@@ -1,0 +1,322 @@
+
+
+SpecialKey     xxx term=bold ctermfg=190
+NonText        xxx term=bold ctermfg=244 ctermbg=16
+Directory      xxx term=bold ctermfg=28
+ErrorMsg       xxx term=standout cterm=bold ctermfg=16 ctermbg=202
+IncSearch      xxx term=reverse cterm=bold ctermfg=195 ctermbg=124
+Search         xxx term=reverse ctermbg=52
+MoreMsg        xxx term=bold cterm=bold ctermfg=16 ctermbg=154
+ModeMsg        xxx term=bold cterm=bold ctermfg=226 ctermbg=18
+LineNr         xxx term=underline ctermfg=28 ctermbg=16
+Question       xxx term=standout cterm=bold ctermfg=70
+StatusLine     xxx term=bold,reverse ctermfg=190 ctermbg=22
+StatusLineNC   xxx term=reverse ctermfg=84 ctermbg=234
+VertSplit      xxx term=reverse ctermfg=84 ctermbg=22
+Title          xxx term=bold cterm=bold ctermfg=98
+Visual         xxx term=reverse ctermbg=238
+VisualNOS      xxx cleared
+WarningMsg     xxx term=standout cterm=bold ctermfg=16 ctermbg=190
+WildMenu       xxx term=standout cterm=bold ctermfg=87 ctermbg=35
+Folded         xxx term=standout cterm=bold ctermfg=38 ctermbg=234
+FoldColumn     xxx term=standout ctermfg=38 ctermbg=234
+DiffAdd        xxx term=bold ctermfg=79 ctermbg=21
+DiffChange     xxx term=bold ctermfg=18 ctermbg=83
+DiffDelete     xxx term=bold ctermfg=79 ctermbg=124
+DiffText       xxx term=reverse ctermfg=16 ctermbg=190
+SignColumn     xxx cleared
+SpellBad       xxx term=reverse cterm=underline
+SpellCap       xxx term=reverse ctermfg=46 ctermbg=236
+SpellRare      xxx term=reverse ctermfg=82 ctermbg=233
+SpellLocal     xxx term=underline ctermfg=227 ctermbg=234
+Pmenu          xxx ctermfg=228 ctermbg=236
+PmenuSel       xxx cterm=bold ctermfg=226 ctermbg=232
+PmenuSbar      xxx ctermfg=119 ctermbg=16
+PmenuThumb     xxx ctermfg=11 ctermbg=16
+TabLine        xxx term=underline ctermfg=253 ctermbg=30
+TabLineSel     xxx term=bold cterm=bold ctermfg=247 ctermbg=16
+TabLineFill    xxx term=reverse ctermfg=247 ctermbg=16
+CursorColumn   xxx term=reverse ctermbg=223
+CursorLine     xxx term=underline ctermbg=233
+MatchParen     xxx term=reverse cterm=bold ctermfg=15 ctermbg=22
+Comment        xxx term=bold ctermfg=37
+Constant       xxx term=underline ctermfg=13
+Special        xxx term=bold ctermfg=15 ctermbg=234
+Identifier     xxx term=underline ctermfg=81
+Statement      xxx term=bold ctermfg=36
+PreProc        xxx term=underline ctermfg=178
+Type           xxx term=underline ctermfg=71
+Underlined     xxx term=underline cterm=bold ctermfg=77
+Ignore         xxx cleared
+Error          xxx term=reverse ctermfg=69
+Todo           xxx term=standout cterm=bold ctermfg=16 ctermbg=148
+String         xxx ctermfg=190
+Character      xxx links to Constant
+Number         xxx cterm=bold ctermfg=50
+Boolean        xxx links to Constant
+Float          xxx links to Number
+Function       xxx links to Identifier
+Conditional    xxx links to Statement
+Repeat         xxx links to Statement
+Label          xxx links to Statement
+Operator       xxx links to Statement
+Keyword        xxx links to Statement
+Exception      xxx links to Statement
+Include        xxx links to PreProc
+Define         xxx links to PreProc
+Macro          xxx links to PreProc
+PreCondit      xxx links to PreProc
+StorageClass   xxx links to Type
+Structure      xxx links to Type
+Typedef        xxx links to Type
+Tag            xxx links to Special
+SpecialChar    xxx ctermfg=155
+Delimiter      xxx links to Special
+SpecialComment xxx links to Special
+Debug          xxx links to Special
+Normal         xxx ctermfg=41 ctermbg=232
+Cursor         xxx ctermfg=255 ctermbg=33
+vimTodo        xxx links to Todo
+vimCommand     xxx links to Statement
+vimOption      xxx links to PreProc
+vimErrSetting  xxx links to vimError
+vimAutoEvent   xxx links to Type
+vimGroup       xxx links to Type
+vimHLGroup     xxx links to vimGroup
+vimFuncName    xxx links to Function
+vimNumber      xxx links to Number
+vimAddress     xxx links to vimMark
+vimAutoCmd     xxx links to vimCommand
+vimExtCmd      xxx cleared
+vimFilter      xxx cleared
+vimLet         xxx links to vimCommand
+vimMap         xxx links to vimCommand
+vimMark        xxx links to Number
+vimSet         xxx cleared
+vimSyntax      xxx links to vimCommand
+vimUserCmd     xxx cleared
+vimCmdSep      xxx cleared
+vimIsCommand   xxx cleared
+vimVar         xxx cleared
+vimFBVar       xxx cleared
+vimInsert      xxx links to vimString
+vimBehaveModel xxx links to vimBehave
+vimBehaveError xxx links to vimError
+vimBehave      xxx links to vimCommand
+vimFTCmd       xxx links to vimCommand
+vimFTOption    xxx links to vimSynType
+vimFTError     xxx links to vimError
+vimFiletype    xxx cleared
+vimFunction    xxx links to Function
+vimFunctionError xxx links to vimError
+vimLineComment xxx links to vimComment
+vimSpecFile    xxx links to Identifier
+vimOper        xxx links to Operator
+vimOperParen   xxx cleared
+vimComment     xxx links to Comment
+vimString      xxx links to String
+vimSubst       xxx links to vimCommand
+vimRegister    xxx links to SpecialChar
+vimCmplxRepeat xxx links to SpecialChar
+vimRegion      xxx cleared
+vimSynLine     xxx cleared
+vimNotation    xxx links to Special
+vimCtrlChar    xxx links to SpecialChar
+vimFuncVar     xxx links to Identifier
+vimContinue    xxx links to Special
+vimAugroupKey  xxx links to vimCommand
+vimAugroup     xxx cleared
+vimAugroupError xxx cleared
+vimFunc        xxx links to vimError
+vimParenSep    xxx links to Delimiter
+vimSep         xxx links to Delimiter
+vimOperError   xxx links to Error
+vimFuncKey     xxx links to vimCommand
+vimFuncSID     xxx links to Special
+vimAbb         xxx links to vimCommand
+vimEcho        xxx cleared
+vimEchoHL      xxx links to vimCommand
+vimExecute     xxx cleared
+vimIf          xxx cleared
+vimHighlight   xxx links to vimCommand
+vimNorm        xxx links to vimCommand
+vimNotFunc     xxx links to vimCommand
+vimUserCommand xxx links to vimCommand
+vimFuncBody    xxx cleared
+vimFuncBlank   xxx cleared
+vimPattern     xxx links to Type
+vimSpecFileMod xxx links to vimSpecFile
+vimEscapeBrace xxx cleared
+vimSetEqual    xxx cleared
+vimSetString   xxx links to vimString
+vimSubstRep    xxx cleared
+vimSubstRange  xxx cleared
+vimUserAttrb   xxx links to vimSpecial
+vimUserAttrbKey xxx links to vimOption
+vimUserAttrbCmplt xxx links to vimSpecial
+vimUserCmdError xxx links to Error
+vimUserAttrbCmpltFunc xxx links to Special
+vimCommentString xxx links to vimString
+vimEnvvar      xxx links to PreProc
+vimPatSepErr   xxx links to vimPatSep
+vimPatSep      xxx links to SpecialChar
+vimPatSepZ     xxx links to vimPatSep
+vimPatSepZone  xxx links to vimString
+vimPatSepR     xxx links to vimPatSep
+vimPatRegion   xxx cleared
+vimNotPatSep   xxx links to vimString
+vimStringCont  xxx links to vimString
+vimSubstTwoBS  xxx links to vimString
+vimSubstSubstr xxx links to SpecialChar
+vimCollection  xxx cleared
+vimSubstPat    xxx cleared
+vimSubst1      xxx links to vimSubst
+vimSubstDelim  xxx links to Delimiter
+vimSubstRep4   xxx cleared
+vimSubstFlagErr xxx links to vimError
+vimCollClass   xxx cleared
+vimCollClassErr xxx links to vimError
+vimSubstFlags  xxx links to Special
+vimMarkNumber  xxx links to vimNumber
+vimPlainMark   xxx links to vimMark
+vimPlainRegister xxx links to vimRegister
+vimSetMod      xxx links to vimOption
+vimSetSep      xxx links to Statement
+vimMapMod      xxx links to vimBracket
+vimMapLhs      xxx cleared
+vimAutoCmdSpace xxx cleared
+vimAutoEventList xxx cleared
+vimAutoCmdSfxList xxx cleared
+vimEchoHLNone  xxx links to vimGroup
+vimMapBang     xxx links to vimCommand
+vimUnmap       xxx links to vimMap
+vimMapRhs      xxx cleared
+vimMapModKey   xxx links to vimFuncSID
+vimMapModErr   xxx links to vimError
+vimMapRhsExtend xxx cleared
+vimMenuBang    xxx cleared
+vimMenuPriority xxx cleared
+vimMenuName    xxx links to PreProc
+vimMenuMod     xxx links to vimMapMod
+vimMenuNameMore xxx links to vimMenuName
+vimMenuMap     xxx cleared
+vimMenuRhs     xxx cleared
+vimBracket     xxx links to Delimiter
+vimUserFunc    xxx links to Normal
+vimElseIfErr   xxx links to Error
+vimBufnrWarn   xxx links to vimWarn
+vimNormCmds    xxx cleared
+vimGroupSpecial xxx links to Special
+vimGroupList   xxx cleared
+vimSynError    xxx links to Error
+vimSynContains xxx links to vimSynOption
+vimSynKeyContainedin xxx links to vimSynContains
+vimSynNextgroup xxx links to vimSynOption
+vimSynType     xxx links to vimSpecial
+vimAuSyntax    xxx cleared
+vimSynCase     xxx links to Type
+vimSynCaseError xxx links to vimError
+vimClusterName xxx cleared
+vimGroupName   xxx cleared
+vimGroupAdd    xxx links to vimSynOption
+vimGroupRem    xxx links to vimSynOption
+vimSynKeyOpt   xxx links to vimSynOption
+vimSynKeyRegion xxx cleared
+vimMtchComment xxx links to vimComment
+vimSynMtchOpt  xxx links to vimSynOption
+vimSynRegPat   xxx links to vimString
+vimSynMatchRegion xxx cleared
+VimSynMtchCchar xxx cleared
+vimSynPatRange xxx links to vimString
+vimSynNotPatRange xxx links to vimSynRegPat
+vimSynRegOpt   xxx links to vimSynOption
+vimSynReg      xxx links to Type
+vimSynMtchGrp  xxx links to vimSynOption
+vimSynRegion   xxx cleared
+vimSynPatMod   xxx cleared
+vimSyncC       xxx links to Type
+vimSyncLines   xxx cleared
+vimSyncMatch   xxx cleared
+vimSyncError   xxx links to Error
+vimSyncLinebreak xxx cleared
+vimSyncLinecont xxx cleared
+vimSyncRegion  xxx cleared
+vimSyncGroupName xxx links to vimGroupName
+vimSyncKey     xxx links to Type
+vimSyncGroup   xxx links to vimGroupName
+vimSyncNone    xxx links to Type
+vimHiLink      xxx cleared
+vimHiClear     xxx cleared
+vimHiKeyList   xxx cleared
+vimHiBang      xxx cleared
+vimHiGroup     xxx links to vimGroupName
+vimHiAttrib    xxx links to PreProc
+vimFgBgAttrib  xxx links to vimHiAttrib
+vimHiAttribList xxx links to vimError
+vimHiCtermColor xxx cleared
+vimHiFontname  xxx cleared
+vimHiGuiFontname xxx cleared
+vimHiGuiRgb    xxx links to vimNumber
+vimHiCtermError xxx links to vimError
+vimHiTerm      xxx links to Type
+vimHiCTerm     xxx links to vimHiTerm
+vimHiStartStop xxx links to vimHiTerm
+vimHiCtermFgBg xxx links to vimHiTerm
+vimHiGui       xxx links to vimHiTerm
+vimHiGuiFont   xxx links to vimHiTerm
+vimHiGuiFgBg   xxx links to vimHiTerm
+vimHiKeyError  xxx links to vimError
+vimHiTermcap   xxx cleared
+vimCommentTitle xxx links to PreProc
+vimCommentTitleLeader xxx cleared
+vimSearchDelim xxx links to Statement
+vimSearch      xxx links to vimString
+vimGlobal      xxx cleared
+vimEmbedError  xxx links to vimError
+vimAugroupSyncA xxx cleared
+vimAuHighlight xxx links to vimHighlight
+vimError       xxx links to Error
+vimKeyCodeError xxx links to vimError
+vimWarn        xxx links to WarningMsg
+vimAutoCmdOpt  xxx links to vimOption
+vimAutoSet     xxx links to vimCommand
+vimCondHL      xxx links to vimCommand
+vimElseif      xxx links to vimCondHL
+vimSynOption   xxx links to Special
+vimKeyCode     xxx links to vimSpecFile
+vimSpecial     xxx links to Type
+vimFold        xxx links to Folded
+vimHLMod       xxx links to PreProc
+vimKeyword     xxx links to Statement
+vimScriptDelim xxx links to Comment
+vimStatement   xxx links to Statement
+cIf0           xxx cleared
+lCursor        xxx cleared
+Scrollbar      xxx cleared
+Menu           xxx cleared
+SpellErrors    xxx cleared
+Condtional     xxx cleared
+CursorIM       xxx cleared
+Subtitle       xxx cleared
+Blue           xxx cleared
+Conceal        xxx cleared
+Cyan           xxx cleared
+Green          xxx cleared
+Magenta        xxx cleared
+Red            xxx cleared
+Tags           xxx cleared
+Unique         xxx cleared
+AltUnique      xxx cleared
+AltAltUnique   xxx cleared
+White          xxx cleared
+Yellow         xxx cleared
+AltConstant    xxx cleared
+AltFunction    xxx cleared
+AltType        xxx cleared
+User1          xxx cterm=bold ctermfg=28
+User2          xxx cterm=bold ctermfg=39
+Titled         xxx cleared
+CursorIME      xxx cleared
+FoldedColumn   xxx ctermfg=39 ctermbg=190
+Costant        xxx ctermfg=73
+TaglistTagName xxx cterm=bold ctermfg=48 ctermbg=124

@@ -1,0 +1,141 @@
+" Vim syntax file
+" Language:	gams
+" Maintainer:	Allan Kelly <allan@fruitloaf.co.uk>
+" Last Change:	Tue Sep 14 14:24:23 BST 1999
+
+
+" For version 5.x: Clear all syntax items
+" For version 6.x: Quit when a syntax file was already loaded
+if version < 600
+  syntax clear
+elseif exists("b:current_syntax")
+  finish
+endif
+
+" A bunch of gams keywords
+syn keyword gamsStatement 	Sets Set SET SETS set sets
+syn keyword gamsStatement 	Table table TABLE
+syn keyword gamsStatement 	Parameter Parameters PARAMETER PARAMETERS parameter parameters
+syn keyword gamsStatement 	Model model MODEL model
+syn keyword gamsStatement 	Solve solve SOLVE 
+syn keyword gamsStatement 	Equations Equation equation EQUATIONS equations
+syn keyword gamsStatement 	Variable variable Variables variables VARIABLE VARIABLES 
+syn keyword gamsStatement 	$option $OPTION $Option
+"syn keyword gamsStatement 	$include $INCLUDE $inludebat $INCLUDEBAT
+syn keyword gamsStatement 	display DISPLAY Display
+syn keyword gamsStatement 	option Option
+syn keyword gamsStatement 	Alias alias
+syn keyword gamsStatement 	Scalar scalar SCALAR
+syn keyword gamsStatement 	xxpto
+
+
+
+syn keyword gamsFunction	ABS abs Abs ASC asc Asc
+syn keyword gamsFunction	ATN atn Atn CDBL cdbl Cdbl
+syn keyword gamsFunction	CINT cint Cint CLNG clng Clng
+syn keyword gamsFunction	COS cos Cos CSNG csng Csng
+syn keyword gamsFunction	CSRLIN csrlin Csrlin CVD cvd Cvd
+syn keyword gamsFunction	CVDMBF cvdmbf Cvdmbf CVI cvi Cvi
+syn keyword gamsFunction	CVL cvl Cvl CVS cvs Cvs
+syn keyword gamsFunction	CVSMBF cvsmbf Cvsmbf EOF eof Eof
+syn keyword gamsFunction	ERDEV erdev Erdev ERL erl Erl
+syn keyword gamsFunction	ERR err Err EXP exp Exp
+syn keyword gamsFunction	FILEATTR fileattr Fileattr FIX fix Fix
+syn keyword gamsFunction	FRE fre Fre FREEFILE freefile Freefile
+syn keyword gamsFunction	INP inp Inp INSTR instr Instr
+syn keyword gamsFunction	INT int Int LBOUND lbound Lbound
+syn keyword gamsFunction	LEN len Len LOC loc Loc
+syn keyword gamsFunction	LOF lof Lof LOG log Log
+syn keyword gamsFunction	LPOS lpos Lpos PEEK peek Peek
+syn keyword gamsFunction	PEN pen Pen POINT point Point
+syn keyword gamsFunction	POS pos Pos RND rnd Rnd
+syn keyword gamsFunction	SADD sadd Sadd SCREEN screen Screen
+syn keyword gamsFunction	SEEK seek Seek SETMEM setmem Setmem
+syn keyword gamsFunction	SGN sgn Sgn SIN sin Sin
+syn keyword gamsFunction	SPC spc Spc SQR sqr Sqr
+syn keyword gamsFunction	STICK stick Stick STRIG strig Strig
+syn keyword gamsFunction	TAB tab Tab TAN tan Tan
+syn keyword gamsFunction	UBOUND ubound Ubound VAL val Val
+syn keyword gamsFunction	VALPTR valptr Valptr VALSEG valseg Valseg
+syn keyword gamsFunction	VARPTR varptr Varptr VARSEG varseg Varseg
+syn keyword gamsFunction	CHR$ Chr$ chr$ COMMAND$ command$ Command$
+syn keyword gamsFunction	DATE$ date$ Date$ ENVIRON$ environ$ Environ$
+syn keyword gamsFunction	ERDEV$ erdev$ Erdev$ HEX$ hex$ Hex$
+syn keyword gamsFunction	INKEY$ inkey$ Inkey$ INPUT$ input$ Input$
+syn keyword gamsFunction	IOCTL$ ioctl$ Ioctl$ LCASES$ lcases$ Lcases$
+syn keyword gamsFunction	LAFT$ laft$ Laft$ LTRIM$ ltrim$ Ltrim$
+syn keyword gamsFunction	MID$ mid$ Mid$ MKDMBF$ mkdmbf$ Mkdmbf$
+syn keyword gamsFunction	MKD$ mkd$ Mkd$ MKI$ mki$ Mki$
+syn keyword gamsFunction	MKL$ mkl$ Mkl$ MKSMBF$ mksmbf$ Mksmbf$
+syn keyword gamsFunction	MKS$ mks$ Mks$ OCT$ oct$ Oct$
+syn keyword gamsFunction	RIGHT$ right$ Right$ RTRIM$ rtrim$ Rtrim$
+syn keyword gamsFunction	SPACE$ space$ Space$ STR$ str$ Str$
+syn keyword gamsFunction	STRING$ string$ String$ TIME$ time$ Time$
+syn keyword gamsFunction	UCASE$ ucase$ Ucase$ VARPTR$ varptr$ Varptr$
+syn keyword gamsTodo contained	TODO
+
+syn match gamsSpecial 		"^\$\<[^ ]\+\>"
+"syn match gamsSpecial 		"^.*\$\(.*\).*$"
+"syn match  gamsFunction 	"\$.*$"
+
+"integer number, or floating point number without a dot.
+syn match  gamsNumber		"\<\d\+\>"
+"floating point number, with dot
+syn match  gamsNumber		"\<\d\+\.\d*\>"
+"floating point number, starting with a dot
+syn match  gamsNumber		"\.\d\+\>"
+
+"integer number, or floating point number without a dot.
+syn match  gamsNumber		"\<\d\+\>"
+"floating point number, with dot
+syn match  gamsNumber		"\<\d\+\.\d*\>"
+"floating point number, starting with a dot
+syn match  gamsNumber		"\.\d\+\>"
+
+
+" String and Character contstants
+syn region  gamsString		  start=+"+  skip=+\\\\\|\\"+  end=+"+ 
+
+"syn region  gamsComment	start="^[ \t]*'" end="$" contains=gamsTodo
+"syn region  gamsComment	start="^[ \t]*\*+" end="$"
+"syn region  gamsComment	start="^*" end="$"
+"syn match   gamsComment         "^[*]+.*$" contains=gamsTodo
+syn match   gamsComment         "^\*.*$" 
+"syn region  gamsComment 	start="^\*" end="$" contains=gamsTodo
+syn region  gamsComment         start="^\$ontext" end="^\$offtext"
+" syn match   gamsMathsOperator "[<>+\*^/\\=-]"
+syn match   gamsMathsOperator   "-\|=\|[:<>+\*^/\\]\|AND\|OR"
+
+" Define the default highlighting.
+" For version 5.7 and earlier: only when not done already
+" For version 5.8 and later: only when an item doesn't have highlighting yet
+if version >= 508 || !exists("did_gams_syntax_inits")
+  if version < 508
+    let did_gams_syntax_inits = 1
+    command -nargs=+ HiLink hi link <args>
+  else
+    command -nargs=+ HiLink hi def link <args>
+  endif
+
+  HiLink gamsLabel		Label
+  HiLink gamsConditional	Conditional
+  HiLink gamsRepeat		Repeat
+  HiLink gamsLineNumber	Comment
+  HiLink gamsNumber		Number
+  HiLink gamsError		Error
+  HiLink gamsStatement	Statement
+  HiLink gamsString		String
+  HiLink gamsComment		Comment
+  HiLink gamsSpecial		Special
+  HiLink gamsTodo		Todo
+  HiLink gamsFunction		Identifier
+  HiLink gamsTypeSpecifier Type
+  HiLink gamsFilenumber gamsTypeSpecifier
+  "hi gamsMathsOperator term=bold cterm=bold gui=bold
+
+  delcommand HiLink
+endif
+
+let b:current_syntax = "gams"
+
+" vim: ts=8
