@@ -1,4 +1,5 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =2
+let g:netrw_dirhist_cnt =3
 let g:netrw_dirhist_1='/tmp/hinacio'
 let g:netrw_dirhist_2='/home/stu/hinacio/.ssh'
+let g:netrw_dirhist_3='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/scip-1.2.1.1/src/scip'

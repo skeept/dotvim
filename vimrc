@@ -33,6 +33,8 @@ set history=50		" keep 50 lines of command line history
 set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
 set incsearch		" do incremental searching
+set ignorecase
+"set smartcase
 set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
@@ -51,12 +53,11 @@ endif
 set expandtab
 set softtabstop=2
 set cindent shiftwidth=2
-set ignorecase
 set scrolloff=9 "kepp 9 lines of contex when editing
 set clipboard+=unnamed " turns out I do like is sharing windows clipboard
-set nohlsearch 
 set wildmenu                    "wmnu:  enhanced ex command completion
 set wildmode=longest:full,list:full  "wim:   helps wildmenu auto-completion
+"cabbrev help tab help
 
 " for being able to change buffers without saving
 set hidden
@@ -151,19 +152,26 @@ if !has("gui_running")
   "colorscheme evening
   "colorscheme default
   "colorscheme morning
-
   "colorscheme darkblue
-
   "colorscheme fruit 
   "colorscheme icansee
   "colorscheme greens
   "colorscheme freya
   "colorscheme 256_asu1dark
-  colorscheme desert256
+  "colorscheme desert256
   "colorscheme desert
   "colorscheme autumn
   "colorscheme leo
   "colorscheme torte
+  "colorscheme blacksea_cs
+  "colorscheme asu1dark_cs
+  "colorscheme candycode_cs
+  "colorscheme LightDefaultGrey_cs
+  "colorscheme Dark2_cs
+  "colorscheme anotherdark_cs
+  "colorscheme  koehler_cs
+   "colorscheme xoria256
+   colorscheme  graywh_cs
 endif
 
 
@@ -229,28 +237,20 @@ inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
 " for searching gams erros
 map <Leader>e /\*\*\*\*.*$<cr>
 map <Leader>v :view<cr>
+" for clearing search views
+map <Leader>ch :nohlsearch<CR>
 
 "let NERDShutUp=1
-hi TabLine cterm=reverse
+"hi TabLine cterm=reverse
 
 "map H :let &hlsearch = !&hlsearch<CR>
 
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
 
-"" changing colors with as suggested in the tip
-let SwitchSchemesFiles = globpath("$VIMRUNTIME,$HOME/.vim","colors/*.vim")
-let SwitchSchemesIndex = 0
-function! SwitchSchemes()
-        let sep="\n"
-        if g:SwitchSchemesIndex == -1
-                let g:SwitchSchemesIndex=0
-        endif
-
-        exe "source " . NextElement(g:SwitchSchemesFiles, sep, g:SwitchSchemesIndex)
-        let g:SwitchSchemesIndex = NextIndex(g:SwitchSchemesFiles, sep, g:SwitchSchemesIndex + 1)
-endfunction
-map <f12>  :call SwitchSchemes()<CR>:echo g:colors_name<cr>
+"to change the colors if previous color desired :call PreviousColorScheme()
+map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"map <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
@@ -260,5 +260,9 @@ set foldmethod=syntax
 set title
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-"set complete=.,w,b,u
-set complete=.
+"
+"
+"for now set scip compatible settings (3 spaces indentation for c files)
+if has("autocmd")
+  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+end " has("autocmd")
