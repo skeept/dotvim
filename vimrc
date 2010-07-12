@@ -239,6 +239,9 @@ map <Leader>e /\*\*\*\*.*$<cr>
 map <Leader>v :view<cr>
 " for clearing search views
 map <Leader>ch :nohlsearch<CR>
+"open scratch buffer 
+map <Leader>os :Scratch<CR>
+
 
 "let NERDShutUp=1
 "hi TabLine cterm=reverse
@@ -266,3 +269,7 @@ com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 if has("autocmd")
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 end " has("autocmd")
+
+if !has("win32") "for gnu grep, do some other settin for windows (maybe use cygwin?)
+  set grepprg=grep\ -nI\ --exclude=tags\ --exclude=cscope.out
+endif
