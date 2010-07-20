@@ -271,5 +271,5 @@ if has("autocmd")
 end " has("autocmd")
 
 if !has("win32") "for gnu grep, do some other settin for windows (maybe use cygwin?)
-  set grepprg=grep\ -nI\ --exclude=tags\ --exclude=cscope.out
+  set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
 endif

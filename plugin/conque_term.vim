@@ -1,0 +1,1 @@
+/home/stu/hinacio/.vim/pp/conque_1.1/plugin/conque_term.vim

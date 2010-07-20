@@ -1,0 +1,1 @@
+/home/stu/hinacio/.vim/ppackages/vimgdb_runtime/syntax/gdbvim.vim
