@@ -1,8 +1,11 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =6
+let g:netrw_dirhist_cnt =9
 let g:netrw_dirhist_1='/tmp/hinacio'
 let g:netrw_dirhist_2='/home/stu/hinacio/.ssh'
 let g:netrw_dirhist_3='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/scip-1.2.1.1/src/scip'
 let g:netrw_dirhist_4='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/scip-1.2.1.3/src/scip'
 let g:netrw_dirhist_5='/home/stu/hinacio/.ssh'
 let g:netrw_dirhist_6='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/n2/scip-1.2.1.4/src/scip'
+let g:netrw_dirhist_7='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/scip-1.2.1.4/src/scip'
+let g:netrw_dirhist_8='/home/stu/hinacio'
+let g:netrw_dirhist_9='/home/stu/hinacio/WORK/ziboptsuite-1.2.0/scip-1.2.1.4/src/scip'

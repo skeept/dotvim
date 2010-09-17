@@ -39,15 +39,19 @@ set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
 
+set undofile
+
 "" set backup. but all the backuped files will be 
 "" placed in the directory specified by backupdir
 set backup
 if has("win32") 
   set backupdir=$HOME\vimfiles\backup
   set directory=$HOME\vimfiles\swapdir
+  set undodir=$HOME\vimfiles\undodir
 else
   set backupdir=~/.vim/backup
   set directory=~/.vim/swapdir
+  set undodir=$HOME/.vim/undodir
 endif
 
 set expandtab
@@ -257,7 +261,9 @@ map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
-set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
+"set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
+"set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
+set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 
 set foldmethod=syntax
 set title
@@ -270,6 +276,13 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 end " has("autocmd")
 
-if !has("win32") "for gnu grep, do some other settin for windows (maybe use cygwin?)
+if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
   set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
 endif
+
+
+" ==================================================
+" Python
+" ==================================================
+"au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
+"au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
