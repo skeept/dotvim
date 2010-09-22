@@ -61,7 +61,8 @@ set scrolloff=9 "kepp 9 lines of contex when editing
 set clipboard+=unnamed " turns out I do like is sharing windows clipboard
 set wildmenu                    "wmnu:  enhanced ex command completion
 set wildmode=longest:full,list:full  "wim:   helps wildmenu auto-completion
-"cabbrev help tab help
+cabbrev tabh tab help
+set nostartofline
 
 " for being able to change buffers without saving
 set hidden
@@ -138,6 +139,7 @@ imap <f4> <esc>:wq<cr>
 map ,en :cnext<cr>
 map ,ep :cprevious<cr>
 
+
 let fortran_free_source = 1
 
 set nopaste
@@ -197,9 +199,27 @@ function! ToggleSpell()
 		echo "No spell Cheking"
         endif
 endfunction
-map <F5> :call ToggleSpell()<cr>
-imap <F5> <C-O>:call ToggleSpell()<cr>
+"map <F5> :call ToggleSpell()<cr>
+"imap <F5> <C-O>:call ToggleSpell()<cr>
 map <Leader>s :call ToggleSpell() <cr>
+
+let g:relativenumber = 2
+function! ToogleRelativeNumber()
+  if g:relativenumber == 0
+    let g:relativenumber = 1
+    set relativenumber
+  elseif g:relativenumber == 1
+    let g:relativenumber = 2
+    set number
+  else
+    let g:relativenumber = 0
+    set nonumber
+    set norelativenumber
+  endif
+endfunction
+
+map <Leader>tn :call ToogleRelativeNumber()<cr>
+set relativenumber
 
 "taglist options and keyboard mappings
 "let Tlist_Close_On_Select = 1
