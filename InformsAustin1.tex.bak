@@ -2,7 +2,7 @@
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-%\usepackage{times}
+\usepackage{times}
 %\usepackage{kpfonts}
 %\usepackage{pxfonts}
 %\usepackage{txfontsb}
@@ -49,10 +49,10 @@
 \end{center}
 \end{tiny}} % todolater
 
-%\usetheme{Warsaw}
+\usetheme{Warsaw}
 %\usetheme{Boadilla}
 %\usetheme{Darmstadt}
-\usetheme{Dresden}
+%\usetheme{Dresden}
 
 
 \title{Convex Relaxations for Cubic Polynomials Problems}
@@ -227,39 +227,6 @@ $x^i = \prod_{k=1}^{n} x_k^{i_k}$, $i_k \in \mathbf{N_0}$ and $\sum_{k=1}^n i_k 
 
 \begin{frame}{Convex Relaxations for Cubic Problems}
 
-  From the Factorable Programming approach we can easily get the following relaxations for
-  terms of order 3:
-
-  To relax the terms $x \cdot y \cdot z$ we introduce the additional variables
-  $w_{xyz}, w_{xy}, w_{xz}, w_{yz}$ and the constraints : 
-
-  \begin{displaymath}
-    \begin{array}[h]{rcl}
-      w_{xyz} & \geq & z^l \cdot w_{xy}+ y^l \cdot w_{xz} + x^l \cdot w_{yz} \\
-     &  & -y^l \cdot z^l \cdot x - x^l \cdot z^l \cdot y - y^l \cdot z^l z 
-     + x^l \cdot y^l \cdot z^l \\
-      w_{xyz} & \geq & z^l \cdot w_{xy}+ y^u \cdot w_{xz} + x^u \cdot w_{yz} \\
-     &  & -y^u \cdot z^l \cdot x - x^u \cdot z^l \cdot y - y^u \cdot z^l z 
-     + x^u \cdot y^u \cdot z^l \\
-      w_{xyz} & \geq & z^u \cdot w_{xy}+ y^l \cdot w_{xz} + x^u \cdot w_{yz} \\
-     &  & -y^l \cdot z^u \cdot x - x^u \cdot z^u \cdot y - y^l \cdot z^u z 
-     + x^u \cdot y^l \cdot z^u \\
-      w_{xyz} & \geq & z^u \cdot w_{xy}+ y^u \cdot w_{xz} + x^l \cdot w_{yz} \\
-     &  & -y^u \cdot z^u \cdot x - x^l \cdot z^u \cdot y - y^u \cdot z^u z 
-     + x^l \cdot y^u \cdot z^u \\
-     z_{\gamma_1 \gamma_2} & \geq & \gamma_2^l \cdot \gamma_1 + \gamma_1^l \cdot \gamma_2
-     - \gamma_1^l \cdot \gamma_2^l \\
-     z_{\gamma_1 \gamma_2} & \geq & \gamma_2^u \cdot \gamma_1 + \gamma_1^u \cdot \gamma_2
-     - \gamma_1^u \cdot \gamma_2^u \\
-     &  &  (\gamma_1, \gamma_2) \in \left\{ (x,y), (x,z), (y,z) \right\} \\
-    \end{array}
-  \end{displaymath}
-  
-\end{frame}
-
-\begin{frame}{Relaxations of Cubic Terms -- Trilinear Terms}
-
-  
 \end{frame}
 
 
