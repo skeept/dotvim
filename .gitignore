@@ -7,9 +7,9 @@ undodir/*
 
 .VimballRecord
 
-backup
-swapdir
-undodir
+!backup
+!swapdir
+!undodir
 d
 dd_
 view/
