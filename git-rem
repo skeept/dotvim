@@ -25,4 +25,4 @@ git push
 
 use for fetching the latest changes 
 
-git pull /path/myCode.git
+git pull 
