@@ -1,0 +1,28 @@
+
+Suppose you are working in a folder ~/mycode with a git rep
+
+to add a repository in the same tree, say in 
+/path/myCode.git
+
+mkdir /path/myCode.git
+cd /path/myCode.git
+git --bare init 
+
+cd ~/myCode
+
+git remote add origin /path/myCode.git
+git push origin master
+
+
+now go to other machine
+
+git clone ssh://user@host/path/myCode.git myCode
+
+If you change someting in the other machine
+
+#git push ssh://user@host/path/myCode.git 
+git push 
+
+use for fetching the latest changes 
+
+git pull 
