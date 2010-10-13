@@ -26,3 +26,22 @@ git push
 use for fetching the latest changes 
 
 git pull 
+<<<<<<< HEAD
+=======
+
+actually we I need to edit .git/config
+and add the following
+
+[alias] 
+        mypull ssh://user@host/path/myCode.git
+
+
+or
+
+[alias] 
+        mypull /path/myCode.git
+
+
+
+this is a pain. hope from now on can just focus on work
+>>>>>>> f7154e14275b0a57aafca6e8402facc47de8423a
