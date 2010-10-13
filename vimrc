@@ -164,9 +164,9 @@ set t_Co=256
 
 
 " setting the color in terminals
-if !has("gui_running")
+if !has("gui_running") && !has("win32")
   "on windows default is better
-  colorscheme evening
+  "colorscheme evening
   "colorscheme default
   "colorscheme morning
   "colorscheme darkblue
@@ -377,7 +377,9 @@ endif
 "for scip go up two folders
 set tags=tags=./tags,./TAGS,tags,TAGS,../../tags
 
-let &t_ti.="\e[1 q"
-let &t_SI.="\e[5 q"
-let &t_EI.="\e[1 q"
-let &t_te.="\e[0 q"
+"let &t_ti.="\e[1 q"
+"let &t_SI.="\e[5 q"
+"let &t_EI.="\e[1 q"
+"let &t_te.="\e[0 q"
+
+let g:LustyExplorerSuppressRubyWarning = 1

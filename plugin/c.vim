@@ -53,11 +53,17 @@ let g:C_Version= "5.11"  							" version number of this script; do not change
 "
 let	s:MSWIN =		has("win16") || has("win32") || has("win64") || has("win95")
 "
+
+"it's not working on windows!
+if s:MSWIN
+  finish
+endif
+
 if	s:MSWIN
 	"
   let s:escfilename      = ''
   let s:plugin_dir       = $VIM.'\vimfiles\'
-  let s:C_CodeSnippets   = s:plugin_dir.'c-support/codesnippets/'
+  let s:C_CodeSnippets   = s:plugin_dir.'c-support\codesnippets\'
   let s:C_IndentErrorLog = $HOME.'.indent.errorlog'
 	let s:installation	   = 'system'
 	"
@@ -129,7 +135,12 @@ let s:C_XtermDefaults         = '-fa courier -fs 12 -geometry 80x24'
 let s:C_GuiSnippetBrowser     = 'gui'										" gui / commandline
 let s:C_GuiTemplateBrowser    = 'gui'										" gui / explorer / commandline
 "
-let s:C_GlobalTemplateFile    = s:plugin_dir.'c-support/templates/Templates'
+if !s:MSWIN
+  let s:C_GlobalTemplateFile    = s:plugin_dir.'c-support/templates/Templates'
+else
+  let s:C_GlobalTemplateFile    = s:plugin_dir.'c-support\templates\Templates'
+endif
+
 let s:C_GlobalTemplateDir     = fnamemodify( s:C_GlobalTemplateFile, ":p:h" ).'/'
 let s:C_LocalTemplateFile     = $HOME.'/.vim/c-support/templates/Templates'
 let s:C_LocalTemplateDir      = fnamemodify( s:C_LocalTemplateFile, ":p:h" ).'/'

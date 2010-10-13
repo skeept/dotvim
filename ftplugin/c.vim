@@ -11,6 +11,14 @@
 "
 " Only do this when not done yet for this buffer
 " 
+let	s:MSWIN =		has("win16") || has("win32") || has("win64") || has("win95")
+"
+
+"it's not working on windows!
+if s:MSWIN
+  finish
+endif
+
 if exists("b:did_C_ftplugin")
   finish
 endif
