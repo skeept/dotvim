@@ -149,8 +149,13 @@ fun! s:SetPersistentNumber(name, value)
 endfun
 
 let s:prevDate = 20101013
+<<<<<<< HEAD
 let s:prevLine = 26240
 let s:vimtipsDate = 20101013
+=======
+let s:prevLine = 26300
+let s:vimtipsDate = 20100525
+>>>>>>> 563b35f61ebe67fbf818923b1ecf09535328c6cd
 
 let &l:cpo = s:save_cpo
 

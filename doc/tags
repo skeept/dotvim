@@ -3171,4 +3171,5 @@ verbatim	latexhelp.txt	/*verbatim*
 verse	latexhelp.txt	/*verse*
 vim_complete	neocomplcache.txt	/*vim_complete*
 vimgdb	gdb.txt	/*vimgdb*
+vimtips.txt	../plugin/vimtips/vimtips.txt	/*vimtips.txt*
 why-IMAP	latex-suite.txt	/*why-IMAP*
