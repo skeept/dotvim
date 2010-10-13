@@ -1,1 +1,1 @@
-modif//papayawhip_cs.vim
+modif//PapayaWhip_cs.vim
