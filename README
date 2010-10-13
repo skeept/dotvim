@@ -5,3 +5,22 @@ simple configuration for keeping vim configuration across different machines
 some steps which might be necessary to type
 
 
+to copy the hole thing 
+
+    git clone git@github.com:skeept/dotvim.git
+
+
+the following updates the local folders to the same in the rep:
+
+    git pull git@github.com:skeept/dotvim.git
+
+
+in linux if (not done yet) have to do the following
+
+    ln -s ~/vimrc  ~/.vimrc
+    ln -s ~/gvimrc ~/.gvimrc
+
+
+on windows the symlinks don't always work well: 
+    cp vimrc  ..\_vimrc
+    cp gvimrc ..\_gvimrc
