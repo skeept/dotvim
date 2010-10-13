@@ -45,13 +45,13 @@ set undofile
 "" placed in the directory specified by backupdir
 set backup
 if has("win32") 
-  set backupdir=$HOME\vimfiles\backup
-  set directory=$HOME\vimfiles\swapdir
-  set undodir=$HOME\vimfiles\undodir
+  set backupdir^=$HOME\vimfiles\backup//
+  set directory^=$HOME\vimfiles\swapdir//
+  set undodir^=$HOME\vimfiles\undodir//
 else
-  set backupdir=~/.vim/backup
-  set directory=~/.vim/swapdir
-  set undodir=$HOME/.vim/undodir
+  set backupdir^=~/.vim/backup//
+  set directory^=~/.vim/swapdir//
+  set undodir^=$HOME/.vim/undodir//
 endif
 
 set expandtab
@@ -118,7 +118,7 @@ imap <C-E> <ESC>$a
 "map f2 to make
 imap <F2> <ESC>:wa<cr>:Make <Up>
 map  <F2> :wa<cr>:Make <Up>
-command -nargs=* Make write | make <args> | cwindow 6
+command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
 imap <F1> <ESC>:wa<cr>a
@@ -138,7 +138,17 @@ imap <f4> <esc>:wq<cr>
 
 map ,en :cnext<cr>
 map ,ep :cprevious<cr>
+map <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+map ,w <c-w>
+map ,, <c-w><c-w>
 
+"map gl :bprevious<cr>
+"
+if &diff
+  map <f4> :qa<cr>
+  map <f5> :wqa!<cr>
+  map <f6> :qa!<cr>
+endif
 
 let fortran_free_source = 1
 
@@ -150,12 +160,13 @@ set pastetoggle=<Leader>pt
 "Set terminal capabilities before the colorscheme
 "set t_Co=128
 set t_Co=256
+"set t_Co=88
 
 
 " setting the color in terminals
 if !has("gui_running")
   "on windows default is better
-  "colorscheme evening
+  colorscheme evening
   "colorscheme default
   "colorscheme morning
   "colorscheme darkblue
@@ -203,14 +214,16 @@ endfunction
 "imap <F5> <C-O>:call ToggleSpell()<cr>
 map <Leader>s :call ToggleSpell() <cr>
 
-let g:relativenumber = 2
+let g:relativenumber = 0
 function! ToogleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
-    set relativenumber
+    set norelativenumber
+    set number
   elseif g:relativenumber == 1
     let g:relativenumber = 2
-    set number
+    set nonumber
+    set relativenumber
   else
     let g:relativenumber = 0
     set nonumber
@@ -219,22 +232,73 @@ function! ToogleRelativeNumber()
 endfunction
 
 map <Leader>tn :call ToogleRelativeNumber()<cr>
-set relativenumber
+"set relativenumber
 
-"taglist options and keyboard mappings
+"taglist options 
 "let Tlist_Close_On_Select = 1
 let Tlist_Enable_Fold_Column = 0
 let Tlist_GainFocus_On_ToggleOpen = 1
 let Tlist_Use_Horiz_Window = 0
-let Tlist_WinWidth = 20
+let Tlist_WinWidth = 31
 let Tlist_Compact_Format = 1
 let Tlist_Exit_OnlyWindow = 1
 let Tlist_Use_SingleClick = 1
-map <F3> :TlistToggle<cr>
-imap <F3> <ESC>:TlistToggle<cr>
 " the following is useful to use configure ctags for using taglist with gams
 let tlist_gams_settings='gams;e:equation;c:variable;m:model'
 let tlist_gamslst_settings='asm;e:equation;c:variable;m:model;a:eqval'
+"map <F3> :TlistToggle<cr>
+"imap <F3> <ESC>:TlistToggle<cr>
+"
+"NERDTree settings
+let NERDTreeShowBookmarks = 1
+
+"lusty juggler
+let g:LustyJugglerShowKeys = 'a'
+
+"don't show file numbers in taglist and nerdtree
+autocmd FileType nerdtree      setlocal norelativenumber
+autocmd FileType taglist       setlocal norelativenumber
+autocmd FileType qf            setlocal norelativenumber
+autocmd FileType tlibInputList setlocal norelativenumber
+
+
+let g:togglelistornerdtree = 0
+function! ToogleTagListNerdTree()
+  if g:togglelistornerdtree == 0
+    "NERDTreeClose
+    "TlistOpen
+    TlistToggle
+    "setlocal nonumber
+    "setlocal norelativenumber
+    let g:togglelistornerdtree = 1
+  elseif g:togglelistornerdtree == 1
+    TlistToggle
+    "TlistClose
+    NERDTreeToggle
+    "setlocal nonumber
+    "setlocal norelativenumber
+    let g:togglelistornerdtree = 2
+  else
+    "TlistClose
+    "NERDTreeClose
+    NERDTreeToggle
+    let g:togglelistornerdtree = 0
+  endif
+endfunction
+
+"source explorer
+let g:SrcExpl_isUpdateTags = 0
+
+map <F3> :call ToogleTagListNerdTree() <cr>
+imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
+
+nmap <silent> ,f :LustyFilesystemExplorer<CR>
+nmap <silent> ,r :LustyFilesystemExplorerFromHere<CR>
+nmap <silent> ,b :LustyBufferExplorer<CR>
+nmap <silent> ,g :LustyBufferGrep<CR>
+
+nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+
 
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
@@ -243,20 +307,21 @@ let g:Tex_UsePython=1
 let g:Tex_MultipleCompileFormats='dvi,pdf'
 "make vim load .tex files as latex files
 let g:tex_flavor='latex'
+let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
 
-"tab complete
-function! InsertTabWrapper(direction)
-    let col = col('.') - 1
-    if !col || getline('.')[col - 1] !~ '\k'
-        return "\<tab>"
-    elseif "backward" == a:direction
-        return "\<c-p>"
-    else
-        return "\<c-n>"
-    endif
-endfunction
-inoremap <tab> <c-r>=InsertTabWrapper ("forward")<cr>
-inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
+""tab complete
+"function! InsertTabWrapper(direction)
+    "let col = col('.') - 1
+    "if !col || getline('.')[col - 1] !~ '\k'
+        "return "\<tab>"
+    "elseif "backward" == a:direction
+        "return "\<c-p>"
+    "else
+        "return "\<c-n>"
+    "endif
+"endfunction
+"inoremap <tab> <c-r>=InsertTabWrapper ("forward")<cr>
+"inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
 
 " for searching gams erros
 map <Leader>e /\*\*\*\*.*$<cr>
@@ -297,7 +362,9 @@ if has("autocmd")
 end " has("autocmd")
 
 if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
-  set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
+  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
+  "we change to setting from H to -h so the filename does not show up
+  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
 endif
 
 
@@ -306,3 +373,11 @@ endif
 " ==================================================
 "au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
 "au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
+"
+"for scip go up two folders
+set tags=tags=./tags,./TAGS,tags,TAGS,../../tags
+
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
