@@ -37,3 +37,11 @@
 
 [difftool]
   prompt = false
+
+[branch "master"]
+  remote = Informs1
+  merge = <remote-ref>
+
+[remote "Informs1"]
+  url = ssh://c/home/scratch/hinacio/GIT/Informs1
+  fetch = master
