@@ -108,4 +108,5 @@ endif
 "set guifontset=-misc-*-medium-*-*-*-18-*-*-*-*-*-*-1
 "set guifontset=-misc-fixed-medium-*-*-*-18-*-*-*-*-*-iso8859-15
 
-colorscheme morning
+"colorscheme morning
+colorscheme desert
