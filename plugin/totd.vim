@@ -151,6 +151,9 @@ endfun
 let s:prevDate = 20101014
 let s:prevLine = 26371
 let s:vimtipsDate = 20100525
+=======
+let s:prevLine = 26481
+let s:vimtipsDate = 20100525
 
 let &l:cpo = s:save_cpo
 
