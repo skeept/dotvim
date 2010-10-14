@@ -51,8 +51,8 @@
 
 %\usetheme{Warsaw}
 %\usetheme{Boadilla}
-%\usetheme{Darmstadt}
-\usetheme{Dresden}
+\usetheme{Darmstadt}
+%\usetheme{Dresden}
 
 
 \title{Convex Relaxations for Cubic Polynomials Problems}
@@ -212,8 +212,20 @@ $x^i = \prod_{k=1}^{n} x_k^{i_k}$, $i_k \in \mathbf{N_0}$ and $\sum_{k=1}^n i_k 
   We note that each of the previous inequalities is simply a subgradient inequality for
   $x^2$ at a point $x^i$.
 
+\end{frame}
+
+\begin{frame}{$-x^2$}
+
   For $-x^2$ the best approximation we can have is the secant approximation
-  \todo{formula for secant approximation}
+  \begin{equation}
+    z \leq (x^l)^2 - \frac{(x^u)^2 - (x^l)^2}{x^u-x^l} \left( x- x^l \right)
+    \label{nx2_1}
+  \end{equation}
+  or equivalently
+  \begin{equation}
+    z \leq \left( x^l+x^u \right) x - x^l x^u
+    \label{nx2_2}
+  \end{equation}
 
 \end{frame}
 
@@ -224,6 +236,12 @@ $x^i = \prod_{k=1}^{n} x_k^{i_k}$, $i_k \in \mathbf{N_0}$ and $\sum_{k=1}^n i_k 
   \todo{mention in some cases might be better direct approach}
 
 \end{frame}
+
+\section{Cubic Terms} % (fold)
+\label{sec:cubterms}
+
+\subsubsection{Beyond Cubic} % (fold)
+\label{ssub:boundcubic}
 
 \begin{frame}{Convex Relaxations for Cubic Problems}
 
@@ -259,8 +277,35 @@ $x^i = \prod_{k=1}^{n} x_k^{i_k}$, $i_k \in \mathbf{N_0}$ and $\sum_{k=1}^n i_k 
 
 \begin{frame}{Relaxations of Cubic Terms -- Trilinear Terms}
 
-  ew
-  
+  We can also write relaxations for trilinear terms without the use of the additional
+  variables $w_{xy}, w_{zx}, w_{yz}$: 
+
+  \begin{displaymath}
+    \begin{array}[<+position+>]{rcl}
+      w_{xyz} & \geq & \dots
+    \end{array}
+  \end{displaymath}
+
+  \todo{note: it will be quite hard to write all these constraints. \\
+  are they necessary to show here?}
 \end{frame}
+
+\begin{frame}{Cubic Terms -- $-x^3$}
+
+  Here again we have the secant equation for the concave function $-x^3$ \\
+  (Remember that $x >= 0$ )
+
+  \begin{equation}
+      z \leq (x^l)^3 + \frac{( x^u )^3-( x^l )^3 }{x^u-x^l} \left(
+      x - x^l \right) 
+    \end{equation}
+    or equivalently,
+    \begin{equation}
+      z \leq \left( ( x^l )^2 + ( x^u )^2 + x^l x^u \right) x 
+      - x^l x^u \left( x^l + x^u \right)
+    \end{equation}
+    
+\end{frame}
+
 
 \end{document}
