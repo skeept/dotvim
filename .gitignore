@@ -19,6 +19,9 @@ doc/tags
 doc/tags-ja
 plugin/totd.vim
 
+ftplugin/latex-suite/bibtools.pyc 
+ftplugin/latex-suite/outline.pyc
 
+*.pyc
 
 
