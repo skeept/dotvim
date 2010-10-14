@@ -1,0 +1,235 @@
+\documentclass{beamer}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{times}
+%\usepackage{kpfonts}
+%\usepackage{pxfonts}
+%\usepackage{txfontsb}
+
+\setbeamerfont{structure}{family=\rmfamily,shape=\itshape}
+%\usefonttheme{serif}
+\usefonttheme[stillsansseriftext,stillsansserifmath]{serif}
+
+
+
+
+\usepackage{amssymb,amsmath, amsthm}
+\usepackage[]{color}
+\usepackage{graphicx}
+\usepackage{booktabs}
+%\usepackage{subfig}
+
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{result}{Result}
+
+\def\Rreal{\mathbb{R}}
+\def\Zint{\mathbb{Z}}
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\normone}[1]{{\lVert #1 \rVert}_{1}}
+\newcommand{\norminf}[1]{{\lVert #1 \rVert}_{\infty}}
+\newcommand{\normtwo}[1]{{\lVert #1 \rVert}_{2}}
+
+\definecolor{MyDarkBlue}{rgb}{0.1,0,0.55}
+\newcommand{\todolater}[1]
+{\begin{center} {\color{red}
+  \textbf{ {\#\#\#\hfill\#\#\#}\\{#1}\\\#\#\#\hfill\#\#\#}} \end{center} } % todolater
+\newenvironment{modifa}
+{\color{MyDarkBlue}}
+{}
+\newenvironment{todel}
+{\color{red}}
+{}
+
+\newcommand{\todo}[1]
+{\begin{tiny}
+  \begin{center} {\color{red}
+  \textbf{ {\#\#\#\hfill\#\#\#}\\{#1}\\\#\#\#\hfill\#\#\#}}
+\end{center}
+\end{tiny}} % todolater
+
+\usetheme{Warsaw}
+%\usetheme{Boadilla}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+
+
+\title{Convex Relaxations for Cubic Polynomials Problems}
+\author[In\'acio, Ahmed, Realff]{Helder In\'acio \\ Shabbir Ahmed \\ Matthew Realff}
+\date{November 10, 2010}
+\institute[GATech]{Georgia Institute of Technology}
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+
+
+\begin{frame}{Introduction}
+
+  We consider a problem in the form :
+  \begin{displaymath}
+    \begin{array}[h]{rcl}
+      \min\limits_x & c'x & \\
+      \text{subject to } & g_s(x) & \leq 0 , \quad s \in S\\
+      & \multicolumn{2}{l}{ 0 \leq x^l \leq x \leq x^u < \infty} \\
+    \end{array}
+  \end{displaymath}
+
+where $g(x)$ is a polynomial function of degree up to 3:
+\begin{displaymath}
+  g_s(x) = \sum_{i \in I} a_i x^i, \quad s \in S
+\end{displaymath}
+with $a_i$ a real coefficient and
+%$x^i = x_{i_1}^{i_1}\cdot x_{i_2}^{i_2}\cdots x_{i_n}^{i_n}$, $i_1, i_2, \dots, i_n \in
+%\mathbf{N}$ and $\sum_k i_k \leq 3$.
+
+$x^i = \prod_{k=1}^{n} x_k^{i_k}$, $i_k \in \mathbf{N_0}$ and $\sum_{k=1}^n i_k \leq 3$.
+
+\end{frame}
+
+\begin{frame}{Introduction}
+
+  \begin{itemize}
+    \item
+  If all $g_s(x)$ are convex functions then problem is convex,
+  so any local optimum solution is also global.
+  \item
+    In general functions $g_s(x)$ are not convex.
+  \end{itemize}
+
+  Approach: \\
+  For nonconvex $g_s(x)$ replace it by convex approximation.
+  \todo{talk about branch and bound}
+
+\end{frame}
+
+\begin{frame}{Convex under approximation }
+
+  \todo{ Picture of polyhedral under approximation}
+  \todo{ Figure of convex relaxation }
+
+  \todo{ (the convex should in this case be better than polyhedral)}
+
+\end{frame}
+
+%\begin{frame}{Introduction}
+
+  %\begin{itemize}
+    %\item
+      %Many approaches know and implemented for solving this problem.
+      %Commercial software code BARON includes and open source code project COUENNE
+      %find global solutions to this problem.
+
+  %\end{itemize}
+%\end{frame}
+
+\begin{frame}{Convex Relaxations}
+  We consider for simplicity a single constraint
+  \begin{displaymath}
+    g(x) \leq 0
+  \end{displaymath}
+
+  We want to build a convex relaxation for the set
+  \begin{displaymath}
+    S = \left\{ x \mid g(x) \leq 0 \right\}
+  \end{displaymath}
+  that is a set $S^C$ such that
+  \begin{itemize}
+    \item
+      $S^C$ is convex.
+    \item
+      $S \subseteq S^C $
+  \end{itemize}
+  Ideally we would like to have that if $S^{C'}$ is another convex set such that
+  $S \subseteq S^{C'}$ then $S^{C} \subseteq S^{C'}$, that is $S^C$ is the convex hull of
+  $S$.
+\end{frame}
+
+\begin{frame}{Convex Relaxations}
+
+  Unfortunately this approach not attainable in general.
+  \todo{  (Mention Sahinidis and Bao here?) }
+
+  What can be done? \\
+
+  build relaxations for individual terms for which usually a tight convex relaxation is
+  know.
+
+\end{frame}
+
+\begin{frame}{Quadratic Case}
+  We consider for simplicity a single constraint
+  \begin{displaymath}
+    g(x) \leq 0
+  \end{displaymath}
+
+  If there are no terms of order 3, then we can write
+
+  \begin{displaymath}
+    g(x) = a_0 + \sum_{i \neq j} b_{ij} x_i x_j + \sum_{i=1}^n c_i x_i^2
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}{Quadratic Case}
+ In this case we have to deal with terms of the form
+
+ $ \alpha x \cdot y $ and $\beta x^2$. \\
+ Consider $x \cdot y$ with $x \in [x^l, x^u]$ and $y \in [y^l, y^u]$.
+ To build a relaxation of this term we introduce a new variable $z$ and the two linear
+ constraints
+ \begin{displaymath}
+   \begin{array}[h]{rl}
+     z \geq & y^l \cdot x + x^l \cdot y - x^l \cdot y^l \\
+     z \geq & y^u \cdot x + x^u \cdot y - x^u \cdot y^u \\
+   \end{array}
+ \end{displaymath}
+
+ In the case of a $-x \cdot y$ term the relaxation is
+ \begin{displaymath}
+   \begin{array}[h]{rl}
+     z \leq & y^l \cdot x + x^u \cdot y - x^u \cdot y^l \\
+     z \leq & y^u \cdot x + x^l \cdot y - x^l \cdot y^u \\
+   \end{array}
+ \end{displaymath}
+\end{frame}
+
+\begin{frame}{Quadratic Case}
+  Previous relaxations are know as McCormic convex and concave envelopes of $x \cdot y$
+  in $[x^l, x^u] \times [y^l, y^u]$.
+  \todo{picture of relaxations of x y}
+
+  For the terms $x^2$ we have that this term is convex, so we can leave it unchanged a
+  possible relaxation.\\
+  However if we require the relaxation to be polyhedral we can use:
+  \begin{displaymath}
+    z \geq (x^i)^2 + 2 x^i \cdot (x-x^i) = -(x^i)^2 + 2 x^i \cdot x, \quad i=1,\dots N_i
+  \end{displaymath}
+  as an polyhedral approximation.
+
+  We note that each of the previous inequalities is simply a subgradient inequality for
+  $x^2$ at a point $x^i$.
+
+  For $-x^2$ the best approximation we can have is the secant approximation
+  \todo{formula for secant approximation}
+
+\end{frame}
+
+\begin{frame}{Beyond the Quadratic Case}
+
+  \todo{mention factorable programming}
+
+  \todo{mention in some cases might be better direct approach}
+
+\end{frame}
+
+\begin{frame}{Convex Relaxations for Cubic Problems}
+
+\end{frame}
+
+%how old is this version
+% a bit earlier<F4>
+
+\end{document}
