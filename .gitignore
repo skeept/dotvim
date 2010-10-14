@@ -14,6 +14,10 @@ d
 dd_
 view/
 
+.netrwhist
+doc/tags
+doc/tags-ja
+plugin/totd.vim
 
 
 
