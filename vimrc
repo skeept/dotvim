@@ -306,9 +306,15 @@ nmap <silent> <Leader>bb :TSelectBuffer<cr>
 let g:Tex_UsePython=1
 let g:Tex_MultipleCompileFormats='dvi,pdf'
 "make vim load .tex files as latex files
-let g:tex_flavor='latex'
+"let g:tex_flavor='latex'
+let g:tex_flavor='pdflatex'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
 let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
+let g:Tex_IgnoreLevel = 3
+if has("autocmd")
+  autocmd BufRead,BufNewFile *.tex compiler tex
+endif 
+
 
 ""tab complete
 "function! InsertTabWrapper(direction)
