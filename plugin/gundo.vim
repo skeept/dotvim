@@ -10,11 +10,11 @@
 
 
 "{{{ Init
-"if exists('loaded_gundo') || &cp
-    "finish
-"endif
+if exists('loaded_gundo') || &cp
+    finish
+endif
 
-"let loaded_gundo = 1
+let loaded_gundo = 1
 
 if !exists('g:gundo_width')
     let g:gundo_width = 45

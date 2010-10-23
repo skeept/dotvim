@@ -384,9 +384,11 @@ endif
 "for scip go up two folders
 set tags=tags=./tags,./TAGS,tags,TAGS,../../tags
 
-"let &t_ti.="\e[1 q"
-"let &t_SI.="\e[5 q"
-"let &t_EI.="\e[1 q"
-"let &t_te.="\e[0 q"
 
+"some plugins don't work weel with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
+if !has("python")
+  let g:loaded_gundo = 1
+  let loaded_gundo = 1
+endif
+
