@@ -121,7 +121,7 @@ map  <F2> :wa<cr>:Make <Up>
 command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
-imap <F1> <ESC>:wa<cr>a
+imap <F1> <ESC>:wa<cr>
 map <F1> :wa<cr>
 
 map  <f7> :tabp<cr>
