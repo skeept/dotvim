@@ -108,6 +108,10 @@ if has("autocmd")
   " do the gams stuff here
   autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+
+  "source .vimrc if changes are made (cool)
+  autocmd BufWritePost $MYVIMRC so %
+
 endif " has("autocmd")
 
 set whichwrap=<,>,[,],h,l
