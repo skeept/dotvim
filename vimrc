@@ -383,11 +383,11 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 end " has("autocmd")
 
-if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
   set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
-endif
+"endif
 
 
 " ==================================================
