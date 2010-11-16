@@ -108,6 +108,10 @@ if has("autocmd")
   " do the gams stuff here
   autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+
+  "source .vimrc if changes are made (cool)
+  autocmd BufWritePost $MYVIMRC so %
+
 endif " has("autocmd")
 
 set whichwrap=<,>,[,],h,l
@@ -259,6 +263,9 @@ let NERDTreeShowBookmarks = 1
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 
+"yankring 
+let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
+
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
 autocmd FileType taglist       setlocal norelativenumber
@@ -304,6 +311,7 @@ nmap <silent> ,g :LustyBufferGrep<CR>
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
 
 
+
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -318,6 +326,9 @@ let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
 endif 
+
+"for plugin in ftplugin/tex/tex_pdf.vim
+let g:tex_pdf_map_keys = 0
 
 
 ""tab complete
