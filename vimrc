@@ -265,6 +265,7 @@ let g:LustyJugglerShowKeys = 'a'
 
 "yankring 
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
+let g:yankring_history_dir = '$VIM' "don't want the file in the home folder
 
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
