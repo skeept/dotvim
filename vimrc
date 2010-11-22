@@ -132,10 +132,10 @@ command! -nargs=* Make write | make <args> | cwindow 6
 imap <F1> <ESC>:wa<cr>
 map <F1> :wa<cr>
 
-map  <f7> :tabp<cr>
-map  <s-f7> :bp<cr>
-map  <f8> :tabn<cr>
-map  <s-f8> :bn<cr>
+"map  <f7> :tabp<cr>
+"map  <s-f7> :bp<cr>
+"map  <f8> :tabn<cr>
+"map  <s-f8> :bn<cr>
 "imap <f7> <esc>:bp<cr>
 "imap <s-f7> <esc>:tabp<cr>
 "imap <f8> <esc>:tabn<cr>
