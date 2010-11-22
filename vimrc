@@ -136,10 +136,12 @@ map  <f7> :tabp<cr>
 map  <s-f7> :bp<cr>
 map  <f8> :tabn<cr>
 map  <s-f8> :bn<cr>
-imap <f7> <esc>:bp<cr>
-imap <s-f7> <esc>:tabp<cr>
-imap <f8> <esc>:tabn<cr>
-imap <s-f8> <esc>:bn<cr>
+"imap <f7> <esc>:bp<cr>
+"imap <s-f7> <esc>:tabp<cr>
+"imap <f8> <esc>:tabn<cr>
+"imap <s-f8> <esc>:bn<cr>
+
+imap ;; <esc> "how often do I type ;;?
 
 map  <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
