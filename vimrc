@@ -141,7 +141,8 @@ map <F1> :wa<cr>
 "imap <f8> <esc>:tabn<cr>
 "imap <s-f8> <esc>:bn<cr>
 
-imap ;; <esc> "how often do I type ;;?
+"how often do I type ;;?
+imap ;; <esc>
 
 map  <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
