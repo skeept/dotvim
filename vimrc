@@ -270,7 +270,7 @@ let g:LustyJugglerShowKeys = 'a'
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 if has("win32") 
-  let g:yankring_history_dir  = "$HOME\vimfiles"
+  let g:yankring_history_dir  = "$HOME/vimfiles"
 else
   let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
 endif
