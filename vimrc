@@ -80,6 +80,10 @@ map Q gq
 " Make p in Visual mode replace the selected text with the "" register.
 vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 
+" select the text just last pasted or edited :)
+nnoremap gp `[v`]
+
+
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
 if &t_Co > 2 || has("gui_running")
@@ -110,6 +114,10 @@ if has("autocmd")
   " do the gams stuff here
   autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+
+  "source .vimrc if changes are made (cool)
+  autocmd BufWritePost $MYVIMRC so %
+
 endif " has("autocmd")
 
 set whichwrap=<,>,[,],h,l
@@ -130,14 +138,17 @@ command! -nargs=* Make write | make <args> | cwindow 6
 imap <F1> <ESC>:wa<cr>
 map <F1> :wa<cr>
 
-map  <f7> :tabp<cr>
-map  <s-f7> :bp<cr>
-map  <f8> :tabn<cr>
-map  <s-f8> :bn<cr>
-imap <f7> <esc>:bp<cr>
-imap <s-f7> <esc>:tabp<cr>
-imap <f8> <esc>:tabn<cr>
-imap <s-f8> <esc>:bn<cr>
+"map  <f7> :tabp<cr>
+"map  <s-f7> :bp<cr>
+"map  <f8> :tabn<cr>
+"map  <s-f8> :bn<cr>
+"imap <f7> <esc>:bp<cr>
+"imap <s-f7> <esc>:tabp<cr>
+"imap <f8> <esc>:tabn<cr>
+"imap <s-f8> <esc>:bn<cr>
+
+"how often do I type ;;?
+imap ;; <esc>
 
 map  <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
@@ -261,6 +272,16 @@ let NERDTreeShowBookmarks = 1
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 
+"yankring 
+let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
+let g:yankring_history_file = '.yankring_history'
+if has("win32") 
+  let g:yankring_history_dir  = "$HOME/vimfiles"
+else
+  let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
+endif
+
+
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
 autocmd FileType taglist       setlocal norelativenumber
@@ -306,6 +327,7 @@ nmap <silent> ,g :LustyBufferGrep<CR>
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
 
 
+
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -320,6 +342,9 @@ let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
 endif 
+
+"for plugin in ftplugin/tex/tex_pdf.vim
+let g:tex_pdf_map_keys = 0
 
 
 ""tab complete
@@ -374,11 +399,11 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 end " has("autocmd")
 
-if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
   set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
-endif
+"endif
 
 
 " ==================================================

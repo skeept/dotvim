@@ -98,11 +98,12 @@ function! ToggleMenu()
 endfunction
 
 
-"if has("gui")
-  "set lines=40 columns=100
-"endif
-"
+if has("gui")
+  set lines=40 columns=100
+endif
+
 map <c-tab> gt
+map <c-s-tab> gT
 
 "-*-*-medium-*-*-*-15-*-*-*-*-*-*-*
 "above is the desired font name for the gui
