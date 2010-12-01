@@ -39,7 +39,9 @@ set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
 
-set undofile
+if version >= 703
+  set undofile
+endif
 
 "" set backup. but all the backuped files will be 
 "" placed in the directory specified by backupdir
@@ -47,11 +49,15 @@ set backup
 if has("win32") 
   set backupdir^=$HOME\vimfiles\backup//
   set directory^=$HOME\vimfiles\swapdir//
-  set undodir^=$HOME\vimfiles\undodir//
+  if version >= 703
+    set undodir^=$HOME\vimfiles\undodir//
+  endif
 else
   set backupdir^=~/.vim/backup//
   set directory^=~/.vim/swapdir//
-  set undodir^=$HOME/.vim/undodir//
+  if version >= 703
+    set undodir^=$HOME/.vim/undodir//
+  endif
 endif
 
 set expandtab
