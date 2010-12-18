@@ -341,6 +341,9 @@ endif
 let g:tex_pdf_map_keys = 0
 
 
+"neocomplcache
+"let g:neocomplcache_enable_at_startup = 1 
+
 ""tab complete
 "function! InsertTabWrapper(direction)
     "let col = col('.') - 1
@@ -407,7 +410,7 @@ end " has("autocmd")
 "au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
 "
 "for scip go up two folders
-set tags=tags=./tags,./TAGS,tags,TAGS,../../tags
+set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 
 "some plugins don't work weel with some enviroments, just try to adjust them
