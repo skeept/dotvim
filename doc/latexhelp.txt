@@ -1412,7 +1412,7 @@ These commands are used with the letter class:
 		implementation). If you give an |\address| declaration, then
 		the letter will be formatted as a personal letter.
 
-\cc{Kate Schechter\\Rob McKenna}		*\cc*
+\cc{Kate Schechter\\Rob McKenna}		*\cc_*
 		Generate a list of other persons the letter was sent to. Each
 		name is printed on a separate line.
 
