@@ -24,7 +24,7 @@ syntax keyword gamsFunction	ABS abs Abs ASC asc Asc
 syntax keyword gamsFunction     abs acos acos asin asinh atan atan2
 syntax keyword gamsFunction     atanh ceil ctime cos cosh exp floor log log10
 syntax keyword gamsFunction     max min precision round sin sinh sqr sqrt tan tanh smin smax
-syntax keyword gamsFunction     time trunc div mod 
+syntax keyword gamsFunction     time trunc div mod power
 syntax keyword gamsFunction     ord card 
 
 syntax keyword gamsConditional  if else eq le lt gt ne and or ge elseif
