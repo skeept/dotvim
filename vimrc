@@ -261,7 +261,7 @@ let Tlist_Exit_OnlyWindow = 1
 let Tlist_Use_SingleClick = 1
 " the following is useful to use configure ctags for using taglist with gams
 let tlist_gams_settings='gams;e:equation;c:variable;m:model'
-let tlist_gamslst_settings='asm;e:equation;c:variable;m:model;a:eqval'
+let tlist_gamslst_settings='asm;e:equation;c:var val;m:model;a:eq val'
 "map <F3> :TlistToggle<cr>
 "imap <F3> <ESC>:TlistToggle<cr>
 "
