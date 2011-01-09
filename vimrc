@@ -152,11 +152,11 @@ imap ;; <esc>
 map  <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
 
-map ,en :cnext<cr>
-map ,ep :cprevious<cr>
-map <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
-map ,w <c-w>
-map ,, <c-w><c-w>
+"map ,en :cnext<cr>
+"map ,ep :cprevious<cr>
+nnoremap  <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+nnoremap  ,w <c-w>
+nnoremap  ,, <c-w><c-w>
 
 "map gl :bprevious<cr>
 "
