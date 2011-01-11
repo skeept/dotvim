@@ -82,6 +82,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
 
+cmap tb tab split +b
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
