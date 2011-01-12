@@ -82,7 +82,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
 
-cmap tb tab split +b
+"cmap tb tab split +b
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -262,7 +262,7 @@ let Tlist_Exit_OnlyWindow = 1
 let Tlist_Use_SingleClick = 1
 " the following is useful to use configure ctags for using taglist with gams
 let tlist_gams_settings='gams;e:equation;c:variable;m:model'
-let tlist_gamslst_settings='asm;e:equation;c:var val;m:model;a:eq val'
+let tlist_gamslst_settings='asm;m:model;e:equation;c:var val;a:eq val'
 "map <F3> :TlistToggle<cr>
 "imap <F3> <ESC>:TlistToggle<cr>
 "
