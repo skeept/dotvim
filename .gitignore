@@ -24,5 +24,7 @@ ftplugin/latex-suite/outline.pyc
 
 *.pyc
 
+tags
+
 .yankring_history_v2.txt
 
