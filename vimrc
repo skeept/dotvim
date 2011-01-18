@@ -235,12 +235,12 @@ let g:relativenumber = 0
 function! ToogleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
-    set norelativenumber
-    set number
-  elseif g:relativenumber == 1
-    let g:relativenumber = 2
     set nonumber
     set relativenumber
+  elseif g:relativenumber == 1
+    let g:relativenumber = 2
+    set norelativenumber
+    set number
   else
     let g:relativenumber = 0
     set nonumber
@@ -301,10 +301,14 @@ function! ToogleTagListNerdTree()
   elseif g:togglelistornerdtree == 1
     TlistToggle
     "TlistClose
-    NERDTreeToggle
+
+    "NERDTreeToggle
+
     "setlocal nonumber
     "setlocal norelativenumber
-    let g:togglelistornerdtree = 2
+
+    let g:togglelistornerdtree = 0
+
   else
     "TlistClose
     "NERDTreeClose
