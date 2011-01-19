@@ -1,0 +1,34 @@
+Mark intersting lines with signs:
+
+    - items in the quickfix and location lists (e.g. compilation errors)
+    - marks a-zA-Z
+    - relative line numbers
+    - changes (with respect to the version in the VCS)
+
+Other lists can be configured via the |g:quickfixsigns_lists| variable.
+
+The attached text ist displayed in a balloon -- it is possible though 
+that other plugins that set 'balloonexpr' disable this feature.
+
+If you want nicer looking images instead of the ASCII markers, you have 
+to change the following signs' definition in your |vimrc| file:
+
+    QFS_QFL ... Entries in the |quickfix| list
+    QFS_LOC ... Entries in the |location-list|
+    QFS_Mark_[a-zA-Z] ... Marks
+
+
+CREDITS:
+quickfixsigns includes some icons from the open icon library. See 
+http://openiconlibrary.sourceforge.net for details.
+
+
+-----------------------------------------------------------------------
+
+Status:  Works for me (there may be some minor quirks)
+Dependencies:
+  tlib :: http://github.com/tomtom/tlib_vim
+      > git clone git://github.com/tomtom/tlib_vim.git
+Install: See http://github.com/tomtom/vimtlib/blob/master/INSTALL.TXT
+See http://github.com/tomtom for related plugins.
+
