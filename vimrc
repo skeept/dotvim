@@ -329,7 +329,9 @@ nmap <silent> ,b :LustyBufferExplorer<CR>
 nmap <silent> ,g :LustyBufferGrep<CR>
 
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
-
+"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
+"let g:tmpa='screen -p gams_run -X stuff gr'
+"nmap  <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 
 "latex options
