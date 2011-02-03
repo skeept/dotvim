@@ -329,6 +329,8 @@ nmap <silent> ,b :LustyBufferExplorer<CR>
 nmap <silent> ,g :LustyBufferGrep<CR>
 
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+nnoremap <C-L> :nohl<CR><C-L>
+
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap  <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
