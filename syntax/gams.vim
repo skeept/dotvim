@@ -16,7 +16,7 @@ syntax case ignore
 syn keyword gamsStatement       set sets table tables parameter parameters
 syn keyword gamsStatement       model models solve equation equations variable variables
 syn keyword gamsStatement       display option alias scalar scalars sum
-syn keyword gamsStatement       Acronym positive binary not free integer
+syn keyword gamsStatement       Acronym positive binary not free integer sos1 sos2
 syn keyword gamsStatement       yes no put files file
 syn keyword gamsStatement       putclose sameas
 
