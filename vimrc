@@ -231,7 +231,8 @@ endfunction
 "imap <F5> <C-O>:call ToggleSpell()<cr>
 map <Leader>s :call ToggleSpell() <cr>
 
-let g:relativenumber = 0
+let g:relativenumber =2
+set relativenumber
 function! ToogleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
@@ -388,6 +389,9 @@ map <Leader>os :Scratch<CR>
 
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
+
+"don't want to start this completion thing before 5 chars
+let g:acp_behaviorKeywordLength = 5
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
