@@ -16,6 +16,11 @@ if v:progname =~? "evim"
   finish
 endif
 
+
+" pathogen 
+call pathogen#helptags()
+call pathogen#runtime_append_all_bundles()
+
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
@@ -83,6 +88,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
 
+"cmap tb tab split +b
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -153,11 +159,11 @@ imap ;; <esc>
 map  <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
 
-map ,en :cnext<cr>
-map ,ep :cprevious<cr>
-map <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
-map ,w <c-w>
-map ,, <c-w><c-w>
+"map ,en :cnext<cr>
+"map ,ep :cprevious<cr>
+nnoremap  <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+nnoremap  ,w <c-w>
+nnoremap  ,, <c-w><c-w>
 
 "map gl :bprevious<cr>
 "
@@ -231,16 +237,17 @@ endfunction
 "imap <F5> <C-O>:call ToggleSpell()<cr>
 map <Leader>s :call ToggleSpell() <cr>
 
-let g:relativenumber = 0
+let g:relativenumber =2
+set relativenumber
 function! ToogleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
-    set norelativenumber
-    set number
-  elseif g:relativenumber == 1
-    let g:relativenumber = 2
     set nonumber
     set relativenumber
+  elseif g:relativenumber == 1
+    let g:relativenumber = 2
+    set norelativenumber
+    set number
   else
     let g:relativenumber = 0
     set nonumber
@@ -261,8 +268,8 @@ let Tlist_Compact_Format = 1
 let Tlist_Exit_OnlyWindow = 1
 let Tlist_Use_SingleClick = 1
 " the following is useful to use configure ctags for using taglist with gams
-let tlist_gams_settings='gams;e:equation;c:variable;m:model'
-let tlist_gamslst_settings='asm;e:equation;c:variable;m:model;a:eqval'
+let tlist_gams_settings='gams;e:equation;c:variable;m:model;s:Solve Statement'
+let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "map <F3> :TlistToggle<cr>
 "imap <F3> <ESC>:TlistToggle<cr>
 "
@@ -301,10 +308,14 @@ function! ToogleTagListNerdTree()
   elseif g:togglelistornerdtree == 1
     TlistToggle
     "TlistClose
-    NERDTreeToggle
+
+    "NERDTreeToggle
+
     "setlocal nonumber
     "setlocal norelativenumber
-    let g:togglelistornerdtree = 2
+
+    let g:togglelistornerdtree = 0
+
   else
     "TlistClose
     "NERDTreeClose
@@ -325,7 +336,11 @@ nmap <silent> ,b :LustyBufferExplorer<CR>
 nmap <silent> ,g :LustyBufferGrep<CR>
 
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+nnoremap <C-L> :nohl<CR><C-L>
 
+"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
+"let g:tmpa='screen -p gams_run -X stuff gr'
+"nmap  <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 
 "latex options
@@ -346,6 +361,9 @@ endif
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
 
+
+"neocomplcache
+"let g:neocomplcache_enable_at_startup = 1 
 
 ""tab complete
 "function! InsertTabWrapper(direction)
@@ -377,6 +395,9 @@ map <Leader>os :Scratch<CR>
 
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
+
+"don't want to start this completion thing before 5 chars
+let g:acp_behaviorKeywordLength = 5
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
@@ -413,7 +434,7 @@ end " has("autocmd")
 "au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
 "
 "for scip go up two folders
-set tags=tags=./tags,./TAGS,tags,TAGS,../../tags
+set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 
 "some plugins don't work weel with some enviroments, just try to adjust them
@@ -421,5 +442,9 @@ let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
   let g:loaded_gundo = 1
   let loaded_gundo = 1
+endif
+
+if has("gui_running")
+  execute "HeadlightsTurnOn"
 endif
 

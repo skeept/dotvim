@@ -1,9 +1,10 @@
 " Align: tool to align multiple fields based on one or more separators
 "   Author:		Charles E. Campbell, Jr.
-"   Date:		Mar 03, 2009
-"   Version:	35
+"   Date:		Jun 29, 2010
+"   Version:	36g	ASTRO-ONLY
 " GetLatestVimScripts: 294 1 :AutoInstall: Align.vim
 " GetLatestVimScripts: 1066 1 :AutoInstall: cecutil.vim
+"redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell, Jr. {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -24,7 +25,7 @@
 if exists("g:loaded_Align") || &cp
  finish
 endif
-let g:loaded_Align = "v35"
+let g:loaded_Align = "v36g"
 if v:version < 700
  echohl WarningMsg
  echo "***warning*** this version of Align needs vim 7.0"
@@ -133,7 +134,7 @@ fun! Align#AlignCtrl(...)
 
 "  call Decho("AlignCtrl() A[0]=".A[0])
   if !exists("s:AlignStyle")
-   let s:AlignStyle= "l"
+   let s:AlignStyle= 'l'
   endif
   if !exists("s:AlignPrePad")
    let s:AlignPrePad= 0
@@ -263,10 +264,10 @@ fun! Align#AlignCtrl(...)
 "	call Decho("style case w: ignore leading whitespace")
 	let s:AlignLeadKeep= 'w'
    elseif style =~# 'W'
-"	call Decho("style case w: keep leading whitespace")
+"	call Decho("style case W: keep leading whitespace")
 	let s:AlignLeadKeep= 'W'
    elseif style =~# 'I'
-"	call Decho("style case w: retain initial leading whitespace")
+"	call Decho("style case I: retain initial leading whitespace")
 	let s:AlignLeadKeep= 'I'
    endif
 
@@ -297,9 +298,9 @@ fun! Align#AlignCtrl(...)
    endif
 
     "[-lrc+:] : set up s:AlignStyle
-   if style =~# '[-lrc+:]'
+   if style =~# '[-lrc+:*]'
 "	call Decho("style case [-lrc+:]: field justification")
-    let s:AlignStyle= substitute(style,'[^-lrc:+]','','g')
+    let s:AlignStyle= substitute(style,'[^-lrc:+*]','','g')
 "    call Decho("AlignStyle<".s:AlignStyle.">")
    endif
 
@@ -395,7 +396,8 @@ fun! Align#Align(hasctrl,...) range
   let keep_search= @/
   let keep_ic    = &ic
   let keep_report= &report
-  set noic report=10000
+  let keep_hls   = &hls
+  set noic report=10000 nohls
 
   if A[0] > hasctrl
   " Align will accept a list of separator regexps
@@ -469,6 +471,11 @@ fun! Align#Align(hasctrl,...) range
   endif
 "  call Decho("lines[".begline.",".endline."] col[".begcol.",".endcol."] ragged=".ragged." AlignCtrl<".s:AlignCtrl.">")
 
+  " record initial whitespace
+  if s:AlignLeadKeep == 'W'
+   let wskeep = map(getline(begline,endline),"substitute(v:val,'^\\(\\s*\\).\\{-}$','\\1','')")
+  endif
+
   " Keep user options
   let etkeep   = &l:et
   let pastekeep= &l:paste
@@ -484,6 +491,11 @@ fun! Align#Align(hasctrl,...) range
    set noet
   endif
   exe begline.",".endline."ret"
+
+  " record transformed to spaces leading whitespace
+  if s:AlignLeadKeep == 'W'
+   let wsblanks = map(getline(begline,endline),"substitute(v:val,'^\\(\\s*\\).\\{-}$','\\1','')")
+  endif
 
   " Execute two passes
   " First  pass: collect alignment data (max field sizes)
@@ -558,6 +570,10 @@ fun! Align#Align(hasctrl,...) range
 "    call Decho("Pass".pass.": endtxt<".endtxt.">")
 	if !exists("s:AlignPat_{1}")
 	 echohl Error|echo "no separators specified!"|echohl None
+	 let @      /= keep_search
+	 let &ic     = keep_ic
+	 let &report = keep_report
+	 let &hls    = keep_hls
 "     call Dret("Align#Align")
 	 return
 	endif
@@ -575,7 +591,7 @@ fun! Align#Align(hasctrl,...) range
     let alignpostpad= s:AlignPostPad
 	let alignsep    = s:AlignSep
 	let alignophold = " "
-	let alignop     = "l"
+	let alignop     = 'l'
 "	call Decho("Pass".pass.": initial alignstyle<".alignstyle."> seppat<".seppat.">")
 
     " Process each field on the line
@@ -606,23 +622,41 @@ fun! Align#Align(hasctrl,...) range
 	  endif
 	 endif
 
-	 " cylic separator alignment specification handling
+	 " cyclic separator alignment specification handling
 	 let alignsepop= strpart(alignsep,0,1)
 	 let alignsep  = strpart(alignsep,1).alignsepop
 
+	 " ------------------------------------------------------
 	 " mark end-of-field and the subsequent end-of-separator.
-	 " Extend field if alignop is '-'
+	 " ------------------------------------------------------
      let endfield = match(txt,seppat,bgnfield)
 	 let sepfield = matchend(txt,seppat,bgnfield)
      let skipfield= sepfield
-"	 call Decho("Pass".pass.": endfield=match(txt<".txt.">,seppat<".seppat.">,bgnfield=".bgnfield.")=".endfield)
+"	 call Decho("Pass".pass.": endfield=match(txt<".txt.">,seppat<".seppat.">,bgnfield=".bgnfield.")=".endfield." alignop=".alignop)
+
+	 " Mark eof: Extend field if alignop is '*' and AlignSkip() is true.
+	  if alignop == '*' && exists("g:AlignSkip") && type(g:AlignSkip) == 2
+"	   call Decho("Pass".pass.": endfield=match(txt<".txt.">,seppat<".seppat.">,bgnfield=".bgnfield.")=".endfield." alignop=".alignop)
+	   " a '*' acts like a '-' while the g:AlignSkip function reference is true except that alignop doesn't advance
+	   while g:AlignSkip(line,endfield) && endfield != -1
+	    let endfield  = match(txt,seppat,skipfield)
+	    let sepfield  = matchend(txt,seppat,skipfield)
+	    let skipfield = sepfield
+"	    call Decho("Pass".pass.": extend field: endfield<".strpart(txt,bgnfield,endfield-bgnfield)."> alignop<".alignop."> alignstyle<".alignstyle.">")
+	   endwhile
+	   let alignop   = strpart(alignstyle,0,1)
+	   let alignstyle= strpart(alignstyle,1).strpart(alignstyle,0,1)
+"	   call Decho("Pass".pass.": endfield=match(txt<".txt.">,seppat<".seppat.">,bgnfield=".bgnfield.")=".endfield." alignop=".alignop." (after *)")
+	  endif
+
+	 " Mark eof: Extend field if alignop is '-'
 	 while alignop == '-' && endfield != -1
 	  let endfield  = match(txt,seppat,skipfield)
 	  let sepfield  = matchend(txt,seppat,skipfield)
 	  let skipfield = sepfield
 	  let alignop   = strpart(alignstyle,0,1)
 	  let alignstyle= strpart(alignstyle,1).strpart(alignstyle,0,1)
-"	  call Decho("Pass".pass.": extend field: endfield<".strpart(txt,bgnfield,endfield-bgnfield)."> alignop<".alignop."> alignstyle<".alignstyle.">")
+"      call Decho("Pass".pass.": extend field: endfield<".strpart(txt,bgnfield,endfield-bgnfield)."> alignop<".alignop."> alignstyle<".alignstyle.">")
 	 endwhile
 	 let seplen= sepfield - endfield
 "	 call Decho("Pass".pass.": seplen=[sepfield=".sepfield."] - [endfield=".endfield."]=".seplen)
@@ -695,7 +729,7 @@ fun! Align#Align(hasctrl,...) range
 		 let sep       = s:MakeSpace(sepleft).sep.s:MakeSpace(sepright)
 		endif
 	   endif
-	   let spaces     = FieldSize_{ifield} - fieldlen
+	   let spaces = FieldSize_{ifield} - fieldlen
 "	   call Decho("Pass".pass.": Field #".ifield."<".field."> spaces=".spaces." be[".bgnfield.",".endfield."] pad=".prepad.','.postpad." FS_".ifield."<".FieldSize_{ifield}."> sep<".sep."> ragged=".ragged." doend=".doend." alignop<".alignop.">")
 
 	    " Perform alignment according to alignment style justification
@@ -746,7 +780,7 @@ fun! Align#Align(hasctrl,...) range
 "     call Decho("Pass".pass.": bgntxt<".bgntxt."> line=".line)
 "     call Decho("Pass".pass.": newtxt<".newtxt.">")
 "     call Decho("Pass".pass.": endtxt<".endtxt.">")
-	 call setline(line,bgntxt.newtxt.endtxt)
+	 keepj call setline(line,bgntxt.newtxt.endtxt)
 	endif
 
     let line = line + 1
@@ -760,6 +794,19 @@ fun! Align#Align(hasctrl,...) range
   let &l:et    = etkeep
   let &l:paste = pastekeep
 
+  " restore original leading whitespace
+  if s:AlignLeadKeep == 'W'
+   let iline= begline
+   let i    = 0
+"   call Decho("restore original leading whitespace")
+   while iline <= endline
+"	call Decho("exe ".iline."s/^".wsblanks[i]."/".wskeep[i]."/")
+	exe "keepj ".iline."s/^".wsblanks[i]."/".wskeep[i]."/"
+	let iline= iline + 1
+	let i    = i + 1
+   endwhile
+  endif
+
   if exists("s:DoAlignPop")
    " AlignCtrl Map support
    call Align#AlignPop()
@@ -770,6 +817,8 @@ fun! Align#Align(hasctrl,...) range
   let @/      = keep_search
   let &ic     = keep_ic
   let &report = keep_report
+  let &hls    = keep_hls
+  nohls
 
 "  call Dret("Align#Align")
   return
@@ -876,25 +925,25 @@ fun! Align#AlignReplaceQuotedSpaces()
   while (1)
     let l:startQuotePos = match(l:line, l:quoteRe, l:startingPos)
     if (l:startQuotePos < 0) 
-"      "call Decho("No more quotes to the end of line")
-      break
+"     call Decho("No more quotes to the end of line")
+     break
     endif
     let l:endQuotePos = match(l:line, l:quoteRe, l:startQuotePos + 1)
     if (l:endQuotePos < 0)
-"      "call Decho("Mismatched quotes")
-      break
+"     call Decho("Mismatched quotes")
+     break
     endif
     let l:spaceReplaceRe = '^.\{' . (l:startQuotePos + 1) . '}.\{-}\zs\s\ze.*.\{' . (linelen - l:endQuotePos) . '}$'
-"    "call Decho('spaceReplaceRe="' . l:spaceReplaceRe . '"')
+"    call Decho('spaceReplaceRe="' . l:spaceReplaceRe . '"')
     let l:newStr = substitute(l:line, l:spaceReplaceRe, '%', '')
     while (l:newStr != l:line)
-"      "call Decho('newstr="' . l:newStr . '"')
+"      call Decho('newstr="' . l:newStr . '"')
       let l:line = l:newStr
       let l:newStr = substitute(l:line, l:spaceReplaceRe, '%', '')
     endwhile
     let l:startingPos = l:endQuotePos + 1
   endwhile
-  call setline(line('.'), l:line)
+  keepj call setline(line('.'), l:line)
 
 "  call Dret("AlignReplaceQuotedSpaces")
 endfun
@@ -923,19 +972,20 @@ fun! s:QArgSplitter(qarg)
    while args != ""
 	let iarg   = 0
 	let arglen = strlen(args)
-"	call Decho("args[".iarg."]<".args[iarg]."> arglen=".arglen)
+"	call Decho(".args[".iarg."]<".args[iarg]."> arglen=".arglen)
 	" find index to first not-escaped '"'
+"	call Decho("find index to first not-escaped \"")
 	while args[iarg] != '"' && iarg < arglen
 	 if args[iarg] == '\'
 	  let args= strpart(args,1)
 	 endif
 	 let iarg= iarg + 1
 	endwhile
-"	call Decho("args<".args."> iarg=".iarg." arglen=".arglen)
+"	call Decho(".args<".args."> iarg=".iarg." arglen=".arglen)
 
 	if iarg > 0
 	 " handle left of quote or remaining section
-"	 call Decho("handle left of quote or remaining section")
+"	 call Decho(".handle left of quote or remaining section")
 	 if args[iarg] == '"'
 	  let qarglist= qarglist + split(strpart(args,0,iarg-1))
 	 else
@@ -946,7 +996,7 @@ fun! s:QArgSplitter(qarg)
 
 	elseif iarg < arglen && args[0] == '"'
 	 " handle "quoted" section
-"	 call Decho("handle quoted section")
+"	 call Decho(".handle quoted section")
 	 let iarg= 1
 	 while args[iarg] != '"' && iarg < arglen
 	  if args[iarg] == '\'
@@ -954,7 +1004,7 @@ fun! s:QArgSplitter(qarg)
 	  endif
 	  let iarg= iarg + 1
 	 endwhile
-"	 call Decho("args<".args."> iarg=".iarg." arglen=".arglen)
+"	 call Decho(".args<".args."> iarg=".iarg." arglen=".arglen)
 	 if args[iarg] == '"'
 	  call add(qarglist,strpart(args,1,iarg-1))
 	  let args= strpart(args,iarg+1)
@@ -963,12 +1013,14 @@ fun! s:QArgSplitter(qarg)
 	  let args     = ""
 	 endif
 	endif
-"	call Decho("qarglist".string(qarglist)." iarg=".iarg." args<".args.">")
+"	call Decho(".qarglist".string(qarglist)." iarg=".iarg." args<".args.">")
    endwhile
+"   call Decho("end of loop (handling quoted arguments)")
 
   else
    " split at all whitespace
-   let qarglist= split(a:qarg)
+"   call Decho("split at all whitespace")
+   let qarglist= split(a:qarg,"[ \t]")
   endif
 
   let qarglistlen= len(qarglist)

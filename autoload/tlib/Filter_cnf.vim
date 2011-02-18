@@ -3,23 +3,30 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2008-11-25.
-" @Last Change: 2010-03-22.
-" @Revision:    0.0.66
-
-let s:save_cpo = &cpo
-set cpo&vim
-
+" @Last Change: 2010-10-10.
+" @Revision:    0.0.74
 
 let s:prototype = tlib#Object#New({'_class': ['Filter_cnf'], 'name': 'cnf'}) "{{{2
+let s:prototype.highlight = g:tlib_inputlist_higroup
 
 " The search pattern for |tlib#input#List()| is in conjunctive normal 
 " form: (P1 OR P2 ...) AND (P3 OR P4 ...) ...
 " The pattern is a '/\V' very no-'/magic' regexp pattern.
 "
+" Pressing <space> joins two patterns with AND.
+" Pressing | joins two patterns with OR.
+" I.e. In order to get "lala AND (foo OR bar)", you type 
+" "lala foo|bar".
+"
 " This is also the base class for other filters.
 function! tlib#Filter_cnf#New(...) "{{{3
     let object = s:prototype.New(a:0 >= 1 ? a:1 : {})
     return object
+endf
+
+
+" :nodoc:
+function! s:prototype.Init(world) dict "{{{3
 endf
 
 
@@ -136,6 +143,3 @@ function! s:prototype.CleanFilter(filter) dict "{{{3
     return a:filter
 endf
 
-
-let &cpo = s:save_cpo
-unlet s:save_cpo

@@ -9,9 +9,11 @@
 " Author: Hosup Chung <hosup.chung@gmail.com>
 "
 " Created: 2003 December 31
-" Last Updated: 2006 March 20
+" Last Updated: 2010 July 23
 "
-" Version: 0.3
+" Version: 0.4
+" 0.4: added RemoveCurrentColorScheme() function (requested by auto didakto)
+" 
 " 0.3: updated code to handle file not found error due to color schemes 
 " 	were removed
 "
@@ -33,16 +35,21 @@
 " scheme's file path.  You can then load different color schemes using 
 " NextColorScheme(), PreviousColorScheme() or RandomColorScheme(). 
 "
-" There are 3 main functions 
+" Or if you don't like current color scheme you can call
+" RemoveCurrentColorScheme() to remove the file.
+"
+" There are 4 main functions 
 "   1. You can either call them directly
 "      :call NextColorScheme()
 "      :call PreviousColorScheme() 
 "      :call RandomColorScheme()
+"      :call RemoveCurrentColorScheme()
 "
-"   2. You can map and save them in your [._]gvimrc
-"      map <F12>   :call NextColorScheme()<CR>
-"      map <S-F12> :call PreviousColorScheme()<CR>
-"      map <C-F12> :call RandomColorScheme()<CR>
+"   2. You can map and save them in your [._]gvimrc.
+"      map <F4>   :call NextColorScheme()<CR>
+"      map <S-F4> :call PreviousColorScheme()<CR>
+"      map <C-F4> :call RandomColorScheme()<CR>
+"      map <F3>   :call RemoveCurrentColorScheme()<CR>
 "
 "   3. You can also start each vim session with random color scheme by 
 "      adding following line in your [._]gvimrc
@@ -77,7 +84,6 @@ endif
 
 let g:change_color_scheme="0.3"
 
-" I don't know if I need to set this cpo, but everyone else is doing it, so...
 if 1
 	let s:save_cpo = &cpoptions
 endif
@@ -89,47 +95,48 @@ set cpo&vim
 let s:sep='?'
 
 " Just in case when some of color scheme files are removed, I need to keep track
-" of which direction the user is moving on color scheme array. 
-let s:direction='right'
+" of which direction the user was moving in color scheme array. 
+let s:direction='NEXT'
 
-" I got idea from lightWeightArray.vim, and came up ElementAt.
-" This function expect an array which element is separated by sep character
-" and returns the index element from given array or -1 for not found
-function! ElementAt (array, sep, index)
-	" if array is empty or index is negative then return -1
-	if strlen(a:array) == 0 || a:index < 0
+" I got an idea from lightWeightArray.vim, and came up ElementAt.
+" array is actually a string. Each element in the array is separated by sep
+" character. 
+" The function will returns the array_index element or -1 for not found
+function! ElementAt (array, sep, array_index)
+	" if array is empty or array_index is negative then return -1
+	if strlen(a:array) == 0 || a:array_index < 0
 		return -1
 	endif
 
-	let current_pos = 0 	" current character position within array
-	let i = 0		" current array position
+	let char_pos = 0 	" current character position within array
+	let i = 0		" current array index position
 
-	" Search the array element on a:index position.
-	while i != a:index 
-		let current_pos = match(a:array, a:sep, current_pos)
-		if current_pos == -1
+	" Search the array element on a:array_index position.
+	while i != a:array_index 
+		let char_pos = match(a:array, a:sep, char_pos)
+		if char_pos == -1
 			return -1	" couldn't find it
 		endif
 
-		let current_pos = current_pos + 1
+		let char_pos = char_pos + 1
 		let i = i + 1
 	endwhile
  
 	" then find where the current array element ends 
-	let array_element_endpos = match(a:array, a:sep, current_pos)
+	let array_element_endpos = match(a:array, a:sep, char_pos)
 	if array_element_endpos == -1
 		" must be the last array element
 		let array_element_endpos = strlen(a:array) 
 	endif
 
-	let color_scheme_path = strpart(a:array,current_pos,(array_element_endpos-current_pos))
+	let color_scheme_path = strpart(a:array,char_pos,(array_element_endpos-char_pos))
 
 	" if path is not found, probably some of color scheme files are
 	" removed. Reinitialize the array and call ElementAt again.
 	if filereadable(color_scheme_path) == 0
 		call InitializeVariables()
 
-		if ((a:index == 0 || a:index >= s:total_schemes-1) && s:direction == 'right')
+		if ((a:array_index == 0 || a:array_index >= s:total_schemes-1) && s:direction == 'NEXT')
 			let s:scheme_index = 0
 		else
 			let s:scheme_index = s:total_schemes-1
@@ -137,7 +144,7 @@ function! ElementAt (array, sep, index)
 		return ElementAt(s:color_schemes, s:sep, s:scheme_index)
 	endif
 
-	" return the color scheme file path in a:index position
+	" return the color scheme file path in a:array_index position
 	return color_scheme_path
 endfunction  " ElementAt
 
@@ -151,30 +158,6 @@ function! GetColorSyntaxName()
 	endif	
 endfunction  "GetColorSyntaxName
 
-" Use this function if you want to use different fonts for different scheme.
-" SetGuiFont don't do anything by default. You can uncomment if..else..endif 
-" block and change font name and size for your platform.
-function! SetGuiFont()
-	" Color schemes that has dark background should defined 'background' 
-	" option as 'dark' in its scheme. You can use this option to set 
-	" different fonts when color scheme has dark background.
-	" I found Anonymous font from on code2html script description page,
-	" and it looks good (only on dark background though). 
-	" http://www.ms-studio.com/FontSales/anonymous.html
-	" if &background == "dark"
-	"	set guifont=Anonymous:h9:cANSI
-	" else
-	"	set guifont=Courier_New:h10:cANSI
-	" endif
-
-	" You can also use different font for different color scheme.
-	" if g:colors_name == "aqua"
-	"	set guifont=Courier_New:h12:cANSI
-	" elseif g:colors_name == "default" 
-	"	set guifont=Terminal:h12:cANSI
-	" endif
-endfunction   " SetGuiFont
-
 function! InitializeVariables()
 	" get all color scheme file path and save it to s:color_schemes. It will be 
 	" treated as a string array which elements are separated by sep character. 
@@ -182,10 +165,11 @@ function! InitializeVariables()
 	let s:total_schemes = 0
 	let s:scheme_index = 0
 
-	" calculate the total number of color schemes by counting sep character from 
-	" color_schemes. Unless there's no color scheme, total number of color scheme
-	" is 1 bigger than number of sep characters
 	if (strlen(s:color_schemes) > 0)
+		" determine the total number of color schemes by counting sep 
+		" character from color_schemes string. Unless there's no color 
+		" scheme, total number of color scheme is 1 bigger than number 
+		" of sep characters
 		let found = 0
 		while found != -1
 			let found = match(s:color_schemes, s:sep, found+1)
@@ -197,29 +181,28 @@ endfunction
 " load next color schemes.
 function! NextColorScheme()
 	let s:scheme_index = s:scheme_index + 1
-	let s:direction = 'right'
+	let s:direction = 'NEXT'
 	call LoadColorScheme()
 endfunction
 
 " load previous color schemes.
 function! PreviousColorScheme()
 	let s:scheme_index = s:scheme_index - 1
-	let s:direction = 'left'
+	let s:direction = 'PREVIOUS'
 	call LoadColorScheme()
 endfunction
 
-" load randomly chosen color scheme
-" Vim still doesn't have a function that returns millisecons. As a result,
-" it's difficult to create a random number. My previous attempt was to call
-" localtime(). Since it's only returns seconds, calling RandomColorScheme()
-" continuosly is just same as NextColorScheme() except the first call.
-" Now I found another function getfsize(), which returns the file size. I
-" dont dare to say adding localtime() and getfsize() generates random numbers, 
-" but it's better than previous one. And it looks random enough for me ^_^
-"------------------------------------------------------------------------------
+" load randomly chosen color scheme.
+" vim still doesn't have a function that returns millisecons. As a result,
+" it's difficult to generate a random number sequence. My previous attempt was 
+" to use just localtime(). But since it only returns seconds, quickly calling 
+" series of RandomColorScheme() is just same as NextColorScheme() except the 
+" first call. Now I found another function getfsize(), which returns the file 
+" size. I think adding localtime() and current color scheme's filesize seems 
+" random enough for this script.
 function! RandomColorScheme()
 	let s:current_scheme_fsize = getfsize(ElementAt(s:color_schemes, s:sep, s:scheme_index))
-	" set a random scheme_index from (0 ... total_schemes-1).
+	" set a random scheme_index from the range (0 ... total_schemes-1).
 	let s:scheme_index = (localtime()+s:current_scheme_fsize) % s:total_schemes
 	call LoadColorScheme()
 endfunction
@@ -241,8 +224,32 @@ function! LoadColorScheme()
 	" ElementAt returns the name of color scheme on scheme_index position in 
 	" color_schemes array. Then we will load (source) the scheme.
 	exe "source " ElementAt(s:color_schemes, s:sep, s:scheme_index)
+endfunction
 
-	call SetGuiFont()
+function! RemoveCurrentColorScheme()
+	let s:current_scheme_path = ElementAt(s:color_schemes, s:sep, s:scheme_index)
+	let s:isFilewritable = filewritable(s:current_scheme_path)
+
+	if s:isFilewritable == 1
+		let s:response = input("Are you sure to remove current color scheme (" . s:current_scheme_path . ") file? [y/n] ")
+
+		if (s:response == "y" || s:response == "Y")
+			let s:returnValue = delete(s:current_scheme_path)
+			if s:returnValue == 0
+				call InitializeVariables()
+				call RandomColorScheme()
+				redraw | echo s:current_scheme_path . " was removed"
+			else
+				echo 'Could not remove current color scheme file'
+			endif
+		else
+			echo 'Removing current color scheme cancelled'
+		endif
+	elseif filereadable(s:current_scheme_path) == 1
+		echo 'Could not remove current color scheme file'
+	else
+		echo 'Could not read the current color scheme file'
+	endif
 endfunction
 
 call InitializeVariables()

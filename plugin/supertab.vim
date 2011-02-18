@@ -2,7 +2,7 @@
 "   Original: Gergely Kontra <kgergely@mcl.hu>
 "   Current:  Eric Van Dewoestine <ervandew@gmail.com> (as of version 0.4)
 "   Please direct all correspondence to Eric.
-" Version: 1.0
+" Version: 1.5
 " GetLatestVimScripts: 1643 1 :AutoInstall: supertab.vim
 "
 " Description: {{{
@@ -14,9 +14,7 @@
 " }}}
 "
 " License: {{{
-"   Software License Agreement (BSD License)
-"
-"   Copyright (c) 2002 - 2009
+"   Copyright (c) 2002 - 2011
 "   All rights reserved.
 "
 "   Redistribution and use of this software in source and binary forms, with
@@ -84,8 +82,22 @@ set cpo&vim
     let g:SuperTabRetainCompletionDuration = 'insert'
   endif
 
-  if !exists("g:SuperTabMidWordCompletion")
-    let g:SuperTabMidWordCompletion = 1
+  if !exists("g:SuperTabNoCompleteBefore")
+    " retain backwards compatability
+    if exists("g:SuperTabMidWordCompletion") && !g:SuperTabMidWordCompletion
+      let g:SuperTabNoCompleteBefore = ['\k']
+    else
+      let g:SuperTabNoCompleteBefore = []
+    endif
+  endif
+
+  if !exists("g:SuperTabNoCompleteAfter")
+    " retain backwards compatability
+    if exists("g:SuperTabLeadingSpaceCompletion") && g:SuperTabLeadingSpaceCompletion
+      let g:SuperTabNoCompleteAfter = []
+    else
+      let g:SuperTabNoCompleteAfter = ['\s']
+    endif
   endif
 
   if !exists("g:SuperTabMappingForward")
@@ -99,8 +111,16 @@ set cpo&vim
     let g:SuperTabMappingTabLiteral = '<c-tab>'
   endif
 
+  if !exists("g:SuperTabLongestEnhanced")
+    let g:SuperTabLongestEnhanced = 0
+  endif
+
   if !exists("g:SuperTabLongestHighlight")
     let g:SuperTabLongestHighlight = 0
+  endif
+
+  if !exists("g:SuperTabCrMapping")
+    let g:SuperTabCrMapping = 1
   endif
 
 " }}}
@@ -162,6 +182,7 @@ endfunction " }}}
 " restore SuperTab default:
 "   nmap <F6> :call SetSuperTabCompletionType("<c-p>")<cr>
 function! SuperTabSetCompletionType(type)
+  call s:InitBuffer()
   exec "let b:complType = \"" . escape(a:type, '<') . "\""
 endfunction " }}}
 
@@ -187,26 +208,14 @@ function! SuperTabAlternateCompletion(type)
   " vim into keyword completion mode and end that mode to prevent the regular
   " insert behavior of <c-e> from occurring.
   call feedkeys("\<c-x>\<c-p>\<c-e>", 'n')
-  call feedkeys(b:complType)
+  call feedkeys(b:complType, 'n')
   return ''
 endfunction " }}}
 
 " s:Init {{{
 " Global initilization when supertab is loaded.
 function! s:Init()
-  augroup supertab_init
-    autocmd!
-    autocmd BufEnter * call <SID>InitBuffer()
-  augroup END
-
-  " ensure InitBuffer gets called for the first buffer, after the ftplugins
-  " have been called.
-  augroup supertab_init_first
-    autocmd!
-    autocmd FileType <buffer> call <SID>InitBuffer()
-  augroup END
-
-  " Setup mechanism to restore orignial completion type upon leaving insert
+  " Setup mechanism to restore original completion type upon leaving insert
   " mode if configured to do so
   if g:SuperTabRetainCompletionDuration == 'insert'
     augroup supertab_retain
@@ -219,12 +228,23 @@ endfunction " }}}
 " s:InitBuffer {{{
 " Per buffer initilization.
 function! s:InitBuffer()
-  if exists("b:complType")
+  if exists('b:SuperTabNoCompleteBefore')
     return
   endif
 
+  let b:complReset = 0
+  let b:complTypeManual = !exists('b:complTypeManual') ? '' : b:complTypeManual
+  let b:complTypeContext = ''
+
   " init hack for <c-x><c-v> workaround.
   let b:complCommandLine = 0
+
+  if !exists('b:SuperTabNoCompleteBefore')
+    let b:SuperTabNoCompleteBefore = g:SuperTabNoCompleteBefore
+  endif
+  if !exists('b:SuperTabNoCompleteAfter')
+    let b:SuperTabNoCompleteAfter = g:SuperTabNoCompleteAfter
+  endif
 
   let b:SuperTabDefaultCompletionType = g:SuperTabDefaultCompletionType
 
@@ -248,6 +268,8 @@ function! s:ManualCompletionEnter()
       let complType = "\<c-x>" . complType
     endif
 
+    let b:complTypeManual = complType
+
     if index(['insert', 'session'], g:SuperTabRetainCompletionDuration) != -1
       let b:complType = complType
     endif
@@ -255,6 +277,11 @@ function! s:ManualCompletionEnter()
     " Hack to workaround bug when invoking command line completion via <c-r>=
     if complType == "\<c-x>\<c-v>"
       return s:CommandLineCompletion()
+    endif
+
+    " optionally enable enhanced longest completion
+    if g:SuperTabLongestEnhanced && &completeopt =~ 'longest'
+      call s:EnableLongestEnhancement()
     endif
 
     return complType
@@ -290,29 +317,57 @@ endfunction " }}}
 " previous entry in a completion list, and determines whether or not to simply
 " retain the normal usage of <tab> based on the cursor position.
 function! s:SuperTab(command)
-  if s:WillComplete()
-    " rare case where no autocmds have fired for this buffer to initialize the
-    " supertab vars.
-    call s:InitBuffer()
+  call s:InitBuffer()
 
-    let key = ''
+  if s:WillComplete()
+    " optionally enable enhanced longest completion
+    if g:SuperTabLongestEnhanced && &completeopt =~ 'longest'
+      call s:EnableLongestEnhancement()
+    endif
+
     " highlight first result if longest enabled
     if g:SuperTabLongestHighlight && !pumvisible() && &completeopt =~ 'longest'
-      let key = (b:complType == "\<c-p>") ? "\<c-p>" : "\<c-n>"
+      let key = (b:complType == "\<c-p>") ? b:complType : "\<c-n>"
+      call feedkeys(key)
+    endif
+
+    if !pumvisible()
+      let b:complTypeManual = ''
     endif
 
     " exception: if in <c-p> mode, then <c-n> should move up the list, and
     " <c-p> down the list.
-    if a:command == 'p' &&
+    if a:command == 'p' && !b:complReset &&
       \ (b:complType == "\<c-p>" ||
       \   (b:complType == 'context' &&
-      \    tolower(g:SuperTabContextDefaultCompletionType) == '<c-p>'))
+      \    b:complTypeManual == '' &&
+      \    b:complTypeContext == "\<c-p>"))
       return "\<c-n>"
-    elseif a:command == 'p' &&
+
+    elseif a:command == 'p' && !b:complReset &&
       \ (b:complType == "\<c-n>" ||
       \   (b:complType == 'context' &&
-      \    tolower(g:SuperTabContextDefaultCompletionType) == '<c-n>'))
+      \    b:complTypeManual == '' &&
+      \    b:complTypeContext == "\<c-n>"))
       return "\<c-p>"
+
+    " this used to handle call from captured keys with the longest enhancement
+    " enabled, but also must work when the enhancement is disabled.
+    elseif pumvisible() && !b:complReset
+      if b:complType == 'context'
+        exec "let contextDefault = \"" .
+          \ escape(g:SuperTabContextDefaultCompletionType, '<') . "\""
+        " if we are in another completion mode, just scroll to the next
+        " completion
+        if b:complTypeContext != contextDefault
+          return a:command == 'n' ? "\<c-n>" : "\<c-p>"
+        endif
+        return contextDefault
+      endif
+      if a:command == 'n'
+        return b:complType == "\<c-p>" ? "\<c-p>" : "\<c-n>"
+      endif
+      return b:complType == "\<c-p>" ? "\<c-n>" : "\<c-p>"
     endif
 
     " handle 'context' completion.
@@ -322,14 +377,25 @@ function! s:SuperTab(command)
         exec "let complType = \"" .
           \ escape(g:SuperTabContextDefaultCompletionType, '<') . "\""
       endif
-      return complType . key
-    endif
+      let b:complTypeContext = complType
 
     " Hack to workaround bug when invoking command line completion via <c-r>=
-    if b:complType == "\<c-x>\<c-v>"
-      return s:CommandLineCompletion()
+    elseif b:complType == "\<c-x>\<c-v>"
+      let complType = s:CommandLineCompletion()
+    else
+      let complType = b:complType
     endif
-    return b:complType . key
+
+    if b:complReset
+      let b:complReset = 0
+      " not an accurate condition for everyone, but better than sending <c-e>
+      " at the wrong time.
+      if pumvisible()
+        return "\<c-e>" . complType
+      endif
+    endif
+
+    return complType
   endif
 
   return "\<tab>"
@@ -371,27 +437,106 @@ endfunction " }}}
 " s:WillComplete() {{{
 " Determines if completion should be kicked off at the current location.
 function! s:WillComplete()
+  if pumvisible()
+    return 1
+  endif
+
   let line = getline('.')
   let cnum = col('.')
 
   " Start of line.
-  let prev_char = strpart(line, cnum - 2, 1)
-  if prev_char =~ '^\s*$'
+  if line =~ '^\s*\%' . cnum . 'c'
     return 0
   endif
 
+  " honor SuperTabNoCompleteAfter
+  let pre = line[:cnum - 2]
+  for pattern in b:SuperTabNoCompleteAfter
+    if pre =~ pattern . '$'
+      return 0
+    endif
+  endfor
+
+  " honor SuperTabNoCompleteBefore
   " Within a word, but user does not have mid word completion enabled.
-  let next_char = strpart(line, cnum - 1, 1)
-  if !g:SuperTabMidWordCompletion && next_char =~ '\k'
-    return 0
-  endif
-
-  " In keyword completion mode and no preceding word characters.
-  "if (b:complType == "\<c-n>" || b:complType == "\<c-p>") && prev_char !~ '\k'
-  "  return 0
-  "endif
+  let post = line[cnum - 1:]
+  for pattern in b:SuperTabNoCompleteBefore
+    if post =~ '^' . pattern
+      return 0
+    endif
+  endfor
 
   return 1
+endfunction " }}}
+
+" s:EnableLongestEnhancement() {{{
+function! s:EnableLongestEnhancement()
+  augroup supertab_reset
+    autocmd!
+    autocmd InsertLeave,CursorMovedI <buffer>
+      \ call s:ReleaseKeyPresses() | autocmd! supertab_reset
+    call s:CaptureKeyPresses()
+  augroup END
+endfunction " }}}
+
+" s:CompletionReset(char) {{{
+function! s:CompletionReset(char)
+  let b:complReset = 1
+  return a:char
+endfunction " }}}
+
+" s:CaptureKeyPresses() {{{
+function! s:CaptureKeyPresses()
+  if !exists('b:capturing') || !b:capturing
+    let b:capturing = 1
+    " save any previous mappings
+    " TODO: capture additional info provided by vim 7.3.032 and up.
+    let b:captured = {
+        \ '<bs>': maparg('<bs>', 'i'),
+        \ '<c-h>': maparg('<c-h>', 'i'),
+      \ }
+    " TODO: use &keyword to get an accurate list of chars to map
+    for c in split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_', '.\zs')
+      exec 'imap <buffer> ' . c . ' <c-r>=<SID>CompletionReset("' . c . '")<cr>'
+    endfor
+    imap <buffer> <bs> <c-r>=<SID>CompletionReset("\<lt>bs>")<cr>
+    imap <buffer> <c-h> <c-r>=<SID>CompletionReset("\<lt>c-h>")<cr>
+    exec 'imap <buffer> ' . g:SuperTabMappingForward . ' <c-r>=<SID>SuperTab("n")<cr>'
+  endif
+endfunction " }}}
+
+" s:ReleaseKeyPresses() {{{
+function! s:ReleaseKeyPresses()
+  if exists('b:capturing') && b:capturing
+    let b:capturing = 0
+    for c in split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_', '.\zs')
+      exec 'iunmap <buffer> ' . c
+    endfor
+
+    iunmap <buffer> <bs>
+    iunmap <buffer> <c-h>
+    exec 'iunmap <buffer> ' . g:SuperTabMappingForward
+
+    " restore any previous mappings
+    for [key, rhs] in items(b:captured)
+      if rhs != ''
+        let args = substitute(rhs, '.*\(".\{-}"\).*', '\1', '')
+        if args != rhs
+          let args = substitute(args, '<', '<lt>', 'g')
+          let expr = substitute(rhs, '\(.*\)".\{-}"\(.*\)', '\1%s\2', '')
+          let rhs = printf(expr, args)
+        endif
+        exec printf("imap <silent> %s %s", key, rhs)
+      endif
+    endfor
+    unlet b:captured
+
+    if mode() == 'i'
+      " force full exit from completion mode (don't exit insert mode since
+      " that will break repeating with '.')
+      call feedkeys("\<space>\<bs>", 'n')
+    endif
+  endif
 endfunction " }}}
 
 " s:CommandLineCompletion() {{{
@@ -478,23 +623,89 @@ function! s:ContextText()
   endif
 endfunction " }}}
 
+" s:ExpandMap(map) {{{
+function! s:ExpandMap(map)
+  let map = a:map
+  if map =~ '<Plug>'
+    let plug = substitute(map, '.\{-}\(<Plug>\w\+\).*', '\1', '')
+    let plug_map = maparg(plug, 'i')
+    let map = substitute(map, '.\{-}\(<Plug>\w\+\).*', plug_map, '')
+  endif
+  return map
+endfunction " }}}
+
 " Key Mappings {{{
   " map a regular tab to ctrl-tab (note: doesn't work in console vim)
   exec 'inoremap ' . g:SuperTabMappingTabLiteral . ' <tab>'
 
   imap <c-x> <c-r>=<SID>ManualCompletionEnter()<cr>
 
-  " From the doc |insert.txt| improved
-  exec 'imap ' . g:SuperTabMappingForward . ' <c-n>'
-  exec 'imap ' . g:SuperTabMappingBackward . ' <c-p>'
+  imap <script> <Plug>SuperTabForward <c-r>=<SID>SuperTab('n')<cr>
+  imap <script> <Plug>SuperTabBackward <c-r>=<SID>SuperTab('p')<cr>
+
+  exec 'imap ' . g:SuperTabMappingForward . ' <Plug>SuperTabForward'
+  exec 'imap ' . g:SuperTabMappingBackward . ' <Plug>SuperTabBackward'
 
   " After hitting <Tab>, hitting it once more will go to next match
   " (because in XIM mode <c-n> and <c-p> mappings are ignored)
   " and wont start a brand new completion
   " The side effect, that in the beginning of line <c-n> and <c-p> inserts a
   " <Tab>, but I hope it may not be a problem...
-  inoremap <c-n> <c-r>=<SID>SuperTab('n')<cr>
-  inoremap <c-p> <c-r>=<SID>SuperTab('p')<cr>
+  let ctrl_n = maparg('<c-n>', 'i')
+  if ctrl_n != ''
+    let ctrl_n = substitute(ctrl_n, '<', '<lt>', 'g')
+    exec 'imap <c-n> <c-r>=<SID>ForwardBack("n", "' . ctrl_n . '")<cr>'
+  else
+    imap <c-n> <Plug>SuperTabForward
+  endif
+  let ctrl_p = maparg('<c-p>', 'i')
+  if ctrl_p != ''
+    let ctrl_p = substitute(ctrl_p, '<', '<lt>', 'g')
+    exec 'imap <c-p> <c-r>=<SID>ForwardBack("p", "' . ctrl_p . '")<cr>'
+  else
+    imap <c-p> <Plug>SuperTabBackward
+  endif
+  function! s:ForwardBack(command, map)
+    exec "let map = \"" . escape(a:map, '<') . "\""
+    return pumvisible() ? s:SuperTab(a:command) : map
+  endfunction
+
+  if g:SuperTabCrMapping
+    if maparg('<CR>','i') =~ '<CR>'
+      let map = maparg('<cr>', 'i')
+      let cr = (map =~? '\(^\|[^)]\)<cr>')
+      let map = s:ExpandMap(map)
+      exec "inoremap <script> <cr> <c-r>=<SID>SelectCompletion(" . cr . ")<cr>" . map
+    else
+      inoremap <cr> <c-r>=<SID>SelectCompletion(1)<cr>
+    endif
+    function! s:SelectCompletion(cr)
+      " selecting a completion
+      if pumvisible()
+        " ugly hack to let other <cr> mappings for other plugins cooperate
+        " with supertab
+        let b:supertab_pumwasvisible = 1
+        return "\<c-y>"
+      endif
+
+      if exists('b:supertab_pumwasvisible')
+        unlet b:supertab_pumwasvisible
+        return ''
+      endif
+
+      " not so pleasant hack to keep <cr> working for abbreviations
+      let word = substitute(getline('.'), '^.*\s\+\(.*\%' . col('.') . 'c\).*', '\1', '')
+      if maparg(word, 'i', 1) != ''
+        call feedkeys("\<c-]>", 't')
+        call feedkeys("\<cr>", 'n')
+        return ''
+      endif
+
+      " only return a cr if nothing else is mapped to it since we don't want
+      " to duplicate a cr returned by another mapping.
+      return a:cr ? "\<cr>" : ""
+    endfunction
+  endif
 " }}}
 
 " Command Mappings {{{

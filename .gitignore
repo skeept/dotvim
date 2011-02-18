@@ -7,6 +7,8 @@ undodir/*
 
 .VimballRecord
 
+._git
+
 !backup
 !swapdir
 !undodir
@@ -23,6 +25,8 @@ ftplugin/latex-suite/bibtools.pyc
 ftplugin/latex-suite/outline.pyc
 
 *.pyc
+
+tags
 
 .yankring_history_v2.txt
 

@@ -1,0 +1,28 @@
+# #!/bin/bash
+
+snippet equ 
+	Equations
+	${1}
+	;
+	${2}
+
+snippet loop
+	Loop((${1:loop set}),
+	  ${2:Loop statements}
+	);
+	${3}
+
+snippet if
+	if(${1:condition},
+	  ${2:if statements}
+	);
+	${3}
+
+snippet comr
+	$OnText
+	${1}
+	$OffText
+	${2}
+
+snippet com1
+	**==================== ${1:description} ====================

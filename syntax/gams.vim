@@ -16,7 +16,7 @@ syntax case ignore
 syn keyword gamsStatement       set sets table tables parameter parameters
 syn keyword gamsStatement       model models solve equation equations variable variables
 syn keyword gamsStatement       display option alias scalar scalars sum
-syn keyword gamsStatement       Acronym positive binary not free integer
+syn keyword gamsStatement       Acronym positive binary not free integer sos1 sos2
 syn keyword gamsStatement       yes no put files file
 syn keyword gamsStatement       putclose sameas
 
@@ -24,7 +24,7 @@ syntax keyword gamsFunction	ABS abs Abs ASC asc Asc
 syntax keyword gamsFunction     abs acos acos asin asinh atan atan2
 syntax keyword gamsFunction     atanh ceil ctime cos cosh exp floor log log10
 syntax keyword gamsFunction     max min precision round sin sinh sqr sqrt tan tanh smin smax
-syntax keyword gamsFunction     time trunc div mod 
+syntax keyword gamsFunction     time trunc div mod power
 syntax keyword gamsFunction     ord card 
 
 syntax keyword gamsConditional  if else eq le lt gt ne and or ge elseif
