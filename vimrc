@@ -439,6 +439,6 @@ if !has("python")
 endif
 
 if has("gui_running")
-  execute "HeadlightsTurnOn"
+  "execute "HeadlightsTurnOn"
 endif
 
