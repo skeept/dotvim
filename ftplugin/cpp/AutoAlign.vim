@@ -1,14 +1,13 @@
 " AutoAlign: ftplugin support for C++
 " Author:    Charles E. Campbell, Jr.
-" Date:      Aug 16, 2007
-" Version:   13
+" Date:      Jan 06, 2011
+" Version:   15a	ASTRO-ONLY
 " ---------------------------------------------------------------------
-let b:loaded_autoalign_cpp= "v13"
-let b:undo_ftplugin= "v13"
+let b:loaded_autoalign_cpp= "v15a"
 
 "  overloading '=' to keep things lined up {{{1
 ino <silent> = =<c-r>=AutoAlign(1)<cr>
-let b:autoalign_reqdpat1 = '^\(\s*\h\w*\(\[\d\+]\)\{0,}\(->\|\.\)\=\)\+\s*[-+*/^|%]\=='
+let b:autoalign_reqdpat1 = '^\([ \t*]\{0,}\h\w*\%(\[\%(\d\+\|\h\w*\)]\)\{0,}\%(->\|\.\)\=\)\+\s*[-+*/^|%]\=='
 let b:autoalign_notpat1  = '^[^=]\+$'
 let b:autoalign_trigger1 = '='
 if !exists("g:mapleader")
@@ -39,4 +38,16 @@ if !exists("g:mapleader")
  let b:autoalign_cmd3     = 'norm \a<$'
 else
  let b:autoalign_cmd3     = "norm ".g:mapleader."a<$"
+endif
+
+"  overloading '//' to keep things lined up {{{1
+"ino <silent> / /<c-o>:silent call AutoAlign(-4)<cr>
+ino <silent> / /<c-r>=AutoAlign(-4)<cr>
+let b:autoalign_reqdpat4 = '//'
+let b:autoalign_notpat4  = '^\%(\%(//\)\@!.\)*$'
+let b:autoalign_trigger4 = '/'
+if !exists("g:mapleader")
+ let b:autoalign_cmd4     = 'norm \acom'
+else
+ let b:autoalign_cmd4     = "norm ".g:mapleader."acom"
 endif

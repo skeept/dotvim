@@ -1,6 +1,6 @@
 " AlignMapsPlugin:   Alignment maps based upon <Align.vim> and <AlignMaps.vim>
 " Maintainer:        Dr. Charles E. Campbell, Jr. <NdrOchipS@PcampbellAfamily.Mbiz>
-" Date:              Jan 22, 2010
+" Date:              Feb 22, 2011
 "
 " NOTE: the code herein needs vim 7.0 or later
 " Copyright:    Copyright (C) 1999-2009 Charles E. Campbell, Jr. {{{1
@@ -38,7 +38,7 @@ if &cp || exists("g:loaded_AlignMapsPlugin")
  finish
 endif
 let s:keepcpo                = &cpo
-let g:loaded_AlignMapsPlugin = "v42j"
+let g:loaded_AlignMapsPlugin = "v42k"
 set cpo&vim
 
 " =====================================================================
@@ -195,7 +195,7 @@ map <silent> <script> <Plug>AM_tt		<SID>WS:AlignCtrl mIp1P1=l \\\@<!& \\\\<CR>:'
 " Menu Support: {{{1
 "   ma ..move.. use menu
 "   v V or ctrl-v ..move.. use menu
-if has("menu") && has("gui_running") && &go =~ 'm' && !exists("s:firstmenu")
+if has("menu") && has("gui_running") && &go =~# 'm' && !exists("s:firstmenu")
  let s:firstmenu= 1
  if !exists("g:DrChipTopLvlMenu")
   let g:DrChipTopLvlMenu= "DrChip."

@@ -1,8 +1,8 @@
-*align.txt*	The Alignment Tool			Oct 29, 2010
+*align.txt*	The Alignment Tool			Feb 22, 2011
 
 Author:    Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
            (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2010 by Charles E. Campbell, Jr.	*Align-copyright*
+Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*Align-copyright*
            The VIM LICENSE applies to Align.vim, AlignMaps.vim, and Align.txt
            (see |copyright|) except use "Align and AlignMaps" instead of "Vim"
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
@@ -1473,6 +1473,7 @@ ALIGNMENT MAP HISTORY					*alignmap-history* {{{2
 			       for c, c++ correctly.
 	      Oct 29, 2010   * added a note on having one's own default
 			       AlignCtrl (see |alignctrl-init|)
+	      Feb 22, 2011   * for menus, &go =~# used to insure correct case
        v41    Nov 02, 2008   * g:loaded_AlignMapsPlugin testing to prevent
 			       re-loading installed
 			     * AlignMaps now use 0x0f (ctrl-p) for special

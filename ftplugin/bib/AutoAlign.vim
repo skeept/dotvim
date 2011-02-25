@@ -5,7 +5,6 @@
 " ---------------------------------------------------------------------
 let b:loaded_autoalign_bib= "v13"
 "call Decho("loaded ftplugin/bib/AutoAlign!")
-let b:undo_ftplugin= "v13"
 
 "  overloading '=' to keep things lined up {{{1
 ino <silent> = =<c-r>=AutoAlign(1)<cr>
