@@ -1,8 +1,8 @@
-*autoalign.txt*		Automatic Alignment		Oct 19, 2006
+*autoalign.txt*		Automatic Alignment		Feb 22, 2011
 
 Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
 (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
+Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*autoalign-copyright*
            The VIM LICENSE applies to AutoAlign.vim and AutoAlign.txt
            (see |copyright|) except use "AutoAlign" instead of "Vim"
 	   No warranty, express or implied.  Use At-Your-Own-Risk.
@@ -23,23 +23,16 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 	   which are available from either:
 >
 		http://vim.sourceforge.net/scripts/script.php?script_id=294
-		http://mysite.verizon.net/astronaut/vim/textab.html
+		http://mysite.verizon.net/astronaut/vim/index.html#AUTOALIGN
 <
-	  a) Put the compressed archive (Align.tar.gz) in your
-	     .vim (Unix) or vimfiles\ (Windows) directory
-	  b) Decompress it:  gunzip Align.tar.gz
-	  c) De-archive it:  tar -oxvf Align.tar
+	2. Using vim 7.1: >
 
-
-	2. AutoAlign is composed of a plugin and several
-	   ftplugins.  It is available from:
->
-        	http://vim.sourceforge.net/scripts/script.php?script_id=884
+	      vim AutoAlign.vba.gz
+	       :so %
+	       :q
 <
-	3. Decompress it:  gunzip Align.tar.gz
-	4. De-archive it: tar -oxvf Align.tar
-	5. Steps 3 and 4 will provide you with:
->
+	   This process will generate the following files on your runtimepath: >
+
 	        plugin/cecutil.vim
 	        ftplugin/bib/AutoAlign.vim
 	        ftplugin/c/AutoAlign.vim
@@ -48,15 +41,8 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 	        ftplugin/tex/AutoAlign.vim
 	        ftplugin/vim/AutoAlign.vim
 <
-	6. In order to make help available while using vim for AutoAlign:
->
-		vim
-		:helptags ~/.vim/doc                 <-- Unix
-		:helptags (wherever)/vimfiles/doc    <-- Windows
-		:q
-<
 
-	7. To enable plugins and filetype plugins generally, including
+	3. To enable plugins and filetype plugins generally, including
 	   AutoAlign, have the following in your <.vimrc> file:
 >
 		"  Initialize: {{{1
@@ -67,14 +53,23 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 <
 
 ==============================================================================
-3. AutoAlign Manual						*autoalign-man*
+3. AutoAlign Manual			*autoalign-man* *autoalign-manual*
 
     The AutoAlign filetype plugins operate while vim is in insert mode.  They
     apply appropriate Align/AlignMaps to the most recent contiguous region,
     thereby keeping such things as "=" aligned.  See |align| and |alignmaps|.
 
-        :AA   - toggles AutoAlign on and off
+					*autoalign-AA* *autoalign-AAstart*
+    There are two commands supported by AutoAlign: >
 
+        :AA             - toggles AutoAlign on and off
+	:AAstart        - manually set the current insertion block to start at
+	                  the current line
+	:[line]AAstart  - manually set the current insertion block to start at
+	                  the specified line
+	:AAstart [line] - manually set the current insertion block to start at
+	                  the specified line
+<
     The mark 'a is used by AutoAlign to indicate where the start of the
     automatic alignment region begins.  Changing 'a to some other place will
     also stop AutoAlign from operating on that region.  One may temporarily
@@ -187,9 +182,39 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 
 
 ==============================================================================
-5. AutoAlign History					*autoalign-history*
+5. Elastic Tabs			*autoalign-eltab* *autoalign-elastictabs*
 
-   13 : Oct 19, 2006 : ftplugin/cpp/AutoAlign.vim fixed for < and >.
+Those of you who are interested in "elastic" non-uniform tab stops may find
+the "eltab" filetype of use.  Its not a pure non-uniform tab solution (that
+would take a modification to vim itself); however, a filetype of eltab coupled
+with AutoAlign makes for an almost elastic-tab solution.
+
+If the tabstop is set to 1 (:set ts=1), then AlignMaps' \tab will do a
+no-padding alignment on the tabs.  Thus one gets tabs surrounded by spaces to
+do the alignment (with no additional padding).
+
+If your file has a modeline: >
+
+	vim: ft=eltab
+<
+Subsequently, as you type, tabs will be auto-aligned within each current insertion
+block of text; total file alignment can be done with 1V$\tab (ie. select
+entire file, align it).
+
+
+==============================================================================
+6. AutoAlign History					*autoalign-history*
+
+   14 : Sep 20, 2007 * now using startinsert! instead of startinsert.
+   		       Currently not using the various autoalign_trigger
+		       strings; will see how modification works out.
+		     * found some cases where startinsert! isn't a good
+		       idea (ex. inserting an "=").  New modification;
+		       this one may use the autoalign_trigger string.
+		     * The c plugin's AutoAlign.vim was overriding
+		       the c++ plugin's AutoAlign.vim settings.
+	Feb 22, 2011 * for menus, &go =~# used to insure correct case
+   13 : Oct 19, 2006 * ftplugin/cpp/AutoAlign.vim fixed for < and >.
                        Introduced b:autoalign_trigger# so AutoAlign
 		       can put cursor back where it belongs.
 		     * AutoAlign now pluginkiller immune
@@ -201,24 +226,24 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 		       =<c-o>:silent call AutoAlign(#).
 		       Thanks to Antony Scriven!  Gets that "|.|"
 		       repeater working.
-   12 : Sep 19, 2006 : ftplugin/bib/AutoAlign.vim fixed
-   11 : Mar 23, 2006 : v10 had debugging enabled; this one has debugging
+   12 : Sep 19, 2006 * ftplugin/bib/AutoAlign.vim fixed
+   11 : Mar 23, 2006 * v10 had debugging enabled; this one has debugging
                        deactivated.
 		     * now decides to use startinsert vs startinsert!
 		       before the alignment by using the "atend" variable,
 		       which holds the result of testing whether the cursor
 		       is at the end-of-line or not.
-   10 : Mar 16, 2006 : using startinsert! to recommence editing
+   10 : Mar 16, 2006 * using startinsert! to recommence editing
                        AutoAlign only triggered when the trigger character
 		       is at the end of the current line being inserted.
 		     * works with ve=all and ve=  (see |'ve'|)
-    9 : Mar 16, 2006 : seems to have stopped working with virtualedit off.
+    9 : Mar 16, 2006 * seems to have stopped working with virtualedit off.
                        Now works with virtualedit off or on.  If vim 7.0
 		       is in use, AutoAlign doesn't use SaveWinPosn()
 		       or RestoreWinPosn(), so it may work faster.
-    8 : Jan 18, 2006 : cecutil updated to use keepjumps
+    8 : Jan 18, 2006 * cecutil updated to use keepjumps
                      * plugin/AutoAlign.vim was missing from distribution
-    7 : Mar 31, 2005 : supports html
+    7 : Mar 31, 2005 * supports html
 		     * b:autoalign_suspend# for suspend-alignment pattern
 		       implemented, along with using AutoAlign(-#) to avoid
 		       having a reqdpat failure doing an AutoAlign suspension.
@@ -227,25 +252,25 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*autoalign-copyright*
 		       b:autoalign_suspend#.
         Apr 22, 2005 * sanity check included to prevent an attempt to access
 		       an undefined variable (b:autoalign_reqdpat{i})
-    6 : Mar 30, 2005 : AutoAlign is split into a plugin containing the
+    6 : Mar 30, 2005 * AutoAlign is split into a plugin containing the
 		       majority of vimscript; the supported ftplugins
 		       contain the invoking imaps and pattern definitions
 		       that the plugin uses.
-    5 : Jan 24, 2005 : first release of AutoAlign using vim's user-help.
+    5 : Jan 24, 2005 * first release of AutoAlign using vim's user-help.
 		     * using g:mapleader instead of a built-in backslash to
 		       access AlignMaps
 		     * map and function changed to allow use of "." to
 		       repeat entry of =... expressions.
-    4, Jul 02, 2004  : see |i_ctrl-g_u| -- breaks undo sequence at every align
-    3, Mar 03, 2004  : autoalign not taken if a no-pattern line is
+    4, Jul 02, 2004  * see |i_CTRL-G_u| -- breaks undo sequence at every align
+    3, Mar 03, 2004  * autoalign not taken if a no-pattern line is
                        in-between the keepalign line and the current line
-    2                : b:autoalign==0: turns autoalign off
+    2                * b:autoalign==0: turns autoalign off
                        b:autoalign==1: turns autoalign back on
                      * 'a now used during autoalign, and AlignMap's \t=
                        If user changes 'a, then AutoAlign recognizes that
                        it is not to keep aligning
                      * The :AA command can be used to toggle AutoAlign
-    1                : The Epoch
+    1                * The Epoch
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help

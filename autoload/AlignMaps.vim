@@ -1,14 +1,14 @@
 " AlignMaps.vim : support functions for AlignMaps
 "   Author: Charles E. Campbell, Jr.
-"     Date: Sep 20, 2010
-"  Version: 42j	ASTRO-ONLY
+"     Date: Feb 22, 2011
+"  Version: 42k	ASTRO-ONLY
 "redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
 if &cp || exists("g:loaded_AlignMaps")
  finish
 endif
-let g:loaded_AlignMaps= "v42j"
+let g:loaded_AlignMaps= "v42k"
 let s:keepcpo         = &cpo
 set cpo&vim
 "DechoTabOn
