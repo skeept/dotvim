@@ -4,7 +4,7 @@
 " Author:      Jan Larres <jan@majutsushi.net>
 " Licence:     Vim licence
 " Website:     http://majutsushi.github.com/tagbar/
-" Version:     1.0
+" Version:     1.2
 " Note:        This plugin was heavily inspired by the 'Taglist' plugin by
 "              Yegappan Lakshmanan and uses a small amount of code from it.
 "
@@ -62,9 +62,14 @@ if !exists('g:tagbar_compact')
     let g:tagbar_compact = 0
 endif
 
+if !exists('g:tagbar_expand')
+    let g:tagbar_expand = 0
+endif
+
 let s:type_init_done    = 0
 let s:key_mapping_done  = 0
 let s:autocommands_done = 0
+let s:window_expanded   = 0
 
 " s:InitTypes() {{{2
 function! s:InitTypes()
@@ -531,8 +536,9 @@ function! s:InitTypes()
         \ 'f:methods',
         \ 'F:singleton methods'
     \ ]
-    let type_ruby.kinds2scope = {
-        \ 'c' : 'class'
+    let type_ruby.kind2scope = {
+        \ 'c' : 'class',
+        \ 'm' : 'class'
     \ }
     let type_ruby.scope2kind = {
         \ 'class' : 'c'
@@ -837,6 +843,12 @@ function! s:OpenWindow(autoclose)
         return
     endif
 
+    " Expand the Vim window to accomodate for the Tagbar window if requested
+    if g:tagbar_expand && !s:window_expanded && has('gui_running')
+        let &columns += g:tagbar_width + 1
+        let s:window_expanded = 1
+    endif
+
     let openpos = g:tagbar_left ? 'topleft vertical ' : 'botright vertical '
     exe 'silent! keepalt ' . openpos . g:tagbar_width . 'split ' . '__Tagbar__'
 
@@ -880,21 +892,6 @@ function! s:OpenWindow(autoclose)
 
     let w:autoclose = a:autoclose
 
-    syntax match Comment    '^" .*'             " Comments
-    syntax match Identifier '^ [^: ]\+[^:]\+$'  " Non-scoped kinds
-    syntax match Title      '[^(* ]\+\ze\*\? :' " Scope names
-    syntax match Type       ' : \zs.*'          " Scope types
-    syntax match SpecialKey '(.*)'              " Signatures
-    syntax match NonText    '\*\ze :'           " Pseudo-tag identifiers
-
-    highlight default TagbarAccessPublic    guifg=Green ctermfg=Green
-    highlight default TagbarAccessProtected guifg=Blue  ctermfg=Blue
-    highlight default TagbarAccessPrivate   guifg=Red   ctermfg=Red
-
-    syntax match TagbarAccessPublic    '^\s*+\ze[^ ]'
-    syntax match TagbarAccessProtected '^\s*#\ze[^ ]'
-    syntax match TagbarAccessPrivate   '^\s*-\ze[^ ]'
-
     if has('balloon_eval')
         setlocal balloonexpr=TagbarBalloonExpr()
         set ballooneval
@@ -930,6 +927,8 @@ function! s:CloseWindow()
         return
     endif
 
+    let tagbarbufnr = winbufnr(tagbarwinnr)
+
     if winnr() == tagbarwinnr
         if winbufnr(2) != -1
             " Other windows are open, only close the tagbar one
@@ -946,6 +945,20 @@ function! s:CloseWindow()
         let winnum = bufwinnr(curbufnr)
         if winnr() != winnum
             exe winnum . 'wincmd w'
+        endif
+    endif
+
+    " If the Vim window has been expanded, and Tagbar is not open in any other
+    " tabpages, shrink the window again
+    if s:window_expanded
+        let tablist = []
+        for i in range(tabpagenr('$'))
+            call extend(tablist, tabpagebuflist(i + 1))
+        endfor
+
+        if index(tablist, tagbarbufnr) == -1
+            let &columns -= g:tagbar_width + 1
+            let s:window_expanded = 0
         endif
     endif
 endfunction
@@ -1021,12 +1034,10 @@ function! s:ProcessFile(fname, ftype)
 
     if has_key(typeinfo, 'scopes') && !empty(typeinfo.scopes)
         let scopedtags = []
-        for scope in typeinfo.scopes
-            let is_scoped = 'has_key(typeinfo.kind2scope, v:val.fields.kind) ||
-                           \ has_key(v:val.fields, scope)'
-            let scopedtags += filter(copy(fileinfo.tags), is_scoped)
-            call filter(fileinfo.tags, '!(' . is_scoped . ')')
-        endfor
+        let is_scoped = 'has_key(typeinfo.kind2scope, v:val.fields.kind) ||
+                       \ has_key(v:val, "scope")'
+        let scopedtags += filter(copy(fileinfo.tags), is_scoped)
+        call filter(fileinfo.tags, '!(' . is_scoped . ')')
 
         let processedtags = []
         call s:AddScopedTags(scopedtags, processedtags, '', '', 0, typeinfo)
@@ -1676,6 +1687,7 @@ endfunction
 " s:CleanUp() {{{2
 function! s:CleanUp()
     silent! autocmd! TagbarAutoCmds
+
     unlet s:current_file
     unlet s:is_maximized
     unlet s:compare_typeinfo
