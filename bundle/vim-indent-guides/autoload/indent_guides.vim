@@ -40,13 +40,14 @@ function! indent_guides#enable()
   " loop through each indent level and define a highlight pattern
   " will automagically figure out whether to use tabs or spaces
   for l:level in range(s:start_level, s:indent_levels)
-    let l:group      = 'IndentGuides' . ((l:level % 2 == 0) ? 'Even' : 'Odd')
-    let l:pattern    = '^\s\{' . (l:level * s:indent_size - s:indent_size) . '\}\zs'
-    let l:pattern   .= '\s\{' . s:guide_size . '\}'
-    let l:pattern   .= '\ze'
+    let l:group = 'IndentGuides' . ((l:level % 2 == 0) ? 'Even' : 'Odd')
+    let l:column_start = (l:level - 1) * s:indent_size + 1
+    let l:soft_pattern = indent_guides#indent_highlight_pattern('\s', l:column_start, s:guide_size)
+    let l:hard_pattern = indent_guides#indent_highlight_pattern('\t', l:column_start, s:indent_size)
 
-    " define the higlight pattern and add to list
-    call add(w:indent_guides_matches, matchadd(l:group, l:pattern))
+    " define the higlight patterns and add to matches list
+    call add(w:indent_guides_matches, matchadd(l:group, l:soft_pattern))
+    call add(w:indent_guides_matches, matchadd(l:group, l:hard_pattern))
   endfor
 endfunction
 
@@ -152,8 +153,8 @@ endfunction
 " Define default highlights.
 "
 function! indent_guides#define_default_highlights()
-  exe 'hi IndentGuidesOdd  guibg=NONE ctermbg=NONE'
-  exe 'hi IndentGuidesEven guibg=NONE ctermbg=NONE'
+  hi default clear IndentGuidesOdd
+  hi default clear IndentGuidesEven
 endfunction
 
 "
@@ -168,7 +169,7 @@ endfunction
 " plugin is enabled.
 "
 function! indent_guides#init_script_vars()
-  let s:indent_size = indent_guides#get_indent_size()
+  let s:indent_size = &l:shiftwidth
   let s:guide_size  = indent_guides#calculate_guide_size()
   let s:hi_normal   = indent_guides#capture_highlight('Normal')
 
@@ -179,7 +180,7 @@ function! indent_guides#init_script_vars()
   let s:debug             = g:indent_guides_debug
   let s:indent_levels     = g:indent_guides_indent_levels
   let s:auto_colors       = g:indent_guides_auto_colors
-  let s:change_percent    = g:indent_guides_color_change_percent / 100.0
+  let s:change_percent    = g:indent_guides_color_change_percent / str2float("100.0")
   let s:color_hex_pat     = g:indent_guides_color_hex_pattern
   let s:color_hex_bg_pat  = g:indent_guides_color_hex_guibg_pattern
   let s:color_name_bg_pat = g:indent_guides_color_name_guibg_pattern
@@ -206,24 +207,13 @@ endfunction
 " NOTE: Currently, this only works when soft-tabs are being used.
 "
 function! indent_guides#calculate_guide_size()
-  let l:guide_size  = g:indent_guides_guide_size
-  let l:indent_size = indent_guides#get_indent_size()
+  let l:guide_size = g:indent_guides_guide_size
 
-  if l:indent_size > 1 && l:guide_size >= 1
-    let l:guide_size = (l:guide_size > s:indent_size) ? s:indent_size : l:guide_size
-  else
+  if l:guide_size == 0 || l:guide_size > s:indent_size
     let l:guide_size = s:indent_size
   endif
 
   return l:guide_size
-endfunction
-
-"
-" Gets the indent size, which depends on whether soft-tabs or hard-tabs are
-" being used.
-"
-function! indent_guides#get_indent_size()
-  return (&l:expandtab == 1) ? &l:shiftwidth : 1
 endfunction
 
 "
@@ -241,3 +231,21 @@ function! indent_guides#capture_highlight(group_name)
   return l:output
 endfunction
 
+"
+" Returns a regex pattern for highlighting an indent level.
+"
+" Example: indent_guides#indent_highlight_pattern(' ', 1, 4)
+" Returns: /^ *\%1v\zs *\%5v\ze/
+"
+" Example: indent_guides#indent_highlight_pattern('\s', 5, 2)
+" Returns: /^\s*\%5v\zs\s*\%7v\ze/
+"
+" Example: indent_guides#indent_highlight_pattern('\t', 9, 2)
+" Returns: /^\t*\%9v\zs\t*\%11v\ze/
+"
+function! indent_guides#indent_highlight_pattern(indent_pattern, column_start, indent_size)
+  let l:pattern  = '^' . a:indent_pattern . '*\%' . a:column_start . 'v\zs'
+  let l:pattern .= a:indent_pattern . '*\%' . (a:column_start + a:indent_size) . 'v'
+  let l:pattern .= '\ze'
+  return l:pattern
+endfunction
