@@ -437,8 +437,3 @@ if !has("python")
   let g:loaded_gundo = 1
   let loaded_gundo = 1
 endif
-
-if has("gui_running")
-  "execute "HeadlightsTurnOn"
-endif
-
