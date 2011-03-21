@@ -401,7 +401,13 @@ map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
-set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
+"set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
+set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\ \ 
+set statusline+=%{&fenc},%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
+set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
+"set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
+"set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
+"set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
 
 set foldmethod=syntax
 set title
