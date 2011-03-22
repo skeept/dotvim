@@ -5,6 +5,7 @@
 function do_git2_()
 {
 for folder in * ; do 
+  if test ! -d $folder ; then continue; fi
   if mv $folder/.git $folder/._git >& /dev/null; then 
     printf "%30s: OK\n" $folder
   else
@@ -13,17 +14,36 @@ for folder in * ; do
 done
 }
 
-function do_git_from_()
+function do_git_update()
 {
 for folder in * ; do 
-  if mv $folder/._git $folder/.git >& /dev/null; then 
-    echo -n "."
-  else
-    echo -n "#"
+  if test -d $folder; then 
+    cd "$folder" >& /dev/null
+    mv ._git .git >& /dev/null 
+    if test -d .git; then 
+      printf "\n>>>   %s\n" $(basename $PWD)
+      git pull
+    fi
+    cd ..
   fi
 done
 }
 
 
-#do_git2_
-do_git2_
+function main()
+{
+  DO_UPDATE=0
+  while getopts "u" flag
+  do
+    case $flag in 
+      u) DO_UPDATE=1 ;;
+    esac
+  done
+  if test $DO_UPDATE -eq 1 ; then
+    do_git_update
+  else
+    do_git2_
+  fi
+}
+
+main "$@"

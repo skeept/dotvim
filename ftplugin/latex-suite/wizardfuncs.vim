@@ -206,8 +206,8 @@ endfunction "}}}
 inoremap <silent> <Plug>Tex_Help <C-o>:call <SID>TexHelp()<CR>
 nnoremap <silent> <Plug>Tex_Help :call <SID>TexHelp()<CR>
 command! -nargs=0 THelp call <SID>TexHelp()
-"call Tex_MakeMap('<F1>', '<Plug>Tex_Help', 'i', '')
-"call Tex_MakeMap('<F1>', '<Plug>Tex_Help', 'n', '')
+call Tex_MakeMap('<F1>', '<Plug>Tex_Help', 'i', '')
+call Tex_MakeMap('<F1>', '<Plug>Tex_Help', 'n', '')
 
 " TexHelp: Cursor being on LaTeX item check if exists help tag about it " {{{
 function! s:TexHelp()
