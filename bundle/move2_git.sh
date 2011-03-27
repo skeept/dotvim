@@ -32,8 +32,13 @@ done
 
 function main()
 {
+  if test -z "$@"; then
+    echo "$0 -s : move .git to ._git"
+    echo "$0 -u : update .git"
+    exit
+  fi
   DO_UPDATE=0
-  while getopts "u" flag
+  while getopts "us" flag
   do
     case $flag in 
       u) DO_UPDATE=1 ;;

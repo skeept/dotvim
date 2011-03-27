@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Mar 2011.
+" Last Modified: 25 Mar 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,7 +26,7 @@
 "=============================================================================
 
 function! unite#version()"{{{
-  return str2nr(printf('%02d%02d%03d', 1, 1, 0))
+  return str2nr(printf('%02d%02d%03d', 1, 5, 0))
 endfunction"}}}
 
 " User functions."{{{
@@ -76,11 +76,7 @@ function! unite#custom_filters(source_name, filters)"{{{
   let l:filters = type(a:filters) == type([]) ?
         \ a:filters : [a:filters]
   for key in split(a:source_name, ',')
-    if !has_key(s:dynamic.sources, key)
-      let s:dynamic.sources[key] = {}
-    endif
-
-    let s:dynamic.sources[key].filters = l:filters
+    let s:custom.filters[key] = l:filters
   endfor
 endfunction"}}}
 function! unite#custom_alias(kind, name, action)"{{{
@@ -196,6 +192,7 @@ let s:custom = {}
 let s:custom.actions = {}
 let s:custom.default_actions = {}
 let s:custom.aliases = {}
+let s:custom.filters = {}
 let s:custom.source = {}
 
 let s:buffer_name_options = {}
@@ -787,13 +784,6 @@ function! s:quit_session(is_force)  "{{{
     pclose!
   endif
 
-  " Call finalize functions.
-  for l:source in unite#loaded_sources_list()
-    if has_key(l:source.hooks, 'on_close')
-      call l:source.hooks.on_close(l:source.args, l:source.unite__context)
-    endif
-  endfor
-
   if winnr('$') != 1
     if !a:is_force && l:unite.context.no_quit
       if winnr('#') > 0
@@ -808,6 +798,13 @@ function! s:quit_session(is_force)  "{{{
       endif
     endif
   endif
+
+  " Call finalize functions.
+  for l:source in unite#loaded_sources_list()
+    if has_key(l:source.hooks, 'on_close')
+      call l:source.hooks.on_close(l:source.args, l:source.unite__context)
+    endif
+  endfor
 
   if l:unite.context.complete
     if l:unite.context.col < col('$')
@@ -899,7 +896,9 @@ function! s:initialize_sources()"{{{
       let l:source.syntax = ''
     endif
     if !has_key(l:source, 'filters')
-      let l:source.filters = unite#filters#default#get()
+      let l:source.filters = has_key(s:custom.filters, l:source.name) ?
+            \ s:custom.filters[l:source.name] :
+            \ unite#filters#default#get()
     endif
     if l:source.is_volatile
           \ && !has_key(l:source, 'change_candidates')
@@ -1012,6 +1011,9 @@ function! s:recache_candidates(input, is_force)"{{{
       endif
       if !has_key(l:candidate, 'kind')
         let l:candidate.kind = 'common'
+      endif
+      if !has_key(l:candidate, 'source')
+        let l:candidate.source = l:source.name
       endif
 
       " Initialize.
@@ -1207,8 +1209,8 @@ function! s:initialize_unite_buffer()"{{{
 
         execute 'highlight default link' l:source.syntax g:unite_abbr_highlight
 
-        execute printf('syntax region %s start="^- %s" end="$" contains=uniteSourceNames,%s',
-              \ 'uniteSourceLine__'.l:source.syntax, l:name == '' ? '' : l:name . '\>', l:source.syntax
+        execute printf('syntax region %s start="^- %s" end="$" contains=%s%s',
+              \ 'uniteSourceLine__'.l:source.syntax, (l:name == '' ? '' : l:name . '\>'), (l:name == '' ? '' : 'uniteSourceNames,'), l:source.syntax
               \ )
 
         if has_key(l:source.hooks, 'on_syntax')
