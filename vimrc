@@ -205,7 +205,7 @@ if !has("gui_running") && !has("win32")
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   colorscheme  graywh_cs
+   colorscheme  graywh_cs1
 endif
 
 
@@ -282,6 +282,9 @@ else
   let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
 endif
 
+nmap ,f :call PreciseJumpF(-1, -1, 0)<cr>
+vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<cr>
+omap ,f :call PreciseJumpF(-1, -1, 0)<cr>
 
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
@@ -324,10 +327,10 @@ let g:SrcExpl_isUpdateTags = 0
 map <F3> :call ToogleTagListNerdTree() <cr>
 imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 
-nmap <silent> ,f :LustyFilesystemExplorer<CR>
-nmap <silent> ,r :LustyFilesystemExplorerFromHere<CR>
-nmap <silent> ,b :LustyBufferExplorer<CR>
-nmap <silent> ,g :LustyBufferGrep<CR>
+nmap <silent> ,lf :LustyFilesystemExplorer<CR>
+nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
+nmap <silent> ,lb :LustyBufferExplorer<CR>
+nmap <silent> ,lg :LustyBufferGrep<CR>
 
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
 nnoremap <C-L> :nohl<CR><C-L>
