@@ -393,8 +393,8 @@ map <Leader>os :Scratch<CR>
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
 
-"don't want to start this completion thing before 5 chars
-let g:acp_behaviorKeywordLength = 5
+"don't want to start this completion thing before x chars
+let g:acp_behaviorKeywordLength = 3
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
@@ -414,6 +414,7 @@ set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 
 set foldmethod=syntax
 set title
+set virtualedit+=block
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "
