@@ -135,6 +135,7 @@ unite-filter-matcher_default	unite.jax	/*unite-filter-matcher_default*
 unite-filter-matcher_glob	unite.jax	/*unite-filter-matcher_glob*
 unite-filter-sorter_default	unite.jax	/*unite-filter-sorter_default*
 unite-filter-sorter_nothing	unite.jax	/*unite-filter-sorter_nothing*
+unite-filter-sorter_word	unite.jax	/*unite-filter-sorter_word*
 unite-functions	unite.jax	/*unite-functions*
 unite-functions-core	unite.jax	/*unite-functions-core*
 unite-functions-customs	unite.jax	/*unite-functions-customs*
@@ -193,6 +194,7 @@ unite-source-attribute-gather_candidates	unite.jax	/*unite-source-attribute-gath
 unite-source-attribute-hooks	unite.jax	/*unite-source-attribute-hooks*
 unite-source-attribute-hooks-on_close	unite.jax	/*unite-source-attribute-hooks-on_close*
 unite-source-attribute-hooks-on_init	unite.jax	/*unite-source-attribute-hooks-on_init*
+unite-source-attribute-hooks-on_post_filter	unite.jax	/*unite-source-attribute-hooks-on_post_filter*
 unite-source-attribute-hooks-on_syntax	unite.jax	/*unite-source-attribute-hooks-on_syntax*
 unite-source-attribute-is_volatile	unite.jax	/*unite-source-attribute-is_volatile*
 unite-source-attribute-max_candidates	unite.jax	/*unite-source-attribute-max_candidates*

@@ -395,6 +395,7 @@ let g:NERDDefaultNesting=1
 
 "don't want to start this completion thing before x chars
 let g:acp_behaviorKeywordLength = 3
+let g:acp_completeOption = '.,w,b,k,t'
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>

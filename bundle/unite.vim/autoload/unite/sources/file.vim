@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Mar 2011.
+" Last Modified: 01 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -25,8 +25,8 @@
 "=============================================================================
 
 " Variables  "{{{
-call unite#util#set_default('g:unite_source_file_ignore_pattern', 
-      \'\%(^\|/\)\.$\|\~$\|\.\%(o|exe|dll|bak|sw[po]\)$')
+call unite#util#set_default('g:unite_source_file_ignore_pattern',
+      \'^\%(/\|\a\+:/\)$\|\%(^\|/\)\.\.\?$\|\~$\|\.\%(o|exe|dll|bak|sw[po]\)$')
 "}}}
 
 function! unite#sources#file#define()"{{{
@@ -58,8 +58,8 @@ function! s:source.change_candidates(args, context)"{{{
 
   if a:context.input != ''
     let l:dummy = substitute(a:context.input, '[*\\]', '', 'g')
-    if (!filereadable(l:dummy) && !isdirectory(l:dummy) && isdirectory(fnamemodify(l:dummy, ':h')))
-          \ || l:dummy =~ '^\%(/\|\a\+:/\)$'
+    " if (!filereadable(l:dummy) && !isdirectory(l:dummy) && isdirectory(fnamemodify(l:dummy, ':h')))
+    if !filereadable(l:dummy) && !isdirectory(l:dummy)
       " Add dummy candidate.
       call add(l:candidates, l:dummy)
     endif
@@ -67,6 +67,15 @@ function! s:source.change_candidates(args, context)"{{{
 
   if g:unite_source_file_ignore_pattern != ''
     call filter(l:candidates, 'v:val !~ ' . string(g:unite_source_file_ignore_pattern))
+  endif
+
+  if l:input !~ '^\%(/\|\a\+:/\)$'
+    let l:dummy = substitute(l:input, '[*\\]', '', 'g')
+
+    if (l:input == '' || isdirectory(l:input)) && isdirectory(l:dummy . '..')
+      " Add .. directory.
+      call insert(l:candidates, l:dummy . '..')
+    endif
   endif
 
   let l:candidates_dir = []

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 29 Mar 2011.
+" Last Modified: 04 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -142,15 +142,14 @@ function! unite#mappings#narrowing(word)"{{{
   endif
 endfunction"}}}
 function! unite#mappings#do_action(action_name, ...)"{{{
-  let l:candidates = a:0 > 0 && type(a:1) == type([]) ?
-        \ a:1 : unite#get_marked_candidates()
+  let l:candidates = a:0 > 0 ? a:1 : unite#get_marked_candidates()
 
-  if a:0 <= 0 || empty(l:candidates)
-    let l:num = a:0 > 0 ? a:1 :
-          \ (line('.') <= unite#get_current_unite().prompt_linenr) ? 0 :
-          \ (line('.') - (unite#get_current_unite().prompt_linenr + 1))
+  let l:unite = unite#get_current_unite()
+  if empty(l:candidates)
+    let l:num = (line('.') <= l:unite.prompt_linenr) ? 0 :
+          \ (line('.') - (l:unite.prompt_linenr + 1))
     if type(l:num) == type(0)
-      if line('$') - (unite#get_current_unite().prompt_linenr + 1) < l:num
+      if line('$') - (l:unite.prompt_linenr + 1) < l:num
         " Ignore.
         return
       endif
@@ -163,12 +162,16 @@ function! unite#mappings#do_action(action_name, ...)"{{{
 
   let l:action_tables = s:get_action_table(a:action_name, l:candidates)
 
+  let l:context = l:unite.context
+
   " Execute action.
   let l:is_redraw = 0
+  let l:is_quit = 0
   for l:table in l:action_tables
     " Check quit flag.
     if l:table.action.is_quit
       call unite#quit_session()
+      let l:is_quit = 1
     endif
 
     call l:table.action.func(l:table.candidates)
@@ -182,6 +185,13 @@ function! unite#mappings#do_action(action_name, ...)"{{{
       let l:is_redraw = 1
     endif
   endfor
+
+  if l:context.temporary && !l:is_quit
+    " Resume unite buffer.
+    call unite#force_quit_session()
+    call unite#resume(l:context.old_buffer_name)
+    call setpos('.', l:context.old_pos)
+  endif
 
   if l:is_redraw
     call unite#force_redraw()
@@ -202,7 +212,7 @@ function! s:get_action_table(action_name, candidates)"{{{
     if !has_key(l:action_table, l:action_name)
       call unite#util#print_error(l:candidate.abbr . '(' . l:candidate.source . ')')
       call unite#util#print_error('No such action : ' . l:action_name)
-      return
+      return []
     endif
 
     let l:action = l:action_table[l:action_name]
@@ -211,7 +221,7 @@ function! s:get_action_table(action_name, candidates)"{{{
     if !l:action.is_selectable && len(a:candidates) > 1
       call unite#util#print_error(l:candidate.abbr . '(' . l:candidate.source . ')')
       call unite#util#print_error('Not selectable action : ' . l:action_name)
-      return
+      return []
     endif
 
     let l:found = 0
@@ -255,6 +265,13 @@ endfunction"}}}
 " key-mappings functions.
 function! s:exit()"{{{
   call unite#force_quit_session()
+
+  let l:context = unite#get_context()
+  if l:context.temporary
+    " Resume unite buffer.
+    call unite#resume(l:context.old_buffer_name)
+    call setpos('.', l:context.old_pos)
+  endif
 endfunction"}}}
 function! s:restart()"{{{
   let l:unite = unite#get_current_unite()
@@ -307,93 +324,32 @@ function! s:toggle_mark_candidates(start, end)"{{{
   endwhile
 endfunction"}}}
 function! s:choose_action()"{{{
-  if line('$') < (unite#get_current_unite().prompt_linenr+1)
+  let l:unite = unite#get_current_unite()
+  if line('$') < (l:unite.prompt_linenr+1)
+        \ || l:unite.context.temporary
     " Ignore.
     return
   endif
 
   let l:candidates = unite#get_marked_candidates()
   if empty(l:candidates)
-    let l:num = line('.') <= unite#get_current_unite().prompt_linenr ? 0 : line('.') - (unite#get_current_unite().prompt_linenr+1)
+    let l:num = line('.') <= l:unite.prompt_linenr ?
+          \ 0 : line('.') - (l:unite.prompt_linenr+1)
 
     let l:candidates = [ unite#get_unite_candidates()[l:num] ]
   endif
 
-  call unite#start([['action'] + l:candidates])
-endfunction"}}}
-function! s:choose_action_old()"{{{
-  if line('$') < (unite#get_current_unite().prompt_linenr+1)
-    " Ignore.
-    return
-  endif
+  call unite#define_source(s:source)
 
-  let l:candidates = unite#get_marked_candidates()
-  if empty(l:candidates)
-    let l:num = line('.') <= unite#get_current_unite().prompt_linenr ? 0 : line('.') - (unite#get_current_unite().prompt_linenr+1)
+  let l:context = deepcopy(l:unite.context)
+  let l:context.old_pos = getpos('.')
+  let l:context.old_buffer_name = l:unite.buffer_name
 
-    let l:candidates = [ unite#get_unite_candidates()[l:num] ]
-  endif
+  let l:context.buffer_name = 'action'
+  let l:context.temporary = 1
 
-  echohl Statement | echo 'Candidates:' | echohl None
-
-  let s:actions = s:get_actions(l:candidates)
-  if empty(s:actions)
-    call unite#util#print_error('No actions.')
-    return
-  endif
-
-  " Print candidates.
-  for l:candidate in l:candidates
-    " Print candidates.
-    echo l:candidate.abbr . '('
-    echohl Type | echon l:candidate.source | echohl None
-    echon ')'
-  endfor
-
-  " Print action names.
-  let l:max = max(map(values(s:actions), 'len(v:val.name)'))
-  for [l:action_name, l:action] in items(s:actions)
-    echohl Identifier
-    echo unite#util#truncate(l:action_name, l:max)
-    if l:action.description != ''
-      echohl Special | echon ' -- '
-      echohl Comment
-      echon l:action.description
-    endif
-  endfor
-  echohl None
-
-  " Choose action.
-  let l:input = ''
-  while 1
-    let l:input = input('What action? ', l:input, 'customlist,unite#mappings#complete_actions')
-
-    if l:input == ''
-      " Cancel.
-      return
-    endif
-
-    " Check action candidates.
-    let l:actions = filter(keys(s:actions), printf('stridx(v:val, %s) == 0', string(l:input)))
-    if empty(l:actions)
-      echohl Error | echo 'Invalid action.' | echohl None
-    elseif len(l:actions) > 1
-      if has_key(s:actions, l:input)
-        let l:selected_action = l:input
-        break
-      endif
-
-      echohl Error | echo 'Too match action.' | echohl None
-    else
-      let l:selected_action = l:actions[0]
-      break
-    endif
-
-    echo ''
-  endwhile
-
-  " Execute action.
-  call unite#mappings#do_action(l:selected_action)
+  call unite#force_quit_session()
+  call unite#start([['action'] + l:candidates], l:context)
 endfunction"}}}
 function! s:insert_enter()"{{{
   let l:unite = unite#get_current_unite()
@@ -480,7 +436,9 @@ function! s:insert_selected_candidate()"{{{
   call unite#mappings#narrowing(l:candidate.word)
 endfunction"}}}
 function! s:quick_match()"{{{
-  if line('$') < (unite#get_current_unite().prompt_linenr+1)
+  let l:unite = unite#get_current_unite()
+
+  if line('$') < (l:unite.prompt_linenr+1)
     call unite#util#print_error('Candidate is nothing.')
     return
   elseif !empty(unite#get_marked_candidates())
@@ -505,9 +463,9 @@ function! s:quick_match()"{{{
   call unite#force_redraw()
 
   if has_key(g:unite_quick_match_table, l:char)
-        \ && g:unite_quick_match_table[l:char] < len(unite#get_current_unite().candidates)
-    call unite#mappings#do_action(unite#get_current_unite().context.default_action,
-          \ g:unite_quick_match_table[l:char])
+        \ && g:unite_quick_match_table[l:char] < len(l:unite.candidates)
+    call unite#mappings#do_action(l:unite.context.default_action,
+          \ [ l:unite.candidates[g:unite_quick_match_table[l:char]] ])
   else
     call unite#util#print_error('Canceled.')
   endif
@@ -532,6 +490,9 @@ let s:source = {
       \ 'syntax' : 'uniteSource__Action',
       \}
 
+function! s:source.hooks.on_close(args, context)"{{{
+  call unite#undef_source('action')
+endfunction"}}}
 function! s:source.hooks.on_syntax(args, context)"{{{
   syntax match uniteSource__ActionDescriptionLine / -- .*$/ contained containedin=uniteSource__Action
   syntax match uniteSource__ActionDescription /.*$/ contained containedin=uniteSource__ActionDescriptionLine
@@ -576,10 +537,6 @@ let s:source.action_table['*'] = s:action_table
 
 unlet s:action_table
 "}}}
-
-call unite#define_source(s:source)
-
-unlet s:source
 "}}}
 
 " vim: foldmethod=marker
