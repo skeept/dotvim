@@ -21,8 +21,12 @@ for folder in * ; do
     cd "$folder" >& /dev/null
     mv ._git .git >& /dev/null 
     if test -d .git; then 
-      printf "\n>>>   %s\n" $(basename $PWD)
+      printf "\n>>> git >>>  %s\n" $(basename $PWD)
       git pull
+    fi
+    if test -d .hg ; then 
+      printf "\n>>> hg >>>   %s\n" $(basename $PWD)
+      hg pull -u
     fi
     cd ..
   fi

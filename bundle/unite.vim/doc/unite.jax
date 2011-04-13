@@ -285,17 +285,6 @@ g:unite_enable_start_insert			*g:unite_enable_start_insert*
 		
 		初期値は0である。
 
-g:unite_enable_ignore_case			*g:unite_enable_ignore_case*
-		大文字・小文字を区別するかを制御する。1ならば区別しない。
-		
-		初期値は'ignorecase'オプションと同じである。
-
-g:unite_enable_smart_case			*g:unite_enable_smart_case*
-		入力に大文字が含まれている場合は、大文字・小文字を区別する。1
-		ならば有効になる。
-		
-		初期値は'infercase'オプションと同じである。
-
 g:unite_split_rule				*g:unite_split_rule*
 		uniteのウィンドウを生成する際、画面分割の位置ルールを指定する。
 		
@@ -368,8 +357,7 @@ g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
 		|unite-source-file|, |unite-source-file_rec|の候補に表示しな
 		いファイルの正規表現パターンを指定する。マッチングはファイル
 		のフルパスに対して行われる。この変数が空文字列以外であれば、
-		指定した正規表現で結果をフィルタリングする。正規表現の大文字・
-		小文字の区別は'ignorecase'の設定次第である。
+		指定した正規表現で結果をフィルタリングする。
 
 		初期値は autoload/unite/sources/file.vim を参照。
 
@@ -401,8 +389,8 @@ g:unite_source_file_mru_ignore_pattern		*g:unite_source_file_mru_ignore_pattern*
 		|unite-source-file_mru|の候補に表示しないファイルの正規表現
 		パターンを指定する。マッチングはファイルのフルパスに対して行
 		われる。この変数が空文字列以外であれば、指定した正規表現で結
-		果をフィルタリングする。正規表現の大文字・小文字は
-		'ignorecase'の設定に関わらず、明確に区別される。
+		果をフィルタリングする。正規表現の大文字・小文字は明確に区別さ
+		れる。
 		
 		初期値は autoload/unite/sources/file_mru.vim を参照。
 
@@ -423,8 +411,8 @@ g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
 		|unite-source-file_rec|の候補に表示しないファイルの正規表現
 		パターンを指定する。マッチングはファイルのフルパスに対して行
 		われる。この変数が空文字列以外であれば、指定した正規表現で結
-		果をフィルタリングする。正規表現の大文字・小文字は
-		'ignorecase'の設定に関わらず、明確に区別される。
+		果をフィルタリングする。正規表現の大文字・小文字は明確に区別さ
+		れる。
 		
 		初期値は autoload/unite/sources/file_rec.vim を参照。
 
@@ -754,7 +742,7 @@ unite#get_substitute_pattern({buffer-name})
 		ーンを取得する。{buffer-name}に置換パターンが定義されていない
 		と、エラーになる。デバッグ用である。
 
-unite#unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
+unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
 						*unite#set_buffer_name_option()*
 		uniteのバッファ名{buffer-name}における{option-name}のオプショ
 		ンを{value}に設定する。
@@ -770,6 +758,14 @@ unite#unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
 		filter名のリストを指定する。ここで指定したfilterは、source毎
 		に呼び出される普通のfilterとは異なり、全候補を結合した後に呼
 		び出される。
+		
+		ignorecase			(数値)
+		uniteバッファで一時的にセットされる'ignorecase'オプションの値を
+		決定する。省略すると、'ignorecase'の値と同じになる。
+		
+		smartcase			(数値)
+		大文字が入力されているときに、'ignorecase'オプションの値を無視
+		するかどうか決定する。省略すると、'smartcase'の値と同じになる。
 
 unite#custom_default_action({kind}, {default-action})
 						*unite#custom_default_action()*

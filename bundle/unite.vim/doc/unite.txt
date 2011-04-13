@@ -287,17 +287,6 @@ g:unite_enable_start_insert			*g:unite_enable_start_insert*
 
 		Default value is 0.
 
-g:unite_enable_ignore_case			*g:unite_enable_ignore_case*
-		Ignores case when the value is 1.
-
-		Default value is same to 'ignorecase' option.
-
-g:unite_enable_smart_case			*g:unite_enable_smart_case*
-		Distinguish capitals from smalls when the narrowing text has a
-		capital letter if this variable is 1.
-		
-		Default value is same to 'infercase'.
-
 g:unite_split_rule				*g:unite_split_rule*
 		Defines split position rule.
 
@@ -370,7 +359,7 @@ g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
 		candidates in which source is file.  This matches on the full
 		path of each files.  If the variable isn't empty string, unite
 		filters with the regex pattern on the results.  It depends on
-		'ignorecase' to distinguish cases or not.
+		|g:unite_enable_ignore_case| to distinguish cases or not.
 
 		Refer autoload/unite/sources/file.vim about the default value.
 
@@ -404,7 +393,7 @@ g:unite_source_file_mru_ignore_pattern		*g:unite_source_file_mru_ignore_pattern*
 		|unite-source-file_mru|.  This applies on the full path of
 		each files.  Unless this variable value is an empty string,
 		Unite filters out the result with the regexp.  Regardless of
-		'ignorecase' value, it's case sensitive.
+		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_mru.vim about the default
 		value.
@@ -427,7 +416,7 @@ g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
 		|unite-source-file_rec|.  This applies on the full path of
 		each files.  Unless this variable value is an empty string,
 		Unite filters out the result with the regexp.  Regardless of
-		'ignorecase' value, it's case sensitive.
+		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_rec.vim about the default
 		value.
@@ -762,6 +751,20 @@ unite#get_substitute_pattern({buffer-name})
 		Gets the substitute pattern for narrowing text of a Unite buffer
 		name {buffer-name}.  This causes an error if the substitute
 		pattern of {buffer-name}.  This is for debugging.
+
+unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
+						*unite#set_buffer_name_option()*
+		Set {buffer-name} specialized {option-name} to {value}.
+		
+		This options is available:
+		
+		substitute_patterns		(Dictionary)
+		
+		filters				(List)
+		
+		ignorecase			(Number)
+		
+		smartcase			(Number)
 
 unite#custom_default_action({kind}, {default-action})
 						*unite#custom_default_action()*
@@ -1264,6 +1267,16 @@ BUGS						*unite-bugs*
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-04-13
+- Added ignorecase and smartcase buffer_name options.
+- Fixed help.
+
+2011-04-12
+- Fixed quick match bug.
+- Fixed choose action.
+- Improved redraw.
+- Improved source file dummy candidates.
 
 2011-04-09
 - Improved file_rec source.
