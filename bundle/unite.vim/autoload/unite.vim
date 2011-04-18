@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Apr 2011.
+" Last Modified: 17 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1043,6 +1043,9 @@ function! s:recache_candidates(input, is_force)"{{{
       if !has_key(l:candidate, 'source')
         let l:candidate.source = l:source.name
       endif
+      if !has_key(l:candidate, 'is_dummy')
+        let l:candidate.is_dummy = 0
+      endif
 
       " Initialize.
       let l:candidate.unite__is_marked = 0
@@ -1379,9 +1382,6 @@ function! s:on_cursor_moved()  "{{{
     endif
 
     call unite#mappings#do_action('preview')
-    if line('.') != l:prompt_linenr
-      normal! zz
-    endif
   endif
 endfunction"}}}
 
@@ -1435,7 +1435,8 @@ function! s:take_action(action_name, candidate, is_parent_action)"{{{
         \ : a:action_name
 
   if !has_key(l:action_table, a:action_name)
-    throw 'no such action ' . a:action_name
+    " throw 'no such action ' . a:action_name
+    return
   endif
 
   let l:action = l:action_table[a:action_name]
