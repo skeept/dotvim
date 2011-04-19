@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-04-17
+" Updated : 2011-04-18
 " Version : 0.3.3
 " License : MIT license {{{
 "
@@ -98,7 +98,13 @@ function! s:get_outline_info(filetype, is_default)
       " E117: Unknown function:
       continue
     endtry
-    call s:check_update(s:find_autoload_script(load_func))
+    try
+      let scr_path = s:find_autoload_script(load_func)
+    catch /^ScriptNotFoundError:/
+      " the user moved his/her outline info somewhere!
+      continue
+    endtry
+    call s:check_update(scr_path)
     return s:init_outline_info({load_func}())
   endfor
   return {}
@@ -183,24 +189,27 @@ function! unite#sources#outline#import(name)
 endfunction
 
 function! s:find_autoload_script(funcname)
+  if !exists('s:autoload_scripts')
+    let s:autoload_scripts = {}
+  endif
+  if has_key(s:autoload_scripts, a:funcname)
+    let path =  s:autoload_scripts[a:funcname]
+    if filereadable(path)
+      return s:autoload_scripts[a:funcname]
+    else
+      " the script was moved somewhere for some reason...
+      unlet s:autoload_scripts[a:funcname]
+    endif
+  endif
   let path_list = split(a:funcname, '#')
-  let dir = s:find_dir('autoload/' . join(path_list[:-3], '/'))
-  if empty(dir)
-    throw "unite-outline: Directory not found for " . a:funcname
+  let rel_path = 'autoload/' . join(path_list[:-2], '/') . '.vim'
+  let path = get(split(globpath(&runtimepath, rel_path), "\<NL>"), 0, '')
+  if empty(path)
+    throw "ScriptNotFoundError: Script file not found for " . a:funcname
+  else
+    let s:autoload_scripts[a:funcname] = path
   endif
-  let base = path_list[-2] . '.vim'
-  return get(split(globpath(dir, base), "\<NL>"), 0, '')
-endfunction
-
-function! s:find_dir(rel_path)
-  if !exists('s:autoload_dirs')
-    let s:autoload_dirs = {}
-  endif
-  if !has_key(s:autoload_dirs, a:rel_path)
-    let dir = get(split(globpath(&runtimepath, a:rel_path), "\<NL>"), 0, '')
-    let s:autoload_dirs[a:rel_path] = dir
-  endif
-  return s:autoload_dirs[a:rel_path]
+  return path
 endfunction
 
 function! unite#sources#outline#clear_cache()
@@ -275,9 +284,7 @@ function! s:define_filetype_aliases()
   "
   let oinfos = {}
   for path in s:OUTLINE_INFO_PATH[:-2]
-    let dir = s:find_dir(path)
-    if empty(dir) | continue | endif
-    let oinfo_paths = split(globpath(dir, '*.vim'), "\<NL>")
+    let oinfo_paths = split(globpath(&rtp, path . '*.vim'), "\<NL>")
     for filetype in map(oinfo_paths, 'matchstr(v:val, "\\w\\+\\ze\\.vim$")')
       let filetype = substitute(filetype, '_', '.', 'g')
       let oinfos[filetype] = 1
@@ -304,12 +311,7 @@ let s:source = {
       \ }
 
 function! s:source.hooks.on_init(args, context)
-  let s:cache = unite#sources#outline#import('cache')
-  let s:tree  = unite#sources#outline#import('tree')
-  let s:util  = unite#sources#outline#import('util')
-
   let s:heading_id = 1
-
   let buffer = {
         \ 'nr'        : bufnr('%'),
         \ 'path'      : expand('%:p'),
@@ -323,12 +325,17 @@ function! s:source.hooks.on_init(args, context)
         \ 'minor_filetype': get(compound_filetypes, 1, ''),
         \ 'compound_filetypes': compound_filetypes,
         \ })
-  let outline_info = unite#sources#outline#get_outline_info(buffer.filetype)
-  let s:context = {
-        \ 'buffer': buffer,
-        \ 'outline_info': outline_info,
-        \ }
+  let s:context = { 'buffer': buffer }
   let a:context.source__outline_context = s:context
+  call s:import()
+endfunction
+function! s:import()
+  let s:cache = unite#sources#outline#import('cache')
+  let s:tree  = unite#sources#outline#import('tree')
+  let s:util  = unite#sources#outline#import('util')
+
+  let filetype = s:context.buffer.filetype
+  let s:context.outline_info = unite#sources#outline#get_outline_info(filetype)
 endfunction
 
 function! s:source.hooks.on_close(args, context)
@@ -352,12 +359,15 @@ function! s:source.gather_candidates(args, context)
     if s:cache.has(path) && !is_force
       try
         return s:cache.get(path)
-      catch /^CacheCompatibilityError/
+      catch /^CacheCompatibilityError:/
       catch /^unite-outline:/
         call unite#util#print_error(v:exception)
       endtry
     endif
 
+    if is_force
+      call s:import()
+    endif
     let filetype = s:context.buffer.filetype
     let outline_info = s:context.outline_info
 
