@@ -332,6 +332,36 @@ nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
 nmap <silent> ,lb :LustyBufferExplorer<CR>
 nmap <silent> ,lg :LustyBufferGrep<CR>
 
+nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
+nnoremap <silent> ,uo  :<C-u>Unite outline<CR>
+nnoremap  ,uf  :<C-u>Unite source<CR>
+
+autocmd FileType unite call s:unite_my_settings()
+function! s:unite_my_settings()"{{{
+  " Overwrite settings.
+
+  nmap <buffer> <ESC>      <Plug>(unite_exit)
+  imap <buffer> jj      <Plug>(unite_insert_leave)
+  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+
+  " <C-l>: manual neocomplcache completion.
+  inoremap <buffer> <C-l>  <C-x><C-u><C-p><Down>
+
+  " Start insert.
+  "let g:unite_enable_start_insert = 1
+  set nonumber
+  set norelativenumber
+endfunction"}}}
+
+let g:unite_source_file_mru_limit = 200
+let g:unite_cursor_line_highlight = 'TabLineSel'
+let g:unite_abbr_highlight = 'TabLine'
+
+" For optimize.
+let g:unite_source_file_mru_filename_format = ''
+
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
 nnoremap <C-L> :nohl<CR><C-L>
 
