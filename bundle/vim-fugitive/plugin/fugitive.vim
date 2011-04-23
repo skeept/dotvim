@@ -732,7 +732,7 @@ function! s:Commit(args) abort
         if bufname('%') == '' && line('$') == 1 && getline(1) == '' && !&mod
           edit `=msgfile`
         else
-          split `=msgfile`
+          keepalt split `=msgfile`
         endif
         if old_type ==# 'index'
           bdelete #
@@ -1178,9 +1178,9 @@ function! s:Move(force,destination)
   call fugitive#reload_status()
   if s:buffer().commit() == ''
     if isdirectory(destination)
-      return 'edit '.s:fnameescape(destination)
+      return 'keepalt edit '.s:fnameescape(destination)
     else
-      return 'saveas! '.s:fnameescape(destination)
+      return 'keepalt saveas! '.s:fnameescape(destination)
     endif
   else
     return 'file '.s:fnameescape(s:repo().translate(':0:'.destination)

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-04-19
+" Updated : 2011-04-23
 " Version : 0.3.3
 " License : MIT license {{{
 "
@@ -607,8 +607,7 @@ endfunction
 function! s:normalize_heading(heading)
   if type(a:heading) == type("")
     " normalize to a Dictionary
-    let level = unite#sources#outline#
-          \util#get_indent_level(s:context, s:context.heading_lnum)
+    let level = s:util.get_indent_level(s:context, s:context.heading_lnum)
     let heading = {
           \ 'word' : a:heading,
           \ 'level': level,
@@ -675,9 +674,19 @@ endfunction
 function! s:convert_headings_to_candidates(headings)
   if empty(a:headings) | return a:headings | endif
 
+  let outline_info = s:context.outline_info
+  if has_key(outline_info, 'not_match_patterns')
+    let not_match_pattern = '\%(' . join(outline_info.not_match_patterns, '\|') . '\)'
+  else
+    let not_match_pattern = ''
+  endif
   let physical_levels = s:smooth_levels(a:headings)
-  let candidates = map(s:util.list.zip(a:headings, physical_levels),
-        \ 's:create_candidate(v:val[0], v:val[1])')
+  let candidates = []
+  for [heading, phys_level] in s:util.list.zip(a:headings, physical_levels)
+    let cand = s:create_candidate(heading, phys_level)
+    let cand.word = substitute(cand.word, not_match_pattern, '', 'g')
+    call add(candidates, cand)
+  endfor
   return candidates
 endfunction
 
@@ -706,6 +715,7 @@ function! s:create_candidate(heading, physical_level)
         \
         \ 'source__heading': heading,
         \ })
+  let cand.abbr = cand.word
   unlet cand.level
   unlet cand.type
   unlet cand.lnum
