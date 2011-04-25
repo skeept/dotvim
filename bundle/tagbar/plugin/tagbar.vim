@@ -411,15 +411,33 @@ function! s:InitTypes()
     " JavaScript is weird -- it does have scopes, but ctags doesn't seem to
     " properly generate the information for them, instead it simply uses the
     " complete name. So ctags has to be fixed before I can do anything here.
+    " Alternatively jsctags/doctorjs will be used if available.
     let type_javascript = {}
     let type_javascript.ctagstype = 'javascript'
-    let type_javascript.kinds     = [
-        \ {'short' : 'v', 'long' : 'global variables', 'fold' : 0},
-        \ {'short' : 'c', 'long' : 'classes',          'fold' : 0},
-        \ {'short' : 'p', 'long' : 'properties',       'fold' : 0},
-        \ {'short' : 'm', 'long' : 'methods',          'fold' : 0},
-        \ {'short' : 'f', 'long' : 'functions',        'fold' : 0}
-    \ ]
+    if executable('jsctags')
+        let type_javascript.kinds = [
+            \ {'short' : 'v', 'long' : 'variables', 'fold' : 0},
+            \ {'short' : 'f', 'long' : 'functions', 'fold' : 0}
+        \ ]
+        let type_javascript.sro        = '.'
+        let type_javascript.kind2scope = {
+            \ 'v' : 'namespace',
+            \ 'f' : 'namespace'
+        \ }
+        let type_javascript.scope2kind = {
+            \ 'namespace' : 'v'
+        \ }
+        let type_javascript.ctagsbin   = 'jsctags'
+        let type_javascript.ctagsargs  = '-f -'
+    else
+        let type_javascript.kinds = [
+            \ {'short' : 'v', 'long' : 'global variables', 'fold' : 0},
+            \ {'short' : 'c', 'long' : 'classes',          'fold' : 0},
+            \ {'short' : 'p', 'long' : 'properties',       'fold' : 0},
+            \ {'short' : 'm', 'long' : 'methods',          'fold' : 0},
+            \ {'short' : 'f', 'long' : 'functions',        'fold' : 0}
+        \ ]
+    endif
     let s:known_types.javascript = type_javascript
     " Lisp {{{3
     let type_lisp = {}
@@ -882,9 +900,11 @@ function! s:BaseTag.getPrototype() dict
 endfunction
 
 " s:BaseTag._getPrefix() {{{3
-function! s:BaseTag._getPrefix(fileinfo, typeinfo) dict
+function! s:BaseTag._getPrefix() dict
+    let fileinfo = self.fileinfo
+
     if has_key(self, 'children') && !empty(self.children)
-        if a:fileinfo.tagfolds[self.fields.kind][self.fullpath]
+        if fileinfo.tagfolds[self.fields.kind][self.fullpath]
             let prefix = s:icon_closed
         else
             let prefix = s:icon_open
@@ -1007,14 +1027,19 @@ function! s:NormalTag.isNormalTag() dict
 endfunction
 
 " s:NormalTag.str() {{{3
-function! s:NormalTag.str(fileinfo, typeinfo) dict
+function! s:NormalTag.str() dict
+    let fileinfo = self.fileinfo
+    let typeinfo = s:known_types[fileinfo.ftype]
+
     let suffix = get(self.fields, 'signature', '')
-    if has_key(a:typeinfo, 'kind2scope') &&
-     \ has_key(a:typeinfo.kind2scope, self.fields.kind)
-        let suffix .= ' : ' . a:typeinfo.kind2scope[self.fields.kind]
+    if has_key(self.fields, 'type')
+        let suffix .= ' : ' . self.fields.type
+    elseif has_key(typeinfo, 'kind2scope') &&
+         \ has_key(typeinfo.kind2scope, self.fields.kind)
+        let suffix .= ' : ' . typeinfo.kind2scope[self.fields.kind]
     endif
 
-    return self._getPrefix(a:fileinfo, a:typeinfo) . self.name . suffix
+    return self._getPrefix() . self.name . suffix . "\n"
 endfunction
 
 " s:NormalTag.getPrototype() {{{3
@@ -1040,13 +1065,16 @@ function! s:PseudoTag.isPseudoTag() dict
 endfunction
 
 " s:PseudoTag.str() {{{3
-function! s:PseudoTag.str(fileinfo, typeinfo) dict
+function! s:PseudoTag.str() dict
+    let fileinfo = self.fileinfo
+    let typeinfo = s:known_types[fileinfo.ftype]
+
     let suffix = get(self.fields, 'signature', '')
-    if has_key(a:typeinfo.kind2scope, self.fields.kind)
-        let suffix .= ' : ' . a:typeinfo.kind2scope[self.fields.kind]
+    if has_key(typeinfo.kind2scope, self.fields.kind)
+        let suffix .= ' : ' . typeinfo.kind2scope[self.fields.kind]
     endif
 
-    return self._getPrefix(a:fileinfo, a:typeinfo) . self.name . '*' . suffix
+    return self._getPrefix() . self.name . '*' . suffix
 endfunction
 
 " Kind header {{{2
@@ -1235,7 +1263,7 @@ function! s:known_files.has(fname) dict
     return has_key(self._files, a:fname)
 endfunction
 
-" s:known_files.rm() {{{2
+" s:known_files.rm() {{{3
 function! s:known_files.rm(fname) dict
     if s:known_files.has(a:fname)
         call remove(self._files, a:fname)
@@ -1404,32 +1432,42 @@ function! s:ProcessFile(fname, ftype)
 
     let typeinfo = s:known_types[a:ftype]
 
-    let ctags_args  = ' -f - '
-    let ctags_args .= ' --format=2 '
-    let ctags_args .= ' --excmd=pattern '
-    let ctags_args .= ' --fields=nksSaz '
-    let ctags_args .= ' --extra= '
-    let ctags_args .= ' --sort=yes '
+    if has_key(typeinfo, 'ctagsargs')
+        let ctags_args = ' ' . typeinfo.ctagsargs . ' '
+    else
+        let ctags_args  = ' -f - '
+        let ctags_args .= ' --format=2 '
+        let ctags_args .= ' --excmd=pattern '
+        let ctags_args .= ' --fields=nksSa '
+        let ctags_args .= ' --extra= '
+        let ctags_args .= ' --sort=yes '
 
-    " Include extra type definitions
-    if has_key(typeinfo, 'deffile')
-        let ctags_args .= ' --options=' . typeinfo.deffile . ' '
+        " Include extra type definitions
+        if has_key(typeinfo, 'deffile')
+            let ctags_args .= ' --options=' . typeinfo.deffile . ' '
+        endif
+
+        let ctags_type = typeinfo.ctagstype
+
+        let ctags_kinds = ''
+        for kind in typeinfo.kinds
+            let ctags_kinds .= kind.short
+        endfor
+
+        let ctags_args .= ' --language-force=' . ctags_type .
+                        \ ' --' . ctags_type . '-kinds=' . ctags_kinds . ' '
     endif
 
-    let ctags_type = typeinfo.ctagstype
-
-    let ctags_kinds = ''
-    for kind in typeinfo.kinds
-        let ctags_kinds .= kind.short
-    endfor
-
-    let ctags_args .= ' --language-force=' . ctags_type .
-                    \ ' --' . ctags_type . '-kinds=' . ctags_kinds . ' '
+    if has_key(typeinfo, 'ctagsbin')
+        let ctags_bin = expand(typeinfo.ctagsbin)
+    else
+        let ctags_bin = g:tagbar_ctags_bin
+    endif
 
     if has('win32') || has('win64')
-        let ctags_bin = fnamemodify(g:tagbar_ctags_bin, ':8')
+        let ctags_bin = fnamemodify(ctags_bin, ':8')
     else
-        let ctags_bin = shellescape(g:tagbar_ctags_bin)
+        let ctags_bin = shellescape(ctags_bin)
     endif
     let ctags_cmd = ctags_bin . ctags_args . shellescape(a:fname)
     let ctags_output = system(ctags_cmd)
@@ -1550,6 +1588,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo)
     let taginfo.prototype = prototype
 
     let fields = split(a:part2, '\t')
+    let taginfo.fields.kind = remove(fields, 0)
     for field in fields
         " can't use split() since the value can contain ':'
         let delimit             = stridx(field, ':')
@@ -1557,6 +1596,10 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo)
         let val                 = strpart(field, delimit + 1)
         let taginfo.fields[key] = val
     endfor
+    " Needed for jsctags
+    if has_key(taginfo.fields, 'lineno')
+        let taginfo.fields.line = taginfo.fields.lineno
+    endif
 
     " Make some information easier accessible
     if has_key(a:typeinfo, 'scope2kind')
@@ -1917,7 +1960,7 @@ endfunction
 
 " s:PrintKinds() {{{2
 function! s:PrintKinds(typeinfo, fileinfo)
-    let first_kind = 1
+    let first_tag = 1
 
     for kind in a:typeinfo.kinds
         let curtags = filter(copy(a:fileinfo.tags),
@@ -1931,10 +1974,10 @@ function! s:PrintKinds(typeinfo, fileinfo)
          \ has_key(a:typeinfo.kind2scope, kind.short)
             " Scoped tags
             for tag in curtags
-                if g:tagbar_compact && first_kind && s:short_help
-                    silent 0put =tag.str(a:fileinfo, a:typeinfo)
+                if g:tagbar_compact && first_tag && s:short_help
+                    silent 0put =tag.str()
                 else
-                    silent  put =tag.str(a:fileinfo, a:typeinfo)
+                    silent  put =tag.str()
                 endif
 
                 " Save the current tagbar line in the tag for easy
@@ -1953,8 +1996,8 @@ function! s:PrintKinds(typeinfo, fileinfo)
                     silent put _
                 endif
 
+                let first_tag = 0
             endfor
-            let first_kind = 0
         else
             " Non-scoped tags
             let kindtag = curtags[0].parent
@@ -1965,7 +2008,7 @@ function! s:PrintKinds(typeinfo, fileinfo)
                 let foldmarker = s:icon_open
             endif
 
-            if g:tagbar_compact && first_kind && s:short_help
+            if g:tagbar_compact && first_tag && s:short_help
                 silent 0put =foldmarker . ' ' . kind.long
             else
                 silent  put =foldmarker . ' ' . kind.long
@@ -1977,7 +2020,7 @@ function! s:PrintKinds(typeinfo, fileinfo)
 
             if !kindtag.isFolded()
                 for tag in curtags
-                    let str = tag.str(a:fileinfo, a:typeinfo)
+                    let str = tag.str()
                     silent put ='  ' . str
 
                     " Save the current tagbar line in the tag for easy
@@ -1993,7 +2036,7 @@ function! s:PrintKinds(typeinfo, fileinfo)
                 silent put _
             endif
 
-            let first_kind = 0
+            let first_tag = 0
         endif
     endfor
 endfunction
@@ -2001,7 +2044,7 @@ endfunction
 " s:PrintTag() {{{2
 function! s:PrintTag(tag, depth, fileinfo, typeinfo)
     " Print tag indented according to depth
-    silent put =repeat(' ', a:depth * 2) . a:tag.str(a:fileinfo, a:typeinfo)
+    silent put =repeat(' ', a:depth * 2) . a:tag.str()
 
     " Save the current tagbar line in the tag for easy
     " highlighting access
