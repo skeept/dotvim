@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-04-23
-" Version : 0.3.3
+" Updated : 2011-04-26
+" Version : 0.3.4
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -63,14 +63,13 @@ function! unite#sources#outline#get_outline_info(filetype, ...)
   let is_default = (a:0 ? a:1 : 0)
 
   " NOTE: The filetype of the buffer may be a "compound filetype", a set of
-  " filetypes separated by periods.
+  " filetypes separated by periods. If the filetype is a compound one and has
+  " no outline info, fallback to its major filetype which is the left most.
+  "
   let try_filetypes = [a:filetype]
   if a:filetype =~ '\.'
-    " If the filetype is a compound one and has no outline info, fallback to
-    " its major filetype which is the left most.
     call add(try_filetypes, split(a:filetype, '\.')[0])
   endif
-
   for filetype in try_filetypes
     let outline_info = s:get_outline_info(filetype, is_default)
     if !empty(outline_info) | return outline_info | endif
@@ -88,7 +87,6 @@ function! s:get_outline_info(filetype, is_default)
   if has_key(g:unite_source_outline_info, filetype)
     return g:unite_source_outline_info[filetype]
   endif
-
   for path in (a:is_default ? s:OUTLINE_INFO_PATH[-1:] : s:OUTLINE_INFO_PATH)
     let load_func  = substitute(substitute(path, '^autoload/', '', ''), '/', '#', 'g')
     let load_func .= substitute(filetype, '\.', '_', 'g') . '#outline_info'
@@ -224,7 +222,6 @@ function! s:jump_to_match(...)
     call unite#util#print_error("unite-outline: Invalid buffer name.")
     return
   endif
-
   let flags = (a:0 ? a:1 : '')
   let forward = (flags !~# 'b')
   if empty(g:unite_source_outline_input)
@@ -261,10 +258,6 @@ endif
 
 if !exists('g:unite_source_outline_max_headings')
   let g:unite_source_outline_max_headings = 1000
-endif
-
-if !exists('g:unite_source_outline_cache_buffers')
-  let g:unite_source_outline_cache_buffers = 100
 endif
 
 if !exists('g:unite_source_outline_cache_limit')
@@ -343,20 +336,18 @@ function! s:source.gather_candidates(args, context)
   let save_ignorecase = &ignorecase
   set cpoptions&vim
   set noignorecase
-
   try
     if exists('g:unite_source_outline_profile') && g:unite_source_outline_profile && has("reltime")
       let start_time = s:get_reltime()
     endif
 
     let buffer = s:context.buffer
-
     let is_force = ((len(a:args) > 0 && a:args[0] == '!') || a:context.is_redraw)
     if is_force
       let s:context.outline_info = unite#sources#outline#get_outline_info(buffer.filetype)
-    elseif s:cache.has(buffer.path)
+    elseif s:cache.has(buffer)
       try
-        return s:cache.get(buffer.path)
+        return s:cache.get(buffer)
       catch /^CacheCompatibilityError:/
       catch /^unite-outline:/
         call unite#util#print_error(v:exception)
@@ -364,7 +355,6 @@ function! s:source.gather_candidates(args, context)
     endif
 
     let outline_info = s:context.outline_info
-
     if empty(outline_info)
       if empty(buffer.filetype)
         call unite#util#print_error("unite-outline: Please set the filetype.")
@@ -377,7 +367,6 @@ function! s:source.gather_candidates(args, context)
 
     let lines = [""] + getbufline(s:context.buffer.nr, 1, '$')
     let num_lines = len(lines) - 1
-
     let s:context.outline_info = outline_info
     let s:context.lines = lines
     let s:context.heading_lnum = 0
@@ -386,7 +375,6 @@ function! s:source.gather_candidates(args, context)
     if has_key(outline_info, 'initialize')
       call outline_info.initialize(s:context)
     endif
-
     if has_key(outline_info, 'extract_headings')
       let headings = outline_info.extract_headings(s:context)
       let normalized = 0
@@ -394,7 +382,6 @@ function! s:source.gather_candidates(args, context)
       let headings = s:extract_headings()
       let normalized = 1
     endif
-
     if has_key(outline_info, 'finalize')
       call outline_info.finalize(s:context)
     endif
@@ -425,9 +412,9 @@ function! s:source.gather_candidates(args, context)
     let is_volatile = has_key(outline_info, 'is_volatile') && outline_info.is_volatile
     if !is_volatile && (num_lines > 100)
       let do_serialize = (num_lines > g:unite_source_outline_cache_limit)
-      call s:cache.set(buffer.path, candidates, do_serialize)
-    elseif s:cache.has(buffer.path)
-      call s:cache.remove(buffer.path)
+      call s:cache.set(buffer, candidates, do_serialize)
+    elseif s:cache.has(buffer)
+      call s:cache.remove(buffer)
     endif
 
     if exists('g:unite_source_outline_profile') && g:unite_source_outline_profile && has("reltime")
@@ -572,7 +559,6 @@ function! s:extract_headings()
         call s:util.print_progress("Extracting headings..." . s:lnum * 100 / num_lines . "%")
       endif
     endif
-
     let s:lnum += 1
   endwhile
   call s:util.print_progress("Extracting headings...done.")
@@ -615,16 +601,16 @@ function! s:normalize_heading(heading)
   else
     let heading = a:heading
   endif
-
   let heading.source__id = s:heading_id
   let heading.word = s:normalize_heading_word(heading.word)
   call extend(heading, {
         \ 'level': 1,
         \ 'type' : 'generic',
         \ 'lnum' : s:context.heading_lnum,
+        \ 'source__is_marked' : 1,
+        \ 'source__is_matched': 0,
         \ }, 'keep')
   let s:heading_id += 1
-
   return heading
 endfunction
 
@@ -637,9 +623,8 @@ endfunction
 " Heading Type Filter
 function! s:filter_headings(headings, ignore_types, ...)
   let headings = a:headings
-  let remove_comments = (a:0 ? a:1 : 0)
-
   if !empty(a:ignore_types)
+    let remove_comments = (a:0 ? a:1 : 0)
     if remove_comments
       if index(a:ignore_types, 'comment') >= 0
         call filter(headings, 'v:val.type !=# "comment"')
@@ -654,11 +639,9 @@ function! s:filter_headings(headings, ignore_types, ...)
       function pred.call(heading)
         return (a:heading.type !~# self.ignore_types_pattern)
       endfunction
-
-      let headings = s:tree.filter(headings, pred, 1)
+      let headings = s:tree.filter(a:headings, pred, 1)
     endif
   endif
-
   return headings
 endfunction
 
@@ -719,7 +702,6 @@ function! s:create_candidate(heading, physical_level)
   unlet cand.level
   unlet cand.type
   unlet cand.lnum
-
   return cand
 endfunction
 
@@ -882,6 +864,6 @@ let s:source.action_table.jump_list = s:action_table
 "---------------------------------------
 " Filters
 
-call unite#custom_filters('outline', ['outline_matcher_glob_tree', 'outline_formatter'])
+call unite#custom_filters('outline', ['outline_matcher_glob', 'outline_formatter'])
 
 " vim: filetype=vim

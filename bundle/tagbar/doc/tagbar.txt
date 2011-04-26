@@ -3,7 +3,7 @@
 Author:		Jan Larres <jan@majutsushi.net>
 Licence:	Vim licence, see |license|
 Homepage:	http://majutsushi.github.com/tagbar/
-Version:	1.5
+Version:	2.0.1
 
 ==============================================================================
 Contents					*tagbar* *tagbar-contents*
@@ -339,7 +339,9 @@ g:tagbar_sort~
 Default: 1
 
 If this option is set the tags are sorted according to their name. If it is
-unset they are sorted according to their order in the source file.
+unset they are sorted according to their order in the source file. Note that
+in the second case Pseudo-tags are always sorted before normal tags of the
+same kind since they don't have a real position in the file.
 
 Example:
 >
@@ -778,6 +780,21 @@ files.
 ==============================================================================
 8. History						*tagbar-history*
 
+2.0.1 (2011-04-26)
+    - Fix sorting bug when 'ignorecase' is set
+
+2.0 (2011-04-26)
+    - Folding now works correctly. Folds will be preserved when leaving the
+      Tagbar window and when switching between files. Also tag types can be
+      configured to be folded by default, which is useful for things like
+      includes and imports.
+    - DoctorJS/jsctags and other compatible programs are now supported.
+    - All of the highlight groups can now be overridden.
+    - Added keybinding to quickly jump to next/previous top-level tag.
+    - Added Taglist's "p" keybinding for jumping to a tag without leaving the
+      Tagbar window.
+    - Several bugfixes and other small improvements.
+
 1.5 (2011-03-06)
     - Type definitions can now include a path to a file with the ctags
       definition. This is especially useful for ftplugins that can now ship
@@ -828,10 +845,11 @@ The folding technique was inspired by NERDTree by Martin Grenfell.
 
 Taybin Rutkin:
   - Contributed tagbar_autofocus option
-Jan Christoph Ebersbach:
-  - Suggested "deffile" option
 Seth Milliken:
   - Contributed folding keybindings that resemble the built-in ones
+
+Thanks to the following people for feature suggestions etc: Jan Christoph
+Ebersbach, pielgrzym
 
 ==============================================================================
  vim: tw=78 ts=8 sw=8 sts=8 noet ft=help
