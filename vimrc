@@ -270,6 +270,9 @@ let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
 
+"1tagbar settings
+let g:tagbar_autofocus = 1
+
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 
