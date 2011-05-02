@@ -352,7 +352,7 @@ function! s:unite_my_settings()"{{{
   "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
 
   " <C-l>: manual neocomplcache completion.
-  inoremap <buffer> <C-l>  <C-x><C-u><C-p><Down>
+  inoremap <buffer> <C-;>  <C-x><C-u><C-p><Down>
 
   " Start insert.
   "let g:unite_enable_start_insert = 1
