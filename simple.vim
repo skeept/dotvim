@@ -150,6 +150,7 @@ set pastetoggle=<Leader>pt
 "set t_Co=128
 set t_Co=256
 "set t_Co=88
+colorscheme bw_cs
 
 
 " setting the color in terminals
@@ -294,9 +295,6 @@ end " has("autocmd")
 set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 
-"some plugins don't work weel with some enviroments, just try to adjust them
-let g:LustyExplorerSuppressRubyWarning = 1
-if !has("python")
-  let g:loaded_gundo = 1
-  let loaded_gundo = 1
-endif
+"load eventual plugins here (the ones that would be really necessary)
+let g:p0 = split(&runtimepath, ',')[0]
+exec "source" . g:p0 . "/plugin/NERD_commenter.vim"
