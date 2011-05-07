@@ -11,7 +11,7 @@ undodir/*
 !backup
 !swapdir
 !undodir
-d.0
+d.1
 dd_
 view/
 
