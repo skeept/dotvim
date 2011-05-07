@@ -209,6 +209,7 @@ unite-source-directory_mru	unite.jax	/*unite-source-directory_mru*
 unite-source-file	unite.jax	/*unite-source-file*
 unite-source-file_mru	unite.jax	/*unite-source-file_mru*
 unite-source-file_rec	unite.jax	/*unite-source-file_rec*
+unite-source-mapping	unite.jax	/*unite-source-mapping*
 unite-source-output	unite.jax	/*unite-source-output*
 unite-source-register	unite.jax	/*unite-source-register*
 unite-source-source	unite.jax	/*unite-source-source*
