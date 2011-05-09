@@ -258,6 +258,11 @@ endfunction
 map <Leader>tn :call ToogleRelativeNumber()<cr>
 "set relativenumber
 
+"pep8 map
+let g:pep8_map='<leader>p8'
+"todo list
+map <leader>td <Plug>TaskList
+
 "taglist options 
 "let Tlist_Close_On_Select = 1
 let Tlist_Enable_Fold_Column = 0
