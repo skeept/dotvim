@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 May 2011.
+" Last Modified: 08 May 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,14 +22,14 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 2.0, for Vim 7.0
+" Version: 2.1, for Vim 7.0
 "=============================================================================
 
 let s:save_cpo = &cpo
 set cpo&vim
 
 function! unite#version()"{{{
-  return str2nr(printf('%02d%02d%03d', 2, 0, 0))
+  return str2nr(printf('%02d%02d%03d', 2, 1, 0))
 endfunction"}}}
 
 " User functions."{{{
@@ -728,7 +728,7 @@ function! unite#start(sources, ...)"{{{
     if !l:is_restore
       execute (l:unite.prompt_linenr+1)
     endif
-    normal! z.
+    normal! 0z.
   endif
 endfunction"}}}
 function! unite#resume(buffer_name)"{{{
@@ -776,9 +776,8 @@ function! unite#resume(buffer_name)"{{{
         \ || l:unite.context.start_insert || l:unite.context.complete
     let l:unite.is_insert = 1
 
-    if !l:is_restore
-      execute l:unite.prompt_linenr
-    endif
+    execute l:unite.prompt_linenr
+    normal! z.
 
     startinsert!
   else
@@ -795,9 +794,9 @@ function! unite#resume(buffer_name)"{{{
     if !l:is_restore
       execute (l:unite.prompt_linenr+1)
     endif
-  endif
 
-  normal! z.
+    normal! 0z.
+  endif
 endfunction"}}}
 
 function! unite#force_quit_session()  "{{{
