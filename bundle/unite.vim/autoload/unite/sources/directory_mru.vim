@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: directory_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Mar 2011.
+" Last Modified: 22 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -23,6 +23,9 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 " Variables  "{{{
 " The version of MRU file format.
@@ -68,8 +71,8 @@ function! unite#sources#directory_mru#_append()"{{{
   call insert(filter(s:mru_dirs, 'v:val.action__path !=# l:path'),
   \           s:convert2dictionary([l:path, localtime()]))
 
-  if g:unite_source_directory_mru_limit > 0
-    unlet s:mru_dirs[g:unite_source_directory_mru_limit]
+  if g:unite_source_directory_mru_limit < len(s:mru_dirs)
+    unlet s:mru_dirs[g:unite_source_directory_mru_limit :]
   endif
 
   call s:save()
@@ -85,14 +88,11 @@ let s:source = {
       \}
 
 function! s:source.hooks.on_syntax(args, context)"{{{
-  syntax match uniteSource__DirectoryMru_Time /(.*)/ containedin=uniteSource__DirectoryMru
+  syntax match uniteSource__DirectoryMru_Time /(.*)/ contained containedin=uniteSource__DirectoryMru
   highlight default link uniteSource__DirectoryMru_Time Statement
 endfunction"}}}
-
-function! s:source.gather_candidates(args, context)"{{{
-  call s:load()
-
-  for l:mru in s:mru_dirs
+function! s:source.hooks.on_post_filter(args, context)"{{{
+  for l:mru in a:context.candidates
     let l:relative_path = unite#util#substitute_path_separator(fnamemodify(l:mru.action__path, ':~:.'))
     if l:relative_path == ''
       let l:relative_path = l:mru.action__path
@@ -104,7 +104,10 @@ function! s:source.gather_candidates(args, context)"{{{
     let l:mru.abbr = strftime(g:unite_source_directory_mru_time_format, l:mru.source__time)
           \ . l:relative_path
   endfor
+endfunction"}}}
 
+function! s:source.gather_candidates(args, context)"{{{
+  call s:load()
   return s:mru_dirs
 endfunction"}}}
 
@@ -156,7 +159,6 @@ endfunction"}}}
 function! s:convert2dictionary(list)  "{{{
   return {
         \ 'word' : unite#util#substitute_path_separator(a:list[0]),
-        \ 'source' : 'directory_mru',
         \ 'kind' : 'directory',
         \ 'source__time' : a:list[1],
         \ 'action__path' : unite#util#substitute_path_separator(a:list[0]),
@@ -166,5 +168,8 @@ endfunction"}}}
 function! s:convert2list(dict)  "{{{
   return [ a:dict.action__path, a:dict.source__time ]
 endfunction"}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim: foldmethod=marker

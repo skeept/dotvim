@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: register.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Feb 2011.
+" Last Modified: 22 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -24,6 +24,9 @@
 " }}}
 "=============================================================================
 
+let s:save_cpo = &cpo
+set cpo&vim
+
 function! unite#sources#register#define()"{{{
   return s:source
 endfunction"}}}
@@ -37,7 +40,7 @@ function! s:source.gather_candidates(args, context)"{{{
   let l:candidates = []
 
   let l:max_width = winwidth(0) - 5
-  for [l:reg, l:register] in [['"', @"],
+  let l:registers = [['"', @"],
         \ ['0', @0], ['1', @1], ['2', @2], ['3', @3], ['4', @4],
         \ ['5', @5], ['6', @6], ['7', @7], ['8', @8], ['9', @9],
         \ ['a', @a], ['b', @b], ['c', @c], ['d', @d], ['e', @e],
@@ -48,12 +51,15 @@ function! s:source.gather_candidates(args, context)"{{{
         \ ['-', @-], ['*', @*], ['+', @+], ['.', @.], [':', @:],
         \ ['%', @%], ['#', @#], ['/', @/], ['=', @=],
         \ ]
+  if exists('g:yanktmp_file') && filereadable(g:yanktmp_file)
+    call add(l:registers, ['yanktmp', join(readfile(g:yanktmp_file, "b"), "\n")])
+  endif
 
+  for [l:reg, l:register] in l:registers
     if l:register != ''
       call add(l:candidates, {
             \ 'word' : l:register,
-            \ 'abbr' : printf('"%s - %-' . l:max_width . 's', l:reg, l:register[ : l:max_width]),
-            \ 'source' : 'register',
+            \ 'abbr' : printf('%-7s - %-' . l:max_width . 's', l:reg, l:register[ : l:max_width]),
             \ 'kind' : 'word',
             \ })
     endif
@@ -61,5 +67,8 @@ function! s:source.gather_candidates(args, context)"{{{
 
   return l:candidates
 endfunction"}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim: foldmethod=marker

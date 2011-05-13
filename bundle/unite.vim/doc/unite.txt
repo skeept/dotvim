@@ -1,6 +1,6 @@
 *unite.txt*	Unite all sources
 
-Version: 1.5
+Version: 2.0
 Author : Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -287,17 +287,6 @@ g:unite_enable_start_insert			*g:unite_enable_start_insert*
 
 		Default value is 0.
 
-g:unite_enable_ignore_case			*g:unite_enable_ignore_case*
-		Ignores case when the value is 1.
-
-		Default value is same to 'ignorecase' option.
-
-g:unite_enable_smart_case			*g:unite_enable_smart_case*
-		Distinguish capitals from smalls when the narrowing text has a
-		capital letter if this variable is 1.
-		
-		Default value is same to 'infercase'.
-
 g:unite_split_rule				*g:unite_split_rule*
 		Defines split position rule.
 
@@ -370,7 +359,7 @@ g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
 		candidates in which source is file.  This matches on the full
 		path of each files.  If the variable isn't empty string, unite
 		filters with the regex pattern on the results.  It depends on
-		'ignorecase' to distinguish cases or not.
+		|g:unite_enable_ignore_case| to distinguish cases or not.
 
 		Refer autoload/unite/sources/file.vim about the default value.
 
@@ -404,7 +393,7 @@ g:unite_source_file_mru_ignore_pattern		*g:unite_source_file_mru_ignore_pattern*
 		|unite-source-file_mru|.  This applies on the full path of
 		each files.  Unless this variable value is an empty string,
 		Unite filters out the result with the regexp.  Regardless of
-		'ignorecase' value, it's case sensitive.
+		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_mru.vim about the default
 		value.
@@ -427,7 +416,7 @@ g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
 		|unite-source-file_rec|.  This applies on the full path of
 		each files.  Unless this variable value is an empty string,
 		Unite filters out the result with the regexp.  Regardless of
-		'ignorecase' value, it's case sensitive.
+		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_rec.vim about the default
 		value.
@@ -752,14 +741,30 @@ unite#set_substitute_pattern({buffer-name}, {pattern}, {subst} [, {priority}])
 		which buffer_name is files, it adds a wildcard in order to
 		match ~ as $HOME and to match partially /.
 >
-		call unite#set_substitute_pattern('files', '^\~', substitute(substitute($HOME, '\\', '/', 'g'), ' ', '\\\\ ', 'g'), -100)
-		call unite#set_substitute_pattern('files', '[^~.*]\zs/', '*/*', 100)
+		call unite#set_substitute_pattern('files', '^\~',
+		\ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
+		call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
+		call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
 <
 unite#get_substitute_pattern({buffer-name})
 						*unite#get_substitute_pattern()*
 		Gets the substitute pattern for narrowing text of a Unite buffer
 		name {buffer-name}.  This causes an error if the substitute
 		pattern of {buffer-name}.  This is for debugging.
+
+unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
+						*unite#set_buffer_name_option()*
+		Set {buffer-name} specialized {option-name} to {value}.
+		
+		This options is available:
+		
+		substitute_patterns		(Dictionary)
+		
+		filters				(List)
+		
+		ignorecase			(Number)
+		
+		smartcase			(Number)
 
 unite#custom_default_action({kind}, {default-action})
 						*unite#custom_default_action()*
@@ -856,6 +861,9 @@ SOURCES						*unite-sources*
 
 						*unite-source-file*
 file		Nominates an input file as a candidate.
+		Note: This source doesn't nominates parent file(Example: "../")
+		or hidden files(Example: ".gitignore").  If you want to open
+		this files, please input ".".
 
 						*unite-source-file_mru*
 file_mru	Nominates files you used recently as candidates, ordering
@@ -868,7 +876,9 @@ directory_mru	Nominates directories you used recently as candidates,
 						*unite-source-file_rec*
 file_rec	Nominates all directory or file names of input narrowing text
 		under the current directly as candidates.  This may get Vim
-		frozen when there are too many candidates.
+		frozen when there are too many candidates. The candidates is
+		cached by file_rec source. If you clear cache, use
+		|<Plug>(unite_redraw)| keymapping.
 
 		Source arguments:
 		1. the narrowing text.
@@ -919,6 +929,9 @@ output		Nominates executed Vim command as candidates.
 
 						*unite-source-command*
 command		Nominates Vim Ex commands as candidates.
+
+						*unite-source-mapping*
+mapping		Nominates Vim mappings as candidates.
 
 ==============================================================================
 KINDS						*unite-kinds*
@@ -1037,9 +1050,6 @@ completion	An interface for completion
 ==============================================================================
 ACTIONS						*unite-actions*
 
-When you select an action with |<Plug>(unite_choose_action)|, you can complete
-action names or skip just by the first letters.
-
 Actions of each kinds
 
 common					*unite-action-common*
@@ -1073,6 +1083,10 @@ Defines an interface for files you can move to with cd command.
 			only when you already installed |vimshell|.
 	tabvimshell	Run |:VimShellTab| on the directory.  This is
 			available only when you already installed |vimshell|.
+	vimfiler	Run |vimfiler| on the directory.  This is available
+			only when you already installed |vimfiler|.
+	tabvimfiler	Run |:VimFilerTab| on the directory.  This is
+			available only when you already installed |vimfiler|.
 	rec		Run |unite-source-file_rec| on the directory.
 
 file						*unite-action-file*
@@ -1081,6 +1095,7 @@ Opens a file into a new buffer.  This kind extends |unite-action-openable| and
 	open		Open the file
 	preview		Open the file into preview window
 	bookmark	Add the file into your bookmark
+	mkdir		Make directory. If exists file, this action is invalid.
 
 buffer						*unite-action-buffer*
 This kind extends |unite-action-file|.
@@ -1221,6 +1236,9 @@ EXAMPLES					*unite-examples*
 	nnoremap <silent> [unite]o  :<C-u>Unite outline<CR>
 	nnoremap  [unite]f  :<C-u>Unite source<CR>
 	
+	" Start insert.
+	"let g:unite_enable_start_insert = 1
+	
 	autocmd FileType unite call s:unite_my_settings()
 	function! s:unite_my_settings()"{{{
 	  " Overwrite settings.
@@ -1231,9 +1249,6 @@ EXAMPLES					*unite-examples*
 	
 	  " <C-l>: manual neocomplcache completion.
 	  inoremap <buffer> <C-l>  <C-x><C-u><C-p><Down>
-	
-	  " Start insert.
-	  "let g:unite_enable_start_insert = 1
 	endfunction"}}}
 	
 	let g:unite_source_file_mru_limit = 200
@@ -1258,6 +1273,126 @@ BUGS						*unite-bugs*
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-05-06
+- Fixed syntax error.
+- Fixed example.
+- Improved g:unite_enable_start_insert option.
+- Added .gitignore file.
+- Improved file source discription.
+
+2011-05-01
+- Ver.2.0 is released.
+
+------------------------------------------------------------------------------
+ChangeLog unite.vim Ver.2.0:
+
+2011-04-28
+- Fixed unite source.
+
+2011-04-27
+- Refactored a bit.
+
+2011-04-26
+- Implemented position restore.
+- Improved auto preview behavior.
+- Implemented mapping source.
+
+2011-04-25
+- Fixed file_mru error.
+
+2011-04-22
+- Set cpoptions.
+- Improved file_rec source.
+
+2011-04-21
+- Fixed redraw candidates bug.
+
+2011-04-20
+- Fixed default action bug.
+
+2011-04-17
+- Improved auto preview.
+- Ignore invalid action.
+- Improved source file.
+- Improved loop cursor down/up.
+- Implemented dummy candidates.
+
+2011-04-16
+- Fixed auto preview bug.
+
+2011-04-15
+- Supported yanktmp in register source.
+
+2011-04-13
+- Added ignorecase and smartcase buffer_name options.
+- Fixed help.
+
+2011-04-12
+- Fixed quick match bug.
+- Fixed choose action.
+- Improved redraw.
+- Improved source file dummy candidates.
+
+2011-04-09
+- Improved file_rec source.
+- Caching file_rec source.
+- Fixed narrowing action.
+
+2011-04-07
+- Fixed hlsearch bug.
+- Fixed sidescrolloff problem.
+- Added is_async context flag.
+
+2011-04-04
+- Fixed quick match error.
+- Improved default substitute pattern.
+
+2011-04-03
+- Improved unite action.
+
+2011-04-02
+- Fixed :UniteResume bug.
+- Improved unite action.
+- Fixed choose action.
+
+2011-04-01
+- Fixed get action table bug.
+- Fixed priority sort bug.
+- Fixed narrowing.
+- Improved file source.
+- Implemented auto mkdir().
+- Implemented mkdir action.
+
+2011-03-31
+- Improved sort.
+- Optimized initialization.
+- Improved truncate.
+- Added post_filter hook.
+- Improved file_mru source.
+- Improved directory_mru source.
+- Fixed choose_action documentation.
+- Add '..' directory in unite source.
+
+2011-03-29
+- Implemented unite action source.
+- Changed unite#loaded_source_names_with_args().
+- Added sorter_word.
+- Improved redraw.
+- Fixed highlight settings.
+
+2011-03-25
+- Implemented vimfiler and tabvimfiler actions.
+- Improved documentation.
+- Fixed highlight.
+- Changed on_close timing.
+
+2011-03-23
+- Fixed kind completion bug.
+
+2011-03-22
+- Fixed unite#custom_filters() bug.
+- Ommitable candidates source name.
 
 2011-03-17
 - Implemented unite#clear_message().

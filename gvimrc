@@ -113,3 +113,7 @@ map <c-s-tab> gT
 
 "colorscheme morning
 colorscheme desert
+
+if has("autocmd")
+  autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
+endif 

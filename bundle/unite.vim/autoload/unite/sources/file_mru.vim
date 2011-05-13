@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Mar 2011.
+" Last Modified: 25 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -23,6 +23,9 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 " Variables  "{{{
 " The version of MRU file format.
@@ -58,8 +61,8 @@ function! unite#sources#file_mru#_append()"{{{
   call insert(filter(s:mru_files, 'v:val.action__path !=# l:path'),
   \           s:convert2dictionary([l:path, localtime()]))
 
-  if g:unite_source_file_mru_limit > 0
-    unlet s:mru_files[g:unite_source_file_mru_limit]
+  if g:unite_source_file_mru_limit < len(s:mru_files)
+    let s:mru_files = s:mru_files[ : g:unite_source_file_mru_limit - 1]
   endif
 
   call s:save()
@@ -75,23 +78,21 @@ let s:source = {
       \}
 
 function! s:source.hooks.on_syntax(args, context)"{{{
-  syntax match uniteSource__FileMru_Time /(.*)/ containedin=uniteSource__FileMru
+  syntax match uniteSource__FileMru_Time /(.*)/ contained containedin=uniteSource__FileMru
   highlight default link uniteSource__FileMru_Time Statement
+endfunction"}}}
+function! s:source.hooks.on_post_filter(args, context)"{{{
+  for l:mru in a:context.candidates
+    let l:path = (g:unite_source_file_mru_filename_format == '') ? '' :
+          \ unite#util#substitute_path_separator(fnamemodify(l:mru.action__path, g:unite_source_file_mru_filename_format))
+    let l:mru.abbr = (g:unite_source_file_mru_filename_format == '' ? '' :
+          \ strftime(g:unite_source_file_mru_time_format, l:mru.source__time)) .
+          \ (l:path == '' ? l:mru.action__path : l:path)
+  endfor
 endfunction"}}}
 
 function! s:source.gather_candidates(args, context)"{{{
   call s:load()
-
-  " Create abbr.
-  for l:mru in s:mru_files
-    let l:path = (g:unite_source_file_mru_filename_format == '') ? '' :
-          \ unite#util#substitute_path_separator(fnamemodify(l:mru.action__path, g:unite_source_file_mru_filename_format))
-    if l:path == ''
-      let l:path = l:mru.action__path
-    endif
-
-    let l:mru.abbr = strftime(g:unite_source_file_mru_time_format, l:mru.source__time) . l:path
-  endfor
 
   return s:mru_files
 endfunction"}}}
@@ -148,7 +149,6 @@ function! s:convert2dictionary(list)  "{{{
   let l:path = unite#util#substitute_path_separator(a:list[0])
   return {
         \ 'word' : l:path,
-        \ 'source' : 'file_mru',
         \ 'kind' : (isdirectory(l:path) ? 'directory' : 'file'),
         \ 'source__time' : a:list[1],
         \ 'action__path' : l:path,
@@ -158,5 +158,8 @@ endfunction"}}}
 function! s:convert2list(dict)  "{{{
   return [ a:dict.action__path, a:dict.source__time ]
 endfunction"}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim: foldmethod=marker

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Mar 2011.
+" Last Modified: 22 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -24,6 +24,9 @@
 " }}}
 "=============================================================================
 
+let s:save_cpo = &cpo
+set cpo&vim
+
 " Variables  "{{{
 call unite#util#set_default('g:unite_source_file_rec_ignore_pattern', 
       \'\%(^\|/\)\.$\|\~$\|\.\%(o|exe|dll|bak|sw[po]\)$\|\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)')
@@ -39,6 +42,8 @@ let s:source = {
       \ 'max_candidates' : 50,
       \ }
 
+let s:continuation = {}
+
 function! s:source.gather_candidates(args, context)"{{{
   if !empty(a:args)
     let l:directory = a:args[0]
@@ -52,34 +57,48 @@ function! s:source.gather_candidates(args, context)"{{{
 
   call unite#print_message('[file_rec] directory: ' . l:directory)
 
-  " Initialize continuation.
-  let a:context.source__continuation = {
-        \ 'files' : [l:directory],
-        \ }
+  let a:context.source__directory = l:directory
+  if a:context.is_redraw || !has_key(s:continuation, l:directory)
+    let a:context.is_async = 1
 
-  return []
+    " Initialize continuation.
+    let s:continuation[l:directory] = {
+          \ 'files' : [l:directory],
+          \ 'cached' : [],
+          \ }
+  endif
+
+  let l:continuation = s:continuation[a:context.source__directory]
+  if empty(l:continuation.files)
+    " Disable async.
+    call unite#print_message('[file_rec] Directory traverse was completed.')
+    let a:context.is_async = 0
+  endif
+
+  return l:continuation.cached
 endfunction"}}}
 
 function! s:source.async_gather_candidates(args, context)"{{{
-  if empty(a:context.source__continuation.files)
-    return []
-  endif
+  let l:continuation = s:continuation[a:context.source__directory]
+  let [l:continuation.files, l:candidates] = s:get_files(l:continuation.files)
 
-  let [a:context.source__continuation.files, l:candidates] =
-        \ s:get_files(a:context.source__continuation.files)
-
-  if empty(a:context.source__continuation.files)
+  if empty(l:continuation.files)
+    " Disable async.
     call unite#print_message('[file_rec] Directory traverse was completed.')
+    let a:context.is_async = 0
   endif
 
-  return map(l:candidates, '{
+  call map(l:candidates, '{
         \ "word" : unite#util#substitute_path_separator(fnamemodify(v:val, ":p")),
         \ "abbr" : unite#util#substitute_path_separator(fnamemodify(v:val, ":.")),
-        \ "source" : "file_rec",
         \ "kind" : "file",
         \ "action__path" : unite#util#substitute_path_separator(fnamemodify(v:val, ":p")),
         \ "action__directory" : unite#util#path2directory(v:val),
         \ }')
+
+  let l:continuation.cached += l:candidates
+
+  return l:candidates
 endfunction"}}}
 
 " Add custom action table."{{{
@@ -98,14 +117,15 @@ unlet! s:cdable_action_rec
 function! s:get_files(files)"{{{
   let l:continuation_files = []
   let l:ret_files = []
-  let l:max_len = 20
+  let l:max_len = 30
   let l:files_index = 0
   let l:ret_files_len = 0
   for l:file in a:files
     let l:files_index += 1
 
-    if g:unite_source_file_rec_ignore_pattern != '' &&
-          \ l:file =~ g:unite_source_file_rec_ignore_pattern
+    if l:file =~ '/\.\+$'
+          \ || (g:unite_source_file_rec_ignore_pattern != '' &&
+          \     l:file =~ g:unite_source_file_rec_ignore_pattern)
       continue
     endif
 
@@ -120,7 +140,7 @@ function! s:get_files(files)"{{{
       for l:child in l:childs
         let l:child_index += 1
 
-        if l:child =~ '/\.\%(\.\|$\)'
+        if l:child =~ '/\.\+$'
               \ ||(g:unite_source_file_rec_ignore_pattern != '' &&
               \     l:child =~ g:unite_source_file_rec_ignore_pattern)
           continue
@@ -147,5 +167,8 @@ function! s:get_files(files)"{{{
   let l:continuation_files += a:files[l:files_index :]
   return [l:continuation_files, l:ret_files]
 endfunction"}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim: foldmethod=marker

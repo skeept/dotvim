@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cdable.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Feb 2011.
+" Last Modified: 22 Apr 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -23,6 +23,9 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#kinds#cdable#define()"{{{
   return s:kind
@@ -91,6 +94,9 @@ function! s:kind.action_table.narrow.func(candidate)"{{{
     let l:word = a:candidate.word
   else
     let l:word = unite#util#substitute_path_separator(fnamemodify(a:candidate.action__directory, ':.'))
+    if l:word == ''
+      let l:word = a:candidate.word
+    endif
   endif
 
   if l:word !~ '[\\/]$'
@@ -116,6 +122,25 @@ if exists(':VimShellTab')
     VimShellTab `=a:candidate.action__directory`
   endfunction"}}}
 endif
+if exists(':VimFiler')
+  let s:kind.action_table.vimfiler = {
+        \ 'description' : 'open vimfiler buffer here',
+        \ }
+  function! s:kind.action_table.vimfiler.func(candidate)"{{{
+    VimFilerCreate `=a:candidate.action__directory`
+  endfunction"}}}
+endif
+if exists(':VimFilerTab')
+  let s:kind.action_table.tabvimfiler = {
+        \ 'description' : 'tabopen vimfiler buffer here',
+        \ }
+  function! s:kind.action_table.tabvimfiler.func(candidate)"{{{
+    VimFilerTab `=a:candidate.action__directory`
+  endfunction"}}}
+endif
 "}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim: foldmethod=marker

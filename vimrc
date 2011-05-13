@@ -44,7 +44,7 @@ set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
 
-if version >= 703
+if v:version >= 703
   set undofile
 endif
 
@@ -54,13 +54,13 @@ set backup
 if has("win32") 
   set backupdir^=$HOME\vimfiles\backup//
   set directory^=$HOME\vimfiles\swapdir//
-  if version >= 703
+  if v:version >= 703
     set undodir^=$HOME\vimfiles\undodir//
   endif
 else
   set backupdir^=~/.vim/backup//
   set directory^=~/.vim/swapdir//
-  if version >= 703
+  if v:version >= 703
     set undodir^=$HOME/.vim/undodir//
   endif
 endif
@@ -211,7 +211,7 @@ if !has("gui_running") && !has("win32")
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   colorscheme  graywh_cs
+   colorscheme  graywh_cs1
 endif
 
 
@@ -276,6 +276,9 @@ let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
 
+"1tagbar settings
+let g:tagbar_autofocus = 1
+
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 
@@ -288,6 +291,9 @@ else
   let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
 endif
 
+nmap ,f :call PreciseJumpF(-1, -1, 0)<cr>
+vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<cr>
+omap ,f :call PreciseJumpF(-1, -1, 0)<cr>
 
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
@@ -330,10 +336,42 @@ let g:SrcExpl_isUpdateTags = 0
 map <F3> :call ToogleTagListNerdTree() <cr>
 imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 
-nmap <silent> ,f :LustyFilesystemExplorer<CR>
-nmap <silent> ,r :LustyFilesystemExplorerFromHere<CR>
-nmap <silent> ,b :LustyBufferExplorer<CR>
-nmap <silent> ,g :LustyBufferGrep<CR>
+nmap <silent> ,lf :LustyFilesystemExplorer<CR>
+nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
+nmap <silent> ,lb :LustyBufferExplorer<CR>
+nmap <silent> ,lg :LustyBufferGrep<CR>
+
+nmap <silent> ,lj :LustyJuggler<CR>
+
+nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
+nnoremap <silent> ,uo  :<C-u>Unite outline<CR>
+nnoremap  ,uf  :<C-u>Unite source<CR>
+
+autocmd FileType unite call s:unite_my_settings()
+function! s:unite_my_settings()"{{{
+  " Overwrite settings.
+
+  nmap <buffer> <ESC>      <Plug>(unite_exit)
+  imap <buffer> jj      <Plug>(unite_insert_leave)
+  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+
+  " <C-l>: manual neocomplcache completion.
+  inoremap <buffer> <C-;>  <C-x><C-u><C-p><Down>
+
+  " Start insert.
+  "let g:unite_enable_start_insert = 1
+  set nonumber
+  set norelativenumber
+endfunction"}}}
+
+let g:unite_source_file_mru_limit = 200
+let g:unite_cursor_line_highlight = 'TabLineSel'
+let g:unite_abbr_highlight = 'TabLine'
+
+" For optimize.
+let g:unite_source_file_mru_filename_format = ''
 
 nmap <silent> <Leader>bb :TSelectBuffer<cr> 
 nnoremap <C-L> :nohl<CR><C-L>
@@ -396,8 +434,9 @@ map <Leader>os :Scratch<CR>
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
 
-"don't want to start this completion thing before 5 chars
-let g:acp_behaviorKeywordLength = 5
+"don't want to start this completion thing before x chars
+let g:acp_behaviorKeywordLength = 4
+let g:acp_completeOption = '.,w,b,k,t'
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
@@ -417,6 +456,7 @@ set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 
 set foldmethod=syntax
 set title
+set virtualedit+=block
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "

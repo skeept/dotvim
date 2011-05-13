@@ -21,8 +21,12 @@ for folder in * ; do
     cd "$folder" >& /dev/null
     mv ._git .git >& /dev/null 
     if test -d .git; then 
-      printf "\n>>>   %s\n" $(basename $PWD)
+      printf "\n>>> git >>>  %s\n" $(basename $PWD)
       git pull
+    fi
+    if test -d .hg ; then 
+      printf "\n>>> hg >>>   %s\n" $(basename $PWD)
+      hg pull -u
     fi
     cd ..
   fi
@@ -32,8 +36,15 @@ done
 
 function main()
 {
+  if test -z "$@"; then
+    echo "$0 -s : move .git to ._git"
+    echo "$0 -u : update .git"
+    echo -e "\n\n"
+    do_git_update
+    exit
+  fi
   DO_UPDATE=0
-  while getopts "u" flag
+  while getopts "us" flag
   do
     case $flag in 
       u) DO_UPDATE=1 ;;

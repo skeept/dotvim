@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Mar 2011.
+" Last Modified: 01 May 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,12 +22,15 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 1.5, for Vim 7.0
+" Version: 2.0, for Vim 7.0
 "=============================================================================
 
 if exists('g:loaded_unite')
   finish
 endif
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 " Global options definition."{{{
 if !exists('g:unite_update_time')
@@ -77,7 +80,7 @@ if !exists('g:unite_data_directory')
   let g:unite_data_directory = expand('~/.unite')
 endif
 if !isdirectory(fnamemodify(g:unite_data_directory, ':p'))
-  call mkdir(fnamemodify(g:unite_data_directory, ':p'), 'p')
+  call mkdir(iconv(fnamemodify(g:unite_data_directory, ':p'), &encoding, &termencoding), 'p')
 endif
 "}}}
 
@@ -183,6 +186,9 @@ endfunction"}}}
 command! -nargs=? -complete=customlist,unite#complete_buffer UniteResume call unite#resume(<q-args>)
 
 let g:loaded_unite = 1
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " __END__
 " vim: foldmethod=marker
