@@ -46,6 +46,7 @@ set cmdheight=1
 
 if v:version >= 703
   set undofile
+  set relativenumber
 endif
 
 "" set backup. but all the backuped files will be 
@@ -238,7 +239,6 @@ endfunction
 map <Leader>s :call ToggleSpell() <cr>
 
 let g:relativenumber =2
-set relativenumber
 function! ToogleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
@@ -257,6 +257,11 @@ endfunction
 
 map <Leader>tn :call ToogleRelativeNumber()<cr>
 "set relativenumber
+
+"pep8 map
+let g:pep8_map='<leader>p8'
+"todo list
+map <leader>td <Plug>TaskList
 
 "taglist options 
 "let Tlist_Close_On_Select = 1
@@ -488,4 +493,13 @@ let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
   let g:loaded_gundo = 1
   let loaded_gundo = 1
+endif
+
+"don't load plugins in that cause errors for previous versions
+if v:version < 702
+  let g:loaded_ZoomWinPlugin = 1
+  let g:loaded_tagbar = 1
+endif
+if v:version < 703
+  let g:loaded_autoload_l9 = 1
 endif

@@ -150,7 +150,10 @@ set pastetoggle=<Leader>pt
 "set t_Co=128
 set t_Co=256
 "set t_Co=88
-colorscheme bw_cs
+"colorscheme bw_cs
+"colorscheme desertink
+"colorscheme ps_color_cs
+colorscheme winter_cs
 
 
 " setting the color in terminals
