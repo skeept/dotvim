@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/rst.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-16
+" Updated : 2011-05-17
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -9,16 +9,14 @@
 "=============================================================================
 
 " Default outline info for reStructuredText
-" Version: 0.0.1
+" Version: 0.0.2
 
 function! unite#sources#outline#defaults#rst#outline_info()
   return s:outline_info
 endfunction
 
-let s:Util = unite#sources#outline#import('Util')
-
 let s:outline_info = {
-      \ 'heading+1': '^[[:punct:]]\{4,}',
+      \ 'heading+1': '^\([[:punct:]]\)\1\{3,}$',
       \ }
 
 function! s:outline_info.initialize(context)
@@ -49,7 +47,11 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     let heading.level = s:adornment_levels[adchar]
   endif
 
-  return heading
+  if heading.level > 0
+    return heading
+  else
+    return {}
+  endif
 endfunction
 
 " vim: filetype=vim
