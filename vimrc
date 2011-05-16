@@ -340,6 +340,7 @@ let g:SrcExpl_isUpdateTags = 0
 
 map <F3> :call ToogleTagListNerdTree() <cr>
 imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
+map <F5> :TagbarToggle<CR>
 
 nmap <silent> ,lf :LustyFilesystemExplorer<CR>
 nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
