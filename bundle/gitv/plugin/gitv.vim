@@ -648,6 +648,7 @@ fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
         let cmd = a:geditForm . " " . sha
         let cmd = 'call s:RecordBufferExecAndWipe("'.cmd.'", '.(a:geditForm=='Gedit').')'
         call s:MoveIntoPreviewAndExecute(cmd, 1)
+        call s:MoveIntoPreviewAndExecute('setlocal fdm=syntax', 0)
     endif
 endf
 fu! s:OpenWorkingCopy(geditForm)
@@ -749,7 +750,7 @@ fu! s:StatGitvCommit() range "{{{
     if shafirst == "" || shalast == ""
         return
     endif
-    let cmd  = 'diff '.shafirst
+    let cmd  = 'diff --no-color '.shafirst
     if shafirst != shalast
         let cmd .= ' '.shalast
     endif
