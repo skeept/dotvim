@@ -1,6 +1,6 @@
 " File: plugin/SingleCompile.vim
-" GetLatestVimScripts: 3115 1 :AutoInstall: SingleCompile.zip
-" version 2.2.6
+" GetLatestVimScripts: 3115 1 SingleCompile.zip
+" version 2.8.2beta
 " check doc/SingleCompile.txt for more version information
 
 if v:version < 700
@@ -18,23 +18,39 @@ set cpo&vim
 
 
 " commands {{{1
-command -nargs=* SCCompile       
-            \if <q-args> == '' | call SingleCompile#Compile() | 
-            \else | call SingleCompile#Compile(<q-args>) | endif
-command -nargs=* SCCompileRun    
-            \if <q-args> == '' | call SingleCompile#CompileRun() | 
-            \else | call SingleCompile#CompileRun(<q-args>) | endif
-command -nargs=* SingleCompile       
-            \if <q-args> == '' | call SingleCompile#Compile() |
-            \else | call SingleCompile#Compile(<q-args>) | endif
-command -nargs=* SingleCompileRun    
-            \if <q-args> == '' | call SingleCompile#CompileRun() | 
-            \else | call SingleCompile#CompileRun(<q-args>) | endif
-command -nargs=+ SCCompileAF    
-            \call SingleCompile#Compile('AdditionalFlags', <q-args>)
-command -nargs=+ SCCompileRunAF    
-            \call SingleCompile#CompileRun('AdditionalFlags', <q-args>)
+command -nargs=* SCCompile
+            \ if <q-args> == '' | call SingleCompile#Compile() |
+            \ else | call SingleCompile#Compile(<q-args>) | endif
+command -nargs=* SCCompileRun
+            \ if <q-args> == '' | call SingleCompile#CompileRun() |
+            \ else | call SingleCompile#CompileRun(<q-args>) | endif
+command -nargs=* SCCompileRunAsync
+            \ if <q-args> == '' | call SingleCompile#CompileRunAsync() |
+            \ else | call SingleCompile#CompileRunAsync(<q-args>) | endif
+command -nargs=* SingleCompile
+            \ if <q-args> == '' | call SingleCompile#Compile() |
+            \ else | call SingleCompile#Compile(<q-args>) | endif
+command -nargs=* SingleCompileRun
+            \ if <q-args> == '' | call SingleCompile#CompileRun() |
+            \ else | call SingleCompile#CompileRun(<q-args>) | endif
+command -nargs=+ SCCompileAF
+            \ call SingleCompile#Compile('AdditionalFlags', <q-args>)
+command -nargs=+ SCCompileRunAF
+            \ call SingleCompile#CompileRun('AdditionalFlags', <q-args>)
+command -nargs=+ SCCompileRunAsyncAF
+            \ call SingleCompile#CompileRunAsync('AdditionalFlags', <q-args>)
+command SCTerminateAsync
+            \ if SingleCompileAsync#Terminate() |
+            \ echohl ErrorMsg |
+            \ echo 'Failed to terminate the background process!' |
+            \ echohl None |
+            \ else |
+            \ echo 'Background process terminated.' |
+            \ endif
 command SCChooseCompiler call SingleCompile#ChooseCompiler(&filetype)
+command SCChooseInterpreter call SingleCompile#ChooseCompiler(&filetype)
+command SCViewResult call SingleCompile#ViewResult(0)
+command SCViewResultAsync call SingleCompile#ViewResult(1)
 
 " menus {{{1
 
@@ -49,34 +65,46 @@ if has('gui_running') && has('menu')
                     \ :SCCompileRun<cr>
         nnoremenu Plugin.SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ :SCChooseCompiler<cr>
+        nnoremenu Plugin.SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
         inoremenu Plugin.SingleCompile.&Compile<tab>:SCCompile
                     \ <C-O>:SCCompile<cr>
         inoremenu Plugin.SingleCompile.Compile\ and\ &Run<tab>:SCCompileRun
                     \ <C-O>:SCCompileRun<cr>
         inoremenu Plugin.SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ <C-O>:SCChooseCompiler<cr>
+        inoremenu Plugin.SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
         vnoremenu Plugin.SingleCompile.&Compile<tab>:SCCompile
                     \ <Esc>:SCCompile<cr>
         vnoremenu Plugin.SingleCompile.Compile\ and\ &Run<tab>:SCCompileRun
                     \ <Esc>:SCCompileRun<cr>
         vnoremenu Plugin.SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ <Esc>:SCChooseCompiler<cr>
+        vnoremenu Plugin.SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
     elseif g:SingleCompile_menumode == 2
         nnoremenu SingleCompile.&Compile<tab>:SCCompile :SCCompile<cr>
         nnoremenu SingleCompile.Compile\ and\ &Run<tab>:SCCompileRun
                     \ :SCCompileRun<cr>
         nnoremenu SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ :SCChooseCompiler<cr>
+        nnoremenu SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
         inoremenu SingleCompile.&Compile<tab>:SCCompile <C-O>:SCCompile<cr>
         inoremenu SingleCompile.Compile\ and\ &Run<tab>:SCCompileRun
                     \ <C-O>:SCCompileRun<cr>
         inoremenu SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ <C-O>:SCChooseCompiler<cr>
+        inoremenu SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
         vnoremenu SingleCompile.&Compile<tab>:SCCompile <Esc>:SCCompile<cr>
         vnoremenu SingleCompile.Compile\ and\ &Run<tab>:SCCompileRun
                     \ <Esc>:SCCompileRun<cr>
         vnoremenu SingleCompile.C&hoose\ Compiler<tab>:SCChooseCompiler
                     \ <Esc>:SCChooseCompiler<cr>
+        vnoremenu SingleCompile.&View\ Result<tab>:SCViewResult
+                    \ :SCViewResult<cr>
     endif
 endif
 
