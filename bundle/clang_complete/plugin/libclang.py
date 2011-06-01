@@ -19,8 +19,8 @@ def getCurrentFile():
   return (vim.current.buffer.name, file)
 
 def getCurrentTranslationUnit(update = False):
-  userOptionsGlobal = vim.eval("g:clang_user_options").split(" ")
-  userOptionsLocal = vim.eval("b:clang_user_options").split(" ")
+  userOptionsGlobal = splitOptions(vim.eval("g:clang_user_options"))
+  userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
   args = userOptionsGlobal + userOptionsLocal
 
   currentFile = getCurrentFile()
@@ -62,6 +62,25 @@ def getCurrentTranslationUnit(update = False):
     elapsed = (time.time() - start)
     print "LibClang - First reparse (generate PCH cache): " + str(elapsed)
   return tu
+
+def splitOptions(options):
+  optsList = []
+  opt = ""
+  quoted = False
+
+  for char in options:
+    if char == ' ' and not quoted:
+      if opt != "":
+        optsList += [opt]
+        opt = ""
+      continue
+    elif char == '"':
+      quoted = not quoted
+    opt += char
+
+  if opt != "":
+    optsList += [opt]
+  return optsList
 
 def getQuickFix(diagnostic):
   # Some diagnostics have no file, e.g. "too many errors emitted, stopping now"
@@ -188,12 +207,13 @@ class CompleteThread(threading.Thread):
     self.result = None
 
   def run(self):
-    with CompleteThread.lock:
-      try:
-        self.result = getCurrentCompletionResults(self.line, self.column)
-      except Exception:
-        pass
-
+    try:
+      CompleteThread.lock.acquire()
+      self.result = getCurrentCompletionResults(self.line, self.column)
+    except Exception:
+      CompleteThread.lock.release()
+      pass
+    CompleteThread.lock.release()
 
 def getCurrentCompletions(base):
   global debug
@@ -204,7 +224,7 @@ def getCurrentCompletions(base):
 
   t = CompleteThread(line, column)
   t.start()
-  while t.is_alive():
+  while t.isAlive():
     t.join(0.01)
     cancel = int(vim.eval('complete_check()'))
     if cancel != 0:
@@ -334,7 +354,7 @@ kinds = dict({                                                                 \
                                                                                \
 # Preprocessing                                                                \
 500 : '500', # CXCursor_PreprocessingDirective                                 \
-501 : 'm',   # CXCursor_MacroDefinition                                        \
+501 : 'd',   # CXCursor_MacroDefinition                                        \
 502 : '502', # CXCursor_MacroInstantiation                                     \
 503 : '503'  # CXCursor_InclusionDirective                                     \
 })
