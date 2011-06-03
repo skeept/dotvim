@@ -1275,6 +1275,10 @@ BUGS						*unite-bugs*
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-06-03
+- Fixed unite-register freeze.
+- Fixed initialize error.
+
 2011-06-02
 - Added replace action in jump_list kind.
 - Improved redraw.
