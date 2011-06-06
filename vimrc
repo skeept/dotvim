@@ -338,6 +338,10 @@ endfunction
 "source explorer
 let g:SrcExpl_isUpdateTags = 0
 
+
+"don't enable showmarks, use \mt to toogle it
+let g:showmarks_enable=0
+
 map <F3> :call ToogleTagListNerdTree() <cr>
 imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 map <F5> :TagbarToggle<CR>

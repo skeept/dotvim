@@ -25,6 +25,7 @@
 <Plug>(unite_restart)	unite.jax	/*<Plug>(unite_restart)*
 <Plug>(unite_rotate_next_source)	unite.jax	/*<Plug>(unite_rotate_next_source)*
 <Plug>(unite_rotate_previous_source)	unite.jax	/*<Plug>(unite_rotate_previous_source)*
+<Plug>(unite_toggle_mark_all_candidates)	unite.jax	/*<Plug>(unite_toggle_mark_all_candidates)*
 <Plug>(unite_toggle_mark_current_candidate)	unite.jax	/*<Plug>(unite_toggle_mark_current_candidate)*
 g:unite_abbr_highlight	unite.jax	/*g:unite_abbr_highlight*
 g:unite_cd_command	unite.jax	/*g:unite_cd_command*
