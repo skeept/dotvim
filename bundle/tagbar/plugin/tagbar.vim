@@ -97,6 +97,10 @@ if !exists('g:tagbar_expand')
     let g:tagbar_expand = 0
 endif
 
+if !exists('g:tagbar_singleclick')
+    let g:tagbar_singleclick = 0
+endif
+
 if !exists('g:tagbar_foldlevel')
     let g:tagbar_foldlevel = 99
 endif
@@ -871,12 +875,18 @@ endfunction
 
 " s:MapKeys() {{{2
 function! s:MapKeys()
-    nnoremap <script> <silent> <buffer> <CR>    :call <SID>JumpToTag(0)<CR>
     nnoremap <script> <silent> <buffer> <2-LeftMouse>
                                               \ :call <SID>JumpToTag(0)<CR>
-    nnoremap <script> <silent> <buffer> p       :call <SID>JumpToTag(1)<CR>
     nnoremap <script> <silent> <buffer> <LeftRelease>
-                \ <LeftRelease>:call <SID>CheckMouseClick()<CR>
+                                 \ <LeftRelease>:call <SID>CheckMouseClick()<CR>
+
+    inoremap <script> <silent> <buffer> <2-LeftMouse>
+                                              \ <C-o>:call <SID>JumpToTag(0)<CR>
+    inoremap <script> <silent> <buffer> <LeftRelease>
+                            \ <LeftRelease><C-o>:call <SID>CheckMouseClick()<CR>
+
+    nnoremap <script> <silent> <buffer> <CR>    :call <SID>JumpToTag(0)<CR>
+    nnoremap <script> <silent> <buffer> p       :call <SID>JumpToTag(1)<CR>
     nnoremap <script> <silent> <buffer> <Space> :call <SID>ShowPrototype()<CR>
 
     nnoremap <script> <silent> <buffer> +        :call <SID>OpenFold()<CR>
@@ -2788,6 +2798,8 @@ function! s:CheckMouseClick()
         call s:CloseFold()
     elseif (match(line, s:icon_closed . '[-+ ]') + 1) == curcol
         call s:OpenFold()
+    elseif g:tagbar_singleclick
+        call s:JumpToTag(0)
     endif
 endfunction
 
