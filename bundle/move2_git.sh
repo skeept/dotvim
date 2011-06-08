@@ -33,7 +33,6 @@ for folder in * ; do
 done
 }
 
-
 function main()
 {
   if test -z "$@"; then
