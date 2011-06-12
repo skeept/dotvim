@@ -9,7 +9,7 @@ CONTENTS~
     3. Key Mappings (Global) .............. |buffergator-global-keys|
     4. Key Mappings (Catalog Viewer) ...... |buffergator-keys|
     5. Options and Settings ............... |buffergator-options|
-~
+
 ===============================================================================
                                                       *buffergator-introduction*
 INTRODUCTION~
@@ -32,7 +32,7 @@ By default, Buffergator provides global key maps that invoke its main
 commands: "<Leader>b" to open, "<Leader>B" to close. If you prefer to map
 other keys, or do not want any keys mapped at all, set
 "g:buffergator_suppress_keymaps" to 1 in your $VIMRUNTIME.
-~
+
 ===============================================================================
                                                           *buffergator-commands*
 COMMANDS~
@@ -90,21 +90,26 @@ Open Selected Buffer~
                     open.
 
 -------------------------------------------------------------------------------
-Movement Within the Catalog Viewer that Updates the Other Window~
+Preview Selected Buffer Without Leaving the Catalog Viewer~
 
-The following keys open the currently-selected buffer in the previous
-window, but retain focus on the catalog viewer.
+The following keys all open the currently-selected buffer, but retain focus on
+the catalog viewer.
 
-p                   Show the current buffer entry in the previous window.
-<SPACE>             Go to the next buffer entry and show it in the previous
+po, .               Preview the currently-selected buffer in the previous
+                    window, keeping focus on the catalog.
+ps                  Preview the currently-selected buffer is a new split,
+                    keeping focus on the catalog.
+pv                  Preview the currently-selected buffer is a new vertical
+                    split, keeping focus on the catalog.
+pt                  Preview the currently-selected buffer is a new tab
+                    page, keeping focus on the catalog.
+<SPACE>, <C-N>      Go to the next buffer entry and preview it in the previous
                     window.
-<C-SPACE>           Go to the previous buffer entry and show it in the
+<C-SPACE>, <C-P>    Go to the previous buffer entry and preview it in the
                     previous window.
-<C-N>               Go to and show the next buffer entry.
-<C-P>               Go to and show the previous buffer entry.
 
 -------------------------------------------------------------------------------
-Jumping to the Matched Line Without Closing the Catalog Viewer~
+Open Selected Buffer Without Closing the Catalog Viewer~
 
 The following keys all open the currently-selected buffer and switch focus to
 it, but keep the catalog viewer open.
@@ -121,7 +126,7 @@ t                   Keeping the catalog viewer open, open the current selected
                     in a new tab page.
 
 -------------------------------------------------------------------------------
-Jumping to the Matched Line, Closing the Catalog Viewer~
+Open Selected Buffer and Close the Catalog Viewer~
 
 The following keys all open the currently-selected buffer and switch focus to
 it, closing the catalog viewer at the same time.
@@ -176,8 +181,10 @@ g:buffergator_sort_regime~
     Default: "bufnum"
     Sets the default sort regime for buffer listing:
         "bufnum" : sort by buffer number [default]
-        "basename": sort by buffer file basename
+        "basename": sort by buffer file basename (followed by directory)
         "filepath": sort by full buffer filepath
+        "extension": sort by buffer filename extension (followed by full
+                    filepath)
 
 g:buffergator_display_regime~
     Default: "basename"
