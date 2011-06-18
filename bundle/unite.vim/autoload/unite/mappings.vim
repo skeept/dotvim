@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 May 2011.
+" Last Modified: 07 Jun 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -49,8 +49,9 @@ function! unite#mappings#define_default_mappings()"{{{
   nnoremap <silent><buffer><expr> <Plug>(unite_do_default_action)   unite#do_action(unite#get_current_unite().context.default_action)
   nnoremap <silent><buffer> <Plug>(unite_delete_backward_path)  :<C-u>call <SID>normal_delete_backward_path()<CR>
   nnoremap <silent><buffer> <Plug>(unite_restart)  :<C-u>call <SID>restart()<CR>
+  nnoremap <buffer><silent> <Plug>(unite_toggle_mark_all_candidates)  :<C-u>call <SID>toggle_mark_candidates(0, len(unite#get_unite_candidates()) - 1)<CR>
 
-  vnoremap <buffer><silent> <Plug>(unite_toggle_mark_selected_candidates)  :<C-u>call <SID>toggle_mark_candidates(getpos("'<")[1], getpos("'>")[1])<CR>
+  vnoremap <buffer><silent> <Plug>(unite_toggle_mark_selected_candidates)  :<C-u>call <SID>toggle_mark_candidates(getpos("'<")[1] - unite#get_current_unite().prompt_linenr-1, getpos("'>")[1] - unite#get_current_unite().prompt_linenr - 1)<CR>
 
   inoremap <silent><buffer> <Plug>(unite_exit)  <ESC>:<C-u>call <SID>exit()<CR>
   inoremap <silent><buffer> <Plug>(unite_insert_leave)  <C-o>:<C-u>call <SID>insert_leave()<CR>
@@ -94,12 +95,12 @@ function! unite#mappings#define_default_mappings()"{{{
   nmap <buffer> <Up>         <Plug>(unite_loop_cursor_up)
   nmap <buffer> <C-h>     <Plug>(unite_delete_backward_path)
   nmap <buffer> <C-r>     <Plug>(unite_restart)
+  nmap <buffer> *         <Plug>(unite_toggle_mark_all_candidates)
 
   nnoremap <silent><buffer><expr> d   unite#smart_map('d', unite#do_action('delete'))
   nnoremap <silent><buffer><expr> b   unite#smart_map('b', unite#do_action('bookmark'))
-  nnoremap <silent><buffer><expr> e   unite#smart_map('e', unite#do_action('narrow'))
-  nnoremap <silent><buffer><expr> l   unite#smart_map('l', unite#do_action(unite#get_current_unite().context.default_action))
-  nnoremap <silent><buffer><expr> p   unite#smart_map('p', unite#do_action('preview'))
+  nnoremap <silent><buffer><expr> e   unite#smart_map('e', unite#do_action('edit'))
+  nnoremap <silent><buffer><expr> p   unite#do_action('preview')
   nmap <silent><buffer><expr> x       unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
 
   " Visual mode key-mappings.
@@ -123,7 +124,7 @@ function! unite#mappings#define_default_mappings()"{{{
   imap <buffer> <Home>    <Plug>(unite_move_head)
 
   inoremap <silent><buffer><expr> d         unite#smart_map('d', unite#do_action('delete'))
-  inoremap <silent><buffer><expr> /         unite#smart_map('/', unite#do_action('narrow'))
+  inoremap <silent><buffer><expr> e         unite#smart_map('e', unite#do_action('edit'))
   imap <silent><buffer><expr> <Space>       unite#smart_map(' ', "\<Plug>(unite_toggle_mark_current_candidate)")
   imap <silent><buffer><expr> x             unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
 endfunction"}}}
@@ -165,6 +166,11 @@ function! unite#mappings#do_action(action_name, ...)"{{{
   if empty(l:candidates)
     return
   endif
+
+  " Clear mark flag.
+  for l:candidate in l:candidates
+    let l:candidate.unite__is_marked = 0
+  endfor
 
   let l:action_tables = s:get_action_table(a:action_name, l:candidates)
 
@@ -313,18 +319,18 @@ function! s:toggle_mark()"{{{
   normal! j
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end)"{{{
-  if a:start <= unite#get_current_unite().prompt_linenr
+  if a:start < 0 || a:end >= len(unite#get_unite_candidates())
     " Ignore.
     return
   endif
 
   let l:cnt = a:start
   while l:cnt <= a:end
-    let l:candidate = unite#get_unite_candidates()[l:cnt - (unite#get_current_unite().prompt_linenr+1)]
+    let l:candidate = unite#get_unite_candidates()[l:cnt]
     let l:candidate.unite__is_marked = !l:candidate.unite__is_marked
     let l:candidate.unite__marked_time = localtime()
 
-    call unite#redraw_line(l:cnt)
+    call unite#redraw_line(l:cnt + unite#get_current_unite().prompt_linenr+1)
 
     let l:cnt += 1
   endwhile
@@ -602,10 +608,28 @@ function! s:source.gather_candidates(args, context)"{{{
   " Print candidates.
   call unite#print_message(map(copy(l:candidates), '"[action] candidates: ".v:val.abbr."(".v:val.source.")"'))
 
+  " Process Alias.
   let l:actions = s:get_actions(l:candidates)
-  let l:max = max(map(values(l:actions), 'len(v:val.name)'))
+  let l:alias_table = unite#get_alias_table(
+        \ l:candidates[0].source, l:candidates[0].kind)
+  for [l:alias_name, l:action_name] in items(l:alias_table)
+    if has_key(l:actions, l:alias_name)
+      let l:actions[l:action_name] = copy(l:actions[l:action_name])
+      let l:actions[l:action_name].name = l:alias_name
+    endif
+  endfor
 
-  return sort(map(values(l:actions), '{
+  " Uniq.
+  let l:uniq_actions = {}
+  for l:action in values(l:actions)
+    if !has_key(l:action, l:action.name)
+      let l:uniq_actions[l:action.name] = l:action
+    endif
+  endfor
+
+  let l:max = max(map(values(l:uniq_actions), 'len(v:val.name)'))
+
+  return sort(map(values(l:uniq_actions), '{
         \   "word": v:val.name,
         \   "abbr": printf("%-' . l:max . 's -- %s", v:val.name, v:val.description),
         \   "kind": "common",

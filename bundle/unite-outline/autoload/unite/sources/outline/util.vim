@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/util.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-05
-" Version : 0.3.4
+" Updated : 2011-05-15
+" Version : 0.3.5
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -29,11 +29,10 @@
 let s:Util = unite#sources#outline#import('Util')
 
 " NOTE: All of the functions in this file are obsolete now. If you need any of
-" them, please import Util module and call them via the module as Dictionary
-" functions.
+" them, please import Util module and call them as Dictionary functions.
 
 "-----------------------------------------------------------------------------
-" Headings
+" Heading
 
 function! unite#sources#outline#util#get_indent_level(...)
   return call(s:Util.get_indent_level, a:000)
@@ -67,25 +66,25 @@ function! unite#sources#outline#util#shared_pattern(...)
 endfunction
 
 "-----------------------------------------------------------------------------
-" Paths
+" Path
 
 function! unite#sources#outline#util#normalize_path(...)
   return call(s:Util.Path.normalize, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------
-" Strings
+" String
 
 function! unite#sources#outline#util#capitalize(...)
-  return call(s:Util.Str.capitalize, a:000)
+  return call(s:Util.String.capitalize, a:000)
 endfunction
 
 function! unite#sources#outline#util#nr2roman(...)
-  return call(s:Util.Str.nr2roman, a:000)
+  return call(s:Util.String.nr2roman, a:000)
 endfunction
 
 function! unite#sources#outline#util#shellescape(...)
-  return call(s:Util.Str.shellescape, a:000)
+  return call(s:Util.String.shellescape, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------

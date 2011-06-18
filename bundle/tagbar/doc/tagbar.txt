@@ -3,7 +3,7 @@
 Author:		Jan Larres <jan@majutsushi.net>
 Licence:	Vim licence, see |license|
 Homepage:	http://majutsushi.github.com/tagbar/
-Version:	2.0.1
+Version:	2.1
 
 ==============================================================================
 Contents					*tagbar* *tagbar-contents*
@@ -262,7 +262,8 @@ These mappings are valid in the Tagbar window:
 p             Jump to the tag under the cursor, but stay in the Tagbar window.
 <LeftMouse>   When on a fold icon, open or close the fold depending on the
               current state.
-<2-LeftMouse> Same as <CR>.
+<2-LeftMouse> Same as <CR>. See |g:tagbar_singleclick| if you want to use a
+              single- instead of a double-click.
 <Space>       Display the prototype of the current tag (i.e. the line defining
               it) in the command line.
 +/zo          Open the fold under the cursor.
@@ -377,6 +378,18 @@ Tagbar window if using a GUI version of Vim.
 Example:
 >
 	let g:tagbar_expand = 1
+<
+
+							*g:tagbar_singleclick*
+g:tagbar_singleclick~
+Default: 0
+
+If this option is set then a single- instead of a double-click is used to jump
+to the tag definition.
+
+Example:
+>
+	let g:tagbar_singleclick = 1
 <
 
 							*g:tagbar_foldlevel*
@@ -507,7 +520,9 @@ complicated cases.
 
 Tagbar has a flexible mechanism for extending the existing file type (i.e.
 language) definitions. This can be used both to change the settings of the
-existing types and to add completely new types.
+existing types and to add completely new types. A complete configuration
+consists of a type definition for Tagbar in your |vimrc| and optionally a
+language definition for ctags in case you want to add a new language.
 
 Every type definition in Tagbar is a dictionary with the following keys:
 
@@ -598,12 +613,13 @@ ctagsargs: The arguments to be passed to the filetype-specific ctags program
            program.
 
 
-You then have to assign this dictionary to a variable with the name
+You then have to assign this dictionary to a variable in your vimrc with the
+name
 >
 	g:tagbar_type_{vim filetype}
 <
 For example, for C++ the name would be "g:tagbar_type_cpp". If you don't know
-the vim file type run the following command:
+the vim file type then run the following command:
 >
 	:set filetype?
 <
@@ -800,6 +816,22 @@ files.
 
 ==============================================================================
 8. History						*tagbar-history*
+
+2.1 (2011-05-29)
+    - Make Tagbar work in (hopefully) all cases under Windows
+    - Handle cases where 'encoding' is different from system encoding, for
+      example on a Chinese Windows with 'encoding' set to "utf-8" (see manual
+      for details in case it doesn't work out-of-the-box)
+    - Fixed a bug with the handling of subtypes like "python.django"
+    - If a session got saved with Tagbar open it now gets restored properly
+    - Locally reset foldmethod/foldexpr in case foldexpr got set to something
+      expensive globally
+    - Tagbar now tries hard to go to the correct window when jumping to a tag
+    - Explain some possible issues with the current jsctags version in the
+      manual
+    - Explicitly check for some possible configuration problems to be able to
+      give better feedback
+    - A few other small fixes
 
 2.0.1 (2011-04-26)
     - Fix sorting bug when 'ignorecase' is set

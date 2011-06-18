@@ -910,6 +910,16 @@ function! s:Edit(cmd,...) abort
   else
     if &previewwindow && getbufvar('','fugitive_type') ==# 'index'
       wincmd p
+      if &diff
+        let mywinnr = winnr()
+        for winnr in range(winnr('$'),1,-1)
+          if winnr != mywinnr && getwinvar(winnr,'&diff')
+            execute winnr.'wincmd w'
+            close
+            wincmd p
+          endif
+        endfor
+      endif
     endif
     return a:cmd.' '.s:fnameescape(file)
   endif
@@ -1622,7 +1632,7 @@ function! s:ReplaceCmd(cmd,...) abort
         let prefix = 'env GIT_INDEX_FILE='.s:shellesc(a:1).' '
       endif
     endif
-    call writefile(split(system(prefix.a:cmd), "\n", 1), tmp)
+    call writefile(split(system(prefix.a:cmd), "\n", 1), tmp, 'b')
   finally
     if exists('old_index')
       let $GIT_INDEX_FILE = old_index
@@ -1773,7 +1783,7 @@ function! s:BufReadObject()
       if b:fugitive_display_format
         call s:ReplaceCmd(s:repo().git_command('ls-tree',hash))
       else
-        call s:ReplaceCmd(s:repo().git_command('show',hash))
+        call s:ReplaceCmd(s:repo().git_command('show','--no-color',hash))
       endif
     elseif b:fugitive_type == 'tag'
       let b:fugitive_display_format = b:fugitive_display_format % 2
@@ -1787,7 +1797,7 @@ function! s:BufReadObject()
       if b:fugitive_display_format
         call s:ReplaceCmd(s:repo().git_command('cat-file',b:fugitive_type,hash))
       else
-        call s:ReplaceCmd(s:repo().git_command('show','--pretty=format:tree %T%nparent %P%nauthor %an <%ae> %ad%ncommitter %cn <%ce> %cd%nencoding %e%n%n%s%n%n%b',hash))
+        call s:ReplaceCmd(s:repo().git_command('show','--no-color','--pretty=format:tree %T%nparent %P%nauthor %an <%ae> %ad%ncommitter %cn <%ce> %cd%nencoding %e%n%n%s%n%n%b',hash))
         call search('^parent ')
         if getline('.') ==# 'parent '
           silent delete_

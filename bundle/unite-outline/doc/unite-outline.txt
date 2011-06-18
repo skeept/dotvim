@@ -2,7 +2,7 @@
 
 Author  : h1mesuke <himesuke@gmail.com>
 Updated : 2011-04-25
-Version : 0.3.4
+Version : 0.3.5
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -136,10 +136,10 @@ g:unite_source_outline_max_headings	*g:unite_source_outline_max_headings*
 
 g:unite_source_outline_cache_limit	*g:unite_source_outline_cache_limit*
 
-	Threshold of cache serialization.
+	Threshold for persistent/on-memory caching.
+	
 	If the number of lines of the buffer is greater than the value of this
-	variable, the cache of the extracted headings are serialized to
-	a file.
+	variable, the cache of the extracted headings is stored in a file.
 
 	Once the cache is stored in a file, unite-outline loads the headings
 	from the file even at the first time of its execution after a reboot

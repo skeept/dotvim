@@ -153,7 +153,8 @@ set t_Co=256
 "colorscheme bw_cs
 "colorscheme desertink
 "colorscheme ps_color_cs
-colorscheme winter_cs
+"colorscheme winter_cs
+set bg=dark | colorscheme peaksea
 
 
 " setting the color in terminals

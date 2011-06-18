@@ -247,6 +247,10 @@ COMMANDS 					*unite-commands*
 		Defines split position rule. The default value is same to
 		|g:unite_split_rule|.
 
+						*unite-options-verbose*
+		-verbose
+		Print verbose warning messages.
+
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		Equivalent to |:Unite| except that the initial narrowing text
 		is the current directory.
@@ -480,9 +484,12 @@ Normal mode mappings.
 		cursor into the prompt line automatically.
 
 <Plug>(unite_toggle_mark_current_candidate)	*<Plug>(unite_toggle_mark_current_candidate)*
-		Toggles the mark of the candidate in the current line.  You may
+		Toggles the mark of the candidates in the current line.  You may
 		run an action on multiple candidates at the same time by
 		marking multiple candidates.
+
+<Plug>(unite_toggle_mark_current_candidate)	*<Plug>(unite_toggle_mark_all_candidates)*
+		Toggles the mark of the candidates in the all lines.
 
 <Plug>(unite_redraw)				*<Plug>(unite_redraw)*
 		Without waiting for the update time defined in 
@@ -595,6 +602,7 @@ A		|<Plug>(unite_append_end)|
 q		|<Plug>(unite_exit)|
 <C-r>		|<Plug>(unite_restart)|
 <Space>		|<Plug>(unite_toggle_mark_current_candidate)|
+*		|<Plug>(unite_toggle_mark_all_candidates)|
 <Tab>		|<Plug>(unite_choose_action)|
 <C-n>		|<Plug>(unite_rotate_next_source)|
 <C-p>		|<Plug>(unite_rotate_previous_source)|
@@ -607,11 +615,10 @@ j		|<Plug>(unite_loop_cursor_down)|
 k		|<Plug>(unite_loop_cursor_up)|
 <Up>		|<Plug>(unite_loop_cursor_up)|
 <CR>		In case when you selected a candidate, runs default action
-l		In case when you selected a candidate, runs default action
 d		In case when you selected a candidate, runs delete action
 b		In case when you selected a candidate, runs bookmark action
 e		In case when you selected a candidate, runs narrow action
-p		In case when you selected a candidate, runs preview action
+p		runs preview action
 x		In case when you selected a candidate, runs
 		|<Plug>(unite_quick_match_default_action)|
 
@@ -633,7 +640,7 @@ Insert mode mappings.
 <C-w>		|i_<Plug>(unite_delete_backward_word)|
 <C-a>		|i_<Plug>(unite_move_head)|
 <Home>		|i_<Plug>(unite_move_head)|
-/		In case when you selected a candidate, runs narrow action
+e		In case when you selected a candidate, runs narrow action
 d		In case when you selected a candidate, runs delete action
 <Space>		In case when you selected a candidate,
 		|i_<Plug>(unite_toggle_mark_current_candidate)|
@@ -1088,6 +1095,7 @@ Defines an interface for files you can move to with cd command.
 	tabvimfiler	Run |:VimFilerTab| on the directory.  This is
 			available only when you already installed |vimfiler|.
 	rec		Run |unite-source-file_rec| on the directory.
+	file		Run |unite-source-file| on the directory.
 
 file						*unite-action-file*
 Opens a file into a new buffer.  This kind extends |unite-action-openable| and
@@ -1128,6 +1136,7 @@ This kind extends actions of |unite-action-openable|.  Let me explain about
 the additional actions defined in this.
 	open		Jump to the location of the candidate
 	preview		Preview around the location of the candidate
+	replace		Replace selected candidates with |qfreplace| plugin
 
 command						*unite-action-command*
 	execute		Execute the command
@@ -1273,6 +1282,69 @@ BUGS						*unite-bugs*
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-06-17
+- Fixed caching bug.
+- Improved s:recache_candidates().
+
+2011-06-15
+- Fixed unite-buffer-name problem.
+
+2011-06-13
+- Fixed switch_unite_buffer().
+
+2011-06-12
+- Fixed quit unite buffer problem.
+
+2011-06-11
+- Improved kind tab.
+
+2011-06-10
+- Added -verbose option.
+
+2011-06-09
+- Improved unite#print_error().
+
+2011-06-07
+- Improved "e" mapping.
+- Changed insert mode mappings.
+
+2011-06-04
+- Added <Plug>(unite_toggle_mark_all_candidates) keymapping.
+- Deleted l default keymapping.
+
+2011-06-03
+- Fixed unite-register freeze.
+- Fixed initialize error.
+- Added file action in cdable kind.
+- Improved narrow action.
+
+2011-06-02
+- Added replace action in jump_list kind.
+- Improved redraw.
+
+2011-06-01
+- Fixed recaching.
+- Fixed choose_action.
+
+2011-05-31
+- Improved redraw flag.
+- Fixed is_redraw flag.
+
+2011-05-21
+- Improved file_mru.
+
+2011-05-16
+- Fixed directory_mru error.
+
+2011-05-15
+- Improved alias in choose action.
+
+2011-05-14
+- Fixed kind command.
+- Fixed preview action.
+- Updated vital.vim.
+- Fixed choose_action().
 
 2011-05-08
 - Fixed :UniteResume error.

@@ -4,82 +4,10 @@
 "
 " Description: Use of clang to complete in C/C++.
 "
-" Configuration: Each project can have a .clang_complete at his root,
-"                containing the compiler options. This is useful if
-"                you're using some non-standard include paths.
-"                For simplicity, please don't put relative and
-"                absolute include path on the same line. It is not
-"                currently correctly handled.
-"
-" Options:
-"  - g:clang_complete_auto:
-"       if equal to 1, automatically complete after ->, ., ::
-"       Default: 1
-"
-"  - g:clang_complete_copen:
-"       if equal to 1, open quickfix window on error.
-"       Default: 0
-"
-"  - g:clang_hl_errors:
-"       if equal to 1, it will highlight the warnings and errors the
-"       same way clang does it.
-"       Default: 1
-"
-"  - g:clang_periodic_quickfix:
-"       if equal to 1, it will periodically update the quickfix window
-"       Note: You could use the g:ClangUpdateQuickFix() to do the same
-"             with a mapping.
-"       Default: 0
-"
-"  - g:clang_snippets:
-"       if equal to 1, it will do some snippets magic after having selected
-"       something to complete.
-"       Default: 0
-"
-"  - g:clang_snippets_engine:
-"       the snippets engine (clang_complete, snipmate, ultisnips... see the
-"       snippets subdirectory).
-"       Default: 'clang_complete'
-"
-"  - g:clang_exec:
-"       Name or path of clang executable.
-"       Note: Use this if clang has a non-standard name, or isn't in the
-"       path.
-"       Default: 'clang'
-"
-"  - g:clang_user_options:
-"       Option added at the end of clang command. Useful if you want to
-"       filter the result, or if you want to ignore the error code
-"       returned by clang: on error, the completion is not shown.
-"       Default: ''
-"       Example: '|| exit 0' (it will discard clang return value)
-"
-"  - g:clang_use_library:
-"       Instead of calling the clang/clang++ tool use libclang directly. This
-"       should improve the performance, but is still experimental.
-"       Don't forget to set g:clang_library_path.
-"       Default: has('python') && exists('g:clang_library_path')
-"
-"  - g:clang_library_path:
-"       If libclang.[dll/so/dylib] is not in your library search path, set
-"       this to the absolute path where libclang is available.
-"       Default: variable doesn't exists
-"
-"  - g:clang_sort_algo:
-"       How results are sorted (alpha, priority).
-"       Currently only works with libclang.
-"       Default: 'priority'
-"
-"  - g:clang_debug:
-"       Output debugging informations, like timeing output of completion.
-"       Default: 0
-"
-" Todo: - Fix bugs
-"       - Parse fix-its and do something useful with it.
-"       - -code-completion-macros -code-completion-patterns
+" Help: Use :help clang_complete
 "
 
-au FileType c,cpp,objc,objcpp call s:ClangCompleteInit()
+au FileType c,cpp,objc,objcpp call <SID>ClangCompleteInit()
 
 let b:clang_parameters = ''
 let b:clang_user_options = ''
@@ -91,23 +19,8 @@ let b:clang_type_complete = 0
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 
 function! s:ClangCompleteInit()
-  let l:local_conf = findfile('.clang_complete', '.;')
-  let b:clang_user_options = ''
-  if l:local_conf != '' && filereadable(l:local_conf)
-    let l:opts = readfile(l:local_conf)
-    for l:opt in l:opts
-      " Better handling of absolute path
-      " I don't know if those pattern will work on windows
-      " platform
-      if matchstr(l:opt, '\C-I\s*/') != ''
-        let l:opt = substitute(l:opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
-              \ '-I' . '\1', 'g')
-      else
-        let l:opt = substitute(l:opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
-              \ '-I' . l:local_conf[:-16] . '\1', 'g')
-      endif
-      let b:clang_user_options .= ' ' . l:opt
-    endfor
+  if !exists('g:clang_auto_select')
+    let g:clang_auto_select = 0
   endif
 
   if !exists('g:clang_complete_auto')
@@ -147,6 +60,14 @@ function! s:ClangCompleteInit()
     let g:clang_use_library = (has('python') && exists('g:clang_library_path'))
   endif
 
+  if !exists('g:clang_complete_macros')
+    let g:clang_complete_macros = 0
+  endif
+
+  if !exists('g:clang_complete_patterns')
+    let g:clang_complete_patterns = 0
+  endif
+
   if !exists('g:clang_debug')
     let g:clang_debug = 0
   endif
@@ -155,10 +76,17 @@ function! s:ClangCompleteInit()
     let g:clang_sort_algo = 'priority'
   endif
 
-  inoremap <expr> <buffer> <C-X><C-U> LaunchCompletion()
-  inoremap <expr> <buffer> . CompleteDot()
-  inoremap <expr> <buffer> > CompleteArrow()
-  inoremap <expr> <buffer> : CompleteColon()
+  if !exists('g:clang_auto_user_options')
+    let g:clang_auto_user_options = 'path, .clang_complete'
+  endif
+
+  call LoadUserOptions()
+
+  inoremap <expr> <buffer> <C-X><C-U> <SID>LaunchCompletion()
+  inoremap <expr> <buffer> . <SID>CompleteDot()
+  inoremap <expr> <buffer> > <SID>CompleteArrow()
+  inoremap <expr> <buffer> : <SID>CompleteColon()
+  inoremap <expr> <buffer> <CR> <SID>HandlePossibleSelection()
 
   if g:clang_snippets == 1
     try
@@ -191,12 +119,24 @@ function! s:ClangCompleteInit()
     let b:clang_parameters .= '-header'
   endif
 
+  let g:clang_complete_lib_flags = 0
+
+  if g:clang_complete_macros == 1
+    let b:clang_parameters .= ' -code-completion-macros'
+    let g:clang_complete_lib_flags = 1
+  endif
+
+  if g:clang_complete_patterns == 1
+    let b:clang_parameters .= ' -code-completion-patterns'
+    let g:clang_complete_lib_flags += 2
+  endif
+
   setlocal completefunc=ClangComplete
   setlocal omnifunc=ClangComplete
 
   if g:clang_periodic_quickfix == 1
     augroup ClangComplete
-      au CursorHold,CursorHoldI <buffer> call s:DoPeriodicQuickFix()
+      au CursorHold,CursorHoldI <buffer> call <SID>DoPeriodicQuickFix()
     augroup end
   endif
 
@@ -214,6 +154,59 @@ function! s:ClangCompleteInit()
   endif
 endfunction
 
+function! LoadUserOptions()
+  let b:clang_user_options = ''
+
+  let l:option_sources = split(g:clang_auto_user_options, ',')
+  let l:remove_spaces_cmd = 'substitute(v:val, "\\s*\\(.*\\)\\s*", "\\1", "")'
+  let l:option_sources = map(l:option_sources, l:remove_spaces_cmd)
+
+  for l:source in l:option_sources
+    if l:source == 'path'
+      call s:parsePathOption()
+    elseif l:source == '.clang_complete'
+      call s:parseConfig()
+    endif
+  endfor
+endfunction
+
+function! s:parseConfig()
+  let l:local_conf = findfile('.clang_complete', '.;')
+  if l:local_conf == '' || !filereadable(l:local_conf)
+    return
+  endif
+
+  let l:opts = readfile(l:local_conf)
+  for l:opt in l:opts
+    " Better handling of absolute path
+    " I don't know if those pattern will work on windows
+    " platform
+    if matchstr(l:opt, '\C-I\s*/') != ''
+      let l:opt = substitute(l:opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
+            \ '-I' . '\1', 'g')
+    else
+      let l:opt = substitute(l:opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
+            \ '-I' . l:local_conf[:-16] . '\1', 'g')
+    endif
+    let b:clang_user_options .= ' ' . l:opt
+  endfor
+endfunction
+
+function! s:parsePathOption()
+  let l:dirs = split(&path, ',')
+  for l:dir in l:dirs
+    if len(l:dir) == 0 || !isdirectory(l:dir)
+      continue
+    endif
+
+    " Add only absolute paths
+    if matchstr(l:dir, '\s*/') != ''
+      let l:opt = '-I' . l:dir
+      let b:clang_user_options .= ' ' . l:opt
+    endif
+  endfor
+endfunction
+
 function! s:initClangCompletePython()
   python import sys
 
@@ -228,7 +221,7 @@ function! s:initClangCompletePython()
 
   exe 'python sys.path = ["' . s:plugin_path . '"] + sys.path'
   exe 'pyfile ' . s:plugin_path . '/libclang.py'
-  python initClangComplete()
+  python initClangComplete(vim.eval('g:clang_complete_lib_flags'))
 endfunction
 
 function! s:GetKind(proto)
@@ -534,9 +527,11 @@ function! ClangComplete(findstart, base)
       for item in l:res
         let item['word'] = eval('snippets#' . g:clang_snippets_engine . "#add_snippet('" . item['word'] . "', '" . item['info'] . "')")
       endfor
+      inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelection()
       augroup ClangComplete
-        au CursorMovedI <buffer> call s:TriggerSnippet()
+        au CursorMovedI <buffer> call <SID>TriggerSnippet()
       augroup end
+      let b:snippet_chosen = 0
     endif
   endif
 
@@ -547,13 +542,22 @@ function! ClangComplete(findstart, base)
 endif
 endfunction
 
+function! s:HandlePossibleSelection()
+  if pumvisible()
+    let b:snippet_chosen = 1
+    return "\<C-Y>"
+  end
+  return "\<CR>"
+endfunction
+
 function! s:TriggerSnippet()
   " Dont bother doing anything until we're sure the user exited the menu
-  if pumvisible() != 0
+  if !b:snippet_chosen
     return
   endif
 
-  " Stop monitoring if we successfully triggered a snippet
+  " Stop monitoring as we'll trigger a snippet
+  silent! iunmap <buffer> <C-Y>
   augroup ClangComplete
     au! CursorMovedI <buffer>
   augroup end
@@ -562,7 +566,7 @@ function! s:TriggerSnippet()
   call eval('snippets#' . g:clang_snippets_engine . '#trigger()')
 endfunction
 
-function! ShouldComplete()
+function! s:ShouldComplete()
   if (getline('.') =~ '#\s*\(include\|import\)')
     return 0
   else
@@ -579,37 +583,40 @@ function! ShouldComplete()
   endif
 endfunction
 
-function! LaunchCompletion()
-  if ShouldComplete()
+function! s:LaunchCompletion()
+  let l:result = ""
+  if s:ShouldComplete()
     if match(&completeopt, 'longest') != -1
-      return "\<C-X>\<C-U>"
+      let l:result = "\<C-X>\<C-U>"
     else
-      return "\<C-X>\<C-U>\<C-P>"
+      let l:result = "\<C-X>\<C-U>\<C-P>"
     endif
-  else
-    return ''
+    if g:clang_auto_select == 1
+      let l:result .= "\<C-R>=(pumvisible() ? \"\\<Down>\" : '')\<CR>"
+    endif
   endif
+  return l:result
 endfunction
 
-function! CompleteDot()
+function! s:CompleteDot()
   if g:clang_complete_auto == 1
-    return '.' . LaunchCompletion()
+    return '.' . s:LaunchCompletion()
   endif
   return '.'
 endfunction
 
-function! CompleteArrow()
+function! s:CompleteArrow()
   if g:clang_complete_auto != 1 || getline('.')[col('.') - 2] != '-'
     return '>'
   endif
-  return '>' . LaunchCompletion()
+  return '>' . s:LaunchCompletion()
 endfunction
 
-function! CompleteColon()
+function! s:CompleteColon()
   if g:clang_complete_auto != 1 || getline('.')[col('.') - 2] != ':'
     return ':'
   endif
-  return ':' . LaunchCompletion()
+  return ':' . s:LaunchCompletion()
 endfunction
 
 " May be used in a mapping to update the quickfix window.

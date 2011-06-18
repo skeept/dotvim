@@ -2,12 +2,15 @@ from clang.cindex import *
 import vim
 import time
 import re
+import threading
 
-def initClangComplete():
+def initClangComplete(clang_complete_flags):
   global index
   index = Index.create()
   global translationUnits
   translationUnits = dict()
+  global complete_flags
+  complete_flags = int(clang_complete_flags)
 
 # Get a tuple (fileName, fileContent) for the file opened in the current
 # vim buffer. The fileContent contains the unsafed buffer content.
@@ -16,8 +19,8 @@ def getCurrentFile():
   return (vim.current.buffer.name, file)
 
 def getCurrentTranslationUnit(update = False):
-  userOptionsGlobal = vim.eval("g:clang_user_options").split(" ")
-  userOptionsLocal = vim.eval("b:clang_user_options").split(" ")
+  userOptionsGlobal = splitOptions(vim.eval("g:clang_user_options"))
+  userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
   args = userOptionsGlobal + userOptionsLocal
 
   currentFile = getCurrentFile()
@@ -59,6 +62,25 @@ def getCurrentTranslationUnit(update = False):
     elapsed = (time.time() - start)
     print "LibClang - First reparse (generate PCH cache): " + str(elapsed)
   return tu
+
+def splitOptions(options):
+  optsList = []
+  opt = ""
+  quoted = False
+
+  for char in options:
+    if char == ' ' and not quoted:
+      if opt != "":
+        optsList += [opt]
+        opt = ""
+      continue
+    elif char == '"':
+      quoted = not quoted
+    opt += char
+
+  if opt != "":
+    optsList += [opt]
+  return optsList
 
 def getQuickFix(diagnostic):
   # Some diagnostics have no file, e.g. "too many errors emitted, stopping now"
@@ -133,7 +155,8 @@ def getCurrentCompletionResults(line, column):
   currentFile = getCurrentFile()
   if debug:
     start = time.time()
-  cr = tu.codeComplete(vim.current.buffer.name, line, column, [currentFile])
+  cr = tu.codeComplete(vim.current.buffer.name, line, column, [currentFile],
+      complete_flags)
   if debug:
     elapsed = (time.time() - start)
     print "LibClang - Code completion time: " + str(elapsed)
@@ -173,20 +196,52 @@ def formatResult(result):
 
   return completion
 
+
+class CompleteThread(threading.Thread):
+  lock = threading.Lock()
+
+  def __init__(self, line, column):
+    threading.Thread.__init__(self)
+    self.line = line
+    self.column = column
+    self.result = None
+
+  def run(self):
+    try:
+      CompleteThread.lock.acquire()
+      self.result = getCurrentCompletionResults(self.line, self.column)
+    except Exception:
+      pass
+    CompleteThread.lock.release()
+
 def getCurrentCompletions(base):
   global debug
   debug = int(vim.eval("g:clang_debug")) == 1
   priority = vim.eval("g:clang_sort_algo") == 'priority'
   line = int(vim.eval("line('.')"))
   column = int(vim.eval("b:col"))
-  cr = getCurrentCompletionResults(line, column)
+
+  t = CompleteThread(line, column)
+  t.start()
+  while t.isAlive():
+    t.join(0.01)
+    cancel = int(vim.eval('complete_check()'))
+    if cancel != 0:
+      return []
+  cr = t.result
+  if cr is None:
+    return []
 
   regexp = re.compile("^" + base)
   filteredResult = filter(lambda x: regexp.match(getAbbr(x.string)), cr.results)
 
   getPriority = lambda x: x.string.priority
   getAbbrevation = lambda x: getAbbr(x.string).lower()
-  sortedResult = sorted(filteredResult, key = getPriority if priority else getAbbrevation)
+  if priority:
+    key = getPriority
+  else:
+    key = getAbbrevation
+  sortedResult = sorted(filteredResult, None, key)
   return map(formatResult, sortedResult)
 
 def getAbbr(strings):
@@ -298,7 +353,7 @@ kinds = dict({                                                                 \
                                                                                \
 # Preprocessing                                                                \
 500 : '500', # CXCursor_PreprocessingDirective                                 \
-501 : 'm',   # CXCursor_MacroDefinition                                        \
+501 : 'd',   # CXCursor_MacroDefinition                                        \
 502 : '502', # CXCursor_MacroInstantiation                                     \
 503 : '503'  # CXCursor_InclusionDirective                                     \
 })

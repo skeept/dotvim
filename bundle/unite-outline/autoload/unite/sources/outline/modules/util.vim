@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/util.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-05
-" Version : 0.3.4
+" Updated : 2011-05-15
+" Version : 0.3.5
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -41,7 +41,7 @@ delfunction s:get_SID
 let s:Util = unite#sources#outline#modules#base#new('Util', s:SID)
 
 "-----------------------------------------------------------------------------
-" Headings
+" Heading
 
 function! s:Util_get_indent_level(context, lnum)
   let line = a:context.lines[a:lnum]
@@ -68,7 +68,6 @@ call s:Util.function('get_comment_heading_level')
 " Matching
 
 " join_to( {context}, {lnum}, {pattern} [, {limit}])
-"
 function! s:Util_join_to(context, lnum, pattern, ...)
   let lines = a:context.lines
   let limit = (a:0 ? a:1 : 3)
@@ -111,7 +110,6 @@ endfunction
 call s:Util.function('join_to_rparen')
 
 " neighbor_match( {context}, {lnum}, {pattern} [, {range} [, {exclusive}])
-"
 function! s:Util_neighbor_match(context, lnum, pattern, ...)
   let lines = a:context.lines
   let range = get(a:000, 0, 1)
@@ -144,7 +142,6 @@ function! s:neighbor_ranges(context, lnum, prev, next, exclusive)
 endfunction
 
 " neighbor_matchstr( {context}, {lnum}, {pattern} [, {range} [, {exclusive}])
-"
 function! s:Util_neighbor_matchstr(context, lnum, pattern, ...)
   let lines = a:context.lines
   let range = get(a:000, 0, 1)
@@ -253,42 +250,19 @@ call s:List.function('zip')
 unlet s:List
 
 "-----------------------------------------------------------------------------
-" Paths
+" Path
 
 let Path = unite#sources#outline#modules#base#new('Path', s:SID)
 let s:Util.Path = Path
 
+" Path.normalize( {path} [, {mods}])
 function! s:Path_normalize(path, ...)
-  let path = a:path | let sep = '/'
-  let do_shellescape = 0 | let do_iconv = 0
-
-  for opt in a:000
-    if opt =~ '^:'
-      let mods = opt
-      let path = fnamemodify(path, mods)
-    elseif opt =~# '^shell\%[escape]$'
-      let do_shellescape = 1
-    elseif opt =~# '^term\%[encoding]$'
-      let do_iconv = 1
-    elseif opt == '\'
-      let sep = '\'
-    endif
-  endfor
-
-  let path = substitute(path, '[/\\]', sep, 'g')
-
-  if do_shellescape
-    let path = s:Str_shellescape(path)
+  let path = a:path
+  if a:0
+    let mods = a:0
+    let path = fnamemodify(path, mods)
   endif
-
-  if do_iconv && &termencoding != '' && &termencoding != &encoding
-    let path = iconv(path, &encoding, &termencoding)
-    if empty(path)
-      throw "unite-outline: iconv() from " . &encoding . " to " . &termencoding .
-            \ " failed for " . string(path)
-    endif
-  endif
-
+  let path = substitute(path, '[/\\]', '/', 'g')
   return path
 endfunction
 call Path.function('normalize')
@@ -296,23 +270,22 @@ call Path.function('normalize')
 unlet Path
 
 "-----------------------------------------------------------------------------
-" Strings
+" String
 
-let Str = unite#sources#outline#modules#base#new('Str', s:SID)
-let s:Util.Str = Str
+let String = unite#sources#outline#modules#base#new('String', s:SID)
+let s:Util.String = String
 
-" capitalize( {str} [, {flag}])
-"
-function! s:Str_capitalize(str, ...)
+" String.capitalize( {str} [, {flag}])
+function! s:String_capitalize(str, ...)
   let flag = (a:0 ? a:1 : '')
   return substitute(a:str, '\<\(\h\)\(\w\+\)\>', '\u\1\L\2', flag)
 endfunction
-call Str.function('capitalize')
+call String.function('capitalize')
 
 " Ported from:
 " Sample code from Programing Ruby, page 145
 "
-function! s:Str_nr2roman(nr)
+function! s:String_nr2roman(nr)
   if a:nr <= 0 || 4999 < a:nr
     return string(a:nr)
   endif
@@ -333,24 +306,24 @@ function! s:Str_nr2roman(nr)
   endfor
   return roman
 endfunction
-call Str.function('nr2roman')
+call String.function('nr2roman')
 
-function! s:Str_shellescape(str)
+function! s:String_shellescape(str)
   if &shell =~? '^\%(cmd\%(\.exe\)\=\|command\.com\)\%(\s\|$\)'
     return '"' . substitute(a:str, '"', '""', 'g') . '"'
   else
     return "'" . substitute(a:str, "'", "'\\\\''", 'g') . "'"
   endif
 endfunction
-call Str.function('shellescape')
+call String.function('shellescape')
 
-unlet Str
+unlet String
 
 "-----------------------------------------------------------------------------
 " Misc
 
 function! s:Util_print_debug(msg)
-  if exists('g:unite_source_outline_debug') && g:unite_source_outline_debug
+  if get(g:, 'unite_source_outline_debug', 0)
     echomsg "unite-outline: " . a:msg
   endif
 endfunction

@@ -235,8 +235,12 @@ http://www.ustream.tv/recorded/11240673
 
 						*unite-options-direction*
 		-direction={direction}
-		Defines split position rule. The default value is same to
-		|g:unite_split_rule|.
+		uniteバッファの分割方法を指定する。デフォルト値は
+		|g:unite_split_rule|と同じである。
+
+						*unite-options-verbose*
+		-verbose
+		冗長な警告メッセージを出すようにする。
 
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		初期の絞込みテキストが現在のディレクトリである他は|:Unite|と同
@@ -478,6 +482,9 @@ g:unite_kind_jump_list_after_jump_scroll	*g:unite_kind_jump_list_after_jump_scro
 		カレント行の候補のマークを反転させる。複数の候補をマークすれば、
 		複数の候補に対して一気にアクションを実行することができる。
 
+<Plug>(unite_toggle_mark_all_candidates)	*<Plug>(unite_toggle_mark_all_candidates)*
+		全ての候補のマークを反転させる。
+
 <Plug>(unite_redraw)				*<Plug>(unite_redraw)*
 		|g:unite_update_time|で制御される更新間隔を待たずに、すぐに表
 		示を更新する。uniteのキャッシュ更新に使われる。
@@ -588,6 +595,7 @@ A		|<Plug>(unite_append_end)|
 q		|<Plug>(unite_exit)|
 <C-r>		|<Plug>(unite_restart)|
 <Space>		|<Plug>(unite_toggle_mark_current_candidate)|
+*		|<Plug>(unite_toggle_mark_all_candidates)|
 <Tab>		|<Plug>(unite_choose_action)|
 <C-n>		|<Plug>(unite_rotate_next_source)|
 <C-p>		|<Plug>(unite_rotate_previous_source)|
@@ -600,11 +608,10 @@ j		|<Plug>(unite_loop_cursor_down)|
 k		|<Plug>(unite_loop_cursor_up)|
 <Up>		|<Plug>(unite_loop_cursor_up)|
 <CR>		候補を選択している場合は default アクションの実行
-l		候補を選択している場合は default アクションの実行
 d		候補を選択している場合は delete アクションの実行
 b		候補を選択している場合は bookmark アクションの実行
-e		候補を選択している場合は narrow アクションの実行
-p		候補を選択している場合は preview アクションの実行
+e		候補を選択している場合は edit アクションの実行
+p		preview アクションの実行
 x		候補を選択している場合は|<Plug>(unite_quick_match_default_action)|
 
 インサートモードマッピング
@@ -625,7 +632,7 @@ x		候補を選択している場合は|<Plug>(unite_quick_match_default_action)
 <C-w>		|i_<Plug>(unite_delete_backward_word)|
 <C-a>		|i_<Plug>(unite_move_head)|
 <Home>		|i_<Plug>(unite_move_head)|
-/		候補を選択している場合は narrow アクションの実行
+e		候補を選択している場合は edit アクションの実行
 d		候補を選択している場合は delete アクションの実行
 <Space>		候補を選択している場合は|i_<Plug>(unite_toggle_mark_current_candidate)|
 x		候補を選択している場合は|i_<Plug>(unite_quick_match_default_action)|
@@ -1031,6 +1038,9 @@ jump_list	ジャンプリスト
 			action__pattern		(文字列)		(任意)
 				ファイルを開いた後に検索するパターン
 
+			action__text		(文字列)		(任意)
+				ジャンプする行の内容
+
 			action__signature	(文字列)		(任意)
 				action__patternに設定するパターンや
 				action__lineだけではジャンプ位置の一意性を保証
@@ -1183,6 +1193,7 @@ cd可能ファイルのインタフェースを定義している。
 			|vimfiler|がインストールされている場合にのみ有効な
 			アクションである。
 	rec		そのディレクトリで|unite-source-file_rec|を起動する。
+	file		そのディレクトリで|unite-source-file|を起動する。
 
 file						*unite-action-file*
 ファイルはすべて別のバッファに開かれる。
@@ -1223,6 +1234,8 @@ jump_list					*unite-action-jump_list*
 のアクションについて解説する。
 	open		その候補の場所にジャンプする
 	preview		その候補の場所をプレビューする
+	replace		選択した候補を|qfreplace|プラグインで置換する。
+			候補にaction__textが必要である。
 
 command						*unite-action-command*
 	execute		コマンドを実行する
