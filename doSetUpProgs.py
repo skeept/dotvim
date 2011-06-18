@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
-# if the file is a directory, create a directory with the same name in usr, if it doesn't exist
-# it the file is not a directory, just create a symbolic link pointing to the file
+# if the file is a directory, create a directory with the same name in usr,
+# if it doesn't exist
+# if the file is not a directory, just create a symbolic
+# link pointing to the file
 
 # see in Packages/<package_name>
 
-import os, sys
+import os
+import sys
 import glob
 import errno
+import textwrap
 
 from os.path import join, realpath, abspath
+
 
 def force_symlink(file1, file2):
     try:
@@ -20,80 +25,86 @@ def force_symlink(file1, file2):
             os.symlink(file1, file2)
 
 
-def usage() :
-  print "usage : program folder_origin [folder_destin]"
-  print "	folder_origin is the original folder with all the files and folders to be linked"
-  print "	folder_destin is where you want to create symlinks, defaults to 'usr'"
+def usage():
+  msg = textwrap.dedent("""\
+  usage : program folder_origin [folder_destin]
+          folder_origin is the original folder with all the files\
+  and folders to be linked
+          folder_destin is where you want to create symlinks, defaults to 'usr'
+  """)
 
-def do_recursion(origin, dirname) :
 
-  AlternatePrefix="usr"
+def do_recursion(origin, dirname):
+  AlternatePrefix = "usr"
   dirlist = glob.glob(dirname + os.sep + "*")
-  for name in dirlist :
+  for name in dirlist:
     newName = name.replace(origin, "")
     newName = AlternatePrefix + os.sep + newName
-    if os.path.isdir(name) :
+    if os.path.isdir(name):
       #check if file exists in usr/...
-      if os.path.isdir(newName) == False :
-	#create the directory there
-	print "creating directory: ", newName
-	os.mkdir(newName)
+      if os.path.isdir(newName) == False:
+        #create the directory there
+        print "creating directory: ", newName
+        os.mkdir(newName)
       do_recursion(origin, name)
-    else :
+    else:
       print name, " --> ", newName
-      if (os.path.isfile(newName) == False) : 
-	force_symlink(os.getcwd() + os.sep + name,  os.getcwd() + os.sep + newName)
+      if (os.path.isfile(newName) == False):
+        force_symlink(os.getcwd() + os.sep + name,
+            os.getcwd() + os.sep + newName)
 
-def create_symlinks(origin, destin, display_passage=True) :
-  """ we go over the files and folders in origin and create a symlink in destin
-  folders if not existing will be explicitly created, others files symlinked """
+
+def create_symlinks(origin, destin, display_passage=True):
+  """we go over the files and folders in origin and create a symlink in destin
+  folders if not existing will be explicitly created, others files symlinked"""
   origin = realpath(origin)
   destin = abspath(destin)
   os.chdir(origin)
   # make sure destin exists
-  if display_passage is False and os.path.isdir(destin) is False : 
+  if display_passage is False and os.path.isdir(destin) is False:
     os.makedirs(destin)
-  for root, dirs, files in os.walk(os.curdir) :
-    for dir in dirs : 
+  for root, dirs, files in os.walk(os.curdir):
+    for dir in dirs:
       dir_orig = join(join(origin, root), dir)
       dir_dest = join(join(destin, root), dir)
-      if (os.path.exists(dir_dest) is False) : 
-        if display_passage is True : 
+      if (os.path.exists(dir_dest) is False):
+        if display_passage is True:
           sys.stdout.write('%s does not exists, creating it.\n'  % dir_dest)
-        else :
+        else:
           os.makedirs(dir_dest)
-    for file in files : 
+    for file in files:
       file_orig = realpath(join(join(origin, root), file))
       file_dest = abspath(join(join(destin, root), file))
-      if display_passage is True : 
+      if display_passage is True:
         msg = '%35s ---> %s\n' % (file_orig, file_dest)
         sys.stdout.write(msg)
-      else :
+      else:
         force_symlink(file_orig, file_dest)
 
-  if display_passage is True : 
-    msg = "\n\nWill perform the previous listed actions.\nDo you wish to continue? <ctrl-c> to abort"
+  if display_passage is True:
+    msg = """\n\n
+    Will perform the previous listed actions.
+    Do you wish to continue? <ctrl-c> to abort"""
     raw_input(msg)
-    create_symlinks(origin, destin, display_passage = False)
-
+    create_symlinks(origin, destin, display_passage=False)
 
 
 # for now assume Packages/sys.argv[1] exists, and do the recursion here
-prefixDir="Packages"
-#do_recursion(prefixDir + os.sep  + sys.argv[1] + os.sep, prefixDir + os.sep  + sys.argv[1])
+prefixDir = "Packages"
+#do_recursion(prefixDir + os.sep  + sys.argv[1] + os.sep,
+    #prefixDir + os.sep  + sys.argv[1])
 
-def main() :
-  if (len(sys.argv) < 2) :
+
+def main():
+  if (len(sys.argv) < 2):
     usage()
     sys.exit(-1)
   origin = sys.argv[1]
   destin = 'usr'
-  if len(sys.argv) > 2 : 
+  if len(sys.argv) > 2:
     destin = sys.argv[2]
   #create_symlinks(sys.argv[1], '.')
   create_symlinks(origin, destin)
 
 if __name__ == '__main__':
   main()
-
-
