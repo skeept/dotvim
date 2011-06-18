@@ -298,7 +298,10 @@ end " has("autocmd")
 "for scip go up two folders
 set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
+"" for supertab plugin try changing the default context
+let g:SuperTabDefaultCompletionType = "context"
 
 "load eventual plugins here (the ones that would be really necessary)
 let g:p0 = split(&runtimepath, ',')[0]
 exec "source" . g:p0 . "/plugin/NERD_commenter.vim"
+exec "source" . g:p0 . "/plugin/supertab.vim"
