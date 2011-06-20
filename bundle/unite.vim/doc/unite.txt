@@ -1284,6 +1284,7 @@ BUGS						*unite-bugs*
 CHANGELOG					*unite-changelog*
 
 2011-06-20
+- Improved unite -immediately behavior.
 - Fixed path separator problem in unite-file.
 
 2011-06-19
