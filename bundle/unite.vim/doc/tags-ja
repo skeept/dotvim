@@ -180,6 +180,7 @@ unite-options-no-quit	unite.jax	/*unite-options-no-quit*
 unite-options-no-start-insert	unite.jax	/*unite-options-no-start-insert*
 unite-options-prompt	unite.jax	/*unite-options-prompt*
 unite-options-start-insert	unite.jax	/*unite-options-start-insert*
+unite-options-verbose	unite.jax	/*unite-options-verbose*
 unite-options-vertical	unite.jax	/*unite-options-vertical*
 unite-options-winheight	unite.jax	/*unite-options-winheight*
 unite-options-winwidth	unite.jax	/*unite-options-winwidth*
