@@ -445,11 +445,15 @@ map <Leader>os :Scratch<CR>
 let g:NERDDefaultNesting=1
 
 "don't want to start this completion thing before x chars
-let g:acp_behaviorKeywordLength = 4
+let g:acp_behaviorKeywordLength = 5
 let g:acp_completeOption = '.,w,b,k,t'
 
+"" for supertab plugin try changing the default context
+let g:SuperTabDefaultCompletionType = "context"
+
 "to change the colors if previous color desired :call PreviousColorScheme()
-map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+map <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "map <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 

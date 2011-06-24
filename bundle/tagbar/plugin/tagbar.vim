@@ -18,6 +18,10 @@
 "              use of this software.
 " ============================================================================
 
+if has('multi_byte')
+    scriptencoding utf-8
+endif
+
 if &cp || exists('g:loaded_tagbar')
     finish
 endif
@@ -1731,7 +1735,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo)
         let dollar = ''
     endif
     let pattern           = strpart(pattern, start, end - start)
-    let taginfo.pattern   = '\V\^' . pattern . dollar
+    let taginfo.pattern   = '\V\^\C' . pattern . dollar
     let prototype         = substitute(pattern,   '^[[:space:]]\+', '', '')
     let prototype         = substitute(prototype, '[[:space:]]\+$', '', '')
     let taginfo.prototype = prototype
@@ -1768,7 +1772,13 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo)
     let taginfo.fileinfo = a:fileinfo
 
     " Needed for folding
-    call taginfo.initFoldState()
+    try
+        call taginfo.initFoldState()
+    catch /^Vim(\a\+):E716:/ " 'Key not present in Dictionary'
+        " The tag has a 'kind' that doesn't exist in the type definition
+        echoerr 'Your ctags and Tagbar configurations are out of sync!'
+              \ 'Please read '':help tagbar-extend''.'
+    endtry
 
     return taginfo
 endfunction
@@ -2361,6 +2371,23 @@ function! s:JumpToTag(stay_in_tagbar)
     " since it doesn't take the scope into account and thus can fail if tags
     " with the same name are defined in different scopes (e.g. classes)
     execute taginfo.fields.line
+
+    " If the file has been changed but not saved, the tag may not be on the
+    " saved line anymore, so search for it in the vicinity of the saved line
+    if match(getline('.'), taginfo.pattern) == -1
+        let interval = 1
+        let forward  = 1
+        while search(taginfo.pattern, 'W' . forward ? '' : 'b') == 0
+            if !forward
+                if interval > line('$')
+                    break
+                else
+                    let interval = interval * 2
+                endif
+            endif
+            let forward = !forward
+        endwhile
+    endif
 
     " Center the tag in the window
     normal! z.
