@@ -326,12 +326,23 @@ function! ToogleTagListNerdTree()
     "setlocal norelativenumber
 
     let g:togglelistornerdtree = 0
-
   else
     "TlistClose
     "NERDTreeClose
     NERDTreeToggle
     let g:togglelistornerdtree = 0
+  endif
+endfunction
+
+"fuction to toogle behaviour of autocomplpop
+let g:is_acp_disabled = 0
+function! ToggleAcpDisable()
+  if g:is_acp_disabled == 0
+    AcpLock
+    let g:is_acp_disabled = 1
+  else
+    AcpUnlock
+    let g:is_acp_disabled = 0
   endif
 endfunction
 
@@ -341,6 +352,9 @@ let g:SrcExpl_isUpdateTags = 0
 
 "don't enable showmarks, use \mt to toogle it
 let g:showmarks_enable=0
+
+map <f11> :call ToggleAcpDisable()<cr>
+imap <f11> <ESC>:call ToggleAcpDisable()<cr>a
 
 map <F3> :call ToogleTagListNerdTree() <cr>
 imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
