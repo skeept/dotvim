@@ -45,17 +45,11 @@ function! s:_import(name, scripts)
   let target = a:name == '' ? '' : '/' . substitute(a:name, '\W\+', '/', 'g')
   let target = substitute(target, '\l\zs\ze\u', '_', 'g') " OrderedSet -> Ordered_Set
   let target = substitute(target, '[/_]\zs\u', '\l\0', 'g') " Ordered_Set -> ordered_set
-  let pat = substitute(s:base_dir . target, '[/\\]', '[/\\\\]', 'g') . '\.vim$'
-  let sid = 0
-  for script in a:scripts
-    if script =~? pat
-      let sid = matchstr(script, '^\s*\zs\d\+') - 0
-      break
-    endif
-  endfor
+  let target = s:base_dir . target . '.vim'
+  let sid = get(a:scripts, s:_unify_path(target), 0)
   if !sid
     try
-      source `=s:base_dir . target . '.vim'`
+      source `=target`
     catch /^Vim\%((\a\+)\)\?:E484/
       throw 'vital: module not found: ' . a:name
     endtry
@@ -65,7 +59,18 @@ function! s:_import(name, scripts)
 endfunction
 
 function! s:_scripts()
-  return split(s:_redir('scriptnames'), "\n")
+  let scripts = {}
+  for line in split(s:_redir('scriptnames'), "\n")
+    let list = matchlist(line, '^\s*\(\d\+\):\s\+\(.\+\)\s*$')
+    if !empty(list)
+      let scripts[s:_unify_path(list[2])] = list[1] - 0
+    endif
+  endfor
+  return scripts
+endfunction
+
+function! s:_unify_path(path)
+  return fnamemodify(resolve(a:path), ':p:gs?\\\+?/?')
 endfunction
 
 function! s:_build_module(sid)
@@ -95,23 +100,10 @@ function! s:_build_module(sid)
   return copy(module)
 endfunction
 
-function! s:_redir(...)
-  let temp = tempname()
-  let save_vfile = &verbosefile
-  let &verbosefile = temp
-
-  let res = ''
-  try
-    for c in a:000
-      silent execute c
-    endfor
-    if &verbosefile ==# temp
-      let &verbosefile = save_vfile
-      let res = join(readfile(temp, 'b'), "\n")
-    endif
-  finally
-    call delete(temp)
-  endtry
+function! s:_redir(cmd)
+  redir => res
+    silent! execute a:cmd
+  redir END
   return res
 endfunction
 

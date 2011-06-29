@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Jun 2011.
+" Last Modified: 28 Jun 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -566,10 +566,6 @@ endfunction"}}}
 function! unite#get_current_unite() "{{{
   return exists('b:unite') && s:is_initialized_unite_buffer ? b:unite : s:current_unite
 endfunction"}}}
-function! unite#set_search_pattern(pattern) "{{{
-  let l:unite = unite#get_current_unite()
-  let l:unite.search_pattern_save = a:pattern
-endfunction"}}}
 
 " Utils.
 function! unite#print_error(message)"{{{
@@ -720,26 +716,16 @@ function! unite#start(sources, ...)"{{{
 
   if l:context.immediately
     let l:candidates = unite#gather_candidates()
-    let l:winnr = bufwinnr(unite#get_current_unite().real_buffer_name)
 
     " Immediately action.
     if empty(l:candidates)
-      if l:winnr > 0
-        " Close previous unite buffer.
-        execute l:winnr . 'wincmd w'
-        close!
-      endif
-
       " Ignore.
+      let s:is_initialized_unite_buffer = 1
       return
     elseif len(l:candidates) == 1
-      if l:winnr > 0
-        execute l:winnr . 'wincmd w'
-        close!
-      endif
-
       " Default action.
       call unite#mappings#do_action(l:context.default_action, [l:candidates[0]])
+      let s:is_initialized_unite_buffer = 1
       return
     endif
   endif
@@ -821,7 +807,6 @@ function! unite#resume(buffer_name)"{{{
   let l:unite.winnr = l:winnr
   let l:unite.win_rest_cmd = l:win_rest_cmd
   let l:unite.redrawtime_save = &redrawtime
-  let l:unite.search_pattern_save = @/
 
   let s:current_unite = l:unite
 
@@ -868,9 +853,6 @@ function! s:quit_session(is_force)  "{{{
   " Save unite value.
   let s:current_unite = b:unite
   let l:unite = s:current_unite
-
-  " Highlight off.
-  let @/ = l:unite.search_pattern_save
 
   " Restore options.
   if exists('&redrawtime')
@@ -1225,13 +1207,14 @@ function! s:initialize_current_unite(sources, context)"{{{
   let l:context = a:context
 
   if getbufvar(bufnr('%'), '&filetype') ==# 'unite'
-    if l:context.input == ''
-          \ && unite#get_current_unite().buffer_name ==# l:context.buffer_name
-      " Get input text.
-      let l:context.input = unite#get_input()
-
+    if unite#get_current_unite().buffer_name ==# l:context.buffer_name
       " Quit unite buffer.
-      call unite#quit_session()
+      call unite#force_quit_session()
+
+      if l:context.input == ''
+        " Get input text.
+        let l:context.input = unite#get_input()
+      endif
     endif
   endif
 
@@ -1265,7 +1248,6 @@ function! s:initialize_current_unite(sources, context)"{{{
   let l:unite.input = l:context.input
   let l:unite.last_input = l:context.input
   let l:unite.sidescrolloff_save = &sidescrolloff
-  let l:unite.search_pattern_save = @/
   let l:unite.prompt_linenr = 2
   let l:unite.max_source_name = len(a:sources) > 1 ?
         \ max(map(copy(a:sources), 'len(v:val[0])')) + 2 : 0
@@ -1290,7 +1272,8 @@ function! s:initialize_unite_buffer()"{{{
   endif
   let l:unite.bufnr = bufnr('%')
 
-  if !l:is_bufexists
+  " Note: If unite buffer initialize is incomplete, &modified or &wrap.
+  if !l:is_bufexists || &modified || &wrap
     " Basic settings.
     setlocal bufhidden=hide
     setlocal buftype=nofile
@@ -1318,6 +1301,8 @@ function! s:initialize_unite_buffer()"{{{
       autocmd CursorHoldI <buffer>  call s:on_cursor_hold_i()
       autocmd CursorHold <buffer>  call s:on_cursor_hold()
       autocmd CursorMoved,CursorMovedI <buffer>  call s:on_cursor_moved()
+      autocmd WinEnter,BufWinEnter <buffer>  call s:on_win_enter()
+      autocmd WinLeave,BufWinLeave <buffer>  call s:on_win_leave()
     augroup END
 
     call unite#mappings#define_default_mappings()
@@ -1441,12 +1426,6 @@ endfunction"}}}
 
 " Autocmd events.
 function! s:on_insert_enter()  "{{{
-  if &updatetime > g:unite_update_time
-    let l:unite = unite#get_current_unite()
-    let l:unite.update_time_save = &updatetime
-    let &updatetime = g:unite_update_time
-  endif
-
   setlocal modifiable
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
@@ -1455,16 +1434,19 @@ function! s:on_insert_leave()  "{{{
     call unite#redraw()
   endif
 
-  if has_key(unite#get_current_unite(), 'update_time_save') && &updatetime < unite#get_current_unite().update_time_save
-    let &updatetime = unite#get_current_unite().update_time_save
-  endif
-
   setlocal nomodifiable
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
-  if line('.') == unite#get_current_unite().prompt_linenr
+  let l:prompt_linenr = unite#get_current_unite().prompt_linenr
+  if line('.') == l:prompt_linenr
     " Redraw.
     call unite#redraw()
+
+    execute 'match' (line('.') <= l:prompt_linenr ?
+          \ line('$') <= l:prompt_linenr ?
+          \ 'UniteError /\%'.l:prompt_linenr.'l/' :
+          \ g:unite_cursor_line_highlight.' /\%'.(l:prompt_linenr+1).'l/' :
+          \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
 
     " Prompt check.
     if col('.') <= len(unite#get_current_unite().prompt)
@@ -1488,10 +1470,13 @@ function! s:on_cursor_hold()  "{{{
 endfunction"}}}
 function! s:on_cursor_moved()  "{{{
   let l:prompt_linenr = unite#get_current_unite().prompt_linenr
-  execute 'setlocal' line('.') == l:prompt_linenr ? 'modifiable' : 'nomodifiable'
+
+  execute 'setlocal' line('.') == l:prompt_linenr ?
+        \ 'modifiable' : 'nomodifiable'
+
   execute 'match' (line('.') <= l:prompt_linenr ?
         \ line('$') <= l:prompt_linenr ?
-        \ 'Error /\%'.l:prompt_linenr.'l/' :
+        \ 'UniteError /\%'.l:prompt_linenr.'l/' :
         \ g:unite_cursor_line_highlight.' /\%'.(l:prompt_linenr+1).'l/' :
         \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
 
@@ -1513,6 +1498,20 @@ function! s:on_cursor_moved()  "{{{
         execute 'resize' l:context.winheight
       endif
     endif
+  endif
+endfunction"}}}
+function! s:on_win_enter()  "{{{
+  if &updatetime > g:unite_update_time
+    let l:unite = unite#get_current_unite()
+    let l:unite.update_time_save = &updatetime
+    let &updatetime = g:unite_update_time
+  endif
+endfunction"}}}
+function! s:on_win_leave()  "{{{
+  let l:unite = unite#get_current_unite()
+  if has_key(l:unite, 'update_time_save')
+        \ && &updatetime < l:unite.update_time_save
+    let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
 
