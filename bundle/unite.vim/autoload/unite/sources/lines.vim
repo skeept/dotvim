@@ -2,7 +2,7 @@
 " FILE: lines.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          t9md <taqumd at gmail.com>
-" Last Modified: 28 Jun 2011.
+" Last Modified: 30 Jun 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -40,6 +40,7 @@ function! s:unite_source.hooks.on_init(args, context) "{{{
     syntax case ignore
     let a:context.source__path = expand('%:p')
     let a:context.source__bufnr = bufnr('%')
+    let a:context.source__linenr = line('.')
 endfunction"}}}
 function! s:unite_source.hooks.on_syntax(args, context) "{{{
     call s:hl_refresh(a:context)
@@ -59,16 +60,35 @@ function! s:hl_refresh(context)
     endfor
 endfunction
 
+let s:supported_search_direction = ['forward', 'backward', 'all']
 function! s:unite_source.gather_candidates(args, context)
-    let lines = getbufline(a:context.source__bufnr, 1, '$')
+    let direction = len(a:args) > 0 ? a:args[0] : 'all'
+    if index(s:supported_search_direction, direction) == -1
+        let direction = 'all'
+    endif
+
+    if direction !=# 'all'
+        call unite#print_message('[lines] direction: ' . direction)
+    endif
+
+    let [start, end] =
+                \ direction ==# 'forward' ?
+                \ [a:context.source__linenr, '$'] :
+                \ direction ==# 'backward' ?
+                \ [1, a:context.source__linenr] :
+                \ [1, '$']
+
+    let lines = map(getbufline(a:context.source__bufnr, start, end),
+                \ '{"nr": v:key+start, "val": v:val }')
+
     let format = '%' . strlen(len(lines)) . 'd: %s'
     return map(lines, '{
-                \   "word": v:val,
-                \   "abbr": printf(format, v:key + 1, v:val),
+                \   "word": v:val.val,
+                \   "abbr": printf(format, v:val.nr, v:val.val),
                 \   "kind": "jump_list",
                 \   "action__path": a:context.source__path,
-                \   "action__line": v:key + 1,
-                \   "action__text": v:val,
+                \   "action__line": v:val.nr,
+                \   "action__text": v:val.val
                 \ }')
 endfunction
 
