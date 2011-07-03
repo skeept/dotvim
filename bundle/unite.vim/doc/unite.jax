@@ -1058,6 +1058,10 @@ lines		カレントバッファの行を候補とする。
 >
 	nnoremap <silent> /  :<C-u>Unite -buffer-name=search lines -start-insert -no-quit<CR>
 <
+						*unite-source-resume*
+resume		|:UniteResume|の引数となるuniteバッファを候補とする。uniteバッ
+		ファは使用した順番に並び換えられる。
+
 ==============================================================================
 kind						*unite-kinds*
 
@@ -1218,6 +1222,10 @@ matcher_default	|unite-filter-default|により呼び出される、デフォル
 matcher_glob	ユーザーが入力したglobパターンにより候補をフィルタリングする
 		matcher。
 		絞り込みにはwordを使用する。
+
+						*unite-filter-matcher_regexp*
+matcher_regexp	ユーザーが入力したパターンを正規表現として、候補をフィルタリ
+		ングするmatcher。絞り込みにはwordを使用する。
 
 						*unite-filter-sorter_default*
 sorter_default	|unite-filter-default|により呼び出される、デフォルトのsorter。
