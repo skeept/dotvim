@@ -38,7 +38,7 @@ function main()
   if test -z "$@"; then
     echo "$0 -s : move .git to ._git"
     echo "$0 -u : update .git"
-    echo -e "\n\n"
+    echo -e "\n"
     do_git_update
     exit
   fi
