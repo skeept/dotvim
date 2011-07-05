@@ -420,6 +420,13 @@ g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
 		
 		初期値は autoload/unite/sources/file_rec.vim を参照。
 
+g:unite_source_file_rec_min_cache_files		*g:unite_source_file_rec_min_cache_files*
+		|unite-source-file_rec|が内部でキャッシュする最小のファイル
+		数を指定する。ディレクトリ中のファイル数が、ここで指定したファ
+		イル数よりも小さい場合はキャッシュされない。
+
+		初期値は50である。
+
 g:unite_source_grep_command			*g:unite_source_grep_command*
 		"grep"コマンドを指定する。
 
@@ -442,13 +449,13 @@ g:unite_source_grep_max_candidates		*g:unite_source_grep_max_candidates*
 
 		初期値は100である。
 
-g:unite_source_lines_enable_highlight		*g:unite_source_lines_enable_highlight*
+g:unite_source_line_enable_highlight		*g:unite_source_line_enable_highlight*
 		検索キーワードをハイライトするか制御する。
 
 		Default value is 1.
 
-g:unite_source_lines_search_word_highlight	*g:unite_source_lines_search_word_highlight*
-		|g:unite_source_lines_enable_highlight|が真のとき、検索文字
+g:unite_source_line_search_word_highlight	*g:unite_source_line_search_word_highlight*
+		|g:unite_source_line_enable_highlight|が真のとき、検索文字
 		列のハイライトを設定する。
 
 		初期値は"Search"である。
@@ -1039,14 +1046,22 @@ grep		"grep"コマンドを実行した結果を候補とする。
 		#         : 裏バッファ名
 		$buffers  : 全てのバッファ名
 
-						*unite-source-lines*
-lines		カレントバッファの行を候補とする。
+						*unite-source-line*
+line		カレントバッファの行を候補とする。
 		Note: このsourceはt9md氏によって作成された。
+
+		source引数：
+		1. 検索方向。 "all", "forward", "backward"のうちどれかを指定
+		する。省略すると"all"となる。
 
 		Example:
 >
-	nnoremap <silent> /  :<C-u>Unite -buffer-name=search lines -start-insert -no-quit<CR>
+	nnoremap <silent> /  :<C-u>Unite -buffer-name=search line -start-insert -no-quit<CR>
 <
+						*unite-source-resume*
+resume		|:UniteResume|の引数となるuniteバッファを候補とする。uniteバッ
+		ファは使用した順番に並び換えられる。
+
 ==============================================================================
 kind						*unite-kinds*
 
@@ -1207,6 +1222,10 @@ matcher_default	|unite-filter-default|により呼び出される、デフォル
 matcher_glob	ユーザーが入力したglobパターンにより候補をフィルタリングする
 		matcher。
 		絞り込みにはwordを使用する。
+
+						*unite-filter-matcher_regexp*
+matcher_regexp	ユーザーが入力したパターンを正規表現として、候補をフィルタリ
+		ングするmatcher。絞り込みにはwordを使用する。
 
 						*unite-filter-sorter_default*
 sorter_default	|unite-filter-default|により呼び出される、デフォルトのsorter。
