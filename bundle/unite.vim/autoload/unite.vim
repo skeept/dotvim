@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Jul 2011.
+" Last Modified: 09 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -210,6 +210,7 @@ call unite#set_substitute_pattern('files', '^\~',
       \ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
 call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
 call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
+call unite#set_substitute_pattern('files', '\.', '*.', 1000)
 
 let s:unite_options = [
       \ '-buffer-name=', '-input=', '-prompt=',
@@ -657,6 +658,13 @@ endfunction"}}}
 
 " Command functions.
 function! unite#start(sources, ...)"{{{
+  " Check command line window.
+  if s:is_cmdwin()
+    echoerr 'Command line buffer is detected!'
+    echoerr 'Please close command line buffer.'
+    return
+  endif
+
   let l:context = a:0 >= 1 ? a:1 : {}
   call s:initialize_context(l:context)
 
@@ -733,6 +741,13 @@ function! unite#start(sources, ...)"{{{
   endif
 endfunction"}}}
 function! unite#resume(buffer_name)"{{{
+  " Check command line window.
+  if s:is_cmdwin()
+    echoerr 'Command line buffer is detected!'
+    echoerr 'Please close command line buffer.'
+    return
+  endif
+
   if a:buffer_name == ''
     " Use last unite buffer.
     if !bufexists(s:last_unite_bufnr)
@@ -1501,6 +1516,10 @@ function! s:on_cursor_hold()  "{{{
   endif
 endfunction"}}}
 function! s:on_cursor_moved()  "{{{
+  if &filetype !=# 'unite'
+    return
+  endif
+
   let l:prompt_linenr = unite#get_current_unite().prompt_linenr
 
   execute 'setlocal' line('.') == l:prompt_linenr ?
@@ -1643,6 +1662,16 @@ function! s:call_hook(sources, hook_name)"{{{
       call call(l:source.hooks[a:hook_name], [l:source.args, l:source.unite__context], l:source.hooks)
     endif
   endfor
+endfunction"}}}
+function! s:is_cmdwin()"{{{
+  try
+    noautocmd wincmd p
+    noautocmd wincmd p
+  catch /^Vim(wincmd):E11:/
+    return 1
+  endtry
+
+  return 0
 endfunction"}}}
 "}}}
 
