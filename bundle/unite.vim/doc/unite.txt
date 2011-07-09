@@ -1390,10 +1390,16 @@ BUGS						*unite-bugs*
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-07-10
+- Fixed narrowing problem.
+- Improved buffer and file_mru source abbr.
+- Improved delete backword path keymapping.
+
 2011-07-09
 - Improved command line buffer detect.
 - Improved substitute pattern.
 - Deleted <ESC> default mapping.
+- Improved on InsertEnter.
 
 2011-07-08
 - Added unite#custom_max_candidates().
