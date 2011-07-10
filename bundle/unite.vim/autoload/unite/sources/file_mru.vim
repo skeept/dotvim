@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Jun 2011.
+" Last Modified: 10 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -48,7 +48,8 @@ function! unite#sources#file_mru#define()"{{{
   return s:source
 endfunction"}}}
 function! unite#sources#file_mru#_append()"{{{
-  let l:path = unite#util#substitute_path_separator(simplify(expand('%:p')))
+  let l:path = unite#util#substitute_path_separator(
+        \ simplify(resolve(expand('%:p'))))
 
   " Append the current buffer to the mru list.
   if !s:is_exists_path(path) || &l:buftype =~ 'help'
@@ -83,11 +84,15 @@ function! s:source.hooks.on_syntax(args, context)"{{{
 endfunction"}}}
 function! s:source.hooks.on_post_filter(args, context)"{{{
   for l:mru in a:context.candidates
-    let l:path = (g:unite_source_file_mru_filename_format == '') ? '' :
-          \ unite#util#substitute_path_separator(fnamemodify(l:mru.action__path, g:unite_source_file_mru_filename_format))
-    let l:mru.abbr = (g:unite_source_file_mru_filename_format == '' ? '' :
-          \ strftime(g:unite_source_file_mru_time_format, l:mru.source__time)) .
-          \ (l:path == '' ? l:mru.action__path : l:path)
+    let l:path = (g:unite_source_file_mru_filename_format == '') ?
+          \ l:mru.action__path :
+          \ unite#util#substitute_path_separator(
+          \     fnamemodify(l:mru.action__path, g:unite_source_file_mru_filename_format))
+    if l:path == ''
+      let l:path = l:mru.action__path
+    endif
+    let l:mru.abbr = (g:unite_source_file_mru_time_format == '' ? '' :
+          \ strftime(g:unite_source_file_mru_time_format, l:mru.source__time)) .l:path
   endfor
 endfunction"}}}
 
