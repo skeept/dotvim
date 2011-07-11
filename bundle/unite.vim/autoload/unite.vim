@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Jul 2011.
+" Last Modified: 10 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 2.1, for Vim 7.0
+" Version: 2.2, for Vim 7.0
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -104,6 +104,11 @@ function! unite#custom_action(kind, name, action)"{{{
     let s:custom.actions[key][a:name] = a:action
   endfor
 endfunction"}}}
+function! unite#custom_max_candidates(source_name, max)"{{{
+  for key in split(a:source_name, ',')
+    let s:custom.max_candidates[key] = a:max
+  endfor
+endfunction"}}}
 function! unite#undef_custom_action(kind, name)"{{{
   for key in split(a:kind, ',')
     if has_key(s:custom.actions, key)
@@ -157,7 +162,7 @@ endfunction"}}}
 
 function! unite#do_action(action)
   return printf("%s:\<C-u>call unite#mappings#do_action(%s)\<CR>",
-        \             (mode() ==# 'i' ? "\<ESC>" : ''), string(a:action))
+        \             (mode() ==# 'i' ? "\<C-o>" : ''), string(a:action))
 endfunction
 function! unite#smart_map(narrow_map, select_map)"{{{
   return (line('.') <= unite#get_current_unite().prompt_linenr && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
@@ -198,12 +203,14 @@ let s:custom.default_actions = {}
 let s:custom.aliases = {}
 let s:custom.filters = {}
 let s:custom.source = {}
+let s:custom.max_candidates = {}
 
 let s:buffer_name_options = {}
 call unite#set_substitute_pattern('files', '^\~',
       \ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
 call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
 call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
+call unite#set_substitute_pattern('files', '\.', '*.', 1000)
 
 let s:unite_options = [
       \ '-buffer-name=', '-input=', '-prompt=',
@@ -594,7 +601,10 @@ function! unite#clear_message()"{{{
       let l:modifiable_save = &l:modifiable
       setlocal modifiable
 
+      let l:pos = getpos('.')
       silent! execute '2,'.(l:unite.prompt_linenr-1).'delete _'
+      call setpos('.', l:pos)
+      normal! z.
 
       let l:unite.prompt_linenr = 2
 
@@ -623,10 +633,15 @@ function! s:print_buffer(message)"{{{
     setlocal modifiable
 
     let l:unite = unite#get_current_unite()
+    let l:pos = getpos('.')
     call append(l:unite.prompt_linenr-1, a:message)
     let l:len = type(a:message) == type([]) ?
           \ len(a:message) : 1
     let l:unite.prompt_linenr += l:len
+
+    let l:pos[1] += l:len
+    call setpos('.', l:pos)
+    normal! z.
 
     let &l:modifiable = l:modifiable_save
     call s:on_cursor_moved()
@@ -643,6 +658,13 @@ endfunction"}}}
 
 " Command functions.
 function! unite#start(sources, ...)"{{{
+  " Check command line window.
+  if s:is_cmdwin()
+    echoerr 'Command line buffer is detected!'
+    echoerr 'Please close command line buffer.'
+    return
+  endif
+
   let l:context = a:0 >= 1 ? a:1 : {}
   call s:initialize_context(l:context)
 
@@ -719,6 +741,13 @@ function! unite#start(sources, ...)"{{{
   endif
 endfunction"}}}
 function! unite#resume(buffer_name)"{{{
+  " Check command line window.
+  if s:is_cmdwin()
+    echoerr 'Command line buffer is detected!'
+    echoerr 'Please close command line buffer.'
+    return
+  endif
+
   if a:buffer_name == ''
     " Use last unite buffer.
     if !bufexists(s:last_unite_bufnr)
@@ -969,9 +998,6 @@ function! s:initialize_sources()"{{{
     if !has_key(l:source, 'is_volatile')
       let l:source.is_volatile = 0
     endif
-    if !has_key(l:source, 'max_candidates')
-      let l:source.max_candidates = 0
-    endif
     if !has_key(l:source, 'required_pattern_length')
       let l:source.required_pattern_length = 0
     endif
@@ -993,15 +1019,23 @@ function! s:initialize_sources()"{{{
     if !has_key(l:source, 'syntax')
       let l:source.syntax = ''
     endif
-    if !has_key(l:source, 'filters')
-      let l:source.filters = has_key(s:custom.filters, l:source.name) ?
-            \ s:custom.filters[l:source.name] :
-            \ unite#filters#default#get()
-    endif
     if l:source.is_volatile
           \ && !has_key(l:source, 'change_candidates')
       let l:source.change_candidates = l:source.gather_candidates
     endif
+
+    let l:source.filters =
+          \ has_key(s:custom.filters, l:source.name) ?
+          \ s:custom.filters[l:source.name] :
+          \ has_key(l:source, 'filters') ?
+          \ l:source.filters :
+          \ unite#filters#default#get()
+    let l:source.max_candidates =
+          \ has_key(s:custom.max_candidates, l:source.name) ?
+          \ s:custom.max_candidates[l:source.name] :
+          \ has_key(l:source, 'max_candidates') ?
+          \ l:source.max_candidates :
+          \ 0
   endfor
 
   return l:sources
@@ -1438,14 +1472,21 @@ function! s:on_insert_enter()  "{{{
   if line('.') != l:unite.prompt_linenr
         \ || col('.') <= len(l:unite.prompt)
     execute l:unite.prompt_linenr
+    normal! z.
     startinsert!
   endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
-  if line('.') == unite#get_current_unite().prompt_linenr
+  let l:unite = unite#get_current_unite()
+
+  if line('.') == l:unite.prompt_linenr
     " Redraw.
     call unite#redraw()
+  else
+    normal! 0
   endif
+
+  let l:unite.is_insert = 0
 
   setlocal nomodifiable
 endfunction"}}}
@@ -1482,6 +1523,10 @@ function! s:on_cursor_hold()  "{{{
   endif
 endfunction"}}}
 function! s:on_cursor_moved()  "{{{
+  if &filetype !=# 'unite'
+    return
+  endif
+
   let l:prompt_linenr = unite#get_current_unite().prompt_linenr
 
   execute 'setlocal' line('.') == l:prompt_linenr ?
@@ -1624,6 +1669,16 @@ function! s:call_hook(sources, hook_name)"{{{
       call call(l:source.hooks[a:hook_name], [l:source.args, l:source.unite__context], l:source.hooks)
     endif
   endfor
+endfunction"}}}
+function! s:is_cmdwin()"{{{
+  try
+    noautocmd wincmd p
+    noautocmd wincmd p
+  catch /^Vim(wincmd):E11:/
+    return 1
+  endtry
+
+  return 0
 endfunction"}}}
 "}}}
 

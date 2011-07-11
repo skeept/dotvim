@@ -1,6 +1,6 @@
 *unite.txt*	Unite all sources
 
-Version: 2.1
+Version: 2.2
 Author : Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -685,7 +685,6 @@ x		In case when you selected a candidate, runs
 Insert mode mappings.
 {lhs}		{rhs}
 --------	-----------------------------
-<ESC>		|i_<Plug>(unite_insert_leave)|
 <Tab>		|i_<Plug>(unite_choose_action)|
 <C-n>		|i_<Plug>(unite_select_next_line)|
 <Down>		|i_<Plug>(unite_select_next_line)|
@@ -875,10 +874,16 @@ unite#custom_alias({kind}, {name}, {action})
 		call unite#custom_alias('file', 'h', 'left')
 <
 unite#custom_filters({source-name}, {filters})	*unite#custom_filters()*
-		Changes the filters of {source-name} into {filters}.  You
+		Changes the filters of {source-name} into {filters}. You
 		may specify multiple sources with separating "," in
 		{source-name}.  {filters} is a name of filter or a list of
 		the names.
+
+unite#custom_max_candidates({source-name}, {max})
+						*unite#custom_max_candidates()*
+		Changes the max candidates of {source-name} into {max}. You
+		may specify multiple sources with separating "," in
+		{source-name}. If {max} is 0, all candidates is displayed.
 
 unite#take_action({action-name}, {candidate})
 						*unite#take_action()*
@@ -1384,6 +1389,33 @@ BUGS						*unite-bugs*
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-07-10
+- Fixed narrowing problem.
+- Improved buffer and file_mru source abbr.
+- Improved delete backword path keymapping.
+- Fixed buffer source error.
+- Fixed preview action in completion kind.
+
+2011-07-09
+- Improved command line buffer detect.
+- Improved substitute pattern.
+- Deleted <ESC> default mapping.
+- Improved on InsertEnter.
+
+2011-07-08
+- Added unite#custom_max_candidates().
+- Fixed s:print_buffer().
+- Detect command line buffer.
+- Improved mru.
+
+2011-07-07
+- Improved unite#print_message() and unite#clear_message() behavior.
+- Improved grep source behavior.
+
+2011-07-06
+- Ver.2.2 development is started.
+- Fixed file actions.
 
 ------------------------------------------------------------------------------
 ChangeLog unite.vim Ver.2.1:

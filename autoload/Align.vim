@@ -1,7 +1,7 @@
 " Align: tool to align multiple fields based on one or more separators
 "   Author:		Charles E. Campbell, Jr.
-"   Date:		Jun 29, 2010
-"   Version:	36g	ASTRO-ONLY
+"   Date:		Jun 20, 2011
+"   Version:	36h	ASTRO-ONLY
 " GetLatestVimScripts: 294 1 :AutoInstall: Align.vim
 " GetLatestVimScripts: 1066 1 :AutoInstall: cecutil.vim
 "redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
@@ -25,7 +25,7 @@
 if exists("g:loaded_Align") || &cp
  finish
 endif
-let g:loaded_Align = "v36g"
+let g:loaded_Align = "v36h"
 if v:version < 700
  echohl WarningMsg
  echo "***warning*** this version of Align needs vim 7.0"
@@ -449,6 +449,28 @@ fun! Align#Align(hasctrl,...) range
    let begline = a:lastline
    let endline = a:firstline
   endif
+
+  " Expand range to cover align-able lines when the given range is only the current line.
+  " Look for the first line above the current line that matches the first separator pattern, and
+  " look for the last  line below the current line that matches the first separator pattern.
+  if begline == endline
+"   call Decho("case begline == endline")
+   if !exists("s:AlignPat_{1}")
+    echohl Error|echo "no separators specified!"|echohl None
+    let @/      = keep_search
+    let &ic     = keep_ic
+    let &report = keep_report
+    let &hls    = keep_hls
+"    call Dret("Align#Align")
+    return
+   endif
+   let seppat = s:AlignPat_{1}
+   let begline= search('^\%(\%('.seppat.'\)\@!.\)*$',"bnW")
+   if begline == 0|let begline= 1|else|let begline= begline + 1|endif
+   let endline= search('^\%(\%('.seppat.'\)\@!.\)*$',"nW")
+   if endline == 0|let endline= line("$")|else|let endline= endline - 1|endif
+"   call Decho("begline=".begline." endline=".endline." curline#".line("."))
+  endif
 "  call Decho("begline=".begline." endline=".endline)
   let fieldcnt = 0
   if (begline == line("'>") && endline == line("'<")) || (begline == line("'<") && endline == line("'>"))
@@ -570,7 +592,7 @@ fun! Align#Align(hasctrl,...) range
 "    call Decho("Pass".pass.": endtxt<".endtxt.">")
 	if !exists("s:AlignPat_{1}")
 	 echohl Error|echo "no separators specified!"|echohl None
-	 let @      /= keep_search
+	 let @/      = keep_search
 	 let &ic     = keep_ic
 	 let &report = keep_report
 	 let &hls    = keep_hls

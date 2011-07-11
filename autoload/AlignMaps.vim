@@ -1,14 +1,14 @@
 " AlignMaps.vim : support functions for AlignMaps
 "   Author: Charles E. Campbell, Jr.
-"     Date: Feb 22, 2011
-"  Version: 42k	ASTRO-ONLY
+"     Date: Jun 10, 2011
+"  Version: 42m	ASTRO-ONLY
 "redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
 if &cp || exists("g:loaded_AlignMaps")
  finish
 endif
-let g:loaded_AlignMaps= "v42k"
+let g:loaded_AlignMaps= "v42m"
 let s:keepcpo         = &cpo
 set cpo&vim
 "DechoTabOn
@@ -356,6 +356,26 @@ fun! AlignMaps#FixMultiDec()
   let @x= xkeep
 
 "  call Dret("AlignMaps#FixMultiDec : my=".line("'y")." mz=".line("'z"))
+endfun
+
+" ---------------------------------------------------------------------
+" AlignMaps#AlignMapsClean: this function removes the AlignMaps plugin {{{2
+fun! AlignMaps#AlignMapsClean()
+"  call Dfunc("AlignMaps#AlignMapsClean()")
+  for home in split(&rtp,',') + ['']
+"   call Decho("considering home<".home.">")
+   if isdirectory(home)
+	if filereadable(home."/autoload/AlignMaps.vim")
+"	 call Decho("deleting ".home."/autoload/AlignMaps.vim")
+	 call delete(home."/autoload/AlignMaps.vim")
+	endif
+	if filereadable(home."/plugin/AlignMapsPlugin.vim")
+"	 call Decho("deleting ".home."/plugin/AlignMapsPlugin.vim")
+	 call delete(home."/plugin/AlignMapsPlugin.vim")
+	endif
+   endif
+  endfor
+"  call Dret("AlignMaps#AlignMapsClean")
 endfun
 
 " ---------------------------------------------------------------------
