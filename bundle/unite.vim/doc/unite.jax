@@ -727,7 +727,7 @@ unite#start({sources}, [, {context}])				*unite#start()*
 		り込みテキストは保存される。
 
 		{sources}はリストであり、それぞれ
-		の要素は{source-name}または、[{source-name}, [{args},...]]とい
+		の要素は{source-name}または、[{source-name}, {args},...]とい
 		う形式である。{args}には{source-name}に渡す引数を文字列形式で
 		複数指定できる。
 
@@ -1503,10 +1503,20 @@ hooks			辞書		(任意)
 						*unite-source-attribute-action_table*
 action_table		辞書		(任意)
 			source独自のアクションテーブルを追加するときに使用する。
-			キーはアクションテーブルを追加するkindで、値は追加するアクションテーブルである。
-			キーに"*"を設定すると、どんなkindにもマッチするようになる。
-			アクションテーブルの詳細については、|unite-kind-attribute-action_table|
-			を参照せよ。もしこれが与えられない場合、空となる。
+			キーはアクションテーブルを追加するkindで、値は追加す
+			るアクションテーブルである。それぞれのアクションテーブ
+			ルの仕様は、|unite-kind-attribute-action_table|と同じで
+			ある。つまり、source側では候補のkind毎に
+			|unite-kind-attribute-action_table|を定義できる。
+			例えば、
+>
+			'action_table' : { 'buffer' : foo_action_table }
+<
+			の場合、このsourceのkind "buffer"では、foo_action_table
+			が使用される。
+			キーのkindに"*"を設定すると、どんなkindにもマッチするよ
+			うになる。候補のkindが一種類しかない場合に便利である。
+			もしこれが与えられない場合、空となる。
 
 						*unite-source-attribute-default_action*
 default_action		辞書		(任意)
@@ -1514,6 +1524,9 @@ default_action		辞書		(任意)
 			キーはアクションテーブルを追加するkindで、値は標準ア
 			クションである。これを省略した場合はkindの
 			default_actionを使用する。
+			default_actionは文字列形式にすることもできる。
+			その場合、'default_action' : { '*' : action_name }と指
+			定したことと同じとなる。
 
 						*unite-source-attribute-alias_table*
 alias_table		辞書		(任意)

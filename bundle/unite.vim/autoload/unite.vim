@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Jul 2011.
+" Last Modified: 11 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1006,6 +1006,9 @@ function! s:initialize_sources()"{{{
     endif
     if !has_key(l:source, 'default_action')
       let l:source.default_action = {}
+    elseif type(l:source.default_action) == type('')
+      " Syntax sugar.
+      let l:source.default_action = { '*' : l:source.default_action }
     endif
     if !has_key(l:source, 'alias_table')
       let l:source.alias_table = {}
