@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Jul 2011.
+" Last Modified: 13 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -218,7 +218,7 @@ let s:unite_options = [
       \ '-winwidth=', '-winheight=',
       \ '-immediately', '-auto-preview', '-complete',
       \ '-vertical', '-horizontal', '-direction=',
-      \ '-verbose',
+      \ '-verbose', '-auto-resize',
       \]
 "}}}
 
@@ -528,6 +528,16 @@ function! unite#redraw_candidates() "{{{
 
   let l:unite = unite#get_current_unite()
   let l:unite.candidates = l:candidates
+
+  if l:unite.context.auto_resize
+        \ && l:unite.prompt_linenr + len(l:candidates)
+        \      < l:unite.context.winheight
+    " Auto resize.
+    let l:pos = getpos('.')
+    execute 'resize' l:unite.prompt_linenr + len(l:candidates)
+    execute 'normal!' "1z\<Enter>"
+    call setpos('.', l:pos)
+  endif
 endfunction"}}}
 function! unite#get_marked_candidates() "{{{
   return unite#util#sort_by(filter(copy(unite#get_unite_candidates()),
@@ -603,6 +613,7 @@ function! unite#clear_message()"{{{
 
       let l:pos = getpos('.')
       silent! execute '2,'.(l:unite.prompt_linenr-1).'delete _'
+      let l:pos[1] -= l:unite.prompt_linenr-2
       call setpos('.', l:pos)
       normal! z.
 
@@ -720,7 +731,6 @@ function! unite#start(sources, ...)"{{{
     let l:unite.is_insert = 1
 
     execute l:unite.prompt_linenr
-    normal! z.
 
     startinsert!
   else
@@ -737,7 +747,7 @@ function! unite#start(sources, ...)"{{{
     if !l:is_restore
       execute (l:unite.prompt_linenr+1)
     endif
-    normal! 0z.
+    normal! 0
   endif
 endfunction"}}}
 function! unite#resume(buffer_name)"{{{
@@ -869,6 +879,9 @@ function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'verbose')
     let a:context.verbose = 0
   endif
+  if !has_key(a:context, 'auto_resize')
+    let a:context.auto_resize = 0
+  endif
   let a:context.is_redraw = 0
 endfunction"}}}
 
@@ -920,6 +933,8 @@ function! s:quit_session(is_force)  "{{{
   endif
 
   if !a:is_force && l:unite.context.no_quit
+    " Ignore.
+  else
     " Call finalize functions.
     call s:call_hook(unite#loaded_sources_list(), 'on_close')
   endif
