@@ -460,19 +460,19 @@ class BufferExplorer(Explorer):
         return self.prompt.input
 
     def _compute_sorted_matches(self):
-      abbrev = self.current_abbreviation()
-      if len(abbrev) == 0:
-        # Take (current) MRU order if we have no abbreviation.
-        return self.buffer_entries
-      else:
-        matching_entries = []
-        for entry in self.buffer_entries:
-            entry.current_score = Mercury.score(entry.short_name, abbrev)
-            if entry.current_score != 0.0:
-                matching_entries.append(entry)
-        # Sort by score.
-        return sorted(matching_entries,
-                      key=lambda x: (x.current_score, x.mru_placement))
+        abbrev = self.current_abbreviation()
+        if len(abbrev) == 0:
+            # Take (current) MRU order if we have no abbreviation.
+            return self.buffer_entries
+        else:
+            matching_entries = []
+            for entry in self.buffer_entries:
+                entry.current_score = Mercury.score(entry.short_name, abbrev)
+                if entry.current_score != 0.0:
+                    matching_entries.append(entry)
+            # Sort by score.
+            return sorted(matching_entries,
+                        key=lambda x: (x.current_score, x.mru_placement))
 
     def _open_entry(self, entry, open_mode):
         self._cleanup()
