@@ -13,8 +13,8 @@
 "  Description: Dynamic Filesystem and Buffer Explorer Vim Plugin
 "  Maintainers: Michael Hart
 "
-" Release Date: July 8 2011
-"      Version: 0.1
+" Release Date: July 13 2011
+"      Version: 0.3
 "
 "        Usage:
 "                 <Leader>lf  - Opens the filesystem explorer.
