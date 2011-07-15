@@ -1,0 +1,54 @@
+![Headlights in Action][2]
+
+Headlights adds a `Bundles` menu to Vim, revealing your bundles (aka. plugins)
+and the features they provide.
+
+Headlights creates a menu for each _currently loaded_ bundle, grouping
+together docs, commands, mappings, abbreviations, functions, and script files.
+
+Combined with a powerful bundle manager, Headlights will improve your ~~Vim
+user experience~~ quality of life.
+
+Get Headlights
+==============
+
+__NOTE:__ Headlights requires Vim 7+ compiled with Python 2.6+ support.
+
+The Recommended Way
+-------------------
+
+Using [Vundle] [3]:
+
+1. Add the following line to the Vundle section in your `.vimrc`:
+
+    `Bundle 'Headlights'`
+
+2. Run the following Vim command:
+
+    `BundleInstall`
+
+The Manual Way
+--------------
+
+1. [Download the latest package] [4].
+
+2. Expand the archive into your `.vim` directory.
+
+3. Run the following Vim command:
+
+    `helptags ~/.vim/doc/`
+
+Further Reading
+===============
+
+- Refer to the Headlights help menu:
+
+    `Bundles > a - i > headlights > Help`
+
+[1]: http://www.vim.org/
+
+[2]: https://github.com/mbadran/headlights/raw/master/headlights_ss.png
+
+[3]: https://github.com/gmarik/vundle
+
+[4]: https://github.com/mbadran/headlights/archives/master
