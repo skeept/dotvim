@@ -144,12 +144,17 @@ http://www.ustream.tv/recorded/11240673
 		現在uniteバッファに居る場合、絞り込みテキストは保存される。
 
 		source名の後ろに:で区切った文字列のリストを引数として渡すことが
-		できる。引数に含まれる:と\は\でエスケープしなければならない。引
-		数がどう解釈されるかは、sourceによって異なる。
+		できる。引数に含まれる:と\は\でエスケープしなければならな
+		い。::は引数の省略を表す。引数がどう解釈されるかは、sourceに
+		よって異なる。
 
 		例：
-		"file:hoge:piyo": source fileに与える引数は[hoge, piyo]である。
-		"file:hoge\:piyo": source fileに与える引数は[hoge:piyo]である。
+		"file:hoge:piyo": source fileに与える引数は
+		                  ["hoge", "piyo"]である。
+		"file:hoge\:piyo": source fileに与える引数は
+		                  ["hoge:piyo"]である。
+		"file:hoge::piyo": source fileに与える引数は
+		                  ["hoge", "", "piyo"]である。
 
 						*unite-options*
 		{options}とはuniteバッファに与えるオプションである。
@@ -224,6 +229,10 @@ http://www.ustream.tv/recorded/11240673
 						*unite-options-vertical*
 		-vertical
 		uniteバッファを垂直分割する。
+
+						*unite-options-auto-resize*
+		-auto-resize
+		候補数に応じて、uniteバッファを自動的にリサイズする。
 
 						*unite-options-horizontal*
 		-horizontal
@@ -358,10 +367,10 @@ g:unite_no_default_keymappings			*g:unite_no_default_keymappings*
 sourceの変数					*unite-sources-variables*
 
 g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
-		|unite-source-file|, |unite-source-file_rec|の候補に表示しな
-		いファイルの正規表現パターンを指定する。マッチングはファイル
-		のフルパスに対して行われる。この変数が空文字列以外であれば、
-		指定した正規表現で結果をフィルタリングする。
+		|unite-source-file|の候補に表示しないファイルの正規表現パター
+		ンを指定する。マッチングはファイルのフルパスに対して行われる。
+		この変数が空文字列以外であれば、指定した正規表現で結果をフィル
+		タリングする。
 
 		初期値は autoload/unite/sources/file.vim を参照。
 
@@ -727,7 +736,7 @@ unite#start({sources}, [, {context}])				*unite#start()*
 		り込みテキストは保存される。
 
 		{sources}はリストであり、それぞれ
-		の要素は{source-name}または、[{source-name}, [{args},...]]とい
+		の要素は{source-name}または、[{source-name}, {args},...]とい
 		う形式である。{args}には{source-name}に渡す引数を文字列形式で
 		複数指定できる。
 
@@ -1503,10 +1512,20 @@ hooks			辞書		(任意)
 						*unite-source-attribute-action_table*
 action_table		辞書		(任意)
 			source独自のアクションテーブルを追加するときに使用する。
-			キーはアクションテーブルを追加するkindで、値は追加するアクションテーブルである。
-			キーに"*"を設定すると、どんなkindにもマッチするようになる。
-			アクションテーブルの詳細については、|unite-kind-attribute-action_table|
-			を参照せよ。もしこれが与えられない場合、空となる。
+			キーはアクションテーブルを追加するkindで、値は追加す
+			るアクションテーブルである。それぞれのアクションテーブ
+			ルの仕様は、|unite-kind-attribute-action_table|と同じで
+			ある。つまり、source側では候補のkind毎に
+			|unite-kind-attribute-action_table|を定義できる。
+			例えば、
+>
+			'action_table' : { 'buffer' : foo_action_table }
+<
+			の場合、このsourceのkind "buffer"では、foo_action_table
+			が使用される。
+			キーのkindに"*"を設定すると、どんなkindにもマッチするよ
+			うになる。候補のkindが一種類しかない場合に便利である。
+			もしこれが与えられない場合、空となる。
 
 						*unite-source-attribute-default_action*
 default_action		辞書		(任意)
@@ -1514,6 +1533,9 @@ default_action		辞書		(任意)
 			キーはアクションテーブルを追加するkindで、値は標準ア
 			クションである。これを省略した場合はkindの
 			default_actionを使用する。
+			default_actionは文字列形式にすることもできる。
+			その場合、'default_action' : { '*' : action_name }と指
+			定したことと同じとなる。
 
 						*unite-source-attribute-alias_table*
 alias_table		辞書		(任意)

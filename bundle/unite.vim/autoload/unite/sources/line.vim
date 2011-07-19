@@ -2,7 +2,7 @@
 " FILE: line.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          t9md <taqumd at gmail.com>
-" Last Modified: 03 Jul 2011.
+" Last Modified: 17 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -39,7 +39,8 @@ call unite#custom_filters('line', ['matcher_regexp', 'sorter_default', 'converte
 function! s:unite_source.hooks.on_init(args, context) "{{{
     execute 'highlight default link uniteSource__Line_target ' . g:unite_source_line_search_word_highlight
     syntax case ignore
-    let a:context.source__path = expand('%:p')
+    let a:context.source__path = (&l:buftype =~ 'nofile') ?
+                \ expand('%:p') : bufname('%')
     let a:context.source__bufnr = bufnr('%')
     let a:context.source__linenr = line('.')
 endfunction"}}}
@@ -63,7 +64,11 @@ endfunction
 
 let s:supported_search_direction = ['forward', 'backward', 'all']
 function! s:unite_source.gather_candidates(args, context)
-    let direction = len(a:args) > 0 ? a:args[0] : 'all'
+    let direction = get(a:args, 0, '')
+    if direction == ''
+        let direction = 'all'
+    endif
+
     if index(s:supported_search_direction, direction) == -1
         let direction = 'all'
     endif
@@ -88,6 +93,7 @@ function! s:unite_source.gather_candidates(args, context)
                 \   "abbr": printf(format, v:val.nr, v:val.val),
                 \   "kind": "jump_list",
                 \   "action__path": a:context.source__path,
+                \   "action__buffer_nr": a:context.source__bufnr,
                 \   "action__line": v:val.nr,
                 \   "action__text": v:val.val
                 \ }')
