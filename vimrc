@@ -510,6 +510,8 @@ end " has("autocmd")
 "for scip go up two folders
 set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
+"" change some highlight
+hi! ColorColumn   term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
 "some plugins don't work weel with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
