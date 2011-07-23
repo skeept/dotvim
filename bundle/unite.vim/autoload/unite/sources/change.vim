@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: matcher_regexp.vim
+" FILE: changes.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Jul 2011.
+" Last Modified: 23 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,48 +27,51 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#matcher_regexp#define()"{{{
-  return s:matcher
+" Variables  "{{{
+"}}}
+
+function! unite#sources#change#define()"{{{
+  return s:source
 endfunction"}}}
 
-let s:matcher = {
-      \ 'name' : 'matcher_regexp',
-      \ 'description' : 'regular expression matcher',
-      \}
+let s:source = {
+      \ 'name' : 'change',
+      \ 'description' : 'candidates from changes',
+      \ 'hooks' : {},
+      \ }
 
-function! s:matcher.filter(candidates, context)"{{{
-  if a:context.input == ''
-    return a:candidates
-  endif
+let s:cached_result = []
+function! s:source.hooks.on_init(args, context)"{{{
+  " Get changes list.
+  redir => l:redir
+  silent! changes
+  redir END
 
-  let l:candidates = copy(a:candidates)
-  for l:input in split(a:context.input, '\\\@<! ')
-    if l:input =~ '^!'
-      if l:input == '!'
-        continue
-      endif
-      " Exclusion match.
-      try
-        call filter(l:candidates, 'v:val.word !~ ' . string(l:input[1:]))
-      catch
-      endtry
-    elseif l:input !~ '[~\\.^$[\]*]'
-      " Optimized filter.
-      let l:input = substitute(l:input, '\\\(.\)', '\1', 'g')
-      let l:expr = &ignorecase ?
-            \ printf('stridx(tolower(v:val.word), %s) != -1', string(tolower(l:input))) :
-            \ printf('stridx(v:val.word, %s) != -1', string(l:input))
-
-      call filter(l:candidates, l:expr)
-    else
-      try
-        call filter(l:candidates, 'v:val.word =~ ' . string(l:input))
-      catch
-      endtry
+  let l:result = []
+  let l:max_width = (winwidth(0) - 5)
+  for change in split(l:redir, '\n')[1:]
+    let l:list = split(change)
+    if len(l:list) < 4
+      continue
     endif
+
+    let [l:linenr, l:col, l:text] = [l:list[1], l:list[2]+1, join(l:list[3:])]
+
+    call add(l:result, {
+          \ 'word' : unite#util#truncate_smart(printf('%4d-%-3d  %s', l:linenr, l:col, l:text),
+          \           l:max_width, l:max_width/3, '..'),
+          \ 'kind' : 'jump_list',
+          \ 'action__path' : unite#util#substitute_path_separator(fnamemodify(expand('%'), ':p')),
+          \ 'action__buffer_nr' : bufnr('%'),
+          \ 'action__line' : l:linenr,
+          \ 'action__col' : l:col,
+          \ })
   endfor
 
-  return l:candidates
+  let a:context.source__result = l:result
+endfunction"}}}
+function! s:source.gather_candidates(args, context)"{{{
+  return a:context.source__result
 endfunction"}}}
 
 let &cpo = s:save_cpo

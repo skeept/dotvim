@@ -1,6 +1,6 @@
 *unite.txt*	すべてのsourceを統合する
 
-Version: 2.0
+Version: 2.2
 Author : Shougo <Shougo.Matsu@gmail.com>
 Japanese Documentation Author: naoina
 License: MIT license  {{{
@@ -140,6 +140,7 @@ http://www.ustream.tv/recorded/11240673
 		絞込みテキストは空。{sources} はスペースで区切って複数指定でき
 		る。また、{sources} の指定順序がsourceの候補の表示順序となる。
 		sourceについては|unite-source|を参照。
+		このコマンドは前回の位置を保存する。
 
 		現在uniteバッファに居る場合、絞り込みテキストは保存される。
 
@@ -1051,6 +1052,8 @@ grep		"grep"コマンドを実行した結果を候補とする。
 		2. "grep"に与えるオプション
 		3. 絞り込みパターン
 
+		候補の最大数：|g:unite_source_grep_max_candidates|
+
 		Example:
 >
 	:Unite grep:~/.vim/autoload/unite/sources:-iR:file
@@ -1068,6 +1071,8 @@ line		カレントバッファの行を候補とする。
 		1. 検索方向。 "all", "forward", "backward"のうちどれかを指定
 		する。省略すると"all"となる。
 
+		候補の最大数：100
+
 		Example:
 >
 	nnoremap <silent> /  :<C-u>Unite -buffer-name=search line -start-insert -no-quit<CR>
@@ -1075,6 +1080,12 @@ line		カレントバッファの行を候補とする。
 						*unite-source-resume*
 resume		|:UniteResume|の引数となるuniteバッファを候補とする。uniteバッ
 		ファは使用した順番に並び換えられる。
+
+						*unite-source-jump*
+jump		|:jumps|の結果を候補とする。
+
+						*unite-source-change*
+change		|:changes|の結果を候補とする。
 
 ==============================================================================
 kind						*unite-kinds*
@@ -1141,8 +1152,14 @@ jump_list	ジャンプリスト
 			action__path		(文字列)		(必須)
 				ジャンプするファイルのパス
 
+			action__buffer_nr	(文字列)		(任意)
+				ジャンプするバッファのバッファ番号
+
 			action__line		(数値)			(任意)
 				ジャンプするファイルの行番号
+
+			action__col		(数値)			(任意)
+				ジャンプするファイルの桁番号
 
 			action__pattern		(文字列)		(任意)
 				ファイルを開いた後に検索するパターン

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Jul 2011.
+" Last Modified: 21 Jul 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,7 +29,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! unite#version()"{{{
-  return str2nr(printf('%02d%02d%03d', 2, 1, 0))
+  return str2nr(printf('%02d%02d%03d', 2, 2, 0))
 endfunction"}}}
 
 " User functions."{{{
@@ -255,6 +255,13 @@ function! unite#loaded_sources_list()"{{{
 endfunction"}}}
 function! unite#get_unite_candidates()"{{{
   return unite#get_current_unite().candidates
+endfunction"}}}
+function! unite#get_current_candidate(...)"{{{
+  let l:linenr = a:0 > 1? a:1 : line('.')
+  let l:num = l:linenr <= unite#get_current_unite().prompt_linenr ?
+        \ 0 : l:linenr - (unite#get_current_unite().prompt_linenr+1)
+
+  return get(unite#get_unite_candidates(), l:num, {})
 endfunction"}}}
 function! unite#get_context()"{{{
   return unite#get_current_unite().context
@@ -736,16 +743,20 @@ function! unite#start(sources, ...)"{{{
     startinsert!
   else
     let l:positions = unite#get_buffer_name_option(l:unite.buffer_name, 'unite__save_pos')
+    let l:key = unite#loaded_source_names_string()
     let l:is_restore = l:unite.context.input == '' &&
-          \ has_key(l:positions, unite#loaded_source_names_string())
+          \ has_key(l:positions, l:key)
     if l:is_restore
       " Restore position.
-      call setpos('.', l:positions[unite#loaded_source_names_string()])
+      call setpos('.', l:positions[l:key].pos)
     endif
+    let l:candidate = has_key(l:positions, l:key) ?
+          \ l:positions[l:key].candidate : {}
 
     let l:unite.is_insert = 0
 
-    if !l:is_restore
+    if !l:is_restore ||
+          \ l:candidate != unite#get_current_candidate(l:unite.prompt_linenr+1)
       execute (l:unite.prompt_linenr+1)
     endif
     normal! 0
@@ -808,15 +819,19 @@ function! unite#resume(buffer_name)"{{{
     startinsert!
   else
     let l:positions = unite#get_buffer_name_option(l:unite.buffer_name, 'unite__save_pos')
-    let l:is_restore = has_key(l:positions, unite#loaded_source_names_string())
+    let l:key = unite#loaded_source_names_string()
+    let l:is_restore = has_key(l:positions, l:key)
+    let l:candidate = unite#get_current_candidate()
+
     if l:is_restore
       " Restore position.
-      call setpos('.', l:positions[unite#loaded_source_names_string()])
+      call setpos('.', l:positions[l:key].pos)
     endif
 
     let l:unite.is_insert = 0
 
     if !l:is_restore
+          \ || l:candidate != unite#get_current_candidate()
       execute (l:unite.prompt_linenr+1)
     endif
     normal! 0z.
@@ -915,8 +930,13 @@ function! s:quit_session(is_force)  "{{{
   endif
 
   " Save position.
-  let l:positions = unite#get_buffer_name_option(l:unite.buffer_name, 'unite__save_pos')
-  let l:positions[unite#loaded_source_names_string()] = getpos('.')
+  let l:positions = unite#get_buffer_name_option(
+        \ l:unite.buffer_name, 'unite__save_pos')
+  let l:key = unite#loaded_source_names_string()
+  let l:positions[l:key] = {
+        \ 'pos' : getpos('.'),
+        \ 'candidate' : unite#get_current_candidate(),
+        \ }
 
   if winnr('$') != 1
     if !a:is_force && l:unite.context.no_quit
