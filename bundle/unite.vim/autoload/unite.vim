@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Jul 2011.
+" Last Modified: 01 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -733,8 +733,6 @@ function! unite#start(sources, ...)"{{{
   endfor
   call unite#redraw_candidates()
 
-  " setlocal nomodifiable
-
   if l:unite.context.start_insert || l:unite.context.complete
     let l:unite.is_insert = 1
 
@@ -796,7 +794,9 @@ function! unite#resume(buffer_name)"{{{
   let l:winnr = winnr()
   let l:win_rest_cmd = winrestcmd()
 
-  let l:context = getbufvar(l:bufnr, 'unite').context
+  let l:unite = getbufvar(l:bufnr, 'unite')
+  let l:context = l:unite.context
+
   call s:switch_unite_buffer(bufname(l:bufnr), l:context)
 
   " Set parameters.
@@ -807,8 +807,6 @@ function! unite#resume(buffer_name)"{{{
   let l:unite.access_time = localtime()
 
   let s:current_unite = l:unite
-
-  setlocal nomodifiable
 
   if g:unite_enable_start_insert
     let l:unite.is_insert = 1
@@ -916,19 +914,6 @@ function! s:quit_session(is_force)  "{{{
   let s:current_unite = b:unite
   let l:unite = s:current_unite
 
-  " Restore options.
-  if exists('&redrawtime')
-    let &redrawtime = l:unite.redrawtime_save
-  endif
-  let &sidescrolloff = l:unite.sidescrolloff_save
-
-  match
-
-  if !l:unite.has_preview_window
-    " Close preview window.
-    pclose!
-  endif
-
   " Save position.
   let l:positions = unite#get_buffer_name_option(
         \ l:unite.buffer_name, 'unite__save_pos')
@@ -946,19 +931,7 @@ function! s:quit_session(is_force)  "{{{
     else
       close!
       execute l:unite.winnr . 'wincmd w'
-
-      if winnr('$') != 1
-        execute l:unite.win_rest_cmd
-      endif
     endif
-  endif
-
-  if !a:is_force && l:unite.context.no_quit
-    " Ignore.
-  else
-    " Call finalize functions.
-    call s:call_hook(unite#loaded_sources_list(), 'on_close')
-    let l:unite.is_finalized = 1
   endif
 
   if l:unite.context.complete
@@ -1381,7 +1354,7 @@ function! s:initialize_unite_buffer()"{{{
       autocmd CursorMoved,CursorMovedI <buffer>  call s:on_cursor_moved()
       autocmd WinEnter,BufWinEnter <buffer>  call s:on_win_enter()
       autocmd WinLeave,BufWinLeave <buffer>  call s:on_win_leave()
-      autocmd VimLeave <buffer>  call s:on_vim_leave()
+      autocmd BufUnload,BufHidden <buffer>  call s:on_buf_unload()
     augroup END
 
     call unite#mappings#define_default_mappings()
@@ -1612,13 +1585,35 @@ function! s:on_win_leave()  "{{{
     let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
-function! s:on_vim_leave()  "{{{
+function! s:on_buf_unload()  "{{{
+  " Save unite value.
+  let s:current_unite = getbufvar(expand('<afile>'), 'unite')
+  let l:unite = s:current_unite
+
+  if l:unite.is_finalized
+    return
+  endif
+
+  " Restore options.
+  if exists('&redrawtime')
+    let &redrawtime = l:unite.redrawtime_save
+  endif
+  let &sidescrolloff = l:unite.sidescrolloff_save
+
+  match
+
+  if !l:unite.has_preview_window
+    " Close preview window.
+    pclose!
+  endif
+
+  if winnr('$') != 1
+    execute l:unite.win_rest_cmd
+  endif
+
   " Call finalize functions.
-  for unite in filter(map(range(1, bufnr('$')), 'getbufvar(v:val, "unite")'),
-        \ 'type(v:val) == type({}) && !v:val.is_finalized')
-    call s:call_hook(unite.sources, 'on_close')
-    let unite.is_finalized = 1
-  endfor
+  call s:call_hook(unite#loaded_sources_list(), 'on_close')
+  let l:unite.is_finalized = 1
 endfunction"}}}
 
 " Internal helper functions."{{{
