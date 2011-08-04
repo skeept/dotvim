@@ -38,13 +38,11 @@ License: MIT license  {{{
   kind			  |unite-kinds|
   アクション		  |unite-actions|
   filter		  |unite-filters|
-設定例			|unite-examples|
 sourceの作成		|unite-create-source|
 kindの作成		|unite-create-kind|
 filterの作成		|unite-create-filter|
+設定例			|unite-examples|
 ユーザーのsource	|unite-user-sources|
-ToDo			|unite-todo|
-既知のバグ			|unite-bugs|
 更新履歴		|unite-changelog|
 
 ==============================================================================
@@ -342,7 +340,7 @@ g:unite_cursor_line_highlight			*g:unite_cursor_line_highlight*
 g:unite_abbr_highlight				*g:unite_abbr_highlight*
 		候補の短縮文字列のハイライトを指定する。
 		
-		初期値は"Pmenu"である。
+		初期値は"Normal"である。
 
 g:unite_quick_match_table			*g:unite_quick_match_table*
 		入力文字と対応する、クイックマッチリストの補完候補のテーブルで
