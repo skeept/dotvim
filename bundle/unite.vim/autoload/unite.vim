@@ -211,6 +211,8 @@ call unite#set_substitute_pattern('files', '^\~',
 call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
 call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
 call unite#set_substitute_pattern('files', '\.', '*.', 1000)
+call unite#set_buffer_name_option('files', 'smartcase', 0)
+call unite#set_buffer_name_option('files', 'ignorecase', 1)
 
 let s:unite_options = [
       \ '-buffer-name=', '-input=', '-prompt=',
@@ -887,7 +889,7 @@ function! s:initialize_context(context)"{{{
     let a:context.buffer_name = 'default'
   endif
   if !has_key(a:context, 'prompt')
-    let a:context.prompt = '>'
+    let a:context.prompt = '> '
   endif
   if !has_key(a:context, 'default_action')
     let a:context.default_action = 'default'
@@ -1405,6 +1407,13 @@ function! s:initialize_unite_buffer()"{{{
       setlocal conceallevel=3
       setlocal concealcursor=n
     endif
+    if exists('+cursorcolumn')
+      setlocal nocursorcolumn
+    endif
+    if exists('+colorcolumn')
+      setlocal colorcolumn=0
+    endif
+    setlocal nocursorline
 
     " Autocommands.
     augroup plugin-unite
@@ -1413,8 +1422,6 @@ function! s:initialize_unite_buffer()"{{{
       autocmd CursorHoldI <buffer>  call s:on_cursor_hold_i()
       autocmd CursorHold <buffer>  call s:on_cursor_hold()
       autocmd CursorMoved,CursorMovedI <buffer>  call s:on_cursor_moved()
-      autocmd WinEnter,BufWinEnter <buffer>  call s:on_win_enter()
-      autocmd WinLeave,BufWinLeave <buffer>  call s:on_win_leave()
       autocmd BufUnload,BufHidden <buffer>  call s:on_buf_unload(expand('<afile>'))
     augroup END
 
@@ -1549,6 +1556,12 @@ function! s:on_insert_enter()  "{{{
     normal! zb
     startinsert!
   endif
+
+  if &updatetime > g:unite_update_time
+    let l:unite = unite#get_current_unite()
+    let l:unite.update_time_save = &updatetime
+    let &updatetime = g:unite_update_time
+  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let l:unite = unite#get_current_unite()
@@ -1563,6 +1576,11 @@ function! s:on_insert_leave()  "{{{
   let l:unite.is_insert = 0
 
   setlocal nomodifiable
+
+  if has_key(l:unite, 'update_time_save')
+        \ && &updatetime < l:unite.update_time_save
+    let &updatetime = l:unite.update_time_save
+  endif
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
   let l:prompt_linenr = unite#get_current_unite().prompt_linenr
@@ -1603,6 +1621,8 @@ function! s:on_cursor_moved()  "{{{
 
   let l:prompt_linenr = unite#get_current_unite().prompt_linenr
 
+  setlocal nocursorline
+
   execute 'setlocal' line('.') == l:prompt_linenr ?
         \ 'modifiable' : 'nomodifiable'
 
@@ -1630,20 +1650,6 @@ function! s:on_cursor_moved()  "{{{
         execute 'resize' l:context.winheight
       endif
     endif
-  endif
-endfunction"}}}
-function! s:on_win_enter()  "{{{
-  if &updatetime > g:unite_update_time
-    let l:unite = unite#get_current_unite()
-    let l:unite.update_time_save = &updatetime
-    let &updatetime = g:unite_update_time
-  endif
-endfunction"}}}
-function! s:on_win_leave()  "{{{
-  let l:unite = unite#get_current_unite()
-  if has_key(l:unite, 'update_time_save')
-        \ && &updatetime < l:unite.update_time_save
-    let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
 function! s:on_buf_unload(bufname)  "{{{
@@ -1775,14 +1781,9 @@ function! s:call_hook(sources, hook_name)"{{{
   endfor
 endfunction"}}}
 function! s:is_cmdwin()"{{{
-  try
-    noautocmd wincmd p
-    noautocmd wincmd p
-  catch /^Vim(wincmd):E11:/
-    return 1
-  endtry
-
-  return 0
+  silent! noautocmd wincmd p
+  silent! noautocmd wincmd p
+  return v:errmsg =~ '^E11:'
 endfunction"}}}
 "}}}
 
