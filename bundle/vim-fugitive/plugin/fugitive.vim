@@ -64,6 +64,17 @@ function! s:shellslash(path)
   endif
 endfunction
 
+function! s:recall()
+  let rev = s:buffer().rev()
+  if rev ==# ':'
+    let filename = matchstr(getline('.'),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.\{-\}\ze\%( (new commits)\)\=$\|^\d\{6} \x\{40\} \d\t\zs.*')
+    if filename !=# ''
+      return filename
+    endif
+  endif
+  return rev
+endfunction
+
 function! s:add_methods(namespace, method_names) abort
   for name in a:method_names
     let s:{a:namespace}_prototype[name] = s:function('s:'.a:namespace.'_'.name)
@@ -131,7 +142,7 @@ function! s:Detect(path)
   endif
   if exists('b:git_dir')
     silent doautocmd User Fugitive
-    cnoremap <expr> <buffer> <C-R><C-G> fugitive#buffer().rev()
+    cnoremap <expr> <buffer> <C-R><C-G> <SID>recall()
     let buffer = fugitive#buffer()
     if expand('%:p') =~# '//'
       call buffer.setvar('&path',s:sub(buffer.getvar('&path'),'^\.%(,|$)',''))
@@ -1652,7 +1663,11 @@ function! s:ReplaceCmd(cmd,...) abort
         let prefix = 'env GIT_INDEX_FILE='.s:shellesc(a:1).' '
       endif
     endif
-    call writefile(split(system(prefix.a:cmd), "\n", 1), tmp, 'b')
+    if &shell =~# 'cmd'
+      call system('cmd /c "'.prefix.a:cmd.' > '.tmp.'"')
+    else
+      call system(' ('.prefix.a:cmd.' > '.tmp.') ')
+    endif
   finally
     if exists('old_index')
       let $GIT_INDEX_FILE = old_index
