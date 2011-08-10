@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Jul 2011.
+" Last Modified: 06 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -51,7 +51,9 @@ function! unite#mappings#define_default_mappings()"{{{
   nnoremap <silent><buffer> <Plug>(unite_restart)  :<C-u>call <SID>restart()<CR>
   nnoremap <buffer><silent> <Plug>(unite_toggle_mark_all_candidates)  :<C-u>call <SID>toggle_mark_candidates(0, len(unite#get_unite_candidates()) - 1)<CR>
   nnoremap <buffer><silent> <Plug>(unite_toggle_transpose_window)  :<C-u>call <SID>toggle_transpose_window()<CR>
+  nnoremap <buffer><silent> <Plug>(unite_toggle_auto_preview)  :<C-u>call <SID>toggle_auto_preview()<CR>
   nnoremap <buffer><silent> <Plug>(unite_narrowing_path)  :<C-u>call <SID>narrowing_path()<CR>
+  nnoremap <buffer><silent> <Plug>(unite_narrowing_input_history)  :<C-u>call <SID>narrowing_input_history()<CR>
 
   vnoremap <buffer><silent> <Plug>(unite_toggle_mark_selected_candidates)  :<C-u>call <SID>toggle_mark_candidates(getpos("'<")[1] - unite#get_current_unite().prompt_linenr-1, getpos("'>")[1] - unite#get_current_unite().prompt_linenr - 1)<CR>
 
@@ -72,7 +74,9 @@ function! unite#mappings#define_default_mappings()"{{{
   inoremap <silent><buffer> <Plug>(unite_input_directory)   <C-o>:<C-u>call <SID>input_directory()<CR>
   inoremap <silent><buffer><expr> <Plug>(unite_do_default_action)   unite#do_action(unite#get_current_unite().context.default_action)
   inoremap <buffer><silent> <Plug>(unite_toggle_transpose_window)  <C-o>:<C-u>call <SID>toggle_transpose_window()<CR>
+  inoremap <buffer><silent> <Plug>(unite_toggle_auto_preview)  <C-o>:<C-u>call <SID>toggle_auto_preview()<CR>
   inoremap <buffer><silent> <Plug>(unite_narrowing_path)  <C-o>:<C-u>call <SID>narrowing_path()<CR>
+  inoremap <buffer><silent> <Plug>(unite_narrowing_input_history)  <C-o>:<C-u>call <SID>narrowing_input_history()<CR>
   "}}}
 
   if exists('g:unite_no_default_keymappings') && g:unite_no_default_keymappings
@@ -201,13 +205,6 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     endif
   endfor
 
-  if l:context.temporary && !l:is_quit
-    " Resume unite buffer.
-    call unite#force_quit_session()
-    call unite#resume(l:context.old_buffer_name)
-    call setpos('.', l:context.old_pos)
-  endif
-
   if l:is_redraw
     call unite#force_redraw()
     normal! zz
@@ -281,13 +278,6 @@ endfunction"}}}
 " key-mappings functions.
 function! s:exit()"{{{
   call unite#force_quit_session()
-
-  let l:context = unite#get_context()
-  if l:context.temporary
-    " Resume unite buffer.
-    call unite#resume(l:context.old_buffer_name)
-    call setpos('.', l:context.old_pos)
-  endif
 endfunction"}}}
 function! s:restart()"{{{
   let l:unite = unite#get_current_unite()
@@ -361,20 +351,9 @@ function! s:choose_action()"{{{
     return
   endif
 
-  call unite#define_source(s:source)
+  call unite#define_source(s:source_action)
 
-  let l:context = deepcopy(l:unite.context)
-  let l:context.old_pos = getpos('.')
-  let l:context.old_buffer_name = l:unite.buffer_name
-
-  let l:context.buffer_name = 'action'
-  let l:context.temporary = 1
-  let l:context.input = ''
-  let l:context.auto_preview = 0
-  let l:context.default_action = 'default'
-
-  call unite#force_quit_session()
-  call unite#start([['action'] + l:candidates], l:context)
+  call unite#start_temporary([['action'] + l:candidates], {}, 'action')
 endfunction"}}}
 function! s:insert_enter(key)"{{{
   setlocal modifiable
@@ -556,6 +535,16 @@ function! s:toggle_transpose_window()"{{{
 
   let l:context.vertical = !l:context.vertical
 endfunction"}}}
+function! s:toggle_auto_preview()"{{{
+  let l:context = unite#get_context()
+  let l:context.auto_preview = !l:context.auto_preview
+
+  if !l:context.auto_preview
+        \ && !unite#get_current_unite().has_preview_window
+    " Close preview window.
+    pclose!
+  endif
+endfunction"}}}
 function! s:narrowing_path()"{{{
   if line('.') <= unite#get_current_unite().prompt_linenr
     " Ignore.
@@ -565,25 +554,34 @@ function! s:narrowing_path()"{{{
   let l:candidate = unite#get_current_candidate()
   call unite#mappings#narrowing(has_key(l:candidate, 'action__path')? l:candidate.action__path : l:candidate.word)
 endfunction"}}}
+function! s:narrowing_input_history()"{{{
+  let l:unite = unite#get_current_unite()
+
+  call unite#define_source(s:source_input)
+
+  call unite#start_temporary(['history/input'],
+        \ { 'old_source_names_string' : unite#loaded_source_names_string() },
+        \ 'history/input')
+endfunction"}}}
 
 function! unite#mappings#complete_actions(arglead, cmdline, cursorpos)"{{{
   return filter(keys(s:actions), printf('stridx(v:val, %s) == 0', string(a:arglead)))
 endfunction"}}}
 
 " Unite action source."{{{
-let s:source = {
+let s:source_action = {
       \ 'name' : 'action',
       \ 'description' : 'candidates from unite action',
       \ 'action_table' : {},
       \ 'hooks' : {},
-      \ 'default_action' : { 'common' : 'do' },
+      \ 'default_action' : 'do',
       \ 'syntax' : 'uniteSource__Action',
       \}
 
-function! s:source.hooks.on_close(args, context)"{{{
+function! s:source_action.hooks.on_close(args, context)"{{{
   call unite#undef_source('action')
 endfunction"}}}
-function! s:source.hooks.on_syntax(args, context)"{{{
+function! s:source_action.hooks.on_syntax(args, context)"{{{
   syntax match uniteSource__ActionDescriptionLine / -- .*$/ contained containedin=uniteSource__Action
   syntax match uniteSource__ActionDescription /.*$/ contained containedin=uniteSource__ActionDescriptionLine
   syntax match uniteSource__ActionMarker / -- / contained containedin=uniteSource__ActionDescriptionLine
@@ -591,7 +589,7 @@ function! s:source.hooks.on_syntax(args, context)"{{{
   highlight default link uniteSource__ActionDescription Comment
 endfunction"}}}
 
-function! s:source.gather_candidates(args, context)"{{{
+function! s:source_action.gather_candidates(args, context)"{{{
   let l:candidates = copy(a:args)
 
   " Print candidates.
@@ -641,7 +639,73 @@ function! s:action_table.do.func(candidate)"{{{
   call unite#mappings#do_action(a:candidate.word, a:candidate.source__candidates)
 endfunction"}}}
 
-let s:source.action_table['*'] = s:action_table
+let s:source_action.action_table['*'] = s:action_table
+
+unlet s:action_table
+"}}}
+"}}}
+
+" Unite history/input source."{{{
+let s:source_input = {
+      \ 'name' : 'history/input',
+      \ 'description' : 'candidates from unite input history',
+      \ 'action_table' : {},
+      \ 'hooks' : {},
+      \ 'default_action' : 'narrow',
+      \ 'syntax' : 'uniteSource__Action',
+      \}
+
+function! s:source_input.hooks.on_close(args, context)"{{{
+  call unite#undef_source('history/input')
+endfunction"}}}
+
+function! s:source_input.gather_candidates(args, context)"{{{
+  let l:context = unite#get_context()
+  let l:inputs = unite#get_buffer_name_option(
+        \ l:context.old_buffer_info[0].buffer_name, 'unite__inputs')
+  let l:key = l:context.old_source_names_string
+  if !has_key(l:inputs, l:key)
+    return []
+  endif
+
+  return map(copy(l:inputs[l:key]), '{
+        \ "word" : v:val
+        \ }')
+endfunction"}}}
+
+" Actions"{{{
+let s:action_table = {}
+
+let s:action_table.narrow = {
+      \ 'description' : 'narrow by history',
+      \ 'is_quit' : 0,
+      \ }
+function! s:action_table.narrow.func(candidate)"{{{
+  call unite#force_quit_session()
+  call unite#mappings#narrowing(a:candidate.word)
+endfunction"}}}
+
+let s:action_table.delete = {
+      \ 'description' : 'delete from input history',
+      \ 'is_selectable' : 1,
+      \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
+      \ }
+function! s:action_table.delete.func(candidates)"{{{
+  let l:context = unite#get_context()
+  let l:inputs = unite#get_buffer_name_option(
+        \ l:context.old_buffer_info[0].buffer_name, 'unite__inputs')
+  let l:key = l:context.old_source_names_string
+  if !has_key(l:inputs, l:key)
+    return
+  endif
+
+  for l:candidate in a:candidates
+    call filter(l:inputs[l:key], 'v:val !=# l:candidate.word')
+  endfor
+endfunction"}}}
+
+let s:source_input.action_table['*'] = s:action_table
 
 unlet s:action_table
 "}}}

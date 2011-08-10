@@ -587,6 +587,12 @@ Normal mode mappings.
 <Plug>(unite_narrowing_path)			*<Plug>(unite_narrowing_path)*
 		Narrowing candidates by candidate path(or word).
 
+<Plug>(unite_narrowing_input_history)		*<Plug>(unite_narrowing_input_history)*
+		Narrowing candidates by input history.
+
+<Plug>(unite_toggle_auto_preview)		*<Plug>(unite_toggle_auto_preview)*
+		Toggle the unite buffer's auto preview mode.
+
 Insert mode mappings.
 
 <Plug>(unite_exit)				*i_<Plug>(unite_exit)*
@@ -649,6 +655,12 @@ Insert mode mappings.
 
 <Plug>(unite_narrowing_path)			*i_<Plug>(unite_narrowing_path)*
 		Same to |<Plug>(unite_narrowing_path)|.
+
+<Plug>(unite_narrowing_input_history)		*i_<Plug>(unite_narrowing_input_history)*
+		Same to |<Plug>(unite_narrowing_input_history)|.
+
+<Plug>(unite_toggle_auto_preview)	*i_<Plug>(unite_toggle_auto_preview)*
+		Same to |<Plug>(unite_toggle_auto_preview)|.
 
 Visual mode mappings.
 
@@ -956,6 +968,16 @@ file_rec	Nominates all directory or file names of input narrowing text
 		frozen when there are too many candidates. The candidates is
 		cached by file_rec source. If you clear cache, use
 		|<Plug>(unite_redraw)| keymapping.
+
+		Source arguments:
+		1. the narrowing text.
+
+						*unite-source-file_rec/async*
+file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
+		
+		Note: This source requires vimproc and external "ls" command.
+		Please install.
+		http://github.com/Shougo/vimproc/tree/master
 
 		Source arguments:
 		1. the narrowing text.
@@ -1444,6 +1466,9 @@ NOTATION					*unite-notation*
 			is_redraw		(Number)
 				Todo
 
+			is_invalidate		(Number)
+				Todo
+
 			is_async		(Number)
 				Todo
 
@@ -1625,6 +1650,27 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-08-08
+- Improved matcher.
+
+2011-08-06
+- Fixed file_rec path problem.
+
+2011-08-05
+- Improved quick match.
+- Fixed file_rec/async source.
+
+2011-08-04
+- Fixed windows restore.
+- Added <Plug>(unite_toggle_auto_preview) keymapping.
+- Fixed file_rec relative path.
+- Improved cursor line.
+- Optimized unite-file.
+- Asynchronous file_rec source(experimental).
+- Improved file_rec.
+- Added file_rec/async source.
+- Added <Plug>(unite_narrowing_input_history) keymapping.
 
 2011-08-03
 - Improved relative converters.

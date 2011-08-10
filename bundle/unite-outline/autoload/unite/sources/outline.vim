@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-16
-" Version : 0.3.5
+" Updated : 2011-08-07
+" Version : 0.3.6
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -283,6 +283,19 @@ if !exists('g:unite_source_outline_cache_limit')
   let g:unite_source_outline_cache_limit = 1000
 endif
 
+if !exists('g:unite_source_outline_highlight')
+  let g:unite_source_outline_highlight = {}
+endif
+call extend(g:unite_source_outline_highlight, {
+      \ 'comment' : 'Comment',
+      \ 'function': 'Function',
+      \ 'macro'   : 'Macro',
+      \ 'method'  : 'Function',
+      \ 'special' : 'Macro',
+      \ 'type'    : 'Type',
+      \ 'parameter_list': 'Normal',
+      \ }, 'keep')
+
 "---------------------------------------
 " Aliases
 
@@ -325,6 +338,7 @@ delfunction s:get_SID
 let s:source = {
       \ 'name'       : 'outline',
       \ 'description': 'candidates from heading list',
+      \ 'syntax'     : 'uniteSource__Outline',
       \
       \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
       \ }
@@ -357,6 +371,21 @@ function! s:Source_Hooks_on_close(args, context)
   unlet! s:context
 endfunction
 let s:source.hooks.on_close = function(s:SID . 'Source_Hooks_on_close')
+
+function! s:Source_Hooks_on_syntax(args, context)
+  let outline_info = a:context.source__outline_context.outline_info
+  if has_key(outline_info, 'highlight_rules')
+    for syn_rule in outline_info.highlight_rules
+      if !has_key(syn_rule, 'highlight')
+        let syn_rule.highlight = g:unite_source_outline_highlight[syn_rule.name]
+      endif
+      execute 'syntax match uniteSource__Outline_' . syn_rule.name syn_rule.pattern
+            \ 'contained containedin=uniteSource__Outline'
+      execute 'highlight default link uniteSource__Outline_' . syn_rule.name syn_rule.highlight
+    endfor
+  endif
+endfunction
+let s:source.hooks.on_syntax = function(s:SID . 'Source_Hooks_on_syntax')
 
 function! s:Source_gather_candidates(args, context)
   let save_cpoptions  = &cpoptions
@@ -398,9 +427,9 @@ function! s:Source_gather_candidates(args, context)
       let outline_info = s:context.outline_info
       if empty(outline_info)
         if empty(buffer.filetype)
-          call unite#print_message("unite-outline: Please set the filetype.")
+          call unite#print_message("[unite-outline] Please set the filetype.")
         else
-          call unite#print_message("unite-outline: Sorry, " .
+          call unite#print_message("[unite-outline] Sorry, " .
                 \ toupper(buffer.filetype) . " is not supported.")
         endif
         return []
@@ -610,7 +639,7 @@ function! s:extract_headings()
     if s:lnum % 500 == 0
       if len(headings) > g:unite_source_outline_max_headings
         call unite#print_message(
-              \ "unite-outline: Too many headings, the extraction was interrupted.")
+              \ "[unite-outline] Too many headings, the extraction was interrupted.")
         break
       else
         call s:Util.print_progress("Extracting headings..." . s:lnum * 100 / num_lines . "%")

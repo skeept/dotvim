@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/_cache.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-14
-" Version : 0.3.5
+" Updated : 2011-08-06
+" Version : 0.3.6
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -49,7 +49,7 @@ if get(g:, 'unite_source_outline_debug', 0)
   let s:Cache.CLEANUP_RATE = 1
   let s:Cache.EXPIRES = 60
 else
-  let s:Cache.CLEANUP_FILE_COUNT = 100
+  let s:Cache.CLEANUP_FILE_COUNT = 300
   let s:Cache.CLEANUP_RATE = 10
   let s:Cache.EXPIRES = 60 * 60 * 24 * 30
 endif

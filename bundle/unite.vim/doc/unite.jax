@@ -579,6 +579,12 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 <Plug>(unite_narrowing_path)			*<Plug>(unite_narrowing_path)*
 		候補のパスもしくはwordにより絞り込みを行う。
 
+<Plug>(unite_narrowing_input_history)		*<Plug>(unite_narrowing_input_history)*
+		バッファの入力履歴により絞り込みを行う。
+
+<Plug>(unite_toggle_auto_preview)		*<Plug>(unite_toggle_auto_preview)*
+		uniteバッファのauto previewモードをトグルする。
+
 インサートモードマッピング
 
 <Plug>(unite_exit)				*i_<Plug>(unite_exit)*
@@ -641,6 +647,12 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 
 <Plug>(unite_narrowing_path)			*i_<Plug>(unite_narrowing_path)*
 		|<Plug>(unite_narrowing_path)|と同じ。
+
+<Plug>(unite_narrowing_input_history)		*i_<Plug>(unite_narrowing_input_history)*
+		|<Plug>(unite_narrowing_input_history)|と同じ。
+
+<Plug>(unite_toggle_auto_preview)		*i_<Plug>(unite_toggle_auto_preview)*
+		|<Plug>(unite_toggle_auto_preview)|と同じ。
 
 ビジュアルモードマッピング
 
@@ -985,6 +997,16 @@ file_rec	入力された絞り込みテキストのディレクトリまたは�
 		source引数：
 		1. 絞り込み文字列
 
+						*unite-source-file_rec/async*
+file_rec/async	|unite-source-file_rec|と同じだが、候補の取得を完全に非同期
+		で行う。
+		
+		Note: このsourceはvimprocと外部lsコマンドを必要としている。
+		http://github.com/Shougo/vimproc/tree/master
+
+		source引数：
+		1. 絞り込み文字列
+
 						*unite-source-buffer*
 buffer		開いているバッファを候補とする。バッファは使用した順番に整列さ
 		れる。
@@ -1295,6 +1317,8 @@ converter_relative_word
 		候補のwordを相対パスに変換するconverter。wordはmatcherにおいて、
 		絞り込みに使用される。そのため、このconverterを使用する場合は、
 		matcherの前に指定しなければならない。
+		context情報に、source__directoryが含まれている場合は、そのパ
+		スを基準として相対パスに変換する。
 >
 		call unite#custom_filters('file_rec',
 		\ ['converter_relative_word', 'matcher_default',
@@ -1303,7 +1327,8 @@ converter_relative_word
 
 						*unite-filter-converter_relative_abbr*
 converter_relative_abbr
-		候補のabbrをwordの相対パスに変換するconverter。
+		候補のabbrをwordの相対パスに変換するconverter。仕様は
+		|unite-filter-converter_relative_word|とほぼ同じである。
 
 ==============================================================================
 アクション					*unite-actions*
@@ -1673,7 +1698,13 @@ NOTATION					*unite-notation*
 				|<Plug>(unite_redraw)|で呼び出されたかどうか。
 				ユーザーが明示的にキャッシュを破棄しているので、
 				自前でキャッシュを管理するsourceにとっては重
-				要な情報となる。
+				要な情報となる。アクションの実行により、キャッ
+				シュが無効化された場合も1になる。
+
+			is_invalidate		(数値)
+				アクションの実行により、キャッシュが無効化さ
+				れたかどうか。uniteバッファの初期化のときに
+				も1になる。
 
 			is_async		(数値)
 				sourceが非同期に候補を収集するかどうか。
