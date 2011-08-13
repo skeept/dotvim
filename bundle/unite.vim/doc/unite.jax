@@ -1,6 +1,6 @@
 *unite.txt*	すべてのsourceを統合する
 
-Version: 2.2
+Version: 3.0
 Author : Shougo <Shougo.Matsu@gmail.com>
 Japanese Documentation Author: naoina
 License: MIT license  {{{
@@ -591,7 +591,7 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 		uniteを終了する。
 
 <Plug>(unite_insert_leave)			*i_<Plug>(unite_insert_leave)*
-		ノーマルモードに移行する。
+		ノーマルモードに移行する。最初の候補にカーソルを動かす。
 
 <Plug>(unite_delete_backward_char)		*i_<Plug>(unite_delete_backward_char)*
 		カーソル直前の1文字を消す。文字が入力されていない場合はuniteを
@@ -1738,9 +1738,6 @@ NOTATION					*unite-notation*
 				フィルタリング終了後の候補。
 				|unite-source-attribute-hooks-on_post_filter|内
 				でのみ有効。
-
-			winnr			(数値)
-				uniteを呼び出したウィンドウの番号。
 
 			source__{name}		(不定)		(任意)
 				source独自の付加情報。source側で自由に使用でき
