@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Aug 2011.
+" Last Modified: 14 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,6 +27,33 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+" Global options definition."{{{
+" External commands.
+if !exists('g:unite_kind_file_delete_command')
+  if unite#util#is_win() && !executable('rm')
+    " Can't support.
+    let g:unite_kind_file_delete_command = ''
+  else
+    let g:unite_kind_file_delete_command = 'rm -r $srcs'
+  endif
+endif
+if !exists('g:unite_kind_file_copy_command')
+  if unite#util#is_win() && !executable('cp')
+    " Can't support.
+    let g:unite_kind_file_copy_command = ''
+  else
+    let g:unite_kind_file_copy_command = 'cp -p -r $srcs $dest'
+  endif
+endif
+if !exists('g:unite_kind_file_move_command')
+  if unite#util#is_win() && !executable('mv')
+    let g:unite_kind_file_move_command = 'move /Y $srcs $dest'
+  else
+    let g:unite_kind_file_move_command = 'mv $srcs $dest'
+  endif
+endif
+"}}}
+
 function! unite#kinds#file#define()"{{{
   return s:kind
 endfunction"}}}
@@ -35,6 +62,12 @@ let s:kind = {
       \ 'name' : 'file',
       \ 'default_action' : 'open',
       \ 'action_table' : {},
+      \ 'alias_table' : {
+      \   'vimfiler__rename' : 'rename',
+      \   'copy'   : 'vimfiler__copy',
+      \   'move' : 'vimfiler__move',
+      \   'vimfiler__execute' : 'start',
+      \ },
       \ 'parents' : ['openable', 'cdable', 'uri'],
       \}
 
@@ -72,8 +105,8 @@ endfunction"}}}
 
 let s:kind.action_table.rename = {
       \ 'description' : 'rename files',
-      \ 'is_invalidate_cache' : 1,
       \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
       \ 'is_selectable' : 1,
       \ }
 function! s:kind.action_table.rename.func(candidates)"{{{
@@ -84,17 +117,152 @@ function! s:kind.action_table.rename.func(candidates)"{{{
     endif
   endfor
 endfunction"}}}
+
+let s:kind.action_table.vimfiler__move = {
+      \ 'description' : 'move files',
+      \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.vimfiler__move.func(candidates)"{{{
+  if g:unite_kind_file_move_command == ''
+    call unite#print_error("Please install mv.exe.")
+    return 1
+  endif
+
+  let l:yes = unite#util#input_yesno('Really move files?')
+
+  if !l:yes
+    redraw
+    echo 'Canceled.'
+    return
+  endif
+
+  let l:context = unite#get_context()
+  let l:dest_dir = has_key(a:context, 'vimfiler__dest_directory') ?
+        \ a:context.vimfiler__dest_directory :
+        \ unite#util#input_directory('Input destination directory: ')
+  if l:dest_dir !~ '/'
+    let l:dest_dir .= '/'
+  endif
+
+  let l:dest_drive = matchstr(l:dest_dir, '^\a\+\ze:')
+  for l:candidate in a:candidates
+    let l:filename = l:candidate.action__path
+    if isdirectory(l:filename) && unite#util#is_win()
+          \ && matchstr(l:filename, '^\a\+\ze:') !=? l:dest_drive
+      " move command doesn't supported directory over drive move in Windows.
+      if g:unite_kind_file_copy_command == ''
+        call unite#print_error("Please install cp.exe.")
+        return 1
+      elseif g:unite_kind_file_delete_command == ''
+        call unite#print_error("Please install rm.exe.")
+        return 1
+      endif
+
+      let l:ret = s:kind.action_table.vimfiler__copy.func([l:candidate])
+      if l:ret
+        call unite#print_error('Failed file move: ' . l:filename)
+        return 1
+      endif
+
+      let l:ret = s:kind.action_table.vimfiler__delete.func([l:candidate])
+      if l:ret
+        call unite#print_error('Failed file delete: ' . l:filename)
+        return 1
+      endif
+    else
+      let l:ret = s:external('move', l:dest_dir, [l:filename])
+      if l:ret
+        call unite#print_error('Failed file move: ' . l:filename)
+      endif
+    endif
+  endfor
+endfunction"}}}
+
+let s:kind.action_table.vimfiler__copy = {
+      \ 'description' : 'copy files',
+      \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.vimfiler__copy.func(dest_dir, src_files)"{{{
+  if g:unite_kind_file_copy_command == ''
+    call unite#print_error("Please install cp.exe.")
+    return 1
+  endif
+
+  let l:dest_dir = has_key(a:context, 'vimfiler__dest_directory') ?
+        \ a:context.vimfiler__dest_directory :
+        \ unite#util#input_directory('Input destination directory: ')
+  if l:dest_dir !~ '/'
+    let l:dest_dir .= '/'
+  endif
+
+  for l:candidate in a:candidates
+    let l:filename = l:candidate.action__path
+    let l:ret = s:external('copy', l:dest_dir, [l:filename])
+    if l:ret
+      call unite#print_error('Failed file copy: ' . l:filename)
+    endif
+  endfor
+endfunction"}}}
+
+let s:kind.action_table.vimfiler__delete = {
+      \ 'description' : 'delete files',
+      \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.vimfiler__delete.func(candidates)"{{{
+  if g:unite_kind_file_delete_command == ''
+    call unite#print_error("Please install rm.exe.")
+    return 1
+  endif
+
+  let l:yes = unite#util#input_yesno('Really force delete files?')
+
+  if !l:yes
+    redraw
+    echo 'Canceled.'
+    return
+  endif
+
+  " Execute force delete.
+  for l:candidate in a:candidates
+    let l:ret = s:external('delete', '', [l:candidate.action__path])
+
+    if l:ret
+      call unite#print_error('Failed file delete: ' . l:candidate.action__path)
+    endif
+  endfor
+endfunction"}}}
 "}}}
 
 function! s:execute_command(command, candidate)"{{{
   let l:dir = unite#util#path2directory(a:candidate.action__path)
   " Auto make directory.
-  if !isdirectory(l:dir) &&
-        \ input(printf('"%s" does not exist. Create? [y/N]', l:dir)) =~? '^y\%[es]$'
+  if !isdirectory(l:dir) && unite#util#input_yesno(
+        \   printf('"%s" does not exist. Create? [y/N]', l:dir))
     call mkdir(iconv(l:dir, &encoding, &termencoding), 'p')
   endif
 
   silent call unite#util#smart_execute_command(a:command, a:candidate.action__path)
+endfunction"}}}
+function! s:external(command, dest_dir, src_files)"{{{
+  let l:command_line = g:unite_kind_file_{a:command}_command
+
+  " Substitute pattern.
+  let l:command_line = substitute(l:command_line,
+        \'\$srcs\>', join(map(a:src_files, '''"''.v:val.''"''')), 'g')
+  let l:command_line = substitute(l:command_line,
+        \'\$dest\>', '"'.a:dest_dir.'"', 'g')
+
+  let l:output = unite#util#system(l:command_line)
+
+  echon l:output
+
+  return unite#util#get_last_status()
 endfunction"}}}
 
 let &cpo = s:save_cpo

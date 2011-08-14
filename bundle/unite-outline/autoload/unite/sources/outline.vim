@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-07
-" Version : 0.3.6
+" Updated : 2011-08-13
+" Version : 0.3.7
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -101,7 +101,7 @@ function! s:get_outline_info(filetype, is_default)
     try
       let scr_path = s:find_autoload_script(load_func)
     catch /^ScriptNotFoundError:/
-      " the user moved his/her outline info somewhere!
+      " The user moved his/her outline info somewhere!
       continue
     endtry
     call s:check_update(scr_path)
@@ -144,8 +144,6 @@ function! s:normalize_outline_info(outline_info)
     if has_key(a:outline_info, 'not_match_patterns')
       let a:outline_info.__not_match_pattern__ =
             \ '\%(' . join(a:outline_info.not_match_patterns, '\|') . '\)'
-    else
-      let a:outline_info.__not_match_pattern__ = ''
     endif
     let a:outline_info.__normalized__ = 1
   endif
@@ -212,7 +210,7 @@ function! s:find_autoload_script(funcname)
     if filereadable(path)
       return s:autoload_scripts[a:funcname]
     else
-      " the script was moved somewhere for some reason...
+      " The script was moved somewhere for some reason...
       unlet s:autoload_scripts[a:funcname]
     endif
   endif
@@ -237,8 +235,9 @@ endfunction
 let g:unite_source_outline_input = ''
 
 function! s:jump_to_match(...)
-  if unite#get_context().buffer_name !=# 'outline'
-    call unite#print_error("unite-outline: Invalid buffer name.")
+  if &l:filetype !=# 'unite' || unite#get_context().buffer_name !~# '^outline'
+    call unite#print_error(
+          \ "unite-outline: The key-mapping was used on the unexpected buffer.")
     return
   endif
   let flags = (a:0 ? a:1 : '')
@@ -291,9 +290,17 @@ call extend(g:unite_source_outline_highlight, {
       \ 'function': 'Function',
       \ 'macro'   : 'Macro',
       \ 'method'  : 'Function',
+      \ 'normal'  : g:unite_abbr_highlight,
+      \ 'package' : g:unite_abbr_highlight,
       \ 'special' : 'Macro',
       \ 'type'    : 'Type',
-      \ 'parameter_list': 'Normal',
+      \ 'level_1' : 'Type',
+      \ 'level_2' : 'PreProc',
+      \ 'level_3' : 'Identifier',
+      \ 'level_4' : 'Constant',
+      \ 'level_5' : 'Special',
+      \ 'level_6' : g:unite_abbr_highlight,
+      \ 'parameter_list': g:unite_abbr_highlight,
       \ }, 'keep')
 
 "---------------------------------------
@@ -315,6 +322,7 @@ function! s:define_filetype_aliases()
 
   for [alias, src_filetype] in s:OUTLINE_ALIASES
     if !has_key(oinfos, alias)
+
       call unite#sources#outline#alias(alias, src_filetype)
     endif
   endfor
@@ -345,6 +353,7 @@ let s:source = {
 
 function! s:Source_Hooks_on_init(args, context)
   let s:heading_id = 1
+  " Collect the current buffer's information.
   let buffer = {
         \ 'nr'  : bufnr('%'),
         \ 'path': expand('%:p'),
@@ -363,6 +372,7 @@ function! s:Source_Hooks_on_init(args, context)
         \ 'buffer': buffer,
         \ 'outline_info': outline_info,
         \ }
+
   let a:context.source__outline_context = s:context
 endfunction
 let s:source.hooks.on_init = function(s:SID . 'Source_Hooks_on_init')
@@ -373,135 +383,189 @@ endfunction
 let s:source.hooks.on_close = function(s:SID . 'Source_Hooks_on_close')
 
 function! s:Source_Hooks_on_syntax(args, context)
-  let outline_info = a:context.source__outline_context.outline_info
-  if has_key(outline_info, 'highlight_rules')
-    for syn_rule in outline_info.highlight_rules
-      if !has_key(syn_rule, 'highlight')
-        let syn_rule.highlight = g:unite_source_outline_highlight[syn_rule.name]
-      endif
-      execute 'syntax match uniteSource__Outline_' . syn_rule.name syn_rule.pattern
-            \ 'contained containedin=uniteSource__Outline'
-      execute 'highlight default link uniteSource__Outline_' . syn_rule.name syn_rule.highlight
-    endfor
+  let outline_context = a:context.source__outline_context
+  let outline_info = outline_context.outline_info
+
+  if outline_context.method ==# 'filetype'
+    " Filetype
+    if has_key(outline_info, 'highlight_rules')
+      for hl_rule in outline_info.highlight_rules
+        if !has_key(hl_rule, 'highlight')
+          let hl_rule.highlight = g:unite_source_outline_highlight[hl_rule.name]
+        endif
+        execute 'syntax match uniteSource__Outline_' . hl_rule.name hl_rule.pattern
+              \ 'contained containedin=uniteSource__Outline'
+        execute 'highlight default link uniteSource__Outline_' . hl_rule.name hl_rule.highlight
+      endfor
+    endif
   endif
 endfunction
 let s:source.hooks.on_syntax = function(s:SID . 'Source_Hooks_on_syntax')
 
 function! s:Source_gather_candidates(args, context)
+  " Save and set Vim options.
   let save_cpoptions  = &cpoptions
   let save_ignorecase = &ignorecase
   set cpoptions&vim
   set noignorecase
   try
-    let is_force = ((len(a:args) > 0 && a:args[0] == '!') || a:context.is_redraw)
-    let buffer = s:context.buffer
+    let opts = s:parse_options(a:args, a:context)
+    call extend(s:context, opts)
 
+    let buffer = s:context.buffer
     let bufvars = getbufvar(buffer.nr, '')
-    if has_key(bufvars, s:OUTLINE_CACHE_VAR) && !is_force
+    if has_key(bufvars, s:OUTLINE_CACHE_VAR)
       " Path A: Get candidates from the buffer local cache and return them.
       let candidates = getbufvar(buffer.nr, s:OUTLINE_CACHE_VAR)
-      return candidates
+      let method = (!empty(candidates) &&
+            \ candidates[0].source__heading.type ==# 'folding' ? 'folding' : 'filetype')
+      if s:context.method ==# 'last'
+        let s:context.method = method
+      endif
+      if !s:context.is_force && s:context.method ==# method
+        " The cached candidates are reusable because they were extracted by
+        " the same method as s:context.method.
+        return candidates
+      endif
     endif
 
-    let cache_loaded = 0
-    if s:Cache.has(buffer) && !is_force
-      " Path B1: Get headings from the serialized cache.
-      try
-        let headings = s:Cache.get(buffer)
-        let cache_loaded = 1
-      catch /^CacheCompatibilityError:/
-      catch /^unite-outline:/
-        call unite#util#print_error(v:exception)
-      endtry
-    endif
-    if !cache_loaded
-      " Path B2: Get headings by parsing the buffer.
-      let start_time = s:benchmark_start()
-
-      if is_force
-        " re-source the outline info if updated
-        let s:context.outline_info =
-              \ unite#sources#outline#get_outline_info(buffer.filetype)
-      endif
-
-      let outline_info = s:context.outline_info
-      if empty(outline_info)
-        if empty(buffer.filetype)
-          call unite#print_message("[unite-outline] Please set the filetype.")
-        else
-          call unite#print_message("[unite-outline] Sorry, " .
-                \ toupper(buffer.filetype) . " is not supported.")
-        endif
-        return []
-      endif
-
-      let lines = [""] + getbufline(s:context.buffer.nr, 1, '$')
-      let num_lines = len(lines) - 1
-      let s:context.lines = lines
-      let s:context.heading_lnum = 0
-      let s:context.matched_lnum = 0
-
-      if has_key(outline_info, 'initialize')
-        call outline_info.initialize(s:context)
-      endif
-      if has_key(outline_info, 'extract_headings')
-        let headings = outline_info.extract_headings(s:context)
-        let normalized = 0
-      else
-        let headings = s:extract_headings()
-        let normalized = 1
-      endif
-      if has_key(outline_info, 'finalize')
-        call outline_info.finalize(s:context)
-      endif
-
-      let ignore_types = unite#sources#
-            \outline#get_ignore_heading_types(buffer.filetype)
-
-      " normalize and filter headings
-      if type(headings) == type({})
-        let tree = headings | unlet headings
-        let tree = s:Tree.normalize(tree)
-        let headings  = s:Tree.flatten(tree)
-        call s:filter_headings(headings, ignore_types, 1)
-        call map(headings, 's:normalize_heading(v:val)')
-      else
-        call s:filter_headings(headings, ignore_types, 1)
-        if !normalized
-          call map(headings, 's:normalize_heading(v:val)')
-        endif
-        let tree = s:Tree.build(headings)
-      endif
-      let headings = s:filter_headings(headings, ignore_types)
-
-      unlet s:context.heading_lnum
-      unlet s:context.matched_lnum
-
-      if !outline_info.is_volatile && num_lines > 100 && !empty(headings)
-        let is_persistant = (num_lines > g:unite_source_outline_cache_limit)
-        call s:Cache.set(buffer, headings, is_persistant)
-      elseif s:Cache.has(buffer)
-        call s:Cache.remove(buffer)
-      endif
-
-      call s:benchmark_stop(start_time)
-    endif
-
-    " headings -> candidates
+    " Path B: Candidates haven't been cached, so try to get headings.
+    let headings = s:gather_headings()
+    " Convert headings into candidates and cache them.
     let candidates = s:convert_headings_to_candidates(headings)
     call setbufvar(buffer.nr, s:OUTLINE_CACHE_VAR, candidates)
 
     return candidates
+  catch /^NoWindowError:/
+    call unite#print_message("[unite-outline] The context buffer has no window.")
+    return []
   catch
     call unite#util#print_error(v:throwpoint)
     call unite#util#print_error(v:exception)
     return []
   finally
+    " Restore Vim options.
     let &cpoptions  = save_cpoptions
     let &ignorecase = save_ignorecase
   endtry
 endfunction
 let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
+
+function! s:parse_options(args, context)
+  let opts = {
+        \ 'method'  : 'last',
+        \ 'is_force': 0,
+        \ }
+  for value in a:args
+    if value =~# '^\%(ft\|fi\%[letype]\)$'
+      let opts.method = 'filetype'
+    elseif value =~# '^fo\%[lding]$'
+      let opts.method = 'folding'
+    elseif value =~# '^\%(update\|!\)$'
+      let opts.is_force = 1
+    endif
+  endfor
+  if a:context.is_redraw
+    let opts.is_force = 1
+  endif
+  return opts
+endfunction
+
+function! s:gather_headings()
+  let buffer = s:context.buffer
+  let cache_reusable = 0
+  if s:Cache.has(buffer)
+    " Path B_1: Get headings from the persistent cache.
+    try
+      let headings = s:Cache.get(buffer)
+      let method = (!empty(headings) &&
+            \ headings[0].type ==# 'folding' ? 'folding' : 'filetype')
+      if s:context.method ==# 'last'
+        let s:context.method = method
+      endif
+      if !s:context.is_force && s:context.method ==# method
+        " The cached headings are reusable because they were extracted by the
+        " same method as s:context.method.
+        let cache_reusable = 1
+        call s:ids_to_refs(headings)
+      endif
+    catch /^CacheCompatibilityError:/
+      " Fallback siliently.
+    catch /^unite-outline:/
+      call unite#util#print_error(v:exception)
+    endtry
+  endif
+  if !cache_reusable
+    " Path B_2: Get headings by parsing the buffer.
+    let winnr = bufwinnr(s:context.buffer.nr)
+    if winnr == -1
+      throw "NoWindowError:"
+    endif
+    call s:Util.print_progress("Extracting headings...")
+    " Save and set Vim options.
+    let save_winheight  = &winheight
+    let save_winwidth   = &winwidth
+    let save_lazyredraw = &lazyredraw
+    set lazyredraw
+    set winheight=1
+    set winwidth=1
+    " current window -> context window
+    execute winnr . 'wincmd w'
+    " NOTE: To keep the window size on :wincmd, set 'winheight' and 'winwidth'
+    " to a small value.
+    let success = 0
+    try
+      let start_time = s:benchmark_start()
+
+      let lines = [""] + getbufline(s:context.buffer.nr, 1, '$')
+      let s:context.lines = lines
+      let s:context.heading_lnum = 0
+      let s:context.matched_lnum = 0
+
+      if s:context.method !=# 'folding'
+        " Path B_2_a: Extract headings in filetype-specific way using the
+        " filetype's outline info.
+        let s:context.method = 'filetype'
+        let headings = s:extract_filetype_headings()
+      else
+        " Path B_2_b: Extract headings using folds' information.
+        let s:context.method = 'folding'
+        let headings = s:extract_folding_headings()
+      endif
+
+      " Cache the headings.
+      let num_lines = len(lines) - 1
+      let is_volatile = get(s:context.outline_info, 'is_volatile', 0)
+      if !is_volatile && num_lines > 100 && !empty(headings)
+        let is_persistant = (num_lines > g:unite_source_outline_cache_limit)
+        call s:Cache.set(buffer, s:refs_to_ids(headings), is_persistant)
+      elseif s:Cache.has(buffer)
+        call s:Cache.remove(buffer)
+      endif
+
+      " current window <- context window
+      wincmd p
+      let &lazyredraw = save_lazyredraw
+      let success = 1
+      call s:Util.print_progress("Extracting headings...done.")
+
+      call s:benchmark_stop(start_time) | " use s:context.lines
+      unlet s:context.lines
+      unlet s:context.heading_lnum
+      unlet s:context.matched_lnum
+    finally
+      " Restore Vim options.
+      if !success
+        " current window <- context window
+        wincmd p
+        let &lazyredraw = save_lazyredraw
+      endif
+      let &winheight = save_winheight
+      let &winwidth  = save_winwidth
+    endtry
+  endif
+  return headings
+endfunction
 
 function! s:benchmark_start()
   if get(g:, 'unite_source_outline_profile', 0) && has("reltime")
@@ -525,40 +589,110 @@ function! s:get_reltime()
   return str2float(reltimestr(reltime()))
 endfunction
 
-function! s:skip_header()
-  let outline_info = s:context.outline_info
-  let lines = s:context.lines | let num_lines = len(lines)
-
-  if has_key(outline_info, 'skip') && has_key(outline_info.skip, 'header')
-    " eval once
-    let skip_header_leading = has_key(outline_info.skip.header, 'leading')
-    let skip_header_block   = has_key(outline_info.skip.header, 'block')
-
-    while s:lnum < num_lines
-      let line = lines[s:lnum]
-      if skip_header_leading && line =~# outline_info.skip.header.leading
-        call s:skip_while(outline_info.skip.header.leading)
-      elseif skip_header_block && line =~# outline_info.skip.header.block.begin
-        call s:skip_to(outline_info.skip.header.block.end)
-      else
-        break
-      endif
-    endwhile
-  endif
+" NOTE: Built-in string() function can't dump an object that has any cyclic
+" references because of E724, nested too deep error; therefore, we need to
+" substitute references to each heading's parent and children with their id
+" numbers before their serialization.
+"
+function! s:refs_to_ids(headings)
+  let headings = copy(a:headings)
+  let headings = map(headings, 'copy(v:val)')
+  for heading in headings
+    let heading.parent = heading.parent.id
+    let heading.children = map(copy(heading.children), 'v:val.id')
+  endfor
+  return headings
 endfunction
 
-function! s:extract_headings()
+function! s:ids_to_refs(headings)
+  try
+    let root = s:Tree.new()
+    let heading_table = {}
+    for heading in a:headings
+      let heading_table[heading.id] = heading
+    endfor
+    for heading in a:headings
+      if heading.parent == 0
+        call s:Tree.append_child(root, heading)
+      else
+        let heading.parent = heading_table[heading.parent]
+      endif
+      call map(heading.children, 'heading_table[v:val]')
+    endfor
+  catch
+    call s:Util.print_debug(v:throwpoint)
+    call s:Util.print_debug(v:exception)
+    throw "CacheCompatibilityError:"
+  endtry
+  return a:headings
+endfunction
+
+function! s:extract_filetype_headings()
+  let buffer = s:context.buffer
+  if s:context.is_force
+    " Re-source the outline info if updated.
+    let s:context.outline_info =
+          \ unite#sources#outline#get_outline_info(buffer.filetype)
+  endif
+  let outline_info = s:context.outline_info
+  if empty(outline_info)
+    if empty(buffer.filetype)
+      call unite#print_message("[unite-outline] Please set the filetype.")
+    else
+      call unite#print_message("[unite-outline] Sorry, " .
+            \ toupper(buffer.filetype) . " is not supported.")
+    endif
+    return []
+  endif
+
+  " Extract headings.
+  if has_key(outline_info, 'initialize')
+    call outline_info.initialize(s:context)
+  endif
+  if has_key(outline_info, 'extract_headings')
+    let headings = outline_info.extract_headings(s:context)
+    let is_normalized = 0
+  else
+    let headings = s:_builtin_extract_headings()
+    let is_normalized = 1
+  endif
+  if has_key(outline_info, 'finalize')
+    call outline_info.finalize(s:context)
+  endif
+
+  " Normalize.
+  if type(headings) == type({})
+    let tree = headings | unlet headings
+    let headings = s:Tree.flatten(tree)
+  else
+    let tree = s:Tree.build(headings)
+    let headings = s:Tree.flatten(tree) | " smooth levels
+  endif
+  if !is_normalized
+    call map(headings, 's:normalize_heading(v:val)')
+  endif
+
+  " Filter headings.
+  let ignore_types = unite#sources#
+        \outline#get_ignore_heading_types(buffer.filetype)
+  let headings = s:filter_headings(headings, ignore_types)
+
+  return headings
+endfunction
+
+function! s:_builtin_extract_headings()
   let s:lnum = 1
 
   call s:skip_header()
   let outline_info = s:context.outline_info
 
-  " eval once
+  " Eval once.
   let skip_block = has_key(outline_info, 'skip') && has_key(outline_info.skip, 'block')
   let has_heading_pattern      = has_key(outline_info, 'heading')
   let has_heading_prev_pattern = has_key(outline_info, 'heading-1')
   let has_heading_next_pattern = has_key(outline_info, 'heading+1')
   let has_create_heading_func  = has_key(outline_info, 'create_heading')
+  "
   " NOTE: outline info is allowed to update heading patterns dynamically on
   " the runtime, so attribute values for them must not be assigned to local
   " variables here.
@@ -570,11 +704,11 @@ function! s:extract_headings()
     let line = lines[s:lnum]
 
     if skip_block && line =~# outline_info.skip.block.begin
-      " skip a documentation block
+      " Skip a documentation block.
       call s:skip_to(outline_info.skip.block.end)
 
     elseif has_heading_prev_pattern && line =~# outline_info['heading-1'] && s:lnum < num_lines - 3
-      " matched: heading-1
+      " Matched: heading-1
       let next_line = lines[s:lnum + 1]
       if next_line =~ '[[:punct:]]\@!\S'
         let s:context.heading_lnum = s:lnum + 1
@@ -589,7 +723,7 @@ function! s:extract_headings()
           let s:lnum += 1
         endif
       elseif next_line =~ '\S' && s:lnum < num_lines - 4
-        " see one more next
+        " See one more next
         let next_line = lines[s:lnum + 2]
         if next_line =~ '[[:punct:]]\@!\S'
           let s:context.heading_lnum = s:lnum + 2
@@ -607,7 +741,7 @@ function! s:extract_headings()
       endif
 
     elseif has_heading_pattern && line =~# outline_info.heading
-      " matched: heading
+      " Matched: heading
       let s:context.heading_lnum = s:lnum
       let s:context.matched_lnum = s:lnum
       if has_create_heading_func
@@ -620,7 +754,7 @@ function! s:extract_headings()
       endif
 
     elseif has_heading_next_pattern && line =~# outline_info['heading+1'] && s:lnum > 0
-      " matched: heading+1
+      " Matched: heading+1
       let prev_line = lines[s:lnum - 1]
       if prev_line =~ '[[:punct:]]\@!\S'
         let s:context.heading_lnum = s:lnum - 1
@@ -636,20 +770,32 @@ function! s:extract_headings()
       endif
     endif
 
-    if s:lnum % 500 == 0
-      if len(headings) > g:unite_source_outline_max_headings
-        call unite#print_message(
-              \ "[unite-outline] Too many headings, the extraction was interrupted.")
-        break
-      else
-        call s:Util.print_progress("Extracting headings..." . s:lnum * 100 / num_lines . "%")
-      endif
-    endif
     let s:lnum += 1
   endwhile
-  call s:Util.print_progress("Extracting headings...done.")
 
   return headings
+endfunction
+
+function! s:skip_header()
+  let outline_info = s:context.outline_info
+  let lines = s:context.lines | let num_lines = len(lines)
+
+  if has_key(outline_info, 'skip') && has_key(outline_info.skip, 'header')
+    " Eval once.
+    let skip_header_leading = has_key(outline_info.skip.header, 'leading')
+    let skip_header_block   = has_key(outline_info.skip.header, 'block')
+
+    while s:lnum < num_lines
+      let line = lines[s:lnum]
+      if skip_header_leading && line =~# outline_info.skip.header.leading
+        call s:skip_while(outline_info.skip.header.leading)
+      elseif skip_header_block && line =~# outline_info.skip.header.block.begin
+        call s:skip_to(outline_info.skip.header.block.end)
+      else
+        break
+      endif
+    endwhile
+  endif
 endfunction
 
 function! s:skip_while(pattern)
@@ -676,9 +822,38 @@ function! s:skip_to(pattern)
   endwhile
 endfunction
 
+function! s:extract_folding_headings()
+  let headings = []
+  let lines = s:context.lines | let num_lines = len(lines)
+
+  let current_level = 0
+  let lnum = 1
+  while lnum < num_lines
+    let foldlevel = foldlevel(lnum)
+    if foldlevel > current_level
+      let heading_lnum = lnum
+      if &l:foldmethod ==# 'indent'
+        let heading_lnum -=1
+      endif
+      let heading = {
+            \ 'word' : lines[heading_lnum],
+            \ 'level': foldlevel,
+            \ 'type' : 'folding',
+            \ 'lnum' : heading_lnum,
+            \ }
+      call add(headings, heading)
+    endif
+    let current_level = foldlevel
+    let lnum += 1
+  endwhile
+  call map(headings, 's:normalize_heading(v:val)')
+  call s:Tree.build(headings)
+  return headings
+endfunction
+
 function! s:normalize_heading(heading)
   if type(a:heading) == type("")
-    " normalize to a Dictionary
+    " Normalize to a Dictionary.
     let level = s:Util.get_indent_level(s:context, s:context.heading_lnum)
     let heading = {
           \ 'word' : a:heading,
@@ -698,14 +873,14 @@ function! s:normalize_heading(heading)
         \ 'is_matched': 0,
         \ }, 'keep')
   let heading.line = s:context.lines[heading.lnum]
-  let heading.pattern = s:make_search_pattern(heading.line)
+  let heading.pattern = '^' . unite#util#escape_pattern(heading.line) . '$'
   let heading.signature = s:calc_signature(heading.lnum, s:context.lines)
   let outline_info = s:context.outline_info
-  if !has_key(heading, 'group')
+  if s:context.method !=# 'folding' && !has_key(heading, 'group')
     let group_map = outline_info.heading_group_map
     let heading.group = get(group_map, heading.type, 'generic')
   endif
-  if !has_key(heading, 'keyword') && !empty(outline_info.__not_match_pattern__)
+  if has_key(outline_info, '__not_match_pattern__')
     let heading.keyword =
           \ substitute(heading.word, outline_info.__not_match_pattern__, '', 'g')
   endif
@@ -717,10 +892,6 @@ function! s:normalize_heading_word(heading_word)
   let heading_word = substitute(substitute(a:heading_word, '^\s*', '', ''), '\s*$', '', '')
   let heading_word = substitute(heading_word, '\s\+', ' ', 'g')
   return heading_word
-endfunction
-
-function! s:make_search_pattern(line)
-  return '^' . unite#util#escape_pattern(a:line) . '$'
 endfunction
 
 let s:SIGNATURE_RANGE = 10
@@ -742,7 +913,7 @@ function! s:_calc_signature(bwd_lines, fwd_lines)
   return join(map(bwd_lines + fwd_lines, 's:digest_line(v:val)'), '')
 endfunction
 
-" quick and dirty digest
+" Quick and Dirty Digest
 function! s:digest_line(line)
   let line = substitute(a:line, '\s*', '', 'g')
   if s:strchars(line) <= 20
@@ -765,28 +936,28 @@ else
 endif
 
 " Heading Type Filter
-function! s:filter_headings(headings, ignore_types, ...)
+function! s:filter_headings(headings, ignore_types)
+  if empty(a:ignore_types) | return a:headings | endif
   let headings = a:headings
-  if !empty(a:ignore_types)
-    let remove_comments = (a:0 ? a:1 : 0)
-    if remove_comments
-      if index(a:ignore_types, 'comment') >= 0
-        call filter(headings, 'v:val.type !=# "comment"')
-      endif
-    else
-      let ignore_types = map(copy(a:ignore_types), 'unite#util#escape_pattern(v:val)')
-      let ignore_types_pattern = '^\%(' . join(ignore_types, '\|') . '\)$'
 
-      " something like closure
-      let predicate = {}
-      let predicate.ignore_types_pattern = ignore_types_pattern
-      function predicate.call(heading)
-        return (a:heading.type !~# self.ignore_types_pattern)
-      endfunction
-
-      let headings = s:Tree.filter(a:headings, predicate, 1)
-    endif
+  " Remove comment headings.
+  if index(a:ignore_types, 'comment') >= 0
+    call filter(headings, 'v:val.type !=# "comment"')
+    let headings = s:Tree.flatten(s:Tree.build(headings))
   endif
+
+  let ignore_types = map(copy(a:ignore_types), 'unite#util#escape_pattern(v:val)')
+  let ignore_types_pattern = '^\%(' . join(ignore_types, '\|') . '\)$'
+  " Use something like closure.
+  let predicate = {}
+  let predicate.ignore_types_pattern = ignore_types_pattern
+  function predicate.call(heading)
+    return (a:heading.type =~# self.ignore_types_pattern)
+  endfunction
+  " Remove headings to be ignored.
+  let tree = s:Tree.get_root(headings[0])
+  call s:Tree.remove(tree, predicate)
+  let headings = s:Tree.flatten(tree)
   return headings
 endfunction
 
@@ -800,25 +971,17 @@ function! unite#sources#outline#get_ignore_heading_types(filetype)
 endfunction
 
 function! s:convert_headings_to_candidates(headings)
-  if empty(a:headings) | return [] | endif
-
-  let outline_info = s:context.outline_info
-  let physical_levels = s:smooth_levels(a:headings)
-  let candidates = []
-  for [heading, physical_level] in s:Util.List.zip(a:headings, physical_levels)
-    let heading.physical_level = physical_level
-    let cand = s:create_candidate(heading, physical_level)
-    call add(candidates, cand)
-  endfor
+  let candidates = map(copy(a:headings), 's:create_candidate(v:val)')
   return candidates
 endfunction
 
-function! s:create_candidate(heading, physical_level)
+function! s:create_candidate(heading)
   " NOTE:
   "   abbr - String for displaying
   "   word - String for narrowing
+  let indent = repeat(' ', (a:heading.level - 1) * g:unite_source_outline_indent_width)
   let cand = {
-        \ 'abbr': s:make_indent(a:physical_level) . a:heading.word,
+        \ 'abbr': indent . a:heading.word,
         \ 'word': a:heading.keyword,
         \ 'source': 'outline',
         \ 'kind'  : 'jump_list',
@@ -826,28 +989,10 @@ function! s:create_candidate(heading, physical_level)
         \ 'action__pattern'  : a:heading.pattern,
         \ 'action__signature': a:heading.signature,
         \
-        \ 'source__heading'   : a:heading,
+        \ 'source__heading'  : a:heading,
         \ }
   let a:heading.__unite_candidate__ = cand
   return cand
-endfunction
-
-function! s:make_indent(level)
-  return repeat(' ', (a:level - 1) * g:unite_source_outline_indent_width)
-endfunction
-
-function! s:smooth_levels(headings)
-  let levels = map(copy(a:headings), 'v:val.level')
-  return s:_smooth_levels(levels, 0)
-endfunction
-function! s:_smooth_levels(levels, base_level)
-  let splitted = s:Util.List.split(a:levels, a:base_level)
-  for sub_levels in splitted
-    let shift = min(sub_levels) - a:base_level - 1
-    call map(sub_levels, 'v:val - shift')
-  endfor
-  call map(splitted, 'empty(v:val) ? v:val : s:_smooth_levels(v:val, a:base_level + 1)')
-  return s:Util.List.join(splitted, a:base_level)
 endfunction
 
 function! s:Source_calc_signature(lnum)
@@ -935,7 +1080,7 @@ function! s:adjust_scroll(best_winline)
   normal! zt
   let save_cursor = getpos('.')
   let winl = 1
-  " scroll the cursor line down
+  " Scroll the cursor line down.
   while winl <= a:best_winline
     let prev_winl = winl
     execute "normal! \<C-y>"
