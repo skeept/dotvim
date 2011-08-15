@@ -1,8 +1,8 @@
 " histwin.vim - Vim global plugin for browsing the undo tree
 " -------------------------------------------------------------
-" Last Change: Sat, 30 Jul 2011 15:34:59 +0200
+" Last Change: Mon, 15 Aug 2011 10:37:51 +0200
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Version:     0.23
+" Version:     0.25
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
 "              The VIM LICENSE applies to histwin.vim 
 "              (see |copyright|) except use "histwin.vim" 
@@ -440,6 +440,10 @@ fun! s:DiffUndoBranch()"{{{1
     exe "setl ft=".cur_ft
 	silent w!
 	diffthis
+	" Fix issue 2 for histwin: http://github.com/chrisbra/histwin/issues/2
+	if &splitright
+		wincmd x
+	endif
 	exe bufwinnr(s:orig_buffer) . 'wincmd w'
 	diffthis
 endfun
