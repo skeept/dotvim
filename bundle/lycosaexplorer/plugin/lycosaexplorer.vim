@@ -13,23 +13,20 @@
 "  Description: Dynamic Filesystem and Buffer Explorer Vim Plugin
 "  Maintainers: Michael Hart
 "
-" Release Date: July 13 2011
-"      Version: 0.3
+" Release Date: August 15 2011
+"      Version: 0.5
 "
 "        Usage:
 "                 <Leader>lf  - Opens the filesystem explorer.
 "                 <Leader>lr  - Opens the filesystem explorer from the
 "                               directory of the current file.
 "                 <Leader>lb  - Opens the buffer explorer.
-"                 <Leader>lg  - Opens the buffer grep, for searching through
-"                               all loaded buffers
 "
 "               You can also use the commands:
 "
 "                 ":LycosaFilesystemExplorer"
 "                 ":LycosaFilesystemExplorerFromHere"
 "                 ":LycosaBufferExplorer"
-"                 ":LycosaBufferGrep"
 "
 "               When launched, a new window appears at bottom presenting a
 "               table of files/dirs or buffers, and in the status bar a
@@ -38,8 +35,7 @@
 "                 >>
 "
 "               As you type, the table updates for possible matches using a
-"               fuzzy matching algorithm (or regex matching, in the case of
-"               grep).  Special keys include:
+"               fuzzy matching algorithm.  Special keys include:
 "
 "                 <Enter>  open selected match
 "                 <Tab>    open selected match
@@ -90,21 +86,6 @@
 "
 "  - Buffers are sorted first by fuzzy match and then by most-recently used.
 "  - The currently active buffer is highlighted.
-"
-" Buffer Grep:
-"
-"  - Searches all loaded buffers.
-"  - Uses Python-style regexes instead of Vim style.  This means:
-"
-"    - \b instead of \< or \> for beginning/end of word.
-"    - (foo|bar) instead of \(foo\|bar\)
-"    - {2,5} instead of \{2,5}
-"    - + instead of \+
-"    - Generally, fewer backslashes. :-)
-"
-"  - For now, searches are always case-insensitive.
-"  - Matches from the previous grep are remembered upon relaunch;  clear with
-"    <C-u>.
 "
 "
 " Install Details:
@@ -205,14 +186,12 @@ let g:loaded_lycosaexplorer = "yep"
 command LycosaBufferExplorer :call <SID>LycosaBufferExplorerStart()
 command LycosaFilesystemExplorer :call <SID>LycosaFilesystemExplorerStart()
 command LycosaFilesystemExplorerFromHere :call <SID>LycosaFilesystemExplorerFromHereStart()
-command LycosaBufferGrep :call <SID>LycosaBufferGrepStart()
 
 
 " Default mappings.
 nmap <silent> <Leader>lf :LycosaFilesystemExplorer<CR>
 nmap <silent> <Leader>lr :LycosaFilesystemExplorerFromHere<CR>
 nmap <silent> <Leader>lb :LycosaBufferExplorer<CR>
-nmap <silent> <Leader>lg :LycosaBufferGrep<CR>
 
 " Vim-to-python function calls.
 function! s:LycosaFilesystemExplorerStart()
@@ -227,10 +206,6 @@ function! s:LycosaBufferExplorerStart()
   python lycosa_buffer_explorer.run()
 endfunction
 
-function! s:LycosaBufferGrepStart()
-  python lycosa_buffer_grep.run()
-endfunction
-
 function! s:LycosaFilesystemExplorerCancel()
   python lycosa_filesystem_explorer.cancel()
 endfunction
@@ -239,20 +214,12 @@ function! s:LycosaBufferExplorerCancel()
   python lycosa_buffer_explorer.cancel()
 endfunction
 
-function! s:LycosaBufferGrepCancel()
-  python lycosa_buffer_grep.cancel()
-endfunction
-
 function! s:LycosaFilesystemExplorerKeyPressed(code_arg)
   python lycosa_filesystem_explorer.key_pressed()
 endfunction
 
 function! s:LycosaBufferExplorerKeyPressed(code_arg)
   python lycosa_buffer_explorer.key_pressed()
-endfunction
-
-function! s:LycosaBufferGrepKeyPressed(code_arg)
-  python lycosa_buffer_grep.key_pressed()
 endfunction
 
 " Setup the autocommands that handle buffer MRU ordering.
