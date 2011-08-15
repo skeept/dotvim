@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/javascript.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-04-23
+" Updated : 2011-08-08
 "
 " Contributed by hamaco
 "
@@ -41,9 +41,11 @@ let s:rvalue = '\(function\s*(\([^)]*\))\|{\)'
 let s:outline_info = {
       \ 'heading-1': s:Util.shared_pattern('cpp', 'heading-1'),
       \ 'heading'  : '^\s*\%(function\>\|\%(' . s:assign . '\|' . s:label . '\)\s*' . s:rvalue . '\)',
+      \
       \ 'skip': {
       \   'header': s:Util.shared_pattern('cpp', 'header'),
       \ },
+      \
       \ 'not_match_patterns': [
       \   s:Util.shared_pattern('*', 'parameter_list'),
       \ ],
@@ -51,6 +53,7 @@ let s:outline_info = {
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context)
   let h_lnum = a:context.heading_lnum
+  " Level 1 to 3 are reserved for comment headings.
   let level = s:Util.get_indent_level(a:context, h_lnum) + 3
   let heading = {
         \ 'word' : a:heading_line,

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/python.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-11
+" Updated : 2011-08-13
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -9,7 +9,7 @@
 "=============================================================================
 
 " Default outline info for Python
-" Version: 0.1.1
+" Version: 0.1.5
 
 function! unite#sources#outline#defaults#python#outline_info()
   return s:outline_info
@@ -23,13 +23,34 @@ let s:outline_info = {
       \   'type'     : ['class'],
       \   'function' : ['function', 'member'],
       \ },
+      \
       \ 'not_match_patterns': [
       \   s:Util.shared_pattern('*', 'parameter_list'),
+      \ ],
+      \
+      \ 'highlight_rules': [
+      \   { 'name'   : 'type',
+      \     'pattern': '/\S\+\ze : class/' },
+      \   { 'name'   : 'function',
+      \     'pattern': '/\h\w*\ze\s*(/' },
+      \   { 'name'   : 'parameter_list',
+      \     'pattern': '/(.*)/' },
       \ ],
       \}
 
 function! s:outline_info.extract_headings(context)
   return s:Ctags.extract_headings(a:context)
+endfunction
+
+function! s:outline_info.need_blank_between(head1, head2, memo)
+  if a:head1.group == 'function' && a:head2.group == 'function'
+    " Don't insert a blank between two sibling functions.
+    return 0
+  else
+    return (a:head1.group != a:head2.group ||
+          \ s:Util.has_marked_child(a:head1, a:memo) ||
+          \ s:Util.has_marked_child(a:head2, a:memo))
+  endif
 endfunction
 
 " vim: filetype=vim

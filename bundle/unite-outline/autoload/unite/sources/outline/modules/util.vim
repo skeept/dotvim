@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/util.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-15
-" Version : 0.3.5
+" Updated : 2011-08-13
+" Version : 0.3.7
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -170,8 +170,8 @@ call s:Util.function('neighbor_matchstr')
 
 let s:SHARED_PATTERNS = {
       \ '*': {
-      \   'parameter_list': '([^)]*)',
-      \   'parameter_list_and_after': '([^)]*).*$',
+      \   'parameter_list': '\S\s*\zs([^)]*)',
+      \   'parameter_list_and_after': '\S\s*\zs([^)]*).*$',
       \   'after_lbrace'  : '{.*$',
       \   'after_lbracket': '[.*$',
       \   'after_lparen'  : '(.*$',
@@ -214,38 +214,6 @@ function! s:compare_by_lnum(d1, d2)
   return n1 == n2 ? 0 : n1 > n2 ? 1 : -1
 endfunction
 call s:List.function('sort_by_lnum')
-
-function! s:List_split(list, sep)
-  let result = []
-  let sub_list = []
-  for value in a:list
-    if value == a:sep
-      call add(result, sub_list)
-      let sub_list = []
-    else
-      call add(sub_list, value)
-    endif
-  endfor
-  call add(result, sub_list)
-  return result
-endfunction
-call s:List.function('split')
-
-function! s:List_join(lists, sep)
-  let result = []
-  for sub_list in a:lists
-    let result += sub_list
-    let result += [a:sep]
-  endfor
-  call remove(result, -1)
-  return result
-endfunction
-call s:List.function('join')
-
-function! s:List_zip(list1, list2)
-  return map(range(len(a:list1)), '[a:list1[v:val], a:list2[v:val]]')
-endfunction
-call s:List.function('zip')
 
 unlet s:List
 
@@ -320,6 +288,22 @@ call String.function('shellescape')
 unlet String
 
 "-----------------------------------------------------------------------------
+" Tree
+
+let s:Tree = unite#sources#outline#import('Tree')
+
+" Memoized version:
+function! s:Util_has_marked_child(heading, memo)
+  if has_key(a:memo, a:heading.id)
+    return a:memo[a:heading.id]
+  endif
+  let result = s:Tree.has_marked_child(a:heading)
+  let a:memo[a:heading.id] = result
+  return result
+endfunction
+call s:Util.function('has_marked_child')
+
+"-----------------------------------------------------------------------------
 " Misc
 
 function! s:Util_print_debug(msg)
@@ -330,8 +314,8 @@ endfunction
 call s:Util.function('print_debug')
 
 function! s:Util_print_progress(msg)
-  redraw
   echon a:msg
+  redraw
 endfunction
 call s:Util.function('print_progress')
 

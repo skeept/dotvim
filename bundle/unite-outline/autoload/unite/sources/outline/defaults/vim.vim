@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/vim.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-04-23
+" Updated : 2011-08-13
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -9,7 +9,7 @@
 "=============================================================================
 
 " Default outline info for Vim script
-" Version: 0.1.2
+" Version: 0.1.5
 
 function! unite#sources#outline#defaults#vim#outline_info()
   return s:outline_info
@@ -19,11 +19,24 @@ let s:Util = unite#sources#outline#import('Util')
 
 let s:outline_info = {
       \ 'heading-1': '^\s*"\s*[-=]\{10,}\s*$',
-      \ 'heading'  : '^\s*fu\%[nction]!\= ',
+      \ 'heading'  : '^\(augroup\s\+\%(END\>\)\@!\|\s*fu\%[nction]!\= \)',
+      \
       \ 'skip': { 'header': '^"' },
+      \
       \ 'not_match_patterns': [
-      \   '^\s*fu\%[nction]!\=\s',
       \   s:Util.shared_pattern('*', 'parameter_list'),
+      \ ],
+      \
+      \ 'highlight_rules': [
+      \   { 'name'     : 'comment',
+      \     'pattern'  : '/".*/' },
+      \   { 'name'     : 'augroup',
+      \     'pattern'  : '/\S\+\ze : augroup/',
+      \     'highlight': g:unite_source_outline_highlight.type },
+      \   { 'name'     : 'function',
+      \     'pattern'  : '/\S\+\ze\s*(/' },
+      \   { 'name'     : 'parameter_list',
+      \     'pattern'  : '/(.*)/' },
       \ ],
       \}
 
@@ -40,7 +53,14 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     let heading.level = s:Util.get_comment_heading_level(a:context, m_lnum, 5)
   elseif a:which ==# 'heading'
     let heading.level = 4
-    let heading.type = 'function'
+    if heading.word =~ '^augroup '
+      let heading.type = 'augroup'
+      let heading.word = substitute(heading.word, '^augroup\s\+', '', '') . ' : augroup'
+    else
+      let heading.type = 'function'
+      let heading.word = substitute(heading.word, '^\s*fu\%[nction]!\=', '', '')
+      let heading.word = substitute(heading.word, '\S\zs(', ' (', '')
+    endif
   endif
 
   if heading.level > 0

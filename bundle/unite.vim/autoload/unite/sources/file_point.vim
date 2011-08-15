@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: converter_relative_abbr.vim
+" FILE: file_point.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Aug 2011.
+" Last Modified: 10 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,39 +27,44 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_abbr#define()"{{{
-  return s:converter
+function! unite#sources#file_point#define()"{{{
+  return s:source
 endfunction"}}}
 
-let s:converter = {
-      \ 'name' : 'converter_relative_abbr',
-      \ 'description' : 'relative path abbr converter',
+let s:source = {
+      \ 'name' : 'file_point',
+      \ 'description' : 'file candidate from cursor point',
+      \ 'hooks' : {},
       \}
+function! s:source.hooks.on_init(args, context)"{{{
+  let l:filename_pattern = '[[:alnum:];/?:@&=+$,_.!~*''|()-]\+'
+  let l:filename = expand(matchstr(getline('.')[: col('.')-1], l:filename_pattern . '$')
+        \ . matchstr(getline('.')[col('.') :], '^'.l:filename_pattern))
+  let a:context.source__filename =
+        \ (l:filename =~ '^\%(https\?\|ftp\)://') ?
+        \ l:filename : fnamemodify(l:filename, ':p')
+endfunction"}}}
 
-function! s:converter.filter(candidates, context)"{{{
-  try
-    let l:directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let l:old_dir = l:directory
-      let l:directory = substitute(a:context.source__directory, '*', '', 'g')
-
-      if l:directory !=# l:old_dir
-        lcd `=l:directory`
-      endif
-    endif
-
-    for candidate in a:candidates
-      let candidate.abbr = unite#util#substitute_path_separator(
-            \ fnamemodify(candidate.word, ':~:.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && l:directory !=# l:old_dir
-      lcd `=l:old_dir`
-    endif
-  endtry
-
-  return a:candidates
+function! s:source.gather_candidates(args, context)"{{{
+  if a:context.source__filename =~ '^\%(https\?\|ftp\)://'
+    " URI.
+    return [{
+          \   'word' : a:context.source__filename,
+          \   'kind' : 'uri',
+          \   'action__path' : a:context.source__filename,
+          \ }]
+  elseif filereadable(a:context.source__filename)
+    return [{
+          \   'word' : a:context.source__filename,
+          \   'kind' : 'file',
+          \   'action__path' : a:context.source__filename,
+          \   'action__directory' : unite#util#path2directory(
+          \               a:context.source__filename),
+          \ }]
+  else
+    " File not found.
+    return []
+  endif
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: converter_relative_abbr.vim
+" FILE: uri.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Aug 2011.
+" Last Modified: 10 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,40 +27,29 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_abbr#define()"{{{
-  return s:converter
+function! unite#kinds#uri#define()"{{{
+  return s:kind
 endfunction"}}}
 
-let s:converter = {
-      \ 'name' : 'converter_relative_abbr',
-      \ 'description' : 'relative path abbr converter',
+let s:System = vital#of('unite').import('System.File')
+
+let s:kind = {
+      \ 'name' : 'uri',
+      \ 'default_action' : 'start',
+      \ 'action_table' : {},
       \}
 
-function! s:converter.filter(candidates, context)"{{{
-  try
-    let l:directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let l:old_dir = l:directory
-      let l:directory = substitute(a:context.source__directory, '*', '', 'g')
-
-      if l:directory !=# l:old_dir
-        lcd `=l:directory`
-      endif
-    endif
-
-    for candidate in a:candidates
-      let candidate.abbr = unite#util#substitute_path_separator(
-            \ fnamemodify(candidate.word, ':~:.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && l:directory !=# l:old_dir
-      lcd `=l:old_dir`
-    endif
-  endtry
-
-  return a:candidates
+" Actions"{{{
+let s:kind.action_table.start = {
+      \ 'description' : 'open files with associated program',
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.start.func(candidates)"{{{
+  for l:candidate in a:candidates
+    call s:System.open(l:candidate.action__path)
+  endfor
 endfunction"}}}
+"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

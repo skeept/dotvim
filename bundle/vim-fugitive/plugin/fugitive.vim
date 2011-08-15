@@ -1,5 +1,5 @@
 " fugitive.vim - A Git wrapper so awesome, it should be illegal
-" Maintainer:   Tim Pope <vimNOSPAM@tpope.org>
+" Maintainer:   Tim Pope <http://tpo.pe/>
 " Version:      1.2
 " GetLatestVimScripts: 2975 1 :AutoInstall: fugitive.vim
 
@@ -62,6 +62,17 @@ function! s:shellslash(path)
   else
     return a:path
   endif
+endfunction
+
+function! s:recall()
+  let rev = s:buffer().rev()
+  if rev ==# ':'
+    let filename = matchstr(getline('.'),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.\{-\}\ze\%( (new commits)\)\=$\|^\d\{6} \x\{40\} \d\t\zs.*')
+    if filename !=# ''
+      return filename
+    endif
+  endif
+  return rev
 endfunction
 
 function! s:add_methods(namespace, method_names) abort
@@ -131,16 +142,16 @@ function! s:Detect(path)
   endif
   if exists('b:git_dir')
     silent doautocmd User Fugitive
-    cnoremap <expr> <buffer> <C-R><C-G> fugitive#buffer().rev()
+    cnoremap <expr> <buffer> <C-R><C-G> <SID>recall()
     let buffer = fugitive#buffer()
     if expand('%:p') =~# '//'
       call buffer.setvar('&path',s:sub(buffer.getvar('&path'),'^\.%(,|$)',''))
     endif
     if b:git_dir !~# ',' && stridx(buffer.getvar('&tags'),b:git_dir.'/tags') == -1
+      call buffer.setvar('&tags',b:git_dir.'/tags'.','.buffer.getvar('&tags'))
       if &filetype != ''
-        call buffer.setvar('&tags',buffer.getvar('&tags').','.b:git_dir.'/'.&filetype.'.tags')
+        call buffer.setvar('&tags',b:git_dir.'/'.&filetype.'.tags'.','.buffer.getvar('&tags'))
       endif
-      call buffer.setvar('&tags',buffer.getvar('&tags').','.b:git_dir.'/tags')
     endif
   endif
 endfunction
@@ -150,7 +161,7 @@ augroup fugitive
   autocmd BufNewFile,BufReadPost * call s:Detect(expand('<amatch>:p'))
   autocmd FileType           netrw call s:Detect(expand('<afile>:p'))
   autocmd VimEnter * if expand('<amatch>')==''|call s:Detect(getcwd())|endif
-  autocmd BufWinLeave * execute getwinvar(+winnr(), 'fugitive_restore')
+  autocmd BufWinLeave * execute getwinvar(+winnr(), 'fugitive_leave')
 augroup END
 
 " }}}1
@@ -1084,8 +1095,8 @@ call s:command("-bar -nargs=? -complete=customlist,s:EditComplete Gsdiff :execut
 
 augroup fugitive_diff
   autocmd!
-  autocmd BufWinLeave * if s:diff_window_count() == 2 && &diff && getbufvar(+expand('<abuf>'), 'git_dir') !=# '' | call s:diff_off_all(getbufvar(+expand('<abuf>'), 'git_dir')) | endif
-  autocmd BufWinEnter * if s:diff_window_count() == 1 && &diff && getbufvar(+expand('<abuf>'), 'git_dir') !=# '' | diffoff | endif
+  autocmd BufWinLeave * if s:diff_window_count() == 2 && &diff && getbufvar(+expand('<abuf>'), 'git_dir') !=# '' | call s:diffoff_all(getbufvar(+expand('<abuf>'), 'git_dir')) | endif
+  autocmd BufWinEnter * if s:diff_window_count() == 1 && &diff && getbufvar(+expand('<abuf>'), 'git_dir') !=# '' | call s:diffoff() | endif
 augroup END
 
 function! s:diff_window_count()
@@ -1096,7 +1107,27 @@ function! s:diff_window_count()
   return c
 endfunction
 
-function! s:diff_off_all(dir)
+function! s:diffthis()
+  if !&diff
+    let w:fugitive_diff_restore = 'setlocal nodiff noscrollbind'
+    let w:fugitive_diff_restore .= ' scrollopt=' . &l:scrollopt
+    let w:fugitive_diff_restore .= &l:wrap ? ' wrap' : ' nowrap'
+    let w:fugitive_diff_restore .= ' foldmethod=' . &l:foldmethod
+    let w:fugitive_diff_restore .= ' foldcolumn=' . &l:foldcolumn
+    diffthis
+  endif
+endfunction
+
+function! s:diffoff()
+  if exists('w:fugitive_diff_restore')
+    execute w:fugitive_diff_restore
+    unlet w:fugitive_diff_restore
+  else
+    diffoff
+  endif
+endfunction
+
+function! s:diffoff_all(dir)
   for nr in range(1,winnr('$'))
     if getwinvar(nr,'&diff')
       if nr != winnr()
@@ -1104,7 +1135,7 @@ function! s:diff_off_all(dir)
         let restorewinnr = 1
       endif
       if exists('b:git_dir') && b:git_dir ==# a:dir
-        diffoff
+        call s:diffoff()
       endif
       if exists('restorewinnr')
         wincmd p
@@ -1143,13 +1174,13 @@ function! s:Diff(bang,...) abort
     let nr = bufnr('')
     execute 'leftabove '.split.' `=fugitive#buffer().repo().translate(s:buffer().expand('':2''))`'
     execute 'nnoremap <buffer> <silent> dp :diffput '.nr.'<Bar>diffupdate<CR>'
-    diffthis
+    call s:diffthis()
     wincmd p
     execute 'rightbelow '.split.' `=fugitive#buffer().repo().translate(s:buffer().expand('':3''))`'
     execute 'nnoremap <buffer> <silent> dp :diffput '.nr.'<Bar>diffupdate<CR>'
-    diffthis
+    call s:diffthis()
     wincmd p
-    diffthis
+    call s:diffthis()
     return ''
   elseif a:0
     if a:1 ==# ''
@@ -1181,9 +1212,9 @@ function! s:Diff(bang,...) abort
     else
       execute 'leftabove '.split.' `=spec`'
     endif
-    diffthis
+    call s:diffthis()
     wincmd p
-    diffthis
+    call s:diffthis()
     return ''
   catch /^fugitive:/
     return 'echoerr v:errmsg'
@@ -1336,7 +1367,7 @@ function! s:Blame(bang,line1,line2,count,args) abort
         let b:git_dir = git_dir
         let b:fugitive_type = 'blame'
         let b:fugitive_blamed_bufnr = bufnr
-        let w:fugitive_restore = restore
+        let w:fugitive_leave = restore
         let b:fugitive_blame_arguments = join(a:args,' ')
         call s:Detect(expand('%:p'))
         execute top
@@ -1518,7 +1549,7 @@ function! s:Browse(bang,line1,count,...) abort
       let @* = url
       return 'echomsg '.string(url)
     else
-      return 'echomsg '.string(url).'|silent Git web--browse '.shellescape(url,1)
+      return 'echomsg '.string(url).'|call fugitive#buffer().repo().git_chomp("web--browse",'.string(url).')'
     endif
   catch /^fugitive:/
     return 'echoerr v:errmsg'
@@ -1632,7 +1663,11 @@ function! s:ReplaceCmd(cmd,...) abort
         let prefix = 'env GIT_INDEX_FILE='.s:shellesc(a:1).' '
       endif
     endif
-    call writefile(split(system(prefix.a:cmd), "\n", 1), tmp, 'b')
+    if &shell =~# 'cmd'
+      call system('cmd /c "'.prefix.a:cmd.' > '.tmp.'"')
+    else
+      call system(' ('.prefix.a:cmd.' > '.tmp.') ')
+    endif
   finally
     if exists('old_index')
       let $GIT_INDEX_FILE = old_index

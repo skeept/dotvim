@@ -19,7 +19,7 @@ let s:Util = unite#sources#outline#import('Util')
 
 let s:outline_info = {
       \ 'heading': '^\\\%(title\|part\|chapter\|\%(sub\)\{,2}section\|begin{thebibliography}\){',
-      \ }
+      \}
 
 let s:unit_level_map = {
       \ 'title'        : 1,

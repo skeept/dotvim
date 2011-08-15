@@ -1,5 +1,6 @@
+from __future__ import division
+
 import collections
-import copy
 import decimal
 import fnmatch
 import functools
@@ -43,6 +44,19 @@ def single_quote_escape(s):
 
 def regex_escape(s):
     return re.sub('[%s]' % (re.escape(r'\[].~"^$*'), ), r"\\\g<0>", s)
+
+
+COLUMN_SEPARATOR = "    "
+ENTRY_START_VIM_REGEX = r'\%%(^\|%s\)' % (COLUMN_SEPARATOR, )
+ENTRY_END_VIM_REGEX = r'\%%(\s*$\|%s\)' % (COLUMN_SEPARATOR, )
+
+
+def entry_syntaxify(s, case_insensitive):
+    # Create a match regex string for the given s.
+    # This is for a Vim regex, not for a Python regex.
+    return r"%s\zs%s\ze%s%s" % (
+        ENTRY_START_VIM_REGEX, s, ENTRY_END_VIM_REGEX,
+        r'\c' if case_insensitive else '')
 
 
 # Print with colours
@@ -155,7 +169,7 @@ class Mercury(object):
         except ValueError:
             return 0.0
 
-        started = (index == 0 or first_char_matched)
+        started = (index == 0) or first_char_matched
 
         # TODO Instead of having two scores, should there be a sliding "match"
         # score based on the distance of the matched character to the beginning
@@ -275,16 +289,6 @@ class BufferEntry(Entry):
         self.current_score = 0.0
 
 
-# Used in BufferGrep
-class GrepEntry(Entry):
-
-    def __init__(self, vim_buffer, mru_placement):
-        Entry.__init__(self, vim_buffer.name, "::UNSET::", "::UNSET::")
-        self.vim_buffer = vim_buffer
-        self.mru_placement = mru_placement
-        self.line_number = 1
-
-
 # Abstract base class; extended as BufferExplorer, FilesystemExplorer
 class Explorer(object):
 
@@ -297,7 +301,7 @@ class Explorer(object):
 
     def __init__(self):
         self.settings = SavedSettings()
-        self.display = Display(self._title())
+        self.display = Display(self.TITLE)
         self.prompt = None
         self.current_sorted_matches = []
         self.running = False
@@ -380,14 +384,13 @@ class Explorer(object):
         self._set_syntax_matching()
 
     def _highlight_selected_index(self):
-        # Note: overridden by BufferGrep
         vim.command('syn clear LycosaSelected')
         try:
             entry = self.current_sorted_matches[self.selected_index]
         except IndexError:
             return
         escaped = regex_escape(entry.label)
-        label_match_string = Display.entry_syntaxify(escaped, False)
+        label_match_string = entry_syntaxify(escaped, False)
         vim.command('syn match LycosaSelected "%s" contains=LycosaGrepMatch' %
                     (label_match_string, ))
 
@@ -409,6 +412,8 @@ class Explorer(object):
 
 class BufferExplorer(Explorer):
 
+    TITLE = '[LycosaExplorer-Buffers]'
+
     def __init__(self):
         Explorer.__init__(self)
         self.prompt = Prompt()
@@ -428,9 +433,6 @@ class BufferExplorer(Explorer):
         self.selected_index = 0
         Explorer.run(self)
 
-    def _title(self):
-        return '[LycosaExplorer-Buffers]'
-
     def _set_syntax_matching(self):
         # Base highlighting -- more is set on refresh.
         if has_syntax():
@@ -443,7 +445,7 @@ class BufferExplorer(Explorer):
         for buf in self.buffer_entries:
             if buf.vim_buffer == self.curbuf_at_start:
                 escaped = regex_escape(buf.label)
-                return Display.entry_syntaxify(
+                return entry_syntaxify(
                     escaped, self.prompt.insensitive())
         else:
             return ""
@@ -472,7 +474,7 @@ class BufferExplorer(Explorer):
                     matching_entries.append(entry)
             # Sort by score.
             return sorted(matching_entries,
-                        key=lambda x: (x.current_score, x.mru_placement))
+                          key=lambda x: (-x.current_score, x.mru_placement))
 
     def _open_entry(self, entry, open_mode):
         self._cleanup()
@@ -491,6 +493,8 @@ class BufferExplorer(Explorer):
 
 
 class FilesystemExplorer(Explorer):
+
+    TITLE = '[LycosaExplorer-Files]'
 
     def __init__(self):
         Explorer.__init__(self)
@@ -552,9 +556,6 @@ class FilesystemExplorer(Explorer):
     def _vim_current_directory(self):
         return vim.eval("getcwd()")
 
-    def _title(self):
-        return '[LycosaExplorer-Files]'
-
     def _set_syntax_matching(self):
       # Base highlighting -- more is set on refresh.
       if has_syntax():
@@ -570,7 +571,7 @@ class FilesystemExplorer(Explorer):
             if file_with_swap.dirname() == view:
                 base = file_with_swap.basename()
                 escaped = regex_escape(base)
-                match_str = Display.entry_syntaxify(escaped, False)
+                match_str = entry_syntaxify(escaped, False)
                 vim.command(
                     'syn match LycosaFileWithSwap "%s"' % (match_str, ))
       # NOTE: restore highlighting for open buffers?
@@ -642,7 +643,7 @@ class FilesystemExplorer(Explorer):
                 return sorted(matches, key=operator.attrgetter("label"))
             else:
                 # Sort by score.
-                return sorted(matches, key=operator.attrgetter("current_score"))
+                return sorted(matches, key=lambda x: -x.current_score)
 
     def _open_entry(self, entry, open_mode):
         path = os.path.join(self.view_path(), entry.label)
@@ -682,159 +683,6 @@ class FilesystemExplorer(Explorer):
         cmd = commands[open_mode]
         # TODO: will raise KeyError on bad open_mode
         vim.command("silent %s %s" % (cmd, sanitized))
-
-
-# TODO:
-# - some way for user to indicate case-sensitive regex
-# - add slash highlighting back to file name?
-
-class BufferGrep(Explorer):
-
-    def __init__(self):
-        Explorer.__init__(self)
-        self.display.single_column_mode = True
-        self.prompt = Prompt()
-        self.buffer_entries = []
-        self.matched_strings = []
-        # State from previous run, so you don't have to retype
-        # your search each time to get the previous entries.
-        self.previous_input = ''
-        self.previous_grep_entries = []
-        self.previous_matched_strings = []
-        self.previous_selected_index = 0
-
-    def run(self):
-        if self.running:
-            return
-        self.prompt.set(self.previous_input)
-        self.buffer_entries = GrepEntry.compute_buffer_entries()
-        self.selected_index = self.previous_selected_index
-        Explorer.run(self)
-
-    def _title(self):
-        return '[LycosaExplorer-BufferGrep]'
-
-    def _set_syntax_matching(self):
-      vim.command('syn clear LycosaGrepFileName')
-      vim.command('syn clear LycosaGrepLineNumber')
-      vim.command('syn clear LycosaGrepContext')
-
-      # Base syntax matching -- others are set on refresh.
-      vim.command(
-          'syn match LycosaGrepFileName "^\zs.\{-}\ze:\d\+:" '
-          'contains=NONE '
-          'nextgroup=LycosaGrepLineNumber')
-      vim.command(
-          'syn match LycosaGrepLineNumber ":\d\+:" '
-          'contained '
-          'contains=NONE '
-          'nextgroup=LycosaGrepContext')
-      vim.command(
-          'syn match LycosaGrepContext ".*" '
-          'transparent '
-          'contained '
-          'contains=LycosaGrepMatch')
-
-    def _on_refresh(self):
-        if has_syntax():
-            vim.command('syn clear LycosaGrepMatch')
-
-        if self.matched_strings:
-            sub_regexes = [regex_escape(x) for x in self.matched_strings]
-            syntax_regex = r"\%%(%s\)" % (r"\|".join(sub_regexes), )
-            vim.command('syn match LycosaGrepMatch "%s" '
-                        "contained "
-                        "contains=NONE" % (syntax_regex, ))
-
-    def _highlight_selected_index(self):
-        vim.command('syn clear LycosaSelected')
-        try:
-            entry = self.current_sorted_matches[self.selected_index]
-        except IndexError:
-            return
-        match_string = "%s:%d:" % (entry.short_name, entry.line_number)
-        escaped = regex_escape(match_string)
-        vim.command('syn match LycosaSelected "^%s" '
-                    'contains=NONE '
-                    'nextgroup=LycosaGrepContext' % (escaped, ))
-
-    def current_abbreviation(self):
-        return self.prompt.input
-
-    def _compute_sorted_matches(self):
-        abbrev = self.current_abbreviation()
-
-        grep_entries = self.previous_grep_entries
-        self.matched_strings = self.previous_matched_strings
-
-        self.previous_input = ''
-        self.previous_grep_entries = []
-        self.previous_matched_strings = []
-        self.previous_selected_index = 0
-
-        if grep_entries:
-            return grep_entries
-        elif abbrev == '':
-            for entry in self.buffer_entries:
-                entry.label = entry.short_name
-            return self.buffer_entries
-
-        try:
-            regex = re.compile(abbrev, re.IGNORECASE)
-        except re.error:
-            return []
-
-        max_visible_entries = Display.max_height()
-
-        # Used to avoid duplicating match strings, which slows down refresh.
-        highlight_hash = {}
-
-        # Search through every line of every open buffer for the
-        # given expression.
-        for entry in self.buffer_entries:
-            vim_buffer = entry.vim_buffer
-            for index, line in enumerate(vim_buffer):
-                match = regex.match(line)
-                if match:
-                    line_number = index + 1
-                    grep_entry = copy.copy(entry)
-                    grep_entry.line_number = line_number
-                    grep_entry.label = "%s:%d:%s" % (
-                        grep_entry.short_name, line_number, line)
-                    grep_entries.append(grep_entry)
-
-                    # Keep track of all matched strings
-                    matched_str = match.group()
-                    if matched_str not in highlight_hash:
-                        self.matched_strings.append(matched_str)
-                        highlight_hash[matched_str] = True
-
-                    if len(grep_entries) > max_visible_entries:
-                        return grep_entries
-        return grep_entries
-
-    def _open_entry(self, entry, open_mode):
-        self._cleanup()
-        number = entry.vim_buffer.number
-
-        commands = {
-            self.CURRENT_TAB: "b",
-            # For some reason just using tabe or e gives an error when
-            # the alternate-file isn't set, hence tab split.
-            self.NEW_TAB: "tab split | b",
-            self.NEW_SPLIT: "sp | b",
-            self.NEW_VSPLIT: "vs | b",
-        }
-        cmd = commands[open_mode]
-        vim.command("silent %s %s" % (cmd, number))
-        vim.command(str(entry.line_number))
-
-    def _cleanup(self):
-        self.previous_input = self.prompt.input
-        self.previous_grep_entries = self.current_sorted_matches
-        self.previous_matched_strings = self.matched_strings
-        self.previous_selected_index = self.selected_index
-        Explorer._cleanup(self)
 
 
 # Used in BufferExplorer
@@ -903,7 +751,7 @@ class FilesystemPrompt(Prompt):
         # We have not typed anything yet or have just typed the final '/' on a
         # directory name in pwd.  This check is interspersed throughout
         # FilesystemExplorer because of the conventions of basename and dirname.
-        return not self.input or self.input.endswith(os.path.sep)
+        return (len(self.input) == 0) or self.input.endswith(os.path.sep)
         # Don't think the os.path.isdir call is necessary, but leaving this
         # here as a reminder.
         #(os.path.isdir(input()) and input().ends_with?(os.path.sep))
@@ -1007,20 +855,8 @@ def unlocked_buffer(func):
 
 class Display(object):
 
-    _COLUMN_SEPARATOR = "    "
     _NO_MATCHES_STRING = "-- NO MATCHES --"
     _TRUNCATED_STRING = "-- TRUNCATED --"
-
-    ENTRY_START_VIM_REGEX = r'\%%(^\|%s\)' % (_COLUMN_SEPARATOR, )
-    ENTRY_END_VIM_REGEX = r'\%%(\s*$\|%s\)' % (_COLUMN_SEPARATOR, )
-
-    @classmethod
-    def entry_syntaxify(cls, s, case_insensitive):
-        # Create a match regex string for the given s.
-        # This is for a Vim regex, not for a Python regex.
-        return r"%s\zs%s\ze%s%s" % (
-            cls.ENTRY_START_VIM_REGEX, s, cls.ENTRY_END_VIM_REGEX,
-            r'\c' if case_insensitive else '')
 
     def __init__(self, title):
         self.title = title
@@ -1145,7 +981,7 @@ class Display(object):
                 if col_index < col_count - 1:
                     # Add spacer to the width of the column
                     row += (" " * (column_width - strwidth(value)))
-                    row += self._COLUMN_SEPARATOR
+                    row += COLUMN_SEPARATOR
                 rows[index] = row
 
         self._print_rows(rows, truncated)
@@ -1194,8 +1030,8 @@ class Display(object):
                 # The -1 is for the truncation indicator.
                 return [Display.max_height() - 1, True]
             else:
-                single_row_width = sum(len(s) for s in strings) + (len(self._COLUMN_SEPARATOR) * (len(strings) - 1))
-                if single_row_width <= max_width or len(strings) == 1:
+                single_row_width = sum(len(s) for s in strings) + (len(COLUMN_SEPARATOR) * (len(strings) - 1))
+                if (single_row_width <= max_width) or (len(strings) == 1):
                     # All fits on a single row
                     return [1, False]
                 else:
@@ -1214,7 +1050,7 @@ class Display(object):
                 break
             column_count += 1
             column_widths.append(column_width)
-            total_width += len(self._COLUMN_SEPARATOR)
+            total_width += len(COLUMN_SEPARATOR)
 
         return [optimal_row_count, column_count, column_widths, truncated]
 
@@ -1252,7 +1088,7 @@ class Display(object):
         sorted_by_shortest = sorted(len(x) for x in strings)
         longest_length = sorted_by_shortest.pop()
 
-        row_width = longest_length + len(self._COLUMN_SEPARATOR)
+        row_width = longest_length + len(COLUMN_SEPARATOR)
 
         max_width = Display.max_width()
         column_count = 1
@@ -1263,7 +1099,7 @@ class Display(object):
                 break
 
             column_count += 1
-            row_width += len(self._COLUMN_SEPARATOR)
+            row_width += len(COLUMN_SEPARATOR)
 
         return column_count * Display.max_height()
 
@@ -1282,7 +1118,7 @@ class Display(object):
         lower = 1  # (1 = 2 - 1)
         upper = max_height + 1
         while lower + 1 != upper:
-            row_count = (lower + upper) / 2   # Mid-point
+            row_count = (lower + upper) // 2   # Mid-point
 
             col_start_index = 0
             col_end_index = row_count - 1
@@ -1298,7 +1134,7 @@ class Display(object):
                     total_width = infinity
                     break
 
-                total_width += len(self._COLUMN_SEPARATOR)
+                total_width += len(COLUMN_SEPARATOR)
 
                 col_start_index += row_count
                 col_end_index += row_count
@@ -1309,7 +1145,7 @@ class Display(object):
                     col_end_index = len(strings) - 1
 
             # The final column doesn't need a separator.
-            total_width -= len(self._COLUMN_SEPARATOR)
+            total_width -= len(COLUMN_SEPARATOR)
 
             if total_width <= max_width:
                 # This row count fits.
@@ -1407,7 +1243,6 @@ class BufferStack(object):
             buf_num for buf_num in iterable if is_buffer_listed(buf_num)]
 
 
+le_buffer_stack = BufferStack()
 lycosa_buffer_explorer = BufferExplorer()
 lycosa_filesystem_explorer = FilesystemExplorer()
-lycosa_buffer_grep = BufferGrep()
-le_buffer_stack = BufferStack()

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/ruby_rspec.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-02
+" Updated : 2011-08-08
 "
 " Contributed by kenchan
 "
@@ -25,6 +25,7 @@ let headings += ['before', 'context', 'describe', 'its\=', 'let!\=', 'specify', 
 let s:outline_info = {
       \ 'heading-1': s:Util.shared_pattern('sh', 'heading-1'),
       \ 'heading'  : '^\s*\zs\(' . join(headings, '\|') . '\)\>',
+      \
       \ 'skip': {
       \   'header': s:Util.shared_pattern('sh', 'header'),
       \   'block' : ['^=begin', '^=end'],
@@ -34,6 +35,7 @@ unlet headings
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context)
   let h_lnum = a:context.heading_lnum
+  " Level 1 to 3 are reserved for comment headings.
   let level = s:Util.get_indent_level(a:context, h_lnum) + 3
   let heading = {
         \ 'word' : a:heading_line,

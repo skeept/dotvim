@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: converter_relative_abbr.vim
+" FILE: source.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Aug 2011.
+" Last Modified: 03 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,40 +27,33 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_abbr#define()"{{{
-  return s:converter
+function! unite#kinds#source#define()"{{{
+  return s:kind
 endfunction"}}}
 
-let s:converter = {
-      \ 'name' : 'converter_relative_abbr',
-      \ 'description' : 'relative path abbr converter',
+let s:kind = {
+      \ 'name' : 'source',
+      \ 'default_action' : 'start',
+      \ 'action_table': {},
       \}
 
-function! s:converter.filter(candidates, context)"{{{
-  try
-    let l:directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let l:old_dir = l:directory
-      let l:directory = substitute(a:context.source__directory, '*', '', 'g')
+" Actions"{{{
+let s:kind.action_table.start = {
+      \ 'description' : 'start source',
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.start.func(candidates)"{{{
+  let l:context = unite#get_context()
+  let l:context.input = ''
+  let l:context.auto_preview = 0
+  let l:context.default_action = 'default'
 
-      if l:directory !=# l:old_dir
-        lcd `=l:directory`
-      endif
-    endif
-
-    for candidate in a:candidates
-      let candidate.abbr = unite#util#substitute_path_separator(
-            \ fnamemodify(candidate.word, ':~:.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && l:directory !=# l:old_dir
-      lcd `=l:old_dir`
-    endif
-  endtry
-
-  return a:candidates
+  call unite#start(map(copy(a:candidates),
+        \ 'has_key(v:val, "action__source_args") ?'
+        \  . 'insert(v:val.action__source_args, v:val.action__source_name) :'
+        \  . 'v:val.action__source_name'), l:context)
 endfunction"}}}
+"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
