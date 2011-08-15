@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/ruby.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-08
+" Updated : 2011-08-13
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -38,15 +38,15 @@ let s:outline_info = {
       \ 'highlight_rules': [
       \   { 'name'     : 'comment',
       \     'pattern'  : '/#.*/' },
-      \   { 'name'     : 'type',
-      \     'pattern'  : '/.*\ze: \%(module\|class\)/' },
-      \   { 'name'     : 'eigen_class',
-      \     'pattern'  : '/  \<class\s\+<<\s\+.*/',
-      \     'highlight': g:unite_source_outline_highlight.special },
       \   { 'name'     : 'method',
-      \     'pattern'  : '/:\@<! [_[:alnum:]=\[\]<>!?.]\+/' },
+      \     'pattern'  : '/:\@<! \zs[_[:alnum:]=\[\]<>!?.]\+/' },
+      \   { 'name'     : 'type',
+      \     'pattern'  : '/\S\+\ze : \%(module\|class\)/' },
+      \   { 'name'     : 'eigen_class',
+      \     'pattern'  : '/\<class\s\+<<\s\+.*/',
+      \     'highlight': g:unite_source_outline_highlight.special },
       \   { 'name'     : 'meta_method',
-      \     'pattern'  : '/  \<def\s\+[^(]*/',
+      \     'pattern'  : '/\<def\s\+[^(]*/',
       \     'highlight': g:unite_source_outline_highlight.special },
       \   { 'name'     : 'parameter_list',
       \     'pattern'  : '/(.*)/' },
@@ -102,19 +102,13 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
 endfunction
 
 function! s:outline_info.need_blank_between(head1, head2, memo)
-  if a:head1.level < a:head2.level
+  if a:head1.group == 'method' && a:head2.group == 'method'
+    " Don't insert a blank between two sibling methods.
     return 0
-  elseif a:head1.level == a:head2.level
-    if a:head1.group == 'method' && a:head2.group == 'method'
-      " Don't insert a blank between two headings of methods.
-      return 0
-    else
-      return (a:head1.group != a:head2.group ||
-            \ s:Util.has_marked_child(a:head1, a:memo) ||
-            \ s:Util.has_marked_child(a:head2, a:memo))
-    endif
-  else " if a:head1.level > a:head2.level
-    return 1
+  else
+    return (a:head1.group != a:head2.group ||
+          \ s:Util.has_marked_child(a:head1, a:memo) ||
+          \ s:Util.has_marked_child(a:head2, a:memo))
   endif
 endfunction
 

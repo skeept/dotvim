@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/filters/outline_formatter.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-07
-" Version : 0.3.6
+" Updated : 2011-08-13
+" Version : 0.3.7
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -46,44 +46,58 @@ let s:formatter = {
 
 function! s:formatter.filter(candidates, context)
   if empty(a:candidates) | return a:candidates | endif
-
-  let candidates = a:candidates
   let outline_context = a:context.source__outline_context
-  let outline_info = outline_context.outline_info
 
-  let do_insert_blank = !empty(outline_info.heading_groups) ||
-        \ has_key(outline_info, 'need_blank_between')
+  " Insert blanks for readability.
+  let candidates = s:insert_blanks(a:candidates, outline_context)
 
-  if do_insert_blank
-    if !has_key(outline_info, 'need_blank_between')
-      " Use the default implementation.
-      let outline_info.need_blank_between = function('s:need_blank_between')
-    endif
-    let candidates = [a:candidates[0]]
-    let prev_heading = a:candidates[0].source__heading
-    let memo = {} | " for memoization
-    for cand in a:candidates[1:]
-      let heading = cand.source__heading
-      if do_insert_blank && outline_info.need_blank_between(prev_heading, heading, memo)
-        call add(candidates, s:BLANK)
+  " Turbo Jump
+  if len(a:candidates) < 10
+    let matches = filter(copy(a:candidates), 'v:val.source__heading.is_matched')
+    if len(matches) == 1 " Bingo!
+      let bingo = copy(matches[0])
+      if bingo != a:candidates[0]
+        " Prepend a copy of the only one matched heading to the narrowing
+        " results for jumping to its position with one <Enter>.
+        let bingo.abbr = substitute(bingo.abbr, '^ \=', '!', '')
+        let candidates = [bingo, s:BLANK] + candidates
       endif
-      call add(candidates, cand)
-      let prev_heading = heading
-    endfor
+    endif
   endif
   return candidates
 endfunction
 
-function! s:need_blank_between(head1, head2, memo) dict
-  if a:head1.level < a:head2.level
-    return 0
-  elseif a:head1.level == a:head2.level
-    return (a:head1.group != a:head2.group ||
-          \ s:Util.has_marked_child(a:head1, a:memo) ||
-          \ s:Util.has_marked_child(a:head2, a:memo))
-  else " if a:head1.level > a:head2.level
-    return 1
+function! s:insert_blanks(candidates, context)
+  let outline_info = a:context.outline_info
+  if a:context.method !=# 'filetype' ||
+        \ (empty(outline_info.heading_groups) && !has_key(outline_info, 'need_blank_between'))
+    return a:candidates
   endif
+
+  if !has_key(outline_info, 'need_blank_between')
+    " Use the default implementation.
+    let outline_info.need_blank_between = function('s:need_blank_between')
+  endif
+  let candidates = []
+  let prev_sibling = {} | let prev_level = 0
+  let memo = {} | " for memoization
+  for cand in a:candidates
+    let heading = cand.source__heading
+    if heading.level <= prev_level  &&
+          \ outline_info.need_blank_between(prev_sibling[heading.level], heading, memo)
+        call add(candidates, s:BLANK)
+    endif
+    call add(candidates, cand)
+    let prev_sibling[heading.level] = heading
+    let prev_level = heading.level
+  endfor
+  return candidates
+endfunction
+
+function! s:need_blank_between(head1, head2, memo) dict
+  return (a:head1.group != a:head2.group ||
+        \ s:Util.has_marked_child(a:head1, a:memo) ||
+        \ s:Util.has_marked_child(a:head2, a:memo))
 endfunction
 
 " vim: filetype=vim
