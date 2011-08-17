@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/tree.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-13
+" Updated : 2011-08-16
 " Version : 0.3.7
 " License : MIT license {{{
 "
@@ -62,9 +62,11 @@ function! s:Tree_append_child(node, child)
   endif
   call add(a:node.children, a:child)
   let a:child.parent = a:node
-  " Ensure that all headings has 'children'.
+  " Ensure that all nodes have 'children'.
   if !has_key(a:child, 'children')
     let a:child.children = []
+    " NOTE: While building a tree, all nodes of the tree pass throuth this
+    " function as a:child.
   endif
 endfunction
 call s:Tree.function('append_child')
@@ -84,26 +86,21 @@ function! s:Tree_is_leaf(node)
 endfunction
 call s:Tree.function('is_leaf')
 
-" Builds the tree structure from a list of headings and then returns the root
-" node of the tree.
+" Builds a tree structure from a List of elements, which are Dictionaries with
+" `level' attribute, and then returns the root node of the built tree.
 "
-function! s:Tree_build(headings, ...)
+function! s:Tree_build(elems)
   let root = s:Tree_new()
-  if empty(a:headings) | return root | endif
-
-  " Ensure that all headings has 'children'.
-  for heading in a:headings
-    let heading.children = []
-  endfor
-
-  let context = [root] | " stack
-  let prev_heading =  a:headings[0]
-  for heading in a:headings
-    while context[-1].level >= heading.level
-      call remove(context, -1)
+  if empty(a:elems) | return root | endif
+  " Build a tree.
+  let stack = [root]
+  let prev_elem =  a:elems[0]
+  for elem in a:elems
+    while stack[-1].level >= elem.level
+      call remove(stack, -1)
     endwhile
-    call s:Tree_append_child(context[-1], heading)
-    call add(context, heading)
+    call s:Tree_append_child(stack[-1], elem)
+    call add(stack, elem)
   endfor
   return root
 endfunction
@@ -111,7 +108,7 @@ call s:Tree.function('build')
 
 " Flatten a tree into a List.
 "
-" NOTE: This function resets heading levels in accordance with the given
+" NOTE: This function resets the level of nodes in accordance with the given
 " tree's structure while flattening it.
 "
 "   1               1
@@ -120,36 +117,51 @@ call s:Tree.function('build')
 "   |  +--4         |  +--3 
 "
 function! s:Tree_flatten(node)
-  let headings = []
+  let nodes = []
   for child in a:node.children
     let child.level = a:node.level + 1
-    call add(headings, child)
-    let headings += s:Tree_flatten(child)
+    call add(nodes, child)
+    let nodes += s:Tree_flatten(child)
   endfor
-  return headings
+  return nodes
 endfunction
 call s:Tree.function('flatten')
 
-" Marks nodes using {predicate}.
+" Marks nodes for which or one of whose children {predicate} returns True.
 "
-" A node is marked when it has any marked child or for which {predicate}
-" returns True.
+" * A node is matched for which {predicate} returns True.
+" * A node is marked when it has any marked child or is matched.
 "
-function! s:Tree_mark(node, predicate)
+" NOTE: unite-outline's matcher see these flags to accomplish its tree-aware
+" filtering task.
+"
+function! s:Tree_match(node, predicate, ...)
+  let and = (a:0 ? a:1 : 0)
+  if !and
+    call s:init_marks(a:node)
+  endif
   let child_marked = 0
   for child in a:node.children
     if !child.is_marked
       continue
     endif
-    let child.is_matched = a:predicate.call(child)
-    let child.is_marked = (s:Tree_mark(child, a:predicate) || child.is_matched)
+    let child.is_matched = child.is_matched && a:predicate.call(child)
+    let child.is_marked = (s:Tree_match(child, a:predicate, 1) || child.is_matched)
     if child.is_marked
       let child_marked = 1
     endif
   endfor
   return child_marked
 endfunction
-call s:Tree.function('mark')
+call s:Tree.function('match')
+
+function! s:init_marks(node)
+  for child in a:node.children
+    let child.is_marked  = 1
+    let child.is_matched = 1
+    call s:init_marks(child)
+  endfor
+endfunction
 
 function! s:Tree_has_marked_child(node)
   for child in a:node.children

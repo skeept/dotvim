@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Aug 2011.
+" Last Modified: 17 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -119,7 +119,7 @@ function! unite#mappings#define_default_mappings()"{{{
   nmap <buffer> k         <Plug>(unite_loop_cursor_up)
   nmap <buffer> <Up>         <Plug>(unite_loop_cursor_up)
   nmap <buffer> J         <Plug>(unite_skip_cursor_down)
-  nmap <buffer> K         <Plug>(unite_skip_cursor_down)
+  nmap <buffer> K         <Plug>(unite_skip_cursor_up)
   nmap <buffer> <C-h>     <Plug>(unite_delete_backward_path)
   nmap <buffer> <C-r>     <Plug>(unite_restart)
   nmap <buffer> *         <Plug>(unite_toggle_mark_all_candidates)
@@ -657,7 +657,7 @@ function! s:source_action.gather_candidates(args, context)"{{{
 
   let l:max = max(map(values(l:uniq_actions), 'len(v:val.name)'))
 
-  return sort(map(values(l:uniq_actions), '{
+  return sort(map(filter(values(l:uniq_actions), 'v:val.is_listed'), '{
         \   "word": v:val.name,
         \   "abbr": printf("%-' . l:max . 's -- %s", v:val.name, v:val.description),
         \   "kind": "common",
