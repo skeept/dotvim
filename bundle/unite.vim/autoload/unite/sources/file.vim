@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Jun 2011.
+" Last Modified: 17 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -42,15 +42,26 @@ let s:source = {
       \}
 
 function! s:source.change_candidates(args, context)"{{{
+  if !has_key(a:context, 'source__cache') || a:context.is_redraw
+        \ || a:context.is_invalidate
+    " Initialize cache.
+    let a:context.source__cache = {}
+  endif
+
   let l:input_list = filter(split(a:context.input,
         \                     '\\\@<! ', 1), 'v:val !~ "!"')
   let l:input = empty(l:input_list) ? '' : l:input_list[0]
   let l:input = substitute(substitute(a:context.input, '\\ ', ' ', 'g'), '^\a\+:\zs\*/', '/', '')
 
-  if l:input !~ '^\%(/\|\a\+:/\)' && get(a:args, 0) != ''
-    let l:input = a:args[0] . '/' .  l:input
+  let l:path = get(a:args, 0, '')
+  if l:path =~ '[\\/]$'
+    " Chomp.
+    let l:path = l:path[: -2]
   endif
-  let l:is_relative_path = l:input !~ '^\%(/\|\a\+:/\)' && get(a:args, 0) == ''
+  if l:input !~ '^\%(/\|\a\+:/\)' && l:path != ''
+    let l:input = l:path . '/' .  l:input
+  endif
+  let l:is_relative_path = l:input !~ '^\%(/\|\a\+:/\)' && l:path == ''
 
   " Substitute *. -> .* .
   let l:input = substitute(l:input, '\*\.', '.*', 'g')
@@ -62,65 +73,122 @@ function! s:source.change_candidates(args, context)"{{{
 
   " Glob by directory name.
   let l:input = substitute(l:input, '[^/.]*$', '', '')
-  let l:candidates = split(unite#util#substitute_path_separator(glob(l:input . (l:input =~ '\*$' ? '' : '*'))), '\n')
+  let l:glob = l:input . (l:input =~ '\*$' ? '' : '*')
+  if !has_key(a:context.source__cache, l:glob)
+    let l:files = split(unite#util#substitute_path_separator(
+          \ glob(l:glob)), '\n')
+
+    if g:unite_source_file_ignore_pattern != ''
+      call filter(l:files, 'v:val !~ ' . string(g:unite_source_file_ignore_pattern))
+    endif
+
+    let a:context.source__cache[l:glob] =
+          \ map(sort(l:files, 's:compare_file'), 's:create_dict(v:val, l:is_relative_path)')
+  endif
+
+  let l:candidates = a:context.source__cache[l:glob]
 
   if a:context.input != ''
     let l:newfile = substitute(a:context.input, '[*\\]', '', 'g')
-    " if (!filereadable(l:newfile) && !isdirectory(l:newfile) && isdirectory(fnamemodify(l:newfile, ':h')))
     if !filereadable(l:newfile) && !isdirectory(l:newfile)
       " Add newfile candidate.
-      call add(l:candidates, l:newfile)
+      let l:candidates = copy(l:candidates) +
+            \ [s:create_dict(l:newfile, l:is_relative_path)]
+    endif
+
+    if l:input !~ '^\%(/\|\a\+:/\)$'
+      let l:parent = substitute(l:input, '[*\\]\|\.[^/]*$', '', 'g')
+
+      if a:context.input =~ '\.$' && isdirectory(l:parent . '..')
+        " Add .. directory.
+        let l:candidates = [s:create_dict(l:parent . '..', l:is_relative_path)]
+              \ + copy(l:candidates)
+      endif
     endif
   endif
 
-  if g:unite_source_file_ignore_pattern != ''
-    call filter(l:candidates, 'v:val !~ ' . string(g:unite_source_file_ignore_pattern))
-  endif
+  return l:candidates
+endfunction"}}}
+function! s:source.vimfiler_gather_candidates(args, context)"{{{
+  let l:path = get(a:args, 0, '')
 
-  if l:input !~ '^\%(/\|\a\+:/\)$'
-    let l:parent = substitute(l:input, '[*\\]\|\.[^/]*$', '', 'g')
-
-    " if (l:input == '' || isdirectory(l:input)) && isdirectory(l:parent . '..')
-    if a:context.input =~ '\.$' && isdirectory(l:parent . '..')
-      " Add .. directory.
-      call insert(l:candidates, l:parent . '..')
+  if isdirectory(l:path)
+    let l:type = 'directory'
+    let l:candidates = self.change_candidates(a:args, a:context)
+    if a:context.vimfiler__visible_dot_files
+      " Add doted files.
+      let l:context = deepcopy(a:context)
+      let l:context.input .= '.'
+      let l:candidates += filter(self.change_candidates(a:args, l:context),
+            \ 'v:val.word !~ "/\.\.$"')
     endif
+  elseif filereadable(l:path)
+    let l:type = 'file'
+    let l:candidates = [ s:create_dict(l:path, 0) ]
+  else
+    return []
   endif
 
-  let l:candidates_dir = []
-  let l:candidates_file = []
-  for l:file in l:candidates
-    let l:dict = {
-          \ 'word' : l:file,
-          \ 'abbr' : l:file, 'source' : 'file',
-          \ 'action__path' : unite#util#substitute_path_separator(fnamemodify(l:file, ':p')),
-          \}
-    let l:dict.action__directory = l:is_relative_path ?
+  let l:old_dir = getcwd()
+  if l:path !=# l:old_dir
+        \ && isdirectory(l:path)
+    lcd `=l:path`
+  endif
+
+  " Set vimfiler property.
+  for l:candidate in l:candidates
+    let l:candidate.vimfiler__filename =
           \ unite#util#substitute_path_separator(
-          \    fnamemodify(unite#util#path2directory(l:file), ':.')) :
-          \ unite#util#path2directory(l:dict.action__path)
-
-    if isdirectory(l:file)
-      if l:file !~ '^\%(/\|\a\+:/\)$'
-        let l:dict.abbr .= '/'
-      endif
-
-      let l:dict.kind = 'directory'
-
-      call add(l:candidates_dir, l:dict)
-    else
-      if !filereadable(l:file)
-        " New file.
-        let l:dict.abbr = '[new file]' . l:file
-      endif
-
-      let l:dict.kind = 'file'
-
-      call add(l:candidates_file, l:dict)
-    endif
+          \       fnamemodify(l:candidate.word, ':t'))
+    let l:candidate.vimfiler__abbr =
+          \ unite#util#substitute_path_separator(
+          \       fnamemodify(l:candidate.word, ':.'))
+    let l:candidate.vimfiler__is_directory =
+          \ isdirectory(l:candidate.action__path)
+    let l:candidate.vimfiler__is_executable =
+          \ executable(l:candidate.action__path)
+    let l:candidate.vimfiler__filesize = getfsize(l:candidate.action__path)
+    let l:candidate.vimfiler__filetime = getftime(l:candidate.action__path)
   endfor
 
-  return l:candidates_dir + l:candidates_file
+  if l:path !=# l:old_dir
+        \ && isdirectory(l:path)
+    lcd `=l:old_dir`
+  endif
+
+  " return [l:type, l:candidates]
+  return l:candidates
+endfunction"}}}
+function! s:create_dict(file, is_relative_path)"{{{
+  let l:dict = {
+        \ 'word' : a:file,
+        \ 'abbr' : a:file, 'source' : 'file',
+        \ 'action__path' : unite#util#substitute_path_separator(fnamemodify(a:file, ':p')),
+        \}
+  let l:dict.action__directory = a:is_relative_path ?
+        \ unite#util#substitute_path_separator(
+        \    fnamemodify(unite#util#path2directory(a:file), ':.')) :
+        \ unite#util#path2directory(l:dict.action__path)
+
+  if isdirectory(a:file)
+    if a:file !~ '^\%(/\|\a\+:/\)$'
+      let l:dict.abbr .= '/'
+    endif
+
+    let l:dict.kind = 'directory'
+  else
+    if !filereadable(a:file)
+      " New file.
+      let l:dict.abbr = '[new file]' . a:file
+    endif
+
+    let l:dict.kind = 'file'
+  endif
+
+  return l:dict
+endfunction"}}}
+function! s:compare_file(a, b)"{{{
+  return isdirectory(a:b) - isdirectory(a:a)
 endfunction"}}}
 
 " Add custom action table."{{{

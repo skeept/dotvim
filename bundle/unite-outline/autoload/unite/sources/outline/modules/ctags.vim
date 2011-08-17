@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/lib/ctags.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-15
-" Version : 0.3.5
+" Updated : 2011-08-13
+" Version : 0.3.7
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -146,11 +146,11 @@ endfunction
 
 function! s:Ctags_extract_headings(context)
   if !s:Ctags_exists()
-    call unite#print_message("unite-outline: Sorry, Exuberant Ctags required.")
+    call unite#print_message("[unite-outline] Sorry, Exuberant Ctags required.")
     return []
   elseif !s:Ctags_has(a:context.buffer.filetype)
     call unite#print_message(
-          \ "unite-outline: Sorry, your ctags doesn't support " .
+          \ "[unite-outline] Sorry, your ctags doesn't support " .
           \ toupper(a:context.buffer.filetype))
     return []
   endif
@@ -164,11 +164,9 @@ function! s:Ctags_extract_headings(context)
   let tag_name_counter = {}
 
   let root = s:Tree.new()
-
   let idx = 0
   while idx < num_tags
     let tag = tags[idx]
-
     if has_key(lang, 'create_heading')
       let heading = lang.create_heading(tag, a:context)
     else
@@ -180,7 +178,7 @@ function! s:Ctags_extract_headings(context)
     let heading.word .= s:get_tag_name_id_suffix(tag, tag_name_counter)
 
     if tag.kind =~# scope_kinds_pattern
-      " the heading has its scope
+      " The heading has its scope.
       if !has_key(scope_table, tag.qualified_name)
         let scope_table[tag.qualified_name] = heading
       elseif has_key(scope_table[tag.qualified_name], 'source__pseudo__')
@@ -190,7 +188,7 @@ function! s:Ctags_extract_headings(context)
     endif
 
     if has_key(tag, 'scope')
-      " the heading belongs to a scope
+      " The heading belongs to a scope.
       if !has_key(scope_table, tag.scope)
         let pseudo_heading = {
               \ 'word' : '(' . tag.scope . ') : ' . tag.scope_kind,
@@ -205,20 +203,14 @@ function! s:Ctags_extract_headings(context)
       call s:Tree.append_child(scope_table[tag.scope], heading)
 
     elseif !has_key(scope_table, tag.qualified_name)
-      " the heading belongs to the toplevel (and doesn't have its scope)
+      " The heading belongs to the toplevel (and doesn't have its scope)
       call s:Tree.append_child(root, heading)
     endif
-
-    if idx % 50 == 0
-      call s:Util.print_progress("Extracting headings..." . idx * 100 / num_tags . "%")
-    endif
-
     let idx += 1
   endwhile
-  call s:Util.print_progress("Extracting headings...done.")
 
   " Merge
-  for heading in filter(values(scope_table), 's:Tree.is_toplevel(v:val)')
+  for heading in filter(values(scope_table), '!has_key(v:val, "parent")')
     call s:Tree.append_child(root, heading)
   endfor
   call s:Util.List.sort_by_lnum(root.children)
@@ -320,8 +312,6 @@ function! s:Ctags.langs.cpp.create_heading(tag, context)
       elseif line =~# a:tag.name . '('
         let heading.word .= ' ' . s:get_param_list(a:context, a:tag.lnum)
         let heading.group = 'function'
-      else
-        let heading.group = 'type'
       endif
     endif
     let heading.word .= ' : ' . a:tag.kind

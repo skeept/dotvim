@@ -1,8 +1,8 @@
 *unite-outline.txt*	バッファの見出し一覧を表示し、ジャンプ機能を提供する。
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-05-14
-Version : 0.3.5
+Updated : 2011-08-16
+Version : 0.3.7
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -35,6 +35,7 @@ License : MIT license {{{
 	Outline Info		|unite-outline-info|
 	  outline info の作成	  |unite-outline-info-create|
 	  outline info の属性	  |unite-outline-info-attributes|
+	  外部プログラム	  |unite-outline-info-external-programs|
 	関数			|unite-outline-functions|
 	  UTILITY FUNCTIONS	  |unite-outline-utility-functions|
 	ToDo			|unite-outline-todo|
@@ -74,6 +75,8 @@ License : MIT license {{{
 	|unite|の使い方については、unite.vim のヘルプを参照して下さい。ここで
 	は、unite.vim の source である unite-outline の使い方を説明します。
 
+見出し一覧を表示する ~
+
 	バッファの見出し一覧を表示するには、source として outline を指定し、
 	:Unite を実行します。
 >
@@ -87,6 +90,12 @@ License : MIT license {{{
 	抽出された見出しはキャッシュされ、２回目以降は見出し一覧の表示が高速に
 	なります。
 
+見出しを絞り込む ~
+
+	|unite-usage|を参照
+
+見出し一覧を更新する ~
+
 	キャッシュの内容を破棄し、見出しの抽出をやり直したい場合は、outline の
 	引数に "!" を指定して :Unite を実行します。
 >
@@ -95,6 +104,23 @@ License : MIT license {{{
 	もしくは、見出し一覧が表示されている状態（ノーマルモード）で
 	|<Plug>(unite_redraw)|（デフォルトのキーマッピングでは <C-l>）を実行し
 	ます。
+
+折り畳みから見出しを作成する ~
+
+	バッファに折り畳みが設定されていれば、それを元に見出しを作成することも
+	できます。
+>
+	:Unite outline:folding
+<
+	この方法は、バッファのファイルタイプに対応する outline info がない場合
+	でも使えます。（'foldmethod' によっては、折り畳みから有用な見出しが作
+	成できないことがあります）
+
+	ファイルタイプ固有の見出し抽出に戻す場合は
+>
+	:Unite outline:filetype
+<
+	とします。
 
 ==============================================================================
 設定						*unite-outline-settings*
@@ -161,6 +187,37 @@ g:unite_source_outline_cache_limit	*g:unite_source_outline_cache_limit*
 
 	初期値は 1000
 
+g:unite_source_outline_highlight	*g:unite_source_outline_highlight*
+
+	見出し一覧のハイライトを指定するための辞書
+	見出しのグループごとに適用するハイライトを指定できます。
+
+	初期値は下の設定例を参照
+
+	設定例： >
+	let g:unite_source_outline_highlight = {
+	      \ 'comment' : 'Comment',
+	      \ 'function': 'Function',
+	      \ 'macro'   : 'Macro',
+	      \ 'method'  : 'Function',
+	      \ 'normal'  : g:unite_abbr_highlight,
+	      \ 'package' : g:unite_abbr_highlight,
+	      \ 'special' : 'Macro',
+	      \ 'type'    : 'Type',
+	      \ 'level_1' : 'Type',
+	      \ 'level_2' : 'PreProc',
+	      \ 'level_3' : 'Identifier',
+	      \ 'level_4' : 'Constant',
+	      \ 'level_5' : 'Special',
+	      \ 'level_6' : g:unite_abbr_highlight,
+	      \ 'parameter_list': g:unite_abbr_highlight,
+	      \ }
+<
+	ハイライトを適用する部分を指定するためのパターンは、個々のファイルタイ
+	プ用の outline info で定義します。
+
+	詳細は|unite-outline-info-highlight_rules|を参照
+
 ------------------------------------------------------------------------------
 設定例					*unite-outline-settings-examples*
 >
@@ -168,10 +225,13 @@ g:unite_source_outline_cache_limit	*g:unite_source_outline_cache_limit*
 	nmap f [unite]
 
 	nnoremap <silent> [unite]o :<C-u>Unite -buffer-name=outline outline<CR>
+	nnoremap <silent> [unite]z :<C-u>Unite -buffer-name=outline outline:folding<CR>
+	nnoremap <silent> [unite]Z :<C-u>Unite -buffer-name=outline outline:filetype<CR>
 
 	call unite#set_buffer_name_option('outline', 'ignorecase', 1)
 	call unite#set_buffer_name_option('outline', 'smartcase', 1)
 <
+
 ==============================================================================
 Outline Info					*unite-outline-info*
 
@@ -262,10 +322,34 @@ heading-1		文字列（任意）		*unite-outline-info-heading-1*
 	こういうタイプの見出しにも対応できるよう、次の行が実質上の空行とみなせ
 	る場合は、もうひとつ次の行も見るにようになっています。
 
-
+	定義例： >
+	let s:outline_info = {
+	      \ 'heading-1': '^[-=]\{10,}\s*$',
+	      \ }
+<
 heading			文字列（任意） 		*unite-outline-info-heading*
 
 	「その行が」見出しであるような行にマッチするパターン
+
+	定義例（HTML用)： >
+	let s:outline_info = {
+	      \ 'heading': '<[hH][1-6][^>]*>',
+	      \ }
+<
+				*unite-outline-info-heading-pattern-constraints*
+	重要：使用できるパターンの制約~
+
+	heading-1, heaging, heading+1 のパターンとして使用できる正規表現には
+	以下の制約があります。
+
+	1. 'magic'オプションがオンである場合の書法を用いること	|/magic|
+	2. 後方参照（\1..\9）を使用しないこと			|/\1|
+
+	これらは、見出し抽出時のパターンマッチングの速度を最大限に上げるために
+	もうけられている制約です。見出しの抽出に後方参照が必要な場合は、
+	heading では後方参照を使わない緩いマッチングを行い、その後の
+	create_heading()関数にて後方参照を用いた厳密なマッチングを行うといった
+	方法で対処して下さい。
 
 
 heading+1		文字列（任意）		*unite-outline-info-heading+1*
@@ -278,7 +362,12 @@ heading+1		文字列（任意）		*unite-outline-info-heading+1*
 <
 	のような、下線をともなうタイプの見出しを抽出できます。
 
-
+	定義例（Markdown用)： >
+	let s:outline_info = {
+	      \ 'heading'  : '^#\+',
+	      \ 'heading+1': '^[-=]\+$',
+	      \ }
+<
 create_heading		関数（任意） 	*unite-outline-info-create_heading()*
 
 	create_heading( {which}, {heading-line}, {matched-line}, {context})
@@ -356,7 +445,6 @@ create_heading		関数（任意） 	*unite-outline-info-create_heading()*
 	  return heading
 	endfunction
 <
-
 skip			辞書（任意）		*unite-outline-info-skip*
 
 	見出し抽出の対象としない領域を指定するための辞書です。
@@ -402,7 +490,6 @@ skip			辞書（任意）		*unite-outline-info-skip*
 		\   'block': ['^=begin', '^=end'],
 		\ },
 <
-
 EXTRACTING HEADINGS [2] ~
 
 extract_headings	関数（任意）	*unite-outline-info-extract_headings()*
@@ -423,13 +510,47 @@ extract_headings	関数（任意）	*unite-outline-info-extract_headings()*
 			詳細は|unite-outline-notation-{context}|を参照
 
 	返値は見出し（辞書）のリストまたはツリーであり、個々の見出しには
-	|unite-outline-notation-{heading}|の属性に加え、以下の属性を設定する必
+	|unite-outline-notation-{heading}|の属性に加え、以下の属性も設定する必
 	要があります。
 
 	* lnum		整数  （必須）
 			見出し行の行番号
 
-	TODO: ツリーの作り方の説明
+	見出しのツリーを返す ~
+
+	アウトラインを解析する過程で outline info が見出しのツリー構造を把握で
+	きる場合、extract_headings() にて抽出された見出しのツリーを構築し、そ
+	れを返値とすることができます。
+
+	見出しのツリーは以下のように作成します。
+
+	例： >
+	let s:Tree = unite#sources#outline#import('Tree')
+
+	let root = s:Tree.new()
+	call s:Tree.append_child(root, heading_A)
+	call s:Tree.append_child(root, heading_B)
+	call s:Tree.append_child(heading_A, heading_1)
+	call s:Tree.append_child(heading_A, heading_2)
+	call s:Tree.append_child(heading_B, heading_3)
+<
+	トップレベルの見出しは Tree.new() で生成した root の子となるようにし、
+	以下、見出し間の親子関係を Tree.append_child() にて設定します。
+
+	これにより、下図のような構造のツリーができます。extract_headings() か
+	らは root を返します。（見出し一覧には root は表示されません）
+>
+	root
+	 |
+	 +--heading_A
+	 |   +--heading_1
+	 |   +--heading_2
+	 |
+	 +--heading_B
+	     +--heading_3
+<
+	見出しのツリーを返す場合、見出しの親子関係から見出しレベルを決定できる
+	ため、個々の見出しに level属性を設定する必要はありません。
 
 FORMATTING ~
 
@@ -442,7 +563,7 @@ heading_groups		辞書（任意）	*unite-outline-info-heading_groups*
 	個々のグループは見出しの type のリストです。
 
 	見出しの抽出に際しては、この属性に設定された辞書を元に、所属するグルー
-	プの名前が見出しの group 属性に設定されます。
+	プの名前が見出しの group属性に設定されます。
 
 	定義例（C++用）： >
 	let s:outline_info = {
@@ -454,13 +575,13 @@ heading_groups		辞書（任意）	*unite-outline-info-heading_groups*
 	  \ },
 	  \}
 <
-
 need_blank_between	関数（任意）	*unite-outline-info-need_blank_between()*
 
 	need_blank_between( {heading-1}, {heading-2}, {memo})
 
 	設定されていると、見出し一覧の表示に先立って順次呼び出されます。
-	真を返すと {heading-1} と {heading-2} の間に空行が挿入されます。
+	真を返すと、兄弟関係にある見出し {heading-1} と {heading-2} の間に空行
+	が挿入されます。
 
 	この関数を定義することで、見出し一覧における空行の挿入を制御できます。
 	heading_groups属性の設定による空行の挿入結果が期待通りにならない場合、
@@ -470,9 +591,18 @@ need_blank_between	関数（任意）	*unite-outline-info-need_blank_between()*
 	れます。見出しについて何らかの計算を行う場合は、結果をメモ化することで
 	同じ計算を２回行わずに済みます。
 
-	定義例（Python用）：
-	TODO
-
+	定義例（Python用）： >
+	function! s:outline_info.need_blank_between(head1, head2, memo)
+	  if a:head1.group == 'function' && a:head2.group == 'function'
+	    " Don't insert a blank between two sibling functions.
+	    return 0
+	  else
+	    return (a:head1.group != a:head2.group ||
+		  \ s:Util.has_marked_child(a:head1, a:memo) ||
+		  \ s:Util.has_marked_child(a:head2, a:memo))
+	  endif
+	endfunction
+<
 NARROWING ~
 
 not_match_patterns	リスト（任意）	*unite-outline-info-not_match_patterns*
@@ -480,6 +610,35 @@ not_match_patterns	リスト（任意）	*unite-outline-info-not_match_patterns*
 	絞り込みの対象にしない部分を指定するパターンのリスト
 	見出しの word のうち、このリストに指定したパターンにマッチする部分は絞
 	り込みの対象にならなくなります。
+
+SYNTAX HIGHLIGHTING ~
+
+highlight_rules		辞書（任意）	*unite-outline-info-highlight_rules*
+
+	見出し一覧に適用するシンタックスハイライトの定義（辞書）のリスト
+	シンタックスは、見出し一覧が表示される直前に、リストの添字の順に定義さ
+	れます。マッチするパターンが複数ある場合は|:syn-priority|にあるルール
+	にもとづき適用されるシンタックスが決定されます。
+
+	パターンは正規表現で記述できますが、両端を '/' などの記号で囲む必要が
+	あります。（詳細は|:syn-pattern|を参照）
+	
+	定義例（Vim script用）： >
+	let s:outline_info = {
+	      \ 'highlight_rules': [
+	      \   { 'name'     : 'comment',
+	      \     'pattern'  : '/".*/' },
+	      \   { 'name'     : 'augroup',
+	      \     'pattern'  : '/\S\+\ze : augroup/',
+	      \     'highlight': g:unite_source_outline_highlight.type },
+	      \   { 'name'     : 'function',
+	      \     'pattern'  : '/\S\+\ze\s*(/' },
+	      \   { 'name'     : 'parameter_list',
+	      \     'pattern'  : '/(.*)/' },
+	      \}
+<
+	highlight属性は省略でき、その場合は|g:unite_source_outline_highlight|
+	変数に設定されているハイライトが使われます。
 
 CACHING ~
 
@@ -508,6 +667,20 @@ finalize		関数（任意） 		*unite-outline-info-finalize()*
 	始末の機会を与えます。
 
 	{context} については、|unite-outline-notation-{context}|を参照
+
+------------------------------------------------------------------------------
+外部プログラム				 *unite-outline-info-external-programs*
+
+同梱されている outline info のうち、一部のファイルタイプ用のものは、見出しの抽
+出に特定の外部プログラムを使用します。
+
+これらのファイルタイプでの見出し抽出を行うためには、指定された外部プログラムが
+実行可能である（PATH が通っており、|system()|から呼び出せる）必要があります。
+
+C, C++, Java, Python
+
+	* Exuberant Ctags（必須）
+	  http://ctags.sourceforge.net/
 
 ==============================================================================
 関数						*unite-outline-functions*
@@ -586,19 +759,25 @@ Util.neighbor_matchstr( {context}, {lnum}, {pattern} [, {range} [, {exclusive}]]
 ==============================================================================
 TODO						*unite-outline-todo*
 
-	* ハイライト対応（色付け)
+	* 絞り込み時の hlsearch
 
-		unite.vim に候補一覧のハイライト機能が実装されたので、それを利
-		用して見出し一覧をカラフルにする。また、重要でない情報を目立た
-		なくする。
-	
 	* JavaScript用 outline info の改善
 
 		jsctags を使えばよさげ。
 
+	* Ruby用 outline info の改善
+
+		rtags を使えばよさげ。
+
+	*　見出し一覧の自動更新
+
+		バッファの変更を検出し、見出し一覧の更新を自動で行う仕組み。
+		できれば非同期にやりたいが……
+
 	* D, Erlang, Go, Haskell などの outline info
 
-		作者にとって未知の言語なため対応が遅れています。
+		話題の言語には一通り対応したいもの。
+		が、作者にとって未知の言語なため対応が遅れています。
 		なんとかしなければ。
 
 	* 対応ファイルタイプの充実
@@ -623,20 +802,58 @@ outline info 募集！
 	
 	* Send a pull request - GitHub
 	  https://github.com/h1mesuke/unite-outline/pull/new/master
-
+	
 ==============================================================================
 既知の問題					*unite-outline-bugs*
+
+親子関係の誤認識 ~
+
+	unite-outline では、見出しの親子関係をツリー構造で把握しています。
+	絞り込みの際には、このツリー構造にもとづき、見出しの親子関係に配慮した
+	絞り込みを行います。（小見出しがマッチした見出しも残すなど）
+
+	現在、一部のファイルタイプ（Ruby など）では、ソースコードのインデント
+	の深さから見出しレベルを決定しています。この場合、作成される見出しのツ
+	リーが、必ずしも論理的に正しい親子関係を反映しないことがあります。結
+	果、絞り込みの結果に、実際には親子関係にないはずの見出しが残ることがあ
+	ります。
 
 ==============================================================================
 更新履歴					*unite-outline-changelog*
 
 https://github.com/h1mesuke/unite-outline/commits/master
 
+0.5.0	2011-08-xx
+
+	* 見出しの抽出を高速化
+	  これにともない、outline info の heading-1, heading, heading+1 に使用
+	  できる正規表現にいくつかの制約を導入
+				|unite-outline-info-heading-pattern-constraints|
+
+	* 以下のキーマッピングを deprecated とした
+	  -<Plug>(unite_outline_loop_cursor_down)
+	  -<Plug>(unite_outline_loop_cursor_up)
+
+0.3.7	2011-08-14
+
+	* 見出しが１つまで絞り込まれたら、絞り込み結果の最上段にその見出しを複
+	  製する機能を追加。見出し選択のためのカーソル移動を不要とした。
+
+	* 折り畳みの見出し抽出を実装	|unite-outline-usage|
+
+0.3.6	2011-08-08
+
+	* 見出し一覧のシンタックスハイライトに対応し、以下の変数を追加
+	  -|g:unite_source_outline_highlight|
+
+	* outline info の仕様に以下の属性を追加
+	  - highlight_rules		|unite-outline-info-highlight_rules|
+
 0.3.5	2011-05-14
 
 	* outline info の仕様に以下の属性を追加
-	  - heading_groups
-	  - need_blank_between()
+	  - heading_groups		|unite-outline-info-heading_groups|
+	  - need_blank_between()	|unite-outline-info-need_blank_between|
 
 0.3.4	2011-04-26
 
@@ -644,7 +861,7 @@ https://github.com/h1mesuke/unite-outline/commits/master
 	  - g:unite_source_outline_cache_buffers
 
 	* outline info の仕様に以下の属性を追加
-	  - not_match_patterns
+	  - not_match_patterns		|unite-outline-info-not_match_patterns|
 
 	* 親子関係に配慮した matcher を実装
 

@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 20 Jul 2011.
+" Last Modified: 14 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -40,7 +40,8 @@ let s:action_grep_file = {
   \   'is_selectable': 1,
   \ }
 function! s:action_grep_file.func(candidates) "{{{
-  call unite#start([['grep', map(copy(a:candidates), 'v:val.action__path')]])
+  call unite#start([['grep', map(copy(a:candidates), 'v:val.action__path'),
+        \ g:unite_source_grep_recursive_opt]], { 'no_quit' : 1 })
 endfunction "}}}
 
 let s:action_grep_directory = {
@@ -50,7 +51,8 @@ let s:action_grep_directory = {
   \   'is_selectable': 1,
   \ }
 function! s:action_grep_directory.func(candidates) "{{{
-  call unite#start([['grep', map(copy(a:candidates), 'v:val.action__directory'), g:unite_source_grep_recursive_opt]])
+  call unite#start([['grep', map(copy(a:candidates), 'v:val.action__directory'),
+        \ g:unite_source_grep_recursive_opt]], { 'no_quit' : 1 })
 endfunction "}}}
 if executable(g:unite_source_grep_command) && unite#util#has_vimproc()
   call unite#custom_action('file,buffer', 'grep', s:action_grep_file)
@@ -160,18 +162,17 @@ function! s:grep_source.async_gather_candidates(args, context) "{{{
     let a:context.is_async = 0
   endif
 
-  let l:result = l:stdout.read_lines(-1, 300)
-
-  let l:candidates = map(filter(l:result,
+  let l:candidates = map(filter(map(l:stdout.read_lines(-1, 300),
+        \ 'iconv(v:val, &termencoding, &encoding)'),
     \  'v:val =~ "^.\\+:.\\+:.\\+$"'),
     \ '[v:val, split(v:val[2:], ":")]')
 
   return map(l:candidates,
     \ '{
     \   "word": v:val[0],
-    \   "source": "grep",
     \   "kind": "jump_list",
-    \   "action__path": v:val[0][:1].v:val[1][0],
+    \   "action__path": unite#util#substitute_path_separator(
+    \                   fnamemodify(v:val[0][:1].v:val[1][0], ":p")),
     \   "action__line": v:val[1][1],
     \   "action__text": join(v:val[1][2:], ":"),
     \ }')
