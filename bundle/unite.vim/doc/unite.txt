@@ -217,7 +217,7 @@ COMMANDS 					*unite-commands*
 		-immediately
 		If the number of candidates is exactly one, it runs default
 		action immediately. If candidate is empty, it doesn't open
-		unite buffer.
+		unite buffer. This option also works in narrowing mode.
 
 						*unite-options-auto-preview*
 		-auto-preview
@@ -1708,6 +1708,10 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-08-19
+- Fixed current unite bug.
+- Changed -immediately behavior.
 
 2011-08-17
 - Fixed visible dot file error.

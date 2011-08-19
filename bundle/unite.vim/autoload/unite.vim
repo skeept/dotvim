@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Aug 2011.
+" Last Modified: 19 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -704,7 +704,7 @@ function! unite#start(sources, ...)"{{{
   let l:context = a:0 >= 1 ? a:1 : {}
   call s:initialize_context(l:context)
 
-  let s:use_initialized_unite_buffer = 0
+  let s:use_current_unite = 1
 
   try
     call s:initialize_current_unite(a:sources, l:context)
@@ -718,9 +718,9 @@ function! unite#start(sources, ...)"{{{
   call s:recache_candidates(l:context.input, l:context.is_redraw, 0)
 
   if l:context.immediately
+    " Immediately action.
     let l:candidates = unite#gather_candidates()
 
-    " Immediately action.
     if empty(l:candidates)
       " Ignore.
       let s:use_current_unite = 0
@@ -735,7 +735,7 @@ function! unite#start(sources, ...)"{{{
 
   call s:initialize_unite_buffer()
 
-  let s:use_initialized_unite_buffer = 1
+  let s:use_current_unite = 0
 
   let l:unite = unite#get_current_unite()
 
@@ -1609,8 +1609,8 @@ endfunction"}}}
 function! s:redraw(is_force, winnr) "{{{
   if a:winnr > 0
     " Set current unite.
-    let s:use_current_unite = 1
     let l:use_current_unite_save = s:use_current_unite
+    let s:use_current_unite = 1
     let l:unite = getbufvar(a:winnr, 'unite')
     let l:unite_save = s:current_unite
 
@@ -1649,6 +1649,17 @@ function! s:redraw(is_force, winnr) "{{{
     let s:current_unite = l:unite_save
     wincmd p
   endif
+
+  let l:context = unite#get_context()
+  if l:context.immediately
+    " Immediately action.
+    let l:candidates = unite#gather_candidates()
+
+    if len(l:candidates) == 1
+      " Default action.
+      call unite#mappings#do_action(l:context.default_action, [l:candidates[0]])
+    endif
+  endif
 endfunction"}}}
 
 " Autocmd events.
@@ -1682,7 +1693,9 @@ function! s:on_insert_leave()  "{{{
 
   let l:unite.is_insert = 0
 
-  setlocal nomodifiable
+  if &filetype ==# 'unite'
+    setlocal nomodifiable
+  endif
 
   if has_key(l:unite, 'update_time_save')
         \ && &updatetime < l:unite.update_time_save
@@ -1694,6 +1707,10 @@ function! s:on_cursor_hold_i()  "{{{
   if line('.') == l:prompt_linenr
     " Redraw.
     call unite#redraw()
+
+    if &filetype !=# 'unite'
+      return
+    endif
 
     execute 'match' (line('.') <= l:prompt_linenr ?
           \ line('$') <= l:prompt_linenr ?
