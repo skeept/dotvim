@@ -144,10 +144,10 @@ function! s:Detect(path)
     if expand('%:p') =~# '//'
       call buffer.setvar('&path',s:sub(buffer.getvar('&path'),'^\.%(,|$)',''))
     endif
-    if b:git_dir !~# ',' && stridx(buffer.getvar('&tags'),b:git_dir.'/tags') == -1
-      call buffer.setvar('&tags',b:git_dir.'/tags'.','.buffer.getvar('&tags'))
+    if stridx(buffer.getvar('&tags'),escape(b:git_dir.'/tags',', ')) == -1
+      call buffer.setvar('&tags',escape(b:git_dir.'/tags',', ').','.buffer.getvar('&tags'))
       if &filetype != ''
-        call buffer.setvar('&tags',b:git_dir.'/'.&filetype.'.tags'.','.buffer.getvar('&tags'))
+        call buffer.setvar('&tags',escape(b:git_dir.'/'.&filetype.'.tags',', ').','.buffer.getvar('&tags'))
       endif
     endif
   endif
@@ -316,6 +316,28 @@ function! s:repo_superglob(base) dict abort
 endfunction
 
 call s:add_methods('repo',['dirglob','superglob'])
+
+function! s:repo_config(conf) dict abort
+  return matchstr(system(s:repo().git_command('config').' '.a:conf),"[^\r\n]*")
+endfun
+
+function! s:repo_user() dict abort
+  let username = s:repo().config('user.name')
+  let useremail = s:repo().config('user.email')
+  return username.' <'.useremail.'>'
+endfun
+
+function! s:repo_aliases() dict abort
+  if !has_key(self,'_aliases')
+    let self._aliases = {}
+    for line in split(self.git_chomp('config','--get-regexp','^alias[.]'),"\n")
+      let self._aliases[matchstr(line,'\.\zs\S\+')] = matchstr(line,' \zs.*')
+    endfor
+  endif
+  return self._aliases
+endfunction
+
+call s:add_methods('repo',['config', 'user', 'aliases'])
 
 function! s:repo_keywordprg() dict abort
   let args = ' --git-dir='.escape(self.dir(),"\\\"' ").' show'
@@ -518,9 +540,9 @@ function! s:GitComplete(A,L,P) abort
   if a:L =~ ' [[:alnum:]-]\+ '
     return s:repo().superglob(a:A)
   elseif a:A == ''
-    return cmds
+    return sort(cmds+keys(s:repo().aliases()))
   else
-    return filter(cmds,'v:val[0 : strlen(a:A)-1] ==# a:A')
+    return filter(sort(cmds+keys(s:repo().aliases())),'v:val[0:strlen(a:A)-1] ==# a:A')
   endif
 endfunction
 
@@ -576,6 +598,18 @@ function! fugitive#reload_status() abort
   endfor
 endfunction
 
+function! s:StageReloadSeek(target,lnum1,lnum2)
+  let jump = a:target
+  let f = matchstr(getline(a:lnum1-1),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.*')
+  if f !=# '' | let jump = f | endif
+  let f = matchstr(getline(a:lnum2+1),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.*')
+  if f !=# '' | let jump = f | endif
+  silent! edit!
+  1
+  redraw
+  call search('^#\t\%([[:alpha:] ]\+: *\)\=\V'.jump.'\%( (new commits)\)\=\$','W')
+endfunction
+
 function! s:StageDiff(diff) abort
   let section = getline(search('^# .*:$','bcnW'))
   let line = getline('.')
@@ -601,13 +635,24 @@ function! s:StageDiffEdit() abort
   let section = getline(search('^# .*:$','bcnW'))
   let line = getline('.')
   let filename = matchstr(line,'^#\t\%([[:alpha:] ]\+: *\)\=\zs.\{-\}\ze\%( (new commits)\)\=$')
-  let args = (filename ==# '' ? '.' : s:shellesc(filename))
+  let arg = (filename ==# '' ? '.' : filename)
   if section ==# '# Changes to be committed:'
-    return 'Git! diff --cached '.args
+    return 'Git! diff --cached '.s:shellesc(arg)
   elseif section ==# '# Untracked files:'
-    return 'Git add -N '.args
+    let repo = s:repo()
+    call repo.git_chomp_in_tree('add','--intent-to-add',arg)
+    if arg ==# '.'
+      silent! edit!
+      1
+      if !search('^# Change\%(d but not updated\|s not staged for commit\):$','W')
+        call search('^# Change','W')
+      endif
+    else
+      call s:StageReloadSeek(arg,line('.'),line('.'))
+    endif
+    return ''
   else
-    return 'Git! diff '.args
+    return 'Git! diff '.s:shellesc(arg)
   endif
 endfunction
 
@@ -634,13 +679,10 @@ function! s:StageToggle(lnum1,lnum2) abort
         endif
         return ''
       elseif line ==# '# Untracked files:'
-        " Work around Vim parser idiosyncrasy
-        call repo.git_chomp_in_tree('add','-N','.')
+        call repo.git_chomp_in_tree('add','.')
         silent! edit!
         1
-        if !search('^# Change\%(d but not updated\|s not staged for commit\):$','W')
-          call search('^# Change','W')
-        endif
+        call search('^# Change','W')
         return ''
       endif
       let filename = matchstr(line,'^#\t\%([[:alpha:] ]\+: *\)\=\zs.\{-\}\ze\%( (\a\+ [[:alpha:], ]\+)\)\=$')
@@ -665,15 +707,7 @@ function! s:StageToggle(lnum1,lnum2) abort
       let output .= call(repo.git_chomp_in_tree,cmd,s:repo())."\n"
     endfor
     if exists('first_filename')
-      let jump = first_filename
-      let f = matchstr(getline(a:lnum1-1),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.*')
-      if f !=# '' | let jump = f | endif
-      let f = matchstr(getline(a:lnum2+1),'^#\t\%([[:alpha:] ]\+: *\)\=\zs.*')
-      if f !=# '' | let jump = f | endif
-      silent! edit!
-      1
-      redraw
-      call search('^#\t\%([[:alpha:] ]\+: *\)\=\V'.jump.'\%( (new commits)\)\=\$','W')
+      call s:StageReloadSeek(first_filename,a:lnum1,a:lnum2)
     endif
     echo s:sub(s:gsub(output,'\n+','\n'),'\n$','')
   catch /^fugitive:/
@@ -1425,8 +1459,8 @@ function! s:Blame(bang,line1,line2,count,args) abort
         nnoremap <buffer> <silent> <CR> :<C-U>exe <SID>BlameJump('')<CR>
         nnoremap <buffer> <silent> P    :<C-U>exe <SID>BlameJump('^'.v:count1)<CR>
         nnoremap <buffer> <silent> ~    :<C-U>exe <SID>BlameJump('~'.v:count1)<CR>
-        nnoremap <buffer> <silent> o    :<C-U>exe <SID>Edit((&splitbelow ? "botright" : "topleft")." split", matchstr(getline('.'),'\x\+'))<CR>
-        nnoremap <buffer> <silent> O    :<C-U>exe <SID>Edit("tabedit", matchstr(getline('.'),'\x\+'))<CR>
+        nnoremap <buffer> <silent> o    :<C-U>exe <SID>Edit((&splitbelow ? "botright" : "topleft")." split", 0, matchstr(getline('.'),'\x\+'))<CR>
+        nnoremap <buffer> <silent> O    :<C-U>exe <SID>Edit("tabedit", 0, matchstr(getline('.'),'\x\+'))<CR>
         syncbind
       endif
     finally
@@ -1457,7 +1491,7 @@ function! s:BlameJump(suffix) abort
   if winnr > 0
     exe winnr.'wincmd w'
   endif
-  execute s:Edit('edit',commit.a:suffix.':'.path)
+  execute s:Edit('edit', 0, commit.a:suffix.':'.path)
   if winnr > 0
     exe bufnr.'bdelete'
   endif
@@ -1955,13 +1989,13 @@ function! s:JumpInit() abort
   if !&modifiable
     nnoremap <buffer> <silent> o     :<C-U>exe <SID>GF("split")<CR>
     nnoremap <buffer> <silent> O     :<C-U>exe <SID>GF("tabedit")<CR>
-    nnoremap <buffer> <silent> P     :<C-U>exe <SID>Edit('edit',<SID>buffer().commit().'^'.v:count1.<SID>buffer().path(':'))<CR>
-    nnoremap <buffer> <silent> ~     :<C-U>exe <SID>Edit('edit',<SID>buffer().commit().'~'.v:count1.<SID>buffer().path(':'))<CR>
-    nnoremap <buffer> <silent> C     :<C-U>exe <SID>Edit('edit',<SID>buffer().containing_commit())<CR>
-    nnoremap <buffer> <silent> cc    :<C-U>exe <SID>Edit('edit',<SID>buffer().containing_commit())<CR>
-    nnoremap <buffer> <silent> co    :<C-U>exe <SID>Edit('split',<SID>buffer().containing_commit())<CR>
-    nnoremap <buffer> <silent> cO    :<C-U>exe <SID>Edit('tabedit',<SID>buffer().containing_commit())<CR>
-    nnoremap <buffer> <silent> cp    :<C-U>exe <SID>Edit('pedit',<SID>buffer().containing_commit())<CR>
+    nnoremap <buffer> <silent> P     :<C-U>exe <SID>Edit('edit',0,<SID>buffer().commit().'^'.v:count1.<SID>buffer().path(':'))<CR>
+    nnoremap <buffer> <silent> ~     :<C-U>exe <SID>Edit('edit',0,<SID>buffer().commit().'~'.v:count1.<SID>buffer().path(':'))<CR>
+    nnoremap <buffer> <silent> C     :<C-U>exe <SID>Edit('edit',0,<SID>buffer().containing_commit())<CR>
+    nnoremap <buffer> <silent> cc    :<C-U>exe <SID>Edit('edit',0,<SID>buffer().containing_commit())<CR>
+    nnoremap <buffer> <silent> co    :<C-U>exe <SID>Edit('split',0,<SID>buffer().containing_commit())<CR>
+    nnoremap <buffer> <silent> cO    :<C-U>exe <SID>Edit('tabedit',0,<SID>buffer().containing_commit())<CR>
+    nnoremap <buffer> <silent> cp    :<C-U>exe <SID>Edit('pedit',0,<SID>buffer().containing_commit())<CR>
   endif
 endfunction
 
@@ -2147,18 +2181,6 @@ function! fugitive#statusline(...)
     return '[Git'.status.']'
   endif
 endfunction
-
-function! s:repo_config(conf) dict abort
-  return matchstr(system(s:repo().git_command('config').' '.a:conf),"[^\r\n]*")
-endfun
-
-function! s:repo_user() dict abort
-  let username = s:repo().config('user.name')
-  let useremail = s:repo().config('user.email')
-  return username.' <'.useremail.'>'
-endfun
-
-call s:add_methods('repo',['config', 'user'])
 
 " }}}1
 
