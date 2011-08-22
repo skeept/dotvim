@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-17
+" Updated : 2011-08-22
 " Version : 0.3.7
 " License : MIT license {{{
 "
@@ -54,44 +54,42 @@ function! unite#sources#outline#define()
   return s:source
 endfunction
 
-function! unite#sources#outline#alias(alias, src_filetype)
+" Defines an alias of {filetype}.
+"
+function! unite#sources#outline#alias(alias, filetype)
   if !exists('s:filetype_alias_table')
     let s:filetype_alias_table = {}
   endif
-  let s:filetype_alias_table[a:alias] = a:src_filetype
+  let s:filetype_alias_table[a:alias] = a:filetype
 endfunction
 
+" Returns the outline info for {filetype}. If not defined, returns an empty
+" Dictionary.
+"
 function! unite#sources#outline#get_outline_info(filetype, ...)
   let is_default = (a:0 ? a:1 : 0)
-
-  " NOTE: The filetype of the buffer may be a "compound filetype", a set of
-  " filetypes separated by periods. If the filetype is a compound one and has
-  " no outline info, fallback to its major filetype which is the left most.
-  "
-  let try_filetypes = [a:filetype]
-  if a:filetype =~ '\.'
-    call add(try_filetypes, split(a:filetype, '\.')[0])
-  endif
-  for filetype in try_filetypes
+  for filetype in s:resolve_filetype(a:filetype)
     let outline_info = s:get_outline_info(filetype, is_default)
     if !empty(outline_info) | return outline_info | endif
   endfor
   return {}
 endfunction
 
+" Returns the default outline info for {filetype}. If not defined, returns
+" an empty Dictionary.
+"
 function! unite#sources#outline#get_default_outline_info(filetype)
   return unite#sources#outline#get_outline_info(a:filetype, 1)
 endfunction
 
 function! s:get_outline_info(filetype, is_default)
-  let filetype = s:resolve_filetype_alias(a:filetype)
-
-  if has_key(g:unite_source_outline_info, filetype)
-    return g:unite_source_outline_info[filetype]
+  if has_key(g:unite_source_outline_info, a:filetype)
+    return g:unite_source_outline_info[a:filetype]
   endif
-  for path in (a:is_default ? s:OUTLINE_INFO_PATH[-1:] : s:OUTLINE_INFO_PATH)
-    let load_func  = substitute(substitute(path, '^autoload/', '', ''), '/', '#', 'g')
-    let load_func .= substitute(filetype, '\.', '_', 'g') . '#outline_info'
+  let oinfo_dirs = (a:is_default ? s:OUTLINE_INFO_PATH[-1:] : s:OUTLINE_INFO_PATH)
+  for dir in oinfo_dirs
+    let load_func  = substitute(substitute(dir, '^autoload/', '', ''), '/', '#', 'g')
+    let load_func .= substitute(a:filetype, '\.', '_', 'g') . '#outline_info'
     try
       call {load_func}()
     catch /^Vim\%((\a\+)\)\=:E117:/
@@ -105,19 +103,12 @@ function! s:get_outline_info(filetype, is_default)
       continue
     endtry
     call s:check_update(scr_path)
+    " Load the outline info.
     let outline_info = {load_func}()
     let outline_info = s:normalize_outline_info(outline_info)
     return outline_info
   endfor
   return {}
-endfunction
-
-function! s:resolve_filetype_alias(filetype)
-  if has_key(s:filetype_alias_table, a:filetype)
-    let filetype = s:filetype_alias_table[a:filetype]
-    return s:resolve_filetype_alias(filetype) | " 1 more hop
-  endif
-  return a:filetype
 endfunction
 
 function! s:check_update(path)
@@ -132,6 +123,63 @@ function! s:check_update(path)
   endif
   let s:ftime_table[path] = new_ftime
   return (new_ftime > old_ftime)
+endfunction
+
+function! unite#sources#outline#get_filetype_option(filetype, key)
+  for filetype in s:resolve_filetype(a:filetype)
+    if has_key(g:unite_source_outline_filetype_options, filetype)
+      let opts = g:unite_source_outline_filetype_options[filetype]
+      if has_key(opts, a:key)
+        return opts[a:key]
+      endif
+    endif
+  endfor
+  throw "unite-outline: Unknown option `" . a:key . "'."
+endfunction
+
+"  {filetype}
+"    |/
+"   aaa.bbb.ccc -(alias)-> ddd -(alias)-> eee
+"    |/
+"   aaa.bbb     -(alias)-> fff -(alias)-> ggg
+"    |/
+"   aaa
+"
+"   => [aaa.bbb.ccc, ddd, eee, aaa.bbb, fff, ggg, aaa]
+"
+function! s:resolve_filetype(filetype)
+  let candidates = []
+  let filetype = a:filetype
+  while 1
+    call add(candidates, filetype)
+    let candidates += s:resolve_filetype_alias(filetype)
+    if filetype =~ '\.'
+      let filetype = substitute(filetype, '\.\w\+$', '', '')
+    else
+      break
+    endif
+  endwhile
+  call add(candidates, '*')
+  return candidates
+endfunction
+
+function! s:resolve_filetype_alias(filetype)
+  let seen = {}
+  let candidates = []
+  let filetype = a:filetype
+  while 1
+    if has_key(s:filetype_alias_table, filetype)
+      if has_key(seen, filetype)
+        throw "unite-outline: Cyclic alias definition detected."
+      endif
+      let filetype = s:filetype_alias_table[filetype]
+      call add(candidates, filetype)
+      let seen[filetype] = 1
+    else
+      break
+    endif
+  endwhile
+  return candidates
 endfunction
 
 function! s:normalize_outline_info(outline_info)
@@ -247,10 +295,6 @@ if !exists('g:unite_source_outline_indent_width')
   let g:unite_source_outline_indent_width = 2
 endif
 
-if !exists('g:unite_source_outline_ignore_heading_types')
-  let g:unite_source_outline_ignore_heading_types = {}
-endif
-
 if !exists('g:unite_source_outline_max_headings')
   let g:unite_source_outline_max_headings = 1000
 endif
@@ -258,6 +302,14 @@ endif
 if !exists('g:unite_source_outline_cache_limit')
   let g:unite_source_outline_cache_limit = 1000
 endif
+
+if !exists('g:unite_source_outline_filetype_options')
+  let g:unite_source_outline_filetype_options = {}
+endif
+call extend(g:unite_source_outline_filetype_options, { '*': {} }, 'keep')
+call extend(g:unite_source_outline_filetype_options['*'], {
+      \ 'ignore_types': [],
+      \ }, 'keep')
 
 if !exists('g:unite_source_outline_highlight')
   let g:unite_source_outline_highlight = {}
@@ -284,27 +336,23 @@ call extend(g:unite_source_outline_highlight, {
 " Aliases
 
 function! s:define_filetype_aliases()
-
   " NOTE: If the user has his/her own outline info for a filetype, not define
   " it as an alias of the other filetype by default.
-  "
-  let oinfos = {}
+  let user_oinfos = {}
   for path in s:OUTLINE_INFO_PATH[:-2]
     let oinfo_paths = split(globpath(&rtp, path . '*.vim'), "\<NL>")
     for filetype in map(oinfo_paths, 'matchstr(v:val, "\\w\\+\\ze\\.vim$")')
       let filetype = substitute(filetype, '_', '.', 'g')
-      let oinfos[filetype] = 1
+      let user_oinfos[filetype] = 1
     endfor
   endfor
-
-  for [alias, src_filetype] in s:OUTLINE_ALIASES
-    if !has_key(oinfos, alias)
-
-      call unite#sources#outline#alias(alias, src_filetype)
+  for [alias, filetype] in s:OUTLINE_ALIASES
+    if !has_key(user_oinfos, alias)
+      call unite#sources#outline#alias(alias, filetype)
     endif
   endfor
 endfunction
-
+" Define the default filetype aliases.
 call s:define_filetype_aliases()
 
 "-----------------------------------------------------------------------------
@@ -379,15 +427,16 @@ endfunction
 let s:source.hooks.on_syntax = function(s:SID . 'Source_Hooks_on_syntax')
 
 function! s:Source_gather_candidates(args, context)
-  " Save and set Vim options.
+  " Save the Vim options.
   let save_cpoptions  = &cpoptions
   let save_ignorecase = &ignorecase
   let save_magic = &magic
-  set cpoptions&vim
-  set noignorecase
-  set magic
   try
-    let opts = s:parse_options(a:args, a:context)
+    set cpoptions&vim
+    set noignorecase
+    set magic
+
+    let opts = s:parse_source_arguments(a:args, a:context)
     call extend(s:context, opts)
 
     let buffer = s:context.buffer
@@ -422,7 +471,7 @@ function! s:Source_gather_candidates(args, context)
     call unite#util#print_error(v:exception)
     return []
   finally
-    " Restore Vim options.
+    " Restore the Vim options.
     let &cpoptions  = save_cpoptions
     let &ignorecase = save_ignorecase
     let &magic = save_magic
@@ -430,7 +479,7 @@ function! s:Source_gather_candidates(args, context)
 endfunction
 let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
 
-function! s:parse_options(args, context)
+function! s:parse_source_arguments(args, context)
   let opts = {
         \ 'method'  : 'last',
         \ 'is_force': 0,
@@ -465,16 +514,16 @@ function! s:gather_headings()
       if !s:context.is_force && s:context.method ==# method
         " The cached headings are reusable because they were extracted by the
         " same method as s:context.method.
-        let cache_reusable = 1
         call s:ids_to_refs(headings)
+        let cache_reusable = 1
       endif
     catch /^CacheCompatibilityError:/
-      " Fallback siliently.
-      let cache_reusable = 0
+      " Fallback silently.
     catch /^unite-outline:/
       call unite#util#print_error(v:exception)
     endtry
   endif
+
   if !cache_reusable
     " Path B_2: Get headings by parsing the buffer.
     let winnr = bufwinnr(s:context.buffer.nr)
@@ -484,7 +533,7 @@ function! s:gather_headings()
 
     call s:Util.print_progress("Extracting headings...")
 
-    " Save and set Vim options.
+    " Save the Vim options.
     let save_eventignore = &eventignore
     let save_winheight   = &winheight
     let save_winwidth    = &winwidth
@@ -498,11 +547,11 @@ function! s:gather_headings()
 
     " Switch: current window -> context window
     execute winnr . 'wincmd w'
-
     " Save the cursor and scroll.
     let save_cursor  = getpos('.')
     let save_topline = line('w0')
 
+    " Initialize the temporary context data.
     let lines = [""] + getbufline(s:context.buffer.nr, 1, '$')
     let s:context.lines = lines | " available while the extraction
     let s:context.heading_lnum = 0
@@ -511,6 +560,7 @@ function! s:gather_headings()
     let success = 0
     let start_time = s:benchmark_start()
     try
+      " Extract headings.
       if s:context.method !=# 'folding'
         " Path B_2_a: Extract headings in filetype-specific way using the
         " filetype's outline info.
@@ -532,7 +582,13 @@ function! s:gather_headings()
         call s:Cache.remove(buffer)
       endif
       let success = 1
+      " Don't catch anything.
     finally
+      " Clear the temporary context data.
+      unlet s:context.lines
+      unlet s:context.heading_lnum
+      unlet s:context.matched_lnum
+
       " Restore the cursor and scroll.
       let save_scrolloff = &scrolloff
       set scrolloff=0
@@ -540,23 +596,18 @@ function! s:gather_headings()
       normal! zt
       call setpos('.', save_cursor)
       let &scrolloff = save_scrolloff
-
-      " Siwtch: current window <- context window
+      " Switch: current window <- context window
       wincmd p
 
-      " Restore Vim options.
+      " Restore the Vim options.
       let &lazyredraw = save_lazyredraw
       if success
         call s:Util.print_progress("Extracting headings...done.")
-        call s:benchmark_stop(start_time) | " use s:context.lines
+        call s:benchmark_stop(start_time)
       endif
       let &winheight   = save_winheight
       let &winwidth    = save_winwidth
       let &eventignore = save_eventignore
-
-      unlet s:context.lines
-      unlet s:context.heading_lnum
-      unlet s:context.matched_lnum
     endtry
   endif
   return headings
@@ -572,7 +623,7 @@ endfunction
 
 function! s:benchmark_stop(start_time)
   if get(g:, 'unite_source_outline_profile', 0) && has("reltime")
-    let num_lines = len(s:context.lines) - 1 | " -1 for a dummy
+    let num_lines = line('$')
     let used_time = s:get_reltime() - a:start_time
     let used_time_100l = used_time * (str2float("100") / num_lines)
     call s:Util.print_progress("unite-outline: used=" . string(used_time) .
@@ -584,6 +635,9 @@ function! s:get_reltime()
   return str2float(reltimestr(reltime()))
 endfunction
 
+" Substitutes references to each heading's parent and children with their id
+" numbers.
+"
 " NOTE: Built-in string() function can't dump an object that has any cyclic
 " references because of E724, nested too deep error; therefore, we need to
 " substitute references to each heading's parent and children with their id
@@ -599,6 +653,9 @@ function! s:refs_to_ids(headings)
   return headings
 endfunction
 
+" Substitutes id numbers of headings with references to the headings
+" themselves.
+"
 function! s:ids_to_refs(headings)
   try
     let root = s:Tree.new()
@@ -622,6 +679,9 @@ function! s:ids_to_refs(headings)
   return a:headings
 endfunction
 
+" Extract headings from the context buffer in its filetype specific way using
+" the filetype's outline info.
+"
 function! s:extract_filetype_headings()
   let buffer = s:context.buffer
   if s:context.is_force
@@ -655,21 +715,21 @@ function! s:extract_filetype_headings()
     call outline_info.finalize(s:context)
   endif
 
-  " Normalize.
+  " Normalize headings.
   if type(headings) == type({})
     let tree = headings | unlet headings
     let headings = s:Tree.flatten(tree)
   else
     let tree = s:Tree.build(headings)
-    let headings = s:Tree.flatten(tree) | " smooth levels
+    let headings = s:Tree.flatten(tree) | " correct levels
   endif
   if !is_normalized
     call map(headings, 's:normalize_heading(v:val)')
   endif
 
   " Filter headings.
-  let ignore_types = unite#sources#
-        \outline#get_ignore_heading_types(buffer.filetype)
+  let ignore_types = unite#sources#outline#
+        \get_filetype_option(buffer.filetype, 'ignore_types')
   let headings = s:filter_headings(headings, ignore_types)
 
   return headings
@@ -690,6 +750,7 @@ function! s:builtin_extract_headings()
   call cursor(1, 1)
   while 1
     let found = 0
+    " Search the buffer for the next heading.
     let [lnum, col, submatch] = searchpos(pattern, 'cpW')
     if lnum == 0
       break
@@ -974,7 +1035,7 @@ function! s:digest_line(line)
   if s:strchars(line) <= 20
     let digest = line
   else
-    let line = matchstr(line, '^\%(\%(.\{5}\)\{,20}\)')
+    let line = matchstr(line, '^\%(.\{5}\)\{,20}')
     let digest = substitute(line, '\(.\).\{4}', '\1', 'g')
   endif
   return digest
@@ -1014,15 +1075,6 @@ function! s:filter_headings(headings, ignore_types)
   call s:Tree.remove(tree, predicate)
   let headings = s:Tree.flatten(tree)
   return headings
-endfunction
-
-function! unite#sources#outline#get_ignore_heading_types(filetype)
-  for filetype in [a:filetype, s:resolve_filetype_alias(a:filetype), '*']
-    if has_key(g:unite_source_outline_ignore_heading_types, filetype)
-      return g:unite_source_outline_ignore_heading_types[filetype]
-    endif
-  endfor
-  return []
 endfunction
 
 function! s:convert_headings_to_candidates(headings)

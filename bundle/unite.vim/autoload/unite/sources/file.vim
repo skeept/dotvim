@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 18 Aug 2011.
+" Last Modified: 23 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -82,8 +82,11 @@ function! s:source.change_candidates(args, context)"{{{
       call filter(l:files, 'v:val !~ ' . string(g:unite_source_file_ignore_pattern))
     endif
 
+    let l:files = sort(filter(copy(l:files), 'isdirectory(v:val)'), 1) +
+          \ sort(filter(copy(l:files), '!isdirectory(v:val)'), 1)
+
     let a:context.source__cache[l:glob] =
-          \ map(sort(l:files, 's:compare_file'), 's:create_dict(v:val, l:is_relative_path)')
+          \ map(l:files, 's:create_dict(v:val, l:is_relative_path)')
   endif
 
   let l:candidates = a:context.source__cache[l:glob]
@@ -135,26 +138,12 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
     lcd `=l:path`
   endif
 
-  if unite#util#is_win()
-    let l:exts = escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.')
-  endif
+  let l:exts = unite#util#is_win() ?
+        \ escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.') : ''
 
   " Set vimfiler property.
   for l:candidate in l:candidates
-    let l:candidate.vimfiler__filename =
-          \ unite#util#substitute_path_separator(
-          \       fnamemodify(l:candidate.word, ':t'))
-    let l:candidate.vimfiler__abbr =
-          \ unite#util#substitute_path_separator(
-          \       fnamemodify(l:candidate.word, ':.'))
-    let l:candidate.vimfiler__is_directory =
-          \ isdirectory(l:candidate.action__path)
-    let l:candidate.vimfiler__is_executable =
-          \ unite#util#is_win() ?
-          \ ('.'.fnamemodify(l:candidate.vimfiler__filename, ':e') =~? l:exts) :
-          \ executable(l:candidate.action__path)
-    let l:candidate.vimfiler__filesize = getfsize(l:candidate.action__path)
-    let l:candidate.vimfiler__filetime = getftime(l:candidate.action__path)
+    call s:create_vimfiler_dict(l:candidate, l:exts)
   endfor
 
   if l:path !=# l:old_dir
@@ -163,6 +152,36 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
   endif
 
   " return [l:type, l:candidates]
+  return l:candidates
+endfunction"}}}
+function! s:source.vimfiler_dummy_candidates(args, context)"{{{
+  let l:path = get(a:args, 0, '')
+
+  if l:path == ''
+    return []
+  endif
+
+  let l:old_dir = getcwd()
+  if l:path !=# l:old_dir
+        \ && isdirectory(l:path)
+    lcd `=l:path`
+  endif
+
+  let l:exts = unite#util#is_win() ?
+        \ escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.') : ''
+
+  let l:is_relative_path = l:path !~ '^\%(/\|\a\+:/\)'
+
+  " Set vimfiler property.
+  for l:candidate in [ s:create_dict(l:path, l:is_relative_path) ]
+    call s:create_vimfiler_dict(l:candidate, l:exts)
+  endfor
+
+  if l:path !=# l:old_dir
+        \ && isdirectory(l:path)
+    lcd `=l:old_dir`
+  endif
+
   return l:candidates
 endfunction"}}}
 function! s:create_dict(file, is_relative_path)"{{{
@@ -193,8 +212,21 @@ function! s:create_dict(file, is_relative_path)"{{{
 
   return l:dict
 endfunction"}}}
-function! s:compare_file(a, b)"{{{
-  return isdirectory(a:b) - isdirectory(a:a)
+function! s:create_vimfiler_dict(candidate, exts)"{{{
+  let a:candidate.vimfiler__filename =
+        \ unite#util#substitute_path_separator(
+        \       fnamemodify(a:candidate.word, ':t'))
+  let a:candidate.vimfiler__abbr =
+        \ unite#util#substitute_path_separator(
+        \       fnamemodify(a:candidate.word, ':.'))
+  let a:candidate.vimfiler__is_directory =
+        \ isdirectory(a:candidate.action__path)
+  let a:candidate.vimfiler__is_executable =
+        \ unite#util#is_win() ?
+        \ ('.'.fnamemodify(a:candidate.vimfiler__filename, ':e') =~? a:exts) :
+        \ executable(a:candidate.action__path)
+  let a:candidate.vimfiler__filesize = getfsize(a:candidate.action__path)
+  let a:candidate.vimfiler__filetime = getftime(a:candidate.action__path)
 endfunction"}}}
 
 " Add custom action table."{{{
