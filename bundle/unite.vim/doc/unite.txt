@@ -217,7 +217,7 @@ COMMANDS 					*unite-commands*
 		-immediately
 		If the number of candidates is exactly one, it runs default
 		action immediately. If candidate is empty, it doesn't open
-		unite buffer.
+		unite buffer. This option also works in narrowing mode.
 
 						*unite-options-auto-preview*
 		-auto-preview
@@ -1103,6 +1103,12 @@ jump_point	Nominates current line of "file:line" format as candidates.
 file_point	Nominates cursor word of filename or URI as candidates.
 		This source is useful for |vimshell| outputs.
 
+						*unite-source-launcher*
+launcher	Nominates executable files from $PATH as candidates.
+
+		Source arguments:
+		1. comma separated executable files path.
+
 ==============================================================================
 KINDS						*unite-kinds*
 
@@ -1235,10 +1241,19 @@ source		unite.vim source
 				The source arguments
 
 						*unite-kind-uri*
-uri		Files and protocols.
+uri		Files and protocols
 
 			action__path		(String)	(Required)
-				The file path.
+				The file path
+
+						*unite-kind-guicmd*
+guicmd		GUI executable commands
+
+			action__path		(String)	(Required)
+				The command path
+
+			action__args		(List)		(Optional)
+				The command args
 
 ==============================================================================
 FILTERS						*unite-filters*
@@ -1694,9 +1709,22 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-08-21
+- Fixed file_rec/async ignore pattern.
+
+2011-08-20
+- Improved quick match behavior.
+
+2011-08-19
+- Fixed current unite bug.
+- Changed -immediately behavior.
+
 2011-08-17
 - Fixed visible dot file error.
 - Fixed default mapping.
+- Added guicmd kind.
+- Added launcher source.
+- Improved launcher source.
 
 2011-08-16
 - Improved vimfiler actions.

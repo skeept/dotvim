@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Aug 2011.
+" Last Modified: 20 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -511,11 +511,12 @@ function! unite#redraw_line(...) "{{{
 
   let &l:modifiable = l:modifiable_save
 endfunction"}}}
-function! unite#quick_match_redraw() "{{{
+function! unite#quick_match_redraw(quick_match_table) "{{{
   let l:modifiable_save = &l:modifiable
   setlocal modifiable
 
-  call setline(unite#get_current_unite().prompt_linenr+1, s:convert_quick_match_lines(unite#get_current_unite().candidates))
+  call setline(unite#get_current_unite().prompt_linenr+1,
+        \ s:convert_quick_match_lines(unite#get_current_unite().candidates, a:quick_match_table))
   redraw
 
   let &l:modifiable = l:modifiable_save
@@ -704,7 +705,7 @@ function! unite#start(sources, ...)"{{{
   let l:context = a:0 >= 1 ? a:1 : {}
   call s:initialize_context(l:context)
 
-  let s:use_initialized_unite_buffer = 0
+  let s:use_current_unite = 1
 
   try
     call s:initialize_current_unite(a:sources, l:context)
@@ -718,9 +719,9 @@ function! unite#start(sources, ...)"{{{
   call s:recache_candidates(l:context.input, l:context.is_redraw, 0)
 
   if l:context.immediately
+    " Immediately action.
     let l:candidates = unite#gather_candidates()
 
-    " Immediately action.
     if empty(l:candidates)
       " Ignore.
       let s:use_current_unite = 0
@@ -735,7 +736,7 @@ function! unite#start(sources, ...)"{{{
 
   call s:initialize_unite_buffer()
 
-  let s:use_initialized_unite_buffer = 1
+  let s:use_current_unite = 0
 
   let l:unite = unite#get_current_unite()
 
@@ -1363,7 +1364,7 @@ function! s:get_source_candidates(source, is_vimfiler)"{{{
   return a:source.unite__cached_candidates
         \ + a:source.unite__cached_change_candidates
 endfunction"}}}
-function! s:convert_quick_match_lines(candidates)"{{{
+function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
   let l:unite = unite#get_current_unite()
   let [l:max_width, l:max_source_name] = s:adjustments(winwidth(0)-2, l:unite.max_source_name, 5)
   if l:unite.max_source_name == 0
@@ -1374,7 +1375,7 @@ function! s:convert_quick_match_lines(candidates)"{{{
 
   " Create key table.
   let l:keys = {}
-  for [l:key, l:number] in items(g:unite_quick_match_table)
+  for [l:key, l:number] in items(a:quick_match_table)
     let l:keys[l:number] = l:key . ': '
   endfor
 
@@ -1609,8 +1610,8 @@ endfunction"}}}
 function! s:redraw(is_force, winnr) "{{{
   if a:winnr > 0
     " Set current unite.
-    let s:use_current_unite = 1
     let l:use_current_unite_save = s:use_current_unite
+    let s:use_current_unite = 1
     let l:unite = getbufvar(a:winnr, 'unite')
     let l:unite_save = s:current_unite
 
@@ -1649,6 +1650,17 @@ function! s:redraw(is_force, winnr) "{{{
     let s:current_unite = l:unite_save
     wincmd p
   endif
+
+  let l:context = unite#get_context()
+  if l:context.immediately
+    " Immediately action.
+    let l:candidates = unite#gather_candidates()
+
+    if len(l:candidates) == 1
+      " Default action.
+      call unite#mappings#do_action(l:context.default_action, [l:candidates[0]])
+    endif
+  endif
 endfunction"}}}
 
 " Autocmd events.
@@ -1682,7 +1694,9 @@ function! s:on_insert_leave()  "{{{
 
   let l:unite.is_insert = 0
 
-  setlocal nomodifiable
+  if &filetype ==# 'unite'
+    setlocal nomodifiable
+  endif
 
   if has_key(l:unite, 'update_time_save')
         \ && &updatetime < l:unite.update_time_save
@@ -1694,6 +1708,10 @@ function! s:on_cursor_hold_i()  "{{{
   if line('.') == l:prompt_linenr
     " Redraw.
     call unite#redraw()
+
+    if &filetype !=# 'unite'
+      return
+    endif
 
     execute 'match' (line('.') <= l:prompt_linenr ?
           \ line('$') <= l:prompt_linenr ?
