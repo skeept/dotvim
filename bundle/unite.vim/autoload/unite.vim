@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Aug 2011.
+" Last Modified: 23 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -220,7 +220,7 @@ let s:unite_options = [
       \ '-winwidth=', '-winheight=',
       \ '-immediately', '-auto-preview', '-complete',
       \ '-vertical', '-horizontal', '-direction=',
-      \ '-verbose', '-auto-resize',
+      \ '-verbose', '-auto-resize', '-toggle'
       \]
 "}}}
 
@@ -539,7 +539,6 @@ function! unite#redraw_candidates() "{{{
   if len(l:lines) < len(unite#get_current_unite().candidates)
     let l:pos = getpos('.')
     silent! execute (unite#get_current_unite().prompt_linenr+1).',$delete _'
-    execute 'normal!' "1z\<Enter>"
     call setpos('.', l:pos)
   endif
   call setline(unite#get_current_unite().prompt_linenr+1, l:lines)
@@ -553,10 +552,8 @@ function! unite#redraw_candidates() "{{{
         \ && l:unite.prompt_linenr + len(l:candidates)
         \      < l:unite.context.winheight
     " Auto resize.
-    let l:pos = getpos('.')
     execute 'resize' l:unite.prompt_linenr + len(l:candidates)
-    execute 'normal!' "1z\<Enter>"
-    call setpos('.', l:pos)
+    normal! zb
   endif
 endfunction"}}}
 function! unite#get_marked_candidates() "{{{
@@ -707,6 +704,18 @@ function! unite#start(sources, ...)"{{{
 
   let s:use_current_unite = 1
 
+  if l:context.toggle
+    " Search unite window.
+    " Note: must escape file-pattern.
+    let l:buffer_name = unite#util#escape_file_searching(l:context.buffer_name)
+    if bufwinnr(l:buffer_name) > 0
+      silent execute bufwinnr(l:buffer_name) 'wincmd w'
+      " Quit unite buffer.
+      call unite#force_quit_session()
+      return
+    endif
+  endif
+
   try
     call s:initialize_current_unite(a:sources, l:context)
   catch /^Invalid source/
@@ -766,6 +775,7 @@ function! unite#start(sources, ...)"{{{
     if l:is_restore
       " Restore position.
       call setpos('.', l:positions[l:key].pos)
+      normal! zb
     endif
     let l:candidate = has_key(l:positions, l:key) ?
           \ l:positions[l:key].candidate : {}
@@ -995,6 +1005,9 @@ function! s:initialize_context(context)"{{{
   endif
   if !has_key(a:context, 'old_buffer_info')
     let a:context.old_buffer_info = []
+  endif
+  if !has_key(a:context, 'toggle')
+    let a:context.toggle = 0
   endif
   let a:context.is_redraw = 0
   let a:context.is_changed = 0
@@ -1401,7 +1414,8 @@ function! s:convert_lines(candidates)"{{{
 
   return map(copy(a:candidates),
         \ '(v:val.unite__is_marked ? "*  " : "-  ")
-        \ . (l:unite.max_source_name == 0 ? " " : unite#util#truncate(v:val.source, l:max_source_name))
+        \ . (l:unite.max_source_name == 0 ? " "
+        \   : unite#util#truncate(v:val.source, l:max_source_name))
         \ . unite#util#truncate_smart(v:val.abbr, ' . l:max_width .  ', l:max_width/3, "..")')
 endfunction"}}}
 
@@ -1412,13 +1426,13 @@ function! s:initialize_current_unite(sources, context)"{{{
 
   if getbufvar(bufnr('%'), '&filetype') ==# 'unite'
     if unite#get_current_unite().buffer_name ==# l:context.buffer_name
-      " Quit unite buffer.
-      call unite#force_quit_session()
-
       if l:context.input == ''
         " Get input text.
         let l:context.input = unite#get_input()
       endif
+
+      " Quit unite buffer.
+      call unite#force_quit_session()
     endif
   endif
 
@@ -1444,7 +1458,8 @@ function! s:initialize_current_unite(sources, context)"{{{
   let l:unite.sources = l:sources
   let l:unite.kinds = s:initialize_kinds()
   let l:unite.filters = s:initialize_filters()
-  let l:unite.buffer_name = (l:context.buffer_name == '') ? 'default' : l:context.buffer_name
+  let l:unite.buffer_name = (l:context.buffer_name == '') ?
+        \ 'default' : l:context.buffer_name
   let l:unite.buffer_options =
         \ s:initialize_buffer_name_options(l:unite.buffer_name)
   let l:unite.real_buffer_name = l:buffer_name
@@ -1561,8 +1576,10 @@ function! s:initialize_unite_buffer()"{{{
 
         execute 'highlight default link' l:source.syntax g:unite_abbr_highlight
 
-        execute printf('syntax region %s start="^- %s" end="$" contains=%s%s',
-              \ 'uniteSourceLine__'.l:source.syntax, (l:name == '' ? '' : l:name . '\>'), (l:name == '' ? '' : 'uniteSourceNames,'), l:source.syntax
+        execute printf('syntax region %s start="^-  %s" end="$" contains=uniteCandidateMarker,%s%s',
+              \ 'uniteSourceLine__'.l:source.syntax,
+              \ (l:name == '' ? '' : l:name . '\>'),
+              \ (l:name == '' ? '' : 'uniteSourceNames,'), l:source.syntax
               \ )
 
         call s:call_hook([l:source], 'on_syntax')
@@ -1573,8 +1590,9 @@ endfunction"}}}
 function! s:switch_unite_buffer(buffer_name, context)"{{{
   " Search unite window.
   " Note: must escape file-pattern.
-  if bufwinnr(unite#util#escape_file_searching(a:buffer_name)) > 0
-    silent execute bufwinnr(unite#util#escape_file_searching(a:buffer_name)) 'wincmd w'
+  let l:buffer_name = unite#util#escape_file_searching(a:buffer_name)
+  if bufwinnr(l:buffer_name) > 0
+    silent execute bufwinnr(l:buffer_name) 'wincmd w'
   else
     " Split window.
     execute a:context.direction (bufexists(a:buffer_name) ?

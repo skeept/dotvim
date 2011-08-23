@@ -38,13 +38,49 @@ endfunction
 let s:SID = s:get_SID()
 delfunction s:get_SID
 
+" Tree module provides functions to build, to handle, to filter a tree
+" structure.
+"
+" You can build a tree from a List, elements of which are Dictionaries with
+" `level' attribute, using Tree.build() function. Or, you can also do it one
+" node by one node manually using Tree.new() and Tree.append_child()
+" functions.
+"
+" The following example show how to build a tree in the latter way.
+"
+" == Example
+"
+"   let s:Tree = unite#sources#outline#import('Tree')
+"   
+"   let root = s:Tree.new()
+"   call s:Tree.append_child(root, heading_A)
+"   call s:Tree.append_child(root, heading_B)
+"   call s:Tree.append_child(heading_A, heading_1)
+"   call s:Tree.append_child(heading_A, heading_2)
+"   call s:Tree.append_child(heading_B, heading_3)
+"
+"     |/
+"
+"   root
+"    |
+"    +--heading_A
+"    |   +--heading_1
+"    |   +--heading_2
+"    |
+"    +--heading_B
+"        +--heading_3
+"
 let s:Tree = unite#sources#outline#modules#base#new('Tree', s:SID)
 
+" Creates a new root node.
+"
 function! s:Tree_new()
   return { '__root__': 1, 'id': 0, 'level': 0, 'children': [] }
 endfunction
 call s:Tree.function('new')
 
+" Returns the root node of the tree to which {node} belongs.
+"
 function! s:Tree_get_root(node)
   let node = a:node
   while 1
@@ -56,6 +92,9 @@ function! s:Tree_get_root(node)
 endfunction
 call s:Tree.function('get_root')
 
+" Append {child} to a List of children of {node}.
+" The parent of {child} is set to {node}.
+"
 function! s:Tree_append_child(node, child)
   if !has_key(a:node, 'children')
     let a:node.children = []
@@ -65,12 +104,14 @@ function! s:Tree_append_child(node, child)
   " Ensure that all nodes have 'children'.
   if !has_key(a:child, 'children')
     let a:child.children = []
-    " NOTE: While building a tree, all nodes of the tree pass throuth this
+    " NOTE: While building a tree, all nodes of the tree pass through this
     " function as a:child.
   endif
 endfunction
 call s:Tree.function('append_child')
 
+" Remove {child} from a List of children of {node}.
+"
 function! s:Tree_remove_child(node, child)
   call remove(a:node.children, index(a:node.children, a:child))
 endfunction
@@ -89,12 +130,25 @@ call s:Tree.function('is_leaf')
 " Builds a tree structure from a List of elements, which are Dictionaries with
 " `level' attribute, and then returns the root node of the built tree.
 "
+" NOTE: This function allows discontinuous levels and build a tree from such
+" a sequence of levels as shown below:
+"
+"                             root
+"                              |
+"                              +--1
+"   [1, 3, 5, 5, 2, ...]  =>   |  +--3
+"                              |  |  +--5
+"                              |  |  +--5
+"                              |  |
+"                              :  +--2
+"
+" Tree.flatten() function can corrects these discontinuous levels.
+"
 function! s:Tree_build(elems)
   let root = s:Tree_new()
   if empty(a:elems) | return root | endif
   " Build a tree.
   let stack = [root]
-  let prev_elem =  a:elems[0]
   for elem in a:elems
     " Forget about the current children...
     let elem.children = []
@@ -111,13 +165,17 @@ call s:Tree.function('build')
 
 " Flatten a tree into a List.
 "
-" NOTE: This function resets the level of nodes in accordance with the given
-" tree's structure while flattening it.
+" NOTE: This function also corrects the level of nodes in accordance with the
+" given tree's structure while flattening it.
 "
-"   1               1
-"   +--3            +--2
-"   |  +--5   =>    |  +--3
-"   |  +--4         |  +--3 
+"   root             root
+"    |                |
+"    +--1             +--1
+"    |  +--3          |  +--2
+"    |  |  +--5  =>   |  |  +--3  =>  [1, 2, 3, 3, 2, ...]
+"    |  |  +--5       |  |  +--3
+"    |  |             |  |
+"    :  +--2          :  +--2
 "
 function! s:Tree_flatten(node)
   let nodes = []
@@ -176,7 +234,7 @@ function! s:Tree_has_marked_child(node)
 endfunction
 call s:Tree.function('has_marked_child')
 
-" Remove nodes for which {predicate} returns True WITH their children.
+" Remove nodes for which {predicate} returns True WITH their descendants.
 "
 function! s:Tree_remove(node, predicate, ...)
   for child in a:node.children
