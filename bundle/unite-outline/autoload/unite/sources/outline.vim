@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-22
+" Updated : 2011-08-25
 " Version : 0.3.7
 " License : MIT license {{{
 "
@@ -44,6 +44,28 @@ let s:OUTLINE_ALIASES = [
       \ ['xhtml',    'html'    ],
       \ ['zsh',      'sh'      ],
       \]
+
+let s:OUTLINE_CACHE_DIR = g:unite_data_directory . '/outline'
+
+" Rename the cache directory if its name is still old, dotted name.
+" See http://d.hatena.ne.jp/tyru/20110824/unite_file_mru
+let old_cache_dir = g:unite_data_directory . '/.outline'
+if isdirectory(s:OUTLINE_CACHE_DIR)
+  if isdirectory(old_cache_dir) 
+    call unite#print_message("[unite-outline] " .
+          \ "Warning: Please remove the old cache directory: ")
+    call unite#print_message("[unite-outline] " . old_cache_dir)
+  endif
+else " if !isdirectory(s:OUTLINE_CACHE_DIR)
+  if isdirectory(old_cache_dir)
+    if rename(old_cache_dir, s:OUTLINE_CACHE_DIR) != 0
+      let s:OUTLINE_CACHE_DIR = old_cache_dir
+      call unite#util#print_error(
+            \ "unite-outline: Couldn't rename the cache directory.")
+    endif
+  endif
+endif
+unlet old_cache_dir
 
 let s:OUTLINE_CACHE_VAR = 'unite_source_outline_cache'
 
@@ -358,7 +380,7 @@ call s:define_filetype_aliases()
 "-----------------------------------------------------------------------------
 " Source
 
-let s:Cache = unite#sources#outline#import('Cache', g:unite_data_directory . '/.outline')
+let s:Cache = unite#sources#outline#import('Cache', s:OUTLINE_CACHE_DIR)
 let s:Tree  = unite#sources#outline#import('Tree')
 let s:Util  = unite#sources#outline#import('Util')
 
@@ -371,6 +393,7 @@ delfunction s:get_SID
 let s:source = {
       \ 'name'       : 'outline',
       \ 'description': 'candidates from heading list',
+      \ 'filters'    : ['outline_matcher_glob', 'outline_formatter'],
       \ 'syntax'     : 'uniteSource__Outline',
       \
       \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
@@ -694,8 +717,8 @@ function! s:extract_filetype_headings()
     if empty(buffer.filetype)
       call unite#print_message("[unite-outline] Please set the filetype.")
     else
-      call unite#print_message("[unite-outline] Sorry, " .
-            \ toupper(buffer.filetype) . " is not supported.")
+      call unite#print_message("[unite-outline] " .
+            \ "Sorry, " . toupper(buffer.filetype) . " is not supported.")
     endif
     return []
   endif
@@ -800,8 +823,8 @@ function! s:builtin_extract_headings()
           call add(headings, s:normalize_heading(heading))
         endif
         if len(headings) >= g:unite_source_outline_max_headings
-          call unite#print_message(
-                \ "[unite-outline] Too many headings, the extraction was interrupted.")
+          call unite#print_message("[unite-outline] " . 
+                \ "Too many headings, the extraction was interrupted.")
           break
         endif
       endif
@@ -954,8 +977,8 @@ function! s:extract_folding_headings()
             \ }
       call add(headings, heading)
       if len(headings) >= g:unite_source_outline_max_headings
-        call unite#print_message(
-              \ "[unite-outline] Too many headings, the extraction was interrupted.")
+        call unite#print_message("[unite-outline] " .
+              \ "Too many headings, the extraction was interrupted.")
         break
       endif
     endif
@@ -1204,10 +1227,5 @@ function! s:adjust_scroll(best_winline)
 endfunction
 
 let s:source.action_table.jump_list = s:action_table
-
-"---------------------------------------
-" Filters
-
-call unite#custom_filters('outline', ['outline_matcher_glob', 'outline_formatter'])
 
 " vim: filetype=vim
