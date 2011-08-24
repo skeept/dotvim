@@ -568,8 +568,8 @@ function! unite#get_input()"{{{
     setlocal modifiable
 
     " Restore prompt.
-    " call setline(l:unite.prompt_linenr, l:unite.prompt
-    "       \ . getline(l:unite.prompt_linenr))
+    call setline(l:unite.prompt_linenr, l:unite.prompt
+          \ . getline(l:unite.prompt_linenr))
 
     let &l:modifiable = l:modifiable_save
   endif
@@ -1342,14 +1342,19 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
   let &ignorecase = l:ignorecase_save
 endfunction"}}}
 function! s:get_source_candidates(source, is_vimfiler)"{{{
-  if a:is_vimfiler
-    return has_key(a:source, 'vimfiler_gather_candidates') ?
-          \ copy(a:source.vimfiler_gather_candidates(
-          \           a:source.args, a:source.unite__context))
-          \ : []
-  endif
-
   let l:context = a:source.unite__context
+
+  if a:is_vimfiler
+    if l:context.vimfiler__is_dummy
+      return has_key(a:source, 'vimfiler_dummy_candidates') ?
+            \ copy(a:source.vimfiler_dummy_candidates(
+            \           a:source.args, a:source.unite__context)) : []
+    else
+      return has_key(a:source, 'vimfiler_gather_candidates') ?
+            \ copy(a:source.vimfiler_gather_candidates(
+            \           a:source.args, a:source.unite__context)) : []
+    endif
+  endif
 
   if l:context.is_redraw || a:source.unite__is_invalidate
     " Recaching.
@@ -1426,13 +1431,13 @@ function! s:initialize_current_unite(sources, context)"{{{
 
   if getbufvar(bufnr('%'), '&filetype') ==# 'unite'
     if unite#get_current_unite().buffer_name ==# l:context.buffer_name
-      " Quit unite buffer.
-      call unite#force_quit_session()
-
       if l:context.input == ''
         " Get input text.
         let l:context.input = unite#get_input()
       endif
+
+      " Quit unite buffer.
+      call unite#force_quit_session()
     endif
   endif
 
