@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Aug 2011.
+" Last Modified: 24 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -602,6 +602,24 @@ function! unite#gather_candidates()"{{{
 endfunction"}}}
 function! unite#get_current_unite() "{{{
   return exists('b:unite') && !s:use_current_unite ? b:unite : s:current_unite
+endfunction"}}}
+function! unite#add_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call add(l:unite.previewd_buffer_list, a:bufnr)
+endfunction"}}}
+function! unite#remove_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call filter(l:unite.previewd_buffer_list, 'v:val != a:bufnr')
+endfunction"}}}
+function! unite#clear_previewed_buffer_list() "{{{
+  let l:unite = unite#get_current_unite()
+  for l:bufnr in l:unite.previewd_buffer_list
+    if buflisted(l:bufnr)
+      silent execute 'bdelete!' l:bufnr
+    endif
+  endfor
+
+  let l:unite.previewd_buffer_list = []
 endfunction"}}}
 
 " Utils.
@@ -1479,6 +1497,7 @@ function! s:initialize_current_unite(sources, context)"{{{
         \ len(filter(copy(l:sources), 'v:val.unite__context.is_async')) > 0
   let l:unite.access_time = localtime()
   let l:unite.is_finalized = 0
+  let l:unite.previewd_buffer_list = []
 
   " Preview windows check.
   let l:unite.has_preview_window =
@@ -1548,6 +1567,11 @@ function! s:initialize_unite_buffer()"{{{
     " Save redrawtime
     let l:unite.redrawtime_save = &redrawtime
     let &redrawtime = 100
+  endif
+
+  if &updatetime > g:unite_update_time
+    let l:unite.update_time_save = &updatetime
+    let &updatetime = g:unite_update_time
   endif
 
   " User's initialization.
@@ -1698,12 +1722,6 @@ function! s:on_insert_enter()  "{{{
     normal! zb
     startinsert!
   endif
-
-  if &updatetime > g:unite_update_time
-    let l:unite = unite#get_current_unite()
-    let l:unite.update_time_save = &updatetime
-    let &updatetime = g:unite_update_time
-  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let l:unite = unite#get_current_unite()
@@ -1719,11 +1737,6 @@ function! s:on_insert_leave()  "{{{
 
   if &filetype ==# 'unite'
     setlocal nomodifiable
-  endif
-
-  if has_key(l:unite, 'update_time_save')
-        \ && &updatetime < l:unite.update_time_save
-    let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
@@ -1814,6 +1827,10 @@ function! s:on_buf_unload(bufname)  "{{{
     let &redrawtime = l:unite.redrawtime_save
   endif
   let &sidescrolloff = l:unite.sidescrolloff_save
+  if has_key(l:unite, 'update_time_save')
+        \ && &updatetime < l:unite.update_time_save
+    let &updatetime = l:unite.update_time_save
+  endif
 
   match
 
@@ -1821,6 +1838,8 @@ function! s:on_buf_unload(bufname)  "{{{
     " Close preview window.
     pclose!
   endif
+
+  call unite#clear_previewed_buffer_list()
 
   if winnr('$') != 1
     execute l:unite.win_rest_cmd
