@@ -1,8 +1,9 @@
 " Vim color file
 " Name:         diablo3
 " Maintainer:   Vayn <vayn@vayn.de>
-" Last Change:  2011年 06月 14日 星期二 23:40:18 CST
+" Last Change:  2011年 08月 24日 星期三 22:44:21 CST
 " Thanks To:    lilydjwg, Tomas Restrepo(author of molokai.vim), terremoto 
+" License:      MIT License
 " Options:
 "
 " If you want to set long line warning, copy this in your vimrc:
@@ -17,8 +18,6 @@
 "
 " Notice the length here is the length you want to set plus 1.
 "
-"
-
 hi clear
 
 set background=dark
@@ -30,8 +29,8 @@ if version > 580
 endif
 let g:colors_name="diablo3"
 
-" Error format when a line is longer than g:diablo3_longlen, default
-" length is 120.
+" Error format when a line is longer than g:diablo3_longlen, {{{1
+" default length is 120.
 if exists('g:diablo3_longline') && g:diablo3_longline == 1 
   if ! exists('g:diablo3_len')
     let g:diablo3_len = 121
@@ -39,6 +38,33 @@ if exists('g:diablo3_longline') && g:diablo3_longline == 1
   exe 'match LongLineWarning "\%'.g:diablo3_len.'v.*"'
 end
 
+" Change term cursor color in insert mode {{{1
+let s:color_normal = 'azure4'
+let s:color_insert = 'DarkGoldenrod1'
+let s:color_exit = 'azure4'
+if &term =~ 'xterm\|rxvt'
+  exe 'silent !echo -ne "\e]12;"' . s:color_normal . '"\007"'
+  let &t_SI="\e]12;" . s:color_insert . "\007"
+  let &t_EI="\e]12;" . s:color_normal . "\007"
+  exe 'autocmd VimLeave * :!echo -ne "\e]12;"' . s:color_exit . '"\007"'
+elseif &term =~ "screen"
+  if exists('$TMUX')
+    exe 'silent !echo -ne "\033Ptmux;\033\e]12;"' . s:color_normal . '"\007\033\\"'
+    let &t_SI="\033Ptmux;\033\e]12;" . s:color_insert . "\007\033\\"
+    let &t_EI="\033Ptmux;\033\e]12;" . s:color_normal . "\007\033\\"
+    exe 'autocmd VimLeave * :!echo -ne "\033Ptmux;\033\e]12;"' . s:color_exit . '"\007\033\\"'
+  else
+    exe 'silent !echo -ne "\033P\e]12;"' . s:color_normal . '"\007\033\\"'
+    let &t_SI="\033P\e]12;" . s:color_insert . "\007\033\\"
+    let &t_EI="\033P\e]12;" . s:color_normal . "\007\033\\"
+    exe 'autocmd VimLeave * :!echo -ne "\033P\e]12;"' . s:color_exit . '"\007\033\\"'
+  endif
+endif
+unlet s:color_normal
+unlet s:color_insert
+unlet s:color_exit
+
+" Colors {{{1
 hi Boolean         guifg=#ae81ff               gui=bold
 hi Character       guifg=#e6db74
 hi Number          guifg=#ae81ff
@@ -163,6 +189,11 @@ if &t_Co > 255
   highlight Label           cterm=none                    ctermfg=185
   highlight Macro                                         ctermfg=144
   highlight SpecialKey                                    ctermfg=148
+
+  highlight helpExample                                   ctermfg=178
+  highlight helpOption                                    ctermfg=6
+  highlight HelpHyperTextEntry                            ctermfg=2
+  highlight HelpHyperTextJump                             ctermfg=33
 
   highlight MatchParen      cterm=bold      ctermbg=208   ctermfg=16
 
