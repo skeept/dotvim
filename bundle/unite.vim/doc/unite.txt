@@ -1714,8 +1714,16 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-08-25
+- Improved vimfiler interface.
+
 2011-08-24
 - Fixed unite buffer delete.
+- Improved update time.
+- Implemented previewd_buffer_list.
+- Implemented vimfiler actions.
+- Check obsolute option.
+- Improved file operations for vimfiler.
 
 2011-08-23
 - Fixed get buffer name input.

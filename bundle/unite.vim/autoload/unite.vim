@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Aug 2011.
+" Last Modified: 24 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -603,6 +603,24 @@ endfunction"}}}
 function! unite#get_current_unite() "{{{
   return exists('b:unite') && !s:use_current_unite ? b:unite : s:current_unite
 endfunction"}}}
+function! unite#add_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call add(l:unite.previewd_buffer_list, a:bufnr)
+endfunction"}}}
+function! unite#remove_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call filter(l:unite.previewd_buffer_list, 'v:val != a:bufnr')
+endfunction"}}}
+function! unite#clear_previewed_buffer_list() "{{{
+  let l:unite = unite#get_current_unite()
+  for l:bufnr in l:unite.previewd_buffer_list
+    if buflisted(l:bufnr)
+      silent execute 'bdelete!' l:bufnr
+    endif
+  endfor
+
+  let l:unite.previewd_buffer_list = []
+endfunction"}}}
 
 " Utils.
 function! unite#print_error(message)"{{{
@@ -809,6 +827,33 @@ function! unite#start_temporary(sources, new_context, buffer_name)"{{{
   call unite#force_quit_session()
   call unite#start(a:sources, l:context)
 endfunction"}}}
+function! unite#vimfiler_check_filetype(sources, ...)"{{{
+  let l:context = a:0 >= 1 ? a:1 : {}
+  call s:initialize_context(l:context)
+
+  try
+    call s:initialize_current_unite(a:sources, l:context)
+  catch /^Invalid source/
+    return []
+  endtry
+
+  for l:source in unite#loaded_sources_list()
+    if has_key(l:source, 'vimfiler_check_filetype')
+      let l:ret = l:source.vimfiler_check_filetype(l:source.args, l:context)
+      if !empty(l:ret)
+        let [l:type, l:lines, l:dict] = l:ret
+        if !empty(l:dict)
+          call s:initialize_vimfiler_candidates([l:dict])
+        endif
+
+        return [l:type, l:lines, l:dict]
+      endif
+    endif
+  endfor
+
+  " Not found.
+  return []
+endfunction"}}}
 function! unite#get_vimfiler_candidates(sources, ...)"{{{
   let l:context = a:0 >= 1 ? a:1 : {}
   call s:initialize_context(l:context)
@@ -831,39 +876,7 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
     endif
   endfor
 
-  for l:candidate in l:candidates
-    " Set default vimfiler property.
-    if !has_key(l:candidate, 'vimfiler__filename')
-      let l:candidate.vimfiler__filename = l:candidate.word
-    endif
-    if !has_key(l:candidate, 'vimfiler__abbr')
-      let l:candidate.vimfiler__abbr = l:candidate.word
-    endif
-    if !has_key(l:candidate, 'vimfiler__is_directory')
-      let l:candidate.vimfiler__is_directory = 0
-    endif
-    if !has_key(l:candidate, 'vimfiler__is_executable')
-      let l:candidate.vimfiler__is_executable = 0
-    endif
-    if !has_key(l:candidate, 'vimfiler__filesize')
-      let l:candidate.vimfiler__filesize = -1
-    endif
-    if !has_key(l:candidate, 'vimfiler__filetime')
-      let l:candidate.vimfiler__filetime = -1
-    endif
-    if !has_key(l:candidate, 'vimfiler__datemark')
-      let l:candidate.vimfiler__datemark = vimfiler#get_datemark(l:candidate)
-    endif
-    if !has_key(l:candidate, 'vimfiler__extension')
-      let l:candidate.vimfiler__extension =
-            \ l:candidate.vimfiler__is_directory ?
-            \ '' : fnamemodify(l:candidate.vimfiler__filename, ':e')
-    endif
-    if !has_key(l:candidate, 'vimfiler__filetype')
-      let l:candidate.vimfiler__filetype = vimfiler#get_filetype(l:candidate)
-    endif
-    let l:candidate.vimfiler__is_marked = 0
-  endfor
+  call s:initialize_vimfiler_candidates(l:candidates)
 
   return l:candidates
 endfunction"}}}
@@ -1246,6 +1259,41 @@ function! s:initialize_buffer_name_options(buffer_name)"{{{
     let l:setting.unite__inputs = {}
   endif
 endfunction"}}}
+function! s:initialize_vimfiler_candidates(candidates)"{{{
+  " Set default vimfiler property.
+  for l:candidate in a:candidates
+    if !has_key(l:candidate, 'vimfiler__filename')
+      let l:candidate.vimfiler__filename = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'vimfiler__abbr')
+      let l:candidate.vimfiler__abbr = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'vimfiler__is_directory')
+      let l:candidate.vimfiler__is_directory = 0
+    endif
+    if !has_key(l:candidate, 'vimfiler__is_executable')
+      let l:candidate.vimfiler__is_executable = 0
+    endif
+    if !has_key(l:candidate, 'vimfiler__filesize')
+      let l:candidate.vimfiler__filesize = -1
+    endif
+    if !has_key(l:candidate, 'vimfiler__filetime')
+      let l:candidate.vimfiler__filetime = -1
+    endif
+    if !has_key(l:candidate, 'vimfiler__datemark')
+      let l:candidate.vimfiler__datemark = vimfiler#get_datemark(l:candidate)
+    endif
+    if !has_key(l:candidate, 'vimfiler__extension')
+      let l:candidate.vimfiler__extension =
+            \ l:candidate.vimfiler__is_directory ?
+            \ '' : fnamemodify(l:candidate.vimfiler__filename, ':e')
+    endif
+    if !has_key(l:candidate, 'vimfiler__filetype')
+      let l:candidate.vimfiler__filetype = vimfiler#get_filetype(l:candidate)
+    endif
+    let l:candidate.vimfiler__is_marked = 0
+  endfor
+endfunction"}}}
 
 function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
   let l:unite = unite#get_current_unite()
@@ -1479,6 +1527,7 @@ function! s:initialize_current_unite(sources, context)"{{{
         \ len(filter(copy(l:sources), 'v:val.unite__context.is_async')) > 0
   let l:unite.access_time = localtime()
   let l:unite.is_finalized = 0
+  let l:unite.previewd_buffer_list = []
 
   " Preview windows check.
   let l:unite.has_preview_window =
@@ -1548,6 +1597,11 @@ function! s:initialize_unite_buffer()"{{{
     " Save redrawtime
     let l:unite.redrawtime_save = &redrawtime
     let &redrawtime = 100
+  endif
+
+  if &updatetime > g:unite_update_time
+    let l:unite.update_time_save = &updatetime
+    let &updatetime = g:unite_update_time
   endif
 
   " User's initialization.
@@ -1698,12 +1752,6 @@ function! s:on_insert_enter()  "{{{
     normal! zb
     startinsert!
   endif
-
-  if &updatetime > g:unite_update_time
-    let l:unite = unite#get_current_unite()
-    let l:unite.update_time_save = &updatetime
-    let &updatetime = g:unite_update_time
-  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let l:unite = unite#get_current_unite()
@@ -1719,11 +1767,6 @@ function! s:on_insert_leave()  "{{{
 
   if &filetype ==# 'unite'
     setlocal nomodifiable
-  endif
-
-  if has_key(l:unite, 'update_time_save')
-        \ && &updatetime < l:unite.update_time_save
-    let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
@@ -1814,6 +1857,10 @@ function! s:on_buf_unload(bufname)  "{{{
     let &redrawtime = l:unite.redrawtime_save
   endif
   let &sidescrolloff = l:unite.sidescrolloff_save
+  if has_key(l:unite, 'update_time_save')
+        \ && &updatetime < l:unite.update_time_save
+    let &updatetime = l:unite.update_time_save
+  endif
 
   match
 
@@ -1821,6 +1868,8 @@ function! s:on_buf_unload(bufname)  "{{{
     " Close preview window.
     pclose!
   endif
+
+  call unite#clear_previewed_buffer_list()
 
   if winnr('$') != 1
     execute l:unite.win_rest_cmd
