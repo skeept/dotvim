@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Aug 2011.
+" Last Modified: 26 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -254,6 +254,10 @@ function! unite#loaded_source_names_with_args()"{{{
 endfunction"}}}
 function! unite#loaded_sources_list()"{{{
   return s:get_loaded_sources()
+endfunction"}}}
+function! unite#get_vimfiler_source_names()"{{{
+  return map(filter(values(s:initialize_sources()),
+        \ 'has_key(v:val, "vimfiler_check_filetype")'), 'v:val.name')
 endfunction"}}}
 function! unite#get_unite_candidates()"{{{
   return unite#get_current_unite().candidates
@@ -843,6 +847,7 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
       if !empty(l:ret)
         let [l:type, l:lines, l:dict] = l:ret
         if !empty(l:dict)
+          call s:initialize_candidates([l:dict], l:source.name)
           call s:initialize_vimfiler_candidates([l:dict])
         endif
 
@@ -879,6 +884,26 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
   call s:initialize_vimfiler_candidates(l:candidates)
 
   return l:candidates
+endfunction"}}}
+function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
+  let l:context = {}
+  call s:initialize_context(l:context)
+
+  try
+    call s:initialize_current_unite(a:sources, l:context)
+  catch /^Invalid source/
+    return []
+  endtry
+
+  let _ = []
+  for l:source in unite#loaded_sources_list()
+    if has_key(l:source, 'vimfiler_complete')
+      let _ += l:source.vimfiler_complete(
+            \ l:source.args, l:context, a:arglead, a:cmdline, a:cursorpos)
+    endif
+  endfor
+
+  return _
 endfunction"}}}
 function! unite#resume(buffer_name)"{{{
   " Check command line window.
@@ -1259,6 +1284,28 @@ function! s:initialize_buffer_name_options(buffer_name)"{{{
     let l:setting.unite__inputs = {}
   endif
 endfunction"}}}
+function! s:initialize_candidates(candidates, source_name)"{{{
+  for l:candidate in a:candidates
+    if !has_key(l:candidate, 'abbr')
+      let l:candidate.abbr = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'kind')
+      let l:candidate.kind = 'common'
+    endif
+    if !has_key(l:candidate, 'source')
+      let l:candidate.source = a:source_name
+    endif
+    if !has_key(l:candidate, 'is_dummy')
+      let l:candidate.is_dummy = 0
+    endif
+    if !has_key(l:candidate, 'is_matched')
+      let l:candidate.is_matched = 1
+    endif
+    if !has_key(l:candidate, 'unite__is_marked')
+      let l:candidate.unite__is_marked = 0
+    endif
+  endfor
+endfunction"}}}
 function! s:initialize_vimfiler_candidates(candidates)"{{{
   " Set default vimfiler property.
   for l:candidate in a:candidates
@@ -1357,26 +1404,7 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
     let l:source.unite__context.candidates = l:source_candidates
     call s:call_hook([l:source], 'on_post_filter')
 
-    for l:candidate in l:source_candidates
-      if !has_key(l:candidate, 'abbr')
-        let l:candidate.abbr = l:candidate.word
-      endif
-      if !has_key(l:candidate, 'kind')
-        let l:candidate.kind = 'common'
-      endif
-      if !has_key(l:candidate, 'source')
-        let l:candidate.source = l:source.name
-      endif
-      if !has_key(l:candidate, 'is_dummy')
-        let l:candidate.is_dummy = 0
-      endif
-      if !has_key(l:candidate, 'is_matched')
-        let l:candidate.is_matched = 1
-      endif
-      if !has_key(l:candidate, 'unite__is_marked')
-        let l:candidate.unite__is_marked = 0
-      endif
-    endfor
+    call s:initialize_candidates(l:source_candidates, l:source.name)
 
     let l:source.unite__candidates = l:source_candidates
     let l:source.unite__is_invalidate = 0
@@ -1941,6 +1969,11 @@ function! s:take_action(action_name, candidate, is_parent_action)"{{{
         \ [a:candidate] : a:candidate)
 endfunction"}}}
 function! s:get_loaded_sources(...)"{{{
+  if empty(s:static)
+    " Initialize load.
+    call s:load_default_scripts()
+  endif
+
   let l:unite = unite#get_current_unite()
   return a:0 == 0 ? l:unite.sources : get(filter(copy(l:unite.sources), 'v:val.name ==# a:1'), 0, {})
 endfunction"}}}

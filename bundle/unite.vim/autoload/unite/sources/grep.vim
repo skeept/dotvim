@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 14 Aug 2011.
+" Last Modified: 26 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -40,7 +40,8 @@ let s:action_grep_file = {
   \   'is_selectable': 1,
   \ }
 function! s:action_grep_file.func(candidates) "{{{
-  call unite#start([['grep', map(copy(a:candidates), 'v:val.action__path'),
+  call unite#start([['grep', map(copy(a:candidates),
+        \ 'substitute(v:val.action__path, "/$", "", "g")'),
         \ g:unite_source_grep_recursive_opt]], { 'no_quit' : 1 })
 endfunction "}}}
 
@@ -140,9 +141,10 @@ function! s:grep_source.gather_candidates(args, context) "{{{
   let l:cmdline = printf('%s %s ''%s'' %s %s',
     \   g:unite_source_grep_command,
     \   g:unite_source_grep_default_opts,
+    \   a:context.source__extra_opts,
     \   substitute(a:context.source__input, "'", "''", 'g'),
     \   join(a:context.source__target),
-    \   a:context.source__extra_opts)
+    \)
   call unite#print_message('[grep] Command-line: ' . l:cmdline)
   let a:context.source__proc = vimproc#pgroup_open(l:cmdline)
   " let a:context.source__proc = vimproc#popen3(l:cmdline)
