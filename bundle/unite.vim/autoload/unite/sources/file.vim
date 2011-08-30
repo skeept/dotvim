@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Aug 2011.
+" Last Modified: 26 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -86,7 +86,7 @@ function! s:source.change_candidates(args, context)"{{{
           \ sort(filter(copy(l:files), '!isdirectory(v:val)'), 1)
 
     let a:context.source__cache[l:glob] =
-          \ map(l:files, 's:create_dict(v:val, l:is_relative_path)')
+          \ map(l:files, 'unite#sources#file#create_file_dict(v:val, l:is_relative_path)')
   endif
 
   let l:candidates = a:context.source__cache[l:glob]
@@ -96,7 +96,7 @@ function! s:source.change_candidates(args, context)"{{{
     if !filereadable(l:newfile) && !isdirectory(l:newfile)
       " Add newfile candidate.
       let l:candidates = copy(l:candidates) +
-            \ [s:create_dict(l:newfile, l:is_relative_path)]
+            \ [unite#sources#file#create_file_dict(l:newfile, l:is_relative_path)]
     endif
 
     if l:input !~ '^\%(/\|\a\+:/\)$'
@@ -104,7 +104,8 @@ function! s:source.change_candidates(args, context)"{{{
 
       if a:context.input =~ '\.$' && isdirectory(l:parent . '..')
         " Add .. directory.
-        let l:candidates = [s:create_dict(l:parent . '..', l:is_relative_path)]
+        let l:candidates = [unite#sources#file#create_file_dict(
+              \              l:parent . '..', l:is_relative_path)]
               \ + copy(l:candidates)
       endif
     endif
@@ -112,11 +113,27 @@ function! s:source.change_candidates(args, context)"{{{
 
   return l:candidates
 endfunction"}}}
-function! s:source.vimfiler_gather_candidates(args, context)"{{{
+function! s:source.vimfiler_check_filetype(args, context)"{{{
   let l:path = get(a:args, 0, '')
 
   if isdirectory(l:path)
     let l:type = 'directory'
+    let l:lines = []
+    let l:dict = {}
+  elseif filereadable(l:path)
+    let l:type = 'file'
+    let l:lines = readfile(l:path)
+    let l:dict = unite#sources#file#create_file_dict(l:path, 0)
+  else
+    return []
+  endif
+
+  return [l:type, l:lines, l:dict]
+endfunction"}}}
+function! s:source.vimfiler_gather_candidates(args, context)"{{{
+  let l:path = get(a:args, 0, '')
+
+  if isdirectory(l:path)
     let l:candidates = self.change_candidates(a:args, a:context)
 
     " Add doted files.
@@ -125,8 +142,7 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
     let l:candidates += filter(self.change_candidates(a:args, l:context),
           \ 'v:val.word !~ "/\.\.$"')
   elseif filereadable(l:path)
-    let l:type = 'file'
-    let l:candidates = [ s:create_dict(l:path, 0) ]
+    let l:candidates = [ unite#sources#file#create_file_dict(l:path, 0) ]
   else
     return []
   endif
@@ -142,7 +158,7 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
 
   " Set vimfiler property.
   for l:candidate in l:candidates
-    call s:create_vimfiler_dict(l:candidate, l:exts)
+    call unite#sources#file#create_vimfiler_dict(l:candidate, l:exts)
   endfor
 
   if l:path !=# l:old_dir
@@ -150,7 +166,6 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
     lcd `=l:old_dir`
   endif
 
-  " return [l:type, l:candidates]
   return l:candidates
 endfunction"}}}
 function! s:source.vimfiler_dummy_candidates(args, context)"{{{
@@ -172,9 +187,9 @@ function! s:source.vimfiler_dummy_candidates(args, context)"{{{
   let l:is_relative_path = l:path !~ '^\%(/\|\a\+:/\)'
 
   " Set vimfiler property.
-  let l:candidates = [ s:create_dict(l:path, l:is_relative_path) ]
+  let l:candidates = [ unite#sources#file#create_file_dict(l:path, l:is_relative_path) ]
   for l:candidate in l:candidates
-    call s:create_vimfiler_dict(l:candidate, l:exts)
+    call unite#sources#file#create_vimfiler_dict(l:candidate, l:exts)
   endfor
 
   if l:path !=# l:old_dir
@@ -184,11 +199,15 @@ function! s:source.vimfiler_dummy_candidates(args, context)"{{{
 
   return l:candidates
 endfunction"}}}
-function! s:create_dict(file, is_relative_path)"{{{
+function! s:source.vimfiler_complete(args, context, arglead, cmdline, cursorpos)"{{{
+  return split(glob(a:arglead . '*'), '\n')
+endfunction"}}}
+
+function! unite#sources#file#create_file_dict(file, is_relative_path)"{{{
   let l:dict = {
-        \ 'word' : a:file,
-        \ 'abbr' : a:file, 'source' : 'file',
-        \ 'action__path' : unite#util#substitute_path_separator(fnamemodify(a:file, ':p')),
+        \ 'word' : a:file, 'abbr' : a:file,
+        \ 'action__path' : unite#util#substitute_path_separator(
+        \ fnamemodify(a:file, ':p')),
         \}
   let l:dict.action__directory = a:is_relative_path ?
         \ unite#util#substitute_path_separator(
@@ -212,7 +231,7 @@ function! s:create_dict(file, is_relative_path)"{{{
 
   return l:dict
 endfunction"}}}
-function! s:create_vimfiler_dict(candidate, exts)"{{{
+function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
   let a:candidate.vimfiler__filename =
         \ unite#util#substitute_path_separator(
         \       fnamemodify(a:candidate.word, ':t'))

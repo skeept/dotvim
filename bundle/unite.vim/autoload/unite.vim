@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Aug 2011.
+" Last Modified: 30 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -255,6 +255,10 @@ endfunction"}}}
 function! unite#loaded_sources_list()"{{{
   return s:get_loaded_sources()
 endfunction"}}}
+function! unite#get_vimfiler_source_names()"{{{
+  return map(filter(values(s:initialize_sources()),
+        \ 'has_key(v:val, "vimfiler_check_filetype")'), 'v:val.name')
+endfunction"}}}
 function! unite#get_unite_candidates()"{{{
   return unite#get_current_unite().candidates
 endfunction"}}}
@@ -475,13 +479,14 @@ function! unite#complete_source(arglead, cmdline, cursorpos)"{{{
   let l:sources = filter(s:initialize_sources(), 'v:val.is_listed')
   return filter(sort(keys(l:sources))+s:unite_options, 'stridx(v:val, a:arglead) == 0')
 endfunction"}}}
-function! unite#complete_buffer(arglead, cmdline, cursorpos)"{{{
-  let l:buffer_list = map(filter(range(1, bufnr('$')), '
+function! unite#complete_resume(arglead, cmdline, cursorpos)"{{{
+  let _ = map(filter(range(1, bufnr('$')), '
         \ getbufvar(v:val, "&filetype") ==# "unite" &&
         \ !getbufvar(v:val, "unite").context.temporary'),
         \ 'getbufvar(v:val, "unite").buffer_name')
+  let _ += s:unite_options
 
-  return filter(l:buffer_list, printf('stridx(v:val, %s) == 0', string(a:arglead)))
+  return filter(_, printf('stridx(v:val, %s) == 0', string(a:arglead)))
 endfunction"}}}
 function! unite#invalidate_cache(source_name)  "{{{
   for l:source in unite#get_current_unite().sources
@@ -603,6 +608,24 @@ endfunction"}}}
 function! unite#get_current_unite() "{{{
   return exists('b:unite') && !s:use_current_unite ? b:unite : s:current_unite
 endfunction"}}}
+function! unite#add_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call add(l:unite.previewd_buffer_list, a:bufnr)
+endfunction"}}}
+function! unite#remove_previewed_buffer_list(bufnr) "{{{
+  let l:unite = unite#get_current_unite()
+  call filter(l:unite.previewd_buffer_list, 'v:val != a:bufnr')
+endfunction"}}}
+function! unite#clear_previewed_buffer_list() "{{{
+  let l:unite = unite#get_current_unite()
+  for l:bufnr in l:unite.previewd_buffer_list
+    if buflisted(l:bufnr)
+      silent execute 'bdelete!' l:bufnr
+    endif
+  endfor
+
+  let l:unite.previewd_buffer_list = []
+endfunction"}}}
 
 " Utils.
 function! unite#print_error(message)"{{{
@@ -699,18 +722,42 @@ function! unite#start(sources, ...)"{{{
     return
   endif
 
-  let l:context = a:0 >= 1 ? a:1 : {}
+  let l:context = get(a:000, 0, {})
   call s:initialize_context(l:context)
 
   let s:use_current_unite = 1
 
   if l:context.toggle
+    let l:quit_winnr = 0
+
     " Search unite window.
     " Note: must escape file-pattern.
     let l:buffer_name = unite#util#escape_file_searching(l:context.buffer_name)
     if bufwinnr(l:buffer_name) > 0
-      silent execute bufwinnr(l:buffer_name) 'wincmd w'
+      let l:quit_winnr = bufwinnr(l:buffer_name)
+    else
+      " Search from temporary buffer.
+      let l:winnr = 1
+      while l:winnr <= winnr('$')
+        if type(getbufvar(winbufnr(l:winnr), 'unite')) == type({})
+          let l:buffer_context = getbufvar(winbufnr(l:winnr), 'unite').context
+          if l:buffer_context.temporary
+                \ && !empty(filter(copy(l:buffer_context.old_buffer_info),
+                  \ 'v:val.buffer_name ==# l:context.buffer_name'))
+            let l:quit_winnr = l:winnr
+            " Disable resume.
+            let l:buffer_context.old_buffer_info = []
+            break
+          endif
+        endif
+
+        let l:winnr += 1
+      endwhile
+    endif
+
+    if l:quit_winnr > 0
       " Quit unite buffer.
+      silent execute l:quit_winnr 'wincmd w'
       call unite#force_quit_session()
       return
     endif
@@ -760,7 +807,7 @@ function! unite#start(sources, ...)"{{{
   endfor
   call unite#redraw_candidates()
 
-  if l:unite.context.start_insert || l:unite.context.complete
+  if l:unite.context.start_insert
     let l:unite.is_insert = 1
 
     execute l:unite.prompt_linenr
@@ -788,6 +835,8 @@ function! unite#start(sources, ...)"{{{
       normal! zb
     endif
     normal! 0
+
+    stopinsert
   endif
 endfunction"}}}
 function! unite#start_temporary(sources, new_context, buffer_name)"{{{
@@ -809,8 +858,36 @@ function! unite#start_temporary(sources, new_context, buffer_name)"{{{
   call unite#force_quit_session()
   call unite#start(a:sources, l:context)
 endfunction"}}}
+function! unite#vimfiler_check_filetype(sources, ...)"{{{
+  let l:context = get(a:000, 0, {})
+  call s:initialize_context(l:context)
+
+  try
+    call s:initialize_current_unite(a:sources, l:context)
+  catch /^Invalid source/
+    return []
+  endtry
+
+  for l:source in unite#loaded_sources_list()
+    if has_key(l:source, 'vimfiler_check_filetype')
+      let l:ret = l:source.vimfiler_check_filetype(l:source.args, l:context)
+      if !empty(l:ret)
+        let [l:type, l:lines, l:dict] = l:ret
+        if !empty(l:dict)
+          call s:initialize_candidates([l:dict], l:source.name)
+          call s:initialize_vimfiler_candidates([l:dict])
+        endif
+
+        return [l:type, l:lines, l:dict]
+      endif
+    endif
+  endfor
+
+  " Not found.
+  return []
+endfunction"}}}
 function! unite#get_vimfiler_candidates(sources, ...)"{{{
-  let l:context = a:0 >= 1 ? a:1 : {}
+  let l:context = get(a:000, 0, {})
   call s:initialize_context(l:context)
 
   try
@@ -831,43 +908,31 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
     endif
   endfor
 
-  for l:candidate in l:candidates
-    " Set default vimfiler property.
-    if !has_key(l:candidate, 'vimfiler__filename')
-      let l:candidate.vimfiler__filename = l:candidate.word
-    endif
-    if !has_key(l:candidate, 'vimfiler__abbr')
-      let l:candidate.vimfiler__abbr = l:candidate.word
-    endif
-    if !has_key(l:candidate, 'vimfiler__is_directory')
-      let l:candidate.vimfiler__is_directory = 0
-    endif
-    if !has_key(l:candidate, 'vimfiler__is_executable')
-      let l:candidate.vimfiler__is_executable = 0
-    endif
-    if !has_key(l:candidate, 'vimfiler__filesize')
-      let l:candidate.vimfiler__filesize = -1
-    endif
-    if !has_key(l:candidate, 'vimfiler__filetime')
-      let l:candidate.vimfiler__filetime = -1
-    endif
-    if !has_key(l:candidate, 'vimfiler__datemark')
-      let l:candidate.vimfiler__datemark = vimfiler#get_datemark(l:candidate)
-    endif
-    if !has_key(l:candidate, 'vimfiler__extension')
-      let l:candidate.vimfiler__extension =
-            \ l:candidate.vimfiler__is_directory ?
-            \ '' : fnamemodify(l:candidate.vimfiler__filename, ':e')
-    endif
-    if !has_key(l:candidate, 'vimfiler__filetype')
-      let l:candidate.vimfiler__filetype = vimfiler#get_filetype(l:candidate)
-    endif
-    let l:candidate.vimfiler__is_marked = 0
-  endfor
+  call s:initialize_vimfiler_candidates(l:candidates)
 
   return l:candidates
 endfunction"}}}
-function! unite#resume(buffer_name)"{{{
+function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
+  let l:context = {}
+  call s:initialize_context(l:context)
+
+  try
+    call s:initialize_current_unite(a:sources, l:context)
+  catch /^Invalid source/
+    return []
+  endtry
+
+  let _ = []
+  for l:source in unite#loaded_sources_list()
+    if has_key(l:source, 'vimfiler_complete')
+      let _ += l:source.vimfiler_complete(
+            \ l:source.args, l:context, a:arglead, a:cmdline, a:cursorpos)
+    endif
+  endfor
+
+  return _
+endfunction"}}}
+function! unite#resume(buffer_name, ...)"{{{
   " Check command line window.
   if s:is_cmdwin()
     echoerr 'Command line buffer is detected!'
@@ -906,16 +971,20 @@ function! unite#resume(buffer_name)"{{{
 
   call s:switch_unite_buffer(bufname(l:bufnr), l:context)
 
+  let l:context = get(a:000, 0, {})
+  call s:initialize_context(l:context)
+
   " Set parameters.
   let l:unite = unite#get_current_unite()
   let l:unite.winnr = l:winnr
   let l:unite.win_rest_cmd = l:win_rest_cmd
   let l:unite.redrawtime_save = &redrawtime
   let l:unite.access_time = localtime()
+  let l:unite.context = extend(l:unite.context, l:context)
 
   let s:current_unite = l:unite
 
-  if g:unite_enable_start_insert
+  if l:unite.context.start_insert
     let l:unite.is_insert = 1
 
     execute l:unite.prompt_linenr
@@ -940,22 +1009,25 @@ function! unite#resume(buffer_name)"{{{
       execute (l:unite.prompt_linenr+1)
     endif
     normal! 0zb
+
+    stopinsert
   endif
 endfunction"}}}
 function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'input')
     let a:context.input = ''
   endif
+  if !has_key(a:context, 'complete')
+    let a:context.complete = 0
+  endif
   if !has_key(a:context, 'start_insert')
-    let a:context.start_insert = g:unite_enable_start_insert
+    let a:context.start_insert = a:context.complete ?
+          \ 1 : g:unite_enable_start_insert
   endif
   if has_key(a:context, 'no_start_insert')
         \ && a:context.no_start_insert
     " Disable start insert.
     let a:context.start_insert = 0
-  endif
-  if !has_key(a:context, 'complete')
-    let a:context.complete = 0
   endif
   if !has_key(a:context, 'col')
     let a:context.col = col('.')
@@ -1085,6 +1157,10 @@ function! s:quit_session(is_force)  "{{{
   endif
 endfunction"}}}
 function! s:resume_from_temporary(context)  "{{{
+  if empty(a:context.old_buffer_info)
+    return
+  endif
+
   " Resume unite buffer.
   let l:buffer_info = a:context.old_buffer_info[0]
   call unite#resume(l:buffer_info.buffer_name)
@@ -1150,8 +1226,24 @@ function! s:initialize_sources()"{{{
 
   let l:sources = extend(copy(s:static.sources), s:dynamic.sources)
 
-  for l:source in values(filter(copy(l:sources), '!has_key(v:val, "is_initialized")'))
+  for l:source in values(filter(copy(l:sources),
+        \ '!has_key(v:val, "is_initialized")'))
     let l:source.is_initialized = 1
+
+    if !has_key(l:source, 'hooks')
+      let l:source.hooks = {}
+    endif
+
+    if has_key(l:source.hooks, 'on_pre_init')
+      " Call pre_init hook.
+
+      " Set dummey value.
+      let l:source.args = []
+      let l:source.unite__context = { 'source' : l:source }
+
+      " Overwrite source values.
+      call s:call_hook([l:source], 'on_pre_init')
+    endif
 
     if !has_key(l:source, 'is_volatile')
       let l:source.is_volatile = 0
@@ -1173,9 +1265,6 @@ function! s:initialize_sources()"{{{
     endif
     if !has_key(l:source, 'alias_table')
       let l:source.alias_table = {}
-    endif
-    if !has_key(l:source, 'hooks')
-      let l:source.hooks = {}
     endif
     if !has_key(l:source, 'description')
       let l:source.description = ''
@@ -1246,6 +1335,63 @@ function! s:initialize_buffer_name_options(buffer_name)"{{{
     let l:setting.unite__inputs = {}
   endif
 endfunction"}}}
+function! s:initialize_candidates(candidates, source_name)"{{{
+  for l:candidate in a:candidates
+    if !has_key(l:candidate, 'abbr')
+      let l:candidate.abbr = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'kind')
+      let l:candidate.kind = 'common'
+    endif
+    if !has_key(l:candidate, 'source')
+      let l:candidate.source = a:source_name
+    endif
+    if !has_key(l:candidate, 'is_dummy')
+      let l:candidate.is_dummy = 0
+    endif
+    if !has_key(l:candidate, 'is_matched')
+      let l:candidate.is_matched = 1
+    endif
+    if !has_key(l:candidate, 'unite__is_marked')
+      let l:candidate.unite__is_marked = 0
+    endif
+  endfor
+endfunction"}}}
+function! s:initialize_vimfiler_candidates(candidates)"{{{
+  " Set default vimfiler property.
+  for l:candidate in a:candidates
+    if !has_key(l:candidate, 'vimfiler__filename')
+      let l:candidate.vimfiler__filename = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'vimfiler__abbr')
+      let l:candidate.vimfiler__abbr = l:candidate.word
+    endif
+    if !has_key(l:candidate, 'vimfiler__is_directory')
+      let l:candidate.vimfiler__is_directory = 0
+    endif
+    if !has_key(l:candidate, 'vimfiler__is_executable')
+      let l:candidate.vimfiler__is_executable = 0
+    endif
+    if !has_key(l:candidate, 'vimfiler__filesize')
+      let l:candidate.vimfiler__filesize = -1
+    endif
+    if !has_key(l:candidate, 'vimfiler__filetime')
+      let l:candidate.vimfiler__filetime = -1
+    endif
+    if !has_key(l:candidate, 'vimfiler__datemark')
+      let l:candidate.vimfiler__datemark = vimfiler#get_datemark(l:candidate)
+    endif
+    if !has_key(l:candidate, 'vimfiler__extension')
+      let l:candidate.vimfiler__extension =
+            \ l:candidate.vimfiler__is_directory ?
+            \ '' : fnamemodify(l:candidate.vimfiler__filename, ':e')
+    endif
+    if !has_key(l:candidate, 'vimfiler__filetype')
+      let l:candidate.vimfiler__filetype = vimfiler#get_filetype(l:candidate)
+    endif
+    let l:candidate.vimfiler__is_marked = 0
+  endfor
+endfunction"}}}
 
 function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
   let l:unite = unite#get_current_unite()
@@ -1309,26 +1455,7 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
     let l:source.unite__context.candidates = l:source_candidates
     call s:call_hook([l:source], 'on_post_filter')
 
-    for l:candidate in l:source_candidates
-      if !has_key(l:candidate, 'abbr')
-        let l:candidate.abbr = l:candidate.word
-      endif
-      if !has_key(l:candidate, 'kind')
-        let l:candidate.kind = 'common'
-      endif
-      if !has_key(l:candidate, 'source')
-        let l:candidate.source = l:source.name
-      endif
-      if !has_key(l:candidate, 'is_dummy')
-        let l:candidate.is_dummy = 0
-      endif
-      if !has_key(l:candidate, 'is_matched')
-        let l:candidate.is_matched = 1
-      endif
-      if !has_key(l:candidate, 'unite__is_marked')
-        let l:candidate.unite__is_marked = 0
-      endif
-    endfor
+    call s:initialize_candidates(l:source_candidates, l:source.name)
 
     let l:source.unite__candidates = l:source_candidates
     let l:source.unite__is_invalidate = 0
@@ -1479,6 +1606,7 @@ function! s:initialize_current_unite(sources, context)"{{{
         \ len(filter(copy(l:sources), 'v:val.unite__context.is_async')) > 0
   let l:unite.access_time = localtime()
   let l:unite.is_finalized = 0
+  let l:unite.previewd_buffer_list = []
 
   " Preview windows check.
   let l:unite.has_preview_window =
@@ -1548,6 +1676,11 @@ function! s:initialize_unite_buffer()"{{{
     " Save redrawtime
     let l:unite.redrawtime_save = &redrawtime
     let &redrawtime = 100
+  endif
+
+  if &updatetime > g:unite_update_time
+    let l:unite.update_time_save = &updatetime
+    let &updatetime = g:unite_update_time
   endif
 
   " User's initialization.
@@ -1635,7 +1768,7 @@ function! s:redraw(is_force, winnr) "{{{
     " Set current unite.
     let l:use_current_unite_save = s:use_current_unite
     let s:use_current_unite = 1
-    let l:unite = getbufvar(a:winnr, 'unite')
+    let l:unite = getbufvar(winbufnr(a:winnr), 'unite')
     let l:unite_save = s:current_unite
 
     execute a:winnr 'wincmd w'
@@ -1698,12 +1831,6 @@ function! s:on_insert_enter()  "{{{
     normal! zb
     startinsert!
   endif
-
-  if &updatetime > g:unite_update_time
-    let l:unite = unite#get_current_unite()
-    let l:unite.update_time_save = &updatetime
-    let &updatetime = g:unite_update_time
-  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let l:unite = unite#get_current_unite()
@@ -1719,11 +1846,6 @@ function! s:on_insert_leave()  "{{{
 
   if &filetype ==# 'unite'
     setlocal nomodifiable
-  endif
-
-  if has_key(l:unite, 'update_time_save')
-        \ && &updatetime < l:unite.update_time_save
-    let &updatetime = l:unite.update_time_save
   endif
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
@@ -1785,7 +1907,7 @@ function! s:on_cursor_moved()  "{{{
       pclose!
     endif
 
-    call unite#mappings#do_action('preview')
+    call unite#mappings#do_action('preview', [], {}, 0)
 
     " Restore window size.
     let l:context = unite#get_context()
@@ -1802,8 +1924,13 @@ function! s:on_cursor_moved()  "{{{
 endfunction"}}}
 function! s:on_buf_unload(bufname)  "{{{
   " Save unite value.
-  let s:current_unite = getbufvar(a:bufname, 'unite')
-  let l:unite = s:current_unite
+  let l:unite = getbufvar(a:bufname, 'unite')
+  if type(l:unite) != type({})
+    " Invalid unite.
+    return
+  endif
+
+  let s:current_unite = l:unite
 
   if l:unite.is_finalized
     return
@@ -1814,6 +1941,10 @@ function! s:on_buf_unload(bufname)  "{{{
     let &redrawtime = l:unite.redrawtime_save
   endif
   let &sidescrolloff = l:unite.sidescrolloff_save
+  if has_key(l:unite, 'update_time_save')
+        \ && &updatetime < l:unite.update_time_save
+    let &updatetime = l:unite.update_time_save
+  endif
 
   match
 
@@ -1821,6 +1952,8 @@ function! s:on_buf_unload(bufname)  "{{{
     " Close preview window.
     pclose!
   endif
+
+  call unite#clear_previewed_buffer_list()
 
   if winnr('$') != 1
     execute l:unite.win_rest_cmd
@@ -1892,6 +2025,11 @@ function! s:take_action(action_name, candidate, is_parent_action)"{{{
         \ [a:candidate] : a:candidate)
 endfunction"}}}
 function! s:get_loaded_sources(...)"{{{
+  if empty(s:static)
+    " Initialize load.
+    call s:load_default_scripts()
+  endif
+
   let l:unite = unite#get_current_unite()
   return a:0 == 0 ? l:unite.sources : get(filter(copy(l:unite.sources), 'v:val.name ==# a:1'), 0, {})
 endfunction"}}}
@@ -1922,9 +2060,11 @@ function! s:get_substitute_input(input)"{{{
   return l:input
 endfunction"}}}
 function! s:call_hook(sources, hook_name)"{{{
+  let _ = []
   for l:source in a:sources
     if has_key(l:source.hooks, a:hook_name)
-      call call(l:source.hooks[a:hook_name], [l:source.args, l:source.unite__context], l:source.hooks)
+      call call(l:source.hooks[a:hook_name],
+            \ [l:source.args, l:source.unite__context], l:source.hooks)
     endif
   endfor
 endfunction"}}}
