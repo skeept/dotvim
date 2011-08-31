@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Aug 2011.
+" Last Modified: 31 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -190,7 +190,8 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     endif
   endif
 
-  call filter(copy(l:candidates), '!v:val.is_dummy')
+  call filter(copy(l:candidates),
+        \ '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
   if empty(l:candidates)
     return []
   endif
@@ -252,7 +253,7 @@ function! s:get_action_table(action_name, candidates)"{{{
   let l:action_tables = []
   let Self = unite#get_self_functions()[-1]
   for l:candidate in a:candidates
-    let l:action_table = unite#get_action_table(l:candidate.source, l:candidate.kind, Self)
+    let l:action_table = s:get_candidate_action_table(l:candidate)
 
     let l:action_name =
           \ a:action_name ==# 'default' ?
@@ -299,17 +300,22 @@ function! s:get_action_table(action_name, candidates)"{{{
 endfunction"}}}
 function! s:get_actions(candidates)"{{{
   let Self = unite#get_self_functions()[-1]
-  let l:actions = unite#get_action_table(a:candidates[0].source, a:candidates[0].kind, Self)
-  if len(a:candidates) > 1
-    for l:candidate in a:candidates
-      let l:action_table = unite#get_action_table(l:candidate.source, l:candidate.kind, Self)
-      " Filtering unique items and check selectable flag.
-      call filter(l:actions, 'has_key(l:action_table, v:key)
-            \ && l:action_table[v:key].is_selectable')
-    endfor
-  endif
+
+  let l:actions = s:get_candidate_action_table(a:candidates[0])
+
+  for l:candidate in a:candidates[1:]
+    let l:action_table = s:get_candidate_action_table(l:candidate)
+    " Filtering unique items and check selectable flag.
+    call filter(l:actions, 'has_key(l:action_table, v:key)
+          \ && l:action_table[v:key].is_selectable')
+  endfor
 
   return l:actions
+endfunction"}}}
+function! s:get_candidate_action_table(candidate)"{{{
+  let Self = unite#get_self_functions()[-1]
+
+  return unite#get_action_table(a:candidate.source, a:candidate.kind, Self)
 endfunction"}}}
 
 " key-mappings functions.
@@ -651,18 +657,11 @@ function! s:source_action.gather_candidates(args, context)"{{{
   let l:candidates = copy(a:args)
 
   " Print candidates.
-  call unite#print_message(map(copy(l:candidates), '"[action] candidates: ".v:val.abbr."(".v:val.source.")"'))
+  call unite#print_message(map(copy(l:candidates),
+        \ '"[action] candidates: ".v:val.abbr."(".v:val.source.")"'))
 
   " Process Alias.
   let l:actions = s:get_actions(l:candidates)
-  let l:alias_table = unite#get_alias_table(
-        \ l:candidates[0].source, l:candidates[0].kind)
-  for [l:alias_name, l:action_name] in items(l:alias_table)
-    if has_key(l:actions, l:alias_name)
-      let l:actions[l:action_name] = copy(l:actions[l:action_name])
-      let l:actions[l:action_name].name = l:alias_name
-    endif
-  endfor
 
   " Uniq.
   let l:uniq_actions = {}
@@ -677,7 +676,6 @@ function! s:source_action.gather_candidates(args, context)"{{{
   return sort(map(filter(values(l:uniq_actions), 'v:val.is_listed'), '{
         \   "word": v:val.name,
         \   "abbr": printf("%-' . l:max . 's -- %s", v:val.name, v:val.description),
-        \   "kind": "common",
         \   "source__candidates": l:candidates,
         \   "action__action": l:actions[v:val.name],
         \ }'), 's:compare_word')

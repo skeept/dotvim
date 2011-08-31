@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Aug 2011.
+" Last Modified: 31 Aug 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -283,8 +283,22 @@ function! unite#set_context(context)"{{{
 
   return l:old_context
 endfunction"}}}
+
 " function! unite#get_action_table(source_name, kind_name, self_func, [is_parent_action])
-function! unite#get_action_table(source_name, kind_name, self_func, ...)"{{{
+function! unite#get_action_table(source_name, kind, self_func, ...)"{{{
+  let l:is_parents_action = get(a:000, 0, 0)
+
+  let l:action_table = {}
+  for l:kind_name in type(a:kind) == type([]) ?
+        \ a:kind : [a:kind]
+    call extend(l:action_table,
+          \ s:get_action_table(a:source_name,
+          \                l:kind_name, a:self_func, l:is_parents_action))
+  endfor
+
+  return l:action_table
+endfunction"}}}
+function! s:get_action_table(source_name, kind_name, self_func, is_parents_action)"{{{
   let l:kind = unite#get_kinds(a:kind_name)
   let l:source = unite#get_sources(a:source_name)
   if empty(l:source)
@@ -292,14 +306,12 @@ function! unite#get_action_table(source_name, kind_name, self_func, ...)"{{{
     return {}
   endif
 
-  let l:is_parents_action = a:0 > 0 ? a:1 : 0
-
   let l:action_table = {}
 
   let l:source_kind = 'source/'.a:source_name.'/'.a:kind_name
   let l:source_kind_wild = 'source/'.a:source_name.'/*'
 
-  if !l:is_parents_action
+  if !a:is_parents_action
     " Source/kind custom actions.
     if has_key(s:custom.actions, l:source_kind)
       let l:action_table = s:extend_actions(a:self_func, l:action_table,
@@ -341,7 +353,7 @@ function! unite#get_action_table(source_name, kind_name, self_func, ...)"{{{
           \ unite#get_action_table(a:source_name, l:parent, a:self_func))
   endfor
 
-  if !l:is_parents_action
+  if !a:is_parents_action
     " Kind aliases.
     call s:filter_alias_action(l:action_table, l:kind.alias_table,
           \ l:kind.name)
@@ -402,7 +414,17 @@ function! unite#get_action_table(source_name, kind_name, self_func, ...)"{{{
   " Filtering nop action.
   return filter(l:action_table, 'v:key !=# "nop"')
 endfunction"}}}
-function! unite#get_alias_table(source_name, kind_name)"{{{
+function! unite#get_alias_table(source_name, kind)"{{{
+  let l:alias_table = {}
+  for l:kind_name in type(a:kind) == type([]) ?
+        \ a:kind : [a:kind]
+    call extend(l:alias_table,
+          \ s:get_alias_table(a:source_name, l:kind_name))
+  endfor
+
+  return l:alias_table
+endfunction"}}}
+function! s:get_alias_table(source_name, kind_name)"{{{
   let l:kind = unite#get_kinds(a:kind_name)
   let l:source = unite#get_sources(a:source_name)
 
@@ -438,7 +460,13 @@ function! unite#get_alias_table(source_name, kind_name)"{{{
 
   return l:table
 endfunction"}}}
-function! unite#get_default_action(source_name, kind_name)"{{{
+function! unite#get_default_action(source_name, kind)"{{{
+  let l:kinds = type(a:kind) == type([]) ?
+        \ a:kind : [a:kind]
+
+  return s:get_default_action(a:source_name, l:kinds[-1])
+endfunction"}}}
+function! s:get_default_action(source_name, kind_name)"{{{
   let l:source = unite#get_sources(a:source_name)
 
   let l:source_kind = 'source/'.a:source_name.'/'.a:kind_name
@@ -472,6 +500,7 @@ function! unite#get_default_action(source_name, kind_name)"{{{
   " Kind default actions.
   return unite#get_kinds(a:kind_name).default_action
 endfunction"}}}
+
 function! unite#escape_match(str)"{{{
   return substitute(substitute(escape(a:str, '~\.^$[]'), '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
 endfunction"}}}
@@ -1254,15 +1283,27 @@ function! s:initialize_sources()"{{{
     if !has_key(l:source, 'required_pattern_length')
       let l:source.required_pattern_length = 0
     endif
+
     if !has_key(l:source, 'action_table')
       let l:source.action_table = {}
+    elseif !empty(l:source.action_table)
+      let l:action = values(l:source.action_table)[0]
+
+      " Check if '*' action_table?
+      if has_key(l:action, 'func')
+            \ && type(l:action.func) == type(function('type'))
+        " Syntax sugar.
+        let l:source.action_table = { '*' : l:source.action_table }
+      endif
     endif
+
     if !has_key(l:source, 'default_action')
       let l:source.default_action = {}
     elseif type(l:source.default_action) == type('')
       " Syntax sugar.
       let l:source.default_action = { '*' : l:source.default_action }
     endif
+
     if !has_key(l:source, 'alias_table')
       let l:source.alias_table = {}
     endif
@@ -1994,6 +2035,7 @@ function! s:filter_alias_action(action_table, alias_table, from)"{{{
     elseif has_key(a:action_table, l:alias_action)
       let a:action_table[l:alias_name] = a:action_table[l:alias_action]
       let a:action_table[l:alias_name].from = a:from
+      let a:action_table[l:alias_name].name = l:alias_name
     endif
   endfor
 endfunction"}}}

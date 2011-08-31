@@ -284,6 +284,8 @@ let NERDTreeShowBookmarks = 1
 
 "1tagbar settings
 let g:tagbar_autofocus = 1
+"tagbar width (default is 40)
+let g:tagbar_width = 30
 
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
