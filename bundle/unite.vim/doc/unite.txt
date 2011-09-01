@@ -814,6 +814,16 @@ unite#start({sources}, [, {context}])		*unite#start()*
 		Refer |unite-notation-{context}| about {context}.  If you
 		skipped it will use the default value.
 
+unite#start_complete({sources}, [{context}])	*unite#start_complete()*
+		Returns the key sequence which open unite buffer for completion.
+		This will be used with inoremap <buffer><expr> usually.
+		Example:
+>
+		inoremap <buffer><expr> <C-l> unite#start_complete(
+		\ ['vimshell/history'], {
+		\ 'start_insert' : 0,
+		\ 'input' : vimshell#get_cur_text()})
+<
 unite#get_context()				*unite#get_context()*
 		Gets the context information of the current Unite buffer.
 		This is used by functions like |unite#custom_action()| to call
@@ -848,6 +858,16 @@ unite#smart_map({narrow-map}, {select-map})	*unite#smart_map()*
 >
 		inoremap <buffer><expr> ' unite#smart_map("'", unite#do_action('preview'))
 <
+unite#mappings#set_current_filters({filters})			*unite#mappings#set_current_filters()*
+		Change current unite buffer filters.
+		Example:
+>
+  nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
+        \ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
+<
+unite#mappings#get_current_filters()				*unite#mappings#get_current_filters()*
+		Get current unite buffer filters.
+
 unite#set_substitute_pattern({buffer-name}, {pattern}, {subst} [, {priority}])
 						*unite#set_substitute_pattern()*
 		Specifies a replace pattern of narrowing text for a Unite
@@ -995,6 +1015,20 @@ unite#undef_filter({name})			*unite#undef_filter()*
 		Removes the filter which name is {name} that was added by
 		|unite#define_filter()|.  If such a filter doesn't exist,
 		this function doesn't do anything.
+
+
+unite#filters#default#use({filters})		*unite#filters#default#use(()*
+		Todo
+
+unite#filters#matcher_default#use({matchers})	*unite#filters#matcher_default#use(()*
+		Todo
+
+unite#filters#sorter_default#use({sorters})	*unite#filters#sorter_default#use(()*
+		Todo
+
+						*unite#filters#converter_default#use(()*
+unite#filters#converter_default#use({converters})
+		Todo
 
 ==============================================================================
 SOURCES						*unite-sources*
@@ -1415,6 +1449,10 @@ directory_mru					*unite-action-directory_mru*
 bookmark					*unite-action-bookmark*
 	delete		Delete from bookmark file candidates
 
+register					*unite-action-register*
+	edit		Change register value
+	delete		Clear registers
+
 						*unite-default-action*
 Default actions
 
@@ -1589,7 +1627,7 @@ NOTATION					*unite-notation*
 			source			(String)	(Optional)
 				Todo
 
-			kind			(String)	(Optional)
+			kind			(String/List)	(Optional)
 				Todo
 
 			is_dummy		(Number)	(Optional)
@@ -1677,10 +1715,10 @@ Todo
 (4) Default action table for kind "source/file/*".
 (5) Custom action table for kind "file".
 (6) Default action table for kind "file".
-(7) Custom action table for kind "openable".
-(8) Default action table for kind "openable".
-(9) Custom action table for kind "cdable".
-(10) Default action table for kind "cdable".
+(7) Custom action table for kind "cdable".
+(8) Default action table for kind "cdable".
+(9) Custom action table for kind "openable".
+(10) Default action table for kind "openable".
 (11) Custom action table for kind "common".
 (12) Default action table for kind "common".
 
@@ -1749,6 +1787,22 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-09-01
+- Implemented unite#start_complete().
+- Added nested autocmd.
+- Added sorter_reverse filter.
+- Implemented unite#mappings#set_current_filters().
+- Added register edit action.
+- Improved syntax highlight.
+
+2011-08-31
+- Fixed new file action.
+- Added register delete action.
+- Implemented action_table syntax sugar.
+- Supported kind list(experimental).
+- Fixed unite-mappings.
+- Improved alias.
 
 2011-08-30
 - Improved :UniteResume.

@@ -810,6 +810,19 @@ unite#start({sources}, [, {context}])				*unite#start()*
 		{context}については、 |unite-notation-{context}|
 		を参照せよ。値を省略すると、デフォルト値が使用される。
 
+unite#start_complete({sources}, [{context}])			*unite#start_complete()*
+		|unite#start()|と似ているが、uniteバッファを補完用に初期化する
+		キーシーケンスを返す。{context}は上書きするcontext情報である。
+		自動的にセットされるcontext情報については、実装を参照せよ。
+
+		inoremap <buffer><expr>で通常用いる。
+		例:
+>
+		inoremap <buffer><expr> <C-l> unite#start_complete(
+		\ ['vimshell/history'], {
+		\ 'start_insert' : 0,
+		\ 'input' : vimshell#get_cur_text()})
+<
 unite#get_context()						*unite#get_context()*
 		現在のuniteバッファのコンテキスト情報を得る。
 		|unite#custom_action()|などで、|unite#start()|を内部で呼び出す
@@ -845,6 +858,17 @@ unite#smart_map({narrow-map}, {select-map})			*unite#smart_map()*
 >
 		inoremap <buffer><expr> ' unite#smart_map("'", unite#do_action('preview'))
 <
+unite#mappings#set_current_filters({filters})			*unite#mappings#set_current_filters()*
+		|unite#set_buffer_name_option()|で設定された、現在のuniteバッフ
+		ァのfilterを動的に変更する。以下のように、キーマッピングとして
+		呼び出すことも可能である。
+>
+  nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
+        \ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
+<
+unite#mappings#get_current_filters()				*unite#mappings#get_current_filters()*
+		現在のuniteバッファのfilterを取得する。
+
 unite#set_substitute_pattern({buffer-name}, {pattern}, {subst} [, {priority}])
 						*unite#set_substitute_pattern()*
 		uniteのバッファ名{buffer-name}における絞込みテキストの置換パタ
@@ -897,7 +921,8 @@ unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
 		filters				(リスト)
 		filter名のリストを指定する。ここで指定したfilterは、source毎
 		に呼び出される普通のfilterとは異なり、全候補を結合した後に呼
-		び出される。
+		び出される。filtersを動的に変更する場合は、
+		|unite#mappings#set_current_filters()|を使用する。
 		
 		ignorecase			(数値)
 		uniteバッファで一時的にセットされる'ignorecase'オプションの値を
@@ -1395,6 +1420,9 @@ sorter_nothing	何もsortをしないsorter。source側のsortがそのまま反
 						*unite-filter-sorter_word*
 sorter_word	wordを比較するsorter。
 
+						*unite-filter-sorter_reverse*
+sorter_reverse	順番を反転するsorter。
+
 						*unite-filter-converter_default*
 converter_default
 		|unite-filter-default|により呼び出される、デフォルトのconverter。
@@ -1543,6 +1571,10 @@ directory_mru					*unite-action-directory_mru*
 
 bookmark					*unite-action-bookmark*
 	delete		ブックマークファイルの候補から削除
+
+register					*unite-action-register*
+	edit		レジスタの中身を変更する
+	delete		レジスタの中身を空にする
 
 						*unite-default-action*
 デフォルトアクション
@@ -1698,7 +1730,13 @@ action_table		辞書		(任意)
 			キーのkindに"*"を設定すると、どんなkindにもマッチするよ
 			うになる。候補のkindが一種類しかない場合に便利である。
 			もしこれが与えられない場合、空となる。
-
+			action_tableに、アクションテーブルをそのまま記述することも
+			できる。その場合、キーのkindは"*"だと解釈される。
+			つまり、次の二つは同じ意味である。
+>
+			'action_table' : foo_action_table
+			'action_table' : { '*' : foo_action_table }
+<
 						*unite-source-attribute-default_action*
 default_action		辞書		(任意)
 			source独自の標準的なアクションを追加するときに使用する。
@@ -1849,8 +1887,19 @@ NOTATION					*unite-notation*
 				候補が所属するsource名。省略された場合、自動
 				的にセットされる。
 
-			kind			(文字列)	(任意)
+			kind			(文字列/リスト)	(任意)
 				候補が所属するkind名。省略すると"common"となる。
+				ここにはkind名のリストを指定することもできる。
+				リストを指定すると、kindを継承した新しいkindを
+				わざわざ定義しなくても良い利点がある。リストの
+				場合、アクションの検索については、リストの順番
+				で辿っていき、後から見つかったものによって上書
+				きされる。例えば、["file", "command"]とすると、
+				"file"のアクションは"command"のアクションで上書
+				きされる。この場合、kindのデフォルトアクション
+				の検索は、"command" kindからしか行われないこと
+				に注意。kindではなく、sourceのデフォルトアクシ
+				ョンを利用したほうが無難である。
 
 			is_dummy		(数値)		(任意)
 				ダミー候補であるかどうか。省略すると0となる。
@@ -1987,10 +2036,10 @@ actionの解決順序				*unite-action-resolution-order*
 (4) Default action table for kind "source/file/*".
 (5) Custom action table for kind "file".
 (6) Default action table for kind "file".
-(7) Custom action table for kind "openable".
-(8) Default action table for kind "openable".
-(9) Custom action table for kind "cdable".
-(10) Default action table for kind "cdable".
+(7) Custom action table for kind "cdable".
+(8) Default action table for kind "cdable".
+(9) Custom action table for kind "openable".
+(10) Default action table for kind "openable".
 (11) Custom action table for kind "common".
 (12) Default action table for kind "common".
 

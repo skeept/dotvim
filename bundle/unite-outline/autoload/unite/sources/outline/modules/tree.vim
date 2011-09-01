@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/tree.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-21
+" Updated : 2011-09-01
 " Version : 0.3.8
 " License : MIT license {{{
 "
@@ -38,15 +38,14 @@ endfunction
 let s:SID = s:get_SID()
 delfunction s:get_SID
 
-" Tree module provides functions to build, to handle, to filter a tree
-" structure.
+" Tree module provides functions to build and handle a tree structure.
 "
 " You can build a tree from a List, elements of which are Dictionaries with
 " `level' attribute, using Tree.build() function. Or, you can also do it one
 " node by one node manually using Tree.new() and Tree.append_child()
 " functions.
 "
-" The following example show how to build a tree in the latter way.
+" The following example shows how to build a tree in the latter way.
 "
 " == Example
 "
@@ -79,28 +78,13 @@ function! s:Tree_new()
 endfunction
 call s:Tree.function('new')
 
-" Returns the root node of the tree to which {node} belongs.
-"
-function! s:Tree_get_root(node)
-  let node = a:node
-  while 1
-    if has_key(node.parent, '__root__')
-      return node.parent
-    endif
-    let node = node.parent
-  endwhile
-endfunction
-call s:Tree.function('get_root')
-
 " Append {child} to a List of children of {node}.
-" The parent of {child} is set to {node}.
 "
 function! s:Tree_append_child(node, child)
   if !has_key(a:node, 'children')
     let a:node.children = []
   endif
   call add(a:node.children, a:child)
-  let a:child.parent = a:node
   " Ensure that all nodes have 'children'.
   if !has_key(a:child, 'children')
     let a:child.children = []
@@ -118,7 +102,7 @@ endfunction
 call s:Tree.function('remove_child')
 
 function! s:Tree_is_toplevel(node)
-  return has_key(a:node.parent, '__root__')
+  return (a:node.level == 1)
 endfunction
 call s:Tree.function('is_toplevel')
 
@@ -130,19 +114,17 @@ call s:Tree.function('is_leaf')
 " Builds a tree structure from a List of elements, which are Dictionaries with
 " `level' attribute, and then returns the root node of the built tree.
 "
-" NOTE: This function allows discontinuous levels and build a tree from such
-" a sequence of levels as shown below:
+" NOTE: This function allows discontinuous levels and can build a tree from such
+" a sequence of levels well.
 "
-"                             root
-"                              |
-"                              +--1
-"   [1, 3, 5, 5, 2, ...]  =>   |  +--3
-"                              |  |  +--5
-"                              |  |  +--5
-"                              |  |
-"                              :  +--2
-"
-" Tree.flatten() function can corrects these discontinuous levels.
+"                                root              root
+"                                 |                 |
+"                                 +--1              +--1
+"    [1, 3, 5, 5, 2, ...]   =>    |  +--3      =>   |  +--2
+"                                 |  |  +--5        |  |  +--3
+"                                 |  |  +--5        |  |  +--3
+"                                 |  |              |  |
+"                                 :  +--2           :  +--2
 "
 function! s:Tree_build(elems)
   let root = s:Tree_new()
@@ -159,34 +141,43 @@ function! s:Tree_build(elems)
     call s:Tree_append_child(stack[-1], elem)
     call add(stack, elem)
   endfor
+  call s:correct_levels(root)
   return root
 endfunction
 call s:Tree.function('build')
 
-" Flatten a tree into a List.
-"
-" NOTE: This function also corrects the level of nodes in accordance with the
-" given tree's structure while flattening it.
+" Corrects the level of nodes in accordance with the given tree's structure.
 "
 "   root             root
 "    |                |
 "    +--1             +--1
 "    |  +--3          |  +--2
-"    |  |  +--5  =>   |  |  +--3  =>  [1, 2, 3, 3, 2, ...]
+"    |  |  +--5  =>   |  |  +--3
 "    |  |  +--5       |  |  +--3
 "    |  |             |  |
 "    :  +--2          :  +--2
 "
-function! s:Tree_flatten(node)
-  let nodes = []
+function! s:correct_levels(node)
   for child in a:node.children
     let child.level = a:node.level + 1
-    call add(nodes, child)
-    let nodes += s:Tree_flatten(child)
+    call s:correct_levels(child)
   endfor
-  return nodes
+endfunction
+
+" Flattens a tree into a List and sets the level of nodes in accordance with
+" the given tree's structure.
+"
+function! s:Tree_flatten(node)
+  let elems = []
+  for child in a:node.children
+    let child.level = a:node.level + 1
+    call add(elems, child)
+    let elems += s:Tree_flatten(child)
+  endfor
+  return elems
 endfunction
 call s:Tree.function('flatten')
+
 
 " Marks nodes for which or one of whose children {predicate} returns True.
 "
