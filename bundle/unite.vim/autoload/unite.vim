@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Aug 2011.
+" Last Modified: 01 Sep 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -167,6 +167,17 @@ endfunction
 function! unite#smart_map(narrow_map, select_map)"{{{
   return (line('.') <= unite#get_current_unite().prompt_linenr && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
 endfunction"}}}
+function! unite#start_complete(sources, ...) "{{{
+  let l:context = {
+        \ 'col' : col('.'), 'complete' : 1,
+        \ 'direction' : 'rightbelow', 'winheight' : 10,
+        \ 'buffer_name' : 'completion',
+        \ }
+  call extend(l:context, get(a:000, 0, {}))
+
+  return printf("\<ESC>:call unite#start(%s, %s)\<CR>",
+        \  string(a:sources), string(l:context))
+endfunction "}}}
 
 function! unite#take_action(action_name, candidate)"{{{
   call s:take_action(a:action_name, a:candidate, 0)
@@ -624,8 +635,7 @@ function! unite#gather_candidates()"{{{
 
   " Post filter.
   let l:unite = unite#get_current_unite()
-  for l:filter_name in unite#get_buffer_name_option(
-        \ l:unite.buffer_name, 'filters')
+  for l:filter_name in l:unite.post_filters
     if has_key(l:unite.filters, l:filter_name)
       let l:candidates =
             \ l:unite.filters[l:filter_name].filter(l:candidates, l:unite.context)
@@ -756,7 +766,7 @@ function! unite#start(sources, ...)"{{{
 
   let s:use_current_unite = 1
 
-  if l:context.toggle
+  if l:context.toggle"{{{
     let l:quit_winnr = 0
 
     " Search unite window.
@@ -790,7 +800,7 @@ function! unite#start(sources, ...)"{{{
       call unite#force_quit_session()
       return
     endif
-  endif
+  endif"}}}
 
   try
     call s:initialize_current_unite(a:sources, l:context)
@@ -803,7 +813,7 @@ function! unite#start(sources, ...)"{{{
   let s:current_unite.input = l:context.input
   call s:recache_candidates(l:context.input, l:context.is_redraw, 0)
 
-  if l:context.immediately
+  if l:context.immediately"{{{
     " Immediately action.
     let l:candidates = unite#gather_candidates()
 
@@ -817,7 +827,7 @@ function! unite#start(sources, ...)"{{{
       let s:use_current_unite = 0
       return
     endif
-  endif
+  endif"}}}
 
   call s:initialize_unite_buffer()
 
@@ -1648,6 +1658,8 @@ function! s:initialize_current_unite(sources, context)"{{{
   let l:unite.access_time = localtime()
   let l:unite.is_finalized = 0
   let l:unite.previewd_buffer_list = []
+  let l:unite.post_filters = unite#get_buffer_name_option(
+        \ l:unite.buffer_name, 'filters')
 
   " Preview windows check.
   let l:unite.has_preview_window =
@@ -1701,7 +1713,7 @@ function! s:initialize_unite_buffer()"{{{
       autocmd InsertLeave <buffer>  call s:on_insert_leave()
       autocmd CursorHoldI <buffer>  call s:on_cursor_hold_i()
       autocmd CursorHold <buffer>  call s:on_cursor_hold()
-      autocmd CursorMoved,CursorMovedI <buffer>  call s:on_cursor_moved()
+      autocmd CursorMoved,CursorMovedI <buffer>  nested call s:on_cursor_moved()
       autocmd BufUnload,BufHidden <buffer>  call s:on_buf_unload(expand('<afile>'))
     augroup END
 
@@ -1819,18 +1831,21 @@ function! s:redraw(is_force, winnr) "{{{
     return
   endif
 
-  if a:is_force
+  let l:unite = unite#get_current_unite()
+
+  if !l:unite.context.is_redraw
+    let l:unite.context.is_redraw = a:is_force
+  endif
+
+  if l:unite.context.is_redraw
     call unite#clear_message()
   endif
 
-  let l:unite = unite#get_current_unite()
   let l:input = unite#get_input()
-  if !a:is_force && l:input ==# l:unite.last_input
+  if !l:unite.context.is_redraw && l:input ==# l:unite.last_input
         \ && !l:unite.is_async
     return
   endif
-
-  let l:unite.context.is_redraw = a:is_force
 
   " Recaching.
   call s:recache_candidates(l:input, a:is_force, 0)
@@ -1890,8 +1905,9 @@ function! s:on_insert_leave()  "{{{
   endif
 endfunction"}}}
 function! s:on_cursor_hold_i()  "{{{
-  let l:prompt_linenr = unite#get_current_unite().prompt_linenr
-  if line('.') == l:prompt_linenr
+  let l:unite = unite#get_current_unite()
+  let l:prompt_linenr = l:unite.prompt_linenr
+  if line('.') == l:prompt_linenr || l:unite.context.is_redraw
     " Redraw.
     call unite#redraw()
 
@@ -1905,13 +1921,14 @@ function! s:on_cursor_hold_i()  "{{{
           \ g:unite_cursor_line_highlight.' /\%'.(l:prompt_linenr+1).'l/' :
           \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
 
-    " Prompt check.
-    if col('.') <= len(unite#get_current_unite().prompt)
-      startinsert!
-    endif
   endif
 
-  if unite#get_current_unite().is_async
+  " Prompt check.
+  if line('.') == l:prompt_linenr && col('.') <= len(l:unite.prompt)
+    startinsert!
+  endif
+
+  if l:unite.is_async
     " Ignore key sequences.
     call feedkeys("\<C-r>\<ESC>", 'n')
   endif
