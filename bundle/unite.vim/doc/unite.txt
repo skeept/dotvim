@@ -250,6 +250,10 @@ COMMANDS 					*unite-commands*
 		Defines split position rule. The default value is same to
 		|g:unite_split_rule|.
 
+						*unite-options-no-split*
+		-no-split
+		No split unite buffer and no resize window.
+
 						*unite-options-verbose*
 		-verbose
 		Print verbose warning messages.
@@ -1787,6 +1791,12 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-09-03
+- Improved quit unite buffer.
+- Implemented -no-split option.
+- Improved insert word action.
+- Improved vimfiler file source.
 
 2011-09-02
 - Fixed quit unite buffer.
