@@ -393,6 +393,10 @@ function! s:unite_my_settings()"{{{
   set norelativenumber
 endfunction"}}}
 
+
+"libclang completion
+let g:clang_use_library = 1
+
 let g:unite_source_file_mru_limit = 200
 let g:unite_cursor_line_highlight = 'TabLineSel'
 let g:unite_abbr_highlight = 'TabLine'
