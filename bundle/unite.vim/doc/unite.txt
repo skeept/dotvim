@@ -250,6 +250,10 @@ COMMANDS 					*unite-commands*
 		Defines split position rule. The default value is same to
 		|g:unite_split_rule|.
 
+						*unite-options-no-split*
+		-no-split
+		No split unite buffer and no resize window.
+
 						*unite-options-verbose*
 		-verbose
 		Print verbose warning messages.
@@ -794,10 +798,13 @@ unite#get_kinds([{kind-name}])			*unite#get_kinds()*
 			Changing the return value is not allowed.
 
 unite#get_sources([{source-name}])		*unite#get_sources()*
-			Gets the source of {source-name}. Unless they exist
-			this returns an empty dictionary.  This returns a
-			dictionary which keys are source names and values are
-			the sources when you skipped giving {source-name}.
+			Gets the loaded source of {source-name}. Unless they
+			exist this returns an empty dictionary.  This
+			returns a dictionary which keys are source names and
+			values are the sources when you skipped giving
+			{source-name}.
+			If you give {source-name} as dictionary, unite.vim
+			use this source temporary.
 
 			Changing the return value is not allowed.
 
@@ -1787,6 +1794,20 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-09-04
+- Improved unite buffer source.
+
+2011-09-03
+- Improved quit unite buffer.
+- Implemented -no-split option.
+- Improved insert word action.
+- Improved vimfiler file source.
+- Improved unite#vimfiler_check_filetype().
+- Improved unite#start().
+
+2011-09-02
+- Fixed quit unite buffer.
 
 2011-09-01
 - Implemented unite#start_complete().

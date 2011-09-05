@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Sep 2011.
+" Last Modified: 04 Sep 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -230,8 +230,8 @@ let s:unite_options = [
       \ '-default-action=', '-start-insert','-no-start-insert', '-no-quit',
       \ '-winwidth=', '-winheight=',
       \ '-immediately', '-auto-preview', '-complete',
-      \ '-vertical', '-horizontal', '-direction=',
-      \ '-verbose', '-auto-resize', '-toggle'
+      \ '-vertical', '-horizontal', '-direction=', '-no-split',
+      \ '-verbose', '-auto-resize', '-toggle',
       \]
 "}}}
 
@@ -241,6 +241,10 @@ function! unite#get_kinds(...)"{{{
   return a:0 == 0 ? l:unite.kinds : get(l:unite.kinds, a:1, {})
 endfunction"}}}
 function! unite#get_sources(...)"{{{
+  let l:unite = unite#get_current_unite()
+  return a:0 == 0 ? l:unite.sources : get(l:unite.sources, a:1, {})
+endfunction"}}}
+function! unite#get_all_sources(...)"{{{
   let l:all_sources = s:initialize_sources()
   return a:0 == 0 ? l:all_sources : get(l:all_sources, a:1, {})
 endfunction"}}}
@@ -295,23 +299,25 @@ function! unite#set_context(context)"{{{
   return l:old_context
 endfunction"}}}
 
-" function! unite#get_action_table(source_name, kind_name, self_func, [is_parent_action])
 function! unite#get_action_table(source_name, kind, self_func, ...)"{{{
   let l:is_parents_action = get(a:000, 0, 0)
+  let l:source_table = get(a:000, 1, {})
 
   let l:action_table = {}
   for l:kind_name in type(a:kind) == type([]) ?
         \ a:kind : [a:kind]
     call extend(l:action_table,
           \ s:get_action_table(a:source_name,
-          \                l:kind_name, a:self_func, l:is_parents_action))
+          \                l:kind_name, a:self_func,
+          \                l:is_parents_action, l:source_table))
   endfor
 
   return l:action_table
 endfunction"}}}
-function! s:get_action_table(source_name, kind_name, self_func, is_parents_action)"{{{
+function! s:get_action_table(source_name, kind_name, self_func, is_parents_action, source_table)"{{{
   let l:kind = unite#get_kinds(a:kind_name)
-  let l:source = unite#get_sources(a:source_name)
+  let l:source = empty(a:source_table) ?
+        \ unite#get_sources(a:source_name) : get(a:source_table, a:source_name, {})
   if empty(l:source)
     call unite#print_error('source "' . a:source_name . '" is not found.')
     return {}
@@ -361,7 +367,8 @@ function! s:get_action_table(source_name, kind_name, self_func, is_parents_actio
   " Parents actions.
   for l:parent in l:kind.parents
     let l:action_table = s:extend_actions(a:self_func, l:action_table,
-          \ unite#get_action_table(a:source_name, l:parent, a:self_func))
+          \ unite#get_action_table(a:source_name, l:parent,
+          \                    a:self_func, 0, a:source_table))
   endfor
 
   if !a:is_parents_action
@@ -596,6 +603,7 @@ function! unite#redraw_candidates() "{{{
   if l:unite.context.auto_resize
         \ && l:unite.prompt_linenr + len(l:candidates)
         \      < l:unite.context.winheight
+        \ && winnr('$') != 1
     " Auto resize.
     execute 'resize' l:unite.prompt_linenr + len(l:candidates)
     normal! zb
@@ -911,13 +919,13 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
     if has_key(l:source, 'vimfiler_check_filetype')
       let l:ret = l:source.vimfiler_check_filetype(l:source.args, l:context)
       if !empty(l:ret)
-        let [l:type, l:lines, l:dict] = l:ret
-        if !empty(l:dict)
-          call s:initialize_candidates([l:dict], l:source.name)
-          call s:initialize_vimfiler_candidates([l:dict])
+        let [l:type, l:info] = l:ret
+        if l:type ==# 'file'
+          call s:initialize_candidates([l:info[1]], l:source.name)
+          call s:initialize_vimfiler_candidates([l:info[1]])
         endif
 
-        return [l:type, l:lines, l:dict]
+        return [l:type, l:info]
       endif
     endif
   endfor
@@ -1105,6 +1113,9 @@ function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'direction')
     let a:context.direction = g:unite_split_rule
   endif
+  if !has_key(a:context, 'no_split')
+    let a:context.no_split = 0
+  endif
   if !has_key(a:context, 'temporary')
     let a:context.temporary = 0
   endif
@@ -1171,16 +1182,22 @@ function! s:quit_session(is_force)  "{{{
           \ 'v:val !=# l:unite.context.input'), l:context.input)
   endif
 
-  if winnr('$') != 1
-    if !a:is_force && l:context.no_quit
-      if winnr('#') > 0
-        wincmd p
-      endif
+  if a:is_force || !l:context.no_quit
+    let l:bufname = bufname('%')
+
+    if winnr('$') == 1 || l:context.no_split
+      call unite#util#alternate_buffer()
     else
-      let l:bufname = bufname('%')
       noautocmd close!
       execute l:unite.winnr . 'wincmd w'
-      call s:on_buf_unload(l:bufname)
+    endif
+
+    call s:on_buf_unload(l:bufname)
+  else
+    if winnr('$') == 1 || winnr('#') < 0
+      new
+    else
+      wincmd p
     endif
   endif
 
@@ -1232,13 +1249,21 @@ function! s:initialize_loaded_sources(sources, context)"{{{
   let l:sources = []
 
   let l:number = 0
-  for [l:source_name, l:args] in map(a:sources, 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
-    if !has_key(l:all_sources, l:source_name)
-      call unite#util#print_error('Invalid source name "' . l:source_name . '" is detected.')
-      throw 'Invalid source'
+  for [l:source, l:args] in map(a:sources, 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
+    if type(l:source) == type('')
+      let l:source_name = l:source
+      unlet l:source
+      if !has_key(l:all_sources, l:source_name)
+        call unite#util#print_error('Invalid source name "' . l:source_name . '" is detected.')
+        throw 'Invalid source'
+      endif
+
+      let l:source = deepcopy(l:all_sources[l:source_name])
+    else
+      " Use source dictionary.
+      call s:initialize_sources([l:source])
     endif
 
-    let l:source = deepcopy(l:all_sources[l:source_name])
     let l:source.args = l:args
     let l:source.unite__is_invalidate = 1
 
@@ -1253,20 +1278,25 @@ function! s:initialize_loaded_sources(sources, context)"{{{
     let l:number += 1
 
     call add(l:sources, l:source)
+
+    unlet l:source
   endfor
 
   return l:sources
 endfunction"}}}
-function! s:initialize_sources()"{{{
+function! s:initialize_sources(...)"{{{
   if empty(s:static)
     " Initialize load.
     call s:load_default_scripts()
   endif
 
-  let l:sources = extend(copy(s:static.sources), s:dynamic.sources)
+  let l:sources = get(a:000, 0,
+        \ extend(copy(s:static.sources), s:dynamic.sources))
 
-  for l:source in values(filter(copy(l:sources),
-        \ '!has_key(v:val, "is_initialized")'))
+  let l:filterd_sources = filter(copy(l:sources),
+        \ '!has_key(v:val, "is_initialized")')
+  for l:source in type(l:filterd_sources) == type([]) ?
+        \ l:filterd_sources : values(l:filterd_sources)
     let l:source.is_initialized = 1
 
     if !has_key(l:source, 'hooks')
@@ -1705,7 +1735,6 @@ function! s:initialize_unite_buffer()"{{{
     if exists('+colorcolumn')
       setlocal colorcolumn=0
     endif
-    setlocal nocursorline
 
     " Autocommands.
     augroup plugin-unite
@@ -1739,6 +1768,7 @@ function! s:initialize_unite_buffer()"{{{
   " User's initialization.
   setlocal nomodifiable
   set sidescrolloff=0
+  setlocal nocursorline
   setfiletype unite
 
   if exists('b:current_syntax') && b:current_syntax ==# 'unite'
@@ -1782,13 +1812,15 @@ function! s:switch_unite_buffer(buffer_name, context)"{{{
   " Search unite window.
   " Note: must escape file-pattern.
   let l:buffer_name = unite#util#escape_file_searching(a:buffer_name)
-  if bufwinnr(l:buffer_name) > 0
+  if !a:context.no_split && bufwinnr(l:buffer_name) > 0
     silent execute bufwinnr(l:buffer_name) 'wincmd w'
   else
-    " Split window.
-    execute a:context.direction (bufexists(a:buffer_name) ?
-          \ ((a:context.vertical) ? 'vsplit' : 'split') :
-          \ ((a:context.vertical) ? 'vnew' : 'new'))
+    if !a:context.no_split
+      " Split window.
+      execute a:context.direction (bufexists(a:buffer_name) ?
+            \ ((a:context.vertical) ? 'vsplit' : 'split') :
+            \ ((a:context.vertical) ? 'vnew' : 'new'))
+    endif
 
     if bufexists(a:buffer_name)
       " Search buffer name.
@@ -1803,11 +1835,11 @@ function! s:switch_unite_buffer(buffer_name, context)"{{{
         let l:bufnr += 1
       endwhile
     else
-      silent! file `=a:buffer_name`
+      silent! edit `=a:buffer_name`
     endif
   endif
 
-  if winnr('$') != 1
+  if !a:context.no_split && winnr('$') != 1
     if a:context.vertical
       execute 'vertical resize' a:context.winwidth
     else
