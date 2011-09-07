@@ -6,8 +6,8 @@
 "               supports.
 " Authors:      Ming Bai <mbbill AT gmail DOT com>,
 "               Wu Yongwei <wuyongwei AT gmail DOT com>
-" Last Change:  2009-04-30 21:17:26
-" Version:      1.19
+" Last Change:  2011-06-22 16:34:01
+" Version:      1.23
 "
 " Install:      1. Put echofunc.vim to /plugin directory.
 "               2. Use the command below to create tags
@@ -28,6 +28,15 @@
 "               macro name, etc. This works with when
 "               +balloon_eval is compiled in.
 "
+"               Because the message line often cleared by
+"               some other plugins (e.g. ominicomplete), an
+"               other choice is to show message in status line.
+"               First, add  %{EchoFuncGetStatusLine()}  to
+"               your 'statusline' option.
+"               Second, add the following line to your vimrc
+"               let g:EchoFuncShowOnStatus = 1
+"               to avoid echoing function name in message line.
+"
 " Options:      g:EchoFuncLangsDict
 "                 Dictionary to map the Vim file types to
 "                 tags languages that should be used. You do
@@ -40,9 +49,15 @@
 "               g:EchoFuncMaxBalloonDeclarations
 "                 Maximum lines to display in balloon declarations.
 "               g:EchoFuncKeyNext
-"                 Key to echo the next function
+"                 Key to echo the next function.
 "               g:EchoFuncKeyPrev
-"                 Key to echo the previous function
+"                 Key to echo the previous function.
+"               g:EchoFuncShowOnStatus
+"                 Show function name on status line. NOTE,
+"                 you should manually add %{EchoFuncGetStatusLine()}
+"                 to your 'statusline' option.
+"               g:EchoFuncAutoStartBalloonDeclaration
+"                 Automatically start balloon declaration if not 0.
 "
 " Thanks:       edyfox minux
 "
@@ -57,8 +72,15 @@ endif
 let s:res=[]
 let s:count=1
 
-function! s:EchoFuncDisplay()
+function! EchoFuncGetStatusLine()
     if len(s:res) == 0
+        return ""
+    endif
+    return substitute(s:res[s:count-1],'^\s*','','')
+endfunction
+
+function! s:EchoFuncDisplay()
+    if len(s:res) == 0 || g:EchoFuncShowOnStatus == 1
         return
     endif
     set noshowmode
@@ -82,9 +104,16 @@ endfunction
 
 function! s:GetFunctions(fun, fn_only)
     let s:res=[]
-    let ftags=taglist('^'.escape(a:fun,'[\*~^').'$')
+    let funpat=escape(a:fun,'[\*~^')
+    let ftags=taglist('^'.funpat.'$')
     if (type(ftags)==type(0) || ((type(ftags)==type([])) && ftags==[]))
-        return
+        if &filetype=='cpp' && funpat!~'^\(catch\|if\|for\|while\|switch\)$'
+            " Namespaces may be omitted
+            let ftags=taglist('::'.funpat.'$')
+            if (type(ftags)==type(0) || ((type(ftags)==type([])) && ftags==[]))
+                return
+            endif
+        endif
     endif
     let fil_tag=[]
     for i in ftags
@@ -105,8 +134,11 @@ function! s:GetFunctions(fun, fn_only)
             if (!a:fn_only || (i.kind=='p' || i.kind=='f') ||
                         \(i.kind == 'm' && has_key(i,'cmd') &&
                         \                  match(i.cmd,'(') != -1)) &&
-                        \i.name==a:fun
-                let fil_tag+=[i]
+                        \i.name=~funpat
+                if &filetype!='cpp' || !has_key(i,'class') ||
+                            \i.name!~'::' || i.name=~i.class
+                    let fil_tag+=[i]
+                endif
             endif
         else
             if !a:fn_only && i.name == a:fun
@@ -120,11 +152,12 @@ function! s:GetFunctions(fun, fn_only)
     let s:count=1
     for i in fil_tag
         if has_key(i,'kind') && has_key(i,'name') && has_key(i,'signature')
-            let tmppat=escape(i.name,'[\*~^')
+            let tmppat=substitute(escape(i.name,'[\*~^'),'^.*::','','')
             if &filetype == 'cpp'
                 let tmppat=substitute(tmppat,'\<operator ','operator\\s*','')
-                let tmppat=substitute(tmppat,'^\(.*::\)','\\(\1\\)\\?','')
+                "let tmppat=substitute(tmppat,'^\(.*::\)','\\(\1\\)\\?','')
                 let tmppat=tmppat . '\s*(.*'
+                let tmppat='\([A-Za-z_][A-Za-z_0-9]*::\)*'.tmppat
             else
                 let tmppat=tmppat . '\>.*'
             endif
@@ -381,6 +414,14 @@ if !exists("g:EchoFuncKeyPrev")
     let g:EchoFuncKeyPrev='<M-->'
 endif
 
+if !exists("g:EchoFuncShowOnStatus")
+    let g:EchoFuncShowOnStatus = 0
+endif
+
+if !exists("g:EchoFuncAutoStartBalloonDeclaration")
+    let g:EchoFuncAutoStartBalloonDeclaration = 1
+endif
+
 function! s:CheckTagsLanguage(filetype)
     return index(g:EchoFuncLangsUsed, a:filetype) != -1
 endfunction
@@ -392,7 +433,7 @@ function! CheckedEchoFuncStart()
 endfunction
 
 function! CheckedBalloonDeclarationStart()
-    if s:CheckTagsLanguage(&filetype)
+    if s:CheckTagsLanguage(&filetype) && g:EchoFuncAutoStartBalloonDeclaration
         call BalloonDeclarationStart()
     endif
 endfunction

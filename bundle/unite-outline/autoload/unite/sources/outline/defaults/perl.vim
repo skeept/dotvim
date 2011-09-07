@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/perl.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-28
+" Updated : 2011-08-29
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -17,6 +17,9 @@ endfunction
 
 let s:Util = unite#sources#outline#import('Util')
 
+"-----------------------------------------------------------------------------
+" Outline Info
+
 let s:outline_info = {
       \ 'heading-1': s:Util.shared_pattern('sh', 'heading-1'),
       \ 'heading'  : '^\%(\s*\%(sub\s\+\h\|\%(package\|BEGIN\|CHECK\|INIT\|END\)\>\)\|__\%(DATA\|END\)__$\)',
@@ -31,16 +34,16 @@ let s:outline_info = {
       \     'pattern'  : '/#.*/' },
       \   { 'name'     : 'sub',
       \     'pattern'  : '/\h\w*/',
-      \     'highlight': unite#sources#outline#get_default_highlight('function') },
+      \     'highlight': unite#sources#outline#get_highlight('function') },
       \   { 'name'     : 'block',
       \     'pattern'  : '/\<\%(BEGIN\|CHECK\|INIT\|END\|__\%(DATA\|END\)__\)\>/',
-      \     'highlight': unite#sources#outline#get_default_highlight('special') },
+      \     'highlight': unite#sources#outline#get_highlight('special') },
       \   { 'name'     : 'package',
       \     'pattern'  : '/\S\+\ze : package/',
-      \     'highlight': unite#sources#outline#get_default_highlight('type') },
+      \     'highlight': unite#sources#outline#get_highlight('type') },
       \   { 'name'     : '_after_colon',
       \     'pattern'  : '/ : \h\w*/',
-      \     'highlight': unite#sources#outline#get_default_highlight('normal') },
+      \     'highlight': unite#sources#outline#get_highlight('normal') },
       \ ],
       \}
 
@@ -68,7 +71,6 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
       let heading.level += 1
     endif
   endif
-
   return heading
 endfunction
 
