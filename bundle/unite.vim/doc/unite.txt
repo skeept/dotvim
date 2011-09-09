@@ -1795,6 +1795,14 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-09-09
+- Fixed buffer rename action.
+- Improved initialize candidates.
+
+2011-09-08
+- Improved unite-line.
+- Fixed unite-register error.
+
 2011-09-07
 - Fixed keymapping.
 - Changed g:unite_update_time default value.

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: register.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Sep 2011.
+" Last Modified: 08 Sep 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -47,7 +47,7 @@ function! s:source.gather_candidates(args, context)"{{{
         \ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
         \ 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
         \ 'u', 'v', 'w', 'x', 'y', 'z',
-        \ '-', '*', '+', '.', ':', '%', '#', '/', '=',
+        \ '-', '*', '+', '.', ':', '#', '%', '/', '=',
         \ ]
   if exists('g:yanktmp_file') && filereadable(g:yanktmp_file)
     call add(l:registers, 'yanktmp')
@@ -85,7 +85,7 @@ function! s:source.action_table.delete.func(candidates)"{{{
     if l:candidate.action__register ==# 'yanktmp'
       call delete(g:yanktmp_file)
     else
-      call setreg(l:candidate.action__register, '')
+      silent! call setreg(l:candidate.action__register, '')
     endif
   endfor
 endfunction"}}}
@@ -104,7 +104,7 @@ function! s:source.action_table.edit.func(candidate)"{{{
   if a:candidate.action__register ==# 'yanktmp'
     call writefile(split(l:new_value, "\n", 1), g:yanktmp_file)
   else
-    call setreg(a:candidate.action__register, l:new_value)
+    silent! call setreg(a:candidate.action__register, l:new_value)
   endif
 endfunction"}}}
 "}}}
