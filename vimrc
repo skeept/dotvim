@@ -535,3 +535,6 @@ endif
 if v:version < 703
   let g:loaded_autoload_l9 = 1
 endif
+
+"load cscope in two levels up
+map <Leader>csa :cs add ../s/cscope.out ../s<cr>
