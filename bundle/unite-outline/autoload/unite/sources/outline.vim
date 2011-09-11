@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-07
+" Updated : 2011-09-10
 " Version : 0.5.0
 " License : MIT license {{{
 "
@@ -195,7 +195,7 @@ function! s:load_outline_info(filetype, is_default)
     call s:update_script(scr_path)
     " Load the outline info.
     let outline_info = {load_func}()
-    let outline_info = s:normalize_outline_info(outline_info)
+    let outline_info = s:initialize_outline_info(outline_info)
     return outline_info
   endfor
   return {}
@@ -245,8 +245,8 @@ function! s:update_script(path)
   return (new_ftime > old_ftime)
 endfunction
 
-function! s:normalize_outline_info(outline_info)
-  if has_key(a:outline_info, '__normalized__')
+function! s:initialize_outline_info(outline_info)
+  if has_key(a:outline_info, '__initialized__')
     return a:outline_info
   endif
   call extend(a:outline_info, { 'is_volatile': 0 }, 'keep' )
@@ -258,7 +258,7 @@ function! s:normalize_outline_info(outline_info)
     let a:outline_info.__not_match_pattern__ =
           \ '\%(' . join(a:outline_info.not_match_patterns, '\|') . '\)'
   endif
-  let a:outline_info.__normalized__ = 1
+  let a:outline_info.__initialized__ = 1
   return a:outline_info
 endfunction
 
@@ -815,7 +815,7 @@ function! s:extract_Headings(context)
     " to a small value.
     set lazyredraw
 
-    " Switch: current window -> context window
+    " Switch: current window -> source buffer's window
     execute winnr . 'wincmd w'
     " Save the cursor and scroll.
     let save_cursor  = getpos('.')
@@ -865,7 +865,7 @@ function! s:extract_Headings(context)
     normal! zt
     call setpos('.', save_cursor)
     let &scrolloff = save_scrolloff
-    " Switch: current window <- context window
+    " Switch: current window <- source buffer's window
     wincmd p
 
     " Restore the Vim options.
