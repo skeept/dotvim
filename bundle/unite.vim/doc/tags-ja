@@ -44,6 +44,7 @@ g:unite_kind_openable_lcd_command	unite.jax	/*g:unite_kind_openable_lcd_command*
 g:unite_kind_openable_persist_open_blink_time	unite.jax	/*g:unite_kind_openable_persist_open_blink_time*
 g:unite_no_default_keymappings	unite.jax	/*g:unite_no_default_keymappings*
 g:unite_quick_match_table	unite.jax	/*g:unite_quick_match_table*
+g:unite_source_alias_aliases	unite.jax	/*g:unite_source_alias_aliases*
 g:unite_source_bookmark_directory	unite.jax	/*g:unite_source_bookmark_directory*
 g:unite_source_directory_mru_directory	unite.jax	/*g:unite_source_directory_mru_directory*
 g:unite_source_directory_mru_ignore_pattern	unite.jax	/*g:unite_source_directory_mru_ignore_pattern*
@@ -107,10 +108,13 @@ unite#get_context()	unite.jax	/*unite#get_context()*
 unite#get_kinds()	unite.jax	/*unite#get_kinds()*
 unite#get_sources()	unite.jax	/*unite#get_sources()*
 unite#get_substitute_pattern()	unite.jax	/*unite#get_substitute_pattern()*
+unite#mappings#get_current_filters()	unite.jax	/*unite#mappings#get_current_filters()*
+unite#mappings#set_current_filters()	unite.jax	/*unite#mappings#set_current_filters()*
 unite#set_buffer_name_option()	unite.jax	/*unite#set_buffer_name_option()*
 unite#set_substitute_pattern()	unite.jax	/*unite#set_substitute_pattern()*
 unite#smart_map()	unite.jax	/*unite#smart_map()*
 unite#start()	unite.jax	/*unite#start()*
+unite#start_complete()	unite.jax	/*unite#start_complete()*
 unite#take_action()	unite.jax	/*unite#take_action()*
 unite#take_parents_action()	unite.jax	/*unite#take_parents_action()*
 unite#undef_custom_action()	unite.jax	/*unite#undef_custom_action()*
@@ -129,6 +133,7 @@ unite-action-file	unite.jax	/*unite-action-file*
 unite-action-file_mru	unite.jax	/*unite-action-file_mru*
 unite-action-jump_list	unite.jax	/*unite-action-jump_list*
 unite-action-openable	unite.jax	/*unite-action-openable*
+unite-action-register	unite.jax	/*unite-action-register*
 unite-action-resolution-order	unite.jax	/*unite-action-resolution-order*
 unite-action-tab	unite.jax	/*unite-action-tab*
 unite-action-uri	unite.jax	/*unite-action-uri*
@@ -158,6 +163,7 @@ unite-filter-matcher_glob	unite.jax	/*unite-filter-matcher_glob*
 unite-filter-matcher_regexp	unite.jax	/*unite-filter-matcher_regexp*
 unite-filter-sorter_default	unite.jax	/*unite-filter-sorter_default*
 unite-filter-sorter_nothing	unite.jax	/*unite-filter-sorter_nothing*
+unite-filter-sorter_reverse	unite.jax	/*unite-filter-sorter_reverse*
 unite-filter-sorter_word	unite.jax	/*unite-filter-sorter_word*
 unite-functions	unite.jax	/*unite-functions*
 unite-functions-core	unite.jax	/*unite-functions-core*
@@ -205,6 +211,7 @@ unite-options-horizontal	unite.jax	/*unite-options-horizontal*
 unite-options-immediately	unite.jax	/*unite-options-immediately*
 unite-options-input	unite.jax	/*unite-options-input*
 unite-options-no-quit	unite.jax	/*unite-options-no-quit*
+unite-options-no-split	unite.jax	/*unite-options-no-split*
 unite-options-no-start-insert	unite.jax	/*unite-options-no-start-insert*
 unite-options-prompt	unite.jax	/*unite-options-prompt*
 unite-options-start-insert	unite.jax	/*unite-options-start-insert*
@@ -213,6 +220,7 @@ unite-options-verbose	unite.jax	/*unite-options-verbose*
 unite-options-vertical	unite.jax	/*unite-options-vertical*
 unite-options-winheight	unite.jax	/*unite-options-winheight*
 unite-options-winwidth	unite.jax	/*unite-options-winwidth*
+unite-source-alias	unite.jax	/*unite-source-alias*
 unite-source-attribute-action_table	unite.jax	/*unite-source-attribute-action_table*
 unite-source-attribute-alias_table	unite.jax	/*unite-source-attribute-alias_table*
 unite-source-attribute-async_gather_candidates	unite.jax	/*unite-source-attribute-async_gather_candidates*
@@ -225,6 +233,7 @@ unite-source-attribute-hooks	unite.jax	/*unite-source-attribute-hooks*
 unite-source-attribute-hooks-on_close	unite.jax	/*unite-source-attribute-hooks-on_close*
 unite-source-attribute-hooks-on_init	unite.jax	/*unite-source-attribute-hooks-on_init*
 unite-source-attribute-hooks-on_post_filter	unite.jax	/*unite-source-attribute-hooks-on_post_filter*
+unite-source-attribute-hooks-on_pre_init	unite.jax	/*unite-source-attribute-hooks-on_pre_init*
 unite-source-attribute-hooks-on_syntax	unite.jax	/*unite-source-attribute-hooks-on_syntax*
 unite-source-attribute-is_listed	unite.jax	/*unite-source-attribute-is_listed*
 unite-source-attribute-is_volatile	unite.jax	/*unite-source-attribute-is_volatile*
