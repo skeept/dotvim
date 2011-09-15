@@ -1,8 +1,8 @@
 *unite-outline.txt*	outline source for unite.vim
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-09-06
-Version : 0.3.8
+Updated : 2011-09-13
+Version : 0.5.0
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -103,21 +103,6 @@ FILTER HEADINGS ~
 
 	See |unite-usage|.
 
-CREATE HEADINGS FROM FOLDINGS ~
-
-	You can also create headings from the foldings of the buffer.
->
-	:Unite outline:folding
-<
-	This method can be used even if there is no outline info for the
-	filetype of the buffer. (However, by unsuitable settings of folding,
-	you may not get useful headings from the foldings).
-
-	To go back to the heading list extracted in the filetype specific way,
-	execute the following.
->
-	:Unite outline:filetype
-<
 ==============================================================================
 SETTINGS					*unite-outline-settings*
 
@@ -269,8 +254,6 @@ SETTINGS EXAMPLE			*unite-outline-settings-example*
 	nmap f [unite]
 
 	nnoremap <silent> [unite]o :<C-u>Unite -buffer-name=outline outline<CR>
-	nnoremap <silent> [unite]z :<C-u>Unite -buffer-name=outline outline:folding<CR>
-	nnoremap <silent> [unite]Z :<C-u>Unite -buffer-name=outline outline:filetype<CR>
 
 	call unite#set_buffer_name_option('outline', 'ignorecase', 1)
 	call unite#set_buffer_name_option('outline', 'smartcase',  1)
@@ -904,10 +887,10 @@ MESSAGE FROM THE AUTHOR
 	the default outline info of the filetype.
 
 	* Issues - h1mesuke/unite-outline - GitHub
-	  https://github.com/h1mesuke/unite-outline/issues
+	  http://github.com/h1mesuke/unite-outline/issues
 	
 	* Send a pull request - GitHub
-	  https://github.com/h1mesuke/unite-outline/pull/new/master
+	  http://github.com/h1mesuke/unite-outline/pull/new/master
 
 ==============================================================================
 BUGS						*unite-outline-bugs*
@@ -929,7 +912,7 @@ INCORRECT STRUCTURED TREE ~
 ==============================================================================
 CHANHELOG					*unite-outline-changelog*
 
-https://github.com/h1mesuke/unite-outline/commits/master
+http://github.com/h1mesuke/unite-outline/commits/master
 
 0.5.0	2011-9-06
 
