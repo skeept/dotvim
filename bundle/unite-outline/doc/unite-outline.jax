@@ -1,8 +1,8 @@
 *unite-outline.txt*	バッファの見出し一覧を表示し、ジャンプ機能を提供する。
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-09-06
-Version : 0.3.8
+Updated : 2011-09-13
+Version : 0.5.0
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -107,23 +107,6 @@ License : MIT license {{{
 
 	NOTE: バージョン 0.5.0 から見出しの自動更新が可能になりました。
 	詳細は|unite-outline-filetype-option-auto-update|を参照
-
-折り畳みから見出しを作成する ~
-
-	バッファに折り畳みが設定されていれば、それを元に見出しを作成することも
-	できます。
->
-	:Unite outline:folding
-<
-	この方法は、バッファのファイルタイプに対応する outline info がない場合
-	でも使えます。（'foldmethod' によっては、折り畳みから有用な見出しが作
-	成できないことがあります）
-
-	ファイルタイプ固有の見出し抽出に戻す場合は
->
-	:Unite outline:filetype
-<
-	とします。
 
 ==============================================================================
 設定						*unite-outline-settings*
@@ -272,8 +255,6 @@ g:unite_source_outline_highlight	*g:unite_source_outline_highlight*
 	nmap f [unite]
 
 	nnoremap <silent> [unite]o :<C-u>Unite -buffer-name=outline outline<CR>
-	nnoremap <silent> [unite]z :<C-u>Unite -buffer-name=outline outline:folding<CR>
-	nnoremap <silent> [unite]Z :<C-u>Unite -buffer-name=outline outline:filetype<CR>
 
 	call unite#set_buffer_name_option('outline', 'ignorecase', 1)
 	call unite#set_buffer_name_option('outline', 'smartcase',  1)
@@ -874,10 +855,10 @@ outline info 募集！
 	布アーカイブにそのまま同梱）させていただきます。
 
 	* Issues - h1mesuke/unite-outline - GitHub
-	  https://github.com/h1mesuke/unite-outline/issues
+	  http://github.com/h1mesuke/unite-outline/issues
 	
 	* Send a pull request - GitHub
-	  https://github.com/h1mesuke/unite-outline/pull/new/master
+	  http://github.com/h1mesuke/unite-outline/pull/new/master
 	
 ==============================================================================
 既知の問題					*unite-outline-bugs*
@@ -897,7 +878,7 @@ outline info 募集！
 ==============================================================================
 更新履歴					*unite-outline-changelog*
 
-https://github.com/h1mesuke/unite-outline/commits/master
+http://github.com/h1mesuke/unite-outline/commits/master
 
 0.5.0	2011-09-06
 
