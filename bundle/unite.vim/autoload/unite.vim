@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Sep 2011.
+" Last Modified: 17 Sep 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -218,7 +218,8 @@ let s:custom.max_candidates = {}
 
 let s:buffer_name_options = {}
 call unite#set_substitute_pattern('files', '^\~',
-      \ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
+      \ substitute(unite#util#substitute_path_separator($HOME),
+      \ ' ', '\\\\ ', 'g'), -100)
 call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
 call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
 call unite#set_substitute_pattern('files', '\.', '*.', 1000)
@@ -1025,13 +1026,19 @@ function! unite#resume(buffer_name, ...)"{{{
 
   call s:switch_unite_buffer(bufname(l:bufnr), l:unite.context)
 
+  let l:new_context = get(a:000, 0, {})
+  if has_key(l:new_context, 'no_start_insert')
+        \ && l:new_context.no_start_insert
+    let l:new_context.start_insert = 0
+  endif
+
   " Set parameters.
   let l:unite = unite#get_current_unite()
   let l:unite.winnr = l:winnr
   let l:unite.win_rest_cmd = l:win_rest_cmd
   let l:unite.redrawtime_save = &redrawtime
   let l:unite.access_time = localtime()
-  call extend(l:unite.context, get(a:000, 0, {}))
+  call extend(l:unite.context, l:new_context)
 
   let s:current_unite = l:unite
 
@@ -1137,6 +1144,8 @@ function! s:initialize_context(context)"{{{
   endif
   let a:context.is_redraw = 0
   let a:context.is_changed = 0
+
+  return a:context
 endfunction"}}}
 
 function! unite#force_quit_session()  "{{{
