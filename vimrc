@@ -537,4 +537,5 @@ if v:version < 703
 endif
 
 "load cscope in two levels up
-map <Leader>csa :cs add ../s/cscope.out ../s<cr>
+map <Leader>csa :cs add ../../cscope.out ../..<cr>
+set cot-=preview
