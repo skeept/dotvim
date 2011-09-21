@@ -538,3 +538,4 @@ endif
 
 "load cscope in two levels up
 map <Leader>csa :cs add ../../cscope.out ../..<cr>
+set cot-=preview

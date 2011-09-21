@@ -1,9 +1,8 @@
 " space.vim - Smart Space key
 " Author:       Henrik Öhman <speeph@gmail.com>
 " URL:          http://github.com/spiiph/vim-space/tree/master
-" Version:      1.7
-" LastChanged:  $LastChangedDate: 2009-04-23 01:42:43 +0200 (to, 23 apr 2009) $
-" Revision:     $Revision: 171 $
+" Version:      1.8
+" ReleaseDate:  2011 jun 09
 "
 " Licensed under the same terms as Vim itself.
 "
@@ -17,7 +16,7 @@
 
 " Set this variable to disable space.vim
 "
-"   let g:loaded_space = 1
+"   let g:space_loaded = 1
 
 " Set this variable to disable select mode mappings
 "
@@ -49,6 +48,9 @@
 "
 " Disable <Space> for fold movement commands, e.g. [z, ]z, zj and zk
 "   let g:space_no_folds = 1
+"
+" Disable <Space> for tag movement commands, e.g. Ctrl-], :tag, etc.
+"   let g:space_no_tags = 1
 "
 " Disable <Space> for quickfix and location list commands, e.g. :cc, :ll, etc.
 "   let g:space_no_quickfix = 1
@@ -82,21 +84,30 @@ if exists("g:space_debug")
     let g:space_no_folds = 0
     let g:space_no_quickfix = 0
     let g:space_no_undolist = 0
+    let g:space_no_tags = 0
     echomsg "Running space.vim in debug mode."
 elseif exists("g:space_loaded")
     finish
 endif
 let g:space_loaded = 1
 
+" Mapping of <Space>/<S-Space> and possibly <BS>
 noremap <expr> <silent> <Space>   <SID>do_space(0, "<Space>")
 noremap <expr> <silent> <S-Space> <SID>do_space(1, "<S-Space>")
-noremap <expr> <silent> <BS>      <SID>do_space(1, "<BS>")
 
 if exists("g:space_disable_select_mode")
     silent! sunmap <Space>
     silent! sunmap <S-Space>
     silent! sunmap <BS>
 endif
+
+if mapcheck("<BS>") == "" || !has("gui_running")
+    noremap <expr> <silent> <BS>      <SID>do_space(1, "<BS>")
+    if exists("g:space_disable_select_mode")
+        silent! sunmap <BS>
+    endif
+endif
+
 
 " character movement commands
 if !exists("g:space_no_character_movements") || !g:space_no_character_movements
@@ -123,17 +134,20 @@ if !exists("g:space_no_search") || !g:space_no_search
     " do not override visual mappings for * and #
     " because these are often used for visual search functions
     if maparg('*', 'v') != ''
-        nnoremap <expr> <silent> *  <SID>setup_space("search", "*")
-        onoremap <expr> <silent> *  <SID>setup_space("search", "*")
+        nnoremap <expr> <silent> *           <SID>setup_space("search", "*")
+        onoremap <expr> <silent> *           <SID>setup_space("search", "*")
+        nnoremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
+        onoremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
     else
-        noremap <expr> <silent> *  <SID>setup_space("search", "*")
+        noremap <expr> <silent> *           <SID>setup_space("search", "*")
+        noremap <expr> <silent> <kMultiply> <SID>setup_space("search", "*")
     endif
 
     if maparg('#', 'v') != ''
-        nnoremap <expr> <silent> #  <SID>setup_space("search", "#")
-        onoremap <expr> <silent> #  <SID>setup_space("search", "#")
+        nnoremap <expr> <silent> # <SID>setup_space("search", "#")
+        onoremap <expr> <silent> # <SID>setup_space("search", "#")
     else
-        noremap <expr> <silent> #  <SID>setup_space("search", "#")
+        noremap  <expr> <silent> # <SID>setup_space("search", "#")
     endif
 
     noremap <expr> <silent> g* <SID>setup_space("search", "g*")
@@ -144,6 +158,7 @@ if !exists("g:space_no_search") || !g:space_no_search
     if exists("g:space_disable_select_mode")
         silent! sunmap *
         silent! sunmap #
+        silent! sunmap <kMultiply>
         silent! sunmap g*
         silent! sunmap g#
         silent! sunmap n
@@ -156,18 +171,12 @@ else
 endif
 
 " jump commands
+" NOTE: Jumps are not motions. They can't be used in Visual mode.
 if !exists("g:space_no_jump") || !g:space_no_jump
-    noremap <expr> <silent> g, <SID>setup_space("cjump", "g,")
-    noremap <expr> <silent> g; <SID>setup_space("cjump", "g;")
-    noremap <expr> <silent> <C-O> <SID>setup_space("jump", "\<C-o>")
-    noremap <expr> <silent> <C-I> <SID>setup_space("jump", "\<C-i>")
-
-    if exists("g:space_disable_select_mode")
-        silent! sunmap g,
-        silent! sunmap g;
-        silent! sunmap <C-o>
-        silent! sunmap <C-i>
-    endif
+    nnoremap <expr> <silent> g, <SID>setup_space("cjump", "g,")
+    nnoremap <expr> <silent> g; <SID>setup_space("cjump", "g;")
+    nnoremap <expr> <silent> <C-O> <SID>setup_space("jump", "\<C-o>")
+    nnoremap <expr> <silent> <C-I> <SID>setup_space("jump", "\<C-i>")
 endif
 
 " diff next/prev
@@ -245,6 +254,19 @@ if !exists("g:space_no_folds") || !g:space_no_folds
     endif
 endif
 
+" tag movement
+if !exists("g:space_no_tags") || !g:space_no_tags
+    noremap <expr> <silent> <C-]> <SID>setup_space("tag", "\<C-]>")
+
+    if exists("g:space_disable_select_mode")
+        silent! sunmap <C-]>
+    endif
+
+    let s:tag_mappings = 1
+else
+    let s:tag_mappings = 0
+endif
+
 " undolist movement
 if !exists("g:space_no_undolist") || !g:space_no_undolist
     noremap <expr> <silent> g- <SID>setup_space("undo", "g-")
@@ -286,10 +308,10 @@ function! s:remove_space_mappings()
     silent! unmap n
     silent! unmap N
 
-    silent! unmap g,
-    silent! unmap g;
-    silent! unmap <C-o>
-    silent! unmap <C-i>
+    silent! nunmap g,
+    silent! nunmap g;
+    silent! nunmap <C-o>
+    silent! nunmap <C-i>
 
     silent! unmap ]c
     silent! unmap [c
@@ -314,18 +336,44 @@ function! s:remove_space_mappings()
     silent! unmap ]z
     silent! unmap [z
 
+    silent! unmap <C-]>
+
     silent! unmap g-
     silent! unmap g+
 
     silent! cunmap <CR>
 
-    silent! unlet g:loaded_space
+    silent! unlet g:space_loaded
 endfunction
 
 " TODO: Check if the '\>!\=' part of the pattern fails when 'iskeyword'
 "       contains '!'
 " NOTE: Since Vim allows commands like ":'k,'lvim /foo/ *", it's a little
 "       tedious to write a perfect regexp.
+
+let s:pre_re = '^\%(' .
+    \   '\%(noa\%[utocmd]\s\+\)\=' .
+    \   '\%(' .
+    \     '\%(' .
+    \       '\%(\d\+\)\|' .
+    \       '\%(''[0-9a-zA-Z><.]\)\|' .
+    \       '\%(\\[/?&]\)\|' .
+    \       '[%$.]' .
+    \     '\)' .
+    \     '\%([-+]\d*\)\=' .
+    \   '\)\=' .
+    \   ',\=' .
+    \   '\%(' .
+    \     '\%(' .
+    \       '\%(\d\+\)\|' .
+    \       '\%(''[0-9a-zA-Z><.]\)\|' .
+    \       '\%(\\[/?&]\)\|' .
+    \       '[%$.]' .
+    \     '\)' .
+    \     '\%([-+]\d*\)\=' .
+    \   '\)\=' .
+    \ '\)\='
+
 let s:qf_re = '\%(' .
     \ 'mak\%[e]\|' .
     \ 'v\%[imgrep]\|' .
@@ -352,17 +400,32 @@ let s:lf_re = 'l\%(' .
     \ '\(f\|nf\|Nf\|pf\)\%[ile]' .
     \ '\)\>!\='
 
+let s:ta_re = 't\%(' .
+    \ 'a\%[g]\|' .
+    \ 'n\%[ext]\|' .
+    \ 'p\%[revious]\|' .
+    \ 'N\%[ext]\|' .
+    \ 'r\%[ewind]\|' .
+    \ 'f\%[irst]\|' .
+    \ 'l\%[ast]\|' .
+    \ '\)\>!\='
+
 function! s:parse_cmd_line()
     let cmd = getcmdline()
     let type = getcmdtype()
 
     if s:search_mappings && (type == '/' || type == '?')
         return <SID>setup_space("search", cmd)
-    elseif s:quickfix_mappings && type == ':'
-        if cmd =~ s:lf_re
-            return <SID>setup_space("lf", cmd)
-        elseif cmd =~ s:qf_re
-            return <SID>setup_space("qf", cmd)
+    elseif type == ':'
+        if s:quickfix_mappings
+            if cmd =~ s:pre_re . s:lf_re
+                return <SID>setup_space("lf", cmd)
+            elseif cmd =~ s:pre_re . s:qf_re
+                return <SID>setup_space("qf", cmd)
+            endif
+        endif
+        if s:tag_mappings && cmd =~ s:pre_re . s:ta_re
+            return <SID>setup_space("tag", cmd)
         endif
     end
     return "\<CR>"
@@ -433,6 +496,13 @@ function! s:setup_space(type, command)
         let s:shift_space_move = "\<C-o>"
         let s:cmd_type = "jump"
         let cmd = <SID>maybe_open_fold(cmd)
+    elseif a:type == "tag"
+        let s:space_move = "tn"
+        let s:shift_space_move = "tp"
+        let s:cmd_type = "tag"
+        if getcmdtype() == ':'
+            let cmd = <SID>maybe_open_fold(cmd)
+        endif
     elseif a:type == "qf"
         let s:space_move = "cn"
         let s:shift_space_move = "cN"
@@ -476,9 +546,9 @@ function! s:do_space(shift, default)
 endfunc
 
 function! s:maybe_open_fold(cmd)
-    if !exists("g:space_no_foldopen") && &foldopen =~ s:cmd_type
+    if !exists("g:space_no_foldopen") && &foldopen =~ s:cmd_type && v:operator != "c"
         " special treatment of :ex commands
-        if s:cmd_type == "quickfix"
+        if s:cmd_type == "quickfix" || s:cmd_type == "tag"
             if getcmdtype() == ':'
                 return "\<CR>"
             else
@@ -488,10 +558,6 @@ function! s:maybe_open_fold(cmd)
         elseif s:cmd_type == "search" && getcmdtype() =~ "[/?]"
             return "\<CR>zv"
         else
-            " do not (un)fold in change mode
-            if v:operator == "c"
-                return a:cmd
-            endif
             if mode() =~ "[vV]"
                 " NOTE: That this works is probably a bug in vim.  Let's hope
                 "       it stays that way. ;)
@@ -503,7 +569,7 @@ function! s:maybe_open_fold(cmd)
             endif
         endif
     else
-        if s:cmd_type == "quickfix"
+        if s:cmd_type == "quickfix" || s:cmd_type == "tag"
             if getcmdtype() == ':'
                 return "\<CR>"
             else
