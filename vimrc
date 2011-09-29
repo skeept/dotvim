@@ -539,3 +539,5 @@ endif
 "load cscope in two levels up
 map <Leader>csa :cs add ../../cscope.out ../..<cr>
 set cot-=preview
+
+let g:unite_source_history_yank_enable = 1
