@@ -1483,9 +1483,12 @@ function! s:Blame(bang,line1,line2,count,args) abort
         if exists('+relativenumber')
           setlocal norelativenumber
         endif
+        nnoremap <buffer> <silent> q    :exe substitute('bdelete<Bar>'.bufwinnr(b:fugitive_blamed_bufnr).' wincmd w','<Bar>-1','','')<CR>
+        nnoremap <buffer> <silent> gq   :exe substitute('bdelete<Bar>'.bufwinnr(b:fugitive_blamed_bufnr).' wincmd w<Bar>if expand("%:p") =~# "^fugitive:[\\/][\\/]"<Bar>Gedit<Bar>endif','<Bar>-1','','')<CR>
         nnoremap <buffer> <silent> <CR> :<C-U>exe <SID>BlameJump('')<CR>
         nnoremap <buffer> <silent> P    :<C-U>exe <SID>BlameJump('^'.v:count1)<CR>
         nnoremap <buffer> <silent> ~    :<C-U>exe <SID>BlameJump('~'.v:count1)<CR>
+        nnoremap <buffer> <silent> i    :<C-U>exe "exe 'norm q'<Bar>".<SID>Edit("edit", 0, matchstr(getline('.'),'\x\+'))<CR>
         nnoremap <buffer> <silent> o    :<C-U>exe <SID>Edit((&splitbelow ? "botright" : "topleft")." split", 0, matchstr(getline('.'),'\x\+'))<CR>
         nnoremap <buffer> <silent> O    :<C-U>exe <SID>Edit("tabedit", 0, matchstr(getline('.'),'\x\+'))<CR>
         syncbind
@@ -1506,8 +1509,8 @@ function! s:BlameJump(suffix) abort
   if commit =~# '^0\+$'
     let commit = ':0'
   endif
-  let lnum = matchstr(getline('.'),'\d\+\ze\s\+[([:digit:]]')
-  let path = matchstr(getline('.'),'^\^\=\zs\x\+\s\+\zs.\{-\}\ze\s*\d\+ ')
+  let lnum = matchstr(getline('.'),' \zs\d\+\ze\s\+[([:digit:]]')
+  let path = matchstr(getline('.'),'^\^\=\x\+\s\+\zs.\{-\}\ze\s*\d\+ ')
   if path ==# ''
     let path = s:buffer(b:fugitive_blamed_bufnr).path()
   endif
@@ -1519,6 +1522,7 @@ function! s:BlameJump(suffix) abort
     exe winnr.'wincmd w'
   endif
   execute s:Edit('edit', 0, commit.a:suffix.':'.path)
+  execute lnum
   if winnr > 0
     exe bufnr.'bdelete'
   endif
@@ -1526,9 +1530,9 @@ function! s:BlameJump(suffix) abort
   execute lnum
   let delta = line('.') - line('w0') - offset
   if delta > 0
-    execute 'norm! 'delta."\<C-E>"
+    execute 'normal! '.delta."\<C-E>"
   elseif delta < 0
-    execute 'norm! '(-delta)."\<C-Y>"
+    execute 'normal! '.(-delta)."\<C-Y>"
   endif
   syncbind
   return ''
@@ -2010,7 +2014,7 @@ augroup fugitive_temp
         \   let b:git_type = 'temp' |
         \   call s:Detect(expand('<amatch>:p')) |
         \   setlocal bufhidden=delete |
-        \   nnoremap <buffer> <silent> q    :<C-U>bdelete<CR> |
+        \   nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>|
         \ endif
 augroup END
 
