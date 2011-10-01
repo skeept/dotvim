@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-30
+" Updated : 2011-10-01
 " Version : 0.5.0
 " License : MIT license {{{
 "
@@ -515,7 +515,7 @@ endfunction
 let s:source.hooks.on_init = function(s:SID . 'Source_Hooks_on_init')
 
 " Initialize the outline data and register autocmds if the current buffer
-" hasn't initialized yet.
+" hasn't been initialized yet.
 "
 function! s:unite_outline_initialize()
   let bufnr = bufnr('%')
@@ -560,7 +560,7 @@ function! s:Source_Hooks_on_syntax(source_args, unite_context)
     endif
   else
     " Method: Folding
-    " Now folding headings are not highlighted at all.
+    " NOTE: Now folding headings are not highlighted at all.
   endif
 endfunction
 let s:source.hooks.on_syntax = function(s:SID . 'Source_Hooks_on_syntax')
@@ -751,8 +751,8 @@ function! s:get_candidates(bufnr, context)
 endfunction
 
 function! s:extract_headings(context)
-  let winnr = bufwinnr(a:context.buffer.nr)
-  if winnr == -1
+  let src_winnr = bufwinnr(a:context.buffer.nr)
+  if src_winnr == -1
     throw "NoWindowError:"
   endif
 
@@ -779,7 +779,8 @@ function! s:extract_headings(context)
     set lazyredraw
 
     " Switch: current window -> source buffer's window
-    execute winnr . 'wincmd w'
+    let cur_winnr = winnr()
+    execute src_winnr . 'wincmd w'
     " Save the cursor and scroll.
     let save_cursor  = getpos('.')
     let save_topline = line('w0')
@@ -829,7 +830,7 @@ function! s:extract_headings(context)
     call setpos('.', save_cursor)
     let &scrolloff = save_scrolloff
     " Switch: current window <- source buffer's window
-    wincmd p
+    execute cur_winnr . 'wincmd w'
 
     " Restore the Vim options.
     let &lazyredraw  = save_lazyredraw
@@ -1243,12 +1244,10 @@ function! s:filter_headings(headings, ignore_types)
     let headings = s:Tree.List.normalize_levels(headings)
     call remove(ignore_types, idx)
   endif
-
+  " Remove headings to be ignored.
   call map(ignore_types, 'unite#util#escape_pattern(v:val)')
   let ignore_types_pattern = '^\%(' . join(ignore_types, '\|') . '\)$'
-  " Use something like closure.
   let pred = 'v:val.type =~# ' . string(ignore_types_pattern)
-  " Remove headings to be ignored.
   let headings = s:Tree.List.remove(headings, pred)
   return headings
 endfunction
@@ -1502,7 +1501,11 @@ function! s:find_outline_buffers(src_bufnr)
 endfunction
 
 function! s:is_unite_buffer(bufnr)
-  return (getbufvar(a:bufnr, '&filetype') ==# 'unite')
+  if unite#is_win()
+    return (bufname(a:bufnr) =~# '^\[unite\]')
+  else
+    return (bufname(a:bufnr) =~# '^\*unite\*')
+  endif
 endfunction
 
 function! s:Unite_find_outline_source(unite)
