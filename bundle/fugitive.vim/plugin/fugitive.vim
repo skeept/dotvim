@@ -1488,9 +1488,10 @@ function! s:Blame(bang,line1,line2,count,args) abort
         nnoremap <buffer> <silent> <CR> :<C-U>exe <SID>BlameJump('')<CR>
         nnoremap <buffer> <silent> P    :<C-U>exe <SID>BlameJump('^'.v:count1)<CR>
         nnoremap <buffer> <silent> ~    :<C-U>exe <SID>BlameJump('~'.v:count1)<CR>
-        nnoremap <buffer> <silent> i    :<C-U>exe "exe 'norm q'<Bar>".<SID>Edit("edit", 0, matchstr(getline('.'),'\x\+'))<CR>
-        nnoremap <buffer> <silent> o    :<C-U>exe <SID>Edit((&splitbelow ? "botright" : "topleft")." split", 0, matchstr(getline('.'),'\x\+'))<CR>
-        nnoremap <buffer> <silent> O    :<C-U>exe <SID>Edit("tabedit", 0, matchstr(getline('.'),'\x\+'))<CR>
+        nnoremap <buffer> <silent> i    :<C-U>exe <SID>BlameCommit("exe 'norm q'<Bar>edit")<CR>
+        nnoremap <buffer> <silent> o    :<C-U>exe <SID>BlameCommit((&splitbelow ? "botright" : "topleft")." split")<CR>
+        nnoremap <buffer> <silent> O    :<C-U>exe <SID>BlameCommit("tabedit")<CR>
+        redraw
         syncbind
       endif
     finally
@@ -1502,6 +1503,47 @@ function! s:Blame(bang,line1,line2,count,args) abort
   catch /^fugitive:/
     return 'echoerr v:errmsg'
   endtry
+endfunction
+
+function! s:BlameCommit(cmd) abort
+  let cmd = s:Edit(a:cmd, 0, matchstr(getline('.'),'\x\+'))
+  if cmd =~# '^echoerr'
+    return cmd
+  endif
+  let lnum = matchstr(getline('.'),' \zs\d\+\ze\s\+[([:digit:]]')
+  let path = matchstr(getline('.'),'^\^\=\x\+\s\+\zs.\{-\}\ze\s*\d\+ ')
+  if path ==# ''
+    let path = s:buffer(b:fugitive_blamed_bufnr).path()
+  endif
+  execute cmd
+  if search('^diff .* b/\M'.escape(path,'\').'$','W')
+    call search('^+++')
+    let head = line('.')
+    while search('^@@ \|^diff ') && getline('.') =~# '^@@ '
+      let top = +matchstr(getline('.'),' +\zs\d\+')
+      let len = +matchstr(getline('.'),' +\d\+,\zs\d\+')
+      if lnum >= top && lnum <= top + len
+        let offset = lnum - top
+        if &scrolloff
+          +
+          normal! zt
+        else
+          normal! zt
+          +
+        endif
+        while offset > 0 && line('.') < line('$')
+          +
+          if getline('.') =~# '^[ +]'
+            let offset -= 1
+          endif
+        endwhile
+        return ''
+      endif
+    endwhile
+    execute head
+    normal! zt
+  endif
+  return ''
 endfunction
 
 function! s:BlameJump(suffix) abort
@@ -2134,6 +2176,21 @@ function! s:GF(mode) abort
 
       elseif getline('.') =~# '^[+-]\{3\} [ab/]'
         let ref = getline('.')[4:]
+
+      elseif getline('.') =~# '^[+-]' && search('^@@ -\d\+,\d\+ +\d\+,','bnW')
+        let type = getline('.')[0]
+        let lnum = line('.') - 1
+        let offset = -1
+        while getline(lnum) !~# '^@@ -\d\+,\d\+ +\d\+,'
+          if getline(lnum) =~# '^[ '.type.']'
+            let offset += 1
+          endif
+          let lnum -= 1
+        endwhile
+        let offset += matchstr(getline(lnum), type.'\zs\d\+')
+        let ref = getline(search('^'.type.'\{3\} [ab]/','bnW'))[4:-1]
+        let dcmd = '+'.offset.'|foldopen'
+        let dref = ''
 
       elseif getline('.') =~# '^rename from '
         let ref = 'a/'.getline('.')[12:]
