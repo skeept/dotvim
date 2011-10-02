@@ -54,16 +54,19 @@ Set this to 1 to set full |regexp| search as the default mode: >
   let g:ctrlp_regexp_search = 0
 <
 
+                                                   *'g:ctrlp_persistent_input'*
+Remember the last input string:
+  1 - Remember the last input string.
+  2 - Also remember the position of the selection in the match window.
+  0 - Clear the input field each time CtrlP starts.
+>
+  let g:ctrlp_persistent_input = 0
+<
+
                                               *'g:ctrlp_match_window_reversed'*
 Reverse the sort order of the matched files in the match window. The default
 setting is from bottom to top: >
   let g:ctrlp_match_window_reversed = 1
-<
-
-                                                   *'g:ctrlp_persistent_input'*
-Remember the last input string. Set this to 2 to also remember the last
-position of the selection in the match window and 0 to disable this feature: >
-  let g:ctrlp_persistent_input = 1
 <
 
                                                        *'g:ctrlp_split_window'*
@@ -139,10 +142,12 @@ only need to keep the lines that you’ve changed the values (inside []): >
     \ 'PrtDelete()':                ['<del>'],
     \ 'PrtDeleteWord()':            ['<c-w>'],
     \ 'PrtClear()':                 ['<c-u>'],
-    \ 'PrtSelectMove("j")':         ['<c-n>', '<c-j>', '<down>'],
-    \ 'PrtSelectMove("k")':         ['<c-p>', '<c-k>', '<up>'],
+    \ 'PrtSelectMove("j")':         ['<c-j>', '<down>'],
+    \ 'PrtSelectMove("k")':         ['<c-k>', '<up>'],
+    \ 'PrtHistory(-1)':             ['<c-n>'],
+    \ 'PrtHistory(1)':              ['<c-p>'],
     \ 'AcceptSelection("e")':       ['<cr>'],
-    \ 'AcceptSelection("h")':       ['<c-cr>', '<c-s>'],
+    \ 'AcceptSelection("h")':       ['<c-cr>', '<c-s>', '<c-x>'],
     \ 'AcceptSelection("t")':       ['<c-t>'],
     \ 'AcceptSelection("v")':       ['<c-v>'],
     \ 'ToggleFocus()':              ['<tab>'],
@@ -156,6 +161,7 @@ only need to keep the lines that you’ve changed the values (inside []): >
     \ 'PrtCurLeft()':               ['<c-h>', '<left>'],
     \ 'PrtCurRight()':              ['<c-l>', '<right>'],
     \ 'PrtClearCache()':            ['<F5>'],
+    \ 'CreateNewFile()':            ['<c-y>'],
     \ 'BufOpen("ControlP", "del")': ['<esc>', '<c-c>', '<c-g>'],
     \ }
 <
@@ -217,7 +223,7 @@ The maximum number of files to scan, set to 0 for no limit: >
 The maximum depth of a directory tree to recurse into: >
   let g:ctrlp_max_depth = 40
 <
-Note: keep it smaller than 200. The larger the value, the more memory Vim uses.
+Note: the larger the value, the more memory Vim uses.
 
                                                         *'g:ctrlp_live_update'*
 Set to 0 to disable the update-as-you-type functionality; press <c-o> to force
@@ -239,6 +245,24 @@ Examples: >
   let g:ctrlp_user_command = 'find %s -type f | grep (?!tmp/.*)'
   let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d | findstr .*\.py$'
 <
+
+                                                      *'g:ctrlp_open_new_file'*
+Use this option to specify how the newly created file is to be opened when
+pressing <c-y>:
+  1 - in a new tab
+  2 - in a new horizontal split
+  3 - in a new vertical split
+  0 - in the current window/split
+>
+  let g:ctrlp_open_new_file = 3
+<
+
+                                                        *'g:ctrlp_max_history'*
+The maximum number of input strings you want |CtrlP| to remember. The default
+value mirrors Vim’s global |'history'| option. E.g. `set history=50`: >
+  let g:ctrlp_max_history = &history
+<
+Set it to 0 to disable prompt’s history.
 
 ===============================================================================
 3. Commands                                                    *ctrlp-commands*
@@ -322,12 +346,10 @@ Once inside the prompt:
     Force update the match window.
     Use this if |g:ctrlp_live_update| has been set to 0.
 
-  <c-n>,
   <c-j>,
   <down>
     Move selection down
 
-  <c-p>,
   <c-k>,
   <up>
     Move selection up
@@ -362,8 +384,18 @@ Once inside the prompt:
     Open selected file in a 'vertical' split
 
   <c-cr>,
-  <c-s>
+  <c-s>,
+  <c-x>
     Open selected file in a 'horizontal' split
+
+  <c-y>
+    Create a new file and its parent directories.
+
+  <c-n>
+    'Next' string in the prompt’s history (of accepted input strings)
+
+  <c-p>
+    'Previous' string in the prompt’s history
 
   <F5>
     Refresh the match window and purge the cache for the current directory.
@@ -424,6 +456,14 @@ Mercurial repository: https://bitbucket.org/kien/ctrlp.vim
 ===============================================================================
 CHANGELOG
 
+    + New mappings: <c-y> create new file and its parent dirs.
+                    <c-n>, <c-p> next/prev string in the input history.
+    + New options: |g:ctrlp_open_new_file|,
+                   |g:ctrlp_max_history|
+    + Added a new open-in-horizontal-split mapping: <c-x>
+
+Before 2011/09/19
+
     + New command: |ResetCtrlP|
     + New options: |g:ctrlp_max_files|,
                    |g:ctrlp_max_depth|,
@@ -457,4 +497,4 @@ The updates are shown in reverse chronological order, from newest (top) to
 oldest (bottom).
 
 ===============================================================================
-vim:nofen:et:ts=2:sw=2:sts=2
+vim:et:ts=2:sw=2:sts=2
