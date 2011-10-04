@@ -158,7 +158,7 @@ augroup fugitive
   autocmd BufNewFile,BufReadPost * call s:Detect(expand('<amatch>:p'))
   autocmd FileType           netrw call s:Detect(expand('<afile>:p'))
   autocmd VimEnter * if expand('<amatch>')==''|call s:Detect(getcwd())|endif
-  autocmd BufWinLeave * execute getwinvar(+winnr(), 'fugitive_leave')
+  autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
 augroup END
 
 " }}}1
@@ -1456,6 +1456,12 @@ function! s:Blame(bang,line1,line2,count,args) abort
         if v:shell_error
           call s:throw(join(readfile(error),"\n"))
         endif
+        for winnr in range(winnr('$'),1,-1)
+          call setwinvar(winnr, '&scrollbind', 0)
+          if getbufvar(winbufnr(winnr), 'fugitive_blamed_bufnr')
+            execute winbufnr(winnr).'bdelete'
+          endif
+        endfor
         let bufnr = bufnr('')
         let restore = 'call setwinvar(bufwinnr('.bufnr.'),"&scrollbind",0)'
         if &l:wrap
@@ -1464,9 +1470,6 @@ function! s:Blame(bang,line1,line2,count,args) abort
         if &l:foldenable
           let restore .= '|call setwinvar(bufwinnr('.bufnr.'),"&foldenable",1)'
         endif
-        let winnr = winnr()
-        windo set noscrollbind
-        exe winnr.'wincmd w'
         setlocal scrollbind nowrap nofoldenable
         let top = line('w0') + &scrolloff
         let current = line('.')
