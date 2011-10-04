@@ -261,8 +261,10 @@ endfunction
 map <Leader>tn :call ToogleRelativeNumber()<cr>
 "set relativenumber
 
-"pep8 map
-let g:pep8_map='<leader>p8'
+"pep8
+"let g:pep8_map = '<leader>p8' "not used anymore
+let g:pep8_cmd  = 'pep8.py'
+let g:pep8_ignore = "E111,E221,E225"
 "todo list
 map <leader>td <Plug>TaskList
 
