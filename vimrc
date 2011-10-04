@@ -20,6 +20,8 @@ endif
 " pathogen 
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
+"let g:pathogen_disabled = ['whatever', 'unite.vim']
+let g:pathogen_disabled = ['whatever']
 call pathogen#infect()
 
 " Use Vim settings, rather then Vi settings (much better!).
