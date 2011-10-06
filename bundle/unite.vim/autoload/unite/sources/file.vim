@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Oct 2011.
+" Last Modified: 05 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -79,6 +79,13 @@ function! s:source.change_candidates(args, context)"{{{
   " Glob by directory name.
   let input = substitute(input, '[^/.]*$', '', '')
   let glob = input . (input =~ '\*$' ? '' : '*')
+
+  " Escape [.
+  if unite#is_win()
+    let glob = substitute(glob, '\[', '\\[[]', 'g')
+  else
+    let glob = escape(glob, '[')
+  endif
   if !has_key(a:context.source__cache, glob)
     let files = split(unite#util#substitute_path_separator(
           \ glob(glob)), '\n')
@@ -147,7 +154,7 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
     " Add doted files.
     let context.input .= '.'
     let candidates += filter(self.change_candidates(a:args, context),
-          \ 'v:val.word !~ "/\.\.$"')
+          \ 'v:val.word !~ "/\.\.\\?$"')
   elseif filereadable(path)
     let candidates = [ unite#sources#file#create_file_dict(path, 0) ]
   else
@@ -259,11 +266,13 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
 
   let a:candidate.vimfiler__is_directory =
         \ isdirectory(a:candidate.action__path)
-  let a:candidate.vimfiler__is_executable =
-        \ unite#util#is_win() ?
-        \ ('.'.fnamemodify(a:candidate.vimfiler__filename, ':e') =~? a:exts) :
-        \ executable(a:candidate.action__path)
-  let a:candidate.vimfiler__filesize = getfsize(a:candidate.action__path)
+  if !a:candidate.vimfiler__is_directory
+    let a:candidate.vimfiler__is_executable =
+          \ unite#util#is_win() ?
+          \ ('.'.fnamemodify(a:candidate.vimfiler__filename, ':e') =~? a:exts) :
+          \ executable(a:candidate.action__path)
+    let a:candidate.vimfiler__filesize = getfsize(a:candidate.action__path)
+  endif
   let a:candidate.vimfiler__filetime = getftime(a:candidate.action__path)
 endfunction"}}}
 
