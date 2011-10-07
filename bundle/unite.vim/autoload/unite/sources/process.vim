@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: process.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Oct 2011.
+" Last Modified: 07 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -40,14 +40,23 @@ let s:source = {
       \ 'description' : 'candidates from processes',
       \ 'default_action' : 'sigterm',
       \ 'action_table' : {},
+      \ 'alias_table' : { 'delete' : 'sigkill' },
       \ }
 
 function! s:source.gather_candidates(args, context)"{{{
   " Get process list.
   let _ = []
+  let command = unite#is_win() ? 'tasklist' : 'ps aux'
+
+  let result = split(vimproc#system(command), '\n')
+  if empty(result)
+    return []
+  endif
+
   if unite#is_win()
     " Use tasklist.
-    for line in split(unite#util#system('tasklist'), '\n')[3:]
+    call unite#print_message('[process] ' . result[1])
+    for line in result[3:]
       let process = split(line)
       if len(process) < 5
         " Invalid output.
@@ -61,18 +70,18 @@ function! s:source.gather_candidates(args, context)"{{{
             \})
     endfor
   else
-    " Use ps.
-    for line in split(unite#util#system('ps -A'), '\n')[1:]
+    call unite#print_message('[process] ' . result[0])
+    for line in result[1:]
       let process = split(line)
-      if len(process) < 4
+      if len(process) < 2
         " Invalid output.
         continue
       endif
 
       call add(_, {
-            \ 'word' : process[3],
-            \ 'abbr' : line,
-            \ 'action__pid' : process[0],
+            \ 'word' : join(process[10:]),
+            \ 'abbr' : '      ' . line,
+            \ 'action__pid' : process[1],
             \})
     endfor
   endif
