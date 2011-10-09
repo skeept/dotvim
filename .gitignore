@@ -6,7 +6,8 @@ undodir/*
 
 .VimballRecord
 
-._git
+._git/
+.git/
 
 !backup
 !swapdir
