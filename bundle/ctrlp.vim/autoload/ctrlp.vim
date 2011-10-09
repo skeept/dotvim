@@ -3,7 +3,7 @@
 " Description:   Full path fuzzy file, buffer and MRU file finder for Vim.
 " Author:        Kien Nguyen <github.com/kien>
 " License:       MIT
-" Version:       1.5.1
+" Version:       1.5.2
 " =============================================================================
 
 if v:version < '700' "{{{
@@ -14,6 +14,7 @@ endif "}}}
 func! s:opts()
 	let opts = {
 				\ 'g:ctrlp_match_window_reversed' : ['s:mwreverse', 1],
+				\ 'g:ctrlp_match_window_bottom'   : ['s:mwbottom', 1],
 				\ 'g:ctrlp_split_window'          : ['s:splitwin', 0],
 				\ 'g:ctrlp_working_path_mode'     : ['s:pathmode', 1],
 				\ 'g:ctrlp_root_markers'          : ['s:rmarkers', []],
@@ -61,9 +62,7 @@ cal s:opts()
 let s:lash = ctrlp#utils#lash()
 
 " Limiters
-let s:compare_lim = 3000
-let s:nocache_lim = 4000
-let s:mltipats_lim = 2000
+let [s:compare_lim, s:nocache_lim, s:mltipats_lim] = [3000, 4000, 2000]
 "}}}
 
 " * Clear caches {{{
@@ -92,7 +91,7 @@ endfunc
 "}}}
 
 " * ListAllFiles {{{
-func! s:List(dirs, allfiles, depth)
+func! s:GlobPath(dirs, allfiles, depth)
 	" Note: wildignore is ignored when using **
 	let glob     = s:dotfiles ? '.*\|*' : '*'
 	let entries  = split(globpath(a:dirs, glob), '\n')
@@ -107,28 +106,38 @@ func! s:List(dirs, allfiles, depth)
 	else
 		let dirs = join(alldirs, ',')
 		sil! cal s:progress(len(g:ctrlp_allfiles))
-		cal s:List(dirs, g:ctrlp_allfiles, depth)
+		cal s:GlobPath(dirs, g:ctrlp_allfiles, depth)
+	endif
+endfunc
+
+func! s:UserCommand(path, lscmd)
+	let path = a:path
+	if exists('+ssl') && &ssl
+		let ssl = &ssl
+		let &ssl = 0
+		let path = substitute(path, '/', '\', 'g')
+	endif
+	let g:ctrlp_allfiles = split(system(printf(a:lscmd, shellescape(path))), '\n')
+	if exists('+ssl') && exists('ssl')
+		let &ssl = ssl
+		cal map(g:ctrlp_allfiles, 'substitute(v:val, "\\", "/", "g")')
+	endif
+	if exists('s:vcscmd') && s:vcscmd
+		cal map(g:ctrlp_allfiles, 'substitute(v:val, "/", "\\", "g")')
 	endif
 endfunc
 
 func! s:ListAllFiles(path)
 	let cache_file = ctrlp#utils#cachefile()
 	if g:ctrlp_newcache || !filereadable(cache_file) || !s:caching
+		let lscmd = s:lscommand()
 		" Get the list of files
-		if empty(g:ctrlp_user_command)
-			cal s:List(a:path, [], 0)
+		if empty(lscmd)
+			cal s:GlobPath(a:path, [], 0)
 		else
 			sil! cal s:progress(escape('Waiting...', ' '))
 			try
-				if exists('+ssl') && &ssl
-					let ssl = &ssl
-					let &ssl = 0
-				endif
-				let g:ctrlp_allfiles = split(system(printf(g:ctrlp_user_command, shellescape(a:path))), '\n')
-				if exists('+ssl') && exists('ssl')
-					let &ssl = ssl
-					cal map(g:ctrlp_allfiles, 'substitute(v:val, "\\", "/", "g")')
-				endif
+				cal s:UserCommand(a:path, lscmd)
 			catch
 				retu []
 			endtry
@@ -208,9 +217,7 @@ endfunc "}}}
 
 " * GetMatchedItems {{{
 func! s:MatchIt(items, pat, limit)
-	let items = a:items
-	let pat   = a:pat
-	let limit = a:limit
+	let [items, pat, limit] = [a:items, a:pat, a:limit]
 	let newitems = []
 	for item in items
 		if s:byfname
@@ -225,9 +232,7 @@ func! s:MatchIt(items, pat, limit)
 endfunc
 
 func! s:GetMatchedItems(items, pats, limit)
-	let items = a:items
-	let pats  = a:pats
-	let limit = a:limit
+	let [items, pats, limit] = [a:items, a:pats, a:limit]
 	" If items is longer than s:mltipats_lim, use only the last pattern
 	if len(items) >= s:mltipats_lim
 		let pats = [pats[-1]]
@@ -255,11 +260,7 @@ endfunc
 func! s:BufOpen(...) "{{{
 	if exists('a:2')
 		" Closing
-		try
-			bun!
-		catch
-			winc c
-		endtry
+		try | bun! | catch | clo! | endtry
 		exe s:currwin.'winc w'
 		" Restore the changed global options
 		let &magic  = s:CtrlP_magic
@@ -289,9 +290,10 @@ func! s:BufOpen(...) "{{{
 		cal s:recordhist(prt[0] . prt[1] . prt[2])
 		ec
 	else
-		let s:currwin = winnr()
 		" Open new buffer
-		sil! exe 'bo 1new' a:1
+		let pos = s:mwbottom ? 'bo' : 'to'
+		sil! exe pos '1new' a:1
+		let s:currwin = s:mwbottom ? winnr('#') : winnr('#') + 1
 		abc <buffer>
 		let s:winnr = bufwinnr('%')
 		let s:bufnr = bufnr('%')
@@ -427,7 +429,7 @@ func! s:CreateNewFile() "{{{
 	let arr = split(str, '[\/]')
 	cal map(arr, 'escape(v:val, "%#")')
 	let fname = remove(arr, -1)
-	winc c
+	exe s:currwin.'winc w'
 	if s:newfop == 1 " In new tab
 		tabnew
 		let cmd = 'e'
@@ -485,39 +487,39 @@ func! s:OpenMulti()
 		retu
 	endif
 	let marked = deepcopy(s:marked)
-	let prt = g:CtrlP_prompt
-	let str = prt[0] . prt[1] . prt[2]
 	if !has('autocmd') | cal s:BufOpen('ControlP', 'del') | endif
 	exe s:currwin.'winc w'
 	" Try not to open in new tab
-	let bufs = []
-	for winnr in range(1, winnr('$'))
-		cal add(bufs, winbufnr(winnr))
-	endfor
-	let ntab = 1
-	" Check if the other window only has a blank buffer
-	if len(bufs) == 1
-		for each in bufs
-			if getbufvar(each, '&bl') && empty(bufname(each))
-						\ && empty(getbufvar(each, '&bt')) && empty(getbufvar(each, '&ft'))
-						\ && getbufvar(each, '&ma') && bufname(each) != 'ControlP'
-				" If it does, don't open new tab
-				let ntab = 0
+	let ntab = 0
+	let norwins = s:normbuf()
+	if empty(norwins)
+		let ntab = 1
+	else
+		for each in norwins
+			let bufnr = winbufnr(each)
+			if !empty(bufname(bufnr)) && !empty(getbufvar(bufnr, '&ft'))
+						\ && bufname(bufnr) != 'ControlP'
+				let ntab = 1
 			endif
 		endfor
+		if !ntab
+			let wnr = min(norwins)
+		endif
 	endif
 	if ntab | tabnew | endif
 	let ic = 1
+	let wnr = exists('wnr') ? wnr : 1
+	exe wnr.'winc w'
 	for key in keys(marked)
 		let filpath = marked[key]
-		sil! exe 'bo vne' filpath
+		let cmd = ic == 1 ? 'e ' : 'vne '
+		sil! exe cmd.filpath
 		if s:opmul > 1 && s:opmul < ic
-			winc c
+			clo!
 		else
 			let ic += 1
 		endif
 	endfor
-	1winc w | winc c
 	ec
 endfunc
 "}}}
@@ -647,7 +649,7 @@ func! s:PrtClearCache()
 endfunc
 
 func! s:PrtExit()
-	if has('autocmd') && s:currwin
+	if has('autocmd')
 		exe s:currwin.'winc w'
 	else
 		cal s:BufOpen('ControlP', 'del')
@@ -794,13 +796,17 @@ endfunc
 "}}}
 
 " * SetWorkingPath {{{
-func! s:FindRoot(curr, mark, depth)
+func! s:FindRoot(curr, mark, depth, ...)
 	let depth = a:depth + 1
 	if !empty(globpath(a:curr, a:mark)) || depth > s:maxdepth
-		sil! exe 'chd!' a:curr
+		if exists('a:1') && !empty(a:1)
+			let s:vcsroot = depth <= s:maxdepth ? a:curr : ''
+		else
+			sil! exe 'chd!' a:curr
+		endif
 	else
 		let parent = substitute(a:curr, '[\/]\zs[^\/]\+[\/]\?$', '', '')
-		if parent != a:curr | cal s:FindRoot(parent, a:mark, depth) | endif
+		if parent != a:curr | cal s:FindRoot(parent, a:mark, depth, a:1) | endif
 	endif
 endfunc
 
@@ -824,10 +830,10 @@ func! ctrlp#SetWorkingPath(...)
 	if s:pathmode == 1 || l:pathmode == 1 | retu | endif
 	let markers = [
 				\ 'root.dir',
-				\ '.vimprojects',
 				\ '.git/',
-				\ '_darcs/',
 				\ '.hg/',
+				\ '.vimprojects',
+				\ '_darcs/',
 				\ '.bzr/',
 				\ ]
 	if exists('s:rmarkers') && type(s:rmarkers) == 3 && !empty(s:rmarkers)
@@ -844,12 +850,20 @@ func! s:AcceptSelection(mode,...) "{{{
 	let md = a:mode
 	let prt = g:CtrlP_prompt
 	let str = prt[0] . prt[1] . prt[2]
-	" Walk backward the dir tree
-	if md == 'e' && !s:itemtype && str == '..'
-		cal s:parentdir(getcwd())
-		cal s:SetLines(s:itemtype)
-		cal s:PrtClear()
-		retu
+	if md == 'e' && !s:itemtype
+		if str == '..'
+			" Walk backward the dir tree
+			cal s:parentdir(getcwd())
+			cal s:SetLines(s:itemtype)
+			cal s:PrtClear()
+			retu
+		elseif str == '?'
+			" Use ? for help
+			exe s:currwin.'winc w'
+			let hlpwin = &columns > 159 ? '| vert res 80' : ''
+			exe 'bo vert h ctrlp-mappings' hlpwin '| norm! 0'
+			retu
+		endif
 	endif
 	" Get the full path
 	let matchstr = matchstr(getline('.'), '^> \zs.\+\ze\t*$')
@@ -859,10 +873,11 @@ func! s:AcceptSelection(mode,...) "{{{
 	if exists('a:1') && a:1 | retu filpath | endif
 	" Manually remove the prompt and match window
 	if !has('autocmd') | cal s:BufOpen('ControlP', 'del') | endif
-	let bufnum = bufnr(filpath)
-	let bufwinnr = bufwinnr(bufnum)
-	let norbuf = s:normbuf()
 	exe s:currwin.'winc w'
+	let bufnum   = bufnr(filpath)
+	let bufwinnr = bufwinnr(bufnum)
+	let norwins  = s:normbuf()
+	let norwin   = empty(norwins) ? 0 : norwins[0]
 	" Check if the file's already opened in a tab
 	for nr in range(1, tabpagenr('$'))
 		" Get a list of the buffers in the nr tab
@@ -906,11 +921,11 @@ func! s:AcceptSelection(mode,...) "{{{
 		elseif md == 'e' || !s:splitwin " In current window
 			let cmd = 'e'
 			" If there's at least 1 normal buffer
-			if norbuf
+			if norwin
 				" But not the current one
 				if !&l:bl || !empty(&l:bt) || !&l:ma
 					" Go to the first normal one
-					exe norbuf.'winc w'
+					exe norwin.'winc w'
 				endif
 			else
 				" No normal buffers
@@ -930,8 +945,7 @@ endfunc "}}}
 " Sorting {{{
 func! s:complen(s1, s2)
 	" By length
-	let len1 = strlen(a:s1)
-	let len2 = strlen(a:s2)
+	let [len1, len2] = [strlen(a:s1), strlen(a:s2)]
 	retu len1 == len2 ? 0 : len1 > len2 ? 1 : -1
 endfunc
 
@@ -947,6 +961,12 @@ func! s:compword(s1, s2)
 	let wrd1  = s:wordonly(s:matchlens(a:s1, s:compat))
 	let wrd2  = s:wordonly(s:matchlens(a:s2, s:compat))
 	retu wrd1 == wrd2 ? 0 : wrd1 > wrd2 ? 1 : -1
+endfunc
+
+func! s:comptime(s1, s2)
+	" By last modified time
+	let [time1, time2] = [getftime(a:s1), getftime(a:s2)]
+	retu time1 == time2 ? 0 : time1 < time2 ? 1 : -1
 endfunc
 
 func! s:matchlens(str, pat, ...)
@@ -986,7 +1006,11 @@ func! s:wordonly(lens)
 endfunc
 
 func! s:mixedsort(s1, s2)
-	retu 3 * s:compmatlen(a:s1, a:s2) + 2 * s:complen(a:s1, a:s2) + s:compword(a:s1, a:s2)
+	let cmatlen = s:compmatlen(a:s1, a:s2)
+	let ctime   = s:comptime(a:s1, a:s2)
+	let clen    = s:complen(a:s1, a:s2)
+	let cword   = s:compword(a:s1, a:s2)
+	retu 3 * cmatlen + 3 * ctime + 2 * clen + cword
 endfunc
 "}}}
 
@@ -1017,8 +1041,7 @@ func! s:statusline(...)
 endfunc
 
 func! s:progress(len)
-	let cnt = '%#Function# '.a:len.' %*'
-	let dir = ' %=%<%#LineNr# '.getcwd().' %*'
+	let [cnt, dir] = ['%#Function# '.a:len.' %*', ' %=%<%#LineNr# '.getcwd().' %*']
 	let &l:stl = cnt.dir
 	redr
 endfunc
@@ -1173,15 +1196,15 @@ endfunc
 
 " Buffers {{{
 func! s:normbuf()
-	if &l:bl && empty(&l:bt) && &l:ma | retu winnr() | endif
+	let winnrs = []
 	for each in range(1, winnr('$'))
 		let bufnr = winbufnr(each)
 		if getbufvar(bufnr, '&bl') && empty(getbufvar(bufnr, '&bt'))
 					\ && getbufvar(bufnr, '&ma')
-			retu each
+			cal add(winnrs, each)
 		endif
 	endfor
-	retu 0
+	retu winnrs
 endfunc
 
 func! s:setupblank()
@@ -1251,6 +1274,25 @@ func! s:insertcache(str)
 		cal ctrlp#utils#writecache(data)
 	endif
 endfunc
+
+func! s:lscommand()
+	let usercmd = g:ctrlp_user_command
+	if type(usercmd) == 1
+		retu usercmd
+	elseif type(usercmd) == 3 && len(usercmd) >= 2
+				\ && !empty(usercmd[0]) && !empty(usercmd[1])
+		let rmarker = usercmd[0]
+		" Find a repo root if existed
+		cal s:FindRoot(getcwd(), rmarker, 0, 1)
+		if !exists('s:vcsroot') || ( exists('s:vcsroot') && empty(s:vcsroot) )
+			" Try the secondary_command if defined
+			retu len(usercmd) == 3 && !empty(usercmd[2]) ? usercmd[2] : ''
+		else
+			let s:vcscmd = s:lash == '\' ? 1 : 0
+			retu usercmd[1]
+		endif
+	endif
+endfunc
 "}}}
 "}}}
 
@@ -1276,8 +1318,7 @@ endfunc
 
 func! ctrlp#init(type, ...)
 	if exists('s:init') | retu | endif
-	let s:matches = 1
-	let s:init = 1
+	let [s:matches, s:init] = [1, 1]
 	let a1 = exists('a:1') ? a:1 : ''
 	cal ctrlp#SetWorkingPath(a1)
 	cal s:BufOpen('ControlP')

@@ -1,4 +1,4 @@
-*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.1
+*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.2
 *CtrlP* *ControlP* *'ctrlp'* *'ctrl-p'*
 ===============================================================================
 #                                                                             #
@@ -53,6 +53,11 @@ Set this to 1 to set search by filename (not full path) as the default: >
                                                       *'g:ctrlp_regexp_search'*
 Set this to 1 to set full |regexp| search as the default mode: >
   let g:ctrlp_regexp_search = 0
+<
+
+                                                *'g:ctrlp_match_window_bottom'*
+Set this to 0 to show the match window at the top of the screen: >
+  let g:ctrlp_match_window_bottom = 1
 <
 
                                               *'g:ctrlp_match_window_reversed'*
@@ -226,6 +231,14 @@ You can also use 'grep', 'findstr' or something else to filter the results.
 Examples: >
   let g:ctrlp_user_command = 'find %s -type f | grep (?!tmp/.*)'
   let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d | findstr .*\.py$'
+<
+Use version control listing commands: >
+  let g:ctrlp_user_command = [marker, command, secondary_command]
+<
+If the secondary_command is empty or not defined, globpath() will be used.
+Examples: >
+  let g:ctrlp_user_command = ['.git/', 'cd %s && git ls-files']
+  let g:ctrlp_user_command = ['.hg/', 'hg --cwd %s locate --fullpath -I .']
 <
 
                                                       *'g:ctrlp_open_new_file'*
@@ -440,6 +453,8 @@ d)  Type exactly two dots (..) at the start of the line and press enter to go
 e)  Type the name of a non-existed file and press <c-y> to create it.
     e.g. 'parentdir/file.txt' will create a directory named 'parentdir' as well
     as 'file.txt'. Use '\' in place of '/' on Windows (if |'ssl'| is not set).
+
+f)  Submit ? to open this help file.
 
 ===============================================================================
 6. Credits                                                      *ctrlp-credits*
