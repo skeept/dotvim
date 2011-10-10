@@ -507,7 +507,7 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 		Set arguments automatically.
 
 		description		(String)	(Optional)
-		Description length.
+		Description string.
 
 		Example:
 >
@@ -517,6 +517,42 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 		      \     'args': '~/',
 		      \   },
 		      \ }
+<
+		Default value is "{}".
+
+g:unite_source_menu_menus			*g:unite_source_menu_menus*
+		Set |unite-source-menu| settings.
+		This variable is dictionary. The key is menu name,
+		and the value is following attributes dictionary.
+
+		candidates	(List or Dictionary)	(Required)
+		Menu candidates. If candidates are directory, keys are
+		ignored.
+
+		map_expr		(String)	(Optional)
+		If this attribute is given, candidates will be result of
+		map(candidates, map_expr).
+
+		description		(String)	(Optional)
+		Description string.
+
+		Example:
+>
+		let g:unite_source_menu_menus = {
+			\   'test' : {
+			\     'candidates' : {
+			\       'ghci'      : 'VimShellInteractive ghci',
+			\       'python'    : 'VimShellInteractive python',
+			\       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
+			\     },
+			\     'map_expr' : "{
+			\       'word' : v:key,
+			\       'kind' : 'command',
+			\       'action__command' : v:val,
+			\     }",
+			\     'description' : 'Test menu'
+			\   },
+		\ }
 <
 		Default value is "{}".
 
@@ -559,7 +595,10 @@ KEY MAPPINGS 					*unite-key-mappings*
 Normal mode mappings.
 
 <Plug>(unite_exit)				*<Plug>(unite_exit)*
-		Exits unite.
+		Exits unite. And restore previous unite buffer menu.
+
+<Plug>(unite_all_exit)				*<Plug>(unite_all_exit)*
+		Exits unite with previous unites buffer menu.
 
 <Plug>(unite_restart)				*<Plug>(unite_restart)*
 		Restarts unite.
@@ -762,6 +801,7 @@ I		|<Plug>(unite_insert_head)|
 a		|<Plug>(unite_append_enter)|
 A		|<Plug>(unite_append_end)|
 q		|<Plug>(unite_exit)|
+Q		|<Plug>(unite_all_exit)|
 <C-r>		|<Plug>(unite_restart)|
 <Space>		|<Plug>(unite_toggle_mark_current_candidate)|
 *		|<Plug>(unite_toggle_mark_all_candidates)|
@@ -1238,6 +1278,15 @@ alias		Create alias source copied original source.
 		|g:unite_source_alias_aliases|.
 		Note: This source is created by tacroe.
 
+						*unite-source-menu*
+menu		Nominates menus.
+		If arguments is not given, nominates all menu names.
+		To create menus, please refer to
+		|g:unite_source_menu_menus|.
+
+		Source arguments:
+		1. menu name.
+
 						*unite-source-history/yank*
 history/yank	Nominates yanked words.
 		To use this source, please set
@@ -1560,6 +1609,10 @@ completion					*unite-action-completion*
 uri						*unite-action-uri*
 	start		Open file with associated program.
 
+source						*unite-action-source*
+	start		Start source
+	edit		Edit source arguments
+
 Actions of each sources
 
 file_mru					*unite-action-file_mru*
@@ -1591,6 +1644,7 @@ tab		open
 directory	narrow
 word		insert
 jump_list	open
+source		start
 
 ==============================================================================
 CREATE SOURCE					*unite-create-source*
@@ -1914,6 +1968,15 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-10-11
+- Added unite-menu source.
+
+2011-10-10
+- Fixed variables initialize.
+- Improved unite-source behavior.
+- Added <Plug>(unite_all_exit) mapping.
+- Improved buffer name option behavior.
 
 2011-10-09
 - Expand path.

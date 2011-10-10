@@ -520,6 +520,42 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 <
 		初期値は{}である。
 
+g:unite_source_menu_menus			*g:unite_source_menu_menus*
+		|unite-source-menu|が使用するメニューを定義する。
+		この変数は辞書であり、キーとして定義するmenuの名前、
+		値として次の属性を持つ辞書を取る。
+
+		candidates		(リストか辞書)	(必須)
+		menuの中身となる候補を定義する。
+		この属性は辞書でもよいが、キーは無視される。
+
+		map_expr		(文字列)	(任意)
+		この属性が与えられている場合、map(candidates, map_expr)の処
+		理結果がcandidatesとなる。
+
+		description		(文字列)	(任意)
+		menuの説明用文字列。
+
+		例えば、次の設定では"test"というmenuが定義される。
+>
+		let g:unite_source_menu_menus = {
+			\   'test' : {
+			\     'candidates' : {
+			\       'ghci'      : 'VimShellInteractive ghci',
+			\       'python'    : 'VimShellInteractive python',
+			\       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
+			\     },
+			\     'map_expr' : "{
+			\       'word' : v:key,
+			\       'kind' : 'command',
+			\       'action__command' : v:val,
+			\     }",
+			\     'description' : 'Test menu'
+			\   },
+		\ }
+<
+		初期値は{}である。
+
 g:unite_source_history_yank_enable		*g:unite_source_history_yank_enable*
 		|unite-source-history/yank|を有効化するかどうか決定する。
 		この変数が定義され、値が0以外なら有効化される。値は
@@ -560,7 +596,10 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 ノーマルモードマッピング
 
 <Plug>(unite_exit)				*<Plug>(unite_exit)*
-		uniteを終了する。
+		uniteを終了する。前のuniteバッファメニューは復元される。
+
+<Plug>(unite_all_exit)				*<Plug>(unite_all_exit)*
+		uniteバッファメニューを全て閉じ、uniteを終了する。
 
 <Plug>(unite_restart)				*<Plug>(unite_restart)*
 		uniteを再起動する。
@@ -761,6 +800,7 @@ I		|<Plug>(unite_insert_head)|
 a		|<Plug>(unite_append_enter)|
 A		|<Plug>(unite_append_end)|
 q		|<Plug>(unite_exit)|
+Q		|<Plug>(unite_all_exit)|
 <C-r>		|<Plug>(unite_restart)|
 <Space>		|<Plug>(unite_toggle_mark_current_candidate)|
 *		|<Plug>(unite_toggle_mark_all_candidates)|
@@ -1268,6 +1308,15 @@ alias		すでに存在するsourceの定義をコピーし、aliasのsourceを�
 		参照せよ。
 		Note: このsourceはtacroeによって作成された。
 
+						*unite-source-menu*
+menu		予め定義されたメニューを候補とする。いちいちsourceを定義する
+		必要がない。引数が与えられない場合、menuの一覧を候補とする。
+		メニューの作り方については、|g:unite_source_menu_menus|を参
+		照せよ。
+
+		source引数：
+		1. メニューの名前
+
 						*unite-source-history/yank*
 history/yank	ヤンクされたテキストの履歴を候補とする。
 		このsourceを使用するためには、
@@ -1639,6 +1688,10 @@ completion					*unite-action-completion*
 uri						*unite-action-uri*
 	start		ファイルを関連付けで開く
 
+source						*unite-action-source*
+	start		sourceを起動する
+	edit		sourceの引数を変更する
+
 source別アクション
 
 file_mru					*unite-action-file_mru*
@@ -1670,6 +1723,7 @@ tab		open
 directory	narrow
 word		insert
 jump_list	open
+source		start
 
 ==============================================================================
 sourceの作成					*unite-create-source*

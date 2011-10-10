@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Oct 2011.
+" Last Modified: 10 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -71,9 +71,12 @@ function! unite#set_buffer_name_option(buffer_name, option_name, value)"{{{
   endfor
 endfunction"}}}
 function! unite#get_buffer_name_option(buffer_name, option_name)"{{{
-  let buffer_name = (a:buffer_name == '' ? 'default' : a:buffer_name)
+  let buffer_name = matchstr(a:buffer_name, '^\S\+')
+  if buffer_name == ''
+    let buffer_name = 'default'
+  endif
 
-  return s:buffer_name_options[a:buffer_name][a:option_name]
+  return s:buffer_name_options[buffer_name][a:option_name]
 endfunction"}}}
 function! unite#custom_filters(source_name, filters)"{{{
   let filters = type(a:filters) == type([]) ?
@@ -893,7 +896,7 @@ function! unite#start(sources, ...)"{{{
     stopinsert
   endif
 endfunction"}}}
-function! unite#start_temporary(sources, new_context, buffer_name)"{{{
+function! unite#start_temporary(sources, ...)"{{{
   if &filetype == 'unite'
     " Get current context.
     let old_context = unite#get_context()
@@ -908,16 +911,20 @@ function! unite#start_temporary(sources, new_context, buffer_name)"{{{
     let context.old_buffer_info = []
   endif
 
-  let context.buffer_name = a:buffer_name
+  let new_context = get(a:000, 0, {})
+  let buffer_name = get(a:000, 1, context.buffer_name
+        \ . ' - ' . len(context.old_buffer_info))
+
+  let context.buffer_name = buffer_name
   let context.temporary = 1
   let context.input = ''
   let context.auto_preview = 0
   let context.default_action = 'default'
 
   " Overwrite context.
-  let context = extend(context, a:new_context)
+  let context = extend(context, new_context)
 
-  call unite#force_quit_session()
+  call unite#all_quit_session()
   call unite#start(a:sources, context)
 endfunction"}}}
 function! unite#vimfiler_check_filetype(sources, ...)"{{{
@@ -1019,7 +1026,6 @@ function! unite#resume(buffer_name, ...)"{{{
     endfor
 
     if !has_key(buffer_dict, a:buffer_name)
-      call unite#util#print_error('Invalid buffer name : ' . a:buffer_name)
       return
     endif
     let bufnr = buffer_dict[a:buffer_name]
@@ -1154,6 +1160,9 @@ function! s:initialize_context(context)"{{{
   return a:context
 endfunction"}}}
 
+function! unite#all_quit_session(...)  "{{{
+  call s:quit_session(get(a:000, 0, 1))
+endfunction"}}}
 function! unite#force_quit_session()  "{{{
   call s:quit_session(1)
 
@@ -1412,10 +1421,12 @@ function! s:initialize_filters()"{{{
   return extend(copy(s:static.filters), s:dynamic.filters)
 endfunction"}}}
 function! s:initialize_buffer_name_options(buffer_name)"{{{
-  if !has_key(s:buffer_name_options, a:buffer_name)
-    let s:buffer_name_options[a:buffer_name] = {}
+  let buffer_name = matchstr(a:buffer_name, '^\S\+')
+
+  if !has_key(s:buffer_name_options, buffer_name)
+    let s:buffer_name_options[buffer_name] = {}
   endif
-  let setting = s:buffer_name_options[a:buffer_name]
+  let setting = s:buffer_name_options[buffer_name]
   if !has_key(setting, 'substitute_patterns')
     let setting.substitute_patterns = {}
   endif
