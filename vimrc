@@ -20,6 +20,8 @@ endif
 " pathogen 
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
+"let g:pathogen_disabled = ['whatever', 'unite.vim']
+let g:pathogen_disabled = ['whatever']
 call pathogen#infect()
 
 " Use Vim settings, rather then Vi settings (much better!).
@@ -259,8 +261,10 @@ endfunction
 map <Leader>tn :call ToogleRelativeNumber()<cr>
 "set relativenumber
 
-"pep8 map
-let g:pep8_map='<leader>p8'
+"pep8
+"let g:pep8_map = '<leader>p8' "not used anymore
+let g:pep8_cmd  = 'pep8.py'
+let g:pep8_ignore = "E111,E221,E225"
 "todo list
 map <leader>td <Plug>TaskList
 
@@ -537,4 +541,7 @@ if v:version < 703
 endif
 
 "load cscope in two levels up
-map <Leader>csa :cs add ../s/cscope.out ../s<cr>
+map <Leader>csa :cs add ../../cscope.out ../..<cr>
+set cot-=preview
+
+let g:unite_source_history_yank_enable = 1

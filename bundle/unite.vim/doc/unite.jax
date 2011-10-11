@@ -166,6 +166,7 @@ http://www.ustream.tv/recorded/11240673
 		バッファ名を付けることで、|unite#set_substitute_pattern()|など
 		の設定を共通化することができる。指定しないと、'default'が使われ
 		る。
+		Note: バッファ名にスペースを含めてはならない。
 
 						*unite-options-input*
 		-input={input-text}
@@ -467,6 +468,16 @@ g:unite_source_grep_max_candidates		*g:unite_source_grep_max_candidates*
 
 		初期値は100である。
 
+g:unite_source_find_command			*g:unite_source_find_command*
+		"find"コマンドを指定する。
+
+		初期値は"find"である。
+
+g:unite_source_find_max_candidates		*g:unite_source_find_max_candidates*
+		|unite-source-find|の候補の最大数を指定する。
+
+		初期値は100である。
+
 g:unite_source_line_enable_highlight		*g:unite_source_line_enable_highlight*
 		検索キーワードをハイライトするか制御する。
 
@@ -510,6 +521,57 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 <
 		初期値は{}である。
 
+g:unite_source_menu_menus			*g:unite_source_menu_menus*
+		|unite-source-menu|が使用するメニューを定義する。
+		この変数は辞書であり、キーとして定義するmenuの名前、
+		値として次の属性を持つものである。
+
+		candidates		(リストか辞書)	(必須)
+		menuの中身となる候補を定義する。
+		この属性は辞書でもよいが、キーは無視される。
+
+		map			(関数)		(任意)
+		この属性が与えられている場合、map(key, value)の処理結果が
+		candidatesとなる。
+
+		description		(文字列)	(任意)
+		menuの説明用文字列。
+
+		例えば、次の設定では"test"というmenuが定義される。
+>
+		let g:unite_source_menu_menus = {}
+		let g:unite_source_menu_menus.test = {
+		      \     'description' : 'Test menu',
+		      \ }
+		let g:unite_source_menu_menus.test.candidates = {
+		      \       'ghci'      : 'VimShellInteractive ghci',
+		      \       'python'    : 'VimShellInteractive python',
+		      \       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
+		      \     }
+		function g:unite_source_menu_menus.test.map(key, value)
+		  return {
+		        \       'word' : a:key, 'kind' : 'command',
+		        \       'action__command' : a:value,
+		        \     }
+		endfunction
+		
+		nnoremap <silent> fm  :<C-u>Unite menu:test<CR>
+<
+		初期値は{}である。
+
+g:unite_source_history_yank_enable		*g:unite_source_history_yank_enable*
+		|unite-source-history/yank|を有効化するかどうか決定する。
+		この変数が定義され、値が0以外なら有効化される。値は
+		.vimrc内でセットしなければならない。
+
+		この変数はデフォルトで定義されない。
+
+g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
+		|unite-source-history/yank|が履歴を保存する最大数を指定
+		する。
+		
+		初期値は100である。
+
 kindの変数					*unite-kinds-variables*
 
 g:unite_kind_jump_list_after_jump_scroll	*g:unite_kind_jump_list_after_jump_scroll*
@@ -537,7 +599,10 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 ノーマルモードマッピング
 
 <Plug>(unite_exit)				*<Plug>(unite_exit)*
-		uniteを終了する。
+		uniteを終了する。前のuniteバッファメニューは復元される。
+
+<Plug>(unite_all_exit)				*<Plug>(unite_all_exit)*
+		uniteバッファメニューを全て閉じ、uniteを終了する。
 
 <Plug>(unite_restart)				*<Plug>(unite_restart)*
 		uniteを再起動する。
@@ -635,6 +700,12 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 <Plug>(unite_toggle_auto_preview)		*<Plug>(unite_toggle_auto_preview)*
 		uniteバッファのauto previewモードをトグルする。
 
+<Plug>(unite_toggle_max_candidates)		*<Plug>(unite_toggle_max_candidates)*
+		uniteバッファのmax_candidatesの有効化・無効化をトグルする。
+
+<Plug>(unite_quick_help)			*<Plug>(unite_quick_help)*
+		uniteバッファのマッピングを見る。
+
 インサートモードマッピング
 
 <Plug>(unite_exit)				*i_<Plug>(unite_exit)*
@@ -712,6 +783,9 @@ g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_ope
 <Plug>(unite_toggle_auto_preview)		*i_<Plug>(unite_toggle_auto_preview)*
 		|<Plug>(unite_toggle_auto_preview)|と同じ。
 
+<Plug>(unite_toggle_max_candidates)		*i_<Plug>(unite_toggle_max_candidates)*
+		|<Plug>(unite_toggle_max_candidates)|と同じ。
+
 ビジュアルモードマッピング
 
 <Plug>(unite_toggle_mark_selected_candidates)	*v_<Plug>(unite_toggle_selected_candidates)*
@@ -729,9 +803,11 @@ I		|<Plug>(unite_insert_head)|
 a		|<Plug>(unite_append_enter)|
 A		|<Plug>(unite_append_end)|
 q		|<Plug>(unite_exit)|
+Q		|<Plug>(unite_all_exit)|
 <C-r>		|<Plug>(unite_restart)|
 <Space>		|<Plug>(unite_toggle_mark_current_candidate)|
 *		|<Plug>(unite_toggle_mark_all_candidates)|
+M		|<Plug>(unite_toggle_max_candidates)|
 <Tab>		|<Plug>(unite_choose_action)|
 <C-n>		|<Plug>(unite_rotate_next_source)|
 <C-p>		|<Plug>(unite_rotate_previous_source)|
@@ -745,6 +821,7 @@ k		|<Plug>(unite_loop_cursor_up)|
 <Up>		|<Plug>(unite_loop_cursor_up)|
 J		|<Plug>(unite_skip_cursor_down)|
 K		|<Plug>(unite_skip_cursor_up)|
+?		|<Plug>(unite_quick_help)|
 <CR>		候補を選択している場合は default アクションの実行
 d		候補を選択している場合は delete アクションの実行
 b		候補を選択している場合は bookmark アクションの実行
@@ -892,7 +969,7 @@ unite#set_substitute_pattern({buffer-name}, {pattern}, {subst} [, {priority}])
 		
 		この関数を使うと、曖昧マッチを模倣することができる。
 >
-		call unite#set_substitute_pattern('files', '[[:alnum:]]', '*\0', 100)
+		call unite#set_substitute_pattern('files', '[^*]\ze[[:alnum:]]', '\0*', 100)
 		call unite#set_substitute_pattern('files', '[[:alnum:]]', ' \0', 100)
 <
 		上の設定は/を越えずに曖昧検索をするが、下の場合は/を越えて曖昧
@@ -906,6 +983,7 @@ unite#set_substitute_pattern({buffer-name}, {pattern}, {subst} [, {priority}])
 		\ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
 		call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
 		call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
+		call unite#set_substitute_pattern('files', '\.', '*.', 1000)
 <
 unite#get_substitute_pattern({buffer-name})
 						*unite#get_substitute_pattern()*
@@ -961,8 +1039,8 @@ unite#custom_action({kind}, {name}, {action})
 		function! my_tabopen.func(candidates)
 		  call unite#take_action('tabopen', a:candidates)
 		
-		  let l:dir = isdirectory(a:candidate.word) ? a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
-		  execute g:unite_kind_openable_lcd_command '`=l:dir`'
+		  let dir = isdirectory(a:candidate.word) ? a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
+		  execute g:unite_kind_openable_lcd_command '`=dir`'
 		endfunction
 		call unite#custom_action('file,buffer', 'tabopen', my_tabopen)
 		unlet my_tabopen
@@ -1150,6 +1228,9 @@ command		VimのExコマンドを候補とする。
 						*unite-source-mapping*
 mapping		ユーザーが定義したマッピングを候補とする。
 
+		source引数：
+		1. ターゲットとなるバッファの番号
+
 						*unite-source-grep*
 grep		"grep"コマンドを実行した結果を候補とする。
 		Note: このsourceはSixeight氏によって作成された。
@@ -1172,6 +1253,18 @@ grep		"grep"コマンドを実行した結果を候補とする。
 		%         : カレントバッファ名
 		#         : 裏バッファ名
 		$buffers  : 全てのバッファ名
+
+						*unite-source-find*
+find		"find"コマンドを実行した結果を候補とする。
+
+		Note: このsourceはvimprocを必要としている。
+		http://github.com/Shougo/vimproc/tree/master
+
+		source引数：
+		1. ターゲットとなるディレクトリ名
+		2. "find"に与えるオプション
+
+		候補の最大数：|g:unite_source_find_max_candidates|
 
 						*unite-source-line*
 line		カレントバッファの行を候補とする。
@@ -1217,6 +1310,27 @@ alias		すでに存在するsourceの定義をコピーし、aliasのsourceを�
 		alias sourceの作り方については、|g:unite_source_alias_aliases|を
 		参照せよ。
 		Note: このsourceはtacroeによって作成された。
+
+						*unite-source-menu*
+menu		予め定義されたメニューを候補とする。いちいちsourceを定義する
+		必要がない。引数が与えられない場合、menuの一覧を候補とする。
+		メニューの作り方については、|g:unite_source_menu_menus|を参
+		照せよ。
+
+		source引数：
+		1. メニューの名前
+
+						*unite-source-history/yank*
+history/yank	ヤンクされたテキストの履歴を候補とする。
+		このsourceを使用するためには、
+		|g:unite_source_history_yank_enable|を1にしなければなら
+		ない。
+		Note: このsourceは|g:unite_source_history_yank_enable|
+		が0か定義されていないときに無効化される。
+
+						*unite-source-process*
+process		プロセスリストを候補とする。
+		Note: このsourceには"ps"外部コマンドが必要である。
 
 ==============================================================================
 kind						*unite-kinds*
@@ -1415,6 +1529,15 @@ matcher_glob	ユーザーが入力したglobパターンにより候補をフィ
 matcher_regexp	ユーザーが入力したパターンを正規表現として、候補をフィルタリ
 		ングするmatcher。"!"は否定となる。絞り込みにはwordを使用する。
 
+						*unite-filter-matcher_fuzzy*
+matcher_fuzzy	ユーザーが入力したパターンを曖昧検索として、候補をフィルタリ
+		ングするmatcher。"!"は否定となる。絞り込みにはwordを使用する。
+		このmatcherを使用すると、絞り込みが遅くなるので注意すること。
+		|unite-source-file_rec|に対して設定すると便利かもしれない。
+>
+		call unite#custom_filters('file,buffer,file_rec',
+		\ ['matcher_fuzzy', 'sorter_default', 'converter_default'])
+<
 						*unite-filter-sorter_default*
 sorter_default	|unite-filter-default|により呼び出される、デフォルトのsorter。
 		初期状態では、["sorter_nothing"]のsorterを呼び出す。
@@ -1568,6 +1691,10 @@ completion					*unite-action-completion*
 uri						*unite-action-uri*
 	start		ファイルを関連付けで開く
 
+source						*unite-action-source*
+	start		sourceを起動する
+	edit		sourceの引数を変更する
+
 source別アクション
 
 file_mru					*unite-action-file_mru*
@@ -1583,6 +1710,10 @@ register					*unite-action-register*
 	edit		レジスタの中身を変更する
 	delete		レジスタの中身を空にする
 
+process						*unite-action-process*
+	sigterm		プロセスにSIGTERMを送る
+	sigkill		プロセスにSIGKILLを送る
+
 						*unite-default-action*
 デフォルトアクション
 
@@ -1595,6 +1726,7 @@ tab		open
 directory	narrow
 word		insert
 jump_list	open
+source		start
 
 ==============================================================================
 sourceの作成					*unite-create-source*

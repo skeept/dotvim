@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Sep 2011.
+" Last Modified: 11 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 3.0, for Vim 7.0
+" Version: 3.0, for Vim 7.2
 "=============================================================================
 
 if exists('g:loaded_unite')
@@ -31,6 +31,11 @@ endif
 
 let s:save_cpo = &cpo
 set cpo&vim
+
+" Vim version check.
+if v:version < 702
+  echoerr 'Your Vim version is too old. Please update to Vim 7.2 or above.'
+endif
 
 " Obsolute options check."{{{
 if exists('g:unite_cd_command')
@@ -41,163 +46,152 @@ if exists('g:unite_lcd_command')
 endif
 "}}}
 " Global options definition."{{{
-if !exists('g:unite_update_time')
-  let g:unite_update_time = 500
-endif
-if !exists('g:unite_enable_start_insert')
-  let g:unite_enable_start_insert = 0
-endif
-if !exists('g:unite_enable_ignore_case')
-  let g:unite_enable_ignore_case = &ignorecase
-endif
-if !exists('g:unite_enable_smart_case')
-  let g:unite_enable_smart_case = &infercase
-endif
-if !exists('g:unite_split_rule')
-  let g:unite_split_rule = 'topleft'
-endif
-if !exists('g:unite_enable_split_vertically')
-  let g:unite_enable_split_vertically = 0
-endif
-if !exists('g:unite_winheight')
-  let g:unite_winheight = 20
-endif
-if !exists('g:unite_winwidth')
-  let g:unite_winwidth = 90
-endif
-if !exists('g:unite_quick_match_table')
-  let g:unite_quick_match_table = {
-        \'a' : 1, 's' : 2, 'd' : 3, 'f' : 4, 'g' : 5, 'h' : 6, 'j' : 7, 'k' : 8, 'l' : 9, ';' : 10,
-        \'q' : 11, 'w' : 12, 'e' : 13, 'r' : 14, 't' : 15, 'y' : 16, 'u' : 17, 'i' : 18, 'o' : 19, 'p' : 20,
-        \'1' : 21, '2' : 22, '3' : 23, '4' : 24, '5' : 25, '6' : 26, '7' : 27, '8' : 28, '9' : 29, '0' : 30,
-        \}
-endif
-if !exists('g:unite_abbr_highlight')
-  let g:unite_abbr_highlight = 'Normal'
-endif
-if !exists('g:unite_cursor_line_highlight')
-  let g:unite_cursor_line_highlight = 'PmenuSel'
-endif
-if !exists('g:unite_data_directory')
-  let g:unite_data_directory = expand('~/.unite')
-endif
+let g:unite_update_time =
+      \ get(g:, 'unite_update_time', 500)
+let g:unite_enable_start_insert =
+      \ get(g:, 'unite_enable_start_insert', 0)
+let g:unite_enable_ignore_case =
+      \ get(g:, 'unite_enable_ignore_case', &ignorecase)
+let g:unite_enable_smart_case =
+      \ get(g:, 'unite_enable_smart_case', &infercase)
+let g:unite_split_rule =
+      \ get(g:, 'unite_split_rule', 'topleft')
+let g:unite_enable_split_vertically =
+      \ get(g:, 'unite_enable_split_vertically', 0)
+let g:unite_winheight =
+      \ get(g:, 'unite_winheight', 20)
+let g:unite_winwidth =
+      \ get(g:, 'unite_winwidth', 90)
+let g:unite_quick_match_table =
+      \ get(g:, 'unite_quick_match_table', {
+      \     'a' : 1, 's' : 2, 'd' : 3, 'f' : 4, 'g' : 5, 'h' : 6, 'j' : 7, 'k' : 8, 'l' : 9, ';' : 10,
+      \     'q' : 11, 'w' : 12, 'e' : 13, 'r' : 14, 't' : 15, 'y' : 16, 'u' : 17, 'i' : 18, 'o' : 19, 'p' : 20,
+      \     '1' : 21, '2' : 22, '3' : 23, '4' : 24, '5' : 25, '6' : 26, '7' : 27, '8' : 28, '9' : 29, '0' : 30,
+      \ })
+let g:unite_abbr_highlight =
+      \ get(g:, 'unite_abbr_highlight', 'Normal')
+let g:unite_cursor_line_highlight =
+      \ get(g:, 'unite_cursor_line_highlight', 'PmenuSel')
+let g:unite_data_directory =
+      \ get(g:, 'unite_data_directory', expand('~/.unite'))
 if !isdirectory(fnamemodify(g:unite_data_directory, ':p'))
-  call mkdir(iconv(fnamemodify(g:unite_data_directory, ':p'), &encoding, &termencoding), 'p')
+  call mkdir(iconv(fnamemodify(g:unite_data_directory, ':p'),
+        \    &encoding, &termencoding), 'p')
 endif
 "}}}
 
 " Wrapper command.
 command! -nargs=+ -complete=customlist,unite#complete_source Unite call s:call_unite_empty(<q-args>)
 function! s:call_unite_empty(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  call unite#start(l:args, l:options)
+  let [args, options] = s:parse_options_args(a:args)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=+ -complete=customlist,unite#complete_source UniteWithCurrentDir call s:call_unite_current_dir(<q-args>)
 function! s:call_unite_current_dir(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  if !has_key(l:options, 'input')
-    let l:path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(getcwd(), ':p'))
-    if l:path !~ '/$'
-      let l:path .= '/'
+  let [args, options] = s:parse_options_args(a:args)
+  if !has_key(options, 'input')
+    let path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(getcwd(), ':p'))
+    if path !~ '/$'
+      let path .= '/'
     endif
-    let l:options.input = escape(l:path, ' ')
+    let options.input = escape(path, ' ')
   endif
 
-  call unite#start(l:args, l:options)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=+ -complete=customlist,unite#complete_source UniteWithBufferDir call s:call_unite_buffer_dir(<q-args>)
 function! s:call_unite_buffer_dir(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  if !has_key(l:options, 'input')
-    let l:path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(bufname('%'), ':p:h'))
-    if l:path !~ '/$'
-      let l:path .= '/'
+  let [args, options] = s:parse_options_args(a:args)
+  if !has_key(options, 'input')
+    let path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(bufname('%'), ':p:h'))
+    if path !~ '/$'
+      let path .= '/'
     endif
-    let l:options.input = escape(l:path, ' ')
+    let options.input = escape(path, ' ')
   endif
 
-  call unite#start(l:args, l:options)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=+ -complete=customlist,unite#complete_source UniteWithCursorWord call s:call_unite_cursor_word(<q-args>)
 function! s:call_unite_cursor_word(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  if !has_key(l:options, 'input')
-    let l:options.input = expand('<cword>')
+  let [args, options] = s:parse_options_args(a:args)
+  if !has_key(options, 'input')
+    let options.input = expand('<cword>')
   endif
 
-  call unite#start(l:args, l:options)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=+ -complete=customlist,unite#complete_source UniteWithInput call s:call_unite_input(<q-args>)
 function! s:call_unite_input(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  if !has_key(l:options, 'input')
-    let l:options.input = escape(input('Input narrowing text: ', ''), ' ')
+  let [args, options] = s:parse_options_args(a:args)
+  if !has_key(options, 'input')
+    let options.input = escape(input('Input narrowing text: ', ''), ' ')
   endif
 
-  call unite#start(l:args, l:options)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=+ -complete=customlist,unite#complete_source UniteWithInputDirectory call s:call_unite_input_directory(<q-args>)
 function! s:call_unite_input_directory(args)"{{{
-  let [l:args, l:options] = s:parse_options_args(a:args)
-  if !has_key(l:options, 'input')
-    let l:path = unite#substitute_path_separator(input('Input narrowing directory: ', '', 'dir'))
-    if isdirectory(l:path) && l:path !~ '/$'
-      let l:path .= '/'
+  let [args, options] = s:parse_options_args(a:args)
+  if !has_key(options, 'input')
+    let path = unite#substitute_path_separator(input('Input narrowing directory: ', '', 'dir'))
+    if isdirectory(path) && path !~ '/$'
+      let path .= '/'
     endif
-    let l:options.input = l:path
+    let options.input = path
   endif
 
-  call unite#start(l:args, l:options)
+  call unite#start(args, options)
 endfunction"}}}
 
 command! -nargs=? -complete=customlist,unite#complete_resume UniteResume call s:call_unite_resume(<q-args>)
 function! s:call_unite_resume(args)"{{{
-  let [l:args, l:options] = s:parse_options(a:args)
+  let [args, options] = s:parse_options(a:args)
 
-  call unite#resume(join(l:args), l:options)
+  call unite#resume(join(args), options)
 endfunction"}}}
 
 function! s:parse_options(args)"{{{
-  let l:args = []
-  let l:options = {}
-  for l:arg in split(a:args, '\%(\\\@<!\s\)\+')
-    let l:arg = substitute(l:arg, '\\\( \)', '\1', 'g')
+  let args = []
+  let options = {}
+  for arg in split(a:args, '\%(\\\@<!\s\)\+')
+    let arg = substitute(arg, '\\\( \)', '\1', 'g')
 
-    let l:matched_list = filter(copy(unite#get_options()),
-          \  'stridx(l:arg, v:val) == 0')
-    for l:option in l:matched_list
-      let l:key = substitute(substitute(l:option, '-', '_', 'g'), '=$', '', '')[1:]
-      let l:options[l:key] = (l:option =~ '=$') ?
-            \ l:arg[len(l:option) :] : 1
+    let matched_list = filter(copy(unite#get_options()),
+          \  'stridx(arg, v:val) == 0')
+    for option in matched_list
+      let key = substitute(substitute(option, '-', '_', 'g'), '=$', '', '')[1:]
+      let options[key] = (option =~ '=$') ?
+            \ arg[len(option) :] : 1
       break
     endfor
 
-    if empty(l:matched_list)
-      call add(l:args, l:arg)
+    if empty(matched_list)
+      call add(args, arg)
     endif
   endfor
 
-  return [l:args, l:options]
+  return [args, options]
 endfunction"}}}
 function! s:parse_options_args(args)"{{{
   let _ = []
-  let [l:args, l:options] = s:parse_options(a:args)
-  for l:arg in l:args
+  let [args, options] = s:parse_options(a:args)
+  for arg in args
     " Add source name.
-    let l:source_name = matchstr(l:arg, '^[^:]*')
-    let l:source_arg = l:arg[len(l:source_name)+1 :]
-    let l:source_args = l:source_arg  == '' ? [] :
-          \  map(split(l:source_arg, '\\\@<!:', 1),
+    let source_name = matchstr(arg, '^[^:]*')
+    let source_arg = arg[len(source_name)+1 :]
+    let source_args = source_arg  == '' ? [] :
+          \  map(split(source_arg, '\\\@<!:', 1),
           \      'substitute(v:val, ''\\\(.\)'', "\\1", "g")')
-    call add(_, insert(l:source_args, l:source_name))
+    call add(_, insert(source_args, source_name))
   endfor
 
-  return [_, l:options]
+  return [_, options]
 endfunction"}}}
 
 let g:loaded_unite = 1
