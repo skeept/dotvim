@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/cpp.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-23
+" Updated : 2011-10-10
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -9,7 +9,7 @@
 "=============================================================================
 
 " Default outline info for C++
-" Version: 0.1.9
+" Version: 0.2.0
 
 function! unite#sources#outline#defaults#cpp#outline_info()
   return s:outline_info
@@ -30,17 +30,22 @@ let s:outline_info = {
       \
       \ 'not_match_patterns': [
       \   s:Util.shared_pattern('*', 'parameter_list'),
+      \   ' => .*',
       \ ],
       \
       \ 'highlight_rules': [
       \   { 'name'   : 'parameter_list',
-      \     'pattern': '/(.*)/' },
+      \     'pattern': '/\%(=> .*\)\@<!\zs([^=]*)/' },
       \   { 'name'   : 'type',
-      \     'pattern': '/\S\+\ze : \%(class\|enum\|struct\|typedef\)/' },
+      \     'pattern': '/\S\+\ze\%( #\d\+\)\= : \%(class\|enum\|struct\|typedef\)/' },
       \   { 'name'   : 'function',
-      \     'pattern': '/\(operator\>.*\|\h\w*\)\ze\s*(/' },
+      \     'pattern': '/\%(=> .*\)\@<!\(operator\>.*\|\h\w*\)\ze\s*(/' },
       \   { 'name'   : 'macro',
-      \     'pattern': '/\h\w*\ze\%( (.*)\)\= : macro/' },
+      \     'pattern': '/\h\w*\ze .*=> /' },
+      \   { 'name'   : 'expanded',
+      \     'pattern': '/ => \zs.*/' },
+      \   { 'name'   : 'id',
+      \     'pattern': '/ \zs#\d\+/' },
       \ ],
       \}
 
