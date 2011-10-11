@@ -1,3 +1,6 @@
+" DESC: Set scriptname
+let g:scriptname = expand('<sfile>:t')
+
 " OPTION: g:pymode_doc -- bool. Show documentation enabled
 call helpers#SafeVar('g:pymode_doc', 1)
 
@@ -11,7 +14,6 @@ endif
 
 " DESC: Check pydoc installed
 if !helpers#CheckProgramm('pydoc')
-    helpers#ShowError(s:scriptname . ' required pydoc.')
     finish
 endif
 
@@ -19,14 +21,14 @@ endif
 " ARGS: word -- string, word for search
 fun! <SID>:PydocLoad(word) "{{{
     if a:word == ''
-        call helpers#ShowError('no name/symbol under cursor!')
+        echoerr 'no name/symbol under cursor!'
         return 0
     endif
     call helpers#ShowPreviewCmd(g:pydoc . " " . escape(a:word, " "))
 endfunction "}}}
 
 " DESC: Set commands
-command! -nargs=+ Pydoc call <SID>:PydocLoad("<args>")
+command! -buffer -nargs=+ Pydoc call <SID>:PydocLoad("<args>")
 
 " DESC: Set keys
 exe "nnoremap <silent> <buffer> " g:pymode_doc_key ":call <SID>:PydocLoad(expand('<cword>'))<CR>"
