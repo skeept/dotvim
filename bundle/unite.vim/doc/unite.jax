@@ -166,6 +166,7 @@ http://www.ustream.tv/recorded/11240673
 		バッファ名を付けることで、|unite#set_substitute_pattern()|など
 		の設定を共通化することができる。指定しないと、'default'が使われ
 		る。
+		Note: バッファ名にスペースを含めてはならない。
 
 						*unite-options-input*
 		-input={input-text}
@@ -523,36 +524,38 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		|unite-source-menu|が使用するメニューを定義する。
 		この変数は辞書であり、キーとして定義するmenuの名前、
-		値として次の属性を持つ辞書を取る。
+		値として次の属性を持つものである。
 
 		candidates		(リストか辞書)	(必須)
 		menuの中身となる候補を定義する。
 		この属性は辞書でもよいが、キーは無視される。
 
-		map_expr		(文字列)	(任意)
-		この属性が与えられている場合、map(candidates, map_expr)の処
-		理結果がcandidatesとなる。
+		map			(関数)		(任意)
+		この属性が与えられている場合、map(key, value)の処理結果が
+		candidatesとなる。
 
 		description		(文字列)	(任意)
 		menuの説明用文字列。
 
 		例えば、次の設定では"test"というmenuが定義される。
 >
-		let g:unite_source_menu_menus = {
-			\   'test' : {
-			\     'candidates' : {
-			\       'ghci'      : 'VimShellInteractive ghci',
-			\       'python'    : 'VimShellInteractive python',
-			\       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
-			\     },
-			\     'map_expr' : "{
-			\       'word' : v:key,
-			\       'kind' : 'command',
-			\       'action__command' : v:val,
-			\     }",
-			\     'description' : 'Test menu'
-			\   },
-		\ }
+		let g:unite_source_menu_menus = {}
+		let g:unite_source_menu_menus.test = {
+		      \     'description' : 'Test menu',
+		      \ }
+		let g:unite_source_menu_menus.test.candidates = {
+		      \       'ghci'      : 'VimShellInteractive ghci',
+		      \       'python'    : 'VimShellInteractive python',
+		      \       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
+		      \     }
+		function g:unite_source_menu_menus.test.map(key, value)
+		  return {
+		        \       'word' : a:key, 'kind' : 'command',
+		        \       'action__command' : a:value,
+		        \     }
+		endfunction
+		
+		nnoremap <silent> fm  :<C-u>Unite menu:test<CR>
 <
 		初期値は{}である。
 
