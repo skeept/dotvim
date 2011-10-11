@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Oct 2011.
+" Last Modified: 11 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 3.0, for Vim 7.0
+" Version: 3.0, for Vim 7.2
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -912,7 +912,7 @@ function! unite#start_temporary(sources, ...)"{{{
   endif
 
   let new_context = get(a:000, 0, {})
-  let buffer_name = get(a:000, 1, context.buffer_name
+  let buffer_name = get(a:000, 1, matchstr(context.buffer_name, '^\S\+')
         \ . ' - ' . len(context.old_buffer_info))
 
   let context.buffer_name = buffer_name
@@ -932,7 +932,7 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
   call s:initialize_context(context)
 
   try
-    call s:initialize_current_unite(a:sources, context)
+    silent call s:initialize_current_unite(a:sources, context)
   catch /^Invalid source/
     return []
   endtry
@@ -945,6 +945,13 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
         if type ==# 'file'
           call s:initialize_candidates([info[1]], source.name)
           call s:initialize_vimfiler_candidates([info[1]])
+        elseif type ==# 'directory'
+          " nop
+        elseif type ==# 'error'
+          call unite#print_error(info[0])
+          return []
+        else
+          call unite#print_error('Invalid filetype : ' . type)
         endif
 
         return [type, info]

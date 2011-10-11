@@ -172,6 +172,7 @@ COMMANDS 					*unite-commands*
 		functions like |unite#set_substitute_pattern()| by giving a
 		buffer name for unite buffers that have same purpose.
 		The default buffer name is 'default'.
+		Note: Buffer name must not contain spaces.
 
 						*unite-options-input*
 		-input={input-text}
@@ -522,37 +523,39 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 
 g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		Set |unite-source-menu| settings.
-		This variable is dictionary. The key is menu name,
-		and the value is following attributes dictionary.
+		This variable is dictionary that the keys are menu names
+		and the values are the following attributes.
 
 		candidates	(List or Dictionary)	(Required)
 		Menu candidates. If candidates are directory, keys are
 		ignored.
 
-		map_expr		(String)	(Optional)
+		map		(Function)		(Optional)
 		If this attribute is given, candidates will be result of
-		map(candidates, map_expr).
+		map(key, value).
 
 		description		(String)	(Optional)
 		Description string.
 
 		Example:
 >
-		let g:unite_source_menu_menus = {
-			\   'test' : {
-			\     'candidates' : {
-			\       'ghci'      : 'VimShellInteractive ghci',
-			\       'python'    : 'VimShellInteractive python',
-			\       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
-			\     },
-			\     'map_expr' : "{
-			\       'word' : v:key,
-			\       'kind' : 'command',
-			\       'action__command' : v:val,
-			\     }",
-			\     'description' : 'Test menu'
-			\   },
-		\ }
+		let g:unite_source_menu_menus = {}
+		let g:unite_source_menu_menus.test = {
+		      \     'description' : 'Test menu',
+		      \ }
+		let g:unite_source_menu_menus.test.candidates = {
+		      \       'ghci'      : 'VimShellInteractive ghci',
+		      \       'python'    : 'VimShellInteractive python',
+		      \       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
+		      \     }
+		function g:unite_source_menu_menus.test.map(key, value)
+		  return {
+		        \       'word' : a:key, 'kind' : 'command',
+		        \       'action__command' : a:value,
+		        \     }
+		endfunction
+		
+		nnoremap <silent> fm  :<C-u>Unite menu:test<CR>
 <
 		Default value is "{}".
 
@@ -702,7 +705,7 @@ Normal mode mappings.
 		Toggle the unite buffer's max_candidates.
 
 <Plug>(unite_quick_help)			*<Plug>(unite_quick_help)*
-		View quick help.
+		View the mappings of the unite buffer.
 
 Insert mode mappings.
 
@@ -1971,6 +1974,13 @@ CHANGELOG					*unite-changelog*
 
 2011-10-11
 - Added unite-menu source.
+- Fixed unite-menu.
+- Fixed unite#vimfiler_check_filetype() error message.
+- Added buffer name limitation.
+- Fixed expand path.
+- Improved unite-menu examples.
+- Changed g:unite_source_menu_menus interface.
+- For Vim 7.2 or above.
 
 2011-10-10
 - Fixed variables initialize.
