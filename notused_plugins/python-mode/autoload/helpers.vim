@@ -1,9 +1,12 @@
+" DESC: Set scriptname
+let g:scriptname = expand('<sfile>:t')
+
 " DESC: Set var if not exists
 " ARGS: name -- str, variable name
 "       value -- variable value
 fun! helpers#SafeVar(name, value) "{{{
     if !exists(a:name)
-        execute('let ' . a:name . ' = ' . a:value)
+        execute('let ' . a:name . ' = ' . string(a:value))
         return 0
     endif
     return 1
@@ -29,7 +32,7 @@ fun! helpers#ShowPreviewCmd(cmd) "{{{
         silent exec 'r!' . a:cmd
     catch /.*/
         close
-        call helpers#ShowError('Command fail')
+        echoerr 'Command fail'
     endtry
     redraw
     normal gg
@@ -71,20 +74,13 @@ fun! helpers#PlaceErrorSigns() "{{{
 endfunction "}}}
 
 
-" DESC: Show error
-" ARGS: output -- str, error message
-fun! helpers#ShowError(output) "{{{
-    redraw | echohl ErrorMsg | echomsg a:output | echohl None
-endfunction "}}}
-
-
 fun! helpers#CheckProgramm(name) "{{{
     let varname = 'g:' . a:name
-    if helpers#SafeVar(varname, "'" . a:name . "'")
+    if helpers#SafeVar(varname, a:name)
         return 1
     endif
-    if !executable(a:name)
-        call helpers#ShowError(s:scriptname.": can't find " . a:name . ". please set g:" . a:name . ", or extend $PATH")
+    if !executable(eval(l:varname))
+        echoerr g:scriptname . ": can't find '" . eval(l:varname) . "'. Please set " . l:varname . ", or extend $PATH"
         return 0
     endif
     return 1

@@ -24,18 +24,16 @@ Requirements
 ============
 
 - VIM >= 7.0 with python support
-- plugin-helpers_ -- vim plugin
 
 
 Installation
 ============
 
-- First plugin-helpers_ must be installed.
 - Just copy the plugin folders into your `~/.vim` directory.
 
 .. note:: Alternatively, if you are using pathogen_, clone the plugin into your ``bundle`` folder.
 
-.. note:: Also you can see vim help. :help PythonMode
+.. note:: Also you can see `:help PythonMode`
 
 Settings
 ========
@@ -83,6 +81,10 @@ Default values: ::
     " Load pylint code plugin
     let g:pymode_lint = 1
 
+    " Pylint configuration file
+    " If file not found use '.pylintrc' from python-mode plugin directory
+    let g:pymode_lint_config = "$HOME/.pylintrc"
+
     " Check code every save
     let g:pymode_lint_write = 1
 
@@ -91,6 +93,10 @@ Default values: ::
 
     " Place error signs
     let g:pymode_lint_signs = 1
+
+.. note:: 
+    Pylint options (ex. disable messages) may be defined in '$HOME/pylint.rc'
+    See pylint documentation.
 
 Rope refactoring library
 ------------------------
@@ -185,6 +191,22 @@ Contributors
 =============
 
 * klen_ (Kirill Klenov)
+
+
+Changelog
+=========
+
+## 2011-10-12 0.1.4
+-------------------
+* Add default pylint configuration
+
+## 2011-10-12 0.1.3
+-------------------
+* Fix pylint and update docs
+
+## 2011-10-11 0.1.2
+-------------------
+* First public release
 
 
 License
