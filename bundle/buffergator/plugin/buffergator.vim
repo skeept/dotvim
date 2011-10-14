@@ -532,8 +532,10 @@ function! s:NewCatalogViewer(name, title)
             execute("silent keepalt keepjumps " . self.split_mode . " " . self.bufnum)
             if g:buffergator_viewport_split_policy =~ '[RrLl]' && g:buffergator_split_size
                 execute("vertical resize " . g:buffergator_split_size)
+                setlocal winfixwidth
             elseif g:buffergator_viewport_split_policy =~ '[TtBb]' && g:buffergator_split_size
                 execute("resize " . g:buffergator_split_size)
+                setlocal winfixheight
             endif
         endif
     endfunction
@@ -1137,7 +1139,7 @@ function! s:NewBufferCatalogViewer()
             " explicit split command not given: switch to buffer in current
             " window
             let &switchbuf="useopen"
-            execute("silent keepalt keepjumps buffer " . a:bufnum)
+            execute("silent buffer " . a:bufnum)
         else
             " explcit split command given: split current window
             let &switchbuf="split"
