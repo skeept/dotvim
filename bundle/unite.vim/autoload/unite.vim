@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Oct 2011.
+" Last Modified: 17 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2058,6 +2058,7 @@ function! s:on_cursor_moved()  "{{{
 
   if unite#get_current_unite().context.auto_preview
     if !unite#get_current_unite().has_preview_window
+          \ && s:has_preview_window()
       pclose!
     endif
 
@@ -2065,7 +2066,7 @@ function! s:on_cursor_moved()  "{{{
 
     " Restore window size.
     let context = unite#get_context()
-    if winnr('$') != 1
+    if s:has_preview_window()
       if context.vertical
         if winwidth(winnr()) != context.winwidth
           execute 'vertical resize' context.winwidth
@@ -2227,6 +2228,10 @@ function! s:is_cmdwin()"{{{
   silent! noautocmd wincmd p
   silent! noautocmd wincmd p
   return v:errmsg =~ '^E11:'
+endfunction"}}}
+function! s:has_preview_window()"{{{
+  return len(filter(range(1, winnr('$')),
+          \    'getwinvar(v:val, "&previewwindow")')) > 0
 endfunction"}}}
 "}}}
 

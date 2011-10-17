@@ -12,7 +12,6 @@ au FileType c,cpp,objc,objcpp call <SID>ClangCompleteInit()
 let b:clang_parameters = ''
 let b:clang_user_options = ''
 let b:my_changedtick = 0
-let b:clang_type_complete = 0
 
 " Store plugin path, as this is available only when sourcing the file,
 " not during a function call.
@@ -97,6 +96,13 @@ function! s:ClangCompleteInit()
     endtry
   endif
 
+  " Force menuone. Without it, when there's only one completion result,
+  " it can be confusing (not completing and no popup)
+  if g:clang_auto_select != 2
+    set completeopt-=menu
+    set completeopt+=menuone
+  endif
+
   " Disable every autocmd that could have been set.
   augroup ClangComplete
     autocmd!
@@ -105,7 +111,6 @@ function! s:ClangCompleteInit()
   let b:should_overload = 0
   let b:my_changedtick = b:changedtick
   let b:clang_parameters = '-x c'
-  let b:clang_type_complete = 0
 
   if &filetype == 'objc'
     let b:clang_parameters = '-x objective-c'
@@ -496,7 +501,6 @@ function! ClangComplete(findstart, base)
     if l:line[l:wsstart - 1] =~ '[(,]'
       let b:should_overload = 1
       let b:col = l:wsstart + 1
-      let b:clang_type_complete = 0
       return l:wsstart
     endif
     let b:should_overload = 0
@@ -593,10 +597,9 @@ endfunction
 function! s:LaunchCompletion()
   let l:result = ""
   if s:ShouldComplete()
-    if match(&completeopt, 'longest') != -1
-      let l:result = "\<C-X>\<C-U>"
-    else
-      let l:result = "\<C-X>\<C-U>\<C-P>"
+    let l:result = "\<C-X>\<C-U>"
+    if g:clang_auto_select != 2
+      let l:result .= "\<C-P>"
     endif
     if g:clang_auto_select == 1
       let l:result .= "\<C-R>=(pumvisible() ? \"\\<Down>\" : '')\<CR>"

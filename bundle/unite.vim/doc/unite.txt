@@ -1156,6 +1156,10 @@ file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
 						*unite-source-buffer*
 buffer		Nominates opened buffers as candidates, ordering by time
 		series.
+		If argument 1 is "!", displays non-listed buffer.
+
+		Source arguments:
+		1. bang.
 
 						*unite-source-buffer_tab*
 buffer_tab	Nominates opened buffers only in the current tab as
@@ -1523,6 +1527,7 @@ internally.
 	yank_escape	Yank the escaped candidate text
 	ex		Input the escaped candidate text into command line
 	insert		Input the candidate text into the current buffer
+	preview		Preview the candidate text.
 
 openable					*unite-action-openable*
 Defines an interface for files you can open.  This requires an inheriting kind
@@ -1967,7 +1972,7 @@ EXAMPLES					*unite-examples*
 	" For optimize.
 	let g:unite_source_file_mru_filename_format = ''
 	
->
+<
 ==============================================================================
 USER DEFINED SOURCES				*unite-user-sources*
 
@@ -1976,6 +1981,19 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-10-16
+- Improved unite-resume behavior.
+- Added preview action in common kind.
+- Improved file_point source.
+- Improved cursor move.
+- Fixed jump_point.
+- Improved buffer view.
+- Added bang in buffer source.
+- Improved unite mapping source.
+
+2011-10-15
+- Changed a bit.
 
 2011-10-14
 - Skip don't exist file in jump_point source.
