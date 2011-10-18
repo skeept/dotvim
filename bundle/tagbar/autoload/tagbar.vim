@@ -53,7 +53,14 @@ if !exists('g:tagbar_ctags_bin')
         finish
     endif
 else
+    " reset 'wildignore' temporarily in case *.exe is included in it
+    let wildignore_save = &wildignore
+    set wildignore&
+
     let g:tagbar_ctags_bin = expand(g:tagbar_ctags_bin)
+
+    let &wildignore = wildignore_save
+
     if !executable(g:tagbar_ctags_bin)
         echomsg 'Tagbar: Exuberant ctags not found in specified place,'
               \ 'skipping plugin'
@@ -821,11 +828,11 @@ function! s:RestoreSession()
     call s:InitWindow(g:tagbar_autoclose)
 
     " Leave the Tagbar window and come back so the update event gets triggered
-    execute 'wincmd p'
+    wincmd p
     execute tagbarwinnr . 'wincmd w'
 
     if !in_tagbar
-        execute 'wincmd p'
+        wincmd p
     endif
 endfunction
 
@@ -934,6 +941,10 @@ endfunction
 
 " s:CheckExCtagsVersion() {{{2
 function! s:CheckExCtagsVersion(output)
+    if a:output =~ 'Exuberant Ctags Development'
+        return 1
+    endif
+
     let matchlist = matchlist(a:output, '\vExuberant Ctags (\d+)\.(\d+)')
     let major     = matchlist[1]
     let minor     = matchlist[2]
@@ -1398,7 +1409,7 @@ function! s:OpenWindow(autoclose)
 
     call s:InitWindow(a:autoclose)
 
-    execute 'wincmd p'
+    wincmd p
 
     " Jump back to the tagbar window if autoclose or autofocus is set. Can't
     " just stay in it since it wouldn't trigger the update event
@@ -1477,6 +1488,7 @@ function! s:CloseWindow()
         if winbufnr(2) != -1
             " Other windows are open, only close the tagbar one
             close
+            wincmd p
         endif
     else
         " Go to the tagbar window, close it and then come back to the
@@ -1642,7 +1654,11 @@ function! s:ExecuteCtagsOnFile(fname, ftype)
     endif
 
     if has_key(typeinfo, 'ctagsbin')
+        " reset 'wildignore' temporarily in case *.exe is included in it
+        let wildignore_save = &wildignore
+        set wildignore&
         let ctags_bin = expand(typeinfo.ctagsbin)
+        let &wildignore = wildignore_save
     else
         let ctags_bin = g:tagbar_ctags_bin
     endif
@@ -2315,7 +2331,7 @@ function! s:JumpToTag(stay_in_tagbar)
     " This elaborate construct will try to switch to the correct
     " buffer/window; if the buffer isn't currently shown in a window it will
     " open it in the first window with a non-special buffer in it
-    execute 'wincmd p'
+    wincmd p
     let filebufnr = bufnr(taginfo.fileinfo.fpath)
     if bufnr('%') != filebufnr
         let filewinnr = bufwinnr(filebufnr)
@@ -2333,7 +2349,7 @@ function! s:JumpToTag(stay_in_tagbar)
         " To make ctrl-w_p work we switch between the Tagbar window and the
         " correct window once
         execute tagbarwinnr . 'wincmd w'
-        execute 'wincmd p'
+        wincmd p
     endif
 
     " Mark current position so it can be jumped back to

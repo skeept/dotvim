@@ -1177,7 +1177,10 @@ file_rec/async	|unite-source-file_rec|と同じだが、候補の取得を完全
 
 						*unite-source-buffer*
 buffer		開いているバッファを候補とする。バッファは使用した順番に整列さ
-		れる。
+		れる。引数1が"!"ならば、|buflisted()|でないバッファも表示する。
+
+		source引数：
+		1. !
 
 						*unite-source-buffer_tab*
 buffer_tab	現在のタブで開いたバッファを候補とする。バッファは使用した順番
@@ -1599,6 +1602,7 @@ common					*unite-action-common*
 	yank_escape	エスケープした候補文字列をヤンクする
 	ex		候補をエスケープして、コマンドラインに入力した状態にする
 	insert		現在のバッファに文字列を挿入する
+	preview		候補の文字列を表示する
 
 openable					*unite-action-openable*
 オープン可能ファイルのインタフェースを定義している。内部でopenアクションを呼
@@ -2255,7 +2259,7 @@ description		文字列		(任意)
 	" For optimize.
 	let g:unite_source_file_mru_filename_format = ''
 	
->
+<
 ==============================================================================
 ユーザーのsource				*unite-user-sources*
 
