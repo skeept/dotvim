@@ -172,7 +172,10 @@ def completeCurrentAt(line, column):
   print "\n".join(map(str, getCurrentCompletionResults().results))
 
 def formatChunkForWord(chunk):
-  return chunk.spelling
+  if chunk.isKindPlaceHolder():
+    return "<#" + chunk.spelling + "#>"
+  else:
+    return chunk.spelling
 
 def formatResult(result):
   completion = dict()
@@ -187,8 +190,8 @@ def formatResult(result):
   else:
     returnStr = ""
 
-  info = returnStr + "".join(map(lambda x: x.spelling, word))
-  word = abbr
+  info = "".join(map(formatChunkForWord, word))
+  word = returnStr + "".join(map(lambda x: x.spelling, word))
 
   completion['word'] = word
   completion['abbr'] = abbr
@@ -215,10 +218,27 @@ class CompleteThread(threading.Thread):
   def run(self):
     try:
       CompleteThread.lock.acquire()
-      self.result = getCurrentCompletionResults(self.line, self.column)
+      if self.line == -1:
+        # Warm up the caches. For this it is sufficient to get the current
+        # translation unit. No need to retrieve completion results.
+        # This short pause is necessary to allow vim to initialize itself.
+        # Otherwise we would get: E293: block was not locked
+        # The user does not see any delay, as we just pause a background thread.
+        time.sleep(0.1)
+        getCurrentTranslationUnit()
+      else:
+        self.result = getCurrentCompletionResults(self.line, self.column)
     except Exception:
       pass
     CompleteThread.lock.release()
+
+def WarmupCache():
+  global debug
+  debug = int(vim.eval("g:clang_debug")) == 1
+  t = CompleteThread(-1, -1)
+  t.start()
+  return
+
 
 def getCurrentCompletions(base):
   global debug
