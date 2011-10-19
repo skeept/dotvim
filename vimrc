@@ -21,7 +21,7 @@ endif
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
-let g:pathogen_disabled = ['whatever']
+let g:pathogen_disabled = ['pyflakes', 'pep8']
 call pathogen#infect()
 
 " Use Vim settings, rather then Vi settings (much better!).
@@ -545,3 +545,5 @@ map <Leader>csa :cs add ../../cscope.out ../..<cr>
 set cot-=preview
 
 let g:unite_source_history_yank_enable = 1
+
+let g:manpageview_winopen = "hsplit="
