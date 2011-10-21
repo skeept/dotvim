@@ -1,3 +1,7 @@
+if helpers#SafeVar('b:pymode', 1)
+    finish
+endif
+
 " Python Options
 setlocal complete+=t
 setlocal cinwords=if,elif,else,for,while,try,except,finally,def,class
@@ -18,6 +22,11 @@ if g:pymode
     py curpath = vim.eval('getcwd()')
     py curpath in sys.path or sys.path.append(curpath)
 
+endif
+
+" Add virtualenv paths
+if g:pymode_virtualenv && exists("$VIRTUAL_ENV")
+    call pymode_virtualenv#Activate()
 endif
 
 " Python documentation
@@ -55,6 +64,7 @@ if g:pymode_rope
     noremap <silent> <buffer> <C-c>f :RopeFindOccurences<CR>
     noremap <silent> <buffer> <C-c>m :emenu Rope.<TAB>
     inoremap <silent> <buffer> <Nul> <C-R>=RopeCodeAssistInsertMode()<CR>
+    inoremap <silent> <buffer> <C-space> <C-R>=RopeCodeAssistInsertMode()<CR>
     inoremap <silent> <buffer> <S-TAB> <C-R>=RopeLuckyAssistInsertMode()<CR>
 
 endif

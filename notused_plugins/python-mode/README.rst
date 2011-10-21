@@ -15,6 +15,7 @@ There is no need to install the pylint_ or rope_ library on your system.
 - Run python code
 - Go to definition
 - Powerful customization
+- Virtualenv support
 - And more...
 
 See screencast here: http://t.co/3b0bzeXA (sorry for quality, this my first screencast)
@@ -91,6 +92,9 @@ Default values: ::
     " Auto open cwindow if errors be finded
     let g:pymode_lint_cwindow = 1
 
+    " Auto jump on first error
+    let g:pymode_lint_jump = 0
+
     " Place error signs
     let g:pymode_lint_signs = 1
 
@@ -150,6 +154,9 @@ Default values: ::
 
     " Autoremove unused whitespaces
     let g:pymode_utils_whitespaces = 1
+
+    " Auto fix vim python paths if virtualenv enabled
+    let g:pymode_virtualenv = 1
 
 .. note:: See also :help ropevim.txt
 
