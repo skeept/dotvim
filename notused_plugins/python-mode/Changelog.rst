@@ -1,6 +1,19 @@
 Changelog
 =========
 
+## 2011-10-20 0.2.11
+--------------------
+* Add 'pymode_lint_jump' option
+
+## 2011-10-19 0.2.10
+--------------------
+* Minor fixes (virtualenv loading, buffer commands)
+
+## 2011-10-18 0.2.6
+-------------------
+* Add <C-space> shortcut for macvim users.
+* Add VIRTUALENV support
+
 ## 2011-10-17 0.2.4
 -------------------
 * Add current work path to sys.path

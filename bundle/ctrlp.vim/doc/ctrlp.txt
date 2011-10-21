@@ -201,6 +201,11 @@ search feature to work correctly along side with |wildignore|. If you’ve
 disabled dotfiles search (set |g:ctrlp_dotfiles| to 0), then you can ignore
 this.
 
+Other note: |wildignore| influences the result of |expand()|, |globpath()| and
+|glob()| which many plugins use to find stuff on the system (e.g. fugitive.vim
+looks for .git/, some other plugins look for external .exe tools on Windows).
+So be a little careful with what you put in your |wildignore|.
+
                                                     *'g:ctrlp_highlight_match'*
 Use this to enable/disable highlighting of the matched patterns and to specify
 the highlight group that’ll be used: >
@@ -261,7 +266,7 @@ Set to 0 to disable prompt’s history.
 
                                                          *'g:ctrlp_open_multi'*
 If non-zero this will enable opening multiple files with <c-z> and <c-o>: >
-  let g:ctrlp_open_multi = 0
+  let g:ctrlp_open_multi = 1
 <
 If bigger than 1, it’ll be used as the maximum number of windows to create when
 opening the files (the rest will be hidden buffers). If is 1, it’ll open all
@@ -476,6 +481,8 @@ Mercurial repository: https://bitbucket.org/kien/ctrlp.vim
 
 ===============================================================================
 CHANGELOG
+
+Before 2011/10/12
 
     + New features: Open multiple files.
                     Pass Vim’s ++opt and +cmd to the opening file (section 5.c)
