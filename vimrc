@@ -547,3 +547,6 @@ set cot-=preview
 let g:unite_source_history_yank_enable = 1
 
 let g:manpageview_winopen = "hsplit="
+
+"some pylint settings
+let g:pylint_onwrite = 0
