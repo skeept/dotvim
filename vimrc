@@ -550,3 +550,7 @@ let g:manpageview_winopen = "hsplit="
 
 "some pylint settings
 let g:pylint_onwrite = 0
+
+"pysmell
+autocmd FileType python setlocal completefunc=pysmell#Complete
+
