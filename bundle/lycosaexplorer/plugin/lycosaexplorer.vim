@@ -13,8 +13,8 @@
 "  Description: Dynamic Filesystem and Buffer Explorer Vim Plugin
 "  Maintainers: Michael Hart
 "
-" Release Date: August 15 2011
-"      Version: 0.5
+" Release Date: October 22 2011
+"      Version: 0.6
 "
 "        Usage:
 "                 <Leader>lf  - Opens the filesystem explorer.
@@ -189,9 +189,9 @@ command LycosaFilesystemExplorerFromHere :call <SID>LycosaFilesystemExplorerFrom
 
 
 " Default mappings.
-nmap <silent> <Leader>lf :LycosaFilesystemExplorer<CR>
-nmap <silent> <Leader>lr :LycosaFilesystemExplorerFromHere<CR>
-nmap <silent> <Leader>lb :LycosaBufferExplorer<CR>
+nnoremap <silent> <Leader>lf :LycosaFilesystemExplorer<CR>
+nnoremap <silent> <Leader>lr :LycosaFilesystemExplorerFromHere<CR>
+nnoremap <silent> <Leader>lb :LycosaBufferExplorer<CR>
 
 " Vim-to-python function calls.
 function! s:LycosaFilesystemExplorerStart()
