@@ -554,3 +554,6 @@ let g:pylint_onwrite = 0
 "pysmell
 autocmd FileType python setlocal completefunc=pysmell#Complete
 
+"mapping for running python code
+nmap <F9> :SingleCompileRun<cr>
+
