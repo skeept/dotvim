@@ -88,12 +88,7 @@ function! s:ClangCompleteInit()
   inoremap <expr> <buffer> <CR> <SID>HandlePossibleSelectionEnter()
 
   if g:clang_snippets == 1
-    try
-      call eval('snippets#' . g:clang_snippets_engine . '#init()')
-    catch /^Vim\%((\a\+)\)\=:E117/
-      echoe 'Snippets engine ' . g:clang_snippets_engine . ' not found.'
-      let g:clang_snippets = 0
-    endtry
+    call g:ClangSetSnippetEngine(g:clang_snippets_engine)
   endif
 
   " Force menuone. Without it, when there's only one completion result,
@@ -455,6 +450,7 @@ function! s:ClangCompleteBinary(base)
       endif
 
       let l:word = l:wabbr
+
       let l:proto = s:DemangleProto(l:proto)
 
     elseif l:line[:9] == 'OVERLOAD: ' && b:should_overload == 1
@@ -473,13 +469,26 @@ function! s:ClangCompleteBinary(base)
       continue
     endif
 
+    let l:args_pos = []
+    if g:clang_snippets == 1
+      let l:startidx = match(l:proto, '<#')
+      while l:startidx != -1
+        let l:proto = substitute(l:proto, '<#', '', '')
+        let l:endidx = match(l:proto, '#>')
+        let l:proto = substitute(l:proto, '#>', '', '')
+        let l:args_pos += [[ l:startidx, l:endidx ]]
+        let l:startidx = match(l:proto, '<#')
+      endwhile
+    endif
+
     let l:item = {
           \ 'word': l:word,
           \ 'abbr': l:wabbr,
           \ 'menu': l:proto,
           \ 'info': l:proto,
-          \ 'dup': 1,
-          \ 'kind': l:kind }
+          \ 'dup': 0,
+          \ 'kind': l:kind,
+          \ 'args_pos': l:args_pos }
 
     call add(l:res, l:item)
   endfor
@@ -517,7 +526,7 @@ function! ClangComplete(findstart, base)
     endif
 
     if g:clang_snippets == 1
-      call eval('snippets#' . g:clang_snippets_engine . '#reset()')
+      call b:ResetSnip()
     endif
 
     if g:clang_use_library == 1
@@ -528,23 +537,10 @@ function! ClangComplete(findstart, base)
 
     for item in l:res
       if g:clang_snippets == 1
-        let l:args_pos = []
-        let l:startidx = match(l:item['info'], '<#')
-        while l:startidx != -1
-          let l:item['info'] = substitute(l:item['info'], '<#', '', '')
-          let l:endidx = match(l:item['info'], '#>')
-          let l:item['info'] = substitute(l:item['info'], '#>', '', '')
-          let l:args_pos += [[ l:startidx, l:endidx ]]
-          let l:startidx = match(l:item['info'], '<#')
-        endwhile
-        let Snip = function('snippets#' . g:clang_snippets_engine . '#add_snippet')
-        let item['word'] = Snip(item['info'], l:args_pos)
+        let item['word'] = b:AddSnip(item['info'], item['args_pos'])
       else
-        let item['info'] = substitute(item['info'], '<#', '', 'g')
-        let item['info'] = substitute(item['info'], '#>', '', 'g')
         let item['word'] = item['abbr']
       endif
-      let item['menu'] = item['info']
     endfor
     if g:clang_snippets == 1
       inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
@@ -589,7 +585,7 @@ function! s:TriggerSnippet()
   augroup end
 
   " Trigger the snippet
-  call eval('snippets#' . g:clang_snippets_engine . '#trigger()')
+  call b:TriggerSnip()
 endfunction
 
 function! s:ShouldComplete()
@@ -648,6 +644,18 @@ endfunction
 function! g:ClangUpdateQuickFix()
   call s:DoPeriodicQuickFix()
   return ''
+endfunction
+
+function! g:ClangSetSnippetEngine(engine_name)
+  try
+    call eval('snippets#' . a:engine_name . '#init()')
+    let b:AddSnip = function('snippets#' . a:engine_name . '#add_snippet')
+    let b:ResetSnip = function('snippets#' . a:engine_name . '#reset')
+    let b:TriggerSnip = function('snippets#' . a:engine_name . '#trigger')
+  catch /^Vim\%((\a\+)\)\=:E117/
+    echoe 'Snippets engine ' . a:engine_name . ' not found.'
+    let g:clang_snippets = 0
+  endtry
 endfunction
 
 " vim: set ts=2 sts=2 sw=2 expandtab :
