@@ -309,3 +309,7 @@ let g:p0 = split(&runtimepath, ',')[0]
 exec "source" . g:p0 . "/plugin/NERD_commenter.vim"
 exec "source" . g:p0 . "/plugin/supertab.vim"
 exec "source" . g:p0 . "/plugin/unimpaired.vim"
+exec "source" . g:p0 . "/plugin/scratch.vim"
+
+
+"some tests/tries

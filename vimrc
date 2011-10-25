@@ -20,6 +20,8 @@ endif
 " pathogen 
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
+"let g:pathogen_disabled = ['whatever', 'unite.vim']
+let g:pathogen_disabled = ['pyflakes', 'pep8']
 call pathogen#infect()
 
 " Use Vim settings, rather then Vi settings (much better!).
@@ -259,8 +261,10 @@ endfunction
 map <Leader>tn :call ToogleRelativeNumber()<cr>
 "set relativenumber
 
-"pep8 map
-let g:pep8_map='<leader>p8'
+"pep8
+"let g:pep8_map = '<leader>p8' "not used anymore
+let g:pep8_cmd  = 'pep8.py'
+let g:pep8_ignore = "E111,E221,E225"
 "todo list
 map <leader>td <Plug>TaskList
 
@@ -284,6 +288,8 @@ let NERDTreeShowBookmarks = 1
 
 "1tagbar settings
 let g:tagbar_autofocus = 1
+"tagbar width (default is 40)
+let g:tagbar_width = 30
 
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
@@ -390,6 +396,10 @@ function! s:unite_my_settings()"{{{
   set nonumber
   set norelativenumber
 endfunction"}}}
+
+
+"libclang completion
+let g:clang_use_library = 1
 
 let g:unite_source_file_mru_limit = 200
 let g:unite_cursor_line_highlight = 'TabLineSel'
@@ -529,3 +539,21 @@ endif
 if v:version < 703
   let g:loaded_autoload_l9 = 1
 endif
+
+"load cscope in two levels up
+map <Leader>csa :cs add ../../cscope.out ../..<cr>
+set cot-=preview
+
+let g:unite_source_history_yank_enable = 1
+
+let g:manpageview_winopen = "hsplit="
+
+"some pylint settings
+let g:pylint_onwrite = 0
+
+"pysmell
+autocmd FileType python setlocal completefunc=pysmell#Complete
+
+"mapping for running python code
+nmap <F9> :SingleCompileRun<cr>
+

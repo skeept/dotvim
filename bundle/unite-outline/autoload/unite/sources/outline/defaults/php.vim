@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/php.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-13
+" Updated : 2011-09-22
 "
 " Contributed by hamaco
 "
@@ -11,7 +11,7 @@
 "=============================================================================
 
 " Default outline info for PHP
-" Version: 0.1.0
+" Version: 0.1.2
 
 function! unite#sources#outline#defaults#php#outline_info()
   return s:outline_info
@@ -19,9 +19,17 @@ endfunction
 
 let s:Util = unite#sources#outline#import('Util')
 
+"---------------------------------------
+" Sub Pattern
+
+let s:pat_type = '\%(interface\|class\|function\)\>'
+
+"-----------------------------------------------------------------------------
+" Outline Info
+
 let s:outline_info = {
       \ 'heading-1': s:Util.shared_pattern('cpp', 'heading-1'),
-      \ 'heading'  : '^\s*\%(interface\|class\|\%(\h\w*\s\+\)\=function\)\>',
+      \ 'heading'  : '^\s*\%(\h\w*\s\+\)*' . s:pat_type,
       \
       \ 'skip': {
       \   'header': {
@@ -66,33 +74,48 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     let heading.type = 'comment'
     let heading.level = s:Util.get_comment_heading_level(a:context, m_lnum)
   elseif a:which == 'heading'
-    let heading.word = substitute(a:heading_line, '\s*{.*$', '', '')
-    if heading.word =~ '^\s*interface\>'
-      " interface
+    let modifiers = matchstr(heading.word, '^.*\ze' . s:pat_type)
+    let heading.word = substitute(heading.word, '\s*{.*$', '', '')
+    if heading.word =~ '\<interface\>'
+      " Interface
       let heading.type = 'interface'
-      let heading.word = matchstr(heading.word, '^\s*interface\s\+\zs\h\w*') . ' : interface'
-    elseif heading.word =~ '^\s*class\>'
-      " class
+      let heading.word = matchstr(heading.word, '\zs\<interface\s\+\zs\h\w*') . ' : interface'
+    elseif heading.word =~ '\<class\>'
+      " Class
       let heading.type = 'class'
-      let heading.word = matchstr(heading.word, '^\s*class\s\+\zs\h\w*') . ' : class'
+      let heading.word = matchstr(heading.word, '\zs\<class\s\+\zs\h\w*') . ' : class'
     else
-      " function or method
+      " Function or Method
       let heading.type = 'function'
-      let heading.word = substitute(heading.word, '\<function\s*', '', '')
-      if heading.word =~ '^\s*public\>'
-        let heading.word = substitute(heading.word, '\<public\s*', '+ ', '')
-      elseif heading.word =~ '^\s*protected\>'
-        let heading.word = substitute(heading.word, '\<protected\s*', '# ', '')
-      elseif heading.word =~ '^\s*private\>'
-        let heading.word = substitute(heading.word, '\<private\s*', '- ', '')
+      let heading.word = matchstr(heading.word, '\<function\s*\zs.*', '', '')
+      if modifiers =~ '\<public\>'
+        let heading.word = '+ ' . heading.word
+      elseif modifiers =~ '\<protected\>'
+        let heading.word = '# ' . heading.word
+      elseif modifiers =~ '\<private\>'
+        let heading.word = '- ' . heading.word
       elseif heading.level > 3
         let heading.word = substitute(heading.word, '\%(&\|\h\)\@=', '+ ', '')
       endif
       let heading.word = substitute(heading.word, '\S\zs(', ' (', '')
     endif
+    " Append modifiers.
+    let modifiers = substitute(modifiers, '\%(public\|protected\|private\)', '', 'g')
+    if modifiers !~ '^\s*$'
+      let heading.word .= ' <' . join(split(modifiers, '\s\+'), ',') . '>'
+    endif
   endif
-
   return heading
+endfunction
+
+function! s:outline_info.need_blank_between(cand1, cand2, memo)
+  if a:cand1.source__heading_group == 'function' && a:cand2.source__heading_group == 'function'
+    " Don't insert a blank between two sibling functions.
+    return 0
+  else
+    return (a:cand1.source__heading_group != a:cand2.source__heading_group ||
+          \ a:cand1.source__has_marked_child || a:cand2.source__has_marked_child)
+  endif
 endfunction
 
 " vim: filetype=vim

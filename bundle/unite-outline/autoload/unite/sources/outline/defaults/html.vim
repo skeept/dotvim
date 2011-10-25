@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/html.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-10
+" Updated : 2011-09-17
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -17,22 +17,25 @@ endfunction
 
 let s:Util = unite#sources#outline#import('Util')
 
+"-----------------------------------------------------------------------------
+" Outline Info
+
 let s:outline_info = {
       \ 'heading': '<[hH][1-6][^>]*>',
       \
       \ 'highlight_rules': [
-      \   { 'name'     : 'level_1',
-      \     'pattern'  : '/h1\. .*/' },
-      \   { 'name'     : 'level_2',
-      \     'pattern'  : '/h2\. .*/' },
-      \   { 'name'     : 'level_3',
-      \     'pattern'  : '/h3\. .*/' },
-      \   { 'name'     : 'level_4',
-      \     'pattern'  : '/h4\. .*/' },
-      \   { 'name'     : 'level_5',
-      \     'pattern'  : '/h5\. .*/' },
-      \   { 'name'     : 'level_6',
-      \     'pattern'  : '/h6\. .*/' },
+      \   { 'name'   : 'level_1',
+      \     'pattern': '/h1\. .*/' },
+      \   { 'name'   : 'level_2',
+      \     'pattern': '/h2\. .*/' },
+      \   { 'name'   : 'level_3',
+      \     'pattern': '/h3\. .*/' },
+      \   { 'name'   : 'level_4',
+      \     'pattern': '/h4\. .*/' },
+      \   { 'name'   : 'level_5',
+      \     'pattern': '/h5\. .*/' },
+      \   { 'name'   : 'level_6',
+      \     'pattern': '/h6\. .*/' },
       \ ],
       \}
 

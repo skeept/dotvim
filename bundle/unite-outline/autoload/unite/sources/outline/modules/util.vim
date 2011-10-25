@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/util.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-13
-" Version : 0.3.7
+" Updated : 2011-09-22
+" Version : 0.5.0
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -288,26 +288,10 @@ call String.function('shellescape')
 unlet String
 
 "-----------------------------------------------------------------------------
-" Tree
-
-let s:Tree = unite#sources#outline#import('Tree')
-
-" Memoized version:
-function! s:Util_has_marked_child(heading, memo)
-  if has_key(a:memo, a:heading.id)
-    return a:memo[a:heading.id]
-  endif
-  let result = s:Tree.has_marked_child(a:heading)
-  let a:memo[a:heading.id] = result
-  return result
-endfunction
-call s:Util.function('has_marked_child')
-
-"-----------------------------------------------------------------------------
 " Misc
 
-function! s:Util_print_debug(msg)
-  if get(g:, 'unite_source_outline_debug', 0)
+function! s:Util_print_debug(which, msg)
+  if get(g:, 'unite_source_outline_' . a:which . '_debug', 0)
     echomsg "unite-outline: " . a:msg
   endif
 endfunction

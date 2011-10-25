@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/java.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-13
+" Updated : 2011-09-23
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -18,6 +18,9 @@ endfunction
 let s:Ctags = unite#sources#outline#import('Ctags')
 let s:Util  = unite#sources#outline#import('Util')
 
+"-----------------------------------------------------------------------------
+" Outline Info
+
 let s:outline_info = {
       \ 'heading_groups': {
       \   'package': ['package'],
@@ -33,7 +36,7 @@ let s:outline_info = {
       \   { 'name'   : 'package',
       \     'pattern': '/\S\+\ze : package/' },
       \   { 'name'   : 'type',
-      \     'pattern': '/\S\+\ze : \(interface\|class\|enum\)/' },
+      \     'pattern': '/\S\+\ze : \%(interface\|class\|enum\)/' },
       \   { 'name'   : 'method',
       \     'pattern': '/\h\w*\ze\s*(/' },
       \   { 'name'   : 'parameter_list',

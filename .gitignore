@@ -6,7 +6,8 @@ undodir/*
 
 .VimballRecord
 
-._git
+._git/
+.git/
 
 !backup
 !swapdir
@@ -32,3 +33,5 @@ tags*
 colors/not_used/
 
 .hg/
+
+doc/tags*
