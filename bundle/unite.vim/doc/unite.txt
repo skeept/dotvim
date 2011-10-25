@@ -1987,6 +1987,10 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-10-25
+- Added is_multiline attribute.
+- Improved history/yank source behavior.
+
 2011-10-24
 - Changed a default keymapping behavior.
 - Added matcher_migemo filter.
