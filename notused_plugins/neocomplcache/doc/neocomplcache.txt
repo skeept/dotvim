@@ -299,7 +299,20 @@ g:neocomplcache_enable_underbar_completion		*g:neocomplcache_enable_underbar_com
 		When you input _, this variable controls whether
 		neocomplcache takes an ambiguous searching as an end of the
 		words in it.  For example, neocomplcache come to match it
-		with 'public_html' when you input it with 'p_h'.
+		with "public_html" when you input it with "p_h".
+		
+		Default value is 0.
+
+g:neocomplcache_enable_fuzzy_completion			*g:neocomplcache_enable_fuzzy_completion*
+		When you input one character, this variable controls whether
+		neocomplcache takes an ambiguous searching as an end of the
+		words in it.  For example, neocomplcache come to match it
+		with "public_html" or "PublicHtml" when you input it with "ph".
+		This variable disables
+		|g:neocomplcache_enable_camel_case_completion| and
+		|g:neocomplcache_enable_underbar_completion|.
+		Note: This match is too heavy. So, it is enabled when your
+		input is less than 8 characters.
 		
 		Default value is 0.
 
@@ -332,6 +345,9 @@ g:neocomplcache_lock_buffer_name_pattern		*g:neocomplcache_lock_buffer_name_patt
 
 g:neocomplcache_compare_function			*g:neocomplcache_compare_function*
 		This variable set compare candidates function.
+		The compare function specification is same to |sort()|
+		compare function. If you change compare function, you must
+		create compare function.
 		
 		Default value is 'neocomplcache#compare_rank'.
 
@@ -454,7 +470,6 @@ g:neocomplcache_filetype_include_lists			*g:neocomplcache_filetype_include_lists
 		let g:neocomplcache_filetype_include_lists.vim =
 		\ [{'filetype' : 'python', 'start' : '^\s*python <<\s*\(\h\w*\)', 'end' : '^\1'}]
 <
-		
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
 
@@ -1090,6 +1105,15 @@ CHANGELOG						*neocomplcache-changelog*
 
 ------------------------------------------------------------------------------
 ChangeLog neocomplcache 6.2:
+
+2011-10-23
+- Added g:neocomplcache_enable_fuzzy_completion option.
+- Fixed file_include source.
+- Improved filename_complete.
+- Supported nyaos.
+
+2011-10-22
+- Improved documentation.
 
 2011-10-18
 - Fixed Japanese documentation.

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Oct 2011.
+" Last Modified: 25 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -944,8 +944,8 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
       if !empty(ret)
         let [type, info] = ret
         if type ==# 'file'
-          call s:initialize_candidates([info[1]], source.name)
-          call s:initialize_vimfiler_candidates([info[1]])
+          let info[1] = s:initialize_candidates([info[1]], source.name)
+          let info[1] = s:initialize_vimfiler_candidates([info[1]])
         elseif type ==# 'directory'
           " nop
         elseif type ==# 'error'
@@ -985,7 +985,7 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
     endif
   endfor
 
-  call s:initialize_vimfiler_candidates(candidates)
+  let candidates = s:initialize_vimfiler_candidates(candidates)
 
   return candidates
 endfunction"}}}
@@ -1455,7 +1455,9 @@ function! s:initialize_buffer_name_options(buffer_name)"{{{
   endif
 endfunction"}}}
 function! s:initialize_candidates(candidates, source_name)"{{{
+  let candidates = []
   for candidate in a:candidates
+    let candidate = deepcopy(candidate)
     if !has_key(candidate, 'abbr')
       let candidate.abbr = candidate.word
     endif
@@ -1474,7 +1476,30 @@ function! s:initialize_candidates(candidates, source_name)"{{{
 
     " Force set.
     let candidate.source = a:source_name
+
+    let candidate.is_multiline = get(candidate, 'is_multiline', 0)
+    if candidate.is_multiline && candidate.abbr =~ '\r\?\n'
+      let cnt = 0
+      for multi in split(candidate.abbr, '\r\?\n', 1)[:4]
+        let candidate_multi = deepcopy(candidate)
+        let candidate_multi.abbr =
+              \ (cnt == 0 ? '+ ' : '| ') . multi
+
+        if cnt != 0
+          let candidate_multi.is_dummy = 1
+        endif
+
+        call add(candidates, candidate_multi)
+
+        let cnt += 1
+      endfor
+    else
+      let candidate.abbr = '  ' . candidate.abbr
+      call add(candidates, candidate)
+    endif
   endfor
+
+  return candidates
 endfunction"}}}
 function! s:initialize_vimfiler_candidates(candidates)"{{{
   " Set default vimfiler property.
@@ -1510,6 +1535,8 @@ function! s:initialize_vimfiler_candidates(candidates)"{{{
     endif
     let candidate.vimfiler__is_marked = 0
   endfor
+
+  return a:candidates
 endfunction"}}}
 
 function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
@@ -1518,20 +1545,64 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
   " Save options.
   let ignorecase_save = &ignorecase
 
-  if unite#get_buffer_name_option(unite.buffer_name, 'smartcase') && a:input =~ '\u'
+  if unite#get_buffer_name_option(unite.buffer_name, 'smartcase')
+        \ && a:input =~ '\u'
     let &ignorecase = 0
   else
-    let &ignorecase = unite#get_buffer_name_option(unite.buffer_name, 'ignorecase')
+    let &ignorecase =
+          \ unite#get_buffer_name_option(unite.buffer_name, 'ignorecase')
   endif
 
-  let input = s:get_substitute_input(a:input)
-  let input_len = unite#util#strchars(input)
-
   let context = unite.context
-  let context.input = input
   let context.is_redraw = a:is_force
   let context.is_changed = a:input !=# unite.last_input
+
+  for source in unite#loaded_sources_list()
+    let source.unite__candidates = []
+  endfor
+
+  for input in s:get_substitute_input(a:input)
+    let context.input = input
+    call s:recache_candidates_loop(context, a:is_force, a:is_vimfiler)
+  endfor
+
   let filtered_count = 0
+
+  for source in unite#loaded_sources_list()
+    let source.unite__is_invalidate = 0
+
+    if !a:is_vimfiler && source.max_candidates != 0
+          \ && !unite.is_enabled_max_candidates
+          \ && len(source.unite__candidates) > source.max_candidates
+      " Filtering too many candidates.
+      let source.unite__candidates =
+            \ source.unite__candidates[: source.max_candidates - 1]
+
+      if context.verbose && filtered_count < &cmdheight
+        echohl WarningMsg | echomsg printf('[%s] Filtering too many candidates.', source.name) | echohl None
+        let filtered_count += 1
+      endif
+    endif
+
+    " Call post_filter hook.
+    let source.unite__context.candidates = source.unite__candidates
+    call s:call_hook([source], 'on_post_filter')
+
+    let source.unite__candidates = s:initialize_candidates(
+          \ source.unite__candidates, source.name)
+  endfor
+
+  " Update async state.
+  let unite.is_async =
+        \ len(filter(copy(unite.sources),
+        \           'v:val.unite__context.is_async')) > 0
+
+  let &ignorecase = ignorecase_save
+endfunction"}}}
+function! s:recache_candidates_loop(context, is_force, is_vimfiler)"{{{
+  let unite = unite#get_current_unite()
+
+  let input_len = unite#util#strchars(a:context.input)
 
   for source in unite#loaded_sources_list()
     " Check required pattern length.
@@ -1540,9 +1611,9 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
     endif
 
     " Set context.
-    let source.unite__context.input = context.input
-    let source.unite__context.is_redraw = context.is_redraw
-    let source.unite__context.is_changed = context.is_changed
+    let source.unite__context.input = a:context.input
+    let source.unite__context.is_redraw = a:context.is_redraw
+    let source.unite__context.is_changed = a:context.is_changed
     let source.unite__context.is_invalidate = source.unite__is_invalidate
 
     let source_candidates = s:get_source_candidates(source, a:is_vimfiler)
@@ -1555,38 +1626,13 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
           \ custom_source.filters : source.filters
       if has_key(unite.filters, filter_name)
         let source_candidates =
-              \ unite.filters[filter_name].filter(source_candidates, source.unite__context)
+              \ unite.filters[filter_name].filter(
+              \     source_candidates, source.unite__context)
       endif
     endfor
 
-    if !a:is_vimfiler && source.max_candidates != 0
-          \ && !unite.is_enabled_max_candidates
-          \ && len(source_candidates) > source.max_candidates
-      " Filtering too many candidates.
-      let source_candidates = source_candidates[: source.max_candidates - 1]
-
-      if context.verbose && filtered_count < &cmdheight
-        echohl WarningMsg | echomsg printf('[%s] Filtering too many candidates.', source.name) | echohl None
-        let filtered_count += 1
-      endif
-    endif
-
-    " Call post_filter hook.
-    let source.unite__context.candidates = source_candidates
-    call s:call_hook([source], 'on_post_filter')
-
-    call s:initialize_candidates(source_candidates, source.name)
-
-    let source.unite__candidates = source_candidates
-    let source.unite__is_invalidate = 0
+    let source.unite__candidates += source_candidates
   endfor
-
-  " Update async state.
-  let unite.is_async =
-        \ len(filter(copy(unite.sources),
-        \           'v:val.unite__context.is_async')) > 0
-
-  let &ignorecase = ignorecase_save
 endfunction"}}}
 function! s:get_source_candidates(source, is_vimfiler)"{{{
   let context = a:source.unite__context
@@ -1665,10 +1711,10 @@ function! s:convert_lines(candidates)"{{{
   endif
 
   return map(copy(a:candidates),
-        \ '(v:val.unite__is_marked ? "*  " : "-  ")
-        \ . (unite.max_source_name == 0 ? " "
+        \ "(v:val.unite__is_marked ? '*  ' : '-  ')
+        \ . (unite.max_source_name == 0 ? ' '
         \   : unite#util#truncate(v:val.source, max_source_name))
-        \ . unite#util#truncate_smart(v:val.abbr, ' . max_width .  ', max_width/3, "..")')
+        \ . unite#util#truncate_smart(v:val.abbr, " . max_width .  ", max_width/3, '..')")
 endfunction"}}}
 
 function! s:initialize_current_unite(sources, context)"{{{
@@ -1732,7 +1778,7 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.sidescrolloff_save = &sidescrolloff
   let unite.prompt_linenr = 2
   let unite.max_source_name = len(a:sources) > 1 ?
-        \ max(map(copy(a:sources), 'len(v:val[0])')) + 2 : 0
+        \ max(map(copy(a:sources), 'len(v:val[0])')) : 0
   let unite.is_async =
         \ len(filter(copy(sources), 'v:val.unite__context.is_async')) > 0
   let unite.access_time = localtime()
@@ -1833,7 +1879,7 @@ function! s:initialize_unite_buffer()"{{{
     else
       syntax match uniteCandidateSourceName /^- / contained
     endif
-    let source_padding = 3
+    let source_padding = 5
     execute 'syntax match uniteCandidateAbbr' '/\%'.(unite.max_source_name+source_padding).'c.*/ contained'
 
     execute 'highlight default link uniteCandidateAbbr'  g:unite_abbr_highlight
@@ -2193,27 +2239,58 @@ function! s:get_substitute_input(input)"{{{
   let input = a:input
 
   let unite = unite#get_current_unite()
-  let substitute_patterns =
-        \ unite#get_buffer_name_option(unite.buffer_name, 'substitute_patterns')
+  let substitute_patterns = reverse(unite#util#sort_by(
+        \ values(unite#get_buffer_name_option(unite.buffer_name,
+        \        'substitute_patterns')),
+        \ 'v:val.priority'))
   if unite.input != '' && stridx(input, unite.input) == 0
     " Substitute after input.
     let input_save = input
-    let subst = input_save[len(unite.input) :]
-    let input = input_save[: len(unite.input)-1]
+    let input = [input_save[len(unite.input) :]]
+    let head = input_save[: len(unite.input)-1]
   else
     " Substitute all input.
-    let subst = input
-    let input = ''
+    let head = ''
   endif
 
-  for pattern in reverse(unite#util#sort_by(values(substitute_patterns),
-        \ 'v:val.priority'))
-    let subst = substitute(subst, pattern.pattern, pattern.subst, 'g')
+  let inputs = s:get_substitute_input_loop(input, substitute_patterns)
+
+  for input in inputs
+    let input = head . input
   endfor
 
-  let input .= subst
+  return inputs
+endfunction"}}}
+function! s:get_substitute_input_loop(input, substitute_patterns)"{{{
+  if empty(a:substitute_patterns)
+    return [a:input]
+  endif
 
-  return input
+  let inputs = [a:input]
+  for pattern in a:substitute_patterns
+    let cnt = 0
+    for input in inputs
+      if input =~ pattern.pattern
+        if type(pattern.subst) == type([])
+          if len(inputs) == 1
+            " List substitute.
+            let inputs = []
+            for subst in pattern.subst
+              call add(inputs,
+                    \ substitute(input, pattern.pattern, subst, 'g'))
+            endfor
+          endif
+        else
+          let inputs[cnt] = substitute(
+                \ input, pattern.pattern, pattern.subst, 'g')
+        endif
+      endif
+
+      let cnt += 1
+    endfor
+  endfor
+
+  return inputs
 endfunction"}}}
 function! s:call_hook(sources, hook_name)"{{{
   let _ = []
