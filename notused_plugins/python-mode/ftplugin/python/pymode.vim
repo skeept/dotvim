@@ -12,9 +12,15 @@ setlocal foldmethod=indent
 setlocal formatoptions-=t
 setlocal nowrap
 setlocal number
-setlocal tabstop=4
 setlocal textwidth=80
+setlocal tabstop=4
 setlocal softtabstop=4
+setlocal shiftwidth=4
+setlocal shiftround
+setlocal smartindent
+setlocal smarttab
+setlocal expandtab
+setlocal autoindent
 
 " Fix path for project
 if g:pymode
@@ -50,7 +56,7 @@ if g:pymode_lint
     endif
 
     " DESC: Set commands
-    command! -buffer PyLintToggle :let g:pymode_lint = g:pymode_lint ? 0 : 1
+    command! -buffer PyLintToggle :call pymode_lint#Toggle()
     command! -buffer PyLint :call pymode_lint#Lint()
 
 endif
@@ -63,9 +69,11 @@ if g:pymode_rope
     noremap <silent> <buffer> <C-c>d :RopeShowDoc<CR>
     noremap <silent> <buffer> <C-c>f :RopeFindOccurrences<CR>
     noremap <silent> <buffer> <C-c>m :emenu Rope.<TAB>
-    inoremap <silent> <buffer> <Nul> <C-R>=RopeCodeAssistInsertMode()<CR>
-    inoremap <silent> <buffer> <C-space> <C-R>=RopeCodeAssistInsertMode()<CR>
     inoremap <silent> <buffer> <S-TAB> <C-R>=RopeLuckyAssistInsertMode()<CR>
+
+    let s:prascm = g:pymode_rope_always_show_complete_menu ? "<C-P>" : ""    
+    exe "inoremap <silent> <buffer> <Nul> <C-R>=RopeCodeAssistInsertMode()<CR>" . s:prascm
+    exe "inoremap <silent> <buffer> <C-space> <C-R>=RopeCodeAssistInsertMode()<CR>" . s:prascm
 
 endif
 
