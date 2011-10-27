@@ -22,7 +22,7 @@ for folder in * ; do
     mv ._git .git >& /dev/null 
     if test -d .git; then 
       printf "\n>>> git >>>  %s\n" $(basename $PWD)
-      GIT_SSL_NO_VERIFY=true git pull
+      GIT_SSL_NO_VERIFY=true git pull origin master
     fi
     if test -d .hg ; then 
       printf "\n>>> hg >>>   %s\n" $(basename $PWD)

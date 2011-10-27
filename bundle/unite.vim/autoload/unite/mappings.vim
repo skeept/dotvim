@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Oct 2011.
+" Last Modified: 26 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -107,7 +107,6 @@ function! unite#mappings#define_default_mappings()"{{{
   " Normal mode key-mappings.
   nmap <buffer> i         <Plug>(unite_insert_enter)
   nmap <buffer> I         <Plug>(unite_insert_head)
-  nmap <buffer> a         <Plug>(unite_append_enter)
   nmap <buffer> A         <Plug>(unite_append_end)
   nmap <buffer> q         <Plug>(unite_exit)
   nmap <buffer> Q         <Plug>(unite_all_exit)
@@ -131,16 +130,27 @@ function! unite#mappings#define_default_mappings()"{{{
   nmap <buffer> M         <Plug>(unite_toggle_max_candidates)
   nmap <buffer> ?         <Plug>(unite_quick_help)
 
-  nnoremap <silent><buffer><expr> d   unite#smart_map('d', unite#do_action('delete'))
-  nnoremap <silent><buffer><expr> b   unite#smart_map('b', unite#do_action('bookmark'))
-  nnoremap <silent><buffer><expr> e   unite#smart_map('e', unite#do_action('edit'))
-  nnoremap <silent><buffer><expr> p   unite#do_action('preview')
-  nmap <silent><buffer><expr> x       unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
-  nnoremap <silent><buffer><expr> t   unite#smart_map('t', unite#do_action('tabopen'))
-  inoremap <silent><buffer><expr> t   unite#smart_map('t', unite#do_action('tabopen'))
+  nmap <silent><buffer><expr> a
+        \ unite#smart_map("\<Plug>(unite_append_enter)",
+        \                 "\<Plug>(unite_choose_action)")
+  nnoremap <silent><buffer><expr> d
+        \ unite#smart_map('d', unite#do_action('delete'))
+  nnoremap <silent><buffer><expr> b
+        \ unite#smart_map('b', unite#do_action('bookmark'))
+  nnoremap <silent><buffer><expr> e
+        \ unite#smart_map('e', unite#do_action('edit'))
+  nnoremap <silent><buffer><expr> p
+        \ unite#do_action('preview')
+  nmap <silent><buffer><expr> x
+        \ unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
+  nnoremap <silent><buffer><expr> t
+        \ unite#smart_map('t', unite#do_action('tabopen'))
+  inoremap <silent><buffer><expr> t
+        \ unite#smart_map('t', unite#do_action('tabopen'))
 
   " Visual mode key-mappings.
-  xmap <buffer> <Space>   <Plug>(unite_toggle_mark_selected_candidates)
+  xmap <buffer> <Space>
+        \ <Plug>(unite_toggle_mark_selected_candidates)
 
   " Insert mode key-mappings.
   imap <buffer> <TAB>     <Plug>(unite_choose_action)
@@ -168,13 +178,13 @@ function! unite#mappings#narrowing(word)"{{{
   setlocal modifiable
   let unite = unite#get_current_unite()
   let unite.input = escape(a:word, ' *')
-  call setline(unite#get_current_unite().prompt_linenr, unite#get_current_unite().prompt . unite#get_current_unite().input)
+  let prompt_linenr = unite.prompt_linenr
+  call setline(prompt_linenr, unite.prompt . unite.input)
   call unite#redraw()
+  execute prompt_linenr
   if unite.is_insert
-    execute unite#get_current_unite().prompt_linenr
     startinsert!
   else
-    execute unite#get_current_unite().prompt_linenr
     normal! 0z.
   endif
 endfunction"}}}
@@ -182,6 +192,7 @@ function! unite#mappings#do_action(action_name, ...)"{{{
   let candidates = get(a:000, 0, unite#get_marked_candidates())
   let new_context = get(a:000, 1, {})
   let is_clear_marks = get(a:000, 2, 1)
+  let sources = get(a:000, 3, {})
 
   let unite = unite#get_current_unite()
   if empty(candidates)
@@ -212,7 +223,7 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     endfor
   endif
 
-  let action_tables = s:get_action_table(a:action_name, candidates)
+  let action_tables = s:get_action_table(a:action_name, candidates, sources)
 
   if !empty(new_context)
     " Set new context.
@@ -269,11 +280,11 @@ function! unite#mappings#set_current_filters(filters)"{{{
   return mode() ==# 'i' ? "\<C-r>\<ESC>" : "g\<ESC>"
 endfunction"}}}
 
-function! s:get_action_table(action_name, candidates)"{{{
+function! s:get_action_table(action_name, candidates, sources)"{{{
   let action_tables = []
   let Self = unite#get_self_functions()[-1]
   for candidate in a:candidates
-    let action_table = s:get_candidate_action_table(candidate)
+    let action_table = s:get_candidate_action_table(candidate, a:sources)
 
     let action_name =
           \ a:action_name ==# 'default' ?
@@ -332,11 +343,11 @@ function! s:get_actions(candidates, sources)"{{{
 
   return actions
 endfunction"}}}
-function! s:get_candidate_action_table(candidate, ...)"{{{
+function! s:get_candidate_action_table(candidate, sources)"{{{
   let Self = unite#get_self_functions()[-1]
 
   return unite#get_action_table(a:candidate.source, a:candidate.kind, Self,
-        \ 0, get(a:000, 0, {}))
+        \ 0, a:sources)
 endfunction"}}}
 
 " key-mappings functions.
@@ -531,9 +542,14 @@ function! s:loop_cursor_down(is_skip_not_matched)"{{{
     endif
   endif
 
-  let num = (line('.') <= prompt_linenr) ? 0 :
-        \ (line('.') - (prompt_linenr + 1))
+  let num = line('.') - (prompt_linenr + 1)
   let cnt = 1
+  if line('.') <= prompt_linenr
+    let cnt += prompt_linenr - line('.')
+  endif
+  if is_insert && line('.') == prompt_linenr
+    let cnt += 1
+  endif
 
   while 1
     let candidate = get(unite#get_unite_candidates(), num + cnt, {})
@@ -545,10 +561,6 @@ function! s:loop_cursor_down(is_skip_not_matched)"{{{
 
     break
   endwhile
-
-  if is_insert && line('.') == prompt_linenr
-    let cnt += 1
-  endif
 
   if is_insert
     return "\<Home>" . repeat("\<Down>", cnt)
@@ -569,12 +581,12 @@ function! s:loop_cursor_up(is_skip_not_matched)"{{{
     endif
   endif
 
-  let num = (line('.') <= prompt_linenr) ? 0 :
-        \ (line('.') - (prompt_linenr + 1))
-
+  let num = line('.') - (prompt_linenr + 1)
   let cnt = 1
-
-  if is_insert && line('.') == prompt_linenr + 2
+  if line('.') <= prompt_linenr
+    let cnt += prompt_linenr - line('.')
+  endif
+  if is_insert && line('.') == prompt_linenr+2
     let cnt += 1
   endif
 
@@ -722,7 +734,9 @@ let s:source_action.action_table.do = {
       \ 'description' : 'do action',
       \ }
 function! s:source_action.action_table.do.func(candidate)"{{{
-  call unite#mappings#do_action(a:candidate.word, a:candidate.source__candidates)
+  call unite#mappings#do_action(a:candidate.word,
+   \ a:candidate.source__candidates, {}, 1,
+   \ unite#get_context().source__sources)
 endfunction"}}}
 "}}}
 "}}}

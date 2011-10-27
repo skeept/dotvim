@@ -21,7 +21,10 @@ endif
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
-let g:pathogen_disabled = ['whatever']
+let g:pathogen_disabled = ['pyflakes', 'pep8']
+if has("win32")
+  let g:pathogen_disabled += ['pysmell']
+endif
 call pathogen#infect()
 
 " Use Vim settings, rather then Vi settings (much better!).
@@ -545,3 +548,16 @@ map <Leader>csa :cs add ../../cscope.out ../..<cr>
 set cot-=preview
 
 let g:unite_source_history_yank_enable = 1
+
+let g:manpageview_winopen = "hsplit="
+
+"some pylint settings
+let g:pylint_onwrite = 0
+autocmd FileType python compiler pylint
+
+"pysmell
+autocmd FileType python setlocal completefunc=pysmell#Complete
+
+"mapping for running python code
+nmap <F9> :SingleCompileRun<cr>
+

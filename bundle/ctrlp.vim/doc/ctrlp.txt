@@ -1,4 +1,4 @@
-*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.3
+*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.5
 *CtrlP* *ControlP* *'ctrlp'* *'ctrl-p'*
 ===============================================================================
 #                                                                             #
@@ -76,9 +76,15 @@ Use this option to specify how the file is to be opened when pressing <cr>:
   1 - in a new tab
   2 - in a new horizontal split
   3 - in a new vertical split
-  0 - in the current window/split
+  0 - in the current window
 >
   let g:ctrlp_split_window = 0
+<
+
+                                                     *'g:ctrlp_jump_to_buffer'*
+Set this to 0 to disable the jump-to-open-buffer feature; set to 2 to also jump
+tab if the selected buffer’s opened in another tab: >
+  let g:ctrlp_jump_to_buffer = 1
 <
 
                                                   *'g:ctrlp_working_path_mode'*
@@ -104,7 +110,7 @@ to your |.vimrc|; the parameter is the same (1, 2 and 0): >
 
                                                        *'g:ctrlp_root_markers'*
 Use this to set your own root markers for the |SetWorkingPath()| function, in
-addition to the default ones, your markers will take precedence: >
+addition to the default ones. Your markers will take precedence: >
   let g:ctrlp_root_markers = ['']
 <
 
@@ -201,6 +207,11 @@ search feature to work correctly along side with |wildignore|. If you’ve
 disabled dotfiles search (set |g:ctrlp_dotfiles| to 0), then you can ignore
 this.
 
+Other note: |wildignore| influences the result of |expand()|, |globpath()| and
+|glob()| which many plugins use to find stuff on the system (e.g. fugitive.vim
+looks for .git/, some other plugins look for external .exe tools on Windows).
+So be a little mindful of what you put in your |wildignore|.
+
                                                     *'g:ctrlp_highlight_match'*
 Use this to enable/disable highlighting of the matched patterns and to specify
 the highlight group that’ll be used: >
@@ -261,7 +272,7 @@ Set to 0 to disable prompt’s history.
 
                                                          *'g:ctrlp_open_multi'*
 If non-zero this will enable opening multiple files with <c-z> and <c-o>: >
-  let g:ctrlp_open_multi = 0
+  let g:ctrlp_open_multi = 1
 <
 If bigger than 1, it’ll be used as the maximum number of windows to create when
 opening the files (the rest will be hidden buffers). If is 1, it’ll open all
@@ -392,7 +403,7 @@ Once inside the prompt:
     Create a new file and its parent directories.
 
   <c-n>
-    'Next' string in the prompt’s history (of accepted input strings)
+    'Next' string in the prompt’s history
 
   <c-p>
     'Previous' string in the prompt’s history
@@ -476,6 +487,10 @@ Mercurial repository: https://bitbucket.org/kien/ctrlp.vim
 
 ===============================================================================
 CHANGELOG
+
+    + New option: |g:ctrlp_jump_to_buffer|
+
+Before 2011/10/12
 
     + New features: Open multiple files.
                     Pass Vim’s ++opt and +cmd to the opening file (section 5.c)

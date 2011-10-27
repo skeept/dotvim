@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 18 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,7 +38,8 @@ function! unite#sources#buffer#_append()"{{{
   " Append the current buffer.
   let bufnr = bufnr('%')
   let s:buffer_list[bufnr] = {
-        \ 'action__buffer_nr' : bufnr, 'source__time' : localtime(),
+        \ 'action__buffer_nr' : bufnr,
+        \ 'source__time' : localtime(),
         \ }
 
   if !exists('t:unite_buffer_dictionary')
@@ -67,7 +68,9 @@ let s:source_buffer_all = {
       \}
 
 function! s:source_buffer_all.hooks.on_init(args, context)"{{{
-  let a:context.source__buffer_list = s:get_buffer_list()
+  let a:context.source__is_bang = (get(a:args, 0, '') ==# '!')
+  let a:context.source__buffer_list =
+        \ s:get_buffer_list(a:context.source__is_bang)
 endfunction"}}}
 function! s:source_buffer_all.hooks.on_syntax(args, context)"{{{
   syntax match uniteSource__Buffer_Directory /\[[^\]]*\]\ze\s*$/ contained containedin=uniteSource__Buffer
@@ -77,12 +80,13 @@ endfunction"}}}
 function! s:source_buffer_all.gather_candidates(args, context)"{{{
   if a:context.is_redraw
     " Recaching.
-    let a:context.source__buffer_list = s:get_buffer_list()
+    let a:context.source__buffer_list =
+          \ s:get_buffer_list(a:context.source__is_bang)
   endif
 
   let candidates = map(copy(a:context.source__buffer_list), '{
         \ "word" : s:make_word(v:val.action__buffer_nr),
-        \ "abbr" : s:make_abbr(v:val.action__buffer_nr),
+        \ "abbr" : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
         \ "kind" : "buffer",
         \ "action__path" : unite#substitute_path_separator(bufname(v:val.action__buffer_nr)),
         \ "action__buffer_nr" : v:val.action__buffer_nr,
@@ -100,7 +104,9 @@ let s:source_buffer_tab = {
       \}
 
 function! s:source_buffer_tab.hooks.on_init(args, context)"{{{
-  let a:context.source__buffer_list = s:get_buffer_list()
+  let a:context.source__is_bang = (get(a:args, 0, '') ==# '!')
+  let a:context.source__buffer_list =
+        \ s:get_buffer_list(a:context.source__is_bang)
 endfunction"}}}
 function! s:source_buffer_tab.hooks.on_syntax(args, context)"{{{
   syntax match uniteSource__BufferTab_Directory /\[[^\]]*\]\ze\s*$/ containedin=uniteSource__BufferTab
@@ -110,18 +116,20 @@ endfunction"}}}
 function! s:source_buffer_tab.gather_candidates(args, context)"{{{
   if a:context.is_redraw
     " Recaching.
-    let a:context.source__buffer_list = s:get_buffer_list()
+    let a:context.source__buffer_list =
+          \ s:get_buffer_list(a:context.source__is_bang)
   endif
 
   if !exists('t:unite_buffer_dictionary')
     let t:unite_buffer_dictionary = {}
   endif
 
-  let list = filter(copy(a:context.source__buffer_list), 'has_key(t:unite_buffer_dictionary, v:val.action__buffer_nr)')
+  let list = filter(copy(a:context.source__buffer_list),
+        \ 'has_key(t:unite_buffer_dictionary, v:val.action__buffer_nr)')
 
   let candidates = map(list, '{
         \ "word" : s:make_word(v:val.action__buffer_nr),
-        \ "abbr" : s:make_abbr(v:val.action__buffer_nr),
+        \ "abbr" : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
         \ "kind" : "buffer",
         \ "action__path" : unite#substitute_path_separator(bufname(v:val.action__buffer_nr)),
         \ "action__buffer_nr" : v:val.action__buffer_nr,
@@ -147,7 +155,7 @@ function! s:make_word(bufnr)"{{{
 
   return path
 endfunction"}}}
-function! s:make_abbr(bufnr)"{{{
+function! s:make_abbr(bufnr, flags)"{{{
   let filetype = getbufvar(a:bufnr, '&filetype')
   if filetype ==# 'vimfiler'
     let path = getbufvar(a:bufnr, 'vimfiler').current_dir
@@ -160,8 +168,11 @@ function! s:make_abbr(bufnr)"{{{
           \ (has_key(vimshell, 'cmdline') ? vimshell.cmdline : ''),
           \ unite#substitute_path_separator(simplify(path)))
   else
-    let path = fnamemodify(bufname(a:bufnr), ':~:.') . (getbufvar(a:bufnr, '&modified') ? '[+]' : '')
-    let path = unite#substitute_path_separator(simplify(path))
+    let path = unite#substitute_path_separator(
+          \ simplify(fnamemodify(bufname(a:bufnr), ':~:.')))
+    if a:flags != ''
+      let path .= ' [' . a:flags . ']'
+    endif
   endif
 
   return path
@@ -182,32 +193,44 @@ function! s:get_directory(bufnr)"{{{
 
   return dir
 endfunction"}}}
-function! s:get_buffer_list()"{{{
+function! s:get_buffer_list(is_bang)"{{{
+  " Get :ls flags.
+  redir => output
+  silent! ls
+  redir END
+
+  let flag_dict = {}
+  for out in map(split(output, '\n'), 'split(v:val)')
+    let flag_dict[out[0]] = matchstr(join(out), '^.*\ze\s\+"')
+  endfor
+
   " Make buffer list.
   let list = []
   let bufnr = 1
   while bufnr <= bufnr('$')
-    if buflisted(bufnr) && bufnr != bufnr('%')
-      if has_key(s:buffer_list, bufnr)
-        call add(list, s:buffer_list[bufnr])
-      else
-        call add(list,
-              \ { 'action__buffer_nr' : bufnr, 'source__time' : 0 })
-      endif
+    if (a:is_bang || buflisted(bufnr)) && bufnr != bufnr('%')
+      let dict = get(s:buffer_list, bufnr, {
+            \ 'action__buffer_nr' : bufnr,
+            \ 'source__time' : 0,
+            \ })
+      let dict.source__flags = get(flag_dict, bufnr, '')
+
+      call add(list, dict)
     endif
     let bufnr += 1
   endwhile
 
   call sort(list, 's:compare')
 
-  if buflisted(bufnr('%'))
+  if a:is_bang || buflisted(bufnr('%'))
     " Add current buffer.
-    if has_key(s:buffer_list, bufnr('%'))
-      call add(list, s:buffer_list[bufnr('%')])
-    else
-      call add(list,
-            \ { 'action__buffer_nr' : bufnr('%'), 'source__time' : 0 })
-    endif
+    let dict = get(s:buffer_list, bufnr('%'), {
+          \ 'action__buffer_nr' : bufnr('%'),
+          \ 'source__time' : 0,
+          \ })
+    let dict.source__flags = get(flag_dict, bufnr('%'), '')
+
+    call add(list, dict)
   endif
 
   return list
