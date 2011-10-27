@@ -553,6 +553,7 @@ let g:manpageview_winopen = "hsplit="
 
 "some pylint settings
 let g:pylint_onwrite = 0
+autocmd FileType python compiler pylint
 
 "pysmell
 autocmd FileType python setlocal completefunc=pysmell#Complete
