@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Oct 2011.
+" Last Modified: 28 Oct 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -170,7 +170,7 @@ function! neocomplcache#enable() "{{{
         \'\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'python,int-python,int-ipython',
-        \'\h\w*')
+        \'[@]\?\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'cs',
         \'\h\w*')
@@ -182,7 +182,7 @@ function! neocomplcache#enable() "{{{
         \'\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'coffee,int-coffee',
-        \'@\h\w*\|\h\w*')
+        \'[@]\?\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'awk',
         \'\h\w*')
@@ -279,6 +279,8 @@ function! neocomplcache#enable() "{{{
         \'\h\w*>')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'vim,help',
         \'\w*()\?\|\w*:\]\|[[:alnum:]_-]*[)>=]')
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'python',
+        \'\w*()\?')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'tex',
         \'\h\w*\*\?[*[{}]')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'html,xhtml,xml,mkd',
@@ -974,36 +976,13 @@ function! neocomplcache#rand(max)"{{{
   let time = reltime()[1]
   return (time < 0 ? -time : time)% (a:max + 1)
 endfunction"}}}
-function! neocomplcache#system(str, ...)"{{{
-  let command = a:str
-  let input = a:0 >= 1 ? a:1 : ''
-  if has('iconv') && &termencoding != '' && &termencoding != &encoding
-    let command = iconv(command, &encoding, &termencoding)
-    let input = iconv(input, &encoding, &termencoding)
-  endif
-
-  if !neocomplcache#has_vimproc()
-    if a:0 == 0
-      let output = system(command)
-    else
-      let output = system(command, input)
-    endif
-  elseif a:0 == 0
-    let output = vimproc#system(command)
-  elseif a:0 == 1
-    let output = vimproc#system(command, input)
-  else
-    let output = vimproc#system(command, input, a:2)
-  endif
-
-  if has('iconv') && &termencoding != '' && &termencoding != &encoding
-    let output = iconv(output, &termencoding, &encoding)
-  endif
-
-  return output
+function! neocomplcache#system(...)"{{{
+  let V = vital#of('neocomplcache')
+  return call(V.system, a:000)
 endfunction"}}}
-function! neocomplcache#has_vimproc()"{{{
-  return s:exists_vimproc
+function! neocomplcache#has_vimproc(...)"{{{
+  let V = vital#of('neocomplcache')
+  return call(V.has_vimproc, a:000)
 endfunction"}}}
 
 function! neocomplcache#get_cur_text(...)"{{{
@@ -1889,8 +1868,10 @@ function! s:remove_next_keyword(plugin_name, list)"{{{
     let pattern = '^\%(' . neocomplcache#get_next_keyword_pattern() . '\m\)'
   endif
 
-  let next_keyword_str = matchstr('a'.getline('.')[len(neocomplcache#get_cur_text()) :], pattern)[1:]
+  let next_keyword_str = matchstr('a'.
+        \ getline('.')[len(neocomplcache#get_cur_text(1)) :], pattern)[1:]
   if next_keyword_str != ''
+    echomsg next_keyword_str
     let next_keyword_str = substitute(escape(next_keyword_str, '~" \.^$*[]'), "'", "''", 'g').'$'
 
     " No ignorecase.
