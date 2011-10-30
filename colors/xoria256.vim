@@ -1,7 +1,7 @@
 " Vim color file
 "
 " Name:       xoria256.vim
-" Version:    1.5
+" Version:    1.6
 " Maintainer:	Dmitriy Y. Zotikov (xio) <xio@ungrund.org>
 "
 " Should work in recent 256 color terminals.  88-color terms like urxvt are
@@ -15,12 +15,12 @@
 "
 " For a specific filetype highlighting rules issue :syntax list when a file of
 " that type is opened.
+"
+" TODO: link colours instead of setting values explicitly
 
 " Initialization {{{
 if &t_Co != 256 && ! has("gui_running")
-  echomsg ""
-  echomsg "err: please use GUI or a 256-color terminal (so that t_Co=256 could be set)"
-  echomsg ""
+  echoerr "Please use GUI or a 256-color terminal (which sets t_Co=256)."
   finish
 endif
 
@@ -78,12 +78,14 @@ hi VisualNOS    ctermfg=255 guifg=#eeeeee ctermbg=60  guibg=#5f5f87
 hi WildMenu     ctermfg=0   guifg=#000000 ctermbg=150 guibg=#afdf87 cterm=bold gui=bold
 
 "" Syntax highlighting {{{2
-hi Comment      ctermfg=244 guifg=#808080
+" hi Comment      ctermfg=244 guifg=#808080
+hi Comment      ctermfg=150  guifg=#afdf87
 hi Constant     ctermfg=229 guifg=#ffffaf
 hi Identifier   ctermfg=182 guifg=#dfafdf                           cterm=none
 hi Ignore       ctermfg=238 guifg=#444444
 hi Number       ctermfg=180 guifg=#dfaf87
-hi PreProc      ctermfg=150 guifg=#afdf87
+" hi PreProc      ctermfg=150 guifg=#afdf87
+hi PreProc      ctermfg=152 guifg=#afdfdf
 hi Special      ctermfg=174 guifg=#df8787
 hi Statement    ctermfg=110 guifg=#87afdf                           cterm=none gui=none
 hi Type         ctermfg=146 guifg=#afafdf                           cterm=none gui=none
@@ -124,6 +126,8 @@ hi treeOpenable   ctermfg=150  guifg=#afdf87
 hi treePart       ctermfg=244  guifg=#808080
 hi treeDirSlash   ctermfg=244  guifg=#808080
 hi treeLink       ctermfg=182  guifg=#dfafdf
+""" rst #{{{3
+hi link rstEmphasis Number
 
 """ VimDebug {{{3
 " FIXME
@@ -139,4 +143,3 @@ hi treeLink       ctermfg=182  guifg=#dfafdf
 " sign define breakPoint  linehl=breakPoint  text=>>
 " sign define both        linehl=currentLine text=>>
 " sign define empty       linehl=empty
-
