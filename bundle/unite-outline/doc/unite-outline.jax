@@ -1,7 +1,7 @@
 *unite-outline.txt*	バッファの見出し一覧を表示し、ジャンプ機能を提供する。
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-10-10
+Updated : 2011-10-31
 Version : 0.5.0
 License : MIT license {{{
 
@@ -121,7 +121,7 @@ g:unite_source_outline_info			*g:unite_source_outline_info*
 	のみ、作成した outline info をこの辞書に登録します。
 
 	outline info ついては
-	|unite-outline-info|、|unite-outline-info-create|を参照
+	|unite-outline-info|, |unite-outline-info-create|を参照
 
 	初期値は {}
 
@@ -283,10 +283,30 @@ outline info の作成				*unite-outline-info-create*
 	unite-outline に同梱されている outline info ではなく、ユーザー独自の
 	outline info を作成／使用したい場合、その方法は以下の２つです。
 
-    [A]	vimrc にてグローバル変数に設定する
+    [A]	オートロード関数を定義する。				[推奨]
+
+      *	$HOME/.vim/autoload/unite/sources/outline/ に {filetype}.vim を作成し、
+	そこにオートロード関数 unite#sources#outline#{filetype}#outline_info()
+	を定義する。
+
+         または
+
+         $HOME/.vim/autoload/outline/ に {filetype}.vim を作成し、
+         そこにオートロード関数 outline#{filetype}#outline_info() を定義する。
+
+      *	関数の返値として、outline info（辞書）を返す。
+
+	この方法で定義した outline info は必要になるまでロードされません。
+	vimrc を肥大化させることもないので、outline info を作り込むのであれば
+	こちらの方法がおすすめです。
+
+	$HOME/.vim/autoload/unite/sources/outline/defaults/ にあるデフォルトの
+	outline info はすべてこの方法で定義されています。
+
+    [B]	vimrc にてグローバル変数に設定する。			[非推奨]
 
       *	vimrc にて g:unite_source_outline_info.{filetype} に直接 outline info
-	を設定します。
+	を設定する。
 
 	定義例（Ruby用）： >
 	let g:unite_source_outline_info.ruby = {
@@ -297,25 +317,6 @@ outline info の作成				*unite-outline-info-create*
 	      \ },
 	      \}
 <
-    [B]	オートロード関数を定義する
-
-      *	$HOME/.vim/autoload/unite/sources/outline/ に {filetype}.vim を作成し、
-	そこに unite#sources#outline#{filetype}#outline_info() を定義します。
-
-		または
-
-		$HOME/.vim/autoload/outline/ に {filetype}.vim を作成し、
-		そこに outline#{filetype}#outline_info() を定義します。
-
-      *	その関数の返値として、outline info（辞書）を返します。
-
-	こちらは遅延ロードになるため必要になるまでロードされません。 vimrc を
-	肥大化させることもないので、outline info を作り込むのであればこちらの
-	方法がおすすめです。
-
-	$HOME/.vim/autoload/unite/sources/outline/defaults/ にあるデフォルトの
-	outline info がこの方法で定義されており、参考になると思います。
-
 ------------------------------------------------------------------------------
 outline info の属性				*unite-outline-info-attributes*
 
@@ -364,7 +365,7 @@ heading			文字列（任意） 		*unite-outline-info-heading*
 	      \ }
 <
 				*unite-outline-info-heading-pattern-restrictions*
-	重要：使用できる正規表現の制限事項 ~
+	重要：使用できる正規表現の制約 ~
 
 	heading-1, heaging, heading+1 のパターンとして使用できる正規表現には
 	以下の制約があります。
@@ -704,23 +705,31 @@ is_volatile		数値（任意）		*unite-outline-info-is_volatile*
 	1 を設定すると、見出しはキャッシュされません。
 
 HOOKS ~
-
+						*unite-outline-info-hooks*
 initialize		関数（任意） 		*unite-outline-info-initialize()*
 
-	initialize( {context})
+	initialize()
 
-	設定されていると、見出しの抽出に先立って呼ばれ、outline info に初期化
-	の機会を与えます。
+	設定されていると、outline info がロードした後に呼び出されます。
+	outline info の初期化のために実行すべき処理があればここに記述します。
+
+
+before			関数（任意） 		*unite-outline-info-before()*
+
+	before( {context})
+
+	設定されていると、見出しの抽出が始まる前に呼び出されます。
+	見出し抽出前に実行すべき処理があればここに記述します。
 
 	{context} については、|unite-outline-context-object|を参照
 
 
-finalize		関数（任意） 		*unite-outline-info-finalize()*
+after			関数（任意） 		*unite-outline-info-after()*
 
-	finalize( {context})
+	after( {context})
 
-	設定されていると、見出しの抽出が完了した後に呼ばれ、outline info に後
-	始末の機会を与えます。
+	設定されていると、見出しの抽出が完了した後に呼び出されます。
+	見出し抽出後に実行すべき処理があればここに記述します。
 
 	{context} については、|unite-outline-context-object|を参照
 
@@ -753,15 +762,14 @@ unite#sources#outline#alias( {alias}, {source})
 	call unite#sources#outline#alias('zsh',   'sh')
 <
 				*unite#sources#outline#get_outline_info()*
-unite#sources#outline#get_outline_info( {filetype})
+unite#sources#outline#get_outline_info( {filetype} [, {reload} [, {nouser}]])
 
 	{filetype} の outline info を返します。
-	outline info が見つからない場合は空の辞書 {} を返します。
-
-			*unite#sources#outline#get_default_outline_info()*
-unite#sources#outline#get_default_outline_info( {filetype})
-
-	{filetype} のデフォルトの outline info を返します。
+	{reload} が non-zero の場合、outline info を取得する前にスクリプトを
+	source し直します。（outline info がオートロード関数を使ってファイルに
+	定義されている場合にのみ有効）
+	{nouser} が non-zero の場合、ユーザー定義の outline info の探索をス
+	キップします。
 	outline info が見つからない場合は空の辞書 {} を返します。
 
 				*unite#sources#outline#get_filetype_option()*
@@ -772,9 +780,14 @@ unite#sources#outline#get_filetype_option( {filetype}, {key} [, {default}])
 	そうでないなら 0 を返します。
 
 					*unite#sources#outline#get_highlight()*
-unite#sources#outline#get_highlight( {name})
+unite#sources#outline#get_highlight( {name} ...)
 
-	{name} に関連付けられたハイライトグループを返します。
+	{name} に関連付けられたハイライトグループ名を返します。
+	関連付けがない場合は、引数を順次調べ関連付けを探します。関連付けが最後
+	まで見つからなかった場合は |g:unite_abbr_highlight| の値を返します。
+
+	ハイライトグループ名への関連付けについては
+	|g:unite_source_outline_highlight| を参照
 
 					*unite#sources#outline#import()*
 unite#sources#outline#import( {module})
@@ -843,10 +856,6 @@ TODO						*unite-outline-todo*
 
 		jsctags を使えばよさげ。
 
-	* Ruby用 outline info の改善
-
-		rtags を使えばよさげ。
-
 	* D, Erlang, Go, Haskell などの outline info
 
 		話題の言語には一通り対応したいもの。
@@ -885,18 +894,22 @@ outline info 募集！
 	絞り込みの際には、このツリー構造にもとづき、見出しの親子関係に配慮した
 	絞り込みを行います。（小見出しがマッチした見出しも残すなど）
 
-	現在、一部のファイルタイプ（Ruby など）では、ソースコードのインデント
-	の深さから見出しレベルを決定しています。この場合、作成される見出しのツ
-	リーが、必ずしも論理的に正しい親子関係を反映しないことがあります。結
-	果、絞り込みの結果に、実際には親子関係にないはずの見出しが残ることがあ
-	ります。
+	現在、一部のファイルタイプでは、ソースコードのインデントの深さから見出
+	しレベルを決定しています。この場合、作成される見出しのツリーが、必ずし
+	も論理的に正しい親子関係を反映しないことがあります。結果、絞り込みの結
+	果に、実際には親子関係にないはずの見出しが残ることがあります。
 
 ==============================================================================
 更新履歴					*unite-outline-changelog*
 
-http://github.com/h1mesuke/unite-outline/commits/master
-
 0.5.1	2011-10-xx
+
+	* フックを追加
+	  - initialize			|unite-outline-info-initialize|
+
+	* フックの名前を変更
+	  - initialize -> before	|unite-outline-info-before|
+	  - finalize   -> after		|unite-outline-info-after|
 
 	* 内部データの管理を改善
 

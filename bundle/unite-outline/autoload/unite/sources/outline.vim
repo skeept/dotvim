@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-10
+" Updated : 2011-10-31
 " Version : 0.5.0
 " License : MIT license {{{
 "
@@ -35,20 +35,22 @@ let s:OUTLINE_INFO_PATH = [
       \ 'autoload/unite/sources/outline/defaults/',
       \ ]
 
+" NOTE: source <- [aliases...]
 let s:OUTLINE_ALIASES = {
-      \ 'c'       : 'cpp',
-      \ 'cfg'     : 'dosini',
-      \ 'mkd'     : 'markdown',
-      \ 'plaintex': 'tex',
-      \ 'snippet' : 'conf',
-      \ 'xhtml'   : 'html',
-      \ 'zsh'     : 'sh',
+      \ 'markdown': ['mkd'],
+      \ 'cpp'     : ['c'],
+      \ 'dosini'  : ['cfg'],
+      \ 'tex'     : ['plaintex'],
+      \ 'conf'    : ['snippet'],
+      \ 'html'    : ['eruby', 'xhtml'],
+      \ 'sh'      : ['zsh'],
       \ }
 
 let s:OUTLINE_CACHE_DIR = g:unite_data_directory . '/outline'
 
 " Rename the cache directory if its name is still old, dotted style name.
 " See http://d.hatena.ne.jp/tyru/20110824/unite_file_mru
+"
 let old_cache_dir = g:unite_data_directory . '/.outline'
 if isdirectory(s:OUTLINE_CACHE_DIR)
   if isdirectory(old_cache_dir) 
@@ -78,18 +80,23 @@ function! unite#sources#outline#define()
   return s:source
 endfunction
 
-" Defines an alias of {filetype}.
+" Defines an alias of filetype {ftype}.
 "
-function! unite#sources#outline#alias(alias, filetype)
-  if !exists('s:filetype_alias_table')
-    let s:filetype_alias_table = {}
-  endif
-  let s:filetype_alias_table[a:alias] = a:filetype
+function! unite#sources#outline#alias(alias, ftype)
+  call s:define_filetype_aliases([a:alias], a:ftype)
+endfunction
+
+let s:ftype_alias_table = {}
+
+function! s:define_filetype_aliases(aliases, ftype)
+  for alias in a:aliases
+    let s:ftype_alias_table[alias] = a:ftype
+  endfor
 endfunction
 
 " Accessor functions for the outline data, that is a Dictionary assigned to
-" the script local variable.
-"
+" the buffer local variable.
+ 
 function! unite#sources#outline#has_outline_data(...)
   return call('s:has_outline_data', a:000)
 endfunction
@@ -104,15 +111,23 @@ function! s:has_outline_data(bufnr, ...)
   endif
 endfunction
 
-" Returns the value of outline data {key} for buffer {bufnr}.
-" If the value isn't available, returns {default}.
+" Returns the value of outline data {key} for buffer {bufnr}. If the value
+" isn't available, returns {default}. When {key} is omitted, returns an
+" outline data's Dictionary.
 "
 function! unite#sources#outline#get_outline_data(...)
   return call('s:get_outline_data', a:000)
 endfunction
-function! s:get_outline_data(bufnr, key, ...)
+function! s:get_outline_data(bufnr, ...)
   let data = getbufvar(a:bufnr, s:BUFVAR_OUTLINE_DATA)
-  return (a:0 ? get(data, a:key, a:1) : data[a:key])
+  let argc = len(a:000)
+  if argc == 0
+    return data
+  elseif argc == 1
+    return data[a:1]
+  else
+    return get(data, a:1, a:2)
+  endif
 endfunction
 
 " Sets the value of outline data {key} for buffer {bufnr} to {value}.
@@ -145,150 +160,144 @@ function! s:get_outline_buffer_ids(winnr)
   return winvars[s:WINVAR_OUTLINE_BUFFER_IDS]
 endfunction
 
-" Returns the outline info for {filetype}. If not found, returns an empty
-" Dictionary.
+" Returns the outline info for filetype {ftype}. If not found, returns an
+" empty Dictionary. When {ftype} is a Dictionary, assumes it is a Context and
+" takes the context buffer's filetype.
 "
-function! unite#sources#outline#get_outline_info(filetype)
-  return s:get_outline_info(a:filetype, 0)
+function! unite#sources#outline#get_outline_info(...)
+  return call('s:get_outline_info', a:000)
 endfunction
-
-" Returns the default outline info for {filetype}. If not found, returns an
-" empty Dictionary.
-"
-function! unite#sources#outline#get_default_outline_info(filetype)
-  return s:get_outline_info(a:filetype, 1)
-endfunction
-
-let s:outline_info = {}
-let s:default_outline_info = {}
-
-function! s:get_outline_info(filetype, ...)
-  let [use_default, reload] = (a:000 + [0, 0])[0:1]
-  let memo = (use_default ? s:default_outline_info : s:outline_info)
-  if !reload && has_key(memo, a:filetype)
-    return memo[a:filetype]
+function! s:get_outline_info(ftype, ...)
+  if type(a:ftype) == type({})
+    let ftype = join(a:ftype.buffer.filetypes, '.')
+    let context = a:ftype
+  else
+    let ftype = a:ftype
+    let context = {}
   endif
-  for filetype in s:resolve_filetype(a:filetype)
-    let outline_info = s:load_outline_info(filetype, use_default)
-    if !empty(outline_info)| break | endif
-  endfor
-  let memo[a:filetype] = outline_info
-  return outline_info
-endfunction
+  let reload = get(a:000, 0, 0)
+  let nouser = get(a:000, 1, 0)
+  let oinfo_paths = (nouser ? s:OUTLINE_INFO_PATH[-1:] : s:OUTLINE_INFO_PATH)
 
-" Try to load the outline info for {filetype}. If couldn't load, returns an
-" empty Dictionary.
-"
-function! s:load_outline_info(filetype, use_default)
-  if has_key(g:unite_source_outline_info, a:filetype)
-    return g:unite_source_outline_info[a:filetype]
-  endif
-  let oinfo_dirs = (a:use_default ? s:OUTLINE_INFO_PATH[-1:] : s:OUTLINE_INFO_PATH)
-  for dir in oinfo_dirs
-    let load_func  = substitute(substitute(dir, '^autoload/', '', ''), '/', '#', 'g')
-    let load_func .= substitute(a:filetype, '\.', '_', 'g') . '#outline_info'
-    try
-      call {load_func}()
-    catch /^Vim\%((\a\+)\)\=:E117:/
-      " E117: Unknown function:
-      continue
-    endtry
-    try
-      let scr_path = s:find_autoload_script(load_func)
-    catch /^ScriptNotFoundError:/
-      " The user moved his/her outline info somewhere!
-      continue
-    endtry
-    call s:update_script(scr_path)
-    " Load the outline info.
-    let outline_info = {load_func}()
-    let outline_info = s:initialize_outline_info(outline_info)
-    return outline_info
+  for ftype in s:resolve_filetype(ftype)
+    if has_key(g:unite_source_outline_info, ftype)
+      let name = ftype
+      let oinfo = g:unite_source_outline_info[ftype]
+      call s:initialize_outline_info(oinfo, ftype)
+      return oinfo
+    endif
+    let load_func = s:find_loadable_func(ftype, oinfo_paths)
+    if !empty(load_func)
+      let name = load_func
+      let oinfo = s:load_outline_info(load_func, context, reload)
+      if type(oinfo) == type("")
+        " Redirect.
+        let redir_ftype = oinfo | unlet oinfo
+        let oinfo = s:get_outline_info(redir_ftype, reload, nouser)
+      else
+        call s:initialize_outline_info(oinfo, load_func)
+      endif
+      return oinfo
+    endif
   endfor
   return {}
 endfunction
 
-" Returns a full pathname of the script file where function {funcname} is
-" defined.
+function! s:find_loadable_func(ftype, paths)
+  let ftype = substitute(a:ftype, '\.', '_', 'g')
+  for path in a:paths
+    let path = substitute(path, '^autoload/', '', '') . ftype
+    let load_func = substitute(path . '#outline_info', '/', '#', 'g')
+    try
+      " NOTE: This is a workaround for that exists('*auto#load#func') always
+      " returns 0 when used in a function other than the toplevel.
+      call call(load_func, [])
+      return load_func
+    catch /^Vim\%((\a\+)\)\=:E117:/
+      " E117: Unknown function:
+    catch
+    endtry
+  endfor
+  return ''
+endfunction
+
+" Reloads an autoload script where autoload function {funcname} is defined.
 "
-function! s:find_autoload_script(funcname)
-  if !exists('s:autoload_scripts')
-    let s:autoload_scripts = {}
+function! s:reload_autoload_script(funcname)
+  " path#to#file#func() -> autoload/path/to/file.vim -> full path
+  let path = 'autoload/' . join(split(a:funcname, '#')[:-2], '/') . '.vim'
+  let path = get(split(globpath(&runtimepath, path), "\<NL>"), 0, '')
+  let path = fnamemodify(path, ':p')
+  " Re-source the autoload script.
+  source `=path`
+endfunction
+
+function! s:load_outline_info(load_func, context, reload)
+  if a:reload
+    call s:reload_autoload_script(a:load_func)
   endif
-  if has_key(s:autoload_scripts, a:funcname)
-    let path =  s:autoload_scripts[a:funcname]
-    if filereadable(path)
-      return s:autoload_scripts[a:funcname]
-    else
-      " The script was moved somewhere for some reason...
-      unlet s:autoload_scripts[a:funcname]
-    endif
-  endif
-  let path_list = split(a:funcname, '#')
-  let rel_path = 'autoload/' . join(path_list[:-2], '/') . '.vim'
-  let path = get(split(globpath(&runtimepath, rel_path), "\<NL>"), 0, '')
-  if empty(path)
-    throw "ScriptNotFoundError: Script file not found for " . a:funcname
+  if !empty(a:context)
+    try
+      let oinfo = call(a:load_func, [a:context])
+    catch /^Vim\%((\a\+)\)\=:E118:/
+      " E118: Too many arguments for function:
+      let oinfo = call(a:load_func, [])
+    endtry
   else
-    let s:autoload_scripts[a:funcname] = path
+    let oinfo = call(a:load_func, [])
   endif
-  return path
+  return oinfo
 endfunction
 
-" Re-sources script file {path} if the script has been modified since the last
-" sourcing.
-"
-function! s:update_script(path)
-  if !exists('s:file_mtime_table')
-    let s:file_mtime_table = {}
+function! s:initialize_outline_info(oinfo, name)
+  if has_key(a:oinfo, 'super')
+    if a:oinfo.__initialized__ > a:oinfo.super.__initialized__
+      return
+    endif
+  elseif has_key(a:oinfo, '__initialized__')
+    return
   endif
-  let path = fnamemodify(a:path, ':p')
-  let new_ftime = getftime(path)
-  let old_ftime = get(s:file_mtime_table, path, new_ftime)
-  if new_ftime > old_ftime
-    source `=path`
+
+  if has_key(a:oinfo, 'initialize')
+    call a:oinfo.initialize()
   endif
-  let s:file_mtime_table[path] = new_ftime
-  return (new_ftime > old_ftime)
+  call extend(a:oinfo, { 'name': a:name, 'is_volatile': 0 }, 'keep' )
+  if has_key(a:oinfo, 'skip')
+    call s:normalize_skip_info(a:oinfo)
+  endif
+  call s:normalize_heading_groups(a:oinfo)
+  if has_key(a:oinfo, 'not_match_patterns')
+    let a:oinfo.__not_match_pattern__ =
+          \ '\%(' . join(a:oinfo.not_match_patterns, '\|') . '\)'
+  endif
+
+  if has_key(a:oinfo, 'super')
+    let a:oinfo.__initialized__ = a:oinfo.super.__initialized__ + 1
+  else
+    let a:oinfo.__initialized__ = 1
+  endif
 endfunction
 
-function! s:initialize_outline_info(outline_info)
-  if has_key(a:outline_info, '__initialized__')
-    return a:outline_info
-  endif
-  call extend(a:outline_info, { 'is_volatile': 0 }, 'keep' )
-  if has_key(a:outline_info, 'skip')
-    call s:normalize_skip_info(a:outline_info)
-  endif
-  call s:normalize_heading_groups(a:outline_info)
-  if has_key(a:outline_info, 'not_match_patterns')
-    let a:outline_info.__not_match_pattern__ =
-          \ '\%(' . join(a:outline_info.not_match_patterns, '\|') . '\)'
-  endif
-  let a:outline_info.__initialized__ = 1
-  return a:outline_info
-endfunction
-
-function! s:normalize_skip_info(outline_info)
-  if has_key(a:outline_info.skip, 'header')
-    let value_type = type(a:outline_info.skip.header)
+function! s:normalize_skip_info(oinfo)
+  if has_key(a:oinfo.skip, 'header')
+    let value_type = type(a:oinfo.skip.header)
     if value_type == type("")
-      let a:outline_info.skip.header = { 'leading': a:outline_info.skip.header }
+      let a:oinfo.skip.header = { 'leading': a:oinfo.skip.header }
     elseif value_type == type([])
-      let a:outline_info.skip.header =
-            \ { 'block': s:normalize_block_patterns(a:outline_info.skip.header) }
+      let a:oinfo.skip.header =
+            \ { 'block': s:normalize_block_patterns(a:oinfo.skip.header) }
     elseif value_type == type({})
-      if has_key(a:outline_info.skip.header, 'block') &&
-            \ type(a:outline_info.skip.header.block) == type([])
-        let a:outline_info.skip.header.block =
-              \ s:normalize_block_patterns(a:outline_info.skip.header.block)
+      if has_key(a:oinfo.skip.header, 'block') &&
+            \ type(a:oinfo.skip.header.block) == type([])
+        let a:oinfo.skip.header.block =
+              \ s:normalize_block_patterns(a:oinfo.skip.header.block)
       endif
     endif
   endif
-  if has_key(a:outline_info.skip, 'block')
-    let value_type = type(a:outline_info.skip.block)
+  if has_key(a:oinfo.skip, 'block')
+    let value_type = type(a:oinfo.skip.block)
     if value_type == type([])
-      let a:outline_info.skip.block = s:normalize_block_patterns(a:outline_info.skip.block)
+      let a:oinfo.skip.block = s:normalize_block_patterns(a:oinfo.skip.block)
     endif
   endif
 endfunction
@@ -297,34 +306,34 @@ function! s:normalize_block_patterns(patterns)
   return { 'begin': a:patterns[0], 'end': a:patterns[1] }
 endfunction
 
-function! s:normalize_heading_groups(outline_info)
-  if !has_key(a:outline_info, 'heading_groups')
-    let a:outline_info.heading_groups = {}
+function! s:normalize_heading_groups(oinfo)
+  if !has_key(a:oinfo, 'heading_groups')
+    let a:oinfo.heading_groups = {}
     let group_map = {}
   else
-    let groups = keys(a:outline_info.heading_groups)
+    let groups = keys(a:oinfo.heading_groups)
     let group_map = {}
     for group in groups
-      let group_types = a:outline_info.heading_groups[group]
+      let group_types = a:oinfo.heading_groups[group]
       for heading_type in group_types
         let group_map[heading_type] = group
       endfor
     endfor
   endif
   let group_map.generic = 'generic'
-  let a:outline_info.heading_group_map = group_map
+  let a:oinfo.heading_group_map = group_map
 endfunction
 
-" Returns the value of filetype option {key} for {filetype}.
+" Returns the value of filetype option {key} for filetype {ftype}.
 " If the value isn't available, returns {default}.
 "
 function! unite#sources#outline#get_filetype_option(...)
   return call('s:get_filetype_option', a:000)
 endfunction
-function! s:get_filetype_option(filetype, key, ...)
-  for filetype in s:resolve_filetype(a:filetype)
-    if has_key(g:unite_source_outline_filetype_options, filetype)
-      let options = g:unite_source_outline_filetype_options[filetype]
+function! s:get_filetype_option(ftype, key, ...)
+  for ftype in s:resolve_filetype(a:ftype)
+    if has_key(g:unite_source_outline_filetype_options, ftype)
+      let options = g:unite_source_outline_filetype_options[ftype]
       if has_key(options, a:key)
         return options[a:key]
       endif
@@ -334,60 +343,71 @@ function! s:get_filetype_option(filetype, key, ...)
   return get(s:default_filetype_options, a:key, default)
 endfunction
 
-" Returns a List of filetypes that are {filetype} itself and its fallback
-" filetypes.
+" Returns a List of filetypes that are filetype {ftype} itself and its
+" fallback filetypes and aliases of each of them.
 "
-"  {filetype}
-"    |/
-"   aaa.bbb.ccc -(alias)-> ddd -(alias)-> eee
-"    |/
-"   aaa.bbb     -(alias)-> fff -(alias)-> ggg
-"    |/
-"   aaa
+"   the given filetype {ftype}
+"     |/
+"   (1)aaa.bbb.ccc -> (2)aliases
+"   (3)aaa/bbb/ccc -> (4)aliases
+"     |/
+"   (5)aaa.bbb     -> (6)aliases
+"   (7)aaa/bbb     -> (8)aliases
+"     |/
+"   (9)aaa         -> ($)aliases
 "
-"   => [aaa.bbb.ccc, ddd, eee, aaa.bbb, fff, ggg, aaa]
-"
-function! s:resolve_filetype(filetype)
-  let candidates = []
-  let filetype = a:filetype
+function! s:resolve_filetype(ftype)
+  let ftcands = []
+  let ftype = a:ftype
   while 1
-    call add(candidates, filetype)
-    let candidates += s:resolve_filetype_alias(filetype)
-    if filetype =~ '\.\w\+$'
-      let filetype = substitute(filetype, '\.\w\+$', '', '')
+    call add(ftcands, ftype)
+    let ftcands += s:resolve_filetype_alias(ftype)
+    if ftype =~ '\.'
+      let dsl_ftype = substitute(ftype, '\.', '/', 'g')
+      call add(ftcands, dsl_ftype)
+      let ftcands += s:resolve_filetype_alias(dsl_ftype)
+    endif
+    if ftype =~ '[./]\w\+$'
+      let ftype = substitute(ftype, '[./]\w\+$', '', '')
     else
       break
     endif
   endwhile
-  call add(candidates, '*')
-  return candidates
+  call add(ftcands, '*')
+  return ftcands
 endfunction
 
-function! s:resolve_filetype_alias(filetype)
+function! s:resolve_filetype_alias(ftype)
   let seen = {}
-  let candidates = []
-  let filetype = a:filetype
+  let ftcands = []
+  let ftype = a:ftype
   while 1
-    if has_key(s:filetype_alias_table, filetype)
-      if has_key(seen, filetype)
+    if has_key(s:ftype_alias_table, ftype)
+      if has_key(seen, ftype)
         throw "unite-outline: Cyclic alias definition detected."
       endif
-      let filetype = s:filetype_alias_table[filetype]
-      call add(candidates, filetype)
-      let seen[filetype] = 1
+      let ftype = s:ftype_alias_table[ftype]
+      call add(ftcands, ftype)
+      let seen[ftype] = 1
     else
       break
     endif
   endwhile
-  return candidates
+  return ftcands
 endfunction
 
 function! unite#sources#outline#get_highlight(...)
   return call('s:get_highlight', a:000)
 endfunction
-function! s:get_highlight(name)
-  return (has_key(g:unite_source_outline_highlight, a:name)
-        \ ? g:unite_source_outline_highlight[a:name] : s:default_highlight[a:name])
+function! s:get_highlight(...)
+  for name in a:000
+    if has_key(g:unite_source_outline_highlight, name)
+      return g:unite_source_outline_highlight[name]
+    elseif has_key(s:default_highlight, name)
+      return s:default_highlight[name]
+    endif
+  endfor
+  return s:default_highlight.normal
 endfunction
 
 function! unite#sources#outline#import(name, ...)
@@ -464,25 +484,10 @@ endif
 "---------------------------------------
 " Aliases
 
-function! s:define_filetype_aliases()
-  " NOTE: If the user has his/her own outline info for a filetype, not define
-  " it as an alias of the other filetype by default.
-  let user_oinfos = {}
-  for path in s:OUTLINE_INFO_PATH[:-2]
-    let oinfo_paths = split(globpath(&rtp, path . '*.vim'), "\<NL>")
-    for filetype in map(oinfo_paths, 'matchstr(v:val, "\\w\\+\\ze\\.vim$")')
-      let filetype = substitute(filetype, '_', '.', 'g')
-      let user_oinfos[filetype] = 1
-    endfor
-  endfor
-  for [alias, filetype] in items(s:OUTLINE_ALIASES)
-    if !has_key(user_oinfos, alias)
-      call unite#sources#outline#alias(alias, filetype)
-    endif
-  endfor
-endfunction
 " Define the default filetype aliases.
-call s:define_filetype_aliases()
+for [ftype, aliases] in items(s:OUTLINE_ALIASES)
+  call call('s:define_filetype_aliases', [aliases, ftype])
+endfor
 
 "-----------------------------------------------------------------------------
 " Source
@@ -510,23 +515,20 @@ let s:source = {
 function! s:Source_Hooks_on_init(source_args, unite_context)
   let a:unite_context.source__outline_buffer_id = s:outline_buffer_id
   let a:unite_context.source__outline_source_bufnr = bufnr('%')
-  call s:unite_outline_initialize()
-  call s:unite_outline_attach(s:outline_buffer_id)
+  call s:initialize_outline_data()
+  call s:attach_outline_buffer(s:outline_buffer_id)
   let s:outline_buffer_id += 1
 endfunction
 let s:source.hooks.on_init = function(s:SID . 'Source_Hooks_on_init')
 
-" Initialize the outline data and register autocmds if the current buffer
-" hasn't been initialized yet.
+" Initialize the current buffer's outline data and register autocommands to
+" manage the data if the buffer hasn't been initialized yet.
 "
-function! s:unite_outline_initialize()
+function! s:initialize_outline_data()
   let bufnr = bufnr('%')
   let bufvars  = getbufvar(bufnr, '')
-  if !exists('s:outline_data')
-    let s:outline_data = {}
-  endif
   if !has_key(bufvars, s:BUFVAR_OUTLINE_DATA)
-    let bufvars[s:BUFVAR_OUTLINE_DATA] = {}
+    let bufvars[s:BUFVAR_OUTLINE_DATA] = { 'state': 'OK' }
     call s:register_autocmds()
   endif
   call s:update_buffer_changenr()
@@ -535,7 +537,7 @@ endfunction
 " Associate the current buffer's window with the outline buffer {buffer_id}
 " where the headings from the buffer will be displayed.
 "
-function! s:unite_outline_attach(buffer_id)
+function! s:attach_outline_buffer(buffer_id)
   let winnr = winnr()
   let winvars  = getwinvar(winnr, '')
   if !has_key(winvars, s:WINVAR_OUTLINE_BUFFER_IDS)
@@ -546,12 +548,15 @@ endfunction
 
 function! s:Source_Hooks_on_syntax(source_args, unite_context)
   let bufnr = a:unite_context.source__outline_source_bufnr
-  let context = s:get_outline_data(bufnr, 'context')
-  let outline_info = context.outline_info
-  if context.extract_method ==# 'filetype'
+  let odata = s:get_outline_data(bufnr)
+  if odata.state !=# 'OK'
+    return
+  endif
+  let oinfo = odata.context.outline_info
+  if odata.context.extracted_by ==# 'filetype'
     " Method: Filetype
-    if has_key(outline_info, 'highlight_rules')
-      for hl_rule in outline_info.highlight_rules
+    if has_key(oinfo, 'highlight_rules')
+      for hl_rule in oinfo.highlight_rules
         if !has_key(hl_rule, 'highlight')
           let hl_rule.highlight = s:get_highlight(hl_rule.name)
         endif
@@ -611,8 +616,13 @@ function! s:Source_gather_candidates(source_args, unite_context)
     return []
 
   catch
-    call unite#util#print_error(v:throwpoint)
-    call unite#util#print_error(v:exception)
+    if s:get_outline_data(bufnr, 'state') ==# 'OK'
+      call unite#util#print_error(v:throwpoint)
+      call unite#util#print_error(v:exception)
+      call s:set_outline_data(bufnr, 'state', 'Error')
+    endif
+    call unite#print_message("[unite-outline] " . v:throwpoint)
+    call unite#print_message("[unite-outline] " . v:exception)
     return []
 
   finally
@@ -627,13 +637,13 @@ let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
 function! s:parse_source_arguments(source_args, unite_context)
   let options = {
         \ 'is_force': 0,
-        \ 'extract_method': 'last',
+        \ 'extracted_by': '?',
         \ }
   for value in a:source_args
     if value =~# '^\%(ft\|fi\%[letype]\)$'
-      let options.extract_method = 'filetype'
+      let options.extracted_by = 'filetype'
     elseif value =~# '^fo\%[lding]$'
-      let options.extract_method = 'folding'
+      let options.extracted_by = 'folding'
     elseif value =~# '^\%(update\|!\)$'
       let options.is_force = 1
     endif
@@ -654,23 +664,14 @@ function! s:create_context(bufnr, ...)
   let buffer = {
         \ 'nr'  : a:bufnr,
         \ 'path': fnamemodify(bufname(a:bufnr), ':p'),
-        \ 'filetype'  : getbufvar(a:bufnr, '&filetype'),
-        \ 'shiftwidth': getbufvar(a:bufnr, '&shiftwidth'),
-        \ 'tabstop'   : getbufvar(a:bufnr, '&tabstop'),
+        \ 'sw'  : getbufvar(a:bufnr, '&shiftwidth'),
+        \ 'ts'  : getbufvar(a:bufnr, '&tabstop'),
         \ }
-  let compound_filetypes = split(buffer.filetype, '\.')
-  call extend(buffer, {
-        \ 'major_filetype': get(compound_filetypes, 0, ''),
-        \ 'minor_filetype': get(compound_filetypes, 1, ''),
-        \ 'compound_filetypes': compound_filetypes,
-        \ })
-  let outline_info = s:get_outline_info(buffer.filetype)
+  let buffer.filetypes = split(getbufvar(a:bufnr, '&filetype'), '\.')
+  let buffer.filetype = get(buffer.filetypes, 0, '')
   let context = {
-        \ 'buffer': buffer,
-        \ 'event' : 'user',
-        \ 'is_force': 0,
-        \ 'extract_method': 'last',
-        \ 'outline_info': outline_info,
+        \ 'trigger': 'user', 'is_force': 0, 'buffer': buffer,
+        \ 'extracted_by': '?',
         \ }
   call extend(context, (a:0 ? a:1 : {}))
   return context
@@ -681,10 +682,10 @@ endfunction
 function! s:is_valid_candidates(candidates, context)
   let last_method = (!empty(a:candidates) &&
         \ a:candidates[0].source__heading_type ==# 'folding' ? 'folding' : 'filetype')
-  if a:context.extract_method ==# 'last'
-    let a:context.extract_method = last_method
+  if a:context.extracted_by == '?'
+    let a:context.extracted_by = last_method
   endif
-  return (a:context.extract_method ==# last_method)
+  return (a:context.extracted_by ==# last_method)
 endfunction
 
 " Returns False if {cache_data}'s format is not compatible with the current
@@ -700,6 +701,15 @@ function! s:get_candidates(bufnr, options)
   " Update the context Dictionary.
   let context = s:create_context(a:bufnr, a:options)
   call s:set_outline_data(a:bufnr, 'context', context)
+  if context.is_force || !s:has_outline_data(a:bufnr, 'outline_info')
+    " If triggered by <C-l>, reload the outline info.
+    let reload = (context.is_force && context.trigger ==# 'user')
+    let oinfo = s:get_outline_info(context, reload)
+    call s:set_outline_data(a:bufnr, 'outline_info', oinfo)
+  else
+    let oinfo = s:get_outline_data(a:bufnr, 'outline_info')
+  end
+  let context.outline_info = oinfo
 
   if !context.is_force && s:has_outline_data(a:bufnr, 'candidates')
     " Path A: Get candidates from the buffer local cache.
@@ -735,7 +745,7 @@ function! s:get_candidates(bufnr, options)
   " Convert the headings into candidates.
   let candidates = s:convert_headings_to_candidates(headings, a:bufnr)
 
-  let is_volatile = get(context.outline_info, 'is_volatile', 0)
+  let is_volatile = get(oinfo, 'is_volatile', 0)
   if !is_volatile
     " Save the candidates to the buffer local cache.
     call s:set_outline_data(a:bufnr, 'candidates', candidates)
@@ -759,7 +769,7 @@ function! s:extract_headings(context)
   endif
 
   " Print a progress message.
-  if a:context.event ==# 'auto_update'
+  if a:context.trigger ==# 'auto_update'
     if g:unite_source_outline_verbose
       call s:Util.print_progress("Update headings...")
     endif
@@ -799,14 +809,14 @@ function! s:extract_headings(context)
 
     " Extract headings.
     let s:heading_id = 1
-    if a:context.extract_method !=# 'folding'
+    if a:context.extracted_by !=# 'folding'
       " Path C_1: Extract headings in filetype-specific way using the
       " filetype's outline info.
-      let a:context.extract_method = 'filetype'
+      let a:context.extracted_by = 'filetype'
       let headings = s:extract_filetype_headings(a:context)
     else
       " Path C_2: Extract headings using folds' information.
-      let a:context.extract_method = 'folding'
+      let a:context.extracted_by = 'folding'
       let headings = s:extract_folding_headings(a:context)
     endif
 
@@ -842,7 +852,7 @@ function! s:extract_headings(context)
 
     if success
       " Print a progress message.
-      if a:context.event ==# 'auto_update'
+      if a:context.trigger ==# 'auto_update'
         if g:unite_source_outline_verbose
           call s:Util.print_progress("Update headings...done.")
         endif
@@ -879,13 +889,9 @@ endfunction
 " the filetype's outline info.
 "
 function! s:extract_filetype_headings(context)
-  let buffer  = a:context.buffer
-  if a:context.is_force && a:context.event ==# 'user'
-    " Re-source the outline info if updated.
-    let a:context.outline_info = s:get_outline_info(buffer.filetype, 0, 1)
-  endif
-  let outline_info = a:context.outline_info
-  if empty(outline_info)
+  let buffer = a:context.buffer
+  let oinfo = a:context.outline_info
+  if empty(oinfo)
     if empty(buffer.filetype)
       call unite#print_message("[unite-outline] Please set the filetype.")
     else
@@ -896,18 +902,18 @@ function! s:extract_filetype_headings(context)
   endif
 
   " Extract headings.
-  if has_key(outline_info, 'initialize')
-    call outline_info.initialize(a:context)
+  if has_key(oinfo, 'before')
+    call oinfo.before(a:context)
   endif
-  if has_key(outline_info, 'extract_headings')
-    let headings = outline_info.extract_headings(a:context)
+  if has_key(oinfo, 'extract_headings')
+    let headings = oinfo.extract_headings(a:context)
     let headings_normalized = 0
   else
     let headings = s:builtin_extract_headings(a:context)
     let headings_normalized = 1
   endif
-  if has_key(outline_info, 'finalize')
-    call outline_info.finalize(a:context)
+  if has_key(oinfo, 'after')
+    call oinfo.after(a:context)
   endif
 
   " Normalize headings.
@@ -929,10 +935,10 @@ function! s:extract_filetype_headings(context)
 endfunction
 
 function! s:builtin_extract_headings(context)
-  let outline_info = a:context.outline_info
-  let [which, pattern] = s:build_heading_pattern(outline_info)
+  let oinfo = a:context.outline_info
+  let [which, pattern] = s:build_heading_pattern(oinfo)
 
-  let has_create_heading = has_key(outline_info, 'create_heading')
+  let has_create_heading = has_key(oinfo, 'create_heading')
   let num_lines = line('$')
 
   let skip_ranges = s:get_skip_ranges(a:context)
@@ -987,7 +993,7 @@ function! s:builtin_extract_headings(context)
         let heading_line = getline(a:context.heading_lnum)
         let matched_line = getline(a:context.matched_lnum)
         if has_create_heading
-          let heading = outline_info.create_heading(
+          let heading = oinfo.create_heading(
                 \ which[submatch], heading_line, matched_line, a:context)
         else
           let heading = heading_line
@@ -1018,21 +1024,21 @@ endfunction
 "   [ ['dummy', 'dummy', 'heading-1', 'heading', 'heading+1'],
 "     '\%(\(heading-1\)\|\(heading\)\|\(heading+1\)\)' ]
 "
-function! s:build_heading_pattern(outline_info)
+function! s:build_heading_pattern(oinfo)
   let which = ['dummy', 'dummy']
   " NOTE: searchpos() returns submatch counted from 2.
   let sub_patterns = []
-  if has_key(a:outline_info, 'heading-1')
+  if has_key(a:oinfo, 'heading-1')
     call add(which, 'heading-1')
-    call add(sub_patterns, a:outline_info['heading-1'])
+    call add(sub_patterns, a:oinfo['heading-1'])
   endif
-  if has_key(a:outline_info, 'heading')
+  if has_key(a:oinfo, 'heading')
     call add(which, 'heading')
-    call add(sub_patterns, a:outline_info.heading)
+    call add(sub_patterns, a:oinfo.heading)
   endif
-  if has_key(a:outline_info, 'heading+1')
+  if has_key(a:oinfo, 'heading+1')
     call add(which, 'heading+1')
-    call add(sub_patterns, a:outline_info['heading+1'])
+    call add(sub_patterns, a:oinfo['heading+1'])
   endif
   call map(sub_patterns, 's:_substitue_sub_pattern(v:val)')
   let pattern = '\%(' . join(sub_patterns, '\|') . '\)'
@@ -1047,17 +1053,17 @@ endfunction
 " Returns a List of ranges to be skipped while the extraction.
 "
 function! s:get_skip_ranges(context)
-  let outline_info = a:context.outline_info
-  if !has_key(outline_info, 'skip') | return [] | endif
+  let oinfo = a:context.outline_info
+  if !has_key(oinfo, 'skip') | return [] | endif
   let ranges = []
-  if has_key(outline_info.skip, 'header')
+  if has_key(oinfo.skip, 'header')
     let header_range = s:get_header_range(a:context)
     if !empty(header_range)
       call add(ranges, header_range)
     endif
   endif
-  if has_key(outline_info.skip, 'block')
-    let block = outline_info.skip.block
+  if has_key(oinfo.skip, 'block')
+    let block = oinfo.skip.block
     let num_lines = line('$')
     call cursor(1, 1)
     while 1
@@ -1081,8 +1087,8 @@ function! s:get_skip_ranges(context)
 endfunction
 
 function! s:get_header_range(context)
-  let outline_info = a:context.outline_info
-  let header = outline_info.skip.header
+  let oinfo = a:context.outline_info
+  let header = oinfo.skip.header
   let has_leading = has_key(header, 'leading')
   let has_block   = has_key(header, 'block')
 
@@ -1131,11 +1137,11 @@ endfunction
 
 function! s:extract_folding_headings(context)
   let headings = []
-  let curr_level = 0
+  let cur_level = 0
   let lnum = 1 | let num_lines = line('$')
   while lnum < num_lines
     let foldlevel = foldlevel(lnum)
-    if foldlevel > curr_level
+    if foldlevel > cur_level
       let heading_lnum = lnum
       if &l:foldmethod ==# 'indent'
         let heading_lnum -=1
@@ -1153,14 +1159,14 @@ function! s:extract_folding_headings(context)
         break
       endif
     endif
-    let curr_level = foldlevel
+    let cur_level = foldlevel
     let lnum += 1
   endwhile
   return headings
 endfunction
 
 function! s:normalize_heading(heading, context)
-  let outline_info = a:context.outline_info
+  let oinfo = a:context.outline_info
   let a:heading.id = s:heading_id
   let a:heading.word = s:normalize_heading_word(a:heading.word)
   call extend(a:heading, {
@@ -1173,13 +1179,13 @@ function! s:normalize_heading(heading, context)
   let a:heading.signature = s:calc_signature(a:heading.lnum, a:context.lines)
   " group
   if !has_key(a:heading, 'group')
-    let group_map = get(outline_info, 'heading_group_map', {})
+    let group_map = get(oinfo, 'heading_group_map', {})
     let a:heading.group = get(group_map, a:heading.type, 'generic')
   endif
   " keyword => candidate.word
-  if has_key(outline_info, '__not_match_pattern__')
+  if has_key(oinfo, '__not_match_pattern__')
     let a:heading.keyword =
-          \ substitute(a:heading.word, outline_info.__not_match_pattern__, '', 'g')
+          \ substitute(a:heading.word, oinfo.__not_match_pattern__, '', 'g')
   endif
   let s:heading_id += 1
   return a:heading
@@ -1455,9 +1461,15 @@ endfunction
 
 function! s:update_headings(bufnr)
   call s:Util.print_debug('event', 'update_headings')
-  " Update the Model data (headings).
-  call s:get_candidates(a:bufnr, { 'event': 'auto_update', 'is_force': 1 })
-
+  try
+    " Update the Model data (headings).
+    call s:get_candidates(a:bufnr, { 'trigger': 'auto_update', 'is_force': 1 })
+  catch
+    " Ignore all errors caused by auto-updates because they are so annoying.
+    " We can know the error details from the error which was caught at
+    " gather_candidates() not here.
+    return
+  endtry
   " Update the View (unite.vim' buffer) if the visible outline buffer exists.
   let outline_bufnrs = s:find_outline_buffers(a:bufnr)
   " NOTE: An outline buffer is an unite.vim's buffer that is displaying the
@@ -1528,7 +1540,6 @@ function! s:on_buf_win_enter()
   let old_bufnr = bufnr('#')
   call s:Util.print_debug('event', 'on_buf_win_enter at window #' . winnr .
         \ ' from buffer #' . old_bufnr . ' to #' . new_bufnr)
-  call s:unite_outline_initialize()
   call s:swap_headings(s:get_outline_buffer_ids(winnr), new_bufnr)
 endfunction
 
@@ -1550,6 +1561,7 @@ function! s:swap_headings(outline_buffer_ids, new_bufnr)
               let unite_context.source__outline_source_bufnr = a:new_bufnr
               let unite_context.source__outline_swapping = 1
               call s:Util.print_debug('event', 'redraw outline buffer #' . bufnr)
+              call s:initialize_outline_data()
               call unite#force_redraw(bufwinnr(bufnr))
             endif
           endif
