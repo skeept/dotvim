@@ -1703,7 +1703,8 @@ endfunction"}}}
 
 " Key mapping functions."{{{
 function! neocomplcache#smart_close_popup()"{{{
-  return g:neocomplcache_enable_auto_select ? neocomplcache#cancel_popup() : neocomplcache#close_popup()
+  return g:neocomplcache_enable_auto_select ?
+        \ neocomplcache#cancel_popup() : neocomplcache#close_popup()
 endfunction
 "}}}
 function! neocomplcache#close_popup()"{{{
