@@ -1106,6 +1106,22 @@ CHANGELOG						*neocomplcache-changelog*
 ------------------------------------------------------------------------------
 ChangeLog neocomplcache 6.2:
 
+2011-10-31
+- Fixed filter.
+- Improved c snippet.
+
+2011-10-28
+- Fixed remove_next_keyword.
+- Improved python keyword pattern.
+- Improved eval snippet behavior.
+
+2011-10-27
+- Added neocomplcache#util#get_last_status() function.
+
+2011-10-25
+- Fixed member_complete.
+- Fixed fuzzy completion error.
+
 2011-10-23
 - Added g:neocomplcache_enable_fuzzy_completion option.
 - Fixed file_include source.

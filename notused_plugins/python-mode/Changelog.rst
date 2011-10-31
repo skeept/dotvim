@@ -1,6 +1,28 @@
 Changelog
 =========
 
+## 2011-10-30 0.3.3
+-------------------
+* Fix RopeShowDoc
+
+## 2011-10-28 0.3.2
+-------------------
+* Add 'g:pymode_options_*' stuff, for ability
+  to disable default pymode options for python buffers
+
+## 2011-10-27 0.3.1
+-------------------
+* Add 'g:pymode_rope_always_show_complete_menu' option
+* Some pylint fixes
+
+
+## 2011-10-25 0.3.0
+-------------------
+* Add g:pymode_lint_minheight and g:pymode_lint_maxheight
+  options
+* Fix PyLintToggle
+* Fix Rope and PyLint libs loading
+
 ## 2011-10-21 0.2.12
 --------------------
 * Auto open cwindow with results
