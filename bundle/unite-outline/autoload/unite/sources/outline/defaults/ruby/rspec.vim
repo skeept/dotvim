@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/ruby/rspec.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-31
+" Updated : 2011-11-01
 "
 " Contributed by kenchan
 "
@@ -81,6 +81,10 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     let type = 'rspec'
     let word = substitute(word, '\s*\%(do\|{\)\%(\s*|[^|]*|\)\=\s*$', '', '')
     "let word = substitute(word, '\%(;\|#{\@!\).*$', '', '')
+
+    if word =~ '^\s*\%(subject\|it\)\s*$'
+      let word = self.fold_ruby_block(a:context, h_lnum)
+    endif
   endif
 
   if level > 0
@@ -92,10 +96,6 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   else
     let heading = call(self.super.create_heading,
           \ [a:which, a:heading_line, a:matched_line, a:context], self.super)
-    if heading.type == 'method'
-      let h_lnum = a:context.heading_lnum
-      let heading.level = s:Util.get_indent_level(a:context, h_lnum) + 3
-    endif
   endif
   return heading
 endfunction
