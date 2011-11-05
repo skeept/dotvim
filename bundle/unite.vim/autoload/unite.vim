@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Oct 2011.
+" Last Modified: 04 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -235,7 +235,7 @@ let s:unite_options = [
       \ '-winwidth=', '-winheight=',
       \ '-immediately', '-auto-preview', '-complete',
       \ '-vertical', '-horizontal', '-direction=', '-no-split',
-      \ '-verbose', '-auto-resize', '-toggle',
+      \ '-verbose', '-auto-resize', '-toggle', '-quick-match'
       \]
 "}}}
 
@@ -593,12 +593,9 @@ function! unite#redraw_candidates() "{{{
   setlocal modifiable
 
   let lines = s:convert_lines(candidates)
+  let pos = getpos('.')
   if len(lines) < len(unite#get_current_unite().candidates)
-    let pos = getpos('.')
     silent! execute (unite#get_current_unite().prompt_linenr+1).',$delete _'
-    if pos != getpos('.')
-      call setpos('.', pos)
-    endif
   endif
   call setline(unite#get_current_unite().prompt_linenr+1, lines)
 
@@ -607,13 +604,15 @@ function! unite#redraw_candidates() "{{{
   let unite = unite#get_current_unite()
   let unite.candidates = candidates
 
-  if unite.context.auto_resize
-        \ && unite.prompt_linenr + len(candidates)
-        \      < unite.context.winheight
-        \ && winnr('$') != 1
+  if unite.context.auto_resize && winnr('$') != 1
     " Auto resize.
-    execute 'resize' unite.prompt_linenr + len(candidates)
+    let max_len = unite.prompt_linenr + len(candidates)
+    execute 'resize' min([max_len, unite.context.winheight])
     normal! zb
+  endif
+
+  if pos != getpos('.')
+    call setpos('.', pos)
   endif
 endfunction"}}}
 function! unite#get_marked_candidates() "{{{
@@ -865,37 +864,7 @@ function! unite#start(sources, ...)"{{{
   endfor
   call unite#redraw_candidates()
 
-  if unite.context.start_insert
-    let unite.is_insert = 1
-
-    execute unite.prompt_linenr
-    normal! zb
-
-    startinsert!
-  else
-    let positions = unite#get_buffer_name_option(unite.buffer_name, 'unite__save_pos')
-    let key = unite#loaded_source_names_string()
-    let is_restore = unite.context.input == '' &&
-          \ has_key(positions, key)
-    if is_restore
-      " Restore position.
-      call setpos('.', positions[key].pos)
-      normal! zb
-    endif
-    let candidate = has_key(positions, key) ?
-          \ positions[key].candidate : {}
-
-    let unite.is_insert = 0
-
-    if !is_restore ||
-          \ candidate != unite#get_current_candidate(unite.prompt_linenr+1)
-      execute (unite.prompt_linenr+1)
-      normal! zb
-    endif
-    normal! 0
-
-    stopinsert
-  endif
+  call s:init_cursor()
 endfunction"}}}
 function! unite#start_temporary(sources, ...)"{{{
   if &filetype == 'unite'
@@ -1062,34 +1031,7 @@ function! unite#resume(buffer_name, ...)"{{{
 
   let s:current_unite = unite
 
-  if unite.context.start_insert
-    let unite.is_insert = 1
-
-    execute unite.prompt_linenr
-    normal! zb
-
-    startinsert!
-  else
-    let positions = unite#get_buffer_name_option(unite.buffer_name, 'unite__save_pos')
-    let key = unite#loaded_source_names_string()
-    let is_restore = has_key(positions, key)
-    let candidate = unite#get_current_candidate()
-
-    if is_restore
-      " Restore position.
-      call setpos('.', positions[key].pos)
-    endif
-
-    let unite.is_insert = 0
-
-    if !is_restore
-          \ || candidate != unite#get_current_candidate()
-      execute (unite.prompt_linenr+1)
-    endif
-    normal! 0zb
-
-    stopinsert
-  endif
+  call s:init_cursor()
 endfunction"}}}
 function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'input')
@@ -1161,6 +1103,9 @@ function! s:initialize_context(context)"{{{
   endif
   if !has_key(a:context, 'toggle')
     let a:context.toggle = 0
+  endif
+  if !has_key(a:context, 'quick_match')
+    let a:context.quick_match = 0
   endif
   let a:context.is_redraw = 0
   let a:context.is_changed = 0
@@ -2001,6 +1946,10 @@ function! s:redraw(is_force, winnr) "{{{
       call unite#mappings#do_action(context.default_action, [candidates[0]])
     endif
   endif
+
+  if context.auto_preview
+    call s:do_auto_preview()
+  endif
 endfunction"}}}
 
 " Autocmd events.
@@ -2103,24 +2052,7 @@ function! s:on_cursor_moved()  "{{{
         \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
 
   if unite#get_current_unite().context.auto_preview
-    if !unite#get_current_unite().has_preview_window
-          \ && s:has_preview_window()
-      pclose!
-    endif
-
-    call unite#mappings#do_action('preview', [], {}, 0)
-
-    " Restore window size.
-    let context = unite#get_context()
-    if s:has_preview_window()
-      if context.vertical
-        if winwidth(winnr()) != context.winwidth
-          execute 'vertical resize' context.winwidth
-        endif
-      elseif winheight(winnr()) != context.winwidth
-        execute 'resize' context.winheight
-      endif
-    endif
+    call s:do_auto_preview()
   endif
 endfunction"}}}
 function! s:on_buf_unload(bufname)  "{{{
@@ -2305,6 +2237,63 @@ endfunction"}}}
 function! s:has_preview_window()"{{{
   return len(filter(range(1, winnr('$')),
           \    'getwinvar(v:val, "&previewwindow")')) > 0
+endfunction"}}}
+function! s:do_auto_preview()"{{{
+  if !unite#get_current_unite().has_preview_window
+        \ && s:has_preview_window()
+    pclose!
+  endif
+
+  call unite#mappings#do_action('preview', [], {}, 0)
+
+  " Restore window size.
+  let context = unite#get_context()
+  if s:has_preview_window()
+    if context.vertical
+      if winwidth(winnr()) != context.winwidth
+        execute 'vertical resize' context.winwidth
+      endif
+    elseif winheight(winnr()) != context.winwidth
+      execute 'resize' context.winheight
+    endif
+  endif
+endfunction"}}}
+function! s:init_cursor()"{{{
+  let unite = unite#get_current_unite()
+
+  if unite.context.start_insert
+    let unite.is_insert = 1
+
+    execute unite.prompt_linenr
+    normal! zb
+
+    startinsert!
+  else
+    let positions = unite#get_buffer_name_option(
+          \ unite.buffer_name, 'unite__save_pos')
+    let key = unite#loaded_source_names_string()
+    let is_restore = has_key(positions, key)
+    let candidate = unite#get_current_candidate()
+
+    if is_restore
+      " Restore position.
+      call setpos('.', positions[key].pos)
+    endif
+
+    let unite.is_insert = 0
+
+    if !is_restore
+          \ || candidate != unite#get_current_candidate()
+      execute (unite.prompt_linenr+1)
+    endif
+    normal! 0zb
+
+    stopinsert
+  endif
+
+  if unite.context.quick_match
+    call unite#mappings#_quick_match(0)
+  endif
 endfunction"}}}
 "}}}
 

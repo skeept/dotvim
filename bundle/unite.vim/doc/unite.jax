@@ -260,6 +260,10 @@ http://www.ustream.tv/recorded/11240673
 		-toggle
 		同一バッファ名のuniteウインドウが表示されている場合は、閉じる。
 
+						*unite-options-quick-match*
+		-quick-match
+		クイックマッチモードで開始する。
+
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		初期の絞込みテキストが現在のディレクトリである他は|:Unite|と同
 		一である。
@@ -1184,14 +1188,19 @@ file_rec/async	|unite-source-file_rec|と同じだが、候補の取得を完全
 
 						*unite-source-buffer*
 buffer		開いているバッファを候補とする。バッファは使用した順番に整列さ
-		れる。引数1が"!"ならば、|buflisted()|でないバッファも表示する。
+		れる。
+		引数1が"!"ならば、|buflisted()|でないバッファも表示する。
+		引数1が"?"ならば、|buflisted()|でないバッファのみ表示する。
 
 		source引数：
-		1. !
+		1. ! / ?
 
 						*unite-source-buffer_tab*
 buffer_tab	現在のタブで開いたバッファを候補とする。バッファは使用した順番
-		に整列される。
+		に整列される。引数はbuffer sourceと同じである。
+
+		source引数：
+		1. ! / ?
 
 						*unite-source-tab*
 tab		開いているタブを候補とする。t:cwdをカレントディレクトリ、
@@ -1484,6 +1493,9 @@ completion	補完
 
 						*unite-kind-source*
 source		unite.vimのsource
+		この候補を実行すると、現在のuniteバッファで指定したsourceが起動
+		される。unite.vimのバッファを閉じるともとのsourceが復元される。
+		uniteバッファを簡易的なメニューのように使用できる。
 
 			action__source_name	(文字列)	(必須)
 				実行するsourceの名前

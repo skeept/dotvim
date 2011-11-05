@@ -268,6 +268,10 @@ COMMANDS 					*unite-commands*
 		Close unite buffer window if this unite buffer name window is
 		exists.
 
+						*unite-options-quick-match*
+		-quick-match
+		Start with quick match mode.
+
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		Equivalent to |:Unite| except that the initial narrowing text
 		is the current directory.
@@ -680,8 +684,12 @@ Normal mode mappings.
 
 <Plug>(unite_quick_match_default_action)	*<Plug>(unite_quick_match_default_action)*
 		Runs the default action of the selected candidate with using
-		quick match.   This doesn't work when there are marked
+		quick match. This doesn't work when there are marked
 		candidates.
+
+<Plug>(unite_quick_match_choose_action)		*<Plug>(unite_quick_match_choose_action)*
+		Chooses action of the selected candidate with using quick
+		match. This doesn't work when there are marked candidates.
 
 <Plug>(unite_input_directory)			*<Plug>(unite_input_directory)*
 		Narrows with inputting directory name.
@@ -769,6 +777,9 @@ Insert mode mappings.
 
 <Plug>(unite_quick_match_default_action)	*i_<Plug>(unite_quick_match_default_action)*
 		Same to |<Plug>(unite_quick_match_default_action)|.
+
+<Plug>(unite_quick_match_choose_action)		*i_<Plug>(unite_quick_match_choose_action)*
+		Same to |<Plug>(unite_quick_match_choose_action)|.
 
 <Plug>(unite_input_directory)			*i_<Plug>(unite_input_directory)*
 		Same to |<Plug>(unite_input_directory)|.
@@ -1164,14 +1175,20 @@ file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
 						*unite-source-buffer*
 buffer		Nominates opened buffers as candidates, ordering by time
 		series.
-		If argument 1 is "!", displays non-listed buffer.
+		If argument 1 is "!", displays both listed and non-listed
+		buffer.
+		If argument 1 is "?", displays non-listed buffer.
 
 		Source arguments:
-		1. bang.
+		1. "!" or "?".
 
 						*unite-source-buffer_tab*
 buffer_tab	Nominates opened buffers only in the current tab as
 		candidates, ordering by time series.
+		Arguments specification is same to buffer source.
+
+		Source arguments:
+		1. "!" or "?".
 
 						*unite-source-tab*
 tab		Nominates opened tabs as candidates, regarding t:cwd as the
@@ -1443,6 +1460,9 @@ completion	An interface for completion
 
 						*unite-kind-source*
 source		unite.vim source
+		If execute this kind candiate, unite.vim start unite session in
+		current unite buffer. When you close unite buffer, restore
+		sources. So, unite.vim behaves like menu.
 
 			action__source_name	(String)	(Required)
 				The source name
@@ -1998,6 +2018,16 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-11-05
+- Improved buffer source.
+
+2011-11-04
+- Fixed auto_resize and auto_preview behavior.
+- Improved file_rec word.
+- Added <Plug>(unite_quick_match_choose_action) mapping.
+- Added -quick-match option.
+- Improved source kind description.
 
 2011-11-02
 - Improved register and history/yank source.
