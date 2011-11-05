@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Oct 2011.
+" Last Modified: 05 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -498,11 +498,16 @@ function! neocomplcache#enable() "{{{
   set completeopt+=menuone
 
   " For auto complete keymappings.
-  inoremap <silent> <Plug>(neocomplcache_start_auto_complete)          <C-x><C-u><C-p>
+  inoremap <silent> <Plug>(neocomplcache_start_auto_complete)
+        \ <C-x><C-u><C-p>
   inoremap <silent> <Plug>(neocomplcache_start_auto_select_complete)
         \ <C-x><C-u><C-p><C-r>=neocomplcache#popup_post()<CR>
-  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_complete)   unite#sources#neocomplcache#start_complete()
-  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)   unite#sources#snippet#start_complete()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_complete)
+        \ unite#sources#neocomplcache#start_complete()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_quick_match)
+        \ unite#sources#neocomplcache#start_quick_match()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)
+        \ unite#sources#snippet#start_complete()
 
   " Disable bell.
   set vb t_vb=
@@ -1317,6 +1322,7 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
   let words = []
   let icase = g:neocomplcache_enable_ignore_case &&
         \!(g:neocomplcache_enable_smart_case && a:cur_keyword_str =~ '\u')
+        \ && !neocomplcache#is_text_mode()
   for keyword in complete_words
     if has_key(keyword, 'kind') && keyword.kind == ''
       " Remove kind key.
