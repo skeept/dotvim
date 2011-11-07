@@ -298,6 +298,16 @@ A command of source				*:unite-sources-command*
 		parameter, the current position of the current file will be
 		stored.
 
+:UniteSessionSave [{session-name}]		*:UniteSessionSave*
+		Save session data in {session-name}.
+		If {session-name} is omitted, use |v:this_session| or
+		|g:unite_source_session_default_session_name| is used.
+
+:UniteSessionLoad [{session-name}]		*:UniteSessionLoad*
+		Save session data from {session-name}.
+		If {session-name} is omitted, use |v:this_session| or
+		|g:unite_source_session_default_session_name| is used.
+
 ------------------------------------------------------------------------------
 VARIABLES 					*unite-variables*
 
@@ -574,6 +584,22 @@ g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
 		The maximum number of |unite-source-history/yank| to save.
 		
 		Default value is 100.
+
+g:unite_source_session_default_session_name	*g:unite_source_session_default_session_name*
+		Default session name.
+		
+		Default value is "default".
+
+g:unite_source_session_path			*g:unite_source_session_path*
+		Save session path.
+		
+		Default value is |g:unite_data_directory|; '/session'.
+
+g:unite_source_session_options			*g:unite_source_session_options*
+		Use options when execute |:mksession|.
+		Refer to 'sessionoptions'.
+		
+		Default value is "blank,buffers,curdir,folds,help,tabpages,winsize".
 
 KINDS VARIABLES					*unite-kinds-variables*
 
@@ -1336,6 +1362,9 @@ process		Nominates processes.
 		Note: This source is required "ps" command or "tasklist"
 		command(in Windows).
 
+						*unite-source-session*
+session		Nominates sessions.
+
 ==============================================================================
 KINDS						*unite-kinds*
 
@@ -1550,7 +1579,7 @@ ACTIONS						*unite-actions*
 
 Actions of each kinds
 
-common					*unite-action-common*
+common						*unite-action-common*
 Defines the common interface for all kinds.  This uses condidate.word
 internally.
 	nop		Do nothing
@@ -1573,7 +1602,7 @@ to define open action.
 	persist_open	Open the file in alternate window. Don't close unite
 			window.
 
-cdable					*unite-action-cdable*
+cdable						*unite-action-cdable*
 Defines an interface for files you can move to with cd command.
 	cd		Change the current directory.
 	lcd		Change the current directory of the current window.
@@ -1673,8 +1702,14 @@ register					*unite-action-register*
 	delete		Clear registers
 
 process						*unite-action-process*
-	sigterm		Send SIGTERM to the process
+	sigterm		Send SIGTERM to the process(default)
 	sigkill		Send SIGKILL to the process
+
+session						*unite-action-session*
+	load		Load session(default)
+	delete		Delete sessions
+	open		Open session files
+	rename		Rename session name
 
 						*unite-default-action*
 Default actions
@@ -2009,6 +2044,10 @@ EXAMPLES					*unite-examples*
 	" For optimize.
 	let g:unite_source_file_mru_filename_format = ''
 	
+	" For unite-session.
+	" Save session automatically.
+	"autocmd VimLeavePre,CursorHold * if v:this_session != '' | UniteSessionSave | endif
+	
 <
 ==============================================================================
 USER DEFINED SOURCES				*unite-user-sources*
@@ -2018,6 +2057,13 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-11-07
+- Added session source.
+- Fixed alias table syntax sugar.
+- Added g:unite_source_session_options variable.
+- Added :UniteSessionLoad command.
+- Improved unite session behavior.
 
 2011-11-05
 - Improved buffer source.
