@@ -297,6 +297,16 @@ sourceのコマンド				*unite-sources-commands*
 		ブックマークリストにファイルを追加する。引数が指定されなかった
 		場合、現在のファイルの現在位置が記録される。
 
+:UniteSessionSave [{session-name}]		*:UniteSessionSave*
+		{session-name}にセッションデータを保存する。
+		もし{session-name}が省略された場合、|v:this_session|か
+		|g:unite_source_session_default_session_name|を使用する。
+
+:UniteSessionLoad [{session-name}]		*:UniteSessionLoad*
+		{session-name}からセッションデータを読み出す。
+		もし{session-name}が省略された場合、|v:this_session|か
+		|g:unite_source_session_default_session_name|を使用する。
+
 ------------------------------------------------------------------------------
 変数						*unite-variables*
 
@@ -575,6 +585,22 @@ g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
 		する。
 		
 		初期値は100である。
+
+g:unite_source_session_default_session_name	*g:unite_source_session_default_session_name*
+		デフォルトで使用されるセッション名。
+		
+		初期値は"default"である。
+
+g:unite_source_session_path			*g:unite_source_session_path*
+		セッションを保存する基準となるパス。
+		
+		初期値は|g:unite_data_directory|. '/session'である。
+
+g:unite_source_session_options			*g:unite_source_session_options*
+		内部で|:mksession|を実行するときに保存するオプション。
+		設定できる値は'sessionoptions'を参照せよ。
+		
+		Default value is "blank,buffers,curdir,folds,help,tabpages,winsize".
 
 kindの変数					*unite-kinds-variables*
 
@@ -1355,6 +1381,9 @@ history/yank	ヤンクされたテキストの履歴を候補とする。
 process		プロセスリストを候補とする。
 		Note: このsourceには"ps"外部コマンドが必要である。
 
+						*unite-source-session*
+session		セッションリストを候補とする。
+
 ==============================================================================
 kind						*unite-kinds*
 
@@ -1769,8 +1798,14 @@ register					*unite-action-register*
 	delete		レジスタの中身を空にする
 
 process						*unite-action-process*
-	sigterm		プロセスにSIGTERMを送る
+	sigterm		プロセスにSIGTERMを送る(デフォルト)
 	sigkill		プロセスにSIGKILLを送る
+
+session					*unite-action-session*
+	load		セッションを読み込む(デフォルト)
+	delete		セッションを削除する
+	open		セッションを編集する
+	rename		セッション名を変更する
 
 						*unite-default-action*
 デフォルトアクション
@@ -2313,6 +2348,10 @@ description		文字列		(任意)
 	
 	" For optimize.
 	let g:unite_source_file_mru_filename_format = ''
+	
+	" For unite-session.
+	" Save session automatically.
+	"autocmd VimLeavePre,CursorHold * if v:this_session != '' | UniteSessionSave | endif
 	
 <
 ==============================================================================
