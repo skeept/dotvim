@@ -52,9 +52,9 @@ cal s:opts()
 let s:lash = ctrlp#utils#lash()
 
 " Global options
-let s:glbs = { 'magic': '1', 'to': '1', 'tm': '0', 'sb': '1', 'hls': '0',
-	\ 'im': '0', 'report': '9999', 'sc': '0', 'ss': '0', 'siso': '0',
-	\ 'mfd': '200', 'gcr': 'a:block-PmenuSel-blinkon0', 'mouse': 'n' }
+let s:glbs = { 'magic': 1, 'to': 1, 'tm': 0, 'sb': 1, 'hls': 0,
+	\ 'im': 0, 'report': 9999, 'sc': 0, 'ss': 0, 'siso': 0,
+	\ 'mfd': 200, 'gcr': 'a:block-PmenuSel-blinkon0', 'mouse': 'n' }
 
 " Limiters
 let [s:compare_lim, s:nocache_lim, s:mltipats_lim] = [3000, 4000, 2000]
@@ -1108,6 +1108,8 @@ endf
 fu! s:openfile(cmd)
 	try
 		exe a:cmd
+	cat /^Vim\%((\a\+)\)\=:E37/
+		exe substitute(a:cmd, '^e ', 'new ', '')
 	cat
 		echoh Identifier
 		echon "CtrlP: Operation can't be completed. Make sure filename is valid."
