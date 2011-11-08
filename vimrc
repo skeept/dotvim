@@ -560,4 +560,6 @@ autocmd FileType python setlocal completefunc=pysmell#Complete
 
 "mapping for running python code
 nmap <F9> :SingleCompileRun<cr>
+nmap <tab> <c-w>
+nmap <tab><tab> <c-w><c-w>
 
