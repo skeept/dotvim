@@ -315,3 +315,7 @@ exec "source" . g:p0 . "/plugin/scratch.vim"
 "some tests/tries
 nmap <tab> <c-w>
 nmap <tab><tab> <c-w><c-w>
+
+"attemp to fix backspace
+imap  
+nmap  
