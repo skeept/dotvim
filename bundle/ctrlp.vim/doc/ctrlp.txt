@@ -1,4 +1,4 @@
-*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.8
+*ctrlp.txt*       Full path fuzzy file, buffer and MRU file finder. v1.5.9
 *CtrlP* *ControlP* *'ctrlp'* *'ctrl-p'*
 ===============================================================================
 #                                                                             #
@@ -264,6 +264,18 @@ If bigger than 1, it’ll be used as the maximum number of windows to create whe
 opening the files (the rest will be hidden buffers). If is 1, <c-o> will open
 all files, each in a vertical split.
 
+                                                         *'g:ctrlp_dont_split'*
+When opening a file with <cr>, |CtrlP| avoids opening it in windows created by
+plugins. Use this to setup some exceptions: >
+  let g:ctrlp_dont_split = ''
+<
+Acceptable values are partial names or filetypes of the special buffers.
+Use |regexp| to specify the pattern.
+Example: >
+  let g:ctrlp_dont_split = 'netrw\|myplugin'
+<
+
+
 ===============================================================================
 3. Commands                                                    *ctrlp-commands*
 
@@ -494,11 +506,18 @@ Mercurial repository: https://bitbucket.org/kien/ctrlp.vim
 ===============================================================================
 THANKS                                                           *ctrlp-thanks*
 
-Thanks to everyone that has submitted ideas, bug reports, helped debugging or
-came up with solutions on gibhub, bitbucket, and through email.
+Thanks to everyone that has submitted ideas, bug reports or helped debugging on
+gibhub, bitbucket, and through email.
+
+Special thanks:
+
+    * Woojong Koh <github.com/wjkoh>
+        Forked and suggested the support for VCS listing commands.
 
 ===============================================================================
 CHANGELOG                                                     *ctrlp-changelog*
+
+    + New option: |g:ctrlp_dont_split|
 
 Before 2011/10/30
 
