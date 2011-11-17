@@ -1,4 +1,4 @@
-let g:pymode_version = "0.4.2"
+let g:pymode_version = "0.4.4"
 
 command! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
 
@@ -18,13 +18,15 @@ if !has('python')
     let g:pymode_virtualenv = 0
 endif
 
+" DESC: Fix python path
 if !pymode#Default('g:pymode_path', 1) || g:pymode_path
 python << EOF
-import sys, os, vim
+import sys, vim
+from os import path as op
 
-sys.path.insert(0,
-    os.path.join(os.path.dirname(os.path.dirname(
-                vim.eval("expand('<sfile>:p')"))), 'pylibs'))
+sys.path = [
+    op.join(op.dirname(op.dirname(vim.eval("expand('<sfile>:p')"))),
+    'pylibs'), vim.eval("getcwd()") ] + sys.path
 EOF
 endif
 
@@ -111,28 +113,37 @@ def pylint():
 def pyflakes():
     filename = vim.current.buffer.name
     codeString = file(filename, 'U').read() + '\n'
+    qf = []
     try:
         tree = compile(codeString, filename, "exec", _ast.PyCF_ONLY_AST)
+
     except SyntaxError, value:
         msg = value.args[0]
-        if text is None:
+        if codeString is None:
             vim.command('echoerr "%s: problem decoding source"' % filename)
         else:
             lineno, _, text = value.lineno, value.offset, value.text
-            line = text.splitlines()[-1]
-            vim.command('echoerr "%s:%d: %s"' % (filename, lineno, msg))
-            vim.command('echoerr "%s"' % line)
+            qf.append(dict(
+                filename = filename,
+                bufnr = vim.current.buffer.number,
+                lnum = str(lineno),
+                text = msg,
+                type = 'E'
+            ))
+
     else:
         w = checker.Checker(tree, filename)
         w.messages.sort(lambda a, b: cmp(a.lineno, b.lineno))
-        qf = [dict(
-            filename = filename,
-            bufnr = vim.current.buffer.number,
-            lnum = str(w.lineno),
-            text = w.message % w.message_args,
-            type = 'E'
-        ) for w in w.messages]
-        vim.command('let b:qf_list = %s' % repr(qf))
+        for w in w.messages:
+            qf.append(dict(
+                filename = filename,
+                bufnr = vim.current.buffer.number,
+                lnum = str(w.lineno),
+                text = w.message % w.message_args,
+                type = 'E'
+            ))
+
+    vim.command('let b:qf_list = %s' % repr(qf))
 EOF
 endif
 

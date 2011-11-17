@@ -1102,6 +1102,24 @@ CHANGELOG						*neocomplcache-changelog*
 ------------------------------------------------------------------------------
 ChangeLog neocomplcache 6.2:
 
+2011-11-16
+- Improved unite#sources#snippet#start_complete()
+
+2011-11-14
+- Improved async from tags.
+
+2011-11-13
+- Fixed autocmd args error.
+
+2011-11-11
+- Use vital.vim cache module.
+
+2011-11-08
+- Fixed g:neocomplcache_text_mode_filetypes default value.
+
+2011-11-07
+- Added vim snippet.
+
 2011-11-06
 - Fixed unite source.
 
