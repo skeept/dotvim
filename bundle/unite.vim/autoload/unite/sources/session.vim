@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: session.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Nov 2011.
+" Last Modified: 10 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -118,8 +118,10 @@ function! unite#sources#session#_load(filename)"{{{
     doautoall TabEnter
     doautoall SessionLoadPost
   endtry
-  setlocal nomodified
-  " execute 'silent! source' filename
+
+  for bufnr in range(1, bufnr('$'))
+    call setbufvar(bufnr, '&modified', 0)
+  endfor
 
   for tabnr in range(1, tabpagenr('$'))
     if v:version >= 703 && type(gettabvar(tabnr, 'unite_buffer_session')) == type([])
@@ -155,7 +157,7 @@ function! s:source.gather_candidates(args, context)"{{{
   let sessions = split(glob(g:unite_source_session_path.'/*'), '\n')
 
   let candidates = map(copy(sessions), "{
-        \ 'word' : fnamemodify(v:val, ':t:r'),
+        \ 'word' : fnamemodify(v:val, ':t'),
         \ 'kind' : 'file',
         \ 'action__path' : v:val,
         \ 'action__directory' : unite#util#path2directory(v:val),

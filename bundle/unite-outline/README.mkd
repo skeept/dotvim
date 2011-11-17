@@ -2,7 +2,7 @@
 
 ## Introduction
 
-unite-outline is a [unite.vim](http://github.com/Shougo/unite.vim)'s source
+unite-outline is a [unite.vim](https://github.com/Shougo/unite.vim)'s source
 which provides your Vim's buffer with the outline view. It parses the current
 buffer's content and extracts headings from the buffer. And then it shows the
 list of the headings using unite.vim's interface. When you select a heading
@@ -15,7 +15,7 @@ create new ones for unsupported filetypes.
 ## Install
 
 Install the distributed files into your Vim script directory which is usually
-~/.vim/, or $HOME/vimfiles on Windows.
+$HOME/.vim, or $HOME/vimfiles on Windows.
 
 You can show the heading list of the current buffer with ":Unite outline"
 command if you succeeded the installation (and unite-outline supports the
@@ -37,5 +37,5 @@ See :help unite-outline for more details.
 
 ## Screenshots
 
-See [unite-outline's wiki](http://github.com/h1mesuke/unite-outline/wiki).
+See [unite-outline's wiki](https://github.com/h1mesuke/unite-outline/wiki).
 

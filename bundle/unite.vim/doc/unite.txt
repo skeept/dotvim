@@ -272,6 +272,10 @@ COMMANDS 					*unite-commands*
 		-quick-match
 		Start with quick match mode.
 
+						*unite-options-create*
+		-create
+		Create new unite buffer.
+
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		Equivalent to |:Unite| except that the initial narrowing text
 		is the current directory.
@@ -1300,6 +1304,9 @@ find		Nominates "find" command output as candidates.
 
 		Note: This source requires vimproc.  Please install.
 		http://github.com/Shougo/vimproc/tree/master
+		
+		Note: Windows "find" command is not supported.
+		Please install UNIX Tools find for Windows.
 
 		Source arguments:
 		1. the target directory.
@@ -2065,6 +2072,25 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-11-17
+- Fixed file_mru filter.
+- Improved s:convert2dictionary().
+
+2011-11-16
+- Fixed find source.
+- Fixed grep source.
+
+2011-11-15
+- Added -create option.
+- Improved buffer name behavior.
+
+2011-11-11
+- Fixed :VimShellPop bug.
+
+2011-11-10
+- Improved file operations.
+- Improved session load.
 
 2011-11-08
 - Added g:unite_source_session_enable_auto_save.

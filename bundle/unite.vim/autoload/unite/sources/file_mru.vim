@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Nov 2011.
+" Last Modified: 17 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -67,7 +67,7 @@ function! unite#sources#file_mru#_append()"{{{
   let save_ignorecase = &ignorecase
   let &ignorecase = unite#is_win()
 
-  call insert(filter(s:mru_files, 'v:val.action__path != path'),
+  call insert(filter(s:mru_files, 'v:val.action__path !=# path'),
   \           s:convert2dictionary([path, localtime()]))
 
   let &ignorecase = save_ignorecase
@@ -164,13 +164,12 @@ function! s:is_exists_path(path)  "{{{
   return getftype(a:path) != ''
 endfunction"}}}
 function! s:convert2dictionary(list)  "{{{
-  let path = unite#util#substitute_path_separator(a:list[0])
   return {
-        \ 'word' : path,
-        \ 'kind' : (isdirectory(path) ? 'directory' : 'file'),
+        \ 'word' : a:list[0],
+        \ 'kind' : (isdirectory(a:list[0]) ? 'directory' : 'file'),
         \ 'source__time' : a:list[1],
-        \ 'action__path' : path,
-        \ 'action__directory' : unite#util#path2directory(path),
+        \ 'action__path' : a:list[0],
+        \ 'action__directory' : unite#util#path2directory(a:list[0]),
         \   }
 endfunction"}}}
 function! s:convert2list(dict)  "{{{

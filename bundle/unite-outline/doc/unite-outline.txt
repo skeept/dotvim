@@ -1,8 +1,8 @@
 *unite-outline.txt*	outline source for unite.vim
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-11-02
-Version : 0.5.0
+Updated : 2011-11-08
+Version : 0.5.1
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -39,7 +39,7 @@ CONTENTS					*unite-outline-contents*
 	Functions		|unite-outline-functions|
 	  Utility Functions	  |unite-outline-utility-functions|
 	ToDo			|unite-outline-todo|
-	Bugs			|unite-outline-bugs|
+	Known Issues		|unite-outline-known-issues|
 	ChanheLog		|unite-outline-changelog|
 
 ==============================================================================
@@ -59,7 +59,7 @@ INTRODUCTION					*unite-outline-introduction*
 INSTALL						*unite-outline-install*
 
 	Install the distributed files into your Vim script directory which is
-	usually ~/.vim/, or $HOME/vimfiles on Windows.
+	usually $HOME/.vim, or $HOME/vimfiles on Windows.
 
 	You can show the heading list of the current buffer with ":Unite
 	outline" command if you succeeded the installation (and unite-outline
@@ -643,54 +643,6 @@ heading_groups		Dictionary (Optional)
 	  \   'macro'    : ['macro'],
 	  \ },
 	  \}
-<				 *unite-outline-info-need_blank_between()*
-need_blank_between	Funcref (Optional)
-
-	need_blank_between( {cand-1}, {cand-2}, {memo})
-
-	If defined, called for each headings with its next sibling during the
-	formatting process of the headings.
-	If returns True, a blank line is inserted between {cand-1} and
-	{cand-2}.
-
-	By defining this callback function, you can implement your original
-	formatter of heading lists. Even if the built-in formatter doesn't
-	works expectedly, you can replace it with your implementation.
-
-	NOTE: {cand-1}, {cand-2} are not Heading objects. They are unite.vim's
-	Candidate objects created from Heading objects. So, their attribute
-	names are different from Headings'. See |unite-notation-{candidate}|.
-	    
-	    	ATTRIBUTE NAME MAPPING TABLE~
-
-		Heading		Unite's Candidate
-		--------	----------------------
-		id		source__heading_id
-		word		abbr
-		level		source__heading_level
-		type		source__heading_type
-		group		source__heading_group
-
-	{memo} is a Dictionary for memoization. The Dictionary passed to
-	{memo} is the same instance during the formatting process. If you need
-	to calculate something about a heading, you can skip the second
-	calculation for the heading by using the last result saved to {memo}.
-
-	NOTE: Memoization is a very effective strategy here because most of
-	headings are passed to this function twice. The first time as {cand-2}
-	and the second time as {cand-1}.
-
-	Example (for Python): >
-	function! s:outline_info.need_blank_between(cand1, cand2, memo)
-	  if a:cand1.source__heading_group == 'function' &&
-	   \ a:cand2.source__heading_group == 'function'
-	    " Don't insert a blank between two sibling functions.
-	    return 0
-	  else
-	    return (a:cand1.source__heading_group != a:cand2.source__heading_group ||
-	          \ a:cand1.source__has_marked_child || a:cand2.source__has_marked_child)
-	  endif
-	endfunction
 <
 NARROWING ~
 
@@ -889,11 +841,10 @@ Util.neighbor_matchstr( {context}, {lnum}, {pattern} [, {range} [, {exclusive}]]
 ==============================================================================
 TODO						*unite-outline-todo*
 
-	* hlsearch on narrowing
-
-	* Improve JavaScript's outline info.
-
 	* Add outline infos for D, Erlang, Go, Haskell, etc...
+
+	* Issues - h1mesuke/unite-outline - GitHub
+	  https://github.com/h1mesuke/unite-outline/issues
 
 ------------------------------------------------------------------------------
 MESSAGE FROM THE AUTHOR
@@ -910,13 +861,13 @@ MESSAGE FROM THE AUTHOR
 	the default outline info of the filetype.
 
 	* Issues - h1mesuke/unite-outline - GitHub
-	  http://github.com/h1mesuke/unite-outline/issues
+	  https://github.com/h1mesuke/unite-outline/issues
 	
 	* Send a pull request - GitHub
-	  http://github.com/h1mesuke/unite-outline/pull/new/master
+	  https://github.com/h1mesuke/unite-outline/pull/new/master
 
 ==============================================================================
-BUGS						*unite-outline-bugs*
+KNOWN ISSUES					*unite-outline-known-issues*
 
 INCORRECT STRUCTURED TREE ~
 
@@ -938,29 +889,29 @@ CHANHELOG					*unite-outline-changelog*
 0.5.1	2011-11-01
 
 	* Changed unite#sources#outline#get_outline_info()'s interface.
-	  - And supported filetype redirection.
+	- And supported filetype redirection.
 				|unite#sources#outline#get_outline_info()|
 
 	* Deleted unite#sources#outline#get_default_outline_info()
 
 	* Added a new hook.
-	  - initialize			|unite-outline-info-initialize|
+	- initialize			|unite-outline-info-initialize|
 
 	* Changed hook names.
-	  - initialize -> before	|unite-outline-info-before|
-	  - finalize   -> after		|unite-outline-info-after|
+	- initialize -> before		|unite-outline-info-before|
+	- finalize   -> after		|unite-outline-info-after|
 
 	* Refactoring the internal data management.
 
 	* Improved the speed of tree-aware matching.
-	  - No recursive calls. The matcher does its task iteratively.
+	- No recursive calls. The matcher does its task iteratively.
 
 0.5.0	2011-9-06
 
 	* Implemented the auto-update feature and added the following
 	  filetype specific options.
-	  - auto_update	 |unite-outline-filetype-option-auto-update|
-	  - auto_update_event
+	- auto_update	 |unite-outline-filetype-option-auto-update|
+	- auto_update_event
 
 0.3.8	2011-08-25
 
@@ -974,7 +925,7 @@ CHANHELOG					*unite-outline-changelog*
 	  into this new variable as one filetype option.
 
 	* Deprecated the following keymappings.
-	  - <Plug>(unite_outline_loop_cursor_down)
-	  - <Plug>(unite_outline_loop_cursor_up)
+	- <Plug>(unite_outline_loop_cursor_down)
+	- <Plug>(unite_outline_loop_cursor_up)
 
 vim:tw=78:ts=8:ft=help:norl:noet:ai
