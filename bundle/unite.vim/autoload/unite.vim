@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Nov 2011.
+" Last Modified: 21 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 3.0, for Vim 7.2
+" Version: 3.1, for Vim 7.2
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -1135,7 +1135,7 @@ function! unite#force_quit_session()  "{{{
 
   let context = unite#get_context()
   if context.temporary
-    call s:resume_from_temporary(context)
+    call unite#resume_from_temporary(context)
   endif
 endfunction"}}}
 function! unite#quit_session()  "{{{
@@ -1143,7 +1143,7 @@ function! unite#quit_session()  "{{{
 
   let context = unite#get_context()
   if context.temporary
-    call s:resume_from_temporary(context)
+    call unite#resume_from_temporary(context)
   endif
 endfunction"}}}
 function! s:quit_session(is_force)  "{{{
@@ -1207,7 +1207,7 @@ function! s:quit_session(is_force)  "{{{
     redraw!
   endif
 endfunction"}}}
-function! s:resume_from_temporary(context)  "{{{
+function! unite#resume_from_temporary(context)  "{{{
   if empty(a:context.old_buffer_info)
     return
   endif
