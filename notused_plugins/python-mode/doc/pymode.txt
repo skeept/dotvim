@@ -1,4 +1,4 @@
-*pymode.txt*    Python-mode for vim!
+*pymode.txt*  *python-mode.txt*  Python-mode for vim!
 
 ==============================================================================
 CONTENTS                                                  *Python-mode-contents*
@@ -8,8 +8,9 @@ CONTENTS                                                  *Python-mode-contents*
         2.1.Customisation details.............|PythonModeOptionsDetails|
     3.Default Keys............................|PythonModeKeys|
     4.Commands................................|PythonModeCommands|
-    5.Credits.................................|PythonModeCredits|
-    6.License.................................|PythonModeLicense|
+    5.FAQ.....................................|PythonModeFAQ|
+    6.Credits.................................|PythonModeCredits|
+    7.License.................................|PythonModeLicense|
 
 ==============================================================================
 1. Intro ~
@@ -46,6 +47,8 @@ PythonMode. These options should be set in your vimrc.
 
 |'pymode_lint'|                     Turns off pylint script
 
+|'pymode_lint_checker'|             Switch code checkers (pylint, pyflakes)
+
 |'pymode_lint_config'|              Filepath to pylinc configuration
 
 |'pymode_lint_write'|               Check code every save
@@ -71,6 +74,15 @@ PythonMode. These options should be set in your vimrc.
 |'pymode_virtualenv'|               Turns off virtualenv
 
 |'pymode_utils_whitespaces'|        Remove unused whitespaces
+
+|'pymode_options_indent'|           Set default pymode options for
+                                  python indentation
+
+|'pymode_options_fold'|             Set default pymode options for
+                                  python folding
+
+|'pymode_options_other'|            Set default pymode options for
+                                  python codding
 
 
         Note:
@@ -124,12 +136,19 @@ Default: 1.
 If this option is set to 0 then pylint script is disabled.
 
 ------------------------------------------------------------------------------
+                                                         *'pymode_lint_checker'*
+Values: "pylint" or "pyflakes"
+Default: "pylint".
+
+This option set code checker.
+
+------------------------------------------------------------------------------
                                                           *'pymode_lint_config'*
 Values: 'Path to pylint configuration file'
 Default: "$HOME/.pylintrc"
 
 If this option is set path to pylint configuration. If configuration not found
-use file '.pylintrc' from pymode plugin directory.
+uses file 'pylintrc' from python-mode sources.
 
 ------------------------------------------------------------------------------
                                                            *'pymode_lint_write'*
@@ -214,6 +233,49 @@ Default: 1.
 
 Autoremove unused whitespaces
 
+------------------------------------------------------------------------------
+                                                       *'pymode_options_indent'*
+Values: 0 or 1.
+Default: 1.
+
+If this option is set to 1, pymode enable next options for python buffers: >
+
+    setlocal cinwords=if,elif,else,for,while,try,except,finally,def,class
+    setlocal cindent
+    setlocal tabstop=4
+    setlocal softtabstop=4
+    setlocal shiftwidth=4
+    setlocal shiftround
+    setlocal smartindent
+    setlocal smarttab
+    setlocal expandtab
+    setlocal autoindent
+<
+------------------------------------------------------------------------------
+                                                         *'pymode_options_fold'*
+Values: 0 or 1.
+Default: 1.
+
+If this option is set to 1, pymode enable next options for python buffers: >
+
+    setlocal foldlevelstart=99
+    setlocal foldlevel=99
+    setlocal foldmethod=indent
+<
+------------------------------------------------------------------------------
+                                                        *'pymode_options_other'*
+Values: 0 or 1.
+Default: 1.
+
+If this option is set to 1, pymode enable next options for python buffers: >
+
+    setlocal complete+=t
+    setlocal formatoptions-=t
+    setlocal number
+    setlocal nowrap
+    setlocal textwidth=80
+<
+
 
 ==============================================================================
 3. Default Keys ~
@@ -252,7 +314,38 @@ C-Space           Rope code assist
 
 
 ==============================================================================
-5. Credits ~
+5. FAQ ~
+                                                                 *PythonModeFAQ*
+
+Rope completion is very slow
+----------------------------
+
+To work rope_ creates a service directory: `.ropeproject`.
+If |'pymode_rope_guess_project'| set on (by default) and `.ropeproject` in current dir not found, rope scan `.ropeproject` on every dir in parent path.
+If rope finded `.ropeproject` in parent dirs, rope set project for all child dir and scan may be slow for many dirs and files.
+
+Solutions:
+
+- Disable |'pymode_rope_guess_project'| to make rope always create `.ropeproject` in current dir.
+- Delete `.ropeproject` from dip parent dir to make rope create `.ropeproject` in current dir.
+- Press `<C-x>po` or `:RopeOpenProject` to make force rope create `.ropeproject` in current dir.
+
+
+
+Pylint check is very slow
+-------------------------
+
+In some projects pylint_ may check slowly, because it also scan imported modules if posible.
+Try use pyflakes, see |'pymode_lint_checker'|.
+
+You may set |exrc| and |secure| in your |vimrc| for auto set custom settings from `.vimrc` from your projects directories.
+>
+    Example: On Flask projects I automaticly set 'g:pymode_lint_checker = "pyflakes"', on django 'g:pymode_lint_cheker = "pylint"'
+<
+
+
+==============================================================================
+6. Credits ~
                                                              *PythonModeCredits* 
     Kirill Klenov
         http://klen.github.com/
@@ -266,9 +359,13 @@ C-Space           Rope code assist
         Copyright (C) 2003-2011 LOGILAB S.A. (Paris, FRANCE).
         http://www.logilab.fr/
 
+    Pyflakes:
+        Copyright (c) 2005 Divmod, Inc.
+        http://www.divmod.com/
+
 
 ==============================================================================
-6. License ~
+7. License ~
                                                              *PythonModeLicense*
 
 The Python-mode is released under the GNU lesser general public license.

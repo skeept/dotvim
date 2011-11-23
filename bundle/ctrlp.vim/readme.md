@@ -5,18 +5,21 @@ Full path fuzzy __file__, __buffer__ and __MRU__ file finder for Vim.
 * Full support for Vim’s regexp as search pattern.
 * Built-in Most Recently Used (MRU) files monitoring.
 * Built-in project’s root finder.
+* Open Multiple Files.
+* [Extensible][3].
 
 ![ctrlp][1]
 
 ## Basic Usage
-* Press `<c-p>` or run `:CtrlP` to invoke CtrlP.
+* Press `<c-p>` or run `:CtrlP` to invoke CtrlP in find file mode.
+* Or use `:CtrlPBuffer` and `:CtrlPMRU` for buffer and MRU mode.
 
 Once CtrlP is open:
 
 * Press `<c-f>` and `<c-b>` to switch between find file, buffer, and MRU file modes.
 * Press `<c-d>` to switch to filename only search instead of full path.
 * Use `*` or `|` in the prompt to submit the string as a Vim’s regexp pattern.
-* Or press `<c-r>` to switch to full regexp search mode.
+* Or press `<c-r>` to switch to regexp mode.
 * End the input string with a colon `:` followed by a command to execute after opening the file.  
 e.g. `abc:45` will open the file matched the pattern and jump to line 45.
 * Submit two dots `..` as the input string to go backward the directory tree by 1 level.
@@ -33,7 +36,7 @@ e.g. `abc:45` will open the file matched the pattern and jump to line 45.
 * When CtrlP is invoked, it automatically sets the working directory according to this variable:
 
     ```vim
-    let g:ctrlp_working_path_mode = 1
+    let g:ctrlp_working_path_mode = 2
     ```
 
     0 - don’t manage working directory.  
@@ -47,22 +50,8 @@ e.g. `abc:45` will open the file matched the pattern and jump to line 45.
         root.dir
         .vimprojects
 
-* You can also use the set-working-directory functionality above outside of CtrlP
-by adding the following line to your vimrc.  
-The parameter is the same (0, 1 or 2):
-
-    ```vim
-    au BufEnter * cal ctrlp#SetWorkingPath(2)
-    ```
-
-* Enable/Disable Most Recently Used files monitoring and its functionalities:
-
-    ```vim
-    let g:ctrlp_mru_files = 1
-    ```
-
 * If you want to exclude directories or files from the search, you can use the Vim’s option `wildignore`.  
-e.g. Just have something like this in your vimrc:
+Examples:
 
     ```vim
     set wildignore+=*/.git/*,*/.hg/*,*/.svn/*   " for Linux/MacOSX
@@ -80,3 +69,4 @@ _Check [the docs][2] for more mappings, commands and options._
 
 [1]: http://i.imgur.com/3rtLt.png
 [2]: https://github.com/kien/ctrlp.vim/blob/master/doc/ctrlp.txt
+[3]: https://github.com/kien/ctrlp.vim/tree/extensions

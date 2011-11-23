@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Oct 2011.
+" Last Modified: 20 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -49,15 +49,13 @@ let s:source_rec = {
       \ }
 
 function! s:source_rec.gather_candidates(args, context)"{{{
-  let directory = s:get_path(a:args, a:context)
+  let directory = a:context.source__directory
 
   call unite#print_message('[file_rec] directory: ' . directory)
 
   call s:init_continuation(a:context, directory)
 
   let continuation = s:continuation[directory]
-
-  let a:context.source__directory = directory
 
   if empty(continuation.rest) || continuation.end
     " Disable async.
@@ -81,15 +79,33 @@ function! s:source_rec.async_gather_candidates(args, context)"{{{
     let continuation.end = 1
   endif
 
-  let candidates = map(files, '{
-        \ "word" : v:val, "action__path" : v:val,
-        \ }')
+  let is_relative_path =
+        \ a:context.source__directory ==
+        \   unite#util#substitute_path_separator(getcwd())
+
+  if !is_relative_path
+    let cwd = getcwd()
+    lcd `=a:context.source__directory`
+  endif
+
+  let candidates = map(files, "{
+        \ 'word' : unite#util#substitute_path_separator(
+        \    fnamemodify(v:val, ':.')),
+        \ 'action__path' : v:val,
+        \ }")
+
+  if !is_relative_path
+    lcd `=cwd`
+  endif
 
   let continuation.files += candidates
 
   return candidates
 endfunction"}}}
 
+function! s:source_rec.hooks.on_init(args, context)"{{{
+  let a:context.source__directory = s:get_path(a:args, a:context)
+endfunction"}}}
 function! s:source_rec.hooks.on_post_filter(args, context)"{{{
   call s:on_post_filter(a:args, a:context)
 endfunction"}}}
@@ -229,6 +245,15 @@ endfunction"}}}
 function! s:source_async.async_gather_candidates(args, context)"{{{
   let continuation = s:continuation[a:context.source__directory]
 
+  let is_relative_path =
+        \ a:context.source__directory ==
+        \   unite#util#substitute_path_separator(getcwd())
+
+  if !is_relative_path
+    let cwd = getcwd()
+    lcd `=a:context.source__directory`
+  endif
+
   let stdout = a:context.source__proc.stdout
   if stdout.eof
     " Disable async.
@@ -251,11 +276,17 @@ function! s:source_async.async_gather_candidates(args, context)"{{{
       if g:unite_source_file_rec_ignore_pattern == ''
           \ || filename !~ g:unite_source_file_rec_ignore_pattern
         call add(candidates, {
-              \ 'word' : filename, 'action__path' : filename,
+              \ 'word' : unite#util#substitute_path_separator(
+              \    fnamemodify(filename, ':.')),
+              \ 'action__path' : filename,
               \ })
       endif
     endif
   endfor
+
+  if !is_relative_path
+    lcd `=cwd`
+  endif
 
   let continuation.files += candidates
 
@@ -327,8 +358,11 @@ function! s:get_files(files, level, max_len)"{{{
       endif
 
       let child_index = 0
-      let childs = split(unite#util#substitute_path_separator(glob(file . '/*')), '\n')
-            \ + split(unite#util#substitute_path_separator(glob(file . '/.*')), '\n')
+      let childs =
+            \ split(unite#util#substitute_path_separator(
+            \       globpath(file, '*')), '\n') +
+            \ split(unite#util#substitute_path_separator(
+            \       globpath(file, '.*')), '\n')
       for child in childs
         let child_index += 1
 
@@ -375,26 +409,17 @@ function! s:get_files(files, level, max_len)"{{{
 endfunction"}}}
 function! s:on_post_filter(args, context)"{{{
   let is_relative_path =
-        \ a:context.source__directory == unite#util#substitute_path_separator(getcwd())
-
-  if !is_relative_path
-    let cwd = getcwd()
-    lcd `=a:context.source__directory`
-  endif
+        \ a:context.source__directory ==
+        \   unite#util#substitute_path_separator(getcwd())
 
   for candidate in a:context.candidates
     let candidate.kind = 'file'
-    let candidate.abbr = unite#util#substitute_path_separator(
-          \ fnamemodify(candidate.action__path, ':.'))
-          \ . (isdirectory(candidate.action__path) ? '/' : '')
+    let candidate.abbr = candidate.word .
+          \ (isdirectory(candidate.word) ? '/' : '')
     let candidate.action__directory = is_relative_path ?
           \ candidate.abbr :
           \ unite#util#path2directory(candidate.action__path)
   endfor
-
-  if !is_relative_path
-    lcd `=cwd`
-  endif
 endfunction"}}}
 function! s:init_continuation(context, directory)"{{{
   if a:context.is_redraw

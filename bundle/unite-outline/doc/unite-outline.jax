@@ -1,8 +1,8 @@
 *unite-outline.txt*	バッファの見出し一覧を表示し、ジャンプ機能を提供する。
 
 Author  : h1mesuke <himesuke@gmail.com>
-Updated : 2011-10-10
-Version : 0.5.0
+Updated : 2011-11-07
+Version : 0.5.1
 License : MIT license {{{
 
 	Permission is hereby granted, free of charge, to any person obtaining
@@ -39,7 +39,7 @@ License : MIT license {{{
 	関数			|unite-outline-functions|
 	  ユーティリティ関数	  |unite-outline-utility-functions|
 	ToDo			|unite-outline-todo|
-	既知の問題		|unite-outline-bugs|
+	既知の問題		|unite-outline-known-issues|
 	更新履歴		|unite-outline-changelog|
 
 ==============================================================================
@@ -121,7 +121,7 @@ g:unite_source_outline_info			*g:unite_source_outline_info*
 	のみ、作成した outline info をこの辞書に登録します。
 
 	outline info ついては
-	|unite-outline-info|、|unite-outline-info-create|を参照
+	|unite-outline-info|, |unite-outline-info-create|を参照
 
 	初期値は {}
 
@@ -283,10 +283,30 @@ outline info の作成				*unite-outline-info-create*
 	unite-outline に同梱されている outline info ではなく、ユーザー独自の
 	outline info を作成／使用したい場合、その方法は以下の２つです。
 
-    [A]	vimrc にてグローバル変数に設定する
+    [A]	オートロード関数を定義する。				[推奨]
+
+      *	$HOME/.vim/autoload/unite/sources/outline/ に {filetype}.vim を作成し、
+	そこにオートロード関数 unite#sources#outline#{filetype}#outline_info()
+	を定義する。
+
+         または
+
+         $HOME/.vim/autoload/outline/ に {filetype}.vim を作成し、
+         そこにオートロード関数 outline#{filetype}#outline_info() を定義する。
+
+      *	関数の返値として、outline info（辞書）を返す。
+
+	この方法で定義した outline info は必要になるまでロードされません。
+	vimrc を肥大化させることもないので、outline info を作り込むのであれば
+	こちらの方法がおすすめです。
+
+	$HOME/.vim/autoload/unite/sources/outline/defaults/ にあるデフォルトの
+	outline info はすべてこの方法で定義されています。
+
+    [B]	vimrc にてグローバル変数に設定する。			[非推奨]
 
       *	vimrc にて g:unite_source_outline_info.{filetype} に直接 outline info
-	を設定します。
+	を設定する。
 
 	定義例（Ruby用）： >
 	let g:unite_source_outline_info.ruby = {
@@ -297,25 +317,6 @@ outline info の作成				*unite-outline-info-create*
 	      \ },
 	      \}
 <
-    [B]	オートロード関数を定義する
-
-      *	$HOME/.vim/autoload/unite/sources/outline/ に {filetype}.vim を作成し、
-	そこに unite#sources#outline#{filetype}#outline_info() を定義します。
-
-		または
-
-		$HOME/.vim/autoload/outline/ に {filetype}.vim を作成し、
-		そこに outline#{filetype}#outline_info() を定義します。
-
-      *	その関数の返値として、outline info（辞書）を返します。
-
-	こちらは遅延ロードになるため必要になるまでロードされません。 vimrc を
-	肥大化させることもないので、outline info を作り込むのであればこちらの
-	方法がおすすめです。
-
-	$HOME/.vim/autoload/unite/sources/outline/defaults/ にあるデフォルトの
-	outline info がこの方法で定義されており、参考になると思います。
-
 ------------------------------------------------------------------------------
 outline info の属性				*unite-outline-info-attributes*
 
@@ -364,7 +365,7 @@ heading			文字列（任意） 		*unite-outline-info-heading*
 	      \ }
 <
 				*unite-outline-info-heading-pattern-restrictions*
-	重要：使用できる正規表現の制限事項 ~
+	重要：使用できる正規表現の制約 ~
 
 	heading-1, heaging, heading+1 のパターンとして使用できる正規表現には
 	以下の制約があります。
@@ -616,49 +617,6 @@ heading_groups		辞書（任意）	*unite-outline-info-heading_groups*
 	  \ },
 	  \}
 <
-need_blank_between	関数（任意）	*unite-outline-info-need_blank_between()*
-
-	need_blank_between( {cand-1}, {cand-2}, {memo})
-
-	設定されていると、見出し一覧の表示に先立って順次呼び出されます。
-	真を返すと、兄弟関係にある見出し {cand-1} と {cand-2} の間に空行が挿入
-	されます。
-
-	この関数を定義することで、見出し一覧における空行の挿入を制御できます。
-	heading_groups属性の設定による空行の挿入結果が期待通りにならない場合、
-	この関数を定義してその振舞いを変更できます。
-
-	NOTE: {cand-1}, {cand-2} は見出しオブジェクトではなく、見出しオブジェ
-	クトを元に作成された unite.vim の候補オブジェクトです。属性の名前が見
-	出しオブジェクトとは異なるので注意して下さい。（詳細は
-	|unite-notation-{candidate}|を参照）
-
-		属性名の対応表
-
-		見出し		候補
-		--------	----------------------
-		id		source__heading_id
-		word		abbr
-		level		source__heading_level
-		type		source__heading_type
-		group		source__heading_group
-
-	{memo} はメモ化のための辞書で、一連の呼び出しの間、同じ辞書が使い回さ
-	れます。見出しについて何らかの計算を行う場合は、結果をメモ化することで
-	同じ計算を２回行わずに済みます。
-
-	定義例（Python用）： >
-	function! s:outline_info.need_blank_between(cand1, cand2, memo)
-	  if a:cand1.source__heading_group == 'function' &&
-	   \ a:cand2.source__heading_group == 'function'
-	    " Don't insert a blank between two sibling functions.
-	    return 0
-	  else
-	    return (a:cand1.source__heading_group != a:cand2.source__heading_group ||
-	          \ a:cand1.source__has_marked_child || a:cand2.source__has_marked_child)
-	  endif
-	endfunction
-<
 NARROWING ~
 
 not_match_patterns	リスト（任意）	*unite-outline-info-not_match_patterns*
@@ -704,23 +662,31 @@ is_volatile		数値（任意）		*unite-outline-info-is_volatile*
 	1 を設定すると、見出しはキャッシュされません。
 
 HOOKS ~
-
+						*unite-outline-info-hooks*
 initialize		関数（任意） 		*unite-outline-info-initialize()*
 
-	initialize( {context})
+	initialize()
 
-	設定されていると、見出しの抽出に先立って呼ばれ、outline info に初期化
-	の機会を与えます。
+	設定されていると、outline info がロードした後に呼び出されます。
+	outline info の初期化のために実行すべき処理があればここに記述します。
+
+
+before			関数（任意） 		*unite-outline-info-before()*
+
+	before( {context})
+
+	設定されていると、見出しの抽出が始まる前に呼び出されます。
+	見出し抽出前に実行すべき処理があればここに記述します。
 
 	{context} については、|unite-outline-context-object|を参照
 
 
-finalize		関数（任意） 		*unite-outline-info-finalize()*
+after			関数（任意） 		*unite-outline-info-after()*
 
-	finalize( {context})
+	after( {context})
 
-	設定されていると、見出しの抽出が完了した後に呼ばれ、outline info に後
-	始末の機会を与えます。
+	設定されていると、見出しの抽出が完了した後に呼び出されます。
+	見出し抽出後に実行すべき処理があればここに記述します。
 
 	{context} については、|unite-outline-context-object|を参照
 
@@ -753,15 +719,14 @@ unite#sources#outline#alias( {alias}, {source})
 	call unite#sources#outline#alias('zsh',   'sh')
 <
 				*unite#sources#outline#get_outline_info()*
-unite#sources#outline#get_outline_info( {filetype})
+unite#sources#outline#get_outline_info( {filetype} [, {reload} [, {nouser}]])
 
 	{filetype} の outline info を返します。
-	outline info が見つからない場合は空の辞書 {} を返します。
-
-			*unite#sources#outline#get_default_outline_info()*
-unite#sources#outline#get_default_outline_info( {filetype})
-
-	{filetype} のデフォルトの outline info を返します。
+	{reload} が non-zero の場合、outline info を取得する前にスクリプトを
+	source し直します。（outline info がオートロード関数を使ってファイルに
+	定義されている場合にのみ有効）
+	{nouser} が non-zero の場合、ユーザー定義の outline info の探索をス
+	キップします。
 	outline info が見つからない場合は空の辞書 {} を返します。
 
 				*unite#sources#outline#get_filetype_option()*
@@ -772,9 +737,14 @@ unite#sources#outline#get_filetype_option( {filetype}, {key} [, {default}])
 	そうでないなら 0 を返します。
 
 					*unite#sources#outline#get_highlight()*
-unite#sources#outline#get_highlight( {name})
+unite#sources#outline#get_highlight( {name} ...)
 
-	{name} に関連付けられたハイライトグループを返します。
+	{name} に関連付けられたハイライトグループ名を返します。
+	関連付けがない場合は、引数を順次調べ関連付けを探します。関連付けが最後
+	まで見つからなかった場合は |g:unite_abbr_highlight| の値を返します。
+
+	ハイライトグループ名への関連付けについては
+	|g:unite_source_outline_highlight| を参照
 
 					*unite#sources#outline#import()*
 unite#sources#outline#import( {module})
@@ -837,31 +807,12 @@ Util.neighbor_matchstr( {context}, {lnum}, {pattern} [, {range} [, {exclusive}]]
 ==============================================================================
 TODO						*unite-outline-todo*
 
-	* 絞り込み時の hlsearch
-
-	* JavaScript用 outline info の改善
-
-		jsctags を使えばよさげ。
-
-	* Ruby用 outline info の改善
-
-		rtags を使えばよさげ。
-
 	* D, Erlang, Go, Haskell などの outline info
-
-		話題の言語には一通り対応したいもの。
-		が、作者にとって未知の言語なため対応が遅れています。
-		なんとかしなければ。
 
 	* 対応ファイルタイプの充実
 
-		対応ファイルタイプの充実はぼちぼちやっていこうと考えていますが、
-
-		あるファイルタイプにおける妥当な見出し抽出を実現するには、その
-		ファイルタイプに対する知見がどうしても必要なため、作者が普段使
-		わない言語については対応が後手にまわっています。
-
-		そこで↓
+	* Issues - h1mesuke/unite-outline - GitHub
+	  https://github.com/h1mesuke/unite-outline/issues
 
 ------------------------------------------------------------------------------
 outline info 募集！
@@ -871,13 +822,13 @@ outline info 募集！
 	布アーカイブにそのまま同梱）させていただきます。
 
 	* Issues - h1mesuke/unite-outline - GitHub
-	  http://github.com/h1mesuke/unite-outline/issues
+	  https://github.com/h1mesuke/unite-outline/issues
 	
 	* Send a pull request - GitHub
-	  http://github.com/h1mesuke/unite-outline/pull/new/master
+	  https://github.com/h1mesuke/unite-outline/pull/new/master
 	
 ==============================================================================
-既知の問題					*unite-outline-bugs*
+既知の問題					*unite-outline-known-issues*
 
 親子関係の誤認識 ~
 
@@ -885,29 +836,39 @@ outline info 募集！
 	絞り込みの際には、このツリー構造にもとづき、見出しの親子関係に配慮した
 	絞り込みを行います。（小見出しがマッチした見出しも残すなど）
 
-	現在、一部のファイルタイプ（Ruby など）では、ソースコードのインデント
-	の深さから見出しレベルを決定しています。この場合、作成される見出しのツ
-	リーが、必ずしも論理的に正しい親子関係を反映しないことがあります。結
-	果、絞り込みの結果に、実際には親子関係にないはずの見出しが残ることがあ
-	ります。
+	現在、一部のファイルタイプでは、ソースコードのインデントの深さから見出
+	しレベルを決定しています。この場合、作成される見出しのツリーが、必ずし
+	も論理的に正しい親子関係を反映しないことがあります。結果、絞り込みの結
+	果に、実際には親子関係にないはずの見出しが残ることがあります。
 
 ==============================================================================
 更新履歴					*unite-outline-changelog*
 
-http://github.com/h1mesuke/unite-outline/commits/master
+0.5.1	2011-11-01
 
-0.5.1	2011-10-xx
+	* unite#sources#outline#get_outline_info() のインターフェースを変更
+	- ファイルタイプリダイレクトに対応
+				|unite#sources#outline#get_outline_info()|
+
+	* unite#sources#outline#get_default_outline_info() を削除
+
+	* フックを追加
+	- initialize			|unite-outline-info-initialize|
+
+	* フックの名前を変更
+	- initialize -> before		|unite-outline-info-before|
+	- finalize   -> after		|unite-outline-info-after|
 
 	* 内部データの管理を改善
 
 	* 見出しの絞り込みを高速化
-	  - 再帰呼び出しをなくし、反復的に処理するように改善
+	- 再帰呼び出しをなくし、反復的に処理するように改善
 
 0.5.0	2011-09-06
 
 	* 見出しの自動更新を実装し、以下のファイルタイプオプションを追加
-	  - auto_update	 |unite-outline-filetype-option-auto-update|
-	  - auto_update_event
+	- auto_update	 |unite-outline-filetype-option-auto-update|
+	- auto_update_event
 
 0.3.8	2011-08-25
 
@@ -917,12 +878,12 @@ http://github.com/h1mesuke/unite-outline/commits/master
 			|unite-outline-info-heading-pattern-restrictions|
 
 	* ファイルタイプごとのオプション設定をまとめるため、以下の変数を追加
-	  -|g:unite_source_outline_filetype_options|
-	  - g:unite_source_outline_ignore_heading_types は上記の変数に統合
+	-|g:unite_source_outline_filetype_options|
+	- g:unite_source_outline_ignore_heading_types は上記の変数に統合
 
 	* 以下のキーマッピングを deprecated とした
-	  - <Plug>(unite_outline_loop_cursor_down)
-	  - <Plug>(unite_outline_loop_cursor_up)
+	- <Plug>(unite_outline_loop_cursor_down)
+	- <Plug>(unite_outline_loop_cursor_up)
 
 0.3.7	2011-08-14
 
@@ -934,40 +895,40 @@ http://github.com/h1mesuke/unite-outline/commits/master
 0.3.6	2011-08-08
 
 	* 見出し一覧のシンタックスハイライトに対応し、以下の変数を追加
-	  -|g:unite_source_outline_highlight|
+	-|g:unite_source_outline_highlight|
 
 	* outline info の仕様に以下の属性を追加
-	  - highlight_rules		|unite-outline-info-highlight_rules|
+	- highlight_rules		|unite-outline-info-highlight_rules|
 
 0.3.5	2011-05-14
 
 	* outline info の仕様に以下の属性を追加
-	  - heading_groups		|unite-outline-info-heading_groups|
-	  - need_blank_between()	|unite-outline-info-need_blank_between|
+	- heading_groups		|unite-outline-info-heading_groups|
+	- need_blank_between()
 
 0.3.4	2011-04-26
 
 	* キャッシュの管理ロジックを改善し、以下の変数を削除
-	  - g:unite_source_outline_cache_buffers
+	- g:unite_source_outline_cache_buffers
 
 	* outline info の仕様に以下の属性を追加
-	  - not_match_patterns		|unite-outline-info-not_match_patterns|
+	- not_match_patterns		|unite-outline-info-not_match_patterns|
 
 	* 親子関係に配慮した matcher を実装
 
 0.3.3	2011-03-19
 
 	* outline info の仕様から以下の属性を削除
-	  - skip_header()
+	- skip_header()
 
 	* キャッシュの保存ディレクトリを g:unite_data_directory以下に固定し、
 	  以下の変数を削除
-	  - g:unite_source_outline_cache_dir
+	- g:unite_source_outline_cache_dir
 
 	* キャッシュに関するオプション変数を整理
-	  - g:unite_source_outline_cache_serialize_limit を
-	   |g:unite_source_outline_cache_limit|に変更
-	  - 従来の g:unite_source_outline_cache_limit は削除
+	- g:unite_source_outline_cache_serialize_limit を
+	 |g:unite_source_outline_cache_limit|に変更
+	- 従来の g:unite_source_outline_cache_limit は削除
 
 0.3.2	2011-03-01
 
@@ -979,8 +940,8 @@ http://github.com/h1mesuke/unite-outline/commits/master
 	* {context} の仕様を変更
 	  context.lines の先頭にダミーの空行を付加し、リストの添字と行番号が
 	  一致するように修正し、以下の属性名を変更
-	  - heading_index -> heading_lnum
-	  - matched_index -> matched_lnum
+	- heading_index -> heading_lnum
+	- matched_index -> matched_lnum
 
 	* ユーティリティ関数のインターフェースを変更
 	  引数として、{lines} ではなく {context} を、{idx} ではなく {lnum} を
@@ -989,7 +950,7 @@ http://github.com/h1mesuke/unite-outline/commits/master
 0.3.1	2011-01-29
 
 	* 特定の種類の見出しを非表示にする機能を追加し、以下の変数を追加
-	  -|g:unite_source_outline_ignore_heading_types|
+	-|g:unite_source_outline_ignore_heading_types|
 
 0.3.0	2011-01-10
 
@@ -999,7 +960,7 @@ http://github.com/h1mesuke/unite-outline/commits/master
 0.2.1	2011-01-04
 
 	* キャッシュの一部永続化を実装し、以下の変数を追加
-	  -|g:unite_source_outline_cache_dir|
-	  -|g:unite_source_outline_cache_serialize_limit|
+	-|g:unite_source_outline_cache_dir|
+	-|g:unite_source_outline_cache_serialize_limit|
 
 vim:tw=78:ts=8:ft=help:norl:noet:ai

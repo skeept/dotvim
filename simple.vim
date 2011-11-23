@@ -306,10 +306,16 @@ hi! ColorColumn   term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
 "load eventual plugins here (the ones that would be really necessary)
 let g:p0 = split(&runtimepath, ',')[0]
-exec "source" . g:p0 . "/plugin/NERD_commenter.vim"
-exec "source" . g:p0 . "/plugin/supertab.vim"
-exec "source" . g:p0 . "/plugin/unimpaired.vim"
-exec "source" . g:p0 . "/plugin/scratch.vim"
-
+runtime plugin/NERD_commenter.vim
+runtime plugin/supertab.vim
+runtime plugin/unimpaired.vim
+runtime plugin/scratch.vim
 
 "some tests/tries
+nmap <tab> <c-w>
+nmap <tab><tab> <c-w><c-w>
+
+"attemp to fix backspace
+imap  
+nmap  
+cnoremap  

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Oct 2011.
+" Last Modified: 08 Nov 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -170,7 +170,7 @@ function! neocomplcache#enable() "{{{
         \'\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'python,int-python,int-ipython',
-        \'\h\w*')
+        \'[@]\?\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'cs',
         \'\h\w*')
@@ -182,7 +182,7 @@ function! neocomplcache#enable() "{{{
         \'\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'coffee,int-coffee',
-        \'@\h\w*\|\h\w*')
+        \'[@]\?\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'awk',
         \'\h\w*')
@@ -279,6 +279,8 @@ function! neocomplcache#enable() "{{{
         \'\h\w*>')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'vim,help',
         \'\w*()\?\|\w*:\]\|[[:alnum:]_-]*[)>=]')
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'python',
+        \'\w*()\?')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'tex',
         \'\h\w*\*\?[*[{}]')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_next_keyword_patterns, 'html,xhtml,xml,mkd',
@@ -458,7 +460,8 @@ function! neocomplcache#enable() "{{{
   if !exists('g:neocomplcache_text_mode_filetypes')
     let g:neocomplcache_text_mode_filetypes = {}
   endif
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_text_mode_filetypes, 'text,help,tex,gitcommit,nothing,vcs-commit', 1)
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_text_mode_filetypes,
+        \ 'text,help,tex,gitcommit,vcs-commit', 1)
   "}}}
 
   " Initialize tags filter patterns."{{{
@@ -496,11 +499,16 @@ function! neocomplcache#enable() "{{{
   set completeopt+=menuone
 
   " For auto complete keymappings.
-  inoremap <silent> <Plug>(neocomplcache_start_auto_complete)          <C-x><C-u><C-p>
+  inoremap <silent> <Plug>(neocomplcache_start_auto_complete)
+        \ <C-x><C-u><C-p>
   inoremap <silent> <Plug>(neocomplcache_start_auto_select_complete)
         \ <C-x><C-u><C-p><C-r>=neocomplcache#popup_post()<CR>
-  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_complete)   unite#sources#neocomplcache#start_complete()
-  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)   unite#sources#snippet#start_complete()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_complete)
+        \ unite#sources#neocomplcache#start_complete()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_quick_match)
+        \ unite#sources#neocomplcache#start_quick_match()
+  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)
+        \ unite#sources#snippet#start_complete()
 
   " Disable bell.
   set vb t_vb=
@@ -817,7 +825,7 @@ function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
   elseif neocomplcache#check_match_filter(cur_keyword_str)
     " Match filter.
     return filter(a:list, printf(
-          \ 'v:val.word =~ %s && v:val.word !=# cur_keyword_str',
+          \ 'v:val.word =~ %s && v:val.word !=? cur_keyword_str',
           \ string('^' . neocomplcache#keyword_escape(cur_keyword_str))))
   else
     " Use fast filter.
@@ -851,7 +859,7 @@ function! neocomplcache#head_filter(list, cur_keyword_str)"{{{
           \ string(a:cur_keyword_str))
   endif
 
-  return filter(a:list, expr . ' && v:val.word != a:cur_keyword_str')
+  return filter(a:list, expr . ' && v:val.word !=? a:cur_keyword_str')
 endfunction"}}}
 function! neocomplcache#fuzzy_filter(list, cur_keyword_str)"{{{
   let ret = []
@@ -974,36 +982,13 @@ function! neocomplcache#rand(max)"{{{
   let time = reltime()[1]
   return (time < 0 ? -time : time)% (a:max + 1)
 endfunction"}}}
-function! neocomplcache#system(str, ...)"{{{
-  let command = a:str
-  let input = a:0 >= 1 ? a:1 : ''
-  if has('iconv') && &termencoding != '' && &termencoding != &encoding
-    let command = iconv(command, &encoding, &termencoding)
-    let input = iconv(input, &encoding, &termencoding)
-  endif
-
-  if !neocomplcache#has_vimproc()
-    if a:0 == 0
-      let output = system(command)
-    else
-      let output = system(command, input)
-    endif
-  elseif a:0 == 0
-    let output = vimproc#system(command)
-  elseif a:0 == 1
-    let output = vimproc#system(command, input)
-  else
-    let output = vimproc#system(command, input, a:2)
-  endif
-
-  if has('iconv') && &termencoding != '' && &termencoding != &encoding
-    let output = iconv(output, &termencoding, &encoding)
-  endif
-
-  return output
+function! neocomplcache#system(...)"{{{
+  let V = vital#of('neocomplcache')
+  return call(V.system, a:000)
 endfunction"}}}
-function! neocomplcache#has_vimproc()"{{{
-  return s:exists_vimproc
+function! neocomplcache#has_vimproc(...)"{{{
+  let V = vital#of('neocomplcache')
+  return call(V.has_vimproc, a:000)
 endfunction"}}}
 
 function! neocomplcache#get_cur_text(...)"{{{
@@ -1338,6 +1323,7 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
   let words = []
   let icase = g:neocomplcache_enable_ignore_case &&
         \!(g:neocomplcache_enable_smart_case && a:cur_keyword_str =~ '\u')
+        \ && !neocomplcache#is_text_mode()
   for keyword in complete_words
     if has_key(keyword, 'kind') && keyword.kind == ''
       " Remove kind key.
@@ -1724,7 +1710,8 @@ endfunction"}}}
 
 " Key mapping functions."{{{
 function! neocomplcache#smart_close_popup()"{{{
-  return g:neocomplcache_enable_auto_select ? neocomplcache#cancel_popup() : neocomplcache#close_popup()
+  return g:neocomplcache_enable_auto_select ?
+        \ neocomplcache#cancel_popup() : neocomplcache#close_popup()
 endfunction
 "}}}
 function! neocomplcache#close_popup()"{{{
@@ -1889,8 +1876,10 @@ function! s:remove_next_keyword(plugin_name, list)"{{{
     let pattern = '^\%(' . neocomplcache#get_next_keyword_pattern() . '\m\)'
   endif
 
-  let next_keyword_str = matchstr('a'.getline('.')[len(neocomplcache#get_cur_text()) :], pattern)[1:]
+  let next_keyword_str = matchstr('a'.
+        \ getline('.')[len(neocomplcache#get_cur_text(1)) :], pattern)[1:]
   if next_keyword_str != ''
+    echomsg next_keyword_str
     let next_keyword_str = substitute(escape(next_keyword_str, '~" \.^$*[]'), "'", "''", 'g').'$'
 
     " No ignorecase.

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/tex.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-08-29
+" Updated : 2011-11-16
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -9,7 +9,7 @@
 "=============================================================================
 
 " Default outline info for TeX
-" Version: 0.0.9
+" Version: 0.1.0
 
 function! unite#sources#outline#defaults#tex#outline_info()
   return s:outline_info
@@ -21,7 +21,7 @@ let s:Util = unite#sources#outline#import('Util')
 " Outline Info
 
 let s:outline_info = {
-      \ 'heading': '^\\\%(title\|part\|chapter\|\%(sub\)\{,2}section\|begin{thebibliography}\){',
+      \ 'heading': '^\s*\\\%(title\|part\|chapter\|\%(sub\)\{,2}section\|begin{thebibliography}\){',
       \}
 
 let s:unit_level_map = {
@@ -33,7 +33,7 @@ let s:unit_level_map = {
       \ 'subsubsection': 6,
       \ }
 
-function! s:outline_info.initialize(context)
+function! s:outline_info.before(context)
   let s:unit_count = map(copy(s:unit_level_map), '0')
   let s:bib_level = 6
 endfunction
@@ -46,7 +46,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
         \ }
 
   let h_lnum = a:context.heading_lnum
-  if a:heading_line =~ '^\\begin{thebibliography}{'
+  if a:heading_line =~ '^\s*\\begin{thebibliography}{'
     " Bibliography
     let heading.level = s:bib_level
     let bib_label = s:Util.neighbor_matchstr(a:context, h_lnum,
@@ -54,7 +54,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     let heading.word = (empty(bib_label) ? "Bibliography" : bib_label)
   else
     " Parts, Chapters, Sections, etc
-    let unit = matchstr(a:heading_line, '^\\\zs\w\+\ze{')
+    let unit = matchstr(a:heading_line, '^\s*\\\zs\w\+\ze{')
     let s:unit_count[unit] += 1
     let heading.level = s:unit_level_map[unit]
     if 1 < heading.level && heading.level < s:bib_level
@@ -73,7 +73,7 @@ endfunction
 
 function! s:normalize_heading_word(word, unit)
   let word = substitute(a:word, '\\\\\n', '', 'g')
-  let word = matchstr(word, '^\\\w\+{\zs.*\ze}\s*$')
+  let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*$')
   let word = s:unit_seqnr_prefix(a:unit) . word
   return word
 endfunction

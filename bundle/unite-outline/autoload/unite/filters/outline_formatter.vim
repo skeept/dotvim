@@ -1,8 +1,8 @@
 "=============================================================================
 " File    : autoload/unite/filters/outline_formatter.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-22
-" Version : 0.5.0
+" Updated : 2011-10-23
+" Version : 0.5.1
 " License : MIT license {{{
 "
 "   Permission is hereby granted, free of charge, to any person obtaining
@@ -70,22 +70,22 @@ function! s:formatter.filter(candidates, unite_context)
 endfunction
 
 function! s:insert_blanks(candidates, context)
-  let outline_info = a:context.outline_info
-  if a:context.extract_method !=# 'filetype' ||
-        \ (empty(outline_info.heading_groups) && !has_key(outline_info, 'need_blank_between'))
+  let oinfo = a:context.outline_info
+  if a:context.extracted_by !=# 'filetype' ||
+        \ (empty(oinfo.heading_groups) && !has_key(oinfo, 'need_blank_between'))
     return a:candidates
   endif
 
-  if !has_key(outline_info, 'need_blank_between')
+  if !has_key(oinfo, 'need_blank_between')
     " Use the default implementation.
-    let outline_info.need_blank_between = function('s:need_blank_between')
+    let oinfo.need_blank_between = function('s:need_blank_between')
   endif
   let candidates = []
   let prev_sibling = {} | let prev_level = 0
   let memo = {} | " for memoization
   for cand in a:candidates
     if cand.source__heading_level <= prev_level  &&
-          \ outline_info.need_blank_between(prev_sibling[cand.source__heading_level], cand, memo)
+          \ oinfo.need_blank_between(prev_sibling[cand.source__heading_level], cand, memo)
         call add(candidates, s:BLANK)
     endif
     call add(candidates, cand)
