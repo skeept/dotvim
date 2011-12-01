@@ -2101,6 +2101,12 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-12-01
+- Fixed dest_drive error.
+- Fixed uri kind.
+- Improved padding.
+- Fixed cd action behavior.
+
 2011-11-30
 - Fixed a bit.
 - Fixed required_pattern_length problem.
