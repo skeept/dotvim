@@ -1,6 +1,6 @@
-let g:pymode_version = "0.4.4"
+let g:pymode_version = "0.5.0"
 
-command! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
+com! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
 
 " OPTION: g:pymode -- bool. Run pymode.
 if pymode#Default('g:pymode', 1) || !g:pymode
@@ -66,7 +66,7 @@ if !pymode#Default("g:pymode_lint", 1) || g:pymode_lint
 
     " DESC: Set default pylint configuration
     if !filereadable(g:pymode_lint_config)
-        let g:pymode_lint_config = expand("<sfile>:p:h:h") . "/pylintrc"
+        let g:pymode_lint_config = expand("<sfile>:p:h:h") . "/pylint.ini"
     endif
 
 python << EOF
@@ -105,7 +105,7 @@ def pylint():
                 bufnr = vim.current.buffer.number,
                 lnum = test.group(1),
                 type = test.group(2),
-                text = test.group(3),
+                text = test.group(3).replace("'", "\""),
             ))
     vim.command('let b:qf_list = %s' % repr(qf))
 
