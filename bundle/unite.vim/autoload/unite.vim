@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Dec 2011.
+" Last Modified: 05 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1454,15 +1454,18 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     " Force set.
     let candidate.source = a:source_name
 
-    " Delete too long abbr.
-    if len(candidate.abbr) > max_width * 3
-      let candidate.abbr = candidate.abbr[: max_width * 3]
-    endif
-
     " Substitute tab.
     let candidate.abbr = substitute(candidate.abbr, '\t', '>---', 'g')
 
     let candidate.is_multiline = get(candidate, 'is_multiline', 0)
+
+    " Delete too long abbr.
+    if candidate.is_multiline
+      let candidate.abbr = candidate.abbr[: max_width * 8+10]
+    elseif len(candidate.abbr) > max_width * 2
+      let candidate.abbr = candidate.abbr[: max_width * 2]
+    endif
+
     if !candidate.is_multiline
       let candidate.abbr = '  ' . candidate.abbr
       call add(candidates, candidate)
@@ -1704,7 +1707,7 @@ function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
   " Create key table.
   let keys = {}
   for [key, number] in items(a:quick_match_table)
-    let keys[number] = key . ' '
+    let keys[number] = key . '|'
   endfor
 
   " Add number.

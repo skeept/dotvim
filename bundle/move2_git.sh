@@ -47,8 +47,10 @@ for folder in * ; do
     fi
   fi
 done
-parallel -j 20 "cd {}; echo \">>> git  >>> $(basename $PWD) \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-parallel -j 20 "cd {}; echo \">>> hg   >>> $(basename $PWD) \" ; hg pull -u                                   " ::: $hg_folders
+parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u                                   " ::: $hg_folders
+echo "git_folders #$git_folders#"
+echo "hg_folders #$hg_folders#"
 }
 
 function main()
