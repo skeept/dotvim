@@ -23,11 +23,11 @@ for folder in * ; do
     mv ._git .git >& /dev/null 
     if test -d .git; then 
       printf "\n>>> git >>>  %s\n" $(basename $PWD)
-      GIT_SSL_NO_VERIFY=true git pull origin master &
+      GIT_SSL_NO_VERIFY=true git pull origin master
     fi
     if test -d .hg ; then 
       printf "\n>>> hg >>>   %s\n" $(basename $PWD)
-      hg pull -u &
+      hg pull -u
     fi
     cd ..
   fi
@@ -47,10 +47,12 @@ for folder in * ; do
     fi
   fi
 done
-parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u                                   " ::: $hg_folders
-echo "git_folders #$git_folders#"
-echo "hg_folders #$hg_folders#"
+if test -n "$git_folders"; then
+  parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+fi
+if test -n "$hg_folders"; then
+  parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u                                   " ::: $hg_folders
+fi
 }
 
 function main()
