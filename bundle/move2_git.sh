@@ -2,6 +2,7 @@
 
 # I want to use git when it matters 
 
+
 function do_git2_()
 {
 for folder in * ; do 
@@ -32,6 +33,27 @@ for folder in * ; do
   fi
 done
 }
+function do_git_update2()
+{
+git_folders=""
+for folder in * ; do 
+  if test -d $folder; then 
+    mv ${folder}/._git ${folder}/.git >& /dev/null 
+    if test -d ${folder}/.git; then 
+      git_folders="$git_folders $folder"
+    fi
+    if test -d ${folder}/.hg ; then 
+      hg_folders="${hg_folders} $folder"
+    fi
+  fi
+done
+if test -n "$git_folders"; then
+  parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+fi
+if test -n "$hg_folders"; then
+  parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u                                   " ::: $hg_folders
+fi
+}
 
 function main()
 {
@@ -39,7 +61,7 @@ function main()
     echo "$0 -s : move .git to ._git"
     echo "$0 -u : update .git"
     echo -e "\n"
-    do_git_update
+    do_git_update2
     exit
   fi
   DO_UPDATE=0

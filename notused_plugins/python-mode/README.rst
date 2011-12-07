@@ -9,6 +9,7 @@ There is no need to install the pylint_, rope_ or any used python library on you
 
 - Highlight syntax errors
 - Highlight and auto fix unused imports
+- Python objects and motion (]], ]m, vac, vim, dim, ...)
 - Strong code completion
 - Code refactoring
 - Python documentation
@@ -22,6 +23,15 @@ See screencast here: http://t.co/3b0bzeXA (sorry for quality, this is my first s
 
 
 .. contents::
+
+
+Changelog
+=========
+
+## 2011-11-30 0.5.0
+-------------------
+* Add python objects and motions (beta)
+  :h pymode_motion
 
 
 Requirements
@@ -201,6 +211,9 @@ Other stuff
 
 Default values: ::
 
+    " Load motion plugin
+    let g:pymode_motion = 1
+
     " Load breakpoints plugin
     let g:pymode_breakpoint = 1
 
@@ -223,6 +236,51 @@ Default values: ::
     let g:pymode_options_other = 1
 
 
+Syntax highlight
+----------------
+
+Default values: ::
+
+    " Enable pymode's custom syntax highlighting
+    let g:pymode_syntax = 1
+
+    " Enable all python highlightings
+    let g:pymode_syntax_all = 1
+
+    " Highlight "print" as function
+    leg g:pymode_syntax_print_as_function = 0
+
+    " Highlight indentation errors
+    leg g:pymode_syntax_indent_errors = g:pymode_syntax_all
+
+    " Highlight trailing spaces
+    leg g:pymode_syntax_space_errors = g:pymode_syntax_all
+
+    " Highlight string formatting
+    leg g:pymode_syntax_string_formatting = g:pymode_syntax_all
+
+    " Highlight str.format syntax
+    leg g:pymode_syntax_string_format = g:pymode_syntax_all
+
+    " Highlight string.Template syntax
+    let g:pymode_syntax_string_templates = g:pymode_syntax_all
+
+    " Highlight doc-tests
+    let g:pymode_syntax_doctests = g:pymode_syntax_all
+
+    " Highlight builtin objects (__doc__, self, etc)
+    let g:pymode_syntax_builtin_objs = g:pymode_syntax_all
+
+    " Highlight builtin functions
+    let g:pymode_syntax_builtin_funcs = g:pymode_syntax_all
+
+    " Highlight exceptions
+    let g:pymode_syntax_highlight_exceptions = g:pymode_syntax_all
+
+    " For fast machines
+    let g:pymode_syntax_slow_sync = 0
+
+
 Default keys
 ============
 
@@ -231,13 +289,29 @@ Default keys
 ============== =============
 Keys           Command
 ============== =============
-**K**          Show python docs
+**K**          Show python docs (g:pymode_doc enabled)
 -------------- -------------
-**<C-Space>**  Rope autocomplete
+**<C-Space>**  Rope autocomplete (g:pymode_rope enabled)
 -------------- -------------
-**<Leader>r**  Run python
+**<Leader>r**  Run python  (g:pymode_run enabled)
 -------------- -------------
-**<Leader>b**  Set, unset breakpoint
+**<Leader>b**  Set, unset breakpoint (g:pymode_breakpoint enabled)
+-------------- -------------
+[[             Jump on previous class or function (normal, visual, operator modes)
+-------------- -------------
+]]             Jump on next class or function  (normal, visual, operator modes)
+-------------- -------------
+[m             Jump on previous class or method (normal, visual, operator modes)
+-------------- -------------
+]m             Jump on next class or method (normal, visual, operator modes)
+-------------- -------------
+ac             Select a class. Ex: vac, dac, yac, cac (normal, operator modes)
+-------------- -------------
+ic             Select inner class. Ex: vic, dic, yic, cic (normal, operator modes)
+-------------- -------------
+am             Select a function or method. Ex: vam, dam, yam, cam (normal, operator modes)
+-------------- -------------
+im             Select inner function or method. Ex: vim, dim, yim, cim (normal, operator modes)
 ============== =============
 
 .. note:: See also ``:help ropevim.txt``
@@ -325,6 +399,10 @@ Copyright (C) 2011 Kirill Klenov (klen_)
     **Pyflakes**:
         Copyright (c) 2005 Divmod, Inc.
         http://www.divmod.com/
+
+    **Python syntax for vim**
+        Copyright (c) 2010 Dmitry Vasiliev
+        http://www.hlabs.spb.ru/vim/python.vim
 
 
 License

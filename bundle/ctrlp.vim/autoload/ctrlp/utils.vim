@@ -4,7 +4,7 @@
 " Author:        Kien Nguyen <github.com/kien>
 " =============================================================================
 
-" Static variables {{{
+" Static variables {{{1
 fu! ctrlp#utils#lash()
 	retu &ssl || !exists('+ssl') ? '/' : '\'
 endf
@@ -20,28 +20,33 @@ fu! ctrlp#utils#opts()
 	en
 endf
 cal ctrlp#utils#opts()
-"}}}
-" Files and Directories {{{
+" Files and Directories {{{1
 fu! ctrlp#utils#cachedir()
 	retu s:cache_dir
 endf
 
-fu! ctrlp#utils#cachefile()
-	let cache_file = substitute(getcwd(), '\([\/]\|^\a\zs:\)', '%', 'g').'.txt'
-	retu s:cache_dir.s:lash.cache_file
+fu! ctrlp#utils#cachefile(...)
+	let tail = exists('a:1') ? '.'.a:1 : ''
+	let cache_file = substitute(getcwd(), '\([\/]\|^\a\zs:\)', '%', 'g').tail.'.txt'
+	retu exists('a:1') ? cache_file : s:cache_dir.s:lash.cache_file
 endf
 
 fu! ctrlp#utils#readfile(file)
 	if filereadable(a:file)
 		let data = readfile(a:file)
-		if empty(data) || type(data) != 3 | unl data | let data = [] | en
+		if empty(data) || type(data) != 3
+			unl data
+			let data = []
+		en
 		retu data
 	en
 	retu []
 endf
 
 fu! ctrlp#utils#mkdir(dir)
-	if exists('*mkdir') && !isdirectory(a:dir) | sil! cal mkdir(a:dir) | en
+	if exists('*mkdir') && !isdirectory(a:dir)
+		sil! cal mkdir(a:dir)
+	en
 endf
 
 fu! ctrlp#utils#writecache(lines, ...)
@@ -49,13 +54,15 @@ fu! ctrlp#utils#writecache(lines, ...)
 	cal ctrlp#utils#mkdir(cache_dir)
 	if isdirectory(cache_dir)
 		sil! cal writefile(a:lines, exists('a:2') ? a:2 : ctrlp#utils#cachefile())
-		if !exists('a:1') || !exists('a:2') | let g:ctrlp_newcache = 0 | en
+		if !exists('a:1')
+			let g:ctrlp_newcache = 0
+		en
 	en
 endf
 
 fu! ctrlp#utils#glob(...)
-	retu call('glob',  v:version > 701 ? [a:1, a:2] : [a:1])
+	retu call('glob',  v:version > 701 ? a:000 : a:1)
 endf
 "}}}
 
-" vim:fen:fdl=0:fdc=1:ts=2:sw=2:sts=2
+" vim:fen:fdm=marker:fmr={{{,}}}:fdl=0:fdc=1:ts=2:sw=2:sts=2

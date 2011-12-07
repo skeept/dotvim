@@ -1,6 +1,31 @@
 Changelog
 =========
 
+## 2011-11-30 0.5.0
+-------------------
+* Add python objects and motions (beta)
+  :h pymode_motion
+
+## 2011-11-27 0.4.8
+-------------------
+* Add `PyLintWindowToggle` command
+* Fix some bugs
+
+## 2011-11-23 0.4.6
+-------------------
+* Enable all syntax highlighting
+  For old settings set in your vimrc:
+    let g:pymode_syntax_builtin_objs = 0
+    let g:pymode_syntax_builtin_funcs = 0
+
+* Change namespace of syntax variables
+  See README
+
+## 2011-11-18 0.4.5
+-------------------
+* Add 'g:pymode_syntax' option
+* Highlight 'self' keyword
+
 ## 2011-11-16 0.4.4
 -------------------
 * Minor fixes

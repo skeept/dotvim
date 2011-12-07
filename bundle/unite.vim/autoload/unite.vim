@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Nov 2011.
+" Last Modified: 05 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -60,7 +60,7 @@ function! unite#set_substitute_pattern(buffer_name, pattern, subst, ...)"{{{
   endfor
 endfunction"}}}
 function! unite#set_buffer_name_option(buffer_name, option_name, value)"{{{
-  return unite#set_profile(a:buffer_name, a:option_name, a:option_name, a:value)
+  return unite#set_profile(a:buffer_name, a:option_name, a:value)
 endfunction"}}}
 function! unite#get_buffer_name_option(buffer_name, option_name)"{{{
   return unite#get_profile(a:buffer_name, a:option_name)
@@ -299,7 +299,7 @@ function! unite#get_context()"{{{
   return unite#get_current_unite().context
 endfunction"}}}
 function! unite#set_context(context)"{{{
-  let old_context = unite#get_current_unite().context
+  let old_context = unite#get_context()
 
   if exists('b:unite') && !s:use_current_unite
     let b:unite.context = a:context
@@ -1322,6 +1322,9 @@ function! s:initialize_sources(...)"{{{
     if !has_key(source, 'is_listed')
       let source.is_listed = 1
     endif
+    if !has_key(source, 'is_forced')
+      let source.is_forced = 0
+    endif
     if !has_key(source, 'required_pattern_length')
       let source.required_pattern_length = 0
     endif
@@ -1425,6 +1428,10 @@ function! s:initialize_profile(profile_name)"{{{
   endif
 endfunction"}}}
 function! s:initialize_candidates(candidates, source_name)"{{{
+  let unite = unite#get_current_unite()
+  let [max_width, max_source_name] =
+        \ s:adjustments(winwidth(0)-5, unite.max_source_name, 2)
+
   let candidates = []
   for candidate in a:candidates
     let candidate = deepcopy(candidate)
@@ -1447,26 +1454,61 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     " Force set.
     let candidate.source = a:source_name
 
+    " Substitute tab.
+    let candidate.abbr = substitute(candidate.abbr, '\t', '>---', 'g')
+
     let candidate.is_multiline = get(candidate, 'is_multiline', 0)
-    if candidate.is_multiline && candidate.abbr =~ '\r\?\n'
-      let cnt = 0
-      for multi in split(candidate.abbr, '\r\?\n', 1)[:4]
-        let candidate_multi = deepcopy(candidate)
-        let candidate_multi.abbr =
-              \ (cnt == 0 ? '+ ' : '| ') . multi
 
-        if cnt != 0
-          let candidate_multi.is_dummy = 1
-        endif
+    " Delete too long abbr.
+    if candidate.is_multiline
+      let candidate.abbr = candidate.abbr[: max_width * 8+10]
+    elseif len(candidate.abbr) > max_width * 2
+      let candidate.abbr = candidate.abbr[: max_width * 2]
+    endif
 
-        call add(candidates, candidate_multi)
-
-        let cnt += 1
-      endfor
-    else
+    if !candidate.is_multiline
       let candidate.abbr = '  ' . candidate.abbr
       call add(candidates, candidate)
+      continue
     endif
+
+    if candidate.abbr !~ '\n'
+      " Auto split.
+      let abbr = candidate.abbr
+      let candidate.abbr = ''
+
+      while abbr != ''
+        let trunc_abbr = unite#util#strwidthpart(abbr, max_width)
+        let candidate.abbr .= trunc_abbr . "~\n"
+        let abbr = abbr[len(trunc_abbr):]
+      endwhile
+
+      let candidate.abbr = substitute(candidate.abbr, '\~\n$', '', '')
+    else
+      let candidate.abbr = substitute(candidate.abbr, '\r\?\n$', '^@', '')
+    endif
+
+    if candidate.abbr !~ '\n'
+      let candidate.abbr = '  ' . candidate.abbr
+      call add(candidates, candidate)
+      continue
+    endif
+
+    " Convert multi line.
+    let cnt = 0
+    for multi in split(candidate.abbr, '\r\?\n', 1)[:4]
+      let candidate_multi = deepcopy(candidate)
+      let candidate_multi.abbr =
+            \ (cnt == 0 ? '+ ' : '| ') . multi
+
+      if cnt != 0
+        let candidate_multi.is_dummy = 1
+      endif
+
+      call add(candidates, candidate_multi)
+
+      let cnt += 1
+    endfor
   endfor
 
   return candidates
@@ -1582,7 +1624,14 @@ function! s:recache_candidates_loop(context, is_force, is_vimfiler)"{{{
 
     " Set context.
     let source.unite__context.input = a:context.input
-    let source.unite__context.is_redraw = a:context.is_redraw
+    if source.required_pattern_length > 0
+          \ && !source.is_forced
+      " Forced redraw.
+      let source.unite__context.is_redraw = 1
+      let source.is_forced = 1
+    else
+      let source.unite__context.is_redraw = a:context.is_redraw
+    endif
     let source.unite__context.is_changed = a:context.is_changed
     let source.unite__context.is_invalidate = source.unite__is_invalidate
 
@@ -1647,7 +1696,8 @@ function! s:get_source_candidates(source, is_vimfiler)"{{{
 endfunction"}}}
 function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
   let unite = unite#get_current_unite()
-  let [max_width, max_source_name] = s:adjustments(winwidth(0)-2, unite.max_source_name, 5)
+  let [max_width, max_source_name] =
+        \ s:adjustments(winwidth(0)-1, unite.max_source_name, 2)
   if unite.max_source_name == 0
     let max_width -= 1
   endif
@@ -1657,15 +1707,15 @@ function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
   " Create key table.
   let keys = {}
   for [key, number] in items(a:quick_match_table)
-    let keys[number] = key . ': '
+    let keys[number] = key . '|'
   endfor
 
   " Add number.
   let num = 0
   for candidate in a:candidates
     call add(candidates,
-          \ (has_key(keys, num) ? keys[num] : '   ')
-          \ . (unite.max_source_name == 0 ? ' ' :
+          \ (has_key(keys, num) ? keys[num] : '  ')
+          \ . (unite.max_source_name == 0 ? '' :
           \    unite#util#truncate(candidate.source, max_source_name))
           \ . unite#util#truncate_smart(candidate.abbr, max_width, max_width/3, '..'))
     let num += 1
@@ -1675,14 +1725,15 @@ function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
 endfunction"}}}
 function! s:convert_lines(candidates)"{{{
   let unite = unite#get_current_unite()
-  let [max_width, max_source_name] = s:adjustments(winwidth(0)-2, unite.max_source_name, 2)
+  let [max_width, max_source_name] =
+        \ s:adjustments(winwidth(0)-1, unite.max_source_name, 2)
   if unite.max_source_name == 0
     let max_width -= 1
   endif
 
   return map(copy(a:candidates),
-        \ "(v:val.unite__is_marked ? '*  ' : '-  ')
-        \ . (unite.max_source_name == 0 ? ' '
+        \ "(v:val.unite__is_marked ? '* ' : '- ')
+        \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(v:val.source, max_source_name))
         \ . unite#util#truncate_smart(v:val.abbr, " . max_width .  ", max_width/3, '..')")
 endfunction"}}}
@@ -1865,12 +1916,13 @@ function! s:initialize_unite_buffer()"{{{
 
     syntax clear uniteCandidateSourceName
     if unite.max_source_name > 0
-      syntax match uniteCandidateSourceName /\%4c[[:alnum:]_\/-]\+/ contained
+      syntax match uniteCandidateSourceName /\%3c[[:alnum:]_\/-]\+/ contained
     else
       syntax match uniteCandidateSourceName /^- / contained
     endif
-    let source_padding = 5
-    execute 'syntax match uniteCandidateAbbr' '/\%'.(unite.max_source_name+source_padding).'c.*/ contained'
+    let source_padding = 4
+    execute 'syntax match uniteCandidateAbbr' '/\%'
+          \ .(unite.max_source_name+source_padding).'c.*/ contained'
 
     execute 'highlight default link uniteCandidateAbbr'  g:unite_abbr_highlight
 
@@ -1879,7 +1931,8 @@ function! s:initialize_unite_buffer()"{{{
       if source.syntax != ''
         let name = len(unite.sources) > 1 ? source.name : ''
 
-        execute 'syntax match' source.syntax '/\%'.(unite.max_source_name+source_padding).'c.*/ contained'
+        execute 'syntax match' source.syntax '/\%'
+              \ .(unite.max_source_name+source_padding).'c.*/ contained'
 
         execute 'highlight default link' source.syntax g:unite_abbr_highlight
 

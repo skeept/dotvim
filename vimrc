@@ -285,7 +285,28 @@ let tlist_gams_settings='gams;e:equation;c:variable;m:model;s:Solve Statement'
 let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "map <F3> :TlistToggle<cr>
 "imap <F3> <ESC>:TlistToggle<cr>
-"
+
+"tagbar gms and gamslst settings
+let g:tagbar_type_gams = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:variable',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ ],
+  \ }
+let g:tagbar_type_gamslst = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:var val',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ 'a:eq val',
+  \ ],
+  \ }
+
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
 
@@ -567,3 +588,4 @@ nmap <tab><tab> <c-w><c-w>
 imap  
 nmap  
 cnoremap  
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov

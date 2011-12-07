@@ -319,3 +319,4 @@ nmap <tab><tab> <c-w><c-w>
 imap  
 nmap  
 cnoremap  
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov

@@ -3,7 +3,7 @@
 Author:		Jan Larres <jan@majutsushi.net>
 Licence:	Vim licence, see |license|
 Homepage:	http://majutsushi.github.com/tagbar/
-Version:	2.1
+Version:	2.2
 
 ==============================================================================
 Contents					*tagbar* *tagbar-contents*
@@ -488,6 +488,9 @@ TagbarComment
 TagbarKind
     The header of generic "kinds" like "functions" and "variables".
 
+TagbarNestedKind
+    The "kind" headers in square brackets inside of scopes.
+
 TagbarScope
     Tags that define a scope like classes, structs etc.
 
@@ -548,6 +551,16 @@ language) definitions. This can be used both to change the settings of the
 existing types and to add completely new types. A complete configuration
 consists of a type definition for Tagbar in your |vimrc| and optionally a
 language definition for ctags in case you want to add a new language.
+
+Before writing your own extension try googling for already existing ones. For
+example, here is one for Scala:
+http://latestbuild.net/scala-ctags-and-vim-tagbar
+Since those aren't "canonical" configurations and are somewhat subjective they
+probably won't be included in Tagbar, but it is easy enough to just copy&paste
+them into your own setup. Note that you don't have to modify Tagbar directly
+like the article suggests, you can just put the configuration into your
+|vimrc| (see below for more details).
+
 
 Every type definition in Tagbar is a dictionary with the following keys:
 
@@ -861,6 +874,23 @@ value here instead of simply "ctags".
 ==============================================================================
 8. History						*tagbar-history*
 
+2.2 (2011-11-26)
+    - Small incompatible change: TagbarOpen now doesn't jump to the Tagbar
+      window anymore if it is already open. Use "TagbarOpen j" instead or see
+      its documentation for more options.
+    - Tags inside of scopes now have a header displaying their "kind".
+    - The Tagbar contents are now immediately updated on save for files
+      smaller than a configurable size.
+    - Tagbar can now be configured to jump to a tag with only a single-click
+      instead of a double-click.
+    - Most of the script has been moved to the |autoload| directory, so Vim
+      startup should be faster (thanks to Kien N).
+    - Jumping to tags should work most of the time even if the file has been
+      modified and not saved.
+    - If Ctags has been installed into the default location using Homebrew or
+      MacPorts it should now be found automatically.
+    - Several bugfixes.
+
 2.1 (2011-05-29)
     - Make Tagbar work in (hopefully) all cases under Windows
     - Handle cases where 'encoding' is different from system encoding, for
@@ -940,13 +970,13 @@ software.
 
 The folding technique was inspired by NERDTree by Martin Grenfell.
 
-Taybin Rutkin:
-  - Contributed tagbar_autofocus option
-Seth Milliken:
-  - Contributed folding keybindings that resemble the built-in ones
-
-Thanks to the following people for feature suggestions etc: Jan Christoph
-Ebersbach, pielgrzym
+Thanks to the following people for code contributions, feature suggestions etc:
+Jan Christoph Ebersbach
+Leandro Freitas
+Seth Milliken
+Kien N
+pielgrzym
+Taybin Rutkin
 
 ==============================================================================
  vim: tw=78 ts=8 sw=8 sts=8 noet ft=help
