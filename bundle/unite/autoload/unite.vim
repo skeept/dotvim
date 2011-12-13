@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Dec 2011.
+" Last Modified: 13 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2111,12 +2111,18 @@ function! s:on_cursor_hold_i()  "{{{
       return
     endif
 
-    execute 'match' (line('.') <= prompt_linenr ?
+    silent! execute 'match' (line('.') <= prompt_linenr ?
           \ line('$') <= prompt_linenr ?
-          \ 'UniteError /\%'.prompt_linenr.'l/' :
+          \ 'uniteError /\%'.prompt_linenr.'l/' :
           \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
           \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
+    syntax clear uniteCandidateInputKeyword
 
+    if unite#get_input() != ''
+      execute 'syntax match uniteCandidateInputKeyword'
+            \ '/'.escape(unite#util#escape_pattern(unite#get_input()), '/').'/'
+            \ 'containedin=uniteCandidateAbbr'
+    endif
   endif
 
   " Prompt check.
@@ -2164,9 +2170,9 @@ function! s:on_cursor_moved()  "{{{
   execute 'setlocal' line('.') == prompt_linenr ?
         \ 'modifiable' : 'nomodifiable'
 
-  execute 'match' (line('.') <= prompt_linenr ?
+  silent! execute 'match' (line('.') <= prompt_linenr ?
         \ line('$') <= prompt_linenr ?
-        \ 'UniteError /\%'.prompt_linenr.'l/' :
+        \ 'uniteError /\%'.prompt_linenr.'l/' :
         \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
         \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
 
