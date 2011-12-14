@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Dec 2011.
+" Last Modified: 14 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -855,10 +855,12 @@ function! unite#start_temporary(sources, ...)"{{{
   if &filetype == 'unite'
     " Get current context.
     let old_context = unite#get_context()
+    let unite = unite#get_current_unite()
     let context = deepcopy(old_context)
     let context.old_buffer_info = insert(context.old_buffer_info, {
-          \ 'buffer_name' : unite#get_current_unite().buffer_name,
+          \ 'buffer_name' : unite.buffer_name,
           \ 'pos' : getpos('.'),
+          \ 'profile_name' : unite.profile_name,
           \ })
   else
     let context = {}
@@ -898,8 +900,8 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
       if !empty(ret)
         let [type, info] = ret
         if type ==# 'file'
-          let info[1] = s:initialize_candidates([info[1]], source.name)
-          let info[1] = s:initialize_vimfiler_candidates([info[1]])
+          call s:initialize_candidates([info[1]], source.name)
+          call s:initialize_vimfiler_candidates([info[1]])
         elseif type ==# 'directory'
           " nop
         elseif type ==# 'error'
@@ -1957,10 +1959,10 @@ function! s:initialize_unite_buffer()"{{{
 
         execute 'highlight default link' source.syntax g:unite_abbr_highlight
 
-        execute printf('syntax region %s start="^-  %s" end="$" contains=uniteCandidateMarker,%s%s',
+        execute printf('syntax region %s start="^- %s" end="$" contains=uniteCandidateMarker,%s%s',
               \ 'uniteSourceLine__'.source.syntax,
               \ (name == '' ? '' : name . '\>'),
-              \ (name == '' ? '' : 'uniteSourceNames,'), source.syntax
+              \ (name == '' ? '' : 'uniteCandidateSourceName,'), source.syntax
               \ )
 
         call s:call_hook([source], 'on_syntax')
@@ -2009,6 +2011,10 @@ function! s:switch_unite_buffer(buffer_name, context)"{{{
 endfunction"}}}
 
 function! s:redraw(is_force, winnr) "{{{
+  if unite#util#is_cmdwin()
+    return
+  endif
+
   if a:winnr > 0
     " Set current unite.
     let use_current_unite_save = s:use_current_unite
@@ -2111,17 +2117,23 @@ function! s:on_cursor_hold_i()  "{{{
       return
     endif
 
-    silent! execute 'match' (line('.') <= prompt_linenr ?
-          \ line('$') <= prompt_linenr ?
-          \ 'uniteError /\%'.prompt_linenr.'l/' :
-          \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
-          \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
-    syntax clear uniteCandidateInputKeyword
+    if exists('b:current_syntax')
+      execute 'match' (line('.') <= prompt_linenr ?
+            \ line('$') <= prompt_linenr ?
+            \ 'uniteError /\%'.prompt_linenr.'l/' :
+            \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
+            \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
+      syntax clear uniteCandidateInputKeyword
 
-    if unite#get_input() != ''
-      execute 'syntax match uniteCandidateInputKeyword'
-            \ '/'.escape(unite#util#escape_pattern(unite#get_input()), '/').'/'
-            \ 'containedin=uniteCandidateAbbr'
+      if unite#get_input() != ''
+        let pattern = escape(unite#util#escape_pattern(unite#get_input()), '/')
+        execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
+              \ 'containedin=uniteCandidateAbbr'
+        for source in filter(copy(unite.sources), 'v:val.syntax != ""')
+          execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
+                \ 'containedin='.source.syntax
+        endfor
+      endif
     endif
   endif
 
@@ -2170,11 +2182,13 @@ function! s:on_cursor_moved()  "{{{
   execute 'setlocal' line('.') == prompt_linenr ?
         \ 'modifiable' : 'nomodifiable'
 
-  silent! execute 'match' (line('.') <= prompt_linenr ?
-        \ line('$') <= prompt_linenr ?
-        \ 'uniteError /\%'.prompt_linenr.'l/' :
-        \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
-        \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
+  if exists('b:current_syntax')
+    silent! execute 'match' (line('.') <= prompt_linenr ?
+          \ line('$') <= prompt_linenr ?
+          \ 'uniteError /\%'.prompt_linenr.'l/' :
+          \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
+          \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
+  endif
 
   if unite#get_current_unite().context.auto_preview
     call s:do_auto_preview()
