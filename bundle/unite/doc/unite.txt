@@ -1222,14 +1222,15 @@ directory_mru	Nominates directories you used recently as candidates,
 		ordering by time series.
 
 						*unite-source-file_rec*
-file_rec	Nominates all directory or file names of input narrowing text
-		under the current directly as candidates.  This may get Vim
-		frozen when there are too many candidates. The candidates is
-		cached by file_rec source. If you clear cache, use
+file_rec	Gather Files recursive. Nominates all directory or file names
+		under the search directory(argument 1) or the current
+		directly(if argument is ommitted) as candidates.  This may get
+		Vim frozen when there are too many candidates. The candidates
+		is cached by file_rec source. If you clear cache, use
 		|<Plug>(unite_redraw)| keymapping.
 
 		Source arguments:
-		1. the narrowing text.
+		1. the search directory.
 
 						*unite-source-file_rec/async*
 file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
@@ -1239,7 +1240,7 @@ file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
 		http://github.com/Shougo/vimproc/tree/master
 
 		Source arguments:
-		1. the narrowing text.
+		1. the search directory.
 
 						*unite-source-buffer*
 buffer		Nominates opened buffers as candidates, ordering by time
@@ -2107,6 +2108,9 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2011-12-14
+- Fixed highlight.
 
 2011-12-13
 - Improved ignore pattern.
