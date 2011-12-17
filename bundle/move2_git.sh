@@ -47,11 +47,39 @@ for folder in * ; do
     fi
   fi
 done
+#can we do it multiline?
+git_cmd=$(cat << EOF
+cd {} >& /dev/null
+echo ">>> git >>> {}";
+GIT_SSL_NO_VERIFY=true git pull origin master 2>&1      |\
+  grep -v "Already up-to-date" |\
+  grep -v "github.com" |\
+  grep -v -i "FETCH_HEAD"
+EOF
+)
+#printf "$git_cmd"
+
+hg_cmd=$(cat << EOF
+cd {} >& /dev/null
+echo ">>> hg >>> {}";
+hg pull -u |\
+  grep -v "searching for changes" |\
+  grep -v "all remote heads known locally" |\
+  grep -v "no changes found" |\
+  grep -v "pulling from"
+EOF
+)
+
+#all remote heads known locally
+#no changes found
+
 if test -n "$git_folders"; then
-  parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+  #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+  parallel -j 20 "${git_cmd}" ::: $git_folders
 fi
 if test -n "$hg_folders"; then
-  parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u                                   " ::: $hg_folders
+  #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
+  parallel -j 20 "${hg_cmd}" ::: $hg_folders
 fi
 }
 
