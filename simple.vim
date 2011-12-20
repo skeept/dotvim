@@ -320,3 +320,7 @@ imap  
 nmap  
 cnoremap  
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+
+"python compiler settings
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %
