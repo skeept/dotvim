@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Dec 2011.
+" Last Modified: 18 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -230,8 +230,8 @@ let s:profiles = {}
 call unite#set_substitute_pattern('files', '^\~',
       \ substitute(unite#util#substitute_path_separator($HOME),
       \ ' ', '\\\\ ', 'g'), -100)
-call unite#set_substitute_pattern('files', '[^~.*]\ze/', '\0*', 100)
-call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
+call unite#set_substitute_pattern('files', '[^~.* ]\ze/', '\0*', 100)
+call unite#set_substitute_pattern('files', '/\ze[^~.* ]', '/*', 100)
 call unite#set_substitute_pattern('files', '\.', '*.', 1000)
 call unite#set_profile('files', 'smartcase', 0)
 call unite#set_profile('files', 'ignorecase', 1)
@@ -539,7 +539,8 @@ function! s:get_default_action(source_name, kind_name)"{{{
 endfunction"}}}
 
 function! unite#escape_match(str)"{{{
-  return substitute(substitute(escape(a:str, '~\.^$[]'), '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
+  return substitute(substitute(escape(a:str, '~\.^$[]'),
+        \ '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
 endfunction"}}}
 function! unite#complete_source(arglead, cmdline, cursorpos)"{{{
   let sources = filter(s:initialize_sources(), 'v:val.is_listed')
@@ -617,14 +618,10 @@ function! unite#redraw_candidates() "{{{
   let &l:modifiable = l:modifiable_save
 
   let unite = unite#get_current_unite()
+  let context = unite.context
   let unite.candidates = candidates
 
-  if unite.context.auto_resize && winnr('$') != 1
-    " Auto resize.
-    let max_len = unite.prompt_linenr + len(candidates)
-    execute 'resize' min([max_len, unite.context.winheight])
-    normal! zb
-  endif
+  call unite#_resize_window()
 
   if pos != getpos('.')
     call setpos('.', pos)
@@ -1107,7 +1104,9 @@ function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'create')
     let a:context.create = 0
   endif
-  let a:context.is_redraw = 0
+  if !has_key(a:context, 'is_redraw')
+    let a:context.is_redraw = 0
+  endif
   let a:context.is_changed = 0
 
   return a:context
@@ -1215,6 +1214,7 @@ function! s:quit_session(is_force)  "{{{
     else
       noautocmd close!
       execute unite.winnr . 'wincmd w'
+      call unite#_resize_window()
     endif
 
     call s:on_buf_unload(bufname)
@@ -1552,7 +1552,7 @@ function! s:initialize_vimfiler_candidates(candidates)"{{{
       let candidate.vimfiler__is_executable = 0
     endif
     if !has_key(candidate, 'vimfiler__filesize')
-      let candidate.vimfiler__filesize = 0
+      let candidate.vimfiler__filesize = -1
     endif
     if !has_key(candidate, 'vimfiler__filetime')
       let candidate.vimfiler__filetime = 0
@@ -2002,11 +2002,7 @@ function! s:switch_unite_buffer(buffer_name, context)"{{{
   endif
 
   if !a:context.no_split && winnr('$') != 1
-    if a:context.vertical
-      execute 'vertical resize' a:context.winwidth
-    else
-      execute 'resize' a:context.winheight
-    endif
+    call unite#_resize_window()
   endif
 endfunction"}}}
 
@@ -2030,17 +2026,18 @@ function! s:redraw(is_force, winnr) "{{{
   endif
 
   let unite = unite#get_current_unite()
+  let context = unite.context
 
-  if !unite.context.is_redraw
-    let unite.context.is_redraw = a:is_force
+  if !context.is_redraw
+    let context.is_redraw = a:is_force
   endif
 
-  if unite.context.is_redraw
+  if context.is_redraw
     call unite#clear_message()
   endif
 
   let input = unite#get_input()
-  if !unite.context.is_redraw && input ==# unite.last_input
+  if !context.is_redraw && input ==# unite.last_input
         \ && !unite.is_async
     return
   endif
@@ -2059,6 +2056,7 @@ function! s:redraw(is_force, winnr) "{{{
     let s:use_current_unite = use_current_unite_save
     let s:current_unite = unite_save
     wincmd p
+    call unite#_resize_window()
   endif
 
   let context = unite#get_context()
@@ -2074,6 +2072,29 @@ function! s:redraw(is_force, winnr) "{{{
 
   if context.auto_preview
     call s:do_auto_preview()
+  endif
+endfunction"}}}
+function! unite#_resize_window() "{{{
+  if &filetype !=# 'unite' || winnr('$') == 1
+    return
+  endif
+
+  let context = unite#get_context()
+  let unite = unite#get_current_unite()
+
+  if context.auto_resize
+    " Auto resize.
+    let max_len = unite.prompt_linenr + len(unite.candidates)
+    execute 'resize' min([max_len, context.winheight])
+    normal! zb
+  elseif context.vertical
+        \ && winwidth(winnr()) != context.winwidth
+    execute 'vertical resize' context.winwidth
+    let context.winwidth = winwidth(winnr())
+  elseif !context.vertical
+        \ && winheight(winnr()) != context.winheight
+    execute 'resize' context.winheight
+    let context.winheight = winheight(winnr())
   endif
 endfunction"}}}
 
@@ -2112,29 +2133,7 @@ function! s:on_cursor_hold_i()  "{{{
   if line('.') == prompt_linenr || unite.context.is_redraw
     " Redraw.
     call unite#redraw()
-
-    if &filetype !=# 'unite'
-      return
-    endif
-
-    if exists('b:current_syntax')
-      execute 'match' (line('.') <= prompt_linenr ?
-            \ line('$') <= prompt_linenr ?
-            \ 'uniteError /\%'.prompt_linenr.'l/' :
-            \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
-            \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
-      syntax clear uniteCandidateInputKeyword
-
-      if unite#get_input() != ''
-        let pattern = escape(unite#util#escape_pattern(unite#get_input()), '/')
-        execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
-              \ 'containedin=uniteCandidateAbbr'
-        for source in filter(copy(unite.sources), 'v:val.syntax != ""')
-          execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
-                \ 'containedin='.source.syntax
-        endfor
-      endif
-    endif
+    call s:change_highlight()
   endif
 
   " Prompt check.
@@ -2151,6 +2150,7 @@ function! unite#_on_cursor_hold()  "{{{
   if &filetype ==# 'unite'
     " Redraw.
     call unite#redraw()
+    call s:change_highlight()
 
     if unite#get_current_unite().is_async
       " Ignore key sequences.
@@ -2234,6 +2234,43 @@ function! s:on_buf_unload(bufname)  "{{{
   " Call finalize functions.
   call s:call_hook(unite#loaded_sources_list(), 'on_close')
   let unite.is_finalized = 1
+endfunction"}}}
+function! s:change_highlight()  "{{{
+  if &filetype !=# 'unite'
+        \ || !exists('b:current_syntax')
+    return
+  endif
+
+  let unite = unite#get_current_unite()
+  let prompt_linenr = unite.prompt_linenr
+  execute 'match' (line('.') <= prompt_linenr ?
+        \ line('$') <= prompt_linenr ?
+        \ 'uniteError /\%'.prompt_linenr.'l/' :
+        \ g:unite_cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
+        \ g:unite_cursor_line_highlight.' /\%'.line('.').'l/')
+
+  syntax clear uniteCandidateInputKeyword
+
+  if unite#get_input() == ''
+    return
+  endif
+
+  syntax case ignore
+
+  for input in s:get_substitute_input(unite#get_input())
+    for pattern in map(split(input, '\\\@<! '),
+          \ "substitute(escape(unite#escape_match(v:val), '/'),
+          \   '\\\\\\@<!|', '\\\\|', 'g')")
+      execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
+            \ 'containedin=uniteCandidateAbbr contained'
+      for source in filter(copy(unite.sources), 'v:val.syntax != ""')
+        execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
+              \ 'containedin='.source.syntax.' contained'
+      endfor
+    endfor
+  endfor
+
+  syntax case match
 endfunction"}}}
 
 " Internal helper functions."{{{
@@ -2383,13 +2420,7 @@ function! s:do_auto_preview()"{{{
   " Restore window size.
   let context = unite#get_context()
   if s:has_preview_window()
-    if context.vertical
-      if winwidth(winnr()) != context.winwidth
-        execute 'vertical resize' context.winwidth
-      endif
-    elseif winheight(winnr()) != context.winwidth
-      execute 'resize' context.winheight
-    endif
+    call unite#_resize_window()
   endif
 endfunction"}}}
 function! s:init_cursor()"{{{
