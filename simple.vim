@@ -56,6 +56,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
+nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 "cmap tb tab split +b
 

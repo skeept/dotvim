@@ -2123,9 +2123,28 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2011-12-22
+- Improved error detecton when call hook.
+- Fixed for vimfiler.
+- Fixed updatetime error.
+- Fixed documentation.
+- Force use glob().
+- Set kind action_table.
+- Fixed substitute patterns list.
+
+2011-12-21
+- Improved unite#_resize_window().
+- Improved detect source and action error.
+- Improved error detection.
+
+2011-12-20
+- Use vimproc#read_dir() (experimental).
+- Improved glob().
+
 2011-12-19
 - Added -update-time and -cursor-line-high-light options.
 - Improved rename action.
+- Improved buflisted().
 
 2011-12-18
 - Implemented OR matching.

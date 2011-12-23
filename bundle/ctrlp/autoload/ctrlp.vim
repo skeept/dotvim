@@ -2,7 +2,7 @@
 " File:          autoload/ctrlp.vim
 " Description:   Fuzzy file, buffer, mru and tag finder.
 " Author:        Kien Nguyen <github.com/kien>
-" Version:       1.6.4
+" Version:       1.6.5
 " =============================================================================
 
 " Static variables {{{1
@@ -54,7 +54,7 @@ let s:lash = ctrlp#utils#lash()
 " Global options
 let s:glbs = { 'magic': 1, 'to': 1, 'tm': 0, 'sb': 1, 'hls': 0, 'im': 0,
 	\ 'report': 9999, 'sc': 0, 'ss': 0, 'siso': 0, 'mfd': 200, 'mouse': 'n',
-	\ 'gcr': 'a:block-PmenuSel-blinkon0' }
+	\ 'gcr': 'a:blinkon0' }
 
 if s:lazy
 	cal extend(s:glbs, { 'ut': ( s:lazy > 1 ? s:lazy : 250 ) })
@@ -128,12 +128,12 @@ fu! ctrlp#reset()
 endf
 " * Files() {{{1
 fu! s:Files()
-	let [cwd, cache_file] = [getcwd(), ctrlp#utils#cachefile()]
-	if g:ctrlp_newcache || !filereadable(cache_file) || !s:caching
+	let [cwd, cafile, g:ctrlp_allfiles] = [getcwd(), ctrlp#utils#cachefile(), []]
+	if g:ctrlp_newcache || !filereadable(cafile) || !s:caching
 		let lscmd = s:lsCmd()
 		" Get the list of files
 		if empty(lscmd)
-			cal s:GlobPath(cwd, [], 0)
+			cal s:GlobPath(cwd, 0)
 		el
 			sil! cal ctrlp#progress('Indexing...')
 			try | cal s:UserCmd(cwd, lscmd) | cat | retu [] | endt
@@ -142,49 +142,27 @@ fu! s:Files()
 		cal ctrlp#rmbasedir(g:ctrlp_allfiles)
 		let read_cache = 0
 	el
-		let g:ctrlp_allfiles = ctrlp#utils#readfile(cache_file)
+		let g:ctrlp_allfiles = ctrlp#utils#readfile(cafile)
 		let read_cache = 1
 	en
 	if len(g:ctrlp_allfiles) <= s:compare_lim
 		cal sort(g:ctrlp_allfiles, 'ctrlp#complen')
 	en
-	cal s:writecache(read_cache, cache_file)
+	cal s:writecache(read_cache, cafile)
 	retu g:ctrlp_allfiles
 endf
 
-fu! s:GlobPath(dirs, allfiles, depth)
+fu! s:GlobPath(dirs, depth)
 	let entries = split(globpath(a:dirs, s:glob), "\n")
 	if s:usrign != ''
 		cal filter(entries, 'v:val !~ s:usrign')
 	en
-	let [dirs, g:ctrlp_allfiles] = s:DirAndFile(copy(entries))
-	cal extend(g:ctrlp_allfiles, a:allfiles, 0)
-	let depth = a:depth + 1
-	if !empty(dirs) && !s:maxf(len(g:ctrlp_allfiles)) && depth <= s:maxdepth
+	let [dnf, depth] = [ctrlp#dirnfile(entries), a:depth + 1]
+	cal extend(g:ctrlp_allfiles, dnf[1])
+	if !empty(dnf[0]) && !s:maxf(len(g:ctrlp_allfiles)) && depth <= s:maxdepth
 		sil! cal ctrlp#progress(len(g:ctrlp_allfiles))
-		cal s:GlobPath(join(dirs, ','), g:ctrlp_allfiles, depth)
+		cal s:GlobPath(join(dnf[0], ','), depth)
 	en
-endf
-
-fu! s:DirAndFile(entries)
-	let items = [[], []]
-	for each in a:entries
-		let etype = getftype(each)
-		if etype == 'dir'
-			if s:dotfiles | if match(each, '[\/]\.\{,2}$') < 0
-				cal add(items[0], each)
-			en | el
-				cal add(items[0], each)
-			en
-		el
-			if s:folsym
-				cal add(items[1], each)
-			el | if etype != 'link'
-				cal add(items[1], each)
-			en | en
-		en
-	endfo
-	retu items
 endf
 
 fu! s:UserCmd(path, lscmd)
@@ -232,14 +210,11 @@ fu! s:Buffers() "{{{1
 	retu allbufs
 endf
 " * MatchedItems() {{{1
-fu! s:MatchIt(items, pat, limit, ispathitem)
-	let [items, pat, limit, newitems] = [a:items, a:pat, a:limit, []]
-	let mfunc = s:byfname && a:ispathitem ? 's:matchfname'
-		\ : s:itemtype > 2 && len(items) < 30000 && !a:ispathitem ? 's:matchtab'
-		\ : 'match'
-	for item in items
-		if call(mfunc, [item, pat]) >= 0 | cal add(newitems, item) | en
-		if limit > 0 && len(newitems) >= limit | brea | en
+fu! s:MatchIt(items, pat, limit, ispathitem, mfunc)
+	let newitems = []
+	for item in a:items
+		if call(a:mfunc, [item, a:pat]) >= 0 | cal add(newitems, item) | en
+		if a:limit > 0 && len(newitems) >= a:limit | brea | en
 	endfo
 	retu newitems
 endf
@@ -250,8 +225,11 @@ fu! s:MatchedItems(items, pats, limit)
 	if len(items) >= s:mltipats_lim | let pats = [pats[-1]] | en
 	cal map(pats, 'substitute(v:val, "\\\~", "\\\\\\~", "g")')
 	if !s:regexp | cal map(pats, 'escape(v:val, ".")') | en
+	let mfunc = s:byfname && ipt ? 's:matchfname'
+		\ : s:itemtype > 2 && len(items) < 30000 && !ipt ? 's:matchtab'
+		\ : 'match'
 	" Loop through the patterns
-	for each in pats
+	for pat in pats
 		" If newitems is small, set it as items to search in
 		if exists('newitems') && len(newitems) < limit
 			let items = copy(newitems)
@@ -260,7 +238,7 @@ fu! s:MatchedItems(items, pats, limit)
 			retu exists('newitems') ? newitems : []
 		el " Start here, go back up if have 2 or more in pats
 			" Loop through the items
-			let newitems = s:MatchIt(items, each, limit, ipt)
+			let newitems = s:MatchIt(items, pat, limit, ipt, mfunc)
 		en
 	endfo
 	let s:matches = len(newitems)
@@ -349,7 +327,7 @@ fu! s:Update(str)
 	let oldstr = exists('s:savestr') ? s:savestr : ''
 	let pats = s:SplitPattern(a:str)
 	" Get the new string sans tail
-	let notail = substitute(a:str, ':\([^:]\|\\:\)*$', '', 'g')
+	let notail = substitute(a:str, '\\\@<!:\([^:]\|\\:\)*$', '', '')
 	" Stop if the string's unchanged
 	if notail == oldstr && !empty(notail) && !exists('s:force')
 		retu
@@ -371,7 +349,8 @@ fu! s:BuildPrompt(upd, ...)
 	cal map(prt, 'escape(v:val, estr)')
 	let str = join(prt, '')
 	let lazy = empty(str) || exists('s:force') || !has('autocmd') ? 0 : s:lazy
-	if a:upd && ( s:matches || s:regexp || match(str, '[*|]') >= 0 ) && !lazy
+	if a:upd && !lazy && ( s:matches || s:regexp
+		\ || match(str, '[*|]') >= 0 || match(str, '\\\:\([^:]\|\\:\)*$') >= 0 )
 		sil! cal s:Update(str)
 	en
 	sil! cal ctrlp#statusline()
@@ -600,7 +579,7 @@ fu! s:MapSpecs(...)
 	en
 	" Correct arrow keys in terminal
 	if ( has('termresponse') && !empty(v:termresponse) )
-		\ || &term =~? 'xterm\|\<k\?vt\|gnome\|screen'
+		\ || &term =~? 'xterm\|\<k\?vt\|gnome\|screen\|linux'
 		for each in ['\A <up>','\B <down>','\C <right>','\D <left>']
 			exe lcmap.' <esc>['.each
 		endfo
@@ -714,11 +693,11 @@ fu! ctrlp#acceptfile(mode, matchstr, ...)
 	" Switch to existing buffer or open new one
 	if exists('jmpb') && bufwinnr > 0 && md != 't'
 		exe bufwinnr.'winc w'
-		if j2l | cal s:j2l(j2l) | en
+		if j2l | cal ctrlp#j2l(j2l) | en
 	elsei exists('jmpb') && buftab[0]
 		exe 'tabn' buftab[0]
 		exe buftab[1].'winc w'
-		if j2l | cal s:j2l(j2l) | en
+		if j2l | cal ctrlp#j2l(j2l) | en
 	el
 		" Determine the command to use
 		let cmd = md == 't' || s:splitwin == 1 ? 'tabe'
@@ -953,6 +932,40 @@ fu! s:ispathitem()
 	retu 0
 endf
 
+fu! ctrlp#dirnfile(entries)
+	let items = [[], []]
+	for each in a:entries
+		let etype = getftype(each)
+		if etype == 'dir'
+			if s:dotfiles | if match(each, '[\/]\.\{,2}$') < 0
+				cal add(items[0], each)
+			en | el
+				cal add(items[0], each)
+			en
+		elsei etype == 'link'
+			if s:folsym
+				let isfile = !isdirectory(each)
+				if !s:samerootsyml(each, isfile)
+					cal add(items[isfile], each)
+				en
+			en
+		elsei etype == 'file'
+			cal add(items[1], each)
+		en
+	endfo
+	retu items
+endf
+
+fu! s:samerootsyml(each, isfile)
+	let resl = resolve(a:each).( a:isfile ? '' : s:lash )
+	let resl = a:isfile ? fnamemodify(resl, ':p:h').s:lash : resl
+	let cwd = getcwd().s:lash
+	if stridx(resl, cwd) && ( stridx(cwd, resl) || a:isfile )
+		retu 0
+	en
+	retu 1
+endf
+
 fu! ctrlp#rmbasedir(items)
 	let path = &ssl || !exists('+ssl') ? getcwd().'/' :
 		\ substitute(getcwd(), '\\', '\\\\', 'g').'\\'
@@ -1183,11 +1196,14 @@ endf
 
 fu! s:sanstail(str)
 	" Restore the number of backslashes
-	let str = substitute(a:str, '\\\\', '\', 'g')
+	let [str, pat] = [substitute(a:str, '\\\\', '\', 'g'), '\([^:]\|\\:\)*$']
 	unl! s:optail
-	if match(str, ':\([^:]\|\\:\)*$') >= 0
-		let s:optail = matchstr(str, ':\zs\([^:]\|\\:\)*$')
-		retu substitute(str, ':\([^:]\|\\:\)*$', '', 'g')
+	if match(str, '\\\@<!:'.pat) >= 0
+		let s:optail = matchstr(str, ':\zs'.pat)
+		retu substitute(str, ':'.pat, '', '')
+	en
+	if match(str, '\\\=:'.pat) >= 0
+		let str = substitute(str, '\\\=\ze:'.pat, '', '')
 	en
 	retu str
 endf
@@ -1217,7 +1233,7 @@ fu! s:openfile(cmd, filpath, ...)
 		cal ctrlp#msg("Operation can't be completed. Make sure filename is valid.")
 	fina
 		if !empty(tail)
-			sil! norm! zOzz
+			sil! norm! zvzz
 		en
 	endt
 endf
@@ -1230,9 +1246,9 @@ fu! s:writecache(read_cache, cache_file)
 	en
 endf
 
-fu! s:j2l(nr)
+fu! ctrlp#j2l(nr)
 	exe a:nr
-	sil! norm! zOzz
+	sil! norm! zvzz
 endf
 
 fu! s:regexfilter(str)
