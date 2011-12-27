@@ -1,6 +1,6 @@
 *unite.txt*	すべてのsourceを統合する究極のインタフェース
 
-Version: 3.0
+Version: 3.1
 Author : Shougo <Shougo.Matsu@gmail.com>
 Japanese Documentation Author: naoina
 License: MIT license  {{{
@@ -101,6 +101,10 @@ uniteを起動すると、デフォルトの状態ではウィンドウが水平
 <
 上記は hogeにマッチかつ、piyoにマッチする候補にマッチする。
 
+ORマッチングは"|"を用いれば可能である。
+>
+	hoge|piyo
+<
 除外パターンを!で記述できる。例えば
 >
 	hoge !piyo
@@ -267,6 +271,16 @@ http://www.ustream.tv/recorded/11240673
 						*unite-options-create*
 		-create
 		既に開いているuniteバッファは再利用せず、新しく生成する。
+
+						*unite-options-update-time*
+		-update-time={new-update-time}
+		このuniteバッファが開いている間、'updatetime'を変更する。このオ
+		プションが省略されたとき、|g:unite_update_time|が使用される。
+
+						*unite-options-cursor-line-highlight*
+		-cursor-line-high-light={highlight-name}
+		カーソル行のハイライトを変更する。このオプションが省略されると、
+		|g:unite_cursor_line_highlight|が使用される。
 
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		初期の絞込みテキストが現在のディレクトリである他は|:Unite|と同
@@ -1500,7 +1514,8 @@ jump_list	ジャンプリスト
 				ファイルを開いた後に検索するパターン
 
 			action__text		(文字列)		(任意)
-				ジャンプする行の内容
+				ジャンプする行の内容。現在、replace actionでの
+				み使用される。
 
 			action__signature	(文字列)		(任意)
 				action__patternに設定するパターンや

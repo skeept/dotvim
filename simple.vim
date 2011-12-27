@@ -56,6 +56,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
+nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 "cmap tb tab split +b
 
@@ -319,4 +320,8 @@ nmap <tab><tab> <c-w><c-w>
 imap  
 nmap  
 cnoremap  
-set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+
+"python compiler settings
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %

@@ -574,7 +574,9 @@ let g:manpageview_winopen = "hsplit="
 
 "some pylint settings
 let g:pylint_onwrite = 0
-autocmd FileType python compiler pylint
+"autocmd FileType python compiler pylint
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %
 
 "pysmell
 autocmd FileType python setlocal completefunc=pysmell#Complete
@@ -588,4 +590,4 @@ nmap <tab><tab> <c-w><c-w>
 imap  
 nmap  
 cnoremap  
-set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Dec 2011.
+" Last Modified: 20 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -137,7 +137,7 @@ function! neocomplcache#enable() "{{{
         \'[=]\?\h\w*')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'vim,help',
-        \'-\h[[:alnum:]-]*=\?\|\c\[:\%(\h\w*:\]\)\?\|\&\h[[:alnum:]_:]*\|\$\h\w*'
+        \'-\h[[:alnum:]-]*=\?\|\c\[:\%(\h\w*:\]\)\?\|&\h[[:alnum:]_:]*\|\$\h\w*'
         \'\|<SID>\%(\h\w*\)\?\|<Plug>([^)]*)\?\|<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#]*!\?')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
         \'tex',
@@ -511,6 +511,13 @@ function! neocomplcache#enable() "{{{
   inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)
         \ unite#sources#snippet#start_complete()
 
+  " Check if "vim" command is executable.
+  if neocomplcache#has_vimproc() && !executable('vim')
+    echoerr '"vim" command is not executable. Asynchronous caching is disabled.'
+    echoerr 'Please install "vim" command. And add to $PATH.'
+    let s:exists_vimproc = 0
+  endif
+
   " Disable bell.
   set vb t_vb=
 
@@ -657,6 +664,7 @@ function! neocomplcache#do_auto_complete()"{{{
         \ && &l:completefunc != 'neocomplcache#auto_complete'
     if g:neocomplcache_force_overwrite_completefunc
           \ || &l:completefunc == ''
+          \ || &l:completefunc ==# 'neocomplcache#sources_manual_complete'
       " Set completefunc.
       let &l:completefunc = 'neocomplcache#manual_complete'
     else
