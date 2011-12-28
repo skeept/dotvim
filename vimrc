@@ -23,7 +23,7 @@ endif
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
 let g:pathogen_disabled = ['pyflakes', 'pep8']
 if has('unix') && executable('cygpath') "cygwin specific settings
-  let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
+  let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell'] "cygwin vim does not have python
 endif
 if has("win32")
   "let g:pathogen_disabled += ['pysmell']
