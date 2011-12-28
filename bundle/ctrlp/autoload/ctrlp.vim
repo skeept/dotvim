@@ -64,6 +64,9 @@ en
 let [s:compare_lim, s:nocache_lim, s:mltipats_lim] = [3000, 4000, 2000]
 " * Open & Close {{{1
 fu! s:Open()
+	if exists('g:ctrlp_log') && g:ctrlp_log
+		sil! exe 'redi >>' ctrlp#utils#cachedir().s:lash.'ctrlp.log'
+	en
 	let [s:cwd, s:winres] = [getcwd(), winrestcmd()]
 	let [s:crfile, s:crfpath] = [expand('%:p', 1), expand('%:p:h', 1)]
 	let [s:crword, s:crline] = [expand('<cword>'), getline('.')]
@@ -96,9 +99,11 @@ fu! s:Close()
 	let [g:ctrlp_lines, g:ctrlp_allfiles] = [[], []]
 	exe s:winres
 	unl! s:focus s:hisidx s:hstgot s:marked s:statypes s:cline s:init s:savestr
-		\ s:crfile s:crfpath s:crword s:crvisual s:tagfiles s:crline s:crcursor
-		\ g:ctrlp_nolimit s:crbufnr
+		\ g:ctrlp_nolimit
 	cal ctrlp#recordhist()
+	if exists('g:ctrlp_log') && g:ctrlp_log
+		sil! redi END
+	en
 	ec
 endf
 " * Clear caches {{{1
@@ -200,7 +205,7 @@ endf
 fu! s:Buffers() "{{{1
 	let allbufs = []
 	for each in range(1, bufnr('$'))
-		if getbufvar(each, '&bl') && each != bufnr('#')
+		if getbufvar(each, '&bl') && each != s:crbufnr
 			let bufname = bufname(each)
 			if strlen(bufname) && getbufvar(each, '&ma') && bufname != 'ControlP'
 				cal add(allbufs, fnamemodify(bufname, ':p'))
@@ -278,7 +283,7 @@ fu! s:SplitPattern(str, ...) "{{{1
 	if len(array) > 1
 		for item in range(1, len(array) - 1)
 			" Separator
-			let sep = exists('a:1') ? a:1 : '[^'.array[item-1].']\{-}'
+			let sep = a:0 ? a:1 : '[^'.array[item-1].']\{-}'
 			let nitem .= sep.array[item]
 			cal add(newpats, nitem)
 		endfo
@@ -309,7 +314,7 @@ fu! s:Render(lines, pat)
 	en
 	if s:mwreverse | cal reverse(lines) | en
 	let s:matched = copy(lines)
-	cal map(lines, 'substitute(v:val, "^", "> ", "")')
+	cal map(lines, '"> ".v:val')
 	cal setline(1, lines)
 	exe 'keepj norm!' s:mwreverse ? 'G' : 'gg'
 	keepj norm! 1|
@@ -327,13 +332,15 @@ fu! s:Update(str)
 	let oldstr = exists('s:savestr') ? s:savestr : ''
 	let pats = s:SplitPattern(a:str)
 	" Get the new string sans tail
-	let notail = substitute(a:str, '\\\@<!:\([^:]\|\\:\)*$', '', '')
+	let notail = substitute(a:str, '\\\\', '\', 'g')
+	let notail = substitute(notail, '\\\@<!:\([^:]\|\\:\)*$', '', '')
+	let notail = substitute(notail, '\\\ze:', '', 'g')
 	" Stop if the string's unchanged
 	if notail == oldstr && !empty(notail) && !exists('s:force')
 		retu
 	en
 	let lines = exists('g:ctrlp_nolimit') && empty(notail) ? copy(g:ctrlp_lines)
-		\ : s:MatchedItems(g:ctrlp_lines, pats, s:mxheight)
+		\ : s:MatchedItems(g:ctrlp_lines, copy(pats), s:mxheight)
 	cal s:Render(lines, pats[-1])
 endf
 
@@ -817,7 +824,7 @@ fu! s:OpenMulti()
 	let spt = len(s:opmul) > 1 ? cmds[matchstr(s:opmul, '\w$')] : 'vne'
 	let nr = matchstr(s:opmul, '^\d\+')
 	exe wnr.'winc w'
-	for [ke, va] in items(mkd)
+	for va in values(mkd)
 		let cmd = ic == 1 ? 'e' : spt
 		cal s:openfile(cmd, va)
 		if nr > 1 && nr < ic | clo! | el | let ic += 1 | en
@@ -926,14 +933,11 @@ endf
 " Paths {{{2
 fu! s:ispathitem()
 	let ext = s:itemtype - ( g:ctrlp_builtins + 1 )
-	if s:itemtype < 3 || ( s:itemtype > 2 && g:ctrlp_ext_vars[ext][3] == 'dir' )
-		retu 1
-	en
-	retu 0
+	retu s:itemtype < 3 || ( s:itemtype > 2 && g:ctrlp_ext_vars[ext][3] == 'dir' )
 endf
 
 fu! ctrlp#dirnfile(entries)
-	let items = [[], []]
+	let [items, cwd] = [[[], []], getcwd().s:lash]
 	for each in a:entries
 		let etype = getftype(each)
 		if etype == 'dir'
@@ -945,7 +949,7 @@ fu! ctrlp#dirnfile(entries)
 		elsei etype == 'link'
 			if s:folsym
 				let isfile = !isdirectory(each)
-				if !s:samerootsyml(each, isfile)
+				if !s:samerootsyml(each, isfile, cwd)
 					cal add(items[isfile], each)
 				en
 			en
@@ -956,20 +960,15 @@ fu! ctrlp#dirnfile(entries)
 	retu items
 endf
 
-fu! s:samerootsyml(each, isfile)
-	let resl = resolve(a:each).( a:isfile ? '' : s:lash )
-	let resl = a:isfile ? fnamemodify(resl, ':p:h').s:lash : resl
-	let cwd = getcwd().s:lash
-	if stridx(resl, cwd) && ( stridx(cwd, resl) || a:isfile )
-		retu 0
-	en
-	retu 1
+fu! s:samerootsyml(each, isfile, cwd)
+	let resolve = resolve(a:each)
+	let resolve = ( a:isfile ? fnamemodify(resolve, ':p:h') : resolve ).s:lash
+	retu !( stridx(resolve, a:cwd) && ( stridx(a:cwd, resolve) || a:isfile ) )
 endf
 
 fu! ctrlp#rmbasedir(items)
-	let path = &ssl || !exists('+ssl') ? getcwd().'/' :
-		\ substitute(getcwd(), '\\', '\\\\', 'g').'\\'
-	retu map(a:items, 'substitute(v:val, path, "", "g")')
+	let idx = strlen(getcwd()) + 1
+	retu map(a:items, 'strpart(v:val, idx)')
 endf
 
 fu! s:parentdir(curr)
@@ -1050,7 +1049,7 @@ endf
 
 fu! s:highlight(pat, grp)
 	cal clearmatches()
-	if !empty(a:pat) && a:pat != '..' && s:itemtype < 3
+	if !empty(a:pat) && s:itemtype < 3
 		let pat = substitute(a:pat, '\~', '\\~', 'g')
 		if !s:regexp | let pat = escape(pat, '.') | en
 		" Match only filename
@@ -1064,7 +1063,7 @@ fu! s:highlight(pat, grp)
 endf
 
 fu! s:dohighlight()
-	retu type(s:mathi) == 3 && len(s:mathi) == 2 && s:mathi[0]
+	retu type(s:mathi) == 3 && len(s:mathi) > 1 && s:mathi[0]
 		\ && exists('*clearmatches')
 endf
 " Prompt history {{{2
@@ -1095,9 +1094,9 @@ endf
 
 fu! s:remarksigns()
 	if !s:dosigns() | retu | en
-	let nls = s:matched
+	let [nls, head] = [s:matched, s:itemtype ? '' : getcwd().s:lash]
 	for ic in range(1, len(nls))
-		let filpath = s:itemtype ? nls[ic - 1] : getcwd().s:lash.nls[ic - 1]
+		let filpath = head.nls[ic - 1]
 		let key = s:dictindex(s:marked, filpath)
 		if key > 0
 			exe 'sign place' key 'line='.ic.' name=ctrlpmark buffer='.s:bufnr
@@ -1166,7 +1165,7 @@ endf
 fu! s:setupblank()
 	setl noswf nobl nonu nowrap nolist nospell nocuc wfh
 	setl fdc=0 fdl=99 tw=0 bt=nofile bh=unload
-	if v:version >= 703
+	if v:version > 702
 		setl nornu noudf cc=0
 	en
 endf
@@ -1195,17 +1194,13 @@ fu! s:tail()
 endf
 
 fu! s:sanstail(str)
-	" Restore the number of backslashes
 	let [str, pat] = [substitute(a:str, '\\\\', '\', 'g'), '\([^:]\|\\:\)*$']
 	unl! s:optail
 	if match(str, '\\\@<!:'.pat) >= 0
-		let s:optail = matchstr(str, ':\zs'.pat)
-		retu substitute(str, ':'.pat, '', '')
+		let s:optail = matchstr(str, '\\\@<!:\zs'.pat)
+		let str = substitute(str, '\\\@<!:'.pat, '', '')
 	en
-	if match(str, '\\\=:'.pat) >= 0
-		let str = substitute(str, '\\\=\ze:'.pat, '', '')
-	en
-	retu str
+	retu substitute(str, '\\\ze:', '', 'g')
 endf
 " Misc {{{2
 fu! s:lastvisual()
@@ -1221,7 +1216,7 @@ fu! s:lastvisual()
 endf
 
 fu! ctrlp#msg(msg)
-	echoh Identifier | echon "CtrlP: ".a:msg | echoh None
+	redr | echoh Identifier | echon "CtrlP: ".a:msg | echoh None
 endf
 
 fu! s:openfile(cmd, filpath, ...)
@@ -1230,7 +1225,6 @@ fu! s:openfile(cmd, filpath, ...)
 	try
 		exe cmd.tail.' '.ctrlp#fnesc(a:filpath)
 	cat
-		cal ctrlp#msg("Operation can't be completed. Make sure filename is valid.")
 	fina
 		if !empty(tail)
 			sil! norm! zvzz
@@ -1332,13 +1326,11 @@ fu! ctrlp#init(type, ...)
 	if exists('s:init') | retu | en
 	let [s:matches, s:init] = [1, 1]
 	cal s:Open()
-	cal s:SetWD(exists('a:1') ? a:1 : '')
+	cal s:SetWD(a:0 ? a:1 : '')
 	cal s:MapKeys()
 	cal s:SetLines(a:type)
 	cal s:BuildPrompt(1)
-	if has('syntax') && exists('g:syntax_on')
-		cal s:syntax()
-	en
+	if has('syntax') && exists('g:syntax_on') | cal s:syntax() | en
 endf
 if has('autocmd') "{{{1
 	aug CtrlPAug

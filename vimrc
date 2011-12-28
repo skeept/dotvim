@@ -22,8 +22,11 @@ endif
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
 let g:pathogen_disabled = ['pyflakes', 'pep8']
+if has('unix') && executable('cygpath') "cygwin specific settings
+  let g:pathogen_disabled += ['LycosaExplorer', 'headlights']
+endif
 if has("win32")
-  let g:pathogen_disabled += ['pysmell']
+  "let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
 
