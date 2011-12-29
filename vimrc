@@ -1,4 +1,3 @@
-
 "
 " An example for a vimrc file.
 "
@@ -97,6 +96,7 @@ vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
+nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 "cmap tb tab split +b
 
@@ -147,17 +147,17 @@ imap <C-E> <ESC>$a
 
 "map f2 to make
 imap <F2> <ESC>:wa<cr>:Make <Up>
-map  <F2> :wa<cr>:Make <Up>
+map <F2> :wa<cr>:Make <Up>
 command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
 imap <F1> <ESC>:wa<cr>
 map <F1> :wa<cr>
 
-"map  <f7> :tabp<cr>
-"map  <s-f7> :bp<cr>
-"map  <f8> :tabn<cr>
-"map  <s-f8> :bn<cr>
+"map <f7> :tabp<cr>
+"map <s-f7> :bp<cr>
+"map <f8> :tabn<cr>
+"map <s-f8> :bn<cr>
 "imap <f7> <esc>:bp<cr>
 "imap <s-f7> <esc>:tabp<cr>
 "imap <f8> <esc>:tabn<cr>
@@ -166,14 +166,14 @@ map <F1> :wa<cr>
 "how often do I type ;;?
 imap ;; <esc>
 
-map  <f4> :x<cr>
+map <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
 
 "map ,en :cnext<cr>
 "map ,ep :cprevious<cr>
-nnoremap  <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
-nnoremap  ,w <c-w>
-nnoremap  ,, <c-w><c-w>
+nnoremap <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+nnoremap ,w <c-w>
+nnoremap ,, <c-w><c-w>
 
 "map gl :bprevious<cr>
 "
@@ -194,6 +194,10 @@ set pastetoggle=<Leader>pt
 "set t_Co=128
 set t_Co=256
 "set t_Co=88
+"colorscheme bw_cs
+"colorscheme desertink
+"colorscheme ps_color_cs
+"colorscheme winter_cs
 
 
 " setting the color in terminals
@@ -226,29 +230,37 @@ endif
 
 
 " some spelling related options mappings and functions
+" by default now toggle spell and nospell, if a count is given use portuguese
 setlocal nospell
 let g:togglespell = 0
+let g:default_langn = 1 "1 for english, 2 for portuguese
 function! ToggleSpell()
-        if g:togglespell == 0
-                setlocal spell spelllang=en_us
-                let g:togglespell = 1
-		echo "language = en_us"
-        elseif g:togglespell == 1
-	  	setlocal spell spelllang=pt
-                let g:togglespell = 2
-		echo "language = pt"
-        else
-                setlocal nospell
-                let g:togglespell = 0
-		echo "No spell Cheking"
-        endif
+  if v:count != 0
+    let g:default_langn = v:count
+    let g:togglespell = 0 " force spelling this time
+  endif
+  if g:togglespell == 0
+    if g:default_langn == 1
+      setlocal spell spelllang=en_us
+      echo "language = en_us"
+    elseif g:default_langn == 2
+      setlocal spell spelllang=pt
+      echo "language = pt"
+    else
+      echom "No language correspondig to such option [1: English, 2 Portuguese]"
+    endif
+    let g:togglespell = 1
+  else
+    setlocal nospell
+    let g:togglespell = 0
+    echo "No spell Cheking"
+  endif
 endfunction
-"map <F5> :call ToggleSpell()<cr>
-"imap <F5> <C-O>:call ToggleSpell()<cr>
-map <Leader>s :call ToggleSpell() <cr>
+map <Leader>st :<C-U>call ToggleSpell() <cr>
 
 let g:relativenumber =2
-function! ToogleRelativeNumber()
+"set relativenumber
+function! ToggleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
     set nonumber
@@ -264,7 +276,7 @@ function! ToogleRelativeNumber()
   endif
 endfunction
 
-map <Leader>tn :call ToogleRelativeNumber()<cr>
+map <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 "pep8
@@ -405,7 +417,7 @@ nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_
 nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
 nnoremap <silent> ,uo  :<C-u>Unite outline<CR>
-nnoremap  ,uf  :<C-u>Unite source<CR>
+nnoremap ,uf  :<C-u>Unite source<CR>
 
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()"{{{
@@ -440,7 +452,7 @@ nnoremap <C-L> :nohl<CR><C-L>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
 "let g:tmpa='screen -p gams_run -X stuff gr'
-"nmap  <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
+"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 
 "latex options
