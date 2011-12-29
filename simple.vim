@@ -1,3 +1,21 @@
+"
+" An example for a vimrc file.
+"
+" Maintainer:	Bram Moolenaar <Bram@vim.org>
+" Last change:	2001 Jul 18
+"
+" To use it, copy it to
+"     for Unix and OS/2:  ~/.vimrc
+"	      for Amiga:  s:.vimrc
+"  for MS-DOS and Win32:  $VIM\_vimrc
+"	    for OpenVMS:  sys$login:.vimrc
+
+" When started as "evim", evim.vim will already have done these settings.
+if v:progname =~? "evim"
+  finish
+endif
+
+
 
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
@@ -15,11 +33,14 @@ set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
 set incsearch		" do incremental searching
 set ignorecase
+"set smartcase
 set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
 
-set undofile
+if v:version >= 703
+  set undofile
+endif
 
 "" set backup. but all the backuped files will be 
 "" placed in the directory specified by backupdir
@@ -27,11 +48,15 @@ set backup
 if has("win32") 
   set backupdir^=$HOME\vimfiles\backup//
   set directory^=$HOME\vimfiles\swapdir//
-  set undodir^=$HOME\vimfiles\undodir//
+  if v:version >= 703
+    set undodir^=$HOME\vimfiles\undodir//
+  endif
 else
   set backupdir^=~/.vim/backup//
   set directory^=~/.vim/swapdir//
-  set undodir^=$HOME/.vim/undodir//
+  if v:version >= 703
+    set undodir^=$HOME/.vim/undodir//
+  endif
 endif
 
 set expandtab
@@ -107,30 +132,33 @@ imap <C-E> <ESC>$a
 
 "map f2 to make
 imap <F2> <ESC>:wa<cr>:Make <Up>
-map  <F2> :wa<cr>:Make <Up>
+map <F2> :wa<cr>:Make <Up>
 command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
 imap <F1> <ESC>:wa<cr>
 map <F1> :wa<cr>
 
-"map  <f7> :tabp<cr>
-"map  <s-f7> :bp<cr>
-"map  <f8> :tabn<cr>
-"map  <s-f8> :bn<cr>
+"map <f7> :tabp<cr>
+"map <s-f7> :bp<cr>
+"map <f8> :tabn<cr>
+"map <s-f8> :bn<cr>
 "imap <f7> <esc>:bp<cr>
 "imap <s-f7> <esc>:tabp<cr>
 "imap <f8> <esc>:tabn<cr>
 "imap <s-f8> <esc>:bn<cr>
 
-map  <f4> :x<cr>
+"how often do I type ;;?
+imap ;; <esc>
+
+map <f4> :x<cr>
 imap <f4> <esc>:wq<cr>
 
 "map ,en :cnext<cr>
 "map ,ep :cprevious<cr>
-nnoremap  <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
-nnoremap  ,w <c-w>
-nnoremap  ,, <c-w><c-w>
+nnoremap <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+nnoremap ,w <c-w>
+nnoremap ,, <c-w><c-w>
 
 "map gl :bprevious<cr>
 "
@@ -155,39 +183,69 @@ set t_Co=256
 "colorscheme desertink
 "colorscheme ps_color_cs
 "colorscheme winter_cs
-set bg=dark | colorscheme peaksea
 
 
 " setting the color in terminals
 if !has("gui_running") && !has("win32")
+  "on windows default is better
+  "colorscheme evening
+  "colorscheme default
+  "colorscheme morning
+  "colorscheme darkblue
+  "colorscheme fruit 
+  "colorscheme icansee
+  "colorscheme greens
+  "colorscheme freya
+  "colorscheme 256_asu1dark
+  "colorscheme desert256
+  "colorscheme desert
+  "colorscheme autumn
+  "colorscheme leo
+  "colorscheme torte
+  "colorscheme blacksea_cs
+  "colorscheme asu1dark_cs
+  "colorscheme candycode_cs
+  "colorscheme LightDefaultGrey_cs
+  "colorscheme Dark2_cs
+  "colorscheme anotherdark_cs
+  "colorscheme  koehler_cs
+   "colorscheme xoria256
+   set bg=dark | colorscheme peaksea
 endif
 
 
 " some spelling related options mappings and functions
+" by default now toggle spell and nospell, if a count is given use portuguese
 setlocal nospell
 let g:togglespell = 0
+let g:default_langn = 1 "1 for english, 2 for portuguese
 function! ToggleSpell()
-        if g:togglespell == 0
-                setlocal spell spelllang=en_us
-                let g:togglespell = 1
-		echo "language = en_us"
-        elseif g:togglespell == 1
-	  	setlocal spell spelllang=pt
-                let g:togglespell = 2
-		echo "language = pt"
-        else
-                setlocal nospell
-                let g:togglespell = 0
-		echo "No spell Cheking"
-        endif
+  if v:count != 0
+    let g:default_langn = v:count
+    let g:togglespell = 0 " force spelling this time
+  endif
+  if g:togglespell == 0
+    if g:default_langn == 1
+      setlocal spell spelllang=en_us
+      echo "language = en_us"
+    elseif g:default_langn == 2
+      setlocal spell spelllang=pt
+      echo "language = pt"
+    else
+      echom "No language correspondig to such option [1: English, 2 Portuguese]"
+    endif
+    let g:togglespell = 1
+  else
+    setlocal nospell
+    let g:togglespell = 0
+    echo "No spell Cheking"
+  endif
 endfunction
-"map <F5> :call ToggleSpell()<cr>
-"imap <F5> <C-O>:call ToggleSpell()<cr>
-map <Leader>s :call ToggleSpell() <cr>
+map <Leader>st :<C-U>call ToggleSpell() <cr>
 
 let g:relativenumber =2
 "set relativenumber
-function! ToogleRelativeNumber()
+function! ToggleRelativeNumber()
   if g:relativenumber == 0
     let g:relativenumber = 1
     set nonumber
@@ -203,14 +261,14 @@ function! ToogleRelativeNumber()
   endif
 endfunction
 
-map <Leader>tn :call ToogleRelativeNumber()<cr>
+map <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 nnoremap <C-L> :nohl<CR><C-L>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
 "let g:tmpa='screen -p gams_run -X stuff gr'
-"nmap  <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
+"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 
 "latex options
