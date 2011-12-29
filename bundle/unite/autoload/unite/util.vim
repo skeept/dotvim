@@ -111,13 +111,13 @@ function! unite#util#input_directory(message)"{{{
 endfunction"}}}
 
 function! unite#util#alternate_buffer()"{{{
-  if bufnr('%') != bufnr('#') && buflisted(bufnr('#'))
+  if bufnr('%') != bufnr('#') && s:buflisted(bufnr('#'))
     buffer #
     return
   endif
 
   let listed_buffer_len = len(filter(range(1, bufnr('$')),
-        \ 'buflisted(v:val) && getbufvar(v:val, "&filetype") !=# "unite"'))
+        \ 's:buflisted(v:val) && getbufvar(v:val, "&filetype") !=# "unite"'))
   if listed_buffer_len <= 1
     enew
     return
@@ -127,7 +127,7 @@ function! unite#util#alternate_buffer()"{{{
   let pos = 1
   let current = 0
   while pos <= bufnr('$')
-    if buflisted(pos)
+    if s:buflisted(pos)
       if pos == bufnr('%')
         let current = cnt
       endif
@@ -151,6 +151,43 @@ function! unite#util#is_cmdwin()"{{{
   call unite#_resize_window()
   return v:errmsg =~ '^E11:'
 endfunction"}}}
+function! s:buflisted(bufnr)"{{{
+  return !exists('t:unite_buffer_dictionary') ?
+        \ has_key(t:unite_buffer_dictionary, a:bufnr) : buflisted(a:bufnr)
+endfunction"}}}
+
+function! unite#util#glob(pattern, ...)"{{{
+  " let is_force_glob = get(a:000, 0, 0)
+  let is_force_glob = get(a:000, 0, 1)
+
+  if !is_force_glob && a:pattern =~ '^[^\\*]\+/\*'
+        \ && unite#util#has_vimproc() && exists('*vimproc#readdir')
+    return vimproc#readdir(a:pattern[: -2])
+  else
+    " Escape [.
+    if unite#util#is_win()
+      let glob = substitute(a:pattern, '\[', '\\[[]', 'g')
+    else
+      let glob = escape(a:pattern, '[')
+    endif
+
+    return split(unite#util#substitute_path_separator(glob(glob)), '\n')
+  endif
+endfunction"}}}
+function! unite#util#command_with_restore_cursor(command)
+  let pos = getpos('.')
+  let current = winnr()
+
+  execute a:command
+  let next = winnr()
+
+  " Restore cursor.
+  execute current 'wincmd w'
+  call setpos('.', pos)
+
+  execute next 'wincmd w'
+endfunction
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

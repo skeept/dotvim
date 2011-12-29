@@ -22,8 +22,11 @@ endif
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
 let g:pathogen_disabled = ['pyflakes', 'pep8']
+if has('unix') && executable('cygpath') "cygwin specific settings
+  let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell'] "cygwin vim does not have python
+endif
 if has("win32")
-  let g:pathogen_disabled += ['pysmell']
+  "let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
 
@@ -574,7 +577,9 @@ let g:manpageview_winopen = "hsplit="
 
 "some pylint settings
 let g:pylint_onwrite = 0
-autocmd FileType python compiler pylint
+"autocmd FileType python compiler pylint
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %
 
 "pysmell
 autocmd FileType python setlocal completefunc=pysmell#Complete

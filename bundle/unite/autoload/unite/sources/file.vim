@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Dec 2011.
+" Last Modified: 26 Dec 2011.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,11 +33,6 @@ call unite#util#set_default('g:unite_source_file_ignore_pattern',
 "}}}
 
 function! unite#sources#file#define()"{{{
-  " Check vimproc.
-  let s:use_ls_command =
-        \ 0
-        " \ unite#util#has_vimproc() && executable('ls')
-
   return s:source
 endfunction"}}}
 
@@ -86,26 +81,10 @@ function! s:source.change_candidates(args, context)"{{{
   let input = substitute(input, '[^/.]*$', '', '')
   let glob = input . (input =~ '\*$' ? '' : '*')
 
-  " Escape [.
-  if unite#is_win()
-    let glob = substitute(glob, '\[', '\\[[]', 'g')
-  else
-    let glob = escape(glob, '[')
-  endif
   if !has_key(a:context.source__cache, glob)
-
-    if s:use_ls_command
-      let path = glob[: -2]
-      if path !~ '/$'
-        let path .= '/'
-      endif
-      let files = map(split(unite#util#substitute_path_separator(
-            \ vimproc#system(['ls', '-a1', path])), '\n'),
-            \ 'path.v:val')
-    else
-      let files = split(unite#util#substitute_path_separator(
-            \ glob(glob)), '\n')
-    endif
+    " let files = split(unite#util#substitute_path_separator(
+    "       \ glob(glob)), '\n')
+    let files = unite#util#glob(glob, !is_vimfiler)
 
     if !is_vimfiler
       if g:unite_source_file_ignore_pattern != ''
@@ -121,10 +100,11 @@ function! s:source.change_candidates(args, context)"{{{
           \ 'unite#sources#file#create_file_dict(v:val, is_relative_path)')
   endif
 
-  let candidates = a:context.source__cache[glob]
+  let candidates = copy(a:context.source__cache[glob])
 
-  if a:context.input != '' && !is_vimfiler
-    let newfile = substitute(a:context.input, '[*\\]', '', 'g')
+  if !a:context.is_list_input
+        \ && a:context.input != '' && !is_vimfiler
+    let newfile = expand(substitute(a:context.input, '[*\\]', '', 'g'))
     if !filereadable(newfile) && !isdirectory(newfile)
       " Add newfile candidate.
       let file = unite#sources#file#create_file_dict(
@@ -176,13 +156,12 @@ function! s:source.vimfiler_gather_candidates(args, context)"{{{
     let context.is_vimfiler = 1
     let candidates = self.change_candidates(a:args, context)
 
-    if !s:use_ls_command
+    if !exists('*vimproc#readdir')
       " Add doted files.
       let context.input .= '.'
-      let candidates += filter(
-            \ self.change_candidates(a:args, context),
-            \ 'v:val.word !~ "/\.\.\\?$"')
+      let candidates += self.change_candidates(a:args, context)
     endif
+    call filter(candidates, 'v:val.word !~ "/\\.\\.\\?$"')
 
     " echomsg reltimestr(reltime(start))
   elseif filereadable(path)
