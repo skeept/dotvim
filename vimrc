@@ -606,3 +606,10 @@ imap  
 nmap  
 cnoremap  
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+
+"some python mode configuration. Don't always use but for now disable some
+"settings when used
+let g:pymode_lint = 0
+let g:pymode_rope = 0
+let g:pymode_options_indent = 0
+let g:pymode_breakpoint = 0
