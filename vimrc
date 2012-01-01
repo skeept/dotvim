@@ -89,7 +89,7 @@ set hidden
 set shortmess=a
 
 " Don't use Ex mode, use Q for formatting
-map Q gq
+noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "" register.
 vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
@@ -142,45 +142,45 @@ let whichwrapOrig=&whichwrap
 "set ww=<,>,[,],h,l
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
-"imap <C-A> <ESC>0i
-imap <C-E> <ESC>$a
+"inoremap <C-A> <ESC>0i
+inoremap <C-E> <ESC>$a
 
-"map f2 to make
-imap <F2> <ESC>:wa<cr>:Make <Up>
-map <F2> :wa<cr>:Make <Up>
+"noremap f2 to make
+inoremap <F2> <ESC>:wa<cr>:Make <Up>
+noremap <F2> :wa<cr>:Make <Up>
 command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
-imap <F1> <ESC>:wa<cr>
-map <F1> :wa<cr>
+inoremap <F1> <ESC>:wa<cr>
+noremap <F1> :wa<cr>
 
-"map <f7> :tabp<cr>
-"map <s-f7> :bp<cr>
-"map <f8> :tabn<cr>
-"map <s-f8> :bn<cr>
-"imap <f7> <esc>:bp<cr>
-"imap <s-f7> <esc>:tabp<cr>
-"imap <f8> <esc>:tabn<cr>
-"imap <s-f8> <esc>:bn<cr>
+"noremap <f7> :tabp<cr>
+"noremap <s-f7> :bp<cr>
+"noremap <f8> :tabn<cr>
+"noremap <s-f8> :bn<cr>
+"inoremap <f7> <esc>:bp<cr>
+"inoremap <s-f7> <esc>:tabp<cr>
+"inoremap <f8> <esc>:tabn<cr>
+"inoremap <s-f8> <esc>:bn<cr>
 
 "how often do I type ;;?
-imap ;; <esc>
+inoremap ;; <esc>
 
-map <f4> :x<cr>
-imap <f4> <esc>:wq<cr>
+noremap <f4> :x<cr>
+inoremap <f4> <esc>:wq<cr>
 
-"map ,en :cnext<cr>
-"map ,ep :cprevious<cr>
+"noremap ,en :cnext<cr>
+"noremap ,ep :cprevious<cr>
 nnoremap <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
 nnoremap ,w <c-w>
 nnoremap ,, <c-w><c-w>
 
-"map gl :bprevious<cr>
+"noremap gl :bprevious<cr>
 "
 if &diff
-  map <f4> :qa<cr>
-  map <f5> :wqa!<cr>
-  map <f6> :qa!<cr>
+  noremap <f4> :qa<cr>
+  noremap <f5> :wqa!<cr>
+  noremap <f6> :qa!<cr>
 endif
 
 let fortran_free_source = 1
@@ -256,7 +256,7 @@ function! ToggleSpell()
     echo "No spell Cheking"
   endif
 endfunction
-map <Leader>st :<C-U>call ToggleSpell() <cr>
+noremap <Leader>st :<C-U>call ToggleSpell() <cr>
 
 let g:relativenumber =2
 "set relativenumber
@@ -276,7 +276,7 @@ function! ToggleRelativeNumber()
   endif
 endfunction
 
-map <Leader>tn :call ToggleRelativeNumber()<cr>
+noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 "pep8
@@ -284,7 +284,7 @@ map <Leader>tn :call ToggleRelativeNumber()<cr>
 let g:pep8_cmd  = 'pep8.py'
 let g:pep8_ignore = "E111,E221,E225"
 "todo list
-map <leader>td <Plug>TaskList
+noremap <leader>td <Plug>TaskList
 
 "taglist options 
 "let Tlist_Close_On_Select = 1
@@ -298,8 +298,8 @@ let Tlist_Use_SingleClick = 1
 " the following is useful to use configure ctags for using taglist with gams
 let tlist_gams_settings='gams;e:equation;c:variable;m:model;s:Solve Statement'
 let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
-"map <F3> :TlistToggle<cr>
-"imap <F3> <ESC>:TlistToggle<cr>
+"noremap <F3> :TlistToggle<cr>
+"inoremap <F3> <ESC>:TlistToggle<cr>
 
 "tagbar gms and gamslst settings
 let g:tagbar_type_gams = {
@@ -399,12 +399,12 @@ let g:SrcExpl_isUpdateTags = 0
 "don't enable showmarks, use \mt to toogle it
 let g:showmarks_enable=0
 
-map <f11> :call ToggleAcpDisable()<cr>
-imap <f11> <ESC>:call ToggleAcpDisable()<cr>a
+noremap <f11> :call ToggleAcpDisable()<cr>
+inoremap <f11> <ESC>:call ToggleAcpDisable()<cr>a
 
-map <F3> :call ToogleTagListNerdTree() <cr>
-imap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
-map <F5> :TagbarToggle<CR>
+noremap <F3> :call ToogleTagListNerdTree() <cr>
+inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
+noremap <F5> :TagbarToggle<CR>
 
 nmap <silent> ,lf :LustyFilesystemExplorer<CR>
 nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
@@ -424,8 +424,8 @@ function! s:unite_my_settings()"{{{
   " Overwrite settings.
 
   nmap <buffer> <ESC>      <Plug>(unite_exit)
-  imap <buffer> jj      <Plug>(unite_insert_leave)
-  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+  inoremap <buffer> jj      <Plug>(unite_insert_leave)
+  "inoremap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
 
   " <C-l>: manual neocomplcache completion.
   inoremap <buffer> <C-;>  <C-x><C-u><C-p><Down>
@@ -492,18 +492,18 @@ let g:tex_pdf_map_keys = 0
 "inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
 
 " for searching gams erros
-map <Leader>e /\*\*\*\*.*$<cr>
-map <Leader>v :view<cr>
+noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>v :view<cr>
 " for clearing search views
-map <Leader>ch :nohlsearch<CR>
+noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer 
-map <Leader>os :Scratch<CR>
+noremap <Leader>os :Scratch<CR>
 
 
 "let NERDShutUp=1
 "hi TabLine cterm=reverse
 
-"map H :let &hlsearch = !&hlsearch<CR>
+"noremap H :let &hlsearch = !&hlsearch<CR>
 
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
@@ -516,9 +516,9 @@ let g:acp_completeOption = '.,w,b,k,t'
 let g:SuperTabDefaultCompletionType = "context"
 
 "to change the colors if previous color desired :call PreviousColorScheme()
-"map <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
-map <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
-"map <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
@@ -580,7 +580,7 @@ if v:version < 703
 endif
 
 "load cscope in two levels up
-map <Leader>csa :cs add ../../cscope.out ../..<cr>
+noremap <Leader>csa :cs add ../../cscope.out ../..<cr>
 set cot-=preview
 
 let g:unite_source_history_yank_enable = 1
@@ -602,7 +602,18 @@ nmap <tab> <c-w>
 nmap <tab><tab> <c-w><c-w>
 
 "attemp to fix backspace
-imap  
+inoremap  
 nmap  
 cnoremap  
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+
+"some python mode configuration. Don't always use but for now disable some
+"settings when used
+let g:pymode_lint = 0
+let g:pymode_rope = 0
+let g:pymode_options_indent = 0
+let g:pymode_breakpoint = 0
+
+"local vim settings
+let g:localvimrc_sandbox = 0
+let g:localvimrc_ask = 0
