@@ -74,7 +74,7 @@ set hidden
 set shortmess=a
 
 " Don't use Ex mode, use Q for formatting
-map Q gq
+noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "" register.
 vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
@@ -127,45 +127,45 @@ let whichwrapOrig=&whichwrap
 "set ww=<,>,[,],h,l
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
-"imap <C-A> <ESC>0i
-imap <C-E> <ESC>$a
+"inoremap <C-A> <ESC>0i
+inoremap <C-E> <ESC>$a
 
-"map f2 to make
-imap <F2> <ESC>:wa<cr>:Make <Up>
-map <F2> :wa<cr>:Make <Up>
+"noremap f2 to make
+inoremap <F2> <ESC>:wa<cr>:Make <Up>
+noremap <F2> :wa<cr>:Make <Up>
 command! -nargs=* Make write | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
-imap <F1> <ESC>:wa<cr>
-map <F1> :wa<cr>
+inoremap <F1> <ESC>:wa<cr>
+noremap <F1> :wa<cr>
 
-"map <f7> :tabp<cr>
-"map <s-f7> :bp<cr>
-"map <f8> :tabn<cr>
-"map <s-f8> :bn<cr>
-"imap <f7> <esc>:bp<cr>
-"imap <s-f7> <esc>:tabp<cr>
-"imap <f8> <esc>:tabn<cr>
-"imap <s-f8> <esc>:bn<cr>
+"noremap <f7> :tabp<cr>
+"noremap <s-f7> :bp<cr>
+"noremap <f8> :tabn<cr>
+"noremap <s-f8> :bn<cr>
+"inoremap <f7> <esc>:bp<cr>
+"inoremap <s-f7> <esc>:tabp<cr>
+"inoremap <f8> <esc>:tabn<cr>
+"inoremap <s-f8> <esc>:bn<cr>
 
 "how often do I type ;;?
-imap ;; <esc>
+inoremap ;; <esc>
 
-map <f4> :x<cr>
-imap <f4> <esc>:wq<cr>
+noremap <f4> :x<cr>
+inoremap <f4> <esc>:wq<cr>
 
-"map ,en :cnext<cr>
-"map ,ep :cprevious<cr>
+"noremap ,en :cnext<cr>
+"noremap ,ep :cprevious<cr>
 nnoremap <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
 nnoremap ,w <c-w>
 nnoremap ,, <c-w><c-w>
 
-"map gl :bprevious<cr>
+"noremap gl :bprevious<cr>
 "
 if &diff
-  map <f4> :qa<cr>
-  map <f5> :wqa!<cr>
-  map <f6> :qa!<cr>
+  noremap <f4> :qa<cr>
+  noremap <f5> :wqa!<cr>
+  noremap <f6> :qa!<cr>
 endif
 
 let fortran_free_source = 1
@@ -241,7 +241,7 @@ function! ToggleSpell()
     echo "No spell Cheking"
   endif
 endfunction
-map <Leader>st :<C-U>call ToggleSpell() <cr>
+noremap <Leader>st :<C-U>call ToggleSpell() <cr>
 
 let g:relativenumber =2
 "set relativenumber
@@ -261,7 +261,7 @@ function! ToggleRelativeNumber()
   endif
 endfunction
 
-map <Leader>tn :call ToggleRelativeNumber()<cr>
+noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 nnoremap <C-L> :nohl<CR><C-L>
@@ -308,15 +308,15 @@ let g:tex_pdf_map_keys = 0
 "inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
 
 " for searching gams erros
-map <Leader>e /\*\*\*\*.*$<cr>
-map <Leader>v :view<cr>
+noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>v :view<cr>
 " for clearing search views
-map <Leader>ch :nohlsearch<CR>
+noremap <Leader>ch :nohlsearch<CR>
 
 "let NERDShutUp=1
 "hi TabLine cterm=reverse
 
-"map H :let &hlsearch = !&hlsearch<CR>
+"noremap H :let &hlsearch = !&hlsearch<CR>
 
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
@@ -375,7 +375,7 @@ nmap <tab> <c-w>
 nmap <tab><tab> <c-w><c-w>
 
 "attemp to fix backspace
-imap  
+inoremap  
 nmap  
 cnoremap  
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
