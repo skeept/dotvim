@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Dec 2011.
+" Last Modified: 03 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -250,10 +250,18 @@ let s:unite_options = [
 " Core functions."{{{
 function! unite#get_kinds(...)"{{{
   let unite = unite#get_current_unite()
+  if !has_key(unite, 'kinds')
+    return {}
+  endif
+
   return a:0 == 0 ? unite.kinds : get(unite.kinds, a:1, {})
 endfunction"}}}
 function! unite#get_sources(...)"{{{
   let unite = unite#get_current_unite()
+  if !has_key(unite, 'sources')
+    return {}
+  endif
+
   return a:0 == 0 ? unite.sources : get(unite.sources, a:1, {})
 endfunction"}}}
 function! unite#get_all_sources(...)"{{{
@@ -544,9 +552,32 @@ function! unite#escape_match(str)"{{{
         \ '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
 endfunction"}}}
 function! unite#complete_source(arglead, cmdline, cursorpos)"{{{
-  let sources = filter(s:initialize_sources(), 'v:val.is_listed')
-  return filter(sort(keys(sources))+s:unite_options,
-        \ 'stridx(v:val, a:arglead) == 0')
+  let ret = unite#parse_path(join(split(a:cmdline)[1:]))
+  let source_name = ret[0]
+  let source_args = ret[1:]
+
+  let _ = []
+
+  if a:arglead !~ ':'
+    " Option names completion.
+    let _ +=  copy(s:unite_options)
+
+    " Source name completion.
+    let _ += keys(filter(s:initialize_sources(), 'v:val.is_listed'))
+  else
+    " Add "{source-name}:".
+    let _  = map(_, 'source_name.":".v:val')
+  endif
+
+  if source_name != ''
+    " Source args completion.
+    let args = source_name . ':' . join(source_args[: -2], ':')
+    let _ += map(unite#args_complete(
+          \ [insert(copy(source_args), source_name)],
+          \ join(source_args, ':'), a:cmdline, a:cursorpos), 'args . v:val')
+  endif
+
+  return sort(filter(_, 'stridx(v:val, a:arglead) == 0'))
 endfunction"}}}
 function! unite#complete_buffer_name(arglead, cmdline, cursorpos)"{{{
   let _ = map(filter(range(1, bufnr('$')), '
@@ -691,6 +722,16 @@ function! unite#clear_previewed_buffer_list() "{{{
   endfor
 
   let unite.previewd_buffer_list = []
+endfunction"}}}
+function! unite#parse_path(path)"{{{
+  let source_name = matchstr(a:path, '^[^:]*\ze:')
+  let source_arg = a:path[len(source_name)+1 :]
+
+  let source_args = source_arg  == '' ? [] :
+        \  map(split(source_arg, '\\\@<!:', 1),
+        \      'substitute(v:val, ''\\\(.\)'', "\\1", "g")')
+
+  return insert(source_args, source_name)
 endfunction"}}}
 
 " Utils.
@@ -941,6 +982,7 @@ endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
   call s:initialize_context(context)
+  let context.is_complete = 1
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -952,6 +994,27 @@ function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   for source in unite#loaded_sources_list()
     if has_key(source, 'vimfiler_complete')
       let _ += source.vimfiler_complete(
+            \ source.args, context, a:arglead, a:cmdline, a:cursorpos)
+    endif
+  endfor
+
+  return _
+endfunction"}}}
+function! unite#args_complete(sources, arglead, cmdline, cursorpos)"{{{
+  let context = {}
+  call s:initialize_context(context)
+  let context.is_complete = 1
+
+  try
+    call s:initialize_current_unite(a:sources, context)
+  catch /^Invalid source/
+    return []
+  endtry
+
+  let _ = []
+  for source in unite#loaded_sources_list()
+    if has_key(source, 'complete')
+      let _ += source.complete(
             \ source.args, context, a:arglead, a:cmdline, a:cursorpos)
     endif
   endfor
@@ -1112,6 +1175,9 @@ function! s:initialize_context(context)"{{{
   endif
   if !has_key(a:context, 'no_buffer')
     let a:context.no_buffer = 0
+  endif
+  if !has_key(a:context, 'is_complete')
+    let a:context.is_complete = 0
   endif
   let a:context.is_changed = 0
 
@@ -1872,8 +1938,10 @@ function! s:initialize_current_unite(sources, context)"{{{
   " Check sources.
   let sources = s:initialize_loaded_sources(a:sources, a:context)
 
-  " Call initialize functions.
-  call s:call_hook(sources, 'on_init')
+  if !a:context.is_complete
+    " Call initialize functions.
+    call s:call_hook(sources, 'on_init')
+  endif
 
   " Set parameters.
   let unite = {}
@@ -2409,7 +2477,7 @@ function! s:take_action(action_name, candidate, is_parent_action)"{{{
 
   if !has_key(action_table, a:action_name)
     " throw 'no such action ' . a:action_name
-    return
+    return 1
   endif
 
   let action = action_table[a:action_name]

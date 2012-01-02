@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Dec 2011.
+" Last Modified: 02 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -223,9 +223,13 @@ function! s:source.vimfiler_dummy_candidates(args, context)"{{{
 
   return candidates
 endfunction"}}}
-function! s:source.vimfiler_complete(args, context, arglead, cmdline, cursorpos)"{{{
+function! s:source.complete(args, context, arglead, cmdline, cursorpos)"{{{
   return map(split(glob(a:arglead . '*'), '\n'),
         \ "isdirectory(v:val) ? v:val.'/' : v:val")
+endfunction"}}}
+function! s:source.vimfiler_complete(args, context, arglead, cmdline, cursorpos)"{{{
+  return unite#sources#file#complete_file(
+        \ a:args, a:context, a:arglead, a:cmdline, a:cursorpos)
 endfunction"}}}
 
 function! unite#sources#file#create_file_dict(file, is_relative_path, ...)"{{{
@@ -287,6 +291,14 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
   let a:candidate.vimfiler__filetime = getftime(a:candidate.action__path)
   let a:candidate.vimfiler__ftype =
         \ getftype(a:candidate.action__path)
+endfunction"}}}
+
+function! unite#sources#file#complete_file(args, context, arglead, cmdline, cursorpos)"{{{
+  return map(split(glob(a:arglead . '*'), '\n'),
+        \ "isdirectory(v:val) ? v:val.'/' : v:val")
+endfunction"}}}
+function! unite#sources#file#complete_directory(args, context, arglead, cmdline, cursorpos)"{{{
+  return filter(split(glob(a:arglead . '*'), '\n'), 'isdirectory(v:val)')
 endfunction"}}}
 
 " Add custom action table."{{{

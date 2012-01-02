@@ -1831,6 +1831,10 @@ change_candidates	Function	(Optional)
 async_gather_candidates	Function	(Optional)
 			Todo
 
+						*unite-source-attribute-complete*
+complete		Function	(Optional)
+			Todo
+
 						*unite-source-attribute-hooks*
 hooks			Dictionary		(Optional)
 			Todo
@@ -2134,6 +2138,16 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-01-03
+- Fixed complete behavior.
+
+2012-01-02
+- Added complete attribute.
+- Added spec file.
+- Fixed complete problem.
+- Fixed unite#get_sources() error.
+- Added source complete functions.
 
 2012-01-01
 - Fixed file operation.
