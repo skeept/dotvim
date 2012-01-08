@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Jan 2012.
+" Last Modified: 08 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -170,10 +170,10 @@ function! unite#undef_filter(name)"{{{
   endif
 endfunction"}}}
 
-function! unite#do_action(action)
+function! unite#do_action(action)"{{{
   return printf("%s:\<C-u>call unite#mappings#do_action(%s)\<CR>",
         \             (mode() ==# 'i' ? "\<C-o>" : ''), string(a:action))
-endfunction
+endfunction"}}}
 function! unite#smart_map(narrow_map, select_map)"{{{
   return (line('.') <= unite#get_current_unite().prompt_linenr && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
 endfunction"}}}
@@ -194,6 +194,29 @@ function! unite#take_action(action_name, candidate)"{{{
 endfunction"}}}
 function! unite#take_parents_action(action_name, candidate, extend_candidate)"{{{
   call s:take_action(a:action_name, extend(deepcopy(a:candidate), a:extend_candidate), 1)
+endfunction"}}}
+
+function! unite#do_candidates_action(action_name, candidates, ...)"{{{
+  let context = get(a:000, 0, {})
+  let context.is_interactive = 0
+  call s:initialize_context(context)
+
+  " Get sources.
+  let sources = {}
+  for candidate in a:candidates
+    if !has_key(sources, candidate.source)
+      let sources[candidate.source] = 1
+    endif
+  endfor
+
+  try
+    call s:initialize_current_unite(keys(sources), context)
+  catch /^Invalid source/
+    return
+  endtry
+
+  return unite#mappings#do_action(
+        \ a:action_name, a:candidates, context)
 endfunction"}}}
 "}}}
 
@@ -971,7 +994,16 @@ function! unite#get_candidates(sources, ...)"{{{
   call s:initialize_context(context)
   let context.no_buffer = 1
 
-  return s:get_candidates(a:sources, context, 0)
+  let candidates = s:get_candidates(a:sources, context, 0)
+
+  " Finalize.
+  let unite = unite#get_current_unite()
+
+  " Call finalize functions.
+  call s:call_hook(unite#loaded_sources_list(), 'on_close')
+  let unite.is_finalized = 1
+
+  return candidates
 endfunction"}}}
 function! unite#get_vimfiler_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
@@ -983,12 +1015,12 @@ endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
   call s:initialize_context(context)
-  let context.is_complete = 1
+  let context.is_interactive = 0
 
   try
     call s:initialize_current_unite(a:sources, context)
   catch /^Invalid source/
-    return []
+    return
   endtry
 
   let _ = []
@@ -1004,7 +1036,7 @@ endfunction"}}}
 function! unite#args_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
   call s:initialize_context(context)
-  let context.is_complete = 1
+  let context.is_interactive = 0
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1188,8 +1220,8 @@ function! s:initialize_context(context)"{{{
   if !has_key(a:context, 'no_buffer')
     let a:context.no_buffer = 0
   endif
-  if !has_key(a:context, 'is_complete')
-    let a:context.is_complete = 0
+  if !has_key(a:context, 'is_interactive')
+    let a:context.is_interactive = 1
   endif
   let a:context.is_changed = 0
 
@@ -1610,9 +1642,6 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     " Force set.
     let candidate.source = a:source_name
 
-    " Substitute tab.
-    let candidate.abbr = substitute(candidate.abbr, '\t', '>---', 'g')
-
     let candidate.is_multiline = get(candidate, 'is_multiline', 0)
 
     " Delete too long abbr.
@@ -1621,6 +1650,10 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     elseif len(candidate.abbr) > max_width * 2
       let candidate.abbr = candidate.abbr[: max_width * 2]
     endif
+
+    " Substitute tab.
+    let candidate.abbr = substitute(candidate.abbr, '\t',
+          \ repeat(' ', &tabstop), 'g')
 
     if !candidate.is_multiline
       let candidate.abbr = '  ' . candidate.abbr
@@ -1844,9 +1877,17 @@ function! s:get_source_candidates(source, is_vimfiler)"{{{
     endif
 
     if a:source.unite__context.is_async
+      " Get asyncronous candidates.
       let funcname = 'async_gather_candidates'
-      let a:source.unite__cached_candidates +=
-            \ a:source.async_gather_candidates(a:source.args, context)
+      while 1
+        let a:source.unite__cached_candidates +=
+              \ a:source.async_gather_candidates(a:source.args, context)
+
+        if context.is_interactive
+              \ || !a:source.unite__context.is_async
+          break
+        endif
+      endwhile
     endif
 
     if has_key(a:source, 'change_candidates')
@@ -1953,7 +1994,7 @@ function! s:initialize_current_unite(sources, context)"{{{
   " Check sources.
   let sources = s:initialize_loaded_sources(a:sources, a:context)
 
-  if !a:context.is_complete
+  if a:context.is_interactive
     " Call initialize functions.
     call s:call_hook(sources, 'on_init')
   endif

@@ -53,6 +53,9 @@ endif
 if !exists("g:buffergator_display_regime")
     let g:buffergator_display_regime = "basename"
 endif
+if !exists("g:buffergator_show_full_directory_path")
+    let g:buffergator_show_full_directory_path = 1
+endif
 " 1}}}
 
 " Script Data and Variables {{{1
@@ -411,6 +414,7 @@ function! s:NewCatalogViewer(name, title)
     let l:catalog_viewer["is_zoomed"] = 0
     let l:catalog_viewer["columns_expanded"] = 0
     let l:catalog_viewer["lines_expanded"] = 0
+    let l:catalog_viewer["max_buffer_basename_len"] = 30
 
     " Initialize object state.
     let l:catalog_viewer["bufnum"] = -1
@@ -420,6 +424,7 @@ function! s:NewCatalogViewer(name, title)
         redir => buffers_output
         execute('silent ls')
         redir END
+        let self.max_buffer_basename_len = 0
         let l:buffers_output_rows = split(l:buffers_output, "\n")
         for l:buffers_output_row in l:buffers_output_rows
             let l:parts = matchlist(l:buffers_output_row, '^\s*\(\d\+\)\(.....\) "\(.*\)"')
@@ -477,8 +482,21 @@ function! s:NewCatalogViewer(name, title)
             endif
             let l:info["bufname"] = parts[3]
             let l:info["filepath"] = fnamemodify(l:info["bufname"], ":p")
+            " if g:buffergator_show_full_directory_path
+            "     let l:info["filepath"] = fnamemodify(l:info["bufname"], ":p")
+            " else
+            "     let l:info["filepath"] = fnamemodify(l:info["bufname"], ":.")
+            " endif
             let l:info["basename"] = fnamemodify(l:info["bufname"], ":t")
+            if len(l:info["basename"]) > self.max_buffer_basename_len
+                let self.max_buffer_basename_len = len(l:info["basename"])
+            endif
             let l:info["parentdir"] = fnamemodify(l:info["bufname"], ":p:h")
+            if g:buffergator_show_full_directory_path
+                let l:info["parentdir"] = fnamemodify(l:info["bufname"], ":p:h")
+            else
+                let l:info["parentdir"] = fnamemodify(l:info["bufname"], ":h")
+            endif
             let l:info["extension"] = fnamemodify(l:info["bufname"], ":e")
             call add(bcat, l:info)
             " let l:buffers_info[l:info[l:key]] = l:info
@@ -833,6 +851,23 @@ function! s:NewCatalogViewer(name, title)
         call s:_buffergator_messenger.send_info("sorted " . l:sort_desc)
     endfunction
 
+    " Cycles full/relative paths
+    function! l:catalog_viewer.cycle_directory_path_display() dict
+        if self.display_regime != "basename"
+            call s:_buffergator_messenger.send_info("cycling full/relative directory paths only makes sense when using the 'basename' display regime")
+            return
+        endif
+        if g:buffergator_show_full_directory_path
+            let g:buffergator_show_full_directory_path = 0
+            call s:_buffergator_messenger.send_info("displaying relative directory path")
+            call self.open(1)
+        else
+            let g:buffergator_show_full_directory_path = 1
+            call s:_buffergator_messenger.send_info("displaying full directory path")
+            call self.open(1)
+        endif
+    endfunction
+
     " Cycles display regime.
     function! l:catalog_viewer.cycle_display_regime() dict
         let l:cur_regime = index(s:buffergator_catalog_display_regimes, self.display_regime)
@@ -932,7 +967,7 @@ endfunction
 function! s:NewBufferCatalogViewer()
 
     " initialize
-    let l:catalog_viewer = s:NewCatalogViewer("[[buffergator: buffers]]", "buffergator")
+    let l:catalog_viewer = s:NewCatalogViewer("[[buffergator-buffers]]", "buffergator")
     let l:catalog_viewer["calling_bufnum"] = -1
     let l:catalog_viewer["buffers_catalog"] = {}
 
@@ -1003,6 +1038,7 @@ function! s:NewBufferCatalogViewer()
             """" Catalog management
             noremap <buffer> <silent> cs          :call b:buffergator_catalog_viewer.cycle_sort_regime()<CR>
             noremap <buffer> <silent> cd          :call b:buffergator_catalog_viewer.cycle_display_regime()<CR>
+            noremap <buffer> <silent> cp          :call b:buffergator_catalog_viewer.cycle_directory_path_display()<CR>
             noremap <buffer> <silent> r           :call b:buffergator_catalog_viewer.rebuild_catalog()<CR>
             noremap <buffer> <silent> q           :call b:buffergator_catalog_viewer.close(1)<CR>
             noremap <buffer> <silent> d           :<C-U>call b:buffergator_catalog_viewer.delete_target(0, 0)<CR>
@@ -1110,7 +1146,8 @@ function! s:NewBufferCatalogViewer()
                 let l:line .= "  "
             endif
             if self.display_regime == "basename"
-                let l:line .= s:_format_align_left(l:bufinfo.basename, 30, " ")
+                let l:line .= s:_format_align_left(l:bufinfo.basename, self.max_buffer_basename_len, " ")
+                let l:line .= "  "
                 let l:line .= l:bufinfo.parentdir
             elseif self.display_regime == "filepath"
                 let l:line .= l:bufinfo.filepath
@@ -1372,7 +1409,7 @@ endfunction
 function! s:NewTabCatalogViewer()
 
     " initialize
-    let l:catalog_viewer = s:NewCatalogViewer("[[buffergator: tabs]]", "buffergator")
+    let l:catalog_viewer = s:NewCatalogViewer("[[buffergator-tabs]]", "buffergator")
     let l:catalog_viewer["tab_catalog"] = []
 
     " Opens the buffer for viewing, creating it if needed.
