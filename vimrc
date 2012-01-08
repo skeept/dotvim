@@ -509,11 +509,12 @@ noremap <Leader>os :Scratch<CR>
 let g:NERDDefaultNesting=1
 
 "don't want to start this completion thing before x chars
-let g:acp_behaviorKeywordLength = 5
+let g:acp_behaviorKeywordLength = 12
 let g:acp_completeOption = '.,w,b,k,t'
 
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
+"let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 "noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
