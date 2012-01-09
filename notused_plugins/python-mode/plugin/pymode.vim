@@ -1,4 +1,4 @@
-let g:pymode_version = "0.5.0"
+let g:pymode_version = "0.5.2"
 
 com! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
 
@@ -11,7 +11,7 @@ endif
 " DESC: Check python support
 if !has('python')
     echoerr expand("<sfile>:t") . " required vim compiled with +python."
-    echoerr "Pymode pylint and rope plugins will be disabled."
+    echoerr "Pymode rope, pylint and virtualenv plugins will be disabled."
     let g:pymode_lint = 0
     let g:pymode_rope = 0
     let g:pymode_path = 0
@@ -29,6 +29,9 @@ sys.path = [
     'pylibs'), vim.eval("getcwd()") ] + sys.path
 EOF
 endif
+
+
+" Lint {{{
 
 if !pymode#Default("g:pymode_lint", 1) || g:pymode_lint
 
@@ -147,6 +150,11 @@ def pyflakes():
 EOF
 endif
 
+" }}}
+
+
+" Breakpoints {{{
+
 if !pymode#Default("g:pymode_breakpoint", 1) || g:pymode_breakpoint
 
     " OPTION: g:pymode_breakpoint_key -- string. Key for set/unset breakpoint.
@@ -155,6 +163,11 @@ if !pymode#Default("g:pymode_breakpoint", 1) || g:pymode_breakpoint
     call pymode#Default("g:pymode_breakpoint_cmd", "import ipdb; ipdb.set_trace() ### XXX BREAKPOINT")
 
 endif
+
+" }}}
+
+
+" Documentation {{{
 
 if !pymode#Default("g:pymode_doc", 1) || g:pymode_doc
 
@@ -167,11 +180,21 @@ if !pymode#Default("g:pymode_doc", 1) || g:pymode_doc
 
 endif
 
+" }}}
+
+
+" Virtualenv {{{
+
 if !pymode#Default("g:pymode_virtualenv", 1) || g:pymode_virtualenv
 
     call pymode#Default("g:pymode_virtualenv_enabled", [])
 
 endif
+
+" }}}
+
+
+" Execution {{{
 
 if !pymode#Default("g:pymode_run", 1) || g:pymode_run
 
@@ -183,6 +206,11 @@ if !pymode#Default("g:pymode_run", 1) || g:pymode_run
     call pymode#Default("g:pymode_run_key", "<leader>r")
 
 endif
+
+" }}}
+
+
+" Rope {{{
 
 if !pymode#Default("g:pymode_rope", 1) || g:pymode_rope
 
@@ -245,10 +273,9 @@ if !pymode#Default("g:pymode_rope", 1) || g:pymode_rope
     endfunction "}}}
 
     fun! RopeOmni(findstart, base) "{{{
-        " TODO: Fix omni
-        if a:findstart == 1
-            let start = col('.') - 1
-            return start
+        if a:findstart
+            py ropevim._interface._find_start()
+            return g:pymode_offset
         else
             call RopeOmniComplete()
             return g:pythoncomplete_completions
@@ -277,3 +304,12 @@ if !pymode#Default("g:pymode_rope", 1) || g:pymode_rope
     menu <silent> Rope.UseFunction :RopeUseFunction<CR>
 
 endif
+
+" }}}
+
+
+" OPTION: g:pymode_utils_whitespaces -- bool. Remove unused whitespaces on save
+call pymode#Default("g:pymode_utils_whitespaces", 1)
+
+" vim: fdm=marker:fdl=0
+

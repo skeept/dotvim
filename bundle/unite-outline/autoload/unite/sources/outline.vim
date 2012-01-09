@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-12-29
+" Updated : 2012-01-07
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -83,7 +83,13 @@ endfunction
 " Defines an alias of filetype {ftype}.
 "
 function! unite#sources#outline#alias(alias, ftype)
-  call s:define_filetype_aliases([a:alias], a:ftype)
+  if type(a:alias) == type([])
+    call s:define_filetype_aliases(a:alias, a:ftype)
+  elseif type(a:alias) == type('')
+    call s:define_filetype_aliases([a:alias], a:ftype)
+  else
+    call unite#print_error("unite-outline: Unsupported alias type: " . string(a:alias))
+  endif
 endfunction
 
 let s:ftype_alias_table = {}

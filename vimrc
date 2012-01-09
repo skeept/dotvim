@@ -509,11 +509,12 @@ noremap <Leader>os :Scratch<CR>
 let g:NERDDefaultNesting=1
 
 "don't want to start this completion thing before x chars
-let g:acp_behaviorKeywordLength = 5
+let g:acp_behaviorKeywordLength = 12
 let g:acp_completeOption = '.,w,b,k,t'
 
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
+"let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 "noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
@@ -617,3 +618,8 @@ let g:pymode_breakpoint = 0
 "local vim settings
 let g:localvimrc_sandbox = 0
 let g:localvimrc_ask = 0
+
+let g:UltiSnipsExpandTrigger = "<f10>"
+let g:UltiSnipsListSnippets  = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""

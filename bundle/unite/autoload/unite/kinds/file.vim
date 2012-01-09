@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Jan 2012.
+" Last Modified: 08 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -151,7 +151,7 @@ let s:kind.action_table.rename = {
 function! s:kind.action_table.rename.func(candidates)"{{{
   for candidate in a:candidates
     let filename = unite#util#substitute_path_separator(
-          \ expand(input(printf('New file name: %s -> ',
+          \ unite#util#expand(input(printf('New file name: %s -> ',
           \ candidate.action__path), candidate.action__path)))
     if filename != '' && filename !=# candidate.action__path
       call s:rename(candidate.action__path, filename)
@@ -224,6 +224,7 @@ function! s:kind.action_table.move.func(candidates)"{{{
     echo 'Canceled.'
     return
   endif
+  redraw
 
   return s:kind.action_table.vimfiler__move.func(a:candidates)
 endfunction"}}}
@@ -381,7 +382,7 @@ function! s:kind.action_table.vimfiler__newfile.func(candidate)"{{{
       let file.source = 'file'
 
       call writefile([], filename)
-      call unite#mappings#do_action('open', [file])
+      call unite#mappings#do_action(g:vimfiler_edit_action, [file])
     endfor
   finally
     if vimfiler_current_dir != ''
@@ -527,7 +528,7 @@ function! s:execute_command(command, candidate)"{{{
     call mkdir(iconv(dir, &encoding, &termencoding), 'p')
   endif
 
-  silent call unite#util#smart_execute_command(a:command, a:candidate.action__path)
+  call unite#util#smart_execute_command(a:command, a:candidate.action__path)
 endfunction"}}}
 function! s:external(command, dest_dir, src_files)"{{{
   let dest_dir = a:dest_dir
@@ -548,7 +549,6 @@ function! s:external(command, dest_dir, src_files)"{{{
 
   " echomsg command_line
   let output = unite#util#system(command_line)
-  echomsg command_line
 
   return unite#util#get_last_status()
 endfunction"}}}
