@@ -33,22 +33,29 @@ for folder in * ; do
   fi
 done
 }
+
 function do_git_update2()
 {
-git_folders=""
-for folder in * ; do 
-  if test -d $folder; then 
-    mv ${folder}/._git ${folder}/.git >& /dev/null 
-    if test -d ${folder}/.git; then 
-      git_folders="$git_folders $folder"
+  git_folders=""
+  hg_folders=""
+  bz_folders=""
+  for folder in * ; do 
+    if test -d $folder; then 
+      mv ${folder}/._git ${folder}/.git >& /dev/null 
+      if test -d ${folder}/.git; then 
+        git_folders="$git_folders $folder"
+      fi
+      if test -d ${folder}/.hg ; then 
+        hg_folders="${hg_folders} $folder"
+      fi
+      if test -d ${folder}/.bzr ; then 
+        bzr_folders="${bzr_folders} $folder"
+      fi
     fi
-    if test -d ${folder}/.hg ; then 
-      hg_folders="${hg_folders} $folder"
-    fi
-  fi
-done
-#can we do it multiline?
-git_cmd=$(cat << EOF
+  done
+
+  #can we do it multiline?
+  git_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> git >>> {}";
 GIT_SSL_NO_VERIFY=true git pull origin master 2>&1      |\
@@ -57,9 +64,9 @@ GIT_SSL_NO_VERIFY=true git pull origin master 2>&1      |\
   grep -v -i "FETCH_HEAD"
 EOF
 )
-#printf "$git_cmd"
+  #printf "$git_cmd"
 
-hg_cmd=$(cat << EOF
+  hg_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> hg >>> {}";
 hg pull -u |\
@@ -70,17 +77,31 @@ hg pull -u |\
 EOF
 )
 
-#all remote heads known locally
-#no changes found
+  bzr_cmd=$(cat << EOF
+cd {} >& /dev/null
+echo ">>> bzr >>> {}";
+bzr pull |\
+  grep -v "All changes applied successfully" |\
+  grep -v "Now on revision" |\
+  grep -v "Using saved parent location" |\
+  grep -v "No revisions to pull"
+EOF
+)
 
-if test -n "$git_folders"; then
-  #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-  parallel -j 20 "${git_cmd}" ::: $git_folders
-fi
-if test -n "$hg_folders"; then
-  #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
-  parallel -j 20 "${hg_cmd}" ::: $hg_folders
-fi
+  #all remote heads known locally
+  #no changes found
+
+  if test -n "$git_folders"; then
+    #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+    parallel -j 20 "${git_cmd}" ::: $git_folders
+  fi
+  if test -n "$hg_folders"; then
+    #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
+    parallel -j 20 "${hg_cmd}" ::: $hg_folders
+  fi
+  if test -n "$bzr_folders"; then
+    parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
+  fi
 }
 
 function main()
