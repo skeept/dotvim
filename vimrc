@@ -618,3 +618,8 @@ let g:pymode_breakpoint = 0
 "local vim settings
 let g:localvimrc_sandbox = 0
 let g:localvimrc_ask = 0
+
+let g:UltiSnipsExpandTrigger = "<f10>"
+let g:UltiSnipsListSnippets  = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""

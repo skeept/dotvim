@@ -35,3 +35,5 @@ colors/not_used/
 .hg/
 
 doc/tags*
+
+.bzr/
