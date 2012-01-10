@@ -413,6 +413,11 @@ nmap <silent> ,lg :LustyBufferGrep<CR>
 
 nmap <silent> ,lj :LustyJuggler<CR>
 
+"" lycosaexplorer alternative mappings        
+noremap  ,b :LycosaBufferExplorer<CR>
+noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
+noremap  ,le :LycosaFilesystemExplorer<CR>
+
 nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
@@ -447,7 +452,18 @@ let g:unite_abbr_highlight = 'TabLine'
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
 
-nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+"nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+"Buffergator settings
+let g:buffergator_suppress_keymaps      = 1
+let g:buffergator_viewport_split_policy = "R"
+let g:buffergator_split_size            = 26
+noremap <Leader>bb :BuffergatorOpen<cr>
+noremap <Leader>bB :BuffergatorClose<cr>
+noremap <Leader>bt :BuffergatorTabsOpen<cr>
+noremap <Leader>bT :BuffergatorTabsClose<cr>
+
+
+
 nnoremap <C-L> :nohl<CR><C-L>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
@@ -623,3 +639,5 @@ let g:UltiSnipsExpandTrigger = "<f10>"
 let g:UltiSnipsListSnippets  = "<c-f10>"
 let g:UltiSnipsJumpForwardTrigger  = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
+
+let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
