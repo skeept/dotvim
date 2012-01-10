@@ -16,7 +16,7 @@ if v:progname =~? "evim"
 endif
 
 
-" pathogen 
+" pathogen
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
@@ -57,10 +57,10 @@ if v:version >= 703
   set relativenumber
 endif
 
-"" set backup. but all the backuped files will be 
+"" set backup. but all the backuped files will be
 "" placed in the directory specified by backupdir
 set backup
-if has("win32") 
+if has("win32")
   set backupdir^=$HOME\vimfiles\backup//
   set directory^=$HOME\vimfiles\swapdir//
   if v:version >= 703
@@ -138,7 +138,7 @@ endif " has("autocmd")
 
 set whichwrap=<,>,[,],h,l
 let whichwrapOrig=&whichwrap
-"the above is the same thing as 
+"the above is the same thing as
 "set ww=<,>,[,],h,l
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
@@ -207,7 +207,7 @@ if !has("gui_running") && !has("win32")
   "colorscheme default
   "colorscheme morning
   "colorscheme darkblue
-  "colorscheme fruit 
+  "colorscheme fruit
   "colorscheme icansee
   "colorscheme greens
   "colorscheme freya
@@ -286,7 +286,7 @@ let g:pep8_ignore = "E111,E221,E225"
 "todo list
 noremap <leader>td <Plug>TaskList
 
-"taglist options 
+"taglist options
 "let Tlist_Close_On_Select = 1
 let Tlist_Enable_Fold_Column = 0
 let Tlist_GainFocus_On_ToggleOpen = 1
@@ -333,10 +333,10 @@ let g:tagbar_width = 30
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 
-"yankring 
+"yankring
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
-if has("win32") 
+if has("win32")
   let g:yankring_history_dir  = "$HOME/vimfiles"
 else
   let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
@@ -413,7 +413,7 @@ nmap <silent> ,lg :LustyBufferGrep<CR>
 
 nmap <silent> ,lj :LustyJuggler<CR>
 
-"" lycosaexplorer alternative mappings        
+"" lycosaexplorer alternative mappings
 noremap  ,b :LycosaBufferExplorer<CR>
 noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
 noremap  ,le :LycosaFilesystemExplorer<CR>
@@ -452,7 +452,7 @@ let g:unite_abbr_highlight = 'TabLine'
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
 
-"nmap <silent> <Leader>bb :TSelectBuffer<cr> 
+"nmap <silent> <Leader>bb :TSelectBuffer<cr>
 "Buffergator settings
 let g:buffergator_suppress_keymaps      = 1
 let g:buffergator_viewport_split_policy = "R"
@@ -484,14 +484,14 @@ let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
-endif 
+endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
 
 
 "neocomplcache
-"let g:neocomplcache_enable_at_startup = 1 
+"let g:neocomplcache_enable_at_startup = 1
 
 ""tab complete
 "function! InsertTabWrapper(direction)
@@ -512,7 +512,7 @@ noremap <Leader>e /\*\*\*\*.*$<cr>
 noremap <Leader>v :view<cr>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
-"open scratch buffer 
+"open scratch buffer
 noremap <Leader>os :Scratch<CR>
 
 
@@ -542,7 +542,7 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
 "set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\ \ 
+set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\ \
 set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
 set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
