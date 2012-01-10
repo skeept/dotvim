@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/util.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-14
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#sources#outline#modules#util#import()
   return s:Util
@@ -309,4 +312,5 @@ function! s:Util__cpp_is_in_comment(heading_line, matched_line)
 endfunction
 call s:Util.function('_cpp_is_in_comment')
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/_cache.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-11-07
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#sources#outline#modules#file_cache#import(dir)
   let s:FileCache.DIR = a:dir
@@ -239,4 +242,5 @@ function! s:print_debug(msg)
   call s:Util.print_debug('cache', a:msg)
 endfunction
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

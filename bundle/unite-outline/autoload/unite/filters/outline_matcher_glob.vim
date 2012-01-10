@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/filters/outline_matcher_glob.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-21
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#filters#outline_matcher_glob#define()
   return s:matcher
@@ -77,4 +80,5 @@ function! s:matcher.filter(candidates, unite_context)
   return candidates
 endfunction
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

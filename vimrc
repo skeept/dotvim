@@ -622,7 +622,9 @@ nmap <tab><tab> <c-w><c-w>
 inoremap  
 nmap  
 cnoremap  
-set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
+set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+set wildignore+=tags,cscope.out
 
 "some python mode configuration. Don't always use but for now disable some
 "settings when used
@@ -640,4 +642,13 @@ let g:UltiSnipsListSnippets  = "<c-f10>"
 let g:UltiSnipsJumpForwardTrigger  = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
 
+"some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
+noremap ,pu :CtrlPMRUFiles<cr>
+noremap ,pb :CtrlPBuffer<cr>
+noremap ,pt :CtrlPTag<cr>
+noremap ,pq :CtrlPQuickfix<cr>
+noremap ,pd :CtrlPCurWD<cr>
+noremap ,pj :CtrlPBufTagAll<cr>
+noremap ,pf :CtrlPCurFile<cr>
+ "CtrlPBufTag  CtrlPBufTagAll  CtrlPBuffer  CtrlPCurFile  CtrlPCurWD  CtrlPDir  CtrlPMRUFiles  CtrlPQuickfix  CtrlPRoot  CtrlPTag
