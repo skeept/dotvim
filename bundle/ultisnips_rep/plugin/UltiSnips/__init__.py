@@ -6,15 +6,15 @@ import glob
 import hashlib
 import os
 import re
-import string
 import traceback
 
 import vim
 
 from UltiSnips.Geometry import Position
+from UltiSnips.Compatibility import make_suitable_for_vim
 from UltiSnips.TextObjects import *
 from UltiSnips.Buffer import VimBuffer
-from UltiSnips.Util import IndentUtil, vim_string, as_utf8
+from UltiSnips.Util import IndentUtil, vim_string, as_unicode
 from UltiSnips.Langmap import LangMapTranslator
 
 # The following lines silence DeprecationWarnings. They are raised
@@ -22,7 +22,7 @@ from UltiSnips.Langmap import LangMapTranslator
 # which is deprecated since 2.5 and will no longer work in 2.7. Let's hope
 # vim gets this fixed before)
 import sys
-if sys.version_info[:2] >= (2,6):
+if (2,6) <= sys.version_info[:2] < (3,0):
     import warnings
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -266,9 +266,9 @@ class Snippet(object):
     _TABS = re.compile(r"^\t*")
 
     def __init__(self, trigger, value, descr, options, globals):
-        self._t = as_utf8(trigger)
-        self._v = as_utf8(value)
-        self._d = as_utf8(descr)
+        self._t = as_unicode(trigger)
+        self._v = as_unicode(value)
+        self._d = as_unicode(descr)
         self._opts = options
         self._matched = ""
         self._last_re = None
@@ -295,7 +295,7 @@ class Snippet(object):
             return before.strip()
         else:
             before_words = before
-            for i in xrange(-1, -(num_words + 1), -1):
+            for i in range(-1, -(num_words + 1), -1):
                 left = before_words.rfind(word_list[i])
                 before_words = before_words[:left]
             return before[len(before_words):].strip()
@@ -322,7 +322,7 @@ class Snippet(object):
         self._matched = ""
 
         # Don't expand on whitespace
-        if trigger and trigger[-1] in string.whitespace:
+        if trigger and trigger.rstrip() is not trigger:
             return False
 
         words = self._words_for_line(trigger)
@@ -360,7 +360,7 @@ class Snippet(object):
         self._matched = ""
 
         # Don't expand on whitespace
-        if trigger and trigger[-1] in string.whitespace:
+        if trigger and trigger.rstrip() is not trigger:
             return False
 
         words = self._words_for_line(trigger)
@@ -596,7 +596,7 @@ class VimState(object):
                             "| redir END")
 
                 # Check if any mappings where found
-                all_maps = filter(len, vim.eval(r"_tmp_smaps").splitlines())
+                all_maps = list(filter(len, vim.eval(r"_tmp_smaps").splitlines()))
                 if (len(all_maps) == 1 and all_maps[0][0] not in " sv"):
                     # "No maps found". String could be localized. Hopefully
                     # it doesn't start with any of these letters in any
@@ -943,7 +943,7 @@ class SnippetManager(object):
         line = vim.current.line
 
         # Get the word to the left of the current edit position
-        before, after = line[:col], line[col:]
+        before, after = as_unicode(line[:col]), as_unicode(line[col:])
 
         return before, after
 
@@ -982,14 +982,14 @@ class SnippetManager(object):
 
         try:
             # let vim_string format it as a vim list
-            rv = vim.eval("inputlist(%s)" % vim_string(display))
+            rv = vim.eval(make_suitable_for_vim(as_unicode("inputlist(%s)") % vim_string(display)))
             if rv is None or rv == '0':
                 return None
             rv = int(rv)
             if rv > len(snippets):
                 rv = len(snippets)
             return snippets[rv-1]
-        except vim.error, e:
+        except vim.error as e:
             if str(e) == 'invalid expression':
                 return None
             raise

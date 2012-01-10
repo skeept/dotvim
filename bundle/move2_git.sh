@@ -69,7 +69,7 @@ EOF
   hg_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> hg >>> {}";
-hg pull -u |\
+hg pull -u 2>&1 |\
   grep -v "searching for changes" |\
   grep -v "all remote heads known locally" |\
   grep -v "no changes found" |\
@@ -80,7 +80,7 @@ EOF
   bzr_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> bzr >>> {}";
-bzr pull |\
+bzr pull 2>&1 |\
   grep -v "All changes applied successfully" |\
   grep -v "Now on revision" |\
   grep -v "Using saved parent location" |\
