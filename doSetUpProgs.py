@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# vim: cc=80
+
 # if the file is a directory, create a directory with the same name in usr,
 # if it doesn't exist
 # if the file is not a directory, just create a symbolic
