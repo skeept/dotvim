@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Jan 2012.
+" Last Modified: 11 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -198,8 +198,8 @@ endfunction"}}}
 
 function! unite#do_candidates_action(action_name, candidates, ...)"{{{
   let context = get(a:000, 0, {})
-  let context.is_interactive = 0
   call s:initialize_context(context)
+  let context.is_interactive = 0
 
   " Get sources.
   let sources = {}
@@ -993,6 +993,7 @@ function! unite#get_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
   call s:initialize_context(context)
   let context.no_buffer = 1
+  let context.is_interactive = 0
 
   let candidates = s:get_candidates(a:sources, context, 0)
 
@@ -1233,6 +1234,10 @@ function! s:get_candidates(sources, context, is_vimfiler)
   catch /^Invalid source/
     return []
   endtry
+
+  " Call initialize functions.
+  let unite = unite#get_current_unite()
+  call s:call_hook(unite.sources, 'on_init')
 
   " Caching.
   let s:current_unite.last_input = a:context.input
@@ -1930,7 +1935,7 @@ function! s:convert_quick_match_lines(candidates, quick_match_table)"{{{
   let num = 0
   for candidate in a:candidates
     call add(candidates,
-          \ (has_key(keys, num) ? keys[num] : '  ')
+          \ (!candidate.is_dummy && has_key(keys, num) ? keys[num] : '  ')
           \ . (unite.max_source_name == 0 ? '' :
           \    unite#util#truncate(candidate.source, max_source_name))
           \ . unite#util#truncate_smart(candidate.abbr, max_width, max_width/3, '..'))

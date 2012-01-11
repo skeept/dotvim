@@ -61,6 +61,8 @@ echo ">>> git >>> {}";
 GIT_SSL_NO_VERIFY=true git pull origin master 2>&1      |\
   grep -v "Already up-to-date" |\
   grep -v "github.com" |\
+  grep -v "Updating " |\
+  grep -v "Fast-forward" |\
   grep -v -i "FETCH_HEAD"
 EOF
 )

@@ -625,10 +625,16 @@ g:unite_source_history_yank_enable		*g:unite_source_history_yank_enable*
 		この変数はデフォルトで定義されない。
 
 g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
-		|unite-source-history/yank|が履歴を保存する最大数を指定
-		する。
+		|unite-source-history/yank|がヤンク履歴を保存する最大数を指定す
+		る。
 		
 		初期値は100である。
+
+g:unite_source_history_yank_file		*g:unite_source_history_yank_file*
+		ヤンク履歴を書き出すファイルを指定する。この変数を空にすると、
+		履歴は保存されなくなる。
+		
+		初期値は |g:unite_data_directory| . '/history_yank' である。
 
 g:unite_source_session_default_session_name	*g:unite_source_session_default_session_name*
 		デフォルトで使用されるセッション名。
@@ -2440,6 +2446,13 @@ description		文字列		(任意)
 	"let g:unite_source_session_enable_auto_save = 1
 	" Load session automatically.
 	"autocmd VimEnter * UniteSessionLoad
+	
+	" For ack.
+	if executable('ack-grep')
+	  let g:unite_source_grep_command = 'ack-grep'
+	  let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  let g:unite_source_grep_recursive_opt = ''
+	endif
 <
 ==============================================================================
 ユーザーのsource				*unite-user-sources*

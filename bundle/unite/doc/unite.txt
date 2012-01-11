@@ -636,6 +636,12 @@ g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
 		
 		Default value is 100.
 
+g:unite_source_history_yank_file		*g:unite_source_history_yank_file*
+		Specifies the file to write the information of yank history.
+		If this variable is empty, disabled save history.
+
+		Default value is |g:unite_data_directory|; '/history_yank'
+
 g:unite_source_session_default_session_name	*g:unite_source_session_default_session_name*
 		Default session name.
 		
@@ -2135,6 +2141,13 @@ EXAMPLES					*unite-examples*
 	"let g:unite_source_session_enable_auto_save = 1
 	" Load session automatically.
 	"autocmd VimEnter * UniteSessionLoad
+	
+	" For ack.
+	if executable('ack-grep')
+	  let g:unite_source_grep_command = 'ack-grep'
+	  let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  let g:unite_source_grep_recursive_opt = ''
+	endif
 <
 ==============================================================================
 USER DEFINED SOURCES				*unite-user-sources*
@@ -2146,7 +2159,11 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 CHANGELOG					*unite-changelog*
 
 2012-01-11
+- Supported ack command in grep source.
 - Fixed execute problem.
+- Added g:unite_source_history_yank_file option.
+- Fixed unite#get_candidates().
+- Fixed quick match.
 
 2012-01-09
 - Added abbr_head.
