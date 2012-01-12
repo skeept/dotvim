@@ -20,7 +20,7 @@ endif
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 "let g:pathogen_disabled = ['whatever', 'unite.vim']
-let g:pathogen_disabled = ['pyflakes', 'pep8']
+"let g:pathogen_disabled = ['pyflakes', 'pep8', 'python-mode']
 if has('unix') && executable('cygpath') "cygwin specific settings
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell'] "cygwin vim does not have python
 endif
