@@ -383,3 +383,5 @@ set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png
 "python compiler settings
 autocmd FileType python setlocal errorformat=%f:%l:\ %m
 autocmd FileType python setlocal makeprg=epylint\ %
+"pep8 settings (do I want to leave pep8 in simple.vim?)
+let g:pep8_args = " --ignore=E111,E221,E225"

@@ -17,10 +17,10 @@ endif
 
 
 " pathogen
+let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
-"let g:pathogen_disabled = ['whatever', 'unite.vim']
-"let g:pathogen_disabled = ['pyflakes', 'pep8', 'python-mode']
+let g:pathogen_disabled += ['pyflakes', 'python-mode']
 if has('unix') && executable('cygpath') "cygwin specific settings
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell'] "cygwin vim does not have python
 endif
@@ -283,6 +283,8 @@ noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "let g:pep8_map = '<leader>p8' "not used anymore
 let g:pep8_cmd  = 'pep8.py'
 let g:pep8_ignore = "E111,E221,E225"
+" this is a different plugin, the one I used now doesn't work the same way
+let g:pep8_args = " --ignore=E111,E221,E225"
 "todo list
 noremap <leader>td <Plug>TaskList
 
