@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 11 Jan 2012.
+" Last Modified: 12 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -83,35 +83,41 @@ let s:source = {
 
 function! s:source.hooks.on_init(args, context) "{{{
   if type(get(a:args, 0, '')) == type([])
-    let default = join(get(a:args, 0, ''))
+    let a:context.source__target = a:args[0]
+    let targets = a:context.source__target
   else
     let default = get(a:args, 0, '')
-  endif
-  if default == ''
-    let default = '**'
-  endif
 
-  if get(a:args, 0, '') == ''
-    let target = input('Target: ', default, 'file')
-  else
-    let target = default
-  endif
+    if default == ''
+      let default = '**'
+    endif
 
-  if target == '%' || target == '#'
-    let target = unite#util#escape_file_searching(bufname(target))
-  elseif target ==# '$buffers'
-    let target = join(map(filter(range(1, bufnr('$')),
-          \ 'buflisted(v:val) && filereadable(bufname(v:val))'),
-          \ 'unite#util#escape_file_searching(bufname(v:val))'))
-  elseif target == '**'
-    " Optimized.
-    let target = '*'
-  else
-    " Escape filename.
-    let target = escape(target, ' ')
-  endif
+    if type(get(a:args, 0, '')) == type('')
+          \ && get(a:args, 0, '') == ''
+      let target = input('Target: ', default, 'file')
+    else
+      let target = default
+    endif
 
-  let a:context.source__target = [target]
+    if target == '%' || target == '#'
+      let target = unite#util#escape_file_searching(bufname(target))
+    elseif target ==# '$buffers'
+      let target = join(map(filter(range(1, bufnr('$')),
+            \ 'buflisted(v:val) && filereadable(bufname(v:val))'),
+            \ 'unite#util#escape_file_searching(bufname(v:val))'))
+    elseif target == '**'
+      " Optimized.
+      let target = '*'
+    else
+      " Escape filename.
+      let target = escape(target, ' ')
+    endif
+
+    let a:context.source__target = [target]
+
+    let targets = map(filter(split(target), 'v:val !~ "^-"'),
+          \ 'substitute(v:val, "*\\+$", "", "")')
+  endif
 
   let a:context.source__extra_opts = get(a:args, 1, '')
 
@@ -120,8 +126,6 @@ function! s:source.hooks.on_init(args, context) "{{{
     let a:context.source__input = input('Pattern: ')
   endif
 
-  let targets = map(filter(split(target), 'v:val !~ "^-"'),
-        \ 'substitute(v:val, "*\\+$", "", "")')
   let a:context.source__directory =
         \ (len(targets) == 1) ?
         \ unite#util#substitute_path_separator(
