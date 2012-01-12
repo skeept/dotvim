@@ -322,7 +322,7 @@ noremap <Leader>ch :nohlsearch<CR>
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
 "set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\ \ 
+set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\,
 set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
 set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
