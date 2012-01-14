@@ -643,6 +643,7 @@ let g:UltiSnipsExpandTrigger = "<f10>"
 let g:UltiSnipsListSnippets  = "<c-f10>"
 let g:UltiSnipsJumpForwardTrigger  = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
+nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
