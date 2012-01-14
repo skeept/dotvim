@@ -532,7 +532,7 @@ let g:acp_completeOption = '.,w,b,k,t'
 
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
-"let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 "noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
@@ -653,4 +653,5 @@ noremap ,pq :CtrlPQuickfix<cr>
 noremap ,pd :CtrlPCurWD<cr>
 noremap ,pj :CtrlPBufTagAll<cr>
 noremap ,pf :CtrlPCurFile<cr>
- "CtrlPBufTag  CtrlPBufTagAll  CtrlPBuffer  CtrlPCurFile  CtrlPCurWD  CtrlPDir  CtrlPMRUFiles  CtrlPQuickfix  CtrlPRoot  CtrlPTag
+
+"let g:acp_enableAtStartup = 0
