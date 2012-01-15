@@ -437,6 +437,9 @@ runtime bundle/tagbar/plugin/tagbar.vim
 exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
 
 ""ultisnips
-runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
-exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+if !(has('unix') && executable('cygpath'))
+  "cygwin vim does not have python
+  runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
+  exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+endif
 "==============================================================================
