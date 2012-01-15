@@ -363,10 +363,6 @@ com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "" change some highlight
 hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
-
-
-
-
 "======================== PyLint Compiler =====================================
 "autocmd FileType python compiler pylint
 autocmd FileType python setlocal errorformat=%f:%l:\ %m
