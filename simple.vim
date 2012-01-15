@@ -17,6 +17,7 @@ endif
 
 
 
+"=============================== Settings =====================================
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
@@ -27,6 +28,8 @@ set backspace=2
 set esckeys
 
 set autoindent		" always set autoindenting on
+"set splitright          "split the window to the right
+"set splitbelow          "open the window to the bottom
 
 set history=50		" keep 50 lines of command line history
 set ruler		" show the cursor position all the time
@@ -37,15 +40,25 @@ set ignorecase
 set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
+set whichwrap=<,>,[,],h,l
+set nopaste
+"set pastetoggle=<S-F3>
+set pastetoggle=<Leader>pt
+
+"Set terminal capabilities before the colorscheme
+"set t_Co=128
+set t_Co=256
+"set t_Co=88
 
 if v:version >= 703
   set undofile
+  "set relativenumber
 endif
 
-"" set backup. but all the backuped files will be 
+"" set backup. but all the backuped files will be
 "" placed in the directory specified by backupdir
 set backup
-if has("win32") 
+if has("win32")
   set backupdir^=$HOME\vimfiles\backup//
   set directory^=$HOME\vimfiles\swapdir//
   if v:version >= 703
@@ -73,6 +86,33 @@ set nostartofline
 set hidden
 set shortmess=a
 
+set foldmethod=syntax
+set title
+set virtualedit+=block
+
+"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
+  "we change to setting from H to -h so the filename does not show up
+  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
+"endif
+
+"for scip go up two folders
+set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
+
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
+set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+set wildignore+=tags,cscope.out
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+if &t_Co > 2 || has("gui_running")
+  syntax on
+  set hlsearch
+endif
+"set cot-=preview
+"==============================================================================
+
+"============================ Mappings ========================================
 " Don't use Ex mode, use Q for formatting
 noremap Q gq
 
@@ -84,47 +124,6 @@ nnoremap gp `[v`]
 nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 "cmap tb tab split +b
-
-" Switch syntax highlighting on, when the terminal has colors
-" Also switch on highlighting the last used search pattern.
-if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-endif
-
-" Only do this part when compiled with support for autocommands.
-if has("autocmd")
-
-  " Enable file type detection.
-  " Use the default filetype settings, so that mail gets 'tw' set to 72,
-  " 'cindent' is on in C files, etc.
-  " Also load indent files, to automatically do language-dependent indenting.
-  filetype plugin indent on
-
-  " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=78
-
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  autocmd BufReadPost *
-    \ if line("'\"") > 0 && line("'\"") <= line("$") |
-    \   exe "normal g`\"" |
-    \ endif
-
-  " do the gams stuff here
-  autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
-  autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
-
-  "source .vimrc if changes are made (cool)
-  autocmd BufWritePost $MYVIMRC so %
-
-endif " has("autocmd")
-
-set whichwrap=<,>,[,],h,l
-let whichwrapOrig=&whichwrap
-"the above is the same thing as 
-"set ww=<,>,[,],h,l
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
 "inoremap <C-A> <ESC>0i
@@ -168,53 +167,31 @@ if &diff
   noremap <f6> :qa!<cr>
 endif
 
-let fortran_free_source = 1
+nnoremap <C-L> :nohl<CR><C-L>
 
-set nopaste
-"set pastetoggle=<S-F3>
-set pastetoggle=<Leader>pt
+"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
+"let g:tmpa='screen -p gams_run -X stuff gr'
+"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
-
-"Set terminal capabilities before the colorscheme
-"set t_Co=128
-set t_Co=256
-"set t_Co=88
-"colorscheme bw_cs
-"colorscheme desertink
-"colorscheme ps_color_cs
-"colorscheme winter_cs
+" for searching gams erros
+noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>v :view<cr>
+" for clearing search views
+noremap <Leader>ch :nohlsearch<CR>
+"open scratch buffer
+noremap <Leader>os :Scratch<CR>
 
 
-" setting the color in terminals
-if !has("gui_running") && !has("win32")
-  "on windows default is better
-  "colorscheme evening
-  "colorscheme default
-  "colorscheme morning
-  "colorscheme darkblue
-  "colorscheme fruit 
-  "colorscheme icansee
-  "colorscheme greens
-  "colorscheme freya
-  "colorscheme 256_asu1dark
-  "colorscheme desert256
-  "colorscheme desert
-  "colorscheme autumn
-  "colorscheme leo
-  "colorscheme torte
-  "colorscheme blacksea_cs
-  "colorscheme asu1dark_cs
-  "colorscheme candycode_cs
-  "colorscheme LightDefaultGrey_cs
-  "colorscheme Dark2_cs
-  "colorscheme anotherdark_cs
-  "colorscheme  koehler_cs
-   "colorscheme xoria256
-   set bg=dark | colorscheme peaksea
-endif
+nmap <tab> <c-w>
+nmap <tab><tab> <c-w><c-w>
 
+"attemp to fix backspace
+inoremap  
+nmap  
+cnoremap  
+"==============================================================================
 
-" some spelling related options mappings and functions
+"======================== Spelling ============================================
 " by default now toggle spell and nospell, if a count is given use portuguese
 setlocal nospell
 let g:togglespell = 0
@@ -242,6 +219,68 @@ function! ToggleSpell()
   endif
 endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <cr>
+"==============================================================================
+
+" Only do this part when compiled with support for autocommands.
+if has("autocmd")
+
+  " Enable file type detection.
+  " Use the default filetype settings, so that mail gets 'tw' set to 72,
+  " 'cindent' is on in C files, etc.
+  " Also load indent files, to automatically do language-dependent indenting.
+  filetype plugin indent on
+
+  " For all text files set 'textwidth' to 78 characters.
+  autocmd FileType text setlocal textwidth=78
+
+  " When editing a file, always jump to the last known cursor position.
+  " Don't do it when the position is invalid or when inside an event handler
+  " (happens when dropping a file on gvim).
+  autocmd BufReadPost *
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "normal g`\"" |
+    \ endif
+
+  " do the gams stuff here
+  autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
+  autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+
+  "source .vimrc if changes are made (cool)
+  autocmd BufWritePost $MYVIMRC so %
+
+  "for now set scip compatible settings (3 spaces indentation for c files)
+  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+endif " has("autocmd")
+
+let fortran_free_source = 1
+
+" setting the color in terminals
+if !has("gui_running") && !has("win32")
+  "on windows default is better
+  "colorscheme evening
+  "colorscheme default
+  "colorscheme morning
+  "colorscheme darkblue
+  "colorscheme fruit
+  "colorscheme icansee
+  "colorscheme greens
+  "colorscheme freya
+  "colorscheme 256_asu1dark
+  "colorscheme desert256
+  "colorscheme desert
+  "colorscheme autumn
+  "colorscheme leo
+  "colorscheme torte
+  "colorscheme blacksea_cs
+  "colorscheme asu1dark_cs
+  "colorscheme candycode_cs
+  "colorscheme LightDefaultGrey_cs
+  "colorscheme Dark2_cs
+  "colorscheme anotherdark_cs
+  "colorscheme  koehler_cs
+   "colorscheme xoria256
+   set bg=dark | colorscheme peaksea
+endif
 
 let g:relativenumber =2
 "set relativenumber
@@ -264,13 +303,12 @@ endfunction
 noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
-nnoremap <C-L> :nohl<CR><C-L>
-
-"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
-"let g:tmpa='screen -p gams_run -X stuff gr'
-"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
+" Main settings and mappings for plugins
+"
 
 
+
+"========================== Latex =============================================
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -284,40 +322,20 @@ let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
-endif 
+endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
+"==============================================================================
 
 
-"neocomplcache
-"let g:neocomplcache_enable_at_startup = 1 
-
-""tab complete
-"function! InsertTabWrapper(direction)
-    "let col = col('.') - 1
-    "if !col || getline('.')[col - 1] !~ '\k'
-        "return "\<tab>"
-    "elseif "backward" == a:direction
-        "return "\<c-p>"
-    "else
-        "return "\<c-n>"
-    "endif
-"endfunction
-"inoremap <tab> <c-r>=InsertTabWrapper ("forward")<cr>
-"inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
-
-" for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<cr>
-noremap <Leader>v :view<cr>
-" for clearing search views
-noremap <Leader>ch :nohlsearch<CR>
-
+"============================= NerdCommenter ==================================
 "let NERDShutUp=1
-"hi TabLine cterm=reverse
+"use nested comments by default in NerdCommenter
+let g:NERDDefaultNesting=1
+"==============================================================================
 
-"noremap H :let &hlsearch = !&hlsearch<CR>
-
+"======================== Statusline ==========================================
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
@@ -328,41 +346,85 @@ set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
 "set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
 "set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
-
-set foldmethod=syntax
-set title
-set virtualedit+=block
+"==============================================================================
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "
 "
-"for now set scip compatible settings (3 spaces indentation for c files)
-if has("autocmd")
-  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
-end " has("autocmd")
 
-"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
-  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
-  "we change to setting from H to -h so the filename does not show up
-  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
-"endif
-
-
-" ==================================================
+" =============================================================================
 " Python
-" ==================================================
+" =============================================================================
 "au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
 "au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
 "
-"for scip go up two folders
-set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
-
-"" for supertab plugin try changing the default context
-let g:SuperTabDefaultCompletionType = "context"
 
 "" change some highlight
-hi! ColorColumn   term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
+
+
+
+
+"======================== PyLint Compiler =====================================
+"autocmd FileType python compiler pylint
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %
+"==============================================================================
+
+"=============================== tagbar =======================================
+"tagbar gms and gamslst settings
+
+let g:tagbar_autofocus = 1
+"tagbar width (default is 40)
+let g:tagbar_width = 30
+
+let g:tagbar_type_gams = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:variable',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ ],
+  \ }
+let g:tagbar_type_gamslst = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:var val',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ 'a:eq val',
+  \ ],
+  \ }
+
+noremap <F5> :TagbarToggle<CR>
+"==============================================================================
+
+"============================== pep8 ==========================================
+"let g:pep8_map = '<leader>p8' "not used anymore
+"let g:pep8_cmd  = 'pep8.py'
+"let g:pep8_ignore = "E111,E221,E225"
+" this is a different plugin, the one I used now doesn't work the same way
+let g:pep8_args = " --ignore=E111,E221,E225"
+"==============================================================================
+
+"================================ UltiSnips ===================================
+let g:UltiSnipsExpandTrigger = "<f10>"
+let g:UltiSnipsListSnippets  = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
+nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
+"==============================================================================
+
+"=============================== Supertab =====================================
+"" for supertab plugin try changing the default context
+let g:SuperTabDefaultCompletionType = "context"
+"let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+"==============================================================================
+
+"======================== Plugin Loading ======================================
 "load eventual plugins here (the ones that would be really necessary)
 let g:p0 = split(&runtimepath, ',')[0]
 runtime plugin/NERD_commenter.vim
@@ -370,18 +432,11 @@ runtime plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 
-"some tests/tries
-nmap <tab> <c-w>
-nmap <tab><tab> <c-w><c-w>
+""tagbar
+runtime bundle/tagbar/plugin/tagbar.vim
+exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
 
-"attemp to fix backspace
-inoremap  
-nmap  
-cnoremap  
-set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar,*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
-
-"python compiler settings
-autocmd FileType python setlocal errorformat=%f:%l:\ %m
-autocmd FileType python setlocal makeprg=epylint\ %
-"pep8 settings (do I want to leave pep8 in simple.vim?)
-let g:pep8_args = " --ignore=E111,E221,E225"
+""ultisnips
+runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
+exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+"==============================================================================

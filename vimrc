@@ -16,7 +16,7 @@ if v:progname =~? "evim"
 endif
 
 
-" pathogen
+"============================= pathogen =======================================
 let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
@@ -28,7 +28,9 @@ if has("win32")
   "let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
+"==============================================================================
 
+"=============================== Settings =====================================
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
@@ -51,6 +53,15 @@ set ignorecase
 set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
+set whichwrap=<,>,[,],h,l
+set nopaste
+"set pastetoggle=<S-F3>
+set pastetoggle=<Leader>pt
+
+"Set terminal capabilities before the colorscheme
+"set t_Co=128
+set t_Co=256
+"set t_Co=88
 
 if v:version >= 703
   set undofile
@@ -88,6 +99,33 @@ set nostartofline
 set hidden
 set shortmess=a
 
+set foldmethod=syntax
+set title
+set virtualedit+=block
+
+"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
+  "we change to setting from H to -h so the filename does not show up
+  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
+"endif
+
+"for scip go up two folders
+set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
+
+set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
+set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
+set wildignore+=tags,cscope.out
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+if &t_Co > 2 || has("gui_running")
+  syntax on
+  set hlsearch
+endif
+set cot-=preview
+"==============================================================================
+
+"============================ Mappings ========================================
 " Don't use Ex mode, use Q for formatting
 noremap Q gq
 
@@ -99,47 +137,6 @@ nnoremap gp `[v`]
 nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 "cmap tb tab split +b
-
-" Switch syntax highlighting on, when the terminal has colors
-" Also switch on highlighting the last used search pattern.
-if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-endif
-
-" Only do this part when compiled with support for autocommands.
-if has("autocmd")
-
-  " Enable file type detection.
-  " Use the default filetype settings, so that mail gets 'tw' set to 72,
-  " 'cindent' is on in C files, etc.
-  " Also load indent files, to automatically do language-dependent indenting.
-  filetype plugin indent on
-
-  " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=78
-
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  autocmd BufReadPost *
-    \ if line("'\"") > 0 && line("'\"") <= line("$") |
-    \   exe "normal g`\"" |
-    \ endif
-
-  " do the gams stuff here
-  autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
-  autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
-
-  "source .vimrc if changes are made (cool)
-  autocmd BufWritePost $MYVIMRC so %
-
-endif " has("autocmd")
-
-set whichwrap=<,>,[,],h,l
-let whichwrapOrig=&whichwrap
-"the above is the same thing as
-"set ww=<,>,[,],h,l
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
 "inoremap <C-A> <ESC>0i
@@ -183,22 +180,92 @@ if &diff
   noremap <f6> :qa!<cr>
 endif
 
+nnoremap <C-L> :nohl<CR><C-L>
+
+"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
+"let g:tmpa='screen -p gams_run -X stuff gr'
+"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
+
+" for searching gams erros
+noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>v :view<cr>
+" for clearing search views
+noremap <Leader>ch :nohlsearch<CR>
+"open scratch buffer
+noremap <Leader>os :Scratch<CR>
+
+
+nmap <tab> <c-w>
+nmap <tab><tab> <c-w><c-w>
+
+"attemp to fix backspace
+inoremap  
+nmap  
+cnoremap  
+"==============================================================================
+
+"======================== Spelling ============================================
+" by default now toggle spell and nospell, if a count is given use portuguese
+setlocal nospell
+let g:togglespell = 0
+let g:default_langn = 1 "1 for english, 2 for portuguese
+function! ToggleSpell()
+  if v:count != 0
+    let g:default_langn = v:count
+    let g:togglespell = 0 " force spelling this time
+  endif
+  if g:togglespell == 0
+    if g:default_langn == 1
+      setlocal spell spelllang=en_us
+      echo "language = en_us"
+    elseif g:default_langn == 2
+      setlocal spell spelllang=pt
+      echo "language = pt"
+    else
+      echom "No language correspondig to such option [1: English, 2 Portuguese]"
+    endif
+    let g:togglespell = 1
+  else
+    setlocal nospell
+    let g:togglespell = 0
+    echo "No spell Cheking"
+  endif
+endfunction
+noremap <Leader>st :<C-U>call ToggleSpell() <cr>
+"==============================================================================
+
+" Only do this part when compiled with support for autocommands.
+if has("autocmd")
+
+  " Enable file type detection.
+  " Use the default filetype settings, so that mail gets 'tw' set to 72,
+  " 'cindent' is on in C files, etc.
+  " Also load indent files, to automatically do language-dependent indenting.
+  filetype plugin indent on
+
+  " For all text files set 'textwidth' to 78 characters.
+  autocmd FileType text setlocal textwidth=78
+
+  " When editing a file, always jump to the last known cursor position.
+  " Don't do it when the position is invalid or when inside an event handler
+  " (happens when dropping a file on gvim).
+  autocmd BufReadPost *
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "normal g`\"" |
+    \ endif
+
+  " do the gams stuff here
+  autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
+  autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+
+  "source .vimrc if changes are made (cool)
+  autocmd BufWritePost $MYVIMRC so %
+
+  "for now set scip compatible settings (3 spaces indentation for c files)
+  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+endif " has("autocmd")
+
 let fortran_free_source = 1
-
-set nopaste
-"set pastetoggle=<S-F3>
-set pastetoggle=<Leader>pt
-
-
-"Set terminal capabilities before the colorscheme
-"set t_Co=128
-set t_Co=256
-"set t_Co=88
-"colorscheme bw_cs
-"colorscheme desertink
-"colorscheme ps_color_cs
-"colorscheme winter_cs
-
 
 " setting the color in terminals
 if !has("gui_running") && !has("win32")
@@ -228,36 +295,6 @@ if !has("gui_running") && !has("win32")
    colorscheme  graywh_cs1
 endif
 
-
-" some spelling related options mappings and functions
-" by default now toggle spell and nospell, if a count is given use portuguese
-setlocal nospell
-let g:togglespell = 0
-let g:default_langn = 1 "1 for english, 2 for portuguese
-function! ToggleSpell()
-  if v:count != 0
-    let g:default_langn = v:count
-    let g:togglespell = 0 " force spelling this time
-  endif
-  if g:togglespell == 0
-    if g:default_langn == 1
-      setlocal spell spelllang=en_us
-      echo "language = en_us"
-    elseif g:default_langn == 2
-      setlocal spell spelllang=pt
-      echo "language = pt"
-    else
-      echom "No language correspondig to such option [1: English, 2 Portuguese]"
-    endif
-    let g:togglespell = 1
-  else
-    setlocal nospell
-    let g:togglespell = 0
-    echo "No spell Cheking"
-  endif
-endfunction
-noremap <Leader>st :<C-U>call ToggleSpell() <cr>
-
 let g:relativenumber =2
 "set relativenumber
 function! ToggleRelativeNumber()
@@ -279,15 +316,15 @@ endfunction
 noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
-"pep8
-"let g:pep8_map = '<leader>p8' "not used anymore
-let g:pep8_cmd  = 'pep8.py'
-let g:pep8_ignore = "E111,E221,E225"
-" this is a different plugin, the one I used now doesn't work the same way
-let g:pep8_args = " --ignore=E111,E221,E225"
+" Main settings and mappings for plugins
+"
+
+"=============================== tasklist =====================================
 "todo list
 noremap <leader>td <Plug>TaskList
+"==============================================================================
 
+"=============================== Taglist ======================================
 "taglist options
 "let Tlist_Close_On_Select = 1
 let Tlist_Enable_Fold_Column = 0
@@ -302,58 +339,11 @@ let tlist_gams_settings='gams;e:equation;c:variable;m:model;s:Solve Statement'
 let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "noremap <F3> :TlistToggle<cr>
 "inoremap <F3> <ESC>:TlistToggle<cr>
+"==============================================================================
 
-"tagbar gms and gamslst settings
-let g:tagbar_type_gams = {
-  \ 'ctagstype': 'gams',
-  \ 'kinds' : [
-  \ 'e:equation',
-  \ 'c:variable',
-  \ 'm:model',
-  \ 's:Solve Statement',
-  \ ],
-  \ }
-let g:tagbar_type_gamslst = {
-  \ 'ctagstype': 'gams',
-  \ 'kinds' : [
-  \ 'e:equation',
-  \ 'c:var val',
-  \ 'm:model',
-  \ 's:Solve Statement',
-  \ 'a:eq val',
-  \ ],
-  \ }
-
+"=============================== NerdTree =====================================
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
-
-"1tagbar settings
-let g:tagbar_autofocus = 1
-"tagbar width (default is 40)
-let g:tagbar_width = 30
-
-"lusty juggler
-let g:LustyJugglerShowKeys = 'a'
-
-"yankring
-let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
-let g:yankring_history_file = '.yankring_history'
-if has("win32")
-  let g:yankring_history_dir  = "$HOME/vimfiles"
-else
-  let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
-endif
-
-nmap ,f :call PreciseJumpF(-1, -1, 0)<cr>
-vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<cr>
-omap ,f :call PreciseJumpF(-1, -1, 0)<cr>
-
-"don't show file numbers in taglist and nerdtree
-autocmd FileType nerdtree      setlocal norelativenumber
-autocmd FileType taglist       setlocal norelativenumber
-autocmd FileType qf            setlocal norelativenumber
-autocmd FileType tlibInputList setlocal norelativenumber
-
 
 let g:togglelistornerdtree = 0
 function! ToogleTagListNerdTree()
@@ -381,45 +371,47 @@ function! ToogleTagListNerdTree()
     let g:togglelistornerdtree = 0
   endif
 endfunction
+"==============================================================================
 
-"fuction to toogle behaviour of autocomplpop
-let g:is_acp_disabled = 0
-function! ToggleAcpDisable()
-  if g:is_acp_disabled == 0
-    AcpLock
-    let g:is_acp_disabled = 1
-  else
-    AcpUnlock
-    let g:is_acp_disabled = 0
-  endif
-endfunction
+"=============================== LustyJuggler =================================
+"lusty juggler
+let g:LustyJugglerShowKeys = 'a'
+"==============================================================================
 
-"source explorer
-let g:SrcExpl_isUpdateTags = 0
+"=============================== yankRing =====================================
+"yankring
+let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
+let g:yankring_history_file = '.yankring_history'
+if has("win32")
+  let g:yankring_history_dir  = "$HOME/vimfiles"
+else
+  let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
+endif
+"==============================================================================
+
+"=============================== PreciseJump ==================================
+nmap ,f :call PreciseJumpF(-1, -1, 0)<cr>
+vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<cr>
+omap ,f :call PreciseJumpF(-1, -1, 0)<cr>
+"==============================================================================
 
 
-"don't enable showmarks, use \mt to toogle it
-let g:showmarks_enable=0
-
-noremap <f11> :call ToggleAcpDisable()<cr>
-inoremap <f11> <ESC>:call ToggleAcpDisable()<cr>a
-
-noremap <F3> :call ToogleTagListNerdTree() <cr>
-inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
-noremap <F5> :TagbarToggle<CR>
-
+"======================== LustyExplorer and Juggler ===========================
 nmap <silent> ,lf :LustyFilesystemExplorer<CR>
 nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
 nmap <silent> ,lb :LustyBufferExplorer<CR>
 nmap <silent> ,lg :LustyBufferGrep<CR>
-
 nmap <silent> ,lj :LustyJuggler<CR>
+"==============================================================================
 
+"========================= LocosaExplorer =====================================
 "" lycosaexplorer alternative mappings
 noremap  ,b :LycosaBufferExplorer<CR>
 noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
 noremap  ,le :LycosaFilesystemExplorer<CR>
+"==============================================================================
 
+"=============================== Unite ========================================
 nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
@@ -443,17 +435,20 @@ function! s:unite_my_settings()"{{{
   set norelativenumber
 endfunction"}}}
 
-
-"libclang completion
-let g:clang_use_library = 1
-
 let g:unite_source_file_mru_limit = 200
 let g:unite_cursor_line_highlight = 'TabLineSel'
 let g:unite_abbr_highlight = 'TabLine'
 
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
+let g:unite_source_history_yank_enable = 1
+"==============================================================================
 
+"========================= LibClang ===========================================
+let g:clang_use_library = 1
+"==============================================================================
+
+"=============================== Buffergator ==================================
 "nmap <silent> <Leader>bb :TSelectBuffer<cr>
 "Buffergator settings
 let g:buffergator_suppress_keymaps      = 1
@@ -463,16 +458,9 @@ noremap <Leader>bb :BuffergatorOpen<cr>
 noremap <Leader>bB :BuffergatorClose<cr>
 noremap <Leader>bt :BuffergatorTabsOpen<cr>
 noremap <Leader>bT :BuffergatorTabsClose<cr>
+"==============================================================================
 
-
-
-nnoremap <C-L> :nohl<CR><C-L>
-
-"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
-"let g:tmpa='screen -p gams_run -X stuff gr'
-"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
-
-
+"========================== Latex =============================================
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -490,56 +478,37 @@ endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
+"==============================================================================
 
 
-"neocomplcache
-"let g:neocomplcache_enable_at_startup = 1
-
-""tab complete
-"function! InsertTabWrapper(direction)
-    "let col = col('.') - 1
-    "if !col || getline('.')[col - 1] !~ '\k'
-        "return "\<tab>"
-    "elseif "backward" == a:direction
-        "return "\<c-p>"
-    "else
-        "return "\<c-n>"
-    "endif
-"endfunction
-"inoremap <tab> <c-r>=InsertTabWrapper ("forward")<cr>
-"inoremap <s-tab> <c-r>=InsertTabWrapper ("backward")<cr>
-
-" for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<cr>
-noremap <Leader>v :view<cr>
-" for clearing search views
-noremap <Leader>ch :nohlsearch<CR>
-"open scratch buffer
-noremap <Leader>os :Scratch<CR>
-
-
+"============================= NerdCommenter ==================================
 "let NERDShutUp=1
-"hi TabLine cterm=reverse
-
-"noremap H :let &hlsearch = !&hlsearch<CR>
-
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
+"==============================================================================
 
+"============================ autocomplpop (acp) ==============================
 "don't want to start this completion thing before x chars
 let g:acp_behaviorKeywordLength = 12
 let g:acp_completeOption = '.,w,b,k,t'
 
-"" for supertab plugin try changing the default context
-let g:SuperTabDefaultCompletionType = "context"
-let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+"fuction to toogle behaviour of autocomplpop
+let g:is_acp_disabled = 0
+function! ToggleAcpDisable()
+  if g:is_acp_disabled == 0
+    AcpLock
+    let g:is_acp_disabled = 1
+  else
+    AcpUnlock
+    let g:is_acp_disabled = 0
+  endif
+endfunction
 
-"to change the colors if previous color desired :call PreviousColorScheme()
-"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
-noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
-"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+noremap <f11> :call ToggleAcpDisable()<cr>
+inoremap <f11> <ESC>:call ToggleAcpDisable()<cr>a
+"==============================================================================
 
-
+"======================== Statusline ==========================================
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
@@ -550,37 +519,21 @@ set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
 "set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
 "set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
-
-set foldmethod=syntax
-set title
-set virtualedit+=block
+"==============================================================================
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "
 "
-"for now set scip compatible settings (3 spaces indentation for c files)
-if has("autocmd")
-  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
-end " has("autocmd")
 
-"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
-  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
-  "we change to setting from H to -h so the filename does not show up
-  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
-"endif
-
-
-" ==================================================
+" =============================================================================
 " Python
-" ==================================================
+" =============================================================================
 "au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
 "au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
 "
-"for scip go up two folders
-set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 "" change some highlight
-hi! ColorColumn   term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
 "some plugins don't work weel with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
@@ -600,51 +553,39 @@ endif
 
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<cr>
-set cot-=preview
-
-let g:unite_source_history_yank_enable = 1
 
 let g:manpageview_winopen = "hsplit="
 
 "some pylint settings
 let g:pylint_onwrite = 0
-"autocmd FileType python compiler pylint
-autocmd FileType python setlocal errorformat=%f:%l:\ %m
-autocmd FileType python setlocal makeprg=epylint\ %
 
 "pysmell
 autocmd FileType python setlocal completefunc=pysmell#Complete
 
 "mapping for running python code
 nmap <F9> :SingleCompileRun<cr>
-nmap <tab> <c-w>
-nmap <tab><tab> <c-w><c-w>
 
-"attemp to fix backspace
-inoremap  
-nmap  
-cnoremap  
-set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
-set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
-set wildignore+=tags,cscope.out
-
+"======================== python_mode =========================================
 "some python mode configuration. Don't always use but for now disable some
 "settings when used
 let g:pymode_lint = 0
 let g:pymode_rope = 0
 let g:pymode_options_indent = 0
 let g:pymode_breakpoint = 0
+"==============================================================================
 
-"local vim settings
+"======================== PyLint Compiler =====================================
+"autocmd FileType python compiler pylint
+autocmd FileType python setlocal errorformat=%f:%l:\ %m
+autocmd FileType python setlocal makeprg=epylint\ %
+"==============================================================================
+
+"=========================== localvim =========================================
 let g:localvimrc_sandbox = 0
 let g:localvimrc_ask = 0
+"==============================================================================
 
-let g:UltiSnipsExpandTrigger = "<f10>"
-let g:UltiSnipsListSnippets  = "<c-f10>"
-let g:UltiSnipsJumpForwardTrigger  = "<f10>"
-let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
-nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
-
+"============================ ctrlP ===========================================
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
 noremap ,pu :CtrlPMRUFiles<cr>
@@ -654,5 +595,76 @@ noremap ,pq :CtrlPQuickfix<cr>
 noremap ,pd :CtrlPCurWD<cr>
 noremap ,pj :CtrlPBufTagAll<cr>
 noremap ,pf :CtrlPCurFile<cr>
+"==============================================================================
 
-"let g:acp_enableAtStartup = 0
+"=============================== tagbar =======================================
+"tagbar gms and gamslst settings
+
+let g:tagbar_autofocus = 1
+"tagbar width (default is 40)
+let g:tagbar_width = 30
+
+let g:tagbar_type_gams = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:variable',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ ],
+  \ }
+let g:tagbar_type_gamslst = {
+  \ 'ctagstype': 'gams',
+  \ 'kinds' : [
+  \ 'e:equation',
+  \ 'c:var val',
+  \ 'm:model',
+  \ 's:Solve Statement',
+  \ 'a:eq val',
+  \ ],
+  \ }
+
+noremap <F5> :TagbarToggle<CR>
+"==============================================================================
+
+"============================== pep8 ==========================================
+"let g:pep8_map = '<leader>p8' "not used anymore
+"let g:pep8_cmd  = 'pep8.py'
+"let g:pep8_ignore = "E111,E221,E225"
+" this is a different plugin, the one I used now doesn't work the same way
+let g:pep8_args = " --ignore=E111,E221,E225"
+"==============================================================================
+
+"================================ UltiSnips ===================================
+let g:UltiSnipsExpandTrigger = "<f10>"
+let g:UltiSnipsListSnippets  = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
+nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
+"==============================================================================
+
+"=============================== Supertab =====================================
+"" for supertab plugin try changing the default context
+let g:SuperTabDefaultCompletionType = "context"
+let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+"==============================================================================
+
+"don't show file numbers in taglist and nerdtree
+autocmd FileType nerdtree      setlocal norelativenumber
+autocmd FileType taglist       setlocal norelativenumber
+autocmd FileType qf            setlocal norelativenumber
+autocmd FileType tlibInputList setlocal norelativenumber
+
+"source explorer
+let g:SrcExpl_isUpdateTags = 0
+
+"don't enable showmarks, use \mt to toogle it
+let g:showmarks_enable=0
+
+noremap <F3> :call ToogleTagListNerdTree() <cr>
+inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
+
+"to change the colors if previous color desired :call PreviousColorScheme()
+"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>

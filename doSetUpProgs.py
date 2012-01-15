@@ -19,21 +19,21 @@ from os.path import join, realpath, abspath
 
 
 def force_symlink(file1, file2):
-    try:
-        os.symlink(file1, file2)
-    except OSError, e:
-        if e.errno == errno.EEXIST:
-            os.remove(file2)
-            os.symlink(file1, file2)
+  try:
+    os.symlink(file1, file2)
+  except OSError, e:
+    if e.errno == errno.EEXIST:
+      os.remove(file2)
+      os.symlink(file1, file2)
 
 
 def usage():
-  msg = textwrap.dedent("""\
+  sys.stdout.write(textwrap.dedent("""\
   usage : program folder_origin [folder_destin]
           folder_origin is the original folder with all the files\
   and folders to be linked
           folder_destin is where you want to create symlinks, defaults to 'usr'
-  """)
+  """))
 
 
 def do_recursion(origin, dirname):
@@ -66,17 +66,17 @@ def create_symlinks(origin, destin, display_passage=True):
   if display_passage is False and os.path.isdir(destin) is False:
     os.makedirs(destin)
   for root, dirs, files in os.walk(os.curdir):
-    for dir in dirs:
-      dir_orig = join(join(origin, root), dir)
-      dir_dest = join(join(destin, root), dir)
+    for dirn in dirs:
+      #dir_orig = join(join(origin, root), dirn)
+      dir_dest = join(join(destin, root), dirn)
       if (os.path.exists(dir_dest) is False):
         if display_passage is True:
           sys.stdout.write('%s does not exists, creating it.\n'  % dir_dest)
         else:
           os.makedirs(dir_dest)
-    for file in files:
-      file_orig = realpath(join(join(origin, root), file))
-      file_dest = abspath(join(join(destin, root), file))
+    for filen in files:
+      file_orig = realpath(join(join(origin, root), filen))
+      file_dest = abspath(join(join(destin, root), filen))
       if display_passage is True:
         msg = '%35s ---> %s\n' % (file_orig, file_dest)
         sys.stdout.write(msg)
