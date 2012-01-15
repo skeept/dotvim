@@ -15,6 +15,7 @@ if v:progname =~? "evim"
   finish
 endif
 
+let g:is_vimrc_simple = 1 "so we can do something specific in gvimrc
 
 
 "=============================== Settings =====================================
