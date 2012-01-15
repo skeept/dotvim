@@ -439,4 +439,9 @@ if !(has('unix') && executable('cygpath'))
   runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
   exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
 endif
+
+"for filetype tex we need imap.vim
+if has("autocmd")
+  autocmd FileType tex exec "source " . g:p0 . "/plugin/imaps.vim"
+endif
 "==============================================================================

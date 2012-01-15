@@ -361,7 +361,6 @@ function! ToogleTagListNerdTree()
     "TlistClose
 
     "NERDTreeToggle
-
     "setlocal nonumber
     "setlocal norelativenumber
 
