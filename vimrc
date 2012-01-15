@@ -24,7 +24,7 @@ let g:pathogen_disabled += ['pyflakes', 'python-mode']
 if has('unix') && executable('cygpath') "cygwin specific settings
   "cygwin vim does not have python
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell'] 
-  let g:pathogen_disabled += ['UltiSnips_rep', 'pyflakes', 'python-mode']
+  let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
 endif
 if has("win32")
   "let g:pathogen_disabled += ['pysmell']
