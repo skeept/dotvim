@@ -369,6 +369,18 @@ autocmd FileType python setlocal errorformat=%f:%l:\ %m
 autocmd FileType python setlocal makeprg=epylint\ %
 "==============================================================================
 
+"============================ ctrlP ===========================================
+"some ctrl settings and mappings
+let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
+noremap ,pu :CtrlPMRUFiles<cr>
+noremap ,pb :CtrlPBuffer<cr>
+noremap ,pt :CtrlPTag<cr>
+noremap ,pq :CtrlPQuickfix<cr>
+noremap ,pd :CtrlPCurWD<cr>
+noremap ,pj :CtrlPBufTagAll<cr>
+noremap ,pf :CtrlPCurFile<cr>
+"==============================================================================
+
 "=============================== tagbar =======================================
 "tagbar gms and gamslst settings
 
@@ -396,7 +408,7 @@ let g:tagbar_type_gamslst = {
   \ ],
   \ }
 
-noremap <F5> :TagbarToggle<CR>
+"noremap <F5> :TagbarToggle<CR>
 "==============================================================================
 
 "============================== pep8 ==========================================
@@ -429,19 +441,30 @@ runtime plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 
-""tagbar
-runtime bundle/tagbar/plugin/tagbar.vim
-exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
+function! LoadTagbar()
+  runtime bundle/tagbar/plugin/tagbar.vim
+  exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
+  noremap <F5> :TagbarToggle<CR>
+endf
+noremap <f5> :call LoadTagbar()<cr>:TagbarToggle<CR>
 
-""ultisnips
-if !(has('unix') && executable('cygpath'))
-  "cygwin vim does not have python
-  runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
-  exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
-endif
+function! LoadUltisnips()
+  if !(has('unix') && executable('cygpath'))
+    "cygwin vim does not have python
+    runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
+    exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+  endif
+  nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
+endfunction
+nnoremap <f10> :call LoadUltisnips()<cr>:call UltiSnips_ListSnippets()<CR>
 
 "for filetype tex we need imap.vim
 if has("autocmd")
   autocmd FileType tex exec "source " . g:p0 . "/plugin/imaps.vim"
 endif
-"==============================================================================
+
+function! LoadCtrlP()
+  exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
+  runtime bundle/ctrlp/plugin/ctrlp.vim
+endf
+nnoremap <c-p> :call LoadCtrlP()<cr>
