@@ -63,9 +63,9 @@ def entry_syntaxify(s, case_insensitive):
 def pretty_msg(*rest):
     if len(rest) == 0:
         return
-    vim.command("redraw") # see :help echo-redraw
+    vim.command("redraw")  # see :help echo-redraw
     for heading, message in itertools.izip_longest(
-        *([iter(rest)]*2), fillvalue=None):
+        *([iter(rest)] * 2), fillvalue=None):
         vim.command("echohl %s" % (heading, ))
         if message is not None:
             vim.command("echon '%s'" % (message, ))
@@ -133,7 +133,7 @@ def chunk(iterable, size):
 # algorithms
 class Mercury(object):
 
-    _SCORE_NO_MATCH = 0.0 # do not change, this is assumed to be 0.0
+    _SCORE_NO_MATCH = 0.0  # do not change, this is assumed to be 0.0
     _SCORE_EXACT_MATCH = 1.0
     _SCORE_MATCH = 0.9
     _SCORE_TRAILING = 0.7
@@ -179,7 +179,8 @@ class Mercury(object):
         else:
             score = self._SCORE_MATCH
 
-        # If matching on a word boundary, score the characters since the last match
+        # If matching on a word boundary, score the characters
+        # since the last match.
         if index > score_idx:
             if started:
                 buffer_score = self._SCORE_BUFFER_BUT_STARTED
@@ -229,7 +230,7 @@ class Entry(object):
     def compute_buffer_entries(cls):
         num_to_buffer = dict((buf.number, buf) for buf in vim.buffers)
         buffer_entries = [cls(num_to_buffer[n], n)
-                          for n in le_buffer_stack.numbers
+                          for n in lycosa_buffer_stack.numbers
                           if n in num_to_buffer]
         # Put the current buffer at the end of the list.
         buffer_entries.append(buffer_entries.pop(0))
@@ -323,36 +324,57 @@ class Explorer(object):
         # Grab argument from the Vim function.
         i = int(vim.eval("a:code_arg"))
         refresh_mode = self.FULL
+        number_of_matches = len(self.current_sorted_matches)
 
-        if 32 <= i <= 126: # Printable characters
+        if 32 <= i <= 126:  # Printable characters
             c = chr(i)
             self.prompt.add(c)
             self.selected_index = 0
-        elif i == 8: # Backspace/Del/C-h
+        elif i == 2:  # C-b (select left)
+            if number_of_matches > 0:
+                new_index = self.selected_index - self.display.number_of_rows
+                if new_index < 0:
+                    new_index = (number_of_matches - (
+                        number_of_matches % self.display.number_of_rows)
+                    ) + self.selected_index
+                    if new_index >= number_of_matches:
+                        new_index -= self.display.number_of_rows
+                self.selected_index = new_index
+            refresh_mode = self.NO_RECOMPUTE
+        elif i == 6:  # C-f (select right)
+            if number_of_matches > 0:
+                new_index = self.selected_index + self.display.number_of_rows
+                if new_index >= number_of_matches:
+                    new_index %= self.display.number_of_rows
+                self.selected_index = new_index
+            refresh_mode = self.NO_RECOMPUTE
+        elif i == 8:  # Backspace/Del/C-h
             self.prompt.backspace()
             self.selected_index = 0
-        elif i in (9, 13): # Tab and Enter
+        elif i in (9, 13):  # Tab and Enter
             self._choose(self.CURRENT_TAB)
-        elif i == 23: # C-w (delete 1 dir backward)
-            self.prompt.up_one_dir()
-            self.selected_index = 0
-        elif i == 14: # C-n (select next)
-            self.selected_index = \
-                (self.selected_index + 1) % len(self.current_sorted_matches)
+        elif i == 14:  # C-n (select next)
+            if number_of_matches > 0:
+                self.selected_index = \
+                        (self.selected_index + 1) % number_of_matches
             refresh_mode = self.NO_RECOMPUTE
-        elif i == 16: # C-p (select previous)
-            self.selected_index = \
-                (self.selected_index - 1) % len(self.current_sorted_matches)
-            refresh_mode = self.NO_RECOMPUTE
-        elif i == 15: # C-o choose in new horizontal split
+        elif i == 15:  # C-o choose in new horizontal split
             self._choose(self.NEW_SPLIT)
-        elif i == 20: # C-t choose in new tab
+        elif i == 16:  # C-p (select previous)
+            if number_of_matches > 0:
+                self.selected_index = \
+                    (self.selected_index - 1) % number_of_matches
+            refresh_mode = self.NO_RECOMPUTE
+        elif i == 20:  # C-t choose in new tab
             self._choose(self.NEW_TAB)
-        elif i == 21: # C-u clear prompt
+        elif i == 21:  # C-u clear prompt
             self.prompt.clear()
             self.selected_index = 0
-        elif i == 22: # C-v choose in new vertical split
+        elif i == 22:  # C-v choose in new vertical split
             self._choose(self.NEW_VSPLIT)
+        elif i == 23:  # C-w (delete 1 dir backward)
+            self.prompt.up_one_dir()
+            self.selected_index = 0
 
         self._refresh(refresh_mode)
 
@@ -388,11 +410,13 @@ class Explorer(object):
         try:
             entry = self.current_sorted_matches[self.selected_index]
         except IndexError:
-            return
-        escaped = regex_escape(entry.label)
-        label_match_string = entry_syntaxify(escaped, False)
-        vim.command('syn match LycosaSelected "%s" contains=LycosaGrepMatch' %
-                    (label_match_string, ))
+            pass
+        else:
+            escaped = regex_escape(entry.label)
+            label_match_string = entry_syntaxify(escaped, False)
+            vim.command(
+                'syn match LycosaSelected "%s" contains=LycosaGrepMatch' %
+                (label_match_string, ))
 
     def _choose(self, open_mode):
         try:
@@ -500,6 +524,7 @@ class FilesystemExplorer(Explorer):
         Explorer.__init__(self)
         self.prompt = FilesystemPrompt()
         self.memoized_dir_contents = {}
+        self._yank_callback = None
 
     def run(self):
         if self.running:
@@ -509,21 +534,12 @@ class FilesystemExplorer(Explorer):
         self.selected_index = 0
         Explorer.run(self)
 
-    def run_from_here(self):
+    def run_from_path(self, path=None):
         if self.running:
             return
-        if vim.current.buffer.name is None:
-            start_path = self._vim_current_directory()
-        else:
-            start_path = vim.eval("expand('%:p:h')")
-
-        self.prompt.set(start_path + os.path.sep)
-        self.run()
-
-    def run_from_wd(self):
-        if self.running:
-            return
-        self.prompt.set(self._vim_current_directory() + os.path.sep)
+        if not path:
+            path = self._vim_current_directory()
+        self.prompt.set(path.rstrip(os.path.sep) + os.path.sep)
         self.run()
 
     def key_pressed(self):
@@ -536,20 +552,29 @@ class FilesystemExplorer(Explorer):
                 if self.prompt.at_dir():
                     path_str = self.prompt.input + e.label
                 else:
-                    path_str = os.path.join(self.prompt.dirname, e.label)
+                    path_str = os.path.join(self.prompt.dirname(), e.label)
 
                 if os.path.isfile(path_str):
                     self.load_file(path_str, self.CURRENT_TAB)
-        elif i == 5: # <C-e> edit file, create it if necessary
+        elif i == 5:  # <C-e> edit file, create it if necessary
             if not self.prompt.at_dir():
                 self._cleanup()
                 # Force a reread of this directory so that the new file will
                 # show up (as long as it is saved before the next run).
                 del self.memoized_dir_contents[self.view_path()]
                 self.load_file(self.prompt.input, self.CURRENT_TAB)
-        elif i == 18: # <C-r> refresh
+        elif i == 18:  # <C-r> refresh
             del self.memoized_dir_contents[self.view_path()]
             self._refresh(self.FULL)
+        elif i == 24:  # C-y yank to external function
+            if self._yank_callback is not None:
+                if self.prompt.at_dir():
+                    dirname = self.prompt.input
+                else:
+                    dirname = self.prompt.dirname()
+                self.cancel()
+                vim.eval("%s('%s')" % (self._yank_callback,
+                                       single_quote_escape(dirname)))
         else:
             Explorer.key_pressed(self)
 
@@ -557,24 +582,24 @@ class FilesystemExplorer(Explorer):
         return vim.eval("getcwd()")
 
     def _set_syntax_matching(self):
-      # Base highlighting -- more is set on refresh.
-      if has_syntax():
-          vim.command('syn match LycosaSlash "/" contained')
-          vim.command(
-              r'syn match LycosaDir "\%(\S\+ \)*\S\+/" contains=LycosaSlash')
+        # Base highlighting -- more is set on refresh.
+        if has_syntax():
+            vim.command('syn match LycosaSlash "/" contained')
+            vim.command(
+                r'syn match LycosaDir "\%(\S\+ \)*\S\+/" contains=LycosaSlash')
 
     def _on_refresh(self):
-      if has_syntax():
-        vim.command('syn clear LycosaFileWithSwap')
-        view = self.view_path()
-        for file_with_swap in self.vim_swaps:
-            if file_with_swap.dirname() == view:
-                base = file_with_swap.basename()
-                escaped = regex_escape(base)
-                match_str = entry_syntaxify(escaped, False)
-                vim.command(
-                    'syn match LycosaFileWithSwap "%s"' % (match_str, ))
-      # NOTE: restore highlighting for open buffers?
+        if has_syntax():
+            vim.command('syn clear LycosaFileWithSwap')
+            view = self.view_path()
+            for file_with_swap in self.vim_swaps:
+                if file_with_swap.dirname() == view:
+                    base = file_with_swap.basename()
+                    escaped = regex_escape(base)
+                    match_str = entry_syntaxify(escaped, False)
+                    vim.command(
+                        'syn match LycosaFileWithSwap "%s"' % (match_str, ))
+                    # NOTE: restore highlighting for open buffers?
 
     def current_abbreviation(self):
         if self.prompt.at_dir():
@@ -592,6 +617,16 @@ class FilesystemExplorer(Explorer):
         else:
             path = os.path.dirname(input_)
         return os.path.abspath(path)
+
+    def _create_explorer_window(self):
+        Explorer._create_explorer_window(self)
+        opt_name = "g:LycosaExplorerYankCallback"
+        if eval_bool("exists('%s') && %s != '0'" % (opt_name, opt_name)):
+            self._yank_callback = vim.eval("%s" % opt_name)
+            mapcmd = "noremap <silent> <buffer>"
+            key_binding_prefix = "Lycosa" + self.__class__.__name__
+            vim.command("%s %s    :call <SID>%sKeyPressed(%d)<CR>" % (
+                mapcmd, '<C-y>', key_binding_prefix, 24))
 
     def all_files_at_view(self):
         view = self.view_path()
@@ -617,12 +652,14 @@ class FilesystemExplorer(Explorer):
                 all_entries.append(FilesystemEntry(name))
             self.memoized_dir_contents[view] = all_entries
 
-        if is_option_set("AlwaysShowDotFiles") or self.current_abbreviation().startswith("."): # TODO:
+        if (is_option_set("AlwaysShowDotFiles")
+            or self.current_abbreviation().startswith(".")):  # TODO:
             return all_entries
         else:
-            # Filter out dotfiles if the current abbreviation doesn't start with
-            # '.'.
-            return [entry for entry in all_entries if not entry.label.startswith(".")]
+            # Filter out dotfiles if the current abbreviation doesn't start
+            # with '.'.
+            return [entry for entry in all_entries
+                    if not entry.label.startswith(".")]
 
     def _compute_sorted_matches(self):
         abbrev = self.current_abbreviation()
@@ -640,10 +677,11 @@ class FilesystemExplorer(Explorer):
 
             if abbrev == '.':
                 # Sort alphabetically, otherwise it just looks weird.
-                return sorted(matches, key=operator.attrgetter("label"))
+                order_fn = operator.attrgetter("label")
             else:
                 # Sort by score.
-                return sorted(matches, key=lambda x: -x.current_score)
+                order_fn = lambda x: -x.current_score
+            return sorted(matches, key=order_fn)
 
     def _open_entry(self, entry, open_mode):
         path = os.path.join(self.view_path(), entry.label)
@@ -660,15 +698,16 @@ class FilesystemExplorer(Explorer):
             self.load_file(path, open_mode)
 
     def _filename_escape(self, s):
-        # Escape slashes, open square braces, spaces, sharps, and double quotes.
-        return re.sub('[%s]' % (re.escape(r'[ #"'), ), r'\\\g<0>',
+        # Escape slashes, open square braces, spaces, sharps, percent signs
+        # and double quotes.
+        return re.sub('[%s]' % (re.escape(r'[ #"%'), ), r'\\\g<0>',
                       s.replace(r'\\', r'\\\\'))
 
     def load_file(self, path_str, open_mode):
         # Escape for Vim and remove leading ./ for files in pwd.
         # TODO: sub replacement required
         escaped_filepath = self._filename_escape(path_str)
-        if escaped_filepath.startswith("./"): # TODO: windows?
+        if escaped_filepath.startswith("./"):  # TODO: windows?
             escaped_filepath = escaped_filepath[2:]
         single_quote_escaped = single_quote_escape(escaped_filepath)
         sanitized = vim.eval(
@@ -696,12 +735,12 @@ class Prompt(object):
     def clear(self):
         self.input = ""
 
-    def render(self, max_width = 0):
+    def render(self, max_width=0):
         text = self.input
         # may need some extra characters for "..." and spacing
         max_width -= 5
         if max_width > 0 and len(text) > max_width:
-            text = "..." + text[(len(text) - max_width + 3 ):]
+            text = "..." + text[(len(text) - max_width + 3):]
         pretty_msg("Comment", self._PROMPT,
                    "None", single_quote_escape(text),
                    "Underlined", " ")
@@ -748,9 +787,10 @@ class FilesystemPrompt(Prompt):
         self.dirty = True
 
     def at_dir(self):
-        # We have not typed anything yet or have just typed the final '/' on a
-        # directory name in pwd.  This check is interspersed throughout
-        # FilesystemExplorer because of the conventions of basename and dirname.
+        # We have not typed anything yet or have just typed the final '/' on
+        # a directory name in pwd.  This check is interspersed throughout
+        # FilesystemExplorer because of the conventions of basename and
+        # dirname.
         return (len(self.input) == 0) or self.input.endswith(os.path.sep)
         # Don't think the os.path.isdir call is necessary, but leaving this
         # here as a reminder.
@@ -760,8 +800,8 @@ class FilesystemPrompt(Prompt):
         return self.at_dir() or (self.basename() == self.basename().lower())
 
     def add(self, s):
-        # Assumption: add() will only receive enough chars at a time to complete
-        # a single directory level, e.g. foo/, not foo/bar/
+        # Assumption: add() will only receive enough chars at a time to
+        # complete a single directory level, e.g. foo/, not foo/bar/
         self.input += s
         self.dirty = True
 
@@ -863,6 +903,7 @@ class Display(object):
         self.window_number = None
         self.buffer = None
         self.single_column_mode = False
+        self.number_of_rows = 0
 
     def create(self, prefix):
         # Make a window for the display and move there.
@@ -921,20 +962,22 @@ class Display(object):
             vim.command("highlight link LycosaGrepMatch IncSearch")
             vim.command("highlight link LycosaGrepLineNumber Directory")
             vim.command("highlight link LycosaGrepFileName Comment")
-            vim.command("highlight link LycosaGrepContext None") # transparent
+            vim.command("highlight link LycosaGrepContext None")  # transparent
             vim.command("highlight link LycosaOpenedFile PreProc")
             vim.command("highlight link LycosaFileWithSwap WarningMsg")
             vim.command("highlight link LycosaNoEntries ErrorMsg")
             vim.command("highlight link LycosaTruncated Visual")
 
+            if exists('*clearmatches'):
+                vim.eval('clearmatches()')
         #
         # Key mappings - we need to reroute user input.
         #
 
         # Non-special printable characters.
-        printables =  ('/!"#$%&\'()*+,-.0123456789:<=>?#@"'
-                       'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                       '[]^_`abcdefghijklmnopqrstuvwxyz{}~')
+        printables = ('/!"#$%&\'()*+,-.0123456789:<=>?#@"'
+                      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                      '[]^_`abcdefghijklmnopqrstuvwxyz{}~')
 
         mapcmd = "noremap <silent> <buffer>"
 
@@ -951,9 +994,13 @@ class Display(object):
         for key, code in [
             ("<C-a>", 1), ("<C-e>", 5), ("<BS>", 8), ("<C-h>", 8),
             ("<Del>", 8), ("<Tab>", 9), ("<S-CR>", 10), ("<CR>", 13),
-            ("<C-n>", 14), ("<C-o>", 15), ("<C-p>", 16), ("<C-r>", 18),
-            ("<C-t>", 20), ("<C-u>", 21), ("<C-v>", 22), ("<C-w>", 23),
-            ("<Space>", 32), ("<Bslash>", 92), ("<Bar>", 124)]:
+            ("<C-b>", 2), ("<Esc>0D", 2), ("<Left>", 2),
+            ("<C-f>", 6), ("<Esc>0C", 6), ("<Right>", 6),
+            ("<C-n>", 14), ("<Esc>0B", 14), ("<Down>", 14),
+            ("<C-p>", 16), ("<Esc>0A", 16), ("<Up>", 16),
+            ("<C-o>", 15),
+            ("<C-r>", 18), ("<C-t>", 20), ("<C-u>", 21), ("<C-v>", 22),
+            ("<C-w>", 23), ("<Space>", 32), ("<Bslash>", 92), ("<Bar>", 124)]:
             vim.command("%s %s    :call <SID>%sKeyPressed(%d)<CR>" % (
                 mapcmd, key, prefix, code))
 
@@ -975,15 +1022,14 @@ class Display(object):
                 break
             column_width = col_widths[col_index]
             for index, value in enumerate(column):
-                row = rows[index]
-                row += value
-
+                row = rows[index] + value
                 if col_index < col_count - 1:
                     # Add spacer to the width of the column
                     row += (" " * (column_width - strwidth(value)))
                     row += COLUMN_SEPARATOR
                 rows[index] = row
 
+        self.number_of_rows = row_count
         self._print_rows(rows, truncated)
 
     def close(self):
@@ -999,7 +1045,7 @@ class Display(object):
     def max_height(cls):
         stored_height = vim.current.window.height
         # Vim ints are signed 32-bit.
-        most_positive_integer = 2**(32 - 1) - 2
+        most_positive_integer = 2 ** (32 - 1) - 2
         vim.current.window.height = most_positive_integer
         highest_allowable = vim.current.window.height
         vim.current.window.height = stored_height
@@ -1016,7 +1062,8 @@ class Display(object):
 
         max_width = Display.max_width()
         max_height = Display.max_height()
-        displayable_string_upper_bound = self._compute_displayable_upper_bound(strings)
+        displayable_string_upper_bound = self._compute_displayable_upper_bound(
+            strings)
 
         # Determine optimal row count.
         def counter():
@@ -1030,7 +1077,9 @@ class Display(object):
                 # The -1 is for the truncation indicator.
                 return [Display.max_height() - 1, True]
             else:
-                single_row_width = sum(len(s) for s in strings) + (len(COLUMN_SEPARATOR) * (len(strings) - 1))
+                single_row_width = (
+                    sum(len(s) for s in strings)
+                    + (len(COLUMN_SEPARATOR) * (len(strings) - 1)))
                 if (single_row_width <= max_width) or (len(strings) == 1):
                     # All fits on a single row
                     return [1, False]
@@ -1067,8 +1116,8 @@ class Display(object):
             vim.current.buffer.append(
                 self._TRUNCATED_STRING.center(vim.current.window.width))
         else:
-            # Stretch the last line to the length of the window with whitespace so
-            # that we can "hide" the cursor in the corner.
+            # Stretch the last line to the length of the window with whitespace
+            # so that we can "hide" the cursor in the corner.
             # TODO: globals
             last_line = vim.current.buffer[-1].ljust(vim.current.window.width)
             vim.current.buffer[-1] = last_line
@@ -1076,7 +1125,8 @@ class Display(object):
     @unlocked_buffer
     def _print_no_entries(self):
         vim.current.window.height = 1
-        vim.current.buffer.append(self._NO_MATCHES_STRING.center(vim.current.window.width))
+        vim.current.buffer.append(
+            self._NO_MATCHES_STRING.center(vim.current.window.width))
 
     def _compute_displayable_upper_bound(self, strings):
         # Compute an upper-bound on the number of displayable matches.
@@ -1243,6 +1293,6 @@ class BufferStack(object):
             buf_num for buf_num in iterable if is_buffer_listed(buf_num)]
 
 
-le_buffer_stack = BufferStack()
+lycosa_buffer_stack = BufferStack()
 lycosa_buffer_explorer = BufferExplorer()
 lycosa_filesystem_explorer = FilesystemExplorer()
