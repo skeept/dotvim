@@ -187,9 +187,9 @@ nmap <tab> <c-w>
 nmap <tab><tab> <c-w><c-w>
 
 "attemp to fix backspace
-inoremap  
-nmap  
-cnoremap  
+"inoremap  
+"nmap  
+"cnoremap  
 "==============================================================================
 
 "======================== Spelling ============================================
