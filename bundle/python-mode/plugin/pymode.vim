@@ -1,4 +1,4 @@
-let g:pymode_version = "0.5.3"
+let g:pymode_version = "0.5.5"
 
 com! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
 
@@ -38,6 +38,9 @@ if !pymode#Default("g:pymode_lint", 1) || g:pymode_lint
     " OPTION: g:pymode_lint_write -- bool. Check code every save.
     call pymode#Default("g:pymode_lint_write", 1)
 
+    " OPTION: g:pymode_lint_onfly -- bool. Check code every save.
+    call pymode#Default("g:pymode_lint_onfly", 0)
+
     " OPTION: g:pymode_lint_checker -- str. Use pylint of pyflakes for check.
     call pymode#Default("g:pymode_lint_checker", "pylint")
 
@@ -64,6 +67,7 @@ if !pymode#Default("g:pymode_lint", 1) || g:pymode_lint
         sign define C text=CC texthl=Comment
         sign define R text=RR texthl=Visual
         sign define E text=EE texthl=Error
+        sign define I text=II texthl=Info
 
     endif
 
