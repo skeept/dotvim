@@ -98,6 +98,7 @@ function! ToggleMenu()
         endif
 endfunction
 
+
 if has("gui")
   set lines=40 columns=100
 endif
