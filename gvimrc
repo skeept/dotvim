@@ -76,7 +76,8 @@ set cmdheight=1
 "set guioptions -=T
 
 "set guifont=Courier\ 16
-set guifont=Courier\ 13
+"set guifont=Courier\ 13
+set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
 
 set winaltkeys=no
 
@@ -96,7 +97,6 @@ function! ToggleMenu()
                 let g:togglemenu = 0
         endif
 endfunction
-
 
 if has("gui")
   set lines=40 columns=100
