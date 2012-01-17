@@ -76,7 +76,8 @@ set cmdheight=1
 "set guioptions -=T
 
 "set guifont=Courier\ 16
-set guifont=Courier\ 13
+"set guifont=Courier\ 13
+set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
 
 set winaltkeys=no
 
