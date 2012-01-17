@@ -14,12 +14,16 @@ let s:ars = [
 	\ 's:maxdepth',
 	\ 's:maxfiles',
 	\ 's:compare_lim',
-	\ 's:glob',
-	\ 's:usrign',
+	\ 's:dotfiles',
 	\ ]
 
-let s:dir_var = ['ctrlp#dir#init('.join(s:ars, ', ').')', 'ctrlp#dir#accept',
-	\ 'dirs', 'dir']
+let s:dir_var = {
+	\ 'init': 'ctrlp#dir#init('.join(s:ars, ', ').')',
+	\ 'accept': 'ctrlp#dir#accept',
+	\ 'lname': 'dirs',
+	\ 'sname': 'dir',
+	\ 'type': 'path',
+	\ }
 
 let g:ctrlp_ext_vars = exists('g:ctrlp_ext_vars') && !empty(g:ctrlp_ext_vars)
 	\ ? add(g:ctrlp_ext_vars, s:dir_var) : [s:dir_var]
@@ -27,9 +31,9 @@ let g:ctrlp_ext_vars = exists('g:ctrlp_ext_vars') && !empty(g:ctrlp_ext_vars)
 let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
 " Utilities {{{1
 fu! s:globdirs(dirs, depth)
-	let entries = split(globpath(a:dirs, s:glob), "\n")
-	if s:usrign != ''
-		cal filter(entries, 'v:val !~ s:usrign')
+	let entries = split(globpath(a:dirs, '*'), "\n")
+	if s:dotfiles
+		let entries += split(globpath(a:dirs, '.*'), "\n")
 	en
 	let [dirs, depth] = [ctrlp#dirnfile(entries)[0], a:depth + 1]
 	cal extend(g:ctrlp_alldirs, dirs)
@@ -49,8 +53,8 @@ fu! ctrlp#dir#init(...)
 	for each in range(len(s:ars))
 		exe 'let' s:ars[each] '=' string(eval('a:'.(each + 1)))
 	endfo
-	let cadir = ctrlp#utils#cachedir().ctrlp#utils#lash().s:dir_var[3]
-	let cafile = cadir.ctrlp#utils#lash().ctrlp#utils#cachefile(s:dir_var[3])
+	let cadir = ctrlp#utils#cachedir().ctrlp#utils#lash().s:dir_var['sname']
+	let cafile = cadir.ctrlp#utils#lash().ctrlp#utils#cachefile(s:dir_var['sname'])
 	if g:ctrlp_newdir || !filereadable(cafile)
 		let g:ctrlp_alldirs = []
 		cal s:globdirs(s:cwd, 0)

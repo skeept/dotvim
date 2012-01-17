@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-31
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 "-----------------------------------------------------------------------------
 " Constants
@@ -83,7 +86,13 @@ endfunction
 " Defines an alias of filetype {ftype}.
 "
 function! unite#sources#outline#alias(alias, ftype)
-  call s:define_filetype_aliases([a:alias], a:ftype)
+  if type(a:alias) == type([])
+    call s:define_filetype_aliases(a:alias, a:ftype)
+  elseif type(a:alias) == type('')
+    call s:define_filetype_aliases([a:alias], a:ftype)
+  else
+    call unite#print_error("unite-outline: Unsupported alias type: " . string(a:alias))
+  endif
 endfunction
 
 let s:ftype_alias_table = {}
@@ -1067,7 +1076,7 @@ function! s:get_skip_ranges(context)
     let num_lines = line('$')
     call cursor(1, 1)
     while 1
-      let beg_lnum = search(block.begin, 'cW')
+      let beg_lnum = search(block.begin, 'ceW')
       if beg_lnum == 0 || beg_lnum == num_lines
         break
       endif
@@ -1575,4 +1584,5 @@ function! s:swap_headings(outline_buffer_ids, new_bufnr)
   endwhile
 endfunction
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

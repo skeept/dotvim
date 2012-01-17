@@ -93,7 +93,8 @@ function! unite#util#input_yesno(message)"{{{
 endfunction"}}}
 function! unite#util#input_directory(message)"{{{
   echo a:message
-  let dir = unite#util#substitute_path_separator(expand(input('', '', 'dir')))
+  let dir = unite#util#substitute_path_separator(
+        \ unite#util#expand(input('', '', 'dir')))
   while !isdirectory(dir)
     redraw
     if dir == ''
@@ -104,7 +105,8 @@ function! unite#util#input_directory(message)"{{{
     " Retry.
     call unite#print_error('Invalid path.')
     echo a:message
-    let dir = unite#util#substitute_path_separator(expand(input('', '', 'dir')))
+    let dir = unite#util#substitute_path_separator(
+          \ unite#util#expand(input('', '', 'dir')))
   endwhile
 
   return dir
@@ -152,8 +154,9 @@ function! unite#util#is_cmdwin()"{{{
   return v:errmsg =~ '^E11:'
 endfunction"}}}
 function! s:buflisted(bufnr)"{{{
-  return !exists('t:unite_buffer_dictionary') ?
-        \ has_key(t:unite_buffer_dictionary, a:bufnr) : buflisted(a:bufnr)
+  return exists('t:unite_buffer_dictionary') ?
+        \ has_key(t:unite_buffer_dictionary, a:bufnr) && buflisted(a:bufnr) :
+        \ buflisted(a:bufnr)
 endfunction"}}}
 
 function! unite#util#glob(pattern, ...)"{{{
@@ -165,15 +168,29 @@ function! unite#util#glob(pattern, ...)"{{{
     return vimproc#readdir(a:pattern[: -2])
   else
     " Escape [.
-    if unite#util#is_win()
-      let glob = substitute(a:pattern, '\[', '\\[[]', 'g')
-    else
-      let glob = escape(a:pattern, '[')
-    endif
+    let glob = escape(a:pattern, unite#util#is_win() ?  '?"={}' : '?"={}[]')
 
     return split(unite#util#substitute_path_separator(glob(glob)), '\n')
   endif
 endfunction"}}}
+function! unite#util#command_with_restore_cursor(command)
+  let pos = getpos('.')
+  let current = winnr()
+
+  execute a:command
+  let next = winnr()
+
+  " Restore cursor.
+  execute current 'wincmd w'
+  call setpos('.', pos)
+
+  execute next 'wincmd w'
+endfunction
+function! unite#util#expand(path)"{{{
+  return expand(escape(a:path, unite#util#is_win() ?
+        \ '*?"={}' : '*?"={}[]'))
+endfunction"}}}
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

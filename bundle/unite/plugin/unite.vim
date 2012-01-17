@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Dec 2011.
+" Last Modified: 12 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -77,23 +77,26 @@ let g:unite_cursor_line_highlight =
 let g:unite_data_directory =
       \ get(g:, 'unite_data_directory', expand('~/.unite'))
 if !isdirectory(fnamemodify(g:unite_data_directory, ':p'))
-  call mkdir(iconv(fnamemodify(g:unite_data_directory, ':p'),
-        \    &encoding, &termencoding), 'p')
+  call mkdir(fnamemodify(g:unite_data_directory, ':p'))
 endif
 "}}}
 
 " Wrapper command.
-command! -nargs=+ -complete=customlist,unite#complete_source Unite call s:call_unite_empty(<q-args>)
+command! -nargs=+ -complete=customlist,unite#complete_source Unite
+      \ call s:call_unite_empty(<q-args>)
 function! s:call_unite_empty(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
   call unite#start(args, options)
 endfunction"}}}
 
-command! -nargs=+ -complete=customlist,unite#complete_source UniteWithCurrentDir call s:call_unite_current_dir(<q-args>)
+command! -nargs=+ -complete=customlist,unite#complete_source UniteWithCurrentDir
+      \ call s:call_unite_current_dir(<q-args>)
 function! s:call_unite_current_dir(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
   if !has_key(options, 'input')
-    let path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(getcwd(), ':p'))
+    let path = &filetype ==# 'vimfiler' ?
+          \ b:vimfiler.current_dir :
+          \ unite#substitute_path_separator(fnamemodify(getcwd(), ':p'))
     if path !~ '/$'
       let path .= '/'
     endif
@@ -103,11 +106,14 @@ function! s:call_unite_current_dir(args)"{{{
   call unite#start(args, options)
 endfunction"}}}
 
-command! -nargs=+ -complete=customlist,unite#complete_source UniteWithBufferDir call s:call_unite_buffer_dir(<q-args>)
+command! -nargs=+ -complete=customlist,unite#complete_source UniteWithBufferDir
+      \ call s:call_unite_buffer_dir(<q-args>)
 function! s:call_unite_buffer_dir(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
   if !has_key(options, 'input')
-    let path = &filetype ==# 'vimfiler' ? b:vimfiler.current_dir : unite#substitute_path_separator(fnamemodify(bufname('%'), ':p:h'))
+    let path = &filetype ==# 'vimfiler' ?
+          \ b:vimfiler.current_dir :
+          \ unite#substitute_path_separator(fnamemodify(bufname('%'), ':p:h'))
     if path !~ '/$'
       let path .= '/'
     endif

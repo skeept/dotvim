@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 01 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -47,6 +47,25 @@ function! s:kind.action_table.open.func(candidates)"{{{
   for candidate in a:candidates
     execute 'buffer' candidate.action__buffer_nr
   endfor
+endfunction"}}}
+
+let s:kind.action_table.goto = {
+      \ 'description' : 'goto buffer tab',
+      \ }
+function! s:kind.action_table.goto.func(candidate)"{{{
+  for i in range(tabpagenr('$'))
+    let tabnr = i + 1
+    for nr in tabpagebuflist(tabnr)
+      if nr == a:candidate.action__buffer_nr
+        execute 'tabnext' tabnr
+        execute bufwinnr(nr) 'wincmd w'
+
+        " Jump to the first.
+        return
+      endif
+    endfor
+  endfor
+  execute 'buffer' a:candidate.action__buffer_nr
 endfunction"}}}
 
 let s:kind.action_table.delete = {
@@ -148,7 +167,11 @@ function! s:delete(delete_command, candidate)"{{{
     if winbufnr(winnr) == a:candidate.action__buffer_nr
       execute winnr . 'wincmd w'
       call unite#util#alternate_buffer()
-      wincmd p
+
+      let unite_winnr = bufwinnr(unite#get_current_unite().bufnr)
+      if unite_winnr > 0
+        execute unite_winnr 'wincmd w'
+      endif
     endif
 
     let winnr += 1

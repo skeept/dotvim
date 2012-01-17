@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: filename_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Dec 2011.
+" Last Modified: 05 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -161,14 +161,15 @@ function! s:get_include_files(cur_keyword_str)"{{{
   let bufdirectory = fnamemodify(expand('%'), ':p:h')
   let dir_list = []
   let file_list = []
-  for subpath in map(split(path, ','), 'substitute(v:val, "\\\\", "/", "g")')
+  for subpath in map(split(path, '[,;]'), 'substitute(v:val, "\\\\", "/", "g")')
     let dir = (subpath == '.') ? bufdirectory : subpath
     if !isdirectory(dir)
       continue
     endif
     lcd `=dir`
 
-    for word in split(substitute(glob(glob), '\\', '/', 'g'), '\n')
+    " for word in split(substitute(glob(glob), '\\', '/', 'g'), '\n')
+    for word in neocomplcache#util#glob(glob)
       let dict = { 'word' : word, 'menu' : '[FI]' }
 
       let abbr = dict.word
@@ -220,12 +221,16 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
 
     let files = copy(s:cached_files[getcwd()])
   else
-    try
-      let globs = globpath(path, glob)
-    catch
-      return []
-    endtry
-    let files = split(substitute(globs, '\\', '/', 'g'), '\n')
+    if a:path == ''
+      let files = neocomplcache#util#glob(glob)
+    else
+      try
+        let globs = globpath(path, glob)
+      catch
+        return []
+      endtry
+      let files = split(substitute(globs, '\\', '/', 'g'), '\n')
+    endif
 
     if empty(files)
       " Add '*' to a delimiter.
@@ -284,7 +289,7 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
     endif
 
     let abbr = dict.word
-    if isdirectory(expand(dict.word))
+    if isdirectory(neocomplcache#util#expand(dict.word))
       let abbr .= '/'
       if g:neocomplcache_enable_auto_delimiter
         let dict.word .= '/'
@@ -307,8 +312,10 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
   return dir_list + file_list
 endfunction"}}}
 function! s:caching_current_files()
-  let s:cached_files[getcwd()] =
-        \ split(substitute(glob('*') . "\n" . glob('.*'), '\\', '/', 'g'), '\n')
+  let s:cached_files[getcwd()] = neocomplcache#util#glob('*')
+  if !exists('vimproc#readdir')
+    let s:cached_files[getcwd()] += neocomplcache#util#glob('.*')
+  endif
 endfunction
 
 function! neocomplcache#sources#filename_complete#define()"{{{

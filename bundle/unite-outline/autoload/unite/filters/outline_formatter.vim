@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/filters/outline_formatter.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-23
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#filters#outline_formatter#define()
   return s:formatter
@@ -100,4 +103,5 @@ function! s:need_blank_between(cand1, cand2, memo) dict
         \ a:cand1.source__has_marked_child || a:cand2.source__has_marked_child)
 endfunction
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

@@ -46,10 +46,26 @@ for details):
 3. Configuration				*clang_complete-configuration*
 
 Each project can have a .clang_complete at his root, containing the compiler
-options. This is useful if you're using some non-standard include paths. For
-simplicity, please don't put relative and absolute include path on the same
-line. It is not currently correctly handled.
+options. This is useful if you're using some non-standard include paths or
+need to specify particular architecture type, frameworks to use, path to
+precompiled headers, precompiler definitions etc.
 
+Compiler options should go on individual lines (multiple options on one line
+can work sometimes too, but since there are some not obvious conditions for
+that, it's better to have one option per line).
+
+Linking isn't performed during completion, so one doesn't need to specify any
+of linker arguments in .clang_complete file. They will lead to completion
+failure when using clang executable and will be completely ignored by
+libclang.
+
+Example .clang_complete file: >
+ -DDEBUG
+ -include ../config.h
+ -I../common
+ -I/usr/include/c++/4.5.3/
+ -I/usr/include/c++/4.5.3/x86_64-slackware-linux/
+<
 ==============================================================================
 4. Options					*clang_complete-options*
 
@@ -121,10 +137,22 @@ Default: ""
        				       	*g:clang_auto_user_options*
 Set sources for user options passed to clang. Available sources are:
 - path - use &path content as list of include directories (relative paths are
-  ignored)
+  ignored);
 - .clang_complete - use information from .clang_complete file Multiple options
-  are separated by comma.
-Default: "path, .clang_complete"
+  are separated by comma;
+- {anything} else will be treaded as a custom option source in the following
+  manner: clang_complete will try to load autoload-function named
+  getopts#{anything}#getopts, which then will be able to modify
+  b:clang_user_options variable. See help on |autoload| if you don't know
+  what it is.
+  
+An example of custom option sources is bundled with clang_complete and called
+"gcc". This source runs gcc to get a list of include paths. The list of
+include paths for each of supported filetypes (c, cpp, objc and objcpp) is
+cached on a disk and can be removed by calling ClearGCCIncludeCaches()
+function (for changes to take affect one needs to reread buffers using the
+:edit command or something equivalent).
+Default: "path, .clang_complete, gcc"
 
        				       	*clang_complete-use_library*
        				       	*g:clang_use_library*

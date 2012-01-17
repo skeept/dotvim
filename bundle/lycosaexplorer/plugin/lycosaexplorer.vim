@@ -1,5 +1,5 @@
-"    Copyright: Copyright (C) 2011 Michael Hart
-"               LustyExplorer (which this script is based on)
+"    Copyright: Copyright (C) 2012 Michael Hart
+"               LycosaExplorer (which this script is based on)
 "               Copyright (C) 2007-2010 Stephen Bach
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -13,8 +13,8 @@
 "  Description: Dynamic Filesystem and Buffer Explorer Vim Plugin
 "  Maintainers: Michael Hart
 "
-" Release Date: October 22 2011
-"      Version: 0.6
+" Release Date: January 16 2012
+"      Version: 0.9
 "
 "        Usage:
 "                 <Leader>lf  - Opens the filesystem explorer.
@@ -25,6 +25,7 @@
 "               You can also use the commands:
 "
 "                 ":LycosaFilesystemExplorer"
+"                 ":LycosaFilesystemExplorer <some directory path>"
 "                 ":LycosaFilesystemExplorerFromHere"
 "                 ":LycosaBufferExplorer"
 "
@@ -47,8 +48,12 @@
 "                 <C-o>    open selected match in a new h[o]rizontal split
 "                 <C-v>    open selected match in a new [v]ertical split
 "
+"                 <C-b>    go [b]ack one column
+"                 <C-f>    go [f]orward one column
 "                 <C-n>    select [n]ext match
 "                 <C-p>    select [p]revious match
+"                 The above four actions can also be accessed with the cursor
+"                 keys
 "
 "                 <C-u>    clear prompt
 "
@@ -58,6 +63,7 @@
 "                 <C-r>    [r]efresh directory contents
 "                 <C-a>    open [a]ll files in current tab
 "                 <C-e>    create new buffer with the given name and path
+"                 <C-y>    call callback, see install instructions below
 "
 " Filesystem Explorer:
 "
@@ -109,6 +115,19 @@
 "
 "   let g:LycosaExplorerSuppressPythonWarning = 1
 "
+" Default keybindings can be suppressed if you want a mapping other than that
+" already provided. You can do this so like this (in .vimrc)
+"
+"   let g:LycosaExplorerDefaultMappings = 0
+"
+" You can set a callback to be run with the current directory name when C-y is
+" pressed in a filesystem explorer, for example:
+"
+"   function g:example_callback(dirname)
+"       echo a:dirname
+"   endfunction
+"
+"   let g:LycosaExplorerYankCallback = "g:example_callback"
 
 " Exit quickly when already loaded.
 if exists("g:loaded_lycosaexplorer")
@@ -136,7 +155,7 @@ if !has("python") || version < 700
     echon "Here are some tips for adding it:\n"
 
     echo "Debian / Ubuntu:"
-    echo "    # apt-get install vim-python\n"
+    echo "    # apt-get install vim\n"
 
     echo "Fedora:"
     echo "    # yum install vim-enhanced\n"
@@ -151,7 +170,7 @@ if !has("python") || version < 700
     echo "    1. Download and install Python from here:"
     echo "       http://www.python.org/"
     echo "    2. Install a Vim binary with Python support:"
-    echo "       http://segfault.hasno.info/vim/gvim72.zip\n"
+    echo "       http://www.vim.org/download.php#pc"
 
     echo "Manually (including Cygwin):"
     echo "    1. Install Python."
@@ -180,26 +199,27 @@ if ! &hidden
   echohl none
 endif
 
-let g:loaded_lycosaexplorer = "yep"
+let g:loaded_lycosaexplorer = 1
 
 " Commands.
 command LycosaBufferExplorer :call <SID>LycosaBufferExplorerStart()
-command LycosaFilesystemExplorer :call <SID>LycosaFilesystemExplorerStart()
-command LycosaFilesystemExplorerFromHere :call <SID>LycosaFilesystemExplorerFromHereStart()
-
+command -nargs=? LycosaFilesystemExplorer :call <SID>LycosaFilesystemExplorerStart("<args>")
+command LycosaFilesystemExplorerFromHere :call <SID>LycosaFilesystemExplorerStart(expand("%:p:h"))
 
 " Default mappings.
-nnoremap <silent> <Leader>lf :LycosaFilesystemExplorer<CR>
-nnoremap <silent> <Leader>lr :LycosaFilesystemExplorerFromHere<CR>
-nnoremap <silent> <Leader>lb :LycosaBufferExplorer<CR>
+if !exists("g:LycosaExplorerDefaultMappings")
+  let g:LycosaExplorerDefaultMappings = 1
+endif
+
+if g:LycosaExplorerDefaultMappings == 1
+  nnoremap <silent> <Leader>lf :LycosaFilesystemExplorer<CR>
+  nnoremap <silent> <Leader>lr :LycosaFilesystemExplorerFromHere<CR>
+  nnoremap <silent> <Leader>lb :LycosaBufferExplorer<CR>
+endif
 
 " Vim-to-python function calls.
-function! s:LycosaFilesystemExplorerStart()
-  python lycosa_filesystem_explorer.run_from_wd()
-endfunction
-
-function! s:LycosaFilesystemExplorerFromHereStart()
-  python lycosa_filesystem_explorer.run_from_here()
+function! s:LycosaFilesystemExplorerStart(path)
+  exec "python lycosa_filesystem_explorer.run_from_path(r'".escape(a:path, "'\\")."')"
 endfunction
 
 function! s:LycosaBufferExplorerStart()
@@ -225,9 +245,9 @@ endfunction
 " Setup the autocommands that handle buffer MRU ordering.
 augroup LycosaExplorer
   autocmd!
-  autocmd BufEnter * python le_buffer_stack.push()
-  autocmd BufDelete * python le_buffer_stack.pop()
-  autocmd BufWipeout * python le_buffer_stack.pop()
+  autocmd BufEnter * python lycosa_buffer_stack.push()
+  autocmd BufDelete * python lycosa_buffer_stack.pop()
+  autocmd BufWipeout * python lycosa_buffer_stack.pop()
 augroup End
 
 execute "pyfile ".fnameescape(fnamemodify(expand("<sfile>"), ":h")."/lycosa.py")

@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/lib/ctags.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-10-14
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#sources#outline#modules#ctags#import()
   return s:Ctags
@@ -453,4 +456,5 @@ let s:Ctags.lang_info.java = {
       \ 'scope_delim'  : '.',
       \ }
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

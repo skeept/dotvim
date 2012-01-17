@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Dec 2011.
+" Last Modified: 12 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -68,6 +68,8 @@ if !exists('g:unite_kind_file_move_command')
     let g:unite_kind_file_move_command = 'mv $srcs $dest'
   endif
 endif
+
+call unite#util#set_default('g:unite_kind_file_use_trashbox', 0)
 "}}}
 
 function! unite#kinds#file#define()"{{{
@@ -131,11 +133,7 @@ function! s:kind.action_table.mkdir.func(candidate)"{{{
     return
   endif
 
-  if &termencoding != '' && &termencoding != &encoding
-    let dirname = iconv(dirname, &encoding, &termencoding)
-  endif
-
-  if !filereadable(dirname)
+  if !filereadable(dirname) && !isdirectory(dirname)
     call mkdir(dirname, 'p')
   endif
 endfunction"}}}
@@ -149,7 +147,7 @@ let s:kind.action_table.rename = {
 function! s:kind.action_table.rename.func(candidates)"{{{
   for candidate in a:candidates
     let filename = unite#util#substitute_path_separator(
-          \ expand(input(printf('New file name: %s -> ',
+          \ unite#util#expand(input(printf('New file name: %s -> ',
           \ candidate.action__path), candidate.action__path)))
     if filename != '' && filename !=# candidate.action__path
       call s:rename(candidate.action__path, filename)
@@ -222,6 +220,7 @@ function! s:kind.action_table.move.func(candidates)"{{{
     echo 'Canceled.'
     return
   endif
+  redraw
 
   return s:kind.action_table.vimfiler__move.func(a:candidates)
 endfunction"}}}
@@ -300,7 +299,7 @@ function! s:kind.action_table.vimfiler__delete.func(candidates)"{{{
       return 1
     endif
 
-    call unite#kinds#file#do_action(a:candidates, '', 'delete_func',
+    call unite#kinds#file#do_action(a:candidates, '', 'delete',
           \ s:SID_PREFIX().'check_delete_func')
   finally
     if vimfiler_current_dir != ''
@@ -379,7 +378,7 @@ function! s:kind.action_table.vimfiler__newfile.func(candidate)"{{{
       let file.source = 'file'
 
       call writefile([], filename)
-      call unite#mappings#do_action('open', [file])
+      call unite#mappings#do_action(g:vimfiler_edit_action, [file])
     endfor
   finally
     if vimfiler_current_dir != ''
@@ -456,11 +455,10 @@ function! s:kind.action_table.vimfiler__mkdir.func(candidate)"{{{
       return
     endif
 
-    if &termencoding != '' && &termencoding != &encoding
-      let dirname = iconv(dirname, &encoding, &termencoding)
-    endif
+    let dirname = unite#util#substitute_path_separator(
+          \ fnamemodify(dirname, ':p'))
 
-    if !filereadable(dirname)
+    if !filereadable(dirname) && !isdirectory(dirname)
       call mkdir(dirname, 'p')
     endif
   finally
@@ -468,9 +466,6 @@ function! s:kind.action_table.vimfiler__mkdir.func(candidate)"{{{
       lcd `=current_dir`
     endif
   endtry
-
-  " vimfiler cd.
-  call vimfiler#mappings#cd(dirname)
 endfunction"}}}
 
 let s:kind.action_table.vimfiler__execute = {
@@ -522,26 +517,27 @@ function! s:execute_command(command, candidate)"{{{
   " Auto make directory.
   if !isdirectory(dir) && unite#util#input_yesno(
         \   printf('"%s" does not exist. Create?', dir))
-    call mkdir(iconv(dir, &encoding, &termencoding), 'p')
+    call mkdir(dir, 'p')
   endif
 
-  silent call unite#util#smart_execute_command(a:command, a:candidate.action__path)
+  call unite#util#smart_execute_command(a:command, a:candidate.action__path)
 endfunction"}}}
 function! s:external(command, dest_dir, src_files)"{{{
   let dest_dir = a:dest_dir
-  if dest_dir =~ '/$'
+  if dest_dir =~ '[^:]/$'
     " Delete last /.
     let dest_dir = dest_dir[: -2]
   endif
 
-  let src_files = map(a:src_files, 'substitute(v:val, "/$", "", "")')
+  let src_files = map(a:src_files, 'substitute(v:val, "[^:]\zs/$", "", "")')
   let command_line = g:unite_kind_file_{a:command}_command
 
   " Substitute pattern.
   let command_line = substitute(command_line,
-        \'\$srcs\>', join(map(src_files, '''"''.v:val.''"''')), 'g')
+        \'\$srcs\>', escape(join(
+        \   map(src_files, '''"''.v:val.''"''')), '&'), 'g')
   let command_line = substitute(command_line,
-        \'\$dest\>', '"'.dest_dir.'"', 'g')
+        \'\$dest\>', escape('"'.dest_dir.'"', '&'), 'g')
 
   " echomsg command_line
   let output = unite#util#system(command_line)
@@ -691,11 +687,26 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
           \ filename)
     redraw
 
-    let command = a:command_func == '' ?
-          \ a:action_name : call(a:command_func, [filename])
-    if s:external(command, dest_filename, [filename])
-      call unite#print_error(printf('Failed file %s: %s',
-            \ a:action_name, filename))
+    if a:action_name == 'delete' && g:unite_kind_file_use_trashbox
+      " Environment check.
+      if unite#util#is_win() && unite#util#has_vimproc() && exists('*vimproc#delete_trash')
+        let ret = vimproc#delete_trash(filename)
+        if ret
+          call unite#print_error(printf('Failed file %s: %s',
+                \ a:action_name, filename))
+          call unite#print_error(printf('Error code is %d', ret))
+        endif
+      else
+        call unite#util#print_error('Your environment is not supported vimproc#delete_trash().')
+        break
+      endif
+    else
+      let command = a:command_func == '' ?
+            \ a:action_name : call(a:command_func, [filename])
+      if s:external(command, dest_filename, [filename])
+        call unite#print_error(printf('Failed file %s: %s',
+              \ a:action_name, filename))
+      endif
     endif
 
     let cnt += 1

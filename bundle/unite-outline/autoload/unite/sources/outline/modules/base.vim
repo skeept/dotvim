@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/modules/base.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-05-05
+" Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
 "
@@ -25,6 +25,9 @@
 "   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! unite#sources#outline#modules#base#new(name, sid)
   let module = copy(s:Module)
@@ -50,4 +53,5 @@ endfunction
 let s:Module.__bind__ = function(s:SID . 'Module_bind')
 let s:Module.function = s:Module.__bind__ | " syntax sugar
 
-" vim: filetype=vim
+let &cpo = s:save_cpo
+unlet s:save_cpo

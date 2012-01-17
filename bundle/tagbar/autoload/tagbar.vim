@@ -4,7 +4,7 @@
 " Author:      Jan Larres <jan@majutsushi.net>
 " Licence:     Vim licence
 " Website:     http://majutsushi.github.com/tagbar/
-" Version:     2.2
+" Version:     2.3
 " Note:        This plugin was heavily inspired by the 'Taglist' plugin by
 "              Yegappan Lakshmanan and uses a small amount of code from it.
 "
@@ -2711,13 +2711,14 @@ endfunction
 
 " s:QuitIfOnlyWindow() {{{2
 function! s:QuitIfOnlyWindow()
-    " Before quitting Vim, delete the tagbar buffer so that
-    " the '0 mark is correctly set to the previous buffer.
+    " Check if there is more than window
     if winbufnr(2) == -1
         " Check if there is more than one tab page
         if tabpagenr('$') == 1
+            " Before quitting Vim, delete the tagbar buffer so that
+            " the '0 mark is correctly set to the previous buffer.
             bdelete
-            quit
+            quitall
         else
             close
         endif
@@ -3081,11 +3082,13 @@ endfunction
 
 " Automatically open Tagbar if one of the open buffers contains a supported
 " file
-function! tagbar#autoopen()
+function! tagbar#autoopen(...)
+    let always = a:0 > 0 ? a:1 : 1
+
     call s:Init()
 
     for bufnr in range(1, bufnr('$'))
-        if buflisted(bufnr)
+        if buflisted(bufnr) && (always || bufwinnr(bufnr) != -1)
             let ftype = s:DetectFiletype(bufnr)
             if s:IsValidFile(bufname(bufnr), ftype)
                 call s:OpenWindow('')

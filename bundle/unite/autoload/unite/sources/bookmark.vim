@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: bookmark.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Oct 2011.
+" Last Modified: 05 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -46,7 +46,7 @@ function! unite#sources#bookmark#_append(filename)"{{{
 
   if a:filename == ''
     " Append the current buffer to the bookmark list.
-    let path = expand('%:p')
+    let path = unite#util#expand('%:p')
     let linenr = line('.')
     let pattern = '^' . escape(getline('.'), '~"\.^*$[]') . '$'
   else
@@ -55,7 +55,8 @@ function! unite#sources#bookmark#_append(filename)"{{{
     let pattern = ''
   endif
 
-  let filename = (a:filename == '' ? expand('%') : a:filename)
+  let filename = (a:filename == '' ?
+        \ unite#util#expand('%') : a:filename)
   if bufexists(filename) && a:filename == ''
     " Detect vimfiler and vimshell.
     if &filetype ==# 'vimfiler'
@@ -66,7 +67,7 @@ function! unite#sources#bookmark#_append(filename)"{{{
   endif
 
   let path = unite#substitute_path_separator(
-        \ simplify(fnamemodify(expand(path), ':p')))
+        \ simplify(fnamemodify(unite#util#expand(path), ':p')))
 
   redraw
   echo 'Path: ' . path
@@ -92,18 +93,23 @@ function! s:source.gather_candidates(args, context)"{{{
   let bookmark_name = get(a:args, 0, 'default')
 
   let bookmark = s:load(bookmark_name)
-  return map(copy(bookmark.files), '{
-        \ "word" : (v:val[0] != "" ? "[" . v:val[0] . "] " : "") .
-        \          (fnamemodify(v:val[1], ":~:.") != "" ?
-        \           fnamemodify(v:val[1], ":~:.") : v:val[1]),
-        \ "kind" : (isdirectory(v:val[1]) ? "directory" : "jump_list"),
-        \ "source_bookmark_name" : bookmark_name,
-        \ "source_entry_name" : v:val[0],
-        \ "action__path" : v:val[1],
-        \ "action__line" : v:val[2],
-        \ "action__pattern" : v:val[3],
-        \ "action__directory" : unite#path2directory(v:val[1]),
-        \   }')
+  return map(copy(bookmark.files), "{
+        \ 'word' : (v:val[0] != '' ? '[' . v:val[0] . '] ' : '') .
+        \          (fnamemodify(v:val[1], ':~:.') != '' ?
+        \           fnamemodify(v:val[1], ':~:.') : v:val[1]),
+        \ 'kind' : (isdirectory(v:val[1]) ? 'directory' : 'jump_list'),
+        \ 'source_bookmark_name' : bookmark_name,
+        \ 'source_entry_name' : v:val[0],
+        \ 'action__path' : v:val[1],
+        \ 'action__line' : v:val[2],
+        \ 'action__pattern' : v:val[3],
+        \ 'action__directory' : unite#path2directory(v:val[1]),
+        \   }")
+endfunction"}}}
+function! s:source.complete(args, context, arglead, cmdline, cursorpos)"{{{
+  return ['default'] + map(split(glob(
+        \ g:unite_source_bookmark_directory . '/' . a:arglead . '*'), '\n'),
+        \ "fnamemodify(v:val, ':t')")
 endfunction"}}}
 
 " Actions"{{{
@@ -180,6 +186,10 @@ function! s:load(filename)  "{{{
       return
     endif
     let bookmark.files = map(bookmark.files, 'split(v:val, "\t", 1)')
+    for files in bookmark.files
+      let files[1] = unite#util#substitute_path_separator(
+            \ unite#util#expand(files[1]))
+    endfor
     let bookmark.file_mtime = getftime(filename)
   endif
 

@@ -9,8 +9,8 @@
 
 
 Author:      Nate Kane <nathanaelkane AT gmail DOT com>
-Version:     1.5
-Last Change: 13 Mar 2011
+Version:     1.6
+Last Change: 01 Jan 2012
 
 ==============================================================================
 CONTENTS                                                *indent-guides-contents*
@@ -220,12 +220,18 @@ Credits:~
 Contact:~
   * Twitter: @nathanaelkane
   * Email:   <nathanaelkane AT gmail DOT com>
-  * IRC:     nate- on Freenode (I usually idle in the #vim channel)
 
 Bug reports, feedback, suggestions etc are welcomed.
 
 ==============================================================================
 7. CHANGELOG                                           *indent-guides-changelog*
+
+1.6~
+  * Added option g:|indent_guides_space_guides| to control whether spaces are
+    considered as indention (thanks scoz).
+  * Added 'doc/tags' to gitignore (thanks lenniboy).
+  * Fixed E803 ID not found spam (thanks mutewinter).
+  * Fixed str2float issue with Vim 7.1 (thanks acx0).
 
 1.5~
   * Added highlight support for files with a mixture of tab and space indent
@@ -266,7 +272,7 @@ Bug reports, feedback, suggestions etc are welcomed.
 The MIT Licence
 http://www.opensource.org/licenses/mit-license.php
 
-Copyright (c) 2010-2011 Nate Kane
+Copyright (c) 2010-2012 Nate Kane
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

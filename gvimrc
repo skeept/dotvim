@@ -117,3 +117,9 @@ colorscheme desert
 if has("autocmd")
   autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
 endif 
+
+"simple.vim settings
+if exists("g:is_vimrc_simple")
+  colo peaksea
+  hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+endif

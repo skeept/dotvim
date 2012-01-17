@@ -1,7 +1,7 @@
 "=============================================================================
 " File    : autoload/unite/sources/outline/defaults/python.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-" Updated : 2011-09-22
+" Updated : 2012-01-11
 "
 " Licensed under the MIT license:
 " http://www.opensource.org/licenses/mit-license.php
@@ -25,7 +25,7 @@ let s:outline_info = {
       \
       \ 'skip': {
       \   'header': s:Util.shared_pattern('sh', 'header'),
-      \   'block' : ['^\s*r\="""', '^\s*"""'],
+      \   'block' : ['r\="""', '\\\@<!"""'],
       \ },
       \
       \ 'heading_groups': {
@@ -79,5 +79,3 @@ function! s:outline_info.need_blank_between(cand1, cand2, memo)
           \ a:cand1.source__has_marked_child || a:cand2.source__has_marked_child)
   endif
 endfunction
-
-" vim: filetype=vim
