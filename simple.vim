@@ -435,7 +435,12 @@ let g:SuperTabDefaultCompletionType = "context"
 
 "======================== Plugin Loading ======================================
 "load eventual plugins here (the ones that would be really necessary)
-let g:p0 = split(&runtimepath, ',')[0]
+"let g:p0 = split(&runtimepath, ',')[0]
+if has("unix")
+  let g:p0 = "~/.vim"
+else
+  let g:p0 = "~/vimfiles"
+endif
 runtime plugin/NERD_commenter.vim
 runtime plugin/supertab.vim
 runtime plugin/unimpaired.vim
