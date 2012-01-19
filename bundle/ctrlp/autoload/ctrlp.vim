@@ -46,6 +46,7 @@ fu! s:opts()
 	if !exists('g:ctrlp_newcache') | let g:ctrlp_newcache = 0 | en
 	let s:maxdepth = min([s:maxdepth, 100])
 	let s:mxheight = max([s:mxheight, 1])
+	let s:glob = s:dotfiles ? '.*\|*' : '*'
 	let s:igntype = empty(s:usrign) ? -1 : type(s:usrign)
 	" Extensions
 	let g:ctrlp_builtins = 2
@@ -226,10 +227,7 @@ fu! s:Files()
 endf
 
 fu! s:GlobPath(dirs, depth)
-	let entries = split(globpath(a:dirs, '*'), "\n")
-	if s:dotfiles
-		let entries += split(globpath(a:dirs, '.*'), "\n")
-	en
+	let entries = split(globpath(a:dirs, s:glob), "\n")
 	let [dnf, depth] = [ctrlp#dirnfile(entries), a:depth + 1]
 	cal extend(g:ctrlp_allfiles, dnf[1])
 	if !empty(dnf[0]) && !s:maxf(len(g:ctrlp_allfiles)) && depth <= s:maxdepth
@@ -276,7 +274,7 @@ fu! s:Buffers() "{{{1
 		if getbufvar(each, '&bl') && each != s:crbufnr
 			let bufname = bufname(each)
 			if strlen(bufname) && getbufvar(each, '&ma') && bufname != 'ControlP'
-				cal add(allbufs, fnamemodify(bufname, ':p'))
+				cal add(allbufs, fnamemodify(bufname, ':.'))
 			en
 		en
 	endfo
@@ -798,7 +796,7 @@ fu! s:CreateNewFile(...) "{{{1
 		if val != mrk
 			let arr = extend(split(mrk, '[\/]')[:-2], arr)
 			let pah = fnamemodify(val, ':p:h')
-			let str = ctrlp#rmbasedir([pah.s:lash(pad).str])[0]
+			let str = ctrlp#rmbasedir([pah.s:lash(pah).str])[0]
 		en
 	en
 	if len(arr) | if isdirectory(s:createparentdirs(arr))
