@@ -669,3 +669,8 @@ inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 "noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
+"
+
+let g:smartusline_string_to_highlight = '(%n) %f '
+let smartusline_deep_eval = 1
+set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
