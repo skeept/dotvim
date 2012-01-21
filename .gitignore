@@ -37,3 +37,4 @@ colors/not_used/
 doc/tags*
 
 .bzr/
+.Powerline.cache

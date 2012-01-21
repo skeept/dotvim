@@ -110,7 +110,14 @@ if &t_Co > 2 || has("gui_running")
   syntax on
   set hlsearch
 endif
-"set cot-=preview
+set cot-=preview
+
+"let g:p0 = split(&runtimepath, ',')[0]
+if has("unix")
+  let g:p0 = "~/.vim"
+else
+  let g:p0 = "~/vimfiles"
+endif
 "==============================================================================
 
 "============================ Mappings ========================================
@@ -435,12 +442,6 @@ let g:SuperTabDefaultCompletionType = "context"
 
 "======================== Plugin Loading ======================================
 "load eventual plugins here (the ones that would be really necessary)
-"let g:p0 = split(&runtimepath, ',')[0]
-if has("unix")
-  let g:p0 = "~/.vim"
-else
-  let g:p0 = "~/vimfiles"
-endif
 runtime plugin/NERD_commenter.vim
 runtime plugin/supertab.vim
 runtime plugin/unimpaired.vim

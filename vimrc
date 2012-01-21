@@ -125,6 +125,13 @@ if &t_Co > 2 || has("gui_running")
   set hlsearch
 endif
 set cot-=preview
+
+"let g:p0 = split(&runtimepath, ',')[0]
+if has("unix")
+  let g:p0 = "~/.vim"
+else
+  let g:p0 = "~/vimfiles"
+endif
 "==============================================================================
 
 "============================ Mappings ========================================
@@ -650,6 +657,12 @@ let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "==============================================================================
 
+"=============================== powerline ====================================
+"let g:Powerline_cache_file = g:p0 . "/.Powerline.cache"
+"let g:Powerline_symbols = 'unicode'
+"==============================================================================
+
+
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
 autocmd FileType taglist       setlocal norelativenumber
@@ -671,6 +684,9 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "
 
-let g:smartusline_string_to_highlight = '(%n) %f '
-let smartusline_deep_eval = 1
+"=============================== powerline ====================================
+"%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
+let g:smartusline_string_to_highlight = '%-3.3n%t   %h%m%r'
+"let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+"==============================================================================
