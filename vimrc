@@ -658,7 +658,7 @@ let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "==============================================================================
 
 "=============================== powerline ====================================
-"let g:Powerline_cache_file = g:p0 . "/.Powerline.cache"
+let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
 "let g:Powerline_symbols = 'unicode'
 "==============================================================================
 
@@ -684,7 +684,7 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 "
 
-"=============================== powerline ====================================
+"=============================== smartusline ==================================
 "%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
 let g:smartusline_string_to_highlight = '%-3.3n%t   %h%m%r'
 "let smartusline_deep_eval = 1
