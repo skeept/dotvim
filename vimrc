@@ -673,4 +673,4 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 let g:smartusline_string_to_highlight = '(%n) %f '
 let smartusline_deep_eval = 1
-set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+"set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
