@@ -2,7 +2,7 @@
 " File:          autoload/ctrlp.vim
 " Description:   Fuzzy file, buffer, mru and tag finder.
 " Author:        Kien Nguyen <github.com/kien>
-" Version:       1.6.7
+" Version:       1.6.8
 " =============================================================================
 
 " Static variables {{{1
@@ -403,6 +403,9 @@ fu! s:Update(str)
 		retu
 	en
 	let bfn = notail != '' && match(notail, '\v/|\\:@!') < 0
+	if s:regexp && match(notail, '\\:\@!') >= 0
+		let bfn = s:byfname
+	en
 	let lines = exists('g:ctrlp_nolimit') && empty(notail) ? copy(g:ctrlp_lines)
 		\ : s:MatchedItems(g:ctrlp_lines, copy(pats), s:mxheight, bfn)
 	cal s:Render(lines, pats[-1], bfn)
@@ -797,14 +800,14 @@ fu! s:CreateNewFile(...) "{{{1
 	if exists('s:marked') && len(s:marked)
 		" Use the first marked file's path
 		let val = values(s:marked)[0]
-		let mrk = ctrlp#rmbasedir([val])[0]
+		let mrk = fnamemodify(val, ':.')
 		if val != mrk
 			let arr = extend(split(mrk, '[\/]')[:-2], arr)
 			let pah = fnamemodify(val, ':p:h')
-			let str = ctrlp#rmbasedir([pah.s:lash(pah).str])[0]
+			let str = fnamemodify(pah.s:lash(pah).str, ':.')
 		en
 	en
-	if len(arr) | if isdirectory(ctrlp#utils#createpath(arr))
+	if len(arr) | if isdirectory(s:createpath(arr))
 		let optyp = str | en | el | let optyp = fname
 	en
 	if !exists('optyp') | retu | en
@@ -1028,6 +1031,14 @@ fu! s:ispathitem()
 		\ || ( s:itemtype > 2 && g:ctrlp_ext_vars[ext]['type'] == 'path' )
 endf
 
+fu! s:createpath(arr)
+	for each in a:arr
+		let curr = exists('curr') ? curr.s:lash(curr).each : each
+		cal ctrlp#utils#mkdir(curr)
+	endfo
+	retu curr
+endf
+
 fu! ctrlp#dirnfile(entries)
 	let [items, cwd] = [[[], []], getcwd().s:lash()]
 	for each in a:entries
@@ -1131,7 +1142,7 @@ fu! s:highlight(pat, grp, bfn)
 	cal clearmatches()
 	if !empty(a:pat) && s:ispathitem()
 		let pat = substitute(a:pat, '\~', '\\~', 'g')
-		if !s:regexp | let pat = escape(pat, '.') | en
+		let pat = s:regexp ? pat : escape(pat, '.')
 		" Match only filename
 		if s:byfname && a:bfn
 			let pat = substitute(pat, '\[\^\(.\{-}\)\]\\{-}', '[^\\/\1]\\{-}', 'g')
