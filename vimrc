@@ -279,15 +279,15 @@ let fortran_free_source = 1
 " setting the color in terminals
 if !has("gui_running") && !has("win32")
   "on windows default is better
-  "colorscheme evening
+  "colorscheme evening_cs
   "colorscheme default
   "colorscheme morning
   "colorscheme darkblue
   "colorscheme fruit
   "colorscheme icansee
   "colorscheme greens
-  "colorscheme freya
-  colorscheme asu1dark_cs
+  "colorscheme freya_cs
+  "colorscheme asu1dark_cs
   "colorscheme desert256_cs
   "colorscheme desert
   "colorscheme leo_cs
@@ -300,7 +300,8 @@ if !has("gui_running") && !has("win32")
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   "colorscheme  graywh_cs1
+   colorscheme  graywh_cs1
+   "colorscheme peaksea | set background=dark
 endif
 
 let g:relativenumber =2
