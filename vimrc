@@ -287,12 +287,11 @@ if !has("gui_running") && !has("win32")
   "colorscheme icansee
   "colorscheme greens
   "colorscheme freya
-  "colorscheme 256_asu1dark
-  "colorscheme desert256
+  colorscheme asu1dark_cs
+  "colorscheme desert256_cs
   "colorscheme desert
-  "colorscheme autumn
-  "colorscheme leo
-  "colorscheme torte
+  "colorscheme leo_cs
+  "colorscheme torte_cs
   "colorscheme blacksea_cs
   "colorscheme asu1dark_cs
   "colorscheme candycode_cs
@@ -301,7 +300,7 @@ if !has("gui_running") && !has("win32")
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   colorscheme  graywh_cs1
+   "colorscheme  graywh_cs1
 endif
 
 let g:relativenumber =2

@@ -1,4 +1,5 @@
-
+"use this file together with the script listcol.pl
+"to list the colors and call each one at a time.
 
 syntax on
 set nocompatible
