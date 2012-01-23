@@ -38,3 +38,4 @@ doc/tags*
 
 .bzr/
 .Powerline.cache
+test/cur_color.vim
