@@ -438,6 +438,17 @@ nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
 "let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+"imap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
+let g:mysupertabaltcom = 1
+function! MySupertabAltCompletion()
+  "let g:mysupertabaltcom = 1 - g:mysupertabaltcom
+  if g:mysupertabaltcom == 0
+    return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
+  else
+    return SuperTabAlternateCompletion("\<lt>c-p>")
+  endif
+endfunction
+imap <nul> <c-r>=MySupertabAltCompletion()<cr>
 "==============================================================================
 
 "======================== Plugin Loading ======================================
