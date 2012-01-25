@@ -20,7 +20,7 @@ snippet uncover "add uncover"
 }
 endsnippet
 
-snippet ref "reference"
+snippet ref "reference" w
 (\ref{${1:<+reference+>}})${2:<++>}
 endsnippet
 
@@ -95,6 +95,17 @@ endsnippet
 
 snippet lr[ "left[ right]" !w
 \left[ $1 \right] ${2:<++>}
+endsnippet
+
+snippet table
+\begin{table}
+  \centering
+  \begin{tabular}{${1:<+dimensions+>}}
+    ${2:<++>}
+  \end{tabular}
+  \caption{${3:<+Caption text+>}}
+  \label{tab:${4:<+label+>}}
+\end{table}${5:<++>}
 endsnippet
 
 # vim:ft=snippets:
