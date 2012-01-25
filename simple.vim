@@ -265,7 +265,7 @@ let fortran_free_source = 1
 " setting the color in terminals
 if !has("gui_running") && !has("win32")
   "on windows default is better
-  "colorscheme evening
+  "colorscheme evening_cs
   "colorscheme default
   "colorscheme morning
   "colorscheme darkblue
@@ -276,9 +276,8 @@ if !has("gui_running") && !has("win32")
   "colorscheme 256_asu1dark
   "colorscheme desert256
   "colorscheme desert
-  "colorscheme autumn
-  "colorscheme leo
-  "colorscheme torte
+  "colorscheme leo_cs
+  "colorscheme torte_cs
   "colorscheme blacksea_cs
   "colorscheme asu1dark_cs
   "colorscheme candycode_cs
@@ -437,12 +436,12 @@ nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 "=============================== Supertab =====================================
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
-"let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
+let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "imap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
-  "let g:mysupertabaltcom = 1 - g:mysupertabaltcom
-  if g:mysupertabaltcom == 0
+  let g:mysupertabaltcom = 1 - g:mysupertabaltcom
+  if g:mysupertabaltcom == 0 && &completefunc != ""
     return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
   else
     return SuperTabAlternateCompletion("\<lt>c-p>")
