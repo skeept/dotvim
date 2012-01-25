@@ -126,3 +126,7 @@ if exists("g:is_vimrc_simple")
 endif
 
 set encoding=utf-8
+
+"=============================== Supertab =====================================
+imap <c-space> <c-r>=MySupertabAltCompletion()<cr>
+"==============================================================================
