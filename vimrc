@@ -512,8 +512,8 @@ function! ToggleAcpDisable()
   endif
 endfunction
 
-noremap <f11> :call ToggleAcpDisable()<cr>
-inoremap <f11> <ESC>:call ToggleAcpDisable()<cr>a
+"noremap <f11> :call ToggleAcpDisable()<cr>
+"inoremap <f11> <ESC>:call ToggleAcpDisable()<cr>a
 "==============================================================================
 
 "======================== Statusline ==========================================
