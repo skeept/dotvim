@@ -25,7 +25,7 @@ snippet ref "reference" w
 endsnippet
 
 snippet mcol "multicolumn"
-\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}
+\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${4:<++>}
 endsnippet
 
 #snippet begin "insert begin end enviroment
@@ -79,6 +79,12 @@ snippet matr
 ${2:<+row+>}
 \end{array}
 \right]${3:<+matr_end+>}
+endsnippet
+
+snippet array
+\begin{array}[h]{${1:<+cols+>}}
+${2:<+row+>}
+\end{array}${3:<+arrayEnd+>}
 endsnippet
 
 snippet lr( "left( right)" !w
