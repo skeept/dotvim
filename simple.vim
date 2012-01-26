@@ -486,12 +486,3 @@ function! LoadCtrlP()
 endf
 nnoremap <c-p> :call LoadCtrlP()<cr>
 "==============================================================================
-"
-"try to fix the delete key
-function! HFixDel()
-  if &term == "screen"
-    set t_kb=
-    fixdel
-  endif
-endfunction
-nnoremap \ufd :call HFixDel()<cr>

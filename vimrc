@@ -477,11 +477,12 @@ let g:Tex_MultipleCompileFormats='dvi,pdf'
 "make vim load .tex files as latex files
 "let g:tex_flavor='latex'
 let g:tex_flavor='pdflatex'
+let g:Tex_DefaultTargetFormat='pdf'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
 let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
-  autocmd BufRead,BufNewFile *.tex compiler tex
+  autocmd BufRead,BufNewFile *.tex compiler tex textwidth=90
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
@@ -701,12 +702,3 @@ let g:smartusline_string_to_highlight = '%-3.3n%t   %h%m%r'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 "==============================================================================
-"
-"try to fix the delete key
-function! HFixDel()
-  if &term == "screen"
-    set t_kb=
-    fixdel
-  endif
-endfunction
-nnoremap \ufd :call HFixDel()<cr>
