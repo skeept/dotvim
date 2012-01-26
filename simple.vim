@@ -477,7 +477,7 @@ nnoremap <f10> :call LoadUltisnips()<cr>:call UltiSnips_ListSnippets()<CR>
 
 "for filetype tex we need imap.vim
 if has("autocmd")
-  autocmd FileType tex exec "source " . g:p0 . "/plugin/imaps.vim"
+  autocmd FileType tex exec "source " . g:p0 . "/bundle/vlatex/plugin/imaps.vim"
 endif
 
 function! LoadCtrlP()
