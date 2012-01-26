@@ -457,6 +457,7 @@ runtime plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 
+
 function! LoadTagbar()
   runtime bundle/tagbar/plugin/tagbar.vim
   exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
@@ -484,3 +485,13 @@ function! LoadCtrlP()
   runtime bundle/ctrlp/plugin/ctrlp.vim
 endf
 nnoremap <c-p> :call LoadCtrlP()<cr>
+"==============================================================================
+"
+"try to fix the delete key
+function! HFixDel()
+  if &term == "screen"
+    set t_kb=
+    fixdel
+  endif
+endfunction
+nnoremap \ufd :call HFixDel()<cr>

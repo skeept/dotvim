@@ -701,3 +701,12 @@ let g:smartusline_string_to_highlight = '%-3.3n%t   %h%m%r'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 "==============================================================================
+"
+"try to fix the delete key
+function! HFixDel()
+  if &term == "screen"
+    set t_kb=
+    fixdel
+  endif
+endfunction
+nnoremap \ufd :call HFixDel()<cr>
