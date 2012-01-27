@@ -482,7 +482,8 @@ let g:Tex_DefaultTargetFormat='pdf'
 let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
-  autocmd BufRead,BufNewFile *.tex compiler tex textwidth=90
+  autocmd BufRead,BufNewFile *.tex compiler tex
+        \ | setlocal textwidth=90
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
@@ -634,6 +635,8 @@ let g:tagbar_type_gamslst = {
   \ }
 
 noremap <F5> :TagbarToggle<CR>
+"aditonal map, since vim-latex takes over f5
+noremap ,gt :TagbarToggle<cr>
 "==============================================================================
 
 "============================== pep8 ==========================================

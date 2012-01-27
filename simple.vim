@@ -272,9 +272,9 @@ if !has("gui_running") && !has("win32")
   "colorscheme fruit
   "colorscheme icansee
   "colorscheme greens
-  "colorscheme freya
-  "colorscheme 256_asu1dark
-  "colorscheme desert256
+  "colorscheme freya_cs
+  "colorscheme asu1dark_cs
+  "colorscheme desert256_cs
   "colorscheme desert
   "colorscheme leo_cs
   "colorscheme torte_cs
@@ -324,11 +324,13 @@ let g:Tex_MultipleCompileFormats='dvi,pdf'
 "make vim load .tex files as latex files
 "let g:tex_flavor='latex'
 let g:tex_flavor='pdflatex'
+let g:Tex_DefaultTargetFormat='pdf'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
 let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
+        \ | setlocal textwidth=90
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
@@ -415,6 +417,8 @@ let g:tagbar_type_gamslst = {
   \ }
 
 "noremap <F5> :TagbarToggle<CR>
+"aditonal map, since vim-latex takes over f5
+noremap ,gt :TagbarToggle<cr>
 "==============================================================================
 
 "============================== pep8 ==========================================
