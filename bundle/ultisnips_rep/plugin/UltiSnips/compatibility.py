@@ -10,10 +10,10 @@ import sys
 
 import vim
 
-__all__ = ['as_unicode', 'compatible_exec', 'CheapTotalOrdering', 'vim_cursor', 'set_vim_cursor']
+__all__ = ['as_unicode', 'compatible_exec', 'vim_cursor', 'set_vim_cursor']
 
 if sys.version_info >= (3,0):
-    from UltiSnips.Compatibility_py3 import *
+    from UltiSnips.compatibility_py3 import *
 
     def set_vim_cursor(line, col):
         """Wrapper around vims access to window.cursor. It can't handle
@@ -34,31 +34,15 @@ if sys.version_info >= (3,0):
 
         col = len(raw_bytes.decode("utf-8"))
         return line, col
-    class CheapTotalOrdering:
-        """Total ordering only appears in python 2.7. We try to stay compatible with
-        python 2.5 for now, so we define our own"""
-
-        def __lt__(self, other):
-            return self.__cmp__(other) < 0
-
-        def __le__(self, other):
-            return self.__cmp__(other) <= 0
-
-        def __gt__(self, other):
-            return self.__cmp__(other) > 0
-
-        def __ge__(self, other):
-            return self.__cmp__(other) >= 0
-
     def as_unicode(s):
         if isinstance(s, bytes):
             return s.decode("utf-8")
         return str(s)
 
-    def make_suitable_for_vim(s):
+    def as_vimencoding(s):
         return s
 else:
-    from UltiSnips.Compatibility_py2 import *
+    from UltiSnips.compatibility_py2 import *
 
     def set_vim_cursor(line, col):
         """Wrapper around vims access to window.cursor. It can't handle
@@ -80,30 +64,11 @@ else:
         col = len(raw_bytes.decode("utf-8"))
         return line, col
 
-
-    class CheapTotalOrdering(object):
-        """Total ordering only appears in python 2.7. We try to stay compatible with
-        python 2.5 for now, so we define our own"""
-
-        def __lt__(self, other):
-            return self.__cmp__(other) < 0
-
-        def __le__(self, other):
-            return self.__cmp__(other) <= 0
-
-        def __gt__(self, other):
-            return self.__cmp__(other) > 0
-
-        def __ge__(self, other):
-            return self.__cmp__(other) >= 0
-
     def as_unicode(s):
         if isinstance(s, str):
             return s.decode("utf-8")
         return unicode(s)
 
-    def make_suitable_for_vim(s):
-        if isinstance(s, list):
-            return [ a.encode("utf-8") for a in s ]
+    def as_vimencoding(s):
         return s.encode("utf-8")
 

@@ -14,7 +14,7 @@ endif
 let g:_uspy=":py3 "
 if !has("python3")
     if !has("python")
-        echo  "UltiSnips requires py >= 2.5 or any py3"
+        echo  "UltiSnips requires py >= 2.6 or any py3"
         finish
     endif
     let g:_uspy=":py "
@@ -167,14 +167,13 @@ function! UltiSnips_MapKeys()
         exec "inoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <C-R>=UltiSnips_JumpForwards()<cr>"
         exec "snoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <Esc>:call UltiSnips_JumpForwards()<cr>"
     endif
-    exec 'xnoremap ' . g:UltiSnipsExpandTrigger. ' <Esc>:call UltiSnips_SaveLastVisualSelection()<cr>gvs'
+    exec 'xnoremap ' . g:UltiSnipsExpandTrigger. ' :call UltiSnips_SaveLastVisualSelection()<cr>gvs'
     exec "inoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <C-R>=UltiSnips_JumpBackwards()<cr>"
     exec "snoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <Esc>:call UltiSnips_JumpBackwards()<cr>"
     exec "inoremap <silent> " . g:UltiSnipsListSnippets . " <C-R>=UltiSnips_ListSnippets()<cr>"
     exec "snoremap <silent> " . g:UltiSnipsListSnippets . " <Esc>:call UltiSnips_ListSnippets()<cr>"
 
-    " Do not remap this.
-    snoremap <silent> <BS> <Esc>:exec g:_uspy "UltiSnips_Manager.backspace_while_selected()"<cr>
+    snoremap <silent> <BS> <c-g>c
 endf
 
 function! UltiSnips_CursorMoved()
@@ -200,7 +199,7 @@ exec g:_uspy "UltiSnips_Manager.forward_trigger = vim.eval('g:UltiSnipsJumpForwa
 exec g:_uspy "UltiSnips_Manager.backward_trigger = vim.eval('g:UltiSnipsJumpBackwardTrigger')"
 
 au CursorMovedI * call UltiSnips_CursorMoved()
-au InsertEnter * call UltiSnips_EnteredInsertMode()
+au CursorMoved * call UltiSnips_CursorMoved()
 au WinLeave * call UltiSnips_LeavingWindow()
 
 call UltiSnips_MapKeys()
