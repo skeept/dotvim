@@ -1521,6 +1521,14 @@ class Visual_SelectOneWord(_VimTest):
     snippets = ("test", "h${VISUAL}b")
     keys = "blablub" + ESC + "0v6l" + EX + "test" + EX
     wanted = "hblablubb"
+class VisualWithDefault_ExpandWithoutVisual(_VimTest):
+    snippets = ("test", "h${VISUAL:world}b")
+    keys = "test" + EX + "hi"
+    wanted = "hworldbhi"
+class VisualWithDefault_ExpandWithVisual(_VimTest):
+    snippets = ("test", "h${VISUAL:world}b")
+    keys = "blablub" + ESC + "0v6l" + EX + "test" + EX
+    wanted = "hblablubb"
 
 class Visual_ExpandTwice(_VimTest):
     snippets = ("test", "h${VISUAL}b")
@@ -2520,6 +2528,10 @@ class JumpForward_DefSnippet(_VimTest):
     snippets = ("test", "${1}\n`!p snip.rv = '\\n'.join(t[1].split())`\n\n${0:pass}")
     keys = "test" + EX + "a b c" + JF + "shallnot" + JF + "end"
     wanted = "a b c\na\nb\nc\n\nshallnotend"
+class DeleteSnippetInsertion(_VimTest):
+    snippets = ("test", "${1:hello} $1")
+    keys = "test" + EX + ESC + "Vkx" + "i\nworld\n"
+    wanted = "world"
 
 # End: Undo of Snippet insertion  #}}}
 # Tab Completion of Words  {{{#

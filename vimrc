@@ -354,31 +354,34 @@ let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
 
-let g:togglelistornerdtree = 0
-function! ToogleTagListNerdTree()
-  if g:togglelistornerdtree == 0
-    "NERDTreeClose
-    "TlistOpen
-    TlistToggle
-    "setlocal nonumber
-    "setlocal norelativenumber
-    let g:togglelistornerdtree = 1
-  elseif g:togglelistornerdtree == 1
-    TlistToggle
-    "TlistClose
+"let g:togglelistornerdtree = 0
+"function! ToogleTagListNerdTree()
+  "if g:togglelistornerdtree == 0
+    ""NERDTreeClose
+    ""TlistOpen
+    "TlistToggle
+    ""setlocal nonumber
+    ""setlocal norelativenumber
+    "let g:togglelistornerdtree = 1
+  "elseif g:togglelistornerdtree == 1
+    "TlistToggle
+    ""TlistClose
 
+    ""NERDTreeToggle
+    ""setlocal nonumber
+    ""setlocal norelativenumber
+
+    "let g:togglelistornerdtree = 0
+  "else
+    ""TlistClose
+    ""NERDTreeClose
     "NERDTreeToggle
-    "setlocal nonumber
-    "setlocal norelativenumber
+    "let g:togglelistornerdtree = 0
+  "endif
+"endfunction
+"noremap <F3> :call ToogleTagListNerdTree() <cr>
+"inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 
-    let g:togglelistornerdtree = 0
-  else
-    "TlistClose
-    "NERDTreeClose
-    NERDTreeToggle
-    let g:togglelistornerdtree = 0
-  endif
-endfunction
 "==============================================================================
 
 "=============================== LustyJuggler =================================
@@ -633,10 +636,41 @@ let g:tagbar_type_gamslst = {
   \ 'a:eq val',
   \ ],
   \ }
+let g:tagbar_type_tex = {
+    \ 'ctagstype' : 'latex',
+    \ 'kinds'     : [
+        \ 's:sections',
+        \ 'g:graphics',
+        \ 'l:labels',
+        \ 'r:refs:1',
+        \ 'p:pagerefs:1'
+    \ ],
+    \ 'sort'    : 0,
+\ }
+    "\ 'deffile' : expand('<sfile>:p:h:h') . '/ctags/latex.cnf'
 
-noremap <F5> :TagbarToggle<CR>
-"aditonal map, since vim-latex takes over f5
-noremap ,gt :TagbarToggle<cr>
+"noremap <F5> :TagbarToggle<CR>
+""aditonal map, since vim-latex takes over f5
+"noremap ,gt :TagbarToggle<cr>
+
+function! ToggleTBarListNT()
+  if v:count != 0
+    let g:tbarlistnt = v:count
+  else
+    let g:tbarlistnt = 0
+  endif
+  if g:tbarlistnt == 0
+    TagbarToggle
+  elseif g:tbarlistnt == 1
+    TlistToggle
+  elseif g:tbarlistnt == 2
+    NERDTreeToggle
+  else
+    echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree"
+  endif
+endfunction
+nnoremap <F3> :<c-u>call ToggleTBarListNT() <cr>
+inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <cr>
 "==============================================================================
 
 "============================== pep8 ==========================================
@@ -689,9 +723,6 @@ let g:SrcExpl_isUpdateTags = 0
 
 "don't enable showmarks, use \mt to toogle it
 let g:showmarks_enable=0
-
-noremap <F3> :call ToogleTagListNerdTree() <cr>
-inoremap <F3> <ESC>:call ToogleTagListNerdTree() <cr>
 
 "to change the colors if previous color desired :call PreviousColorScheme()
 "noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>

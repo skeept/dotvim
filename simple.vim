@@ -415,10 +415,41 @@ let g:tagbar_type_gamslst = {
   \ 'a:eq val',
   \ ],
   \ }
+let g:tagbar_type_tex = {
+    \ 'ctagstype' : 'latex',
+    \ 'kinds'     : [
+        \ 's:sections',
+        \ 'g:graphics',
+        \ 'l:labels',
+        \ 'r:refs:1',
+        \ 'p:pagerefs:1'
+    \ ],
+    \ 'sort'    : 0,
+\ }
+    "\ 'deffile' : expand('<sfile>:p:h:h') . '/ctags/latex.cnf'
 
 "noremap <F5> :TagbarToggle<CR>
-"aditonal map, since vim-latex takes over f5
-noremap ,gt :TagbarToggle<cr>
+""aditonal map, since vim-latex takes over f5
+"noremap ,gt :TagbarToggle<cr>
+
+function! ToggleTBarListNT()
+  if v:count != 0
+    let g:tbarlistnt = v:count
+  else
+    let g:tbarlistnt = 0
+  endif
+  if g:tbarlistnt == 0
+    TagbarToggle
+  elseif g:tbarlistnt == 1
+    TlistToggle
+  elseif g:tbarlistnt == 2
+    NERDTreeToggle
+  else
+    echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree"
+  endif
+endfunction
+nnoremap <F3> :<c-u>call ToggleTBarListNT() <cr>
+inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <cr>
 "==============================================================================
 
 "============================== pep8 ==========================================
@@ -465,9 +496,12 @@ runtime plugin/scratch.vim
 function! LoadTagbar()
   runtime bundle/tagbar/plugin/tagbar.vim
   exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
-  noremap <F5> :TagbarToggle<CR>
+  "nnoremap <F3> :TagbarToggle<CR>
+  nnoremap <F3> :<c-u>call ToggleTBarListNT() <cr>
+  inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <cr>
 endf
-noremap <f5> :call LoadTagbar()<cr>:TagbarToggle<CR>
+nnoremap <f3> :call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
+inoremap <f3> <cr>:call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips()
   if !(has('unix') && executable('cygpath'))
@@ -478,6 +512,7 @@ function! LoadUltisnips()
   nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 endfunction
 nnoremap <f10> :call LoadUltisnips()<cr>:call UltiSnips_ListSnippets()<CR>
+inoremap <f10> <esc>:call LoadUltisnips()<cr>a<c-r>=UltiSnips_ExpandSnippet()<cr>
 
 "for filetype tex we need imap.vim
 if has("autocmd")
