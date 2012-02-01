@@ -531,5 +531,5 @@ function! LoadCtrlP()
   exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
   runtime bundle/ctrlp/plugin/ctrlp.vim
 endf
-nnoremap <c-p> :call LoadCtrlP()<cr>
+nnoremap <c-p> :call LoadCtrlP()<cr>:<c-u>CtrlP<cr>
 "==============================================================================
