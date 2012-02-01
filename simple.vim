@@ -17,6 +17,15 @@ endif
 
 let g:is_vimrc_simple = 1 "so we can do something specific in gvimrc
 
+"default path for runtime files
+"let g:p0 = split(&runtimepath, ',')[0]
+if has("unix")
+  let g:p0 = "~/.vim"
+else
+  let g:p0 = "~/vimfiles"
+endif
+
+
 
 "=============================== Settings =====================================
 " Use Vim settings, rather then Vi settings (much better!).
@@ -59,19 +68,24 @@ endif
 "" set backup. but all the backuped files will be
 "" placed in the directory specified by backupdir
 set backup
-if has("win32")
-  set backupdir^=$HOME\vimfiles\backup//
-  set directory^=$HOME\vimfiles\swapdir//
-  if v:version >= 703
-    set undodir^=$HOME\vimfiles\undodir//
-  endif
-else
-  set backupdir^=~/.vim/backup//
-  set directory^=~/.vim/swapdir//
-  if v:version >= 703
-    set undodir^=$HOME/.vim/undodir//
-  endif
+exec "set backupdir^=" . g:p0 . "/backup"
+exec "set directory^=" . g:p0 . "/swapdir"
+if v:version >= 703
+  exec "set undodir^=" . g:p0 . "/undodir"
 endif
+"if has("win32")
+  "set backupdir^=$HOME\vimfiles\backup//
+  "set directory^=$HOME\vimfiles\swapdir//
+  "if v:version >= 703
+    "set undodir^=$HOME\vimfiles\undodir//
+  "endif
+"else
+  "set backupdir^=~/.vim/backup//
+  "set directory^=~/.vim/swapdir//
+  "if v:version >= 703
+    "set undodir^=$HOME/.vim/undodir//
+  "endif
+"endif
 
 set expandtab
 set softtabstop=2
@@ -112,12 +126,6 @@ if &t_Co > 2 || has("gui_running")
 endif
 set cot-=preview
 
-"let g:p0 = split(&runtimepath, ',')[0]
-if has("unix")
-  let g:p0 = "~/.vim"
-else
-  let g:p0 = "~/vimfiles"
-endif
 "==============================================================================
 
 "============================ Mappings ========================================
