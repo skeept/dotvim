@@ -108,5 +108,6 @@ def main():
   #create_symlinks(sys.argv[1], '.')
   create_symlinks(origin, destin)
 
+
 if __name__ == '__main__':
   main()
