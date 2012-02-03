@@ -115,6 +115,10 @@ function main()
     echo -e "\n"
     do_git_update2
     exit
+  elif test "$1" = "-quiet"; then
+    echo "##################### $(basename $PWD) ########"
+    do_git_update2
+    exit
   fi
   DO_UPDATE=0
   while getopts "us" flag
