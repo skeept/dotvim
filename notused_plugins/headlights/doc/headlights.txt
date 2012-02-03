@@ -27,7 +27,8 @@ Headlights adds a 'bundles' menu [1] to Vim, revealing your bundles (aka.
 plugins) and the features they provide.
 
 Headlights creates a menu for each currently loaded [2] bundle, grouping
-together docs, commands, mappings, abbreviations, functions, and script files.
+together docs, commands, mappings, abbreviations, functions, highlights, and
+plugin files.
 
 Combined with a powerful bundle manager, Headlights will improve your Vim user
 experience -- nay, your quality of life.
@@ -92,6 +93,14 @@ Default value: 0
 Create menus for global bundle functions: >
 
     let g:headlights_show_functions = 1
+<
+Default value: 0
+
+                                                  *headlights_show_highlights*
+
+Create menus for bundle highlights: >
+
+    let g:headlights_show_highlights = 1
 <
 Default value: 0
 
@@ -178,6 +187,8 @@ CHANGELOG                                               *headlights-changelog*
 1.4
     - menus are now intelligently grouped by bundle (optional)
     - autoload bundles are now properly duplicated in the buffer menu
+    - new category: highlights
+    - usability improvements
     - refactoring and performance tweaks
 
 1.3
