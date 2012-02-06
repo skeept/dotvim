@@ -61,8 +61,8 @@ snippet hfig "insert figure"
 ${5:<+end figure+>}
 endsnippet
 
-snippet hfrac "insert fraction"
-\frac{${1}}{${2:<+den+>}}${3:<++>}
+snippet fr "insert fraction"
+\frac{${1:${VISUAL:<+nom+>}}}{${2:<+denom+>}}${0:<++>}
 endsnippet
 
 snippet sum
@@ -70,7 +70,7 @@ snippet sum
 endsnippet
 
 snippet cite
-\cite{${1}}${2:<+end cite+>}
+\cite{${1}}${0:<++>}
 endsnippet
 
 snippet matr
@@ -78,29 +78,29 @@ snippet matr
 \begin{array}[h]{${1:<+cols+>}}
 ${2:<+row+>}
 \end{array}
-\right]${3:<+matr_end+>}
+\right]${0:<++>}
 endsnippet
 
 snippet array
 \begin{array}[h]{${1:<+cols+>}}
 ${2:<+row+>}
-\end{array}${3:<+arrayEnd+>}
+\end{array}${0:<++>}
 endsnippet
 
 snippet lr( "left( right)" !w
-\left( $1 \right) ${2:<++>}
+\left( ${1:${VISUAL}} \right) ${2:<++>}
 endsnippet
 
 snippet lr| "left| right|" !w
-\left| $1 \right| ${2:<++>}
+\left| ${1:${VISUAL}} \right| ${2:<++>}
 endsnippet
 
 snippet lr{ "left\{ right\}" w
-\left\{ $1 \right\} ${2:<++>}
+\left\\{ ${1:${VISUAL}} \right\\} ${0:<++>}
 endsnippet
 
 snippet lr[ "left[ right]" !w
-\left[ $1 \right] ${2:<++>}
+\left[ ${1:${VISUAL}} \right] ${2:<++>}
 endsnippet
 
 snippet table
@@ -115,7 +115,13 @@ snippet table
 endsnippet
 
 snippet equ
-eqn<c-r>=UltiSnips_ExpandSnippet()<cr>
+eqn`!p vim.command('call feedkeys("\<f10>")')`
+endsnippet
+
+snippet "b(egin)?" "begin{} / end{}" !br
+\begin{${1:something}}
+        ${0:${VISUAL}}
+\end{$1}
 endsnippet
 
 # vim:ft=snippets:

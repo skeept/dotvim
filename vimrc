@@ -621,8 +621,8 @@ noremap ,pf :CtrlPCurFile<cr>
 "tagbar gms and gamslst settings
 
 let g:tagbar_autofocus = 1
-"tagbar width (default is 40)
-let g:tagbar_width = 30
+let g:tagbar_width = 30 "tagbar width (default is 40)
+let g:tagbar_sort = 0 "by default sort by order in the file
 
 let g:tagbar_type_gams = {
   \ 'ctagstype': 'gams',
