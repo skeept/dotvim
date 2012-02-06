@@ -28,12 +28,13 @@ See (old) screencast here: http://t.co/3b0bzeXA (sorry for quality, this is my f
 Changelog
 =========
 
-## 2012-01-17 0.5.5
+## 2012-02-06 0.5.6
 -------------------
-* Add a sign for info messages from pylint.
-  (c) Fredrik Henrysson
-* Change motion keys: vic - viC, dam - daM and etc
-* Add 'g:pymode_lint_onfly' option
+* Fix 'g:pymode_syntax' option
+* Show error message in bottom part of screen
+  see 'g:pymode_lint_message'
+* Fix pylint for windows users
+* Fix breakpoint command (Use pdb when idpb not installed)
 
 
 Requirements
@@ -150,6 +151,9 @@ Default values: ::
 
     " Auto open cwindow if errors be finded
     let g:pymode_lint_cwindow = 1
+
+    " Show error message if cursor placed at the error line
+    let g:pymode_lint_message = 1
 
     " Auto jump on first error
     let g:pymode_lint_jump = 0
