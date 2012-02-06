@@ -615,6 +615,10 @@ noremap ,pq :CtrlPQuickfix<cr>
 noremap ,pd :CtrlPCurWD<cr>
 noremap ,pj :CtrlPBufTagAll<cr>
 noremap ,pf :CtrlPCurFile<cr>
+let g:ctrlp_prompt_mappings = {
+         \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
+         \ 'PrtCurLeft()': ['<left>', '<c-^>'],
+         \ }
 "==============================================================================
 
 "=============================== tagbar =======================================
