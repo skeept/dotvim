@@ -146,9 +146,20 @@ nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 inoremap <C-E> <ESC>$a
 
 "noremap f2 to make
-inoremap <F2> <ESC>:wa<cr>:Make <Up>
-noremap <F2> :wa<cr>:Make <Up>
-command! -nargs=* Make write | make <args> | cwindow 6
+"inoremap <F2> <ESC>:wa<cr>:Make <Up>
+"noremap <F2> :wa<cr>:Make <Up>
+inoremap <F2> <ESC>:call Make2()<cr><c-l>
+noremap <F2> :call Make2()<cr><c-l>
+command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
+function! Make2()
+  if !exists("g:make_args")
+    let g:make_args = ""
+  endif
+  write
+  exec "silent! make " . g:make_args
+  cwindow 6
+  redraw
+endfunction
 
 "make the f1 key save-buffer key
 inoremap <F1> <ESC>:wa<cr>
@@ -495,6 +506,19 @@ function! MySupertabAltCompletion()
   endif
 endfunction
 imap <nul> <c-r>=MySupertabAltCompletion()<cr>
+"==============================================================================
+
+"=============================== Delete Whitespace ============================
+function! StripTrailingWhitespace()
+  if !&binary && &filetype != 'diff'
+    normal mz
+    normal Hmy
+    %s/\s\+$//e
+    normal 'yz<CR>
+    normal `z
+  endif
+endfunction
+command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "==============================================================================
 
 "======================== Plugin Loading ======================================
