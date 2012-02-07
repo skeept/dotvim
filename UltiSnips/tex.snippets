@@ -28,12 +28,17 @@ snippet mcol "multicolumn"
 \multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${4:<++>}
 endsnippet
 
-#snippet begin "insert begin end enviroment
-#\begin{${1:env}}
-#${2}
-#\end{$1}
-#${3:<+end $1+>}
-#endsnippet
+snippet "be(gin)?(\s)*(\S+)*" "begin{} / end{}" !br
+\begin{${1:`!p snip.rv = match.group(3) if match.group(3) is not None else "something"`}}
+	${2:${VISUAL}}
+\end{$1}$0
+endsnippet
+
+snippet "vr(\s)*(\S+)*" "begin{} / end{}" !br
+\begin{${1:`!p snip.rv = match.group(2) if match.group(2) is not None else "something"`}}
+	${0:${VISUAL}}
+\end{$1}
+endsnippet
 
 snippet htab "tabular"
 \begin{${1:tabular}}{${2:c}}

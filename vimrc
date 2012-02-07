@@ -709,6 +709,9 @@ let g:UltiSnipsListSnippets  = "<c-f10>"
 let g:UltiSnipsJumpForwardTrigger  = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
 nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
+inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<cr>
+snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<cr>
+inoremap <silent> <c-j> <c-r>=UltiSnips_JumpForwards()<cr>
 "==============================================================================
 
 "=============================== Supertab =====================================
