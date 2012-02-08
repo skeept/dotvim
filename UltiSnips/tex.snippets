@@ -28,14 +28,16 @@ snippet mcol "multicolumn"
 \multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${4:<++>}
 endsnippet
 
-snippet "be(gin)?(\s)*(\S+)*" "begin{} / end{}" !br
-\begin{${1:`!p snip.rv = match.group(3) if match.group(3) is not None else "something"`}}
+snippet "be(gin)?( (\S+))?" "begin{} / end{}" !br
+\begin{${1:`!p
+snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
 	${2:${VISUAL}}
 \end{$1}$0
 endsnippet
 
-snippet "vr(\s)*(\S+)*" "begin{} / end{}" !br
-\begin{${1:`!p snip.rv = match.group(2) if match.group(2) is not None else "something"`}}
+snippet "vr(egin)?( (\S+))?" "begin{} / end{}" !br
+\begin{${1:`!p
+snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
 	${0:${VISUAL}}
 \end{$1}
 endsnippet

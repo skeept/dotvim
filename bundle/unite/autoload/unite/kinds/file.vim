@@ -151,7 +151,7 @@ function! s:kind.action_table.rename.func(candidates)"{{{
           \ candidate.action__path), candidate.action__path)))
     redraw
     if filename != '' && filename !=# candidate.action__path
-      call s:rename(candidate.action__path, filename)
+      call unite#kinds#file#do_rename(candidate.action__path, filename)
     endif
   endfor
 endfunction"}}}
@@ -337,7 +337,7 @@ function! s:kind.action_table.vimfiler__rename.func(candidate)"{{{
     redraw
 
     if filename != '' && filename !=# a:candidate.action__path
-      call s:rename(a:candidate.action__path, filename)
+      call unite#kinds#file#do_rename(a:candidate.action__path, filename)
     endif
   finally
     if vimfiler_current_dir != ''
@@ -593,28 +593,6 @@ function! s:move_to_other_drive(candidate, filename)"{{{
     return 1
   endif
 endfunction"}}}
-function! s:copy_to_other_drive(candidate, filename)"{{{
-  " rename() doesn't supported case matched rename.
-  if g:unite_kind_file_copy_file_command == ''
-        \ || g:unite_kind_file_copy_directory_command == ''
-    call unite#print_error("Please install cp.exe.")
-    return 1
-  elseif g:unite_kind_file_delete_file_command == ''
-          \ || g:unite_kind_file_delete_directory_command == ''
-    call unite#print_error("Please install rm.exe.")
-    return 1
-  endif
-
-  if s:kind.action_table.vimfiler__copy.func([a:candidate])
-    call unite#print_error('Failed file move: ' . a:filename)
-    return 1
-  endif
-
-  if s:kind.action_table.vimfiler__delete.func([a:candidate])
-    call unite#print_error('Failed file delete: ' . a:filename)
-    return 1
-  endif
-endfunction"}}}
 function! s:check_over_write(dest_dir, filename, overwrite_method, is_reset_method)"{{{
   let is_reset_method = a:is_reset_method
   let dest_filename = a:dest_dir . fnamemodify(a:filename, ':t')
@@ -665,8 +643,16 @@ function! s:check_over_write(dest_dir, filename, overwrite_method, is_reset_meth
 
   return [dest_filename, overwrite_method, is_reset_method, is_continue]
 endfunction"}}}
-function! s:rename(old_filename, new_filename)
+function! unite#kinds#file#do_rename(old_filename, new_filename)"{{{
   if a:old_filename ==# a:new_filename
+    return
+  endif
+
+  if a:old_filename !=? a:new_filename &&
+        \ (filereadable(a:new_filename) || isdirectory(a:new_filename))
+    " Failed.
+    call unite#print_error(
+          \ printf('file: "%s" is already exists!', a:new_filename))
     return
   endif
 
@@ -676,32 +662,18 @@ function! s:rename(old_filename, new_filename)
     let bufnr_save = bufnr('%')
     execute 'buffer' bufnr
     saveas! `=a:new_filename`
-    call delete(a:old_filename)
     execute 'buffer' bufnr_save
-
-    return
   endif
 
-  if filereadable(a:new_filename) || isdirectory(a:new_filename)
-    " Failed.
-    call unite#print_error(
-          \ printf('file: "%s" is already exists!', a:new_filename))
-    return
-  endif
-
-  if a:old_filename ==? a:new_filename
-    let context = unite#get_context()
-    let context.action__directory = a:new_filename
-    let candidate = {
-          \ 'action__directory' :
-          \       unite#util#path2directory(a:old_filename),
-          \ 'action__path' : a:old_filename,
-          \ }
-    call s:move_to_other_drive(candidate, a:new_filename)
-  else
-    call rename(a:old_filename, a:new_filename)
-  endif
-endfunction
+  call rename(a:old_filename, a:new_filename)
+endfunction"}}}
+function! s:filename2candidate(filename)"{{{
+  return {
+        \ 'action__directory' :
+        \       unite#util#path2directory(a:filename),
+        \ 'action__path' : a:filename,
+        \ }
+endfunction"}}}
 
 function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_func)"{{{
   let overwrite_method = ''
