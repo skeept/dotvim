@@ -77,6 +77,12 @@ To use UltiSnips, you need a python enabled Vim 7. You have python if either
 yields '1'. Recent versions have been tested with python 2.7 and python 3.2,
 theoretically, UltiSnips should work with all versions >= python 2.6.
 
+UltiSnips tries to autodetect which Vim Python command to use (there are two:
+:py and :py3). Unfortunately, some Vim versions choke when you test for both
+versions. In this case you have to tell UltiSnips which version to use via >
+   
+   let g:UltiSnipsUsePythonVersion = 2   " or 3
+
 Using Pathogen:                                     *UltiSnips-using-pathogen*
 
 If you are a Pathogen user, you can track the official mirror of UltiSnips on github: >
@@ -509,6 +515,37 @@ endsnippet
 ------------------- SNAP -------------------
 wow<tab>Hello World ->
 Hello World                                                     HELLO WORLD
+
+The following snippet is an example of the use of the match in snippets with
+regular expression. It shows how to build snippets whose expansion depends
+on the actual definition of the snippet which can vary:
+
+------------------- SNIP -------------------
+snippet "be(gin)?( (\S+))?" "begin{} / end{}" br
+\begin{${1:`!p
+snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
+	${2:${VISUAL}}
+\end{$1}$0
+endsnippet
+------------------- SNAP -------------------
+be<tab>center<c-j> ->
+\begin{center}
+
+\end{center}
+------------------- SNAP -------------------
+be center<tab> ->
+\begin{center}
+
+\end{center}
+
+The second form is just a variation of the first one but, it serves as an
+illustration of how to match groups in regular expressions but it has some 
+drawbacks:
+1. If you use <tab> for expanding the snippets and also for completion then
+   if you were trying to use <tab> to complete "be form" to "be formatted"
+   then you would end up with the above SNAP which is not what you want.
+2. The snippet is harder to read.
+
 
  4.4.4 Global Snippets:                                   *UltiSnips-globals*
 
