@@ -585,7 +585,11 @@ endif
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<cr>
 
+"======================== manpageview =========================================
 let g:manpageview_winopen = "hsplit="
+autocmd FileType man setlocal norelativenumber nonumber
+"also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
+"==============================================================================
 
 "some pylint settings
 let g:pylint_onwrite = 0
