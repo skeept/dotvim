@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Jan 2012.
+" Last Modified: 09 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 6.2, for Vim 7.2
+" Version: 7.0, for Vim 7.2
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -47,9 +47,12 @@ function! neocomplcache#enable() "{{{
     autocmd!
     " Auto complete events
     autocmd CursorMovedI * call s:on_moved_i()
-    autocmd CursorHoldI * call s:on_hold_i()
     autocmd InsertLeave * call s:on_insert_leave()
   augroup END "}}}
+
+  if g:neocomplcache_enable_cursor_hold_i
+    autocmd neocomplcache CursorHoldI * call neocomplcache#do_auto_complete()
+  endif
 
   " Disable beep.
   set vb t_vb=
@@ -61,7 +64,7 @@ function! neocomplcache#enable() "{{{
   let s:ftplugin_sources = {}
   let s:loaded_ftplugin_sources = {}
   let s:complete_lock = {}
-  let s:plugins_lock = {}
+  let s:sources_lock = {}
   let s:auto_completion_length = {}
   let s:cur_keyword_str = ''
   let s:complete_words = []
@@ -84,8 +87,7 @@ function! neocomplcache#enable() "{{{
   for file in split(globpath(&runtimepath, 'autoload/neocomplcache/sources/*.vim'), '\n')
     let source_name = fnamemodify(file, ':t:r')
     if !has_key(s:plugin_sources, source_name)
-          \ && (!has_key(g:neocomplcache_plugin_disable, source_name) || 
-          \ g:neocomplcache_plugin_disable[source_name] == 0)
+          \ && neocomplcache#is_source_enabled(source_name)
       let source = call('neocomplcache#sources#' . source_name . '#define', [])
       if empty(source)
         " Ignore.
@@ -361,53 +363,57 @@ function! neocomplcache#enable() "{{{
   "}}}
 
   " Initialize include filetype lists."{{{
-  if !exists('g:neocomplcache_filetype_include_lists')
-    let g:neocomplcache_filetype_include_lists = {}
+  if exists('g:neocomplcache_filetype_include_lists')
+    let g:neocomplcache_context_filetype_lists =
+          \ g:neocomplcache_filetype_include_lists
   endif
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  if !exists('g:neocomplcache_context_filetype_lists')
+    let g:neocomplcache_context_filetype_lists = {}
+  endif
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'c,cpp', [
         \ {'filetype' : 'masm', 'start' : '_*asm_*\s\+\h\w*', 'end' : '$'},
         \ {'filetype' : 'masm', 'start' : '_*asm_*\s*\%(\n\s*\)\?{', 'end' : '}'},
         \ {'filetype' : 'gas', 'start' : '_*asm_*\s*\%(_*volatile_*\s*\)\?(', 'end' : ');'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'd', [
         \ {'filetype' : 'masm', 'start' : 'asm\s*\%(\n\s*\)\?{', 'end' : '}'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'perl6', [
         \ {'filetype' : 'pir', 'start' : 'Q:PIR\s*{', 'end' : '}'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'vimshell', [
         \ {'filetype' : 'vim', 'start' : 'vexe \([''"]\)', 'end' : '\\\@<!\1'},
         \ {'filetype' : 'vim', 'start' : ' :\w*', 'end' : '\n'},
         \ {'filetype' : 'vim', 'start' : ' vexe\s\+', 'end' : '\n'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'eruby', [
         \ {'filetype' : 'ruby', 'start' : '<%[=#]\?', 'end' : '%>'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'vim', [
         \ {'filetype' : 'python', 'start' : '^\s*python <<\s*\(\h\w*\)', 'end' : '^\1'},
         \ {'filetype' : 'ruby', 'start' : '^\s*ruby <<\s*\(\h\w*\)', 'end' : '^\1'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'html,xhtml', [
         \ {'filetype' : 'javascript', 'start' : '<script type="text/javascript">', 'end' : '</script>'},
         \ {'filetype' : 'css', 'start' : '<style type="text/css">', 'end' : '</style>'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'python', [
         \ {'filetype' : 'vim', 'start' : 'vim.command\s*(\([''"]\)', 'end' : '\\\@<!\1\s*)'},
         \ {'filetype' : 'vim', 'start' : 'vim.eval\s*(\([''"]\)', 'end' : '\\\@<!\1\s*)'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'help', [
         \ {'filetype' : 'vim', 'start' : '^>', 'end' : '^<'},
         \])
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_filetype_include_lists,
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_context_filetype_lists,
         \ 'nyaos,int-nyaos', [
         \ {'filetype' : 'lua', 'start' : '\<lua_e\s\+\(["'']\)', 'end' : '^\1'},
         \])
@@ -514,7 +520,6 @@ function! neocomplcache#enable() "{{{
   " Check if "vim" command is executable.
   if neocomplcache#has_vimproc() && !executable('vim')
     echoerr '"vim" command is not executable. Asynchronous caching is disabled.'
-    echoerr 'Please install "vim" command. And add to $PATH.'
     let s:exists_vimproc = 0
   endif
 
@@ -761,7 +766,7 @@ function! neocomplcache#do_auto_complete()"{{{
   let s:changedtick = b:changedtick
 endfunction"}}}
 
-" Plugin helper."{{{
+" Source helper."{{{
 function! neocomplcache#available_complfuncs()"{{{
   return s:complfunc_sources
 endfunction"}}}
@@ -791,9 +796,14 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
   endif"}}}
 
   " Fuzzy completion.
-  if len(keyword_escape) < 8 && g:neocomplcache_enable_fuzzy_completion
-    let keyword_escape = substitute(keyword_escape, '\w',
-          \ '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g')
+  if g:neocomplcache_enable_fuzzy_completion
+    if len(keyword_escape) < 8
+      let keyword_escape = keyword_escape[: 1] . substitute(keyword_escape[2:], '\w',
+            \ '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g')
+    elseif len(keyword_escape) < 20
+      let keyword_escape = keyword_escape[: 3] . substitute(keyword_escape[4:12], '\w',
+            \ '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g') . keyword_escape[13:]
+    endif
   else
     " Underbar completion."{{{
     if g:neocomplcache_enable_underbar_completion
@@ -1014,8 +1024,8 @@ endfunction"}}}
 function! neocomplcache#get_completion_length(plugin_name)"{{{
   if neocomplcache#is_auto_complete() && has_key(s:auto_completion_length, bufnr('%'))
     return s:auto_completion_length[bufnr('%')]
-  elseif has_key(g:neocomplcache_plugin_completion_length, a:plugin_name)
-    return g:neocomplcache_plugin_completion_length[a:plugin_name]
+  elseif has_key(g:neocomplcache_source_completion_length, a:plugin_name)
+    return g:neocomplcache_source_completion_length[a:plugin_name]
   elseif has_key(s:ftplugin_sources, a:plugin_name)
         \ || has_key(s:complfunc_sources, a:plugin_name)
     return 0
@@ -1026,13 +1036,13 @@ function! neocomplcache#get_completion_length(plugin_name)"{{{
   endif
 endfunction"}}}
 function! neocomplcache#set_completion_length(plugin_name, length)"{{{
-  if !has_key(g:neocomplcache_plugin_completion_length, a:plugin_name)
-    let g:neocomplcache_plugin_completion_length[a:plugin_name] = a:length
+  if !has_key(g:neocomplcache_source_completion_length, a:plugin_name)
+    let g:neocomplcache_source_completion_length[a:plugin_name] = a:length
   endif
 endfunction"}}}
 function! neocomplcache#get_auto_completion_length(plugin_name)"{{{
-  if has_key(g:neocomplcache_plugin_completion_length, a:plugin_name)
-    return g:neocomplcache_plugin_completion_length[a:plugin_name]
+  if has_key(g:neocomplcache_source_completion_length, a:plugin_name)
+    return g:neocomplcache_source_completion_length[a:plugin_name]
   elseif g:neocomplcache_enable_fuzzy_completion
     return 1
   else
@@ -1101,9 +1111,9 @@ function! neocomplcache#is_plugin_locked(plugin_name)"{{{
   endif
 
   let bufnr = bufnr('%')
-  return has_key(s:plugins_lock, bufnr)
-        \ && has_key(s:plugins_lock[bufnr], a:plugin_name)
-        \ && s:plugins_lock[bufnr][a:plugin_name]
+  return has_key(s:sources_lock, bufnr)
+        \ && has_key(s:sources_lock[bufnr], a:source_name)
+        \ && s:sources_lock[bufnr][a:source_name]
 endfunction"}}}
 function! neocomplcache#is_auto_select()"{{{
   return g:neocomplcache_enable_auto_select && !neocomplcache#is_eskk_enabled()
@@ -1124,7 +1134,7 @@ function! neocomplcache#is_win()"{{{
   return has('win32') || has('win64')
 endfunction"}}}
 function! neocomplcache#is_source_enabled(plugin_name)"{{{
-  return !get(g:neocomplcache_plugin_disable, a:plugin_name, 0)
+  return !get(g:neocomplcache_source_disable, a:plugin_name, 0)
 endfunction"}}}
 function! neocomplcache#exists_echodoc()"{{{
   return exists('g:loaded_echodoc') && g:loaded_echodoc
@@ -1193,15 +1203,15 @@ function! neocomplcache#get_context_filetype(...)"{{{
 
   return s:context_filetype
 endfunction"}}}
-function! neocomplcache#get_plugin_rank(plugin_name)"{{{
-  if has_key(g:neocomplcache_plugin_rank, a:plugin_name)
-    return g:neocomplcache_plugin_rank[a:plugin_name]
+function! neocomplcache#get_source_rank(plugin_name)"{{{
+  if has_key(g:neocomplcache_source_rank, a:plugin_name)
+    return g:neocomplcache_source_rank[a:plugin_name]
   elseif has_key(s:complfunc_sources, a:plugin_name)
     return 10
   elseif has_key(s:ftplugin_sources, a:plugin_name)
     return 100
   elseif has_key(s:plugin_sources, a:plugin_name)
-    return neocomplcache#get_plugin_rank('keyword_complete')
+    return neocomplcache#get_source_rank('keyword_complete')
   else
     " unknown.
     return 1
@@ -1230,9 +1240,7 @@ function! neocomplcache#get_complete_results(cur_text, ...)"{{{
     let sources = filter(sources, 'v:key ==# "omni_complete"')
   endif
   if a:0 < 1
-    call filter(sources,
-          \ '!(has_key(g:neocomplcache_plugin_disable, v:key)
-          \     && g:neocomplcache_plugin_disable[v:key])
+    call filter(sources, 'neocomplcache#is_source_enabled(v:key)
           \  && !neocomplcache#is_plugin_locked(v:key)')
   endif
 
@@ -1245,7 +1253,7 @@ function! neocomplcache#get_complete_results(cur_text, ...)"{{{
       call neocomplcache#print_error(v:throwpoint)
       call neocomplcache#print_error(v:exception)
       call neocomplcache#print_error('Error occured in complfunc''s get_keyword_pos()!')
-      call neocomplcache#print_error('Plugin name is ' . source_name)
+      call neocomplcache#print_error('Source name is ' . source_name)
       return complete_results
     endtry
 
@@ -1307,7 +1315,7 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
       endfor
     endif
 
-    let base_rank = neocomplcache#get_plugin_rank(source_name)
+    let base_rank = neocomplcache#get_source_rank(source_name)
 
     for keyword in result.complete_words
       let word = keyword.word
@@ -1467,7 +1475,7 @@ function! s:set_complete_results_words(complete_results)"{{{
       call neocomplcache#print_error(v:throwpoint)
       call neocomplcache#print_error(v:exception)
       call neocomplcache#print_error('Error occured in complfunc''s get_complete_words()!')
-      call neocomplcache#print_error('Plugin name is ' . source_name)
+      call neocomplcache#print_error('Source name is ' . source_name)
       return
     endtry
 
@@ -1529,29 +1537,29 @@ function! neocomplcache#unlock(...)"{{{
 
   let s:complete_lock[bufnr('%')] = 0
 endfunction"}}}
-function! neocomplcache#lock_plugin(plugin_name)"{{{
+function! neocomplcache#lock_source(source_name)"{{{
   if !neocomplcache#is_enabled()
     call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
     return
   endif
 
-  if !has_key(s:plugins_lock, bufnr('%'))
-    let s:plugins_lock[bufnr('%')] = {}
+  if !has_key(s:sources_lock, bufnr('%'))
+    let s:sources_lock[bufnr('%')] = {}
   endif
 
-  let s:plugins_lock[bufnr('%')][a:plugin_name] = 1
+  let s:sources_lock[bufnr('%')][a:source_name] = 1
 endfunction"}}}
-function! neocomplcache#unlock_plugin(plugin_name)"{{{
+function! neocomplcache#unlock_source(source_name)"{{{
   if !neocomplcache#is_enabled()
     call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
     return
   endif
 
-  if !has_key(s:plugins_lock, bufnr('%'))
-    let s:plugins_lock[bufnr('%')] = {}
+  if !has_key(s:sources_lock, bufnr('%'))
+    let s:sources_lock[bufnr('%')] = {}
   endif
 
-  let s:plugins_lock[bufnr('%')][a:plugin_name] = 0
+  let s:sources_lock[bufnr('%')][a:source_name] = 0
 endfunction"}}}
 function! s:display_neco(number)"{{{
   let cmdheight_save = &cmdheight
@@ -1848,11 +1856,6 @@ endfunction"}}}
 "}}}
 
 " Event functions."{{{
-function! s:on_hold_i()"{{{
-  if g:neocomplcache_enable_cursor_hold_i
-    call neocomplcache#do_auto_complete()
-  endif
-endfunction"}}}
 function! s:on_moved_i()"{{{
   if !g:neocomplcache_enable_cursor_hold_i
     call neocomplcache#do_auto_complete()
@@ -1948,7 +1951,9 @@ function! s:set_context_filetype()"{{{
 
       if !source.loaded
         " Initialize.
-        call source.initialize()
+        if has_key(source, 'initialize')
+          call source.initialize()
+        endif
 
         let source.loaded = 1
       endif
@@ -1968,11 +1973,11 @@ function! s:get_context_filetype(filetype)"{{{
   if neocomplcache#is_eskk_enabled()
     let context_filetype = 'eskk'
     let filetype = 'eskk'
-  elseif has_key(g:neocomplcache_filetype_include_lists, filetype)
-        \ && !empty(g:neocomplcache_filetype_include_lists[filetype])
+  elseif has_key(g:neocomplcache_context_filetype_lists, filetype)
+        \ && !empty(g:neocomplcache_context_filetype_lists[filetype])
 
     let pos = [line('.'), col('.')]
-    for include in g:neocomplcache_filetype_include_lists[filetype]
+    for include in g:neocomplcache_context_filetype_lists[filetype]
       let start_backward = searchpos(include.start, 'bnW')
 
       " Check start <= line <= end.
