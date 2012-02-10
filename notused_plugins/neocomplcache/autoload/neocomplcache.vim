@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Feb 2012.
+" Last Modified: 10 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -46,12 +46,14 @@ function! neocomplcache#enable() "{{{
   augroup neocomplcache "{{{
     autocmd!
     " Auto complete events
-    autocmd CursorMovedI * call s:on_moved_i()
     autocmd InsertLeave * call s:on_insert_leave()
   augroup END "}}}
 
   if g:neocomplcache_enable_cursor_hold_i
     autocmd neocomplcache CursorHoldI * call neocomplcache#do_auto_complete()
+  else
+    autocmd neocomplcache InsertEnter * call s:on_insert_enter()
+    autocmd neocomplcache CursorMovedI * call neocomplcache#do_auto_complete()
   endif
 
   " Disable beep.
@@ -80,6 +82,7 @@ function! neocomplcache#enable() "{{{
   let s:skip_next_complete = 0
   let s:is_prefetch = 0
   let s:use_sources = {}
+  let s:update_time_save = &updatetime
   "}}}
 
   " Initialize sources table."{{{
@@ -605,18 +608,9 @@ function! neocomplcache#manual_complete(findstart, base)"{{{
   let s:cur_keyword_str = a:base
   let s:is_prefetch = 0
 
-  if (v:version > 703 || v:version == 703 && has('patch319'))
-    let dict = { 'words' : s:complete_words }
-
-    if !g:neocomplcache_enable_auto_select
-      " Note: This feature breaks register-.
-      " let dict.refresh = 'always'
-    endif
-
-    return dict
-  else
-    return s:complete_words
-  endif
+  return (v:version > 703 || v:version == 703 && has('patch418')) ?
+        \ { 'words' : s:complete_words, 'refresh' : 'always' } :
+        \ s:complete_words
 endfunction"}}}
 
 function! neocomplcache#sources_manual_complete(findstart, base)"{{{
@@ -1856,9 +1850,11 @@ endfunction"}}}
 "}}}
 
 " Event functions."{{{
-function! s:on_moved_i()"{{{
-  if !g:neocomplcache_enable_cursor_hold_i
-    call neocomplcache#do_auto_complete()
+function! s:on_insert_enter()"{{{
+  if &updatetime > g:neocomplcache_cursor_hold_i_time
+    " Change updatetime.
+    let s:update_time_save = &updatetime
+    let &updatetime = g:neocomplcache_cursor_hold_i_time
   endif
 endfunction"}}}
 function! s:on_insert_leave()"{{{
@@ -1869,6 +1865,11 @@ function! s:on_insert_leave()"{{{
   let s:is_text_mode = 0
   let s:skip_next_complete = 0
   let s:is_prefetch = 0
+
+  if g:neocomplcache_enable_cursor_hold_i && &updatetime < s:update_time_save
+    " Restore updatetime.
+    let &updatetime = s:update_time_save
+  endif
 endfunction"}}}
 function! s:remove_next_keyword(plugin_name, list)"{{{
   let list = a:list

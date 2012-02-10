@@ -507,6 +507,14 @@ if has("autocmd") && has("win32")
         \ | setlocal textwidth=90
 endif
 
+"with the following c-j is not mapped to the default keys
+if &filetype != 'tex'
+  imap <M-C-J> <Plug>IMAP_JumpForward
+  nmap <M-C-J> <Plug>IMAP_JumpForward
+  vmap <M-C-J> <Plug>IMAP_JumpForward
+  vmap <M-C-J> <Plug>IMAP_DeleteAndJumpForward
+endif
+
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
 "==============================================================================
