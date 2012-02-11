@@ -155,7 +155,7 @@ function! Make2()
   if !exists("g:make_args")
     let g:make_args = ""
   endif
-  write
+  wall
   exec "silent! make " . g:make_args
   cwindow 6
   redraw
@@ -399,6 +399,7 @@ autocmd FileType python setlocal makeprg=epylint\ %
 "============================ ctrlP ===========================================
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
+let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 noremap ,pu :CtrlPMRUFiles<cr>
 noremap ,pb :CtrlPBuffer<cr>
 noremap ,pt :CtrlPTag<cr>

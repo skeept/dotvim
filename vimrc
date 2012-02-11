@@ -168,7 +168,7 @@ function! Make2()
   if !exists("g:make_args")
     let g:make_args = ""
   endif
-  write
+  wall
   exec "silent! make " . g:make_args
   cwindow 6
   redraw
@@ -631,6 +631,7 @@ let g:localvimrc_ask = 0
 "============================ ctrlP ===========================================
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
+let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 noremap ,pu :CtrlPMRUFiles<cr>
 noremap ,pb :CtrlPBuffer<cr>
 noremap ,pt :CtrlPTag<cr>
@@ -724,8 +725,10 @@ let g:UltiSnipsEditSplit =  "horizontal"
 nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<cr>
 snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<cr>
-inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<cr>
-snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<cr>
+"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<cr>
+"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<cr>
+inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<cr>
+snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<cr>
 "==============================================================================
 
 "=============================== Supertab =====================================

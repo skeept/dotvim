@@ -2,7 +2,7 @@
 # new variable definition
 snippet av "add new variable (try to follow scip formatting)"
 ${1:type}`!p
-snip.rv = (17-len(t[1]))*" "`${2:var_name};`!p
+snip.rv = (22-len(t[1]))*" "`${2:var_name};`!p
 snip.rv = (19-len(t[2]))*" " if len(t[3]) else ""`${3:/**< ${4:explanation} */}${0}
 endsnippet
 
@@ -30,6 +30,10 @@ ${2:SCIP_RETCODE} ${3:SCIPFunctionName}(
    $0
    return SCIP_OKAY;
 }
+endsnippet
+
+snippet sc "make a SCIP_CALL"
+SCIP_CALL( ${1} );$0
 endsnippet
 
 snippet "pri (\S+)" "example" r

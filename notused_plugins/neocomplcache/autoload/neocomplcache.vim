@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Feb 2012.
+" Last Modified: 11 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -628,7 +628,7 @@ function! neocomplcache#manual_complete(findstart, base)"{{{
     " let dict.refresh = 'always'
     return dict
   else
-    return s:complete_results
+    return s:complete_words
   endif
 endfunction"}}}
 
@@ -730,18 +730,11 @@ function! s:do_auto_complete(event)"{{{
         \ || cur_text == s:old_cur_text
         \ || (neocomplcache#is_eskk_enabled()
         \            && cur_text !~ '▽')
+        \ || (!neocomplcache#is_eskk_enabled() && (exists('b:skk_on') && b:skk_on)
+        \     || char2nr(split(cur_text, '\zs')[-1]) > 0x80)
     let s:cur_keyword_str = ''
     let s:complete_words = []
     return
-  endif
-  if !neocomplcache#is_eskk_enabled()
-    if (exists('b:skk_on') && b:skk_on)
-          \ || char2nr(split(cur_text, '\zs')[-1]) > 0x80
-          \ || cur_text =~ '[[:cntrl:]]$'
-      let s:cur_keyword_str = ''
-      let s:complete_words = []
-      return
-    endif
   endif
 
   if cur_text =~ '\s\+$'
@@ -1883,7 +1876,8 @@ endfunction"}}}
 
 " Event functions."{{{
 function! s:on_insert_enter()"{{{
-  if &updatetime > g:neocomplcache_cursor_hold_i_time
+  if g:neocomplcache_enable_cursor_hold_i &&
+        \ &updatetime > g:neocomplcache_cursor_hold_i_time
     " Change updatetime.
     let s:update_time_save = &updatetime
     let &updatetime = g:neocomplcache_cursor_hold_i_time
@@ -1898,7 +1892,8 @@ function! s:on_insert_leave()"{{{
   let s:skip_next_complete = 0
   let s:is_prefetch = 0
 
-  if g:neocomplcache_enable_cursor_hold_i && &updatetime < s:update_time_save
+  if g:neocomplcache_enable_cursor_hold_i &&
+        \ &updatetime < s:update_time_save
     " Restore updatetime.
     let &updatetime = s:update_time_save
   endif
