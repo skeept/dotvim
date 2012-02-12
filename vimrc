@@ -804,7 +804,7 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 
 "=============================== smartusline ==================================
 "%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
-let g:smartusline_string_to_highlight = '%-3.3n%t   %h%m%r'
+let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 "==============================================================================

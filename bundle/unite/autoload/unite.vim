@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Feb 2012.
+" Last Modified: 12 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -198,7 +198,7 @@ endfunction"}}}
 
 function! unite#do_candidates_action(action_name, candidates, ...)"{{{
   let context = get(a:000, 0, {})
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
   let context.is_interactive = 0
 
   " Get sources.
@@ -858,7 +858,7 @@ function! unite#start(sources, ...)"{{{
   endif
 
   let context = get(a:000, 0, {})
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
 
   let s:use_current_unite = 1
 
@@ -927,7 +927,7 @@ function! unite#start_temporary(sources, ...)"{{{
           \ })
   else
     let context = {}
-    call s:initialize_context(context)
+    let context = s:initialize_context(context)
     let context.old_buffer_info = []
   endif
 
@@ -956,7 +956,7 @@ function! unite#start_temporary(sources, ...)"{{{
 endfunction"}}}
 function! unite#vimfiler_check_filetype(sources, ...)"{{{
   let context = get(a:000, 0, {})
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
 
   try
     silent call s:initialize_current_unite(a:sources, context)
@@ -992,7 +992,7 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
 endfunction"}}}
 function! unite#get_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
   let context.no_buffer = 1
   let context.is_interactive = 0
 
@@ -1009,14 +1009,14 @@ function! unite#get_candidates(sources, ...)"{{{
 endfunction"}}}
 function! unite#get_vimfiler_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
   let context.no_buffer = 1
 
   return s:get_candidates(a:sources, context, 1)
 endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
   let context.is_interactive = 0
 
   try
@@ -1037,7 +1037,7 @@ function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
 endfunction"}}}
 function! unite#args_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
-  call s:initialize_context(context)
+  let context = s:initialize_context(context)
   let context.is_interactive = 0
 
   try
@@ -1129,107 +1129,7 @@ function! unite#resume(buffer_name, ...)"{{{
 
   call s:init_cursor()
 endfunction"}}}
-function! s:initialize_context(context)"{{{
-  if !has_key(a:context, 'input')
-    let a:context.input = ''
-  endif
-  if !has_key(a:context, 'complete')
-    let a:context.complete = 0
-  endif
-  if !has_key(a:context, 'start_insert')
-    let a:context.start_insert = a:context.complete ?
-          \ 1 : g:unite_enable_start_insert
-  endif
-  if has_key(a:context, 'no_start_insert')
-        \ && a:context.no_start_insert
-    " Disable start insert.
-    let a:context.start_insert = 0
-  endif
-  if !has_key(a:context, 'col')
-    let a:context.col = col('.')
-  endif
-  if !has_key(a:context, 'no_quit')
-    let a:context.no_quit = 0
-  endif
-  if !has_key(a:context, 'buffer_name')
-    let a:context.buffer_name = 'default'
-  endif
-  if !has_key(a:context, 'profile_name')
-    let a:context.profile_name = a:context.buffer_name
-  endif
-  if !has_key(a:context, 'prompt')
-    let a:context.prompt = '> '
-  endif
-  if !has_key(a:context, 'default_action')
-    let a:context.default_action = 'default'
-  endif
-  if !has_key(a:context, 'winwidth')
-    let a:context.winwidth = g:unite_winwidth
-  endif
-  if !has_key(a:context, 'winheight')
-    let a:context.winheight = g:unite_winheight
-  endif
-  if !has_key(a:context, 'immediately')
-    let a:context.immediately = 0
-  endif
-  if !has_key(a:context, 'auto_preview')
-    let a:context.auto_preview = 0
-  endif
-  if !has_key(a:context, 'vertical')
-    let a:context.vertical = g:unite_enable_split_vertically
-  endif
-  if has_key(a:context, 'horizontal')
-    " Disable vertically.
-    let a:context.vertical = 0
-  endif
-  if !has_key(a:context, 'direction')
-    let a:context.direction = g:unite_split_rule
-  endif
-  if !has_key(a:context, 'no_split')
-    let a:context.no_split = 0
-  endif
-  if !has_key(a:context, 'temporary')
-    let a:context.temporary = 0
-  endif
-  if !has_key(a:context, 'verbose')
-    let a:context.verbose = 0
-  endif
-  if !has_key(a:context, 'auto_resize')
-    let a:context.auto_resize = 0
-  endif
-  if !has_key(a:context, 'old_buffer_info')
-    let a:context.old_buffer_info = []
-  endif
-  if !has_key(a:context, 'toggle')
-    let a:context.toggle = 0
-  endif
-  if !has_key(a:context, 'quick_match')
-    let a:context.quick_match = 0
-  endif
-  if !has_key(a:context, 'create')
-    let a:context.create = 0
-  endif
-  if !has_key(a:context, 'is_redraw')
-    let a:context.is_redraw = 0
-  endif
-  if !has_key(a:context, 'cursor_line_highlight')
-    let a:context.cursor_line_highlight =
-          \ g:unite_cursor_line_highlight
-  endif
-  if !has_key(a:context, 'update_time')
-    let a:context.update_time = g:unite_update_time
-  endif
-  if !has_key(a:context, 'no_buffer')
-    let a:context.no_buffer = 0
-  endif
-  if !has_key(a:context, 'is_interactive')
-    let a:context.is_interactive = 1
-  endif
-  let a:context.is_changed = 0
-
-  return a:context
-endfunction"}}}
-function! s:get_candidates(sources, context, is_vimfiler)
+function! s:get_candidates(sources, context, is_vimfiler)"{{{
   try
     call s:initialize_current_unite(a:sources, a:context)
   catch /^Invalid source/
@@ -1256,7 +1156,7 @@ function! s:get_candidates(sources, context, is_vimfiler)
   endfor
 
   return candidates
-endfunction
+endfunction"}}}
 
 function! unite#close(buffer_name)  "{{{
   let buffer_name = a:buffer_name
@@ -1423,10 +1323,11 @@ function! s:load_default_scripts()"{{{
   let s:static.filters = {}
 
   for key in ['sources', 'kinds', 'filters']
-    for name in map(split(globpath(&runtimepath, 'autoload/unite/' . key . '/*.vim'), '\n'),
+    for name in map(split(globpath(&runtimepath,
+          \ 'autoload/unite/' . key . '/*.vim'), '\n'),
           \ 'fnamemodify(v:val, ":t:r")')
 
-      let define = {'unite#' . key . '#' . name . '#define'}()
+      let define = unite#{key}#{name}#define()
       for dict in (type(define) == type([]) ? define : [define])
         if !empty(dict) && !has_key(s:static[key], dict.name)
           let s:static[key][dict.name] = dict
@@ -1436,17 +1337,73 @@ function! s:load_default_scripts()"{{{
     endfor
   endfor
 endfunction"}}}
+function! s:initialize_context(context)"{{{
+  let default_context = {
+        \ 'input' : '',
+        \ 'complete' : 0,
+        \ 'col' : col('.'),
+        \ 'no_quit' : 0,
+        \ 'buffer_name' : 'default',
+        \ 'prompt' : '> ',
+        \ 'default_action' : 'default',
+        \ 'winwidth' : g:unite_winwidth,
+        \ 'winheight' : g:unite_winheight,
+        \ 'immediately' : 0,
+        \ 'auto_preview' : 0,
+        \ 'vertical' : g:unite_enable_split_vertically,
+        \ 'direction' : g:unite_split_rule,
+        \ 'no_split' : 0,
+        \ 'temporary' : 0,
+        \ 'verbose' : 0,
+        \ 'auto_resize' : 0,
+        \ 'old_buffer_info' : [],
+        \ 'toggle' : 0,
+        \ 'quick_match' : 0,
+        \ 'create' : 0,
+        \ 'is_redraw' : 0,
+        \ 'cursor_line_highlight' :
+        \    g:unite_cursor_line_highlight,
+        \ 'update_time' : g:unite_update_time,
+        \ 'no_buffer' : 0,
+        \ 'is_interactive' : 1,
+        \ }
+
+  let context = extend(default_context, a:context)
+
+  " Complex initializer.
+  if !has_key(context, 'start_insert')
+    let context.start_insert = context.complete ?
+          \ 1 : g:unite_enable_start_insert
+  endif
+  if has_key(context, 'no_start_insert')
+        \ && context.no_start_insert
+    " Disable start insert.
+    let context.start_insert = 0
+  endif
+  if !has_key(context, 'profile_name')
+    let context.profile_name = context.buffer_name
+  endif
+  if has_key(context, 'horizontal')
+    " Disable vertically.
+    let context.vertical = 0
+  endif
+  let context.is_changed = 0
+
+  return context
+endfunction"}}}
 function! s:initialize_loaded_sources(sources, context)"{{{
   let all_sources = s:initialize_sources()
   let sources = []
 
   let number = 0
-  for [source, args] in map(a:sources, 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
+  for [source, args] in map(a:sources,
+        \ 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
     if type(source) == type('')
       let source_name = source
       unlet source
       if !has_key(all_sources, source_name)
-        call unite#util#print_error('Invalid source name "' . source_name . '" is detected.')
+        call unite#util#print_error(
+              \ 'Invalid source name "' . source_name . '" is detected.')
         throw 'Invalid source'
       endif
 
