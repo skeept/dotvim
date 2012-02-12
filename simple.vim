@@ -368,12 +368,30 @@ let g:NERDDefaultNesting=1
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
 "set statusline=%-3.3n%t\ \ \ %h%m%r\ %y%=%{strftime(\"[%H:%M%p]\")}\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
-set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\,
-set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
-set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
+"
 "set statusline=%<%f%m\ \[%{&ff}:%{&fenc}:%Y]
 "set statusline+=\ %{getcwd()}\ \ \[%{strftime('%Y/%b/%d\ %a\ %I:%M\ %p')}\]
 "set statusline+=\ %=\ Line:%l\/%L\ Column:%c%V\ %P
+"
+"set statusline=%-3.3n%t\ \ \ %h%m%r%=[%{&ft}\,
+"set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
+"set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
+"
+function! CondDispFtFf()
+  if winwidth(0) < 70 || &filetype == 'help'
+    let val = ''
+  else
+    let xft = &filetype
+    let xff = &fileformat
+    let val =  '[' . xft . ( xft == '' ? '' : ',' ) . xff . ']'
+  endif
+  return val
+endfunction
+
+"set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
+set statusline=%2.2n\ %t\ %h%m%r%=%{CondDispFtFf()}
+"set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
+set statusline+=\ %l/%L\ %2c\ %P
 "==============================================================================
 
 com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
