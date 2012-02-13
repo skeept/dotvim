@@ -512,8 +512,10 @@ let g:UltiSnipsEditSplit =  "horizontal"
 nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<cr>
 snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<cr>
-inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<cr>
-snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<cr>
+"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<cr>
+"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<cr>
+inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<cr>
+snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<cr>
 "==============================================================================
 
 "=============================== Supertab =====================================
