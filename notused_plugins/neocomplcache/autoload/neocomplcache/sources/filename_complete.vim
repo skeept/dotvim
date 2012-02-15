@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: filename_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Feb 2012.
+" Last Modified: 15 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -221,6 +221,12 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
 
     let files = copy(s:cached_files[getcwd()])
   else
+    let ftype = getftype(glob)
+    if ftype != '' && ftype !=# 'dir'
+      " Note: If glob() device files, Vim may freeze!
+      return []
+    endif
+
     if a:path == ''
       let files = neocomplcache#util#glob(glob)
     else

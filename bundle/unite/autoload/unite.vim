@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Feb 2012.
+" Last Modified: 15 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -42,7 +42,7 @@ endfunction"}}}
 function! unite#set_substitute_pattern(buffer_name, pattern, subst, ...)"{{{
   let buffer_name = (a:buffer_name == '' ? 'default' : a:buffer_name)
 
-  for key in split(buffer_name, ',')
+  for key in split(buffer_name, '\s*,\s*')
     let substitute_patterns = has_key(s:profiles, key) ?
           \ unite#get_profile(key, 'substitute_patterns') : {}
 
@@ -69,7 +69,7 @@ function! unite#set_profile(profile_name, option_name, value)"{{{
   let profile_name =
         \ (a:profile_name == '' ? 'default' : a:profile_name)
 
-  for key in split(profile_name, ',')
+  for key in split(profile_name, '\s*,\s*')
     if !has_key(s:profiles, key)
       let s:profiles[key] = {}
     endif
@@ -88,12 +88,11 @@ endfunction"}}}
 function! unite#custom_filters(source_name, filters)"{{{
   let filters = type(a:filters) == type([]) ?
         \ a:filters : [a:filters]
-  for key in split(a:source_name, ',')
-    let s:custom.filters[key] = filters
-  endfor
+  call unite#util#set_dictionary_helper(s:custom.filters,
+        \ a:source_name, filters)
 endfunction"}}}
 function! unite#custom_alias(kind, name, action)"{{{
-  for key in split(a:kind, ',')
+  for key in split(a:kind, '\s*,\s*')
     if !has_key(s:custom.aliases, key)
       let s:custom.aliases[key] = {}
     endif
@@ -102,12 +101,11 @@ function! unite#custom_alias(kind, name, action)"{{{
   endfor
 endfunction"}}}
 function! unite#custom_default_action(kind, default_action)"{{{
-  for key in split(a:kind, ',')
-    let s:custom.default_actions[key] = a:default_action
-  endfor
+  call unite#util#set_dictionary_helper(s:custom.default_actions,
+        \ a:kind, a:default_action)
 endfunction"}}}
 function! unite#custom_action(kind, name, action)"{{{
-  for key in split(a:kind, ',')
+  for key in split(a:kind, '\s*,\s*')
     if !has_key(s:custom.actions, key)
       let s:custom.actions[key] = {}
     endif
@@ -115,12 +113,11 @@ function! unite#custom_action(kind, name, action)"{{{
   endfor
 endfunction"}}}
 function! unite#custom_max_candidates(source_name, max)"{{{
-  for key in split(a:source_name, ',')
-    let s:custom.max_candidates[key] = a:max
-  endfor
+  call unite#util#set_dictionary_helper(s:custom.max_candidates,
+        \ a:source_name, a:max)
 endfunction"}}}
 function! unite#undef_custom_action(kind, name)"{{{
-  for key in split(a:kind, ',')
+  for key in split(a:kind, '\s*,\s*')
     if has_key(s:custom.actions, key)
       call remove(s:custom.actions, key)
     endif
@@ -2065,11 +2062,20 @@ function! s:initialize_unite_buffer()"{{{
 
     " Autocommands.
     augroup plugin-unite
-      autocmd InsertEnter <buffer>  call s:on_insert_enter()
-      autocmd InsertLeave <buffer>  call s:on_insert_leave()
-      autocmd CursorHoldI <buffer>  call s:on_cursor_hold_i()
-      autocmd CursorMoved,CursorMovedI <buffer>  nested call s:on_cursor_moved()
-      autocmd BufUnload,BufHidden <buffer>  call s:on_buf_unload(expand('<afile>'))
+      autocmd InsertEnter <buffer>
+            \ call s:on_insert_enter()
+      autocmd InsertLeave <buffer>
+            \ call s:on_insert_leave()
+      autocmd CursorHoldI <buffer>
+            \ call s:on_cursor_hold_i()
+      autocmd CursorMoved,CursorMovedI <buffer>  nested
+            \ call s:on_cursor_moved()
+      autocmd BufUnload,BufHidden <buffer>
+            \ call s:on_buf_unload(expand('<afile>'))
+      autocmd WinEnter,BufWinEnter <buffer>
+            \ call s:save_updatetime()
+      autocmd WinLeave,BufWinLeave <buffer>
+            \ call s:restore_updatetime()
     augroup END
 
     call unite#mappings#define_default_mappings()
@@ -2086,10 +2092,7 @@ function! s:initialize_unite_buffer()"{{{
     let &redrawtime = 100
   endif
 
-  let unite.update_time_save = &updatetime
-  if &updatetime > unite.context.update_time
-    let &updatetime = unite.context.update_time
-  endif
+  call s:save_updatetime()
 
   " User's initialization.
   setlocal nomodifiable
@@ -2387,9 +2390,8 @@ function! s:on_buf_unload(bufname)  "{{{
     let &redrawtime = unite.redrawtime_save
   endif
   let &sidescrolloff = unite.sidescrolloff_save
-  if &updatetime < unite.update_time_save
-    let &updatetime = unite.update_time_save
-  endif
+
+  call s:restore_updatetime()
 
   if !unite.has_preview_window
     " Close preview window.
@@ -2443,6 +2445,21 @@ function! s:change_highlight()  "{{{
   endfor
 
   syntax case match
+endfunction"}}}
+function! s:save_updatetime()  "{{{
+  let unite = unite#get_current_unite()
+
+  let unite.update_time_save = &updatetime
+  if &updatetime > unite.context.update_time
+    let &updatetime = unite.context.update_time
+  endif
+endfunction"}}}
+function! s:restore_updatetime()  "{{{
+  let unite = unite#get_current_unite()
+
+  if &updatetime < unite.update_time_save
+    let &updatetime = unite.update_time_save
+  endif
 endfunction"}}}
 
 " Internal helper functions."{{{
