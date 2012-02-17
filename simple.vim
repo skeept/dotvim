@@ -330,7 +330,7 @@ noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 "fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Ju exe ":norm! <count>\<C-I>" 
+command! -count=1 Jump exe ":norm! <count>\<C-I>" 
 
 " Main settings and mappings for plugins
 "
