@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Feb 2012.
+" Last Modified: 20 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -656,16 +656,31 @@ function! unite#kinds#file#do_rename(old_filename, new_filename)"{{{
     return
   endif
 
-  let bufnr = bufnr(unite#util#escape_file_searching(a:old_filename))
+  " Convert to relative path.
+  let directory = unite#util#substitute_path_separator(
+        \ fnamemodify(a:old_filename, ':p:h'))
+  let current_dir_save = getcwd()
+  lcd `=directory`
+  let old_filename = fnamemodify(a:old_filename, ':.')
+  let new_filename = fnamemodify(a:new_filename, ':.')
+
+  let bufnr = bufnr(unite#util#escape_file_searching(old_filename))
   if bufnr > 0
     " Buffer rename.
     let bufnr_save = bufnr('%')
     execute 'buffer' bufnr
-    saveas! `=a:new_filename`
+    saveas! `=new_filename`
     execute 'buffer' bufnr_save
   endif
 
-  call rename(a:old_filename, a:new_filename)
+  if rename(old_filename, new_filename)
+    call unite#print_error(
+          \ printf('Failed file rename: "%s" to "%s".',
+          \   a:old_filename, a:new_filename))
+  endif
+
+  " Restore path.
+  lcd `=current_dir_save`
 endfunction"}}}
 function! s:filename2candidate(filename)"{{{
   return {
@@ -708,9 +723,11 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
           \ filename)
     redraw
 
-    if a:action_name == 'delete' && g:unite_kind_file_use_trashbox
+    if a:action_name == 'delete'
+          \ && g:unite_kind_file_use_trashbox
       " Environment check.
-      if unite#util#is_windows() && unite#util#has_vimproc() && exists('*vimproc#delete_trash')
+      if unite#util#is_windows()
+            \ && unite#util#has_vimproc() && exists('*vimproc#delete_trash')
         let ret = vimproc#delete_trash(filename)
         if ret
           call unite#print_error(printf('Failed file %s: %s',
@@ -718,7 +735,8 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
           call unite#print_error(printf('Error code is %d', ret))
         endif
       else
-        call unite#util#print_error('Your environment is not supported vimproc#delete_trash().')
+        call unite#util#print_error(
+              \ 'Your environment is not supported vimproc#delete_trash().')
         break
       endif
     else

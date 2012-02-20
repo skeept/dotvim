@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Feb 2012.
+" Last Modified: 16 Feb 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1998,17 +1998,20 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.max_source_name = len(a:sources) > 1 ?
         \ max(map(copy(a:sources), 'len(v:val[0])')) : 0
   let unite.is_async =
-        \ len(filter(copy(sources), 'v:val.unite__context.is_async')) > 0
+        \ len(filter(copy(sources),
+        \  'v:val.unite__context.is_async')) > 0
   let unite.access_time = localtime()
   let unite.is_finalized = 0
   let unite.is_enabled_max_candidates = 0
   let unite.previewd_buffer_list = []
   let unite.post_filters = unite#get_profile(
         \ unite.profile_name, 'filters')
+  let unite.update_time_save = &updatetime
 
   " Preview windows check.
   let unite.has_preview_window =
-   \ len(filter(range(1, winnr('$')), 'getwinvar(v:val, "&previewwindow")')) > 0
+   \ len(filter(range(1, winnr('$')),
+   \  'getwinvar(v:val, "&previewwindow")')) > 0
 
   let s:current_unite = unite
 endfunction"}}}
@@ -2261,6 +2264,9 @@ function! unite#_resize_window() "{{{
     let max_len = unite.prompt_linenr + len(unite.candidates)
     execute 'resize' min([max_len, context.winheight])
     normal! zb
+    if mode() ==# 'i' && col('.') == (col('$') - 1)
+      startinsert!
+    endif
   elseif context.vertical
         \ && winwidth(winnr()) != context.winwidth
     execute 'vertical resize' context.winwidth
