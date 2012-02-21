@@ -711,23 +711,18 @@ let g:tagbar_type_tex = {
 "noremap ,gt :TagbarToggle<cr>
 
 function! ToggleTBarListNT()
-  if v:count != 0
-    let g:tbarlistnt = v:count
-  else
-    let g:tbarlistnt = 0
-  endif
-  if g:tbarlistnt == 0
+  if v:count == 0
     TagbarToggle
-  elseif g:tbarlistnt == 1
+  elseif v:count == 1
     TlistToggle
-  elseif g:tbarlistnt == 2
+  elseif v:count == 2
     NERDTreeToggle
   else
     echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree"
   endif
 endfunction
-nnoremap <F3> :<c-u>call ToggleTBarListNT() <cr>
-inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <cr>
+nnoremap <F3> :<c-u>call ToggleTBarListNT()<cr>
+inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<cr>
 "==============================================================================
 
 "============================== pep8 ==========================================
