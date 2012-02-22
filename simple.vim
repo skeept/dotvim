@@ -433,6 +433,11 @@ let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
          \ }
+let g:ctrlp_map = ''
+command! CtrlPShowArr echo g:ctrlp_comm
+let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
+      \'Root', 'Tag']
+"nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
 "==============================================================================
 
 "=============================== tagbar =======================================
@@ -583,6 +588,8 @@ endif
 function! LoadCtrlP()
   exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
   runtime bundle/ctrlp/plugin/ctrlp.vim
+  nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
 endf
-nnoremap <c-p> :call LoadCtrlP()<cr>:<c-u>CtrlP<cr>
+nnoremap <c-p> :call LoadCtrlP()<cr>
+      \:<c-u>CtrlP<cr>
 "==============================================================================
