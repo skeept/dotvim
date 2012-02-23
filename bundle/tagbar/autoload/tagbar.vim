@@ -967,6 +967,8 @@ function! s:CreateAutocommands()
                     \ s:AutoUpdate(fnamemodify(expand('<afile>'), ':p'))
         autocmd BufDelete,BufUnload,BufWipeout * call
                     \ s:CleanupFileinfo(fnamemodify(expand('<afile>'), ':p'))
+
+        autocmd VimEnter * call s:CorrectFocusOnStartup()
     augroup END
 
     let s:autocommands_done = 1
@@ -1521,8 +1523,12 @@ function! s:OpenWindow(flags)
                 let w:autoclose = autoclose
             endif
         endif
+        call s:LogDebugMessage("OpenWindow finished, Tagbar already open")
         return
     endif
+
+    " This is only needed for the CorrectFocusOnStartup() function
+    let s:last_autofocus = autofocus
 
     if !s:Init()
         return 0
@@ -1693,6 +1699,23 @@ function! s:ZoomWindow()
     else
         vert resize
         let s:is_maximized = 1
+    endif
+endfunction
+
+" s:CorrectFocusOnStartup() {{{2
+" For whatever reason the focus will be on the Tagbar window if
+" tagbar#autoopen is used with a FileType autocommand on startup and
+" g:tagbar_left is set. This should work around it by jumping to the window of
+" the current file after startup.
+function! s:CorrectFocusOnStartup()
+    if bufwinnr('__Tagbar__') != -1 && !g:tagbar_autofocus && !s:last_autofocus
+        let curfile = s:known_files.getCurrent()
+        if !empty(curfile) && curfile.fpath != fnamemodify(bufname('%'), ':p')
+            let winnr = bufwinnr(curfile.fpath)
+            if winnr != -1
+                call s:winexec(winnr . 'wincmd w')
+            endif
+        endif
     endif
 endfunction
 
@@ -3110,6 +3133,8 @@ endfunction
 
 " s:winexec() {{{2
 function! s:winexec(cmd)
+    call s:LogDebugMessage("Executing without autocommands: " . a:cmd)
+
     let eventignore_save = &eventignore
     set eventignore=BufEnter
 
@@ -3221,6 +3246,7 @@ endfunction
 " Automatically open Tagbar if one of the open buffers contains a supported
 " file
 function! tagbar#autoopen(...)
+    call s:LogDebugMessage('tagbar#autoopen called on ' . bufname('%'))
     let always = a:0 > 0 ? a:1 : 1
 
     call s:Init()
@@ -3230,10 +3256,15 @@ function! tagbar#autoopen(...)
             let ftype = s:DetectFiletype(bufnr)
             if s:IsValidFile(bufname(bufnr), ftype)
                 call s:OpenWindow('')
+                call s:LogDebugMessage('tagbar#autoopen finished ' .
+                                     \ 'after finding valid file')
                 return
             endif
         endif
     endfor
+
+    call s:LogDebugMessage('tagbar#autoopen finished ' .
+                         \ 'without finding valid file')
 endfunction
 
 " Modeline {{{1
