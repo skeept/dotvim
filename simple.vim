@@ -502,8 +502,13 @@ inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<cr>
 "let g:pep8_map = '<leader>p8' "not used anymore
 "let g:pep8_cmd  = 'pep8.py'
 "let g:pep8_ignore = "E111,E221,E225"
+"
 " this is a different plugin, the one I used now doesn't work the same way
-let g:pep8_args = " --ignore=E111,E221,E225"
+" E221 multiple spaces before operator -- aligning equals breaks this
+" E111 indentation is not a multiple of four -- I use two spaces
+" E225 missing whitespace around operator -- I like * without space
+" E501 line too long   -- allow more than 80 characters
+let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================
 
 "================================ UltiSnips ===================================
