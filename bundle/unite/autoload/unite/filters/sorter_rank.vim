@@ -1,5 +1,5 @@
 "=============================================================================
-" FILE: sorter_default.vim
+" FILE: sorter_rank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 25 Feb 2012.
 " License: MIT license  {{{
@@ -27,34 +27,59 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#sorter_default#define()"{{{
+function! unite#filters#sorter_rank#define()"{{{
   return s:sorter
 endfunction"}}}
 
 let s:sorter = {
-      \ 'name' : 'sorter_default',
-      \ 'description' : 'default sorter',
+      \ 'name' : 'sorter_rank',
+      \ 'description' : 'sort by matched rank order',
       \}
 
 function! s:sorter.filter(candidates, context)"{{{
-  let candidates = a:candidates
-  for default in s:default_sorters
-    let filter = unite#get_filters(default)
-    if !empty(filter)
-      let candidates = filter.filter(candidates, a:context)
-    endif
+  if a:context.input == '' || !has('float')
+    return a:candidates
+  endif
+
+  " Initialize.
+  for candidate in a:candidates
+    let candidate.filter__rank = 0
   endfor
 
-  return candidates
+  for input in split(a:context.input, '\\\@<! ')
+    let input = substitute(substitute(input, '\\ ', ' ', 'g'), '\*', '', 'g')
+    let boundary_inputs = split(input, '\W')
+
+    " Calc rank.
+    for candidate in a:candidates
+      let candidate.filter__rank +=
+            \ s:calc_rank_sequential_match(candidate.word, input)
+    endfor
+
+    if empty(boundary_inputs)
+      continue
+    endif
+
+    for boundary_input in boundary_inputs
+      for candidate in a:candidates
+        let candidate.filter__rank +=
+              \ (s:calc_rank_sequential_match(candidate.word, boundary_input) + 1.0) / 2
+      endfor
+    endfor
+  endfor
+
+  return unite#util#sort_by(a:candidates, 'v:val.filter__rank')
 endfunction"}}}
 
+" Range of return is [0.0, 1.0]
+function! s:calc_rank_sequential_match(word, input)"{{{
+  let pos = stridx(a:word, a:input)
+  if pos < 0
+    return 0
+  endif
 
-let s:default_sorters = ['sorter_rank']
-function! unite#filters#sorter_default#get()"{{{
-  return s:default_sorters
-endfunction"}}}
-function! unite#filters#sorter_default#use(sorters)"{{{
-  let s:default_sorters = a:sorters
+  let rest = len(a:word) - len(a:input) - pos
+  return str2float(pos == 0 ? '0.5' : '0.0') + str2float('0.5') / (rest + 1)
 endfunction"}}}
 
 let &cpo = s:save_cpo
