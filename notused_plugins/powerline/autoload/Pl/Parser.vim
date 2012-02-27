@@ -171,7 +171,7 @@ function! s:ParseSegments(mode, side, segments, ...) " {{{
 				let mode_colors = get(colors, mode, get(colors, 'n', {}))
 
 				if empty(mode_colors)
-					echoe 'Segment doesn''t have any colors! NS: "'. seg_curr.ns .'" SEG: "'. seg_curr.name .'"'
+					echom 'Segment doesn''t have any colors! NS: "'. seg_curr.ns .'" SEG: "'. seg_curr.name .'"'
 
 					continue
 				endif
@@ -313,6 +313,8 @@ function! s:AddDivider(text, side, mode, colors, prev, curr, next) " {{{
 
 			let div_colors['ctermbg'] = get(cmp_colors, 'ctermbg')
 			let div_colors['guibg']   = get(cmp_colors, 'guibg')
+
+			let div_colors['attr']    = 'NONE'
 		endif
 	endif
 
