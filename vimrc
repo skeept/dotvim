@@ -722,8 +722,10 @@ function! ToggleTBarListNT()
     TlistToggle
   elseif v:count == 2
     NERDTreeToggle
+  elseif v:count == 3
+    BuffergatorToggle
   else
-    echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree"
+    echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree, 3: buffergator"
   endif
 endfunction
 nnoremap <F3> :<c-u>call ToggleTBarListNT()<cr>
