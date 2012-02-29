@@ -512,10 +512,10 @@ endif
 
 "with the following c-j is not mapped to the default keys
 if &filetype != 'tex'
-  imap <M-C-J> <Plug>IMAP_JumpForward
-  nmap <M-C-J> <Plug>IMAP_JumpForward
-  vmap <M-C-J> <Plug>IMAP_JumpForward
-  vmap <M-C-J> <Plug>IMAP_DeleteAndJumpForward
+  "imap <M-C-J> <Plug>IMAP_JumpForward
+  "nmap <M-C-J> <Plug>IMAP_JumpForward
+  "vmap <M-C-J> <Plug>IMAP_JumpForward
+  "vmap <M-C-J> <Plug>IMAP_DeleteAndJumpForward
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
