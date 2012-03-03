@@ -58,9 +58,7 @@ function do_git_update2()
   git_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> git >>> {}";
-#GIT_SSL_NO_VERIFY=true git pull origin master 2>&1      |\
-#GIT_SSL_NO_VERIFY=true git pull origin master 2>&1  |\
-GIT_SSL_NO_VERIFY=true git pull origin master |\
+GIT_SSL_NO_VERIFY=true git pull 2>&1  |\
   grep -v "Already up-to-date" |\
   grep -v "github.com" |\
   grep -v "Updating " |\
