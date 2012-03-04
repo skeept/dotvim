@@ -18,6 +18,10 @@ com! -n=? -com=dir CtrlP cal ctrlp#init(0, <q-args>)
 com! CtrlPBuffer   cal ctrlp#init(1)
 com! CtrlPMRUFiles cal ctrlp#init(2)
 
+com! CtrlPClearCache     cal ctrlp#clr()
+com! CtrlPClearAllCaches cal ctrlp#clra()
+com! CtrlPReload         cal ctrlp#reset()
+
 com! ClearCtrlPCache     cal ctrlp#clr()
 com! ClearAllCtrlPCaches cal ctrlp#clra()
 com! ResetCtrlP          cal ctrlp#reset()
