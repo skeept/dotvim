@@ -290,6 +290,9 @@ if has("autocmd")
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+
+  "place quickfix window below all other windows
+  autocmd! FileType qf wincmd J
 endif " has("autocmd")
 
 let fortran_free_source = 1
