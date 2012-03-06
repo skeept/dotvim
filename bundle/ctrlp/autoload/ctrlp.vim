@@ -323,7 +323,7 @@ endf
 fu! s:MatchIt(items, pat, limit, mfunc)
 	let newitems = []
 	for item in a:items
-		try | if call(a:mfunc, [item, a:pat]) >= 0
+		try | if item != s:crfilerel && call(a:mfunc, [item, a:pat]) >= 0
 			cal add(newitems, item)
 		en | cat | brea | endt
 		if a:limit > 0 && len(newitems) >= a:limit | brea | en
@@ -1163,6 +1163,7 @@ endf
 fu! ctrlp#setdir(path, ...)
 	let cmd = a:0 ? a:1 : 'lc!'
 	sil! exe cmd ctrlp#fnesc(a:path)
+	let s:crfilerel = fnamemodify(s:crfile, ':.')
 endf
 
 fu! ctrlp#setlcdir()
