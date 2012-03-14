@@ -515,10 +515,14 @@ endif
 
 "with the following c-j is not mapped to the default keys
 if &filetype != 'tex'
-  "imap <M-C-J> <Plug>IMAP_JumpForward
-  "nmap <M-C-J> <Plug>IMAP_JumpForward
-  "vmap <M-C-J> <Plug>IMAP_JumpForward
-  "vmap <M-C-J> <Plug>IMAP_DeleteAndJumpForward
+  "imap <m-C-J> <Plug>IMAP_JumpForward
+  "nmap <m-C-J> <Plug>IMAP_JumpForward
+  "vmap <m-C-J> <Plug>IMAP_JumpForward
+  "vmap <m-C-J> <Plug>IMAP_DeleteAndJumpForward
+  imap  <Leader>#$ <Plug>IMAP_JumpForward
+  nmap  <Leader>#$ <Plug>IMAP_JumpForward
+  vmap  <Leader>#$ <Plug>IMAP_JumpForward
+  vmap  <Leader>#$ <Plug>IMAP_DeleteAndJumpForward
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
@@ -767,7 +771,7 @@ snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<cr>
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
-"imap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
+"inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
   let g:mysupertabaltcom = 1 - g:mysupertabaltcom
@@ -777,7 +781,7 @@ function! MySupertabAltCompletion()
     return SuperTabAlternateCompletion("\<lt>c-p>")
   endif
 endfunction
-imap <nul> <c-r>=MySupertabAltCompletion()<cr>
+inoremap <nul> <c-r>=MySupertabAltCompletion()<cr>
 "==============================================================================
 
 "=============================== powerline ====================================

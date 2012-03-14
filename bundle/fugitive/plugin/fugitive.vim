@@ -1370,9 +1370,9 @@ function! s:Move(force,destination)
   call fugitive#reload_status()
   if s:buffer().commit() == ''
     if isdirectory(destination)
-      return 'edit '.s:fnameescape(destination)
+      return 'keepalt edit '.s:fnameescape(destination)
     else
-      return 'saveas! '.s:fnameescape(destination)
+      return 'keepalt saveas! '.s:fnameescape(destination)
     endif
   else
     return 'file '.s:fnameescape(s:repo().translate(':0:'.destination)
@@ -1883,7 +1883,10 @@ function! s:BufReadIndex()
       endtry
       set ft=gitcommit
     endif
-    setlocal ro noma nomod noswapfile bufhidden=wipe
+    setlocal ro noma nomod noswapfile
+    if &bufhidden ==# ''
+      setlocal bufhidden=delete
+    endif
     call s:JumpInit()
     nunmap   <buffer>          P
     nunmap   <buffer>          ~

@@ -8,19 +8,20 @@ This plugin allow you create python code in vim very easily.
 There is no need to install the pylint_, rope_ or any used python library on your system.
 
 - Python objects and motion (]], 3[[, ]]M, vaC, viM, daC, ciM, ...)
+- Folding of python code
+- Virtualenv support
 - Highlight syntax errors
 - Highlight and auto fix unused imports
+- Many linters (pylint_, pyflakes_, ...) that can be run simultaneously
 - Strong code completion
 - Code refactoring
 - Python documentation
 - Run python code
 - Go to definition
 - Powerful customization
-- Virtualenv support
-- Many linters (pylint_, pyflakes_, ...) that can be run simultaneously
-- And more...
+- And more, more ...
 
-See (old) screencast here: http://t.co/3b0bzeXA (sorry for quality, this is my first screencast)
+See (very old) screencast here: http://t.co/3b0bzeXA (sorry for quality, this is my first screencast)
 
 
 .. contents::
@@ -133,7 +134,7 @@ Default values: ::
 
     " Switch pylint, pyflakes, pep8, mccabe code-checkers
     " Can have multiply values "pep8,pyflakes,mcccabe"
-    let g:pymode_lint_checker = "pylint"
+    let g:pymode_lint_checker = "pyflakes,pep8,mccabe"
 
     " Skip errors and warnings
     " E.g. "E501,W002", "E2,W" (Skip all Warnings and Errors startswith E2) and etc
@@ -223,13 +224,37 @@ Default values: ::
     let g:pymode_rope_always_show_complete_menu = 0
 
 
+Automatically folding of python code
+--------------------------------------
+
+Default values: ::
+
+    " Enable python folding
+    let g:pymode_folding = 1
+
+
+Vim python motions and operators
+--------------------------------
+
+Default values: ::
+
+    " Enable python objects and motion
+    let g:pymode_motion = 1
+
+
+Virtualenv support
+------------------
+
+Default values: ::
+
+    " Auto fix vim python paths if virtualenv enabled
+    let g:pymode_virtualenv = 1
+
+
 Other stuff
 -----------
 
 Default values: ::
-
-    " Load python objects and motion
-    let g:pymode_motion = 1
 
     " Load breakpoints plugin
     let g:pymode_breakpoint = 1
@@ -240,14 +265,8 @@ Default values: ::
     " Autoremove unused whitespaces
     let g:pymode_utils_whitespaces = 1
 
-    " Auto fix vim python paths if virtualenv enabled
-    let g:pymode_virtualenv = 1
-
     " Set default pymode python indent options
     let g:pymode_options_indent = 1
-
-    " Set default pymode python fold options
-    let g:pymode_options_fold = 1
 
     " Set default pymode python other options
     let g:pymode_options_other = 1
@@ -309,6 +328,12 @@ Keys           Command
 **K**          Show python docs (g:pymode_doc enabled)
 -------------- -------------
 **<C-Space>**  Rope autocomplete (g:pymode_rope enabled)
+-------------- -------------
+**<C-c>g**     Rope goto definition  (g:pymode_rope enabled)
+-------------- -------------
+**<C-c>d**     Rope show documentation  (g:pymode_rope enabled)
+-------------- -------------
+**<C-c>f**     Rope find occurrences  (g:pymode_rope enabled)
 -------------- -------------
 **<Leader>r**  Run python  (g:pymode_run enabled)
 -------------- -------------
@@ -402,7 +427,7 @@ Development of pylint-mode happens at github: https://github.com/klen/python-mod
 Copyright
 =========
 
-Copyright (C) 2011 Kirill Klenov (klen_)
+Copyright (C) 2012 Kirill Klenov (klen_)
 
     **Rope**
         Copyright (C) 2006-2010 Ali Gholami Rudi
