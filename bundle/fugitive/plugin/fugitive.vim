@@ -107,7 +107,12 @@ let s:abstract_prototype = {}
 " }}}1
 " Initialization {{{1
 
-function! s:ExtractGitDir(path) abort
+function! s:is_git_dir(path) abort
+  let path = a:path . '/'
+  return isdirectory(path.'objects') && isdirectory(path.'refs') && filereadable(path.'HEAD') && filereadable(path.'config')
+endfunction
+
+function! s:extract_git_dir(path) abort
   let path = s:shellslash(a:path)
   if path =~? '^fugitive://.*//'
     return matchstr(path,'fugitive://\zs.\{-\}\ze//')
@@ -115,10 +120,16 @@ function! s:ExtractGitDir(path) abort
   let fn = fnamemodify(path,':s?[\/]$??')
   let ofn = ""
   let nfn = fn
-  while fn !=# ofn && fn !=# '/'
-    if filereadable(fn . '/.git/HEAD')
+  while fn !=# ofn
+    let embedded = s:sub(fn, '[\/]$', '') . '/.git'
+    if s:is_git_dir(embedded)
       return s:sub(simplify(fnamemodify(fn . '/.git',':p')),'\W$','')
-    elseif fn =~ '\.git$' && filereadable(fn . '/HEAD')
+    elseif filereadable(embedded)
+      let line = readfile(embedded,1)[0]
+      if line =~# '^gitdir: '
+        return line[8:-1]
+      endif
+    elseif s:is_git_dir(fn)
       return s:sub(simplify(fnamemodify(fn,':p')),'\W$','')
     endif
     let ofn = fn
@@ -132,7 +143,7 @@ function! s:Detect(path)
     unlet b:git_dir
   endif
   if !exists('b:git_dir')
-    let dir = s:ExtractGitDir(a:path)
+    let dir = s:extract_git_dir(a:path)
     if dir != ''
       let b:git_dir = dir
     endif
@@ -169,7 +180,7 @@ let s:repo_prototype = {}
 let s:repos = {}
 
 function! s:repo(...) abort
-  let dir = a:0 ? a:1 : (exists('b:git_dir') && b:git_dir !=# '' ? b:git_dir : s:ExtractGitDir(expand('%:p')))
+  let dir = a:0 ? a:1 : (exists('b:git_dir') && b:git_dir !=# '' ? b:git_dir : s:extract_git_dir(expand('%:p')))
   if dir !=# ''
     if has_key(s:repos,dir)
       let repo = get(s:repos,dir)
@@ -191,15 +202,28 @@ function! s:repo_dir(...) dict abort
 endfunction
 
 function! s:repo_tree(...) dict abort
-  if !self.bare()
-    let dir = fnamemodify(self.git_dir,':h')
-    return join([dir]+a:000,'/')
+  if self.dir() =~# '/\.git$'
+    let dir = self.dir()[0:-6]
+  else
+    let config = readfile(self.dir('config'),10)
+    call filter(config,'v:val =~# "^\\s*worktree *="')
+    if len(config) == 1
+      let dir = matchstr(config[0], '= *\zs.*')
+    else
+      call s:throw('no work tree')
+    endif
   endif
-  call s:throw('no work tree')
+  return join([dir]+a:000,'/')
 endfunction
 
 function! s:repo_bare() dict abort
-  return self.dir() !~# '/\.git$'
+  if self.dir() =~# '/\.git$'
+    return 0
+  else
+    let config = readfile(self.dir('config'),10)
+    call filter(config,'v:val =~# "^\\s*worktree *="')
+    return (len(config) != 1)
+  endtry
 endfunction
 
 function! s:repo_translate(spec) dict abort
@@ -1918,7 +1942,7 @@ endfunction
 
 function! s:FileRead()
   try
-    let repo = s:repo(s:ExtractGitDir(expand('<amatch>')))
+    let repo = s:repo(s:extract_git_dir(expand('<amatch>')))
     let path = s:sub(s:sub(matchstr(expand('<amatch>'),'fugitive://.\{-\}//\zs.*'),'/',':'),'^\d:',':&')
     let hash = repo.rev_parse(path)
     if path =~ '^:'

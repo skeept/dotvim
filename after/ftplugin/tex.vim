@@ -3,5 +3,5 @@
 inoremap <F1> <ESC>:wa<cr>
 noremap <F1> :wa<cr>
 
-imap <NL> <Plug>IMAP_JumpForward
+"imap <NL> <Plug>IMAP_JumpForward
 

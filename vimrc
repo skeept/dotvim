@@ -514,16 +514,16 @@ if has("autocmd") && has("win32")
 endif
 
 "with the following c-j is not mapped to the default keys
-if &filetype != 'tex'
+"if &filetype != 'tex'
   "imap <m-C-J> <Plug>IMAP_JumpForward
   "nmap <m-C-J> <Plug>IMAP_JumpForward
   "vmap <m-C-J> <Plug>IMAP_JumpForward
   "vmap <m-C-J> <Plug>IMAP_DeleteAndJumpForward
-  imap  <Leader>#$ <Plug>IMAP_JumpForward
-  nmap  <Leader>#$ <Plug>IMAP_JumpForward
-  vmap  <Leader>#$ <Plug>IMAP_JumpForward
-  vmap  <Leader>#$ <Plug>IMAP_DeleteAndJumpForward
-endif
+  imap  <F8> <Plug>IMAP_JumpForward
+  nmap  <F8> <Plug>IMAP_JumpForward
+  vmap  <F8> <Plug>IMAP_JumpForward
+  vmap  <F8> <Plug>IMAP_DeleteAndJumpForward
+"endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0

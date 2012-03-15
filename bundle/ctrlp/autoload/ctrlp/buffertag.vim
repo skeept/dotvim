@@ -196,6 +196,21 @@ fu! s:parseline(line)
 	let [bufnr, bufname] = [bufnr('^'.vals[2].'$'), fnamemodify(vals[2], ':p:t')]
 	retu vals[1].'	'.vals[4].'|'.bufnr.':'.bufname.'|'.vals[6].'| '.vals[3]
 endf
+
+fu! s:syntax()
+	if !hlexists('CtrlPTagKind')
+		hi link CtrlPTagKind Title
+	en
+	if !hlexists('CtrlPBufName')
+		hi link CtrlPBufName Directory
+	en
+	if !hlexists('CtrlPTabExtra')
+		hi link CtrlPTabExtra Comment
+	en
+	sy match CtrlPTagKind '\zs[^\t|]\+\ze|\d\+:[^|]\+|\d\+|'
+	sy match CtrlPBufName '|\d\+:\zs[^|]\+\ze|\d\+|'
+	sy match CtrlPTabExtra '\zs\t.*\ze$' contains=CtrlPBufName,CtrlPTagKind
+endf
 " Public {{{1
 fu! ctrlp#buffertag#init(fname)
 	let bufs = exists('s:btmode') && s:btmode
@@ -203,14 +218,12 @@ fu! ctrlp#buffertag#init(fname)
 		\ : [exists('s:bufname') ? s:bufname : a:fname]
 	let lines = []
 	for each in bufs
-		let tftype = get(split(getbufvar(each, '&ft'), '\.'), 0, '')
-		cal extend(lines, s:process(each, tftype))
+		let bname = fnamemodify(each, ':p')
+		let tftype = get(split(getbufvar(bname, '&ft'), '\.'), 0, '')
+		cal extend(lines, s:process(bname, tftype))
 	endfo
 	if has('syntax') && exists('g:syntax_on')
-		if !hlexists('CtrlPTabExtra')
-			hi link CtrlPTabExtra Comment
-		en
-		sy match CtrlPTabExtra '\zs\t.*\ze$'
+		cal s:syntax()
 	en
 	retu lines
 endf
