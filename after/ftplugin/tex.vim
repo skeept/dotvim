@@ -4,5 +4,5 @@ inoremap <buffer> <silent> <F1> <ESC>:wa<cr>
 noremap <buffer> <silent> <F1> :wa<cr>
 
 "imap <NL> <Plug>IMAP_JumpForward
-imap <buffer> <silent> <c-\><F9> <Plug>Tex_Completion
+imap <buffer> <silent> <F9> <Plug>Tex_Completion
 
