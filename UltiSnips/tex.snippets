@@ -125,4 +125,16 @@ snippet equ
 eqn`!p vim.command('call feedkeys("\<f10>")')`
 endsnippet
 
+snippet out "define a outline"
+\outline{
+  ${1:<+outline_text+>}
+} % OutlineEnd${0:<++>}
+endsnippet
+
+snippet todo "define a todo"
+\todo{
+  ${1:<+TodoText+>}
+} % TODOEND${0:<++>}
+endsnippet
+
 # vim:ft=snippets:
