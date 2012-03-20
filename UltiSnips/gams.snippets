@@ -1,0 +1,31 @@
+snippet equ "equation snippet"
+Equations
+${1}
+;
+${0}
+endsnippet
+
+snippet loop "general loop statement"
+Loop((${1:loop set}),
+  ${2:!!statements}
+);
+${0}
+endsnippet
+
+snippet if "conditional if statement"
+if(${1:condition},
+  ${2:!!if statements}
+);
+${0}
+endsnippet
+
+snippet comr "multiline comment"
+$OnText
+${1}
+$OffText
+${0}
+endsnippet
+
+snippet com1 "single line comment with some extra visual == signs"
+**==================== ${1:description} ====================
+endsnippet
