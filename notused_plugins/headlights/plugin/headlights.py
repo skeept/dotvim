@@ -84,6 +84,14 @@ def init_bundle(path, order):
                     name = bundles[key]["name"]
                     break
 
+    # remove the 'vim-' prefix from bundle names (a source control project thing)
+    if name.startswith("vim-"):
+        name = name[4:]
+
+    # remove the '_vim' suffix from bundle names (a source control project thing)
+    if name.endswith("_vim"):
+        name = name[:-4]
+
     bundles[path] = {
         "order": order,
         "name": name,
