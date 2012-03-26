@@ -894,7 +894,7 @@ function! unite#start(sources, ...)"{{{
   " Caching.
   let s:current_unite.last_input = context.input
   let s:current_unite.input = context.input
-  call s:recache_candidates(context.input, context.is_redraw, 0)
+  call s:recache_candidates(context.input, context.is_redraw)
 
   if context.immediately || context.no_empty"{{{
     let candidates = unite#gather_candidates()
@@ -973,6 +973,7 @@ endfunction"}}}
 function! unite#vimfiler_check_filetype(sources, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
+  let context.is_vimfiler = 1
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1027,8 +1028,9 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
   let context.no_buffer = 1
+  let context.is_vimfiler = 1
 
-  return s:get_candidates(a:sources, context, 1)
+  return s:get_candidates(a:sources, context)
 endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
@@ -1145,7 +1147,7 @@ function! unite#resume(buffer_name, ...)"{{{
 
   call s:init_cursor()
 endfunction"}}}
-function! s:get_candidates(sources, context, is_vimfiler)"{{{
+function! s:get_candidates(sources, context)"{{{
   try
     call s:initialize_current_unite(a:sources, a:context)
   catch /^Invalid source/
@@ -1159,12 +1161,12 @@ function! s:get_candidates(sources, context, is_vimfiler)"{{{
   " Caching.
   let s:current_unite.last_input = a:context.input
   let s:current_unite.input = a:context.input
-  call s:recache_candidates(a:context.input, a:context.is_redraw, a:is_vimfiler)
+  call s:recache_candidates(a:context.input, a:context.is_redraw)
 
   let candidates = []
   for source in unite#loaded_sources_list()
     if !empty(source.unite__candidates)
-      let candidates += a:is_vimfiler ?
+      let candidates += a:context.is_vimfiler ?
             \ s:initialize_vimfiler_candidates(
             \   source.unite__candidates, source.name) :
             \ source.unite__candidates
@@ -1383,6 +1385,7 @@ function! s:initialize_context(context)"{{{
         \ 'update_time' : g:unite_update_time,
         \ 'no_buffer' : 0,
         \ 'is_interactive' : 1,
+        \ 'is_vimfiler' : 0,
         \ 'hide_source_names' : 0,
         \ }
 
@@ -1424,8 +1427,13 @@ function! s:initialize_loaded_sources(sources, context)"{{{
       let source_name = source
       unlet source
       if !has_key(all_sources, source_name)
+        if a:context.is_vimfiler
+          " Ignore error.
+          continue
+        endif
+
         call unite#util#print_error(
-              \ 'Invalid source name "' . source_name . '" is detected.')
+              \ 'unite.vim: Invalid source name "' . source_name . '" is detected.')
         throw 'Invalid source'
       endif
 
@@ -1734,7 +1742,7 @@ function! s:initialize_vimfiler_candidates(candidates, source_name)"{{{
   return a:candidates
 endfunction"}}}
 
-function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
+function! s:recache_candidates(input, is_force)"{{{
   let unite = unite#get_current_unite()
 
   " Save options.
@@ -1760,7 +1768,7 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
   let context.is_list_input = len(inputs) > 1
   for input in inputs
     let context.input = input
-    call s:recache_candidates_loop(context, a:is_force, a:is_vimfiler)
+    call s:recache_candidates_loop(context, a:is_force)
   endfor
 
   let filtered_count = 0
@@ -1796,7 +1804,7 @@ function! s:recache_candidates(input, is_force, is_vimfiler)"{{{
 
   let &ignorecase = ignorecase_save
 endfunction"}}}
-function! s:recache_candidates_loop(context, is_force, is_vimfiler)"{{{
+function! s:recache_candidates_loop(context, is_force)"{{{
   let unite = unite#get_current_unite()
 
   let input_len = unite#util#strchars(a:context.input)
@@ -1815,13 +1823,17 @@ function! s:recache_candidates_loop(context, is_force, is_vimfiler)"{{{
       let source.unite__context.is_redraw = 1
       let source.is_forced = 1
     else
-      let source.unite__context.is_redraw = a:context.is_redraw
+      let source.unite__context.is_redraw =
+            \ a:context.is_redraw
     endif
-    let source.unite__context.is_changed = a:context.is_changed
-    let source.unite__context.is_invalidate = source.unite__is_invalidate
-    let source.unite__context.is_list_input = a:context.is_list_input
+    let source.unite__context.is_changed =
+          \ a:context.is_changed
+    let source.unite__context.is_invalidate =
+          \ source.unite__is_invalidate
+    let source.unite__context.is_list_input =
+          \ a:context.is_list_input
 
-    let source_candidates = s:get_source_candidates(source, a:is_vimfiler)
+    let source_candidates = s:get_source_candidates(source)
 
     let custom_source = get(s:custom.source, source.name, {})
 
@@ -1838,12 +1850,12 @@ function! s:recache_candidates_loop(context, is_force, is_vimfiler)"{{{
     let source.unite__candidates += source_candidates
   endfor
 endfunction"}}}
-function! s:get_source_candidates(source, is_vimfiler)"{{{
+function! s:get_source_candidates(source)"{{{
   let context = a:source.unite__context
 
   let funcname = 's:get_source_candidates()'
   try
-    if a:is_vimfiler
+    if context.is_vimfiler
       if context.vimfiler__is_dummy
         let funcname = 'vimfiler_dummy_candidates'
         return has_key(a:source, 'vimfiler_dummy_candidates') ?
@@ -2255,7 +2267,7 @@ function! s:redraw(is_force, winnr) "{{{
   endif
 
   " Recaching.
-  call s:recache_candidates(input, a:is_force, 0)
+  call s:recache_candidates(input, a:is_force)
 
   let unite.last_input = input
 
