@@ -35,7 +35,7 @@ if has('unix') && executable('cygpath') "cygwin specific settings
   let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
 endif
 if has("win32")
-  "let g:pathogen_disabled += ['pysmell']
+  let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
 "==============================================================================
