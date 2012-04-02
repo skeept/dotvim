@@ -1,8 +1,7 @@
 *recover.vim*   Show differences for recovered files
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.11 Thu, 21 Oct 2010 22:57:10 +0200
-
+Version: 0.14 Sat, 31 Mar 2012 13:29:07 +0200
 Copyright: (c) 2009, 2010 by Christian Brabandt         
            The VIM LICENSE applies to recoverPlugin.vim and recoverPlugin.txt
            (see |copyright|) except use recoverPlugin instead of "Vim".
@@ -84,7 +83,7 @@ have a filename (|:f|) of something like 'original file (on disk-version)'. If
 you want to save that version, use |:saveas|.
 
 ==============================================================================
-3. ChangesPlugin Feedback                                   *recover-feedback*
+3. Plugin Feedback                                        *recover-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
@@ -98,7 +97,24 @@ third line of this document.
 
 ==============================================================================
 4. recover History                                          *recover-history*
-        0.10: Oct 19, 2010      : use confirm() instead of inputdialog()
+        0.14: Mar 31, 2012      : still some problems with issue #4
+        0.13: Mar 29, 2012      : fix issue 3 (
+                                  https://github.com/chrisbra/Recover.vim/issues/3
+                                  reported by lyokha, thanks!)
+                                : Ask the user to delete the swapfile
+                                  (issue 
+                                  https://github.com/chrisbra/Recover.vim/issues/4
+                                  reported by lyokha, thanks!)
+        0.12: Mar 25, 2012      : minor documentation update
+                                : delete swap files, if no difference found
+                                  (issue
+                                  https://github.com/chrisbra/Recover.vim/issues/1
+                                  reported by y, thanks!)
+                                : fix some small issues, that prevented the
+                                  development versions from working
+                                  (https://github.com/chrisbra/Recover.vim/issues/2
+                                  reported by Rahul Kumar, thanks!)
+        0.11: Oct 19, 2010      : use confirm() instead of inputdialog()
                                   (suggested by D.Fishburn, thanks!)
         0.9: Jun 02, 2010       : use feedkeys(...,'t') instead of feedkeys()
                                   (this works more reliable, although it
