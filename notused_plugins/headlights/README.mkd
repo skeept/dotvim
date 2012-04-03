@@ -14,7 +14,7 @@ user experience~~ quality of life.
 
 __NOTE:__ Headlights requires Vim 7+ compiled with Python 2.6+ support.
 
-### The Recommended Way
+#### The Recommended Way
 
 Using [Vundle] [3]:
 
@@ -26,7 +26,7 @@ Using [Vundle] [3]:
 
     `BundleInstall`
 
-### The Manual Way
+#### The Manual Way
 
 1. [Download the latest package] [4].
 
@@ -62,17 +62,18 @@ Using [Vundle] [3]:
 
 Refer to the Headlights help document:
 
-    Bundles > a - i > headlights > Help
+`Bundles > a - i > headlights > Help`
 
-    :help headlights
+`:help headlights`
 
-### Protip
+#### Protip
 
-If you use Mac OS X, you can quickly access any plugin by typing its name. For
-example, hit `CMD-?` to bring up a search dialog for menu items, then type
-`fugitive open` to reveal the `fugitive.vim` file as the first result. You can
-also type `fugitive help` to quickly access the documentation. I do this, like,
-_all the time_.
+If you use MacVim, you can quickly access any plugin by typing its name. For
+example, hit `CMD-?` to bring up a search dialog for menu items, then type `fug
+open` to reveal the `fugitive.vim` file as the first result. You can also type
+`fug help` to quickly access the documentation. I do this, like, _all the time_.
+
+* * *
 
 [^1]: Headlights is inspired by TextMate's Bundles menu.
 
