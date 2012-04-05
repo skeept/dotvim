@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Mar 2012.
+" Last Modified: 05 Apr 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -955,6 +955,7 @@ function! unite#start_temporary(sources, ...)"{{{
   let context.temporary = 1
   let context.input = ''
   let context.auto_preview = 0
+  let context.is_vimfiler = 0
   let context.default_action = 'default'
 
   " Overwrite context.
