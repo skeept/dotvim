@@ -1,0 +1,10 @@
+snippet iter
+for( ${1:std::vector}<${2:type}>::${3:const_iterator} ${4:iter} = ${5:container}.begin(); $4 != $5.end(); ++$4})
+{
+   ${6}
+}${0}
+endsnippet
+
+snippet co
+cout << "${1:what} " << ${2:$1} << endl;${0}
+endsnippet
