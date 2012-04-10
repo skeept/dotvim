@@ -47,6 +47,8 @@ def check_file():
 def mccabe(filename):
     import mccabe as mc
     return mc.get_module_complexity(filename)
+    complexity = int(vim.eval("g:pymode_lint_mccabe_complexity"))
+    return mc.get_module_complexity(filename, complexity)
 
 
 def pep8(filename):
@@ -130,12 +132,10 @@ def _init_pep8():
 
     class _PEP8Options(object):
         # Default options taken from pep8.process_options()
-        max_complexity = -1
         verbose = False
         quiet = False
-        no_repeat = False
+        repeat = True
         exclude = [exc.rstrip('/') for exc in p8.DEFAULT_EXCLUDE.split(',')]
-        filename = ['*.py']
         select = []
         ignore = p8.DEFAULT_IGNORE.split(',')  # or []?
         show_source = False
@@ -144,7 +144,10 @@ def _init_pep8():
         count = False
         benchmark = False
         testsuite = ''
+        max_line_length = p8.MAX_LINE_LENGTH
+        filename = ['*.py']
         doctest = False
+
         logical_checks = physical_checks = None
         messages = counters = None
 

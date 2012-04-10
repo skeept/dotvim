@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Apr 2012.
+" Last Modified: 10 Apr 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -105,7 +105,7 @@ function! unite#mappings#define_default_mappings()"{{{
         \ "\<ESC>0".(unite#get_current_unite().prompt_linenr+1)."G" : "\<ESC>0"
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_char)
         \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-        \ "\<C-o>:\<C-u>call \<SID>exit()\<Cr>" : "\<C-h>"
+        \ "\<C-o>:\<C-u>call \<SID>exit()\<CR>" : "\<C-h>"
   inoremap <expr><buffer> <Plug>(unite_delete_backward_line)
         \ repeat("\<C-h>", col('.')-(len(unite#get_current_unite().prompt)+1))
   inoremap <expr><buffer> <Plug>(unite_delete_backward_word)
@@ -296,13 +296,11 @@ function! unite#mappings#do_action(action_name, ...)"{{{
 
   " Execute action.
   let is_redraw = 0
-  let is_quit = 0
   let _ = []
   for table in action_tables
     " Check quit flag.
     if table.action.is_quit
       call unite#all_quit_session(0)
-      let is_quit = 1
     endif
 
     try
@@ -796,6 +794,10 @@ function! s:source_action.hooks.on_syntax(args, context)"{{{
 endfunction"}}}
 
 function! s:source_action.gather_candidates(args, context)"{{{
+  if empty(a:args)
+    return
+  endif
+
   let candidates = copy(a:args)
 
   " Print candidates.

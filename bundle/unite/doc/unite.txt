@@ -1833,7 +1833,7 @@ session						*unite-action-session*
 	open		Open session files
 	rename		Rename session name
 
-mapping						*unite-action-source*
+mapping						*unite-action-mapping*
 	help		Read documentation
 
 						*unite-default-action*
@@ -2197,6 +2197,11 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-04-10
+- Fixed unite-action error.
+- Fixed unite buffer behavior.
+- Improved sudo check.
 
 2012-04-05
 - Fixed for vimfiler source.
