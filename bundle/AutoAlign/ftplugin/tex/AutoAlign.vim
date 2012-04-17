@@ -4,7 +4,6 @@
 " Version:   13
 " ---------------------------------------------------------------------
 let b:loaded_autoalign_tex = "v13"
-let b:undo_ftplugin= "v13"
 
 "  overloading '\' to keep things lined up {{{1
 "ino <silent> \\ \\<c-o>:silent call AutoAlign(1)<cr>
