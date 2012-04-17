@@ -18,6 +18,7 @@ cal add(g:ctrlp_ext_vars, {
 	\ 'exit': 'ctrlp#changes#exit()',
 	\ 'type': 'tabe',
 	\ 'sort': 0,
+	\ 'nolim': 1,
 	\ })
 
 let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
@@ -63,7 +64,6 @@ fu! ctrlp#changes#init(original_bufnr, bufnr)
 	endfo
 	sil! exe 'noa hid b' a:original_bufnr
 	let &swb = swb
-	let g:ctrlp_nolimit = 1
 	cal ctrlp#syntax()
 	cal s:syntax()
 	retu lines
@@ -71,6 +71,7 @@ endf
 
 fu! ctrlp#changes#accept(mode, str)
 	let info = matchlist(a:str, '\t|\(\d\+\):[^|]\+|\(\d\+\):\(\d\+\)|$')
+	if info == [] | retu | en
 	let bufnr = str2nr(get(info, 1))
 	if bufnr
 		cal ctrlp#acceptfile(a:mode, fnamemodify(bufname(bufnr), ':p'))
