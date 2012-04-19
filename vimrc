@@ -506,7 +506,7 @@ let g:Tex_MultipleCompileFormats='dvi,pdf'
 let g:tex_flavor='pdflatex'
 let g:Tex_DefaultTargetFormat='pdf'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
-let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
+let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
