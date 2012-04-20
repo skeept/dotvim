@@ -29,3 +29,8 @@ endsnippet
 snippet com1 "single line comment with some extra visual == signs"
 **==================== ${1:description} ====================
 endsnippet
+
+snippet disp "display something"
+Display `!p snip.rv = '"' if t[1] else ""`${1:What}`!p
+snip.rv = '", ' if t[1] else ""`${2};$0
+endsnippet
