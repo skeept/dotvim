@@ -93,6 +93,7 @@ fu! s:opts()
 		\ 'PrtInsert("s")':       ['<F3>'],
 		\ 'PrtInsert("v")':       ['<F4>'],
 		\ 'PrtInsert("+")':       ['<F6>', '<MiddleMouse>'],
+		\ 'PrtInsert("gf")':      ['<c-\>'],
 		\ 'PrtCurStart()':        ['<c-a>'],
 		\ 'PrtCurEnd()':          ['<c-e>'],
 		\ 'PrtCurLeft()':         ['<c-h>', '<left>', '<c-^>'],
@@ -150,6 +151,7 @@ let s:prtunmaps = [
 	\ 'PrtInsert("s")',
 	\ 'PrtInsert("v")',
 	\ 'PrtInsert("+")',
+	\ 'PrtInsert("gf")',
 	\ ]
 
 " Keypad
@@ -320,8 +322,8 @@ fu! s:lsCmd()
 endf
 " - Buffers {{{1
 fu! ctrlp#buffers(...)
-	let ids = filter(range(1, bufnr('$')), 'empty(getbufvar(v:val, "&bt"))'
-		\ .' && getbufvar(v:val, "&bl") && strlen(bufname(v:val))')
+	let ids = sort(filter(range(1, bufnr('$')), 'empty(getbufvar(v:val, "&bt"))'
+		\ .' && getbufvar(v:val, "&bl") && strlen(bufname(v:val))'), 's:compmreb')
 	retu a:0 && a:1 == 'id' ? ids : map(ids, 'fnamemodify(bufname(v:val), ":.")')
 endf
 " * MatchedItems() {{{1
@@ -393,13 +395,13 @@ fu! s:Render(lines, pat)
 		if s:dohighlight() | cal clearmatches() | en
 		retu
 	en
+	let s:matched = copy(lines)
 	" Sorting
-	if s:dosort()
+	if !s:nosort()
 		let s:compat = a:pat
 		cal sort(lines, 's:mixedsort')
 		unl s:compat
 	en
-	let s:matched = copy(lines)
 	if s:mwreverse | cal reverse(lines) | en
 	let s:lines = copy(lines)
 	cal map(lines, 's:formatline(v:val)')
@@ -471,6 +473,8 @@ fu! s:SetDefTxt()
 		let txt = txt && !stridx(s:crfpath, s:dyncwd)
 			\ ? ctrlp#rmbasedir([s:crfpath])[0] : ''
 		let txt = txt != '' ? txt.s:lash(s:crfpath) : ''
+	el
+		let txt = expand(txt, 1)
 	en
 	let s:prompt[0] = txt
 endf
@@ -521,7 +525,8 @@ fu! s:PrtInsert(type)
 	let s:prompt[0] .= a:type == 'w' ? s:crword
 		\ : a:type == 's' ? getreg('/')
 		\ : a:type == 'v' ? s:crvisual
-		\ : a:type == '+' ? substitute(getreg('+'), '\n', '\\n', 'g') : s:prompt[0]
+		\ : a:type == '+' ? substitute(getreg('+'), '\n', '\\n', 'g')
+		\ : a:type == 'gf' ? s:crgfile : s:prompt[0]
 	cal s:BuildPrompt(1)
 	unl s:act_add
 endf
@@ -958,25 +963,20 @@ fu! s:comptime(...)
 endf
 
 fu! s:compmreb(...)
-	" By last entered time (buffer)
-	if !exists('s:mrbs')
-		let s:mrbs = ctrlp#mrufiles#bufs()
-	en
-	let id1 = index(s:mrbs, fnamemodify(a:1, ':p'))
-	let id2 = index(s:mrbs, fnamemodify(a:2, ':p'))
+	" By last entered time (bufnr)
+	let [id1, id2] = [index(s:mrbs, a:1), index(s:mrbs, a:2)]
 	retu id1 == id2 ? 0 : id1 > id2 ? 1 : -1
 endf
 
 fu! s:compmref(...)
 	" By last entered time (MRU)
-	let id1 = index(g:ctrlp_lines, a:1)
-	let id2 = index(g:ctrlp_lines, a:2)
+	let [id1, id2] = [index(g:ctrlp_lines, a:1), index(g:ctrlp_lines, a:2)]
 	retu id1 == id2 ? 0 : id1 > id2 ? 1 : -1
 endf
 
 fu! s:comparent(...)
 	" By same parent dir
-	if match(s:crfpath, escape(s:dyncwd, '.^$*\')) >= 0
+	if !stridx(s:crfpath, s:dyncwd)
 		let [as1, as2] = [s:dyncwd.s:lash().a:1, s:dyncwd.s:lash().a:2]
 		let [loc1, loc2] = [s:getparent(as1), s:getparent(as2)]
 		if loc1 == s:crfpath && loc2 != s:crfpath | retu -1 | en
@@ -1013,15 +1013,15 @@ endf
 
 fu! s:mixedsort(...)
 	let [cln, cml] = [ctrlp#complen(a:1, a:2), s:compmatlen(a:1, a:2)]
-	if s:ispath && s:height < 51
+	if s:ispath
 		let ms = []
 		if s:height < 21
 			if s:itemtype !~ '\v^(1|2)$' | let ms += [s:comptime(a:1, a:2)] | en
-			let ms += [s:compfnlen(a:1, a:2), s:comparent(a:1, a:2)]
+			let ms += [s:compfnlen(a:1, a:2)]
+			if !s:itemtype | let ms += [s:comparent(a:1, a:2)] | en
 		en
-		let time = s:itemtype == 1 ? [s:compmreb(a:1, a:2)]
-			\ : s:itemtype == 2 ? [s:compmref(a:1, a:2)] : []
-		let ms += time + [cml] + [0, 0, 0, 0]
+		if s:itemtype =~ '\v^(1|2)$' | let ms += [s:compmref(a:1, a:2)] | en
+		let ms += [cml, 0, 0, 0]
 		let mp = call('s:multipliers', ms[:3])
 		retu cln + ms[0] * mp[0] + ms[1] * mp[1] + ms[2] * mp[2] + ms[3] * mp[3]
 	en
@@ -1422,10 +1422,9 @@ fu! s:modevar()
 	let s:dosort = s:getextvar('sort')
 endf
 
-fu! s:dosort()
-	retu s:matcher == {} && ( ( s:itemtype != 2 && s:nolim != 1 )
-		\ || s:prompt != ['', '', ''] ) && !( s:itemtype == 2 && s:mrudef )
-		\ && s:dosort
+fu! s:nosort()
+	retu s:matcher != {} || s:nolim == 1 || ( s:itemtype == 2 && s:mrudef )
+		\ || ( s:itemtype =~ '\v^(1|2)$' && s:prompt == ['', '', ''] ) || !s:dosort
 endf
 
 fu! s:narrowable()
@@ -1497,12 +1496,13 @@ endf
 fu! s:getenv()
 	let [s:cwd, s:winres] = [getcwd(), [winrestcmd(), &lines, winnr('$')]]
 	let [s:crfile, s:crfpath] = [expand('%:p', 1), expand('%:p:h', 1)]
-	let [s:crword, s:crline] = [expand('<cword>'), getline('.')]
+	let [s:crword, s:crline] = [expand('<cword>', 1), getline('.')]
 	let [s:winh, s:crcursor] = [min([s:mxheight, &lines]), getpos('.')]
 	let [s:crbufnr, s:crvisual] = [bufnr('%'), s:lastvisual()]
 	let s:currwin = s:mwbottom ? winnr() : winnr() + has('autocmd')
 	let s:wpmode = exists('b:ctrlp_working_path_mode')
 		\ ? b:ctrlp_working_path_mode : s:pathmode
+	let [s:mrbs, s:crgfile] = [ctrlp#mrufiles#bufs(), expand('<cfile>', 1)]
 endf
 
 fu! s:lastvisual()
