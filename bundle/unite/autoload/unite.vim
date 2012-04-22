@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Apr 2012.
+" Last Modified: 22 Apr 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2127,6 +2127,8 @@ function! s:initialize_unite_buffer()"{{{
             \ call s:on_cursor_moved()
       autocmd BufUnload,BufHidden <buffer>
             \ call s:on_buf_unload(expand('<afile>'))
+      autocmd WinEnter,BufWinEnter <buffer>
+            \ call s:save_updatetime()
       autocmd WinLeave,BufWinLeave <buffer>
             \ call s:restore_updatetime()
     augroup END
