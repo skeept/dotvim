@@ -787,6 +787,8 @@ inoremap <nul> <c-r>=MySupertabAltCompletion()<cr>
 "=============================== powerline ====================================
 let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
 "let g:Powerline_symbols = 'unicode'
+let g:Powerline_theme       = 'skwp'
+let g:Powerline_colorscheme = 'skwp'
 "==============================================================================
 
 "=============================== Delete Whitespace ============================
