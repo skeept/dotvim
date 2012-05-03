@@ -410,6 +410,11 @@ function! s:get_action_table(source_name, kind_name, self_func, is_parents_actio
   endif
 
   " Parents actions.
+  for parent in source.parents
+    let parent_kind = unite#get_kinds(parent)
+    let action_table = s:extend_actions(a:self_func, action_table,
+          \ parent_kind.action_table, parent)
+  endfor
   for parent in kind.parents
     let action_table = s:extend_actions(a:self_func, action_table,
           \ unite#get_action_table(a:source_name, parent,
@@ -783,12 +788,21 @@ function! unite#print_error(message)"{{{
     echohl WarningMsg | echomsg mes | echohl None
   endfor
 endfunction"}}}
+function! unite#print_source_error(message, source_name)"{{{
+  let message = type(a:message) == type([]) ?
+        \ a:message : [a:message]
+  call unite#print_error(map(copy(message),
+        \ "printf('[%s] %s', a:source_name, v:val)")
+endfunction"}}}
 function! unite#print_message(message)"{{{
   if &filetype ==# 'unite' && !s:use_current_unite
     call s:print_buffer(a:message)
   else
     call add(s:unite_cached_message, a:message)
   endif
+endfunction"}}}
+function! unite#print_source_message(message, source_name)"{{{
+  call unite#print_message(printf('[%s] %s', a:source_name, a:message))
 endfunction"}}}
 function! unite#clear_message()"{{{
   if &filetype ==# 'unite'
@@ -1493,6 +1507,7 @@ function! s:initialize_sources(...)"{{{
         \ 'action_table' : {},
         \ 'default_action' : {},
         \ 'alias_table' : {},
+        \ 'parents' : [],
         \ 'description' : '',
         \ 'syntax' : '',
         \ }
