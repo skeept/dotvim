@@ -661,6 +661,7 @@ let g:localvimrc_ask = 0
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
+let g:ctrlp_max_depth = 2
 noremap ,pu :CtrlPMRUFiles<cr>
 noremap ,pb :CtrlPBuffer<cr>
 noremap ,pt :CtrlPTag<cr>
