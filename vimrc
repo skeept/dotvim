@@ -214,7 +214,7 @@ nnoremap <C-L> :nohl<CR><C-L>
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 " for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>e /\*\*\*\*.*$<cr>:set nohls<cr><c-l>
 noremap <Leader>v :view<cr>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
@@ -232,10 +232,10 @@ nmap <tab><tab> <c-w><c-w>
 "==============================================================================
 
 "======================== Spelling ============================================
-" by default now toggle spell and nospell, if a count is given use portuguese
+" by default now toggle spell and nospell, if a count is given use Portuguese
 setlocal nospell
 let g:togglespell = 0
-let g:default_langn = 1 "1 for english, 2 for portuguese
+let g:default_langn = 1 "1 for English, 2 for Portuguese
 function! ToggleSpell()
   if v:count != 0
     let g:default_langn = v:count

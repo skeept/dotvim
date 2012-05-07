@@ -201,7 +201,7 @@ nnoremap <C-L> :nohl<CR><C-L>
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
 
 " for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<cr>
+noremap <Leader>e /\*\*\*\*.*$<cr>:set nohls<cr><c-l>
 noremap <Leader>v :view<cr>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
@@ -219,10 +219,10 @@ nmap <tab><tab> <c-w><c-w>
 "==============================================================================
 
 "======================== Spelling ============================================
-" by default now toggle spell and nospell, if a count is given use portuguese
+" by default now toggle spell and nospell, if a count is given use Portuguese
 setlocal nospell
 let g:togglespell = 0
-let g:default_langn = 1 "1 for english, 2 for portuguese
+let g:default_langn = 1 "1 for English, 2 for Portuguese
 function! ToggleSpell()
   if v:count != 0
     let g:default_langn = v:count
@@ -351,7 +351,7 @@ let g:Tex_MultipleCompileFormats='dvi,pdf'
 let g:tex_flavor='pdflatex'
 let g:Tex_DefaultTargetFormat='pdf'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
-let g:Tex_CompileRule_pdf = 'pdflatex  -interaction=nonstopmode $*'
+let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
@@ -422,7 +422,7 @@ autocmd FileType python setlocal makeprg=epylint\ %
 
 "============================ ctrlP ===========================================
 "some ctrl settings and mappings
-let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir']
+let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_depth = 2
@@ -441,7 +441,7 @@ let g:ctrlp_map = ''
 command! CtrlPShowArr echo g:ctrlp_comm
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag']
-"nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
+nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
 "==============================================================================
 
 "=============================== tagbar =======================================
