@@ -29,7 +29,8 @@ let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode']
-if has('unix') && executable('cygpath') "cygwin specific settings
+"if has('unix') && executable('cygpath') "cygwin specific settings
+if !has("python")
   "cygwin vim does not have python
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell']
   let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
