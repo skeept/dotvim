@@ -432,18 +432,31 @@ omap ,f :call PreciseJumpF(-1, -1, 0)<cr>
 
 
 "======================== LustyExplorer and Juggler ===========================
-nmap <silent> ,lf :LustyFilesystemExplorer<CR>
-nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
-nmap <silent> ,lb :LustyBufferExplorer<CR>
-nmap <silent> ,lg :LustyBufferGrep<CR>
-nmap <silent> ,lj :LustyJuggler<CR>
+"nmap <silent> ,lf :LustyFilesystemExplorer<CR>
+"nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
+"nmap <silent> ,lb :LustyBufferExplorer<CR>
+"nmap <silent> ,lg :LustyBufferGrep<CR>
+"nmap <silent> ,lj :LustyJuggler<CR>
 "==============================================================================
 
-"========================= LocosaExplorer =====================================
+"========================= LycosaExplorer =====================================
 "" lycosaexplorer alternative mappings
 noremap  ,b :LycosaBufferExplorer<CR>
 noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
 noremap  ,le :LycosaFilesystemExplorer<CR>
+
+function! ToggleLycosa()
+  if v:count == 0
+    LycosaFilesystemExplorer
+  elseif v:count == 1
+    LycosaBufferExplorer
+  elseif v:count == 2
+    LycosaFilesystemExplorerFromHere
+  else
+    echo "0: File System, 1:buffer, 2: File from here"
+  endif
+endfunction
+nnoremap ,e :<c-u> call ToggleLycosa()<cr>
 "==============================================================================
 
 "=============================== Unite ========================================

@@ -338,6 +338,25 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 " Main settings and mappings for plugins
 "
 
+"========================= LycosaExplorer =====================================
+"" lycosaexplorer alternative mappings
+noremap  ,b :LycosaBufferExplorer<CR>
+noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
+noremap  ,le :LycosaFilesystemExplorer<CR>
+
+function! ToggleLycosa()
+  if v:count == 0
+    LycosaFilesystemExplorer
+  elseif v:count == 1
+    LycosaBufferExplorer
+  elseif v:count == 2
+    LycosaFilesystemExplorerFromHere
+  else
+    echo "0: File System, 1:buffer, 2: File from here"
+  endif
+endfunction
+"nnoremap ,e :<c-u> call ToggleLycosa()<cr>
+"==============================================================================
 
 
 "========================== Latex =============================================
@@ -603,4 +622,11 @@ function! LoadCtrlP()
 endf
 nnoremap <c-p> :call LoadCtrlP()<cr>
       \:<c-u>CtrlP<cr>
+
+function! LoadLycosa()
+  exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
+  runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
+  nnoremap ,e :<c-u> call ToggleLycosa()<cr>
+endfunction
+nnoremap ,e :call LoadLycosa()<cr>:<c-u>LycosaFilesystemExplorer<cr>
 "==============================================================================
