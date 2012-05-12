@@ -537,17 +537,6 @@ endif
   nmap  <F8> <Plug>IMAP_JumpForward
   vmap  <F8> <Plug>IMAP_JumpForward
   vmap  <F8> <Plug>IMAP_DeleteAndJumpForward
-
-  imap  <c-s> <Plug>IMAP_JumpForward
-  nmap  <c-s> <Plug>IMAP_JumpForward
-  vmap  <c-s> <Plug>IMAP_JumpForward
-  vmap  <c-s> <Plug>IMAP_DeleteAndJumpForward
-
-  imap  <c-l> <Plug>IMAP_JumpForward
-  "nmap  <c-l> <Plug>IMAP_JumpForward
-  vmap  <c-l> <Plug>IMAP_JumpForward
-  vmap  <c-l> <Plug>IMAP_DeleteAndJumpForward
-
 "endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim

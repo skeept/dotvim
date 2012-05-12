@@ -6,3 +6,14 @@ noremap <buffer> <silent> <F1> :wa<cr>
 "imap <NL> <Plug>IMAP_JumpForward
 imap <buffer><silent> <c-\><F9> <Plug>Tex_Completion
 
+
+imap  <c-s> <Plug>IMAP_JumpForward
+nmap  <c-s> <Plug>IMAP_JumpForward
+vmap  <c-s> <Plug>IMAP_JumpForward
+vmap  <c-s> <Plug>IMAP_DeleteAndJumpForward
+
+imap  <c-l> <Plug>IMAP_JumpForward
+"nmap  <c-l> <Plug>IMAP_JumpForward
+vmap  <c-l> <Plug>IMAP_JumpForward
+vmap  <c-l> <Plug>IMAP_DeleteAndJumpForward
+
