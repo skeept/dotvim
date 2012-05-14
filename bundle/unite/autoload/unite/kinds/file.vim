@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Apr 2012.
+" Last Modified: 13 May 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -227,7 +227,13 @@ function! s:kind.action_table.vimfiler__move.func(candidates)"{{{
       endif
     endfor
 
-    call unite#kinds#file#do_action(candidates, dest_dir, 'move', '')
+    if dest_dir =~ '^\h\w\+:'
+      " Use protocol move method.
+      let protocol = matchstr(dest_dir, '^\h\w\+:')
+      call unite#sources#{protocol}#move_files(dest_dir, candidates)
+    else
+      call unite#kinds#file#do_action(candidates, dest_dir, 'move', '')
+    endif
   finally
 
     if vimfiler_current_dir != ''
@@ -282,8 +288,14 @@ function! s:kind.action_table.vimfiler__copy.func(candidates)"{{{
       let dest_dir .= '/'
     endif
 
-    call unite#kinds#file#do_action(a:candidates, dest_dir, 'copy',
-          \ s:SID_PREFIX().'check_copy_func')
+    if dest_dir =~ '^\h\w\+:'
+      " Use protocol move method.
+      let protocol = matchstr(dest_dir, '^\h\w\+:')
+      call unite#sources#{protocol}#copy_files(dest_dir, candidates)
+    else
+      call unite#kinds#file#do_action(a:candidates, dest_dir, 'copy',
+            \ s:SID_PREFIX().'check_copy_func')
+    endif
   finally
     if vimfiler_current_dir != ''
       lcd `=current_dir`
@@ -497,6 +509,7 @@ endfunction"}}}
 let s:kind.action_table.vimfiler__execute = {
       \ 'description' : 'open files with associated program',
       \ 'is_selectable' : 1,
+      \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__execute.func(candidates)"{{{
   let vimfiler_current_dir =
@@ -525,6 +538,7 @@ endfunction"}}}
 
 let s:kind.action_table.vimfiler__write = {
       \ 'description' : 'save file',
+      \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__write.func(candidate)"{{{
   let context = unite#get_context()

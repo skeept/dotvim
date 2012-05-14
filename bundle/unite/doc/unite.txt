@@ -1,6 +1,6 @@
 *unite.txt*	Ultimate interface to unite all sources
 
-Version: 3.1
+Version: 4.0
 Author : Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -48,9 +48,9 @@ Changelog		|unite-changelog|
 ==============================================================================
 INTRODUCTION					*unite-introduction*
 
-*unite* or *unite.vim* searches and displays information from arbitrary sources like files,
-buffers, recently used files or registers. You can run one of defined action
-on a target displayed.
+*unite* or *unite.vim* searches and displays information from arbitrary sources
+like files, buffers, recently used files or registers. You can run one of
+defined action on a target displayed.
 
 The differences between |unite| and similar plugins like |fuzzyfinder| or |ku|
 are that |unite| doesn't use the built-in completion interface of Vim, and
@@ -432,9 +432,9 @@ g:unite_quick_match_table			*g:unite_quick_match_table*
 g:unite_data_directory				*g:unite_data_directory*
 		Specifies directories for configurations internally used in
 		unite itself or its sources.  If the directory doesn't exist
-		the directory will be automatically generated.  For example source
-		of file_mru saves the information of the most recent used
-		files on the directory.
+		the directory will be automatically generated.  For example
+		source of file_mru saves the information of the most recent
+		used files on the directory.
 		
 		Default value is expand('~/.unite'); the absolute path of it.
 
@@ -447,10 +447,10 @@ g:unite_no_default_keymappings			*g:unite_no_default_keymappings*
 SOURCES VARIABLES 				*unite-sources-variables*
 
 g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
-		Specifies a regex pattern for ignoring some specific
-		candidates in |unite-source-file|.  This matches on the full
-		path of each files.  If the variable isn't empty string, unite
-		filters with the regex pattern on the results.
+		Specifies a regex pattern for ignoring some specific candidates
+		in |unite-source-file|.  This matches on the full path of each
+		files.  If the variable isn't empty string, unite filters with
+		the regex pattern on the results.
 
 		Refer autoload/unite/sources/file.vim about the default value.
 
@@ -481,9 +481,9 @@ g:unite_source_file_mru_limit			*g:unite_source_file_mru_limit*
 
 g:unite_source_file_mru_ignore_pattern		*g:unite_source_file_mru_ignore_pattern*
 		Specifies the regexp pattern to ignore candidates of
-		|unite-source-file_mru|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
+		|unite-source-file_mru|.  This applies on the full path of each
+		files.  Unless this variable value is an empty string, Unite
+		filters out the result with the regexp.  Regardless of
 		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_mru.vim about the default
@@ -504,9 +504,9 @@ g:unite_source_bookmark_directory			*g:unite_source_bookmark_directory*
 
 g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
 		Specifies the regexp pattern to ignore candidates of
-		|unite-source-file_rec|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
+		|unite-source-file_rec|.  This applies on the full path of each
+		files.  Unless this variable value is an empty string, Unite
+		filters out the result with the regexp.  Regardless of
 		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/file_rec.vim about the default
@@ -546,9 +546,9 @@ g:unite_source_grep_max_candidates		*g:unite_source_grep_max_candidates*
 
 g:unite_source_grep_ignore_pattern		*g:unite_source_grep_ignore_pattern*
 		Specifies the regexp pattern to ignore candidates of
-		|unite-source-grep|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
+		|unite-source-grep|.  This applies on the full path of each
+		files.  Unless this variable value is an empty string, Unite
+		filters out the result with the regexp.  Regardless of
 		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/grep.vim about the default
@@ -571,9 +571,9 @@ g:unite_source_find_max_candidates		*g:unite_source_find_max_candidates*
 
 g:unite_source_find_ignore_pattern		*g:unite_source_find_ignore_pattern*
 		Specifies the regexp pattern to ignore candidates of
-		|unite-source-find|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
+		|unite-source-find|.  This applies on the full path of each
+		files.  Unless this variable value is an empty string, Unite
+		filters out the result with the regexp.  Regardless of
 		|g:unite_enable_ignore_case| value, it's case sensitive.
 
 		Refer autoload/unite/sources/find.vim about the default
@@ -592,10 +592,10 @@ g:unite_source_line_search_word_highlight	*g:unite_source_line_search_word_highl
 		Default value is "Search".
 
 g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
-		Set |unite-source-alias| settings.
-		This variable is dictionary. The key is alias source name,
-		and the value is following attributes dictionary.
-		Alias sources are copy of original source.
+		Set |unite-source-alias| settings.  This variable is
+		dictionary. The key is alias source name, and the value is
+		following attributes dictionary.  Alias sources are copy of
+		original source.
 
 		source			(String)	(Required)
 		Base source name.
@@ -618,9 +618,9 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 		Default value is "{}".
 
 g:unite_source_menu_menus			*g:unite_source_menu_menus*
-		Set |unite-source-menu| settings.
-		This variable is dictionary that the keys are menu names
-		and the values are the following attributes.
+		Set |unite-source-menu| settings.  This variable is dictionary
+		that the keys are menu names and the values are the following
+		attributes.
 
 		candidates	(List or Dictionary)	(Required)
 		Menu candidates. If candidates are directory, keys are
@@ -656,7 +656,7 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		Default value is "{}".
 
 g:unite_source_history_yank_enable		*g:unite_source_history_yank_enable*
-		If it's defined and non-0, unite enables 
+		If it's defined and non-0, unite enables
 		|unite-source-history/yank|. This has to be done in .vimrc to
 		set this value.
 
@@ -687,7 +687,8 @@ g:unite_source_session_options			*g:unite_source_session_options*
 		Use options when execute |:mksession|.
 		Refer to 'sessionoptions'.
 		
-		Default value is "blank,buffers,curdir,folds,help,tabpages,winsize".
+		Default value is
+		"blank,buffers,curdir,folds,help,tabpages,winsize".
 
 g:unite_source_session_enable_auto_save		*g:unite_source_session_enable_auto_save*
 		Enable auto save session.
@@ -712,7 +713,8 @@ g:unite_kind_jump_list_after_jump_scroll	*g:unite_kind_jump_list_after_jump_scro
 		Default is 25.
 
 g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_open_blink_time*
-		A number of blink time after "persist_open" action by |unite-kind-openable|.
+		A number of blink time after "persist_open" action by
+		|unite-kind-openable|.
 
 		Default value is "250m"
 
@@ -742,27 +744,27 @@ Normal mode mappings.
 		|unite-kind| about kinds.
 
 <Plug>(unite_insert_enter)			*<Plug>(unite_insert_enter)*
-		Starts inputting narrowing text by the cursor position.  In
+		Starts inputting narrowing text by the cursor position. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_insert_head)			*<Plug>(unite_insert_head)*
-		Starts inputting narrowing text by the head of the line.  In
+		Starts inputting narrowing text by the head of the line. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_append_enter)			*<Plug>(unite_append_enter)*
-		Starts inputting narrowing text by the head of the line.  In
+		Starts inputting narrowing text by the head of the line. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_append_end)			*<Plug>(unite_append_end)*
-		Starts inputting narrowing text by the end of the line.  In
+		Starts inputting narrowing text by the end of the line. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_toggle_mark_current_candidate)	*<Plug>(unite_toggle_mark_current_candidate)*
-		Toggles the mark of the candidates in the current line.  You may
+		Toggles the mark of the candidates in the current line. You may
 		run an action on multiple candidates at the same time by
 		marking multiple candidates.
 
@@ -843,7 +845,8 @@ Insert mode mappings.
 		candidate line.
 
 <Plug>(unite_delete_backward_char)		*i_<Plug>(unite_delete_backward_char)*
-		Deletes a char just before the cursor, otherwise quits the Unite.
+		Deletes a char just before the cursor, otherwise quits the
+		Unite.
 
 <Plug>(unite_delete_backward_line)		*i_<Plug>(unite_delete_backward_line)*
 		Deletes all chars after the cursor until the end of the line.
@@ -1004,23 +1007,21 @@ FUNCTIONS					*unite-functions*
 CORE						*unite-functions-core*
 
 unite#get_kinds([{kind-name}])			*unite#get_kinds()*
-			Gets the kinds of {kind-name}.  Unless they exist this
-			returns an empty dictionary.  This returns a
-			dictionary which keys are kind names and values are
-			the kinds when you skipped giving {kind-name}.
+		Gets the kinds of {kind-name}.  Unless they exist this returns
+		an empty dictionary.  This returns a dictionary which keys are
+		kind names and values are the kinds when you skipped giving
+		{kind-name}.
 
-			Changing the return value is not allowed.
+		Note: Changing the return value is not allowed.
 
 unite#get_sources([{source-name}])		*unite#get_sources()*
-			Gets the loaded source of {source-name}. Unless they
-			exist this returns an empty dictionary.  This
-			returns a dictionary which keys are source names and
-			values are the sources when you skipped giving
-			{source-name}.
-			If you give {source-name} as dictionary, unite.vim
-			use this source temporary.
+		Gets the loaded source of {source-name}. Unless they exist this
+		returns an empty dictionary.  This returns a dictionary which
+		keys are source names and values are the sources when you
+		skipped giving {source-name}.  If you give {source-name} as
+		dictionary, unite.vim use this source temporary.
 
-			Changing the return value is not allowed.
+		Note: Changing the return value is not allowed.
 
 CUSTOMS						*unite-functions-customs*
 
@@ -1091,14 +1092,14 @@ unite#smart_map({narrow-map}, {select-map})	*unite#smart_map()*
 >
 		inoremap <buffer><expr> ' unite#smart_map("'", unite#do_action('preview'))
 <
-unite#mappings#set_current_filters({filters})			*unite#mappings#set_current_filters()*
+unite#mappings#set_current_filters({filters})	*unite#mappings#set_current_filters()*
 		Change current unite buffer filters.
 		Example:
 >
   nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
         \ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
 <
-unite#mappings#get_current_filters()				*unite#mappings#get_current_filters()*
+unite#mappings#get_current_filters()		*unite#mappings#get_current_filters()*
 		Get current unite buffer filters.
 
 unite#set_substitute_pattern({profile-name}, {pattern}, {subst} [, {priority}])
@@ -1113,8 +1114,9 @@ unite#set_substitute_pattern({profile-name}, {pattern}, {subst} [, {priority}])
 		defeat {pattern} with giving {subst} as "".  {priority}
 		prioritizes how this replaces.  If you skipped giving
 		{priority} it'll be 0.  Give bigger number for a {pattern}
-		which must be done earlier.  Note that the initial text of
-		Unite buffer will not be replaced with these values.
+		which must be done earlier.
+		Note: that the initial text of Unite buffer will not be
+		replaced with these values.
 
 		You may mimic ambiguous matching with using this function.
 >
@@ -1153,12 +1155,24 @@ unite#set_profile({profile-name}, {option-name}, {value})
 		This options is available:
 		
 		substitute_patterns		(Dictionary)
+		Specifies substitute pattern. The key is "pattern",
+		"subst" and "priority". Please refer to
+		|unite#set_substitute_pattern()|.
 		
 		filters				(List)
+		Specifies filter names list. The filters are called after
+		combined all candidates. If you change filters dynamically, use
+		|unite#mappings#set_current_filters()| instead.
 		
 		ignorecase			(Number)
+		Specifies 'ignorecase' value in unite buffer. If omitted it,
+		used global 'ignorecase' value.
+		Note: If profile_name is "files", default value "1" is used.
 		
 		smartcase			(Number)
+		Specifies 'smartcase' value in unite buffer. If omitted it,
+		used global 'smartcase' value.
+		Note: If profile_name is "files", default value "0" is used.
 
 unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
 						*unite#set_buffer_name_option()*
@@ -1185,7 +1199,8 @@ unite#custom_action({kind}, {name}, {action})
 		function! my_tabopen.func(candidates)
 		  call unite#take_action('tabopen', a:candidates)
 		
-		  let dir = isdirectory(a:candidate.word) ? a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
+		  let dir = isdirectory(a:candidate.word) ?
+		  \    a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
 		  execute g:unite_kind_openable_lcd_command '`=dir`'
 		endfunction
 		call unite#custom_action('file,buffer', 'tabopen', my_tabopen)
@@ -1261,19 +1276,28 @@ unite#undef_filter({name})			*unite#undef_filter()*
 		|unite#define_filter()|.  If such a filter doesn't exist,
 		this function doesn't do anything.
 
-
 unite#filters#default#use({filters})		*unite#filters#default#use(()*
-		Todo
+		Changes the default filter used by
+		|unite-filter-default| into {filters}. {filters} must be
+		specified with a list of filter names.
 
 unite#filters#matcher_default#use({matchers})	*unite#filters#matcher_default#use(()*
-		Todo
+		Change the default match used by
+		|unite-filter-matcher_default| into {matchers}.
+		{matchers} must be specified with a list of matcher
+		names.
 
 unite#filters#sorter_default#use({sorters})	*unite#filters#sorter_default#use(()*
-		Todo
+		Change the default sorter used by
+		|unite-filter-sorter_default| into {sourters}. {sorters}
+		must be specified with a list of sorter names.
 
 						*unite#filters#converter_default#use(()*
 unite#filters#converter_default#use({converters})
-		Todo
+		Change the default converter used by
+		|unite-filter-converter_default| into {converters}.
+		{converters} must be specified with a list of converter
+		names.
 
 ==============================================================================
 SOURCES						*unite-sources*
@@ -1290,10 +1314,6 @@ file/new	Nominates an input new file as a candidate.
 						*unite-source-file_mru*
 file_mru	Nominates files you used recently as candidates, ordering
 		by time series.
-
-						*unite-source-directory_mru*
-directory_mru	Nominates directories you used recently as candidates,
-		ordering by time series.
 
 						*unite-source-file_rec*
 file_rec	Gather Files recursive. Nominates all directory or file names
@@ -1317,6 +1337,19 @@ file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
 		
 		Source arguments:
 		1. the search directory.
+
+						*unite-source-directory*
+directory	Nominates an input directory as a candidate.
+		Note: This source doesn't nominates parent directory(Example:
+		"../") or hidden directories(Example: ".git"). If you want to
+		open this directories, please input ".".
+
+						*unite-source-directory/new*
+directory/new	Nominates an input new directory as a candidate.
+
+						*unite-source-directory_mru*
+directory_mru	Nominates directories you used recently as candidates,
+		ordering by time series.
 
 						*unite-source-buffer*
 buffer		Nominates opened buffers as candidates, ordering by time
@@ -1642,21 +1675,38 @@ guicmd		GUI executable commands
 FILTERS						*unite-filters*
 
 						*unite-filter-default*
-default		Todo
+default		Todo: This default filter is used unless specified explicitly.
+		This filter is a dummy with ["matcher_glob",
+		"sorter_nothing", "converter_nothing"] registered initially.
+		This filter can be changed by calling
+		|unite#filters#default#use()|.
 
 						*unite-filter-matcher_default*
-matcher_default	Todo
+matcher_default	Todo: The default matcher used by |unite-filter-default| with
+		["matcher_glob"] set initially.
+		This can be changed by calling
+		|unite#filters#matcher_default#use()|.
 
 						*unite-filter-matcher_glob*
-matcher_glob	Todo
+matcher_glob	Todo: A matcher which filters the candidates with user given
+		glob pattern.  This recognizes "*" as wild card and "!" as
+		negate.  Narrowing down can be done by word.
 
 						*unite-filter-matcher_regexp*
-matcher_regexp	Todo
+matcher_regexp	Todo: A matcher which filters the candidates with user given
+		regular expression. This recognizes "!" as negate.
+		Narrowing down can be done by word.
 
 						*unite-filter-matcher_fuzzy*
-matcher_fuzzy	Todo
+matcher_fuzzy	Todo: A matcher which filters the candidates with user
+		given fuzzy string.
+		This recognizes "!" as negate.
+		Narrowing down can be done by word.
+		Note: that narrowing down might be slower if this matcher is
+		used.
+		This matcher may best effect if set as |unite-source-file_rec|.
 >
-		call unite#custom_filters('file,file_new,buffer,file_rec',
+		call unite#custom_filters('file,file/new,buffer,file_rec',
 		\ ['matcher_fuzzy', 'sorter_default', 'converter_default'])
 <
 						*unite-filter-matcher_migemo*
@@ -1671,8 +1721,10 @@ matcher_hide_hidden_files
 		files will be appeared.
 
 						*unite-filter-sorter_default*
-sorter_default	Todo
-		In default, use sorter_default sorter.
+sorter_default	Todo: The default sorter used by |unite-filter-default|.
+		["sorter_nothing"] is set initially.
+		This default sorter can be changed by calling
+		|unite#filters#sorter_default#use()|.
 
 						*unite-filter-sorter_nothing*
 sorter_nothing	Nothing sorter.
@@ -1693,7 +1745,10 @@ sorter_reverse	Reverse order sorter.
 
 						*unite-filter-converter_default*
 converter_default
-		Todo
+		Todo: The default converter used by |unite-filter-default|.
+		["converter_nothing"] is set initially.
+		This default converter can be changed by calling
+		|unite#filters#converter_default#use()|.
 
 						*unite-filter-converter_nothing*
 converter_nothing
@@ -1701,7 +1756,12 @@ converter_nothing
 
 						*unite-filter-converter_relative_word*
 converter_relative_word
-		Todo
+		Todo: A converter which converts a candidate's word into a
+		corresponding relative path.
+		word can be used by matcher to narrow down the candidates and must be set in precedence of the matcher.
+		If context information contains source__directory, this
+		converter uses it as the base path in relative path
+		conversion.
 >
 		call unite#custom_filters('file_rec',
 		\ ['converter_relative_word', 'matcher_default',
@@ -1709,7 +1769,10 @@ converter_relative_word
 <
 						*unite-filter-converter_relative_abbr*
 converter_relative_abbr
-		Todo
+		Todo: A converter which converts a candidate's abbr into a
+		corresponding relative path.
+		Specification of this term is almost the same as
+		|unite-filter-converter_relative_word|.
 
 ==============================================================================
 ACTIONS						*unite-actions*
@@ -1798,8 +1861,8 @@ exists.
 
 directory					*unite-action-directory*
 This kind extends actions of |unite-action-file|.  This doesn't have any
-additional actions.  You may want to use this to change the default_action
-when the target is a directory.
+additional actions.  You may want to use this to change the default_action when
+the target is a directory.
 
 word						*unite-action-word*
 This kind doesn't have any additional actions.  You may want to use this to
@@ -1879,122 +1942,289 @@ source		start
 ==============================================================================
 CREATE SOURCE					*unite-create-source*
 
-Todo
+The files in autoload/unite/sources are automatically loaded and it
+calls unite#sources#{source_name}#define() whose return value is the
+source.  Each return value can be a list so you can return an empty list
+to avoid adding undesireble sources.  To add your own sources
+dynamically, you can use |unite#define_source()|.
+
+Note: To optimize load source files, if "buffer/rec" source name is detected,
+unite.vim loads "autoload/unite/sources/buffer*.vim" files.  The source file
+name must be source name prefix(Ex: buffer).
 
 ------------------------------------------------------------------------------
 SOURCE ATTRIBUTES				*unite-source-attributes*
 
 						*unite-source-attribute-name*
 name			String		(Required)
-			The name of a source. It must consist of the following
-			characters:
+			The name of a source. It must consist of the
+			following characters:
 			- a-z
 			- 0-9
 			- _
 			- /
 
 			For example:
-			- "buffer" , "file_mru" and "virw/git" are valid.
-			- "BadOne", "!@#$%^&*()_[]{}-|" and "" are invalid.
+			- "buffer" , "file_mru" and "virw/git" are
+			  valid.
+			- "BadOne", "!@#$%^&*()_[]{}-|" and "" are
+			  invalid.
 
 						*unite-source-attribute-gather_candidates*
 gather_candidates	Function	(Required)
-			Todo
+			This function is called once in gathering
+			candidates and anytime in redrawing by
+			|<Plug>(unite_redraw).  If source is defined as
+			|unite-source-is_volatile|, this function is
+			called whenever the input string is changed.
+			This function takes {args} and {context} as its
+			parameter and returns a list of {candidate}.
+			Here, {args} is a list of parameters given to
+			the source when |:Unite| command is executed
+			and {context} is the context informantion when
+			the source is called. If either of these are not
+			given, the argument becomes "". Hence, this
+			function must handle empty string. Arguments
+			should be checked by |get()| function. For more
+			details, you can refer to
+			|unite-notation-{context}| about {context} and
+			|unite-notation-{candidate}| about {candidate}.
+			This attribute can be omitted if other
+			attributes can gather some candidates.
+			The candidates gathered by this attribute are
+			cached by unite buffer. The cache is available
+			until the unite buffer is closed and is
+			discarded unless you use |:UniteResume|. To
+			cache persistenly regardless of the life of the
+			unite buffer, you have some source to save the
+			cache on non-volatile storage.
 
 						*unite-source-attribute-change_candidates*
 change_candidates	Function	(Optional)
-			Todo
+			This function is called if the input string is
+			changed in gathering candidates by unite.  You
+			can make use of this attribute to generate
+			candidates from the input string.  The
+			candidates generated by this attributes are
+			added to the candidates cached by
+			|unites-source-attribute-gather_candidates|.
+			This function takes {args} and {context} as its
+			parameter and returns a list of {candidate}.
+			The specification of the parameters and the
+			returned value is the same as
+			|unite-source-attribute-gather_candidates|.
 
 						*unite-source-attribute-async_gather_candidates*
 async_gather_candidates	Function	(Optional)
-			Todo
+			This function is called asynchronously in
+			gathering candidates.  You can make use of this
+			function to split time-consuming job into small
+			jobs.  |g:unite_update_time| is the default
+			timing.  This function takes {args} and
+			{context} as its parameter and returns a list of
+			{candidate}.
+			
+			The specification of the parameters and the
+			returned value is the same as
+			|unite-source-attribute-gather_candidates|.
 
 						*unite-source-attribute-complete*
 complete		Function	(Optional)
-			Todo
+			This functions is called to complete the source
+			argument of |:Unite|.  This function takes
+			{args}, {context}, {arglead}, {cmdline} and
+			{cursorpos} as its parameter and returns a list
+			of candidates.
 
 						*unite-source-attribute-hooks*
 hooks			Dictionary		(Optional)
-			Todo
+			You may put hook functions in this dictionary
+			with which the key is the position to hook and
+			and the value is the reference to the function
+			to be called.  The following hook functions are
+			defined:
 
 			on_init			*unite-source-attribute-hooks-on_init*
-			Todo
+			Called just before returning to unite buffer
+			after executing |:Unite| commands or calling
+			|unite#start()| but executing |:UniteResume|.
+			This function takes {args} and {context} as its
+			parameters.
+			Note that you must be careful to select the
+			function to call because the unite buffer is not
+			still initialized in calling this hook
+			function.
 
 			on_syntax		*unite-source-attribute-hooks-on_syntax*
-			Todo
-			Note: To get abbr head column, use "unite#get_current_unite().abbr_head".
+			Called after the unite buffer is initialized and
+			syntax for each source is set but not called if
+			|unite-source-attribute-syntax| is not set.
+			This function takes {args} and {context} as its
+			parameters.
+			Highlight configuration for each source is done
+			by this function.
+
+			Note: To get abbr head column, use
+			"unite#get_current_unite().abbr_head".
 			Example:
 >
 			syntax match uniteSource_FileMru_Time /(.*)/ contained containedin=uniteSource_FileMru
 			highlight default link uniteSource_FileMru_Time Statement
 <
-			Todo
+			Note you must set the containedin as same as the
+			syntax name for |unite-source-attribute-syntax|.
 
 			on_close		*unite-source-attribute-hooks-on_close*
-			Todo
+			Called after executing |<Plug>(unite_exit)| or
+			closing the unite buffer following some command
+			execution.  This function takes {args} and
+			{context} as its parameters.
+
+			on_pre_filter		*unite-source-attribute-hooks-on_pre_filter*
+			Called the filters before narrowed down the
+			candidates. This function takes {args} and
+			{context} as its parameters.
 
 			on_post_filter		*unite-source-attribute-hooks-on_post_filter*
-			Todo
+			Called the filters after narrowed down the
+			candidates.  This is used to set attributes.
+			This filters is to avoid badly affecting the
+			performance.  This function takes {args} and
+			{context} as its parameters.
 
 			on_pre_init		*unite-source-attribute-hooks-on_pre_init*
-			Todo
+			Called before source is initialized.
+			{args} is empty.
+			Current source is set as "a:context.source" in
+			{context}.
+			You can dynamically initialize source by
+			changing "a:context.source" in this function.
 
 						*unite-source-attribute-action_table*
 action_table		Dictionary		(Optional)
-			Todo
+			Add source's own action table.  In this
+			dictionary, the key is the kind and the value is
+			the action table.  The specification of action
+			table is as same as
+			|unite-kind-attribute-action_table|. With this
+			dictionary, you can define original
+			|unite-kind-attribute-action_table| for each
+			kind in source's own context.
+			For example:
 >
 			'action_table' : { 'buffer' : foo_action_table }
 <
-			Todo
-
+			means that foo_action_table is used for kind
+			"buffer" in this source's context.
+			You can use "*" for the key to match any kind.
+			This is useful if you expect only one kind.  If
+			no key-value pair is set, this dictionary is
+			left empty.  You can put action table without a
+			corresponding key and it means the key is "*".
+			For example, the following two are the same.
+>
+			'action_table' : foo_action_table
+			'action_table' : { '*' : foo_action_table }
+<
 						*unite-source-attribute-default_action*
 default_action		Dictionary		(Optional)
-			Todo
-
+			Add default action unique to the source.  In
+			this dictionary, key is the kind and the value
+			is the default action.
+			If not given, it uses the kind's default action.
+			The default action can be in string format and
+			it means the same as:
+>
+			'default_action' : { '*' : action_name}.
+<
 						*unite-source-attribute-alias_table*
 alias_table		Dictionary		(Optional)
-			Todo
+			Add an alias table unique to the source.  In
+			this dictionary, the key is the kind and the
+			value is the alias table.
+			If key is '*', it matches any kinds.
+			Please refer to
+			|unite-kind-attribute-action_table| for the
+			specification of alias table.
+			If no key-value is set, this dictionary is left
+			empty.
 
 						*unite-source-attribute-max_candidates*
 max_candidates		Number		(Optional)
 			The maximum number of candidates.
 
-			This attribute is optional; if it is not given, 0 is
-			used as the default value.  This means maximum number
-			is infinity.
+			This attribute is optional; if it is not given,
+			0 is used as the default value.  This means
+			maximum number is infinity.
 
 						*unite-source-attribute-required_pattern_length*
 required_pattern_length	Number		(Optional)
-			Todo
+			The least string length to narrow down the
+			candidates. This attribute is optional.
+			If not given, 0 is used as the default value and
+			all the possible candidates are collected.
 
 						*unite-source-attribute-is_volatile*
 is_volatile		Number		(Optional)
-			Todo
+			Whether the source recalculates the candidates
+			everytime the input is changed.
+			This attribute is optional.
+			If not given, 0 is set as the default value. In
+			this case, canidates are cached in unite buffer
+			and it does not call
+			|unite-source-attribute-gather_candidates|
+			repeatedly and the cache is available until the
+			unite buffer is closed. To cache longer time,
+			the source has no choise but to cache by itself.
 
 						*unite-source-attribute-is_listed*
 is_listed		Number		(Optional)
-			Todo
+			Whether the source name is visible to the user.
+			If the source is internal, must be set to 0.  If
+			omitted, set to 1.
 
 						*unite-source-attribute-description*
 description		String		(Optional)
-			Todo
+			The description of the source.
+			If ommitted, set to "".
+			|unite-source-source| uses this.
 
 						*unite-source-attribute-syntax*
 syntax			String		(Optional)
-			Todo
+			The syntax name used within the source.  This
+			syntax name is defined automatically by unite
+			itself.
+			If omitted, set to "".
+			This is used to configure the source's own
+			highlight.  According to the unite's naming
+			convension to avoid the syntax name conflicted,
+			use syntax name like "uniteSource__(source
+			name)".  Configuration of highlight itself must
+			uses |unite-source-attribute-hooks-on_syntax|.
 
 						*unite-source-attribute-filters*
 filters			List		(Optional)
-			Todo
+			The list of filters used by the source.  Please
+			refer to |unite-filter-attributes| for the
+			specification of filter.  If omitted, unite uses
+			|unite-filter-default|.
 
 						*unite-source-attribute-source__*
 source__		Unknown		(Optional)
-			Todo
+			The Attribute unique for each source.  To avoid
+			the attibute conflicting the unite's own,
+			"source__" prefix must be added.
 
 NOTATION					*unite-notation*
 
 {context}					*unite-notation-{context}*
-			Todo
+			A dictionary to give context information.
+			The followings are the primary information.
+			The global context information can be acquired
+			by |unite#get_context()|.
+			The context information is characteristic to
+			each source and you can distinguish one by a key
+			stored in the dictionary.
 
 			input			(String)
 				The input string of unite buffer.
@@ -2018,8 +2248,9 @@ NOTATION					*unite-notation*
 				Todo
 
 			is_invalidate		(Number)
-				1 if action disables a cache. This is also 1
-				in initialization of unite buffer.
+				1 if action disables a cache. This is
+				also 1 in initialization of unite
+				buffer.
 
 			is_async		(Number)
 				Todo
@@ -2055,10 +2286,10 @@ NOTATION					*unite-notation*
 				Todo
 
 			is_multiline		(Number)	(Optional)
-				1 if the candiates have multiple lines. The
-				default value is 0. When this is enabled,
-				unite splits abbr (or word is abbr is missing)
-				by a newline character.
+				1 if the candiates have multiple lines.
+				The default value is 0. When this is
+				enabled, unite splits abbr (or word is
+				abbr is missing) by a newline character.
 
 			source__{name}		(Unknown)	(Optional)
 				Todo
@@ -2071,13 +2302,17 @@ CREATE KIND					*unite-create-kind*
 
 Todo
 
+Note: To optimize load kind files, if "foo" kind name is detected, unite.vim
+loads "autoload/unite/kinds/foo*.vim" files.  The kind file name must be kind
+name prefix(Ex: foo).
+
 ------------------------------------------------------------------------------
 KIND ATTRIBUTES					*unite-kind-attributes*
 
 						*unite-kind-attribute-name*
 name			String		(Required)
-			The name of a kind. It must consist of the following
-			characters:
+			The name of a kind. It must consist of the
+			following characters:
 			- a-z
 			- 0-9
 			- _
@@ -2151,6 +2386,10 @@ CREATE FILTER					*unite-create-filter*
 
 Todo
 
+Note: To optimize load filter files, if "matcher_foo_bar" filter name is
+detected, unite.vim loads "autoload/unite/filters/matcher_foo*.vim" files.  The
+filter file name must be filter name prefix(Ex: matcher_foo).
+
 ------------------------------------------------------------------------------
 FILTER ATTRIBUTES				*unite-filter-attributes*
 
@@ -2223,6 +2462,36 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-05-14
+- Improved completion behavior.
+- Fixed load filters.
+- Fixed document.
+- Improved load default scripts.
+
+2012-05-13
+- Fixed redraw behavior.
+- Optimised load scripts.
+- Supported protocol copy.
+
+2012-05-12
+- Improved file kind.
+- Added directory and directory/new source.
+- Improved cdable actions.
+- Changed sources initialize behavior.
+- Improved source initialization.
+- Revised documentation.
+
+2012-05-09
+- Fixed mark set bug.
+
+2012-05-06
+- Ver.4.0 development is started.
+- Merged English documentation(Thanks akiradeveloper!).
+- Improved English documentation.
+
+------------------------------------------------------------------------------
+ChangeLog unite.vim Ver.3.1:
 
 2012-05-06
 - Improved unite#get_context() implementation.
