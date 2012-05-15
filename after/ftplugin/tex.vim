@@ -17,3 +17,4 @@ imap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_DeleteAndJumpForward
 
+set textwidth=90 "for some reason sometimes it gets set to zero in my linux machine
