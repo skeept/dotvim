@@ -600,8 +600,7 @@ nnoremap <f3> :call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
 inoremap <f3> <cr>:call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips()
-  if !(has('unix') && executable('cygpath'))
-    "cygwin vim does not have python
+  if !has("python")
     runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
     exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
   endif
