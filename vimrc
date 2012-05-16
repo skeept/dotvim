@@ -348,7 +348,7 @@ noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 "fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>" 
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 " Main settings and mappings for plugins
 "
@@ -525,6 +525,13 @@ let g:Tex_IgnoreLevel = 3
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
         \ | setlocal textwidth=90
+endif
+
+if has("win32")
+  let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
+  let g:Tex_ViewRule_pdf = expand("$HOME" .
+        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
+        \ "-reuse-instance")
 endif
 
 "with the following c-j is not mapped to the default keys

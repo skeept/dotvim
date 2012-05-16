@@ -17,3 +17,5 @@ imap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_DeleteAndJumpForward
 
+"the following should help complete fig:whatever
+set iskeyword+=:
