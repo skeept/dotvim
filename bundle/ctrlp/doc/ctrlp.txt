@@ -296,6 +296,7 @@ For the letters:
   t - each file in a new tab.
   h - each file in a new horizontal split.
   v - each file in a new vertical split.
+  i - all files as hidden buffers.
   Reuse the current window:
   tr,
   hr,
@@ -734,16 +735,15 @@ c)  End the string with a colon ':' followed by a Vim command to execute that
     with a backslash: '\:'. When opening multiple files, the command will be
     executed on each opening file.
 
-    E.g. Use ':45' to open the selected file and jump to line 45.
+    E.g. Use ':45' to jump to line 45.
 
-         Use ':/any\:string' to open the selected file and jump to the first
-         instance of 'any:string'.
+         Use ':/any\:string' to jump to the first instance of 'any:string'.
 
-         Use ':+setf\ myfiletype|50' to open the selected file and set its
-         filetype to 'myfiletype', then jump to line 50.
+         Use ':+setf\ myfiletype|50' to set the filetype to 'myfiletype', then
+         jump to line 50.
 
-         Use ':diffthis' to open the selected files and run |:diffthis| on the
-         first 4 files (if they have been marked).
+         Use ':diffthis' when opening multiple files to run |:diffthis| on the
+         first 4 files.
 
     See also: Vim's |++opt| and |+cmd|.
 
@@ -948,7 +948,7 @@ Statuslines:~
 ===============================================================================
 MISCELLANEOUS CONFIGS                             *ctrlp-miscellaneous-configs*
 
-* Use |wildignore| for |g:ctrlp_user_command|:
+* Using |wildignore| for |g:ctrlp_user_command|:
 >
   function! s:wig2cmd()
     " Change wildignore into space or | separated groups
@@ -986,6 +986,12 @@ MISCELLANEOUS CONFIGS                             *ctrlp-miscellaneous-configs*
   autocmd BufEnter * call s:setcwd()
 <
 (requires Vim 7.1.299+)
+
+* Using a |count| to invoke different commands using the same mapping:
+>
+  let g:ctrlp_map = '<leader>f'
+  let g:ctrlp_cmd = 'exe "CtrlP".get(["", "Buffer", "MRU"], v:count)'
+<
 
 ===============================================================================
 CREDITS                                                         *ctrlp-credits*
