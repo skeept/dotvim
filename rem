@@ -29,3 +29,6 @@ to select various lines use <shitf-v> and arrows (or other movement commands)
 
 replace ^M
 :%s/<ctrl-v><enter>//g
+
+change to current folder of current file
+cd %:p:h
