@@ -559,8 +559,12 @@ let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
   let g:mysupertabaltcom = 1 - g:mysupertabaltcom
-  if g:mysupertabaltcom == 0 && &completefunc != ""
-    return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
+  if g:mysupertabaltcom == 0 && (&completefunc != "" || &filetype == 'tex')
+    if &completefunc != ""
+      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
+    else
+      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-]>")
+    endif
   else
     return SuperTabAlternateCompletion("\<lt>c-p>")
   endif

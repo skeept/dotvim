@@ -796,9 +796,15 @@ let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
+  "alternate between keyword completion and user omni completion
+  "when in latex complete tags
   let g:mysupertabaltcom = 1 - g:mysupertabaltcom
-  if g:mysupertabaltcom == 0 && &completefunc != ""
-    return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
+  if g:mysupertabaltcom == 0 && (&completefunc != "" || &filetype == 'tex')
+    if &completefunc != ""
+      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
+    else
+      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-]>")
+    endif
   else
     return SuperTabAlternateCompletion("\<lt>c-p>")
   endif
