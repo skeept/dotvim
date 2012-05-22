@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 18 May 2012.
+" Last Modified: 21 May 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -480,7 +480,8 @@ function! neocomplcache#enable() "{{{
   if !exists('g:neocomplcache_text_mode_filetypes')
     let g:neocomplcache_text_mode_filetypes = {}
   endif
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_text_mode_filetypes,
+  call neocomplcache#set_dictionary_helper(
+        \ g:neocomplcache_text_mode_filetypes,
         \ 'text,help,tex,gitcommit,vcs-commit', 1)
   "}}}
 
@@ -526,6 +527,8 @@ function! neocomplcache#enable() "{{{
         \ unite#sources#neocomplcache#start_quick_match()
   inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)
         \ unite#sources#snippet#start_complete()
+  inoremap <silent> <Plug>(neocomplcache_start_auto_complete)
+        \ <C-x><C-u><C-r>=neocomplcache#popup_post()<CR>
 
   " Check if "vim" command is executable.
   if neocomplcache#has_vimproc() && !executable('vim')
@@ -725,8 +728,8 @@ function! s:do_auto_complete(event)"{{{
   " Prevent infinity loop.
   if cur_text == ''
         \ || cur_text == s:old_cur_text
-        \ || (neocomplcache#is_eskk_enabled()
-        \            && cur_text !~ '▽')
+        \ || (neocomplcache#is_eskk_enabled() &&
+        \      !neocomplcache#is_eskk_convertion(cur_text))
         \ || (!neocomplcache#is_eskk_enabled() &&
         \      (exists('b:skk_on') && b:skk_on)
         \     || char2nr(split(cur_text, '\zs')[-1]) > 0x80)
@@ -771,10 +774,9 @@ function! s:do_auto_complete(event)"{{{
   if g:neocomplcache_enable_prefetch || &l:formatoptions =~# 'a'
     call feedkeys((g:neocomplcache_enable_auto_select ?
           \ "\<C-x>\<C-u>\<C-p>\<Down>" :
-          \ "\<C-x>\<C-u>\<C-p>"), "n")
+          \ "\<C-x>\<C-u>\<C-p>"), 'n')
   else
-    call feedkeys("\<C-x>\<C-u>"
-          \."\<C-r>=neocomplcache#popup_post()\<CR>", "n")
+    call feedkeys("\<Plug>(neocomplcache_start_auto_complete)")
   endif
 
   let s:changedtick = b:changedtick
@@ -856,6 +858,10 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
 endfunction"}}}
 function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
   let cur_keyword_str = a:cur_keyword_str
+
+  if neocomplcache#complete_check()
+    return []
+  endif
 
   " Delimiter check.
   let filetype = neocomplcache#get_context_filetype()
@@ -971,23 +977,23 @@ function! neocomplcache#dictionary_filter(dictionary, cur_keyword_str, completio
         \   a:cur_keyword_str, a:completion_length)
     return neocomplcache#keyword_filter(
           \ neocomplcache#unpack_dictionary(a:dictionary), a:cur_keyword_str)
-  else
-    let key = tolower(a:cur_keyword_str[: a:completion_length-1])
-
-    if !has_key(a:dictionary, key)
-      return []
-    endif
-
-    let list = a:dictionary[key]
-    if type(list) == type({})
-      " Convert dictionary dictionary.
-      unlet list
-      let list = values(a:dictionary[key])
-    endif
-
-    return (len(a:cur_keyword_str) == a:completion_length && &ignorecase)?
-          \ list : neocomplcache#keyword_filter(copy(list), a:cur_keyword_str)
   endif
+
+  let key = tolower(a:cur_keyword_str[: a:completion_length-1])
+
+  if !has_key(a:dictionary, key)
+    return []
+  endif
+
+  let list = a:dictionary[key]
+  if type(list) == type({})
+    " Convert dictionary dictionary.
+    unlet list
+    let list = values(a:dictionary[key])
+  endif
+
+  return (len(a:cur_keyword_str) == a:completion_length && &ignorecase)?
+        \ list : neocomplcache#keyword_filter(copy(list), a:cur_keyword_str)
 endfunction"}}}
 function! neocomplcache#unpack_dictionary(dict)"{{{
   let ret = []
@@ -1164,6 +1170,9 @@ endfunction"}}}
 function! neocomplcache#is_eskk_enabled()"{{{
   return exists('*eskk#is_enabled') && eskk#is_enabled()
 endfunction"}}}
+function! neocomplcache#is_eskk_convertion(cur_text)"{{{
+  return a:cur_text =~ '笆ｽ'
+endfunction"}}}
 function! neocomplcache#is_text_mode()"{{{
   return s:is_text_mode
 endfunction"}}}
@@ -1276,6 +1285,9 @@ function! neocomplcache#get_temporary_directory()"{{{
 
   return directory
 endfunction"}}}
+function! neocomplcache#complete_check()"{{{
+  return !g:neocomplcache_enable_prefetch && complete_check()
+endfunction"}}}
 
 " For unite source.
 function! neocomplcache#get_complete_results(cur_text, ...)"{{{
@@ -1296,14 +1308,22 @@ function! neocomplcache#get_complete_results(cur_text, ...)"{{{
   " Try source completion."{{{
   let complete_results = {}
   for [source_name, source] in items(sources)
+    let pos = getpos('.')
+
     try
       let cur_keyword_pos = source.get_keyword_pos(a:cur_text)
     catch
       call neocomplcache#print_error(v:throwpoint)
       call neocomplcache#print_error(v:exception)
-      call neocomplcache#print_error('Error occured in complfunc''s get_keyword_pos()!')
-      call neocomplcache#print_error('Source name is ' . source_name)
+      call neocomplcache#print_error(
+            \ 'Error occured in complfunc''s get_keyword_pos()!')
+      call neocomplcache#print_error(
+            \ 'Source name is ' . source_name)
       return complete_results
+    finally
+      if getpos('.') != pos
+        call setpos('.', pos)
+      endif
     endtry
 
     if cur_keyword_pos < 0
@@ -1380,6 +1400,10 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
           \ source_name, result.complete_words)
   endfor
 
+  if neocomplcache#complete_check()
+    return []
+  endif
+
   " Sort.
   if !neocomplcache#is_eskk_enabled() && a:is_sort
     call sort(complete_words, g:neocomplcache_compare_function)
@@ -1411,6 +1435,10 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
     endif
   endfor
   let complete_words = words
+
+  if neocomplcache#complete_check()
+    return []
+  endif
 
   if g:neocomplcache_max_list >= 0
     let complete_words = complete_words[: g:neocomplcache_max_list]
@@ -1454,6 +1482,10 @@ function! neocomplcache#get_complete_words(complete_results, is_sort,
       endfor
     endfor
   endif"}}}
+
+  if neocomplcache#complete_check()
+    return []
+  endif
 
   " Convert words.
   if neocomplcache#is_text_mode() "{{{
@@ -1502,7 +1534,7 @@ endfunction"}}}
 function! s:set_complete_results_words(complete_results)"{{{
   " Try source completion.
   for [source_name, result] in items(a:complete_results)
-    if !g:neocomplcache_enable_prefetch && complete_check()
+    if neocomplcache#complete_check()
       return
     endif
 
@@ -1511,11 +1543,14 @@ function! s:set_complete_results_words(complete_results)"{{{
 
     if neocomplcache#is_text_mode()
       let &ignorecase = 1
-    elseif g:neocomplcache_enable_smart_case && result.cur_keyword_str =~ '\u'
+    elseif g:neocomplcache_enable_smart_case
+          \ && result.cur_keyword_str =~ '\u'
       let &ignorecase = 0
     else
       let &ignorecase = g:neocomplcache_enable_ignore_case
     endif
+
+    let pos = getpos('.')
 
     try
       let words = result.source.get_complete_words(
@@ -1523,9 +1558,15 @@ function! s:set_complete_results_words(complete_results)"{{{
     catch
       call neocomplcache#print_error(v:throwpoint)
       call neocomplcache#print_error(v:exception)
-      call neocomplcache#print_error('Error occured in complfunc''s get_complete_words()!')
-      call neocomplcache#print_error('Source name is ' . source_name)
+      call neocomplcache#print_error(
+            \ 'Error occured in complfunc''s get_complete_words()!')
+      call neocomplcache#print_error(
+            \ 'Source name is ' . source_name)
       return
+    finally
+      if getpos('.') != pos
+        call setpos('.', pos)
+      endif
     endtry
 
     let &ignorecase = ignorecase_save
@@ -1973,8 +2014,8 @@ function! s:remove_next_keyword(plugin_name, list)"{{{
 endfunction"}}}
 function! neocomplcache#popup_post()"{{{
   return  !pumvisible() ? "" :
-        \ !g:neocomplcache_enable_auto_select
-        \  || neocomplcache#is_eskk_enabled() ? "\<C-p>" :
+        \ (!g:neocomplcache_enable_auto_select
+        \  || neocomplcache#is_eskk_enabled()) ? "\<C-p>" :
         \ "\<C-p>\<Down>"
 endfunction"}}}
 "}}}
