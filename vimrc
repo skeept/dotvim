@@ -28,7 +28,7 @@ endif
 let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
-let g:pathogen_disabled += ['pyflakes', 'python-mode', 'Align']
+let g:pathogen_disabled += ['pyflakes', 'python-mode', 'Align', 'AutoAlign']
 "if has('unix') && executable('cygpath') "cygwin specific settings
 if !has("python")
   "cygwin vim does not have python
