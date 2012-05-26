@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 May 2012.
+" Last Modified: 26 May 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -293,8 +293,12 @@ function! unite#get_sources(...)"{{{
   return a:0 == 0 ? unite.sources : get(unite.sources, a:1, {})
 endfunction"}}}
 function! unite#get_all_sources(...)"{{{
-  let all_sources = s:initialize_sources()
-  return a:0 == 0 ? all_sources : get(all_sources, a:1, {})
+  if a:0 == 0
+    return s:initialize_sources()
+  endif
+
+  let all_sources = s:initialize_sources([], a:1)
+  return get(all_sources, a:1, {})
 endfunction"}}}
 function! unite#get_filters(...)"{{{
   if a:0 == 0
@@ -304,7 +308,12 @@ function! unite#get_filters(...)"{{{
   endif
 
   let filters = s:initialize_filters()
-  return a:0 == 0 ? filters : get(filters, a:1, {})
+
+  if a:0 == 0
+    return filters
+  endif
+
+  return get(filters, a:1, {})
 endfunction"}}}
 "}}}
 
@@ -604,7 +613,8 @@ function! unite#complete_source(arglead, cmdline, cursorpos)"{{{
     let _ +=  copy(s:unite_options)
 
     " Source name completion.
-    let _ += keys(filter(s:initialize_sources(), 'v:val.is_listed'))
+    let _ += keys(filter(s:initialize_sources([], a:arglead),
+          \ 'v:val.is_listed'))
   else
     " Add "{source-name}:".
     let _  = map(_, 'source_name.":".v:val')
@@ -1304,20 +1314,23 @@ function! s:quit_session(is_force)  "{{{
   " Save position.
   let positions = unite#get_profile(
         \ unite.profile_name, 'unite__save_pos')
-  let positions[key] = {
-        \ 'pos' : getpos('.'),
-        \ 'candidate' : unite#get_current_candidate(),
-        \ }
+  if key != ''
+    let positions[key] = {
+          \ 'pos' : getpos('.'),
+          \ 'candidate' : unite#get_current_candidate(),
+          \ }
 
-  if context.input != ''
-    " Save input.
-    let inputs = unite#get_profile(
-          \ unite.profile_name, 'unite__inputs')
-    if !has_key(inputs, key)
-      let inputs[key] = []
+    if context.input != ''
+      " Save input.
+      let inputs = unite#get_profile(
+            \ unite.profile_name, 'unite__inputs')
+      if !has_key(inputs, key)
+        let inputs[key] = []
+      endif
+      call insert(filter(inputs[key],
+            \ 'v:val !=# unite.context.input'), context.input)
     endif
-    call insert(filter(inputs[key],
-          \ 'v:val !=# unite.context.input'), context.input)
+
   endif
 
   if a:is_force || !context.no_quit
@@ -1385,10 +1398,13 @@ function! unite#resume_from_temporary(context)  "{{{
 endfunction"}}}
 
 function! s:load_default_scripts(kind, names)"{{{
-  for name in empty(a:names) ? [''] : a:names
-    if name != '' && has_key(s:static[a:kind], name)
-      continue
-    endif
+  let names = empty(a:names) ? [''] : a:names
+  if a:kind ==# 'sources' && !empty(a:names)
+    call add(names, 'alias')
+  endif
+
+  for name in filter(names,
+        \ "v:val == '' || !has_key(s:static[a:kind], v:val)")
 
     let name = (a:kind ==# 'filters') ?
           \ substitute(name,
@@ -1536,6 +1552,10 @@ function! s:initialize_sources(...)"{{{
   " Initialize load.
   let source_names = type(get(a:000, 0, [])) == type([]) ?
         \ get(a:000, 0, []) : []
+  let head_name = get(a:000, 1, '')
+  if empty(source_names) && head_name != ''
+    let source_names = [head_name]
+  endif
   call s:load_default_scripts('sources', source_names)
 
   let default_source = {
