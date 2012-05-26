@@ -607,6 +607,11 @@ function! LoadUltisnips()
   if has("python")
     runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
     exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+    if has("autocmd")
+      autocmd FileType * call UltiSnips_FileTypeChanged()
+      autocmd BufNewFile,BufRead *.snippets setf snippets
+    endif
+    call UltiSnips_FileTypeChanged()
   endif
   nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
 endfunction
