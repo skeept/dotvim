@@ -28,11 +28,10 @@ endif
 let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
-let g:pathogen_disabled += ['pyflakes', 'python-mode', 'Align', 'AutoAlign']
-"if has('unix') && executable('cygpath') "cygwin specific settings
+let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
+let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
-  "cygwin vim does not have python
-  let g:pathogen_disabled += ['lycosaexplorer', 'headlights', 'pysmell']
+  let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
   let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
 endif
 if has("win32")
@@ -652,7 +651,15 @@ autocmd FileType man setlocal norelativenumber nonumber
 let g:pylint_onwrite = 0
 
 "pysmell
-autocmd FileType python setlocal completefunc=pysmell#Complete
+function! LoadPysmell()
+  "load pysmell only for python types (remember to disable it in bundle)
+  if has("python")
+    runtime bundle/pysmell/plugin/pysmell.vim
+    setlocal completefunc=pysmell#Complete
+  endif
+endfunction
+"autocmd FileType python setlocal completefunc=pysmell#Complete
+autocmd FileType python call LoadPysmell()
 
 "mapping for running python code
 "nmap <F9> :SingleCompileRun<cr>
