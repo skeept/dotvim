@@ -975,6 +975,21 @@ Todo
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
+2012-05-31
+- Improved MacOS check.
+
+2012-05-30
+- Fixed for MacVim check.
+
+2012-05-28
+- Fixed for MacVim.
+
+2012-05-26
+- Fixed omni_complete for rubycomplete.
+- Fixed for eskk convertion check.
+- Improved check lock.
+- Improved for omni_complete.
+
 2012-05-24
 - Changed filename_complete default rank.
 - Improved auto complete behavior.

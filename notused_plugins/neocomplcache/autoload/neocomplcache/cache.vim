@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cache.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 May 2012.
+" Last Modified: 30 May 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -270,10 +270,31 @@ endfunction"}}}
 function! s:async_load(argv, cache_dir, filename)"{{{
   " if 0
   if neocomplcache#has_vimproc()
-    let base_path = neocomplcache#util#substitute_path_separator(
-          \ fnamemodify(vimproc#get_command_name(v:progname), ':p:h'))
-    let vim_path = base_path .
-          \ (neocomplcache#util#is_windows() ? '/vim.exe' : '/vim')
+    let paths = vimproc#get_command_name(v:progname, $PATH, -1)
+    if empty(paths)
+      if has('gui_macvim')
+        " MacVim check.
+        if !executable('/Applications/MacVim.app/Contents/MacOS/Vim')
+          call neocomplcache#print_error(
+                \ 'You installed MacVim in not default directory!'.
+                \ ' You must add MacVim install path in $PATH.')
+          return
+        endif
+
+        let vim_path = '/Applications/MacVim.app/Contents/MacOS/Vim'
+      else
+        call neocomplcache#print_error(
+              \ printf('Vim path : "%s" is not found.', v:progname))
+        return
+      endif
+    else
+      let base_path = neocomplcache#util#substitute_path_separator(
+            \ fnamemodify(vimproc#get_command_name(paths[0]), ':p:h'))
+
+      let vim_path = base_path .
+            \ (neocomplcache#util#is_windows() ? '/vim.exe' : '/vim')
+    endif
+
     if !executable(vim_path) && neocomplcache#util#is_mac()
       " Note: Search "Vim" instead of vim.
       let vim_path = base_path. '/Vim'

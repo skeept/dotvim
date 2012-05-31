@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 May 2012.
+" Last Modified: 31 May 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -459,20 +459,25 @@ function! neocomplcache#enable() "{{{
   if !exists('g:neocomplcache_ctags_arguments_list')
     let g:neocomplcache_ctags_arguments_list = {}
   endif
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_ctags_arguments_list, 'default', '')
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_ctags_arguments_list, 'vim',
+  call neocomplcache#set_dictionary_helper(
+        \ g:neocomplcache_ctags_arguments_list, 'default', '')
+  call neocomplcache#set_dictionary_helper(
+        \ g:neocomplcache_ctags_arguments_list, 'vim',
         \"--extra=fq --fields=afmiKlnsStz --regex-vim='/function!? ([a-z#:_0-9A-Z]+)/\\1/function/'")
-  if !neocomplcache#is_windows() && (has('macunix') || system('uname') =~? '^darwin')
-    call neocomplcache#set_dictionary_helper(g:neocomplcache_ctags_arguments_list, 'c',
+  if neocomplcache#util#is_mac()
+    call neocomplcache#set_dictionary_helper(
+          \ g:neocomplcache_ctags_arguments_list, 'c',
           \'--c-kinds=+p --fields=+iaS --extra=+q -I__DARWIN_ALIAS,__DARWIN_ALIAS_C,__DARWIN_ALIAS_I,__DARWIN_INODE64
           \ -I__DARWIN_1050,__DARWIN_1050ALIAS,__DARWIN_1050ALIAS_C,__DARWIN_1050ALIAS_I,__DARWIN_1050INODE64
           \ -I__DARWIN_EXTSN,__DARWIN_EXTSN_C
           \ -I__DARWIN_LDBL_COMPAT,__DARWIN_LDBL_COMPAT2')
   else
-    call neocomplcache#set_dictionary_helper(g:neocomplcache_ctags_arguments_list, 'c',
+    call neocomplcache#set_dictionary_helper(
+          \ g:neocomplcache_ctags_arguments_list, 'c',
           \'-R --sort=1 --c-kinds=+p --fields=+iaS --extra=+q -I __wur')
   endif
-  call neocomplcache#set_dictionary_helper(g:neocomplcache_ctags_arguments_list, 'cpp',
+  call neocomplcache#set_dictionary_helper(
+        \ g:neocomplcache_ctags_arguments_list, 'cpp',
         \'-R --sort=1 --c++-kinds=+p --fields=+iaS --extra=+q -I __wur --language-force=C++')
   "}}}
 
@@ -529,6 +534,8 @@ function! neocomplcache#enable() "{{{
         \ unite#sources#snippet#start_complete()
   inoremap <silent> <Plug>(neocomplcache_start_auto_complete)
         \ <C-x><C-u><C-r>=neocomplcache#popup_post()<CR>
+  inoremap <silent> <Plug>(neocomplcache_start_omni_complete)
+        \ <C-x><C-o><C-r>=neocomplcache#popup_post()<CR>
 
   " Check if "vim" command is executable.
   if neocomplcache#has_vimproc() && !executable('vim')
@@ -674,7 +681,6 @@ endfunction"}}}
 
 function! s:do_auto_complete(event)"{{{
   if (&buftype !~ 'nofile\|nowrite' && b:changedtick == s:changedtick)
-        \ || g:neocomplcache_disable_auto_complete
         \ || neocomplcache#is_locked()
     return
   endif
@@ -732,8 +738,7 @@ function! s:do_auto_complete(event)"{{{
         \ || (neocomplcache#is_eskk_enabled() &&
         \      !neocomplcache#is_eskk_convertion(cur_text))
         \ || (!neocomplcache#is_eskk_enabled() &&
-        \      (exists('b:skk_on') && b:skk_on)
-        \     || char2nr(split(cur_text, '\zs')[-1]) > 0x80)
+        \      neocomplcache#is_multibyte_input(cur_text))
         \ || g:neocomplcache_lock_iminsert && &l:iminsert
     let s:cur_keyword_str = ''
     let s:complete_words = []
@@ -746,10 +751,14 @@ function! s:do_auto_complete(event)"{{{
     return
   endif
 
+  if neocomplcache#is_omni_complete(cur_text)
+    call feedkeys("\<Plug>(neocomplcache_start_omni_complete)")
+    return
+  endif
+
   let &l:completefunc = 'neocomplcache#auto_complete'
 
-  if g:neocomplcache_enable_prefetch
-        \ && !g:neocomplcache_enable_insert_char_pre
+  if neocomplcache#is_prefetch()
     " Do prefetch.
     let s:complete_results =
           \ neocomplcache#get_complete_results(s:get_cur_text())
@@ -763,7 +772,7 @@ function! s:do_auto_complete(event)"{{{
     endif
   endif
 
-  let s:is_prefetch = g:neocomplcache_enable_prefetch
+  let s:is_prefetch = neocomplcache#is_prefetch()
   let s:changedtick = b:changedtick
 
   " Set options.
@@ -772,7 +781,7 @@ function! s:do_auto_complete(event)"{{{
   set completeopt+=menuone
 
   " Start auto complete.
-  if g:neocomplcache_enable_prefetch || &l:formatoptions =~# 'a'
+  if neocomplcache#is_prefetch()
     call feedkeys((g:neocomplcache_enable_auto_select ?
           \ "\<C-x>\<C-u>\<C-p>\<Down>" :
           \ "\<C-x>\<C-u>\<C-p>"), 'n')
@@ -1160,8 +1169,10 @@ endfunction"}}}
 function! neocomplcache#is_locked(...)"{{{
   let bufnr = a:0 > 0 ? a:1 : bufnr('%')
   return !s:is_enabled
-        \ || (has_key(s:complete_lock, bufnr) && s:complete_lock[bufnr])
-        \ || (g:neocomplcache_lock_buffer_name_pattern != '' && bufname(bufnr) =~ g:neocomplcache_lock_buffer_name_pattern)
+        \ || g:neocomplcache_disable_auto_complete
+        \ || get(s:complete_lock, bufnr, 0)
+        \ || (g:neocomplcache_lock_buffer_name_pattern != '' &&
+        \   bufname(bufnr) =~ g:neocomplcache_lock_buffer_name_pattern)
 endfunction"}}}
 function! neocomplcache#is_plugin_locked(plugin_name)"{{{
   if !s:is_enabled
@@ -1186,7 +1197,13 @@ function! neocomplcache#is_eskk_enabled()"{{{
   return exists('*eskk#is_enabled') && eskk#is_enabled()
 endfunction"}}}
 function! neocomplcache#is_eskk_convertion(cur_text)"{{{
-  return a:cur_text =~ '笆ｽ'
+  return neocomplcache#is_eskk_enabled()
+        \   && eskk#get_buftable().get_henkan_phase() !=#
+        \             g:eskk#buftable#PHASE_NORMAL
+endfunction"}}}
+function! neocomplcache#is_multibyte_input(cur_text)"{{{
+  return (exists('b:skk_on') && b:skk_on)
+        \     || char2nr(split(a:cur_text, '\zs')[-1]) > 0x80
 endfunction"}}}
 function! neocomplcache#is_text_mode()"{{{
   return s:is_text_mode
@@ -1196,6 +1213,36 @@ function! neocomplcache#is_windows()"{{{
 endfunction"}}}
 function! neocomplcache#is_win()"{{{
   return neocomplcache#is_windows()
+endfunction"}}}
+function! neocomplcache#is_prefetch()"{{{
+  return g:neocomplcache_enable_prefetch
+        \ || &l:formatoptions =~# 'a'
+endfunction"}}}
+function! neocomplcache#is_omni_complete(cur_text)"{{{
+  if !neocomplcache#is_source_enabled('omni_complete')
+    return 0
+  endif
+
+  let filetype = neocomplcache#get_context_filetype()
+
+  if &filetype !=# filetype
+    " &omnifunc is irregal.
+    return 0
+  endif
+
+  let omnifunc = &l:omnifunc
+
+  if has_key(g:neocomplcache_omni_patterns, omnifunc)
+    let pattern = g:neocomplcache_omni_patterns[omnifunc]
+  elseif filetype != '' && has_key(g:neocomplcache_omni_patterns, filetype)
+    let pattern = g:neocomplcache_omni_patterns[filetype]
+  else
+    return 0
+  endif
+
+  " For rubycomplete only.
+  return &l:omnifunc ==# 'rubycomplete#Complete'
+        \ && a:cur_text =~ pattern
 endfunction"}}}
 function! neocomplcache#is_source_enabled(plugin_name)"{{{
   return !get(g:neocomplcache_source_disable, a:plugin_name, 0)
@@ -1301,7 +1348,7 @@ function! neocomplcache#get_temporary_directory()"{{{
   return directory
 endfunction"}}}
 function! neocomplcache#complete_check()"{{{
-  return !g:neocomplcache_enable_prefetch && complete_check()
+  return !neocomplcache#is_prefetch() && complete_check()
 endfunction"}}}
 
 " For unite source.
@@ -1616,7 +1663,7 @@ function! neocomplcache#toggle_lock()"{{{
     return
   endif
 
-  if !has_key(s:complete_lock, bufnr('%')) || !s:complete_lock[bufnr('%')]
+  if !get(s:complete_lock, bufnr('%'), 0)
     echo 'neocomplcache is locked!'
     call neocomplcache#lock()
   else
@@ -1624,17 +1671,19 @@ function! neocomplcache#toggle_lock()"{{{
     call neocomplcache#unlock()
   endif
 endfunction"}}}
-function! neocomplcache#lock(...)"{{{
+function! neocomplcache#lock()"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
     return
   endif
 
   let s:complete_lock[bufnr('%')] = 1
 endfunction"}}}
-function! neocomplcache#unlock(...)"{{{
+function! neocomplcache#unlock()"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
     return
   endif
 
