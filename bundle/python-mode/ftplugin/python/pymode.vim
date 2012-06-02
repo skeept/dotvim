@@ -28,7 +28,9 @@ endif
 if !pymode#Default('g:pymode_options_other', 1) || g:pymode_options_other
     setlocal complete+=t
     setlocal formatoptions-=t
-    setlocal number
+    if v:version > 702 && !&relativenumber
+        setlocal number
+    endif
     setlocal nowrap
     setlocal textwidth=79
 endif
