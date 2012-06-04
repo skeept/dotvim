@@ -368,8 +368,9 @@ let Tlist_Compact_Format = 1
 let Tlist_Exit_OnlyWindow = 1
 let Tlist_Use_SingleClick = 1
 " the following is useful to use configure ctags for using taglist with gams
-let tlist_gams_settings='gams;e:equation;c:variable;m:model;s:Solve Statement'
-let tlist_gamslst_settings='gamslst;m:model;e:equation;c:var val;a:eq val'
+let tlist_gams_settings='gams;e:Equation;c:Variable;m:Model;s:Solve Statement'
+let tlist_gamslst_settings = 'gamslst;m:Model Solution Report;'
+let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
 "noremap <F3> :TlistToggle<cr>
 "inoremap <F3> <ESC>:TlistToggle<cr>
 "==============================================================================
@@ -724,28 +725,28 @@ let g:tagbar_type_gams = {
   \ 's:Solve Statement',
   \ ],
   \ }
+
 let g:tagbar_type_gamslst = {
-  \ 'ctagstype': 'gams',
+  \ 'ctagstype': 'gamslst',
   \ 'kinds' : [
-  \ 'e:equation',
-  \ 'c:var val',
-  \ 'm:model',
-  \ 's:Solve Statement',
-  \ 'a:eq val',
+  \ 'm:Model Solution Report',
+  \ 'e:Equation',
+  \ 'c:Variable Val:1',
+  \ 'a:Equation val:1',
   \ ],
   \ }
+
 let g:tagbar_type_tex = {
-    \ 'ctagstype' : 'latex',
-    \ 'kinds'     : [
-        \ 's:sections',
-        \ 'g:graphics',
-        \ 'l:labels',
-        \ 'r:refs:1',
-        \ 'p:pagerefs:1'
-    \ ],
-    \ 'sort'    : 0,
-\ }
-    "\ 'deffile' : expand('<sfile>:p:h:h') . '/ctags/latex.cnf'
+  \ 'ctagstype' : 'latex',
+  \ 'kinds'     : [
+    \ 's:sections',
+    \ 'l:labels',
+    \ 'r:refs:1',
+    \ 'g:graphics:1:0',
+    \ 'p:pagerefs:1:0'
+  \ ],
+  \ 'sort'    : 0,
+  \ }
 
 "noremap <F5> :TagbarToggle<CR>
 ""aditonal map, since vim-latex takes over f5

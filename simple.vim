@@ -333,7 +333,7 @@ noremap <Leader>tn :call ToggleRelativeNumber()<cr>
 "set relativenumber
 
 "fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>" 
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 " Main settings and mappings for plugins
 "
@@ -480,13 +480,12 @@ let g:tagbar_type_gams = {
   \ ],
   \ }
 let g:tagbar_type_gamslst = {
-  \ 'ctagstype': 'gams',
+  \ 'ctagstype': 'gamslst',
   \ 'kinds' : [
-  \ 'e:equation',
-  \ 'c:var val',
-  \ 'm:model',
-  \ 's:Solve Statement',
-  \ 'a:eq val',
+  \ 'm:Model Solution Report',
+  \ 'e:Equation',
+  \ 'c:Variable Val',
+  \ 'a:Equaation val',
   \ ],
   \ }
 let g:tagbar_type_tex = {
