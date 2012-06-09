@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Jun 2012.
+" Last Modified: 09 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,6 +27,11 @@
 
 let s:save_cpo = &cpo
 set cpo&vim
+
+augroup unite
+  autocmd CursorHold
+        \ call unite#_on_cursor_hold()
+augroup END
 
 function! unite#version()"{{{
   return str2nr(printf('%02d%02d%03d', 4, 0, 0))
@@ -112,15 +117,20 @@ function! unite#custom_action(kind, name, action)"{{{
     let s:custom.actions[key][a:name] = a:action
   endfor
 endfunction"}}}
-function! unite#custom_max_candidates(source_name, max)"{{{
-  call unite#util#set_dictionary_helper(s:custom.max_candidates,
-        \ a:source_name, a:max)
-endfunction"}}}
 function! unite#undef_custom_action(kind, name)"{{{
   for key in split(a:kind, '\s*,\s*')
     if has_key(s:custom.actions, key)
       call remove(s:custom.actions, key)
     endif
+  endfor
+endfunction"}}}
+function! unite#custom_source(source_name, option_name, value)"{{{
+  for key in split(a:source_name, '\s*,\s*')
+    if has_key(s:custom.source, key)
+      let s:custom.source[key] = {}
+    endif
+
+    let s:custom.source[key][a:option_name] = a:value
   endfor
 endfunction"}}}
 
@@ -248,7 +258,6 @@ let s:custom.default_actions = {}
 let s:custom.aliases = {}
 let s:custom.filters = {}
 let s:custom.source = {}
-let s:custom.max_candidates = {}
 
 let s:profiles = {}
 call unite#set_substitute_pattern('files', '^\~',
@@ -269,7 +278,7 @@ let s:unite_options = [
       \ '-verbose', '-auto-resize', '-toggle', '-quick-match', '-create',
       \ '-cursor-line-highlight=', '-no-cursor-line',
       \ '-update-time=', '-hide-source-names',
-      \ '-max-multi-lines=', '-here', '-silent',
+      \ '-max-multi-lines=', '-here', '-silent', '-keep-focus',
       \]
 "}}}
 
@@ -1461,6 +1470,9 @@ function! s:initialize_context(context)"{{{
         \ 'max_multi_lines' : 5,
         \ 'here' : 0,
         \ 'silent' : 0,
+        \ 'keep_focus' : 0,
+        \ 'old_winwidth' : 0,
+        \ 'old_winheight' : 0,
         \ }
 
   let context = extend(default_context, a:context)
@@ -1491,6 +1503,10 @@ function! s:initialize_context(context)"{{{
     if context.winheight < 7
       let context.winheight = 7
     endif
+  endif
+  if &l:modified && !&l:hidden
+    " Split automatically.
+    let context.no_split = 0
   endif
   let context.is_changed = 0
 
@@ -1630,6 +1646,8 @@ function! s:initialize_sources(...)"{{{
         call remove(source, 'gather_candidates')
       endif
 
+      let custom_source = get(s:custom.source, source.name, {})
+
       let source.filters =
             \ has_key(s:custom.filters, source.name) ?
             \ s:custom.filters[source.name] :
@@ -1637,11 +1655,11 @@ function! s:initialize_sources(...)"{{{
             \ source.filters :
             \ unite#filters#default#get()
       let source.max_candidates =
-            \ has_key(s:custom.max_candidates, source.name) ?
-            \ s:custom.max_candidates[source.name] :
-            \ has_key(source, 'max_candidates') ?
-            \ source.max_candidates :
-            \ 0
+            \ get(custom_source, 'max_candidates',
+            \    get(source, 'max_candidates', 0))
+      let source.ignore_pattern =
+            \ get(custom_source, 'ignore_pattern',
+            \    get(source, 'ignore_pattern', ''))
     catch
       call unite#print_error(v:throwpoint)
       call unite#print_error(v:exception)
@@ -1870,13 +1888,16 @@ function! s:recache_candidates(input, is_force)"{{{
             \ source.unite__candidates[: source.max_candidates - 1]
 
       if context.verbose && filtered_count < &cmdheight
-        echohl WarningMsg | echomsg printf('[%s] Filtering too many candidates.', source.name) | echohl None
+        echohl WarningMsg | echomsg printf(
+              \ '[%s] Filtering too many candidates.', source.name)
+              \ | echohl None
         let filtered_count += 1
       endif
     endif
 
     " Call post_filter hook.
-    let source.unite__context.candidates = source.unite__candidates
+    let source.unite__context.candidates =
+          \ source.unite__candidates
     call s:call_hook([source], 'on_post_filter')
 
     let source.unite__candidates = s:initialize_candidates(
@@ -1922,15 +1943,26 @@ function! s:recache_candidates_loop(context, is_force)"{{{
     let source_candidates = s:get_source_candidates(source)
 
     let custom_source = get(s:custom.source, source.name, {})
+    if source.ignore_pattern != ''
+      call filter(source_candidates,
+            \ 'v:val.word !~# source.ignore_pattern')
+    endif
 
     " Call pre_filter hook.
     let source.unite__context.candidates = source_candidates
     call s:call_hook([source], 'on_pre_filter')
 
     " Filter.
-    for filter_name in get(custom_source, 'filters', source.filters)
+    for Filter in get(custom_source, 'filters', source.filters)
+      if type(Filter) == type('')
         let source_candidates = unite#call_filter(
-              \ filter_name, source_candidates, source.unite__context)
+              \ Filter, source_candidates, source.unite__context)
+      else
+        let source_candidates = call(Filter,
+              \ [source_candidates, source.unite__context], source)
+      endif
+
+      unlet Filter
     endfor
 
     let source.unite__candidates += source_candidates
@@ -1986,13 +2018,16 @@ function! s:get_source_candidates(source)"{{{
       " Recaching.
       let funcname = 'change_candidates'
       let a:source.unite__cached_change_candidates =
-            \ a:source.change_candidates(a:source.args, a:source.unite__context)
+            \ a:source.change_candidates(
+            \     a:source.args, a:source.unite__context)
     endif
   catch
       call unite#print_error(v:throwpoint)
       call unite#print_error(v:exception)
-      call unite#print_error('[unite.vim] Error occured in ' . funcname . '!')
-      call unite#print_error('[unite.vim] Source name is ' . a:source.name)
+      call unite#print_error(
+            \ '[unite.vim] Error occured in ' . funcname . '!')
+      call unite#print_error(
+            \ '[unite.vim] Source name is ' . a:source.name)
 
       return []
   endtry
@@ -2328,13 +2363,12 @@ function! s:redraw(is_force, winnr) "{{{
 
   if a:winnr > 0
     " Set current unite.
-    let use_current_unite_save = s:use_current_unite
-    let s:use_current_unite = 1
     let unite = getbufvar(winbufnr(a:winnr), 'unite')
     let unite_save = s:current_unite
     let winnr_save = winnr()
 
     execute a:winnr 'wincmd w'
+
   endif
 
   if &filetype !=# 'unite'
@@ -2374,7 +2408,6 @@ function! s:redraw(is_force, winnr) "{{{
 
   if a:winnr > 0
     " Restore current unite.
-    let s:use_current_unite = use_current_unite_save
     let s:current_unite = unite_save
     execute winnr_save 'wincmd w'
     call unite#_resize_window()
@@ -2421,25 +2454,22 @@ function! unite#_resize_window() "{{{
     call unite#redraw()
   elseif context.vertical
         \ && winwidth(winnr()) != context.winwidth
-        \ && (context.winheight  == 0 ||
+        \ && (context.old_winwidth  == 0 ||
         \     winheight(winnr()) == context.winheight)
     execute 'vertical resize' context.winwidth
-    let context.winwidth = winwidth(winnr())
 
     let context.is_resize = 1
-    call unite#redraw()
   elseif !context.vertical
         \ && winheight(winnr()) != context.winheight
-        \ && (context.winwidth  == 0 ||
+        \ && (context.old_winheight  == 0 ||
         \     winwidth(winnr()) == context.winwidth)
     execute 'resize' context.winheight
 
     let context.is_resize = 1
-    call unite#redraw()
   endif
 
-  let context.winheight = winheight(winnr())
-  let context.winwidth = winwidth(winnr())
+  let context.old_winheight = winheight(winnr())
+  let context.old_winwidth = winwidth(winnr())
 endfunction"}}}
 
 " Autocmd events.
@@ -2508,27 +2538,31 @@ function! s:on_bufwin_enter(bufnr)  "{{{
   endif
 endfunction"}}}
 function! unite#_on_cursor_hold()  "{{{
+  let is_async = 0
+
   if &filetype ==# 'unite'
     " Redraw.
     call unite#redraw()
     call s:change_highlight()
 
-    if unite#get_current_unite().is_async
-      " Ignore key sequences.
-      call feedkeys("g\<ESC>", 'n')
-    endif
+    let is_async = unite#get_current_unite().is_async
   else
     " Search other unite window.
-    let winnr = 1
-    while winnr <= winnr('$')
-      if getbufvar(winbufnr(winnr), '&filetype') ==# 'unite'
-            \ && getbufvar(winbufnr(winnr), 'unite').is_async
+    for winnr in filter(range(1, winnr('$')),
+          \ "getbufvar(winbufnr(v:val), '&filetype') ==# 'unite'")
+      let unite = getbufvar(winbufnr(winnr), 'unite')
+      if unite.is_async
         " Redraw unite buffer.
         call unite#redraw(winnr)
-      endif
 
-      let winnr += 1
-    endwhile
+        let is_async = unite.is_async
+      endif
+    endfor
+  endif
+
+  if is_async
+    " Ignore key sequences.
+    call feedkeys("g\<ESC>", 'n')
   endif
 endfunction"}}}
 function! s:on_cursor_moved()  "{{{
@@ -2786,8 +2820,10 @@ function! s:call_hook(sources, hook_name)"{{{
     catch
       call unite#print_error(v:throwpoint)
       call unite#print_error(v:exception)
-      call unite#print_error('[unite.vim] Error occured in calling hook "' . a:hook_name . '"!')
-      call unite#print_error('[unite.vim] Source name is ' . source.name)
+      call unite#print_error(
+            \ '[unite.vim] Error occured in calling hook "' . a:hook_name . '"!')
+      call unite#print_error(
+            \ '[unite.vim] Source name is ' . source.name)
     endtry
   endfor
 endfunction"}}}
