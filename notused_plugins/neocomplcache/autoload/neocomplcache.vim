@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 May 2012.
+" Last Modified: 10 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,14 +29,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 scriptencoding utf-8
-
-" Check vimproc.
-try
-  call vimproc#version()
-  let s:exists_vimproc = 1
-catch
-  let s:exists_vimproc = 0
-endtry
 
 if !exists('s:is_enabled')
   let s:is_enabled = 0
@@ -322,7 +314,9 @@ function! neocomplcache#enable() "{{{
   call neocomplcache#set_dictionary_helper(g:neocomplcache_same_filetype_lists,
         \ 'help', 'vim')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_same_filetype_lists,
-        \ 'tex', 'bib')
+        \ 'tex', 'bib,plaintex')
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_same_filetype_lists,
+        \ 'plaintex', 'bib,tex')
   call neocomplcache#set_dictionary_helper(g:neocomplcache_same_filetype_lists,
         \ 'lingr-say', 'lingr-messages,lingr-members')
 
@@ -536,12 +530,6 @@ function! neocomplcache#enable() "{{{
         \ <C-x><C-u><C-r>=neocomplcache#popup_post()<CR>
   inoremap <silent> <Plug>(neocomplcache_start_omni_complete)
         \ <C-x><C-o><C-r>=neocomplcache#popup_post()<CR>
-
-  " Check if "vim" command is executable.
-  if neocomplcache#has_vimproc() && !executable('vim')
-    echoerr '"vim" command is not executable. Asynchronous caching is disabled.'
-    let s:exists_vimproc = 0
-  endif
 
   " Initialize.
   for source in values(neocomplcache#available_complfuncs())
@@ -1073,8 +1061,20 @@ function! neocomplcache#system(...)"{{{
   return call(V.system, a:000)
 endfunction"}}}
 function! neocomplcache#has_vimproc(...)"{{{
-  let V = vital#of('neocomplcache')
-  return call(V.has_vimproc, a:000)
+  " Initialize.
+  if !exists('g:neocomplcache_use_vimproc')
+    " Check vimproc.
+    try
+      call vimproc#version()
+      let exists_vimproc = 1
+    catch
+      let exists_vimproc = 0
+    endtry
+
+    let g:neocomplcache_use_vimproc = exists_vimproc
+  endif
+
+  return g:neocomplcache_use_vimproc
 endfunction"}}}
 
 function! neocomplcache#get_cur_text(...)"{{{
@@ -1173,6 +1173,7 @@ function! neocomplcache#is_locked(...)"{{{
         \ || get(s:complete_lock, bufnr, 0)
         \ || (g:neocomplcache_lock_buffer_name_pattern != '' &&
         \   bufname(bufnr) =~ g:neocomplcache_lock_buffer_name_pattern)
+        \ || &l:omnifunc ==# 'fuf#onComplete'
 endfunction"}}}
 function! neocomplcache#is_plugin_locked(plugin_name)"{{{
   if !s:is_enabled

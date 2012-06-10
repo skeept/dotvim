@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 May 2012.
+" Last Modified: 09 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -52,6 +52,7 @@ let s:source_rec = {
       \ 'description' : 'candidates from directory by recursive',
       \ 'hooks' : {},
       \ 'max_candidates' : 50,
+      \ 'ignore_pattern' : g:unite_source_file_rec_ignore_pattern,
       \ }
 
 function! s:source_rec.gather_candidates(args, context)"{{{
@@ -250,6 +251,7 @@ let s:source_async = {
       \ 'description' : 'asyncronous candidates from directory by recursive',
       \ 'hooks' : {},
       \ 'max_candidates' : 50,
+      \ 'ignore_pattern' : g:unite_source_file_rec_ignore_pattern,
       \ }
 
 function! s:source_async.gather_candidates(args, context)"{{{
@@ -325,8 +327,7 @@ function! s:source_async.async_gather_candidates(args, context)"{{{
   for filename in map(filter(
         \ stdout.read_lines(-1, 100), 'v:val != ""'),
         \ "fnamemodify(iconv(v:val, 'char', &encoding), ':p')")
-    if (g:unite_source_file_rec_ignore_pattern == ''
-          \ || filename !~ g:unite_source_file_rec_ignore_pattern)
+    if filename !~ '/\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'
       call add(candidates, {
             \ 'word' : unite#util#substitute_path_separator(
             \    fnamemodify(filename, ':.')),
@@ -415,6 +416,24 @@ unlet! s:cdable_action_rec
 unlet! s:cdable_action_rec_async
 "}}}
 
+" Filters"{{{
+function! s:source_rec.source__converter(candidates, context)"{{{
+  return s:converter(a:candidates, a:context)
+endfunction"}}}
+
+let s:source_rec.filters =
+      \ ['matcher_default', 'sorter_default',
+      \      s:source_rec.source__converter]
+
+function! s:source_async.source__converter(candidates, context)"{{{
+  return s:converter(a:candidates, a:context)
+endfunction"}}}
+
+let s:source_async.filters =
+      \ ['matcher_default', 'sorter_default',
+      \      s:source_async.source__converter]
+"}}}
+
 " Misc.
 function! s:get_path(args, context)"{{{
   let directory = get(
@@ -441,9 +460,7 @@ function! s:get_files(files, level, max_len)"{{{
   for file in a:files
     let files_index += 1
 
-    if file =~ '/\.\+$'
-          \ || (g:unite_source_file_rec_ignore_pattern != '' &&
-          \     file =~ g:unite_source_file_rec_ignore_pattern)
+    if file =~ '/\.\+$\|/\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'
           \ || isdirectory(file) && getftype(file) ==# 'link'
       continue
     endif
@@ -454,13 +471,12 @@ function! s:get_files(files, level, max_len)"{{{
       endif
 
       let child_index = 0
-      let childs = unite#util#glob(file.'/*') + unite#util#glob(file.'/.*')
+      let childs = unite#util#glob(file.'/*') +
+            \ unite#util#glob(file.'/.*')
       for child in childs
         let child_index += 1
 
-        if child =~ '/\.\+$'
-              \ ||(g:unite_source_file_rec_ignore_pattern != '' &&
-              \     child =~ g:unite_source_file_rec_ignore_pattern)
+        if child =~ '/\.\+$\|/\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'
               \ || isdirectory(child) && getftype(child) ==# 'link'
           continue
         endif
@@ -500,16 +516,9 @@ function! s:get_files(files, level, max_len)"{{{
         \ "unite#util#substitute_path_separator(fnamemodify(v:val, ':p'))")]
 endfunction"}}}
 function! s:on_post_filter(args, context)"{{{
-  let is_relative_path =
-        \ a:context.source__directory ==
-        \   unite#util#substitute_path_separator(getcwd())
-
   for candidate in a:context.candidates
     let candidate.kind = 'file'
-    let candidate.abbr = candidate.word .
-          \ (isdirectory(candidate.word) ? '/' : '')
-    let candidate.action__directory = is_relative_path ?
-          \ candidate.abbr :
+    let candidate.action__directory =
           \ unite#util#path2directory(candidate.action__path)
   endfor
 endfunction"}}}
@@ -558,6 +567,18 @@ function! s:init_continuation(context, directory)"{{{
           \ 'directory' : a:directory, 'end' : 0,
           \ }
   endif
+endfunction"}}}
+function! s:converter(candidates, context)"{{{
+  let is_relative_path =
+        \ a:context.source__directory ==
+        \   unite#util#substitute_path_separator(getcwd())
+
+  for candidate in a:candidates
+    let candidate.abbr = candidate.word .
+          \ (isdirectory(candidate.word) ? '/' : '')
+  endfor
+
+  return a:candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo
