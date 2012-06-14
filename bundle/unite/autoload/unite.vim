@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Jun 2012.
+" Last Modified: 12 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -825,7 +825,7 @@ function! unite#print_source_error(message, source_name)"{{{
   let message = type(a:message) == type([]) ?
         \ a:message : [a:message]
   call unite#print_error(map(copy(message),
-        \ "printf('[%s] %s', a:source_name, v:val)")
+        \ "printf('[%s] %s', a:source_name, v:val)"))
 endfunction"}}}
 function! unite#print_message(message)"{{{
   let context = unite#get_context()
@@ -2451,7 +2451,6 @@ function! unite#_resize_window() "{{{
     endif
 
     let context.is_resize = 1
-    call unite#redraw()
   elseif context.vertical
         \ && winwidth(winnr()) != context.winwidth
         \ && (context.old_winwidth  == 0 ||
