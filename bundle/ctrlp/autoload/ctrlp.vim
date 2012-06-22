@@ -92,8 +92,7 @@ let [s:pref, s:opts, s:new_opts] = ['g:ctrlp_', {
 " Global options
 let s:glbs = { 'magic': 1, 'to': 1, 'tm': 0, 'sb': 1, 'hls': 0, 'im': 0,
 	\ 'report': 9999, 'sc': 0, 'ss': 0, 'siso': 0, 'mfd': 200, 'mouse': 'n',
-	\ 'gcr': 'a:blinkon0', 'ic': 1, 'scs': 1, 'lmap': '', 'mousef': 0,
-	\ 'imd': 1 }
+	\ 'gcr': 'a:blinkon0', 'ic': 1, 'lmap': '', 'mousef': 0, 'imd': 1 }
 
 " Keymaps
 let [s:lcmap, s:prtmaps] = ['nn <buffer> <silent>', {
@@ -139,8 +138,9 @@ en
 
 let s:lash = ctrlp#utils#lash()
 
-" Limiters
-let [s:compare_lim, s:nocache_lim] = [3000, 4000]
+let s:compare_lim = 3000
+
+let s:ficounts = {}
 
 " Regexp
 let s:fpats = {
@@ -292,7 +292,7 @@ endf
 " * Files {{{1
 fu! ctrlp#files()
 	let cafile = ctrlp#utils#cachefile()
-	if g:ctrlp_newcache || !filereadable(cafile) || !s:caching
+	if g:ctrlp_newcache || !filereadable(cafile) || s:nocache()
 		let [lscmd, s:initcwd, g:ctrlp_allfiles] = [s:lsCmd(), s:dyncwd, []]
 		" Get the list of files
 		if empty(lscmd)
@@ -314,6 +314,7 @@ fu! ctrlp#files()
 			let g:ctrlp_allfiles = ctrlp#utils#readfile(cafile)
 		en
 	en
+	cal extend(s:ficounts, { s:dyncwd : len(g:ctrlp_allfiles) })
 	retu g:ctrlp_allfiles
 endf
 
@@ -382,7 +383,8 @@ endf
 " * MatchedItems() {{{1
 fu! s:MatchIt(items, pat, limit, exc)
 	let [lines, id] = [[], 0]
-	let pat = s:byfname ? split(a:pat, '^[^;]\+\zs;', 1) : a:pat
+	let pat = s:byfname ?
+		\ map(split(a:pat, '^[^;]\+\zs;', 1), 's:martcs.v:val') : s:martcs.a:pat
 	for item in a:items
 		let id += 1
 		try | if !( s:ispath && item == a:exc ) && call(s:mfunc, [item, pat]) >= 0
@@ -457,7 +459,7 @@ fu! s:Render(lines, pat)
 	let s:matched = copy(lines)
 	" Sorting
 	if !s:nosort()
-		let s:compat = pat
+		let s:compat = s:martcs.pat
 		cal sort(lines, 's:mixedsort')
 		unl s:compat
 	en
@@ -485,6 +487,7 @@ fu! s:Update(str)
 	let str = s:sanstail(a:str)
 	" Stop if the string's unchanged
 	if str == oldstr && !empty(str) && !exists('s:force') | retu | en
+	let s:martcs = &scs && str =~ '\u' ? '\C' : ''
 	let pat = s:matcher == {} ? s:SplitPattern(str) : str
 	let lines = s:nolim == 1 && empty(str) ? copy(g:ctrlp_lines)
 		\ : s:MatchedItems(g:ctrlp_lines, pat, s:winh)
@@ -1346,7 +1349,7 @@ fu! s:highlight(pat, grp)
 			let pat = substitute(pat, '\[\^\(.\{-}\)\]\\{-}', '[^\\/\1]\\{-}', 'g')
 			let pat = substitute(pat, '\$\@<!$', '\\ze[^\\/]*$', 'g')
 		en
-		cal matchadd(a:grp, '\c'.pat)
+		cal matchadd(a:grp, ( s:martcs == '' ? '\c' : '\C' ).pat)
 		cal matchadd('CtrlPLinePre', '^>')
 	en
 endf
@@ -1764,12 +1767,14 @@ fu! s:mmode()
 endf
 " Cache {{{2
 fu! s:writecache(cache_file)
-	let fwrite = len(g:ctrlp_allfiles) > s:nocache_lim
-	if ( g:ctrlp_newcache || !filereadable(a:cache_file) ) && s:caching || fwrite
-		if fwrite | let s:caching = 1 | en
+	if ( g:ctrlp_newcache || !filereadable(a:cache_file) ) && !s:nocache()
 		cal ctrlp#utils#writecache(g:ctrlp_allfiles)
 		let g:ctrlp_newcache = 0
 	en
+endf
+
+fu! s:nocache()
+	retu !s:caching || ( s:caching > 1 && get(s:ficounts, s:dyncwd) < s:caching )
 endf
 
 fu! s:insertcache(str)
