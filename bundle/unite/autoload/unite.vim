@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Jun 2012.
+" Last Modified: 23 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1724,6 +1724,7 @@ function! s:initialize_candidates(candidates, source_name)"{{{
         \ unite.context.winwidth : &columns
   let [max_width, max_source_name] =
         \ s:adjustments(winwidth-5, unite.max_source_name, 2)
+  let is_multiline = 0
 
   let default_candidate = {
         \ 'kind' : 'common',
@@ -1758,7 +1759,6 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     endif
 
     if !candidate.is_multiline
-      let candidate.unite__abbr = '  ' . candidate.unite__abbr
       call add(candidates, candidate)
       continue
     endif
@@ -1782,7 +1782,7 @@ function! s:initialize_candidates(candidates, source_name)"{{{
     endif
 
     if candidate.unite__abbr !~ '\n'
-      let candidate.unite__abbr = '  ' . candidate.unite__abbr
+      let candidate.is_multiline = 0
       call add(candidates, candidate)
       continue
     endif
@@ -1799,11 +1799,20 @@ function! s:initialize_candidates(candidates, source_name)"{{{
         let candidate_multi.is_dummy = 1
       endif
 
+      let is_multiline = 1
       call add(candidates, candidate_multi)
 
       let cnt += 1
     endfor
   endfor
+
+  " Multiline check.
+  if is_multiline
+    for candidate in filter(copy(candidates),
+          \ '!v:val.is_multiline')
+      let candidate.unite__abbr = '  ' . candidate.unite__abbr
+    endfor
+  endif
 
   return candidates
 endfunction"}}}
@@ -1916,6 +1925,7 @@ function! s:recache_candidates_loop(context, is_force)"{{{
 
   let input_len = unite#util#strchars(a:context.input)
 
+  let candidate_sources = []
   for source in unite#loaded_sources_list()
     " Check required pattern length.
     if input_len < source.required_pattern_length
@@ -1957,7 +1967,8 @@ function! s:recache_candidates_loop(context, is_force)"{{{
     let filters = []
     for Filter in get(custom_source, 'filters', source.filters)
       if type(Filter) == type('') &&
-            \ get(unite#get_filters(Filter), 'name', '') =~# '^matcher_'
+            \ get(unite#get_filters(Filter),
+            \              'name', '') =~# '^matcher_'
         call add(matchers, Filter)
       else
         call add(filters, Filter)
@@ -1979,7 +1990,16 @@ function! s:recache_candidates_loop(context, is_force)"{{{
     endfor
 
     let source.unite__candidates += source_candidates
+    if !empty(source_candidates)
+      call add(candidate_sources, source.name)
+    endif
   endfor
+
+  if !a:context.hide_source_names
+        \ && len(unite#loaded_sources_list()) > 1
+    let unite.max_source_name =
+          \ max(map(candidate_sources, 'len(v:val)')) + 1
+  endif
 endfunction"}}}
 function! s:get_source_candidates(source)"{{{
   let context = a:source.unite__context
@@ -2175,10 +2195,7 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.post_filters = unite#get_profile(
         \ unite.profile_name, 'filters')
   let unite.preview_candidate = {}
-
-  let unite.max_source_name =
-        \ !context.hide_source_names && len(a:sources) > 1 ?
-        \ max(map(copy(a:sources), 'len(v:val[0])')) : 0
+  let unite.max_source_name = 0
 
   " Preview windows check.
   let unite.has_preview_window =

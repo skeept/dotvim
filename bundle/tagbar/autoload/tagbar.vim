@@ -1191,17 +1191,22 @@ endfunction
 
 " s:BaseTag.getClosedParentTline() {{{3
 function! s:BaseTag.getClosedParentTline() dict
-    let tagline = self.tline
+    let tagline  = self.tline
     let fileinfo = self.fileinfo
 
-    let parent = self.parent
-    while !empty(parent)
+    " Find the first closed parent, starting from the top of the hierarchy.
+    let parents   = []
+    let curparent = self.parent
+    while !empty(curparent)
+        call add(parents, curparent)
+        let curparent = curparent.parent
+    endwhile
+    for parent in reverse(parents)
         if parent.isFolded()
             let tagline = parent.tline
             break
         endif
-        let parent = parent.parent
-    endwhile
+    endfor
 
     return tagline
 endfunction
@@ -1615,13 +1620,14 @@ endfunction
 function! s:InitWindow(autoclose)
     call s:LogDebugMessage('InitWindow called with autoclose: ' . a:autoclose)
 
+    setlocal filetype=tagbar
+
     setlocal noreadonly " in case the "view" mode is used
     setlocal buftype=nofile
     setlocal bufhidden=hide
     setlocal noswapfile
     setlocal nobuflisted
     setlocal nomodifiable
-    setlocal filetype=tagbar
     setlocal nolist
     setlocal nonumber
     setlocal nowrap
@@ -1629,6 +1635,7 @@ function! s:InitWindow(autoclose)
     setlocal textwidth=0
     setlocal nocursorline
     setlocal nocursorcolumn
+    setlocal nospell
 
     if exists('+relativenumber')
         setlocal norelativenumber
@@ -2626,6 +2633,7 @@ function! s:HighlightTag(openfolds, ...)
 
     let foldpat = '[' . s:icon_open . s:icon_closed . ' ]'
     let pattern = '/^\%' . tagline . 'l\s*' . foldpat . '[-+# ]\zs[^( ]\+\ze/'
+    call s:LogDebugMessage("Highlight pattern: '" . pattern . "'")
     execute 'match TagbarHighlight ' . pattern
 
     if a:0 == 0 " no line explicitly given, so assume we were in the file window
