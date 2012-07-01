@@ -1,4 +1,4 @@
-*ctrlp.txt*       Fuzzy file, buffer, mru, tag, ... finder. v1.7.7
+*ctrlp.txt*       Fuzzy file, buffer, mru, tag, ... finder. v1.77
 *CtrlP* *ControlP* *'ctrlp'* *'ctrl-p'*
 ===============================================================================
 #                                                                             #
@@ -301,11 +301,8 @@ For the letters:
   v - each file in a new vertical split.
   i - all files as hidden buffers.
   j - after opening, jump to the first opened tab or window.
-  Reuse the current window:
-  tr,
-  hr,
-  vr - open the first file in the current window, then the remaining files in
-       new splits or new tabs just like with t, h, v.
+  r - open the first file in the current window, then the remaining files in
+      new splits or new tabs depending on which of h, v and t is also present.
 
                                                             *'g:ctrlp_arg_map'*
 When this is set to 1, the <c-o> and <c-y> mappings will accept one extra key
@@ -343,6 +340,10 @@ delay time in milliseconds.
 Set this to 1 to enable seeding the prompt with the current file's relative
 path: >
   let g:ctrlp_default_input = 0
+<
+Instead of 1 or 0, if the value of the option is a string, it'll be used as-is
+as the default input: >
+  let g:ctrlp_default_input = 'anystring'
 <
 
                                                          *'g:ctrlp_use_migemo'*
