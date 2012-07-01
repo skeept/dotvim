@@ -138,7 +138,16 @@ endsnippet
 snippet todo "define a todo"
 \todo{
   ${1:<+TodoText+>}
-} % TODOEND${0:<++>}
+}${0:<++>}
+endsnippet
+
+snippet abs "enclose expression in | |" !w
+\abs{${1:<++>}}$0
+endsnippet
+
+snippet todoi "expansion of todoi" !w
+\todoi{${1:<+outline title (red)+>}}
+  {${2:<+outline (blue)+>}}$0
 endsnippet
 
 # vim:ft=snippets:
