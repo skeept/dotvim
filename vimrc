@@ -75,7 +75,7 @@ set t_Co=256
 
 if v:version >= 703
   set undofile
-  set relativenumber
+  "set relativenumber
 endif
 
 "" set backup. but all the backuped files will be
@@ -121,7 +121,7 @@ set virtualedit+=block
 "if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
-  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
+  set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
 "endif
 
 "for scip go up two folders
@@ -286,13 +286,17 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
 
   "source .vimrc if changes are made (cool)
-  autocmd BufWritePost $MYVIMRC so %
+  "autocmd BufWritePost $MYVIMRC so %
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 
   "place quickfix window below all other windows
   autocmd! FileType qf wincmd J
+
+  "set readonly files to autoread
+  autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread so=0
+        \ sbo+=ver,hor | endif
 endif " has("autocmd")
 
 let fortran_free_source = 1
@@ -353,8 +357,9 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 "
 
 "=============================== tasklist =====================================
-"todo list
-noremap <leader>td <Plug>TaskList
+"useful for managing a todo list
+noremap <leader>t_ <Plug>TaskList
+noremap <leader>td :TaskList<cr>
 "==============================================================================
 
 "=============================== Taglist ======================================
@@ -461,22 +466,22 @@ nnoremap ,e :<c-u> call ToggleLycosa()<cr>
 "==============================================================================
 
 "=============================== Unite ========================================
-nnoremap <silent> ,uc  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
-nnoremap <silent> ,ub  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
-nnoremap <silent> ,ur  :<C-u>Unite -buffer-name=register register<CR>
-nnoremap <silent> ,uo  :<C-u>Unite outline<CR>
+nnoremap <silent> ,uc :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
+nnoremap <silent> ,uo :<C-u>Unite outline<CR>
 nnoremap ,uf  :<C-u>Unite source<CR>
 
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()"{{{
   " Overwrite settings.
 
-  nmap <buffer> <ESC>      <Plug>(unite_exit)
-  inoremap <buffer> jj      <Plug>(unite_insert_leave)
-  "inoremap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+  nmap <buffer> <ESC> <Plug>(unite_exit)
+  inoremap <buffer> jj <Plug>(unite_insert_leave)
+  "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
 
   " <C-l>: manual neocomplcache completion.
-  inoremap <buffer> <C-;>  <C-x><C-u><C-p><Down>
+  inoremap <buffer> <C-;> <C-x><C-u><C-p><Down>
 
   " Start insert.
   "let g:unite_enable_start_insert = 1
@@ -604,7 +609,9 @@ function! CondDispFtFf()
 endfunction
 
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
-set statusline=%2.2n\ %t\ %h%m%r%=%{CondDispFtFf()}
+set statusline=%2.2n\ %t
+"set statusline+=%{tagbar#currenttag('[%s] ', '')}
+set statusline+=\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
 "==============================================================================
@@ -698,14 +705,27 @@ noremap ,pq :CtrlPQuickfix<cr>
 noremap ,pd :CtrlPCurWD<cr>
 noremap ,pj :CtrlPBufTagAll<cr>
 noremap ,pf :CtrlPCurFile<cr>
+noremap ,pa :CtrlPShowArr<cr>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
          \ }
 let g:ctrlp_map = ''
-command! CtrlPShowArr echo g:ctrlp_comm
+command! CtrlPShowArr call CtrlpShowArrFun()
+function! CtrlpShowArrFun()
+  let i = 0
+  let msg = ''
+  for v in g:ctrlp_comm 
+    let msg .= i
+    let msg .= ':'
+    let msg .= g:ctrlp_comm[i]
+    let msg .= ' '
+    let i = i + 1
+  endfor
+  echo msg
+endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
-      \'Root', 'Tag']
+      \'Root', 'Tag', 'CurFile']
 nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
 "==============================================================================
 
@@ -840,6 +860,11 @@ endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "==============================================================================
 
+"============================= Change to Current's File Folder ================
+command! ChgDirCurrFileFolder lcd %:p:h
+"==============================================================================
+
+
 "don't show file numbers in taglist and nerdtree
 autocmd FileType nerdtree      setlocal norelativenumber
 autocmd FileType taglist       setlocal norelativenumber
@@ -863,4 +888,52 @@ noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <cr>
 let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+"==============================================================================
+
+"===================== Don't view files with inconsistent ctrl-r ==============
+map ,m :ed ++ff=dos<cr>
+command! HideCtrlM ed ++ff=dos
+autocmd BufReadPost * nested
+      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+      \   let b:reload_dos = 1 |
+      \   e ++ff=dos |
+      \ endif
+"==============================================================================
+
+"============================ A.vim settings ==================================
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================
+
+"============================ scrollbind mappings =============================
+noremap ,sbt :windo set scrollbind<cr>
+noremap ,sbf :windo set noscrollbind<cr>
+"==============================================================================
+"
+if has("win32")
+  let $TMP = 'c:\\htemp\\tmp'
+endif
+
+"=========================== full screen with plugin ==========================
+"plugin: http://www.vim.org/scripts/script.php?script_id=2596
+let g:isMaximized = 0
+function! FullScreenToogleFun()
+  if g:isMaximized == 0
+    let g:defaultNumCols = &columns
+    let g:defaultNumLines = &lines
+    let g:currposx = getwinposx()
+    let g:currposy = getwinposy()
+    call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+    let g:isMaximized = 1
+  else
+    call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+    let g:isMaximized = 0
+    exec "set columns=" . g:defaultNumCols
+    exec "set lines=" . g:defaultNumLines
+    exec "winpos" . g:currposx . " " . g:currposy
+  endif
+endfunction
+
+"command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+command! FullScreenToogle call FullScreenToogleFun()
+noremap  <Leader>tf :FullScreenToogle<CR>
 "==============================================================================
