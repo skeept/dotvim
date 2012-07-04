@@ -715,7 +715,7 @@ command! CtrlPShowArr call CtrlpShowArrFun()
 function! CtrlpShowArrFun()
   let i = 0
   let msg = ''
-  for v in g:ctrlp_comm 
+  for v in g:ctrlp_comm
     let msg .= i
     let msg .= ':'
     let msg .= g:ctrlp_comm[i]
