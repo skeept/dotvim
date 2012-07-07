@@ -3,10 +3,11 @@
 
 " Helper Functions                                  {{{1
     function! s:LowerMarksList() "                  {{{2
+        let l:SignatureIncludeMarks = ( exists('b:SignatureIncludeMarks') ? b:SignatureIncludeMarks : g:SignatureIncludeMarks )
         let l:ref = split("abcdefghijklmnopqrstuvwxyz", '\zs')
         let l:lmarks = []
         for i in l:ref
-            if stridx(g:SignatureIncludeMarks, i) >= 0
+            if stridx(l:SignatureIncludeMarks, i) >= 0
                 call add(l:lmarks, i)
             endif
         endfor
@@ -14,10 +15,11 @@
     endfunction
 
     function! s:UpperMarksList() "                  {{{2
+        let l:SignatureIncludeMarks = ( exists('b:SignatureIncludeMarks') ? b:SignatureIncludeMarks : g:SignatureIncludeMarks )
         let l:ref = split("ABCDEFGHIJKLMNOPQRSTUVWXYZ", '\zs')
         let l:umarks = []
         for i in l:ref
-            if stridx(g:SignatureIncludeMarks, i) >= 0
+            if stridx(l:SignatureIncludeMarks, i) >= 0
                 call add(l:umarks, i)
             endif
         endfor
@@ -25,15 +27,16 @@
     endfunction
 
     function! s:MarksList() "                       {{{2
+        let l:SignatureIncludeMarks = ( exists('b:SignatureIncludeMarks') ? b:SignatureIncludeMarks : g:SignatureIncludeMarks )
         let l:marks = []
         for i in split("abcdefghijklmnopqrstuvwxyz", '\zs')
-            if stridx(g:SignatureIncludeMarks, toupper(i)) >= 0
+            if stridx(l:SignatureIncludeMarks, toupper(i)) >= 0
                 let [ l:buf, l:line, l:col, l:off ] = getpos("'" . toupper(i))
                 if l:buf == bufnr('%') || l:buf == 0
                     let l:marks = add(l:marks, [toupper(i), l:line])
                 endif
             endif
-            if stridx(g:SignatureIncludeMarks, i) >= 0
+            if stridx(l:SignatureIncludeMarks, i) >= 0
                 let l:marks = add(l:marks, [i, line("'" . i)])
             endif
         endfor
@@ -77,7 +80,7 @@
             call s:ToggleSign(l:mark, 1, l:lnum)
 
         else
-            if a:mode == 0 || a:mode == -1
+            if l:mode == 0 || l:mode == -1
                 " Toggle Mark
                 for i in s:MarksAt(line('.'))
                     if i ==# a:mark
@@ -88,7 +91,7 @@
                 endfor
             endif
 
-            if a:mode == 1 || a:mode == -1
+            if l:mode == 1 || l:mode == -1
                 " Mark not present, hence place new mark
                 call s:ToggleSign(a:mark, 0, 0)
                 exec 'normal! m' . a:mark
@@ -106,41 +109,48 @@
     endfunction     "}}}2
 
     function! signature#ToggleMarker(marker, ...) " {{{2
-        let l:mode = has_key(b:sig_markers, l:lnum) && b:sig_markers[l:lnum] == a:marker
-        let l:mode = ( a:0 >= 1 && a:1 >= 0 ? a:1 : l:mode    )
         let l:lnum = ( a:0 >= 2 && a:2 >  0 ? a:2 : line('.') )
-
+        let l:mode = ( a:0 >= 1 && a:1 >= 0 ? a:1 : !(has_key(b:sig_markers, l:lnum) && b:sig_markers[l:lnum] == a:marker))
         if !l:mode | call remove(b:sig_markers, l:lnum) | endif
         call s:ToggleSign(a:marker, l:mode, l:lnum)
     endfunction
 
 
     function! signature#RemoveMarker(marker) "      {{{2
-        let l:markers = keys(filter(copy(b:sig_markers), 'v:val=~#a:marker'))
-        for i in l:markers
+        for i in keys(filter(copy(b:sig_markers), 'v:val=~#a:marker'))
             call s:ToggleSign(a:marker, 0, i)
         endfor
         call filter(b:sig_markers, 'v:val!~#a:marker')
+    endfunction
+
+    function! signature#PurgeMarkers() "            {{{2
+        for i in keys(b:sig_markers)
+            call s:ToggleSign(b:sig_markers[i], 0, i)
+        endfor
+        let b:sig_markers = {}
     endfunction     "}}}2
 
     function! s:ToggleSign(mark, mode, lnum) "      {{{2
         if !has('signs') | return | endif
+        let l:SignatureIncludeMarkers = ( exists('b:SignatureIncludeMarkers') ? b:SignatureIncludeMarkers : g:SignatureIncludeMarkers )
+        let l:SignatureLcMarkStr      = ( exists('b:SignatureLcMarkStr')      ? b:SignatureLcMarkStr      : g:SignatureLcMarkStr      )
+        let l:SignatureUcMarkStr      = ( exists('b:SignatureUcMarkStr')      ? b:SignatureUcMarkStr      : g:SignatureUcMarkStr      )
 
-        if stridx(g:SignatureMarkers, a:mark) >= 0
+        if stridx(l:SignatureIncludeMarkers, a:mark) >= 0
             " Visual marker has been set
             let l:lnum = a:lnum
             let l:id = ( winbufnr(0) + 1 ) * l:lnum
             if a:mode
                 let b:sig_markers[l:lnum] = a:mark
-                let l:str = stridx(g:SignatureMarkers, a:mark)
+                let l:str = stridx(l:SignatureIncludeMarkers, a:mark)
                 exec 'sign place ' . l:id . ' line=' . l:lnum . ' name=sig_Marker_' . l:str . ' file=' . expand('%:p')
             else
                 if has_key(b:sig_marks, l:lnum)
                     let l:mark = strpart(b:sig_marks[l:lnum], 0, 1)
                     if index(s:LowerMarksList(), l:mark) >= 0
-                        let l:str = substitute(g:SignatureLcMarkStr, "\m", l:mark, "")
+                        let l:str = substitute(l:SignatureLcMarkStr, "\m", l:mark, "")
                     elseif index(s:UpperMarksList(), l:mark) >= 0
-                        let l:str = substitute(g:SignatureUcMarkStr, "\m", l:mark, "")
+                        let l:str = substitute(l:SignatureUcMarkStr, "\m", l:mark, "")
                     endif
                     let l:str = substitute(l:str, "\p", strpart(b:sig_marks[l:lnum], 1, 1), "")
                     exec 'sign define sig_Mark_' . l:id . ' text=' . l:str . ' texthl=Exception'
@@ -176,9 +186,9 @@
             if !has_key(b:sig_markers, l:lnum)
                 let l:mark = strpart(b:sig_marks[l:lnum], 0, 1)
                 if index(s:LowerMarksList(), l:mark) >= 0
-                    let l:str = substitute(g:SignatureLcMarkStr, "\m", l:mark, "")
+                    let l:str = substitute(l:SignatureLcMarkStr, "\m", l:mark, "")
                 elseif index(s:UpperMarksList(), l:mark) >= 0
-                    let l:str = substitute(g:SignatureUcMarkStr, "\m", l:mark, "")
+                    let l:str = substitute(l:SignatureUcMarkStr, "\m", l:mark, "")
                 endif
                 let l:str = substitute(l:str, "\p", strpart(b:sig_marks[l:lnum], 1, 1), "")
                 exec 'sign define sig_Mark_' . l:id . ' text=' . l:str . ' texthl=Exception'
@@ -212,6 +222,7 @@
 
     function! s:GotoMarkByPos(dir) "                {{{2
         "echom "Jumping by POS"
+        let l:SignatureWrapJumps = ( exists('b:SignatureWrapJumps') ? b:SignatureWrapJumps : g:SignatureWrapJumps )
 
         let l:MarksList = s:UsedMarks()
         if len(l:MarksList) < 2 | return "" | endif
@@ -247,7 +258,7 @@
             endfor
         endif
 
-        if empty(l:mark) && g:SignatureWrapJumps
+        if empty(l:mark) && l:SignatureWrapJumps
             let l:mark = l:mark_first
         endif
 
@@ -256,6 +267,7 @@
 
     function! s:GotoMarkByAlpha(dir) "              {{{2
         "echom "Jumping by ALPHA"
+        let l:SignatureWrapJumps = ( exists('b:SignatureWrapJumps') ? b:SignatureWrapJumps : g:SignatureWrapJumps )
 
         let l:UsedMarks = s:UsedMarks()
         let l:MarksAt = s:MarksAt(line('.'))
@@ -263,33 +275,33 @@
         let l:mark_first = ""
 
         if empty(l:MarksAt)
-            if exists('g:sig_GotoMarkByAlpha')
-                unlet g:sig_GotoMarkByAlpha
+            if exists('b:sig_GotoMarkByAlpha')
+                unlet b:sig_GotoMarkByAlpha
             endif
             return s:GotoMarkByPos(a:dir)
         endif
         
-        if len(l:MarksAt) == 1 || !exists('g:sig_GotoMarkByAlpha')
-            let g:sig_GotoMarkByAlpha = l:MarksAt[0]
+        if len(l:MarksAt) == 1 || !exists('b:sig_GotoMarkByAlpha')
+            let b:sig_GotoMarkByAlpha = l:MarksAt[0]
         endif
 
         for i in range(0, len(l:UsedMarks)-1)
-            if l:UsedMarks[i][0] ==# g:sig_GotoMarkByAlpha
+            if l:UsedMarks[i][0] ==# b:sig_GotoMarkByAlpha
                 if a:dir ==? "next"
                     if i != len(l:UsedMarks)-1
                         let l:mark = l:UsedMarks[i+1][0]
-                        let g:sig_GotoMarkByAlpha = l:mark
-                    elseif g:SignatureWrapJumps 
+                        let b:sig_GotoMarkByAlpha = l:mark
+                    elseif l:SignatureWrapJumps 
                         let l:mark = l:UsedMarks[0][0]
-                        let g:sig_GotoMarkByAlpha = l:mark
+                        let b:sig_GotoMarkByAlpha = l:mark
                     endif
                 elseif a:dir ==? "prev"
                     if i != 0
                         let l:mark = l:UsedMarks[i-1][0]
-                        let g:sig_GotoMarkByAlpha = l:mark
-                    elseif g:SignatureWrapJumps
+                        let b:sig_GotoMarkByAlpha = l:mark
+                    elseif l:SignatureWrapJumps
                         let l:mark = l:UsedMarks[-1][0]
-                        let g:sig_GotoMarkByAlpha = l:mark
+                        let b:sig_GotoMarkByAlpha = l:mark
                     endif
                 endif
                 return l:mark
@@ -332,20 +344,23 @@
 
 
 " Misc                                              {{{1
-    function! signature#RefreshAll(mode) "               {{{2
-        if !exists('b:sig_marks')   | let b:sig_marks   = {} | endif
-        " b:sig_markers = { lnum:marks_str }
+    function! signature#RefreshDisplay(mode) "      {{{2
+        if !exists('b:sig_status')  | let b:sig_status  = 1             | endif
+        if  a:mode                  | let b:sig_status  = !b:sig_status | endif
+        if !exists('b:sig_marks')   | let b:sig_marks   = {}            | endif
+        if !exists('b:sig_markers') | let b:sig_markers = {}            | endif
 
-        if !exists('b:sig_markers') | let b:sig_markers = {} | endif
-        " b:sig_markers = { lnum:marker }
+            " b:sig_markers = { lnum:marks_str }
+            " b:sig_markers = { lnum:marker }
 
+        let l:SignatureIncludeMarks = ( exists('b:SignatureIncludeMarks') ? b:SignatureIncludeMarks : g:SignatureIncludeMarks )
         let l:used_marks = s:UsedMarks()
 
-        if a:mode
+        if b:sig_status
             " Signature enabled -> Refresh signs
 
             " Remove signs for absent marks
-            for i in split(g:SignatureIncludeMarks, '\zs')
+            for i in split(l:SignatureIncludeMarks, '\zs')
                 let l:pair = items(filter(copy(b:sig_marks), 'v:val =~# i'))
                 if !empty(l:pair)
                     let l:found = 0
