@@ -135,10 +135,8 @@ snippet out "define a outline"
 } % OutlineEnd${0:<++>}
 endsnippet
 
-snippet todo "define a todo"
-\todo{
-  ${1:<+TodoText+>}
-}${0:<++>}
+snippet todo "define a todo" !w
+\todo{${1:<+what+>}}${0:<++>}
 endsnippet
 
 snippet abs "enclose expression in | |" !w
