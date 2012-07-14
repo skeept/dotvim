@@ -2,7 +2,7 @@
 " File:          autoload/ctrlp.vim
 " Description:   Fuzzy file, buffer, mru, tag, etc finder.
 " Author:        Kien Nguyen <github.com/kien>
-" Version:       1.77
+" Version:       1.78
 " =============================================================================
 
 " ** Static variables {{{1
@@ -78,6 +78,7 @@ let [s:pref, s:opts, s:new_opts] = ['g:ctrlp_', {
 	\ 'root_markers':          ['s:rmarkers', []],
 	\ 'split_window':          ['s:splitwin', 0],
 	\ 'status_func':           ['s:status', {}],
+	\ 'tabpage_position':      ['s:tabpage', 'ac'],
 	\ 'use_caching':           ['s:caching', 1],
 	\ 'use_migemo':            ['s:migemo', 0],
 	\ 'user_command':          ['s:usrcmd', ''],
@@ -1017,11 +1018,14 @@ fu! s:OpenMulti(...)
 		\ + ( ur ? [] : ['ignruw'] )
 	let fst = call('ctrlp#normcmd', ncmd)
 	" Check if the current window has a replaceable buffer
-	let repabl = empty(bufname('%')) && empty(&l:ft)
+	let repabl = !( md == 't' && !ur ) && empty(bufname('%')) && empty(&l:ft)
 	" Commands for the rest of the files
 	let [ic, cmds] = [1, { 'v': ['vert sb', 'vne'], 'h': ['sb', 'new'],
 		\ 't': ['tab sb', 'tabe'] }]
 	let [swb, &swb] = [&swb, '']
+	if md == 't' && ctrlp#tabcount() < tabpagenr()
+		let s:tabct = ctrlp#tabcount()
+	en
 	" Open the files
 	for va in mkd
 		let bufnr = bufnr('^'.va.'$')
@@ -1043,7 +1047,7 @@ fu! s:OpenMulti(...)
 			if jf | if ic == 2
 				let crpos = [tabpagenr(), winnr()]
 			el
-				let crpos[0] += tabpagenr() == crpos[0]
+				let crpos[0] += tabpagenr() <= crpos[0]
 				let crpos[1] += winnr() == crpos[1]
 			en | en
 		en
@@ -1052,6 +1056,7 @@ fu! s:OpenMulti(...)
 		exe ( md == 't' ? 'tabn '.crpos[0] : crpos[1].'winc w' )
 	en
 	let &swb = swb
+	unl! s:tabct
 endf
 " ** Helper functions {{{1
 " Sorting {{{2
@@ -1545,7 +1550,7 @@ fu! s:argmaps(md, i)
 	let roh = [
 		\ ['OpenMulti', '/h[i]dden/[c]lear', ['i', 'c']],
 		\ ['CreateNewFile', '/[r]eplace', ['r']],
-		\ ['OpenSeleted', '/[r]eplace/h[i]dden', ['r', 'i']],
+		\ ['OpenSelected', '/[r]eplace/h[i]dden', ['r', 'i']],
 		\ ]
 	let str = roh[a:i][0].': [t]ab/[v]ertical/[h]orizontal'.roh[a:i][1].'? '
 	retu s:choices(str, ['t', 'v', 'h'] + roh[a:i][2], 's:argmaps', [a:md, a:i])
@@ -1712,7 +1717,7 @@ endf
 
 fu! s:openfile(cmd, fid, tail, ...)
 	let cmd = a:cmd =~ '^[eb]$' && &modified ? 'hid '.a:cmd : a:cmd
-	let cmd = cmd =~ '^tab' ? tabpagenr('$').cmd : cmd
+	let cmd = cmd =~ '^tab' ? ctrlp#tabcount().cmd : cmd
 	let j2l = a:0 && a:1 ? a:2 : 0
 	exe cmd.( a:0 && a:1 ? '' : a:tail ) ctrlp#fnesc(a:fid)
 	if j2l
@@ -1724,6 +1729,26 @@ fu! s:openfile(cmd, fid, tail, ...)
 	if cmd != 'bad'
 		cal ctrlp#setlcdir()
 	en
+endf
+
+fu! ctrlp#tabcount()
+	if exists('s:tabct')
+		let tabct = s:tabct
+		let s:tabct += 1
+	elsei !type(s:tabpage)
+		let tabct = s:tabpage
+	elsei type(s:tabpage) == 1
+		let tabpos =
+			\ s:tabpage =~ 'c' ? tabpagenr() :
+			\ s:tabpage =~ 'f' ? 1 :
+			\ s:tabpage =~ 'l' ? tabpagenr('$') :
+			\ tabpagenr()
+		let tabct =
+			\ s:tabpage =~ 'a' ? tabpos :
+			\ s:tabpage =~ 'b' ? tabpos - 1 :
+			\ tabpos
+	en
+	retu tabct < 0 ? 0 : tabct
 endf
 
 fu! s:settype(type)
