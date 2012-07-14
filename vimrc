@@ -189,6 +189,7 @@ noremap <F1> :wa<cr>
 
 "how often do I type ;;?
 inoremap ;; <esc>
+inoremap {{ {<cr><cr>}<esc>kcc
 
 noremap <f4> :x<cr>
 inoremap <f4> <esc>:wq<cr>
@@ -297,6 +298,10 @@ if has("autocmd")
   "set readonly files to autoread
   autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread so=0
         \ sbo+=ver,hor | endif
+
+  "mappings for specific buffers
+  autocmd FileType help map <buffer> <space> <c-d>
+  autocmd FileType help map <buffer> <bs> <c-u>
 endif " has("autocmd")
 
 let fortran_free_source = 1

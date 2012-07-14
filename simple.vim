@@ -108,7 +108,7 @@ set virtualedit+=block
 "if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
-  set grepprg=grep\ -nIh\ --exclude=tags\ --exclude=cscope.out
+  set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
 "endif
 
 "for scip go up two folders
@@ -176,6 +176,7 @@ noremap <F1> :wa<cr>
 
 "how often do I type ;;?
 inoremap ;; <esc>
+inoremap {{ {<cr><cr>}<esc>kcc
 
 noremap <f4> :x<cr>
 inoremap <f4> <esc>:wq<cr>
@@ -273,13 +274,21 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
 
   "source .vimrc if changes are made (cool)
-  autocmd BufWritePost $MYVIMRC so %
+  "autocmd BufWritePost $MYVIMRC so %
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
 
   "place quickfix window below all other windows
   autocmd! FileType qf wincmd J
+
+  "set readonly files to autoread
+  autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread so=0
+        \ sbo+=ver,hor | endif
+
+  "mappings for specific buffers
+  autocmd FileType help map <buffer> <space> <c-d>
+  autocmd FileType help map <buffer> <bs> <c-u>
 endif " has("autocmd")
 
 let fortran_free_source = 1
@@ -377,6 +386,13 @@ if has("autocmd") && has("win32")
         \ | setlocal textwidth=90
 endif
 
+if has("win32")
+  let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
+  let g:Tex_ViewRule_pdf = expand("$HOME" .
+        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
+        \ "-reuse-instance")
+endif
+
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
 "==============================================================================
@@ -452,14 +468,27 @@ noremap ,pq :CtrlPQuickfix<cr>
 noremap ,pd :CtrlPCurWD<cr>
 noremap ,pj :CtrlPBufTagAll<cr>
 noremap ,pf :CtrlPCurFile<cr>
+noremap ,pa :CtrlPShowArr<cr>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
          \ }
 let g:ctrlp_map = ''
-command! CtrlPShowArr echo g:ctrlp_comm
+command! CtrlPShowArr call CtrlpShowArrFun()
+function! CtrlpShowArrFun()
+  let i = 0
+  let msg = ''
+  for v in g:ctrlp_comm
+    let msg .= i
+    let msg .= ':'
+    let msg .= g:ctrlp_comm[i]
+    let msg .= ' '
+    let i = i + 1
+  endfor
+  echo msg
+endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
-      \'Root', 'Tag']
+      \'Root', 'Tag', 'CurFile']
 nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
 "==============================================================================
 
@@ -479,27 +508,28 @@ let g:tagbar_type_gams = {
   \ 's:Solve Statement',
   \ ],
   \ }
+
 let g:tagbar_type_gamslst = {
   \ 'ctagstype': 'gamslst',
   \ 'kinds' : [
   \ 'm:Model Solution Report',
   \ 'e:Equation',
-  \ 'c:Variable Val',
-  \ 'a:Equaation val',
+  \ 'c:Variable Val:1',
+  \ 'a:Equation val:1',
   \ ],
   \ }
+
 let g:tagbar_type_tex = {
-    \ 'ctagstype' : 'latex',
-    \ 'kinds'     : [
-        \ 's:sections',
-        \ 'g:graphics',
-        \ 'l:labels',
-        \ 'r:refs:1',
-        \ 'p:pagerefs:1'
-    \ ],
-    \ 'sort'    : 0,
-\ }
-    "\ 'deffile' : expand('<sfile>:p:h:h') . '/ctags/latex.cnf'
+  \ 'ctagstype' : 'latex',
+  \ 'kinds'     : [
+    \ 's:sections',
+    \ 'l:labels',
+    \ 'r:refs:1',
+    \ 'g:graphics:1:0',
+    \ 'p:pagerefs:1:0'
+  \ ],
+  \ 'sort'    : 0,
+  \ }
 
 "noremap <F5> :TagbarToggle<CR>
 ""aditonal map, since vim-latex takes over f5
@@ -557,6 +587,8 @@ let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
+  "alternate between keyword completion and user omni completion
+  "when in latex complete tags
   let g:mysupertabaltcom = 1 - g:mysupertabaltcom
   if g:mysupertabaltcom == 0 && (&completefunc != "" || &filetype == 'tex')
     if &completefunc != ""
