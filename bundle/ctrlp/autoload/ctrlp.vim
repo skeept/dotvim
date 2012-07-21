@@ -844,6 +844,7 @@ fu! ctrlp#acceptfile(mode, line, ...)
 	let [bufnr, tail] = [bufnr('^'.filpath.'$'), s:tail()]
 	let j2l = a:0 ? a:1 : str2nr(matchstr(tail, '^ +\D*\zs\d\+\ze\D*'))
 	if s:jmptobuf && bufnr > 0 && md =~ 'e\|t'
+		\ && !( md == 'e' && bufnr == bufnr('%') )
 		let [jmpb, bufwinnr] = [1, bufwinnr(bufnr)]
 		let buftab = s:jmptobuf > 1 ? s:buftab(bufnr, md) : [0, 0]
 	en
@@ -999,6 +1000,14 @@ fu! s:OpenMulti(...)
 			cal s:unmarksigns()
 			unl! s:marked
 			cal s:BuildPrompt(0)
+		elsei !has_marked && md == 'a'
+			let [s:marked, key] = [{}, 1]
+			for line in s:lines
+				let s:marked = extend(s:marked, { key : fnamemodify(line, ':p') })
+				let key += 1
+			endfo
+			cal s:remarksigns()
+			retu s:BuildPrompt(0)
 		en
 		if md =~ '\v^c(ancel)?$' | retu | en
 		let nr = nr == '0' ? ( nopt ? '' : '1' ) : nr
@@ -1190,7 +1199,7 @@ fu! ctrlp#statusline()
 		let byfname = '%#CtrlPMode1# '.byfname.' %*'
 		let regex   = s:regexp  ? '%#CtrlPMode2# regex %*' : ''
 		let slider  = ' <'.prv.'>={'.item.'}=<'.nxt.'>'
-		let dir     = ' %=%<%#CtrlPMode2# '.s:dyncwd.' %*'
+		let dir     = ' %=%<%#CtrlPMode2# %{getcwd()} %*'
 		let &l:stl  = focus.byfname.regex.slider.marked.dir
 	en
 endf
@@ -1204,7 +1213,7 @@ fu! ctrlp#progress(enum, ...)
 	if has('macunix') || has('mac') | sl 1m | en
 	let txt = a:0 ? '(press ctrl-c to abort)' : ''
 	let &l:stl = s:status != {} ? call(s:status['prog'], [a:enum])
-		\ : '%#CtrlPStats# '.a:enum.' %* '.txt.'%=%<%#CtrlPMode2# '.s:dyncwd.' %*'
+		\ : '%#CtrlPStats# '.a:enum.' %* '.txt.'%=%<%#CtrlPMode2# %{getcwd()} %*'
 	redraws
 endf
 " Paths {{{2
@@ -1548,9 +1557,9 @@ endf
 
 fu! s:argmaps(md, i)
 	let roh = [
-		\ ['OpenMulti', '/h[i]dden/[c]lear', ['i', 'c']],
-		\ ['CreateNewFile', '/[r]eplace', ['r']],
-		\ ['OpenSelected', '/[r]eplace/h[i]dden', ['r', 'i']],
+		\ ['Open Multiple Files', '/h[i]dden/[c]lear', ['i', 'c']],
+		\ ['Create a New File', '/[r]eplace', ['r']],
+		\ ['Open Selected', '/[r]eplace/h[i]dden? Mark [a]ll', ['r', 'i', 'a']],
 		\ ]
 	let str = roh[a:i][0].': [t]ab/[v]ertical/[h]orizontal'.roh[a:i][1].'? '
 	retu s:choices(str, ['t', 'v', 'h'] + roh[a:i][2], 's:argmaps', [a:md, a:i])
