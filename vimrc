@@ -942,3 +942,5 @@ endfunction
 command! FullScreenToogle call FullScreenToogleFun()
 noremap  <Leader>tf :FullScreenToogle<CR>
 "==============================================================================
+
+noremap q; :
