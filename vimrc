@@ -230,6 +230,8 @@ nmap <tab><tab> <c-w><c-w>
 "inoremap  
 "nmap  
 "cnoremap  
+
+noremap q; :
 "==============================================================================
 
 "======================== Spelling ============================================
@@ -942,5 +944,3 @@ endfunction
 command! FullScreenToogle call FullScreenToogleFun()
 noremap  <Leader>tf :FullScreenToogle<CR>
 "==============================================================================
-
-noremap q; :
