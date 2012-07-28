@@ -688,27 +688,29 @@ endif
 
 "=========================== full screen with plugin ==========================
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
-let g:isMaximized = 0
-function! FullScreenToogleFun()
-  if g:isMaximized == 0
-    let g:defaultNumCols = &columns
-    let g:defaultNumLines = &lines
-    let g:currposx = getwinposx()
-    let g:currposy = getwinposy()
-    call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-    let g:isMaximized = 1
-  else
-    call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-    let g:isMaximized = 0
-    exec "set columns=" . g:defaultNumCols
-    exec "set lines=" . g:defaultNumLines
-    exec "winpos" . g:currposx . " " . g:currposy
-  endif
-endfunction
+if has("win32")
+  let g:isMaximized = 0
+  function! FullScreenToogleFun()
+    if g:isMaximized == 0
+      let g:defaultNumCols = &columns
+      let g:defaultNumLines = &lines
+      let g:currposx = getwinposx()
+      let g:currposy = getwinposy()
+      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+      let g:isMaximized = 1
+    else
+      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+      let g:isMaximized = 0
+      exec "set columns=" . g:defaultNumCols
+      exec "set lines=" . g:defaultNumLines
+      exec "winpos" . g:currposx . " " . g:currposy
+    endif
+  endfunction
 
-"command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-command! FullScreenToogle call FullScreenToogleFun()
-noremap  <Leader>tf :FullScreenToogle<CR>
+  "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+  command! FullScreenToogle call FullScreenToogleFun()
+  noremap  <Leader>tf :FullScreenToogle<CR>
+endif
 "==============================================================================
 
 function! LoadCtrlP()
