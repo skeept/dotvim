@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Jul 2012.
+" Last Modified: 26 Jul 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -728,6 +728,10 @@ function! s:do_auto_complete(event)"{{{
   " Get cursor word.
   let cur_text = s:get_cur_text()
   if a:event ==# 'InsertCharPre'
+    if v:char =~ '[[:cntrl:]]'
+      return
+    endif
+
     let cur_text .= v:char
   endif
 
@@ -2067,6 +2071,10 @@ function! s:on_complete_done()"{{{
   " Get cursor word.
   let [_, candidate] =
         \ neocomplcache#match_word(s:get_cur_text())
+  if candidate == ''
+    return
+  endif
+
   let frequencies = s:get_frequencies()
   if !has_key(frequencies, candidate)
     let frequencies[candidate] = 0

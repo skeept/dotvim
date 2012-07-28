@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Jul 2012.
+" Last Modified: 27 Jul 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -399,10 +399,10 @@ call unite#custom_action('cdable', 'file', s:cdable_action_file)
 unlet! s:cdable_action_file
 "}}}
 
-
 function! s:get_filetime(filename)"{{{
   let filetime = getftime(a:filename)
-  if filetime < 0 && has('python')"{{{
+  if filetime < 0 && getftype(a:filename) !=# 'link'
+        \ && has('python')"{{{
     " Use python.
 python <<END
 import os
@@ -412,10 +412,9 @@ os.stat_float_times(False)
 vim.command('let filetime = ' +\
 str(os.path.getctime(vim.eval('a:filename'))))
 END
-  echomsg string(filetime)
   endif"}}}
 
-return filetime
+  return filetime
 endfunction"}}}
 
 let &cpo = s:save_cpo
