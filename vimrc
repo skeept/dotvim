@@ -129,7 +129,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
-set wildignore+=tags,cscope.out
+set wildignore+=tags,cscope.out,*.db
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -189,7 +189,25 @@ noremap <F1> :wa<cr>
 
 "how often do I type ;;?
 inoremap ;; <esc>
-inoremap {{ {<cr><cr>}<esc>kcc
+inoremap {{ {<CR><CR>}<ESC>kcc
+"===================== Don't view files with inconsistent ctrl-r ==============
+map ,m :ed ++ff=dos<cr>
+command! HideCtrlM ed ++ff=dos
+autocmd BufReadPost * nested
+      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+      \   let b:reload_dos = 1 |
+      \   e ++ff=dos |
+      \ endif
+"==============================================================================
+
+"============================ A.vim settings ==================================
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================
+
+"============================ scrollbind mappings =============================
+noremap ,sbt :windo set scrollbind<cr>
+noremap ,sbf :windo set noscrollbind<cr>
+"==============================================================================
 
 noremap <f4> :x<cr>
 inoremap <f4> <esc>:wq<cr>
@@ -230,6 +248,11 @@ nmap <tab><tab> <c-w><c-w>
 "inoremap  
 "nmap  
 "cnoremap  
+
+"record something in register u by default
+""noremap <Leader>rs :set nomore<cr>quq:redir @U<cr>
+noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<cr>
+noremap <Leader>re :redir END \| set more \| "-> u<cr>
 
 noremap q; :
 "==============================================================================
@@ -336,7 +359,7 @@ if !has("gui_running") && !has("win32")
    "colorscheme peaksea | set background=dark
 endif
 
-let g:relativenumber =2
+let g:relativenumber = 2
 "set relativenumber
 function! ToggleRelativeNumber()
   if g:relativenumber == 0
@@ -915,10 +938,13 @@ let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,
 noremap ,sbt :windo set scrollbind<cr>
 noremap ,sbf :windo set noscrollbind<cr>
 "==============================================================================
-"
-if has("win32")
-  let $TMP = 'c:\\htemp\\tmp'
+"========================== Fix shell=bash in windows =========================
+if has("win32") && &shell =~ 'bash'
+"let $TMP = 'c:\\htemp\\tmp'
+set shell=C:\Windows\System32\cmd.exe
+set shellxquote=(
 endif
+"==============================================================================
 
 "=========================== full screen with plugin ==========================
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
@@ -943,4 +969,9 @@ endfunction
 "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
 command! FullScreenToogle call FullScreenToogleFun()
 noremap  <Leader>tf :FullScreenToogle<CR>
+"==============================================================================
+
+"====================== vim-pipe commands =====================================
+autocmd FileType python :let b:vimpipe_command="python"
+autocmd FileType perl :let b:vimpipe_command="perl"
 "==============================================================================
