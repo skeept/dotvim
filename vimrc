@@ -975,6 +975,7 @@ endif
 "==============================================================================
 
 "====================== vim-pipe commands =====================================
-autocmd FileType python :let b:vimpipe_command="python"
-autocmd FileType perl :let b:vimpipe_command="perl"
+autocmd FileType python let b:vimpipe_command="python"
+autocmd FileType perl let b:vimpipe_command="perl"
+autocmd FileType tex let b:vimpipe_command="latexmk"
 "==============================================================================
