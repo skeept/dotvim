@@ -255,6 +255,7 @@ noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<cr>
 noremap <Leader>re :redir END \| set more \| "-> u<cr>
 
 noremap q; :
+noremap q' "
 "==============================================================================
 
 "======================== Spelling ============================================
