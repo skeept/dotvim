@@ -630,10 +630,12 @@ g:neocomplcache_delimiter_patterns		*g:neocomplcache_delimiter_patterns*
 		autoload/neocomplcache.vim for the initial value.
 
 g:neocomplcache_omni_functions			*g:neocomplcache_omni_functions*
-		This dictionary which appoints |omni_complete| call
-		function.  The key is |&filetype|. If
-		g:neocomplcache_omni_function_list[|&filetype|] is
-		undefined, |omni_complete| calls |omnifunc|.
+		This dictionary which appoints |omni_complete| call functions.
+		The key is |&filetype|. The value is omnifunc String or List of
+		omnifunc String. If
+		g:neocomplcache_omni_function_list[|&filetype|] is undefined,
+		|omni_complete| calls |omnifunc|.
+		If the key is "_", used for all filetypes.
 		
 		Default value is {}.
 
@@ -958,13 +960,6 @@ omni_complete.vim				*omni_complete*
 		|g:neocomplcache_omni_function_list|is defined,
 		neocomplcache will give priority it.
 
-completefunc_complete.vim			*completefunc_complete*
-		This source collects candidates from any 'completefunc'.
-		But it is incomplete.
-		neocomplcache#sources#completefunc_complete#call_completefunc(funcname)
-		is only available. This function calls any 'completefunc'
-		manually.
-
 abbrev_complete.vim				*abbrev_complete*
 		This source collects candidates from abbrev.
 
@@ -1057,6 +1052,20 @@ But you can use |unite.vim| to quick match.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-08-03
+- Improved omni_complete.
+- Added _ omnifunc.
+- Deleted completefunc_complete source.
+- Updated vital.
+
+2012-08-02
+- Fixed for g:neocomplcache_enable_insert_char_pre.
+- Fixed omni_complete for compound filetype.
+- Fixed dictionary_complete caching timing.
+
+2012-08-01
+- Fixed filename_complete.
 
 2012-07-27
 - Added FAQ section.

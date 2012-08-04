@@ -14,6 +14,11 @@ function! s:yank_with_key(key)
   return a:key
 endfunction
 
+function! s:paste_with_key(key, mode, register)
+  let keys = (a:register == s:default_register()) ? a:key : ('"' . a:register . a:key)
+  return s:paste_from_yankstack(keys, a:mode, 1)
+endfunction
+
 function! s:paste_from_yankstack(key, mode, is_new)
   let s:last_paste = { 'changedtick': -1, 'key': a:key, 'mode': a:mode }
   call feedkeys("\<Plug>yankstack_after_paste", "m")
@@ -151,9 +156,10 @@ function! yankstack#setup()
     exec 'xnoremap <expr>'  key '<SID>yank_with_key("' . key . '")'
   endfor
 
+  let clear_cmd = ':echo ""<CR>'
   for key in paste_keys
-    exec 'nnoremap' key ':call <SID>paste_from_yankstack("' . key . '", "n", 1)<CR>'
-    exec 'xnoremap' key ':<C-u>call <SID>paste_from_yankstack("' . key . '", "v", 1)<CR>'
+    exec 'nnoremap' key ':call <SID>paste_with_key("' . key . '", "n", v:register)<CR>' . clear_cmd
+    exec 'xnoremap' key ':<C-u>call <SID>paste_with_key("' . key . '", "v", v:register)<CR>' . clear_cmd
   endfor
 
   for key in word_characters
