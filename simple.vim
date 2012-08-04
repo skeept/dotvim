@@ -725,7 +725,9 @@ nnoremap <c-p> :call LoadCtrlP()<cr>
 function! LoadLycosa()
   exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
   runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
-  nnoremap ,e :<c-u> call ToggleLycosa()<cr>
+  nnoremap ,e :<c-u>call ToggleLycosa()<cr>
+  nnoremap ,b :<c-u>LycosaBufferExplorer<cr>
 endfunction
-nnoremap ,e :call LoadLycosa()<cr>:<c-u>LycosaFilesystemExplorer<cr>
+nnoremap ,e :call LoadLycosa()<cr>:<c-u>LycosaFilesystemExplorer<CR>
+nnoremap ,b :call LoadLycosa()<cr>:<c-u>LycosaBufferExplorer<CR>
 "==============================================================================
