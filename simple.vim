@@ -718,16 +718,16 @@ function! LoadCtrlP()
   exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
   runtime bundle/ctrlp/plugin/ctrlp.vim
   nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
+  nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
 nnoremap <c-p> :call LoadCtrlP()<cr>
       \:<c-u>CtrlP<cr>
+nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 
 function! LoadLycosa()
   exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
   runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
   nnoremap ,e :<c-u>call ToggleLycosa()<cr>
-  nnoremap ,b :<c-u>LycosaBufferExplorer<cr>
 endfunction
 nnoremap ,e :call LoadLycosa()<cr>:<c-u>LycosaFilesystemExplorer<CR>
-nnoremap ,b :call LoadLycosa()<cr>:<c-u>LycosaBufferExplorer<CR>
 "==============================================================================
