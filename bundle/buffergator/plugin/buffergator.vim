@@ -119,42 +119,41 @@ let s:_default_keymaps = {
       \},
    \ }
 
-let s:_keymap_help = {
-      \ 'BuffergatorSelect'           : 'Open in previous window',
-      \ 'BuffergatorCycleSort'        : 'Cycle through sort regime',
-      \ 'BuffergatorDelete'           : 'Delete the selected buffer',
-      \ 'BuffergatorWipe'             : 'Wipe the selected buffer',
-      \ 'BuffergatorForceDelete'      : 'Uncondtionally delete the selected buffer',
-      \ 'BuffergatorForceWipe'        : 'Uncondtionally wipe the selected buffer',
-      \ 'BuffergatorSplitVert'        : 'Open in new vertical split',
-      \ 'BuffergatorSplitHorz'        : 'Open in a new split',
-      \ 'BuffergatorNewTab'           : 'Open in a new tab',
-      \ 'BuffergatorSelectGator'      : 'Open in previous window and keep buffergator open',
-      \ 'BuffergatorSplitVertGator'   : 'Open in vertical split and keep buffergator open',
-      \ 'BuffergatorSplitHorzGator'   : 'Open in new split and keep buffergator open',
-      \ 'BuffergatorNewTabGator'      : 'Open in new tab and keep buffergator open',
-      \ 'BuffergatorPreview'          : 'Preview in previous window',
-      \ 'BuffergatorPreviewVertSplit' : 'Preview in a new vertical split',
-      \ 'BuffergatorPreviewHorzSplit' : 'Preview in a new split',
-      \ 'BuffergatorPreviewTab'       : 'Preview in a new tab',
-      \ 'BuffergatorPreviewNext'      : 'Go to next buffer and preview in previous window',
-      \ 'BuffergatorPreviewPrevious'  : 'Go to previus buffer and preview in in previous window',
-      \ 'BuffergatorFind'             : 'Find buffer in an existing window anywhere, and go to it only if it can be found',
-      \ 'BuffergatorFindOrOpen'       : 'Find buffer in an existing window or open in previous',
-      \ 'BuffergatorFindOrVSplit'     : 'Find buffer in an existing window or open in new vertical split',
-      \ 'BuffergatorFindOrHSplit'     : 'Find buffer in an existing window or open in new split',
-      \ 'BuffergatorFindOrTab'        : 'Find buffer in an existing window or open in a new tab',
-      \ 'BuffergatorTabSelect'        : 'Opens tab page or window',
-      \ 'BuffergatorTabNext'          : 'Select the next tab page',
-      \ 'BuffergatorTabPrev'          : 'Select the previous tab page',
-      \ 'BuffergatorTabWinNext'       : 'Select the next tab page window entry',
-      \ 'BuffergatorTabWinPrev'       : 'Select the previous tab page window entry',
-      \ 'BuffergatorCycleDisplay'     : 'Cycle the display regime',
-      \ 'BuffergatorCyclePath'        : 'Cycle the full path display',
-      \ 'BuffergatorZoomWin'          : 'Zoom / unzoom the window',
-      \ 'BuffergatorRebuild'          : 'Update rebuild / refresh the buffers catalog',
-      \ 'BuffergatorQuit'             : 'Quit the buffergator window',
-      \ }
+let s:_keymap_help = [
+   \ ['BuffergatorSelect', 'Open in previous window'],
+   \ ['BuffergatorSplitVert', 'Open in new vertical split'],
+   \ ['BuffergatorSplitHorz', 'Open in a new split'],
+   \ ['BuffergatorNewTab', 'Open in a new tab'],
+   \ ['BuffergatorPreview', 'Preview in previous window'],
+   \ ['BuffergatorPreviewVertSplit', 'Preview in a new vertical split'],
+   \ ['BuffergatorPreviewHorzSplit', 'Preview in a new split'],
+   \ ['BuffergatorPreviewTab', 'Preview in a new tab'],
+   \ ['BuffergatorPreviewNext', 'Go to next buffer and preview in previous window'],
+   \ ['BuffergatorPreviewPrevious', 'Go to previus buffer and preview in in previous window'],
+   \ ['BuffergatorSelectGator', 'Open in previous window and keep buffergator open'],
+   \ ['BuffergatorSplitVertGator', 'Open in vertical split and keep buffergator open'],
+   \ ['BuffergatorSplitHorzGator', 'Open in new split and keep buffergator open'],
+   \ ['BuffergatorNewTabGator', 'Open in new tab and keep buffergator open'],
+   \ ['BuffergatorFind', 'Find buffer in an existing window anywhere, and go to it only if it can be found'],
+   \ ['BuffergatorFindOrOpen', 'Find buffer in an existing window or open in previous'],
+   \ ['BuffergatorFindOrVSplit', 'Find buffer in an existing window or open in new vertical split'],
+   \ ['BuffergatorFindOrHSplit', 'Find buffer in an existing window or open in new split'],
+   \ ['BuffergatorTabSelect', 'Opens tab page or window'],
+   \ ['BuffergatorTabNext', 'Select the next tab page'],
+   \ ['BuffergatorTabPrev', 'Select the previous tab page'],
+   \ ['BuffergatorTabWinNext', 'Select the next tab page window entry'],
+   \ ['BuffergatorTabWinPrev', 'Select the previous tab page window entry'],
+   \ ['BuffergatorCycleSort', 'Cycle through sort regime'],
+   \ ['BuffergatorCycleDisplay', 'Cycle the display regime'],
+   \ ['BuffergatorCyclePath', 'Cycle the full path display'],
+   \ ['BuffergatorZoomWin', 'Zoom / unzoom the window'],
+   \ ['BuffergatorRebuild', 'Update rebuild / refresh the buffers catalog'],
+   \ ['BuffergatorDelete', 'Delete the selected buffer'],
+   \ ['BuffergatorForceDelete', 'Uncondtionally delete the selected buffer'],
+   \ ['BuffergatorWipe', 'Wipe the selected buffer'],
+   \ ['BuffergatorForceWipe', 'Uncondtionally wipe the selected buffer'],
+   \ ['BuffergatorQuit', 'Quit the buffergator window']
+   \ ]
 
 if exists('g:buffergator_keymaps')
   call extend(s:_default_keymaps, g:buffergator_keymaps, 'force')
@@ -216,7 +215,7 @@ noremap <Plug>BuffergatorZoomWin           :call b:buffergator_catalog_viewer.to
 noremap <Plug>BuffergatorShowHelp          :call b:buffergator_catalog_viewer.toggle_help()<CR>
 
 """"" Close the help window
-noremap <Plug>BuffergatorCloseHelp         :q<CR>:wincmd p<CR>
+noremap <Plug>BuffergatorCloseHelp         :call b:buffergator_catalog_viewer.close_help()<CR>
 
 
 " Script Data and Variables {{{1
@@ -644,7 +643,10 @@ function! s:NewCatalogViewer(name, title)
             let l:col1_prop = 0.4
             let l:col2_prop = 0.6
           endif
+          let b:buffergator_catalog_viewer = self
+          let b:buffergator_help_bufnum = bufnr('%')
       else
+        " execute "buffer " . self.bufnum
         execute "bdelete " l:help_buffer
         return
       endif
@@ -669,14 +671,13 @@ function! s:NewCatalogViewer(name, title)
       echomsg string([l:window_width, l:column_1, l:column_2])
       "
       for l:command_set in ['buffer_catalog_viewer', 'tab_catalog_viewer', 'global', 'help']
-          for l:plug_mapping in keys(s:_default_keymaps[l:command_set])
-              if has_key(s:_keymap_help,l:plug_mapping)
+          " for l:plug_mapping in sort(keys(s:_default_keymaps[l:command_set]))
+          for l:plug_mapping_help in s:_keymap_help
+              let l:plug_mapping = l:plug_mapping_help[0]
+              if has_key(s:_default_keymaps[l:command_set], l:plug_mapping)
                   let l:keys = join(s:_default_keymaps[l:command_set][l:plug_mapping],", ")
-                  let l:help = s:_keymap_help[l:plug_mapping]
+                  let l:help = l:plug_mapping_help[1]
                   " ha ha syntax fail.
-                  let l:rows_for_columns = [strlen(l:keys) / l:column_1 + 1, strlen(l:help) / l:column_2 + 1]
-
-                  let l:rows = max(l:rows_for_columns)
                   " to divide on the first space before the column break
                   " we split on the last space before our column width
                   " use a zero width match to avoid remove parts of
@@ -684,6 +685,7 @@ function! s:NewCatalogViewer(name, title)
                   " \(\s[^ ]*\%24c\)\@=
                   let l:keys_split = split(l:keys,'\v\s([^ ]*%' . l:column_1 . 'c)@=')
                   let l:help_split = split(l:help,'\v\s([^ ]*%' . l:column_2 . 'c)@=')
+                  let l:rows = max([len(l:keys_split), len(l:help_split)])
 
                   for l:row in range(l:rows)
                       " use only the matching portion
@@ -837,7 +839,7 @@ function! s:NewCatalogViewer(name, title)
     endfunction
 
     " Opens viewer if closed, closes viewer if open.
-    function! l:catalog_viewer.toggle() dict
+    function! l:catalog_viewer.toggle(existing_only) dict
         " get buffer number of the catalog view buffer, creating it if neccessary
         if self.bufnum < 0 || !bufexists(self.bufnum)
             call self.open()
@@ -966,6 +968,23 @@ function! s:NewCatalogViewer(name, title)
         "     " setlocal fillchars=fold:\ "
         "     setlocal fillchars=fold:.
         " endif
+    endfunction
+
+    " Close help if open, and jump back to Buffergator catalog viewer
+    function! l:catalog_viewer.close_help() dict
+        if !exists("b:buffergator_help_bufnum") || !bufexists(b:buffergator_help_bufnum)
+        " if !exists("b:buffergator_help_bufnum")
+            return
+        endif
+        let l:bufnum_to_delete = b:buffergator_help_bufnum
+        if bufexists(self.bufnum)
+            let l:bfwn = bufwinnr(self.bufnum)
+            if l:bfwn >= 0
+                execute l:bfwn . " :wincmd w"
+            endif
+        endif
+        call self.contract_screen()
+        execute("bwipe " . l:bufnum_to_delete)
     endfunction
 
     " Close and quit the viewer.
