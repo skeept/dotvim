@@ -1,6 +1,25 @@
 
 
+$do_break = $False
+#set the default locations for the installation
+switch ( Get-Content Env:ComputerName )
+{
+  "ISENGARD" {
+    $install = "c:\Program Files\vim\vim73"
+    $backup = "c:\htemp\tmp"
+    $source = "c:\htemp\vim"
+  }
+  default {
+    $computername = Get-Content Env:computername
+    Write-Warning "$computername not in list of know computer names!"
+    $do_break = $True
+  }
+}
 
+If( $do_break )
+{
+  break
+}
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator"))
@@ -9,15 +28,10 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     #Write-Warning "You do not have Administrator rights to run this script!`nPlease re-run this script as an Administrator!"
     #Break
   $testIsAdmin = $False
-  Write-Warning "You're not and Administrator!!!`n"
-  Write-Warning "Run this as Administrator!!!`n"
+  Write-Warning "You're not and Administrator!`n"
   break
 }
 
-#set the default locations for the installation
-$install = "c:\Program Files\vim\vim73"
-$backup = "c:\htemp\tmp"
-$source = "c:\htemp\vim"
 
 # copy the default installation to a backup location 
 Write-Output "Backup: $install --> $backup"
