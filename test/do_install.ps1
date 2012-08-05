@@ -16,10 +16,7 @@ switch ( Get-Content Env:ComputerName )
   }
 }
 
-If( $do_break )
-{
-  break
-}
+If( $do_break ) { break }
 
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator"))
@@ -31,7 +28,6 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
   Write-Warning "You're not and Administrator!`n"
   break
 }
-
 
 # copy the default installation to a backup location 
 Write-Output "Backup: $install --> $backup"
