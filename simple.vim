@@ -375,7 +375,6 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 "========================= LycosaExplorer =====================================
 "" lycosaexplorer alternative mappings
-noremap  ,b :LycosaBufferExplorer<CR>
 noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
 noremap  ,le :LycosaFilesystemExplorer<CR>
 
