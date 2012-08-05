@@ -1,4 +1,4 @@
-
+# powershell script to copy over files compiled in source dir
 
 $do_break = $False
 #set the default locations for the installation
