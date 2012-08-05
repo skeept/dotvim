@@ -146,10 +146,10 @@ nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 inoremap <C-E> <ESC>$a
 
 "noremap f2 to make
-"inoremap <F2> <ESC>:wa<cr>:Make <Up>
-"noremap <F2> :wa<cr>:Make <Up>
-inoremap <F2> <ESC>:call Make2()<cr><c-l>
-noremap <F2> :call Make2()<cr><c-l>
+"inoremap <F2> <ESC>:wa<CR>:Make <Up>
+"noremap <F2> :wa<CR>:Make <Up>
+inoremap <F2> <ESC>:call Make2()<CR><c-l>
+noremap <F2> :call Make2()<CR><c-l>
 command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
 function! Make2()
   if !exists("g:make_args")
@@ -162,23 +162,23 @@ function! Make2()
 endfunction
 
 "make the f1 key save-buffer key
-inoremap <F1> <ESC>:wa<cr>
-noremap <F1> :wa<cr>
+inoremap <F1> <ESC>:wa<CR>
+noremap <F1> :wa<CR>
 
-"noremap <f7> :tabp<cr>
-"noremap <s-f7> :bp<cr>
-"noremap <f8> :tabn<cr>
-"noremap <s-f8> :bn<cr>
-"inoremap <f7> <esc>:bp<cr>
-"inoremap <s-f7> <esc>:tabp<cr>
-"inoremap <f8> <esc>:tabn<cr>
-"inoremap <s-f8> <esc>:bn<cr>
+"noremap <f7> :tabp<CR>
+"noremap <s-f7> :bp<CR>
+"noremap <f8> :tabn<CR>
+"noremap <s-f8> :bn<CR>
+"inoremap <f7> <esc>:bp<CR>
+"inoremap <s-f7> <esc>:tabp<CR>
+"inoremap <f8> <esc>:tabn<CR>
+"inoremap <s-f8> <esc>:bn<CR>
 
 "how often do I type ;;?
 inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
 "===================== Don't view files with inconsistent ctrl-r ==============
-map ,m :ed ++ff=dos<cr>
+map ,m :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
 autocmd BufReadPost * nested
       \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
@@ -192,36 +192,36 @@ let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,
 "==============================================================================
 
 "============================ scrollbind mappings =============================
-noremap ,sbt :windo set scrollbind<cr>
-noremap ,sbf :windo set noscrollbind<cr>
+noremap ,sbt :windo set scrollbind<CR>
+noremap ,sbf :windo set noscrollbind<CR>
 "==============================================================================
 
-noremap <f4> :x<cr>
-inoremap <f4> <esc>:wq<cr>
+noremap <f4> :x<CR>
+inoremap <f4> <esc>:wq<CR>
 
-"noremap ,en :cnext<cr>
-"noremap ,ep :cprevious<cr>
+"noremap ,en :cnext<CR>
+"noremap ,ep :cprevious<CR>
 nnoremap <c-\>a :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
 nnoremap ,w <c-w>
 nnoremap ,, <c-w><c-w>
 
-"noremap gl :bprevious<cr>
+"noremap gl :bprevious<CR>
 "
 if &diff
-  noremap <f4> :qa<cr>
-  noremap <f5> :wqa!<cr>
-  noremap <f6> :qa!<cr>
+  noremap <f4> :qa<CR>
+  noremap <f5> :wqa!<CR>
+  noremap <f6> :qa!<CR>
 endif
 
 nnoremap <C-L> :nohl<CR><C-L>
 
-"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <cr>
+"nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
-"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <cr>
+"nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
 
 " for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<cr>:set nohls<cr><c-l>
-noremap <Leader>v :view<cr>
+noremap <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><c-l>
+noremap <Leader>v :view<CR>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer
@@ -237,9 +237,9 @@ nmap <tab><tab> <c-w><c-w>
 "cnoremap  
 
 "record something in register u by default
-""noremap <Leader>rs :set nomore<cr>quq:redir @U<cr>
-noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<cr>
-noremap <Leader>re :redir END \| set more \| "-> u<cr>
+""noremap <Leader>rs :set nomore<CR>quq:redir @U<CR>
+noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
+noremap <Leader>re :redir END \| set more \| "-> u<CR>
 
 noremap q; :
 noremap q' "
@@ -272,7 +272,7 @@ function! ToggleSpell()
     echo "No spell Cheking"
   endif
 endfunction
-noremap <Leader>st :<C-U>call ToggleSpell() <cr>
+noremap <Leader>st :<C-U>call ToggleSpell() <CR>
 "==============================================================================
 
 " Only do this part when compiled with support for autocommands.
@@ -364,7 +364,7 @@ function! ToggleRelativeNumber()
   endif
 endfunction
 
-noremap <Leader>tn :call ToggleRelativeNumber()<cr>
+noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
 
 "fix not having <c-i> for the jumplist after mapping tab
@@ -389,7 +389,7 @@ function! ToggleLycosa()
     echo "0: File System, 1:buffer, 2: File from here"
   endif
 endfunction
-"nnoremap ,e :<c-u> call ToggleLycosa()<cr>
+"nnoremap ,e :<c-u> call ToggleLycosa()<CR>
 "==============================================================================
 
 
@@ -486,14 +486,14 @@ let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_depth = 2
-noremap ,pu :CtrlPMRUFiles<cr>
-noremap ,pb :CtrlPBuffer<cr>
-noremap ,pt :CtrlPTag<cr>
-noremap ,pq :CtrlPQuickfix<cr>
-noremap ,pd :CtrlPCurWD<cr>
-noremap ,pj :CtrlPBufTagAll<cr>
-noremap ,pf :CtrlPCurFile<cr>
-noremap ,pa :CtrlPShowArr<cr>
+noremap ,pu :CtrlPMRUFiles<CR>
+noremap ,pb :CtrlPBuffer<CR>
+noremap ,pt :CtrlPTag<CR>
+noremap ,pq :CtrlPQuickfix<CR>
+noremap ,pd :CtrlPCurWD<CR>
+noremap ,pj :CtrlPBufTagAll<CR>
+noremap ,pf :CtrlPCurFile<CR>
+noremap ,pa :CtrlPShowArr<CR>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
@@ -514,7 +514,7 @@ function! CtrlpShowArrFun()
 endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
-nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
+nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 "==============================================================================
 
 "=============================== tagbar =======================================
@@ -558,7 +558,7 @@ let g:tagbar_type_tex = {
 
 "noremap <F5> :TagbarToggle<CR>
 ""aditonal map, since vim-latex takes over f5
-"noremap ,gt :TagbarToggle<cr>
+"noremap ,gt :TagbarToggle<CR>
 
 function! ToggleTBarListNT()
   if v:count == 0
@@ -573,8 +573,8 @@ function! ToggleTBarListNT()
     echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree, 3: buffergator"
   endif
 endfunction
-nnoremap <F3> :<c-u>call ToggleTBarListNT()<cr>
-inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<cr>
+nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
+inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
 "==============================================================================
 
 "============================== pep8 ==========================================
@@ -596,20 +596,20 @@ let g:UltiSnipsListSnippets  = "<c-f10>"
 let g:UltiSnipsJumpForwardTrigger  = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
 let g:UltiSnipsEditSplit =  "horizontal"
-nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
-inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<cr>
-snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<cr>
-"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<cr>
-"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<cr>
-inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<cr>
-snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<cr>
+nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
+inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<CR>
+snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<CR>
+"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<CR>
+"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<CR>
+inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
+snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
 "==============================================================================
 
 "=============================== Supertab =====================================
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
-"inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<cr>
+"inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<CR>
 let g:mysupertabaltcom = 1
 function! MySupertabAltCompletion()
   "alternate between keyword completion and user omni completion
@@ -625,7 +625,7 @@ function! MySupertabAltCompletion()
     return SuperTabAlternateCompletion("\<lt>c-p>")
   endif
 endfunction
-inoremap <nul> <c-r>=MySupertabAltCompletion()<cr>
+inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================
 
 "=============================== Delete Whitespace ============================
@@ -653,11 +653,11 @@ function! LoadTagbar()
   runtime bundle/tagbar/plugin/tagbar.vim
   exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
   "nnoremap <F3> :TagbarToggle<CR>
-  nnoremap <F3> :<c-u>call ToggleTBarListNT() <cr>
-  inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <cr>
+  nnoremap <F3> :<c-u>call ToggleTBarListNT() <CR>
+  inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <CR>
 endf
-nnoremap <f3> :call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
-inoremap <f3> <cr>:call LoadTagbar()<cr>:<c-u>call ToggleTBarListNT()<CR>
+nnoremap <f3> :call LoadTagbar()<CR>:<c-u>call ToggleTBarListNT()<CR>
+inoremap <f3> <CR>:call LoadTagbar()<CR>:<c-u>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips()
   if has("python")
@@ -669,10 +669,10 @@ function! LoadUltisnips()
     endif
     call UltiSnips_FileTypeChanged()
   endif
-  nnoremap <f10> :call UltiSnips_ListSnippets()<cr>
+  nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
 endfunction
-nnoremap <f10> :call LoadUltisnips()<cr>:call UltiSnips_ListSnippets()<CR>
-inoremap <f10> <esc>:call LoadUltisnips()<cr>a<c-r>=UltiSnips_ExpandSnippet()<cr>
+nnoremap <f10> :call LoadUltisnips()<CR>:call UltiSnips_ListSnippets()<CR>
+inoremap <f10> <esc>:call LoadUltisnips()<CR>a<c-r>=UltiSnips_ExpandSnippet()<CR>
 
 "for filetype tex we need imap.vim
 if has("autocmd")
@@ -716,17 +716,17 @@ endif
 function! LoadCtrlP()
   exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
   runtime bundle/ctrlp/plugin/ctrlp.vim
-  nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<cr>
+  nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
-nnoremap <c-p> :call LoadCtrlP()<cr>
-      \:<c-u>CtrlP<cr>
+nnoremap <c-p> :call LoadCtrlP()<CR>
+      \:<c-u>CtrlP<CR>
 nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 
 function! LoadLycosa()
   exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
   runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
-  nnoremap ,e :<c-u>call ToggleLycosa()<cr>
+  nnoremap ,e :<c-u>call ToggleLycosa()<CR>
 endfunction
-nnoremap ,e :call LoadLycosa()<cr>:<c-u>LycosaFilesystemExplorer<CR>
+nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
 "==============================================================================
