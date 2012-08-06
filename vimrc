@@ -240,7 +240,6 @@ noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer
 noremap <Leader>os :Scratch<CR>
 
-
 nmap <tab> <c-w>
 nmap <tab><tab> <c-w><c-w>
 
@@ -978,4 +977,9 @@ endif
 autocmd FileType python let b:vimpipe_command="python"
 autocmd FileType perl let b:vimpipe_command="perl"
 autocmd FileType tex let b:vimpipe_command="latexmk"
+"==============================================================================
+
+"======================== delimitmate =========================================
+let g:delimitMate_expand_cr = 1
+let g:delimitMate_expand_space = 1
 "==============================================================================
