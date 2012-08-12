@@ -17,9 +17,5 @@ imap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_JumpForward
 vmap  <c-l> <Plug>IMAP_DeleteAndJumpForward
 
-<<<<<<< HEAD
-set textwidth=90 "for some reason sometimes it gets set to zero in my linux machine
-=======
 "the following should help complete fig:whatever
 set iskeyword+=:
->>>>>>> e20566b7993e502fbba62da0ab41c690b5f317cd
