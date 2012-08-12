@@ -169,7 +169,9 @@ VARIABLES 					*neocomplcache-variables*
 
 g:neocomplcache_enable_at_startup		*g:neocomplcache_enable_at_startup*
 		This variable controls whether I validate neocomplcache at
-		the time of Vim start.  This option should set it in .vimrc.
+		the time of Vim start.
+		Note: This option must set it in .vimrc(_vimrc). NOT IN
+		.gvimrc(_gvimrc)!
 		
 		Because default value is 0, you cannot use neocomplcache
 		unless you validate it by manual operation.
@@ -421,8 +423,8 @@ g:neocomplcache_omni_patterns			*g:neocomplcache_omni_patterns*
 		endif
 		let g:neocomplcache_omni_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
 		let g:neocomplcache_omni_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-		let g:neocomplcache_omni_patterns.c = '\%(\.\|->\)\h\w*'
-		let g:neocomplcache_omni_patterns.cpp = '\h\w*\%(\.\|->\)\h\w*\|\h\w*::'
+		let g:neocomplcache_omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
+		let g:neocomplcache_omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
 <
 g:neocomplcache_tags_filter_patterns		*g:neocomplcache_tags_filter_patterns*
 		This dictionary records  a pattern to filter a candidate in
@@ -808,6 +810,7 @@ neocomplcache#complete_common_string()		*neocomplcache#complete_common_string()*
 ==============================================================================
 EXAMPLES					*neocomplcache-examples*
 >
+	"Note: This option must set it in .vimrc(_vimrc). NOT IN .gvimrc(_gvimrc)!
 	" Disable AutoComplPop.
 	let g:acp_enableAtStartup = 0
 	" Use neocomplcache.
@@ -887,8 +890,8 @@ EXAMPLES					*neocomplcache-examples*
 	let g:neocomplcache_omni_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
 	"autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
 	let g:neocomplcache_omni_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-	let g:neocomplcache_omni_patterns.c = '\%(\.\|->\)\h\w*'
-	let g:neocomplcache_omni_patterns.cpp = '\h\w*\%(\.\|->\)\h\w*\|\h\w*::'
+	let g:neocomplcache_omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
+	let g:neocomplcache_omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
 	
 	" For perlomni.vim setting.
 	" https://github.com/c9s/perlomni.vim
@@ -1052,6 +1055,17 @@ But you can use |unite.vim| to quick match.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-08-11
+- Improved documentation.
+
+2012-08-07
+- Improved a bit.
+- Fixed omni patterns for c and cpp.
+
+2012-08-06
+- Improved remove next keyword.
+- Improved set context filetype.
 
 2012-08-03
 - Improved omni_complete.

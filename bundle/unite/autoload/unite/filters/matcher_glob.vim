@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_glob.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Dec 2011.
+" Last Modified: 10 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,38 +38,46 @@ let s:matcher = {
 
 function! s:matcher.filter(candidates, context)"{{{
   if a:context.input == ''
-    return a:candidates
+    return unite#util#filter_matcher(
+          \ a:candidates, '', a:context)
   endif
 
   let candidates = a:candidates
   for input in split(a:context.input, '\\\@<! ')
-    let input = substitute(input, '\\ ', ' ', 'g')
-
-    if input =~ '^!'
-      if input == '!'
-        continue
-      endif
-
-      " Exclusion.
-      let input = substitute(unite#escape_match(input),
-            \ '\\\@<!|', '\\|', 'g')
-      let expr = 'v:val.word !~ ' . string(input[1:])
-    elseif input =~ '\\\@<![*|]'
-      " Wildcard(*) or OR(|).
-      let input = substitute(unite#escape_match(input),
-            \ '\\\@<!|', '\\|', 'g')
-      let expr = 'v:val.word =~ ' . string(input)
-    else
-      let input = substitute(input, '\\\(.\)', '\1', 'g')
-      let expr = &ignorecase ?
-            \ printf('stridx(tolower(v:val.word), %s) != -1', string(tolower(input))) :
-            \ printf('stridx(v:val.word, %s) != -1', string(input))
-    endif
-
-    let candidates = filter(copy(candidates), expr)
+    let candidates = unite#filters#matcher_glob#glob_matcher(
+          \ candidates, input, a:context)
   endfor
 
   return candidates
+endfunction"}}}
+
+function! unite#filters#matcher_glob#glob_matcher(candidates, input, context)"{{{
+  let input = substitute(a:input, '\\ ', ' ', 'g')
+
+  if input =~ '^!'
+    if input == '!'
+      return a:candidates
+    endif
+
+    " Exclusion.
+    let input = substitute(unite#escape_match(input),
+          \ '\\\@<!|', '\\|', 'g')
+    let expr = 'v:val.word !~ ' . string(input[1:])
+  elseif input =~ '\\\@<![*|]'
+    " Wildcard(*) or OR(|).
+    let input = substitute(unite#escape_match(input),
+          \ '\\\@<!|', '\\|', 'g')
+    let expr = 'v:val.word =~ ' . string(input)
+  else
+    let input = substitute(input, '\\\(.\)', '\1', 'g')
+    let expr = &ignorecase ?
+          \ printf('stridx(tolower(v:val.word), %s) != -1',
+          \     string(tolower(input))) :
+          \ printf('stridx(v:val.word, %s) != -1',
+          \     string(input))
+  endif
+
+  return unite#util#filter_matcher(a:candidates, expr, a:context)
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 27 Jul 2012.
+" Last Modified: 12 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -301,11 +301,11 @@ function! unite#sources#file#create_file_dict(file, is_relative_path, ...)"{{{
   elseif is_newfile
     if is_newfile == 1
       " New file.
-      let dict.abbr = '[new file]' . a:file
+      let dict.abbr = '[new file] ' . a:file
       let dict.kind = 'file'
     elseif is_newfile == 2
       " New directory.
-      let dict.abbr = '[new directory]' . a:file
+      let dict.abbr = '[new directory] ' . a:file
       let dict.kind = 'directory'
     endif
   else
@@ -317,6 +317,8 @@ endfunction"}}}
 function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
   let a:candidate.vimfiler__is_directory =
         \ isdirectory(a:candidate.action__path)
+  let a:candidate.vimfiler__is_writable =
+        \ filewritable(a:candidate.action__path)
 
   if len(a:candidate.action__path) > 200
     " Convert to relative path.
