@@ -12,6 +12,19 @@ fun! pymode#Default(name, default) "{{{
 endfunction "}}}
 
 
+fun! pymode#Option(name) "{{{
+
+    let name = 'b:pymode_' . a:name
+    if exists(name)
+        return eval(name)
+    endif
+
+    let name = 'g:pymode_' . a:name
+    return eval(name)
+
+endfunction "}}}
+
+
 fun! pymode#QuickfixOpen(onlyRecognized, holdCursor, maxHeight, minHeight, jumpError) "{{{
     " DESC: Open quickfix window
     "
@@ -22,7 +35,7 @@ fun! pymode#QuickfixOpen(onlyRecognized, holdCursor, maxHeight, minHeight, jumpE
         exe max([min([line("$"), a:maxHeight]), a:minHeight]) . "wincmd _"
         if a:jumpError
             cc
-        elseif a:holdCursor
+        elseif !a:holdCursor
             wincmd p
         endif
     else
@@ -40,10 +53,12 @@ endfunction "}}}
 fun! pymode#PlaceSigns() "{{{
     " DESC: Place error signs
     "
-    sign unplace *
-    for item in filter(getqflist(), 'v:val.bufnr != ""')
-        execute printf('silent! sign place 1 line=%d name=%s buffer=%d', item.lnum, item.type, item.bufnr)
-    endfor
+    if has('signs')
+        sign unplace *
+        for item in filter(getqflist(), 'v:val.bufnr != ""')
+            execute printf('silent! sign place 1 line=%d name=%s buffer=%d', item.lnum, item.type, item.bufnr)
+        endfor
+    endif
 endfunction "}}}
 
 
@@ -77,9 +92,8 @@ fun! pymode#ShowStr(str) "{{{
     let g:pymode_curbuf = bufnr("%")
     call pymode#TempBuffer()
     put! =a:str
-    redraw
-    normal gg 
     wincmd p
+    redraw
 endfunction "}}}
 
 
@@ -105,7 +119,7 @@ fun! pymode#WideMessage(msg) "{{{
     let x=&ruler | let y=&showcmd
     set noruler noshowcmd
     redraw
-    echo strpart(a:msg, 0, &columns-1)
+    echohl Debug | echo strpart(a:msg, 0, &columns-1) | echohl none
     let &ruler=x | let &showcmd=y
 endfunction "}}}
 
@@ -145,6 +159,18 @@ fun! pymode#BlockEnd(lnum, ...) "{{{
         endif
     endwhile
     return line('$')
+endfunction "}}}
+
+
+fun! pymode#Modeline() "{{{
+    let modeline = getline(prevnonblank('$'))
+    if modeline =~ '^#\s\+pymode:'
+        for ex in split(modeline, ':')[1:]
+            let [name, value] = split(ex, '=')
+            let {'b:pymode_'.name} = value
+        endfor
+    endif
+    au BufRead <buffer> call pymode#Modeline()
 endfunction "}}}
 
 

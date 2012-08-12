@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Apr 2012.
+" Last Modified: 12 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -65,6 +65,10 @@ function! unite#mappings#define_default_mappings()"{{{
         \ <SID>loop_cursor_down(1)
   nnoremap <buffer><expr> <Plug>(unite_skip_cursor_up)
         \ <SID>loop_cursor_up(1)
+  nnoremap <buffer><silent> <Plug>(unite_next_screen)
+        \ :<C-u>call <SID>move_screen(1)<CR>
+  nnoremap <buffer><silent> <Plug>(unite_next_half_screen)
+        \ :<C-u>call <SID>move_half_screen(1)<CR>
   nnoremap <silent><buffer> <Plug>(unite_quick_match_default_action)
         \ :<C-u>call unite#mappings#_quick_match(0)<CR>
   nnoremap <silent><buffer> <Plug>(unite_quick_match_choose_action)
@@ -252,7 +256,8 @@ endfunction"}}}
 function! unite#mappings#do_action(action_name, ...)"{{{
   call unite#redraw()
 
-  let candidates = get(a:000, 0, unite#get_marked_candidates())
+  let candidates = get(a:000, 0,
+        \ unite#get_marked_candidates())
   let new_context = get(a:000, 1, {})
   let is_clear_marks = get(a:000, 2, 1)
   let sources = get(a:000, 3, {})
@@ -294,6 +299,7 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     let new_context = extend(
           \ deepcopy(unite#get_context()), new_context)
     let old_context = unite#set_context(new_context)
+    let unite = unite#get_current_unite()
   endif
 
   let context = unite#get_context()
@@ -331,9 +337,18 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     endif
   endfor
 
+  if unite.context.keep_focus
+    let winnr = bufwinnr(unite.bufnr)
+
+    if winnr > 0
+      " Restore focus.
+      execute winnr 'wincmd w'
+    endif
+  endif
+
   if !empty(new_context)
     " Restore context.
-    call unite#set_context(old_context)
+    let unite.context = old_context
   endif
 
   if is_redraw
@@ -369,8 +384,10 @@ function! s:get_action_table(action_name, candidates, sources)"{{{
     endif
 
     if !has_key(action_table, action_name)
-      call unite#util#print_error(candidate.abbr . '(' . candidate.source . ')')
-      call unite#util#print_error('No such action : ' . action_name)
+      call unite#util#print_error(
+            \ candidate.unite__abbr . '(' . candidate.source . ')')
+      call unite#util#print_error(
+            \ 'No such action : ' . action_name)
       return []
     endif
 
@@ -378,8 +395,10 @@ function! s:get_action_table(action_name, candidates, sources)"{{{
 
     " Check selectable flag.
     if !action.is_selectable && len(a:candidates) > 1
-      call unite#util#print_error(candidate.abbr . '(' . candidate.source . ')')
-      call unite#util#print_error('Not selectable action : ' . action_name)
+      call unite#util#print_error(
+            \ candidate.unite__abbr . '(' . candidate.source . ')')
+      call unite#util#print_error(
+            \ 'Not selectable action : ' . action_name)
       return []
     endif
 
@@ -473,7 +492,9 @@ function! s:toggle_mark()"{{{
   endif
   call unite#redraw_line()
 
-  normal! j
+  if line('.') != line('$')
+    normal! j
+  endif
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end)"{{{
   if a:start < 0 || a:end >= len(unite#get_unite_candidates())
@@ -511,17 +532,20 @@ function! s:choose_action()"{{{
 
   call unite#mappings#_choose_action(candidates)
 endfunction"}}}
-function! unite#mappings#_choose_action(candidates)"{{{
-  call filter(a:candidates, '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
+function! unite#mappings#_choose_action(candidates, ...)"{{{
+  call filter(a:candidates,
+        \ '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
   if empty(a:candidates)
     return
   endif
 
   let unite = unite#get_current_unite()
+  let context = get(a:000, 0, {})
+  let context.source__sources = unite.sources
 
-  call unite#start_temporary([[s:source_action] + a:candidates], {
-        \ 'source__sources' : unite.sources,
-        \ }, 'action')
+  call unite#start_temporary(
+        \ [[s:source_action] + a:candidates],
+        \ context, 'action')
 endfunction"}}}
 function! s:insert_enter(key)"{{{
   setlocal modifiable
@@ -562,7 +586,7 @@ function! s:print_candidate()"{{{
   endif
 
   let candidate = unite#get_current_candidate()
-  echo 'abbr: ' . candidate.abbr
+  echo 'abbr: ' . candidate.unite__abbr
   echo 'word: ' . candidate.word
 endfunction"}}}
 function! s:insert_selected_candidate()"{{{
@@ -600,12 +624,12 @@ function! unite#mappings#_quick_match(is_choose)"{{{
   let unite = unite#get_current_unite()
 
   if !has_key(quick_match_table, char)
-        \ || quick_match_table[char] >= len(unite.candidates)
+        \ || quick_match_table[char] >= len(unite.current_candidates)
     call unite#util#print_error('Canceled.')
     return
   endif
 
-  let candidate = unite.candidates[quick_match_table[char]]
+  let candidate = unite.current_candidates[quick_match_table[char]]
   if candidate.is_dummy
     call unite#util#print_error('Canceled.')
     return
@@ -806,7 +830,7 @@ function! s:source_action.gather_candidates(args, context)"{{{
 
   " Print candidates.
   call unite#print_message(map(copy(candidates),
-        \ '"[action] candidates: ".v:val.abbr."(".v:val.source.")"'))
+        \ '"[action] candidates: ".v:val.unite__abbr."(".v:val.source.")"'))
 
   " Process Alias.
   let actions = s:get_actions(candidates,

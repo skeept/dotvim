@@ -1,10 +1,7 @@
 " vim: ft=vim:fdm=marker
 
-" OPTION: g:pymode_syntax -- bool.
-call pymode#Default('g:pymode_syntax', 1)
-
 " DESC: Disable script loading
-if pymode#Default('b:current_syntax', 'python') || !g:pymode_syntax
+if !pymode#Option('syntax') || pymode#Default('b:current_syntax', 'python')
     finish
 endif
 

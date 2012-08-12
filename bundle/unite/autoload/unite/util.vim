@@ -2,7 +2,8 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:V = vital#of('unite.vim')
-call s:V.load('Data.List')
+let s:List = vital#of('unite.vim').import('Data.List')
+
 function! unite#util#truncate_smart(...)
   return call(s:V.truncate_smart, a:000)
 endfunction
@@ -73,10 +74,10 @@ function! unite#util#get_last_errmsg()
   return unite#util#has_vimproc() ? vimproc#get_last_errmsg() : ''
 endfunction
 function! unite#util#sort_by(...)
-  return call(s:V.Data.List.sort_by, a:000)
+  return call(s:List.sort_by, a:000)
 endfunction
 function! unite#util#uniq(...)
-  return call(s:V.Data.List.uniq, a:000)
+  return call(s:List.uniq, a:000)
 endfunction
 function! unite#util#input_yesno(message)"{{{
   let yesno = input(a:message . ' [yes/no] : ')
@@ -150,8 +151,10 @@ function! unite#util#alternate_buffer()"{{{
   endif
 endfunction"}}}
 function! unite#util#is_cmdwin()"{{{
+  let errmsg_save = v:errmsg
   silent! verbose noautocmd wincmd p
-  if v:errmsg =~ '^E11:'
+  if errmsg_save !=# v:errmsg
+        \ && v:errmsg =~ '^E11:'
     return 1
   endif
 
@@ -166,6 +169,21 @@ function! s:buflisted(bufnr)"{{{
 endfunction"}}}
 
 function! unite#util#glob(pattern, ...)"{{{
+  if a:pattern =~ "'"
+    " Use glob('*').
+    let cwd = getcwd()
+    let base = unite#util#substitute_path_separator(
+          \ fnamemodify(a:pattern, ':h'))
+    lcd `=base`
+
+    let files = map(split(unite#util#substitute_path_separator(
+          \ glob('*')), '\n'), "base . '/' . v:val")
+
+    lcd `=cwd`
+
+    return files
+  endif
+
   " let is_force_glob = get(a:000, 0, 0)
   let is_force_glob = get(a:000, 0, 1)
 
@@ -174,7 +192,8 @@ function! unite#util#glob(pattern, ...)"{{{
     return vimproc#readdir(a:pattern[: -2])
   else
     " Escape [.
-    let glob = escape(a:pattern, unite#util#is_windows() ?  '?"={}' : '?"={}[]')
+    let glob = escape(a:pattern,
+          \ unite#util#is_windows() ?  '?"={}' : '?"={}[]')
 
     return split(unite#util#substitute_path_separator(glob(glob)), '\n')
   endif
@@ -210,6 +229,35 @@ function! unite#util#set_dictionary_helper(variable, keys, value)"{{{
   for key in split(a:keys, '\s*,\s*')
     let a:variable[key] = a:value
   endfor
+endfunction"}}}
+
+" filter() for matchers.
+function! unite#util#filter_matcher(list, expr, context)"{{{
+  if !a:context.unite__is_sort_nothing ||
+        \ a:context.unite__max_candidates <= 0
+
+    return a:expr == '' ? a:list : filter(a:list, a:expr)
+  endif
+
+  if a:expr == ''
+    return a:list[: a:context.unite__max_candidates]
+  endif
+
+  let _ = []
+  let len = 0
+  let max = a:context.unite__max_candidates
+  let offset = max*4
+  for cnt in range(0, len(a:list) / offset)
+    let list = filter(a:list[cnt*offset : cnt*offset + offset], a:expr)
+    let len += len(list)
+    let _ += list
+
+    if len >= max
+      break
+    endif
+  endfor
+
+  return _[: max]
 endfunction"}}}
 
 let &cpo = s:save_cpo

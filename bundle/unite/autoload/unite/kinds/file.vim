@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Apr 2012.
+" Last Modified: 27 Jul 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -202,10 +202,12 @@ function! s:kind.action_table.vimfiler__move.func(candidates)"{{{
     endif
 
     let context = unite#get_context()
-    let dest_dir = has_key(context, 'action__directory')
-          \ && context.action__directory != '' ?
-          \   context.action__directory :
-          \   unite#util#input_directory('Input destination directory: ')
+    let dest_dir = get(context, 'action__directory', '')
+    if dest_dir == ''
+      let dest_dir = unite#util#input_directory(
+            \ 'Input destination directory: ')
+    endif
+
     if dest_dir == ''
       return
     elseif isdirectory(dest_dir) && dest_dir !~ '/$'
@@ -227,7 +229,15 @@ function! s:kind.action_table.vimfiler__move.func(candidates)"{{{
       endif
     endfor
 
-    call unite#kinds#file#do_action(candidates, dest_dir, 'move', '')
+    if dest_dir =~ '^\h\w\+:'
+      " Use protocol move method.
+      let protocol = matchstr(dest_dir, '^\h\w\+')
+      call unite#sources#{protocol}#move_files(
+            \ dest_dir, candidates)
+    else
+      call unite#kinds#file#do_action(
+            \ candidates, dest_dir, 'move')
+    endif
   finally
 
     if vimfiler_current_dir != ''
@@ -236,7 +246,8 @@ function! s:kind.action_table.vimfiler__move.func(candidates)"{{{
   endtry
 endfunction"}}}
 
-let s:kind.action_table.move = deepcopy(s:kind.action_table.vimfiler__move)
+let s:kind.action_table.move =
+      \ deepcopy(s:kind.action_table.vimfiler__move)
 let s:kind.action_table.move.is_listed = 1
 function! s:kind.action_table.move.func(candidates)"{{{
   if !unite#util#input_yesno('Really move files?')
@@ -272,18 +283,25 @@ function! s:kind.action_table.vimfiler__copy.func(candidates)"{{{
     endif
 
     let context = unite#get_context()
-    let dest_dir = has_key(context, 'action__directory')
-          \ && context.action__directory != '' ?
-          \   context.action__directory :
-          \   unite#util#input_directory('Input destination directory: ')
+    let dest_dir = get(context, 'action__directory', '')
+    if dest_dir == ''
+      let dest_dir = unite#util#input_directory(
+            \ 'Input destination directory: ')
+    endif
+
     if dest_dir == ''
       return
     elseif isdirectory(dest_dir) && dest_dir !~ '/$'
       let dest_dir .= '/'
     endif
 
-    call unite#kinds#file#do_action(a:candidates, dest_dir, 'copy',
-          \ s:SID_PREFIX().'check_copy_func')
+    if dest_dir =~ '^\h\w\+:'
+      " Use protocol move method.
+      let protocol = matchstr(dest_dir, '^\h\w\+')
+      call unite#sources#{protocol}#copy_files(dest_dir, a:candidates)
+    else
+      call unite#kinds#file#do_action(a:candidates, dest_dir, 'copy')
+    endif
   finally
     if vimfiler_current_dir != ''
       lcd `=current_dir`
@@ -323,8 +341,7 @@ function! s:kind.action_table.vimfiler__delete.func(candidates)"{{{
       return 1
     endif
 
-    call unite#kinds#file#do_action(a:candidates, '', 'delete',
-          \ s:SID_PREFIX().'check_delete_func')
+    call unite#kinds#file#do_action(a:candidates, '', 'delete')
   finally
     if vimfiler_current_dir != ''
       lcd `=current_dir`
@@ -418,9 +435,6 @@ let s:kind.action_table.vimfiler__shell = {
       \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__shell.func(candidate)"{{{
-  let vimfiler_current_dir =
-        \ get(unite#get_context(), 'vimfiler__current_directory', '')
-
   if !exists(':VimShellPop')
     shell
     return
@@ -449,8 +463,11 @@ function! s:kind.action_table.vimfiler__shellcmd.func(candidate)"{{{
 
   try
     let command = unite#get_context().vimfiler__command
+    let output = split(unite#util#system(command), '\n\|\r\n')
 
-    echo unite#util#system(command)
+    if !empty(output)
+      call unite#start([['output', output]])
+    endif
   finally
     if vimfiler_current_dir != ''
       lcd `=current_dir`
@@ -497,6 +514,7 @@ endfunction"}}}
 let s:kind.action_table.vimfiler__execute = {
       \ 'description' : 'open files with associated program',
       \ 'is_selectable' : 1,
+      \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__execute.func(candidates)"{{{
   let vimfiler_current_dir =
@@ -525,6 +543,7 @@ endfunction"}}}
 
 let s:kind.action_table.vimfiler__write = {
       \ 'description' : 'save file',
+      \ 'is_listed' : 0,
       \ }
 function! s:kind.action_table.vimfiler__write.func(candidate)"{{{
   let context = unite#get_context()
@@ -564,8 +583,8 @@ function! s:external(command, dest_dir, src_files)"{{{
         \   map(src_files, '''"''.v:val.''"''')), '&'), 'g')
   let command_line = substitute(command_line,
         \'\$dest\>', escape('"'.dest_dir.'"', '&'), 'g')
-
   " echomsg command_line
+
   let output = unite#util#system(command_line)
 
   return unite#util#get_last_status()
@@ -720,7 +739,7 @@ function! s:filename2candidate(filename)"{{{
         \ }
 endfunction"}}}
 
-function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_func)"{{{
+function! unite#kinds#file#do_action(candidates, dest_dir, action_name)"{{{
   let overwrite_method = ''
   let is_reset_method = 1
 
@@ -735,9 +754,10 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
 
     if a:action_name == 'move' || a:action_name == 'copy'
       " Overwrite check.
-      let [dest_filename, overwrite_method, is_reset_method, is_continue] =
-            \ s:check_over_write(a:dest_dir, filename, overwrite_method,
-            \                    is_reset_method)
+      let [dest_filename, overwrite_method,
+            \ is_reset_method, is_continue] =
+            \ s:check_over_write(a:dest_dir, filename,
+            \    overwrite_method, is_reset_method)
       if is_continue
         let cnt += 1
         continue
@@ -747,10 +767,10 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
     endif
 
     " Print progress.
-    echo printf('%d%% %s %s%s',
+    echo printf('%d%% %s %s',
           \ ((cnt*100) / max), a:action_name,
-          \ (dest_filename == '' ? '' : dest_filename  . ' -> '),
-          \ filename)
+          \ (filename . (dest_filename == '' ? '' :
+          \              ' -> ' . dest_filename)))
     redraw
 
     if a:action_name == 'delete'
@@ -770,8 +790,14 @@ function! unite#kinds#file#do_action(candidates, dest_dir, action_name, command_
         break
       endif
     else
-      let command = a:command_func == '' ?
-            \ a:action_name : call(a:command_func, [filename])
+      let command = a:action_name
+
+      if a:action_name ==# 'copy'
+        let command = s:check_copy_func(filename)
+      elseif a:action_name ==# 'delete'
+        let command = s:check_delete_func(filename)
+      endif
+
       if s:external(command, dest_filename, [filename])
         call unite#print_error(printf('Failed file %s: %s',
               \ a:action_name, filename))

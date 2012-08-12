@@ -79,7 +79,7 @@ fu! Gitv_OpenGitCommand(command, windowCmd, ...) "{{{
         if a:windowCmd == ''
             silent setlocal modifiable
             silent setlocal noreadonly
-            1,$ d
+            1,$ d _
         else
             let goBackTo       = winnr()
             let dir            = s:GetRepoDir()
@@ -446,6 +446,8 @@ fu! s:AddFileModeSpecific(filePath, range, commitCount) "{{{
 endfu "}}}
 fu! s:SetupMappings() "{{{
     "operations
+    nnoremap <buffer> <silent> <C-n> <C-n>:call <SID>OpenGitvCommit("Gedit", 0)<cr>
+    nnoremap <buffer> <silent> <C-p> <C-p>:call <SID>OpenGitvCommit("Gedit", 0)<cr>
     nnoremap <buffer> <silent> <cr> :call <SID>OpenGitvCommit("Gedit", 0)<cr>
     nnoremap <buffer> <silent> o :call <SID>OpenGitvCommit("Gsplit", 0)<cr>
     nnoremap <buffer> <silent> O :call <SID>OpenGitvCommit("Gtabedit", 0)<cr>
@@ -472,6 +474,7 @@ fu! s:SetupMappings() "{{{
     vnoremap <buffer> <silent> S :call <SID>StatGitvCommit()<cr>
 
     vnoremap <buffer> <silent> m :call <SID>MergeBranches()<cr>
+    nnoremap <buffer> <silent> <leader>m :call <SID>MergeToCurrent()<cr>
 
     "movement
     nnoremap <buffer> <silent> x :call <SID>JumpToBranch(0)<cr>
@@ -481,7 +484,9 @@ fu! s:SetupMappings() "{{{
     nnoremap <buffer> <silent> P :call <SID>JumpToHead()<cr>
 
     "misc
-    nnoremap <buffer> git :Git 
+    nnoremap <buffer> git :Git<space>
+    " yank the commit hash
+    nnoremap <buffer> <silent> yc m'$F[w"+yw`'
 endf "}}}
 fu! s:SetupBufferCommands(fileMode) "{{{
     silent command! -buffer -nargs=* -complete=customlist,s:fugitive_GitComplete Git call <sid>MoveIntoPreviewAndExecute("unsilent Git <args>",1)|normal u
@@ -942,6 +947,23 @@ fu! s:PerformMerge(target, mergeBranch, ff) abort
             exec 'Git branch -d ' . a:mergeBranch
         endif
     endif
+endfu
+fu! s:MergeToCurrent()
+    let refs = s:GetGitvRefs(".")
+    call filter(refs, 'v:val !=? "HEAD"')
+    if len(refs) < 1
+        echoerr 'No ref found to perform a merge.'
+        return
+    endif
+    let target = refs[0]
+    let target = substitute(target, "^[tr]:", "", "")
+
+    let choices = "&Yes\n&No\n&Cancel"
+    let ff = confirm("Use fast-forward, if possible, to merge '". target . "' in to 'HEAD'?", choices)
+    if ff == 0 || ff == 3 | return | endif
+    let ff = ff == 1 ? ff : 0
+
+    call s:PerformMerge("HEAD", target, ff)
 endfu "}}}
 fu! s:StatGitvCommit() range "{{{
     let shafirst = s:GetGitvSha(a:firstline)

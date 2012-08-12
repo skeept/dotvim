@@ -24,6 +24,10 @@ snippet ref "reference" w
 (\ref{${1:<+reference+>}})${2:<++>}
 endsnippet
 
+snippet refl "reference" w
+\ref{${1:<+reference+>}}${2:<++>}
+endsnippet
+
 snippet mcol "multicolumn"
 \multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${4:<++>}
 endsnippet
@@ -72,8 +76,8 @@ snippet fr "insert fraction"
 \frac{${1:${VISUAL:<+nom+>}}}{${2:<+denom+>}}${0:<++>}
 endsnippet
 
-snippet sum
-\sum_{${1:i=1}}^{${2:n}}{${3}}${4}
+snippet sum "sum with lower and upper limits" w
+\sum_{${1:i=1}}^{${2:n}}{${3:<++>}}${0:<++>}
 endsnippet
 
 snippet cite
@@ -131,10 +135,17 @@ snippet out "define a outline"
 } % OutlineEnd${0:<++>}
 endsnippet
 
-snippet todo "define a todo"
-\todo{
-  ${1:<+TodoText+>}
-} % TODOEND${0:<++>}
+snippet todo "define a todo" !w
+\todo{${1:<+what+>}}${0:<++>}
+endsnippet
+
+snippet abs "enclose expression in | |" !w
+\abs{${1:<++>}}$0
+endsnippet
+
+snippet todoi "expansion of todoi" !w
+\todoi{${1:<+outline title (red)+>}}
+  {${2:<+outline (blue)+>}}$0
 endsnippet
 
 # vim:ft=snippets:

@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 03 May 2012.
+" Last Modified: 31 Jul 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -63,8 +63,18 @@ function! s:action_grep_directory.func(candidates) "{{{
         \ ]], { 'no_quit' : 1 })
 endfunction "}}}
 if executable(g:unite_source_grep_command) && unite#util#has_vimproc()
-  call unite#custom_action('file,buffer', 'grep', s:action_grep_file)
-  call unite#custom_action('file,buffer', 'grep_directory', s:action_grep_directory)
+  call unite#custom_action('file,buffer',
+        \ 'grep', s:action_grep_file)
+  call unite#custom_action('file,buffer',
+        \ 'grep_directory', s:action_grep_directory)
+
+  if get(g:, 'vimfiler_as_default_explorer', 0)
+    " For unite-ssh.
+    call unite#custom_action('file/ssh',
+          \ 'grep', s:action_grep_file)
+    call unite#custom_action('file/ssh',
+          \ 'grep_directory', s:action_grep_directory)
+  endif
 endif
 " }}}
 
@@ -79,6 +89,7 @@ let s:source = {
       \ 'hooks' : {},
       \ 'syntax' : 'uniteSource__Grep',
       \ 'filters' : ['matcher_regexp', 'sorter_default', 'converter_default'],
+      \ 'ignore_pattern' : g:unite_source_grep_ignore_pattern,
       \ }
 
 function! s:source.hooks.on_init(args, context) "{{{
@@ -131,6 +142,26 @@ function! s:source.hooks.on_init(args, context) "{{{
         \ (len(targets) == 1) ?
         \ unite#util#substitute_path_separator(
         \  unite#util#expand(targets[0])) : ''
+
+  let a:context.source__ssh_path = ''
+  if exists('*vimfiler#get_current_vimfiler')
+    if !empty(get(b:, 'vimfiler', {}))
+      let vimfiler = b:vimfiler
+    else
+      let vimfiler = vimfiler#get_current_vimfiler()
+    endif
+
+    if get(vimfiler, 'source', '') ==# 'ssh'
+      let [hostname, port, path] =
+            \ unite#sources#ssh#parse_path(
+            \  vimfiler.source.':'.vimfiler.current_dir)
+      let a:context.source__ssh_path =
+            \ printf('%s://%s:%s/', vimfiler.source, hostname, port)
+
+      call map(a:context.source__target,
+            \ "substitute(v:val, 'ssh://', '', '')")
+    endif
+  endif
 endfunction"}}}
 function! s:source.hooks.on_syntax(args, context)"{{{
   syntax case ignore
@@ -167,6 +198,15 @@ function! s:source.gather_candidates(args, context) "{{{
     \   join(map(a:context.source__target,
     \           "substitute(v:val, '/$', '', '')")),
     \)
+  if a:context.source__ssh_path != ''
+    " Use ssh command.
+    let [hostname, port, path] =
+          \ unite#sources#ssh#parse_path(a:context.source__ssh_path)
+    let cmdline = substitute(substitute(
+          \ g:unite_kind_file_ssh_command . ' ' . cmdline,
+          \   '\<HOSTNAME\>', hostname, 'g'), '\<PORT\>', port, 'g')
+  endif
+
   call unite#print_source_message('Command-line: ' . cmdline, s:source.name)
   let a:context.source__proc = vimproc#plineopen3(cmdline, 1)
 
@@ -174,6 +214,10 @@ function! s:source.gather_candidates(args, context) "{{{
 endfunction "}}}
 
 function! s:source.async_gather_candidates(args, context) "{{{
+  if !has_key(a:context, 'source__proc')
+    return []
+  endif
+
   let stderr = a:context.source__proc.stderr
   if !stderr.eof
     " Print error.
@@ -197,27 +241,37 @@ function! s:source.async_gather_candidates(args, context) "{{{
     \  'v:val =~ "^.\\+:.\\+:.\\+$"'),
     \ '[v:val, split(v:val[2:], ":")]')
 
-  if g:unite_source_grep_ignore_pattern != ''
-    call filter(candidates, 'v:val[0][:1].v:val[1][0] !~ '
-          \ . string(g:unite_source_grep_ignore_pattern))
-  endif
-
   if isdirectory(a:context.source__directory)
     let cwd = getcwd()
     lcd `=a:context.source__directory`
+  endif
+
+  if a:context.source__ssh_path != ''
+    " Use ssh command.
+    let [hostname, port, path] = unite#sources#ssh#parse_path(
+          \     a:context.source__ssh_path)
   endif
 
   let _ = []
   for candidate in candidates
     let dict = {
           \   'kind': 'jump_list',
-          \   'action__path': unite#util#substitute_path_separator(
-          \                   fnamemodify(candidate[0][:1].candidate[1][0], ':p')),
+          \   'action__path': candidate[0][:1].candidate[1][0],
           \   'action__line': candidate[1][1],
           \   'action__text': join(candidate[1][2:], ':'),
           \ }
-    let dict.word = unite#util#substitute_path_separator(
-          \ fnamemodify(dict.action__path, ':.')) . ': ' . dict.action__text
+    if a:context.source__ssh_path != ''
+      let dict.action__path =
+            \ a:context.source__ssh_path . dict.action__path
+    else
+      let dict.action__path = unite#util#substitute_path_separator(
+          \  fnamemodify(dict.action__path, ':p'))
+    endif
+
+    let dict.word = printf('%s:%s:%s',
+          \  unite#util#substitute_path_separator(
+          \     fnamemodify(dict.action__path, ':.')),
+          \ dict.action__line, dict.action__text)
 
     call add(_, dict)
   endfor

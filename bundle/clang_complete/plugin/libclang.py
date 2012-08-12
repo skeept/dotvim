@@ -11,6 +11,8 @@ def initClangComplete(clang_complete_flags):
   translationUnits = dict()
   global complete_flags
   complete_flags = int(clang_complete_flags)
+  global libclangLock
+  libclangLock = threading.Lock()
 
 # Get a tuple (fileName, fileContent) for the file opened in the current
 # vim buffer. The fileContent contains the unsafed buffer content.
@@ -149,9 +151,12 @@ def updateCurrentDiagnostics():
   debug = int(vim.eval("g:clang_debug")) == 1
   userOptionsGlobal = splitOptions(vim.eval("g:clang_user_options"))
   userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
-  args = userOptionsGlobal + userOptionsLocal
+  parametersLocal = splitOptions(vim.eval("b:clang_parameters"))
+  args = userOptionsGlobal + userOptionsLocal + parametersLocal
+  libclangLock.acquire()
   getCurrentTranslationUnit(args, getCurrentFile(),
                           vim.current.buffer.name, update = True)
+  libclangLock.release()
 
 def getCurrentCompletionResults(line, column, args, currentFile, fileName):
   tu = getCurrentTranslationUnit(args, currentFile, fileName)
@@ -212,8 +217,6 @@ def formatResult(result):
 
 
 class CompleteThread(threading.Thread):
-  lock = threading.Lock()
-
   def __init__(self, line, column, currentFile, fileName):
     threading.Thread.__init__(self)
     self.line = line
@@ -223,11 +226,12 @@ class CompleteThread(threading.Thread):
     self.result = None
     userOptionsGlobal = splitOptions(vim.eval("g:clang_user_options"))
     userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
-    self.args = userOptionsGlobal + userOptionsLocal
+    parametersLocal = splitOptions(vim.eval("b:clang_parameters"))
+    self.args = userOptionsGlobal + userOptionsLocal + parametersLocal
 
   def run(self):
     try:
-      CompleteThread.lock.acquire()
+      libclangLock.acquire()
       if self.line == -1:
         # Warm up the caches. For this it is sufficient to get the current
         # translation unit. No need to retrieve completion results.
@@ -241,7 +245,7 @@ class CompleteThread(threading.Thread):
                                           self.args, self.currentFile, self.fileName)
     except Exception:
       pass
-    CompleteThread.lock.release()
+    libclangLock.release()
 
 def WarmupCache():
   global debug

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: filename_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 May 2012.
+" Last Modified: 07 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -52,6 +52,13 @@ function! s:source.initialize()"{{{
   call neocomplcache#set_completion_length(
         \ 'filename_complete', g:neocomplcache_auto_completion_start_length)
 
+  " Set filename pattern.
+  call neocomplcache#set_dictionary_helper(g:neocomplcache_keyword_patterns,
+        \'filename',
+        \ neocomplcache#util#is_windows() ?
+        \'\%(\a\+:[/\\]\)\?[\\/[:alnum:]()$+_\~.-]\+' :
+        \'\%(\\.\|[/\[\][:alnum:]()$+_\~.-]\)\+')
+
   " Initialize filename include expr."{{{
   let g:neocomplcache_filename_include_exprs =
         \ get(g:, 'neocomplcache_filename_include_exprs', {})
@@ -78,7 +85,7 @@ function! s:source.initialize()"{{{
 
   " Set rank.
   call neocomplcache#set_dictionary_helper(g:neocomplcache_source_rank,
-        \ 'filename_complete', 10)
+        \ 'filename_complete', 3)
 endfunction"}}}
 function! s:source.finalize()"{{{
 endfunction"}}}
@@ -86,7 +93,6 @@ endfunction"}}}
 function! s:source.get_keyword_pos(cur_text)"{{{
   let filetype = neocomplcache#get_context_filetype()
   if filetype ==# 'vimshell' || filetype ==# 'unite'
-        \ || neocomplcache#within_comment()
     return -1
   endif
 
@@ -99,9 +105,7 @@ function! s:source.get_keyword_pos(cur_text)"{{{
   endif
   if neocomplcache#is_auto_complete()
         \ && (pattern == '' || a:cur_text !~ pattern)
-        \ && a:cur_text =~
-        \'\*$\|\.\.\+$\|[/\\][/\\]\f*$\|/c\%[ygdrive/]$\|\\$\|' .
-        \'\\[[:alnum:].-]'
+        \ && a:cur_text =~ '\*$\|\.\.\+$\|/c\%[ygdrive/]$'
     " Skip filename completion.
     return -1
   endif
@@ -187,12 +191,15 @@ function! s:get_include_files(cur_keyword_str)"{{{
     if !isdirectory(dir)
       continue
     endif
+
     lcd `=dir`
 
     for word in split(
           \ neocomplcache#util#substitute_path_separator(
           \   glob(glob)), '\n')
       let dict = { 'word' : word, 'menu' : '[FI]' }
+
+      call add(isdirectory(word) ? dir_list : file_list, dict)
 
       let abbr = dict.word
       if isdirectory(word)
@@ -215,15 +222,11 @@ function! s:get_include_files(cur_keyword_str)"{{{
               \ 'v:fname', string(dict.abbr), 'g'))
       else
         " Escape word.
-        let dict.word = escape(dict.word, ' *?[]"={}''')
+        let dict.word = escape(dict.word, ' ;*?[]"={}''')
       endif
-
-      call add(isdirectory(word) ? dir_list : file_list, dict)
     endfor
   endfor
   lcd `=cwd`
-
-  echomsg string(file_list)
 
   return neocomplcache#keyword_filter(dir_list, a:cur_keyword_str)
         \ + neocomplcache#keyword_filter(file_list, a:cur_keyword_str)
@@ -234,8 +237,8 @@ let s:cached_files = {}
 function! s:get_glob_files(cur_keyword_str, path)"{{{
   let path = ',,' . substitute(a:path, '\.\%(,\|$\)\|,,', '', 'g')
 
-  let cur_keyword_str = a:cur_keyword_str
-  let cur_keyword_str = substitute(cur_keyword_str, '\\ ', ' ', 'g')
+  let cur_keyword_str = substitute(a:cur_keyword_str,
+        \ '\\\(.\)', '\1', 'g')
 
   let glob = (cur_keyword_str !~ '\*$')?
         \ cur_keyword_str . '*' : cur_keyword_str
@@ -266,8 +269,10 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
 
     if empty(files)
       " Add '*' to a delimiter.
-      let cur_keyword_str = substitute(cur_keyword_str, '\w\+\ze[/._-]', '\0*', 'g')
-      let glob = (cur_keyword_str !~ '\*$')?  cur_keyword_str . '*' : cur_keyword_str
+      let cur_keyword_str =
+            \ substitute(cur_keyword_str, '\w\+\ze[/._-]', '\0*', 'g')
+      let glob = (cur_keyword_str !~ '\*$') ?
+            \ cur_keyword_str . '*' : cur_keyword_str
 
       try
         let globs = globpath(path, glob)
@@ -285,7 +290,8 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
         \ }'),
         \ fnamemodify(a:cur_keyword_str, ':t'))
 
-  if (neocomplcache#is_auto_complete() && len(files) > g:neocomplcache_max_list)
+  if neocomplcache#is_auto_complete()
+        \ && len(files) > g:neocomplcache_max_list
     let files = files[: g:neocomplcache_max_list - 1]
   endif
 
@@ -305,23 +311,25 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
   endif
 
   let home_pattern = '^'.
-        \ neocomplcache#util#substitute_path_separator(expand('~')).'/'
+        \ neocomplcache#util#substitute_path_separator(
+        \ expand('~')).'/'
   let exts = escape(substitute($PATHEXT, ';', '\\|', 'g'), '.')
 
   let dir_list = []
   let file_list = []
   for dict in files
+    call add(isdirectory(dict.word) ?
+          \ dir_list : file_list, dict)
+
     let dict.menu = '[F]'
     let dict.orig = dict.word
 
     if len_env != 0 && dict.word[: len_env-1] == env_ev
       let dict.word = env . dict.word[len_env :]
-    elseif a:cur_keyword_str =~ '^\~/'
-      let dict.word = substitute(dict.word, home_pattern, '\~/', '')
     endif
 
     let abbr = dict.word
-    if isdirectory(neocomplcache#util#expand(dict.word))
+    if isdirectory(dict.word) && dict.word !~ '/$'
       let abbr .= '/'
       if g:neocomplcache_enable_auto_delimiter
         let dict.word .= '/'
@@ -335,10 +343,13 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
     endif
     let dict.abbr = abbr
 
-    " Escape word.
-    let dict.word = escape(dict.word, ' *?[]"={}''')
+    if a:cur_keyword_str =~ '^\~/'
+      let dict.word = substitute(dict.word, home_pattern, '\~/', '')
+      let dict.abbr = substitute(dict.abbr, home_pattern, '\~/', '')
+    endif
 
-    call add(isdirectory(dict.word) ? dir_list : file_list, dict)
+    " Escape word.
+    let dict.word = escape(dict.word, ' ;*?[]"={}''')
   endfor
 
   return dir_list + file_list

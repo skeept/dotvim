@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cache.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 May 2012.
+" Last Modified: 23 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,21 +35,20 @@ function! neocomplcache#cache#check_cache_list(cache_dir, key, async_cache_dicti
     return
   endif
 
-  for cache in filter(copy(a:async_cache_dictionary[a:key]),
-        \ 'filereadable(v:val.cachename)')
-    let keyword_list = []
-    for cache in a:async_cache_dictionary[a:key]
+  let cache_list = a:async_cache_dictionary[a:key]
+  let keyword_list = []
+  for cache in a:async_cache_dictionary[a:key]
+    if filereadable(cache.cachename)
       let keyword_list +=
             \ neocomplcache#cache#load_from_cache(a:cache_dir, cache.filename)
-    endfor
-
-    call neocomplcache#cache#list2index(keyword_list,
-          \ a:index_keyword_list, a:completion_length)
-
-    " Delete from dictionary.
-    call remove(a:async_cache_dictionary, a:key)
-    break
+    endif
   endfor
+
+  call neocomplcache#cache#list2index(keyword_list,
+        \ a:index_keyword_list, a:completion_length)
+
+  " Delete from dictionary.
+  call remove(a:async_cache_dictionary, a:key)
 endfunction"}}}
 function! neocomplcache#cache#check_cache(cache_dir, key, async_cache_dictionary, keyword_list_dictionary, completion_length) "{{{
   " Caching.
@@ -61,6 +60,20 @@ function! neocomplcache#cache#check_cache(cache_dir, key, async_cache_dictionary
         \ a:keyword_list_dictionary[a:key], a:completion_length)
 endfunction"}}}
 function! neocomplcache#cache#load_from_cache(cache_dir, filename)"{{{
+  try
+    return eval(get(neocomplcache#cache#readfile(
+          \ a:cache_dir, a:filename), 0, '[]'))
+  catch
+    let cache_name =
+          \ neocomplcache#cache#encode_name(a:cache_dir, a:filename)
+    if filereadable(cache_name)
+      call delete(cache_name)
+    endif
+
+    return []
+  endtry
+endfunction"}}}
+function! neocomplcache#cache#load_from_cache_old(cache_dir, filename)"{{{
   try
     return map(map(neocomplcache#cache#readfile(a:cache_dir, a:filename),
           \ 'split(v:val, "|||", 1)'), '{
@@ -99,6 +112,10 @@ function! neocomplcache#cache#list2index(list, dictionary, completion_length)"{{
 endfunction"}}}
 
 function! neocomplcache#cache#save_cache(cache_dir, filename, keyword_list)"{{{
+  call neocomplcache#cache#writefile(
+        \ a:cache_dir, a:filename, [string(a:keyword_list)])
+endfunction"}}}
+function! neocomplcache#cache#save_cache_old(cache_dir, filename, keyword_list)"{{{
   " Create dictionary key.
   for keyword in a:keyword_list
     if !has_key(keyword, 'abbr')
@@ -270,10 +287,35 @@ endfunction"}}}
 function! s:async_load(argv, cache_dir, filename)"{{{
   " if 0
   if neocomplcache#has_vimproc()
-    let base_path = neocomplcache#util#substitute_path_separator(
-          \ fnamemodify(vimproc#get_command_name(v:progname), ':p:h'))
-    let vim_path = base_path .
-          \ (neocomplcache#util#is_windows() ? '/vim.exe' : '/vim')
+    let paths = vimproc#get_command_name(v:progname, $PATH, -1)
+    if empty(paths)
+      if has('gui_macvim')
+        " MacVim check.
+        if !executable('/Applications/MacVim.app/Contents/MacOS/Vim')
+          call neocomplcache#print_error(
+                \ 'You installed MacVim in not default directory!'.
+                \ ' You must add MacVim installed path in $PATH.')
+          let g:neocomplcache_use_vimproc = 0
+          return
+        endif
+
+        let vim_path = '/Applications/MacVim.app/Contents/MacOS/Vim'
+      else
+        call neocomplcache#print_error(
+              \ printf('Vim path : "%s" is not found.'.
+              \        ' You must add "%s" installed path in $PATH.',
+              \        v:progname, v:progname))
+        let g:neocomplcache_use_vimproc = 0
+        return
+      endif
+    else
+      let base_path = neocomplcache#util#substitute_path_separator(
+            \ fnamemodify(vimproc#get_command_name(paths[0]), ':p:h'))
+
+      let vim_path = base_path .
+            \ (neocomplcache#util#is_windows() ? '/vim.exe' : '/vim')
+    endif
+
     if !executable(vim_path) && neocomplcache#util#is_mac()
       " Note: Search "Vim" instead of vim.
       let vim_path = base_path. '/Vim'
@@ -281,7 +323,8 @@ function! s:async_load(argv, cache_dir, filename)"{{{
 
     if !executable(vim_path)
       call neocomplcache#print_error(
-            \ printf('Vim path : "%s" is not found.', vim_path))
+            \ printf('Vim path : "%s" is not executable.', vim_path))
+      let g:neocomplcache_use_vimproc = 0
       return
     endif
 

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_regexp.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 10 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,39 +38,44 @@ let s:matcher = {
 
 function! s:matcher.filter(candidates, context)"{{{
   if a:context.input == ''
-    return a:candidates
+    return unite#util#filter_matcher(
+          \ a:candidates, '', a:context)
   endif
 
   let candidates = a:candidates
   for input in split(a:context.input, '\\\@<! ')
-    if input =~ '^!'
-      if input == '!'
-        continue
-      endif
-      " Exclusion match.
-      try
-        let candidates = filter(copy(candidates),
-              \ 'v:val.word !~ ' . string(input[1:]))
-      catch
-      endtry
-    elseif input !~ '[~\\.^$[\]*]'
-      " Optimized filter.
-      let input = substitute(input, '\\\(.\)', '\1', 'g')
-      let expr = &ignorecase ?
-            \ printf('stridx(tolower(v:val.word), %s) != -1', string(tolower(input))) :
-            \ printf('stridx(v:val.word, %s) != -1', string(input))
-
-      let candidates = filter(copy(candidates), expr)
-    else
-      try
-        let candidates = filter(copy(candidates),
-              \ 'v:val.word =~ ' . string(input))
-      catch
-      endtry
-    endif
+    let candidates = unite#filters#matcher_regexp#regexp_matcher(
+          \ candidates, input, a:context)
   endfor
 
   return candidates
+endfunction"}}}
+
+function! unite#filters#matcher_regexp#regexp_matcher(candidates, input, context)"{{{
+  let input = a:input
+  if input =~ '^!'
+    if input == '!'
+      return a:candidates
+    endif
+    " Exclusion match.
+    let expr = 'v:val.word !~ '.string(input[1:])
+  elseif input !~ '[~\\.^$[\]*]'
+    " Optimized filter.
+    let input = substitute(input, '\\\(.\)', '\1', 'g')
+    let expr = &ignorecase ?
+          \ printf('stridx(tolower(v:val.word), %s) != -1',
+          \    string(tolower(input))) :
+          \ printf('stridx(v:val.word, %s) != -1',
+          \    string(input))
+  else
+    let expr = 'v:val.word =~ '.string(input)
+  endif
+
+  try
+    return unite#util#filter_matcher(a:candidates, expr, a:context)
+  catch
+    return []
+  endtry
 endfunction"}}}
 
 let &cpo = s:save_cpo

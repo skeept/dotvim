@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: directory_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 May 2012.
+" Last Modified: 09 Jun 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,12 +38,14 @@ let s:mru_file_mtime = 0  " the last modified time of the mru file.
 
 call unite#util#set_default('g:unite_source_directory_mru_time_format',
       \ '(%Y/%m/%d %H:%M:%S) ')
+call unite#util#set_default('g:unite_source_directory_mru_filename_format',
+      \ ':~:.')
 call unite#util#set_default('g:unite_source_directory_mru_file',
       \ g:unite_data_directory . '/directory_mru')
 call unite#util#set_default('g:unite_source_directory_mru_limit', 100)
 call unite#util#set_default('g:unite_source_directory_mru_ignore_pattern',
       \'\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'
-      \'\|^\%(\\\\\|/mnt/\|/media/\|/temp/\|/tmp/\|/private/var/folders/\)')
+      \'\|^\%(\\\\\|/mnt/\|/media/\|/temp/\|/tmp/\|\%(/private\)\=/var/folders/\)')
 "}}}
 
 function! unite#sources#directory_mru#define()"{{{
@@ -66,8 +68,6 @@ function! unite#sources#directory_mru#_append()"{{{
 
   " Append the current buffer to the mru list.
   if !isdirectory(path) || &buftype =~ 'help'
-  \   || (g:unite_source_directory_mru_ignore_pattern != ''
-  \      && path =~# g:unite_source_directory_mru_ignore_pattern)
     return
   endif
 
@@ -95,29 +95,18 @@ let s:source = {
       \ 'hooks' : {},
       \ 'action_table' : {},
       \ 'syntax' : 'uniteSource__DirectoryMru',
+      \ 'ignore_pattern' :
+      \    g:unite_source_directory_mru_ignore_pattern,
       \}
 
 function! s:source.hooks.on_syntax(args, context)"{{{
   syntax match uniteSource__DirectoryMru_Time
-        \ /\s\+\zs([^)]*)/
+        \ /([^)]*)\s\+/
         \ contained containedin=uniteSource__DirectoryMru
   highlight default link uniteSource__DirectoryMru_Time Statement
 endfunction"}}}
 function! s:source.hooks.on_post_filter(args, context)"{{{
-  for mru in filter(copy(a:context.candidates), "!has_key(v:val, 'abbr')")
-    let relative_path = unite#util#substitute_path_separator(
-          \ fnamemodify(mru.action__path, ':~:.'))
-    if relative_path == ''
-      let relative_path = mru.action__path
-    endif
-    if relative_path !~ '/$'
-      let relative_path .= '/'
-    endif
-
-    " Set default abbr.
-    let mru.abbr = strftime(g:unite_source_directory_mru_time_format,
-          \ mru.source__time)
-          \ . relative_path
+  for mru in a:context.candidates
     let mru.action__directory =
           \ unite#util#path2directory(mru.action__path)
   endfor
@@ -142,6 +131,33 @@ function! s:source.action_table.delete.func(candidates)"{{{
 
   call s:save()
 endfunction"}}}
+"}}}
+
+" Filters"{{{
+function! s:source.source__converter(candidates, context)"{{{
+  for mru in filter(copy(a:context.candidates), "!has_key(v:val, 'abbr')")
+    let relative_path = unite#util#substitute_path_separator(
+          \ fnamemodify(mru.action__path,
+          \   g:unite_source_directory_mru_filename_format))
+    if relative_path == ''
+      let relative_path = mru.action__path
+    endif
+    if relative_path !~ '/$'
+      let relative_path .= '/'
+    endif
+
+    " Set default abbr.
+    let mru.abbr = strftime(g:unite_source_directory_mru_time_format,
+          \ mru.source__time)
+          \ . relative_path
+  endfor
+
+  return a:candidates
+endfunction"}}}
+
+let s:source.filters =
+      \ ['matcher_default', 'sorter_default',
+      \      s:source.source__converter]
 "}}}
 
 " Misc
