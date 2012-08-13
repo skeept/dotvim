@@ -1,6 +1,23 @@
+" Copyright (C) 2010-2012 Hong Xu
+
+" This file is part of SingleCompile.
+
+" SingleCompile is free software: you can redistribute it and/or modify
+" it under the terms of the GNU General Public License as published by
+" the Free Software Foundation, either version 3 of the License, or
+" (at your option) any later version.
+
+" SingleCompile is distributed in the hope that it will be useful,
+" but WITHOUT ANY WARRANTY; without even the implied warranty of
+" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+" GNU General Public License for more details.
+
+" You should have received a copy of the GNU General Public License
+" along with SingleCompile.  If not, see <http://www.gnu.org/licenses/>.
+
 " File: plugin/SingleCompile.vim
 " GetLatestVimScripts: 3115 1 SingleCompile.zip
-" version 2.8.7
+" version 2.10.6
 " check doc/SingleCompile.txt for more version information
 
 if v:version < 700
@@ -118,7 +135,7 @@ endif
 " eg call scriptmanager#Activate(["vim-addon-actions","SingleCompile"])
 if exists('g:vim_actions')
     for cmd in ['SingleCompile','SingleCompileRun']
-        call actions#AddAction('run '.cmd, 
+        call actions#AddAction('run '.cmd,
                     \{'action': funcref#Function('return '.string([cmd]))})
     endfor
 endif

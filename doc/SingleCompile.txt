@@ -1,15 +1,29 @@
 *SingleCompile.txt*
 
 File: SingleCompile.txt
-Version: 2.8.7
-Original Author: H Xu <xuhdev@gmail.com>
-Current Main Maintainers: H Xu <xuhdev@gmail.com>
-                          Zhou Yichao <broken.zhou@gmail.com>
-Last Change: 26 June 2011
+Version: 2.10.6
+Original Author and Current Maintainer: Hong Xu <dev@hong.me>
+Last Change: 15 May 2012
+Homepage: http://www.vim.org/scripts/script.php?script_id=3115
+GitHub repo: https://github.com/xuhdev/SingleCompile
 Description: Make it more convenient to compile or run a single source file.
-License: You can redistribute this plugin and/or modify it under the terms 
-         of the GNU General Public License as published by the Free Software 
-         Foundation; either version 2, or any later version. 
+License:
+    Copyright (C) 2010-2012 Hong Xu
+
+    This file is part of SingleCompile.
+
+    SingleCompile is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    SingleCompile is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with SingleCompile.  If not, see <http://www.gnu.org/licenses/>.
 
 CONTENTS~
                                             *SingleCompile-contents*
@@ -32,6 +46,9 @@ OVERVIEW~
 This plugin is aimed at making it more convenient to compile or run a single
 source file without leaving vim.
 
+A short introduction is available here:
+http://hong-xu.github.com/blog/2012/03/07/use-singlecompile-to-compile-and-run-a-single-source-file-easily-in-vim/ 
+
 Consider this situation: you have just written a small c source file for a
 small test, but you have to write a Makefile to compile it or exit vim to
 compile it or compile it using "!gcc" without quickfix feature because vim's
@@ -39,15 +56,16 @@ make command only use the "make" command? This plugin will help you out.
 
 Add these key-mappings to your vimrc:
 >
- nmap <F9> :SCCompile<cr> 
+ nmap <F9> :SCCompile<cr>
  nmap <F10> :SCCompileRun<cr>
 <
-If your file type is supported, then press F9 to compile your source file, and
-press F10 to compile and run your source file. If there is a compilation
-error, and the |quickfix| feature is enabled, then you could use |:cope|
-command to see the error list. You may also use ":SCChooseCompiler" command to
-choose a compiler if you have more than one kind of compiler available on you
-system.  ":SCViewResult" will show you the last run result.
+Note that the two lines here should not have any trailing space. If your file
+type is supported, then press F9 to compile your source file, and press F10 to
+compile and run your source file. If there is a compilation error, and the
+|quickfix| feature is enabled, then you could use |:cope| command to see the
+error list. You may also use ":SCChooseCompiler" command to choose a compiler
+if you have more than one kind of compiler available on you system.
+":SCViewResult" will show you the last run result.
 
 
 Features:
@@ -76,11 +94,14 @@ C:
     bcc (Borland C++ Builder), Windows only
     cc (UNIX C Compiler), UNIX only
     ch (SoftIntegration Ch)
-    clang (clang)
+    clang (the Clang C and Objective-C compiler)
     gcc (GNU C Compiler)
     icc (Intel C++ Compiler)
     lcc (Little C Compiler)
-    msvc (Microsoft Visual C++), Windows only
+    msvc (Microsoft Visual C++ (In PATH)), Windows only
+    msvc80 (Microsoft Visual C++ 2005), Windows only
+    msvc90 (Microsoft Visual C++ 2008), Windows only
+    msvc100 (Microsoft Visual C++ 2010), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C Compiler), UNIX only
     pcc (Portable C Compiler)
@@ -91,10 +112,13 @@ C:
 C++:
     bcc (Borland C++ Builder), Windows Only
     ch (SoftIntegration Ch)
-    clang++ (clang)
+    clang (the Clang C and Objective-C compiler)
     g++ (GNU C++ Compiler)
     icc (Intel C++ Compiler)
-    msvc (Microsoft Visual C++), Windows Only
+    msvc (Microsoft Visual C++ (In PATH)), Windows only
+    msvc80 (Microsoft Visual C++ 2005), Windows only
+    msvc90 (Microsoft Visual C++ 2008), Windows only
+    msvc100 (Microsoft Visual C++ 2010), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C++ Compiler), UNIX only
     sol-studio (Sun C++ Compiler(Sun Solaris Studio)), UNIX only
@@ -137,11 +161,13 @@ Haskell:
     runhaskell (runhaskell)
 
 html:
+    arora (Arora)
     chrome (Google Chrome)
+    epiphany (Epiphany)
     firefox (Mozilla Firefox)
     ie (Microsoft Internet Explorer)
-    opera (Opera)
     konqueror (Konqueror)
+    opera (Opera)
 
 IDL(Interactive Data Language):
     idl (ITT Visual Information Solutions Interactive Data Language)
@@ -152,7 +178,9 @@ Java:
     sunjdk (Sun Java Development Kit)
 
 JavaScript:
+    gjs (Javascript Bindings for GNOME)
     js (SpiderMonkey, a JavaScript engine written in C)
+    node.js (node.js)
     rhino (Rhino, a JavaScript engine written in Java)
 
 ksh:
@@ -175,7 +203,12 @@ Makefile:
     nmake (Microsoft Program Maintenance Utility)
     mingw32-make (MinGW32 Make)
 
+Markdown:
+    markdown (text-to-HTML conversion tool)
+    rdiscount (Discount Markdown Processor for Ruby)
+
 Object-C:
+    clang (the Clang C and Objective-C compiler)
     gcc (GNU Object-C Compiler)
 
 Pascal:
@@ -194,13 +227,16 @@ python:
     pypy (PyPy)
     python (Python Interpreter)
     python3 (Python 3 Interpreter)
-    
+
 R:
     R (R)
 
+reStructuredText:
+    rst2html (reST to HTML)
+
 ruby:
     ruby (Ruby Interpreter)
-    
+
 sh:
     ash (Almquist Shell)
     bash (Bourne-Again Shell)
@@ -217,13 +253,16 @@ tcsh:
 
 vb script:
     vb (VB Script Interpreter)
-    
+
 xhtml:
+    arora (Arora)
     chrome (Google Chrome)
+    chromium (Chromium)
+    epiphany (Epiphany)
     firefox (Mozilla Firefox)
     ie (Microsoft Internet Explorer)
-    opera (Opera)
     konqueror (Konqueror)
+    opera (Opera)
 
 zsh:
     zsh (Z Shell)
@@ -245,8 +284,8 @@ people, you could send me an email to inform me, and I'll put them in the
 built-in templates.
 
 
-Repository:
-https://bitbucket.org/xuhdev/singlecompile/src
+Git repository on github.com: https://github.com/xuhdev/SingleCompile
+Mercurial repository on bitbucket.org: https://bitbucket.org/xuhdev/singlecompile
 
 Follow xuhdev on twitter if you are interested in my development:
 http://twitter.com/xuhdev
@@ -287,7 +326,7 @@ Also see |:SCCompileAF|.
                                             *:SingleCompile*
 Command:
     :SingleCompile
-Same as |:SCCompile|, only for backward compatibility use. Not recommended to 
+Same as |:SCCompile|, only for backward compatibility use. Not recommended to
 use any more.
 
                                             *:SCCompileAF*
@@ -311,7 +350,7 @@ flags defined in the original templates are not used. For example, the
 templates of GCC defined "flags" as '-o "%<"', "%<" stands for the output file
 name. ":SCCompile -O2" will use "gcc -O2 some_file.c" to compile your source
 file, while ":SCCompileAF -O2" will use "gcc -o some_file -O2 some_file.c" to
-compile your source file. 
+compile your source file.
 
                                             *:SCCompileRun*
 Command:
@@ -337,7 +376,7 @@ instead. See |:SCCompileRunAsync| for further information.
                                             *:SingleCompileRun*
 Command:
     :SingleCompileRun
-Same as |:SCCompileRun|, only for backward compatibility use. Not recommended 
+Same as |:SCCompileRun|, only for backward compatibility use. Not recommended
 to use any more.
 
                                             *:SCCompileRunAF*
@@ -397,7 +436,7 @@ Terminate the process which is running asynchronously if exists. Also see
 
                                             *:SCViewResult*
 Command:
-    :SCViewResult 
+    :SCViewResult
 View the result of the last run command. Only valid when "tee" command is
 available.  "tee" is usually available on a UNIX system. If you are under
 Windows, install cygwin or visit the following link to download a "tee"
@@ -501,7 +540,9 @@ your vimrc file:
 >
  let g:SingleCompile_showquickfixiferror = 1
 <
-The default value of g:SingleCompile_showquickfixiferror is 0.
+The default value of g:SingleCompile_showquickfixiferror is 0. Note that this
+option will be ignored if you are using interpreting languages on Windows,
+such as python, ruby.
 
                                             *SingleCompile-showresultafterrun*
 If "tee" command is available on your system, copy the following line to your
@@ -547,6 +588,7 @@ COMPILER-TEMPLATE~
                                             *SingleCompile-compiler-template*
 ----------------------------------------------------------------------------
                                           *SingleCompile-use-built-in-template*
+                                          *SingleCompile#ChooseCompiler*
 To use a built-in compiler, add the following line to your vimrc file:
 >
  call SingleCompile#ChooseCompiler('filetype', 'compiler')
@@ -565,13 +607,16 @@ For the list of built-in supported compilers, see
 |SingleCompile-built-in-compilers|.
 
 If you don't choose a compiler by yourself, SingleCompile will automatically
-choose one for you.
+choose one for you according to the compiler's priority value (See
+|SingleCompile-priority|).
 
 You can also extend the compiler template if the compiler you want is not in
-the built-in supporting list. Check |SingleCompile-add-your-compiler| for more
-information.
+the built-in supporting list. SingleCompile#ChooseCompiler could also be used
+to choose a user defined compiler. Check |SingleCompile-add-your-compiler| for
+more information.
 
                                           *SingleCompile-add-your-compiler*
+                                          *SingleCompile#SetCompilerTemplate*
 To add a new compiler support by yourself, there are two ways:
 1. (Recommended) Add the following lines to your vimrc file:
 >
@@ -587,7 +632,7 @@ is the command of compiling, such as "gcc", "g++"; "flag" is the flags of
 compiling, such as "-O2"; "run_command" is the command of running, such as
 "./a.out". For interpreted languages such as Python, Ruby, "command" is the
 command of interpreting, such as "python"; "flag" is the flags of
-interpreting; and "run_command" MUST be set to be empty. 
+interpreting; and "run_command" MUST be set to be empty.
 
 For the second line, "filetype" and  "compiler" has the same meanings with the
 first line. "out_file" is the output file of the compilation, such as
@@ -615,7 +660,7 @@ Here are some examples modified from built-in compiler templates:
  call SingleCompile#SetCompilerTemplate('c', 'gcc', 'GNU C Compiler',
              \'gcc', '-o $(FILE_TITLE)$', l:common_run_command)
  call SingleCompile#SetOutfile('c', 'gcc', l:common_out_file)
- call SingleCompile#SetCompilerTemplate('c', 'icc', 
+ call SingleCompile#SetCompilerTemplate('c', 'icc',
              \'Intel C++ Compiler', 'icc', '-o $(FILE_TITLE)$',
              \l:common_run_command)
  call SingleCompile#SetOutfile('c', 'icc', l:common_out_file)
@@ -623,11 +668,11 @@ Here are some examples modified from built-in compiler templates:
  call SingleCompile#ChooseCompiler('c', 'gcc')
 
  " fortran
- call SingleCompile#SetCompilerTemplate('fortran', 'g77', 
+ call SingleCompile#SetCompilerTemplate('fortran', 'g77',
              \'GNU Fortran 77 Compiler', 'g77', '-o $(FILE_TITLE)$',
              \l:common_run_command)
  call SingleCompile#SetOutfile('fortran', 'g77', l:common_out_file)
- call SingleCompile#SetCompilerTemplate('fortran', 'ifort', 
+ call SingleCompile#SetCompilerTemplate('fortran', 'ifort',
              \'Intel Fortran Compiler', 'ifort', '-o $(FILE_TITLE)$',
              \l:common_run_command)
  call SingleCompile#SetOutfile('fortran', 'ifort', l:common_out_file)
@@ -643,10 +688,10 @@ Here are some examples modified from built-in compiler templates:
  call SingleCompile#ChooseCompiler('python', 'jython')
 <
 
-2. (Deprecated, only kept for backward compatibility use) 
-If you use this method to add a language template, many features of 
-SingleCompile will be unavailable. For example, ":SCChooseCompiler" command 
-will not be available. So I don't recommend you to use this method, and this 
+2. (Deprecated, only kept for backward compatibility use)
+If you use this method to add a language template, many features of
+SingleCompile will be unavailable. For example, ":SCChooseCompiler" command
+will not be available. So I don't recommend you to use this method, and this
 method is kept ONLY for backward compatibility.
 
 Add the following lines to your vimrc file:
@@ -659,7 +704,7 @@ For compiling languages such as C, Java, stringA is the command of compiling,
 stringB is the flags of compiling, stringC is the command of running; For
 interpreted languages such as Python, Ruby, stringA is the command of
 interpreting, stringB is the flags of interpreting, stringC MUST be set to
-be empty. 
+be empty.
 
 Here are some examples:
 >
@@ -713,11 +758,14 @@ C:
     bcc (Borland C++ Builder), Windows only
     cc (UNIX C Compiler), UNIX only
     ch (SoftIntegration Ch)
-    clang (clang)
+    clang (the Clang C and Objective-C compiler)
     gcc (GNU C Compiler)
     icc (Intel C++ Compiler)
     lcc (Little C Compiler)
-    msvc (Microsoft Visual C++), Windows only
+    msvc (Microsoft Visual C++ (In PATH)), Windows only
+    msvc80 (Microsoft Visual C++ 2005), Windows only
+    msvc90 (Microsoft Visual C++ 2008), Windows only
+    msvc100 (Microsoft Visual C++ 2010), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C Compiler), UNIX only
     pcc (Portable C Compiler)
@@ -728,10 +776,13 @@ C:
 C++:
     bcc (Borland C++ Builder), Windows Only
     ch (SoftIntegration Ch)
-    clang++ (clang)
+    clang (the Clang C and Objective-C compiler)
     g++ (GNU C++ Compiler)
     icc (Intel C++ Compiler)
-    msvc (Microsoft Visual C++), Windows Only
+    msvc (Microsoft Visual C++ (In PATH)), Windows only
+    msvc80 (Microsoft Visual C++ 2005), Windows only
+    msvc90 (Microsoft Visual C++ 2008), Windows only
+    msvc100 (Microsoft Visual C++ 2010), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C++ Compiler), UNIX only
     sol-studio (Sun C++ Compiler(Sun Solaris Studio)), UNIX only
@@ -774,9 +825,13 @@ Haskell:
     runhaskell (runhaskell)
 
 html:
+    arora (Arora)
     chrome (Google Chrome)
+    chromium (Chromium)
+    epiphany (Epiphany)
     firefox (Mozilla Firefox)
     ie (Microsoft Internet Explorer)
+    konqueror (Konqueror)
     opera (Opera)
 
 IDL(Interactive Data Language):
@@ -788,7 +843,9 @@ Java:
     sunjdk (Sun Java Development Kit)
 
 JavaScript:
+    gjs (Javascript Bindings for GNOME)
     js (SpiderMonkey, a JavaScript engine written in C)
+    node.js (node.js)
     rhino (Rhino, a JavaScript engine written in Java)
 
 ksh:
@@ -811,7 +868,12 @@ Makefile:
     nmake (Microsoft Program Maintenance Utility)
     mingw32-make (MinGW32 Make)
 
+Markdown:
+    markdown (text-to-HTML conversion tool)
+    rdiscount (Discount Markdown Processor for Ruby)
+
 Object-C:
+    clang (the Clang C and Objective-C compiler)
     gcc (GNU Object-C Compiler)
 
 Pascal:
@@ -833,10 +895,10 @@ python:
 
 R:
     R (R)
-    
+
 ruby:
     ruby (Ruby Interpreter)
-    
+
 sh:
     ash (Almquist Shell)
     bash (Bourne-Again Shell)
@@ -853,11 +915,14 @@ tcsh:
 
 vb script:
     vb (VB Script Interpreter)
-    
+
 xhtml:
+    arora (Arora)
     chrome (Google Chrome)
+    epiphany (Epiphany)
     firefox (Mozilla Firefox)
     ie (Microsoft Internet Explorer)
+    konqueror (Konqueror)
     opera (Opera)
 
 zsh:
@@ -873,7 +938,7 @@ SUPPORTINGS~
 There are some supporting code in this plugin for Marc Weber's
 vim-addon-actions:
     http://github.com/MarcWeber/vim-addon-actions
-    
+
 
 ADVANCED~
                                             *SingleCompile-advanced*
@@ -902,7 +967,7 @@ function will use a built-in default compiler detecting function instead. The
 default function would check whether the "command" is in PATH, ~/bin,
 /usr/local/bin, /usr/bin, /bin on UNIX and whether it is in PATH on other
 OSes, and returns the full path of the command if it is not in PATH. If the
-command is not detected, the default function would return 0.  
+command is not detected, the default function would return 0.
 
 Here is a short example excerpted from built-in template(OpenWatcom detecting
 function):
@@ -926,6 +991,10 @@ environment varible "$WATCOM" to get the compiler's installation directory and
 get the full path of the compiling program.
 
                                             *SingleCompile-predo-postdo*
+                                            *SingleCompile-predo*
+                                            *SingleCompile-postdo*
+                                            *SingleCompile#SetPredo*
+                                            *SingleCompile#SetPostdo*
 "Predo" and "Postdo" features allow you to initialize the compiler before
 compiling and clean up after compiling in you own way.
 
@@ -973,7 +1042,7 @@ Example: OpenWatcom's "Predo" and "Postdo" functions:
  call SingleCompile#SetPostdo('c', 'open-watcom', function('s:PostdoWatcom'))
 <
 As you see, the OpenWatcom "Predo" function first saves the current PATH
-environment varible, then modifies $PATH to meet the OpenWatcom compiler needs. 
+environment varible, then modifies $PATH to meet the OpenWatcom compiler needs.
 It returns the original compiling info because it does not need to modify it.
 The OpenWatcom "Postdo" function restores the original $PATH. After defining
 the two functions, the example calls "SetPredo" and "SetPostdo" function to
@@ -986,6 +1055,7 @@ calling order is: first the compiler detecting function, then "Predo"
 function, then compile, and the last is the "Postdo" function.
 
                                             *SingleCompile-vim-compiler*
+                                            *SingleCompile#SetVimCompiler*
 SingleCompile can work with the compiler feature of vim(see |:compiler|). To
 set the compiler file in the compiler direcotry for a compiler, use
 SingleCompile#SetVimCompiler function. For example, for g77, the GNU Fortran
@@ -1000,14 +1070,36 @@ Then if we are using g77 as our compiler, SingleCompile will first execute
 the advantage that vim's quickfix will recognize the messages output by g77
 and help us locate these errors quickly.
 
+                                            *SingleCompile-priority*
+                                            *SingleCompile#SetPriority*
+Since version 2.9, every compiler template could be assigned a priority value.
+This value determines which compiler to use when seversal compilers has been
+detected. Use the following line to set a compiler's priority:
+>
+ call SingleCompile#SetPriority('language_name', 'compiler_name', priority)
+<
+The parameter "priority" is an integer. The less the parameter "priority" is,
+the higher priority the compiler has. For example, the following two lines set
+two Fortran compilers' priorities (The two lines are excerpted from the
+built-in template):
+>
+ call SingleCompile#SetPriority('fortran', 'gfortran', 70)
+ call SingleCompile#SetPriority('fortran', 'ifort', 80)
+<
+After executing the two lines above, if ifort (which is Intel Fortran
+Compiler) and gfortran (GNU fortran compiler) are both detected by
+SingleCompile, and the user does not call |SingleCompile#ChooseCompiler| to
+choose a compiler explicitly, SingleCompile will choose gfortran as the
+current compiler.
 
 CREDITS~
                                             *SingleCompile-credits*
 ----------------------------------------------------------------------------
-Marc Weber  Integrate SingleCompile with vim-addon-actions, and some other
+Marc Weber  Integrated SingleCompile with vim-addon-actions, and some other
             improvements
-Darek       Fix a directory switching bug
-sky hi      DMD compiler for D language built-in template
+Darek       Fixed a directory switching bug
+sky hi      Provided DMD compiler for D language built-in template
+Zhou Yichao Made several improvements and fixed several bugs.
 
 
 TODO~
@@ -1017,8 +1109,6 @@ Add asynchronous compilation support.
 
 Add matlab built-in template.
 
-Improve the detection of MSVC on Windows.
-
 If "tee" is used when we are executing ":make" command, currently we can't get
 the exit code of the compiler. We need to fix this.
 
@@ -1026,7 +1116,9 @@ When running compiled program, if "tee" is used for redirecting, things
 written to stdout are not printed as if what happens when stdout is a tty.
 This need to be fixed.
 
-Make it possible to store compiler template in config files, such as ini 
+Make it possible to store compiler template in config files, such as ini
 files.
+
+Reduce startup time and shrink memory use.
 
 vim:ts=4:ft=help:tw=78:et
