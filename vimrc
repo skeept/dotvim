@@ -983,3 +983,7 @@ autocmd FileType tex let b:vimpipe_command="latexmk"
 let g:delimitMate_expand_cr = 1
 let g:delimitMate_expand_space = 1
 "==============================================================================
+
+"======================= ConqueTerm ===========================================
+let g:ConqueTerm_ReadUnfocused = 1
+"==============================================================================
