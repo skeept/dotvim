@@ -1,13 +1,22 @@
 # powershell script to copy over files compiled in source dir
 
 $do_break = $False
+
+# similar to perl use strict;
+Set-StrictMode -version 1
+
 #set the default locations for the installation
 switch ( Get-Content Env:ComputerName )
 {
   "ISENGARD" {
-    $install = "c:\Program Files\vim\vim73"
+    $install = "C:\Program Files\Vim\vim73"
     $backup = "c:\htemp\tmp"
     $source = "c:\htemp\vim"
+  }
+  "MIDDLE-EARTH" {
+    $install = "C:\Program Files (x86)\vim\vim73"
+    $backup = "C:\htemp\tmp"
+    $source = "C:\htemp\vim"
   }
   default {
     $computername = Get-Content Env:computername
@@ -31,7 +40,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 # copy the default installation to a backup location 
 Write-Output "Backup: $install --> $backup"
-Copy-Item $install $backup -recurse -force
+Copy-Item "$install" "$backup" -recurse -force
 
 #copy vim and gvim to destination
 Write-Output "Copy: vim and gvim from $source\src to $install"
@@ -40,4 +49,4 @@ Copy-Item "$source\src\gvim.exe" "$install" -force
 
 Write-Output "Copying $source\runtime to $install"
 # copy runtime folder to install location
-Copy-Item "$source\runtime" $install -force -recurse
+Copy-Item "$source\runtime" "$install" -force -recurse
