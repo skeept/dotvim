@@ -1011,7 +1011,8 @@ function! MyThesisEnv()
   "exec "edit " . g:thesis_path . "/pgprob.tex"
   "!perl run_latexmk.pl
   ConqueTermSplit perl run_latexmk.pl
-  nmap <silent> \tt :!perl OtherFiles/do_tags.pl<cr>
+  setlocal buftype=nofile
+  nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
   "au InsertLeave FileType conque_term normal G
   function! ChangeBufferConqueTerm()
     let currBuffer = bufnr("%")
