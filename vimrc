@@ -29,6 +29,7 @@ let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
+let g:pathogen_disabled += ['powerline']
 let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
@@ -638,10 +639,21 @@ function! CondDispFtFf()
   return val
 endfunction
 
+function! XgetTagbarFunc()
+  if &ft == "help"
+    return ""
+  else
+    return tagbar#currenttag('[%s] ', '')
+  endif
+endfunction
+
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
+set statusline+=\ %h%m%r%=
+"set statusline+=%{XgetTagbarFunc()}
+set statusline+=%{CondDispFtFf()}
+"set statusline+=\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=%{tagbar#currenttag('[%s] ', '')}
-set statusline+=\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
 "==============================================================================
@@ -1014,5 +1026,5 @@ function! MyThesisEnv()
   "nmap ,a <C-^>:<C-U>if &ft == "conque_term" \| normal G \|endif<CR><ESC>
   nmap ,a :call ChangeBufferConqueTerm()<CR>
 endfunction
-command Mt call MyThesisEnv()
+command! Mt call MyThesisEnv()
 "==============================================================================
