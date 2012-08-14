@@ -988,3 +988,31 @@ let g:delimitMate_expand_space = 1
 "======================= ConqueTerm ===========================================
 let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================
+
+"===================== Thesis Specific Settings ===============================
+let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
+if compname == "MIDDLE-EARTH"
+    let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
+endif
+function! MyThesisEnv()
+  silent exec "cd " . g:thesis_path
+  "exec "edit " . g:thesis_path . "/pgprob.tex"
+  "!perl run_latexmk.pl
+  ConqueTermSplit perl run_latexmk.pl
+  nmap <silent> \tt :!perl OtherFiles/do_tags.pl<cr>
+  "au InsertLeave FileType conque_term normal G
+  function! ChangeBufferConqueTerm()
+    let currBuffer = bufnr("%")
+    if &ft != "conque_term"
+      buffer perl
+      normal G
+    else
+      exec "buffer " . g:prevBuffer
+    endif
+    let g:prevBuffer = currBuffer
+  endfunction
+  "nmap ,a <C-^>:<C-U>if &ft == "conque_term" \| normal G \|endif<CR><ESC>
+  nmap ,a :call ChangeBufferConqueTerm()<CR>
+endfunction
+command Mt call MyThesisEnv()
+"==============================================================================
