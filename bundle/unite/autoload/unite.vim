@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Aug 2012.
+" Last Modified: 15 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -207,21 +207,9 @@ endfunction"}}}
 function! unite#do_candidates_action(action_name, candidates, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
-  let context.is_interactive = 0
-
-  " Get sources.
-  let sources = {}
-  for candidate in a:candidates
-    if !has_key(sources, candidate.source)
-      let sources[candidate.source] = 1
-    endif
-  endfor
-
-  try
-    call s:initialize_current_unite(keys(sources), context)
-  catch /^unite.vim: Invalid source/
-    return
-  endtry
+  let context.unite__is_interactive = 0
+  let context.unite__disable_hooks = 1
+  call unite#set_context(context)
 
   return unite#mappings#do_action(
         \ a:action_name, a:candidates, context)
@@ -237,7 +225,6 @@ let s:LNUM_STATUS = 1
 
 " Variables  "{{{
 " buffer number of the unite buffer
-let s:last_unite_bufnr = -1
 let s:current_unite = {}
 let s:unite_cached_message = []
 let s:use_current_unite = 1
@@ -998,6 +985,7 @@ function! unite#start(sources, ...)"{{{
   endif"}}}
 
   call s:initialize_unite_buffer()
+  call s:on_bufwin_enter(bufnr('%'))
 
   let s:use_current_unite = 0
 
@@ -1041,7 +1029,7 @@ function! unite#start_temporary(sources, ...)"{{{
   let context.temporary = 1
   let context.input = ''
   let context.auto_preview = 0
-  let context.is_vimfiler = 0
+  let context.unite__is_vimfiler = 0
   let context.default_action = 'default'
 
   " Overwrite context.
@@ -1060,7 +1048,7 @@ endfunction"}}}
 function! unite#vimfiler_check_filetype(sources, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
-  let context.is_vimfiler = 1
+  let context.unite__is_vimfiler = 1
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1099,12 +1087,13 @@ function! unite#get_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
   let context.no_buffer = 1
-  let context.is_interactive = 0
-
-  let candidates = s:get_candidates(a:sources, context)
+  let context.unite__is_interactive = 0
 
   " Finalize.
   let unite = unite#get_current_unite()
+  let unite.is_enabled_max_candidates = 1
+
+  let candidates = s:get_candidates(a:sources, context)
 
   " Call finalize functions.
   call s:call_hook(unite#loaded_sources_list(), 'on_close')
@@ -1119,15 +1108,15 @@ function! unite#get_vimfiler_candidates(sources, ...)"{{{
   let context = get(a:000, 0, {})
   let context = s:initialize_context(context)
   let context.no_buffer = 1
-  let context.is_vimfiler = 1
+  let context.unite__is_vimfiler = 1
 
   return s:get_candidates(a:sources, context)
 endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
   let context = s:initialize_context(context)
-  let context.is_interactive = 0
-  let context.is_complete = 1
+  let context.unite__is_interactive = 0
+  let context.unite__is_complete = 1
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1148,8 +1137,8 @@ endfunction"}}}
 function! unite#args_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
   let context = s:initialize_context(context)
-  let context.is_interactive = 0
-  let context.is_complete = 1
+  let context.unite__is_interactive = 0
+  let context.unite__is_complete = 1
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1177,12 +1166,13 @@ function! unite#resume(buffer_name, ...)"{{{
 
   if a:buffer_name == ''
     " Use last unite buffer.
-    if !bufexists(s:last_unite_bufnr)
+    if !exists('t:unite') ||
+          \ !bufexists(t:unite.last_unite_bufnr)
       call unite#util#print_error('No unite buffer.')
       return
     endif
 
-    let bufnr = s:last_unite_bufnr
+    let bufnr = t:unite.last_unite_bufnr
   else
     let buffer_name = a:buffer_name
     if buffer_name !~ '@\d\+$'
@@ -1247,10 +1237,6 @@ function! s:get_candidates(sources, context)"{{{
     return []
   endtry
 
-  " Call initialize functions.
-  let unite = unite#get_current_unite()
-  call s:call_hook(unite.sources, 'on_init')
-
   " Caching.
   let s:current_unite.last_input = a:context.input
   let s:current_unite.input = a:context.input
@@ -1259,7 +1245,7 @@ function! s:get_candidates(sources, context)"{{{
   let candidates = []
   for source in unite#loaded_sources_list()
     if !empty(source.unite__candidates)
-      let candidates += a:context.is_vimfiler ?
+      let candidates += a:context.unite__is_vimfiler ?
             \ s:initialize_vimfiler_candidates(
             \   source.unite__candidates, source.name) :
             \ source.unite__candidates
@@ -1276,7 +1262,8 @@ function! unite#close(buffer_name)  "{{{
     let prefix = unite#util#is_windows() ?
           \ '[unite] - ' : '*unite* - '
     let prefix .= buffer_name
-    let buffer_name .= s:get_postfix(prefix, 0)
+    let buffer_name .= s:get_postfix(
+          \ prefix, 0, tabpagebuflist(tabpagenr()))
   endif
 
   let quit_winnr = 0
@@ -1493,23 +1480,24 @@ function! s:initialize_context(context)"{{{
         \ 'toggle' : 0,
         \ 'quick_match' : 0,
         \ 'create' : 0,
-        \ 'is_redraw' : 0,
-        \ 'is_resize' : 1,
         \ 'cursor_line_highlight' :
         \    g:unite_cursor_line_highlight,
         \ 'no_cursor_line' : 0,
         \ 'update_time' : g:unite_update_time,
         \ 'no_buffer' : 0,
-        \ 'is_interactive' : 1,
-        \ 'is_complete' : 1,
-        \ 'is_vimfiler' : 0,
         \ 'hide_source_names' : 0,
         \ 'max_multi_lines' : 5,
         \ 'here' : 0,
         \ 'silent' : 0,
         \ 'keep_focus' : 0,
-        \ 'old_winwidth' : 0,
-        \ 'old_winheight' : 0,
+        \ 'is_redraw' : 0,
+        \ 'is_resize' : 1,
+        \ 'unite__is_interactive' : 1,
+        \ 'unite__is_complete' : 1,
+        \ 'unite__is_vimfiler' : 0,
+        \ 'unite__old_winwidth' : 0,
+        \ 'unite__old_winheight' : 0,
+        \ 'unite__disable_hooks' : 0,
         \ }
 
   let context = extend(default_context, a:context)
@@ -1563,7 +1551,7 @@ function! s:initialize_loaded_sources(sources, context)"{{{
       let source_name = source
       unlet source
       if !has_key(all_sources, source_name)
-        if a:context.is_vimfiler || a:context.is_complete
+        if a:context.unite__is_vimfiler || a:context.unite__is_complete
           " Ignore error.
           continue
         endif
@@ -1901,6 +1889,9 @@ function! s:initialize_vimfiler_candidates(candidates, source_name)"{{{
 
   return a:candidates
 endfunction"}}}
+function! s:initialize_tab_variable()  "{{{
+  let t:unite = { 'last_unite_bufnr' : -1 }
+endfunction"}}}
 
 function! s:recache_candidates(input, is_force)"{{{
   let unite = unite#get_current_unite()
@@ -1937,7 +1928,7 @@ function! s:recache_candidates(input, is_force)"{{{
     let source.unite__is_invalidate = 0
 
     if !context.no_buffer && source.max_candidates != 0
-          \ && !unite.is_enabled_max_candidates
+          \ && unite.is_enabled_max_candidates
           \ && len(source.unite__candidates) > source.max_candidates
       " Filtering too many candidates.
       let source.unite__candidates =
@@ -2044,10 +2035,12 @@ function! s:recache_candidates_loop(context, is_force)"{{{
       let sorters = []
     endif
 
-    let context.unite__is_sort_nothing = empty(sorters)
+    let context.unite__is_sort_nothing =
+          \ empty(sorters) && context.unite__is_interactive
     let context.unite__max_candidates = source.max_candidates
     let unite.max_source_candidates +=
-          \ (context.unite__is_sort_nothing && source.max_candidates > 0) ?
+          \ (context.unite__is_sort_nothing
+          \    && source.max_candidates > 0) ?
           \ source.max_candidates : len(source_candidates)
 
     " Call filters.
@@ -2080,7 +2073,7 @@ function! s:get_source_candidates(source)"{{{
 
   let funcname = 's:get_source_candidates()'
   try
-    if context.is_vimfiler
+    if context.unite__is_vimfiler
       if context.vimfiler__is_dummy
         let funcname = 'vimfiler_dummy_candidates'
         return has_key(a:source, 'vimfiler_dummy_candidates') ?
@@ -2112,7 +2105,7 @@ function! s:get_source_candidates(source)"{{{
         let a:source.unite__cached_candidates +=
               \ a:source.async_gather_candidates(a:source.args, context)
 
-        if context.is_interactive
+        if context.unite__is_interactive
               \ || !a:source.unite__context.is_async
           break
         endif
@@ -2229,8 +2222,6 @@ function! s:initialize_current_unite(sources, context)"{{{
   " Check sources.
   let sources = s:initialize_loaded_sources(a:sources, a:context)
 
-  call s:call_hook(sources, 'on_init')
-
   " Set parameters.
   let unite = {}
   let unite.winnr = winnr
@@ -2248,7 +2239,8 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.prev_winnr = winnr()
 
   " Create new buffer name.
-  let postfix = s:get_postfix(buffer_name, 1)
+  let postfix = s:get_postfix(
+        \ buffer_name, unite.context.create)
   let unite.buffer_name .= postfix
 
   let unite.real_buffer_name = buffer_name . postfix
@@ -2262,7 +2254,7 @@ function! s:initialize_current_unite(sources, context)"{{{
         \  'v:val.unite__context.is_async')) > 0
   let unite.access_time = localtime()
   let unite.is_finalized = 0
-  let unite.is_enabled_max_candidates = 0
+  let unite.is_enabled_max_candidates = 1
   let unite.previewd_buffer_list = []
   let unite.post_filters = unite#get_profile(
         \ unite.profile_name, 'filters')
@@ -2279,6 +2271,8 @@ function! s:initialize_current_unite(sources, context)"{{{
         \  'getwinvar(v:val, "&previewwindow")')) > 0
 
   call unite#set_current_unite(unite)
+
+  call s:call_hook(sources, 'on_init')
 endfunction"}}}
 function! s:initialize_unite_buffer()"{{{
   let is_bufexists = bufexists(s:current_unite.real_buffer_name)
@@ -2288,9 +2282,6 @@ function! s:initialize_unite_buffer()"{{{
   let b:unite = s:current_unite
   let unite = unite#get_current_unite()
 
-  if !unite.context.temporary
-    let s:last_unite_bufnr = bufnr('%')
-  endif
   let unite.bufnr = bufnr('%')
 
   " Note: If unite buffer initialize is incomplete, &modified or &wrap.
@@ -2451,9 +2442,7 @@ function! s:switch_unite_buffer(buffer_name, context)"{{{
     silent! edit `=a:buffer_name`
   endif
 
-  if !a:context.no_split && winnr('$') != 1
-    call unite#_resize_window()
-  endif
+  call s:on_bufwin_enter(bufnr('%'))
 endfunction"}}}
 
 function! s:redraw(is_force, winnr) "{{{
@@ -2553,22 +2542,22 @@ function! unite#_resize_window() "{{{
     let context.is_resize = 1
   elseif context.vertical
         \ && winwidth(winnr()) != context.winwidth
-        \ && (context.old_winwidth  == 0 ||
+        \ && (context.unite__old_winwidth  == 0 ||
         \     winheight(winnr()) == context.winheight)
     execute 'vertical resize' context.winwidth
 
     let context.is_resize = 1
   elseif !context.vertical
         \ && winheight(winnr()) != context.winheight
-        \ && (context.old_winheight  == 0 ||
+        \ && (context.unite__old_winheight  == 0 ||
         \     winwidth(winnr()) == context.winwidth)
     execute 'resize' context.winheight
 
     let context.is_resize = 1
   endif
 
-  let context.old_winheight = winheight(winnr())
-  let context.old_winwidth = winwidth(winnr())
+  let context.unite__old_winheight = winheight(winnr())
+  let context.unite__old_winwidth = winwidth(winnr())
 endfunction"}}}
 
 " Autocmd events.
@@ -2645,11 +2634,19 @@ function! s:on_bufwin_enter(bufnr)  "{{{
   endif
 
   call s:save_updatetime()
-  call unite#_resize_window()
+
+  if !unite.context.no_split && winnr('$') != 1
+    call unite#_resize_window()
+  endif
 
   if exists('winnr')
     execute winnr.'wincmd w'
   endif
+
+  if !exists('t:unite')
+    call s:initialize_tab_variable()
+  endif
+  let t:unite.last_unite_bufnr = a:bufnr
 endfunction"}}}
 function! unite#_on_cursor_hold()  "{{{
   let is_async = 0
@@ -2761,8 +2758,13 @@ function! s:on_buf_unload(bufname)  "{{{
   call s:restore_updatetime()
 
   if !unite.has_preview_window
-    " Close preview window.
-    pclose!
+    let preview_windows = filter(range(1, winnr('$')),
+          \ 'getwinvar(v:val, "&previewwindow") != 0')
+    if !empty(preview_windows)
+      " Close preview window.
+      pclose!
+
+    endif
   endif
 
   call unite#clear_previewed_buffer_list()
@@ -2956,6 +2958,11 @@ function! s:get_substitute_input_loop(input, substitute_patterns)"{{{
   return inputs
 endfunction"}}}
 function! s:call_hook(sources, hook_name)"{{{
+  let context = unite#get_context()
+  if context.unite__disable_hooks
+    return
+  endif
+
   let _ = []
   for source in a:sources
     if !has_key(source.hooks, a:hook_name)
@@ -3033,11 +3040,12 @@ function! s:init_cursor()"{{{
     call unite#mappings#_quick_match(0)
   endif
 endfunction"}}}
-function! s:get_postfix(prefix, is_create)"{{{
-  let buflist = sort(filter(map(range(1, bufnr('$')),
+function! s:get_postfix(prefix, is_create, ...)"{{{
+  let buffers = get(a:000, 0, range(1, bufnr('$')))
+  let buflist = sort(filter(map(buffers,
         \ 'bufname(v:val)'), 'stridx(v:val, a:prefix) >= 0'))
   if empty(buflist)
-    return '@1'
+    return ''
   endif
 
   return a:is_create ? '@'.(matchstr(buflist[-1], '@\zs\d\+$') + 1)
