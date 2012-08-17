@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Aug 2012.
+" Last Modified: 17 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -347,7 +347,8 @@ function! unite#get_current_candidate(...)"{{{
 endfunction"}}}
 function! unite#get_context()"{{{
   let unite = unite#get_current_unite()
-  return empty(unite) ? s:initialize_context({}) : unite.context
+  return has_key(unite, 'context') ?
+        \ unite.context : s:initialize_context({})
 endfunction"}}}
 function! unite#set_context(context)"{{{
   let old_context = unite#get_context()
@@ -2182,6 +2183,8 @@ function! unite#convert_lines(candidates)"{{{
 endfunction"}}}
 
 function! s:initialize_current_unite(sources, context)"{{{
+  call unite#set_context(a:context)
+
   let s:unite_cached_message = []
 
   let context = a:context
@@ -2638,6 +2641,8 @@ function! s:on_bufwin_enter(bufnr)  "{{{
   if !unite.context.no_split && winnr('$') != 1
     call unite#_resize_window()
   endif
+
+  setlocal nomodified
 
   if exists('winnr')
     execute winnr.'wincmd w'
