@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Aug 2012.
+" Last Modified: 19 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -206,6 +206,8 @@ function! unite#mappings#define_default_mappings()"{{{
         \ unite#smart_map('t', unite#do_action('tabopen'))
   inoremap <silent><buffer><expr> t
         \ unite#smart_map('t', unite#do_action('tabopen'))
+  nnoremap <silent><buffer><expr> yy
+        \ unite#smart_map('yy', unite#do_action('yank'))
 
   " Visual mode key-mappings.
   xmap <buffer> <Space>
@@ -479,7 +481,7 @@ function! s:normal_delete_backward_path()"{{{
 endfunction"}}}
 function! s:toggle_mark()"{{{
   let candidate = unite#get_current_candidate()
-  if empty(candidate)
+  if empty(candidate) || get(candidate, 'is_dummy', 0)
     return
   endif
 
@@ -490,11 +492,19 @@ function! s:toggle_mark()"{{{
   if line('.') <= prompt_linenr
     call cursor(prompt_linenr+1, 0)
   endif
-  call unite#redraw_line()
 
-  if line('.') != line('$')
-    normal! j
-  endif
+  while 1
+    call unite#redraw_line()
+
+    if line('.') != line('$')
+      normal! j
+    endif
+
+    let candidate = unite#get_current_candidate()
+    if line('.') == line('$') || !get(candidate, 'is_dummy', 0)
+      break
+    endif
+  endwhile
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end)"{{{
   if a:start < 0 || a:end >= len(unite#get_unite_candidates())
@@ -508,7 +518,8 @@ function! s:toggle_mark_candidates(start, end)"{{{
     let candidate.unite__is_marked = !candidate.unite__is_marked
     let candidate.unite__marked_time = localtime()
 
-    call unite#redraw_line(cnt + unite#get_current_unite().prompt_linenr+1)
+    call unite#redraw_line(
+          \ cnt + unite#get_current_unite().prompt_linenr+1)
 
     let cnt += 1
   endwhile

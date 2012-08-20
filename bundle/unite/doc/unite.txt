@@ -204,9 +204,9 @@ COMMANDS 					*unite-commands*
 
 						*unite-options-no-quit*
 		-no-quit
-		Doesn't close a unite buffer after firing an action.  Unless
-		you specify it, a unite buffer gets closed when you selected
-		an action which is "is_quit".
+		Doesn't close unite buffer after firing an action.  Unless you
+		specify it, a unite buffer gets closed when you selected an
+		action which is "is_quit".
 
 						*unite-options-keep-focus*
 		-keep-focus
@@ -323,6 +323,10 @@ COMMANDS 					*unite-commands*
 						*unite-options-silent*
 		-silent
 		Silent messages in unite buffer.
+
+						*unite-options-auto-quit*
+		-auto-quit
+		Close unite buffer automatically.
 
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		Equivalent to |:Unite| except that it targets the current
@@ -924,6 +928,7 @@ d		In case when you selected a candidate, runs delete action
 b		In case when you selected a candidate, runs bookmark action
 e		In case when you selected a candidate, runs narrow action
 t		In case when you selected a candidate, runs tabopen action
+yy		In case when you selected a candidate, runs yank action
 p		runs preview action
 x		In case when you selected a candidate, runs
 		|<Plug>(unite_quick_match_default_action)|
@@ -2529,6 +2534,22 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-08-20
+- Improved yank action.
+- Improved vimfiler check in grep source.
+- Fixed insert action behavior.
+
+2012-08-19
+- Added yy mapping.
+- Fixed redraw.
+- Fixed toggle marks behavior.
+
+2012-08-18
+- Fixed unite#get_vimfiler_candidates().
+- Fixed ignore pattern in file source.
+- Added -auto-quit option.
+- Use unite#util#iconv().
 
 2012-08-17
 - Setlocal nomodified.

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Aug 2012.
+" Last Modified: 20 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -266,6 +266,7 @@ let s:unite_options = [
       \ '-cursor-line-highlight=', '-no-cursor-line',
       \ '-update-time=', '-hide-source-names',
       \ '-max-multi-lines=', '-here', '-silent', '-keep-focus',
+      \ '-auto-quit',
       \]
 "}}}
 
@@ -761,7 +762,7 @@ function! unite#gather_candidates()"{{{
   endif
 
   let candidates = s:initialize_candidates(
-        \ unite.candidates[: unite.candidates_pos])
+        \ unite.candidates[: unite.candidates_pos-1])
 
   " Post filter.
   for filter_name in unite.post_filters
@@ -970,7 +971,8 @@ function! unite#start(sources, ...)"{{{
   let s:current_unite.input = context.input
   call s:recache_candidates(context.input, context.is_redraw)
 
-  if context.immediately || context.no_empty"{{{
+  if !s:current_unite.is_async &&
+        \ (context.immediately || context.no_empty)"{{{
     let candidates = unite#gather_candidates()
 
     if empty(candidates)
@@ -1085,33 +1087,43 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
 endfunction"}}}
 function! unite#get_candidates(sources, ...)"{{{
   let unite_save = unite#get_current_unite()
-  let context = get(a:000, 0, {})
-  let context = s:initialize_context(context)
-  let context.no_buffer = 1
-  let context.unite__is_interactive = 0
 
-  " Finalize.
-  let unite = unite#get_current_unite()
-  let unite.is_enabled_max_candidates = 1
+  try
+    let context = get(a:000, 0, {})
+    let context = s:initialize_context(context)
+    let context.no_buffer = 1
+    let context.unite__is_interactive = 0
 
-  let candidates = s:get_candidates(a:sources, context)
+    " Finalize.
+    let unite = unite#get_current_unite()
+    let unite.is_enabled_max_candidates = 1
 
-  " Call finalize functions.
-  call s:call_hook(unite#loaded_sources_list(), 'on_close')
-  let unite.is_finalized = 1
+    let candidates = s:get_candidates(a:sources, context)
 
-  " Restore unite variables.
-  call unite#set_current_unite(unite_save)
+    " Call finalize functions.
+    call s:call_hook(unite#loaded_sources_list(), 'on_close')
+    let unite.is_finalized = 1
+  finally
+    call unite#set_current_unite(unite_save)
+  endtry
 
   return candidates
 endfunction"}}}
 function! unite#get_vimfiler_candidates(sources, ...)"{{{
-  let context = get(a:000, 0, {})
-  let context = s:initialize_context(context)
-  let context.no_buffer = 1
-  let context.unite__is_vimfiler = 1
+  let unite_save = unite#get_current_unite()
 
-  return s:get_candidates(a:sources, context)
+  try
+    let context = get(a:000, 0, {})
+    let context = s:initialize_context(context)
+    let context.no_buffer = 1
+    let context.unite__is_vimfiler = 1
+
+    let candidates = s:get_candidates(a:sources, context)
+  finally
+    call unite#set_current_unite(unite_save)
+  endtry
+
+  return candidates
 endfunction"}}}
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos)"{{{
   let context = {}
@@ -1491,8 +1503,9 @@ function! s:initialize_context(context)"{{{
         \ 'here' : 0,
         \ 'silent' : 0,
         \ 'keep_focus' : 0,
+        \ 'auto_quit' : 0,
         \ 'is_redraw' : 0,
-        \ 'is_resize' : 1,
+        \ 'is_resize' : 0,
         \ 'unite__is_interactive' : 1,
         \ 'unite__is_complete' : 1,
         \ 'unite__is_vimfiler' : 0,
@@ -1823,7 +1836,8 @@ function! s:initialize_candidates(candidates)"{{{
     let cnt = 0
     for multi in split(
           \ candidate.unite__abbr, '\r\?\n', 1)[: context.max_multi_lines-1]
-      let candidate_multi = deepcopy(candidate)
+      let candidate_multi = (cnt != 0) ?
+            \ deepcopy(candidate) : candidate
       let candidate_multi.unite__abbr =
             \ (cnt == 0 ? '+ ' : '| ') . multi
 
@@ -2517,6 +2531,10 @@ function! s:redraw(is_force, winnr) "{{{
     endif
   endif
 
+  if context.auto_quit && !unite.is_async
+    call unite#force_quit_session()
+  endif
+
   if context.auto_preview
     call s:do_auto_preview()
   endif
@@ -2530,6 +2548,7 @@ function! unite#_resize_window() "{{{
   let unite = unite#get_current_unite()
 
   if context.no_split
+    let context.is_resize = 0
     return
   endif
 
@@ -2557,6 +2576,8 @@ function! unite#_resize_window() "{{{
     execute 'resize' context.winheight
 
     let context.is_resize = 1
+  else
+    let context.is_resize = 0
   endif
 
   let context.unite__old_winheight = winheight(winnr())
@@ -2732,7 +2753,7 @@ function! s:on_cursor_moved()  "{{{
   endtry
 
   let context = unite.context
-  let unite.current_candidates = candidates
+  let unite.current_candidates += candidates
 
   call unite#_resize_window()
 

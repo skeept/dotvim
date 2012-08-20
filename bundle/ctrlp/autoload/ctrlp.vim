@@ -8,26 +8,26 @@
 " ** Static variables {{{1
 fu! s:ignore() "{{{2
 	let igdirs = [
-		\ '\.git$',
-		\ '\.hg$',
-		\ '\.svn$',
-		\ '_darcs$',
-		\ '\.bzr$',
-		\ '\.cdv$',
-		\ '\~\.dep$',
-		\ '\~\.dot$',
-		\ '\~\.nib$',
-		\ '\~\.plst$',
-		\ '\.pc$',
-		\ '_MTN$',
-		\ '<blib$',
-		\ '<CVS$',
-		\ '<RCS$',
-		\ '<SCCS$',
-		\ '_sgbak$',
-		\ '<autom4te\.cache$',
-		\ '<cover_db$',
-		\ '_build$',
+		\ '\.git',
+		\ '\.hg',
+		\ '\.svn',
+		\ '_darcs',
+		\ '\.bzr',
+		\ '\.cdv',
+		\ '\~\.dep',
+		\ '\~\.dot',
+		\ '\~\.nib',
+		\ '\~\.plst',
+		\ '\.pc',
+		\ '_MTN',
+		\ 'blib',
+		\ 'CVS',
+		\ 'RCS',
+		\ 'SCCS',
+		\ '_sgbak',
+		\ 'autom4te\.cache',
+		\ 'cover_db',
+		\ '_build',
 		\ ]
 	let igfiles = [
 		\ '\~$',
@@ -45,7 +45,7 @@ fu! s:ignore() "{{{2
 		\ '\.tar\.gz$',
 		\ ]
 	retu {
-		\ 'dir': '\v'.join(igdirs, '|'),
+		\ 'dir': '\v[\/]('.join(igdirs, '|').')$',
 		\ 'file': '\v'.join(igfiles, '|'),
 		\ }
 endf "}}}2
@@ -134,7 +134,7 @@ let [s:lcmap, s:prtmaps] = ['nn <buffer> <silent>', {
 	\ 'PrtExit()':            ['<esc>', '<c-c>', '<c-g>'],
 	\ }]
 
-if !has('gui_running') && ( has('win32') || has('win64') )
+if !has('gui_running')
 	cal add(s:prtmaps['PrtBS()'], remove(s:prtmaps['PrtCurLeft()'], 0))
 en
 
@@ -143,6 +143,8 @@ let s:lash = ctrlp#utils#lash()
 let s:compare_lim = 3000
 
 let s:ficounts = {}
+
+let s:ccex = s:pref.'clear_cache_on_exit'
 
 " Regexp
 let s:fpats = {
@@ -294,7 +296,7 @@ endf
 " * Files {{{1
 fu! ctrlp#files()
 	let cafile = ctrlp#utils#cachefile()
-	if g:ctrlp_newcache || !filereadable(cafile) || s:nocache()
+	if g:ctrlp_newcache || !filereadable(cafile) || s:nocache(cafile)
 		let [lscmd, s:initcwd, g:ctrlp_allfiles] = [s:lsCmd(), s:dyncwd, []]
 		" Get the list of files
 		if empty(lscmd)
@@ -310,13 +312,16 @@ fu! ctrlp#files()
 			cal sort(g:ctrlp_allfiles, 'ctrlp#complen')
 		en
 		cal s:writecache(cafile)
+		let catime = getftime(cafile)
 	el
+		let catime = getftime(cafile)
 		if !( exists('s:initcwd') && s:initcwd == s:dyncwd )
+			\ || get(s:ficounts, s:dyncwd, [0, catime])[1] != catime
 			let s:initcwd = s:dyncwd
 			let g:ctrlp_allfiles = ctrlp#utils#readfile(cafile)
 		en
 	en
-	cal extend(s:ficounts, { s:dyncwd : len(g:ctrlp_allfiles) })
+	cal extend(s:ficounts, { s:dyncwd : [len(g:ctrlp_allfiles), catime] })
 	retu g:ctrlp_allfiles
 endf
 
@@ -347,6 +352,14 @@ fu! s:UserCmd(lscmd)
 	if exists('s:vcscmd') && s:vcscmd
 		cal map(g:ctrlp_allfiles, 'tr(v:val, "/", "\\")')
 	en
+	if type(s:usrcmd) == 4 && has_key(s:usrcmd, 'ignore') && s:usrcmd['ignore']
+		if !empty(s:usrign)
+			let g:ctrlp_allfiles = ctrlp#dirnfile(g:ctrlp_allfiles)[1]
+		en
+		if &wig != ''
+			cal filter(g:ctrlp_allfiles, 'glob(v:val) != ""')
+		en
+	en
 endf
 
 fu! s:lsCmd()
@@ -359,12 +372,15 @@ fu! s:lsCmd()
 		en
 		let s:vcscmd = s:lash == '\' ? 1 : 0
 		retu cmd[1]
-	elsei type(cmd) == 4 && has_key(cmd, 'types')
-		let [markrs, cmdtypes] = [[], values(cmd['types'])]
-		for pair in cmdtypes
-			cal add(markrs, pair[0])
-		endfo
-		let fndroot = s:findroot(s:dyncwd, markrs, 0, 1)
+	elsei type(cmd) == 4 && ( has_key(cmd, 'types') || has_key(cmd, 'fallback') )
+		let fndroot = []
+		if has_key(cmd, 'types') && cmd['types'] != {}
+			let [markrs, cmdtypes] = [[], values(cmd['types'])]
+			for pair in cmdtypes
+				cal add(markrs, pair[0])
+			endfo
+			let fndroot = s:findroot(s:dyncwd, markrs, 0, 1)
+		en
 		if fndroot == []
 			retu has_key(cmd, 'fallback') ? cmd['fallback'] : ''
 		en
@@ -1507,7 +1523,7 @@ endf
 
 fu! s:leavepre()
 	if exists('s:bufnr') && s:bufnr == bufnr('%') | bw! | en
-	if !( exists('g:ctrlp_clear_cache_on_exit') && !g:ctrlp_clear_cache_on_exit )
+	if !( exists(s:ccex) && !{s:ccex} )
 		\ && !( has('clientserver') && len(split(serverlist(), "\n")) > 1 )
 		cal ctrlp#clra()
 	en
@@ -1827,15 +1843,25 @@ fu! s:mmode()
 	retu matchmodes[s:mfunc]
 endf
 " Cache {{{2
-fu! s:writecache(cache_file)
-	if ( g:ctrlp_newcache || !filereadable(a:cache_file) ) && !s:nocache()
+fu! s:writecache(cafile)
+	if ( g:ctrlp_newcache || !filereadable(a:cafile) ) && !s:nocache()
 		cal ctrlp#utils#writecache(g:ctrlp_allfiles)
 		let g:ctrlp_newcache = 0
 	en
 endf
 
-fu! s:nocache()
-	retu !s:caching || ( s:caching > 1 && get(s:ficounts, s:dyncwd) < s:caching )
+fu! s:nocache(...)
+	if !s:caching
+		retu 1
+	elsei s:caching > 1
+		if !( exists(s:ccex) && !{s:ccex} ) || has_key(s:ficounts, s:dyncwd)
+			retu get(s:ficounts, s:dyncwd, [0, 0])[0] < s:caching
+		elsei a:0 && filereadable(a:1)
+			retu len(ctrlp#utils#readfile(a:1)) < s:caching
+		en
+		retu 1
+	en
+	retu 0
 endf
 
 fu! s:insertcache(str)
