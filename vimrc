@@ -30,6 +30,7 @@ let g:pathogen_disabled = []
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
 let g:pathogen_disabled += ['powerline']
+let g:pathogen_disabled += ['powershell']
 let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights']

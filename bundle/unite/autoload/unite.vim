@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Aug 2012.
+" Last Modified: 21 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -753,8 +753,6 @@ function! unite#gather_candidates()"{{{
     let unite.candidates += source.unite__candidates
   endfor
 
-  let unite.max_candidates = len(unite.candidates)
-
   if unite.context.is_redraw || unite.candidates_pos == 0
     let height = unite.context.no_split ?
           \ winheight(0) : unite.context.winheight
@@ -774,8 +772,13 @@ function! unite#gather_candidates()"{{{
 endfunction"}}}
 function! unite#gather_candidates_pos(offset)"{{{
   let unite = unite#get_current_unite()
+  if unite.context.is_redraw || unite.candidates_pos == 0
+    return []
+  endif
+
+  let unite = unite#get_current_unite()
   let candidates = unite.candidates[unite.candidates_pos :
-        \ unite.candidates_pos + a:offset]
+        \ unite.candidates_pos + a:offset - 1]
 
   " Post filter.
   for filter_name in unite.post_filters
@@ -2006,7 +2009,7 @@ function! s:recache_candidates_loop(context, is_force)"{{{
     let source_candidates = s:get_source_candidates(source)
 
     let custom_source = get(s:custom.source, source.name, {})
-    if source.ignore_pattern != ''
+    if source.ignore_pattern != '' && !context.unite__is_vimfiler
       call filter(source_candidates,
             \ 'v:val.word !~# source.ignore_pattern')
     endif
@@ -2278,7 +2281,6 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.preview_candidate = {}
   let unite.max_source_name = 0
   let unite.candidates_pos = 0
-  let unite.max_candidates = 0
   let unite.candidates = []
   let unite.max_source_candidates = 0
 
@@ -2742,12 +2744,11 @@ function! s:on_cursor_moved()  "{{{
   endif
 
   let modifiable_save = &l:modifiable
-  setlocal modifiable
-
   try
+    setlocal modifiable
     let lines = unite#convert_lines(candidates)
     let pos = getpos('.')
-    call setline('$', lines)
+    call append('$', lines)
   finally
     let &l:modifiable = l:modifiable_save
   endtry
