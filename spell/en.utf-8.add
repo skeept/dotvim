@@ -13,3 +13,5 @@ subgradient
 Semicontinuous
 MILP
 Cplex
+benchscale
+MaxAvg

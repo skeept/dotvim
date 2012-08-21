@@ -558,6 +558,7 @@ let g:Tex_DefaultTargetFormat='pdf'
 "let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
 let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
+let g:tex_comment_nospell= 1 "don't do spelling in comments
 if has("autocmd") && has("win32")
   autocmd BufRead,BufNewFile *.tex compiler tex
         \ | setlocal textwidth=90
@@ -996,29 +997,15 @@ let g:ConqueTerm_ReadUnfocused = 1
 
 "===================== Thesis Specific Settings ===============================
 let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
-if compname == "MIDDLE-EARTH"
+if compname == "MIDDLE-EARTH" || compname == "ISENGARD"
     let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
+  elseif compname == "ISENGARD2"
+    let g:thesis_path = $HOME . ""
 endif
 function! MyThesisEnv()
   silent exec "cd " . g:thesis_path
-  "exec "edit " . g:thesis_path . "/pgprob.tex"
-  "!perl run_latexmk.pl
-  ConqueTermSplit perl run_latexmk.pl
-  setlocal buftype=nofile
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
-  "au InsertLeave FileType conque_term normal G
-  function! ChangeBufferConqueTerm()
-    let currBuffer = bufnr("%")
-    if &ft != "conque_term"
-      buffer perl
-      normal G
-    else
-      exec "buffer " . g:prevBuffer
-    endif
-    let g:prevBuffer = currBuffer
-  endfunction
-  "nmap ,a <C-^>:<C-U>if &ft == "conque_term" \| normal G \|endif<CR><ESC>
-  nmap ,a :call ChangeBufferConqueTerm()<CR>
+  command! StartPerlLatex !start perl run_latexmk.pl
 endfunction
 command! Mt call MyThesisEnv()
 "==============================================================================
