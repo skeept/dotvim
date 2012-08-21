@@ -26,5 +26,22 @@ snoremap <silent> <C-L> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
 
 imap <silent> <NL> <Plug>IMAP_JumpForward
 "nmap <silent> <NL> <Plug>IMAP_JumpForward
-vmap <silent> <NL> <Plug>IMAP_JumpForward
-vmap <silent> <NL> <Plug>IMAP_DeleteAndJumpForward
+"vmap <silent> <NL> <Plug>IMAP_JumpForward
+"vmap <silent> <NL> <Plug>IMAP_DeleteAndJumpForward
+
+function! SelectImapOrUlti()
+  let save_cursor = getpos(".")
+  "execute "normal \<Plug>IMAP_JumpForward"
+  "execute "normal \<Plug>IMAP_DeleteAndJumpForward"
+  call UltiSnips_ExpandSnippetOrJump()
+  "let current_cursor = getpos(".")
+  "if save_cursor == current_cursor
+    ""call UltiSnips_ExpandSnippetOrJump()
+    "execute "normal UltiSnips_ExpandSnippetOrJump"
+  "endif
+  "return ""
+  return ''
+endfunction
+imap <c-l> <c-r>=SelectImapOrUlti()<cr>
+vmap <c-l> <esc>:call SelectImapOrUlti()<cr>
+snoremap <c-l> <esc>:call SelectImapOrUlti()<cr>
