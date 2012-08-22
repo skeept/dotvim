@@ -30,6 +30,7 @@ Interface		|neocomplcache-interface|
   Commands		  |neocomplcache-commands|
   Variables		  |neocomplcache-variables|
   Key mappings		  |neocomplcache-key-mappings|
+  Functions		  |neocomplcache-functions|
 Examples		|neocomplcache-examples|
 Sources			|neocomplcache-sources|
   User sources		  |neocomplcache-user-sources|
@@ -163,6 +164,12 @@ COMMANDS 					*neocomplcache-commands*
 :NeoComplCacheCreateTags [bufname]		*:NeoComplCacheCreateTags*
 		Create tags from [bufname] buffer.
 		Select current buffer when [bufname] omitted.
+
+:NeoComplCacheSetFileType [filetype]		*:NeoComplCacheSetFileType*
+		Change filetype to [filetype] in current buffer.
+		This filetype is only used neocomplcache.
+		Note: You can get current filetype by
+		|neocomplcache#get_context_filetype()|
 
 ------------------------------------------------------------------------------
 VARIABLES 					*neocomplcache-variables*
@@ -736,6 +743,12 @@ g:neocomplcache_ignore_composite_filetype_lists	*g:neocomplcache_ignore_composit
 		Default value is {}.
 
 ------------------------------------------------------------------------------
+FUNCTIONS 					*neocomplcache-functions*
+
+neocomplcache#get_context_filetype()		*unite#get_context_filetype()*
+		Get current context filetype.
+
+------------------------------------------------------------------------------
 KEY MAPPINGS 					*neocomplcache-key-mappings*
 
 neocomplcache#start_manual_complete([{sources}])
@@ -1015,9 +1028,9 @@ groups?:
 
 A: Like this:
 >
-	highlight Pmenu ctermbg=8
-	highlight PmenuSel ctermbg=1
-	highlight PmenuSbar ctermbg=0
+	highlight Pmenu ctermbg=8 guibg=#606060
+	highlight PmenuSel ctermbg=1 guifg=#dddd00 guibg=#1f82cd
+	highlight PmenuSbar ctermbg=0 guibg=#d6d6d6
 <
 
 Q: Python(or Ruby) interface crashes Vim using neocomplcache:
@@ -1055,6 +1068,14 @@ But you can use |unite.vim| to quick match.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-08-22
+- Added :NeoComplCacheSetFileType command.
+- Improved command-completion.
+- Improved FAQ section.
+- Improved context filetype.
+- Updated features dict.
+- Fixed g:neocomplcache_disable_auto_complete problem.
 
 2012-08-21
 - Updated vital.
