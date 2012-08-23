@@ -1826,6 +1826,7 @@ Opens a file into a new buffer.  This kind extends |unite-action-openable| and
 	grep		Grep files
 	grep_directory	Grep directories
 	wunix		Write by unix fileformat
+	diff		diff with the other candidate or current buffer
 
 buffer						*unite-action-buffer*
 This kind extends |unite-action-file|.
@@ -2535,6 +2536,15 @@ https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-08-23
+- Fixed g:unite_source_file_ignore_pattern.
+- Deleted yank action in history/yank.
+- Improved syntax.
+- Added diff action in kind file.
+- Fixed <Plug>(unite_toggle_mark_all_candidates) and <Plug>(unite_toggle_max_candidates) behavior.
+- Fixed unite#custom_max_candidates() error.
+- Improved print message behavior.
 
 2012-08-22
 - Deleted Japanese documentation.
