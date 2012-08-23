@@ -103,9 +103,9 @@ inoremap <NL> <C-R>=SelectImapOrUlti(0)<CR>
 endif
 
 
-inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$$0', '$$')<cr>
+inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$$0', '$$', 'dollar', "r")<cr>
 inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}$0', '\^\^', 'hat', "r")<cr>
-inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}$0', '__', 'unders', "w")<cr>
+inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}$0', '__', 'unders', "r")<cr>
 
 
 "inoremap ^^ circ<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
