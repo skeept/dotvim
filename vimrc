@@ -31,6 +31,7 @@ let g:pathogen_disabled = []
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
 let g:pathogen_disabled += ['powerline']
 let g:pathogen_disabled += ['powershell']
+let g:pathogen_disabled += ['vlatex']
 let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
