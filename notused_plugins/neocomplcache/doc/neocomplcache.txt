@@ -369,13 +369,16 @@ g:neocomplcache_compare_function		*g:neocomplcache_compare_function*
 		Default value is 'neocomplcache#compare_rank'.
 
 g:neocomplcache_enable_prefetch			*g:neocomplcache_enable_prefetch*
-		This variable controls whether neocomplcache prefetch.
-		This variable is non 0, neocomplcache don't flick in auto completion.
-		Note: This variable has side effect.
-		Partial function (ex: |complete_check()|) is disabled in
-		completefunc.
+		This variable controls whether neocomplcache prefetch.  This
+		variable is non 0, neocomplcache don't flick in auto
+		completion.
+		Note: This variable has side effect. Partial function (ex:
+		|complete_check()|) is disabled in completefunc.
+		Note: It this variable is 0, input problem may be occurred in
+		using uim-skk or other IME in GVim.
 		
-		Default value is 0(less than 7.3.519).
+		Default value is 0(above equal than 7.3.519).
+		Default value is 1(|+xim| and GUI version).
 
 g:neocomplcache_lock_iminsert			*g:neocomplcache_lock_iminsert*
 		This variable is non 0, neocomplcache lock when 'iminsert' is
@@ -420,9 +423,9 @@ g:neocomplcache_omni_patterns			*g:neocomplcache_omni_patterns*
 		|omnifunc|. For example, ruby and php omnifunc are disabled,
 		because they are too slow.
 		
-		Because it is complicated, refer to
-		s:source.initialize() autoload/neocomplcache/sources/omni_complete.vim
-		for the initial value.
+		Because it is complicated, refer to s:source.initialize()
+		autoload/neocomplcache/sources/omni_complete.vim for the
+		initial value.
 >
 		" Examples:
 		if !exists('g:neocomplcache_omni_patterns')
@@ -1080,6 +1083,8 @@ CHANGELOG					*neocomplcache-changelog*
 
 2012-08-24
 - Added FAQ item.
+- Set refresh always.
+- Change g:neocomplcache_enable_prefetch default value.
 
 2012-08-23
 - Fixed customlist completion problem.

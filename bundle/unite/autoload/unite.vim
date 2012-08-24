@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Aug 2012.
+" Last Modified: 24 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2363,6 +2363,7 @@ function! s:initialize_unite_buffer()"{{{
     setlocal nowrap
     setlocal foldcolumn=0
     setlocal iskeyword+=-,+,\\,!,~
+    setlocal matchpairs-=<:>
     match
     if has('conceal')
       setlocal conceallevel=3
@@ -2612,14 +2613,14 @@ function! unite#_resize_window() "{{{
   elseif context.vertical
         \ && winwidth(winnr()) != context.winwidth
         \ && (context.unite__old_winwidth  == 0 ||
-        \     winheight(winnr()) == context.winheight)
+        \     winheight(winnr()) == context.unite__old_winheight)
     execute 'vertical resize' context.winwidth
 
     let context.is_resize = 1
   elseif !context.vertical
         \ && winheight(winnr()) != context.winheight
-        \ && (context.unite__old_winheight  == 0 ||
-        \     winwidth(winnr()) == context.winwidth)
+        \ && (context.unite__old_winheight == 0 ||
+        \     winwidth(winnr()) == context.unite__old_winwidth)
     execute 'resize' context.winheight
 
     let context.is_resize = 1
@@ -2635,14 +2636,6 @@ endfunction"}}}
 function! s:on_insert_enter()  "{{{
   let unite = unite#get_current_unite()
   let unite.is_insert = 1
-  setlocal modifiable
-
-  if line('.') != unite.prompt_linenr
-        \ || col('.') <= len(unite.prompt)
-    execute unite.prompt_linenr
-    normal! zb
-    startinsert!
-  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let unite = unite#get_current_unite()
