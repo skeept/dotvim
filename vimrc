@@ -998,11 +998,14 @@ let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================
 
 "===================== Thesis Specific Settings ===============================
-let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
+"let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
+let compname = hostname()
 if compname == "MIDDLE-EARTH" || compname == "ISENGARD"
     let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
   elseif compname == "ISENGARD2"
     let g:thesis_path = $HOME . ""
+  elseif compname == "Isengard-3000-N100"
+    let g:thesis_path = $HOME .  "/Documents/Thesis"
 endif
 function! MyThesisEnv()
   silent exec "cd " . g:thesis_path
