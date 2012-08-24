@@ -107,6 +107,10 @@ inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$$0', '$$', 'dollar', "r")<cr>
 inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}$0', '\^\^', 'hat', "r")<cr>
 inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}$0', '__', 'unders', "r")<cr>
 
+let b:SuperTabDefaultCompletionType = "\<C-N>"
+execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
+set complete+=k
+
 
 "inoremap ^^ circ<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 "inoremap __ unders<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
