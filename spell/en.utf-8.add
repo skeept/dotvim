@@ -15,3 +15,6 @@ MILP
 Cplex
 benchscale
 MaxAvg
+AllConstrained
+FindCloseLin
+FindCloseNonLin
