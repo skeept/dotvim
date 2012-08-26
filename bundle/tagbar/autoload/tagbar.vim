@@ -913,7 +913,7 @@ function! s:MapKeys() abort
 
     nnoremap <script> <silent> <buffer> <CR>    :call <SID>JumpToTag(0)<CR>
     nnoremap <script> <silent> <buffer> p       :call <SID>JumpToTag(1)<CR>
-    nnoremap <script> <silent> <buffer> <Space> :call <SID>ShowPrototype()<CR>
+    nnoremap <script> <silent> <buffer> <Space> :call <SID>ShowPrototype(0)<CR>
 
     nnoremap <script> <silent> <buffer> +        :call <SID>OpenFold()<CR>
     nnoremap <script> <silent> <buffer> <kPlus>  :call <SID>OpenFold()<CR>
@@ -949,7 +949,7 @@ function! s:CreateAutocommands() abort
     augroup TagbarAutoCmds
         autocmd!
         autocmd BufEnter   __Tagbar__ nested call s:QuitIfOnlyWindow()
-        autocmd CursorHold __Tagbar__ call s:ShowPrototype()
+        autocmd CursorHold __Tagbar__ call s:ShowPrototype(1)
 
         autocmd BufWritePost * call
                     \ s:AutoUpdate(fnamemodify(expand('<afile>'), ':p'), 1)
@@ -1141,6 +1141,7 @@ function! s:BaseTag._init(name) abort dict
     let self.fields        = {}
     let self.fields.line   = 0
     let self.fields.column = 1
+    let self.prototype     = ''
     let self.path          = ''
     let self.fullpath      = a:name
     let self.depth         = 0
@@ -1166,8 +1167,8 @@ function! s:BaseTag.isKindheader() abort dict
 endfunction
 
 " s:BaseTag.getPrototype() {{{3
-function! s:BaseTag.getPrototype() abort dict
-    return ''
+function! s:BaseTag.getPrototype(short) abort dict
+    return self.prototype
 endfunction
 
 " s:BaseTag._getPrefix() {{{3
@@ -1330,8 +1331,57 @@ function! s:NormalTag.str(longsig, full) abort dict
 endfunction
 
 " s:NormalTag.getPrototype() {{{3
-function! s:NormalTag.getPrototype() abort dict
-    return self.prototype
+function! s:NormalTag.getPrototype(short) abort dict
+    if self.prototype != ''
+        let prototype = self.prototype
+    else
+        let bufnr = self.fileinfo.bufnr
+
+        let line = getbufline(bufnr, self.fields.line)[0]
+        let list = split(line, '\zs')
+
+        let start = index(list, '(')
+        if start == -1
+            return substitute(line, '^\s\+', '', '')
+        endif
+
+        let opening = count(list, '(', 0, start)
+        let closing = count(list, ')', 0, start)
+        if closing >= opening
+            return substitute(line, '^\s\+', '', '')
+        endif
+
+        let balance = opening - closing
+
+        let prototype = line
+        let curlinenr = self.fields.line + 1
+        while balance > 0
+            let curline = getbufline(bufnr, curlinenr)[0]
+            let curlist = split(curline, '\zs')
+            let balance += count(curlist, '(')
+            let balance -= count(curlist, ')')
+            let prototype .= "\n" . curline
+            let curlinenr += 1
+        endwhile
+
+        let self.prototype = prototype
+    endif
+
+    if a:short
+        " join all lines and remove superfluous spaces
+        let prototype = substitute(prototype, '^\s\+', '', '')
+        let prototype = substitute(prototype, '\_s\+', ' ', 'g')
+        let prototype = substitute(prototype, '(\s\+', '(', 'g')
+        let prototype = substitute(prototype, '\s\+)', ')', 'g')
+        " Avoid hit-enter prompts
+        let maxlen = &columns - 12
+        if len(prototype) > maxlen
+            let prototype = prototype[:maxlen - 1 - 3]
+            let prototype .= '...'
+        endif
+    endif
+
+    return prototype
 endfunction
 
 " Pseudo tag {{{2
@@ -1364,7 +1414,7 @@ function! s:KindheaderTag.isKindheader() abort dict
 endfunction
 
 " s:KindheaderTag.getPrototype() {{{3
-function! s:KindheaderTag.getPrototype() abort dict
+function! s:KindheaderTag.getPrototype(short) abort dict
     return self.name . ': ' .
          \ self.numtags . ' ' . (self.numtags > 1 ? 'tags' : 'tag')
 endfunction
@@ -2008,11 +2058,8 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo) abort
     else
         let dollar = ''
     endif
-    let pattern           = strpart(pattern, start, end - start)
-    let taginfo.pattern   = '\V\^\C' . pattern . dollar
-    let prototype         = substitute(pattern,   '^[[:space:]]\+', '', '')
-    let prototype         = substitute(prototype, '[[:space:]]\+$', '', '')
-    let taginfo.prototype = prototype
+    let pattern         = strpart(pattern, start, end - start)
+    let taginfo.pattern = '\V\^\C' . pattern . dollar
 
     let fields = split(a:part2, '\t')
     let taginfo.fields.kind = remove(fields, 0)
@@ -2764,14 +2811,14 @@ function! s:JumpToTag(stay_in_tagbar) abort
 endfunction
 
 " s:ShowPrototype() {{{2
-function! s:ShowPrototype() abort
+function! s:ShowPrototype(short) abort
     let taginfo = s:GetTagInfo(line('.'), 1)
 
     if empty(taginfo)
-        return
+        return ''
     endif
 
-    echo taginfo.getPrototype()
+    echo taginfo.getPrototype(a:short)
 endfunction
 
 " s:ToggleHelp() {{{2
@@ -3211,7 +3258,7 @@ function! s:GetTagInfo(linenr, ignorepseudo) abort
     endif
 
     " Don't do anything in empty and comment lines
-    let curline = getline(a:linenr)
+    let curline = getbufline(bufnr('__Tagbar__'), a:linenr)[0]
     if curline =~ '^\s*$' || curline[0] == '"'
         return {}
     endif
@@ -3292,10 +3339,10 @@ function! TagbarBalloonExpr() abort
     let taginfo = s:GetTagInfo(v:beval_lnum, 1)
 
     if empty(taginfo)
-        return
+        return ''
     endif
 
-    return taginfo.getPrototype()
+    return taginfo.getPrototype(0)
 endfunction
 
 " TagbarGenerateStatusline() {{{2

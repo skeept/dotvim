@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Aug 2012.
+" Last Modified: 26 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -57,16 +57,16 @@ function! unite#mappings#define_default_mappings()"{{{
         \ :<C-u>call <SID>print_candidate()<CR>
   nnoremap <buffer><expr> <Plug>(unite_cursor_top)
         \ unite#get_current_unite().prompt_linenr.'G0z.'
-  nnoremap <buffer> <Plug>(unite_cursor_bottom)
-        \ :<C-u>call <SID>redraw_all_candidates()<CR>G
+  nnoremap <silent><buffer> <Plug>(unite_cursor_bottom)
+        \ :<C-u>call <SID>force_redraw_all_candidates()<CR>G
   nnoremap <buffer><expr> <Plug>(unite_loop_cursor_down)
         \ <SID>loop_cursor_down(0)
   nnoremap <silent><buffer> <Plug>(unite_loop_cursor_up)
-        \ :<C-u>call <SID>loop_cursor_up(0, 'n')<CR>
+        \ <ESC>:call <SID>loop_cursor_up(0, 'n')<CR>
   nnoremap <buffer><expr> <Plug>(unite_skip_cursor_down)
         \ <SID>loop_cursor_down(1)
   nnoremap <silent><buffer> <Plug>(unite_skip_cursor_up)
-        \ :<C-u>call <SID>loop_cursor_up(1, 'n')<CR>
+        \ <ESC>:call <SID>loop_cursor_up(1, 'n')<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_screen)
         \ :<C-u>call <SID>move_screen(1)<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_half_screen)
@@ -136,8 +136,10 @@ function! unite#mappings#define_default_mappings()"{{{
         \ <C-o>:<C-u>call <SID>toggle_mark()<CR>
   inoremap <silent><buffer> <Plug>(unite_choose_action)
         \ <C-o>:<C-u>call <SID>choose_action()<CR>
-  inoremap <silent><buffer> <Plug>(unite_move_head)
-        \ <C-o>:<C-u>call <SID>insert_head()<CR>
+  inoremap <expr><buffer> <Plug>(unite_move_head)
+        \ <SID>smart_imap("\<ESC>".<SID>insert_enter('i'),
+        \   repeat("\<Left>", len(substitute(
+        \     unite#get_input(), '.', 'x', 'g'))))
   inoremap <silent><buffer> <Plug>(unite_quick_match_default_action)
         \ <C-o>:<C-u>call unite#mappings#_quick_match(0)<CR>
   inoremap <silent><buffer> <Plug>(unite_quick_match_choose_action)
@@ -241,6 +243,16 @@ function! unite#mappings#define_default_mappings()"{{{
         \ unite#smart_map(' ', "\<Plug>(unite_toggle_mark_current_candidate)")
   imap <silent><buffer><expr> x
         \ unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
+endfunction"}}}
+
+function! s:smart_imap(lhs, rhs)"{{{
+  return line('.') > unite#get_current_unite().prompt_linenr ||
+        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
+       \ a:lhs : a:rhs
+endfunction"}}}
+function! s:smart_imap2(lhs, rhs)"{{{
+  return line('.') <= unite#get_current_unite().prompt_linenr ?
+       \ a:lhs : a:rhs
 endfunction"}}}
 
 function! unite#mappings#narrowing(word)"{{{
@@ -726,7 +738,6 @@ function! s:loop_cursor_up(is_skip_not_matched, mode)"{{{
     if is_insert
       noautocmd startinsert!
     endif
-
     return
   endif
 
@@ -753,17 +764,72 @@ function! s:loop_cursor_up(is_skip_not_matched, mode)"{{{
   if num < 0
     call cursor(prompt_linenr, 0)
 
-    if is_insert
-      noautocmd startinsert!
-    endif
-
     normal! zb
-    return
+  else
+    call cursor(line('.') - cnt, 0)
   endif
 
-  call cursor(line('.') - cnt, 0)
   if is_insert
     noautocmd startinsert!
+  endif
+endfunction"}}}
+function! unite#mappings#loop_cursor_up_call(is_skip_not_matched, mode)"{{{
+  let is_insert = a:mode ==# 'i'
+  let prompt_linenr = unite#get_current_unite().prompt_linenr
+
+  if !is_insert && line('.') > 2
+    return cursor(line('.') - 1, 0)
+  endif
+
+  " Loop.
+
+  call s:force_redraw_all_candidates()
+
+  call cursor(line('$'), 0)
+  if is_insert
+    noautocmd startinsert!
+  endif
+endfunction"}}}
+function! unite#mappings#loop_cursor_up_expr(is_skip_not_matched)"{{{
+  let is_insert = mode() ==# 'i'
+  let prompt_linenr = unite#get_current_unite().prompt_linenr
+
+  let num = line('.') - (prompt_linenr + 1)
+  let cnt = 1
+  if line('.') <= prompt_linenr
+    let cnt += prompt_linenr - line('.')
+  endif
+  if is_insert && line('.') == prompt_linenr+2
+    let cnt += 1
+  endif
+
+  while 1
+    let candidate = get(unite#get_unite_candidates(), num - cnt, {})
+    if num >= cnt && !empty(candidate) && (candidate.is_dummy
+          \ || (a:is_skip_not_matched && !candidate.is_matched))
+      let cnt += 1
+      continue
+    endif
+
+    break
+  endwhile
+
+  if num < 0
+    if is_insert
+      return "\<C-Home>\<End>".repeat("\<Down>", prompt_linenr)."\<Home>"
+    else
+      return prompt_linenr.'G0z.'
+    endif
+  endif
+
+  if is_insert
+    if line('.') <= prompt_linenr + 2
+      return repeat("\<Up>", cnt) . "\<End>"
+    else
+      return "\<Home>" . repeat("\<Up>", cnt)
+    endif
+  else
+    return repeat('k', cnt)
   endif
 endfunction"}}}
 function! s:toggle_transpose_window()"{{{

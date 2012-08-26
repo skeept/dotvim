@@ -2555,6 +2555,10 @@ CHANGELOG					*unite-changelog*
 
 2012-08-26
 - Fixed vimgrep source.
+- Fixed grep source.
+- Fixed insert_head error.
+- Fixed move head behavior.
+- Fixed <Plug>(unite_cursor_bottom).
 
 2012-08-25
 - Delted obsolute changelog.

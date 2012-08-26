@@ -9,9 +9,14 @@
 " TODO support horizontal split.
 " TODO Clear history from current seq.
 
-" At least version 7.0 is needed for undo branches.
-if v:version < 700
-     finish
+" At least version 7.3 with 005 patch is needed for undo branches.
+" Refer to https://github.com/mbbill/undotree/issues/4 for details.
+" Thanks kien
+if v:version < 703
+    finish
+endif
+if (v:version == 703 && !has("patch005"))
+    finish
 endif
 
 " tree node shape.
@@ -773,7 +778,8 @@ function! s:undotree.Render()
         endif
 
         " output.
-        let newline = " "
+        let onespace = " "
+        let newline = onespace
         let newmeta = {}
         let node = slots[index]
         if type(node) == TYPE_X
@@ -845,7 +851,8 @@ function! s:undotree.Render()
             endif
         endif
         unlet node
-        if newline != " "
+        if newline != onespace
+            let newline = substitute(newline,'\s*$','','g') "remove trailing space.
             call insert(out,newline,0)
             call insert(outmeta,newmeta,0)
         endif
