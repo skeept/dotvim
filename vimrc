@@ -1001,6 +1001,7 @@ let g:ConqueTerm_ReadUnfocused = 1
 nnoremap ,gcf :<C-U>Gcommit -v %<CR>
 nnoremap ,gca :<C-U>Gcommit -v -a<CR>
 nnoremap ,gp :<C-U>Git push<CR>
+nnoremap ,gdf :<C-U>Git diff<CR>
 "==============================================================================
 
 "===================== Thesis Specific Settings ===============================
