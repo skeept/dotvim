@@ -669,11 +669,15 @@ function! LoadUltisnips()
       autocmd BufNewFile,BufRead *.snippets setf snippets
     endif
     call UltiSnips_FileTypeChanged()
+    nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+    return 1
+  else
+    echom "vim compiled without python"
+    return 0
   endif
-  nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
 endfunction
-nnoremap <f10> :call LoadUltisnips()<CR>:call UltiSnips_ListSnippets()<CR>
-inoremap <f10> <esc>:call LoadUltisnips()<CR>a<c-r>=UltiSnips_ExpandSnippet()<CR>
+nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
+inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 
 "for filetype tex we need imap.vim
 if has("autocmd")
