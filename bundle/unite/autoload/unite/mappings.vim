@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Aug 2012.
+" Last Modified: 27 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -61,12 +61,8 @@ function! unite#mappings#define_default_mappings()"{{{
         \ :<C-u>call <SID>force_redraw_all_candidates()<CR>G
   nnoremap <buffer><expr> <Plug>(unite_loop_cursor_down)
         \ <SID>loop_cursor_down(0)
-  nnoremap <silent><buffer> <Plug>(unite_loop_cursor_up)
-        \ <ESC>:call <SID>loop_cursor_up(0, 'n')<CR>
   nnoremap <buffer><expr> <Plug>(unite_skip_cursor_down)
         \ <SID>loop_cursor_down(1)
-  nnoremap <silent><buffer> <Plug>(unite_skip_cursor_up)
-        \ <ESC>:call <SID>loop_cursor_up(1, 'n')<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_screen)
         \ :<C-u>call <SID>move_screen(1)<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_half_screen)
@@ -106,26 +102,26 @@ function! unite#mappings#define_default_mappings()"{{{
   inoremap <silent><buffer> <Plug>(unite_exit)
         \ <ESC>:<C-u>call <SID>exit()<CR>
   inoremap <silent><expr><buffer> <Plug>(unite_insert_leave)
-        \ ((line('.') <= unite#get_current_unite().prompt_linenr) ?
-        \ "\<ESC>0".(unite#get_current_unite().prompt_linenr+1)."G" : "\<ESC>0")
+        \ "\<ESC>0".((line('.') <= unite#get_current_unite().prompt_linenr) ?
+        \ (unite#get_current_unite().prompt_linenr+1)."G" : "")
         \ . ":call unite#redraw()\<CR>"
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_char)
         \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
         \ "\<C-o>:\<C-u>call \<SID>exit()\<CR>" : "\<C-h>"
   inoremap <expr><buffer> <Plug>(unite_delete_backward_line)
-        \ repeat("\<C-h>", col('.')-(len(unite#get_current_unite().prompt)+1))
+        \ <SID>smart_imap('', repeat("\<C-h>",
+        \     col('.')-(len(unite#get_current_unite().prompt)+1)))
+        " \ repeat("\<C-h>", col('.')-(len(unite#get_current_unite().prompt)+1))
   inoremap <expr><buffer> <Plug>(unite_delete_backward_word)
-        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-        \ '' : "\<C-w>"
+        \ <SID>smart_imap('', "\<C-w>")
+        " \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
+        " \ '' : "\<C-w>"
   inoremap <expr><buffer> <Plug>(unite_delete_backward_path)
-        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-        \ '' : <SID>delete_backward_path()
+        \ <SID>smart_imap('', <SID>delete_backward_path())
+        " \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
+        " \ '' : <SID>delete_backward_path()
   inoremap <expr><buffer> <Plug>(unite_select_next_line)
         \ pumvisible() ? "\<C-n>" : <SID>loop_cursor_down(0)
-  inoremap <silent><buffer> <Plug>(unite_select_previous_line)
-        \ <ESC>:call <SID>loop_cursor_up(0, 'i')<CR>
-  inoremap <expr><buffer> <Plug>(unite_skip_next_line)
-        \ pumvisible() ? "\<C-n>" : <SID>loop_cursor_down(1)
   inoremap <silent><buffer> <Plug>(unite_skip_previous_line)
         \ <ESC>:call <SID>loop_cursor_up(1, 'i')<CR>
   inoremap <expr><buffer> <Plug>(unite_select_next_page)
@@ -246,12 +242,12 @@ function! unite#mappings#define_default_mappings()"{{{
 endfunction"}}}
 
 function! s:smart_imap(lhs, rhs)"{{{
-  return line('.') > unite#get_current_unite().prompt_linenr ||
+  return line('.') != unite#get_current_unite().prompt_linenr ||
         \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
        \ a:lhs : a:rhs
 endfunction"}}}
 function! s:smart_imap2(lhs, rhs)"{{{
-  return line('.') <= unite#get_current_unite().prompt_linenr ?
+  return line('.') <= (len(unite#get_current_unite().prompt)+1) ?
        \ a:lhs : a:rhs
 endfunction"}}}
 
