@@ -997,6 +997,12 @@ let g:delimitMate_expand_space = 1
 let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================
 
+"=========================  fugitive ==========================================
+nnoremap ,gcf :<C-U>Gcommit -v %<CR>
+nnoremap ,gca :<C-U>Gcommit -v -a<CR>
+nnoremap ,gp :<C-U>Git push<CR>
+"==============================================================================
+
 "===================== Thesis Specific Settings ===============================
 "let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
 let compname = hostname()
@@ -1010,7 +1016,7 @@ endif
 function! MyThesisEnv()
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
-  command! StartPerlLatex !start perl run_latexmk.pl
+  command! ThesisCompileView !start perl run_latexmk.pl
 endfunction
 command! Mt call MyThesisEnv()
 "==============================================================================
