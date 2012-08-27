@@ -842,8 +842,8 @@ let g:pep8_args = " --ignore=E111,E221,E225,E501"
 
 "================================ UltiSnips ===================================
 let g:UltiSnipsExpandTrigger = "<f10>"
-let g:UltiSnipsListSnippets  = "<c-f10>"
-let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsListSnippets = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
 let g:UltiSnipsEditSplit =  "horizontal"
 nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
