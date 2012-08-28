@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Aug 2012.
+" Last Modified: 28 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -622,8 +622,9 @@ function! neocomplcache#manual_complete(findstart, base)"{{{
   if v:version > 703 || v:version == 703 && has('patch418')
     let dict = { 'words' : s:complete_words }
 
-    if g:neocomplcache_enable_cursor_hold_i
-          \ || v:version > 703 || v:version == 703 && has('patch561')
+    if len(s:complete_words) >= g:neocomplcache_max_list
+          \ && (g:neocomplcache_enable_cursor_hold_i
+          \ || v:version > 703 || v:version == 703 && has('patch561'))
       " Note: If Vim is less than 7.3.561, it have broken register "." problem.
       let dict.refresh = 'always'
     endif
@@ -869,7 +870,7 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
     "}}}
   endif
 
-  " echomsg keyword_escape
+  call neocomplcache#print_debug(keyword_escape)
   return keyword_escape
 endfunction"}}}
 function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
@@ -1297,7 +1298,11 @@ function! neocomplcache#trunk_string(string, max)"{{{
   return printf('%.' . a:max-10 . 's..%%s', a:string, a:string[-8:])
 endfunction"}}}
 function! neocomplcache#head_match(checkstr, headstr)"{{{
-  return stridx(a:checkstr, a:headstr) == 0
+  let checkstr = &ignorecase ?
+        \ tolower(a:checkstr) : a:checkstr
+  let headstr = &ignorecase ?
+        \ tolower(a:headstr) : a:headstr
+  return stridx(checkstr, headstr) == 0
 endfunction"}}}
 function! neocomplcache#get_source_filetypes(filetype)"{{{
   let filetype = (a:filetype == '') ? 'nothing' : a:filetype
@@ -1988,7 +1993,8 @@ function! neocomplcache#complete_common_string()"{{{
   let ignorecase_save = &ignorecase
 
   " Get cursor word.
-  let [cur_keyword_pos, cur_keyword_str] = neocomplcache#match_word(s:get_cur_text())
+  let [cur_keyword_pos, cur_keyword_str] =
+        \ neocomplcache#match_word(s:get_cur_text())
 
   if neocomplcache#is_text_mode()
     let &ignorecase = 1
@@ -2018,6 +2024,10 @@ function! neocomplcache#complete_common_string()"{{{
   endif
 
   let &ignorecase = ignorecase_save
+
+  if common_str == ''
+    return ''
+  endif
 
   return (pumvisible() ? "\<C-e>" : '')
         \ . repeat("\<BS>", len(cur_keyword_str)) . common_str
