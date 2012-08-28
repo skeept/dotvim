@@ -842,8 +842,8 @@ let g:pep8_args = " --ignore=E111,E221,E225,E501"
 
 "================================ UltiSnips ===================================
 let g:UltiSnipsExpandTrigger = "<f10>"
-let g:UltiSnipsListSnippets  = "<c-f10>"
-let g:UltiSnipsJumpForwardTrigger  = "<f10>"
+let g:UltiSnipsListSnippets = "<c-f10>"
+let g:UltiSnipsJumpForwardTrigger = "<f10>"
 let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
 let g:UltiSnipsEditSplit =  "horizontal"
 nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
@@ -1001,6 +1001,7 @@ let g:ConqueTerm_ReadUnfocused = 1
 nnoremap ,gcf :<C-U>Gcommit -v %<CR>
 nnoremap ,gca :<C-U>Gcommit -v -a<CR>
 nnoremap ,gp :<C-U>Git push<CR>
+nnoremap ,gdf :<C-U>Git diff<CR>
 "==============================================================================
 
 "===================== Thesis Specific Settings ===============================
