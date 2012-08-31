@@ -92,20 +92,21 @@ function! SelectImapOrUlti(pref)
   return ''
 endfunction
 
-inoremap <C-L> <C-R>=SelectImapOrUlti(0)<CR>
-vnoremap <C-L> <ESC>:call SelectImapOrUlti(0)<CR>
-snoremap <C-L> <ESC>:call SelectImapOrUlti(0)<CR>
+inoremap <silent> <buffer> <C-L> <C-R>=SelectImapOrUlti(0)<CR>
+vnoremap <silent> <buffer> <C-L> <ESC>:call SelectImapOrUlti(0)<CR>
+snoremap <silent> <buffer> <C-L> <ESC>:call SelectImapOrUlti(0)<CR>
 
-inoremap <NL> <C-R>=SelectImapOrUlti(0)<CR>
+inoremap <silent> <buffer> <NL> <C-R>=SelectImapOrUlti(0)<CR>
 "vnoremap <NL> :call SelectImapOrUlti(1)<CR>
 "snoremap <NL> :call SelectImapOrUlti(1)<CR>
 "nnoremap <NL> :call SelectImapOrUlti(1)<CR>
 endif
 
 
-inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$$0', '$$', 'dollar', "r")<cr>
-inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}$0', '\^\^', 'hat', "r")<cr>
-inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}$0', '__', 'unders', "r")<cr>
+inoremap <silent> <buffer> {{ __LTXSPlbraces<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+inoremap <silent> <buffer> $$ __LTXSPddolar<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+inoremap <silent> <buffer> ^^ __LTXSPdhat<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+inoremap <silent> <buffer> __ __LTXSPdunders<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 
 let b:SuperTabDefaultCompletionType = "\<C-N>"
 execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
@@ -114,3 +115,4 @@ set complete+=k
 
 "inoremap ^^ circ<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 "inoremap __ unders<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+
