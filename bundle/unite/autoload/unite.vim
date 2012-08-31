@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Aug 2012.
+" Last Modified: 31 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -217,6 +217,18 @@ function! unite#do_candidates_action(action_name, candidates, ...)"{{{
   return unite#mappings#do_action(
         \ a:action_name, a:candidates, context)
 endfunction"}}}
+function! unite#get_unite_winnr(buffer_name)
+  for winnr in filter(range(1, winnr('$')),
+        \ "getbufvar(winbufnr(v:val), '&filetype') ==# 'unite'")
+    let buffer_context = getbufvar(
+          \ winbufnr(winnr), 'unite').context
+    if buffer_context.buffer_name ==# a:buffer_name
+      return winnr
+    endif
+  endfor
+
+  return -1
+endfunction
 "}}}
 
 " Constants"{{{
@@ -889,7 +901,9 @@ function! unite#clear_message()"{{{
       silent! execute '2,'.(unite.prompt_linenr-1).'delete _'
       let pos[1] -= unite.prompt_linenr-2
       call setpos('.', pos)
-      normal! zb
+      if line('.') < winheight(0)
+        normal! zb
+      endif
       if mode() ==# 'i' && pos[2] == col('$')
         startinsert!
       endif
@@ -961,7 +975,9 @@ function! s:print_buffer(message)"{{{
 
   let pos[1] += len(message)
   call setpos('.', pos)
-  normal! zb
+  if line('.') < winheight(0)
+    normal! zb
+  endif
   if mode() ==# 'i' && pos[2] == col('$')
     startinsert!
   endif
@@ -2254,7 +2270,8 @@ function! s:initialize_current_unite(sources, context)"{{{
   let context = a:context
 
   if getbufvar(bufnr('%'), '&filetype') ==# 'unite'
-        \ && unite#get_current_unite().buffer_name ==# context.buffer_name
+        \ && unite#get_current_unite().buffer_name ==#
+        \         context.buffer_name
         \ && context.input == ''
     " Get input text.
     let context.input = unite#get_input()
@@ -2262,17 +2279,12 @@ function! s:initialize_current_unite(sources, context)"{{{
 
   " Quit previous unite buffer.
   if !context.create
-    let winnr = 1
-    for winnr in filter(range(1, winnr('$')),
-          \ "getbufvar(winbufnr(v:val), '&filetype') ==# 'unite'")
-      let buffer_context = getbufvar(winbufnr(winnr), 'unite').context
-      if buffer_context.buffer_name ==# context.buffer_name
-        " Quit unite buffer.
-        execute winnr 'wincmd w'
-        call unite#force_quit_session()
-        break
-      endif
-    endfor
+    let winnr = unite#get_unite_winnr(context.buffer_name)
+    if winnr > 0
+      " Quit unite buffer.
+      execute winnr 'wincmd w'
+      call unite#force_quit_session()
+    endif
   endif
 
   " The current buffer is initialized.
@@ -2332,6 +2344,8 @@ function! s:initialize_current_unite(sources, context)"{{{
   let unite.has_preview_window =
         \ len(filter(range(1, winnr('$')),
         \  'getwinvar(v:val, "&previewwindow")')) > 0
+
+  " Help windows check.
 
   call unite#set_context(context)
 
@@ -2616,7 +2630,9 @@ function! unite#_resize_window() "{{{
     " Auto resize.
     let max_len = unite.prompt_linenr + len(unite.current_candidates)
     execute 'resize' min([max_len, context.winheight])
-    normal! zb
+    if line('.') < winheight(0)
+      normal! zb
+    endif
     if mode() ==# 'i' && col('.') == (col('$') - 1)
       startinsert!
     endif
@@ -3117,7 +3133,9 @@ function! s:init_cursor()"{{{
     let unite.is_insert = 1
 
     execute unite.prompt_linenr
-    normal! zb
+    if line('.') < winheight(0)
+      normal! zb
+    endif
     setlocal modifiable
 
     startinsert!
@@ -3139,7 +3157,11 @@ function! s:init_cursor()"{{{
           \ || candidate != unite#get_current_candidate()
       execute (unite.prompt_linenr+1)
     endif
-    normal! 0zb
+
+    normal! 0
+    if line('.') < winheight(0)
+      normal! zb
+    endif
 
     stopinsert
   endif

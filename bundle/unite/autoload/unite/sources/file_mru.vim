@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_mru.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Aug 2012.
+" Last Modified: 30 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -61,7 +61,7 @@ function! unite#sources#file_mru#_append()"{{{
   endif
 
   " Append the current buffer to the mru list.
-  if !s:is_exists_path(path) || &buftype =~ 'help'
+  if !s:is_exists_path(path) || &buftype =~# 'help\|nofile'
     return
   endif
 
@@ -190,7 +190,7 @@ function! s:load()  "{{{
 endfunction"}}}
 function! s:is_exists_path(path)  "{{{
   return a:path !~ '^\a\w\+:' &&
-        \ getftype(a:path) != '' && !isdirectory(a:path)
+        \ getftype(a:path) ==# 'file' && !isdirectory(a:path)
 endfunction"}}}
 function! s:convert2dictionary(list)  "{{{
   return { 'word' : a:list[0], 'source__time' : a:list[1],

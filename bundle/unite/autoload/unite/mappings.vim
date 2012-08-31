@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 27 Aug 2012.
+" Last Modified: 31 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -365,7 +365,6 @@ function! unite#mappings#do_action(action_name, ...)"{{{
 
   if is_redraw
     call unite#force_redraw()
-    normal! zb
   endif
 
   return _
@@ -679,7 +678,8 @@ function! s:loop_cursor_down(is_skip_not_matched)"{{{
   let prompt_linenr = unite#get_current_unite().prompt_linenr
 
   if line('.') <= prompt_linenr && !is_insert
-    return 'j'
+    return line('.') == line('$') &&
+          \ empty(unite#get_unite_candidates()) ? '2G' : 'j'
   endif
 
   if line('.') == line('$')
@@ -760,7 +760,9 @@ function! s:loop_cursor_up(is_skip_not_matched, mode)"{{{
   if num < 0
     call cursor(prompt_linenr, 0)
 
-    normal! zb
+    if line('.') < winheight(0)
+      normal! zb
+    endif
   else
     call cursor(line('.') - cnt, 0)
   endif
@@ -919,9 +921,12 @@ let s:source_action = {
       \}
 
 function! s:source_action.hooks.on_syntax(args, context)"{{{
-  syntax match uniteSource__ActionDescriptionLine / -- .*$/ contained containedin=uniteSource__Action
-  syntax match uniteSource__ActionDescription /.*$/ contained containedin=uniteSource__ActionDescriptionLine
-  syntax match uniteSource__ActionMarker / -- / contained containedin=uniteSource__ActionDescriptionLine
+  syntax match uniteSource__ActionDescriptionLine / -- .*$/
+        \ contained containedin=uniteSource__Action
+  syntax match uniteSource__ActionDescription /.*$/
+        \ contained containedin=uniteSource__ActionDescriptionLine
+  syntax match uniteSource__ActionMarker / -- /
+        \ contained containedin=uniteSource__ActionDescriptionLine
   highlight default link uniteSource__ActionMarker Special
   highlight default link uniteSource__ActionDescription Comment
 endfunction"}}}
@@ -991,7 +996,6 @@ function! s:source_action.action_table.do.func(candidate)"{{{
       endfor
 
       call unite#force_redraw()
-      normal! zb
     endif
   endif
 endfunction"}}}
