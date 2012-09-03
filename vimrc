@@ -643,11 +643,19 @@ function! XgetTagbarFunc()
   endif
 endfunction
 
+function! DispLTXCF()
+  "use this to debug other things
+  " by displaying information in statusline
+  " redifine it where appropriate
+  return ''
+endfunction
+
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
 set statusline+=\ %h%m%r%=
 "set statusline+=%{XgetTagbarFunc()}
 set statusline+=%{CondDispFtFf()}
+set statusline+=%{DispLTXCF()}
 "set statusline+=\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=%{tagbar#currenttag('[%s] ', '')}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
