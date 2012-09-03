@@ -61,7 +61,7 @@ let [s:pref, s:opts, s:new_opts] = ['g:ctrlp_', {
 	\ 'extensions':            ['s:extensions', []],
 	\ 'follow_symlinks':       ['s:folsym', 0],
 	\ 'highlight_match':       ['s:mathi', [1, 'CtrlPMatch']],
-	\ 'jump_to_buffer':        ['s:jmptobuf', 2],
+	\ 'jump_to_buffer':        ['s:jmptobuf', 'Et'],
 	\ 'lazy_update':           ['s:lazy', 0],
 	\ 'match_func':            ['s:matcher', {}],
 	\ 'match_window_bottom':   ['s:mwbottom', 1],
@@ -154,22 +154,6 @@ let s:fpats = {
 	\ '^\S\\?$': '\\?',
 	\ }
 
-" Specials
-let s:prtunmaps = [
-	\ 'PrtBS()',
-	\ 'PrtDelete()',
-	\ 'PrtDeleteWord()',
-	\ 'PrtClear()',
-	\ 'PrtCurStart()',
-	\ 'PrtCurEnd()',
-	\ 'PrtCurLeft()',
-	\ 'PrtCurRight()',
-	\ 'PrtHistory(-1)',
-	\ 'PrtHistory(1)',
-	\ 'PrtInsert("c")',
-	\ 'PrtInsert()',
-	\ ]
-
 " Keypad
 let s:kprange = {
 	\ 'Plus': '+',
@@ -235,7 +219,8 @@ fu! s:Open()
 	cal s:execextvar('enter')
 	sil! exe 'keepa' ( s:mwbottom ? 'bo' : 'to' ) '1new ControlP'
 	cal s:buffunc(1)
-	let [s:bufnr, s:prompt, s:winw] = [bufnr('%'), ['', '', ''], winwidth(0)]
+	let [s:bufnr, s:winw] = [bufnr('%'), winwidth(0)]
+	let [s:focus, s:prompt] = [1, ['', '', '']]
 	abc <buffer>
 	if !exists('s:hstry')
 		let hst = filereadable(s:gethistloc()[1]) ? s:gethistdata() : ['']
@@ -517,7 +502,7 @@ fu! s:ForceUpdate()
 	sil! cal s:Update(join(prt, ''))
 endf
 
-fu! s:BuildPrompt(upd, ...)
+fu! s:BuildPrompt(upd)
 	let base = ( s:regexp ? 'r' : '>' ).( s:byfname ? 'd' : '>' ).'> '
 	let [estr, prt] = ['"\', copy(s:prompt)]
 	cal map(prt, 'escape(v:val, estr)')
@@ -529,9 +514,9 @@ fu! s:BuildPrompt(upd, ...)
 	en
 	sil! cal ctrlp#statusline()
 	" Toggling
-	let [hiactive, hicursor, base] = a:0 && !a:1
-		\ ? ['CtrlPPrtBase', 'CtrlPPrtBase', tr(base, '>', '-')]
-		\ : ['CtrlPPrtText', 'CtrlPPrtCursor', base]
+	let [hiactive, hicursor, base] = s:focus
+		\ ? ['CtrlPPrtText', 'CtrlPPrtCursor', base]
+		\ : ['CtrlPPrtBase', 'CtrlPPrtBase', tr(base, '>', '-')]
 	let hibase = 'CtrlPPrtBase'
 	" Build it
 	redr
@@ -540,7 +525,7 @@ fu! s:BuildPrompt(upd, ...)
 		\ | echoh' hicursor '| echon "'.prt[1].'"
 		\ | echoh' hiactive '| echon "'.prt[2].'" | echoh None'
 	" Append the cursor at the end
-	if empty(prt[1]) && !( a:0 && !a:1 )
+	if empty(prt[1]) && s:focus
 		exe 'echoh' hibase '| echon "_" | echoh None'
 	en
 endf
@@ -560,6 +545,7 @@ endf
 " ** Prt Actions {{{1
 " Editing {{{2
 fu! s:PrtClear()
+	if !s:focus | retu | en
 	unl! s:hstgot
 	let [s:prompt, s:matches] = [['', '', ''], 1]
 	cal s:BuildPrompt(1)
@@ -574,12 +560,14 @@ fu! s:PrtAdd(char)
 endf
 
 fu! s:PrtBS()
+	if !s:focus | retu | en
 	unl! s:hstgot
 	let [s:prompt[0], s:matches] = [substitute(s:prompt[0], '.$', '', ''), 1]
 	cal s:BuildPrompt(1)
 endf
 
 fu! s:PrtDelete()
+	if !s:focus | retu | en
 	unl! s:hstgot
 	let [prt, s:matches] = [s:prompt, 1]
 	let prt[1] = matchstr(prt[2], '^.')
@@ -588,6 +576,7 @@ fu! s:PrtDelete()
 endf
 
 fu! s:PrtDeleteWord()
+	if !s:focus | retu | en
 	unl! s:hstgot
 	let [str, s:matches] = [s:prompt[0], 1]
 	let str = str =~ '\W\w\+$' ? matchstr(str, '^.\+\W\ze\w\+$')
@@ -599,6 +588,7 @@ fu! s:PrtDeleteWord()
 endf
 
 fu! s:PrtInsert(...)
+	if !s:focus | retu | en
 	let type = !a:0 ? '' : a:1
 	if !a:0
 		let type = s:insertstr()
@@ -621,6 +611,7 @@ fu! s:PrtInsert(...)
 endf
 
 fu! s:PrtExpandDir()
+	if !s:focus | retu | en
 	let str = s:prompt[0]
 	if str =~ '\v^\@(cd|lc[hd]?|chd)\s.+' && s:spi
 		let hasat = split(str, '\v^\@(cd|lc[hd]?|chd)\s*\zs')
@@ -642,6 +633,7 @@ fu! s:PrtExpandDir()
 endf
 " Movement {{{2
 fu! s:PrtCurLeft()
+	if !s:focus | retu | en
 	let prt = s:prompt
 	if !empty(prt[0])
 		let s:prompt = [substitute(prt[0], '.$', '', ''), matchstr(prt[0], '.$'),
@@ -651,6 +643,7 @@ fu! s:PrtCurLeft()
 endf
 
 fu! s:PrtCurRight()
+	if !s:focus | retu | en
 	let prt = s:prompt
 	let s:prompt = [prt[0] . prt[1], matchstr(prt[2], '^.'),
 		\ substitute(prt[2], '^.', '', '')]
@@ -658,12 +651,14 @@ fu! s:PrtCurRight()
 endf
 
 fu! s:PrtCurStart()
+	if !s:focus | retu | en
 	let str = join(s:prompt, '')
 	let s:prompt = ['', matchstr(str, '^.'), substitute(str, '^.', '', '')]
 	cal s:BuildPrompt(0)
 endf
 
 fu! s:PrtCurEnd()
+	if !s:focus | retu | en
 	let s:prompt = [join(s:prompt, ''), '', '']
 	cal s:BuildPrompt(0)
 endf
@@ -673,33 +668,38 @@ fu! s:PrtSelectMove(dir)
 	let dirs = {'t': 'gg','b': 'G','j': 'j','k': 'k','u': wht.'k','d': wht.'j'}
 	exe 'keepj norm!' dirs[a:dir]
 	if s:nolim != 1 | let s:cline = line('.') | en
-	if line('$') > winheight(0) | cal s:BuildPrompt(0, s:Focus()) | en
+	if line('$') > winheight(0) | cal s:BuildPrompt(0) | en
 endf
 
-fu! s:PrtSelectJump(char, ...)
+fu! s:PrtSelectJump(char)
 	let lines = copy(s:lines)
-	if a:0
+	if s:byfname
 		cal map(lines, 'split(v:val, ''[\/]\ze[^\/]\+$'')[-1]')
 	en
 	" Cycle through matches, use s:jmpchr to store last jump
-	let chr = escape(a:char, '.~')
-	if match(lines, '\c^'.chr) >= 0
+	let chr = escape(matchstr(a:char, '^.'), '.~')
+	let smartcs = &scs && chr =~ '\u' ? '\C' : ''
+	if match(lines, smartcs.'^'.chr) >= 0
 		" If not exists or does but not for the same char
-		let pos = match(lines, '\c^'.chr)
+		let pos = match(lines, smartcs.'^'.chr)
 		if !exists('s:jmpchr') || ( exists('s:jmpchr') && s:jmpchr[0] != chr )
 			let [jmpln, s:jmpchr] = [pos, [chr, pos]]
 		elsei exists('s:jmpchr') && s:jmpchr[0] == chr
 			" Start of lines
 			if s:jmpchr[1] == -1 | let s:jmpchr[1] = pos | en
-			let npos = match(lines, '\c^'.chr, s:jmpchr[1] + 1)
+			let npos = match(lines, smartcs.'^'.chr, s:jmpchr[1] + 1)
 			let [jmpln, s:jmpchr] = [npos == -1 ? pos : npos, [chr, npos]]
 		en
 		keepj exe jmpln + 1
 		if s:nolim != 1 | let s:cline = line('.') | en
-		if line('$') > winheight(0) | cal s:BuildPrompt(0, s:Focus()) | en
+		if line('$') > winheight(0) | cal s:BuildPrompt(0) | en
 	en
 endf
 " Misc {{{2
+fu! s:PrtFocusMap(char)
+	cal call(( s:focus ? 's:PrtAdd' : 's:PrtSelectJump' ), [a:char])
+endf
+
 fu! s:PrtClearCache()
 	if s:itemtype == 0
 		cal ctrlp#clr()
@@ -736,7 +736,7 @@ fu! s:PrtExit()
 endf
 
 fu! s:PrtHistory(...)
-	if !s:maxhst | retu | en
+	if !s:focus || !s:maxhst | retu | en
 	let [str, hst, s:matches] = [join(s:prompt, ''), s:hstry, 1]
 	" Save to history if not saved before
 	let [hst[0], hslen] = [exists('s:hstgot') ? hst[0] : str, len(hst)]
@@ -749,55 +749,48 @@ fu! s:PrtHistory(...)
 	unl s:force
 endf
 "}}}1
-" * MapKeys() {{{1
-fu! s:MapKeys(...)
-	" Normal keys
-	let pfunc = a:0 && !a:1 ? 'PrtSelectJump' : 'PrtAdd'
-	let dojmp = s:byfname && a:0 && !a:1 ? ', 1' : ''
-	let pcmd = "nn \<buffer> \<silent> \<k%s> :\<c-u>cal \<SID>%s(\"%s\"%s)\<cr>"
+" * Mappings {{{1
+fu! s:MapNorms()
+	if exists('s:nmapped') && s:nmapped == s:bufnr | retu | en
+	let pcmd = "nn \<buffer> \<silent> \<k%s> :\<c-u>cal \<SID>%s(\"%s\")\<cr>"
 	let cmd = substitute(pcmd, 'k%s', 'char-%d', '')
-	for each in range(32, 126)
-		exe printf(cmd, each, pfunc, escape(nr2char(each), '"|\'), dojmp)
+	let pfunc = 'PrtFocusMap'
+	let ranges = [32, 33, 125, 126] + range(35, 91) + range(93, 123)
+		\ + range(128, 255)
+	for each in [34, 92, 124]
+		exe printf(cmd, each, pfunc, escape(nr2char(each), '"|\'))
+	endfo
+	for each in ranges
+		exe printf(cmd, each, pfunc, nr2char(each))
 	endfo
 	for each in range(0, 9)
-		exe printf(pcmd, each, pfunc, each, dojmp)
+		exe printf(pcmd, each, pfunc, each)
 	endfo
 	for [ke, va] in items(s:kprange)
-		exe printf(pcmd, ke, pfunc, va, dojmp)
+		exe printf(pcmd, ke, pfunc, va)
 	endfo
-	" Special keys
-	if a:0 < 2
-		cal call('s:MapSpecs', a:0 && !a:1 ? [1] : [])
-	en
+	let s:nmapped = s:bufnr
 endf
 
-fu! s:MapSpecs(...)
-	" Correct arrow keys in terminal
-	if ( has('termresponse') && v:termresponse =~ "\<ESC>" )
-		\ || &term =~? '\vxterm|<k?vt|gnome|screen|linux|ansi'
-		for each in ['\A <up>','\B <down>','\C <right>','\D <left>']
-			exe s:lcmap.' <esc>['.each
-		endfo
+fu! s:MapSpecs()
+	if !( exists('s:smapped') && s:smapped == s:bufnr )
+		" Correct arrow keys in terminal
+		if ( has('termresponse') && v:termresponse =~ "\<ESC>" )
+			\ || &term =~? '\vxterm|<k?vt|gnome|screen|linux|ansi'
+			for each in ['\A <up>','\B <down>','\C <right>','\D <left>']
+				exe s:lcmap.' <esc>['.each
+			endfo
+		en
 	en
-	if a:0
-		for ke in s:prtunmaps | for kp in s:prtmaps[ke]
-			exe s:lcmap kp '<Nop>'
-		endfo | endfo
-	el
-		for [ke, va] in items(s:prtmaps) | for kp in va
-			exe s:lcmap kp ':<c-u>cal <SID>'.ke.'<cr>'
-		endfo | endfo
-	en
+	for [ke, va] in items(s:prtmaps) | for kp in va
+		exe s:lcmap kp ':<c-u>cal <SID>'.ke.'<cr>'
+	endfo | endfo
+	let s:smapped = s:bufnr
 endf
 " * Toggling {{{1
-fu! s:Focus()
-	retu !exists('s:focus') ? 1 : s:focus
-endf
-
 fu! s:ToggleFocus()
-	let s:focus = !exists('s:focus') || s:focus ? 0 : 1
-	cal s:MapKeys(s:focus)
-	cal s:BuildPrompt(0, s:focus)
+	let s:focus = s:focus ? 0 : 1
+	cal s:BuildPrompt(0)
 endf
 
 fu! s:ToggleRegex()
@@ -809,7 +802,6 @@ fu! s:ToggleByFname()
 	if s:ispath
 		let s:byfname = s:byfname ? 0 : 1
 		let s:mfunc = s:mfunc()
-		cal s:MapKeys(s:Focus(), 1)
 		cal s:PrtSwitcher()
 	en
 endf
@@ -824,7 +816,7 @@ endf
 
 fu! s:PrtSwitcher()
 	let [s:force, s:matches] = [1, 1]
-	cal s:BuildPrompt(1, s:Focus())
+	cal s:BuildPrompt(1)
 	unl s:force
 endf
 " - SetWD() {{{1
@@ -855,16 +847,19 @@ fu! ctrlp#acceptfile(mode, line, ...)
 	cal s:PrtExit()
 	let [bufnr, tail] = [bufnr('^'.filpath.'$'), s:tail()]
 	let j2l = a:0 ? a:1 : str2nr(matchstr(tail, '^ +\D*\zs\d\+\ze\D*'))
-	if s:jmptobuf && bufnr > 0 && md =~ 'e\|t'
+	if ( s:jmptobuf =~ md || ( s:jmptobuf && md =~ '[et]' ) ) && bufnr > 0
 		\ && !( md == 'e' && bufnr == bufnr('%') )
 		let [jmpb, bufwinnr] = [1, bufwinnr(bufnr)]
-		let buftab = s:jmptobuf > 1 ? s:buftab(bufnr, md) : [0, 0]
+		let buftab = ( s:jmptobuf =~# '[tTVH]' || s:jmptobuf > 1 )
+			\ ? s:buftab(bufnr, md) : [0, 0]
 	en
 	" Switch to existing buffer or open new one
-	if exists('jmpb') && bufwinnr > 0 && md != 't'
+	if exists('jmpb') && bufwinnr > 0
+		\ && !( md == 't' && ( s:jmptobuf !~# toupper(md) || buftab[0] ) )
 		exe bufwinnr.'winc w'
 		if j2l | cal ctrlp#j2l(j2l) | en
 	elsei exists('jmpb') && buftab[0]
+		\ && !( md =~ '[evh]' && s:jmptobuf !~# toupper(md) )
 		exe 'tabn' buftab[0]
 		exe buftab[1].'winc w'
 		if j2l | cal ctrlp#j2l(j2l) | en
@@ -879,7 +874,8 @@ fu! ctrlp#acceptfile(mode, line, ...)
 		" Reset &switchbuf option
 		let [swb, &swb] = [&swb, '']
 		" Open new window/buffer
-		let args = [cmd, useb ? bufnr : filpath, a:0 ? ' +'.a:1 : tail, useb, j2l]
+		let [fid, tail] = [( useb ? bufnr : filpath ), ( a:0 ? ' +'.a:1 : tail )]
+		let args = [cmd, fid, tail, 1, [useb, j2l]]
 		cal call('s:openfile', args)
 		let &swb = swb
 	en
@@ -914,7 +910,7 @@ fu! s:AcceptSelection(mode)
 	let str = join(s:prompt, '')
 	if a:mode == 'e' | if s:SpecInputs(str) | retu | en | en
 	" Get the selected line
-	let line = !empty(s:lines) ? s:lines[line('.') - 1] : ''
+	let line = ctrlp#getcline()
 	if a:mode != 'e' && !s:itemtype && line == ''
 		\ && str !~ '\v^(\.\.([\/]\.\.)*[\/]?[.\/]*|/|\\|\?|\@.+)$'
 		cal s:CreateNewFile(a:mode) | retu
@@ -958,7 +954,7 @@ fu! s:CreateNewFile(...)
 		\ s:newfop =~ '2\|h' || ( a:0 && a:1 == 'h' ) || md == 'h' ? 'new' :
 		\ s:newfop =~ '3\|v' || ( a:0 && a:1 == 'v' ) || md == 'v' ? 'vne' :
 		\ ctrlp#normcmd('e')
-	cal s:openfile(cmd, filpath, tail)
+	cal s:openfile(cmd, filpath, tail, 1)
 endf
 " * OpenMulti() {{{1
 fu! s:MarkToOpen()
@@ -966,7 +962,7 @@ fu! s:MarkToOpen()
 		\ || ( s:itemtype > 2 && s:getextvar('opmul') != 1 )
 		retu
 	en
-	let line = !empty(s:lines) ? s:lines[line('.') - 1] : ''
+	let line = ctrlp#getcline()
 	if empty(line) | retu | en
 	let filpath = s:ispath ? fnamemodify(line, ':p') : line
 	if exists('s:marked') && s:dictindex(s:marked, filpath) > 0
@@ -1005,7 +1001,7 @@ fu! s:OpenMulti(...)
 	let md = a:0 ? a:1 : ( md == '' ? 'v' : md )
 	let nopt = exists('g:ctrlp_open_multiple_files')
 	if !has_marked
-		let line = !empty(s:lines) ? s:lines[line('.') - 1] : ''
+		let line = ctrlp#getcline()
 		if line == '' | retu | en
 		let marked = { 1 : fnamemodify(line, ':p') }
 		let [nr, ur, jf, nopt] = ['1', 0, 0, 1]
@@ -1016,16 +1012,8 @@ fu! s:OpenMulti(...)
 			cal s:unmarksigns()
 			unl! s:marked
 			cal s:BuildPrompt(0)
-		elsei !has_marked && md == 'a'
-			let [s:marked, key] = [{}, 1]
-			for line in s:lines
-				let s:marked = extend(s:marked, { key : fnamemodify(line, ':p') })
-				let key += 1
-			endfo
-			cal s:remarksigns()
-			retu s:BuildPrompt(0)
-		elsei !has_marked && md == 'x'
-			retu call(s:openfunc[s:ctype], [md, line])
+		elsei !has_marked && md =~ '[axd]'
+			retu s:OpenNoMarks(md, line)
 		en
 		if md =~ '\v^c(ancel)?$' | retu | en
 		let nr = nr == '0' ? ( nopt ? '' : '1' ) : nr
@@ -1035,9 +1023,9 @@ fu! s:OpenMulti(...)
 	cal s:sanstail(join(s:prompt, ''))
 	cal s:PrtExit()
 	if nr == '0' || md == 'i'
-		retu map(mkd, "s:openfile('bad', fnamemodify(v:val, ':.'), '')")
+		retu map(mkd, "s:openfile('bad', v:val, '', 0)")
 	en
-	let [tail, fnesc] = [s:tail(), exists('*fnameescape') && v:version > 701]
+	let tail = s:tail()
 	let [emptytail, bufnr] = [empty(tail), bufnr('^'.mkd[0].'$')]
 	let useb = bufnr > 0 && buflisted(bufnr) && emptytail
 	" Move to a replaceable window
@@ -1064,19 +1052,16 @@ fu! s:OpenMulti(...)
 		let conds = [( nr != '' && nr > 1 && nr < ic ) || ( nr == '' && ic > 1 ),
 			\ nr != '' && nr < ic]
 		if conds[nopt]
-			if bufnr <= 0 | if fnesc
-				cal s:openfile('bad', fnamemodify(va, ':.'), '')
-			el
-				cal s:openfile(cmd, va, tail) | sil! hid clo!
-			en | en
+			if !buflisted(bufnr) | cal s:openfile('bad', va, '', 0) | en
 		el
-			cal s:openfile(cmd, useb ? bufnr : va, tail) | let ic += 1
-			if jf | if ic == 2
+			cal s:openfile(cmd, useb ? bufnr : va, tail, ic == 1 ? 1 : 0)
+			if jf | if ic == 1
 				let crpos = [tabpagenr(), winnr()]
 			el
 				let crpos[0] += tabpagenr() <= crpos[0]
-				let crpos[1] += winnr() == crpos[1]
+				let crpos[1] += winnr() <= crpos[1]
 			en | en
+			let ic += 1
 		en
 	endfo
 	if jf && exists('crpos') && ic > 2
@@ -1084,6 +1069,28 @@ fu! s:OpenMulti(...)
 	en
 	let &swb = swb
 	unl! s:tabct
+endf
+
+fu! s:OpenNoMarks(md, line)
+	if a:md == 'a'
+		let [s:marked, key] = [{}, 1]
+		for line in s:lines
+			let s:marked = extend(s:marked, { key : fnamemodify(line, ':p') })
+			let key += 1
+		endfo
+		cal s:remarksigns()
+		cal s:BuildPrompt(0)
+	elsei a:md == 'x'
+		cal call(s:openfunc[s:ctype], [a:md, a:line])
+	elsei a:md == 'd'
+		let dir = fnamemodify(a:line, ':h')
+		if isdirectory(dir)
+			cal ctrlp#setdir(dir)
+			cal ctrlp#switchtype(0)
+			cal ctrlp#recordhist()
+			cal s:PrtClear()
+		en
+	en
 endf
 " ** Helper functions {{{1
 " Sorting {{{2
@@ -1204,7 +1211,7 @@ fu! ctrlp#statusline()
 	let nxt = tps[s:walker(max, s:itemtype,  1)][1]
 	let prv = tps[s:walker(max, s:itemtype, -1)][1]
 	let s:ctype = tps[s:itemtype][0]
-	let focus   = s:Focus() ? 'prt'  : 'win'
+	let focus   = s:focus ? 'prt'  : 'win'
 	let byfname = s:byfname ? 'file' : 'path'
 	let marked  = s:opmul != '0' ?
 		\ exists('s:marked') ? ' <'.s:dismrk().'>' : ' <->' : ''
@@ -1489,6 +1496,14 @@ fu! s:buftab(bufnr, md)
 	retu [0, 0]
 endf
 
+fu! s:bufwins(bufnr)
+	let winns = 0
+	for tabnr in range(1, tabpagenr('$'))
+		let winns += count(tabpagebuflist(tabnr), a:bufnr)
+	endfo
+	retu winns
+endf
+
 fu! ctrlp#normcmd(cmd, ...)
 	if a:0 < 2 && s:nosplit() | retu a:cmd | en
 	let norwins = filter(range(1, winnr('$')),
@@ -1507,6 +1522,11 @@ fu! ctrlp#normcmd(cmd, ...)
 		retu a:cmd
 	en
 	retu a:0 ? a:1 : 'bo vne'
+endf
+
+fu! ctrlp#modfilecond()
+	retu &mod && !&hid && &bh != 'hide' && !&cf && !&awa
+		\ && s:bufwins(bufnr('%')) == 1
 endf
 
 fu! s:nosplit()
@@ -1586,11 +1606,17 @@ fu! s:argmaps(md, i)
 	let roh = [
 		\ ['Open Multiple Files', '/h[i]dden/[c]lear', ['i', 'c']],
 		\ ['Create a New File', '/[r]eplace', ['r']],
-		\ ['Open Selected', '/[r]eplace/h[i]dden? Mark [a]ll', ['r', 'i', 'a']],
+		\ ['Open Selected', '/[r]eplace', ['r', 'd', 'a']],
 		\ ]
-	if a:i == 2 && s:openfunc != {} && has_key(s:openfunc, s:ctype)
-		let roh[2][1] = '/[r]eplace/h[i]dden/e[x]ternal? Mark [a]ll'
-		let roh[2][2] = ['r', 'i', 'x', 'a']
+	if a:i == 2
+		if !buflisted(bufnr('^'.fnamemodify(ctrlp#getcline(), ':p').'$'))
+			let roh[2][1] .= '/h[i]dden'
+			let roh[2][2] += ['i']
+		en
+		if s:openfunc != {} && has_key(s:openfunc, s:ctype)
+			let roh[2][1] .= '/e[x]ternal'
+			let roh[2][2] += ['x']
+		en
 	en
 	let str = roh[a:i][0].': [t]ab/[v]ertical/[h]orizontal'.roh[a:i][1].'? '
 	retu s:choices(str, ['t', 'v', 'h'] + roh[a:i][2], 's:argmaps', [a:md, a:i])
@@ -1693,7 +1719,7 @@ fu! s:regexfilter(str)
 endf
 
 fu! s:walker(m, p, d)
-	retu a:d > 0 ? a:p < a:m ? a:p + a:d : 0 : a:p > 0 ? a:p + a:d : a:m
+	retu a:d >= 0 ? a:p < a:m ? a:p + a:d : 0 : a:p > 0 ? a:p + a:d : a:m
 endf
 
 fu! s:delent(rfunc)
@@ -1755,11 +1781,12 @@ fu! s:buffunc(e)
 	en
 endf
 
-fu! s:openfile(cmd, fid, tail, ...)
-	let cmd = a:cmd =~ '^[eb]$' && &modified ? 'hid '.a:cmd : a:cmd
+fu! s:openfile(cmd, fid, tail, chkmod, ...)
+	let cmd = a:chkmod && a:cmd =~ '^[eb]$' && ctrlp#modfilecond()
+		\ && !( a:cmd == 'b' && &aw ) ? ( a:cmd == 'b' ? 'sb' : 'sp' ) : a:cmd
 	let cmd = cmd =~ '^tab' ? ctrlp#tabcount().cmd : cmd
-	let j2l = a:0 && a:1 ? a:2 : 0
-	exe cmd.( a:0 && a:1 ? '' : a:tail ) ctrlp#fnesc(a:fid)
+	let j2l = a:0 && a:1[0] ? a:1[1] : 0
+	exe cmd.( a:0 && a:1[0] ? '' : a:tail ) ctrlp#fnesc(a:fid)
 	if j2l
 		exe j2l
 	en
@@ -1900,6 +1927,10 @@ fu! s:getextvar(key)
 	retu -1
 endf
 
+fu! ctrlp#getcline()
+	retu !empty(s:lines) ? s:lines[line('.') - 1] : ''
+endf
+
 fu! ctrlp#exit()
 	cal s:PrtExit()
 endf
@@ -1943,7 +1974,8 @@ fu! ctrlp#init(type, ...)
 	cal ctrlp#reset()
 	noa cal s:Open()
 	cal s:SetWD(a:0 ? a:1 : {})
-	cal s:MapKeys()
+	cal s:MapNorms()
+	cal s:MapSpecs()
 	cal ctrlp#syntax()
 	cal ctrlp#setlines(s:settype(a:type))
 	cal s:SetDefTxt()

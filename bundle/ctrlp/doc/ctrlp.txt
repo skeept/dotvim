@@ -128,13 +128,16 @@ Set the maximum height of the match window: >
 <
 
                                                       *'g:ctrlp_switch_buffer'*
-When opening a file with <cr> or <c-t>, if the file's already opened somewhere
-CtrlP will try to jump to it instead of opening a new instance: >
-  let g:ctrlp_switch_buffer = 2
+When opening a file, if it's already opened in a window somewhere CtrlP will
+try to jump to it instead of opening a new instance: >
+  let g:ctrlp_switch_buffer = 'Et'
 <
-  1 - only jump to the buffer if it's opened in the current tab.
-  2 - jump tab as well if the buffer's opened in another tab.
-  0 - disable this feature.
+  e - jump when <cr> is pressed, but only to windows in the current tab.
+  t - jump when <c-t> is pressed, but only to windows in another tab.
+  v - like e, but jump when <c-v> is pressed.
+  h - like e, but jump when <c-x> is pressed.
+  E, T, V, H - like e, t, v and h respectively, but jump to windows anywhere.
+  0 or <empty-string> - disable this feature.
 
                                                        *'g:ctrlp_reuse_window'*
 When opening a file with <cr>, CtrlP avoids opening it in windows created by
@@ -165,7 +168,7 @@ variable: >
   c - the directory of the current file.
   r - the nearest ancestor that contains one of these directories or files:
       .git .hg .svn .bzr _darcs
-  0 or [empty-string] - don't manage working directory.
+  0 or <empty-string> - don't manage working directory.
 
 Note #1: you can use b:ctrlp_working_path_mode (a |b:var|) to set this option
 on a per buffer basis.
@@ -265,8 +268,10 @@ Examples: >
 <
 You can also use 'grep', 'findstr' or something else to filter the results.
 Examples: >
-  let g:ctrlp_user_command = 'find %s -type f | grep (?!tmp/.*)'
-  let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d | findstr .*\.py$'
+  let g:ctrlp_user_command =
+    \ 'find %s -type f | grep -v -P "\.jpg$|/tmp/"'          " MacOSX/Linux
+  let g:ctrlp_user_command =
+    \ 'dir %s /-n /b /s /a-d | findstr /v /l ".jpg \\tmp\\"' " Windows
 <
 Use a version control listing command when inside a repository, this is faster
 when scanning large projects: >
@@ -280,17 +285,29 @@ when scanning large projects: >
     \ 'ignore': 0 or 1
     \ }
 <
-Examples: >
+Some examples: >
+  " Single VCS, listing command does not list untracked files:
   let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files']
   let g:ctrlp_user_command = ['.hg', 'hg --cwd %s locate -I .']
+
+  " Multiple VCS's:
   let g:ctrlp_user_command = {
     \ 'types': {
       \ 1: ['.git', 'cd %s && git ls-files'],
       \ 2: ['.hg', 'hg --cwd %s locate -I .'],
       \ },
-    \ 'fallback': 'find %s -type f',
-    \ 'ignore': 0
+    \ 'fallback': 'find %s -type f'
     \ }
+
+  " Single VCS, listing command lists untracked files (slower):
+  let g:ctrlp_user_command =
+    \ ['.git', 'cd %s && git ls-files . -co --exclude-standard']
+
+  let g:ctrlp_user_command =
+    \ ['.hg', 'hg --cwd %s status -numac -I . $(hg root)'] " MacOSX/Linux
+
+  let g:ctrlp_user_command = ['.hg', 'for /f "tokens=1" %%a in (''hg root'') '
+    \ . 'do hg --cwd %s status -numac -I . %%a']           " Windows
 <
 Note #1: if the fallback_command is empty or not defined, |globpath()| will
 then be used when searching outside a repo.
@@ -785,7 +802,22 @@ Opening multiple files:~
     - Mark/unmark a file to create a new file in its directory using <c-y>.
 
   <c-o>
-    Open files marked by <c-z>.
+    - Open files marked by <c-z>.
+    - When no file has been marked by <c-z>, open a console dialog with the
+      following options:
+
+      Open the selected file:
+        t - in a tab page.
+        v - in a vertical split.
+        h - in a horizontal split.
+        r - in the current window.
+        i - as a hidden buffer.
+        x - (optional) with the function defined in |g:ctrlp_open_func|.
+
+      Other options (not shown):
+        a - mark all files in the match window.
+        d - change CtrlP's local working directory to the selected file's
+            directory and switch to find file mode.
 
 Function keys:~
 
@@ -1131,6 +1163,8 @@ Special thanks:~
 ===============================================================================
 CHANGELOG                                                     *ctrlp-changelog*
 
+    + Change |g:ctrlp_switch_buffer|'s and |g:ctrlp_working_path_mode|'s type
+      (old values still work).
     + New key for |g:ctrlp_user_command| when it's a Dictionary: 'ignore'.
     + New options: |g:ctrlp_open_func|.
                    |g:ctrlp_tabpage_position|.
