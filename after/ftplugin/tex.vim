@@ -144,3 +144,11 @@ inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r
 let b:SuperTabDefaultCompletionType = "\<C-N>"
 execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
 set complete+=k
+
+function! Ulti_ExpandOrJump_and_getRes()
+  call UltiSnips_ExpandSnippetOrJump()
+  return g:ulti_expand_or_jump_res
+endfunction
+
+inoremap <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
+
