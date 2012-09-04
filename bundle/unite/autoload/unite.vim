@@ -2337,9 +2337,9 @@ function! s:initialize_current_unite(sources, context)"{{{
 
   " Help windows check.
 
-  call unite#set_context(context)
-
   call unite#set_current_unite(unite)
+
+  call unite#set_context(context)
 
   call s:call_hook(sources, 'on_init')
 endfunction"}}}
@@ -2570,18 +2570,6 @@ function! s:redraw(is_force, winnr, is_gather_all) "{{{
     let s:current_unite = unite_save
     execute winnr_save 'wincmd w'
     call unite#_resize_window()
-  endif
-
-  let context = unite#get_context()
-  if context.immediately
-    " Immediately action.
-    let candidates = unite#gather_candidates()
-
-    if len(candidates) == 1
-      " Default action.
-      call unite#mappings#do_action(
-            \ context.default_action, [candidates[0]])
-    endif
   endif
 
   if context.auto_quit && !unite.is_async

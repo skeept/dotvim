@@ -227,7 +227,7 @@ COMMANDS 					*unite-commands*
 		-immediately
 		If the number of candidates is exactly one, it runs default
 		action immediately. If candidate is empty, it doesn't open any
-		unite buffer. This option also works in the narrowing mode.
+		unite buffer.
 
 						*unite-options-no-empty*
 		-no-empty
@@ -724,9 +724,13 @@ Normal mode mappings.
 
 <Plug>(unite_exit)				*<Plug>(unite_exit)*
 		Exits unite. And previous unite buffer menu will be restored.
+		Note: You cannot close unite buffer using |:close| or
+		|:bdelete| or |:quit| command. This mapping restore windows.
 
 <Plug>(unite_all_exit)				*<Plug>(unite_all_exit)*
 		Exits unite with previous unite buffer menu.
+		Note: You cannot close unite buffer using |:close| or
+		|:bdelete| or |:quit| command. This mapping restore windows.
 
 <Plug>(unite_restart)				*<Plug>(unite_restart)*
 		Restarts unite.
@@ -2654,6 +2658,9 @@ CHANGELOG					*unite-changelog*
 
 2012-09-04
 - Fixed narrowing behavior.
+- Changed -immediately behavior.
+- Fixed resume bug.
+- Added alias in directory kind.
 
 2012-09-03
 - Fixed function preview error.
