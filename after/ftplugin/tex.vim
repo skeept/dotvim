@@ -145,6 +145,7 @@ let b:SuperTabDefaultCompletionType = "\<C-N>"
 execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
 set complete+=k
 
+let g:ulti_expand_or_jump_res = 1 "if this is not implemented in ultisnips, want no trouble
 function! Ulti_ExpandOrJump_and_getRes()
   call UltiSnips_ExpandSnippetOrJump()
   return g:ulti_expand_or_jump_res
