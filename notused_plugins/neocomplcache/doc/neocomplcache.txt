@@ -447,7 +447,12 @@ g:neocomplcache_force_omni_patterns
 		directly. So almost neocomplcache features are disabled. But
 		all Omni completion works instead of
 		|g:neocomplcache_omni_patterns|.
-		
+>
+		if !exists('g:neocomplcache_force_omni_patterns')
+		  let g:neocomplcache_force_omni_patterns = {}
+		endif
+		let g:neocomplcache_force_omni_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
+<
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
 >
@@ -1166,6 +1171,12 @@ A: Please try below settings.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-09-06
+- Fixed include pattern.
+
+2012-09-05
+- Fixed check force_omni_patterns.
 
 2012-09-04
 - Added default include files in include_file.
