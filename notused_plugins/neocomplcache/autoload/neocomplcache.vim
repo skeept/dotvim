@@ -606,12 +606,18 @@ function! neocomplcache#manual_complete(findstart, base)"{{{
             \ -1 : -3
     endif
 
+    let cur_text = s:get_cur_text()
+    if neocomplcache#is_omni_complete(cur_text)
+      " Use omni function.
+      return -1
+    endif
+
     " Get cur_keyword_pos.
     if s:is_prefetch && !empty(s:complete_results)
       " Use prefetch results.
     else
       let s:complete_results =
-            \ neocomplcache#get_complete_results(s:get_cur_text())
+            \ neocomplcache#get_complete_results(cur_text)
     endif
     let cur_keyword_pos =
           \ neocomplcache#get_cur_keyword_pos(s:complete_results)
@@ -1548,20 +1554,25 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
 
   " Convert words.
   if neocomplcache#is_text_mode() "{{{
+    let convert_candidates = filter(copy(complete_words),
+          \ "get(v:val, 'neocomplcache__convertable', 1)")
+
     if a:cur_keyword_str =~ '^\l\+$'
-      for keyword in complete_words
+      for keyword in convert_candidates
         let keyword.word = tolower(keyword.word)
         let keyword.abbr = tolower(keyword.abbr)
       endfor
     elseif a:cur_keyword_str =~ '^\u\+$'
-      for keyword in complete_words
+      for keyword in convert_candidates
         let keyword.word = toupper(keyword.word)
         let keyword.abbr = toupper(keyword.abbr)
       endfor
     elseif a:cur_keyword_str =~ '^\u\l\+$'
-      for keyword in complete_words
-        let keyword.word = toupper(keyword.word[0]).tolower(keyword.word[1:])
-        let keyword.abbr = toupper(keyword.abbr[0]).tolower(keyword.abbr[1:])
+      for keyword in convert_candidates
+        let keyword.word = toupper(keyword.word[0]).
+              \ tolower(keyword.word[1:])
+        let keyword.abbr = toupper(keyword.abbr[0]).
+              \ tolower(keyword.abbr[1:])
       endfor
     endif
   endif"}}}
