@@ -133,6 +133,7 @@ inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$${0:<++>}', '$$', 'dollar', "r"
 inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}${0:<++>}', '\^\^', 'hat', "r")<cr>
 inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r")<cr>
 
+
 "inoremap <silent> <buffer> {{ __LTXSPlbraces<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 "inoremap <silent> <buffer> $$ __LTXSPddolar<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 "inoremap <silent> <buffer> ^^ __LTXSPdhat<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
@@ -151,5 +152,5 @@ function! Ulti_ExpandOrJump_and_getRes()
   return g:ulti_expand_or_jump_res
 endfunction
 
-inoremap <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
+inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
 
