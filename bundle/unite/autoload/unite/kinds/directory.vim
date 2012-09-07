@@ -35,12 +35,13 @@ let s:kind = {
       \ 'name' : 'directory',
       \ 'default_action' : 'narrow',
       \ 'action_table': {},
+      \ 'alias_table' : { 'diff' : 'dirdiff' },
       \ 'parents': ['file'],
       \}
 
 if exists(':VimFiler')
   " Set alias.
-  let s:kind.alias_table = { 'tabopen' : 'tabvimfiler' }
+  let s:kind.alias_table.tabopen = 'tabvimfiler'
 endif
 
 " Actions"{{{
