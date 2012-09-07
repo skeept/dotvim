@@ -2,7 +2,7 @@
 #frame
 snippet frame "add a frame"
 \begin{frame}
-\frametitle{${1:<+frametitle+>}}
+\frametitle{${1:<+title+>}}
 ${2}
 \end{frame}
 endsnippet
@@ -20,16 +20,16 @@ snippet uncover "add uncover"
 }
 endsnippet
 
-snippet ref "reference" w
-(\ref{${1:<+reference+>}})${2:<++>}
+snippet reff "reference" w
+(\ref{${1:<+ref+>}})${0:<++>}
 endsnippet
 
-snippet refl "reference" w
-\ref{${1:<+reference+>}}${2:<++>}
+snippet ref "reference" w
+\ref{${1:<+ref+>}}${0:<++>}
 endsnippet
 
 snippet mcol "multicolumn"
-\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${4:<++>}
+\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${0:<++>}
 endsnippet
 
 snippet "be(gin)?( (\S+))?" "begin{} / end{}" !br
@@ -57,8 +57,7 @@ snippet eqn "insert equation"
 \begin{equation}
 ${1}
 \label{eqn:${2:<+lblname+>}}
-\end{equation}
-${3:<+end equation+>}
+\end{equation}$0
 endsnippet
 
 snippet hfig "insert figure"
@@ -68,11 +67,10 @@ snippet hfig "insert figure"
 \end{center}
 \caption{${3:<+caption+>}}
 \label{fig:${4:<+label+>}}
-\end{figure}
-${5:<+end figure+>}
+\end{figure}$0
 endsnippet
 
-snippet fr "insert fraction"
+snippet fr "insert fraction" w
 \frac{${1:${VISUAL:<+nom+>}}}{${2:<+denom+>}}${0:<++>}
 endsnippet
 
@@ -106,7 +104,7 @@ snippet lr| "left| right|" !w
 \left| ${1:${VISUAL}} \right| ${2:<++>}
 endsnippet
 
-snippet lr{ "left\{ right\}" w
+snippet lr{ "left\{ right\}" !w
 \left\\{ ${1:${VISUAL}} \right\\} ${0:<++>}
 endsnippet
 
@@ -122,7 +120,7 @@ snippet table
   \end{tabular}
   \caption{${3:<+Caption text+>}}
   \label{tab:${4:<+label+>}}
-\end{table}${5:<++>}
+\end{table}${0:<++>}
 endsnippet
 
 snippet equ
@@ -144,7 +142,7 @@ snippet abs "enclose expression in | |" !w
 endsnippet
 
 snippet todoi "expansion of todoi" !w
-\todoi{${1:<+outline title (red)+>}}
+\todoi{${1:<+title (red)+>}}
   {${2:<+outline (blue)+>}}$0
 endsnippet
 
@@ -161,11 +159,11 @@ snippet tl "tilde" w
 endsnippet
 
 snippet em "emphasize" w
-\emph{$1}$0
+\emph{${1:${VISUAL}}}$0
 endsnippet
 
 snippet fbf "font bold face" w
-\textbf{$1}$0
+\textbf{${1:${VISUAL}}}$0
 endsnippet
 
 snippet sideset "sideset" w
