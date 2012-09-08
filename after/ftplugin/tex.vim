@@ -145,6 +145,7 @@ inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r
 let b:SuperTabDefaultCompletionType = "\<C-N>"
 execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
 set complete+=k
+setlocal textwidth=90
 
 let g:ulti_expand_or_jump_res = 1 "if this is not implemented in ultisnips, want no trouble
 function! Ulti_ExpandOrJump_and_getRes()
