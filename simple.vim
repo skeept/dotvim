@@ -645,7 +645,7 @@ command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "======================== Plugin Loading ======================================
 "load eventual plugins here (the ones that would be really necessary)
 runtime plugin/NERD_commenter.vim
-runtime plugin/supertab.vim
+runtime bundle/supertab/plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 
