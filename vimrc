@@ -1094,7 +1094,9 @@ if g:neocomplcache_enable_at_startup == 1
   set completeopt+=longest
   let g:neocomplcache_enable_auto_select = 1
   let g:neocomplcache_disable_auto_complete = 1
-  inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
+  "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
+  inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
+  inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
   inoremap <expr><CR>  neocomplcache#smart_close_popup() . "\<CR>"
 
   " Enable omni completion.
