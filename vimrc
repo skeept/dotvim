@@ -1033,13 +1033,13 @@ command! Mt call MyThesisEnv()
 "======================= neocomplcache ========================================
 " Use neocomplcache?
 let g:neocomplcache_enable_at_startup = 1
-if g:neocomplcache_enable_at_startup == 1
+if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1
   " Disable AutoComplPop.
   let g:acp_enableAtStartup = 0
   " Use smartcase.
-  let g:neocomplcache_enable_smart_case = 1
+  let g:neocomplcache_enable_smart_case = 0
   " Use camel case completion.
-  let g:neocomplcache_enable_camel_case_completion = 1
+  let g:neocomplcache_enable_camel_case_completion = 0
   " Use underbar completion.
   let g:neocomplcache_enable_underbar_completion = 1
   " Set minimum syntax keyword length.
@@ -1097,7 +1097,8 @@ if g:neocomplcache_enable_at_startup == 1
   "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
   inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
   inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
-  inoremap <expr><CR>  neocomplcache#smart_close_popup() . "\<CR>"
+  "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
+  inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 
   " Enable omni completion.
   autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
