@@ -160,7 +160,7 @@ nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
 "inoremap <C-A> <ESC>0i
-inoremap <C-E> <C-O>$
+inoremap <expr><C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
@@ -1081,7 +1081,7 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
   inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
   inoremap <expr><C-y>  pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
-  inoremap <expr><C-e>  pumvisible()? neocomplcache#cancel_popup() :
+  inoremap <expr><C-e>  pumvisible() ? neocomplcache#cancel_popup() :
         \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
   " For cursor moving in insert mode(Not recommended)

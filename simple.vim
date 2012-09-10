@@ -143,7 +143,7 @@ nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
 "inoremap <C-A> <ESC>0i
-inoremap <C-E> <ESC>$a
+inoremap <expr><C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
@@ -735,3 +735,8 @@ function! LoadLycosa()
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
 "==============================================================================
+
+function! IsLineEndInsert()
+  "in insert mode last is +1 len"
+  return getpos(".")[2] == (1 + len(getline(".")))
+endfunction0
