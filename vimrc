@@ -160,7 +160,7 @@ nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
 " in insert mode make ctrl-a and ctrl-e behave like in emacs
 "inoremap <C-A> <ESC>0i
-inoremap <C-E> <ESC>$a
+inoremap <C-E> <C-O>$
 
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
@@ -648,6 +648,7 @@ function! DispLTXCF()
   "use this to debug other things
   " by displaying information in statusline
   " redifine it where appropriate
+  "return '[' . len(getline(".")) . ',' . getpos(".")[2] . ']'
   return ''
 endfunction
 
@@ -1030,6 +1031,11 @@ function! MyThesisEnv()
 endfunction
 command! Mt call MyThesisEnv()
 
+function! IsLineEndInsert()
+  "in insert mode last is +1 len"
+  return getpos(".")[2] == (1 + len(getline(".")))
+endfunction0
+
 "======================= neocomplcache ========================================
 " Use neocomplcache?
 let g:neocomplcache_enable_at_startup = 1
@@ -1074,8 +1080,9 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   " <C-h>, <BS>: close popup and delete backword char.
   inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
   inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-  inoremap <expr><C-y>  neocomplcache#close_popup()
-  inoremap <expr><C-e>  neocomplcache#cancel_popup()
+  inoremap <expr><C-y>  pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
+  inoremap <expr><C-e>  pumvisible()? neocomplcache#cancel_popup() :
+        \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
   " For cursor moving in insert mode(Not recommended)
   "inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
