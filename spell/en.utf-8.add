@@ -18,3 +18,6 @@ MaxAvg
 AllConstrained
 FindCloseLin
 FindCloseNonLin
+Dicopt
+MaxAvgLinAP
+Matlab
