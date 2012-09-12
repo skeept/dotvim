@@ -1034,7 +1034,7 @@ command! Mt call MyThesisEnv()
 function! IsLineEndInsert()
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
-endfunction0
+endfunction
 
 "======================= neocomplcache ========================================
 " Use neocomplcache?
