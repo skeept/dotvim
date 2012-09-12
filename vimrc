@@ -1059,6 +1059,11 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
         \ 'scheme' : $HOME.'/.gosh_completions'
         \ }
 
+  " disable file name completion
+  let g:neocomplcache_source_disable = {
+        \ 'filename_complete' : 1
+        \ }
+
   " Define keyword.
   if !exists('g:neocomplcache_keyword_patterns')
     let g:neocomplcache_keyword_patterns = {}
