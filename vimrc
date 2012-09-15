@@ -31,7 +31,7 @@ let g:pathogen_disabled = []
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
 let g:pathogen_disabled += ['powerline']
 let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
-let g:pathogen_disabled += ['supertab']
+"let g:pathogen_disabled += ['supertab']
 "let g:pathogen_disabled += ['vlatex']
 let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
@@ -1113,8 +1113,9 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   let g:neocomplcache_enable_auto_select = 1
   let g:neocomplcache_disable_auto_complete = 1
   "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-  inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
-  inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
+  "inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
+  "inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
+  inoremap <expr><F8> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
   "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
   inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 
