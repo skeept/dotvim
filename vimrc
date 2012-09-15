@@ -30,7 +30,7 @@ let g:pathogen_disabled = []
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
 let g:pathogen_disabled += ['powerline']
-let g:pathogen_disabled += ['powershell']
+let g:pathogen_disabled += ['powershell', 'lycosaexplorer']
 let g:pathogen_disabled += ['supertab']
 "let g:pathogen_disabled += ['vlatex']
 let g:pathogen_disabled += ['Align', 'AutoAlign']
@@ -481,22 +481,28 @@ omap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 
 "========================= LycosaExplorer =====================================
 "" lycosaexplorer alternative mappings
-noremap  ,b :LycosaBufferExplorer<CR>
-noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
-noremap  ,le :LycosaFilesystemExplorer<CR>
+if index(g:pathogen_disabled, 'lycosaexplorer') == -1
+  noremap ,b :LycosaBufferExplorer<CR>
+  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
+  noremap ,le :LycosaFilesystemExplorer<CR>
 
-function! ToggleLycosa()
-  if v:count == 0
-    LycosaFilesystemExplorer
-  elseif v:count == 1
-    LycosaBufferExplorer
-  elseif v:count == 2
-    LycosaFilesystemExplorerFromHere
-  else
-    echo "0: File System, 1:buffer, 2: File from here"
-  endif
-endfunction
-nnoremap ,e :<c-u> call ToggleLycosa()<CR>
+  function! ToggleLycosa()
+    if v:count == 0
+      LycosaFilesystemExplorer
+    elseif v:count == 1
+      LycosaBufferExplorer
+    elseif v:count == 2
+      LycosaFilesystemExplorerFromHere
+    else
+      echo "0: File System, 1:buffer, 2: File from here"
+    endif
+  endfunction
+  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
+else
+  noremap ,b :CtrlPBuffer<CR>
+  noremap ,e :CtrlPCurFile<CR>
+endif
+
 "==============================================================================
 
 "=============================== Unite ========================================
@@ -927,9 +933,9 @@ let g:SrcExpl_isUpdateTags = 0
 let g:showmarks_enable=0
 
 "to change the colors if previous color desired :call PreviousColorScheme()
-"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName() <CR>
-noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName() <CR>
-"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName() <CR>
+"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName()<CR>
+"noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName()<CR>
+"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName()<CR>
 "
 
 "=============================== smartusline ==================================
