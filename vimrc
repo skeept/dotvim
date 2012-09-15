@@ -869,6 +869,12 @@ snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
 "snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<CR>
 inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
 snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
+
+function! Ulti_ExpandOrJump_and_getRes()
+  call UltiSnips_ExpandSnippetOrJump()
+  return g:ulti_expand_or_jump_res
+endfunction
+
 "==============================================================================
 
 "=============================== Supertab =====================================
