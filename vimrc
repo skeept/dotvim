@@ -29,7 +29,7 @@ let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
-let g:pathogen_disabled += ['powerline']
+let g:pathogen_disabled += ['powerline', 'snipmate']
 let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
 "let g:pathogen_disabled += ['supertab']
 "let g:pathogen_disabled += ['vlatex']
@@ -244,8 +244,8 @@ noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer
 noremap <Leader>os :Scratch<CR>
 
-nmap <tab> <c-w>
-nmap <tab><tab> <c-w><c-w>
+nmap <TAB> <C-w>
+nmap <TAB><TAB> <C-W><C-W>
 
 "attemp to fix backspace
 "inoremap  
@@ -254,11 +254,26 @@ nmap <tab><tab> <c-w><c-w>
 
 "record something in register u by default
 ""noremap <Leader>rs :set nomore<CR>quq:redir @U<CR>
-noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
-noremap <Leader>re :redir END \| set more \| "-> u<CR>
 
 noremap q; :
 noremap q' "
+"==============================================================================
+
+"========================= redir ==============================================
+noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
+noremap <Leader>re :redir END \| set more \| "-> u<CR>
+function! CaptureOutFun(cmd)
+  set nomore
+  let @u = ""
+  redir @U
+  exec a:cmd
+  redir END
+  set more
+  normal "up']$
+endfunction
+command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
+nnoremap ,co :CaptureOut<SPACE>
+
 "==============================================================================
 
 "======================== Spelling ============================================
@@ -861,14 +876,14 @@ let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
 let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
-let g:UltiSnipsEditSplit =  "horizontal"
+let g:UltiSnipsEditSplit = "horizontal"
 nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
 inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
 snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
-"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<CR>
-"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<CR>
-inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
-snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
+"inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
+"snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
+inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
 
 function! Ulti_ExpandOrJump_and_getRes()
   call UltiSnips_ExpandSnippetOrJump()
@@ -1061,7 +1076,8 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   " Use underbar completion.
   let g:neocomplcache_enable_underbar_completion = 1
   " Set minimum syntax keyword length.
-  let g:neocomplcache_min_syntax_length = 3
+  let g:neocomplcache_min_syntax_length = 6
+  let g:neocomplcache_min_keyword_length = 6
   let g:neocomplcache_lock_buffer_name_pattern = '\*ku\*'
 
   " Define dictionary.
@@ -1116,12 +1132,12 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
 
   " Shell like behavior(not recommended).
   set completeopt+=longest
-  let g:neocomplcache_enable_auto_select = 1
+  let g:neocomplcache_enable_auto_select = 0
   let g:neocomplcache_disable_auto_complete = 1
   "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
   "inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
   "inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
-  inoremap <expr><F8> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
+  inoremap <expr><F12> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
   "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
   inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 
@@ -1148,4 +1164,8 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   " https://github.com/c9s/perlomni.vim
   let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
+"==============================================================================
+
+"========================= snipmate ===========================================
+let g:snippets_dir = g:p0 . "/bundle/snipmate/snippets"
 "==============================================================================

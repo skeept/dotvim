@@ -227,9 +227,8 @@ noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer
 noremap <Leader>os :Scratch<CR>
 
-
-nmap <tab> <c-w>
-nmap <tab><tab> <c-w><c-w>
+nmap <TAB> <C-W>
+nmap <TAB><TAB> <C-W><C-W>
 
 "attemp to fix backspace
 "inoremap  
@@ -238,8 +237,25 @@ nmap <tab><tab> <c-w><c-w>
 
 "record something in register u by default
 ""noremap <Leader>rs :set nomore<CR>quq:redir @U<CR>
+
+noremap q; :
+noremap q' "
+"==============================================================================
+
+"========================= redir ==============================================
 noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
 noremap <Leader>re :redir END \| set more \| "-> u<CR>
+function! CaptureOutFun(cmd)
+  set nomore
+  let @u = ""
+  redir @U
+  exec a:cmd
+  redir END
+  set more
+  normal "up']$
+endfunction
+command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
+nnoremap ,co :CaptureOut<SPACE>
 
 noremap q; :
 noremap q' "
@@ -592,18 +608,18 @@ let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================
 
 "================================ UltiSnips ===================================
-let g:UltiSnipsExpandTrigger = "<f10>"
-let g:UltiSnipsListSnippets = "<c-f10>"
-let g:UltiSnipsJumpForwardTrigger = "<f10>"
-let g:UltiSnipsJumpBackwardTrigger ="<s-f10>""
+let g:UltiSnipsExpandTrigger = "<F10>"
+let g:UltiSnipsListSnippets = "<C-F10>"
+let g:UltiSnipsJumpForwardTrigger = "<F10>"
+let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
 let g:UltiSnipsEditSplit = "horizontal"
-nnoremap <f10> :call UltiSnips_ListSnippets()<CR>
-inoremap <f9> <c-r>=UltiSnips_JumpBackwards()<CR>
-snoremap <f9> <esc>:call UltiSnips_JumpBackwards()<CR>
-"inoremap <silent> <NL> <c-r>=UltiSnips_JumpForwards()<CR>
-"snoremap <silent> <NL> <esc>:call UltiSnips_JumpForwards()<CR>
-inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
-snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
+nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
+snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
+"inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
+"snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
+inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
 "==============================================================================
 
 "=============================== Supertab =====================================
@@ -654,11 +670,11 @@ function! LoadTagbar()
   runtime bundle/tagbar/plugin/tagbar.vim
   exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
   "nnoremap <F3> :TagbarToggle<CR>
-  nnoremap <F3> :<c-u>call ToggleTBarListNT() <CR>
-  inoremap <F3> <esc>:<c-u>call ToggleTBarListNT() <CR>
+  nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
+  inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
 endf
-nnoremap <f3> :call LoadTagbar()<CR>:<c-u>call ToggleTBarListNT()<CR>
-inoremap <f3> <CR>:call LoadTagbar()<CR>:<c-u>call ToggleTBarListNT()<CR>
+nnoremap <F3> :call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
+inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips()
   if has("python")
@@ -739,4 +755,4 @@ nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
 function! IsLineEndInsert()
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
-endfunction0
+endfunction

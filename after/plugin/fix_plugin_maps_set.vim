@@ -8,5 +8,7 @@ imap <silent> ( <Plug>delimitMate(<c-r>=EchoFunc()<cr>
 "it in latex files
 "inoremap <silent> <NL> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
 "snoremap <silent> <NL> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
-inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
-snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
+inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?  "" : IMAP_Jumpfunc('', 0)<CR>
+snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?  "" : IMAP_Jumpfunc('', 0)<CR>
+
+inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ? "" : UltiSnips_ListSnippets()<CR>
