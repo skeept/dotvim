@@ -148,4 +148,5 @@ set complete+=k
 setlocal textwidth=90
 
 inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0)?"":IMAP_Jumpfunc('', 0)<CR>
+snoremap <silent> <buffer> <C-L> <C-R>=IMAP_Jumpfunc('', 0)<CR>
 
