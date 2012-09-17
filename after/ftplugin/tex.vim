@@ -125,7 +125,7 @@ if 0
   "snoremap <NL> :call SelectImapOrUlti(1)<CR>
   "nnoremap <NL> :call SelectImapOrUlti(1)<CR>
 else
-  inoremap <silent> <buffer> <C-L> <C-R>=IMAP_Jumpfunc_NHLS('', 0)<CR>
+  inoremap <silent> <buffer> <C-L> <C-R>=IMAP_Jumpfunc('', 0)<CR>
 endif
 
 inoremap <silent> {{ {{<C-R>=UltiSnips_Anon('\\{ $1 \\}${0:<++>}', '{{', 'paren', "r")<cr>
@@ -148,15 +148,6 @@ set complete+=k
 setlocal textwidth=90
 
 inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
-      \ "" : IMAP_Jumpfunc_NHLS('', 0)<CR>
-snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc_NHLS('', 0)<CR>
-vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc_NHLS('', 0)<CR>
-
-function! IMAP_Jumpfunc_NHLS(direction, inclusive)
-  call IMAP_Jumpfunc(a:direction, a:inclusive)
-  setlocal nohlsearch
-  return ""
-endfunction
-
-nnoremap <silent> <buffer> / :<C-U>set hls<CR>/
-nnoremap <silent> <buffer> ? :<C-U>set hls<CR>?
+      \ "" : IMAP_Jumpfunc('', 0)<CR>
+snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc('', 0)<CR>
+vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc('', 0)<CR>
