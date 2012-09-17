@@ -1055,6 +1055,8 @@ function! MyThesisEnv()
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
   command! ThesisCompileView !start perl run_latexmk.pl
+
+  set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg
 endfunction
 command! Mt call MyThesisEnv()
 
