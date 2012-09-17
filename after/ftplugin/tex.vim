@@ -125,7 +125,8 @@ if 0
   "snoremap <NL> :call SelectImapOrUlti(1)<CR>
   "nnoremap <NL> :call SelectImapOrUlti(1)<CR>
 else
-  inoremap <silent> <buffer> <C-L> <C-R>=IMAP_Jumpfunc('', 0)<CR>
+  inoremap <silent> <buffer> <C-L> <C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
+        \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 endif
 
 inoremap <silent> {{ {{<C-R>=UltiSnips_Anon('\\{ $1 \\}${0:<++>}', '{{', 'paren', "r")<cr>
@@ -147,7 +148,17 @@ execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
 set complete+=k
 setlocal textwidth=90
 
+function! IMAP_Jumpfunc_val(arg1, arg2)
+  let g:imap_jumpfun_val = IMAP_Jumpfunc(a:arg1, a:arg2)
+  return g:imap_jumpfun_val
+endfunction
+
+
+
 inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
       \ "" : IMAP_Jumpfunc('', 0)<CR>
-snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc('', 0)<CR>
-vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=IMAP_Jumpfunc('', 0)<CR>
+snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
+      \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
+      \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+
