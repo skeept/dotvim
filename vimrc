@@ -665,11 +665,13 @@ function! XgetTagbarFunc()
   endif
 endfunction
 
+let g:displtxcf = '' "one time display
 function! DispLTXCF()
   "use this to debug other things
   " by displaying information in statusline
   " redifine it where appropriate
   "return '[' . len(getline(".")) . ',' . getpos(".")[2] . ']'
+  "return '[' . g:displtxcf . ']'
   return ''
 endfunction
 
