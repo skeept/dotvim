@@ -1101,8 +1101,8 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
 
   " Plugin key-mappings.
-  inoremap <expr><C-g>     neocomplcache#undo_completion()
-  inoremap <expr><C-l>     neocomplcache#complete_common_string()
+  "inoremap <expr><C-G>     neocomplcache#undo_completion()
+  "inoremap <expr><C-L>     neocomplcache#complete_common_string()
 
   " Recommended key-mappings.
   " <CR>: close popup and save indent.
