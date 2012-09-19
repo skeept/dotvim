@@ -1,6 +1,7 @@
 # powershell script to copy over files compiled in source dir
 
 $do_break = $False
+$do_backup = $False
 
 # similar to perl use strict;
 Set-StrictMode -version 1
@@ -15,6 +16,11 @@ switch ( Get-Content Env:ComputerName )
   }
   "MIDDLE-EARTH" {
     $install = "C:\Program Files (x86)\vim\vim73"
+    $backup = "C:\htemp\tmp"
+    $source = "C:\htemp\vim"
+  }
+  "Gondor" {
+    $install = "C:\Program Files\Vim\vim73"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
@@ -39,8 +45,11 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # copy the default installation to a backup location 
-Write-Output "Backup: $install --> $backup"
+If( $do_backup )
+{
+  Write-Output "Backup: $install --> $backup"
 Copy-Item "$install" "$backup" -recurse -force
+}
 
 #copy vim and gvim to destination
 Write-Output "Copy: vim and gvim from $source\src to $install"
