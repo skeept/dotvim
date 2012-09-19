@@ -1046,7 +1046,7 @@ nnoremap ,gdf :<C-U>Git diff<CR>
 "===================== Thesis Specific Settings ===============================
 "let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
 let compname = hostname()
-if compname == "MIDDLE-EARTH" || compname == "ISENGARD"
+if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
     let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
   elseif compname == "ISENGARD2"
     let g:thesis_path = $HOME . ""
