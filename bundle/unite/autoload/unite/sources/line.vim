@@ -2,7 +2,7 @@
 " FILE: line.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          t9md <taqumd at gmail.com>
-" Last Modified: 24 Aug 2012.
+" Last Modified: 20 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,28 +27,99 @@
 
 " original verion is http://d.hatena.ne.jp/thinca/20101105/1288896674
 
-call unite#util#set_default('g:source_line_enable_highlight', 1)
-call unite#util#set_default('g:source_line_search_word_highlight', 'Search')
+call unite#util#set_default(
+      \ 'g:source_line_enable_highlight', 1)
+call unite#util#set_default(
+      \ 'g:source_line_search_word_highlight', 'Search')
+
+let s:supported_search_direction = ['forward', 'backward', 'all']
 
 function! unite#sources#line#define() "{{{
-  let s:last_result = {
-        \ 'direction' : '',
-        \ 'bufnr' : -1,
-        \ 'lines' : [],
-        \ }
-
-  return s:source
+  return [s:source_line, s:source_line_fast]
 endfunction "}}}
 
-let s:source = {
+" line source."{{{
+let s:source_line = {
       \ 'name' : 'line',
       \ 'syntax' : 'uniteSource__Line',
       \ 'hooks' : {},
       \ 'max_candidates': 100,
       \ }
 
-function! s:source.hooks.on_init(args, context) "{{{
-  execute 'highlight default link uniteSource__Line_target '
+function! s:source_line.hooks.on_init(args, context) "{{{
+  call s:on_init(a:args, a:context)
+
+  call unite#print_source_message(
+        \ 'Target: ' . a:context.source__path, s:source_line.name)
+endfunction"}}}
+function! s:source_line.hooks.on_syntax(args, context) "{{{
+  call s:hl_refresh(a:context)
+endfunction"}}}
+
+function! s:source_line.gather_candidates(args, context)"{{{
+  let lines = s:on_gather_candidates(a:args, a:context, 0)
+
+  let _ = map(lines, "{
+        \ 'word' : v:val[1],
+        \ 'is_multiline' : 1,
+        \ 'action__line' : v:val[0],
+        \ 'action__text' : v:val[1],
+        \ }")
+
+  let a:context.source__format = '%' . strlen(len(_)) . 'd: %s'
+
+  return _
+endfunction"}}}
+
+function! s:source_line.hooks.on_post_filter(args, context)"{{{
+  call s:post_filter(a:args, a:context)
+endfunction"}}}
+
+function! s:source_line.complete(args, context, arglead, cmdline, cursorpos)"{{{
+  return s:supported_search_direction
+endfunction"}}}
+
+function! s:source_line.source__converter(candidates, context)"{{{
+  return s:converter(a:candidates, a:context)
+endfunction"}}}
+
+let s:source_line.filters =
+      \ ['matcher_regexp', 'sorter_default',
+      \      s:source_line.source__converter]
+"}}}
+
+" line/fast source."{{{
+let s:source_line_fast = deepcopy(s:source_line)
+let s:source_line_fast.name = 'line/fast'
+let s:source_line_fast.syntax = 'uniteSource__LineFast'
+let s:source_line_fast.is_volatile = 1
+let s:source_line_fast.required_pattern_length = 3
+
+function! s:source_line_fast.hooks.on_init(args, context) "{{{
+  call s:on_init(a:args, a:context)
+
+  call unite#print_source_message(
+        \ 'Target: ' . a:context.source__path, s:source_line_fast.name)
+endfunction"}}}
+function! s:source_line_fast.gather_candidates(args, context)"{{{
+  let lines = s:on_gather_candidates(a:args, a:context, 1)
+
+  let _ = map(lines, "{
+        \ 'word' : v:val[1],
+        \ 'is_multiline' : 1,
+        \ 'action__line' : v:val[0],
+        \ 'action__text' : v:val[1],
+        \ }")
+
+  let a:context.source__format = '%' . strlen(len(_)) . 'd: %s'
+
+  return _
+endfunction"}}}
+"}}}
+
+" Misc."{{{
+function! s:on_init(args, context)"{{{
+  execute 'highlight default link uniteSource__LineFast_target '
         \ . g:source_line_search_word_highlight
   syntax case ignore
   let a:context.source__path = unite#util#substitute_path_separator(
@@ -57,29 +128,8 @@ function! s:source.hooks.on_init(args, context) "{{{
   let a:context.source__linenr = line('.')
   let a:context.source__is_bang =
         \ (get(a:args, 0, '') ==# '!')
-
-  call unite#print_source_message('Target: ' . a:context.source__path, s:source.name)
 endfunction"}}}
-function! s:source.hooks.on_syntax(args, context) "{{{
-  call s:hl_refresh(a:context)
-endfunction"}}}
-
-function! s:hl_refresh(context)
-  syntax clear uniteSource__Line_target
-  syntax case ignore
-  if a:context.input == '' || !g:source_line_enable_highlight
-    return
-  endif
-
-  for word in split(a:context.input, '\\\@<! ')
-    execute "syntax match uniteSource__Line_target "
-          \ . string(unite#escape_match(word))
-          \ . " contained containedin=uniteSource__Line"
-  endfor
-endfunction
-
-let s:supported_search_direction = ['forward', 'backward', 'all']
-function! s:source.gather_candidates(args, context)
+function! s:on_gather_candidates(args, context, is_fast)"{{{
   call s:hl_refresh(a:context)
 
   let direction = get(filter(copy(a:args),
@@ -93,71 +143,54 @@ function! s:source.gather_candidates(args, context)
   endif
 
   if direction !=# 'all'
-    call unite#print_source_message('direction: ' . direction, s:source.name)
+    call unite#print_source_message(
+          \ 'direction: ' . direction, s:source_line.name)
   endif
 
-  if a:context.source__is_bang
-        \ && s:last_result.bufnr == a:context.source__bufnr
-        \ && s:last_result.direction ==# direction
-        \ && !a:context.is_redraw
-    " Use last lines.
-    let _ = s:last_result.lines
-  else
-    let lines = (direction ==# 'forward' || direction ==# 'backward') ?
-          \ s:get_lines(a:context, direction) :
-          \ (s:get_lines(a:context, 'forward')
-          \  + s:get_lines(a:context, 'backward')[: -2])
+  let lines = (direction ==# 'forward' || direction ==# 'backward') ?
+        \ s:get_lines(a:context, direction, a:is_fast) :
+        \ (s:get_lines(a:context, 'forward', a:is_fast)
+        \  + s:get_lines(a:context, 'backward', a:is_fast)[: -2])
 
-    let _ = map(lines, "{
-          \ 'word' : v:val[1],
-          \ 'is_multiline' : 1,
-          \ 'action__line' : v:val[0],
-          \ 'action__text' : v:val[1],
-          \ }")
-    if a:context.source__is_bang
-      let s:last_result = {
-            \ 'direction' : direction,
-            \ 'bufnr' : a:context.source__bufnr,
-            \ 'lines' : _,
-            \ }
-    endif
-  endif
-
-  let a:context.source__format = '%' . strlen(len(_)) . 'd: %s'
-
-  return _
-endfunction
-
-function! s:get_lines(context, direction)"{{{
+  return lines
+endfunction"}}}
+function! s:get_lines(context, direction, is_fast)"{{{
   let [start, end] =
         \ a:direction ==# 'forward' ?
-        \ [a:context.source__linenr, '$'] :
+        \ [a:context.source__linenr, line('$')] :
         \ [1, a:context.source__linenr]
 
   let _ = []
   let linenr = start
-  for line in getbufline(a:context.source__bufnr, start, end)
-    call add(_, [linenr, line])
+  let offset = 1000
+  while start <= end
+    for line in getbufline(a:context.source__bufnr, start, start+offset)
+      call add(_, [linenr, line])
 
-    let linenr += 1
-  endfor
+      let linenr += 1
+    endfor
+
+    let start += offset
+  endwhile
 
   return _
 endfunction"}}}
 
-function! s:source.hooks.on_post_filter(args, context)
-  for candidate in a:context.candidates
-    let candidate.kind = 'jump_list'
-    let candidate.action__buffer_nr = a:context.source__bufnr
-  endfor
-endfunction
+function! s:hl_refresh(context)"{{{
+  silent! syntax clear uniteSource__Line_target
+  syntax case ignore
+  if a:context.input == '' || !g:source_line_enable_highlight
+    return
+  endif
 
-function! s:source.complete(args, context, arglead, cmdline, cursorpos)"{{{
-  return ['all', 'forward', 'backward']
+  for word in split(a:context.input, '\\\@<! ')
+    execute "syntax match uniteSource__Line_target "
+          \ . string(unite#escape_match(word))
+          \ . " contained containedin=uniteSource__Line"
+  endfor
 endfunction"}}}
 
-" Filters.
-function! s:source.source__converter(candidates, context)"{{{
+function! s:converter(candidates, context)"{{{
   for candidate in a:candidates
     let candidate.abbr = printf(a:context.source__format,
           \ candidate.action__line, candidate.action__text)
@@ -165,9 +198,12 @@ function! s:source.source__converter(candidates, context)"{{{
 
   return a:candidates
 endfunction"}}}
+function! s:post_filter(args, context)"{{{
+  for candidate in a:context.candidates
+    let candidate.kind = 'jump_list'
+    let candidate.action__buffer_nr = a:context.source__bufnr
+  endfor
+endfunction"}}}
+"}}}
 
-let s:source.filters =
-      \ ['matcher_regexp', 'sorter_default',
-      \      s:source.source__converter]
-
-" vim: expandtab:ts=2:sts=2:sw=2
+" vim: foldmethod=marker

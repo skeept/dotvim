@@ -147,8 +147,6 @@ if !has('gui_running')
 	cal add(s:prtmaps['PrtBS()'], remove(s:prtmaps['PrtCurLeft()'], 0))
 en
 
-let s:lash = ctrlp#utils#lash()
-
 let s:compare_lim = 3000
 
 let s:ficounts = {}
@@ -222,6 +220,7 @@ fu! s:opts(...)
 	let s:mxheight = max([s:mxheight, 1])
 	let s:glob = s:showhidden ? '.*\|*' : '*'
 	let s:igntype = empty(s:usrign) ? -1 : type(s:usrign)
+	let s:lash = ctrlp#utils#lash()
 	if s:keyloop
 		let [s:lazy, s:glbs['imd']] = [0, 0]
 	en
@@ -290,12 +289,12 @@ fu! ctrlp#clr(...)
 endf
 
 fu! ctrlp#clra()
-	let cache_dir = ctrlp#utils#cachedir()
-	if isdirectory(cache_dir)
-		let cache_files = split(s:glbpath(cache_dir, '**', 1), "\n")
+	let cadir = ctrlp#utils#cachedir()
+	if isdirectory(cadir)
+		let cafiles = split(s:glbpath(s:fnesc(cadir, 'g', ','), '**', 1), "\n")
 		let eval = '!isdirectory(v:val) && fnamemodify(v:val, ":t") !~'
 			\ . ' ''\v^<cache>[.a-z]+$|\.log$'''
-		sil! cal map(filter(cache_files, eval), 'delete(v:val)')
+		sil! cal map(filter(cafiles, eval), 'delete(v:val)')
 	en
 	cal ctrlp#clr()
 endf
@@ -314,7 +313,7 @@ fu! ctrlp#files()
 		let [lscmd, s:initcwd, g:ctrlp_allfiles] = [s:lsCmd(), s:dyncwd, []]
 		" Get the list of files
 		if empty(lscmd)
-			cal s:GlobPath(s:dyncwd, 0)
+			cal s:GlobPath(s:fnesc(s:dyncwd, 'g', ','), 0)
 		el
 			sil! cal ctrlp#progress('Indexing...')
 			try | cal s:UserCmd(lscmd)
@@ -345,7 +344,7 @@ fu! s:GlobPath(dirs, depth)
 	cal extend(g:ctrlp_allfiles, dnf[1])
 	if !empty(dnf[0]) && !s:maxf(len(g:ctrlp_allfiles)) && depth <= s:maxdepth
 		sil! cal ctrlp#progress(len(g:ctrlp_allfiles), 1)
-		cal s:GlobPath(join(dnf[0], ','), depth)
+		cal s:GlobPath(join(map(dnf[0], 's:fnesc(v:val, "g", ",")'), ','), depth)
 	en
 endf
 
@@ -384,7 +383,7 @@ fu! s:lsCmd()
 		if s:findroot(s:dyncwd, cmd[0], 0, 1) == []
 			retu len(cmd) == 3 ? cmd[2] : ''
 		en
-		let s:vcscmd = s:lash == '\' ? 1 : 0
+		let s:vcscmd = s:lash == '\'
 		retu cmd[1]
 	elsei type(cmd) == 4 && ( has_key(cmd, 'types') || has_key(cmd, 'fallback') )
 		let fndroot = []
@@ -401,7 +400,7 @@ fu! s:lsCmd()
 		for pair in cmdtypes
 			if pair[0] == fndroot[0] | brea | en
 		endfo
-		let s:vcscmd = s:lash == '\' ? 1 : 0
+		let s:vcscmd = s:lash == '\'
 		retu pair[1]
 	en
 endf
@@ -858,6 +857,9 @@ endf
 
 fu! s:ToggleKeyLoop()
 	let s:keyloop = !s:keyloop
+	if exists('+imd')
+		let &imd = !s:keyloop
+	en
 	if s:keyloop
 		let [&ut, s:lazy] = [0, 0]
 		cal s:KeyLoop()
@@ -1111,7 +1113,7 @@ fu! s:OpenMulti(...)
 		if conds[nopt]
 			if !buflisted(bufnr) | cal s:openfile('bad', va, '', 0) | en
 		el
-			cal s:openfile(cmd, useb ? bufnr : va, tail, ic == 1 ? 1 : 0)
+			cal s:openfile(cmd, useb ? bufnr : va, tail, ic == 1)
 			if jf | if ic == 1
 				let crpos = [tabpagenr(), winnr()]
 			el
@@ -1313,7 +1315,7 @@ endf
 fu! s:dircompl(be, sd)
 	if a:sd == '' | retu [] | en
 	let [be, sd] = a:be == '' ? [s:dyncwd, a:sd] : [a:be, a:be.s:lash(a:be).a:sd]
-	let dirs = ctrlp#rmbasedir(split(globpath(be, a:sd.'*/'), "\n"))
+	let dirs = ctrlp#rmbasedir(split(globpath(s:fnesc(be, 'g', ','), a:sd.'*/'), "\n"))
 	cal filter(dirs, '!match(v:val, escape(sd, ''~$.\''))'
 		\ . ' && v:val !~ ''\v(^|[\/])\.{1,2}[\/]$''')
 	retu dirs
@@ -1402,10 +1404,13 @@ endf
 fu! s:findroot(curr, mark, depth, type)
 	let [depth, fnd] = [a:depth + 1, 0]
 	if type(a:mark) == 1
-		let fnd = s:glbpath(a:curr, a:mark, 1) != ''
+		let fnd = s:glbpath(s:fnesc(a:curr, 'g', ','), a:mark, 1) != ''
 	elsei type(a:mark) == 3
 		for markr in a:mark
-			if s:glbpath(a:curr, markr, 1) != '' | let fnd = 1 | brea | en
+			if s:glbpath(s:fnesc(a:curr, 'g', ','), markr, 1) != ''
+				let fnd = 1
+				brea
+			en
 		endfo
 	en
 	if fnd
@@ -1424,17 +1429,16 @@ endf
 
 fu! ctrlp#setdir(path, ...)
 	let cmd = a:0 ? a:1 : 'lc!'
-	sil! exe cmd ctrlp#fnesc(a:path)
+	sil! exe cmd s:fnesc(a:path, 'c')
 	let [s:crfilerel, s:dyncwd] = [fnamemodify(s:crfile, ':.'), getcwd()]
 endf
 " Fallbacks {{{3
 fu! s:glbpath(...)
-	let cond = v:version > 702 || ( v:version == 702 && has('patch051') )
-	retu call('globpath', cond ? a:000 : a:000[:1])
+	retu call('ctrlp#utils#globpath', a:000)
 endf
 
-fu! ctrlp#fnesc(path)
-	retu exists('*fnameescape') ? fnameescape(a:path) : escape(a:path, " %#*?|<\"\n")
+fu! s:fnesc(...)
+	retu call('ctrlp#utils#fnesc', a:000)
 endf
 
 fu! ctrlp#setlcdir()
@@ -1765,10 +1769,10 @@ fu! s:getinput(...)
 endf
 
 fu! s:migemo(str)
-	let str = a:str
-	let dict = s:glbpath(&rtp, printf("dict/%s/migemo-dict", &enc), 1)
+	let [str, rtp] = [a:str, s:fnesc(&rtp, 'g')]
+	let dict = s:glbpath(rtp, printf("dict/%s/migemo-dict", &enc), 1)
 	if !len(dict)
-		let dict = s:glbpath(&rtp, "dict/migemo-dict", 1)
+		let dict = s:glbpath(rtp, "dict/migemo-dict", 1)
 	en
 	if len(dict)
 		let [tokens, str, cmd] = [split(str, '\s'), '', 'cmigemo -v -w %s -d %s']
@@ -1790,7 +1794,7 @@ fu! ctrlp#j2l(nr)
 endf
 
 fu! s:maxf(len)
-	retu s:maxfiles && a:len > s:maxfiles ? 1 : 0
+	retu s:maxfiles && a:len > s:maxfiles
 endf
 
 fu! s:regexfilter(str)
@@ -1869,7 +1873,7 @@ fu! s:openfile(cmd, fid, tail, chkmod, ...)
 	en
 	let cmd = cmd =~ '^tab' ? ctrlp#tabcount().cmd : cmd
 	let j2l = a:0 && a:1[0] ? a:1[1] : 0
-	exe cmd.( a:0 && a:1[0] ? '' : a:tail ) ctrlp#fnesc(a:fid)
+	exe cmd.( a:0 && a:1[0] ? '' : a:tail ) s:fnesc(a:fid, 'f')
 	if j2l
 		cal ctrlp#j2l(j2l)
 	en
@@ -2012,6 +2016,10 @@ endf
 
 fu! ctrlp#getcline()
 	retu !empty(s:lines) ? s:lines[line('.') - 1] : ''
+endf
+
+fu! ctrlp#getmarkedlist()
+	retu exists('s:marked') ? values(s:marked) : []
 endf
 
 fu! ctrlp#exit()
