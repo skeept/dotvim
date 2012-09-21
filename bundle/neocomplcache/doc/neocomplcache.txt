@@ -509,7 +509,22 @@ g:neocomplcache_same_filetype_lists
 				*g:neocomplcache_same_filetype_lists*
 		It is a dictionary to connect file type mutually.  It is
 		effective at time to let you refer to c and cpp mutually.
-		
+		The value are comma-separated filetypes.
+		If the value contains "_", neocomplcache completes from all
+		buffers.
+		Note: neocomplcache completes from same filetype buffers in
+		default.
+>
+	if !exists('g:neocomplcache_same_filetype_lists')
+	  let g:neocomplcache_same_filetype_lists = {}
+	endif
+	" In c buffers, completes from cpp and d buffers.
+	let g:neocomplcache_same_filetype_lists.c = 'cpp,d'
+	" In cpp buffers, completes from c buffers.
+	let g:neocomplcache_same_filetype_lists.cpp = 'c'
+	" In gitconfig buffers, completes from all buffers.
+	let g:neocomplcache_same_filetype_lists.gitconfig = '_'
+<
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
 
@@ -1260,8 +1275,21 @@ A: Please try below settings.
 	  "return pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 	endfunction
 >
+Q: No completion offered from "vim" buffers in "non-vim" buffers.
+
+A: It is feature. neocomplcache completes from same filetype buffers in
+default. But you can completes from other filetype buffers using
+|g:neocomplcache_same_filetype_lists|.
+
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-09-21
+- Improved sudo check.
+- Improved member completion.
+- Improved delimiter patterns behavior.
+- Improved source initialization.
+- Don't delete longest completeopt.
 
 2012-09-20
 - Improved :NeoComplCacheCachingBuffer behavior.
@@ -1370,7 +1398,7 @@ ChangeLog neocomplcache 7.1:
 
 2012-08-02
 - Fixed for g:neocomplcache_enable_insert_char_pre.
-- Fixed omni_complete for compound filetype.
+- Fixed omni_complete for composite filetype.
 - Fixed dictionary_complete caching timing.
 
 2012-08-01

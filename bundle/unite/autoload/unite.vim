@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Sep 2012.
+" Last Modified: 21 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -347,9 +347,13 @@ function! unite#loaded_source_names_string()"{{{
   return join(unite#loaded_source_names())
 endfunction"}}}
 function! unite#loaded_source_names_with_args()"{{{
-  return map(copy(unite#loaded_sources_list()),
-        \ 'join(insert(filter(copy(v:val.args),
-        \  "type(v:val) < 1"), s:convert_source_name(v:val.name)), ":")')
+  return map(copy(unite#loaded_sources_list()), "
+        \ join(insert(filter(copy(v:val.args),
+        \  'type(v:val) < 1'), s:convert_source_name(v:val.name)), ':')
+        \ . (v:val.unite__len_candidates == 0 ? '' :
+        \      printf('(%s/%s)', v:val.unite__len_candidates,
+        \      v:val.unite__orig_len_candidates))
+        \ ")
 endfunction"}}}
 function! unite#loaded_sources_list()"{{{
   return s:get_loaded_sources()
@@ -730,6 +734,7 @@ function! unite#redraw_candidates(...) "{{{
   let modifiable_save = &l:modifiable
   setlocal modifiable
 
+  call unite#redraw_status()
   let lines = unite#convert_lines(candidates)
   let pos = getpos('.')
   let unite = unite#get_current_unite()
@@ -1070,13 +1075,15 @@ function! unite#start(sources, ...)"{{{
 
   setlocal modifiable
 
+  " Redraw prompt.
   silent % delete _
-  call unite#redraw_status()
+  call setline(s:LNUM_STATUS, '')
   call setline(unite.prompt_linenr, unite.prompt . unite.context.input)
   for message in s:unite_cached_message
     call s:print_buffer(message)
     unlet message
   endfor
+
   call unite#redraw_candidates()
 
   call s:init_cursor()
@@ -2127,10 +2134,11 @@ function! s:recache_candidates_loop(context, is_force)"{{{
 
     let context.unite__is_sort_nothing =
           \ empty(sorters) && context.unite__is_interactive
+    let source.unite__orig_len_candidates = len(source_candidates)
     let unite.max_source_candidates +=
           \ (context.unite__is_sort_nothing
           \    && source.max_candidates > 0) ?
-          \ source.max_candidates : len(source_candidates)
+          \ source.max_candidates : source.unite__orig_len_candidates
 
     " Call filters.
     for Filter in prev_filters + matchers + sorters + post_filters
@@ -2146,6 +2154,7 @@ function! s:recache_candidates_loop(context, is_force)"{{{
     endfor
 
     let source.unite__candidates += source_candidates
+    let source.unite__len_candidates = len(source_candidates)
     if !empty(source_candidates)
       call add(candidate_sources,
             \ s:convert_source_name(source.name))

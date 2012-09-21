@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Sep 2012.
+" Last Modified: 21 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -94,22 +94,27 @@ function! neocomplcache#enable() "{{{
 
   " Initialize sources table."{{{
   " Search autoload.
-  for file in split(globpath(&runtimepath, 'autoload/neocomplcache/sources/*.vim'), '\n')
-    let source_name = fnamemodify(file, ':t:r')
-    if !has_key(s:plugin_sources, source_name)
-          \ && neocomplcache#is_source_enabled(source_name)
-      let source = call('neocomplcache#sources#' . source_name . '#define', [])
-      if empty(source)
-        " Ignore.
-      elseif source.kind ==# 'complfunc'
+  for source_name in filter(map(split(globpath(&runtimepath,
+        \ 'autoload/neocomplcache/sources/*.vim'), '\n'),
+        \ "fnamemodify(v:val, ':t:r')"),
+        \ "neocomplcache#is_source_enabled(v:val)")
+    let source = neocomplcache#sources#{source_name}#define()
+    if empty(source)
+      " Ignore.
+    elseif source.kind ==# 'complfunc'
+      if !has_key(s:complfunc_sources, source_name)
         let s:complfunc_sources[source_name] = source
-      elseif source.kind ==# 'ftplugin'
+      endif
+    elseif source.kind ==# 'ftplugin'
+      if !has_key(s:ftplugin_sources, source_name)
         let s:ftplugin_sources[source_name] = source
 
         " Clear loaded flag.
         let s:ftplugin_sources[source_name].loaded = 0
-      elseif source.kind ==# 'plugin'
-            \ && neocomplcache#is_source_enabled('keyword_complete')
+      endif
+    elseif source.kind ==# 'plugin'
+          \ && neocomplcache#is_source_enabled('keyword_complete')
+      if !has_key(s:plugin_sources, source_name)
         let s:plugin_sources[source_name] = source
       endif
     endif
@@ -790,7 +795,22 @@ function! s:do_auto_complete(event)"{{{
   let s:old_cur_text = cur_text
   if s:skip_next_complete
     let s:skip_next_complete = 0
-    return
+
+    " Check delimiter pattern.
+    let is_delimiter = 0
+    let filetype = neocomplcache#get_context_filetype()
+
+    for delimiter in get(g:neocomplcache_delimiter_patterns,
+          \ filetype, [])
+      if cur_text =~ delimiter . '$'
+        let is_delimiter = 1
+        break
+      endif
+    endfor
+
+    if !is_delimiter
+      return
+    endif
   endif
 
   if neocomplcache#is_omni_complete(cur_text)
@@ -831,7 +851,6 @@ function! s:do_auto_complete(event)"{{{
 
   " Set options.
   set completeopt-=menu
-  set completeopt-=longest
   set completeopt+=menuone
 
   " Start auto complete.
@@ -923,12 +942,10 @@ function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
 
   " Delimiter check.
   let filetype = neocomplcache#get_context_filetype()
-  if has_key(g:neocomplcache_delimiter_patterns, filetype)"{{{
-    for delimiter in g:neocomplcache_delimiter_patterns[filetype]
-      let cur_keyword_str = substitute(cur_keyword_str,
-            \ delimiter, '*' . delimiter, 'g')
-    endfor
-  endif"}}}
+  for delimiter in get(g:neocomplcache_delimiter_patterns, filetype, [])
+    let cur_keyword_str = substitute(cur_keyword_str,
+          \ delimiter, '*' . delimiter, 'g')
+  endfor
 
   if cur_keyword_str == ''
     return a:list
@@ -1378,7 +1395,7 @@ function! neocomplcache#get_source_filetypes(filetype)"{{{
     if has_key(g:neocomplcache_ignore_composite_filetype_lists, filetype)
       let filetypes = [g:neocomplcache_ignore_composite_filetype_lists[filetype]]
     else
-      " Set compound filetype.
+      " Set composite filetype.
       let filetypes += split(filetype, '\.')
     endif
   endif
@@ -1557,42 +1574,40 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
 
   " Delimiter check.
   let filetype = neocomplcache#get_context_filetype()
-  if has_key(g:neocomplcache_delimiter_patterns, filetype)"{{{
-    for delimiter in g:neocomplcache_delimiter_patterns[filetype]
-      " Count match.
-      let delim_cnt = 0
-      let matchend = matchend(a:cur_keyword_str, delimiter)
-      while matchend >= 0
-        let matchend = matchend(a:cur_keyword_str, delimiter, matchend)
-        let delim_cnt += 1
-      endwhile
+  for delimiter in get(g:neocomplcache_delimiter_patterns, filetype, [])"{{{
+    " Count match.
+    let delim_cnt = 0
+    let matchend = matchend(a:cur_keyword_str, delimiter)
+    while matchend >= 0
+      let matchend = matchend(a:cur_keyword_str, delimiter, matchend)
+      let delim_cnt += 1
+    endwhile
 
-      for keyword in complete_words
-        let split_list = split(keyword.word, delimiter, 1)
-        if len(split_list) > 1
-          let delimiter_sub = substitute(delimiter, '\\\([.^$]\)', '\1', 'g')
-          let keyword.word = join(split_list[ : delim_cnt], delimiter_sub)
-          let keyword.abbr = join(
-                \ split(keyword.abbr, delimiter, 1)[ : delim_cnt],
-                \ delimiter_sub)
+    for keyword in complete_words
+      let split_list = split(keyword.word, delimiter, 1)
+      if len(split_list) > 1
+        let delimiter_sub = substitute(delimiter, '\\\([.^$]\)', '\1', 'g')
+        let keyword.word = join(split_list[ : delim_cnt], delimiter_sub)
+        let keyword.abbr = join(
+              \ split(keyword.abbr, delimiter, 1)[ : delim_cnt],
+              \ delimiter_sub)
 
-          if g:neocomplcache_max_keyword_width >= 0
-                \ && len(keyword.abbr) > g:neocomplcache_max_keyword_width
-            let keyword.abbr = substitute(keyword.abbr,
-                  \ '\(\h\)\w*'.delimiter, '\1'.delimiter_sub, 'g')
-          endif
-          if delim_cnt+1 < len(split_list)
-            let keyword.abbr .= delimiter_sub . '~'
-            let keyword.dup = 0
+        if g:neocomplcache_max_keyword_width >= 0
+              \ && len(keyword.abbr) > g:neocomplcache_max_keyword_width
+          let keyword.abbr = substitute(keyword.abbr,
+                \ '\(\h\)\w*'.delimiter, '\1'.delimiter_sub, 'g')
+        endif
+        if delim_cnt+1 < len(split_list)
+          let keyword.abbr .= delimiter_sub . '~'
+          let keyword.dup = 0
 
-            if g:neocomplcache_enable_auto_delimiter
-              let keyword.word .= delimiter_sub
-            endif
+          if g:neocomplcache_enable_auto_delimiter
+            let keyword.word .= delimiter_sub
           endif
         endif
-      endfor
+      endif
     endfor
-  endif"}}}
+  endfor"}}}
 
   if neocomplcache#complete_check()
     return []
@@ -2361,7 +2376,7 @@ function! s:unite_patterns(pattern_var, filetype)"{{{
   let keyword_patterns = []
   let dup_check = {}
 
-  " Compound filetype.
+  " Composite filetype.
   for ft in split(a:filetype, '\.')
     if has_key(a:pattern_var, ft) && !has_key(dup_check, ft)
       let dup_check[ft] = 1
