@@ -150,6 +150,8 @@ setlocal textwidth=90
 
 function! IMAP_Jumpfunc_val(arg1, arg2)
   let g:imap_jumpfun_val = IMAP_Jumpfunc(a:arg1, a:arg2)
+  let g:imap_jumpfun_val = substitute(g:imap_jumpfun_val, 'g:Tex_LastSearchPattern', "''", "")
+  "let g:displtxcf = g:imap_jumpfun_val
   return g:imap_jumpfun_val
 endfunction
 
