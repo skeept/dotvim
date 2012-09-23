@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Sep 2012.
+" Last Modified: 23 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -40,8 +40,6 @@ let s:source = {
 function! s:source.initialize()"{{{
   augroup neocomplcache"{{{
     " Caching events
-    autocmd BufRead,FileType,BufNewFile *
-          \ call s:check_source()
     autocmd CursorHold *
           \ call s:check_cache()
     autocmd BufWritePost *
@@ -66,8 +64,6 @@ function! s:source.initialize()"{{{
   let s:rank_cache_count = 1
   let s:disable_caching_list = {}
   let s:async_dictionary_list = {}
-  let s:completion_length =
-        \ neocomplcache#get_auto_completion_length('buffer_complete')
   "}}}
 
   call neocomplcache#set_completion_length('buffer_complete',
@@ -107,20 +103,15 @@ function! s:source.get_keyword_pos(cur_text)"{{{
 endfunction"}}}
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)"{{{
-  if !s:exists_current_source()
-    call s:check_source()
-  endif
+  call s:check_source()
 
   let keyword_list = []
   for [key, source] in s:get_sources_list()
     call neocomplcache#cache#check_cache_list('buffer_cache',
-          \ source.path,
-          \ s:async_dictionary_list,
-          \ source.keyword_cache, s:completion_length)
+          \ source.path, s:async_dictionary_list, source.keyword_cache)
 
     let keyword_list += neocomplcache#dictionary_filter(
-          \ source.keyword_cache, a:cur_keyword_str,
-          \ s:completion_length)
+          \ source.keyword_cache, a:cur_keyword_str)
     if key == bufnr('%')
       let source.accessed_time = localtime()
     endif
@@ -155,6 +146,7 @@ function! s:caching_current_buffer(start, end, is_auto)"{{{
   let keyword_pattern2 = '^\%('.keyword_pattern.'\m\)'
   let keywords = source.keyword_cache
 
+  let completion_length = 2
   let line = join(getline(a:start, a:end))
   let match = match(line, keyword_pattern)
   while match >= 0"{{{
@@ -163,7 +155,7 @@ function! s:caching_current_buffer(start, end, is_auto)"{{{
     " Ignore too short keyword.
     if len(match_str) >= g:neocomplcache_min_keyword_length"{{{
       " Check dup.
-      let key = tolower(match_str[: s:completion_length-1])
+      let key = tolower(match_str[: completion_length-1])
       if !has_key(keywords, key)
         let keywords[key] = {}
       endif
@@ -301,9 +293,7 @@ function! s:check_source()"{{{
 
   let source = s:buffer_sources[bufnumber]
   call neocomplcache#cache#check_cache_list('buffer_cache',
-        \ source.path,
-        \ s:async_dictionary_list,
-        \ source.keyword_cache, s:completion_length)
+        \ source.path, s:async_dictionary_list, source.keyword_cache)
 endfunction"}}}
 function! s:check_cache()"{{{
   let release_accessd_time =

@@ -310,6 +310,8 @@ COMMANDS 					*unite-commands*
 		-hide-source-names
 		Hide source names.
 		Note: This option hide unite status line.
+		Note: If this option is used, source highlight will be
+		overwritten by other sources.
 
 					*unite-options-max-multi-lines*
 		-max-multi-lines={max-lines}
@@ -341,6 +343,11 @@ COMMANDS 					*unite-commands*
 					*unite-options-long-source-names*
 		-long-source-names
 		Use long source names.
+
+					*unite-options-multi-line*
+		-multi-line
+		Force use multi line. If candiate abbr is too long, unite.vim
+		will fold automatically.
 
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
 		Equivalent to |:Unite| except that it targets the current
@@ -1952,6 +1959,8 @@ Defines an interface for files you can move to with cd command.
 	lcd		Change the current directory of the current window.
 	project_cd	Look for the project directory, and change the
 			current directory there.
+	tabnew_cd	Open a new tab page and change the current
+			directory there.
 	narrow		Narrow down candidates by the directory name
 	vimshell	Run |vimshell| on the directory.  This is available
 			only when you already installed |vimshell|.
@@ -2714,6 +2723,10 @@ CHANGELOG					*unite-changelog*
 
 2012-09-24
 - Improved input().
+- Improved lcd for vimfiler.
+- Fixed set syntax.
+- Fixed redraw_all_candidates().
+- Added -multi-line option.
 
 2012-09-21
 - Added line/fast source.
