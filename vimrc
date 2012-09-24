@@ -1173,3 +1173,8 @@ endif
 "========================= snipmate ===========================================
 let g:snippets_dir = g:p0 . "/bundle/snipmate/snippets"
 "==============================================================================
+
+"========================== languagetool ======================================
+let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
+      \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
+"==============================================================================
