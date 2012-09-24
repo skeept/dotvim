@@ -112,13 +112,14 @@ snippet lr[ "left[ right]" !w
 \left[ ${1:${VISUAL}} \right] ${2:<++>}
 endsnippet
 
+#caption goes before table in thesis
 snippet table
 \begin{table}
   \centering
+  \caption{${3:<+Caption text+>}}
   \begin{tabular}{${1:<+dimensions+>}}
     ${2:<++>}
   \end{tabular}
-  \caption{${3:<+Caption text+>}}
   \label{tab:${4:<+label+>}}
 \end{table}${0:<++>}
 endsnippet
