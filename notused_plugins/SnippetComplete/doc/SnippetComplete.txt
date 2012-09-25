@@ -1,0 +1,149 @@
+*SnippetComplete.txt*   Insert mode completion that completes defined abbreviations and other snippets.
+
+		      SNIPPET COMPLETE    by Ingo Karkat
+							 *SnippetComplete.vim*
+description			|SnippetComplete-description|
+usage				|SnippetComplete-usage|
+installation			|SnippetComplete-installation|
+configuration			|SnippetComplete-configuration|
+integration			|SnippetComplete-integration|
+limitations			|SnippetComplete-limitations|
+known problems			|SnippetComplete-known-problems|
+todo				|SnippetComplete-todo|
+history				|SnippetComplete-history|
+
+==============================================================================
+DESCRIPTION					 *SnippetComplete-description*
+
+Insert mode abbreviations and snippets can dramatically speed up editing, but
+how does one remember all those shortcuts that are rarely used? You can list
+all insert mode abbreviations via |:ia| to break out of this vicious circle,
+but switching to command mode for that is cumbersome.
+
+This plugin offers a context-sensitive insert mode completion to quickly list
+and complete defined abbreviations directly while typing.
+
+==============================================================================
+USAGE						       *SnippetComplete-usage*
+								  *i_CTRL-X_]*
+i_CTRL-X_]		Find matches for abbreviations that start with the
+			text in front of the cursor. If other snippet types
+			are registered, show those, too.
+
+			There are three types of |abbreviations| (full-id,
+			end-id and non-id), which can consist of different
+			characters. Thus, there can be more than one candidate
+			for the existing completion base, e.g. "pre@c" can
+			expand into a full-id abbreviation starting with "c"
+			or into a non-id one starting with "pre@c". The
+			completion indicates such a ambiguity through the
+			message "base n of m; next: blah", and you can cycle
+			through the different completion bases by repeating
+			the i_CTRL-X_] shortcut.
+
+			Matches are selected and inserted as with any other
+			|ins-completion|, see |popupmenu-keys|. If you use
+			<Space> or |i_CTRL-]| to select an abbreviation, it'll
+			be expanded automatically.
+
+==============================================================================
+INSTALLATION					*SnippetComplete-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim SnippetComplete.vba.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					*SnippetComplete-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+CONFIGURATION				       *SnippetComplete-configuration*
+
+If you want to use a different mapping, map your keys to the
+<Plug>(SnippetComplete) mapping target _before_ sourcing this script (e.g. in
+your |vimrc|).
+For example, to use CTRL-X <Tab>, use this: >
+    imap <C-x><Tab> <Plug>(SnippetComplete)
+<
+==============================================================================
+INTEGRATION					 *SnippetComplete-integration*
+
+There exist multiple snippet systems that extend the built-in abbreviations
+with support for filetype-specific and more complex expansions, like allowing
+placeholders and expansion of in-line scriptlets. One popular one is the
+snipMate plugin (vimscript #2540).
+Since there is a seamless transition from simple abbreviation to complex
+snippet, it may help to have a completion for both sources. To support this,
+this plugin allows to write completions for other snippet plugins with just a
+little bit of configuration and a function to retrieve the valid snippets.
+This completion can be stand-alone via a different mapping, or it can add the
+snippets to the |i_CTRL-X_]| completion mapping provided here.
+
+The definition of a snippet type consists of an object with the following
+properties: >
+    let typeDefinition = {
+    \   '{typeName}': {
+    \       'priority': 100,
+    \       'pattern': '\k\+',
+    \       'generator': function('MySnippets#Get')
+    \   }
+    \}
+<
+The {pattern} key specifies the valid syntax of the snippets; the {generator}
+should return all snippets in the format of |complete-items|; the filtering
+according to the completion base is done by this plugin itself.
+
+					   *g:SnippetComplete_RegisteredTypes*
+To include the snippets in the |i_CTRL-X_]| completion mapping provided here: >
+    call extend(g:SnippetComplete_RegisteredTypes, typeDefinition)
+<
+To create a separate completion mapping for your type: >
+    inoremap <silent> <C-x>% <C-r>=SnippetComplete#PreSnippetCompleteExpr()<CR><C-r>=SnippetComplete#SnippetComplete(typeDefinition)<CR>
+<
+==============================================================================
+LIMITATIONS					 *SnippetComplete-limitations*
+
+KNOWN PROBLEMS				      *SnippetComplete-known-problems*
+
+- When <CR> is :map-expr to <C-Y> when pumvisible() to accept the current
+  entry, and there's additional processing after <C-Y> (in my case, <C-\><C-o>
+  to call a function) the completed abbreviation is not expanded any more.
+
+TODO							*SnippetComplete-todo*
+
+- Getting and sorting of matches when 'ignorecase' is on.
+- Limiting the length of the snippet expansion shown in the popup menu.
+
+IDEAS						       *SnippetComplete-ideas*
+
+==============================================================================
+HISTORY						     *SnippetComplete-history*
+
+2.01	13-Aug-2012
+- FIX: Vim 7.0/1 need preloading of functions referenced in Funcrefs.
+
+2.00	08-May-2012
+- Modularize and generalize for completing other types of snippets (e.g. from
+  snipMate).
+
+1.01	25-Sep-2010
+Using separate autoload script to help speed up Vim startup.
+
+1.00	12-Jan-2010
+First published version.
+
+0.01	08-Jan-2010
+Started development.
+
+==============================================================================
+Copyright: (C) 2010-2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
