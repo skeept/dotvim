@@ -451,12 +451,13 @@ g:neocomplcache_next_keyword_patterns
 g:neocomplcache_omni_patterns		*g:neocomplcache_omni_patterns*
 		This dictionary records keyword patterns used in
 		|omni_complete|.  This is appointed in regular expression
-		every file type.  If this pattern is not defined,
-		neocomplcache does't call 'omnifunc'.
+		every file type or 'omnifunc' name.  If this pattern is not
+		defined, neocomplcache does't call 'omnifunc'.
 		Note: ruby and php omnifunc are disabled, because they are too
 		slow.
 		Note: Partial omnifunc has problem when neocomplcache call(Ex:
-		rubycomplete and cocoa.vim and clang_complete).
+		rubycomplete and cocoa.vim and clang_complete). You should
+		|g:neocomplcache_force_omni_patterns| instead.
 		
 		Because it is complicated, refer to s:source.initialize()
 		autoload/neocomplcache/sources/omni_complete.vim for the
@@ -513,7 +514,8 @@ g:neocomplcache_same_filetype_lists
 		effective at time to let you refer to c and cpp mutually.
 		The value are comma-separated filetypes.
 		If the value contains "_", neocomplcache completes from all
-		buffers.
+		buffers. If the key is "_", the value will be used for default
+		same filetypes.
 		Note: neocomplcache completes from same filetype buffers in
 		default.
 >
@@ -526,6 +528,8 @@ g:neocomplcache_same_filetype_lists
 	let g:neocomplcache_same_filetype_lists.cpp = 'c'
 	" In gitconfig buffers, completes from all buffers.
 	let g:neocomplcache_same_filetype_lists.gitconfig = '_'
+	" In default, completes from all buffers.
+	let g:neocomplcache_same_filetype_lists._ = '_'
 <
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
@@ -756,6 +760,22 @@ g:neocomplcache_vim_completefuncs
 		  let g:neocomplcache_vim_completefuncs = {}
 		endif
 		let g:neocomplcache_vim_completefuncs.Ref = 'ref#complete'
+<
+g:neocomplcache_sources_list
+					*g:neocomplcache_sources_list*
+		It is a dictionary to decide use source names. The key is
+		filetype and the value is source names list. If the key is
+		"_", the value will be used for default filetypes. For
+		example, you can disable some sources in C++ filetype.
+		Default value is {}.
+>
+		" Examples:
+		if !exists('g:neocomplcache_sources_list')
+		  let g:neocomplcache_sources_list = {}
+		endif
+		let g:neocomplcache_sources_list._ = ['buffer_complete']
+		let g:neocomplcache_sources_list.cpp =
+		\ ['buffer_complete', 'include_complete']
 <
 g:neocomplcache_source_disable
 					*g:neocomplcache_source_disable*
@@ -1306,12 +1326,19 @@ You can disable it by following code.
 	endif
 	let g:neocomplcache_text_mode_filetypes.gitcommit = 0
 <
+Q: Conflicts completefunc with other plugins in neocomplcache.
+
+A: You can disable the error by |g:neocomplcache_force_overwrite_completefunc|
+variable to 1.
+
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
 2012-09-27
 - Improved initialization.
 - Improved text mode.
+- Improved g:neocomplcache_same_filetype_lists.
+- Added g:neocomplcache_sources_list option.
 
 2012-09-26
 - Improved FAQ section.
