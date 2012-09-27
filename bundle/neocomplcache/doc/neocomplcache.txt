@@ -581,7 +581,14 @@ g:neocomplcache_text_mode_filetypes
 		It is a dictionary to define text mode filetypes. The
 		dictionary's key is filetype and value is number.  If the
 		value is non-zero, this filetype is text mode.  In text mode,
-		neocomplcache supports writing English.
+		neocomplcache supports word convertion to write English.
+
+		For example, if you input "Fo", neocomplcache will convert
+		candidate "foo" to "Foo".  If you input "foo", neocomplcache
+		will convert candidate "FooBar" to "foobar". If you input
+		"FO", neocomplcache will convert candidate "foo" to "FOO".
+		Note: Text mode convetion is only used for "foobar" or
+		"Foobar" or "FOOBAR" words. Not "fooBar" or "FooBar".
 		
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
@@ -1301,6 +1308,10 @@ You can disable it by following code.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-09-27
+- Improved initialization.
+- Improved text mode.
 
 2012-09-26
 - Improved FAQ section.
