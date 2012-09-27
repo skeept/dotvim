@@ -114,11 +114,11 @@ endsnippet
 
 #caption goes before table in thesis
 snippet table
-\begin{table}
+\begin{table}[ht]
   \centering
-  \caption{${3:<+Caption text+>}}
-  \begin{tabular}{${1:<+dimensions+>}}
-    ${2:<++>}
+  \caption{${1:<+Caption+>}}
+  \begin{tabular}{${2:<+ccc+>}}
+    ${3:<++>}
   \end{tabular}
   \label{tab:${4:<+label+>}}
 \end{table}${0:<++>}
