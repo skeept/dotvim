@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 27 Sep 2012.
+" Last Modified: 28 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -188,6 +188,8 @@ function! unite#smart_map(narrow_map, select_map)"{{{
   return (line('.') <= unite#get_current_unite().prompt_linenr && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
 endfunction"}}}
 function! unite#start_complete(sources, ...) "{{{
+  let sources = type(a:sources) == type('') ?
+        \ [a:sources] : a:sources
   let context = {
         \ 'col' : col('.'), 'complete' : 1,
         \ 'direction' : 'rightbelow',
@@ -197,7 +199,16 @@ function! unite#start_complete(sources, ...) "{{{
   call extend(context, get(a:000, 0, {}))
 
   return printf("\<ESC>:call unite#start(%s, %s)\<CR>",
-        \  string(a:sources), string(context))
+        \  string(sources), string(context))
+endfunction "}}}
+function! unite#get_cur_text() "{{{
+  let cur_text =
+        \ (mode() ==# 'i' ? (col('.')-1) : col('.')) >= len(getline('.')) ?
+        \      getline('.') :
+        \      matchstr(getline('.'),
+        \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
+
+  return cur_text
 endfunction "}}}
 
 function! unite#take_action(action_name, candidate)"{{{
@@ -957,21 +968,20 @@ function! s:print_buffer(message)"{{{
   let unite = unite#get_current_unite()
   let pos = getpos('.')
 
-  let winwidth = unite.context.vertical ?
-        \ unite.context.winwidth : &columns
+  let winwidth = winwidth(0)
   let [max_width, max_source_name] =
         \ s:adjustments(winwidth-5, unite.max_source_name, 2)
 
   " Auto split.
   let message = []
-  for msg in type(a:message) == type([]) ?
+  let messages = type(a:message) == type([]) ?
         \ a:message : [a:message]
 
-    " Convert source name.
-    let msg = substitute(msg, '^\[\zs.\{-}\ze\] ',
-          \ '\=s:convert_source_name(submatch(0))', '')
-
+  " Convert source name.
+  for msg in messages
     while msg != ''
+      let msg = substitute(msg, '^\[\zs.\{-}\ze\] ',
+            \ '\=s:convert_source_name(submatch(0))', '')
       let trunc_msg = unite#util#strwidthpart(
             \ msg, max_width)
       let msg = msg[len(trunc_msg):]
@@ -982,18 +992,15 @@ function! s:print_buffer(message)"{{{
           let msg = '!!!<'.msg
           let trunc_msg .= '>!!!'
         else
+          let source_name = matchstr(trunc_msg, '^\[.\{-}\] ')
+
           " Append source name.
-          let msg = matchstr(trunc_msg, '^\[.\{-}\] ').'<'.msg
+          let msg = source_name.'<'.msg
           let trunc_msg .= '>'
         endif
       endif
 
-      let trunc_msgs = split(trunc_msg, '\n')
-      call add(message, trunc_msgs[0])
-
-      " Append source name.
-      let message += map(trunc_msgs[1:],
-            \ "matchstr(trunc_msg, '^\\[.\\{-}\\] ') . v:val")
+      call add(message, trunc_msg)
     endwhile
   endfor
 

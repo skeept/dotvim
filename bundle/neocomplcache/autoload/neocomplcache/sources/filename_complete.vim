@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: filename_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Sep 2012.
+" Last Modified: 28 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -57,8 +57,8 @@ function! s:source.initialize()"{{{
         \ g:neocomplcache_keyword_patterns,
         \'filename',
         \ neocomplcache#util#is_windows() ?
-        \'\%(\a\+:[/\\]\)\?[\\/[:alnum:]()$+_\~.-]\+' :
-        \'\%(\\.\|[/\[\][:alnum:]()$+_\~.-]\)\+')
+        \'\%(\a\+:[/\\]\)\?\%([\\/[:alnum:]()$+_\~.\x80-\xff-]\|[^[:print:]]\)\+' :
+        \'\%(\\.\|[/\[\][:alnum:]()$+_\~.-]\|[^[:print:]]\)\+')
 
   " Initialize filename include expr."{{{
   let g:neocomplcache_filename_include_exprs =
@@ -371,12 +371,12 @@ function! s:get_glob_files(cur_keyword_str, path)"{{{
 
   return dir_list + file_list
 endfunction"}}}
-function! s:caching_current_files()
+function! s:caching_current_files()"{{{
   let s:cached_files[getcwd()] = neocomplcache#util#glob('*')
   if !exists('vimproc#readdir')
     let s:cached_files[getcwd()] += neocomplcache#util#glob('.*')
   endif
-endfunction
+endfunction"}}}
 
 function! neocomplcache#sources#filename_complete#define()"{{{
   return s:source
