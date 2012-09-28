@@ -1061,16 +1061,12 @@ function! MyThesisEnv()
   set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg
 
   function! MyLatexReplaceTextEnc(in, out)
-    let s_aux = "s/\\\\text{\\([^}]*\\)}/\\1/gc"
-    call histadd("cmd", s_aux)
-    let s_aux = "s/" . a:in . "^/(" . a:out . ")^/gc"
-    let g:s_aux1 = s_aux
-    call histadd("cmd", s_aux)
-    let s_aux = "s/" . a:in . "/" . a:out . "/gc"
-    let g:s_aux2 = s_aux
-    call histadd("cmd", s_aux)
+    "all versions with the range for these substitutions
+    call histadd("cmd", "'<,'>s/\\\\text{\\([^}]*\\)}/\\1/gc")
+    call histadd("cmd", "'<,'>s/" . a:in . "^/(" . a:out . ")^/gc")
+    call histadd("cmd", "'<,'>s/" . a:in . "/" . a:out . "/gc")
   endfunction
-  command -nargs=* ChgcmdhistTex call MyLatexReplaceTextEnc(<f-args>)
+  command! -nargs=* ChgcmdhistTex call MyLatexReplaceTextEnc(<f-args>)
 endfunction
 
 command! Mt call MyThesisEnv()
