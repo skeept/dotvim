@@ -1070,7 +1070,7 @@ function! MyThesisEnv()
     let g:s_aux2 = s_aux
     call histadd("cmd", s_aux)
   endfunction
-  "command -nargs=2 HistChgSet
+  command -nargs=* ChgcmdhistTex call MyLatexReplaceTextEnc(<f-args>)
 endfunction
 
 command! Mt call MyThesisEnv()
