@@ -1053,6 +1053,7 @@ if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
   elseif compname == "Isengard-3000-N100"
     let g:thesis_path = $HOME .  "/Documents/Thesis"
 endif
+
 function! MyThesisEnv()
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
@@ -1060,12 +1061,40 @@ function! MyThesisEnv()
 
   set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg
 
-  function! MyLatexReplaceTextEnc(in, out)
-    "all versions with the range for these substitutions
+  function! MyLatexReplaceTextEnc(...)
     call histadd("cmd", "'<,'>s/\\\\text{\\([^}]*\\)}/\\1/gc")
-    call histadd("cmd", "'<,'>s/" . a:in . "^/(" . a:out . ")^/gc")
-    call histadd("cmd", "'<,'>s/" . a:in . "/" . a:out . "/gc")
+    if a:0 > 0
+      if a:0 != 2
+        let g:replace_cmd = 'echom "provide two lists to the function"''
+        return
+      endif
+      let g:replace_list_in = a:1
+      let g:replace_list_out = a:2
+      let g:replace_ncur = 0
+    endif
+    if !exists("g:replace_ncur")
+      let g:replace_ncur = 0
+    endif
+    if a:0 == 0 && g:replace_ncur == 0
+      let g:replace_list_in = ['xl^', 'xl', 'xu^', 'xu']
+      let g:replace_list_out = ['(x^l)^', 'x^l', '(x^u)^', 'x^u']
+    endif
+    if g:replace_ncur == len(g:replace_list_in)
+      let g:replace_cmd = 'echom "reached end of list"'
+      let g:replace_ncur = -1
+    else
+      let range_ = "'<,'>"
+      let extra_flags = 'gc'
+      let g:replace_cmd = range_ . "s/" .  g:replace_list_in[g:replace_ncur]
+            \ . "/" . g:replace_list_out[g:replace_ncur] . "/" . extra_flags
+      call histadd("cmd", g:replace_cmd)
+    endif
+    let g:replace_ncur += 1
+    return ''
   endfunction
+  nnoremap <Leader>ns :exe ":call MyLatexReplaceTextEnc()\|"
+        \ . g:replace_cmd<CR>
+
   command! -nargs=* ChgcmdhistTex call MyLatexReplaceTextEnc(<f-args>)
 endfunction
 
@@ -1122,12 +1151,12 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
     return pumvisible() ? neocomplcache#close_popup() . "\<CR>" : "\<CR>"
   endfunction
   " <TAB>: completion.
-  inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+  "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
   " <C-h>, <BS>: close popup and delete backword char.
   inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
   inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-  inoremap <expr><C-y>  pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
-  inoremap <expr><C-e>  pumvisible() ? neocomplcache#cancel_popup() :
+  inoremap <expr><C-y> pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
+  inoremap <expr><C-e> pumvisible() ? neocomplcache#cancel_popup() :
         \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
   " For cursor moving in insert mode(Not recommended)
