@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Sep 2012.
+" Last Modified: 30 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -550,8 +550,6 @@ function! neocomplcache#enable() "{{{
         \ unite#sources#neocomplcache#start_complete()
   inoremap <expr><silent> <Plug>(neocomplcache_start_unite_quick_match)
         \ unite#sources#neocomplcache#start_quick_match()
-  inoremap <expr><silent> <Plug>(neocomplcache_start_unite_snippet)
-        \ unite#sources#snippet#start_complete()
   inoremap <silent> <Plug>(neocomplcache_start_auto_complete)
         \ <C-x><C-u><C-r>=neocomplcache#popup_post()<CR>
   inoremap <silent> <Plug>(neocomplcache_start_omni_complete)
@@ -770,7 +768,7 @@ function! s:do_auto_complete(event)"{{{
     let is_delimiter = 0
     let filetype = neocomplcache#get_context_filetype()
 
-    for delimiter in ['/'] +
+    for delimiter in ['/', '.'] +
           \ get(g:neocomplcache_delimiter_patterns, filetype, [])
       if cur_text =~ delimiter . '$'
         let is_delimiter = 1
@@ -1751,7 +1749,11 @@ endfunction"}}}
 function! neocomplcache#filetype_complete(arglead, cmdline, cursorpos)"{{{
   " Dup check.
   let ret = {}
-  for item in map(split(globpath(&runtimepath, 'syntax/*.vim'), '\n'), 'fnamemodify(v:val, ":t:r")')
+  for item in map(
+        \ split(globpath(&runtimepath, 'syntax/*.vim'), '\n') +
+        \ split(globpath(&runtimepath, 'indent/*.vim'), '\n') +
+        \ split(globpath(&runtimepath, 'ftplugin/*.vim'), '\n')
+        \ , 'fnamemodify(v:val, ":t:r")')
     if !has_key(ret, item) && item =~ '^'.a:arglead
       let ret[item] = 1
     endif
@@ -2236,8 +2238,12 @@ function! s:get_cur_text()"{{{
         \      matchstr(getline('.'),
         \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
 
-  let cur_keyword_str = matchstr(cur_text, '\S\+$')
-  let cur_text = matchstr(cur_text, '^.\{-}\ze\S\+$')
+  if cur_text =~ '^.\{-}\ze\S\+$'
+    let cur_keyword_str = matchstr(cur_text, '\S\+$')
+    let cur_text = matchstr(cur_text, '^.\{-}\ze\S\+$')
+  else
+    let cur_keyword_str = ''
+  endif
 
   let filetype = neocomplcache#get_context_filetype()
   let wildcard = get(g:neocomplcache_wildcard_characters, filetype,
