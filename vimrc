@@ -1061,6 +1061,11 @@ function! MyThesisEnv()
 
   set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg
 
+  "exe "command! MLRT1 '<'>s/\(xl\|xu\|yl\|yu\|zl\|zu\)/\=" .
+        "\ "{'xu':'x^u', 'xl':'x^l', 'yl':'y^l', 'yu':'y^u', 'zl':'z^l', 'yu':'y^u'}" .
+        "\ "[submatch(0)]/gc"
+  command! MLRT1 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)/\1^\2/gc')
+  command! MLRT2 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)^/(\1^\2)^/gc')
   function! MyLatexReplaceText(...)
     call histadd("cmd", "'<,'>s/\\\\text{\\([^}]*\\)}/\\1/gc")
     if a:0 > 0
@@ -1073,8 +1078,8 @@ function! MyThesisEnv()
       let g:replace_ncur = 0
     endif
     if a:0 == 0 && !exists("g:replace_ncur")
-      let g:replace_list_in = ['xl^', 'xl', 'xu^', 'xu']
-      let g:replace_list_out = ['(x^l)^', 'x^l', '(x^u)^', 'x^u']
+      let g:replace_list_in = ['xl^', 'xl', 'xu^', 'xu', 'yl', 'yu', 'zl', 'zu']
+      let g:replace_list_out = ['(x^l)^', 'x^l', '(x^u)^', 'x^u', 'y^l', 'y^u', 'z^l', 'z^u']
       let g:replace_ncur = 0
     endif
     if g:replace_ncur == len(g:replace_list_in)
