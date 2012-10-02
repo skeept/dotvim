@@ -886,6 +886,9 @@ Normal mode mappings.
 <Plug>(unite_quick_help)			*<Plug>(unite_quick_help)*
 		Views the mappings of the unite buffer.
 
+<Plug>(unite_new_candidate)			*<Plug>(unite_new_candidate)*
+		Add new candidate in cursor source.
+
 Insert mode mappings.
 
 <Plug>(unite_exit)				*i_<Plug>(unite_exit)*
@@ -981,6 +984,9 @@ Insert mode mappings.
 <Plug>(unite_redraw)				*i_<Plug>(unite_redraw)*
 		Same to |<Plug>(unite_redraw)|.
 
+<Plug>(unite_new_candidate)			*i_<Plug>(unite_new_candidate)*
+		Same to |<Plug>(unite_new_candidate)|.
+
 Visual mode mappings.
 
 <Plug>(unite_toggle_mark_selected_candidates)
@@ -1020,6 +1026,7 @@ k		|<Plug>(unite_loop_cursor_up)|
 J		|<Plug>(unite_skip_cursor_down)|
 K		|<Plug>(unite_skip_cursor_up)|
 ?		|<Plug>(unite_quick_help)|
+N		|<Plug>(unite_new_candidate)|
 <CR>		In case when you selected a candidate, runs default action
 d		In case when you selected a candidate, runs delete action
 b		In case when you selected a candidate, runs bookmark action
@@ -2298,6 +2305,11 @@ default_action		Dictionary		(Optional)
 >
 			'default_action' : { '*' : action_name}.
 <
+					*unite-source-attribute-default_kind*
+default_kind		String			(Optional)
+			Default kind in source candidates.
+			If it's not given, the "common" is used.
+
 					*unite-source-attribute-alias_table*
 alias_table		Dictionary		(Optional)
 			Adds an alias table unique to the source.  In
@@ -2546,6 +2558,9 @@ action_table		Dictionary		(Required)
 			If the value is "nop", the actions are disabled.
 			Note: "default" and "nop" names are keyword. You cannot
 			use them.
+			Note: If name is "unite__new_candidate", it will be
+			used for |<Plug>(unite_new_candidate)|. It adds a
+			candidate in current source.
 			
 			func			(Function)
 				This function is called when executing actions.
@@ -2727,6 +2742,13 @@ A: You can use below mappings.
 <
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2012-10-02
+- Added default_kind attribute.
+- Set default_kind attribute in sources.
+- Added unite__new_candidate action.
+- Improved is_listed action behavior.
+- Added unite__new_candidate action in sources.
 
 2012-09-28
 - Improved message behavior.

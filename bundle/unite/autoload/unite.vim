@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Sep 2012.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -533,7 +533,8 @@ function! s:get_action_table(source_name, kind_name, self_func, is_parents_actio
       let action.is_invalidate_cache = 0
     endif
     if !has_key(action, 'is_listed')
-      let action.is_listed = 1
+      let action.is_listed =
+            \ (action.name !~ '^unite__\|^vimfiler__')
     endif
   endfor
 
@@ -1166,7 +1167,7 @@ function! unite#vimfiler_check_filetype(sources, ...)"{{{
 
     let [type, info] = ret
     if type ==# 'file'
-      call s:initialize_candidates_source([info[1]], source.name)
+      call unite#initialize_candidates_source([info[1]], source.name)
       call s:initialize_vimfiler_candidates([info[1]], source.name)
     elseif type ==# 'directory'
       " nop
@@ -1710,6 +1711,7 @@ function! s:initialize_sources(...)"{{{
         \ 'required_pattern_length' : 0,
         \ 'action_table' : {},
         \ 'default_action' : {},
+        \ 'default_kind' : 'common',
         \ 'alias_table' : {},
         \ 'parents' : [],
         \ 'description' : '',
@@ -1849,9 +1851,11 @@ function! s:initialize_profile(profile_name)"{{{
     let setting.unite__inputs = {}
   endif
 endfunction"}}}
-function! s:initialize_candidates_source(candidates, source_name)"{{{
+function! unite#initialize_candidates_source(candidates, source_name)"{{{
+  let source = s:get_loaded_sources(a:source_name)
+
   let default_candidate = {
-        \ 'kind' : 'common',
+        \ 'kind' : source.default_kind,
         \ 'is_dummy' : 0,
         \ 'is_matched' : 1,
         \ 'is_multiline' : 0,
@@ -2063,7 +2067,7 @@ function! s:recache_candidates(input, is_force)"{{{
     call s:call_hook([source], 'on_post_filter')
 
     let source.unite__candidates =
-          \ s:initialize_candidates_source(
+          \ unite#initialize_candidates_source(
           \   source.unite__candidates, source.name)
   endfor
 
