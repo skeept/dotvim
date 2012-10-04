@@ -1066,6 +1066,7 @@ function! MyThesisEnv()
         "\ "[submatch(0)]/gc"
   command! MLRT1 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)/\1^\2/gc')
   command! MLRT2 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)^/(\1^\2)^/gc')
+  command! MLRT3 call histadd("cmd", "'<,'>s/" . '\\text{\([^}]*\)}/\1/gc')
   function! MyLatexReplaceText(...)
     call histadd("cmd", "'<,'>s/\\\\text{\\([^}]*\\)}/\\1/gc")
     if a:0 > 0
