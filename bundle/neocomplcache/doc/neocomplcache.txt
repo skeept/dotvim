@@ -1115,9 +1115,10 @@ include_complete.vim				*include_complete*
 		not need to prepare a tags file and a dictionary file.
 		But it is necessary for 'path' and 'include',
 		'includeexpr' to be set adequately.
-		Note: If vimproc is installed, neocomplcache will cache. But
-		if not installed, auto caching feature is disabled. Please
-			execute |:NeoComplCacheCachingInclude| manually.
+
+		Note: If you have vimproc installed, neocomplcache will cache
+		automatically.  Otherwise it won't; please execute
+		|:NeoComplCacheCachingInclude| manually.
  
 vim_complete.vim				*vim_complete*
 		This source analyzes context and start Omni completion of
@@ -1366,6 +1367,9 @@ heavy, so disabled by default.
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
+2012-10-07
+- Fixed keyword escape error.
+
 2012-10-05
 - Improved commands definitions.
 
@@ -1486,7 +1490,7 @@ ChangeLog neocomplcache 7.1:
 - Fixed neocomplcache#complete_common_string().
 
 2012-08-25
-- Deleted obsolute changelog.
+- Deleted obsolete changelog.
 
 2012-08-24
 - Added FAQ item.

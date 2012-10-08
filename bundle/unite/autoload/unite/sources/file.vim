@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Oct 2012.
+" Last Modified: 08 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -320,8 +320,6 @@ endfunction"}}}
 function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
   let a:candidate.vimfiler__is_directory =
         \ isdirectory(a:candidate.action__path)
-  let a:candidate.vimfiler__is_writable =
-        \ filewritable(a:candidate.action__path)
 
   if len(a:candidate.action__path) > 200
     " Convert to relative path.
@@ -349,10 +347,17 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts)"{{{
           \ getfsize(a:candidate.action__path)
     let a:candidate.vimfiler__is_readable =
           \ filereadable(a:candidate.action__path)
+    let a:candidate.vimfiler__is_writable =
+          \ filewritable(a:candidate.action__path)
   else
     let a:candidate.vimfiler__is_readable =
           \ getfperm(a:candidate.action__path) =~# 'r.x$'
+    let a:candidate.vimfiler__is_writable =
+          \ unite#util#is_windows() ?
+          \ (getfperm(a:candidate.action__path) =~# '.wx$')
+          \ : filewritable(a:candidate.action__path)
   endif
+
   let a:candidate.vimfiler__filetime =
         \ s:get_filetime(a:candidate.action__path)
   let a:candidate.vimfiler__ftype = getftype(filename)
@@ -420,7 +425,8 @@ import os.path
 import vim
 os.stat_float_times(False)
 vim.command('let filetime = ' +\
-str(os.path.getmtime(vim.eval('a:filename'))))
+str(os.path.getmtime(vim.eval(\
+    'unite#util#iconv(a:filename, &encoding, "char")'))))
 END
   endif"}}}
 
