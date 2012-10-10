@@ -119,6 +119,8 @@ map <c-s-tab> gT
 
 "colorscheme morning
 "colorscheme desert
+let g:solarized_contrast = "high"
+let g:solarized_visibility= "high"
 set bg=light | colorscheme solarized
 
 if has("autocmd")
