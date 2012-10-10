@@ -118,10 +118,7 @@ map <c-s-tab> gT
 "set guifontset=-misc-fixed-medium-*-*-*-18-*-*-*-*-*-iso8859-15
 
 "colorscheme morning
-"colorscheme desert
-let g:solarized_contrast = "high"
-let g:solarized_visibility= "high"
-set bg=light | colorscheme solarized
+colorscheme desert
 
 if has("autocmd")
   autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
