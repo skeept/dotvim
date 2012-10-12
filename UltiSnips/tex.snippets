@@ -78,7 +78,7 @@ snippet sum "sum with lower and upper limits" w
 \sum_{${1:i=1}}^{${2:n}}{${3:<++>}}${0:<++>}
 endsnippet
 
-snippet cite
+snippet cite "citation" w
 \cite{${1}}${0:<++>}
 endsnippet
 
@@ -164,6 +164,11 @@ snippet em "emphasize" w
 endsnippet
 
 snippet fbf "font bold face" w
+\textbf{${1:${VISUAL}}}$0
+endsnippet
+
+snippet fit "textit" w
+\textit
 \textbf{${1:${VISUAL}}}$0
 endsnippet
 
