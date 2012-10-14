@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Oct 2012.
+" Last Modified: 14 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -52,6 +52,10 @@ function! s:initialize_variables()"{{{
   let s:filetype_frequencies = {}
   let s:cur_keyword_pos = -1
   let s:loaded_all_sources = 0
+
+  if has('reltime')
+    let s:start_time = reltime()
+  endif
 endfunction"}}}
 
 if !exists('s:is_enabled')
@@ -654,7 +658,8 @@ endfunction"}}}
 
 function! neocomplcache#disable()"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
     return
   endif
 
@@ -848,9 +853,16 @@ function! s:do_auto_complete(event)"{{{
   endif
 
   " Prevent infinity loop.
+  let cur_word = matchstr(cur_text, '\S\+$')
+  let old_cur_word = matchstr(s:old_cur_text, '\S\+$')
   if cur_text == ''
         \ || cur_text == s:old_cur_text
         \ || (g:neocomplcache_lock_iminsert && &l:iminsert)
+        \ || (!neocomplcache#is_eskk_enabled() && !s:skip_next_complete
+        \     && len(cur_word) > 1 && len(old_cur_word) > 1
+        \     && stridx(cur_text, s:old_cur_text) == 0
+        \     && stridx(cur_word, old_cur_word) == 0
+        \     && empty(s:complete_words))
     let s:cur_keyword_str = ''
     let s:complete_words = []
     return
@@ -1159,6 +1171,20 @@ function! neocomplcache#unpack_dictionary(dict)"{{{
   let ret = []
   for l in values(a:dict)
     let ret += type(l) == type([]) ? l : values(l)
+  endfor
+
+  return ret
+endfunction"}}}
+function! neocomplcache#pack_dictionary(list)"{{{
+  let completion_length = 2
+  let ret = {}
+  for candidate in a:list
+    let key = tolower(candidate.word[: completion_length-1])
+    if !has_key(ret, key)
+      let ret[key] = {}
+    endif
+
+    let ret[key][candidate.word] = candidate
   endfor
 
   return ret
@@ -1555,11 +1581,26 @@ function! neocomplcache#get_temporary_directory()"{{{
   return directory
 endfunction"}}}
 function! neocomplcache#complete_check()"{{{
+  if g:neocomplcache_enable_debug
+    echomsg split(reltimestr(reltime(s:start_time)))[0]
+  endif
   return !neocomplcache#is_prefetch() && complete_check()
+        \ || (neocomplcache#is_auto_complete()
+        \     && has('reltime') && g:neocomplcache_skip_auto_completion_time != ''
+        \     && split(reltimestr(reltime(s:start_time)))[0] >
+        \          g:neocomplcache_skip_auto_completion_time)
 endfunction"}}}
 
 " For unite source.
 function! neocomplcache#get_complete_results(cur_text, ...)"{{{
+  if has('reltime')
+    if g:neocomplcache_enable_debug
+      echomsg 'start get_complete_results'
+    endif
+
+    let s:start_time = reltime()
+  endif
+
   let complete_results = call(
         \ 's:set_complete_results_pos', [a:cur_text] + a:000)
   call s:set_complete_results_words(complete_results)
@@ -1620,11 +1661,11 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
           \ && len_words > g:neocomplcache_max_list
       break
     endif
-  endfor
 
-  if neocomplcache#complete_check()
-    return []
-  endif
+    if neocomplcache#complete_check()
+      return []
+    endif
+  endfor
 
   if g:neocomplcache_max_list > 0
     let complete_words = complete_words[: g:neocomplcache_max_list]
@@ -1852,6 +1893,10 @@ function! s:set_complete_results_words(complete_results)"{{{
         call setpos('.', pos)
       endif
     endtry
+
+    if g:neocomplcache_enable_debug
+      echomsg source_name
+    endif
 
     let &ignorecase = ignorecase_save
 
