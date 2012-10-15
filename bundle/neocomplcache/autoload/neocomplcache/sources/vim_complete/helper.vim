@@ -138,7 +138,8 @@ function! neocomplcache#sources#vim_complete#helper#get_completion_name(command_
           \ s:caching_completion_from_dict('command_completions')
   endif
   if !has_key(s:global_candidates_list, 'command_completions')
-    let s:global_candidates_list.commands = s:get_cmdlist()
+    let s:global_candidates_list.commands =
+          \ neocomplcache#pack_dictionary(s:get_cmdlist())
   endif
 
   if has_key(s:internal_candidates_list.command_completions, a:command_name)
@@ -235,6 +236,8 @@ function! neocomplcache#sources#vim_complete#helper#command(cur_text, cur_keywor
             \ neocomplcache#pack_dictionary(commands)
     endif
 
+    " echomsg string(s:internal_candidates_list.commands)[: 1000]
+    " echomsg string(s:global_candidates_list.commands)[: 1000]
     let list = neocomplcache#dictionary_filter(
           \ s:internal_candidates_list.commands, a:cur_keyword_str)
           \ + neocomplcache#dictionary_filter(
