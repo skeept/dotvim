@@ -917,13 +917,18 @@ g:neocomplcache_skip_auto_completion_time
 		auto completion.
 		If it is "", the skip feature will be disabled.
 
-		Default value is "0.15".
+		Default value is "0.3".
 		{only available when compiled with the |+reltime| feature}
 
 ------------------------------------------------------------------------------
 FUNCTIONS 					*neocomplcache-functions*
 
-neocomplcache#get_context_filetype()		*unite#get_context_filetype()*
+neocomplcache#initialize()			*neocomplcache#initialize()*
+		Initialize neocomplcache and sources.
+		Note: It enables neocomplcache.
+
+neocomplcache#get_context_filetype()
+					*neocomplcache#get_context_filetype()*
 		Get current context filetype.
 
 neocomplcache#disable_default_dictionary({variable-name})
@@ -1091,6 +1096,18 @@ EXAMPLES					*neocomplcache-examples*
 	" For perlomni.vim setting.
 	" https://github.com/c9s/perlomni.vim
 	let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
+	
+	" Disable foldmethod in insertmode.
+	augroup foldmethod-expr
+	  autocmd!
+	  autocmd InsertEnter * if &l:foldmethod ==# 'expr'
+	  \                   |   let b:foldinfo = [&l:foldmethod, &l:foldexpr]
+	  \                   |   setlocal foldmethod=manual foldexpr=0
+	  \                   | endif
+	  autocmd InsertLeave * if exists('b:foldmethod')
+	  \                   |   let [&l:foldmethod, &l:foldexpr] = b:foldinfo
+	  \                   | endif
+	augroup END
 <
 ==============================================================================
 SOURCES						*neocomplcache-sources*
@@ -1299,8 +1316,10 @@ http://github.com/Shougo/vimproc
 
 Q: An error occurred in "sudo vim":
 
-A: neocomplcache does not support "sudo vim". You must use sudo.vim or set
-"Defaults always_set_home" in "/etc/sudoers", or must use "sudoedit" command.
+A: neocomplcache does not support "sudo vim". Bacause neocomplcache (and other
+plugins) creates temporary files in super user permission by sudo command. You
+must use sudo.vim or set "Defaults always_set_home" in "/etc/sudoers", or must
+use "sudoedit" command.
 
 Ubuntu has a command "sudoedit" which can work well with neocomplcache.
 I'm not sure if other distros has this command...
@@ -1398,8 +1417,44 @@ heavy, so disabled by default.
 	endif
 	let g:neocomplcache_force_omni_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
 <
+Q: I want to disable skip completion.
+
+A:
+>
+	let g:neocomplcache_skip_auto_completion_time = ''
+<
+Q: I want to initialize neocomplcache in .vimrc.
+
+A: Please call neocomplcache#initialize() in .vimrc. But this function slows
+your Vim initialization.
+>
+	call neocomplcache#initialize()
+<
+Q: neocomplcache is too heavy.
+A: Please try below settings.
+>
+	" Disable foldmethod in insertmode.
+	augroup foldmethod-expr
+	  autocmd!
+	  autocmd InsertEnter * if &l:foldmethod ==# 'expr'
+	  \                   |   let b:foldinfo = [&l:foldmethod, &l:foldexpr]
+	  \                   |   setlocal foldmethod=manual foldexpr=0
+	  \                   | endif
+	  autocmd InsertLeave * if exists('b:foldmethod')
+	  \                   |   let [&l:foldmethod, &l:foldexpr] = b:foldinfo
+	  \                   | endif
+	augroup END
+<
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-10-15
+- Fixed error in vim_complete.
+- Improved skip auto completion.
+- Added neocomplcache#initialize().
+- Improved unpack behavior.
+- Disabled vim include functions.
+- Added FAQ section.
 
 2012-10-14
 - Improved auto completion.
