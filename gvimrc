@@ -114,6 +114,7 @@ map <c-s-tab> gT
 " set options for solarized
 let g:solarized_underline = 0
 let g:solarized_italic    = 0
+let g:solarized_style     = "light"
 
 "-*-*-medium-*-*-*-15-*-*-*-*-*-*-*
 "above is the desired font name for the gui
@@ -123,7 +124,7 @@ let g:solarized_italic    = 0
 
 "colorscheme morning
 colorscheme desert
-"set bg=light | colorschem solarized
+"set bg=light | colorscheme solarized
 
 if has("autocmd")
   autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
