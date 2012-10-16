@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Oct 2012.
+" Last Modified: 16 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -23,6 +23,10 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+
+if !exists('g:loaded_neocomplcache')
+  runtime! plugin/neocomplcache.vim
+endif
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -980,20 +984,21 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
         \ && (g:neocomplcache_fuzzy_completion_start_length
         \          <= keyword_len && keyword_len < 20)
     let keyword_escape = s:keyword_escape(a:cur_keyword_str)
+    let pattern = keyword_len >= 8 ?
+          \ '\0\\w*\\W\\?' :
+          \ '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)'
 
     let start = g:neocomplcache_fuzzy_completion_start_length
     if start <= 1
       let keyword_escape =
-            \ substitute(keyword_escape, '\w',
-            \   '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g')
+            \ substitute(keyword_escape, '\w', pattern, 'g')
     elseif keyword_len < 8
       let keyword_escape = keyword_escape[: start - 2]
-            \ . substitute(keyword_escape[start-1 :], '\w',
-            \     '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g')
+            \ . substitute(keyword_escape[start-1 :], '\w', pattern, 'g')
     else
       let keyword_escape = keyword_escape[: 3] .
             \ substitute(keyword_escape[4:12], '\w',
-            \     '\\%(\0\\|\U\0\E\\l*\\|\0\\w*\\W\\)', 'g') . keyword_escape[13:]
+            \   pattern, 'g') . keyword_escape[13:]
     endif
   else
     let head = neocomplcache#is_auto_complete() ?
@@ -1035,6 +1040,10 @@ function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
 
   if neocomplcache#complete_check()
     return []
+  endif
+
+  if g:neocomplcache_enable_debug
+    echomsg len(a:list)
   endif
 
   " Delimiter check.
@@ -2306,6 +2315,7 @@ function! s:on_moved_i()"{{{
 endfunction"}}}
 function! s:on_insert_leave()"{{{
   let s:cur_text = ''
+  let s:old_cur_text = ''
   let s:cur_keyword_str = ''
   let s:complete_words = []
   let s:is_text_mode = 0
@@ -2315,7 +2325,8 @@ function! s:on_insert_leave()"{{{
 
   " Restore foldinfo.
   let neocomplcache = s:get_current_neocomplcache()
-  if neocomplcache.foldinfo != [&l:foldmethod, &l:foldexpr]
+  if !empty(neocomplcache.foldinfo) &&
+        \ neocomplcache.foldinfo != [&l:foldmethod, &l:foldexpr]
      let [&l:foldmethod, &l:foldexpr] = neocomplcache.foldinfo
   endif
 endfunction"}}}
@@ -2592,7 +2603,7 @@ function! s:get_current_neocomplcache()"{{{
           \ 'context_filetype' : '',
           \ 'completion_length' : -1,
           \ 'update_time_save' : &updatetime,
-          \ 'foldinfo' : [&l:foldmethod, &l:foldexpr],
+          \ 'foldinfo' : [],
           \}
   endif
 

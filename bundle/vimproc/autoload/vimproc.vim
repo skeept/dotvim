@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 15 Oct 2012.
+" Last Modified: 16 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -109,6 +109,13 @@ function! vimproc#open(filename)"{{{
   let filename = vimproc#util#iconv(fnamemodify(a:filename, ':p'),
         \ &encoding, vimproc#util#termencoding())
 
+  if filename =~ '^\%(https\?\|ftp\)://'
+          \ && !vimproc#host_exists(filename)
+    " URI is invalid.
+    call s:print_error('vimproc#open: URI "' . filename . '" is invalid.')
+    return
+  endif
+
   " Detect desktop environment.
   if vimproc#util#is_windows()
     " For URI only.
@@ -135,7 +142,7 @@ function! vimproc#open(filename)"{{{
     call vimproc#system_bg(['open', filename])
   else
     " Give up.
-    throw 'vimproc#open: Not supported.'
+    call s:print_error('vimproc#open: Not supported.')
   endif
 endfunction"}}}
 
@@ -593,7 +600,8 @@ function! vimproc#socket_open(host, port)"{{{
 endfunction"}}}
 
 function! vimproc#host_exists(host)"{{{
-  let rval = s:vp_host_exists(a:host)
+  let rval = s:vp_host_exists(
+        \ substitute(substitute(a:host, '^\a\+://', '', ''), '/.*$', '', ''))
   return 0 + rval
 endfunction"}}}
 
@@ -937,9 +945,17 @@ function! s:convert_args(args)"{{{
     return []
   endif
 
-  if a:args[0] ==# 'echo' && vimproc#util#is_windows()
-    " Use cmd.exe
-    return ['cmd', '/c', 'echo'] + a:args[1:]
+  if vimproc#util#is_windows() && !executable(a:args[0])
+    " Search from internal commands.
+    let internal_commands = [
+          \ 'copy', 'dir', 'echo', 'erase', 'ftype',
+          \ 'md', 'mkdir', 'move', 'path', 'rd', 'ren', 'rename',
+          \ 'rmdir', 'start', 'time', 'type', 'ver', 'vol']
+    let index = index(internal_commands, a:args[0])
+    if index >= 0
+      " Use cmd.exe
+      return ['cmd', '/c', internal_commands[index]] + a:args[1:]
+    endif
   endif
 
   let command_name = vimproc#get_command_name(a:args[0])
@@ -1403,7 +1419,7 @@ endif
 try
   let dll_version = vimproc#dll_version()
   if dll_version < vimproc#version()
-    throw printf('Your vimproc binary version is "%d",'.
+    call s:print_error('Your vimproc binary version is "%d",'.
           \ ' but vimproc version is "%d".',
           \ dll_version, vimproc#version())
   endif
