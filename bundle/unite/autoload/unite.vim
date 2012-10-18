@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Oct 2012.
+" Last Modified: 18 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -70,13 +70,31 @@ endfunction"}}}
 function! unite#get_buffer_name_option(buffer_name, option_name)"{{{
   return unite#get_profile(a:buffer_name, a:option_name)
 endfunction"}}}
+function! s:initialize_profile(profile_name)"{{{
+  if !has_key(s:profiles, a:profile_name)
+    let s:profiles[a:profile_name] = {}
+  endif
+
+  let default_profile = {
+        \ 'substitute_patterns' : {},
+        \ 'filters' : [],
+        \ 'context' : {},
+        \ 'ignorecase' : &ignorecase,
+        \ 'smartcase' : &smartcase,
+        \ 'unite__save_pos' : {},
+        \ 'unite__inputs' : {},
+        \ }
+
+  let s:profiles[a:profile_name] = extend(default_profile,
+        \ s:profiles[a:profile_name])
+endfunction"}}}
 function! unite#set_profile(profile_name, option_name, value)"{{{
   let profile_name =
         \ (a:profile_name == '' ? 'default' : a:profile_name)
 
   for key in split(profile_name, '\s*,\s*')
     if !has_key(s:profiles, key)
-      let s:profiles[key] = {}
+      call s:initialize_profile(key)
     endif
 
     let s:profiles[key][a:option_name] = a:value
@@ -86,6 +104,10 @@ function! unite#get_profile(profile_name, option_name)"{{{
   let profile_name = matchstr(a:profile_name, '^\S\+')
   if profile_name == ''
     let profile_name = 'default'
+  endif
+
+  if !has_key(s:profiles, profile_name)
+    call s:initialize_profile(profile_name)
   endif
 
   return s:profiles[profile_name][a:option_name]
@@ -1136,11 +1158,7 @@ function! unite#start_temporary(sources, ...)"{{{
   endif
 
   let new_context = get(a:000, 0, {})
-  let buffer_name = get(a:000, 1,
-        \ matchstr(context.buffer_name, '^\S\+')
-        \ . ' - ' . len(context.old_buffer_info))
 
-  let context.buffer_name = buffer_name
   let context.temporary = 1
   let context.input = ''
   let context.auto_preview = 0
@@ -1149,6 +1167,12 @@ function! unite#start_temporary(sources, ...)"{{{
 
   " Overwrite context.
   let context = extend(context, new_context)
+
+  let buffer_name = get(a:000, 1,
+        \ matchstr(context.buffer_name, '^\S\+')
+        \ . ' - ' . len(context.old_buffer_info))
+
+  let context.buffer_name = buffer_name
 
   let unite_save = unite#get_current_unite()
 
@@ -1566,7 +1590,9 @@ endfunction"}}}
 function! s:initialize_context(context)"{{{
   let default_context = {
         \ 'input' : '',
+        \ 'start_insert' : g:unite_enable_start_insert,
         \ 'complete' : 0,
+        \ 'script' : 0,
         \ 'col' : col('.'),
         \ 'no_quit' : 0,
         \ 'buffer_name' : 'default',
@@ -1610,12 +1636,24 @@ function! s:initialize_context(context)"{{{
         \ 'unite__disable_hooks' : 0,
         \ }
 
+  let profile_name = get(a:context, 'profile_name',
+        \ get(a:context, 'buffer_name', 'default'))
+
+  " Overwrite default_context by profile context.
+  let default_context = extend(default_context,
+        \ unite#get_profile(profile_name, 'context'))
+
   let context = extend(default_context, a:context)
 
+  if context.temporary || context.script
+    " User can overwrite context by profile context.
+    let context = extend(context,
+          \ unite#get_profile(profile_name, 'context'))
+  endif
+
   " Complex initializer.
-  if !has_key(context, 'start_insert')
-    let context.start_insert = context.complete ?
-          \ 1 : g:unite_enable_start_insert
+  if get(context, 'complete', 1)
+    let context.start_insert = 1
   endif
   if get(context, 'no_start_insert', 0)
     " Disable start insert.
@@ -1838,30 +1876,6 @@ function! s:initialize_kinds()"{{{
 endfunction"}}}
 function! s:initialize_filters()"{{{
   return extend(copy(s:static.filters), s:dynamic.filters)
-endfunction"}}}
-function! s:initialize_profile(profile_name)"{{{
-  if !has_key(s:profiles, a:profile_name)
-    let s:profiles[a:profile_name] = {}
-  endif
-  let setting = s:profiles[a:profile_name]
-  if !has_key(setting, 'substitute_patterns')
-    let setting.substitute_patterns = {}
-  endif
-  if !has_key(setting, 'filters')
-    let setting.filters = []
-  endif
-  if !has_key(setting, 'ignorecase')
-    let setting.ignorecase = &ignorecase
-  endif
-  if !has_key(setting, 'smartcase')
-    let setting.smartcase = &smartcase
-  endif
-  if !has_key(setting, 'unite__save_pos')
-    let setting.unite__save_pos = {}
-  endif
-  if !has_key(setting, 'unite__inputs')
-    let setting.unite__inputs = {}
-  endif
 endfunction"}}}
 function! unite#initialize_candidates_source(candidates, source_name)"{{{
   let source = s:get_loaded_sources(a:source_name)
@@ -2368,8 +2382,6 @@ function! s:initialize_current_unite(sources, context)"{{{
         \ 'default' : context.buffer_name
   let unite.profile_name = (context.profile_name == '') ?
         \ unite.buffer_name : context.profile_name
-  let unite.buffer_options =
-        \ s:initialize_profile(unite.profile_name)
   let unite.prev_bufnr = bufnr('%')
   let unite.prev_winnr = winnr()
 
@@ -3117,7 +3129,7 @@ function! s:do_auto_preview()"{{{
 
   let unite.preview_candidate = unite#get_current_candidate()
 
-  call unite#mappings#do_action('preview', [], {}, 0)
+  call unite#mappings#do_action('preview', [], {})
 
   " Restore window size.
   let context = unite#get_context()

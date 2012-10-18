@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Oct 2012.
+" Last Modified: 18 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -296,8 +296,7 @@ function! unite#mappings#do_action(action_name, ...)"{{{
   let candidates = get(a:000, 0,
         \ unite#get_marked_candidates())
   let new_context = get(a:000, 1, {})
-  let is_clear_marks = get(a:000, 2, 1)
-  let sources = get(a:000, 3, {})
+  let sources = get(a:000, 2, {})
 
   let unite = unite#get_current_unite()
   if empty(candidates)
@@ -311,17 +310,18 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     let candidates = [ unite#get_current_candidate() ]
   endif
 
-  let candidates = filter(copy(candidates),
-        \ '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
-  if empty(candidates)
-    return []
-  endif
-
+  let is_clear_marks = !empty(unite#get_marked_candidates())
   if is_clear_marks
     " Clear marks.
     for candidate in candidates
       let candidate.unite__is_marked = 0
     endfor
+  endif
+
+  let candidates = filter(copy(candidates),
+        \ '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
+  if empty(candidates)
+    return []
   endif
 
   let action_tables = s:get_action_table(
@@ -384,7 +384,7 @@ function! unite#mappings#do_action(action_name, ...)"{{{
     let unite.context = old_context
   endif
 
-  if is_redraw
+  if is_redraw || is_clear_marks
     call unite#force_redraw()
   endif
 
@@ -420,6 +420,7 @@ function! s:get_action_table(action_name, candidates, sources)"{{{
             \ candidate.unite__abbr . '(' . candidate.source . ')')
       call unite#util#print_error(
             \ 'No such action : ' . action_name)
+
       return []
     endif
 
@@ -587,17 +588,17 @@ function! unite#mappings#_choose_action(candidates, ...)"{{{
   endif
 
   let unite = unite#get_current_unite()
-  let context = get(a:000, 0, {})
+  let context = deepcopy(get(a:000, 0, {}))
   let context.source__sources = unite.sources
+  let context.buffer_name = 'action'
+  let context.profile_name = 'action'
 
   if has_key(context, 'vimfiler__current_directory')
     call unite#start(
-          \ [[s:source_action] + a:candidates],
-          \ context, 'action')
+          \ [[s:source_action] + a:candidates], context)
   else
     call unite#start_temporary(
-          \ [[s:source_action] + a:candidates],
-          \ context, 'action')
+          \ [[s:source_action] + a:candidates], context)
   endif
 endfunction"}}}
 function! s:insert_enter(key)"{{{
@@ -1026,8 +1027,7 @@ function! s:source_action.action_table.do.func(candidate)"{{{
   endif
 
   call unite#mappings#do_action(a:candidate.word,
-   \ a:candidate.source__candidates, context, 1,
-   \ context.source__sources)
+   \ a:candidate.source__candidates, context, context.source__sources)
 
   " Check quit flag.
   if !a:candidate.action__action.is_quit
