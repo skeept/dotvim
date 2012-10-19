@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 18 Oct 2012.
+" Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -39,7 +39,6 @@ function! s:initialize_variables()"{{{
   let s:plugin_sources = {}
   let s:ftplugin_sources = {}
   let s:loaded_ftplugin_sources = {}
-  let s:sources_lock = {}
   let s:cur_keyword_str = ''
   let s:complete_words = []
   let s:complete_results = {}
@@ -1062,10 +1061,6 @@ endfunction"}}}
 function! neocomplcache#keyword_filter(list, cur_keyword_str)"{{{
   let cur_keyword_str = a:cur_keyword_str
 
-  if neocomplcache#complete_check()
-    return []
-  endif
-
   if g:neocomplcache_enable_debug
     echomsg len(a:list)
   endif
@@ -1409,14 +1404,13 @@ function! neocomplcache#is_locked(...)"{{{
         \ || &l:omnifunc ==# 'fuf#onComplete'
 endfunction"}}}
 function! neocomplcache#is_plugin_locked(source_name)"{{{
-  if !s:is_enabled
+  if !neocomplcache#is_enabled()
     return 1
   endif
 
-  let bufnr = bufnr('%')
-  return has_key(s:sources_lock, bufnr)
-        \ && has_key(s:sources_lock[bufnr], a:source_name)
-        \ && s:sources_lock[bufnr][a:source_name]
+  let neocomplcache = s:get_current_neocomplcache()
+
+  return get(neocomplcache.lock_sources, a:source_name, 0)
 endfunction"}}}
 function! neocomplcache#is_auto_select()"{{{
   return g:neocomplcache_enable_auto_select && !neocomplcache#is_eskk_enabled()
@@ -1996,27 +1990,25 @@ function! neocomplcache#unlock()"{{{
 endfunction"}}}
 function! neocomplcache#lock_source(source_name)"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
     return
   endif
 
-  if !has_key(s:sources_lock, bufnr('%'))
-    let s:sources_lock[bufnr('%')] = {}
-  endif
+  let neocomplcache = s:get_current_neocomplcache()
 
-  let s:sources_lock[bufnr('%')][a:source_name] = 1
+  let neocomplcache.lock_sources[a:source_name] = 1
 endfunction"}}}
 function! neocomplcache#unlock_source(source_name)"{{{
   if !neocomplcache#is_enabled()
-    call neocomplcache#print_warning('neocomplcache is disabled! This command is ignored.')
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
     return
   endif
 
-  if !has_key(s:sources_lock, bufnr('%'))
-    let s:sources_lock[bufnr('%')] = {}
-  endif
+  let neocomplcache = s:get_current_neocomplcache()
 
-  let s:sources_lock[bufnr('%')][a:source_name] = 0
+  let neocomplcache.lock_sources[a:source_name] = 1
 endfunction"}}}
 function! s:display_neco(number)"{{{
   let cmdheight_save = &cmdheight
@@ -2628,6 +2620,7 @@ function! s:get_current_neocomplcache()"{{{
           \ 'completion_length' : -1,
           \ 'update_time_save' : &updatetime,
           \ 'foldinfo' : [],
+          \ 'lock_sources' : {},
           \}
   endif
 
@@ -2693,18 +2686,19 @@ endfunction"}}}
 function! s:get_sources_list(...)"{{{
   let filetype = neocomplcache#get_context_filetype()
 
-  let source_names = get(a:000, 0,
+  let source_names = exists('b:neocomplcache_sources_list') ?
+        \ b:neocomplcache_sources_list :
+        \ get(a:000, 0,
         \ get(g:neocomplcache_sources_list, filetype,
-        \   get(g:neocomplcache_sources_list, '_', [''])))
+        \   get(g:neocomplcache_sources_list, '_', ['_'])))
   call s:initialize_sources(source_names)
 
   let all_sources = neocomplcache#available_sources()
   let sources = {}
   for source_name in source_names
-    if source_name == ''
+    if source_name ==# '_'
       " All sources.
-      let sources = all_sources
-      break
+      return all_sources
     endif
 
     if !has_key(all_sources, source_name)

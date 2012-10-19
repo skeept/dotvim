@@ -1,5 +1,5 @@
 "=============================================================================
-" FILE: converter_relative_word.vim
+" FILE: sorter_length.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
@@ -27,39 +27,17 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_word#define()"{{{
-  return s:converter
+function! unite#filters#sorter_length#define()"{{{
+  return s:sorter
 endfunction"}}}
 
-let s:converter = {
-      \ 'name' : 'converter_relative_word',
-      \ 'description' : 'relative path word converter',
+let s:sorter = {
+      \ 'name' : 'sorter_length',
+      \ 'description' : 'sort by length order',
       \}
 
-function! s:converter.filter(candidates, context)"{{{
-  try
-    let directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let old_dir = directory
-      let directory = substitute(a:context.source__directory, '*', '', 'g')
-
-      if directory !=# old_dir && isdirectory(directory)
-        lcd `=directory`
-      endif
-    endif
-
-    for candidate in a:candidates
-      let candidate.word = unite#util#substitute_path_separator(
-            \ fnamemodify(candidate.word, ':.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && directory !=# old_dir
-      lcd `=old_dir`
-    endif
-  endtry
-
-  return a:candidates
+function! s:sorter.filter(candidates, context)"{{{
+  return unite#util#sort_by(a:candidates, 'len(v:val.word)')
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: omni_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Oct 2012.
+" Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -241,7 +241,7 @@ function! s:set_complete_results_words(complete_results)"{{{
   " Try source completion.
   for [omnifunc, result] in items(a:complete_results)
     if neocomplcache#complete_check()
-      return []
+      return a:complete_results
     endif
 
     let pos = getpos('.')
@@ -265,6 +265,11 @@ function! s:set_complete_results_words(complete_results)"{{{
         call setpos('.', pos)
       endif
     endtry
+
+    if type(list) != type([])
+      " Error.
+      return a:complete_results
+    endif
 
     let list = s:get_omni_list(list)
 

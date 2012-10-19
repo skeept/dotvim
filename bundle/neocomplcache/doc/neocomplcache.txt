@@ -535,17 +535,17 @@ g:neocomplcache_same_filetype_lists
 		Note: neocomplcache completes from same filetype buffers in
 		default.
 >
-	if !exists('g:neocomplcache_same_filetype_lists')
-	  let g:neocomplcache_same_filetype_lists = {}
-	endif
-	" In c buffers, completes from cpp and d buffers.
-	let g:neocomplcache_same_filetype_lists.c = 'cpp,d'
-	" In cpp buffers, completes from c buffers.
-	let g:neocomplcache_same_filetype_lists.cpp = 'c'
-	" In gitconfig buffers, completes from all buffers.
-	let g:neocomplcache_same_filetype_lists.gitconfig = '_'
-	" In default, completes from all buffers.
-	let g:neocomplcache_same_filetype_lists._ = '_'
+		if !exists('g:neocomplcache_same_filetype_lists')
+		let g:neocomplcache_same_filetype_lists = {}
+		endif
+		" In c buffers, completes from cpp and d buffers.
+		let g:neocomplcache_same_filetype_lists.c = 'cpp,d'
+		" In cpp buffers, completes from c buffers.
+		let g:neocomplcache_same_filetype_lists.cpp = 'c'
+		" In gitconfig buffers, completes from all buffers.
+		let g:neocomplcache_same_filetype_lists.gitconfig = '_'
+		" In default, completes from all buffers.
+		let g:neocomplcache_same_filetype_lists._ = '_'
 <
 		Because it is complicated, refer to neocomplcache#enable() in
 		autoload/neocomplcache.vim for the initial value.
@@ -786,6 +786,7 @@ g:neocomplcache_sources_list
 		filetype and the value is source names list. If the key is
 		"_", the value will be used for default filetypes. For
 		example, you can disable some sources in C++ filetype.
+		If the value is "_", it will load all sources.
 		Default value is {}.
 >
 		" Examples:
@@ -795,6 +796,14 @@ g:neocomplcache_sources_list
 		let g:neocomplcache_sources_list._ = ['buffer_complete']
 		let g:neocomplcache_sources_list.cpp =
 		\ ['buffer_complete', 'include_complete']
+<
+b:neocomplcache_sources_list
+					*b:neocomplcache_sources_list*
+		It is a list to decide use source names in buffer local.
+>
+		" Examples:
+		" In cmdwin, only use vim_complete source.
+		autocmd CmdwinEnter * let b:neocomplcache_sources_list = ['vim_complete']
 <
 g:neocomplcache_source_disable
 					*g:neocomplcache_source_disable*
@@ -1333,9 +1342,13 @@ A: Please try below settings.
 	      \ '[^.[:digit:] *\t]\%(\.\|->\)'
 	let g:neocomplcache_force_omni_patterns.cpp =
 	      \ '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+	let g:neocomplcache_force_omni_patterns.objc =
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)'
+	let g:neocomplcache_force_omni_patterns.objcpp =
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
 	let g:clang_complete_auto = 0
 	let g:clang_auto_select = 0
-	let g:clang_use_library   = 0
+	"let g:clang_use_library = 1
 <
 
 Q: I wanto to support omni patterns for external plugins.
@@ -1420,6 +1433,12 @@ your Vim initialization.
 <
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2012-10-19
+- Improved lock sources behavior.
+- Added b:neocomplcache_sources_list.
+- Fixed vim_complete behavior.
+- Fixed complete_common_string.
 
 2012-10-18
 - Fixed skip auto completion behavior.
