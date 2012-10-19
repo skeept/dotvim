@@ -164,4 +164,6 @@ snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '
 vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
       \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 
+inoremap <silent> <buffer> `. \cdot
+
 syn region texTabularPos matchgroup=texSection start='\\begin\s*{\s*tabular\s*}{' end='}' fold contains=@texFoldGroup,@texDocGroup
