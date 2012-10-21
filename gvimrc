@@ -36,7 +36,7 @@ if version >= 500
   set hlsearch
 
   " For Win32 version, have "K" lookup the keyword in a help file
-  "if has("win32")
+  "if g:is_win
   "  let winhelpfile='windows.hlp'
   "  map K :execute "!start winhlp32 -k <cword> " . winhelpfile <CR>
   "endif
@@ -78,7 +78,7 @@ set cmdheight=1
 "set guifont=Courier\ 16
 "set guifont=Courier\ 13
 "set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
-if has("win32")
+if g:is_win
   set guifont=Terminus:h12
 else
   set guifont=Terminus\ 12

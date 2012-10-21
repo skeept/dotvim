@@ -23,6 +23,7 @@ else
   let g:p0 = "~/vimfiles"
 endif
 
+let g:is_win = has('win32') || has('win64')
 
 "============================= pathogen =======================================
 let g:pathogen_disabled = []
@@ -38,7 +39,7 @@ if !has("python")
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
   let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
 endif
-if has("win32")
+if g:is_win
   let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
@@ -90,7 +91,7 @@ exec "set directory^=" . g:p0 . "/swapdir"
 if v:version >= 703
   exec "set undodir^=" . g:p0 . "/undodir"
 endif
-"if has("win32")
+"if g:is_win
   "set backupdir^=$HOME\vimfiles\backup//
   "set directory^=$HOME\vimfiles\swapdir//
   "if v:version >= 703
@@ -122,7 +123,7 @@ set foldmethod=syntax
 set title
 set virtualedit+=block
 
-"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+"if !g:is_win "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
   set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
@@ -351,7 +352,7 @@ endif " has("autocmd")
 let fortran_free_source = 1
 
 " setting the color in terminals
-if !has("gui_running") && !has("win32")
+if !has("gui_running") && !g:is_win
   "on windows default is better
   "colorscheme evening_cs
   "colorscheme default
@@ -469,14 +470,9 @@ let g:LustyJugglerShowKeys = 'a'
 "==============================================================================
 
 "=============================== yankRing =====================================
-"yankring
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
-if has("win32")
-  let g:yankring_history_dir  = "$HOME/vimfiles"
-else
-  let g:yankring_history_dir = "$HOME/.vim" "don't want the file in the home folder
-endif
+let g:yankring_history_dir = g:p0
 "==============================================================================
 
 "=============================== PreciseJump ==================================
@@ -484,7 +480,6 @@ nmap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
 omap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 "==============================================================================
-
 
 "======================== LustyExplorer and Juggler ===========================
 "nmap <silent> ,lf :LustyFilesystemExplorer<CR>
@@ -583,12 +578,12 @@ let g:Tex_DefaultTargetFormat='pdf'
 let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 let g:tex_comment_nospell= 1 "don't do spelling in comments
-if has("autocmd") && has("win32")
+if has("autocmd") && g:is_win
   autocmd BufRead,BufNewFile *.tex compiler tex
         \ | setlocal textwidth=90
 endif
 
-if has("win32")
+if g:is_win
   let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
   let g:Tex_ViewRule_pdf = expand("$HOME" .
         \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
@@ -987,7 +982,7 @@ noremap ,sbt :windo set scrollbind<CR>
 noremap ,sbf :windo set noscrollbind<CR>
 "==============================================================================
 "========================== Fix shell=bash in windows =========================
-if has("win32") && &shell =~ 'bash'
+if g:is_win && &shell =~ 'bash'
 "let $TMP = 'c:\\htemp\\tmp'
 set shell=C:\Windows\System32\cmd.exe
 set shellxquote=(
@@ -996,7 +991,7 @@ endif
 
 "=========================== full screen with plugin ==========================
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
-if has("win32")
+if g:is_win
   let g:isMaximized = 0
   function! FullScreenToogleFun()
     if g:isMaximized == 0

@@ -25,7 +25,7 @@ else
   let g:p0 = "~/vimfiles"
 endif
 
-
+let g:is_win = has('win32') || has('win64')
 
 "=============================== Settings =====================================
 " Use Vim settings, rather then Vi settings (much better!).
@@ -73,7 +73,7 @@ exec "set directory^=" . g:p0 . "/swapdir"
 if v:version >= 703
   exec "set undodir^=" . g:p0 . "/undodir"
 endif
-"if has("win32")
+"if g:is_win
   "set backupdir^=$HOME\vimfiles\backup//
   "set directory^=$HOME\vimfiles\swapdir//
   "if v:version >= 703
@@ -105,7 +105,7 @@ set foldmethod=syntax
 set title
 set virtualedit+=block
 
-"if !has("win32") "for gnu grep, do some other setting for windows (maybe use cygwin?)
+"if !g:is_win "for gnu grep, do some other setting for windows (maybe use cygwin?)
   "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
   "we change to setting from H to -h so the filename does not show up
   set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
@@ -336,7 +336,7 @@ endif " has("autocmd")
 let fortran_free_source = 1
 
 " setting the color in terminals
-if !has("gui_running") && !has("win32")
+if !has("gui_running") && !g:is_win
   "on windows default is better
   "colorscheme evening_cs
   "colorscheme default
@@ -423,12 +423,12 @@ let g:Tex_DefaultTargetFormat='pdf'
 let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 let g:tex_comment_nospell= 1 "don't do spelling in comments
-if has("autocmd") && has("win32")
+if has("autocmd") && g:is_win
   autocmd BufRead,BufNewFile *.tex compiler tex
         \ | setlocal textwidth=90
 endif
 
-if has("win32")
+if g:is_win
   let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
   let g:Tex_ViewRule_pdf = expand("$HOME" .
         \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
@@ -700,7 +700,7 @@ if has("autocmd")
   autocmd FileType tex exec "source " . g:p0 . "/bundle/vlatex/plugin/imaps.vim"
 endif
 "========================== Fix shell=bash in windows =========================
-if has("win32") && &shell =~ 'bash'
+if g:is_win && &shell =~ 'bash'
 "let $TMP = 'c:\\htemp\\tmp'
 set shell=C:\Windows\System32\cmd.exe
 set shellxquote=(
@@ -709,7 +709,7 @@ endif
 
 "=========================== full screen with plugin ==========================
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
-if has("win32")
+if g:is_win
   let g:isMaximized = 0
   function! FullScreenToogleFun()
     if g:isMaximized == 0
