@@ -58,7 +58,7 @@ function do_git_update2()
   git_cmd=$(cat << EOF
 cd {} >& /dev/null
 echo ">>> git >>> {}";
-GIT_SSL_NO_VERIFY=true git pull 2>&1  |\
+GIT_SSL_NO_VERIFY=true git pull 2>&1 |\
   grep -v "Already up-to-date" |\
   grep -v "github.com" |\
   grep -v "Updating " |\
@@ -94,44 +94,105 @@ EOF
   #all remote heads known locally
   #no changes found
 
+  #if test -n "$git_folders"; then
+    ##parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
+    #parallel -j 20 "${git_cmd}" ::: $git_folders
+  #fi
+  #if test -n "$hg_folders"; then
+    ##parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
+    #parallel -j 20 "${hg_cmd}" ::: $hg_folders
+  #fi
+  #if test -n "$bzr_folders"; then
+    #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
+  #fi
+
   if test -n "$git_folders"; then
     #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-    parallel -j 20 "${git_cmd}" ::: $git_folders
+    parallel -j 20 "./move2_git.sh update_cmd git {}" ::: $git_folders
   fi
   if test -n "$hg_folders"; then
     #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
-    parallel -j 20 "${hg_cmd}" ::: $hg_folders
+    #parallel -j 20 "${hg_cmd}" ::: $hg_folders
+    parallel -j 20 "./move2_git.sh update_cmd hg {}" ::: $hg_folders
   fi
   if test -n "$bzr_folders"; then
-    parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
+    #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
+    parallel -j 20 "./move2_git.sh update_cmd bzr {}" ::: $bzr_folders
   fi
+}
+
+
+function update_cmd()
+{
+  #curdir=${PWD}
+  if test "$1" = "git"; then
+    prog="git"
+    cd "$2" 2>&1 > /dev/null
+    output=$(GIT_SSL_NO_VERIFY=true git pull 2>&1 |\
+      grep -v "Already up-to-date" |\
+      grep -v "github.com" |\
+      grep -v "Updating " |\
+      grep -v "Fast-forward" |\
+      grep -v "^From " |\
+      grep -v -i "FETCH_HEAD"
+    )
+  fi
+
+  if test "$1" = "hg"; then
+    prog="hg"
+    cd "$2" 2>&1 > /dev/null
+    output=$(hg pull -u 2>&1 |\
+      grep -v "searching for changes" |\
+      grep -v "all remote heads known locally" |\
+      grep -v "no changes found" |\
+      grep -v "pulling from"
+    )
+  fi
+
+  if test "$1" = "bzr"; then
+    prog="bzr"
+    cd "$2" 2>&1 > /dev/null
+    output=$(bzr pull 2>&1 |\
+      grep -v "All changes applied successfully" |\
+      grep -v "Now on revision" |\
+      grep -v "Using saved parent location" |\
+      grep -v "No revisions to pull"
+    )
+  fi
+
+  if test -n "$output"; then
+    echo ">>> ${prog}: $2"
+    echo "$output"
+  fi
+}
+
+function usage()
+{
+  echo "$0 -s : move .git to ._git"
+  echo "$0 -u : update .git"
 }
 
 function main()
 {
-  if test -z "$@"; then
-    echo "$0 -s : move .git to ._git"
-    echo "$0 -u : update .git"
-    echo -e "\n"
+  if test "$#" -eq 0; then
     do_git_update2
     exit
-  elif test "$1" = "-quiet"; then
-    echo "##################### $(basename $PWD) ########"
-    do_git_update2
+  elif test "$1" = "-h"; then
+    usage
     exit
-  fi
-  DO_UPDATE=0
-  while getopts "us" flag
-  do
-    case $flag in 
-      u) DO_UPDATE=1 ;;
-    esac
-  done
-  if test $DO_UPDATE -eq 1 ; then
-    do_git_update
-  else
-    do_git2_
+  elif test "$1" = "update_cmd"; then
+    shift
+    update_cmd "$@"
+    exit
   fi
 }
 
 main "$@"
+#if test "$#" -eq 0; then
+  #main "$@"
+#else
+  #if test "$1" = "update_cmd"; then
+    #shift
+    #update_cmd "$@"
+  #fi
+#fi
