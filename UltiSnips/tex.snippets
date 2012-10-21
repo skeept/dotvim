@@ -143,8 +143,9 @@ snippet abs "enclose expression in | |" !w
 endsnippet
 
 snippet todoi "expansion of todoi" !w
-\todoi{${1:<+title (red)+>}}
-  {${2:<+outline (blue)+>}}$0
+\todoi{${1:<+title (red)+>}}{
+${2:<+outline (blue)+>}
+}$0
 endsnippet
 
 snippet ht "hat" w
