@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Oct 2012.
+" Last Modified: 22 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -141,6 +141,20 @@ function! s:kind.action_table.rename.func(candidates)"{{{
     if filename != '' && filename !=# candidate.action__path
       call unite#kinds#file#do_rename(candidate.action__path, filename)
     endif
+  endfor
+endfunction"}}}
+
+let s:kind.action_table.backup = {
+      \ 'description' : 'backup files',
+      \ 'is_quit' : 0,
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.backup.func(candidates)"{{{
+  for candidate in a:candidates
+    let filename = candidate.action__path . '.' . strftime('%y%m%d_%H%M')
+
+    call unite#sources#file#copy_files(filename, [candidate])
   endfor
 endfunction"}}}
 
@@ -504,11 +518,11 @@ let s:kind.action_table.vimfiler__mkdir = {
       \ 'is_quit' : 0,
       \ 'is_invalidate_cache' : 1,
       \ 'is_listed' : 0,
+      \ 'is_selectable' : 1,
       \ }
-function! s:kind.action_table.vimfiler__mkdir.func(candidate)"{{{
-  let vimfiler_current_dir =
-        \ get(unite#get_context(),
-        \   'vimfiler__current_directory', '')
+function! s:kind.action_table.vimfiler__mkdir.func(candidates)"{{{
+  let context = unite#get_context()
+  let vimfiler_current_dir = get(context, 'vimfiler__current_directory', '')
   if vimfiler_current_dir == ''
     let vimfiler_current_dir = getcwd()
   endif
@@ -530,8 +544,14 @@ function! s:kind.action_table.vimfiler__mkdir.func(candidate)"{{{
 
     if filereadable(dirname) || isdirectory(dirname)
       echo dirname . ' is already exists.'
-    else
-      call mkdir(dirname, 'p')
+      return
+    endif
+
+    call mkdir(dirname, 'p')
+
+    " Move marked files.
+    if !get(context, 'vimfiler__is_dummy', 1)
+      call unite#sources#file#move_files(dirname, a:candidates)
     endif
   finally
     lcd `=current_dir`
