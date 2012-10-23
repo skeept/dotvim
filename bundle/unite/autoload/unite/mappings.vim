@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Oct 2012.
+" Last Modified: 23 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -410,6 +410,11 @@ function! s:get_action_table(action_name, candidates, sources)"{{{
       " Get default action.
       let action_name = unite#get_default_action(
             \ candidate.source, candidate.kind)
+    endif
+
+    if action_name == ''
+      " Ignore.
+      return []
     endif
 
     if !has_key(action_table, action_name)
@@ -962,8 +967,11 @@ function! s:source_action.gather_candidates(args, context)"{{{
   " Print default action.
   let default_actions = []
   for candidate in candidates
-    call add(default_actions, unite#get_default_action(
-          \ candidate.source, candidate.kind))
+    let default_action = unite#get_default_action(
+          \ candidate.source, candidate.kind)
+    if default_action != ''
+      call add(default_actions, default_action)
+    endif
   endfor
   let default_actions = unite#util#uniq(default_actions)
   if len(default_actions) == 1
