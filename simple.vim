@@ -177,6 +177,9 @@ noremap <F1> :wa<CR>
 "how often do I type ;;?
 inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
+
+"do I really change colorscheme that often?
+nnoremap ,sc :<C-U>colorscheme<space>
 "===================== Don't view files with inconsistent ctrl-r ==============
 map ,m :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
