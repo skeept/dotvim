@@ -166,11 +166,11 @@ vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '
 
 inoremap <silent> <buffer> `. \cdot
 
-"map <F12> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
-      "\ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
-      "\ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
+map <F12> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
+      \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
+      \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
 "syn region texTabularPos matchgroup=NONE start='\\begin\s*{\s*tabular\s*}{' end='}'
       "\ contains=@NoSpell
-syn region texMyNOHL matchgroup=NONE start='{tabular}{' end='}'
+syn region texComment matchgroup=texStatement start='{tabular}{' end='}'
       \ contains=@NoSpell
