@@ -1088,7 +1088,7 @@ function! MyThesisEnv()
     else
       let range_ = "'<,'>"
       let extra_flags = 'gc'
-      let g:replace_cmd = ':' .range_ . "s/" .  g:replace_list_in[g:replace_ncur] 
+      let g:replace_cmd = ':' .range_ . "s/" .  g:replace_list_in[g:replace_ncur]
             \ . "/" . g:replace_list_out[g:replace_ncur] . "/" . extra_flags
             \ . "\<CR>"
       call histadd("cmd", g:replace_cmd)
