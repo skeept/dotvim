@@ -60,11 +60,10 @@ ${1}
 \end{equation}${0:<++>}
 endsnippet
 
-snippet hfig "insert figure"
-\begin{figure}
-\begin{center}
-\includegraphics[scale=${1:1.0}]{${2}}
-\end{center}
+snippet fig "insert figure"
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=${1:1.0}]{${2:<+fig name+>}}
 \caption{${3:<+caption+>}}
 \label{fig:${4:<+label+>}}
 \end{figure}$0
