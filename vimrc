@@ -519,11 +519,12 @@ endif
 "==============================================================================
 
 "=============================== Unite ========================================
-nnoremap <silent> ,uc :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
 nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-nnoremap ,uf  :<C-u>Unite source<CR>
+nnoremap ,uf :<C-u>Unite source<CR>
+nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
 
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()"{{{
