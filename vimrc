@@ -1098,6 +1098,13 @@ function! MyThesisEnv()
   endfunction
   nnoremap <silent><expr> <Leader>ns MyLatexReplaceText()
 
+  function! MyForwardSearch()
+    let target = 'tdraft.pdf'
+    let cmd = "SumatraPdf -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . target
+    let execString = 'silent! !start ' . cmd
+    echom execString
+  endfunction
+
 endfunction
 
 command! Mt call MyThesisEnv()
