@@ -588,10 +588,9 @@ if has("autocmd") && g:is_win
 endif
 
 if g:is_win
-  let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
-  let g:Tex_ViewRule_pdf = expand("$HOME" .
-        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
-        \ "-reuse-instance")
+  let g:SumatraPdfLoc = expand("$HOME" .
+        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
+  let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
 endif
 
 imap <F8> <Plug>IMAP_JumpForward
@@ -1100,10 +1099,11 @@ function! MyThesisEnv()
 
   function! MyForwardSearch()
     let target = 'tdraft.pdf'
-    let cmd = "SumatraPdf -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . target
+    let cmd = g:SumatraPdfLoc .  " -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . " " . target
     let execString = 'silent! !start ' . cmd
-    echom execString
+    exe execString
   endfunction
+  nnoremap <Leader>la :<C-U>call MyForwardSearch()<CR>
 
 endfunction
 
