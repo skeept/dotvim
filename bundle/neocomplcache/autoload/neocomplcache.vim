@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Oct 2012.
+" Last Modified: 27 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -897,6 +897,9 @@ function! s:do_auto_complete(event)"{{{
     endfor
 
     if !is_delimiter
+      let s:cur_text = ''
+      let s:old_cur_text = ''
+
       if g:neocomplcache_enable_debug
         echomsg 'Skipped.'
       endif
@@ -1249,22 +1252,42 @@ function! neocomplcache#compare_rank(i1, i2)
   endif
   return diff
 endfunction"}}}
-" Pos order."{{{
-function! s:compare_pos(i1, i2)
-  return a:i1[0] == a:i2[0] ? a:i1[1] - a:i2[1] : a:i1[0] - a:i2[0]
-endfunction"}}}
 " Word order."{{{
 function! neocomplcache#compare_word(i1, i2)
   return (a:i1.word ># a:i2.word) ? 1 : -1
 endfunction"}}}
+" Nothing order."{{{
+function! neocomplcache#compare_nothing(i1, i2)
+  return 0
+endfunction"}}}
+" Human order."{{{
+function! neocomplcache#compare_human(i1, i2)
+  let words_1 = map(split(a:i1.word, '\D\zs\ze\d'),
+        \ "v:val =~ '^\\d' ? str2nr(v:val) : v:val")
+  let words_2 = map(split(a:i2.word, '\D\zs\ze\d'),
+        \ "v:val =~ '^\\d' ? str2nr(v:val) : v:val")
+  let words_1_len = len(words_1)
+  let words_2_len = len(words_2)
+
+  for i in range(0, min([words_1_len, words_2_len])-1)
+    if words_1[i] ># words_2[i]
+      return 1
+    elseif words_1[i] <# words_2[i]
+      return -1
+    endif
+  endfor
+
+  return words_1_len - words_2_len
+endfunction"}}}
+
 " Source rank order."{{{
 function! s:compare_source_rank(i1, i2)
   return neocomplcache#get_source_rank(a:i2[0]) -
         \ neocomplcache#get_source_rank(a:i1[0])
 endfunction"}}}
-" Nothing order."{{{
-function! neocomplcache#compare_nothing(i1, i2)
-  return 0
+" Pos order."{{{
+function! s:compare_pos(i1, i2)
+  return a:i1[0] == a:i2[0] ? a:i1[1] - a:i2[1] : a:i1[0] - a:i2[0]
 endfunction"}}}
 
 function! neocomplcache#rand(max)"{{{
