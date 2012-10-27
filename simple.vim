@@ -73,19 +73,6 @@ exec "set directory^=" . g:p0 . "/swapdir"
 if v:version >= 703
   exec "set undodir^=" . g:p0 . "/undodir"
 endif
-"if g:is_win
-  "set backupdir^=$HOME\vimfiles\backup//
-  "set directory^=$HOME\vimfiles\swapdir//
-  "if v:version >= 703
-    "set undodir^=$HOME\vimfiles\undodir//
-  "endif
-"else
-  "set backupdir^=~/.vim/backup//
-  "set directory^=~/.vim/swapdir//
-  "if v:version >= 703
-    "set undodir^=$HOME/.vim/undodir//
-  "endif
-"endif
 
 set expandtab
 set softtabstop=2
