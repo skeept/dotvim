@@ -172,5 +172,4 @@ map <F12> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans
 
 "syn region texTabularPos matchgroup=NONE start='\\begin\s*{\s*tabular\s*}{' end='}'
       "\ contains=@NoSpell
-syn region texComment matchgroup=texStatement start='{tabular}{' end='}'
-      \ contains=@NoSpell
+syn region texSectionZone matchgroup=texSection start='{tabular}{' end='}' contains=@NoSpell
