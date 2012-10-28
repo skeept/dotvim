@@ -21,8 +21,8 @@ hi Cursor       guifg=NONE    guibg=#626262 gui=NONE
 hi CursorColumn guibg=#2d2d2d
 hi CursorLine   guibg=#2d2d2d
 hi DiffAdd      guifg=#000000 guibg=#3cb371 gui=NONE
+hi DiffDelete   guifg=#000000 guibg=#aa4450 gui=NONE
 hi DiffChange   guifg=#000000 guibg=#4f94cd gui=NONE
-hi DiffDelete   guifg=#000000 guibg=#8b3626 gui=NONE
 hi DiffText     guifg=#000000 guibg=#8ee5ee gui=NONE
 hi Directory    guifg=#1e90ff guibg=bg      gui=NONE
 hi ErrorMsg     guifg=#ff6a6a guibg=NONE    gui=bold
@@ -75,10 +75,14 @@ hi PreProc      guifg=#528b8b gui=NONE
 hi Todo         guifg=#8f6f8f guibg=#202020 gui=italic,underline,bold
 
 " Diff
-hi diffOldFile      guifg=#da70d6   guibg=NONE      gui=italic
-hi diffNewFile      guifg=#ffff00   guibg=NONE      gui=italic
-hi diffFile         guifg=#ffa500   guibg=NONE      gui=italic
-hi diffLine         guifg=#ff00ff   guibg=NONE      gui=italic
+hi diffOldFile      guifg=#88afcb   guibg=NONE      gui=italic
+hi diffNewFile      guifg=#88afcb   guibg=NONE      gui=italic
+hi diffFile         guifg=#88afcb   guibg=NONE      gui=italic
+hi diffLine         guifg=#88afcb   guibg=NONE      gui=italic
+hi link             diffSubname     diffLine
+hi diffAdded        guifg=#3cb371   guibg=NONE      gui=NONE
+hi diffRemoved      guifg=#aa4450   guibg=NONE      gui=NONE
+hi diffChanged      guifg=#4f94cd   guibg=NONE      gui=NONE
 hi link             diffOnly        Constant
 hi link             diffIdentical   Constant
 hi link             diffDiffer      Constant
@@ -86,11 +90,7 @@ hi link             diffBDiffer     Constant
 hi link             diffIsA         Constant
 hi link             diffNoEOL       Constant
 hi link             diffCommon      Constant
-hi diffRemoved      guifg=#cd5555   guibg=NONE      gui=NONE
-hi diffChanged      guifg=#4f94cd   guibg=NONE      gui=NONE
-hi diffAdded        guifg=#00cd00   guibg=NONE      gui=NONE
-hi link             diffSubname     diffLine
-hi link             diffComment     Comment
+hi link             diffComment     Constant
 
 " Python
 hi pythonException  guifg=#90b0d1 guibg=NONE gui=NONE
@@ -103,12 +103,13 @@ hi link pythonDecoratorFunction pythonDecorator
 " 256 Colors {{{1
 " ============================================================================
 hi Normal                 cterm=NONE             ctermbg=235   ctermfg=145
-hi ColorColumn            cterm=NONE             ctermbg=234   ctermfg=fg
+hi ColorColumn            cterm=NONE             ctermbg=16   ctermfg=fg
 hi Cursor                 cterm=NONE             ctermbg=241   ctermfg=fg
-hi CursorColumn           cterm=NONE             ctermbg=236   ctermfg=fg
+hi CursorColumn           cterm=NONE             ctermbg=16   ctermfg=fg
+hi CursorLine             cterm=NONE             ctermbg=236   ctermfg=fg
 hi DiffAdd                cterm=NONE             ctermbg=71    ctermfg=16
+hi DiffDelete             cterm=NONE             ctermbg=124    ctermfg=16
 hi DiffChange             cterm=NONE             ctermbg=68    ctermfg=16
-hi DiffDelete             cterm=NONE             ctermbg=94    ctermfg=16
 hi DiffText               cterm=NONE             ctermbg=117   ctermfg=16
 hi Directory              cterm=NONE             ctermbg=234   ctermfg=33
 hi ErrorMsg               cterm=bold             ctermbg=bg    ctermfg=203
@@ -119,7 +120,7 @@ hi LineNr                 cterm=NONE             ctermbg=16    ctermfg=59
 hi MatchParen             cterm=bold             ctermbg=16    ctermfg=226
 hi ModeMsg                cterm=bold             ctermbg=46    ctermfg=16
 hi MoreMsg                cterm=bold             ctermbg=234   ctermfg=29
-hi NonText                cterm=NONE             ctermbg=234   ctermfg=59
+hi NonText                cterm=NONE             ctermbg=bg   ctermfg=59
 hi Pmenu                  cterm=NONE             ctermbg=238   ctermfg=231
 hi PmenuSbar              cterm=NONE             ctermbg=250   ctermfg=fg
 hi PmenuSel               cterm=NONE             ctermbg=149   ctermfg=16
@@ -156,13 +157,22 @@ hi Special                cterm=NONE             ctermbg=bg    ctermfg=64
 hi PreProc                cterm=NONE             ctermbg=bg    ctermfg=66
 hi Todo                   cterm=bold,underline   ctermbg=234   ctermfg=96
 
-hi diffAdded              cterm=NONE             ctermbg=bg    ctermfg=40
-hi diffChanged            cterm=NONE             ctermbg=bg    ctermfg=68
-hi diffFile               cterm=NONE             ctermbg=bg    ctermfg=214
-hi diffLine               cterm=NONE             ctermbg=bg    ctermfg=201
-hi diffNewFile            cterm=NONE             ctermbg=bg    ctermfg=226
-hi diffOldFile            cterm=NONE             ctermbg=bg    ctermfg=170
-hi diffRemoved            cterm=NONE             ctermbg=bg    ctermfg=167
+hi diffOldFile            cterm=NONE             ctermbg=bg    ctermfg=67
+hi diffNewFile            cterm=NONE             ctermbg=bg    ctermfg=67
+hi diffFile               cterm=NONE             ctermbg=bg    ctermfg=67
+hi diffLine               cterm=NONE             ctermbg=bg    ctermfg=67
+hi diffAdded              cterm=NONE             ctermfg=bg    ctermfg=71
+hi diffRemoved            cterm=NONE             ctermfg=bg    ctermfg=124
+hi diffChanged            cterm=NONE             ctermfg=bg    ctermfg=68
+hi link             diffSubname     diffLine
+hi link             diffOnly        Constant
+hi link             diffIdentical   Constant
+hi link             diffDiffer      Constant
+hi link             diffBDiffer     Constant
+hi link             diffIsA         Constant
+hi link             diffNoEOL       Constant
+hi link             diffCommon      Constant
+hi link             diffComment     Constant
 
 hi pythonClass            cterm=NONE             ctermbg=bg    ctermfg=fg
 hi pythonDecorator        cterm=NONE             ctermbg=bg    ctermfg=101
