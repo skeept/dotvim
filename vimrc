@@ -1101,7 +1101,7 @@ function! MyThesisEnv()
   nnoremap <silent><expr> <Leader>ns MyLatexReplaceText()
 
   function! MyForwardSearch()
-    let target = 'tdraft.pdf'
+    let target = g:thesis_path . '/tdraft.pdf'
     let cmd = g:SumatraPdfLoc .  " -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . " " . target
     let execString = 'silent! !start ' . cmd
     exe execString
