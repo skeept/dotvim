@@ -30,7 +30,8 @@ let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
-let g:pathogen_disabled += ['powerline', 'snipmate']
+"let g:pathogen_disabled += ['powerline']
+let g:pathogen_disabled += ['snipmate']
 let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
 "let g:pathogen_disabled += ['supertab']
 "let g:pathogen_disabled += ['vlatex']
@@ -909,7 +910,9 @@ inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
 "let g:Powerline_symbols = 'unicode'
 "let g:Powerline_theme       = 'skwp'
-let g:Powerline_colorscheme = 'skwp'
+"let g:Powerline_colorscheme = 'skwp'
+let g:Powerline_theme = 'solarized256'
+let g:Powerline_colorscheme = 'solarized256'
 let g:Powerline_stl_path_style = 'filename'
 "==============================================================================
 
