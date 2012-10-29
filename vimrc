@@ -1047,6 +1047,8 @@ if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
     let g:thesis_path = $HOME . ""
   elseif compname == "Isengard-3000-N100"
     let g:thesis_path = $HOME .  "/Documents/Thesis"
+  elseif compname =~ 'isye.gatech.edu'
+    let g:thesis_path = $HOME . "/WORK/Thesis"
 endif
 
 function! MyThesisEnv()
