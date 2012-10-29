@@ -907,13 +907,17 @@ inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================
 
 "=============================== powerline ====================================
-let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
-"let g:Powerline_symbols = 'unicode'
-"let g:Powerline_theme       = 'skwp'
-"let g:Powerline_colorscheme = 'skwp'
-let g:Powerline_theme = 'solarized256'
-let g:Powerline_colorscheme = 'solarized256'
-let g:Powerline_stl_path_style = 'filename'
+if index(g:pathogen_disabled, 'powerline') == -1
+  let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
+  "let g:Powerline_symbols = 'unicode'
+  "let g:Powerline_theme       = 'skwp'
+  "let g:Powerline_colorscheme = 'skwp'
+  "let g:Powerline_theme = 'solarized256'
+  "let g:Powerline_colorscheme = 'solarized256'
+  let g:Powerline_stl_path_style = 'filename'
+  call Pl#Theme#RemoveSegment('currenttag')
+  call Pl#Theme#RemoveSegment('branch')
+endif
 "==============================================================================
 
 "=============================== Delete Whitespace ============================
