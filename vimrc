@@ -30,7 +30,7 @@ let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
-"let g:pathogen_disabled += ['powerline']
+let g:pathogen_disabled += ['powerline']
 let g:pathogen_disabled += ['snipmate']
 let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
 "let g:pathogen_disabled += ['supertab']
@@ -1050,6 +1050,10 @@ if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
 endif
 
 function! MyThesisEnv()
+  if has("gui")
+    winpos 0 0
+    set lines=100 columns=96
+  endif
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
   command! ThesisCompileView !start perl run_latexmk.pl
