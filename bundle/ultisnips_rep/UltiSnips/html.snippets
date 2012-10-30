@@ -37,6 +37,10 @@ snippet doctype "HTML - 4.0 Transitional (doctype)" b
 
 endsnippet
 
+snippet doctype "HTML - 5.0 (doctype)" b
+<!DOCTYPE html>
+
+endsnippet
 
 #############
 # Shortcuts #
@@ -163,8 +167,8 @@ snip.rv = snip.fn and 'Hallo' or 'Nothin'
 endsnippet
 
 snippet div "XHTML <div>"
-<div${1: id="${2:name}"}>
-	$0
+<div`!p snip.rv=' id="' if t[1] else ""`${1:name}`!p snip.rv = '"' if t[1] else ""`>
+   $0
 </div>
 endsnippet
 
@@ -273,4 +277,21 @@ snippet movie "Embed QT movie (movie)" b
 </object>
 endsnippet
 
+snippet html5 "HTML5 Template"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>${1}</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <header>
+        ${2}
+    </header>
+    <footer>
+        ${4}
+    </footer>
+</body>
+</html>
+endsnippet
 # vim:ft=snippets:

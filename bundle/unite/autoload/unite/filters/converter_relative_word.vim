@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: converter_relative_word.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -43,7 +43,8 @@ function! s:converter.filter(candidates, context)"{{{
       let old_dir = directory
       let directory = substitute(a:context.source__directory, '*', '', 'g')
 
-      if directory !=# old_dir
+      if directory !=# old_dir && isdirectory(directory)
+            \ && a:context.input == ''
         lcd `=directory`
       endif
     endif

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: jump_list.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Nov 2011.
+" Last Modified: 26 Aug 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,130 +37,123 @@ endif
 "}}}
 
 function! unite#kinds#jump_list#define()"{{{
-  return s:kind
-endfunction"}}}
+  let kind = {
+        \ 'name' : 'jump_list',
+        \ 'default_action' : 'open',
+        \ 'action_table': {},
+        \ 'alias_table' : { 'rename' : 'replace' },
+        \ 'parents': ['openable'],
+        \}
 
-let s:kind = {
-      \ 'name' : 'jump_list',
-      \ 'default_action' : 'open',
-      \ 'action_table': {},
-      \ 'parents': ['openable'],
-      \}
-
-" Actions"{{{
-let s:kind.action_table.open = {
-      \ 'description' : 'jump to this position',
-      \ 'is_selectable' : 1,
-      \ }
-function! s:kind.action_table.open.func(candidates)"{{{
-  for candidate in a:candidates
-    if bufnr(unite#util#escape_file_searching(candidate.action__path)) != bufnr('%')
-      if has_key(candidate, 'action__buffer_nr')
-        execute 'buffer' candidate.action__buffer_nr
-      else
-        edit `=candidate.action__path`
-      endif
-    endif
-    call s:jump(candidate, 0)
-
-    " Open folds.
-    normal! zv
-    call s:adjust_scroll(s:best_winline())
-
-    call unite#remove_previewed_buffer_list(
-          \ bufnr(unite#util#escape_file_searching(
-          \       candidate.action__path)))
-  endfor
-endfunction"}}}
-
-let s:kind.action_table.preview = {
-      \ 'description' : 'preview this position',
-      \ 'is_quit' : 0,
-      \ }
-function! s:kind.action_table.preview.func(candidate)"{{{
-  let buflisted = buflisted(
-        \ unite#util#escape_file_searching(
-        \ a:candidate.action__path))
-
-  pedit +call\ s:jump(a:candidate,1) `=a:candidate.action__path`
-  if has_key(a:candidate, 'action__buffer_nr')
-    let filetype = getbufvar(a:candidate.action__buffer_nr, '&filetype')
-    if filetype != ''
-      let winnr = winnr()
-      execute bufwinnr(a:candidate.action__buffer_nr) . 'wincmd w'
-      execute 'setfiletype' filetype
-      execute winnr . 'wincmd w'
-    endif
-  endif
-
-  if !buflisted
-    call unite#add_previewed_buffer_list(
-        \ bufnr(unite#util#escape_file_searching(
-        \       a:candidate.action__path)))
-  endif
-endfunction"}}}
-
-if globpath(&runtimepath, 'autoload/qfreplace.vim') != ''
-  let s:kind.action_table.replace = {
-        \ 'description' : 'replace with qfreplace',
+  " Actions"{{{
+  let kind.action_table.open = {
+        \ 'description' : 'jump to this position',
         \ 'is_selectable' : 1,
         \ }
-  function! s:kind.action_table.replace.func(candidates)"{{{
-    let qflist = []
+  function! kind.action_table.open.func(candidates)"{{{
     for candidate in a:candidates
-      if has_key(candidate, 'action__line')
-            \ && has_key(candidate, 'action__text')
-        call add(qflist, {
-              \ 'filename' : candidate.action__path,
-              \ 'lnum' : candidate.action__line,
-              \ 'text' : candidate.action__text,
-              \ })
-      endif
-    endfor
+      let bufnr = s:open(candidate)
+      call s:jump(candidate, 0)
 
-    if !empty(qflist)
-      call setqflist(qflist)
-      call qfreplace#start('')
+      " Open folds.
+      normal! zv
+      call s:adjust_scroll(s:best_winline())
+
+      call unite#remove_previewed_buffer_list(bufnr)
+    endfor
+  endfunction"}}}
+
+  let kind.action_table.preview = {
+        \ 'description' : 'preview this position',
+        \ 'is_quit' : 0,
+        \ }
+  function! kind.action_table.preview.func(candidate)"{{{
+    let is_highlight = !unite#get_context().auto_preview
+    let preview_windows = filter(range(1, winnr('$')),
+          \ 'getwinvar(v:val, "&previewwindow") != 0')
+    if empty(preview_windows)
+      let filename = s:get_filename(a:candidate)
+      pedit! `=filename`
+      let preview_windows = filter(range(1, winnr('$')),
+            \ 'getwinvar(v:val, "&previewwindow") != 0')
+    endif
+
+    let winnr = winnr()
+    execute preview_windows[0].'wincmd w'
+    let bufnr = s:open(a:candidate)
+    call s:jump(a:candidate, is_highlight)
+    execute winnr.'wincmd w'
+
+    if !buflisted(bufnr)
+      call unite#add_previewed_buffer_list(bufnr)
     endif
   endfunction"}}}
-endif
+
+  if globpath(&runtimepath, 'autoload/qfreplace.vim') != ''
+    let kind.action_table.replace = {
+          \ 'description' : 'replace with qfreplace',
+          \ 'is_selectable' : 1,
+          \ }
+    function! kind.action_table.replace.func(candidates)"{{{
+      let qflist = []
+      for candidate in a:candidates
+        if has_key(candidate, 'action__line')
+              \ && has_key(candidate, 'action__text')
+          let filename = s:get_filename(candidate)
+          call add(qflist, {
+                \ 'filename' : filename,
+                \ 'lnum' : candidate.action__line,
+                \ 'text' : candidate.action__text,
+                \ })
+        endif
+      endfor
+
+      if !empty(qflist)
+        call setqflist(qflist)
+        call qfreplace#start('')
+      endif
+    endfunction"}}}
+  endif
+
+  return kind
+endfunction"}}}
+
 "}}}
 
 " Misc.
 function! s:jump(candidate, is_highlight)"{{{
-  if !has_key(a:candidate, 'action__line')
-        \ && !has_key(a:candidate, 'action__pattern')
-    " Move to head.
-    call cursor(1, 1)
-    return
-  endif
+  let line = get(a:candidate, 'action__line', 1)
+  let pattern = get(a:candidate, 'action__pattern', '')
 
-  if has_key(a:candidate, 'action__line')
-        \ && a:candidate.action__line != ''
-        \ && a:candidate.action__line !~ '^\d\+$'
+  if line !~ '^\d\+$'
     call unite#print_error('unite: jump_list: Invalid action__line format.')
     return
   endif
 
   if !has_key(a:candidate, 'action__pattern')
     " Jump to the line number.
-    let col = has_key(a:candidate, 'action__col') ?
-          \ a:candidate.action__col : 0
-    call cursor(a:candidate.action__line, col)
+    let col = get(a:candidate, 'action__col', 0)
+    if col == 0
+      if line('.') != line
+        execute line
+      endif
+    else
+      call cursor(line, col)
+    endif
+
     call s:open_current_line(a:is_highlight)
     return
   endif
 
-  let pattern = a:candidate.action__pattern
-
   " Jump by search().
   let source = unite#get_sources(a:candidate.source)
-  if !(has_key(a:candidate, 'action__signature') && has_key(source, 'calc_signature'))
+  if !(has_key(a:candidate, 'action__signature')
+        \ && has_key(source, 'calc_signature'))
     " Not found signature.
-    if has_key(a:candidate, 'action__line')
-          \ && a:candidate.action__line != ''
-          \ && getline(a:candidate.action__line) =~# pattern
-      execute a:candidate.action__line
+    if line != '' && getline(line) =~# pattern
+      if line('.') != line
+        execute line
+      endif
     else
       call search(pattern, 'w')
     endif
@@ -177,12 +170,14 @@ function! s:jump(candidate, is_highlight)"{{{
   if lnum != lnum_prev
     " Detected same pattern lines!!
     let start_lnum = lnum
-    while source.calc_signature(lnum) !=# a:candidate.action__signature
+    while source.calc_signature(lnum) !=#
+          \ a:candidate.action__signature
       call search(pattern, 'w')
       let lnum = line('.')
       if lnum == start_lnum
         " Not found.
-        call unite#print_error("unite: jump_list: Target position is not found.")
+        call unite#print_error(
+              \ "unite: jump_list: Target position is not found.")
         call cursor(1, 1)
         return
       endif
@@ -222,6 +217,30 @@ function! s:open_current_line(is_highlight)"{{{
   if a:is_highlight
     execute 'match Search /\%'.line('.').'l/'
   endif
+endfunction"}}}
+
+function! s:open(candidate)"{{{
+  let bufnr = s:get_bufnr(a:candidate)
+  if bufnr != bufnr('%')
+    if has_key(a:candidate, 'action__buffer_nr')
+      execute 'buffer' bufnr
+    else
+      edit `=a:candidate.action__path`
+    endif
+  endif
+
+  return bufnr
+endfunction"}}}
+function! s:get_filename(candidate)"{{{
+  return has_key(a:candidate, 'action__path') ?
+            \ a:candidate.action__path :
+            \ bufname(a:candidate.action__buffer_nr)
+endfunction"}}}
+function! s:get_bufnr(candidate)"{{{
+  return has_key(a:candidate, 'action__buffer_nr') ?
+        \ a:candidate.action__buffer_nr :
+        \ bufnr(unite#util#escape_file_searching(
+        \     a:candidate.action__path))
 endfunction"}}}
 
 let &cpo = s:save_cpo

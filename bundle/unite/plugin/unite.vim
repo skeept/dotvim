@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Jan 2012.
+" Last Modified: 21 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,17 +22,18 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 3.1, for Vim 7.2
 "=============================================================================
 
-if v:version < 702
+if exists('g:loaded_unite')
+  finish
+elseif v:version < 702
   echoerr 'unite.vim does not work this version of Vim "' . v:version . '".'
   finish
-elseif exists('g:loaded_unite')
-  finish
-elseif $SUDO_USER != ''
-  echoerr '"sudo vim" is detected. Please use sudo.vim or other plugins instead.'
-  echoerr 'unite.vim is disabled.'
+elseif $SUDO_USER != '' && $USER !=# $SUDO_USER
+      \ && $HOME !=# expand('~'.$USER)
+      \ && $HOME ==# expand('~'.$SUDO_USER)
+  echoerr '"sudo vim" and $HOME is not same to /root are detected.'
+        \.'Please use sudo.vim plugin instead of sudo command or set always_set_home in sudoers.'
   finish
 endif
 
@@ -74,22 +75,28 @@ let g:unite_abbr_highlight =
       \ get(g:, 'unite_abbr_highlight', 'Normal')
 let g:unite_cursor_line_highlight =
       \ get(g:, 'unite_cursor_line_highlight', 'PmenuSel')
+let g:unite_enable_short_source_names =
+      \ get(g:, 'unite_enable_short_source_names', 0)
 let g:unite_data_directory =
-      \ get(g:, 'unite_data_directory', expand('~/.unite'))
-if !isdirectory(fnamemodify(g:unite_data_directory, ':p'))
-  call mkdir(fnamemodify(g:unite_data_directory, ':p'))
+      \ substitute(substitute(fnamemodify(get(
+      \   g:, 'unite_data_directory', '~/.unite'),
+      \  ':p'), '\\', '/', 'g'), '/$', '', '')
+if !isdirectory(g:unite_data_directory)
+  call mkdir(g:unite_data_directory)
 endif
 "}}}
 
 " Wrapper command.
-command! -nargs=+ -complete=customlist,unite#complete_source Unite
+command! -nargs=+ -complete=customlist,unite#complete_source
+      \ Unite
       \ call s:call_unite_empty(<q-args>)
 function! s:call_unite_empty(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
   call unite#start(args, options)
 endfunction"}}}
 
-command! -nargs=+ -complete=customlist,unite#complete_source UniteWithCurrentDir
+command! -nargs=+ -complete=customlist,unite#complete_source
+      \ UniteWithCurrentDir
       \ call s:call_unite_current_dir(<q-args>)
 function! s:call_unite_current_dir(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
@@ -106,7 +113,8 @@ function! s:call_unite_current_dir(args)"{{{
   call unite#start(args, options)
 endfunction"}}}
 
-command! -nargs=+ -complete=customlist,unite#complete_source UniteWithBufferDir
+command! -nargs=+ -complete=customlist,unite#complete_source
+      \ UniteWithBufferDir
       \ call s:call_unite_buffer_dir(<q-args>)
 function! s:call_unite_buffer_dir(args)"{{{
   let [args, options] = s:parse_options_args(a:args)
@@ -161,14 +169,16 @@ function! s:call_unite_input_directory(args)"{{{
   call unite#start(args, options)
 endfunction"}}}
 
-command! -nargs=? -complete=customlist,unite#complete_buffer_name UniteResume call s:call_unite_resume(<q-args>)
+command! -nargs=? -complete=customlist,unite#complete_buffer_name
+      \ UniteResume call s:call_unite_resume(<q-args>)
 function! s:call_unite_resume(args)"{{{
   let [args, options] = s:parse_options(a:args)
 
   call unite#resume(join(args), options)
 endfunction"}}}
 
-command! -nargs=1 -complete=customlist,unite#complete_buffer_name UniteClose call unite#close(<q-args>)
+command! -nargs=1 -complete=customlist,unite#complete_buffer_name
+      \ UniteClose call unite#close(<q-args>)
 
 function! s:parse_options(args)"{{{
   let args = []

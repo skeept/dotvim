@@ -79,7 +79,7 @@ fu! Gitv_OpenGitCommand(command, windowCmd, ...) "{{{
         if a:windowCmd == ''
             silent setlocal modifiable
             silent setlocal noreadonly
-            1,$ d
+            1,$ d _
         else
             let goBackTo       = winnr()
             let dir            = s:GetRepoDir()
@@ -123,9 +123,8 @@ fu! Gitv_OpenGitCommand(command, windowCmd, ...) "{{{
             silent setlocal nowrap
         endif
         silent setlocal fdm=syntax
-        silent setlocal foldlevel=0
-        nmap <buffer> <silent> q :q!<CR>
-        nmap <buffer> <silent> u :if exists('b:Git_Command')<bar>call Gitv_OpenGitCommand(b:Git_Command, '', 1)<bar>endif<cr>
+        nnoremap <buffer> <silent> q :q!<CR>
+        nnoremap <buffer> <silent> u :if exists('b:Git_Command')<bar>call Gitv_OpenGitCommand(b:Git_Command, '', 1)<bar>endif<cr>
         call append(0, split(result, '\n')) "system converts eols to \n regardless of os.
         silent setlocal nomodifiable
         silent setlocal readonly
@@ -447,34 +446,47 @@ fu! s:AddFileModeSpecific(filePath, range, commitCount) "{{{
 endfu "}}}
 fu! s:SetupMappings() "{{{
     "operations
-    nmap <buffer> <silent> <cr> :call <SID>OpenGitvCommit("Gedit", 0)<cr>
-    nmap <buffer> <silent> o :call <SID>OpenGitvCommit("Gsplit", 0)<cr>
-    nmap <buffer> <silent> O :call <SID>OpenGitvCommit("Gtabedit", 0)<cr>
-    nmap <buffer> <silent> s :call <SID>OpenGitvCommit("Gvsplit", 0)<cr>
-    "force opening the fugitive buffer for the commit
-    nmap <buffer> <silent> <c-cr> :call <SID>OpenGitvCommit("Gedit", 1)<cr>
+    nnoremap <buffer> <silent> <C-n> <C-n>:call <SID>OpenGitvCommit("Gedit", 0)<cr>
+    nnoremap <buffer> <silent> <C-p> <C-p>:call <SID>OpenGitvCommit("Gedit", 0)<cr>
+    nnoremap <buffer> <silent> <cr> :call <SID>OpenGitvCommit("Gedit", 0)<cr>
+    nnoremap <buffer> <silent> o :call <SID>OpenGitvCommit("Gsplit", 0)<cr>
+    nnoremap <buffer> <silent> O :call <SID>OpenGitvCommit("Gtabedit", 0)<cr>
+    nnoremap <buffer> <silent> s :call <SID>OpenGitvCommit("Gvsplit", 0)<cr>
+    if(!exists("g:Gitv_DoNotMapCtrlKey"))
+        "fuzzyfinder style key mappings
+        nnoremap <buffer> <silent> <c-j> :call <SID>OpenGitvCommit("Gsplit", 0)<cr>
+        nnoremap <buffer> <silent> <c-k> :call <SID>OpenGitvCommit("Gvsplit", 0)<cr>
+        nnoremap <buffer> <silent> <c-l> :call <SID>OpenGitvCommit("Gtabedit", 0)<cr>
+        "force opening the fugitive buffer for the commit
+        nnoremap <buffer> <silent> <c-cr> :call <SID>OpenGitvCommit("Gedit", 1)<cr>
+    endif
+    "for the terminal
+    nnoremap <buffer> <silent> i :call <SID>OpenGitvCommit("Gedit", 1)<cr>
 
-    nmap <buffer> <silent> q :call <SID>CloseGitv()<cr>
-    nmap <buffer> <silent> u :call <SID>LoadGitv('', 1, b:Gitv_CommitCount, b:Gitv_ExtraArgs, <SID>GetRelativeFilePath(), <SID>GetRange())<cr>
-    nmap <buffer> <silent> co :call <SID>CheckOutGitvCommit()<cr>
+    nnoremap <buffer> <silent> q :call <SID>CloseGitv()<cr>
+    nnoremap <buffer> <silent> u :call <SID>LoadGitv('', 1, b:Gitv_CommitCount, b:Gitv_ExtraArgs, <SID>GetRelativeFilePath(), <SID>GetRange())<cr>
+    nnoremap <buffer> <silent> co :call <SID>CheckOutGitvCommit()<cr>
 
-    nmap <buffer> <silent> D :call <SID>DiffGitvCommit()<cr>
-    vmap <buffer> <silent> D :call <SID>DiffGitvCommit()<cr>
+    nnoremap <buffer> <silent> D :call <SID>DiffGitvCommit()<cr>
+    vnoremap <buffer> <silent> D :call <SID>DiffGitvCommit()<cr>
 
-    nmap <buffer> <silent> S :call <SID>StatGitvCommit()<cr>
-    vmap <buffer> <silent> S :call <SID>StatGitvCommit()<cr>
+    nnoremap <buffer> <silent> S :call <SID>StatGitvCommit()<cr>
+    vnoremap <buffer> <silent> S :call <SID>StatGitvCommit()<cr>
 
-    vmap <buffer> <silent> m :call <SID>MergeBranches()<cr>
+    vnoremap <buffer> <silent> m :call <SID>MergeBranches()<cr>
+    nnoremap <buffer> <silent> <leader>m :call <SID>MergeToCurrent()<cr>
 
     "movement
-    nmap <buffer> <silent> x :call <SID>JumpToBranch(0)<cr>
-    nmap <buffer> <silent> X :call <SID>JumpToBranch(1)<cr>
-    nmap <buffer> <silent> r :call <SID>JumpToRef(0)<cr>
-    nmap <buffer> <silent> R :call <SID>JumpToRef(1)<cr>
-    nmap <buffer> <silent> P :call <SID>JumpToHead()<cr>
+    nnoremap <buffer> <silent> x :call <SID>JumpToBranch(0)<cr>
+    nnoremap <buffer> <silent> X :call <SID>JumpToBranch(1)<cr>
+    nnoremap <buffer> <silent> r :call <SID>JumpToRef(0)<cr>
+    nnoremap <buffer> <silent> R :call <SID>JumpToRef(1)<cr>
+    nnoremap <buffer> <silent> P :call <SID>JumpToHead()<cr>
 
     "misc
-    nmap <buffer> git :Git 
+    nnoremap <buffer> git :Git<space>
+    " yank the commit hash
+    nnoremap <buffer> <silent> yc m'$F[w"+yw`'
 endf "}}}
 fu! s:SetupBufferCommands(fileMode) "{{{
     silent command! -buffer -nargs=* -complete=customlist,s:fugitive_GitComplete Git call <sid>MoveIntoPreviewAndExecute("unsilent Git <args>",1)|normal u
@@ -858,6 +870,11 @@ fu! s:CloseGitv() "{{{
     if s:IsFileMode()
         q
     else
+        "only tab: quit vim
+        if tabpagenr() == tabpagenr('$') && tabpagenr() == 1
+            qa
+        endif
+
         if g:Gitv_WipeAllOnClose
             silent windo setlocal bufhidden=wipe
         endif
@@ -930,6 +947,23 @@ fu! s:PerformMerge(target, mergeBranch, ff) abort
             exec 'Git branch -d ' . a:mergeBranch
         endif
     endif
+endfu
+fu! s:MergeToCurrent()
+    let refs = s:GetGitvRefs(".")
+    call filter(refs, 'v:val !=? "HEAD"')
+    if len(refs) < 1
+        echoerr 'No ref found to perform a merge.'
+        return
+    endif
+    let target = refs[0]
+    let target = substitute(target, "^[tr]:", "", "")
+
+    let choices = "&Yes\n&No\n&Cancel"
+    let ff = confirm("Use fast-forward, if possible, to merge '". target . "' in to 'HEAD'?", choices)
+    if ff == 0 || ff == 3 | return | endif
+    let ff = ff == 1 ? ff : 0
+
+    call s:PerformMerge("HEAD", target, ff)
 endfu "}}}
 fu! s:StatGitvCommit() range "{{{
     let shafirst = s:GetGitvSha(a:firstline)

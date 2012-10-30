@@ -166,7 +166,7 @@ When you use ropevim dialogs there is a command called ``batchset``.
 It can set many options at the same time.  After selecting this
 command from dialog base prompt, you are asked to enter a string.
 
-``batchset`` strijgs can set the value of configs in two ways.  The
+``batchset`` strings can set the value of configs in two ways.  The
 single line form is like this: >
 
   name1 value1
@@ -252,6 +252,9 @@ restructuring can be: >
                                   for "go to definition" result if the definition
                                   found is located in another file. By default the
                                   file is open in the same buffer.
+                                  Values: '' -- same buffer, 'new' --
+                                  horizontally split, 'vnew' --
+                                  vertically split
 
 *'pymode_rope_always_show_complete_menu'*   If set, rope autocompletion menu
 always show.

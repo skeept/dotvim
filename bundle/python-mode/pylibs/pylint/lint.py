@@ -1,5 +1,5 @@
 # Copyright (c) 2003-2010 Sylvain Thenault (thenault@gmail.com).
-# Copyright (c) 2003-2010 LOGILAB S.A. (Paris, FRANCE).
+# Copyright (c) 2003-2012 LOGILAB S.A. (Paris, FRANCE).
 # http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -66,6 +66,18 @@ REPORTER_OPT_MAP = {'text': TextReporter,
                     'msvs': VSTextReporter,
                     'colorized': ColorizedTextReporter,
                     'html': HTMLReporter,}
+
+
+def _get_python_path(filepath):
+    dirname = os.path.dirname(os.path.realpath(
+            os.path.expanduser(filepath)))
+    while True:
+        if not os.path.exists(os.path.join(dirname, "__init__.py")):
+            return dirname
+        old_dirname = dirname
+        dirname = os.path.dirname(dirname)
+        if old_dirname == dirname:
+            return os.getcwd()
 
 
 # Python Linter class #########################################################
@@ -140,84 +152,86 @@ class PyLinter(OptionsManagerMixIn, MessagesHandlerMixIn, ReportsHandlerMixIn,
     msgs = MSGS
     may_be_disabled = False
 
-    options = (('ignore',
-                {'type' : 'csv', 'metavar' : '<file>[,<file>...]',
-                 'dest' : 'black_list', 'default' : ('CVS',),
-                 'help' : 'Add files or directories to the blacklist. \
+    @staticmethod
+    def make_options():
+        return (('ignore',
+                 {'type' : 'csv', 'metavar' : '<file>[,<file>...]',
+                  'dest' : 'black_list', 'default' : ('CVS',),
+                  'help' : 'Add files or directories to the blacklist. \
 They should be base names, not paths.'}),
-               ('persistent',
-                {'default': True, 'type' : 'yn', 'metavar' : '<y_or_n>',
-                 'level': 1,
-                 'help' : 'Pickle collected data for later comparisons.'}),
+                ('persistent',
+                 {'default': True, 'type' : 'yn', 'metavar' : '<y_or_n>',
+                  'level': 1,
+                  'help' : 'Pickle collected data for later comparisons.'}),
 
-               ('load-plugins',
-                {'type' : 'csv', 'metavar' : '<modules>', 'default' : (),
-                 'level': 1,
-                 'help' : 'List of plugins (as comma separated values of \
+                ('load-plugins',
+                 {'type' : 'csv', 'metavar' : '<modules>', 'default' : (),
+                  'level': 1,
+                  'help' : 'List of plugins (as comma separated values of \
 python modules names) to load, usually to register additional checkers.'}),
 
-               ('output-format',
-                {'default': 'text', 'type': 'choice', 'metavar' : '<format>',
-                 'choices': ('text', 'parseable', 'msvs', 'colorized', 'html'),
-                 'short': 'f',
-                 'group': 'Reports',
-                 'help' : 'Set the output format. Available formats are text,\
+                ('output-format',
+                 {'default': 'text', 'type': 'choice', 'metavar' : '<format>',
+                  'choices': REPORTER_OPT_MAP.keys(),
+                  'short': 'f',
+                  'group': 'Reports',
+                  'help' : 'Set the output format. Available formats are text,\
                  parseable, colorized, msvs (visual studio) and html'}),
 
-               ('include-ids',
-                {'type' : 'yn', 'metavar' : '<y_or_n>', 'default' : 0,
-                 'short': 'i',
-                 'group': 'Reports',
-                 'help' : 'Include message\'s id in output'}),
+                ('include-ids',
+                 {'type' : 'yn', 'metavar' : '<y_or_n>', 'default' : 0,
+                  'short': 'i',
+                  'group': 'Reports',
+                  'help' : 'Include message\'s id in output'}),
 
-               ('files-output',
-                {'default': 0, 'type' : 'yn', 'metavar' : '<y_or_n>',
-                 'group': 'Reports', 'level': 1,
-                 'help' : 'Put messages in a separate file for each module / \
+                ('files-output',
+                 {'default': 0, 'type' : 'yn', 'metavar' : '<y_or_n>',
+                  'group': 'Reports', 'level': 1,
+                  'help' : 'Put messages in a separate file for each module / \
 package specified on the command line instead of printing them on stdout. \
 Reports (if any) will be written in a file name "pylint_global.[txt|html]".'}),
 
-               ('reports',
-                {'default': 1, 'type' : 'yn', 'metavar' : '<y_or_n>',
-                 'short': 'r',
-                 'group': 'Reports',
-                 'help' : 'Tells whether to display a full report or only the\
+                ('reports',
+                 {'default': 1, 'type' : 'yn', 'metavar' : '<y_or_n>',
+                  'short': 'r',
+                  'group': 'Reports',
+                  'help' : 'Tells whether to display a full report or only the\
  messages'}),
 
-               ('evaluation',
-                {'type' : 'string', 'metavar' : '<python_expression>',
-                 'group': 'Reports', 'level': 1,
-                 'default': '10.0 - ((float(5 * error + warning + refactor + \
+                ('evaluation',
+                 {'type' : 'string', 'metavar' : '<python_expression>',
+                  'group': 'Reports', 'level': 1,
+                  'default': '10.0 - ((float(5 * error + warning + refactor + \
 convention) / statement) * 10)',
-                 'help' : 'Python expression which should return a note less \
+                  'help' : 'Python expression which should return a note less \
 than 10 (10 is the highest note). You have access to the variables errors \
 warning, statement which respectively contain the number of errors / warnings\
  messages and the total number of statements analyzed. This is used by the \
  global evaluation report (RP0004).'}),
 
-               ('comment',
-                {'default': 0, 'type' : 'yn', 'metavar' : '<y_or_n>',
-                 'group': 'Reports', 'level': 1,
-                 'help' : 'Add a comment according to your evaluation note. \
+                ('comment',
+                 {'default': 0, 'type' : 'yn', 'metavar' : '<y_or_n>',
+                  'group': 'Reports', 'level': 1,
+                  'help' : 'Add a comment according to your evaluation note. \
 This is used by the global evaluation report (RP0004).'}),
 
-               ('enable',
-                {'type' : 'csv', 'metavar': '<msg ids>',
-                 'short': 'e',
-                 'group': 'Messages control',
-                 'help' : 'Enable the message, report, category or checker with the '
-                 'given id(s). You can either give multiple identifier '
-                 'separated by comma (,) or put this option multiple time.'}),
+                ('enable',
+                 {'type' : 'csv', 'metavar': '<msg ids>',
+                  'short': 'e',
+                  'group': 'Messages control',
+                  'help' : 'Enable the message, report, category or checker with the '
+                  'given id(s). You can either give multiple identifier '
+                  'separated by comma (,) or put this option multiple time.'}),
 
-               ('disable',
-                {'type' : 'csv', 'metavar': '<msg ids>',
-                 'short': 'd',
-                 'group': 'Messages control',
-                 'help' : 'Disable the message, report, category or checker '
-                 'with the given id(s). You can either give multiple identifier'
-                 ' separated by comma (,) or put this option multiple time '
-                 '(only on the command line, not in the configuration file '
-                 'where it should appear only once).'}),
+                ('disable',
+                 {'type' : 'csv', 'metavar': '<msg ids>',
+                  'short': 'd',
+                  'group': 'Messages control',
+                  'help' : 'Disable the message, report, category or checker '
+                  'with the given id(s). You can either give multiple identifier'
+                  ' separated by comma (,) or put this option multiple time '
+                  '(only on the command line, not in the configuration file '
+                  'where it should appear only once).'}),
                )
 
     option_groups = (
@@ -240,7 +254,7 @@ This is used by the global evaluation report (RP0004).'}),
         self.current_file = None
         self.stats = None
         # init options
-        self.options = options + PyLinter.options
+        self.options = options + PyLinter.make_options()
         self.option_groups = option_groups + PyLinter.option_groups
         self._options_methods = {
             'enable': self.enable,
@@ -269,6 +283,10 @@ This is used by the global evaluation report (RP0004).'}),
         self._dynamic_plugins = []
         self.load_provider_defaults()
         self.set_reporter(reporter or TextReporter(sys.stdout))
+
+    def load_default_plugins(self):
+        from pylint import checkers
+        checkers.initialize(self)
 
     def load_plugin_modules(self, modnames):
         """take a list of module names which are pylint plugins and load
@@ -338,10 +356,10 @@ This is used by the global evaluation report (RP0004).'}),
                     self.disable(msgid)
 
     def disable_reporters(self):
-       """disable all reporters"""
-       for reporters in self._reports.values():
-           for report_id, _title, _cb in reporters:
-               self.disable_report(report_id)
+        """disable all reporters"""
+        for reporters in self._reports.values():
+            for report_id, _title, _cb in reporters:
+                self.disable_report(report_id)
 
     def error_mode(self):
         """error mode: enable only errors; no reports, no persistent"""
@@ -520,6 +538,7 @@ This is used by the global evaluation report (RP0004).'}),
         """
         if not modname and filepath is None:
             return
+        self.reporter.on_set_current_module(modname, filepath)
         self.current_name = modname
         self.current_file = filepath or modname
         self.stats['by_module'][modname] = {}
@@ -584,19 +603,26 @@ This is used by the global evaluation report (RP0004).'}),
         if persistent run, pickle results for later comparison
         """
         if self.base_name is not None:
-            # load old results if any
-            old_stats = config.load_results(self.base_name)
+            # load previous results if any
+            previous_stats = config.load_results(self.base_name)
+            # XXX code below needs refactoring to be more reporter agnostic
+            self.reporter.on_close(self.stats, previous_stats)
             if self.config.reports:
-                self.make_reports(self.stats, old_stats)
-            elif self.config.output_format == 'html':
-                self.reporter.display_results(Section())
+                sect = self.make_reports(self.stats, previous_stats)
+                if self.config.files_output:
+                    filename = 'pylint_global.' + self.reporter.extension
+                    self.reporter.set_output(open(filename, 'w'))
+            else:
+                sect = Section()
+            if self.config.reports or self.config.output_format == 'html':
+                self.reporter.display_results(sect)
             # save results if persistent run
             if self.config.persistent:
                 config.save_results(self.stats, self.base_name)
 
     # specific reports ########################################################
 
-    def report_evaluation(self, sect, stats, old_stats):
+    def report_evaluation(self, sect, stats, previous_stats):
         """make the global evaluation report"""
         # check with at least check 1 statements (usually 0 when there is a
         # syntax error preventing pylint from further processing)
@@ -611,18 +637,18 @@ This is used by the global evaluation report (RP0004).'}),
         else:
             stats['global_note'] = note
             msg = 'Your code has been rated at %.2f/10' % note
-            if 'global_note' in old_stats:
-                msg += ' (previous run: %.2f/10)' % old_stats['global_note']
+            if 'global_note' in previous_stats:
+                msg += ' (previous run: %.2f/10)' % previous_stats['global_note']
             if self.config.comment:
                 msg = '%s\n%s' % (msg, config.get_note_message(note))
         sect.append(Text(msg))
 
 # some reporting functions ####################################################
 
-def report_total_messages_stats(sect, stats, old_stats):
+def report_total_messages_stats(sect, stats, previous_stats):
     """make total errors / warnings report"""
     lines = ['type', 'number', 'previous', 'difference']
-    lines += table_lines_from_stats(stats, old_stats,
+    lines += table_lines_from_stats(stats, previous_stats,
                                     ('convention', 'refactor',
                                      'warning', 'error'))
     sect.append(Table(children=lines, cols=4, rheaders=1))
@@ -632,7 +658,7 @@ def report_messages_stats(sect, stats, _):
     if not stats['by_msg']:
         # don't print this report when we didn't detected any errors
         raise EmptyReport()
-    in_order = sorted([(value, msg_id) 
+    in_order = sorted([(value, msg_id)
                        for msg_id, value in stats['by_msg'].items()
                        if not msg_id.startswith('I')])
     in_order.reverse()
@@ -802,8 +828,7 @@ are done by default'''}),
             ), option_groups=self.option_groups,
                reporter=reporter, pylintrc=self._rcfile)
         # register standard checkers
-        from pylint import checkers
-        checkers.initialize(linter)
+        linter.load_default_plugins()
         # load command line plugins
         linter.load_plugin_modules(self._plugins)
         # add some help section
@@ -861,7 +886,10 @@ been issued by analysing pylint output status code
             sys.exit(32)
         # insert current working directory to the python path to have a correct
         # behaviour
-        sys.path.insert(0, os.getcwd())
+        if len(args) == 1:
+            sys.path.insert(0, _get_python_path(args[0]))
+        else:
+            sys.path.insert(0, os.getcwd())
         if self.linter.config.profile:
             print >> sys.stderr, '** profiled run'
             import cProfile, pstats

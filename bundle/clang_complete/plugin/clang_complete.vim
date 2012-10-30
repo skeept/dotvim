@@ -18,12 +18,21 @@ let b:my_changedtick = 0
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 
 function! s:ClangCompleteInit()
+  let l:bufname = bufname("%")
+  if l:bufname == ''
+    return
+  endif
+  
   if !exists('g:clang_auto_select')
     let g:clang_auto_select = 0
   endif
 
   if !exists('g:clang_complete_auto')
     let g:clang_complete_auto = 1
+  endif
+
+  if !exists('g:clang_close_preview')
+    let g:clang_close_preview = 0
   endif
 
   if !exists('g:clang_complete_copen')
@@ -54,6 +63,14 @@ function! s:ClangCompleteInit()
     let g:clang_user_options = ''
   endif
 
+  if !exists('g:clang_conceal_snippets')
+    let g:clang_conceal_snippets = has('conceal')
+  endif
+
+  if !exists('g:clang_trailing_placeholder')
+    let g:clang_trailing_placeholder = 0
+  endif
+
   " Only use libclang if the user clearly show intent to do so for now
   if !exists('g:clang_use_library')
     let g:clang_use_library = (has('python') && exists('g:clang_library_path'))
@@ -76,7 +93,7 @@ function! s:ClangCompleteInit()
   endif
 
   if !exists('g:clang_auto_user_options')
-    let g:clang_auto_user_options = 'path, .clang_complete, gcc'
+    let g:clang_auto_user_options = 'path, .clang_complete, clang'
   endif
 
   call LoadUserOptions()
@@ -143,13 +160,12 @@ function! s:ClangCompleteInit()
   " Load the python bindings of libclang
   if g:clang_use_library == 1
     if has('python')
-      exe s:initClangCompletePython()
+      call s:initClangCompletePython()
     else
       echoe 'clang_complete: No python support available.'
       echoe 'Cannot use clang library, using executable'
       echoe 'Compile vim with python support to use libclang'
       let g:clang_use_library = 0
-      return
     endif
   endif
 endfunction
@@ -189,8 +205,7 @@ function! s:parseConfig()
     if matchstr(l:opt, '\C-I\s*/') != ''
       let l:opt = substitute(l:opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
             \ '-I' . '\1', 'g')
-    " Check for win32 is enough since it's true on win64
-    elseif has('win32') && matchstr(l:opt, '\C-I\s*[a-zA-Z]:/') != ''
+    elseif s:isWindows() && matchstr(l:opt, '\C-I\s*[a-zA-Z]:/') != ''
       let l:opt = substitute(l:opt, '\C-I\s*\([a-zA-Z:]/\%(\w\|\\\s\)*\)',
             \ '-I' . '\1', 'g')
     else
@@ -220,18 +235,14 @@ function! s:initClangCompletePython()
   " Only parse the python library once
   if !exists('s:libclang_loaded')
     python import sys
-    if exists('g:clang_library_path')
-      " Load the library from the given library path.
-      exe 'python sys.argv = ["' . escape(g:clang_library_path, '\') . '"]'
-    else
-      " By setting argv[0] to '' force the python bindings to load the library
-      " from the normal system search path.
-      python sys.argv[0] = ''
-    endif
 
     exe 'python sys.path = ["' . s:plugin_path . '"] + sys.path'
     exe 'pyfile ' . s:plugin_path . '/libclang.py'
-    python initClangComplete(vim.eval('g:clang_complete_lib_flags'))
+    if exists('g:clang_library_path')
+      python initClangComplete(vim.eval('g:clang_complete_lib_flags'), vim.eval('g:clang_library_path'))
+    else
+      python initClangComplete(vim.eval('g:clang_complete_lib_flags'))
+    endif
     let s:libclang_loaded = 1
   endif
   python WarmupCache()
@@ -269,7 +280,7 @@ function! s:CallClangBinaryForDiagnostics(tempfile)
         \ . ' ' . l:escaped_tempfile
         \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' ' . g:clang_user_options
 
-  let l:clang_output = split(system(l:command), "\n")
+  let l:clang_output = split(system(s:escapeCommand(l:command)), "\n")
   call delete(a:tempfile)
   return l:clang_output
 endfunction
@@ -424,7 +435,8 @@ function! s:ClangCompleteBinary(base)
         \ . ' -code-completion-at=' . l:escaped_tempfile . ':'
         \ . line('.') . ':' . b:col . ' ' . l:escaped_tempfile
         \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' ' . g:clang_user_options
-  let l:clang_output = split(system(l:command), "\n")
+
+  let l:clang_output = split(system(s:escapeCommand(l:command)), "\n")
   call delete(l:tempfile)
 
   call s:ClangQuickFix(l:clang_output, l:tempfile)
@@ -514,6 +526,15 @@ function! s:ClangCompleteBinary(base)
   return l:res
 endfunction
 
+function! s:escapeCommand(command)
+    return s:isWindows() ? a:command : escape(a:command, '()')
+endfunction
+
+function! s:isWindows()
+  " Check for win32 is enough since it's true on win64
+  return has('win32')
+endfunction
+
 function! ClangComplete(findstart, base)
   if a:findstart
     let l:line = getline('.')
@@ -549,7 +570,9 @@ function! ClangComplete(findstart, base)
     endif
 
     if g:clang_use_library == 1
-      python vim.command('let l:res = ' + str(getCurrentCompletions(vim.eval('a:base'))))
+      python completions, timer = getCurrentCompletions(vim.eval('a:base'))
+      python vim.command('let l:res = ' + completions)
+      python timer.registerEvent("Load into vimscript")
     else
       let l:res = s:ClangCompleteBinary(a:base)
     endif
@@ -561,13 +584,17 @@ function! ClangComplete(findstart, base)
         let item['word'] = item['abbr']
       endif
     endfor
-    if g:clang_snippets == 1
-      inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
-      augroup ClangComplete
-        au CursorMovedI <buffer> call <SID>TriggerSnippet()
-      augroup end
-      let b:snippet_chosen = 0
-    endif
+
+    inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
+    augroup ClangComplete
+      au CursorMovedI <buffer> call <SID>TriggerSnippet()
+    augroup end
+    let b:snippet_chosen = 0
+
+  if g:clang_use_library == 1
+    python timer.registerEvent("vimscript + snippets")
+    python timer.finish()
+  endif
 
   if g:clang_debug == 1
     echom 'clang_complete: completion time (' . (g:clang_use_library == 1 ? 'library' : 'binary') . ') '. split(reltimestr(reltime(l:time_start)))[0]
@@ -597,14 +624,20 @@ function! s:TriggerSnippet()
     return
   endif
 
-  " Stop monitoring as we'll trigger a snippet
-  silent! iunmap <buffer> <C-Y>
-  augroup ClangComplete
-    au! CursorMovedI <buffer>
-  augroup end
+  if g:clang_snippets == 1
+    " Stop monitoring as we'll trigger a snippet
+    silent! iunmap <buffer> <C-Y>
+    augroup ClangComplete
+      au! CursorMovedI <buffer>
+    augroup end
 
-  " Trigger the snippet
-  call b:TriggerSnip()
+    " Trigger the snippet
+    call b:TriggerSnip()
+  endif
+
+  if g:clang_close_preview
+    pclose
+  endif
 endfunction
 
 function! s:ShouldComplete()

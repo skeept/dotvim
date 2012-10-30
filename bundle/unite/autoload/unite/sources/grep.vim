@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 12 Jan 2012.
+" Last Modified: 21 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,7 +27,7 @@
 
 " Variables  "{{{
 call unite#util#set_default('g:unite_source_grep_command', 'grep')
-call unite#util#set_default('g:unite_source_grep_default_opts', '-Hn')
+call unite#util#set_default('g:unite_source_grep_default_opts', '-iHn')
 call unite#util#set_default('g:unite_source_grep_recursive_opt', '-R')
 call unite#util#set_default('g:unite_source_grep_max_candidates', 100)
 call unite#util#set_default('g:unite_source_grep_search_word_highlight', 'Search')
@@ -45,7 +45,7 @@ let s:action_grep_file = {
   \   'is_selectable': 1,
   \ }
 function! s:action_grep_file.func(candidates) "{{{
-  call unite#start([
+  call unite#start_script([
         \ ['grep', map(copy(a:candidates),
         \ 'string(substitute(v:val.action__path, "/$", "", "g"))'),
         \ ]], { 'no_quit' : 1 })
@@ -58,19 +58,28 @@ let s:action_grep_directory = {
   \   'is_selectable': 1,
   \ }
 function! s:action_grep_directory.func(candidates) "{{{
-  call unite#start([
+  call unite#start_script([
         \ ['grep', map(copy(a:candidates), 'string(v:val.action__directory)'),
         \ ]], { 'no_quit' : 1 })
 endfunction "}}}
-if executable(g:unite_source_grep_command) && unite#util#has_vimproc()
-  call unite#custom_action('file,buffer', 'grep', s:action_grep_file)
-  call unite#custom_action('file,buffer', 'grep_directory', s:action_grep_directory)
+if unite#util#has_vimproc()
+  call unite#custom_action('file,buffer',
+        \ 'grep', s:action_grep_file)
+  call unite#custom_action('file,buffer',
+        \ 'grep_directory', s:action_grep_directory)
+
+  if get(g:, 'vimfiler_as_default_explorer', 0)
+    " For unite-ssh.
+    call unite#custom_action('file/ssh',
+          \ 'grep', s:action_grep_file)
+    call unite#custom_action('file/ssh',
+          \ 'grep_directory', s:action_grep_directory)
+  endif
 endif
 " }}}
 
 function! unite#sources#grep#define() "{{{
-  return executable(g:unite_source_grep_command) && unite#util#has_vimproc() ?
-        \ s:source : []
+  return unite#util#has_vimproc() ? s:source : []
 endfunction "}}}
 
 let s:source = {
@@ -79,6 +88,13 @@ let s:source = {
       \ 'hooks' : {},
       \ 'syntax' : 'uniteSource__Grep',
       \ 'filters' : ['matcher_regexp', 'sorter_default', 'converter_default'],
+      \ 'ignore_pattern' : g:unite_source_grep_ignore_pattern,
+      \ 'variables' : {
+      \      'command' : g:unite_source_grep_command,
+      \      'default_opts' : g:unite_source_grep_default_opts,
+      \      'recursive_opt' : g:unite_source_grep_recursive_opt,
+      \      'search_word_highlight' : g:unite_source_grep_search_word_highlight,
+      \   },
       \ }
 
 function! s:source.hooks.on_init(args, context) "{{{
@@ -89,12 +105,13 @@ function! s:source.hooks.on_init(args, context) "{{{
     let default = get(a:args, 0, '')
 
     if default == ''
-      let default = '**'
+      let default = '.'
     endif
 
     if type(get(a:args, 0, '')) == type('')
           \ && get(a:args, 0, '') == ''
-      let target = input('Target: ', default, 'file')
+      let target = unite#util#substitute_path_separator(
+            \ unite#util#input('Target: ', default, 'file'))
     else
       let target = default
     endif
@@ -107,7 +124,7 @@ function! s:source.hooks.on_init(args, context) "{{{
             \ 'unite#util#escape_file_searching(bufname(v:val))'))
     elseif target == '**'
       " Optimized.
-      let target = '*'
+      let target = '.'
     else
       " Escape filename.
       let target = escape(target, ' ')
@@ -123,13 +140,34 @@ function! s:source.hooks.on_init(args, context) "{{{
 
   let a:context.source__input = get(a:args, 2, '')
   if a:context.source__input == ''
-    let a:context.source__input = input('Pattern: ')
+    let a:context.source__input = unite#util#input('Pattern: ')
   endif
 
   let a:context.source__directory =
         \ (len(targets) == 1) ?
         \ unite#util#substitute_path_separator(
         \  unite#util#expand(targets[0])) : ''
+
+  let a:context.source__ssh_path = ''
+  if exists('b:vimfiler') &&
+        \ exists('*vimfiler#get_current_vimfiler')
+    if !empty(b:vimfiler)
+      let vimfiler = b:vimfiler
+    else
+      let vimfiler = vimfiler#get_current_vimfiler()
+    endif
+
+    if get(vimfiler, 'source', '') ==# 'ssh'
+      let [hostname, port, path] =
+            \ unite#sources#ssh#parse_path(
+            \  vimfiler.source.':'.vimfiler.current_dir)
+      let a:context.source__ssh_path =
+            \ printf('%s://%s:%s/', vimfiler.source, hostname, port)
+
+      call map(a:context.source__target,
+            \ "substitute(v:val, 'ssh://', '', '')")
+    endif
+  endif
 endfunction"}}}
 function! s:source.hooks.on_syntax(args, context)"{{{
   syntax case ignore
@@ -137,19 +175,35 @@ function! s:source.hooks.on_syntax(args, context)"{{{
         \ . substitute(a:context.source__input, '\([/\\]\)', '\\\1', 'g')
         \ . '/ contained containedin=uniteSource__Grep'
   execute 'highlight default link uniteSource__GrepPattern'
-        \ g:unite_source_grep_search_word_highlight
+        \ unite#get_source_variables(a:context).search_word_highlight
 endfunction"}}}
 function! s:source.hooks.on_close(args, context) "{{{
   if has_key(a:context, 'source__proc')
     call a:context.source__proc.waitpid()
   endif
 endfunction "}}}
+function! s:source.hooks.on_post_filter(args, context)"{{{
+  for candidate in a:context.candidates
+    let candidate.kind = [((a:context.source__ssh_path != '') ?
+          \ 'file/ssh' : 'file'), 'jump_list']
+    let candidate.action__directory =
+          \ unite#util#path2directory(candidate.action__path)
+    let candidate.is_multiline = 1
+  endfor
+endfunction"}}}
 
 function! s:source.gather_candidates(args, context) "{{{
+  let variables = unite#get_source_variables(a:context)
+  if !executable(variables.command)
+    call unite#print_source_message(printf(
+          \ 'command "%s" is not executable.', variables.command), s:source.name)
+    return []
+  endif
+
   if empty(a:context.source__target)
         \ || a:context.source__input == ''
     let a:context.is_async = 0
-    call unite#print_message('[grep] Completed.')
+    call unite#print_source_message('Completed.', s:source.name)
     return []
   endif
 
@@ -158,38 +212,74 @@ function! s:source.gather_candidates(args, context) "{{{
   endif
 
   let cmdline = printf('%s %s %s %s %s %s',
-    \   g:unite_source_grep_command,
-    \   g:unite_source_grep_default_opts,
-    \   g:unite_source_grep_recursive_opt,
+    \   variables.command,
+    \   variables.default_opts,
+    \   variables.recursive_opt,
     \   a:context.source__extra_opts,
     \   string(a:context.source__input),
-    \   join(a:context.source__target),
+    \   join(map(a:context.source__target,
+    \           "substitute(v:val, '/$', '', '')")),
     \)
-  call unite#print_message('[grep] Command-line: ' . cmdline)
-  let a:context.source__proc = vimproc#pgroup_open(cmdline, 1)
+  if a:context.source__ssh_path != ''
+    " Use ssh command.
+    let [hostname, port, path] =
+          \ unite#sources#ssh#parse_path(a:context.source__ssh_path)
+    let cmdline = substitute(substitute(
+          \ g:unite_kind_file_ssh_command . ' ' . cmdline,
+          \   '\<HOSTNAME\>', hostname, 'g'), '\<PORT\>', port, 'g')
+  endif
 
-  " Close handles.
-  call a:context.source__proc.stderr.close()
+  call unite#print_source_message('Command-line: ' . cmdline, s:source.name)
+
+  let save_term = $TERM
+  try
+    " Disable colors.
+    let $TERM = 'dumb'
+
+    let a:context.source__proc = vimproc#plineopen3(
+          \ vimproc#util#iconv(cmdline, &encoding, 'char'), 1)
+  finally
+    let $TERM = save_term
+  endtry
 
   return []
 endfunction "}}}
 
 function! s:source.async_gather_candidates(args, context) "{{{
+  let variables = unite#get_source_variables(a:context)
+
+  if !has_key(a:context, 'source__proc')
+    return []
+  endif
+
+  let stderr = a:context.source__proc.stderr
+  if !stderr.eof
+    " Print error.
+    let errors = filter(stderr.read_lines(-1, 100),
+          \ "v:val !~ '^\\s*$'")
+    if !empty(errors)
+      call unite#print_source_error(errors, s:source.name)
+    endif
+  endif
+
   let stdout = a:context.source__proc.stdout
   if stdout.eof
     " Disable async.
-    call unite#print_message('[grep] Completed.')
+    call unite#print_source_message('Completed.', s:source.name)
     let a:context.is_async = 0
   endif
 
-  let candidates = map(filter(map(stdout.read_lines(-1, 300),
-        \ 'iconv(v:val, &termencoding, &encoding)'),
-    \  'v:val =~ "^.\\+:.\\+:.\\+$"'),
-    \ '[v:val, split(v:val[2:], ":")]')
-
-  if g:unite_source_grep_ignore_pattern != ''
-    call filter(candidates, 'v:val[0][:1].v:val[1][0] !~ '
-          \ . string(g:unite_source_grep_ignore_pattern))
+  let candidates = map(stdout.read_lines(-1, 100),
+          \ "unite#util#iconv(v:val, 'char', &encoding)")
+  if variables.default_opts =~ '^-[^-]*l'
+        \ || a:context.source__extra_opts =~ '^-[^-]*l'
+    let candidates = map(filter(candidates,
+          \ 'v:val != ""'),
+          \ '[v:val, [v:val[2:], 0]]')
+  else
+    let candidates = map(filter(candidates,
+          \  'v:val =~ "^.\\+:.\\+:.\\+$"'),
+          \ '[v:val, split(v:val[2:], ":")]')
   endif
 
   if isdirectory(a:context.source__directory)
@@ -197,20 +287,41 @@ function! s:source.async_gather_candidates(args, context) "{{{
     lcd `=a:context.source__directory`
   endif
 
-  return map(candidates,
-    \ '{
-    \   "word": unite#util#substitute_path_separator(
-    \                   fnamemodify(v:val[0], ":.")),
-    \   "kind": "jump_list",
-    \   "action__path": unite#util#substitute_path_separator(
-    \                   fnamemodify(v:val[0][:1].v:val[1][0], ":p")),
-    \   "action__line": v:val[1][1],
-    \   "action__text": join(v:val[1][2:], ":"),
-    \ }')
+  if a:context.source__ssh_path != ''
+    " Use ssh command.
+    let [hostname, port, path] = unite#sources#ssh#parse_path(
+          \     a:context.source__ssh_path)
+  endif
+
+  let _ = []
+  for candidate in candidates
+    let dict = {
+          \   'action__path' : candidate[0][:1].candidate[1][0],
+          \   'action__line' : candidate[1][1],
+          \   'action__text' : join(candidate[1][2:], ':'),
+          \ }
+    if a:context.source__ssh_path != ''
+      let dict.action__path =
+            \ a:context.source__ssh_path . dict.action__path
+    else
+      let dict.action__path =
+            \ unite#util#substitute_path_separator(
+            \   fnamemodify(dict.action__path, ':p'))
+    endif
+
+    let dict.word = printf('%s:%s:%s',
+          \  unite#util#substitute_path_separator(
+          \     fnamemodify(dict.action__path, ':.')),
+          \ dict.action__line, dict.action__text)
+
+    call add(_, dict)
+  endfor
 
   if isdirectory(a:context.source__directory)
     lcd `=cwd`
   endif
+
+  return _
 endfunction "}}}
 
 function! s:source.complete(args, context, arglead, cmdline, cursorpos)"{{{

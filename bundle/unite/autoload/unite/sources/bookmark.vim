@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: bookmark.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Jan 2012.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -46,7 +46,7 @@ function! unite#sources#bookmark#_append(filename)"{{{
 
   if a:filename == ''
     " Append the current buffer to the bookmark list.
-    let path = unite#util#expand('%:p')
+    let path = expand('%:p')
     let linenr = line('.')
     let pattern = '^' . escape(getline('.'), '~"\.^*$[]') . '$'
   else
@@ -54,9 +54,10 @@ function! unite#sources#bookmark#_append(filename)"{{{
     let linenr = ''
     let pattern = ''
   endif
+  let path = unite#util#substitute_path_separator(path)
 
-  let filename = (a:filename == '' ?
-        \ unite#util#expand('%') : a:filename)
+  let filename = unite#util#substitute_path_separator(
+        \ a:filename == '' ? expand('%') : a:filename)
   if bufexists(filename) && a:filename == ''
     " Detect vimfiler and vimshell.
     if &filetype ==# 'vimfiler'
@@ -71,7 +72,8 @@ function! unite#sources#bookmark#_append(filename)"{{{
 
   redraw
   echo 'Path: ' . path
-  let bookmark_name = input('Please input bookmark file name (default): ',
+  let bookmark_name = input(
+        \ 'Please input bookmark file name (default): ',
         \ '', 'customlist,' . s:SID_PREFIX() . 'complete_bookmark_filename')
   if bookmark_name == ''
     let bookmark_name = 'default'
@@ -128,6 +130,22 @@ function! s:source.action_table.delete.func(candidates)"{{{
     call s:save(candidate.source_bookmark_name, bookmark)
   endfor
 endfunction"}}}
+
+let s:source.action_table.unite__new_candidate = {
+      \ 'description' : 'add new bookmark',
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_quit' : 0,
+      \ }
+function! s:source.action_table.unite__new_candidate.func(candidates)"{{{
+  let filename = input('Please input bookmark filename: ', '', 'file')
+  if filename == ''
+    redraw
+    echo 'Canceled.'
+    return
+  endif
+
+  call unite#sources#bookmark#_append(filename)
+endfunction"}}}
 "}}}
 
 " Add custom action table."{{{
@@ -143,11 +161,14 @@ let s:buffer_bookmark_action = {
       \ 'description' : 'append buffers to bookmark list',
       \ }
 function! s:buffer_bookmark_action.func(candidate)"{{{
-  let filetype = getbufvar(a:candidate.action__buffer_nr, '&filetype')
+  let filetype = getbufvar(
+        \ a:candidate.action__buffer_nr, '&filetype')
   if filetype ==# 'vimfiler'
-    let filename = getbufvar(a:candidate.action__buffer_nr, 'vimfiler').current_dir
+    let filename = getbufvar(
+          \ a:candidate.action__buffer_nr, 'vimfiler').current_dir
   elseif filetype ==# 'vimshell'
-    let filename = getbufvar(a:candidate.action__buffer_nr, 'vimshell').current_dir
+    let filename = getbufvar(
+          \ a:candidate.action__buffer_nr, 'vimshell').current_dir
   else
     let filename = a:candidate.action__path
   endif

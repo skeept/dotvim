@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: process.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Oct 2011.
+" Last Modified: 03 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,7 +31,7 @@ set cpo&vim
 "}}}
 
 function! unite#sources#process#define()"{{{
-  return executable('ps') || (unite#is_win() && executable('tasklist')) ?
+  return executable('ps') || (unite#util#is_windows() && executable('tasklist')) ?
         \ s:source : {}
 endfunction"}}}
 
@@ -46,16 +46,16 @@ let s:source = {
 function! s:source.gather_candidates(args, context)"{{{
   " Get process list.
   let _ = []
-  let command = unite#is_win() ? 'tasklist' : 'ps aux'
+  let command = unite#util#is_windows() ? 'tasklist' : 'ps aux'
 
   let result = split(vimproc#system(command), '\n')
   if empty(result)
     return []
   endif
 
-  if unite#is_win()
+  if unite#util#is_windows()
     " Use tasklist.
-    call unite#print_message('[process] ' . result[1])
+    call unite#print_source_message(result[1], s:source.name)
     for line in result[3:]
       let process = split(line)
       if len(process) < 5
@@ -70,7 +70,7 @@ function! s:source.gather_candidates(args, context)"{{{
             \})
     endfor
   else
-    call unite#print_message('[process] ' . result[0])
+    call unite#print_source_message(result[0], s:source.name)
     for line in result[1:]
       let process = split(line)
       if len(process) < 2
@@ -114,12 +114,27 @@ function! s:source.action_table.sigterm.func(candidates)"{{{
   endfor
 endfunction"}}}
 
-function! s:kill(signal, pid)
-  call unite#util#system(unite#is_win() ?
+let s:source.action_table.unite__new_candidate = {
+      \ 'description' : 'create new process',
+      \ 'is_invalidate_cache' : 1,
+      \ 'is_quit' : 0,
+      \ }
+function! s:source.action_table.unite__new_candidate.func(candidate)"{{{
+  let cmdline = input('Please input command args : ', '', 'shellcmd')
+
+  if unite#util#is_windows()
+    silent execute ':!start' cmdline
+  else
+    call system(cmdline . ' &')
+  endif
+endfunction"}}}
+
+function! s:kill(signal, pid)"{{{
+  call unite#util#system(unite#util#is_windows() ?
         \ printf('taskkill /PID %d', a:pid) :
         \  printf('kill %s %d', a:signal, a:pid)
         \ )
-endfunction
+endfunction"}}}
 "}}}
 
 let &cpo = s:save_cpo

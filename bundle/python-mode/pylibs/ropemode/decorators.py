@@ -15,11 +15,10 @@ class Logger(object):
             self._show(short)
 
     def _show(self, message):
-        if message is None:
+        if self.message is None:
             print message
         else:
             self.message(message)
-
 
 logger = Logger()
 
@@ -48,7 +47,6 @@ input_exceptions = (exceptions.RefactoringError,
                     exceptions.ModuleSyntaxError,
                     exceptions.BadIdentifierError)
 
-
 def _exception_handler(func):
     def newfunc(*args, **kwds):
         try:
@@ -62,10 +60,8 @@ def _exception_handler(func):
     newfunc.__doc__ = func.__doc__
     return newfunc
 
-
 def _exception_message(e):
     return '%s: %s' % (e.__class__.__name__, str(e))
-
 
 def rope_hook(hook):
     def decorator(func):

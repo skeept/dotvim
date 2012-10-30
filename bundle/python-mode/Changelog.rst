@@ -1,6 +1,92 @@
 Changelog
 =========
 
+## 2012-09-07 0.6.10
+--------------------
+* Dont raise an exception when Logger has no message handler (c) nixon
+* Improve performance of white space removal (c) Dave Smith
+* Improve ropemode support (c) s0undt3ch 
+* Add `g:pymode_updatetime` option
+* Update autopep8 to version 0.8.1
+
+## 2012-09-07 0.6.9
+-------------------
+* Update autopep8
+* Improve pymode#troubleshooting#Test()
+
+## 2012-09-06 0.6.8
+-------------------
+* Add PEP8 indentation ":help 'pymode_indent'" 
+
+## 2012-08-15 0.6.7
+-------------------
+* Fix documentation. Thanks (c) bgrant;
+* Fix pymode "async queue" support.
+
+## 2012-08-02 0.6.6
+-------------------
+* Updated Pep8 to version 1.3.3
+* Updated Pylint to version 0.25.2
+* Fixed virtualenv support for windows users
+* Added pymode modeline ':help PythonModeModeline'
+* Added diagnostic tool ':call pymode#troubleshooting#Test()'
+* Added `PyLintAuto` command ':help PyLintAuto' 
+* Code checking is async operation now
+* More, more fast the pymode folding
+* Repaired execution of python code
+
+## 2012-05-24 0.6.4
+-------------------
+* Add 'pymode_paths' option
+* Rope updated to version 0.9.4
+
+## 2012-04-18 0.6.3
+-------------------
+* Fix pydocs integration
+
+## 2012-04-10 0.6.2
+-------------------
+* Fix pymode_run for "unnamed" clipboard
+* Add 'pymode_lint_mccabe_complexity' option
+* Update Pep8 to version 1.0.1
+* Warning! Change 'pymode_rope_goto_def_newwin' option
+  for open "goto definition" in new window, set it to 'new' or 'vnew'
+  for horizontally or vertically split
+  If you use default behaviour (in the same buffer), not changes needed.
+
+## 2012-03-13 0.6.0
+-------------------
+* Add 'pymode_lint_hold' option 
+* Improve pymode loading speed
+* Add pep8, mccabe lint checkers
+* Now g:pymode_lint_checker can have many values
+  Ex. "pep8,pyflakes,mccabe"
+* Add 'pymode_lint_ignore' and 'pymode_lint_select' options 
+* Fix rope keys
+* Fix python motion in visual mode
+* Add folding 'pymode_folding'
+* Warning: 'pymode_lint_checker' now set to 'pyflakes,pep8,mccabe' by default
+
+## 2012-02-12 0.5.8
+-------------------
+* Fix pylint for Windows users
+* Python documentation search running from Vim (delete g:pydoc option)
+* Python code execution running from Vim (delete g:python option)
+
+## 2012-02-11 0.5.7
+-------------------
+* Fix 'g:pymode_lint_message' mode error
+* Fix breakpoints
+* Fix python paths and virtualenv detection
+
+## 2012-02-06 0.5.6
+-------------------
+* Fix 'g:pymode_syntax' option
+* Show error message in bottom part of screen
+  see 'g:pymode_lint_message'
+* Fix pylint for windows users
+* Fix breakpoint command (Use pdb when idpb not installed)
+
 ## 2012-01-17 0.5.5
 -------------------
 * Add a sign for info messages from pylint.

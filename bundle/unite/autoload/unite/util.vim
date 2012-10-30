@@ -1,8 +1,9 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:V = vital#of('unite')
-call s:V.load('Data.List')
+let s:V = vital#of('unite.vim')
+let s:List = vital#of('unite.vim').import('Data.List')
+
 function! unite#util#truncate_smart(...)
   return call(s:V.truncate_smart, a:000)
 endfunction
@@ -25,6 +26,9 @@ function! unite#util#wcswidth(...)
   return call(s:V.wcswidth, a:000)
 endfunction
 function! unite#util#is_win(...)
+  return call(s:V.is_windows, a:000)
+endfunction
+function! unite#util#is_windows(...)
   return call(s:V.is_windows, a:000)
 endfunction
 function! unite#util#is_mac(...)
@@ -63,6 +67,10 @@ endfunction
 function! unite#util#system(...)
   return call(s:V.system, a:000)
 endfunction
+function! unite#util#system_passwd(...)
+  return call((unite#util#has_vimproc() ?
+        \ 'vimproc#system_passwd' : 'system'), a:000)
+endfunction
 function! unite#util#get_last_status(...)
   return call(s:V.get_last_status, a:000)
 endfunction
@@ -70,11 +78,22 @@ function! unite#util#get_last_errmsg()
   return unite#util#has_vimproc() ? vimproc#get_last_errmsg() : ''
 endfunction
 function! unite#util#sort_by(...)
-  return call(s:V.Data.List.sort_by, a:000)
+  return call(s:List.sort_by, a:000)
 endfunction
 function! unite#util#uniq(...)
-  return call(s:V.Data.List.uniq, a:000)
+  return call(s:List.uniq, a:000)
 endfunction
+function! unite#util#input(prompt, ...)"{{{
+  let context = unite#get_context()
+  let default = get(a:000, 0, '')
+  let completion = get(a:000, 1, '')
+  let args = [a:prompt, default]
+  if completion != ''
+    call add(args, completion)
+  endif
+
+  return context.unite__is_interactive ? call('input', args) : default
+endfunction"}}}
 function! unite#util#input_yesno(message)"{{{
   let yesno = input(a:message . ' [yes/no] : ')
   while yesno !~? '^\%(y\%[es]\|n\%[o]\)$'
@@ -111,6 +130,9 @@ function! unite#util#input_directory(message)"{{{
 
   return dir
 endfunction"}}}
+function! unite#util#iconv(...)
+  return call(s:V.iconv, a:000)
+endfunction
 
 function! unite#util#alternate_buffer()"{{{
   if bufnr('%') != bufnr('#') && s:buflisted(bufnr('#'))
@@ -147,11 +169,7 @@ function! unite#util#alternate_buffer()"{{{
   endif
 endfunction"}}}
 function! unite#util#is_cmdwin()"{{{
-  silent! noautocmd wincmd p
-  silent! noautocmd wincmd p
-
-  call unite#_resize_window()
-  return v:errmsg =~ '^E11:'
+  return bufname('%') ==# '[Command Line]'
 endfunction"}}}
 function! s:buflisted(bufnr)"{{{
   return exists('t:unite_buffer_dictionary') ?
@@ -160,6 +178,21 @@ function! s:buflisted(bufnr)"{{{
 endfunction"}}}
 
 function! unite#util#glob(pattern, ...)"{{{
+  if a:pattern =~ "'"
+    " Use glob('*').
+    let cwd = getcwd()
+    let base = unite#util#substitute_path_separator(
+          \ fnamemodify(a:pattern, ':h'))
+    lcd `=base`
+
+    let files = map(split(unite#util#substitute_path_separator(
+          \ glob('*')), '\n'), "base . '/' . v:val")
+
+    lcd `=cwd`
+
+    return files
+  endif
+
   " let is_force_glob = get(a:000, 0, 0)
   let is_force_glob = get(a:000, 0, 1)
 
@@ -168,7 +201,8 @@ function! unite#util#glob(pattern, ...)"{{{
     return vimproc#readdir(a:pattern[: -2])
   else
     " Escape [.
-    let glob = escape(a:pattern, unite#util#is_win() ?  '?"={}' : '?"={}[]')
+    let glob = escape(a:pattern,
+          \ unite#util#is_windows() ?  '?"={}' : '?"={}[]')
 
     return split(unite#util#substitute_path_separator(glob(glob)), '\n')
   endif
@@ -187,10 +221,56 @@ function! unite#util#command_with_restore_cursor(command)
   execute next 'wincmd w'
 endfunction
 function! unite#util#expand(path)"{{{
-  return expand(escape(a:path, unite#util#is_win() ?
-        \ '*?"={}' : '*?"={}[]'))
+  return s:V.substitute_path_separator(
+        \ (a:path =~ '^\~') ? substitute(a:path, '^\~', expand('~'), '') :
+        \ (a:path =~ '^\$\h\w*') ? substitute(a:path,
+        \               '^\$\h\w*', '\=eval(submatch(0))', '') :
+        \ a:path)
+endfunction"}}}
+function! unite#util#set_default_dictionary_helper(variable, keys, value)"{{{
+  for key in split(a:keys, '\s*,\s*')
+    if !has_key(a:variable, key)
+      let a:variable[key] = a:value
+    endif
+  endfor
+endfunction"}}}
+function! unite#util#set_dictionary_helper(variable, keys, value)"{{{
+  for key in split(a:keys, '\s*,\s*')
+    let a:variable[key] = a:value
+  endfor
 endfunction"}}}
 
+" filter() for matchers.
+function! unite#util#filter_matcher(list, expr, context)"{{{
+  if !a:context.unite__is_sort_nothing ||
+        \ a:context.unite__max_candidates <= 0 ||
+        \ !unite#get_current_unite().is_enabled_max_candidates ||
+        \ len(a:context.input_list) > 1
+
+    return a:expr == '' ? a:list : filter(a:list, a:expr)
+  endif
+
+  if a:expr == ''
+    return a:list[: a:context.unite__max_candidates - 1]
+  endif
+
+  let _ = []
+  let len = 0
+
+  let max = a:context.unite__max_candidates
+  let offset = max*4
+  for cnt in range(0, len(a:list) / offset)
+    let list = filter(a:list[cnt*offset : cnt*offset + offset], a:expr)
+    let len += len(list)
+    let _ += list
+
+    if len >= max
+      break
+    endif
+  endfor
+
+  return _[: max]
+endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

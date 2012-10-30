@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: find.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" Last Modified: 03 Jan 2012.
+" Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -39,7 +39,9 @@ let s:action_find = {
   \   'is_invalidate_cache': 1,
   \ }
 function! s:action_find.func(candidate) "{{{
-  call unite#start([['find', a:candidate.action__directory]])
+  call unite#start_script([['find',
+        \ a:candidate.action__directory]],
+        \ {'no_quit' : 1})
 endfunction "}}}
 if executable(g:unite_source_find_command) && unite#util#has_vimproc()
   call unite#custom_action('file,buffer', 'find', s:action_find)
@@ -56,21 +58,23 @@ let s:source = {
       \ 'max_candidates': g:unite_source_find_max_candidates,
       \ 'hooks' : {},
       \ 'filters' : ['matcher_regexp', 'sorter_default', 'converter_relative'],
+      \ 'ignore_pattern' : g:unite_source_find_ignore_pattern,
+      \ 'default_kind' : 'command',
       \ }
 
 function! s:source.hooks.on_init(args, context) "{{{
   let a:context.source__target = get(a:args, 0, '')
   if a:context.source__target == ''
-    let a:context.source__target = input('Target: ', '.', 'dir')
+    let a:context.source__target = unite#util#input('Target: ', '.', 'dir')
   endif
 
   let a:context.source__input = get(a:args, 1, '')
   if a:context.source__input == ''
     redraw
     echo "Please input command-line(quote is needed) Ex: -name '*.vim'"
-    let a:context.source__input = input(
+    let a:context.source__input = unite#util#input(
           \ printf('%s %s ', g:unite_source_find_command,
-          \   a:context.source__target))
+          \   a:context.source__target), '-name ')
   endif
 endfunction"}}}
 function! s:source.hooks.on_close(args, context) "{{{
@@ -82,8 +86,15 @@ endfunction "}}}
 function! s:source.gather_candidates(args, context) "{{{
   if empty(a:context.source__target)
         \ || a:context.source__input == ''
+    call unite#print_source_message('Completed.', s:source.name)
     let a:context.is_async = 0
-    call unite#print_message('[find] Completed.')
+    return []
+  endif
+
+  if unite#util#is_windows() &&
+        \ vimproc#get_command_name('find') =~? '/Windows/system.*/find\.exe$'
+    call unite#print_source_message('Detected windows find command.', s:source.name)
+    let a:context.is_async = 0
     return []
   endif
 
@@ -93,8 +104,9 @@ function! s:source.gather_candidates(args, context) "{{{
 
   let cmdline = printf('%s %s %s', g:unite_source_find_command,
     \   string(a:context.source__target), a:context.source__input)
-  call unite#print_message('[find] Command-line: ' . cmdline)
-  let a:context.source__proc = vimproc#pgroup_open(cmdline)
+  call unite#print_source_message('Command-line: ' . cmdline, s:source.name)
+  let a:context.source__proc = vimproc#pgroup_open(
+        \ vimproc#util#iconv(cmdline, &encoding, 'char'))
 
   " Close handles.
   call a:context.source__proc.stdin.close()
@@ -107,31 +119,25 @@ function! s:source.async_gather_candidates(args, context) "{{{
   let stdout = a:context.source__proc.stdout
   if stdout.eof
     " Disable async.
-    call unite#print_message('[find] Completed.')
+    call unite#print_source_message('Completed.', s:source.name)
     let a:context.is_async = 0
   endif
 
-  let candidates = map(filter(stdout.read_lines(-1, 300), 'v:val != ""'),
-        \ 'fnamemodify(iconv(v:val, &termencoding, &encoding), ":p")')
-
-  if g:unite_source_find_ignore_pattern != ''
-    call filter(candidates, 'v:val !~ '
-          \ . string(g:unite_source_find_ignore_pattern))
-  endif
+  let candidates = map(filter(
+        \ stdout.read_lines(-1, 100), "v:val != ''"),
+        \ "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
 
   if isdirectory(a:context.source__target)
     let cwd = getcwd()
     lcd `=a:context.source__target`
   endif
 
-  call map(candidates,
-    \ '{
-    \   "word": v:val,
-    \   "abbr": fnamemodify(v:val, ":."),
-    \   "kind": "file",
-    \   "action__path" : unite#util#substitute_path_separator(v:val),
-    \   "action__directory": unite#util#path2directory(v:val),
-    \ }')
+  call map(candidates, "{
+    \   'word': v:val,
+    \   'abbr': fnamemodify(v:val, ':.'),
+    \   'action__path' : unite#util#substitute_path_separator(v:val),
+    \   'action__directory': unite#util#path2directory(v:val),
+    \ }")
 
   if isdirectory(a:context.source__target)
     lcd `=cwd`

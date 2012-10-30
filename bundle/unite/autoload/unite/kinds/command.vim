@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: command.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Oct 2011.
+" Last Modified: 02 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -43,22 +43,48 @@ let s:kind.action_table.execute = {
       \ 'description' : 'execute command',
       \ }
 function! s:kind.action_table.execute.func(candidate)"{{{
-  " Add history.
+  let command = a:candidate.action__command
   let type = get(a:candidate, 'action__type', ':')
-  call histadd(type, a:candidate.action__command)
-  if type ==# '/'
-    let @/ = a:candidate.action__command
-  endif
-
-  execute type.a:candidate.action__command
+  call s:add_history(type, command)
+  execute type . command
 endfunction"}}}
 let s:kind.action_table.edit = {
       \ 'description' : 'edit command',
       \ }
 function! s:kind.action_table.edit.func(candidate)"{{{
-  call feedkeys(':' . a:candidate.action__command, 'n')
+  if has_key(a:candidate, 'action__description')
+    " Print description.
+
+    " For function.
+    " let prototype_name = matchstr(a:candidate.action__description,
+    "       \'\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\='
+    "       \'\%(\i\|[#.]\|{.\{-1,}}\)*\s*(\ze\%([^(]\|(.\{-})\)*$')
+    let prototype_name = matchstr(a:candidate.action__description,
+          \'\<\%(\d\+\)\?\zs\h\w*\ze!\?\|'
+          \'\<\%([[:digit:],[:space:]$''<>]\+\)\?\zs\h\w*\ze/.*')
+    echon ':'
+    echohl Identifier | echon prototype_name | echohl None
+    if prototype_name != a:candidate.action__description
+      echon substitute(a:candidate.action__description[
+            \ len(prototype_name) :], '^\s\+', ' ', '')
+    endif
+  endif
+
+  let command = input(':', a:candidate.action__command, 'command')
+  if command != ''
+    let type = get(a:candidate, 'action__type', ':')
+    call s:add_history(type, command)
+    execute command
+  endif
+  " call feedkeys(':' . a:candidate.action__command, 'n')
 endfunction"}}}
 "}}}
+function! s:add_history(type, command)
+  call histadd(a:type, a:command)
+  if a:type ==# '/'
+    let @/ = a:command
+  endif
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

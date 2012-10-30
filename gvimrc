@@ -36,7 +36,7 @@ if version >= 500
   set hlsearch
 
   " For Win32 version, have "K" lookup the keyword in a help file
-  "if has("win32")
+  "if g:is_win
   "  let winhelpfile='windows.hlp'
   "  map K :execute "!start winhlp32 -k <cword> " . winhelpfile <CR>
   "endif
@@ -76,7 +76,13 @@ set cmdheight=1
 "set guioptions -=T
 
 "set guifont=Courier\ 16
-set guifont=Courier\ 13
+"set guifont=Courier\ 13
+"set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
+if g:is_win
+  set guifont=Terminus:h12
+else
+  set guifont=Terminus\ 12
+endif
 
 set winaltkeys=no
 
@@ -105,6 +111,11 @@ endif
 map <c-tab> gt
 map <c-s-tab> gT
 
+" set options for solarized
+let g:solarized_underline = 0
+let g:solarized_italic    = 0
+let g:solarized_style     = "light"
+
 "-*-*-medium-*-*-*-15-*-*-*-*-*-*-*
 "above is the desired font name for the gui
 "set guifontset=-*-*-medium-*-*-*-18-*-*-*-*-*-*-1
@@ -113,6 +124,7 @@ map <c-s-tab> gT
 
 "colorscheme morning
 colorscheme desert
+"set bg=light | colorscheme solarized
 
 if has("autocmd")
   autocmd BufEnter * hi PreciseJumpTarget ctermfg=yellow ctermbg=red cterm=bold gui=bold guibg=Red guifg=yellow
@@ -123,3 +135,9 @@ if exists("g:is_vimrc_simple")
   colo peaksea
   hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 endif
+
+set encoding=utf-8
+
+"=============================== Supertab =====================================
+imap <c-space> <c-r>=MySupertabAltCompletion()<cr>
+"==============================================================================

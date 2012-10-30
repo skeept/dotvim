@@ -1,5 +1,22 @@
+" Copyright (C) 2010-2012 Hong Xu
+
+" This file is part of SingleCompile.
+
+" SingleCompile is free software: you can redistribute it and/or modify
+" it under the terms of the GNU General Public License as published by
+" the Free Software Foundation, either version 3 of the License, or
+" (at your option) any later version.
+
+" SingleCompile is distributed in the hope that it will be useful,
+" but WITHOUT ANY WARRANTY; without even the implied warranty of
+" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+" GNU General Public License for more details.
+
+" You should have received a copy of the GNU General Public License
+" along with SingleCompile.  If not, see <http://www.gnu.org/licenses/>.
+
 " File: autoload/SingleCompileAsync.vim
-" Version: 2.8.7
+" Version: 2.10.5
 " check doc/SingleCompile.txt for more information
 
 
@@ -51,7 +68,7 @@ class SingleCompileAsync:
     output = None
     # This value will be set below if we are on win32. For other systems,
     # leave this as None
-    startupinfo = None  
+    startupinfo = None
 
 # if we are on win32, we need to set STARTUPINFO before calling
 # subprocess.Popen() to make the console of the subprocess show minimized and

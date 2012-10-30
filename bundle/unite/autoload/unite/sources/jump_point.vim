@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: jump_point.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Oct 2011.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,6 +35,7 @@ let s:source = {
       \ 'name' : 'jump_point',
       \ 'description' : 'candidates from cursor point',
       \ 'hooks' : {},
+      \ 'default_kind' : 'jump_list',
       \}
 function! s:source.hooks.on_init(args, context)"{{{
   let line = substitute(getline('.'), '^!!!\|!!!$', '', 'g')
@@ -46,12 +47,11 @@ function! s:source.gather_candidates(args, context)"{{{
   let candidates = []
 
   for [word, list] in map(a:context.source__lines,
-        \ '[v:val, split(v:val[2:], ":")]')
+        \ "[v:val, split(v:val[2:], ':')]")
     let candidate = {
         \   'word': word,
-        \   'kind': 'jump_list',
         \ }
-    if len(word) == 1 && unite#util#is_win()
+    if len(word) == 1 && unite#util#is_windows()
       let candidate.word = word . list[0]
       let list = list[1:]
     endif

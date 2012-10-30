@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: output.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Jan 2012.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,22 +38,31 @@ let s:source = {
       \ 'name' : 'output',
       \ 'description' : 'candidates from Vim command output',
       \ 'default_action' : 'yank',
+      \ 'default_kind' : 'word',
       \ }
 
 function! s:source.gather_candidates(args, context)"{{{
-  let command = join(a:args, ' ')
-  if command == ''
-    let command = input('Please input Vim command: ', '', 'command')
+  if type(get(a:args, 0, '')) == type([])
+    " Use args directly.
+    let result = a:args[0]
+  else
+    let command = join(a:args, ' ')
+    if command == ''
+      let command = unite#util#input(
+            \ 'Please input Vim command: ', '', 'command')
+    endif
+
+    redir => output
+    silent! execute command
+    redir END
+
+    let result = split(output, '\r\n\|\n')
   endif
 
-  redir => result
-  silent execute command
-  redir END
-
-  return map(split(result, '\r\n\|\n'), '{
-        \ "word" : v:val,
-        \ "kind" : "word",
-        \ }')
+  return map(result, "{
+        \ 'word' : v:val,
+        \ 'is_multiline' : 1,
+        \ }")
 endfunction"}}}
 function! s:source.complete(args, context, arglead, cmdline, cursorpos)"{{{
   if !exists('*neocomplcache#sources#vim_complete#helper#command')

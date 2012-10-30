@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_default.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 19 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -49,12 +49,13 @@ function! s:matcher.filter(candidates, context)"{{{
 endfunction"}}}
 
 
-let s:default_matchers = ['matcher_glob']
+let s:default_matchers = ['matcher_context']
 function! unite#filters#matcher_default#get()"{{{
   return s:default_matchers
 endfunction"}}}
 function! unite#filters#matcher_default#use(matchers)"{{{
-  let s:default_matchers = a:matchers
+  let s:default_matchers = type(a:matchers) == type([]) ?
+        \ a:matchers : [a:matchers]
 endfunction"}}}
 
 let &cpo = s:save_cpo

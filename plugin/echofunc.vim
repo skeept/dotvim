@@ -6,8 +6,8 @@
 "               supports.
 " Authors:      Ming Bai <mbbill AT gmail DOT com>,
 "               Wu Yongwei <wuyongwei AT gmail DOT com>
-" Last Change:  2011-06-22 16:34:01
-" Version:      1.3
+" Last Change:  2012-02-04 19:18:00
+" Version:      2.0
 "
 " Install:      1. Put echofunc.vim to /plugin directory.
 "               2. Use the command below to create tags
@@ -94,6 +94,10 @@ if v:version < 700
      echohl ErrorMsg | echomsg "Echofunc.vim needs vim version >= 7.0!" | echohl None
      finish
 endif
+
+" Change cpoptions to make sure line continuation works
+let s:cpo_save=&cpo
+set cpo&vim
 
 let s:res=[]
 let s:count=1
@@ -354,8 +358,8 @@ function! EchoFuncStart()
     let b:EchoFuncStarted=1
     let s:ShowMode=&showmode
     let s:CmdHeight=&cmdheight
-    inoremap <silent> <buffer>  (   (<c-r>=EchoFunc()<cr>
-    inoremap <silent> <buffer>  )    <c-r>=EchoFuncClear()<cr>)
+    "inoremap <silent> <buffer>  (   (<c-r>=EchoFunc()<cr>
+    "inoremap <silent> <buffer>  )    <c-r>=EchoFuncClear()<cr>)
     exec 'inoremap <silent> <buffer> ' . g:EchoFuncKeyNext . ' <c-r>=EchoFuncN()<cr>'
     exec 'inoremap <silent> <buffer> ' . g:EchoFuncKeyPrev . ' <c-r>=EchoFuncP()<cr>'
 endfunction
@@ -546,5 +550,8 @@ endfunction
 augroup EchoFunc
     autocmd BufRead,BufNewFile * call s:EchoFuncInitialize()
 augroup END
+
+" Restore cpoptions
+let &cpo=s:cpo_save
 
 " vim: set et sts=4 sw=4:

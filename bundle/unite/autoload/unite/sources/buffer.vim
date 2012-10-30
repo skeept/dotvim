@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Jan 2012.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -65,15 +65,14 @@ let s:source_buffer_all = {
       \ 'description' : 'candidates from buffer list',
       \ 'syntax' : 'uniteSource__Buffer',
       \ 'hooks' : {},
+      \ 'default_kind' : 'buffer',
       \}
 
 function! s:source_buffer_all.hooks.on_init(args, context)"{{{
   return s:init_context(a:args, a:context)
 endfunction"}}}
 function! s:source_buffer_all.hooks.on_syntax(args, context)"{{{
-  syntax match uniteSource__Buffer_Directory /\[[^\]]*\]\ze\s*$/
-        \ contained containedin=uniteSource__Buffer
-  highlight default link uniteSource__Buffer_Directory PreProc
+  return s:on_syntax(a:args, a:context)
 endfunction"}}}
 
 function! s:source_buffer_all.gather_candidates(args, context)"{{{
@@ -84,14 +83,13 @@ function! s:source_buffer_all.gather_candidates(args, context)"{{{
           \                   a:context.source__is_question)
   endif
 
-  let candidates = map(copy(a:context.source__buffer_list), '{
-        \ "word" : s:make_word(v:val.action__buffer_nr),
-        \ "abbr" : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
-        \ "kind" : "buffer",
-        \ "action__path" : unite#substitute_path_separator(bufname(v:val.action__buffer_nr)),
-        \ "action__buffer_nr" : v:val.action__buffer_nr,
-        \ "action__directory" : s:get_directory(v:val.action__buffer_nr),
-        \}')
+  let candidates = map(copy(a:context.source__buffer_list), "{
+        \ 'word' : s:make_word(v:val.action__buffer_nr),
+        \ 'abbr' : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
+        \ 'action__path' : unite#substitute_path_separator(bufname(v:val.action__buffer_nr)),
+        \ 'action__buffer_nr' : v:val.action__buffer_nr,
+        \ 'action__directory' : s:get_directory(v:val.action__buffer_nr),
+        \}")
 
   return candidates
 endfunction"}}}
@@ -102,17 +100,16 @@ endfunction"}}}
 let s:source_buffer_tab = {
       \ 'name' : 'buffer_tab',
       \ 'description' : 'candidates from buffer list in current tab',
-      \ 'syntax' : 'uniteSource__BufferTab',
+      \ 'syntax' : 'uniteSource__Buffer',
       \ 'hooks' : {},
+      \ 'default_kind' : 'buffer',
       \}
 
 function! s:source_buffer_tab.hooks.on_init(args, context)"{{{
   return s:init_context(a:args, a:context)
 endfunction"}}}
 function! s:source_buffer_tab.hooks.on_syntax(args, context)"{{{
-  syntax match uniteSource__BufferTab_Directory /\[[^\]]*\]\ze\s*$/
-        \ containedin=uniteSource__BufferTab
-  highlight default link uniteSource__BufferTab_Directory PreProc
+  return s:on_syntax(a:args, a:context)
 endfunction"}}}
 
 function! s:source_buffer_tab.gather_candidates(args, context)"{{{
@@ -130,15 +127,14 @@ function! s:source_buffer_tab.gather_candidates(args, context)"{{{
   let list = filter(copy(a:context.source__buffer_list),
         \ 'has_key(t:unite_buffer_dictionary, v:val.action__buffer_nr)')
 
-  let candidates = map(list, '{
-        \ "word" : s:make_word(v:val.action__buffer_nr),
-        \ "abbr" : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
-        \ "kind" : "buffer",
-        \ "action__path" : unite#substitute_path_separator(
+  let candidates = map(list, "{
+        \ 'word' : s:make_word(v:val.action__buffer_nr),
+        \ 'abbr' : s:make_abbr(v:val.action__buffer_nr, v:val.source__flags),
+        \ 'action__path' : unite#substitute_path_separator(
         \        bufname(v:val.action__buffer_nr)),
-        \ "action__buffer_nr" : v:val.action__buffer_nr,
-        \ "action__directory" : s:get_directory(v:val.action__buffer_nr),
-        \}')
+        \ 'action__buffer_nr' : v:val.action__buffer_nr,
+        \ 'action__directory' : s:get_directory(v:val.action__buffer_nr),
+        \}")
 
   return candidates
 endfunction"}}}
@@ -163,26 +159,33 @@ function! s:make_word(bufnr)"{{{
   return path
 endfunction"}}}
 function! s:make_abbr(bufnr, flags)"{{{
+  let bufname = fnamemodify(bufname(a:bufnr), ':t')
+  if bufname == ''
+    let bufname = bufname(a:bufnr)
+  endif
+
   let filetype = getbufvar(a:bufnr, '&filetype')
   if filetype ==# 'vimfiler'
-    let path = getbufvar(a:bufnr, 'vimfiler').current_dir
-    let path = printf('%s [%s]', fnamemodify(bufname(a:bufnr), ':t'),
-          \ unite#substitute_path_separator(simplify(path)))
+    let vimfiler = getbufvar(a:bufnr, 'vimfiler')
+    let path = vimfiler.current_dir
+    if path =~ '^//'
+      let path = vimfiler.source . ':' . path
+    endif
+    let path = printf('%s : [%s]', bufname, path)
   elseif filetype ==# 'vimshell'
     let vimshell = getbufvar(a:bufnr, 'vimshell')
     let path = vimshell.current_dir
-    let path = printf('%s: %s [%s]', fnamemodify(bufname(a:bufnr), ':t'),
-          \ (has_key(vimshell, 'cmdline') ? vimshell.cmdline : ''),
-          \ unite#substitute_path_separator(simplify(path)))
+    let path = printf('%s : %s [%s]', bufname,
+          \ get(vimshell, 'cmdline', ''), simplify(path))
   else
-    let path = unite#substitute_path_separator(
-          \ simplify(fnamemodify(bufname(a:bufnr), ':~:.')))
+    let path = simplify(fnamemodify(bufname(a:bufnr), ':~:.'))
     if a:flags != ''
       let path .= ' [' . a:flags . ']'
     endif
   endif
 
-  return path
+  return (getbufvar(a:bufnr, '&buftype') =~# 'nofile' ? '[nofile] ' : '' ) .
+         \ unite#util#substitute_path_separator(path)
 endfunction"}}}
 function! s:compare(candidate_a, candidate_b)"{{{
   return a:candidate_b.source__time - a:candidate_a.source__time
@@ -243,8 +246,19 @@ function! s:get_buffer_list(is_bang, is_question)"{{{
 
   return list
 endfunction"}}}
+function! s:on_syntax(args, context)"{{{
+  syntax match uniteSource__Buffer_Info /\[.\{-}\]\ze\s*$/
+        \ contained containedin=uniteSource__Buffer
+  highlight default link uniteSource__Buffer_Info PreProc
+  syntax match uniteSource__Buffer_Modified /\[.\{-}+\]/
+        \ contained containedin=uniteSource__Buffer
+  highlight default link uniteSource__Buffer_Modified Statement
+  syntax match uniteSource__Buffer_NoFile /\[nofile\]/
+        \ contained containedin=uniteSource__Buffer
+  highlight default link uniteSource__Buffer_NoFile Function
+endfunction"}}}
 
-function! s:init_context(args, context)
+function! s:init_context(args, context)"{{{
   let a:context.source__is_bang =
         \ (get(a:args, 0, '') ==# '!')
   let a:context.source__is_question =
@@ -252,16 +266,16 @@ function! s:init_context(args, context)
   let a:context.source__buffer_list =
         \ s:get_buffer_list(a:context.source__is_bang,
         \                   a:context.source__is_question)
-endfunction
+endfunction"}}}
 
-function! s:is_listed(is_bang, is_question, bufnr)
+function! s:is_listed(is_bang, is_question, bufnr)"{{{
   return bufexists(a:bufnr) &&
         \ (a:is_question ? !buflisted(a:bufnr) :
         \    (a:is_bang || buflisted(a:bufnr)))
         \ && (getbufvar(a:bufnr, '&filetype') !=# 'unite'
         \      || getbufvar(a:bufnr, 'unite').buffer_name !=#
         \         unite#get_current_unite().buffer_name)
-endfunction
+endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

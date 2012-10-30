@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_fuzzy.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Sep 2011.
+" Last Modified: 04 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,31 +38,26 @@ let s:matcher = {
 
 function! s:matcher.filter(candidates, context)"{{{
   if a:context.input == ''
-    return a:candidates
+    return unite#util#filter_matcher(
+          \ a:candidates, '', a:context)
   endif
 
   let candidates = a:candidates
-  for input in split(a:context.input, '\\\@<! ')
+  for input in a:context.input_list
     let input = substitute(input, '\\ ', ' ', 'g')
-
-    " Fuzzy.
-    let input = substitute(input, '[^*]\ze[[:alnum:]]', '\0*', 'g')
-
-    if input =~ '^!'
-      if input == '!'
-        continue
-      endif
-
-      " Exclusion.
-      let input = unite#escape_match(input)
-      let expr = 'v:val.word !~ ' . string(input[1:])
-    else
-      " Wildcard.
-      let input = unite#escape_match(input)
-      let expr = 'v:val.word =~ ' . string(input)
+    if input == '!'
+      continue
     endif
 
-    let candidates = filter(copy(candidates), expr)
+    let input = substitute(substitute(unite#escape_match(input),
+          \ '[[:alnum:]._-]', '\0.*', 'g'), '\*\*', '*', 'g')
+
+    let expr = (input =~ '^!') ?
+          \ 'v:val.word !~ ' . string(input[1:]) :
+          \ 'v:val.word =~ ' . string(input)
+
+    let candidates = unite#util#filter_matcher(
+          \ a:candidates, expr, a:context)
   endfor
 
   return candidates

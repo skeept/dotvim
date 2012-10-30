@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: command.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Sep 2011.
+" Last Modified: 02 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,7 +38,9 @@ let s:source = {
       \ 'name' : 'command',
       \ 'description' : 'candidates from Ex command',
       \ 'default_action' : 'edit',
-      \ 'max_candidates' : 30,
+      \ 'max_candidates' : 200,
+      \ 'action_table' : {},
+      \ 'filters' : ['matcher_regexp', 'sorter_default', 'converter_default'],
       \ }
 
 let s:cached_result = []
@@ -77,14 +79,21 @@ function! s:source.gather_candidates(args, context)"{{{
       let prototype = ''
     endif
 
-    call add(s:cached_result, {
+    let dict = {
           \ 'word' : word,
           \ 'abbr' : printf('%-16s %s', word, prototype),
           \ 'kind' : 'command',
-          \ 'action__command' : word,
-          \})
+          \ 'action__command' : word . ' ',
+          \ 'source__command' : ':'.word,
+          \ }
+    let dict.action__description = dict.abbr
+
+    call add(s:cached_result, dict)
   endfor
   let s:cached_result += s:caching_from_neocomplcache_dict()
+
+  let s:cached_result = unite#util#sort_by(
+        \ s:cached_result, 'tolower(v:val.word)')
 
   return s:cached_result
 endfunction"}}}
@@ -105,27 +114,52 @@ function! s:source.change_candidates(args, context)"{{{
 endfunction"}}}
 
 function! s:caching_from_neocomplcache_dict()"{{{
-  let dict_files = split(globpath(&runtimepath, 'autoload/neocomplcache/sources/vim_complete/commands.dict'), '\n')
+  let dict_files = split(globpath(&runtimepath,
+        \ 'autoload/neocomplcache/sources/vim_complete/commands.dict'), '\n')
   if empty(dict_files)
     return []
   endif
 
   let keyword_pattern =
-        \'^\%(-\h\w*\%(=\%(\h\w*\|[01*?+%]\)\?\)\?\|<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#\[]*\%([!\]]\+\|()\?\)\?\)'
+        \'^\%(-\h\w*\%(=\%(\h\w*\|[01*?+%]\)\?\)\?\|'
+        \'<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#\[]*\%([!\]]\+\|()\?\)\?\)'
   let keyword_list = []
   for line in readfile(dict_files[0])
-    let word = substitute(matchstr(line, keyword_pattern), '[\[\]]', '', 'g')
+    let word = substitute(
+          \ matchstr(line, keyword_pattern), '[\[\]]', '', 'g')
     call add(keyword_list, {
-          \ 'word' : word,
-          \ 'abbr' : line,
+          \ 'word' : line,
           \ 'kind' : 'command',
-          \ 'source' : 'command',
-          \ 'action__command' : word,
+          \ 'action__command' : word . ' ',
+          \ 'action__description' : line,
+          \ 'source__command' : ':'.word,
           \})
   endfor
 
   return keyword_list
 endfunction"}}}
+
+" Actions"{{{
+let s:source.action_table.preview = {
+      \ 'description' : 'view the help documentation',
+      \ 'is_quit' : 0,
+      \ }
+function! s:source.action_table.preview.func(candidate)"{{{
+  let winnr = winnr()
+
+  try
+    execute 'help' a:candidate.source__command
+    normal! zv
+    normal! zt
+    setlocal previewwindow
+    setlocal winfixheight
+  catch /^Vim\%((\a\+)\)\?:E149/
+    " Ignore
+  endtry
+
+  execute winnr.'wincmd w'
+endfunction"}}}
+"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

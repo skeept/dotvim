@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: jump.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Jan 2012.
+" Last Modified: 02 Oct 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,6 +37,7 @@ endfunction"}}}
 let s:source = {
       \ 'name' : 'jump',
       \ 'description' : 'candidates from jumps',
+      \ 'default_kind' : 'jump_list',
       \ }
 
 let s:cached_result = []
@@ -58,7 +59,7 @@ function! s:source.gather_candidates(args, context)"{{{
     let path = file_text
     let bufnr = bufnr(file_text)
     if empty(lines)
-      if getline(linenr) ==# file_text
+      if stridx(join(split(getline(linenr))), file_text) == 0
         let lines = [file_text]
         let path = bufname('%')
         let bufnr = bufnr('%')
@@ -88,7 +89,6 @@ function! s:source.gather_candidates(args, context)"{{{
     let dict = {
           \ 'word' : unite#util#truncate(
           \     printf('%s:%d-%d  ', path, linenr, col), max_path) . text,
-          \ 'kind' : 'jump_list',
           \ 'action__path' : unite#util#substitute_path_separator(
           \     fnamemodify(unite#util#expand(path), ':p')),
           \ 'action__line' : linenr,

@@ -1,6 +1,6 @@
 *unite.txt*	Ultimate interface to unite all sources
 
-Version: 3.1
+Version: 4.1
 Author : Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -34,23 +34,24 @@ Interface		|unite-interface|
     Sources variables	    |unite-sources-variables|
   Key mappings		  |unite-key-mappings|
   Functions		  |unite-functions|
-  Sources		  |unite-sources|
-  Kinds			  |unite-kinds|
-  Actions		  |unite-actions|
-  Filters		  |unite-filters|
+Sources			|unite-sources|
+Kinds			|unite-kinds|
+Actions			|unite-actions|
+Filters			|unite-filters|
 Create source		|unite-create-source|
 Create kind		|unite-create-kind|
 Create filter		|unite-create-filter|
 Configulation Examples	|unite-examples|
 User defined source	|unite-user-sources|
+FAQ			|unite-faq|
 Changelog		|unite-changelog|
 
 ==============================================================================
 INTRODUCTION					*unite-introduction*
 
-*unite* or *unite.vim* searches and displays information from arbitrary sources like files,
-buffers, recently used files or registers. You can run one of defined action
-on a target displayed.
+*unite* or *unite.vim* searches and displays information from arbitrary sources
+like files, buffers, recently used files or registers. You can run one of
+defined actions on a target displayed.
 
 The differences between |unite| and similar plugins like |fuzzyfinder| or |ku|
 are that |unite| doesn't use the built-in completion interface of Vim, and
@@ -69,21 +70,21 @@ USAGE						*unite-usage*
 	:Unite -input=foo file
 <
 
-The unite you started splits the window horizontally as default, opening on
+The unite you started splits the window horizontally by default, opening on
 the top of the Vim.  For example,
 >
 	:Unite file
 <
-lists up the files of the current directory.  You may choose one of the
-candidates by moving j or k, and typing Enter opens the candidate in a new
-buffer.  That's the default action for candidates of which kind is file.  You
-may also select an action with <Tab> on a candidate.  See also |unite-action|
-about the actions.
+lists up the files in the current directory.  You may choose one of the
+candidates by moving j or k, and typing Enter key opens the candidate in a new
+buffer.  That's the default action for candidates of which the kind is file.
+You may also select an action with <Tab> on a candidate.  See also
+|unite-action| about the actions.
 
 You can narrow down the candidates with a keyword.  After opening a unite
 window, the cursor goes on the right side of > in the 2nd line by typing i.
 Then you can input a keyword to narrow down the candidates.  Each single
-characters you type narrows down the candidates.  You also can use a wild
+characters you type narrows down the candidates.  You can also use a wild
 card * as an arbitrary character sequence.  For example
 >
 	*hisa
@@ -94,25 +95,25 @@ matches directory recursively.  For example
 	**/foo
 <
 matches bar/foo or buzz/bar/foo.  Note that you should consider using
-|file_rec| that will be described bellow in most cases.
+|file_rec| in most cases that will be described bellow.
 
 You may specify multiple keywords to narrow down, separating by spaces.
 >
 	foo bar
 <
+That matches candidates that meet both foo and bar.
+
 OR matching is implemented by "|".
 >
 	foo|bar
 <
-That matches candidates that match both foo and bar.
-
 You may specify negative conditions with !.
 >
 	foo !bar
 <
-That matches foo but candidates that match bar will be rejected.
+That matches candidates that meet foo but doesn't meet bar.
 
-	You may add wild cards automatically with / if you specify files on
+	Wild cards are added automatically with / if you specify files on
 	-buffer-name option.  That's handy in case you select file with unite.
 >
 	:Unite -buffer-name=files file
@@ -128,12 +129,9 @@ INSTALL						*unite-install*
 Install the distributed files into Vim script directory which is usually
 ~/.vim/, or $HOME/vimfiles on Windows.
 
-In future VimJolts the Vim plugin package manager will support unite, you can
-install unite just by `jolt install unite`.
-
 You may run unite with |:Unite| command with source as parameters if you
-succeeded in installing unite.  However, it's pain in ass to run the command
-explicitly every time, so I recommend you to set a key mapping for the
+succeeded in installing unite.  However, it's a pain in the ass to run the
+command explicitly every time, so I recommend you to set a key mapping for the
 command.
 
 ==============================================================================
@@ -143,40 +141,44 @@ INTERFACE					*unite-interface*
 COMMANDS 					*unite-commands*
 
 :Unite [{options}] {sources}			*:Unite*
-		Shows the candidate window of {sources} with empty initial
-		narrowing text.  You may specify multiple {sources} with
-		spaces as a separator; the order of the {sources} will be the
-		order of candidates.  See |unite-source| also for sources.
+		Shows the candidate window of {sources} with the initial
+		narrowing text empty.  You may specify multiple {sources} with
+		spaces as a separator; the order of the {sources} is equal to
+		the order of candidates.  See also |unite-source| for sources.
 		This command restores previous position.
 
-		In case you are already on unite buffer, the narrowing text
-		will be stored.
+		In case you are already on a unite buffer, the narrowing text
+		is stored.
 
 		You may give a list of strings, separating with ":", after
 		the name of sources. You must escape ":" and "\" with "\"
-		for parameters themselves. "::" is abbreviation argument. It
-		depends on the sources how the parameters will be interpreted.
+		in parameters themselves. "::" is abbreviation argument. It
+		depends on the sources how the parameters are interpreted.
 
 		Examples:
 		"file:foo:bar": the parameters of source file are
 		                ["foo", "bar"].
-		"file:foo\:bar": the parameters of source file are
+		"file:foo\:bar": the parameter of source file is
 		                ["foo:bar"].
 		"file:foo::baz": the parameters of source file are
 		                ["foo", "", "bar"].
 
 						*unite-options*
 		{options} are options for a unite buffer.  You may give the
-		following parameters for a option; you must escape with \ when
-		it contains spaces.
+		following parameters for a option; you must escape with "\"
+		when it contains spaces.
+		
+		Note: In unite.vim, options converts to a context dictionary.
+		The "-buffer-name" option is same to "buffer_name" key in
+		context.
 
 						*unite-options-buffer-name*
 		-buffer-name={buffer-name}
-		Specifies a buffer name. You can share a configuration of
-		functions like |unite#set_substitute_pattern()| by giving a
-		buffer name for unite buffers that have same purpose.
-		The default buffer name is 'default'.
-		Note: Buffer name must not contain spaces.
+		Specifies a buffer name. You can share the configuration of
+		functions like |unite#set_substitute_pattern()| by giving the
+		same name to unite buffers that have the same purpose.  The
+		default buffer name is 'default'.
+		Note: Buffer name must not contain any spaces.
 
 						*unite-options-input*
 		-input={input-text}
@@ -193,40 +195,49 @@ COMMANDS 					*unite-commands*
 						*unite-options-start-insert*
 						*unite-options-no-start-insert*
 		-start-insert
-		Opens unite buffer with narrowing mode.
+		Opens a unite buffer in the narrowing mode.
 
 		-no-start-insert
-		Opens unite buffer with normal mode.
+		Opens a unite buffer in the normal mode.
 
-		When both options are undefined, this will depend on
+		When both options are undefined, it depends on
 		|g:unite_enable_start_insert| option.
-		The behavior when both options are defined is undefined.
+		The behavior is undefined when both options are defined.
 
 						*unite-options-no-quit*
 		-no-quit
-		Doesn't close the unite buffer after firing an action.  Unless
-		you specify it, a unite buffer will be closed when you
-		selected an action which is "is_quit".
+		Doesn't close unite buffer after firing an action.  Unless you
+		specify it, a unite buffer gets closed when you selected an
+		action which is "is_quit".
+
+						*unite-options-keep-focus*
+		-keep-focus
+		Keep the focus on a unite buffer after firing an action.
+		Note: This option is used with "-no-quit" option.
 
 						*unite-options-winwidth*
 		-winwidth={window-width}
 		Specifies the width of a unite buffer.  Unless you specify
-		it, |g:unite_winwidth| will be used.
+		it, |g:unite_winwidth| is used.
 
 						*unite-options-winheight*
 		-winheight={window-height}
 		Specifies the height of a unite buffer.  Unless you specify
-		it, |g:unite_winheight| will be used.
+		it, |g:unite_winheight| is used.
 
 						*unite-options-immediately*
 		-immediately
 		If the number of candidates is exactly one, it runs default
-		action immediately. If candidate is empty, it doesn't open
-		unite buffer. This option also works in narrowing mode.
+		action immediately. If candidate is empty, it doesn't open any
+		unite buffer.
+
+						*unite-options-no-empty*
+		-no-empty
+		If candidate is empty, it doesn't open any unite buffer.
 
 						*unite-options-auto-preview*
 		-auto-preview
-		When you selected candidate, it runs "preview" action
+		When you selected a candidate, it runs "preview" action
 		automatically.
 
 						*unite-options-completion*
@@ -246,13 +257,13 @@ COMMANDS 					*unite-commands*
 		-horizontal
 		Splits unite window horizontally.
 		
-		When both options are undefined, this will depend on
+		When both options are undefined, it depends on
 		|g:unite_enable_split_vertically| option.
-		The behavior when both options are defined is undefined.
+		The behavior is undefined when both options are defined.
 
 						*unite-options-direction*
 		-direction={direction}
-		Defines split position rule. The default value is same to
+		Defines split position rule. The default value is the same to
 		|g:unite_split_rule|.
 
 						*unite-options-no-split*
@@ -269,70 +280,110 @@ COMMANDS 					*unite-commands*
 
 						*unite-options-toggle*
 		-toggle
-		Close unite buffer window if this unite buffer name window is
+		Close unite buffer window if one of the same buffer name
 		exists.
 
 						*unite-options-quick-match*
 		-quick-match
-		Start with quick match mode.
+		Start in the quick match mode.
 
 						*unite-options-create*
 		-create
-		Create new unite buffer.
+		Create a new unite buffer.
 
 						*unite-options-update-time*
 		-update-time={new-update-time}
 		Change 'updatetime' option. If this option is ommit,
-		|g:unite_update_time| is used.
+		|g:unite_update_time| is used. This option is useful for
+		animation source.
 
-						*unite-options-cursor-line-highlight*
+					*unite-options-cursor-line-highlight*
 		-cursor-line-high-light={highlight-name}
 		Change cursor line highlight. If this option is ommit,
 		|g:unite_cursor_line_highlight| is used.
 
+						*unite-options-no-cursor-line*
+		-no-cursor-line
+		Disable cursor line highlight. This option is useful for
+		animation source.
+
+					*unite-options-hide-source-names*
+		-hide-source-names
+		Hides source names.
+		Note: This option doesn't only hide names but also the whole
+		unite status line.
+		Note: Source highlight will be overwritten by other sources.
+
+					*unite-options-max-multi-lines*
+		-max-multi-lines={max-lines}
+		Specifies the lines max in multiline candidates. If this
+		option is ommit, "5" is used.
+
+						*unite-options-here*
+		-here
+		Open unite buffer at the cursor position.
+		Note: This option is disabled if "-vertical" or "-no-split"
+		option is on.
+
+						*unite-options-silent*
+		-silent
+		Shuts messages up in unite buffer.
+
+						*unite-options-auto-quit*
+		-auto-quit
+		Closes unite buffer automatically when all candidates are
+		shown.
+
+						*unite-options-no-focus*
+		-no-focus
+		No the focus on the unite buffer after opening a unite buffer.
+
+					*unite-options-short-source-names*
+		-short-source-names
+		Use short source names.
+
+					*unite-options-long-source-names*
+		-long-source-names
+		Use long source names.
+
+					*unite-options-multi-line*
+		-multi-line
+		Force use multi line. If candiate abbr is too long, unite.vim
+		will fold automatically.
+
 :UniteWithCurrentDir [{options}] {sources}	*:UniteWithCurrentDir*
-		Equivalent to |:Unite| except that the initial narrowing text
-		is the current directory.
+		Equivalent to |:Unite| except that it targets the current
+		directory for the initial narrowing text.
 
 :UniteWithBufferDir [{options}] {sources}	*:UniteWithBufferDir*
-		Equivalent to |:Unite| except that the initial narrowing text
-		is the buffer's directory.
+		Equivalent to |:Unite| except that it targets the buffer's
+		directory for the initial narrowing text.
 
 :UniteWithInput [{options}] {sources}		*:UniteWithInput*
-		Equivalent to |:Unite| except that the initial narrowing text
-		is the user input.
+		Equivalent to |:Unite| except that it targets the user input
+		for the initial narrowing text.
 
 :UniteWithCursorWord [{options}] {sources}	*:UniteWithCursorWord*
-		Equivalent to |:Unite| except that the initial narrowing text
-		is the word on the cursor.
+		Equivalent to |:Unite| except that it targets the word on the
+		cursor for the initial narrowing text.
 
 :UniteResume [{options}] [{buffer-name}]	*:UniteResume*
-		Reuses the unite buffer previously opened named {buffer-name}.
-		Reuses the last unite buffer you used if you skipped
-		specifying {buffer-name}.  Narrowing texts or candidates are
-		same to them. If {options} are given, context information
-		will override.
+		Reuses the unite buffer named {buffer-name} that you opened
+		previously. Narrowing texts or candidates are
+		as-is. If {options} are given, context information gets
+		overridden.
+		Note: Reuses the last unite buffer you used in current tab if
+		you skip specifying {buffer-name}.
 
 :UniteClose {buffer-name}			*:UniteClose*
-		Close the unite buffer named {buffer-name}.
+		Closes the unite buffer named {buffer-name}.
 
-A command of source				*:unite-sources-command*
+The commands of source				*:unite-sources-commands*
 
 :UniteBookmarkAdd [{file}]			*:UniteBookmarkAdd*
-		Adds the file into the bookmark list. Unless you specify the
-		parameter, the current position of the current file will be
+		Adds a file into the bookmark list. Unless you specify any
+		parameter, the current position of the current file is
 		stored.
-
-:UniteSessionSave [{session-name}]		*:UniteSessionSave*
-		Save session data in {session-name}.
-		If {session-name} is omitted, use |v:this_session| or
-		|g:unite_source_session_default_session_name| is used.
-
-:UniteSessionLoad [{session-name}]		*:UniteSessionLoad*
-		Save session data from {session-name}.
-		If {session-name} is omitted, use |v:this_session| or
-		|g:unite_source_session_default_session_name| is used.
-		If session data is not found, will create it.
 
 ------------------------------------------------------------------------------
 VARIABLES 					*unite-variables*
@@ -341,26 +392,27 @@ g:unite_update_time				*g:unite_update_time*
 		Update time interval of candidates for each input of narrowing
 		text.  In Msec.
 
-		Default value is 500.
+		The default value is 500.
 
 g:unite_enable_start_insert			*g:unite_enable_start_insert*
-		If this variable is 1, unite buffer will be Insert Mode
+		If this variable is 1, unite buffer will be in Insert Mode
 		immediately.
 
-		Default value is 0.
+		The default value is 0.
 
 g:unite_split_rule				*g:unite_split_rule*
 		Defines split position rule.
 
-		Default value is "topleft".
+		The default value is "topleft".
 
-g:unite_enable_split_vertically			*g:unite_enable_split_vertically*
-		If this option is 1, splits unite window vertically.
+g:unite_enable_split_vertically
+					*g:unite_enable_split_vertically*
+		If this option is 1, unite window is split vertically.
 
-		Default value is 0; unite window will be splat horizontally.
+		The default value is 0; unite window is split horizontally.
 
 g:unite_winheight				*g:unite_winheight*
-		The height of unite window when it's split horizontally.  It's
+		The height of unite window when it's split horizontally. It's
 		ignored in splitting vertically.
 
 		The default value is 20.
@@ -371,27 +423,34 @@ g:unite_winwidth				*g:unite_winwidth*
 
 		The default value is 90.
 
-g:unite_kind_openable_cd_command				*g:unite_kind_openable_cd_command*
+g:unite_kind_openable_cd_command	*g:unite_kind_openable_cd_command*
 		Specifies the Vim command for cd action.
 		This command must interpret |`=|.
 
 		The default value is "cd".
 
-g:unite_kind_openable_lcd_command				*g:unite_kind_openable_lcd_command*
+g:unite_kind_openable_lcd_command	*g:unite_kind_openable_lcd_command*
 		Specifies the Vim command for lcd action.
 		This command must interpret |`=|.
 
 		The default value is "lcd".
 
-g:unite_cursor_line_highlight			*g:unite_cursor_line_highlight*
+g:unite_cursor_line_highlight		*g:unite_cursor_line_highlight*
 		Specifies the cursor line highlight.
 		
 		The default value is "PmenuSel".
 
 g:unite_abbr_highlight				*g:unite_abbr_highlight*
-		Specifies candidates abbr highlight.
+		Specifies abbreviated candidates highlight.
 		
 		The default value is "Normal".
+
+g:unite_enable_use_short_source_names
+				*g:unite_enable_use_short_source_names*
+		If this variable is 1, unite buffer will show short source
+		names.
+
+		The default value is 0.
 
 g:unite_quick_match_table			*g:unite_quick_match_table*
 		The table of completion candidates of quick match list,
@@ -401,170 +460,193 @@ g:unite_quick_match_table			*g:unite_quick_match_table*
 
 g:unite_data_directory				*g:unite_data_directory*
 		Specifies directories for configurations internally used in
-		unite itself or its sources.  If the directory doesn't exist
-		the directory will be automatically generated.  For example source
-		of file_mru saves the information of the most recent used
-		files on the directory.
+		unite itself or its sources.  If the directory doesn't exist,
+		the directory is automatically generated.  For example
+		source of file_mru saves the information of the most recent
+		used files into the directory.
 		
-		Default value is expand('~/.unite'); the absolute path of it.
+		The Default value is expand('~/.unite'); the absolute path
+		of it.
 
-g:unite_no_default_keymappings			*g:unite_no_default_keymappings*
+g:unite_no_default_keymappings		*g:unite_no_default_keymappings*
 		If it's 1, unite doesn't map any default key mappings.  You
-		shouldn't enable this option without any strong reasons.
+		shouldn't enable this option without any particular reasons.
 
 		This variable doesn't exist unless you define explicitly.
 
 SOURCES VARIABLES 				*unite-sources-variables*
 
-g:unite_source_file_ignore_pattern		*g:unite_source_file_ignore_pattern*
-		Specifies a regex pattern for ignoring some specific
-		candidates in |unite-source-file|.  This matches on the full
-		path of each files.  If the variable isn't empty string, unite
-		filters with the regex pattern on the results.
-
+g:unite_source_file_ignore_pattern	*g:unite_source_file_ignore_pattern*
 		Refer autoload/unite/sources/file.vim about the default value.
+		Note: This variable is deprecated. Please use
+		|unite#custom_source()| instead.
+		Note: This variable must be set before using |unite|.
 
-g:unite_source_file_mru_time_format		*g:unite_source_file_mru_time_format*
+g:unite_source_file_mru_time_format
+					*g:unite_source_file_mru_time_format*
 		Specifies the output format of the last access time of
 		|unite-source-file_mru|.  The format is same to |strftime()|.
 
-		Default value is "(%c) ".
+		The default value is "(%Y/%m/%d %H:%M:%S) ".
 
-g:unite_source_file_mru_filename_format		*g:unite_source_file_mru_filename_format*
+g:unite_source_file_mru_filename_format
+				*g:unite_source_file_mru_filename_format*
 		Specifies the output format of the filename of
 		|unite-source-file_mru|.  The format is same to
 		|fnamemodify()|.  If this variable is empty, drawing speed
 		is faster.
 
-		Default value is ":~:.".
+		The default value is ":~:.".
 
 g:unite_source_file_mru_file			*g:unite_source_file_mru_file*
 		Specifies the file to write the information of most recent
 		used files.
 
-		Default value is |g:unite_data_directory|; '/file_mru'
+		The default value is |g:unite_data_directory|; '/file_mru'
 
-g:unite_source_file_mru_limit			*g:unite_source_file_mru_limit*
+g:unite_source_file_mru_limit		*g:unite_source_file_mru_limit*
 		The maximum number of most recent files to save.
 
-		Default value is 100.
+		The default value is 100.
 
-g:unite_source_file_mru_ignore_pattern		*g:unite_source_file_mru_ignore_pattern*
-		Specifies the regexp pattern to ignore candidates of
-		|unite-source-file_mru|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
-		|g:unite_enable_ignore_case| value, it's case sensitive.
-
+g:unite_source_file_mru_ignore_pattern
+				*g:unite_source_file_mru_ignore_pattern*
 		Refer autoload/unite/sources/file_mru.vim about the default
 		value.
+		Note: This function is deprecated. Please use
+		|unite#custom_source()| instead.
+		Note: This variable must be set before using |unite|.
 
-g:unite_source_directory_mru_time_format	*g:unite_source_directory_mru_time_format*
-g:unite_source_directory_mru_directory		*g:unite_source_directory_mru_directory*
-g:unite_source_directory_mru_limit		*g:unite_source_directory_mru_limit*
-g:unite_source_directory_mru_ignore_pattern	*g:unite_source_directory_mru_ignore_pattern*
-		They are same to |unite-source-file_mru| except for the
+g:unite_source_directory_mru_time_format
+				*g:unite_source_directory_mru_time_format*
+g:unite_source_directory_mru_filename_format
+				*g:unite_source_directory_mru_filename_format*
+g:unite_source_directory_mru_directory
+				*g:unite_source_directory_mru_directory*
+g:unite_source_directory_mru_limit
+				*g:unite_source_directory_mru_limit*
+g:unite_source_directory_mru_ignore_pattern
+				*g:unite_source_directory_mru_ignore_pattern*
+		They are same to |unite-source-file_mru| except that the
 		targets are |unite-source-directory_mru|.
 
-g:unite_source_bookmark_directory			*g:unite_source_bookmark_directory*
-		Specifies the directory that |unite-source-bookmark| writes its
+g:unite_source_bookmark_directory	*g:unite_source_bookmark_directory*
+		Specifies the directory where |unite-source-bookmark| writes its
 		bookmarks.
 
-		Default value is |g:unite_data_directory|; '/bookmark'.
+		The default value is |g:unite_data_directory|; '/bookmark'.
 
-g:unite_source_file_rec_ignore_pattern		*g:unite_source_file_rec_ignore_pattern*
-		Specifies the regexp pattern to ignore candidates of
-		|unite-source-file_rec|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
-		|g:unite_enable_ignore_case| value, it's case sensitive.
-
+g:unite_source_file_rec_ignore_pattern
+				*g:unite_source_file_rec_ignore_pattern*
 		Refer autoload/unite/sources/file_rec.vim about the default
 		value.
+		Note: This variable is deprecated. Please use
+		|unite#custom_source()| instead like the below.
+>
+		" before
+		" let g:unite_source_file_rec_ignore_pattern = '\.abc$'
+		" after
+		call unite#custom_source('file_rec', 'ignore_pattern', '\.abc$')
+<
+		Note: This variable must be set before using |unite|.
 
-g:unite_source_file_rec_min_cache_files		*g:unite_source_file_rec_min_cache_files*
+g:unite_source_file_rec_min_cache_files
+				*g:unite_source_file_rec_min_cache_files*
 		Specifies the minimum number of files that
-		|unite-source-file_rec| caches.  It doesn't cache if the
-		number of files is less than this value.
+		|unite-source-file_rec| saves the caches.  Any cache isn't
+		saved if the number of files is less than this value or this
+		value is 0.
 
-		Default value is 50.
+		The default value is 100.
 
 g:unite_source_grep_command			*g:unite_source_grep_command*
 		Set grep command.
 
-		Default value is "grep".
+		The default value is "grep".
 
-g:unite_source_grep_recursive_opt		*g:unite_source_grep_recursive_opt*
+g:unite_source_grep_recursive_opt	*g:unite_source_grep_recursive_opt*
 		Set grep recursive option.
 
-		Default value is "-R".
+		The default value is "-R".
 
-g:unite_source_grep_default_opts		*g:unite_source_grep_default_opts*
-		Set grep default options.
-		Note: grep output must be this pattern.
+g:unite_source_grep_default_opts	*g:unite_source_grep_default_opts*
+		Set the default options for grep.
+		Note: grep output must match the pattern below.
 		filename:number:pattern
 >
 		let g:unite_source_grep_default_opts = '-iRHn'
 <
-		Default value is "-Hn".
+		The default value is "-Hn".
 
-g:unite_source_grep_max_candidates		*g:unite_source_grep_max_candidates*
-		Set |unite-source-grep| max candidates number.
+g:unite_source_grep_max_candidates	*g:unite_source_grep_max_candidates*
+		Set the max number of |unite-source-grep| candidates.
 
-		Default value is 100.
+		The default value is 100.
 
-g:unite_source_grep_ignore_pattern		*g:unite_source_grep_ignore_pattern*
-		Specifies the regexp pattern to ignore candidates of
-		|unite-source-grep|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
-		|g:unite_enable_ignore_case| value, it's case sensitive.
-
+g:unite_source_grep_ignore_pattern	*g:unite_source_grep_ignore_pattern*
 		Refer autoload/unite/sources/grep.vim about the default
 		value.
+		Note: This variable is deprecated. Please use
+		|unite#custom_source()| instead.
+		Note: This variable must be set before using |unite|.
 
-g:unite_source_grep_search_word_highlight	*g:unite_source_grep_search_word_highlight*
+g:unite_source_grep_search_word_highlight
+				*g:unite_source_grep_search_word_highlight*
 		Specifies the search word highlight.
 		
 		The default value is "Search".
 
+g:unite_source_vimgrep_search_word_highlight
+				*g:unite_source_vimgrep_search_word_highlight*
+		Specifies the search word highlight.
+		
+		The default value is "Search".
+
+g:unite_source_vimgrep_ignore_pattern	*g:unite_source_vimgrep_ignore_pattern*
+		Refer autoload/unite/sources/vimgrep.vim about the default
+		value.
+		Note: This variable is deprecated. Please use
+		|unite#custom_source()| instead.
+		Note: This variable must be set before using |unite|.
+
 g:unite_source_find_command			*g:unite_source_find_command*
 		Set find command.
 
-		Default value is "find".
+		The default value is "find".
 
-g:unite_source_find_max_candidates		*g:unite_source_find_max_candidates*
-		Set |unite-source-find| max candidates number.
+g:unite_source_find_max_candidates
+					*g:unite_source_find_max_candidates*
+		Set the max number of |unite-source-find| candidates.
 
-		Default value is 100.
+		The default value is 100.
 
-g:unite_source_find_ignore_pattern		*g:unite_source_find_ignore_pattern*
-		Specifies the regexp pattern to ignore candidates of
-		|unite-source-find|.  This applies on the full path of
-		each files.  Unless this variable value is an empty string,
-		Unite filters out the result with the regexp.  Regardless of
-		|g:unite_enable_ignore_case| value, it's case sensitive.
-
+g:unite_source_find_ignore_pattern
+					*g:unite_source_find_ignore_pattern*
 		Refer autoload/unite/sources/find.vim about the default
 		value.
+		Note: This variable is deprecated. Please use
+		|unite#custom_source()| instead.
+		Note: This variable must be set before using |unite|.
 
-g:unite_source_line_enable_highlight		*g:unite_source_line_enable_highlight*
+g:unite_source_line_enable_highlight
+					*g:unite_source_line_enable_highlight*
 		Control whether search keyword is highlighted in unite
 		buffer.
 
-		Default value is 1.
+		The default value is 1.
 
-g:unite_source_line_search_word_highlight	*g:unite_source_line_search_word_highlight*
+g:unite_source_line_search_word_highlight
+				*g:unite_source_line_search_word_highlight*
 		Highlight setting applied to search keyword when
 		|g:unite_source_enable_highlight| is true.
 
-		Default value is "Search".
+		The default value is "Search".
 
 g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
-		Set |unite-source-alias| settings.
-		This variable is dictionary. The key is alias source name,
-		and the value is following attributes dictionary.
-		Alias sources are copy of original source.
+		Set |unite-source-alias| settings.  This variable is
+		dictionary. The key is an alias source name, and the value is
+		a dictionary with following attributes.  Alias sources are
+		copies of original sources.
 
 		source			(String)	(Required)
 		Base source name.
@@ -584,19 +666,24 @@ g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 		      \   },
 		      \ }
 <
-		Default value is "{}".
+		The default value is "{}".
 
 g:unite_source_menu_menus			*g:unite_source_menu_menus*
-		Set |unite-source-menu| settings.
-		This variable is dictionary that the keys are menu names
-		and the values are the following attributes.
+		Set |unite-source-menu| settings.  This variable is
+		dictionary.  The keys are menu names and the values are the
+		following attributes.
 
 		candidates	(List or Dictionary)	(Required)
-		Menu candidates. If candidates are directory, keys are
+		Menu candidates. If candidates type is dictionary, keys are
 		ignored.
 
+		command_candidates
+				(List or Dictionary)	(Optional)
+		Menu candidates for commands. The key is used for word.
+		The value is command name.
+
 		map		(Function)		(Optional)
-		If this attribute is given, candidates will be result of
+		If this attribute is given, candidates are results of
 		map(key, value).
 
 		description		(String)	(Optional)
@@ -609,64 +696,49 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		      \     'description' : 'Test menu',
 		      \ }
 		let g:unite_source_menu_menus.test.candidates = {
-		      \       'ghci'      : 'VimShellInteractive ghci',
-		      \       'python'    : 'VimShellInteractive python',
-		      \       'Unite Beautiful Attack' : 'Unite -auto-preview colorscheme',
-		      \     }
+		      \   'ghci'      : 'VimShellInteractive ghci',
+		      \ }
 		function g:unite_source_menu_menus.test.map(key, value)
 		  return {
-		        \       'word' : a:key, 'kind' : 'command',
-		        \       'action__command' : a:value,
-		        \     }
+		      \       'word' : a:key, 'kind' : 'command',
+		      \       'action__command' : a:value,
+		      \     }
 		endfunction
+
+		let g:unite_source_menu_menus.test2 = {
+		      \     'description' : 'Test menu2',
+		      \ }
+		let g:unite_source_menu_menus.test.command_candidates = {
+		      \   'python'    : 'VimShellInteractive python',
+		      \ }
 		
 		nnoremap <silent> fm  :<C-u>Unite menu:test<CR>
 <
-		Default value is "{}".
+		The default value is "{}".
 
-g:unite_source_history_yank_enable		*g:unite_source_history_yank_enable*
-		If it's defined and non-0, unite enables 
-		|unite-source-history/yank|. This has to be done in .vimrc to
-		set this value.
+g:unite_source_history_yank_enable
+					*g:unite_source_history_yank_enable*
+		If it's defined and non-0, unite enables
+		|unite-source-history/yank|.  Note: This value has to be set
+		in .vimrc.
 
 		This variable is not defined by default.
 
-g:unite_source_history_yank_limit		*g:unite_source_history_yank_limit*
+g:unite_source_history_yank_limit	*g:unite_source_history_yank_limit*
 		The maximum number of |unite-source-history/yank| to save.
 		
-		Default value is 100.
+		The default value is 100.
 
-g:unite_source_history_yank_file		*g:unite_source_history_yank_file*
+g:unite_source_history_yank_file	*g:unite_source_history_yank_file*
 		Specifies the file to write the information of yank history.
-		If this variable is empty, disabled save history.
+		If this variable is empty, saving history is disabled.
 
-		Default value is |g:unite_data_directory|; '/history_yank'
-
-g:unite_source_session_default_session_name	*g:unite_source_session_default_session_name*
-		Default session name.
-		
-		Default value is "default".
-
-g:unite_source_session_path			*g:unite_source_session_path*
-		Save session path.
-		
-		Default value is |g:unite_data_directory|; '/session'.
-
-g:unite_source_session_options			*g:unite_source_session_options*
-		Use options when execute |:mksession|.
-		Refer to 'sessionoptions'.
-		
-		Default value is "blank,buffers,curdir,folds,help,tabpages,winsize".
-
-g:unite_source_session_enable_auto_save		*g:unite_source_session_enable_auto_save*
-		Enable auto save session.
-		Note: This option must be set in .vimrc.
-		
-		Default value is "0".
+		The default value is |g:unite_data_directory|; '/history_yank'
 
 KINDS VARIABLES					*unite-kinds-variables*
 
-g:unite_kind_jump_list_after_jump_scroll	*g:unite_kind_jump_list_after_jump_scroll*
+g:unite_kind_jump_list_after_jump_scroll
+				*g:unite_kind_jump_list_after_jump_scroll*
 		A number for adjusting the location of the cursor after the
 		jump by |unite-kind-jump_list|.  The minimum is 0 which means
 		the top of the window and the maximum is 100 which means the
@@ -678,12 +750,14 @@ g:unite_kind_jump_list_after_jump_scroll	*g:unite_kind_jump_list_after_jump_scro
 		50	Window centre	normal! |z.|
 		100	Window bottom	normal! |z-|
 
-		Default is 25.
+		The default value is 25.
 
-g:unite_kind_openable_persist_open_blink_time	*g:unite_kind_openable_persist_open_blink_time*
-		A number of blink time after "persist_open" action by |unite-kind-openable|.
+g:unite_kind_openable_persist_open_blink_time
+			*g:unite_kind_openable_persist_open_blink_time*
+		A number of blink time after "persist_open" action by
+		|unite-kind-openable|.
 
-		Default value is "250m"
+		The default value is "250m"
 
 ------------------------------------------------------------------------------
 KEY MAPPINGS 					*unite-key-mappings*
@@ -691,15 +765,19 @@ KEY MAPPINGS 					*unite-key-mappings*
 Normal mode mappings.
 
 <Plug>(unite_exit)				*<Plug>(unite_exit)*
-		Exits unite. And restore previous unite buffer menu.
+		Exits unite. And previous unite buffer menu will be restored.
+		Note: You cannot close unite buffer using |:close| or
+		|:bdelete| or |:quit| command. This mapping restore windows.
 
 <Plug>(unite_all_exit)				*<Plug>(unite_all_exit)*
-		Exits unite with previous unites buffer menu.
+		Exits unite with previous unite buffer menu.
+		Note: You cannot close unite buffer using |:close| or
+		|:bdelete| or |:quit| command. This mapping restore windows.
 
 <Plug>(unite_restart)				*<Plug>(unite_restart)*
 		Restarts unite.
 
-<Plug>(unite_do_default_action)			*<Plug>(unite_do_default_action)*
+<Plug>(unite_do_default_action)		*<Plug>(unite_do_default_action)*
 		Runs the default action of the default candidates.  The kinds
 		of each candidates have their own defined actions.  See also
 		|unite-kind| about kinds.  Refer |unite-default-action| about
@@ -711,31 +789,34 @@ Normal mode mappings.
 		|unite-kind| about kinds.
 
 <Plug>(unite_insert_enter)			*<Plug>(unite_insert_enter)*
-		Starts inputting narrowing text by the cursor position.  In
+		Starts inputting narrowing text from the cursor position. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_insert_head)			*<Plug>(unite_insert_head)*
-		Starts inputting narrowing text by the head of the line.  In
+		Starts inputting narrowing text from the head of the line. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
 <Plug>(unite_append_enter)			*<Plug>(unite_append_enter)*
-		Starts inputting narrowing text by the head of the line.  In
-		case when the cursor is not on prompt line, this moves the
-		cursor into the prompt line automatically.
+		Starts inputting narrowing text from the right side of the
+		cursor position. In case when the cursor is not on prompt
+		line, this moves the cursor into the prompt line
+		automatically.
 
 <Plug>(unite_append_end)			*<Plug>(unite_append_end)*
-		Starts inputting narrowing text by the end of the line.  In
+		Starts inputting narrowing text from the end of the line. In
 		case when the cursor is not on prompt line, this moves the
 		cursor into the prompt line automatically.
 
-<Plug>(unite_toggle_mark_current_candidate)	*<Plug>(unite_toggle_mark_current_candidate)*
-		Toggles the mark of the candidates in the current line.  You may
-		run an action on multiple candidates at the same time by
+<Plug>(unite_toggle_mark_current_candidate)
+				*<Plug>(unite_toggle_mark_current_candidate)*
+		Toggles the mark of the candidates in the current line. You
+		may run an action on multiple candidates at the same time by
 		marking multiple candidates.
 
-<Plug>(unite_toggle_mark_current_candidate)	*<Plug>(unite_toggle_mark_all_candidates)*
+<Plug>(unite_toggle_mark_current_candidate)
+				*<Plug>(unite_toggle_mark_all_candidates)*
 		Toggles the mark of the candidates in the all lines.
 
 <Plug>(unite_redraw)				*<Plug>(unite_redraw)*
@@ -743,66 +824,78 @@ Normal mode mappings.
 		|g:unite_update_time|, Unite updates its view immediately.
 		This is also used internally for updating the cache.
 
-<Plug>(unite_rotate_next_source)		*<Plug>(unite_rotate_next_source)*
+<Plug>(unite_rotate_next_source)	*<Plug>(unite_rotate_next_source)*
 		Changes the order of source normally.
 
-<Plug>(unite_rotate_previous_source)		*<Plug>(unite_rotate_previous_source)*
+<Plug>(unite_rotate_previous_source)	*<Plug>(unite_rotate_previous_source)*
 		Changes the order of source reversely.
 
-<Plug>(unite_print_candidate)			*<Plug>(unite_print_candidate)*
-		Shows the target of the action of the selected candidate.  For
-		example this shows the content of the candidate when the
-		kind of the candidate you selected is |word|.
+<Plug>(unite_print_candidate)		*<Plug>(unite_print_candidate)*
+		Shows the target of the action of the selected candidate.
 
 <Plug>(unite_cursor_top)			*<Plug>(unite_cursor_top)*
 		Moves the cursor to the top of the Unite buffer.
 
-<Plug>(unite_loop_cursor_down)			*<Plug>(unite_loop_cursor_down)*
-		Goes to the next line.  Goes up to top when you are on bottom.
+<Plug>(unite_cursor_bottom)			*<Plug>(unite_cursor_bottom)*
+		Moves the cursor to the bottom of the Unite buffer.
+		Note: This mapping redraw all candidates.
 
-<Plug>(unite_loop_cursor_up)			*<Plug>(unite_loop_cursor_up)*
-		Goes to the previous line.  Goes bottom when you are on top.
+<Plug>(unite_loop_cursor_down)		*<Plug>(unite_loop_cursor_down)*
+		Goes to the next line.  Goes up to the top when you are on
+		the bottom.
 
-<Plug>(unite_skip_cursor_down)			*<Plug>(unite_skip_cursor_down)*
-		Goes to the next line. But skips not matched candidates.
-		Goes up to top when you are on bottom.
+<Plug>(unite_loop_cursor_up)		*<Plug>(unite_loop_cursor_up)*
+		Goes to the previous line.  Goes down to the bottom when you are
+		on the top.
+
+<Plug>(unite_skip_cursor_down)		*<Plug>(unite_skip_cursor_down)*
+		Goes to the next line. But skips unmatched candidates.
+		Goes up to top when you are on the bottom.
 
 <Plug>(unite_skip_cursor_up)			*<Plug>(unite_skip_cursor_up)*
-		Goes to the previous line. But skips not matched candidates.
-		Goes bottom when you are on top.
+		Goes to the previous line. But skips unmatched candidates.
+		Goes down to the bottom when you are on the top.
 
-<Plug>(unite_quick_match_default_action)	*<Plug>(unite_quick_match_default_action)*
+<Plug>(unite_quick_match_default_action)
+				*<Plug>(unite_quick_match_default_action)*
 		Runs the default action of the selected candidate with using
 		quick match. This doesn't work when there are marked
 		candidates.
 
-<Plug>(unite_quick_match_choose_action)		*<Plug>(unite_quick_match_choose_action)*
-		Chooses action of the selected candidate with using quick
+<Plug>(unite_quick_match_choose_action)
+				*<Plug>(unite_quick_match_choose_action)*
+		Chooses an action of the selected candidate with using quick
 		match. This doesn't work when there are marked candidates.
 
-<Plug>(unite_input_directory)			*<Plug>(unite_input_directory)*
+<Plug>(unite_input_directory)		*<Plug>(unite_input_directory)*
 		Narrows with inputting directory name.
 
-<Plug>(unite_delete_backward_path)		*<Plug>(unite_delete_backward_path)*
-		Deletes a path upward. Refer to |i_<Plug>(unite_delete_backward_path)|.
+<Plug>(unite_delete_backward_path)	*<Plug>(unite_delete_backward_path)*
+		Deletes a path upward. Refer to
+		|i_<Plug>(unite_delete_backward_path)|.
 
-<Plug>(unite_toggle_transpose_window)		*<Plug>(unite_toggle_transpose_window)*
+<Plug>(unite_toggle_transpose_window)
+				*<Plug>(unite_toggle_transpose_window)*
 		Change the unite buffer's split direction.
 
 <Plug>(unite_narrowing_path)			*<Plug>(unite_narrowing_path)*
 		Narrowing candidates by candidate path(or word).
 
-<Plug>(unite_narrowing_input_history)		*<Plug>(unite_narrowing_input_history)*
+<Plug>(unite_narrowing_input_history)
+				*<Plug>(unite_narrowing_input_history)*
 		Narrowing candidates by input history.
 
-<Plug>(unite_toggle_auto_preview)		*<Plug>(unite_toggle_auto_preview)*
-		Toggle the unite buffer's auto preview mode.
+<Plug>(unite_toggle_auto_preview)	*<Plug>(unite_toggle_auto_preview)*
+		Toggles the unite buffer's auto preview mode.
 
-<Plug>(unite_toggle_max_candidates)		*<Plug>(unite_toggle_max_candidates)*
-		Toggle the unite buffer's max_candidates.
+<Plug>(unite_toggle_max_candidates)	*<Plug>(unite_toggle_max_candidates)*
+		Toggles the unite buffer's max_candidates.
 
 <Plug>(unite_quick_help)			*<Plug>(unite_quick_help)*
-		View the mappings of the unite buffer.
+		Views the mappings of the unite buffer.
+
+<Plug>(unite_new_candidate)			*<Plug>(unite_new_candidate)*
+		Add new candidate in cursor source.
 
 Insert mode mappings.
 
@@ -810,19 +903,19 @@ Insert mode mappings.
 		Exits Unite.
 
 <Plug>(unite_insert_leave)			*i_<Plug>(unite_insert_leave)*
-		Changes the mode into Normal mode and move cursor to first
-		candidate line.
+		Changes the mode into Normal mode and move the cursor to the
+		first candidate line.
 
-<Plug>(unite_delete_backward_char)		*i_<Plug>(unite_delete_backward_char)*
-		Deletes a char just before the cursor, otherwise quits the Unite.
+<Plug>(unite_delete_backward_char)	*i_<Plug>(unite_delete_backward_char)*
+		Deletes a char just before the cursor, or quits the Unite.
 
-<Plug>(unite_delete_backward_line)		*i_<Plug>(unite_delete_backward_line)*
+<Plug>(unite_delete_backward_line)	*i_<Plug>(unite_delete_backward_line)*
 		Deletes all chars after the cursor until the end of the line.
 
-<Plug>(unite_delete_backward_word)		*i_<Plug>(unite_delete_backward_word)*
+<Plug>(unite_delete_backward_word)	*i_<Plug>(unite_delete_backward_word)*
 		Deletes a word just before the cursor.
 
-<Plug>(unite_delete_backward_path)		*i_<Plug>(unite_delete_backward_path)*
+<Plug>(unite_delete_backward_path)	*i_<Plug>(unite_delete_backward_path)*
 		Deletes a path upward. For example doing
 		<Plug>(unite_delete_backward_path) on >
 		/Users/ujihisa/Desktop
@@ -832,68 +925,80 @@ Insert mode mappings.
 		/Users/ujihisa
 <		This is handy for changing file paths.
 
-<Plug>(unite_select_next_line)			*i_<Plug>(unite_select_next_line)*
-		Goes to the next candidate.  Goes to the top from bottom.
+<Plug>(unite_select_next_line)		*i_<Plug>(unite_select_next_line)*
+		Goes to the next candidate, or goes to the top from the
+		bottom.
 
-<Plug>(unite_select_previous_line)		*i_<Plug>(unite_select_previous_line)*
-		Goes to the previous candidate.  Goes to the bottom from top.
+<Plug>(unite_select_previous_line)	*i_<Plug>(unite_select_previous_line)*
+		Goes to the previous candidate, or goes to the bottom from
+		the top.
 
-<Plug>(unite_skip_next_line)			*i_<Plug>(unite_skip_next_line)*
-		Goes to the next candidate. But skips not matched candidates.
-		Goes to the top from bottom.
+<Plug>(unite_skip_next_line)		*i_<Plug>(unite_skip_next_line)*
+		Goes to the next candidate but skips unmatched candidates.
+		Or, goes to the top from the bottom.
 
-<Plug>(unite_skip_previous_line)		*i_<Plug>(unite_skip_previous_line)*
-		Goes to the previous candidate. But skips not matched candidates.
-		Goes to the bottom from top.
+<Plug>(unite_skip_previous_line)	*i_<Plug>(unite_skip_previous_line)*
+		Goes to the previous candidate but skips unmatched candidates.
+		Or, goes to the bottom from the top.
 
-<Plug>(unite_select_next_page)			*i_<Plug>(unite_select_next_page)*
+<Plug>(unite_select_next_page)		*i_<Plug>(unite_select_next_page)*
 		Shows the next candidate page.
 
-<Plug>(unite_select_previous_page)		*i_<Plug>(unite_select_previous_page)*
+<Plug>(unite_select_previous_page)	*i_<Plug>(unite_select_previous_page)*
 		Shows the previous candidate page.
 
-<Plug>(unite_do_default_action)			*i_<Plug>(unite_do_default_action)*
+<Plug>(unite_do_default_action)		*i_<Plug>(unite_do_default_action)*
 		Same to |<Plug>(unite_do_default_action)|.
 
-<Plug>(unite_toggle_mark_current_candidate)	*i_<Plug>(unite_toggle_mark_current_candidate)*
+<Plug>(unite_toggle_mark_current_candidate)
+				*i_<Plug>(unite_toggle_mark_current_candidate)*
 		Same to |<Plug>(unite_toggle_mark_current_candidate)|.
 
-<Plug>(unite_choose_action)			*i_<Plug>(unite_choose_action)*
+<Plug>(unite_choose_action)		*i_<Plug>(unite_choose_action)*
 		Same to |<Plug>(unite_choose_action)|.
 
 <Plug>(unite_move_head)				*i_<Plug>(unite_move_head)*
 		Goes to the top of the line.
 
-<Plug>(unite_quick_match_default_action)	*i_<Plug>(unite_quick_match_default_action)*
+<Plug>(unite_quick_match_default_action)
+				*i_<Plug>(unite_quick_match_default_action)*
 		Same to |<Plug>(unite_quick_match_default_action)|.
 
-<Plug>(unite_quick_match_choose_action)		*i_<Plug>(unite_quick_match_choose_action)*
+<Plug>(unite_quick_match_choose_action)
+				*i_<Plug>(unite_quick_match_choose_action)*
 		Same to |<Plug>(unite_quick_match_choose_action)|.
 
-<Plug>(unite_input_directory)			*i_<Plug>(unite_input_directory)*
+<Plug>(unite_input_directory)		*i_<Plug>(unite_input_directory)*
 		Same to |<Plug>(unite_input_directory)|.
 
-<Plug>(unite_toggle_selected_candidates)	*i_<Plug>(unite_toggle_transpose_window)*
+<Plug>(unite_toggle_selected_candidates)
+				*i_<Plug>(unite_toggle_transpose_window)*
 		Same to |<Plug>(unite_toggle_transpose_window)|.
 
-<Plug>(unite_narrowing_path)			*i_<Plug>(unite_narrowing_path)*
+<Plug>(unite_narrowing_path)		*i_<Plug>(unite_narrowing_path)*
 		Same to |<Plug>(unite_narrowing_path)|.
 
-<Plug>(unite_narrowing_input_history)		*i_<Plug>(unite_narrowing_input_history)*
+<Plug>(unite_narrowing_input_history)
+				*i_<Plug>(unite_narrowing_input_history)*
 		Same to |<Plug>(unite_narrowing_input_history)|.
 
-<Plug>(unite_toggle_auto_preview)		*i_<Plug>(unite_toggle_auto_preview)*
+<Plug>(unite_toggle_auto_preview)	*i_<Plug>(unite_toggle_auto_preview)*
 		Same to |<Plug>(unite_toggle_auto_preview)|.
 
-<Plug>(unite_toggle_max_candidates)		*i_<Plug>(unite_toggle_max_candidates)*
+<Plug>(unite_toggle_max_candidates)
+				*i_<Plug>(unite_toggle_max_candidates)*
 		Same to |<Plug>(unite_toggle_max_candidates)|.
 
 <Plug>(unite_redraw)				*i_<Plug>(unite_redraw)*
 		Same to |<Plug>(unite_redraw)|.
 
+<Plug>(unite_new_candidate)			*i_<Plug>(unite_new_candidate)*
+		Same to |<Plug>(unite_new_candidate)|.
+
 Visual mode mappings.
 
-<Plug>(unite_toggle_mark_selected_candidates)	*v_<Plug>(unite_toggle_selected_candidates)*
+<Plug>(unite_toggle_mark_selected_candidates)
+				*v_<Plug>(unite_toggle_selected_candidates)*
 		Toggle marks in visual selected candidates.
 
 						*unite_default_key_mappings*
@@ -921,6 +1026,7 @@ M		|<Plug>(unite_toggle_max_candidates)|
 <C-l>		|<Plug>(unite_redraw)|
 <C-h>		|<Plug>(unite_delete_backward_path)|
 gg		|<Plug>(unite_cursor_top)|
+G		|<Plug>(unite_cursor_bottom)|
 j		|<Plug>(unite_loop_cursor_down)|
 <Down>		|<Plug>(unite_loop_cursor_down)|
 k		|<Plug>(unite_loop_cursor_up)|
@@ -928,11 +1034,13 @@ k		|<Plug>(unite_loop_cursor_up)|
 J		|<Plug>(unite_skip_cursor_down)|
 K		|<Plug>(unite_skip_cursor_up)|
 ?		|<Plug>(unite_quick_help)|
+N		|<Plug>(unite_new_candidate)|
 <CR>		In case when you selected a candidate, runs default action
 d		In case when you selected a candidate, runs delete action
 b		In case when you selected a candidate, runs bookmark action
 e		In case when you selected a candidate, runs narrow action
 t		In case when you selected a candidate, runs tabopen action
+yy		In case when you selected a candidate, runs yank action
 p		runs preview action
 x		In case when you selected a candidate, runs
 		|<Plug>(unite_quick_match_default_action)|
@@ -940,6 +1048,7 @@ x		In case when you selected a candidate, runs
 Insert mode mappings.
 {lhs}		{rhs}
 --------	-----------------------------
+<ESC>		|i_<Plug>(unite_insert_leave)|
 <Tab>		|i_<Plug>(unite_choose_action)|
 <C-n>		|i_<Plug>(unite_select_next_line)|
 <Down>		|i_<Plug>(unite_select_next_line)|
@@ -955,6 +1064,7 @@ Insert mode mappings.
 <C-a>		|i_<Plug>(unite_move_head)|
 <Home>		|i_<Plug>(unite_move_head)|
 <C-l>		|i_<Plug>(unite_redraw)|
+<C-g>		|i_<Plug>(unite_exit)|
 e		In case when you selected a candidate, runs narrow action
 d		In case when you selected a candidate, runs delete action
 t		In case when you selected a candidate, runs tabopen action
@@ -968,46 +1078,57 @@ Visual mode mappings.
 --------	-----------------------------
 <Space>		|v_<Plug>(unite_toggle_mark_selected_candidates)|
 
-==============================================================================
+------------------------------------------------------------------------------
 FUNCTIONS					*unite-functions*
 
 CORE						*unite-functions-core*
 
 unite#get_kinds([{kind-name}])			*unite#get_kinds()*
-			Gets the kinds of {kind-name}.  Unless they exist this
-			returns an empty dictionary.  This returns a
-			dictionary which keys are kind names and values are
-			the kinds when you skipped giving {kind-name}.
+		Gets the kinds of {kind-name}.  Unless they exist, this
+		returns an empty dictionary.  This returns a dictionary of
+		that keys are kind names and values are the kinds when you
+		skip giving {kind-name}.
 
-			Changing the return value is not allowed.
+		Note: Changing the return value is not allowed.
 
 unite#get_sources([{source-name}])		*unite#get_sources()*
-			Gets the loaded source of {source-name}. Unless they
-			exist this returns an empty dictionary.  This
-			returns a dictionary which keys are source names and
-			values are the sources when you skipped giving
-			{source-name}.
-			If you give {source-name} as dictionary, unite.vim
-			use this source temporary.
+		Gets the loaded source of {source-name}. Unless they exist,
+		this returns an empty dictionary.  This returns a dictionary
+		of that keys are source names and values are the sources when
+		you skip giving {source-name}.  If you give {source-name} as
+		dictionary, unite.vim use this source temporary.
 
-			Changing the return value is not allowed.
+		Note: Changing the return value is not allowed.
+
+unite#get_unite_winnr({buffer-name})		*unite#get_unite_winnr()*
+		Returns unite window number which has {buffer-name}. If the
+		window is not found, it will return -1.
+
+unite#redraw([{winnr}])				*unite#redraw()*
+		Redraw {winnr} unite window. If you omit {winnr}, current
+		window number will be used.
+
+unite#force_redraw([{winnr}])			*unite#force_redraw()*
+		Force redraw {winnr} unite window. If you omit {winnr},
+		current window number will be used.
 
 CUSTOMS						*unite-functions-customs*
 
 unite#start({sources}, [, {context}])		*unite#start()*
 		Creates a new Unite buffer.  In case when you are already on a
-		Unite buffer, the narrowing text will be preserved.
+		Unite buffer, the narrowing text is preserved.
 
-		{sources} is a list which elements are formatted as
+		{sources} is a list of which elements are formatted as
 		{source-name} or [{source-name}, {args}, ...].  You may
-		specify multiple string arguments in {args} for {source-name}.
+		specify multiple string arguments for {args} of {source-name}.
 
 		Refer |unite-notation-{context}| about {context}.  If you
-		skipped it will use the default value.
+		skip a value, it uses the default value.
 
 unite#start_complete({sources}, [{context}])	*unite#start_complete()*
-		Returns the key sequence which open unite buffer for completion.
-		This will be used with inoremap <buffer><expr> usually.
+		Returns the key sequence that opens unite buffer for
+		completion.  This will be used with inoremap <buffer><expr>
+		usually.
 		Example:
 >
 		inoremap <buffer><expr> <C-l> unite#start_complete(
@@ -1016,15 +1137,15 @@ unite#start_complete({sources}, [{context}])	*unite#start_complete()*
 		\ 'input' : vimshell#get_cur_text()})
 <
 unite#get_candidates({sources}, [, {context}])	*unite#get_candidates()*
-		Get all candidates list with sources. Does not create unite
-		buffer.  This function may not work in some sources. The
+		Get a list of all candidates of sources. Unite buffer is not
+		created.  This function may not work in some sources. The
 		arguments feature is same to |unite#start()|.
-		Note: Ignore sources max_candidates option.
+		Note: max_candidates option of sources is ignored.
 
 unite#do_candidates_action({action-name}, {candidates}, [, {context}])
 						*unite#do_candidates_action()*
-		Do {action-name} with {candidates}. Does not create unite
-		buffer.  This function may not work in some actions.
+		Does {action-name} with {candidates}. Unite buffer is not
+		created.  This function may not work in some actions.
 		Note: To get candidates, use |unite#get_candidates()|.
 
 unite#get_context()				*unite#get_context()*
@@ -1033,19 +1154,19 @@ unite#get_context()				*unite#get_context()*
 		|unite#start()| internally.
 
 unite#do_action({action-name})			*unite#do_action()*
-		Returns the key sequence for running {action-name} action for
-		the marked candidates.  This function works only when Unite is
-		already activated.  This causes a runtime error if
+		Returns the key sequence for running {action-name} action to
+		the marked candidates.  This function works only when Unite
+		has been already activated.  This causes a runtime error if
 		{action-name} doesn't exist or the action is invalid.
 
-		This is handy for defining a key mapping to run an action by
-		yourself.
+		This is handy for defining a key mapping to run an action.
 
-		This runs the default action when you specify "default" on
+		This runs the default action when you specify "default" for
 		{action-name}.
 
 		This runs an action on the candidates of the current line or
-		the top of the candidates when none of the candidates are marked.
+		the top of the candidates when none of the candidates are
+		marked.
 
 		This is usually used as inoremap <buffer><expr> or
 		nnoremap <buffer><expr>.  For example,
@@ -1054,49 +1175,53 @@ unite#do_action({action-name})			*unite#do_action()*
 >
 unite#smart_map({narrow-map}, {select-map})	*unite#smart_map()*
 		Returns the key sequence which works both modes of narrowing
-		and selecting with respect to the given narrow-map and select-map.
-		Use this with |unite#do_action()|.  This will be used with
-		inoremap <buffer><expr> or nnoremap <buffer><expr> usually.
+		and selecting with respect to the given narrow-map and
+		select-map.  Use this with |unite#do_action()|.  This will be
+		used with inoremap <buffer><expr> or nnoremap <buffer><expr>
+		usually.
 		Example:
 >
 		inoremap <buffer><expr> ' unite#smart_map("'", unite#do_action('preview'))
 <
-unite#mappings#set_current_filters({filters})			*unite#mappings#set_current_filters()*
-		Change current unite buffer filters.
+unite#mappings#set_current_filters({filters})
+					*unite#mappings#set_current_filters()*
+		Changes current unite buffer filters.
 		Example:
 >
   nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
         \ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
 <
-unite#mappings#get_current_filters()				*unite#mappings#get_current_filters()*
-		Get current unite buffer filters.
+unite#mappings#get_current_filters()
+					*unite#mappings#get_current_filters()*
+		Gets current unite buffer filters.
 
 unite#set_substitute_pattern({profile-name}, {pattern}, {subst} [, {priority}])
 						*unite#set_substitute_pattern()*
 		Specifies a replace pattern of narrowing text for a Unite
-		buffer which name is {profile-name}.  "" is regarded as
-		"default" and is equivalent to the case when |:Unite| without
+		buffer of which name is {profile-name}.  "" is regarded as
+		"default" and is equivalent to the case of |:Unite| without
 		-buffer-name= option.  You may specify multiple {profile-name}
 		with breaking with ",".  {pattern} is the replace target regexp
 		and {subst} is the substitute string.  If you specify a same
-		{pattern} again, the setting will just be updated.  You may
-		defeat {pattern} with giving {subst} as "".  {priority}
+		{pattern} again, the setting is just updated.  You may
+		defeat {pattern} with giving "" to {subst}.  {priority}
 		prioritizes how this replaces.  If you skipped giving
-		{priority} it'll be 0.  Give bigger number for a {pattern}
-		which must be done earlier.  Note that the initial text of
-		Unite buffer will not be replaced with these values.
+		{priority} it is 0.  Give bigger number for a {pattern}
+		which must be done earlier.
+		Note: that the initial text of Unite buffer is not replaced
+		with these values.
 
 		You may mimic ambiguous matching with using this function.
 >
 		call unite#set_substitute_pattern('files', '[^*]\ze[[:alnum:]]', '\0*', 100)
 		call unite#set_substitute_pattern('files', '[[:alnum:]]', ' \0', 100)
 <
-		The former does ambiguous search within / while the latter
-		does over the /.
+		The former does ambiguous search within "/" while the latter
+		does over it.
 
-		The initial value is defined as the following; on a buffer
+		The initial value is defined as the following; on a buffer of
 		which profile_name is files, it adds a wildcard in order to
-		match ~ as $HOME and to match partially /.
+		match ~ as $HOME and to match "/" partially.
 >
 		call unite#set_substitute_pattern('files', '^\~',
 		\ substitute(unite#util#substitute_path_separator($HOME), ' ', '\\\\ ', 'g'), -100)
@@ -1104,7 +1229,7 @@ unite#set_substitute_pattern({profile-name}, {pattern}, {subst} [, {priority}])
 		call unite#set_substitute_pattern('files', '/\ze[^~.*]', '/*', 100)
 		call unite#set_substitute_pattern('files', '\.', '*.', 1000)
 <
-		If {subst} is list, unite.vim search by some narrowing text.
+		If {subst} is a list, Unite searches by some narrowing texts.
 		Note: It is only once to be replaced with a list.
 >
 		call unite#set_substitute_pattern('files', '^\.v/',
@@ -1112,40 +1237,67 @@ unite#set_substitute_pattern({profile-name}, {pattern}, {subst} [, {priority}])
 <
 unite#get_substitute_pattern({profile-name})
 						*unite#get_substitute_pattern()*
-		Gets the substitute pattern for narrowing text of a Unite buffer
-		name {profile-name}.  This causes an error if the substitute
-		pattern of {profile-name}.  This is for debugging.
+		Gets the substitute pattern for narrowing text of a Unite
+		buffer name {profile-name}.  This causes an error without the
+		substitute pattern of {profile-name}.  This is for debugging.
 
 unite#set_profile({profile-name}, {option-name}, {value})
 						*unite#set_profile()*
 		Set {profile-name} specialized {option-name} to {value}.
 		
-		This options is available:
+		These options below are available:
 		
 		substitute_patterns		(Dictionary)
+		Specifies substitute patterns. The key is "pattern",
+		"subst" and "priority". Please refer to
+		|unite#set_substitute_pattern()|.
 		
 		filters				(List)
+		Specifies a list of filter names. The filters are called after
+		combining all candidates. If you change filters dynamically,
+		use |unite#mappings#set_current_filters()| instead.
 		
 		ignorecase			(Number)
+		Specifies 'ignorecase' value in unite buffer. If it is
+		omitted, global 'ignorecase' value is used.
+		Note: If profile_name is "files", the default value "1" is
+		used.
 		
 		smartcase			(Number)
-
+		Specifies 'smartcase' value in unite buffer. If it is omitted,
+		global 'smartcase' value is used.
+		Note: If profile_name is "files", the default value "0" is
+		used.
+		
+		context				(Dictionary)
+		Specifies default {context} value in unite buffer.
+		You can custom the context in unite buffer.
+		Note: In temporary unite buffer and script created unite
+		buffer, the context overwrites current context instead of
+		default context.
+		
+		Example:
+>
+		" Start insert mode in unite-action buffer.
+		call unite#set_profile('action', 'context',
+		\ {'start_insert' : 1})
+<
 unite#set_buffer_name_option({buffer-name}, {option-name}, {value})
-						*unite#set_buffer_name_option()*
+					*unite#set_buffer_name_option()*
 		This function is deprecated. Please use
 		|unite#set_profile()| instead.
 
 unite#custom_default_action({kind}, {default-action})
-						*unite#custom_default_action()*
+					*unite#custom_default_action()*
 		Changes the default action of {kind} into {default-action}.
 		You may specify multiple {kind} with separating ",".  For
-		example:
+		Example:
 >
 		call unite#custom_default_action('file', 'tabopen')
 <
 unite#custom_action({kind}, {name}, {action})
 						*unite#custom_action()*
-		Adds an {action} which name is {name} for {kind}.
+		Adds an {action} of which name is {name} for {kind}.
 		You may specify multiple {kind} with separating ",".  For
 		example:
 >
@@ -1155,23 +1307,24 @@ unite#custom_action({kind}, {name}, {action})
 		function! my_tabopen.func(candidates)
 		  call unite#take_action('tabopen', a:candidates)
 		
-		  let dir = isdirectory(a:candidate.word) ? a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
+		  let dir = isdirectory(a:candidate.word) ?
+		  \    a:candidate.word : fnamemodify(a:candidate.word, ':p:h')
 		  execute g:unite_kind_openable_lcd_command '`=dir`'
 		endfunction
 		call unite#custom_action('file,buffer', 'tabopen', my_tabopen)
 		unlet my_tabopen
 <
 unite#undef_custom_action({kind}, {name})	*unite#undef_custom_action()*
-		Deletes an action which name is {name} of {kind} that you
+		Deletes an action of which name is {name} of {kind} that you
 		added with using |unite#custom_action()|.  You may specify
 		multiple {kind} with separating ",".  This function doesn't do
 		anything if the function doesn't exist.
 
 unite#custom_alias({kind}, {name}, {action})
 						*unite#custom_alias()*
-		Define action {kind} is another name of {name} in {kind}.  You
-		may specify multiple {kind} with separating ",".  If {action}
-		is "nop", such action is disabled.
+		Defines an action of {name} which is another name of {action}
+		in {kind}.  You may specify multiple {kind} with separating
+		",".  If {action} is "nop", such action is disabled.
 		example:
 >
 		call unite#custom_alias('file', 'h', 'left')
@@ -1181,12 +1334,41 @@ unite#custom_filters({source-name}, {filters})	*unite#custom_filters()*
 		may specify multiple sources with separating "," in
 		{source-name}.  {filters} is a name of filter or a list of
 		the names.
+		Note: This function is deprecated. Please use
+		|unite#custom_source()| instead.
 
 unite#custom_max_candidates({source-name}, {max})
-						*unite#custom_max_candidates()*
-		Changes the max candidates of {source-name} into {max}. You
-		may specify multiple sources with separating "," in
-		{source-name}. If {max} is 0, all candidates is displayed.
+					*unite#custom_max_candidates()*
+		Changes the max candidates of {source-name} into
+		{max}.  You may specify multiple sources with
+		separating "," in {source-name}.
+		Note: This function is deprecated. Please use
+		|unite#custom_source()| instead.
+
+unite#custom_source({source-name}, {option-name}, {value})
+						*unite#custom_source()*
+		Set {source-name} source specialized {option-name}
+		to {value}.
+		
+		These options below are available:
+		
+		filters				(List)
+		Specifies a list of filter names.  The filters overwrite
+		source default filters.
+		
+		max_candidates			(Number)
+		Changes the max candidates into {value}.  If {value}
+		is 0, all candidates is displayed.
+		
+		ignore_pattern			(String)
+		Specifies the regexp pattern to ignore candidates of the
+		source.  This applies on the path or word attribute of
+		candidates.  Regardless of |g:unite_enable_ignore_case| value,
+		it's case sensitive.
+		
+		variables			(Dictionary)
+		Changes the source custom variables. The variables are depends
+		on sources.
 
 unite#take_action({action-name}, {candidate})
 						*unite#take_action()*
@@ -1203,92 +1385,115 @@ unite#take_parents_action({action-name}, {candidate}, {extend-candidate})
 
 unite#define_source({source})			*unite#define_source()*
 		Adds {source} dynamically.  See also |unite-create-source|
-		about the detail of source.  If a source which name is same
-		exists, that will be overwritten.
+		about the detail of source.  If a source with the same name
+		exists, that is overwritten.
 
 unite#define_kind({kind})			*unite#define_kind()*
 		Adds {kind} dynamically.  See also |unite-create-kind|
-		about the detail of kind.  If a kind which name is same
-		exists, that will be overwritten.
+		about the detail of kind.  If a kind with the same name
+		exists, that is overwritten.
 
 unite#define_filter({filter})			*unite#define_filter()*
 		Adds {filter} dynamically.  See also |unite-create-filter|
-		about the detail of filter.  If a filter which name is same
-		exists, that will be overwritten.
+		about the detail of filter.  If a filter with the same name
+		exists, that is overwritten.
 
 unite#undef_source({name})			*unite#undef_source()*
-		Removes the source which name is {name} that was added by
+		Removes the source with a name of {name} that was added by
 		|unite#define_source()|.  If such a source doesn't exist, this
 		function doesn't do anything.
 
 unite#undef_kind({name})			*unite#undef_kind()*
-		Removes the kind which name is {name} that was added by
+		Removes the kind with a name of {name} that was added by
 		|unite#define_kind()|.  If such a kind doesn't exist, this
 		function doesn't do anything.
 
 unite#undef_filter({name})			*unite#undef_filter()*
-		Removes the filter which name is {name} that was added by
+		Removes the filter with a name of {name} that was added by
 		|unite#define_filter()|.  If such a filter doesn't exist,
 		this function doesn't do anything.
 
-
 unite#filters#default#use({filters})		*unite#filters#default#use(()*
-		Todo
+		Changes the default filter used by
+		|unite-filter-default| into {filters}.  {filters} must be
+		specified with a list of filter names.
 
-unite#filters#matcher_default#use({matchers})	*unite#filters#matcher_default#use(()*
-		Todo
+unite#filters#matcher_default#use({matchers})
+					*unite#filters#matcher_default#use(()*
+		Changes the default match used by
+		|unite-filter-matcher_default| into {matchers}.
+		{matchers} must be specified with a list of matcher names.
 
-unite#filters#sorter_default#use({sorters})	*unite#filters#sorter_default#use(()*
-		Todo
+unite#filters#sorter_default#use({sorters})
+					*unite#filters#sorter_default#use(()*
+		Changes the default sorter used by
+		|unite-filter-sorter_default| into {sourters}.  {sorters}
+		must be specified with a list of sorter names.
 
-						*unite#filters#converter_default#use(()*
+					*unite#filters#converter_default#use(()*
 unite#filters#converter_default#use({converters})
-		Todo
+		Changes the default converter used by
+		|unite-filter-converter_default| into {converters}.
+		{converters} must be specified with a list of converter names.
 
 ==============================================================================
 SOURCES						*unite-sources*
 
 						*unite-source-file*
 file		Nominates an input file as a candidate.
-		Note: This source doesn't nominates parent file(Example: "../")
-		or hidden files(Example: ".gitignore").  If you want to open
-		this files, please input ".".
+		Note: This source doesn't nominate files in parent directory
+		(Example: "../") or hidden files(Example: ".gitignore").
+		If you want to open these files, please input ".".
+
+						*unite-source-file/new*
+file/new	Nominates a new input file as a candidate.
 
 						*unite-source-file_mru*
 file_mru	Nominates files you used recently as candidates, ordering
 		by time series.
 
-						*unite-source-directory_mru*
-directory_mru	Nominates directories you used recently as candidates,
-		ordering by time series.
-
 						*unite-source-file_rec*
-file_rec	Gather Files recursive. Nominates all directory or file names
-		under the search directory(argument 1) or the current
+file_rec	Gather files recursive and nominates all directory or file
+		names under the search directory(argument 1) or the current
 		directly(if argument is ommitted) as candidates.  This may get
 		Vim frozen when there are too many candidates. The candidates
-		is cached by file_rec source. If you clear cache, use
+		are cached by file_rec source. If you clear cache, use
 		|<Plug>(unite_redraw)| keymapping.
+		If argument 1 is "!", use the project directory instead of
+		current directory.
 
 		Source arguments:
 		1. the search directory.
 
 						*unite-source-file_rec/async*
-file_rec/async	Same as |unite-source-file_rec|. But get files by asynchronously.
+file_rec/async	Same as |unite-source-file_rec|, but get files asynchronously.
 		
-		Note: This source requires vimproc and external "ls" command.
-		Please install.
-		http://github.com/Shougo/vimproc/tree/master
-
+		Note: This source requires vimproc.
+		Note: Windows "find" command is not supported.
+		Please install UNIX Tools find for Windows.
+		
 		Source arguments:
 		1. the search directory.
+
+						*unite-source-directory*
+directory	Nominates an input directory as a candidate.
+		Note: This source doesn't nominate parent directory(Example:
+		"../") or hidden directories(Example: ".git").  If you want to
+		open this directories, please input ".".
+
+						*unite-source-directory/new*
+directory/new	Nominates a new input directory as a candidate.
+
+						*unite-source-directory_mru*
+directory_mru	Nominates directories you used recently as candidates,
+		ordering by time series.
 
 						*unite-source-buffer*
 buffer		Nominates opened buffers as candidates, ordering by time
 		series.
-		If argument 1 is "!", displays both listed and non-listed
-		buffer.
-		If argument 1 is "?", displays non-listed buffer.
+		If argument 1 is "!", both listed and non-listed buffer are
+		displayed.
+		If argument 1 is "?", non-listed buffer is displayed.
 
 		Source arguments:
 		1. "!" or "?".
@@ -1296,7 +1501,7 @@ buffer		Nominates opened buffers as candidates, ordering by time
 						*unite-source-buffer_tab*
 buffer_tab	Nominates opened buffers only in the current tab as
 		candidates, ordering by time series.
-		Arguments specification is same to buffer source.
+		Argument specification is same to buffer source.
 
 		Source arguments:
 		1. "!" or "?".
@@ -1306,18 +1511,18 @@ tab		Nominates opened tabs as candidates, regarding t:cwd as the
 		current directory and t:title as the title of the tab.  This
 		requires |gettabvar()|.
 
-		If t:title exists, this will be used as "word" for narrowing.
-		Otherwise, the buffer name of the current tab will be used.
+		If t:title exists, this is used as "word" for narrowing.
+		Otherwise, the buffer name of the current tab is used.
 
 		Source arguments:
-		1. "no-current" remove current tab from candidates.
+		1. "no-current" removes current tab from candidates.
 
 						*unite-source-register*
 register	Nominates the strings stored in registers as candidates.
 
 						*unite-source-bookmark*
 bookmark	Nominates files or directories you bookmarked as candidates.
-		If ommitted source arguments, "default" bookmark file name
+		If source arguments are ommitted, "default" bookmark file name
 		is used.
 
 		Source arguments:
@@ -1334,7 +1539,7 @@ window		Nominates opened windows as candidates, ordering by time
 		series.
 
 		Source arguments:
-		1. "no-current" remove current window from candidates.
+		1. "no-current" removes current window from candidates.
 
 						*unite-source-output*
 output		Nominates executed Vim command as candidates.
@@ -1344,6 +1549,13 @@ output		Nominates executed Vim command as candidates.
 
 						*unite-source-command*
 command		Nominates Vim Ex commands as candidates.
+		Note: To gather Vim internal commands, unite.vim uses
+		|neocomplcache| functions.
+
+						*unite-source-function*
+function	Nominates functions as candidates.
+		Note: To gather Vim internal functions, unite.vim uses
+		|neocomplcache| functions.
 
 						*unite-source-mapping*
 mapping		Nominates Vim mappings as candidates.
@@ -1364,14 +1576,39 @@ grep		Nominates "grep" command output as candidates.
 		3. the narrowing pattern.
 		Max candidates: |g:unite_source_grep_max_candidates|
 
-		Example:
->
-	:Unite grep:~/.vim/autoload/unite/sources:-iR:file
-<
 		Special Target:
 		%         : Current buffer name
 		#         : Alternate buffer name
 		$buffers  : All buffer names
+
+		Source variables:
+		command                : grep command name
+		default_opts           : default grep options
+		recursive_opt          : grep recursive options
+		search_word_highlight  : search word highlight
+
+		Example:
+>
+	:Unite grep:~/.vim/autoload/unite/sources:-iR:file
+<
+		Settings Example:
+>
+	" Use ack in unite grep source.
+	if executable('ack-grep')
+	  let g:unite_source_grep_command = 'ack-grep'
+	  let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  let g:unite_source_grep_recursive_opt = ''
+	endif
+<
+						*unite-source-vimgrep*
+vimgrep		Nominates |vimgrep| command output as candidates.
+		This source is slower than |unite-source-grep|, but
+		it can recognize file encodings.
+		Note: The source clears quickfix list.
+
+		Source arguments:
+		1. the target directory.
+		2. the narrowing pattern.
 
 						*unite-source-find*
 find		Nominates "find" command output as candidates.
@@ -1399,10 +1636,20 @@ line		Nominates current buffer lines as candidates.
 >
 	nnoremap <silent> /  :<C-u>Unite -buffer-name=search line -start-insert -no-quit<CR>
 <
-						*unite-source-resume*
-resume		Nominates unite buffers as candidates, ordering by time
-		series.
+						*unite-source-line/fast*
+line/fast	Nominates current buffer lines as candidates.
+		This source is created for big line files(over 10000 lines).
+		It filters candiates automatically.
+		Note: You cannot change the matcher in it.
 
+		Source arguments:
+		1. the search direction. "all" or "forward" or "backward".
+		Max candidates: 100
+
+		Example:
+>
+	nnoremap <silent> /  :<C-u>Unite -buffer-name=search line/fast -start-insert -no-quit<CR>
+<
 						*unite-source-jump*
 jump		Nominates results of |:jumps| command as candidates.
 
@@ -1414,24 +1661,24 @@ jump_point	Nominates current line of "file:line" format as candidates.
 		This source is useful for |vimshell| outputs.
 
 						*unite-source-file_point*
-file_point	Nominates cursor word of filename or URI as candidates.
+file_point	Nominates filename or URI at the cursor as candidates.
 		This source is useful for |vimshell| outputs.
 
 						*unite-source-launcher*
 launcher	Nominates executable files from $PATH as candidates.
 
 		Source arguments:
-		1. comma separated executable files path.
+		1. comma separated executable files' path.
 
 						*unite-source-alias*
-alias		Create alias source copied original source.
+alias		Creates alias source copied from original source.
 		This source is dummy. To create alias source, please refer to
 		|g:unite_source_alias_aliases|.
 		Note: This source is created by tacroe.
 
 						*unite-source-menu*
 menu		Nominates menus.
-		If arguments is not given, nominates all menu names.
+		If arguments is not given, all menu names are nominated.
 		To create menus, please refer to
 		|g:unite_source_menu_menus|.
 
@@ -1440,7 +1687,7 @@ menu		Nominates menus.
 
 						*unite-source-history/yank*
 history/yank	Nominates yanked words.
-		To use this source, please set
+		To use this source, set
 		|g:unite_source_history_yank_enable| is 1.
 		Note: This source is disabled when
 		|g:unite_source_history_yank_enable| is 0 or not defined.
@@ -1449,9 +1696,6 @@ history/yank	Nominates yanked words.
 process		Nominates processes.
 		Note: This source is required "ps" command or "tasklist"
 		command(in Windows).
-
-						*unite-source-session*
-session		Nominates sessions.
 
 ==============================================================================
 KINDS						*unite-kinds*
@@ -1471,40 +1715,41 @@ cdable		An interface that can cd.
 				The target directory
 
 						*unite-kind-file*
-file		An interface for files.  This kind is inheriting cdable, uri
+file		An interface for files.  This kind inherits cdable, uri
 		and openable, so this requires kinds that they require.
 
 			action__path		(String)	(Required)
 				The path of the target directory
 
 						*unite-kind-buffer*
-buffer		An interface for buffers.  This kind is inheriting file, so
+buffer		An interface for buffers.  This kind inherits file, so
 		this requires keys that it requires.
 
 			action__buffer_nr	(String		(Required)
 				The number of the target buffer
 
 						*unite-kind-tab*
-tab		An interface for tabs.  If you can use |gettabvar()|, since this
-		kind inherits cdable, this requires keys that those kind
+tab		An interface for tabs.  If you can use |gettabvar()|, since
+		this kind inherits cdable, this requires keys that those kind
 		require.
 
 			action__tab_nr		(String)	(Required)
 				The number of the tab
 
 						*unite-kind-directory*
-directory	An interface for directories.  This kind is inheriting file,
+directory	An interface for directories.  This kind inherits file,
 		this requires keys it requires.
 
 						*unite-kind-word*
-word		A String that you can insert
+word		A String that can be inserted
 
 			word			(String)	(Required)
 				The string you want to insert
 
 						*unite-kind-jump_list*
-jump_list	An interface for jump lists.  This kind is inheriting
-		openable, so this requires that it requires.
+jump_list	An interface for jump lists.  This kind inherits openable,
+		so this requires that it requires.
+		Note: The action__path or action__buffer_nr is required.
 
 			action__path		(String)	(Required)
 				The path of the file that you'll jump into.
@@ -1521,12 +1766,11 @@ jump_list	An interface for jump lists.  This kind is inheriting
 				into.
 
 			action__pattern		(String)	(Optional)
-				The search pattern that you'll search after
-				you open the file.
+				The search pattern after the file is opened.
 
 			action__signature	(String)	(Optional)
-				In case you cannot assume the uniqueness where
-				you'll jump into only by the pattern of
+				In case you cannot assume the uniqueness of
+				where you'll jump into only by the pattern of
 				action__pattern and action__line, a unique
 				String to distinguish lines that match same
 				pattern.
@@ -1557,7 +1801,7 @@ command		An interface for Ex commands of Vim
 
 						*unite-kind-window*
 window		An interface for Windows of Vim
-		This kind is inheriting cdable, so this requires keys that it
+		This kind inherits cdable, so this requires keys that it
 		requires.
 
 			action__window_nr	(String)	(Required)
@@ -1577,9 +1821,9 @@ completion	An interface for completion
 
 						*unite-kind-source*
 source		unite.vim source
-		If execute this kind candiate, unite.vim start unite session in
-		current unite buffer. When you close unite buffer, restore
-		sources. So, unite.vim behaves like menu.
+		If this kind candiate is executed, unite.vim starts unite
+		session in current unite buffer.  When you close unite buffer,
+		sources are restored. So, unite.vim behaves like menu.
 
 			action__source_name	(String)	(Required)
 				The source name
@@ -1591,7 +1835,8 @@ source		unite.vim source
 uri		Files and protocols
 
 			action__path		(String)	(Required)
-				The file path
+				The file uri
+				If it is omitted, "action__path" is used.
 
 						*unite-kind-guicmd*
 guicmd		GUI executable commands
@@ -1606,21 +1851,39 @@ guicmd		GUI executable commands
 FILTERS						*unite-filters*
 
 						*unite-filter-default*
-default		Todo
+default		This default filter is used unless specified explicitly.
+		This filter is a dummy with ["matcher_context",
+		"sorter_nothing", "converter_nothing"] registered initially.
+		This filter can be changed by calling
+		|unite#filters#default#use()|.
 
 						*unite-filter-matcher_default*
-matcher_default	Todo
+matcher_default	The default matcher used by |unite-filter-default| with
+		["matcher_context"] set initially.
+		This can be changed by calling
+		|unite#filters#matcher_default#use()|.
 
 						*unite-filter-matcher_glob*
-matcher_glob	Todo
+matcher_glob	A matcher which filters the candidates with user given
+		glob pattern.  This recognizes "*" as wild card and "!" as
+		negative.  Narrowing down can be done by word.
 
 						*unite-filter-matcher_regexp*
-matcher_regexp	Todo
+matcher_regexp	A matcher which filters the candidates with user given
+		regular expression. This recognizes "!" as negative.
+		Narrowing down can be done by word.
 
 						*unite-filter-matcher_fuzzy*
-matcher_fuzzy	Todo
+matcher_fuzzy	A matcher which filters the candidates with user
+		given fuzzy string.
+		This recognizes "!" as negative.
+		Narrowing down can be done by word.
+		Note: that narrowing down might be slower if this matcher is
+		used.
+		This matcher may produce th best effect if set as
+		|unite-source-file_rec|.
 >
-		call unite#custom_filters('file,buffer,file_rec',
+		call unite#custom_filters('file,file/new,buffer,file_rec',
 		\ ['matcher_fuzzy', 'sorter_default', 'converter_default'])
 <
 						*unite-filter-matcher_migemo*
@@ -1629,38 +1892,74 @@ matcher_migemo	For Japanese migemo filter.
 		call unite#custom_filters('line',
 		\ ['matcher_migemo', 'sorter_default', 'converter_default'])
 <
+				*unite-filter-matcher_hide_hidden_files*
+matcher_hide_hidden_files
+		Hide hidden files filter.  If your input contains ".", hidden
+		files will be appeared.
+
+						*unite-filter-matcher_context*
+matcher_context	A matcher which filters the candidates with user given glob
+		pattern or regexp pattern. In default, use glob pattern. If
+		the pattern starts "^", will use regexp pattern(head match).
+		Note: The filter is created by hrsh7th.
+
 						*unite-filter-sorter_default*
-sorter_default	Todo
+sorter_default	The default sorter used by |unite-filter-default|.
+		["sorter_nothing"] is set initially.
+		This default sorter can be changed by calling
+		|unite#filters#sorter_default#use()|.
 
 						*unite-filter-sorter_nothing*
 sorter_nothing	Nothing sorter.
 
 						*unite-filter-sorter_word*
-sorter_word	Compare words sorter.
+sorter_word	Compare word sorter.
 
+						*unite-filter-sorter_length*
+sorter_length	Compare length sorter.
+
+						*unite-filter-sorter_rank*
+sorter_rank	Matched rank order sorter.  The higher the matched word is or
+		the longer the matched length is, the higher the rank is.
+		This sorter is useful for file candidate source.
+>
+		call unite#custom_filters('buffer,file,file_mru,file_rec',
+		\ ['matcher_default', 'sorter_rank', 'converter_relative_abbr'])
+<
 						*unite-filter-sorter_reverse*
 sorter_reverse	Reverse order sorter.
 
-						*unite-filter-converter_default*
+					*unite-filter-converter_default*
 converter_default
-		Todo
+		The default converter used by |unite-filter-default|.
+		["converter_nothing"] is set initially.
+		This default converter can be changed by calling
+		|unite#filters#converter_default#use()|.
 
-						*unite-filter-converter_nothing*
+					*unite-filter-converter_nothing*
 converter_nothing
 		This converter is dummy.
 
-						*unite-filter-converter_relative_word*
+					*unite-filter-converter_relative_word*
 converter_relative_word
-		Todo
+		A converter which converts a candidate's word into a
+		corresponding relative path.
+		word can be used by matcher to narrow down the candidates and
+		must be set in precedence of the matcher.
+		If context information contains source__directory, this
+		converter uses it as the base path in relative path
+		conversion.
 >
 		call unite#custom_filters('file_rec',
 		\ ['converter_relative_word', 'matcher_default',
 		\  'sorter_default', 'converter_relative_abbr'])
 <
-
-						*unite-filter-converter_relative_abbr*
+					*unite-filter-converter_relative_abbr*
 converter_relative_abbr
-		Todo
+		A converter which converts a candidate's abbr into a
+		corresponding relative path.
+		Specification of this term is almost the same as
+		|unite-filter-converter_relative_word|.
 
 ==============================================================================
 ACTIONS						*unite-actions*
@@ -1671,43 +1970,53 @@ common						*unite-action-common*
 Defines the common interface for all kinds.  This uses condidate.word
 internally.
 	nop		Do nothing
-	yank		Yank the candidate text
-	yank_escape	Yank the escaped candidate text
+	yank		Yank the candidate "word" or "action__text"
+	yank_escape	Yank the escaped candidate "word" or "action__text"
 	ex		Input the escaped candidate text into command line
-	insert		Input the candidate text into the current buffer
+	insert		Input the candidate word or text into the current
+			buffer
 	insert_directory
 			Input the candidate directory into the current buffer
 	preview		Preview the candidate text.
+	echo		Echo candidates for debug.
 
 openable					*unite-action-openable*
-Defines an interface for files you can open.  This requires an inheriting kind
-to define open action.
+Defines an interface for files that can be open.  This requires an inheriting
+kind to define open action.
 	tabopen		Open the file in a new tab
+	tabdrop		Open the file by ":tab drop" command
 	split		Open the file, splitting horizontally
 	vsplit		Open the file, splitting vertically
 	left		Open the file in the left, splitting vertically
 	right		Open the file in the right, splitting vertically
 	above		Open the file in the top, splitting horizontally
 	below		Open the file in the bottom, splitting horizontally
-	persist_open	Open the file in alternate window. Don't close unite
-			window.
+	persist_open	Open the file in alternate window.  unite window
+			isn't closed.
 
 cdable						*unite-action-cdable*
 Defines an interface for files you can move to with cd command.
 	cd		Change the current directory.
 	lcd		Change the current directory of the current window.
-	project_cd	Look for the project directory, and changes the
+	project_cd	Look for the project directory, and change the
 			current directory there.
+	tabnew_cd	Open a new tab page and change the current
+			directory there.
 	narrow		Narrow down candidates by the directory name
 	vimshell	Run |vimshell| on the directory.  This is available
 			only when you already installed |vimshell|.
 	tabvimshell	Run |:VimShellTab| on the directory.  This is
-			available only when you already installed |vimshell|.
+			available only when |vimshell| is already installed.
 	vimfiler	Run |vimfiler| on the directory.  This is available
-			only when you already installed |vimfiler|.
+			only when |vimfiler| is already installed.
 	tabvimfiler	Run |:VimFilerTab| on the directory.  This is
-			available only when you already installed |vimfiler|.
+			available only when |vimfiler| is already installed.
 	rec		Run |unite-source-file_rec| on the directory.
+	rec_parent	Run |unite-source-file_rec| on the parent directory.
+	rec/async	Run |unite-source-file_rec/async| on the directory.
+	rec_parent/async
+			Run |unite-source-file_rec/async| on the parent
+			directory.
 	file		Run |unite-source-file| on the directory.
 
 file						*unite-action-file*
@@ -1716,10 +2025,16 @@ Opens a file into a new buffer.  This kind extends |unite-action-openable| and
 	open		Open the file
 	preview		Open the file into preview window
 	bookmark	Add the file into your bookmark
-	mkdir		Make directory. If exists file, this action is invalid.
-	rename		Change the file name.
-	grep		grep files
-	grep_directory	grep directories
+	mkdir		Make directory. If the file exists, this action is
+			invalid.
+	rename		Change the file name
+	grep		Grep files
+	grep_directory	Grep directories
+	wunix		Write by unix fileformat
+	diff		diff with the other candidate or current buffer
+	dirdiff		|:DirDiff| with the other candidate
+			(|DirDiff.vim| plugin is needed.)
+	backup		Simple backup files
 
 buffer						*unite-action-buffer*
 This kind extends |unite-action-file|.
@@ -1729,7 +2044,7 @@ This kind extends |unite-action-file|.
 	unload		|:bunload| the buffer
 	bookmark	Add the candidate into your bookmark
 	rename		Change the buffer name and file name.
-	goto		Goto buffer tab
+	goto		Go to buffer tab
 
 tab						*unite-action-tab*
 This kind extends actions of |unite-action-cdable| only when |gettabvar()|
@@ -1739,6 +2054,7 @@ exists.
 	
 	The following action requires |gettabvar()| and t:cwd.
 	rename		Change the title of the tab
+	preview		Preview the tab
 
 directory					*unite-action-directory*
 This kind extends actions of |unite-action-file|.  This doesn't have any
@@ -1761,17 +2077,18 @@ command						*unite-action-command*
 	edit		Input the command into command line
 
 window						*unite-action-window*
-This kind extends ctions of |unite-action-cdable|.
+This kind extends actions of |unite-action-cdable|.
 	open		Move to the window
 	delete		Close the window
-	only		Close all windows besides the window
+	only		Close all windows except the window
+	preview		Preview the window
 
 completion					*unite-action-completion*
 	insert		Insert the candidate
 	preview		Show the information of the candidate
 
 uri						*unite-action-uri*
-	start		Open file with associated program.
+	start		Open a file with associated program.
 
 source						*unite-action-source*
 	start		Start source
@@ -1779,28 +2096,32 @@ source						*unite-action-source*
 
 Actions of each sources
 
-file_mru					*unite-action-file_mru*
+file_mru					*unite-action-source-file_mru*
 	delete		Delete from most recent used file candidates
 
-directory_mru					*unite-action-directory_mru*
+directory_mru				*unite-action-source-directory_mru*
 	delete		Delete from most recent used directory candidates
 
-bookmark					*unite-action-bookmark*
+bookmark					*unite-action-source-bookmark*
 	delete		Delete from bookmark file candidates
 
-register					*unite-action-register*
-	edit		Change register value
+register					*unite-action-source-register*
+	edit		Change a register value
 	delete		Clear registers
 
-process						*unite-action-process*
+process						*unite-action-source-process*
 	sigterm		Send SIGTERM to the process(default)
 	sigkill		Send SIGKILL to the process
 
-session						*unite-action-session*
-	load		Load session(default)
-	delete		Delete sessions
-	open		Open session files
-	rename		Rename session name
+mapping						*unite-action-source-mapping*
+	preview		View the help documentation
+
+command						*unite-action-source-command*
+	preview		View the help documentation
+
+function					*unite-action-source-function*
+	call		Call the function and print result
+	preview		View the help documentation
 
 						*unite-default-action*
 Default actions
@@ -1819,122 +2140,301 @@ source		start
 ==============================================================================
 CREATE SOURCE					*unite-create-source*
 
-Todo
+The files in autoload/unite/sources are automatically loaded and it
+calls unite#sources#{source_name}#define() whose return value is the
+source.  Each return value can be a list so you can return an empty list
+to avoid adding undesireble sources.  To add your own sources
+dynamically, you can use |unite#define_source()|.
+
+Note: To optimize load source files, if "buffer/rec" source name is detected,
+unite.vim loads "autoload/unite/sources/buffer*.vim" files.  The source file
+name must have source name prefix(Ex: buffer).
 
 ------------------------------------------------------------------------------
 SOURCE ATTRIBUTES				*unite-source-attributes*
 
 						*unite-source-attribute-name*
 name			String		(Required)
-			The name of a source. It must consist of the following
-			characters:
+			The name of a source.  It must consist of the
+			following characters:
 			- a-z
 			- 0-9
 			- _
 			- /
 
 			For example:
-			- "buffer" , "file_mru" and "virw/git" are valid.
-			- "BadOne", "!@#$%^&*()_[]{}-|" and "" are invalid.
+			- "buffer" , "file_mru" and "virw/git" are
+			  valid.
+			- "BadOne", "!@#$%^&*()_[]{}-|" and "" are
+			  invalid.
 
-						*unite-source-attribute-gather_candidates*
+				*unite-source-attribute-gather_candidates*
 gather_candidates	Function	(Required)
-			Todo
+			This function is called once in gathering
+			candidates and anytime in redrawing by
+			|<Plug>(unite_redraw).  If source is defined as
+			|unite-source-is_volatile|, this function is
+			called whenever the input string is changed.
+			This function takes {args} and {context} as its
+			parameter and returns a list of {candidate}.
+			Here, {args} is a list of parameters given to
+			the source when |:Unite| command is executed
+			and {context} is the context informantion when
+			the source is called.  If either of these are not
+			given, the argument becomes "".  Hence, this
+			function must handle empty string.  Arguments
+			should be checked by |get()| function.  For more
+			details, you can refer to
+			|unite-notation-{context}| about {context} and
+			|unite-notation-{candidate}| about {candidate}.
+			This attribute can be omitted if other
+			attributes can gather some candidates.
+			The candidates gathered by this attribute are
+			cached by unite buffer.  The cache is available
+			until the unite buffer is closed and is
+			discarded unless you use |:UniteResume|.  To
+			cache persistenly regardless of the life of the
+			unite buffer, you have some source to save the
+			cache on non-volatile storage.
 
-						*unite-source-attribute-change_candidates*
+				*unite-source-attribute-change_candidates*
 change_candidates	Function	(Optional)
-			Todo
+			This function is called if the input string is
+			changed in gathering candidates by unite.  You
+			can make use of this attribute to generate
+			candidates from the input string.  The
+			candidates generated by this attributes are
+			added to the candidates cached by
+			|unites-source-attribute-gather_candidates|.
+			This function takes {args} and {context} as its
+			parameter and returns a list of {candidate}.
+			The specification of the parameters and the
+			returned value is same as
+			|unite-source-attribute-gather_candidates|.
 
-						*unite-source-attribute-async_gather_candidates*
+			*unite-source-attribute-async_gather_candidates*
 async_gather_candidates	Function	(Optional)
-			Todo
+			This function is called asynchronously in
+			gathering candidates.  You can make use of this
+			function to split time-consuming job into small
+			jobs.  |g:unite_update_time| is the default
+			timing.  This function takes {args} and
+			{context} as its parameter and returns a list of
+			{candidate}.
+			
+			The specification of the parameters and the
+			returned value is same as
+			|unite-source-attribute-gather_candidates|.
 
-						*unite-source-attribute-complete*
+					*unite-source-attribute-complete*
 complete		Function	(Optional)
-			Todo
+			This functions is called to complete the source
+			argument of |:Unite|.  This function takes
+			{args}, {context}, {arglead}, {cmdline} and
+			{cursorpos} as its parameter and returns a list
+			of candidates.
 
 						*unite-source-attribute-hooks*
 hooks			Dictionary		(Optional)
-			Todo
+			You may put hook functions in this dictionary
+			in which the key is the position to hook and
+			and the value is the reference to the function
+			to be called.  The following hook functions are
+			defined:
 
-			on_init			*unite-source-attribute-hooks-on_init*
-			Todo
+			on_init		*unite-source-attribute-hooks-on_init*
+			Called just before returning to unite buffer
+			after executing |:Unite| commands or calling
+			|unite#start()| but executing |:UniteResume|.
+			This function takes {args} and {context} as its
+			parameters.
+			Note that you must be careful to select the
+			function to call because the unite buffer is not
+			still initialized in calling this hook
+			function.
 
-			on_syntax		*unite-source-attribute-hooks-on_syntax*
-			Todo
-			Note: To get abbr head column, use "unite#get_current_unite().abbr_head".
+			on_syntax
+				*unite-source-attribute-hooks-on_syntax*
+			Called after the unite buffer is initialized and
+			syntax for each source is set but not called if
+			|unite-source-attribute-syntax| is not set.
+			This function takes {args} and {context} as its
+			parameters.
+			Highlight configuration for each source is done
+			by this function.
+
+			Note: To get abbr head column, use
+			"unite#get_current_unite().abbr_head".
 			Example:
 >
 			syntax match uniteSource_FileMru_Time /(.*)/ contained containedin=uniteSource_FileMru
 			highlight default link uniteSource_FileMru_Time Statement
 <
-			Todo
+			Note you must set the containedin of the same syntax
+			name as for |unite-source-attribute-syntax|.
 
-			on_close		*unite-source-attribute-hooks-on_close*
-			Todo
+			on_close
+				*unite-source-attribute-hooks-on_close*
+			Called after executing |<Plug>(unite_exit)| or
+			closing the unite buffer following some command
+			execution.  This function takes {args} and
+			{context} as its parameters.
 
-			on_post_filter		*unite-source-attribute-hooks-on_post_filter*
-			Todo
+			on_pre_filter
+				*unite-source-attribute-hooks-on_pre_filter*
+			Called before the filters to narrow down the
+			candidates. This function takes {args} and
+			{context} as its parameters.
 
-			on_pre_init		*unite-source-attribute-hooks-on_pre_init*
-			Todo
+			on_post_filter
+				*unite-source-attribute-hooks-on_post_filter*
+			Called after the filters to narrow down the
+			candidates.  This is used to set attributes.
+			This filters is to avoid adversely affecting the
+			performance.  This function takes {args} and
+			{context} as its parameters.
 
-						*unite-source-attribute-action_table*
+			on_pre_init
+				*unite-source-attribute-hooks-on_pre_init*
+			Called before source is initialized.
+			{args} is empty.
+			Current source is set as "a:context.source" in
+			{context}.
+			You can dynamically initialize source by
+			changing "a:context.source" in this function.
+
+					*unite-source-attribute-action_table*
 action_table		Dictionary		(Optional)
-			Todo
+			Adds source's own action table.  In this
+			dictionary, the key is the kind and the value is
+			the action table.  The specification of action
+			table is same as
+			|unite-kind-attribute-action_table|.  With this
+			dictionary, you can define original
+			|unite-kind-attribute-action_table| for each
+			kind in source's own context.
+			For example:
 >
 			'action_table' : { 'buffer' : foo_action_table }
 <
-			Todo
-
-						*unite-source-attribute-default_action*
+			means that foo_action_table is used for kind
+			"buffer" in this source's context.
+			You can use "*" for the key to match any kind.
+			This is useful if you expect only one kind.  If
+			no key-value pair is set, this dictionary is
+			left empty.  You can put action table without a
+			corresponding key and it means the key is "*".
+			For example, the following two are the same.
+>
+			'action_table' : foo_action_table
+			'action_table' : { '*' : foo_action_table }
+<
+					*unite-source-attribute-default_action*
 default_action		Dictionary		(Optional)
-			Todo
+			Adds default action unique to the source.  In
+			this dictionary, the key is the kind and the value
+			is the default action.
+			If it's not given, the kind's default action is used.
+			The default action can be in string format and
+			it means the same as:
+>
+			'default_action' : { '*' : action_name}.
+<
+					*unite-source-attribute-default_kind*
+default_kind		String			(Optional)
+			Default kind in source candidates.
+			If it's not given, the "common" is used.
 
-						*unite-source-attribute-alias_table*
+					*unite-source-attribute-alias_table*
 alias_table		Dictionary		(Optional)
-			Todo
+			Adds an alias table unique to the source.  In
+			this dictionary, the key is the kind and the
+			value is the alias table.
+			If the key is '*', it matches any kinds.
+			Please refer to
+			|unite-kind-attribute-action_table| for the
+			specification of alias table.
+			If no key-value is set, this dictionary is left
+			empty.
 
-						*unite-source-attribute-max_candidates*
+					*unite-source-attribute-max_candidates*
 max_candidates		Number		(Optional)
 			The maximum number of candidates.
 
-			This attribute is optional; if it is not given, 0 is
-			used as the default value.  This means maximum number
-			is infinity.
+			This attribute is optional; if it is not given,
+			0 is used as the default value.  This means
+			maximum number is infinity.
 
-						*unite-source-attribute-required_pattern_length*
+			*unite-source-attribute-required_pattern_length*
 required_pattern_length	Number		(Optional)
-			Todo
+			The least string length to narrow down the
+			candidates.  This attribute is optional.
+			If it's not given, 0 is used as the default value and
+			all the possible candidates are collected.
 
-						*unite-source-attribute-is_volatile*
+					*unite-source-attribute-is_volatile*
 is_volatile		Number		(Optional)
-			Todo
+			Whether the source recalculates the candidates
+			everytime the input is changed.
+			This attribute is optional.
+			If it's not given, 0 is set as the default value. In
+			this case, canidates are cached in unite buffer
+			and it does not call
+			|unite-source-attribute-gather_candidates|
+			repeatedly and the cache is available until the
+			unite buffer is closed.  To cache longer, the source
+			has no choise but to cache by itself.
 
-						*unite-source-attribute-is_listed*
+					*unite-source-attribute-is_listed*
 is_listed		Number		(Optional)
-			Todo
+			Whether the source name is visible to the user.
+			If the source is internal, it must be set to 0.  If
+			it's omitted, it's set to 1.
 
-						*unite-source-attribute-description*
+					*unite-source-attribute-description*
 description		String		(Optional)
-			Todo
+			The description of the source.
+			If it's ommitted, it's set to "".
+			|unite-source-source| uses this.
 
-						*unite-source-attribute-syntax*
+					*unite-source-attribute-syntax*
 syntax			String		(Optional)
-			Todo
+			The syntax name used within the source.  This
+			syntax name is defined automatically by unite
+			itself.
+			If it's omitted, it's set to "".
+			This is used to configure the source's own
+			highlight.  According to the unite's naming
+			convension to avoid the syntax name conflicted,
+			use syntax name like "uniteSource__(source
+			name)".  Configuration of highlight itself must
+			use |unite-source-attribute-hooks-on_syntax|.
 
-						*unite-source-attribute-filters*
+					*unite-source-attribute-filters*
 filters			List		(Optional)
-			Todo
+			The list of filters used by the source.  The elements
+			are filter name or function reference (accepted
+			dictionary function in current source).  Please refer
+			to |unite-filter-attributes| for the specification of
+			filter.  If it's omitted, unite uses
+			|unite-filter-default|.
 
-						*unite-source-attribute-source__*
+					*unite-source-attribute-source__*
 source__		Unknown		(Optional)
-			Todo
+			The Attribute unique for each source.  To avoid
+			the attibute from conflicting wth the unite's own,
+			"source__" prefix must be added.
 
 NOTATION					*unite-notation*
 
 {context}					*unite-notation-{context}*
-			Todo
+			A dictionary to give context information.
+			The followings are the primary information.
+			The global context information can be acquired
+			by |unite#get_context()|.
+			The context information is characteristic to
+			each source and you can distinguish one by a key
+			stored in the dictionary.
 
 			input			(String)
 				The input string of unite buffer.
@@ -1949,75 +2449,126 @@ NOTATION					*unite-notation*
 				The prompt string of unite buffer.
 
 			is_insert		(Number)
-				Todo
+				If unite buffer is loaded from
+				insert mode.
 
 			immediately		(Number)
-				Todo
+				If unite buffer is loaded from
+				|unite-options-immediately|.
 
 			is_redraw		(Number)
-				Todo
+				If a user pressed
+				|<Plug>(unite_redraw)| or
+				invalidated cache after executed
+				actions.
+				Note: A user uses
+				|<Plug>(unite_redraw)| mapping
+				to remove cache files.
 
 			is_invalidate		(Number)
-				1 if action disables a cache. This is also 1
-				in initialization of unite buffer.
+				If An action disables a cache. This is
+				also 1 in initialization of unite
+				buffer.
 
 			is_async		(Number)
-				Todo
+				If the source gathers candidates
+				asynchronously.
+				If it's set to 0 in a source, it disables
+				asynchronous.
 
 			source			(Dictionary)
-				Todo
+				Gathering candidates source
+				information.
 
 			candidates		(List)
-				Todo
-
-			source__{name}		(Unknown)		(Optional)
-				Todo
-
-{candidate}					*unite-notation-{candidate}*
-			Todo
-
-			word			(String)
-				Todo
-
-			abbr			(String)	(Optional)
-				Todo
-
-			source			(String)	(Optional)
-				Todo
-
-			kind			(String/List)	(Optional)
-				Todo
-
-			is_dummy		(Number)	(Optional)
-				Todo
-
-			is_matched		(Number)	(Optional)
-				Todo
-
-			is_multiline		(Number)	(Optional)
-				1 if the candiates have multiple lines. The
-				default value is 0. When this is enabled,
-				unite splits abbr (or word is abbr is missing)
-				by a newline character.
+				Filtered candidates.
+				Note: This key is valid only in
+				|unite-source-attribute-hooks-on_post_filter|.
 
 			source__{name}		(Unknown)	(Optional)
-				Todo
+				Additional source information.
+				Note: Recommend sources save
+				variables instead of s: variables.
+
+{candidate}					*unite-notation-{candidate}*
+			A dictionary for candidates.
+			The followings are the primary information.
+
+			word			(String)
+				String Displayed in unite buffer.
+				Matcher to use word attribute to
+				filter.
+
+			abbr			(String)	(Optional)
+				String Displayed in unite buffer.
+				If it is omit, word attribute is used
+				instead.
+				The attribute is not used for
+				matcher.
+
+			source			(String)	(Optional)
+				Generated candidate source name.
+				Note: This attribute is set
+				automatically.
+
+			kind			(String/List)	(Optional)
+				The candidate kind name.
+				If it is omit, "common" is used.
+				Kind name list is acceptable.
+				Ex: ["file", "directory"]
+				If you use list, you have not to
+				define parents kind action.
+				Note: Unite searches kinds action from list
+				tail.
+				Ex: If you set kind attribute to ["file",
+				"command"], "file" (default) actions will be
+				overwritten by "command" action.  You should
+				use source default action instead of kind.
+
+			is_dummy		(Number)	(Optional)
+				If the candidate is dummy.
+				The default value is 0.
+				Note: When the cursor moves, dummy candidates
+				are skipped.
+
+			is_matched		(Number)	(Optional)
+				If the candidate is filtered.
+
+			is_multiline		(Number)	(Optional)
+				If the candiates have multiple lines.
+				The default value is 0.  When this is
+				enabled, unite splits abbr (or word if
+				abbr is missing) by a newline character.
+
+			source__{name}		(Unknown)	(Optional)
+				Attributes added by sources.
 
 			action__{name}		(Unknown)	(Optional)
-				Todo
+				Attributes added by actions.
+				For example, "action__path" attribute is file
+				path.  If you learn standard action attributes,
+				please refer to |unite-kind|.
 
 ==============================================================================
 CREATE KIND					*unite-create-kind*
 
-Todo
+The files in autoload/unite/kinds are automatically loaded and it calls
+unite#kinds#{kind_name}#define() whose return value is the kind.  Each return
+value can be a list so you can return an empty list to avoid adding
+undesireble kinds.  To add your own kinds dynamically, you can use
+|unite#define_kind()|.
+
+Note: To optimize load kind files, if "foo" kind name is detected, unite.vim
+loads "autoload/unite/kinds/foo*.vim" files.  The kind file name must be kind
+name prefix(Ex: foo).
 
 ------------------------------------------------------------------------------
 KIND ATTRIBUTES					*unite-kind-attributes*
 
 						*unite-kind-attribute-name*
 name			String		(Required)
-			The name of a kind. It must consist of the following
-			characters:
+			The name of a kind.  It must consist of the
+			following characters:
 			- a-z
 			- 0-9
 			- _
@@ -2027,51 +2578,91 @@ name			String		(Required)
 			- "buffer" , "file_mru" and "virw/git" are valid.
 			- "BadOne", "!@#$%^&*()_[]{}-|" and "" are invalid.
 
-						*unite-kind-attribute-default_action*
+					*unite-kind-attribute-default_action*
 default_action		String		(Required)
-			Todo
+			Specifies default action name when executing
+			|<Plug>(unite_do_default_action)|.  If this attribute is
+			ommitted, an error occurred.  But this hack is used in
+			parent only actions.
 
-						*unite-kind-attribute-action_table*
+					*unite-kind-attribute-action_table*
 action_table		Dictionary		(Required)
-			Todo
+			Adds an action table unique to the kind.  In
+			this dictionary, the key is the action name and the
+			value is one of dictionary attributes below.
+			If the value is "nop", the actions are disabled.
+			Note: "default" and "nop" names are keyword. You cannot
+			use them.
+			Note: If name is "unite__new_candidate", it will be
+			used for |<Plug>(unite_new_candidate)|. It adds a
+			candidate in current source.
 			
 			func			(Function)
-				Todo
+				This function is called when executing actions.
+				This function takes {candidate}.
+				If "is_selectable" attribute is "1",
+				{candidate} are candidate list({candidates}).
+				Note: This {candidate} is cached by unite, so
+				you cannot modify it.  If you modify it, you
+				must use |deepcopy()|.
 
 			description		(String)	(Optional)
-				Todo
+				The kind description string.
 
-			is_quit			(Number)		(Optional)
-				Todo
+			is_quit			(Number)	(Optional)
+				If this attribute is "1", unite buffer is closed
+				before executing actions. If this attribute is
+				ommitted, "1" is used.
 
-			is_selectable		(Number)		(Optional)
-				Todo
+			is_selectable		(Number)	(Optional)
+				If this attribute is "1", the action can
+				execute multiple candidates.  If this attribute
+				is ommitted, "0" is used.
 
-			is_invalidate_cache	(Number)		(Optional)
-				Todo
+			is_invalidate_cache	(Number)	(Optional)
+				If this attribute is "1", unite invalidates
+				source cache when executing the action.  If
+				this attribute is ommitted, "0" is used.
 
-			is_listed		(Number)		(Optional)
-				Todo
+			is_listed		(Number)	(Optional)
+				If this attribute is "1", the action is listed
+				in |<Plug>(unite_choose_action)|.  If this
+				attribute is omitted, "1" is used.
 
-						*unite-kind-attribute-alias_table*
+					*unite-kind-attribute-alias_table*
 alias_table		Dictionary		(Optional)
-			Todo
+			Adds an alias table unique to the kind.  In
+			this dictionary, the key is the action name and the
+			value is the overwrite action name.
+			If the value is "nop", the action is disabled.
 
 						*unite-kind-attribute-parents*
 parents			List		(Optional)
-			Todo
+			Specifies parent list.  If this attribute is ommitted,
+			["common"] is used.
+			Unite searches actions from list tail(head actions are
+			overwritten).
+			Note: Unite searches actions from parent list
+			recursively.  You must check infinity loop.
 
 ------------------------------------------------------------------------------
-IMPLICIT KIND					*unite-implicit-kind-for-a-source*
+IMPLICIT KIND				*unite-implicit-kind-for-a-source*
 
-Todo
+Unite can define actions in implicit kind.  The implicit kind name is
+"source/{name}/{kind}". The {name} is source name.  If the {kind} is "*", it
+matches any kinds.
+
+For example, if you want to add "delete" action in source "file", execute
+below command.
 >
 	call unite#custom_action('source/file/*', 'delete', function('...'))
 <
 ------------------------------------------------------------------------------
 ACTION RESOLUTION ORDER				*unite-action-resolution-order*
 
-Todo
+For example, if you fire actions from kind "file" candidate gathered
+by source "file", unite searches actions by order below.
+Note: kind "file" extends "openable" and "cdable" kind.
 
 (1) Custom action table for kind "source/file/file".
 (2) Default action table for kind "source/file/file".
@@ -2089,7 +2680,15 @@ Todo
 ==============================================================================
 CREATE FILTER					*unite-create-filter*
 
-Todo
+The files in autoload/unite/filters are automatically loaded and it calls
+unite#filters#{filter_name}#define() whose return value is the filter.  Each
+return value can be a list so you can return an empty list to avoid adding
+undesireble filter.  To add your own filters dynamically, you can use
+|unite#define_filter()|.
+
+Note: To optimize load filter files, if "matcher_foo_bar" filter name is
+detected, unite.vim loads "autoload/unite/filters/matcher_foo*.vim" files.  The
+filter file name must be filter name prefix(Ex: matcher_foo).
 
 ------------------------------------------------------------------------------
 FILTER ATTRIBUTES				*unite-filter-attributes*
@@ -2100,28 +2699,51 @@ name			String		(Required)
 
 						*unite-filter-attribute-filter*
 filter			Function		(Required)
-			Todo
+			This function is called after gathering
+			candidates by unite.
+			This function takes {candidates} and
+			{context} as its parameter and returns a
+			list of {candidate}.
+			The specification of the parameters and the
+			returned value is same as
+			|unite-source-attribute-gather_candidates|.
 
-						*unite-filter-attribute-description*
+					*unite-filter-attribute-description*
 description		String		(Optional)
-			Todo
+			The filter description string.
 
 ==============================================================================
 EXAMPLES					*unite-examples*
 >
-	
 	" The prefix key.
 	nnoremap    [unite]   <Nop>
 	nmap    f [unite]
 	
-	nnoremap <silent> [unite]c  :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
-	nnoremap <silent> [unite]b  :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
-	nnoremap <silent> [unite]r  :<C-u>Unite -buffer-name=register register<CR>
+	nnoremap <silent> [unite]c  :<C-u>UniteWithCurrentDir
+	\ -buffer-name=files buffer file_mru bookmark file<CR>
+	nnoremap <silent> [unite]b  :<C-u>UniteWithBufferDir
+	\ -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+	nnoremap <silent> [unite]r  :<C-u>Unite
+	\ -buffer-name=register register<CR>
 	nnoremap <silent> [unite]o  :<C-u>Unite outline<CR>
+	nnoremap <silent> [unite]f
+	\ :<C-u>Unite -buffer-name=resume resume<CR>
+	nnoremap <silent> [unite]d
+	\ :<C-u>Unite -buffer-name=files -default-action=lcd directory_mru<CR>
+	nnoremap <silent> [unite]ma
+	\ :<C-u>Unite mapping<CR>
+	nnoremap <silent> [unite]me
+	\ :<C-u>Unite output:message<CR>
 	nnoremap  [unite]f  :<C-u>Unite source<CR>
+	
+	nnoremap <silent> [unite]s
+	        \ :<C-u>Unite -buffer-name=files -no-split
+	        \ jump_point file_point buffer_tab
+	        \ file_rec:! file file/new file_mru<CR>
 	
 	" Start insert.
 	"let g:unite_enable_start_insert = 1
+	"let g:unite_enable_short_source_names = 1
 	
 	autocmd FileType unite call s:unite_my_settings()
 	function! s:unite_my_settings()"{{{
@@ -2131,8 +2753,34 @@ EXAMPLES					*unite-examples*
 	  imap <buffer> jj      <Plug>(unite_insert_leave)
 	  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
 	
-	  " <C-l>: manual neocomplcache completion.
-	  inoremap <buffer> <C-l>  <C-x><C-u><C-p><Down>
+	imap <buffer><expr> j unite#smart_map('j', '')
+	imap <buffer> <TAB>   <Plug>(unite_select_next_line)
+	imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+	imap <buffer> '     <Plug>(unite_quick_match_default_action)
+	nmap <buffer> '     <Plug>(unite_quick_match_default_action)
+	imap <buffer><expr> x
+	        \ unite#smart_map('x', "\<Plug>(unite_quick_match_choose_action)")
+	nmap <buffer> x     <Plug>(unite_quick_match_choose_action)
+	nmap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
+	imap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
+	imap <buffer> <C-y>     <Plug>(unite_narrowing_path)
+	nmap <buffer> <C-y>     <Plug>(unite_narrowing_path)
+	nmap <buffer> <C-j>     <Plug>(unite_toggle_auto_preview)
+	nmap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
+	imap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
+	nnoremap <silent><buffer><expr> l
+	        \ unite#smart_map('l', unite#do_action('default'))
+	
+	let unite = unite#get_current_unite()
+	if unite.buffer_name =~# '^search'
+	  nnoremap <silent><buffer><expr> r     unite#do_action('replace')
+	else
+	  nnoremap <silent><buffer><expr> r     unite#do_action('rename')
+	endif
+	
+	nnoremap <silent><buffer><expr> cd     unite#do_action('lcd')
+	nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
+	\ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
 	endfunction"}}}
 	
 	let g:unite_source_file_mru_limit = 200
@@ -2142,17 +2790,18 @@ EXAMPLES					*unite-examples*
 	" For optimize.
 	let g:unite_source_file_mru_filename_format = ''
 	
-	" For unite-session.
-	" Save session automatically.
-	"let g:unite_source_session_enable_auto_save = 1
-	" Load session automatically.
-	"autocmd VimEnter * UniteSessionLoad
+	if executable('jvgrep')
+	  " For jvgrep.
+	  let g:unite_source_grep_command = 'jvgrep'
+	  let g:unite_source_grep_default_opts = '--exclude ''\.(git|svn|hg|bzr)'''
+	  let g:unite_source_grep_recursive_opt = '-R'
+	endif
 	
 	" For ack.
 	if executable('ack-grep')
-	  let g:unite_source_grep_command = 'ack-grep'
-	  let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
-	  let g:unite_source_grep_recursive_opt = ''
+	  " let g:unite_source_grep_command = 'ack-grep'
+	  " let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  " let g:unite_source_grep_recursive_opt = ''
 	endif
 <
 ==============================================================================
@@ -2162,1800 +2811,490 @@ See Wiki page(Japanese).
 https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
 ==============================================================================
+FAQ						*unite-faq*
+
+Q: I want to delete files in unite buffer.
+
+A: You can use below setting. But this setting is dangerous.  You may delete
+files by mistake.
+>
+	call unite#custom_alias('file', 'delete', 'vimfiler__delete')
+<
+Q: I want to input register values in insert mode.
+
+A: You can use below mappings.
+>
+	inoremap <silent><expr> <C-z>
+	\ unite#start_complete('register', { 'input': unite#get_cur_text() })
+<
+==============================================================================
 CHANGELOG					*unite-changelog*
 
-2012-01-18
-- Added i_<Plug>(unite_redraw) mapping.
+2012-10-28
+- Improved update behavior.
 
-2012-01-17
-- Fixed autocmd problem.
+2012-10-23
+- Fixed unite#get_default_action().
 
-2012-01-15
-- Deleted noautocmd.
-- Improved parse path in file source.
-- Fixed history/yank source limit.
+2012-10-22
+- Added backup action.
 
-2012-01-14
-- Improved for vimfiler.
-- Fixed expand problem.
-- Fixed truncate bug.
+2012-10-21
+- Deleted max_candidates in mapping source.
+- Improved adjustment behavior.
+- Added source custom variables.
 
-2012-01-12
-- Fixed resume_from_temporary().
-- Fixed iconv() bug.
-- Fixed grep source error.
-- Fixed grep action.
-- Added insert_directory action.
+2012-10-20
+- Fixed file_rec filters.
 
-2012-01-11
-- Supported ack command in grep source.
-- Fixed execute problem.
-- Added g:unite_source_history_yank_file option.
-- Fixed unite#get_candidates().
-- Fixed quick match.
+2012-10-19
+- Added unite#start_script().
+- Added sorter_length.
+- Fixed converter in file_rec.
+- Improved file_rec converter.
+- Fixed for multiline behavior.
 
-2012-01-09
-- Added abbr_head.
+2012-10-18
+- Fixed clear marks behavior.
+- Improved unite#mappings#do_action().
+- Improved profile behavior.
+- Improved documentation.
 
-2012-01-08
-- Improved substitute tab characters.
-- Improved newfile action.
-- Improved grep source.
-- Added unite#do_candidates_action().
-- Improved get asyncronous candidates behavior.
-- Fixed unite#get_candidates().
+2012-10-17
+- Added examples.
+- Fixed a bug that edit action didn't add history in command kind.
 
-2012-01-06
-- Fixed cd action behavior.
-- Fixed initialize vimfiler candidates.
+2012-10-16
+- Fixed choose action for vimfiler.
+- Added host check in file_point.
 
-2012-01-05
-- Improved :UniteResume behavior.
-- Fixed expand() problem.
-- Fixed -toggle option.
+2012-10-15
+- Fixed insert word.
 
-2012-01-04
-- Fixed mru sources behavior.
+2012-10-14
+- Fixed statusline.
 
-2012-01-03
+2012-10-11
+- Fixed for unite-source.
+
+2012-10-10
+- Disable colors in grep source.
+
+2012-10-09
+- Save previous winwidth and winheight.
+- Improved auto split behavior.
+
+2012-10-06
+- Fixed resume error.
+- Print default action in action source.
+
+2012-10-03
+- Added unite__new_candidate action in directory sources.
+- Added unite__new_candidate action in process sources.
+- Improved unite#util#is_cmdwin().
+
+2012-10-02
+- Added default_kind attribute.
+- Set default_kind attribute in sources.
+- Added unite__new_candidate action.
+- Improved is_listed action behavior.
+- Added unite__new_candidate action in sources.
+
+2012-09-28
+- Improved message behavior.
+- Changed tab source behavior.
+- Deleted mru max_candidates.
+- Improved unite#start_complete().
+
+2012-09-27
+- Fixed initialize error.
+
+2012-09-25
+- Improved tab source.
+- Changed tab source behavior.
+
+2012-09-24
+- Improved input().
+- Improved lcd for vimfiler.
+- Fixed set syntax.
+- Fixed redraw_all_candidates().
+- Added -multi-line option.
+
+2012-09-21
+- Added line/fast source.
+- Set is_multi_line in output source.
+- Improved redraw status line.
+
+2012-09-20
 - Fixed complete behavior.
-- Fixed source completion.
+- Changed insert word behavior.
+- Added matcher_context filter.
+- Changed default matcher.
+- Fixed for line source.
+
+2012-09-19
 - Fixed grep source.
-- Improved escape filename.
-- Fixed E325 problem.
+- Added echo action.
+- Added FAQ section.
 
-2012-01-02
-- Added complete attribute.
-- Added spec file.
-- Fixed complete problem.
-- Fixed unite#get_sources() error.
-- Added source complete functions.
+2012-09-14
+- Fixed redraw all candiates behavior.
 
-2012-01-01
-- Fixed file operation.
-- Added g:unite_kind_file_use_trashbox option.
-- Added goto action in buffer kind.
+2012-09-13
+- Use trashbox automatically in delete action.
 
-2011-12-31
-- Fixed find and grep source behavior.
+2012-09-10
+- Added g:unite_source_vimgrep_ignore_pattern.
 
-2011-12-30
-- Improved expand bookmark name.
-- Added g:unite_source_grep_search_word_highlight option.
-- Fixed external command bug.
-- Improved register source.
-- Does not cd in vimfiler__mkdir action.
-- Fixed unite#get_candidates() behavior.
-- Ignore directories in file_mru source.
+2012-09-09
+- Added <C-g> mapping.
+- Added -no-focus option.
+- Added -short-source-names and -long-source-names and
+  g:unite_enable_use_short_source_names option.
 
-2011-12-29
-- Added unite#get_candidates().
-- Fixed make directory action.
+2012-09-07
+- Added dirdiff action.
 
-2011-12-27
-- Fixed restore cursor in actions.
-- set winfixwidth and winfixheight.
+2012-09-06
+- Fixed grep check.
 
-2011-12-26
-- Don't use wincmd p.
-- Improved persist_open action.
-- Fixed expand input bug.
+2012-09-04
+- Fixed narrowing behavior.
+- Changed -immediately behavior.
+- Fixed resume bug.
+- Added alias in directory kind.
+- Fixed for new vimshell.
 
-2011-12-25
-- Fixed persist_open action.
+2012-09-03
+- Fixed function preview error.
+- Fixed ignore_pattern behavior.
+- Added readable check in file.
 
-2011-12-22
-- Improved error detecton when call hook.
+2012-09-02
+- Ver.4.1 development is started.
+- Fixed for new vimshell.
+- Fixed insert word.
+- Added function source.
+- Improved unite-menu source.
+
+------------------------------------------------------------------------------
+ChangeLog unite.vim Ver.4.0:
+
+2012-09-01
+- Improved sort in command source.
+- Changed default matcher in command source.
+
+2012-08-31
+- Improved move cursor.
+- Added unite#get_unite_winnr().
+
+2012-08-30
+- Improved loop cursor down behavior.
+- Improved documentation.
+
+2012-08-28
+- Improved unite command source.
+- Fixed error message.
+- Improved mkdir action.
+- Move to new directory position when vimfiler__mkdir action.
+- Fixed save updatetime.
+
+2012-08-27
+- Improved mapping behavior.
+- Improved move cursor behavior.
+- Improved insert mode mappings.
+- Improved command source.
+- Improved edit action in command kind.
+- Added preview action in mapping and command sources.
+- Improved buffer view.
+
+2012-08-26
+- Fixed vimgrep source.
+- Fixed grep source.
+- Fixed insert_head error.
+- Fixed move head behavior.
+- Fixed <Plug>(unite_cursor_bottom).
+
+2012-08-25
+- Delted obsolute changelog.
+- Improved resize behavior.
+- Fixed set context in initialization.
+
+2012-08-24
+- Fixed typo.
+- Set is_multiline in grep and line source.
+- Improved document.
+- Added documentation.
+- Improved vimgrep source.
+- Added <Plug>(unite_cursor_bottom) keymapping.
+- Fixed unite#util#filter_matcher().
+- Improved resize window behavior.
+- Improved cursor up behavior.
+
+2012-08-23
+- Fixed g:unite_source_file_ignore_pattern.
+- Deleted yank action in history/yank.
+- Improved syntax.
+- Added diff action in kind file.
+- Fixed <Plug>(unite_toggle_mark_all_candidates) and <Plug>(unite_toggle_max_candidates) behavior.
+- Fixed unite#custom_max_candidates() error.
+- Improved print message behavior.
+
+2012-08-22
+- Deleted Japanese documentation.
+- Added file kind in grep source.
+
+2012-08-21
+- Updated vital.
+- Improved documentation.
+- Fixed gather candidates.
+- Fixed output source behavior.
+- Fixed ignore_pattern in vimfiler.
+
+2012-08-20
+- Improved yank action.
+- Improved vimfiler check in grep source.
+- Fixed insert action behavior.
+
+2012-08-19
+- Added yy mapping.
+- Fixed redraw.
+- Fixed toggle marks behavior.
+
+2012-08-18
+- Fixed unite#get_vimfiler_candidates().
+- Fixed ignore pattern in file source.
+- Added -auto-quit option.
+- Use unite#util#iconv().
+
+2012-08-17
+- Setlocal nomodified.
+- Fixed unite#get_context().
+
+2012-08-15
+- Fixed unite#do_candidates_action().
+
+2012-08-14
+- Fixed create new buffer name.
+- Fixed last unite bufnr.
+- Fixed :UniteClose.
+- Improved for resume.
+- Changed postfix behavior.
+- Improved jump_list kind actions.
+- Fixed unite#get_candidates().
+
+2012-08-12
+- Fixed postfix problem.
+- Fixed execute actions error for vimfiler.
 - Fixed for vimfiler.
-- Fixed updatetime error.
-- Fixed documentation.
-- Force use glob().
-- Set kind action_table.
-- Fixed substitute patterns list.
+- Improved matcher_fuzzy.
+- Fixed converter problem.
 
-2011-12-21
-- Improved unite#_resize_window().
-- Improved detect source and action error.
-- Improved error detection.
+2012-08-11
+- Improved file_rec source behavior.
 
-2011-12-20
-- Use vimproc#read_dir() (experimental).
-- Improved glob().
+2012-08-10
+- Fixed quick match error.
+- Updated vital.
+- Improved call filters.
+- Optimized filters.
+- Improved matcher_migemo matcher.
+- Use cache in line source.
+- Improved line source behavior.
+- Fixed for unite-outline matcher.
 
-2011-12-19
-- Added -update-time and -cursor-line-high-light options.
-- Improved rename action.
-- Improved buflisted().
+2012-08-09
+- Fixed for multiline behavior.
+- Fixed for many candidates behavior.
 
-2011-12-18
-- Implemented OR matching.
+2012-08-08
+- Fixed for vimfiler.
 
-2011-12-17
-- Fixed path bug in Windows.
-- Improved window resize.
-
-2011-12-16
-- Improved filename completion.
-- Improved history/yank source.
-- Fixed for vimfiler initialize.
-
-2011-12-15
-- Improved input highlight patterns.
-
-2011-12-14
-- Fixed highlight.
-- Improved change source.
-- Changed for new vimfiler interface.
-- Syntax case ignore.
-
-2011-12-13
-- Improved ignore pattern.
-- Implemented keyword highlight.
-- Improved vimfiler__mkdir action.
-- Fixed :match error.
-- Fixed unite#vimfiler_check_filetype().
-- Improved unite register source.
-- Fixed unite history/input source error.
-
-2011-12-12
-- Improved file_mru and directory_mru default setting.
-- Improved UniteWithInput behavior.
-- Fixed highlight group bug.
-
-2011-12-08
-- Added :UniteClose command.
-
-2011-12-07
-- Improved grep source.
-- Improved jump source.
-
-2011-12-05
-- Improved long abbr behavior.
-- Fixed move_to_other_drive behavior.
-- Changed quick match syntax.
-
-2011-12-03
-- Improved quick match syntax.
-- Improved is_multiline behavior.
-- Improved initialize candidates.
-
-2011-12-02
-- Fixed move_to_other_drive error.
-
-2011-12-01
-- Fixed dest_drive error.
-- Fixed uri kind.
-- Improved padding.
-- Fixed cd action behavior.
-
-2011-11-30
-- Fixed a bit.
-- Fixed required_pattern_length problem.
-
-2011-11-28
-- Fixed for UNC path.
-- Fixed source line.
-
-2011-11-25
-- Improved substitute path separator.
-
-2011-11-24
-- Fixed unite#set_buffer_name_option() error.
-
-2011-11-23
-- Implemented use ls command when gather candidates(experimental).
-- Implemented profile instead of buffer_name option.
-
-2011-11-22
+2012-08-07
+- Fixed candidates bug.
+- Improved mapping behavior.
+- Improved autocmd.
+- Improved matcher.
 - Improved line source.
 
-2011-11-21
-- Added g:unite_source_find_ignore_pattern and g:unite_source_grep_ignore_pattern options.
-- Fixed unite history/yank and register sources.
-- Ver.3.1 development is started.
-
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.3.0:
-
-2011-11-21
-- Ver.3.0 is released.
-
-2011-11-20
-- Improved history/yank and register source.
-- Fixed mapping and file_rec source.
-
-2011-11-18
-- Fixed mark error.
-
-2011-11-17
-- Fixed file_mru filter.
-- Improved s:convert2dictionary().
-
-2011-11-16
-- Fixed find source.
-- Fixed grep source.
-
-2011-11-15
-- Added -create option.
-- Improved buffer name behavior.
-
-2011-11-11
-- Fixed :VimShellPop bug.
-
-2011-11-10
-- Improved file operations.
-- Improved session load.
-
-2011-11-08
-- Added g:unite_source_session_enable_auto_save.
-- Improved automatically session.
-
-2011-11-07
-- Added session source.
-- Fixed alias table syntax sugar.
-- Added g:unite_source_session_options variable.
-- Added :UniteSessionLoad command.
-- Improved unite session behavior.
-
-2011-11-05
-- Improved buffer source.
-
-2011-11-04
-- Fixed auto_resize and auto_preview behavior.
-- Improved file_rec word.
-- Added <Plug>(unite_quick_match_choose_action) mapping.
-- Added -quick-match option.
-- Improved source kind description.
-
-2011-11-02
-- Improved register and history/yank source.
-
-2011-11-01
-- Improved buffer abbr.
-
-2011-10-31
-- Fixed s:check_over_write() behavior.
-- Fixed copy and move behavior.
-
-2011-10-26
-- Supported list substitute pattern.
-- Fixed input error.
-- Improved overwrite method.
-
-2011-10-25
-- Added is_multiline attribute.
-- Improved history/yank source behavior.
-- Added is_multiline documentation.
-
-2011-10-24
-- Changed a default keymapping behavior.
-- Added matcher_migemo filter.
-- Improved recache_candidates().
-
-2011-10-23
-- Improved check filetype.
-
-2011-10-19
-- Fixed unite#print_error() error.
-- Fixed unite action source.
-
-2011-10-18
-- Fixed end problem.
-
-2011-10-17
-- Improved unite-resume behavior.
-- Added preview action in common kind.
-- Improved file_point source.
-- Improved cursor move.
-- Fixed jump_point.
-- Improved buffer view.
-- Added bang in buffer source.
-- Improved unite mapping source.
-
-2011-10-15
-- Changed a bit.
-
-2011-10-14
-- Skip don't exist file in jump_point source.
-- Improved unite async redraw.
-
-2011-10-13
-- Improved unite-bookmark.
-- Detect sudo vim.
-
-2011-10-12
-- Fixed unite-bookmark.
-
-2011-10-11
-- Added unite-menu source.
-- Fixed unite-menu.
-- Fixed unite#vimfiler_check_filetype() error message.
-- Added buffer name limitation.
-- Fixed expand path.
-- Improved unite-menu examples.
-- Changed g:unite_source_menu_menus interface.
-- For Vim 7.2 or above.
-
-2011-10-10
-- Fixed variables initialize.
-- Improved unite-source behavior.
-- Added <Plug>(unite_all_exit) mapping.
-- Improved buffer name option behavior.
-
-2011-10-09
-- Expand path.
-
-2011-10-07
-- Added unite process candidates alias.
-- Fixed unite mappings source.
-
-2011-10-06
-- Improved process view.
-- Fixed bookmark check.
-
-2011-10-05
-- Escape [].
-- Improved unite#sources#file#create_vimfiler_dict().
-- Added process source.
-- Fixed vimfiler_gather_candidates().
-- Improved redraw behavior.
-- source process supported Windows.
-
-2011-10-04
-- Improved unite-bookmark.
-- Fixed vimfiler actions.
-- Optimized for vimfiler.
-
-2011-09-30
-- Fixed unite-line source.
-
-2011-09-28
-- Fixed g:unite_source_file_rec_ignore_pattern escape.
-
-2011-09-27
-- Added history/yank source.
-- Added documentation.
-- Fixed copy/delete action.
-
-2011-09-26
-- Fixed copy and move behavior.
-- Fixed unite launcher source.
-
-2011-09-24
-- Fixed source change.
-
-2011-09-23
-- Fixed g:unite_source_file_mru_ignore_pattern.
-- Fixed file actions.
-- Improved quit.
-
-2011-09-21
-- Added matcher_fuzzy.
-- Improved vimfiler cd.
-- Added find source.
-
-2011-09-18
-- Added <Plug>(unite_toggle_max_candidates) mapping.
-- Refactoringed local variable names.
-
-2011-09-17
-- Fixed vimfiler cd error.
-- Fixed for vimfiler Ver.3.
-- Fixed unite resume.
-- Fixed examples.
-
-2011-09-16
-- Fixed source file for vimfiler.
-
-2011-09-15
-- Improved choose action.
-
-2011-09-14
-- Fixed search unite buffer.
-
-2011-09-09
-- Fixed buffer rename action.
-- Improved initialize candidates.
-- Fixed overwrite hooks error.
-- Added tabopen mappings.
-
-2011-09-08
-- Improved unite-line.
-- Fixed unite-register error.
-
-2011-09-07
-- Fixed keymapping.
-- Changed g:unite_update_time default value.
-- Fixed for yanktmp.
-- Fixed unite#resume().
-- Fixed unite#mappings#do_action().
-
-2011-09-06
-- Fixed unite-source.
-
-2011-09-05
-- Fixed vimfiler file source.
-- Improved register source.
-
-2011-09-04
-- Improved unite buffer source.
-
-2011-09-03
-- Improved quit unite buffer.
-- Implemented -no-split option.
-- Improved insert word action.
-- Improved vimfiler file source.
-- Improved unite#vimfiler_check_filetype().
-- Improved unite#start().
-
-2011-09-02
-- Fixed quit unite buffer.
-
-2011-09-01
-- Implemented unite#start_complete().
-- Added nested autocmd.
-- Added sorter_reverse filter.
-- Implemented unite#mappings#set_current_filters().
-- Added register edit action.
-- Improved syntax highlight.
-
-2011-08-31
-- Fixed new file action.
-- Added register delete action.
-- Implemented action_table syntax sugar.
-- Supported kind list(experimental).
-- Fixed unite-mappings.
-- Improved alias.
-
-2011-08-30
-- Improved :UniteResume.
-
-2011-08-29
-- Fixed unite alias.
-- Fixed unite on_buf_unload error.
-
-2011-08-28
-- Fixed unite alias.
-- Added documentation.
-- Supported on_pre_init hook in alias source.
-
-2011-08-27
-- Fixed unite toggle.
-- Added alias source.
-
-2011-08-26
-- Implemented vimfiler write interface.
-- Implemented vimfiler completion interface.
-- Fixed grep action.
-- Fixed grep option.
-
-2011-08-25
-- Improved vimfiler interface.
-- Fixed auto preview.
-- Added file_rec vimfiler interface.
-- Implemented file_rec vimfiler interface.
-
-2011-08-24
-- Fixed unite buffer delete.
-- Improved update time.
-- Implemented previewd_buffer_list.
-- Implemented vimfiler actions.
-- Check obsolute option.
-- Improved file operations for vimfiler.
-
-2011-08-23
-- Fixed get buffer name input.
-- Fixed vimfiler cd action.
-- Renamed cd and lcd options.
-
-2011-08-22
-- Fixed source syntax highlight.
-- Updated vital.vim.
-- Added -toggle option.
-- Changed file_mru and directory_mru default filename.
-- Changed g:unite_source_bookmark_file to g:unite_source_bookmark_directory.
-- Improved redraw.
-- Improved source file sort.
-- Added vimfiler_dummy_candidates().
-
-2011-08-21
-- Fixed file_rec/async ignore pattern.
-
-2011-08-20
-- Improved quick match behavior.
-
-2011-08-19
-- Fixed current unite bug.
-- Changed -immediately behavior.
-
-2011-08-17
-- Fixed visible dot file error.
-- Fixed default mapping.
-- Added guicmd kind.
-- Added launcher source.
-- Improved launcher source.
-
-2011-08-16
-- Improved vimfiler actions.
-- Added is_listed attribute.
-
-2011-08-15
-- Fixed vimfiler actions.
-
-2011-08-14
-- Fixed for vimfiler Ver.3.
-- Implemented vimfiler actions.
-- Fixed vimfiler error.
-- Improved redraw.
-- Added is_matched and keymappings.
-- Improved action name.
-- Implemented copy and delete and move action.
-
-2011-08-13
-- Ver.3.0 development started.
-- Implemented vimfiler interface(experimental).
-
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.2.2:
-2011-08-13
-- Fixed recache candidates.
-- Improved <Plug>(unite_insert_leave) keymapping.
-- Fixed documentation.
-- Released ver.2.2.
-
-2011-08-12
-- Fixed change_candidates().
-
-2011-08-11
-- Improved toggle mark.
-
-2011-08-10
-- Optimized source line.
-- Added jump_point source.
-- Added file_point source and uri kind.
-- Kind file inherited uri kind.
-- Improved command-line window detection.
-- Fixed for cursorline.
-- Fixed for colorcolumn.
-- Changed default prompt.
-- Improved autocmd.
-- Improved cursor down/up behavior.
-- Initialize ignorecase and smartcase value in files buffer.
-
-2011-08-09
-- Improved context source.
-
-2011-08-08
-- Improved matcher.
-
-2011-08-06
-- Fixed file_rec path problem.
-
-2011-08-05
-- Improved quick match.
-- Fixed file_rec/async source.
-
-2011-08-04
-- Fixed windows restore.
-- Added <Plug>(unite_toggle_auto_preview) keymapping.
-- Fixed file_rec relative path.
-- Improved cursor line.
-- Optimized unite-file.
-- Asynchronous file_rec source(experimental).
-- Improved file_rec.
-- Added file_rec/async source.
-- Added <Plug>(unite_narrowing_input_history) keymapping.
-
-2011-08-03
-- Improved relative converters.
-- Added source kind.
-- Improved g:unite_abbr_highlight default value.
-- Improved documentation.
-
-2011-08-02
-- Improved mru filtering.
-
-2011-08-01
-- Improved unite-grep source.
-- Added converter_relative_abbr and converter_relative_word.
-- Improved converter_relative.
-- Improved quit session.
-- Improved file_rec source.
-
-2011-07-31
-- Fixed preview problems.
-- Fixed arguments parse.
-
-2011-07-23
-- Added jump source.
-- Added change source.
-
-2011-07-21
-- Set max candidates in line source.
-- Improved matcher.
-- Improved restore position.
-
-2011-07-20
-- Fixed source args parse.
-- Fixed filter description.
-- Fixed filters.
-- Improved matcher_regexp filter.
-
-2011-07-17
-- Fixed resource leak in grep source.
-- Use new vimproc function.
-- Improved async.
-- Fixed args problem.
-- Supported null args.
-- Implemented abbreviation argument.
-
-2011-07-16
-- Improved redraw.
-
-2011-07-15
-- Fixed jump_list kind.
-
-2011-07-13
-- Added -auto-resize option.
-- Fixed unite#clear_message().
-- Improved file_rec source.
-
-2011-07-12
-- Fixed on_close call timing.
-
-2011-07-11
-- Fixed fatal mru bug.
-- Fixed unite#start() description.
-- Implemented default_action syntax sugar.
-- Improved source action_table description.
-
-2011-07-10
-- Fixed narrowing problem.
-- Improved buffer and file_mru source abbr.
-- Improved delete backword path keymapping.
-- Fixed buffer source error.
-- Fixed preview action in completion kind.
-
-2011-07-09
-- Improved command line buffer detect.
-- Improved substitute pattern.
-- Deleted <ESC> default mapping.
-- Improved on InsertEnter.
-
-2011-07-08
-- Added unite#custom_max_candidates().
-- Fixed s:print_buffer().
-- Detect command line buffer.
-- Improved mru.
-
-2011-07-07
-- Improved unite#print_message() and unite#clear_message() behavior.
-- Improved grep source behavior.
-
-2011-07-06
-- Ver.2.2 development started.
-- Fixed file actions.
-
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.2.1:
-
-2011-07-05
-- Released unite.vim Ver.2.1.
-
-2011-07-03
-- Improved insert enter mappings.
-- Renamed lines source to line.
-
-2011-07-02
-- Added matcher_regexp filter.
-- Changed lines and grep filters.
-- Added resume source.
-
-2011-06-30
-- Added direction argument in source lines.
-- Improved file_rec source.
-- Added g:unite_source_file_rec_min_cache_files option.
-
-2011-06-28
-- Added <Plug>(unite_toggle_selected_candidates) keymapping.
-- Improved unite buffer initialize.
-- Added <Plug>(unite_narrowing_path) keymapping.
-- Supported redraw in source lines.
-- Improved unite buffer initialize.
-
-2011-06-26
-- Improved autocmd.
-- Improved matcher.
-- Improved error highlight.
-- Improved preview action in jump_list.
-- Added lines source.
-- Fixed for syntax case.
-- Added persist_open action.
-
-2011-06-25
-- Added rename action.
-- Deleted search pattern.
-- Fixed initialize unite bug.
-- Added grep source(Thanks Sixeight).
-- Improved unite-grep.
-- Added pattern highlight in unite-grep.
-
-2011-06-24
-- Don't follow symbolic link in file_rec source.
-
-2011-06-20
-- Improved unite -immediately behavior.
-- Fixed path separator problem in unite-file.
-
-2011-06-19
-- Improved detect error in mru.
-
-2011-06-18
-- Fixed hlsearch.
-
-2011-06-17
-- Fixed caching bug.
-- Improved s:recache_candidates().
-
-2011-06-15
-- Fixed unite-buffer-name problem.
-
-2011-06-13
-- Fixed switch_unite_buffer().
-
-2011-06-12
-- Fixed quit unite buffer problem.
-
-2011-06-11
-- Improved kind tab.
-
-2011-06-10
-- Added -verbose option.
-
-2011-06-09
-- Improved unite#print_error().
-
-2011-06-07
-- Improved "e" mapping.
-- Changed insert mode mappings.
-
-2011-06-04
-- Added <Plug>(unite_toggle_mark_all_candidates) keymapping.
-- Deleted l default keymapping.
-
-2011-06-03
-- Fixed unite-register freeze.
-- Fixed initialize error.
-- Added file action in cdable kind.
-- Improved narrow action.
-
-2011-06-02
-- Added replace action in jump_list kind.
-- Improved redraw.
-
-2011-06-01
-- Fixed recaching.
-- Fixed choose_action.
-
-2011-05-31
-- Improved redraw flag.
-- Fixed is_redraw flag.
-
-2011-05-21
+2012-08-06
+- Optimized redraw candidates.
+- Improved unite#gather_candidates().
 - Improved file_mru.
-
-2011-05-16
-- Fixed directory_mru error.
-
-2011-05-15
-- Improved alias in choose action.
-
-2011-05-14
-- Fixed kind command.
-- Fixed preview action.
-- Updated vital.vim.
-- Fixed choose_action().
-
-2011-05-08
-- Fixed :UniteResume error.
-- Improved cursor move behavior.
-- Ver.2.1 development started.
-
-2011-05-06
-- Fixed syntax error.
-- Fixed example.
-- Improved g:unite_enable_start_insert option.
-- Added .gitignore file.
-- Improved file source discription.
-
-2011-05-01
-- Ver.2.0 is released.
-
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.2.0:
-
-2011-04-28
-- Fixed unite source.
-
-2011-04-27
-- Refactored a bit.
-
-2011-04-26
-- Implemented position restore.
-- Improved auto preview behavior.
-- Implemented mapping source.
-
-2011-04-25
-- Fixed file_mru error.
-
-2011-04-22
-- Set cpoptions.
-- Improved file_rec source.
-
-2011-04-21
-- Fixed redraw candidates bug.
-
-2011-04-20
-- Fixed default action bug.
-
-2011-04-17
-- Improved auto preview.
-- Ignore invalid action.
-- Improved source file.
-- Improved loop cursor down/up.
-- Implemented dummy candidates.
-
-2011-04-16
-- Fixed auto preview bug.
-
-2011-04-15
-- Supported yanktmp in register source.
-
-2011-04-13
-- Added ignorecase and smartcase buffer_name options.
-- Fixed help.
-
-2011-04-12
-- Fixed quick match bug.
-- Fixed choose action.
-- Improved redraw.
-- Improved source file dummy candidates.
-
-2011-04-09
-- Improved file_rec source.
-- Caching file_rec source.
-- Fixed narrowing action.
-
-2011-04-07
-- Fixed hlsearch bug.
-- Fixed sidescrolloff problem.
-- Added is_async context flag.
-
-2011-04-04
-- Fixed quick match error.
-- Improved default substitute pattern.
-
-2011-04-03
-- Improved unite action.
-
-2011-04-02
-- Fixed :UniteResume bug.
-- Improved unite action.
-- Fixed choose action.
-
-2011-04-01
-- Fixed get action table bug.
-- Fixed priority sort bug.
-- Fixed narrowing.
-- Improved file source.
-- Implemented auto mkdir().
-- Implemented mkdir action.
-
-2011-03-31
-- Improved sort.
-- Optimized initialization.
-- Improved truncate.
-- Added post_filter hook.
-- Improved file_mru source.
-- Improved directory_mru source.
-- Fixed choose_action documentation.
-- Add '..' directory in unite source.
-
-2011-03-29
-- Implemented unite action source.
-- Changed unite#loaded_source_names_with_args().
-- Added sorter_word.
-- Improved redraw.
-- Fixed highlight settings.
-
-2011-03-25
-- Implemented vimfiler and tabvimfiler actions.
-- Improved documentation.
-- Fixed highlight.
-- Changed on_close timing.
-
-2011-03-23
-- Fixed kind completion bug.
-
-2011-03-22
-- Fixed unite#custom_filters() bug.
-- Ommitable candidates source name.
-
-2011-03-17
-- Implemented unite#clear_message().
-- Added README.
-- Implemented source highlight.
-
-2011-03-16
-- Added matcher_default, sorter_default, converter_default.
-
-2011-03-13
-- Improved delete buffer action.
-- Fixed unite#custom_filters() error.
-- Fixed help typo.
-- Renamed unite#custom_filter() to unite#custom_filters().
-- Added filter help.
-- Added unite#set_buffer_name_option() help.
-
-2011-03-10
-- Implemented filters.
-- Refactored buffer name options.
-- Implemented buffer name filters.
-- Fixed version number.
-
-2011-03-02
-- Improved file_rec path.
-- Improved buffer abbr.
-
-2011-02-25
-- Fixed context bug.
-- Fixed narrowing.
-- Added unite-source-attribute-source__ description.
-- Changed available_xxx API names to get_xxx.
-
-2011-02-24
-- Improved unite#print_error() and unite#print_message().
-- Implemented input_gather_candidates().
-- Fixed narrowing bug.
-- Changed input_gather_candidates() to change_candidates().
-- gather_candidates attribute is optional.
-- Changed file_rec message format.
-- Improved syntax.
-
-2011-02-23
-- Fixed auto_preview.
-- Fixed set search pattern.
-- Deleted highlight off.
-
-2011-02-22
-- Fixed narrowing bugs.
-
-2011-02-21
-- Fixed fnamemodify().
-- Improved traverse message in file_rec source.
-- Fixed file_rec path problem.
-
-2011-02-18
-- Fixed source file path problem.
-
-2011-02-16
-- Fixed source register max width.
-- Improved syntax.
-
-2011-02-14
-- Added -vertical, -horizontal, -direction options.
-
-2011-02-13
-- Implemented preview window check.
-- Improved initialize sources.
-
-2011-02-11
-- Implemented sorter and matcher.
-- Implemented unite#print_message().
-
-2011-02-10
-- Changed volatile source.
-- Added default matcher.
-- Added from field in action.
-
-2011-02-09
-- Improved file_rec source.
-- Added g:unite_source_file_rec_ignore_pattern option.
-
-2011-02-08
-- Fixed file_rec index.
-
-2011-02-07
-- Implemented asynchronous get candidates.
-- Improved file_rec.
-
-2011-02-06
-- Fixed redraw buffer source bug.
-- Added <Plug>(unite_restart) keymapping.
-
-2011-02-05
-- Fixed unite buffer name.
-
-2011-02-04
-- Fixed is_insert error.
-- Fixed completion kind.
-- Improved completion kind.
-
-2011-02-03
-- Fixed filtering bug.
-- Added completion kind.
-- Added col and completion option.
-
-2011-02-02
-- Improved syntax.
-- Improved highlight off.
-
-2011-02-01
-- Don't save directory in file_mru.
-- Fixed unite-command.
-- Implemented -auto-preview option.
-
-2011-01-31
-- Fixed substitute input.
-- Fixed buffer source.
-
-2011-01-30
-- Added no-current option in window and tab source.
-- Added <Plug>(unite_delete_backward_path) keymapping.
-- Improved normal mode redraw.
-- Refactored.
-- Added -immediately option.
-
-2011-01-28
-- Improved unite-register.
-- Improved narrowing behavior.
-
-2011-01-27
-- Improved jump_list.
-
-2011-01-26
-- Deleted :NeoComplCacheCachingBuffer.
-- Improved quick match message.
-- Chomp last /.
-
-2011-01-24
-- Added --no-start-insert option.
-
-2011-01-21
-- Fixed unite-register freeze bug.
-
-2011-01-20
-- Fixed is_redraw bug.
-
-2011-01-19
-- Added unite#version().
-- Fixed context.
-- Improved initialize.
-
-2011-01-17
-- Improved unite-command.
-- Improved command narrow action.
-- Use strdisplaywidth().
-- Add history in kind command.
-- Fixed :NeoComplCacheCachingBuffer error.
-- Improved context.
-- Improved rotate sources.
-- Improved args.
-- Improved syntax.
-
-2011-01-16
-- Improved command source.
-- Fixed jump_list escape.
-
-2011-01-15
-- Improved command action.
-- Added command source.
-
-2011-01-14
-- Fixed escape jump_list.
-- Fixed unite#get_default_action().
-- Improved unite-output.
-- Added edit action in command kind.
-
-2011-01-11
-- Changed :UniteWithInputDirectory behavior.
-- Deleted unused tag.
-
-2011-01-10
-- Changed yank action.
-- Added output source.
-- Fixed help typo.
-- Improved source arguments description.
-
-2011-01-09
-- Ver.1.1 development started.
-- Improved insert leave.
-- Supported neocomplcache manual completion.
-- Added g:unite_cursor_line_highlight and g:unite_abbr_highlight options.
-
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.1.0:
-
-2011-01-08
-- Optimized file_mru.
-- Added g:unite_source_file_mru_filename_format option.
-
-2010-12-27
-- Improved autocmd timing.
-
-2010-12-24
-- Fixed window sort.
-
-2010-12-23
-- Fixed unite window error.
-- Improved unite window.
-
-2010-12-19
-- Fixed directory_mru.
-- Fixed buffer_tab source error.
-- Added kind window.
-- Fixed buffer bug.
-
-2010-12-16
-- Fixed unite source compare.
-
-2010-12-14
-- Gather no buflisted buffers in source buffer.
-- silent mappings.
-- Improved tab source.
-
-2010-12-09
-- Added unite.vim tag.
-
-2010-12-08
-- Changed cd action behavior.
-
-2010-12-06
-- Improved narrowing.
-
-2010-12-05
-- Fixed kind/cdable cd and lcd action bugs.
-- Added screencast.
-- Improved project_cd.
-
-2010-12-03
-- Improved help tags.
-- Fixed <Plug>(unite_move_head).
-
-2010-12-02
-- Fixed select actions.
-
-2010-11-25
-- Improved util functions.
-- Added wiki page.
-- Implemented source description.
-
-2010-11-24
-- Fixed file_rec.
-- Added user sources.
-- Improved open action of jump_list kind.
-- Added yank_escape action of common kind.
-- Added unite#util#has_vimproc() function.
-- Refactored internal functions.
-
-2010-11-22
-- Fixed bookmark error.
-- Improved jump_list.
-- Fixed unite#util#system().
-- Added unite#util#get_last_status().
-- Changed hooks specification.
-- Improved source default_action.
-- Fixed rotate source error.
-
-2010-11-21
-- Added unite#util#system().
-- Added context winnr.
-- Added unite-functions-core description.
-- Added unite-alias description.
-- Improved unite kind descriptions.
-- Changed core functions.
-- Improved file_rec.
-- Added g:unite_source_file_rec_max_depth option.
-- Added source source.
-- Fixed unite#start() bug.
-
-2010-11-20
-- Improved jump_list.
-
-2010-11-19
-- Changed file_rec specification.
-- Fixed source file.
-- Improved narrowing.
-- Added mark source description.
-
-2010-11-18
-- Improved narrowing.
-- Added insert action in common kind.
-- Added g:unite_kind_jump_list_search_range variable.
-- Improved jump_list.
-- Fixed required_pattern_length bug (Thanks ujihisa!)
-
-2010-11-17
-- Improved view.
-- Don't make directory in dummy file.
-- Fixed option parse.
-- Added user sources description.
-
-2010-11-16
-- Improved Japanese documentation.
-- Some Improvements.
-- Implemented project_cd action.
-- Improved file_mru.
-- Implemented directory_mru.
-- Improved highlight abbr.
-- Improved util functions.
-- Fixed tags.
-- Improved autoload.
-- Improved file and file_rec sources.
-- Make directory in dummy file.
-
-2010-11-15
-- Escape buffer name.
-- Fixed on_init timing.
-
-2010-11-14
-- Added <Plug>(unite_rotate_previous_source) and <Plug>(unite_rotate_next_source).
-- Improved input parse.
-- Added <Plug>(unite_input_directory) keymappings.
-- Added on_init and on_close attributes.
-
-2010-11-13
-- Fixed :bwipeout command.
-
-2010-11-12
-- Improved :UniteWithInputDirectory.
+- Improved new file.
+
+2012-08-05
+- Added tabdrop action.
+
+2012-08-01
+- Fixed auto preview behavior.
+
+2012-07-31
+- Fixed grep source error.
+
+2012-07-28
+- Fixed for vimfiler and vimshell in unite-session.
+- Improved unite-sesion (But chaotic...)
+- Splitted session source.
+
+2012-07-27
+- Supported unite-ssh.
+
+2012-07-26
+- Deleted debug message.
+- Improved output source behavior.
+- Improved error message.
+- Fixed for symbolic link problem.
+
+2012-07-22
+- Fixed unite#get_candidates().
+- Improved session behavior.
+- Supported over 4GB files.
+
+2012-07-20
+- Improved for resume.
+- Fixed args completion.
+
+2012-07-17
+- Improved write cache in file_rec source.
+
+2012-07-15
+- Vesting tests.
+- Fixed file_rec problem.
+- Delete old cache files.
+- Fixed file_rec cache problem.
+
+2012-07-06
+- Improved grep source.
+
+2012-07-05
+- Improved utils.
+
+2012-07-02
+- Improved unite-buffer for vimfiler.
+
+2012-06-28
+- Fixed source padding.
+
+2012-06-23
+- Fixed display candidates.
+- Improved display source names behavior.
+- Fixed print progress.
+- Fixed window delete action.
+- Fixed source candidates.
 - Improved file actions.
 
-2010-11-11
-- Fixed :UniteResume.
-- Improved examples.
-- Added is_redraw in context.
-- Candidates key kind is an option.
-- Fixed highlight error.
-- Added :UniteWithInputDirectory command.
+2012-06-22
+- Improved for multiline behavior.
 
-2010-11-10
-- Fixed unite#custom_action().
-- Fixed required_pattern_length.
-- Fixed buffer kind.
-- Added wipeout, unload action in buffer kind.
-- Deleted fopen action in file kind.
-
-2010-11-09
-- Improved display source name.
-- Added command kind.
-- Changed unite#take_action().
-- Fixed inifinite loop problem.
-
-2010-11-08
-- Fixed :UniteWithInput.
-- Added outline source description.
-- Added unite help settings.
-
-2010-11-07
-- Improved analyse options.
-- Changed unite#take_action().
-- Implemented source/* action_table.
-- Improved japanese documentation.
-- Implemented alias_table.
-- Improved fold method.
-
-2010-11-06
-- Improved switch to unite buffer.
-- Added -no-quit option.
-- Improved drawing lines.
-- Added -winwidth and -winheight options.
-
-2010-11-05
-- Improved syntax highlight.
-- Setlocal nolist.
-- Open folds when jump_list open.
-- Improved keyword filter.
-- Improved buffer filtering.
-- Improved drawing candidates.
-- Fixed help tags.
-- Improved default quick match table.
-- Added description in action_table.
-
-2010-11-04
-- Improved g:unite_enable_start_insert.
-- Improved unite#resume().
-- Save search pattern.
-- Added kind name description.
-
-2010-11-03
-- Added unite#do_action().
-- Changed mappings.
-- Fixed file_mru error.
-- Deleted do action mappings.
-- Fixed unite#do_action() description.
-
-2010-11-02
-- Improved <Plug>(unite_select_next_line) and <Plug>(unite_select_previous_line).
-- Improved prompt check.
-- Fixed default parameters set.
-- Fixed unite#take_action() error.
-
-2010-11-01
-- Improved redraw.
-- Fixed parents.
-
-2010-10-31
-- Fixed buffer action error.
-- Improved buffer actions.
-- Changed unite#start() specification.
-- Improved common parents.
-- Improved unite#take_action().
-- Added unite#take_parents_action().
-- Added cdable source.
-- Improved Japanese documentation.
-- Added rec action in cdable.
-- Improved tab source.
-- Added g:unite_winwidth option.
-- Improved match line.
-
-2010-10-30
-- Action specification is changed dramatically.
-- Improved substitute path separator.
-- Added unite#undef_custom_action().
-- Source bookmark uses unite#custom_action().
-- :Unite command analyses source arguments.
-- Improved Japanese documentation.
-- Set hlsearch option.
-- Added unite#start() and unite#get_context().
-- Implemented extend kinds.
-- Improved file_rec.
-
-2010-10-29
-- Improved selectable action(experimental).
-- Improved tab action.
-- Fixed unite#take_action().
-
-2010-10-28
-- Improved util.vim.
-- Sorted marked candidates.
-
-2010-10-26
-- Added g:unite_winheight option.
-- Improved modifiable.
-- Improved file_mru abbr.
-- Improved file_mru load.
-- Improved unite_tab.
-- Added rename action in kind tab.
-- Fixed filtering bug.
-
-2010-10-25
-- Fixed unite#invalidate_cache() error.
-
-2010-10-24
-- Improved file_mru.
-- Added tab source.
-
-2010-10-23
+2012-06-20
+- Fixed for unite-ssh.
 - Fixed jump_list.
 
-2010-10-22
-- Fixed escape pattern.
-- Added bookmark action in buffer.
-- Improved file_mru.
-
-2010-10-21
-- Improved prompt check.
-- Added unite#define_source() and unite#define_kind() and unite#undef_source() and unite#undef_kind().
-- Added unite-user-sources.
-- Improved Japanese help.
-- Added tabvimshell action in directory kind.
-- Improved jump_list preview action.
-
-2010-10-20
-- Improved do_action().
-- Fixed source name syntax.
-- Added i_<Plug>(unite_do_delete_action) mapping.
-- Added -start-insert option.
-
-2010-10-19
-- Improved source name completion.
-
-2010-10-16
-- Deleted g:unite_enable_quick_match_mappings option.
-- Added <Plug>(unite_quick_match_default_action) mapping.
-- Improved quick match.
-- Improved unite#mappings#do_action() description.
-- Added g:unite_quick_match_table option.
-- Implemented unite#custom_alias().
-- Improved unite#set_substitute_pattern() and unite#custom_alias().
-- Implemented unite#custom_default_action().
-- Implemented unite#custom_action().
-- Fixed buffer append error.
-- Improved unite#take_action().
-
-2010-10-15
-- Improved <Plug>(unite_select_next_line) and <Plug>(unite_select_previous_line).
-- Implemented default-action option.
-- Improved completion.
-- Displays candidates number.
-- Implemented quick match.
-- Added g:unite_enable_quick_match_mappings option.
-- Added cursor key support.
-- Deleted <ESC> mapping.
-
-2010-10-14
-- Fixed substitute pattern.
-- Improved dummy file.
-- Implemented unite#get_substitute_pattern().
-- Fixed :Unite completion.
-- Improved buffer_tab.
-- Improved s:load_default_sources_and_kinds() loading.
-
-2010-10-12
-- Fixed get directory error.
-- Fixed s:load_default_sources_and_kinds() error.
-- Added buffer_tab source.
-- Improved buffer sort.
-
-2010-10-11
-- Fixed modifiable problem in insert mode.
-- Fixed lcd in unite#quit_session().
-- Improved <Plug>(unite_delete_backward_path) mapping.
-- Improved s:load_default_sources_and_kinds().
-
-2010-10-10
-- Changed g:unite_update_time default value.
-- Allowed source name contained /.
-- Allowed sources#define to list sources.
-- Added <Plug>(unite_delete_backward_path) mapping.
-
-2010-10-09
-- Improved unite#mappings#smart_map().
-- Deleted <S-Tab> default mapping.
-- Improved g:unite_source_file_mru_time_format default pattern.
-- Improved default mappings.
-- Modifiable unite buffer.
-- Fixed register source error.
-- Improved prompt highlight.
-- Improved Japanese description.
-- Parse prompt.
-- Implemented restore prompt.
-- Improved <Plug>(unite_delete_backward_char).
-- Fixed syntax clear.
-- Fixed :UniteWithInput.
-
-2010-10-08
-- Fixed dummy candidates bug.
-- Improved buffer narrowing.
-- Added common kind.
-- Improved unite#mappings#do_action().
-- Improved choose action.
-- Improved mapping description.
-- Changed source action specification.
-- Improved cd action.
-- Improved dummy.
-- Improved English description.
-- Added g:unite_cd_command and g:unite_lcd_command options.
-- Changed gather_candidates() specification.
-- Changed the name of unite#mappings#smart_imap to unite#mappings#smart_map
-
-2010-10-07
-- Improved :UniteResume.
-- Fixed file_mru word.
-- Optimized register source.
-- Don't chase link.
-- Fixed filtering bug.
-- Fixed dummy candidates bug.
-
-2010-10-06
-- Improved unite#set_substitute_pattern().
-- Deleted / mappings.
-- Improved description.
-- Improved globing pattern.
-- List current buffer.
-- Added vimshell action in buffer.
-- Improved default substitute patterns.
-- Improved / substitute pattern.
-- Fixed substitute pattern.
-- Added :UniteResume.
-
-2010-10-04
-- Fixed Japanese description.
-- Deleted :UniteFilemruSweep command.
-
-2010-10-02
-- Added file_rec source.
-- Improved file_rec source.
-- Added :UniteWithInput command.
-- Improved get input text.
-- Improved invalid source detection.
-- Detect home directory in file_rec.
-
-2010-10-01
-- Improved iskeyword.
-
-2010-09-30
-- Improved g:unite_source_file_ignore_pattern.
-- Changed g:unite_temporary_directory into g:unite_data_directory.
-- Improved / mapping.
-- Fixed globing.
-- Deleted setlocal number.
-- Fixed / mapping.
-
-2010-09-29
-- Added openable kind.
-- Print candidates when <Plug>(unite_choose_action).
-- Changed / mapping.
-- Implemented unite#mappings#smart_imap().
-
-2010-09-28
-- Optimized redraw.
-- Added <Plug>(unite_do_narrow_action).
-- Reverted / behavior.
-- Added narrow action in buffer.
-- Fixed glob().
-- Fixed force redraw bug.
-- Added cd and lcd action in buffer.
-- Fixed modifiable bug.
-
-2010-09-27
-- Fixed file glob.
-- Fixed abbr in file_mru.
-- Fixed doted file search.
-- Improved g:unite_source_file_ignore_pattern.
-
-2010-09-26
-- Fixed ignorecase bug.
-- Deleted obsolute mappings.
-- Improved prompt.
-- Implemented input text save.
-- Optimized file_mru.
-- Added <Plug>(unite_cursor_top) and <Plug>(unite_loop_cursor_down) and <Plug>(unite_loop_cursor_up) mappings.
+2012-06-17
 - Improved documentation.
-- Fixed vimshell error.
-- Improved glob.
+- Improved call filters.
 
-2010-09-24
-- Improved <Plug>(unite_select_next_line) and <Plug>(unite_previous_line) behavior.
-- Fixed documentation typo.
-- Added unite#set_substitute_pattern().
-- Deleted g:unite_substitute_patterns.
+2012-06-12
+- Fixed unite#custom_source().
 
-2010-09-23
-- Fixed filtering bug.
-- Added the unite-functions description into Japanese document.
+2012-06-11
+- Fixed for auto resize error.
+- Fixed unite#print_error() error.
 
-2010-09-21
-- Ver.1.0 development started.
-- Fixed unite buffer restore bug.
+2012-06-09
+- Split automatically when &l:modified && !&l:hidden.
+- Added unite#custom_source().
+- Changed ignore pattern behavior.
 
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.0.5
-2010-09-21
-- Ver.0.5 is released.
-- Fixed japanese documentation.
-- Improved unite buffer detect.
+2012-06-08
+- Fixed file_mru error.
 
-2010-09-20
-- Added :UniteWithCursorWord command.
-- Improved initialization.
-- Added Japanese help (Thanks naoina!)
-- Added <Plug>(unite_toggle_mark_selected_candidates) keymapping.
-- Changed some keymappings name.
-- Refactored file_mru.
-- Added bookmark source.
-- Added jump_list kind.
-- Added <Plug>(unite_do_bookmark_action)
-- Detect vimfiler and vimshell in bookmark.
-- Improved buffer search.
-- Fixed i_<Plug>(unite_exit).
-- Fixed help tags.
+2012-06-07
+- Fixed window size problem.
+- Added g:unite_source_directory_mru_filename_format option.
+- Changed filters behavior.
+- Fixed line filter.
 
-2010-09-19
-- Fixed wildcard bug.
-- Improved buffer check.
-- Improved split.
+2012-06-05
+- Changed asyncronous update behavior.
+- Fixed cmdwin check.
 
-2010-09-18
-- Display modified flag in source buffer.
-- Fixed multiple unite buffer bug.
-- Refactored.
-- Fixed :UniteWithBufferDir and :UniteWithCurrentDir.
-- Improved multiple unite buffer.
-- Set nomodeline.
-- Fixed redraw bug.
-- Changed g:unite_update_time default value.
+2012-06-04
+- Improved asyncronous behavior.
+- Added -keep-focus option.
+- Improved English documentation.
 
-2010-09-17
-- Implemented escape ' '.
-- Added split actions in kind file.
-- Added cd and lcd actions in kind file.
-- Added ex action in kind file.
-- Improved filtering.
-- Added vimshell action in kind directory.
-- Improved mru format.
-- Implemented delete action in file_mru.
-- Improved action table.
+2012-06-02
+- Improved jump_list.
+- Fixed find action error.
 
-2010-09-16
-- Added <Plug>(unite_move_head) keymapping.
-- Deleted h keymappings.
-- Added sources variables description.
-- Supported ** pattern.
-- Added g:unite_source_file_ignore_pattern option.
-- Improved g:unite_source_file_mru_ignore_pattern option.
-- Implemented option parse.
-- Revised examples.
-- Improved directory kind.
-- Added file kind actions.
-- Added preview keymapping.
+2012-06-01
+- Fixed for vimfiler completion.
+- Fixed for vimfiler choose action.
 
-2010-09-15
-- Improved complete sources.
-- Implemented choose action.
-- Resolve link file.
-- Improved restore window.
+2012-05-31
+- Fixed for completion.
+- Improved resize behavior.
 
-2010-09-14
-- Added dummy candidate in file source.
-- Changed cur_text as input.
-- Changed unite#start() arguments.
+2012-05-29
+- Fixed for grep action.
 
-2010-09-12
-- Fixed filtering.
-- Added source register.
-- Added kind word.
+2012-05-27
+- Improved find action.
 
-2010-09-10
-- Ver.0.5 development started.
-- Implemented kind.
-- Improved caching.
+2012-05-26
+- Improved for profile.
+- Fixed load default scripts problem.
+- Improved completion.
 
-------------------------------------------------------------------------------
-ChangeLog unite.vim Ver.0.1
-2010-09-10
-- Improved UniteWithBufferDir and UniteWithCurrentDir.
+2012-05-23
+- Improved mapping source.
+- Fixed toggle mark behavior.
+- Improved document.
 
-2010-09-09
-- Check redrawtime.
-- Implemented ! exclude pattern.
-- Added g:unite_enable_start_insert option.
-- Improved file_mru.
-- Fixed filtering bug.
-- Detect invalid source name.
-- Implemented maximum candidates attribute.
-- Added g:unite_split_rule and g:unite_enable_split_vertically options.
-- Implemented required_pattern_length attribute.
+2012-05-22
+- Fixed syntax.
 
-2010-09-05
-- Fixed filtering bug.
-- Improved close buffer.
-- Improved truncate.
-- Improved mappings.
+2012-05-21
+- Clear mark.
 
-2010-09-04
-- Implemented exclude pattern.
-- Improved syntax.
+2012-05-19
+- Fixed unite#util#glob().
 
-2010-08-30
-- Improved UniteWithBufferDir.
+2012-05-17
+- Fixed highlight patterns.
 
-2010-08-28
-- Fixed / mapping.
-- Fixed startinsert error.
-- Fixed mappings.
-- Fixed initialization bug.
-- Implemented caching candidates.
-- Improved caching behavior.
-- Improved <Plug>(unite_enter).
-- Added UniteWithCurrentDir.
-- Added UniteWithBufferDir.
-- Improved <Plug>(unite_do_selected_candidate).
+2012-05-16
+- Fixed unite action.
+- Fixed completion "~".
 
-2010-08-27
-- Improved <Enter> mappings.
+2012-05-14
+- Improved completion behavior.
+- Fixed load filters.
+- Fixed document.
+- Improved load default scripts.
 
-2010-08-25
-- Added examples.
+2012-05-13
+- Fixed redraw behavior.
+- Optimised load scripts.
+- Supported protocol copy.
 
-2010-08-19
-- Added wildcard syntax.
+2012-05-12
+- Improved file kind.
+- Added directory and directory/new source.
+- Improved cdable actions.
+- Changed sources initialize behavior.
+- Improved source initialization.
+- Revised documentation.
 
-2010-08-18
-- Added <Plug>(unite_print_candidate) mapping.
-- Improved truncate string.
-- Fixed escape bug.
-- Implemented insert mode completion.
-- Improved truncate max.
-- Improved unite_enter.
-- Implemented <Plug>(unite_insert_leave) mapping.
+2012-05-09
+- Fixed mark set bug.
 
-2010-08-13
-- Fixed highlight bug.
-- Fixed buffer filtering bug.
-- Fixed load error.
-
-2010-08-12
-- Improved source buffer.
-- Improved mappings.
-- Improved filter.
-- Added g:unite_enable_ignore_case and g:unite_enable_smart_case option.
-
-2010-08-10
-- Improved keymappings.
-- Improved InsertLeave behavior.
-- Improved substitute tilde.
-- Added g:unite_substitute_patterns option.
-
-2010-08-08
-- Fixed nomodifiable error.
-- Improved redraw.
-- Implemented previous/next source.
-
-2010-08-07
-- Implemented buffer delete.
-- Improved action table.
-- Implemented marks.
-- Improved buffer settings.
-
-2010-08-06
-- Improved buffer abbr.
-- Renamed unite#buf_leave().
-- Improved buffer sort.
-- Improved cursor position.
-- Improved buffer leave.
-
-2010-08-05
-- Fixed buffer switch.
-- Improved match behavior.
-
-2010-08-04
-- Improved menu.
-- Improved syntax.
-- Improved redrawtime.
-- Improved file source.
-- Fixed open bugs.
-
-2010-08-03
-- Changed mru file format.
-- Changed mappings name.
-- Added highlight match.
-
-2010-08-02
-- Improved mappings name.
-
-2010-08-01
-- Updated file_mru.
-- Improved mappings.
-
-2010-07-31
-- Added documentation.
-- Added syntax file.
-- Implemented buffer source.
-- Added file source.
-- Added file_mru source.
-- Some improvements.
+2012-05-06
+- Ver.4.0 development is started.
+- Merged English documentation(Thanks akiradeveloper!).
+- Improved English documentation.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:fdl=0:

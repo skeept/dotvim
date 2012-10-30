@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: menu.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" Last Modified: 02 Jan 2012.
+" Last Modified: 02 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -54,26 +54,32 @@ function! s:source.gather_candidates(args, context)"{{{
 
   " Check menu name.
   if !has_key(g:unite_source_menu_menus, menu_name)
-    call unite#print_error('[menu] Invalid menu name : ' . menu_name)
+    call unite#print_source_error(
+          \ 'Invalid menu name : ' . menu_name, s:source.name)
     return []
   endif
 
   let menu = g:unite_source_menu_menus[menu_name]
-  if has_key(menu, 'map')
-    let candidates = []
+  if has_key(menu, 'command_candidates')
+    " Use default map().
+    let candidates = map(copy(menu.command_candidates), "{
+        \       'word' : v:key, 'kind' : 'command',
+        \       'action__command' : v:val,
+        \     }")
+  elseif has_key(menu, 'candidates')
     if type(menu.candidates) == type([])
+      let candidates = []
       let key = 1
       for value in menu.candidates
         call add(candidates, menu.map(key, value))
         let key += 1
       endfor
     else
-      for [key, value] in items(menu.candidates)
-        call add(candidates, menu.map(key, value))
-      endfor
+      let candidates = map(copy(menu.candidates),
+            \ "menu.map(v:key, v:val)")
     endif
   else
-    let candidates = copy(menu.candidates)
+    let candidates = copy(get(menu, 'candidates', []))
   endif
 
   if type(candidates) == type({})
