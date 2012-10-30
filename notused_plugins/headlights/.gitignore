@@ -1,6 +1,4 @@
-.DS_Store
-doc/.DS_Store
+.DS_STORE
 doc/tags
-plugin/.DS_Store
 plugin/.ropeproject/
 .ropeproject/
