@@ -156,7 +156,6 @@ function! IMAP_Jumpfunc_val(arg1, arg2)
 endfunction
 
 
-
 inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
       \ "" : IMAP_Jumpfunc('', 0)<CR>
 snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
@@ -166,10 +165,18 @@ vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '
 
 inoremap <silent> <buffer> `. \cdot
 
-map <F12> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
-      \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
-      \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
+syn region texTabularPos matchgroup=texStatement
+      \ start='\\begin\s*{\s*tabular\s*}[^}]*{' end='}' fold
+      \ contains=@texFoldGroup,@texDocGroup,@NoSpell
+      \ containedin=texDocZone,texChapterZone,texSectionZone,texSubSectionZone
 
-"syn region texTabularPos matchgroup=NONE start='\\begin\s*{\s*tabular\s*}{' end='}'
-      "\ contains=@NoSpell
-syn region texSectionZone matchgroup=texSection start='{tabular}{' end='}' contains=@NoSpell
+syn region texMcolPos matchgroup=texStatement
+      \ start='\\multicolumn{.*}{' end='}' fold
+      \ contains=@texFoldGroup,@texDocGroup,@NoSpell
+      \ containedin=texDocZone,texChapterZone,texSectionZone,texSubSectionZone
+
+"" uncomment the following to allow tracing of highlight zones
+"map ,h <Plug>HiLinkTrace
+"map <F12> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
+      "\ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
+      "\ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
