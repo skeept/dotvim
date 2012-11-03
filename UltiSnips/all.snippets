@@ -1,0 +1,16 @@
+snippet def "def"
+def ${1:${VISUAL:foo}}
+{${2}} ${3:{${4}}} ${5:{${6}}}
+$0
+endsnippet 
+
+global !p
+def ins1(t1, t2):
+  return t2 if t1 else ''
+endglobal
+
+snippet def2 "def"
+def ${1:${VISUAL:foo}}
+{${2}} `!p snip.rv=ins1(t[3], '{')`$3`!p snip.rv=ins1(t[3], '}')` `!p snip.rv=ins1(t[4], '{')`$4`!p snip.rv=ins1(t[4], '}')`
+$0
+endsnippet 
