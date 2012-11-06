@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Nov 2012.
+" Last Modified: 06 Nov 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -648,6 +648,12 @@ function! neocomplcache#enable() "{{{
   if g:neocomplcache_min_keyword_length < 1
     let g:neocomplcache_min_keyword_length = 1
   endif
+
+  " Initialize omni function list."{{{
+  if !exists('g:neocomplcache_omni_functions')
+    let g:neocomplcache_omni_functions = {}
+  endif
+  "}}}
 
   " Save options.
   let s:completefunc_save = &completefunc
@@ -1471,8 +1477,11 @@ function! neocomplcache#is_omni_complete(cur_text)"{{{
   endif
 
   let filetype = neocomplcache#get_context_filetype()
+  let omnifunc = get(g:neocomplcache_omni_functions,
+        \ filetype, &l:omnifunc)
 
-  if &filetype !=# filetype
+  if &filetype !=# filetype || omnifunc == ''
+        \ || (omnifunc !~ '#' && !exists('*' . omnifunc))
     " &omnifunc is irregal.
     return 0
   endif
@@ -1483,8 +1492,6 @@ function! neocomplcache#is_omni_complete(cur_text)"{{{
     return 0
   endif
 
-  let omnifunc = &l:omnifunc
-
   if has_key(g:neocomplcache_force_omni_patterns, omnifunc)
     let pattern = g:neocomplcache_force_omni_patterns[omnifunc]
   elseif filetype != '' && has_key(g:neocomplcache_force_omni_patterns, filetype)
@@ -1493,7 +1500,14 @@ function! neocomplcache#is_omni_complete(cur_text)"{{{
     return 0
   endif
 
-  return a:cur_text =~# '\%(' . pattern . '\m\)$'
+  if a:cur_text !~# '\%(' . pattern . '\m\)$'
+    return 0
+  endif
+
+  " Set omnifunc.
+  let &omnifunc = omnifunc
+
+  return 1
 endfunction"}}}
 function! neocomplcache#exists_echodoc()"{{{
   return exists('g:loaded_echodoc') && g:loaded_echodoc
