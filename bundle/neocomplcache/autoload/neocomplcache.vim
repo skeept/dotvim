@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Nov 2012.
+" Last Modified: 07 Nov 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -505,9 +505,9 @@ function! neocomplcache#enable() "{{{
         \ 'g:neocomplcache_context_filetype_lists',
         \ 'vim', [
         \ {'filetype' : 'python',
-        \  'start' : '^\s*python3\? <<\s*\(\h\w*\)', 'end' : '^\1'},
+        \  'start' : '^\s*py\%[thon\]3\? <<\s*\(\h\w*\)', 'end' : '^\1'},
         \ {'filetype' : 'ruby',
-        \  'start' : '^\s*ruby <<\s*\(\h\w*\)', 'end' : '^\1'},
+        \  'start' : '^\s*rub\%[y\] <<\s*\(\h\w*\)', 'end' : '^\1'},
         \])
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_context_filetype_lists',
@@ -981,12 +981,6 @@ function! s:do_auto_complete(event)"{{{
 endfunction"}}}
 
 " Source helper."{{{
-function! neocomplcache#available_sources()"{{{
-  return extend(extend(copy(
-        \ neocomplcache#available_complfuncs()),
-        \ neocomplcache#available_loaded_ftplugins()),
-        \ neocomplcache#available_loaded_plugins())
-endfunction"}}}
 function! neocomplcache#available_complfuncs()"{{{
   return s:complfunc_sources
 endfunction"}}}
@@ -1001,8 +995,24 @@ function! neocomplcache#available_plugins()"{{{
 endfunction"}}}
 function! neocomplcache#available_sources()"{{{
   call s:set_context_filetype()
-  return extend(extend(copy(s:complfunc_sources), s:plugin_sources),
-        \ s:loaded_ftplugin_sources)
+  return extend(extend(copy(s:complfunc_sources),
+        \ s:ftplugin_sources), s:plugin_sources)
+endfunction"}}}
+function! neocomplcache#is_enabled_source(source_name)"{{{
+  let neocomplcache = s:get_current_neocomplcache()
+  if !has_key(neocomplcache, 'sources')
+    call s:get_sources_list()
+  endif
+
+  return index(keys(neocomplcache.sources), a:source_name) >= 0
+endfunction"}}}
+function! neocomplcache#is_disabled_source(source_name)"{{{
+  let filetype = neocomplcache#get_context_filetype()
+
+  let disabled_sources = get(
+        \ g:neocomplcache_disabled_sources_list, filetype,
+        \   get(g:neocomplcache_disabled_sources_list, '_', []))
+  return index(disabled_sources, a:source_name) >= 0
 endfunction"}}}
 function! s:keyword_escape(cur_keyword_str)
   let keyword_escape = escape(a:cur_keyword_str, '~" \.^$[]')
@@ -1480,9 +1490,7 @@ function! neocomplcache#is_omni_complete(cur_text)"{{{
   let omnifunc = get(g:neocomplcache_omni_functions,
         \ filetype, &l:omnifunc)
 
-  if &filetype !=# filetype || omnifunc == ''
-        \ || (omnifunc !~ '#' && !exists('*' . omnifunc))
-    " &omnifunc is irregal.
+  if neocomplcache#check_invalid_omnifunc(omnifunc)
     return 0
   endif
 
@@ -1582,12 +1590,32 @@ function! neocomplcache#get_context_filetype(...)"{{{
     return &filetype
   endif
 
-  if a:0 != 0 ||
-        \ s:get_current_neocomplcache().context_filetype == ''
+  let neocomplcache = s:get_current_neocomplcache()
+
+  if a:0 != 0 || mode() !=# 'i' ||
+        \ neocomplcache.context_filetype == ''
     call s:set_context_filetype()
   endif
 
-  return s:get_current_neocomplcache().context_filetype
+  return neocomplcache.context_filetype
+endfunction"}}}
+function! neocomplcache#get_context_filetype_range(...)"{{{
+  if !neocomplcache#is_enabled()
+    return [1, line('$')]
+  endif
+
+  let neocomplcache = s:get_current_neocomplcache()
+
+  if a:0 != 0 || mode() !=# 'i' ||
+        \ neocomplcache.context_filetype == ''
+    call s:set_context_filetype()
+  endif
+
+  if neocomplcache.context_filetype ==# &filetype
+    return [1, line('$')]
+  endif
+
+  return neocomplcache.context_filetype_range
 endfunction"}}}
 function! neocomplcache#get_source_rank(plugin_name)"{{{
   if has_key(g:neocomplcache_source_rank, a:plugin_name)
@@ -1631,6 +1659,24 @@ function! neocomplcache#complete_check()"{{{
         \     && has('reltime') && g:neocomplcache_skip_auto_completion_time != ''
         \     && split(reltimestr(reltime(s:start_time)))[0] >
         \          g:neocomplcache_skip_auto_completion_time)
+endfunction"}}}
+function! neocomplcache#check_invalid_omnifunc(omnifunc)"{{{
+  if a:omnifunc == ''
+    " omnifunc is irregal.
+    return 0
+  endif
+
+  if a:omnifunc =~ '#' && !exists('*' . a:omnifunc)
+    " Source automatically.
+    for path in split(globpath(&runtimepath,
+          \ printf('autoload/%s.vim',
+          \   fnamemodify(substitute(a:omnifunc,
+          \         '#', '/', 'g'),':h'))), '\n')
+      source `=path`
+    endfor
+  endif
+
+  return !exists('*' . a:omnifunc)
 endfunction"}}}
 
 " For unite source.
@@ -2333,15 +2379,13 @@ function! s:on_moved_i()"{{{
   " Get cursor word.
   let cur_text = s:get_cur_text()
 
-  let sources = neocomplcache#available_sources()
-
   " Make cache.
   if cur_text =~ '^\s*$\|\s\+$'
-    if has_key(sources, 'buffer_complete')
+    if neocomplcache#is_enabled_source('buffer_complete')
       " Caching current cache line.
       call neocomplcache#sources#buffer_complete#caching_current_line()
     endif
-    if has_key(sources, 'member_complete')
+    if neocomplcache#is_enabled_source('member_complete')
       " Caching current cache line.
       call neocomplcache#sources#member_complete#caching_current_line()
     endif
@@ -2485,13 +2529,15 @@ function! s:set_context_filetype()"{{{
     let old_filetype = 'nothing'
   endif
 
+  let neocomplcache = s:get_current_neocomplcache()
+
   let dup_check = {}
   while 1
     let new_filetype = s:get_context_filetype(old_filetype)
 
     " Check filetype root.
     if get(dup_check, old_filetype, '') ==# new_filetype
-      let b:neocomplcache.context_filetype = old_filetype
+      let neocomplcache.context_filetype = old_filetype
       break
     endif
 
@@ -2504,14 +2550,14 @@ function! s:set_context_filetype()"{{{
   let syn_name = neocomplcache#get_syn_name(1)
   let s:is_text_mode =
         \ get(g:neocomplcache_text_mode_filetypes,
-        \ b:neocomplcache.context_filetype, 0)
+        \ neocomplcache.context_filetype, 0)
   let s:within_comment = (syn_name ==# 'Comment')
 
   " Set filetype plugins.
   let s:loaded_ftplugin_sources = {}
   for [source_name, source] in
         \ items(filter(copy(neocomplcache#available_ftplugins()),
-        \ 'has_key(v:val.filetypes, b:neocomplcache.context_filetype)'))
+        \ 'has_key(v:val.filetypes, neocomplcache.context_filetype)'))
     let s:loaded_ftplugin_sources[source_name] = source
 
     if !source.loaded
@@ -2533,48 +2579,55 @@ function! s:set_context_filetype()"{{{
     endif
   endfor
 
-  return b:neocomplcache.context_filetype
+  return neocomplcache.context_filetype
 endfunction"}}}
 function! s:get_context_filetype(filetype)"{{{
+  " Default.
   let filetype = a:filetype
   if filetype == ''
     let filetype = 'nothing'
   endif
 
-  " Default.
-  let context_filetype = filetype
-  if has_key(g:neocomplcache_context_filetype_lists, filetype)
-        \ && !empty(g:neocomplcache_context_filetype_lists[filetype])
+  " Default range.
+  let neocomplcache = s:get_current_neocomplcache()
 
-    let pos = [line('.'), col('.')]
-    for include in g:neocomplcache_context_filetype_lists[filetype]
-      let start_backward = searchpos(include.start, 'bnW')
+  let pos = [line('.'), col('.')]
+  for include in get(g:neocomplcache_context_filetype_lists, filetype, [])
+    let start_backward = searchpos(include.start, 'bnW')
 
-      " Check start <= line <= end.
-      if start_backward[0] == 0 || s:compare_pos(start_backward, pos) > 0
-        continue
-      endif
+    " Check pos > start.
+    if start_backward[0] == 0 || s:compare_pos(start_backward, pos) > 0
+      continue
+    endif
 
-      let end_pattern = include.end
-      if end_pattern =~ '\\1'
-        let match_list = matchlist(getline(start_backward[0]), include.start)
-        let end_pattern = substitute(end_pattern, '\\1', '\=match_list[1]', 'g')
-      endif
-      let end_forward = searchpos(end_pattern, 'nW')
+    let end_pattern = include.end
+    if end_pattern =~ '\\1'
+      let match_list = matchlist(getline(start_backward[0]), include.start)
+      let end_pattern = substitute(end_pattern, '\\1', '\=match_list[1]', 'g')
+    endif
+    let end_forward = searchpos(end_pattern, 'nW')
+    if end_forward[0] == 0
+      let end_forward[0] = line('$')
+    endif
 
-      if end_forward[0] == 0 || s:compare_pos(pos, end_forward) < 0
-        let end_backward = searchpos(end_pattern, 'bnW')
+    " Check end > pos.
+    if s:compare_pos(pos, end_forward) > 0
+      continue
+    endif
 
-        if end_backward[0] == 0 || s:compare_pos(start_backward, end_backward) > 0
-          let context_filetype = include.filetype
-          let filetype = include.filetype
-          break
-        endif
-      endif
-    endfor
-  endif
+    let end_backward = searchpos(end_pattern, 'bnW')
 
-  return context_filetype
+    " Check start <= end.
+    if s:compare_pos(start_backward, end_backward) < 0
+      continue
+    endif
+
+    let neocomplcache.context_filetype_range =
+          \ [ start_backward[0], end_forward[0] ]
+    return include.filetype
+  endfor
+
+  return filetype
 endfunction"}}}
 function! s:match_wildcard(cur_text, pattern, cur_keyword_pos)"{{{
   let cur_keyword_pos = a:cur_keyword_pos
@@ -2634,6 +2687,7 @@ function! s:get_current_neocomplcache()"{{{
           \ 'lock' : 0,
           \ 'filetype' : '',
           \ 'context_filetype' : '',
+          \ 'context_filetype_range' : [1, line('$')],
           \ 'completion_length' : -1,
           \ 'update_time_save' : &updatetime,
           \ 'foldinfo' : [],
@@ -2705,9 +2759,10 @@ function! s:get_sources_list(...)"{{{
   let source_names = exists('b:neocomplcache_sources_list') ?
         \ b:neocomplcache_sources_list :
         \ get(a:000, 0,
-        \ get(g:neocomplcache_sources_list, filetype,
-        \   get(g:neocomplcache_sources_list, '_', ['_'])))
-  let disabled_sources = get(g:neocomplcache_disabled_sources_list, filetype,
+        \   get(g:neocomplcache_sources_list, filetype,
+        \     get(g:neocomplcache_sources_list, '_', ['_'])))
+  let disabled_sources = get(
+        \ g:neocomplcache_disabled_sources_list, filetype,
         \   get(g:neocomplcache_disabled_sources_list, '_', []))
   call s:initialize_sources(source_names)
 
@@ -2729,8 +2784,13 @@ function! s:get_sources_list(...)"{{{
     let sources[source_name] = all_sources[source_name]
   endfor
 
-  return filter(sources,
-        \ 'index(disabled_sources, v:val.name) < 0')
+  let neocomplcache = s:get_current_neocomplcache()
+  let neocomplcache.sources = filter(sources, "
+        \ index(disabled_sources, v:val.name) < 0 &&
+        \   (v:val.kind !=# 'ftplugin' ||
+        \    get(v:val.filetypes, neocomplcache.context_filetype, 0))")
+
+  return neocomplcache.sources
 endfunction"}}}
 function! s:is_skip_auto_complete(cur_text)"{{{
   if a:cur_text == ''
