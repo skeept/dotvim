@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Nov 2012.
+" Last Modified: 08 Nov 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1054,13 +1054,13 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
           \ s:keyword_escape(a:cur_keyword_str[: 1]) : ''
     let keyword_escape = s:keyword_escape(
           \   (neocomplcache#is_auto_complete() ?
-          \    a:cur_keyword_str[2: ] :a:cur_keyword_str))
+          \    a:cur_keyword_str[2: ] : a:cur_keyword_str))
 
     " Underbar completion."{{{
     if g:neocomplcache_enable_underbar_completion
-          \ && keyword_escape =~ '[^_]_'
+          \ && keyword_escape =~ '[^_]_\|^_'
       let keyword_escape = substitute(keyword_escape,
-            \ '[^_]\zs_', '[^_]*_', 'g')
+            \ '\%(^\|[^_]\)\zs_', '[^_]*_', 'g')
     endif
     if g:neocomplcache_enable_underbar_completion
           \ && '-' =~ '\k' && keyword_escape =~ '[^-]-'
@@ -1071,6 +1071,12 @@ function! neocomplcache#keyword_escape(cur_keyword_str)"{{{
     " Camel case completion."{{{
     if g:neocomplcache_enable_camel_case_completion
           \ && keyword_escape =~ '\u\?\U*'
+      if head != ''
+        " Append tail character.
+        let keyword_escape = head[-1:] . keyword_escape
+        let head = head[: -2]
+      endif
+
       let keyword_escape =
             \ substitute(keyword_escape,
             \ '\u\?\zs\U*',
@@ -1601,7 +1607,7 @@ function! neocomplcache#get_context_filetype(...)"{{{
 endfunction"}}}
 function! neocomplcache#get_context_filetype_range(...)"{{{
   if !neocomplcache#is_enabled()
-    return [1, line('$')]
+    return [[1, 1], [line('$'), len(getline('$'))+1]]
   endif
 
   let neocomplcache = s:get_current_neocomplcache()
@@ -1612,7 +1618,7 @@ function! neocomplcache#get_context_filetype_range(...)"{{{
   endif
 
   if neocomplcache.context_filetype ==# &filetype
-    return [1, line('$')]
+    return [[1, 1], [line('$'), len(getline('$'))+1]]
   endif
 
   return neocomplcache.context_filetype_range
@@ -1661,22 +1667,7 @@ function! neocomplcache#complete_check()"{{{
         \          g:neocomplcache_skip_auto_completion_time)
 endfunction"}}}
 function! neocomplcache#check_invalid_omnifunc(omnifunc)"{{{
-  if a:omnifunc == ''
-    " omnifunc is irregal.
-    return 0
-  endif
-
-  if a:omnifunc =~ '#' && !exists('*' . a:omnifunc)
-    " Source automatically.
-    for path in split(globpath(&runtimepath,
-          \ printf('autoload/%s.vim',
-          \   fnamemodify(substitute(a:omnifunc,
-          \         '#', '/', 'g'),':h'))), '\n')
-      source `=path`
-    endfor
-  endif
-
-  return !exists('*' . a:omnifunc)
+  return a:omnifunc == '' || (a:omnifunc !~ '#' && !exists('*' . a:omnifunc))
 endfunction"}}}
 
 " For unite source.
@@ -2607,7 +2598,7 @@ function! s:get_context_filetype(filetype)"{{{
     endif
     let end_forward = searchpos(end_pattern, 'nW')
     if end_forward[0] == 0
-      let end_forward[0] = line('$')
+      let end_forward = [line('$'), len(getline('$'))+1]
     endif
 
     " Check end > pos.
@@ -2623,7 +2614,7 @@ function! s:get_context_filetype(filetype)"{{{
     endif
 
     let neocomplcache.context_filetype_range =
-          \ [ start_backward[0], end_forward[0] ]
+          \ [ start_backward, end_forward ]
     return include.filetype
   endfor
 
@@ -2687,7 +2678,8 @@ function! s:get_current_neocomplcache()"{{{
           \ 'lock' : 0,
           \ 'filetype' : '',
           \ 'context_filetype' : '',
-          \ 'context_filetype_range' : [1, line('$')],
+          \ 'context_filetype_range' :
+          \    [[1, 1], [line('$'), len(getline('$'))+1]],
           \ 'completion_length' : -1,
           \ 'update_time_save' : &updatetime,
           \ 'foldinfo' : [],

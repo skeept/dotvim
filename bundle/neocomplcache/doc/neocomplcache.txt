@@ -1457,6 +1457,11 @@ your Vim initialization.
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
+2012-11-08
+- Changed neocomplcache#get_context_filetype_range() behavior.
+- Improved neocomplcache#check_invalid_omnifunc().
+- Fixed underbar completion and camel case completion.
+
 2012-11-07
 - Added neocomplcache#get_context_filetype_range().
 - Added neocomplcache#is_enabled_source().
