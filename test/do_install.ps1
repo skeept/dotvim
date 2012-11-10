@@ -15,7 +15,7 @@ switch ( Get-Content Env:ComputerName )
     $source = "c:\htemp\vim"
   }
   "MIDDLE-EARTH" {
-    $install = "C:\Program Files (x86)\vim\vim73"
+    $install = "C:\Program Files\vim\vim73"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
