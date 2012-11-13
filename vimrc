@@ -833,16 +833,25 @@ let g:tagbar_type_tex = {
 "noremap ,gt :TagbarToggle<CR>
 
 function! ToggleTBarListNT()
-  if v:count == 0
+  "always use last explicit argument
+  if !exists("s:tbartoggle")
+    let s:tbartoggle = 1
+  endif
+  if v:count >= 1 && v:count <= 4
+    let s:tbartoggle = v:count
+  elseif v:count > 4
+    echo "1 tagbar(*), 2: taglist, 3: nerdtree, 4: buffergator"
+    return
+  endif
+
+  if s:tbartoggle == 1
     TagbarToggle
-  elseif v:count == 1
+  elseif s:tbartoggle == 2
     TlistToggle
-  elseif v:count == 2
+  elseif s:tbartoggle == 3
     NERDTreeToggle
-  elseif v:count == 3
+  elseif s:tbartoggle == 4
     BuffergatorToggle
-  else
-    echo "0 or no prefix: tagbar, 1: taglist, 2: nerdtree, 3: buffergator"
   endif
 endfunction
 nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
