@@ -575,22 +575,27 @@ function! ToggleTBarListNT()
   if !exists("s:tbartoggle")
     let s:tbartoggle = 1
   endif
+
+  let s:tbartoggle_names = ['1: tagbar', '2: taglist', '3: nerdtree', '4: buffergator']
+
   if v:count >= 1 && v:count <= 4
     let s:tbartoggle = v:count
-  elseif v:count > 4
-    echo "1 tagbar(*), 2: taglist, 3: nerdtree, 4: buffergator"
-    return
   endif
 
-  if s:tbartoggle == 1
-    TagbarToggle
-  elseif s:tbartoggle == 2
-    TlistToggle
-  elseif s:tbartoggle == 3
-    NERDTreeToggle
-  elseif s:tbartoggle == 4
-    BuffergatorToggle
+  if v:count <= 4
+    if s:tbartoggle == 1
+      TagbarToggle
+    elseif s:tbartoggle == 2
+      TlistToggle
+    elseif s:tbartoggle == 3
+      NERDTreeToggle
+    elseif s:tbartoggle == 4
+      BuffergatorToggle
+    endif
   endif
+  let s:tbartoggle_display = copy(s:tbartoggle_names)
+  let s:tbartoggle_display[s:tbartoggle-1] .= '(*)'
+  echom join(s:tbartoggle_display, ', ')
 endfunction
 nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
 inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
