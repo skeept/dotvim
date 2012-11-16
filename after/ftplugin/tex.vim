@@ -129,10 +129,10 @@ else
         \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 endif
 
-inoremap <silent> {{ {{<C-R>=UltiSnips_Anon('\\{ $1 \\}${0:<++>}', '{{', 'paren', "r")<cr>
-inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$${0:<++>}', '$$', 'dollar', "r")<cr>
-inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}${0:<++>}', '\^\^', 'hat', "r")<cr>
-inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r")<cr>
+"inoremap <silent> {{ {{<C-R>=UltiSnips_Anon('\\{ $1 \\}${0:<++>}', '{{', 'paren', "r")<cr>
+"inoremap <silent> $$ $$<C-R>=UltiSnips_Anon('$$1$${0:<++>}', '$$', 'dollar', "r")<cr>
+"inoremap <silent> ^^ ^^<C-R>=UltiSnips_Anon('^{$1}${0:<++>}', '\^\^', 'hat', "r")<cr>
+"inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r")<cr>
 
 
 "inoremap <silent> <buffer> {{ __LTXSPlbraces<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
@@ -174,6 +174,11 @@ syn region texMcolPos matchgroup=texStatement
       \ start='\\multicolumn{.*}{' end='}' fold
       \ contains=@texFoldGroup,@texDocGroup,@NoSpell
       \ containedin=texDocZone,texChapterZone,texSectionZone,texSubSectionZone
+
+syn region texHNoSpell matchgroup=texStatement
+      \ start='\\nospell{' end='}' fold
+      \ contains=@texFoldGroup,@texDocGroup,@NoSpell
+      \ containedin=texParen,texChapterZone,texSectionZone,texSubSectionZone,texSubSubSectionZone
 
 "" uncomment the following to allow tracing of highlight zones
 "map ,h <Plug>HiLinkTrace

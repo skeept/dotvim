@@ -31,6 +31,7 @@ let g:pathogen_disabled = []
 "call pathogen#runtime_append_all_bundles()
 let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
 let g:pathogen_disabled += ['powerline']
+let g:pathogen_disabled += ['hilinks']
 let g:pathogen_disabled += ['snipmate']
 let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
 "let g:pathogen_disabled += ['supertab']
