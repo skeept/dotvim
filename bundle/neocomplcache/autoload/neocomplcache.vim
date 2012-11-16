@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Nov 2012.
+" Last Modified: 16 Nov 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -598,12 +598,15 @@ function! neocomplcache#enable() "{{{
   else
     call neocomplcache#util#set_default_dictionary(
           \ 'g:neocomplcache_ctags_arguments_list', 'c',
-          \ '-R --sort=1 --c-kinds=+p --fields=+iaS --extra=+q -I __wur')
+          \ '-R --sort=1 --c-kinds=+p --fields=+iaS --extra=+q ' .
+          \ '-I __wur,__THROW,__attribute_malloc__,__nonnull+,'.
+          \   '__attribute_pure__,__attribute_warn_unused_result__,__attribute__+')
   endif
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_ctags_arguments_list', 'cpp',
-        \ '-R --sort=1 --c++-kinds=+p --fields=+iaS
-        \ --extra=+q -I __wur --language-force=C++')
+        \ '--language-force=C++ -R --sort=1 --c++-kinds=+p --fields=+iaS --extra=+q '.
+        \ '-I __wur,__THROW,__attribute_malloc__,__nonnull+,'.
+        \   '__attribute_pure__,__attribute_warn_unused_result__,__attribute__+')
   "}}}
 
   " Initialize text mode filetypes."{{{
