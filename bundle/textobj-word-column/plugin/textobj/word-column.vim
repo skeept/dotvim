@@ -9,8 +9,8 @@ function! TextObjWordBasedColumn(textobj)
   let stop_col        = virtcol("'>")
   let line_num        = line(".")
   let indent_level    = s:indent_level(".")
-  let start_line      = s:find_boundary_row(line_num, start_col, indent_level, -1)
-  let stop_line       = s:find_boundary_row(line_num, start_col, indent_level, 1)
+  let start_line      = s:find_boundary_row(line_num, col("'<"), start_col, indent_level, -1)
+  let stop_line       = s:find_boundary_row(line_num, col("'<"), start_col, indent_level, 1)
   let whitespace_only = s:whitespace_column_wanted(start_line, stop_line, cursor_col)
 
   if (exists("g:textobj_word_column_no_smart_boundary_cols"))
@@ -84,7 +84,7 @@ function! s:whitespace_column_wanted(start_line, stop_line, cursor_col)
   return 1
 endfunction
 
-function! s:find_boundary_row(start_line, start_col, indent_level, step)
+function! s:find_boundary_row(start_line, start_col, start_vcol, indent_level, step)
   let current_line = a:start_line
   let max_boundary = 0
   if a:step == 1
@@ -94,8 +94,9 @@ function! s:find_boundary_row(start_line, start_col, indent_level, step)
     let next_line      = current_line + a:step
     let non_blank      = getline(next_line) =~ "[^ \t]"
     let same_indent    = s:indent_level(next_line) == a:indent_level
+    let has_width      = getline(next_line) =~ '\%'.a:start_vcol.'v'
     let is_not_comment = ! s:is_comment(next_line, a:start_col)
-    if same_indent && non_blank && is_not_comment
+    if same_indent && non_blank && has_width && is_not_comment
       let current_line = next_line
     else
       return current_line
@@ -114,14 +115,14 @@ function! s:is_comment(line_num, column)
 endfunction
 
 if (!exists("g:skip_default_textobj_word_column_mappings"))
-  nnoremap <silent> vac :call TextObjWordBasedColumn("aw")<cr>
-  nnoremap <silent> vaC :call TextObjWordBasedColumn("aW")<cr>
-  nnoremap <silent> vic :call TextObjWordBasedColumn("iw")<cr>
-  nnoremap <silent> viC :call TextObjWordBasedColumn("iW")<cr>
-  onoremap <silent> ac  :call TextObjWordBasedColumn("aw")<cr>
-  onoremap <silent> aC  :call TextObjWordBasedColumn("aW")<cr>
-  onoremap <silent> ic  :call TextObjWordBasedColumn("iw")<cr>
-  onoremap <silent> iC  :call TextObjWordBasedColumn("iW")<cr>
+  xnoremap <silent> ac :<C-u>call TextObjWordBasedColumn("aw")<cr>
+  xnoremap <silent> aC :<C-u>call TextObjWordBasedColumn("aW")<cr>
+  xnoremap <silent> ic :<C-u>call TextObjWordBasedColumn("iw")<cr>
+  xnoremap <silent> iC :<C-u>call TextObjWordBasedColumn("iW")<cr>
+  onoremap <silent> ac :call TextObjWordBasedColumn("aw")<cr>
+  onoremap <silent> aC :call TextObjWordBasedColumn("aW")<cr>
+  onoremap <silent> ic :call TextObjWordBasedColumn("iw")<cr>
+  onoremap <silent> iC :call TextObjWordBasedColumn("iW")<cr>
 endif
 
 let g:loaded_textobj_word_column = 1
