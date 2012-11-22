@@ -61,7 +61,7 @@ let s:window_expanded = 0
 let s:compare_typeinfo = {}
 
 
-let s:access_symbols = {
+let s:visibility_symbols = {
     \ 'public'    : '+',
     \ 'protected' : '#',
     \ 'private'   : '-'
@@ -1207,10 +1207,13 @@ function! s:BaseTag._getPrefix() abort dict
     else
         let prefix = ' '
     endif
-    if has_key(self.fields, 'access')
-        let prefix .= get(s:access_symbols, self.fields.access, ' ')
-    else
-        let prefix .= ' '
+    " Visibility is called 'access' in the ctags output
+    if g:tagbar_show_visibility
+        if has_key(self.fields, 'access')
+            let prefix .= get(s:visibility_symbols, self.fields.access, ' ')
+        else
+            let prefix .= ' '
+        endif
     endif
 
     return prefix
@@ -2513,7 +2516,10 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
                             " only if they are not scope-defining tags (since
                             " those already have an identifier)
                             if !has_key(a:typeinfo.kind2scope, ckind.short)
-                                silent put =repeat(' ', g:tagbar_indent + 2) .
+                                let indent  = g:tagbar_indent
+                                let indent += g:tagbar_show_visibility
+                                let indent += 1 " fold symbol
+                                silent put =repeat(' ', indent) .
                                                  \ '[' . ckind.long . ']'
                                 " Add basic tag to allow folding when on the
                                 " header line
@@ -2546,10 +2552,11 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
                 let foldmarker = s:icon_open
             endif
 
+            let padding = g:tagbar_show_visibility ? ' ' : ''
             if g:tagbar_compact && first_tag && s:short_help
-                silent 0put =foldmarker . ' ' . kind.long
+                silent 0put =foldmarker . padding . kind.long
             else
-                silent  put =foldmarker . ' ' . kind.long
+                silent  put =foldmarker . padding . kind.long
             endif
 
             let curline                   = line('.')
@@ -2600,7 +2607,10 @@ function! s:PrintTag(tag, depth, fileinfo, typeinfo) abort
                 " are not scope-defining tags (since those already have an
                 " identifier)
                 if !has_key(a:typeinfo.kind2scope, ckind.short)
-                    silent put =repeat(' ', (a:depth + 1) * g:tagbar_indent + 2)
+                    let indent  = g:tagbar_indent
+                    let indent += g:tagbar_show_visibility
+                    let indent += 1 " fold symbol
+                    silent put =repeat(' ', (a:depth + 1) * indent)
                               \ . '[' . ckind.long . ']'
                     " Add basic tag to allow folding when on the header line
                     let headertag = s:BaseTag.New(ckind.long)
