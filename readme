@@ -9,7 +9,7 @@ Bellow are some tips (things I need to look up once in a while)
 ma   --- mark the current position in mark a
 'a   --- goto the position specified in mark a
 
-H M L --- goto to the top, midle and bottom of the current screen
+H M L --- goto to the [H]top, [M]midle, or [L]bottom of the current screen
 
 zz   --- put the current cursor position in the midle of the screen
 
