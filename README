@@ -1,3 +1,8 @@
+My vim configuration.
+
+Bellow are some tips (things I need to look up once in a while)
+
+
 "xY   --- copies the current line to register x
 "xP   --- pastes the content of register x before the cursor
 
@@ -8,8 +13,8 @@ H M L --- goto to the top, midle and bottom of the current screen
 
 zz   --- put the current cursor position in the midle of the screen
 
-recording --- to record a set of keystrokes to register s do the folowing : 
-qs<keystrokes>q 
+recording --- to record a set of keystrokes to register s do the folowing :
+qs<keystrokes>q
 then invoke the keystroke s by @s
 
 
