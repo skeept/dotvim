@@ -3,34 +3,35 @@ My vim configuration.
 Bellow are some tips (things I need to look up once in a while)
 
 
-"xY   --- copies the current line to register x
-"xP   --- pastes the content of register x before the cursor
+"xY -- copies the current line to register x
+"xP -- pastes the content of register x before the cursor
 
-ma   --- mark the current position in mark a
-'a   --- goto the position specified in mark a
+ma -- mark the current position in mark a
+'a -- goto the position specified in mark a
 
-H M L --- goto to the [H]top, [M]midle, or [L]bottom of the current screen
+H M L -- goto to the [H]top, [M]midle, or [L]bottom of the current screen
 
-zz   --- put the current cursor position in the midle of the screen
+zz -- put the current cursor position in the midle of the screen
 
-recording --- to record a set of keystrokes to register s do the folowing :
+recording -- to record a set of keystrokes to register s do the folowing:
 qs<keystrokes>q
 then invoke the keystroke s by @s
 
 
-tranposing chars : xp
-transposing lines : ddp
-transposing words : dawwP
+tranposing chars: xp
+transposing lines: ddp
+transposing words: dawwP
 
-<c-o> --- goto last visited position in the file
+<c-o> -- goto last visited position in the file
+<c-i> -- usually goes back, but after mapping <tab> to <c-w> have defined :Jump command
 
-change case of current character : ~
-current line <lowercase-uppercase> : uu UU
-in visual mode : u and U change the case of selected text
+change case of current character: ~
+current line <lowercase-uppercase>: uu UU
+in visual mode: u and U change the case of selected text
 guaw -- change current word lowercase
 gUaw -- change current word uppercase
 
-to select various lines use <shitf-v> and arrows (or other movement commands)
+to select various lines use <shitf-v> <c-v> selects blocks
 
 replace ^M
 :%s/<ctrl-v><enter>//g
@@ -43,3 +44,13 @@ perldo
 in the specified range append to current line $_ .= ...
 
 @: -- repeat last : command
+
+
+-- some mappings I have don't I don't remember always  --
+\os -- open scratch buffer
+,dr -- display registers (:reg)
+q; :
+q' "
+\rs -- start recording to register u
+\re -- end recording. contents in register u
+,co -- capture output from command (pastes contents at end of current buffer)
