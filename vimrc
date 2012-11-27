@@ -1,4 +1,4 @@
-"
+" is_windows evim? {{{
 " An example for a vimrc file.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
@@ -24,8 +24,9 @@ else
 endif
 
 let g:is_win = has('win32') || has('win64')
+"}}}
 
-"============================= pathogen =======================================
+"================== pathogen ================================================{{{
 let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
@@ -45,9 +46,9 @@ if g:is_win
   let g:pathogen_disabled += ['pysmell']
 endif
 call pathogen#infect()
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Settings =====================================
+"================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
@@ -133,9 +134,9 @@ if &t_Co > 2 || has("gui_running")
 endif
 set cot-=preview
 
-"==============================================================================
+"==============================================================================}}}
 
-"============================ Mappings ========================================
+"================== Mappings =================================================={{{
 " Don't use Ex mode, use Q for formatting
 noremap Q gq
 
@@ -172,15 +173,6 @@ endfunction
 inoremap <F1> <ESC>:wa<CR>
 noremap <F1> :wa<CR>
 
-"noremap <f7> :tabp<CR>
-"noremap <s-f7> :bp<CR>
-"noremap <f8> :tabn<CR>
-"noremap <s-f8> :bn<CR>
-"inoremap <f7> <esc>:bp<CR>
-"inoremap <s-f7> <esc>:tabp<CR>
-"inoremap <f8> <esc>:tabn<CR>
-"inoremap <s-f8> <esc>:bn<CR>
-
 "how often do I type ;;?
 inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
@@ -188,26 +180,13 @@ inoremap {{ {<CR><CR>}<ESC>kcc
 "do I really change colorscheme that often?
 nnoremap ,sc :<C-U>colorscheme<space>
 nnoremap ,dr :registers<CR>
-"==============================================================================
 
-"===================== Don't view files with inconsistent ctrl-r ==============
-map ,m :ed ++ff=dos<CR>
-command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
-"==============================================================================
-
-"============================ A.vim settings ==================================
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
-"==============================================================================
-
-"============================ scrollbind mappings =============================
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================
+" make <BS> <DEL> <C-U> and <C-W> undoable
+" h i_Ctrl-g_u
+inoremap <C-U> <C-G>u<C-U>
+inoremap <C-W> <C-G>u<C-W>
+inoremap <BS> <C-G>u<BS>
+inoremap <DEL> <C-G>u<DEL>
 
 noremap <f4> :x<CR>
 inoremap <f4> <esc>:wq<CR>
@@ -240,7 +219,7 @@ noremap <Leader>ch :nohlsearch<CR>
 "open scratch buffer
 noremap <Leader>os :Scratch<CR>
 
-nmap <TAB> <C-w>
+nmap <TAB> <C-W>
 nmap <TAB><TAB> <C-W><C-W>
 
 "attemp to fix backspace
@@ -253,9 +232,9 @@ nmap <TAB><TAB> <C-W><C-W>
 
 noremap q; :
 noremap q' "
-"==============================================================================
+"==============================================================================}}}
 
-"========================= redir ==============================================
+"================== redir ====================================================={{{
 noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
 noremap <Leader>re :redir END \| set more \| "-> u<CR>
 function! CaptureOutFun(cmd)
@@ -270,9 +249,9 @@ endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
 nnoremap ,co :CaptureOut<SPACE>
 
-"==============================================================================
+"==============================================================================}}}
 
-"======================== Spelling ============================================
+"================== Spelling =================================================={{{
 " by default now toggle spell and nospell, if a count is given use Portuguese
 setlocal nospell
 let g:togglespell = 0
@@ -300,8 +279,9 @@ function! ToggleSpell()
   endif
 endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <CR>
-"==============================================================================
+"==============================================================================}}}
 
+"================== autocommands =============================================={{{
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 
@@ -342,10 +322,24 @@ if has("autocmd")
   "mappings for specific buffers
   autocmd FileType help map <buffer> <space> <c-d>
   autocmd FileType help map <buffer> <bs> <c-u>
+
+  au BufWinEnter *.txt if(&ft =~ 'help')| nmap <buffer> <CR> <C-]> |endif
+
+  "don't show file numbers in taglist and nerdtree
+  autocmd FileType nerdtree      setlocal norelativenumber
+  autocmd FileType taglist       setlocal norelativenumber
+  autocmd FileType qf            setlocal norelativenumber
+  autocmd FileType tlibInputList setlocal norelativenumber
+
+
 endif " has("autocmd")
+"==============================================================================}}}
 
-let fortran_free_source = 1
+"================== A.vim ====================================================={{{
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================}}}
 
+"================== colorscheme ==============================================={{{
 " setting the color in terminals
 if !has("gui_running") && !g:is_win
   "on windows default is better
@@ -373,7 +367,9 @@ if !has("gui_running") && !g:is_win
    colorscheme  graywh_cs1
    "colorscheme peaksea | set background=dark
 endif
+"==============================================================================}}}
 
+"================== number/relativenumber ====================================={{{
 let g:relativenumber = 2
 "set relativenumber
 function! ToggleRelativeNumber()
@@ -394,20 +390,15 @@ endfunction
 
 noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
+"==============================================================================}}}
 
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-" Main settings and mappings for plugins
-"
-
-"=============================== tasklist =====================================
+"================== tasklist =================================================={{{
 "useful for managing a todo list
 noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Taglist ======================================
+"================== Taglist ==================================================={{{
 "taglist options
 "let Tlist_Close_On_Select = 1
 let Tlist_Enable_Fold_Column = 0
@@ -423,9 +414,9 @@ let tlist_gamslst_settings = 'gamslst;m:Model Solution Report;'
 let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
 "noremap <F3> :TlistToggle<CR>
 "inoremap <F3> <ESC>:TlistToggle<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== NerdTree =====================================
+"================== NerdTree =================================================={{{
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
 
@@ -457,34 +448,34 @@ let NERDTreeShowBookmarks = 1
 "noremap <F3> :call ToogleTagListNerdTree() <CR>
 "inoremap <F3> <ESC>:call ToogleTagListNerdTree() <CR>
 
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== LustyJuggler =================================
+"================== LustyJuggler =============================================={{{
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== yankRing =====================================
+"================== yankRing =================================================={{{
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== PreciseJump ==================================
+"================== PreciseJump ==============================================={{{
 nmap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
 omap ,f :call PreciseJumpF(-1, -1, 0)<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"======================== LustyExplorer and Juggler ===========================
+"================== LustyExplorer and Juggler ================================={{{
 "nmap <silent> ,lf :LustyFilesystemExplorer<CR>
 "nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
 "nmap <silent> ,lb :LustyBufferExplorer<CR>
 "nmap <silent> ,lg :LustyBufferGrep<CR>
 "nmap <silent> ,lj :LustyJuggler<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"========================= LycosaExplorer =====================================
+"================== LycosaExplorer ============================================{{{
 "" lycosaexplorer alternative mappings
 if index(g:pathogen_disabled, 'lycosaexplorer') == -1
   noremap ,b :LycosaBufferExplorer<CR>
@@ -508,9 +499,9 @@ else
   noremap ,e :CtrlPCurFile<CR>
 endif
 
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Unite ========================================
+"================== Unite ====================================================={{{
 nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
@@ -542,13 +533,13 @@ let g:unite_abbr_highlight = 'TabLine'
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
 let g:unite_source_history_yank_enable = 1
-"==============================================================================
+"==============================================================================}}}
 
-"========================= LibClang ===========================================
+"================== LibClang =================================================={{{
 let g:clang_use_library = 1
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Buffergator ==================================
+"================== Buffergator ==============================================={{{
 "nmap <silent> <Leader>bb :TSelectBuffer<CR>
 "Buffergator settings
 let g:buffergator_suppress_keymaps      = 1
@@ -558,9 +549,9 @@ noremap <Leader>bb :BuffergatorOpen<CR>
 noremap <Leader>bB :BuffergatorClose<CR>
 noremap <Leader>bt :BuffergatorTabsOpen<CR>
 noremap <Leader>bT :BuffergatorTabsClose<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"========================== Latex =============================================
+"================== Latex ====================================================={{{
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -592,16 +583,16 @@ vmap <F8> <Plug>IMAP_DeleteAndJumpForward
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
-"==============================================================================
+"==============================================================================}}}
 
-
-"============================= NerdCommenter ==================================
+"================== NerdCommenter ============================================={{{
 "let NERDShutUp=1
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
 "==============================================================================
+"}}}
 
-"============================ autocomplpop (acp) ==============================
+"================== autocomplpop (acp) ========================================{{{
 "don't want to start this completion thing before x chars
 let g:acp_behaviorKeywordLength = 12
 let g:acp_completeOption = '.,w,b,k,t'
@@ -620,9 +611,9 @@ endfunction
 
 "noremap <f11> :call ToggleAcpDisable()<CR>
 "inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
-"==============================================================================
+"==============================================================================}}}
 
-"======================== Statusline ==========================================
+"================== Statusline ================================================{{{
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
@@ -675,47 +666,22 @@ set statusline+=%{DispLTXCF()}
 "set statusline+=%{tagbar#currenttag('[%s] ', '')}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
-"==============================================================================
 
-com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-"
-"
+"=============================== smartusline =================================={{{
+"%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
+let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
+"let smartusline_deep_eval = 1
+"set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+"==============================================================================}}}
+"==============================================================================}}}
 
-" =============================================================================
-" Python
-" =============================================================================
-"au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
-"au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
-"
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
-"some plugins don't work weel with some enviroments, just try to adjust them
-let g:LustyExplorerSuppressRubyWarning = 1
-if !has("python")
-  let g:loaded_gundo = 1
-  let loaded_gundo = 1
-endif
-
-"don't load plugins in that cause errors for previous versions
-if v:version < 702
-  let g:loaded_ZoomWinPlugin = 1
-  let g:loaded_tagbar = 1
-endif
-if v:version < 703
-  let g:loaded_autoload_l9 = 1
-endif
-
-"load cscope in two levels up
-noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
-
-"======================== manpageview =========================================
+"================== manpageview ==============================================={{{
 let g:manpageview_winopen = "hsplit="
 autocmd FileType man setlocal norelativenumber nonumber
 "also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
-"==============================================================================
+"==============================================================================}}}
 
+"================== python settings ==========================================={{{
 "some pylint settings
 let g:pylint_onwrite = 0
 
@@ -733,27 +699,36 @@ autocmd FileType python call LoadPysmell()
 "mapping for running python code
 "nmap <F9> :SingleCompileRun<CR>
 
-"======================== python_mode =========================================
+"================== python_mode (plugin) ======================================{{{
 "some python mode configuration. Don't always use but for now disable some
 "settings when used
 let g:pymode_lint = 0
 let g:pymode_rope = 0
 let g:pymode_options_indent = 0
 let g:pymode_breakpoint = 0
-"==============================================================================
+"==============================================================================}}}
 
-"======================== PyLint Compiler =====================================
+"================== PyLint Compiler ==========================================={{{
 "autocmd FileType python compiler pylint
 autocmd FileType python setlocal errorformat=%f:%l:\ %m
 autocmd FileType python setlocal makeprg=epylint\ %
-"==============================================================================
+"==============================================================================}}}
 
-"=========================== localvim =========================================
-let g:localvimrc_sandbox = 0
-let g:localvimrc_ask = 0
-"==============================================================================
+"================== pep8 ======================================================{{{
+"let g:pep8_map = '<leader>p8' "not used anymore
+"let g:pep8_cmd  = 'pep8.py'
+"let g:pep8_ignore = "E111,E221,E225"
+"
+" this is a different plugin, the one I used now doesn't work the same way
+" E221 multiple spaces before operator -- aligning equals breaks this
+" E111 indentation is not a multiple of four -- I use two spaces
+" E225 missing whitespace around operator -- I like * without space
+" E501 line too long   -- allow more than 80 characters
+let g:pep8_args = " --ignore=E111,E221,E225,E501"
+"==============================================================================}}}
+"==============================================================================}}}
 
-"============================ ctrlP ===========================================
+"================== ctrlP ====================================================={{{
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
@@ -788,9 +763,9 @@ endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
 nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== tagbar =======================================
+"================== tagbar ===================================================={{{
 "tagbar gms and gamslst settings
 
 let g:tagbar_autofocus = 1
@@ -862,22 +837,9 @@ function! ToggleTBarListNT()
 endfunction
 nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
 inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"============================== pep8 ==========================================
-"let g:pep8_map = '<leader>p8' "not used anymore
-"let g:pep8_cmd  = 'pep8.py'
-"let g:pep8_ignore = "E111,E221,E225"
-"
-" this is a different plugin, the one I used now doesn't work the same way
-" E221 multiple spaces before operator -- aligning equals breaks this
-" E111 indentation is not a multiple of four -- I use two spaces
-" E225 missing whitespace around operator -- I like * without space
-" E501 line too long   -- allow more than 80 characters
-let g:pep8_args = " --ignore=E111,E221,E225,E501"
-"==============================================================================
-
-"================================ UltiSnips ===================================
+"================== UltiSnips ================================================={{{
 let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
@@ -896,9 +858,9 @@ function! Ulti_ExpandOrJump_and_getRes()
   return g:ulti_expand_or_jump_res
 endfunction
 
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Supertab =====================================
+"================== Supertab =================================================={{{
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
@@ -919,9 +881,9 @@ function! MySupertabAltCompletion()
   endif
 endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== powerline ====================================
+"================== powerline ================================================={{{
 if index(g:pathogen_disabled, 'powerline') == -1
   let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
   "let g:Powerline_symbols = 'unicode'
@@ -933,9 +895,69 @@ if index(g:pathogen_disabled, 'powerline') == -1
   call Pl#Theme#RemoveSegment('currenttag')
   call Pl#Theme#RemoveSegment('branch')
 endif
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Delete Whitespace ============================
+"================== other commands/mappings/settings =========================={{{
+"source explorer
+let g:SrcExpl_isUpdateTags = 0
+
+"don't enable showmarks, use \mt to toogle it
+let g:showmarks_enable=0
+
+"================== Don't view files with inconsistent ctrl-r ================={{{
+map ,m :ed ++ff=dos<CR>
+command! HideCtrlM ed ++ff=dos
+autocmd BufReadPost * nested
+      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+      \   let b:reload_dos = 1 |
+      \   e ++ff=dos |
+      \ endif
+"==============================================================================}}}
+
+" delete current buffer but don't delete the view
+command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+
+"some plugins don't work weel with some enviroments, just try to adjust them
+let g:LustyExplorerSuppressRubyWarning = 1
+if !has("python")
+  let g:loaded_gundo = 1
+  let loaded_gundo = 1
+endif
+
+"don't load plugins in that cause errors for previous versions
+if v:version < 702
+  let g:loaded_ZoomWinPlugin = 1
+  let g:loaded_tagbar = 1
+endif
+if v:version < 703
+  let g:loaded_autoload_l9 = 1
+endif
+
+"load cscope in two levels up
+noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
+
+"fix not having <c-i> for the jumplist after mapping tab
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
+
+let fortran_free_source = 1
+
+"================== scrollbind mappings ======================================={{{
+noremap ,sbt :windo set scrollbind<CR>
+noremap ,sbf :windo set noscrollbind<CR>
+"==============================================================================}}}
+
+"================== Fix shell=bash in windows ================================={{{
+if g:is_win && &shell =~ 'bash'
+"let $TMP = 'c:\\htemp\\tmp'
+set shell=C:\Windows\System32\cmd.exe
+set shellxquote=(
+endif
+"==============================================================================}}}
+
+"================== Delete Whitespace ========================================={{{
 function! StripTrailingWhitespace()
   if !&binary && &filetype != 'diff'
     normal mz
@@ -946,65 +968,29 @@ function! StripTrailingWhitespace()
   endif
 endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
-"==============================================================================
+"==============================================================================}}}
 
-"============================= Change to Current's File Folder ================
+"================== Change to Current's File Folder ==========================={{{
 command! ChgDirCurrFileFolder lcd %:p:h
-"==============================================================================
+"==============================================================================}}}
 
+"================== localvim =================================================={{{
+let g:localvimrc_sandbox = 0
+let g:localvimrc_ask = 0
+"==============================================================================}}}
 
-"don't show file numbers in taglist and nerdtree
-autocmd FileType nerdtree      setlocal norelativenumber
-autocmd FileType taglist       setlocal norelativenumber
-autocmd FileType qf            setlocal norelativenumber
-autocmd FileType tlibInputList setlocal norelativenumber
-
-"source explorer
-let g:SrcExpl_isUpdateTags = 0
-
-"don't enable showmarks, use \mt to toogle it
-let g:showmarks_enable=0
-
-"to change the colors if previous color desired :call PreviousColorScheme()
-"noremap <F12> :call NextColorScheme()<CR>:echo GetColorSyntaxName()<CR>
-"noremap <Leader>nc :call NextColorScheme()<CR>:echo GetColorSyntaxName()<CR>
-"noremap <F10> :call PreviousColorScheme()<CR>:echo GetColorSyntaxName()<CR>
-"
-
-"=============================== smartusline ==================================
-"%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
-let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
-"let smartusline_deep_eval = 1
-"set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
-"==============================================================================
-
-"===================== Don't view files with inconsistent ctrl-r ==============
-map ,m :ed ++ff=dos<CR>
-command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
-"==============================================================================
-
-"============================ A.vim settings ==================================
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
-"==============================================================================
-
-"============================ scrollbind mappings =============================
+"================== scrollbind mappings ======================================={{{
 noremap ,sbt :windo set scrollbind<CR>
 noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================
-"========================== Fix shell=bash in windows =========================
-if g:is_win && &shell =~ 'bash'
-"let $TMP = 'c:\\htemp\\tmp'
-set shell=C:\Windows\System32\cmd.exe
-set shellxquote=(
-endif
-"==============================================================================
+"==============================================================================}}}
 
-"=========================== full screen with plugin ==========================
+"==============================================================================}}}
+
+"================== A.vim settings ============================================{{{
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================}}}
+
+"================== full screen with plugin ==================================={{{
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
 if g:is_win
   let g:isMaximized = 0
@@ -1029,31 +1015,31 @@ if g:is_win
   command! FullScreenToogle call FullScreenToogleFun()
   noremap  <Leader>tf :FullScreenToogle<CR>
 endif
-"==============================================================================
+"==============================================================================}}}
 
-"====================== vim-pipe commands =====================================
+"================== vim-pipe commands ========================================={{{
 autocmd FileType python let b:vimpipe_command="python"
 autocmd FileType perl let b:vimpipe_command="perl"
 autocmd FileType tex let b:vimpipe_command="latexmk"
-"==============================================================================
+"==============================================================================}}}
 
-"======================== delimitmate =========================================
+"================== delimitmate ==============================================={{{
 let g:delimitMate_expand_cr = 1
 let g:delimitMate_expand_space = 1
-"==============================================================================
+"==============================================================================}}}
 
-"======================= ConqueTerm ===========================================
+"================== ConqueTerm ================================================{{{
 let g:ConqueTerm_ReadUnfocused = 1
-"==============================================================================
+"==============================================================================}}}
 
-"=========================  fugitive ==========================================
+"================== fugitive =================================================={{{
 nnoremap ,gcf :<C-U>Gcommit -v %<CR>
 nnoremap ,gca :<C-U>Gcommit -v -a<CR>
 nnoremap ,gp :<C-U>Git push<CR>
 nnoremap ,gdf :<C-U>Git diff<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"===================== Thesis Specific Settings ===============================
+"================== Thesis Specific Settings =================================={{{
 "let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
 let compname = hostname()
 if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
@@ -1131,8 +1117,9 @@ function! IsLineEndInsert()
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
 endfunction
+"==============================================================================}}}
 
-"======================= neocomplcache ========================================
+"================== neocomplcache ============================================={{{
 " Use neocomplcache?
 let g:neocomplcache_enable_at_startup = 1
 if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1
@@ -1233,13 +1220,15 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   " https://github.com/c9s/perlomni.vim
   let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
-"==============================================================================
+"==============================================================================}}}
 
-"========================= snipmate ===========================================
+"================== snipmate =================================================={{{
 let g:snippets_dir = g:p0 . "/bundle/snipmate/snippets"
-"==============================================================================
+"==============================================================================}}}
 
-"========================== languagetool ======================================
+"================== languagetool =============================================={{{
 let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
       \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
-"==============================================================================
+"==============================================================================}}}
+
+" vim: foldmethod=marker
