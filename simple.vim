@@ -228,9 +228,6 @@ function! CaptureOutFun(cmd)
 endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
 nnoremap ,co :CaptureOut<SPACE>
-
-noremap q; :
-noremap q' "
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
@@ -398,8 +395,8 @@ let g:Tex_MultipleCompileFormats='dvi,pdf'
 "let g:tex_flavor='latex'
 let g:tex_flavor='pdflatex'
 let g:Tex_DefaultTargetFormat='pdf'
-"let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
-let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
+let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
+"let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
 let g:Tex_IgnoreLevel = 3
 let g:tex_comment_nospell= 1 "don't do spelling in comments
 if has("autocmd") && g:is_win
@@ -408,10 +405,9 @@ if has("autocmd") && g:is_win
 endif
 
 if g:is_win
-  let g:Tex_ViewRule_pdf = expand(g:p0 . "/test/SumatraPDF")
-  let g:Tex_ViewRule_pdf = expand("$HOME" .
-        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable " .
-        \ "-reuse-instance")
+  let g:SumatraPdfLoc = expand("$HOME" .
+        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
+  let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
 endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
@@ -667,22 +663,24 @@ function! IsLineEndInsert()
   return getpos(".")[2] == (1 + len(getline(".")))
 endfunction
 
+" delete current buffer but don't delete the view
+command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+
 "fix not having <c-i> for the jumplist after mapping tab
 command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 let fortran_free_source = 1
 
-com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 "==============================================================================}}}
 
-"=================== A.vim settings ==========================================={{{
+"================== A.vim settings ============================================{{{
 let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
 "==============================================================================}}}
 
-"=================== full screen with plugin =================================={{{
+"================== full screen with plugin ==================================={{{
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
 if g:is_win
   let g:isMaximized = 0

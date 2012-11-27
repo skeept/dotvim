@@ -248,7 +248,6 @@ function! CaptureOutFun(cmd)
 endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
 nnoremap ,co :CaptureOut<SPACE>
-
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
@@ -931,20 +930,6 @@ endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "==============================================================================}}}
 
-"================== Change to Current's File Folder ==========================={{{
-command! ChgDirCurrFileFolder lcd %:p:h
-"==============================================================================}}}
-
-"================== localvim =================================================={{{
-let g:localvimrc_sandbox = 0
-let g:localvimrc_ask = 0
-"==============================================================================}}}
-
-"================== scrollbind mappings ======================================={{{
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================}}}
-
 function! IsLineEndInsert()
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
@@ -955,6 +940,25 @@ command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 
 "" change some highlight
 hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+
+"fix not having <c-i> for the jumplist after mapping tab
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
+
+let fortran_free_source = 1
+
+"source explorer
+let g:SrcExpl_isUpdateTags = 0
+
+"don't enable showmarks, use \mt to toogle it
+let g:showmarks_enable=0
+
+" Change to Current's File Folder
+command! ChgDirCurrFileFolder lcd %:p:h
+
+"================== localvim =================================================={{{
+let g:localvimrc_sandbox = 0
+let g:localvimrc_ask = 0
+"==============================================================================}}}
 
 "some plugins don't work weel with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
@@ -975,16 +979,6 @@ endif
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
 
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-let fortran_free_source = 1
-
-"source explorer
-let g:SrcExpl_isUpdateTags = 0
-
-"don't enable showmarks, use \mt to toogle it
-let g:showmarks_enable=0
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
