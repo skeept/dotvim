@@ -165,6 +165,8 @@ vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '
 
 inoremap <silent> <buffer> `. \cdot
 
+inoremap <silent> <buffer> \{{ \{<SPACE><SPACE>\}<++><ESC>F<SPACE>i
+
 syn region texTabularPos matchgroup=texStatement
       \ start='\\begin\s*{\s*tabular\s*}[^}]*{' end='}' fold
       \ contains=@texFoldGroup,@texDocGroup,@NoSpell
