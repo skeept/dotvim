@@ -168,6 +168,14 @@ inoremap {{ {<CR><CR>}<ESC>kcc
 "do I really change colorscheme that often?
 nnoremap ,sc :<C-U>colorscheme<space>
 nnoremap ,dr :registers<CR>
+
+" make <BS> <DEL> <C-U> and <C-W> undoable
+" h i_Ctrl-g_u
+inoremap <C-U> <C-G>u<C-U>
+inoremap <C-W> <C-G>u<C-W>
+inoremap <BS> <C-G>u<BS>
+inoremap <DEL> <C-G>u<DEL>
+
 "==============================================================================
 
 "===================== Don't view files with inconsistent ctrl-r ==============
@@ -284,6 +292,7 @@ endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <CR>
 "==============================================================================
 
+"============================ autocommands ====================================
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 
@@ -324,7 +333,11 @@ if has("autocmd")
   "mappings for specific buffers
   autocmd FileType help map <buffer> <space> <c-d>
   autocmd FileType help map <buffer> <bs> <c-u>
+
+  au BufWinEnter *.txt if(&ft =~ 'help')| nmap <buffer> <CR> <C-]> |endif
+
 endif " has("autocmd")
+"==============================================================================
 
 let fortran_free_source = 1
 
