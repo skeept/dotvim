@@ -1,4 +1,4 @@
-" is_windows evim? {{{
+" is_windows, evim? {{{
 " An example for a vimrc file.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
@@ -333,10 +333,6 @@ if has("autocmd")
 
 
 endif " has("autocmd")
-"==============================================================================}}}
-
-"================== A.vim ====================================================={{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
 "==============================================================================}}}
 
 "================== colorscheme ==============================================={{{
@@ -853,10 +849,11 @@ snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
 inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
 
-function! Ulti_ExpandOrJump_and_getRes()
+function! Ulti_ExpandOrJump_and_getRes() "{{{
+  " use only for latex new
   call UltiSnips_ExpandSnippetOrJump()
   return g:ulti_expand_or_jump_res
-endfunction
+endfunction "}}}
 
 "==============================================================================}}}
 
@@ -898,12 +895,6 @@ endif
 "==============================================================================}}}
 
 "================== other commands/mappings/settings =========================={{{
-"source explorer
-let g:SrcExpl_isUpdateTags = 0
-
-"don't enable showmarks, use \mt to toogle it
-let g:showmarks_enable=0
-
 "================== Don't view files with inconsistent ctrl-r ================={{{
 map ,m :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
@@ -913,36 +904,6 @@ autocmd BufReadPost * nested
       \   e ++ff=dos |
       \ endif
 "==============================================================================}}}
-
-" delete current buffer but don't delete the view
-command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
-"some plugins don't work weel with some enviroments, just try to adjust them
-let g:LustyExplorerSuppressRubyWarning = 1
-if !has("python")
-  let g:loaded_gundo = 1
-  let loaded_gundo = 1
-endif
-
-"don't load plugins in that cause errors for previous versions
-if v:version < 702
-  let g:loaded_ZoomWinPlugin = 1
-  let g:loaded_tagbar = 1
-endif
-if v:version < 703
-  let g:loaded_autoload_l9 = 1
-endif
-
-"load cscope in two levels up
-noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
-
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-let fortran_free_source = 1
 
 "================== scrollbind mappings ======================================={{{
 noremap ,sbt :windo set scrollbind<CR>
@@ -984,6 +945,46 @@ noremap ,sbt :windo set scrollbind<CR>
 noremap ,sbf :windo set noscrollbind<CR>
 "==============================================================================}}}
 
+function! IsLineEndInsert()
+  "in insert mode last is +1 len"
+  return getpos(".")[2] == (1 + len(getline(".")))
+endfunction
+
+" delete current buffer but don't delete the view
+command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+
+"some plugins don't work weel with some enviroments, just try to adjust them
+let g:LustyExplorerSuppressRubyWarning = 1
+if !has("python")
+  let g:loaded_gundo = 1
+  let loaded_gundo = 1
+endif
+
+"don't load plugins in that cause errors for previous versions
+if v:version < 702
+  let g:loaded_ZoomWinPlugin = 1
+  let g:loaded_tagbar = 1
+endif
+if v:version < 703
+  let g:loaded_autoload_l9 = 1
+endif
+
+"load cscope in two levels up
+noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
+
+"fix not having <c-i> for the jumplist after mapping tab
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
+
+let fortran_free_source = 1
+
+"source explorer
+let g:SrcExpl_isUpdateTags = 0
+
+"don't enable showmarks, use \mt to toogle it
+let g:showmarks_enable=0
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
@@ -1112,11 +1113,6 @@ function! MyThesisEnv()
 endfunction
 
 command! Mt call MyThesisEnv()
-
-function! IsLineEndInsert()
-  "in insert mode last is +1 len"
-  return getpos(".")[2] == (1 + len(getline(".")))
-endfunction
 "==============================================================================}}}
 
 "================== neocomplcache ============================================={{{
