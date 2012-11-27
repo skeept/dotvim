@@ -1,4 +1,4 @@
-"
+" is_windows, evim? {{{
 " An example for a vimrc file.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
@@ -26,8 +26,9 @@ else
 endif
 
 let g:is_win = has('win32') || has('win64')
+"}}}
 
-"=============================== Settings =====================================
+"================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
 set nocompatible
@@ -113,9 +114,9 @@ if &t_Co > 2 || has("gui_running")
 endif
 set cot-=preview
 
-"==============================================================================
+"==============================================================================}}}
 
-"============================ Mappings ========================================
+"================== Mappings =================================================={{{
 " Don't use Ex mode, use Q for formatting
 noremap Q gq
 
@@ -152,15 +153,6 @@ endfunction
 inoremap <F1> <ESC>:wa<CR>
 noremap <F1> :wa<CR>
 
-"noremap <f7> :tabp<CR>
-"noremap <s-f7> :bp<CR>
-"noremap <f8> :tabn<CR>
-"noremap <s-f8> :bn<CR>
-"inoremap <f7> <esc>:bp<CR>
-"inoremap <s-f7> <esc>:tabp<CR>
-"inoremap <f8> <esc>:tabn<CR>
-"inoremap <s-f8> <esc>:bn<CR>
-
 "how often do I type ;;?
 inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
@@ -175,27 +167,6 @@ inoremap <C-U> <C-G>u<C-U>
 inoremap <C-W> <C-G>u<C-W>
 inoremap <BS> <C-G>u<BS>
 inoremap <DEL> <C-G>u<DEL>
-
-"==============================================================================
-
-"===================== Don't view files with inconsistent ctrl-r ==============
-map ,m :ed ++ff=dos<CR>
-command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
-"==============================================================================
-
-"============================ A.vim settings ==================================
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
-"==============================================================================
-
-"============================ scrollbind mappings =============================
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================
 
 noremap <f4> :x<CR>
 inoremap <f4> <esc>:wq<CR>
@@ -241,9 +212,9 @@ nmap <TAB><TAB> <C-W><C-W>
 
 noremap q; :
 noremap q' "
-"==============================================================================
+"==============================================================================}}}
 
-"========================= redir ==============================================
+"================== redir ====================================================={{{
 noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
 noremap <Leader>re :redir END \| set more \| "-> u<CR>
 function! CaptureOutFun(cmd)
@@ -260,9 +231,9 @@ nnoremap ,co :CaptureOut<SPACE>
 
 noremap q; :
 noremap q' "
-"==============================================================================
+"==============================================================================}}}
 
-"======================== Spelling ============================================
+"================== Spelling =================================================={{{
 " by default now toggle spell and nospell, if a count is given use Portuguese
 setlocal nospell
 let g:togglespell = 0
@@ -290,9 +261,9 @@ function! ToggleSpell()
   endif
 endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <CR>
-"==============================================================================
+"==============================================================================}}}
 
-"============================ autocommands ====================================
+"================== autocommands =============================================={{{
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 
@@ -336,11 +307,17 @@ if has("autocmd")
 
   au BufWinEnter *.txt if(&ft =~ 'help')| nmap <buffer> <CR> <C-]> |endif
 
+  "don't show file numbers in taglist and nerdtree
+  autocmd FileType nerdtree      setlocal norelativenumber
+  autocmd FileType taglist       setlocal norelativenumber
+  autocmd FileType qf            setlocal norelativenumber
+  autocmd FileType tlibInputList setlocal norelativenumber
+
+
 endif " has("autocmd")
-"==============================================================================
+"==============================================================================}}}
 
-let fortran_free_source = 1
-
+"================== colorscheme ==============================================={{{
 " setting the color in terminals
 if !has("gui_running") && !g:is_win
   "on windows default is better
@@ -367,7 +344,9 @@ if !has("gui_running") && !g:is_win
    "colorscheme xoria256
    set bg=dark | colorscheme peaksea
 endif
+"==============================================================================}}}
 
+"================== number/relativenumber ====================================={{{
 let g:relativenumber = 2
 "set relativenumber
 function! ToggleRelativeNumber()
@@ -388,14 +367,9 @@ endfunction
 
 noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
+"==============================================================================}}}
 
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-" Main settings and mappings for plugins
-"
-
-"========================= LycosaExplorer =====================================
+"================== LycosaExplorer ============================================{{{
 "" lycosaexplorer alternative mappings
 noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
 noremap  ,le :LycosaFilesystemExplorer<CR>
@@ -412,10 +386,9 @@ function! ToggleLycosa()
   endif
 endfunction
 "nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-
-"========================== Latex =============================================
+"================== Latex ====================================================={{{
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
 " in case we get errors when using compiling because of python set to 0
@@ -443,16 +416,15 @@ endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
-"==============================================================================
+"==============================================================================}}}
 
-
-"============================= NerdCommenter ==================================
+"================== NerdCommenter ============================================={{{
 "let NERDShutUp=1
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
-"==============================================================================
+"==============================================================================}}}
 
-"======================== Statusline ==========================================
+"================== Statusline ================================================{{{
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
 "set statusline=%-3.3n%t\ \ %h%m%r\ %y%=%l/%L\ %3c\ \ \ %P
@@ -481,29 +453,30 @@ endfunction
 set statusline=%2.2n\ %t\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
-"==============================================================================
+"==============================================================================}}}
 
-com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-"
-"
-
-" =============================================================================
-" Python
-" =============================================================================
-"au BufRead *.py set makeprg=python\ -c\ \"import\ py_compile,sys;\ sys.stderr=sys.stdout;\ py_compile.compile(r'%')\"
-"au BufRead *.py set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
-"
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
-"======================== PyLint Compiler =====================================
+"================== python settings ==========================================={{{
+"================== PyLint Compiler ==========================================={{{
 "autocmd FileType python compiler pylint
 autocmd FileType python setlocal errorformat=%f:%l:\ %m
 autocmd FileType python setlocal makeprg=epylint\ %
-"==============================================================================
+"==============================================================================}}}
 
-"============================ ctrlP ===========================================
+"================== pep8 ======================================================{{{
+"let g:pep8_map = '<leader>p8' "not used anymore
+"let g:pep8_cmd  = 'pep8.py'
+"let g:pep8_ignore = "E111,E221,E225"
+"
+" this is a different plugin, the one I used now doesn't work the same way
+" E221 multiple spaces before operator -- aligning equals breaks this
+" E111 indentation is not a multiple of four -- I use two spaces
+" E225 missing whitespace around operator -- I like * without space
+" E501 line too long   -- allow more than 80 characters
+let g:pep8_args = " --ignore=E111,E221,E225,E501"
+"==============================================================================}}}
+"==============================================================================}}}
+
+"================== ctrlP ====================================================={{{
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
@@ -538,9 +511,9 @@ endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
 nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== tagbar =======================================
+"================== tagbar ===================================================={{{
 "tagbar gms and gamslst settings
 
 let g:tagbar_autofocus = 1
@@ -612,22 +585,9 @@ function! ToggleTBarListNT()
 endfunction
 nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
 inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"============================== pep8 ==========================================
-"let g:pep8_map = '<leader>p8' "not used anymore
-"let g:pep8_cmd  = 'pep8.py'
-"let g:pep8_ignore = "E111,E221,E225"
-"
-" this is a different plugin, the one I used now doesn't work the same way
-" E221 multiple spaces before operator -- aligning equals breaks this
-" E111 indentation is not a multiple of four -- I use two spaces
-" E225 missing whitespace around operator -- I like * without space
-" E501 line too long   -- allow more than 80 characters
-let g:pep8_args = " --ignore=E111,E221,E225,E501"
-"==============================================================================
-
-"================================ UltiSnips ===================================
+"================== UltiSnips ================================================={{{
 let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
@@ -640,9 +600,9 @@ snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
 "snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
 inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Supertab =====================================
+"================== Supertab =================================================={{{
 "" for supertab plugin try changing the default context
 let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
@@ -663,9 +623,33 @@ function! MySupertabAltCompletion()
   endif
 endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
-"==============================================================================
+"==============================================================================}}}
 
-"=============================== Delete Whitespace ============================
+"================== other commands/mappings/settings =========================={{{
+"================== Don't view files with inconsistent ctrl-r ================={{{
+map ,m :ed ++ff=dos<CR>
+command! HideCtrlM ed ++ff=dos
+autocmd BufReadPost * nested
+      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+      \   let b:reload_dos = 1 |
+      \   e ++ff=dos |
+      \ endif
+"==============================================================================}}}
+
+"================== scrollbind mappings ======================================={{{
+noremap ,sbt :windo set scrollbind<CR>
+noremap ,sbf :windo set noscrollbind<CR>
+"==============================================================================}}}
+
+"================== Fix shell=bash in windows ================================={{{
+if g:is_win && &shell =~ 'bash'
+"let $TMP = 'c:\\htemp\\tmp'
+set shell=C:\Windows\System32\cmd.exe
+set shellxquote=(
+endif
+"==============================================================================}}}
+
+"================== Delete Whitespace ========================================={{{
 function! StripTrailingWhitespace()
   if !&binary && &filetype != 'diff'
     normal mz
@@ -676,58 +660,29 @@ function! StripTrailingWhitespace()
   endif
 endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
-"==============================================================================
+"==============================================================================}}}
 
-"======================== Plugin Loading ======================================
-"load eventual plugins here (the ones that would be really necessary)
-runtime plugin/NERD_commenter.vim
-runtime bundle/supertab/plugin/supertab.vim
-runtime plugin/unimpaired.vim
-runtime plugin/scratch.vim
-
-
-function! LoadTagbar()
-  runtime bundle/tagbar/plugin/tagbar.vim
-  exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
-  "nnoremap <F3> :TagbarToggle<CR>
-  nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
-  inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
-endf
-nnoremap <F3> :call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-
-function! LoadUltisnips()
-  if has("python")
-    runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
-    exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
-    if has("autocmd")
-      autocmd FileType * call UltiSnips_FileTypeChanged()
-      autocmd BufNewFile,BufRead *.snippets setf snippets
-    endif
-    call UltiSnips_FileTypeChanged()
-    nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
+function! IsLineEndInsert()
+  "in insert mode last is +1 len"
+  return getpos(".")[2] == (1 + len(getline(".")))
 endfunction
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 
-"for filetype tex we need imap.vim
-if has("autocmd")
-  autocmd FileType tex exec "source " . g:p0 . "/bundle/vlatex/plugin/imaps.vim"
-endif
-"========================== Fix shell=bash in windows =========================
-if g:is_win && &shell =~ 'bash'
-"let $TMP = 'c:\\htemp\\tmp'
-set shell=C:\Windows\System32\cmd.exe
-set shellxquote=(
-endif
-"==============================================================================
+"fix not having <c-i> for the jumplist after mapping tab
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
-"=========================== full screen with plugin ==========================
+let fortran_free_source = 1
+
+com! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+"==============================================================================}}}
+
+"=================== A.vim settings ==========================================={{{
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================}}}
+
+"=================== full screen with plugin =================================={{{
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
 if g:is_win
   let g:isMaximized = 0
@@ -752,9 +707,48 @@ if g:is_win
   command! FullScreenToogle call FullScreenToogleFun()
   noremap  <Leader>tf :FullScreenToogle<CR>
 endif
-"==============================================================================
+"==============================================================================}}}
 
-function! LoadCtrlP()
+"=================== Plugin Loading ==========================================={{{
+" always load {{{
+runtime plugin/NERD_commenter.vim
+runtime bundle/supertab/plugin/supertab.vim
+runtime plugin/unimpaired.vim
+runtime plugin/scratch.vim
+"}}}
+
+function! LoadTagbar() "{{{
+  runtime bundle/tagbar/plugin/tagbar.vim
+  exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
+  "nnoremap <F3> :TagbarToggle<CR>
+  nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
+  inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
+endf
+nnoremap <F3> :call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
+inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
+"}}}
+
+function! LoadUltisnips() "{{{
+  if has("python")
+    runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
+    exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+    if has("autocmd")
+      autocmd FileType * call UltiSnips_FileTypeChanged()
+      autocmd BufNewFile,BufRead *.snippets setf snippets
+    endif
+    call UltiSnips_FileTypeChanged()
+    nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+    return 1
+  else
+    echom "vim compiled without python"
+    return 0
+  endif
+endfunction
+nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
+inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+"}}}
+
+function! LoadCtrlP() "{{{
   exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
   runtime bundle/ctrlp/plugin/ctrlp.vim
   nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
@@ -763,16 +757,20 @@ endf
 nnoremap <c-p> :call LoadCtrlP()<CR>
       \:<c-u>CtrlP<CR>
 nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
+"}}}
 
-function! LoadLycosa()
+function! LoadLycosa() "{{{
   exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
   runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
   nnoremap ,e :<c-u>call ToggleLycosa()<CR>
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
-"==============================================================================
+"}}}
 
-function! IsLineEndInsert()
-  "in insert mode last is +1 len"
-  return getpos(".")[2] == (1 + len(getline(".")))
-endfunction
+"for filetype tex we need imap.vim
+if has("autocmd")
+  autocmd FileType tex exec "source " . g:p0 . "/bundle/vlatex/plugin/imaps.vim"
+endif
+"==============================================================================}}}
+
+" vim: foldmethod=marker
