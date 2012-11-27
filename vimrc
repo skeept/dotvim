@@ -1187,7 +1187,7 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
   inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
 
-  inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-U>"
+  inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-G>u\<C-U>"
 
   " Enable omni completion.
   autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
