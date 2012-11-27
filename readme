@@ -41,3 +41,5 @@ cd %:p:h
 perldo
 '<,'>perldo $_ .= '   ' . (abs((split(/,/, $_))[2]) > 1.0e-8 ? 'YES' : 'NO')
 in the specified range append to current line $_ .= ...
+
+@: -- repeat last : command
