@@ -523,6 +523,10 @@ endif
 if g:is_win
   let g:SumatraPdfLoc = expand("$HOME" .
         \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
+  if hostname() == "SHABBIRSTU3"
+    let g:SumatraPdfLoc = 'C:\Documents and Settings\hinacio\Applications' .
+          \ '\PortableApps\PortableApps\SumatraPDFPortable\SumatraPDFPortable'
+  endif
   let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
 endif
 
@@ -1054,6 +1058,8 @@ if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
     let g:thesis_path = $HOME . ""
   elseif compname == "Isengard-3000-N100"
     let g:thesis_path = $HOME .  "/Documents/Thesis"
+  elseif compname == "SHABBIRSTU3"
+    let g:thesis_path = 'U:\WORK\Thesis'
   elseif compname =~ 'isye.gatech.edu'
     let g:thesis_path = $HOME . "/WORK/Thesis"
 endif
