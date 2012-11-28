@@ -64,8 +64,11 @@ endif
 
 " Highlight linked syntax type.
 " You may chose your favorite through ":hi" command
-if !exists('g:undotree_HighlightSyntax')
-    let g:undotree_HighlightSyntax = "UnderLined"
+if !exists('g:undotree_HighlightSyntaxAdd')
+    let g:undotree_HighlightSyntaxAdd = "DiffAdd"
+endif
+if !exists('g:undotree_HighlightSyntaxChange')
+    let g:undotree_HighlightSyntaxChange = "DiffChange"
 endif
 
 "Custom key mappings: add this function to your vimrc.
@@ -95,6 +98,7 @@ let s:helpless = ['" Press ? for help.']
 let s:keymap = []
 " action, key, help.
 let s:keymap += [['Help','?','Toggle quick help']]
+let s:keymap += [['FocusTarget','<tab>','Set Focus to editor']]
 let s:keymap += [['ClearHistory','C','Clear undo history']]
 let s:keymap += [['TimestampToggle','T','Toggle relative timestamp']]
 let s:keymap += [['DiffToggle','D','Toggle diff panel']]
@@ -304,12 +308,6 @@ function! s:undotree.Action(action)
     silent exec 'call self.Action'.a:action.'()'
 endfunction
 
-function! s:undotree.ActionHelp()
-    let self.showHelp = !self.showHelp
-    call self.Draw()
-    call self.MarkSeqs()
-endfunction
-
 " Helper function, do action in target window, and then update itself.
 function! s:undotree.ActionInTarget(cmd)
     if !self.SetTargetFocus()
@@ -322,6 +320,16 @@ function! s:undotree.ActionInTarget(cmd)
     endif
     " Update not always set current focus.
     call self.SetFocus()
+endfunction
+
+function! s:undotree.ActionHelp()
+    let self.showHelp = !self.showHelp
+    call self.Draw()
+    call self.MarkSeqs()
+endfunction
+
+function! s:undotree.ActionFocusTarget()
+    call self.SetTargetFocus()
 endfunction
 
 function! s:undotree.ActionEnter()
@@ -427,8 +435,12 @@ function! s:undotree.Toggle()
     if self.IsVisible()
         call self.Hide()
         call t:diffpanel.Hide()
+        call self.SetTargetFocus()
     else
         call self.Show()
+        if !g:undotree_SetFocusWhenToggle
+            call self.SetTargetFocus()
+        endif
     endif
 endfunction
 
@@ -485,9 +497,6 @@ function! s:undotree.Show()
     call s:exec("norm! ".bufwinnr(targetBufnr)."\<c-w>\<c-w>")
     let self.targetBufnr = -1 "force update
     call self.Update()
-    if !g:undotree_SetFocusWhenToggle
-        call self.SetTargetFocus()
-    endif
 endfunction
 
 " called outside undotree window
@@ -932,6 +941,8 @@ function! s:diffpanel.Update(seq,targetBufnr,targetWinnr)
         return
     endif
     let diffresult = []
+    let self.changes.add = 0
+    let self.changes.del = 0
 
     if a:seq == 0
         let diffresult = []
@@ -986,9 +997,7 @@ function! s:diffpanel.Update(seq,targetBufnr,targetWinnr)
         endif
     endif
 
-    if g:undotree_HighlightChangedText
-        call self.HighlightDiff(diffresult)
-    endif
+    call self.ParseDiff(diffresult)
 
     call self.SetFocus()
 
@@ -1005,14 +1014,13 @@ function! s:diffpanel.Update(seq,targetBufnr,targetWinnr)
     call t:undotree.SetFocus()
 endfunction
 
-function! s:diffpanel.HighlightDiff(diffresult)
+function! s:diffpanel.ParseDiff(diffresult)
     " set target focus first.
     call t:undotree.SetTargetFocus()
 
     if empty(a:diffresult)
         return
     endif
-    exec "hi link UndotreeChangedText ".g:undotree_HighlightSyntax
     " clear previous highlighted syntax
     " matchadd associates with windows.
     if exists("w:undotree_diffmatches")
@@ -1026,24 +1034,46 @@ function! s:diffpanel.HighlightDiff(diffresult)
         let matchnum = matchstr(line,'^[0-9,\,]*[ac]\zs\d*\ze')
         if !empty(matchnum)
             let lineNr = str2nr(matchnum)
+            let matchwhat = matchstr(line,'^[0-9,\,]*\zs[ac]\ze\d*')
             continue
+        endif
+        if matchstr(line,'^<.*$') != ''
+            let self.changes.del += 1
         endif
         let matchtext = matchstr(line,'^>\zs .*$')
         if empty(matchtext)
             continue
         endif
-        if matchtext != ' '
-            let matchtext = '\%'.lineNr.'l\V'.escape(matchtext[1:],'"\') "remove beginning space.
-            call s:log("matchadd() ->  ".matchtext)
-            call add(w:undotree_diffmatches,matchadd("UndotreeChangedText",matchtext))
+        let self.changes.add += 1
+        if g:undotree_HighlightChangedText
+            if matchtext != ' '
+                let matchtext = '\%'.lineNr.'l\V'.escape(matchtext[1:],'"\') "remove beginning space.
+                call s:log("matchadd(".matchwhat.") ->  ".matchtext)
+                call add(w:undotree_diffmatches,matchadd((matchwhat ==# 'a' ? g:undotree_HighlightSyntaxAdd : g:undotree_HighlightSyntaxChange),matchtext))
+            endif
         endif
+
         let lineNr = lineNr+1
     endfor
+endfunction
+
+function! s:diffpanel.GetStatusLine()
+    let max = winwidth(0) - 4
+    let sum = self.changes.add + self.changes.del
+    if sum > max
+        let add = self.changes.add * max / sum + 1
+        let del = self.changes.del * max / sum + 1
+    else
+        let add = self.changes.add
+        let del = self.changes.del
+    endif
+    return string(sum).' '.repeat('+',add).repeat('-',del)
 endfunction
 
 function! s:diffpanel.Init()
     let self.bufname = "diffpanel_".s:cntr
     let self.cache = {}
+    let self.changes = {'add':0, 'del':0}
     let self.diffexecutable = executable('diff')
     if !self.diffexecutable
         echoerr '"diff" is not executable.'
@@ -1091,6 +1121,7 @@ function! s:diffpanel.Show()
     setlocal nonumber
     setlocal nocursorline
     setlocal nomodifiable
+    setlocal statusline=%!t:diffpanel.GetStatusLine()
 
     let &eventignore = ei_bak
     let &splitbelow = sb_bak
@@ -1161,11 +1192,12 @@ function! UndotreeUpdate()
     if type(gettabvar(tabpagenr(),'undotree')) != type(s:undotree)
         return
     endif
-    let thisbuf = bufnr('%')
+    " assume window layout won't change during updating.
+    let thiswinnr = winnr()
     call t:undotree.Update()
     " focus moved
-    if bufnr('%') != thisbuf
-        call t:undotree.SetTargetFocus()
+    if winnr() != thiswinnr
+        call s:exec("norm! ".thiswinnr."\<c-w>\<c-w>")
     endif
 endfunction
 
@@ -1177,6 +1209,10 @@ function! UndotreeToggle()
     endif
     call t:undotree.Toggle()
     call s:log("<<< UndotreeToggle() leave")
+endfunction
+
+function! UndotreeIsVisible()
+    return (exists('t:undotree') && t:undotree.IsVisible())
 endfunction
 
 
