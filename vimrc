@@ -445,55 +445,10 @@ let NERDTreeShowBookmarks = 1
 
 "==============================================================================}}}
 
-"================== LustyJuggler =============================================={{{
-"lusty juggler
-let g:LustyJugglerShowKeys = 'a'
-"==============================================================================}}}
-
-"================== yankRing =================================================={{{
-let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
-let g:yankring_history_file = '.yankring_history'
-let g:yankring_history_dir = g:p0
-"==============================================================================}}}
-
 "================== PreciseJump ==============================================={{{
 nmap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
 omap ,f :call PreciseJumpF(-1, -1, 0)<CR>
-"==============================================================================}}}
-
-"================== LustyExplorer and Juggler ================================={{{
-"nmap <silent> ,lf :LustyFilesystemExplorer<CR>
-"nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
-"nmap <silent> ,lb :LustyBufferExplorer<CR>
-"nmap <silent> ,lg :LustyBufferGrep<CR>
-"nmap <silent> ,lj :LustyJuggler<CR>
-"==============================================================================}}}
-
-"================== LycosaExplorer ============================================{{{
-"" lycosaexplorer alternative mappings
-if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-  noremap ,b :LycosaBufferExplorer<CR>
-  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
-  noremap ,le :LycosaFilesystemExplorer<CR>
-
-  function! ToggleLycosa()
-    if v:count == 0
-      LycosaFilesystemExplorer
-    elseif v:count == 1
-      LycosaBufferExplorer
-    elseif v:count == 2
-      LycosaFilesystemExplorerFromHere
-    else
-      echo "0: File System, 1:buffer, 2: File from here"
-    endif
-  endfunction
-  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-else
-  noremap ,b :CtrlPBuffer<CR>
-  noremap ,e :CtrlPCurFile<CR>
-endif
-
 "==============================================================================}}}
 
 "================== Unite ====================================================={{{
@@ -587,27 +542,6 @@ let g:NERDDefaultNesting=1
 "==============================================================================
 "}}}
 
-"================== autocomplpop (acp) ========================================{{{
-"don't want to start this completion thing before x chars
-let g:acp_behaviorKeywordLength = 12
-let g:acp_completeOption = '.,w,b,k,t'
-
-"fuction to toogle behaviour of autocomplpop
-let g:is_acp_disabled = 0
-function! ToggleAcpDisable()
-  if g:is_acp_disabled == 0
-    AcpLock
-    let g:is_acp_disabled = 1
-  else
-    AcpUnlock
-    let g:is_acp_disabled = 0
-  endif
-endfunction
-
-"noremap <f11> :call ToggleAcpDisable()<CR>
-"inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
-"==============================================================================}}}
-
 "================== Statusline ================================================{{{
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
@@ -668,12 +602,6 @@ let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 "==============================================================================}}}
-"==============================================================================}}}
-
-"================== manpageview ==============================================={{{
-let g:manpageview_winopen = "hsplit="
-autocmd FileType man setlocal norelativenumber nonumber
-"also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
 "==============================================================================}}}
 
 "================== python settings ==========================================={{{
@@ -930,19 +858,24 @@ endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "==============================================================================}}}
 
-function! IsLineEndInsert()
+function! IsLineEndInsert() "{{{
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
-endfunction
+endfunction "}}}
 
+" {{{ commands
 " delete current buffer but don't delete the view
 command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
 "fix not having <c-i> for the jumplist after mapping tab
 command! -count=1 Jump exe ":norm! <count>\<C-I>"
+
+" Change to Current's File Folder
+command! ChgDirCurrFileFolder lcd %:p:h
+" }}}
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
 let fortran_free_source = 1
 
@@ -952,12 +885,100 @@ let g:SrcExpl_isUpdateTags = 0
 "don't enable showmarks, use \mt to toogle it
 let g:showmarks_enable=0
 
-" Change to Current's File Folder
-command! ChgDirCurrFileFolder lcd %:p:h
+"================== snipmate =================================================={{{
+let g:snippets_dir = g:p0 . "/bundle/snipmate/snippets"
+"==============================================================================}}}
 
 "================== localvim =================================================={{{
 let g:localvimrc_sandbox = 0
 let g:localvimrc_ask = 0
+"==============================================================================}}}
+
+"================== yankRing =================================================={{{
+let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
+let g:yankring_history_file = '.yankring_history'
+let g:yankring_history_dir = g:p0
+"==============================================================================}}}
+
+"================== A.vim settings ============================================{{{
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================}}}
+
+"================== autocomplpop (acp) ========================================{{{
+"don't want to start this completion thing before x chars
+let g:acp_behaviorKeywordLength = 12
+let g:acp_completeOption = '.,w,b,k,t'
+
+"fuction to toogle behaviour of autocomplpop
+let g:is_acp_disabled = 0
+function! ToggleAcpDisable()
+  if g:is_acp_disabled == 0
+    AcpLock
+    let g:is_acp_disabled = 1
+  else
+    AcpUnlock
+    let g:is_acp_disabled = 0
+  endif
+endfunction
+
+"noremap <f11> :call ToggleAcpDisable()<CR>
+"inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
+"==============================================================================}}}
+
+"================== manpageview ==============================================={{{
+let g:manpageview_winopen = "hsplit="
+autocmd FileType man setlocal norelativenumber nonumber
+"also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
+"==============================================================================}}}
+
+"================== languagetool =============================================={{{
+let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
+      \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
+"==============================================================================}}}
+
+"================== LustyExplorer and Juggler ================================={{{
+"nmap <silent> ,lf :LustyFilesystemExplorer<CR>
+"nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
+"nmap <silent> ,lb :LustyBufferExplorer<CR>
+"nmap <silent> ,lg :LustyBufferGrep<CR>
+"nmap <silent> ,lj :LustyJuggler<CR>
+"==============================================================================}}}
+
+"================== LustyJuggler =============================================={{{
+"lusty juggler
+let g:LustyJugglerShowKeys = 'a'
+"==============================================================================}}}
+
+"================== LycosaExplorer ============================================{{{
+"" lycosaexplorer alternative mappings
+if index(g:pathogen_disabled, 'lycosaexplorer') == -1
+  noremap ,b :LycosaBufferExplorer<CR>
+  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
+  noremap ,le :LycosaFilesystemExplorer<CR>
+
+  function! ToggleLycosa()
+    if v:count == 0
+      LycosaFilesystemExplorer
+    elseif v:count == 1
+      LycosaBufferExplorer
+    elseif v:count == 2
+      LycosaFilesystemExplorerFromHere
+    else
+      echo "0: File System, 1:buffer, 2: File from here"
+    endif
+  endfunction
+  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
+else
+  noremap ,b :CtrlPBuffer<CR>
+  noremap ,e :CtrlPCurFile<CR>
+endif
+
+"==============================================================================}}}
+
+"================== vim-pipe commands ========================================={{{
+autocmd FileType python let b:vimpipe_command="python"
+autocmd FileType perl let b:vimpipe_command="perl"
+autocmd FileType tex let b:vimpipe_command="latexmk"
 "==============================================================================}}}
 
 "some plugins don't work weel with some enviroments, just try to adjust them
@@ -979,10 +1000,6 @@ endif
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
 
-"==============================================================================}}}
-
-"================== A.vim settings ============================================{{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
 "==============================================================================}}}
 
 "================== full screen with plugin ==================================={{{
@@ -1010,12 +1027,6 @@ if g:is_win
   command! FullScreenToogle call FullScreenToogleFun()
   noremap  <Leader>tf :FullScreenToogle<CR>
 endif
-"==============================================================================}}}
-
-"================== vim-pipe commands ========================================={{{
-autocmd FileType python let b:vimpipe_command="python"
-autocmd FileType perl let b:vimpipe_command="perl"
-autocmd FileType tex let b:vimpipe_command="latexmk"
 "==============================================================================}}}
 
 "================== delimitmate ==============================================={{{
@@ -1210,15 +1221,6 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   " https://github.com/c9s/perlomni.vim
   let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
-"==============================================================================}}}
-
-"================== snipmate =================================================={{{
-let g:snippets_dir = g:p0 . "/bundle/snipmate/snippets"
-"==============================================================================}}}
-
-"================== languagetool =============================================={{{
-let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
-      \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
 "==============================================================================}}}
 
 " vim: foldmethod=marker
