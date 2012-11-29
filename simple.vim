@@ -61,17 +61,11 @@ set pastetoggle=<Leader>pt
 set t_Co=256
 "set t_Co=88
 
-if v:version >= 703
-  set undofile
-  "set relativenumber
-endif
-
-"" set backup. but all the backuped files will be
-"" placed in the directory specified by backupdir
 set backup
 exec "set backupdir^=" . g:p0 . "/backup"
 exec "set directory^=" . g:p0 . "/swapdir"
 if v:version >= 703
+  set undofile
   exec "set undodir^=" . g:p0 . "/undodir"
 endif
 
@@ -326,7 +320,6 @@ if !has("gui_running") && !g:is_win
   "colorscheme icansee
   "colorscheme greens
   "colorscheme freya_cs
-  "colorscheme asu1dark_cs
   "colorscheme desert256_cs
   "colorscheme desert
   "colorscheme leo_cs

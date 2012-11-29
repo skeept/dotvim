@@ -81,17 +81,11 @@ set pastetoggle=<Leader>pt
 set t_Co=256
 "set t_Co=88
 
-if v:version >= 703
-  set undofile
-  "set relativenumber
-endif
-
-"" set backup. but all the backuped files will be
-"" placed in the directory specified by backupdir
 set backup
 exec "set backupdir^=" . g:p0 . "/backup"
 exec "set directory^=" . g:p0 . "/swapdir"
 if v:version >= 703
+  set undofile
   exec "set undodir^=" . g:p0 . "/undodir"
 endif
 
@@ -346,7 +340,6 @@ if !has("gui_running") && !g:is_win
   "colorscheme icansee
   "colorscheme greens
   "colorscheme freya_cs
-  "colorscheme asu1dark_cs
   "colorscheme desert256_cs
   "colorscheme desert
   "colorscheme leo_cs
@@ -1185,9 +1178,7 @@ if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomp
   "inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
   "inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
   "inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
-  " Or set this.
   "let g:neocomplcache_enable_cursor_hold_i = 1
-  " Or set this.
   "let g:neocomplcache_enable_insert_char_pre = 1
 
   " AutoComplPop like behavior.
