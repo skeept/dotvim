@@ -1,4 +1,73 @@
 ================================================================================
+  RELEASE NOTES FOR VERSION 5.19
+================================================================================
+- Resolve home for linked home directories.
+- Three C++-items removed (see file 'customization.cpp.vim').
+- Bugfix: global options changed unintentionally.
+- Minor improvements and bugfixes.
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.18
+================================================================================
+- Hotkeys \lcs, \ucs removed.
+- Bugfix: delayed template initialization missing correct style.
+- Wrong cursor position when inserting some templates at the end of a line.
+
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.17
+================================================================================
+- Two new plugin tags: LICENSE,ORGANIZATION
+- System-wide installation: minimal Template file for a user will automatically
+  be added.
+- New menu item and hotkey: choose a makefile.
+- New idiom: realloc.
+- New preprocessor item: #if #endif.
+- New hotkeys: \ire, \ifs, \ifp, \pif.
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.16.1
+================================================================================
+- Bugfix: problem with a system-wide installation under Windows (thanks to Ricardo Vrech).
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.16
+================================================================================
+- Plugin loads faster: loading the templates is delayed until the first use.
+- Plugin now works with pathogen.vim.
+- Menus will always be generated (for the use with :emenu).
+- Bugfix: no local templates available with a system-wide installation (thanks to Iain Arnell).
+- Several improvements.
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.15
+================================================================================
+- New hotkey \cx C to C++ comments and vice versa.
+- Several hotkeys allow a range, e.g. '3\cl' (see help text and c-hotkey.pdf).
+- Improved prototype picking: \nf, \np picks up a function prototype, 
+  \nm picks up a method prototype (see documentation for more).
+- include-statements will now be inserted in the actual line (before: new line
+  below the actual line).
+- Several minor improvements.
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.14
+================================================================================
+- A makefile can be run with C-F9
+- Linking ( Run menu, \rl, \rr ) will be suppressed if buffer contains no main function.
+- Bugfix: correctly deactivate unwanted compiler messages in a quickfix buffer.
+- Several minor improvements
+
+================================================================================
+  RELEASE NOTES FOR VERSION 5.13
+================================================================================
+- New hotkeys \rmc (run 'make clean') and \rme (executable to run).
+- Hotkeys for make are working when in a makefile.
+- Linker errors and errors during a make will be shown in a quickfix buffer.
+- Bugfix: detection of a systemwide installation can fail.
+- Bugfix: preprocessor directive '#if 0 #endif' not working.
+
+================================================================================
   RELEASE NOTES FOR VERSION 5.12
 ================================================================================
 - New hotkeys \+" .
