@@ -26,7 +26,11 @@ endif
 let g:is_win = has('win32') || has('win64')
 "}}}
 
+" decide on pathogen or vam
+let s:addon_manager = 2
+
 "================== pathogen ================================================{{{
+"we still use g:pathogen_disabled
 let g:pathogen_disabled = []
 "call pathogen#helptags()
 "call pathogen#runtime_append_all_bundles()
@@ -45,7 +49,33 @@ endif
 if g:is_win
   let g:pathogen_disabled += ['pysmell']
 endif
-call pathogen#infect()
+if s:addon_manager == 1
+  call pathogen#infect()
+endif
+"==============================================================================}}}
+
+"================== vim-addon-manager========================================{{{
+if s:addon_manager == 2
+fun SetupVAM()
+  let vam_install_path = g:p0 . '/bundle'
+  exec 'set rtp+='.vam_install_path.'/vam'
+  " let g:vim_addon_manager = { your config here see "commented version" example and help
+
+  let s:active_addons = ['ctrlp', 'indent-guides', 'neocomplcache', 'smartusline', 'tasklist']
+  let s:active_addons += ['unite-mark', 'd.0', 'LanguageTool', 'textobj-word-column']
+  let s:active_addons += ['unite-outline', 'buffergator', 'delimitMate', 'LaTeX-Box']
+  let s:active_addons += ['SpellCheck', 'ultisnips_rep', 'unite-tag', 'clang_complete']
+  let s:active_addons += ['fugitive', 'supertab', 'undotree', 'CountJump', 'gitv']
+  let s:active_addons += ['manpageview', 'tabular', 'unite', 'vimproc', 'csv',  'tagbar']
+  let s:active_addons += ['unite-colorscheme', 'vlatex']
+  if has("python")
+    let s:active_addons += ['ultisnips_rep']
+  endif
+
+  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0})
+endfun
+call SetupVAM()
+endif
 "==============================================================================}}}
 
 "================== Settings =================================================={{{
@@ -1121,9 +1151,8 @@ command! Mt call MyThesisEnv()
 
 "================== neocomplcache ============================================={{{
 " Use neocomplcache?
-let g:neocomplcache_enable_at_startup = 1
-if g:neocomplcache_enable_at_startup == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1
-  " Disable AutoComplPop.
+let g:neocomplcache_enable_at_startup = 1 && index(g:pathogen_disabled, 'neocomplcache') == -1
+if g:neocomplcache_enable_at_startup == 1
   let g:acp_enableAtStartup = 0
   " Use smartcase.
   let g:neocomplcache_enable_smart_case = 0
