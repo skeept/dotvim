@@ -57,6 +57,7 @@ endif
 "================== vim-addon-manager========================================{{{
 if s:addon_manager == 2
 fun SetupVAM()
+  let g:vim_addon_manager = {}
   let vam_install_path = g:p0 . '/bundle'
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
@@ -71,6 +72,8 @@ fun SetupVAM()
   if has("python")
     let s:active_addons += ['ultisnips_rep']
   endif
+
+  let g:vim_addon_manager.additional_addon_dirs = [g:p0 . '/notused_plugins']
 
   call vam#ActivateAddons(s:active_addons, {'auto_install' : 0})
 endfun
