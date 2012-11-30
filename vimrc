@@ -346,8 +346,6 @@ if has("autocmd")
   autocmd FileType help map <buffer> <space> <c-d>
   autocmd FileType help map <buffer> <bs> <c-u>
 
-  au BufWinEnter *.txt if(&ft =~ 'help')| nmap <buffer> <CR> <C-]> |endif
-
   "don't show file numbers in taglist and nerdtree
   autocmd FileType nerdtree      setlocal norelativenumber
   autocmd FileType taglist       setlocal norelativenumber
