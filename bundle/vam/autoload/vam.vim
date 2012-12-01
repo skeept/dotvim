@@ -43,8 +43,8 @@ endif
 " ensure we have absolute paths (windows doesn't like ~/.. ) :
 let s:c.plugin_root_dir = expand(fnameescape(s:c.plugin_root_dir))
 
-" calling expand is expensive, the user should add absolute paths or do it himself
 let s:c.additional_addon_dirs = get(s:c, 'additional_addon_dirs', [])
+call map(s:c.additional_addon_dirs, 'expand(fnameescape(v:val))')
 
 let s:c.dont_source          = get(s:c, 'dont_source',          0)
 let s:c.plugin_dir_by_name   = get(s:c, 'plugin_dir_by_name',   'vam#DefaultPluginDirFromName')
@@ -214,6 +214,23 @@ fun! vam#ActivateRecursively(list_of_names, ...)
   endfor
 endfun
 
+fun! s:GetAuGroups()
+  redir => aus
+  silent autocmd VimEnter,BufEnter,TabEnter,BufWinEnter,WinEnter,GUIEnter
+  redir END
+  let augs = {}
+  for [group, event] in map(filter(split(aus, "\n"),
+        \                          'v:val=~#''\v^\w+\s+\w+$'''),
+        \                   'split(v:val)')
+    if has_key(augs, group)
+      call add(augs[group], event)
+    else
+      let augs[group] = [event]
+    endif
+  endfor
+  return augs
+endfun
+
 let s:top_level = 0
 " see also ActivateRecursively
 " Activate activates the plugins and their dependencies recursively.
@@ -298,12 +315,40 @@ fun! vam#ActivateAddons(...) abort
       call vam#GlobThenSource(rtp.'/ftdetect/*.vim')
     endfor
 
+    " HACKS source files which Vim only sources at startup (before VimEnter)
+    "
     " using force is very likely to cause the plugin to be sourced twice
     " I hope the plugins don't mind
     if !has('vim_starting') || get(opts, 'force_loading_plugins_now', 0)
+      " get all au groups which have been defined before sourcing additional
+      " plugin files
+      let oldaugs = s:GetAuGroups()
+
       for rtp in new_runtime_paths
         call vam#GlobThenSource(rtp.'/plugin/**/*.vim')
         call vam#GlobThenSource(rtp.'/after/plugin/**/*.vim')
+      endfor
+
+      " Now find out which au groups are new and run them manually, cause
+      " Vim does so only when starting up. NerdTree and powerline are two
+      " plugins serving as sample. Both use VimEnter.
+      let newaugs = filter(s:GetAuGroups(), '!has_key(oldaugs, v:key)')
+      let event_to_groups = {}
+      for [group, events] in items(newaugs)
+        for event in events
+          if has_key(event_to_groups, event)
+            call add(event_to_groups, group)
+          else
+            let event_to_groups[event] = [group]
+          endif
+        endfor
+      endfor
+      for event in filter((has('gui_running')?['GUIEnter']:[])+['VimEnter',
+            \              'TabEnter', 'WinEnter', 'BufEnter', 'BufWinEnter'],
+            \             'has_key(event_to_groups, v:val)')
+        for group in event_to_groups[event]
+          execute 'doautocmd' group event
+        endfor
       endfor
 
       if !empty(new_runtime_paths)
