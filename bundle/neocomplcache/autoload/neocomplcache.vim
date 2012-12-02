@@ -764,9 +764,12 @@ function! neocomplcache#manual_complete(findstart, base) "{{{
       let s:complete_words = []
       let s:is_prefetch = 0
       let s:complete_results = {}
-      return (g:neocomplcache_enable_prefetch
-            \ || g:neocomplcache_enable_insert_char_pre) ?
-            \ -1 : -3
+
+      let neocomplcache = s:get_current_neocomplcache()
+      let cur_keyword_pos = (g:neocomplcache_enable_prefetch ||
+            \ g:neocomplcache_enable_insert_char_pre ||
+            \ s:get_current_neocomplcache().skipped) ?  -1 : -3
+      let neocomplcache.skipped = 0
     endif
 
     return cur_keyword_pos
@@ -842,6 +845,10 @@ function! s:do_auto_complete(event) "{{{
     return
   endif
 
+  let neocomplcache = s:get_current_neocomplcache()
+  let neocomplcache.skipped = 0
+  let neocomplcache.event = a:event
+
   let cur_text = s:get_cur_text()
   if g:neocomplcache_enable_debug
     echomsg 'cur_text = ' . cur_text
@@ -857,8 +864,6 @@ function! s:do_auto_complete(event) "{{{
     let s:complete_words = []
     return
   endif
-
-  let neocomplcache = s:get_current_neocomplcache()
 
   let s:old_cur_text = cur_text
 
@@ -1645,6 +1650,9 @@ function! neocomplcache#complete_check() "{{{
         \     && split(reltimestr(reltime(s:start_time)))[0] >
         \          g:neocomplcache_skip_auto_completion_time)
   if ret
+    let neocomplcache = s:get_current_neocomplcache()
+    let neocomplcache.skipped = 1
+
     redraw
     echo 'Skipped.'
   endif
@@ -2395,7 +2403,7 @@ function! s:on_insert_enter() "{{{
   if &l:foldmethod ==# 'expr'
     let neocomplcache.foldinfo = [&l:foldmethod, &l:foldexpr]
     setlocal foldmethod=manual foldexpr=0
-    normal! zv
+    foldopen
   endif
 
   let neocomplcache.skip_next_complete = 0
@@ -2480,6 +2488,11 @@ function! s:get_cur_text() "{{{
     let cur_text = matchstr(cur_text, '^.\{-}\ze\S\+$')
   else
     let cur_keyword_str = ''
+  endif
+
+  let neocomplcache = s:get_current_neocomplcache()
+  if neocomplcache.event ==# 'InsertCharPre'
+    let cur_keyword_str .= v:char
   endif
 
   let filetype = neocomplcache#get_context_filetype()
@@ -2689,6 +2702,8 @@ function! s:get_current_neocomplcache() "{{{
           \ 'update_time_save' : &updatetime,
           \ 'foldinfo' : [],
           \ 'lock_sources' : {},
+          \ 'skipped' : 0,
+          \ 'event' : '',
           \}
   endif
 
