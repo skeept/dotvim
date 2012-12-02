@@ -37,7 +37,7 @@ let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
 let g:pathogen_disabled += ['Align', 'AutoAlign']
 if !has("python")
   let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
-  let g:pathogen_disabled += ['ultisnips_rep', 'pyflakes', 'python-mode']
+  let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
 endif
 if g:is_win
   let g:pathogen_disabled += ['pysmell']
@@ -58,12 +58,12 @@ fun SetupVAM()
   let s:active_addons = ['ctrlp', 'indent-guides', 'neocomplcache', 'smartusline', 'tasklist']
   let s:active_addons += ['unite-mark', 'd.0', 'LanguageTool', 'textobj-word-column']
   let s:active_addons += ['unite-outline', 'buffergator', 'delimitMate', 'LaTeX-Box']
-  let s:active_addons += ['SpellCheck', 'ultisnips_rep', 'unite-tag', 'clang_complete']
+  let s:active_addons += ['SpellCheck', 'unite-tag', 'clang_complete']
   let s:active_addons += ['fugitive', 'supertab', 'undotree', 'CountJump', 'gitv']
   let s:active_addons += ['manpageview', 'tabular', 'unite', 'vimproc', 'csv',  'tagbar']
   let s:active_addons += ['unite-colorscheme', 'vlatex']
   if has("python")
-    let s:active_addons += ['ultisnips_rep']
+    let s:active_addons += ['UltiSnips']
   endif
 
   let g:vim_addon_manager.additional_addon_dirs = [expand(g:p0 . '/notused_plugins')]
