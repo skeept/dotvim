@@ -1143,7 +1143,9 @@ command! Mt call MyThesisEnv()
 
 "================== neocomplcache ============================================={{{
 " Use neocomplcache?
-let g:neocomplcache_enable_at_startup = 1 && index(g:pathogen_disabled, 'neocomplcache') == -1
+let g:neocomplcache_enable_at_startup = 0 && (
+      \ (s:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
+      \ (s:addon_manager == 2 && index(s:active_addons, 'neocomplcache') >= 0))
 if g:neocomplcache_enable_at_startup == 1
   let g:acp_enableAtStartup = 0
   " Use smartcase.
