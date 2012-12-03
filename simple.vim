@@ -35,6 +35,9 @@ fun SetupVAM()
   let g:vim_addon_manager.additional_addon_dirs = [expand(g:p0 . '/notused_plugins')]
 
   call vam#ActivateAddons(s:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
+
+  command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
+        \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
 endfun
 call SetupVAM()
 endif
