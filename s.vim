@@ -30,15 +30,11 @@ fun SetupVAM()
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons = ['ctrlp']
-  if has("python")
-    let s:active_addons += ['UltiSnips']
-  endif
+  let s:active_addons = ['supertab']
 
-  let g:vim_addon_manager.source_missing_plugins = 0
   let g:vim_addon_manager.additional_addon_dirs = [expand(g:p0 . '/notused_plugins')]
 
-  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0})
+  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
 endfun
 call SetupVAM()
 endif
@@ -717,13 +713,12 @@ endif
 "=================== Plugin Loading ==========================================={{{
 " always load {{{
 runtime plugin/NERD_commenter.vim
-runtime bundle/supertab/plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 "}}}
 
 function! LoadTagbar() "{{{
-  call vam#ActivateAddons('tagbar')
+  call vam#ActivateAddons(['tagbar'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
   inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
 endf
@@ -733,7 +728,7 @@ inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips() "{{{
   if has("python")
-    call vam#ActivateAddons('UltiSnips')
+    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
     if has("autocmd")
       autocmd FileType * call UltiSnips_FileTypeChanged()
       autocmd BufNewFile,BufRead *.snippets setf snippets
@@ -741,6 +736,7 @@ function! LoadUltisnips() "{{{
     call UltiSnips_FileTypeChanged()
     nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
     inoremap <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    inoremap <C-J> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
     return 1
   else
     echom "vim compiled without python"
@@ -752,7 +748,7 @@ inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 "}}}
 
 function! LoadCtrlP() "{{{
-  call vam#ActivateAddons('ctrlp')
+  call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
@@ -762,7 +758,7 @@ nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
 function! LoadLycosa() "{{{
-  call vam#ActivateAddons('lycosaExplorer')
+  call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap ,e :<c-u>call ToggleLycosa()<CR>
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
