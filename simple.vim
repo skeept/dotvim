@@ -22,8 +22,28 @@ endif
 let g:is_win = has('win32') || has('win64')
 "}}}
 
+"================== vim-addon-manager========================================{{{
+if 1
+fun SetupVAM()
+  let g:vim_addon_manager = {}
+  let vam_install_path = expand(g:p0 . '/bundle')
+  exec 'set rtp+='.vam_install_path.'/vam'
+  " let g:vim_addon_manager = { your config here see "commented version" example and help
+
+  let s:active_addons = ['supertab']
+
+  let g:vim_addon_manager.additional_addon_dirs = [expand(g:p0 . '/notused_plugins')]
+
+  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
+endfun
+call SetupVAM()
+endif
+"==============================================================================}}}
+
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+set nocompatible
 
 " allow backspacing over everything in insert mode
 "set backspace=indent,eol,start
@@ -693,15 +713,12 @@ endif
 "=================== Plugin Loading ==========================================={{{
 " always load {{{
 runtime plugin/NERD_commenter.vim
-runtime bundle/supertab/plugin/supertab.vim
 runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 "}}}
 
 function! LoadTagbar() "{{{
-  runtime bundle/tagbar/plugin/tagbar.vim
-  exec "set runtimepath+=" . g:p0 . "/bundle/tagbar"
-  "nnoremap <F3> :TagbarToggle<CR>
+  call vam#ActivateAddons(['tagbar'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
   inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
 endf
@@ -711,14 +728,15 @@ inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips() "{{{
   if has("python")
-    runtime bundle/UltiSnips/plugin/UltiSnips.vim
-    exec "set runtimepath+=" . g:p0 . "/bundle/UltiSnips"
+    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
     if has("autocmd")
       autocmd FileType * call UltiSnips_FileTypeChanged()
       autocmd BufNewFile,BufRead *.snippets setf snippets
     endif
     call UltiSnips_FileTypeChanged()
     nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+    inoremap <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    inoremap <C-J> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
     return 1
   else
     echom "vim compiled without python"
@@ -730,8 +748,7 @@ inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 "}}}
 
 function! LoadCtrlP() "{{{
-  exec "set runtimepath+=" . g:p0 . "/bundle/ctrlp"
-  runtime bundle/ctrlp/plugin/ctrlp.vim
+  call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
@@ -741,8 +758,7 @@ nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
 function! LoadLycosa() "{{{
-  exec "set runtimepath+=" . g:p0 ."/bundle/lycosaexplorer"
-  runtime bundle/lycosaexplorer/plugin/lycosaexplorer.vim
+  call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap ,e :<c-u>call ToggleLycosa()<CR>
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
