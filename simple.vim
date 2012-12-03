@@ -711,8 +711,8 @@ inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 
 function! LoadUltisnips() "{{{
   if has("python")
-    runtime bundle/ultisnips_rep/plugin/UltiSnips.vim
-    exec "set runtimepath+=" . g:p0 . "/bundle/ultisnips_rep"
+    runtime bundle/UltiSnips/plugin/UltiSnips.vim
+    exec "set runtimepath+=" . g:p0 . "/bundle/UltiSnips"
     if has("autocmd")
       autocmd FileType * call UltiSnips_FileTypeChanged()
       autocmd BufNewFile,BufRead *.snippets setf snippets
