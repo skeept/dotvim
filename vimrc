@@ -55,13 +55,13 @@ fun SetupVAM()
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons = ['ctrlp', 'indent-guides', 'neocomplcache', 'SmartusLine', 'TaskList']
-  let s:active_addons += ['unite-mark', 'd.0', 'LanguageTool', 'textobj-word-column']
-  let s:active_addons += ['unite-outline', 'Buffergator', 'delimitMate', 'LaTeX-Box']
-  let s:active_addons += ['SpellCheck', 'unite-tag', 'clang_complete']
+  let s:active_addons = ['ctrlp', 'indent-guides', 'SmartusLine', 'TaskList']
+  let s:active_addons += ['d.0', 'LanguageTool', 'textobj-word-column']
+  let s:active_addons += ['Buffergator', 'delimitMate', 'LaTeX-Box']
+  let s:active_addons += ['SpellCheck', 'clang_complete']
   let s:active_addons += ['fugitive', 'supertab', 'undotree', 'CountJump', 'gitv']
-  let s:active_addons += ['ManPageView', 'tabular', 'unite', 'vimproc', 'csv',  'Tagbar']
-  let s:active_addons += ['unite-colorscheme', 'vlatex']
+  let s:active_addons += ['ManPageView', 'tabular', 'vimproc', 'csv',  'Tagbar']
+  let s:active_addons += ['vlatex']
   if has("python")
     "let s:active_addons += ['UltiSnips']
   endif
@@ -1146,7 +1146,7 @@ command! Mt call MyThesisEnv()
 
 "================== neocomplcache ============================================={{{
 " Use neocomplcache?
-let g:neocomplcache_enable_at_startup = 0 && (
+let g:neocomplcache_enable_at_startup = 1 && (
       \ (s:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
       \ (s:addon_manager == 2 && index(s:active_addons, 'neocomplcache') >= 0))
 if g:neocomplcache_enable_at_startup == 1
@@ -1268,6 +1268,22 @@ endfunction
 nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+"}}}
+
+function! LoadUnite() "{{{
+    call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline', 'unite-tag', 'unite-colorscheme'],
+          \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+    nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+    nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
+    nnoremap <silent> ,uo :<C-u>Unite outline<CR>
+    nnoremap ,uf :<C-u>Unite source<CR>
+    nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
+endfunction
+nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
+nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>Unite colorscheme<CR>
+nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
+nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
 "}}}
 "==============================================================================}}}
 
