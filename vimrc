@@ -49,7 +49,7 @@ endif
 
 "================== vim-addon-manager========================================{{{
 if s:addon_manager == 2
-fun SetupVAM()
+function! SetupVAM()
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
   exec 'set rtp+='.vam_install_path.'/vam'
@@ -72,7 +72,7 @@ fun SetupVAM()
 
   command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-endfun
+endfunction
 call SetupVAM()
 endif
 "==============================================================================}}}

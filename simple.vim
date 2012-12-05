@@ -24,7 +24,7 @@ let g:is_win = has('win32') || has('win64')
 
 "================== vim-addon-manager========================================{{{
 if 1
-fun SetupVAM()
+function! SetupVAM()
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
   exec 'set rtp+='.vam_install_path.'/vam'
@@ -38,7 +38,7 @@ fun SetupVAM()
 
   command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-endfun
+endfunction
 call SetupVAM()
 endif
 "==============================================================================}}}
@@ -721,7 +721,7 @@ runtime plugin/scratch.vim
 "}}}
 
 function! LoadTagbar() "{{{
-  call vam#ActivateAddons(['tagbar'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  call vam#ActivateAddons(['Tagbar', 'NERDtree', 'Buffergator'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
   inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
 endf
@@ -755,8 +755,7 @@ function! LoadCtrlP() "{{{
   nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
-nnoremap <c-p> :call LoadCtrlP()<CR>
-      \:<c-u>CtrlP<CR>
+nnoremap <c-p> :call LoadCtrlP()<CR>:<C-U>CtrlP<CR>
 nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
