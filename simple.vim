@@ -721,12 +721,15 @@ runtime plugin/scratch.vim
 "}}}
 
 function! LoadTagbar() "{{{
-  call vam#ActivateAddons(['Tagbar', 'NERDtree', 'Buffergator'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  "call vam#ActivateAddons(['Tagbar', 'nerdtree', 'Buffergator'], "nerdtree
+  "and buffergator don't load well. can investigate later (couple weeks)
+  call vam#ActivateAddons(['Tagbar'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
   inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
 endf
-nnoremap <F3> :call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-inoremap <F3> <CR>:call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
+nnoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
+inoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 "}}}
 
 function! LoadUltisnips() "{{{
