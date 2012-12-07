@@ -8,9 +8,7 @@ CONTENTS                                        *VAM-contents-getting-started*
     2. Installation & installing plugins      |VAM-installation|
         2.2 Names of addons and addon sources |VAM-addon-names|
         2.3 Example: configurable setup       |VAM-complex-setup-sample|
-        2.4 unattended installation           |VAM-unattended-installation|
-
-        2.9 error messages you may see and what they mean
+        2.4 Unattended installation           |VAM-unattended-installation|
 In |vim-addon-manager-additional-documentation.txt|:
     3. Functionality provided                 |VAM-functionality|
         3.1. Commands                         |VAM-commands|
@@ -23,11 +21,12 @@ In |vim-addon-manager-additional-documentation.txt|:
    10. Some notes for windows users           |VAM-windows|
    11. Some notes for Gentoo users            |VAM-gentoo|
    12. Troubleshooting and known bugs         |VAM-trouble-shooting|
+        12.1. Common error messages           |VAM-common-errors|
    13. TODO notes                             |VAM-TODO|
    14. VAM vs ...                             |VAM-comparison|
    15. Tracking down errors                   |VAM-tracking-down-erros|
    16. Making plugins work with VAM           |VAM-adjusting-plugins|
-   50. VAM works around deficiencies in runtimepath      |VAM-fixes-rtp|
+   17. VAM runtimepath handling tricks        |VAM-rtp-tricks|
 
 ==============================================================================
 
@@ -38,10 +37,10 @@ Read: |VAM-installation| and |VAM-addon-names|
 
 
 NEED HELP: ~
-Join irc.freenode.net, /join #vim. Ask there. VAM has many users
-MarcWeber is hanging around often so ping him or create a github ticket [1] and
-people will try to help you. You should skim the docs before asking for
-help though. Also see |VAM-author|
+Join irc.freenode.net, /join #vim. Ask there. VAM has many users MarcWeber is 
+hanging around often so ping him or create a github ticket [1] and people will 
+try to help you. You should skim the docs before asking for help though. Also 
+see |VAM-author|.
 [1] https://github.com/MarcWeber/vim-addon-manager/issues
 
 WHY VAM?: ~
@@ -132,8 +131,8 @@ commented version ~
           " to fetch VAM, VAM-known-repositories and the listed plugins
           " without having to install curl, 7-zip and git tools first
           " -> BUG [4] (git-less installation)
-          let is_installed = "isdirectory(a:plugin_root_dir.'/vim-addon-manager/autoload')"
-          if eval(is_installed)
+          let vam_autoload_dir = a:plugin_root_dir.'/vim-addon-manager/autoload'
+          if isdirectory(vam_autoload_dir)
             return 1
           else
             if 1 == confirm("Clone VAM into ".a:plugin_root_dir."?","&Y\n&N")
@@ -150,7 +149,7 @@ commented version ~
               " plugins
               exec 'helptags '.fnameescape(a:plugin_root_dir.'/vim-addon-manager/doc')
             endif
-            return eval(is_installed)
+            return isdirectory(vam_autoload_dir)
           endif
         endfun
 
@@ -172,7 +171,7 @@ commented version ~
             echohl ErrorMsg | echomsg "No VAM found!" | echohl NONE
             return
           endif
-          exec 'set rtp+='.fnameescape(plugin_root_dir.'/vim-addon-manager')
+          let &rtp.=(empty(&rtp)?'':',').plugin_root_dir.'/vim-addon-manager'
 
           " Tell VAM which plugins to fetch & load:
           call vam#ActivateAddons([], {'auto_install' : 0})
@@ -207,7 +206,7 @@ minimal version ~
 
         fun SetupVAM()
           let plugin_root_dir = expand('$HOME') . '/.vim/vim-addons'
-          exec 'set rtp+='.fnameescape(plugin_root_dir.'/vim-addon-manager')
+          let &rtp.=(empty(&rtp)?'':',').plugin_root_dir.'/vim-addon-manager'
           " let g:vim_addon_manager = { your config here see "commented version" example and help
           if !isdirectory(plugin_root_dir.'/vim-addon-manager/autoload')
             execute '!git clone --depth=1 git://github.com/MarcWeber/vim-addon-manager '
@@ -453,18 +452,5 @@ just use the log_buffer_name option which defaults to a value of
     \'log_buffer_name': '/tmp/vam_install.log',
     \}
 <
-
-------------------------------------------------------------------------------
-2.9 error messages you may see and what they mean
->
-   unknown function: vam#ActivteAddons
-
-This means that Vim's |runtimepath| setting does not contain the path you
-cloned VAM to. Using the recommended setup this should not happen.
-Have a second glance at the minimal setup at 2.2 |VAM-install|
-
-The long description is that vam# functions are looked up in
-&runtimepath/autoload/vam.vim files. If Vim doesn't find such the error will
-happen
 
 vim: tw=78:ts=8:ft=help:norl
