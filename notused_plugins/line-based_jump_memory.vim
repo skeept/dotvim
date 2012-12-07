@@ -12,7 +12,7 @@
 "
 "       Author: Douglas A. Augusto (daaugusto AT gmail DOT com)
 "
-"      Version: 0.2.0
+"      Version: 0.2.1
 "
 "  Last change: January 7, 2011
 "
@@ -120,7 +120,7 @@ function! <SID>Normal(cmd, has_char_arg)
    let n = v:count ? v:count : ''
 
    call <SID>SavePos()
-   silent exec eval("\"normal! " . n . a:cmd . c . "\"")
+   silent exec "normal! " . n . eval("\"".a:cmd."\"") . c
    call <SID>Mark()
 endfunction
 
