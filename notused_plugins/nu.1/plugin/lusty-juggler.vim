@@ -1,4 +1,4 @@
-"    Copyright: Copyright (C) 2008-2011 Stephen Bach
+"    Copyright: Copyright (C) 2008-2012 Stephen Bach
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
 "               notice is copied with it. Like anything else that's free,
@@ -11,10 +11,12 @@
 "  Description: Dynamic Buffer Switcher Vim Plugin
 "   Maintainer: Stephen Bach <this-file@sjbach.com>
 " Contributors: Juan Frias, Bartosz Leper, Marco Barberis, Vincent Driessen,
-"               Martin Wache, Johannes Holzfuß, Adam Rutkowski, Carlo Teubner
+"               Martin Wache, Johannes Holzfuß, Adam Rutkowski, Carlo Teubner,
+"               lilydjwg, Leonid Shevtsov, Giuseppe Rota, Göran Gustafsson,
+"               Chris Lasher, Guy Haskin Fernald
 "
-" Release Date: April 29, 2011
-"      Version: 1.3
+" Release Date: February 29, 2012
+"      Version: 1.5.1
 "
 "        Usage:
 "                 <Leader>lj  - Opens the buffer juggler.
@@ -23,13 +25,16 @@
 "
 "                 ":LustyJuggler"
 "
-"               (Personally, I map this to ,j)
+"               To suppress the default mapping, set this option:
+"
+"                 let g:LustyJugglerDefaultMappings = 0
 "
 "               When launched, the command bar at bottom is replaced with a
 "               new bar showing the names of currently-opened buffers in
 "               most-recently-used order.
 "
-"               The buffers are mapped to these keys:
+"               By default, LustyJuggler follows the QWERTY layout, and
+"               buffers are mapped to these keys:
 "
 "                   1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th
 "                   ----------------------------------------
@@ -42,7 +47,8 @@
 "
 "               If you want to switch to that buffer, press "f" or "4" again
 "               or press "<ENTER>".  Alternatively, press one of the other
-"               mapped keys to highlight another buffer.
+"               mapped keys to highlight another buffer.  To open the buffer
+"               in a new split, press "b" for horizontal or "v" for vertical.
 "
 "               To display the key with the name of the buffer, add one of
 "               the following lines to your .vimrc:
@@ -52,6 +58,19 @@
 "
 "               To cancel the juggler, press any of "q", "<ESC>", "<C-c",
 "               "<BS>", "<Del>", or "<C-h>".
+"
+"               LustyJuggler also supports the Dvorak keyboard layout. To
+"               enable this feature, place the following in your .vimrc:
+"
+"                 let g:LustyJugglerKeyboardLayout = "dvorak"
+"
+"               With the layout set to "dvorak", the buffer mapping is as
+"               follows:
+"
+"                   1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th
+"                   ----------------------------------------
+"                   a   o   e   u   i   d   h   t   n   s
+"                   1   2   3   4   5   6   7   8   9   0
 "
 "               LustyJuggler can act very much like <A-Tab> window switching.
 "               To enable this mode, add the following line to your .vimrc:
@@ -211,7 +230,13 @@ endfunction
 
 
 " Default mappings.
-nmap <silent> <Leader>lj :LustyJuggler<CR>
+if !exists("g:LustyJugglerDefaultMappings")
+  let g:LustyJugglerDefaultMappings = 1
+endif
+
+if g:LustyJugglerDefaultMappings == 1
+  nmap <silent> <Leader>lj :LustyJuggler<CR>
+endif
 
 " Vim-to-ruby function calls.
 function! s:LustyJugglerStart()
@@ -320,12 +345,6 @@ module VIM
     s.gsub("'", "''")
   end
 
-  def self.filename_escape(s)
-    # Escape slashes, open square braces, spaces, sharps, double quotes and
-    # percent signs.
-    s.gsub(/\\/, '\\\\\\').gsub(/[\[ #"%]/, '\\\\\0')
-  end
-
   def self.regex_escape(s)
     s.gsub(/[\]\[.~"^$\\*]/,'\\\\\0')
   end
@@ -379,6 +398,27 @@ else
   module VIM
     def self.strwidth(s)
       s.length
+    end
+  end
+end
+
+if VIM::exists?("*fnameescape")
+  module VIM
+    def self.filename_escape(s)
+      # Escape slashes, open square braces, spaces, sharps, double
+      # quotes and percent signs, and remove leading ./ for files in
+      # pwd.
+      single_quote_escaped = single_quote_escape(s)
+      evaluate("fnameescape('#{single_quote_escaped}')").sub(/^\.\//,"")
+    end
+  end
+else
+  module VIM
+    def self.filename_escape(s)
+      # Escape slashes, open square braces, spaces, sharps, double
+      # quotes and percent signs, and remove leading ./ for files in
+      # pwd.
+      s.gsub(/\\/, '\\\\\\').gsub(/[\[ #"%]/, '\\\\\0').sub(/^\.\//,"")
     end
   end
 end
@@ -500,33 +540,64 @@ end
 
 module LustyJ
 class LustyJuggler
-  private
-    @@KEYS = { "a" => 1,
-               "s" => 2,
-               "d" => 3,
-               "f" => 4,
-               "g" => 5,
-               "h" => 6,
-               "j" => 7,
-               "k" => 8,
-               "l" => 9,
-               ";" => 10,
-               "1" => 1,
-               "2" => 2,
-               "3" => 3,
-               "4" => 4,
-               "5" => 5,
-               "6" => 6,
-               "7" => 7,
-               "8" => 8,
-               "9" => 9,
-               "0" => 10 }
-
   public
     def initialize
       @running = false
       @last_pressed = nil
-      @name_bar = NameBar.new
+      alpha_buffer_keys = [
+        "a",
+        "s",
+        "d",
+        "f",
+        "g",
+        "h",
+        "j",
+        "k",
+        "l",
+        ";",
+      ]
+      @name_bar = NameBar.new(alpha_buffer_keys)
+      @ALPHA_BUFFER_KEYS = Hash.new
+      alpha_buffer_keys.each_with_index {|x, i| @ALPHA_BUFFER_KEYS[x] = i + 1}
+      @NUMERIC_BUFFER_KEYS = {
+        "1" => 1,
+        "2" => 2,
+        "3" => 3,
+        "4" => 4,
+        "5" => 5,
+        "6" => 6,
+        "7" => 7,
+        "8" => 8,
+        "9" => 9,
+        "0" => 10,
+        "10" => 10
+      }
+      @BUFFER_KEYS = @ALPHA_BUFFER_KEYS.merge(@NUMERIC_BUFFER_KEYS)
+      @KEYPRESS_KEYS = {
+        # Can't use '<CR>' as an argument to :call func for some reason.
+        "<CR>" => "ENTER",
+        "<Tab>" => "TAB",
+
+        # Split opener keys
+        "v" => "v",
+        "b" => "b",
+
+        # Left and Right keys
+        "<Esc>OD" => "Left",
+        "<Esc>OC" => "Right",
+        "<Left>" => "Left",
+        "<Right>" => "Right",
+      }
+      @KEYPRESS_MAPPINGS = @BUFFER_KEYS.merge(@KEYPRESS_KEYS)
+      @CANCEL_MAPPINGS = [
+        "i",
+        "q",
+        "<Esc>",
+        "<C-c>",
+        "<BS>",
+        "<Del>",
+        "<C-h>",
+      ]
     end
 
     def run
@@ -558,21 +629,14 @@ class LustyJuggler
       @key_mappings_map = Hash.new { |hash, k| hash[k] = [] }
 
       # Selection keys.
-      @@KEYS.keys.each do |c|
-        map_key(c, ":call <SID>LustyJugglerKeyPressed('#{c}')<CR>")
+      @KEYPRESS_MAPPINGS.each_pair do |c, v|
+        map_key(c, ":call <SID>LustyJugglerKeyPressed('#{v}')<CR>")
       end
-      # Can't use '<CR>' as an argument to :call func for some reason.
-      map_key("<CR>", ":call <SID>LustyJugglerKeyPressed('ENTER')<CR>")
-      map_key("<Tab>", ":call <SID>LustyJugglerKeyPressed('TAB')<CR>")
 
       # Cancel keys.
-      map_key("i", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("q", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("<Esc>", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("<C-c>", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("<BS>", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("<Del>", ":call <SID>LustyJugglerCancel()<CR>")
-      map_key("<C-h>", ":call <SID>LustyJugglerCancel()<CR>")
+      @CANCEL_MAPPINGS.each do |c|
+        map_key(c, ":call <SID>LustyJugglerCancel()<CR>")
+      end
 
       @last_pressed = 2 if LustyJuggler::alt_tab_mode_active?
       print_buffer_list(@last_pressed)
@@ -583,11 +647,22 @@ class LustyJuggler
 
       if @last_pressed.nil? and c == 'ENTER'
         cleanup()
-      elsif @last_pressed and (@@KEYS[c] == @last_pressed or c == 'ENTER')
+      elsif @last_pressed and (@BUFFER_KEYS[c] == @last_pressed or c == 'ENTER')
         choose(@last_pressed)
         cleanup()
+      elsif @last_pressed and %w(v b).include?(c)
+        c=='v' ? vsplit(@last_pressed) : hsplit(@last_pressed)
+        cleanup()
+      elsif c == 'Left'
+        @last_pressed = (@last_pressed.nil?) ? 0 : (@last_pressed)
+        @last_pressed = (@last_pressed - 1) < 1 ? $lj_buffer_stack.length : (@last_pressed - 1)
+        print_buffer_list(@last_pressed)
+      elsif c == 'Right'
+        @last_pressed = (@last_pressed.nil?) ? 0 : (@last_pressed)
+        @last_pressed = (@last_pressed + 1) > $lj_buffer_stack.length ? 1 : (@last_pressed + 1)
+        print_buffer_list(@last_pressed)
       else
-        @last_pressed = @@KEYS[c]
+        @last_pressed = @BUFFER_KEYS[c]
         print_buffer_list(@last_pressed)
       end
     end
@@ -601,19 +676,12 @@ class LustyJuggler
       VIM::set_option "showcmd" if @showcmd
       VIM::set_option "showmode" if @showmode
 
-      @@KEYS.keys.each do |c|
+      @KEYPRESS_MAPPINGS.keys.each do |c|
         unmap_key(c)
       end
-      unmap_key("<CR>")
-      unmap_key("<Tab>")
-
-      unmap_key("i")
-      unmap_key("q")
-      unmap_key("<Esc>")
-      unmap_key("<C-c>")
-      unmap_key("<BS>")
-      unmap_key("<Del>")
-      unmap_key("<C-h>")
+      @CANCEL_MAPPINGS.each do |c|
+        unmap_key(c)
+      end
 
       @running = false
       VIM::message ''
@@ -645,9 +713,19 @@ class LustyJuggler
       buf = $lj_buffer_stack.num_at_pos(i)
       VIM::command "b #{buf}"
     end
+    
+    def vsplit(i)
+      buf = $lj_buffer_stack.num_at_pos(i)
+      VIM::command "vert sb #{buf}"
+    end
+    
+    def hsplit(i)
+      buf = $lj_buffer_stack.num_at_pos(i)
+      VIM::command "sb #{buf}"
+    end
 
     def map_key(key, action)
-      ['n','v','o','i','c','l'].each do |mode|
+      ['n','s','x','o','i','c','l'].each do |mode|
         VIM::command "let s:maparg_holder = maparg('#{key}', '#{mode}')"
         if VIM::evaluate_bool("s:maparg_holder != ''")
           orig_rhs = VIM::evaluate("s:maparg_holder")
@@ -659,7 +737,8 @@ class LustyJuggler
             buffer  = VIM::evaluate_bool("s:maparg_dict_holder['buffer']")  ? ' <buffer>' : ''
             restore_cmd = "#{mode}#{nore}map#{silent}#{expr}#{buffer} #{key} #{orig_rhs}"
           else
-            restore_cmd = "#{mode}noremap <silent> #{key} #{orig_rhs}"
+            nore = LustyJ::starts_with?(orig_rhs, '<Plug>') ? '' : 'nore'
+            restore_cmd = "#{mode}#{nore}map <silent> #{key} #{orig_rhs}"
           end
           @key_mappings_map[key] << [ mode, restore_cmd ]
         end
@@ -668,31 +747,48 @@ class LustyJuggler
     end
 
     def unmap_key(key)
-      modes_with_mappings_for_key = \
-        { 'n' => false,
-          'v' => false,
-          'o' => false,
-          'i' => false,
-          'c' => false,
-          'l' => false }
+      #first, unmap lusty_juggler's maps
+      ['n','s','x','o','i','c','l'].each do |mode|
+        VIM::command "#{mode}unmap <silent> #{key}"
+      end
 
       if @key_mappings_map.has_key?(key)
         @key_mappings_map[key].each do |a|
           mode, restore_cmd = *a
+          # for mappings that have on the rhs \|, the \ is somehow stripped
+          restore_cmd.gsub!("|", "\\|")
           VIM::command restore_cmd
-          modes_with_mappings_for_key[mode] = true
-        end
-      end
-
-      modes_with_mappings_for_key.each_pair do |mode, had_mapping|
-        unless had_mapping
-          VIM::command "#{mode}unmap <silent> #{key}"
         end
       end
     end
 end
-end
 
+class LustyJugglerDvorak < LustyJuggler
+  public
+    def initialize
+      super
+      alpha_buffer_keys = [
+        "a",
+        "o",
+        "e",
+        "u",
+        "i",
+        "d",
+        "h",
+        "t",
+        "n",
+        "s",
+      ]
+      @name_bar = NameBar.new(alpha_buffer_keys)
+      @ALPHA_BUFFER_KEYS = Hash.new
+      alpha_buffer_keys.each_with_index {|x, i| @ALPHA_BUFFER_KEYS[x] = i + 1}
+      @BUFFER_KEYS = @ALPHA_BUFFER_KEYS.merge(@NUMERIC_BUFFER_KEYS)
+      @KEYPRESS_MAPPINGS = @BUFFER_KEYS.merge(@KEYPRESS_KEYS)
+      @CANCEL_MAPPINGS.delete("i")
+      @CANCEL_MAPPINGS.push("c")
+    end
+end
+end
 
 # An item (delimiter/separator or buffer name) on the NameBar.
 module LustyJ
@@ -823,8 +919,9 @@ end
 module LustyJ
 class NameBar
   public
-    def initialize
+    def initialize(letters)
       @selected_buffer = nil
+      @LETTERS = letters
     end
 
     attr_writer :selected_buffer
@@ -842,9 +939,6 @@ class NameBar
       NameBar.do_pretty_print(clipped)
     end
 
-  private
-    @@LETTERS = ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";"]
-
 
     def create_items
       names = $lj_buffer_stack.names(10)
@@ -853,7 +947,7 @@ class NameBar
         key = if VIM::exists?("g:LustyJugglerShowKeys")
                 case VIM::evaluate("g:LustyJugglerShowKeys").to_s
                 when /[[:alpha:]]/
-                  @@LETTERS[array.size / 2] + ":"
+                  @LETTERS[array.size / 2] + ":"
                 when /[[:digit:]]/
                   "#{((array.size / 2) + 1) % 10}:"
                 else
@@ -993,7 +1087,6 @@ end
 end
 
 
-
 # Maintain MRU ordering.
 module LustyJ
 class BufferStack
@@ -1103,7 +1196,11 @@ end
 
 
 
-$lusty_juggler = LustyJ::LustyJuggler.new
+if VIM::exists?('g:LustyJugglerKeyboardLayout') and VIM::evaluate_bool('g:LustyJugglerKeyboardLayout == "dvorak"')
+  $lusty_juggler = LustyJ::LustyJugglerDvorak.new
+else
+  $lusty_juggler = LustyJ::LustyJuggler.new
+end
 $lj_buffer_stack = LustyJ::BufferStack.new
 
 EOF

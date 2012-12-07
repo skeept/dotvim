@@ -1,4 +1,4 @@
-"    Copyright: Copyright (C) 2007-2011 Stephen Bach
+"    Copyright: Copyright (C) 2007-2012 Stephen Bach
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
 "               notice is copied with it. Like anything else that's free,
@@ -16,10 +16,11 @@
 "               Matt Tolton, Björn Winckler, sowill, David Brown
 "               Brett DiFrischia, Ali Asad Lotia, Kenneth Love, Ben Boeckel,
 "               robquant, lilydjwg, Martin Wache, Johannes Holzfuß
-"               Donald Curtis, Jan Zwiener
+"               Donald Curtis, Jan Zwiener, Giuseppe Rota, Toby O'Connell,
+"               Göran Gustafsson, Joel Elkins
 "
-" Release Date: April 29, 2011
-"      Version: 4.1
+" Release Date: February 24, 2012
+"      Version: 4.3
 "
 "        Usage:
 "                 <Leader>lf  - Opens the filesystem explorer.
@@ -36,7 +37,9 @@
 "                 ":LustyBufferExplorer"
 "                 ":LustyBufferGrep"
 "
-"               (Personally, I map these to ,f ,r ,b and ,g)
+"               To suppress the default mappings, set this option:
+"
+"                 let g:LustyExplorerDefaultMappings = 0
 "
 "               When launched, a new window appears at bottom presenting a
 "               table of files/dirs or buffers, and in the status bar a
@@ -266,14 +269,22 @@ endfunction
 
 
 " Default mappings.
-nmap <silent> <Leader>lf :LustyFilesystemExplorer<CR>
-nmap <silent> <Leader>lr :LustyFilesystemExplorerFromHere<CR>
-nmap <silent> <Leader>lb :LustyBufferExplorer<CR>
-nmap <silent> <Leader>lg :LustyBufferGrep<CR>
+if !exists("g:LustyExplorerDefaultMappings")
+  let g:LustyExplorerDefaultMappings = 1
+endif
+
+if g:LustyExplorerDefaultMappings == 1
+  nmap <silent> <Leader>lf :LustyFilesystemExplorer<CR>
+  nmap <silent> <Leader>lr :LustyFilesystemExplorerFromHere<CR>
+  nmap <silent> <Leader>lb :LustyBufferExplorer<CR>
+  nmap <silent> <Leader>lg :LustyBufferGrep<CR>
+endif
 
 " Vim-to-ruby function calls.
 function! s:LustyFilesystemExplorerStart(path)
-  exec "ruby LustyE::profile() { $lusty_filesystem_explorer.run_from_path('".a:path."') }"
+  ruby LustyE::profile() {
+       \  $lusty_filesystem_explorer.run_from_path(VIM::evaluate("a:path"))
+       \}
 endfunction
 
 function! s:LustyBufferExplorerStart()
@@ -400,12 +411,6 @@ module VIM
     s.gsub("'", "''")
   end
 
-  def self.filename_escape(s)
-    # Escape slashes, open square braces, spaces, sharps, double quotes and
-    # percent signs.
-    s.gsub(/\\/, '\\\\\\').gsub(/[\[ #"%]/, '\\\\\0')
-  end
-
   def self.regex_escape(s)
     s.gsub(/[\]\[.~"^$\\*]/,'\\\\\0')
   end
@@ -459,6 +464,27 @@ else
   module VIM
     def self.strwidth(s)
       s.length
+    end
+  end
+end
+
+if VIM::exists?("*fnameescape")
+  module VIM
+    def self.filename_escape(s)
+      # Escape slashes, open square braces, spaces, sharps, double
+      # quotes and percent signs, and remove leading ./ for files in
+      # pwd.
+      single_quote_escaped = single_quote_escape(s)
+      evaluate("fnameescape('#{single_quote_escaped}')").sub(/^\.\//,"")
+    end
+  end
+else
+  module VIM
+    def self.filename_escape(s)
+      # Escape slashes, open square braces, spaces, sharps, double
+      # quotes and percent signs, and remove leading ./ for files in
+      # pwd.
+      s.gsub(/\\/, '\\\\\\').gsub(/[\[ #"%]/, '\\\\\0').sub(/^\.\//,"")
     end
   end
 end
@@ -824,31 +850,51 @@ class Explorer
           @selected_index = 0
         when 14               # C-n (select next)
           @selected_index = \
-            (@selected_index + 1) % @current_sorted_matches.size
+            if @current_sorted_matches.size.zero?
+              0
+            else
+              (@selected_index + 1) % @current_sorted_matches.size
+            end
           refresh_mode = :no_recompute
         when 16               # C-p (select previous)
           @selected_index = \
-            (@selected_index - 1) % @current_sorted_matches.size
+            if @current_sorted_matches.size.zero?
+              0
+            else
+              (@selected_index - 1) % @current_sorted_matches.size
+            end
           refresh_mode = :no_recompute
         when 6                # C-f (select right)
-          columns = (@current_sorted_matches.size.to_f / @row_count.to_f).ceil
-          cur_column = @selected_index / @row_count
-          cur_row = @selected_index % @row_count
-          new_column = (cur_column + 1) % columns
-          if (new_column + 1) * (cur_row + 1) > @current_sorted_matches.size
-            new_column = 0
-          end
-          @selected_index = new_column * @row_count + cur_row
+          @selected_index = \
+            if @row_count.nil? || @row_count.zero?
+              0
+            else
+              columns = \
+                (@current_sorted_matches.size.to_f / @row_count.to_f).ceil
+              cur_column = @selected_index / @row_count
+              cur_row = @selected_index % @row_count
+              new_column = (cur_column + 1) % columns
+              if (new_column + 1) * (cur_row + 1) > @current_sorted_matches.size
+                new_column = 0
+              end
+              new_column * @row_count + cur_row
+            end
           refresh_mode = :no_recompute
         when 2                # C-b (select left)
-          columns = (@current_sorted_matches.size.to_f / @row_count.to_f).ceil
-          cur_column = @selected_index / @row_count
-          cur_row = @selected_index % @row_count
-          new_column = (cur_column - 1) % columns
-          if (new_column + 1) * (cur_row + 1) > @current_sorted_matches.size
-            new_column = columns - 2
-          end
-          @selected_index = new_column * @row_count + cur_row
+          @selected_index = \
+            if @row_count.nil? || @row_count.zero?
+              0
+            else
+              columns = \
+                (@current_sorted_matches.size.to_f / @row_count.to_f).ceil
+              cur_column = @selected_index / @row_count
+              cur_row = @selected_index % @row_count
+              new_column = (cur_column - 1) % columns
+              if (new_column + 1) * (cur_row + 1) > @current_sorted_matches.size
+                new_column = columns - 2
+              end
+              new_column * @row_count + cur_row
+            end
           refresh_mode = :no_recompute
         when 15               # C-o choose in new horizontal split
           choose(:new_split)
@@ -1083,6 +1129,9 @@ class FilesystemExplorer < Explorer
       if path.empty?
         path = VIM::getcwd()
       end
+      if path.respond_to?(:force_encoding)
+        path = path.force_encoding(VIM::evaluate('&enc'))
+      end
       @prompt.set!(path + File::SEPARATOR)
       run()
     end
@@ -1202,17 +1251,22 @@ class FilesystemExplorer < Explorer
           view_str << File::SEPARATOR
         end
 
-        Dir.foreach(view_str) do |name|
-          next if name == "."   # Skip pwd
-          next if name == ".." and LustyE::option_set?("AlwaysShowDotFiles")
+        begin
+          Dir.foreach(view_str) do |name|
+            next if name == "."   # Skip pwd
+            next if name == ".." and LustyE::option_set?("AlwaysShowDotFiles")
 
-          # Hide masked files.
-          next if FileMasks.masked?(name)
+            # Hide masked files.
+            next if FileMasks.masked?(name)
 
-          if FileTest.directory?(view_str + name)
-            name << File::SEPARATOR
+            if FileTest.directory?(view_str + name)
+              name << File::SEPARATOR
+            end
+            entries << FilesystemEntry.new(name)
           end
-          entries << FilesystemEntry.new(name)
+        rescue Errno::EACCES
+          # TODO: show "-- PERMISSION DENIED --"
+          return []
         end
         @memoized_dir_contents[view] = entries
       end
@@ -1257,7 +1311,7 @@ class FilesystemExplorer < Explorer
     def open_entry(entry, open_mode)
       path = view_path() + entry.label
 
-      if File.directory?(path)
+      if File.directory?(path.to_s)
         # Recurse into the directory instead of opening it.
         @prompt.set!(path.to_s)
         @selected_index = 0
@@ -1272,8 +1326,8 @@ class FilesystemExplorer < Explorer
 
     def load_file(path_str, open_mode)
       LustyE::assert($curwin == @calling_window)
-      # Escape for Vim and remove leading ./ for files in pwd.
-      filename_escaped = VIM::filename_escape(path_str).sub(/^\.\//,"")
+      filename_escaped = VIM::filename_escape(path_str)
+      # Escape single quotes again since we may have just left ruby for Vim.
       single_quote_escaped = VIM::single_quote_escape(filename_escaped)
       sanitized = VIM::evaluate "fnamemodify('#{single_quote_escaped}', ':.')"
       cmd = case open_mode
@@ -1787,6 +1841,10 @@ class Display
       VIM::command "setlocal textwidth=0"
       VIM::command "setlocal noreadonly"
 
+      if VIM::exists? '&relativenumber'
+        VIM::command "setlocal norelativenumber"
+      end
+
       # Non-buffer-local (Vim is annoying).
       # (Update SavedSettings if adding to below.)
       VIM::set_option "timeoutlen=0"
@@ -1876,6 +1934,14 @@ class Display
       VIM::command "#{map} <C-e>    :call <SID>#{prefix}KeyPressed(5)<CR>"
       VIM::command "#{map} <C-r>    :call <SID>#{prefix}KeyPressed(18)<CR>"
       VIM::command "#{map} <C-u>    :call <SID>#{prefix}KeyPressed(21)<CR>"
+      VIM::command "#{map} <Esc>OD  :call <SID>#{prefix}KeyPressed(2)<CR>"
+      VIM::command "#{map} <Esc>OC  :call <SID>#{prefix}KeyPressed(6)<CR>"
+      VIM::command "#{map} <Esc>OA  :call <SID>#{prefix}KeyPressed(16)<CR>"
+      VIM::command "#{map} <Esc>OB  :call <SID>#{prefix}KeyPressed(14)<CR>"
+      VIM::command "#{map} <Left>   :call <SID>#{prefix}KeyPressed(2)<CR>"
+      VIM::command "#{map} <Right>  :call <SID>#{prefix}KeyPressed(6)<CR>"
+      VIM::command "#{map} <Up>     :call <SID>#{prefix}KeyPressed(16)<CR>"
+      VIM::command "#{map} <Down>   :call <SID>#{prefix}KeyPressed(14)<CR>"
     end
 
     def print(strings)
