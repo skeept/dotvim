@@ -456,10 +456,11 @@ set statusline=%2.2n\ %t\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
 
-"SmartusLine
-set statusline=%2.2n\ %t\ %h%m%r%=%l/%L\ %2c\ %P
-let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
-call vam#ActivateAddons(['SmartusLine'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+"" SmartusLine
+"hi Modified guifg=black guibg=#FFA500
+"set statusline=%2.2n\ %t\ %h%#Modified#%m%r%*%=%{CondDispFtFf()}\ %l/%L\ %2c\ %P
+"let g:smartusline_string_to_highlight = '%2.2n %t %h'
+"call vam#ActivateAddons(['SmartusLine'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
 "==============================================================================}}}
 
 "================== python settings ==========================================={{{

@@ -609,7 +609,7 @@ endfunction
 
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
-set statusline+=\ %h%m%r%=
+set statusline+=\ %h%#Modified#%m%r%*%=
 "set statusline+=%{XgetTagbarFunc()}
 set statusline+=%{CondDispFtFf()}
 set statusline+=%{DispLTXCF()}
@@ -620,7 +620,8 @@ set statusline+=\ %l/%L\ %2c\ %P
 
 "=============================== smartusline =================================={{{
 "%-3.3n%t   %h%m%r%=[%{&ft},%{&ff}]   %{strftime("[%H:%M%p]")}     %l/%L  %3c   %P
-let g:smartusline_string_to_highlight = '%2.2n %t %h%m%r'
+hi Modified guifg=black guibg=#FFA500
+let g:smartusline_string_to_highlight = '%2.2n %t %h'
 "let smartusline_deep_eval = 1
 "set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 "==============================================================================}}}
