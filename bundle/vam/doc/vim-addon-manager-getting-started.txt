@@ -9,6 +9,8 @@ CONTENTS                                        *VAM-contents-getting-started*
         2.2 Names of addons and addon sources |VAM-addon-names|
         2.3 Example: configurable setup       |VAM-complex-setup-sample|
         2.4 unattended installation           |VAM-unattended-installation|
+
+        2.9 error messages you may see and what they mean
 In |vim-addon-manager-additional-documentation.txt|:
     3. Functionality provided                 |VAM-functionality|
         3.1. Commands                         |VAM-commands|
@@ -130,8 +132,8 @@ commented version ~
           " to fetch VAM, VAM-known-repositories and the listed plugins
           " without having to install curl, 7-zip and git tools first
           " -> BUG [4] (git-less installation)
-          let vam_autoload_dir = a:plugin_root_dir.'/vim-addon-manager/autoload'
-          if isdirectory(vam_autoload_dir)
+          let is_installed = "isdirectory(a:plugin_root_dir.'/vim-addon-manager/autoload')"
+          if eval(is_installed)
             return 1
           else
             if 1 == confirm("Clone VAM into ".a:plugin_root_dir."?","&Y\n&N")
@@ -148,7 +150,7 @@ commented version ~
               " plugins
               exec 'helptags '.fnameescape(a:plugin_root_dir.'/vim-addon-manager/doc')
             endif
-            return isdirectory(vam_autoload_dir)
+            return eval(is_installed)
           endif
         endfun
 
@@ -170,7 +172,7 @@ commented version ~
             echohl ErrorMsg | echomsg "No VAM found!" | echohl NONE
             return
           endif
-          let &rtp.=(empty(&rtp)?'':',').escape(plugin_root_dir, ',')
+          exec 'set rtp+='.fnameescape(plugin_root_dir.'/vim-addon-manager')
 
           " Tell VAM which plugins to fetch & load:
           call vam#ActivateAddons([], {'auto_install' : 0})
@@ -205,7 +207,7 @@ minimal version ~
 
         fun SetupVAM()
           let plugin_root_dir = expand('$HOME') . '/.vim/vim-addons'
-          let &rtp.=(empty(&rtp)?'':',').escape(plugin_root_dir, ',')
+          exec 'set rtp+='.fnameescape(plugin_root_dir.'/vim-addon-manager')
           " let g:vim_addon_manager = { your config here see "commented version" example and help
           if !isdirectory(plugin_root_dir.'/vim-addon-manager/autoload')
             execute '!git clone --depth=1 git://github.com/MarcWeber/vim-addon-manager '
@@ -451,5 +453,18 @@ just use the log_buffer_name option which defaults to a value of
     \'log_buffer_name': '/tmp/vam_install.log',
     \}
 <
+
+------------------------------------------------------------------------------
+2.9 error messages you may see and what they mean
+>
+   unknown function: vam#ActivteAddons
+
+This means that Vim's |runtimepath| setting does not contain the path you
+cloned VAM to. Using the recommended setup this should not happen.
+Have a second glance at the minimal setup at 2.2 |VAM-install|
+
+The long description is that vam# functions are looked up in
+&runtimepath/autoload/vam.vim files. If Vim doesn't find such the error will
+happen
 
 vim: tw=78:ts=8:ft=help:norl
