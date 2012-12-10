@@ -33,6 +33,7 @@ tags*
 colors/not_used/
 
 .hg/
+.svn/
 
 doc/tags*
 
