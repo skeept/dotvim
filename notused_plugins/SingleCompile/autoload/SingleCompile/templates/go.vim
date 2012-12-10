@@ -17,17 +17,10 @@
 
 " check doc/SingleCompile.txt for more information
 
-function! SingleCompile#templates#tex#Initialize()
-    call SingleCompile#SetCompilerTemplate('tex', 'pdflatex', 'pdfLaTeX',
-                \'pdflatex', '-interaction=nonstopmode',
-                \ SingleCompile#GetDefaultOpenCommand() .
-                \ ' "$(FILE_TITLE)$.pdf"')
-    call SingleCompile#SetPriority('tex', 'pdflatex', 50)
-    call SingleCompile#SetCompilerTemplate('tex', 'latex', 'LaTeX',
-                \'latex', '-interaction=nonstopmode',
-                \ SingleCompile#GetDefaultOpenCommand() .
-                \ ' "$(FILE_TITLE)$.dvi"')
-    call SingleCompile#SetPriority('tex', 'latex', 80)
+function! SingleCompile#templates#go#Initialize()
+    call SingleCompile#SetCompilerTemplate('go', 'go', 'Go',
+                \ 'go', 'build -o $(FILE_TITLE)$', g:SingleCompile_common_run_command)
+    call SingleCompile#SetPriority('go', 'Go', 20)
 endfunction
 
 "vim703: cc=78
