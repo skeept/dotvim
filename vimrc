@@ -1004,6 +1004,17 @@ autocmd FileType perl let b:vimpipe_command="perl"
 autocmd FileType tex let b:vimpipe_command="latexmk"
 "==============================================================================}}}
 
+"================== ConqueTerm ================================================{{{
+let g:ConqueTerm_ReadUnfocused = 1
+"==============================================================================}}}
+
+"================== QuickRun =================================================={{{
+let g:quickrun_config = {}
+let g:quickrun_config.python = {
+      \ 'runner': 'vimproc',
+      \ }
+"==============================================================================}}}
+
 "some plugins don't work weel with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
@@ -1055,10 +1066,6 @@ endif
 "================== delimitmate ==============================================={{{
 let g:delimitMate_expand_cr = 1
 let g:delimitMate_expand_space = 1
-"==============================================================================}}}
-
-"================== ConqueTerm ================================================{{{
-let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================}}}
 
 "================== fugitive =================================================={{{
@@ -1272,19 +1279,27 @@ inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 "}}}
 
 function! LoadUnite() "{{{
-    call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline', 'unite-tag', 'unite-colorscheme'],
-          \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
-    nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
-    nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-    nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-    nnoremap ,uf :<C-u>Unite source<CR>
-    nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
+  call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline', 'unite-tag', 'unite-colorscheme'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
+  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+  nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
+  nnoremap <silent> ,uo :<C-u>Unite outline<CR>
+  nnoremap ,uf :<C-u>Unite source<CR>
+  nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
 endfunction
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
 nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>Unite colorscheme<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
+"}}}
+
+function! LoadQuickRun() "{{{
+  call vam#ActivateAddons(['quickrun'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  nnoremap ,qr :QuickRun<CR>
+endfunction
+nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 "==============================================================================}}}
 
