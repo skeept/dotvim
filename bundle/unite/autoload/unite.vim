@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Dec 2012.
+" Last Modified: 14 Dec 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -962,7 +962,7 @@ endfunction"}}}
 function! unite#clear_message() "{{{
   let s:unite_cached_message = []
   let unite = unite#get_current_unite()
-  if &filetype !=# 'unite' || unite.prompt_linenr < 2
+  if &filetype !=# 'unite' || unite.prompt_linenr <= 2
     return
   endif
 
@@ -971,7 +971,7 @@ function! unite#clear_message() "{{{
 
   let linenr = line('.')
   silent! execute '2,'.(unite.prompt_linenr-1).'delete _'
-  call cursor(linenr, 0)
+  call cursor(linenr - (unite.prompt_linenr - 2), 0)
   if line('.') < winheight(0)
     normal! zb
   endif
@@ -1046,7 +1046,7 @@ function! s:print_buffer(message) "{{{
   call append(unite.prompt_linenr-1, message)
   let unite.prompt_linenr += len(message)
 
-  call cursor(linenr+len(message)-1, 0)
+  call cursor(linenr+len(message), 0)
   if line('.') < winheight(0)
     normal! zb
   endif
@@ -2014,6 +2014,8 @@ function! s:initialize_candidates(candidates) "{{{
     for candidate in filter(copy(candidates), '!v:val.is_multiline')
       let candidate.unite__abbr = '  ' . candidate.unite__abbr
     endfor
+
+    let unite.is_multi_line = 1
   endif
 
   return candidates
@@ -2437,6 +2439,7 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.candidates_pos = 0
   let unite.candidates = []
   let unite.max_source_candidates = 0
+  let unite.is_multi_line = 0
 
   " Preview windows check.
   let unite.has_preview_window =
@@ -2880,8 +2883,14 @@ function! s:on_cursor_moved()  "{{{
         \  || unite.context.winheight == 0) ?
         \ winheight(0) : unite.context.winheight
   let candidates = unite#gather_candidates_pos(height)
+  let old_unite = deepcopy(unite)
   if empty(candidates)
     " Nothing.
+    return
+  endif
+
+  if unite.is_multi_line != old_unite.is_multi_line
+    call unite#redraw_candidates()
     return
   endif
 
