@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Dec 2012.
+" Last Modified: 15 Dec 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2380,21 +2380,36 @@ function! s:on_insert_leave() "{{{
   let neocomplcache.old_cur_text = ''
 
   " Restore foldinfo.
-  if !empty(neocomplcache.foldinfo) &&
-        \ neocomplcache.foldinfo != [&l:foldmethod, &l:foldexpr]
-     let [&l:foldmethod, &l:foldexpr] = neocomplcache.foldinfo
-  endif
+  for tabnr in range(1, tabpagenr('$'))
+    for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
+          \ "!empty(gettabwinvar(tabnr, v:val, 'neocomplcache_foldinfo'))")
+      let neocomplcache_foldinfo =
+            \ gettabwinvar(tabnr, winnr, 'neocomplcache_foldinfo')
+      call settabwinvar(tabnr, winnr, '&foldmethod',
+            \ neocomplcache_foldinfo.foldmethod)
+      call settabwinvar(tabnr, winnr, '&foldexpr',
+            \ neocomplcache_foldinfo.foldexpr)
+      call settabwinvar(tabnr, winnr,
+            \ 'neocomplcache_foldinfo', {})
+    endfor
+  endfor
 endfunction"}}}
 function! s:on_insert_enter() "{{{
-  let neocomplcache = neocomplcache#get_current_neocomplcache()
-
   " Save foldinfo.
-  if &l:foldmethod ==# 'expr'
-    let neocomplcache.foldinfo = [&l:foldmethod, &l:foldexpr]
-    setlocal foldmethod=manual foldexpr=0
-    if foldlevel('.') != 0
-      foldopen
-    endif
+  for tabnr in range(1, tabpagenr('$'))
+    for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
+          \ "gettabwinvar(tabnr, v:val, '&foldmethod') ==# 'expr'")
+      call settabwinvar(tabnr, winnr, 'neocomplcache_foldinfo', {
+            \ 'foldmethod' : gettabwinvar(tabnr, winnr, '&foldmethod'),
+            \ 'foldexpr'   : gettabwinvar(tabnr, winnr, '&foldexpr')
+            \ })
+      call settabwinvar(tabnr, winnr, '&foldmethod', 'manual')
+      call settabwinvar(tabnr, winnr, '&foldexpr', 0)
+    endfor
+  endfor
+
+  if &l:foldmethod ==# 'expr' && foldlevel('.') != 0
+    foldopen
   endif
 endfunction"}}}
 function! s:on_complete_done() "{{{
