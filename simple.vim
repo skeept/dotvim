@@ -635,7 +635,7 @@ inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 
 "================== other commands/mappings/settings =========================={{{
 "================== Don't view files with inconsistent ctrl-r ================={{{
-map ,m :ed ++ff=dos<CR>
+map ,ml :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
 autocmd BufReadPost * nested
       \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
