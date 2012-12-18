@@ -221,6 +221,9 @@ nmap <TAB><TAB> <C-W><C-W>
 
 noremap q; :
 noremap q' "
+
+" we already have <Leader>pt as pastetoogle, but I always get confused
+nnoremap <Leader>tp :set paste!<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
@@ -686,6 +689,13 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 let fortran_free_source = 1
 
+"================== QuickRun =================================================={{{
+let g:quickrun_config = {}
+let g:quickrun_config.python = {
+      \ 'runner': 'vimproc',
+      \ }
+"==============================================================================}}}
+
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
@@ -773,6 +783,14 @@ function! LoadLycosa() "{{{
   nnoremap ,e :<c-u>call ToggleLycosa()<CR>
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
+"}}}
+
+function! LoadQuickRun() "{{{
+  call vam#ActivateAddons(['quickrun'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  nnoremap ,qr :QuickRun<CR>
+endfunction
+nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 
 "for filetype tex we need imap.vim
