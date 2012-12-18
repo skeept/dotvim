@@ -2381,7 +2381,9 @@ function! s:on_insert_leave() "{{{
   let neocomplcache.old_cur_text = ''
 
   " Restore foldinfo.
-  for tabnr in range(1, tabpagenr('$'))
+  " Note: settabwinvar() in insert mode has bug.
+  " for tabnr in range(1, tabpagenr('$'))
+  for tabnr in [tabpagenr()]
     for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
           \ "!empty(gettabwinvar(tabnr, v:val, 'neocomplcache_foldinfo'))")
       let neocomplcache_foldinfo =
@@ -2397,9 +2399,12 @@ function! s:on_insert_leave() "{{{
 endfunction"}}}
 function! s:on_insert_enter() "{{{
   " Save foldinfo.
-  for tabnr in range(1, tabpagenr('$'))
+  " Note: settabwinvar() in insert mode has bug.
+  " for tabnr in range(1, tabpagenr('$'))
+  for tabnr in [tabpagenr()]
     for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
-          \ "gettabwinvar(tabnr, v:val, '&foldmethod') ==# 'expr'")
+          \ "gettabwinvar(tabnr, v:val, '&foldmethod') ==# 'expr' &&
+          \  gettabwinvar(tabnr, v:val, '&modifiable')")
       call settabwinvar(tabnr, winnr, 'neocomplcache_foldinfo', {
             \ 'foldmethod' : gettabwinvar(tabnr, winnr, '&foldmethod'),
             \ 'foldexpr'   : gettabwinvar(tabnr, winnr, '&foldexpr')
@@ -2828,6 +2833,8 @@ function! s:is_skip_auto_complete(cur_text) "{{{
   if a:cur_text == ''
         \ || a:cur_text == neocomplcache.old_cur_text
         \ || (g:neocomplcache_lock_iminsert && &l:iminsert)
+        \ || (&l:formatoptions =~# '[tc]' && &l:textwidth > 0
+        \     && neocomplcache#util#wcswidth(a:cur_text) >= &l:textwidth)
     return 1
   endif
 
