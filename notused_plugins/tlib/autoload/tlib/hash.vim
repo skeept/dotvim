@@ -1,75 +1,74 @@
-" hash.vim
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Created:     2012-12-14.
-" @Last Change: 2010-09-26.
-" @Revision:    139
+" @Revision:    224
 
 
-function! tlib#hash#NumBits(num) "{{{3
-    let bits = []
-    for bitx in [1, 2, 4, 8, 16, 32, 64, 128]
-        call add(bits, and(a:num, bitx) != 0)
-    endfor
-    return bits
-endf
+if !exists('g:tlib#hash#use_crc32')
+    let g:tlib#hash#use_crc32 = 'auto'   "{{{2
+endif
 
 
-function! tlib#hash#CRC32(chars) "{{{3
-    if has('ruby')
+function! tlib#hash#CRC32B(chars) "{{{3
+    if has('ruby') && g:tlib#hash#use_crc32 =~ '\<\(auto\|ruby\)\>'
         let rv = ''
         ruby << EOR
         require 'zlib'
-        VIM::command('let rv = "%08x"' % Zlib.crc32(VIM::evaluate("a:chars")))
+        VIM::command('let rv = "%08X"' % Zlib.crc32(VIM::evaluate("a:chars")))
 EOR
-    " elseif has('python')
-    " elseif has('perl')
-    " elseif has('tcl')
+    " elseif has('python') && g:tlib#hash#use_crc32 =~ '\<\(auto\|python\)\>'
+    " elseif has('perl') && g:tlib#hash#use_crc32 =~ '\<\(auto\|perl\)\>'
+    " elseif has('tcl') && g:tlib#hash#use_crc32 =~ '\<\(auto\|tcl\)\>'
     else
-        throw "tlib: No implementation for CRC32"
-        " " crc32
-        " let crc32 = 0
-        " " let crc32 = 0xffffffff
-        " let crc32poly = 0x04C11DB7
-        " for char in split(a:chars, '\zs')
-        "     let bits = tlib#hash#NumBits(char2nr(char))
-        "     TLogVAR char, bits
-        "     for bit in bits
-        "         let cc = and(crc32, 0x80000000) ? 1 : 0
-        "         TLogVAR bit, cc, bit != cc
-        "         if cc != bit
-        "             let crc32 = xor(crc32 * 2, crc32poly)
-        "         else
-        "             let crc32 = crc32 * 2
-        "         endif
-        "     endfor
-        " endfor
-        " " let crc32 = xor(crc32, 0xffffffff)
-        " let rv = printf("%08X", crc32)
-        "
-        " " crc32rev
-        " let crc32 = 0xffffffff
-        " " let crc32 = 0xffffffff
-        " let crc32poly = 0xEDB88320
-        " for char in split(a:chars, '\zs')
-        "     let bits = tlib#hash#NumBits(char2nr(char))
-        "     for bit in bits
-        "         let cc = and(crc32, 1)
-        "         if cc != bit
-        "             let crc32 = xor(crc32 / 2, crc32poly)
-        "         else
-        "             let crc32 = crc32 / 2
-        "         endif
-        "     endfor
-        " endfor
-        " let crc32 = xor(crc32, 0xffffffff)
-        " let rv = printf("%08X", crc32)
+        " based on http://rosettacode.org/wiki/CRC-32
+        if !exists('s:crc_table')
+            let cfile = tlib#persistent#Filename('tlib', 'crc_table', 1)
+            let s:crc_table = tlib#persistent#Value(cfile, 'tlib#hash#CreateCrcTable', 0)
+        endif
+        let xFFFF_FFFF = repeat([1], 32)
+        let crc = tlib#bitwise#XOR([0], xFFFF_FFFF, 'bits')
+        for char in split(a:chars, '\zs')
+            let octet = char2nr(char)
+            let r1 = tlib#bitwise#ShiftRight(crc, 8)
+            let i0 = tlib#bitwise#AND(crc, xFFFF_FFFF, 'bits')
+            let i1 = tlib#bitwise#XOR(i0, octet, 'bits')
+            let i2 = tlib#bitwise#Bits2Num(tlib#bitwise#AND(i1, 0xff, 'bits'))
+            let r2 = s:crc_table[i2]
+            let crc = tlib#bitwise#XOR(r1, r2, 'bits')
+        endfor
+        let crc = tlib#bitwise#XOR(crc, xFFFF_FFFF, 'bits')
+        let rv = tlib#bitwise#Bits2Num(crc, 16)
     endif
     return rv
 endf
 
 
+" :nodoc:
+function! tlib#hash#CreateCrcTable() "{{{3
+    let sum = 0.0
+    for exponent in [0, 1, 2, 4, 5, 7, 8, 10, 11, 12, 16, 22, 23, 26, 32]
+        let exp = tlib#bitwise#Bits2Num(repeat([0], 32 - exponent) + [1], 10.0)
+        let sum += exp
+    endfor
+    let divisor = tlib#bitwise#Num2Bits(sum)
+    let crc_table = []
+    for octet in range(256)
+        let remainder = tlib#bitwise#Num2Bits(octet)
+        for i in range(8)
+            if get(remainder, i) != 0
+                let remainder = tlib#bitwise#XOR(remainder, tlib#bitwise#ShiftLeft(divisor, i), "bits")
+            endif
+        endfor
+        let remainder = tlib#bitwise#ShiftRight(remainder, 8)
+        call add(crc_table, remainder)
+    endfor
+    return crc_table
+endf
+
+
 function! tlib#hash#Adler32(chars) "{{{3
+    if !exists('*or')
+        throw "TLIB: Vim version doesn't support bitwise or()"
+    endif
     let mod_adler = 65521
     let a = 1
     let b = 0
