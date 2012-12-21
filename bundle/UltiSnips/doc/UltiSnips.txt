@@ -127,7 +127,7 @@ If you are a pathogen user, you can track the official mirror of UltiSnips on
 github: >
 
    $ cd ~/.vim/
-   $ git submodule add https://github.com/sirver/ultisnips bundle/ultisnips
+   $ git submodule add git://github.com/SirVer/ultisnips.git bundle/ultisnips
 
 See the pathogen documentation for more details on how to update a bundle.
 
@@ -1299,6 +1299,7 @@ Contributors listed in chronological order:
    Vivien Didelot
    Øystein Walle (osse)
    Pedro Algarvio (s0undt3ch)
+   Steven Humphrey (shumphrey)
 
 Thank you for your support.
 
