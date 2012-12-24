@@ -200,8 +200,6 @@ nnoremap <C-L> :nohl<CR><C-L>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
 
-" for searching gams erros
-noremap <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><c-l>
 noremap <Leader>v :view<CR>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
@@ -295,10 +293,9 @@ if has("autocmd")
 
   " do the gams stuff here
   autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
+        \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
   autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
-
-  "source .vimrc if changes are made (cool)
-  "autocmd BufWritePost $MYVIMRC so %
+        \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
