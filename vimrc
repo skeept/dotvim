@@ -637,8 +637,8 @@ let g:pylint_onwrite = 0
 "pysmell
 function! LoadPysmell()
   "load pysmell only for python types (remember to disable it in bundle)
-  if has("python")
-    runtime bundle/pysmell/plugin/pysmell.vim
+  if has("python") && 0
+    ActivateAddons pysmell
     setlocal completefunc=pysmell#Complete
   endif
 endfunction
