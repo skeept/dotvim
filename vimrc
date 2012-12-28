@@ -251,6 +251,7 @@ nmap <TAB><TAB> <C-W><C-W>
 
 noremap q; :
 noremap q' "
+noremap gl :
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
