@@ -2,7 +2,7 @@
 " FILE: line.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          t9md <taqumd at gmail.com>
-" Last Modified: 02 Oct 2012.
+" Last Modified: 31 Dec 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -45,6 +45,8 @@ let s:source_line = {
       \ 'hooks' : {},
       \ 'max_candidates': 100,
       \ 'default_kind' : 'jump_list',
+      \ 'matchers' : 'matcher_regexp',
+      \ 'sorters' : 'sorter_nothing',
       \ }
 
 function! s:source_line.hooks.on_init(args, context) "{{{
@@ -91,9 +93,7 @@ function! s:source_line.source__converter(candidates, context) "{{{
   return s:converter(a:candidates, a:context)
 endfunction"}}}
 
-let s:source_line.filters =
-      \ ['matcher_regexp', 'sorter_default',
-      \      s:source_line.source__converter]
+let s:source_line.converters = [s:source_line.source__converter]
 "}}}
 
 " line/fast source. "{{{
