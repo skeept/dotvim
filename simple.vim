@@ -46,7 +46,6 @@ endif
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 " This must be first, because it changes other options as a side effect.
-set nocompatible
 
 " allow backspacing over everything in insert mode
 "set backspace=indent,eol,start
@@ -219,7 +218,11 @@ nmap <TAB><TAB> <C-W><C-W>
 
 noremap q; :
 noremap q' "
-noremap gl :
+
+nnoremap ; :
+nnoremap : ;
+vnoremap ; :
+vnoremap : ;
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
