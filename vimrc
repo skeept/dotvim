@@ -155,6 +155,7 @@ if &t_Co > 2 || has("gui_running")
 endif
 set cot-=preview
 
+set viminfo=h,'100,<10000,s1000,/1000,:1000
 "==============================================================================}}}
 
 "================== Mappings =================================================={{{
@@ -259,6 +260,9 @@ vnoremap : ;
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
+
+"select everything in visual mode (from Damian Conway setup)
+vnoremap aa VGo1G
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
