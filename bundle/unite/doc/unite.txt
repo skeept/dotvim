@@ -684,8 +684,11 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 
 		command_candidates
 				(List or Dictionary)	(Optional)
-		Menu candidates for commands. The key is used for word.
-		The value is command name.
+		Menu candidates for commands.
+		If it is Dictionary, the key is used for word.  The value is
+		command name.
+		If it is List, the first item is used for word.  The second
+		item is command name.
 
 		map		(Function)		(Optional)
 		If this attribute is given, candidates are results of
@@ -709,13 +712,21 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		      \       'action__command' : a:value,
 		      \     }
 		endfunction
-
+		
 		let g:unite_source_menu_menus.test2 = {
 		      \     'description' : 'Test menu2',
 		      \ }
 		let g:unite_source_menu_menus.test.command_candidates = {
 		      \   'python'    : 'VimShellInteractive python',
 		      \ }
+		
+		let g:unite_source_menu_menus.test3 = {
+		      \     'description' : 'Test menu3',
+		      \ }
+		let g:unite_source_menu_menus.test.command_candidates = [
+		      \   ['ruby', 'VimShellInteractive python'],
+		      \   ['python', 'VimShellInteractive python'],
+		      \ ]
 		
 		nnoremap <silent> fm  :<C-u>Unite menu:test<CR>
 <
@@ -1361,15 +1372,15 @@ unite#custom_source({source-name}, {option-name}, {value})
 		Specifies a list of filter names.  The filters overwrite
 		source default filters.
 		
-		matchers			(List)
+		matchers			(List) or (String)
 		Specifies a list of matcher names.  The filters overwrite
 		source default matchers.
 		
-		sorters				(List)
+		sorters				(List) or (String)
 		Specifies a list of sorter names.  The filters overwrite
 		source default sorters.
 		
-		converters			(List)
+		converters			(List) or (String)
 		Specifies a list of converter names.  The filters overwrite
 		source default converters.
 		
@@ -2434,13 +2445,13 @@ filters			List		(Optional)
 			filter.  If it's omitted, unite uses
 			|unite-filter-default|.
 					*unite-source-attribute-matchers*
-matchers		List		(Optional)
+matchers		List/String	(Optional)
 			The list of matchers used by the source.
 					*unite-source-attribute-sorters*
-filters			List		(Optional)
+filters			List/String	(Optional)
 			The list of sorters used by the source.
 					*unite-source-attribute-converters*
-converters		List		(Optional)
+converters		List/String	(Optional)
 			The list of converters used by the source.
 
 					*unite-source-attribute-source__*
@@ -2854,6 +2865,9 @@ A: You can use below mappings.
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2013-01-01
+- Fixed unite-menu behavior.
+
 2012-12-31
 - Optimised sorter_rank.
 - Added matchers, sorters, converters.
@@ -2861,6 +2875,7 @@ CHANGELOG					*unite-changelog*
 - Deleted unite#filters#default#use().
 - Added custom matchers/sorters/converters.
 - Improved documentation.
+- Improved check plugins.
 
 2012-12-27
 - Improved for getting filetime.
