@@ -710,7 +710,8 @@ python:
     ironpython (IronPython)
     jython (Jython)
     pypy (PyPy)
-    python (Python Interpreter)
+    python (Python Interpreter, usually the system default Python, no matter it is Python 2 or 3.)
+    python2 (Python 2 Interpreter)
     python3 (Python 3 Interpreter)
 
 R:
@@ -721,6 +722,11 @@ reStructuredText:
 
 ruby:
     ruby (Ruby Interpreter)
+
+scala:
+    scala (Scala compiler)
+    Note: vim does not detect scala files out the box.
+    See https://github.com/bjartek/scala-vim-support
 
 sh:
     ash (Almquist Shell)
