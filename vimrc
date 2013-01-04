@@ -57,11 +57,12 @@ function! SetupVAM()
 
   let s:active_addons = ['ctrlp', 'indent-guides', 'SmartusLine', 'TaskList']
   let s:active_addons += ['d.0', 'LanguageTool', 'textobj-word-column']
-  let s:active_addons += ['Buffergator', 'delimitMate', 'LaTeX-Box']
+  let s:active_addons += ['Buffergator', 'delimitMate']
   let s:active_addons += ['SpellCheck', 'clang_complete']
-  let s:active_addons += ['fugitive', 'supertab', 'undotree', 'CountJump', 'gitv']
+  let s:active_addons += ['supertab', 'undotree', 'CountJump']
   let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  let s:active_addons += ['vlatex']
+  let s:active_addons += ['vlatex', 'LaTeX-Box']
+  "let s:active_addons += ['fugitive', 'gitv']
   if has("python")
     "let s:active_addons += ['UltiSnips']
   endif
