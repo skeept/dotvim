@@ -1877,6 +1877,9 @@ let scmnr.4378 = {'type': 'git', 'url': 'git://github.com/gorkunov/smartpairs.vi
 " Bryan Richter
 let scmnr.4379 = {'type': 'git', 'url': 'git://github.com/chreekat/vim-paren-crosshairs'}
 
+" Eduardo Lopez
+let scmnr.4382 = {'type': 'git', 'url': 'git://github.com/tapichu/asm2d-vim'}
+
 "-----------------------------------------------------------------------------------------------------------------------
 
 " Derek Wyatt
@@ -1905,6 +1908,10 @@ let scm['plugins@svakulenko'] = {'type': 'git', 'url': 'git://github.com/svakule
 " Peter Hofmann
 " The following plugins do not have a separate repository:
 let scmnr.4333 = {'url': 'https://github.com/vain/dotfiles-pub/raw/master/.vim/colors/termpot.vim', 'archive_name': 'termpot.vim', 'type': 'archive', 'script-type': 'color scheme'}
+
+" joey c
+" The following plugin does not have a separate repository:
+let scmnr.4381 = {'url': 'http://hwi.ath.cx/code/home/.vim/plugin/RepeatLast.vim', 'archive_name': 'RepeatLast.vim', 'type': 'archive', 'script-type': 'utility'}
 
 " Yggdroot Chen
 let scmnr.4354 = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/Yggdroot/indentLine'}, {'indentLine.vim': 'plugin'})
