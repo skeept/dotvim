@@ -371,6 +371,13 @@ function! nerdtree#initNerdTreeMirror()
     endif
 endfunction
 
+" FUNCTION: nerdtree#invokeKeyMap(key) {{{2
+"this is needed since I cant figure out how to invoke dict functions from a
+"key map
+function! nerdtree#invokeKeyMap(key)
+    call g:NERDTreeKeyMap.Invoke(a:key)
+endfunction
+
 " FUNCTION: nerdtree#nextBufferName() {{{2
 " returns the buffer name for the next nerd tree
 function! nerdtree#nextBufferName()
@@ -1221,10 +1228,10 @@ endfunction
 
 "FUNCTION: nerdtree#bindMappings() {{{2
 function! nerdtree#bindMappings()
-    "make <cr> do the same as the default 'o' mapping
-    exec "nnoremap <silent> <buffer> <cr> :call <SID>KeyMap_Invoke('". g:NERDTreeMapActivateNode ."')<cr>"
-
     call g:NERDTreeKeyMap.BindAll()
+
+    "make <cr> do the same as the default 'o' mapping
+    exec "nnoremap <silent> <buffer> <cr> :call nerdtree#invokeKeyMap('". g:NERDTreeMapActivateNode ."')<cr>"
 
     command! -buffer -nargs=? Bookmark :call <SID>bookmarkNode('<args>')
     command! -buffer -complete=customlist,nerdtree#completeBookmarks -nargs=1 RevealBookmark :call <SID>revealBookmark('<args>')
