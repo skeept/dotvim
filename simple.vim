@@ -490,6 +490,34 @@ autocmd FileType python setlocal makeprg=epylint\ %
 " E501 line too long   -- allow more than 80 characters
 let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
+
+"pysmell (call LoadPysmell explicitly)
+function! LoadPysmell()
+  if exists("s:loadedPysmell")
+    return ''
+  endif
+  if has("python")
+    silent python << EOF
+import vim
+try:
+  import pysmell
+  vim.command('let s:has_pysmell = 1')
+except:
+  vim.command('let s:has_pysmell = 0')
+EOF
+
+    if s:has_pysmell == 1
+        ActivateAddons pysmell
+      setlocal completefunc=pysmell#Complete
+      autocmd filetype python setlocal completefunc=pysmell#Complete
+    else
+      echom "No Pysmell installed!"
+    endif
+  else
+    echom "Cannot Load PySmell: No Python!"
+  endif
+  let s:loadedPysmell = 1
+endfunction
 "==============================================================================}}}
 
 "================== ctrlP ====================================================={{{

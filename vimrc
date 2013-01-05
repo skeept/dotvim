@@ -646,11 +646,30 @@ let g:pylint_onwrite = 0
 
 "pysmell
 function! LoadPysmell()
-  "load pysmell only for python types (remember to disable it in bundle)
-  if has("python") && 0
-    ActivateAddons pysmell
-    setlocal completefunc=pysmell#Complete
+  if exists("s:loadedPysmell")
+    return ''
   endif
+  if has("python")
+    silent python << EOF
+import vim
+try:
+  import pysmell
+  vim.command('let s:has_pysmell = 1')
+except:
+  vim.command('let s:has_pysmell = 0')
+EOF
+
+    if s:has_pysmell == 1
+        ActivateAddons pysmell
+      setlocal completefunc=pysmell#Complete
+      autocmd filetype python setlocal completefunc=pysmell#Complete
+    else
+      echom "No Pysmell installed!"
+    endif
+  else
+    echom "Cannot Load PySmell: No Python!"
+  endif
+  let s:loadedPysmell = 1
 endfunction
 "autocmd FileType python setlocal completefunc=pysmell#Complete
 autocmd FileType python call LoadPysmell()
