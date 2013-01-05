@@ -1,6 +1,5 @@
 " See documentation at vamkr#GetVim
 let add_by_snr = {}
-let add_by_name = {}
 let mai_snr = {}
 let mai_snr_deps = {}
 "▶1 Hooks
@@ -43,22 +42,19 @@ let add_by_snr.2548={'script-type': 'after/syntax'}
 let add_by_snr.2224={'script-type': 'after/syntax'}
 let add_by_snr.2493={'script-type': 'after/syntax'}
 "▶1 Fixing target directories
-let add_by_snr.1542={'target_dir': 'autoload'}
+call extend(add_by_snr.1542, {'target_dir': 'autoload'})
 let add_by_snr.1662={'target_dir': 'autoload'}
 let add_by_snr.2611={'strip-components': 0}
 let add_by_snr.2572={'strip-components': 0}
 let add_by_snr.2429={'strip-components': 0}
 "▶1 Deprecations
-let add_by_snr.1780={'deprecated': "The syntax doesn't highlight \"\"\" strings correctly. I don't know how to contact the maintainer. So I moved the file and a fix into vim-addon-scala"}
-let add_by_snr.1662={'deprecated': "you should consider using ruby-vim instead"}
+call extend(add_by_snr.1780, {'deprecated': "The syntax doesn't highlight \"\"\" strings correctly. I don't know how to contact the maintainer. So I moved the file and a fix into vim-addon-scala"})
+call extend(add_by_snr.1662, {'deprecated': "you should consider using ruby-vim instead"})
 let add_by_snr.113 ={'deprecated': "greputils supersedes this plugin"}
 
-let add_by_name['lazysnipmate']={'deprecated': "lazysnipmate’s update is just snipmate"}
-" I'm not sure its fair deprecating the plugin - because behavior differs
-" let add_by_snr.2736={'deprecated': "consider using vim-addon-syntax-checker because it is easier to adopt its behaviour to your needs"}
-let add_by_name['syntastic2']={'deprecated': "renamed to vim-addon-syntax-checker"}
+let add_by_snr.3432={'deprecated': "lazysnipmate’s update is just snipmate"}
 
-let add_by_snr.1963 = {'deprecated': "This was one of my biggest mistakes. This library won't be maintained. I'm mvoing contents into individual plugins slowly. Its just bloat"}
+let add_by_snr.1963={'deprecated': "This was one of my biggest mistakes. This library won't be maintained. I'm mvoing contents into individual plugins slowly. Its just bloat"}
 
 let add_by_snr.3184={'deprecated': "Vimpluginloader evolved into unmaintainable blob. Use frawor if you seek for framework"}
 let add_by_snr.3325={'deprecated': "All functions from this plugin are available through `os' resource of @/os frawor module"}
@@ -66,10 +62,9 @@ let add_by_snr.3187={'deprecated': "Deprecated in favour of FWC DSL defined in f
 let add_by_snr.3188={'deprecated': "Deprecated in favour of FWC DSL defined in frawor plugin"}
 let add_by_snr.3186={'deprecated': "Functions from this plugin were either dropped or moved to frawor plugin, see its documentation"}
 
-let consider_valv="Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"
-let add_by_snr.727 ={'deprecated': consider_valv}
-let add_by_snr.441 ={'deprecated': consider_valv}
-let add_by_snr.3393={'deprecated': consider_valv}
+let add_by_snr.727 ={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
+let add_by_snr.441 ={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
+let add_by_snr.3393={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
 
 let add_by_snr.1318={'deprecated': "Use snipmate instead. jano on irc reported that place holders don't work - last release 2006"}
 let add_by_snr.2540={'deprecated': "snipMate is an alias to snipmate now - so use 'snipmate'"}
@@ -98,14 +93,12 @@ let add_by_snr.3524={'deprecated': "Script page and the only download suggest us
 
 let add_by_snr.3881={'deprecated': "Superseeded by github.com/Lokaltog/powerline"}
 
-let prefer_flake8 = "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"
-let add_by_snr.3160={'deprecated': prefer_flake8}
-let add_by_snr.3161={'deprecated': prefer_flake8}
+let add_by_snr.3160={'deprecated': "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"}
+let add_by_snr.3161={'deprecated': "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"}
 
-let suggest_syntastic="Consider giving syntastic a try instead. It supports more backends"
-let add_by_snr.2441={'deprecated': suggest_syntastic}
-let add_by_snr.2914={'deprecated': suggest_syntastic}
-let add_by_snr.3430={'deprecated': suggest_syntastic}
+let add_by_snr.2441={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
+let add_by_snr.2914={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
+let add_by_snr.3430={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
 let add_by_snr.3927={'deprecated': "Also pay attention to alternative syntastic which runs flake and can do much more"}
 
 let add_by_snr.4043={'deprecated': "The author recommends using neosnippet instead"}
@@ -137,7 +130,6 @@ let mai_snr_deps.4283 = [3736]
 let mai_snr_deps.4322 = [4321, 1359]
 let mai_snr_deps.4336 = ['vimproc']
 " fugitive dependants
-let mai_snr_deps.3574 = [2975]
 let mai_snr_deps.3509 = [2975]
 let mai_snr_deps.3574 = [2975]
 " CompleteHelper dependants
@@ -232,22 +224,17 @@ let mai_snr_deps.2782 = [2692]
 let mai_snr_deps.3249 = [2540]
 let mai_snr_deps.3664 = [2540]
 let mai_snr_deps.4276 = [2540, 2926]
-"▶1 Missing runtimepath information for vim.org plugins
-let mai_snr.2883 = {'runtimepath': 'vimlib'}
-let mai_snr.2824 = {'runtimepath': 'vimlib'}
-let mai_snr.2847 = {'runtimepath': 'vimlib'}
-let mai_snr.663  = {'runtimepath': 'vim'}
-"▶1 Missing information for kana sources
+" ▶2 Missing information for kana sources
 let mai_snr_deps.2336 = [2335]
 let mai_snr_deps.2403 = [2402]
 let mai_snr_deps.3892 = [3891]
 " Script 2782 above, in operator-user dependants
-"▶2 ku dependants
+" ku dependants
 let mai_snr_deps.2410 = [2337]
 let mai_snr_deps.2622 = [2337]
 let mai_snr_deps.2343 = [2337, 2338]
 let mai_snr_deps.2344 = [2337, 2335, 2336]
-"▶2 textobj-user dependants
+" textobj-user dependants
 let mai_snr_deps.2716 = [2100]
 let mai_snr_deps.2484 = [2100]
 let mai_snr_deps.2355 = [2100]
@@ -258,6 +245,10 @@ let mai_snr_deps.2610 = [2100]
 let mai_snr_deps.2415 = [2100]
 let mai_snr_deps.2101 = [2100]
 let mai_snr_deps.3886 = [2100]
-"▲1
-let r=[add_by_snr, add_by_name, mai_snr, mai_snr_deps]
+"▶1 Missing runtimepath information for vim.org plugins
+let mai_snr.2883 = {'runtimepath': 'vimlib'}
+let mai_snr.2824 = {'runtimepath': 'vimlib'}
+let mai_snr.2847 = {'runtimepath': 'vimlib'}
+let mai_snr.663  = {'runtimepath': 'vim'}
+let r=[add_by_snr, mai_snr, mai_snr_deps]
 " vim: ft=vim ts=2 sts=2 sw=2 et fdm=marker fmr=▶,▲
