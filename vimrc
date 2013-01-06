@@ -61,7 +61,7 @@ function! SetupVAM()
   let s:active_addons += ['SpellCheck', 'clang_complete']
   let s:active_addons += ['supertab', 'undotree', 'CountJump']
   let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  let s:active_addons += ['vlatex', 'LaTeX-Box']
+  let s:active_addons += ['LaTeX-Box', 'vlatex']
   "let s:active_addons += ['fugitive', 'gitv']
   if has("python")
     "let s:active_addons += ['UltiSnips']
