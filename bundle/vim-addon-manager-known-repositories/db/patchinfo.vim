@@ -20,10 +20,17 @@ let mai_snr.687['post-scms-update-hook'] = hook
 unlet hook
 
 let hook = 'execute "lcd" fnameescape(%d."/smartgrep") | call vam#utils#RunShell("make") | lcd -'
-let mai_snr.4295 = {'runtimepath': 'smartgrep'}
+let mai_snr.4295 = {}
 let mai_snr.4295['post-install-hook']     = hook
 let mai_snr.4295['post-update-hook']      = hook
 let mai_snr.4295['post-scms-update-hook'] = hook
+unlet hook
+
+let hook = 'execute "lcd" fnameescape(%d."/plugin") | call vam#utils#RunShell("make") | lcd -'
+let mai_snr.4384 = {}
+let mai_snr.4384['post-install-hook']     = hook
+let mai_snr.4384['post-update-hook']      = hook
+let mai_snr.4384['post-scms-update-hook'] = hook
 unlet hook
 "▶1 Wrong archive names
 " Author wrote that contents of vert.txt should go to vimrc, but it should work 
@@ -62,10 +69,6 @@ let add_by_snr.3187={'deprecated': "Deprecated in favour of FWC DSL defined in f
 let add_by_snr.3188={'deprecated': "Deprecated in favour of FWC DSL defined in frawor plugin"}
 let add_by_snr.3186={'deprecated': "Functions from this plugin were either dropped or moved to frawor plugin, see its documentation"}
 
-let add_by_snr.727 ={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
-let add_by_snr.441 ={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
-let add_by_snr.3393={'deprecated': "Consider using vim-addon-local-vimrc cause it provides simple hash protection and caches your replies"}
-
 let add_by_snr.1318={'deprecated': "Use snipmate instead. jano on irc reported that place holders don't work - last release 2006"}
 let add_by_snr.2540={'deprecated': "snipMate is an alias to snipmate now - so use 'snipmate'"}
 
@@ -96,10 +99,8 @@ let add_by_snr.3881={'deprecated': "Superseeded by github.com/Lokaltog/powerline
 let add_by_snr.3160={'deprecated': "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"}
 let add_by_snr.3161={'deprecated': "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"}
 
-let add_by_snr.2441={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
-let add_by_snr.2914={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
-let add_by_snr.3430={'deprecated': "Consider giving syntastic a try instead. It supports more backends"}
-let add_by_snr.3927={'deprecated': "Also pay attention to alternative syntastic which runs flake and can do much more"}
+let add_by_snr.2914={'deprecated': "Plugin seems to be no longer supported (last update 2 years ago (from Jan 2013)). Consider giving syntastic a try instead. It supports more backends"}
+let add_by_snr.3430={'deprecated': "Plugin seems to be no longer supported (last update 1 year ago (from Jan 2013)). Consider giving syntastic a try instead. It supports more backends"}
 
 let add_by_snr.4043={'deprecated': "The author recommends using neosnippet instead"}
 "▶1 Missing dependencies
@@ -250,5 +251,6 @@ let mai_snr.2883 = {'runtimepath': 'vimlib'}
 let mai_snr.2824 = {'runtimepath': 'vimlib'}
 let mai_snr.2847 = {'runtimepath': 'vimlib'}
 let mai_snr.663  = {'runtimepath': 'vim'}
+call extend(mai_snr.4295, {'runtimepath': 'smartgrep'})
 let r=[add_by_snr, mai_snr, mai_snr_deps]
 " vim: ft=vim ts=2 sts=2 sw=2 et fdm=marker fmr=▶,▲
