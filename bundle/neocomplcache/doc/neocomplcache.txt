@@ -1484,6 +1484,11 @@ your Vim initialization.
 >
 	call neocomplcache#initialize()
 <
+Q: neocomplcache conflicts when multibyte input in GVim.
+
+A: Because Vim multibyte IME integration is imcomplete.
+If you set |g:neocomplcache_lock_iminsert| is non-zero, it may be fixed.
+
 ==============================================================================
 TODO						*neocomplcache-todo*
 
@@ -1493,6 +1498,9 @@ Improve cache behavior in current buffer.
 
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2013-01-06
+- Supported sass omni completion.
 
 2013-01-04
 - Fixed buffer cache.
