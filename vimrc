@@ -559,6 +559,8 @@ if g:is_win
           \ '\PortableApps\PortableApps\SumatraPDFPortable\SumatraPDFPortable'
   endif
   let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
+else
+  let g:Tex_ViewRule_pdf = 'okular'
 endif
 
 imap <F8> <Plug>IMAP_JumpForward
