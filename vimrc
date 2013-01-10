@@ -497,14 +497,17 @@ function! s:unite_my_settings()"{{{
   nmap <buffer> <ESC> <Plug>(unite_exit)
   inoremap <buffer> jj <Plug>(unite_insert_leave)
   "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
+  "
+  "nmap <buffer> s :call unite#do_action('preview')<CR><Plug>(unite_loop_cursor_down)
+  nmap <buffer> s pj
 
   " <C-l>: manual neocomplcache completion.
   inoremap <buffer> <C-;> <C-x><C-u><C-p><Down>
 
   " Start insert.
   "let g:unite_enable_start_insert = 1
-  set nonumber
-  set norelativenumber
+  setlocal nonumber
+  setlocal norelativenumber
 endfunction"}}}
 
 let g:unite_source_file_mru_limit = 200
