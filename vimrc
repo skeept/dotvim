@@ -673,8 +673,37 @@ EOF
   endif
   let s:loadedPysmell = 1
 endfunction
-"autocmd FileType python setlocal completefunc=pysmell#Complete
-autocmd FileType python call LoadPysmell()
+
+function! LoadJedi()
+  if exists("s:loadedJedi")
+    return ''
+  endif
+  if has("python")
+    silent python << EOF
+import vim
+try:
+  import jedi
+  vim.command('let s:has_jedi = 1')
+except:
+  vim.command('let s:has_jedi = 0')
+EOF
+
+    if s:has_jedi == 1
+      let g:jedi#show_function_definition = "0"
+      ActivateAddons jedi-vim
+      setlocal omnifunc=jedi#complete
+    else
+      echom "No Jedi installed!"
+    endif
+  else
+    echom "Cannot Load Jedi No Python!"
+  endif
+  let s:loadedJedi = 1
+endfunction
+
+"choose one of pysmell or jedi for the completion in python
+"autocmd FileType python call LoadPysmell()
+autocmd FileType python call LoadJedi()
 
 "mapping for running python code
 "nmap <F9> :SingleCompileRun<CR>
