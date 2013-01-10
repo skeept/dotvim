@@ -477,9 +477,9 @@ let NERDTreeShowBookmarks = 1
 "==============================================================================}}}
 
 "================== PreciseJump ==============================================={{{
-nmap ,f :call PreciseJumpF(-1, -1, 0)<CR>
-vmap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
-omap ,f :call PreciseJumpF(-1, -1, 0)<CR>
+nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
+vnoremap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
+onoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 "==============================================================================}}}
 
 "================== Unite ====================================================={{{
