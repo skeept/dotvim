@@ -13,3 +13,14 @@ imap <silent> ( <Plug>delimitMate(<c-r>=EchoFunc()<cr>
 "snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?  "" : IMAP_Jumpfunc('', 0)<CR>
 
 "inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ? "" : UltiSnips_ListSnippets()<CR>
+
+
+vnoremap [q :<C-U>cprevious<CR>
+vnoremap ]q :<C-U>cnext<CR>
+nnoremap [q :<C-U>cprevious<CR>
+nnoremap ]q :<C-U>cnext<CR>
+
+vnoremap [b :<C-U>bprevious<CR>
+vnoremap ]b :<C-U>bnext<CR>
+nnoremap [b :<C-U>bprevious<CR>
+nnoremap ]b :<C-U>bnext<CR>
