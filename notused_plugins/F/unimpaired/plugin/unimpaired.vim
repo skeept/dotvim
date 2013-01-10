@@ -35,7 +35,11 @@ function! s:entries(path)
   let files += split(glob(path."/*"),"\n")
   call map(files,'substitute(v:val,"[\\/]$","","")')
   call filter(files,'v:val !~# "[\\\\/]\\.\\.\\=$"')
-  call filter(files,'v:val[-4:-1] !=# ".swp" && v:val[-1:-1] !=# "~"')
+
+  " filter out &suffixes
+  let filter_suffixes = substitute(escape(&suffixes, '~.*$^'), ',', '$\\|', 'g') .'$'
+  call filter(files, 'v:val !~# filter_suffixes')
+
   return files
 endfunction
 
@@ -68,8 +72,16 @@ function! s:FileByOffset(num)
   return file
 endfunction
 
-nnoremap <silent> <Plug>unimpairedONext     :<C-U>edit `=<SID>FileByOffset(v:count1)`<CR>
-nnoremap <silent> <Plug>unimpairedOPrevious :<C-U>edit `=<SID>FileByOffset(-v:count1)`<CR>
+function! s:fnameescape(file) abort
+  if exists('*fnameescape')
+    return fnameescape(a:file)
+  else
+    return escape(a:file," \t\n*?[{`$\\%#'\"|!<")
+  endif
+endfunction
+
+nnoremap <silent> <Plug>unimpairedONext     :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(v:count1))<CR><CR>
+nnoremap <silent> <Plug>unimpairedOPrevious :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(-v:count1))<CR><CR>
 
 nmap ]o <Plug>unimpairedONext
 nmap [o <Plug>unimpairedOPrevious
