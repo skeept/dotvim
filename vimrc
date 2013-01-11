@@ -1161,7 +1161,7 @@ endif
 function! MyThesisEnv()
   if has("gui")
     winpos 0 0
-    set lines=100 columns=96
+    set lines=100 columns=91
   endif
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
