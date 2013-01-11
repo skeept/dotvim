@@ -120,7 +120,7 @@ endif
 set expandtab
 set softtabstop=2
 set cindent shiftwidth=2
-set scrolloff=9 "kepp 9 lines of contex when editing
+set scrolloff=2 "kepp XX lines of contex when editing
 set clipboard+=unnamed " turns out I do like is sharing windows clipboard
 set wildmenu                    "wmnu:  enhanced ex command completion
 set wildmode=longest:full,list:full  "wim:   helps wildmenu auto-completion
