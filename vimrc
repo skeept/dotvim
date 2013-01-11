@@ -484,7 +484,8 @@ onoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 
 "================== Unite ====================================================={{{
 nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
-nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
+nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
+      \ -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
 nnoremap <silent> ,uo :<C-u>Unite outline<CR>
 nnoremap ,uf :<C-u>Unite source<CR>

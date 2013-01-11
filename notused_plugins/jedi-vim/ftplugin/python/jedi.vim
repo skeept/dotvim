@@ -1,5 +1,8 @@
 let b:did_ftplugin = 1
 
+if !has('python') && !has('python3')
+    finish
+endif
 " ------------------------------------------------------------------------
 " Initialization of jedi-vim
 " ------------------------------------------------------------------------
@@ -30,7 +33,9 @@ end
 
 if g:jedi#auto_vim_configuration
     setlocal completeopt=menuone,longest,preview
-    inoremap <C-c> <ESC>
+    if len(mapcheck('<C-c>', 'i')) == 0
+        inoremap <C-c> <ESC>
+    end
 end
 
 if g:jedi#popup_on_dot

@@ -5,8 +5,10 @@
 " This part of the software is just the vim interface. The main source code
 " lies in the python files around it.
 
-if !has('python')
-    echomsg "Error: Required vim compiled with +python"
+if !has('python') && !has('python3')
+    if !exists("g:jedi#squelch_py_warning")
+        echomsg "Error: Required vim compiled with +python"
+    endif
     finish
 endif
 
@@ -46,7 +48,13 @@ if g:jedi#auto_initialization
     " this is only here because in some cases the VIM library adds their
     " autocompletion as a default, which may cause problems, depending on the
     " order of invocation.
-    autocmd FileType python setlocal omnifunc=jedi#complete switchbuf=useopen  " needed for pydoc
+    autocmd FileType Python setlocal omnifunc=jedi#complete switchbuf=useopen  " needed for pydoc
 endif
+
+if has('python')
+    command! -nargs=1 Python python <args>
+else
+    command! -nargs=1 Python python3 <args>
+end
 
 " vim: set et ts=4:
