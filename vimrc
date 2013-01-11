@@ -500,6 +500,7 @@ function! s:unite_my_settings()"{{{
 
   "nmap <buffer> s :call unite#do_action('preview')<CR><Plug>(unite_loop_cursor_down)
   nmap <buffer> s jp
+  nmap <buffer> S kp
 
   " <C-l>: manual neocomplcache completion.
   inoremap <buffer> <C-;> <C-x><C-u><C-p><Down>
