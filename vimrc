@@ -349,7 +349,7 @@ if has("autocmd")
   autocmd! FileType qf wincmd J
 
   "set readonly files to autoread
-  autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread so=0
+  autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread
         \ sbo+=ver,hor | endif
 
   "mappings for specific buffers
