@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Dec 2012.
+" Last Modified: 12 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,7 +31,7 @@ set cpo&vim
 call unite#util#set_default(
       \ 'g:unite_source_file_rec_ignore_pattern',
       \'\%(^\|/\)\.$\|\~$\|\.\%(o\|exe\|dll\|bak\|sw[po]\|class\)$'.
-      \'\|\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)')
+      \'\|\%(^\|/\)\%(\.hg\|\.git\|\.bzr\|\.svn\|tags\%(-.*\)\?\)\%($\|/\)')
 call unite#util#set_default(
       \ 'g:unite_source_file_rec_min_cache_files', 100)
 "}}}
@@ -118,6 +118,9 @@ function! s:source_rec.async_gather_candidates(args, context) "{{{
   return deepcopy(candidates)
 endfunction"}}}
 
+function! s:source_rec.hooks.on_init(args, context) "{{{
+  call s:on_init(a:args, a:context)
+endfunction"}}}
 function! s:source_rec.hooks.on_post_filter(args, context) "{{{
   call s:on_post_filter(a:args, a:context)
 endfunction"}}}
@@ -321,6 +324,9 @@ function! s:source_async.async_gather_candidates(args, context) "{{{
   return deepcopy(candidates)
 endfunction"}}}
 
+function! s:source_async.hooks.on_init(args, context) "{{{
+  call s:on_init(a:args, a:context)
+endfunction"}}}
 function! s:source_async.hooks.on_close(args, context) "{{{
   if has_key(a:context, 'source__proc')
     call a:context.source__proc.waitpid()
@@ -394,9 +400,15 @@ function! s:get_path(args, context) "{{{
     return unite#util#path2project_directory(directory, 1)
   endif
 
-  return unite#util#substitute_path_separator(
+  let directory = unite#util#substitute_path_separator(
         \ substitute(fnamemodify(directory, ':p'), '^\~',
         \ unite#util#substitute_path_separator($HOME), ''))
+
+  if directory =~ '/$'
+    let directory = directory[: -2]
+  endif
+
+  return directory
 endfunction"}}}
 function! s:get_files(files, level, max_len) "{{{
   let continuation_files = []
@@ -462,6 +474,13 @@ function! s:get_files(files, level, max_len) "{{{
   return [continuation_files, map(ret_files,
         \ "unite#util#substitute_path_separator(fnamemodify(v:val, ':p'))")]
 endfunction"}}}
+function! s:on_init(args, context) "{{{
+  augroup plugin-unite-source-file_rec
+    autocmd!
+    autocmd BufEnter,BufWinEnter,BufFilePost,BufWritePost *
+          \ call unite#sources#file_rec#_append()
+  augroup END
+endfunction"}}}
 function! s:on_post_filter(args, context) "{{{
   for candidate in a:context.candidates
     let candidate.action__directory =
@@ -475,9 +494,9 @@ function! s:init_continuation(context, directory) "{{{
     " Use cache file.
 
     let files = map(s:Cache.readfile(cache_dir, a:directory), "{
-          \ 'word' : unite#util#substitute_path_separator(
-          \    fnamemodify(v:val, ':p')),
-          \ 'action__path' : v:val,
+          \   'word' : unite#util#substitute_path_separator(
+          \      fnamemodify(v:val, ':p')),
+          \   'action__path' : v:val,
           \ }")
 
     let s:continuation[a:directory] = {
@@ -496,7 +515,8 @@ function! s:init_continuation(context, directory) "{{{
   endif
 
   let s:continuation[a:directory].files =
-        \ unite#util#uniq(s:continuation[a:directory].files)
+        \ filter(unite#util#uniq(s:continuation[a:directory].files),
+        \ 'filereadable(v:val.action__path)')
 endfunction"}}}
 function! s:write_cache(directory, files) "{{{
   let cache_dir = g:unite_data_directory . '/file_rec'
@@ -510,6 +530,31 @@ function! s:write_cache(directory, files) "{{{
     " Delete old cache files.
     call s:Cache.delete(cache_dir, a:directory)
   endif
+endfunction"}}}
+
+function! unite#sources#file_rec#_append() "{{{
+  let path = expand('%:p')
+  if path !~ '\a\+:'
+    let path = simplify(resolve(path))
+  endif
+
+  " Append the current buffer to the mru list.
+  if !filereadable(path) || &l:buftype =~# 'help\|nofile'
+    return
+  endif
+
+  let path = unite#util#substitute_path_separator(path)
+
+  " Check continuation.
+  let base_path = unite#util#substitute_path_separator(
+        \ fnamemodify(path, ':h')) . '/'
+  for continuation in values(filter(copy(s:continuation),
+        \ "stridx(v:key.'/', base_path) == 0"))
+    let continuation.files = unite#util#uniq(add(
+          \ continuation.files, {
+            \ 'word' : path, 'action__path' : path,
+            \ }))
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo
