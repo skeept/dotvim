@@ -8,13 +8,6 @@ if exists("g:loaded_unimpaired") || &cp || v:version < 700
 endif
 let g:loaded_unimpaired = 1
 
-nnoremap g/ /\v\C
-onoremap g/ /\v\C
-xnoremap g/ /\v\C
-nnoremap z/ /\v\c
-onoremap z/ /\v\c
-xnoremap z/ /\v\c
-
 " Next and previous {{{1
 
 function! s:MapNextFamily(map,cmd)
@@ -28,6 +21,12 @@ function! s:MapNextFamily(map,cmd)
   execute 'nmap <silent> ]'.        a:map .' '.map.'Next'
   execute 'nmap <silent> ['.toupper(a:map).' '.map.'First'
   execute 'nmap <silent> ]'.toupper(a:map).' '.map.'Last'
+  if exists(':'.a:cmd.'nfile')
+    execute 'nnoremap <silent> '.map.'PFile :<C-U>exe "'.a:cmd.'prfile'.end
+    execute 'nnoremap <silent> '.map.'NFile :<C-U>exe "'.a:cmd.'nfile'.end
+    execute 'nmap <silent> [<C-'.a:map.'> '.map.'PFile'
+    execute 'nmap <silent> ]<C-'.a:map.'> '.map.'NFile'
+  endif
 endfunction
 
 call s:MapNextFamily('a','')
@@ -87,11 +86,15 @@ function! s:fnameescape(file) abort
   endif
 endfunction
 
-nnoremap <silent> <Plug>unimpairedONext     :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(v:count1))<CR><CR>
-nnoremap <silent> <Plug>unimpairedOPrevious :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(-v:count1))<CR><CR>
+nnoremap <silent> <Plug>unimpairedDirectoryNext     :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(v:count1))<CR><CR>
+nnoremap <silent> <Plug>unimpairedDirectoryPrevious :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(-v:count1))<CR><CR>
 
-nmap ]o <Plug>unimpairedONext
-nmap [o <Plug>unimpairedOPrevious
+nmap <Plug>unimpairedONext     <Plug>unimpairedDirectoryNext
+nmap <Plug>unimpairedOPrevious <Plug>unimpairedDirectoryPrevious
+nmap ]f <Plug>unimpairedDirectoryNext
+nmap [f <Plug>unimpairedDirectoryPrevious
+nmap ]o <Plug>unimpairedDirectoryNext
+nmap [o <Plug>unimpairedDirectoryPrevious
 
 " }}}1
 " Diff {{{1
