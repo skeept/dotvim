@@ -129,8 +129,9 @@ set viminfo=h,'100,<10000,s1000,/1000,:1000
 " Don't use Ex mode, use Q for formatting
 noremap Q gq
 
-" Make p in Visual mode replace the selected text with the "" register.
-vnoremap p <Esc>:let current_reg = @"<CR>gvs<C-R>=current_reg<CR><Esc>
+" Make p in Visual mode replace the selected text with the "z register.
+vnoremap p <Esc>:let current_reg = @z<CR>gvs<C-R>=current_reg<CR><Esc>
+command! -nargs=1 CR execute "vnoremap p <Esc>:let current_reg = @<args><CR>gvs<C-R>=current_reg<CR><Esc>"
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
