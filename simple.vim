@@ -771,8 +771,6 @@ runtime plugin/scratch.vim
 "}}}
 
 function! LoadTagbar() "{{{
-  "call vam#ActivateAddons(['Tagbar', 'nerdtree', 'Buffergator'], "nerdtree
-  "and buffergator don't load well. can investigate later (couple weeks)
   call vam#ActivateAddons(['Tagbar'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
