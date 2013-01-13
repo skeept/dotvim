@@ -527,7 +527,6 @@ endfunction
 nnoremap <Leader>b :BufstopModeFast<CR>
 "==============================================================================}}}
 
-
 "================== Latex ====================================================={{{
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
