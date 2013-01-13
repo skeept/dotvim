@@ -71,9 +71,9 @@ function! SetupVAM()
   ""let s:active_addons += ['fugitive', 'gitv']
 
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
-  VAMAddToActiveAddons d.0 Bufstop delimitMate
+  VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar
-  VAMAddToActiveAddons vlatex
+  VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   if has("python")
     "let s:active_addons += ['UltiSnips']
     "VAMAddToActiveAddons UltiSnips
@@ -576,6 +576,10 @@ else
   let g:Tex_ViewRule_pdf = 'okular'
 endif
 
+  imap <F8> <Plug>IMAP_JumpForward
+  nmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
 function! LoadLatexPlugins()
   if exists("s:loaded_latex_plugins") | return '' | endif
 
@@ -589,7 +593,7 @@ function! LoadLatexPlugins()
 
   let s:loaded_latex_plugins = 1
 endfunction
-autocmd FileType tex call LoadLatexPlugins()
+"autocmd FileType tex call LoadLatexPlugins()
 "remoteOpen must be loaded in order to open from external viewer
 "runtime bundle/vlatex/plugin/remoteOpen.vim
 
