@@ -55,7 +55,8 @@ function! SetupVAM()
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons = ['ctrlp', 'Indent_Guides', 'SmartusLine', 'TaskList']
+  let s:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
+  "let s:active_addons += ['Indent_Guides'
   let s:active_addons += ['d.0']
   let s:active_addons += ['Bufstop', 'delimitMate']
   "let s:active_addons += ['clang_complete']
@@ -524,7 +525,15 @@ endfunction
 "==============================================================================}}}
 
 "================== Bufstop ==================================================={{{
-nnoremap <Leader>b :BufstopModeFast<CR>
+function! MyBuffStopCall()
+  if     v:count == 1 | Bufstop
+  elseif v:count == 2 | BufstopFast
+  elseif v:count == 3 | BufstopMode
+  else
+    BufstopModeFast
+  endif
+endfunction
+nnoremap <Leader>b :<C-U>call MyBuffStopCall()<CR>
 "==============================================================================}}}
 
 "================== Latex ====================================================={{{
@@ -779,7 +788,7 @@ function! CtrlpShowArrFun()
 endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
-nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+nnoremap <silent> <C-P> :<C-U>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 "==============================================================================}}}
 
 "================== tagbar ===================================================={{{
