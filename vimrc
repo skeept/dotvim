@@ -50,25 +50,34 @@ endif
 "================== vim-addon-manager========================================{{{
 if s:addon_manager == 2
 function! SetupVAM()
+  let s:active_addons = []
+  command! -nargs=* -bar VAMAddToActiveAddons let s:active_addons += [<f-args>]
+
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
   exec 'set rtp+='.vam_install_path.'/vam'
+  let g:vim_addon_manager.additional_addon_dirs = [escape(expand(g:p0 . '/notused_plugins'), ' \')]
+
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
-  "let s:active_addons += ['Indent_Guides'
-  let s:active_addons += ['d.0']
-  let s:active_addons += ['Bufstop', 'delimitMate']
-  "let s:active_addons += ['clang_complete']
-  let s:active_addons += ['supertab', 'CountJump']
-  let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  "let s:active_addons += ['undotree', 'textobj-word-column']
-  "let s:active_addons += ['fugitive', 'gitv']
+  "let s:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
+  ""let s:active_addons += ['Indent_Guides'
+  "let s:active_addons += ['d.0']
+  "let s:active_addons += ['Bufstop', 'delimitMate']
+  ""let s:active_addons += ['clang_complete']
+  "let s:active_addons += ['supertab', 'CountJump']
+  "let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
+  ""let s:active_addons += ['undotree', 'textobj-word-column']
+  ""let s:active_addons += ['fugitive', 'gitv']
+
+  VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
+  VAMAddToActiveAddons d.0 Bufstop delimitMate
+  VAMAddToActiveAddons ManPageView vimproc Tagbar
+  VAMAddToActiveAddons vlatex
   if has("python")
     "let s:active_addons += ['UltiSnips']
+    "VAMAddToActiveAddons UltiSnips
   endif
-
-  let g:vim_addon_manager.additional_addon_dirs = [escape(expand(g:p0 . '/notused_plugins'), ' \')]
 
   call vam#ActivateAddons(s:active_addons, {'auto_install' : 0})
 
@@ -582,7 +591,7 @@ function! LoadLatexPlugins()
 endfunction
 autocmd FileType tex call LoadLatexPlugins()
 "remoteOpen must be loaded in order to open from external viewer
-runtime bundle/vlatex/plugin/remoteOpen.vim
+"runtime bundle/vlatex/plugin/remoteOpen.vim
 
 
 "for plugin in ftplugin/tex/tex_pdf.vim
