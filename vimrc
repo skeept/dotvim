@@ -55,13 +55,13 @@ function! SetupVAM()
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons = ['ctrlp', 'indent-guides', 'SmartusLine', 'TaskList']
-  let s:active_addons += ['d.0', 'LanguageTool', 'textobj-word-column']
-  let s:active_addons += ['Buffergator', 'delimitMate']
-  let s:active_addons += ['SpellCheck', 'clang_complete']
-  let s:active_addons += ['supertab', 'undotree', 'CountJump']
+  let s:active_addons = ['ctrlp', 'Indent_Guides', 'SmartusLine', 'TaskList']
+  let s:active_addons += ['d.0']
+  let s:active_addons += ['Bufstop', 'delimitMate']
+  "let s:active_addons += ['clang_complete']
+  let s:active_addons += ['supertab', 'CountJump']
   let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  let s:active_addons += ['LaTeX-Box', 'vlatex']
+  "let s:active_addons += ['undotree', 'textobj-word-column']
   "let s:active_addons += ['fugitive', 'gitv']
   if has("python")
     "let s:active_addons += ['UltiSnips']
@@ -524,6 +524,14 @@ let g:unite_source_history_yank_enable = 1
 
 "================== LibClang =================================================={{{
 let g:clang_use_library = 1
+"note, this does not work when the first file is loaded. Just reload the first
+"file (:e!) and chill out
+function LoadClangComplete()
+  if exists("s:loaded_clang_complete") | return '' | endif
+  ActivateAddons clang_complete
+  let s:loaded_clang_complete = 1
+endfunction
+autocmd FileType c,cpp call LoadClangComplete()
 "==============================================================================}}}
 
 "================== Buffergator ==============================================={{{
@@ -532,11 +540,22 @@ let g:clang_use_library = 1
 let g:buffergator_suppress_keymaps      = 1
 let g:buffergator_viewport_split_policy = "R"
 let g:buffergator_split_size            = 26
-noremap <Leader>bb :BuffergatorOpen<CR>
-noremap <Leader>bB :BuffergatorClose<CR>
-noremap <Leader>bt :BuffergatorTabsOpen<CR>
-noremap <Leader>bT :BuffergatorTabsClose<CR>
+"Load Buffergator only on Demand
+function LoadBuffergator()
+  if exists("s:loaded_buffergator") | return '' | endif
+  ActivateAddons Buffergator
+  "noremap <Leader>bb :BuffergatorOpen<CR>
+  "noremap <Leader>bB :BuffergatorClose<CR>
+  "noremap <Leader>bt :BuffergatorTabsOpen<CR>
+  "noremap <Leader>bT :BuffergatorTabsClose<CR>
+  let s:loaded_buffergator = 1
+endfunction
 "==============================================================================}}}
+
+"================== Bufstop ==================================================={{{
+nnoremap <Leader>b :BufstopModeFast<CR>
+"==============================================================================}}}
+
 
 "================== Latex ====================================================={{{
 "latex options
@@ -569,10 +588,21 @@ else
   let g:Tex_ViewRule_pdf = 'okular'
 endif
 
-imap <F8> <Plug>IMAP_JumpForward
-nmap <F8> <Plug>IMAP_JumpForward
-vmap <F8> <Plug>IMAP_JumpForward
-vmap <F8> <Plug>IMAP_DeleteAndJumpForward
+function LoadLatexPlugins()
+  if exists("s:loaded_latex_plugins") | return '' | endif
+
+  imap <F8> <Plug>IMAP_JumpForward
+  nmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
+  ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
+
+  "will it be necessary to load after/ftplugin/tex again?
+
+  let s:loaded_latex_plugins = 1
+endfunction
+autocmd FileType tex call LoadLatexPlugins()
+
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
@@ -843,6 +873,7 @@ function! ToggleTBarListNT()
     elseif s:tbartoggle == 3
       NERDTreeToggle
     elseif s:tbartoggle == 4
+      if !exists("s:loaded_buffergator") | call LoadBuffergator() | endif
       BuffergatorToggle
     endif
   endif
