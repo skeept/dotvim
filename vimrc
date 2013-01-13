@@ -446,35 +446,6 @@ let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
 "================== NerdTree =================================================={{{
 "NERDTree settings
 let NERDTreeShowBookmarks = 1
-
-"let g:togglelistornerdtree = 0
-"function! ToogleTagListNerdTree()
-  "if g:togglelistornerdtree == 0
-    ""NERDTreeClose
-    ""TlistOpen
-    "TlistToggle
-    ""setlocal nonumber
-    ""setlocal norelativenumber
-    "let g:togglelistornerdtree = 1
-  "elseif g:togglelistornerdtree == 1
-    "TlistToggle
-    ""TlistClose
-
-    ""NERDTreeToggle
-    ""setlocal nonumber
-    ""setlocal norelativenumber
-
-    "let g:togglelistornerdtree = 0
-  "else
-    ""TlistClose
-    ""NERDTreeClose
-    "NERDTreeToggle
-    "let g:togglelistornerdtree = 0
-  "endif
-"endfunction
-"noremap <F3> :call ToogleTagListNerdTree() <CR>
-"inoremap <F3> <ESC>:call ToogleTagListNerdTree() <CR>
-
 "==============================================================================}}}
 
 "================== PreciseJump ==============================================={{{
@@ -526,7 +497,7 @@ let g:unite_source_history_yank_enable = 1
 let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
-function LoadClangComplete()
+function! LoadClangComplete()
   if exists("s:loaded_clang_complete") | return '' | endif
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
@@ -541,7 +512,7 @@ let g:buffergator_suppress_keymaps      = 1
 let g:buffergator_viewport_split_policy = "R"
 let g:buffergator_split_size            = 26
 "Load Buffergator only on Demand
-function LoadBuffergator()
+function! LoadBuffergator()
   if exists("s:loaded_buffergator") | return '' | endif
   ActivateAddons Buffergator
   "noremap <Leader>bb :BuffergatorOpen<CR>
@@ -588,7 +559,7 @@ else
   let g:Tex_ViewRule_pdf = 'okular'
 endif
 
-function LoadLatexPlugins()
+function! LoadLatexPlugins()
   if exists("s:loaded_latex_plugins") | return '' | endif
 
   imap <F8> <Plug>IMAP_JumpForward
@@ -869,8 +840,16 @@ function! ToggleTBarListNT()
     if s:tbartoggle == 1
       TagbarToggle
     elseif s:tbartoggle == 2
+      if !exists("s:loaded_taglist")
+        ActivateAddons taglist
+        let s:loaded_taglist = 1
+      endif
       TlistToggle
     elseif s:tbartoggle == 3
+      if !exists("s:loaded_nerdtree")
+        silent ActivateAddons nerdtree
+        let s:loaded_nerdtree = 1
+      endif
       NERDTreeToggle
     elseif s:tbartoggle == 4
       if !exists("s:loaded_buffergator") | call LoadBuffergator() | endif
