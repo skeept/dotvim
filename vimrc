@@ -576,10 +576,10 @@ else
   let g:Tex_ViewRule_pdf = 'okular'
 endif
 
-  imap <F8> <Plug>IMAP_JumpForward
-  nmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
+imap <F8> <Plug>IMAP_JumpForward
+nmap <F8> <Plug>IMAP_JumpForward
+vmap <F8> <Plug>IMAP_JumpForward
+vmap <F8> <Plug>IMAP_DeleteAndJumpForward
 function! LoadLatexPlugins()
   if exists("s:loaded_latex_plugins") | return '' | endif
 
