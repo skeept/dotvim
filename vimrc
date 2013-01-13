@@ -572,6 +572,8 @@ function! LoadLatexPlugins()
   let s:loaded_latex_plugins = 1
 endfunction
 autocmd FileType tex call LoadLatexPlugins()
+"remoteOpen must be loaded in order to open from external viewer
+runtime bundle/vlatex/plugin/remoteOpen.vim
 
 
 "for plugin in ftplugin/tex/tex_pdf.vim
