@@ -400,6 +400,23 @@ endfunction
 "nnoremap ,e :<c-u> call ToggleLycosa()<CR>
 "==============================================================================}}}
 
+"================== Buffergator ==============================================={{{
+"nmap <silent> <Leader>bb :TSelectBuffer<CR>
+"Buffergator settings
+let g:buffergator_suppress_keymaps      = 1
+let g:buffergator_viewport_split_policy = "R"
+let g:buffergator_split_size            = 26
+"Load Buffergator only on Demand
+function! LoadBuffergator()
+  if exists("s:loaded_buffergator") | return '' | endif
+  ActivateAddons Buffergator
+  "noremap <Leader>bb :BuffergatorOpen<CR>
+  "noremap <Leader>bB :BuffergatorClose<CR>
+  "noremap <Leader>bt :BuffergatorTabsOpen<CR>
+  "noremap <Leader>bT :BuffergatorTabsClose<CR>
+  let s:loaded_buffergator = 1
+endfunction
+"==============================================================================}}}
 "================== Latex ====================================================={{{
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
@@ -617,10 +634,19 @@ function! ToggleTBarListNT()
     if s:tbartoggle == 1
       TagbarToggle
     elseif s:tbartoggle == 2
+      if !exists("s:loaded_taglist")
+        ActivateAddons taglist
+        let s:loaded_taglist = 1
+      endif
       TlistToggle
     elseif s:tbartoggle == 3
+      if !exists("s:loaded_nerdtree")
+        ActivateAddons nerdtree
+        let s:loaded_nerdtree = 1
+      endif
       NERDTreeToggle
     elseif s:tbartoggle == 4
+      if !exists("s:loaded_buffergator") | call LoadBuffergator() | endif
       BuffergatorToggle
     endif
   endif
