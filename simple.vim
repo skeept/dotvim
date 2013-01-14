@@ -38,6 +38,7 @@ function! SetupVAM()
 
   command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  cmap asd AA<SPACE>
 endfunction
 call SetupVAM()
 endif
@@ -417,6 +418,7 @@ function! LoadBuffergator()
   let s:loaded_buffergator = 1
 endfunction
 "==============================================================================}}}
+
 "================== Latex ====================================================={{{
 "latex options
 "let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
