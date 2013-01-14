@@ -1197,7 +1197,7 @@ function! MyThesisEnv()
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
   command! ThesisCompileView !start perl run_latexmk.pl
 
-  set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg
+  set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg,*.fls
 
   "exe "command! MLRT1 '<'>s/\(xl\|xu\|yl\|yu\|zl\|zu\)/\=" .
         "\ "{'xu':'x^u', 'xl':'x^l', 'yl':'y^l', 'yu':'y^u', 'zl':'z^l', 'yu':'y^u'}" .
