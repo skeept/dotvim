@@ -1191,6 +1191,7 @@ endif
 function! MyThesisEnv()
   if has("gui")
     winpos 0 0
+    set guioptions-=m "no menu bar for now
     set lines=100 columns=91
   endif
   silent exec "cd " . g:thesis_path
