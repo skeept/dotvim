@@ -184,12 +184,12 @@ xmap ]e <Plug>unimpairedMoveDown
 " }}}1
 " Encoding and decoding {{{1
 
-function! s:StringEncode(str)
+function! s:string_encode(str)
   let map = {"\n": 'n', "\r": 'r', "\t": 't', "\b": 'b', "\f": '\f', '"': '"', '\': '\'}
   return substitute(a:str,"[\001-\033\\\\\"]",'\="\\".get(map,submatch(0),printf("%03o",char2nr(submatch(0))))','g')
 endfunction
 
-function! s:StringDecode(str)
+function! s:string_decode(str)
   let map = {'n': "\n", 'r': "\r", 't': "\t", 'b': "\b", 'f': "\f", 'e': "\e", 'a': "\001", 'v': "\013"}
   let str = a:str
   if str =~ '^\s*".\{-\}\\\@<!\%(\\\\\)*"\s*\n\=$'
@@ -199,71 +199,13 @@ function! s:StringDecode(str)
   return substitute(str,'\\\(\o\{1,3\}\|x\x\{1,2\}\|u\x\{1,4\}\|.\)','\=get(map,submatch(1),submatch(1) =~? "^[0-9xu]" ? nr2char("0".substitute(submatch(1),"^[Uu]","x","")) : submatch(1))','g')
 endfunction
 
-function! s:UrlEncode(str)
+function! s:url_encode(str)
   return substitute(a:str,'[^A-Za-z0-9_.~-]','\="%".printf("%02X",char2nr(submatch(0)))','g')
 endfunction
 
-function! s:UrlDecode(str)
+function! s:url_decode(str)
   let str = substitute(substitute(substitute(a:str,'%0[Aa]\n$','%0A',''),'%0[Aa]','\n','g'),'+',' ','g')
   return substitute(str,'%\(\x\x\)','\=nr2char("0x".submatch(1))','g')
-endfunction
-
-let s:base64_chars = map(range(char2nr('A'),char2nr('Z')),'nr2char(v:val)')
-      \            + map(range(char2nr('a'),char2nr('z')),'nr2char(v:val)')
-      \            + map(range(char2nr('0'),char2nr('9')),'nr2char(v:val)')
-      \            + ['+','/']
-
-let s:base64_filler = '='
-let s:base64_lookup = {}
-let s:pos = 0
-for s:char in s:base64_chars
-  let s:base64_lookup[s:char] = s:pos
-  let s:pos += 1
-endfor
-unlet s:pos
-
-function! s:Base64Encode(str)
-  " Respect current file encoding
-  let input = a:str
-  let encoded = ''
-  while len(input) > 2
-    let encoded .= s:base64_chars[char2nr(input[0])/4]
-          \     .  s:base64_chars[16*(char2nr(input[0])%4 )+char2nr(input[1])/16]
-          \     .  s:base64_chars[4 *(char2nr(input[1])%16)+char2nr(input[2])/64]
-          \     .  s:base64_chars[char2nr(input[2])%64]
-    let input = input[3:]
-  endwhile
-  if len(input) == 2
-    let encoded .= s:base64_chars[char2nr(input[0])/4]
-          \     .  s:base64_chars[16*(char2nr(input[0])%4 )+char2nr(input[1])/16]
-          \     .  s:base64_chars[4 *(char2nr(input[1])%16)]
-          \     .  s:base64_filler
-  elseif len(input) == 1
-    let encoded .= s:base64_chars[char2nr(input[0])/4]
-          \     .  s:base64_chars[16*(char2nr(input[0])%4 )]
-          \     .  s:base64_filler
-          \     .  s:base64_filler
-  endif
-  return encoded
-endfunction
-
-function! s:Base64Decode(str)
-  if len(a:str) % 4 != 0
-    return a:str
-  endif
-  let input = a:str
-  let decoded = ''
-  while !empty(input)
-    let decoded .= nr2char(4 * s:base64_lookup[input[0]] + (s:base64_lookup[input[1]] / 16))
-    if input[2] !=# s:base64_filler
-      let decoded .= nr2char(16 * (s:base64_lookup[input[1]] % 16) + (s:base64_lookup[input[2]]/4))
-      if input[3] !=# s:base64_filler
-        let decoded .= nr2char(64 * (s:base64_lookup[input[2]] % 4) + s:base64_lookup[input[3]])
-      endif
-    endif
-    let input = input[4:]
-  endwhile
-  return decoded
 endfunction
 
 " HTML entities {{{2
@@ -335,7 +277,7 @@ let g:unimpaired_html_entities = {
 
 " }}}2
 
-function! s:XmlEncode(str)
+function! s:xml_encode(str)
   let str = a:str
   let str = substitute(str,'&','\&amp;','g')
   let str = substitute(str,'<','\&lt;','g')
@@ -344,7 +286,7 @@ function! s:XmlEncode(str)
   return str
 endfunction
 
-function! s:XmlEntityDecode(str)
+function! s:xml_entity_decode(str)
   let str = substitute(a:str,'\c&#\%(0*38\|x0*26\);','&amp;','g')
   let str = substitute(str,'\c&#\(\d\+\);','\=nr2char(submatch(1))','g')
   let str = substitute(str,'\c&#\(x\x\+\);','\=nr2char("0".submatch(1))','g')
@@ -356,9 +298,9 @@ function! s:XmlEntityDecode(str)
   return substitute(str,'\c&amp;','\&','g')
 endfunction
 
-function! s:XmlDecode(str)
+function! s:xml_decode(str)
   let str = substitute(a:str,'<\%([[:alnum:]-]\+=\%("[^"]*"\|''[^'']*''\)\|.\)\{-\}>','','g')
-  return s:XmlEntityDecode(str)
+  return s:xml_entity_decode(str)
 endfunction
 
 function! s:Transform(algorithm,type)
@@ -377,13 +319,17 @@ function! s:Transform(algorithm,type)
   else
     silent exe "normal! `[v`]y"
   endif
-  let @@ = s:{a:algorithm}(@@)
+  if a:algorithm =~# '^\u\|#'
+    let @@ = {a:algorithm}(@@)
+  else
+    let @@ = s:{a:algorithm}(@@)
+  endif
   norm! gvp
   let @@ = reg_save
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>unimpairedLine".a:algorithm,a:type)
+    silent! call repeat#set("\<Plug>unimpaired_line_".a:algorithm,a:type)
   endif
 endfunction
 
@@ -396,23 +342,21 @@ function! s:TransformSetup(algorithm)
   let &opfunc = matchstr(expand('<sfile>'), '<SNR>\d\+_').'TransformOpfunc'
 endfunction
 
-function! s:MapTransform(algorithm, key)
-  exe 'nnoremap <silent> <Plug>unimpaired'    .a:algorithm.' :<C-U>call <SID>TransformSetup("'.a:algorithm.'")<CR>g@'
-  exe 'xnoremap <silent> <Plug>unimpaired'    .a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",visualmode())<CR>'
-  exe 'nnoremap <silent> <Plug>unimpairedLine'.a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",v:count1)<CR>'
-  exe 'nmap '.a:key.'  <Plug>unimpaired'.a:algorithm
-  exe 'xmap '.a:key.'  <Plug>unimpaired'.a:algorithm
-  exe 'nmap '.a:key.a:key[strlen(a:key)-1].' <Plug>unimpairedLine'.a:algorithm
+function! UnimpairedMapTransform(algorithm, key)
+  exe 'nnoremap <silent> <Plug>unimpaired_'    .a:algorithm.' :<C-U>call <SID>TransformSetup("'.a:algorithm.'")<CR>g@'
+  exe 'xnoremap <silent> <Plug>unimpaired_'    .a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",visualmode())<CR>'
+  exe 'nnoremap <silent> <Plug>unimpaired_line_'.a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",v:count1)<CR>'
+  exe 'nmap '.a:key.'  <Plug>unimpaired_'.a:algorithm
+  exe 'xmap '.a:key.'  <Plug>unimpaired_'.a:algorithm
+  exe 'nmap '.a:key.a:key[strlen(a:key)-1].' <Plug>unimpaired_line_'.a:algorithm
 endfunction
 
-call s:MapTransform('StringEncode','[y')
-call s:MapTransform('StringDecode',']y')
-call s:MapTransform('UrlEncode','[u')
-call s:MapTransform('UrlDecode',']u')
-call s:MapTransform('XmlEncode','[x')
-call s:MapTransform('XmlDecode',']x')
-call s:MapTransform('Base64Encode','[Y')
-call s:MapTransform('Base64Decode',']Y')
+call UnimpairedMapTransform('string_encode','[y')
+call UnimpairedMapTransform('string_decode',']y')
+call UnimpairedMapTransform('url_encode','[u')
+call UnimpairedMapTransform('url_decode',']u')
+call UnimpairedMapTransform('xml_encode','[x')
+call UnimpairedMapTransform('xml_decode',']x')
 
 " }}}1
 
