@@ -1,8 +1,8 @@
 " ZoomWin:	Brief-like ability to zoom into/out-of a window
 " Author:	Charles Campbell
 "			original version by Ron Aaron
-" Date:		Oct 31, 2012 
-" Version:	25d	ASTRO-ONLY
+" Date:		Jan 14, 2013 
+" Version:	25e	ASTRO-ONLY
 " History: see :help zoomwin-history {{{1
 " GetLatestVimScripts: 508 1 :AutoInstall: ZoomWin.vim
 
@@ -18,7 +18,7 @@ if v:version < 702
  finish
 endif
 let s:keepcpo        = &cpo
-let g:loaded_ZoomWin = "v25d"
+let g:loaded_ZoomWin = "v25e"
 if !exists("g:zoomwin_localoptlist")
  let s:localoptlist   = ["ai","ar","bh","bin","bl","bomb","bt","cfu","ci","cin","cink","cino","cinw","cms","com","cpt","diff","efm","eol","ep","et","fenc","fex","ff","flp","fo","ft","gp","imi","ims","inde","inex","indk","inf","isk","key","kmp","lisp","mps","ml","ma","mod","nf","ofu","oft","pi","qe","ro","sw","sn","si","sts","spc","spf","spl","sua","swf","smc","syn","ts","tx","tw","udf","wm"]
 else
@@ -445,7 +445,9 @@ fun! s:SaveUserSettings()
   let s:keep_wfh    = &wfh
   let s:keep_hidden = &hidden
   let s:keep_write  = &write
-  let s:keep_so     = &so
+  if has("xterm_clipboard")
+   let s:keep_so     = &so
+  endif
   let s:keep_siso   = &siso
   let s:keep_ss     = &ss
   let s:keep_star   = @*
@@ -470,7 +472,9 @@ fun! s:RestoreUserSettings()
   let &hidden= s:keep_hidden
   let &write = s:keep_write
   let &wfh   = s:keep_wfh
-  let &so    = s:keep_so
+  if exists("s:keep_so")
+   let &so    = s:keep_so
+  endif
   let &siso  = s:keep_siso
   let &ss    = s:keep_ss
   let @*     = s:keep_star

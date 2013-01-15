@@ -1,7 +1,7 @@
-*ZoomWin.txt*	Zoom into/out-of a window		Oct 31, 2012
+*ZoomWin.txt*	Zoom into/out-of a window		Jan 14, 2013
 Authors: Charles E. Campbell, Jr.			*zoomwin*
          Ron Aaron
-Copyright: (c) 2004-2012 by Charles E. Campbell, Jr.	*zoomwin-copyright*
+Copyright: (c) 2004-2013 by Charles E. Campbell, Jr.	*zoomwin-copyright*
            The VIM LICENSE applies to ZoomWin.vim and ZoomWin.txt
            (see |copyright|) except use "ZoomWin" instead of "Vim"
 	   No warranty, express or implied.  Use At-Your-Own-Risk.
@@ -102,6 +102,11 @@ Copyright: (c) 2004-2012 by Charles E. Campbell, Jr.	*zoomwin-copyright*
 			     when one zoomed in, zoomed out, and then
 			     attempted to write.  Fixed (due to [Scratch]
 			     file renaming)
+	    Jan 14, 2013   * (Jorge Rodrigues) reported on errors in
+			     RestoreUserSettings() associated with
+			     saving and restoring the |'scrolloff'| setting.
+			     ZoomWin now protects against that by testing
+			     if the current vim supports |xterm_clipboard|.
 	v24 Jan 29, 2009 : * |g:ZoomWin_funcref| supported
 	    May 22, 2009   * supports the saving and restoring of window
 			     variables across zooms
