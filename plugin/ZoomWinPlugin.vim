@@ -18,7 +18,7 @@ if v:version < 702
  finish
 endif
 let s:keepcpo              = &cpo
-let g:loaded_ZoomWinPlugin = "v25e"
+let g:loaded_ZoomWinPlugin = "v25f"
 set cpo&vim
 "DechoTabOn
 
