@@ -48,7 +48,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 If( $do_backup )
 {
   Write-Output "Backup: $install --> $backup"
-Copy-Item "$install" "$backup" -recurse -force
+  Copy-Item "$install" "$backup" -recurse -force
 }
 
 #copy vim and gvim to destination
