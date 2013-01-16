@@ -1176,7 +1176,7 @@ nnoremap ,gdf :<C-U>Git diff<CR>
 "================== Thesis Specific Settings =================================={{{
 "let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
 let compname = hostname()
-if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
+if compname == "MIDDLE-EARTH" || compname == "Gondor"
     let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
   elseif compname == "ISENGARD2"
     let g:thesis_path = $HOME . ""
@@ -1184,7 +1184,7 @@ if compname == "MIDDLE-EARTH" || compname == "ISENGARD" || compname == "Gondor"
     let g:thesis_path = $HOME .  "/Documents/Thesis"
   elseif compname == "SHABBIRSTU3"
     let g:thesis_path = 'U:\WORK\Thesis'
-  elseif compname =~ 'isye.gatech.edu'
+  elseif compname =~ 'isye.gatech.edu' || compname == 'ISENGARD'
     let g:thesis_path = $HOME . "/WORK/Thesis"
 endif
 
@@ -1244,7 +1244,11 @@ function! MyThesisEnv()
     let execString = 'silent! !start ' . cmd
     exe execString
   endfunction
-  nnoremap <Leader>la :<C-U>call MyForwardSearch()<CR>
+  if g:is_win
+    nnoremap <Leader>la :<C-U>call MyForwardSearch()<CR>
+  else
+    nnoremap <Leader>la <Leader>ls
+  endif
 
 endfunction
 
