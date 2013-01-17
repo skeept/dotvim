@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Jan 2013.
+" Last Modified: 18 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -43,6 +43,7 @@ function! s:initialize_script_variables() "{{{
   let s:use_sources = {}
   let s:filetype_frequencies = {}
   let s:loaded_all_sources = 0
+  let s:runtimepath_save = ''
 
   if has('reltime')
     let s:start_time = reltime()
@@ -2394,9 +2395,9 @@ function! s:on_insert_leave() "{{{
   let neocomplcache.old_cur_text = ''
 
   " Restore foldinfo.
-  " Note: settabwinvar() in insert mode has bug.
-  " for tabnr in range(1, tabpagenr('$'))
-  for tabnr in [tabpagenr()]
+  " Note: settabwinvar() in insert mode has bug before 7.3.768.
+  for tabnr in (v:version > 703 || (v:version == 703 && has('patch768')) ?
+        \ [tabpagenr()] : range(1, tabpagenr('$')))
     for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
           \ "!empty(gettabwinvar(tabnr, v:val, 'neocomplcache_foldinfo'))")
       let neocomplcache_foldinfo =
@@ -2411,9 +2412,10 @@ function! s:on_insert_leave() "{{{
   endfor
 endfunction"}}}
 function! s:save_foldinfo() "{{{
-  " Note: settabwinvar() in insert mode has bug.
-  " for tabnr in range(1, tabpagenr('$'))
-  for tabnr in filter([tabpagenr()],
+  " Restore foldinfo.
+  " Note: settabwinvar() in insert mode has bug before 7.3.768.
+  for tabnr in (v:version > 703 || (v:version == 703 && has('patch768')) ?
+        \ [tabpagenr()] : range(1, tabpagenr('$')))
         \ "index(tabpagebuflist(v:val), bufnr('%')) >= 0")
     let winnrs = range(1, tabpagewinnr(tabnr, '$'))
     if tabnr == tabpagenr()
@@ -2747,7 +2749,7 @@ function! neocomplcache#get_current_neocomplcache() "{{{
 endfunction"}}}
 function! s:initialize_sources(source_names) "{{{
   " Initialize sources table.
-  if s:loaded_all_sources
+  if s:loaded_all_sources && &runtimepath ==# s:runtimepath_save
     return
   endif
 
@@ -2804,6 +2806,7 @@ function! s:initialize_sources(source_names) "{{{
 
     if name == '_'
       let s:loaded_all_sources = 1
+      let s:runtimepath_save = &runtimepath
     endif
   endfor
 endfunction"}}}
