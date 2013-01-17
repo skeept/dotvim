@@ -172,6 +172,11 @@ syn region texTabularPos matchgroup=texStatement
       \ contains=@texFoldGroup,@texDocGroup,@NoSpell
       \ containedin=texDocZone,texChapterZone,texSectionZone,texSubSectionZone
 
+syn region texTabularPos2 matchgroup=texStatement
+      \ start='\\begin\s*{\s*tabular\s*}[^}]*{' end='}' fold
+      \ contains=@texFoldGroup,@texDocGroup,@NoSpell
+      \ containedin=texChapterZone,texSectionZone,texParen
+
 syn region texMcolPos matchgroup=texStatement
       \ start='\\multicolumn{.*}{' end='}' fold
       \ contains=@texFoldGroup,@texDocGroup,@NoSpell
