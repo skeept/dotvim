@@ -46,7 +46,7 @@ in the specified range append to current line $_ .= ...
 @: -- repeat last : command
 
 
--- some mappings I have don't I don't remember always  --
+-- some mappings I have don't always remember --
 \os -- open scratch buffer
 ,di -- display registers (:reg or equivalently :di)
 q; :
