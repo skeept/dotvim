@@ -48,7 +48,7 @@ in the specified range append to current line $_ .= ...
 
 -- some mappings I have don't I don't remember always  --
 \os -- open scratch buffer
-,dr -- display registers (:reg)
+,di -- display registers (:reg or equivalently :di)
 q; :
 q' "
 \rs -- start recording to register u

@@ -213,7 +213,7 @@ inoremap {{ {<CR><CR>}<ESC>kcc
 
 "do I really change colorscheme that often?
 nnoremap ,sc :<C-U>colorscheme<space>
-nnoremap ,dr :registers<CR>
+nnoremap ,di :registers<CR>
 
 " make <BS> <DEL> <C-U> and <C-W> undoable
 " h i_Ctrl-g_u
