@@ -17,6 +17,8 @@ recording -- to record a set of keystrokes to register s do the folowing:
 qs<keystrokes>q
 then invoke the keystroke s by @s
 
+ZQ : quit without asking for confirmation
+
 
 tranposing chars: xp
 transposing lines: ddp
