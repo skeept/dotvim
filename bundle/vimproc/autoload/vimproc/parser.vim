@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: parser.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 27 Dec 2012.
+" Last Modified: 20 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -93,8 +93,7 @@ function! s:parse_cmdline(cmdline) "{{{
     let cmdline = s:parse_wildcard(cmdline)
   endif
 
-  " Split args.
-  return cmdline
+  return s:parse_tilde(cmdline)
 endfunction"}}}
 function! vimproc#parser#parse_statements(script) "{{{
   if type(a:script) == type('')  && a:script =~ '^\s*:'
@@ -147,7 +146,7 @@ function! vimproc#parser#parse_statements(script) "{{{
 
         let i += 1
       endif
-    elseif l:script[i] == "'"
+    elseif script[i] == "'"
       " Single quote.
       let [string, i] = s:skip_single_quote(script, i)
       let statement .= string
@@ -254,18 +253,7 @@ function! vimproc#parser#split_args(script) "{{{
     call add(args, arg)
   endif
 
-  " Substitute modifier.
-  let ret = []
-  for arg in args
-    if arg =~ '\%(:[p8~.htre]\)\+$'
-      let modify = matchstr(arg, '\%(:[p8~.htre]\)\+$')
-      let arg = fnamemodify(arg[: -len(modify)-1], modify)
-    endif
-
-    call add(ret, arg)
-  endfor
-
-  return ret
+  return args
 endfunction"}}}
 function! vimproc#parser#split_args_through(script) "{{{
   let script = type(a:script) == type([]) ?
@@ -414,7 +402,7 @@ function! vimproc#parser#expand_wildcard(wildcard) "{{{
   let max = len(a:wildcard)
   let script = ''
   let found = 0
-  while i < l:max
+  while i < max
     if a:wildcard[i] == '*' || a:wildcard[i] == '?' || a:wildcard[i] == '['
       let found = 1
       break
@@ -703,7 +691,7 @@ function! s:parse_redirection(script) "{{{
 
       let i = matchend(a:script, '^\s*\zs\f*', i)
     else
-      let [l:script, i] = s:skip_else(l:script, a:script, i)
+      let [script, i] = s:skip_else(script, a:script, i)
     endif
   endwhile
 
