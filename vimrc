@@ -74,6 +74,7 @@ function! SetupVAM()
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
+  "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   if has("python")
     "let s:active_addons += ['UltiSnips']
     "VAMAddToActiveAddons UltiSnips
