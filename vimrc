@@ -1018,7 +1018,7 @@ let g:localvimrc_sandbox = 0
 let g:localvimrc_ask = 0
 "==============================================================================}}}
 
-"================== yankRing / yankstack======================================={{{
+"================== yankRing / yankstack ======================================{{{
 let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
