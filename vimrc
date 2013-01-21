@@ -527,7 +527,7 @@ function! LoadUnite()
 endfunction
 
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
-nnoremap <silent> ,uc :call LoadUnite()<CR>:call UniteColorSchemeResume()<CR>
+nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
 
@@ -1055,7 +1055,7 @@ function! Uniq () range "{{{
   exec a:firstline . ',' . a:lastline . 'delete'
   call append(a:firstline-1, unique_lines)
 endfunction
-command! -range Uniq call Uniq()
+command! -range Uniq <line1>,<line2>call Uniq()
 "}}}
 
 
