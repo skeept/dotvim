@@ -72,7 +72,7 @@ function! SetupVAM()
 
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
-  VAMAddToActiveAddons ManPageView vimproc Tagbar
+  VAMAddToActiveAddons ManPageView vimproc Tagbar tlib
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
@@ -289,7 +289,8 @@ function! CaptureOutFun(cmd)
   exec a:cmd
   redir END
   set more
-  normal "up']$
+  "normal "up']$
+  normal "up'[
 endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
 nnoremap ,co :CaptureOut<SPACE>
@@ -892,13 +893,39 @@ let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
 let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
 let g:UltiSnipsEditSplit = "horizontal"
-nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+
+"nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
 inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
 snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
-"inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
-"snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
-inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+""inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
+""snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
+"inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+"snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+
+function! LoadUltisnips()
+  if has("python")
+    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    if has("autocmd")
+      autocmd FileType * call UltiSnips_FileTypeChanged()
+      autocmd BufNewFile,BufRead *.snippets setf snippets
+    endif
+    call UltiSnips_FileTypeChanged()
+    inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+          \ "" : IMAP_Jumpfunc('', 0)<CR>
+    snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+          \ "" : IMAP_Jumpfunc('', 0)<CR>
+
+    inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+          \ "" : UltiSnips_ListSnippets()<CR>
+    return 1
+  else
+    echom "vim compiled without python"
+    return 0
+  endif
+endfunction
+nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
+inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 
 function! Ulti_ExpandOrJump_and_getRes() "{{{
   " use only for latex new
@@ -1366,29 +1393,6 @@ endif
 "==============================================================================}}}
 
 "=================== Plugin Loading ==========================================={{{
-function! LoadUltisnips() "{{{
-  if has("python")
-    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    if has("autocmd")
-      autocmd FileType * call UltiSnips_FileTypeChanged()
-      autocmd BufNewFile,BufRead *.snippets setf snippets
-    endif
-    call UltiSnips_FileTypeChanged()
-    inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?  "" : IMAP_Jumpfunc('', 0)<CR>
-    snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?  "" : IMAP_Jumpfunc('', 0)<CR>
-
-    inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ? "" : UltiSnips_ListSnippets()<CR>
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
-endfunction
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-"}}}
-
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline', 'unite-tag', 'unite-colorscheme'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
