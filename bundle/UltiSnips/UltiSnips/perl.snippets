@@ -49,7 +49,7 @@ ${1:expression} while ${2:condition};
 endsnippet
 
 snippet test "Test"
-#!/usr/bin/env perl -w
+#!/usr/bin/perl -w
 
 use strict;
 use Test::More tests => ${1:1};
@@ -105,7 +105,8 @@ if ($1) {
 endsnippet
 
 snippet slurp "slurp"
-my $${1:var} = do { local $/ = undef; open my $fh, '<', ${2:$file}; <$fh> };
+my $${1:var};
+{ local $/ = undef; local *FILE; open FILE, "<${2:file}"; $$1 = <FILE>; close FILE }
 
 endsnippet
 

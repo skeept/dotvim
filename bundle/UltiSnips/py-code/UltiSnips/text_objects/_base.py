@@ -258,7 +258,9 @@ class EditableTextObject(TextObject):
         possible_sol += c
 
         if not len(possible_sol):
-            return None
+            # wrap, sue last
+            m = max(self._tabstops.keys())
+            return (m, self._tabstops[m])
 
         return max(possible_sol)
 

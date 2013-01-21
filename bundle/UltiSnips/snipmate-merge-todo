@@ -1,0 +1,121 @@
+- sample php
+  if<tab> yields\
+  if (CURSOR)
+      code
+
+  now I want to use a snippet like nin (not is_null($1)) at CURSOR, then
+  continue at code, how do I do this?
+
+- run the test suite
+
+- uniq var names!
+
+- colorize placeholders:
+   1st red
+  2nd green
+  3rd ..
+  
+  Then you know ahead of time where the cursor will jump to.
+
+- create a list about what is new to Snipmate users.
+  Eg try
+  bbox<tab> to get a fealing
+
+- extract pieces such as  (long term)
+  - markers
+  - select python, talk to python
+  - ...
+
+- think about how to extract tcomment's filetype detection
+  so that you get js completion in haml files in js sections etc.
+
+  Rather rewrrite and start a new plugin
+
+- snipmate will not be turned into something it isn't, so don't touch it.
+
+- think about how to keep the feature that snippets can be patched and
+  duplicated so that versions with and without markers can be used without
+  redundancy
+
+- wait for Holger Rapp to split snippets into its own repository, so that that
+  can be merged with snipmate-snippets
+
+- tell the mailinglist about this snippet community merge
+
+- think about refactoring plugin/* beacuse that directory should only
+  contain code which get loaded on each startup. It should only contain the
+  interface declaration. Everything else should be moved to autoload or such
+
+- think about whether to keep the plugin already sourced guard.
+  It always annoys me.
+
+- bzr ? there is an official mirror of a launchpad repo on github?
+  doc/UltiSnips.txt says bzr? That's confusing. Consider updating the list of
+  repos which is available
+
+- priorities. collisions? Which is the correct way to handle them?
+  There is ! modifier, good!
+
+- make loading of snippets lazy for best performance
+
+- escaping $ etc will work. Great :) snipmate failed on that
+
+- what about reloading snippets?
+  docs say:
+	UltiSnips detects when you write changes to a snippets file and automatically
+	makes the changes active. So in the empty buffer, type the tab trigger 'bye'
+	and then press the <Tab> key.
+
+  Does this affect all instances, or just the current running Vim instance?
+
+- nested snippets
+
+- ${VISUAL}: great :-)
+
+- what about xtemplate's completion feature stuff: eg input type for form
+  elements? Does this work?
+
+- Can a snippet reference others?
+
+- implement Snipmates completion feature if you type only some chars such as
+  bb<tab> should display all snippets startingh with bb ?
+
+- think about what todo with extends feature. See change implementation
+
+- the <tab> completion triggers completion popup is missing. Probbably getting
+  this working is little bit more work ..
+
+==== plugin/snipMate_compatibility.vim
+	If people use it they should be using teir own code or put this into their .vimrc
+	If they want to pollute the global namespace with a Filename word, then
+	its should be them doing so.
+	We don't want to keep cruft
+
+	" File: snipMate_compatibility.vim
+	" Author: Phillip Berndt <phillip.berndt@gmail.com>
+	" Description: Snipmate compatibility helper functions for UltiSnips
+	"
+	" Snipmate defines a function named Filename and a variable called
+	" g:snips_author for use in snippet subtitutions. See
+	"  https://github.com/msanders/snipmate.vim/blob/master/doc/snipMate.txt
+	" for details.
+	"
+
+	if exists('did_UltiSnips_snipmate_compatibility')
+		finish
+	endif
+	let did_UltiSnips_snipmate_compatibility = 1
+
+	" Define g:snips_author; some snipmate snippets use this
+	if ! exists('g:snips_author')
+		let g:snips_author = "John Doe"
+	endif
+
+	" Filename function, taken from snipMate.vim {{{
+	fun! Filename(...)
+	    let filename = expand('%:t:r')
+	    if filename == '' | return a:0 == 2 ? a:2 : '' | endif
+	    return !a:0 || a:1 == '' ? filename : substitute(a:1, '$1', filename, 'g')
+	endf
+	" }}}
+

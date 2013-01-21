@@ -1,3 +1,53 @@
+version 3beta: 
+	There are su many changes and maybe we'll not be comptabile anymore
+	Thus consider bumping version to 3
+
+	- NOTE: Some refactoring has taken place. Some things may be broken.
+	  If you're hit by such an issue revert to an older version and tell
+	  us to fix it.
+
+	- No more UltiSnipsNoPythonWarning setting. Warning only happens when
+	  you use UltiSnippets
+	- settings use this style now:
+		g:UltiSnips[...] 
+	  However the old g:UltiSnips{..} style is still supported
+	- g:UsePythonVersion is deprecated, assign PyCommand instead.
+	   probably it'll be supported forever ..
+	- drop the au command UltiSnips_Curs* VimL functions. directly cal
+	  python, LeavingBuffer was not EnteredInsertMode was not used at all.
+	- drop file_to_edit, it will be reimplemented in VimL, cause its a
+	  personal thing
+	- drop load_snippets_for. It'll be rewritten
+	- drop _needs_update, everything will be cached in the future
+	- drop _ensure_loaded
+	- drop _ensure_all_loaded
+	- drop reset_buffer_filetypes, 
+	  drop add_buffer_filetypes
+	  they will no longer be needed
+	- drop SnippetDirectories, you'll be able to configure snippet sources
+	  yourself
+	- SnippetDirectories - what for? drop it. If you want to choose the
+	  snippet files yourself - then write your own function
+	- introduce ft_filter and SnippetFilesForCurrentExpansion
+	  configuration options which you can use to select snippets easily.
+	  If this doesn't fit your needs, just assign your own function or
+	  provide a python implementation
+	- drop clear_snippets
+	- UltiSnipsEdit now provides a tlib based list matching ft_filter -
+	  existing files are shown first
+	- parsing errors show in quickfix
+	- show location hint in case there are multiple snippets having the
+	  same name like this: "src: path filetype"
+	  when having to select a snippet
+	- allow wrapping around 0 tabstop, ideally there would be a <m-x>
+	  mapping to jump to tabstop x (TODO)
+	- neue option debug_snipmate_conversion
+	- if there is no expansion possible after non alphanumeric characters
+	  such as ([ such as in "if (CURSOR" retry as if "if (" was not there
+	  forcing word boundary match
+	  Maybe snipmate.py should always add 'w' modifier instead?
+	  Why bother about adding w? Things should just work by default
+
 version 2.2:
 	- Support to silence Python-not-found warnings. *UltiSnips-python-warning*
 	- Matchit support for snippet files.
