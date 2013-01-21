@@ -1023,7 +1023,7 @@ let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
 
-if index(s:active_addons, 'yankstack') >= 0)
+if index(s:active_addons, 'yankstack') >= 0
   nmap ,y <Plug>yankstack_substitute_older_paste
   nmap ,Y <Plug>yankstack_substitute_newer_paste
 endif
