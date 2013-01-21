@@ -469,13 +469,18 @@ onoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 "==============================================================================}}}
 
 "================== Unite ====================================================={{{
-nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
       \ -prompt=%\  buffer file_mru bookmark file<CR>
 nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-nnoremap ,uf :<C-u>Unite source<CR>
-nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
+
+function! UniteColorSchemeResume()
+  if !exists("s:unite_init_colorscheme")
+    let s:unite_init_colorscheme = 1
+    Unite -buffer-name=colorscheme colorscheme
+  else
+    UniteResume colorscheme
+  endif
+endfunction
 
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()"{{{
@@ -505,6 +510,27 @@ let g:unite_abbr_highlight = 'TabLine'
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
 let g:unite_source_history_yank_enable = 1
+
+function! LoadUnite()
+  call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
+	\ 'unite-tag', 'unite-colorscheme'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files
+	\ buffer file_mru bookmark file<CR>
+  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
+	\ -prompt=%\  buffer file_mru bookmark file<CR>
+  nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
+  nnoremap <silent> ,uo :<C-u>Unite outline<CR>
+  nnoremap ,uf :<C-u>Unite source<CR>
+  "nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
+  nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
+endfunction
+
+nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
+nnoremap <silent> ,uc :call LoadUnite()<CR>:call UniteColorSchemeResume()<CR>
+nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
+nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
+
 "==============================================================================}}}
 
 "================== LibClang =================================================={{{
@@ -1009,6 +1035,29 @@ endfunction
 command! DelTrailwhiteSpace call StripTrailingWhitespace()
 "==============================================================================}}}
 
+
+function! Uniq () range "{{{
+    " Nothing unique seen yet...
+    let have_already_seen = {}
+    let unique_lines = []
+
+    " Walk through the lines, remembering only the hitherto-unseen ones...
+    for original_line in getline(a:firstline, a:lastline)
+        let normalized_line = '>' . original_line
+        if !has_key(have_already_seen, normalized_line)
+            call add(unique_lines, original_line)
+            let have_already_seen[normalized_line] = 1
+        endif
+    endfor
+
+    " Replace the range of original lines with just the unique lines...
+    exec a:firstline . ',' . a:lastline . 'delete'
+    call append(a:firstline-1, unique_lines)
+endfunction
+command! -range Uniq call Uniq()
+"}}}
+
+
 function! IsLineEndInsert() "{{{
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
@@ -1393,22 +1442,6 @@ endif
 "==============================================================================}}}
 
 "=================== Plugin Loading ==========================================={{{
-function! LoadUnite() "{{{
-  call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline', 'unite-tag', 'unite-colorscheme'],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> ,ud :<C-u>UniteWithCurrentDir -buffer-name=files buffer file_mru bookmark file<CR>
-  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files -prompt=%\  buffer file_mru bookmark file<CR>
-  nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-  nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-  nnoremap ,uf :<C-u>Unite source<CR>
-  nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
-endfunction
-nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
-nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>Unite colorscheme<CR>
-nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
-nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
-"}}}
-
 function! LoadQuickRun() "{{{
   call vam#ActivateAddons(['quickrun'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
