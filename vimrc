@@ -530,7 +530,6 @@ nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
 nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
-
 "==============================================================================}}}
 
 "================== LibClang =================================================={{{
