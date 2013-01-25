@@ -12,8 +12,6 @@ import jedi
 import jedi.keywords
 from jedi._compatibility import unicode
 
-temp_rename = None  # used for jedi#rename
-
 
 class PythonToVimStr(unicode):
     """ Vim has a different string implementation of single quotes """
@@ -150,7 +148,7 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
                                     lnum=d.line_nr, col=d.column + 1,
                                     text=PythonToVimStr(d.description)))
             vim.eval('setqflist(%s)' % repr(lst))
-            vim.eval('<sid>add_goto_window()')
+            vim.eval('jedi#add_goto_window()')
     return definitions
 
 
@@ -257,9 +255,7 @@ def show_func_def(call_def=None, completion_lines=0):
 
 
 def rename():
-    global temp_rename
     if not int(vim.eval('a:0')):
-        temp_rename = goto(is_related_name=True, no_output=True)
         _rename_cursor = vim.current.window.cursor
 
         vim.command('normal A ')  # otherwise startinsert doesn't work well
@@ -272,18 +268,20 @@ def rename():
         vim.command('normal! diw')
         vim.command(':startinsert')
     else:
-        cursor = vim.current.window.cursor
         window_path = vim.current.buffer.name
         # reset autocommand
         vim.command('autocmd! jedi_rename InsertLeave')
 
         replace = vim.eval("expand('<cword>')")
         vim.command('normal! u')  # undo new word
-        vim.command('normal! u')  # 2u didn't work...
+        cursor = vim.current.window.cursor
+        vim.command('normal! u')  # undo the space at the end
+        vim.current.window.cursor = cursor
 
         if replace is None:
             echo_highlight('No rename possible, if no name is given.')
         else:
+            temp_rename = goto(is_related_name=True, no_output=True)
             # sort the whole thing reverse (positions at the end of the line
             # must be first, because they move the stuff before the position).
             temp_rename = sorted(temp_rename, reverse=True,
@@ -291,17 +289,16 @@ def rename():
             for r in temp_rename:
                 if r.in_builtin_module():
                     continue
+
                 if vim.current.buffer.name != r.module_path:
                     vim.eval("jedi#new_buffer('%s')" % r.module_path)
 
                 vim.current.window.cursor = r.start_pos
                 vim.command('normal! cw%s' % replace)
 
-            vim.current.window.cursor = cursor
             vim.eval("jedi#new_buffer('%s')" % window_path)
+            vim.current.window.cursor = cursor
             echo_highlight('Jedi did %s renames!' % len(temp_rename))
-        # reset rename variables
-        temp_rename = None
 
 
 def tabnew(path):
