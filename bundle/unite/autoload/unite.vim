@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Jan 2013.
+" Last Modified: 26 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -313,7 +313,7 @@ let s:unite_options = [
       \ '-max-multi-lines=', '-here', '-silent', '-keep-focus',
       \ '-auto-quit', '-no-focus',
       \ '-long-source-names', '-short-source-names',
-      \ '-multi-line', '-resume',
+      \ '-multi-line', '-resume', '-wrap',
       \]
 "}}}
 
@@ -1644,6 +1644,7 @@ function! s:initialize_context(context, ...) "{{{
         \ 'no_focus' : 0,
         \ 'multi_line' : 0,
         \ 'resume' : 0,
+        \ 'wrap' : 0,
         \ 'unite__is_interactive' : 1,
         \ 'unite__is_complete' : 0,
         \ 'unite__is_vimfiler' : 0,
@@ -1945,7 +1946,7 @@ function! s:initialize_candidates(candidates) "{{{
           \ get(candidate, 'abbr', candidate.word)
 
     " Delete too long abbr.
-    if candidate.is_multiline || context.multi_line
+    if !&l:wrap && (candidate.is_multiline || context.multi_line)
       let candidate.unite__abbr =
             \ candidate.unite__abbr[: max_width *
             \  (context.max_multi_lines + 1)+10]
@@ -2337,13 +2338,14 @@ function! s:convert_quick_match_lines(candidates, quick_match_table) "{{{
 
   " Add number.
   let num = 0
+
   for candidate in a:candidates
     call add(candidates,
           \ (candidate.is_dummy ? '  ' : get(keys, num, '  '))
           \ . (unite.max_source_name == 0 ? '' :
           \    unite#util#truncate(s:convert_source_name(
           \    candidate.source), max_source_name))
-          \ . unite#util#truncate_smart(candidate.unite__abbr,
+          \ . unite#util#truncate_wrap(candidate.unite__abbr,
           \      max_width, max_width/3, '..'))
     let num += 1
   endfor
@@ -2359,11 +2361,11 @@ function! unite#convert_lines(candidates) "{{{
   endif
 
   return map(copy(a:candidates),
-        \ "(v:val.unite__is_marked ? '* ' : '- ')
+        \ "(v:val.unite__is_marked ? g:unite_marked_icon . ' ' : '- ')
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(s:convert_source_name(
         \     v:val.source), max_source_name))
-        \ . unite#util#truncate_smart(v:val.unite__abbr, " . max_width
+        \ . unite#util#truncate_wrap(v:val.unite__abbr, " . max_width
         \    .  ", max_width/3, '..')")
 endfunction"}}}
 
@@ -2486,7 +2488,6 @@ function! s:initialize_unite_buffer() "{{{
     setlocal nofoldenable
     setlocal nomodeline
     setlocal nonumber
-    setlocal nowrap
     setlocal foldcolumn=0
     setlocal iskeyword+=-,+,\\,!,~
     setlocal matchpairs-=<:>
@@ -2525,6 +2526,8 @@ function! s:initialize_unite_buffer() "{{{
     call unite#mappings#define_default_mappings()
   endif
 
+  let &l:wrap = unite.context.wrap
+
   if exists('&redrawtime')
     " Save redrawtime
     let unite.redrawtime_save = &redrawtime
@@ -2538,12 +2541,6 @@ function! s:initialize_unite_buffer() "{{{
   set sidescrolloff=0
   setlocal nocursorline
   setfiletype unite
-
-  if !exists('b:current_syntax') || b:current_syntax !=# 'unite'
-    return
-  endif
-
-  call s:set_syntax_default()
 endfunction"}}}
 function! s:switch_unite_buffer(buffer_name, context) "{{{
   " Search unite window.
@@ -2970,6 +2967,10 @@ function! s:change_highlight()  "{{{
   endif
 
   let unite = unite#get_current_unite()
+  if empty(unite)
+    return
+  endif
+
   let context = unite#get_context()
   let prompt_linenr = unite.prompt_linenr
   if !context.no_cursor_line
@@ -3264,7 +3265,7 @@ function! s:convert_source_name(source_name) "{{{
         \ a:source_name !~ '\A'  ? a:source_name[:1] :
         \ substitute(a:source_name, '\a\zs\a\+', '', 'g')
 endfunction"}}}
-function! s:set_syntax_default() "{{{
+function! unite#set_highlight() "{{{
   let unite = unite#get_current_unite()
 
   " Set highlight.
@@ -3272,6 +3273,10 @@ function! s:set_syntax_default() "{{{
   syntax clear uniteInputPrompt
   execute 'syntax match uniteInputPrompt'
         \ '/^'.match_prompt.'/ contained'
+
+  let marked_icon = unite#util#escape_pattern(g:unite_marked_icon)
+  execute 'syntax region uniteMarkedLine start=/^'.
+        \ marked_icon.'/ end=''$'' keepend'
 
   if !unite.context.hide_source_names
     syntax match uniteStatusLine /\%1l.*/
@@ -3311,6 +3316,8 @@ function! s:set_syntax_default() "{{{
 
     call s:call_hook([source], 'on_syntax')
   endfor
+
+  call s:set_syntax()
 endfunction"}}}
 function! s:set_syntax() "{{{
   let unite = unite#get_current_unite()
