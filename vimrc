@@ -255,6 +255,7 @@ noremap <Leader>os :Scratch<CR>
 
 nmap <TAB> <C-W>
 nmap <TAB><TAB> <C-W><C-W>
+nnoremap ,i <C-I>
 
 "attemp to fix backspace
 "inoremap  
