@@ -347,11 +347,10 @@ function! Tex_ForwardSearchLaTeX()
 		 if viewer =~? '^ *yap\( \|$\)'
 
 			let execString = 'silent! !start '. viewer.' -s '.line('.').expand('%').' '.mainfnameRoot
-		elseif viewer =~? '^ *sumatra'
+		elseif viewer =~? 'sumatra'
 			let execString = 'silent! !start '. viewer. ' -reuse-instance -forward-search ' 
-						\ . expand('%:p') . ' ' . line('.') . ' ' . mainfnameRoot
+						\ . expand('%:p') . ' ' . line('.') . ' ' . mainfnameRoot . '.pdf'
 		endif
-		echom execString
 
 
 	elseif (has('macunix') && (viewer =~ '^ *\(Skim\|PDFView\|TeXniscope\)\( \|$\)'))
