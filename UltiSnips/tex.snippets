@@ -1,22 +1,22 @@
-#snippet frame "frame"
-#\begin{frame}
-#\frametitle{${1:<+title+>}}
-#${2}
-#\end{frame}
-#endsnippet
-#
-#snippet block "add a block"
-#\begin{block}{${1:<+block title+>}}
-#${2:<+block text+>}
-#\end{block}
-#endsnippet
-#
-#snippet uncover "add uncover"
-#\uncover<${1:i-}>
-#{
-#  ${2:<+%uncover text+>}
-#}
-#endsnippet
+snippet frame "frame"
+\begin{frame}
+\frametitle{${1:<+title+>}}
+${2}
+\end{frame}
+endsnippet
+
+snippet block "add a block"
+\begin{block}{${1:<+block title+>}}
+${2:<+block text+>}
+\end{block}
+endsnippet
+
+snippet uncover "add uncover"
+\uncover<${1:i-}>
+{
+  ${2:<+%uncover text+>}
+}
+endsnippet
 
 snippet reff "reference" w
 (\ref{${1:<+ref+>}})${0:<++>}
