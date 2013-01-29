@@ -343,9 +343,15 @@ function! Tex_ForwardSearchLaTeX()
 
 	" inverse search tips taken from Dimitri Antoniou's tip and Benji Fisher's
 	" tips on vim.sf.net (vim.sf.net tip #225)
-	if (has('win32') && (viewer =~? '^ *yap\( \|$\)'))
+	if has('win32')
+		 if viewer =~? '^ *yap\( \|$\)'
 
-		let execString = 'silent! !start '. viewer.' -s '.line('.').expand('%').' '.mainfnameRoot
+			let execString = 'silent! !start '. viewer.' -s '.line('.').expand('%').' '.mainfnameRoot
+		elseif viewer =~? '^ *sumatra'
+			let execString = 'silent! !start '. viewer. ' -reuse-instance -forward-search ' 
+						\ . expand('%:p') . ' ' . line('.') . ' ' . mainfnameRoot
+		endif
+		echom execString
 
 
 	elseif (has('macunix') && (viewer =~ '^ *\(Skim\|PDFView\|TeXniscope\)\( \|$\)'))
