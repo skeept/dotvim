@@ -1273,7 +1273,13 @@ if compname == "MIDDLE-EARTH" || compname == "Gondor"
     let g:thesis_path = $HOME . "/WORK/Thesis"
 endif
 
-function! MyThesisEnv()
+function! MyThesisEnv(...)
+  if a:0 > 0
+    let s:thesis_target = substitute(a:1, ".pdf", "", "")
+  else
+    "let s:thesis_target = 'tdraft'
+    let s:thesis_target = 'defensePresentation'
+  endif
   if has("gui")
     winpos 0 0
     set guioptions-=m "no menu bar for now
@@ -1281,7 +1287,8 @@ function! MyThesisEnv()
   endif
   silent exec "cd " . g:thesis_path
   nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
-  command! ThesisCompileView !start perl run_latexmk.pl
+  "command! ThesisCompileView !start perl run_latexmk.pl
+  command! ThesisCompileView exec "!start perl run_latexmk.pl " . s:thesis_target
 
   set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg,*.fls
 
@@ -1324,7 +1331,7 @@ function! MyThesisEnv()
   nnoremap <silent><expr> <Leader>ns MyLatexReplaceText()
 
   function! MyForwardSearch()
-    let target = g:thesis_path . '/tdraft.pdf'
+    let target = g:thesis_path . '/' . s:thesis_target . '.pdf'
     let cmd = g:SumatraPdfLoc .  " -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . " " . target
     let execString = 'silent! !start ' . cmd
     exe execString
@@ -1337,7 +1344,7 @@ function! MyThesisEnv()
 
 endfunction
 
-command! Mt call MyThesisEnv()
+command! -complete=file -nargs=* Mt call MyThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplcache ============================================={{{
