@@ -348,7 +348,7 @@ function! Tex_ForwardSearchLaTeX()
 
 			let execString = 'silent! !start '. viewer.' -s '.line('.').expand('%').' '.mainfnameRoot
 		elseif viewer =~? 'sumatra'
-			let execString = 'silent! !start '. viewer. ' -reuse-instance -forward-search ' 
+			let execString = 'silent! !start '. viewer. ' -reuse-instance -forward-search '
 						\ . expand('%:p') . ' ' . line('.') . ' ' . mainfnameRoot . '.pdf'
 		endif
 
