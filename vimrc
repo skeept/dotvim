@@ -1459,4 +1459,6 @@ nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 "==============================================================================}}}
 
+"python from powerline.bindings.vim import source_plugin; source_plugin()
+
 " vim: foldmethod=marker
