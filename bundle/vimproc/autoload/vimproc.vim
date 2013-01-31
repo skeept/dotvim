@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 20 Dec 2012.
+" Last Modified: 31 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -52,15 +52,28 @@ endif
 "}}}
 
 " Global options definition. "{{{
+" Set the default of g:vimproc_dll_path by judging OS "{{{
+if vimproc#util#is_windows()
+  if has('win64')
+    let s:vimproc_dll_basename = 'vimproc_win64.dll'
+  else
+    let s:vimproc_dll_basename = 'vimproc_win32.dll'
+  endif
+elseif has('win32unix')
+  let s:vimproc_dll_basename = 'vimproc_cygwin.dll'
+elseif vimproc#util#is_mac()
+  let s:vimproc_dll_basename = 'vimproc_mac.so'
+else
+  let s:vimproc_dll_basename = 'vimproc_unix.so'
+endif
+"}}}
+
 call vimproc#util#set_default(
-      \ 'g:vimproc#dll_path', expand('<sfile>:p:h') . '/' .
-      \     (vimproc#util#is_windows() ?
-      \           (has('win64') ? 'vimproc_win64.dll' :
-      \                           'vimproc_win32.dll') :
-      \      has('win32unix') ? 'vimproc_cygwin.dll' :
-      \      vimproc#util#is_mac() ? 'vimproc_mac.so' :
-      \                              'vimproc_unix.so'),
+      \ 'g:vimproc#dll_path',
+      \ expand('<sfile>:p:h') . '/' . s:vimproc_dll_basename,
       \ 'g:vimproc_dll_path')
+unlet s:vimproc_dll_basename
+
 call vimproc#util#set_default(
       \ 'g:vimproc#password_pattern',
       \ '\%(Enter \|[Oo]ld \|[Nn]ew \|login '  .
@@ -223,7 +236,7 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
 
   if a:timeout > 0 && has('reltime') && v:version >= 702
     let start = reltime()
-    let timeout = 0
+    let timeout = a:timeout
   else
     let timeout = 0
   endif
@@ -248,7 +261,7 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
           " Ignore error.
         endtry
 
-        return ''
+        throw 'vimproc: vimproc#system(): Timeout.'
       endif
     endif"}}}
 
