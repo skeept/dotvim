@@ -176,8 +176,11 @@ set viminfo=h,'100,<10000,s1000,/1000,:1000
 noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "z register.
+" check http://www.reddit.com/r/vim/comments/17l6si/can_i_make_a_mapping_that_takes_advantage_of_an/
+" and help v:register on how to change this
+command! -nargs=1 CR execute
+      \ "vnoremap p <Esc>:let current_reg = @<args><CR>gvs<C-R>=current_reg<CR><Esc>"
 vnoremap p <Esc>:let current_reg = @z<CR>gvs<C-R>=current_reg<CR><Esc>
-command! -nargs=1 CR execute "vnoremap p <Esc>:let current_reg = @<args><CR>gvs<C-R>=current_reg<CR><Esc>"
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
@@ -1458,7 +1461,5 @@ endfunction
 nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 "==============================================================================}}}
-
-"python from powerline.bindings.vim import source_plugin; source_plugin()
 
 " vim: foldmethod=marker
