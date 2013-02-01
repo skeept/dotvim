@@ -30,8 +30,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 " }}}
 
-let s:is_msys = $MSYSTEM != ''
-
 function! s:print_error(string)
   echohl Error | echomsg a:string | echohl None
 endfunction
@@ -59,7 +57,7 @@ if vimproc#util#is_windows()
   else
     let s:vimproc_dll_basename = 'vimproc_win32.dll'
   endif
-elseif has('win32unix')
+elseif vimproc#util#is_cygwin()
   let s:vimproc_dll_basename = 'vimproc_cygwin.dll'
 elseif vimproc#util#is_mac()
   let s:vimproc_dll_basename = 'vimproc_mac.so'
