@@ -1281,7 +1281,8 @@ function! MyThesisEnv(...)
     let s:thesis_target = substitute(a:1, ".pdf", "", "")
   else
     "let s:thesis_target = 'tdraft'
-    let s:thesis_target = 'defensePresentation'
+    "let s:thesis_target = 'defensePresentation'
+    let s:thesis_target = 'thesis-main'
   endif
   if has("gui")
     winpos 0 0
