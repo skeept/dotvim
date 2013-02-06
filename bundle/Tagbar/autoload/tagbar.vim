@@ -961,7 +961,7 @@ function! s:CreateAutocommands() abort
         autocmd BufEnter   __Tagbar__ nested call s:QuitIfOnlyWindow()
         autocmd CursorHold __Tagbar__ call s:ShowPrototype(1)
 
-        autocmd BufWritePost * call
+        autocmd BufReadPost,BufWritePost * call
                     \ s:AutoUpdate(fnamemodify(expand('<afile>'), ':p'), 1)
         autocmd BufEnter,CursorHold,FileType * call
                     \ s:AutoUpdate(fnamemodify(expand('<afile>'), ':p'), 0)
@@ -2412,6 +2412,13 @@ function! s:RenderContent(...) abort
     else
         let in_tagbar = 0
         let prevwinnr = winnr()
+
+        " Get the previous window number, so that we can reproduce
+        " the window entering history later. Do not run autocmd on
+        " this command, make sure nothing is interfering.
+        call s:winexec('noautocmd wincmd p')
+        let pprevwinnr = winnr()
+
         call s:winexec(tagbarwinnr . 'wincmd w')
     endif
 
@@ -2475,6 +2482,7 @@ function! s:RenderContent(...) abort
     let &eventignore = eventignore_save
 
     if !in_tagbar
+        call s:winexec(pprevwinnr . 'wincmd w')
         call s:winexec(prevwinnr . 'wincmd w')
     endif
 endfunction
@@ -3334,6 +3342,11 @@ function! s:IsValidFile(fname, ftype) abort
         return 0
     endif
 
+    if &previewwindow
+        call s:LogDebugMessage('In preview window')
+        return 0
+    endif
+
     if !has_key(s:known_types, a:ftype)
         if exists('g:tagbar_type_' . a:ftype)
             " Filetype definition must have been specified in an 'ftplugin'
@@ -3350,18 +3363,53 @@ endfunction
 
 " s:QuitIfOnlyWindow() {{{2
 function! s:QuitIfOnlyWindow() abort
-    " Check if there is more than window
-    if winbufnr(2) == -1
+    " Check if there is more than one window
+    if s:NextNormalWindow() == -1
         " Check if there is more than one tab page
         if tabpagenr('$') == 1
             " Before quitting Vim, delete the tagbar buffer so that
             " the '0 mark is correctly set to the previous buffer.
-            bdelete
-            quitall
+            " Also disable autocmd on this command to avoid unnecessary
+            " autocmd nesting.
+            if winnr('$') == 1
+                noautocmd bdelete
+            endif
+            quit
         else
             close
         endif
     endif
+endfunction
+
+" s:NextNormalWindow() {{{2
+function! s:NextNormalWindow() abort
+    for i in range(1, winnr('$'))
+        let buf = winbufnr(i)
+
+        " skip unlisted buffers
+        if buflisted(buf) == 0
+            continue
+        endif
+
+        " skip un-modifiable buffers
+        if getbufvar(buf, '&modifiable') != 1
+            continue
+        endif
+
+        " skip temporary buffers with buftype set
+        if getbufvar(buf, '&buftype') != ''
+            continue
+        endif
+
+        " skip current window
+        if i == winnr()
+            continue
+        endif
+
+        return i
+    endfor
+
+    return -1
 endfunction
 
 " s:winexec() {{{2
