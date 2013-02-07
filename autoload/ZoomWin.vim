@@ -1,8 +1,8 @@
 " ZoomWin:	Brief-like ability to zoom into/out-of a window
 " Author:	Charles Campbell
 "			original version by Ron Aaron
-" Date:		Jan 15, 2013 
-" Version:	25f	ASTRO-ONLY
+" Date:		Feb 07, 2013 
+" Version:	25g	NOT RELEASED
 " History: see :help zoomwin-history {{{1
 " GetLatestVimScripts: 508 1 :AutoInstall: ZoomWin.vim
 
@@ -475,7 +475,7 @@ fun! s:RestoreUserSettings()
   let &so    = s:keep_so
   let &siso  = s:keep_siso
   let &ss    = s:keep_ss
-  if exists("s:keep_star")
+  if has("xterm_clipboard") && exists("s:keep_star")
    let @*     = s:keep_star
   endif
   let &swf   = s:keep_swf
