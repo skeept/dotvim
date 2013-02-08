@@ -24,6 +24,11 @@ switch ( Get-Content Env:ComputerName )
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
+  "Erebor" {
+    $install = "C:\Program Files\Vim\vim73"
+    $backup = "C:\htemp\tmp"
+    $source = "C:\htemp\vim"
+  }
   default {
     $computername = Get-Content Env:computername
     Write-Warning "$computername not in list of know computer names!"
