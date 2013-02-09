@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Feb 2013.
+" Last Modified: 09 Feb 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -113,8 +113,7 @@ function! unite#get_profile(profile_name, option_name) "{{{
   return s:profiles[profile_name][a:option_name]
 endfunction"}}}
 function! unite#custom_filters(source_name, expr) "{{{
-  call unite#util#set_dictionary_helper(s:custom.filters,
-        \ a:source_name, unite#util#convert2list(a:expr))
+  return unite#custom_source(a:source_name, 'filters', a:expr)
 endfunction"}}}
 function! unite#custom_alias(kind, name, action) "{{{
   for key in split(a:kind, '\s*,\s*')
@@ -145,7 +144,8 @@ function! unite#undef_custom_action(kind, name) "{{{
   endfor
 endfunction"}}}
 function! unite#custom_max_candidates(source_name, max) "{{{
-  return unite#custom_source(a:source_name, 'max_candidates', a:max)
+  return unite#custom_source(a:source_name,
+        \ 'max_candidates', a:max)
 endfunction"}}}
 function! unite#custom_source(source_name, option_name, value) "{{{
   for key in split(a:source_name, '\s*,\s*')
@@ -283,10 +283,6 @@ let s:custom = {}
 let s:custom.actions = {}
 let s:custom.default_actions = {}
 let s:custom.aliases = {}
-let s:custom.filters = {}
-let s:custom.matchers = {}
-let s:custom.sorters = {}
-let s:custom.converters = {}
 let s:custom.source = {}
 
 let s:profiles = {}
@@ -1195,7 +1191,7 @@ function! unite#start_temporary(sources, ...) "{{{
 
   let unite_save = unite#get_current_unite()
 
-  call unite#all_quit_session()
+  " call unite#all_quit_session()
   call unite#start(a:sources, context)
 
   " Overwrite unite.
@@ -1849,20 +1845,20 @@ function! s:initialize_sources(...) "{{{
       let custom_source = get(s:custom.source, source.name, {})
 
       " Set filters.
-      if has_key(s:custom.filters, source.name)
-        let source.filters = s:custom.filters[source.name]
+      if has_key(custom_source, 'filters')
+        let source.filters = custom_source.filters
       elseif !has_key(source, 'filters')
-            \ || has_key(s:custom.matchers, source.name)
-            \ || has_key(s:custom.sorters, source.name)
-            \ || has_key(s:custom.converters, source.name)
+            \ || has_key(custom_source, 'matchers')
+            \ || has_key(custom_source, 'sorters')
+            \ || has_key(custom_source, 'converters')
         let matchers = unite#util#convert2list(
-              \ get(s:custom.matchers, source.name,
+              \ get(custom_source, 'matchers',
               \   get(source, 'matchers', 'matcher_default')))
         let sorters = unite#util#convert2list(
-              \ get(s:custom.sorters, source.name,
+              \ get(custom_source, 'sorters',
               \   get(source, 'sorters', 'sorter_default')))
         let converters = unite#util#convert2list(
-              \ get(s:custom.converters, source.name,
+              \ get(custom_source, 'converters',
               \   get(source, 'converters', 'converter_default')))
         let source.filters = matchers + sorters + converters
       endif
@@ -2376,7 +2372,7 @@ function! s:initialize_current_unite(sources, context) "{{{
   let context = a:context
 
   " Quit previous unite buffer.
-  if !context.create
+  if !context.create && !context.temporary
     let winnr = unite#get_unite_winnr(context.buffer_name)
     if winnr > 0
       " Quit unite buffer.
@@ -2552,7 +2548,7 @@ function! s:switch_unite_buffer(buffer_name, context) "{{{
     return
   endif
 
-  if !a:context.no_split
+  if !a:context.no_split && !a:context.temporary
     " Split window.
     execute a:context.direction (bufexists(a:buffer_name) ?
           \ ((a:context.vertical) ? 'vsplit' : 'split') :
