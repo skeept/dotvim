@@ -629,6 +629,29 @@ runtime bundle/vlatex/plugin/remoteOpen.vim
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
+
+"" fix viewing pdf, using \la to view pdf by default
+function! SetPdfDestination(...)
+  "without args get current working file and add pdf, else specific arg
+  if a:0 > 0
+    let g:fix_pdf_dest = substitute(a:1, '.pdf', '', '')
+  else
+    let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
+  endif
+  let g:did_setpdfdestination = 1
+  nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
+endfunction
+
+function! FixForwardSeach()
+  if !exists("g:did_setpdfdestination")
+    call SetPdfDestination()
+  endif
+  let target = expand('%:p:h') . '/' . g:fix_pdf_dest . '.pdf'
+  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search " . expand('%:p') . ' ' . line('.') . ' ' . target
+  let execString = 'silent! !start ' . cmd
+  exe execString
+endfunction
+command! -complete=file -nargs=* FixForwardSeach call SetPdfDestination(<f-args>)
 "==============================================================================}}}
 
 "================== NerdCommenter ============================================={{{
