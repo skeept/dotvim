@@ -1,0 +1,2 @@
+#!/bin/zsh
+tar xJf bzrtestrepo.tar.xz

@@ -1,0 +1,42 @@
+>>> messages
+abc def    ghi  jklmno  
+a	s  -            
+A          B    C       
+abc def    ghi  jklmno  
+a	s  -            
+    A       B     C     
+abc def    ghi  jklmno  
+a	s  -            
+A           B        C  
+abc def    ghi  jklmno  
+a	s  -            
+A           B        C  
+abc def    ghi  jklmno  
+a	s  -            
+A          B    C       
+abc def    ghi  jklmno  
+a	s   -           
++           -        :  
+A          B    C       
+ abc def   ghi  jklmno  
+a	s   -           
+    +       -     :     
+A         | B   + C       
+abc def   | ghi + jklmno  
+a	s | -   +         
++         | -   + :       
+A         | B   | C       
+abc def   | ghi | jklmno  
+a	s | -   |         
++         | -   | :       
+A          B    C       
+abc def    ghi  jklmno  
+a	s  -            
+A          B    C       
+abc def    ghi  jklmno  
+a	s  -            
+A         | B   + C       
+abc def   | ghi + jklmno  
+a	s | -   +         
++         | -   + :       
+<<< messages

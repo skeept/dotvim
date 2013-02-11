@@ -1,0 +1,7 @@
+syntax: glob
+python/**.pyc
+test/dummy.in
+test/*repo
+test/svntestreposerver
+testother
+.ropeproject

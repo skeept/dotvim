@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Oct 2012.
+" Last Modified: 11 Feb 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -165,22 +165,26 @@ function! s:make_abbr(bufnr, flags) "{{{
   endif
 
   let filetype = getbufvar(a:bufnr, '&filetype')
-  if filetype ==# 'vimfiler'
-    let vimfiler = getbufvar(a:bufnr, 'vimfiler')
-    let path = vimfiler.current_dir
-    if path =~ '^//'
-      let path = vimfiler.source . ':' . path
+  if filetype ==# 'vimfiler' || filetype ==# 'vimshell'
+    if filetype ==# 'vimfiler'
+      let vimfiler = getbufvar(a:bufnr, 'vimfiler')
+      let path = vimfiler.current_dir
+      if vimfiler.source !=# 'file'
+        let path = vimfiler.source . ':' . path
+      endif
+    else
+      let path = simplify(getbufvar(a:bufnr, 'vimshell').current_dir)
     endif
-    let path = printf('%s : [%s]', bufname, path)
-  elseif filetype ==# 'vimshell'
-    let vimshell = getbufvar(a:bufnr, 'vimshell')
-    let path = vimshell.current_dir
-    let path = printf('%s : %s [%s]', bufname,
-          \ get(vimshell, 'cmdline', ''), simplify(path))
+
+    let path = printf('%s [%s : %s]', bufname, path, filetype)
   else
     let path = simplify(fnamemodify(bufname(a:bufnr), ':~:.'))
     if a:flags != ''
       let path .= ' [' . a:flags . ']'
+    endif
+
+    if filetype != ''
+      let path .= '[' . filetype . ']'
     endif
   endif
 

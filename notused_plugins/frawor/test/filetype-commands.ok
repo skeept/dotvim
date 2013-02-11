@@ -1,0 +1,10 @@
+: ft=test
+In buffer 1:test
+: ft=
++ 2()
++ 3(test)
+In buffer 3:test
++ 4()
+: 2 ft=test
+> 2
+In buffer 2:test
