@@ -301,6 +301,13 @@ g:unite_no_default_keymappings		*g:unite_no_default_keymappings*
 
 SOURCES VARIABLES 				*unite-sources-variables*
 
+g:unite_source_buffer_time_format
+					*g:unite_source_buffer_time_format*
+		Specifies the output format of the last access time of
+		|unite-source-buffer|.  The format is same to |strftime()|.
+
+		The default value is "(%Y/%m/%d %H:%M:%S) ".
+
 g:unite_source_file_ignore_pattern	*g:unite_source_file_ignore_pattern*
 		Refer autoload/unite/sources/file.vim about the default value.
 		Note: This variable is deprecated. Please use
@@ -356,8 +363,8 @@ g:unite_source_directory_mru_ignore_pattern
 		targets are |unite-source-directory_mru|.
 
 g:unite_source_bookmark_directory	*g:unite_source_bookmark_directory*
-		Specifies the directory where |unite-source-bookmark| writes its
-		bookmarks.
+		Specifies the directory where |unite-source-bookmark| writes
+		its bookmarks.
 
 		The default value is |g:unite_data_directory|; '/bookmark'.
 
@@ -570,6 +577,13 @@ g:unite_source_history_yank_file	*g:unite_source_history_yank_file*
 		If this variable is empty, saving history is disabled.
 
 		The default value is |g:unite_data_directory|; '/history_yank'
+
+g:unite_source_process_enable_confirm	*g:unite_source_process_enable_confirm*
+		When you send a signal to a process via |unite-source-process|
+		such as KILL, Vim will ask you if you really want to do that
+		if this variable is 1.
+
+		The default value is 1.
 
 KINDS VARIABLES					*unite-kinds-variables*
 
@@ -1522,7 +1536,8 @@ file_rec	Gather files recursive and nominates all directory or file
 		are cached by file_rec source. If you clear cache, use
 		|<Plug>(unite_redraw)| keymapping.
 		If argument 1 is "!", use the project directory instead of
-		current directory.
+		current directory. The project directory has ".git", ".svn",
+		".hg".
 		Note: If you edit file by Vim, file_rec source will update
 		cache file.
 
@@ -2914,6 +2929,9 @@ CHANGELOG					*unite-changelog*
 - Improved buffer source highlight.
 - Fixed wrap behavior.
 - Fixed source kind action.
+- Improved here behavior.
+- Added g:unite_source_buffer_time_format.
+- Added unite_sources autoload support.
 
 2013-02-11
 - Fixed quit session behavior.
@@ -2933,6 +2951,7 @@ CHANGELOG					*unite-changelog*
 
 2013-02-07
 - Fixed start action.
+- Added g:unite_source_process_enable_confirm option.
 
 2013-02-03
 - Improved unite menu behavior.

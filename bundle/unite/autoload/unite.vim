@@ -1581,6 +1581,10 @@ function! s:load_default_scripts(kind, names) "{{{
   let names = empty(a:names) ? [''] : a:names
   if a:kind ==# 'sources' && !empty(a:names)
     call add(names, 'alias')
+
+    if exists('*neobundle#autoload#unite_sources')
+      call neobundle#autoload#unite_sources(a:names)
+    endif
   endif
 
   for name in filter(names,
@@ -1697,12 +1701,6 @@ function! s:initialize_context(context, ...) "{{{
   if get(context, 'long_source_names', 0)
     " Disable short name.
     let context.short_source_names = 0
-  endif
-  if context.here
-    let context.winheight = winheight(0) - winline() + 2
-    if context.winheight < 7
-      let context.winheight = 7
-    endif
   endif
   if &l:modified && !&l:hidden
     " Split automatically.
@@ -2456,6 +2454,14 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.max_source_candidates = 0
   let unite.is_multi_line = 0
 
+  if context.here
+    let context.winheight = winheight(0) - winline() +
+          \ unite.prompt_linenr + 1
+    if context.winheight < 7
+      let context.winheight = 7
+    endif
+  endif
+
   " Preview windows check.
   let unite.has_preview_window =
         \ len(filter(range(1, winnr('$')),
@@ -2953,6 +2959,7 @@ function! s:on_buf_unload(bufname)  "{{{
 
   if winnr('$') != 1 && !unite.context.temporary
     execute unite.win_rest_cmd
+    execute unite.prev_winnr 'wincmd w'
   endif
 
   " Call finalize functions.
