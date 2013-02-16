@@ -195,8 +195,8 @@ inoremap <expr><C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
 "noremap <F2> :wa<CR>:Make <Up>
-inoremap <F2> <ESC>:call Make2()<CR><c-l>
-noremap <F2> :call Make2()<CR><c-l>
+inoremap <F2> <ESC>:call Make2()<CR><C-L>
+noremap <F2> :call Make2()<CR><C-L>
 command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
 function! Make2()
   if !exists("g:make_args")
