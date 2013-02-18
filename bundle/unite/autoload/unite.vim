@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Feb 2013.
+" Last Modified: 17 Feb 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -305,7 +305,7 @@ let s:unite_options = [
       \ '-vertical', '-horizontal', '-direction=', '-no-split',
       \ '-verbose', '-auto-resize', '-toggle', '-quick-match', '-create',
       \ '-cursor-line-highlight=', '-no-cursor-line',
-      \ '-update-time=', '-hide-source-names',
+      \ '-update-time=', '-hide-source-names', '-hide-status-line',
       \ '-max-multi-lines=', '-here', '-silent', '-keep-focus',
       \ '-auto-quit', '-no-focus',
       \ '-long-source-names', '-short-source-names',
@@ -330,7 +330,11 @@ function! unite#get_sources(...) "{{{
     return {}
   endif
 
-  return a:0 == 0 ? unite.sources : get(unite.sources, a:1, {})
+  if a:0 == 0
+    return unite.sources
+  endif
+
+  return get(unite.sources, index(unite.sources, a:1), {})
 endfunction"}}}
 function! unite#get_all_sources(...) "{{{
   if a:0 == 0
@@ -669,6 +673,9 @@ function! unite#complete_source(arglead, cmdline, cursorpos) "{{{
     " Source name completion.
     let _ += keys(filter(s:initialize_sources([], a:arglead),
           \ 'v:val.is_listed'))
+    if exists('*neobundle#get_unite_sources')
+      let _ += neobundle#get_unite_sources()
+    endif
   else
     " Add "{source-name}:".
     let _  = map(_, 'source_name.":".v:val')
@@ -739,7 +746,7 @@ function! unite#quick_match_redraw(quick_match_table) "{{{
   let &l:modifiable = modifiable_save
 endfunction"}}}
 function! unite#redraw_status() "{{{
-  if unite#get_context().hide_source_names
+  if unite#get_context().hide_status_line
     return
   endif
 
@@ -1582,6 +1589,14 @@ function! s:load_default_scripts(kind, names) "{{{
   if a:kind ==# 'sources' && !empty(a:names)
     call add(names, 'alias')
 
+    if !exists('*neobundle#autoload#unite_sources')
+      " Dummy call.
+      try
+        call neobundle#autoload#unite_sources([])
+      catch /E117.*/
+      endtry
+    endif
+
     if exists('*neobundle#autoload#unite_sources')
       call neobundle#autoload#unite_sources(a:names)
     endif
@@ -1640,6 +1655,7 @@ function! s:initialize_context(context, ...) "{{{
         \ 'update_time' : g:unite_update_time,
         \ 'no_buffer' : 0,
         \ 'hide_source_names' : 0,
+        \ 'hide_status_line' : 0,
         \ 'max_multi_lines' : 5,
         \ 'here' : 0,
         \ 'silent' : 0,
@@ -2437,7 +2453,7 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.input = context.input
   let unite.last_input = context.input
   let unite.sidescrolloff_save = &sidescrolloff
-  let unite.prompt_linenr = (context.hide_source_names) ? 1 : 2
+  let unite.prompt_linenr = (context.hide_status_line) ? 1 : 2
   let unite.is_async =
         \ len(filter(copy(sources),
         \  'v:val.unite__context.is_async')) > 0
@@ -3058,6 +3074,7 @@ function! s:filter_alias_action(action_table, alias_table, from) "{{{
         call remove(a:action_table, alias_name)
       endif
     elseif has_key(a:action_table, alias_action)
+          \ && !has_key(a:action_table, alias_name)
       let a:action_table[alias_name] = copy(a:action_table[alias_action])
       let a:action_table[alias_name].from = a:from
       let a:action_table[alias_name].name = alias_name
@@ -3065,7 +3082,8 @@ function! s:filter_alias_action(action_table, alias_table, from) "{{{
   endfor
 endfunction"}}}
 function! s:filter_self_func(action_table, self_func) "{{{
-  return filter(copy(a:action_table), printf("string(v:val.func) !=# \"function('%s')\"", a:self_func))
+  return filter(copy(a:action_table),
+        \ printf("string(v:val.func) !=# \"function('%s')\"", a:self_func))
 endfunction"}}}
 function! s:take_action(action_name, candidate, is_parent_action) "{{{
   let candidate_head = type(a:candidate) == type([]) ?
@@ -3284,7 +3302,7 @@ function! unite#set_highlight() "{{{
   execute 'syntax region uniteMarkedLine start=/^'.
         \ marked_icon.'/ end=''$'' keepend'
 
-  if !unite.context.hide_source_names
+  if !unite.context.hide_status_line
     syntax match uniteStatusLine /\%1l.*/
           \  contains=uniteSourcePrompt,uniteSeparator,uniteSourceNames,uniteSourceArgs
   endif
