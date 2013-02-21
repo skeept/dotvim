@@ -166,6 +166,7 @@
         "test/globtopattern.in",
         "test/globtopattern.vim",
         "test/gwine",
+        "test/hgrc",
         "test/hgtestbranchedrepo.tar.xz",
         "test/hgtestrepo.tar.xz",
         "test/maps-annotate.in",

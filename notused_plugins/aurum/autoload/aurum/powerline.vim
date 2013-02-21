@@ -31,6 +31,10 @@ powerline.add_local_theme("aurum.powerline.is_commit", {
     u"segments": {
         u"left": [
             {
+                u"name": u"mode",
+                u"module": u"powerline.segments.vim",
+            },
+            {
                 u"type": u"string",
                 u"contents": u"Commit",
                 u"highlight_group": [u"line_current_symbol"],

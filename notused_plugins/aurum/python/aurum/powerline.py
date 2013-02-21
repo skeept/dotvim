@@ -259,7 +259,7 @@ def file_vcs_status():
             'highlight': ['file_vcs_status_'+statchar, 'file_vcs_status']
            }]
 
-def is_commit():
-    return vim.eval('&ft') == 'aurumcommit'
+def is_commit(matcher_info):
+    return vim.eval('getbufvar({0}, "&ft")'.format(matcher_info['bufnr'])) == 'aurumcommit'
 
 # vim: ft=python ts=4 sw=4 sts=4 et tw=120
