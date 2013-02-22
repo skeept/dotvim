@@ -1,11 +1,11 @@
 " Vim plugin for diffing when swap file was found
 " ---------------------------------------------------------------
 " Author: Christian Brabandt <cb@256bit.org>
-" Version: 0.16
-" Last Change: Wed, 21 Nov 2012 22:23:21 +0100
+" Version: 0.17
+" Last Change: Sat, 16 Feb 2013 23:04:09 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=3068
 " License: VIM License
-" GetLatestVimScripts: 3068 16 :AutoInstall: recover.vim
+" GetLatestVimScripts: 3068 17 :AutoInstall: recover.vim
 "
 fu! recover#Recover(on) "{{{1
     if a:on
@@ -91,10 +91,10 @@ fu! s:CheckRecover() "{{{1
 	    " autoopen): in this case ':wincmd l\n:0\n' must be fed to
 	    " feedkeys
 	    if bufnr('') == 1 && winnr('$') < 3
-		call feedkeys(":wincmd l\n", 't')
+		call feedkeys(":wincmd l\<cr>", 't')
 	    endif
 	    if !(v:version > 703 || (v:version == 703 && has("patch708")))
-		call feedkeys(":0\n", 't')
+		call feedkeys(":0\<cr>", 't')
 	    endif
 	endif
 	let b:did_recovery = 1
@@ -129,7 +129,7 @@ fu! recover#ConfirmSwapDiff() "{{{1
 	let msg = substitute(msg, '.*\(E325.*process ID:.\{-}\)\%x0d.*', '\1', '')
 	let msg = substitute(msg, "\e\\[\\d\\+C", "", "g")
     endif
-    if has("unix") && !empty(msg) && system("uname") =~# "linux"
+    if has("unix") && !empty(msg) && system("uname") =~? "linux"
 	" try to get processname from pid
 	" this is Linux specific. TODO Is there a portable way to retrive this info for at least unix?
 	let pid_pat = 'process ID:\s*\zs\d\+'
@@ -140,7 +140,7 @@ fu! recover#ConfirmSwapDiff() "{{{1
 	    if filereadable(proc)
 		let pname = matchstr(readfile(proc)[0], '^Name:\s*\zs.*')
 	    endif
-	    let msg = substitute(msg, pid_pat, '& ['.pname.']', '')
+	    let msg = substitute(msg, pid_pat, '& ['.pname."]\n", '')
 	endif
     endif
     if executable('vim') && executable('diff') "&& s:isWin()
