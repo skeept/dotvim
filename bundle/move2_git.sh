@@ -87,6 +87,7 @@ bzr pull 2>&1 |\
   grep -v "All changes applied successfully" |\
   grep -v "Now on revision" |\
   grep -v "Using saved parent location" |\
+  grep -v "No revisions or tags to pull" |\
   grep -v "No revisions to pull"
 EOF
 )
@@ -156,6 +157,7 @@ function update_cmd()
       grep -v "All changes applied successfully" |\
       grep -v "Now on revision" |\
       grep -v "Using saved parent location" |\
+      grep -v "No revisions or tags to pull" |\
       grep -v "No revisions to pull"
     )
   fi
