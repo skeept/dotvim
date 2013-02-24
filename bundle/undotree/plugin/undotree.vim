@@ -1003,7 +1003,9 @@ function! s:diffpanel.Update(seq,targetBufnr,targetid)
     call append(0,'- seq: '.a:seq.' -')
 
     "remove the last empty line
-    call s:exec('$d _')
+    if getline("$") == ""
+        call s:exec('$d _')
+    endif
     call s:exec('norm! gg') "move cursor to line 1.
     setlocal nomodifiable
     call t:undotree.SetFocus()
@@ -1108,7 +1110,6 @@ function! s:diffpanel.Show()
     setlocal buftype=nowrite
     setlocal bufhidden=delete
     setlocal nowrap
-    setlocal foldcolumn=0
     setlocal nobuflisted
     setlocal nospell
     setlocal nonumber
@@ -1121,6 +1122,9 @@ function! s:diffpanel.Show()
 
     " syntax need filetype autocommand
     setfiletype diff
+    setlocal foldcolumn=0
+    setlocal nofoldenable
+
     call self.BindAu()
     call t:undotree.SetFocus()
     call winrestview(savedview)
