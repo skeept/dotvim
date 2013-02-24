@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Feb 2013.
+" Last Modified: 24 Feb 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -2587,16 +2587,24 @@ function! s:switch_unite_buffer(buffer_name, context) "{{{
 
   if bufexists(a:buffer_name)
     " Search buffer name.
+    let found = 0
     let bufnr = 1
     let max = bufnr('$')
     while bufnr <= max
-      if bufname(bufnr) ==# a:buffer_name
+      if unite#util#substitute_path_separator(
+            \ bufname(bufnr)) ==# a:buffer_name
         silent execute bufnr 'buffer'
+        let found = 1
         break
       endif
 
       let bufnr += 1
     endwhile
+
+    if !found
+      call unite#print_error('[Bug] Not found buffer name: '
+            \ . string(a:buffer_name))
+    endif
   else
     silent! edit `=a:buffer_name`
   endif
