@@ -130,8 +130,11 @@ set viminfo=h,'100,<10000,s1000,/1000,:1000
 noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "z register.
+" check http://www.reddit.com/r/vim/comments/17l6si/can_i_make_a_mapping_that_takes_advantage_of_an/
+" and help v:register on how to change this
+command! -nargs=1 CR execute
+      \ "vnoremap p <Esc>:let current_reg = @<args><CR>gvs<C-R>=current_reg<CR><Esc>"
 vnoremap p <Esc>:let current_reg = @z<CR>gvs<C-R>=current_reg<CR><Esc>
-command! -nargs=1 CR execute "vnoremap p <Esc>:let current_reg = @<args><CR>gvs<C-R>=current_reg<CR><Esc>"
 
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
@@ -146,8 +149,8 @@ inoremap <expr><C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
 "noremap <F2> :wa<CR>:Make <Up>
-inoremap <F2> <ESC>:call Make2()<CR><c-l>
-noremap <F2> :call Make2()<CR><c-l>
+inoremap <F2> <ESC>:call Make2()<CR><C-L>
+noremap <F2> :call Make2()<CR><C-L>
 command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
 function! Make2()
   if !exists("g:make_args")
@@ -209,6 +212,7 @@ noremap <Leader>os :Scratch<CR>
 
 nmap <TAB> <C-W>
 nmap <TAB><TAB> <C-W><C-W>
+nnoremap ,i <C-I>
 
 "attemp to fix backspace
 "inoremap  
@@ -510,7 +514,7 @@ autocmd FileType python setlocal makeprg=epylint\ %
 let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 
-"pysmell (call LoadPysmell explicitly)
+"pysmell
 function! LoadPysmell()
   if exists("s:loadedPysmell")
     return ''
