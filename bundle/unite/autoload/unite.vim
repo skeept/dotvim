@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Feb 2013.
+" Last Modified: 03 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -22,7 +22,6 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 4.1, for Vim 7.2
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -34,7 +33,7 @@ augroup unite
 augroup END
 
 function! unite#version() "{{{
-  return str2nr(printf('%02d%02d', 4, 1))
+  return str2nr(printf('%02d%02d', 5, 0))
 endfunction"}}}
 
 " User functions. "{{{
@@ -1187,6 +1186,9 @@ function! unite#start_temporary(sources, ...) "{{{
   let context.auto_preview = 0
   let context.unite__is_vimfiler = 0
   let context.default_action = 'default'
+  let context.unite__old_winwidth = 0
+  let context.unite__old_winheight = 0
+  let context.is_resize = 0
 
   " Overwrite context.
   let context = extend(context, new_context)
@@ -1199,6 +1201,8 @@ function! unite#start_temporary(sources, ...) "{{{
 
   let unite_save = unite#get_current_unite()
 
+  let cwd = getcwd()
+
   " call unite#all_quit_session()
   call unite#start(a:sources, context)
 
@@ -1206,6 +1210,10 @@ function! unite#start_temporary(sources, ...) "{{{
   let unite = unite#get_current_unite()
   let unite.prev_bufnr = unite_save.prev_bufnr
   let unite.prev_winnr = unite_save.prev_winnr
+  let unite.update_time_save = unite_save.update_time_save
+
+  " Restore current directory.
+  execute 'lcd' fnameescape(cwd)
 endfunction"}}}
 function! unite#vimfiler_check_filetype(sources, ...) "{{{
   let context = get(a:000, 0, {})
@@ -2723,16 +2731,18 @@ function! unite#_resize_window() "{{{
 
     let context.is_resize = 1
   elseif context.vertical
-        \ && winwidth(winnr()) != context.winwidth
-        \ && (context.unite__old_winwidth  == 0 ||
-        \     winheight(winnr()) == context.unite__old_winheight)
+        \ && context.unite__old_winwidth  == 0
+        " \ && winwidth(winnr()) != context.winwidth
+        " \ && (context.unite__old_winwidth  == 0 ||
+        " \     winheight(winnr()) == context.unite__old_winheight)
     execute 'vertical resize' context.winwidth
 
     let context.is_resize = 1
   elseif !context.vertical
-        \ && winheight(winnr()) != context.winheight
-        \ && (context.unite__old_winheight == 0 ||
-        \     winwidth(winnr()) == context.unite__old_winwidth)
+        \ && context.unite__old_winheight  == 0
+        " \ && winheight(winnr()) != context.winheight
+        " \ && (context.unite__old_winheight == 0 ||
+        " \     winwidth(winnr()) == context.unite__old_winwidth)
     execute 'resize' context.winheight
 
     let context.is_resize = 1
