@@ -946,13 +946,14 @@ function! LoadUltisnips()
       autocmd BufNewFile,BufRead *.snippets setf snippets
     endif
     call UltiSnips_FileTypeChanged()
-    inoremap <silent> <buffer> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <buffer> <NL> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <buffer> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+    inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <NL> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+    xnoremap <silent> <NL> :call UltiSnips_SaveLastVisualSelection()<CR>gvs
 
-    inoremap <silent> <buffer> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <buffer> <F10> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <buffer> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+    inoremap <silent> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <F10> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
     return 1
   else
     echom "vim compiled without python"
@@ -961,9 +962,8 @@ function! LoadUltisnips()
 endfunction
 nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-"snoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
+inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
