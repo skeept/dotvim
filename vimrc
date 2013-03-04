@@ -169,7 +169,7 @@ set viminfo=h,'100,<10000,s1000,/1000,:1000
 
 "================== Mappings =================================================={{{
 " Don't use Ex mode, use Q for formatting
-noremap Q gq
+"noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "z register.
 " check http://www.reddit.com/r/vim/comments/17l6si/can_i_make_a_mapping_that_takes_advantage_of_an/
@@ -182,18 +182,14 @@ vnoremap p <Esc>:let current_reg = @z<CR>gvs<C-R>=current_reg<CR><Esc>
 nnoremap gp `[v`]
 nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
 
-"cmap tb tab split +b
-
-" in insert mode make ctrl-a and ctrl-e behave like in emacs
-"inoremap <C-A> <ESC>0i
-inoremap <expr><C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
+"if EOL copy char bellow, otherwise go to EOL
+inoremap <expr> <C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
 "noremap f2 to make
 "inoremap <F2> <ESC>:wa<CR>:Make <Up>
 "noremap <F2> :wa<CR>:Make <Up>
 inoremap <F2> <ESC>:call Make2()<CR><C-L>
 noremap <F2> :call Make2()<CR><C-L>
-command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
 function! Make2()
   if !exists("g:make_args")
     let g:make_args = ""
@@ -203,6 +199,7 @@ function! Make2()
   cwindow 6
   redraw
 endfunction
+command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
 
 "make the f1 key save-buffer key
 inoremap <F1> <ESC>:wa<CR>
@@ -256,14 +253,6 @@ nmap <TAB> <C-W>
 nmap <TAB><TAB> <C-W><C-W>
 nnoremap ,i <C-I>
 
-"attemp to fix backspace
-"inoremap  
-"nmap  
-"cnoremap  
-
-"record something in register u by default
-""noremap <Leader>rs :set nomore<CR>quq:redir @U<CR>
-
 noremap q; :
 noremap q' "
 
@@ -283,13 +272,13 @@ vnoremap aa VGo1G
 noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
 noremap <Leader>re :redir END \| set more \| "-> u<CR>
 function! CaptureOutFun(cmd)
+  let old_more=&more
   set nomore
   let @u = ""
   redir @U
   exec a:cmd
   redir END
-  set more
-  "normal "up']$
+  let &more=old_more
   normal "up'[
 endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
@@ -314,13 +303,13 @@ function! ToggleSpell()
       setlocal spell spelllang=pt
       echo "language = pt"
     else
-      echom "No language correspondig to such option [1: English, 2 Portuguese]"
+      echom "No language corresponding to such option [1: English, 2 Portuguese]"
     endif
     let g:togglespell = 1
   else
     setlocal nospell
     let g:togglespell = 0
-    echo "No spell Cheking"
+    echo "No spell Checking"
   endif
 endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <CR>
@@ -348,9 +337,11 @@ if has("autocmd")
     \ endif
 
   " do the gams stuff here
-  autocmd BufRead,BufNewFile *.gms,*.inc set syntax=gams filetype=gams
+  autocmd BufRead,BufNewFile *.gms,*.inc
+        \   set syntax=gams filetype=gams
         \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
-  autocmd BufRead,BufNewFile *.lst set syntax=gams filetype=gamslst
+  autocmd BufRead,BufNewFile *.lst
+        \   set syntax=gams filetype=gamslst
         \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
 
   "source .vimrc if changes are made (cool)
@@ -363,19 +354,18 @@ if has("autocmd")
   autocmd! FileType qf wincmd J
 
   "set readonly files to autoread
-  autocmd BufRead,BufNewFile * if &readonly == 1 | setlocal autoread
-        \ sbo+=ver,hor | endif
+  autocmd BufRead,BufNewFile * if &readonly == 1
+        \ | setlocal autoread sbo+=ver,hor | endif
 
   "mappings for specific buffers
-  autocmd FileType help map <buffer> <space> <c-d>
-  autocmd FileType help map <buffer> <bs> <c-u>
+  autocmd FileType help map <buffer> <space> <C-D>
+  autocmd FileType help map <buffer> <BS> <C-U>
 
   "don't show file numbers in taglist and nerdtree
   autocmd FileType nerdtree      setlocal norelativenumber
-  autocmd FileType taglist       setlocal norelativenumber
+  "autocmd FileType taglist       setlocal norelativenumber
   autocmd FileType qf            setlocal norelativenumber
   autocmd FileType tlibInputList setlocal norelativenumber
-
 
 endif " has("autocmd")
 "==============================================================================}}}
@@ -613,9 +603,7 @@ function! LoadLatexPlugins()
   vmap <F8> <Plug>IMAP_JumpForward
   vmap <F8> <Plug>IMAP_DeleteAndJumpForward
   ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
-
   "will it be necessary to load after/ftplugin/tex again?
-
   let s:loaded_latex_plugins = 1
 endfunction
 autocmd FileType tex call LoadLatexPlugins()
@@ -958,13 +946,13 @@ function! LoadUltisnips()
       autocmd BufNewFile,BufRead *.snippets setf snippets
     endif
     call UltiSnips_FileTypeChanged()
-    inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
-          \ "" : IMAP_Jumpfunc('', 0)<CR>
-    snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
-          \ "" : IMAP_Jumpfunc('', 0)<CR>
+    inoremap <silent> <buffer> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <buffer> <NL> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <buffer> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
 
-    inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
-          \ "" : UltiSnips_ListSnippets()<CR>
+    inoremap <silent> <buffer> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <buffer> <F10> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <buffer> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
     return 1
   else
     echom "vim compiled without python"
@@ -974,14 +962,8 @@ endfunction
 nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-snoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-
-function! Ulti_ExpandOrJump_and_getRes() "{{{
-  " use only for latex new
-  call UltiSnips_ExpandSnippetOrJump()
-  return g:ulti_expand_or_jump_res
-endfunction "}}}
-
+"snoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
