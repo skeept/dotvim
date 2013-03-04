@@ -19,7 +19,7 @@ endif
 let g:is_win = has('win32') || has('win64')
 "}}}
 
-" decide on pathogen or vam
+" decide on pathogen or vam (pathogen: 1, vam: 2)
 let s:addon_manager = 2
 
 "================== pathogen ================================================{{{
@@ -343,9 +343,6 @@ if has("autocmd")
   autocmd BufRead,BufNewFile *.lst
         \   set syntax=gams filetype=gamslst
         \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
-
-  "source .vimrc if changes are made (cool)
-  "autocmd BufWritePost $MYVIMRC so %
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
@@ -708,7 +705,7 @@ let g:smartusline_string_to_highlight = '%2.2n %t %h'
 "==============================================================================}}}
 "==============================================================================}}}
 
-"================== python settings ==========================================={{{
+"================== Python Settings ==========================================={{{
 "some pylint settings
 let g:pylint_onwrite = 0
 
@@ -803,7 +800,7 @@ let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 "==============================================================================}}}
 
-"================== ctrlP ====================================================={{{
+"================== CtrlP ====================================================={{{
 "some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
@@ -1136,13 +1133,13 @@ endfunction
 "inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
 "==============================================================================}}}
 
-"================== manpageview ==============================================={{{
+"================== ManPageView ==============================================={{{
 let g:manpageview_winopen = "hsplit="
 autocmd FileType man setlocal norelativenumber nonumber
 "also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
 "==============================================================================}}}
 
-"================== languagetool =============================================={{{
+"================== LanguageTool =============================================={{{
 let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
       \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
 "==============================================================================}}}
@@ -1153,9 +1150,7 @@ let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
 "nmap <silent> ,lb :LustyBufferExplorer<CR>
 "nmap <silent> ,lg :LustyBufferGrep<CR>
 "nmap <silent> ,lj :LustyJuggler<CR>
-"==============================================================================}}}
 
-"================== LustyJuggler =============================================={{{
 "lusty juggler
 let g:LustyJugglerShowKeys = 'a'
 "==============================================================================}}}
@@ -1183,7 +1178,6 @@ else
   noremap ,b :CtrlPBuffer<CR>
   noremap ,e :CtrlPCurFile<CR>
 endif
-
 "==============================================================================}}}
 
 "================== vim-pipe commands ========================================={{{
@@ -1203,7 +1197,7 @@ let g:quickrun_config.python = {
       \ }
 "==============================================================================}}}
 
-"some plugins don't work weel with some enviroments, just try to adjust them
+"some plugins don't work well with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
   let g:loaded_gundo = 1
@@ -1455,7 +1449,7 @@ if g:neocomplcache_enable_at_startup == 1
 endif
 "==============================================================================}}}
 
-"=================== Plugin Loading ==========================================={{{
+"================== Plugin Loading ============================================{{{
 function! LoadQuickRun() "{{{
   call vam#ActivateAddons(['quickrun'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
