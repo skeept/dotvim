@@ -123,7 +123,7 @@ set viminfo=h,'100,<10000,s1000,/1000,:1000
 
 "================== Mappings =================================================={{{
 " Don't use Ex mode, use Q for formatting
-noremap Q gq
+"noremap Q gq
 
 " Make p in Visual mode replace the selected text with the "z register.
 " check http://www.reddit.com/r/vim/comments/17l6si/can_i_make_a_mapping_that_takes_advantage_of_an/
@@ -665,13 +665,41 @@ let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
 let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
 let g:UltiSnipsEditSplit = "horizontal"
-nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
+
+"nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
 inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
 snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
-"inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
-"snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
-inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+""inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
+""snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
+"inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+"snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+
+function! LoadUltisnips()
+  if has("python")
+    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    if has("autocmd")
+      autocmd FileType * call UltiSnips_FileTypeChanged()
+      autocmd BufNewFile,BufRead *.snippets setf snippets
+    endif
+    call UltiSnips_FileTypeChanged()
+    inoremap <silent> <buffer> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <buffer> <NL> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <buffer> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+
+    inoremap <silent> <buffer> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <buffer> <F10> :call UltiSnips_ListSnippets()<CR>
+    snoremap <silent> <buffer> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+    return 1
+  else
+    echom "vim compiled without python"
+    return 0
+  endif
+endfunction
+nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
+inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+"snoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
@@ -805,27 +833,6 @@ function! LoadTagbar() "{{{
 endf
 nnoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 inoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-"}}}
-
-function! LoadUltisnips() "{{{
-  if has("python")
-    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    if has("autocmd")
-      autocmd FileType * call UltiSnips_FileTypeChanged()
-      autocmd BufNewFile,BufRead *.snippets setf snippets
-    endif
-    call UltiSnips_FileTypeChanged()
-    nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
-    inoremap <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    inoremap <C-J> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
-endfunction
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 "}}}
 
 function! LoadCtrlP() "{{{
