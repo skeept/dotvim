@@ -155,9 +155,19 @@ function! IMAP_Jumpfunc_val(arg1, arg2)
   return g:imap_jumpfun_val
 endfunction
 
+function! Ulti_ExpandOrJump_and_getRes() "{{{
+  " use only for latex new
+  call UltiSnips_ExpandSnippetOrJump()
+  return g:ulti_expand_or_jump_res
+endfunction "}}}
 
-"inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
-      "\ "" : IMAP_Jumpfunc('', 0)<CR>
+inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+      \ "" : IMAP_Jumpfunc('', 0)<CR>
+snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+      \ "" : IMAP_Jumpfunc('', 0)<CR>
+
+inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
+      \ "" : UltiSnips_ListSnippets()<CR>
 snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
       \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
