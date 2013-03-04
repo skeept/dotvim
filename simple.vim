@@ -101,11 +101,7 @@ set foldmethod=syntax
 set title
 set virtualedit+=block
 
-"if !g:is_win "for gnu grep, do some other setting for windows (maybe use cygwin?)
-  "set grepprg=grep\ -nIH\ --exclude=tags\ --exclude=cscope.out
-  "we change to setting from H to -h so the filename does not show up
-  set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
-"endif
+set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
 
 "for scip go up two folders
 set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
