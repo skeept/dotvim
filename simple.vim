@@ -834,8 +834,9 @@ function! LoadCtrlP() "{{{
         \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
-nnoremap <C-P> :call LoadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(v:count)
-        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+nnoremap <C-P> :<C-U>let curr_vcount=v:count
+      \ \| call LoadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(curr_vcount)
+      \ \| silent! exe 'CtrlP' . g:ctrlp_comm[curr_vcount]<CR>
 nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
