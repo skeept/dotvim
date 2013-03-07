@@ -550,10 +550,11 @@ let g:ctrlp_prompt_mappings = {
          \ }
 let g:ctrlp_map = ''
 command! CtrlPShowArr call CtrlpShowArrFun()
-function! CtrlpShowArrFun()
+function! CtrlpShowArrFun(count)
   let i = 0
   let msg = ''
   for v in g:ctrlp_comm
+    if a:count == i | let msg .= '*' | endif
     let msg .= i
     let msg .= ':'
     let msg .= g:ctrlp_comm[i]
@@ -564,7 +565,8 @@ function! CtrlpShowArrFun()
 endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
-nnoremap <silent> <C-P> :<C-U>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
+      \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 "==============================================================================}}}
 
 "================== tagbar ===================================================={{{
@@ -828,10 +830,12 @@ inoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
 
 function! LoadCtrlP() "{{{
   call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> <c-p> :<c-u>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+  nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
+        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
-nnoremap <c-p> :call LoadCtrlP()<CR>:<C-U>CtrlP<CR>
+nnoremap <C-P> :call LoadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(v:count)
+        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
