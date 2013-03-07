@@ -524,7 +524,7 @@ let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
 function! LoadClangComplete()
-  if exists("s:loaded_clang_complete") | return '' | endif
+  if exists("s:loaded_clang_complete") || g:is_win | return '' | endif
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
 endfunction
@@ -820,10 +820,11 @@ let g:ctrlp_prompt_mappings = {
          \ }
 let g:ctrlp_map = ''
 command! CtrlPShowArr call CtrlpShowArrFun()
-function! CtrlpShowArrFun()
+function! CtrlpShowArrFun(count)
   let i = 0
   let msg = ''
   for v in g:ctrlp_comm
+    if a:count == i | let msg .= '*' | endif
     let msg .= i
     let msg .= ':'
     let msg .= g:ctrlp_comm[i]
@@ -834,7 +835,8 @@ function! CtrlpShowArrFun()
 endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
-nnoremap <silent> <C-P> :<C-U>silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
+      \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 "==============================================================================}}}
 
 "================== tagbar ===================================================={{{
