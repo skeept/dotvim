@@ -163,6 +163,9 @@ COMMANDS 					*neocomplcache-commands*
 		Note: You can get current filetype by
 		|neocomplcache#get_context_filetype()|
 
+:NeoComplCacheClean 				*:NeoComplCacheClean*
+		Clean cache files in |g:neocomplcache_temporary_dir|.
+
 ------------------------------------------------------------------------------
 VARIABLES 					*neocomplcache-variables*
 
@@ -426,7 +429,7 @@ g:neocomplcache_temporary_dir		*g:neocomplcache_temporary_dir*
 		buffer_complete.vim stores cache of the keyword in this
 		'buffer_cache' sub directory.
 
-		Default value is '~/.neocon'.
+		Default value is '~/.neocomplcache'.
 
 g:neocomplcache_keyword_patterns
 					*g:neocomplcache_keyword_patterns*
@@ -457,7 +460,8 @@ g:neocomplcache_omni_patterns		*g:neocomplcache_omni_patterns*
 		This dictionary records keyword patterns used in
 		|omni_complete|.  This is appointed in regular expression
 		every file type or 'omnifunc' name.  If this pattern is not
-		defined, neocomplcache does not call 'omnifunc'.
+		defined or empty pattern, neocomplcache does not call
+		'omnifunc'.
 		Note: ruby and php omnifunc are disabled, because they are too
 		slow.
 		Note: Partial omnifunc has problem when neocomplcache call(Ex:
@@ -481,8 +485,8 @@ g:neocomplcache_force_omni_patterns
 					*g:neocomplcache_force_omni_patterns*
 		This dictionary records keyword patterns to Omni completion.
 		This is appointed in regular expression every file type.
-		If this pattern is not defined, neocomplcache does not call
-		'omnifunc'.
+		If this pattern is not defined or empty pattern, neocomplcache
+		does not call 'omnifunc'.
 		Note: If it is a set, neocomplcache will call 'omnifunc' or
 		|g:neocomplcache_omni_functions| directly.  So almost
 		neocomplcache features are disabled.  But all Omni completion
@@ -1199,14 +1203,10 @@ omni_complete.vim				*omni_complete*
 		neocomplcache will give priority it.
 		Note: This source is not supported wildcard.
 
-abbrev_complete.vim				*abbrev_complete*
-		This source collects candidates from abbrev.
-
 
 suffix of complete candidates in popup menu declaration.
 (This will be good for user to know where candidate from and what it is.)
 
-    abbrev_complete            -> [A]
     filename_complete          -> [F] {filename}
     filename_include           -> [FI] {filename}
     dictionary_complete        -> [D] {words}
@@ -1214,10 +1214,7 @@ suffix of complete candidates in popup menu declaration.
     buffer_complete            -> [B] {buffername}
     syntax_complete            -> [S] {syntax-keyword}
     include_complete           -> [I]
-    snippets_complete(neosnippet)
-                               -> [Snip] (none or one placeholder) or
-                                  <Snip> (contains multiple placeholders,
-                                  `Snip` (contains evaluation)
+    neosnippet                 -> [neosnip]
     vim_complete               -> [vim] type
     omni_complete              -> [O]
     tags_complete              -> [T]
@@ -1506,8 +1503,22 @@ Improve cache behavior in current buffer.
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
+2013-03-10
+- Changed g:neocomplcache_temporary_dir default value.
+
+2013-03-06
+- Fixed search patterns behavior.
+
+2013-03-03
+- Supported string cache.
+- Improved cache behavior.
+- Improved remove next keyword behavior.
+
 2013-03-02
 - Ver.8.0 development is started.
+- Optimised memory.
+- Added :NeoComplCacheClean command.
+- Deleted abbrev_complete source.
 
 ------------------------------------------------------------------------------
 ChangeLog neocomplcache 7.2:

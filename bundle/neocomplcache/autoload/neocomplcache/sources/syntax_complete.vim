@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Oct 2012.
+" Last Modified: 03 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,6 +35,7 @@ endif
 let s:source = {
       \ 'name' : 'syntax_complete',
       \ 'kind' : 'plugin',
+      \ 'mark' : '[S]',
       \}
 
 function! s:source.initialize() "{{{
@@ -67,12 +68,7 @@ function! s:source.get_keyword_list(cur_keyword_str) "{{{
 
   let filetype = neocomplcache#get_context_filetype()
   if !has_key(s:syntax_list, filetype)
-    let keyword_lists = neocomplcache#cache#index_load_from_cache(
-          \ 'syntax_cache', filetype)
-    if !empty(keyword_lists)
-      " Caching from cache.
-      let s:syntax_list[filetype] = keyword_lists
-    endif
+    call s:caching()
   endif
 
   for source in neocomplcache#get_sources_list(s:syntax_list, filetype)
@@ -104,8 +100,8 @@ function! s:caching() "{{{
           let s:syntax_list[filetype] = s:caching_from_syn(filetype)
         endif
       else
-        let s:syntax_list[filetype] =
-              \ neocomplcache#cache#index_load_from_cache('syntax_cache', filetype)
+        let s:syntax_list[filetype] = neocomplcache#cache#index_load_from_cache(
+              \      'syntax_cache', filetype, 1)
       endif
     endif
   endfor
@@ -139,7 +135,6 @@ function! s:caching_from_syn(filetype) "{{{
   let keyword_pattern = neocomplcache#get_keyword_pattern(a:filetype)
 
   let dup_check = {}
-  let menu = '[S] '
 
   let filetype_pattern = substitute(a:filetype, '\W', '\\A', 'g') . '\u'
 
@@ -148,7 +143,6 @@ function! s:caching_from_syn(filetype) "{{{
     if line =~ '^\h\w\+'
       " Change syntax group name.
       let group_name = matchstr(line, '^\S\+')
-      let menu = printf('[S] %.'.g:neocomplcache_max_menu_width.'s', group_name)
       let line = substitute(line, '^\S\s*xxx', '', '')
     endif
 
@@ -179,13 +173,11 @@ function! s:caching_from_syn(filetype) "{{{
       if len(match_str) >= g:neocomplcache_min_syntax_length
             \ && !has_key(dup_check, match_str)
             \&& match_str =~ '^[[:print:]]\+$'
-        let keyword = { 'word' : match_str, 'menu' : menu }
-
-        let key = tolower(keyword.word[: completion_length-1])
+        let key = tolower(match_str[: completion_length-1])
         if !has_key(keyword_lists, key)
           let keyword_lists[key] = []
         endif
-        call add(keyword_lists[key], keyword)
+        call add(keyword_lists[key], match_str)
 
         let dup_check[match_str] = 1
       endif
@@ -205,11 +197,6 @@ function! s:caching_from_syn(filetype) "{{{
   call neocomplcache#print_caching('')
 
   return keyword_lists
-endfunction"}}}
-
-" LengthOrder. "{{{
-function! s:compare_length(i1, i2)
-  return a:i1.word < a:i2.word ? 1 : a:i1.word == a:i2.word ? 0 : -1
 endfunction"}}}
 
 function! s:substitute_candidate(candidate) "{{{
