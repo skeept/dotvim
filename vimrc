@@ -8,8 +8,6 @@ endif
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
-let g:is_vimrc_simple = 0 "this is not Sparta!
-
 "default path for runtime files
 "let g:p0 = split(&runtimepath, ',')[0]
 if has("unix")
@@ -52,8 +50,8 @@ endif
 "================== vim-addon-manager========================================{{{
 if s:addon_manager == 2
 function! SetupVAM()
-  let s:active_addons = []
-  command! -nargs=* -bar VAMAddToActiveAddons let s:active_addons += [<f-args>]
+  let g:active_addons = []
+  command! -nargs=* -bar VAMAddToActiveAddons let g:active_addons += [<f-args>]
 
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
@@ -62,15 +60,15 @@ function! SetupVAM()
 
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  "let s:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
-  ""let s:active_addons += ['Indent_Guides'
-  "let s:active_addons += ['d.0']
-  "let s:active_addons += ['Bufstop', 'delimitMate']
-  ""let s:active_addons += ['clang_complete']
-  "let s:active_addons += ['supertab', 'CountJump']
-  "let s:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  ""let s:active_addons += ['undotree', 'textobj-word-column']
-  ""let s:active_addons += ['fugitive', 'gitv']
+  "let g:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
+  ""let g:active_addons += ['Indent_Guides'
+  "let g:active_addons += ['d.0']
+  "let g:active_addons += ['Bufstop', 'delimitMate']
+  ""let g:active_addons += ['clang_complete']
+  "let g:active_addons += ['supertab', 'CountJump']
+  "let g:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
+  ""let g:active_addons += ['undotree', 'textobj-word-column']
+  ""let g:active_addons += ['fugitive', 'gitv']
 
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
@@ -79,11 +77,11 @@ function! SetupVAM()
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
   if has("python")
-    "let s:active_addons += ['UltiSnips']
+    "let g:active_addons += ['UltiSnips']
     "VAMAddToActiveAddons UltiSnips
   endif
 
-  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0})
+  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
 
   command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
@@ -92,7 +90,8 @@ call SetupVAM()
 endif
 "==============================================================================}}}
 
-source common.vim "this is where all vimrc and simple settings go
+"this is where all vimrc and simple settings go
+execute "source " . g:p0 . "/common.vim"
 
 "================== tasklist =================================================={{{
 "useful for managing a todo list
@@ -129,7 +128,6 @@ nnoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 vnoremap ,f <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
 onoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 "==============================================================================}}}
-
 
 "================== LibClang =================================================={{{
 let g:clang_use_library = 1
@@ -228,13 +226,6 @@ function! FixForwardSeach()
 endfunction
 command! -complete=file -nargs=* FixForwardSeach call SetPdfDestination(<f-args>)
 "==============================================================================}}}
-
-"================== NerdCommenter ============================================={{{
-"let NERDShutUp=1
-"use nested comments by default in NerdCommenter
-let g:NERDDefaultNesting=1
-"==============================================================================
-"}}}
 
 "================== Statusline ================================================{{{
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
@@ -393,6 +384,8 @@ autocmd FileType python setlocal makeprg=epylint\ %
 let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 
+"==============================================================================}}}
+
 "================== powerline ================================================={{{
 if index(g:pathogen_disabled, 'powerline') == -1
   let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
@@ -407,87 +400,7 @@ if index(g:pathogen_disabled, 'powerline') == -1
 endif
 "==============================================================================}}}
 
-"================== other commands/mappings/settings =========================={{{
-"================== Don't view files with inconsistent ctrl-r ================={{{
-map ,ml :ed ++ff=dos<CR>
-command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
-"==============================================================================}}}
-
-"================== scrollbind mappings ======================================={{{
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================}}}
-
-"================== Fix shell=bash in windows ================================={{{
-if g:is_win && &shell =~ 'bash'
-"let $TMP = 'c:\\htemp\\tmp'
-set shell=C:\Windows\System32\cmd.exe
-set shellxquote=(
-endif
-"==============================================================================}}}
-
-"================== Delete Whitespace ========================================={{{
-function! StripTrailingWhitespace()
-  if !&binary && &filetype != 'diff'
-    normal mz
-    normal Hmy
-    %s/\s\+$//e
-    normal 'yz<CR>
-    normal `z
-  endif
-endfunction
-command! DelTrailwhiteSpace call StripTrailingWhitespace()
-"==============================================================================}}}
-
-
-function! Uniq () range "{{{
-  " from Damian Conway scripting the vim editor
-  " Nothing unique seen yet...
-  let have_already_seen = {}
-  let unique_lines = []
-
-  " Walk through the lines, remembering only the hitherto-unseen ones...
-  for original_line in getline(a:firstline, a:lastline)
-    let normalized_line = '>' . original_line
-    if !has_key(have_already_seen, normalized_line)
-      call add(unique_lines, original_line)
-      let have_already_seen[normalized_line] = 1
-    endif
-  endfor
-
-  " Replace the range of original lines with just the unique lines...
-  exec a:firstline . ',' . a:lastline . 'delete'
-  call append(a:firstline-1, unique_lines)
-endfunction
-command! -range Uniq <line1>,<line2>call Uniq()
-"}}}
-
-
-function! IsLineEndInsert() "{{{
-  "in insert mode last is +1 len"
-  return getpos(".")[2] == (1 + len(getline(".")))
-endfunction "}}}
-
-" {{{ commands
-" delete current buffer but don't delete the view
-command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-" Change to Current's File Folder
-command! ChgDirCurrFileFolder lcd %:p:h
-" }}}
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
-let fortran_free_source = 1
+"================== Other commands/mappings/settings =========================={{{
 
 "source explorer
 let g:SrcExpl_isUpdateTags = 0
@@ -509,14 +422,10 @@ let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
 
-if index(s:active_addons, 'yankstack') >= 0
+if index(g:active_addons, 'yankstack') >= 0
   nmap ,y <Plug>yankstack_substitute_older_paste
   nmap ,Y <Plug>yankstack_substitute_newer_paste
 endif
-"==============================================================================}}}
-
-"================== A.vim settings ============================================{{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
 "==============================================================================}}}
 
 "================== autocomplpop (acp) ========================================{{{
@@ -562,31 +471,6 @@ let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
 let g:LustyJugglerShowKeys = 'a'
 "==============================================================================}}}
 
-"================== LycosaExplorer ============================================{{{
-"" lycosaexplorer alternative mappings
-if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-  noremap ,b :LycosaBufferExplorer<CR>
-  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
-  noremap ,le :LycosaFilesystemExplorer<CR>
-
-  function! ToggleLycosa()
-    if v:count == 0
-      LycosaFilesystemExplorer
-    elseif v:count == 1
-      LycosaBufferExplorer
-    elseif v:count == 2
-      LycosaFilesystemExplorerFromHere
-    else
-      echo "0: File System, 1:buffer, 2: File from here"
-    endif
-  endfunction
-  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-else
-  noremap ,b :CtrlPBuffer<CR>
-  noremap ,e :CtrlPCurFile<CR>
-endif
-"==============================================================================}}}
-
 "================== vim-pipe commands ========================================={{{
 autocmd FileType python let b:vimpipe_command="python"
 autocmd FileType perl let b:vimpipe_command="perl"
@@ -595,13 +479,6 @@ autocmd FileType tex let b:vimpipe_command="latexmk"
 
 "================== ConqueTerm ================================================{{{
 let g:ConqueTerm_ReadUnfocused = 1
-"==============================================================================}}}
-
-"================== QuickRun =================================================={{{
-let g:quickrun_config = {}
-let g:quickrun_config.python = {
-      \ 'runner': 'vimproc',
-      \ }
 "==============================================================================}}}
 
 "some plugins don't work well with some enviroments, just try to adjust them
@@ -623,33 +500,6 @@ endif
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
 
-"==============================================================================}}}
-
-"================== full screen with plugin ==================================={{{
-"plugin: http://www.vim.org/scripts/script.php?script_id=2596
-if g:is_win
-  let g:isMaximized = 0
-  function! FullScreenToogleFun()
-    if g:isMaximized == 0
-      let g:defaultNumCols = &columns
-      let g:defaultNumLines = &lines
-      let g:currposx = getwinposx()
-      let g:currposy = getwinposy()
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 1
-    else
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 0
-      exec "set columns=" . g:defaultNumCols
-      exec "set lines=" . g:defaultNumLines
-      exec "winpos" . g:currposx . " " . g:currposy
-    endif
-  endfunction
-
-  "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-  command! FullScreenToogle call FullScreenToogleFun()
-  noremap  <Leader>tf :FullScreenToogle<CR>
-endif
 "==============================================================================}}}
 
 "================== delimitmate ==============================================={{{
@@ -758,7 +608,7 @@ command! -complete=file -nargs=* Mt call MyThesisEnv(<f-args>)
 " Use neocomplcache?
 let g:neocomplcache_enable_at_startup = 1 && (
       \ (s:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
-      \ (s:addon_manager == 2 && index(s:active_addons, 'neocomplcache') >= 0))
+      \ (s:addon_manager == 2 && index(g:active_addons, 'neocomplcache') >= 0))
 if g:neocomplcache_enable_at_startup == 1
   let g:acp_enableAtStartup = 0
   " Use smartcase.
@@ -854,16 +704,6 @@ if g:neocomplcache_enable_at_startup == 1
   " https://github.com/c9s/perlomni.vim
   let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
-"==============================================================================}}}
-
-"================== Plugin Loading ============================================{{{
-function! LoadQuickRun() "{{{
-  call vam#ActivateAddons(['quickrun'],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap ,qr :QuickRun<CR>
-endfunction
-nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
-"}}}
 "==============================================================================}}}
 
 " vim: foldmethod=marker

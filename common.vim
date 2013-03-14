@@ -1,6 +1,5 @@
 " common settings and functions to both vimrc and simple.vim
 
-
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 
@@ -10,7 +9,7 @@ set backspace=2
 set esckeys
 
 set autoindent		" always set autoindenting on
-if !g:is_vimrc_simple
+if !exists("g:is_vimrc_simple")
   set splitright          "split the window to the right
   set splitbelow          "open the window to the bottom
 endif
@@ -79,7 +78,6 @@ set cot-=preview
 
 set viminfo=h,'100,<10000,s1000,/1000,:1000
 "==============================================================================}}}
-
 
 "================== Mappings =================================================={{{
 " Don't use Ex mode, use Q for formatting
@@ -305,7 +303,7 @@ if !has("gui_running") && !g:is_win
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   if !g:is_vimrc_simple
+   if !exists("g:is_vimrc_simple")
      colorscheme  graywh_cs1
    else
      set bg=dark | colorscheme peaksea
@@ -358,7 +356,6 @@ endfunction
 noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
 "==============================================================================}}}
-
 
 "================== Unite ====================================================={{{
 nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
@@ -481,6 +478,8 @@ let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile']
 nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+noremap ,b :CtrlPBuffer<CR>
+noremap ,e :CtrlPCurFile<CR>
 "==============================================================================}}}
 
 "================== tagbar ===================================================={{{
@@ -632,3 +631,162 @@ endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================}}}
 
+"================== other commands/mappings/settings =========================={{{
+"================== Don't view files with inconsistent ctrl-r ================={{{
+map ,ml :ed ++ff=dos<CR>
+command! HideCtrlM ed ++ff=dos
+autocmd BufReadPost * nested
+      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+      \   let b:reload_dos = 1 |
+      \   e ++ff=dos |
+      \ endif
+"==============================================================================}}}
+
+"================== scrollbind mappings ======================================={{{
+noremap ,sbt :windo set scrollbind<CR>
+noremap ,sbf :windo set noscrollbind<CR>
+"==============================================================================}}}
+
+"================== Fix shell=bash in windows ================================={{{
+if g:is_win && &shell =~ 'bash'
+"let $TMP = 'c:\\htemp\\tmp'
+set shell=C:\Windows\System32\cmd.exe
+set shellxquote=(
+endif
+"==============================================================================}}}
+
+"================== Delete Whitespace ========================================={{{
+function! StripTrailingWhitespace()
+  if !&binary && &filetype != 'diff'
+    normal mz
+    normal Hmy
+    %s/\s\+$//e
+    normal 'yz<CR>
+    normal `z
+  endif
+endfunction
+command! DelTrailwhiteSpace call StripTrailingWhitespace()
+"==============================================================================}}}
+
+function! Uniq () range "{{{
+  " from Damian Conway scripting the vim editor
+  " Nothing unique seen yet...
+  let have_already_seen = {}
+  let unique_lines = []
+
+  " Walk through the lines, remembering only the hitherto-unseen ones...
+  for original_line in getline(a:firstline, a:lastline)
+    let normalized_line = '>' . original_line
+    if !has_key(have_already_seen, normalized_line)
+      call add(unique_lines, original_line)
+      let have_already_seen[normalized_line] = 1
+    endif
+  endfor
+
+  " Replace the range of original lines with just the unique lines...
+  exec a:firstline . ',' . a:lastline . 'delete'
+  call append(a:firstline-1, unique_lines)
+endfunction
+command! -range Uniq <line1>,<line2>call Uniq()
+"}}}
+
+function! IsLineEndInsert() "{{{
+  "in insert mode last is +1 len"
+  return getpos(".")[2] == (1 + len(getline(".")))
+endfunction "}}}
+
+function! LoadQuickRun() "{{{
+  call vam#ActivateAddons(['quickrun'],
+        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  nnoremap ,qr :QuickRun<CR>
+endfunction
+nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
+"}}}
+
+" {{{ commands
+" delete current buffer but don't delete the view
+command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
+
+"fix not having <c-i> for the jumplist after mapping tab
+command! -count=1 Jump exe ":norm! <count>\<C-I>"
+
+" Change to Current's File Folder
+command! ChgDirCurrFileFolder lcd %:p:h
+" }}}
+
+"" change some highlight
+hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+
+let fortran_free_source = 1
+
+"================== QuickRun =================================================={{{
+let g:quickrun_config = {}
+let g:quickrun_config.python = {
+      \ 'runner': 'vimproc',
+      \ }
+"==============================================================================}}}
+
+"================== A.vim settings ============================================{{{
+let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+"==============================================================================}}}
+
+"================== full screen with plugin ==================================={{{
+"plugin: http://www.vim.org/scripts/script.php?script_id=2596
+if g:is_win
+  let g:isMaximized = 0
+  function! FullScreenToogleFun()
+    if g:isMaximized == 0
+      let g:defaultNumCols = &columns
+      let g:defaultNumLines = &lines
+      let g:currposx = getwinposx()
+      let g:currposy = getwinposy()
+      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+      let g:isMaximized = 1
+    else
+      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+      let g:isMaximized = 0
+      exec "set columns=" . g:defaultNumCols
+      exec "set lines=" . g:defaultNumLines
+      exec "winpos" . g:currposx . " " . g:currposy
+    endif
+  endfunction
+
+  "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
+  command! FullScreenToogle call FullScreenToogleFun()
+  noremap  <Leader>tf :FullScreenToogle<CR>
+endif
+"==============================================================================}}}
+
+"================== LycosaExplorer ============================================{{{
+function! SetupLycosa()
+  noremap ,b :LycosaBufferExplorer<CR>
+  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
+  noremap ,le :LycosaFilesystemExplorer<CR>
+
+  function! ToggleLycosa()
+    if v:count == 0
+      LycosaFilesystemExplorer
+    elseif v:count == 1
+      LycosaBufferExplorer
+    elseif v:count == 2
+      LycosaFilesystemExplorerFromHere
+    else
+      echo "0: File System, 1:buffer, 2: File from here"
+    endif
+  endfunction
+  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
+endfunction
+
+"if index(g:pathogen_disabled, 'lycosaexplorer') == -1
+if index(g:active_addons, 'lycosaexplorer') >= 0
+  call SetupLycosa()
+endif
+"==============================================================================}}}
+
+"================== NerdCommenter ============================================={{{
+"let NERDShutUp=1
+"use nested comments by default in NerdCommenter
+let g:NERDDefaultNesting=1
+"==============================================================================}}}
+
+" vim: foldmethod=marker

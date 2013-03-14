@@ -1,6 +1,5 @@
 " is_windows, evim? {{{
 
-
 " When started as "evim", evim.vim will already have done these settings.
 if v:progname =~? "evim"
   finish
@@ -22,19 +21,22 @@ endif
 let g:is_win = has('win32') || has('win64')
 "}}}
 
+" decide on pathogen or vam (pathogen: 1, vam: 2)
+let s:addon_manager = 2
+
 "================== vim-addon-manager========================================{{{
-if 1
+if s:addon_manager == 2
 function! SetupVAM()
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let s:active_addons = ['supertab']
+  let g:active_addons = ['supertab']
 
   let g:vim_addon_manager.additional_addon_dirs = [escape(expand(g:p0 . '/notused_plugins'), ' \')]
 
-  call vam#ActivateAddons(s:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
+  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
 
   command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
@@ -43,26 +45,8 @@ call SetupVAM()
 endif
 "==============================================================================}}}
 
-source common.vim "this is where all vimrc and simple settings go
-
-"================== LycosaExplorer ============================================{{{
-"" lycosaexplorer alternative mappings
-noremap  ,lh :LycosaFilesystemExplorerFromHere<CR>
-noremap  ,le :LycosaFilesystemExplorer<CR>
-
-function! ToggleLycosa()
-  if v:count == 0
-    LycosaFilesystemExplorer
-  elseif v:count == 1
-    LycosaBufferExplorer
-  elseif v:count == 2
-    LycosaFilesystemExplorerFromHere
-  else
-    echo "0: File System, 1:buffer, 2: File from here"
-  endif
-endfunction
-"nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-"==============================================================================}}}
+"this is where all vimrc and simple settings go
+execute "source " . g:p0 . "/common.vim"
 
 "================== Latex ====================================================={{{
 "latex options
@@ -91,12 +75,6 @@ endif
 
 "for plugin in ftplugin/tex/tex_pdf.vim
 let g:tex_pdf_map_keys = 0
-"==============================================================================}}}
-
-"================== NerdCommenter ============================================={{{
-"let NERDShutUp=1
-"use nested comments by default in NerdCommenter
-let g:NERDDefaultNesting=1
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
@@ -184,99 +162,6 @@ EOF
   let s:loadedPysmell = 1
 endfunction
 "==============================================================================}}}
-"================== other commands/mappings/settings =========================={{{
-
-"================== Don't view files with inconsistent ctrl-r ================={{{
-map ,ml :ed ++ff=dos<CR>
-command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
-"==============================================================================}}}
-
-"================== scrollbind mappings ======================================={{{
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
-"==============================================================================}}}
-
-"================== Fix shell=bash in windows ================================={{{
-if g:is_win && &shell =~ 'bash'
-"let $TMP = 'c:\\htemp\\tmp'
-set shell=C:\Windows\System32\cmd.exe
-set shellxquote=(
-endif
-"==============================================================================}}}
-
-"================== Delete Whitespace ========================================={{{
-function! StripTrailingWhitespace()
-  if !&binary && &filetype != 'diff'
-    normal mz
-    normal Hmy
-    %s/\s\+$//e
-    normal 'yz<CR>
-    normal `z
-  endif
-endfunction
-command! DelTrailwhiteSpace call StripTrailingWhitespace()
-"==============================================================================}}}
-
-function! IsLineEndInsert()
-  "in insert mode last is +1 len"
-  return getpos(".")[2] == (1 + len(getline(".")))
-endfunction
-
-" delete current buffer but don't delete the view
-command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
-
-"" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
-
-"fix not having <c-i> for the jumplist after mapping tab
-command! -count=1 Jump exe ":norm! <count>\<C-I>"
-
-let fortran_free_source = 1
-
-"================== QuickRun =================================================={{{
-let g:quickrun_config = {}
-let g:quickrun_config.python = {
-      \ 'runner': 'vimproc',
-      \ }
-"==============================================================================}}}
-
-"==============================================================================}}}
-
-"================== A.vim settings ============================================{{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
-"==============================================================================}}}
-
-"================== full screen with plugin ==================================={{{
-"plugin: http://www.vim.org/scripts/script.php?script_id=2596
-if g:is_win
-  let g:isMaximized = 0
-  function! FullScreenToogleFun()
-    if g:isMaximized == 0
-      let g:defaultNumCols = &columns
-      let g:defaultNumLines = &lines
-      let g:currposx = getwinposx()
-      let g:currposy = getwinposy()
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 1
-    else
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 0
-      exec "set columns=" . g:defaultNumCols
-      exec "set lines=" . g:defaultNumLines
-      exec "winpos" . g:currposx . " " . g:currposy
-    endif
-  endfunction
-
-  "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-  command! FullScreenToogle call FullScreenToogleFun()
-  noremap  <Leader>tf :FullScreenToogle<CR>
-endif
-"==============================================================================}}}
 
 "=================== Plugin Loading ==========================================={{{
 " always load {{{
@@ -309,17 +194,9 @@ nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 
 function! LoadLycosa() "{{{
   call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap ,e :<c-u>call ToggleLycosa()<CR>
+  call SetupLycosa()
 endfunction
 nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
-"}}}
-
-function! LoadQuickRun() "{{{
-  call vam#ActivateAddons(['quickrun'],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap ,qr :QuickRun<CR>
-endfunction
-nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 
 "for filetype tex we need imap.vim
