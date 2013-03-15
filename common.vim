@@ -400,7 +400,7 @@ let g:unite_abbr_highlight = 'TabLine'
 let g:unite_source_file_mru_filename_format = ''
 let g:unite_source_history_yank_enable = 1
 
-function! LoadUnite()
+function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
 	\ 'unite-tag', 'unite-colorscheme'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
@@ -414,13 +414,37 @@ function! LoadUnite()
   nnoremap ,uu :<C-u>Unite source -resume<CR>
   "nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
-endfunction
 
+  " Ref {{{
+  let g:ref_use_vimproc = 1
+  let g:ref_open = 'vsplit'
+  let g:ref_cache_dir = expand('~/.vim/tmp/ref_cache/')
+  nnoremap <leader>K :<C-u>Unite ref/man -buffer-name=man
+        \ -start-insert -horizontal<CR>
+  " }}}
+
+  " Ack {{{
+  let g:unite_source_grep_command = 'ack'
+  let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
+  let g:unite_source_grep_recursive_opt = ''
+  nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -auto-preview<CR>
+  nnoremap <leader>A :<C-u>execute 'Unite grep:.::' . expand("<cword>") .
+        \ ' -default-action=above -auto-preview'<CR>
+  " }}}
+
+  " wimviki replacement {{{
+  nnoremap <leader>W :<C-u>Unite file file/new -buffer-name=notes -start-insert
+        \ -toggle -default-action=split -profile-name=files
+        \ -input=~/vimfiles/Vimwiki/<CR>
+  " }}}
+endfunction
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
 nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
 nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite source<CR>
+" }}}
+
 "==============================================================================}}}
 
 "================== Buffergator ==============================================={{{
