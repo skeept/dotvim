@@ -14,7 +14,7 @@ if !exists("g:is_vimrc_simple")
   set splitbelow          "open the window to the bottom
 endif
 
-set history=50		" keep 50 lines of command line history
+set history=200
 set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
 set incsearch		" do incremental searching
@@ -66,7 +66,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
-set wildignore+=tags,cscope.out,*.db
+set wildignore+=tags,cscope.out,*.db,*.pdf
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -93,6 +93,9 @@ vnoremap p <Esc>:let current_reg = @z<CR>gvs<C-R>=current_reg<CR><Esc>
 " select the text just last pasted or edited :)
 nnoremap gp `[v`]
 nnoremap <expr> gV    "`[".getregtype(v:register)[0]."`]"
+
+nnoremap gy m`^yg_``
+nnoremap gY yg_
 
 "if EOL copy char bellow, otherwise go to EOL
 inoremap <expr> <C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
@@ -173,6 +176,8 @@ nnoremap : ;
 vnoremap ; :
 vnoremap : ;
 
+nnoremap ,; :<UP>
+
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
 
@@ -181,8 +186,18 @@ vnoremap aa VGo1G
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
-noremap <Leader>rs :set nomore \| let @u = "" \| redir @U<CR>
-noremap <Leader>re :redir END \| set more \| "-> u<CR>
+nnoremap <Leader>rr :set nomore \| let @u = "" \| redir @U<CR>
+nnoremap <Leader>re :redir END \| set more \| "-> u<CR>
+nnoremap <Leader>rp :redir END \| set more \| normal "up<CR>
+nnoremap <Leader>rs :call RedirToScratch()<CR>
+
+function! RedirToScratch()
+  redir END
+  set more
+  Sscratch
+  normal "up
+endfunction
+
 function! CaptureOutFun(cmd)
   let old_more=&more
   set nomore
@@ -195,6 +210,7 @@ function! CaptureOutFun(cmd)
 endfunction
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
 nnoremap ,co :CaptureOut<SPACE>
+nnoremap <Leader>co :CaptureOut<SPACE>
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
@@ -249,12 +265,15 @@ if has("autocmd")
     \ endif
 
   " do the gams stuff here
-  autocmd BufRead,BufNewFile *.gms,*.inc
-        \   set syntax=gams filetype=gams
-        \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
-  autocmd BufRead,BufNewFile *.lst
-        \   set syntax=gams filetype=gamslst
-        \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
+  augroup ft_gams
+    autocmd!
+    autocmd BufRead,BufNewFile *.gms,*.inc
+          \   set syntax=gams filetype=gams
+          \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
+    autocmd BufRead,BufNewFile *.lst
+          \   set syntax=gams filetype=gamslst
+          \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
+  augroup END
 
   "for now set scip compatible settings (3 spaces indentation for c files)
   autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
@@ -267,8 +286,9 @@ if has("autocmd")
         \ | setlocal autoread sbo+=ver,hor | endif
 
   "mappings for specific buffers
-  autocmd FileType help map <buffer> <space> <C-D>
-  autocmd FileType help map <buffer> <BS> <C-U>
+  autocmd FileType help nnoremap <buffer> <SPACE> <C-D>
+  autocmd FileType help nnoremap <buffer> <BS> <C-U>
+  autocmd filetype help nnoremap <buffer> q :q<CR>
 
   "don't show file numbers in taglist and nerdtree
   autocmd FileType nerdtree      setlocal norelativenumber
