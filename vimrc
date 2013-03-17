@@ -547,7 +547,7 @@ function! MyThesisEnv(...)
   "command! ThesisCompileView !start perl run_latexmk.pl
   command! ThesisCompileView exec "!start perl run_latexmk.pl " . s:thesis_target
 
-  set wildignore+=*.pdf,*.log,*.aux,*.toc,*.blg,*.fls
+  set wildignore+=*.log,*.aux,*.toc,*.blg,*.fls
 
   "exe "command! MLRT1 '<'>s/\(xl\|xu\|yl\|yu\|zl\|zu\)/\=" .
         "\ "{'xu':'x^u', 'xl':'x^l', 'yl':'y^l', 'yu':'y^u', 'zl':'z^l', 'yu':'y^u'}" .
