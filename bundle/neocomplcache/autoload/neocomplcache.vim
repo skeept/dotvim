@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Mar 2013.
+" Last Modified: 16 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -94,8 +94,8 @@ function! s:initialize_others() "{{{
         \ 'g:neocomplcache_keyword_patterns',
         \'filename',
         \ neocomplcache#util#is_windows() ?
-        \'\%(\a\+:/\)\?\%([/[:alnum:]()$+_\~.\x80-\xff-]\|[^[:print:]]\|\\[ ;*?[]"={}'']\)\+' :
-        \'\%([/\[\][:alnum:]()$+_\~.-]\|[^[:print:]]\|\\[ ;*?[]"={}'']\)\+')
+        \'\%(\a\+:/\)\?\%([/[:alnum:]()$+_~.\x80-\xff-]\|[^[:print:]]\|\\[ ;*?[]"={}'']\)\+' :
+        \'\%([/\[\][:alnum:]()$+_~.-]\|[^[:print:]]\|\\[ ;*?[]"={}'']\)\+')
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_keyword_patterns',
         \'lisp,scheme,clojure,int-gosh,int-clisp,int-clj',
@@ -1280,11 +1280,8 @@ endfunction"}}}
 
 " Rank order. "{{{
 function! neocomplcache#compare_rank(i1, i2)
-  let diff = get(a:i2, 'rank', 0) - get(a:i1, 'rank', 0)
-  if !diff
-    let diff = (a:i1.word ># a:i2.word) ? 1 : -1
-  endif
-  return diff
+  let diff = (get(a:i2, 'rank', 0) - get(a:i1, 'rank', 0))
+  return (diff != 0) ? diff : (a:i1.word ># a:i2.word) ? 1 : -1
 endfunction"}}}
 " Word order. "{{{
 function! neocomplcache#compare_word(i1, i2)
@@ -1421,7 +1418,8 @@ function! neocomplcache#match_word(cur_text, ...) "{{{
   let cur_keyword_pos = s:match_wildcard(
         \ a:cur_text, pattern, match(a:cur_text, pattern))
 
-  let cur_keyword_str = a:cur_text[cur_keyword_pos :]
+  let cur_keyword_str = (cur_keyword_pos >=0) ?
+        \ a:cur_text[cur_keyword_pos :] : ''
 
   return [cur_keyword_pos, cur_keyword_str]
 endfunction"}}}
@@ -1569,7 +1567,8 @@ function! neocomplcache#get_source_filetypes(filetype) "{{{
 
   let filetypes = [filetype, '_']
   if filetype =~ '\.'
-    if has_key(g:neocomplcache_ignore_composite_filetype_lists, filetype)
+    if exists('g:neocomplcache_ignore_composite_filetype_lists')
+          \ && has_key(g:neocomplcache_ignore_composite_filetype_lists, filetype)
       let filetypes = [g:neocomplcache_ignore_composite_filetype_lists[filetype]]
     else
       " Set composite filetype.
@@ -1577,15 +1576,17 @@ function! neocomplcache#get_source_filetypes(filetype) "{{{
     endif
   endif
 
-  for ft in filetypes
-    for same_ft in split(get(g:neocomplcache_same_filetype_lists, ft,
-          \ get(g:neocomplcache_same_filetype_lists, '_', '')), ',')
-      if same_ft != '' && index(filetypes, same_ft) < 0
-        " Add same filetype.
-        call add(filetypes, same_ft)
-      endif
+  if exists('g:neocomplcache_same_filetype_lists')
+    for ft in filetypes
+      for same_ft in split(get(g:neocomplcache_same_filetype_lists, ft,
+            \ get(g:neocomplcache_same_filetype_lists, '_', '')), ',')
+        if same_ft != '' && index(filetypes, same_ft) < 0
+          " Add same filetype.
+          call add(filetypes, same_ft)
+        endif
+      endfor
     endfor
-  endfor
+  endif
 
   return neocomplcache#util#uniq(filetypes)
 endfunction"}}}
