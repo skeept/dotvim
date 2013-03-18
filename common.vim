@@ -388,10 +388,6 @@ noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "==============================================================================}}}
 
 "================== Unite ====================================================={{{
-nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
-      \ -prompt=%\  buffer file_mru bookmark file<CR>
-nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-
 function! UniteColorSchemeResume()
   if !exists("s:unite_init_colorscheme")
     let s:unite_init_colorscheme = 1
@@ -413,7 +409,6 @@ function! s:unite_my_settings()"{{{
   inoremap <buffer> jj <Plug>(unite_insert_leave)
   "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
 
-  "nmap <buffer> s :call unite#do_action('preview')<CR><Plug>(unite_loop_cursor_down)
   nmap <buffer> s jp
   nmap <buffer> S kp
 
