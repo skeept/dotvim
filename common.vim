@@ -100,9 +100,6 @@ nnoremap gY yg_
 "if EOL copy char bellow, otherwise go to EOL
 inoremap <expr> <C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
-"noremap f2 to make
-"inoremap <F2> <ESC>:wa<CR>:Make <Up>
-"noremap <F2> :wa<CR>:Make <Up>
 inoremap <F2> <ESC>:call Make2()<CR><C-L>
 noremap <F2> :call Make2()<CR><C-L>
 function! Make2()
@@ -147,9 +144,9 @@ nnoremap ,, <c-w><c-w>
 "noremap gl :bprevious<CR>
 "
 if &diff
-  noremap <f4> :qa<CR>
-  noremap <f5> :wqa!<CR>
-  noremap <f6> :qa!<CR>
+  noremap <F4> :qa<CR>
+  noremap <F5> :wqa!<CR>
+  noremap <F6> :qa!<CR>
 endif
 
 nnoremap <C-L> :nohl<CR><C-L>
@@ -253,18 +250,29 @@ if has("autocmd")
   " Also load indent files, to automatically do language-dependent indenting.
   filetype plugin indent on
 
-  " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=78
+  augroup common_group
+    autocmd!
 
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  autocmd BufReadPost *
-    \ if line("'\"") > 0 && line("'\"") <= line("$") |
-    \   exe "normal g`\"" |
-    \ endif
+    " For all text files set 'textwidth' to 78 characters.
+    autocmd FileType text setlocal textwidth=78
 
-  " do the gams stuff here
+    " When editing a file, always jump to the last known cursor position.
+    " Don't do it when the position is invalid or when inside an event handler
+    " (happens when dropping a file on gvim).
+    autocmd BufReadPost *
+          \ if line("'\"") > 0 && line("'\"") <= line("$") |
+          \   exe "normal g`\"" |
+          \ endif
+
+    "place quickfix window below all other windows
+    autocmd! FileType qf wincmd J
+
+    "set readonly files to autoread
+    autocmd BufRead,BufNewFile * if &readonly == 1
+          \ | setlocal autoread sbo+=ver,hor | endif
+  augroup END
+
+  " gams stuff
   augroup ft_gams
     autocmd!
     autocmd BufRead,BufNewFile *.gms,*.inc
@@ -276,30 +284,32 @@ if has("autocmd")
   augroup END
 
   "for now set scip compatible settings (3 spaces indentation for c files)
-  autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+  augroup ft_ccpp
+    autocmd!
+    autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+  augroup END
 
-  "place quickfix window below all other windows
-  autocmd! FileType qf wincmd J
+  "help buffers mappings
+  augroup ft_help
+    autocmd!
+    autocmd FileType help nnoremap <buffer> <SPACE> <C-D>
+    autocmd FileType help nnoremap <buffer> <BS> <C-U>
+    autocmd filetype help nnoremap <buffer> q :q<CR>
+  augroup END
 
-  "set readonly files to autoread
-  autocmd BufRead,BufNewFile * if &readonly == 1
-        \ | setlocal autoread sbo+=ver,hor | endif
-
-  "mappings for specific buffers
-  autocmd FileType help nnoremap <buffer> <SPACE> <C-D>
-  autocmd FileType help nnoremap <buffer> <BS> <C-U>
-  autocmd filetype help nnoremap <buffer> q :q<CR>
-
-  "don't show file numbers in taglist and nerdtree
-  autocmd FileType nerdtree      setlocal norelativenumber
-  "autocmd FileType taglist       setlocal norelativenumber
-  autocmd FileType qf            setlocal norelativenumber
-  autocmd FileType tlibInputList setlocal norelativenumber
+  "remove number relativenumber from specific buffers
+  augroup no_nurnu
+    autocmd!
+    autocmd FileType nerdtree      setlocal norelativenumber nonumber
+    "autocmd FileType taglist       setlocal norelativenumber nonumber
+    autocmd FileType qf            setlocal norelativenumber nonumber
+    autocmd FileType tlibInputList setlocal norelativenumber nonumber
+  augroup END
 
 endif " has("autocmd")
 "==============================================================================}}}
 
-"================== colorscheme ==============================================={{{
+"================== Colorscheme ==============================================={{{
 " setting the color in terminals
 if !has("gui_running") && !g:is_win
   "on windows default is better
@@ -391,7 +401,11 @@ function! UniteColorSchemeResume()
   endif
 endfunction
 
-autocmd FileType unite call s:unite_my_settings()
+augroup ft_unite
+  autocmd!
+  autocmd FileType unite call s:unite_my_settings()
+augroup END
+
 function! s:unite_my_settings()"{{{
   " Overwrite settings.
 
@@ -526,7 +540,7 @@ noremap ,b :CtrlPBuffer<CR>
 noremap ,e :CtrlPCurFile<CR>
 "==============================================================================}}}
 
-"================== tagbar ===================================================={{{
+"================== Tagbar ===================================================={{{
 "tagbar gms and gamslst settings
 
 let g:tagbar_autofocus = 1
@@ -628,8 +642,11 @@ function! LoadUltisnips()
   if has("python")
     call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
     if has("autocmd")
-      autocmd FileType * call UltiSnips_FileTypeChanged()
-      autocmd BufNewFile,BufRead *.snippets setf snippets
+      augroup load_ulti
+        autocmd!
+        autocmd FileType * call UltiSnips_FileTypeChanged()
+        autocmd BufNewFile,BufRead *.snippets setf snippets
+      augroup END
     endif
     call UltiSnips_FileTypeChanged()
     inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
@@ -675,15 +692,18 @@ endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================}}}
 
-"================== other commands/mappings/settings =========================={{{
+"================== Other commands/mappings/settings =========================={{{
 "================== Don't view files with inconsistent ctrl-r ================={{{
 map ,ml :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
-autocmd BufReadPost * nested
-      \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
-      \   let b:reload_dos = 1 |
-      \   e ++ff=dos |
-      \ endif
+augroup fix_ff
+  autocmd!
+  autocmd BufReadPost * nested
+        \ if !exists('b:reload_dos') && !&binary && &ff=='unix' && (0 < search('\r$', 'nc')) |
+        \   let b:reload_dos = 1 |
+        \   e ++ff=dos |
+        \ endif
+augroup END
 "==============================================================================}}}
 
 "================== scrollbind mappings ======================================={{{
