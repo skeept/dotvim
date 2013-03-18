@@ -686,8 +686,184 @@ function! MySupertabAltCompletion()
 endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================}}}
+"================== Python Settings ==========================================={{{
+
+"================== PyLint Compiler ==========================================={{{
+augroup py_pylint
+  autocmd!
+  "autocmd FileType python compiler pylint
+  autocmd FileType python setlocal errorformat=%f:%l:\ %m
+  autocmd FileType python setlocal makeprg=epylint\ %
+augroup END
+"==============================================================================}}}
+
+"================== pep8 ======================================================{{{
+"let g:pep8_map = '<leader>p8' "not used anymore
+"let g:pep8_cmd  = 'pep8.py'
+"let g:pep8_ignore = "E111,E221,E225"
+"
+" this is a different plugin, the one I used now doesn't work the same way
+" E221 multiple spaces before operator -- aligning equals breaks this
+" E111 indentation is not a multiple of four -- I use two spaces
+" E225 missing whitespace around operator -- I like * without space
+" E501 line too long   -- allow more than 80 characters
+let g:pep8_args = " --ignore=E111,E221,E225,E501"
+"==============================================================================}}}
+
+"pysmell {{{
+function! LoadPysmell()
+  if exists("s:loadedPysmell")
+    return ''
+  endif
+  if has("python")
+    silent python << EOF
+import vim
+try:
+  import pysmell
+  vim.command('let s:has_pysmell = 1')
+except:
+  vim.command('let s:has_pysmell = 0')
+EOF
+
+    if s:has_pysmell == 1
+        ActivateAddons pysmell
+      setlocal completefunc=pysmell#Complete
+      augroup ft_py_pysmellcomp
+        autocmd!
+        autocmd filetype python setlocal completefunc=pysmell#Complete
+      augroup END
+    else
+      echom "No Pysmell installed!"
+    endif
+  else
+    echom "Cannot Load PySmell: No Python!"
+  endif
+  let s:loadedPysmell = 1
+endfunction "}}}
+
+"Jedi {{{
+function! LoadJedi()
+  if exists("s:loadedJedi")
+    return ''
+  endif
+  if has("python")
+    silent python << EOF
+import vim
+try:
+  import jedi
+  vim.command('let s:has_jedi = 1')
+except:
+  vim.command('let s:has_jedi = 0')
+EOF
+
+    if s:has_jedi == 1
+      let g:jedi#show_function_definition = "0"
+      ActivateAddons jedi-vim
+      setlocal omnifunc=jedi#complete
+    else
+      echom "No Jedi installed!"
+    endif
+  else
+    echom "Cannot Load Jedi No Python!"
+  endif
+  let s:loadedJedi = 1
+endfunction "}}}
+
+"choose one of pysmell or jedi for the completion in python
+if !exists("g:is_vimrc_simple")
+  augroup ft_py_pysmell_or_jedi
+    autocmd!
+    "autocmd FileType python call LoadPysmell()
+    autocmd FileType python call LoadJedi()
+  augroup END
+endif
+
+"==============================================================================}}}
+
+"================== Latex ====================================================={{{
+"latex options
+"let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
+" in case we get errors when using compiling because of python set to 0
+let g:Tex_UsePython=1
+let g:Tex_MultipleCompileFormats='dvi,pdf'
+"make vim load .tex files as latex files
+"let g:tex_flavor='latex'
+let g:tex_flavor='pdflatex'
+let g:Tex_DefaultTargetFormat='pdf'
+let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
+"let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
+let g:Tex_IgnoreLevel = 3
+let g:tex_comment_nospell= 1 "don't do spelling in comments
+"if has("autocmd") && g:is_win "why only on windows? don't remember now
+if has("autocmd")
+  augroup ft_tex_setCompiler
+    autocmd!
+    autocmd BufRead,BufNewFile *.tex compiler tex
+          \ | setlocal textwidth=90
+  augroup END
+endif
+
+if g:is_win
+  let g:SumatraPdfLoc = expand("$HOME" .
+        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
+  if hostname() == "SHABBIRSTU3"
+    let g:SumatraPdfLoc = 'C:\Documents and Settings\hinacio\Applications' .
+          \ '\PortableApps\PortableApps\SumatraPDFPortable\SumatraPDFPortable'
+  endif
+  let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
+else
+  let g:Tex_ViewRule_pdf = 'okular'
+endif
+
+function! LoadLatexPlugins()
+  if exists("s:loaded_latex_plugins") | return '' | endif
+
+  imap <F8> <Plug>IMAP_JumpForward
+  nmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_JumpForward
+  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
+  ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
+  "will it be necessary to load after/ftplugin/tex again?
+  let s:loaded_latex_plugins = 1
+endfunction
+
+augroup ft_tex_loadLatexPlugins
+  autocmd!
+  autocmd FileType tex call LoadLatexPlugins()
+augroup END
+
+"remoteOpen must be loaded in order to open from external viewer
+runtime bundle/vlatex/plugin/remoteOpen.vim
+
+"for plugin in ftplugin/tex/tex_pdf.vim
+let g:tex_pdf_map_keys = 0
+
+"" fix viewing pdf, using \la to view pdf by default
+function! SetPdfDestination(...)
+  "without args get current working file and add pdf, else specific arg
+  if a:0 > 0
+    let g:fix_pdf_dest = substitute(a:1, '.pdf', '', '')
+  else
+    let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
+  endif
+  let g:did_setpdfdestination = 1
+  nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
+endfunction
+
+function! FixForwardSeach()
+  if !exists("g:did_setpdfdestination")
+    call SetPdfDestination()
+  endif
+  let target = expand('%:p:h') . '/' . g:fix_pdf_dest . '.pdf'
+  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search " . expand('%:p') . ' ' . line('.') . ' ' . target
+  let execString = 'silent! !start ' . cmd
+  exe execString
+endfunction
+command! -complete=file -nargs=* FixForwardSeach call SetPdfDestination(<f-args>)
+"==============================================================================}}}
 
 "================== Other commands/mappings/settings =========================={{{
+
 "================== Don't view files with inconsistent ctrl-r ================={{{
 map ,ml :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos

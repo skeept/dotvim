@@ -93,12 +93,6 @@ endif
 "this is where all vimrc and simple settings go
 execute "source " . g:p0 . "/common.vim"
 
-"================== tasklist =================================================={{{
-"useful for managing a todo list
-noremap <leader>t_ <Plug>TaskList
-noremap <leader>td :TaskList<CR>
-"==============================================================================}}}
-
 "================== Taglist ==================================================={{{
 "taglist options
 "let Tlist_Close_On_Select = 1
@@ -138,7 +132,10 @@ function! LoadClangComplete()
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
 endfunction
-autocmd FileType c,cpp call LoadClangComplete()
+augroup ft_cpp_clang
+  autocmd!
+  autocmd FileType c,cpp call LoadClangComplete()
+augroup END
 "==============================================================================}}}
 
 "================== Bufstop ==================================================={{{
@@ -151,80 +148,6 @@ function! MyBuffStopCall()
   endif
 endfunction
 nnoremap <Leader>b :<C-U>call MyBuffStopCall()<CR>
-"==============================================================================}}}
-
-"================== Latex ====================================================={{{
-"latex options
-"let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
-" in case we get errors when using compiling because of python set to 0
-let g:Tex_UsePython=1
-let g:Tex_MultipleCompileFormats='dvi,pdf'
-"make vim load .tex files as latex files
-"let g:tex_flavor='latex'
-let g:tex_flavor='pdflatex'
-let g:Tex_DefaultTargetFormat='pdf'
-let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
-"let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
-let g:Tex_IgnoreLevel = 3
-let g:tex_comment_nospell= 1 "don't do spelling in comments
-if has("autocmd") && g:is_win
-  autocmd BufRead,BufNewFile *.tex compiler tex
-        \ | setlocal textwidth=90
-endif
-
-if g:is_win
-  let g:SumatraPdfLoc = expand("$HOME" .
-        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
-  if hostname() == "SHABBIRSTU3"
-    let g:SumatraPdfLoc = 'C:\Documents and Settings\hinacio\Applications' .
-          \ '\PortableApps\PortableApps\SumatraPDFPortable\SumatraPDFPortable'
-  endif
-  let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
-else
-  let g:Tex_ViewRule_pdf = 'okular'
-endif
-
-function! LoadLatexPlugins()
-  if exists("s:loaded_latex_plugins") | return '' | endif
-
-  imap <F8> <Plug>IMAP_JumpForward
-  nmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
-  ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
-  "will it be necessary to load after/ftplugin/tex again?
-  let s:loaded_latex_plugins = 1
-endfunction
-autocmd FileType tex call LoadLatexPlugins()
-"remoteOpen must be loaded in order to open from external viewer
-runtime bundle/vlatex/plugin/remoteOpen.vim
-
-
-"for plugin in ftplugin/tex/tex_pdf.vim
-let g:tex_pdf_map_keys = 0
-
-"" fix viewing pdf, using \la to view pdf by default
-function! SetPdfDestination(...)
-  "without args get current working file and add pdf, else specific arg
-  if a:0 > 0
-    let g:fix_pdf_dest = substitute(a:1, '.pdf', '', '')
-  else
-    let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
-  endif
-  let g:did_setpdfdestination = 1
-  nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
-endfunction
-
-function! FixForwardSeach()
-  if !exists("g:did_setpdfdestination")
-    call SetPdfDestination()
-  endif
-  let target = expand('%:p:h') . '/' . g:fix_pdf_dest . '.pdf'
-  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search " . expand('%:p') . ' ' . line('.') . ' ' . target
-  let execString = 'silent! !start ' . cmd
-  exe execString
-endfunction
-command! -complete=file -nargs=* FixForwardSeach call SetPdfDestination(<f-args>)
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
@@ -294,65 +217,6 @@ let g:smartusline_string_to_highlight = '%2.2n %t %h'
 "some pylint settings
 let g:pylint_onwrite = 0
 
-"pysmell
-function! LoadPysmell()
-  if exists("s:loadedPysmell")
-    return ''
-  endif
-  if has("python")
-    silent python << EOF
-import vim
-try:
-  import pysmell
-  vim.command('let s:has_pysmell = 1')
-except:
-  vim.command('let s:has_pysmell = 0')
-EOF
-
-    if s:has_pysmell == 1
-        ActivateAddons pysmell
-      setlocal completefunc=pysmell#Complete
-      autocmd filetype python setlocal completefunc=pysmell#Complete
-    else
-      echom "No Pysmell installed!"
-    endif
-  else
-    echom "Cannot Load PySmell: No Python!"
-  endif
-  let s:loadedPysmell = 1
-endfunction
-
-function! LoadJedi()
-  if exists("s:loadedJedi")
-    return ''
-  endif
-  if has("python")
-    silent python << EOF
-import vim
-try:
-  import jedi
-  vim.command('let s:has_jedi = 1')
-except:
-  vim.command('let s:has_jedi = 0')
-EOF
-
-    if s:has_jedi == 1
-      let g:jedi#show_function_definition = "0"
-      ActivateAddons jedi-vim
-      setlocal omnifunc=jedi#complete
-    else
-      echom "No Jedi installed!"
-    endif
-  else
-    echom "Cannot Load Jedi No Python!"
-  endif
-  let s:loadedJedi = 1
-endfunction
-
-"choose one of pysmell or jedi for the completion in python
-"autocmd FileType python call LoadPysmell()
-autocmd FileType python call LoadJedi()
-
 "mapping for running python code
 "nmap <F9> :SingleCompileRun<CR>
 
@@ -363,25 +227,6 @@ let g:pymode_lint = 0
 let g:pymode_rope = 0
 let g:pymode_options_indent = 0
 let g:pymode_breakpoint = 0
-"==============================================================================}}}
-
-"================== PyLint Compiler ==========================================={{{
-"autocmd FileType python compiler pylint
-autocmd FileType python setlocal errorformat=%f:%l:\ %m
-autocmd FileType python setlocal makeprg=epylint\ %
-"==============================================================================}}}
-
-"================== pep8 ======================================================{{{
-"let g:pep8_map = '<leader>p8' "not used anymore
-"let g:pep8_cmd  = 'pep8.py'
-"let g:pep8_ignore = "E111,E221,E225"
-"
-" this is a different plugin, the one I used now doesn't work the same way
-" E221 multiple spaces before operator -- aligning equals breaks this
-" E111 indentation is not a multiple of four -- I use two spaces
-" E225 missing whitespace around operator -- I like * without space
-" E501 line too long   -- allow more than 80 characters
-let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 
 "==============================================================================}}}
@@ -451,7 +296,10 @@ endfunction
 
 "================== ManPageView ==============================================={{{
 let g:manpageview_winopen = "hsplit="
-autocmd FileType man setlocal norelativenumber nonumber
+augroup manpageview
+  autocmd!
+  autocmd FileType man setlocal norelativenumber nonumber
+augroup END
 "also created a file in bundle/manpageview/ftplugin/man.vim with map q to quit
 "==============================================================================}}}
 
@@ -472,13 +320,22 @@ let g:LustyJugglerShowKeys = 'a'
 "==============================================================================}}}
 
 "================== vim-pipe commands ========================================={{{
-autocmd FileType python let b:vimpipe_command="python"
-autocmd FileType perl let b:vimpipe_command="perl"
-autocmd FileType tex let b:vimpipe_command="latexmk"
+augroup vim_pipe
+  autocmd!
+  autocmd FileType python let b:vimpipe_command="python"
+  autocmd FileType perl let b:vimpipe_command="perl"
+  autocmd FileType tex let b:vimpipe_command="latexmk"
+augroup END
 "==============================================================================}}}
 
 "================== ConqueTerm ================================================{{{
 let g:ConqueTerm_ReadUnfocused = 1
+"==============================================================================}}}
+
+"================== tasklist =================================================={{{
+"useful for managing a todo list
+noremap <leader>t_ <Plug>TaskList
+noremap <leader>td :TaskList<CR>
 "==============================================================================}}}
 
 "some plugins don't work well with some enviroments, just try to adjust them
@@ -684,11 +541,14 @@ if g:neocomplcache_enable_at_startup == 1
   inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-G>u\<C-U>"
 
   " Enable omni completion.
-  autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-  autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-  autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-  autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-  autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+  augroup neocomplcache_1
+    autocmd!
+    autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+    autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+    autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+    autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
+    autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+  augroup END
 
   " Enable heavy omni completion.
   if !exists('g:neocomplcache_omni_patterns')
