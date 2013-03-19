@@ -686,6 +686,7 @@ function! MySupertabAltCompletion()
 endfunction
 inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
 "==============================================================================}}}
+
 "================== Python Settings ==========================================={{{
 
 "================== PyLint Compiler ==========================================={{{
@@ -1022,6 +1023,8 @@ endif
 "let NERDShutUp=1
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
+"==============================================================================}}}
+
 "==============================================================================}}}
 
 " vim: foldmethod=marker
