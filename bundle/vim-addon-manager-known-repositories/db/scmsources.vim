@@ -2012,6 +2012,12 @@ let scmnr.4476 = {'type': 'git', 'url': 'git://github.com/junegunn/vim-scroll-po
 " Arnaud Le Blanc
 let scmnr.4477 = {'type': 'git', 'url': 'git://github.com/arnaud-lb/vim-php-namespace'}
 
+" Alex Johnson
+let scmnr.4478 = {'type': 'git', 'url': 'git://github.com/notalex/vim-run-live'}
+
+" Shu Chen
+let scmnr.4479 = {'type': 'hg', 'url': 'https://bitbucket.org/sirpengi/iwilldiffer'}
+
 "-----------------------------------------------------------------------------------------------------------------------
 
 " hickop
@@ -2239,6 +2245,9 @@ let scm['opalang'] = {'type': 'git', 'url': 'git://github.com/MLstate/opalang', 
 let scm['pgnvim'] = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/Raimondi/pgnvim'}, {'pgn.vim': 'syntax'})
 let scm['SkyBison'] = {'type': 'git', 'url': 'git://github.com/paradigm/SkyBison'}
 let scm['jedi-vim'] = {'type': 'git', 'url': 'git://github.com/davidhalter/jedi-vim'}
+
+" Marius Gedminas
+let scm['python-imports@mgedmin'] = {'type': 'git', 'url': 'git://github.com/mgedmin/python-imports.vim'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
