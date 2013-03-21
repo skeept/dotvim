@@ -46,9 +46,6 @@ endif
 "==============================================================================}}}
 
 "this is where all vimrc and simple settings go
-"profile start prof.txt
-"profile file common.vim
-"profdel prof.txt
 execute "source " . g:p0 . "/common.vim"
 
 
