@@ -165,6 +165,9 @@ nnoremap <Leader>b :<C-U>call MyBuffStopCall()<CR>
 "set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "
 function! CondDispFtFf()
+  if v:version < 702
+    return ''
+  endif
   if winwidth(0) < 70 || &filetype == 'help'
     let val = ''
   else
