@@ -280,7 +280,11 @@ function s:F.closediffbuf(dbuf, dtabpagenr, prevbuf, existed, winexisted)
             let cmds+=['execute bufwinnr('.a:dbuf.') "wincmd w"']
             call insert(switchcmds, 'wincmd p')
             if a:prevbuf && bufexists(a:prevbuf)
-                let cmds+=['buffer '.a:prevbuf]
+                let cmds += ['if bufexists('.a:prevbuf.')',
+                            \   'buffer '.a:prevbuf,
+                            \'else',
+                            \   'bnext',
+                            \'endif']
             else
                 let cmds+=['bnext']
             endif

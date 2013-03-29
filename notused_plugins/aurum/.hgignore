@@ -5,3 +5,4 @@ test/*repo
 test/svntestreposerver
 testother
 .ropeproject
+index.txt

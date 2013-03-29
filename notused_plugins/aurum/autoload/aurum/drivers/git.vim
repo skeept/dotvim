@@ -313,7 +313,7 @@ if s:usepythondriver "▶2
 else "▶2
     function s:F.get_status(repo, files, clean, ignored)
         let r=deepcopy(s:_r.utils.emptystatdct)
-        let kwargs={'porcelain': 1, 'z': 1}
+        let kwargs={'porcelain': 1, 'z': 1, 'untracked-files': 'all'}
         let args=empty(a:files)?[]:['--']+a:files
         let s=s:_r.utils.nullnl(
                     \s:F.git(a:repo, 'status', args, kwargs, 2, 'statusf'))[:-2]

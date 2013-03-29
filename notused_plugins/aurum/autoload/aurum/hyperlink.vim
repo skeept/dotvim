@@ -88,11 +88,12 @@ function s:_aufunctions.cmd.function(line1, line2, opts)
     "▶3 File not needed: others
     else
         let repo=s:_r.cmdutils.checkedgetrepo(a:opts.repo)
+        let [repo, rev] = s:_r.cmdutils.getrrf(a:opts, 'norev', 'getrr')[1:2]
         if utype is# 'bundle' || utype is# 'changeset' || utype is# 'log'
-            if has_key(a:opts, 'rev')
-                let hex=repo.functions.getrevhex(repo, a:opts.rev)
-            else
+            if rev is 0
                 let hex=repo.functions.getworkhex(repo)
+            else
+                let hex=repo.functions.getrevhex(repo, rev)
             endif
         endif
     endif

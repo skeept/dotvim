@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from importlib import import_module
 from collections import namedtuple
 from time import time
@@ -5,6 +6,9 @@ import aurum.rcdriverfuncs as rcdfuncs
 import aurum.repeatedcmd as rc
 import vim
 from os.path import dirname, isdir, join, relpath
+from powerline.theme import requires_segment_info
+from powerline.bindings.vim import getbufvar, vim_get_func
+from powerline.lib.memoize import memoize
 
 Funcs = namedtuple('Funcs', 'branch status')
 dummy_func = lambda *args : None
@@ -43,18 +47,23 @@ def specialize(funcs, path):
 funcs_cache = {}
 fname_cache = {}
 
+def plugin_eval(expr):
+    global plugin_eval
+    plugin_eval = vim_get_func('<SNR>'+sid+'_Eval')
+    return plugin_eval(expr)
+
 if hasattr(vim, 'bindeval'):
     self_dict = vim.bindeval('{}')
 
     def get_repo(path):
         global get_repo
-        vim_get_repo = vim.bindeval('<SNR>'+sid+'_Eval("s:_r.repo.get")')
+        vim_get_repo = plugin_eval('s:_r.repo.get')
         get_repo = lambda path: vim_get_repo(path, self=self_dict)
         return get_repo(path)
 
     def get_interval(key):
         global get_interval
-        vim_get_interval = vim.bindeval('<SNR>'+sid+'_Eval("s:_r.cache.getinterval")')
+        vim_get_interval = plugin_eval('s:_r.cache.getinterval')
         get_interval = lambda key: vim_get_interval(key, self=self_dict)
         return get_interval(key)
 
@@ -62,26 +71,26 @@ if hasattr(vim, 'bindeval'):
 
     def get_rrf():
         global get_rrf
-        vim_get_rrf = vim.bindeval('<SNR>'+sid+'_Eval("s:_r.cmdutils.getrrf")')
+        vim_get_rrf = plugin_eval('s:_r.cmdutils.getrrf')
         get_rrf = lambda : list(vim_get_rrf(rf_dict, 0, 'getsilent', self=self_dict))[1:]
         return get_rrf()
+
+    # bufvars = plugin_eval('')
 
 else:
     import json
     def get_repo(path):
-        return vim.eval('<SNR>'+sid+'_Eval(printf("s:_r.repo.get(%s)", string('+json.dumps(path)+')))')
+        return plugin_eval('s:_r.repo.get('+json.dumps(path)+')')
 
     def get_interval(key):
-        return float(vim.eval('<SNR>'+sid+'_Eval("s:_r.cache.getinterval(\''+key+'\')")'))
+        return float(plugin_eval('s:_r.cache.getinterval("'+key+'")'))
 
     def get_rrf():
-        return vim.eval('<SNR>'+sid+'_Eval("s:_r.cmdutils.getrrf({\'repo\': \':\'}, 0, \'getsilent\')")[1:]')
+        return plugin_eval('s:_r.cmdutils.getrrf({"repo": ":"}, 0, "getsilent")[1:]')
 
-def get_rf():
+def get_rf(bufnr):
     global funcs_cache
     global fname_cache
-
-    bufnr = vim.current.buffer.number
 
     if bufnr in fname_cache and (time()-fname_cache[bufnr][1]) < get_repo_interval():
         return funcs_cache[bufnr][0], fname_cache[bufnr][0]
@@ -151,10 +160,8 @@ def process_repo(vim_repo):
     except:
         return None
 
-def guess():
+def guess(bufnr):
     global funcs_cache
-
-    bufnr = vim.current.buffer.number
 
     if bufnr in funcs_cache and (time()-funcs_cache[bufnr][1]) < get_repo_interval():
         return funcs_cache[bufnr][0]
@@ -210,7 +217,7 @@ def setup_buffer(bufnr, func_name, funcs=None, *args):
         if 'funcs' in bdict:
             funcs = bdict['funcs']
         else:
-            funcs = guess()
+            funcs = guess(bufnr)
             bdict['funcs'] = funcs
     else:
         bdict['funcs'] = funcs
@@ -230,21 +237,23 @@ def setup_buffer(bufnr, func_name, funcs=None, *args):
 
     return bdict['rcids'][func_name]
 
-def branch():
-    bsetup = setup_buffer(vim.current.buffer.number, 'branch')
+@requires_segment_info
+def branch(pl, segment_info):
+    bsetup = setup_buffer(segment_info['bufnr'], 'branch')
     if bsetup is None:
         return None
     return rc.get(bsetup)
 
-def file_vcs_status():
-    if not vim.current.buffer.name or vim.eval('&buftype'):
+@requires_segment_info
+def file_vcs_status(pl, segment_info):
+    if not segment_info['buffer'].name or getbufvar(segment_info['bufnr'], '&buftype'):
         return None
 
-    funcs, fname = get_rf()
+    funcs, fname = get_rf(segment_info['bufnr'])
     if not fname or not funcs:
         return None
 
-    bsetup = setup_buffer(vim.current.buffer.number, 'status', funcs, fname)
+    bsetup = setup_buffer(segment_info['bufnr'], 'status', funcs, fname)
     if bsetup is None:
         return None
 
@@ -259,7 +268,74 @@ def file_vcs_status():
             'highlight': ['file_vcs_status_'+statchar, 'file_vcs_status']
            }]
 
+persistent = lambda : memoize(100000, cache_key=lambda segment_info, **kwargs: segment_info['bufnr'])
+
+@requires_segment_info
+@persistent()
+def annotated_changeset(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def status_changesets(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def diff_changesets(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def diff_files(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def log_options(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def repository_root(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def file_directory(pl, segment_info):
+    pass
+
+@requires_segment_info
+@persistent()
+def file_name(pl, segment_info):
+    pass
+
 def is_commit(matcher_info):
-    return vim.eval('getbufvar({0}, "&ft")'.format(matcher_info['bufnr'])) == 'aurumcommit'
+    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumcommit'
+
+def is_annotate(matcher_info):
+    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumannotate'
+
+def is_status(matcher_info):
+    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumstatus'
+
+def is_log(matcher_info):
+    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumlog'
+
+sep = None
+
+def is_file(matcher_info):
+    global sep
+    if not sep:
+        sep = vim.eval('fnamemodify(".", ":p")')[-1]
+    name = matcher_info['buffer'].name
+    return name and name.startswith('aurum:'+sep+sep+'file:')
+
+def is_diff(matcher_info):
+    global sep
+    if not sep:
+        sep = vim.eval('fnamemodify(".", ":p")')[-1]
+    name = matcher_info['buffer'].name
+    return name and name.startswith('aurum:'+sep+sep+'diff:')
 
 # vim: ft=python ts=4 sw=4 sts=4 et tw=120
