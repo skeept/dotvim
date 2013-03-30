@@ -57,7 +57,8 @@ INSTALL						*neocomplcache-install*
 let g:neocomplcache_enable_at_startup = 1
 in your .vimrc.
 
-						*neocomplcache-asyncronous*
+*neocomplcache-RECOMMENDATION*
+						*neocomplcache-asynchronous*
 With neocomplcache Ver.6.0 or later, when you have |vimproc| installed,
 neocomplcache creates caches asynchronously.
 
@@ -1325,6 +1326,7 @@ A: The default compare function is rank order.  It sorts rank order and
 alphabetical order.  If you select candidates, the candidate's rank will be
 high.  To change compare function, you can change
 |g:neocomplcache_compare_function| value.
+Note: To use rank feature, your Vim's version must be 7.3.549 or above.
 >
 	let g:neocomplcache_compare_function = 'neocomplcache#compare_word'
 <
@@ -1469,6 +1471,17 @@ heavy, so disabled by default.
 	endif
 	let g:neocomplcache_force_omni_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
 <
+Q: I want to use jedi omni_complete.
+https://github.com/davidhalter/jedi-vim
+
+A: Please set |g:neocomplcache_omni_functions| as below.
+>
+	if !exists('g:neocomplcache_omni_functions')
+	    let g:neocomplcache_omni_functions = {}
+	endif
+	let g:neocomplcache_omni_functions.python = 'jedi#complete'
+	let g:jedi#popup_on_dot = 0
+<
 Q: Candidates are not found in heavy completion(neco-look, etc).
 
 A: It may be caused by skip completion.
@@ -1504,8 +1517,12 @@ Improve cache behavior in current buffer.
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
 
+2013-03-30
+- Improved complete words behavior.
+
 2013-03-23
 - Fixed refresh behavior.
+- Fixed completion error in vim_complete.
 
 2013-03-22
 - Improved rank behavior.

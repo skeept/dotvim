@@ -209,17 +209,23 @@ function s:F.commit(repo, opts, files, status, types, ...)
     if empty(message)
         call s:_r.run(((a:0 && a:1 isnot 0)? a:1 : 'silent new'),
                     \ 'commit', a:repo, user, date, cb, a:files)
+        " Workaround problem with templates created on BufNewFile. Namely if you 
+        " try to commit a ebuild (or something that ends with a ".ebuild") you 
+        " will see ebuild template inserted
+        %delete _
         let bvar=s:_r.bufvars[bufnr('%')]
         if a:0>1 && a:2 isnot 0
             call extend(bvar, a:2)
         endif
         let bvar.revstatus=revstatus
         "▶2 Add previous message
+        let addedprevmessage=0
         if exists('g:AuPreviousRepoPath') &&
                     \   g:AuPreviousRepoPath is# a:repo.path &&
                     \exists('g:AuPreviousTip') &&
                     \   g:AuPreviousTip is# a:repo.functions.gettiphex(a:repo)&&
                     \exists('g:AuPreviousCommitMessage')
+            let addedprevmessage=1
             call setline('.', split(g:AuPreviousCommitMessage, "\n", 1))
             call cursor(line('$'), col([line('$'), '$']))
             unlet g:AuPreviousRepoPath g:AuPreviousTip g:AuPreviousCommitMessage
@@ -231,6 +237,9 @@ function s:F.commit(repo, opts, files, status, types, ...)
         endfor
         call sort(fmessage)
         call append('.', fmessage)
+        if !addedprevmessage
+            setlocal nomodified
+        endif
         startinsert!
         "▶2 Open diff
         if s:_f.getoption('commitautoopendiff')
