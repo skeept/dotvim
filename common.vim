@@ -619,6 +619,7 @@ inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
 "==============================================================================}}}
 
 "================== UltiSnips ================================================={{{
+if 0
 let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
@@ -662,6 +663,7 @@ nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+endif
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
