@@ -195,7 +195,7 @@ function! RedirToScratch()
   normal "up
 endfunction
 
-function! CaptureOutFun(cmd)
+function! CaptureOutFun(cmd, scratch)
   let old_more=&more
   set nomore
   let @u = ""
@@ -203,11 +203,18 @@ function! CaptureOutFun(cmd)
   exec a:cmd
   redir END
   let &more=old_more
+  if a:scratch == 1
+    Sscratch
+    normal Go
+  endif
   normal "up'[
 endfunction
-command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
+command! -nargs=* CaptureOut silent call CaptureOutFun("<args>", 0)
+command! -nargs=* CaptureOutScratch silent call CaptureOutFun("<args>", 1)
 nnoremap ,co :CaptureOut<SPACE>
 nnoremap <Leader>co :CaptureOut<SPACE>
+nnoremap ,cq :CaptureOutScratch<SPACE>
+nnoremap <Leader>cq :CaptureOutScratch<SPACE>
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
@@ -992,6 +999,8 @@ if g:is_win
   "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
   command! FullScreenToogle call FullScreenToogleFun()
   noremap  <Leader>tf :FullScreenToogle<CR>
+else
+  nnoremap <Leader>tf :silent! !wmctrl -r GVIM -b toggle,fullscreen<CR>
 endif
 "==============================================================================}}}
 
@@ -1028,5 +1037,7 @@ let g:NERDDefaultNesting=1
 "==============================================================================}}}
 
 "==============================================================================}}}
+
+command ML set go-=m | winpos 0 0 | set lines=100
 
 " vim: foldmethod=marker
