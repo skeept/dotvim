@@ -313,6 +313,12 @@ if has("autocmd")
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
   augroup END
 
+  augroup ft_scratch
+    autocmd!
+    autocmd FileType scratch setlocal fdm=expr
+          \ foldexpr=getline(v:lnum)==#getline(v:lnum-1)?1:0
+  augroup END
+
 endif " has("autocmd")
 "==============================================================================}}}
 
@@ -1038,6 +1044,6 @@ let g:NERDDefaultNesting=1
 
 "==============================================================================}}}
 
-command ML set go-=m | winpos 0 0 | set lines=100
+command! ML set go-=m | winpos 0 0 | set lines=100
 
 " vim: foldmethod=marker
