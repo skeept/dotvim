@@ -41,7 +41,8 @@ let s:_messages={
             \'branchf': 'Failed to get list of branches '.
             \           'from the repository %s: %s',
             \  'grepf': 'Failed to search through the repository %s: %s',
-            \ 'stripf': 'Failed to strip revision %s from %s: %s',
+            \ 'stripf': 'Failed to strip revision %s '.
+            \           'from the repository %s: %s',
             \   'tagf': 'Failed to get list of tags from the repository %s: %s',
             \   'addf': 'Failed to add file %s to the repository %s: %s',
             \ 'cbnimp': 'Git driver is not able to close branch',
@@ -440,7 +441,7 @@ function s:git.commit(repo, message, ...)
                 \             s:F.gitm, args, kwargs, 0, 'cif')
 endfunction
 "▶1 git.strip :: [rev[, force]]
-function s:git.strip(...)
+function s:git.strip(repo, ...)
     let args=[(a:0 && !empty(a:1))?(a:1):('HEAD^')]
     if a:0>1 && !empty(a:2)
         call s:_f.throw('sfnsup')

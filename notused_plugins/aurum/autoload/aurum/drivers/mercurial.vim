@@ -725,7 +725,7 @@ endfunction
 function s:hg.strip(repo, ...)
     let kwargs={'force': (a:0>1 && !empty(a:2))}
     if a:0 && !empty(a:1)
-        let kwargs.rev=a:1
+        let kwargs.rev=''.a:1
         let cmd='strip'
     else
         let cmd='rollback'

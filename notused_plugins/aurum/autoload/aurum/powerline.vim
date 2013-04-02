@@ -28,7 +28,7 @@ EOF
 function s:F.define_local_themes()
 python <<EOF
 buffer_type_hl = [u"aurum_buffer_type", u"line_current_symbol"]
-filler_segment = {u"type": u"string", u"width": u"auto", u"highlight_group": u"background", "draw_divider": False}
+filler_segment = {u"type": u"string", u"width": u"auto", u"highlight_group": u"background", "draw_divider": False, "draw_soft_divider": False, "draw_hard_divider": False}
 powerline.add_local_theme("aurum.powerline.is_commit", {
     u"default_module": u"aurum.powerline",
     u"segments": {
