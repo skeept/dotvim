@@ -1,6 +1,6 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('0.0', {'@/options': '0.0',
+execute frawor#Setup('0.1', {'@/options': '0.0',
             \                     '@/os': '0.0',
             \               '@/mappings': '0.0',
             \              '@/functions': '0.1',
@@ -81,6 +81,69 @@ function s:F.write(bvar)
             \           "['commit', ".expand('<abuf>')."], {})\n","n")
     call map(copy(s:_r.cache.allkeys), 's:_r.cache.wipe(v:val)')
 endfunction
+"▶1 genstate
+function s:F.genstate(repo)
+    let cs       = a:repo.functions.getwork(a:repo)
+    let allfiles = a:repo.functions.getcsprop(a:repo, cs, 'allfiles')
+    let status   = a:repo.functions.status(a:repo, 0, 0, allfiles)
+    let state={'files': allfiles, 'contents': {}, 'removes': {}, 'revstatus': {},
+                \'description': cs.description}
+    for [s, files] in items(status)
+        for file in files
+            if index(allfiles, file)!=-1
+                let state.contents[file]=
+                            \a:repo.functions.readfile(a:repo, cs.hex, file)
+            else
+                let state.removes[file]=1
+            endif
+        endfor
+    endfor
+    return state
+endfunction
+"▶1 setstate
+function s:F.setstate(repo, bvar, state)
+    for idx in range(len(a:bvar.lines))
+        let file=a:bvar.files[idx]
+        if has_key(a:state.removes, file)
+            let type=a:bvar.types[idx]
+            if index(['added', 'unknown'], type)!=-1
+                " Do nothing: just do not include the file in the commit
+            elseif a:bvar.types[idx] is# 'modified'
+                call a:repo.functions.forget(file)
+                let a:bvar.types[idx]='removed'
+                let a:bvar.chars[idx]='R'
+                let a:bvar.lines[idx]='R '.file
+                let a:bvar.statuses[idx]=2
+            elseif index(['deleted', 'removed'], type)
+                let a:bvar.statuses[idx]=2
+            endif
+        elseif index(a:state.files, file)!=-1
+            if has_key(a:state.contents, file)
+                let fullpath=s:_r.os.path.join(a:repo.path, file)
+                let backupfile=s:F.getbackupfile(a:bvar, fullpath)
+                if rename(fullpath, backupfile)
+                    call s:_f.throw('renfail', fullpath, backupfile)
+                endif
+                call writefile(a:state.contents[file], fullpath, 'b')
+                if filereadable(fullpath)
+                    " FIXME may loose executable bit
+                    let a:bvar.backupfiles[backupfile]=fullpath
+                    let a:bvar.filesbackup[fullpath]=backupfile
+                else
+                    let a:bvar.newfiles[fullpath]=1
+                endif
+                let a:bvar.statuses[idx]=3
+            else
+                let a:bvar.statuses[idx]=2
+            endif
+        endif
+    endfor
+    let a:bvar.recopts.message = a:state.description
+    setlocal modifiable
+    call s:F.reset(a:bvar)
+    setlocal nomodifiable
+    call cursor(1, 1)
+endfunction
 "▶1 recfunc
 " TODO investigate why closing record tab is causing next character consumption
 "      under wine
@@ -90,6 +153,7 @@ let s:_aufunctions.cmd={'@FWC': ['-onlystrings '.
             \'  ?date        type ""'.
             \'  ?user        type ""'.
             \' !?closebranch'.
+            \' !?amend'.
             \'} '.
             \'+ '.s:_r.cmdutils.comp.file, 'filter']}
 let s:_aufunctions.comp=s:_r.cmdutils.gencompfunc(s:_aufunctions.cmd['@FWC'][0],
@@ -104,6 +168,10 @@ function s:_aufunctions.cmd.function(opts, ...)
         let repo=s:_r.cmdutils.checkedgetrepo(s:_r.os.path.dirname(files[0]))
     else
         let repo=s:_r.cmdutils.checkedgetrepo(a:opts.repo)
+    endif
+    if get(a:opts, 'amend', 0)
+        let state=s:F.genstate(repo)
+        call repo.functions.strip(repo)
     endif
     call map(files, 'repo.functions.reltorepo(repo, v:val)')
     tabnew
@@ -166,6 +234,9 @@ function s:_aufunctions.cmd.function(opts, ...)
     if empty(bvar.chars)
         bwipeout!
     endif
+    if get(a:opts, 'amend', 0)
+        call s:F.setstate(repo, bvar, state)
+    endif
 endfunction
 "▶1 curundo :: () → UInt
 if s:hasundo
@@ -179,7 +250,7 @@ else
 endif
 "▶1 reset
 function s:F.reset(bvar)
-    for idx in range(0, len(a:bvar.lines)-1)
+    for idx in range(len(a:bvar.lines))
         call setline(idx+1, s:statchars[a:bvar.statuses[idx]].a:bvar.lines[idx])
     endfor
     let a:bvar.prevct=b:changedtick
@@ -400,6 +471,20 @@ function s:F.undoleafwrite(bvar, lines, file)
     endif
     return a:bvar.ewrite(a:bvar, a:lines, a:file)
 endfunction
+"▶1 getbackupfile
+function s:F.getbackupfile(bvar, fullpath)
+    if has_key(a:bvar.filesbackup, a:fullpath)
+        let backupfile=a:bvar.filesbackup[a:fullpath]
+    else
+        let backupfile=a:fullpath.'.orig'
+        let i=0
+        while s:_r.os.path.exists(backupfile)
+            let backupfile=a:fullpath.'.'.i.'.orig'
+            let i+=1
+        endwhile
+    endif
+    return backupfile
+endfunction
 "▶1 sactions
 let s:F.sactions={}
 "▶2 sactions.[v]add, sactions.[v]remove
@@ -497,16 +582,7 @@ function s:F.sactions.edit(action, bvar, buf)
     let ntype=get(s:ntypes, type, 0)
     if !modified
         if ntype is# 'm' || ntype is# 'a'
-            if has_key(a:bvar.filesbackup, fullpath)
-                let backupfile=a:bvar.filesbackup[fullpath]
-            else
-                let backupfile=fullpath.'.orig'
-                let i=0
-                while s:_r.os.path.exists(backupfile)
-                    let backupfile=fullpath.'.'.i.'.orig'
-                    let i+=1
-                endwhile
-            endif
+            let backupfile=s:F.getbackupfile(a:bvar, fullpath)
         elseif ntype is# 'r'
             let a:bvar.newfiles[fullpath]=1
         endif

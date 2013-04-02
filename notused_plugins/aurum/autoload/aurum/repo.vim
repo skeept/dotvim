@@ -1,5 +1,5 @@
 "▶1
-execute frawor#Setup('5.5', { '@/resources': '0.0',
+execute frawor#Setup('5.6', { '@/resources': '0.0',
             \                        '@/os': '0.0',
             \                   '@/options': '0.0',
             \                    '@/python': '1.0',
@@ -502,7 +502,7 @@ call s:_f.postresource('repo', {'get': s:F.getrepo,
 let s:requiredfuncs=['repo', 'getcs', 'checkdir']
 let s:optfuncs=['readfile', 'annotate', 'diff', 'status', 'commit', 'update',
             \   'diffre', 'getrepoprop', 'forget', 'branch', 'label',
-            \   'push', 'pull']
+            \   'push', 'pull', 'strip']
 "▶2 regdriver :: {f}, name, funcs → + s:drivers
 function s:F.regdriver(plugdict, fdict, name, funcs)
     "▶3 Check arguments

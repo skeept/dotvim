@@ -199,7 +199,9 @@ function s:F.ewrite(bvar, lines, file)
 endfunction
 function s:F.edit(buf, rw, file)
     if a:rw>=0
-        call s:F.copy(a:buf, a:rw, a:file)
+        if filereadable(a:file)
+            call s:F.copy(a:buf, a:rw, a:file)
+        endif
         if !a:rw
             setlocal buftype=acwrite nomodified modifiable noreadonly
             let s:_r.bufvars[a:buf]={'file': a:file, 'command': 'edit',

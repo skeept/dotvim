@@ -7,16 +7,21 @@ let s:_messages={
             \'ukntype': 'Unknown label type: %s. Supported types: %s',
             \   'ldef': 'Label %s with type %s was alredy defined',
         \}
+function s:F.ltypes(...)
+    return aurum#repository().labeltypes
+endfunction
 let s:_aufunctions.cmd={'@FWC': ['-onlystrings _ '.
-            \'type ""'.
+            \s:_r.cmdutils.comp.rev.
             \'{  repo '.s:_r.cmdutils.comp.repo.
-            \' ? type   type ""'.
+            \' ? type   (type "")'.
             \' ?!delete'.
             \' ?!local'.
             \'} '.
-            \'+ type ""', 'filter']}
+            \'+ '.s:_r.cmdutils.comp.rev, 'filter']}
 let s:_aufunctions.comp=s:_r.cmdutils.gencompfunc(s:_aufunctions.cmd['@FWC'][0],
-            \                                     [], s:_f.fwc.compile)
+            \                                     [['(type "")',
+            \                                       '(in *F.ltypes)', '']],
+            \                                     s:_f.fwc.compile)
 function s:_aufunctions.cmd.function(bang, name, opts, ...)
     let repo=s:_r.cmdutils.checkedgetrepo(a:opts.repo)
     if !has_key(repo, 'labeltypes') || empty(repo.labeltypes)

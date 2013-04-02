@@ -131,6 +131,11 @@ AuCommit {options} [glob1 [glob2 [...]]]                           *:AuCommit*
     date    Commit date in form yy-mm-dd_HH:MM:SS. Both date and time parts 
             are optional (though you must specify one of them), you can omit 
             year or use full four-digit form. Seconds are also optional.
+    [no]amend
+            Flag. If set, strips working directory revision and proceeds as 
+            usual for |:AuCommit|. Note: unlike “hg commit --amend” this won’t 
+            preserve changes that were committed. Use “|:AuRecord| amend” to 
+            preserve.
     [no]closebranch
             Flag. See description of --close-branch in “hg help commit”.
     repo    Path. Repository that should be committed to.
@@ -417,6 +422,7 @@ AuOther[!] {action} [{rev}[ {url}[ {repo}]]]                        *:AuOther*
 AuRecord {opts} [glob1 [...]]                                      *:AuRecord*
     Start record mode (|aurum-record|). Possible options are just the same as 
     |:AuCommit| has (except for “type” option that is absent).
+    Note: `AuRecord amend` preserves changes from previous commit.
 
 AuStatus [{repo}] {opts}                                           *:AuStatus*
     Display status of the repository. Possible options:
@@ -1686,6 +1692,9 @@ functions :: {String : FRef}                            *aurum-repo.functions*
     removes))”. “closebranch” and “force” arguments have Bool type, “user” and 
     “date” are strings. Neither “user” nor “date” argument should have any 
     normalized form, they just should be accepted by VCS.
+  strip :: [hex[, force]] -> _                                *aurum-rf-strip*
+    Delete a changeset and its descendants. Default changeset is a working 
+    directory one.
   branch :: branch, force -> _                               *aurum-rf-branch*
     Create new branch.
   label :: type, label, hex, force, local -> _                *aurum-rf-label*
@@ -1943,6 +1952,8 @@ be absent, but they never throw "nimp").
 |aurum-rf-getcsprop|(…, "children") requires at least mercurial-1.7 or manual 
     preceding |aurum-rf-getchangesets| call. Thus many Next mappings do not 
     work.
+|aurum-rf-strip| without arguments uses “hg rollback”, with: “hg strip”. It is 
+    not guaranteed that using “hg rollback” to strip changesets will.
 |aurum-rf-astatus| in “non-python” version supports only 
     status(repo,0,0,[file],1,1) calls.
 |aurum-rf-agetcs| is absent in non-python version of driver.
@@ -2100,6 +2111,7 @@ Python driver was not tested under windows (wine) at all.
     5.4: Added |aurum-rf-astatus|, |aurum-rf-agetcs|, |aurum-rf-agetrepoprop|, 
          |aurum-rf-aget| and |aurum-rf-aremove|.
     5.5: Added |aurum-rf-apause| and |aurum-rf-aresume|.
+    5.6: Added |aurum-rf-strip|.
 @aurum:
     0.1: Added |:AuBranch| and |:AuName|.
     0.2: Added |:AuOther|.
@@ -2146,6 +2158,9 @@ Python driver was not tested under windows (wine) at all.
          added |g:aurum_commitinfowincmd| option
     1.3: Added seventh optional argument to _r.commit.commit() and 
          |g:aurum_commitautoopendiff| option.
+    1.4: Added eighth optional argument to _r.commit.commit().
+    1.5: Added |:AuCommit| amend, replaced eighth optional argument with 
+         a:opts.amend.
 @%aurum/annotate:
     1.0: Removed one argument to _r.annotate.setannbuf().
 @%aurum/cmdutils:
@@ -2192,5 +2207,7 @@ ftplugin/aurumlog:
     0.1: Added support for password in URL.
 @%aurum/maputils:
     0.1: Added _r.maputils.getnthparentfile().
+@%aurum/record:
+    0.1: Added |:AuRecord| amend.
 
 vim: ft=help:tw=78
