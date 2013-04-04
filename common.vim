@@ -632,7 +632,8 @@ inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
 "==============================================================================}}}
 
 "================== UltiSnips ================================================={{{
-if 0
+let s:ulti_or_neosnip = 1 "1 UltiSnips, 2 neosnippet
+if s:ulti_or_neosnip == 1
 let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
@@ -676,6 +677,21 @@ nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+endif
+"==============================================================================}}}
+
+"================== NeoSnippet ================================================{{{
+"Shoud decide on either neosnippet or UltiSnips
+if s:ulti_or_neosnip == 2
+inoremap <silent><expr> <NL>
+      \ neosnippet#expand_or_jump_impl()
+snoremap <silent><expr> <NL>
+      \ neosnippet#expand_or_jump_impl()
+xnoremap <silent> <NL>
+      \ :<C-u>call neosnippet#expand_target()<CR>
+xnoremap <silent><expr> <C-L>
+      \ unite#sources#snippet_target#start()
+
 endif
 "==============================================================================}}}
 
