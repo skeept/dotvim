@@ -1060,9 +1060,6 @@ let g:NERDDefaultNesting=1
 
 "==============================================================================}}}
 
-<<<<<<< HEAD
-=======
 command! ML set go-=m | winpos 0 0 | set lines=100
 
->>>>>>> 7ee90ebfeb186b21ed954ef540938aba22d1d8c0
 " vim: foldmethod=marker
