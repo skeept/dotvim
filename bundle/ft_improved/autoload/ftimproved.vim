@@ -92,23 +92,32 @@ fun! <sid>HighlightMatch(char, dir) "{{{1
 		sil! call matchdelete(s:matchid)
 	endif
 	let output=''
-	if !empty(a:char)
+	"if !empty(a:char) && a:char !~# '\%(\\c\)\?\%(\V\)\?$'
+	if !empty(matchstr(a:char, '^\%(\\c\)\?\\V\zs.*$'))
 		let output = matchstr(a:char, '^\%(\\c\)\?\\V\zs.*')
+		" remove escaping for display
+		let output = substitute(output, '\\\\', '\\', 'g')
 		if a:dir
 			let pat = '\%(\%>'. col('.'). 'c\&\%'. line('.'). 'l'
 			let pat .= '\|\%>'. line('.'). 'l\)'. a:char
+			" Make sure, it only matches within the current viewport
+			let pat = '\%('. pat. '\m\)\ze\&\%<'.(line('w$')+1).'l'
 		else
 			let pat = '\%(\%<'. col('.'). 'c\&\%'. line('.'). 'l'
 			let pat .= '\|\%<'. line('.'). 'l\)'. a:char
+			" Make sure, it only matches within the current viewport
+			let pat = '\%('. pat. '\m\)\ze\&\%>'.(line('w0')-1).'l'
 		endif
 		let s:matchid = matchadd('IncSearch', pat)
-	endif
-	redraw!
-	" Output input string after(!) redraw.
-	if !empty(output)
-		echohl Title
-		exe ':echon '. string(output)
-		echohl Normal
+		redraw!
+		" Output input string after(!) redraw.
+		if !empty(output)
+			echohl Title
+			exe ':echon '. string(output)
+			echohl Normal
+		endif
+	else
+		redraw! "clear screen"
 	endif
 endfu
 fun! <sid>CheckSearchWrap(pat, fwd, cnt) "{{{1
@@ -146,6 +155,36 @@ fun! <sid>Unmap(lhs) "{{{1
 		exe "ounmap" a:lhs
 	endif
 endfun
+
+fun! <sid>CountMatchesWin(pat, forward) "{{{1
+	" Return number of matches of pattern window start and cursor (backwards)
+	" or cursorline and window end line (forward search)
+	" TODO: filter folded lines?
+	if a:forward
+		let first = line('.') + 1
+		let last = line('w$')
+		let cursorline = getline('.')[col('.')-1:]
+	else
+		let first = line('w0')
+		let last = line('.')-1
+		let cursorline = matchstr(getline('.'), '^.*\%'.col('.').'c')
+	endif
+	" Skip folded lines (they are not visible and won't be available for
+	" jumping to.
+	let buf = ''
+	let line = first
+	while line <= last
+		if foldclosed(line) != -1
+			let line = foldclosedend(line) + 1
+			continue
+		endif
+		let buf .= getline(line) . "\n"
+		let line+=1
+	endw
+
+	let buf .= "\n". cursorline
+	return len(split(buf, a:pat.'\zs', 1)) - 1
+endfu
 
 fun! ftimproved#ColonCommand(f, mode) "{{{1
 	" should be a noop
@@ -208,6 +247,8 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		if  char == s:escape
 			" abort when Escape has been hit
 			return char
+		elseif empty(char) || char ==? "\x80\xFD\x60" "CursorHoldEvent"
+			return s:escape
 		endif
 		let char  = <sid>EscapePat(char, 1)
 		" ignore case of pattern? Does only work with search, not with original
@@ -215,18 +256,30 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		if !get(g:, "ft_improved_ignorecase", 0)
 			let char = '\c'.char
 		endif
-		if get(g:, "ft_improved_multichars", 0)
+		if get(g:, "ft_improved_multichars", 0) &&
+				\ <sid>CountMatchesWin(char, a:fwd) > 1
 			call <sid>HighlightMatch(char, a:fwd)
 			let next = getchar()
-			while !empty(next) && ( next >= 0x20 ||
-				\ ( len(next) == 3 && next[1] == 'k' && next[2] =='b'))
-				" There seems to be a bug, when <bs> is pressed, next should be
-				" equal to kb but it isn't,
-				" therefore, this ugly workaround is needed....
-				if (len(next) == 3 && next[1] == 'k' && next[2] =='b') " <BS>
+			" break on Enter, Esc or Backspace
+			while !empty(next) && ((next !=? "\x80\xFD\x60" &&
+						\ next != 13 &&
+						\ next != 10 &&
+						\ next != 27) || next == "\<BS>")
+				if next == "\<BS>"
+					" Remove one char
 					let char = substitute(char, '\%(\\\\\|.\)$', '', '')
 				else
 					let char .= <sid>EscapePat(nr2char(next),0)
+				endif
+
+				" Get matches of pattern within the windows viewport
+				let matches = <sid>CountMatchesWin(char, a:fwd)
+
+				if matches == 0
+					" no match within the windows viewport, abort
+					return s:escape
+				elseif matches == 1
+					break
 				endif
 
 				if char =~# '^\%(\\c\)\?\\V$'
@@ -244,6 +297,8 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 			endw
 			if nr2char(next) == s:escape
 				" abort when Escape has been hit
+				return s:escape
+			elseif empty(next) || next ==? "\x80\xFD\x60" "CursorHold Event"
 				return s:escape
 			endif
 		endif
@@ -301,7 +356,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 			"endif
 			let cmd  = op_off[0].cmd
 			let off .= op_off[1]
-			let pat1  = (a:fwd ? pat : escape(pat, '?'))
+			let pat1  = (a:fwd ? escape(pat, '/') : escape(pat, '?'))
 			let res  = cmd.pat1.off."\<cr>"
 		else
 			" Searching using 't' command
@@ -325,6 +380,8 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		if <sid>CheckSearchWrap(pat, a:fwd, cnt)
 			let res = s:escape
 		endif
+		" handle 'cedit' key gracefully
+		let res = substitute(res, &cedit, ''.&cedit, '')
 
 		" save pattern for ';' and ','
 		call <sid>ColonPattern(cmd, pat,

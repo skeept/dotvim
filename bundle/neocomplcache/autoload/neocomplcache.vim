@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Mar 2013.
+" Last Modified: 07 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -490,6 +490,8 @@ function! s:initialize_others() "{{{
         \  'start' : '^\s*py\%[thon\]3\? <<\s*\(\h\w*\)', 'end' : '^\1'},
         \ {'filetype' : 'ruby',
         \  'start' : '^\s*rub\%[y\] <<\s*\(\h\w*\)', 'end' : '^\1'},
+        \ {'filetype' : 'lua',
+        \  'start' : '^\s*lua <<\s*\(\h\w*\)', 'end' : '^\1'},
         \])
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_context_filetype_lists',
@@ -798,11 +800,12 @@ function! neocomplcache#manual_complete(findstart, base) "{{{
     if v:version > 703 || v:version == 703 && has('patch418')
       let dict = { 'words' : neocomplcache.complete_words }
 
-      if (!empty(filter(copy(neocomplcache.complete_words),
-            \    "get(v:val, 'neocomplcache__refresh', 0)")) ||
-            \ len(neocomplcache.complete_words) >= g:neocomplcache_max_list)
-            \  && (g:neocomplcache_enable_cursor_hold_i
+      if (g:neocomplcache_enable_cursor_hold_i
             \      || v:version > 703 || v:version == 703 && has('patch561'))
+            \ && (len(a:base) < g:neocomplcache_auto_completion_start_length
+            \   || !empty(filter(copy(neocomplcache.complete_words),
+            \          "get(v:val, 'neocomplcache__refresh', 0)"))
+            \   || len(neocomplcache.complete_words) >= g:neocomplcache_max_list)
         " Note: If Vim is less than 7.3.561, it have broken register "." problem.
         let dict.refresh = 'always'
       endif
@@ -1799,8 +1802,6 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
   endif
 
   " Check dup and set icase.
-  let dup_check = {}
-  let words = []
   let icase = g:neocomplcache_enable_ignore_case &&
         \!(g:neocomplcache_enable_smart_case && a:cur_keyword_str =~ '\u')
         \ && !neocomplcache#is_text_mode()
@@ -1810,20 +1811,8 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
       call remove(keyword, 'kind')
     endif
 
-    if keyword.word != ''
-          \&& (!has_key(dup_check, keyword.word)
-          \    || (has_key(keyword, 'dup') && keyword.dup))
-      let dup_check[keyword.word] = 1
-
-      let keyword.icase = icase
-      if !has_key(keyword, 'abbr')
-        let keyword.abbr = keyword.word
-      endif
-
-      call add(words, keyword)
-    endif
+    let keyword.icase = icase
   endfor
-  let complete_words = words
 
   " Delimiter check. "{{{
   let filetype = neocomplcache#get_context_filetype()
@@ -1843,7 +1832,8 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
         let delimiter_sub = substitute(delimiter, '\\\([.^$]\)', '\1', 'g')
         let keyword.word = join(split_list[ : delim_cnt], delimiter_sub)
         let keyword.abbr = join(
-              \ split(keyword.abbr, delimiter.'\ze.', 1)[ : delim_cnt],
+              \ split(get(keyword, 'abbr', keyword.word),
+              \             delimiter.'\ze.', 1)[ : delim_cnt],
               \ delimiter_sub)
 
         if g:neocomplcache_max_keyword_width >= 0
@@ -1876,19 +1866,25 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
     if a:cur_keyword_str =~ '^\l\+$'
       for keyword in convert_candidates
         let keyword.word = tolower(keyword.word)
-        let keyword.abbr = tolower(keyword.abbr)
+        if has_key(keyword, 'abbr')
+          let keyword.abbr = tolower(keyword.abbr)
+        endif
       endfor
     elseif a:cur_keyword_str =~ '^\u\+$'
       for keyword in convert_candidates
         let keyword.word = toupper(keyword.word)
-        let keyword.abbr = toupper(keyword.abbr)
+        if has_key(keyword, 'abbr')
+          let keyword.abbr = toupper(keyword.abbr)
+        endif
       endfor
     elseif a:cur_keyword_str =~ '^\u\l\+$'
       for keyword in convert_candidates
         let keyword.word = toupper(keyword.word[0]).
               \ tolower(keyword.word[1:])
-        let keyword.abbr = toupper(keyword.abbr[0]).
-              \ tolower(keyword.abbr[1:])
+        if has_key(keyword, 'abbr')
+          let keyword.abbr = toupper(keyword.abbr[0]).
+                \ tolower(keyword.abbr[1:])
+        endif
       endfor
     endif
   endif"}}}
@@ -1898,18 +1894,13 @@ function! neocomplcache#get_complete_words(complete_results, cur_keyword_pos, cu
     let abbr_pattern = printf('%%.%ds..%%s',
           \ g:neocomplcache_max_keyword_width-15)
     for keyword in complete_words
-      if len(keyword.abbr) > g:neocomplcache_max_keyword_width
-        if keyword.abbr =~ '[^[:print:]]'
-          " Multibyte string.
-          let len = neocomplcache#util#wcswidth(keyword.abbr)
+      let abbr = get(keyword, 'abbr', keyword.word)
+      if len(abbr) > g:neocomplcache_max_keyword_width
+        let len = neocomplcache#util#wcswidth(abbr)
 
-          if len > g:neocomplcache_max_keyword_width
-            let keyword.abbr = neocomplcache#util#truncate(
-                  \ keyword.abbr, g:neocomplcache_max_keyword_width - 2) . '..'
-          endif
-        else
-          let keyword.abbr = printf(abbr_pattern,
-                \ keyword.abbr, keyword.abbr[-13:])
+        if len > g:neocomplcache_max_keyword_width
+          let keyword.abbr = neocomplcache#util#truncate(
+                \ abbr, g:neocomplcache_max_keyword_width - 2) . '..'
         endif
       endif
     endfor
@@ -2514,9 +2505,9 @@ function! s:on_complete_done() "{{{
   let frequencies = s:get_frequencies()
   if !has_key(frequencies, candidate)
     let frequencies[candidate] = 20
+  else
+    let frequencies[candidate] += 20
   endif
-
-  let frequencies[candidate] += 20
 endfunction"}}}
 function! s:change_update_time() "{{{
   if &updatetime > g:neocomplcache_cursor_hold_i_time

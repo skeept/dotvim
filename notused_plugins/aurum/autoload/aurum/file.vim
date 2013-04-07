@@ -67,7 +67,8 @@ function s:_aufunctions.cmd.function(rev, file, opts)
         let opts.file=a:file
     endif
     let action=((prompt)?('getrr'):('open'))
-    let [hasbuf, repo, rev, file]=s:_r.cmdutils.getrrf(opts, 'noffile', action)
+    let message=((prompt)?('norev'):('noffile'))
+    let [hasbuf, repo, rev, file]=s:_r.cmdutils.getrrf(opts, message, action)
     if repo is 0
         return
     endif

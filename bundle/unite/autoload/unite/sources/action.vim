@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: action.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" Last Modified: 24 Jan 2013.
+" Last Modified: 23 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -96,8 +96,8 @@ function! s:source.gather_candidates(args, context) "{{{
 
   return sort(map(filter(values(uniq_actions), 'v:val.is_listed'), "{
         \   'word' : v:val.name,
-        \   'abbr' : printf('%-" . max . "s -- %s',
-        \       v:val.name, v:val.description),
+        \   'abbr' : printf('%-" . max . "s %s -- %s',
+        \          v:val.name, (v:val.is_quit ? '!' : ' '), v:val.description),
         \   'source__candidates' : candidates,
         \   'action__action' : v:val,
         \   'source__sources' : sources,
@@ -127,6 +127,10 @@ function! s:source.action_table.do.func(candidate) "{{{
     if profile_name != ''
       let context.profile_name = profile_name
     endif
+  endif
+
+  if a:candidate.action__action.is_quit
+    call unite#all_quit_session(0)
   endif
 
   call unite#mappings#do_action(a:candidate.word,

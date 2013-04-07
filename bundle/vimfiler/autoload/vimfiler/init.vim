@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Mar 2013.
+" Last Modified: 31 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -69,11 +69,6 @@ function! vimfiler#init#_initialize_context(context) "{{{
     let default_context.no_quit = 1
     let default_context.winwidth = 35
     let default_context.columns = g:vimfiler_explorer_columns
-  endif
-
-  if get(a:context, 'simple', 0)
-    " Disable columns.
-    let default_context.columns = ''
   endif
 
   let context = extend(default_context, a:context)
@@ -284,11 +279,8 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
   let context = vimfiler#initialize_context(a:context)
 
   if context.split
-    if context.horizontal || context.double
-      execute context.direction 'new'
-    else
-      execute context.direction 'vnew'
-    endif
+    execute context.direction
+          \ (context.horizontal ? 'split' : 'vsplit')
   endif
 
   execute 'buffer' . a:bufnr
@@ -352,7 +344,7 @@ function! s:create_vimfiler_buffer(path, context) "{{{
   let a:context.buffer_name = bufname
 
   if a:context.split
-    if a:context.horizontal || a:context.double
+    if a:context.horizontal
       execute a:context.direction 'new'
     else
       execute a:context.direction 'vnew'

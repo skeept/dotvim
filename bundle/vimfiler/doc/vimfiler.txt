@@ -70,9 +70,9 @@ COMMANDS 					*vimfiler-commands*
 :VimFiler [{options}...] [[{source-name}:]{path}]
 						*:VimFiler*
 		Run vimfiler. This command reuses a buffer if a vimfiler
-		buffer already exists. If you ommit {path}, vimfiler opens current
+		buffer already exists. If you omit {path}, vimfiler opens current
 		directory. [[{source-name}:]{path}] arg is same as |:Unite|.
-		But you ommit source name, "file" source will be used.
+		But you omit source name, "file" source will be used.
 		If {path} is directory, browse in {path} directory files.
 		If {path} is file, edit {path} file.
 
@@ -574,7 +574,7 @@ Normal mode key mappings.
 <Plug>(vimfiler_execute_file)		*<Plug>(vimfiler_execute_file)*
 		Executes marked files or cursor file by system associated
 		command.
-		Note: <Plug>(vimfiler_execute_file) is obsolute name.
+		Note: <Plug>(vimfiler_execute_file) is obsolete name.
 
 <Plug>(vimfiler_execute_vimfiler_associated)
 				*<Plug>(vimfiler_execute_vimfiler_associated)*
@@ -710,7 +710,7 @@ Normal mode key mappings.
 <Plug>(vimfiler_cd)				*<Plug>(vimfiler_cd)*
 		Changes system current directory to vimfiler current directory
 		using |g:unite_kind_openable_lcd_command|.
-		Note: |<Plug>(vimfiler_cd)| is obsolute name.
+		Note: |<Plug>(vimfiler_cd)| is obsolete name.
 
 <Plug>(vimfiler_cd_file)			*<Plug>(vimfiler_cd_file)*
 		Changes vimfiler current directory.
@@ -733,7 +733,7 @@ Normal mode key mappings.
 		disabled.
 
 <Plug>(vimfiler_toggle_simple_mode)	*<Plug>(vimfiler_toggle_simple_mode)*
-		Toggles simple mode. In simple mode, dispayed information is
+		Toggles simple mode. In simple mode, displayed information is
 		simple.
 
 <Plug>(vimfiler_pushd)				*<Plug>(vimfiler_pushd)*
@@ -998,8 +998,37 @@ A: You should use |<Plug>(vimfiler_mark_current_line)|.
 	nmap <buffer> m <Plug>(vimfiler_mark_current_line)<Plug>(vimfiler_move_file)
 	nmap <buffer> d <Plug>(vimfiler_mark_current_line)<Plug>(vimfiler_delete_file)
 <
+Q: What's the key to refresh the file list?
+A: It is |<Plug>(vimfiler_redraw_screen)|. It is mapped to <C-l> by default.
+
 ==============================================================================
 CHANGELOG					*vimfiler-changelog*
+
+2013-04-06
+- Fixed toggle tree recursive behavior.
+- Fixed filename completion behavior.
+
+2013-04-02
+- Improved redraw behavior.
+
+2013-04-01
+- Optimized for files.
+
+2013-03-31
+- Fixed <Plug>(vimfiler_toggle_simple_mode) problem.
+
+2013-03-30
+- Use python3 interface.
+
+2013-03-29
+- Improved max_width.
+
+2013-03-23
+- Fixed :VimFilerToggle problem.
+
+2013-03-20
+- Deleted vimfiler#util#smart_execute_command().
+- Fixed horizontal behavior.
 
 2013-03-16
 - Fixed mark colors.

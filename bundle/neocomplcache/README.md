@@ -4,10 +4,10 @@
 Description
 -----------
 
-neocomplcache provides keyword completion system by maintaining a cache of
-keywords in the current buffer. neocomplcache could be customized easily and
-has a lot more features than the Vim's standard completion feature.
-Note: neocomplcache may consume more memory than other plugins.
+neocomplcache is the abbreviation of "neo-completion with cache". It
+provides keyword completion system by maintaining a cache of keywords in the
+current buffer. neocomplcache could be customized easily and has a lot more
+features than the Vim's standard completion feature.
 
 Installation
 ============
@@ -27,29 +27,17 @@ script from Mr.thinca.
 
 http://gist.github.com/422503
 
-Snippets feature(snippets\_complete source) was splitted from Ver.7.
-If you used it, please install snippets\_complete source manually.
+Snippets feature(snippets\_complete source) was split from Ver.7.
+If you used it, please install neosnippet source manually.
 
-https://github.com/Shougo/neocomplcache-snippets-complete
+https://github.com/Shougo/neosnippet
 
 Screen shots
 ============
 
-Quick match
------------
-![Quick match.](http://3.bp.blogspot.com/_ci2yBnqzJgM/TD1PeahCmOI/AAAAAAAAADc/Rz_Pbpr92z4/s1600/quick_match.png)
-
-Snippet completion like snipMate.
----------------------------------
-![Snippet completion like snipMate.](http://s14.postimage.org/6m073xpwh/Screenshot2.png)
-
 Original filename completion.
 -----------
 ![Original filename completion.](http://1.bp.blogspot.com/_ci2yBnqzJgM/TD1O5_bOQ2I/AAAAAAAAADE/vHf9Xg_mrTI/s1600/filename_complete.png)
-
-Register completion.
------------
-![Register completion.](http://1.bp.blogspot.com/_ci2yBnqzJgM/TD1Pel4fomI/AAAAAAAAADk/YsAxF8i6r3w/s1600/register_complete.png)
 
 Omni completion.
 ----------------
@@ -95,8 +83,6 @@ endif
 let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
 
 " Plugin key-mappings.
-imap <C-k>     <Plug>(neocomplcache_snippets_expand)
-smap <C-k>     <Plug>(neocomplcache_snippets_expand)
 inoremap <expr><C-g>     neocomplcache#undo_completion()
 inoremap <expr><C-l>     neocomplcache#complete_common_string()
 

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Feb 2013.
+" Last Modified: 04 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,14 +34,20 @@ call unite#util#set_default(
       \'\|\%(^\|/\)\%(\.hg\|\.git\|\.bzr\|\.svn\|tags\%(-.*\)\?\)\%($\|/\)')
 call unite#util#set_default(
       \ 'g:unite_source_file_rec_min_cache_files', 100)
+call unite#util#set_default(
+      \ 'g:unite_source_file_rec_max_cache_files', 1000)
+call unite#util#set_default(
+      \ 'g:unite_source_file_rec_async_command',
+      \ executable('ag') ? 'ag --nocolor --nogroup -g ""' :
+      \ !unite#util#is_windows() && executable('find') ? 'find' :
+      \ '')
 "}}}
 
 let s:Cache = vital#of('unite.vim').import('System.Cache')
 
 function! unite#sources#file_rec#define() "{{{
   return [ s:source_rec ]
-        \ + [ executable('find')
-        \   && unite#util#has_vimproc() ? s:source_async : {} ]
+        \ + [ unite#util#has_vimproc() ? s:source_async : {} ]
 endfunction"}}}
 
 let s:continuation = {}
@@ -95,7 +101,8 @@ function! s:source_rec.async_gather_candidates(args, context) "{{{
         \ s:get_files(continuation.rest, 1, 20,
         \   a:context.source.ignore_pattern)
 
-  if empty(continuation.rest) || len(continuation.files) > 1000
+  if empty(continuation.rest) || len(continuation.files) >
+        \                    g:unite_source_file_rec_max_cache_files
     if empty(continuation.rest)
       call unite#print_source_message(
             \ 'Directory traverse was completed.', self.name)
@@ -249,6 +256,12 @@ let s:source_async = {
       \ }
 
 function! s:source_async.gather_candidates(args, context) "{{{
+  if g:unite_source_file_rec_async_command == ''
+    call unite#print_source_message(
+          \ 'g:unite_source_file_rec_async_command is not executable.', self.name)
+    return []
+  endif
+
   let a:context.source__directory = s:get_path(a:args, a:context)
 
   let directory = a:context.source__directory
@@ -278,7 +291,10 @@ function! s:source_async.gather_candidates(args, context) "{{{
   endif
 
   let a:context.source__proc = vimproc#pgroup_open(
-        \ printf('find %s -type f', string(directory)))
+        \ g:unite_source_file_rec_async_command
+        \ . ' ' . string(directory)
+        \ . (g:unite_source_file_rec_async_command ==#
+        \         'find' ? ' -type f' : ''))
 
   " Close handles.
   call a:context.source__proc.stdin.close()
@@ -300,9 +316,10 @@ function! s:source_async.async_gather_candidates(args, context) "{{{
   let continuation = s:continuation[a:context.source__directory]
 
   let stdout = a:context.source__proc.stdout
-  if stdout.eof || len(continuation.files) > 1000
+  if stdout.eof || len(continuation.files) >
+        \        g:unite_source_file_rec_max_cache_files
     " Disable async.
-    if empty(continuation.rest)
+    if stdout.eof
       call unite#print_source_message(
             \ 'Directory traverse was completed.', self.name)
     else
@@ -317,7 +334,7 @@ function! s:source_async.async_gather_candidates(args, context) "{{{
   for filename in map(filter(
         \ stdout.read_lines(-1, 100), 'v:val != ""'),
         \ "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
-    if filename !~? a:context.source.ignore_pattern
+    if !isdirectory(filename) && filename !~? a:context.source.ignore_pattern
       call add(candidates, {
             \ 'word' : unite#util#substitute_path_separator(
             \    fnamemodify(filename, ':p')),

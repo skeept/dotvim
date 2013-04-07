@@ -43,6 +43,8 @@ let s:_messages={
             \    'pushf': 'Failed to push the repository %s: %s',
             \    'pullf': 'Failed to pull to the repository %s: %s',
             \  'commitf': 'Failed to commit changes to the repository %s: %s',
+            \   'stripf': 'Failed to strip revision %s '.
+            \             'from the repository %s: %s',
             \  'p_empty': 'Parser error: expected 60 dashes, but got nothing',
             \  'p_nobeg': 'Parser error: expected 60 dashes, but got %s',
             \ 'p_nospec': 'Parser error: expected “spec: value”, but got %s',
@@ -421,6 +423,15 @@ function s:bzr.commit(repo, message, ...)
     endif
     return s:_r.utils.usefile(a:repo, a:message, 'file', 'message',
                 \             s:F.bzrm, args, kwargs, 0, 'commitf')
+endfunction
+"▶1 bzr.strip :: repo, [rev[, force]]
+function s:bzr.strip(repo, ...)
+    let kwargs={'force': get(a:000, 1, 0)}
+    if a:0 && !empty(a:1)
+        let kwargs.revision=''.a:1
+    endif
+    return s:F.bzrm(a:repo, 'uncommit', [], kwargs, 0,
+                \   'stripf', get(kwargs, 'revision', -1))
 endfunction
 "▶1 bzr.branch :: repo, branchname, force → + FS
 function s:bzr.branch(repo, branch, force)

@@ -199,7 +199,9 @@ function s:F.ewrite(bvar, lines, file)
 endfunction
 function s:F.edit(buf, rw, file)
     if a:rw>=0
-        call s:F.copy(a:buf, a:rw, a:file)
+        if filereadable(a:file)
+            call s:F.copy(a:buf, a:rw, a:file)
+        endif
         if !a:rw
             setlocal buftype=acwrite nomodified modifiable noreadonly
             let s:_r.bufvars[a:buf]={'file': a:file, 'command': 'edit',
@@ -537,40 +539,87 @@ endfunction
 function s:F.run(vcommand, command, repo, ...)
     let file=call(s:F.fname, [a:command, a:repo]+a:000, {})
     let existed=bufexists(file)
+    let curbuf=bufnr('%')
+    let curbufmax=bufnr('$')
+    let curwin=winnr()
+    let curwinmax=winnr('$')
+    let curtab=tabpagenr()
+    let curtabmax=tabpagenr('$')
+    let curwasempty=empty(bufname(curbuf))
+    let prevbuf=s:F.prevbuf()
     call s:F.checkcmd(a:command)
-    if type(a:repo)==type({}) &&
-                \a:vcommand=~#'\v^%(%(sil%[ent]|vert%[ical]|lefta%[bove]|'.
-                \                    'abo%[veleft]|rightb%[elow]|'.
-                \                    'bel%[owright]|to%[pleft]|bo%[tright]|'.
-                \                    '\d*tab)\ )*'.
-                \                '%(%(tab)?%(e%[dit]|new)|view?|[ev]new?|'.
-                \                  'sp%[lit]|vs%[plit]|sv%[iew])$'
-        let args=copy(a:000)
-        let cdescr=s:commands[a:command]
-        if has_key(cdescr, 'options') && has_key(cdescr.options, 'pats')
-            let args[-1]=copy(args[-1])
-            call s:F.addpats(cdescr, args)
-        endif
-        let prevbuf=s:F.prevbuf()
-        try
-            let savedei=&eventignore
-            set eventignore+=BufReadCmd
+    try
+        if type(a:repo)==type({}) &&
+                    \a:vcommand=~#'\v^%(%(sil%[ent]|vert%[ical]|lefta%[bove]|'.
+                    \                    'abo%[veleft]|rightb%[elow]|'.
+                    \                    'bel%[owright]|to%[pleft]|'.
+                    \                    'bo%[tright]|\d*\s*tab)\ )*'.
+                    \                '%(%(tab)?%(e%[dit]|new)|view?|[ev]new?|'.
+                    \                  'sp%[lit]|vs%[plit]|sv%[iew])$'
+            let args=copy(a:000)
+            let cdescr=s:commands[a:command]
+            if has_key(cdescr, 'options') && has_key(cdescr.options, 'pats')
+                let args[-1]=copy(args[-1])
+                call s:F.addpats(cdescr, args)
+            endif
+            try
+                let savedei=&eventignore
+                set eventignore+=BufReadCmd
+                execute a:vcommand fnameescape(file)
+            finally
+                let &eventignore=savedei
+            endtry
+            setlocal modifiable noreadonly
+            silent call s:F.runcmd(s:commands[a:command], file, [0, a:repo]+args)
+            if bufexists(prevbuf)
+                let s:_r.bufvars[bufnr('%')].prevbuf=prevbuf
+            endif
+            if stridx(a:vcommand, 'sil')==-1
+                file
+            endif
+        else
             execute a:vcommand fnameescape(file)
-        finally
-            let &eventignore=savedei
-        endtry
-        setlocal modifiable noreadonly
-        silent call s:F.runcmd(s:commands[a:command], file, [0, a:repo]+args)
-        if bufexists(prevbuf)
-            let s:_r.bufvars[bufnr('%')].prevbuf=prevbuf
         endif
-        if stridx(a:vcommand, 'sil')==-1
-            file
+        let succeeded=1
+        return existed
+    finally
+        if !exists('succeeded') && getline(1, '$') == [''] &&
+                    \bufname('%')[:5] is# 'aurum:'
+            " When loading failed try to restore state
+            let buf=bufnr('%')
+            let win=winnr()
+            let tab=tabpagenr()
+            " If in different tab or window and tab or window count increased 
+            " assume command has opened new tab or window
+            if tab != curtab
+                if curtabmax < tabpagenr('$')
+                    tabclose!
+                    if curtab < tabpagenr('$')
+                        execute 'tabnext' curtab
+                    endif
+                endif
+            elseif win != curwin
+                if curwinmax < winnr('$')
+                    close!
+                    if curwin < winnr('$')
+                        execute curwin 'wincmd w'
+                    endif
+                endif
+            endif
+            if buf > curbufmax || (curwasempty && !empty(bufname(buf)))
+                if tab == curtab && win == curwin
+                    if bufexists(prevbuf)
+                        execute 'buffer!' prevbuf
+                    else
+                        bnext!
+                    endif
+                endif
+                if bufexists(buf)
+                    execute 'bwipeout!' buf
+                endif
+            endif
         endif
-    else
-        execute a:vcommand fnameescape(file)
-    endif
-    return existed
+    endtry
 endfunction
 "▶1 mrun
 function s:F.mrun(...)

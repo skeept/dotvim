@@ -4,6 +4,8 @@ set cpo&vim
 let s:V = vital#of('unite.vim')
 let s:List = vital#of('unite.vim').import('Data.List')
 
+let s:is_windows = has('win16') || has('win32') || has('win64')
+
 function! unite#util#truncate_smart(...)
   return call(s:V.truncate_smart, a:000)
 endfunction
@@ -26,10 +28,10 @@ function! unite#util#wcswidth(...)
   return call(s:V.wcswidth, a:000)
 endfunction
 function! unite#util#is_win(...)
-  return call(s:V.is_windows, a:000)
+  return s:is_windows
 endfunction
 function! unite#util#is_windows(...)
-  return call(s:V.is_windows, a:000)
+  return s:is_windows
 endfunction
 function! unite#util#is_mac(...)
   return call(s:V.is_mac, a:000)
@@ -37,8 +39,8 @@ endfunction
 function! unite#util#print_error(...)
   return call(s:V.print_error, a:000)
 endfunction
-function! unite#util#smart_execute_command(...)
-  return call(s:V.smart_execute_command, a:000)
+function! unite#util#smart_execute_command(action, word)
+  execute a:action . ' ' . (a:word == '' ? '' : '`=a:word`')
 endfunction
 function! unite#util#escape_file_searching(...)
   return call(s:V.escape_file_searching, a:000)
@@ -52,9 +54,17 @@ endfunction
 function! unite#util#set_dictionary_helper(...)
   return call(s:V.set_dictionary_helper, a:000)
 endfunction
-function! unite#util#substitute_path_separator(...)
-  return call(s:V.substitute_path_separator, a:000)
-endfunction
+
+if unite#util#is_windows()
+  function! unite#util#substitute_path_separator(...)
+    return call(s:V.substitute_path_separator, a:000)
+  endfunction
+else
+  function! unite#util#substitute_path_separator(path)
+    return a:path
+  endfunction
+endif
+
 function! unite#util#path2directory(...)
   return call(s:V.path2directory, a:000)
 endfunction
@@ -63,6 +73,9 @@ function! unite#util#path2project_directory(...)
 endfunction
 function! unite#util#has_vimproc(...)
   return call(s:V.has_vimproc, a:000)
+endfunction
+function! unite#util#has_lua()
+  return has('lua')
 endfunction
 function! unite#util#system(...)
   return call(s:V.system, a:000)
@@ -135,8 +148,9 @@ function! unite#util#iconv(...)
 endfunction
 
 function! unite#util#alternate_buffer() "{{{
-  if bufnr('%') != bufnr('#') && s:buflisted(bufnr('#'))
-    buffer #
+  let unite = unite#get_current_unite()
+  if s:buflisted(unite.prev_bufnr)
+    execute 'buffer' unite.prev_bufnr
     return
   endif
 
@@ -247,7 +261,9 @@ function! unite#util#filter_matcher(list, expr, context) "{{{
         \ !unite#get_current_unite().is_enabled_max_candidates ||
         \ len(a:context.input_list) > 1
 
-    return a:expr == '' ? a:list : filter(a:list, a:expr)
+    return a:expr == '' ? a:list : (a:expr ==# 'if_lua') ?
+          \ unite#util#lua_matcher(a:list, a:context, &ignorecase)
+          \ : filter(a:list, a:expr)
   endif
 
   if a:expr == ''
@@ -260,7 +276,10 @@ function! unite#util#filter_matcher(list, expr, context) "{{{
   let max = a:context.unite__max_candidates
   let offset = max*4
   for cnt in range(0, len(a:list) / offset)
-    let list = filter(a:list[cnt*offset : cnt*offset + offset], a:expr)
+    let list = a:list[cnt*offset : cnt*offset + offset]
+    let list = (a:expr ==# 'if_lua') ?
+          \ unite#util#lua_matcher(list, a:context, &ignorecase) :
+          \ filter(list, a:expr)
     let len += len(list)
     let _ += list
 
@@ -270,6 +289,39 @@ function! unite#util#filter_matcher(list, expr, context) "{{{
   endfor
 
   return _[: max]
+endfunction"}}}
+function! unite#util#lua_matcher(candidates, context, ignorecase) "{{{
+  if !has('lua')
+    return []
+  endif
+
+  for input in a:context.input_list
+    let input = substitute(input, '\\ ', ' ', 'g')
+    let input = substitute(input, '\\\(.\)', '\1', 'g')
+    if a:ignorecase
+      let input = tolower(input)
+    endif
+
+    lua << EOF
+    input = vim.eval('input')
+    candidates = vim.eval('a:candidates')
+    if (vim.eval('a:ignorecase') ~= 0) then
+      for i = #candidates-1, 0, -1 do
+        if (string.find(string.lower(candidates[i].word), input, 1, true) == nil) then
+          candidates[i] = nil
+        end
+      end
+    else
+      for i = #candidates-1, 0, -1 do
+        if (string.find(candidates[i].word, input, 1, true) == nil) then
+          candidates[i] = nil
+        end
+      end
+    end
+EOF
+  endfor
+
+  return a:candidates
 endfunction"}}}
 
 function! unite#util#convert2list(expr) "{{{

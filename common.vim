@@ -195,7 +195,7 @@ function! RedirToScratch()
   normal "up
 endfunction
 
-function! CaptureOutFun(cmd)
+function! CaptureOutFun(cmd, scratch)
   let old_more=&more
   set nomore
   let @u = ""
@@ -203,11 +203,18 @@ function! CaptureOutFun(cmd)
   exec a:cmd
   redir END
   let &more=old_more
+  if a:scratch == 1
+    Sscratch
+    normal Go
+  endif
   normal "up'[
 endfunction
-command! -nargs=* CaptureOut silent call CaptureOutFun("<args>")
+command! -nargs=* CaptureOut silent call CaptureOutFun("<args>", 0)
+command! -nargs=* CaptureOutScratch silent call CaptureOutFun("<args>", 1)
 nnoremap ,co :CaptureOut<SPACE>
 nnoremap <Leader>co :CaptureOut<SPACE>
+nnoremap ,cq :CaptureOutScratch<SPACE>
+nnoremap <Leader>cq :CaptureOutScratch<SPACE>
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
@@ -304,6 +311,12 @@ if has("autocmd")
     "autocmd FileType taglist       setlocal norelativenumber nonumber
     autocmd FileType qf            setlocal norelativenumber nonumber
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
+  augroup END
+
+  augroup ft_scratch
+    autocmd!
+    autocmd FileType scratch setlocal fdm=expr
+          \ foldexpr=getline(v:lnum)==#getline(v:lnum-1)?1:0
   augroup END
 
 endif " has("autocmd")
@@ -619,6 +632,8 @@ inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
 "==============================================================================}}}
 
 "================== UltiSnips ================================================={{{
+let s:ulti_or_neosnip = 1 "1 UltiSnips, 2 neosnippet
+if s:ulti_or_neosnip == 1
 let g:UltiSnipsExpandTrigger = "<F10>"
 let g:UltiSnipsListSnippets = "<C-F10>"
 let g:UltiSnipsJumpForwardTrigger = "<F10>"
@@ -662,6 +677,22 @@ nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+endif
+"==============================================================================}}}
+
+"================== NeoSnippet ================================================{{{
+"Shoud decide on either neosnippet or UltiSnips
+if s:ulti_or_neosnip == 2
+inoremap <silent><expr> <NL>
+      \ neosnippet#expand_or_jump_impl()
+snoremap <silent><expr> <NL>
+      \ neosnippet#expand_or_jump_impl()
+xnoremap <silent> <NL>
+      \ :<C-u>call neosnippet#expand_target()<CR>
+xnoremap <silent><expr> <C-L>
+      \ unite#sources#snippet_target#start()
+
+endif
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
@@ -990,6 +1021,8 @@ if g:is_win
   "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
   command! FullScreenToogle call FullScreenToogleFun()
   noremap  <Leader>tf :FullScreenToogle<CR>
+else
+  nnoremap <Leader>tf :silent! !wmctrl -r GVIM -b toggle,fullscreen<CR>
 endif
 "==============================================================================}}}
 
@@ -1027,4 +1060,9 @@ let g:NERDDefaultNesting=1
 
 "==============================================================================}}}
 
+<<<<<<< HEAD
+=======
+command! ML set go-=m | winpos 0 0 | set lines=100
+
+>>>>>>> 7ee90ebfeb186b21ed954ef540938aba22d1d8c0
 " vim: foldmethod=marker

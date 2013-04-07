@@ -4,7 +4,7 @@
 " Author:      Jan Larres <jan@majutsushi.net>
 " Licence:     Vim licence
 " Website:     http://majutsushi.github.com/tagbar/
-" Version:     2.4.1
+" Version:     2.5
 " Note:        This plugin was heavily inspired by the 'Taglist' plugin by
 "              Yegappan Lakshmanan and uses a small amount of code from it.
 "
@@ -576,6 +576,7 @@ function! s:InitTypes() abort
         \ {'short' : 's', 'long' : 'sets',      'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.scheme = type_scheme
+    let s:known_types.racket = type_scheme
     " Shell script {{{3
     let type_sh = s:TypeInfo.New()
     let type_sh.ctagstype = 'sh'
@@ -1714,6 +1715,14 @@ function! s:OpenWindow(flags) abort
 
     call s:InitWindow(autoclose)
 
+    " If the current file exists, but is empty, it means that it had a
+    " processing error before opening the window, most likely due to a call to
+    " currenttag() in the statusline. Remove the entry so an error message
+    " will be shown if the processing still fails.
+    if empty(s:known_files.get(curfile))
+        call s:known_files.rm(curfile)
+    endif
+
     call s:AutoUpdate(curfile, 0)
     call s:HighlightTag(1, 1, curline)
 
@@ -1817,17 +1826,20 @@ function! s:CloseWindow() abort
             endif
         endif
     else
-        " Go to the tagbar window, close it and then come back to the
-        " original window
-        let curbufnr = bufnr('%')
+        " Go to the tagbar window, close it and then come back to the original
+        " window. Save a win-local variable in the original window so we can
+        " jump back to it even if the window number changed.
+        let w:tagbar_returnhere = 1
         call s:winexec(tagbarwinnr . 'wincmd w')
         close
-        " Need to jump back to the original window only if we are not
-        " already in that window
-        let winnum = bufwinnr(curbufnr)
-        if winnr() != winnum
-            call s:winexec(winnum . 'wincmd w')
-        endif
+
+        for window in range(1, winnr('$'))
+            call s:winexec(window . 'wincmd w')
+            if exists('w:tagbar_returnhere')
+                unlet w:tagbar_returnhere
+                break
+            endif
+        endfor
     endif
 
     " If the Vim window has been expanded, and Tagbar is not open in any other
@@ -2062,8 +2074,11 @@ function! s:ExecuteCtagsOnFile(fname, realfname, ftype) abort
     let ctags_output = s:ExecuteCtags(ctags_cmd)
 
     if v:shell_error || ctags_output =~ 'Warning: cannot open source file'
-        if !s:known_files.has(a:realfname) ||
-         \ !empty(s:known_files.get(a:realfname))
+        " Only display an error message if the Tagbar window is open and we
+        " haven't seen the error before.
+        if bufwinnr("__Tagbar__") != -1 &&
+         \ (!s:known_files.has(a:realfname) ||
+         \ !empty(s:known_files.get(a:realfname)))
             echoerr 'Tagbar: Could not execute ctags for ' . a:fname . '!'
             echomsg 'Executed command: "' . ctags_cmd . '"'
             if !empty(ctags_output)
@@ -2801,29 +2816,7 @@ function! s:JumpToTag(stay_in_tagbar) abort
 
     let tagbarwinnr = winnr()
 
-    " This elaborate construct will try to switch to the correct
-    " buffer/window; if the buffer isn't currently shown in a window it will
-    " open it in the first window with a non-special buffer in it
-    call s:winexec('wincmd p')
-    let filebufnr = bufnr(taginfo.fileinfo.fpath)
-    if bufnr('%') != filebufnr
-        let filewinnr = bufwinnr(filebufnr)
-        if filewinnr != -1
-            call s:winexec(filewinnr . 'wincmd w')
-        else
-            for i in range(1, winnr('$'))
-                call s:winexec(i . 'wincmd w')
-                if &buftype == ''
-                    execute 'buffer ' . filebufnr
-                    break
-                endif
-            endfor
-        endif
-        " To make ctrl-w_p work we switch between the Tagbar window and the
-        " correct window once
-        call s:winexec(tagbarwinnr . 'wincmd w')
-        call s:winexec('wincmd p')
-    endif
+    call s:GotoPreviousWindow(taginfo.fileinfo)
 
     " Mark current position so it can be jumped back to
     mark '
@@ -3358,6 +3351,38 @@ function! s:GetTagInfo(linenr, ignorepseudo) abort
     return taginfo
 endfunction
 
+" s:GotoPreviousWindow() {{{2
+" Try to switch to the previous buffer/window; if the buffer isn't currently
+" shown in a window Tagbar will open it in the first window that has a
+" non-special buffer in it.
+function! s:GotoPreviousWindow(fileinfo) abort
+    let tagbarwinnr = bufwinnr('__Tagbar__')
+
+    call s:winexec('wincmd p')
+
+    let filebufnr = bufnr(a:fileinfo.fpath)
+    if bufnr('%') != filebufnr
+        let filewinnr = bufwinnr(filebufnr)
+        if filewinnr != -1
+            call s:winexec(filewinnr . 'wincmd w')
+        else
+            for i in range(1, winnr('$'))
+                call s:winexec(i . 'wincmd w')
+                if &buftype == ''
+                    execute 'buffer ' . filebufnr
+                    break
+                endif
+            endfor
+        endif
+        " To make ctrl-w_p work we switch between the Tagbar window and the
+        " correct window once
+        call s:winexec(tagbarwinnr . 'wincmd w')
+        call s:winexec('wincmd p')
+    endif
+
+    return winnr()
+endfunction
+
 " s:IsValidFile() {{{2
 function! s:IsValidFile(fname, ftype) abort
     call s:LogDebugMessage('Checking if file is valid [' . a:fname . ']')
@@ -3571,21 +3596,15 @@ endfunction
 
 " tagbar#getusertypes() {{{2
 function! tagbar#getusertypes() abort
-    redir => defs
-    silent execute 'let g:'
-    redir END
+    let userdefs = filter(copy(g:), 'v:key =~ "^tagbar_type_"')
 
-    let deflist = split(defs, '\n')
-    call map(deflist, 'substitute(v:val, ''^\S\+\zs.*'', "", "")')
-    call filter(deflist, 'v:val =~ "^tagbar_type_"')
-
-    let defdict = {}
-    for defstr in deflist
-        let type = substitute(defstr, '^tagbar_type_', '', '')
-        let defdict[type] = g:{defstr}
+    let typedict = {}
+    for [key, val] in items(userdefs)
+        let type = substitute(key, '^tagbar_type_', '', '')
+        let typedict[type] = val
     endfor
 
-    return defdict
+    return typedict
 endfunction
 
 " tagbar#autoopen() {{{2

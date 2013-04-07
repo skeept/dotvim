@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Feb 2013.
+" Last Modified: 02 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -270,19 +270,23 @@ function! unite#sources#file#create_file_dict(file, is_relative_path, ...) "{{{
         \ 'action__path' : a:file,
         \}
 
-  let dict.action__directory = (is_newfile == 2) ?
-        \ a:file :
-        \ unite#util#path2directory(a:file)
+  let dict.vimfiler__is_directory =
+        \ isdirectory(dict.action__path)
 
   if a:is_relative_path
     let dict.action__path = unite#util#substitute_path_separator(
         \                    fnamemodify(a:file, ':p'))
-    let dict.action__directory =
-          \ unite#util#substitute_path_separator(
-          \      fnamemodify(dict.action__directory, ':.'))
   endif
 
-  if isdirectory(a:file)
+  let dict.action__directory = dict.vimfiler__is_directory ?
+        \ dict.action__path : fnamemodify(dict.action__path, ':h')
+
+  if unite#util#is_windows()
+    let dict.action__directory =
+          \ unite#util#substitute_path_separator(dict.action__directory)
+  endif
+
+  if dict.vimfiler__is_directory
     if a:file !~ '^\%(/\|\a\+:/\)$'
       let dict.abbr .= '/'
     endif
@@ -295,6 +299,7 @@ function! unite#sources#file#create_file_dict(file, is_relative_path, ...) "{{{
       let dict.kind = 'file'
     elseif is_newfile == 2
       " New directory.
+      let dict.action__directory = a:file
       let dict.abbr = '[new directory] ' . a:file
       let dict.kind = 'directory'
     endif
@@ -305,20 +310,25 @@ function! unite#sources#file#create_file_dict(file, is_relative_path, ...) "{{{
   return dict
 endfunction"}}}
 function! unite#sources#file#create_vimfiler_dict(candidate, exts) "{{{
-  let a:candidate.vimfiler__is_directory =
-        \ isdirectory(a:candidate.action__path)
+  try
+    if len(a:candidate.action__path) > 200
+      " Convert to relative path.
+      let current_dir_save = getcwd()
+      lcd `=a:candidate.action__directory`
 
-  if len(a:candidate.action__path) > 200
-    " Convert to relative path.
-    let directory = unite#util#substitute_path_separator(
-          \ fnamemodify(a:candidate.action__path, ':h'))
-    let current_dir_save = getcwd()
-    lcd `=directory`
-    let filename = unite#util#substitute_path_separator(
-          \ fnamemodify(a:candidate.action__path, ':.'))
-  else
-    let filename = a:candidate.action__path
-  endif
+      let filename = unite#util#substitute_path_separator(
+            \ fnamemodify(a:candidate.action__path, ':.'))
+    else
+      let filename = a:candidate.action__path
+    endif
+
+    let a:candidate.vimfiler__ftype = getftype(filename)
+  finally
+    if exists('current_dir_save')
+      " Restore path.
+      lcd `=current_dir_save`
+    endif
+  endtry
 
   let a:candidate.vimfiler__filename =
         \       fnamemodify(a:candidate.action__path, ':t')
@@ -347,12 +357,6 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts) "{{{
 
   let a:candidate.vimfiler__filetime =
         \ s:get_filetime(a:candidate.action__path)
-  let a:candidate.vimfiler__ftype = getftype(filename)
-
-  if exists('current_dir_save')
-    " Restore path.
-    lcd `=current_dir_save`
-  endif
 endfunction"}}}
 
 function! unite#sources#file#complete_file(args, context, arglead, cmdline, cursorpos) "{{{
@@ -404,9 +408,9 @@ unlet! s:cdable_action_file
 function! s:get_filetime(filename) "{{{
   let filetime = getftime(a:filename)
   if filetime < 0 && getftype(a:filename) !=# 'link'
-        \ && has('python') "{{{
-    " Use python.
-python <<END
+        \ && has('python3') "{{{
+    " Use python3 interface.
+python3 <<END
 import os
 import os.path
 import vim

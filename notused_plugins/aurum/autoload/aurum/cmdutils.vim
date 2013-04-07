@@ -10,6 +10,7 @@ let s:_messages={
             \'noafile': 'Failed to deduce which file to annotate',
             \'noffile': 'Failed to deduce which file to show',
             \ 'nocurf': 'Failed to deduce which file was meant',
+            \  'norev': 'Failed to get revision',
             \'nocfile': 'Unsure what should be commited',
         \}
 let s:r={}

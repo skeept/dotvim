@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: util.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Feb 2013.
+" Last Modified: 01 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -30,6 +30,8 @@ set cpo&vim
 let s:V = vital#of('vimfiler')
 let s:List = vital#of('vimfiler').import('Data.List')
 
+let s:is_windows = has('win16') || has('win32') || has('win64')
+
 function! vimfiler#util#truncate_smart(...)
   return call(s:V.truncate_smart, a:000)
 endfunction
@@ -49,16 +51,13 @@ function! vimfiler#util#wcswidth(...)
   return call(s:V.wcswidth, a:000)
 endfunction
 function! vimfiler#util#is_windows(...)
-  return call(s:V.is_windows, a:000)
+  return s:is_windows
 endfunction
 function! vimfiler#util#is_win_path(path)
   return a:path =~ '^\A*:' || a:path =~ '^\\\\[^\\]\+\\'
 endfunction
 function! vimfiler#util#print_error(...)
   return call(s:V.print_error, a:000)
-endfunction
-function! vimfiler#util#smart_execute_command(...)
-  return call(s:V.smart_execute_command, a:000)
 endfunction
 function! vimfiler#util#escape_file_searching(...)
   return call(s:V.escape_file_searching, a:000)
@@ -183,6 +182,18 @@ endfunction"}}}
 
 function! vimfiler#util#convert2list(expr) "{{{
   return type(a:expr) ==# type([]) ? a:expr : [a:expr]
+endfunction"}}}
+function! vimfiler#util#get_vimfiler_winnr(buffer_name) "{{{
+  for winnr in filter(range(1, winnr('$')),
+        \ "getbufvar(winbufnr(v:val), '&filetype') ==# 'vimfiler'")
+    let buffer_context = getbufvar(
+          \ winbufnr(winnr), 'vimfiler').context
+    if buffer_context.profile_name ==# a:buffer_name
+      return winnr
+    endif
+  endfor
+
+  return -1
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -1,6 +1,6 @@
 {
     "name": "aurum",
-    "version": "1.7",
+    "version": "1.7.1",
     "author": "ZyX <kp-pav@yandex.ru>",
     "maintainer": "ZyX <kp-pav@yandex.ru>",
     "description": "Plugin for dealing with source files under various VCS control",

@@ -721,6 +721,17 @@ function s:hg.commit(repo, message, ...)
     return s:_r.utils.usefile(a:repo, a:message, 'logfile', 'message',
                 \             s:F.runcmd, args, kwargs)
 endfunction
+"▶1 hg.strip :: [rev[, force]]
+function s:hg.strip(repo, ...)
+    let kwargs={'force': (a:0>1 && !empty(a:2))}
+    if a:0 && !empty(a:1)
+        let kwargs.rev=''.a:1
+        let cmd='strip'
+    else
+        let cmd='rollback'
+    endif
+    return s:F.runcmd(a:repo, cmd, [], kwargs)
+endfunction
 "▶1 hg.branch :: repo, branchname, force → + FS
 function s:hg.branch(repo, branch, force)
     return s:F.runcmd(a:repo, 'branch', [a:branch], {'force': !!a:force})

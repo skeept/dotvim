@@ -41,6 +41,8 @@ let s:_messages={
             \'branchf': 'Failed to get list of branches '.
             \           'from the repository %s: %s',
             \  'grepf': 'Failed to search through the repository %s: %s',
+            \ 'stripf': 'Failed to strip revision %s '.
+            \           'from the repository %s: %s',
             \   'tagf': 'Failed to get list of tags from the repository %s: %s',
             \   'addf': 'Failed to add file %s to the repository %s: %s',
             \ 'cbnimp': 'Git driver is not able to close branch',
@@ -60,6 +62,7 @@ let s:_messages={
             \'uresrev': 'Don’t know how to resolve %s into a commit object. '.
             \           'Occured when resolving %s in the repository %s',
             \ 'nohead': 'Failed to obtain HEAD revision in the repository %s',
+            \ 'sfnsup': 'Forced strip is not supported',
         \}
 let s:git={}
 let s:_options={
@@ -313,7 +316,7 @@ if s:usepythondriver "▶2
 else "▶2
     function s:F.get_status(repo, files, clean, ignored)
         let r=deepcopy(s:_r.utils.emptystatdct)
-        let kwargs={'porcelain': 1, 'z': 1}
+        let kwargs={'porcelain': 1, 'z': 1, 'untracked-files': 'all'}
         let args=empty(a:files)?[]:['--']+a:files
         let s=s:_r.utils.nullnl(
                     \s:F.git(a:repo, 'status', args, kwargs, 2, 'statusf'))[:-2]
@@ -436,6 +439,14 @@ function s:git.commit(repo, message, ...)
     endif
     return s:_r.utils.usefile(a:repo, a:message, 'file', 'message',
                 \             s:F.gitm, args, kwargs, 0, 'cif')
+endfunction
+"▶1 git.strip :: [rev[, force]]
+function s:git.strip(repo, ...)
+    let args=[(a:0 && !empty(a:1))?(a:1):('HEAD^')]
+    if a:0>1 && !empty(a:2)
+        call s:_f.throw('sfnsup')
+    endif
+    return s:F.gitm(a:repo, 'reset', args, {}, 0, 'stripf', args[0])
 endfunction
 "▶1 git.branch :: repo, branchname, force → + FS
 function s:git.branch(repo, branch, force)

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Mar 2013.
+" Last Modified: 06 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -544,20 +544,7 @@ function! s:search_new_file(old_files) "{{{
 endfunction"}}}
 
 function! vimfiler#mappings#close(buffer_name) "{{{
-  let buffer_name = a:buffer_name
-  if buffer_name !~ '@\d\+$'
-    " Add postfix.
-    let prefix = vimfiler#util#is_windows() ?
-          \ '[vimfiler] - ' : '*vimfiler* - '
-    let prefix .= buffer_name
-    let buffer_name = prefix . vimfiler#init#_get_postfix(prefix, 0)
-  endif
-
-  " Note: must escape file-pattern.
-  let buffer_name =
-        \ vimfiler#util#escape_file_searching(buffer_name)
-
-  let quit_winnr = bufwinnr(buffer_name)
+  let quit_winnr = vimfiler#util#get_vimfiler_winnr(a:buffer_name)
   if quit_winnr > 0
     " Hide unite buffer.
     silent execute quit_winnr 'wincmd w'
@@ -871,7 +858,7 @@ function! s:toggle_tree_recursive() "{{{
     return
   endif
 
-  if !file.vimfiler__is_directory || file.vimfiler__nest_level > 0
+  if !file.vimfiler__is_directory
     " Search parent directory.
     for cnt in reverse(range(1, line('.')-1))
       let nest_level = get(vimfiler#get_file(cnt),
@@ -1163,14 +1150,18 @@ function! vimfiler#mappings#create_another_vimfiler() "{{{
 
   " Create another vimfiler.
   let context = deepcopy(vimfiler#get_context())
-  let context.split = 1
-  let context.double = 0
-  let context.create = 1
-  let context.direction = 'belowright'
+  if context.split || context.explorer
+    " Note: Horizontal automatically.
+    let context.horizontal = 1
+  endif
   if context.reverse
     " Reverse split direction.
     let context.horizontal = !context.horizontal
   endif
+  let context.split = 1
+  let context.double = 0
+  let context.create = 1
+  let context.direction = 'belowright'
 
   call vimfiler#start(
         \ current_vimfiler.source.':'.
@@ -1293,7 +1284,6 @@ function! s:split_edit_file() "{{{
   " Resize.
   execute 'vertical resize'
         \ (winnr('$') == 1 ? winwidth : winwidth/(winnr('$') - 1))
-  call vimfiler#force_redraw_all_vimfiler(1)
 endfunction"}}}
 
 " File operations.
@@ -1325,7 +1315,6 @@ function! s:copy() "{{{
         \       s:get_action_current_dir(marked_files),
         \ })
   call s:clear_mark_all_lines()
-  call vimfiler#force_redraw_all_vimfiler(1)
 
   call s:search_new_file(old_files)
 endfunction"}}}
@@ -1363,7 +1352,6 @@ function! s:move() "{{{
         \       s:get_action_current_dir(marked_files),
         \ })
   call s:clear_mark_all_lines()
-  call vimfiler#force_redraw_all_vimfiler(1)
 endfunction"}}}
 function! s:delete() "{{{
   let marked_files = vimfiler#get_marked_files()
@@ -1385,7 +1373,6 @@ function! s:delete() "{{{
         \       s:get_action_current_dir(marked_files),
         \ })
   call s:clear_mark_all_lines()
-  call vimfiler#force_redraw_all_vimfiler(1)
 endfunction"}}}
 function! s:rename() "{{{
   let marked_files = vimfiler#get_marked_filenames()
@@ -1404,7 +1391,6 @@ function! s:rename() "{{{
         \ 'vimfiler__current_directory' :
         \       s:get_action_current_dir([file]),
         \ })
-  call vimfiler#force_redraw_all_vimfiler(1)
 endfunction"}}}
 function! s:make_directory() "{{{
   let directory = vimfiler#get_file_directory()
@@ -1412,7 +1398,6 @@ function! s:make_directory() "{{{
         \ copy(vimfiler#get_current_vimfiler().current_files)
 
   call vimfiler#mappings#do_dir_action('vimfiler__mkdir', directory)
-  call vimfiler#force_redraw_all_vimfiler(1)
 
   call s:search_new_file(old_files)
 endfunction"}}}
@@ -1422,7 +1407,6 @@ function! s:new_file() "{{{
   call s:switch()
 
   call vimfiler#mappings#do_dir_action('vimfiler__newfile', directory)
-  call vimfiler#force_redraw_all_vimfiler(1)
 endfunction"}}}
 function! s:clipboard_copy() "{{{
   let marked_files = vimfiler#get_marked_files()
@@ -1472,7 +1456,6 @@ function! s:clipboard_paste() "{{{
         \ 'action__directory' : dest_dir,
         \ 'vimfiler__current_directory' : dest_dir,
         \ })
-  call vimfiler#force_redraw_all_vimfiler(1)
 
   let b:vimfiler.clipboard = {}
 endfunction"}}}
