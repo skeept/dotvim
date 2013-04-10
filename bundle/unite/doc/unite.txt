@@ -1541,6 +1541,9 @@ file		Nominates an input file as a candidate.
 		(Example: "../") or hidden files(Example: ".gitignore").
 		If you want to open these files, please input ".".
 
+		Source arguments:
+		1. the file/directory path.
+
 						*unite-source-file/new*
 file/new	Nominates a new input file as a candidate.
 
@@ -2966,12 +2969,25 @@ Q: I want to exit unite buffer after narrowing action in directory.
 
 A: You should use |<Plug>(unite_all_exit)| instead of |<Plug>(unite_exit)|.
 
+Q: How to make direct action (or choose action menu) to current file or given
+path?
+
+A:
+>
+	call unite#do_candidates_action('some_action',
+	\  unite#get_candidates([['file', expand('%')]]))
+<
+
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2013-04-10
+- Temporally disabled if_lua feature. Because if_lua has SEGV problem.
 
 2013-04-07
 - Fixed filter.
 - Added unite#util#has_lua().
+- Improved source file.
 
 2013-04-06
 - Improved quick match behavior.
