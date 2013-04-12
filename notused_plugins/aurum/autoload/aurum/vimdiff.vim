@@ -2,6 +2,7 @@
 scriptencoding utf-8
 execute frawor#Setup('1.1', {'@%aurum/cmdutils': '4.3',
             \                    '@%aurum/edit': '1.3',
+            \                 '@%aurum/bufvars': '0.0',
             \                     '@/functions': '0.1',
             \                           '@/fwc': '0.0',
             \                      '@/mappings': '0.0',
@@ -107,16 +108,16 @@ function s:F.diffrestore.onwipe(buf, abuf, dbvar, ddbvars, prevbuffers)
     endif
 endfunction
 "▶2 diffrestore.call
-function s:F.diffrestore.call(buf, func)
-    if !bufexists(a:buf) || !exists('t:auvimdiff_origbufvar') ||
-                \t:auvimdiff_origbufvar.bufnr!=a:buf ||
-                \!exists('t:auvimdiff_diffbufvars')
+function s:F.diffrestore.call(func)
+    if !exists('t:auvimdiff_origbufvar') || !exists('t:auvimdiff_diffbufvars')
+                \|| !bufexists(t:auvimdiff_origbufvar.bufnr)
         return
     endif
     let dbvar=t:auvimdiff_origbufvar
     let ddbvars=t:auvimdiff_diffbufvars
     let prevbuffers=t:auvimdiff_prevbuffers
-    return s:F.diffrestore[a:func](a:buf, +expand('<abuf>'), dbvar, ddbvars,
+    return s:F.diffrestore[a:func](t:auvimdiff_origbufvar.bufnr,
+                \                  +expand('<abuf>'), dbvar, ddbvars,
                 \                  prevbuffers)
 endfunction
 "▶1 findwindow
@@ -167,6 +168,15 @@ function s:F.open(cmd, target)
         return call(s:_r.mrun, ['silent '.a:cmd]+a:target, {})
     endif
 endfunction
+"▶1 bwau
+function s:F.bwau(dbuf, eventpart)
+    augroup AuVimDiff
+        execute 'autocmd! BufEnter   <buffer='.a:dbuf.'> '.
+                    \':call s:F.diffrestore.call("on'.a:eventpart.'enter")'
+        execute 'autocmd! BufWipeOut <buffer='.a:dbuf.'> '.
+                    \':call s:F.diffrestore.call("on'.a:eventpart.'wipe")'
+    augroup END
+endfunction
 "▶1 diffsplit
 function s:F.diffsplit(difftargets, usewin)
     "▶2 Open new tab if current already has diffsplit
@@ -215,6 +225,7 @@ function s:F.diffsplit(difftargets, usewin)
             let ddbvar.filetype=&filetype
             let &filetype=filetype
         endif
+        let ddbvar.orig_filetype = filetype
         let t:auvimdiff_diffbufvars[dbuf]=ddbvar
         let t:auvimdiff_prevbuffers={dbuf : 0}
         let ddbvar.bufnr=dbuf
@@ -226,22 +237,23 @@ function s:F.diffsplit(difftargets, usewin)
         endif
         let dbvar.diffbufs+=[dbuf]
         call s:_f.mapgroup.map('AuVimDiff', dbuf)
-        augroup AuVimDiff
-            execute 'autocmd BufEnter   <buffer='.dbuf.'> '.
-                        \':call s:F.diffrestore.call('.buf.', "onotherenter")'
-            execute 'autocmd BufWipeOut <buffer='.dbuf.'> '.
-                        \':call s:F.diffrestore.call('.buf.', "onotherwipe")'
-        augroup END
+        call s:F.bwau(dbuf, 'other')
+        if has_key(s:_r.bufvars, dbuf)
+            " Is used to preserve diff after Prev/Next mappings
+            let bvar=s:_r.bufvars[dbuf]
+            let bvar.diff_auargs=['other']
+            let bvar.preserve=s:F.preserve
+        endif
         let i+=1
     endfor
     execute bufwinnr(buf).'wincmd w'
     call cursor(dbvar.cursor)
-    augroup AuVimDiff
-        execute 'autocmd BufEnter   <buffer='.buf.'> '.
-                    \':call s:F.diffrestore.call('.buf.', "onenter")'
-        execute 'autocmd BufWipeOut <buffer='.buf.'> '.
-                    \':call s:F.diffrestore.call('.buf.', "onwipe")'
-    augroup END
+    call s:F.bwau(buf, '')
+    if has_key(s:_r.bufvars, buf)
+        let bvar=s:_r.bufvars[buf]
+        let bvar.diff_auargs=['']
+        let bvar.preserve=s:F.preserve
+    endif
 endfunction
 let s:_augroups+=['AuVimDiff']
 "▶1 exit
@@ -330,6 +342,48 @@ function s:F.exit(...)
     endif
     "▲2
     return cmd
+endfunction
+"▶1 preserve
+function s:F.preservebv(bvar, buf)
+    diffthis
+    let buf=bufnr('%')
+    call s:_f.mapgroup.map('AuVimDiff', buf)
+    let bvar=s:_r.bufvars[buf]
+    let bvar.preserve=s:F.preserve
+    let bvar.diff_auargs=a:bvar.diff_auargs
+    call call(s:F.bwau, [buf]+a:bvar.diff_auargs, {})
+    if exists('t:auvimdiff_diffbufvars') &&
+                \has_key(t:auvimdiff_diffbufvars, a:buf)
+        let ddbvar=remove(t:auvimdiff_diffbufvars, a:buf)
+        if &filetype isnot# ddbvar.orig_filetype
+            let ddbvar.filetype=&filetype
+            let &filetype=ddbvar.orig_filetype
+        endif
+        let ddbvar.bufnr=buf
+        let t:auvimdiff_diffbufvars[buf]=ddbvar
+        if exists('t:auvimdiff_origbufvar')
+            call map(t:auvimdiff_origbufvar.diffbufs,
+                        \'v:val=='.a:buf.' ? '.buf.' : v:val')
+        endif
+    elseif exists('t:auvimdiff_origbufvar') &&
+                \t:auvimdiff_origbufvar.bufnr == buf
+        let t:auvimdiff_origbufvar.bufnr=buf
+        if exists('t:auvimdiff_diffbufvars')
+            call map(t:auvimdiff_diffbufvars,
+                        \'extend(v:val, {"srcbuf": '.buf.'})')
+        endif
+        let t:auvimdiff_origbufvar.changedtick=b:changedtick
+    endif
+endfunction
+function s:F.preserve()
+    if &diff
+        augroup AuVimDiff
+            autocmd! BufWipeOut <buffer>
+            autocmd! BufEnter   <buffer>
+        augroup END
+        return s:F.preservebv
+    endif
+    return 0
 endfunction
 "▶1 AuVimDiff mappings
 call s:_f.mapgroup.add('AuVimDiff', {

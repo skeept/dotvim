@@ -603,14 +603,16 @@ aurum://annotate:{repo}:{rev}:{file}                        *aurum://annotate*
              *g:frawormap_AuAnnotate_Diff*   *g:frawormap_AuAnnotate_RFVdiff*
              *g:frawormap_AuAnnotate_Rdiff*  *g:frawormap_AuAnnotate_Annotate*
              *g:frawormap_AuAnnotate_RVdiff* *g:frawormap_AuAnnotate_Open*
-             *g:frawormap_AuAnnotate_Update* *g:frawormap_AuAnnotate_Next*
+             *g:frawormap_AuAnnotate_Update* *g:frawormap_AuAnnotate_NextMod*
+             *g:frawormap_AuAnnotate_Next*   *g:frawormap_AuAnnotate_PrevMod*
              *g:frawormap_AuAnnotate_Prev*       *aurum-m-AuAnnotate_Prev*
                  *aurum-m-AuAnnotate_Enter*      *aurum-m-AuAnnotate_Fdiff*
                  *aurum-m-AuAnnotate_RFdiff*     *aurum-m-AuAnnotate_FVdiff*
                  *aurum-m-AuAnnotate_Diff*       *aurum-m-AuAnnotate_RFVdiff*
                  *aurum-m-AuAnnotate_Rdiff*      *aurum-m-AuAnnotate_Annotate*
                  *aurum-m-AuAnnotate_RVdiff*     *aurum-m-AuAnnotate_Open*
-                 *aurum-m-AuAnnotate_Update*     *aurum-m-AuAnnotate_Next*
+                 *aurum-m-AuAnnotate_Update*     *aurum-m-AuAnnotate_NextMod*
+                 *aurum-m-AuAnnotate_Next*       *aurum-m-AuAnnotate_PrevMod*
     Mapname  LHS  Description ~
     Enter    <CR> View changes between file and current revision (|vimdiff|)
     FVdiff   gD   View diff between working directory and current revision 
@@ -637,6 +639,12 @@ aurum://annotate:{repo}:{rev}:{file}                        *aurum://annotate*
     Prev      J   Reannotate file using first parent of annotated revision.
                   Accepts count, in this case first parent is taken {count} 
                   times ({count}=2: first parent of first parent)
+    NextMod  gK   Like above Next mapping, but children are taken until it 
+                  does not find revision where file was changed. {count}=2 
+                  means two changes after, not two children before.
+    PrevMod  gJ   Like above Prev mapping, but parents are taken until it does 
+                  not find revision where file was changed. {count}=2 means 
+                  two changes before, not two parents before.
 
     Note These mappings are defined for aurumannotate filetype.
 
@@ -725,17 +733,19 @@ aurum://file:{repo}:{rev}:{file}                                *aurum://file*
     Open file {file} from repository {repo} as it was at revision {rev}.
     Local mappings (mgid=AuFile, without leader by default):
                                                           *g:frawormap_AuFile*
-                       *g:frawormap_AuFile_Next*  *g:frawormap_AuFile_RFdiff*
-                       *g:frawormap_AuFile_Prev*  *g:frawormap_AuFile_RFVdiff*
-                       *g:frawormap_AuFile_Diff*  *g:frawormap_AuFile_Update*
-                       *g:frawormap_AuFile_Rdiff* *g:frawormap_AuFile_RVdiff*
-                       *g:frawormap_AuFile_Fdiff* *g:frawormap_AuFile_FVdiff*
-                       *g:frawormap_AuFile_Vdiff*     *aurum-m-AuFile_Vdiff*
-                           *aurum-m-AuFile_Next*      *aurum-m-AuFile_RFdiff*
-                           *aurum-m-AuFile_Prev*      *aurum-m-AuFile_RFVdiff*
-                           *aurum-m-AuFile_Rdiff*     *aurum-m-AuFile_RVdiff*
-                           *aurum-m-AuFile_Diff*      *aurum-m-AuFile_Update*
-                           *aurum-m-AuFile_Fdiff*     *aurum-m-AuFile_FVdiff*
+                    *g:frawormap_AuFile_Next*     *g:frawormap_AuFile_RFdiff*
+                    *g:frawormap_AuFile_Prev*     *g:frawormap_AuFile_RFVdiff*
+                    *g:frawormap_AuFile_Diff*     *g:frawormap_AuFile_Update*
+                    *g:frawormap_AuFile_Rdiff*    *g:frawormap_AuFile_RVdiff*
+                    *g:frawormap_AuFile_Fdiff*    *g:frawormap_AuFile_FVdiff*
+                    *g:frawormap_AuFile_NextMod*  *g:frawormap_AuFile_PrevMod*
+                    *g:frawormap_AuFile_Vdiff*        *aurum-m-AuFile_Vdiff*
+                        *aurum-m-AuFile_Next*         *aurum-m-AuFile_RFdiff*
+                        *aurum-m-AuFile_Prev*         *aurum-m-AuFile_RFVdiff*
+                        *aurum-m-AuFile_Rdiff*        *aurum-m-AuFile_RVdiff*
+                        *aurum-m-AuFile_Diff*         *aurum-m-AuFile_Update*
+                        *aurum-m-AuFile_Fdiff*        *aurum-m-AuFile_FVdiff*
+                        *aurum-m-AuFile_NextMod*      *aurum-m-AuFile_PrevMod*
     Mapname  LHS  Description ~
     Next      K   View current file as it was at first child of current 
                   revision. Accepts count, in this case first child is taken 
@@ -743,6 +753,12 @@ aurum://file:{repo}:{rev}:{file}                                *aurum://file*
     Prev      J   View current file as it was at first parent of current 
                   revision. Accepts count, in this case first parent is taken 
                   {count} times ({count}=2: first parent of first parent)
+    NextMod  gK   Like above Next mapping, but children are taken until it 
+                  does not find revision where file was changed. {count}=2 
+                  means two changes after, not two children before.
+    PrevMod  gJ   Like above Prev mapping, but parents are taken until it does 
+                  not find revision where file was changed. {count}=2 means 
+                  two changes before, not two parents before.
     Update    U   Update working directory to current revision.
                   Accepts count: {count}=3: update to first parent of first 
                   parent of current revision
@@ -1002,6 +1018,8 @@ Diff        d   ac flS  g  Shows diff between rev and WD for current file
                            (status: between two current revisions)
 Rdiff       c   a  fls     Shows changes done in current rev to current file
 Prev/Next  J/K  acdfl      Go to previous/next revision
+PrevMod    gJ   a  f       Go to previous revision where file was modified
+NextMod    gK   a  f       Go to next revision where file was modified
 Open        o   a d ls  g  Opens current file as it was at current revision
 OpenAny     O       l   g  Prompts user and opens one of the changeset files
 Annotate    a   a   ls  g  Annotates current file at current revision
@@ -2203,10 +2221,12 @@ ftplugin/aurumlog:
     1.2: Added pyimport feature
 @%aurum/file:
     0.1: Added |:AuFile| prompt option.
+    0.2: Added support for bvar.preserve function.
 @%aurum/hyperlink:
     0.1: Added support for password in URL.
 @%aurum/maputils:
     0.1: Added _r.maputils.getnthparentfile().
+    0.2: Added optional argument to _r.maputils.getnthparentfile().
 @%aurum/record:
     0.1: Added |:AuRecord| amend.
 

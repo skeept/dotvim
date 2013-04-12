@@ -169,7 +169,8 @@ function s:F.runmap(action, ...)
     elseif a:action is# 'previous' || a:action is# 'next'
         let c=((a:action is# 'previous')?(v:count1):(-v:count1))
         let [rev, file]=s:_r.maputils.getnthparentfile(bvar.repo, bvar.rev,
-                    \                                  bvar.file, c)
+                    \                                  bvar.file, c,
+                    \                                  get(a:000, 0, 1))
         if rev is# bvar.rev
             call s:_f.throw('no'.a:action[:3], bvar.rev)
         endif
@@ -216,6 +217,8 @@ call s:_f.mapgroup.add('AuAnnotate', {
             \   'Update': {'lhs':  'U',   'rhs': s:F.getrhs(    'update'   )},
             \     'Next': {'lhs':  'K',   'rhs': s:F.getrhs('next'         )},
             \     'Prev': {'lhs':  'J',   'rhs': s:F.getrhs('previous'     )},
+            \  'NextMod': {'lhs': 'gK',   'rhs': s:F.getrhs('next'      , 0)},
+            \  'PrevMod': {'lhs': 'gJ',   'rhs': s:F.getrhs('previous'  , 0)},
             \     'Exit': {'lhs':  'X',   'rhs': ':<C-u>bwipeout!<CR>'      },
             \}, {'silent': 1, 'mode': 'n'})
 "▶1

@@ -1,7 +1,7 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('0.1', {'@%aurum/cmdutils': '4.3',
-            \                '@%aurum/maputils': '0.1',
+execute frawor#Setup('0.2', {'@%aurum/cmdutils': '4.3',
+            \                '@%aurum/maputils': '0.2',
             \                 '@%aurum/bufvars': '0.0',
             \               '@%aurum/lineutils': '0.0',
             \                 '@%aurum/vimdiff': '1.0',
@@ -128,7 +128,7 @@ endfunction
 call s:_f.newcommand(s:file)
 unlet s:file
 "▶1 aurum://file mappings
-function s:F.runmap(action)
+function s:F.runmap(action, ...)
     let buf=bufnr('%')
     let bvar=s:_r.bufvars[buf]
     if a:action is# 'exit'
@@ -138,10 +138,17 @@ function s:F.runmap(action)
     elseif a:action is# 'previous' || a:action is# 'next'
         let c=((a:action is# 'previous')?(v:count1):(-v:count1))
         let [rev, file]=s:_r.maputils.getnthparentfile(bvar.repo, bvar.rev,
-                    \                                  bvar.file, c)
+                    \                                  bvar.file, c,
+                    \                                  get(a:000, 0, 1))
         let bhwipe=(&bufhidden is# 'wipe')
+        if has_key(bvar, 'preserve')
+            let d={'restore': bvar.preserve()}
+        endif
         let existed=s:_r.mrun('silent edit', 'file', bvar.repo, rev, file)
                     \|| !bhwipe
+        if exists('d') && !empty(d.restore)
+            call d.restore(bvar, buf)
+        endif
         if bufexists(buf)
             execute 'bwipeout' buf
         endif
@@ -186,6 +193,8 @@ endfunction
 call s:_f.mapgroup.add('AuFile', {
             \   'Next': {'lhs':  'K', 'rhs': s:m('next'          )},
             \   'Prev': {'lhs':  'J', 'rhs': s:m('previous'      )},
+            \'NextMod': {'lhs': 'gK', 'rhs': s:m('next'    , 0   )},
+            \'PrevMod': {'lhs': 'gJ', 'rhs': s:m('previous', 0   )},
             \ 'Update': {'lhs':  'U', 'rhs': s:m('update'        )},
             \   'Exit': {'lhs':  'X', 'rhs': s:m('exit'          )},
             \   'Diff': {'lhs':  'd', 'rhs': s:m(          'diff')},
