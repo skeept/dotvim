@@ -98,7 +98,9 @@ There are some common things for all commands:
    4. |aurum://annotate| buffers: current file is file under cursor (annotate 
       may follow renames/copies; target filename is not explicitely mentioned) 
       and current revision is revision under cursor.
-   5. For other buffers: current file is file name, current revision is 
+   5. |aurum://log| buffers: current file is absent and current revision is 
+      revision whose log entry you see under cursor.
+   6. For other buffers: current file is file name, current revision is 
       working directory revision.
 
 AuAnnotate [file {file}] [rev {rev}] [repo {repo}]               *:AuAnnotate*
@@ -543,6 +545,14 @@ aurum#branch :: ([{repo}]) -> branch                          *aurum#branch()*
           was called which hold files in one repository are no longer visible. 
           Only one process is launched for one repository.
 
+aurum#currev :: {ret} -> hex | rev | cs                       *aurum#currev()*
+    Depending on {ret} argument returns something that belongs to current 
+    revision (|aurum-current-revision|):
+    {ret}  Returns ~
+    hex    Current revision unique identifier. |aurum-cs.hex|
+    rev    Current revision shortened identifier. |aurum-cs.rev|
+    cs     Current revision changeset dictionary. |aurum-changeset|
+
 ------------------------------------------------------------------------------
 2.3. aurum:// pseudo-protocol                                       *aurum://*
 
@@ -979,6 +989,13 @@ Push        P   AuOther push
 Pull        p   AuOther push | AuUpdate
                             Pull new commits from remote repository and 
                             perform an update.
+
+The following mappings use aurum#* functions and are prefixless by default. 
+They are defined for command and insert modes.
+                         *g:frawormap_AurumNP_CurRev* *aurum-m-AurumNP_CurRev*
+Mapname    LHS         Description ~
+CurRevHex  <C-r><C-h>  Insert current revision hex string.
+CurRev     <C-r><C-v>  Insert current revision number.
 
 ------------------------------------------------------------------------------
 2.5. Local mappings index                               *aurum-mappings-index*

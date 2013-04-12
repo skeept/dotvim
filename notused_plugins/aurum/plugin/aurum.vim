@@ -77,6 +77,10 @@ call s:_f.mapgroup.add('Aurum', {
             \'Push':      {'lhs':  'P', 'rhs': ':<C-u>AuOther push<CR>'      },
             \'Pull':      {'lhs':  'p', 'rhs': ':<C-u>AuOther pull<CR>'      },
         \}, {'mode': 'n', 'silent': 1, 'leader': '<Leader>a'})
+call s:_f.mapgroup.add('AurumNP', {
+            \'CurRevHex': {'lhs': '<C-r><C-h>', 'rhs': '<C-r>=aurum#currev("hex")<CR>'},
+            \'CurRev'   : {'lhs': '<C-r><C-v>', 'rhs': '<C-r>=aurum#currev("rev")<CR>'},
+        \}, {'mode': 'ic', 'silent': 1})
 "▶1 Autocommands
 let s:aurun={'function': ['@%aurum/edit', [1], 'event']}
 call s:_f.augroup.add('Aurum',

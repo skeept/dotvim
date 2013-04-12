@@ -119,6 +119,21 @@ function aurum#changeset(...)
     return s:_r.cache.get('cs', repo.functions.getwork, [repo], {})
 endfunction
 let s:_functions+=['aurum#changeset']
+"▶1 aurum#currev
+function aurum#currev(ret)
+    let [repo, rev] = s:_r.cmdutils.getrrf({}, 'norev', 'getrr')[1:2]
+    if rev is 0
+        let rev=repo.functions.getworkhex(repo)
+    endif
+    if a:ret is# 'hex'
+        return repo.functions.getrevhex(repo, rev)
+    elseif a:ret is# 'rev'
+        return repo.functions.getcs(repo, rev).rev
+    elseif a:ret is# 'cs'
+        return repo.functions.getcs(repo, rev)
+    endif
+endfunction
+let s:_functions+=['aurum#currev']
 "▶1 filestatus
 function s:F.filestatus(status)
     return get(keys(filter(copy(a:status), '!empty(v:val)')), 0, '')

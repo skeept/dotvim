@@ -787,7 +787,7 @@ The 'snip' object provides some properties as well: >
     snip.v:
          Data related to the ${VISUAL} placeholder. The property has two
          attributes:
-             snip.v.mode   ('v', 'V', '^V', see *visual-mode* )
+             snip.v.mode   ('v', 'V', '^V', see |visual-mode| )
              snip.v.text   The text that was selected.
 
     snip.fn:
@@ -1315,6 +1315,7 @@ Contributors listed in chronological order:
    Mike Morearty - mmorearty
    Stanislav Golovanov - JazzCore
    David Briscoe - DavidBriscoe
+   Keith Welch - paralogiki
 
 
 8.2 Snippets                                       *UltiSnips-contrisnippets*
@@ -1358,6 +1359,7 @@ Contributors listed in chronological order:
    Jaromír Hradílek (jhradilek)
    Vangelis Tsoumenis (kioopi)
    Rudi Grinberg (rgrinberg)
+   javipolo
 
 Thank you for your support.
 
