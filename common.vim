@@ -9,7 +9,7 @@ set backspace=2
 set esckeys
 
 set autoindent		" always set autoindenting on
-if !exists("g:is_vimrc_simple")
+if 1 || !exists("g:is_vimrc_simple")
   set splitright          "split the window to the right
   set splitbelow          "open the window to the bottom
 endif
@@ -247,7 +247,7 @@ endfunction
 noremap <Leader>st :<C-U>call ToggleSpell() <CR>
 "==============================================================================}}}
 
-"================== autocommands =============================================={{{
+"================== Autocommands =============================================={{{
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 
@@ -293,7 +293,11 @@ if has("autocmd")
   "for now set scip compatible settings (3 spaces indentation for c files)
   augroup ft_ccpp
     autocmd!
-    autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ set shiftwidth=3
+    "scip settings
+    "autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ setlocal shiftwidth=3
+    " Sabre Settings
+    autocmd FileType c setlocal noexpandtab shiftwidth=2 tabstop=2
+    autocmd FileType cpp setlocal noexpandtab shiftwidth=2 tabstop=2
   augroup END
 
   "help buffers mappings
@@ -487,6 +491,27 @@ nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
 nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite source<CR>
 " }}}
 
+if has('python') "{{{ LoadPythonDelayed
+function! LoadPythonDelayed()
+
+python << ENDP
+import time
+from threading import Thread
+import vim
+
+def LoadUnitePy():
+    time.sleep(2)
+    vim.command('call LoadUnite()')
+
+Thread(target=LoadUnitePy).start()
+
+ENDP
+return ''
+endfunction
+
+call LoadPythonDelayed()
+endif
+"}}}
 "==============================================================================}}}
 
 "================== Buffergator ==============================================={{{
@@ -981,6 +1006,9 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 command! ChgDirCurrFileFolder lcd %:p:h
 " }}}
 
+" maximize window vertically
+command! ML set go-=m | winpos 0 0 | set lines=100
+
 "" change some highlight
 hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
@@ -1059,7 +1087,5 @@ let g:NERDDefaultNesting=1
 "==============================================================================}}}
 
 "==============================================================================}}}
-
-command! ML set go-=m | winpos 0 0 | set lines=100
 
 " vim: foldmethod=marker

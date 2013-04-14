@@ -72,7 +72,7 @@ function! SetupVAM()
 
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
-  VAMAddToActiveAddons ManPageView vimproc Tagbar tlib
+  VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
   VAMAddToActiveAddons dispatch
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
@@ -129,7 +129,7 @@ let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
 function! LoadClangComplete()
-  if exists("s:loaded_clang_complete") || g:is_win | return '' | endif
+  if 1 || exists("s:loaded_clang_complete") || g:is_win | return '' | endif
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
 endfunction
