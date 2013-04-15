@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Dec 2012.
+" Last Modified: 12 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -59,20 +59,20 @@ function! s:neocomplcache_source.hooks.on_init(args, context) "{{{
     let g:neocomplcache_max_list = -1
     let g:neocomplcache_max_keyword_width = -1
     let g:neocomplcache_manual_completion_start_length = 0
-    let &l:completefunc = 'neocomplcache#unite_complete'
+    let &l:completefunc = 'neocomplcache#complete#unite_complete'
 
     let cur_text = neocomplcache#get_cur_text(1)
-    let complete_results = neocomplcache#get_complete_results(cur_text)
+    let complete_results = neocomplcache#complete#_get_results(cur_text)
     let a:context.source__cur_keyword_pos =
-          \ neocomplcache#get_cur_keyword_pos(complete_results)
-    let a:context.source__complete_words = neocomplcache#get_complete_words(
+          \ neocomplcache#complete#_get_cur_keyword_pos(complete_results)
+    let a:context.source__complete_words = neocomplcache#complete#_get_words(
           \ complete_results, a:context.source__cur_keyword_pos,
           \ cur_text[a:context.source__cur_keyword_pos :])
   finally
     " Restore options.
     let g:neocomplcache_max_list = max_list_save
     let g:neocomplcache_max_keyword_width = max_keyword_width_save
-    let &l:completefunc = 'neocomplcache#auto_complete'
+    let &l:completefunc = 'neocomplcache#complete#auto_complete'
     let g:neocomplcache_manual_completion_start_length = manual_start_length
   endtry
 endfunction"}}}
