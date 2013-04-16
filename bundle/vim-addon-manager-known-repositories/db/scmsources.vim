@@ -2056,6 +2056,7 @@ let scmnr.4498 = {'type': 'git', 'url': 'git://github.com/wyderkat/code_upstairs
 
 " Terry Ma
 let scmnr.4499 = {'type': 'git', 'url': 'git://github.com/terryma/vim-expand-region'}
+let scmnr.4523 = {'type': 'git', 'url': 'git://github.com/terryma/vim-multiple-cursors'}
 
 " Jesús Espino
 let scmnr.4500 = {'type': 'git', 'url': 'git://github.com/jespino/vim-rebtags'}
@@ -2324,6 +2325,7 @@ let scm['opalang'] = {'type': 'git', 'url': 'git://github.com/MLstate/opalang', 
 let scm['pgnvim'] = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/Raimondi/pgnvim'}, {'pgn.vim': 'syntax'})
 let scm['SkyBison'] = {'type': 'git', 'url': 'git://github.com/paradigm/SkyBison'}
 let scm['jedi-vim'] = {'type': 'git', 'url': 'git://github.com/davidhalter/jedi-vim'}
+let scm['vim-css3-syntax'] = {'type': 'git', 'url': 'git://github.com/hail2u/vim-css3-syntax'}
 
 " Marius Gedminas
 let scm['python-imports@mgedmin'] = {'type': 'git', 'url': 'git://github.com/mgedmin/python-imports.vim'}
