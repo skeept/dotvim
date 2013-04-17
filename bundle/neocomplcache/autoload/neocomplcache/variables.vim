@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: variables.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Apr 2013.
+" Last Modified: 16 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -38,6 +38,27 @@ function! neocomplcache#variables#_initialize() "{{{
   let s:filetype_frequencies = {}
   let s:loaded_all_sources = 0
   let s:runtimepath_save = ''
+endfunction"}}}
+
+function! neocomplcache#variables#get_frequencies() "{{{
+  if !exists('s:filetype_frequencies')
+    let s:filetype_frequencies = {}
+  endif
+  let filetype = neocomplcache#context_filetype#get(&filetype)
+  if !has_key(s:filetype_frequencies, filetype)
+    let s:filetype_frequencies[filetype] = {}
+  endif
+
+  let frequencies = s:filetype_frequencies[filetype]
+
+  return frequencies
+endfunction"}}}
+
+function! neocomplcache#variables#get_sources() "{{{
+  if !exists('s:sources')
+    let s:sources = {}
+  endif
+  return s:sources
 endfunction"}}}
 
 let &cpo = s:save_cpo

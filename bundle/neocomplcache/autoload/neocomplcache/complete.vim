@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: complete.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Apr 2013.
+" Last Modified: 16 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,7 +34,7 @@ function! neocomplcache#complete#manual_complete(findstart, base) "{{{
     let cur_text = neocomplcache#get_cur_text()
     if !neocomplcache#is_enabled()
           \ || neocomplcache#helper#is_omni_complete(cur_text)
-      call neocomplcache#_clear_result()
+      call neocomplcache#helper#clear_result()
       let &l:completefunc = 'neocomplcache#complete#manual_complete'
 
       return (neocomplcache#is_prefetch()
@@ -53,7 +53,7 @@ function! neocomplcache#complete#manual_complete(findstart, base) "{{{
           \ neocomplcache#complete#_get_cur_keyword_pos(neocomplcache.complete_results)
 
     if cur_keyword_pos < 0
-      call neocomplcache#_clear_result()
+      call neocomplcache#helper#clear_result()
 
       let neocomplcache = neocomplcache#get_current_neocomplcache()
       let cur_keyword_pos = (neocomplcache#is_prefetch() ||
@@ -94,14 +94,14 @@ function! neocomplcache#complete#sources_manual_complete(findstart, base) "{{{
 
   if a:findstart
     if !neocomplcache#is_enabled()
-      call neocomplcache#_clear_result()
+      call neocomplcache#helper#clear_result()
       return -2
     endif
 
     let all_sources = neocomplcache#available_sources()
     let sources = get(a:000, 0, keys(all_sources))
-    let s:use_sources = neocomplcache#_get_sources_list(type(sources) == type([]) ?
-          \ sources : [sources])
+    let s:use_sources = neocomplcache#helper#get_sources_list(
+          \ type(sources) == type([]) ? sources : [sources])
 
     " Get cur_keyword_pos.
     let complete_results = neocomplcache#complete#_get_results(
@@ -110,7 +110,7 @@ function! neocomplcache#complete#sources_manual_complete(findstart, base) "{{{
           \ neocomplcache#complete#_get_cur_keyword_pos(complete_results)
 
     if neocomplcache.cur_keyword_pos < 0
-      call neocomplcache#_clear_result()
+      call neocomplcache#helper#clear_result()
 
       return -2
     endif
@@ -174,7 +174,7 @@ function! neocomplcache#complete#_get_cur_keyword_pos(complete_results) "{{{
 endfunction"}}}
 
 function! neocomplcache#complete#_get_words(complete_results, cur_keyword_pos, cur_keyword_str) "{{{
-  let frequencies = neocomplcache#_get_frequencies()
+  let frequencies = neocomplcache#variables#get_frequencies()
   if exists('*neocomplcache#sources#buffer_complete#get_frequencies')
     let frequencies = extend(copy(
           \ neocomplcache#sources#buffer_complete#get_frequencies()),
@@ -356,7 +356,7 @@ function! neocomplcache#complete#_set_results_pos(cur_text, ...) "{{{
   " Set context filetype.
   call neocomplcache#context_filetype#set()
 
-  let sources = copy(get(a:000, 0, neocomplcache#_get_sources_list()))
+  let sources = copy(get(a:000, 0, neocomplcache#helper#get_sources_list()))
   if a:0 < 1
     call filter(sources, '!neocomplcache#is_plugin_locked(v:key)')
   endif
