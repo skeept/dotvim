@@ -183,10 +183,34 @@ vnoremap aa VGo1G
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
-nnoremap <Leader>rr :set nomore \| let @u = "" \| redir @U<CR>
-nnoremap <Leader>re :redir END \| set more \| "-> u<CR>
-nnoremap <Leader>rp :redir END \| set more \| normal "up<CR>
+nnoremap <Leader>rr :<C-U>call CaptureToRegisterU()<CR>
 nnoremap <Leader>rs :call RedirToScratch()<CR>
+
+function! CaptureToRegisterU()
+  "enable/disable capture of output to register u
+  let s:msg = ""
+  if exists("g:captureToRegisterUinProgress") || v:count == 1
+    redir END
+    set more
+    if exists("g:captureToRegisterUinProgress")
+      unlet g:captureToRegisterUinProgress
+      let s:msg .= 'Finished recording to reg u. '
+    endif
+    if v:count == 1
+      silent normal "up
+      "echo "Finished recording to register u; pasted contents of reg u"
+      let s:msg .= "Pasted contents of reg u."
+    endif
+  else
+    let g:captureToRegisterUinProgress = 1
+    set nomore
+    let @u = ""
+    redir @U
+    "echo "Capturing Output to register u"
+    let s:msg .= "Capturing output to reg u. "
+  endif
+  echo s:msg
+endfunction
 
 function! RedirToScratch()
   redir END
@@ -244,7 +268,7 @@ function! ToggleSpell()
     echo "No spell Checking"
   endif
 endfunction
-noremap <Leader>st :<C-U>call ToggleSpell() <CR>
+noremap <Leader>st :<C-U>call ToggleSpell()<CR>
 "==============================================================================}}}
 
 "================== Autocommands =============================================={{{
@@ -423,7 +447,7 @@ function! s:unite_my_settings()"{{{
   " Overwrite settings.
 
   nmap <buffer> <ESC> <Plug>(unite_exit)
-  inoremap <buffer> jj <Plug>(unite_insert_leave)
+  "inoremap <buffer> jj <Plug>(unite_insert_leave)
   "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
 
   nmap <buffer> s jp
@@ -458,6 +482,7 @@ function! LoadUnite() "{{{
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
   nnoremap ,uf :<C-u>Unite source<CR>
   nnoremap ,uu :<C-u>Unite source -resume<CR>
+  nnoremap ,rr :<C-u>UniteResume<CR>
   "nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
 
@@ -470,10 +495,18 @@ function! LoadUnite() "{{{
   " }}}
 
   " Ack {{{
-  let g:unite_source_grep_command = 'ack'
-  let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
-  let g:unite_source_grep_recursive_opt = ''
-  nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -auto-preview<CR>
+  if !g:is_win
+    let g:unite_source_grep_command = 'ack'
+    let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
+    let g:unite_source_grep_recursive_opt = ''
+  else
+    let g:unite_source_grep_command = 'grep_vim'
+    let g:unite_source_grep_default_opts = ''
+    let g:unite_source_grep_recursive_opt = ''
+  endif
+
+  "nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -auto-preview<CR>
+  nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -no-quit <CR>
   nnoremap <leader>A :<C-u>execute 'Unite grep:.::' . expand("<cword>") .
         \ ' -default-action=above -auto-preview'<CR>
   " }}}
@@ -489,9 +522,10 @@ nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<C
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
 nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite source<CR>
+nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
 " }}}
 
-if has('python') "{{{ LoadPythonDelayed
+if 0 && has('python') "{{{ LoadPythonDelayed
 function! LoadPythonDelayed()
 
 python << ENDP
@@ -510,6 +544,8 @@ return ''
 endfunction
 
 call LoadPythonDelayed()
+else
+  call LoadUnite()
 endif
 "}}}
 "==============================================================================}}}
@@ -1002,8 +1038,12 @@ command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 "fix not having <c-i> for the jumplist after mapping tab
 command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
-" Change to Current's File Folder
+" path related commands {{{
+
+" change to path of current file
 command! ChgDirCurrFileFolder lcd %:p:h
+" print current files pwd
+command! Pcp echo expand('%:p')
 " }}}
 
 " maximize window vertically
