@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Apr 2013.
+" Last Modified: 19 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -149,7 +149,6 @@ function! neocomplcache#init#_others() "{{{
 
   " Set completefunc.
   let &completefunc = 'neocomplcache#complete#manual_complete'
-  let &l:completefunc = 'neocomplcache#complete#manual_complete'
 
   " For auto complete keymappings.
   call neocomplcache#mappings#define_default_mappings()
@@ -706,22 +705,7 @@ function! neocomplcache#init#_sources(source_names) "{{{
         continue
       endif
 
-      let sources[source_name] = source
-      let source.loaded = 1
-
-      if (source.kind ==# 'complfunc' || source.kind ==# 'plugin')
-            \ && has_key(source, 'initialize')
-        try
-          call source.initialize()
-        catch
-          call neocomplcache#print_error(v:throwpoint)
-          call neocomplcache#print_error(v:exception)
-          call neocomplcache#print_error(
-                \ 'Error occured in source''s initialize()!')
-          call neocomplcache#print_error(
-                \ 'Source name is ' . source.name)
-        endtry
-      endif
+      call neocomplcache#define_source(source)
     endfor
 
     if name == '_'
@@ -729,6 +713,53 @@ function! neocomplcache#init#_sources(source_names) "{{{
       let s:runtimepath_save = &runtimepath
     endif
   endfor
+endfunction"}}}
+
+function! neocomplcache#init#_source(source) "{{{
+  let default_source = {
+        \ 'filetypes' : {},
+        \ 'hooks' : {},
+        \ }
+
+  let source = extend(default_source, a:source)
+
+  let source.loaded = 0
+  " Source kind convertion.
+  if source.kind ==# 'plugin'
+    let source.kind = 'keyword'
+  elseif source.kind ==# 'ftplugin' || source.kind ==# 'complfunc'
+    let source.kind = 'manual'
+  endif
+
+  if !has_key(source, 'rank')
+    " Set default rank.
+    let source.rank = (source.kind ==# 'keyword') ? 5 :
+          \ empty(source.filetypes) ? 10 : 100
+  endif
+
+  if !has_key(source, 'required_pattern_length')
+    " Set required_pattern_length.
+    let source.required_pattern_length = (source.kind ==# 'keyword') ?
+          \ g:neocomplcache_auto_completion_start_length : 0
+  endif
+
+  " Initialize sources.
+  if empty(source.filetypes) && has_key(source, 'initialize')
+    try
+      call source.initialize()
+    catch
+      call neocomplcache#print_error(v:throwpoint)
+      call neocomplcache#print_error(v:exception)
+      call neocomplcache#print_error(
+            \ 'Error occured in source''s initialize()!')
+      call neocomplcache#print_error(
+            \ 'Source name is ' . source.name)
+    endtry
+
+    let source.loaded = 1
+  endif
+
+  return source
 endfunction"}}}
 
 let &cpo = s:save_cpo
