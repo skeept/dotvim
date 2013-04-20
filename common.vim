@@ -183,9 +183,6 @@ vnoremap aa VGo1G
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
-nnoremap <Leader>rr :<C-U>call CaptureToRegisterU()<CR>
-nnoremap <Leader>rs :call RedirToScratch()<CR>
-
 function! CaptureToRegisterU()
   "enable/disable capture of output to register u
   let s:msg = ""
@@ -233,12 +230,16 @@ function! CaptureOutFun(cmd, scratch)
   endif
   normal "up'[
 endfunction
+
 command! -nargs=* CaptureOut silent call CaptureOutFun("<args>", 0)
 command! -nargs=* CaptureOutScratch silent call CaptureOutFun("<args>", 1)
+
 nnoremap ,co :CaptureOut<SPACE>
 nnoremap <Leader>co :CaptureOut<SPACE>
 nnoremap ,cq :CaptureOutScratch<SPACE>
 nnoremap <Leader>cq :CaptureOutScratch<SPACE>
+nnoremap <Leader>rr :<C-U>call CaptureToRegisterU()<CR>
+nnoremap <Leader>rs :call RedirToScratch()<CR>
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{
