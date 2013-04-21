@@ -67,6 +67,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
 set wildignore+=tags,cscope.out,*.db,*.pdf
+set wildignore+=GTAGS,GRTAGS,GPATH
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -481,9 +482,10 @@ function! LoadUnite() "{{{
 	\ -prompt=%\  buffer file_mru bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-  nnoremap ,uf :<C-u>Unite source<CR>
-  nnoremap ,uu :<C-u>Unite source -resume<CR>
-  nnoremap ,rr :<C-u>UniteResume<CR>
+  nnoremap ,uf :<C-U>Unite source<CR>
+  nnoremap ,uu :<C-U>Unite source -resume<CR>
+  nnoremap ,rr :<C-U>UniteResume<CR>
+  nnoremap ,rd :<C-U>Unite -buffer-name=mru_folders -resume directory_mru<CR>
   "nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
 
@@ -583,12 +585,13 @@ noremap ,pd :CtrlPCurWD<CR>
 noremap ,pj :CtrlPBufTagAll<CR>
 noremap ,pf :CtrlPCurFile<CR>
 noremap ,pa :CtrlPShowArr<CR>
+nnoremap ,pc :CtrlPBookmarkDir<CR>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
          \ }
 let g:ctrlp_map = ''
-command! CtrlPShowArr call CtrlpShowArrFun()
+command! CtrlPShowArr call CtrlpShowArrFun(-1)
 function! CtrlpShowArrFun(count)
   let i = 0
   let msg = ''
@@ -603,7 +606,7 @@ function! CtrlpShowArrFun(count)
   echo msg
 endfunction
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
-      \'Root', 'Tag', 'CurFile']
+      \'Root', 'Tag', 'CurFile', 'BookmarkDir']
 nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 noremap ,b :CtrlPBuffer<CR>
