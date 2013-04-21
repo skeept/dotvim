@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: filename_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Apr 2013.
+" Last Modified: 20 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,19 +29,14 @@ set cpo&vim
 
 let s:source = {
       \ 'name' : 'filename_complete',
-      \ 'kind' : 'complfunc',
+      \ 'kind' : 'manual',
       \ 'mark' : '[F]',
+      \ 'rank' : 3,
+      \ 'required_pattern_length' :
+      \        g:neocomplcache_auto_completion_start_length,
       \}
 
 function! s:source.initialize() "{{{
-  " Initialize.
-  call neocomplcache#set_completion_length(
-        \ 'filename_complete', g:neocomplcache_auto_completion_start_length)
-
-  " Set rank.
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_source_rank',
-        \ 'filename_complete', 3)
 endfunction"}}}
 function! s:source.finalize() "{{{
 endfunction"}}}

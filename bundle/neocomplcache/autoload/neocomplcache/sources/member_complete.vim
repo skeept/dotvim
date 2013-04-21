@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: member_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Mar 2013.
+" Last Modified: 20 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,8 +34,10 @@ endif
 
 let s:source = {
       \ 'name' : 'member_complete',
-      \ 'kind' : 'complfunc',
+      \ 'kind' : 'manual',
       \ 'mark' : '[M]',
+      \ 'rank' : 5,
+      \ 'required_pattern_length' : 0,
       \}
 
 function! s:source.initialize() "{{{
@@ -45,14 +47,6 @@ function! s:source.initialize() "{{{
     autocmd InsertEnter,InsertLeave *
           \ call neocomplcache#sources#member_complete#caching_current_line()
   augroup END"}}}
-
-  " Set rank.
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_source_rank',
-        \ 'member_complete', 5)
-
-  " Set completion length.
-  call neocomplcache#set_completion_length('member_complete', 0)
 
   " Initialize member prefix patterns. "{{{
   if !exists('g:neocomplcache_member_prefix_patterns')

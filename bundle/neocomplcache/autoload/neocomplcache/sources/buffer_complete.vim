@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Apr 2013.
+" Last Modified: 20 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,8 +34,11 @@ endif
 
 let s:source = {
       \ 'name' : 'buffer_complete',
-      \ 'kind' : 'complfunc',
+      \ 'kind' : 'manual',
       \ 'mark' : '[B]',
+      \ 'rank' : 5,
+      \ 'required_pattern_length' :
+      \     g:neocomplcache_auto_completion_start_length,
       \}
 
 function! s:source.initialize() "{{{
@@ -51,11 +54,6 @@ function! s:source.initialize() "{{{
           \ call neocomplcache#sources#buffer_complete#caching_current_line()
   augroup END"}}}
 
-  " Set rank.
-  call neocomplcache#util#set_default_dictionary(
-        \ 'g:neocomplcache_source_rank',
-        \ 'buffer_complete', 5)
-
   " Create cache directory.
   if !isdirectory(neocomplcache#get_temporary_directory() . '/buffer_cache')
     call mkdir(neocomplcache#get_temporary_directory() . '/buffer_cache', 'p')
@@ -68,9 +66,6 @@ function! s:source.initialize() "{{{
   let s:disable_caching_list = {}
   let s:async_dictionary_list = {}
   "}}}
-
-  call neocomplcache#set_completion_length('buffer_complete',
-        \ g:neocomplcache_auto_completion_start_length)
 
   call s:check_source()
 endfunction
