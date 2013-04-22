@@ -961,7 +961,7 @@ function! SetPdfDestination(...)
   let g:did_setpdfdestination = 1
   let g:fix_pdf_dest_target = expand('%:p:h') . '/' . g:fix_pdf_dest
   nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
-  command! -complete=file -nargs=* CompileView
+  command! -complete=file -nargs=* CompileViewLatex
         \ exec "!start latexmk -pvc " . g:fix_pdf_dest_target
 endfunction
 
