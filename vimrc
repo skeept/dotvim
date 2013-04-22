@@ -462,7 +462,7 @@ function! MyThesisEnv(...)
 
 endfunction
 
-command! -complete=file -nargs=* Mt call MyThesisEnv(<f-args>)
+command! -complete=file -nargs=* Mtorig call MyThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplcache ============================================={{{
