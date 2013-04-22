@@ -455,8 +455,11 @@ function! s:unite_my_settings()"{{{
   nmap <buffer> s jp
   nmap <buffer> S kp
 
-  " <C-l>: manual neocomplcache completion.
-  inoremap <buffer> <C-;> <C-x><C-u><C-p><Down>
+  " <C-L>: manual neocomplcache completion.
+  inoremap <buffer> <C-;> <C-X><C-U><C-P><Down>
+
+  inoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
+  nnoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
 
   " Start insert.
   "let g:unite_enable_start_insert = 1
@@ -943,15 +946,25 @@ function! SetPdfDestination(...)
   else
     let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
   endif
+
+  if has("gui")
+    winpos 0 0
+    set guioptions-=m "no menu bar for now
+    set lines=100 columns=91
+  endif
+
   let g:did_setpdfdestination = 1
+  let g:fix_pdf_dest_target = expand('%:p:h') . '/' . g:fix_pdf_dest
   nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
+  command! -complete=file -nargs=* MtCV
+        \exec "!start latexmk -pvc " . g:fix_pdf_dest_target
 endfunction
 
 function! FixForwardSeach()
   if !exists("g:did_setpdfdestination")
     call SetPdfDestination()
   endif
-  let target = expand('%:p:h') . '/' . g:fix_pdf_dest . '.pdf'
+  let target = g:fix_pdf_dest_target . '.pdf'
   let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search " . expand('%:p') . ' ' . line('.') . ' ' . target
   let execString = 'silent! !start ' . cmd
   exe execString
