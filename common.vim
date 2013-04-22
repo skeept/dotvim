@@ -947,6 +947,11 @@ function! SetPdfDestination(...)
     let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
   endif
 
+  "just change to the folder of the current file already. Should be there in
+  "the first place
+  silent exe "cd " . expand('%:p:h')
+  echo "changed folder to " . expand('%p:h')
+
   if has("gui")
     winpos 0 0
     set guioptions-=m "no menu bar for now
@@ -956,8 +961,8 @@ function! SetPdfDestination(...)
   let g:did_setpdfdestination = 1
   let g:fix_pdf_dest_target = expand('%:p:h') . '/' . g:fix_pdf_dest
   nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
-  command! -complete=file -nargs=* MtCV
-        \exec "!start latexmk -pvc " . g:fix_pdf_dest_target
+  command! -complete=file -nargs=* CompileView
+        \ exec "!start latexmk -pvc " . g:fix_pdf_dest_target
 endfunction
 
 function! FixForwardSeach()
@@ -965,11 +970,12 @@ function! FixForwardSeach()
     call SetPdfDestination()
   endif
   let target = g:fix_pdf_dest_target . '.pdf'
-  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search " . expand('%:p') . ' ' . line('.') . ' ' . target
+  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search "
+        \ . expand('%:p') . ' ' . line('.') . ' ' . target
   let execString = 'silent! !start ' . cmd
   exe execString
 endfunction
-command! -complete=file -nargs=* FixForwardSeach call SetPdfDestination(<f-args>)
+command! -complete=file -nargs=* Mt call SetPdfDestination(<f-args>)
 "==============================================================================}}}
 
 "================== Other commands/mappings/settings =========================={{{
