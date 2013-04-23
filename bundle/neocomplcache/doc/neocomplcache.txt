@@ -35,6 +35,8 @@ Examples		|neocomplcache-examples|
 Sources			|neocomplcache-sources|
   User sources		  |neocomplcache-user-sources|
 Create source		|neocomplcache-create-source|
+  Source attributes       |neocomplcache-source-attributes|
+  Candidate attributes   |neocomplcache-candidate-attributes|
 FAQ			|neocomplcache-faq|
 TODO			|neocomplcache-todo|
 Changelog		|neocomplcache-changelog|
@@ -1321,6 +1323,69 @@ required_pattern_length
 			    |g:neocomplcache_auto_completion_start_length|
 			Else : 0
 
+					*neocomplcache-source-attribute-hooks*
+hooks			Dictionary		(Optional)
+			You may put hook functions in this dictionary
+			in which the key is the position to hook and
+			and the value is the reference to the function
+			to be called.  The following hook functions are
+			defined:
+
+				*neocomplcache-source-attribute-hooks-on_init*
+			on_init
+			Called when initializing the source.
+			This function takes {context} as its parameters.
+				*neocomplcache-source-attribute-initialize*
+			Note initialize() attribute is obsolete interface for
+			initialization.
+
+				*neocomplcache-source-attribute-hooks-on_final*
+			on_final
+			Called after executing |:NeoComplCacheDisable|.
+			This function takes {context} as its parameters.
+				*neocomplcache-source-attribute-finalize*
+			Note finalize() attribute is obsolete interface for
+			finalization.
+
+------------------------------------------------------------------------------
+CANDIDATE ATTRIBUTES			*neocomplcache-candidate-attributes*
+
+				*neocomplcache-candidate-attribute-name*
+word			String		(Required)
+			The completion word of a candidate. It is used for
+			matching inputs.
+
+				*neocomplcache-candidate-attribute-abbr*
+abbr			String		(Optional)
+			The abbreviation of a candidate. It is displayed in
+			popup window. It is omitted by
+			|g:neocomplcache_max_keyword_width|.
+
+				*neocomplcache-candidate-attribute-kind*
+kind			String		(Optional)
+			The kind of a candidate. It is displayed in popup
+			window.
+
+				*neocomplcache-candidate-attribute-menu*
+menu			String		(Optional)
+			The menu information of a candidate. It is displayed
+			in popup window.
+
+				*neocomplcache-candidate-attribute-info*
+info			String		(Optional)
+			The preview information of a candidate. If
+			'completeopt' contains "preview", it will be displayed
+			in |preview-window|.
+
+				*neocomplcache-candidate-attribute-rank*
+rank			Number		(Optional)
+			The completion priority.
+
+		*neocomplcache-candidate-attribute-neocomplcache__refresh*
+neocomplcache__refresh	Number		(Optional)
+			If it is non-zero, neocomplcache refresh
+			automatically.
+
 ==============================================================================
 FAQ						*neocomplcache-faq*
 
@@ -1590,6 +1655,7 @@ CHANGELOG					*neocomplcache-changelog*
 
 2013-04-21
 - Changed g:neocomplcache_enable_auto_close_preview default value.
+- Fixed initialization problem using neocomplcache#initialize().
 
 2013-04-11
 - Improved save foldinfo feature.

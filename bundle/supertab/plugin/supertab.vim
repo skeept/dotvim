@@ -459,13 +459,10 @@ function! s:SuperTabHelp() " {{{
     setlocal buftype=nowrite
     setlocal bufhidden=delete
 
-    let saved = @"
-    let @" = s:tabHelp
-    silent put
+    silent put =s:tabHelp
     call cursor(1, 1)
-    silent 1,delete
+    silent 1,delete _
     call cursor(4, 1)
-    let @" = saved
     exec "resize " . line('$')
 
     syntax match Special "|.\{-}|"
@@ -775,30 +772,6 @@ endfunction " }}}
 
   exec 'imap ' . g:SuperTabMappingForward . ' <Plug>SuperTabForward'
   exec 'imap ' . g:SuperTabMappingBackward . ' <Plug>SuperTabBackward'
-
-  " After hitting <Tab>, hitting it once more will go to next match
-  " (because in XIM mode <c-n> and <c-p> mappings are ignored)
-  " and wont start a brand new completion
-  " The side effect, that in the beginning of line <c-n> and <c-p> inserts a
-  " <Tab>, but I hope it may not be a problem...
-  let ctrl_n = maparg('<c-n>', 'i')
-  if ctrl_n != ''
-    let ctrl_n = substitute(ctrl_n, '<', '<lt>', 'g')
-    exec 'imap <c-n> <c-r>=<SID>ForwardBack("n", "' . ctrl_n . '")<cr>'
-  else
-    imap <c-n> <Plug>SuperTabForward
-  endif
-  let ctrl_p = maparg('<c-p>', 'i')
-  if ctrl_p != ''
-    let ctrl_p = substitute(ctrl_p, '<', '<lt>', 'g')
-    exec 'imap <c-p> <c-r>=<SID>ForwardBack("p", "' . ctrl_p . '")<cr>'
-  else
-    imap <c-p> <Plug>SuperTabBackward
-  endif
-  function! s:ForwardBack(command, map)
-    exec "let map = \"" . escape(a:map, '<') . "\""
-    return pumvisible() ? SuperTab(a:command) : map
-  endfunction
 
   if g:SuperTabCrMapping
     let expr_map = 0
