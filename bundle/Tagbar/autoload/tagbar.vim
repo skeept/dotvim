@@ -797,8 +797,8 @@ function! s:InitTypes() abort
 
     call s:LoadUserTypeDefs()
 
-    for type in values(s:known_types)
-        call s:CreateTypeKinddict(type)
+    for typeinfo in values(s:known_types)
+        call typeinfo.createKinddict()
     endfor
 
     let s:type_init_done = 1
@@ -819,47 +819,13 @@ function! s:LoadUserTypeDefs(...) abort
         let defdict = tagbar#getusertypes()
     endif
 
-    " Transform the 'kind' definitions into dictionary format
-    for def in values(defdict)
-        if has_key(def, 'kinds')
-            let kinds = def.kinds
-            let def.kinds = []
-            for kind in kinds
-                let kindlist = split(kind, ':')
-                let kinddict = {'short' : kindlist[0], 'long' : kindlist[1]}
-                if len(kindlist) == 4
-                    let kinddict.fold = kindlist[2]
-                    let kinddict.stl  = kindlist[3]
-                elseif len(kindlist) == 3
-                    let kinddict.fold = kindlist[2]
-                    let kinddict.stl  = 1
-                else
-                    let kinddict.fold = 0
-                    let kinddict.stl  = 1
-                endif
-                call add(def.kinds, kinddict)
-            endfor
-        endif
-
-        " If the user only specified one of kind2scope and scope2kind use it
-        " to generate the other one
-        if has_key(def, 'kind2scope') && !has_key(def, 'scope2kind')
-            let def.scope2kind = {}
-            for [key, value] in items(def.kind2scope)
-                let def.scope2kind[value] = key
-            endfor
-        elseif has_key(def, 'scope2kind') && !has_key(def, 'kind2scope')
-            let def.kind2scope = {}
-            for [key, value] in items(def.scope2kind)
-                let def.kind2scope[value] = key
-            endfor
-        endif
+    let transformed = {}
+    for [type, def] in items(defdict)
+        let transformed[type] = s:TransformUserTypeDef(def)
     endfor
-    unlet! key value
 
-    for [key, value] in items(defdict)
-        if !has_key(s:known_types, key) ||
-         \ (has_key(value, 'replace') && value.replace)
+    for [key, value] in items(transformed)
+        if !has_key(s:known_types, key) || get(value, 'replace', 0)
             let s:known_types[key] = s:TypeInfo.New(value)
         else
             call extend(s:known_types[key], value)
@@ -871,15 +837,38 @@ function! s:LoadUserTypeDefs(...) abort
     endif
 endfunction
 
-" s:CreateTypeKinddict() {{{2
-function! s:CreateTypeKinddict(type) abort
-    " Create a dictionary of the kind order for fast access in sorting
-    " functions
-    let i = 0
-    for kind in a:type.kinds
-        let a:type.kinddict[kind.short] = i
-        let i += 1
-    endfor
+" s:TransformUserTypeDef() {{{2
+" Transform the user definitions into the internal format
+function! s:TransformUserTypeDef(def) abort
+    let newdef = copy(a:def)
+
+    if has_key(a:def, 'kinds')
+        let newdef.kinds = []
+        let kinds = a:def.kinds
+        for kind in kinds
+            let kindlist = split(kind, ':')
+            let kinddict = {'short' : kindlist[0], 'long' : kindlist[1]}
+            let kinddict.fold = get(kindlist, 2, 0)
+            let kinddict.stl  = get(kindlist, 3, 1)
+            call add(newdef.kinds, kinddict)
+        endfor
+    endif
+
+    " If the user only specified one of kind2scope and scope2kind then use it
+    " to generate the respective other
+    if has_key(a:def, 'kind2scope') && !has_key(a:def, 'scope2kind')
+        let newdef.scope2kind = {}
+        for [key, value] in items(a:def.kind2scope)
+            let newdef.scope2kind[value] = key
+        endfor
+    elseif has_key(a:def, 'scope2kind') && !has_key(a:def, 'kind2scope')
+        let newdef.kind2scope = {}
+        for [key, value] in items(a:def.scope2kind)
+            let newdef.kind2scope[value] = key
+        endfor
+    endif
+
+    return newdef
 endfunction
 
 " s:RestoreSession() {{{2
@@ -983,7 +972,7 @@ function! s:CreateAutocommands() abort
 endfunction
 
 " s:PauseAutocommands() {{{2
-" Toggle autocommands 
+" Toggle autocommands
 function! s:PauseAutocommands() abort
     if s:autocommands_enabled == 1
         autocmd! TagbarAutoCmds
@@ -1503,11 +1492,21 @@ function! s:TypeInfo.getKind(kind) abort dict
     return self.kinds[idx]
 endfunction
 
+" s:TypeInfo.createKinddict() {{{3
+" Create a dictionary of the kind order for fast access in sorting functions
+function! s:TypeInfo.createKinddict() abort dict
+    let i = 0
+    for kind in self.kinds
+        let self.kinddict[kind.short] = i
+        let i += 1
+    endfor
+endfunction
+
 " File info {{{2
 let s:FileInfo = {}
 
 " s:FileInfo.New() {{{3
-function! s:FileInfo.New(fname, ftype) abort dict
+function! s:FileInfo.New(fname, ftype, typeinfo) abort dict
     let newobj = copy(self)
 
     " The complete file path
@@ -1533,10 +1532,9 @@ function! s:FileInfo.New(fname, ftype) abort dict
 
     " Dictionary of the folding state of 'kind's, indexed by short name
     let newobj.kindfolds = {}
-    let typeinfo = s:known_types[a:ftype]
-    let newobj.typeinfo = typeinfo
+    let newobj.typeinfo = a:typeinfo
     " copy the default fold state from the type info
-    for kind in typeinfo.kinds
+    for kind in a:typeinfo.kinds
         let newobj.kindfolds[kind.short] =
                     \ g:tagbar_foldlevel == 0 ? 1 : kind.fold
     endfor
@@ -1544,7 +1542,7 @@ function! s:FileInfo.New(fname, ftype) abort dict
     " Dictionary of dictionaries of the folding state of individual tags,
     " indexed by kind and full path
     let newobj.tagfolds = {}
-    for kind in typeinfo.kinds
+    for kind in a:typeinfo.kinds
         let newobj.tagfolds[kind.short] = {}
     endfor
 
@@ -1566,8 +1564,7 @@ function! s:FileInfo.reset() abort dict
     let self._tagfolds_old = self.tagfolds
     let self.tagfolds = {}
 
-    let typeinfo = s:known_types[self.ftype]
-    for kind in typeinfo.kinds
+    for kind in self.typeinfo.kinds
         let self.tagfolds[kind.short] = {}
     endfor
 endfunction
@@ -1905,13 +1902,22 @@ function! s:ProcessFile(fname, ftype) abort
         return
     endif
 
+    let typeinfo = s:known_types[a:ftype]
+
     " If the file has only been updated preserve the fold states, otherwise
     " create a new entry
     if s:known_files.has(a:fname) && !empty(s:known_files.get(a:fname))
         let fileinfo = s:known_files.get(a:fname)
+        let typeinfo = fileinfo.typeinfo
         call fileinfo.reset()
     else
-        let fileinfo = s:FileInfo.New(a:fname, a:ftype)
+        silent! execute 'doautocmd <nomodeline> TagbarProjects User ' . a:fname
+        if exists('b:tagbar_type')
+            let typeinfo = extend(copy(typeinfo),
+                                \ s:TransformUserTypeDef(b:tagbar_type))
+            call typeinfo.createKinddict()
+        endif
+        let fileinfo = s:FileInfo.New(a:fname, a:ftype, typeinfo)
     endif
 
     " Use a temporary files for ctags processing instead of the original one.
@@ -1926,7 +1932,7 @@ function! s:ProcessFile(fname, ftype) abort
     call writefile(getbufline(fileinfo.bufnr, 1, '$'), tempfile)
     let fileinfo.mtime = getftime(tempfile)
 
-    let ctags_output = s:ExecuteCtagsOnFile(tempfile, a:fname, a:ftype)
+    let ctags_output = s:ExecuteCtagsOnFile(tempfile, a:fname, typeinfo)
 
     call delete(tempfile)
 
@@ -1940,11 +1946,10 @@ function! s:ProcessFile(fname, ftype) abort
         call s:LogDebugMessage('Ctags output empty')
         " No need to go through the tag processing if there are no tags, and
         " preserving the old fold state isn't necessary either
-        call s:known_files.put(s:FileInfo.New(a:fname, a:ftype), a:fname)
+        call s:known_files.put(s:FileInfo.New(a:fname, a:ftype,
+                                            \ s:known_types[a:ftype]), a:fname)
         return
     endif
-
-    let typeinfo = fileinfo.typeinfo
 
     call s:LogDebugMessage('Filetype tag kinds: ' .
                          \ string(keys(typeinfo.kinddict)))
@@ -2025,42 +2030,52 @@ function! s:ProcessFile(fname, ftype) abort
 endfunction
 
 " s:ExecuteCtagsOnFile() {{{2
-function! s:ExecuteCtagsOnFile(fname, realfname, ftype) abort
+function! s:ExecuteCtagsOnFile(fname, realfname, typeinfo) abort
     call s:LogDebugMessage('ExecuteCtagsOnFile called [' . a:fname . ']')
 
-    let typeinfo = s:known_types[a:ftype]
-
-    if has_key(typeinfo, 'ctagsargs')
-        let ctags_args = ' ' . typeinfo.ctagsargs . ' '
+    if has_key(a:typeinfo, 'ctagsargs') && type(a:typeinfo.ctagsargs) == type('')
+        " if ctagsargs is a string, prepend and append space separators
+        let ctags_args = ' ' . a:typeinfo.ctagsargs . ' '
+    elseif has_key(a:typeinfo, 'ctagsargs') && type(a:typeinfo.ctagsargs) == type([])
+        let ctags_args = a:typeinfo.ctagsargs
+    " otherwise ctagsargs is not defined or not defined as a valid type
     else
-        let ctags_args  = ' -f - '
-        let ctags_args .= ' --format=2 '
-        let ctags_args .= ' --excmd=pattern '
-        let ctags_args .= ' --fields=nksSa '
-        let ctags_args .= ' --extra= '
-        let ctags_args .= ' --sort=yes '
+        "Prefer constructing ctags_args as a list rather than a string
+        "See s:EscapeCtagsCmd() - It's a best practice to shellescape()
+        "each arg separately because in special cases where space is
+        "intended to be in an argument, spaces in a single ctag_args
+        "string would be ambiguous. Is the space an argument separator
+        "or to be included in the argument
+        let ctags_args  = [ '-f',
+                          \ '-',
+                          \ '--format=2',
+                          \ '--excmd=pattern',
+                          \ '--fields=nksSa',
+                          \ '--extra=',
+                          \ '--sort=yes'
+                          \ ]
 
         " Include extra type definitions
-        if has_key(typeinfo, 'deffile')
-            let ctags_args .= ' --options=' . typeinfo.deffile . ' '
+        if has_key(a:typeinfo, 'deffile')
+            let ctags_args += ['--options=' . a:typeinfo.deffile]
         endif
 
-        let ctags_type = typeinfo.ctagstype
+        let ctags_type = a:typeinfo.ctagstype
 
         let ctags_kinds = ''
-        for kind in typeinfo.kinds
+        for kind in a:typeinfo.kinds
             let ctags_kinds .= kind.short
         endfor
 
-        let ctags_args .= ' --language-force=' . ctags_type .
-                        \ ' --' . ctags_type . '-kinds=' . ctags_kinds . ' '
+        let ctags_args += ['--language-force=' . ctags_type]
+        let ctags_args += ['--' . ctags_type . '-kinds=' . ctags_kinds]
     endif
 
-    if has_key(typeinfo, 'ctagsbin')
+    if has_key(a:typeinfo, 'ctagsbin')
         " reset 'wildignore' temporarily in case *.exe is included in it
         let wildignore_save = &wildignore
         set wildignore&
-        let ctags_bin = expand(typeinfo.ctagsbin)
+        let ctags_bin = expand(a:typeinfo.ctagsbin)
         let &wildignore = wildignore_save
     else
         let ctags_bin = g:tagbar_ctags_bin
@@ -3195,32 +3210,79 @@ endfunction
 " Assemble the ctags command line in a way that all problematic characters are
 " properly escaped and converted to the system's encoding
 " Optional third parameter is a file name to run ctags on
+" Note: The second parameter (a:args) can be a list of args or
+"       a single string of the args.
+"       When a:args is a list, each argument in the list will be escaped for the
+"       current &shell type.
+"       When a:args is a string, all arguments should be escaped appropriately
+"       (if required). In most use cases no escaping is required so a string
+"       is acceptable. But in cases where arguments may need to be escaped
+"       differently for each &shell type, then pass a list of arguments.
 function! s:EscapeCtagsCmd(ctags_bin, args, ...) abort
     call s:LogDebugMessage('EscapeCtagsCmd called')
     call s:LogDebugMessage('ctags_bin: ' . a:ctags_bin)
-    call s:LogDebugMessage('ctags_args: ' . a:args)
+    if type(a:args)==type('')
+        call s:LogDebugMessage('ctags_args (is a string): ' . a:args)
+    elseif type(a:args)==type([])
+        call s:LogDebugMessage('ctags_args (is a list): ' . string(a:args))
+    endif
 
     if exists('+shellslash')
         let shellslash_save = &shellslash
         set noshellslash
     endif
 
-    if a:0 == 1
-        let fname = shellescape(a:1)
+    "Set up 0th argument of ctags_cmd
+    "a:ctags_bin may have special characters that require escaping.
+    if &shell =~ 'cmd\.exe$' && a:ctags_bin !~ '\s'
+        "For windows cmd.exe, escaping the 0th argument can cause
+        "problems if it references a batch file and the batch file uses %~dp0.
+        "So for windows cmd.exe, only escape the 0th argument iff necessary.
+        "Only known necessary case is when ctags_bin executable filename has
+        "whitespace character(s).
+
+        "  Example: If 0th argument is wrapped in double quotes AND it is not
+        "  an absolute path to ctags_bin, but rather an executable in %PATH%,
+        "  then %~dp0 resolves to the current working directory rather than
+        "  the batch file's directory. Batch files like this generally exepect
+        "  and depend on %~dp0 to resolve the batch file's directory.
+        "  Note: Documentation such as `help cmd.exe` and
+        "  http://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/cmd.mspx?mfr=true
+        "  suggest other special characters that require escaping for command
+        "  line completion.  But tagbar.vim does not use the command line
+        "  completion feature of cmd.exe and testing shows that the only special
+        "  character that needs to be escaped for tagbar.vim is <space> for
+        "  windows cmd.exe.
+        let ctags_cmd = a:ctags_bin
     else
-        let fname = ''
+        let ctags_cmd = shellescape(a:ctags_bin)
     endif
 
-    let ctags_cmd = shellescape(a:ctags_bin) . ' ' . a:args . ' ' . fname
+    "Add additional arguments to ctags_cmd
+    if type(a:args)==type('')
+        "When a:args is a string, append the arguments
+        "Note: In this case, do not attempt to shell escape a:args string.
+        "This function expects the string to already be escaped properly for
+        "the shell type. Why not escape? Because it could be ambiguous about
+        "whether a space is an argument separator or included in the argument.
+        "Since escaping rules vary from shell to shell, it is better to pass a
+        "list of arguments to a:args. With a list, each argument is clearly
+        "separated, so shellescape() can calculate the appropriate escaping
+        "for each argument for the current &shell.
+        let ctags_cmd .= ' ' . a:args
+    elseif type(a:args)==type([])
+        "When a:args is a list, shellescape() each argument and append ctags_cmd
+        "Note: It's a better practice to shellescape() each argument separately so that
+        "spaces used as a separator between arguments can be distinguished with
+        "spaces used inside a single argument.
+        for arg in a:args
+            let ctags_cmd .= ' ' . shellescape(arg)
+        endfor
+    endif
 
-    " Stupid cmd.exe quoting
-    if &shell =~ 'cmd\.exe'
-        let reserved_chars = '&()@^'
-        " not allowed in filenames, but escape anyway just in case
-        let reserved_chars .= '<>|'
-        let pattern = join(split(reserved_chars, '\zs'), '\|')
-        let ctags_cmd = substitute(ctags_cmd, '\V\(' . pattern . '\)',
-                                 \ '^\0', 'g')
+    "if a filename was specified, add filename as final argument to ctags_cmd.
+    if a:0 == 1
+        let ctags_cmd .= ' ' . shellescape(a:1)
     endif
 
     if exists('+shellslash')
@@ -3589,7 +3651,7 @@ function! tagbar#RestoreSession() abort
 endfunction
 
 function! tagbar#PauseAutocommands() abort
-    call s:PauseAutocommands() 
+    call s:PauseAutocommands()
 endfunction
 
 " }}}2
