@@ -37,6 +37,7 @@ Sources			|neocomplcache-sources|
 Create source		|neocomplcache-create-source|
   Source attributes       |neocomplcache-source-attributes|
   Candidate attributes   |neocomplcache-candidate-attributes|
+FILTERS			|neocomplcache-filters|
 FAQ			|neocomplcache-faq|
 TODO			|neocomplcache-todo|
 Changelog		|neocomplcache-changelog|
@@ -398,14 +399,6 @@ g:neocomplcache_lock_buffer_name_pattern
 		empty character string, neocomplcache will ignore.
 
 		Default value is ''.
-
-g:neocomplcache_compare_function	*g:neocomplcache_compare_function*
-		This variable set compare candidates function.
-		The compare function specification is same to |sort()|
-		compare function.  If you change compare function, you must
-		create compare function.
-
-		Default value is 'neocomplcache#compare_rank'.
 
 g:neocomplcache_enable_prefetch		*g:neocomplcache_enable_prefetch*
 		This variable controls whether neocomplcache prefetches.  If
@@ -854,14 +847,14 @@ g:neocomplcache_source_rank			*g:neocomplcache_source_rank*
 		filename_complete : 3
 		dictionary_complete : 4
 		buffer_complete : 5
-		syntax_complete : 7
+		syntax_complete : 4
 		include_complete : 8
 		snippets_complete : 8
 		vim_complete : 100
 		omni_complete : 50
-		other plugin sources : 5
-		other completefunc sources : 10
-		other ftplugin sources : 100
+		other keyword sources : 5
+		other manual sources : 10
+		other manual sources with filetype : 100
 
 		Default value is set by each sources.
 >
@@ -1347,6 +1340,54 @@ hooks			Dictionary		(Optional)
 			Note finalize() attribute is obsolete interface for
 			finalization.
 
+			*neocomplcache-source-attribute-get_complete_position*
+get_complete_position	Function	(Optional)
+			This function takes {context} as its
+			parameter and returns complete position in current
+			line.
+			Here, {context} is the context information when the
+			source is called(|neocomplcache-notation-{context}|).
+			If you omit it, neocomplcache will use the position
+			using |g:neocomplcache_keyword_patterns|.
+			Note get_keyword_pos() is obsolete interface for
+			get complete position.
+
+			*neocomplcache-source-attribute-gather_candidates*
+gather_candidates	Function	(Required)
+			This function is called in gathering candidates.  If
+			you enabled fuzzy completion by
+			|g:neocomplcache_enable_fuzzy_completion| , this
+			function is called whenever the input string is
+			changed.  This function takes {context} as its
+			parameter and returns a list of {candidate}.
+			Here, {context} is the context information when the
+			source is called(|neocomplcache-notation-{context}|).
+			Note get_complete_words() and get_keyword_list() are
+			obsolete interface for gather candidates.
+			In obsolete interface, |neocomplcache-filters| feature
+			is disabled for compatibility. You should use new
+			interface.
+
+{context}				*neocomplcache-notation-{context}*
+			A dictionary to give context information.
+			The followings are the primary information.
+			The global context information can be acquired
+			by |neocomplcache#get_context()|.
+
+			input			(String)
+				The input string of current line.
+
+			complete_pos		(Number)
+				The complete position of current source.
+
+			complete_str		(String)
+				The complete string of current source.
+
+			source__{name}		(Unknown)	(Optional)
+				Additional source information.
+				Note: Recommend sources save
+				variables instead of s: variables.
+
 ------------------------------------------------------------------------------
 CANDIDATE ATTRIBUTES			*neocomplcache-candidate-attributes*
 
@@ -1385,6 +1426,13 @@ rank			Number		(Optional)
 neocomplcache__refresh	Number		(Optional)
 			If it is non-zero, neocomplcache refresh
 			automatically.
+
+CONTEXT						*neocomplcache-context*
+
+==============================================================================
+FILTERS						*neocomplcache-filters*
+
+Todo
 
 ==============================================================================
 FAQ						*neocomplcache-faq*
@@ -1448,22 +1496,7 @@ But you can use |unite.vim| instead to use quick match.
 
 Q: How can I change the order of candidates? :
 
-A: The default compare function is rank order.  It sorts rank order and
-alphabetical order.  If you select candidates, the candidate's rank will be
-high.  To change compare function, you can change
-|g:neocomplcache_compare_function| value.
-Note: To use rank feature, your Vim's version must be 7.3.549 or above.
->
-	let g:neocomplcache_compare_function = 'neocomplcache#compare_word'
-<
-To make new compare function, please refer |g:neocomplcache_compare_function|.
-
-The built-in compare functions:
-	neocomplcache#compare_rank        : Rank order (default)
-	neocomplcache#compare_word        : Alphabetical order
-	neocomplcache#compare_human       : Human order(slow)
-	neocomplcache#compare_nothing     : Do not sort
-
+A: Todo.
 
 Q: An input problem occurred in using uim-skk or other IMEs:
 
@@ -1646,6 +1679,27 @@ it is too heavy.
 Q: I want to use Pydiction with neocomplcache.
 A: You should set |g:neocomplcache_dictionary_filetype_lists|.
 neocomplcache can load Pydiction dictionary file.
+
+Q: Why neocomplcache uses if_lua? Many people may not be able to use it
+because they do not have the root privilege to recompile vim.
+A:
+Because:
+ 1. Pyhon interface is not available in every Vim environment. For example,
+ Android, iOS, non configured Vim,...
+ 2. Incompatibility with Python2 and Python3. I must rewrite for it.
+ 3. Loading Python interface is slow(10~20ms). But loading Lua interface is
+ too fast(270ns).
+ 4. Python2 and Python3 is not loaded at same time in Unix environment.
+ 5. Python is too big.
+ 6. Python interface is slow than Lua interface(almost twice).
+ 7. Lua interface is stable(no crashed in latest Vim).
+ 8. Using C module(like vimproc, YouCompleteMe) is hard to compile in Windows
+ environment.
+ 9. Using both Python and C like YouCompleteMe is too unstable. Your Vim may
+ be crash or happen a mysterious error.
+ 10. To build if_lua is easy.
+ 11. I think if_lua is the second level language in Vim(The first is Vim
+ script).
 
 ==============================================================================
 TODO						*neocomplcache-todo*

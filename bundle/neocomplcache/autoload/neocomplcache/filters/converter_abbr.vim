@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: variables.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Apr 2013.
+" FILE: converter_abbr.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
+" Last Modified: 24 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,32 +27,30 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplcache#variables#get_frequencies() "{{{
-  if !exists('s:filetype_frequencies')
-    let s:filetype_frequencies = {}
-  endif
-  let filetype = neocomplcache#context_filetype#get(&filetype)
-  if !has_key(s:filetype_frequencies, filetype)
-    let s:filetype_frequencies[filetype] = {}
-  endif
-
-  let frequencies = s:filetype_frequencies[filetype]
-
-  return frequencies
+function! neocomplcache#filters#converter_abbr#define() "{{{
+  return s:converter
 endfunction"}}}
 
-function! neocomplcache#variables#get_sources() "{{{
-  if !exists('s:sources')
-    let s:sources = {}
-  endif
-  return s:sources
-endfunction"}}}
+let s:converter = {
+      \ 'name' : 'converter_abbr',
+      \ 'description' : 'abbr converter',
+      \}
 
-function! neocomplcache#variables#get_filters() "{{{
-  if !exists('s:filters')
-    let s:filters = {}
-  endif
-  return s:filters
+function! s:converter.filter(context) "{{{
+  for candidate in a:context.candidates
+    let abbr = get(candidate, 'abbr', candidate.word)
+    if len(abbr) > g:neocomplcache_max_keyword_width
+      let len = neocomplcache#util#wcswidth(abbr)
+
+      if len > g:neocomplcache_max_keyword_width
+        let candidate.abbr = neocomplcache#util#truncate_smart(
+              \ abbr, g:neocomplcache_max_keyword_width,
+              \ g:neocomplcache_max_keyword_width/2, '..')
+      endif
+    endif
+  endfor
+
+  return a:context.candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo

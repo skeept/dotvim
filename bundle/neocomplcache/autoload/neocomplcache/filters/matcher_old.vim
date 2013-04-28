@@ -1,6 +1,6 @@
 "=============================================================================
-" FILE: variables.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
+" FILE: matcher_old.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 25 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -27,32 +27,28 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplcache#variables#get_frequencies() "{{{
-  if !exists('s:filetype_frequencies')
-    let s:filetype_frequencies = {}
-  endif
-  let filetype = neocomplcache#context_filetype#get(&filetype)
-  if !has_key(s:filetype_frequencies, filetype)
-    let s:filetype_frequencies[filetype] = {}
-  endif
-
-  let frequencies = s:filetype_frequencies[filetype]
-
-  return frequencies
+function! neocomplcache#filters#matcher_old#define() "{{{
+  return s:matcher
 endfunction"}}}
 
-function! neocomplcache#variables#get_sources() "{{{
-  if !exists('s:sources')
-    let s:sources = {}
-  endif
-  return s:sources
-endfunction"}}}
+let s:matcher = {
+      \ 'name' : 'matcher_old',
+      \ 'description' : 'old matcher',
+      \}
 
-function! neocomplcache#variables#get_filters() "{{{
-  if !exists('s:filters')
-    let s:filters = {}
+function! s:matcher.filter(candidates, context) "{{{
+  if a:context.input == ''
+    return neocomplcache#util#filter_matcher(
+          \ a:candidates, '', a:context)
   endif
-  return s:filters
+
+  let candidates = a:candidates
+  for input in a:context.input_list
+    let candidates = neocomplcache#filters#matcher_old#glob_matcher(
+          \ candidates, input, a:context)
+  endfor
+
+  return candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo
