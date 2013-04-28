@@ -214,6 +214,12 @@ g:unite_update_time				*g:unite_update_time*
 
 		The default value is 500.
 
+g:unite_prompt			                *g:unite_prompt*
+		Unite default prompt. Can be set with `-prompt` option for 
+		each unite session.
+
+		The default value is '> '.
+
 g:unite_enable_start_insert			*g:unite_enable_start_insert*
 		If this variable is 1, unite buffer will be in Insert Mode
 		immediately.
@@ -698,6 +704,9 @@ Normal mode mappings.
 <Plug>(unite_print_candidate)		*<Plug>(unite_print_candidate)*
 		Shows the target of the action of the selected candidate.
 
+<Plug>(unite_print_message_log)		*<Plug>(unite_print_message_log)*
+		Shows the message log in current unite buffer.
+
 <Plug>(unite_cursor_top)			*<Plug>(unite_cursor_top)*
 		Moves the cursor to the top of the Unite buffer.
 
@@ -861,6 +870,12 @@ Insert mode mappings.
 <Plug>(unite_redraw)				*i_<Plug>(unite_redraw)*
 		Same to |<Plug>(unite_redraw)|.
 
+<Plug>(unite_print_candidate)		*i_<Plug>(unite_print_candidate)*
+		Same to |<Plug>(unite_print_candidate)|.
+
+<Plug>(unite_print_message_log)		*i_<Plug>(unite_print_message_log)*
+		Same to |<Plug>(unite_print_message_log)|.
+
 <Plug>(unite_new_candidate)			*i_<Plug>(unite_new_candidate)*
 		Same to |<Plug>(unite_new_candidate)|.
 
@@ -891,7 +906,7 @@ M		|<Plug>(unite_toggle_max_candidates)|
 <Tab>		|<Plug>(unite_choose_action)|
 <C-n>		|<Plug>(unite_rotate_next_source)|
 <C-p>		|<Plug>(unite_rotate_previous_source)|
-<C-g>		|<Plug>(unite_print_candidate)|
+<C-g>		|<Plug>(unite_print_message_log)|
 <C-l>		|<Plug>(unite_redraw)|
 <C-h>		|<Plug>(unite_delete_backward_path)|
 gg		|<Plug>(unite_cursor_top)|
@@ -1405,6 +1420,10 @@ context.
 		-auto-preview
 		When you selected a candidate, it runs "preview" action
 		automatically.
+						*unite-options-auto-highlight*
+		-auto-highlight
+		When you selected a candidate, it runs "highlight" action
+		automatically.
 
 						*unite-options-completion*
 		-completion
@@ -1476,13 +1495,12 @@ context.
 					*unite-options-hide-source-names*
 		-hide-source-names
 		Hides source names.
-		Note: This option doesn't hide status line.
 		Note: Source highlight will be overwritten by other sources.
 
 					*unite-options-hide-status-line*
 		-hide-status-line
-		Hides status line.
-		Note: This option doesn't hide source names.
+		Nothing.
+		Note: This option is obsolete.
 
 					*unite-options-max-multi-lines*
 		-max-multi-lines={max-lines}
@@ -1640,7 +1658,8 @@ bookmark	Nominates files or directories you bookmarked as candidates.
 		is used.
 
 		Source arguments:
-		1. Bookmark file name.
+		1. Bookmark file name. 
+		use `*` or `_` to load from all bookmark files
 
 						*unite-source-source*
 source		Nominates Unite source names themselves as candidates.
@@ -2196,6 +2215,8 @@ This kind extends actions of |unite-action-openable|.  Let me explain about
 the additional actions defined in this.
 	open		Jump to the location of the candidate
 	preview		Preview around the location of the candidate
+	highlight	highlight the location of the candidate if the 
+			corresponding buffer is visible
 	replace		Replace selected candidates with |qfreplace| plugin
 
 command						*unite-action-command*
@@ -2883,6 +2904,15 @@ EXAMPLES					*unite-examples*
 	"let g:unite_enable_start_insert = 1
 	"let g:unite_enable_short_source_names = 1
 	
+	" Like ctrlp.vim settings.
+	"let g:unite_enable_start_insert = 1
+	"let g:unite_winheight = 10
+	"let g:unite_split_rule = 'botright'
+	
+	" Prompt choices.
+	"let g:unite_prompt = '❫ '
+	"let g:unite_prompt = '» '
+	
 	autocmd FileType unite call s:unite_my_settings()
 	function! s:unite_my_settings()"{{{
 	  " Overwrite settings.
@@ -2985,6 +3015,11 @@ A:
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2013-04-28
+- Improved unite status line.
+- Improved message behavior.
+- Added <Plug>(unite_print_message_log) mapping.
 
 2013-04-25
 - Fixed unite#clear_message().

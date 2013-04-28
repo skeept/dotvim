@@ -192,7 +192,9 @@ function! unite#do_action(action) "{{{
         \             (mode() ==# 'i' ? "\<C-o>" : ''), string(a:action))
 endfunction"}}}
 function! unite#smart_map(narrow_map, select_map) "{{{
-  return (line('.') <= unite#get_current_unite().prompt_linenr && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
+  return (line('.') <= unite#get_current_unite().prompt_linenr
+        \ && empty(unite#get_marked_candidates())) ?
+        \   a:narrow_map : a:select_map
 endfunction"}}}
 function! unite#start_complete(sources, ...) "{{{
   let sources = type(a:sources) == type('') ?
@@ -285,7 +287,6 @@ let s:LNUM_STATUS = 1
 " Variables  "{{{
 " buffer number of the unite buffer
 let s:current_unite = {}
-let s:unite_cached_message = []
 let s:use_current_unite = 1
 
 let s:static = {}
@@ -320,7 +321,7 @@ let s:unite_options = [
       \ '-buffer-name=', '-profile-name=', '-input=', '-prompt=',
       \ '-default-action=', '-start-insert','-no-start-insert', '-no-quit',
       \ '-winwidth=', '-winheight=',
-      \ '-immediately', '-no-empty', '-auto-preview', '-complete',
+      \ '-immediately', '-no-empty', '-auto-preview', '-auto-highlight', '-complete',
       \ '-vertical', '-horizontal', '-direction=', '-no-split',
       \ '-verbose', '-auto-resize', '-toggle', '-quick-match', '-create',
       \ '-cursor-line-highlight=', '-no-cursor-line',
@@ -764,11 +765,10 @@ function! unite#quick_match_redraw(quick_match_table) "{{{
 
   let &l:modifiable = modifiable_save
 endfunction"}}}
+function! unite#get_status_string() "{{{
+  return join(unite#loaded_source_names_with_args(), ', ')
+endfunction"}}}
 function! unite#redraw_status() "{{{
-  if unite#get_context().hide_status_line
-    return
-  endif
-
   let modifiable_save = &l:modifiable
   setlocal modifiable
 
@@ -790,7 +790,6 @@ function! unite#redraw_candidates(...) "{{{
   let modifiable_save = &l:modifiable
   setlocal modifiable
 
-  call unite#redraw_status()
   let lines = unite#convert_lines(candidates)
   let pos = getpos('.')
   let unite = unite#get_current_unite()
@@ -935,18 +934,15 @@ endfunction"}}}
 
 " Utils.
 function! unite#print_error(message) "{{{
-  let message = type(a:message) == type([]) ?
-        \ a:message : split(a:message, '\n')
+  let message = unite#util#msg2list(a:message)
+  let unite = unite#get_current_unite()
+  let unite.err_msgs += message
   for mes in message
-    call unite#print_message('!!!'.mes.'!!!')
-
     echohl WarningMsg | echomsg mes | echohl None
   endfor
 endfunction"}}}
 function! unite#print_source_error(message, source_name) "{{{
-  let message = type(a:message) == type([]) ?
-        \ a:message : [a:message]
-  call unite#print_error(map(copy(message),
+  call unite#print_error(map(copy(unite#util#msg2list(a:message)),
         \ "printf('[%s] %s', a:source_name, v:val)"))
 endfunction"}}}
 function! unite#print_message(message) "{{{
@@ -955,127 +951,23 @@ function! unite#print_message(message) "{{{
     return
   endif
 
-  if &filetype ==# 'unite' && !s:use_current_unite
-    call s:print_buffer(a:message)
-  else
-    call add(s:unite_cached_message, a:message)
-  endif
+  let unite = unite#get_current_unite()
+  let unite.msgs += unite#util#msg2list(a:message)
+  echohl Comment | call unite#util#redraw_echo(a:message) | echohl None
 endfunction"}}}
 function! unite#print_source_message(message, source_name) "{{{
-  let messages = type(a:message) == type([]) ?
-        \ a:message : [a:message]
-  call unite#print_message(map(copy(messages),
+  call unite#print_message(map(copy(unite#util#msg2list(a:message)),
         \ "printf('[%s] %s', a:source_name, v:val)"))
 endfunction"}}}
 function! unite#clear_message() "{{{
-  let s:unite_cached_message = []
   let unite = unite#get_current_unite()
-  if &filetype !=# 'unite' ||
-        \ unite.prompt_linenr <= unite.min_prompt_linenr
-    return
-  endif
-
-  let modifiable_save = &l:modifiable
-  setlocal modifiable
-
-  let linenr = line('.')
-  silent! execute unite.min_prompt_linenr.','.
-        \ (unite.prompt_linenr-1).'delete _'
-  call cursor(linenr - (unite.prompt_linenr -
-        \ unite.min_prompt_linenr), 0)
-  if line('.') < winheight(0)
-    normal! zb
-  endif
-  let pos = getpos('.')
-  if mode() ==# 'i' && pos[2] == col('$')
-    startinsert!
-  endif
-
-  let unite.prompt_linenr = unite.min_prompt_linenr
-
-  let &l:modifiable = modifiable_save
-  call s:on_cursor_moved()
-
-  if exists('b:current_syntax') && b:current_syntax ==# 'unite'
-    syntax clear uniteInputLine
-    execute 'syntax match uniteInputLine'
-          \ '/\%'.unite.prompt_linenr.'l.*/'
-          \ 'contains=uniteInputPrompt,uniteInputPromptError,uniteInputSpecial'
-  endif
+  let unite.msgs = []
 endfunction"}}}
 function! unite#substitute_path_separator(path) "{{{
   return unite#util#substitute_path_separator(a:path)
 endfunction"}}}
 function! unite#path2directory(path) "{{{
   return unite#util#path2directory(a:path)
-endfunction"}}}
-function! s:print_buffer(message) "{{{
-  if &filetype !=# 'unite'
-    return
-  endif
-
-  let modifiable_save = &l:modifiable
-  setlocal modifiable
-
-  let unite = unite#get_current_unite()
-
-  let [max_width, max_source_name] =
-        \ s:adjustments(winwidth(0)-1, unite.max_source_name, 2)
-
-  " Auto split.
-  let messages = []
-
-  " Convert source name.
-  for msg in type(a:message) == type([]) ?
-        \ a:message : split(a:message, '\n')
-    let trunc_msg = msg
-    while msg != '' && trunc_msg != ''
-      let msg = substitute(msg, '^\[\zs.\{-}\ze\] ',
-            \ '\=unite#_convert_source_name(submatch(0))', '')
-      let trunc_msg = unite#util#strwidthpart(
-            \ msg, max_width)
-      let msg = msg[len(trunc_msg):]
-
-      if msg != ''
-        if trunc_msg =~ '^!!!'
-          " Append error marker.
-          let msg = '!!!<'.msg
-          let trunc_msg .= '>!!!'
-        else
-          let source_name = matchstr(trunc_msg, '^\[.\{-}\] ')
-
-          " Append source name.
-          let msg = source_name.'<'.msg
-          let trunc_msg .= '>'
-        endif
-      endif
-
-      call add(messages, trunc_msg)
-    endwhile
-  endfor
-
-  let linenr = line('.')
-  call append(unite.prompt_linenr-1, messages)
-  let unite.prompt_linenr += len(messages)
-
-  call cursor(linenr+len(messages), 0)
-  if line('.') < winheight(0)
-    normal! zb
-  endif
-  if mode() ==# 'i'
-    startinsert!
-  endif
-
-  let &l:modifiable = modifiable_save
-  call s:on_cursor_moved()
-
-  if exists('b:current_syntax') && b:current_syntax ==# 'unite'
-    syntax clear uniteInputLine
-    execute 'syntax match uniteInputLine'
-          \ '/\%'.unite.prompt_linenr.'l.*/'
-          \ 'contains=uniteInputPrompt,'
-          \ 'uniteInputPromptError,uniteInputSpecial'
-  endif
 endfunction"}}}
 "}}}
 
@@ -1156,10 +1048,6 @@ function! unite#start(sources, ...) "{{{
   " Redraw prompt.
   silent % delete _
   call setline(unite.prompt_linenr, unite.prompt . unite.context.input)
-  for message in s:unite_cached_message
-    call s:print_buffer(message)
-    unlet message
-  endfor
 
   call unite#redraw_candidates()
 
@@ -1210,6 +1098,7 @@ function! unite#start_temporary(sources, ...) "{{{
   let context.unite__direct_switch = 1
   let context.input = ''
   let context.auto_preview = 0
+  let context.auto_highlight = 0
   let context.unite__is_vimfiler = 0
   let context.default_action = 'default'
   let context.unite__old_winwidth = 0
@@ -1572,11 +1461,12 @@ function! s:quit_session(is_force, ...)  "{{{
       execute unite.prev_winnr 'wincmd w'
     endif
   else
-    let winnr = bufwinnr(unite.prev_bufnr)
-    if winnr < 0
-      let winnr = unite.prev_winnr
-    endif
-    if winnr == winnr() || winnr < 0
+    " Note: Except preview window.
+    let winnr = get(filter(range(1, winnr('$')),
+          \ "winbufnr(v:val) == unite.prev_bufnr &&
+          \  !getwinvar(v:val, '&previewwindow')"), 0, unite.prev_winnr)
+
+    if winnr == winnr()
       new
     else
       execute winnr 'wincmd w'
@@ -1675,13 +1565,14 @@ function! s:initialize_context(context, ...) "{{{
         \ 'no_quit' : 0,
         \ 'buffer_name' : 'default',
         \ 'profile_name' : '',
-        \ 'prompt' : '> ',
+        \ 'prompt' : g:unite_prompt,
         \ 'default_action' : 'default',
         \ 'winwidth' : g:unite_winwidth,
         \ 'winheight' : g:unite_winheight,
         \ 'immediately' : 0,
         \ 'no_empty' : 0,
         \ 'auto_preview' : 0,
+        \ 'auto_highlight' : 0,
         \ 'vertical' : g:unite_enable_split_vertically,
         \ 'direction' : g:unite_split_rule,
         \ 'no_split' : 0,
@@ -1698,7 +1589,6 @@ function! s:initialize_context(context, ...) "{{{
         \ 'update_time' : g:unite_update_time,
         \ 'no_buffer' : 0,
         \ 'hide_source_names' : 0,
-        \ 'hide_status_line' : 0,
         \ 'max_multi_lines' : 5,
         \ 'here' : 0,
         \ 'silent' : 0,
@@ -2430,8 +2320,6 @@ function! unite#convert_lines(candidates) "{{{
 endfunction"}}}
 
 function! s:initialize_current_unite(sources, context) "{{{
-  let s:unite_cached_message = []
-
   let context = a:context
 
   " Quit previous unite buffer.
@@ -2497,8 +2385,8 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.input = context.input
   let unite.last_input = context.input
   let unite.sidescrolloff_save = &sidescrolloff
-  let unite.min_prompt_linenr = (context.hide_status_line) ? 1 : 2
-  let unite.prompt_linenr = unite.min_prompt_linenr
+  let unite.prompt_linenr = 1
+  let unite.min_prompt_linenr = 1
   let unite.is_async =
         \ len(filter(copy(sources),
         \  'v:val.unite__context.is_async')) > 0
@@ -2508,12 +2396,15 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.post_filters = unite#get_profile(
         \ unite.profile_name, 'filters')
   let unite.preview_candidate = {}
+  let unite.highlight_candidate = {}
   let unite.max_source_name = 0
   let unite.candidates_pos = 0
   let unite.candidates = []
   let unite.max_source_candidates = 0
   let unite.is_multi_line = 0
   let unite.args = s:get_source_args(a:sources)
+  let unite.msgs = []
+  let unite.err_msgs = []
 
   if context.here
     let context.winheight = winheight(0) - winline() +
@@ -2577,6 +2468,9 @@ function! s:initialize_unite_buffer() "{{{
     if exists('+colorcolumn')
       setlocal colorcolumn=0
     endif
+    let &l:statusline = '*unite* : %{unite#get_status_string()}'
+          \ . "\ %=%{printf(' %5d/%d',line('.'),
+          \       b:unite.max_source_candidates+b:unite.prompt_linenr)}"
 
     " Autocommands.
     augroup plugin-unite
@@ -2716,6 +2610,9 @@ function! s:redraw(is_force, winnr, is_gather_all) "{{{
 
   if context.auto_preview
     call s:do_auto_preview()
+  endif
+  if context.auto_highlight
+    call s:do_auto_highlight()
   endif
 endfunction"}}}
 function! unite#_resize_window() "{{{
@@ -2944,6 +2841,9 @@ function! s:on_cursor_moved()  "{{{
 
   if context.auto_preview
     call s:do_auto_preview()
+  endif
+  if context.auto_highlight
+    call s:do_auto_highlight()
   endif
 
   " Check lines. "{{{
@@ -3240,6 +3140,16 @@ function! s:do_auto_preview() "{{{
     call unite#_resize_window()
   endif
 endfunction"}}}
+function! s:do_auto_highlight() "{{{
+  let unite = unite#get_current_unite()
+
+  if unite.highlight_candidate == unite#get_current_candidate()
+    return
+  endif
+  let unite.highlight_candidate = unite#get_current_candidate()
+
+  call unite#mappings#do_action('highlight', [], {})
+endfunction"}}}
 function! s:init_cursor() "{{{
   let unite = unite#get_current_unite()
 
@@ -3328,11 +3238,6 @@ function! unite#set_highlight() "{{{
   let marked_icon = unite#util#escape_pattern(g:unite_marked_icon)
   execute 'syntax region uniteMarkedLine start=/^'.
         \ marked_icon.'/ end=''$'' keepend'
-
-  if !unite.context.hide_status_line
-    syntax match uniteStatusLine /\%1l.*/
-          \  contains=uniteSourcePrompt,uniteSeparator,uniteSourceNames,uniteSourceArgs
-  endif
 
   execute 'syntax match uniteInputLine'
         \ '/\%'.unite.prompt_linenr.'l.*/'

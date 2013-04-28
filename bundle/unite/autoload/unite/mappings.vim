@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Apr 2013.
+" Last Modified: 28 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -55,6 +55,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ :<C-u>call <SID>rotate_source(0)<CR>
   nnoremap <silent><buffer> <Plug>(unite_print_candidate)
         \ :<C-u>call <SID>print_candidate()<CR>
+  nnoremap <silent><buffer> <Plug>(unite_print_message_log)
+        \ :<C-u>call <SID>print_message_log()<CR>
   nnoremap <buffer><expr> <Plug>(unite_cursor_top)
         \ unite#get_current_unite().prompt_linenr.'G0z.'
   nnoremap <silent><buffer> <Plug>(unite_cursor_bottom)
@@ -85,6 +87,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ :<C-u>call <SID>toggle_transpose_window()<CR>
   nnoremap <buffer><silent> <Plug>(unite_toggle_auto_preview)
         \ :<C-u>call <SID>toggle_auto_preview()<CR>
+  nnoremap <buffer><silent> <Plug>(unite_toggle_auto_highlight)
+        \ :<C-u>call <SID>toggle_auto_highlight()<CR>
   nnoremap <buffer><silent> <Plug>(unite_narrowing_path)
         \ :<C-u>call <SID>narrowing_path()<CR>
   nnoremap <buffer><silent> <Plug>(unite_narrowing_input_history)
@@ -149,6 +153,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <C-o>:<C-u>call <SID>toggle_transpose_window()<CR>
   inoremap <silent><buffer> <Plug>(unite_toggle_auto_preview)
         \ <C-o>:<C-u>call <SID>toggle_auto_preview()<CR>
+  inoremap <silent><buffer> <Plug>(unite_toggle_auto_highlight)
+        \ <C-o>:<C-u>call <SID>toggle_auto_highlight()<CR>
   inoremap <silent><buffer> <Plug>(unite_narrowing_path)
         \ <C-o>:<C-u>call <SID>narrowing_path()<CR>
   inoremap <silent><buffer> <Plug>(unite_narrowing_input_history)
@@ -159,6 +165,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <C-o>:<C-u>call <SID>redraw()<CR>
   inoremap <buffer><silent> <Plug>(unite_new_candidate)
         \ <C-o>:<C-u>call <SID>do_new_candidate_action()<CR>
+  inoremap <silent><buffer> <Plug>(unite_print_message_log)
+        \ <C-o>:<C-u>call <SID>print_message_log()<CR>
   "}}}
 
   if exists('g:unite_no_default_keymappings')
@@ -177,7 +185,7 @@ function! unite#mappings#define_default_mappings() "{{{
   nmap <buffer> <Tab>     <Plug>(unite_choose_action)
   nmap <buffer> <C-n>     <Plug>(unite_rotate_next_source)
   nmap <buffer> <C-p>     <Plug>(unite_rotate_previous_source)
-  nmap <buffer> <C-g>     <Plug>(unite_print_candidate)
+  nmap <buffer> <C-g>     <Plug>(unite_print_message_log)
   nmap <buffer> <C-l>     <Plug>(unite_redraw)
   nmap <buffer> gg        <Plug>(unite_cursor_top)
   nmap <buffer> G         <Plug>(unite_cursor_bottom)
@@ -250,8 +258,8 @@ endfunction"}}}
 
 function! s:smart_imap(lhs, rhs) "{{{
   return line('.') != unite#get_current_unite().prompt_linenr ||
-        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-       \ a:lhs : a:rhs
+        \ col('.') <= (unite#util#wcswidth(unite#get_current_unite().prompt)) ?
+        \ a:lhs : a:rhs
 endfunction"}}}
 function! s:smart_imap2(lhs, rhs) "{{{
   return line('.') <= (len(unite#get_current_unite().prompt)+1) ?
@@ -501,12 +509,13 @@ function! s:restart() "{{{
   call unite#start(sources, context)
 endfunction"}}}
 function! s:delete_backward_path() "{{{
-  let unite    = unite#get_current_unite()
-  let prompt   = unite.prompt
-  let input    = getline(unite.prompt_linenr)[len(prompt):]
-  let startcol = match(input, '[^/]*.$') + 1 + len(prompt)
-  let endcol   = virtcol('.')
-  return repeat("\<C-h>", (startcol < endcol ? endcol - startcol : 0))
+  let cur_text =
+        \ (mode() ==# 'i' ? (col('.')-1) : col('.')) >= len(getline('.')) ?
+        \      getline('.') :
+        \      matchstr(getline('.'),
+        \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
+  return repeat("\<C-h>", unite#util#strchars(
+        \ cur_text[len(unite#get_context().prompt):]))
 endfunction"}}}
 function! s:normal_delete_backward_path() "{{{
   let modifiable_save = &l:modifiable
@@ -634,7 +643,6 @@ function! s:rotate_source(is_next) "{{{
     endif
   endfor
 
-  call unite#redraw_status()
   call unite#redraw_candidates()
 endfunction"}}}
 function! s:print_candidate() "{{{
@@ -646,6 +654,14 @@ function! s:print_candidate() "{{{
   let candidate = unite#get_current_candidate()
   echo 'abbr: ' . candidate.unite__abbr
   echo 'word: ' . candidate.word
+endfunction"}}}
+function! s:print_message_log() "{{{
+  for msg in unite#get_current_unite().msgs
+    echohl Comment | echo msg | echohl None
+  endfor
+  for msg in unite#get_current_unite().err_msgs
+    echohl WarningMsg | echo msg | echohl None
+  endfor
 endfunction"}}}
 function! s:insert_selected_candidate() "{{{
   if line('.') <= unite#get_current_unite().prompt_linenr
@@ -883,6 +899,10 @@ function! s:toggle_auto_preview() "{{{
     " Close preview window.
     pclose!
   endif
+endfunction"}}}
+function! s:toggle_auto_highlight() "{{{
+  let context = unite#get_context()
+  let context.auto_highlight = !context.auto_highlight
 endfunction"}}}
 function! s:toggle_max_candidates() "{{{
   let unite = unite#get_current_unite()
