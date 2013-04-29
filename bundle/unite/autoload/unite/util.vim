@@ -356,14 +356,14 @@ endfunction"}}}
 
 function! unite#util#redraw_echo(expr) "{{{
   if has('vim_starting')
-    echo join(unite#util#convert2list(a:expr), "\n")
+    echo join(unite#util#msg2list(a:expr), "\n")
     return
   endif
 
-  let msg = unite#util#convert2list(a:expr)
+  let msg = unite#util#msg2list(a:expr)
   for i in range(0, len(msg), &cmdheight)
     redraw
-    echo join(msg[i : i+&cmdheight-1], "\n")
+    echomsg join(msg[i : i+&cmdheight-1], "\n")
   endfor
 endfunction"}}}
 

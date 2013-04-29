@@ -1068,6 +1068,10 @@ unite#smart_map({narrow-map}, {select-map})	*unite#smart_map()*
 >
 		inoremap <buffer><expr> ' unite#smart_map("'", unite#do_action('preview'))
 <
+unite#get_status_string()			 *unite#get_status_string()*
+		Returns unite status string. It is useful to custom
+		statusline.
+
 unite#mappings#set_current_filters({filters})
 					*unite#mappings#set_current_filters()*
 		Changes current unite buffer filters.
@@ -2788,6 +2792,11 @@ action_table		Dictionary		(Required)
 				in |<Plug>(unite_choose_action)|.  If this
 				attribute is omitted, "1" is used.
 
+			is_start		(Number)	(Optional)
+				If this attribute is "1", the action start
+				unite sources. If this attribute is omitted,
+				"0" is used.
+
 					*unite-kind-attribute-alias_table*
 alias_table		Dictionary		(Optional)
 			Adds an alias table unique to the kind.  In
@@ -3012,9 +3021,17 @@ A:
 	call unite#do_candidates_action('some_action',
 	\  unite#get_candidates([['file', expand('%')]]))
 <
+Q: unite.vim statusline conflicts with powerline.
+https://github.com/Lokaltog/powerline
+https://github.com/Lokaltog/vim-powerline
+
+A: Todo
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
+
+2013-04-29
+- Improved start sources behavior.
 
 2013-04-28
 - Improved unite status line.

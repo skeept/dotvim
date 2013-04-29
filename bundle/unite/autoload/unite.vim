@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Apr 2013.
+" Last Modified: 29 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -766,19 +766,8 @@ function! unite#quick_match_redraw(quick_match_table) "{{{
   let &l:modifiable = modifiable_save
 endfunction"}}}
 function! unite#get_status_string() "{{{
-  return join(unite#loaded_source_names_with_args(), ', ')
-endfunction"}}}
-function! unite#redraw_status() "{{{
-  let modifiable_save = &l:modifiable
-  setlocal modifiable
-
-  call setline(s:LNUM_STATUS, 'Sources: ' .
-        \ join(unite#loaded_source_names_with_args(), ', '))
-  if empty(unite#loaded_sources_list())
-    call unite#print_error('[unite.vim] Sources are not found')
-  endif
-
-  let &l:modifiable = modifiable_save
+  return (b:unite.is_async ? '[async] ' : '') .
+        \ join(unite#loaded_source_names_with_args(), ', ')
 endfunction"}}}
 function! unite#redraw_candidates(...) "{{{
   let is_gather_all = get(a:000, 0, 0)
@@ -936,7 +925,9 @@ endfunction"}}}
 function! unite#print_error(message) "{{{
   let message = unite#util#msg2list(a:message)
   let unite = unite#get_current_unite()
-  let unite.err_msgs += message
+  if !empty(unite)
+    let unite.err_msgs += message
+  endif
   for mes in message
     echohl WarningMsg | echomsg mes | echohl None
   endfor
@@ -947,13 +938,16 @@ function! unite#print_source_error(message, source_name) "{{{
 endfunction"}}}
 function! unite#print_message(message) "{{{
   let context = unite#get_context()
-  if context.silent
+  if get(context, 'silent', 0)
     return
   endif
 
   let unite = unite#get_current_unite()
-  let unite.msgs += unite#util#msg2list(a:message)
-  echohl Comment | call unite#util#redraw_echo(a:message) | echohl None
+  let message = unite#util#msg2list(a:message)
+  if !empty(unite)
+    let unite.msgs += message
+  endif
+  echohl Comment | call unite#util#redraw_echo(message) | echohl None
 endfunction"}}}
 function! unite#print_source_message(message, source_name) "{{{
   call unite#print_message(map(copy(unite#util#msg2list(a:message)),
@@ -962,6 +956,7 @@ endfunction"}}}
 function! unite#clear_message() "{{{
   let unite = unite#get_current_unite()
   let unite.msgs = []
+  redraw
 endfunction"}}}
 function! unite#substitute_path_separator(path) "{{{
   return unite#util#substitute_path_separator(a:path)
@@ -1068,7 +1063,9 @@ function! unite#start_script(sources, ...) "{{{
           \ join(a:sources)
   endif
 
-  return unite#start(a:sources, context)
+  return get(unite#get_context(), 'temporary', 0) ?
+        \ unite#start_temporary(a:sources, context) :
+        \ unite#start(a:sources, context)
 endfunction"}}}
 function! unite#start_temporary(sources, ...) "{{{
   " Get current context.
@@ -2386,7 +2383,6 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.last_input = context.input
   let unite.sidescrolloff_save = &sidescrolloff
   let unite.prompt_linenr = 1
-  let unite.min_prompt_linenr = 1
   let unite.is_async =
         \ len(filter(copy(sources),
         \  'v:val.unite__context.is_async')) > 0
