@@ -278,7 +278,8 @@ g:neocomplcache_enable_cursor_hold_i
 		This variable controls whether neocomplcache use |CursorHoldI|
 		event when complete candidates.
 		Note: You should not use this option if less than Vim 7.3.418.
-		Note: This option must be set before call |:NeoComplCacheEnable|.
+		Note: This option must be set before call
+		|:NeoComplCacheEnable|.
 
 		Default value is 0.
 
@@ -404,8 +405,8 @@ g:neocomplcache_lock_buffer_name_pattern
 
 g:neocomplcache_enable_prefetch		*g:neocomplcache_enable_prefetch*
 		This variable controls whether neocomplcache prefetches.  If
-		this variable is non-zero, neocomplcache does not flick in auto
-		completion.
+		this variable is non-zero, neocomplcache does not flick in
+		auto completion.
 
 		Note: This variable has a side effect.  Partial function (ex:
 		|complete_check()|) is disabled in completefunc.
@@ -439,7 +440,7 @@ g:neocomplcache_keyword_patterns
 
 		Because it is complicated, refer to
 		neocomplcache#init#_variables() in
-		autoload/neocomplcache.vim for the initial value.
+		autoload/neocomplcache/init.vim for the initial value.
 >
 		" Examples:
 		if !exists('g:neocomplcache_keyword_patterns')
@@ -455,7 +456,7 @@ g:neocomplcache_next_keyword_patterns
 
 		Because it is complicated, refer to
 		neocomplcache#init#_variables() in
-		autoload/neocomplcache.vim for the initial value.
+		autoload/neocomplcache/init.vim for the initial value.
 
 g:neocomplcache_omni_patterns		*g:neocomplcache_omni_patterns*
 		This dictionary records keyword patterns used in
@@ -500,7 +501,7 @@ g:neocomplcache_force_omni_patterns
 <
 		Because it is complicated, refer to
 		neocomplcache#init#_variables() in
-		autoload/neocomplcache.vim for the initial value.
+		autoload/neocomplcache/init.vim for the initial value.
 
 					*g:neocomplcache_tags_filter_patterns*
 g:neocomplcache_tags_filter_patterns
@@ -509,8 +510,8 @@ g:neocomplcache_tags_filter_patterns
 		beginning in _ in file type of C/C++.
 
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 
 				*g:neocomplcache_tags_caching_limit_file_size*
 g:neocomplcache_tags_caching_limit_file_size
@@ -544,8 +545,8 @@ g:neocomplcache_same_filetype_lists
 		let g:neocomplcache_same_filetype_lists._ = '_'
 <
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 		Note: To disable neocomplcache initialization, you must use
 		|neocomplcache#disable_default_dictionary()|.
 
@@ -594,8 +595,8 @@ g:neocomplcache_context_filetype_lists
 		\ [{'filetype' : 'python', 'start' : '^\s*python <<\s*\(\h\w*\)', 'end' : '^\1'}]
 <
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 
 					*g:neocomplcache_text_mode_filetypes*
 g:neocomplcache_text_mode_filetypes
@@ -612,8 +613,8 @@ g:neocomplcache_text_mode_filetypes
 		"Foobar" or "FOOBAR" words.  Not "fooBar" or "FooBar".
 
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 
 g:neocomplcache_ctags_program		*g:neocomplcache_ctags_program*
 		It is the path to the ctags command.  If this command is not
@@ -630,8 +631,8 @@ g:neocomplcache_ctags_arguments_list
 		default.
 
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 
 g:neocomplcache_include_paths		*g:neocomplcache_include_paths*
 		It is the variable to enumerate path of the include file
@@ -755,13 +756,13 @@ g:neocomplcache_delimiter_patterns
 		let g:neocomplcache_delimiter_patterns.cpp = ['::']
 <
 		Because it is complicated, refer to
-		neocomplcache#init#_variables() in autoload/neocomplcache.vim
-		for the initial value.
+		neocomplcache#init#_variables() in
+		autoload/neocomplcache/init.vim for the initial value.
 
 g:neocomplcache_omni_functions		*g:neocomplcache_omni_functions*
 		This dictionary which appoints |omni_complete| call functions.
-		The key is |&filetype|.  The value is omnifunc String or List of
-		omnifunc String.  If
+		The key is |&filetype|.  The value is omnifunc String or List
+		of omnifunc String.  If
 		g:neocomplcache_omni_function_list[|&filetype|] is undefined,
 		|omni_complete| calls |omnifunc|.
 		If the key is "_", used for all filetypes.
@@ -829,23 +830,21 @@ g:neocomplcache_disabled_sources_list
 
 				*g:neocomplcache_source_completion_length*
 g:neocomplcache_source_completion_length
-		It is a dictionary to control each source's completion
-		length.  For example, you can prolong heavy source's
-		completion length.
-				*g:neocomplcache_plugin_completion_length*
-		Note: g:neocomplcache_plugin_completion_length is deprecated
-		name.
-
-		Default value is {}.
+		Note: This option is deprecated. You should use
+		|neocomplcache#custom_source()| instead of it.
+>
+		call neocomplcache#custom_source(
+				\ 'buffer_complete', 'min_pattern_length', 3)
+<
 
 g:neocomplcache_source_rank			*g:neocomplcache_source_rank*
-		It is a dictionary to control each source's completion
-		priority.
-		The key is source name and the value is source priority
-		number.
-						*g:neocomplcache_plugin_rank*
-		Note: g:neocomplcache_plugin_rank is deprecated name.
-
+		Note: This option is deprecated. You should use
+		|neocomplcache#custom_source()| instead of it.
+>
+		" Examples:
+		call neocomplcache#custom_source(
+				\ 'buffer_complete', 'rank', 10)
+<
 		The default rank of each sources:
 		filename_complete : 3
 		dictionary_complete : 4
@@ -859,14 +858,6 @@ g:neocomplcache_source_rank			*g:neocomplcache_source_rank*
 		other manual sources : 10
 		other manual sources with filetype : 100
 
-		Default value is set by each sources.
->
-		" Examples:
-		let g:neocomplcache_source_rank = {
-			\ 'snippets_complete' : 100,
-			\ 'abbrev_complete' : 50,
-			\ }
-<
 				*g:neocomplcache_force_overwrite_completefunc*
 g:neocomplcache_force_overwrite_completefunc
 		If this variable is 1, neocomplcache forces overwrite
@@ -878,7 +869,8 @@ g:neocomplcache_force_overwrite_completefunc
 
 					*g:neocomplcache_release_cache_time*
 g:neocomplcache_release_cache_time
-		This variable defines time of automatic released cache by a second unit.
+		This variable defines time of automatic released cache by a
+		second unit.
 
 		Default value is 900.
 
@@ -948,7 +940,23 @@ FUNCTIONS 					*neocomplcache-functions*
 neocomplcache#initialize()			*neocomplcache#initialize()*
 		Initialize neocomplcache and sources.
 		Note: It enables neocomplcache.
+		Note: You should call it in |VimEnter| autocmd.
+		User customization for neocomplcache must be set before
+		initialization of neocomplcache.
 
+neocomplcache#custom_source({source-name}, {option-name}, {value})
+						*neocomplcache#custom_source()*
+		Set {source-name} source specialized {option-name}
+		to {value}. You may specify multiple sources with
+		separating "," in {source-name}.
+		If {source-name} is "_", sources default option will be
+		change.
+		
+		These options below are available:
+		|neocomplcache-source-attributes|
+		Note: User customization for neocomplcache must be set before
+		initialization of neocomplcache.
+		
 					*neocomplcache#get_context_filetype()*
 neocomplcache#get_context_filetype()
 		Get current context filetype of the cursor.  This is smarter
@@ -1235,14 +1243,35 @@ neco-ghc				*neocomplcache-sources-neco-ghc*
 ==============================================================================
 FILTERS						*neocomplcache-filters*
 
-					*neocomplcache-filter-sorter_rank*
-sorter_rank	Matched rank order sorter.  The higher the matched word is
-		already selected or in current buffer
+To custom candidates, neocomplcache uses the filters. There are three kinds of
+filters are available. "matcher" is to use filter candidates. "sorter" is to
+use sort candidates. "converter" is to use candidates convertion.
+
+Note: "matcher" is not implemented. It will implemented in ver.8.1.
+
+Default sources are below. But you can create original filters(cf:
+|neocomplcache-create-filter|) and set them by
+|neocomplcache#custom_source()|.
+>
+	call unite#custom_source('buffer_complete', 'converters', [])
+	call unite#custom_source('buffer_complete', 'sorters',
+	\ ['sorter_nothing'])
+<
+					*neocomplcache-filter-sorter_default*
+Default sorters: ['sorter_rank'].
+
+					*neocomplcache-filter-converter_default*
+Default converters: ['converter_remove_next_keyword',
+        \      'converter_delimiter', 'converter_case', 'converter_abbr'].
 
 					*neocomplcache-filter-sorter_nothing*
 sorter_nothing	Nothing sorter.
 
-					*neocomplcach-filter-converter_nothing*
+					*neocomplcache-filter-sorter_rank*
+sorter_rank	Matched rank order sorter.  The higher the matched word is
+		already selected or in current buffer
+
+					*neocomplcache-filter-converter_nothing*
 converter_nothing
 		This converter is dummy.
 
@@ -1258,11 +1287,13 @@ converter_case
 				*neocomplcache-filter-converter_delimiter*
 converter_delimiter
 		The converter which abbreviates a candidate's delimiter.
+		(cf: |g:neocomplcache_delimiter_patterns|)
 
 			*neocomplcache-filter-converter_remove_next_keyword*
-converter_delimiter
+converter_remove_next_keyword
 		The converter which removes matched next keyword part in a
 		candidate's word.
+		(cf: |g:neocomplcache_next_keyword_patterns|)
 
 ==============================================================================
 CREATE SOURCE					*neocomplcache-create-source*
@@ -1330,23 +1361,31 @@ rank			Number		(Optional)
 			If filetype attribute is empty : 10
 			Else : 100
 
-			*neocomplcache-source-attribute-required_pattern_length*
-required_pattern_length
+			*neocomplcache-source-attribute-min_pattern_length*
+min_pattern_length
 			Number		(Optional)
-			Required pattern length fror completion.
+			Required pattern length for completion.
 
 			If you omit it, it is set below value.
 			If kind attribute is "keyword" :
 			    |g:neocomplcache_auto_completion_start_length|
 			Else : 0
 
+			*neocomplcache-source-attribute-max_candidates*
+max_candidates
+			Number		(Optional)
+			The maximum number of candidates.
+
+			This attribute is optional; if it is not given,
+			0 is used as the default value.  This means
+			maximum number is infinity.
+
 					*neocomplcache-source-attribute-hooks*
 hooks			Dictionary		(Optional)
-			You may put hook functions in this dictionary
-			in which the key is the position to hook and
-			and the value is the reference to the function
-			to be called.  The following hook functions are
-			defined:
+			You may put hook functions in this dictionary in which
+			the key is the position to hook and the value is the
+			reference to the function to be called.  The following
+			hook functions are defined:
 
 				*neocomplcache-source-attribute-hooks-on_init*
 			on_init
@@ -1394,11 +1433,11 @@ gather_candidates	Function	(Required)
 			parameter and returns a list of {candidate}.
 			Here, {context} is the context information when the
 			source is called(|neocomplcache-notation-{context}|).
-			Note get_complete_words() and get_keyword_list() are
+			Note: get_complete_words() and get_keyword_list() are
 			obsolete interface for gather candidates.
-			In obsolete interface, |neocomplcache-filters| feature
-			is disabled for compatibility. You should use new
-			interface.
+			Note: |neocomplcache-filters| feature is disabled for
+			compatibility in neocomplcache ver.8.0. You should use
+			new interface in neocomplcache ver.8.1.
 
 {context}				*neocomplcache-notation-{context}*
 			A dictionary to give context information.
@@ -1482,8 +1521,8 @@ name			String		(Required)
 filter			Function		(Required)
 			The filter function.  This function takes {context} as
 			its parameter and returns a list of {candidate}.
-			The specification of the parameters and the
-			returned value is same as
+			The specification of the parameters and the returned
+			value is same as
 			|neocomplcache-source-attribute-gather_candidates|.
 
 					*neocomplcache-filter-attribute-description*
@@ -1495,14 +1534,20 @@ UNITE SOURCES					*neocomplcache-unite-sources*
 
 				*neocomplcache-unite-source-neocomplcache*
 neocomplcache
-		Nominates neocomplcache completion candidates.  The kind is "completion".
-		This source is used in |<Plug>(neocomplcache_start_unite_complete)|.
+		Nominates neocomplcache completion candidates.  The kind is
+		"completion".  This source is used in
+		|<Plug>(neocomplcache_start_unite_complete)|.
 >
 		imap <C-k>  <Plug>(neocomplcache_start_unite_complete)
 		imap <C-q>  <Plug>(neocomplcache_start_unite_quick_match)
 <
 ==============================================================================
 FAQ						*neocomplcache-faq*
+
+Q: My customization for neocomplcache is invalid. Why?
+
+A: User customization for neocomplcache must be set before initialization of
+neocomplcache. For example: |neocomplcache#custom_source()|
 
 Q: Is there a way to control the colors used for popup menu using highlight
 groups?:
@@ -1749,7 +1794,7 @@ Q: Why neocomplcache uses if_lua? Many people may not be able to use it
 because they do not have the root privilege to recompile vim.
 A:
 Because:
- 1. Pyhon interface is not available in every Vim environment. For example,
+ 1. Python interface is not available in every Vim environment. For example,
  Android, iOS, non configured Vim,...
  2. Incompatibility with Python2 and Python3. I must rewrite for it.
  3. Loading Python interface is slow(10~20ms). But loading Lua interface is
@@ -1771,6 +1816,9 @@ TODO						*neocomplcache-todo*
 
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2013-05-02
+- Improved documentation.
 
 2013-04-21
 - Changed g:neocomplcache_enable_auto_close_preview default value.

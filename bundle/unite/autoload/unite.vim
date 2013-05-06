@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 May 2013.
+" Last Modified: 05 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1035,7 +1035,8 @@ function! unite#start(sources, ...) "{{{
       return
     elseif context.immediately && len(candidates) == 1
       " Immediately action.
-      call unite#mappings#do_action(context.default_action, [candidates[0]])
+      call unite#mappings#do_action(
+            \ context.default_action, [candidates[0]])
       let s:use_current_unite = 0
       return
     endif
@@ -1052,11 +1053,13 @@ function! unite#start(sources, ...) "{{{
 
   " Redraw prompt.
   silent % delete _
-  call setline(unite.prompt_linenr, unite.prompt . unite.context.input)
+  call setline(unite.prompt_linenr,
+        \ unite.prompt . unite.context.input)
 
   call unite#redraw_candidates()
 
   call s:init_cursor()
+
 endfunction"}}}
 function! unite#start_script(sources, ...) "{{{
   " Start unite from script.
@@ -1141,6 +1144,7 @@ function! unite#vimfiler_check_filetype(sources, ...) "{{{
   let context = s:initialize_context(context,
         \ s:get_source_names(a:sources))
   let context.unite__is_vimfiler = 1
+  let context.unite__is_interactive = 0
 
   try
     call s:initialize_current_unite(a:sources, context)
@@ -1492,8 +1496,8 @@ function! s:quit_session(is_force, ...)  "{{{
       call neocomplcache#skip_next_complete()
     endif
   else
-    stopinsert
     redraw
+    stopinsert
   endif
 
   " Restore unite.
@@ -1524,10 +1528,6 @@ function! unite#resume_from_temporary(context)  "{{{
 endfunction"}}}
 
 function! s:load_default_scripts(kind, names) "{{{
-  if get(s:loaded_defaults, a:kind, 0)
-    return
-  endif
-
   let names = empty(a:names) ? [''] : a:names
   if a:kind ==# 'sources' && !empty(a:names)
     call add(names, 'alias')
@@ -1545,6 +1545,10 @@ function! s:load_default_scripts(kind, names) "{{{
     endif
   endif
 
+  if get(s:loaded_defaults, a:kind, '') ==# &runtimepath
+    return
+  endif
+
   for name in names
     if name != '' && has_key(s:static[a:kind], name)
           \ || (a:kind ==# 'sources' && name ==# 'alias' &&
@@ -1553,9 +1557,9 @@ function! s:load_default_scripts(kind, names) "{{{
     endif
 
     if name == ''
-      let s:loaded_defaults[a:kind] = 1
+      let s:loaded_defaults[a:kind] = &runtimepath
     elseif a:kind ==# 'sources' && name ==# 'alias'
-      let s:loaded_defaults['alias'] = 1
+      let s:loaded_defaults['alias'] = &runtimepath
     endif
 
     " Search files by prefix or postfix.
@@ -1571,8 +1575,6 @@ function! s:load_default_scripts(kind, names) "{{{
           \ [prefix_name, postfix_name] : [prefix_name])
       let files += split(globpath(&runtimepath,
             \ 'autoload/unite/'.a:kind.'/'.name.'*.vim', 1), '\n')
-      let files += split(globpath(&runtimepath,
-            \ 'autoload/unite/'.a:kind.'/'.name.'*/*.vim', 1), '\n')
     endfor
 
     for define in map(files,
@@ -2110,7 +2112,7 @@ function! s:recache_candidates(input, is_force) "{{{
 
     let source.unite__candidates =
           \ unite#initialize_candidates_source(
-          \   source.unite__candidates, source.name)
+          \   source.unite__context.candidates, source.name)
   endfor
 
   " Update async state.
@@ -2355,6 +2357,7 @@ function! s:initialize_current_unite(sources, context) "{{{
 
   " Quit previous unite buffer.
   if !context.create && !context.temporary
+        \ && context.unite__is_interactive
     let winnr = unite#get_unite_winnr(context.buffer_name)
     if winnr > 0 && s:get_source_args(a:sources) !=#
           \ getbufvar(winbufnr(winnr), 'unite').args
@@ -2636,10 +2639,6 @@ function! s:redraw(is_force, winnr, is_gather_all) "{{{
     endif
   endtry
 
-  if context.auto_quit && !unite.is_async
-    call unite#force_quit_session()
-  endif
-
   if context.auto_preview
     call s:do_auto_preview()
   endif
@@ -2810,7 +2809,12 @@ function! unite#_on_cursor_hold()  "{{{
     call unite#redraw()
     call s:change_highlight()
 
-    let is_async = unite#get_current_unite().is_async
+    let unite = unite#get_current_unite()
+    let is_async = unite.is_async
+
+    if !unite.is_async && unite.context.auto_quit
+      call unite#force_quit_session()
+    endif
   else
     " Search other unite window.
     for winnr in filter(range(1, winnr('$')),
@@ -2859,9 +2863,6 @@ function! s:on_cursor_moved()  "{{{
   else
     if winline() <= winheight('$') / 2
       normal! zz
-    endif
-    if mode() ==# 'i'
-      startinsert!
     endif
 
     nnoremap <expr><buffer> <Plug>(unite_loop_cursor_up)
@@ -3217,7 +3218,7 @@ function! s:init_cursor() "{{{
   let is_restore = has_key(positions, key) &&
         \ context.select == 0
 
-  if context.start_insert
+  if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
     call cursor(unite.prompt_linenr, 0)
@@ -3254,8 +3255,7 @@ function! s:init_cursor() "{{{
     " Select specified candidate.
     call cursor(line('.') + context.select, 0)
   elseif context.input == '' && context.log
-    " Move to bottom.
-    call cursor(line('$'), 0)
+    call unite#redraw_candidates(1)
   endif
 
   if context.no_focus

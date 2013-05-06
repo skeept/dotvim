@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Apr 2013.
+" Last Modified: 02 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -627,6 +627,9 @@ function! neocomplcache#init#_variables() "{{{
     let g:neocomplcache_omni_functions = {}
   endif
   "}}}
+
+  " Set custom.
+  call s:set_default_custom()
 endfunction"}}}
 
 function! neocomplcache#init#_current_neocomplcache() "{{{
@@ -707,6 +710,7 @@ endfunction"}}}
 
 function! neocomplcache#init#_source(source) "{{{
   let default = {
+        \ 'max_candidates' : 0,
         \ 'filetypes' : {},
         \ 'hooks' : {},
         \ 'matchers' : ['matcher_old'],
@@ -720,7 +724,12 @@ function! neocomplcache#init#_source(source) "{{{
         \ 'neocomplcache__context' : copy(neocomplcache#get_context()),
         \ }
 
-  let source = extend(default, a:source)
+  let source = extend(copy(default), a:source)
+
+  " Overwritten by user custom.
+  let custom = neocomplcache#variables#get_custom().sources
+  let source = extend(source, get(custom, source.name,
+        \ get(custom, '_', {})))
 
   let source.loaded = 0
   " Source kind convertion.
@@ -741,9 +750,9 @@ function! neocomplcache#init#_source(source) "{{{
           \ empty(source.filetypes) ? 10 : 100
   endif
 
-  if !has_key(source, 'required_pattern_length')
-    " Set required_pattern_length.
-    let source.required_pattern_length = (source.kind ==# 'keyword') ?
+  if !has_key(source, 'min_pattern_length')
+    " Set min_pattern_length.
+    let source.min_pattern_length = (source.kind ==# 'keyword') ?
           \ g:neocomplcache_auto_completion_start_length : 0
   endif
 
@@ -818,6 +827,28 @@ function! neocomplcache#init#_filter(filter) "{{{
   endif
 
   return filter
+endfunction"}}}
+
+function! s:set_default_custom() "{{{
+  let custom = neocomplcache#variables#get_custom().sources
+
+  " Initialize completion length.
+  for [source_name, length] in items(
+        \ g:neocomplcache_source_completion_length)
+    if !has_key(custom, source_name)
+      let custom[source_name] = {}
+    endif
+    let custom[source_name].min_pattern_length = length
+  endfor
+
+  " Initialize rank.
+  for [source_name, rank] in items(
+        \ g:neocomplcache_source_rank)
+    if !has_key(custom, source_name)
+      let custom[source_name] = {}
+    endif
+    let custom[source_name].rank = rank
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo
