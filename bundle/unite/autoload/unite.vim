@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 29 Apr 2013.
+" Last Modified: 01 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -280,8 +280,6 @@ endfunction"}}}
 " Constants "{{{
 let s:FALSE = 0
 let s:TRUE = !s:FALSE
-
-let s:LNUM_STATUS = 1
 "}}}
 
 " Variables  "{{{
@@ -293,6 +291,8 @@ let s:static = {}
 let s:static.sources = {}
 let s:static.kinds = {}
 let s:static.filters = {}
+
+let s:loaded_defaults = {}
 
 let s:dynamic = {}
 let s:dynamic.sources = {}
@@ -329,7 +329,7 @@ let s:unite_options = [
       \ '-max-multi-lines=', '-here', '-silent', '-keep-focus',
       \ '-auto-quit', '-no-focus',
       \ '-long-source-names', '-short-source-names',
-      \ '-multi-line', '-resume', '-wrap', '-select='
+      \ '-multi-line', '-resume', '-wrap', '-select=', '-log',
       \]
 "}}}
 
@@ -553,7 +553,7 @@ function! s:get_action_table(source_name, kind_name, self_func, is_parents_actio
     endif
   endif
 
-  " Set default parameters.
+  " Initialize action.
   for [action_name, action] in items(action_table)
     if !has_key(action, 'name')
       let action.name = action_name
@@ -563,6 +563,9 @@ function! s:get_action_table(source_name, kind_name, self_func, is_parents_actio
     endif
     if !has_key(action, 'is_quit')
       let action.is_quit = 1
+    endif
+    if !has_key(action, 'is_start')
+      let action.is_start = 0
     endif
     if !has_key(action, 'is_selectable')
       let action.is_selectable = 0
@@ -691,8 +694,10 @@ function! unite#complete_source(arglead, cmdline, cursorpos) "{{{
     let _ +=  copy(s:unite_options)
 
     " Source name completion.
-    let _ += keys(filter(s:initialize_sources([], a:arglead),
-          \ 'v:val.is_listed'))
+    if mode() ==# 'c'
+      let _ += keys(filter(s:initialize_sources([], a:arglead),
+            \ 'v:val.is_listed'))
+    endif
     if exists('*neobundle#get_unite_sources')
       let _ += neobundle#get_unite_sources()
     endif
@@ -701,7 +706,7 @@ function! unite#complete_source(arglead, cmdline, cursorpos) "{{{
     let _  = map(_, 'source_name.":".v:val')
   endif
 
-  if source_name != ''
+  if source_name != '' && mode() ==# 'c'
     " Source args completion.
     let args = source_name . ':' . join(source_args[: -2], ':')
     if args !~ ':$'
@@ -795,6 +800,11 @@ function! unite#redraw_candidates(...) "{{{
 
   if pos != getpos('.')
     call setpos('.', pos)
+  endif
+
+  if context.input == '' && context.log
+    " Move to bottom.
+    call cursor(line('$'), 0)
   endif
 
   " Set syntax.
@@ -1112,7 +1122,6 @@ function! unite#start_temporary(sources, ...) "{{{
 
   let cwd = getcwd()
 
-  " call unite#all_quit_session()
   call unite#start(a:sources, context)
 
   " Overwrite unite.
@@ -1515,6 +1524,10 @@ function! unite#resume_from_temporary(context)  "{{{
 endfunction"}}}
 
 function! s:load_default_scripts(kind, names) "{{{
+  if get(s:loaded_defaults, a:kind, 0)
+    return
+  endif
+
   let names = empty(a:names) ? [''] : a:names
   if a:kind ==# 'sources' && !empty(a:names)
     call add(names, 'alias')
@@ -1532,21 +1545,41 @@ function! s:load_default_scripts(kind, names) "{{{
     endif
   endif
 
-  for name in filter(names,
-        \ "v:val == '' || !has_key(s:static[a:kind], v:val)")
+  for name in names
+    if name != '' && has_key(s:static[a:kind], name)
+          \ || (a:kind ==# 'sources' && name ==# 'alias' &&
+          \     get(s:loaded_defaults, 'alias', 0))
+      continue
+    endif
 
-    let name = (a:kind ==# 'filters') ?
+    if name == ''
+      let s:loaded_defaults[a:kind] = 1
+    elseif a:kind ==# 'sources' && name ==# 'alias'
+      let s:loaded_defaults['alias'] = 1
+    endif
+
+    " Search files by prefix or postfix.
+    let prefix_name = (a:kind ==# 'filters') ?
           \ substitute(name,
           \'^\%(matcher\|sorter\|converter\)_[^/_-]\+\zs[/_-].*$', '', '') :
           \ substitute(name, '^[^/_-]\+\zs[/_-].*$', '', '')
+    let postfix_name = matchstr(name, '[^/_-]\+$')
 
-    for define in map(split(globpath(&runtimepath,
-          \ 'autoload/unite/'.a:kind.'/'.name.'*.vim'), '\n'),
+    let files = []
+    for name in ((postfix_name != '' &&
+          \ prefix_name !=# postfix_name) ?
+          \ [prefix_name, postfix_name] : [prefix_name])
+      let files += split(globpath(&runtimepath,
+            \ 'autoload/unite/'.a:kind.'/'.name.'*.vim', 1), '\n')
+      let files += split(globpath(&runtimepath,
+            \ 'autoload/unite/'.a:kind.'/'.name.'*/*.vim', 1), '\n')
+    endfor
+
+    for define in map(files,
           \ "unite#{a:kind}#{fnamemodify(v:val, ':t:r')}#define()")
-      for dict in unite#util#convert2list(define)
-        if !empty(dict) && !has_key(s:static[a:kind], dict.name)
-          let s:static[a:kind][dict.name] = dict
-        endif
+      for dict in filter(unite#util#convert2list(define),
+            \ '!empty(v:val) && !has_key(s:static[a:kind], v:val.name)')
+        let s:static[a:kind][dict.name] = dict
       endfor
       unlet define
     endfor
@@ -1598,6 +1631,7 @@ function! s:initialize_context(context, ...) "{{{
         \ 'resume' : 0,
         \ 'wrap' : 0,
         \ 'select' : 0,
+        \ 'log' : 0,
         \ 'unite__direct_switch' : 0,
         \ 'unite__is_interactive' : 1,
         \ 'unite__is_complete' : 0,
@@ -2371,6 +2405,9 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.prev_bufnr = bufnr('%')
   let unite.prev_winnr = winnr()
   let unite.update_time_save = &updatetime
+  let unite.statusline = '*unite* : %{unite#get_status_string()}'
+          \ . "\ %=%{printf(' %5d/%d',line('.'),
+          \       b:unite.max_source_candidates+b:unite.prompt_linenr)}"
 
   " Create new buffer name.
   let postfix = s:get_postfix(
@@ -2464,9 +2501,6 @@ function! s:initialize_unite_buffer() "{{{
     if exists('+colorcolumn')
       setlocal colorcolumn=0
     endif
-    let &l:statusline = '*unite* : %{unite#get_status_string()}'
-          \ . "\ %=%{printf(' %5d/%d',line('.'),
-          \       b:unite.max_source_candidates+b:unite.prompt_linenr)}"
 
     " Autocommands.
     augroup plugin-unite
@@ -2574,6 +2608,8 @@ function! s:redraw(is_force, winnr, is_gather_all) "{{{
       return
     endif
 
+    let is_gather_all = a:is_gather_all || context.log
+
     if context.is_redraw
           \ || input !=# unite.last_input
           \ || unite.is_async
@@ -2584,7 +2620,7 @@ function! s:redraw(is_force, winnr, is_gather_all) "{{{
     let unite.last_input = input
 
     " Redraw.
-    call unite#redraw_candidates(a:is_gather_all)
+    call unite#redraw_candidates(is_gather_all)
     let unite.context.is_redraw = 0
   finally
     if a:winnr > 0
@@ -2680,6 +2716,10 @@ function! s:on_insert_enter()  "{{{
     " Lock neocomplcache.
     NeoComplCacheLock
   endif
+
+  if &filetype ==# 'unite'
+    setlocal modifiable
+  endif
 endfunction"}}}
 function! s:on_insert_leave()  "{{{
   let unite = unite#get_current_unite()
@@ -2743,6 +2783,8 @@ function! s:on_bufwin_enter(bufnr)  "{{{
 
   call s:save_updatetime()
 
+  call s:restore_statusline()
+
   if !unite.context.no_split && winnr('$') != 1
     call unite#_resize_window()
   endif
@@ -2760,6 +2802,8 @@ function! s:on_bufwin_enter(bufnr)  "{{{
 endfunction"}}}
 function! unite#_on_cursor_hold()  "{{{
   let is_async = 0
+
+  call s:restore_statusline()
 
   if &filetype ==# 'unite'
     " Redraw.
@@ -2816,6 +2860,9 @@ function! s:on_cursor_moved()  "{{{
     if winline() <= winheight('$') / 2
       normal! zz
     endif
+    if mode() ==# 'i'
+      startinsert!
+    endif
 
     nnoremap <expr><buffer> <Plug>(unite_loop_cursor_up)
           \ unite#mappings#loop_cursor_up_expr(0)
@@ -2841,6 +2888,8 @@ function! s:on_cursor_moved()  "{{{
   if context.auto_highlight
     call s:do_auto_highlight()
   endif
+
+  call s:restore_statusline()
 
   " Check lines. "{{{
   if winheight(0) < line('$') &&
@@ -2964,6 +3013,18 @@ function! s:restore_updatetime()  "{{{
 
   if &updatetime < unite.update_time_save
     let &updatetime = unite.update_time_save
+  endif
+endfunction"}}}
+function! s:restore_statusline()  "{{{
+  if &filetype !=# 'unite' || !g:unite_force_overwrite_statusline
+    return
+  endif
+
+  let unite = unite#get_current_unite()
+
+  if &l:statusline != unite.statusline
+    " Restore statusline.
+    let &l:statusline = unite.statusline
   endif
 endfunction"}}}
 
@@ -3148,14 +3209,15 @@ function! s:do_auto_highlight() "{{{
 endfunction"}}}
 function! s:init_cursor() "{{{
   let unite = unite#get_current_unite()
+  let context = unite.context
 
   let positions = unite#get_profile(
         \ unite.profile_name, 'unite__save_pos')
   let key = unite#loaded_source_names_string()
   let is_restore = has_key(positions, key) &&
-        \ unite.context.select == 0
+        \ context.select == 0
 
-  if unite.context.start_insert
+  if context.start_insert
     let unite.is_insert = 1
 
     call cursor(unite.prompt_linenr, 0)
@@ -3188,12 +3250,15 @@ function! s:init_cursor() "{{{
     stopinsert
   endif
 
-  if unite.context.select != 0
+  if context.select != 0
     " Select specified candidate.
-    call cursor(line('.') + unite.context.select, 0)
+    call cursor(line('.') + context.select, 0)
+  elseif context.input == '' && context.log
+    " Move to bottom.
+    call cursor(line('$'), 0)
   endif
 
-  if unite.context.no_focus
+  if context.no_focus
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
@@ -3201,7 +3266,7 @@ function! s:init_cursor() "{{{
     endif
   endif
 
-  if unite.context.quick_match
+  if context.quick_match
     call unite#mappings#_quick_match(0)
   endif
 endfunction"}}}

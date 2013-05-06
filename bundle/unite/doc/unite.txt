@@ -271,8 +271,8 @@ g:unite_abbr_highlight				*g:unite_abbr_highlight*
 		
 		The default value is "Normal".
 
-g:unite_enable_use_short_source_names
 				*g:unite_enable_use_short_source_names*
+g:unite_enable_use_short_source_names
 		If this variable is 1, unite buffer will show short source
 		names.
 
@@ -282,6 +282,15 @@ g:unite_marked_icon				*g:unite_marked_icon*
 		This variable controls unite marked candidates icon.
 		
 		Default value is "*"
+
+					*g:unite_force_overwrite_statusline*
+g:unite_force_overwrite_statusline
+		If this variable is 1, unite will overwrite 'statusline'
+		automatically.
+		Note: If you want to change 'statusline' in unite buffer, you
+		must set it to 0.
+
+		The default value is 1.
 
 g:unite_quick_match_table			*g:unite_quick_match_table*
 		The table of completion candidates of quick match list,
@@ -785,7 +794,8 @@ Insert mode mappings.
 		first candidate line.
 
 <Plug>(unite_delete_backward_char)	*i_<Plug>(unite_delete_backward_char)*
-		Deletes a char just before the cursor, or quits the Unite.
+		Deletes a char just before the cursor, or quits the unite
+		buffer.
 
 <Plug>(unite_delete_backward_line)	*i_<Plug>(unite_delete_backward_line)*
 		Deletes all chars after the cursor until the end of the line.
@@ -794,8 +804,8 @@ Insert mode mappings.
 		Deletes a word just before the cursor.
 
 <Plug>(unite_delete_backward_path)	*i_<Plug>(unite_delete_backward_path)*
-		Deletes a path upward. For example doing
-		<Plug>(unite_delete_backward_path) on >
+		Deletes a path upward.
+		For example doing <Plug>(unite_delete_backward_path) on >
 		/Users/ujihisa/Desktop
 <		or >
 		/Users/ujihisa/Desktop/
@@ -1440,7 +1450,7 @@ context.
 
 						*unite-options-vertical*
 		-vertical
-		Splits unite window vertically.
+		Splits unite window vertically. |g:unite_winwidth| is used.
 
 						*unite-options-horizontal*
 		-horizontal
@@ -1559,6 +1569,11 @@ context.
 		If it is set, unite will select specified candidate.
 		Note: The candidate index is 0-origin.
 
+						*unite-options-log*
+		-log
+		Enable log mode. In log mode, cursor move to bottom
+		automatically.
+
 ==============================================================================
 SOURCES						*unite-sources*
 
@@ -1663,7 +1678,8 @@ bookmark	Nominates files or directories you bookmarked as candidates.
 
 		Source arguments:
 		1. Bookmark file name. 
-		use `*` or `_` to load from all bookmark files
+		use `_` to load from all bookmark files
+		use `*` to glob
 
 						*unite-source-source*
 source		Nominates Unite source names themselves as candidates.
@@ -2299,8 +2315,9 @@ to avoid adding undesirable sources.  To add your own sources
 dynamically, you can use |unite#define_source()|.
 
 Note: To optimize load source files, if "buffer/rec" source name is detected,
-unite.vim loads "autoload/unite/sources/buffer*.vim" files.  The source file
-name must have source name prefix(Ex: buffer).
+unite.vim loads "autoload/unite/sources/buffer*.vim" or
+"autoload/unite/sources/rec*.vim" files.  The source file name must have
+source name prefix(Ex: buffer) or source name postfix(Ex: rec).
 
 ------------------------------------------------------------------------------
 SOURCE ATTRIBUTES				*unite-source-attributes*
@@ -3023,15 +3040,41 @@ A:
 <
 Q: unite.vim statusline conflicts with powerline.
 https://github.com/Lokaltog/powerline
-https://github.com/Lokaltog/vim-powerline
+https://github.com/Lokaltog/vim-powerline (deprecated)
 
-A: Todo
+A: You must set |g:unite_force_overwrite_statusline| to 0.
+>
+	let g:unite_force_overwrite_statusline = 0
+<
+
+And you must install below custom theme for powerline.
+
+For powerline:
+https://github.com/zhaocai/powerline (custom theme for unite.vim included
+edition)
+https://github.com/Lokaltog/powerline/issues/470
+
+For vim-powerline:
+Note: The description is Japanese
+http://d.hatena.ne.jp/osyo-manga/20130429/1367235332
+https://github.com/osyo-manga/vim-powerline-unite-theme
 
 ==============================================================================
 CHANGELOG					*unite-changelog*
 
+2013-05-01
+- Improved <Plug>(unite_delete_backward_char).
+- Improved load default scripts behavior.
+
+2013-04-30
+- Fixed <Plug>(unite_delete_backward_path).
+- Added g:unite_force_overwrite_statusline option.
+- Fixed start sources behavior.
+
 2013-04-29
 - Improved start sources behavior.
+- Added log option.
+- Restore statusline.
 
 2013-04-28
 - Improved unite status line.

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Apr 2013.
+" Last Modified: 01 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -114,16 +114,14 @@ function! unite#mappings#define_default_mappings() "{{{
         \ (unite#get_current_unite().prompt_linenr+1)."G" : "")
         \ . ":call unite#redraw()\<CR>"
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_char)
-        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-        \ "\<C-o>:\<C-u>call \<SID>all_exit()\<CR>" : "\<C-h>"
-  inoremap <expr><buffer> <Plug>(unite_delete_backward_line)
+        \ <SID>smart_imap("\<C-o>:\<C-u>call \<SID>all_exit()\<CR>",
+        \ (unite#get_input() == '' ? '' : "\<C-h>"))
+  inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_line)
         \ <SID>smart_imap('', repeat("\<C-h>",
         \     col('.')-(len(unite#get_current_unite().prompt)+1)))
-  inoremap <expr><buffer> <Plug>(unite_delete_backward_word)
+  inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_word)
         \ <SID>smart_imap('', "\<C-w>")
-  inoremap <expr><buffer> <Plug>(unite_delete_backward_path)
-        \ col('.') <= (len(unite#get_current_unite().prompt)+1) ?
-        \ "\<C-o>:\<C-u>call \<SID>exit()\<CR>" :
+  inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_path)
         \ <SID>smart_imap('', <SID>delete_backward_path())
   inoremap <expr><buffer> <Plug>(unite_select_next_line)
         \ pumvisible() ? "\<C-n>" : <SID>loop_cursor_down(0)
@@ -321,7 +319,7 @@ function! unite#mappings#do_action(action_name, ...) "{{{
   let is_clear_marks = !empty(unite#get_marked_candidates())
 
   let candidates = filter(copy(candidates),
-        \ '!has_key(v:val, "is_dummy") || !v:val.is_dummy')
+        \ "!empty(v:val) && !get(v:val, 'is_dummy', 0)")
   if empty(candidates)
     return []
   endif
@@ -346,6 +344,7 @@ function! unite#mappings#do_action(action_name, ...) "{{{
   for table in action_tables
     " Check quit flag.
     if table.action.is_quit && unite.profile_name !=# 'action'
+          \ && !table.action.is_start
       call unite#all_quit_session(0)
       let is_quit = 1
     endif
@@ -514,8 +513,9 @@ function! s:delete_backward_path() "{{{
         \      getline('.') :
         \      matchstr(getline('.'),
         \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
-  return repeat("\<C-h>", unite#util#strchars(
-        \ cur_text[len(unite#get_context().prompt):]))
+  let path = matchstr(cur_text[
+        \ len(unite#get_context().prompt):], '[^/]*.$')
+  return repeat("\<C-h>", unite#util#strchars(path))
 endfunction"}}}
 function! s:normal_delete_backward_path() "{{{
   let modifiable_save = &l:modifiable
