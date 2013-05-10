@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: sorter_rank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 29 Apr 2013.
+" Last Modified: 09 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,14 +37,13 @@ let s:sorter = {
       \}
 
 function! s:sorter.filter(context) "{{{
-  return sort(a:context.candidates, 's:compare_rank')
+  return sort(a:context.candidates, 's:compare')
 endfunction"}}}
 
-" Rank order. "{{{
-function! s:compare_rank(i1, i2)
+function! s:compare(i1, i2)
   let diff = (get(a:i2, 'rank', 0) - get(a:i1, 'rank', 0))
   return (diff != 0) ? diff : (a:i1.word ># a:i2.word) ? 1 : -1
-endfunction"}}}
+endfunction"
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

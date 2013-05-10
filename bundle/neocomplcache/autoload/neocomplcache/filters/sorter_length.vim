@@ -1,5 +1,5 @@
 "=============================================================================
-" FILE: converter_relative_word.vim
+" FILE: sorter_length.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 09 May 2013.
 " License: MIT license  {{{
@@ -27,42 +27,26 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_word#define() "{{{
-  return s:converter
+function! neocomplcache#filters#sorter_length#define() "{{{
+  return s:sorter
 endfunction"}}}
 
-let s:converter = {
-      \ 'name' : 'converter_relative_word',
-      \ 'description' : 'relative path word converter',
+let s:sorter = {
+      \ 'name' : 'sorter_length',
+      \ 'description' : 'sort by length order',
       \}
 
-function! s:converter.filter(candidates, context) "{{{
-  try
-    let directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let old_dir = directory
-      let directory = substitute(a:context.source__directory, '*', '', 'g')
-
-      if directory !=# old_dir && isdirectory(directory)
-            \ && a:context.input == ''
-        lcd `=directory`
-      endif
-    endif
-
-    for candidate in a:candidates
-      let candidate.word = unite#util#substitute_path_separator(
-            \ fnamemodify(get(candidate, 'action__path',
-            \     candidate.word), ':~:.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && directory !=# old_dir
-      lcd `=old_dir`
-    endif
-  endtry
-
-  return a:candidates
+function! s:sorter.filter(context) "{{{
+  return sort(a:context.candidates, 's:compare')
 endfunction"}}}
+
+function! s:compare(i1, i2)
+  let diff = len(a:i1.word) - len(a:i2.word)
+  if !diff
+    let diff = (a:i1.word ># a:i2.word) ? 1 : -1
+  endif
+  return diff
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

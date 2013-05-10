@@ -1254,8 +1254,10 @@ Default sources are below. But you can create original filters(cf:
 |neocomplcache#custom_source()|.
 >
 	call unite#custom_source('buffer_complete', 'converters', [])
-	call unite#custom_source('buffer_complete', 'sorters',
-	\ ['sorter_nothing'])
+
+	" Change default sorter.
+	call unite#custom_source('_', 'sorters',
+	\ ['sorter_length'])
 <
 					*neocomplcache-filter-sorter_default*
 Default sorters: ['sorter_rank'].
@@ -1270,6 +1272,9 @@ sorter_nothing	Nothing sorter.
 					*neocomplcache-filter-sorter_rank*
 sorter_rank	Matched rank order sorter.  The higher the matched word is
 		already selected or in current buffer
+
+					*neocomplcache-filter-sorter_length*
+sorter_length	Candidates length order sorter.
 
 					*neocomplcache-filter-converter_nothing*
 converter_nothing
@@ -1787,11 +1792,13 @@ Note: In current version, neocomplcache does not restore 'foldmethod'. Because
 it is too heavy.
 
 Q: I want to use Pydiction with neocomplcache.
+
 A: You should set |g:neocomplcache_dictionary_filetype_lists|.
 neocomplcache can load Pydiction dictionary file.
 
 Q: Why neocomplcache uses if_lua? Many people may not be able to use it
 because they do not have the root privilege to recompile vim.
+
 A:
 Because:
  1. Python interface is not available in every Vim environment. For example,
@@ -1811,11 +1818,21 @@ Because:
  11. I think if_lua is the second level language in Vim(The first is Vim
  script).
 
+Q: I want to disable preview window.
+
+A:
+>
+	set completeopt-=preview
+<
+
 ==============================================================================
 TODO						*neocomplcache-todo*
 
 ==============================================================================
 CHANGELOG					*neocomplcache-changelog*
+
+2013-05-09
+- Added sorter_length.
 
 2013-05-02
 - Improved documentation.

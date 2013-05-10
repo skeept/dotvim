@@ -1,5 +1,5 @@
 "=============================================================================
-" FILE: converter_relative_word.vim
+" FILE: converter_tail.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 09 May 2013.
 " License: MIT license  {{{
@@ -27,39 +27,23 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#converter_relative_word#define() "{{{
+function! unite#filters#converter_tail#define() "{{{
   return s:converter
 endfunction"}}}
 
 let s:converter = {
-      \ 'name' : 'converter_relative_word',
-      \ 'description' : 'relative path word converter',
+      \ 'name' : 'converter_tail',
+      \ 'description' : 'converts word to tail of filename',
       \}
 
 function! s:converter.filter(candidates, context) "{{{
-  try
-    let directory = unite#util#substitute_path_separator(getcwd())
-    if has_key(a:context, 'source__directory')
-      let old_dir = directory
-      let directory = substitute(a:context.source__directory, '*', '', 'g')
-
-      if directory !=# old_dir && isdirectory(directory)
-            \ && a:context.input == ''
-        lcd `=directory`
-      endif
+  for candidate in a:candidates
+    if !has_key(candidate, 'abbr')
+      " Save original word.
+      let candidate.abbr = candidate.word
     endif
-
-    for candidate in a:candidates
-      let candidate.word = unite#util#substitute_path_separator(
-            \ fnamemodify(get(candidate, 'action__path',
-            \     candidate.word), ':~:.'))
-    endfor
-  finally
-    if has_key(a:context, 'source__directory')
-          \ && directory !=# old_dir
-      lcd `=old_dir`
-    endif
-  endtry
+    let candidate.word = fnamemodify(candidate.word, ':t')
+  endfor
 
   return a:candidates
 endfunction"}}}
