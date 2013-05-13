@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 May 2013.
+" Last Modified: 12 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -195,32 +195,35 @@ function! vimfiler#view#_redraw_prompt() "{{{
 
   let context = vimfiler#get_context()
 
-  if !context.explorer
-    " Append up directory.
-    let modifiable_save = &l:modifiable
-    setlocal modifiable
+  " Append up directory.
+  let modifiable_save = &l:modifiable
+  setlocal modifiable
 
-    if getline(b:vimfiler.prompt_linenr) != '..'
-      if line('$') == 1
-        " Note: Dirty Hack for open file.
-        call append(1, '')
-        call setline(2, '..')
-        delete _
-      else
-        call setline(1, '..')
-      endif
+  if getline(b:vimfiler.prompt_linenr) != '..'
+    if line('$') == 1
+      " Note: Dirty Hack for open file.
+      call append(1, '')
+      call setline(2, '..')
+      delete _
+    else
+      call setline(1, '..')
     endif
-
-    if context.status
-      if getline(1) == '..'
-        call append(0, '[in]: ' . b:vimfiler.status)
-      else
-        call setline(0, '[in]: ' . b:vimfiler.status)
-      endif
-    endif
-
-    let &l:modifiable = modifiable_save
   endif
+
+  if context.status || context.explorer
+    if getline(1) == '..'
+      call append(0, '[in]: ' . b:vimfiler.status)
+    else
+      call setline(1, '[in]: ' . b:vimfiler.status)
+    endif
+  endif
+
+  if context.explorer
+    " Delete prompt
+    1,2delete _
+  endif
+
+  let &l:modifiable = modifiable_save
 endfunction"}}}
 function! vimfiler#view#_get_print_lines(files) "{{{
   " Clear previous syntax.
