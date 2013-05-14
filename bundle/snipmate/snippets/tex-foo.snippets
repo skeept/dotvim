@@ -1,0 +1,70 @@
+#frame
+snippet frame
+	\begin{frame}
+	    \frametitle{${1:frametitle}}
+	    ${2}
+	\end{frame}
+#
+
+#what is wrong with this block thing?
+snippet block
+	\begin{block}{${1:block title}}
+	    ${2:%block text}
+	\end{block}
+#
+
+snippet uncover
+	\uncover<${1:i-}>
+	{
+	    ${2:%uncover text}
+	}
+#
+snippet ref
+	(\ref{${1:<+reference+>}})${2:<++>}
+#
+
+snippet mcol
+	\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}
+#
+
+## we replicate all default snippets with the placeholders for latex
+# \begin{}...\end{}
+snippet hbegin
+	\begin{${1:env}}
+		${2}
+	\end{$1}
+	${3:<+end $1+>}
+# Tabular
+snippet htab
+	\begin{${1:tabular}}{${2:c}}
+	${3:<+text+>}
+	\end{$1}
+	${4:<+end tabular+>}
+snippet heq
+	\begin{equation}
+		${1}
+	\end{equation}
+	${2:<+end equation+>}
+snippet hfig
+	\begin{figure}
+	\begin{center}
+	\includegraphics[scale=${1:1.0}]{${2}}
+	\end{center}
+	\caption{${3:<+caption+>}}
+	\label{fig:${4:<+label+>}}
+	\end{figure}
+	${5:<+end figure+>}
+#math
+snippet hfrac
+	\frac{${1}}{${2:<+den+>}}
+snippet hsum
+	\sum_{${1:i=1}}^{${2:n}}{${3}}${4}
+#cite
+snippet hcite
+	\cite{${1}}${2:<+end cite+>}
+snippet matr
+	\left[
+	\begin{array}[h]{${1:<+cols+>}}
+	${2:<+row+>}
+	\end{array}
+	\right]

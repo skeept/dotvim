@@ -1,0 +1,3 @@
+#!/bin/zsh
+tar xf svntestreposerver.tar
+svn checkout -q file://$PWD/svntestreposerver svntestrepo

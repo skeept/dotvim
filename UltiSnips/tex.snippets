@@ -1,0 +1,228 @@
+snippet frame "frame"
+\begin{frame}
+\frametitle{${1:<+title+>}}
+${2}
+\end{frame}
+endsnippet
+
+snippet block "add a block"
+\begin{block}{${1:<+block title+>}}
+${2:<+block text+>}
+\end{block}
+endsnippet
+
+snippet uncover "add uncover"
+\uncover<${1:i-}>
+{
+  ${2:<+%uncover text+>}
+}
+endsnippet
+
+snippet reff "reference" w
+(\ref{${1:<+ref+>}})${0:<++>}
+endsnippet
+
+snippet ref "reference" w
+\ref{${1:<+ref+>}}${0:<++>}
+endsnippet
+
+snippet mcol "multicolumn"
+\multicolumn{${1:<+ncols+>}}{${2:<+aligment+>}}{${3:<+text+>}}${0:<++>}
+endsnippet
+
+snippet "be(gin)?( (\S+))?" "begin{} / end{}" !br
+\begin{${1:`!p
+snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
+	${2:${VISUAL}}
+\end{$1}$0
+endsnippet
+
+#snippet "vr(egin)?( (\S+))?" "begin{} / end{}" !br
+#\begin{${1:`!p
+#snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
+#	${0:${VISUAL}}
+#\end{$1}
+#endsnippet
+
+snippet htab "tabular"
+\begin{${1:tabular}}{${2:c}}
+${3:<+text+>}
+\end{$1}
+${4:<+end tabular+>}
+endsnippet
+
+snippet eqn "Equation"
+\begin{equation}
+${1}
+\label{eqn:${2:<+lblname+>}}
+\end{equation}${0:<++>}
+endsnippet
+
+snippet fig "Figure"
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=${1:1.0}]{${2:<+fig name+>}}
+\caption{${3:<+caption+>}}
+\label{fig:${4:<+label+>}}
+\end{figure}$0
+endsnippet
+
+snippet fr "Fraction" w
+\frac{${1:${VISUAL:<+nom+>}}}{${2:<+denom+>}}${0:<++>}
+endsnippet
+
+snippet sum "sum with lower and upper limits" w
+\sum_{${1:i=1}}^{${2:n}}{${3:<++>}}${0:<++>}
+endsnippet
+
+snippet cite "Citation" w
+\cite{${1}}${0:<++>}
+endsnippet
+
+snippet matr "Array surrounded with []"
+\left[
+\begin{array}[h]{${1:<+cols+>}}
+${2:<+row+>}
+\end{array}
+\right]${0:<++>}
+endsnippet
+
+snippet array
+\begin{array}[h]{${1:<+cols+>}}
+${2:<+row+>}
+\end{array}${0:<++>}
+endsnippet
+
+snippet lr( "left( right)" !w
+\left( ${1:${VISUAL}} \right) ${2:<++>}
+endsnippet
+
+snippet lr| "left| right|" !w
+\left| ${1:${VISUAL}} \right| ${2:<++>}
+endsnippet
+
+snippet lr{ "left\{ right\}" !w
+\left\\{ ${1:${VISUAL}} \right\\} ${0:<++>}
+endsnippet
+
+snippet lr[ "left[ right]" !w
+\left[ ${1:${VISUAL}} \right] ${2:<++>}
+endsnippet
+
+#caption goes before table in thesis
+snippet table
+\begin{table}[ht]
+  \centering
+  \caption{${1:<+Caption+>}}
+  \begin{tabular}{${2:<+ccc+>}}
+    ${3:<++>}
+  \end{tabular}
+  \label{tab:${4:<+label+>}}
+\end{table}${0:<++>}
+endsnippet
+
+snippet equ "equivalent to eqn"
+eqn`!p vim.command('call feedkeys("\<f10>")')`
+endsnippet
+
+snippet out "Outline"
+\outline{
+  ${1:<+OutlineText+>}
+} % OutlineEnd${0:<++>}
+endsnippet
+
+snippet todo "Todo" !w
+\todo{${1:<+what+>}}${0:<++>}
+endsnippet
+
+snippet abs "enclose expression in | |" !w
+\abs{${1:<++>}}$0
+endsnippet
+
+snippet todoi "expansion of todoi" !w
+\todoi{${1:<+title (red)+>}}{
+${2:<+outline (blue)+>}
+}$0
+endsnippet
+
+snippet ht "hat" w
+\hat{$1}$0
+endsnippet
+
+snippet br "bar" w
+\bar{$1}$0
+endsnippet
+
+snippet tl "tilde" w
+\tilde{$1}$0
+endsnippet
+
+snippet em "emphasize" w
+\emph{${1:${VISUAL}}}$0
+endsnippet
+
+snippet bf "font bold face" w
+\textbf{${1:${VISUAL}}}$0
+endsnippet
+
+snippet fb "textbf" w
+\textbf{${1:${VISUAL}}}$0
+endsnippet
+
+snippet it "textit" w
+\textit{${1:${VISUAL}}}$0
+endsnippet
+
+snippet ii "item" w
+\item
+endsnippet
+
+snippet mf "Math Font" w
+\math${1:/bf/cal}{$2}$0
+endsnippet
+
+snippet sideset "sideset" w
+\sideset{${1:^{\star}}}{}$0
+endsnippet
+
+#snippet "__LTXSPlbraces" "\{ \}" r
+#\{ $1 \}$0
+#endsnippet
+#
+#snippet "__LTXSPddolar" "$math$" r
+#$$1$$0
+#endsnippet
+#
+#snippet "__LTXSPdhat" "^{}" r
+#^{$1}$0
+#endsnippet
+#
+#snippet "__LTXSPdunders" "_{}" r
+#_{$1}$0
+#endsnippet
+
+snippet s1 "s1" w
+{\scq}
+endsnippet
+
+snippet s2 "s2" w
+{\slmcnl}
+endsnippet
+
+snippet s4 "s4" w
+{\scenc}
+endsnippet
+
+snippet s5 "s5" w
+{\slmlp}
+endsnippet
+
+snippet s7k5 "s7k5" w
+{\slftkFive}
+endsnippet
+
+snippet s7k10 "s7k10" w
+{\slftkTen}
+endsnippet
+
+# vim:ft=snippets:

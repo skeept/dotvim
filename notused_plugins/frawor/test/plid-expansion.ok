@@ -1,0 +1,5 @@
+plugin/exptest
+plugin/plid-expansion/exptest
+autoload/exptest
+ftplugin/exptest
+['newfeature', 'postresource', 'require', 'throw', 'warn']

@@ -1,0 +1,22 @@
+: just mapped
+""
+"" b
+"a
+d
+e
+e
+: unmapped
+: mapped again
+""
+"" b
+"a
+d
+e
+e
+: other buffer
+""
+"" b
+"a
+D
+e
+e
