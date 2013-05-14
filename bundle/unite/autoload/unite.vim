@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 May 2013.
+" Last Modified: 14 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,7 +33,7 @@ augroup unite
 augroup END
 
 function! unite#version() "{{{
-  return str2nr(printf('%02d%02d', 5, 0))
+  return str2nr(printf('%02d%02d', 5, 1))
 endfunction"}}}
 
 " User functions. "{{{
@@ -330,6 +330,7 @@ let s:unite_options = [
       \ '-auto-quit', '-no-focus',
       \ '-long-source-names', '-short-source-names',
       \ '-multi-line', '-resume', '-wrap', '-select=', '-log',
+      \ '-truncate',
       \]
 "}}}
 
@@ -766,7 +767,7 @@ function! unite#quick_match_redraw(quick_match_table) "{{{
   setlocal modifiable
 
   call setline(unite#get_current_unite().prompt_linenr+1,
-        \ s:convert_quick_match_lines(
+        \ unite#convert_lines(
         \ unite#get_current_unite().current_candidates,
         \ a:quick_match_table))
   redraw
@@ -1062,7 +1063,6 @@ function! unite#start(sources, ...) "{{{
   call unite#redraw_candidates()
 
   call s:init_cursor()
-
 endfunction"}}}
 function! unite#start_script(sources, ...) "{{{
   " Start unite from script.
@@ -1070,14 +1070,6 @@ function! unite#start_script(sources, ...) "{{{
   let context = get(a:000, 0, {})
 
   let context.script = 1
-
-  " Set buffer-name.
-  if !has_key(context, 'buffer_name')
-    let context.buffer_name =
-          \ type(get(a:sources, 0, [])) == type([]) ?
-          \ join(map(copy(a:sources), 'v:val[0]')) :
-          \ join(a:sources)
-  endif
 
   return get(unite#get_context(), 'temporary', 0) ?
         \ unite#start_temporary(a:sources, context) :
@@ -1117,6 +1109,11 @@ function! unite#start_temporary(sources, ...) "{{{
   let context.unite__old_winwidth = 0
   let context.unite__old_winheight = 0
   let context.is_resize = 0
+
+  if context.script
+    " Set buffer-name automatically.
+    let context.buffer_name = s:get_source_names(a:sources)
+  endif
 
   let buffer_name = get(a:000, 1,
         \ matchstr(context.buffer_name, '^\S\+')
@@ -1637,6 +1634,7 @@ function! s:initialize_context(context, ...) "{{{
         \ 'wrap' : 0,
         \ 'select' : 0,
         \ 'log' : 0,
+        \ 'truncate' : 0,
         \ 'unite__direct_switch' : 0,
         \ 'unite__is_interactive' : 1,
         \ 'unite__is_complete' : 0,
@@ -1692,6 +1690,11 @@ function! s:initialize_context(context, ...) "{{{
     " Split automatically.
     let context.no_split = 0
   endif
+  if !has_key(a:context, 'buffer_name') && context.script
+    " Set buffer-name automatically.
+    let context.buffer_name = join(source_names)
+  endif
+
   let context.is_changed = 0
 
   return context
@@ -2316,12 +2319,6 @@ function! s:convert_quick_match_lines(candidates, quick_match_table) "{{{
 
   let candidates = []
 
-  " Create key table.
-  let keys = {}
-  for [key, number] in items(a:quick_match_table)
-    let keys[number] = key . '|'
-  endfor
-
   " Add number.
   let num = 0
 
@@ -2338,21 +2335,33 @@ function! s:convert_quick_match_lines(candidates, quick_match_table) "{{{
 
   return candidates
 endfunction"}}}
-function! unite#convert_lines(candidates) "{{{
+function! unite#convert_lines(candidates, ...) "{{{
+  let quick_match_table = get(a:000, 0, {})
+
   let unite = unite#get_current_unite()
+  let context = unite.context
   let [max_width, max_source_name] =
         \ s:adjustments(winwidth(0)-1, unite.max_source_name, 2)
   if unite.max_source_name == 0
     let max_width -= 1
   endif
 
+  " Create key table.
+  let keys = {}
+  for [key, number] in items(quick_match_table)
+    let keys[number] = key . '|'
+  endfor
+
   return map(copy(a:candidates),
-        \ "(v:val.unite__is_marked ? g:unite_marked_icon . ' ' : '- ')
+        \ "(v:val.is_dummy ? '  ' :
+        \   v:val.unite__is_marked ? g:unite_marked_icon . ' ' :
+        \   empty(quick_match_table) ? '- ' :
+        \   get(keys, v:key, '  '))
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(unite#_convert_source_name(
-        \     v:val.source), max_source_name))
+        \     (v:val.is_dummy ? '' : v:val.source)), max_source_name))
         \ . unite#util#truncate_wrap(v:val.unite__abbr, " . max_width
-        \    .  ", max_width/2, '..')")
+        \    .  ", (context.truncate ? 0 : max_width/2), '..')")
 endfunction"}}}
 
 function! s:initialize_current_unite(sources, context) "{{{

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 May 2013.
+" Last Modified: 14 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -290,10 +290,11 @@ function! unite#mappings#narrowing(word) "{{{
   let prompt_linenr = unite.prompt_linenr
   call setline(prompt_linenr, unite.prompt . unite.input)
   call unite#redraw()
-  execute prompt_linenr
   if unite.is_insert
+    call cursor(prompt_linenr, 0)
     startinsert!
   else
+    call cursor(prompt_linenr+1, 0)
     normal! 0z.
   endif
 endfunction"}}}
@@ -317,8 +318,6 @@ function! unite#mappings#do_action(action_name, ...) "{{{
     let candidates = [ unite#get_current_candidate() ]
   endif
 
-  let is_clear_marks = !empty(unite#get_marked_candidates())
-
   let candidates = filter(copy(candidates),
         \ "!empty(v:val) && !get(v:val, 'is_dummy', 0)")
   if empty(candidates)
@@ -339,8 +338,8 @@ function! unite#mappings#do_action(action_name, ...) "{{{
   let context = unite#get_context()
 
   " Execute action.
-  let is_redraw = 0
   let is_quit = 0
+  let is_redraw = 0
   let _ = []
   for table in action_tables
     " Check quit flag.
@@ -350,7 +349,11 @@ function! unite#mappings#do_action(action_name, ...) "{{{
       let is_quit = 1
     endif
 
-    if table.action.is_selectable && is_clear_marks
+    if table.action.is_start && !empty(unite#get_marked_candidates())
+      call s:clear_marks(candidates)
+      call unite#force_redraw()
+      let is_redraw = 0
+    elseif table.action.is_selectable
       let is_redraw = 1
     endif
 
@@ -399,14 +402,8 @@ function! unite#mappings#do_action(action_name, ...) "{{{
   endif
 
   if !is_quit && is_redraw
+    call s:clear_marks(candidates)
     call unite#force_redraw()
-
-    if is_clear_marks
-      " Clear marks.
-      for candidate in candidates
-        let candidate.unite__is_marked = 0
-      endfor
-    endif
   endif
 
   return _
@@ -941,6 +938,11 @@ function! s:redraw_all_candidates() "{{{
 endfunction"}}}
 function! s:narrowing_dot() "{{{
   call unite#mappings#narrowing(unite#get_input().'.')
+endfunction"}}}
+function! s:clear_marks(candidates) "{{{
+  for candidate in a:candidates
+    let candidate.unite__is_marked = 0
+  endfor
 endfunction"}}}
 
 function! s:get_quick_match_table() "{{{
