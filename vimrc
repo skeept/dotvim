@@ -130,10 +130,19 @@ let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
 function! LoadClangComplete()
-  if 1 || exists("s:loaded_clang_complete") || g:is_win | return '' | endif
+  if hostname() != "go"
+    let s:loaded_clang_complete = 1
+  endif
+
+  if exists("s:loaded_clang_complete") || g:is_win
+    return ''
+  endif
+
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
+  return ''
 endfunction
+
 augroup ft_cpp_clang
   autocmd!
   autocmd FileType c,cpp call LoadClangComplete()
