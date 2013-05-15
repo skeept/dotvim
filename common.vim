@@ -34,11 +34,11 @@ set t_Co=256
 "set t_Co=88
 
 set backup
-exec "set backupdir^=" . g:p0 . "/backup"
-exec "set directory^=" . g:p0 . "/swapdir"
+exec "set backupdir^=" . g:p0 . "/tmp/backup"
+exec "set directory^=" . g:p0 . "/tmp/swapdir"
 if v:version >= 703
   set undofile
-  exec "set undodir^=" . g:p0 . "/undodir"
+  exec "set undodir^=" . g:p0 . "/tmp/undodir"
 endif
 
 set expandtab
