@@ -352,6 +352,10 @@ noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
 "==============================================================================}}}
 
+"================== Vim-Notes ================================================={{{
+let g:notes_directories = [g:p0 . '/tmp/Notes']
+"==============================================================================}}}
+
 "some plugins don't work well with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
