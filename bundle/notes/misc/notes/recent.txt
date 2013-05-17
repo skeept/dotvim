@@ -1,0 +1,1 @@
+/login/sg216489/.vim/bundle/notes/misc/notes/shadow/Note taking syntax
