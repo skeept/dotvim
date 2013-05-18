@@ -97,14 +97,18 @@ function! jedi#new_buffer(path)
         Python vim.command('edit ' + jedi_vim.escape_file_path(vim.eval('a:path')))
     endif
     " sometimes syntax is being disabled and the filetype not set.
-    syntax on
-    set filetype=python
+    if !exists("g:syntax_on")
+      syntax enable
+    endif
+    if &filetype != 'python'
+      set filetype=python
+    endif
 endfunction
 
 function! jedi#add_goto_window()
     set lazyredraw
     cclose
-    execute 'belowright copen 3'
+    execute 'belowright copen '.g:jedi#quickfix_window_height
     set nolazyredraw
     if g:jedi#use_tabs_not_buffers == 1
         map <buffer> <CR> :call jedi#goto_window_on_enter()<CR>
