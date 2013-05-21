@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Apr 2013.
+" Last Modified: 29 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,15 +35,15 @@ function! neocomplcache#helper#get_cur_text() "{{{
         \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
 
   if cur_text =~ '^.\{-}\ze\S\+$'
-    let cur_keyword_str = matchstr(cur_text, '\S\+$')
+    let complete_str = matchstr(cur_text, '\S\+$')
     let cur_text = matchstr(cur_text, '^.\{-}\ze\S\+$')
   else
-    let cur_keyword_str = ''
+    let complete_str = ''
   endif
 
   let neocomplcache = neocomplcache#get_current_neocomplcache()
   if neocomplcache.event ==# 'InsertCharPre'
-    let cur_keyword_str .= v:char
+    let complete_str .= v:char
   endif
 
   let filetype = neocomplcache#get_context_filetype()
@@ -53,26 +53,26 @@ function! neocomplcache#helper#get_cur_text() "{{{
         \ wildcard !=# '*' && len(wildcard) == 1
     " Substitute wildcard character.
     while 1
-      let index = stridx(cur_keyword_str, wildcard)
+      let index = stridx(complete_str, wildcard)
       if index <= 0
         break
       endif
 
-      let cur_keyword_str = cur_keyword_str[: index-1]
-            \ . '*' . cur_keyword_str[index+1: ]
+      let complete_str = complete_str[: index-1]
+            \ . '*' . complete_str[index+1: ]
     endwhile
   endif
 
-  let neocomplcache.cur_text = cur_text . cur_keyword_str
+  let neocomplcache.cur_text = cur_text . complete_str
 
   " Save cur_text.
   return neocomplcache.cur_text
 endfunction"}}}
 
-function! neocomplcache#helper#keyword_escape(cur_keyword_str) "{{{
+function! neocomplcache#helper#keyword_escape(complete_str) "{{{
   " Fuzzy completion.
-  let keyword_len = len(a:cur_keyword_str)
-  let keyword_escape = s:keyword_escape(a:cur_keyword_str)
+  let keyword_len = len(a:complete_str)
+  let keyword_escape = s:keyword_escape(a:complete_str)
   if g:neocomplcache_enable_fuzzy_completion
         \ && (g:neocomplcache_fuzzy_completion_start_length
         \          <= keyword_len && keyword_len < 20)
@@ -128,9 +128,9 @@ function! neocomplcache#helper#is_omni_complete(cur_text) "{{{
       return 0
     endif
 
-    let cur_keyword_pos = call(&l:omnifunc, [1, ''])
-    let cur_keyword_str = a:cur_text[cur_keyword_pos :]
-    return neocomplcache#util#mb_strlen(cur_keyword_str) >=
+    let complete_pos = call(&l:omnifunc, [1, ''])
+    let complete_str = a:cur_text[complete_pos :]
+    return neocomplcache#util#mb_strlen(complete_str) >=
           \ g:eskk#start_completion_length
   endif
 
@@ -174,7 +174,7 @@ function! neocomplcache#helper#is_enabled_source(source_name) "{{{
 
   let neocomplcache = neocomplcache#get_current_neocomplcache()
   if !has_key(neocomplcache, 'sources')
-    call neocomplcache#_get_sources_list()
+    call neocomplcache#helper#get_sources_list()
   endif
 
   return index(keys(neocomplcache.sources), a:source_name) >= 0
@@ -246,13 +246,13 @@ function! neocomplcache#helper#match_word(cur_text, ...) "{{{
   let pattern = a:0 >= 1 ? a:1 : neocomplcache#get_keyword_pattern_end()
 
   " Check wildcard.
-  let cur_keyword_pos = s:match_wildcard(
+  let complete_pos = s:match_wildcard(
         \ a:cur_text, pattern, match(a:cur_text, pattern))
 
-  let cur_keyword_str = (cur_keyword_pos >=0) ?
-        \ a:cur_text[cur_keyword_pos :] : ''
+  let complete_str = (complete_pos >=0) ?
+        \ a:cur_text[complete_pos :] : ''
 
-  return [cur_keyword_pos, cur_keyword_str]
+  return [complete_pos, complete_str]
 endfunction"}}}
 
 function! neocomplcache#helper#filetype_complete(arglead, cmdline, cursorpos) "{{{
@@ -303,22 +303,128 @@ function! neocomplcache#helper#unite_patterns(pattern_var, filetype) "{{{
   return join(keyword_patterns, '\m\|')
 endfunction"}}}
 
-function! s:match_wildcard(cur_text, pattern, cur_keyword_pos) "{{{
-  let cur_keyword_pos = a:cur_keyword_pos
-  while cur_keyword_pos > 1 && a:cur_text[cur_keyword_pos - 1] == '*'
-    let left_text = a:cur_text[: cur_keyword_pos - 2]
+function! neocomplcache#helper#ftdictionary2list(dictionary, filetype) "{{{
+  let list = []
+  for filetype in neocomplcache#get_source_filetypes(a:filetype)
+    if has_key(a:dictionary, filetype)
+      call add(list, a:dictionary[filetype])
+    endif
+  endfor
+
+  return list
+endfunction"}}}
+
+function! neocomplcache#helper#get_sources_list(...) "{{{
+  let filetype = neocomplcache#get_context_filetype()
+
+  let source_names = exists('b:neocomplcache_sources_list') ?
+        \ b:neocomplcache_sources_list :
+        \ get(a:000, 0,
+        \   get(g:neocomplcache_sources_list, filetype,
+        \     get(g:neocomplcache_sources_list, '_', ['_'])))
+  let disabled_sources = get(
+        \ g:neocomplcache_disabled_sources_list, filetype,
+        \   get(g:neocomplcache_disabled_sources_list, '_', []))
+  call neocomplcache#init#_sources(source_names)
+
+  let all_sources = neocomplcache#available_sources()
+  let sources = {}
+  for source_name in source_names
+    if source_name ==# '_'
+      " All sources.
+      let sources = all_sources
+      break
+    endif
+
+    if !has_key(all_sources, source_name)
+      call neocomplcache#print_warning(printf(
+            \ 'Invalid source name "%s" is given.', source_name))
+      continue
+    endif
+
+    let sources[source_name] = all_sources[source_name]
+  endfor
+
+  let neocomplcache = neocomplcache#get_current_neocomplcache()
+  let neocomplcache.sources = filter(sources, "
+        \ index(disabled_sources, v:val.name) < 0 &&
+        \   (empty(v:val.filetypes) ||
+        \    get(v:val.filetypes, neocomplcache.context_filetype, 0))")
+
+  return neocomplcache.sources
+endfunction"}}}
+
+function! neocomplcache#helper#clear_result() "{{{
+  let neocomplcache = neocomplcache#get_current_neocomplcache()
+
+  let neocomplcache.complete_str = ''
+  let neocomplcache.candidates = []
+  let neocomplcache.complete_results = []
+  let neocomplcache.complete_pos = -1
+endfunction"}}}
+
+function! neocomplcache#helper#call_hook(sources, hook_name, context) "{{{
+  for source in neocomplcache#util#convert2list(a:sources)
+    try
+      if !has_key(source.hooks, a:hook_name)
+        if a:hook_name ==# 'on_init' && has_key(source, 'initialize')
+          call source.initialize()
+        elseif a:hook_name ==# 'on_final' && has_key(source, 'finalize')
+          call source.finalize()
+        endif
+      else
+        call call(source.hooks[a:hook_name],
+              \ [extend(source.neocomplcache__context, a:context)],
+              \ source.hooks)
+      endif
+    catch
+      call unite#print_error(v:throwpoint)
+      call unite#print_error(v:exception)
+      call unite#print_error(
+            \ '[unite.vim] Error occured in calling hook "' . a:hook_name . '"!')
+      call unite#print_error(
+            \ '[unite.vim] Source name is ' . source.name)
+    endtry
+  endfor
+endfunction"}}}
+
+function! neocomplcache#helper#call_filters(filters, source, context) "{{{
+  let context = extend(a:source.neocomplcache__context, a:context)
+  let _ = []
+  for filter in neocomplcache#init#_filters(
+        \ neocomplcache#util#convert2list(a:filters))
+    try
+      let context.candidates = call(filter.filter, [context], filter)
+    catch
+      call unite#print_error(v:throwpoint)
+      call unite#print_error(v:exception)
+      call unite#print_error(
+            \ '[unite.vim] Error occured in calling filter '
+            \   . filter.name . '!')
+      call unite#print_error(
+            \ '[unite.vim] Source name is ' . a:source.name)
+    endtry
+  endfor
+
+  return context.candidates
+endfunction"}}}
+
+function! s:match_wildcard(cur_text, pattern, complete_pos) "{{{
+  let complete_pos = a:complete_pos
+  while complete_pos > 1 && a:cur_text[complete_pos - 1] == '*'
+    let left_text = a:cur_text[: complete_pos - 2]
     if left_text == '' || left_text !~ a:pattern
       break
     endif
 
-    let cur_keyword_pos = match(left_text, a:pattern)
+    let complete_pos = match(left_text, a:pattern)
   endwhile
 
-  return cur_keyword_pos
+  return complete_pos
 endfunction"}}}
 
-function! s:keyword_escape(cur_keyword_str) "{{{
-  let keyword_escape = escape(a:cur_keyword_str, '~" \.^$[]')
+function! s:keyword_escape(complete_str) "{{{
+  let keyword_escape = escape(a:complete_str, '~" \.^$[]')
   if g:neocomplcache_enable_wildcard
     let keyword_escape = substitute(
           \ substitute(keyword_escape, '.\zs\*', '.*', 'g'),
