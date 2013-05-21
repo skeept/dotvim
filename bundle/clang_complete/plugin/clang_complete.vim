@@ -116,7 +116,7 @@ function! s:ClangCompleteInit()
   let b:my_changedtick = b:changedtick
   let b:clang_parameters = '-x c'
 
-  if &filetype == 'objc'
+  if &filetype =~ 'objc'
     let b:clang_parameters = '-x objective-c'
   endif
 
@@ -148,7 +148,6 @@ function! s:ClangCompleteInit()
   inoremap <expr> <buffer> . <SID>CompleteDot()
   inoremap <expr> <buffer> > <SID>CompleteArrow()
   inoremap <expr> <buffer> : <SID>CompleteColon()
-  inoremap <expr> <buffer> <CR> <SID>HandlePossibleSelectionEnter()
   execute "nnoremap <buffer> <silent> " . g:clang_jumpto_declaration_key . " :call <SID>GotoDeclaration()<CR><Esc>"
   execute "nnoremap <buffer> <silent> " . g:clang_jumpto_back_key . " <C-O>"
 
@@ -365,6 +364,7 @@ function! ClangComplete(findstart, base)
     python timer.registerEvent("Load into vimscript")
 
     inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
+    inoremap <expr> <buffer> <CR> <SID>HandlePossibleSelectionEnter()
     augroup ClangComplete
       au CursorMovedI <buffer> call <SID>TriggerSnippet()
     augroup end
@@ -402,6 +402,7 @@ function! s:TriggerSnippet()
 
   " Stop monitoring as we'll trigger a snippet
   silent! iunmap <buffer> <C-Y>
+  silent! iunmap <buffer> <CR>
   augroup ClangComplete
     au! CursorMovedI <buffer>
   augroup end

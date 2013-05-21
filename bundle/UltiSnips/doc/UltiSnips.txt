@@ -1316,6 +1316,7 @@ Contributors listed in chronological order:
    Stanislav Golovanov - JazzCore
    David Briscoe - DavidBriscoe
    Keith Welch - paralogiki
+   Zhao Cai - zhaocai
 
 
 8.2 Snippets                                       *UltiSnips-contrisnippets*
@@ -1361,6 +1362,14 @@ Contributors listed in chronological order:
    Rudi Grinberg (rgrinberg)
    javipolo
    Matthew Strawbridge (pxc)
+   Josh Strater (jstrater)
+   jinzhu
+   Rene Vergara (ravl1084)
+   Johan Haals (JHaals)
+   Danilo Bargen (dbrgn)
+   Bernhard Vallant (lazerscience)
+   Von Welch (von)
+   Nikola Petrov (nikolavp)
 
 Thank you for your support.
 
