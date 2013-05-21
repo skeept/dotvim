@@ -15,18 +15,19 @@ fun! pymode#lint#Check() "{{{
     let g:pymode_lint_buffer = bufnr('%')
 
     py from pymode import lint
+    py queue.stop_queue(False)
     py lint.check_file()
 
 endfunction " }}}
 
 
-fun! pymode#lint#Parse()
+fun! pymode#lint#Parse(bnum)
     " DESC: Parse result of code checking.
     "
     call setqflist(g:qf_list, 'r')
 
     if g:pymode_lint_signs
-        call pymode#PlaceSigns()
+        call pymode#PlaceSigns(a:bnum)
     endif
 
     if g:pymode_lint_cwindow

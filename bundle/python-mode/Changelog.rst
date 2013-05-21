@@ -1,6 +1,27 @@
 Changelog
 =========
 
+## 2013-05-15 0.6.18
+--------------------
+* Fixed autopep8 (`PyLintAuto`) command;
+* Fix error on non-ascii characters in docstrings;
+* Update python syntax;
+
+## 2013-05-03 0.6.17
+--------------------
+* Update `Pylint` to version 0.28.0;
+* Update `pyflakes` to version 0.7.3;
+* Fixed `lint_ignore` options bug;
+* Fixed encoding problems when code running;
+
+## 2013-04-26 0.6.16
+--------------------
+* Improvement folding (thanks @alvinfrancis);
+
+## 2013-04-01 0.6.15
+--------------------
+* Bugfix release
+
 ## 2013-03-16 0.6.14
 --------------------
 * Update `PEP8` to version 1.4.5;

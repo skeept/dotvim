@@ -268,9 +268,8 @@ class VimUtils(environment.Environment):
 
     def show_doc(self, docs, altview=False):
         if docs:
-            vim.command(
-                'call pymode#ShowStr("{0}")'.format(docs.replace('"', '\\"'))
-            )
+            docs = docs.encode(self._get_encoding()).replace('"', '\\"')
+            vim.command('call pymode#ShowStr("{0}")'.format(docs))
 
     def preview_changes(self, diffs):
         echo(diffs)
@@ -380,10 +379,7 @@ class VimProgress(object):
 
 
 def echo(message):
-    if _rope_quiet:
-        return
-    if isinstance(message, unicode):
-        message = message.encode(vim.eval('&encoding'))
+    message = message.encode(VimUtils._get_encoding())
     print message
 
 
@@ -391,8 +387,7 @@ def status(message):
     if _rope_quiet:
         return
 
-    if isinstance(message, unicode):
-        message = message.encode(vim.eval('&encoding'))
+    message = message.encode(VimUtils._get_encoding())
     vim.command('redraw | echon "{0}"'.format(message))
 
 
@@ -445,7 +440,6 @@ class RopeMode(interface.RopeMode):
 
         progress.name = txt
         progress.done()
-        echo('Project opened!')
 
 decorators.logger.message = echo
 decorators.logger.only_short = True
