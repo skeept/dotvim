@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 May 2013.
+" Last Modified: 20 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -427,6 +427,24 @@ function! unite#get_current_candidate(...) "{{{
 
   return get(unite#get_unite_candidates(), num, {})
 endfunction"}}}
+function! unite#get_current_candidate_linenr(num) "{{{
+  let num = 0
+
+  let candidate_num = 0
+  for candidate in unite#get_unite_candidates()
+    if !candidate.is_dummy
+      let candidate_num += 1
+    endif
+
+    let num += 1
+
+    if candidate_num >= a:num+1
+      break
+    endif
+  endfor
+
+  return unite#get_current_unite().prompt_linenr + num
+endfunction"}}}
 function! unite#get_context() "{{{
   let unite = unite#get_current_unite()
   return has_key(unite, 'context') ?
@@ -687,9 +705,9 @@ function! unite#escape_match(str) "{{{
         \ '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
 endfunction"}}}
 function! unite#complete_source(arglead, cmdline, cursorpos) "{{{
-  let ret = unite#parse_path(join(split(a:cmdline)[1:]))
-  let source_name = ret[0]
-  let source_args = ret[1:]
+  let [ret, options] = unite#parse_options_args(a:cmdline)
+  let source_name = ret[-1][0]
+  let source_args = ret[-1][1:]
 
   let _ = []
 
@@ -2421,8 +2439,6 @@ function! s:initialize_current_unite(sources, context) "{{{
   let unite.prev_winnr = winnr()
   let unite.update_time_save = &updatetime
   let unite.statusline = '*unite* : %{unite#get_status_string()}'
-          \ . "\ %=%{printf(' %5d/%d',line('.'),
-          \       b:unite.max_source_candidates+b:unite.prompt_linenr)}"
 
   " Create new buffer name.
   let postfix = s:get_postfix(
@@ -3252,7 +3268,7 @@ function! s:init_cursor() "{{{
 
     if !is_restore
           \ || candidate != unite#get_current_candidate()
-      call cursor(unite.prompt_linenr+1, 0)
+      call cursor(unite#get_current_candidate_linenr(0), 0)
     endif
 
     normal! 0
@@ -3265,7 +3281,9 @@ function! s:init_cursor() "{{{
 
   if context.select != 0
     " Select specified candidate.
-    call cursor(line('.') + context.select, 0)
+    echomsg context.select
+    call cursor(unite#get_current_candidate_linenr(
+          \ context.select), 0)
   elseif context.input == '' && context.log
     call unite#redraw_candidates(1)
   endif
@@ -3335,7 +3353,7 @@ function! unite#set_highlight() "{{{
     execute 'highlight default link'
           \ source.syntax g:unite_abbr_highlight
 
-    execute printf('syntax match %s "^- %s" '.
+    execute printf('syntax match %s "^[- ] %s" '.
           \ 'nextgroup='.source.syntax.
           \ ' keepend contains=uniteCandidateMarker,%s',
           \ 'uniteSourceLine__'.source.syntax,
@@ -3393,6 +3411,45 @@ function! s:get_source_args(sources)
   return map(copy(a:sources),
         \ 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
 endfunction
+
+function! unite#parse_options(args) "{{{
+  let args = []
+  let options = {}
+  for arg in split(a:args, '\%(\\\@<!\s\)\+')
+    let arg = substitute(arg, '\\\( \)', '\1', 'g')
+
+    let arg_key = substitute(arg, '=\zs.*$', '', '')
+    let matched_list = filter(copy(unite#get_options()),
+          \  'v:val ==# arg_key')
+    for option in matched_list
+      let key = substitute(substitute(option, '-', '_', 'g'), '=$', '', '')[1:]
+      let options[key] = (option =~ '=$') ?
+            \ arg[len(option) :] : 1
+    endfor
+
+    if empty(matched_list)
+      call add(args, arg)
+    endif
+  endfor
+
+  return [args, options]
+endfunction"}}}
+function! unite#parse_options_args(args) "{{{
+  let _ = []
+  let [args, options] = unite#parse_options(a:args)
+  for arg in args
+    " Add source name.
+    let source_name = matchstr(arg, '^[^:]*')
+    let source_arg = arg[len(source_name)+1 :]
+    let source_args = source_arg  == '' ? [] :
+          \  map(split(source_arg, '\\\@<!:', 1),
+          \      'substitute(v:val, ''\\\(.\)'', "\\1", "g")')
+    call add(_, insert(source_args, source_name))
+  endfor
+
+  return [_, options]
+endfunction"}}}
+
 "}}}
 
 let &cpo = s:save_cpo
