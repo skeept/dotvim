@@ -58,7 +58,8 @@ Ai
 OGdo:silent write
 :
 :
-,xiX
+,xi:Run:
+X
 :
 :
 :WT

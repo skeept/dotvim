@@ -2165,6 +2165,7 @@ Python driver was not tested under windows (wine) at all.
     1.3: Added prevbuf function.
     1.4: Added “plstrgen” _f.newcommand option.
     1.5: Added possibility to use custom writer function for aurum://edit
+    1.6: Added “readable” setting.
 @%aurum/vimdiff:
     0.1: Added full, untracked, onlymodified and files options to |:AuVimDiff|
     0.2: Added _r.vimdiff.full.

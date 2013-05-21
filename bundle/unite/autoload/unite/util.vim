@@ -259,7 +259,7 @@ endfunction"}}}
 " filter() for matchers.
 function! unite#util#filter_matcher(list, expr, context) "{{{
   if a:context.unite__max_candidates <= 0 ||
-        \ !unite#get_current_unite().is_enabled_max_candidates ||
+        \ !a:context.unite__is_interactive ||
         \ len(a:context.input_list) > 1
 
     return a:expr == '' ? a:list : (a:expr ==# 'if_lua') ?
@@ -330,6 +330,9 @@ endfunction"}}}
 function! unite#util#convert2list(expr) "{{{
   return type(a:expr) ==# type([]) ? a:expr : [a:expr]
 endfunction"}}}
+function! unite#util#msg2list(expr) "{{{
+  return type(a:expr) ==# type([]) ? a:expr : split(a:expr, '\n')
+endfunction"}}}
 
 function! unite#util#truncate_wrap(str, max, footer_width, separator) "{{{
   let width = unite#util#wcswidth(a:str)
@@ -349,6 +352,20 @@ function! unite#util#index_name(list, name) "{{{
 endfunction"}}}
 function! unite#util#get_name(list, name, default) "{{{
   return get(a:list, unite#util#index_name(a:list, a:name), a:default)
+endfunction"}}}
+
+function! unite#util#redraw_echo(expr) "{{{
+  if has('vim_starting')
+    echo join(unite#util#msg2list(a:expr), "\n")
+    return
+  endif
+
+  let msg = unite#util#msg2list(a:expr)
+  let height = max([1, &cmdheight])
+  for i in range(0, len(msg)-1, height)
+    redraw
+    echo join(msg[i : i+height-1], "\n")
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -28,6 +28,7 @@ let s:gcproj='matchstr(domain, "\\v^[^.]+")'
 "▶1 mercurial
 "  https://bitbucket.org/ZyX_I/aurum / ssh://hg@bitbucket.org/ZyX_I/aurum
 "  ssh://zyxsf@translit3.hg.sourceforge.net/hgroot/translit3/translit3 / http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3
+"  ssh://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / https://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay
 "  https://vim-pyinteractive-plugin.googlecode.com/hg/
 "  http://hg.assembla.com/CMakeLua
 "  https://zyx@zyx.codebasehq.com/test/test.hg / ssh://hg@codebasehq.com/zyx/test/test.hg
@@ -78,6 +79,13 @@ let s:rhdict={
 \      'clone': '"https://".domain."/@u@/".@3@',
 \       'push': '"@2@://@u@@".domain."/".@@@',
 \}
+let s:sfdict={
+\       'html': '"https://sourceforge.net".path."/ci/".hex."/tree/".file',     'hline': '"l".line',
+\        'raw': '"https://sourceforge.net".path."/ci/".hex."/tree/".file."?format=raw"',
+\   'filehist': '"https://sourceforge.net".path."/ci/".hex."/log/?path=/".file',
+\  'changeset': '"https://sourceforge.net".path."/ci/".hex."/"',
+\        'log': '"https://sourceforge.net".path."/commit_browser"',
+\}
 unlet s:rhbase
 let s:rhdicts={}
 for [s:vcs, s:rh] in items(s:rhprojs)
@@ -102,6 +110,10 @@ let s:hyp.mercurial=[
 \        'log': '"http://".domain."/hgweb".path[7:]."/graph"',
 \      'clone': '"http://".domain.":8000".path',
 \       'push': '"ssh://".user."@".domain.path',}],
+\['domain is? "hg.code.sf.net"', extend({
+\      'clone': '"http://".domain.path',
+\       'push': '"ssh://".user."@".domain.path',
+\}, s:sfdict)],
 \['domain =~? "\\Vgooglecode.com\\$" && path[:2] is? "/hg"',
 \ {     'html': '"http://code.google.com/p/".'.s:gcproj.'."/source/browse/".file."?r=".hex', 'hline': 'line',
 \        'raw': '"http://".domain."/hg-history/".hex."/".file',
@@ -175,6 +187,7 @@ unlet s:hgwebdict s:pkbase s:cpbase s:cbssh s:cbhttps
 "  ssh://git@github.com:MarcWeber/vim-addon-manager / git://github.com/MarcWeber/vim-addon-manager
 "  git://gist.github.com/1569146.git / ssh://git@gist.github.com:1569146.git
 "  git://vimpluginloader.git.sourceforge.net/gitroot/vimpluginloader/vam-test-repository / ssh://zyxsf@vimpluginloader.git.sourceforge.net/gitroot/vimpluginloader/vam-test-repository
+"  ssh://zyxsf@git.code.sf.net/p/vimpluginloader/vam-test-repository / git://git.code.sf.net/p/vimpluginloader/vam-test-repository / https://zyxsf@git.code.sf.net/p/vimpluginloader/vam-test-repository
 "  git://repo.or.cz/test2.git / http://repo.or.cz/r/test2.git / ssh://repo.or.cz/srv/git/test2.git
 "  git://gitorious.org/test4/test.git / https://git.gitorious.org/test4/test.git / ssh://git@gitorious.org:test4/test.git
 "  git://git.kitenet.net/mr.git / http://git.kitenet.net/git/mr.git / ssh://git.kitenet.net/srv/git/mr.git
@@ -223,6 +236,10 @@ let s:hyp.git=[
 \        'log': '"http://".domain."/git/gitweb.cgi?p=".path[9:].";a=log"',
 \      'clone': '"http://".domain.":8000".path',
 \       'push': '"ssh://".user."@".domain.path',}],
+\['domain is? "git.code.sf.net"', extend({
+\      'clone': '"git://".domain.path',
+\       'push': '"ssh://".user."@".domain.path',
+\}, s:sfdict)],
 \['domain is? "code.google.com"',
 \ {     'html': '"http://code.google.com/".substitute(path, "/$", "", "")."/source/browse/".file."?r=".hex',}],
 \['domain =~? ''\v^%(git\.)?gitorious\.org$''',
@@ -257,6 +274,7 @@ let s:hyp.git=[
 unlet s:ghpath s:roproj s:robase s:godomain s:gobase
 "▶1 subversion
 "  https://vimpluginloader.svn.sourceforge.net/svnroot/vimpluginloader
+"  svn+ssh://zyxsf@svn.code.sf.net/p/vimpluginloader/svn/ / svn://svn.code.sf.net/p/vimpluginloader/svn/ / https://svn.code.sf.net/p/vimpluginloader/svn/
 "  http://conque.googlecode.com/svn/trunk
 "  https://zyx.repositoryhosting.com/svn/zyx_t1 / svn+ssh://svn@zyx.repositoryhosting.com/zyx/t1
 "  http://pysvn.tigris.org/svn/pysvn/trunk
@@ -270,6 +288,10 @@ let s:hyp.svn=[
 \     'bundle': '"http://".domain."/viewvc".path[8:]."?view=tar&pathrev=".hex',
 \        'log': '"http://".domain."/viewvc".path[8:]."?view=log"',
 \      'clone': 'url',}],
+\['domain is? "svn.code.sf.net"', extend({
+\      'clone': '"svn://".domain.path',
+\       'push': '"svn+ssh://".user."@".domain.path',
+\}, s:sfdict)],
 \['domain =~? "\\Vgooglecode.com\\$" && path[:3] is? "/svn"',
 \ {     'html': s:svngcbase.'."/source/browse/".'.s:svngcfile.'."?rev=".hex', 'hline': 'line',
 \        'raw': '"http://".domain."/svn-history/r".hex.'.s:svngcfile,
@@ -296,6 +318,7 @@ let s:hyp.svn=[
 \]
 unlet s:svngcbase s:svngcfile
 unlet s:rhdicts
+unlet s:sfdict
 "▶1 bazaar
 let s:hyp.bzr=[
 \]

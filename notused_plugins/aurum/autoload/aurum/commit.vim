@@ -14,7 +14,6 @@ execute frawor#Setup('1.5', {'@/resources': '0.0',
 let s:_messages={
             \'emptmsg': 'Message must contain at least one non-blank character',
             \'nocfile': 'Unsure what should be commited',
-            \'nocread': 'Cannot read aurum://commit',
             \  'nocom': 'Nothing to commit',
         \}
 let s:_options={
@@ -419,6 +418,7 @@ let s:commit={'arguments': 3,
             \  'listargs': 1,
             \'modifiable': 1,
             \  'filetype': 'aurumcommit',
+            \  'readable': 0,
             \}
 function s:F.bufleave()
     let bvar=s:_r.bufvars[+expand('<abuf>')]
@@ -428,9 +428,6 @@ function s:F.bufleave()
     endif
 endfunction
 function s:commit.function(read, repo, user, date, cb, files)
-    if a:read
-        call s:_f.throw('nocread')
-    endif
     augroup AuCommit
         autocmd! BufLeave <buffer> :call s:F.bufleave()
     augroup END
