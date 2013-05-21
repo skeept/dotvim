@@ -38,7 +38,7 @@ Changelog		|vimproc-changelog|
 ==============================================================================
 INTRODUCTION					*vimproc-introduction*
 
-|vimproc|is great asynchronous execution library for Vim. Original vimshell is
+|vimproc| is great asynchronous execution library for Vim. Original vimproc is
 created by Yukihiro Nakadaira. But I'm maintaining it now.
 Instead of external shell(example: 'shell'), |vimproc| uses external dll file.
 
@@ -65,6 +65,8 @@ Supported platforms:
 * BSD (but cannot check)
 * Android (experimental)
 
+Note: You must use GNU make to build vimproc.
+
 Not supported platforms:
 * Other UNIX platforms
 
@@ -88,7 +90,7 @@ Below is Make command.
 	$ make -f make_cygwin.mak
 
 * Solaris/SunOS: >
-	$ make -f make_sunos.mak
+	$ gmake -f make_sunos.mak
 
 * Android: >
 	$ make -f make_android.mak
@@ -381,6 +383,15 @@ EXAMPLES					*vimproc-examples*
 <
 ==============================================================================
 CHANGELOG					*vimproc-changelog*
+
+2013-05-17
+- Fixed resource leak.
+
+2013-04-28
+- Add starting GUI process support in Windows.
+
+2013-04-17
+- Improved vimproc#readdir().
 
 2013-04-07
 - Fixed vimproc#system_passwd().
