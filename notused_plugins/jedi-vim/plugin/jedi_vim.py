@@ -13,6 +13,14 @@ import jedi.keywords
 from jedi._compatibility import unicode
 
 
+def echo_highlight(msg):
+    vim.command('echohl WarningMsg | echom "%s" | echohl None' % msg)
+
+
+if not hasattr(jedi, '__version__') or jedi.__version__ < (0, 6, 0):
+    echo_highlight('Please update your Jedi version, it is to old.')
+
+
 class PythonToVimStr(unicode):
     """ Vim has a different string implementation of single quotes """
     __slots__ = []
@@ -26,10 +34,6 @@ class PythonToVimStr(unicode):
         return '"%s"' % s.replace('\\', '\\\\').replace('"', r'\"')
 
 
-def echo_highlight(msg):
-    vim.command('echohl WarningMsg | echo "%s" | echohl None' % msg)
-
-
 def get_script(source=None, column=None):
     jedi.settings.additional_dynamic_modules = [b.name for b in vim.buffers
                             if b.name is not None and b.name.endswith('.py')]
@@ -39,7 +43,7 @@ def get_script(source=None, column=None):
     if column is None:
         column = vim.current.window.cursor[1]
     buf_path = vim.current.buffer.name
-    encoding = vim.eval('&encoding')
+    encoding = vim.eval('&encoding') or 'latin1'
     return jedi.Script(source, row, column, buf_path, encoding)
 
 
@@ -125,7 +129,7 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
 
             d = list(definitions)[0]
             if d.in_builtin_module():
-                if isinstance(d.definition, jedi.keywords.Keyword):
+                if d.is_keyword:
                     echo_highlight(
                             "Cannot get the definition of Python keywords.")
                 else:
@@ -302,7 +306,12 @@ def rename():
 
 
 def tabnew(path):
+    "Open a file in a new tab or switch to an existing one"
     path = os.path.abspath(path)
+    if vim.eval('has("gui")') == '1':
+        vim.command('tab drop %s' % path)
+        return
+
     for tab_nr in range(int(vim.eval("tabpagenr('$')"))):
         for buf_nr in vim.eval("tabpagebuflist(%i + 1)" % tab_nr):
             buf_nr = int(buf_nr) - 1
