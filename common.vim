@@ -1083,7 +1083,8 @@ let g:quickrun_config.python = {
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+let g:alternateSearchPath = '../inc:sfr:../source,sfr:../src,sfr:../include,sfr'
+let g:alternateExtensions_C = "h,inc,H,HPP,hpp"
 "==============================================================================}}}
 
 "================== full screen with plugin ==================================={{{
