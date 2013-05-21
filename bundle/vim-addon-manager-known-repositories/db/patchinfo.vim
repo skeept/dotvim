@@ -95,6 +95,7 @@ let add_by_snr.103 ={'deprecated': "This plugin states that it requires Johannes
 let add_by_snr.159 ={'deprecated': "No more maintained, use “minibufexplorer” instead. Requires git or you’ll have vimscript #3239 from vim.org which is itself deprecated (changed maintainer, new one posts only to git)"}
 
 let add_by_snr.3901={'deprecated': "Accident (?) duplicate of vimscript #3900"}
+let add_by_snr.4577={'deprecated': "Accident (?) duplicate of vimscript #4576"}
 
 let add_by_snr.3881={'deprecated': "Superseded by powerline (https://github.com/Lokaltog/powerline)"}
 let add_by_snr.3524={'deprecated': "Script page and the only download suggest using git, but referenced repository is absent"}
@@ -136,6 +137,9 @@ let mai_snr_deps.4322 = [4321, 1359]
 let mai_snr_deps.4463 = [2467]
 let mai_snr_deps.4492 = [4491]
 let mai_snr_deps.4511 = [3590]
+let mai_snr_deps.4542 = [3736]
+let mai_snr_deps.4532 = [3133, 'twibill']
+" optional: 3396, 3476, unite-outline, vimproc, favstar-vim
 " vimproc dependants
 let mai_snr_deps.4336 = ['vimproc']
 let mai_snr_deps.4473 = ['vimproc']
@@ -162,6 +166,7 @@ let mai_snr_deps.4304 = [2100]
 let mai_snr_deps.4348 = [2100]
 let mai_snr_deps.4458 = [2100, 'vim-gitgutter']
 let mai_snr_deps.4508 = [2100]
+let mai_snr_deps.4570 = [2100]
 " getvar dependants
 let mai_snr_deps.352  = [353, 354]
 let mai_snr_deps.994  = [353]
@@ -226,7 +231,7 @@ let mai_snr_deps.3854 = [3396]
 let mai_snr_deps.3356 = [3396, 3133, 4019]
 " webapi dependants
 let mai_snr_deps.4143 = [4019]
-" Neocemplcache plugins
+" Neocomplcache plugins
 let mai_snr_deps.3423 = [2620]
 let mai_snr_deps.3440 = [2620]
 let mai_snr_deps.4043 = [2620]
