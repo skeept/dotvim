@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Mar 2013.
+" Last Modified: 20 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -51,7 +51,7 @@ let s:vimfiler_options = [
       \ '-buffer-name=', '-no-quit', '-quit', '-toggle', '-create',
       \ '-simple', '-double', '-split', '-horizontal', '-direction=',
       \ '-winheight=', '-winwidth=', '-winminwidth=', '-auto-cd', '-explorer',
-      \ '-reverse', '-project', '-columns=',
+      \ '-reverse', '-project', '-columns=', '-status',
       \]
 "}}}
 
@@ -75,6 +75,13 @@ function! vimfiler#do_action(action) "{{{
 endfunction"}}}
 function! vimfiler#smart_cursor_map(directory_map, file_map) "{{{
   return vimfiler#mappings#smart_cursor_map(a:directory_map, a:file_map)
+endfunction"}}}
+function! vimfiler#get_status_string() "{{{
+  if !exists('b:vimfiler')
+    return ''
+  endif
+
+  return !exists('b:vimfiler') ? '' : b:vimfiler.status
 endfunction"}}}
 "}}}
 
@@ -115,9 +122,6 @@ endfunction"}}}
 function! vimfiler#redraw_screen() "{{{
   return vimfiler#view#_redraw_screen()
 endfunction"}}}
-function! vimfiler#redraw_prompt() "{{{
-  return vimfiler#view#_redraw_prompt()
-endfunction"}}}
 function! vimfiler#get_marked_files() "{{{
   return filter(copy(vimfiler#get_current_vimfiler().current_files),
         \ 'v:val.vimfiler__is_marked')
@@ -131,8 +135,8 @@ function! vimfiler#get_escaped_marked_files() "{{{
 endfunction"}}}
 function! vimfiler#get_filename(...) "{{{
   let line_num = get(a:000, 0, line('.'))
-  return line_num == 1 ? '' :
-   \ getline(line_num) == '..' ? '..' :
+  return getline(line_num) == '..' ? '..' :
+   \ line_num < b:vimfiler.prompt_linenr ? '' :
    \ b:vimfiler.current_files[vimfiler#get_file_index(line_num)].action__path
 endfunction"}}}
 function! vimfiler#get_file(...) "{{{
@@ -146,17 +150,17 @@ function! vimfiler#get_file_directory(...) "{{{
   return call('vimfiler#helper#_get_file_directory', a:000)
 endfunction"}}}
 function! vimfiler#get_file_index(line_num) "{{{
-  return a:line_num - vimfiler#get_file_offset()
+  return a:line_num - vimfiler#get_file_offset() - 1
 endfunction"}}}
 function! vimfiler#get_original_file_index(line_num) "{{{
   return index(b:vimfiler.original_files, vimfiler#get_file(a:line_num))
 endfunction"}}}
 function! vimfiler#get_line_number(index) "{{{
-  return a:index + vimfiler#get_file_offset()
+  return a:index + vimfiler#get_file_offset() + 1
 endfunction"}}}
 function! vimfiler#get_file_offset() "{{{
-  let offset = vimfiler#get_context().explorer ?  2 : 3
-  return offset
+  let vimfiler = vimfiler#get_current_vimfiler()
+  return vimfiler.prompt_linenr
 endfunction"}}}
 function! vimfiler#force_redraw_all_vimfiler(...) "{{{
   return call('vimfiler#view#_force_redraw_all_vimfiler', a:000)
