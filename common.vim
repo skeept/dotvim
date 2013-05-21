@@ -494,12 +494,14 @@ function! LoadUnite() "{{{
   " }}}
 
   " Ack {{{
-  if !g:is_win
+  if 1 || !g:is_win
     let g:unite_source_grep_command = 'ack'
     let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
     let g:unite_source_grep_recursive_opt = ''
   else
-    let g:unite_source_grep_command = 'grep_vim'
+    "let g:unite_source_grep_command = 'grep_vim'
+    "let g:unite_source_grep_default_opts = ''
+    let g:unite_source_grep_command = 'ack\ --column\ --no-color\ --nogroup\ --with-filename'
     let g:unite_source_grep_default_opts = ''
     let g:unite_source_grep_recursive_opt = ''
   endif
