@@ -4,16 +4,21 @@ function! GetFoldLevel_Log(lnum)
 endfunction
 
 if has("autocmd")
-
   augroup ft_scratch
     autocmd!
     autocmd FileType scratch setlocal fdm=expr
           \ foldexpr=GetFoldLevel_Log(v:lnum)
   augroup END
-
 endif " has("autocmd")
 
-command! -nargs=1 SNumCharsFront let g:numCharsFront = <args>
 "by default 6 chars
 let g:numCharsFront = 6
-nnoremap ,z1 :<C-U>setlocal fdm=expr foldexpr=GetFoldLevel_Log(v:lnum)<CR>
+
+function! SetFoldingPatternNumCharsFront()
+  if v:count > 0
+    let g:numCharsFront = v:count
+  endif
+  setlocal fdm=expr foldexpr=GetFoldLevel_Log(v:lnum)
+endfunction
+
+nnoremap ,z1 :<C-U>call SetFoldingPatternNumCharsFront()<CR>
