@@ -1050,6 +1050,15 @@ A: You can enable status line by |vimfiler-options-status|.
 ==============================================================================
 CHANGELOG					*vimfiler-changelog*
 
+2013-05-23
+- Optimized redraw behavior.
+
+2013-05-22
+- Improved expand tree behavior.
+
+2013-05-21
+- Fixed vimfiler#mappings#do_dir_action().
+
 2013-05-17
 - Fixed <Plug>(vimfiler_exit).
 

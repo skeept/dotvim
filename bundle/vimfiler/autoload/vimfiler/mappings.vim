@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 May 2013.
+" Last Modified: 22 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -147,7 +147,7 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
     nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_h)
           \ ":\<C-u>call \<SID>unexpand_tree()\<CR>"
     nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_l)
-          \ ":\<C-u>call \<SID>expand_tree()\<CR>"
+          \ ":\<C-u>call \<SID>expand_tree(0)\<CR>"
   else
     nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_h)
           \ ":\<C-u>call vimfiler#mappings#cd('..')\<CR>"
@@ -157,9 +157,9 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
   nnoremap <buffer><silent><expr> <Plug>(vimfiler_cursor_top)
         \ (vimfiler#get_file_offset()+1).'Gzb'
   nnoremap <buffer><silent> <Plug>(vimfiler_expand_tree)
-        \ :<C-u>call <SID>toggle_tree()<CR>
+        \ :<C-u>call <SID>toggle_tree(0)<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_expand_tree_recursive)
-        \ :<C-u>call <SID>toggle_tree_recursive()<CR>
+        \ :<C-u>call <SID>toggle_tree(1)<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_cd_input_directory)
         \ :<C-u>call <SID>cd_input_directory()<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_double_click)
@@ -353,6 +353,12 @@ function! vimfiler#mappings#do_dir_action(action, directory, ...) "{{{
     endif
   else
     let context.vimfiler__is_dummy = 0
+  endif
+
+  call s:clear_mark_all_lines()
+
+  if vimfiler.context.quit
+    call s:exit(vimfiler)
   endif
 
   " Execute action.
@@ -766,7 +772,7 @@ function! s:yank_full_path() "{{{
 
   echo 'Yanked: '.filename
 endfunction"}}}
-function! s:toggle_tree() "{{{
+function! s:toggle_tree(is_recursive) "{{{
   let file = vimfiler#get_file()
   if empty(file) || vimfiler#get_filename() == '..'
     return
@@ -777,9 +783,11 @@ function! s:toggle_tree() "{{{
     for cnt in reverse(range(1, line('.')-1))
       let nest_level = get(vimfiler#get_file(cnt),
             \ 'vimfiler__nest_level', -1)
-      if nest_level >= 0 && nest_level < file.vimfiler__nest_level
+      if (a:is_recursive && nest_level == 0) ||
+            \ (!a:is_recursive &&
+            \  nest_level >= 0 && nest_level < file.vimfiler__nest_level)
         call cursor(cnt, 0)
-        call s:toggle_tree()
+        call s:toggle_tree(a:is_recursive)
         break
       endif
     endfor
@@ -789,12 +797,12 @@ function! s:toggle_tree() "{{{
   if file.vimfiler__is_opened
     call s:unexpand_tree()
   else
-    call s:expand_tree()
+    call s:expand_tree(a:is_recursive)
   endif
 
   call vimfiler#view#_check_redraw()
 endfunction"}}}
-function! s:expand_tree() "{{{
+function! s:expand_tree(is_recursive) "{{{
   let file = vimfiler#get_file()
   if empty(file) || vimfiler#get_filename() == '..'
     return
@@ -805,9 +813,11 @@ function! s:expand_tree() "{{{
     for cnt in reverse(range(1, line('.')-1))
       let nest_level = get(vimfiler#get_file(cnt),
             \ 'vimfiler__nest_level', -1)
-      if nest_level >= 0 && nest_level < file.vimfiler__nest_level
+      if (a:is_recursive && nest_level == 0) ||
+            \ (!a:is_recursive &&
+            \  nest_level >= 0 && nest_level < file.vimfiler__nest_level)
         call cursor(cnt, 0)
-        call s:expand_tree()
+        call s:expand_tree(a:is_recursive)
         break
       endif
     endfor
@@ -815,6 +825,10 @@ function! s:expand_tree() "{{{
   endif
 
   if file.vimfiler__is_opened
+    if a:is_recursive
+      call s:unexpand_tree()
+      call vimfiler#view#_check_redraw()
+    endif
     return
   endif
 
@@ -826,18 +840,27 @@ function! s:expand_tree() "{{{
   " Expand tree.
   let nestlevel = file.vimfiler__nest_level + 1
 
-  let original_files =
-        \ vimfiler#get_directory_files(file.action__path)
-  for file in original_files
-    " Initialize.
-    let file.vimfiler__nest_level = nestlevel
-  endfor
+  if a:is_recursive
+    let original_files = vimfiler#mappings#expand_tree_rec(file)
+    let files =
+          \ unite#filters#matcher_vimfiler_mask#define().filter(
+          \ copy(original_files),
+          \ { 'input' : b:vimfiler.current_mask })
+  else
+    let original_files =
+          \ vimfiler#get_directory_files(file.action__path)
+    for file in original_files
+      " Initialize.
+      let file.vimfiler__nest_level = nestlevel
+    endfor
 
-  let files =
-        \ unite#filters#matcher_vimfiler_mask#define().filter(
-        \ copy(original_files),
-        \ { 'input' : b:vimfiler.current_mask })
-  if !b:vimfiler.is_visible_dot_files
+    let files =
+          \ unite#filters#matcher_vimfiler_mask#define().filter(
+          \ copy(original_files),
+          \ { 'input' : b:vimfiler.current_mask })
+  endif
+
+  if !a:is_recursive && !b:vimfiler.is_visible_dot_files
     call filter(files, 'v:val.vimfiler__filename !~ "^\\."')
   endif
 
@@ -856,59 +879,11 @@ function! s:expand_tree() "{{{
   call append('.', vimfiler#view#_get_print_lines(files))
 
   setlocal nomodifiable
-endfunction"}}}
-function! s:toggle_tree_recursive() "{{{
-  let file = vimfiler#get_file()
-  if empty(file) || vimfiler#get_filename() == '..'
-    return
+
+  if !a:is_recursive && !empty(files)
+    " Move to next line.
+    call cursor(line('.')+1, 0)
   endif
-
-  if !file.vimfiler__is_directory
-    " Search parent directory.
-    for cnt in reverse(range(1, line('.')-1))
-      let nest_level = get(vimfiler#get_file(cnt),
-            \ 'vimfiler__nest_level', -1)
-      if nest_level == 0
-        call cursor(cnt, 0)
-        call s:toggle_tree_recursive()
-        break
-      endif
-    endfor
-    return
-  endif
-
-  if file.vimfiler__is_opened
-    call s:unexpand_tree()
-    call vimfiler#view#_check_redraw()
-    return
-  endif
-
-  setlocal modifiable
-
-  let file.vimfiler__is_opened = 1
-  call setline('.', vimfiler#view#_get_print_lines([file]))
-
-  " Expand tree.
-  let nestlevel = file.vimfiler__nest_level + 1
-
-  let original_files = vimfiler#mappings#expand_tree_rec(file)
-
-  let files =
-        \ unite#filters#matcher_vimfiler_mask#define().filter(
-        \ copy(original_files),
-        \ { 'input' : b:vimfiler.current_mask })
-
-  let index = vimfiler#get_file_index(line('.'))
-  let index_orig = vimfiler#get_original_file_index(line('.'))
-
-  let b:vimfiler.current_files = b:vimfiler.current_files[: index]
-        \ + files + b:vimfiler.current_files[index+1 :]
-  let b:vimfiler.original_files = b:vimfiler.original_files[: index_orig]
-        \ + original_files + b:vimfiler.original_files[index_orig+1 :]
-
-  call append('.', vimfiler#view#_get_print_lines(files))
-
-  setlocal nomodifiable
 
   call vimfiler#view#_check_redraw()
 endfunction"}}}
