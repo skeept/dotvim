@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 May 2013.
+" Last Modified: 28 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1180,7 +1180,6 @@ function! unite#vimfiler_check_filetype(sources, ...) "{{{
     let [type, info] = ret
     if type ==# 'file'
       call unite#initialize_candidates_source([info[1]], source.name)
-      call s:initialize_vimfiler_candidates([info[1]], source.name)
     elseif type ==# 'directory'
       " nop
     elseif type ==# 'error'
@@ -1360,10 +1359,7 @@ function! s:get_candidates(sources, context) "{{{
   let candidates = []
   for source in unite#loaded_sources_list()
     if !empty(source.unite__candidates)
-      let candidates += a:context.unite__is_vimfiler ?
-            \ s:initialize_vimfiler_candidates(
-            \   source.unite__candidates, source.name) :
-            \ source.unite__candidates
+      let candidates += source.unite__candidates
     endif
   endfor
 
@@ -2033,49 +2029,6 @@ function! s:initialize_candidates(candidates) "{{{
 
   return candidates
 endfunction"}}}
-function! s:initialize_vimfiler_candidates(candidates, source_name) "{{{
-  " Set default vimfiler property.
-  for candidate in a:candidates
-    if !has_key(candidate, 'vimfiler__filename')
-      let candidate.vimfiler__filename = candidate.word
-    endif
-    if !has_key(candidate, 'vimfiler__abbr')
-      let candidate.vimfiler__abbr = candidate.word
-    endif
-    if !has_key(candidate, 'vimfiler__is_directory')
-      let candidate.vimfiler__is_directory = 0
-    endif
-    if !has_key(candidate, 'vimfiler__is_executable')
-      let candidate.vimfiler__is_executable = 0
-    endif
-    if !has_key(candidate, 'vimfiler__is_writable')
-      let candidate.vimfiler__is_writable = 1
-    endif
-    if !has_key(candidate, 'vimfiler__filesize')
-      let candidate.vimfiler__filesize = -1
-    endif
-    if !has_key(candidate, 'vimfiler__filetime')
-      let candidate.vimfiler__filetime = 0
-    endif
-    if !has_key(candidate, 'vimfiler__datemark')
-      let candidate.vimfiler__datemark = vimfiler#get_datemark(candidate)
-    endif
-    if !has_key(candidate, 'vimfiler__extension')
-      let candidate.vimfiler__extension =
-            \ candidate.vimfiler__is_directory ?
-            \ '' : fnamemodify(candidate.vimfiler__filename, ':e')
-    endif
-    if !has_key(candidate, 'vimfiler__filetype')
-      let candidate.vimfiler__filetype = vimfiler#get_filetype(candidate)
-    endif
-
-    let candidate.vimfiler__is_marked = 0
-    let candidate.source = a:source_name
-    let candidate.unite__abbr = candidate.vimfiler__abbr
-  endfor
-
-  return a:candidates
-endfunction"}}}
 function! s:initialize_tab_variable()  "{{{
   let t:unite = { 'last_unite_bufnr' : -1 }
 endfunction"}}}
@@ -2222,6 +2175,7 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     endfor
 
     if sorters ==# ['sorter_nothing']
+          \ || unite.context.unite__is_vimfiler
       let sorters = []
     endif
 
@@ -2742,6 +2696,11 @@ function! s:on_insert_enter()  "{{{
   if exists(':NeoComplCacheLock')
     " Lock neocomplcache.
     NeoComplCacheLock
+  endif
+
+  if exists(':NeoCompleteLock')
+    " Lock neocomplete.
+    NeoCompleteLock
   endif
 
   if &filetype ==# 'unite'
@@ -3281,7 +3240,6 @@ function! s:init_cursor() "{{{
 
   if context.select != 0
     " Select specified candidate.
-    echomsg context.select
     call cursor(unite#get_current_candidate_linenr(
           \ context.select), 0)
   elseif context.input == '' && context.log
