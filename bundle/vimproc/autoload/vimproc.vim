@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 29 May 2013.
+" Last Modified: 09 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -873,7 +873,7 @@ function! s:read(...) dict "{{{
   let self.eof = eof
   let self.__eof = eof
 
-  return s:hd2str([hd])
+  return has('lua') ? s:hd2str_lua([hd]) : s:hd2str([hd])
 endfunction"}}}
 function! s:read_lines(...) dict "{{{
   let res = self.buffer
@@ -997,6 +997,27 @@ function! s:hd2str(hd)
   return get(s:libcall('vp_decode', [a:hd[0]]), 0, '')
 endfunction
 
+function! s:hd2str_lua(hd)
+  let ret = []
+  lua << EOF
+do
+  local ret = vim.eval('ret')
+  local hd = vim.eval('a:hd')
+  if hd[0] == nil then
+    hd[0] = ''
+  end
+  local len = string.len(hd[0])
+  local s = ''
+  for i = 1, len, 2 do
+    s = s .. string.char(tonumber(string.sub(hd[0], i, i+1), 16))
+  end
+
+  ret:add(s)
+end
+EOF
+  return ret[0]
+endfunction
+
 function! s:str2list(str)
   return map(range(len(a:str)), 'char2nr(a:str[v:val])')
 endfunction
@@ -1117,7 +1138,11 @@ function! s:libcall(func, args) "{{{
 endfunction"}}}
 
 function! s:SID_PREFIX()
-  return matchstr(expand('<sfile>'), '<SNR>\d\+_\zeSID_PREFIX$')
+  if !exists('s:sid_prefix')
+    let s:sid_prefix = matchstr(expand('<sfile>'),
+          \ '<SNR>\d\+_\zeSID_PREFIX$')
+  endif
+  return s:sid_prefix
 endfunction
 
 " Get funcref.

@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: converter_abbr.vim
-" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Jun 2013.
+" FILE: variables.vim
+" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
+" Last Modified: 07 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,37 +27,16 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplcache#filters#converter_abbr#define() "{{{
-  return s:converter
-endfunction"}}}
-
-let s:converter = {
-      \ 'name' : 'converter_abbr',
-      \ 'description' : 'abbr converter',
-      \}
-
-function! s:converter.filter(context) "{{{
-  if g:neocomplcache_max_keyword_width < 0
-    return a:context.candidates
+function! vimfiler#variables#get_clipboard() "{{{
+  if !exists('s:clipboard')
+    let s:clipboard = {'operation' : '', 'files' : []}
   endif
 
-  for candidate in a:context.candidates
-    let abbr = get(candidate, 'abbr', candidate.word)
-    if len(abbr) > g:neocomplcache_max_keyword_width
-      let len = neocomplcache#util#wcswidth(abbr)
-
-      if len > g:neocomplcache_max_keyword_width
-        let candidate.abbr = neocomplcache#util#truncate_smart(
-              \ abbr, g:neocomplcache_max_keyword_width,
-              \ g:neocomplcache_max_keyword_width/2, '..')
-      endif
-    endif
-  endfor
-
-  return a:context.candidates
+  return s:clipboard
 endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
 " vim: foldmethod=marker
+

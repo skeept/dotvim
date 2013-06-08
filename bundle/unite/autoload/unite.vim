@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Jun 2013.
+" Last Modified: 08 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -1563,29 +1563,34 @@ function! s:load_default_scripts(kind, names) "{{{
   for name in names
     if name != '' && has_key(s:static[a:kind], name)
           \ || (a:kind ==# 'sources' && name ==# 'alias' &&
-          \     get(s:loaded_defaults, 'alias', 0))
+          \     has_key(s:loaded_defaults, 'alias'))
       continue
     endif
 
     if name == ''
       let s:loaded_defaults[a:kind] = &runtimepath
     elseif a:kind ==# 'sources' && name ==# 'alias'
-      let s:loaded_defaults['alias'] = &runtimepath
+      let s:loaded_defaults['alias'] = 1
     endif
 
     " Search files by prefix or postfix.
-    let prefix_name = (a:kind ==# 'filters') ?
-          \ substitute(name,
-          \'^\%(matcher\|sorter\|converter\)_[^/_-]\+\zs[/_-].*$', '', '') :
-          \ substitute(name, '^[^/_-]\+\zs[/_-].*$', '', '')
-    let postfix_name = matchstr(name, '[^/_-]\+$')
+    if a:kind ==# 'filters'
+      let prefix_name = substitute(name,
+            \'^\%(matcher\|sorter\|converter\)_[^/_-]\+\zs[/_-].*$', '', '')
+      let postfix_name = ''
+      let postfix_name2 = ''
+    else
+      let prefix_name = matchstr(name, '^[^/_-]\+')
+      let postfix_name = matchstr(name, '[^/_-]\+$')
+      let postfix_name2 = matchstr(name, '^[^/_-]\+[/_-]\+\zs[^/_-]\+')
+    endif
 
     let files = []
-    for name in ((postfix_name != '' &&
-          \ prefix_name !=# postfix_name) ?
-          \ [prefix_name, postfix_name] : [prefix_name])
+    for prefix in filter(unite#util#uniq([
+          \ prefix_name, postfix_name, postfix_name2]),
+          \ "name == '' || v:val != ''")
       let files += split(globpath(&runtimepath,
-            \ 'autoload/unite/'.a:kind.'/'.name.'*.vim', 1), '\n')
+            \ 'autoload/unite/'.a:kind.'/'.prefix.'*.vim', 1), '\n')
     endfor
 
     for define in map(files,
@@ -2955,7 +2960,7 @@ function! s:change_highlight()  "{{{
           \ context.cursor_line_highlight.' /\%'.line('.').'l/')
   endif
 
-  syntax clear uniteCandidateInputKeyword
+  silent! syntax clear uniteCandidateInputKeyword
 
   if unite#get_input() == ''
     return
@@ -3274,7 +3279,7 @@ function! unite#set_highlight() "{{{
 
   " Set highlight.
   let match_prompt = escape(unite.prompt, '\/*~.^$[]')
-  syntax clear uniteInputPrompt
+  silent! syntax clear uniteInputPrompt
   execute 'syntax match uniteInputPrompt'
         \ '/^'.match_prompt.'/ contained'
 
@@ -3286,7 +3291,7 @@ function! unite#set_highlight() "{{{
         \ '/\%'.unite.prompt_linenr.'l.*/'
         \ 'contains=uniteInputPrompt,uniteInputPromptError,uniteInputSpecial'
 
-  syntax clear uniteCandidateSourceName
+  silent! syntax clear uniteCandidateSourceName
   if unite.max_source_name > 0
     syntax match uniteCandidateSourceName
           \ /\%3c[[:alnum:]_\/-]\+/ contained
@@ -3323,13 +3328,13 @@ function! s:set_syntax() "{{{
   let source_padding = 3
 
   let abbr_head = unite.max_source_name+source_padding
-  syntax clear uniteCandidateAbbr
+  silent! syntax clear uniteCandidateAbbr
   execute 'syntax region uniteCandidateAbbr' 'start=/\%'
         \ .(abbr_head).'c/ end=/$/ keepend contained'
 
   " Set syntax.
   for source in filter(copy(unite.sources), 'v:val.syntax != ""')
-    execute 'syntax clear' source.syntax
+    silent! execute 'syntax clear' source.syntax
     execute 'syntax region' source.syntax
           \ 'start=// end=/$/ keepend contained'
   endfor
