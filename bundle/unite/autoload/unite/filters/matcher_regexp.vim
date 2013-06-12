@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_regexp.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 29 May 2013.
+" Last Modified: 11 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -44,6 +44,7 @@ function! s:matcher.filter(candidates, context) "{{{
 
   let candidates = a:candidates
   for input in a:context.input_list
+    let a:context.input = input
     let candidates = unite#filters#matcher_regexp#regexp_matcher(
           \ candidates, input, a:context)
   endfor

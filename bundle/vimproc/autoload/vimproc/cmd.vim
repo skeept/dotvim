@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: matcher_fuzzy.vim
+" FILE: cmd.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Jun 2013.
+" Last Modified: 12 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -24,56 +24,74 @@
 " }}}
 "=============================================================================
 
+" Saving 'cpoptions' {{{
 let s:save_cpo = &cpo
 set cpo&vim
+" }}}
 
-function! unite#filters#matcher_fuzzy#define() "{{{
-  return s:matcher
+if !vimproc#util#is_windows()
+  finish
+endif
+
+" Based from : http://d.hatena.ne.jp/osyo-manga/20130611/1370950114
+
+let s:cmd = {}
+
+augroup vimproc
+  autocmd VimLeave * call s:cmd.close()
+augroup END
+
+
+function! s:cmd.open() "{{{
+  let cmd = "cmd.exe"
+  let self.vimproc = vimproc#popen3(cmd)
+  let self.cwd = getcwd()
+
+  " Wait until getting first prompt.
+  let output = ''
+  while output !~ '.\+>$'
+    let output = self.vimproc.stdout.read_line()
+  endwhile
 endfunction"}}}
 
-let s:matcher = {
-      \ 'name' : 'matcher_fuzzy',
-      \ 'description' : 'fuzzy matcher',
-      \}
-
-function! s:matcher.filter(candidates, context) "{{{
-  if a:context.input == ''
-    return unite#filters#filter_matcher(
-          \ a:candidates, '', a:context)
-  endif
-
-  if len(a:context.input) > 20
-    " Fall back to matcher_glob.
-    return unite#filters#matcher_glob#define().filter(
-          \ a:candidates, a:context)
-  endif
-
-  let candidates = a:candidates
-  for input_orig in a:context.input_list
-    let input = substitute(input_orig, '\\ ', ' ', 'g')
-    if input == '!'
-      continue
-    endif
-
-    let input = substitute(substitute(unite#escape_match(input),
-          \ '[[:alnum:]._-]', '\0.*', 'g'), '\*\*', '*', 'g')
-
-    let expr = (input =~ '^!') ?
-          \ 'v:val.word !~ ' . string(input[1:]) :
-          \ 'v:val.word =~ ' . string(input)
-    if input !~ '^!' && unite#util#has_lua()
-      let expr = 'if_lua_fuzzy'
-      let a:context.input = input_orig
-    endif
-
-    let candidates = unite#filters#filter_matcher(
-          \ a:candidates, expr, a:context)
-  endfor
-
-  return candidates
+function! s:cmd.close() "{{{
+  call self.vimproc.waitpid()
 endfunction"}}}
 
+function! s:cmd.system(cmd) "{{{
+  " Execute cmd.
+  let input = '('
+  if self.cwd !=# getcwd()
+    " Execute cd.
+    let input .= 'cd "' . getcwd() . '" & '
+    let self.cwd = getcwd()
+  endif
+  let input .= a:cmd . ")\n"
+
+  call self.vimproc.stdin.write(input)
+
+  " Wait until getting prompt.
+  let result = ''
+  let output = ''
+  while output !~ '.\+>$'
+    let output = self.vimproc.stdout.read_line()
+    let result .= output
+  endwhile
+
+  let result = substitute(result, '\r\n', '\n', 'g')
+
+  return join(split(result, "\n")[1 : -2], "\n")
+endfunction"}}}
+
+call s:cmd.open()
+
+function! vimproc#cmd#system(expr)
+  let cmd = type(a:expr) == type('') ? a:expr :
+        \ join(map(a:expr, '"\"".v:val."\""'))
+  return s:cmd.system(a:string)
+endfunction
+
+" Restore 'cpoptions' {{{
 let &cpo = s:save_cpo
-unlet s:save_cpo
-
-" vim: foldmethod=marker
+" }}}
+" vim:foldmethod=marker:fen:sw=2:sts=2
