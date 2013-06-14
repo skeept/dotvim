@@ -6,12 +6,20 @@ for( ${1:vector}<${2:double}>::${3:const_iterator} ${4:itr} = ${5:container}.beg
 endsnippet
 
 snippet ff "a for with int default"
-for( int ${1:i}=${2:0}; $1 < ${3:_N}; ${4:++}$1 )
+for(int ${1:i}=${2:0}; $1 < ${3:_N}; ${4:++}$1)
 {
    ${5}
 }${0}
 endsnippet
 
-snippet co
+snippet co "cout"
 cout << "${1:what} " << ${2:$1} << endl;${0}
+endsnippet
+
+snippet oli "OPT_LOGGER_INFO"
+OPT_LOGGER_INFO("${1}" << ${2} << "\n");${0}
+endsnippet
+
+snippet old "OPT_LOGGER_DEBUG"
+OPT_LOGGER_DEBUG("${1}" << ${2} << "\n");${0}
 endsnippet

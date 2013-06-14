@@ -130,9 +130,14 @@ let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
 function! LoadClangComplete()
-  if hostname() != "go"
+  if hostname() != "go" && hostname() != 'aas-cmc01'
     let s:loaded_clang_complete = 1
   endif
+
+  augroup ft_cpp_clang
+    "just clear the autocommands for this group (load this only once)
+    autocmd!
+  augroup END
 
   if exists("s:loaded_clang_complete") || g:is_win
     return ''
