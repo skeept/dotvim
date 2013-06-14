@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cmd.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Jun 2013.
+" Last Modified: 13 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -43,14 +43,14 @@ augroup END
 
 
 function! s:cmd.open() "{{{
-  let cmd = "cmd.exe"
+  let cmd = 'cmd.exe'
   let self.vimproc = vimproc#popen3(cmd)
   let self.cwd = getcwd()
 
   " Wait until getting first prompt.
   let output = ''
   while output !~ '.\+>$'
-    let output = self.vimproc.stdout.read_line()
+    let output .= self.vimproc.stdout.read()
   endwhile
 endfunction"}}}
 
@@ -60,27 +60,26 @@ endfunction"}}}
 
 function! s:cmd.system(cmd) "{{{
   " Execute cmd.
-  let input = '('
   if self.cwd !=# getcwd()
     " Execute cd.
-    let input .= 'cd "' . getcwd() . '" & '
+    let input = '(cd /D "' . getcwd() . '" & ' . a:cmd . ')'
     let self.cwd = getcwd()
+  else
+    let input = a:cmd
   endif
-  let input .= a:cmd . ")\n"
 
-  call self.vimproc.stdin.write(input)
+  call self.vimproc.stdin.write(input . "\n")
 
   " Wait until getting prompt.
-  let result = ''
+  let result = []
   let output = ''
   while output !~ '.\+>$'
-    let output = self.vimproc.stdout.read_line()
-    let result .= output
+    let out = split(output . self.vimproc.stdout.read(), '\r\n\|\n')
+    let output = get(out, -1, '')
+    let result += out[ : -2]
   endwhile
 
-  let result = substitute(result, '\r\n', '\n', 'g')
-
-  return join(split(result, "\n")[1 : -2], "\n")
+  return join(result[1 :], "\n")
 endfunction"}}}
 
 call s:cmd.open()
@@ -88,7 +87,7 @@ call s:cmd.open()
 function! vimproc#cmd#system(expr)
   let cmd = type(a:expr) == type('') ? a:expr :
         \ join(map(a:expr, '"\"".v:val."\""'))
-  return s:cmd.system(a:string)
+  return s:cmd.system(cmd)
 endfunction
 
 " Restore 'cpoptions' {{{
