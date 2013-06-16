@@ -192,22 +192,21 @@ function! CaptureToRegisterU()
     set more
     if exists("g:captureToRegisterUinProgress")
       unlet g:captureToRegisterUinProgress
-      let s:msg .= 'Finished recording to reg u. '
+      if v:count != 1
+        echo "Finished recording to register u"
+      endif
     endif
     if v:count == 1
       silent normal "up
-      "echo "Finished recording to register u; pasted contents of reg u"
-      let s:msg .= "Pasted contents of reg u."
+      echo "Finished recording to register u; pasted contents of reg u"
     endif
   else
     let g:captureToRegisterUinProgress = 1
     set nomore
+    echo "Capturing Output to register u"
     let @u = ""
     redir @U
-    "echo "Capturing Output to register u"
-    let s:msg .= "Capturing output to reg u. "
   endif
-  echo s:msg
 endfunction
 
 function! RedirToScratch()
@@ -341,12 +340,6 @@ if has("autocmd")
     "autocmd FileType taglist       setlocal norelativenumber nonumber
     autocmd FileType qf            setlocal norelativenumber nonumber
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
-  augroup END
-
-  augroup ft_scratch
-    autocmd!
-    autocmd FileType scratch setlocal fdm=expr
-          \ foldexpr=getline(v:lnum)==#getline(v:lnum-1)?1:0
   augroup END
 
 endif " has("autocmd")
@@ -501,12 +494,14 @@ function! LoadUnite() "{{{
   " }}}
 
   " Ack {{{
-  if !g:is_win
+  if 1 || !g:is_win
     let g:unite_source_grep_command = 'ack'
     let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
     let g:unite_source_grep_recursive_opt = ''
   else
-    let g:unite_source_grep_command = 'grep_vim'
+    "let g:unite_source_grep_command = 'grep_vim'
+    "let g:unite_source_grep_default_opts = ''
+    let g:unite_source_grep_command = 'ack\ --column\ --no-color\ --nogroup\ --with-filename'
     let g:unite_source_grep_default_opts = ''
     let g:unite_source_grep_recursive_opt = ''
   endif
@@ -576,7 +571,7 @@ endfunction
 
 "================== CtrlP ====================================================={{{
 "some ctrl settings and mappings
-let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes']
+let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes', 'funky']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_depth = 2
@@ -1007,16 +1002,21 @@ endif
 "==============================================================================}}}
 
 "================== Delete Whitespace ========================================={{{
-function! StripTrailingWhitespace()
+function! StripTrailingWhitespace() range
   if !&binary && &filetype != 'diff'
-    normal mz
-    normal Hmy
-    %s/\s\+$//e
+    "normal mz
+    "normal Hmy
+    let cmd = '' . a:firstline . ',' . a:lastline
+    let cmd .= 's/\s\+$//e'
+    execute cmd
     normal 'yz<CR>
     normal `z
   endif
 endfunction
-command! DelTrailwhiteSpace call StripTrailingWhitespace()
+
+command! -range=% DelTrailWhiteSpace
+      \ exe "normal mz" | exe "normal Hmy"
+      \ | <line1>,<line2>call StripTrailingWhitespace()
 "==============================================================================}}}
 
 function! Uniq () range "{{{
@@ -1085,7 +1085,9 @@ let g:quickrun_config.python = {
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
-let g:alternateSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,./inc,../'
+let g:alternateSearchPath = '../inc,./inc,../source,sfr,../src,../include,..'
+let g:alternateExtensions_C = "h,inc,H,HPP,hpp"
+let g:alternateExtensions_h = "C,cpp,c++,CPP"
 "==============================================================================}}}
 
 "================== full screen with plugin ==================================={{{
