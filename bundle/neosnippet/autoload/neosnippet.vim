@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neosnippet.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Apr 2013.
+" Last Modified: 08 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,11 +31,9 @@ set cpo&vim
 call neosnippet#util#set_default(
       \ 'g:neosnippet#disable_runtime_snippets', {})
 call neosnippet#util#set_default(
-      \ 'g:neosnippet#snippets_directory',
-      \ '', 'g:neocomplcache_snippets_dir')
+      \ 'g:neosnippet#snippets_directory', '')
 call neosnippet#util#set_default(
-      \ 'g:neosnippet#disable_select_mode_mappings',
-      \ 1, 'g:neocomplcache_disable_select_mode_mappings')
+      \ 'g:neosnippet#disable_select_mode_mappings', 1)
 call neosnippet#util#set_default(
       \ 'g:neosnippet#enable_snipmate_compatibility', 0)
 "}}}
@@ -47,30 +45,17 @@ let s:neosnippet_options = [
       \]
 "}}}
 
-function! neosnippet#_lazy_initialize() "{{{
-  if !exists('s:lazy_progress')
-    let s:lazy_progress = 0
-  endif
-
-  if s:lazy_progress == 0
-  elseif s:lazy_progress == 1
-    call s:initialize_script_variables()
-  elseif s:lazy_progress == 2
-    call s:initialize_others()
-  else
-    call s:initialize_cache()
-  endif
-
-  let s:lazy_progress += 1
+function! neosnippet#initialize() "{{{
+  call s:initialize_script_variables()
+  call s:initialize_others()
+  call s:initialize_cache()
 endfunction"}}}
 
 function! s:check_initialize() "{{{
   if !exists('s:is_initialized')
     let s:is_initialized = 1
 
-    call s:initialize_script_variables()
-    call s:initialize_others()
-    call s:initialize_cache()
+    call neosnippet#initialize()
   endif
 endfunction"}}}
 
@@ -1055,9 +1040,24 @@ function! neosnippet#get_runtime_snippets_directory() "{{{
   return copy(s:runtime_dir)
 endfunction"}}}
 function! neosnippet#get_filetype() "{{{
-  return exists('*neocomplcache#get_context_filetype') ?
-        \ neocomplcache#get_context_filetype(1) :
-        \ (&filetype == '' ? 'nothing' : &filetype)
+  if !exists('s:exists_context_filetype')
+    " context_filetype.vim installation check.
+    try
+      call context_filetype#version()
+      let s:exists_context_filetype = 1
+    catch
+      let s:exists_context_filetype = 0
+    endtry
+  endif
+
+  let context_filetype =
+        \ s:exists_context_filetype ?
+        \ context_filetype#get_filetype() : &filetype
+  if context_filetype == ''
+    let context_filetype = 'nothing'
+  endif
+
+  return context_filetype
 endfunction"}}}
 function! s:get_sources_filetypes(filetype) "{{{
   return (exists('*neocomplcache#get_source_filetypes') ?
@@ -1250,6 +1250,9 @@ function! s:skip_next_auto_completion() "{{{
   if exists('*neocomplcache#skip_next_complete')
     call neocomplcache#skip_next_complete()
   endif
+  if exists('*neocomplete#skip_next_complete')
+    call neocomplete#skip_next_complete()
+  endif
 
   let neosnippet = neosnippet#get_current_neosnippet()
   let neosnippet.trigger = 0
@@ -1323,11 +1326,6 @@ function! s:initialize_script_variables() "{{{
   " Initialize.
   let s:snippets_expand_stack = []
   let s:snippets = {}
-
-  if get(g:, 'neocomplcache_snippets_disable_runtime_snippets', 0)
-    " Set for backward compatibility.
-    let g:neosnippet#disable_runtime_snippets._ = 1
-  endif
 
   " Set runtime dir.
   let s:runtime_dir = split(globpath(&runtimepath,

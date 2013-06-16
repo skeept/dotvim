@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: snippets_complete.vim
+" FILE: neosnippet.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Jun 2013.
+" Last Modified: 05 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,40 +28,25 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:source = {
-      \ 'name' : 'snippets_complete',
-      \ 'kind' : 'complfunc',
-      \ 'min_pattern_length' :
-      \     g:neocomplcache_auto_completion_start_length,
+      \ 'name' : 'neosnippet',
+      \ 'kind' : 'keyword',
+      \ 'rank' : 8,
+      \ 'hooks' : {},
       \}
 
-function! s:source.initialize() "{{{
+function! s:source.hooks.on_init(context) "{{{
   " Initialize.
-  call neocomplcache#set_dictionary_helper(
-        \ g:neocomplcache_source_rank, 'snippets_complete', 8)
-  call neocomplcache#set_completion_length('snippets_complete',
-        \ g:neocomplcache_auto_completion_start_length)
   call neosnippet#util#set_default(
         \ 'g:neosnippet#enable_preview', 0)
 endfunction"}}}
 
-function! s:source.get_keyword_pos(cur_text) "{{{
-  let cur_word = matchstr(a:cur_text, '\w\+$')
-  let word_candidates = neocomplcache#keyword_filter(
-        \ filter(values(neosnippet#get_snippets()),
-        \ 'v:val.options.word'), cur_word)
-  if !empty(word_candidates)
-    return match(a:cur_text, '\w\+$')
-  endif
-
-  return match(a:cur_text, '\S\+$')
+function! s:source.gather_candidates(context) "{{{
+  return values(neosnippet#get_snippets())
 endfunction"}}}
 
-function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
-  let list = s:keyword_filter(neosnippet#get_snippets(), a:cur_keyword_str)
-
-  for snippet in list
+function! s:source.hooks.on_post_filter(context) "{{{
+  for snippet in a:context.candidates
     let snippet.dup = 1
-
     let snippet.menu = neosnippet#util#strwidthpart(
           \ snippet.menu_template, winwidth(0)/3)
     if g:neosnippet#enable_preview
@@ -69,33 +54,10 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
     endif
   endfor
 
-  return list
+  return a:context.candidates
 endfunction"}}}
 
-function! s:keyword_filter(snippets, cur_keyword_str) "{{{
-  " Uniq by real_name.
-  let dict = {}
-
-  " Use default filter.
-  let list = neocomplcache#keyword_filter(
-        \ values(a:snippets), a:cur_keyword_str)
-
-  " Add cur_keyword_str snippet.
-  if has_key(a:snippets, a:cur_keyword_str)
-    call add(list, a:snippets[a:cur_keyword_str])
-  endif
-
-  for snippet in neocomplcache#dup_filter(list)
-    if !has_key(dict, snippet.real_name) ||
-          \ len(dict[snippet.real_name].word) > len(snippet.word)
-      let dict[snippet.real_name] = snippet
-    endif
-  endfor
-
-  return values(dict)
-endfunction"}}}
-
-function! neocomplcache#sources#snippets_complete#define() "{{{
+function! neocomplete#sources#neosnippet#define() "{{{
   return s:source
 endfunction"}}}
 
