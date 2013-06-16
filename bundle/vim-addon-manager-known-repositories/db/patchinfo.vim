@@ -98,7 +98,6 @@ let add_by_snr.3901={'deprecated': "Accident (?) duplicate of vimscript #3900"}
 let add_by_snr.4577={'deprecated': "Accident (?) duplicate of vimscript #4576"}
 
 let add_by_snr.3881={'deprecated': "Superseded by powerline (https://github.com/Lokaltog/powerline)"}
-let add_by_snr.3524={'deprecated': "Script page and the only download suggest using git, but referenced repository is absent"}
 
 
 let add_by_snr.3160={'deprecated': "According to github its superseded by vim-flake8 (vimscript #3927). You probably want to prefer syntastic anyway"}
@@ -130,16 +129,29 @@ let mai_snr_deps.4079 = [4050, 4056]
 let mai_snr_deps.4116 = [4115, 2544]
 let mai_snr_deps.4117 = [4116]
 let mai_snr_deps.4194 = [4193]
-let mai_snr_deps.4222 = [2771]
 let mai_snr_deps.4253 = [2646]
-let mai_snr_deps.4283 = [3736]
 let mai_snr_deps.4322 = [4321, 1359]
 let mai_snr_deps.4463 = [2467]
 let mai_snr_deps.4492 = [4491]
 let mai_snr_deps.4511 = [3590]
-let mai_snr_deps.4542 = [3736]
 let mai_snr_deps.4532 = [3133, 'twibill']
 " optional: 3396, 3476, unite-outline, vimproc, favstar-vim
+" ConqueTerm dependants
+let mai_snr_deps.4222 = [2771]
+let mai_snr_deps.4601 = [2771]
+" vim-misc dependants
+let mai_snr_deps.4586 = [4597]
+let mai_snr_deps.3144 = [4597]
+let mai_snr_deps.3625 = [4597]
+let mai_snr_deps.3169 = [4597]
+let mai_snr_deps.3375 = [4597]
+let mai_snr_deps.3148 = [4597]
+let mai_snr_deps.3150 = [4597]
+let mai_snr_deps.3123 = [4597]
+" ctrl-p dependants
+let mai_snr_deps.4283 = [3736]
+let mai_snr_deps.4542 = [3736]
+let mai_snr_deps.4592 = [3736]
 " vimproc dependants
 let mai_snr_deps.4336 = ['vimproc']
 let mai_snr_deps.4473 = ['vimproc']

@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 17 May 2013.
+" Last Modified: 12 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -665,7 +665,7 @@ function! vimproc#kill(pid, sig) "{{{
   try
     call s:libcall('vp_kill', [a:pid, a:sig])
   catch /kill() error:/
-    let s:last_errmsg = v:errmsg
+    let s:last_errmsg = v:exception
     return 1
   endtry
 
@@ -789,7 +789,11 @@ function! vimproc#readdir(dirname) "{{{
   let dirname = vimproc#util#iconv(dirname, &encoding,
         \ vimproc#util#termencoding())
 
-  let files = s:libcall('vp_readdir', [dirname])
+  try
+    let files = s:libcall('vp_readdir', [dirname])
+  catch /vp_readdir/
+    return []
+  endtry
 
   call map(files, 'vimproc#util#iconv(
         \ v:val, vimproc#util#termencoding(), &encoding)')
@@ -869,7 +873,14 @@ function! s:read(...) dict "{{{
   let self.eof = eof
   let self.__eof = eof
 
-  return s:hd2str([hd])
+  if hd == ''
+    return ''
+  endif
+
+  " Note: if output string is too long, if_lua is too slow.
+  return (vimproc#util#has_lua() && len(hd) < 1024) ?
+        \ s:hd2str_lua([hd]) : s:hd2str([hd])
+  " return s:hd2str([hd])
 endfunction"}}}
 function! s:read_lines(...) dict "{{{
   let res = self.buffer
@@ -974,7 +985,7 @@ function! s:garbage_collect() "{{{
         endif
         call remove(s:bg_processes, pid)
       endif
-    catch /waitpid() error:\|vp_waitpid:/
+    catch
       " Ignore error.
     endtry
   endfor
@@ -991,6 +1002,27 @@ endfunction
 function! s:hd2str(hd)
   " a:hd is a list because to avoid copying the value.
   return get(s:libcall('vp_decode', [a:hd[0]]), 0, '')
+endfunction
+
+function! s:hd2str_lua(hd)
+  let ret = []
+  lua << EOF
+do
+  local ret = vim.eval('ret')
+  local hd = vim.eval('a:hd')
+  if hd[0] == nil then
+    hd[0] = ''
+  end
+  local len = string.len(hd[0])
+  local s = ''
+  for i = 1, len, 2 do
+    s = s .. string.char(tonumber(string.sub(hd[0], i, i+1), 16))
+  end
+
+  ret:add(s)
+end
+EOF
+  return ret[0]
 endfunction
 
 function! s:str2list(str)
@@ -1065,7 +1097,6 @@ endfunction"}}}
 " LOW LEVEL API
 
 augroup vimproc
-  autocmd!
   autocmd VimLeave * call s:finalize()
   autocmd CursorHold,BufWritePost * call s:garbage_collect()
 augroup END
@@ -1096,9 +1127,9 @@ function! s:libcall(func, args) "{{{
   let EOV = "\xFF"
   let args = empty(a:args) ? '' : (join(reverse(copy(a:args)), EOV) . EOV)
   let stack_buf = libcall(g:vimproc#dll_path, a:func, args)
-  let result = s:split(stack_buf, "\xff")
+  let result = s:split(stack_buf, EOV)
   if !empty(result) && result[-1] != ''
-    if stack_buf[len(stack_buf) - 1] == "\xFF"
+    if stack_buf[len(stack_buf) - 1] ==# EOV
       " Note: If &encoding equals "cp932" and output ends multibyte first byte,
       "       will fail split.
       return result
@@ -1113,7 +1144,11 @@ function! s:libcall(func, args) "{{{
 endfunction"}}}
 
 function! s:SID_PREFIX()
-  return matchstr(expand('<sfile>'), '<SNR>\d\+_\zeSID_PREFIX$')
+  if !exists('s:sid_prefix')
+    let s:sid_prefix = matchstr(expand('<sfile>'),
+          \ '<SNR>\d\+_\zeSID_PREFIX$')
+  endif
+  return s:sid_prefix
 endfunction
 
 " Get funcref.
@@ -1196,7 +1231,11 @@ endfunction
 
 function! s:vp_pipes_close() dict
   for fd in self.fd
-    call fd.close()
+    try
+      call fd.close()
+    catch /vimproc: vp_pipe_close: /
+      " Ignore error.
+    endtry
   endfor
 endfunction
 

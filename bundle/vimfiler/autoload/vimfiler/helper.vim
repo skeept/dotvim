@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Apr 2013.
+" Last Modified: 27 May 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -41,7 +41,9 @@ function! vimfiler#helper#_get_directory_files(directory, ...) "{{{
     let path = b:vimfiler.source . ':' . path
   endif
   let args = vimfiler#parse_path(path)
-  let current_files = unite#get_vimfiler_candidates([args], context)
+  let current_files = vimfiler#init#_initialize_candidates(
+        \ unite#get_vimfiler_candidates([args], context),
+        \ b:vimfiler.source)
 
   for file in current_files
     " Initialize.
@@ -175,7 +177,8 @@ function! s:sort(files, type) "{{{
     let files = vimfiler#util#sort_by(
           \ a:files, 'v:val.vimfiler__extension')
   elseif a:type =~? '^f\%[ilename]$'
-    let files = sort(a:files, 's:compare_filename')
+    let files = vimfiler#helper#_sort_human(
+          \ a:files, vimfiler#util#has_lua())
   elseif a:type =~? '^t\%[ime]$'
     let files = vimfiler#util#sort_by(
           \ a:files, 'v:val.vimfiler__filetime')
@@ -193,6 +196,31 @@ function! s:sort(files, type) "{{{
 
   return files
 endfunction"}}}
+
+function! vimfiler#helper#_sort_human(candidates, has_lua) "{{{
+  if !a:has_lua
+    return sort(a:candidates, 's:compare_filename')
+  endif
+
+  " Use lua interface.
+  lua << EOF
+do
+  local candidates = vim.eval('a:candidates')
+  local t = {}
+  for i = 1, #candidates do
+    t[i] = candidates[i-1]
+  end
+  table.sort(t, function(a, b)
+        return a.vimfiler__filename < b.vimfiler__filename
+      end)
+  for i = 0, #candidates-1 do
+    candidates[i] = t[i+1]
+  end
+end
+EOF
+  return a:candidates
+endfunction"}}}
+
 " Compare filename by human order. "{{{
 function! s:compare_filename(i1, i2)
   let words_1 = map(split(a:i1.vimfiler__filename, '\D\zs\ze\d\+'),
