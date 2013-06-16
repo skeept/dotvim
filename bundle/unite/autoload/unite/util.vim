@@ -48,9 +48,14 @@ endfunction
 function! unite#util#escape_pattern(...)
   return call(s:V.escape_pattern, a:000)
 endfunction
-function! unite#util#set_default(...)
-  return call(s:V.set_default, a:000)
-endfunction
+function! unite#util#set_default(var, val, ...)  "{{{
+  if !exists(a:var) || type({a:var}) != type(a:val)
+    let alternate_var = get(a:000, 0, '')
+
+    let {a:var} = exists(alternate_var) ?
+          \ {alternate_var} : a:val
+  endif
+endfunction"}}}
 function! unite#util#set_dictionary_helper(...)
   return call(s:V.set_dictionary_helper, a:000)
 endfunction
@@ -122,6 +127,8 @@ function! unite#util#input_yesno(message) "{{{
     call unite#print_error('Invalid input.')
     let yesno = input(a:message . ' [yes/no]: ')
   endwhile
+
+  redraw
 
   return yesno =~? 'y\%[es]'
 endfunction"}}}
@@ -256,82 +263,8 @@ function! unite#util#set_dictionary_helper(variable, keys, value) "{{{
   endfor
 endfunction"}}}
 
-" filter() for matchers.
-function! unite#util#filter_matcher(list, expr, context) "{{{
-  if a:context.unite__max_candidates <= 0 ||
-        \ !a:context.unite__is_interactive ||
-        \ len(a:context.input_list) > 1
-
-    return a:expr == '' ? a:list : (a:expr ==# 'if_lua') ?
-          \ unite#util#lua_matcher(a:list, a:context, &ignorecase)
-          \ : filter(a:list, a:expr)
-  endif
-
-  if a:expr == ''
-    return a:list[: a:context.unite__max_candidates - 1]
-  endif
-
-  let _ = []
-  let len = 0
-
-  let max = a:context.unite__max_candidates
-  let offset = max*4
-  for cnt in range(0, len(a:list) / offset)
-    let list = a:list[cnt*offset : cnt*offset + offset]
-    let list = (a:expr ==# 'if_lua') ?
-          \ unite#util#lua_matcher(list, a:context, &ignorecase) :
-          \ filter(list, a:expr)
-    let len += len(list)
-    let _ += list
-
-    if len >= max
-      break
-    endif
-  endfor
-
-  return _[: max]
-endfunction"}}}
-function! unite#util#lua_matcher(candidates, context, ignorecase) "{{{
-  if !has('lua')
-    return []
-  endif
-
-  for input in a:context.input_list
-    let input = substitute(input, '\\ ', ' ', 'g')
-    let input = substitute(input, '\\\(.\)', '\1', 'g')
-    if a:ignorecase
-      let input = tolower(input)
-    endif
-
-    lua << EOF
-    do
-      local input = vim.eval('input')
-      local candidates = vim.eval('a:candidates')
-      if (vim.eval('a:ignorecase') ~= 0) then
-        for i = #candidates-1, 0, -1 do
-          if (string.find(string.lower(candidates[i].word), input, 1, true) == nil) then
-            candidates[i] = nil
-          end
-        end
-      else
-        for i = #candidates-1, 0, -1 do
-          if (string.find(candidates[i].word, input, 1, true) == nil) then
-            candidates[i] = nil
-          end
-        end
-      end
-    end
-EOF
-  endfor
-
-  return a:candidates
-endfunction"}}}
-
 function! unite#util#convert2list(expr) "{{{
   return type(a:expr) ==# type([]) ? a:expr : [a:expr]
-endfunction"}}}
-function! unite#util#msg2list(expr) "{{{
-  return type(a:expr) ==# type([]) ? a:expr : split(a:expr, '\n')
 endfunction"}}}
 
 function! unite#util#truncate_wrap(str, max, footer_width, separator) "{{{
@@ -354,18 +287,9 @@ function! unite#util#get_name(list, name, default) "{{{
   return get(a:list, unite#util#index_name(a:list, a:name), a:default)
 endfunction"}}}
 
-function! unite#util#redraw_echo(expr) "{{{
-  if has('vim_starting')
-    echo join(unite#util#msg2list(a:expr), "\n")
-    return
-  endif
-
-  let msg = unite#util#msg2list(a:expr)
-  let height = max([1, &cmdheight])
-  for i in range(0, len(msg)-1, height)
-    redraw
-    echo join(msg[i : i+height-1], "\n")
-  endfor
+function! unite#util#escape_match(str) "{{{
+  return substitute(substitute(escape(a:str, '~\.^$[]'),
+        \ '\*\@<!\*', '[^/]*', 'g'), '\*\*\+', '.*', 'g')
 endfunction"}}}
 
 let &cpo = s:save_cpo

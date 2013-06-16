@@ -10,6 +10,10 @@ sources and you can create new interface using unite.
 
 ## Usage
 
+Recommend to read this post by @bling:
+[Unite.vim, the Plugin You Didn't Know You Need](http://bling.github.io/blog/2013/06/02/unite-dot-vim-the-plugin-you-didnt-know-you-need/)
+
+
 In case you run unite to display files and buffers as sources to pick
 from.
 
@@ -23,7 +27,7 @@ down files.
 
 
 If you start unite it splits the window horizontally and pops up
-from the top of Vim by default. 
+from the top of Vim by default.
 
 	:Unite file
 
@@ -39,12 +43,12 @@ You can also narrow down the list of candidates by a keyword. If you change
 into the insert mode inside of a unite window, the cursor drops you behind the
 ">" in the second line from above. There you can start typing to filter the
 candidates.  You can also use the wild card "*" as an arbitrary character
-sequence. For example, 
+sequence. For example,
 
 	*hisa
 
 matches hisa, ujihisa, or ujihisahisa. Furthermore, two consecutive wild cards
-match a directory recursively. 
+match a directory recursively.
 
 	**/foo
 
@@ -87,7 +91,33 @@ sources to the command you wish to select from as parameters. However, it's a
 pain in the ass to run the command explicitly every time, so I recommend you
 to set a key mapping for the command. See `:h unite`.
 
+## FAQ
+
+See [:h unite](https://github.com/Shougo/unite.vim/blob/master/doc/unite.txt). There's FAQ section.
+
 ## Links
 
 unite plugins(in Japanese): https://github.com/Shougo/unite.vim/wiki/unite-plugins
 
+## Screen shots
+============
+
+unite file source
+-----------------
+![Unite file source.](https://a248.e.akamai.net/camo.github.com/079f081e01557032ce18e5118c8576036763854b/687474703a2f2f6779617a6f2e636f6d2f37333739663130343130383436333263363666616566396361663365316630392e706e67)
+
+unite action source
+-------------------
+![Unite action source.](http://gyazo.com/c5c000170f28926aaf83d0c47bc5fcbb.png)
+
+unite output source
+-------------------
+![Unite output source.](http://cdn-ak.f.st-hatena.com/images/fotolife/o/osyo-manga/20130307/20130307101224.png)
+
+unite mapping source
+--------------------
+![Unite mapping source.](http://cdn-ak.f.st-hatena.com/images/fotolife/o/osyo-manga/20130307/20130307101225.png)
+
+unite menu source
+-----------------
+![Unite menu source.](http://cdn-ak.f.st-hatena.com/images/fotolife/o/osyo-manga/20130307/20130307101227.png)
