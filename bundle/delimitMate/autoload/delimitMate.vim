@@ -10,6 +10,10 @@
 
 "let delimitMate_loaded = 1
 
+function! s:g(name, ...) "{{{
+	return eval('b:_l_delimitMate_' . a:name)
+endfunction "}}}
+
 function! delimitMate#ShouldJump(...) "{{{
 	" Returns 1 if the next character is a closing delimiter.
 	let char = delimitMate#GetCharFromCursor(0)
@@ -19,6 +23,10 @@ function! delimitMate#ShouldJump(...) "{{{
 	if (!a:0 && index(list, char) > -1)
 				\ || (a:0 && char == a:1)
 		return 1
+	endif
+
+	if !b:_l_delimitMate_jump_expansion
+		return 0
 	endif
 
 	" Closing delimiter with space expansion.
@@ -40,7 +48,6 @@ function! delimitMate#ShouldJump(...) "{{{
 	elseif a:0 && b:_l_delimitMate_expand_cr && uchar == a:1
 		return 5
 	endif
-
 	return 0
 endfunction "}}}
 
@@ -140,7 +147,7 @@ function! delimitMate#WriteAfter(str) "{{{
 	let len = 1 "len(a:str)
 	let line = split(getline('.'), '\zs')
 	let col = delimitMate#CursorIdx() - 1
-	if (col + 1) < 0
+	if (col + 1) < 0 || col('.') == 1
 		let line = insert(line, a:str)
 	elseif col('.') == col('$')
 		let line = add(line, a:str)
@@ -194,8 +201,11 @@ function! delimitMate#FlushBuffer() " {{{
 	return ''
 endfunction " }}}
 
-function! delimitMate#AddToBuffer(str) "{{{
-	call insert(b:_l_delimitMate_buffer, a:str)
+function! delimitMate#AddToBuffer(str, ...) "{{{
+	if a:0 && a:1 == 1
+		return add(b:_l_delimitMate_buffer, a:str)
+	endif
+	return insert(b:_l_delimitMate_buffer, a:str)
 endfunction "delimitMate#AddToBuffer }}}
 
 function! delimitMate#BalancedParens(char) "{{{
@@ -251,8 +261,11 @@ function! delimitMate#IsSmartQuote(char) "{{{
 	let valid_char_re = '\w\|[^[:punct:][:space:]]'
 	let word_before = char_before =~ valid_char_re
 	let word_at = char_at  =~ valid_char_re
-	let escaped = delimitMate#CursorIdx() >= 1 && delimitMate#GetCharFromCursor(-1) == '\'
-	let result = word_before || escaped || word_at
+	let escaped = delimitMate#CursorIdx() >= 1
+				\ && delimitMate#GetCharFromCursor(-1) == '\'
+	let noescaped = substitute(getline('.'), '\\.', '', 'g')
+	let even = !(count(split(noescaped, '\zs'), a:char) % 2)
+	let result = word_before || escaped || word_at || !even
 	return result
 endfunction "delimitMate#SmartQuote }}}
 
@@ -332,14 +345,23 @@ function! delimitMate#QuoteDelim(char) "{{{
 	elseif delimitMate#IsSmartQuote(a:char)
 		" Seems like a smart quote, insert a single char.
 		return a:char
-	elseif (char_before == a:char && char_at != a:char) && b:_l_delimitMate_smart_quotes
-		" Seems like we have an unbalanced quote, insert one quotation mark and jump to the middle.
+	elseif (char_before == a:char && char_at != a:char)
+				\ && b:_l_delimitMate_smart_quotes
+		" Seems like we have an unbalanced quote, insert one quotation
+		" mark and jump to the middle.
 		call delimitMate#AddToBuffer(a:char)
 		return delimitMate#WriteAfter(a:char)
 	else
 		" Insert a pair and jump to the middle.
-		call delimitMate#AddToBuffer(a:char)
-		call delimitMate#WriteAfter(a:char)
+		let sufix = ''
+		if !empty(s:g('eol_marker')) && col('.') - 1 == len(getline('.'))
+			let idx = len(s:g('eol_marker')) * -1
+			let marker = getline('.')[idx : ]
+			let has_marker = marker == s:g('eol_marker')
+			let sufix = !has_marker ? s:g('eol_marker') : ''
+		endif
+		call delimitMate#AddToBuffer(a:char . sufix)
+		call delimitMate#WriteAfter(a:char . sufix)
 		return a:char
 	endif
 endfunction "}}}
@@ -456,12 +478,12 @@ function! delimitMate#BS() " {{{
 		let extra = ''
 	endif
 	let tail_re = '\m\C\%('
-				\ . join(b:_l_delimitMate_right_delims, '\|')
+				\ . join(s:g('right_delims')+s:g('quotes_list'), '\|')
 				\ . '\)'
-				\ . escape(b:_l_delimitMate_eol_marker, '\*.^$')
+				\ . escape(s:g('eol_marker'), '\*.^$')
 				\ . '$'
 	if buffer_tail =~ tail_re && search('\%#'.tail_re, 'cWn')
-		let extra .= join(map(split(b:_l_delimitMate_eol_marker, '\zs'),
+		let extra .= join(map(split(s:g('eol_marker'), '\zs'),
 					\ 'delimitMate#Del()'), '')
 	endif
 	return "\<BS>" . extra

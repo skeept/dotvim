@@ -64,7 +64,7 @@ function! s:init() "{{{
 
 	" quotes
 	call s:option_init("quotes", "\" ' `")
-	call s:option_init("quotes_list", split(b:_l_delimitMate_quotes))
+	call s:option_init("quotes_list", split(b:_l_delimitMate_quotes, '\zs'))
 
 	" nesting_quotes
 	call s:option_init("nesting_quotes", [])
@@ -112,6 +112,9 @@ function! s:init() "{{{
 		echom "delimitMate: There seems to be some incompatibility with your settings that may interfer with the expansion of <CR>. See :help 'delimitMate_expand_cr' for details."
 	endif
 	call s:option_init("expand_cr", 0)
+
+	" jump_expansion
+	call s:option_init("jump_expansion", 0)
 
 	" smart_matchpairs
 	call s:option_init("smart_matchpairs", '^\%(\w\|\!\|£\|\$\|_\|["'']\s*\S\)')
@@ -335,7 +338,7 @@ endfunction "}}}
 
 function! s:ExtraMappings() "{{{
 	" If pair is empty, delete both delimiters:
-	inoremap <silent><expr> <Plug>delimitMateBS delimitMate#WithinEmptyPair() ? "\<C-R>=delimitMate#BS()\<CR>" : "\<BS>"
+	inoremap <silent> <Plug>delimitMateBS <C-R>=delimitMate#BS()<CR>
 	if !hasmapto('<Plug>delimitMateBS','i') && maparg('<BS>'. 'i') == ''
 		silent! imap <unique> <buffer> <BS> <Plug>delimitMateBS
 	endif
