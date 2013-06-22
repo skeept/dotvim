@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: dictionary.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Jun 2013.
+" Last Modified: 22 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,8 +35,8 @@ let g:neocomplete#sources#dictionary#keyword_patterns =
 "}}}
 
 " Important variables.
-if !exists('s:dictionary_list')
-  let s:dictionary_list = {}
+if !exists('s:dictionary_cache')
+  let s:dictionary_cache = {}
   let s:async_dictionary_list = {}
 endif
 
@@ -72,18 +72,16 @@ function! s:source.gather_candidates(context) "{{{
 
   let filetype = neocomplete#is_text_mode() ?
         \ 'text' : neocomplete#get_context_filetype()
-  if !has_key(s:dictionary_list, filetype)
+  if !has_key(s:dictionary_cache, filetype)
     call s:make_cache()
   endif
 
   for ft in neocomplete#get_source_filetypes(filetype)
     call neocomplete#cache#check_cache(
           \ 'dictionary_cache', ft,
-          \ s:async_dictionary_list, s:dictionary_list, 1)
+          \ s:async_dictionary_list, s:dictionary_cache, 1)
 
-    for dict in neocomplete#get_sources_list(s:dictionary_list, ft)
-      let list += dict
-    endfor
+    let list += get(s:dictionary_cache, ft, [])
   endfor
 
   return list
@@ -97,7 +95,7 @@ function! s:make_cache() "{{{
   let key = neocomplete#is_text_mode() ?
         \ 'text' : neocomplete#get_context_filetype()
   for filetype in neocomplete#get_source_filetypes(key)
-    if !has_key(s:dictionary_list, filetype)
+    if !has_key(s:dictionary_cache, filetype)
           \ && !has_key(s:async_dictionary_list, filetype)
       call neocomplete#sources#dictionary#remake_cache(filetype)
     endif
