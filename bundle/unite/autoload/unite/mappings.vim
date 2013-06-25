@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 17 Jun 2013.
+" Last Modified: 24 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -242,7 +242,9 @@ function! unite#mappings#define_default_mappings() "{{{
   imap <buffer> <C-a>     <Plug>(unite_move_head)
   imap <buffer> <Home>    <Plug>(unite_move_head)
   imap <buffer> <C-l>     <Plug>(unite_redraw)
-  imap <buffer> <ESC>     <Plug>(unite_insert_leave)
+  if has('gui_running')
+    imap <buffer> <ESC>     <Plug>(unite_insert_leave)
+  endif
   imap <buffer> <C-g>     <Plug>(unite_exit)
 
   inoremap <silent><buffer><expr> d
@@ -332,6 +334,7 @@ function! s:restart() "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
   let context.resume = 0
+  let context.is_restart = 1
   let sources = map(deepcopy(unite.sources),
         \ 'empty(v:val.args) ? v:val.name : [v:val.name] + v:val.args')
   call unite#force_quit_session()
