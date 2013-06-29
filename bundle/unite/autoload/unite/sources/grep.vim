@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 24 Jun 2013.
+" Last Modified: 28 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -35,6 +35,7 @@ call unite#util#set_default('g:unite_source_grep_ignore_pattern',
       \'\~$\|\.\%(o\|exe\|dll\|bak\|sw[po]\)$\|'.
       \'\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)\|'.
       \'\%(^\|/\)tags\%(-\a*\)\?$')
+call unite#util#set_default('g:unite_source_grep_encoding', 'char')
 "}}}
 
 function! unite#sources#grep#define() "{{{
@@ -167,14 +168,21 @@ function! s:source.gather_candidates(args, context) "{{{
     call unite#print_source_message(printf(
           \ 'command "%s" is not executable.',
           \    variables.command), s:source.name)
+    let a:context.is_async = 0
     return []
   endif
 
   if !unite#util#has_vimproc()
-        \ || empty(a:context.source__target)
-        \ || a:context.source__input == ''
+    call unite#print_source_message(
+          \ 'vimproc plugin is not installed.', self.name)
     let a:context.is_async = 0
+    return []
+  endif
+
+  if empty(a:context.source__target)
+        \ || a:context.source__input == ''
     call unite#print_source_message('Completed.', s:source.name)
+    let a:context.is_async = 0
     return []
   endif
 
@@ -243,7 +251,7 @@ function! s:source.async_gather_candidates(args, context) "{{{
   endif
 
   let candidates = map(stdout.read_lines(-1, 100),
-          \ "unite#util#iconv(v:val, 'char', &encoding)")
+          \ "unite#util#iconv(v:val, g:unite_source_grep_encoding, &encoding)")
   if variables.default_opts =~ '^-[^-]*l'
         \ || a:context.source__extra_opts =~ '^-[^-]*l'
     let candidates = map(filter(candidates,

@@ -434,24 +434,22 @@ function! delimitMate#JumpOut(char) "{{{
 	endif
 endfunction " }}}
 
-function! delimitMate#JumpAny(key) " {{{
+function! delimitMate#JumpAny(...) " {{{
 	if delimitMate#IsForbidden('')
-		return a:key
+		return ''
 	endif
 	if !delimitMate#ShouldJump()
-		return a:key
+		return ''
 	endif
 	" Let's get the character on the right.
 	let char = delimitMate#GetCharFromCursor(0)
 	if char == " "
 		" Space expansion.
-		"let char = char . getline('.')[col('.')] . delimitMate#Del()
 		return char . getline('.')[col('.')] . delimitMate#Del() .
 					\ delimitMate#Del()
 		"call delimitMate#RmBuffer(1)
 	elseif char == ""
 		" CR expansion.
-		"let char = "\<CR>" . getline(line('.') + 1)[0] . "\<Del>"
 		call delimitMate#FlushBuffer()
 		return "\<CR>" . getline(line('.') + 1)[0] . delimitMate#Del() . "\<Del>"
 	else
@@ -582,16 +580,8 @@ endfunction " }}}
 
 " Tools: {{{
 function! delimitMate#TestMappings() "{{{
-	if &modified
-		echohl WarningMsg
-		let answer = input("Modified buffer, type \"yes\" to write and proceed "
-					\ . "with test: ") !~ '\c^yes$'
-		echohl NONE
-		if answer != '\c^yes$'
-			return
-		endif
-		write
-	endif
+	echom 1
+	%d
 	let options = sort(keys(delimitMate#OptionsList()))
 	let optoutput = ['delimitMate Report', '==================', '',
 				\ '* Options: ( ) default, (g) global, (b) buffer','']
@@ -604,8 +594,8 @@ function! delimitMate#TestMappings() "{{{
 
 	" Check if mappings were set. {{{
 	let imaps = s:g('right_delims')
-	let imaps = imaps + ( s:g('autoclose') ? s:g('left_delims') : [] )
-	let imaps = imaps +
+	let imaps += ( s:g('autoclose') ? s:g('left_delims') : [] )
+	let imaps +=
 				\ s:g('quotes_list') +
 				\ s:g('apostrophes_list') +
 				\ ['<BS>', '<S-BS>', '<Del>', '<S-Tab>', '<Esc>'] +
@@ -620,13 +610,8 @@ function! delimitMate#TestMappings() "{{{
 				\ '<C-ScrollWheelLeft>'] +
 				\ ['<ScrollWheelRight>', '<S-ScrollWheelRight>',
 				\ '<C-ScrollWheelRight>']
-	let imaps = imaps + ( s:g('expand_cr') ?  ['<CR>'] : [] )
-	let imaps = imaps + ( s:g('expand_space') ?  ['<Space>'] : [] )
-
-	let vmaps =
-				\ s:g('right_delims') +
-				\ s:g('left_delims') +
-				\ s:g('quotes_list')
+	let imaps += ( s:g('expand_cr') ?  ['<CR>'] : [] )
+	let imaps += ( s:g('expand_space') ?  ['<Space>'] : [] )
 
 	let imappings = []
 	for map in imaps
@@ -635,7 +620,7 @@ function! delimitMate#TestMappings() "{{{
 			let map = '<Bar>'
 		endif
 		redir => output | execute "verbose imap ".map | redir END
-		let imappings = imappings + split(output, '\n')
+		let imappings += split(output, '\n')
 	endfor
 
 	unlet! output
@@ -728,6 +713,7 @@ function! delimitMate#TestMappings() "{{{
 	call append(line('$'), split(setoptions,"\n")
 				\ + ['--------------------'])
 	setlocal nowrap
+	call feedkeys("\<Esc>\<Esc>", 'n')
 endfunction "}}}
 
 function! delimitMate#OptionsList() "{{{
