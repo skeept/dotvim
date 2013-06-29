@@ -78,6 +78,8 @@ endif
 set cot-=preview
 
 set viminfo=h,'100,<10000,s1000,/1000,:1000
+
+set showtabline=0
 "==============================================================================}}}
 
 "================== Mappings =================================================={{{
@@ -181,6 +183,9 @@ nnoremap <Leader>tp :set paste!<CR>
 
 "select everything in visual mode (from Damian Conway setup)
 vnoremap aa VGo1G
+
+nnoremap <Leader>tc :tabclose<CR>
+nnoremap <Leader>ts :tab split<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
@@ -1017,6 +1022,16 @@ endfunction
 command! -range=% DelTrailWhiteSpace
       \ exe "normal mz" | exe "normal Hmy"
       \ | <line1>,<line2>call StripTrailingWhitespace()
+"==============================================================================}}}
+
+"================== Tab Settings ==============================================={{{
+function! GetNumTabsStr()
+  if tabpagenr('$') == 1
+    return ''
+  else
+    return '[T' . tabpagenr() . '/' . tabpagenr('$') . ']'
+  endif
+endfunction
 "==============================================================================}}}
 
 function! Uniq () range "{{{

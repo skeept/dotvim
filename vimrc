@@ -73,7 +73,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
-  VAMAddToActiveAddons dispatch 
+  VAMAddToActiveAddons dispatch
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
@@ -201,6 +201,7 @@ endfunction
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
 "set statusline+=%{XgetTagbarFunc()}
+set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
 set statusline+=%{DispLTXCF()}
 "set statusline+=\ %h%m%r%=%{CondDispFtFf()}
@@ -336,7 +337,7 @@ augroup END
 let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================}}}
 
-"================== tasklist =================================================={{{
+"================== Tasklist =================================================={{{
 "useful for managing a todo list
 noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
