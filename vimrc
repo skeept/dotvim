@@ -593,4 +593,6 @@ if g:neocomplcache_enable_at_startup == 1
 endif
 "==============================================================================}}}
 
+let Grep_Path = 'C:\cygwin\bin\grep'
+
 " vim: foldmethod=marker
