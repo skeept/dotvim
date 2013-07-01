@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Jun 2013.
+" Last Modified: 27 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -101,7 +101,8 @@ function! vimfiler#view#_redraw_screen() "{{{
   let last_line = line('.')
 
   " Clean up the screen.
-  if b:vimfiler.prompt_linenr + len(b:vimfiler.current_files) < line('$')
+  if line('$') > 1 &&
+        \ b:vimfiler.prompt_linenr + len(b:vimfiler.current_files) < line('$')
     silent execute '$-'.(line('$')-b:vimfiler.prompt_linenr-
           \ len(b:vimfiler.current_files)+1).',$delete _'
   endif
@@ -297,7 +298,7 @@ function! vimfiler#view#_get_print_lines(files) "{{{
     if file.vimfiler__is_marked
       let mark .= g:vimfiler_marked_file_icon
     elseif file.vimfiler__is_directory
-      let mark .= !get(file, 'vimfiler__is_readable', 1)
+      let mark .= !get(file, 'vimfiler__is_writable', 1)
             \    && !file.vimfiler__is_opened ?
             \ g:vimfiler_readonly_file_icon :
             \ file.vimfiler__is_opened ? g:vimfiler_tree_opened_icon :

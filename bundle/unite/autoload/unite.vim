@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: unite.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Jun 2013.
+" Last Modified: 17 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,7 +28,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 augroup plugin-unite
-  autocmd CursorHold
+  autocmd CursorHold *
         \ call unite#handlers#_on_cursor_hold()
 augroup END
 
@@ -42,6 +42,15 @@ function! unite#set_profile(profile_name, option_name, value) "{{{
 endfunction"}}}
 function! unite#get_profile(profile_name, option_name) "{{{
   return unite#custom#get_profile(a:profile_name, a:option_name)
+endfunction"}}}
+function! unite#set_substitute_pattern(buffer_name, pattern, subst, ...) "{{{
+  call unite#print_error('unite#set_substitute_pattern() is deprecated.')
+  call unite#print_error('Please use unite#set_profile() '.
+        \ 'or unite#custom#substitute() instead of it.')
+endfunction"}}}
+function! unite#set_buffer_name_option(buffer_name, option_name, value) "{{{
+  call unite#print_error('unite#set_buffer_name_options() is deprecated.')
+  call unite#print_error('Please use unite#set_profile() instead of it.')
 endfunction"}}}
 
 function! unite#custom_filters(source_name, expr) "{{{
@@ -269,7 +278,7 @@ function! unite#resume(...) "{{{
 endfunction"}}}
 
 function! unite#vimfiler_complete(sources, arglead, cmdline, cursorpos) "{{{
-  return unite#complete#vimfiler()
+  return unite#complete#vimfiler(a:sources, a:arglead, a:cmdline, a:cursorpos)
 endfunction"}}}
 function! unite#complete_source(arglead, cmdline, cursorpos) "{{{
   return unite#complete#source(a:arglead, a:cmdline, a:cursorpos)
@@ -289,7 +298,7 @@ function! unite#force_quit_session()  "{{{
 
   let context = unite#get_context()
   if context.temporary && !empty(context.old_buffer_info)
-      call unite#start#resume_from_temporary(context)
+    call unite#start#resume_from_temporary(context)
   endif
 endfunction"}}}
 function! unite#quit_session()  "{{{

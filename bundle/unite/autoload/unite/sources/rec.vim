@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Jun 2013.
+" Last Modified: 28 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -32,18 +32,18 @@ call unite#util#set_default(
       \ 'g:unite_source_rec_ignore_pattern',
       \'\%(^\|/\)\.$\|\~$\|\.\%(o\|exe\|dll\|bak\|DS_Store\|zwc\|pyc\|sw[po]\|class\)$'.
       \'\|\%(^\|/\)\%(\.hg\|\.git\|\.bzr\|\.svn\|tags\%(-.*\)\?\)\%($\|/\)',
-      \ 'g:unite_source_rec_ignore_pattern')
+      \ 'g:unite_source_file_rec_ignore_pattern')
 call unite#util#set_default(
       \ 'g:unite_source_rec_min_cache_files', 100,
-      \ 'g:unite_source_rec_min_cache_files')
+      \ 'g:unite_source_file_rec_min_cache_files')
 call unite#util#set_default(
       \ 'g:unite_source_rec_max_cache_files', 1000,
-      \ 'g:unite_source_rec_max_cache_files')
+      \ 'g:unite_source_file_rec_max_cache_files')
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command',
       \ (executable('ag') ? 'ag --nocolor --nogroup -g ""' :
       \ !unite#util#is_windows() && executable('find') ? 'find' : ''),
-      \ 'g:unite_source_rec_async_command')
+      \ 'g:unite_source_file_rec_async_command')
 "}}}
 
 let s:Cache = vital#of('unite.vim').import('System.Cache')
@@ -255,6 +255,13 @@ let s:source_file_async.description =
       \ 'asynchronous candidates from directory by recursive'
 
 function! s:source_file_async.gather_candidates(args, context) "{{{
+  if !unite#util#has_vimproc()
+    call unite#print_source_message(
+          \ 'vimproc plugin is not installed.', self.name)
+    let a:context.is_async = 0
+    return []
+  endif
+
   let a:context.source__directory = s:get_path(a:args, a:context)
 
   let directory = a:context.source__directory
@@ -479,6 +486,11 @@ function! s:get_path(args, context) "{{{
           \ a:context.input : getcwd()
   endif
 
+  if a:context.is_restart
+    let directory = unite#util#input('Target: ',
+          \ directory, 'dir', a:context.source_name)
+  endif
+
   if get(a:args, 0, '') == '!'
     " Use project directory.
     return unite#util#path2project_directory(directory, 1)
@@ -503,11 +515,17 @@ function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
     let files_index += 1
 
     if file =~ '/\.\+$' || file =~? a:ignore_pattern
-          \ || (isdirectory(file) && getftype(file) ==# 'link')
       continue
     endif
 
     if isdirectory(file)
+      if getftype(file) ==# 'link'
+        let file = s:resolve(file)
+        if file == ''
+          continue
+        endif
+      endif
+
       if file != '/' && file =~ '/$'
         let file = file[: -2]
       endif
@@ -527,11 +545,17 @@ function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
         let child_index += 1
 
         if child =~ '/\.\+$' || child =~? a:ignore_pattern
-              \ || (isdirectory(child) && getftype(child) ==# 'link')
           continue
         endif
 
         if isdirectory(child)
+          if getftype(child) ==# 'link'
+            let child = s:resolve(child)
+            if child == ''
+              continue
+            endif
+          endif
+
           if a:context.source__is_directory
             call add(ret_files, child)
             let ret_files_len += 1
@@ -662,10 +686,15 @@ endfunction"}}}
 
 function! unite#sources#rec#define() "{{{
   let sources = [ s:source_file_rec, s:source_directory_rec ]
-  if unite#util#has_vimproc()
-    let sources += [ s:source_file_async, s:source_directory_async]
-  endif
+  let sources += [ s:source_file_async, s:source_directory_async]
   return sources
+endfunction"}}}
+
+function! s:resolve(file) "{{{
+  " Detect symbolic link loop.
+  let file_link = unite#util#substitute_path_separator(
+        \ resolve(a:file))
+  return stridx(a:file, file_link.'/') == 0 ? '' : file_link
 endfunction"}}}
 
 let &cpo = s:save_cpo

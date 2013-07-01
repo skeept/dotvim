@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Jun 2013.
+" Last Modified: 28 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -217,8 +217,6 @@ function! unite#mappings#define_default_mappings() "{{{
         \ unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
   nnoremap <silent><buffer><expr> t
         \ unite#smart_map('t', unite#do_action('tabopen'))
-  inoremap <silent><buffer><expr> t
-        \ unite#smart_map('t', unite#do_action('tabopen'))
   nnoremap <silent><buffer><expr> yy
         \ unite#smart_map('yy', unite#do_action('yank'))
 
@@ -242,7 +240,9 @@ function! unite#mappings#define_default_mappings() "{{{
   imap <buffer> <C-a>     <Plug>(unite_move_head)
   imap <buffer> <Home>    <Plug>(unite_move_head)
   imap <buffer> <C-l>     <Plug>(unite_redraw)
-  imap <buffer> <ESC>     <Plug>(unite_insert_leave)
+  if has('gui_running')
+    imap <buffer> <ESC>     <Plug>(unite_insert_leave)
+  endif
   imap <buffer> <C-g>     <Plug>(unite_exit)
 
   inoremap <silent><buffer><expr> d
@@ -253,6 +253,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ unite#smart_map(' ', "\<Plug>(unite_toggle_mark_current_candidate)")
   imap <silent><buffer><expr> x
         \ unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
+  inoremap <silent><buffer><expr> t
+        \ unite#smart_map('t', unite#do_action('tabopen'))
 endfunction"}}}
 
 function! unite#mappings#narrowing(word) "{{{
@@ -316,7 +318,14 @@ endfunction"}}}
 
 " key-mappings functions.
 function! s:exit() "{{{
+  let context = unite#get_context()
+
   call unite#force_quit_session()
+
+  if context.tab && winnr('$') == 1 && !context.temporary
+    " Close window.
+    close
+  endif
 endfunction"}}}
 function! s:all_exit() "{{{
   call unite#all_quit_session()
@@ -325,6 +334,7 @@ function! s:restart() "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
   let context.resume = 0
+  let context.is_restart = 1
   let sources = map(deepcopy(unite.sources),
         \ 'empty(v:val.args) ? v:val.name : [v:val.name] + v:val.args')
   call unite#force_quit_session()
