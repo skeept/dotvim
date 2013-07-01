@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 12 Jun 2013.
+" Last Modified: 25 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -662,14 +662,20 @@ function! vimproc#host_exists(host) "{{{
 endfunction"}}}
 
 function! vimproc#kill(pid, sig) "{{{
+  if a:sig == 0 && vimproc#util#is_windows()
+    " Use waitpid().
+    let [cond, status] = s:waitpid(a:pid)
+    return cond ==# 'run'
+  endif
+
   try
-    call s:libcall('vp_kill', [a:pid, a:sig])
+    let [ret] = s:libcall('vp_kill', [a:pid, a:sig])
   catch /kill() error:/
     let s:last_errmsg = v:exception
     return 1
   endtry
 
-  return 0
+  return ret
 endfunction"}}}
 
 function! vimproc#decode_signal(signal) "{{{
@@ -812,15 +818,19 @@ function! vimproc#delete_trash(filename) "{{{
 
   let filename = a:filename
 
-  " Delete last /.
-  if filename =~ '[^:]/$'
-    " Delete last /.
-    let filename = filename[: -2]
+  if !filewritable(filename) && !isdirectory(filename)
+    return 1
   endif
 
   " Substitute path separator to "/".
   let filename = substitute(
         \ fnamemodify(filename, ':p'), '/', '\\', 'g')
+
+  " Delete last /.
+  if filename =~ '[^:][/\\]$'
+    " Delete last /.
+    let filename = filename[: -2]
+  endif
 
   " Encoding conversion.
   let filename = vimproc#util#iconv(filename,
@@ -967,13 +977,13 @@ function! s:fdopen_pgroup(proc, fd, f_close, f_read, f_write) "{{{
         \}
 endfunction"}}}
 
-function! s:garbage_collect() "{{{
+function! s:garbage_collect(is_force) "{{{
   for pid in values(s:bg_processes)
     " Check processes.
     try
       let [cond, status] = s:libcall('vp_waitpid', [pid])
       " echomsg string([pid, cond, status])
-      if cond !=# 'run'
+      if cond !=# 'run' || a:is_force
         if cond !=# 'exit'
           " Kill process.
           " 15 == SIGTERM
@@ -1098,7 +1108,7 @@ endfunction"}}}
 
 augroup vimproc
   autocmd VimLeave * call s:finalize()
-  autocmd CursorHold,BufWritePost * call s:garbage_collect()
+  autocmd CursorHold,BufWritePost * call s:garbage_collect(0)
 augroup END
 
 " Initialize.
@@ -1122,12 +1132,36 @@ function! s:split(str, sep)
   return result
 endfunction
 
+function! s:split_lua(str, sep)
+  let result = []
+  lua << EOF
+do
+  local pos = 1
+  local result = vim.eval('result')
+  local str = vim.eval('a:str')
+  local sep = vim.eval('a:sep')
+  local tmp = string.find(str, sep, pos, true)
+
+  while tmp ~= nil do
+    result:add(string.sub(str, pos, tmp-1))
+    pos = tmp + 1
+    tmp = string.find(str, sep, pos, true)
+  end
+
+  result:add(string.sub(str, pos))
+end
+EOF
+
+  return result
+endfunction
+
 function! s:libcall(func, args) "{{{
   " End Of Value
   let EOV = "\xFF"
   let args = empty(a:args) ? '' : (join(reverse(copy(a:args)), EOV) . EOV)
   let stack_buf = libcall(g:vimproc#dll_path, a:func, args)
-  let result = s:split(stack_buf, EOV)
+  let result = vimproc#util#has_lua() ?
+        \ s:split_lua(stack_buf, EOV) : s:split(stack_buf, EOV)
   if !empty(result) && result[-1] != ''
     if stack_buf[len(stack_buf) - 1] ==# EOV
       " Note: If &encoding equals "cp932" and output ends multibyte first byte,
@@ -1157,7 +1191,7 @@ function! s:funcref(funcname)
 endfunction
 
 function! s:finalize()
-  call s:garbage_collect()
+  call s:garbage_collect(1)
 
   if exists('s:dll_handle')
     call s:vp_dlclose(s:dll_handle)
@@ -1414,29 +1448,31 @@ function! s:vp_set_winsize(width, height) dict
 endfunction
 
 function! s:vp_kill(sig) dict
-  call s:close_all(self)
-
-  let self.is_valid = 0
-
-  if has_key(self, 'pid_list')
-    for pid in self.pid_list
-      call vimproc#kill(pid, a:sig)
-    endfor
-  else
-    call vimproc#kill(self.pid, a:sig)
+  if a:sig != 0
+    call s:close_all(self)
+    let self.is_valid = 0
   endif
+
+  let ret = 0
+  for pid in get(self, 'pid_list', [self.pid])
+    let ret = vimproc#kill(pid, a:sig)
+  endfor
+
+  return ret
 endfunction
 
 function! s:vp_pgroup_kill(sig) dict
-  call s:close_all(self)
-  let self.is_valid = 0
+  if a:sig != 0
+    call s:close_all(self)
+    let self.is_valid = 0
+  endif
 
   if self.pid == 0
     " Ignore.
     return
   endif
 
-  call self.current_proc.kill(a:sig)
+  return self.current_proc.kill(a:sig)
 endfunction
 
 function! s:waitpid(pid)

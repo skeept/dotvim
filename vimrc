@@ -216,6 +216,7 @@ endfunction
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
 "set statusline+=%{XgetTagbarFunc()}
+set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
 set statusline+=%{DispLTXCF()}
 "set statusline+=\ %h%m%r%=%{CondDispFtFf()}
@@ -351,7 +352,7 @@ augroup END
 let g:ConqueTerm_ReadUnfocused = 1
 "==============================================================================}}}
 
-"================== tasklist =================================================={{{
+"================== Tasklist =================================================={{{
 "useful for managing a todo list
 noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
@@ -591,5 +592,7 @@ if g:neocomplcache_enable_at_startup == 1
   let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
 "==============================================================================}}}
+
+let Grep_Path = 'C:\cygwin\bin\grep'
 
 " vim: foldmethod=marker

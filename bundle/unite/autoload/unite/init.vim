@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Jun 2013.
+" Last Modified: 28 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -63,6 +63,9 @@ function! unite#init#_context(context, ...) "{{{
     " Ignore empty unite buffer.
     let context.no_empty = 1
   endif
+  if context.tab
+    let context.no_split = 1
+  endif
   if !has_key(context, 'short_source_names')
     let context.short_source_names = g:unite_enable_short_source_names
   endif
@@ -90,8 +93,14 @@ function! unite#init#_unite_buffer() "{{{
   let current_unite.context.real_buffer_name =
         \ current_unite.real_buffer_name
 
+  let context = current_unite.context
+
+  if !context.temporary && context.tab
+    tabnew
+  endif
+
   call unite#view#_switch_unite_buffer(
-        \ current_unite.buffer_name, current_unite.context)
+        \ current_unite.buffer_name, context)
 
   let b:unite = current_unite
   let unite = unite#get_current_unite()
@@ -150,7 +159,7 @@ function! unite#init#_unite_buffer() "{{{
     call unite#mappings#define_default_mappings()
   endif
 
-  let &l:wrap = unite.context.wrap
+  let &l:wrap = context.wrap
 
   if exists('&redrawtime')
     " Save redrawtime
@@ -174,7 +183,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   if !context.create && !context.temporary
         \ && context.unite__is_interactive
     let winnr = unite#helper#get_unite_winnr(context.buffer_name)
-    if winnr > 0 && s:get_source_args(a:sources) !=#
+    if winnr > 0 && unite#helper#get_source_args(a:sources) !=#
           \ getbufvar(winbufnr(winnr), 'unite').args
       " Quit unite buffer.
       execute winnr 'wincmd w'
@@ -251,7 +260,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.candidates = []
   let unite.max_source_candidates = 0
   let unite.is_multi_line = 0
-  let unite.args = s:get_source_args(a:sources)
+  let unite.args = unite#helper#get_source_args(a:sources)
   let unite.msgs = []
   let unite.err_msgs = []
 
@@ -305,7 +314,7 @@ function! unite#init#_candidates(candidates) "{{{
             \ repeat(' ', &tabstop), 'g')
     endif
 
-    if !candidate.is_multiline && !context.multi_line
+    if context.wrap || (!candidate.is_multiline && !context.multi_line)
       call add(candidates, candidate)
       continue
     endif
@@ -492,7 +501,7 @@ function! unite#init#_loaded_sources(sources, context) "{{{
   let sources = []
 
   let number = 0
-  for [source, args] in s:get_source_args(a:sources)
+  for [source, args] in unite#helper#get_source_args(a:sources)
     if type(source) == type('')
       let source_name = source
       unlet source
@@ -677,11 +686,6 @@ function! unite#init#_tab_variables() "{{{
   if !exists('t:unite')
     let t:unite = { 'last_unite_bufnr' : -1 }
   endif
-endfunction"}}}
-
-function! s:get_source_args(sources)"{{{
-  return map(copy(a:sources),
-        \ 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
 endfunction"}}}
 
 let &cpo = s:save_cpo

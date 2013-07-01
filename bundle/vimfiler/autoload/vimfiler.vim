@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 May 2013.
+" Last Modified: 15 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -51,7 +51,7 @@ let s:vimfiler_options = [
       \ '-buffer-name=', '-no-quit', '-quit', '-toggle', '-create',
       \ '-simple', '-double', '-split', '-horizontal', '-direction=',
       \ '-winheight=', '-winwidth=', '-winminwidth=', '-auto-cd', '-explorer',
-      \ '-reverse', '-project', '-columns=', '-status',
+      \ '-reverse', '-project', '-columns=', '-status', '-find',
       \]
 "}}}
 
@@ -136,7 +136,8 @@ endfunction"}}}
 function! vimfiler#get_filename(...) "{{{
   let line_num = get(a:000, 0, line('.'))
   return getline(line_num) == '..' ? '..' :
-   \ line_num < b:vimfiler.prompt_linenr ? '' :
+   \ (line_num < b:vimfiler.prompt_linenr ||
+   \  empty(b:vimfiler.current_files)) ? '' :
    \ b:vimfiler.current_files[vimfiler#get_file_index(line_num)].action__path
 endfunction"}}}
 function! vimfiler#get_file(...) "{{{
