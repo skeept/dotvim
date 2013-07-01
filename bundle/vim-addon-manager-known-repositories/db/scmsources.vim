@@ -109,6 +109,7 @@ let scm['vim-addon-toc'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vi
 let scm['vim-ruby'] = {'type': 'git', 'url': 'git://github.com/vim-ruby/vim-ruby'}
 let scm['SmartTag'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/SmartTag'}
 let scm['vim-addon-text-objects'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-text-objects'}
+let scm['vim-haxe-syntax'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-haxe-syntax'}
 " There was key {'branch': 'master-vim-cleaned-up'}, but it is not processed
 " anywhere thus removed
 let scm['ensime'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/ensime'}
@@ -170,12 +171,7 @@ let scm['textobj-django-template'] = {'type': 'git', 'url': 'git://github.com/ka
 let scm['flymake'] = {'type': 'git', 'url': 'git://github.com/kana/vim-flymake'}
 
 " Honza Pokorny
-" vim-snippets is the old "snipmate-snippets" repository
-" In the near future it hopefully is also used by UltiSnip users hence the renaming
-" Right now it can be installed by vim-snippets and snimpate-snippet names,
-" both contain the same
 let scmnr.3633 = {'type': 'git', 'url': 'git://github.com/honza/vim-snippets'}
-let scm['vim-snippets'] = {'type': 'git', 'url': 'git://github.com/honza/vim-snippets'}
 
 " Peter Odding
 let scmnr.2252 = {'type': 'git', 'url': 'git://github.com/xolox/vim-publish'}
@@ -207,6 +203,7 @@ let scm['vimfiler'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimfiler'}
 let scm['vimarise'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimarise'}
 let scm['neoui'] = {'type': 'git', 'url': 'git://github.com/Shougo/neoui'}
 let scm['neobundle'] = {'type': 'git', 'url': 'git://github.com/Shougo/neobundle.vim'}
+let scm['neocomplete'] = {'type': 'git', 'url': 'git://github.com/Shougo/neocomplete'}
 
 " ZyX
 let scmnr.3056 = {'type': 'hg', 'url': 'http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3'}
@@ -632,6 +629,7 @@ let scm['googletasks-vim'] = {'type': 'git', 'url': 'git://github.com/mattn/goog
 let scm['wwwrenderer-vim'] = {'type': 'git', 'url': 'git://github.com/mattn/wwwrenderer-vim'}
 let scm['favstar-vim'] = {'type': 'git', 'url': 'git://github.com/mattn/favstar-vim'}
 let scm['ideone'] = {'type': 'git', 'url': 'git://github.com/mattn/ideone-vim', 'addon-info': {'dependencies': {'%4019': {}}}}
+let scm['vim-textobj-url'] = {'type': 'git', 'url': 'git://github.com/mattn/vim-textobj-url'}
 
 " Mike West
 let scmnr.3766 = {'type': 'git', 'url': 'git://github.com/mikewest/vimroom'}
@@ -677,6 +675,9 @@ let scm['lh-dev'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/dev
 let scm['lh-refactor'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/refactor/trunk'}
 let scm['system-tools'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/system-tools/trunk'}
 let scm['UT'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/UT/trunk'}
+let scm['vim-clang'] = {'type': 'svn', 'url': 'git://github.com/LucHermitte/vim-clang'}
+
+
 " system-tools are required for vim-spell.tar.gz (vimscript #135), which are 
 " part of misc. Cannot install using 'type':'archive': it won’t pull in 
 " documentation. Alternative: use cpp (vimscript #336, above) in place of a@lh
@@ -2182,6 +2183,9 @@ let scmnr.4617 = {'type': 'git', 'url': 'git://github.com/octol/vim-cpp-enhanced
 " Taku Miyakawa
 let scmnr.4618 = {'type': 'git', 'url': 'https://bitbucket.org/kink/kink.vim'}
 
+" Pratheek
+let scmnr.4620 = {'type': 'git', 'url': 'git://github.com/Pychimp/vim-luna'}
+
 "-----------------------------------------------------------------------------------------------------------------------
 
 " hickop
@@ -2422,6 +2426,14 @@ let scm['jedi-vim'] = {'type': 'git', 'url': 'git://github.com/davidhalter/jedi-
 let scm['vim-css3-syntax'] = {'type': 'git', 'url': 'git://github.com/hail2u/vim-css3-syntax'}
 let scm['neco-tweetvim'] = {'type': 'git', 'url': 'git://github.com/yomi322/neco-tweetvim'}
 let scm['ctrlp-cmatcher'] = {'type': 'git', 'url': 'git://github.com/JazzCore/ctrlp-cmatcher', 'addon-info': {'dependencies': {'%3736': {}}}}
+let scm['vim-plugin-viewdoc'] = {'type': 'git', 'url': 'git://github.com/powerman/vim-plugin-viewdoc'}
+let scm['vim-qt-syntax'] = {'type': 'git', 'url': 'https://bitbucket.org/kh3phr3n/vim-qt-syntax'}
+let scm['vim-textobj-space'] = {'type': 'git', 'url': 'git://github.com/saihoooooooo/vim-textobj-space'}
+let scm['vim-textobj-underscore'] = {'type': 'git', 'url': 'git://github.com/lucapette/vim-textobj-underscore'}
+let scm['vim-slime'] = {'type': 'git', 'url': 'git://github.com/jpalardy/vim-slime'}
+
+let scm['merlin'] = {'type': 'git', 'url': 'git://github.com/def-lkb/merlin', 'addon-infof': {'runtimepath': 'vim/merlin'}}
+let scm['ocp-indent'] = {'type': 'git', 'url': 'git://github.com/OCamlPro/ocp-indent'}
 
 " Marius Gedminas
 let scm['python-imports@mgedmin'] = {'type': 'git', 'url': 'git://github.com/mgedmin/python-imports.vim'}

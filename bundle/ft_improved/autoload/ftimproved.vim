@@ -5,7 +5,7 @@
 " Last Change: Sat, 16 Mar 2013 14:59:42 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=3877
 " Copyright:   (c) 2009 - 2013  by Christian Brabandt
-"			   The VIM LICENSE applies to histwin.vim 
+"			   The VIM LICENSE applies to ft_improved.vim 
 "			   (see |copyright|) except use "ft_improved.vim" 
 "			   instead of "Vim".
 "			   No warranty, express or implied.
@@ -64,7 +64,7 @@ fun! <sid>SearchForChar(char) "{{{1
 endfun
 
 fun! <sid>EscapePat(pat, vmagic) "{{{1
-	return (a:vmagic ? '\V' : '').escape(a:pat, '\')
+	return (a:vmagic ? '\V' : '').escape(a:pat, '\''')
 endfun
 
 fun! <sid>ColonPattern(cmd, pat, off, f) "{{{1
@@ -88,6 +88,9 @@ fun! <sid>ColonPattern(cmd, pat, off, f) "{{{1
 endfun
 
 fun! <sid>HighlightMatch(char, dir) "{{{1
+	if get(g:, 'ft_improved_nohighlight', 0)
+		return
+	endif
 	if exists("s:matchid")
 		sil! call matchdelete(s:matchid)
 	endif
@@ -258,10 +261,11 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		elseif empty(char) || char ==? "\x80\xFD\x60" "CursorHoldEvent"
 			return s:escape
 		endif
+		let orig_char = char
 		let char  = <sid>EscapePat(char, 1)
 		" ignore case of pattern? Does only work with search, not with original
 		" f/F/t/T commands
-		if !get(g:, "ft_improved_ignorecase", 0)
+		if get(g:, "ft_improved_ignorecase", 0)
 			let char = '\c'.char
 		endif
 		if get(g:, "ft_improved_multichars", 0) &&
@@ -316,19 +320,21 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		let pat = char
 		if !get(g:, "ft_improved_multichars", 0)
 		" Check if normal f/t commands would work:
-			if search(pat, 'nW') == line('.') && a:fwd
+			if search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'nW') == line('.')
+				\ && a:fwd
 				let s:searchforward = 1
 				let cmd = (a:f ? 'f' : 't')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f)
-				return cmd.char
+				return cmd.orig_char
 
-			elseif search(pat, 'bnw') == line('.') && !a:fwd
+			elseif search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'bnW') == line('.')
+				\ && !a:fwd
 				let s:searchforward = 0
 				let cmd = (a:f ? 'F' : 'T')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f)
-				return cmd. char
+				return cmd.orig_char
 			endif
 		endif
 
@@ -416,7 +422,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 
 		" For visual mode, the :Ex commands exit the visual selection, so need
 		" to reselect it
-		call <sid>DebugOutput(res.post_cmd. (a:mode ==? 'x' ? 'gv' : ''))
+		call <sid>DebugOutput(res.post_cmd. ((a:mode ==? 'x' && mode() !~ '[vV]') ? 'gv' : ''))
 		return res.post_cmd. (a:mode ==? 'x' ? 'gv' : '')
 		"return res. ":let @/='".oldsearchpat."'\n"
 	finally 
