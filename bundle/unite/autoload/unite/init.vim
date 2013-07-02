@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Jun 2013.
+" Last Modified: 01 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -156,6 +156,12 @@ function! unite#init#_unite_buffer() "{{{
             \ call unite#handlers#_restore_updatetime()
     augroup END
 
+    if v:version > 703 || v:version == 703 && has('patch418')
+      " Enable auto narrow feature.
+      autocmd plugin-unite InsertCharPre <buffer>
+            \ call unite#handlers#_on_insert_char_pre()
+    endif
+
     call unite#mappings#define_default_mappings()
   endif
 
@@ -263,6 +269,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.args = unite#helper#get_source_args(a:sources)
   let unite.msgs = []
   let unite.err_msgs = []
+  let unite.redraw_hold_candidates = (unite#util#has_lua() ? 10000 : 4000)
 
   if context.here
     let context.winheight = winheight(0) - winline() +

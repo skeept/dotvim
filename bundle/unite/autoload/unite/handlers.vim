@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handlers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Jun 2013.
+" Last Modified: 01 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -56,7 +56,7 @@ endfunction"}}}
 function! unite#handlers#_on_cursor_hold_i()  "{{{
   let unite = unite#get_current_unite()
 
-  if unite.max_source_candidates > 4000
+  if unite.max_source_candidates > unite.redraw_hold_candidates
     call s:check_redraw()
   endif
 
@@ -70,7 +70,7 @@ function! unite#handlers#_on_cursor_moved_i()  "{{{
   let unite = unite#get_current_unite()
   let prompt_linenr = unite.prompt_linenr
 
-  if unite.max_source_candidates <= 4000
+  if unite.max_source_candidates <= unite.redraw_hold_candidates
     call s:check_redraw()
   endif
 
@@ -261,6 +261,17 @@ function! unite#handlers#_on_buf_unload(bufname)  "{{{
   " Call finalize functions.
   call unite#helper#call_hook(unite#loaded_sources_list(), 'on_close')
   let unite.is_finalized = 1
+endfunction"}}}
+function! unite#handlers#_on_insert_char_pre()  "{{{
+  let prompt_linenr = unite#get_current_unite().prompt_linenr
+
+  if line('.') <= prompt_linenr
+    return
+  endif
+
+  call cursor(prompt_linenr, 0)
+  startinsert!
+  call unite#handlers#_on_cursor_moved()
 endfunction"}}}
 
 function! s:change_highlight()  "{{{
