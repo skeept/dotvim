@@ -80,10 +80,8 @@ alternative for 32bit http://tuxproject.de/projects/vim/
 In Mac(if_lua enabled MacVim):
 https://github.com/zhaocai/macvim
 
-In MacVim with homebrew:
->
-	brew install macvim --with-cscope --with-lua --override-system-vim
-<
+In Mac homebrew. >
+	brew install macvim --with-cscope --with-lua --HEAD
 
 In Linux: You should make Vim and enable |if_lua| manually. Distributed
 package is almost old.
@@ -1017,6 +1015,15 @@ EXAMPLES					*neocomplete-examples*
 	" https://github.com/c9s/perlomni.vim
 	let g:neocomplete#sources#omni#input_patterns.perl =
 	\ '[^. \t]->\%(\h\w*\)\?\|\h\w*::\%(\h\w*\)\?'
+
+	" For smart TAB completion.
+	"inoremap <expr><TAB>  pumvisible() ? "\<C-n>" :
+	"        \ <SID>check_back_space() ? "\<TAB>" :
+	"        \ neocomplete#start_manual_complete()
+	"  function! s:check_back_space() "{{{
+	"    let col = col('.') - 1
+	"    return !col || getline('.')[col - 1]  =~ '\s'
+	"  endfunction"}}}
 <
 ==============================================================================
 SOURCES						*neocomplete-sources*
@@ -1582,13 +1589,13 @@ A: Please try below settings.
 	endif
 	let g:neocomplete#force_overwrite_completefunc = 1
 	let g:neocomplete#force_omni_input_patterns.c =
-	      \ '[^.[:digit:] *\t]\%(\.\|->\)'
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*'
 	let g:neocomplete#force_omni_input_patterns.cpp =
-	      \ '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*\|\h\w*::\w*'
 	let g:neocomplete#force_omni_input_patterns.objc =
-	      \ '[^.[:digit:] *\t]\%(\.\|->\)'
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*'
 	let g:neocomplete#force_omni_input_patterns.objcpp =
-	      \ '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+	      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*\|\h\w*::\w*'
 	let g:clang_complete_auto = 0
 	let g:clang_auto_select = 0
 	"let g:clang_use_library = 1
@@ -1821,6 +1828,17 @@ A:
 Note: This feature is heavy.
 >
 	let g:neocomplete#enable_refresh_always = 1
+<
+
+Q: I want to use PHP omni completion.
+
+A:
+Note: You should use this omni completion for PHP.
+https://github.com/shawncplus/phpcomplete.vim
+>
+
+	let g:neocomplete#sources#omni#input_patterns.php =
+	\ '\h\w*\|[^. \t]->\%(\h\w*\)\?\|\h\w*::\%(\h\w*\)\?'
 <
 
 ==============================================================================

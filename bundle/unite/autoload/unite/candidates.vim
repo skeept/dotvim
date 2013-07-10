@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: candidates.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Jun 2013.
+" Last Modified: 05 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,7 +34,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
   let ignorecase_save = &ignorecase
 
   if unite#custom#get_profile(unite.profile_name, 'smartcase')
-        \ && a:input =~ '\u'
+        \ && get(split(a:input, '\W'), -1, '') =~ '\u'
     let &ignorecase = 0
   else
     let &ignorecase =
@@ -63,6 +63,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
 
     if !context.no_buffer && source.max_candidates != 0
           \ && !context.unite__is_interactive
+          \ && !unite.disabled_max_candidates
           \ && len(source.unite__candidates) > source.max_candidates
       " Filtering too many candidates.
       let source.unite__candidates =
@@ -178,7 +179,8 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     let context.input_list = split(context.input, '\\\@<! ', 1)
     let context.path = get(filter(copy(context.input_list),
         \         "v:val !~ '^[!:]'"), 0, '')
-    let context.unite__max_candidates = source.max_candidates
+    let context.unite__max_candidates =
+          \ (unite.disabled_max_candidates ? 0 : source.max_candidates)
 
     let source_candidates = s:get_source_candidates(source)
 
@@ -234,7 +236,7 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     let source.unite__orig_len_candidates = len(source_candidates)
     let unite.max_source_candidates +=
           \ (context.unite__is_sort_nothing
-          \    && source.max_candidates > 0) ?
+          \    && context.unite__max_candidates > 0) ?
           \ source.max_candidates : source.unite__orig_len_candidates
 
     " Call filters.

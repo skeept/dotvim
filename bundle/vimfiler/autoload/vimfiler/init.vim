@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Jun 2013.
+" Last Modified: 08 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -78,6 +78,10 @@ function! vimfiler#init#_initialize_context(context) "{{{
   if !has_key(context, 'profile_name')
     let context.profile_name = context.buffer_name
   endif
+  if context.toggle && context.find
+    " Disable toggle feature.
+    let context.toggle = 0
+  endif
 
   return context
 endfunction"}}}
@@ -91,7 +95,7 @@ function! vimfiler#init#_initialize_vimfiler_directory(directory, context) "{{{1
   let b:vimfiler.current_files = []
   let b:vimfiler.original_files = []
 
-  let b:vimfiler.is_visible_dot_files = 0
+  let b:vimfiler.is_visible_ignore_files = 0
   let b:vimfiler.simple = a:context.simple
   let b:vimfiler.directory_cursor_pos = {}
   let b:vimfiler.current_mask = ''
@@ -285,14 +289,22 @@ function! vimfiler#init#_start(path, ...) "{{{
   call s:create_vimfiler_buffer(path, context)
 endfunction"}}}
 function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
+  let search_path = fnamemodify(bufname('%'), ':p')
+
   let context = vimfiler#initialize_context(a:context)
 
-  if context.split
-    execute context.direction
-          \ (context.horizontal ? 'split' : 'vsplit')
+  if bufwinnr(a:bufnr) < 0
+    if context.split
+      execute context.direction
+            \ (context.horizontal ? 'split' : 'vsplit')
+    endif
+
+    execute 'buffer' . a:bufnr
+  else
+    " Move to vimfiler window.
+    execute bufwinnr(a:bufnr).'wincmd w'
   endif
 
-  execute 'buffer' . a:bufnr
   call vimfiler#handler#_event_bufwin_enter(a:bufnr)
 
   let b:vimfiler.context = extend(b:vimfiler.context, context)
@@ -313,11 +325,13 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
       let directory = join(ret[1:], ':')
     endif
 
-    if !a:context.find || vimfiler#mappings#search_cursor(
-          \ substitute(vimfiler#helper#_get_cd_path(directory),
-          \   '/$', '', '')) == 0
-      call vimfiler#mappings#cd(directory)
-    endif
+    call vimfiler#mappings#cd(directory)
+  endif
+
+  if a:context.find
+    call vimfiler#mappings#search_cursor(
+          \ substitute(vimfiler#helper#_get_cd_path(
+          \ search_path), '/$', '', ''))
   endif
 
   if a:context.double

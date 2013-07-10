@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Jun 2013.
+" Last Modified: 06 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -127,7 +127,7 @@ function! unite#mappings#define_default_mappings() "{{{
   inoremap <expr><buffer> <Plug>(unite_select_next_line)
         \ pumvisible() ? "\<C-n>" : <SID>loop_cursor_down(0)
   inoremap <silent><buffer> <Plug>(unite_skip_previous_line)
-        \ <ESC>:call <SID>loop_cursor_up(1, 'i')<CR>
+        \ <ESC>:call unite#mappings#loop_cursor_up_call(1, 'i')<CR>
   inoremap <expr><buffer> <Plug>(unite_select_next_page)
         \ pumvisible() ? "\<PageDown>" : repeat("\<Down>", winheight(0))
   inoremap <expr><buffer> <Plug>(unite_select_previous_page)
@@ -245,16 +245,17 @@ function! unite#mappings#define_default_mappings() "{{{
   endif
   imap <buffer> <C-g>     <Plug>(unite_exit)
 
-  inoremap <silent><buffer><expr> d
-        \ unite#smart_map('d', unite#do_action('delete'))
-  inoremap <silent><buffer><expr> e
-        \ unite#smart_map('e', unite#do_action('edit'))
   imap <silent><buffer><expr> <Space>
         \ unite#smart_map(' ', "\<Plug>(unite_toggle_mark_current_candidate)")
-  imap <silent><buffer><expr> x
-        \ unite#smart_map('x', "\<Plug>(unite_quick_match_default_action)")
-  inoremap <silent><buffer><expr> t
-        \ unite#smart_map('t', unite#do_action('tabopen'))
+
+  inoremap <silent><buffer><expr> <C-d>
+        \ unite#do_action('delete')
+  inoremap <silent><buffer><expr> <C-e>
+        \ unite#do_action('edit')
+  inoremap <silent><buffer><expr> <C-t>
+        \ unite#do_action('tabopen')
+  inoremap <silent><buffer><expr> <C-y>
+        \ unite#do_action('yank')
 endfunction"}}}
 
 function! unite#mappings#narrowing(word) "{{{
@@ -269,7 +270,7 @@ function! unite#mappings#narrowing(word) "{{{
     startinsert!
   else
     call cursor(prompt_linenr+1, 0)
-    normal! 0z.
+    keepjumps normal! 0z.
   endif
 endfunction"}}}
 
@@ -601,66 +602,13 @@ function! s:loop_cursor_down(is_skip_not_matched) "{{{
     return repeat('j', cnt)
   endif
 endfunction"}}}
-function! s:loop_cursor_up(is_skip_not_matched, mode) "{{{
-  let is_insert = a:mode ==# 'i'
-  let prompt_linenr = unite#get_current_unite().prompt_linenr
-
-  if line('.') <= prompt_linenr
-    if !is_insert && line('.') > 2
-      return cursor(line('.') - 1, 0)
-    endif
-
-    " Loop.
-
-    call s:redraw_all_candidates()
-
-    call cursor(line('$'), 0)
-    if is_insert
-      noautocmd startinsert!
-    endif
-    return
-  endif
-
-  let num = line('.') - (prompt_linenr + 1)
-  let cnt = 1
-  if line('.') <= prompt_linenr
-    let cnt += prompt_linenr - line('.')
-  endif
-  if is_insert && line('.') == prompt_linenr+2
-    let cnt += 1
-  endif
-
-  while 1
-    let candidate = get(unite#get_unite_candidates(), num - cnt, {})
-    if num >= cnt && !empty(candidate) && (candidate.is_dummy
-          \ || (a:is_skip_not_matched && !candidate.is_matched))
-      let cnt += 1
-      continue
-    endif
-
-    break
-  endwhile
-
-  if num < 0
-    call cursor(prompt_linenr, 0)
-
-    if line('.') < winheight(0)
-      normal! zb
-    endif
-  else
-    call cursor(line('.') - cnt, 0)
-  endif
-
-  if is_insert
-    noautocmd startinsert!
-  endif
-endfunction"}}}
 function! unite#mappings#loop_cursor_up_call(is_skip_not_matched, mode) "{{{
   let is_insert = a:mode ==# 'i'
   let prompt_linenr = unite#get_current_unite().prompt_linenr
 
-  if !is_insert && line('.') > 2
-    return cursor(line('.') - 1, 0)
+  if !is_insert && line('.') > prompt_linenr
+    call cursor(line('.') - 1, 0)
+    return
   endif
 
   " Loop.
@@ -741,6 +689,9 @@ function! s:toggle_auto_highlight() "{{{
   let context.auto_highlight = !context.auto_highlight
 endfunction"}}}
 function! s:disable_max_candidates() "{{{
+  let unite = unite#get_current_unite()
+  let unite.disabled_max_candidates = 1
+
   call unite#force_redraw()
   call s:redraw_all_candidates()
 endfunction"}}}

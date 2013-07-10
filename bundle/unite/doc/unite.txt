@@ -33,8 +33,8 @@ Interface		|unite-interface|
   Commands		  |unite-commands|
   Variables		  |unite-variables|
     Sources variables	    |unite-sources-variables|
-    Kinds variables	    |unite-kinds-variables|
-    Filters variables	    |unite-filters-variables|
+    Kind variables	    |unite-kind-variables|
+    Filter variables	    |unite-filter-variables|
   Key mappings		  |unite-key-mappings|
   Functions		  |unite-functions|
   Options		  |unite-options|
@@ -257,34 +257,38 @@ More advanced configuration example:
 	  imap <buffer> jj      <Plug>(unite_insert_leave)
 	  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
 
-	imap <buffer><expr> j unite#smart_map('j', '')
-	imap <buffer> <TAB>   <Plug>(unite_select_next_line)
-	imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
-	imap <buffer> '     <Plug>(unite_quick_match_default_action)
-	nmap <buffer> '     <Plug>(unite_quick_match_default_action)
-	imap <buffer><expr> x
-	        \ unite#smart_map('x', "\<Plug>(unite_quick_match_choose_action)")
-	nmap <buffer> x     <Plug>(unite_quick_match_choose_action)
-	nmap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
-	imap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
-	imap <buffer> <C-y>     <Plug>(unite_narrowing_path)
-	nmap <buffer> <C-y>     <Plug>(unite_narrowing_path)
-	nmap <buffer> <C-j>     <Plug>(unite_toggle_auto_preview)
-	nmap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
-	imap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
-	nnoremap <silent><buffer><expr> l
-	        \ unite#smart_map('l', unite#do_action('default'))
+	  imap <buffer><expr> j unite#smart_map('j', '')
+	  imap <buffer> <TAB>   <Plug>(unite_select_next_line)
+	  imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
+	  imap <buffer> '     <Plug>(unite_quick_match_default_action)
+	  nmap <buffer> '     <Plug>(unite_quick_match_default_action)
+	  imap <buffer><expr> x
+	          \ unite#smart_map('x', "\<Plug>(unite_quick_match_choose_action)")
+	  nmap <buffer> x     <Plug>(unite_quick_match_choose_action)
+	  nmap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
+	  imap <buffer> <C-z>     <Plug>(unite_toggle_transpose_window)
+	  imap <buffer> <C-y>     <Plug>(unite_narrowing_path)
+	  nmap <buffer> <C-y>     <Plug>(unite_narrowing_path)
+	  nmap <buffer> <C-j>     <Plug>(unite_toggle_auto_preview)
+	  nmap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
+	  imap <buffer> <C-r>     <Plug>(unite_narrowing_input_history)
+	  nnoremap <silent><buffer><expr> l
+	          \ unite#smart_map('l', unite#do_action('default'))
 
-	let unite = unite#get_current_unite()
-	if unite.buffer_name =~# '^search'
-	  nnoremap <silent><buffer><expr> r     unite#do_action('replace')
-	else
-	  nnoremap <silent><buffer><expr> r     unite#do_action('rename')
-	endif
+	  let unite = unite#get_current_unite()
+	  if unite.buffer_name =~# '^search'
+	    nnoremap <silent><buffer><expr> r     unite#do_action('replace')
+	  else
+	    nnoremap <silent><buffer><expr> r     unite#do_action('rename')
+	  endif
 
-	nnoremap <silent><buffer><expr> cd     unite#do_action('lcd')
-	nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
-	        \ empty(unite#mappings#get_current_filters()) ? ['sorter_reverse'] : [])
+	  nnoremap <silent><buffer><expr> cd     unite#do_action('lcd')
+	  nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
+	          \ empty(unite#mappings#get_current_filters()) ?
+	          \ ['sorter_reverse'] : [])
+
+	  " Runs "split" action by <C-s>.
+	  imap <silent><buffer><expr> <C-s>     unite#do_action('split')
 	endfunction"}}}
 
 	let g:unite_source_file_mru_limit = 200
@@ -304,7 +308,7 @@ More advanced configuration example:
 	" For ack.
 	if executable('ack-grep')
 	  " let g:unite_source_grep_command = 'ack-grep'
-	  " let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  " let g:unite_source_grep_default_opts = '--no-heading --no-color -a -H'
 	  " let g:unite_source_grep_recursive_opt = ''
 	endif
 <
@@ -651,6 +655,10 @@ g:unite_source_rec_async_command
 					*g:unite_source_rec_async_command*
 		Specify the filelist command and arguments in file_rec/async
 		source.
+>
+		" Using ack-grep as recursive command.
+		let g:unite_source_rec_async_command = 'ack -f --nofilter'
+<
 
 		The default value is "ag" or "find" and the args.
 
@@ -871,14 +879,14 @@ g:unite_source_process_enable_confirm
 
 		The default value is 1.
 
-KINDS VARIABLES					*unite-kinds-variables*
+KIND VARIABLES					*unite-kind-variables*
 
 g:unite_kind_jump_list_after_jump_scroll
 				*g:unite_kind_jump_list_after_jump_scroll*
-		A number for adjusting the location of the cursor after the
-		jump by |unite-kind-jump_list|.  The minimum is 0 which means
-		the top of the window and the maximum is 100 which means the
-		bottom of the window.
+		Number of lines to adjust the cursor location after the
+		jump via |unite-kind-jump_list|.  Valid range is 0 to 100,
+		where 0 is the top of the window and 100 is the bottom of
+		the window.
 
 		value	meaning		equivalent command
 		--------------------------------------
@@ -890,7 +898,7 @@ g:unite_kind_jump_list_after_jump_scroll
 
 g:unite_kind_openable_persist_open_blink_time
 			*g:unite_kind_openable_persist_open_blink_time*
-		A number of blink time after "persist_open" action by
+		The amount of blink time after "persist_open" action from
 		|unite-kind-openable|.
 
 		The default value is "250m"
@@ -909,7 +917,7 @@ g:unite_kind_openable_lcd_command
 
 		The default value is "lcd".
 
-FILTERS VARIABLES				*unite-filters-variables*
+FILTER VARIABLES				*unite-filter-variables*
 
 g:unite_converter_file_directory_width
 				*g:unite_converter_file_directory_width*
@@ -1208,8 +1216,8 @@ K		|<Plug>(unite_skip_cursor_up)|
 ?		|<Plug>(unite_quick_help)|
 N		|<Plug>(unite_new_candidate)|
 <CR>		In case when you selected a candidate, runs default action
-d		In case when you selected a candidate, runs delete action
 b		In case when you selected a candidate, runs bookmark action
+d		In case when you selected a candidate, runs delete action
 e		In case when you selected a candidate, runs narrow action
 t		In case when you selected a candidate, runs tabopen action
 yy		In case when you selected a candidate, runs yank action
@@ -1238,13 +1246,12 @@ Insert mode mappings.
 <Home>		|i_<Plug>(unite_move_head)|
 <C-l>		|i_<Plug>(unite_redraw)|
 <C-g>		|i_<Plug>(unite_exit)|
-e		In case when you selected a candidate, runs narrow action
-d		In case when you selected a candidate, runs delete action
-t		In case when you selected a candidate, runs tabopen action
 <Space>		In case when you selected a candidate,
 		|i_<Plug>(unite_toggle_mark_current_candidate)|
-x		In case when you selected a candidate,
-		|i_<Plug>(unite_quick_match_default_action)|
+<C-d>		runs delete action
+<C-e>		runs edit action
+<C-t>		runs tabopen action
+<C-y>		runs yank action
 
 Visual mode mappings.
 {lhs}		{rhs}
@@ -1517,7 +1524,8 @@ unite#custom#alias({kind}, {name}, {action})
 >
 		call unite#custom#alias('file', 'h', 'left')
 <
-unite#custom_filters({source-name}, {filters})	*unite#custom_filters()*
+unite#custom_filters({source-name}, {filters})
+						*unite#custom_filters()*
 		Note: This function is deprecated.  Please use
 		|unite#custom#source()| instead.
 
@@ -1526,7 +1534,8 @@ unite#custom_max_candidates({source-name}, {max})
 		Note: This function is deprecated.  Please use
 		|unite#custom#source()| instead.
 
-unite#custom_source({source-name}, {option-name}, {value})
+unite#custom#source({source-name}, {option-name}, {value})
+						*unite#custom#source()*
 						*unite#custom_source()*
 		Set {source-name} source specialized {option-name} to {value}.
 		You may specify multiple sources with separating "," in
@@ -1710,8 +1719,8 @@ The "-buffer-name" option is same to "buffer_name" key in context.
 		When you selected a candidate, it runs "highlight" action
 		automatically.
 
-						*unite-options-completion*
-		-completion
+						*unite-options-complete*
+		-complete
 		Uses unite completion interface. |unite-options-col| is also
 		required.
 
@@ -2039,7 +2048,8 @@ grep		Nominates "grep" command output as candidates.
 		Source arguments:
 		1. the target directory.
 		2. "grep" options.
-		3. the narrowing pattern.
+		3. the narrowing pattern(if you omit it, |unite-options-input|
+		or input prompt is used).
 		Max candidates: |g:unite_source_grep_max_candidates|
 
 		Special Target:
@@ -2069,7 +2079,8 @@ grep		Nominates "grep" command output as candidates.
 	elseif executable('ack-grep')
 	  " Use ack in unite grep source.
 	  let g:unite_source_grep_command = 'ack-grep'
-	  let g:unite_source_grep_default_opts = '--no-heading --no-color -a'
+	  let g:unite_source_grep_default_opts =
+	  \ '--no-heading --no-color -a -H'
 	  let g:unite_source_grep_recursive_opt = ''
 	endif
 <
@@ -2358,7 +2369,9 @@ matcher_fuzzy	A matcher which filters the candidates with user given fuzzy
 		string.
 		This recognizes "!" as negative.
 		Narrowing down can be done by word.
-		Note: that narrowing down might be slower if this matcher is
+		Note: This matcher does not sort candidates. you want to use
+		fuzzy sort, you can use |unite-filter-sorter_rank|.
+		Note: That narrowing down might be slower if this matcher is
 		used.
 		This matcher may produce the best effect if set as
 		|unite-source-file_rec|.
@@ -2401,6 +2414,7 @@ sorter_length	Compare length sorter.
 sorter_rank	Matched rank order sorter.  The higher the matched word is or
 		the longer the matched length is, the higher the rank is.
 		This sorter is useful for file candidate source.
+		Note: This sorter is slow.
 >
 		call unite#custom#source('buffer,file,file_mru,file_rec',
 		\ 'sorters', 'sorter_rank')
@@ -3313,12 +3327,50 @@ Q: I want to use fuzzy match.
 
 A: You can use |unite-filter-matcher_fuzzy|.
 >
-		call unite#custom#source('file,file/new,buffer,file_rec',
-		\ 'matchers', 'matcher_fuzzy')
+	call unite#custom#source('file,file/new,buffer,file_rec',
+	\ 'matchers', 'matcher_fuzzy')
+<
+Note: Fuzzy matcher does not sort candidates.  If you want to sort by rank,
+you can use "sorter_rank". But it is slow.
+>
+	call unite#filters#sorter_default#use(['sorter_rank'])
 <
 Q: I want to clear cache in candidates.
 
 A: Please use |<Plug>(unite_redraw)|.
+
+Q: I want to narrow automatically when other candidates are selected in insert
+mode like ctrlp.vim.
+
+A: This feature is already implemented.
+Note: It requires Vim 7.3.418 or above.
+
+Q: I want to run "split" action in insert mode by "<C-s>".
+
+A:
+>
+	autocmd FileType unite call s:unite_my_settings()
+	function! s:unite_my_settings()
+	  " Overwrite settings.
+	  imap <silent><buffer><expr> <C-s>     unite#do_action('split')
+	endfunction
+<
+
+Q: Unite adds unite buffer to jumplist automatically.
+
+A: Sorry. But it is hard to fix. You should use |unite-source-jump| instead of
+<C-i>/<C-o> mappings. It ignores unite buffer.
+
+Q: unite.vim is too slow.
+
+A: If you use Vim 7.3.885 or above with |if_lua| feature, unite.vim will be
+faster.
+
+Q: Support for existing vim settings like Commant-T plugin? Example,
+'wildignore', 'grepprg', 'suffixes'...
+
+A: No. Because it is hard to implement and it may conflict current unite
+settings.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:
