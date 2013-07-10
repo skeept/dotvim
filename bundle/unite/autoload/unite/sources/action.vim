@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: action.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" Last Modified: 12 Jun 2013.
+" Last Modified: 04 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -48,8 +48,11 @@ function! s:source.hooks.on_syntax(args, context) "{{{
         \ contained containedin=uniteSource__ActionDescriptionLine
   syntax match uniteSource__ActionMarker / -- /
         \ contained containedin=uniteSource__ActionDescriptionLine
+  syntax match uniteSource__ActionKind /(.\{-}) /
+        \ contained containedin=uniteSource__ActionDescriptionLine
   highlight default link uniteSource__ActionMarker Special
   highlight default link uniteSource__ActionDescription Comment
+  highlight default link uniteSource__ActionKind Type
 endfunction"}}}
 
 function! s:source.gather_candidates(args, context) "{{{
@@ -78,26 +81,27 @@ function! s:source.gather_candidates(args, context) "{{{
           \ 'default_action: ' . default_actions[0], self.name)
   endif
 
-  " Process Alias.
-  let actions = s:get_actions(candidates,
-        \ a:context.source__sources)
-
-  " Uniq.
+  " Process alias and uniq.
   let uniq_actions = {}
-  for action in values(actions)
+  for action in values(s:get_actions(candidates,
+        \ a:context.source__sources))
     if !has_key(action, action.name)
       let uniq_actions[action.name] = action
     endif
   endfor
 
-  let max = max(map(values(actions), 'len(v:val.name)'))
+  let actions = filter(values(uniq_actions), 'v:val.is_listed')
+
+  let max_name = max(map(copy(actions), 'len(v:val.name)'))
+  let max_kind = max(map(copy(actions), 'len(v:val.from)')) + 2
 
   let sources = map(copy(candidates), 'v:val.source')
 
-  return sort(map(filter(values(uniq_actions), 'v:val.is_listed'), "{
+  return sort(map(actions, "{
         \   'word' : v:val.name,
-        \   'abbr' : printf('%-" . max . "s %s -- %s',
-        \          v:val.name, (v:val.is_quit ? '!' : ' '), v:val.description),
+        \   'abbr' : printf('%-".max_name."s %s -- %-".max_kind."s %s',
+        \          v:val.name, (v:val.is_quit ? '!' : ' '),
+        \          '('.v:val.from.')', v:val.description),
         \   'source__candidates' : candidates,
         \   'action__action' : v:val,
         \   'source__context' : a:context,
