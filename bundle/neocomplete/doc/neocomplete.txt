@@ -79,6 +79,7 @@ alternative for 32bit http://tuxproject.de/projects/vim/
 
 In Mac(if_lua enabled MacVim):
 https://github.com/zhaocai/macvim
+http://code.google.com/p/macvim-kaoriya/
 
 In Mac homebrew. >
 	brew install macvim --with-cscope --with-lua --HEAD
@@ -1827,6 +1828,13 @@ Q: I want to refresh candidates like |YouCompleteMe|.
 A:
 Note: This feature is heavy.
 >
+	let g:neocomplete#enable_refresh_always = 1
+<
+
+Q: neocomplete auto select feature is not worked. Why?
+A: You should enable refresh always feature.
+>
+	let g:neocomplete#enable_auto_select = 1
 	let g:neocomplete#enable_refresh_always = 1
 <
 
