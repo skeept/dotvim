@@ -73,7 +73,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
-  VAMAddToActiveAddons gtags notes funky-ctrlp
+  VAMAddToActiveAddons gtags notes funky-ctrlp airline
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
