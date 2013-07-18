@@ -1,5 +1,6 @@
 function! GetFoldLevel_Log(lnum)
-  let flag = getline(a:lnum)[:g:numCharsFront] ==? getline(a:lnum-1)[:g:numCharsFront]
+  let numChars = g:numCharsFront
+  let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
   return flag?1:0
 endfunction
 
