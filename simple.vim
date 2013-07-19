@@ -64,6 +64,9 @@ execute "source " . g:p0 . "/common.vim"
 "set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "
 function! CondDispFtFf()
+  if v:version < 702
+    return ''
+  endif
   if winwidth(0) < 70 || &filetype == 'help'
     let val = ''
   else
@@ -75,7 +78,9 @@ function! CondDispFtFf()
 endfunction
 
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
-set statusline=%2.2n\ %t\ %h%m%r%=%{CondDispFtFf()}
+set statusline=%2.2n\ %t\ %h%m%r%=
+set statusline+=%{GetNumTabsStr()}
+set statusline+=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=%{GetNumTabsStr()}
 set statusline+=\ %l/%L\ %2c\ %P

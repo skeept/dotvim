@@ -81,7 +81,8 @@ set cmdheight=1
 if g:is_win
   set guifont=Terminus:h12
 else
-  set guifont=Terminus\ 12
+  set guifont=Terminus\ 12,
+        \-misc-fixed-medium-*-normal-*-15-*-*-*-*-*-*-*
 endif
 
 set winaltkeys=no
