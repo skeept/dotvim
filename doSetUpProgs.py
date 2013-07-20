@@ -96,7 +96,6 @@ prefixDir = "Packages"
 #do_recursion(prefixDir + os.sep  + sys.argv[1] + os.sep,
     #prefixDir + os.sep  + sys.argv[1])
 
-
 def main():
   if (len(sys.argv) < 2):
     usage()
