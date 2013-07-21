@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 06 Jul 2013.
+" Last Modified: 20 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -205,7 +205,7 @@ function! vimproc#get_command_name(command, ...) "{{{
     return files
   endif
 
-  let file = get(files, 0, '')
+  let file = get(files, cnt-1, '')
 
   if file == ''
     throw printf(
@@ -781,12 +781,11 @@ function! vimproc#write(filename, string, ...) "{{{
 endfunction"}}}
 
 function! vimproc#readdir(dirname) "{{{
-  let dirname = substitute(substitute(
-        \ vimproc#util#expand(a:dirname),
-        \ '\\', '/', 'g'), '/$', '', '')
+  let dirname = a:dirname
   if dirname == ''
     let dirname = getcwd()
   endif
+  let dirname = substitute(dirname, '/$', '', '')
 
   if !isdirectory(dirname)
     return []
@@ -801,7 +800,7 @@ function! vimproc#readdir(dirname) "{{{
     return []
   endtry
 
-  call map(files, 'vimproc#util#iconv(
+  call map(filter(files, 'v:val !~ "/\\.\\.\\?$"'), 'vimproc#util#iconv(
         \ v:val, vimproc#util#termencoding(), &encoding)')
   if vimproc#util#is_windows()
     call map(files, 'vimproc#util#substitute_path_separator(v:val)')
@@ -906,12 +905,9 @@ function! s:read_lines(...) dict "{{{
 
   let lines = split(res, '\r\?\n', 1)
 
+  let self.buffer = ''
   if self.eof
-    let self.buffer = ''
     return lines
-  else
-    let self.buffer = empty(lines)? '' : lines[-1]
-    let lines = lines[ : -2]
   endif
 
   let self.eof = (self.buffer != '') ? 0 : self.__eof

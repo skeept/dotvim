@@ -48,18 +48,20 @@ Changelog		|neocomplete-changelog|
 ==============================================================================
 INTRODUCTION					*neocomplete-introduction*
 
-*neocomplete* is the next generation of auto completion framework after
-neocomplcache. It provides keyword completion system by maintaining a cache of
-keywords in the current buffer. neocomplete could be customized easily and has
-a lot more features than the Vim's standard completion feature.
-Note: neocomplete may consume more memory than other plugins.
+*neocomplete* is the next generation auto completion framework and a superior
+successor of the neocomplcache plugin. It provides a keyword completion
+system by maintaining a keyword cache of the current buffer. The neocomplete
+framework can be customized easily and has a lot more features than Vim's
+standard completion.
 
-neocomplete difference from |neocomplcache|:
+Note: neocomplete may consume more memory than other plugins do.
+
+Improvements in neocomplete in comparison to |neocomplcache|:
 
 1. Real fuzzy match behavior like |YouCompleteMe| in default.
-2. Refactorred source interface.
+2. Refactored source interface.
 3. Removed legacy interface.
-4. Required |if_lua|.
+4. Requires |if_lua|.
 5. Optimized completion speed.
 6. Changed source names.
 7. Changed variable names.
@@ -68,53 +70,105 @@ neocomplete difference from |neocomplcache|:
 ==============================================================================
 INSTALL						*neocomplete-install*
 
-Note: To use neocomplete , you must use Vim 7.3.885 or above with
-|if_lua| feature.
+Install prerequisites
 
-In Windows:
+In order to use neocomplete, the following prerequisites have to be met:
+
+1. Vim version 7.3.885 or above
+2. Vim build with the |if_lua| feature
+
+The following sections describe where to get a Vim version, neocomplete
+works with, for your operating system.
+
+On Windows:
+
 For 32bit http://files.kaoriya.net/goto/vim73w32
+For 32bit (alternative) http://tuxproject.de/projects/vim/
 For 64bit http://files.kaoriya.net/goto/vim73w64
 
-alternative for 32bit http://tuxproject.de/projects/vim/
+On Mac:
 
-In Mac(if_lua enabled MacVim):
+You can get if_lua enabled MacVim versions here:
+
 https://github.com/zhaocai/macvim
 http://code.google.com/p/macvim-kaoriya/
 
-In Mac homebrew. >
+Or install it with homebrew:
+>
 	brew install macvim --with-cscope --with-lua --HEAD
+<
 
-In Linux: You should make Vim and enable |if_lua| manually. Distributed
-package is almost old.
+On Linux:
 
-1: Extract the file and put files in your Vim directory
+As almost all Vim packages offered by distributions are too old, you should
+build Vim manually using gnu make and enable |if_lua| in the configuration
+step. The following steps show you the general process on how to build Vim:
+
+1. Get the source package
+2. Unpack the sources
+3. Configure the package (./configure). This step is essential to enable
+   the Vim features you like to use.
+4. Build the package with gnu make
+5. Install the package using your distributions package manager
+
+You can find detailed information on ho to configure and build Vim from source
+under following Link: http://vim.wikia.com/wiki/Building_Vim. Or follow the
+guide on:
+https://github.com/Valloric/YouCompleteMe/wiki/Building-Vim-from-source
+
+Install the plugin
+
+After you have installed the right version of Vim, you can go on to install
+the neocomplete plugin. You can do this in a more old fashioned, manual way
+or use a plugin manager like pathogen, vundle, neobundle. The second approach
+is the recommended installation method.
+
+Manual:
+
+1. Get the plugin package
+2. Extract the files and put them in your Vim directory
    (usually ~/.vim/ or Program Files/Vim/vimfiles on Windows).
-2: Execute |:NeoCompleteEnable| command or set
-let g:neocomplete#enable_at_startup = 1
-in your .vimrc.
+3. Execute |:NeoCompleteEnable| command or set follwing variable in your vimrc >
+	let g:neocomplete#enable_at_startup = 1
+
+Package manager:
+
+For instructions on how to set up a Vim package manager see the documentation
+of the package manager of your choice. For example after the set up of
+neobundle you can install the neocomplete plugin by following steps:
+
+1. Let the plugin manger know about the package (.vimrc) >
+	NeoBundle 'Shougo/neocomplete.vim'
+<
+2. Install the plugin with the install command >
+	:NeoBundleInstall
+<
 
 						*neocomplete-migration*
 
-Migration guide from neocomplcache is available(incomplete).
+In case you are planing to move from neocomplcache to neocomplete there is a
+wiki page that offers a migration guide (incomplete yet).
 https://github.com/Shougo/neocomplete.vim/wiki/neocomplete-migration-guide
-
 
 						*neocomplete-RECOMMENDATION*
 
 						*neocomplete-asynchronous*
-When you have |vimproc| installed, neocomplete creates caches asynchronously.
 
-vimproc is distributed at: http://github.com/Shougo/vimproc
+If you have installed the |vimproc| plugin, neocomplete creates the caches
+asynchronously. You can find vimproc at: http://github.com/Shougo/vimproc.
+The vimproc plugin needs compilation before you can use it. You can find
+further information in the vimproc documentation.
 
-To use vimproc, you must compile it.  Refer to the vimproc documentation.
+						*neocomplete-snippets*
 
-Note: To use snippets feature (neosnippet source), you must install
-neosnippet.
-
+If you like to use the snippet feature with neocomplete you need to install
+the neosnippet plugin. You can find it under:
 https://github.com/Shougo/neosnippet
 
-Note: To enable context filetype feature, you must install
-context_filetype.vim.
+						*neocomplete-context-filetype*
+
+If you like to use the context filetype feature, you need to install the
+context_filetype.vim plugin which you can find under the followind repository:
 https://github.com/Shougo/context_filetype.vim
 
 ==============================================================================
@@ -125,17 +179,16 @@ COMMANDS 					*neocomplete-commands*
 
 :NeoCompleteEnable				*:NeoCompleteEnable*
 		Validate neocomplete and initialize it.
-		Warning: Conventional cache disappears.
+		Warning: The conventional cache disappears.
 
 :NeoCompleteDisable				*:NeoCompleteDisable*
 		Invalidate neocomplete and clean it up.
 
 :NeoCompleteToggle				*:NeoCompleteToggle*
-		Change a lock state of neocomplete.
+		Change the lock state of neocomplete.
 		While neocomplete is in locking, you cannot use automatic
 		completions.
-		Note: This command enables neocomplete when neocomplete is
-		already disabled.
+		Note: This command enables neocomplete if it is disabled.
 
 :NeoCompleteLock				*:NeoCompleteLock*
 		Lock neocomplete.
@@ -150,47 +203,50 @@ COMMANDS 					*neocomplete-commands*
 
 
 :NeoCompleteUnlockSource {source-name}	*:NeoCompleteUnlockSource*
-		Unlock {source-name} source completion.
+		Unlock the completion of {source-name}.
 
 					*:NeoCompleteAutoCompletionLength*
 :NeoCompleteAutoCompletionLength {length}
-		Change start length of automatic completion to {length}.
-		Note: This length value is local to each buffer.
+		Change the start length of automatic completion to {length}.
+		Note: The length value is local to each buffer.
 
 :NeoCompleteClean 				*:NeoCompleteClean*
 		Clean files in |g:neocomplete#data_directory|.
 
 :NeoCompleteSetFileType [filetype]		*:NeoCompleteSetFileType*
-		Change filetype to [filetype] in current buffer.
-		This filetype is only used neocomplete.
-		Note: You can get current filetype by
+		Change the filetype to [filetype] in the current buffer.
+		This filetype is only used by neocomplete.
+		Note: You can get the current filetype by
 		|neocomplete#get_context_filetype()|
 
 
 SOURCES COMMANDS 				*neocomplete-sources-COMMANDS*
 
 :NeoCompleteBufferMakeCache [bufname]		*:NeoCompleteBufferMakeCache*
-		Make cache from [bufname] buffer.
-		This selects current buffer when you omitted [bufname].
+		Make a cache based on the buffer with the name [bufname].
+		The command selects the current buffer when you omit
+		[bufname].
 		If [bufname] is not loaded, neocomplete will open
 		[bufname] automatically.
 		Note: It may take time considerably for the big buffer.
 
 :NeoCompleteSyntaxMakeCache [filetype]		*:NeoCompleteSyntaxMakeCache*
-		Make cache from [filetype] syntax file.
-		Selects current buffer filetype when [filetype] is omitted.
+		Make a cache from the syntax file with [filetype]
+		The current buffer's filetype is selected if [filetype]
+		is omitted
 
 :NeoCompleteDictionaryMakeCache [filetype]
 					*:NeoCompleteDictionaryMakeCache*
-		Make cache from [filetype] dictionary file.
-		Selects current buffer filetype when [filetype] is omitted.
+		Make a cache from a dictionary file with [filetype].
+		Selects the filetype of the current buffer if [filetype] is
+		omitted.
 
 :NeoCompleteTagMakeCache		*:NeoCompleteTagMakeCache*
-		Make cache from tags file in current buffer.
+		Make a cache from a tags file in current buffer.
 
 :NeoCompleteIncludeMakeCache [bufname]		*:NeoCompleteIncludeMakeCache*
-		Make cache from include file in [bufname].
-		Selects current buffer name when [bufname] is omitted.
+		Make a cache from an include file in [bufname].
+		Selects the current buffer name when the [bufname] is omitted.
 
 ------------------------------------------------------------------------------
 VARIABLES 					*neocomplete-variables*
@@ -203,21 +259,21 @@ g:neocomplete#enable_at_startup
 		With the default value 0, you cannot use neocomplete
 		unless you start it manually.
 
-		Note: This option has to be set in .vimrc or _vimrc.  NOT IN
-		.gvimrc nor _gvimrc!
+		Note: This option has to be set in your .vimrc or _vimrc.
+		NOT IN the .gvimrc nor _gvimrc!
 
 g:neocomplete#max_list				*g:neocomplete#max_list*
 		This variable controls the number of candidates displayed in a
-		pop-up menu.  Candidates more than this value won't be show
-		up.
+		pop-up menu. If the list of candidates exceeds the limit not
+		all candidates will show up.
 
 		Default value is 100.
 
 					*g:neocomplete#max_keyword_width*
 g:neocomplete#max_keyword_width
 		This variable controls the indication width of a candidate
-		displayed in a pop-up menu.  The case beyond this value is
-		cut down properly.
+		displayed in a pop-up menu. If the keyword length exceeds
+		the length it will be cut down properly.
 
 		Default value is 80.
 
@@ -1844,10 +1900,22 @@ A:
 Note: You should use this omni completion for PHP.
 https://github.com/shawncplus/phpcomplete.vim
 >
-
 	let g:neocomplete#sources#omni#input_patterns.php =
 	\ '\h\w*\|[^. \t]->\%(\h\w*\)\?\|\h\w*::\%(\h\w*\)\?'
 <
+
+Q: Eclim does not work well with neocomplete.
+https://github.com/Shougo/neocomplete.vim/issues/39
+
+A: neocomplete does not support eclim.  You should use
+|g:neocomplete#force_omni_input_patterns| instead of
+|g:neocomplete#sources#omni#input_patterns|.
+>
+	if !exists('g:neocomplete#force_omni_input_patterns')
+	  let g:neocomplete#force_omni_input_patterns = {}
+	endif
+	g:neocomplete#sources#omni#input_patterns.java =
+	\ \'\%(\h\w*\|)\)\.\w*
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:
