@@ -40,7 +40,7 @@ CONTENTS				*unite-outline-contents*
 	  Utility Functions	  |unite-outline-utility-functions|
 	ToDo			|unite-outline-todo|
 	Known Issues		|unite-outline-known-issues|
-	ChangeLog		|unite-outline-changelog|
+	ChanheLog		|unite-outline-changelog|
 
 ==============================================================================
 INTRODUCTION				*unite-outline-introduction*
@@ -708,7 +708,6 @@ SYNTAX HIGHLIGHTING ~
 		      \     'pattern'  : '/\S\+\ze\s*(/' },
 		      \   { 'name'     : 'parameter_list',
 		      \     'pattern'  : '/(.*)/' },
-		      \ ],
 		      \}
 <
 		If "highlight" attribute is omitted, the highlight specified
@@ -920,7 +919,7 @@ INCORRECT STRUCTURED TREE ~
 	ones.
 
 ==============================================================================
-CHANGELOG				*unite-outline-changelog*
+CHANHELOG				*unite-outline-changelog*
 
 0.5.1	2011-11-01
 

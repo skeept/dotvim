@@ -793,12 +793,10 @@ function! s:extract_headings(context)
   let save_lazyredraw  = &lazyredraw
   try
     set eventignore=all
-
+    set winheight=1
+    set winwidth=1
     " NOTE: To keep the window size on :wincmd, set 'winheight' and 'winwidth'
     " to a small value.
-    let &winheight=&winminheight
-    let &winwidth=&winminwidth
-
     set lazyredraw
 
     " Switch: current window -> source buffer's window
@@ -841,9 +839,9 @@ function! s:extract_headings(context)
 
   finally
     " Remove the temporary context data.
-    unlet! a:context.lines
-    unlet! a:context.heading_lnum
-    unlet! a:context.matched_lnum
+    unlet a:context.lines
+    unlet a:context.heading_lnum
+    unlet a:context.matched_lnum
 
     " Restore the cursor and scroll.
     let save_scrolloff = &scrolloff
@@ -1135,7 +1133,7 @@ function! s:skip_while(pattern, from)
 endfunction
 
 function! s:skip_until(pattern, from)
-  let lnum = a:from | let num_lines = line('$')
+  let lnum = a:from + 1 | let num_lines = line('$')
   while lnum <= num_lines
     let line = getline(lnum)
     let lnum += 1
