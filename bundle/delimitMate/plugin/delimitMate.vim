@@ -1,6 +1,6 @@
 " File:        plugin/delimitMate.vim
-" Version:     2.6
-" Modified:    2011-01-14
+" Version:     2.7
+" Modified:    2013-07-15
 " Description: This plugin provides auto-completion for quotes, parens, etc.
 " Maintainer:  Israel Chauca F. <israelchauca@gmail.com>
 " Manual:      Read ":help delimitMate".
@@ -29,7 +29,7 @@ if v:version < 700
 endif
 
 let s:loaded_delimitMate = 1
-let delimitMate_version = "2.6"
+let delimitMate_version = "2.7"
 
 function! s:option_init(name, default) "{{{
 	let b = exists("b:delimitMate_" . a:name)
@@ -191,11 +191,6 @@ function! s:Unmap() " {{{
 			exec 'silent! iunmap <buffer> ' . map
 		endif
 	endfor
-
-	if !has('gui_running')
-		silent! iunmap <C-[>OC
-	endif
-
 	let b:delimitMate_enabled = 0
 endfunction " }}} s:Unmap()
 
@@ -257,24 +252,6 @@ function! s:DelimitMateSwitch() "{{{
 	endif
 endfunction "}}}
 
-function! s:Finish() " {{{
-	if exists('b:delimitMate_enabled')
-		return delimitMate#Finish(1)
-	endif
-	return ''
-endfunction " }}}
-
-function! s:FlushBuffer() " {{{
-	if exists('b:delimitMate_enabled')
-		return delimitMate#FlushBuffer()
-	endif
-	return ''
-endfunction " }}}
-
-function! s:empty_buffer()
-	return empty(s:g('buffer'))
-endfunction
-
 "}}}
 
 " Mappers: {{{
@@ -296,7 +273,7 @@ function! s:AutoClose() "{{{
 	while i < len(s:g('matchpairs_list'))
 		let ld = s:g('left_delims')[i] == '|' ? '<bar>' : s:g('left_delims')[i]
 		let rd = s:g('right_delims')[i] == '|' ? '<bar>' : s:g('right_delims')[i]
-		exec 'inoremap <silent> <Plug>delimitMate' . ld . ' ' . ld . '<C-R>=delimitMate#ParenDelim("' . escape(rd, '|') . '")<CR>'
+		exec 'inoremap <silent> <Plug>delimitMate' . ld . ' <C-R>=delimitMate#ParenDelim("' . escape(rd, '|') . '")<CR>'
 		exec 'silent! imap <unique> <buffer> '.ld.' <Plug>delimitMate'.ld
 		let i += 1
 	endwhile
@@ -332,18 +309,18 @@ function! s:ExtraMappings() "{{{
 		silent! imap <unique> <buffer> <BS> <Plug>delimitMateBS
 	endif
 	" If pair is empty, delete closing delimiter:
-	inoremap <silent> <expr> <Plug>delimitMateS-BS delimitMate#WithinEmptyPair() ? "\<C-R>=delimitMate#Del()\<CR>" : "\<S-BS>"
+	inoremap <silent> <expr> <Plug>delimitMateS-BS delimitMate#WithinEmptyPair() ? "\<Del>" : "\<S-BS>"
 	if !hasmapto('<Plug>delimitMateS-BS','i') && maparg('<S-BS>', 'i') == ''
 		silent! imap <unique> <buffer> <S-BS> <Plug>delimitMateS-BS
 	endif
 	" Expand return if inside an empty pair:
 	inoremap <silent> <Plug>delimitMateCR <C-R>=delimitMate#ExpandReturn()<CR>
-	if s:g('expand_cr') != 0 && !hasmapto('<Plug>delimitMateCR', 'i') && maparg('<CR>', 'i') == ''
+	if s:g('expand_cr') && !hasmapto('<Plug>delimitMateCR', 'i') && maparg('<CR>', 'i') == ''
 		silent! imap <unique> <buffer> <CR> <Plug>delimitMateCR
 	endif
 	" Expand space if inside an empty pair:
 	inoremap <silent> <Plug>delimitMateSpace <C-R>=delimitMate#ExpandSpace()<CR>
-	if s:g('expand_space') != 0 && !hasmapto('<Plug>delimitMateSpace', 'i') && maparg('<Space>', 'i') == ''
+	if s:g('expand_space') && !hasmapto('<Plug>delimitMateSpace', 'i') && maparg('<Space>', 'i') == ''
 		silent! imap <unique> <buffer> <Space> <Plug>delimitMateSpace
 	endif
 	" Jump over any delimiter:
@@ -351,49 +328,8 @@ function! s:ExtraMappings() "{{{
 	if s:g('tab2exit') && !hasmapto('<Plug>delimitMateS-Tab', 'i') && maparg('<S-Tab>', 'i') == ''
 		silent! imap <unique> <buffer> <S-Tab> <Plug>delimitMateS-Tab
 	endif
-	" Change char buffer on Del:
-	inoremap <silent> <Plug>delimitMateDel <C-R>=delimitMate#Del()<CR>
-	if !hasmapto('<Plug>delimitMateDel', 'i') && maparg('<Del>', 'i') == ''
-		silent! imap <unique> <buffer> <Del> <Plug>delimitMateDel
-	endif
-	let keys = ['Left', 'Right', 'Home', 'End', 'C-Left', 'C-Right',
-						\ 'ScrollWheelUp', 'S-ScrollWheelUp', 'C-ScrollWheelUp',
-						\ 'ScrollWheelDown', 'S-ScrollWheelDown', 'C-ScrollWheelDown',
-						\ 'ScrollWheelLeft', 'S-ScrollWheelLeft', 'C-ScrollWheelLeft',
-						\ 'ScrollWheelRight', 'S-ScrollWheelRight', 'C-ScrollWheelRight']
-	" Flush the char buffer on movement keystrokes:
-	for map in keys
-		exec 'inoremap <silent><expr> <Plug>delimitMate'.map.' !<SID>empty_buffer() ? "<C-R>=delimitMate#Finish(1)<CR><'.map.'>" : "<'.map.'>"'
-		if !hasmapto('<Plug>delimitMate'.map, 'i') && maparg('<'.map.'>', 'i') == ''
-			exec 'silent! imap <unique> <buffer> <'.map.'> <Plug>delimitMate'.map
-		endif
-	endfor
-	" Also for default MacVim movements:
-	if has('gui_macvim')
-		for [key, map] in [['D-Left','Home'], ['D-Right','End'], ['M-Left','C-Left'], ['M-Right','C-Right']]
-			exec 'inoremap <silent> <Plug>delimitMate'.key.' <C-R>=<SID>Finish()<CR><'.map.'>'
-			if mapcheck('<'.key.'>', 'i') == '<'.map.'>'
-				exec 'silent! imap <buffer> <'.key.'> <Plug>delimitMate'.key
-			endif
-		endfor
-	endif
-	" Except when pop-up menu is active:
-	for map in ['Up', 'Down', 'PageUp', 'PageDown', 'S-Down', 'S-Up']
-		exec 'inoremap <silent> <expr> <Plug>delimitMate'.map.' pumvisible()  \|\| <SID>empty_buffer() ? "\<'.map.'>" : "\<C-R>=\<SID>Finish()\<CR>\<'.map.'>"'
-		if !hasmapto('<Plug>delimitMate'.map, 'i') && maparg('<'.map.'>', 'i') == ''
-			exec 'silent! imap <unique> <buffer> <'.map.'> <Plug>delimitMate'.map
-		endif
-	endfor
-	" Avoid ambiguous mappings:
-	for map in ['LeftMouse', 'RightMouse']
-		exec 'inoremap <silent> <Plug>delimitMateM'.map.' <C-R>=delimitMate#Finish(1)<CR><'.map.'>'
-		if !hasmapto('<Plug>delimitMate'.map, 'i') && maparg('<'.map.'>', 'i') == ''
-			exec 'silent! imap <unique> <buffer> <'.map.'> <Plug>delimitMateM'.map
-		endif
-	endfor
-
 	" Jump over next delimiters
-	inoremap <buffer> <Plug>delimitMateJumpMany <C-R>=len(delimitMate#Get('buffer')) ? delimitMate#Finish(0) : delimitMate#JumpMany()<CR>
+	inoremap <buffer> <Plug>delimitMateJumpMany <C-R>=delimitMate#JumpMany()<CR>
 	if !hasmapto('<Plug>delimitMateJumpMany', 'i') && maparg("<C-G>g", 'i') == ''
 		imap <silent> <buffer> <C-G>g <Plug>delimitMateJumpMany
 	endif
@@ -429,14 +365,6 @@ augroup delimitMate
 				\   call <SID>DelimitMateDo() |
 				\   let b:delimitMate_was_here = 1 |
 				\ endif
-
-	" Flush the char buffer:
-	autocmd InsertEnter * call <SID>FlushBuffer()
-	autocmd BufEnter *
-				\ if mode() == 'i' |
-				\   call <SID>FlushBuffer() |
-				\ endif
-
 augroup END
 
 "}}}
