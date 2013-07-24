@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 20 Jul 2013.
+" Last Modified: 23 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -781,7 +781,7 @@ function! vimproc#write(filename, string, ...) "{{{
 endfunction"}}}
 
 function! vimproc#readdir(dirname) "{{{
-  let dirname = a:dirname
+  let dirname = vimproc#util#expand(a:dirname)
   if dirname == ''
     let dirname = getcwd()
   endif
@@ -805,6 +805,7 @@ function! vimproc#readdir(dirname) "{{{
   if vimproc#util#is_windows()
     call map(files, 'vimproc#util#substitute_path_separator(v:val)')
   endif
+  call map(files, "substitute(v:val, '/./', '/', 'g')")
 
   return files
 endfunction"}}}
@@ -906,18 +907,12 @@ function! s:read_lines(...) dict "{{{
   let lines = split(res, '\r\?\n', 1)
 
   let self.buffer = ''
-  if self.eof
-    return lines
-  endif
-
-  let self.eof = (self.buffer != '') ? 0 : self.__eof
   return lines
 endfunction"}}}
 function! s:read_line(...) dict "{{{
   let lines = call(self.read_lines, a:000, self)
   let self.buffer = join(lines[1:], "\n") . self.buffer
-  let self.eof = (self.buffer != '') ? 0 : self.__eof
-
+  let self.eof = (self.buffer != '') ? (self.__eof && self.buffer == '') : self.__eof
   return get(lines, 0, '')
 endfunction"}}}
 

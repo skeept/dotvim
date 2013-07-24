@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: parser.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Jul 2013.
+" Last Modified: 21 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -582,7 +582,7 @@ function! s:parse_equal(script) "{{{
 
   let i = 0
   let max = len(a:script)
-  while i < max - 1
+  while i < max
     if a:script[i] == ' ' && a:script[i+1] == '='
       " Expand filename.
       let prog = matchstr(a:script, '^=\zs[^[:blank:]]*', i+1)
@@ -596,7 +596,12 @@ function! s:parse_equal(script) "{{{
           let script .= filename
         endif
 
-        let i += matchend(a:script, '^=[^[:blank:]]*', i+1)
+        " Consume `a:script` until an end of `prog`.
+        " 
+        " e.g.
+        "   'echo  =ls hoge'  ->  'echo  =ls hoge'
+        "         ^                         ^
+        let i += strlen(a:script[i] . a:script[i+1] . prog)
       endif
     else
       let [script, i] = s:skip_else(script, a:script, i)
@@ -626,7 +631,7 @@ function! s:parse_variables(script) "{{{
             let script .= b:vimshell.system_variables[variable_name]
           elseif script_head =~ '^$\h'
             let script .= vimproc#util#substitute_path_separator(
-                  \ eval(variable_name))
+                  \ eval('$' . variable_name))
           endif
         else
           let script .= vimproc#util#substitute_path_separator(
