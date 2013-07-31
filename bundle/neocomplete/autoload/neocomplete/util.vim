@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: util.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Jun 2013.
+" Last Modified: 29 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,8 +28,13 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:V = vital#of('neocomplete')
-let s:List = vital#of('neocomplete').import('Data.List')
-let s:String = vital#of('neocomplete').import('Data.String')
+
+function! neocomplete#util#get_vital() "{{{
+  return s:V
+endfunction"}}}
+
+let s:List = neocomplete#util#get_vital().import('Data.List')
+let s:String = neocomplete#util#get_vital().import('Data.String')
 
 function! neocomplete#util#truncate_smart(...) "{{{
   return call(s:V.truncate_smart, a:000)

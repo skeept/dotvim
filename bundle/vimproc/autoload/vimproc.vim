@@ -2,7 +2,7 @@
 " FILE: vimproc.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com> (Modified)
 "          Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com> (Original)
-" Last Modified: 23 Jul 2013.
+" Last Modified: 30 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -785,7 +785,8 @@ function! vimproc#readdir(dirname) "{{{
   if dirname == ''
     let dirname = getcwd()
   endif
-  let dirname = substitute(dirname, '/$', '', '')
+  let dirname = substitute(dirname, '.\zs/$', '', '')
+  let dirname = substitute(dirname, '//', '/', 'g')
 
   if !isdirectory(dirname)
     return []
@@ -906,8 +907,8 @@ function! s:read_lines(...) dict "{{{
 
   let lines = split(res, '\r\?\n', 1)
 
-  let self.buffer = ''
-  return lines
+  let self.buffer = get(lines, -1, 0)
+  return lines[ : -2]
 endfunction"}}}
 function! s:read_line(...) dict "{{{
   let lines = call(self.read_lines, a:000, self)
@@ -1225,7 +1226,8 @@ function! s:vp_file_write(hd, timeout) dict
 endfunction
 
 function! s:quote_arg(arg)
-  return a:arg =~ '[ "]' ? '"' . substitute(a:arg, '"', '\\"', 'g') . '"' : a:arg
+  return (a:arg == '' || a:arg =~ '[ "]') ?
+        \ '"' . substitute(a:arg, '"', '\\"', 'g') . '"' : a:arg
 endfunction
 
 function! s:vp_pipe_open(npipe, hstdin, hstdout, hstderr, argv) "{{{
