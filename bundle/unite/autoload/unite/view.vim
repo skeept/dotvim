@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Jul 2013.
+" Last Modified: 27 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -150,7 +150,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     if a:winnr > 0
       if unite.prompt_linenr != line_save
         " Updated.
-        keepjumps normal! G
+        normal! G
       endif
 
       " Restore current unite.
@@ -363,12 +363,12 @@ function! unite#view#_switch_unite_buffer(buffer_name, context) "{{{
   endif
 
   if bufnr > 0
-    silent execute bufnr 'buffer'
+    silent noautocmd execute bufnr 'buffer'
   else
     if bufname('%') == ''
-      keepjumps silent enew
+      noautocmd silent enew
     endif
-    silent! keepjumps edit `=a:context.real_buffer_name`
+    silent! noautocmd edit `=a:context.real_buffer_name`
   endif
 
   call unite#handlers#_on_bufwin_enter(bufnr('%'))
@@ -425,7 +425,7 @@ function! unite#view#_init_cursor() "{{{
       call cursor(unite#helper#get_current_candidate_linenr(0), 0)
     endif
 
-    keepjumps normal! 0
+    normal! 0
     stopinsert
   endif
 
@@ -519,7 +519,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
             \ 'getwinvar(v:val, "&previewwindow") != 0')
       if !empty(preview_windows)
         " Close preview window.
-        pclose!
+        noautocmd pclose!
 
       endif
     endif
