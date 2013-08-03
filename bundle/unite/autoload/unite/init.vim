@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Jul 2013.
+" Last Modified: 02 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -134,6 +134,9 @@ function! unite#init#_unite_buffer() "{{{
     endif
     if exists('+colorcolumn')
       setlocal colorcolumn=0
+    endif
+    if exists('+relativenumber')
+      setlocal norelativenumber
     endif
 
     " Autocommands.
