@@ -761,7 +761,6 @@ xnoremap <silent> <NL>
       \ :<C-u>call neosnippet#expand_target()<CR>
 xnoremap <silent><expr> <C-L>
       \ unite#sources#snippet_target#start()
-
 endif
 "==============================================================================}}}
 
