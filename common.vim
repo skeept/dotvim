@@ -177,7 +177,8 @@ nnoremap : ;
 vnoremap ; :
 vnoremap : ;
 
-nnoremap ,; :<UP>
+"nnoremap ,; :<UP>
+nnoremap ,; :Unite history/command -start-insert<CR>
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
@@ -476,7 +477,7 @@ let g:unite_source_history_yank_enable = 1
 
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
-	\ 'unite-tag', 'unite-colorscheme'],
+	\ 'unite-tag', 'unite-colorscheme', 'unite-history'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
 	\ buffer file_mru bookmark file<CR>
