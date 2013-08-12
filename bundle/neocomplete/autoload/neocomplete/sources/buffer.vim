@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Jun 2013.
+" Last Modified: 06 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -112,7 +112,7 @@ endfunction"}}}
 function! neocomplete#sources#buffer#make_cache_current_line() "{{{
   " Make cache from current line.
   return s:make_cache_current_buffer(
-        \ max([1, line('.') - 10]), min([line('.') + 10, line('$')]))
+        \ max([1, line('.') - 5]), min([line('.') + 5, line('$')]))
 endfunction"}}}
 function! s:make_cache_current_block() "{{{
   " Make cache from current block.
@@ -253,23 +253,16 @@ function! s:check_source() "{{{
     return
   endif
 
-  for bufnumber in range(1, bufnr('$'))
+  for bufnumber in filter(range(1, bufnr('$')), 'buflisted(v:val)')
     " Check new buffer.
-    let bufname = fnamemodify(bufname(bufnumber), ':p')
     if (!has_key(s:buffer_sources, bufnumber)
-          \ || s:check_changed_buffer(bufnumber))
+          \ || (bufwinnr(bufnumber) > 0 && s:check_changed_buffer(bufnumber)))
           \ && (!neocomplete#is_locked(bufnumber) ||
           \    g:neocomplete#disable_auto_complete)
           \ && !getwinvar(bufwinnr(bufnumber), '&previewwindow')
-          \ && getfsize(bufname) <
+          \ && getfsize(fnamemodify(bufname(bufnumber), ':p')) <
           \      g:neocomplete#sources#buffer#cache_limit_size
       call s:make_cache(bufnumber)
-    endif
-
-    if has_key(s:buffer_sources, bufnumber)
-      let source = s:buffer_sources[bufnumber]
-      call neocomplete#cache#check_cache_dictionary('buffer_cache',
-            \ source.path, s:async_dictionary_list, source.keyword_cache, 1)
     endif
   endfor
 endfunction"}}}

@@ -42,6 +42,3 @@ doc/tags*
 .bzr/
 .Powerline.cache
 test/cur_color.vim
-
-vimproc_win64.dll.manifest
-notused_plugins/frawor/test

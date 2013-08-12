@@ -128,7 +128,7 @@ Manual:
 1. Get the plugin package
 2. Extract the files and put them in your Vim directory
    (usually ~/.vim/ or Program Files/Vim/vimfiles on Windows).
-3. Execute |:NeoCompleteEnable| command or set follwing variable in your vimrc >
+3. Execute |:NeoCompleteEnable| command or set following variable in your vimrc >
 	let g:neocomplete#enable_at_startup = 1
 
 Package manager:
@@ -168,7 +168,7 @@ https://github.com/Shougo/neosnippet
 						*neocomplete-context-filetype*
 
 If you like to use the context filetype feature, you need to install the
-context_filetype.vim plugin which you can find under the followind repository:
+context_filetype.vim plugin which you can find under the following repository:
 https://github.com/Shougo/context_filetype.vim
 
 ==============================================================================
@@ -200,10 +200,6 @@ COMMANDS 					*neocomplete-commands*
 :NeoCompleteUnlock				*:NeoCompleteUnlock*
 		Unlock neocomplete.
 		Note: This command is disabled when neocomplete is disabled.
-
-
-:NeoCompleteUnlockSource {source-name}	*:NeoCompleteUnlockSource*
-		Unlock the completion of {source-name}.
 
 					*:NeoCompleteAutoCompletionLength*
 :NeoCompleteAutoCompletionLength {length}
@@ -1099,7 +1095,7 @@ tag						*neocomplete-source-tag*
 		When a huge tag file (above
 		|g:neocomplete#sources#tags#cache_limit_size|) is set,
 		neocomplete does not make cache if you do not execute
-		|:NeoCompleteCachingTags|command.  Because tag is
+		|:NeoCompleteTagMakeCache| command.  Because tag is
 		too slow if tag read a big tags file.  You should use
 		more convenient include completion now.
 

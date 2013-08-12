@@ -2,14 +2,9 @@
 " from vim.sf.net
 " Most numbers represent vim-script numbers
 " See vamkr#PatchSources
-
-let addon_info_deps = {}
-let addon_info = {}
-
-" mai_nr_deps values get translated into names and then get added to addon_info
-" addon_info contains addon-info keys which will be merged into patch_repo
 let patch_repo = {}
-
+let addon_info = {}
+let addon_info_deps = {}
 let renamings = {}
 "▶1 Hooks
 let hook = 'execute "lcd" fnameescape(%d."/ruby/command-t") | call vam#utils#RunShell("ruby extconf.rb") | call vam#utils#RunShell("make") | lcd -'
@@ -161,6 +156,8 @@ let addon_info_deps.3123 = [4597]
 let addon_info_deps.4283 = [3736]
 let addon_info_deps.4542 = [3736]
 let addon_info_deps.4592 = [3736]
+let addon_info_deps.4665 = [3736]
+let addon_info_deps.4673 = [3736]
 " vimproc dependants
 let addon_info_deps.4336 = ['vimproc']
 let addon_info_deps.4473 = ['vimproc']
@@ -168,6 +165,8 @@ let addon_info_deps.4473 = ['vimproc']
 let addon_info_deps.4449 = [4433]
 let addon_info_deps.4462 = [4433]
 let addon_info_deps.4465 = [4433, 4140]
+let addon_info_deps.4654 = [4433]
+let addon_info_deps.4658 = [4433, 3914]
 " fugitive dependants
 let addon_info_deps.3509 = [2975]
 let addon_info_deps.3574 = [2975]
@@ -181,6 +180,7 @@ let addon_info_deps.4266 = [4265]
 let addon_info_deps.4267 = [4265]
 " NERDTree plugins
 let addon_info_deps.4138 = [1658]
+let addon_info_deps.4672 = [1658]
 " Non-Kana textobj-user dependants
 let addon_info_deps.3382 = [2100, 39]
 let addon_info_deps.4304 = [2100]
@@ -296,22 +296,19 @@ let addon_info.2824 = {'runtimepath': 'vimlib'}
 let addon_info.2847 = {'runtimepath': 'vimlib'}
 let addon_info.663  = {'runtimepath': 'vim'}
 call extend(addon_info.4295, {'runtimepath': 'smartgrep'})
-
-" some names got wired titles by the script, try to use better ones
-"
-" policies:
-" Renaming 'Supertab%1643' to 'Supertab'is ok if most users think one is more
-" useful than the other.
-"
-" Renaming "vim-textobj-*" to "textobj-*" or such is not feasable,
-" because its a property that you can pick and "google" for a key.
-" People can tell me that they think differently about this to make me change
-" my mind
-"
-" horrible names like tags_for_std_c_STL_streams_... are the intented use case
-" for renamings:
+"▶1 renamings
+" Some names got wired titles by the script, try to use better ones
+" Policies:
+" - Renaming "Supertab%1643" to "Supertab" is OK if most users think one is more 
+"   useful than the other.
+" - Renaming "vim-textobj-*" to "textobj-*" or such is not feasable, because it 
+"   is a property that you can pick and google for a key. People can tell me 
+"   that they think differently about this to make me change my mind.
+" - Horrible names like "tags_for_std_c_STL_streams_..." are the intented use 
+"   case for renamings.
 let renamings['tags_for_std_c_STL_streams_...'] = 'cpp_src'
 let renamings['SuperTab%1643'] = 'Supertab'
+let renamings['vim-addon-errorformats%4630'] = 'vim-addon-errorformats'
 
 let r=[patch_repo, addon_info, addon_info_deps, renamings]
 " vim: ft=vim ts=2 sts=2 sw=2 et fdm=marker fmr=▶,▲

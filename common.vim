@@ -178,7 +178,7 @@ vnoremap ; :
 vnoremap : ;
 
 "nnoremap ,; :<UP>
-nnoremap ,; :<C-U>Unite -start-insert history/command<CR>
+nnoremap ,; :Unite history/command -start-insert<CR>
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
@@ -761,7 +761,6 @@ xnoremap <silent> <NL>
       \ :<C-u>call neosnippet#expand_target()<CR>
 xnoremap <silent><expr> <C-L>
       \ unite#sources#snippet_target#start()
-
 endif
 "==============================================================================}}}
 
@@ -859,8 +858,7 @@ except:
 EOF
 
     if s:has_jedi == 1
-      let g:jedi#show_function_definition = 0
-      let g:jedi#auto_vim_configuration = 0
+      let g:jedi#show_function_definition = "0"
       ActivateAddons jedi-vim
       setlocal omnifunc=jedi#complete
     else

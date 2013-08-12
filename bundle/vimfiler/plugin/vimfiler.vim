@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Jul 2013.
+" Last Modified: 07 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -79,6 +79,8 @@ let g:vimfiler_tree_opened_icon =
       \ get(g:, 'vimfiler_tree_opened_icon', '-')
 let g:vimfiler_tree_closed_icon =
       \ get(g:, 'vimfiler_tree_closed_icon', '+')
+let g:vimfiler_tree_indentation =
+      \ get(g:, 'vimfiler_tree_indentation', 1)
 let g:vimfiler_file_icon =
       \ get(g:, 'vimfiler_file_icon', ' ')
 let g:vimfiler_readonly_file_icon =
@@ -137,7 +139,7 @@ command! -nargs=? -complete=customlist,vimfiler#complete VimFilerSimple
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerSplit
       \ call s:call_vimfiler({ 'split' : 1, }, <q-args>)
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerTab
-      \ tabnew | call s:call_vimfiler({ 'create' : 1 }, <q-args>)
+      \ call s:call_vimfiler({ 'tab' : 1 }, <q-args>)
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerExplorer
       \ call s:call_vimfiler({ 'explorer' : 1, }, <q-args>)
 command! VimFilerDetectDrives call vimfiler#detect_drives()

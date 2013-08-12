@@ -62,18 +62,25 @@ endfunction
 function! dispatch#vim_executable() abort
   if !exists('s:vim')
     if has('win32')
-      let root = fnamemodify($VIMRUNTIME, ':8') . dispatch#slash()
+      let roots = [fnamemodify($VIMRUNTIME, ':8') . dispatch#slash(),
+                  \ fnamemodify($VIM, ':8') . dispatch#slash()]
     elseif has('gui_macvim')
-      let root = fnamemodify($VIM, ':h:h') . '/MacOS/'
+      let roots = [fnamemodify($VIM, ':h:h') . '/MacOS/']
     else
-      let root = fnamemodify($VIM, ':h:h') . '/bin/'
+      let roots = [fnamemodify($VIM, ':h:h') . '/bin/']
     endif
-    if executable(root . v:progname)
-      let s:vim = root . v:progname
-    elseif executable(v:progname)
-      let s:vim = v:progname
-    else
-      let s:vim = 'vim'
+    for root in roots
+      if executable(root . v:progname)
+        let s:vim = root . v:progname
+        break
+      endif
+    endfor
+    if !exists('s:vim')
+      if executable(v:progname)
+        let s:vim = v:progname
+      else
+        let s:vim = 'vim'
+      endif
     endif
   endif
   return s:vim
@@ -193,7 +200,7 @@ function! dispatch#compiler_for_program(program) abort
   if a:program ==# 'make'
     return 'make'
   endif
-  for plugin in reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim', 1), "\n"))
+  for plugin in reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim'), "\n"))
     for line in readfile(plugin, '', 100)
       if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_-]\+') == a:program
         return fnamemodify(plugin, ':t:r')
@@ -295,7 +302,7 @@ function! dispatch#compile_command(bang, args) abort
   endif
   let request.title = get(request, 'compiler', 'make')
 
-  if &autowrite
+  if &autowrite || &autowriteall
     wall
   endif
 
