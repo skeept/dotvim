@@ -6,26 +6,28 @@ $do_backup = $False
 # similar to perl use strict;
 Set-StrictMode -version 1
 
+$vim_version = "vim74"
+
 #set the default locations for the installation
 switch ( Get-Content Env:ComputerName )
 {
   "ISENGARD" {
-    $install = "C:\Program Files\Vim\vim73"
+    $install = "C:\Program Files\Vim\$vim_version"
     $backup = "c:\htemp\tmp"
     $source = "c:\htemp\vim"
   }
   "MIDDLE-EARTH" {
-    $install = "C:\Program Files\vim\vim73"
+    $install = "C:\Program Files\vim\$vim_version"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
   "Gondor" {
-    $install = "C:\Program Files\Vim\vim73"
+    $install = "C:\Program Files\Vim\$vim_version"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
   "Erebor" {
-    $install = "C:\Program Files\Vim\vim73"
+    $install = "C:\Program Files\Vim\$vim_version"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
