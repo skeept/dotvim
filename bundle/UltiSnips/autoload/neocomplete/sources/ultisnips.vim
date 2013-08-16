@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: ultisnips.vim
-" AUTHOR:  Jorge Rodrigues <skeept@gmail.com>
-" Last Modified: 12 Aug 2013.
+" FILE: neosnippet.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
+" Last Modified: 05 Jun 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -23,12 +23,6 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
-
-if exists("g:ultisnips_disable_neocomplete")
-  function! neocomplete#sources#ultisnips#define() "{{{
-    return {}
-  endfunction"}}}
-endif
 
 let s:save_cpo = &cpo
 set cpo&vim
