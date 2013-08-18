@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: start.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Jul 2013.
+" Last Modified: 18 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -267,6 +267,22 @@ function! unite#start#get_vimfiler_candidates(sources, ...) "{{{
     let context.unite__is_interactive = 0
 
     let candidates = s:get_candidates(a:sources, context)
+
+    " Converts utf-8-mac to utf-8.
+    if has('mac') && has('iconv')
+      for item in candidates
+        let item.action__path = iconv(
+              \ item.action__path, 'utf-8-mac', 'utf-8')
+        let item.action__directory = iconv(
+              \ item.action__directory, 'utf-8-mac', 'utf-8')
+        let item.word = iconv(item.word, 'utf-8-mac', 'utf-8')
+        let item.abbr = iconv(item.abbr, 'utf-8-mac', 'utf-8')
+        let item.vimfiler__filename = iconv(
+              \ item.vimfiler__filename, 'utf-8-mac', 'utf-8')
+        let item.vimfiler__abbr = iconv(
+              \ item.vimfiler__abbr, 'utf-8-mac', 'utf-8')
+      endfor
+    endif
   finally
     call unite#set_current_unite(unite_save)
   endtry
@@ -404,8 +420,7 @@ function! s:get_resume_buffer(buffer_name) "{{{
   let buffer_name = a:buffer_name
   if buffer_name !~ '@\d\+$'
     " Add postfix.
-    let prefix = unite#util#is_windows() ?
-          \ '[unite] - ' : '*unite* - '
+    let prefix = '[unite] - '
     let prefix .= buffer_name
     let buffer_name .= unite#helper#get_postfix(prefix, 0)
   endif
