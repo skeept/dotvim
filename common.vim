@@ -67,7 +67,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
 set wildignore+=tags,cscope.out,*.db,*.pdf
-set wildignore+=GTAGS,GRTAGS,GPATH
+set wildignore+=GTAGS,GRTAGS,GPATH,.tmp
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
