@@ -30,7 +30,10 @@ class PythonToVimStr(unicode):
         # support is pretty bad. don't ask how I came up with this... It just
         # works...
         # It seems to be related to that bug: http://bugs.python.org/issue5876
-        s = self.encode('UTF-8')
+        if unicode is str:
+            s = self
+        else:
+            s = self.encode('UTF-8')
         return '"%s"' % s.replace('\\', '\\\\').replace('"', r'\"')
 
 
@@ -71,13 +74,14 @@ def complete():
         column += len(base)
         try:
             script = get_script(source=source, column=column)
-            completions = script.complete()
-            call_def = script.get_in_function_call()
+            completions = script.completions()
+            sig = script.call_signatures()
+            call_def = sig[0] if sig else None
 
             out = []
             for c in completions:
-                d = dict(word=PythonToVimStr(c.word[:len(base)] + c.complete),
-                         abbr=PythonToVimStr(c.word),
+                d = dict(word=PythonToVimStr(c.name[:len(base)] + c.complete),
+                         abbr=PythonToVimStr(c.name),
                          # stuff directly behind the completion
                          menu=PythonToVimStr(c.description),
                          info=PythonToVimStr(c.doc),  # docstr
@@ -104,11 +108,11 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
     script = get_script()
     try:
         if is_related_name:
-            definitions = script.related_names()
+            definitions = script.usages()
         elif is_definition:
-            definitions = script.get_definition()
+            definitions = script.goto_definitions()
         else:
-            definitions = script.goto()
+            definitions = script.goto_assignments()
     except jedi.NotFoundError:
         echo_highlight(
                     "Cannot follow nothing. Put your cursor on a valid name.")
@@ -133,12 +137,13 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
                     echo_highlight(
                             "Cannot get the definition of Python keywords.")
                 else:
-                    echo_highlight("Builtin modules cannot be displayed.")
+                    echo_highlight("Builtin modules cannot be displayed (%s)."
+                                   % d.module_path)
             else:
                 if d.module_path != vim.current.buffer.name:
                     vim.eval('jedi#new_buffer(%s)' % \
                                         repr(PythonToVimStr(d.module_path)))
-                vim.current.window.cursor = d.line_nr, d.column
+                vim.current.window.cursor = d.line, d.column
                 vim.command('normal! zt')  # cursor at top of screen
         else:
             # multiple solutions
@@ -149,7 +154,7 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
                                 PythonToVimStr('Builtin ' + d.description)))
                 else:
                     lst.append(dict(filename=PythonToVimStr(d.module_path),
-                                    lnum=d.line_nr, col=d.column + 1,
+                                    lnum=d.line, col=d.column + 1,
                                     text=PythonToVimStr(d.description)))
             vim.eval('setqflist(%s)' % repr(lst))
             vim.eval('jedi#add_goto_window()')
@@ -159,7 +164,7 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
 def show_pydoc():
     script = get_script()
     try:
-        definitions = script.get_definition()
+        definitions = script.goto_definitions()
     except jedi.NotFoundError:
         definitions = []
     except Exception:
@@ -199,21 +204,22 @@ def show_func_def(call_def=None, completion_lines=0):
         return
     try:
         if call_def == None:
-            call_def = get_script().get_in_function_call()
+            sig = get_script().call_signatures()
+            call_def = sig[0] if sig else None
         clear_func_def()
 
         if call_def is None:
             return
 
         row, column = call_def.bracket_start
-        if column < 2 or row == 0:
+        if column < 1 or row == 0:
             return  # edge cases, just ignore
 
         # TODO check if completion menu is above or below
         row_to_replace = row - 1
         line = vim.eval("getline(%s)" % row_to_replace)
 
-        insert_column = column - 2  # because it has stuff at the beginning
+        insert_column = column - 1  # because there's a space before the bracket
 
         params = [p.get_code().replace('\n', '') for p in call_def.params]
         try:
@@ -232,7 +238,9 @@ def show_func_def(call_def=None, completion_lines=0):
 
         # Need to decode it with utf8, because vim returns always a python 2
         # string even if it is unicode.
-        e = vim.eval('g:jedi#function_definition_escape').decode('UTF-8')
+        e = vim.eval('g:jedi#function_definition_escape')
+        if hasattr(e, 'decode'):
+            e = e.decode('UTF-8')
         # replace line before with cursor
         regex = "xjedi=%sx%sxjedix".replace('x', e)
 
@@ -317,7 +325,7 @@ def tabnew(path):
             buf_nr = int(buf_nr) - 1
             try:
                 buf_path = vim.buffers[buf_nr].name
-            except IndexError:
+            except LookupError:
                 # Just do good old asking for forgiveness.
                 # don't know why this happens :-)
                 pass

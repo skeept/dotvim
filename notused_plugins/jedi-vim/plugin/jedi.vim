@@ -1,6 +1,5 @@
-"py_fuzzycomplete.vim - Omni Completion for python in vim
+"jedi.vim - Omni Completion for python in vim
 " Maintainer: David Halter <davidhalter88@gmail.com>
-" Version: 0.1
 "
 " This part of the software is just the vim interface. The main source code
 " lies in the python files around it.
@@ -46,6 +45,9 @@ for [key, val] in items(s:settings)
 endfor
 
 
+if g:jedi#auto_vim_configuration
+    filetype plugin on
+endif
 if g:jedi#auto_initialization 
     " this is only here because in some cases the VIM library adds their
     " autocompletion as a default, which may cause problems, depending on the
@@ -68,7 +70,7 @@ if 1:
     text = 'import %s' % args.pop()
     scr = jedi.Script(text, 1, len(text), '')
     try:
-        path = scr.goto()[0].module_path
+        path = scr.goto_assignments()[0].module_path
     except IndexError:
         path = None
     if path and osp.isfile(path):
@@ -92,7 +94,7 @@ if 1:
     else:
         text = 'import %s' % argl
         script=jedi.Script(text, 1, len(text), '')
-        comps = [ '%s%s' % (argl, c.complete) for c in script.complete()]
+        comps = ['%s%s' % (argl, c.complete) for c in script.completions()]
     vim.command("let comps = '%s'" % '\n'.join(comps))
 EOF
     return comps
