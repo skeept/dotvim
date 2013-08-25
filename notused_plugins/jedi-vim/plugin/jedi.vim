@@ -17,25 +17,50 @@ if exists("g:loaded_jedi") || &cp
 endif
 let g:loaded_jedi = 1
 
+
+" ------------------------------------------------------------------------
+" deprecations
+" ------------------------------------------------------------------------
+
+let s:deprecations = {
+    \ 'get_definition_command':     'goto_definitions_command',
+    \ 'goto_command':               'goto_assignments_command',
+    \ 'pydoc':                      'documentation_command',
+    \ 'related_names_command':      'usages_command',
+    \ 'autocompletion_command':     'completions_command',
+    \ 'show_function_definition':   'show_call_signatures',
+\ }
+
+for [key, val] in items(s:deprecations)
+    if exists('g:jedi#'.key)
+        echom "'g:jedi#".key."' is deprecated. Please use 'g:jedi#".val."' instead. Sorry for the inconvenience."
+        exe 'let g:jedi#'.val.' = g:jedi#'.key
+    end
+endfor
+
+
 " ------------------------------------------------------------------------
 " defaults for jedi-vim
 " ------------------------------------------------------------------------
+
 let s:settings = {
     \ 'use_tabs_not_buffers': 1,
     \ 'auto_initialization': 1,
     \ 'auto_vim_configuration': 1,
-    \ 'goto_command': "'<leader>g'",
-    \ 'autocompletion_command': "'<C-Space>'",
-    \ 'get_definition_command': "'<leader>d'",
-    \ 'related_names_command': "'<leader>n'",
+    \ 'goto_assignments_command': "'<leader>g'",
+    \ 'completions_command': "'<C-Space>'",
+    \ 'goto_definitions_command': "'<leader>d'",
+    \ 'call_signatures_command': "'<leader>n'",
+    \ 'usages_command': "'<leader>n'",
     \ 'rename_command': "'<leader>r'",
     \ 'popup_on_dot': 1,
-    \ 'pydoc': "'K'",
-    \ 'show_function_definition': 1,
-    \ 'function_definition_escape': "'≡'",
+    \ 'documentation_command': "'K'",
+    \ 'show_call_signatures': 1,
+    \ 'call_signature_escape': "'≡'",
     \ 'auto_close_doc': 1,
     \ 'popup_select_first': 1,
-    \ 'quickfix_window_height': 10
+    \ 'quickfix_window_height': 10,
+    \ 'completions_enabled': 1
 \ }
 
 for [key, val] in items(s:settings)
@@ -52,56 +77,15 @@ if g:jedi#auto_initialization
     " this is only here because in some cases the VIM library adds their
     " autocompletion as a default, which may cause problems, depending on the
     " order of invocation.
-    autocmd FileType Python setlocal omnifunc=jedi#complete switchbuf=useopen  " needed for pydoc
+    if g:jedi#completions_enabled
+        autocmd FileType Python setlocal omnifunc=jedi#completions switchbuf=useopen  " needed for documentation/pydoc
+    endif
 endif
 
-fun! Pyimport(cmd, args)
-py << EOF
-    # args are the same as for the :edit command
-    # cmd: one of edit, split, vsplit, tabedit, ...
-if 1:
-    import vim
-    import jedi
-    import os.path as osp
-    from shlex import split as shsplit
 
-    cmd = vim.eval('a:cmd')
-    args = shsplit(vim.eval('a:args'))
-    text = 'import %s' % args.pop()
-    scr = jedi.Script(text, 1, len(text), '')
-    try:
-        path = scr.goto_assignments()[0].module_path
-    except IndexError:
-        path = None
-    if path and osp.isfile(path):
-        cmd_args = ' '.join([a.replace(' ', '\\ ') for a in args])
-        vim.command('%s %s %s' % (cmd, cmd_args , path.replace(' ', '\ ')))
-EOF
-endfun
+" ------------------------------------------------------------------------
+" PyImport command
+" ------------------------------------------------------------------------
+command! -nargs=1 -complete=custom,jedi#py_import_completions Pyimport :call jedi#py_import(<q-args>)
 
-fun! Pyimport_comp(argl, cmdl, pos)
-py << EOF
-if 1:
-    import vim
-    import re
-    import json
-    argl = vim.eval('a:argl')
-    try:
-        import jedi
-    except ImportError as err:
-        print('Pyimport completion requires jedi module: https://github.com/davidhalter/jedi')
-        comps = []
-    else:
-        text = 'import %s' % argl
-        script=jedi.Script(text, 1, len(text), '')
-        comps = ['%s%s' % (argl, c.complete) for c in script.completions()]
-    vim.command("let comps = '%s'" % '\n'.join(comps))
-EOF
-    return comps
-endfun
-
-command! -nargs=1 -complete=custom,Pyimport_comp Pyimport :call Pyimport('edit', <q-args>)
-" command! -nargs=1 -complete=custom,Pyimport_comp Pysplit :call Pyimport('split', <q-args>)
-" command! -nargs=1 -complete=custom,Pyimport_comp Pyvsplit :call Pyimport('vsplit', <q-args>)
-" command! -nargs=1 -complete=custom,Pyimport_comp Pytabe :call Pyimport('tabe', <q-args>)
 " vim: set et ts=4:

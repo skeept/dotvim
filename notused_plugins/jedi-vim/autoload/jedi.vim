@@ -1,17 +1,17 @@
 " ------------------------------------------------------------------------
 " functions that call python code
 " ------------------------------------------------------------------------
-function! jedi#goto()
+function! jedi#goto_assignments()
     Python jedi_vim.goto()
 endfunction
 
 
-function! jedi#get_definition()
+function! jedi#goto_definitions()
     Python jedi_vim.goto(is_definition=True)
 endfunction
 
 
-function! jedi#related_names()
+function! jedi#usages()
     Python jedi_vim.goto(is_related_name=True)
 endfunction
 
@@ -21,13 +21,13 @@ function! jedi#rename(...)
 endfunction
 
 
-function! jedi#complete(findstart, base)
-    Python jedi_vim.complete()
+function! jedi#completions(findstart, base)
+    Python jedi_vim.completions()
 endfunction
 
 
-function! jedi#show_func_def()
-    Python jedi_vim.show_func_def()
+function! jedi#show_call_signatures_func()
+    Python jedi_vim.show_call_signatures()
 endfunction
 
 function! jedi#enable_speed_debugging()
@@ -42,11 +42,20 @@ function! jedi#disable_debugging()
     Python jedi_vim.jedi.set_debug_function(None)
 endfunction
 
+function! jedi#py_import(args)
+    Python jedi_vim.py_import()
+endfun
+
+function! jedi#py_import_completions(argl, cmdl, pos)
+    Python jedi_vim.py_import_completions()
+endfun
+
+
 " ------------------------------------------------------------------------
-" show_pydoc
+" show_documentation
 " ------------------------------------------------------------------------
-function! jedi#show_pydoc()
-    Python jedi_vim.show_pydoc()
+function! jedi#show_documentation()
+    Python jedi_vim.show_documentation()
     if bufnr("__doc__") > 0
         " If the __doc__ buffer is open in the current window, jump to it
         silent execute "sbuffer ".bufnr("__doc__")
@@ -83,27 +92,9 @@ function! jedi#show_pydoc()
     let b:current_syntax = "rst"
 endfunction
 
-
 " ------------------------------------------------------------------------
 " helper functions
 " ------------------------------------------------------------------------
-function! jedi#new_buffer(path)
-    if g:jedi#use_tabs_not_buffers
-        Python jedi_vim.tabnew(jedi_vim.escape_file_path(vim.eval('a:path')))
-    else
-        if !&hidden && &modified
-            w
-        endif
-        Python vim.command('edit ' + jedi_vim.escape_file_path(vim.eval('a:path')))
-    endif
-    " sometimes syntax is being disabled and the filetype not set.
-    if !exists("g:syntax_on")
-      syntax enable
-    endif
-    if &filetype != 'python'
-      set filetype=python
-    endif
-endfunction
 
 function! jedi#add_goto_window()
     set lazyredraw
@@ -124,7 +115,7 @@ function! jedi#goto_window_on_enter()
     if l:data.bufnr
         " close goto_window buffer
         normal ZQ
-        call jedi#new_buffer(bufname(l:data.bufnr))
+        Python jedi_vim.new_buffer(vim.eval('bufname(l:data.bufnr)'))
         call cursor(l:data.lnum, l:data.col)
     else
         echohl WarningMsg | echo "Builtin module cannot be opened." | echohl None
@@ -132,7 +123,7 @@ function! jedi#goto_window_on_enter()
 endfunction
 
 
-function! jedi#syn_stack()
+function! s:syn_stack()
     if !exists("*synstack")
         return []
     endif
@@ -141,7 +132,7 @@ endfunc
 
 
 function! jedi#do_popup_on_dot()
-    let highlight_groups = jedi#syn_stack()
+    let highlight_groups = s:syn_stack()
     for a in highlight_groups
         if a == 'pythonDoctest'
             return 1
@@ -158,9 +149,28 @@ function! jedi#do_popup_on_dot()
     return 1
 endfunc
 
-function! jedi#configure_function_definition()
-    autocmd InsertLeave <buffer> Python jedi_vim.clear_func_def()
-    autocmd CursorMovedI <buffer> call jedi#show_func_def()
+
+function! jedi#configure_call_signatures()
+    autocmd InsertLeave <buffer> Python jedi_vim.clear_call_signatures()
+    autocmd CursorMovedI <buffer> call jedi#show_call_signatures_func()
+endfunction
+
+" Helper function instead of `python vim.eval()`, and `.command()` because
+" these also return error definitions.
+function! jedi#_vim_exceptions(str, is_eval)
+    let l:result = {}
+    try
+        if a:is_eval
+            let l:result.result = eval(a:str)
+        else
+            execute a:str
+            let l:result.result = ''
+        endif
+    catch
+        let l:result.exception = v:exception
+        let l:result.throwpoint = v:throwpoint
+    endtry
+    return l:result
 endfunction
 
 if has('python')
@@ -183,7 +193,10 @@ import traceback
 
 # update the sys path to include the jedi_vim script
 sys.path.insert(1, os.path.join(vim.eval('expand("<sfile>:p:h:h")'), 'plugin'))
-import jedi_vim
+try:
+    import jedi_vim
+except ImportError:
+    vim.eval('echom "Please install Jedi if you want to use jedi_vim."')
 sys.path.pop(1)
 
 PYTHONEOF
