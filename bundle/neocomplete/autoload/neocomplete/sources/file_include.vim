@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_include.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Aug 2013.
+" Last Modified: 23 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -172,6 +172,11 @@ function! s:get_include_files(complete_str) "{{{
   let candidates = s:get_default_include_files(filetype)
   for subpath in split(path, '[,;]')
     let dir = (subpath == '.') ? bufdirectory : subpath
+
+    if (complete_str != '' && complete_str[0] == '.' && subpath[0] != '.')
+        continue
+    endif
+
     if !isdirectory(dir)
       continue
     endif
