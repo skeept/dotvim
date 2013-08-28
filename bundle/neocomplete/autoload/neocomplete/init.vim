@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Aug 2013.
+" Last Modified: 26 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -140,7 +140,9 @@ function! neocomplete#init#_others() "{{{
   endif
 
   " Set completefunc.
+  let completefunc_save = &l:completefunc
   let &completefunc = 'neocomplete#complete#manual_complete'
+  let &l:completefunc = completefunc_save
 
   command! -nargs=0 -bar NeoCompleteDisable
         \ call neocomplete#init#disable()
@@ -656,8 +658,10 @@ function! neocomplete#init#_sources(names) "{{{
 
   for name in filter(copy(a:names), '!has_key(sources, v:val)')
     " Search autoload.
-    for source_name in map(split(globpath(runtimepath,
+    for source_name in map(filter(split(globpath(runtimepath,
           \ 'autoload/neocomplete/sources/*.vim'), '\n'),
+          \ "index(g:neocomplete#ignore_source_files,
+          \        fnamemodify(v:val, ':t')) < 0"),
           \ "fnamemodify(v:val, ':t:r')")
       if has_key(s:loaded_source_files, source_name)
         continue

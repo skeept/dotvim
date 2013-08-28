@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file_include.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Aug 2013.
+" Last Modified: 26 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -98,7 +98,7 @@ function! s:source.get_complete_position(context) "{{{
   " Check include pattern.
   let pattern = get(g:neocomplete#sources#include#patterns,
         \ filetype, &l:include)
-  if pattern == '' || a:context.input !~ pattern
+  if pattern == '' || a:context.input !~ pattern . '\s\+'
     return -1
   endif
 
@@ -172,6 +172,11 @@ function! s:get_include_files(complete_str) "{{{
   let candidates = s:get_default_include_files(filetype)
   for subpath in split(path, '[,;]')
     let dir = (subpath == '.') ? bufdirectory : subpath
+
+    if (complete_str != '' && complete_str[0] == '.' && subpath[0] != '.')
+        continue
+    endif
+
     if !isdirectory(dir)
       continue
     endif
@@ -192,7 +197,7 @@ function! s:get_include_files(complete_str) "{{{
               \ 'v:fname', string(dict.word), 'g'))
       endif
 
-      let dict.word = fnamemodify(word, ':t')
+      let dict.word = fnamemodify(word, ':t:r')
 
       let abbr = dict.word
       if dict.action__is_directory
