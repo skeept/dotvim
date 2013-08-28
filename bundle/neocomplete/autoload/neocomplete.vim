@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Jul 2013.
+" Last Modified: 26 Aug 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -99,6 +99,8 @@ let g:neocomplete#force_omni_input_patterns =
       \ get(g:, 'neocomplete#force_omni_input_patterns', {})
 let g:neocomplete#ignore_composite_filetypes =
       \ get(g:, 'neocomplete#ignore_composite_filetypes', {})
+let g:neocomplete#ignore_source_files =
+      \ get(g:, 'neocomplete#ignore_source_files', [])
 "}}}
 
 function! neocomplete#initialize() "{{{
@@ -189,11 +191,10 @@ function! neocomplete#is_enabled() "{{{
   return neocomplete#init#is_enabled()
 endfunction"}}}
 function! neocomplete#is_locked(...) "{{{
-  let ignore_filetypes = ['unite', 'fuf', 'ku']
+  let ignore_filetypes = ['fuf', 'ku']
   let bufnr = a:0 > 0 ? a:1 : bufnr('%')
   return !neocomplete#is_enabled() || &paste
         \ || g:neocomplete#disable_auto_complete
-        \ || &l:completefunc == ''
         \ || index(ignore_filetypes, &filetype) >= 0
         \ || neocomplete#get_current_neocomplete().lock
         \ || (g:neocomplete#lock_buffer_name_pattern != '' &&
