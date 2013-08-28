@@ -349,6 +349,14 @@ if has("autocmd")
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
   augroup END
 
+  "try to disable swapfiles for large files
+  augroup disable_swap_large_files
+    autocmd!
+    "5 megs
+    autocmd BufRead * if getfsize(expand('%:p')) > 5242880 |
+          \ setlocal noswapfile noundofile | endif
+  augroup END
+
 endif " has("autocmd")
 "==============================================================================}}}
 
