@@ -5,26 +5,21 @@ function! jedi#goto_assignments()
     Python jedi_vim.goto()
 endfunction
 
-
 function! jedi#goto_definitions()
     Python jedi_vim.goto(is_definition=True)
 endfunction
-
 
 function! jedi#usages()
     Python jedi_vim.goto(is_related_name=True)
 endfunction
 
-
 function! jedi#rename(...)
     Python jedi_vim.rename()
 endfunction
 
-
 function! jedi#completions(findstart, base)
     Python jedi_vim.completions()
 endfunction
-
 
 function! jedi#show_call_signatures_func()
     Python jedi_vim.show_call_signatures()
@@ -173,10 +168,71 @@ function! jedi#_vim_exceptions(str, is_eval)
     return l:result
 endfunction
 
+" ------------------------------------------------------------------------
+" deprecations
+" ------------------------------------------------------------------------
+
+let s:deprecations = {
+    \ 'get_definition_command':     'goto_definitions_command',
+    \ 'goto_command':               'goto_assignments_command',
+    \ 'pydoc':                      'documentation_command',
+    \ 'related_names_command':      'usages_command',
+    \ 'autocompletion_command':     'completions_command',
+    \ 'show_function_definition':   'show_call_signatures',
+\ }
+
+for [key, val] in items(s:deprecations)
+    if exists('g:jedi#'.key)
+        echom "'g:jedi#".key."' is deprecated. Please use 'g:jedi#".val."' instead. Sorry for the inconvenience."
+        exe 'let g:jedi#'.val.' = g:jedi#'.key
+    end
+endfor
+
+
+" ------------------------------------------------------------------------
+" defaults for jedi-vim
+" ------------------------------------------------------------------------
+
+let s:settings = {
+    \ 'use_tabs_not_buffers': 1,
+    \ 'auto_initialization': 1,
+    \ 'auto_vim_configuration': 1,
+    \ 'goto_assignments_command': "'<leader>g'",
+    \ 'completions_command': "'<C-Space>'",
+    \ 'goto_definitions_command': "'<leader>d'",
+    \ 'call_signatures_command': "'<leader>n'",
+    \ 'usages_command': "'<leader>n'",
+    \ 'rename_command': "'<leader>r'",
+    \ 'popup_on_dot': 1,
+    \ 'documentation_command': "'K'",
+    \ 'show_call_signatures': 1,
+    \ 'call_signature_escape': "'≡'",
+    \ 'auto_close_doc': 1,
+    \ 'popup_select_first': 1,
+    \ 'quickfix_window_height': 10,
+    \ 'completions_enabled': 1
+\ }
+
+for [key, val] in items(s:settings)
+    if !exists('g:jedi#'.key)
+        exe 'let g:jedi#'.key.' = '.val
+    endif
+endfor
+
+
+" ------------------------------------------------------------------------
+" Python initialization
+" ------------------------------------------------------------------------
+
 if has('python')
     command! -nargs=1 Python python <args>
-else
+elseif has('python3')
     command! -nargs=1 Python python3 <args>
+else
+    if !exists("g:jedi#squelch_py_warning")
+        echomsg "Error: jedi-vim requires vim compiled with +python"
+    endif
+    finish
 end
 
 Python << PYTHONEOF
@@ -196,7 +252,7 @@ sys.path.insert(1, os.path.join(vim.eval('expand("<sfile>:p:h:h")'), 'plugin'))
 try:
     import jedi_vim
 except ImportError:
-    vim.eval('echom "Please install Jedi if you want to use jedi_vim."')
+    vim.command('echoerr "Please install Jedi if you want to use jedi_vim."')
 sys.path.pop(1)
 
 PYTHONEOF
