@@ -200,6 +200,18 @@ configuration values that you can use.
       \ 'y': 88,
       \ 'z': 45,
       \ })
+
+  " Note: set to an empty dictionary to disable truncation.
+  let g:airline#extensions#default#section_truncate_width = {}
+<
+                                                        *airline-bufferline*
+vim-bufferline <https://github.com/bling/vim-bufferline>
+
+* enable/disable bufferline integration >
+  let g:airline#extensions#bufferline#enabled = 1
+<
+* determine whether bufferline will overwrite customization variables >
+  let g:airline#extensions#bufferline#overwrite_variables = 1
 <
                                                             *airline-branch*
 fugitive.vim <https://github.com/tpope/vim-fugitive>
