@@ -14,14 +14,10 @@ if g:jedi#auto_initialization
         " map ctrl+space for autocompletion
         if g:jedi#completions_command == "<C-Space>"
             " in terminals, <C-Space> sometimes equals <Nul>
-            inoremap <expr> <Nul> pumvisible() \|\| &omnifunc == '' ?
-                    \ "\<lt>C-n>" :
-                    \ "\<lt>C-x>\<lt>C-o><c-r>=pumvisible() ?" .
-                    \ "\"\\<lt>c-n>\\<lt>c-p>\\<lt>c-n>\" :" .
-                    \ "\" \\<lt>bs>\\<lt>C-n>\"\<CR>"
+            inoremap <expr> <Nul> jedi#complete_string(0)
         endif
         if g:jedi#completions_command != ""
-            execute "inoremap <buffer>".g:jedi#completions_command." <C-X><C-O>"
+            execute "inoremap <expr> <buffer> ".g:jedi#completions_command." jedi#complete_string(0)"
         endif
     endif
 
@@ -47,6 +43,13 @@ if g:jedi#auto_initialization
     if g:jedi#show_call_signatures == 1 && has('conceal')
         call jedi#configure_call_signatures()
     endif
+
+    inoremap <silent> <buffer> . .<C-R>=jedi#complete_string(1)<CR>
+
+    if g:jedi#auto_close_doc
+        " close preview if its still open after insert
+        autocmd InsertLeave <buffer> if pumvisible() == 0|pclose|endif
+    end
 end
 
 if g:jedi#auto_vim_configuration
@@ -54,22 +57,4 @@ if g:jedi#auto_vim_configuration
     if len(mapcheck('<C-c>', 'i')) == 0
         inoremap <C-c> <ESC>
     end
-end
-
-if g:jedi#popup_on_dot
-    if stridx(&completeopt, 'longest') > -1
-        if g:jedi#popup_select_first
-            inoremap <silent> <buffer> . .<C-R>=jedi#do_popup_on_dot() ? "\<lt>C-X>\<lt>C-O>\<lt>C-N>" : ""<CR>
-        else
-            inoremap <silent> <buffer> . .<C-R>=jedi#do_popup_on_dot() ? "\<lt>C-X>\<lt>C-O>" : ""<CR>
-        end
-
-    else
-        inoremap <silent> <buffer> . .<C-R>=jedi#do_popup_on_dot() ? "\<lt>C-X>\<lt>C-O>\<lt>C-P>" : ""<CR>
-    end
-end
-
-if g:jedi#auto_close_doc
-    " close preview if its still open after insert
-    autocmd InsertLeave <buffer> if pumvisible() == 0|pclose|endif
 end
