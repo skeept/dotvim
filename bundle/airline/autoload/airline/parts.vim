@@ -3,6 +3,8 @@
 
 let s:parts = {}
 
+" PUBLIC API {{{
+
 function! airline#parts#define(key, config)
   let s:parts[a:key] = get(s:parts, a:key, {})
   call extend(s:parts[a:key], a:config)
@@ -20,6 +22,10 @@ function! airline#parts#define_raw(key, raw)
   call airline#parts#define(a:key, { 'raw': a:raw })
 endfunction
 
+function! airline#parts#define_minwidth(key, width)
+  call airline#parts#define(a:key, { 'minwidth': a:width })
+endfunction
+
 function! airline#parts#define_empty(keys)
   for key in a:keys
     call airline#parts#define_raw(key, '')
@@ -29,6 +35,8 @@ endfunction
 function! airline#parts#get(key)
   return get(s:parts, a:key, {})
 endfunction
+
+" }}}
 
 function! airline#parts#mode()
   return get(w:, 'airline_current_mode', '')
@@ -47,5 +55,9 @@ endfunction
 
 function! airline#parts#readonly()
   return &readonly ? g:airline_symbols.readonly : ''
+endfunction
+
+function! airline#parts#filetype()
+  return &filetype
 endfunction
 

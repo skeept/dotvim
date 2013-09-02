@@ -1,4 +1,6 @@
 call airline#init#bootstrap()
+call airline#init#sections()
+
 source plugin/airline.vim
 
 describe 'commands'
@@ -10,6 +12,7 @@ describe 'commands'
   end
 
   it 'should toggle whitespace off and on'
+    call airline#extensions#load()
     execute 'AirlineToggleWhitespace'
     Expect exists('#airline_whitespace') to_be_false
     execute 'AirlineToggleWhitespace'

@@ -26,7 +26,6 @@ function! airline#add_inactive_statusline_func(name)
 endfunction
 
 function! airline#load_theme()
-  highlight! default link airline_warning WarningMsg
   call airline#highlighter#load_theme()
   call airline#extensions#load_theme()
 endfunction
@@ -49,19 +48,18 @@ endfunction
 
 function! airline#switch_matching_theme()
   if exists('g:colors_name')
-    let v:errmsg = ''
-    silent! let palette = g:airline#themes#{g:colors_name}#palette
-    if empty(v:errmsg)
+    try
+      let palette = g:airline#themes#{g:colors_name}#palette
       call airline#switch_theme(g:colors_name)
       return 1
-    else
+    catch
       for map in items(g:airline_theme_map)
         if match(g:colors_name, map[0]) > -1
           call airline#switch_theme(map[1])
           return 1
         endif
       endfor
-    endif
+    endtry
   endif
   return 0
 endfunction
@@ -84,9 +82,12 @@ function! airline#update_statusline()
   call s:invoke_funcrefs(context, g:airline_statusline_funcrefs)
 endfunction
 
+let s:core_funcrefs = [
+      \ function('airline#extensions#apply'),
+      \ function('airline#extensions#default#apply') ]
 function! s:invoke_funcrefs(context, funcrefs)
   let builder = airline#builder#new(a:context)
-  let err = airline#util#exec_funcrefs(a:funcrefs + [function('airline#extensions#default#apply')], builder, a:context)
+  let err = airline#util#exec_funcrefs(a:funcrefs + s:core_funcrefs, builder, a:context)
   if err == 1
     call setwinvar(a:context.winnr, '&statusline', builder.build())
   endif

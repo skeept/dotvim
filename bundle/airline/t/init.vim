@@ -10,6 +10,7 @@ describe 'init'
   before
     call s:clear()
     call airline#init#bootstrap()
+    call airline#init#sections()
   end
 
   after
@@ -31,7 +32,7 @@ describe 'init'
   end
 
   it 'section x should be filetype'
-    Expect g:airline_section_x =~ '&filetype'
+    Expect g:airline_section_x == '%{airline#util#wrap(airline#parts#filetype(),0)}'
   end
 
   it 'section y should be fenc and ff'
