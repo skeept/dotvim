@@ -94,6 +94,11 @@ endif
 "this is where all vimrc and simple settings go
 execute "source " . g:p0 . "/common.vim"
 
+let s:work_common = expand(g:p0 . "/work_common.vim")
+if filereadable(s:work_common)
+  execute "source " . s:work_common
+endif
+
 "================== Taglist ==================================================={{{
 "taglist options
 "let Tlist_Close_On_Select = 1

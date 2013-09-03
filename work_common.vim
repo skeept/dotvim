@@ -23,3 +23,10 @@ function! SetFoldingPatternNumCharsFront()
 endfunction
 
 nnoremap ,z1 :<C-U>call SetFoldingPatternNumCharsFront()<CR>
+
+function! JumpToNextNonMatching()
+  let curr_line = getline('.')
+  let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
+  call search(spattern)
+endfunction
+nnoremap ,n :<C-U>call JumpToNextNonMatching()<CR><C-L>
