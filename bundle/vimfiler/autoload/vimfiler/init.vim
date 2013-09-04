@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Sep 2013.
+" Last Modified: 04 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -388,14 +388,12 @@ function! s:create_vimfiler_buffer(path, context) "{{{
 
   " Save swapfile option.
   let swapfile_save = &swapfile
-  set noswapfile
 
   try
+    set noswapfile
     let ret = s:manager.open(bufname)
-    " silent edit `=bufname`
-    setlocal noswapfile
   finally
-    let &swapfile = swapfile_save
+    let &g:swapfile = swapfile_save
   endtry
 
   if !ret.loaded
@@ -437,6 +435,7 @@ function! s:buffer_default_settings() "{{{
   setlocal noswapfile
   setlocal noreadonly
   setlocal nowrap
+  setlocal nospell
   setlocal bufhidden=hide
   setlocal nolist
   setlocal foldcolumn=0

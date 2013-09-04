@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vim.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Aug 2013.
+" Last Modified: 03 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,6 +37,7 @@ let s:source = {
       \ 'kind' : 'manual',
       \ 'filetypes' : { 'vim' : 1, 'vimconsole' : 1, },
       \ 'mark' : '[vim]',
+      \ 'is_volatile' : 1,
       \ 'rank' : 300,
       \ 'hooks' : {},
       \}
@@ -92,7 +93,6 @@ function! s:source.get_complete_position(context) "{{{
   endif
 
   if a:context.input !~ '\.\%(\h\w*\)\?$' && neocomplete#is_auto_complete()
-        \ && bufname('%') !=# '[Command Line]'
         \ && len(complete_str) < g:neocomplete#auto_completion_start_length
     return -1
   endif
@@ -116,7 +116,7 @@ function! s:source.gather_candidates(context) "{{{
           \ cur_text, complete_str)
   elseif a:context.complete_str =~# '^&\%([gl]:\)\?'
     " Options.
-    let prefix = matchstr(a:context.complete_str, '&\%([gl]:\)\?')
+    let prefix = matchstr(a:context.complete_str, '^&\%([gl]:\)\?')
     let list = deepcopy(
           \ neocomplete#sources#vim#helper#option(
           \   cur_text, a:context.complete_str))
