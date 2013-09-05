@@ -296,11 +296,33 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
 * enable/disable enhanced tabline. >
   let g:airline#extensions#tabline#enabled = 0
 <
+* enable/disable displaying buffers with a single tab. >
+  let g:airline#extensions#tabline#show_buffers = 1
+<
 * configure the formatting of filenames (see |filename-modifiers|). >
   let g:airline#extensions#tabline#fnamemod = ':p:.'
 <
 * configure filename match rules to exclude from the tabline. >
   let g:airline#extensions#tabline#excludes = []
+<
+* configure how numbers are calculated in tab mode. >
+  let g:airline#extensions#tabline#tab_nr_type = 0 " # of splits (default)
+  let g:airline#extensions#tabline#tab_nr_type = 1 " tab number
+<
+* configure whether buffer numbers should be shown. >
+  let g:airline#extensions#tabline#buffer_nr_show = 0
+<
+* configure how buffer numbers should be formatted with |printf|. >
+  let g:airline#extensions#tabline#buffer_nr_format = '%s: '
+<
+* configure the minimum number of buffers needed to show the tabline. >
+  let g:airline#extensions#tabline#buffer_min_count = 0
+<
+* configure separators for the tabline only. >
+  let g:airline#extensions#tabline#left_sep = ''
+  let g:airline#extensions#tabline#left_alt_sep = ''
+  let g:airline#extensions#tabline#right_sep = ''
+  let g:airline#extensions#tabline#right_alt_sep = ''
 <
 Note: Enabling this extension will modify |showtabline| and |guioptions|.
 
