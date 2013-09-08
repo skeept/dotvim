@@ -1,13 +1,10 @@
 " MIT License. Copyright (c) 2013 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
 
-let s:fmod = get(g:, 'airline#extensions#tabline#fnamemod', ':p:.')
+let s:formatter = get(g:, 'airline#extensions#tabline#formatter', 'default')
 let s:excludes = get(g:, 'airline#extensions#tabline#excludes', [])
 let s:tab_nr_type = get(g:, 'airline#extensions#tabline#tab_nr_type', 0)
 let s:show_buffers = get(g:, 'airline#extensions#tabline#show_buffers', 1)
-let s:buf_nr_show = get(g:, 'airline#extensions#tabline#buffer_nr_show', 0)
-let s:buf_nr_format = get(g:, 'airline#extensions#tabline#buffer_nr_format', '%s: ')
-let s:buf_modified_symbol = g:airline_symbols.modified
 
 let s:builder_context = {
       \ 'active'        : 1,
@@ -19,6 +16,9 @@ let s:builder_context = {
 
 let s:buf_min_count = get(g:, 'airline#extensions#tabline#buffer_min_count', 0)
 let s:buf_len = 0
+
+" TODO: temporary
+let s:buf_max = get(g:, 'airline#extensions#tabline#buffer_max', winwidth(0) / 16)
 
 function! airline#extensions#tabline#init(ext)
   if has('gui_running')
@@ -43,11 +43,13 @@ function! airline#extensions#tabline#load_theme(palette)
   let l:tabtype = get(colors, 'airline_tabtype', a:palette.visual.airline_a)
   let l:tabfill = get(colors, 'airline_tabfill', a:palette.normal.airline_c)
   let l:tabmod  = get(colors, 'airline_tabmod', a:palette.insert.airline_a)
+  let l:tabhid  = get(colors, 'airline_tabhid', a:palette.normal.airline_c)
   call airline#highlighter#exec('airline_tab', l:tab)
   call airline#highlighter#exec('airline_tabsel', l:tabsel)
   call airline#highlighter#exec('airline_tabtype', l:tabtype)
   call airline#highlighter#exec('airline_tabfill', l:tabfill)
   call airline#highlighter#exec('airline_tabmod', l:tabmod)
+  call airline#highlighter#exec('airline_tabhid', l:tabhid)
 endfunction
 
 function! s:cursormove()
@@ -78,24 +80,7 @@ function! airline#extensions#tabline#title(n)
 endfunction
 
 function! airline#extensions#tabline#get_buffer_name(nr)
-  let _ = ''
-  let name = bufname(a:nr)
-
-  if s:buf_nr_show
-    let _ .= printf(s:buf_nr_format, a:nr)
-  endif
-
-  if empty(name)
-    let _ .= '[No Name]'
-  else
-    let _ .= fnamemodify(name, s:fmod)
-  endif
-
-  if getbufvar(a:nr, '&modified') == 1
-    let _ .= s:buf_modified_symbol
-  endif
-
-  return _
+  return airline#extensions#tabline#formatters#{s:formatter}(a:nr, get(s:, 'current_buffer_list', []))
 endfunction
 
 function! s:get_buffer_list()
@@ -111,12 +96,24 @@ function! s:get_buffer_list()
       call add(buffers, nr)
     endif
   endfor
+
+  " TODO: temporary fix; force the active buffer to be first when there are many buffers open
+  if len(buffers) > s:buf_max && index(buffers, cur) > -1
+    while buffers[1] != cur
+      let first = remove(buffers, 0)
+      call add(buffers, first)
+    endwhile
+    let buffers = buffers[:s:buf_max]
+  endif
+
+  let s:current_buffer_list = buffers
   return buffers
 endfunction
 
 function! s:get_buffers()
   let b = airline#builder#new(s:builder_context)
   let cur = bufnr('%')
+  let tab_bufs = tabpagebuflist(tabpagenr())
   for nr in s:get_buffer_list()
     if cur == nr
       if g:airline_detect_modified && getbufvar(nr, '&modified')
@@ -125,7 +122,11 @@ function! s:get_buffers()
         let group = 'airline_tabsel'
       endif
     else
-      let group = 'airline_tab'
+      if index(tab_bufs, nr) > -1
+        let group = 'airline_tab'
+      else
+        let group = 'airline_tabhid'
+      endif
     endif
     call b.add_section(group, '%( %{airline#extensions#tabline#get_buffer_name('.nr.')} %)')
   endfor
@@ -139,7 +140,18 @@ endfunction
 function! s:get_tabs()
   let b = airline#builder#new(s:builder_context)
   for i in range(1, tabpagenr('$'))
-    let group = i == tabpagenr() ? 'airline_tabsel' : 'airline_tab'
+    if i == tabpagenr()
+      let group = 'airline_tabsel'
+      if g:airline_detect_modified
+        for bi in tabpagebuflist(i)
+          if getbufvar(bi, '&modified')
+            let group = 'airline_tabmod'
+          endif
+        endfor
+      endif
+    else
+      let group = 'airline_tab'
+    endif
     let val = '%('
     if s:tab_nr_type == 0
       let val .= ' %{len(tabpagebuflist('.i.'))}'

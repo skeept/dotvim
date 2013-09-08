@@ -82,6 +82,9 @@ function! s:exec_separator(dict, from, to, inverse, suffix)
 endfunction
 
 function! airline#highlighter#load_theme()
+  for winnr in filter(range(1, winnr('$')), 'v:val != winnr()')
+    call airline#highlighter#highlight_modified_inactive(winbufnr(winnr))
+  endfor
   call airline#highlighter#highlight(['inactive'])
   call airline#highlighter#highlight(['normal'])
 endfunction
@@ -89,6 +92,20 @@ endfunction
 function! airline#highlighter#add_separator(from, to, inverse)
   let s:separators[a:from.a:to] = [a:from, a:to, a:inverse]
   call <sid>exec_separator({}, a:from, a:to, a:inverse, '')
+endfunction
+
+function! airline#highlighter#highlight_modified_inactive(bufnr)
+  if getbufvar(a:bufnr, '&modified')
+    let colors = exists('g:airline#themes#{g:airline_theme}#palette.inactive_modified.airline_c')
+          \ ? g:airline#themes#{g:airline_theme}#palette.inactive_modified.airline_c : []
+  else
+    let colors = exists('g:airline#themes#{g:airline_theme}#palette.inactive.airline_c')
+          \ ? g:airline#themes#{g:airline_theme}#palette.inactive.airline_c : []
+  endif
+
+  if !empty(colors)
+    call airline#highlighter#exec('airline_c'.(a:bufnr).'_inactive', colors)
+  endif
 endfunction
 
 function! airline#highlighter#highlight(modes)
