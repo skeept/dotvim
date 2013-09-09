@@ -21,10 +21,6 @@ function! jedi#completions(findstart, base)
     Python jedi_vim.completions()
 endfunction
 
-function! jedi#show_call_signatures_func()
-    Python jedi_vim.show_call_signatures()
-endfunction
-
 function! jedi#enable_speed_debugging()
     Python jedi_vim.jedi.set_debug_function(jedi_vim.print_to_stdout, speed=True, warnings=False, notices=False)
 endfunction
@@ -51,6 +47,7 @@ endfun
 " ------------------------------------------------------------------------
 function! jedi#show_documentation()
     Python jedi_vim.show_documentation()
+
     if bufnr("__doc__") > 0
         " If the __doc__ buffer is open in the current window, jump to it
         silent execute "sbuffer ".bufnr("__doc__")
@@ -126,7 +123,7 @@ function! s:syn_stack()
 endfunc
 
 
-function! jedi#do_popup_on_dot()
+function! jedi#do_popup_on_dot_in_highlight()
     let highlight_groups = s:syn_stack()
     for a in highlight_groups
         if a == 'pythonDoctest'
@@ -145,9 +142,13 @@ function! jedi#do_popup_on_dot()
 endfunc
 
 
+function! jedi#popup_on_dot_string()
+endfunction
+
+
 function! jedi#configure_call_signatures()
     autocmd InsertLeave <buffer> Python jedi_vim.clear_call_signatures()
-    autocmd CursorMovedI <buffer> call jedi#show_call_signatures_func()
+    autocmd CursorMovedI <buffer> Python jedi_vim.show_call_signatures()
 endfunction
 
 " Helper function instead of `python vim.eval()`, and `.command()` because
@@ -167,6 +168,31 @@ function! jedi#_vim_exceptions(str, is_eval)
     endtry
     return l:result
 endfunction
+
+
+function! jedi#complete_string(is_popup_on_dot)
+
+    if a:is_popup_on_dot && !(g:jedi#popup_on_dot && jedi#do_popup_on_dot_in_highlight())
+        return ''
+
+    end
+    if pumvisible() && !a:is_popup_on_dot
+        return "\<C-n>"
+    else
+        return "\<C-x>\<C-o>\<C-r>=jedi#complete_opened()\<CR>"
+    end
+endfunction
+
+
+function! jedi#complete_opened()
+    if pumvisible() && g:jedi#popup_select_first && stridx(&completeopt, 'longest') > -1
+        " only go down if it is visible, user-enabled and the longest option is set
+        return "\<Down>"
+    end
+    return ""
+endfunction
+
+
 
 " ------------------------------------------------------------------------
 " deprecations
@@ -248,7 +274,7 @@ sys.path.insert(0, os.path.join(vim.eval('expand("<sfile>:p:h:h")'), 'jedi'))
 import traceback
 
 # update the sys path to include the jedi_vim script
-sys.path.insert(1, os.path.join(vim.eval('expand("<sfile>:p:h:h")'), 'plugin'))
+sys.path.insert(1, vim.eval('expand("<sfile>:p:h:h")'))
 try:
     import jedi_vim
 except ImportError:

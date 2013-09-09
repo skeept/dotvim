@@ -64,19 +64,21 @@ Apart from that, jedi-vim supports the following commands
 Installation
 ============
 
-You might want to use `pathogen <https://github.com/tpope/vim-pathogen>`_ to
-install jedi in VIM. Also you need a VIM version that was compiled with
-``+python``, which is typical for most distributions on Linux.
+You might want to use `pathogen <https://github.com/tpope/vim-pathogen>`_ or
+`vundle <https://github.com/gmarik/vundle>`_ to install jedi in VIM. Also you
+need a VIM version that was compiled with ``+python``, which is typical for most
+distributions on Linux.
 
 The first thing you need after that is an up-to-date version of Jedi. You can
 either get it via ``pip install jedi`` or with ``git submodule update --init``
 in your jedi-vim repository.
 
-The autocompletion can be used with <ctrl+space>, if you want it to work with
-<tab> you can use `supertab <https://github.com/ervandew/supertab>`_.
-
 On Arch Linux, you can also install jedi-vim from AUR: `vim-jedi
 <https://aur.archlinux.org/packages/vim-jedi/>`__.
+
+Note that the `python-mode <https://github.com/klen/python-mode>`_ VIM plugin seems
+to conflict with jedi-vim, therefore you should disable it before enabling
+jedi-vim.
 
 
 Settings
@@ -151,6 +153,24 @@ This depends on the ``completeopt`` option. Jedi initializes it in its
 .. code-block:: vim
 
     autocmd FileType python setlocal completeopt-=preview
+
+
+I want <Tab> to do autocompletion
+---------------------------------
+
+Don't even think about changing the Jedi command to ``<Tab>``, 
+use `supertab <https://github.com/ervandew/supertab>`_!
+
+
+The completion is waaay too slow!
+---------------------------------
+
+Completion of complex libraries (like Numpy) should only be slow the first time
+you complete it. After that, the results should be cached and very fast.
+
+If it's still slow, in case you've installed the python-mode VIM plugin, disable
+it. It seems to conflict with jedi-vim. See issue `#163
+<https://github.com/davidhalter/jedi-vim/issues/163>`__.
 
 
 Testing
