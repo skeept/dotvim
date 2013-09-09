@@ -1,9 +1,10 @@
-" File: autoload/ctrlp/funky/python.vim
-" Description: adds python support to ctrlp's funky extension
+" Language: Python (python)
 " Author: pydave
 " License: The MIT License
 
-let s:filter = [{ 'pattern': '\v\C^\s*(def|class)\s+\w.+:',
+let s:filter = [{ 'pattern': '\v\C^\s*class\s+\w+\s*(\([^\)]+\))?:',
+                \ 'filter': ['\v\C^\s*', '', '']},
+              \ { 'pattern': '\v\C^\s*def\s+\w+\s*(\_.*):',
                 \ 'filter': ['\v\C^\s*', '', '']}
 \ ]
 

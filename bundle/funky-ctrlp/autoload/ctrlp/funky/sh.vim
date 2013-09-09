@@ -1,11 +1,16 @@
-" File: autoload/ctrlp/funky/sh.vim
-" Description: adds sh support to ctrlp's funky extension
-" Author: Takahiro Yoshihara <tacahiroy\AT/gmail.com>
+" Language: shell script (sh)
+" Author: Takahiro Yoshihara
 " License: The MIT License
 
-let s:filter = [{ 'pattern': '\m\C^[\t ]*\(function[\t ]\+\)\?[_a-zA-Z][_a-zA-Z0-9]\+[\t ]*([\t ]*)[\t ]*\n*{',
-                \ 'filter': []}
-\]
+let shtype = get(g:, 'ctrlp_funky_sh_type', 'bash')
+
+execute 'runtime! ctrlp/funky/' . shtype . '.vim'
+
+if exists('*ctrlp#funky#' . shtype . '#get_filter')
+  let s:filter = ctrlp#funky#{shtype}#get_filter()
+else
+  let s:filter = ctrlp#funky#bash#get_filter()
+endif
 
 function! ctrlp#funky#sh#apply_filter(bufnr)
   return ctrlp#funky#abstract(a:bufnr, s:filter)

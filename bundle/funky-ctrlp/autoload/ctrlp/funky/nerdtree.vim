@@ -1,6 +1,5 @@
-" File: autoload/ctrlp/funky/nerdtree.vim
-" Description: adds NERDTree support to ctrlp's funky extension
-" Author: Takahiro Yoshihara <tacahiroy\AT/gmail.com>
+" Language: The NERD tree (nerdtree)
+" Author: Takahiro Yoshihara
 " License: The MIT License
 
 let s:filter = [{ 'pattern': '\m\C^\s*[▸▾|~+].*\/$',
@@ -19,10 +18,5 @@ endfunction
 
 function! ctrlp#funky#nerdtree#get_filter()
   return s:filter
-endfunction
-
-" prevent splitting NERDTree window
-function! ctrlp#funky#nerdtree#line_mode()
-  return 1
 endfunction
 
