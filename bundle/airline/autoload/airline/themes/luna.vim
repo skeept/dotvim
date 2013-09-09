@@ -40,6 +40,9 @@ let g:airline#themes#luna#palette.visual_modified = {
 
 let s:IA = [ '#4e4e4e' , '#002b2b' , 59 , 23 , '' ]
 let g:airline#themes#luna#palette.inactive = airline#themes#generate_color_map(s:IA, s:IA, s:IA, s:file)
+let g:airline#themes#luna#palette.inactive_modified = {
+      \ 'airline_c': [ '#450000' , ''        , 52      , ''      , ''     ] ,
+      \ }
 
 
 if !get(g:, 'loaded_ctrlp', 0)
@@ -49,3 +52,11 @@ let g:airline#themes#luna#palette.ctrlp = airline#extensions#ctrlp#generate_colo
       \ [ '#ffffff' , '#002b2b' , 231 , 23 , ''     ] ,
       \ [ '#ffffff' , '#005252' , 231 , 36 , ''     ] ,
       \ [ '#ffffff' , '#973d45' , 231 , 95 , ''     ] )
+
+let g:airline#themes#luna#palette.tabline = {
+      \ 'airline_tab':  ['#2aa198', '#003f3f',  231, 29, ''],
+      \ 'airline_tabsel':  ['#ffffff', '#2e8b57',  231, 36, ''],
+      \ 'airline_tabtype':  ['#ffffff', '#005252',  231, 36, ''],
+      \ 'airline_tabfill':  ['#ffffff', '#002b2b',  231, 23, ''],
+      \ 'airline_tabmod':  ['#ffffff', '#780000',  231, 88, ''],
+      \ }

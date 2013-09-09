@@ -33,7 +33,7 @@ function! airline#extensions#whitespace#check()
 
     let mixed = 0
     if index(s:checks, 'indent') > -1
-      let indents = [search('^ ', 'nb'), search('^ ', 'n'), search('^\t', 'nb'), search('^\t', 'n')]
+      let indents = [search('^ \{2,}', 'nb'), search('^ \{2,}', 'n'), search('^\t', 'nb'), search('^\t', 'n')]
       let mixed = indents[0] != 0 && indents[1] != 0 && indents[2] != 0 && indents[3] != 0
     endif
 
@@ -56,6 +56,7 @@ endfunction!
 function! airline#extensions#whitespace#toggle()
   if s:enabled
     autocmd! airline_whitespace CursorHold,BufWritePost
+    augroup! airline_whitespace
     let s:enabled = 0
   else
     call airline#extensions#whitespace#init()
@@ -65,7 +66,7 @@ function! airline#extensions#whitespace#toggle()
 endfunction
 
 function! airline#extensions#whitespace#init(...)
-  let g:airline_parts.whitespace = '%{airline#extensions#whitespace#check()}'
+  call airline#parts#define_function('whitespace', 'airline#extensions#whitespace#check')
 
   unlet! b:airline_whitespace_check
   augroup airline_whitespace

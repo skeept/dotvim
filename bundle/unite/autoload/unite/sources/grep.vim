@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 04 Aug 2013.
+" Last Modified: 08 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -155,7 +155,7 @@ function! s:source.hooks.on_syntax(args, context) "{{{
   syntax match uniteSource__GrepSeparator /:/ contained
         \ containedin=uniteSource__GrepLine
         \ nextgroup=uniteSource__GrepLineNr
-  syntax match uniteSource__GrepLineNr /\d\+/ contained
+  syntax match uniteSource__GrepLineNr /\d\+\ze:/ contained
         \ containedin=uniteSource__GrepLine
         \ nextgroup=uniteSource__GrepPattern
   execute 'syntax match uniteSource__GrepPattern /'
@@ -168,7 +168,7 @@ function! s:source.hooks.on_syntax(args, context) "{{{
 endfunction"}}}
 function! s:source.hooks.on_close(args, context) "{{{
   if has_key(a:context, 'source__proc')
-    call a:context.source__proc.waitpid()
+    call a:context.source__proc.kill()
   endif
 endfunction "}}}
 function! s:source.hooks.on_post_filter(args, context) "{{{
@@ -267,6 +267,8 @@ function! s:source.async_gather_candidates(args, context) "{{{
     " Disable async.
     let a:context.is_async = 0
     call unite#print_source_message('Completed.', s:source.name)
+
+    call a:context.source__proc.waitpid()
   endif
 
   let candidates = map(stdout.read_lines(-1, 100),

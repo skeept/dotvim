@@ -11,7 +11,7 @@ function! airline#extensions#example#init(ext)
 
   " Here we define a new part for the plugin.  This allows users to place this
   " extension in arbitrary locations.
-  let g:airline_parts.cats = '%{airline#extensions#example#get_cats()}'
+  call airline#parts#define_raw('cats', '%{airline#extensions#example#get_cats()}')
 
   " Next up we add a funcref so that we can run some code prior to the
   " statusline getting modifed.
@@ -25,10 +25,14 @@ endfunction
 function! airline#extensions#example#apply(...)
   " First we check for the filetype.
   if &filetype == "nyancat"
-    " Let's use a helper function.  It will take care of ensuring that the
-    " window-local override exists (and create one based on the global
-    " airline_section if not), and prepend to it.
-    call airline#extensions#prepend_to_section('x', g:airline_parts.cats)
+
+    " Let's say we want to append to section_c, first we check if there's
+    " already a window-local override, and if not, create it off of the global
+    " section_c.
+    let w:airline_section_c = get(w:, 'airline_section_c', g:airline_section_c)
+
+    " Then we just append this extenion to it, optionally using separators.
+    let w:airline_section_c .= ' '.g:airline_left_alt_sep.' %{airline#extensions#example#get_cats()}'
   endif
 endfunction
 

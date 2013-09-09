@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Aug 2013.
+" Last Modified: 04 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -142,7 +142,9 @@ function! neocomplete#init#_others() "{{{
   " Set completefunc.
   let completefunc_save = &l:completefunc
   let &completefunc = 'neocomplete#complete#manual_complete'
-  let &l:completefunc = completefunc_save
+  if completefunc_save != ''
+    let &l:completefunc = completefunc_save
+  endif
 
   command! -nargs=0 -bar NeoCompleteDisable
         \ call neocomplete#init#disable()
@@ -714,12 +716,12 @@ function! neocomplete#init#_source(source) "{{{
 
   let source.loaded = 0
   " Source kind convertion.
-  if source.kind ==# 'plugin'
+  if !has_key(source, 'kind')
+    let source.kind = 'manual'
+  elseif source.kind ==# 'plugin'
     let source.kind = 'keyword'
   elseif source.kind ==# 'ftplugin' || source.kind ==# 'complfunc'
     " For compatibility.
-    let source.kind = 'manual'
-  elseif !has_key(source, 'kind')
     let source.kind = 'manual'
   endif
 

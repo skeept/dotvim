@@ -1,6 +1,8 @@
 " MIT License. Copyright (c) 2013 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
 
+let s:flags = get(g:, 'airline#extensions#tagbar#flags', '')
+
 " Arguments: current, sort, fname
 function! airline#extensions#tagbar#get_status(...)
   let builder = airline#builder#new({ 'active': a:1 })
@@ -16,11 +18,17 @@ function! airline#extensions#tagbar#inactive_apply(...)
   endif
 endfunction
 
+function! airline#extensions#tagbar#currenttag()
+  if get(w:, 'airline_active', 0)
+    return tagbar#currenttag('%s', '', s:flags)
+  endif
+  return ''
+endfunction
+
 function! airline#extensions#tagbar#init(ext)
   call a:ext.add_inactive_statusline_func('airline#extensions#tagbar#inactive_apply')
   let g:tagbar_status_func = 'airline#extensions#tagbar#get_status'
 
-  let g:airline_parts.tagbar = '%(%{get(w:,"airline_active",0) ? tagbar#currenttag("%s","") : ""} '
-        \ .g:airline_right_alt_sep.' %)'
+  call airline#parts#define_function('tagbar', 'airline#extensions#tagbar#currenttag')
 endfunction
 

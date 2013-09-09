@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Aug 2013.
+" Last Modified: 08 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -82,7 +82,7 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
   nnoremap <buffer><silent> <Plug>(vimfiler_popup_shell)
         \ :<C-u>call <SID>popup_shell()<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_edit_file)
-        \ :<C-u>call <SID>edit()<CR>
+        \ :<C-u>call vimfiler#mappings#do_switch_action(g:vimfiler_edit_action)<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_split_edit_file)
         \ :<C-u>call <SID>split_edit_file()<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_edit_binary_file)
@@ -328,6 +328,13 @@ function! vimfiler#mappings#do_action(action, ...) "{{{
         \ a:action, marked_files, cursor_linenr)
 endfunction"}}}
 
+function! vimfiler#mappings#do_switch_action(action) "{{{
+  let current_linenr = line('.')
+  call s:switch()
+
+  call vimfiler#mappings#do_action(a:action, current_linenr)
+endfunction"}}}
+
 function! vimfiler#mappings#do_files_action(action, files, ...) "{{{
   let cursor_linenr = get(a:000, 0, line('.'))
   let vimfiler = vimfiler#get_current_vimfiler()
@@ -336,6 +343,7 @@ function! vimfiler#mappings#do_files_action(action, files, ...) "{{{
   let current_dir = vimfiler.current_dir
   call unite#mappings#do_action(a:action, a:files, {
         \ 'vimfiler__current_directory' : current_dir,
+        \ 'unite__is_interactive' : 1,
         \ })
 endfunction"}}}
 
@@ -350,6 +358,7 @@ function! vimfiler#mappings#do_dir_action(action, directory, ...) "{{{
   let context = get(a:000, 0, {})
   let vimfiler = vimfiler#get_current_vimfiler()
   let context.vimfiler__current_directory = a:directory
+  let context.unite__is_interactive = 1
 
   let files = vimfiler#get_marked_files()
   if empty(files)
@@ -939,7 +948,7 @@ function! s:jump_child(is_first) "{{{
     return
   endif
 
-  let max = a:is_first ? 1 : line('$')
+  let max = a:is_first ? b:vimfiler.prompt_linenr : line('$')
   let cnt = line('.')
   let file = vimfiler#get_file(cnt)
   let level = file.vimfiler__nest_level
@@ -1001,12 +1010,6 @@ function! s:popup_shell() "{{{
   call vimfiler#mappings#do_current_dir_action('vimfiler__shell', {
         \ 'vimfiler__files' : files,
         \})
-endfunction"}}}
-function! s:edit() "{{{
-  let current_linenr = line('.')
-  call s:switch()
-
-  call vimfiler#mappings#do_action(g:vimfiler_edit_action, current_linenr)
 endfunction"}}}
 function! s:edit_binary_file() "{{{
   let file = vimfiler#get_file()
@@ -1349,7 +1352,15 @@ function! s:make_directory() "{{{
   let old_files =
         \ copy(vimfiler#get_current_vimfiler().current_files)
 
-  call vimfiler#mappings#do_dir_action('vimfiler__mkdir', directory)
+  " Don't quit.
+  let context = vimfiler#get_context()
+  let is_quit = context.quit
+  try
+    let context.quit = 0
+    call vimfiler#mappings#do_dir_action('vimfiler__mkdir', directory)
+  finally
+    let context.quit = is_quit
+  endtry
 
   call s:search_new_file(old_files)
 endfunction"}}}
