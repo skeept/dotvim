@@ -65,7 +65,7 @@ function! airline#extensions#apply(...)
 
   if &buftype == 'quickfix'
     let w:airline_section_a = '%q'
-    let w:airline_section_b = ''
+    let w:airline_section_b = '%{get(w:, "quickfix_title", "")}'
     let w:airline_section_c = ''
     let w:airline_section_x = ''
   elseif &buftype == 'help'
@@ -168,7 +168,7 @@ function! airline#extensions#load()
   endif
 
   if (get(g:, 'airline#extensions#branch#enabled', 1) && get(g:, 'airline_enable_branch', 1))
-        \ && (get(g:, 'loaded_fugitive', 0) || get(g:, 'loaded_lawrencium', 0))
+        \ && (exists('*fugitive#head') || exists('*lawrencium#statusline'))
     call airline#extensions#branch#init(s:ext)
   endif
 
