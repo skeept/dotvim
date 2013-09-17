@@ -26,7 +26,7 @@ switch ( Get-Content Env:ComputerName )
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
   }
-  "Erebor" {
+  "H8460305022398" {
     $install = "C:\Program Files\Vim\$vim_version"
     $backup = "C:\htemp\tmp"
     $source = "C:\htemp\vim"
