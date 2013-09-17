@@ -124,9 +124,13 @@ CUSTOMIZATION                                        *airline-customization*
 The following are some unicode symbols for customizing the left/right
 separators, as well as the powerline font glyths.
 
-Note: You must define the dictionary first before setting values: >
-  let g:airline_symbols = {}
->
+Note: You must define the dictionary first before setting values. Also, it's a
+good idea to check whether if it exists as to avoid accidentally overwritting
+its contents. >
+  if !exists('g:airline_symbols')
+    let g:airline_symbols = {}
+  endif
+
   " unicode symbols
   let g:airline_left_sep = '»'
   let g:airline_left_sep = '▶'
@@ -339,7 +343,13 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
 * configure the minimum number of buffers needed to show the tabline. >
   let g:airline#extensions#tabline#buffer_min_count = 0
 <
-  Note: this setting only applies to a single tab.
+  Note: this setting only applies to a single tab and when `show_buffers` is
+  true.
+
+* configure the minimum number of tabs needed to show the tabline. >
+  let g:airline#extensions#tabline#tab_min_count = 0
+<
+  Note: this setting only applies when `show_buffers` is false.
 
 * configure separators for the tabline only. >
   let g:airline#extensions#tabline#left_sep = ''
