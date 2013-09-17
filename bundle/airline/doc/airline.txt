@@ -19,7 +19,7 @@ FEATURES                                                  *airline-features*
 *  looks good with regular fonts, and provides configuration points so you
    can use unicode or powerline symbols.
 *  optimized for speed; it loads in under a millisecond.
-*  fully customizable; if you know a little |statusline| syntax you can
+*  fully customizable; if you know a little 'statusline' syntax you can
    tweak it to your needs.
 *  extremely easy to write themes.
 
@@ -72,7 +72,7 @@ values):
   endfunction
 <
 * enable/disable automatic population of the `g:airline_symbols` dictionary
-  with powerline symbols.
+  with powerline symbols. >
   let g:airline_powerline_fonts=0
 <
 * define the set of text to display for each mode.  >
@@ -116,7 +116,7 @@ COMMANDS                                                  *airline-commands*
   Toggles whitespace detection.
 
 :AirlineToggle                                              *:AirlineToggle*
-  Toggles between the standard `statusline`
+  Toggles between the standard 'statusline'
 
 ==============================================================================
 CUSTOMIZATION                                        *airline-customization*
@@ -124,9 +124,13 @@ CUSTOMIZATION                                        *airline-customization*
 The following are some unicode symbols for customizing the left/right
 separators, as well as the powerline font glyths.
 
-Note: You must define the dictionary first before setting values: >
-  let g:airline_symbols = {}
->
+Note: You must define the dictionary first before setting values. Also, it's a
+good idea to check whether if it exists as to avoid accidentally overwritting
+its contents. >
+  if !exists('g:airline_symbols')
+    let g:airline_symbols = {}
+  endif
+
   " unicode symbols
   let g:airline_left_sep = '»'
   let g:airline_left_sep = '▶'
@@ -339,7 +343,13 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
 * configure the minimum number of buffers needed to show the tabline. >
   let g:airline#extensions#tabline#buffer_min_count = 0
 <
-  Note: this setting only applies to a single tab.
+  Note: this setting only applies to a single tab and when `show_buffers` is
+  true.
+
+* configure the minimum number of tabs needed to show the tabline. >
+  let g:airline#extensions#tabline#tab_min_count = 0
+<
+  Note: this setting only applies when `show_buffers` is false.
 
 * configure separators for the tabline only. >
   let g:airline#extensions#tabline#left_sep = ''
@@ -347,7 +357,7 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
   let g:airline#extensions#tabline#right_sep = ''
   let g:airline#extensions#tabline#right_alt_sep = ''
 <
-Note: Enabling this extension will modify |showtabline| and |guioptions|.
+Note: Enabling this extension will modify 'showtabline' and 'guioptions'.
 
 ==============================================================================
 ADVANCED CUSTOMIZATION                      *airline-advanced-customization*
@@ -369,6 +379,9 @@ For example, this is how you would define a part function: >
 Here is how you would define a part that is visible only if the window width
 greater than a minimum width. >
   call airline#parts#define_minwidth('foo', 50)
+<
+Parts can be configured to be visible conditionally. >
+  call airline#parts#define_condition('foo', 'getcwd() =~ "work_dir"')
 <
 Note: Part definitions are combinative; e.g. the two examples above modify the
 same `foo` part.
@@ -393,13 +406,13 @@ the space and cwd are not defined parts. For convenience, if a part of that
 key does not exist, it will be inserted as is. The unit tests will be a good
 resource for possibilities.
 
-Note: The use of `VimEnter` is important, because most extensions are lazily
+Note: The use of |VimEnter| is important, because most extensions are lazily
 loaded, so we must give them a chance to define their parts before we can use
 them.
 
 Note: The `airline#section#create` function and friends will do its best to
 create a section with the appropriate separators, but it only works for
-function and text parts. Special |statusline| items like %f or raw/undefined
+function and text parts. Special 'statusline' items like %f or raw/undefined
 parts will not work as it is not possible to inspect their widths/contents
 before rendering to the statusline.
 
@@ -489,15 +502,15 @@ WRITING EXTENSIONS                              *airline-writing-extensions*
 
 For contributions into the plugin, here are the following guidelines:
 
-1.  For simple |&filetype| checks, they can be added directly into the
+1.  For simple 'filetype' checks, they can be added directly into the
 `extensions.vim` file.
 
 2.  Pretty much everything else should live as a separate file under the
 `extensions/` directory.
 
   a.  Inside `extensions.vim`, add a check for some variable or command that
-      is always available (these must be defined in `plugin`, and _not_
-      `autoload` of the other plugin).  If it exists, then initialize the
+      is always available (these must be defined in `plugin/`, and _not_
+      `autoload/` of the other plugin).  If it exists, then initialize the
       extension. This ensures that the extension is loaded if and only if the
       user has the other plugin installed.  Also, a check to
       `airline#extensions#foo_plugin#enabled` should be performed to allow the
@@ -532,7 +545,7 @@ A. You need to set up your terminal correctly.  For more details, see
   set t_Co=256
 <
 Q. The statusline does not appear until I create a split.
-A. This is the default setting of |laststatus|.  If you want it to appear all
+A. This is the default setting of 'laststatus'.  If you want it to appear all
    the time, add the following to your vimrc: >
   set laststatus=2
 <

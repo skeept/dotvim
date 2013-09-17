@@ -51,9 +51,10 @@ FAQ			|unite-faq|
 ==============================================================================
 INTRODUCTION					*unite-introduction*
 
-*Unite* is a common extensible interface for searching and displaying lists of
-information from within vim. It can display and search through any arbitrary
-source, from files and directories to buffers and registers.
+*unite* or *unite.vim* is a common extensible interface for searching and
+displaying lists of information from within vim. It can display and search
+through any arbitrary source, from files and directories to buffers and
+registers.
 
 The difference between |unite| and similar plug-ins like |fuzzyfinder|,
 |ctrl-p| or |ku| is, |unite| provides a standard interface for any sources.
@@ -3415,6 +3416,14 @@ Q: Unite adds unite buffer to jumplist automatically.
 
 A: Sorry, but it is hard to fix. You should use |unite-source-jump| instead of
 <C-i>/<C-o> mappings. It ignores unite buffer.
+
+Note: In this issue, experimental settings are suggested. But I don't
+recommend them.
+https://github.com/Shougo/unite.vim/issues/278
+Because:
+1. Unite buffer name may be changed in later version.
+2. You cannot use |:UniteResume| feature.
+3. It has side effect. I cannot guarantee it works.
 
 Q: unite.vim is too slow.
 
