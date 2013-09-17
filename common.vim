@@ -67,7 +67,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
 set wildignore+=tags,cscope.out,*.db,*.pdf
-set wildignore+=GTAGS,GRTAGS,GPATH
+set wildignore+=GTAGS,GRTAGS,GPATH,.tmp
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -347,6 +347,14 @@ if has("autocmd")
     "autocmd FileType taglist       setlocal norelativenumber nonumber
     autocmd FileType qf            setlocal norelativenumber nonumber
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
+  augroup END
+
+  "try to disable swapfiles for large files
+  augroup disable_swap_large_files
+    autocmd!
+    "5 megs
+    autocmd BufRead * if getfsize(expand('%:p')) > 5242880 |
+          \ setlocal noswapfile noundofile | endif
   augroup END
 
 endif " has("autocmd")

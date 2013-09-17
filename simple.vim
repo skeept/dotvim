@@ -48,6 +48,12 @@ endif
 "this is where all vimrc and simple settings go
 execute "source " . g:p0 . "/common.vim"
 
+" load machine specific file if it exists. In this case work related functions
+let s:work_common = expand(g:p0 . "/work_common.vim")
+if filereadable(s:work_common)
+  execute "source " . s:work_common
+endif
+
 
 "================== Statusline ================================================{{{
 "set statusline=%-3.3n%t\ \ \ [%{strlen(&fenc)?&fenc:'none'},%{&ff}]%h%m%r%y%=%c,%l/%L\ %P
