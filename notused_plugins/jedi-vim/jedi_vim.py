@@ -58,10 +58,6 @@ def echo_highlight(msg):
     vim_command('echohl WarningMsg | echom "%s" | echohl None' % msg)
 
 
-if not hasattr(jedi, '__version__') or jedi.__version__ < (0, 7, 0):
-    echo_highlight('Please update your Jedi version, it is to old.')
-
-
 class PythonToVimStr(unicode):
     """ Vim has a different string implementation of single quotes """
     __slots__ = []
@@ -403,6 +399,18 @@ def new_buffer(path, options=''):
     # options are what you can to edit the edit options
     if vim_eval('g:jedi#use_tabs_not_buffers') == '1':
         _tabnew(path, options)
+    elif not vim_eval('g:jedi#use_splits_not_buffers') == '1':
+        user_split_option = vim_eval('g:jedi#use_splits_not_buffers')
+        split_options = {
+            'top': 'topleft split',
+            'left': 'topleft vsplit',
+            'right': 'botright vsplit',
+            'bottom': 'botright split'
+        }
+        if user_split_option not in split_options:
+            print('g:jedi#use_splits_not_buffers value is not correct, valid options are: %s' % ','.join(split_options.keys()))
+        else:
+            vim_command(split_options[user_split_option] + " %s" % path)
     else:
         if vim_eval("!&hidden && &modified") == '1':
             if vim_eval("bufname('%')") is None:
@@ -459,3 +467,7 @@ def escape_file_path(path):
 
 def print_to_stdout(level, str_out):
     print(str_out)
+
+if not hasattr(jedi, '__version__') or jedi.__version__ < (0, 7, 0):
+    echo_highlight('Please update your Jedi version, it is to old.')
+
