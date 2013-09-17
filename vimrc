@@ -94,6 +94,11 @@ endif
 "this is where all vimrc and simple settings go
 execute "source " . g:p0 . "/common.vim"
 
+let s:work_common = expand(g:p0 . "/work_common.vim")
+if filereadable(s:work_common)
+  execute "source " . s:work_common
+endif
+
 "================== Taglist ==================================================={{{
 "taglist options
 "let Tlist_Close_On_Select = 1
@@ -505,8 +510,11 @@ if (s:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
   " <C-h>, <BS>: close popup and delete backword char.
   inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
   inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-  inoremap <expr><C-y>  neocomplete#close_popup()
-  inoremap <expr><C-e>  neocomplete#cancel_popup()
+  "inoremap <expr><C-y>  neocomplete#close_popup()
+  "inoremap <expr><C-e>  neocomplete#cancel_popup()
+  inoremap <expr><C-y> pumvisible() ? neocomplete#close_popup() : "\<C-Y>"
+  inoremap <expr><C-e> pumvisible() ? neocomplete#cancel_popup() :
+        \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
   " Close popup by <Space>.
   "inoremap <expr><Space> pumvisible() ? neocomplete#close_popup() : "\<Space>"
 
