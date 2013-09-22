@@ -24,9 +24,14 @@ endfunction
 
 nnoremap ,z1 :<C-U>call SetFoldingPatternNumCharsFront()<CR>
 
-function! JumpToNextNonMatching()
+function! JumpToNextNonMatching(direction)
+  let flags = ''
+  if a:direction == -1
+    let flags = flags . 'b'
+  endif
   let curr_line = getline('.')
   let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
-  call search(spattern)
+  call search(spattern, flags)
 endfunction
-nnoremap ,n :<C-U>call JumpToNextNonMatching()<CR><C-L>
+nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR><C-L>
+nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR><C-L>
