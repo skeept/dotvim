@@ -29,9 +29,14 @@ function! JumpToNextNonMatching(direction)
   if a:direction == -1
     let flags = flags . 'b'
   endif
-  let curr_line = getline('.')
-  let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
-  call search(spattern, flags)
+  let ntimes = max([v:count, 1])
+  let i = 1
+  while i <= ntimes
+    let i = i + 1
+    let curr_line = getline('.')
+    let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
+    call search(spattern, flags)
+  endwhile
 endfunction
 nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR><C-L>
 nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR><C-L>
