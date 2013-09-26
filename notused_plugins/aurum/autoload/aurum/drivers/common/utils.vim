@@ -243,7 +243,7 @@ if has('python')
         let a:fdict.reloadcmd=(g.py.' reload('.g.pp.')')
     endfunction
 else
-    function s:F.pyimport(plugdict, fdict, pkg)
+    function s:F.pyimport(plugdict, fdict)
         let a:plugdict.g.usepythondriver=0
     endfunction
 endif

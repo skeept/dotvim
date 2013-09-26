@@ -4,20 +4,14 @@ setlocal textwidth=0
 setlocal noswapfile
 setlocal nomodeline
 execute frawor#Setup('0.0', {'@%aurum/bufvars': '0.0',
-            \                '@%aurum/vimdiff': '1.1',
+            \                '@%aurum/vimdiff': '1.0',
             \               '@%aurum/cmdutils': '4.0',
             \                   '@%aurum/edit': '1.2',
             \                 '@%aurum/commit': '1.0',
             \                     '@/mappings': '0.0',
-            \                      '@/options': '0.0',
             \                           '@/os': '0.0',})
 let s:_messages={
             \  'nopars': 'Revision %s has no parents',
-        \}
-let s:_oprefix='aurum'
-let s:_options={
-            \'statwincmd': {'default': 'c',
-            \               'checker': 'match /\v^[jkhlwWtbpc]$/'},
         \}
 "▶1 runmap
 let s:noacttypes={
@@ -43,14 +37,8 @@ function s:F.runmap(action, ...)
     endif
     let visual=(a:0&&a:1)
     let isrecord=get(bvar.opts, 'record', 0)
-    if isrecord
-        if a:action is# 'track'
-            return bvar.recrunmap(((visual)?('v'):('')).'add')
-        elseif a:action is# 'commit'
-            return bvar.recrunmap('commit')
-        elseif a:action is# 'forget'
-            return bvar.recrunmap(((visual)?('v'):('')).'remove')
-        endif
+    if has_key(bvar.foreignactions, a:action)
+        return bvar.foreignmap(a:action, visual)
     endif
     let rev1=get(bvar.opts, 'rev1')
     let rev2=get(bvar.opts, 'rev2')
@@ -71,17 +59,12 @@ function s:F.runmap(action, ...)
     if has_key(s:noacttypes, a:action) &&
                 \!(a:action[-7:] is# 'vimdiff' && manyfiles) &&
                 \index(s:noacttypes[a:action], bvar.types[curline])!=-1
-        return ''
+        return
     endif
     if !(a:action is# 'commit' || a:action is# 'track' || a:action is# 'forget'
                 \|| a:action[-11:] is# 'fullvimdiff' ||
                 \(a:action[-7:] is# 'vimdiff' && manyfiles))
-        if isrecord
-            let [lwnr, rwnr, swnr]=bvar.getwnrs()
-            execute lwnr.'wincmd w'
-        elseif winnr('$')>1
-            execute 'wincmd' s:_f.getoption('statwincmd')
-        endif
+        call bvar.switchwindow()
     endif
     if a:action is# 'open'
         execute 'silent e' fnameescape(s:_r.os.path.join(bvar.repo.path, file))
@@ -108,31 +91,16 @@ function s:F.runmap(action, ...)
             if empty(cs1.parents)
                 call s:_f.throw('nopars', cs1.hex)
             endif
+            let file2=0
             let fargs2=['file', bvar.repo, cs1.parents[0], file]
         elseif empty(rev2)
             let file2=s:_r.os.path.join(bvar.repo.path, file)
+            let fargs2=0
         else
+            let file2=0
             let fargs2=['file', bvar.repo, rev2, file]
         endif
-        if get(bvar.opts, 'record', 0)
-            if exists('file2')
-                execute 'silent edit' fnameescape(file2)
-            else
-                call call(s:_r.mrun, ['silent edit']+fargs2, {})
-            endif
-            diffthis
-            execute rwnr.'wincmd w'
-            call call(s:_r.mrun, ['silent edit']+fargs1, {})
-            diffthis
-            wincmd p
-        else
-            if exists('file2')
-                execute 'silent edit' fnameescape(file2)
-            else
-                call call(s:_r.mrun, ['silent edit']+fargs2, {})
-            endif
-            call s:_r.vimdiff.split([fargs1], -1)
-        endif
+        call bvar.openfiles(file2, fargs1, fargs2)
     elseif a:action is# 'annotate'
         call s:_r.mrun('silent edit', 'file', bvar.repo, rev1, file)
         AuAnnotate

@@ -1133,6 +1133,23 @@ recheight                                                  *g:aurum_recheight*
     Default: winheight/5 (in empty tab |winheight()| will return roughly the 
              same value as 'lines').
 
+recautowrite                                            *g:aurum_recautowrite*
+    Boolean. Determines whether files opened for editing should be 
+    automatically written on |BufWinLeave| and |BufLeave| events.
+    See |aurum-m-AuRecord_Edit|.
+    Default: 1.
+
+fullundo                                                    *g:aurum_fullundo*
+    Boolean. Determines whether full undo tree should be kept for status 
+    window. With this option you will be able to undo changes done while using 
+    |aurum-m-AuRecord_Edit| and redo them (note: changes are atomic: undo 
+    information for edited files is not kept and all changes done during 
+    editing are squashed in one change no matter how often do you save). 
+    Without this option each time you use |aurum-m-AuRecord_Edit| undo history 
+    is discarded. This option keeps edited version in memory thus set it to 
+    true if you use |:AuRecord| to partially commit large files.
+    Default: 1.
+
 diffopts                                                    *g:aurum_diffopts*
     Dictionary. For possible keys see |aurum-diffoptions| (no truncations are 
     allowed, flags should be turned into “{option : 0}” for “nooption”, 
@@ -2187,6 +2204,7 @@ Python driver was not tested under windows (wine) at all.
          respectively. Same for |aurum://status| “rev1” and “rev2” options.
     1.1: Added |:AuStatus| changes.
     1.2: Made _r.status.parseshow handle “all” “status”.
+    2.0: Refactored code to ease use with special tabs (like |:AuRecord|)
 @%aurum/commit:
     1.0: Added fifth argument to _r.commit.commit().
     1.1: Added sixth optional argument to _r.commit.commit().
@@ -2199,6 +2217,8 @@ Python driver was not tested under windows (wine) at all.
          a:opts.amend.
 @%aurum/annotate:
     1.0: Removed one argument to _r.annotate.setannbuf().
+    2.0: Add one argument to _r.annotate.setannbuf(): window ID; add 
+         _r.annotate.findwin().
 @%aurum/cmdutils:
     1.0: Removed cmdutils.prevbuf().
     2.0: Splitted it into @aurum/cmdutils and @aurum/computils.
@@ -2247,5 +2267,6 @@ ftplugin/aurumlog:
     0.2: Added optional argument to _r.maputils.getnthparentfile().
 @%aurum/record:
     0.1: Added |:AuRecord| amend.
+    0.2: Officially added |g:aurum_fullundo|, added |g:aurum_recautowrite|.
 
 vim: ft=help:tw=78

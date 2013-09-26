@@ -1,6 +1,6 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('1.0', {'@%aurum/cmdutils': '4.3',
+execute frawor#Setup('2.0', {'@%aurum/cmdutils': '4.3',
             \                 '@%aurum/bufvars': '0.0',
             \                    '@%aurum/edit': '1.4',
             \                     '@/functions': '0.1',
@@ -35,11 +35,8 @@ endfunction
 "▶1 unload
 function s:F.unload(bvar)
     if has_key(a:bvar, 'annbuf') && bufexists(a:bvar.annbuf)
-        let annwin=s:F.findwin(a:bvar.annbuf)
-        if annwin==-1
-            let annwin=bufwinnr(a:bvar.annbuf)
-        endif
-        if annwin!=-1
+        let annwin=s:F.findwin(a:bvar.winid)
+        if annwin
             for [o, v] in items(a:bvar.saved)
                 call setwinvar(annwin, '&'.o, v)
             endfor
@@ -79,31 +76,34 @@ function s:F.setup(read, repo, rev, file)
     endif
     return bvar
 endfunction
-"▶1 findwin :: buf → win
-function s:F.findwin(buf)
+"▶1 findwin :: winid → win
+function s:F.findwin(winid)
     let win=winnr()
-    if win>1 && winbufnr(win-1)==a:buf
+    if win>1 && getwinvar(win-1, 'aurum_annonate_winid') is a:winid
         return win-1
-    elseif winbufnr(win+1)==a:buf
+    elseif getwinvar(win+1, 'aurum_annonate_winid') is a:winid
         return win+1
+    elseif getwinvar(win, 'aurum_annonate_winid') is a:winid
+        return win
     else
-        return -1
+        return 0
     endif
 endfunction
 "▶1 setannbuf
-function s:F.setannbuf(bvar, annbuf)
+function s:F.setannbuf(bvar, annbuf, winid)
     let a:bvar.annbuf=a:annbuf
+    let a:bvar.winid=a:winid
+    setlocal scrollbind cursorbind nowrap
+    let buf=bufnr('%')
+    let annwin=s:F.findwin(a:winid)
+    if !annwin
+        return
+    endif
+    execute annwin.'wincmd w'
     let a:bvar.saved={}
     let a:bvar.saved.scrollbind = &scrollbind
     let a:bvar.saved.cursorbind = &cursorbind
     let a:bvar.saved.wrap       = &wrap
-    setlocal scrollbind cursorbind nowrap
-    let buf=bufnr('%')
-    let annwin=s:F.findwin(a:annbuf)
-    if annwin==-1
-        return
-    endif
-    execute annwin.'wincmd w'
     setlocal scrollbind cursorbind nowrap
     " XXX I was unable to make scrollbinded windows behave sensibly without the 
     "     following command. No matter what I tried, if initially buffer had any 
@@ -149,6 +149,7 @@ let s:_aufunctions.cmd={'@FWC': ['-onlystrings '.
             \'}', 'filter']}
 let s:_aufunctions.comp=s:_r.cmdutils.gencompfunc(s:_aufunctions.cmd['@FWC'][0],
             \                                     [], s:_f.fwc.compile)
+let s:lastid=0
 function s:_aufunctions.cmd.function(opts)
     let [hasannbuf, repo, rev, file]=s:_r.cmdutils.getrrf(a:opts, 'noafile',
                 \                                         'annotate')
@@ -178,12 +179,15 @@ function s:_aufunctions.cmd.function(opts)
     let annwin=winnr()
     call s:F.foldopen()
     let lnr=line('.')
+    let winid=s:lastid
+    let s:lastid+=1
+    let w:aurum_annonate_winid=winid
     let anwidth=min([42, winwidth(0)/2-1])
     call s:_r.run('silent leftabove '.anwidth.'vsplit', 'annotate', repo,
                 \ rev, file)
     execute lnr
     setlocal bufhidden=wipe
-    call s:F.setannbuf(s:_r.bufvars[bufnr('%')], annbuf)
+    call s:F.setannbuf(s:_r.bufvars[bufnr('%')], annbuf, winid)
 endfunction
 let s:_augroups+=['AuAnnotateBW']
 "▶1 plstrgen
@@ -208,7 +212,8 @@ call s:_f.newcommand({'function': s:F.setup,
             \         'plstrgen': s:F.plstrgen,})
 "▶1 Post resource
 call s:_f.postresource('annotate', {'setannbuf': s:F.setannbuf,
-            \                        'foldopen': s:F.foldopen,})
+            \                        'foldopen': s:F.foldopen,
+            \                         'findwin': s:F.findwin,})
 "▶1
-call frawor#Lockvar(s:, '_r,_pluginloaded')
+call frawor#Lockvar(s:, '_r,lastid')
 " vim: ft=vim ts=4 sts=4 et fmr=▶,▲

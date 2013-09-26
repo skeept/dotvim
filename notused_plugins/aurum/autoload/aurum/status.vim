@@ -1,6 +1,7 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('1.2', {'@%aurum/cmdutils': '4.3',
+execute frawor#Setup('2.0', {'@%aurum/cmdutils': '4.3',
+            \                 '@%aurum/vimdiff': '1.1',
             \                    '@%aurum/edit': '1.0',
             \                     '@/functions': '0.1',
             \                           '@/fwc': '0.0',
@@ -12,12 +13,27 @@ let s:statchars={
         \}
 let s:_options={
             \'usestatwin': {'default': 1, 'filter': 'bool'},
+            \'statwincmd': {'default': 'c',
+            \               'checker': 'match /\v^[jkhlwWtbpc]$/'},
         \}
 let s:defshow=['modified', 'added', 'removed', 'deleted', 'unknown']
 let s:allshow=s:defshow+['ignored', 'clean']
 let s:showchars={}
 call map(copy(s:statchars), 'extend(s:showchars, {v:val            : v:key})')
 call map(copy(s:allshow),   'extend(s:showchars, {toupper(v:val[0]): v:val})')
+"▶1 switchwindow
+function s:F.switchwindow()
+    execute 'wincmd' s:_f.getoption('statwincmd')
+endfunction
+"▶1 openfiles
+function s:F.openfiles(file2, fargs1, fargs2)
+    if a:file2 isnot 0
+        execute 'silent edit' fnameescape(a:file2)
+    else
+        call call(s:_r.mrun, ['silent edit']+a:fargs2, {})
+    endif
+    call s:_r.vimdiff.split([a:fargs1], -1)
+endfunction
 "▶1 parseshow :: [Either type tabbr] → [type]
 function s:F.parseshow(show)
     if index(a:show, 'all')!=-1
@@ -39,7 +55,8 @@ function s:F.setup(read, repo, opts)
     for key in filter(['rev', 'wdrev'], 'has_key(opts, v:val)')
         let opts[key]=a:repo.functions.getrevhex(a:repo, opts[key])
     endfor
-    let bvar={}
+    let bvar={'switchwindow': s:F.switchwindow, 'openfiles': s:F.openfiles,
+                \'foreignactions': {}}
     let requiresclean=0
     let requiresignored=0
     if has_key(opts, 'show')
@@ -57,7 +74,6 @@ function s:F.setup(read, repo, opts)
     let bvar.types=[]
     let bvar.chars=[]
     let bvar.files=[]
-    let isrecord=get(opts, 'record', 0)
     let statlines=[]
     for [type, files] in filter(sort(items(status)), 'index(show,v:val[0])!=-1')
         let char=has_key(s:statchars, type)? s:statchars[type]: toupper(type[0])
@@ -75,7 +91,7 @@ function s:F.setup(read, repo, opts)
             if ignore
                 continue
             endif
-            let statlines+=[((isrecord)?('-'):('')).char.' '.file]
+            let statlines+=[get(opts, 'prefix', '').char.' '.file]
             let bvar.types+=[type]
             let bvar.chars+=[char]
             let bvar.files+=[file]
@@ -155,8 +171,7 @@ endfunction
 call s:_f.newcommand({
             \'function': s:F.setup,
             \ 'options': {'list': ['files', 'show'],
-            \             'bool': ['record'],
-            \              'str': ['rev', 'wdrev'],
+            \              'str': ['rev', 'wdrev', 'prefix'],
             \             'pats': ['files'],},
             \'filetype': 'aurumstatus',
             \})
