@@ -147,7 +147,7 @@ neobundle you can install the neocomplete plugin by following steps:
 						*neocomplete-migration*
 
 In case you are planing to move from neocomplcache to neocomplete there is a
-wiki page that offers a migration guide (incomplete yet).
+wiki page that offers a migration guide.
 https://github.com/Shougo/neocomplete.vim/wiki/neocomplete-migration-guide
 
 						*neocomplete-RECOMMENDATION*
@@ -681,12 +681,8 @@ g:neocomplete#sources#dictionary#dictionaries
 
 			*g:neocomplete#sources#dictionary#keyword_patterns*
 g:neocomplete#sources#dictionary#keyword_patterns
-		It is a dictionary to dictionary keyword patterns.  The
-		dictionary's key is filetype and value is keyword pattern.
-		If this variable is empty, neocomplete uses
-		|g:neocomplete#keyword_patterns| option.
-
-		Default value is {}.
+		This option is deleted. You must use
+		|neocomplete-source-attribute-keyword_patterns|.
 
 				*g:neocomplete#sources#file_include#exprs*
 g:neocomplete#sources#file_include#exprs
@@ -1351,6 +1347,21 @@ max_candidates
 			0 is used as the default value.  This means
 			maximum number is infinity.
 
+			*neocomplete-source-attribute-keyword_patterns*
+keyword_patterns
+			Dictionary	(Optional)
+			This dictionary records keyword patterns to
+			completion.
+>
+	let keyword_patterns = {}
+	let keyword_patterns.tex = '\\\?\h\w*'
+	call neocomplete#custom#source('dictionary',
+	\ 'keyword_patterns', keyword_patterns)
+<
+			This attribute is optional; if it is not given,
+			|g:neocomplete#keyword_patterns| is used as the
+			default value.
+
 				*neocomplete-source-attribute-is_volatile*
 is_volatile		Number		(Optional)
 			Whether the source recalculates the candidates
@@ -1631,12 +1642,11 @@ you can check 'path' option or change |g:neocomplete#sources#include#paths|.
 http://github.com/Shougo/vimproc
 
 
-Q: An error occurred in "sudo vim":
+Q: neocomplete cannot create cache files in "sudo vim":
 
-A: neocomplete does not support "sudo vim".  Because neocomplete (and other
-plugins) creates temporary files in super user permission by sudo command.
-You must use sudo.vim or set "Defaults always_set_home" in "/etc/sudoers", or
-must use "sudoedit" command.
+A: Because neocomplete (and other plugins) creates temporary files in super
+user permission by sudo command.  You must use sudo.vim or set "Defaults
+always_set_home" in "/etc/sudoers", or must use "sudoedit" command.
 
 Ubuntu has a command "sudoedit" which can work well with neocomplete.
 I'm not sure if other distros has this command...
@@ -1948,7 +1958,7 @@ https://github.com/Shougo/neocomplete.vim/issues/69
 
 A: You can use |g:neocomplete#sources#buffer#max_keyword_width|.
 
-Q: neocomplete will change external completeopt vaule(longest).
+Q: neocomplete will change external completeopt value(longest).
 https://github.com/Shougo/neocomplcache.vim/issues/453
 
 A: It is feature. Because "longest" completeopt conflicts with auto
