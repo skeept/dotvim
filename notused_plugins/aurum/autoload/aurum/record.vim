@@ -1,6 +1,6 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('0.1', {'@/options': '0.0',
+execute frawor#Setup('0.2', {'@/options': '0.0',
             \                     '@/os': '0.0',
             \               '@/mappings': '0.0',
             \              '@/functions': '0.1',
@@ -14,10 +14,12 @@ execute frawor#Setup('0.1', {'@/options': '0.0',
             \             '@%aurum/undo': '0.0',
             \          '@%aurum/bufvars': '0.0',})
 let s:_options={
-            \'recheight': {'default': 0,
-            \               'filter': '(if type "" earg _  range 0 inf)'},
-            \'fullundo':  {'default': 1,
-            \               'filter': 'bool'},
+            \'recheight':    {'default': 0,
+            \                  'filter': '(if type "" earg _  range 0 inf)'},
+            \'fullundo':     {'default': 1,
+            \                  'filter': 'bool'},
+            \'recautowrite': {'default': 1,
+            \                  'filter': 'bool'},
         \}
 let s:_messages={
             \ 'bkpmis': 'Backup file %s not found',
@@ -149,7 +151,7 @@ function s:F.run(cmd, opts, files, container)
         let state=0
     endif
     call map(files, 'repo.functions.reltorepo(repo, v:val)')
-    let sopts={'record': 1}
+    let sopts={'prefix': '-'}
     if !empty(files)
         let sopts.files=files
     endif
@@ -190,8 +192,10 @@ function s:_aufunctions.cmd.function(opts, ...)
     let bvar.bufnr=bufnr('%')
     let bvar.oldbufs={}
     let bvar.bwfunc=s:F.unload
-    let bvar.getwnrs=s:F.getwnrs
-    let bvar.recrunmap=s:F.runstatmap
+    let bvar.switchwindow=s:F.switchwindow
+    let bvar.openfiles=s:F.openfiles
+    let bvar.foreignactions=s:foreignactions
+    let bvar.foreignmap=s:F.foreignmap
     let bvar.write=s:F.write
     let bvar.savedopts={'undolevels': &undolevels,
                 \        'scrollopt': &scrollopt,
@@ -510,6 +514,11 @@ function s:F.sactions.edit(action, bvar, buf)
         endif
         execute lwnr.'wincmd w'
         call s:F.edit(a:bvar, 'aurum://edit:'.fullpath, 0)
+        if s:_f.getoption('recautowrite')
+            augroup AuRecordAutowrite
+                autocmd! BufLeave <buffer> nested write
+            augroup END
+        endif
         if a:bvar.undo_full
             let ebvar=s:_r.bufvars[bufnr('%')]
             let ebvar.undoleaf=undoleaf
@@ -601,6 +610,7 @@ function s:F.sactions.edit(action, bvar, buf)
     endif
     return 1
 endfunction
+let s:_augroups+=['AuRecordAutowrite']
 "▶2 sactions.commit
 function s:F.sactions.commit(action, bvar, buf)
     let files=filter(copy(a:bvar.files), 'a:bvar.statuses[v:key]>1')
@@ -662,6 +672,40 @@ function s:F.runstatmap(action, ...)
     endif
     "▶2 action
     call s:_r.undo.doaction(bvar, 1, s:F.runaction, a:action,buf,isundo)
+endfunction
+"▶1 foreignmap
+let s:foreignactions={
+            \'track': 1,
+            \'commit': 1,
+            \'forget': 1,
+        \}
+function s:F.foreignmap(action, visual)
+    if a:action is# 'track'
+        return s:F.runstatmap(((a:visual)?('v'):('')).'add')
+    elseif a:action is# 'commit'
+        return s:F.runstatmap('commit')
+    elseif a:action is# 'forget'
+        return s:F.runstatmap(((a:visual)?('v'):('')).'remove')
+    endif
+endfunction
+"▶1 switchwindow
+function s:F.switchwindow()
+    let [lwnr, rwnr, swnr]=s:F.getwnrs()
+    execute lwnr.'wincmd w'
+endfunction
+"▶1 openfiles
+function s:F.openfiles(file2, fargs1, fargs2)
+    let [lwnr, rwnr, swnr]=s:F.getwnrs()
+    if a:file2 isnot 0
+        execute 'silent edit' fnameescape(a:file2)
+    else
+        call call(s:_r.mrun, ['silent edit']+a:fargs2, {})
+    endif
+    diffthis
+    execute rwnr.'wincmd w'
+    call call(s:_r.mrun, ['silent edit']+a:fargs1, {})
+    diffthis
+    wincmd p
 endfunction
 "▶1 runaction
 function s:F.runaction(bvar, action, buf, isundo)

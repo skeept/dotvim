@@ -5,8 +5,6 @@ from aurum.auutils import vim_throw, outermethodgen, autoexportmethodgen, emptys
 def flush(repo):
     pass
 
-# TODO Maybe cache repo and cs? It seems that unlike with mercurial it is supported in pygit2
-
 def g_repo(path):
     try:
         return git.Repository(path)
@@ -17,21 +15,11 @@ outermethod      = outermethodgen(g_repo, flush)
 autoexportmethod = autoexportmethodgen(g_repo, globals())
 
 def g_cs(repo, rev):
-    if hasattr(repo, 'revparse_single'):
-        try:
-            # TODO Check this. Currently it works only in development branch
-            r = repo.revparse_single(rev)
-        except Exception: # FIXME be more specific
-            vim_throw('norev', rev, repo.path)
-    else:
-        try:
-            ref = repo.lookup_reference(rev)
-            r = repo[ref.resolve().oid]
-        except KeyError:
-            try:
-                r = repo[unicode(rev, 'utf-8')]
-            except KeyError:
-                vim_throw('norev', rev, repo.path)
+    try:
+        # TODO Check this. Currently it works only in development branch
+        r = repo.revparse_single(rev)
+    except Exception: # FIXME be more specific
+        vim_throw('norev', rev, repo.path)
 
     while not isinstance(r, git.Commit):
         if isinstance(r, git.Tag):
@@ -84,15 +72,21 @@ repo_props['branchslist'] = repo_props['brancheslist']
 
 get_repo_prop = outermethod(autoexportmethod()(get_repo_prop_gen(repo_props)))
 
-def list_tree_files(tree, prefix=None):
+def list_tree_files(repo, tree, prefix=None):
     for tentry in tree:
         fname = prefix+'/'+tentry.name if prefix else tentry.name
-        ntree = tentry.to_object()
+        ntree = repo[tentry.oid]
         if isinstance(ntree, git.Tree):
-            for nfname in list_tree_files(ntree, prefix=fname):
+            for nfname in list_tree_files(repo, ntree, prefix=fname):
                 yield nfname
         else:
             yield fname
+
+@outermethod
+@autoexportmethod()
+def getrevhex(repo, rev):
+    cs = g_cs(repo, rev)
+    return {'hex': cs.hex}
 
 @outermethod
 @autoexportmethod()
@@ -104,7 +98,7 @@ def get_status(repo, files=None, clean=None, ignored=None):
         status = repo.status()
         statuses = status.iteritems()
         if clean:
-            r['clean'] = [fname for fname in list_tree_files(g_cs(repo, 'HEAD').tree)
+            r['clean'] = [fname for fname in list_tree_files(repo, g_cs(repo, 'HEAD').tree)
                           if fname not in status]
     while True:
         try:

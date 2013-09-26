@@ -99,6 +99,8 @@ function s:f.cons.getwnrs(plugdict, fdict)
     endif
 endfunction
 "▶1 f.cons.create :: {f}, tabid, botfun, botargs → + vim
+let s:last_prevtabmark=0
+let s:prevtabs={}
 function s:f.cons.create(plugdict, fdict, tabid, botfun, botargs)
     "▶2 Check arguments
     if type(a:tabid)!=type('') || !has_key(a:fdict, a:tabid)
@@ -114,6 +116,11 @@ function s:f.cons.create(plugdict, fdict, tabid, botfun, botargs)
         call s:_f.throw('tabex', a:tabid)
     endif
     let tabspec=a:fdict[a:tabid]
+    if !exists('t:aurum_tabmark')
+        let t:aurum_tabmark=s:last_prevtabmark
+        let s:last_prevtabmark+=1
+    endif
+    let tabmark = t:aurum_tabmark
     tabnew
     setlocal bufhidden=wipe
     let t:aurum_tabid=tabspec.id
@@ -123,6 +130,7 @@ function s:f.cons.create(plugdict, fdict, tabid, botfun, botargs)
                 \{})
     setlocal bufhidden=wipe
     let w:aurum_winid=tabspec.layout.bottom
+    let s:prevtabs[tabspec.id]=tabmark
 endfunction
 "▶1 f.cons.find :: {f}, tabid
 function s:f.cons.find(plugdict, fdict, tabid)
@@ -151,6 +159,14 @@ function s:f.cons.close(plugdict, fdict)
     unlet t:aurum_tabid
     if tabpagenr('$')>1
         tabclose!
+        if has_key(s:prevtabs, tabid)
+            let tabmark=s:prevtabs[tabid]
+            let tabnr=index(map(range(1, tabpagenr('$')),
+                        \       'gettabvar(v:val, "aurum_tabmark")'), tabmark)+1
+            if tabnr
+                execute 'tabnext' tabnr
+            endif
+        endif
     else
         let wlist=range(1, winnr('$'))
         while !empty(wlist)
@@ -170,6 +186,9 @@ function s:f.cons.close(plugdict, fdict)
             endfor
         endwhile
     endif
+    if has_key(s:prevtabs, tabid)
+        unlet s:prevtabs[tabid]
+    endif
     return 1
 endfunction
 "▶1 f.unloadpre :: {f}
@@ -187,5 +206,5 @@ endfunction
 "▶1 Post resource
 call s:_f.newfeature('tab', s:f)
 "▶1
-call frawor#Lockvar(s:, 'tabs')
+call frawor#Lockvar(s:, 'tabs,prevtabs,last_prevtabmark')
 " vim: ft=vim ts=4 sts=4 et fmr=▶,▲

@@ -1,6 +1,6 @@
 {
     "name": "frawor",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "author": "ZyX <kp-pav@yandex.ru>",
     "maintainer": "ZyX <kp-pav@yandex.ru>",
     "description": "Vim framework",
@@ -391,6 +391,8 @@
         "test/rtp/plugin/invalid-getoption.2.vim",
         "test/rtp/plugin/invalid-getoption.20.vim",
         "test/rtp/plugin/invalid-getoption.21.vim",
+        "test/rtp/plugin/invalid-getoption.22.vim",
+        "test/rtp/plugin/invalid-getoption.23.vim",
         "test/rtp/plugin/invalid-getoption.3.vim",
         "test/rtp/plugin/invalid-getoption.4.vim",
         "test/rtp/plugin/invalid-getoption.5.vim",
