@@ -38,5 +38,5 @@ function! JumpToNextNonMatching(direction)
     call search(spattern, flags)
   endwhile
 endfunction
-nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR><C-L>
-nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR><C-L>
+noremap ,n :<C-U>call JumpToNextNonMatching(1)<CR><C-L>
+noremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR><C-L>
