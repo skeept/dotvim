@@ -3,8 +3,8 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-05-01.
-" @Last Change: 2013-09-11.
-" @Revision:    0.1.1270
+" @Last Change: 2013-09-26.
+" @Revision:    0.1.1277
 
 " :filedoc:
 " A prototype used by |tlib#input#List|.
@@ -60,6 +60,8 @@ let s:prototype = tlib#Object#New({
             \ 'key_handlers': [],
             \ 'list': [],
             \ 'matcher': {},
+            \ 'next_agent': '',
+            \ 'next_eval': '',
             \ 'next_state': '',
             \ 'numeric_chars': tlib#var#Get('tlib_numeric_chars', 'bg'),
             \ 'offset': 1,
@@ -692,7 +694,11 @@ endf
 
 " :nodoc:
 function! s:prototype.UseScratch() dict "{{{3
-    keepalt return tlib#scratch#UseScratch(self)
+    keepalt let rv = tlib#scratch#UseScratch(self)
+    " if expand('%:t') == self.scratch
+        let b:tlib_world = self
+    " endif
+    return rv
 endf
 
 
@@ -922,7 +928,7 @@ function! s:prototype.DisplayHelp() dict "{{{3
             call self.PushHelp('<S-Up/Down>', '(Un)Select items')
             call self.PushHelp('#, <C-Space>', '(Un)Select the current item')
             call self.PushHelp('<C|M-a>', '(Un)Select all items')
-            call self.PushHelp('<F9>/<C-F9>', '(Un)Restrict view to selection')
+            call self.PushHelp('<F9>', '(Un)Restrict view to selection')
             " \ '<c-\>        ... Show only selected',
         endif
     endif
