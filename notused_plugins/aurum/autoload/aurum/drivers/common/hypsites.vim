@@ -25,11 +25,13 @@ let s:bbdict={
 \}
 let s:hyp={}
 let s:gcproj='matchstr(domain, "\\v^[^.]+")'
+let s:gcprojr='matchstr(path, "\\v[^/]+", 3)'
 "▶1 mercurial
 "  https://bitbucket.org/ZyX_I/aurum / ssh://hg@bitbucket.org/ZyX_I/aurum
 "  ssh://zyxsf@translit3.hg.sourceforge.net/hgroot/translit3/translit3 / http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3
 "  ssh://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / https://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay
 "  https://vim-pyinteractive-plugin.googlecode.com/hg/
+"  https://code.google.com/r/fritzophrenic-vim-clone/
 "  http://hg.assembla.com/CMakeLua
 "  https://zyx@zyx.codebasehq.com/test/test.hg / ssh://hg@codebasehq.com/zyx/test/test.hg
 "  https://hg01.codeplex.com/visualhg
@@ -120,6 +122,14 @@ let s:hyp.mercurial=[
 \   'filehist': '"http://code.google.com/p/".'.s:gcproj.'."/source/list?path=/".file."&r=".hex',
 \  'changeset': '"http://code.google.com/p/".'.s:gcproj.'."/source/detail?r=".hex',
 \        'log': '"http://code.google.com/p/".'.s:gcproj.'."/source/list"',
+\      'clone': 'url',
+\       'push': 'url',}],
+\['domain is? "code.google.com" && path[:1] is? "/r"',
+\ {     'html': '"http://code.google.com/r/".'.s:gcprojr.'."/source/browse/".file."?r=".hex', 'hline': 'line',
+\        'raw': '"http://".'.s:gcprojr.'.".googlecode.com/hg-history/".hex."/".file',
+\   'filehist': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list?path=/".file."&r=".hex',
+\  'changeset': '"http://code.google.com/r/".'.s:gcprojr.'."/source/detail?r=".hex',
+\        'log': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list"',
 \      'clone': 'url',
 \       'push': 'url',}],
 \['domain is? "hg.assembla.com"',

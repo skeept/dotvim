@@ -159,7 +159,6 @@
         "test/drivers-subversion.ok",
         "test/drivers-subversion.pre",
         "test/gentests-expand-tmpdir.zsh",
-        "test/gentests-setuprtp.zsh",
         "test/gentests-setuptestrepos.zsh",
         "test/gentests-unnormdates.zsh",
         "test/gittestbranchedrepo.tar.xz",

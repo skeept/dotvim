@@ -2268,5 +2268,11 @@ ftplugin/aurumlog:
 @%aurum/record:
     0.1: Added |:AuRecord| amend.
     0.2: Officially added |g:aurum_fullundo|, added |g:aurum_recautowrite|.
+@%aurum/undo:
+    1.0: Moved |g:aurum_fullundo| definition here.
+@%aurum/tabutils:
+    1.0: Moved some functions and |g:aurum_recautowrite| and 
+         |g:aurum_recheight| definitions here, moved some options to tabdesc 
+         argument.
 
 vim: ft=help:tw=78

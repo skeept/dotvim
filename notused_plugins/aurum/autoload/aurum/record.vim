@@ -1,26 +1,16 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('0.2', {'@/options': '0.0',
-            \                     '@/os': '0.0',
-            \               '@/mappings': '0.0',
-            \              '@/functions': '0.1',
-            \                    '@/fwc': '0.0',
-            \            '@%aurum/cache': '2.4',
-            \           '@%aurum/commit': '1.3',
-            \         '@%aurum/cmdutils': '4.3',
-            \         '@%aurum/tabutils': '0.0',
-            \        '@%aurum/lineutils': '0.0',
-            \             '@%aurum/edit': '1.5',
-            \             '@%aurum/undo': '0.0',
-            \          '@%aurum/bufvars': '0.0',})
-let s:_options={
-            \'recheight':    {'default': 0,
-            \                  'filter': '(if type "" earg _  range 0 inf)'},
-            \'fullundo':     {'default': 1,
-            \                  'filter': 'bool'},
-            \'recautowrite': {'default': 1,
-            \                  'filter': 'bool'},
-        \}
+execute frawor#Setup('0.2', {'@/os': '0.0',
+            \          '@/mappings': '0.0',
+            \         '@/functions': '0.1',
+            \               '@/fwc': '0.0',
+            \       '@%aurum/cache': '2.4',
+            \    '@%aurum/cmdutils': '4.3',
+            \    '@%aurum/tabutils': '1.0',
+            \   '@%aurum/lineutils': '0.0',
+            \        '@%aurum/edit': '1.5',
+            \        '@%aurum/undo': '1.0',
+            \     '@%aurum/bufvars': '0.0',})
 let s:_messages={
             \ 'bkpmis': 'Backup file %s not found',
             \'delfail': 'Failed to remove file %s',
@@ -28,38 +18,7 @@ let s:_messages={
             \ 'recnof': 'No files were selected for commiting',
             \   'norm': 'Can’t remove file %s as it was not added',
             \   'noad': 'Can’t add file %s as it is already included',
-            \ 'nsbvar': 'Internal error: sbvar key is present and sbuf '.
-            \           'is pointing to unknown buffer. If you can reproduce '.
-            \           'this file a bug report',
         \}
-"▶1 commitvimdiffcb
-function s:F.commitvimdiffcb(file, bvar, hex)
-    let [lwnr, rwnr, swnr]=s:F.getwnrs()
-
-    execute lwnr.'wincmd w'
-    let file=s:_r.os.path.join(a:bvar.repo.path, a:file)
-    let existed=bufexists(file)
-    execute 'silent edit' fnameescape(file)
-    if !existed
-        setlocal bufhidden=wipe
-    endif
-    diffthis
-
-    execute rwnr.'wincmd w'
-    let existed=s:_r.run('silent edit', 'file', a:bvar.repo, a:hex, a:file)
-    if !existed
-        setlocal bufhidden=wipe
-    endif
-    diffthis
-
-    execute lwnr.'wincmd w'
-endfunction
-"▶1 commitfindwindow
-function s:F.commitfindwindow()
-    let [lwnr, rwnr, swnr]=s:F.getwnrs()
-    execute lwnr.'wincmd w'
-    return 1
-endfunction
 "▶1 write
 function s:F.write(bvar)
     call feedkeys("\<C-\>\<C-n>:call ".
@@ -124,17 +83,9 @@ function s:F.setstate(repo, bvar, state)
             endif
         endif
     endfor
-    let a:bvar.recopts.message = a:state.description
+    let a:bvar.copts.message = a:state.description
     call s:_r.undo.reset(a:bvar)
     call cursor(1, 1)
-endfunction
-"▶1 getswheight
-function s:F.getswheight()
-    let height=s:_f.getoption('recheight')
-    if height<=0
-        return (&lines-&cmdheight-(!!&laststatus))/5
-    endif
-    return height
 endfunction
 "▶1 run
 function s:F.run(cmd, opts, files, container)
@@ -159,6 +110,10 @@ function s:F.run(cmd, opts, files, container)
     setlocal nomodifiable
     call s:_f.mapgroup.map('AuRecord', bufnr('%'))
     call extend(a:container, [state, repo])
+endfunction
+"▶1 _unload :: bvar
+function s:F._unload(bvar)
+    return s:_f.tab.unload(s:layoutname, a:bvar)
 endfunction
 "▶1 recfunc
 " TODO investigate why closing record tab is causing next character consumption
@@ -188,10 +143,10 @@ function s:_aufunctions.cmd.function(opts, ...)
     let bvar.filesbackup={}
     let bvar.newfiles={}
     let bvar.lines=map(copy(bvar.chars), 'v:val." ".bvar.files[v:key]')
-    let bvar.recopts=extend(copy(a:opts), {'repo': repo})
+    let bvar.copts=extend(copy(a:opts), {'repo': repo})
     let bvar.bufnr=bufnr('%')
     let bvar.oldbufs={}
-    let bvar.bwfunc=s:F.unload
+    let bvar.bwfunc=s:F._unload
     let bvar.switchwindow=s:F.switchwindow
     let bvar.openfiles=s:F.openfiles
     let bvar.foreignactions=s:foreignactions
@@ -205,13 +160,13 @@ function s:_aufunctions.cmd.function(opts, ...)
     let bvar.resetlines=s:F.resetlines
     let bvar.pulllines=s:F.pulllines
     let bvar.procundoleaf=s:F.procundoleaf
-    call s:_r.undo.setup(bvar, s:_f.getoption('fullundo'))
+    call s:_r.undo.setup(bvar)
     setglobal noautowrite noautowriteall noautoread
     setlocal noreadonly buftype=acwrite
     augroup AuRecordVimLeave
-        execute 'autocmd! VimLeave * '.
+        execute 'autocmd! VimLeave * nested '.
                     \   ':if has_key(s:_r.bufvars,'.bvar.bufnr.')'.
-                    \   '|  call s:F.unload(s:_r.bufvars.'.bvar.bufnr.')'.
+                    \   '|  call s:F._unload(s:_r.bufvars.'.bvar.bufnr.')'.
                     \   '|endif'
     augroup END
     if empty(bvar.chars)
@@ -244,46 +199,15 @@ function s:F.restorebackup(file, backupfile)
         endif
     endif
 endfunction
-"▶1 tabunload
-function s:F.tabunload()
-    let [lwnr, rwnr, swnr]=s:F.getwnrs()
-    execute swnr.'wincmd w'
-    let bvar=s:_r.bufvars[bufnr('%')]
-    return s:F.unload(bvar)
-endfunction
 "▶1 unload
 function s:F.unload(bvar)
-    let sbvar=get(a:bvar, 'sbvar', a:bvar)
-    let sbuf=get(a:bvar, 'sbuf', -1)
-    if sbuf isnot 0 && bufexists(sbuf)
-        unlet sbvar.bwfunc
-        execute 'bwipeout!' sbuf
-    endif
-    for [o, val] in items(sbvar.savedopts)
-        execute 'let &g:'.o.'=val'
-    endfor
-    if bufexists(sbvar.bufnr)
-        call setbufvar(sbvar.bufnr, '&modified', 0)
-    endif
-    "▶2 Close tab
-    try
-        silent call s:_f.tab.close()
-    catch /\V\^Frawor:\[^:]\+:tidukn:/
-        if s:_f.tab.find(s:layoutname)
-            try
-                call s:_f.tab.close()
-            catch /\V\^Frawor:\[^:]\+:tidukn:/
-            endtry
-        endif
-    endtry
-    "▲2
-    let backupfiles=copy(sbvar.backupfiles)
-    let newfiles=copy(sbvar.newfiles)
+    let backupfiles=copy(a:bvar.backupfiles)
+    let newfiles=copy(a:bvar.newfiles)
     call filter(backupfiles, 'filereadable(v:key)')
     call filter(newfiles,    'filereadable(v:key)')
     call map(backupfiles, 's:F.restorebackup(v:val, v:key)')
     call map(newfiles,    's:F.restorebackup(v:key,   0  )')
-    for [buf, savedopts] in items(filter(sbvar.oldbufs, 'bufexists(v:key)'))
+    for [buf, savedopts] in items(filter(a:bvar.oldbufs, 'bufexists(v:key)'))
         for [opt, optval] in items(savedopts)
             call setbufvar(buf, '&'.opt, optval)
         endfor
@@ -299,9 +223,11 @@ endfunction
 "▶1 register tab
 let s:layoutname='AuRecordTab'
 call s:_f.tab.new(s:layoutname, {
-            \   'top': ['AuRecordLeft', 'AuRecordRight'],
-            \'bottom': 'AuRecordStatus',
-        \}, s:F.getswheight, s:F.tabunload)
+            \    'top': ['AuRecordLeft', 'AuRecordRight'],
+            \ 'bottom': 'AuRecordStatus',
+            \'oprefix': 'rec',
+            \ 'unload': s:F.unload,
+        \})
 "▶1 edit
 let s:savedopts=['readonly', 'modifiable', 'scrollbind', 'cursorbind',
             \    'scrollopt', 'wrap', 'foldmethod', 'foldcolumn']
@@ -337,29 +263,6 @@ function s:F.edit(bvar, fname, ro)
     endif
 endfunction
 let s:_augroups+=['AuRecordLeft']
-"▶1 srestore
-function s:F.srestore(bvar)
-    let sbuf=get(a:bvar, 'sbuf', -1)
-    "▶2 Check sbuf existence
-    if !bufexists(sbuf)
-        if has_key(a:bvar, 'sbvar')
-            return s:F.unload(a:bvar.sbvar)
-        elseif has_key(s:_r.bufvars, sbuf)
-            return s:F.unload(s:_r.bufvars[sbuf])
-        else
-            call s:_f.throw('nsbvar')
-        endif
-    endif
-    "▲2
-    let sbvar=a:bvar.sbvar
-    execute 'silent botright sbuffer' sbuf
-    execute 'resize' s:F.getswheight()
-    call winrestview(a:bvar.winview)
-    redraw!
-    let w:aurum_winid='AuRecordStatus'
-    setlocal bufhidden=wipe
-    return 1
-endfunction
 "▶1 restorefiles :: bvar, sline::UInt, eline::UInt → + FS
 function s:F.restorefiles(bvar, sline, eline)
     for file in map(range(a:sline, a:eline), 'a:bvar.lines[v:val-1][2:]')
@@ -462,7 +365,7 @@ let s:F.sactions.remove=s:F.sactions.add
 let s:F.sactions.vremove=s:F.sactions.remove
 "▶2 sactions.discard
 function s:F.sactions.discard(action, bvar, buf)
-    call s:F.unload(a:bvar)
+    call s:F._unload(a:bvar)
     return 0
 endfunction
 "▶2 sactions.undo
@@ -514,11 +417,7 @@ function s:F.sactions.edit(action, bvar, buf)
         endif
         execute lwnr.'wincmd w'
         call s:F.edit(a:bvar, 'aurum://edit:'.fullpath, 0)
-        if s:_f.getoption('recautowrite')
-            augroup AuRecordAutowrite
-                autocmd! BufLeave <buffer> nested write
-            augroup END
-        endif
+        call s:_f.tab.setautowrite()
         if a:bvar.undo_full
             let ebvar=s:_r.bufvars[bufnr('%')]
             let ebvar.undoleaf=undoleaf
@@ -621,21 +520,15 @@ function s:F.sactions.commit(action, bvar, buf)
     setlocal bufhidden=hide
     let winview=winsaveview()
     try
-        let r=s:_r.commit.commit(a:bvar.repo, a:bvar.recopts, files,
-                    \            a:bvar.status, keys(s:ntypes), 'silent edit',
-                    \            {'vimdiffcb':  s:F.commitvimdiffcb,
-                    \             'findwindow': s:F.commitfindwindow,
-                    \             'bwfunc':     s:F.srestore,
-                    \             'sbvar':      a:bvar,
-                    \             'sbuf':       a:buf,
-                    \             'winview':    winview,})
+        let r=s:_f.tab.copen(a:bvar, a:buf, s:ntypeskeys, {},
+                    \        a:bvar.status, files)
     finally
         if bufwinnr(a:buf)!=-1
             call setbufvar(a:buf, '&bufhidden', 'wipe')
         endif
     endtry
     if r
-        call s:F.unload(a:bvar)
+        call s:F._unload(a:bvar)
     endif
     return 0
 endfunction
@@ -648,6 +541,7 @@ let s:ntypes={
             \'removed':  'r',
             \'deleted':  'r',
         \}
+let s:ntypeskeys=keys(s:ntypes)
 let s:uactions={
             \   'undo': 'undo',
             \   'redo': 'redo',

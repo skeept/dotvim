@@ -19,3 +19,6 @@
 :R silent AuCommit type ? message Added\ jklfile jklfile
 :WT
 :source addmessages.vim
+:" The following is enough for extended-funcref bug: 
+:" :W{{{1 D
+:" :runtime plugin/frawor.vim
