@@ -269,7 +269,7 @@ function s:svn.getnthparent(repo, rev, n)
     endif
     return a:repo.functions.getcs(a:repo, rev)
 endfunction
-"▶1 getchangesets :: repo → [cs]
+"▶1 getchangesets :: repo[, hex[, hex]|limit] → [cs]
 function s:F.getchangesets(repo, ...)
     let args=['--', a:repo.svnroot]
     let kwargs={'xml': 1, 'verbose': 1}
@@ -289,8 +289,11 @@ function s:F.getchangesets(repo, ...)
         call xml.skipctag()
         call xml.skipws()
         let a:repo.changesets[cs.hex]=cs
-        call insert(cslist, cs)
+        call add(cslist, cs)
     endwhile
+    if !has_key(kwargs, 'revision')
+        call reverse(cslist)
+    endif
     return cslist
 endfunction
 "▶1 svn.getchangesets :: repo → [cs]
@@ -339,7 +342,7 @@ function s:svn.updatechangesets(repo)
             call remove(a:repo.mutable.cslist, -1)
         endwhile
     elseif tiprev>oldtiprev
-        let cslist=s:F.getchangesets(a:repo, ''.oldtiprev, ''.tiprev)
+        let cslist=s:F.getchangesets(a:repo, ''.(oldtiprev+1), ''.tiprev)
         if !empty(cslist)
             let a:repo.mutable.cslist[-1].children=
                         \''.(a:repo.mutable.cslist[-1].rev+1)
@@ -528,10 +531,10 @@ function s:svn.status(repo, ...)
             let reverse=(a:2<a:1)
             let s=a:repo.functions.getcs(a:repo, ''.max([+a:1, +a:2])).status
             if a:0>2 && !empty(a:3)
-                call map(copy(s), 'filter(copy(v:val), "index(a:3,v:val)!=-1")')
+                let s=map(deepcopy(s), 'filter(v:val, "index(a:3,v:val)!=-1")')
             endif
-            let revs=s:F.statreverse(s)
             if requiresclean
+                let revs=s:F.statreverse(s)
                 call filter(allfiles, '!has_key(revs, v:val)')
             endif
             call extend(r, s)

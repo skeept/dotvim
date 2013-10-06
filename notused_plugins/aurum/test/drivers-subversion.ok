@@ -102,18 +102,6 @@ o Changeset 4:4
 | $  subdir/pqr             | 1 0
 | $  subdir2/stu            | 1 0
 | $6 files changed, 6 insertions, 0 deletions
-| :Index: ghi
-| :===================================================================
-| :--- ghi	(revision 0)
-| :+++ ghi	(revision 4)
-| :@@ -0,0 +1 @@
-| :+Def
-| :Index: subdir/pqr
-| :===================================================================
-| :--- subdir/pqr	(revision 0)
-| :+++ subdir/pqr	(revision 4)
-| :@@ -0,0 +1 @@
-| :+Mno
 | :Index: mno
 | :===================================================================
 | :--- mno	(revision 0)
@@ -141,6 +129,18 @@ o Changeset 4:4
 | :+++ def	(revision 4)
 | :@@ -0,0 +1 @@
 | :+Abc
+| :Index: ghi
+| :===================================================================
+| :--- ghi	(revision 0)
+| :+++ ghi	(revision 4)
+| :@@ -0,0 +1 @@
+| :+Def
+| :Index: subdir/pqr
+| :===================================================================
+| :--- subdir/pqr	(revision 0)
+| :+++ subdir/pqr	(revision 4)
+| :@@ -0,0 +1 @@
+| :+Mno
 | 
 o Changeset 3:3
 | Commited 08 Jan 2012 20:45 by zyx
@@ -174,9 +174,9 @@ M .
 R def
 ? unknown-file
 {{{1 Status: relative to other (1)
+A subdir2/stu
 A ghi
 A mno
-A subdir2/stu
 A subdir/pqr
 A subdir/file-2
 A .
@@ -187,16 +187,16 @@ M file-under-svn-control
 R ghi
 R mno
 R subdir2/stu
-R subdir/pqr
 R subdir/file-2
+R subdir/pqr
 R .
 R new-file
 {{{1 Status: between two revisions
 M file-under-svn-control
 R ghi
 R --force
-R subdir/pqr
 R subdir/file-2
+R subdir/pqr
 R mno
 R subdir2/stu
 R def
