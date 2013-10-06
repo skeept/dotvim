@@ -102,6 +102,18 @@ o Changeset 4:4
 | $  subdir/pqr             | 1 0
 | $  subdir2/stu            | 1 0
 | $6 files changed, 6 insertions, 0 deletions
+| :Index: ghi
+| :===================================================================
+| :--- ghi	(revision 0)
+| :+++ ghi	(revision 4)
+| :@@ -0,0 +1 @@
+| :+Def
+| :Index: subdir/pqr
+| :===================================================================
+| :--- subdir/pqr	(revision 0)
+| :+++ subdir/pqr	(revision 4)
+| :@@ -0,0 +1 @@
+| :+Mno
 | :Index: mno
 | :===================================================================
 | :--- mno	(revision 0)
@@ -129,18 +141,6 @@ o Changeset 4:4
 | :+++ def	(revision 4)
 | :@@ -0,0 +1 @@
 | :+Abc
-| :Index: ghi
-| :===================================================================
-| :--- ghi	(revision 0)
-| :+++ ghi	(revision 4)
-| :@@ -0,0 +1 @@
-| :+Def
-| :Index: subdir/pqr
-| :===================================================================
-| :--- subdir/pqr	(revision 0)
-| :+++ subdir/pqr	(revision 4)
-| :@@ -0,0 +1 @@
-| :+Mno
 | 
 o Changeset 3:3
 | Commited 08 Jan 2012 20:45 by zyx
@@ -174,11 +174,11 @@ M .
 R def
 ? unknown-file
 {{{1 Status: relative to other (1)
-A subdir2/stu
 A ghi
 A mno
-A subdir/pqr
+A subdir2/stu
 A subdir/file-2
+A subdir/pqr
 A .
 A new-file
 M file-under-svn-control
@@ -193,13 +193,13 @@ R .
 R new-file
 {{{1 Status: between two revisions
 M file-under-svn-control
+R def
 R ghi
 R --force
-R subdir/file-2
 R subdir/pqr
+R subdir/file-2
 R mno
 R subdir2/stu
-R def
 {{{1 Commit
 o Changeset 10
 | @ Added newfile.vim

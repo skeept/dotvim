@@ -1688,10 +1688,19 @@ functions :: {String : FRef}                            *aurum-repo.functions*
     |aurum-cs.hex|.
   getwork :: () -> cs                                       *aurum-rf-getwork*
     Get changeset object for the working directory revision.
-  getnthparent :: hex, n -> cs                         *aurum-rf-getnthparent*
+  getnthparent :: hex, n[, [ file ]] -> cs             *aurum-rf-getnthparent*
     Get nth generation grand-parent of given revision. Use negative n to get 
     nth generation child instead. With n equal to zero it must work like 
     |aurum-rf-getcs|(hex).
+                                                    *aurum-rf-getnthchangerev*
+  getnthchangerev :: hex, n, [ file ] -> (cs, [ file ])
+    Like above, but with two differences:
+    1. Only changesets containing changes to files listed in the fourth 
+       argument are taken into account.
+    2. Returns a pair of |aurum-changeset| object and a list of files. In case 
+       there were no renames returned list is equal to the list given in 
+       arguments, otherwise it returns list with new filenames.
+       Note: copies are ignored.
   getchangesets :: () -> [ cs ]                       *aurum-rf-getchangesets*
     Pull all changesets contained in repository into |aurum-repo.changesets| 
     dictionary. If this function is not called, then |aurum-repo.changesets| 
@@ -2111,7 +2120,7 @@ Python driver was not tested under windows (wine) at all.
 |aurum-cs.time| is always 0 if “date” programm from coreutils is missing.
 |aurum-cs.children| is always empty.
 |aurum-cs.phase| is always “unknown”.
-|aurum-rf-getchasgesets|, |aurum-rf-getcs| are unable to work with commits 
+|aurum-rf-getchangesets|, |aurum-rf-getcs| are unable to work with commits 
     where description contains line with two spaces followed by 60 dashes.
 |aurum-rf-updatechangesets| is doing nothing.
 |aurum-rf-getrevhex| calls |aurum-rf-getcs| thus it may be slow.
@@ -2170,6 +2179,8 @@ Python driver was not tested under windows (wine) at all.
          |aurum-rf-aget| and |aurum-rf-aremove|.
     5.5: Added |aurum-rf-apause| and |aurum-rf-aresume|.
     5.6: Added |aurum-rf-strip|.
+    5.7: Now exporting default functions in _r.repo.defaultfuncs
+    5.8: Added |aurum-rf-getnthchangerev|.
 @aurum:
     0.1: Added |:AuBranch| and |:AuName|.
     0.2: Added |:AuOther|.

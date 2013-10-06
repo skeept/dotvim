@@ -207,39 +207,37 @@ function s:r.readfilewrapper(file, repo, rev)
 endfunction
 "▶1 getnthparentfile :: repo, rev, file, n[, changedonly] → (hex, file)
 function s:r.getnthparentfile(repo, rev, file, n, ...)
-    let n=a:n
-    let shift=(n>0 ? 1 : -1)
-    let file=a:file
-    let prevhex=0
-    let hex=a:repo.functions.getrevhex(a:repo, a:rev)
-    while n && hex isnot# prevhex
-        let prevhex=hex
-        let cs=a:repo.functions.getnthparent(a:repo, hex, shift)
-        let rhex=(shift>0 ? hex : cs.hex)
-        if cs.hex is# hex
-            break
-        endif
-        let hex=cs.hex
-        let renames=a:repo.functions.getcsprop(a:repo, rhex, 'renames')
-        if shift<0
-            let rrenames={}
-            call map(copy(renames), 'extend(rrenames, {v:val : v:key})')
-            let renames=rrenames
-        endif
-        let haschanges=get(a:000, 0, 1)
-        if get(renames, file, 0) isnot 0
-            let file=renames[file]
-            let haschanges=1
-        elseif !haschanges
-            let status=a:repo.functions.status(a:repo, prevhex, hex, [a:file])
-            let haschanges=!empty(filter(copy(status),
-                        \              'v:key isnot# "clean" && !empty(v:val)'))
-        endif
-        if haschanges
+    if !a:0 || a:1
+        let n=a:n
+        let shift=(n>0 ? 1 : -1)
+        let file=a:file
+        let prevhex=0
+        let hex=a:repo.functions.getrevhex(a:repo, a:rev)
+        while n && hex isnot# prevhex
+            let prevhex=hex
+            let cs=a:repo.functions.getnthparent(a:repo, hex, shift)
+            let rhex=(shift>0 ? hex : cs.hex)
+            if cs.hex is# hex
+                break
+            endif
+            let hex=cs.hex
+            let renames=a:repo.functions.getcsprop(a:repo, rhex, 'renames')
+            if shift<0
+                let rrenames={}
+                call map(copy(renames), 'extend(rrenames, {v:val : v:key})')
+                let renames=rrenames
+            endif
+            if get(renames, file, 0) isnot 0
+                let file=renames[file]
+            endif
             let n-=shift
-        endif
-    endwhile
-    return [hex, file]
+        endwhile
+        return [hex, file]
+    else
+        let [hex, files]=a:repo.functions.getnthchangerev(a:repo, a:rev, a:n,
+                    \                                     [a:file])
+        return [hex, files[0]]
+    endif
 endfunction
 "▶1 Post maputils resource
 call s:_f.postresource('maputils', s:r)

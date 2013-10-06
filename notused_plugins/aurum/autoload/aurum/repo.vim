@@ -1,5 +1,5 @@
 "▶1
-execute frawor#Setup('5.6', { '@/resources': '0.0',
+execute frawor#Setup('5.8', { '@/resources': '0.0',
             \                        '@/os': '0.0',
             \                   '@/options': '0.0',
             \                    '@/python': '1.0',
@@ -89,6 +89,43 @@ function s:deffuncs.getnthparent(repo, rev, n)
         let r=a:repo.functions.getcs(a:repo, rl[0])
     endfor
     return r
+endfunction
+"▶1 getnthchangerev :: repo, rev, n, files → cs
+function s:deffuncs.getnthchangerev(repo, rev, n, files)
+    let n=a:n
+    let shift=(n>0 ? 1 : -1)
+    let files=copy(a:files)
+    let prevhex=0
+    let hex=a:repo.functions.getrevhex(a:repo, a:rev)
+    while n && hex isnot# prevhex
+        let prevhex=hex
+        let cs=a:repo.functions.getnthparent(a:repo, hex, shift)
+        let rhex=(shift>0 ? hex : cs.hex)
+        if cs.hex is# hex
+            break
+        endif
+        let hex=cs.hex
+        let renames=a:repo.functions.getcsprop(a:repo, rhex, 'renames')
+        if shift<0
+            let rrenames={}
+            call map(copy(renames), 'extend(rrenames, {v:val : v:key})')
+            let renames=rrenames
+        endif
+        let haschanges=0
+        let renamed=map(copy(files), 'get(renames, v:val, v:val)')
+        if renamed !=# files
+            let files=renamed
+            let haschanges=1
+        else
+            let status=a:repo.functions.status(a:repo, prevhex, hex, files)
+            let haschanges=!empty(filter(copy(status),
+                        \              'v:key isnot# "clean" && !empty(v:val)'))
+        endif
+        if haschanges
+            let n-=shift
+        endif
+    endwhile
+    return [hex, files]
 endfunction
 "▶1 getcsprop :: repo, Either cs rev, propname → a
 function s:deffuncs.getcsprop(repo, csr, propname)
@@ -497,7 +534,8 @@ function s:F.getrepo(path)
 endfunction
 "▶1 Post resource
 call s:_f.postresource('repo', {'get': s:F.getrepo,
-            \        'userepeatedcmd': s:userepeatedcmd})
+            \        'userepeatedcmd': s:userepeatedcmd,
+            \          'defaultfuncs': s:deffuncs})
 "▶1 regdriver feature
 let s:requiredfuncs=['repo', 'getcs', 'checkdir']
 let s:optfuncs=['readfile', 'annotate', 'diff', 'status', 'commit', 'update',
