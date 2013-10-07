@@ -8,35 +8,34 @@ Set-StrictMode -version 1
 
 $vim_version = "vim74"
 
-#set the default locations for the installation
-switch ( Get-Content Env:ComputerName )
-{
-  "ISENGARD" {
+$computername = Get-Content Env:computername
+If($computername -match "ISENGARD|MIDDLE-EARTH|Gondor|H8460305022398" -OR
+    $computername -match "Erebor"
+    ) {
     $install = "C:\Program Files\Vim\$vim_version"
     $backup = "c:\htemp\tmp"
     $source = "c:\htemp\vim"
-  }
-  "MIDDLE-EARTH" {
-    $install = "C:\Program Files\vim\$vim_version"
-    $backup = "C:\htemp\tmp"
-    $source = "C:\htemp\vim"
-  }
-  "Gondor" {
-    $install = "C:\Program Files\Vim\$vim_version"
-    $backup = "C:\htemp\tmp"
-    $source = "C:\htemp\vim"
-  }
-  "H8460305022398" {
-    $install = "C:\Program Files\Vim\$vim_version"
-    $backup = "C:\htemp\tmp"
-    $source = "C:\htemp\vim"
-  }
-  default {
-    $computername = Get-Content Env:computername
-    Write-Warning "$computername not in list of know computer names!"
-    $do_break = $True
+}
+ELSE {
+# settings for specific computers not matching above parameters or break
+  switch ( Get-Content Env:ComputerName )
+  {
+    "WhatIsThiisMachine" {
+      $install = "C:\Program Files\vim\$vim_version"
+        $backup = "C:\htemp\tmp"
+        $source = "C:\htemp\vim"
+    }
+    default {
+      $computername = Get-Content Env:computername
+        Write-Warning "$computername not in list of know computer names!"
+        $do_break = $True
+    }
   }
 }
+
+
+#set the default locations for the installation
+
 
 If( $do_break ) { break }
 
