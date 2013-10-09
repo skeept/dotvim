@@ -29,13 +29,13 @@ function! airline#extensions#tabline#init(ext)
 
   set tabline=%!airline#extensions#tabline#get()
 
-  if s:buf_min_count <= 0 && s:tab_min_count <= 0
+  if s:buf_min_count <= 0 && s:tab_min_count <= 1
     set showtabline=2
   else
     if s:show_buffers == 1
       autocmd CursorMoved * call <sid>on_cursormove(s:buf_min_count, len(s:get_buffer_list()))
     else
-      autocmd CursorMoved * call <sid>on_cursormove(s:tab_min_count, tabpagenr('$'))
+      autocmd TabEnter * call <sid>on_cursormove(s:tab_min_count, tabpagenr('$'))
     endif
   endif
 
