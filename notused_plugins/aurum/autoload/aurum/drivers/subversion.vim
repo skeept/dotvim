@@ -302,7 +302,6 @@ function s:svn.getchangesets(repo)
     if empty(a:repo.mutable.cslist)
         let cslist=s:F.getchangesets(a:repo)
         let cslist[-1].children=[]
-        call map(cslist[:-2], 'extend(v:val, {"children": ["".(v:val.rev-1)]})')
         let a:repo.mutable.cslist+=cslist
     else
         call a:repo.functions.updatechangesets(a:repo)

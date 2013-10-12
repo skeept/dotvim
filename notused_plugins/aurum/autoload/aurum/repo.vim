@@ -112,7 +112,8 @@ function s:deffuncs.getnthchangerev(repo, rev, n, files)
             let renames=rrenames
         endif
         let haschanges=0
-        let renamed=map(copy(files), 'get(renames, v:val, v:val)')
+        let renamed=map(map(copy(files), 'get(renames, v:val, v:val)'),
+                    \   'v:val is 0 ? files[v:key] : v:val')
         if renamed !=# files
             let files=renamed
             let haschanges=1
