@@ -309,11 +309,11 @@ let scmnr.3432 = {'type': 'git', 'url': 'git://github.com/garbas/vim-snipmate'}
 let scmnr.3916 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-haskell'}
 let scmnr.3977 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-commenting'}
 let scmnr.4024 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-rdebug'}
-let scm['vim-addon-python-pdb'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-python-pdb'}
 let scmnr.4028 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-ruby-debug-ide'}
 let scmnr.4340 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-commandline-completion'}
 let scmnr.4630 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-errorformats'}
 let scmnr.4656 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-errorformats'}
+let scm['vim-addon-python-pdb'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-python-pdb'}
 let scm['vim-addon-lout'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-lout'}
 let scm['vim-addon-rfc'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-rfc'}
 let scm['vim-addon-urweb'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-urweb'}
@@ -2246,12 +2246,14 @@ let scmnr.4671 = {'type': 'git', 'url': 'git://github.com/mtth/locate.vim'}
 let scmnr.4672 = {'type': 'git', 'url': 'git://github.com/ivalkeen/nerdtree-execute'}
 let scmnr.4673 = {'type': 'git', 'url': 'git://github.com/ivalkeen/vim-ctrlp-tjump'}
 
-" elixir-lang
-let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim-elixir'}
+" Pandu Rendradjaja
+let scmnr.4675 = {'type': 'git', 'url': 'git://github.com/prendradjaja/vim-vertigo'}
 
-" Carlos Galdino
-let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
+" Xia Kai
+let scmnr.4676 = {'type': 'git', 'url': 'git://github.com/xiaket/better-header'}
 
+" Matthew Boehm
+let scmnr.4677 = {'type': 'git', 'url': 'git://github.com/mattboehm/vim-unstack'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
@@ -2515,6 +2517,15 @@ let scm['python-imports@mgedmin'] = {'type': 'git', 'url': 'git://github.com/mge
 
 " Meikel Brandmeyer
 let scm['vim-clojure-static'] = {'type': 'git', 'url': 'git://github.com/guns/vim-clojure-static'}
+
+" elixir-lang
+let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim-elixir'}
+
+" Carlos Galdino
+let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
+
+" Johannes Raggam - Tabline by: mkitt (Matthew Kitt)
+let scm['tabline'] = {'type': 'git', 'url': 'git://github.com/mkitt/tabline.vim.git'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 

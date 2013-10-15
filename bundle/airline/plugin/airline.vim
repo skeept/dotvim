@@ -60,8 +60,10 @@ function! s:airline_toggle()
     if exists("s:stl")
       let &stl = s:stl
     endif
+
+    silent doautocmd User AirlineToggledOff
   else
-    let s:stl = &stl
+    let s:stl = &statusline
     augroup airline
       autocmd!
 
@@ -78,6 +80,9 @@ function! s:airline_toggle()
             \ exec 'source '.split(globpath(&rtp, 'autoload/airline/themes/'.g:airline_theme.'.vim', 1), "\n")[0]
             \ | call airline#load_theme()
     augroup END
+
+    silent doautocmd User AirlineToggledOn
+
     if s:airline_initialized
       call <sid>on_window_changed()
     endif
