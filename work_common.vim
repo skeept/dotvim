@@ -26,7 +26,7 @@ nnoremap ,z1 :<C-U>call SetFoldingPatternNumCharsFront()<CR>
 
 function! JumpToNextNonMatching(direction)
   let flags = ''
-  if a:direction == -1
+  if a:direction < 0
     let flags = flags . 'b'
   endif
   let ntimes = max([v:count, 1])
@@ -37,6 +37,15 @@ function! JumpToNextNonMatching(direction)
     let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
     call search(spattern, flags)
   endwhile
+  nohlsearch
+  if a:direction == 2
+    mark >
+  endif
+  if a:direction == -2
+    mark <
+  endif
 endfunction
-noremap ,n :<C-U>call JumpToNextNonMatching(1)<CR><C-L>
-noremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR><C-L>
+nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR>
+nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR>
+vnoremap ,n :<C-U>call JumpToNextNonMatching(2)<CR>gvoo
+vnoremap ,N :<C-U>call JumpToNextNonMatching(-2)<CR>gv
