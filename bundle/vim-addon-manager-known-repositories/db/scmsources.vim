@@ -1535,7 +1535,7 @@ let scm['toggletoolbar'] = {'type': 'git', 'url': 'https://bitbucket.org/aliva/v
 
 " Zhao Cai
 let scmnr.3854 = {'type': 'git', 'url': 'git://github.com/zhaocai/unite-scriptnames'}
-let scmnr.4529 = {'type': 'git', 'url': 'git://github.com/zhaocai/GoldenView'}
+let scmnr.4529 = {'type': 'git', 'url': 'git://github.com/zhaocai/GoldenView.Vim'}
 let scmnr.4576 = {'type': 'git', 'url': 'git://github.com/zhaocai/linepower.vim'}
 
 " Matthias Guenther
@@ -2527,7 +2527,10 @@ let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim
 let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
 
 " Johannes Raggam - Tabline by: mkitt (Matthew Kitt)
-let scm['tabline'] = {'type': 'git', 'url': 'git://github.com/mkitt/tabline.vim.git'}
+let scm['tabline'] = {'type': 'git', 'url': 'git://github.com/mkitt/tabline'}
+
+" Tim Clem
+let scm['vim-arduino'] = {'type': 'git', 'url': 'git://github.com/tclem/vim-arduino'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
