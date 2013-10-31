@@ -6,8 +6,8 @@ from www.vim.org archives and repository URLs found in script descriptions
 or installation details found on www.vim.org.
 
 Found SCM URLs are saved in ./db/scm_generated.json.
-List of script numbers which were checked, but with no result,
-is saved in ./db/not_found.json.
+List of script numbers which were checked, but with no result, is saved in
+./db/not_found.json.
 List of script numbers which should not be processed for some reason can be
 found in ./db/omitted.json.
 
@@ -22,13 +22,14 @@ Currently supports only git and mercurial repositories.
 '''
 from __future__ import unicode_literals, division, print_function
 
-from github import Github
+from github import Github, GithubException
 from collections import namedtuple
 from subprocess import check_call, CalledProcessError
 import codecs
 import yaml
 import os
 import urllib
+import httplib
 import json
 import re
 import logging
@@ -55,6 +56,9 @@ import list_git_files as lsgit
 
 
 logger = logging.getLogger('autoget')
+
+
+MAX_ATTEMPTS = 5
 
 
 def dump_json(obj, F):
@@ -101,6 +105,12 @@ def get_voinfo_hash(voinfo):
     return hash(voinfo.get('description',     '') + voinfo.get('install_details', ''))
 
 
+def get_tar_names(tf):
+    for ti in tf:
+        if not ti.isdir():
+            yield ti.name
+
+
 # Namespace
 class FileListers:
     @staticmethod
@@ -122,26 +132,26 @@ class FileListers:
 
     @staticmethod
     def tar(AF):
-        return tarfile.TarFile(fileobj=AF).getnames()
+        return set(get_tar_names(tarfile.TarFile(fileobj=AF)))
 
     @staticmethod
     def tgz(AF):
         # gz requires tell
-        return tarfile.TarFile(fileobj=io.BytesIO(AF.read()), format='gz').getnames()
+        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.gz(AF), format='gz')))
 
     @staticmethod
     def tbz(AF):
-        return tarfile.TarFile(fileobj=io.BytesIO(AF.read()), format='bz2').getnames()
+        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.bz2(AF), format='bz2')))
     tbz2 = tbz
 
     @staticmethod
     def txz(AF):
-        return tarfile.TarFile(fileobj=FileListers.xz(AF)).getnames()
+        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.xz(AF))))
 
     @staticmethod
     def zip(AF):
         # ZipFile requires seek
-        return zipfile.ZipFile(io.BytesIO(AF.read())).namelist()
+        return set(zipfile.ZipFile(io.BytesIO(AF.read())).namelist())
 
     @staticmethod
     def vmb(AF):
@@ -149,11 +159,11 @@ class FileListers:
         while not next(af).startswith('finish'):
             pass
 
-        files = []
+        files = set()
         filere = re.compile('^\S+')
         try:
             while True:
-                files.append(filere.match(next(af)).group(0))
+                files.add(filere.match(next(af)).group(0))
                 numlines = int(next(af))
                 while numlines:
                     next(af)
@@ -170,50 +180,85 @@ def get_file_list(voinfo):
     aname = rinfo['package']
     aurl = 'http://www.vim.org/scripts/download_script.php?src_id='+rinfo['src_id']
     ext = get_ext(aname).lower()
+    logger.info('>>> Processing archive %s (ext %s)' % (aname, ext))
     if ext == 'vim':
         return [guess_fix_dir(voinfo) + '/' + aname]
     elif ext in FileListers.__dict__:
         AF = urllib.urlopen(aurl)
         r = getattr(FileListers, ext)(AF)
-        while not isinstance(r, list):
+        while not isinstance(r, set):
             aname = aname[:-1-len(ext)]
             AF = r
-            ext = get_ext(aname)
+            ext = get_ext(aname).lower()
             r = getattr(FileListers, ext)(AF)
         return r
     else:
         raise ValueError('Unknown extension')
 
 
-expected_extensions = set(('vim', 'txt', 'py', 'pl', 'lua', 'pm'))
+# Only directories that may be automatically loaded by vim are listed below.
+specialdirs = {'plugin', 'ftplugin', 'syntax', 'indent', 'after'}
+
+def isvimvofile(fname):
+    return ((fname.endswith('.vim') and fname.partition('/')[0] in specialdirs))
+           #or (fname.endswith('.py') and
+           #    (fname.startswith('pythonx/')
+           #        or fname.startswith('python2/')
+           #        or fname.startswith('python3/'))))
+
+
+# Directories corresponding to plugin types on www.vim.org
+vodirs = {'plugin', 'colors', 'ftplugin', 'indent', 'syntax'}
+expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm'}
 def check_candidate_with_file_list(vofiles, files, prefix=None):
-    files = set(files)
-    expvofiles = set((fname for fname in vofiles if get_ext(fname) in expected_extensions))
+    expvofiles = {fname for fname in vofiles if get_ext(fname) in expected_extensions}
+    vimvofiles = {fname for fname in expvofiles if isvimvofile(fname)}
+    vimfiles = {fname for fname in files if isvimvofile(fname)}
     if vofiles <= files:
+        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
+            logger.info('>>>> Rejected because there are significant files not present in archive: '
+                    '%s'
+                    % (repr(vimfiles - vimvofiles)))
+            return (prefix, 0)
+        logger.info('>>>> Accepted with score 100 because all files '
+                'are contained in the repository')
         return (prefix, 100)
     elif expvofiles and expvofiles <= files:
+        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
+            logger.info('>>>> Rejected because there are significant files not present in archive: '
+                    '%s'
+                    % (repr(vimfiles - vimvofiles)))
+            return (prefix, 0)
+        logger.info('>>>> Accepted with score 90 because all files that are considered significant '
+                'are contained in the repository: %s' % repr(expvofiles))
         return (prefix, 90)
     else:
         vofileparts = [fname.partition('/') for fname in vofiles]
         leadingdir = vofileparts[0][0]
         if (leadingdir
+                and leadingdir not in vodirs
                 and all((part[0] == leadingdir for part in vofileparts[1:]))
                 and all((part[1] for part in vofileparts))):
+            logger.info('>>>> Trying to match with leading path component removed: %s'
+                    % leadingdir)
             return check_candidate_with_file_list(
                 {part[-1] for part in vofileparts},
                 files,
                 leadingdir,
             )
         else:
+            # TODO Detect the need in vamkr#AddCopyHook
+            logger.info('>>>> Rejected because not all significant files were found '
+                    'in the repository: %s' % repr(expvofiles - files))
             return (prefix, 0)
 
 
-github_url              = re.compile(r'github\.com/([a-zA-Z\-_]+)/([a-zA-Z\-_.]+)(?:\.git)?')
-vundle_github_url       = re.compile('\\b(?:Neo)?Bundle\\b\\s*\'([a-zA-Z\-_]+)/([a-zA-Z\-_.]+)(?:.git)?\'')
+github_url              = re.compile(r'github\.com/([0-9a-zA-Z\-_]+)/([0-9a-zA-Z\-_.]+)(?:\.git)?')
+vundle_github_url       = re.compile('\\b(?:Neo)?Bundle\\b\\s*[\'"]([0-9a-zA-Z\-_]+)/([0-9a-zA-Z\-_.]+)(?:.git)?[\'"]')
 gist_url                = re.compile(r'gist\.github\.com/(\d+)')
-bitbucket_mercurial_url = re.compile(r'\bhg\b[^\n]*bitbucket\.org/([a-zA-Z_]+)/([a-zA-Z\-_.]+)')
-bitbucket_git_url       = re.compile(r'\bgit\b[^\n]*bitbucket\.org/([a-zA-Z_]+)/([a-zA-Z\-_.]+)|bitbucket\.org/([a-zA-Z_.]+)/([a-zA-Z\-_.]+)\.git')
-bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([a-zA-Z_]+)/([a-zA-Z\-_]+)')
+bitbucket_mercurial_url = re.compile(r'\bhg\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)')
+bitbucket_git_url       = re.compile(r'\bgit\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)|bitbucket\.org/([0-9a-zA-Z_.]+)/([0-9a-zA-Z\-_.]+)\.git')
+bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_]+)')
 googlecode_url          = re.compile(r'code\.google\.com/p/([^/\s]+)')
 mercurial_url           = re.compile(r'hg\s+clone\s+(\S+)')
 git_url                 = re.compile(r'git\s+clone\s+(\S+)')
@@ -241,6 +286,7 @@ class Match(object):
     @cached_property
     def key(self):
         name = self.name
+        # TODO Also compare author names
         try:
             voname = self.voinfo['script_name']
         except KeyError:
@@ -301,37 +347,68 @@ class GithubMatch(Match):
         super(GithubMatch, self).__init__(*args, **kwargs)
         self.name = self.match.group(2)
         self.repo_path = self.match.group(1) + '/' + self.name
-        self.scm_url = 'git://github.com/' + self.repo_path
+        if self.repo_path.endswith('.git'):
+            self.repo_path = self.repo_path[:-4]
         self.url = 'https://github.com/' + self.repo_path
+        self._check_redirects()
+
+    def _check_redirects(self, attempt=0):
+        c = httplib.HTTPSConnection('github.com')
+        c.request('HEAD', '/' + self.repo_path)
+        r = c.getresponse()
+        if r.status == httplib.MOVED_PERMANENTLY:
+            new_url = r.msg['location']
+            assert new_url.startswith('https://github.com/')
+            if new_url != self.url:
+                self.info('Found redirect to %s' % new_url)
+                self.url = new_url
+                self.repo_path = self.url[len('https://github.com/'):]
+                self.name = self.repo_path.rpartition('/')[-1]
+        elif 400 <= r.status < 500:
+            self.error('Cannot use this match: request failed with code %u (%s)'
+                       % (r.status, httplib.responses[r.status]))
+            raise ValueError
+        elif 500 <= r.status:
+            if attempt < MAX_ATTEMPTS:
+                self.error('Retrying: request failed with code %u (%s)'
+                           % (r.status, httplib.responses[r.status]))
+                self._check_redirects(attempt + 1)
+            else:
+                self.error('Cannot use this match: request failed with code %u (%s), attempt %u'
+                           % (r.status, httplib.responses[r.status], attempt))
+
+        self.scm_url = 'git://github.com/' + self.repo_path
 
     @cached_property
     def repo(self):
         global gh
         return gh.get_repo(self.repo_path)
 
-    def list_files(self, dir=None):
-        for f in self.repo.get_dir_contents(dir or '/'):
-            name = (dir + '/' + f.name if dir else f.name)
-            if f.type == 'file':
-                yield name
-            elif f.type == 'dir':
-                for subf in self.list_files(name):
-                    yield subf
+    def list_files(self, dir=None, attempt=0):
+        try:
+            for f in self.repo.get_dir_contents(dir or '/'):
+                name = (dir + '/' + f.name if dir else f.name)
+                if f.type == 'file':
+                    yield name
+                elif f.type == 'dir':
+                    for subf in self.list_files(name):
+                        yield subf
+        except GithubException as e:
+            if 500 <= e.status:
+                if attempt < MAX_ATTEMPTS:
+                    self.error('Received exception, retrying: %s' % repr(e))
+                    for fname in self.list_files(self, dir, attempt + 1):
+                        yield fname
+                else:
+                    raise
+            else:
+                raise
 
     @cached_property
     def files(self):
         if self.scm_url.startswith('git://github.com/vim-scripts'):
             raise ValueError('vim-scripts repositories are not used by VAM')
-        try:
-            return self.list_files()
-        except Exception as e:
-            self.exception(e)
-            u = urllib.urlopen(self.url)
-            new_url = u.geturl()
-            if new_url != full_repo_url:
-                return GithubMatch(self.re.match(new_url), self.voinfo).files
-            else:
-                raise ValueError('Failed to get information from ' + repr(new_url))
+        return set(self.list_files())
 
 
 class VundleGithubMatch(GithubMatch):
@@ -356,7 +433,7 @@ class GistMatch(GithubMatch):
 
     @cached_property
     def files(self):
-        return list(self.repo.files())
+        return set(self.repo.files())
 
 
 class MercurialMatch(Match):
@@ -373,7 +450,7 @@ class MercurialMatch(Match):
     def files(self):
         global remote_parser
         parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
-        return list(next(iter(parsing_result['tips'])).files)
+        return set(next(iter(parsing_result['tips'])).files)
 
 
 class BitbucketMercurialMatch(MercurialMatch):
@@ -424,6 +501,7 @@ class GithubLazy(object):
 
 candidate_classes = (
     GithubMatch,
+    VundleGithubMatch,
     GistMatch,
     MercurialMatch,
     BitbucketMercurialMatch,
@@ -454,12 +532,14 @@ def find_repo_candidate(voinfo):
     for candidate in candidates:
         if vofiles is None:
             vofiles = get_file_list(voinfo)
-            vofiles = set((fname for fname in vofiles if not fname.endswith('/')))
+            vofiles = {fname for fname in vofiles if not fname.endswith('/')}
             logger.info('>> vim.org files: ' + repr(vofiles))
         logger.info('>> Checking candidate {0}: {1}'.format(candidate.__class__.__name__,
                                                             candidate.match.group(0)))
         try:
-            prefix, key2 = check_candidate_with_file_list(vofiles, candidate.files)
+            files = set(candidate.files)
+            logger.info('>>> Repository files: {0!r}'.format(files))
+            prefix, key2 = check_candidate_with_file_list(vofiles, files)
         except Exception as e:
             logger.exception(e)
         else:
@@ -488,15 +568,19 @@ if __name__ == '__main__':
     p.add_argument('-n', '--dry-run', action='store_const', const=True,
             help='do not edit any files')
     p.add_argument('-l', '--last', metavar='N', type=int,
-            help='process only last N script numbers')
+            help='process only last N script numbers. Implies -D')
     p.add_argument('-a', '--all-last', action='store_const', const=True,
             help='process scripts in reversed order until already processed script was not found')
-    p.add_argument('--no-descriptions', action='store_const', const=True,
+    p.add_argument('-D', '--no-descriptions', action='store_const', const=True,
             help='do not check description hashes')
+    p.add_argument('-R', '--recheck', action='store_const', const=True,
+            help='recheck URLs found in scm_generated.json and report the result. '
+                 'Does not modify scm_generated.json. Implies -D')
     p.add_argument('-f', '--force', action='store_const', const=True,
             help='do not check whether given numbers were already processed')
     p.add_argument('sids', nargs='*', metavar='SID',
-            help='process only this script. May be passed more then once. Also see --force.')
+            help='process only this script. May be passed more then once. Also see --force. '
+                 'Implies -D')
 
     args = p.parse_args()
 
@@ -507,6 +591,13 @@ if __name__ == '__main__':
 
     if (args.all_last and args.force):
         raise ValueError('You may not specify both --force and --all-last')
+
+    if (args.recheck and (args.sids or args.last or args.all_last)):
+        raise ValueError('You may not specify --recheck and --sids, --last or --all-last at '
+                'the time')
+
+    if (args.sids or args.recheck or args.last):
+        args.no_descriptions = True
 
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
@@ -566,7 +657,10 @@ if __name__ == '__main__':
     else:
         keys = reversed(sorted(db, key=int))
 
-    def process_voinfo(voinfo):
+    def candidate_to_sg(candidate):
+        return {'type': candidate.scm, 'url': candidate.scm_url}
+
+    def process_voinfo(voinfo, recheck=False):
         global scm_generated
         global found
         global not_found
@@ -574,48 +668,66 @@ if __name__ == '__main__':
                     .format(**voinfo))
         try:
             candidate = find_repo_candidate(voinfo)
-            if candidate:
-                scm_generated[key] = {'type': candidate.scm, 'url': candidate.scm_url}
-                logger.info('> Recording found candidate for {0}: {1}'
-                            .format(key, scm_generated[key]))
-                found.add(key)
+            if recheck:
+                desc = '%s : %s' % (voinfo['script_id'], voinfo['script_name'])
+                if candidate:
+                    c_sg = candidate_to_sg(candidate)
+                    s_sg = scm_generated[voinfo['script_id']]
+                    if c_sg == s_sg:
+                        print ('== ' + desc)
+                    else:
+                        logger.info('> {0!r} (new) /= {1!r} (old)'.format(c_sg, s_sg))
+                        print ('/= ' + desc)
+                else:
+                    print ('no ' + desc)
             else:
-                not_found.add(key)
-                found.add(key)
+                if candidate:
+                    scm_generated[key] = candidate_to_sg(candidate)
+                    logger.info('> Recording found candidate for {0}: {1}'
+                                .format(key, scm_generated[key]))
+                    found.add(key)
+                else:
+                    not_found.add(key)
+                    found.add(key)
         except Exception as e:
             logger.exception(e)
 
     with lshg.MercurialRemoteParser() as remote_parser:
-        for key in keys:
-            if not args.force and key in scmnrs:
-                if args.all_last:
-                    break
-                else:
-                    continue
-            logger.info('Considering key {0}'.format(key))
-            process_voinfo(db[key])
-
-        if not args.no_descriptions:
+        if args.recheck:
+            for key in scm_generated:
+                process_voinfo(db[key], recheck=True)
+        else:
             for key in keys:
-                voinfo = db[key]
-                changed = False
-                if key not in description_hashes:
-                    h = get_voinfo_hash(voinfo)
-                    description_hashes[key] = h
-                    changed = True
-                if key in found:
-                    # TODO Check whether old URL should change
-                    continue
-                if not changed:
-                    h = get_voinfo_hash(voinfo)
-                    changed = (h != description_hashes.get(key))
-                    if changed:
-                        logger.info('Hash for key {0} changed, checking it'.format(key))
+                if not args.force and key in scmnrs:
+                    if args.all_last:
+                        break
+                    else:
+                        continue
+                logger.info('Considering key {0}'.format(key))
+                process_voinfo(db[key])
+
+            if not args.no_descriptions:
+                logger.info('Starting descriptions check')
+                for key in keys:
+                    voinfo = db[key]
+                    changed = False
+                    if key not in description_hashes:
+                        h = get_voinfo_hash(voinfo)
                         description_hashes[key] = h
-                else:
-                    logger.info('New hash for key {0}'.format(key))
-                if changed:
-                    process_voinfo(voinfo)
+                        changed = True
+                    if key in found:
+                        # TODO Check whether old URL should change
+                        continue
+                    if not changed:
+                        h = get_voinfo_hash(voinfo)
+                        changed = (h != description_hashes.get(key))
+                        if changed:
+                            logger.info('Hash for key {0} changed, checking it'.format(key))
+                            description_hashes[key] = h
+                    else:
+                        logger.info('New hash for key {0}'.format(key))
+                    if changed:
+                        process_voinfo(voinfo)
 
     if not args.dry_run:
         with open(scm_generated_name, 'w') as SGF:
