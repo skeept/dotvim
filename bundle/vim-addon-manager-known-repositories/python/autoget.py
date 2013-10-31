@@ -1,4 +1,25 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
+'''
+Utility that generates SCM URLs based on comparison of file lists generated
+from www.vim.org archives and repository URLs found in script descriptions
+or installation details found on www.vim.org.
+
+Found SCM URLs are saved in ./db/scm_generated.json.
+List of script numbers which were checked, but with no result,
+is saved in ./db/not_found.json.
+List of script numbers which should not be processed for some reason can be
+found in ./db/omitted.json.
+
+It uses these files and ./db/scmsources.vim to determine which scripts
+should not be rechecked.
+
+Vim.org archive URLs and plugin descriptions are obtained from dump found at
+http://www.vim.org/script-info.php. If there is file ./script-info.json it is
+used instead.
+
+Currently supports only git and mercurial repositories.
+'''
 from __future__ import unicode_literals, division, print_function
 
 from github import Github
@@ -74,6 +95,10 @@ def guess_fix_dir(voinfo):
         return 'colors'
     else:
         return 'plugin'
+
+
+def get_voinfo_hash(voinfo):
+    return hash(voinfo.get('description',     '') + voinfo.get('install_details', ''))
 
 
 # Namespace
@@ -162,31 +187,11 @@ def get_file_list(voinfo):
 
 expected_extensions = set(('vim', 'txt', 'py', 'pl', 'lua', 'pm'))
 def check_candidate_with_file_list(vofiles, files, prefix=None):
-    nummatches = 0
-    nummatches2 = 0
-    numfiles = 0
-    numfiles2 = 0
-    nomatches = set()
     files = set(files)
-    for fname in vofiles:
-        if fname.endswith('/'):
-            continue
-        ext = get_ext(fname)
-        isexp = ext in expected_extensions
-        if fname in files:
-            if isexp:
-                nummatches += 1
-            else:
-                nummatches2 += 1
-        else:
-            nomatches.add(fname)
-        if isexp:
-            numfiles += 1
-        else:
-            numfiles2 += 1
-    if nummatches == numfiles and nummatches2 == numfiles2:
+    expvofiles = set((fname for fname in vofiles if get_ext(fname) in expected_extensions))
+    if vofiles <= files:
         return (prefix, 100)
-    elif nummatches == numfiles and (nummatches2 or not numfiles2):
+    elif expvofiles and expvofiles <= files:
         return (prefix, 90)
     else:
         vofileparts = [fname.partition('/') for fname in vofiles]
@@ -195,7 +200,7 @@ def check_candidate_with_file_list(vofiles, files, prefix=None):
                 and all((part[0] == leadingdir for part in vofileparts[1:]))
                 and all((part[1] for part in vofileparts))):
             return check_candidate_with_file_list(
-                [part[-1] for part in vofileparts],
+                {part[-1] for part in vofileparts},
                 files,
                 leadingdir,
             )
@@ -282,6 +287,10 @@ class Match(object):
             raise NotImplementedError
         return cmp(self.key, other.key)
 
+    def __repr__(self):
+        return ('<%s: %s (from match %s)>'
+                % (type(self).__name__, self.url, self.match.group(0)))
+
 
 class GithubMatch(Match):
     re = github_url
@@ -311,6 +320,8 @@ class GithubMatch(Match):
 
     @cached_property
     def files(self):
+        if self.scm_url.startswith('git://github.com/vim-scripts'):
+            raise ValueError('vim-scripts repositories are not used by VAM')
         try:
             return self.list_files()
         except Exception as e:
@@ -437,22 +448,29 @@ def find_repo_candidates(voinfo):
 
 
 def find_repo_candidate(voinfo):
-    vofiles = get_file_list(voinfo)
-    logger.info('>> vim.org files: ' + repr(vofiles))
-    candidates = sorted(find_repo_candidates(voinfo), key=lambda o: o.key)
+    vofiles = None
+    candidates = sorted(find_repo_candidates(voinfo), key=lambda o: o.key, reverse=True)
     best_candidate = None
     for candidate in candidates:
+        if vofiles is None:
+            vofiles = get_file_list(voinfo)
+            vofiles = set((fname for fname in vofiles if not fname.endswith('/')))
+            logger.info('>> vim.org files: ' + repr(vofiles))
         logger.info('>> Checking candidate {0}: {1}'.format(candidate.__class__.__name__,
                                                             candidate.match.group(0)))
-        prefix, key2 = check_candidate_with_file_list(vofiles, candidate.files)
-        candidate.prefix = prefix
-        if key2 == 100:
-            logger.info('>> Found candidate {0}: {1} (100)'.format(candidate.__class__.__name__,
-                                                                   candidate.match.group(0)))
-            return candidate
-        elif key2 and (not best_candidate or key2 > best_candidate.key2):
-            best_candidate = candidate
-            best_candidate.key2 = key2
+        try:
+            prefix, key2 = check_candidate_with_file_list(vofiles, candidate.files)
+        except Exception as e:
+            logger.exception(e)
+        else:
+            candidate.prefix = prefix
+            if key2 == 100:
+                logger.info('>> Found candidate {0}: {1} (100)'.format(candidate.__class__.__name__,
+                                                                    candidate.match.group(0)))
+                return candidate
+            elif key2 and (not best_candidate or key2 > best_candidate.key2):
+                best_candidate = candidate
+                best_candidate.key2 = key2
     if best_candidate:
         logger.info('Found candidate {0}: {1} ({2})'.format(
                                                 best_candidate.__class__.__name__,
@@ -461,6 +479,35 @@ def find_repo_candidate(voinfo):
     return best_candidate
 
 if __name__ == '__main__':
+    import argparse
+    p = argparse.ArgumentParser(
+            description=__doc__.partition('\n\n')[0],
+            epilog=__doc__.partition('\n\n')[-1],
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
+    p.add_argument('-n', '--dry-run', action='store_const', const=True,
+            help='do not edit any files')
+    p.add_argument('-l', '--last', metavar='N', type=int,
+            help='process only last N script numbers')
+    p.add_argument('-a', '--all-last', action='store_const', const=True,
+            help='process scripts in reversed order until already processed script was not found')
+    p.add_argument('--no-descriptions', action='store_const', const=True,
+            help='do not check description hashes')
+    p.add_argument('-f', '--force', action='store_const', const=True,
+            help='do not check whether given numbers were already processed')
+    p.add_argument('sids', nargs='*', metavar='SID',
+            help='process only this script. May be passed more then once. Also see --force.')
+
+    args = p.parse_args()
+
+    if ((args.sids and args.last)
+            or (args.sids and args.all_last)
+            or (args.last and args.all_last)):
+        raise ValueError('You may specify only one of SID, --last or --all-last')
+
+    if (args.all_last and args.force):
+        raise ValueError('You may not specify both --force and --all-last')
+
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
     logger.addHandler(handler)
@@ -473,23 +520,31 @@ if __name__ == '__main__':
                 scmnrs.add(match.group(1))
 
     scm_generated_name = os.path.join('.', 'db', 'scm_generated.json')
-
     not_found_name = os.path.join('.', 'db', 'not_found.json')
+    omitted_name = os.path.join('.', 'db', 'omitted.json')
+    description_hashes_name = os.path.join('.', 'db', 'description_hashes.json')
 
-    try:
-        with open(scm_generated_name) as SGF:
-            scm_generated = json.load(SGF)
-            scmnrs.update(scm_generated)
-    except IOError:
-        scm_generated = {}
+    def load_scmnrs_json(fname, typ=dict):
+        global scmnrs
+        try:
+            with open(fname) as F:
+                ret = json.load(F)
+                scmnrs.update(ret)
+                return typ(ret)
+        except IOError:
+            return typ()
 
+    scm_generated = load_scmnrs_json(scm_generated_name)
+    omitted       = load_scmnrs_json(omitted_name)
+    found = scmnrs.copy()
+    not_found     = load_scmnrs_json(not_found_name, set)
 
-    try:
-        with open(not_found_name) as NF:
-            not_found = set(json.load(NF))
-            scmnrs.update(not_found)
-    except IOError:
-        not_found = set()
+    if not args.no_descriptions:
+        try:
+            with open(description_hashes_name) as DHF:
+                description_hashes = json.load(DHF)
+        except IOError:
+            description_hashes = {}
 
     with open(os.path.expanduser('~/.settings/passwords.yaml')) as PF:
         passwords = yaml.load(PF)
@@ -498,42 +553,79 @@ if __name__ == '__main__':
 
     db = getdb()
 
-    if len(sys.argv) > 1:
-        if len(sys.argv) == 2 and sys.argv[1].startswith('-'):
-            i = int(sys.argv[1])
-            _keys = reversed(sorted(db, key=int))
-            keys = []
-            while i:
-                keys.append(next(_keys))
-                i += 1
-        else:
-            keys = sys.argv[1:]
-            not_found -= set(keys)
+    if args.sids:
+        keys = args.sids
+        not_found -= set(keys)
+    elif args.last:
+        i = args.last
+        _keys = reversed(sorted(db, key=int))
+        keys = []
+        while i:
+            keys.append(next(_keys))
+            i -= 1
     else:
         keys = reversed(sorted(db, key=int))
 
+    def process_voinfo(voinfo):
+        global scm_generated
+        global found
+        global not_found
+        logger.info('> Checking plugin {script_name} (vimscript #{script_id})'
+                    .format(**voinfo))
+        try:
+            candidate = find_repo_candidate(voinfo)
+            if candidate:
+                scm_generated[key] = {'type': candidate.scm, 'url': candidate.scm_url}
+                logger.info('> Recording found candidate for {0}: {1}'
+                            .format(key, scm_generated[key]))
+                found.add(key)
+            else:
+                not_found.add(key)
+                found.add(key)
+        except Exception as e:
+            logger.exception(e)
+
     with lshg.MercurialRemoteParser() as remote_parser:
         for key in keys:
+            if not args.force and key in scmnrs:
+                if args.all_last:
+                    break
+                else:
+                    continue
             logger.info('Considering key {0}'.format(key))
-            if key not in scmnrs:
+            process_voinfo(db[key])
+
+        if not args.no_descriptions:
+            for key in keys:
                 voinfo = db[key]
-                logger.info('> Checking plugin {script_name} (vimscript #{script_id})'
-                            .format(**voinfo))
-                try:
-                    candidate = find_repo_candidate(voinfo)
-                    if candidate:
-                        scm_generated[key] = {'type': candidate.scm, 'url': candidate.scm_url}
-                        logger.info('> Recording found candidate for {0}: {1}'
-                                    .format(key, scm_generated[key]))
-                    else:
-                        not_found.add(key)
-                except Exception as e:
-                    logger.exception(e)
+                changed = False
+                if key not in description_hashes:
+                    h = get_voinfo_hash(voinfo)
+                    description_hashes[key] = h
+                    changed = True
+                if key in found:
+                    # TODO Check whether old URL should change
+                    continue
+                if not changed:
+                    h = get_voinfo_hash(voinfo)
+                    changed = (h != description_hashes.get(key))
+                    if changed:
+                        logger.info('Hash for key {0} changed, checking it'.format(key))
+                        description_hashes[key] = h
+                else:
+                    logger.info('New hash for key {0}'.format(key))
+                if changed:
+                    process_voinfo(voinfo)
 
-    with open(scm_generated_name, 'w') as SGF:
-        dump_json(scm_generated, SGF)
+    if not args.dry_run:
+        with open(scm_generated_name, 'w') as SGF:
+            dump_json(scm_generated, SGF)
 
-    with open(not_found_name, 'w') as NF:
-        dump_json_nr_set(list(not_found), NF)
+        with open(not_found_name, 'w') as NF:
+            dump_json_nr_set(list(not_found), NF)
+
+        if not args.no_descriptions:
+            with open(description_hashes_name, 'w') as DHF:
+                dump_json(description_hashes, DHF)
 
 # vim: tw=100 ft=python fenc=utf-8 ts=4 sts=4 sw=4
