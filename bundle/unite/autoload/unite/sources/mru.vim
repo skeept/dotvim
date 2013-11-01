@@ -169,8 +169,13 @@ function! s:mru.has_external_update() "{{{
 endfunction"}}}
 
 function! s:mru.save(...) "{{{
+  let opts = {}
+  if a:0 >= 1 && s:V.is_dict(a:1)
+    call extend(opts, a:1)
+  endif
+
   " should load all candidates
-  call self.load()
+  call self.load(1)
 
   let self.candidates = unite#sources#mru#variables#get_mrus(self.type)
         \ + self.candidates
@@ -179,11 +184,6 @@ function! s:mru.save(...) "{{{
   if empty(self.candidates)
     " nothing to save, mru is not loaded
     return
-  endif
-
-  let opts = {}
-  if a:0 >= 1 && s:V.is_dict(a:1)
-    call extend(opts, a:1)
   endif
 
   if self.has_external_update() && filereadable(self.mru_file.short)
@@ -217,9 +217,11 @@ function! s:mru.save(...) "{{{
   endif
 endfunction"}}}
 
-function! s:mru.load()  "{{{
+function! s:mru.load(...)  "{{{
+  let is_force = get(a:000, 0, 0)
+
   " everything is loaded, done!
-  if self.is_loaded >= 2
+  if !is_force && self.is_loaded >= 2
     return
   endif
 

@@ -42,6 +42,8 @@ import tarfile
 import zipfile
 import io
 
+import magic
+
 try:
     import lzma
 except ImportError:
@@ -132,7 +134,8 @@ class FileListers:
 
     @staticmethod
     def tar(AF):
-        return set(get_tar_names(tarfile.TarFile(fileobj=AF)))
+        # tar requires tell on its own
+        return set(get_tar_names(tarfile.TarFile(fileobj=io.BytesIO(AF.read()))))
 
     @staticmethod
     def tgz(AF):
@@ -175,6 +178,46 @@ class FileListers:
     vba = vmb
 
 
+mime_to_ext = {
+    'application/x-gzip': 'gz',
+    'application/x-tar': 'tar',
+}
+
+_magic = None
+
+def find_mime(AF):
+    global _magic
+    if not _magic:
+        _magic = magic.open(magic.MAGIC_MIME_TYPE)
+        _magic.load('/usr/share/misc/magic.mgc')
+    af = AF.read()
+    return io.BytesIO(af), mime_to_ext[_magic.buffer(af)]
+
+
+def get_result(AF, ext, aname, had_to_guess=False):
+    try:
+        ret = getattr(FileListers, ext)(AF)
+    except Exception as e:
+        logger.exception(e)
+        if not had_to_guess:
+            AF.seek(0)
+            AF, ext = find_mime(AF)
+            ret = get_result(AF, ext, aname, True)
+            had_to_guess = True
+        else:
+            raise
+    if not isinstance(ret, set):
+        if had_to_guess:
+            AF, ext = find_mime(ret)
+            return get_result(AF, ext, None, had_to_guess)
+        else:
+            aname = aname[:-1-len(ext)]
+            ext = get_ext(aname).lower()
+            return get_result(ret, ext, aname, had_to_guess)
+    else:
+        return ret
+
+
 def get_file_list(voinfo):
     rinfo = voinfo['releases'][0]
     aname = rinfo['package']
@@ -184,14 +227,7 @@ def get_file_list(voinfo):
     if ext == 'vim':
         return [guess_fix_dir(voinfo) + '/' + aname]
     elif ext in FileListers.__dict__:
-        AF = urllib.urlopen(aurl)
-        r = getattr(FileListers, ext)(AF)
-        while not isinstance(r, set):
-            aname = aname[:-1-len(ext)]
-            AF = r
-            ext = get_ext(aname).lower()
-            r = getattr(FileListers, ext)(AF)
-        return r
+        return get_result(io.BytesIO(urllib.urlopen(aurl).read()), ext, aname)
     else:
         raise ValueError('Unknown extension')
 
@@ -209,7 +245,7 @@ def isvimvofile(fname):
 
 # Directories corresponding to plugin types on www.vim.org
 vodirs = {'plugin', 'colors', 'ftplugin', 'indent', 'syntax'}
-expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm'}
+expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm', 'rb'}
 def check_candidate_with_file_list(vofiles, files, prefix=None):
     expvofiles = {fname for fname in vofiles if get_ext(fname) in expected_extensions}
     vimvofiles = {fname for fname in expvofiles if isvimvofile(fname)}
@@ -262,6 +298,10 @@ bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-
 googlecode_url          = re.compile(r'code\.google\.com/p/([^/\s]+)')
 mercurial_url           = re.compile(r'hg\s+clone\s+(\S+)')
 git_url                 = re.compile(r'git\s+clone\s+(\S+)')
+
+
+class NotLoggedError(Exception):
+    pass
 
 
 def novimext(s):
@@ -367,7 +407,7 @@ class GithubMatch(Match):
         elif 400 <= r.status < 500:
             self.error('Cannot use this match: request failed with code %u (%s)'
                        % (r.status, httplib.responses[r.status]))
-            raise ValueError
+            raise NotLoggedError
         elif 500 <= r.status:
             if attempt < MAX_ATTEMPTS:
                 self.error('Retrying: request failed with code %u (%s)'
@@ -397,7 +437,7 @@ class GithubMatch(Match):
             if 500 <= e.status:
                 if attempt < MAX_ATTEMPTS:
                     self.error('Received exception, retrying: %s' % repr(e))
-                    for fname in self.list_files(self, dir, attempt + 1):
+                    for fname in self.list_files(dir, attempt + 1):
                         yield fname
                 else:
                     raise
@@ -421,7 +461,7 @@ class GistMatch(GithubMatch):
     scm = 'git'
 
     def __init__(self, *args, **kwargs):
-        super(GistMatch, self).__init__(*args, **kwargs)
+        Match.__init__(self, *args, **kwargs)
         self.name = self.match.group(1)
         self.scm_url = 'git://gist.github.com/' + self.name
         self.url = 'https://gist.github.com/' + self.name
@@ -433,7 +473,7 @@ class GistMatch(GithubMatch):
 
     @cached_property
     def files(self):
-        return set(self.repo.files())
+        return set(self.repo.files)
 
 
 class MercurialMatch(Match):
@@ -522,7 +562,10 @@ def find_repo_candidates(voinfo):
             for match in C.re.finditer(string):
                 if not match.group(0) in foundstrings:
                     foundstrings.add(match.group(0))
-                    yield C(match, voinfo)
+                    try:
+                        yield C(match, voinfo)
+                    except NotLoggedError:
+                        pass
 
 
 def find_repo_candidate(voinfo):
@@ -540,6 +583,8 @@ def find_repo_candidate(voinfo):
             files = set(candidate.files)
             logger.info('>>> Repository files: {0!r}'.format(files))
             prefix, key2 = check_candidate_with_file_list(vofiles, files)
+        except NotLoggedError:
+            pass
         except Exception as e:
             logger.exception(e)
         else:
@@ -687,6 +732,7 @@ if __name__ == '__main__':
                                 .format(key, scm_generated[key]))
                     found.add(key)
                 else:
+                    logger.info('> Recording failure to find candidates for {0}'.format(key))
                     not_found.add(key)
                     found.add(key)
         except Exception as e:

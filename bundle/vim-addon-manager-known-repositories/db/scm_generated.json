@@ -115,6 +115,10 @@
     "type": "git",
     "url": "git://github.com/caglartoklu/fortran_line_length.vim"
   },
+  "2903": {
+    "type": "git",
+    "url": "git://github.com/neilhwatson/vim_cf3"
+  },
   "2904": {
     "type": "git",
     "url": "git://github.com/neilhwatson/vim_cf3"
@@ -287,6 +291,10 @@
     "type": "git",
     "url": "git://github.com/rosstimson/bats.vim"
   },
+  "4679": {
+    "type": "git",
+    "url": "git://github.com/biskark/vim-ultimate-colorscheme-utility"
+  },
   "4681": {
     "type": "git",
     "url": "git://github.com/coot/vim_args"
@@ -379,6 +387,10 @@
     "type": "git",
     "url": "git://github.com/drmikehenry/vim-fontdetect"
   },
+  "4724": {
+    "type": "git",
+    "url": "git://github.com/biskark/vim-ultimate-test-utility"
+  },
   "4725": {
     "type": "git",
     "url": "git://github.com/junegunn/vim-emoji"
@@ -394,6 +406,10 @@
   "4733": {
     "type": "git",
     "url": "git://github.com/Pychimp/vim-sol"
+  },
+  "4734": {
+    "type": "git",
+    "url": "git://github.com/ardagnir/united-front"
   },
   "4735": {
     "type": "git",
@@ -438,6 +454,10 @@
   "4755": {
     "type": "git",
     "url": "git://github.com/caglartoklu/launchassociated.vim"
+  },
+  "4756": {
+    "type": "git",
+    "url": "git://github.com/Zuckonit/vim-airline-tomato"
   },
   "586": {
     "type": "git",
