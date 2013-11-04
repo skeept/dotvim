@@ -8,16 +8,16 @@
 set backspace=2
 set esckeys
 
-set autoindent		" always set autoindenting on
+set autoindent          " always set autoindenting on
 if 1 || !exists("g:is_vimrc_simple")
   set splitright          "split the window to the right
   set splitbelow          "open the window to the bottom
 endif
 
 set history=200
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set incsearch		" do incremental searching
+set ruler               " show the cursor position all the time
+set showcmd             " display incomplete commands
+set incsearch           " do incremental searching
 set ignorecase
 "set smartcase
 set showmatch           " show matching parenthesis
@@ -487,12 +487,12 @@ let g:unite_source_history_yank_enable = 1
 
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
-	\ 'unite-tag', 'unite-colorscheme', 'unite-history'],
+        \ 'unite-tag', 'unite-colorscheme', 'unite-history'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
-	\ buffer file_mru bookmark file<CR>
+        \ buffer file_mru bookmark file<CR>
   nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
-	\ -prompt=%\  buffer file_mru bookmark file<CR>
+        \ -prompt=%\  buffer file_mru bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
   nnoremap ,uf :<C-U>Unite source<CR>
