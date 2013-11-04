@@ -29,7 +29,7 @@ describe 'init sections'
   end
 
   it 'section c should be file'
-    Expect g:airline_section_c == '%<%f%m %#__accent_red#%{airline#util#wrap(airline#parts#readonly(),0)}%#__restore__#'
+    Expect g:airline_section_c == '%<%f%m %#__accent_red#%{airline#util#wrap(airline#parts#readonly(),0)}%#__restore__#'
   end
 
   it 'section x should be filetype'
@@ -62,6 +62,7 @@ describe 'init sections'
     Expect airline#parts#get('branch').raw == ''
     Expect airline#parts#get('tagbar').raw == ''
     Expect airline#parts#get('syntastic').raw == ''
+    Expect airline#parts#get('eclim').raw == ''
     Expect airline#parts#get('whitespace').raw == ''
   end
 end

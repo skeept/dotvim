@@ -8,6 +8,10 @@ function! s:prototype.split(...)
   let self._line .= '%#'.self._curgroup.'#'.(a:0 ? a:1 : '%=')
 endfunction
 
+function! s:prototype.add_section_spaced(group, contents)
+  call self.add_section(a:group, (g:airline_symbols.space).a:contents.(g:airline_symbols.space))
+endfunction
+
 function! s:prototype.add_section(group, contents)
   if self._curgroup != ''
     if self._curgroup == a:group
@@ -28,7 +32,6 @@ function! s:prototype.add_section(group, contents)
     let content_parts = split(a:contents, '__accent')
     for cpart in content_parts
       let accent = matchstr(cpart, '_\zs[^#]*\ze')
-      call airline#highlighter#add_accent(a:group, accent)
       call add(contents, cpart)
     endfor
     let line = join(contents, a:group)

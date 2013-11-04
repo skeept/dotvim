@@ -313,6 +313,7 @@ let scmnr.4028 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-ru
 let scmnr.4340 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-commandline-completion'}
 let scmnr.4630 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-errorformats'}
 let scmnr.4656 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-errorformats'}
+let scm['vim-addon-python-pdb'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-python-pdb'}
 let scm['vim-addon-lout'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-lout'}
 let scm['vim-addon-rfc'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-rfc'}
 let scm['vim-addon-urweb'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-urweb'}
@@ -566,6 +567,9 @@ let scmnr.2424 = {'type': 'git', 'url': 'git://github.com/tmallen/transmit-vim'}
 let scmnr.2719 = {'type': 'git', 'url': 'git://github.com/tmallen/proj-vim'}
 let scmnr.3163 = {'type': 'git', 'url': 'git://github.com/tmallen/endline-vim'}
 let scmnr.4431 = {'type': 'git', 'url': 'git://github.com/oinksoft/tcd.vim'}
+
+" Anthony Panozzo
+let scmnr.2429 = {'type': 'git', 'url': 'git://github.com/panozzaj/vim-autocorrect'}
 
 " @kevinwatters
 let scmnr.2441 = {'type': 'git', 'url': 'git://github.com/kevinw/pyflakes-vim'}
@@ -1256,6 +1260,8 @@ let scmnr.3523 = {'type': 'git', 'url': 'git://github.com/GutenYe/gem.vim'}
 " Derek Wyatt
 " Using the author's new github page. Link in vim.org is absent.
 let scmnr.3524 = {'type': 'git', 'url': 'git://github.com/derekwyatt/vim-scala'}
+" vim.org version is old and does not work well with plugin managers
+let scmnr.2624 = {'type': 'git', 'url': 'git://github.com/derekwyatt/vim-protodef'}
 
 " Kim Silkebækken
 let scmnr.3526 = {'type': 'git', 'url': 'git://github.com/Lokaltog/vim-easymotion'}
@@ -1532,7 +1538,7 @@ let scm['toggletoolbar'] = {'type': 'git', 'url': 'https://bitbucket.org/aliva/v
 
 " Zhao Cai
 let scmnr.3854 = {'type': 'git', 'url': 'git://github.com/zhaocai/unite-scriptnames'}
-let scmnr.4529 = {'type': 'git', 'url': 'git://github.com/zhaocai/GoldenView'}
+let scmnr.4529 = {'type': 'git', 'url': 'git://github.com/zhaocai/GoldenView.Vim'}
 let scmnr.4576 = {'type': 'git', 'url': 'git://github.com/zhaocai/linepower.vim'}
 
 " Matthias Guenther
@@ -2245,12 +2251,14 @@ let scmnr.4671 = {'type': 'git', 'url': 'git://github.com/mtth/locate.vim'}
 let scmnr.4672 = {'type': 'git', 'url': 'git://github.com/ivalkeen/nerdtree-execute'}
 let scmnr.4673 = {'type': 'git', 'url': 'git://github.com/ivalkeen/vim-ctrlp-tjump'}
 
-" elixir-lang
-let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim-elixir'}
+" Pandu Rendradjaja
+let scmnr.4675 = {'type': 'git', 'url': 'git://github.com/prendradjaja/vim-vertigo'}
 
-" Carlos Galdino
-let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
+" Xia Kai
+let scmnr.4676 = {'type': 'git', 'url': 'git://github.com/xiaket/better-header'}
 
+" Matthew Boehm
+let scmnr.4677 = {'type': 'git', 'url': 'git://github.com/mattboehm/vim-unstack'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
@@ -2278,6 +2286,9 @@ let scmnr.4333 = {'url': 'https://github.com/vain/dotfiles-pub/raw/master/.vim/c
 " joey c
 " The following plugin does not have a separate repository:
 let scmnr.4381 = {'url': 'http://hwi.ath.cx/code/home/.vim/plugin/RepeatLast.vim', 'archive_name': 'RepeatLast.vim', 'type': 'archive', 'script-type': 'utility'}
+
+" Paul Lampert
+let scmnr.4736 = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/lampert/vim'}, {'navigate-softtab.vim': 'plugin'})
 
 " jeb beich
 let scmnr.4648 = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/jebberjeb/yet-another-buffer-list'}, {'buflist.vim': 'plugin'})
@@ -2514,6 +2525,18 @@ let scm['python-imports@mgedmin'] = {'type': 'git', 'url': 'git://github.com/mge
 
 " Meikel Brandmeyer
 let scm['vim-clojure-static'] = {'type': 'git', 'url': 'git://github.com/guns/vim-clojure-static'}
+
+" elixir-lang
+let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim-elixir'}
+
+" Carlos Galdino
+let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
+
+" Johannes Raggam - Tabline by: mkitt (Matthew Kitt)
+let scm['tabline'] = {'type': 'git', 'url': 'git://github.com/mkitt/tabline.vim'}
+
+" Tim Clem
+let scm['vim-arduino'] = {'type': 'git', 'url': 'git://github.com/tclem/vim-arduino'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 

@@ -40,7 +40,19 @@ function! s:check_in_path()
   if !exists('b:airline_branch_path')
     let root = get(b:, 'git_dir', get(b:, 'mercurial_dir', ''))
     let bufferpath = resolve(fnamemodify(expand('%'), ':p:h'))
-    let root = expand(fnamemodify(root, ':h'))
+
+    if !filereadable(root) "not a file
+      " if .git is a directory, it's the old submodule format
+      if match(root, '\.git$') >= 0
+        let root = expand(fnamemodify(root, ':h'))
+      else
+        " else it's the newer format, and we need to guesstimate
+        let pattern = '\.git\(\\\|\/\)modules\(\\\|\/\)'
+        if match(root, pattern) >= 0
+          let root = substitute(root, pattern, '', '')
+        endif
+    endif
+
     let b:airline_file_in_root = stridx(bufferpath, root) > -1
   endif
   return b:airline_file_in_root

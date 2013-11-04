@@ -11,6 +11,12 @@ function! airline#add_statusline_func(name)
 endfunction
 
 function! airline#add_statusline_funcref(function)
+  if index(g:airline_statusline_funcrefs, a:function) >= 0
+    echohl WarningMsg
+    echo 'The airline statusline funcref '.string(a:function).' has already been added.'
+    echohl NONE
+    return
+  endif
   call add(g:airline_statusline_funcrefs, a:function)
 endfunction
 
@@ -26,6 +32,18 @@ function! airline#add_inactive_statusline_func(name)
 endfunction
 
 function! airline#load_theme()
+  if exists('*airline#themes#{g:airline_theme}#refresh')
+    call airline#themes#{g:airline_theme}#refresh()
+  endif
+
+  let palette = g:airline#themes#{g:airline_theme}#palette
+  call airline#themes#patch(palette)
+
+  if exists('g:airline_theme_patch_func')
+    let Fn = function(g:airline_theme_patch_func)
+    call Fn(palette)
+  endif
+
   call airline#highlighter#load_theme()
   call airline#extensions#load_theme()
 endfunction
@@ -40,15 +58,8 @@ function! airline#switch_theme(name)
       return
     else
       let g:airline_theme = 'dark'
-      let palette = g:airline#themes#dark#palette
     endif
   endtry
-  call airline#themes#patch(palette)
-
-  if exists('g:airline_theme_patch_func')
-    let Fn = function(g:airline_theme_patch_func)
-    call Fn(palette)
-  endif
 
   let w:airline_lastmode = ''
   call airline#update_statusline()
@@ -109,7 +120,12 @@ function! s:invoke_funcrefs(context, funcrefs)
 endfunction
 
 function! airline#statusline(winnr)
-  return '%{airline#check_mode('.a:winnr.')}'.s:contexts[a:winnr].line
+  if has_key(s:contexts, a:winnr)
+    return '%{airline#check_mode('.a:winnr.')}'.s:contexts[a:winnr].line
+  endif
+
+  " in rare circumstances this happens...see #276
+  return ''
 endfunction
 
 function! airline#check_mode(winnr)

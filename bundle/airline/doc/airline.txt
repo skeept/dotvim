@@ -1,4 +1,5 @@
 *airline.txt*  Lean and mean status/tabline that's light as air
+*airline*
                    _                       _      _ _                        ~
             __   _(_)_ __ ___         __ _(_)_ __| (_)_ __   ___             ~
             \ \ / / | '_ ` _ \ _____ / _` | | '__| | | '_ \ / _ \            ~
@@ -6,7 +7,26 @@
               \_/ |_|_| |_| |_|      \__,_|_|_|  |_|_|_| |_|\___|            ~
                                                                              ~
 ==============================================================================
-INTRODUCTION                                                       *airline*
+CONTENTS                                                  *airline-contents*
+
+   01. Intro ............................................... |airline-intro|
+   02. Features ......................................... |airline-features|
+   03. Name ................................................. |airline-name|
+   04. Configuration ............................... |airline-configuration|
+   05. Commands ......................................... |airline-commands|
+   06. Customization ............................... |airline-customization|
+   07. Extensions ..................................... |airline-extensions|
+   08. Advanced Customization ............. |airline-advanced-customization|
+   09. Funcrefs ......................................... |airline-funcrefs|
+   10. Pipeline ......................................... |airline-pipeline|
+   11. Writing Extensions ..................... |airline-writing-extensions|
+   12. Writing Themes ..................................... |airline-themes|
+   13. Troubleshooting ........................... |airline-troubleshooting|
+   14. Contributions ............................... |airline-contributions|
+   15. License ........................................... |airline-license|
+
+==============================================================================
+INTRODUCTION                                                 *airline-intro*
 
 vim-airline is a fast and lightweight alternative to powerline, written
 in 100% vimscript with no outside dependencies.
@@ -116,7 +136,10 @@ COMMANDS                                                  *airline-commands*
   Toggles whitespace detection.
 
 :AirlineToggle                                              *:AirlineToggle*
-  Toggles between the standard 'statusline'
+  Toggles between the standard 'statusline' and airline.
+
+:AirlineRefresh                                            *:AirlineRefresh*
+  Refreshes all highlight groups.
 
 ==============================================================================
 CUSTOMIZATION                                        *airline-customization*
@@ -169,7 +192,7 @@ with the usual statusline syntax.
 
 Note: If you define any section variables it will replace the default values
 entirely.  If you want to disable only certain parts of a section you can try
-using variables defined in the |airline-configuration| or |airline_extensions|
+using variables defined in the |airline-configuration| or |airline-extensions|
 section.
 >
   variable names                default contents
@@ -210,6 +233,26 @@ configuration values that you can use.
   " Note: set to an empty dictionary to disable truncation.
   let g:airline#extensions#default#section_truncate_width = {}
 <
+* configure the layout of the sections by specificing an array of two arrays
+  (first array is the left side, second array is the right side). >
+  let g:airline#extensions#default#layout = [
+      \ [ 'a', 'b', 'c' ],
+      \ [ 'x', 'y', 'z', 'warning' ]
+      \ ])
+<
+
+-------------------------------------                     *airline-quickfix*
+The quickfix extension is a simple built-in extension which determines
+whether the buffer is a quickfix or location list buffer, and adjusts the
+title accordingly.
+
+* configure the title text for quickfix buffers >
+  let g:airline#extensions#quickfix#quickfix_text = 'Quickfix'
+<
+* configure the title text for location list buffers >
+  let g:airline#extensions#quickfix#location_text = 'Location'
+<
+
 -------------------------------------                   *airline-bufferline*
 vim-bufferline <https://github.com/bling/vim-bufferline>
 
@@ -291,6 +334,13 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
 * enable/disable virtualenv integration >
   let g:airline#extensions#virtualenv#enabled = 1
 <
+-------------------------------------                        *airline-eclim*
+eclim <https://eclim.org>
+
+* enable/disable eclim integration, which works well with the
+  |airline-syntastic| extension. >
+  let g:airline#extensions#eclim#enabled = 1
+
 -------------------------------------                   *airline-whitespace*
 * enable/disable detection of whitespace errors. >
   let g:airline#extensions#whitespace#enabled = 1
@@ -344,6 +394,11 @@ virtualenv <https://github.com/jmcantrell/vim-virtualenv>
 <
     * configure collapsing parent directories in buffer name. >
       let g:airline#extensions#tabline#fnamecollapse = 1
+
+  " The `unique_tail` algorithm will display the tail of the filename, unless
+  " there is another file of the same name, in which it will display it along
+  " with the containing parent directory.
+  let g:airline#extensions#tabline#formatter = 'unique_tail'
 <
 * configure the minimum number of buffers needed to show the tabline. >
   let g:airline#extensions#tabline#buffer_min_count = 0
@@ -407,6 +462,22 @@ Before is a list of parts that are predefined by vim-airline.
 And the following are defined for their respective extensions:
 
 `hunks`, `branch`, `tagbar`, `syntastic`, `whitespace`
+
+-------------------------------------                      *airline-accents*
+Accents can be defined on any part, like so: >
+  call airline#parts#define_accent('foo', 'red')
+<
+This will override the colors of that part by using what is defined in that
+particular accent. In the above example, the `red` accent is used, which means
+regardless of which section the part is used in, it will have red foreground
+colors instead of the section's default foreground color.
+
+The following accents are defined by default. Themes can define their variants
+of the colors, but defaults will be provided if missing. >
+  bold, italic, red, green, blue, yellow, orange, purple
+<
+The defaults configure the mode and line number parts to be bold, and the
+readonly part to be red.
 
 -------------------------------------                     *airline-sections*
 Once a part is defined, you can use helper functions to generate the

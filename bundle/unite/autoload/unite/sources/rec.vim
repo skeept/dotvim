@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: rec.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Sep 2013.
+" Last Modified: 29 Oct 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,13 +37,14 @@ call unite#util#set_default(
       \ 'g:unite_source_rec_min_cache_files', 100,
       \ 'g:unite_source_file_rec_min_cache_files')
 call unite#util#set_default(
-      \ 'g:unite_source_rec_max_cache_files', 1000,
+      \ 'g:unite_source_rec_max_cache_files', 2000,
       \ 'g:unite_source_file_rec_max_cache_files')
+call unite#util#set_default('g:unite_source_rec_unit', 200)
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command',
       \ (executable('ag') ?
       \  'ag --nocolor --nogroup --skip-vcs-ignores --ignore ' .
-      \  '''.hg'' --ignore ''.svn'' --ignore ''.git'' --ignore ''.bzr'' --hidden -g ""' :
+      \  '''.hg'' --ignore ''.svn'' --ignore ''.git'' --ignore ''.bzr'' --ignore ''_darcs'' --hidden -g ""' :
       \  !unite#util#is_windows() && executable('find') ? 'find' : ''),
       \ 'g:unite_source_file_rec_async_command')
 "}}}
@@ -60,8 +61,8 @@ let s:source_file_rec = {
       \ 'default_kind' : 'file',
       \ 'max_candidates' : 50,
       \ 'ignore_pattern' : g:unite_source_rec_ignore_pattern,
-      \ 'matchers' : [ 'matcher_default', 'matcher_hide_hidden_files' ],
-      \ 'converters' : 'converter_relative_word',
+      \ 'matchers' : [ 'converter_relative_word',
+      \                'matcher_default', 'matcher_hide_hidden_files' ],
       \ }
 
 function! s:source_file_rec.gather_candidates(args, context) "{{{
@@ -98,7 +99,8 @@ function! s:source_file_rec.async_gather_candidates(args, context) "{{{
   let continuation = a:context.source__continuation
 
   let [continuation.rest, files] =
-        \ s:get_files(a:context, continuation.rest, 1, 20,
+        \ s:get_files(a:context, continuation.rest,
+        \   1, g:unite_source_rec_unit,
         \   a:context.source.ignore_pattern)
 
   if empty(continuation.rest) || len(continuation.files) >
@@ -329,8 +331,22 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   endif
 
   let continuation = a:context.source__continuation
-
   let stdout = a:context.source__proc.stdout
+
+  let candidates = []
+  for filename in map(filter(
+        \ stdout.read_lines(-1, 100), 'v:val != ""'),
+        \ "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
+    if filename !=# a:context.source__directory
+          \ && filename !~? a:context.source.ignore_pattern
+      call add(candidates, {
+            \ 'word' : unite#util#substitute_path_separator(
+            \    fnamemodify(filename, ':p')),
+            \ 'action__path' : filename,
+            \ })
+    endif
+  endfor
+
   if stdout.eof || len(continuation.files) >
         \        g:unite_source_rec_max_cache_files
     " Disable async.
@@ -346,20 +362,6 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
 
     call a:context.source__proc.waitpid()
   endif
-
-  let candidates = []
-  for filename in map(filter(
-        \ stdout.read_lines(-1, 100), 'v:val != ""'),
-        \ "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
-    if filename !=# a:context.source__directory
-          \ && filename !~? a:context.source.ignore_pattern
-      call add(candidates, {
-            \ 'word' : unite#util#substitute_path_separator(
-            \    fnamemodify(filename, ':p')),
-            \ 'action__path' : filename,
-            \ })
-    endif
-  endfor
 
   let continuation.files += candidates
   if stdout.eof
@@ -433,7 +435,7 @@ function! s:get_path(args, context) "{{{
 
   return directory
 endfunction"}}}
-function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
+function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
   let continuation_files = []
   let ret_files = []
   let files_index = 0
@@ -488,10 +490,10 @@ function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
             let ret_files_len += 1
           endif
 
-          if a:level < 5 && ret_files_len < a:max_len
+          if a:level < 5 && ret_files_len < a:max_unit
             let [continuation_files_child, ret_files_child] =
                   \ s:get_files(a:context, [child], a:level + 1,
-                  \  a:max_len - ret_files_len, a:ignore_pattern)
+                  \  a:max_unit - ret_files_len, a:ignore_pattern)
             let continuation_files += continuation_files_child
 
             if !a:context.source__is_directory
@@ -506,7 +508,7 @@ function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
 
           let ret_files_len += 1
 
-          if ret_files_len > a:max_len
+          if ret_files_len > a:max_unit
             let continuation_files += children[child_index :]
             break
           endif
@@ -517,7 +519,7 @@ function! s:get_files(context, files, level, max_len, ignore_pattern) "{{{
       let ret_files_len += 1
     endif
 
-    if ret_files_len > a:max_len
+    if ret_files_len > a:max_unit
       break
     endif
   endfor
