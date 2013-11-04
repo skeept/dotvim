@@ -48,6 +48,7 @@ set scrolloff=2 "kepp XX lines of contex when editing
 set clipboard+=unnamed " turns out I do like is sharing windows clipboard
 set wildmenu                    "wmnu:  enhanced ex command completion
 set wildmode=longest:full,list:full  "wim:   helps wildmenu auto-completion
+set wildignorecase
 cabbrev tabh tab help
 set nostartofline
 
@@ -78,6 +79,7 @@ endif
 set cot-=preview
 
 set viminfo=h,'100,<10000,s1000,/1000,:1000
+set path+=**
 
 set showtabline=0
 "set regexpengine=1
