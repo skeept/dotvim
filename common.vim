@@ -987,6 +987,8 @@ function! FixForwardSeach()
   exe execString
 endfunction
 command! -complete=file -nargs=* Mt call SetPdfDestination(<f-args>)
+" the following settings seems to work for sumartraPDF:
+" "C:\Program Files\Vim\vim74\gvim.exe"  -c ":RemoteOpen +%l %f"
 "==============================================================================}}}
 
 "================== Other commands/mappings/settings =========================={{{
