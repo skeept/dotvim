@@ -1,6 +1,7 @@
 "▶1 
 scriptencoding utf-8
-execute frawor#Setup('0.0', {'@/resources': '0.0'})
+execute frawor#Setup('1.0', {'@/resources': '0.0',
+            \                  '@/options': '0.0',})
 let s:_messages={
             \'noutree': 'No such item in saved undo tree. '.
             \           'If you can reproduce this error file a bug report',
@@ -23,6 +24,10 @@ let s:_messages={
         \}
 let s:r={}
 let s:hasundo=exists('*undotree')
+let s:_options={
+            \'fullundo':     {'default': 1,
+            \                  'filter': 'bool'},
+        \}
 "▶1 curundo :: () → UInt
 if s:hasundo
     function s:F.curundo()
@@ -34,10 +39,10 @@ else
     endfunction
 endif
 "▶1 r.setup
-function s:r.setup(bvar, undo_full)
+function s:r.setup(bvar)
     let a:bvar.undo_start=s:F.curundo()
     let a:bvar.undo_ct=b:changedtick
-    let a:bvar.undo_full=(s:hasundo && a:undo_full)
+    let a:bvar.undo_full=(s:hasundo && s:_f.getoption('fullundo'))
     if a:bvar.undo_full
         let a:bvar.undo_tree={a:bvar.undo_start : {}}
     endif

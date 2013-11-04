@@ -90,6 +90,7 @@ Contents~
         tlib#char#IsAvailable .................. |tlib#char#IsAvailable()|
         tlib#char#GetWithTimeout ............... |tlib#char#GetWithTimeout()|
         g:tlib_scratch_pos ..................... |g:tlib_scratch_pos|
+        g:tlib#scratch#hidden .................. |g:tlib#scratch#hidden|
         tlib#scratch#UseScratch ................ |tlib#scratch#UseScratch()|
         tlib#scratch#CloseScratch .............. |tlib#scratch#CloseScratch()|
         tlib#autocmdgroup#Init ................. |tlib#autocmdgroup#Init()|
@@ -130,6 +131,7 @@ Contents~
         tlib#agent#ShiftLeft ................... |tlib#agent#ShiftLeft()|
         tlib#agent#ShiftRight .................. |tlib#agent#ShiftRight()|
         tlib#agent#Reset ....................... |tlib#agent#Reset()|
+        tlib#agent#ToggleRestrictView .......... |tlib#agent#ToggleRestrictView()|
         tlib#agent#RestrictView ................ |tlib#agent#RestrictView()|
         tlib#agent#UnrestrictView .............. |tlib#agent#UnrestrictView()|
         tlib#agent#Input ....................... |tlib#agent#Input()|
@@ -203,7 +205,7 @@ Contents~
         g:tlib#input#and ....................... |g:tlib#input#and|
         g:tlib#input#or ........................ |g:tlib#input#or|
         g:tlib#input#not ....................... |g:tlib#input#not|
-        g:tlib_numeric_chars ................... |g:tlib_numeric_chars|
+        g:tlib#input#numeric_chars ............. |g:tlib#input#numeric_chars|
         g:tlib#input#keyagents_InputList_s ..... |g:tlib#input#keyagents_InputList_s|
         g:tlib#input#keyagents_InputList_m ..... |g:tlib#input#keyagents_InputList_m|
         g:tlib#input#handlers_EditList ......... |g:tlib#input#handlers_EditList|
@@ -279,6 +281,10 @@ Contents~
         tlib#win#Width ......................... |tlib#win#Width()|
         tlib#win#WinDo ......................... |tlib#win#WinDo()|
         tlib#comments#Comments ................. |tlib#comments#Comments()|
+        tlib#grep#Do ........................... |tlib#grep#Do()|
+        tlib#grep#LocList ...................... |tlib#grep#LocList()|
+        tlib#grep#QuickFixList ................. |tlib#grep#QuickFixList()|
+        tlib#grep#List ......................... |tlib#grep#List()|
         tlib#Filter_cnf#New .................... |tlib#Filter_cnf#New()|
         prototype.Pretty
         tlib#Object#New ........................ |tlib#Object#New()|
@@ -734,6 +740,12 @@ g:tlib_scratch_pos             (default: 'botright')
     bottom. Set this variable to 'topleft' or '' to change this behaviour.
     See |tlib#input#List()|.
 
+                                                    *g:tlib#scratch#hidden*
+g:tlib#scratch#hidden          (default: 'hide')
+    If you want the scratch buffer to be fully removed, you might want to 
+    set this variable to 'wipe'.
+    See also https://github.com/tomtom/tlib_vim/pull/16
+
                                                     *tlib#scratch#UseScratch()*
 tlib#scratch#UseScratch(?keyargs={})
     Display a scratch buffer (a buffer with no file). See :TScratch for an 
@@ -947,6 +959,9 @@ tlib#agent#ShiftRight(world, selected)
 
                                                     *tlib#agent#Reset()*
 tlib#agent#Reset(world, selected)
+
+                                                    *tlib#agent#ToggleRestrictView()*
+tlib#agent#ToggleRestrictView(world, selected)
 
                                                     *tlib#agent#RestrictView()*
 tlib#agent#RestrictView(world, selected)
@@ -1325,8 +1340,8 @@ g:tlib#input#or                (default: '|')
                                                     *g:tlib#input#not*
 g:tlib#input#not               (default: '-')
 
-                                                    *g:tlib_numeric_chars*
-g:tlib_numeric_chars
+                                                    *g:tlib#input#numeric_chars*
+g:tlib#input#numeric_chars
     When editing a list with |tlib#input#List|, typing these numeric chars 
     (as returned by getchar()) will select an item based on its index, not 
     based on its name. I.e. in the default setting, typing a "4" will 
@@ -1380,7 +1395,7 @@ tlib#input#List(type. ?query='', ?list=[], ?handlers=[], ?default="", ?timeout=0
     of selected elements or its indexes.
 
     By default, typing numbers will select an item by its index. See 
-    |g:tlib_numeric_chars| to find out how to change this.
+    |g:tlib#input#numeric_chars| to find out how to change this.
 
     The item is automatically selected if the numbers typed equals the 
     number of digits of the list length. I.e. if a list contains 20 items, 
@@ -1783,6 +1798,22 @@ autoload/tlib/comments.vim~
                                                     *tlib#comments#Comments()*
 tlib#comments#Comments(...)
     function! tlib#comments#Comments(?rx='')
+
+
+========================================================================
+autoload/tlib/grep.vim~
+
+                                                    *tlib#grep#Do()*
+tlib#grep#Do(cmd, rx, files)
+
+                                                    *tlib#grep#LocList()*
+tlib#grep#LocList(rx, files)
+
+                                                    *tlib#grep#QuickFixList()*
+tlib#grep#QuickFixList(rx, files)
+
+                                                    *tlib#grep#List()*
+tlib#grep#List(rx, files)
 
 
 ========================================================================

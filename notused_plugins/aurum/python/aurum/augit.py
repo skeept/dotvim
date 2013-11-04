@@ -11,7 +11,7 @@ def g_repo(path):
     except KeyError:
         vim_throw('norepo', path)
 
-outermethod      = outermethodgen(g_repo, flush)
+outermethod      = outermethodgen(g_repo, flush, globals())
 autoexportmethod = autoexportmethodgen(g_repo, globals())
 
 def g_cs(repo, rev):
@@ -128,6 +128,19 @@ def get_status(repo, files=None, clean=None, ignored=None):
     for v in r.itervalues():
         v.sort()
     return r
+
+def get_allfiles(repo, cs):
+    return list(list_tree_files(repo, cs.tree))
+
+csprops = {
+    'allfiles': get_allfiles,
+}
+
+@outermethod
+@autoexportmethod(var='a:cs')
+def get_cs_prop(repo, rev, prop):
+    cs=g_cs(repo, rev)
+    return {prop : csprops[prop](repo, cs)}
 
 cs_vim_defaults = {
         'phase'     : 'unknown',

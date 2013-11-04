@@ -1,6 +1,6 @@
 {
     "name": "aurum",
-    "version": "1.7.1",
+    "version": "1.8.1",
     "author": "ZyX <kp-pav@yandex.ru>",
     "maintainer": "ZyX <kp-pav@yandex.ru>",
     "description": "Plugin for dealing with source files under various VCS control",
@@ -159,7 +159,6 @@
         "test/drivers-subversion.ok",
         "test/drivers-subversion.pre",
         "test/gentests-expand-tmpdir.zsh",
-        "test/gentests-setuprtp.zsh",
         "test/gentests-setuptestrepos.zsh",
         "test/gentests-unnormdates.zsh",
         "test/gittestbranchedrepo.tar.xz",

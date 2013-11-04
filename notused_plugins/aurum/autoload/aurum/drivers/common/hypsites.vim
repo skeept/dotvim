@@ -25,11 +25,13 @@ let s:bbdict={
 \}
 let s:hyp={}
 let s:gcproj='matchstr(domain, "\\v^[^.]+")'
+let s:gcprojr='matchstr(path, "\\v[^/]+", 3)'
 "▶1 mercurial
 "  https://bitbucket.org/ZyX_I/aurum / ssh://hg@bitbucket.org/ZyX_I/aurum
 "  ssh://zyxsf@translit3.hg.sourceforge.net/hgroot/translit3/translit3 / http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3
 "  ssh://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay / https://zyxsf@hg.code.sf.net/p/vimpluginloader/pluginloader-overlay
 "  https://vim-pyinteractive-plugin.googlecode.com/hg/
+"  https://code.google.com/r/fritzophrenic-vim-clone/
 "  http://hg.assembla.com/CMakeLua
 "  https://zyx@zyx.codebasehq.com/test/test.hg / ssh://hg@codebasehq.com/zyx/test/test.hg
 "  https://hg01.codeplex.com/visualhg
@@ -83,9 +85,16 @@ let s:sfdict={
 \       'html': '"https://sourceforge.net".path."/ci/".hex."/tree/".file',     'hline': '"l".line',
 \        'raw': '"https://sourceforge.net".path."/ci/".hex."/tree/".file."?format=raw"',
 \   'filehist': '"https://sourceforge.net".path."/ci/".hex."/log/?path=/".file',
+\     'bundle': '"https://sourceforge.net".path."/ci/".hex."/tarball"',
 \  'changeset': '"https://sourceforge.net".path."/ci/".hex."/"',
 \        'log': '"https://sourceforge.net".path."/commit_browser"',
 \}
+" XXX The following URL is correct, but useless: sf.net only generates files 
+"     available by this link after the request from the above page.
+let s:sfbundle='"http://sourceforge.net/code-snapshots/%s".substitute(path, ''\v\/[^/]+\/([^/])([^/]?)([^/]*)\/(.*)'', ''/\1/\1\2/\1\2\3/\4%s/\1\2\3-\4'', "")."-".hex.".zip"'
+" http://sourceforge.net/code-snapshots/hg/j/js/jsonvim/code/jsonvim-code-bb311da2aa49eff0c87378aab3b2917dbc447f06.zip
+" http://sourceforge.net/code-snapshots/git/v/vi/vimpluginloader/vam-test-repository.git/vimpluginloader-vam-test-repository-877cc8708d8fee72777852859b9697dd0fb4c679.zip
+" http://sourceforge.net/code-snapshots/svn/v/vi/vimpluginloader/svn/vimpluginloader-svn-2.zip
 unlet s:rhbase
 let s:rhdicts={}
 for [s:vcs, s:rh] in items(s:rhprojs)
@@ -113,13 +122,21 @@ let s:hyp.mercurial=[
 \['domain is? "hg.code.sf.net"', extend({
 \      'clone': '"http://".domain.path',
 \       'push': '"ssh://".user."@".domain.path',
-\}, s:sfdict)],
+\}, extend({'bundle': printf(s:sfbundle, 'hg', '')}, s:sfdict))],
 \['domain =~? "\\Vgooglecode.com\\$" && path[:2] is? "/hg"',
 \ {     'html': '"http://code.google.com/p/".'.s:gcproj.'."/source/browse/".file."?r=".hex', 'hline': 'line',
 \        'raw': '"http://".domain."/hg-history/".hex."/".file',
 \   'filehist': '"http://code.google.com/p/".'.s:gcproj.'."/source/list?path=/".file."&r=".hex',
 \  'changeset': '"http://code.google.com/p/".'.s:gcproj.'."/source/detail?r=".hex',
 \        'log': '"http://code.google.com/p/".'.s:gcproj.'."/source/list"',
+\      'clone': 'url',
+\       'push': 'url',}],
+\['domain is? "code.google.com" && path[:1] is? "/r"',
+\ {     'html': '"http://code.google.com/r/".'.s:gcprojr.'."/source/browse/".file."?r=".hex', 'hline': 'line',
+\        'raw': '"http://".'.s:gcprojr.'.".googlecode.com/hg-history/".hex."/".file',
+\   'filehist': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list?path=/".file."&r=".hex',
+\  'changeset': '"http://code.google.com/r/".'.s:gcprojr.'."/source/detail?r=".hex',
+\        'log': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list"',
 \      'clone': 'url',
 \       'push': 'url',}],
 \['domain is? "hg.assembla.com"',
@@ -239,7 +256,7 @@ let s:hyp.git=[
 \['domain is? "git.code.sf.net"', extend({
 \      'clone': '"git://".domain.path',
 \       'push': '"ssh://".user."@".domain.path',
-\}, s:sfdict)],
+\}, extend({'bundle': printf(s:sfbundle, 'git', '.git')}, s:sfdict))],
 \['domain is? "code.google.com"',
 \ {     'html': '"http://code.google.com/".substitute(path, "/$", "", "")."/source/browse/".file."?r=".hex',}],
 \['domain =~? ''\v^%(git\.)?gitorious\.org$''',
@@ -291,7 +308,7 @@ let s:hyp.svn=[
 \['domain is? "svn.code.sf.net"', extend({
 \      'clone': '"svn://".domain.path',
 \       'push': '"svn+ssh://".user."@".domain.path',
-\}, s:sfdict)],
+\}, extend({'bundle': printf(s:sfbundle, 'svn', '')}, s:sfdict))],
 \['domain =~? "\\Vgooglecode.com\\$" && path[:3] is? "/svn"',
 \ {     'html': s:svngcbase.'."/source/browse/".'.s:svngcfile.'."?rev=".hex', 'hline': 'line',
 \        'raw': '"http://".domain."/svn-history/r".hex.'.s:svngcfile,

@@ -25,7 +25,7 @@ def g_repo(path):
     except error.RepoError:
         vim_throw('norepo', path)
 
-outermethod      = outermethodgen(g_repo, flush)
+outermethod      = outermethodgen(g_repo, flush, globals())
 autoexportmethod = autoexportmethodgen(g_repo, globals())
 
 class PrintUI(ui.ui):
