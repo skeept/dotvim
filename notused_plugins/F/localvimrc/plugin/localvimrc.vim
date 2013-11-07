@@ -102,7 +102,7 @@ if has("autocmd")
     autocmd!
 
     " call s:LocalVimRC() when creating ore reading any file
-    autocmd VimEnter,BufNewFile,BufRead * call s:LocalVimRC()
+    autocmd BufWinEnter * call s:LocalVimRC()
   augroup END
 endif
 
@@ -265,9 +265,6 @@ function! s:LocalVimRC()
 
     endif
   endfor
-
-  " clear command line
-  redraw!
 
   " make information persistent
   call s:LocalVimRCWritePersistent()
