@@ -1,9 +1,10 @@
-*localvimrc.txt*             For Vim version 7.3  Last change: 2012 September 25
-                          
-localvimrc                 Version 2.1.0                     *localvimrc* *lvimrc*
-                          
+*localvimrc.txt*             For Vim version 7.4    Last change: 2013 November 9
+
+localvimrc                 Version 2.2.0                     *localvimrc* *lvimrc*
+
 |localvimrc-description|     Description
 |localvimrc-commands|        Commands
+|localvimrc-variables|       Variables
 |localvimrc-settings|        Settings
 |localvimrc-contribute|      Contribute
 |localvimrc-credits|         Credits
@@ -13,9 +14,10 @@ localvimrc                 Version 2.1.0                     *localvimrc* *lvimr
 DESCRIPTION                                             *localvimrc-description*
 
 This plugin searches for local vimrc files in the file system tree of the
-currently opened file. By default it searches for all ".lvimrc" files from the
-file's directory up to the root directory and loads them in reverse order. The
-filename and amount of loaded files are customizable through global variables.
+currently opened file. It searches for all ".lvimrc" files from the directory
+of the file up to the root directory. By default those files are loaded in
+order from the root directory to the directory of the file. The filename and
+amount of loaded files are customizable through global variables.
 
 For security reasons it the plugin asks for confirmation before loading a
 local vimrc file and loads it using |:sandbox| command. The plugin asks once
@@ -36,6 +38,36 @@ Clear all stored decisions made in the past, when the plugin asked about
 sourcing a local vimrc file.
 
 ==============================================================================
+VARIABLES                                                 *localvimrc-variables*
+
+The plugin provides several convenience variables to make it easier to set up
+path dependent setting like for example makeprg. Adding the following lines to
+a local vimrc in the root directory of a project modify the behavior of
+|:make| to change into a build directory and call make there:
+
+  let &l:makeprg="cd ".g:localvimrc_script_dir."/build && make"
+
+------------------------------------------------------------------------------
+*g:localvimrc_file*
+
+Fully qualified file name of file that triggered loading the local vimrc file.
+
+------------------------------------------------------------------------------
+*g:localvimrc_file_dir*
+
+Fully qualified directory of file that triggered loading the local vimrc file.
+
+------------------------------------------------------------------------------
+*g:localvimrc_script*
+
+Fully qualified file name of the currently loaded local vimrc file.
+
+------------------------------------------------------------------------------
+*g:localvimrc_script_dir*
+
+Fully qualified directory of the currently loaded local vimrc file.
+
+==============================================================================
 SETTINGS                                                   *localvimrc-settings*
 
 Use: >
@@ -49,6 +81,17 @@ to set them in your global vimrc.
 Filename of local vimrc files.
 
 Default: ".lvimrc"
+
+------------------------------------------------------------------------------
+*g:localvimrc_reverse*
+
+Reverse behavior of loading local vimrc files.
+
+Value    Description~
+0        Load files in order from root directory to directory of the file.
+1        Load files in order from directory of the file to root directory.
+
+Default: 0
 
 ------------------------------------------------------------------------------
 *g:localvimrc_count*
@@ -147,7 +190,8 @@ To contact the author (Markus Braun), please email: markus.braun@krawel.de
 If you think this plugin could be improved, fork on GitHub and send a pull
 request or just tell me your ideas.
 
-GitHub: https://github.com/embear/vim-localvimrc
+Bitbucket: https://bitbucket.org/embear/localvimrc
+GitHub:    https://github.com/embear/vim-localvimrc
 
 ==============================================================================
 CREDITS                                                     *localvimrc-credits*
@@ -158,6 +202,14 @@ CREDITS                                                     *localvimrc-credits*
 
 ==============================================================================
 CHANGELOG                                                 *localvimrc-changelog*
+
+v2.2.0 : 2013-11-09
+  - remove redraw calls for better performance and fixing a bug on windows.
+  - load local vimrc on event BufWinEnter to fix a bug with window local
+    settings.
+  - add g:localvimrc_reverse to change order of sourcing local vimrc files.
+  - add convenience variables g:localvimrc_file, g:localvimrc_file_dir,
+    g:localvimrc_script and g:localvimrc_script_dir.
 
 v2.1.0 : 2012-09-25
   - add possibility to make decisions persistent
