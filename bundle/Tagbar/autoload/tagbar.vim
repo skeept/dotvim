@@ -922,11 +922,12 @@ function! s:MapKeys() abort
                             \ <LeftRelease><C-o>:call <SID>CheckMouseClick()<CR>
 
     let maps = [
-        \ ['jump',      'JumpToTag(0)'],
-        \ ['preview',   'JumpToTag(1)'],
-        \ ['nexttag',   'GotoNextToplevelTag(1)'],
-        \ ['prevtag',   'GotoNextToplevelTag(-1)'],
-        \ ['showproto', 'ShowPrototype(0)'],
+        \ ['jump',       'JumpToTag(0)'],
+        \ ['preview',    'JumpToTag(1)'],
+        \ ['previewwin', 'ShowInPreviewWin()'],
+        \ ['nexttag',    'GotoNextToplevelTag(1)'],
+        \ ['prevtag',    'GotoNextToplevelTag(-1)'],
+        \ ['showproto',  'ShowPrototype(0)'],
         \
         \ ['openfold',      'OpenFold()'],
         \ ['closefold',     'CloseFold()'],
@@ -965,6 +966,10 @@ function! s:CreateAutocommands() abort
         autocmd CursorHold __Tagbar__ call s:ShowPrototype(1)
         autocmd WinEnter   __Tagbar__ call s:SetStatusLine('current')
         autocmd WinLeave   __Tagbar__ call s:SetStatusLine('noncurrent')
+
+        if g:tagbar_autopreview
+            autocmd CursorMoved __Tagbar__ nested call s:ShowInPreviewWin()
+        endif
 
         autocmd WinEnter * if bufwinnr('__Tagbar__') == -1 |
                          \     call s:ShrinkIfExpanded() |
@@ -2797,6 +2802,7 @@ function! s:PrintHelp() abort
         silent  put ='\" ' . s:get_map_str('jump') . ': Jump to tag definition'
         silent  put ='\" ' . s:get_map_str('preview') . ': As above, but stay in'
         silent  put ='\"    Tagbar window'
+        silent  put ='\" ' . s:get_map_str('previewwin') . ': Show tag in preview window'
         silent  put ='\" ' . s:get_map_str('nexttag') . ': Go to next top-level tag'
         silent  put ='\" ' . s:get_map_str('prevtag') . ': Go to previous top-level tag'
         silent  put ='\" ' . s:get_map_str('showproto') . ': Display tag prototype'
@@ -2942,7 +2948,7 @@ function! s:JumpToTag(stay_in_tagbar) abort
 
     let tagbarwinnr = winnr()
 
-    call s:GotoPreviousWindow(taginfo.fileinfo)
+    call s:GotoFileWindow(taginfo.fileinfo)
 
     " Mark current position so it can be jumped back to
     mark '
@@ -2994,6 +3000,18 @@ function! s:JumpToTag(stay_in_tagbar) abort
     else
         call s:HighlightTag(0)
     endif
+endfunction
+
+" s:ShowInPreviewWin() {{{2
+function! s:ShowInPreviewWin() abort
+    let taginfo = s:GetTagInfo(line('.'), 1)
+
+    if empty(taginfo) || !taginfo.isNormalTag()
+        return
+    endif
+
+    execute 'topleft pedit +' . taginfo.fields.line . ' ' .
+          \ s:known_files.getCurrent(0).fpath
 endfunction
 
 " s:ShowPrototype() {{{2
@@ -3544,29 +3562,39 @@ function! s:GetTagInfo(linenr, ignorepseudo) abort
     return taginfo
 endfunction
 
-" s:GotoPreviousWindow() {{{2
-" Try to switch to the previous buffer/window; if the buffer isn't currently
-" shown in a window Tagbar will open it in the first window that has a
-" non-special buffer in it.
-function! s:GotoPreviousWindow(fileinfo) abort
+" s:GotoFileWindow() {{{2
+" Try to switch to the window that has Tagbar's current file loaded in it, or
+" open the file in a window otherwise.
+function! s:GotoFileWindow(fileinfo) abort
     let tagbarwinnr = bufwinnr('__Tagbar__')
 
     call s:winexec('wincmd p')
 
     let filebufnr = bufnr(a:fileinfo.fpath)
-    if bufnr('%') != filebufnr
-        let filewinnr = bufwinnr(filebufnr)
-        if filewinnr != -1
-            call s:winexec(filewinnr . 'wincmd w')
-        else
+    if bufnr('%') != filebufnr || &previewwindow
+        " Search for the first real window that has the correct buffer loaded
+        " in it. Similar to bufwinnr() but skips the previewwindow.
+        let found = 0
+        for i in range(1, winnr('$'))
+            call s:winexec(i . 'wincmd w')
+            if bufnr('%') == filebufnr && !&previewwindow
+                let found = 1
+                break
+            endif
+        endfor
+
+        " If there is no window with the correct buffer loaded then load it
+        " into the first window that has a non-special buffer in it.
+        if !found
             for i in range(1, winnr('$'))
                 call s:winexec(i . 'wincmd w')
-                if &buftype == ''
+                if &buftype == '' && !&previewwindow
                     execute 'buffer ' . filebufnr
                     break
                 endif
             endfor
         endif
+
         " To make ctrl-w_p work we switch between the Tagbar window and the
         " correct window once
         call s:winexec(tagbarwinnr . 'wincmd w')
@@ -3688,6 +3716,11 @@ function! s:NextNormalWindow() abort
 
         " skip temporary buffers with buftype set
         if getbufvar(buf, '&buftype') != ''
+            continue
+        endif
+
+        " skip the preview window
+        if getwinvar(i, '&previewwindow')
             continue
         endif
 
