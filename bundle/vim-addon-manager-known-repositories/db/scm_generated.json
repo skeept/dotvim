@@ -87,6 +87,10 @@
     "type": "git",
     "url": "git://github.com/johnsyweb/vim-tut"
   },
+  "251": {
+    "type": "git",
+    "url": "git://github.com/yegappan/lid"
+  },
   "2536": {
     "type": "git",
     "url": "git://github.com/jonathanfilip/vim-lucius"
@@ -139,6 +143,10 @@
     "type": "git",
     "url": "git://github.com/lepture/vim-css"
   },
+  "311": {
+    "type": "git",
+    "url": "git://github.com/yegappan/grep"
+  },
   "3322": {
     "type": "git",
     "url": "git://github.com/coot/vim_ftpdev"
@@ -182,6 +190,10 @@
   "3755": {
     "type": "git",
     "url": "git://github.com/wlangstroth/vim-racket"
+  },
+  "3764": {
+    "type": "git",
+    "url": "git://github.com/lilydjwg/fcitx.vim"
   },
   "3815": {
     "type": "git",
@@ -490,6 +502,10 @@
   "4767": {
     "type": "git",
     "url": "git://github.com/cesheridan/tabwins"
+  },
+  "521": {
+    "type": "git",
+    "url": "git://github.com/yegappan/mru"
   },
   "586": {
     "type": "git",
