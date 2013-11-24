@@ -16,7 +16,7 @@ unxz svntestreposerver.tar.xz
 for test in cmd-annotate-buffers cmd+maps-commit cmd-record cmd-status \
             maps-status cmd+maps-vimdiff cmd-diff cmd-update opts-remembermsg \
             opts-vimdiffusewin cmd-vimdiff-full cmdaus maps-record-undo \
-            maps-commit-diff
+            maps-commit-diff regression-commit-tabs
 do
     ln -s util-add-modified-repo.zsh $test.pre
 done

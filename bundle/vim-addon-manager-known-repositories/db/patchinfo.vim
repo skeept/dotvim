@@ -50,6 +50,7 @@ let patch_repo.1780={'script-type': 'syntax'}
 let patch_repo.1686={'script-type': 'colors'}
 let patch_repo.2527={'script-type': 'ftplugin'}
 let patch_repo.4388={'script-type': 'ftplugin'}
+let patch_repo.4750={'script-type': 'plugin'}
 "▶1 Fixing target directories
 let patch_repo.2372={'target_dir': 'ftplugin/vlog'}
 let patch_repo.1542={'target_dir': 'autoload'}
@@ -142,6 +143,7 @@ let addon_info_deps.4463 = [2467]
 let addon_info_deps.4492 = [4491]
 let addon_info_deps.4511 = [3590]
 let addon_info_deps.4532 = [3133, 'twibill']
+let addon_info_deps.4777 = [2136]
 " airline dependants
 let addon_info_deps.4769 = [4661]
 let addon_info_deps.4756 = [4661]

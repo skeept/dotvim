@@ -72,19 +72,15 @@ function s:utils.run(cmd, hasnulls, cdpath)
         "     some cases?
         let savedlazyredraw=&lazyredraw
         let savedeventignore=&eventignore
+        let savedbufhidden=&l:bufhidden
         set eventignore=all
         set lazyredraw
+        set bufhidden=hide
+        let prevbufnr=bufnr('%')
         try
-            try
-                tabnew
-            catch /^Vim(tabnew):E523:/
-                let r=s:utils.run(a:cmd, 2, a:cdpath)
-                if empty(r[-1])
-                    call remove(r, -1)
-                endif
-                return r
-            endtry
-            setlocal buftype=nofile modifiable noreadonly
+            enew
+            let newbufnr=bufnr('%')
+            setlocal buftype=nofile modifiable noreadonly bufhidden=wipe
             if !empty(a:cdpath)
                 execute 'lcd' fnameescape(a:cdpath)
             endif
@@ -92,8 +88,9 @@ function s:utils.run(cmd, hasnulls, cdpath)
             " without trailing newline, and also is “smart” about lineendings
             silent execute '%!'.join(map(copy(a:cmd), 'shellescape(v:val, 1)'))
             let r=getline(1, '$')
-            bwipeout!
         finally
+            execute 'silent buffer!' prevbufnr
+            call setbufvar(prevbufnr, 'bufhidden', savedbufhidden)
             let &lazyredraw=savedlazyredraw
             let &eventignore=savedeventignore
         endtry

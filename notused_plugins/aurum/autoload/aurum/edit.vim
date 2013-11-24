@@ -573,7 +573,7 @@ function s:F.run(vcommand, command, repo, ...)
                 let &eventignore=savedei
             endtry
             setlocal modifiable noreadonly
-            silent call s:F.runcmd(s:commands[a:command], file, [0, a:repo]+args)
+            silent call s:F.runcmd(s:commands[a:command], file, [0,a:repo]+args)
             if bufexists(prevbuf)
                 let s:_r.bufvars[bufnr('%')].prevbuf=prevbuf
             endif

@@ -55,6 +55,7 @@ sys.path.append(os.path.dirname(__file__))
 
 import list_hg_files as lshg
 import list_git_files as lsgit
+import list_svn_files as lssvn
 
 
 logger = logging.getLogger('autoget')
@@ -94,13 +95,48 @@ def get_ext(fname):
     return fname.rpartition('.')[-1]
 
 
-def guess_fix_dir(voinfo):
-    if voinfo['script_type'] in ('syntax', 'indent', 'ftplugin'):
-        return voinfo['script_type']
-    elif voinfo['script_type'] == 'color scheme':
+def get_patchinfo_fix_dirs(ret={}):
+    if ret:
+        return ret
+    else:
+        with open(os.path.join('.', 'db', 'patchinfo.vim')) as PIF:
+            start_section = b'"▶1 '
+            in_section = 0
+            line_re = re.compile(r"(\d+).*: '([^']+)'")
+            for line in PIF:
+                if line.startswith(start_section):
+                    if line.startswith(start_section + b'Type corrections'):
+                        in_section = 2
+                    elif line.startswith(start_section + b'Fixing target directories'):
+                        in_section = 1
+                    else:
+                        if in_section:
+                            break
+                        in_section = 0
+                    continue
+                if in_section:
+                    match = line_re.search(line)
+                    if match:
+                        d = match.group(2)
+                        ret[match.group(1)] = d if in_section == 1 else _guess_fix_dir(d)
+        return ret
+
+
+def _guess_fix_dir(script_type):
+    if script_type in ('syntax', 'indent', 'ftplugin'):
+        return script_type
+    elif script_type == 'color scheme':
         return 'colors'
     else:
         return 'plugin'
+
+
+def guess_fix_dir(voinfo):
+    patchinfo_fix_dirs = get_patchinfo_fix_dirs()
+    try:
+        return patchinfo_fix_dirs[voinfo['script_id']]
+    except KeyError:
+        return _guess_fix_dir(voinfo['script_type'])
 
 
 def get_voinfo_hash(voinfo):
@@ -247,11 +283,19 @@ def isvimvofile(fname):
            #        or fname.startswith('python3/'))))
 
 
+expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm', 'rb'}
+def isexpected(fname):
+    # Second condition blocks files like .hg_archival.txt
+    return ((get_ext(fname) in expected_extensions)
+            and not fname.startswith('.hg')
+            and not fname.startswith('.git')
+            and not 'README' in fname)
+
+
 # Directories corresponding to plugin types on www.vim.org
 vodirs = {'plugin', 'colors', 'ftplugin', 'indent', 'syntax'}
-expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm', 'rb'}
 def check_candidate_with_file_list(vofiles, files, prefix=None):
-    expvofiles = {fname for fname in vofiles if get_ext(fname) in expected_extensions}
+    expvofiles = {fname for fname in vofiles if isexpected(fname)}
     vimvofiles = {fname for fname in expvofiles if isvimvofile(fname)}
     vimfiles = {fname for fname in files if isvimvofile(fname)}
     if vofiles <= files:
@@ -270,7 +314,8 @@ def check_candidate_with_file_list(vofiles, files, prefix=None):
                     % (repr(vimfiles - vimvofiles)))
             return (prefix, 0)
         logger.info('>>>> Accepted with score 90 because all files that are considered significant '
-                'are contained in the repository: %s' % repr(expvofiles))
+                'are contained in the repository: %s. Missing insignificant files: %s.'
+                % (repr(expvofiles), repr(vofiles - files)))
         return (prefix, 90)
     else:
         vofileparts = [fname.partition('/') for fname in vofiles]
@@ -301,9 +346,11 @@ vundle_github_url       = re.compile('\\b(?:Neo)?Bundle\\b\\s*[\'"]([0-9a-zA-Z\-
 gist_url                = re.compile(r'gist\.github\.com/(\d+)')
 bitbucket_mercurial_url = re.compile(r'\bhg\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)')
 bitbucket_git_url       = re.compile(r'\bgit\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)|bitbucket\.org/([0-9a-zA-Z_.]+)/([0-9a-zA-Z\-_.]+)\.git')
-bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_]+)')
-googlecode_url          = re.compile(r'code\.google\.com/p/([^/\s]+)')
+bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)')
+bitbucket_site_url      = re.compile(r'([0-9a-zA-Z_]+)\.bitbucket\.org/([0-9a-zA-Z\-_.]+)')
+codegoogle_url          = re.compile(r'code\.google\.com/([pr])/([^/\s]+)')
 mercurial_url           = re.compile(r'hg\s+clone\s+(\S+)')
+mercurial_url_2         = re.compile(r'\b(?:(?i)hg|mercurial)\b.*\b(\w+(?:\+\w+)*://\S+)')
 git_url                 = re.compile(r'git\s+clone\s+(\S+)')
 
 
@@ -454,12 +501,17 @@ class GithubMatch(Match):
     @cached_property
     def files(self):
         if self.scm_url.startswith('git://github.com/vim-scripts'):
-            raise ValueError('vim-scripts repositories are not used by VAM')
+            self.error('removing candidate: vim-scripts repositories are not used by VAM')
+            raise NotLoggedError
         return set(self.list_files())
 
 
 class VundleGithubMatch(GithubMatch):
     re = vundle_github_url
+
+
+class VundleGithubMatch2(GithubMatch):
+    re = re.compile('\\b[Bb]undle\\b(?:\s+\\w+)?\s+`?[\'"]?([0-9a-zA-Z\-_]+)/([0-9a-zA-Z\-_.]+)(?:.git)?[\'"]?')
 
 
 class GistMatch(GithubMatch):
@@ -492,12 +544,24 @@ class MercurialMatch(Match):
         super(MercurialMatch, self).__init__(*args, **kwargs)
         self.scm_url = self.match.group(1)
         self.name = self.scm_url.rpartition('/')[-1]
+        self.url = self.scm_url
 
     @cached_property
     def files(self):
         global remote_parser
         parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
         return set(next(iter(parsing_result['tips'])).files)
+
+
+class MercurialMatch2(MercurialMatch):
+    re = mercurial_url_2
+
+    scm = 'hg'
+
+    def __init__(self, *args, **kwargs):
+        super(MercurialMatch2, self).__init__(*args, **kwargs)
+        for attr in ('scm_url', 'name', 'url'):
+            setattr(self, attr, getattr(self, attr).rstrip('.,!?'))
 
 
 class BitbucketMercurialMatch(MercurialMatch):
@@ -509,6 +573,7 @@ class BitbucketMercurialMatch(MercurialMatch):
         super(BitbucketMercurialMatch, self).__init__(*args, **kwargs)
         self.name = self.match.group(2)
         self.scm_url = 'https://bitbucket.org/' + self.match.group(1) + '/' + self.name
+        self.url = self.scm_url
 
 
 class BitbucketMatch(Match):
@@ -518,7 +583,12 @@ class BitbucketMatch(Match):
         global remote_parser
         super(BitbucketMatch, self).__init__(*args, **kwargs)
         self.name = self.match.group(2)
-        self.scm_url = 'https://bitbucket.org/' + self.match.group(1) + '/' + self.name
+        self.repo_path = self.match.group(1) + '/' + self.name
+        self.scm_url = 'https://bitbucket.org/' + self.repo_path
+        self.url = self.scm_url
+
+    def _check_scm(self):
+        self._check_presence()
         try:
             self.info('Checking whether {0} is a mercurial repository'.format(self.scm_url))
             parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
@@ -529,6 +599,87 @@ class BitbucketMatch(Match):
         else:
             self.files = list(next(iter(parsing_result['tips'])).files)
             self.scm = 'hg'
+
+    @cached_property
+    def files(self):
+        self._check_scm()
+        return self.files
+
+    @cached_property
+    def scm(self):
+        self._check_scm()
+        return self.scm
+
+    def _check_presence(self, attempt=0):
+        c = httplib.HTTPSConnection('bitbucket.org')
+        c.request('HEAD', '/' + self.repo_path)
+        r = c.getresponse()
+        if 400 <= r.status < 500:
+            self.error('Cannot use this match: request failed with code %u (%s)'
+                       % (r.status, httplib.responses[r.status]))
+            raise NotLoggedError
+        elif 500 <= r.status:
+            if attempt < MAX_ATTEMPTS:
+                self.error('Retrying: request failed with code %u (%s)'
+                           % (r.status, httplib.responses[r.status]))
+                self._check_presence(attempt + 1)
+            else:
+                self.error('Cannot use this match: request failed with code %u (%s), attempt %u'
+                           % (r.status, httplib.responses[r.status], attempt))
+
+
+class BitbucketSiteMatch(BitbucketMatch):
+    re = bitbucket_site_url
+
+
+class CodeGoogleMatch(Match):
+    re = codegoogle_url
+
+    def __init__(self, *args, **kwargs):
+        global remote_parser
+        super(CodeGoogleMatch, self).__init__(*args, **kwargs)
+        self.name = self.match.group(2)
+        urlpart = self.match.group(1) + '/' + self.match.group(2)
+        url = 'http://code.google.com/' + urlpart
+        self.scm_url = url
+        self.url = url
+
+    def _check_scm(self):
+        try:
+            self.info('Checking whether {0} is a mercurial repository'.format(self.scm_url))
+            parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
+        except Exception as e:
+            try:
+                self.info('Checking whether {0} is a git repository'.format(self.scm_url))
+                self.files = lsgit.list_git_files(self.scm_url, allow_depth=False)
+                self.scm = 'git'
+            except Exception as e:
+                self.info('Checking whether {0} is a subversion repository'.format(self.scm_url))
+                # FIXME detect directory
+                # Plugin for which detection is useful: #2805
+                self.scm_url = 'http://' + self.name + '.googlecode.com/svn'
+                self.files = list(lssvn.list_svn_files(self.scm_url))
+                self.info('Subversion files: {0!r}'.format(self.files))
+                trunkfiles = {tf[6:] for tf in self.files if tf.startswith('trunk/')}
+                if trunkfiles:
+                    self.scm_url += '/trunk'
+                    self.files = trunkfiles
+                    self.info('Found trunk/ directory, leaving only files in there: {0!r}'.format(self.files))
+                self.scm = 'svn'
+        else:
+            self.files = list(next(iter(parsing_result['tips'])).files)
+            self.scm = 'hg'
+
+
+    @cached_property
+    def files(self):
+        self._check_scm()
+        return self.files
+
+    @cached_property
+    def scm(self):
+        self._check_scm()
+        return self.scm
 
 
 class GithubLazy(object):
@@ -549,10 +700,14 @@ class GithubLazy(object):
 candidate_classes = (
     GithubMatch,
     VundleGithubMatch,
+    VundleGithubMatch2,
     GistMatch,
-    MercurialMatch,
+    CodeGoogleMatch,
     BitbucketMercurialMatch,
+    MercurialMatch,
+    MercurialMatch2,
     BitbucketMatch,
+    BitbucketSiteMatch,
 )
 
 
@@ -594,8 +749,11 @@ def find_repo_candidate(voinfo):
             logger.debug('>>> Omitting {0} because it was already checked'.format(url))
             continue
         already_checked.add(url)
-        logger.info('>> Checking candidate {0}: {1}'.format(candidate.__class__.__name__,
-                                                            candidate.match.group(0)))
+        logger.info('>> Checking candidate {0} with key {1}: {2}'.format(
+            candidate.__class__.__name__,
+            candidate.key,
+            candidate.match.group(0)
+        ))
         try:
             try:
                 files = _checked_URLs[url]
@@ -754,6 +912,7 @@ if __name__ == '__main__':
                     scm_generated[key] = candidate_to_sg(candidate)
                     logger.info('> Recording found candidate for {0}: {1}'
                                 .format(key, scm_generated[key]))
+                    not_found.discard(key)
                 else:
                     logger.info('> Recording failure to find candidates for {0}'.format(key))
                     not_found.add(key)

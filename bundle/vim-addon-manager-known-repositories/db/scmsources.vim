@@ -282,9 +282,6 @@ let scm['vim-fix-numbering'] = {'type': 'git', 'url': 'git://github.com/taku-o/v
 let scm['vim-chardet'] = {'type': 'git', 'url': 'git://github.com/taku-o/vim-chardet'}
 let scm['vim-mmatch'] = {'type': 'git', 'url': 'git://github.com/taku-o/vim-mmatch'}
 
-" Christian Ebert
-let scmnr.1512 = {'type': 'hg', 'url': 'http://www.blacktrash.org/hg/screenpaste'}
-
 " Manpreet Singh
 let scmnr.1563 = {'type': 'git', 'url': 'git://github.com/junkblocker/patchreview-vim'}
 
@@ -783,9 +780,6 @@ let scm['jifty'] = {'type': 'git', 'url': 'git://github.com/c9s/jifty.vim'}
 " let scmnr.2784 = {'type': 'git', 'url': 'git://github.com/c9s/template-init.vim'}
 " let scmnr.2923 = {'type': 'git', 'url': 'git://github.com/c9s/std.vim'}
 
-" Kosei Kitahara
-let scmnr.2827 = {'type': 'hg', 'url': 'https://bitbucket.org/Surgo/rtm.vim'}
-
 " David Terei
 let scmnr.2828 = {'type': 'git', 'url': 'git://github.com/dterei/VimCobaltColourScheme'}
 let scmnr.3022 = {'type': 'git', 'url': 'git://github.com/dterei/VimBookmarking'}
@@ -996,9 +990,6 @@ let scmnr.3599 = {'type': 'git', 'url': 'git://github.com/jiangmiao/auto-pairs'}
 " Mitchell Bowden
 let scmnr.3228 = {'type': 'git', 'url': 'git://github.com/msbmsb/porter-stem.vim'}
 let scmnr.3229 = {'type': 'git', 'url': 'git://github.com/msbmsb/stem-search.vim'}
-
-" Almaz Karimov
-let scmnr.3231 = {'type': 'hg', 'url': 'https://vim-pyinteractive-plugin.googlecode.com/hg/'}
 
 " wei ko kao
 let scmnr.3232 = {'type': 'git', 'url': 'git://github.com/othree/html5-syntax.vim'}
@@ -1719,7 +1710,7 @@ let scmnr.4097 = {'type': 'git', 'url': 'git://github.com/fisadev/fisa-vim-color
 let scmnr.4098 = {'type': 'git', 'url': 'git://github.com/samiconductor/vim-sharefix'}
 
 " Lee Savide
-let scmnr.4100 = {'type': 'hg', 'url': 'https://bitbucket.org/laughingman182/abc-vim'}
+let scmnr.4100 = {'type': 'hg', 'url': 'https://bitbucket.org/laughingman182/abc-vim', 'addon-info': {'runtimepath': 'src'}}
 
 " David Richard
 let scmnr.4102 = {'type': 'git', 'url': 'git://github.com/drichard/vim-brunch'}
@@ -1802,9 +1793,6 @@ let scmnr.4195 = {'type': 'git', 'url': 'git://github.com/nielsmadan/harlequin'}
 let scmnr.4328 = {'type': 'git', 'url': 'git://github.com/nielsmadan/easel'}
 let scmnr.4491 = {'type': 'git', 'url': 'git://github.com/nielsmadan/venom'}
 let scmnr.4492 = {'type': 'git', 'url': 'git://github.com/nielsmadan/mercury'}
-
-" Fanael Linithien
-let scmnr.4200 = {'type': 'hg', 'url': 'https://bitbucket.org/Fanael/vim-transliterate'}
 
 " Hugo Pires
 let scmnr.4203 = {'type': 'git', 'url': 'git://github.com/blackgate/tropikos-vim-theme'}
@@ -2262,6 +2250,10 @@ let scmnr.4677 = {'type': 'git', 'url': 'git://github.com/mattboehm/vim-unstack'
 
 " Adam Stankiewicz
 let scmnr.4721 = {'type': 'git', 'url': 'git://github.com/sheerun/vim-polyglot'}
+
+" Jacky Alciné
+let scmnr.4731 = {'type': 'git', 'url': 'git://github.com/jalcine/cmake.vim'}
+let scmnr.4760 = {'type': 'git', 'url': 'git://github.com/jalcine/android.vim'}
 
 " Rafal Bromirski
 let scmnr.4769 = {'type': 'git', 'url': 'git://github.com/paranoida/vim-airlineish'}
