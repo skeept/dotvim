@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Nov 2013.
+" Last Modified: 27 Nov 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -56,6 +56,7 @@ function! neocomplete#handler#_on_insert_leave() "{{{
   let neocomplete.cur_text = ''
   let neocomplete.old_cur_text = ''
   let neocomplete.old_linenr = -1
+  let neocomplete.completed_item = {}
 endfunction"}}}
 function! neocomplete#handler#_on_write_post() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
@@ -75,17 +76,26 @@ function! neocomplete#handler#_on_write_post() "{{{
 endfunction"}}}
 function! neocomplete#handler#_on_complete_done() "{{{
   " Get cursor word.
-  let [_, candidate] = neocomplete#match_word(
-        \ neocomplete#get_cur_text(1))
-  if candidate == ''
+  let complete_str = matchstr(neocomplete#get_cur_text(1),
+        \ '\%('.neocomplete#get_next_keyword_pattern().'\m\)$')
+  if complete_str == ''
     return
   endif
 
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let candidates = filter(copy(neocomplete.candidates),
+        \   "v:val.word ==# complete_str &&
+        \    (has_key(v:val, 'abbr') && v:val.word !=# v:val.abbr) ||
+        \     get(v:val, 'info', '') != ''")
+  if !empty(candidates)
+    let neocomplete.completed_item = candidates[0]
+  endif
+
   let frequencies = neocomplete#variables#get_frequencies()
-  if !has_key(frequencies, candidate)
-    let frequencies[candidate] = 20
+  if !has_key(frequencies, complete_str)
+    let frequencies[complete_str] = 20
   else
-    let frequencies[candidate] += 20
+    let frequencies[complete_str] += 20
   endif
 endfunction"}}}
 function! neocomplete#handler#_change_update_time() "{{{

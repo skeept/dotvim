@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Oct 2013.
+" Last Modified: 27 Nov 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -132,6 +132,9 @@ function! neocomplete#init#_others() "{{{
 
   command! -nargs=0 -bar NeoCompleteDisable
         \ call neocomplete#init#disable()
+
+  " Set for echodoc.
+  call neocomplete#echodoc#init()
 endfunction"}}}
 
 function! neocomplete#init#_variables() "{{{
@@ -181,7 +184,7 @@ function! neocomplete#init#_variables() "{{{
         \'vim,help',
         \'-\h[[:alnum:]-]*=\?\|\c\[:\%(\h\w*:\]\)\?\|&\h[[:alnum:]_:]*\|'.
         \'<SID>\%(\h\w*\)\?\|<Plug>([^)]*)\?'.
-        \'\|<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#]*!\?\|$\h\w*')
+        \'\|<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#]*[!(]\?\|$\h\w*')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'tex',
@@ -356,21 +359,26 @@ function! neocomplete#init#_variables() "{{{
         \'g:neocomplete#keyword_patterns',
         \'nyaos,int-nyaos',
         \'\h\w*')
+  call neocomplete#util#set_default_dictionary(
+        \'g:neocomplete#keyword_patterns',
+        \'go',
+        \'\h\w*')
   "}}}
 
   " Initialize next keyword patterns. "{{{
   call neocomplete#util#set_default_dictionary(
+        \'g:neocomplete#next_keyword_patterns',
+        \'python,go,cs,java,lua,zimbu,php',
+        \'\w*()\?')
+  call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#next_keyword_patterns', 'perl',
-        \'\h\w*>')
+        \'\w*()\?\|\h\w*>')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#next_keyword_patterns', 'perl6',
-        \'\h\w*>')
+        \'\w*()\?\|\h\w*>')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#next_keyword_patterns', 'vim,help',
         \'\w*()\?\|\w*:\]\|[[:alnum:]_-]*[)>=]')
-  call neocomplete#util#set_default_dictionary(
-        \'g:neocomplete#next_keyword_patterns', 'python',
-        \'\w*()\?')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#next_keyword_patterns', 'tex',
         \'[[:alnum:]:_]\+[*[{}]')
@@ -620,6 +628,7 @@ function! neocomplete#init#_current_neocomplete() "{{{
         \ 'start_time' : reltime(),
         \ 'linenr' : 0,
         \ 'completeopt' : &completeopt,
+        \ 'completed_item' : {},
         \}
 endfunction"}}}
 

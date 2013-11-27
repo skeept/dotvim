@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Nov 2013.
+" Last Modified: 26 Nov 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -47,10 +47,6 @@ function! neocomplete#sources#vim#helper#on_filetype() "{{{
 
     let bufnumber += 1
   endwhile
-
-  if neocomplete#exists_echodoc()
-    call echodoc#register('vim', s:doc_dict)
-  endif
 endfunction"}}}
 
 function! neocomplete#sources#vim#helper#make_cache(bufname) "{{{
@@ -61,63 +57,6 @@ function! neocomplete#sources#vim#helper#make_cache(bufname) "{{{
   endif
   let s:global_candidates_list = { 'dictionary_variables' : {} }
 endfunction"}}}
-
-" For echodoc. "{{{
-let s:doc_dict = {
-      \ 'name' : 'vim',
-      \ 'rank' : 10,
-      \ 'filetypes' : { 'vim' : 1 },
-      \ }
-function! s:doc_dict.search(cur_text) "{{{
-  let cur_text = a:cur_text
-
-  " Echo prototype.
-  let script_candidates_list = s:get_cached_script_candidates()
-
-  let prototype_name = matchstr(cur_text,
-        \'\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)*\s*(\ze\%([^(]\|(.\{-})\)*$')
-  let ret = []
-  if prototype_name != ''
-    if !has_key(s:internal_candidates_list, 'function_prototypes')
-      " No cache.
-      return []
-    endif
-
-    " Search function name.
-    call add(ret, { 'text' : prototype_name, 'highlight' : 'Identifier' })
-    if has_key(s:internal_candidates_list.function_prototypes, prototype_name)
-      call add(ret, { 'text' : s:internal_candidates_list.function_prototypes[prototype_name] })
-    elseif has_key(s:global_candidates_list.function_prototypes, prototype_name)
-      call add(ret, { 'text' : s:global_candidates_list.function_prototypes[prototype_name] })
-    elseif has_key(script_candidates_list.function_prototypes, prototype_name)
-      call add(ret, { 'text' : script_candidates_list.function_prototypes[prototype_name] })
-    else
-      " No prototypes.
-      return []
-    endif
-  else
-    if !has_key(s:internal_candidates_list, 'command_prototypes')
-      " No cache.
-      return []
-    endif
-
-    " Search command name.
-    " Skip head digits.
-    let prototype_name = neocomplete#sources#vim#get_command(cur_text)
-    call add(ret, { 'text' : prototype_name, 'highlight' : 'Statement' })
-    if has_key(s:internal_candidates_list.command_prototypes, prototype_name)
-      call add(ret, { 'text' : s:internal_candidates_list.command_prototypes[prototype_name] })
-    elseif has_key(s:global_candidates_list.command_prototypes, prototype_name)
-      call add(ret, { 'text' : s:global_candidates_list.command_prototypes[prototype_name] })
-    else
-      " No prototypes.
-      return []
-    endif
-  endif
-
-  return ret
-endfunction"}}}
-"}}}
 
 function! neocomplete#sources#vim#helper#get_command_completion(command_name, cur_text, complete_str) "{{{
   let completion_name =
@@ -209,7 +148,7 @@ function! neocomplete#sources#vim#helper#augroup(cur_text, complete_str) "{{{
     let s:global_candidates_list.augroups = s:get_augrouplist()
   endif
 
-  return s:global_candidates_list.augroups
+  return copy(s:global_candidates_list.augroups)
 endfunction"}}}
 function! neocomplete#sources#vim#helper#buffer(cur_text, complete_str) "{{{
   return []
@@ -297,7 +236,7 @@ function! neocomplete#sources#vim#helper#environment(cur_text, complete_str) "{{
     let s:global_candidates_list.environments = s:get_envlist()
   endif
 
-  return s:global_candidates_list.environments
+  return copy(s:global_candidates_list.environments)
 endfunction"}}}
 function! neocomplete#sources#vim#helper#event(cur_text, complete_str) "{{{
   return []
@@ -319,7 +258,7 @@ function! neocomplete#sources#vim#helper#feature(cur_text, complete_str) "{{{
   if !has_key(s:internal_candidates_list, 'features')
     let s:internal_candidates_list.features = s:make_cache_features()
   endif
-  return s:internal_candidates_list.features
+  return copy(s:internal_candidates_list.features)
 endfunction"}}}
 function! neocomplete#sources#vim#helper#file(cur_text, complete_str) "{{{
   " Todo.
@@ -335,7 +274,7 @@ function! neocomplete#sources#vim#helper#filetype(cur_text, complete_str) "{{{
           \ , "matchstr(fnamemodify(v:val, ':t:r'), '^[[:alnum:]-]*')"), '')
   endif
 
-  return s:internal_candidates_list.filetypes
+  return copy(s:internal_candidates_list.filetypes)
 endfunction"}}}
 function! neocomplete#sources#vim#helper#function(cur_text, complete_str) "{{{
   " Make cache.
@@ -411,7 +350,7 @@ function! neocomplete#sources#vim#helper#option(cur_text, complete_str) "{{{
   if a:cur_text =~ '\<set\%[local]\s\+\%(filetype\|ft\)='
     return neocomplete#sources#vim#helper#filetype(a:cur_text, a:complete_str)
   else
-    return s:internal_candidates_list.options
+    return copy(s:internal_candidates_list.options)
   endif
 endfunction"}}}
 function! neocomplete#sources#vim#helper#shellcmd(cur_text, complete_str) "{{{
@@ -685,7 +624,7 @@ function! s:make_cache_functions() "{{{
     if !empty(_)
       call insert(functions, {
             \ 'word' : _[2],
-            \ 'menu' : '; ' . substitute(_[1], '(\zs\s\+', '', ''),
+            \ 'abbr' : substitute(_[1], '(\zs\s\+', '', ''),
             \ })
       let desc = ''
     endif
