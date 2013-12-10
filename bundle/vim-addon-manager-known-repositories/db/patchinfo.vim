@@ -51,6 +51,7 @@ let patch_repo.1686={'script-type': 'colors'}
 let patch_repo.2527={'script-type': 'ftplugin'}
 let patch_repo.4388={'script-type': 'ftplugin'}
 let patch_repo.4750={'script-type': 'plugin'}
+let patch_repo.3938={'script-type': 'plugin'}
 "▶1 Fixing target directories
 let patch_repo.2372={'target_dir': 'ftplugin/vlog'}
 let patch_repo.1542={'target_dir': 'autoload'}
@@ -94,6 +95,8 @@ let patch_repo.2518={'deprecated': "This plugin has been replaced with the Hyper
 let patch_repo.3874={'deprecated': "This script is no longer supported. Please use the matchit.vim plugin (already bundled with vim > 7) instead."}
 let patch_repo.287 ={'deprecated': "This script has been retired. You should use #273"}
 let patch_repo.2765={'deprecated': "Maintainer has changed. You should use #4452 (vim-javascript) now"}
+
+let patch_repo.3102={'deprecated': "Author recommends using other plugin installers and states that this one is kept only for historical reasons"}
 
 let patch_repo.2554={'deprecated': "Author says it is buggy and thus should not be used"}
 

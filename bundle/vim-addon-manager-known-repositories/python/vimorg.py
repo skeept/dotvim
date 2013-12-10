@@ -93,7 +93,7 @@ class FileListers:
     @staticmethod
     def gz(AF):
         # GzipFile requires tell
-        return gzip.GzipFile(fileobj=io.BytesIO(AF.read()))
+        return io.BytesIO(gzip.GzipFile(fileobj=AF).read())
 
     @staticmethod
     def bz2(AF):
@@ -101,16 +101,16 @@ class FileListers:
 
     @staticmethod
     def lzma(AF):
-        return lzma.LZMAFile(AF)
+        return io.BytesIO(lzma.LZMAFile(AF).read())
 
     @staticmethod
     def xz(AF):
-        return lzma.LZMAFile(AF)
+        return io.BytesIO(lzma.LZMAFile(AF).read())
 
     @staticmethod
     def tar(AF):
         # tar requires tell on its own
-        return set(get_tar_names(tarfile.TarFile(fileobj=io.BytesIO(AF.read()))))
+        return set(get_tar_names(tarfile.TarFile(fileobj=AF)))
 
     @staticmethod
     def tgz(AF):
@@ -129,7 +129,14 @@ class FileListers:
     @staticmethod
     def zip(AF):
         # ZipFile requires seek
-        return set(zipfile.ZipFile(io.BytesIO(AF.read())).namelist())
+        zf = zipfile.ZipFile(AF)
+        ret = set(zf.namelist())
+        if len(ret) == 1:
+            fname = next(iter(ret))
+            if '/' not in fname and hasattr(FileListers, get_ext(fname)):
+                logger.debug('>>>> Assuming somebody packed an archive ({0}) into a zip file'.format(fname))
+                return io.BytesIO(zf.open(fname).read())
+        return ret
 
     @staticmethod
     def vmb(AF):
@@ -170,7 +177,9 @@ def find_mime(AF):
         _magic = magic.open(magic.MAGIC_MIME_TYPE)
         _magic.load('/usr/share/misc/magic.mgc')
     af = AF.read()
-    return io.BytesIO(af), mime_to_ext[_magic.buffer(af)]
+    mime = _magic.buffer(af)
+    logger.info('>>>> Deduced mime extension: {0}'.format(mime))
+    return io.BytesIO(af), mime_to_ext[mime]
 
 
 def _get_file_list(AF, ext, aname, had_to_guess=False):
@@ -217,7 +226,8 @@ def get_file_list(voinfo):
     if ext == 'vim':
         ret = {guess_fix_dir(voinfo) + '/' + aname}
     elif ext in FileListers.__dict__:
-        ret = set(_get_file_list(io.BytesIO(urllib.urlopen(aurl).read()), ext, aname))
+        ret = {fname for fname in _get_file_list(io.BytesIO(urllib.urlopen(aurl).read()), ext, aname)
+                         if not (fname.startswith('__MACOSX') or '.git/' in fname)}
     else:
         raise ValueError('Unknown extension')
     _downloaded_URLs[aurl] = ret
