@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: complete.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 06 Nov 2013.
+" Last Modified: 10 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,6 +29,8 @@ set cpo&vim
 
 function! neocomplete#complete#manual_complete(findstart, base) "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.event = ''
+
   if a:findstart
     let cur_text = neocomplete#get_cur_text()
     if !neocomplete#is_enabled()
@@ -94,6 +96,7 @@ endfunction"}}}
 
 function! neocomplete#complete#sources_manual_complete(findstart, base) "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.event = ''
 
   if a:findstart
     if !neocomplete#is_enabled()
@@ -168,6 +171,7 @@ function! neocomplete#complete#_get_words(sources, complete_pos, complete_str) "
   " Append prefix.
   let candidates = []
   let len_words = 0
+  let sources_len = 0
   for source in sort(filter(copy(a:sources),
         \ '!empty(v:val.neocomplete__context.candidates)'),
         \  's:compare_source_rank')
@@ -232,6 +236,7 @@ EOF
 
     let candidates += words
     let len_words += len(words)
+    let sources_len += 1
 
     if g:neocomplete#max_list > 0
           \ && len_words > g:neocomplete#max_list
@@ -247,11 +252,28 @@ EOF
     let candidates = candidates[: g:neocomplete#max_list]
   endif
 
+  if sources_len == 1
+    " Remove default menu.
+    lua << EOF
+    do
+      local candidates = vim.eval('candidates')
+      local mark = vim.eval('mark')
+      local sources_len = vim.eval('sources_len')
+      for i = 0, #candidates-1 do
+        if candidates[i].menu == mark then
+          candidates[i].menu = nil
+        end
+      end
+    end
+EOF
+  endif
+
   " Check dup and set icase.
   let icase = g:neocomplete#enable_ignore_case &&
-        \!(g:neocomplete#enable_smart_case && a:complete_str =~ '\u')
+        \!((g:neocomplete#enable_smart_case
+        \  || g:neocomplete#enable_camel_case) && a:complete_str =~ '\u')
   for candidate in candidates
-    let candidate.icase = icase
+    let candidate.icase = 1
   endfor
 
   if neocomplete#complete_check()
@@ -341,9 +363,8 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
 
     if neocomplete#is_text_mode()
       let &ignorecase = 1
-    elseif g:neocomplete#enable_smart_case
-          \ && context.complete_str =~ '\u'
-      let &ignorecase = 0
+    elseif g:neocomplete#enable_smart_case || g:neocomplete#enable_camel_case
+      let &ignorecase = context.complete_str !~ '\u'
     else
       let &ignorecase = g:neocomplete#enable_ignore_case
     endif
