@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 22 Nov 2013.
+" Last Modified: 25 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -93,10 +93,10 @@ function! neosnippet#view#_expand(cur_text, col, trigger_name) "{{{
   let expand_stack = neosnippet#variables#expand_stack()
 
   try
-    call setline('.', snippet_lines[0])
     if len(snippet_lines) > 1
       call append('.', snippet_lines[1:])
     endif
+    call setline('.', snippet_lines[0])
 
     if begin_line != end_line || snippet.options.indent
       call s:indent_snippet(begin_line, end_line)
@@ -142,19 +142,20 @@ function! neosnippet#view#_jump(cur_text, col) "{{{
 
   let expand_info = expand_stack[-1]
   " Search patterns.
-  let [begin, end] = s:get_snippet_range(
+  let [begin, end] = neosnippet#view#_get_snippet_range(
         \ expand_info.begin_line,
         \ expand_info.begin_patterns,
         \ expand_info.end_line,
         \ expand_info.end_patterns)
-  if s:search_snippet_range(begin, end, expand_info.holder_cnt)
+  if neosnippet#view#_search_snippet_range(
+        \ begin, end, expand_info.holder_cnt)
     " Next count.
     let expand_info.holder_cnt += 1
     return 1
   endif
 
   " Search placeholder 0.
-  if s:search_snippet_range(begin, end, 0)
+  if neosnippet#view#_search_snippet_range(begin, end, 0)
     return 1
   endif
 
@@ -163,52 +164,6 @@ function! neosnippet#view#_jump(cur_text, col) "{{{
   let expand_stack = expand_stack[: -2]
 
   return s:search_outof_range(a:col)
-endfunction"}}}
-
-function! neosnippet#view#_on_insert_leave() "{{{
-  let expand_stack = neosnippet#variables#expand_stack()
-
-  " Get patterns and count.
-  if empty(expand_stack)
-        \ || neosnippet#variables#current_neosnippet().trigger
-    return
-  endif
-
-  let expand_info = expand_stack[-1]
-
-  if expand_info.begin_line != expand_info.end_line
-    return
-  endif
-
-  " Search patterns.
-  let [begin, end] = s:get_snippet_range(
-        \ expand_info.begin_line,
-        \ expand_info.begin_patterns,
-        \ expand_info.end_line,
-        \ expand_info.end_patterns)
-
-  let pos = getpos('.')
-
-  " Found snippet.
-  let found = 0
-  try
-    while s:search_snippet_range(begin, end, expand_info.holder_cnt, 0)
-      " Next count.
-      let expand_info.holder_cnt += 1
-      let found = 1
-    endwhile
-
-    " Search placeholder 0.
-    if s:search_snippet_range(begin, end, 0)
-      let found = 1
-    endif
-  finally
-    if found
-      stopinsert
-    endif
-
-    call setpos('.', pos)
-  endtry
 endfunction"}}}
 
 function! s:indent_snippet(begin, end) "{{{
@@ -253,7 +208,7 @@ function! s:indent_snippet(begin, end) "{{{
   endtry
 endfunction"}}}
 
-function! s:get_snippet_range(begin_line, begin_patterns, end_line, end_patterns) "{{{
+function! neosnippet#view#_get_snippet_range(begin_line, begin_patterns, end_line, end_patterns) "{{{
   let pos = getpos('.')
 
   call cursor(a:begin_line, 0)
@@ -287,7 +242,7 @@ function! s:get_snippet_range(begin_line, begin_patterns, end_line, end_patterns
   call setpos('.', pos)
   return [begin, end]
 endfunction"}}}
-function! s:search_snippet_range(start, end, cnt, ...) "{{{
+function! neosnippet#view#_search_snippet_range(start, end, cnt, ...) "{{{
   let is_select = get(a:000, 0, 1)
   call s:substitute_placeholder_marker(a:start, a:end, a:cnt)
 
@@ -378,7 +333,7 @@ function! s:expand_placeholder(start, end, holder_cnt, line, ...) "{{{
 
     " Substitute holder.
     call setline(a:line,
-          \ substitute(current_line, pattern, escape(default, '\'), ''))
+          \ substitute(current_line, pattern, escape(default, '&\'), ''))
   endif
 
   call setpos('.', pos)
