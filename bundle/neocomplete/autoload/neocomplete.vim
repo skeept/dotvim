@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Dec 2013.
+" Last Modified: 24 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -140,9 +140,6 @@ function! neocomplete#custom_source(source_name, option_name, value) "{{{
   return neocomplete#custom#source(a:source_name, a:option_name, a:value)
 endfunction"}}}
 
-function! neocomplete#is_enabled_source(source_name) "{{{
-  return neocomplete#helper#is_enabled_source(a:source_name)
-endfunction"}}}
 function! neocomplete#dup_filter(list) "{{{
   return neocomplete#util#dup_filter(a:list)
 endfunction"}}}
@@ -169,19 +166,29 @@ function! neocomplete#get_next_keyword() "{{{
 endfunction"}}}
 function! neocomplete#get_keyword_pattern(...) "{{{
   let filetype = a:0 != 0? a:000[0] : neocomplete#get_context_filetype()
-  let keyword_patterns = g:neocomplete#keyword_patterns
-  if a:0 >= 2
-    let source = get(neocomplete#variables#get_sources(), a:2, {})
-    let keyword_patterns = get(source, 'keyword_patterns',
-          \ g:neocomplete#keyword_patterns)
-    if keyword_patterns !=# g:neocomplete#keyword_patterns
-      " Merge default patterns.
-      let keyword_patterns = extend(copy(keyword_patterns),
-            \ g:neocomplete#keyword_patterns, 'keep')
-    endif
+  if a:0 < 2
+    return neocomplete#helper#unite_patterns(
+          \ g:neocomplete#keyword_patterns, filetype)
   endif
 
-  return neocomplete#helper#unite_patterns(keyword_patterns, filetype)
+  let source = a:2
+  let keyword_patterns = get(source, 'keyword_patterns',
+        \ g:neocomplete#keyword_patterns)
+  if keyword_patterns !=# g:neocomplete#keyword_patterns
+    " Merge default patterns.
+    let keyword_patterns = extend(copy(keyword_patterns),
+          \ g:neocomplete#keyword_patterns, 'keep')
+  endif
+
+  if !has_key(source, 'neocomplete__unite_patterns')
+    let source.neocomplete__unite_patterns = {}
+  endif
+  if !has_key(source.neocomplete__unite_patterns, filetype)
+    let source.neocomplete__unite_patterns[filetype] =
+          \ neocomplete#helper#unite_patterns(keyword_patterns, filetype)
+  endif
+
+  return source.neocomplete__unite_patterns[filetype]
 endfunction"}}}
 function! neocomplete#get_next_keyword_pattern(...) "{{{
   let filetype = (a:0 != 0) ? a:000[0] : neocomplete#get_context_filetype()
@@ -258,9 +265,7 @@ function! neocomplete#exists_echodoc() "{{{
   return exists('g:loaded_echodoc') && g:loaded_echodoc
 endfunction"}}}
 function! neocomplete#within_comment() "{{{
-  let neocomplete = neocomplete#get_current_neocomplete()
-  return neocomplete.cur_text =~# substitute(
-        \ neocomplete#util#escape_pattern(&l:commentstring), '%s.*$', '', '')
+  return 0
 endfunction"}}}
 function! neocomplete#print_error(string) "{{{
   echohl Error | echomsg a:string | echohl None
@@ -285,11 +290,8 @@ function! neocomplete#escape_match(str) "{{{
   return escape(a:str, '~"*\.^$[]')
 endfunction"}}}
 function! neocomplete#get_context_filetype(...) "{{{
-  if !neocomplete#is_enabled()
-    return &filetype
-  endif
-
-  let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete = exists('b:neocomplete') ?
+        \ b:neocomplete : neocomplete#get_current_neocomplete()
 
   if a:0 != 0 || mode() !=# 'i' ||
         \ neocomplete.context_filetype == ''

@@ -1,5 +1,7 @@
 # vim:fileencoding=utf-8
 
+from __future__ import division
+
 import os
 import logging
 import codecs
@@ -227,7 +229,9 @@ def get_file_list(voinfo):
         ret = {guess_fix_dir(voinfo) + '/' + aname}
     elif ext in FileListers.__dict__:
         ret = {fname for fname in _get_file_list(io.BytesIO(urllib.urlopen(aurl).read()), ext, aname)
-                         if not (fname.startswith('__MACOSX') or '.git/' in fname)}
+                         if not (fname.startswith('__MACOSX') or '.git/' in fname
+                                 or fname.startswith('._') or '/._' in fname
+                                 or fname.endswith('.DS_Store'))}
     else:
         raise ValueError('Unknown extension')
     _downloaded_URLs[aurl] = ret
@@ -262,31 +266,57 @@ def isexpected(fname):
             and not 'README' in fname)
 
 
+def check_vim_files(vimvofiles, vimfiles):
+    if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
+        logger.info('>>>> Rejected because there are more then 5 significant files '
+                'not present in archive: %s'
+                % (repr(vimfiles - vimvofiles)))
+        return True
+    return False
+
+
 # Directories corresponding to plugin types on www.vim.org
 vodirs = {'plugin', 'colors', 'ftplugin', 'indent', 'syntax'}
-def compare_file_lists(vofiles, files, prefix=None):
+def compare_file_lists(candidate, vofiles, files, prefix=None):
     expvofiles = {fname for fname in vofiles if isexpected(fname)}
+    expfiles = {fname for fname in files if isexpected(fname)}
     vimvofiles = {fname for fname in expvofiles if isvimvofile(fname)}
     vimfiles = {fname for fname in files if isvimvofile(fname)}
-    if vofiles <= files:
-        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
-            logger.info('>>>> Rejected because there are significant files not present in archive: '
-                    '%s'
-                    % (repr(vimfiles - vimvofiles)))
+    if vofiles and files and vofiles <= files:
+        if check_vim_files(vimvofiles, vimfiles):
             return (prefix, 0)
         logger.info('>>>> Accepted with score 100 because all files '
                 'are contained in the repository')
         return (prefix, 100)
-    elif expvofiles and expvofiles <= files:
-        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
-            logger.info('>>>> Rejected because there are significant files not present in archive: '
-                    '%s'
-                    % (repr(vimfiles - vimvofiles)))
+    elif expvofiles and expfiles and expvofiles <= expfiles:
+        if check_vim_files(vimvofiles, vimfiles):
             return (prefix, 0)
         logger.info('>>>> Accepted with score 90 because all files that are considered significant '
                 'are contained in the repository: %s. Missing insignificant files: %s.'
                 % (repr(expvofiles), repr(vofiles - files)))
         return (prefix, 90)
+    elif (candidate.has_name_similarity and
+            (len(vofiles ^ files) / ((len(vofiles) + len(files)) / 2)) <= 0.2):
+        if check_vim_files(vimvofiles, vimfiles):
+            return (prefix, 0)
+        logger.info('>>>> Accepted with score 80 because difference between repository and archive '
+                'is not greater then 20%% of files. Files not present in the repository: %s. '
+                'Files not present in the archive: %s.'
+                % (repr(vofiles - files), repr(files - vofiles)))
+        return (prefix, 80)
+    elif (candidate.has_name_similarity and
+            (len(expvofiles ^ expfiles) / ((len(expvofiles) + len(expfiles)) / 2)) <= 0.1):
+        if check_vim_files(vimvofiles, vimfiles):
+            return (prefix, 0)
+        logger.info('>>>> Accepted with score 70 because difference between repository and archive '
+                'is not greater then 10%% of files that are considered significant. '
+                'Files not present in the repository: %s. '
+                'Files not present in the archive: %s. '
+                'Significant files not present in the repository: %s. '
+                'Significant files not present in the archive: %s.'
+                % (repr(vofiles - files), repr(files - vofiles),
+                   repr(expvofiles - expfiles), repr(expfiles - expvofiles)))
+        return (prefix, 70)
     else:
         vofileparts = [fname.partition('/') for fname in vofiles]
         leadingdir = vofileparts[0][0]
@@ -297,6 +327,7 @@ def compare_file_lists(vofiles, files, prefix=None):
             logger.info('>>>> Trying to match with leading path component removed: %s'
                     % leadingdir)
             return compare_file_lists(
+                candidate,
                 {part[-1] for part in vofileparts},
                 files,
                 leadingdir,

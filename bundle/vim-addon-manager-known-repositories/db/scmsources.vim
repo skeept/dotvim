@@ -925,6 +925,9 @@ let scmnr.4731 = {'type': 'git', 'url': 'git://github.com/jalcine/cmake.vim'}
 " Adam Stankiewicz
 let scmnr.4721 = {'type': 'git', 'url': 'git://github.com/sheerun/vim-polyglot'}
 
+" light xue
+let scmnr.4791 = {'type': 'git', 'url': 'git://github.com/lightxue/SwissCalc'}
+
 "-----------------------------------------------------------------------------------------------------------------------
 
 " David Briscoe
@@ -1102,13 +1105,8 @@ let scmnr.3733 = vamkr#AddCopyHook({'type': 'git', 'url': 'git://github.com/knat
 " Jannis Pohlmann
 let scmnr.2278 = vamkr#AddCopyHook({'type': 'git', 'url': 'git://git.gezeiten.org/git/jptemplate'}, {'jptemplate.vim': 'plugin'})
 
-" Dmitry Ermolov
-let hook='execute "edit" fnameescape(%d."/Makefile") | %s@\V~/.vim@.@ | write! | execute "lcd" fnameescape(%d) | call mkdir("plugin") | call vam#utils#RunShell("make && make install") | lcd -'
-let scmnr.3648 = {'type': 'git', 'url': 'git://github.com/9uMaH/autocpp', 'addon-info': {'post-install-hook': hook, 'post-scms-update-hook': substitute(hook, '\Vcall mkdir("plugin") | ', '', '')}}
-unlet hook
-
 " Jian Liang
-let hook='execute "edit" fnameescape(%d."/install_linux_dev.sh") | %s@\V~/.vim@.@ | write! | execute "lcd" fnameescape(%d) | call mkdir("plugin") | call vam#utils#RunShell("sh ./install_linux_dev.sh") | lcd -'
+let hook='if g:is_win | execute "edit" fnameescape(%d."/install_windows.bat") | %s@\V\w:\\vim\\vimfiles@.@ | else | execute "edit" fnameescape(%d."/install_linux_dev.sh") | %s@\V~/.vim@.@ | endif | write! | execute "lcd" fnameescape(%d) | call mkdir("plugin") | call vam#utils#RunShell(g:is_win ? "cmd .\\install_windows.bat" : "sh ./install_linux_dev.sh") | lcd -'
 let scmnr.4637 = {'type': 'git', 'url': 'https://code.google.com/p/symfind/', 'addon-info': {'post-install-hook': hook, 'post-scms-update-hook': substitute(hook, '\Vcall mkdir("plugin") | ', '', '')}}
 unlet hook
 
@@ -1272,7 +1270,6 @@ let scm['vim-arduino'] = {'type': 'git', 'url': 'git://github.com/tclem/vim-ardu
 let scm['vim-opengrok-search'] = {'type': 'git', 'url': 'git://github.com/jdevera/vim-opengrok-search'}
 
 " Justin M. Keyes
-let scm['vim-sneak'] = {'type': 'git', 'url': 'git://github.com/justinmk/vim-sneak'}
 let scm['vim-gtfo'] = {'type': 'git', 'url': 'git://github.com/justinmk/vim-gtfo'}
 
 " Christopher Sexton

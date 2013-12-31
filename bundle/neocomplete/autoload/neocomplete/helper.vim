@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Dec 2013.
+" Last Modified: 24 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -95,15 +95,15 @@ function! neocomplete#helper#is_omni(cur_text) "{{{
   return 1
 endfunction"}}}
 
-function! neocomplete#helper#is_enabled_source(source_name) "{{{
-  let neocomplete = neocomplete#get_current_neocomplete()
-  let source = get(neocomplete#variables#get_sources(), a:source_name, {})
+function! neocomplete#helper#is_enabled_source(source, filetype) "{{{
+  let source = type(a:source) == type('') ?
+        \ get(neocomplete#variables#get_sources(), a:source, {})
+        \ : a:source
 
   return !empty(source) && (empty(source.filetypes) ||
-        \     get(source.filetypes, neocomplete.context_filetype, 0))
+        \     get(source.filetypes, a:filetype, 0))
         \  && (!get(source.disabled_filetypes, '_', 0) &&
-        \      !get(source.disabled_filetypes,
-        \           neocomplete.context_filetype, 0))
+        \      !get(source.disabled_filetypes, a:filetype, 0))
 endfunction"}}}
 
 function! neocomplete#helper#get_source_filetypes(filetype) "{{{
@@ -127,6 +127,9 @@ function! neocomplete#helper#get_source_filetypes(filetype) "{{{
       let filetypes += split(get(g:neocomplete#same_filetypes, ft,
             \ get(g:neocomplete#same_filetypes, '_', '')), ',')
     endfor
+  endif
+  if neocomplete#is_text_mode()
+    call add(filetypes, 'text')
   endif
 
   return neocomplete#util#uniq(filetypes)
@@ -278,6 +281,7 @@ function! neocomplete#helper#get_sources_list(...) "{{{
   let neocomplete.sources = filter(sources, "
         \   (empty(v:val.filetypes) ||
         \    get(v:val.filetypes, neocomplete.context_filetype, 0))")
+  let neocomplete.sources_filetype = neocomplete.context_filetype
 
   return neocomplete.sources
 endfunction"}}}
@@ -325,8 +329,7 @@ endfunction"}}}
 function! neocomplete#helper#call_filters(filters, source, context) "{{{
   let context = extend(a:source.neocomplete__context, a:context)
   let _ = []
-  for filter in neocomplete#init#_filters(
-        \ neocomplete#util#convert2list(a:filters))
+  for filter in a:filters
     try
       let context.candidates = call(filter.filter, [context], filter)
     catch

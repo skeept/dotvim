@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 10 Dec 2013.
+" Last Modified: 24 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -544,7 +544,7 @@ function! neocomplete#init#_variables() "{{{
         \ '_', '')
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#ctags_arguments', 'vim',
-        \ '--extra=fq --fields=afmiKlnsStz ' .
+        \ '--language-force=vim --extra=fq --fields=afmiKlnsStz ' .
         \ "--regex-vim='/function!? ([a-z#:_0-9A-Z]+)/\\1/function/'")
   if neocomplete#util#is_mac()
     call neocomplete#util#set_default_dictionary(
@@ -629,6 +629,8 @@ function! neocomplete#init#_current_neocomplete() "{{{
         \ 'linenr' : 0,
         \ 'completeopt' : &completeopt,
         \ 'completed_item' : {},
+        \ 'sources' : [],
+        \ 'sources_filetype' : '',
         \}
 endfunction"}}}
 
@@ -730,6 +732,13 @@ function! neocomplete#init#_source(source) "{{{
     let source.min_pattern_length = (source.kind ==# 'keyword') ?
           \ g:neocomplete#auto_completion_start_length : 0
   endif
+
+  let source.neocomplete__matchers = neocomplete#init#_filters(
+        \ neocomplete#util#convert2list(source.matchers))
+  let source.neocomplete__sorters = neocomplete#init#_filters(
+        \ neocomplete#util#convert2list(source.sorters))
+  let source.neocomplete__converters = neocomplete#init#_filters(
+        \ neocomplete#util#convert2list(source.converters))
 
   let source.neocomplete__context.source_name = source.name
 

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Aug 2013.
+" Last Modified: 26 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -60,10 +60,15 @@ function! vimfiler#default_settings() "{{{
   return vimfiler#init#_default_settings()
 endfunction"}}}
 function! vimfiler#set_execute_file(exts, command) "{{{
+  let g:vimfiler_execute_file_list =
+        \ get(g:, 'vimfiler_execute_file_list', {})
   return vimfiler#util#set_dictionary_helper(g:vimfiler_execute_file_list,
         \ a:exts, a:command)
 endfunction"}}}
 function! vimfiler#set_extensions(kind, exts) "{{{
+  let g:vimfiler_extensions =
+        \ get(g:, 'vimfiler_extensions', {})
+
   let g:vimfiler_extensions[a:kind] = {}
   for ext in split(a:exts, '\s*,\s*')
     let g:vimfiler_extensions[a:kind][ext] = 1
@@ -192,7 +197,7 @@ function! vimfiler#parse_path(path) "{{{
   return vimfiler#helper#_parse_path(a:path)
 endfunction"}}}
 function! vimfiler#initialize_context(context) "{{{
-  return vimfiler#init#_initialize_context(a:context)
+  return vimfiler#init#_context(a:context)
 endfunction"}}}
 function! vimfiler#get_histories() "{{{
   return copy(s:vimfiler_current_histories)
@@ -206,36 +211,6 @@ endfunction"}}}
 function! vimfiler#complete_path(arglead, cmdline, cursorpos) "{{{
   return vimfiler#helper#_complete_path(a:arglead, a:cmdline, a:cursorpos)
 endfunction"}}}
-"}}}
-
-" Global options definition. "{{{
-let g:vimfiler_execute_file_list =
-      \ get(g:, 'vimfiler_execute_file_list', {})
-let g:vimfiler_extensions =
-      \ get(g:, 'vimfiler_extensions', {})
-if !has_key(g:vimfiler_extensions, 'text')
-  call vimfiler#set_extensions('text',
-        \ 'txt,cfg,ini')
-endif
-if !has_key(g:vimfiler_extensions, 'image')
-  call vimfiler#set_extensions('image',
-        \ 'bmp,png,gif,jpg,jpeg,jp2,tif,ico,wdp,cur,ani')
-endif
-if !has_key(g:vimfiler_extensions, 'archive')
-  call vimfiler#set_extensions('archive',
-        \ 'lzh,zip,gz,bz2,cab,rar,7z,tgz,tar')
-endif
-if !has_key(g:vimfiler_extensions, 'system')
-  call vimfiler#set_extensions('system',
-        \ 'inf,sys,reg,dat,spi,a,so,lib,dll')
-endif
-if !has_key(g:vimfiler_extensions, 'multimedia')
-  call vimfiler#set_extensions('multimedia',
-        \ 'avi,asf,wmv,mpg,flv,swf,divx,mov,mpa,m1a,'.
-        \ 'm2p,m2a,mpeg,m1v,m2v,mp2v,mp4,qt,ra,rm,ram,'.
-        \ 'rmvb,rpm,smi,mkv,mid,wav,mp3,ogg,wma,au,flac'
-        \ )
-endif
 "}}}
 
 " vim: foldmethod=marker

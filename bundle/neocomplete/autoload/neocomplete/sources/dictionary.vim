@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: dictionary.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 24 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -52,13 +52,13 @@ let s:source = {
 
 function! s:source.hooks.on_init(context) "{{{
   " Set make cache event.
-  autocmd neocomplete FileType * call s:make_cache()
+  autocmd neocomplete FileType * call s:make_cache(&l:filetype)
 
   " Create cache directory.
   call neocomplete#cache#make_directory('dictionary_cache')
 
   " Initialize check.
-  call s:make_cache()
+  call s:make_cache(&l:filetype)
 endfunction"}}}
 
 function! s:source.hooks.on_final(context) "{{{
@@ -68,13 +68,11 @@ endfunction"}}}
 function! s:source.gather_candidates(context) "{{{
   let list = []
 
-  let filetype = neocomplete#is_text_mode() ?
-        \ 'text' : neocomplete#get_context_filetype()
-  if !has_key(s:dictionary_cache, filetype)
-    call s:make_cache()
-  endif
-
-  for ft in neocomplete#get_source_filetypes(filetype)
+  for ft in neocomplete#get_source_filetypes(
+        \ neocomplete#get_context_filetype())
+    if !has_key(s:dictionary_cache, ft)
+      call s:make_cache(ft)
+    endif
     call neocomplete#cache#check_cache(
           \ 'dictionary_cache', ft,
           \ s:async_dictionary_list, s:dictionary_cache, 1)
@@ -85,19 +83,11 @@ function! s:source.gather_candidates(context) "{{{
   return list
 endfunction"}}}
 
-function! s:make_cache() "{{{
-  if !bufloaded(bufnr('%'))
-    return
+function! s:make_cache(filetype) "{{{
+  if !has_key(s:dictionary_cache, a:filetype)
+        \ && !has_key(s:async_dictionary_list, a:filetype)
+    call neocomplete#sources#dictionary#remake_cache(a:filetype)
   endif
-
-  let key = neocomplete#is_text_mode() ?
-        \ 'text' : neocomplete#get_context_filetype()
-  for filetype in neocomplete#get_source_filetypes(key)
-    if !has_key(s:dictionary_cache, filetype)
-          \ && !has_key(s:async_dictionary_list, filetype)
-      call neocomplete#sources#dictionary#remake_cache(filetype)
-    endif
-  endfor
 endfunction"}}}
 
 function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
@@ -120,7 +110,7 @@ function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
   endif
 
   if dictionaries == ''
-    if filetype != &filetype &&
+    if filetype == &filetype &&
           \ &l:dictionary != '' && &l:dictionary !=# &g:dictionary
       let dictionaries = &l:dictionary
     endif
@@ -128,7 +118,7 @@ function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
 
   let s:async_dictionary_list[filetype] = []
 
-  let pattern = neocomplete#get_keyword_pattern(filetype, s:source.name)
+  let pattern = neocomplete#get_keyword_pattern(filetype, s:source)
   for dictionary in split(dictionaries, ',')
     let dictionary = neocomplete#util#substitute_path_separator(
           \ fnamemodify(dictionary, ':p'))

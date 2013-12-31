@@ -422,8 +422,8 @@ class CompleteThread(threading.Thread):
     self.timer = timer
 
   def run(self):
-    with workingDir(self.cwd):
-      with libclangLock:
+    with libclangLock:
+      with workingDir(self.cwd):
         if self.line == -1:
           # Warm up the caches. For this it is sufficient to get the
           # current translation unit. No need to retrieve completion
@@ -522,8 +522,8 @@ def gotoDeclaration():
   line, col = vim.current.window.cursor
   timer = CodeCompleteTimer(debug, vim.current.buffer.name, line, col, params)
 
-  with workingDir(params['cwd']):
-    with libclangLock:
+  with libclangLock:
+    with workingDir(params['cwd']):
       tu = getCurrentTranslationUnit(params['args'], getCurrentFile(),
                                      vim.current.buffer.name, timer,
                                      update = True)
@@ -539,8 +539,9 @@ def gotoDeclaration():
       for d in defs:
         if d is not None and loc != d.location:
           loc = d.location
-          jumpToLocation(loc.file.name, loc.line, loc.column)
-          break
+          if loc.file is not None:
+            jumpToLocation(loc.file.name, loc.line, loc.column)
+            break
 
   timer.finish()
 

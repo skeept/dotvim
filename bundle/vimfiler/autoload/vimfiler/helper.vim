@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Nov 2013.
+" Last Modified: 28 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -41,7 +41,7 @@ function! vimfiler#helper#_get_directory_files(directory, ...) "{{{
     let path = b:vimfiler.source . ':' . path
   endif
   let args = vimfiler#parse_path(path)
-  let current_files = vimfiler#init#_initialize_candidates(
+  let current_files = vimfiler#init#_candidates(
         \ unite#get_vimfiler_candidates([args], context),
         \ b:vimfiler.source)
 
@@ -138,7 +138,7 @@ function! vimfiler#helper#_get_cd_path(dir) "{{{
         \ || (vimfiler#util#is_windows() && dir =~ '^//')
         \ || (!vimfiler#util#is_windows() && dir =~ '^/')
     " Network drive or absolute path.
-  else
+  elseif b:vimfiler.source ==# 'file'
     " Relative path.
     let dir = simplify(current_dir . dir)
   endif

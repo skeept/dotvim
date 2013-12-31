@@ -3169,7 +3169,7 @@
   },
   "4703": {
     "type": "git",
-    "url": "git://github.com/gcmt/tag-surfer"
+    "url": "git://github.com/gcmt/surfer.vim"
   },
   "4706": {
     "type": "git",
@@ -3378,6 +3378,62 @@
   "4792": {
     "type": "git",
     "url": "git://github.com/sirbrillig/netgrep"
+  },
+  "4796": {
+    "type": "git",
+    "url": "git://github.com/smilekzs/vim-nfo"
+  },
+  "4797": {
+    "type": "git",
+    "url": "git://github.com/DavidEGx/ctrlp-smarttabs"
+  },
+  "4799": {
+    "type": "git",
+    "url": "git://github.com/DeonPoncini/includefixer"
+  },
+  "4800": {
+    "type": "git",
+    "url": "git://github.com/Keithbsmiley/investigate.vim"
+  },
+  "4801": {
+    "type": "git",
+    "url": "git://github.com/l04m33/vim-skuld"
+  },
+  "4802": {
+    "type": "git",
+    "url": "git://github.com/richox/vim-javacompleteex"
+  },
+  "4803": {
+    "type": "git",
+    "url": "git://github.com/ujihisa/ft-cmake"
+  },
+  "4806": {
+    "type": "git",
+    "url": "git://github.com/cazador481/vim-systemverilog"
+  },
+  "4808": {
+    "type": "git",
+    "url": "git://github.com/jiangmiao/auto-pairs"
+  },
+  "4809": {
+    "type": "git",
+    "url": "git://github.com/justinmk/vim-sneak"
+  },
+  "4811": {
+    "type": "git",
+    "url": "git://github.com/reedes/vim-quotable"
+  },
+  "4812": {
+    "type": "git",
+    "url": "git://github.com/guns/vim-sexp"
+  },
+  "4814": {
+    "type": "git",
+    "url": "git://github.com/laurentgoudet/vim-howdoi"
+  },
+  "4815": {
+    "type": "git",
+    "url": "git://github.com/t9md/vim-choosewin"
   },
   "521": {
     "type": "git",

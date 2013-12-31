@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 24 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -130,8 +130,7 @@ function! s:make_cache_from_syntax(filetype) "{{{
   endif
 
   let group_name = ''
-  let keyword_pattern = neocomplete#get_keyword_pattern(
-        \ a:filetype, s:source.name)
+  let keyword_pattern = neocomplete#get_keyword_pattern(a:filetype, s:source)
 
   let filetype_pattern = tolower(substitute(
         \ a:filetype, '-', '_', 'g'))
@@ -236,7 +235,9 @@ function! s:split_pattern(keyword_pattern) "{{{
 
       let save_pattern = analyzing_patterns
       let analyzing_patterns = []
-      for keyword in split(original_pattern[matchend(original_pattern, '^\\%\?(', i) : end], '\\|')
+      for keyword in split(
+            \ original_pattern[matchend(original_pattern,
+            \                 '^\\%\?(', i) : end-1], '\\|')
         for prefix in save_pattern
           call add(analyzing_patterns, prefix . keyword)
         endfor

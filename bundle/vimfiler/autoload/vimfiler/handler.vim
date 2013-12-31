@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Nov 2013.
+" Last Modified: 25 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -63,9 +63,9 @@ function! s:on_BufReadCmd(source_name, source_args, context)  "{{{1
   let b:vimfiler.context = a:context
   let b:vimfiler.bufnr = bufnr('%')
   if type ==# 'directory'
-    call vimfiler#init#_initialize_vimfiler_directory(info, a:context)
+    call vimfiler#init#_vimfiler_directory(info, a:context)
   elseif type ==# 'file'
-    call vimfiler#init#_initialize_vimfiler_file(
+    call vimfiler#init#_vimfiler_file(
           \ a:source_args, info[0], info[1])
   else
     call vimfiler#print_error('Unknown filetype.')
@@ -182,8 +182,6 @@ function! vimfiler#handler#_event_bufwin_enter(bufnr) "{{{
         setlocal winfixheight
       endif
     endif
-
-    let context.vimfiler__prev_winnr = prev_winnr
 
     let winwidth = (winwidth(0)+1)/2*2
     if exists('vimfiler.winwidth')

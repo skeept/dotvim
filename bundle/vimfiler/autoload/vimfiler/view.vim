@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Dec 2013.
+" Last Modified: 30 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,15 +28,31 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let g:vimfiler_draw_files_limit =
-      \ get(g:, 'vimfiler_draw_files_limit', 100)
+      \ get(g:, 'vimfiler_draw_files_limit', 0)
 
 function! vimfiler#view#_force_redraw_screen(...) "{{{
   let is_manualed = get(a:000, 0, 0)
 
   let old_original_files = {}
   for file in filter(copy(b:vimfiler.original_files),
-        \ 'v:val.vimfiler__is_directory && v:val.vimfiler__is_opened')
-    let old_original_files[file.action__path] = 1
+        \ "v:val.vimfiler__is_directory &&
+        \   (v:val.vimfiler__is_opened
+        \     || v:val.vimfiler__abbr =~ './.')")
+    if file.vimfiler__abbr =~ './.'
+      let path = (file.vimfiler__is_opened ||
+            \ !has_key(file, 'vimfiler__parent')) ?
+            \ file.action__path : file.vimfiler__parent.action__path
+      let old_original_files[path] = 1
+
+      let old_path = ''
+      while path != '' && path !=# old_path
+        let old_original_files[path] = 1
+        let old_path = path
+        let path = fnamemodify(old_path, ':h')
+      endwhile
+    else
+      let old_original_files[file.action__path] = 1
+    endif
   endfor
 
   " Use matcher_glob.
@@ -46,6 +62,7 @@ function! vimfiler#view#_force_redraw_screen(...) "{{{
   for file in copy(b:vimfiler.original_files)
     if file.vimfiler__is_directory
           \ && has_key(old_original_files, file.action__path)
+
       " Insert children.
       let children = vimfiler#mappings#expand_tree_rec(file, old_original_files)
 
@@ -114,7 +131,7 @@ function! vimfiler#view#_redraw_screen(...) "{{{
     if line('$') > 1 &&
           \ b:vimfiler.prompt_linenr + len(b:vimfiler.current_files) < line('$')
       silent execute '$-'.(line('$')-b:vimfiler.prompt_linenr-
-            \ len(b:vimfiler.current_files)+1).',$delete _'
+            \ len(b:vimfiler.current_files)).',$delete _'
     endif
 
     call s:redraw_prompt()
@@ -246,32 +263,7 @@ function! vimfiler#view#_get_print_lines(files) "{{{
 
   let columns = (b:vimfiler.context.simple) ? [] : b:vimfiler.columns
 
-  let start = 0
-  for column in columns
-    let column.vimfiler__length = column.length(
-          \ a:files, b:vimfiler.context)
-  endfor
-  let columns = filter(columns, 'v:val.vimfiler__length > 0')
-
-  " Calc padding width.
-  let padding = 0
-  for column in columns
-    let padding += column.vimfiler__length + 1
-  endfor
-
-  if &l:number || (exists('&relativenumber') && &l:relativenumber)
-    let padding += max([&l:numberwidth,
-          \ len(line('$') + len(a:files))+1])
-  endif
-
-  let padding += &l:foldcolumn
-
-  if has('signs')
-    " Delete signs.
-    silent execute 'sign unplace buffer='.bufnr('%')
-  endif
-
-  let max_len = max([max([winwidth(0), &winwidth]) - padding, 10])
+  let max_len = vimfiler#view#_get_max_len(a:files)
 
   " Column region.
   let start = max_len + 1
@@ -354,12 +346,42 @@ function! vimfiler#view#_get_print_lines(files) "{{{
 
   return lines
 endfunction"}}}
-function! vimfiler#view#_check_redraw()
+function! vimfiler#view#_check_redraw() "{{{
   if &l:number || (exists('&relativenumber') && &l:relativenumber)
     " Force redraw.
     call vimfiler#view#_force_redraw_screen()
   endif
-endfunction
+endfunction"}}}
+function! vimfiler#view#_get_max_len(files) "{{{
+  let columns = (b:vimfiler.context.simple) ? [] : b:vimfiler.columns
+
+  let start = 0
+  for column in columns
+    let column.vimfiler__length = column.length(
+          \ a:files, b:vimfiler.context)
+  endfor
+  let columns = filter(columns, 'v:val.vimfiler__length > 0')
+
+  " Calc padding width.
+  let padding = 0
+  for column in columns
+    let padding += column.vimfiler__length + 1
+  endfor
+
+  if &l:number || (exists('&relativenumber') && &l:relativenumber)
+    let padding += max([&l:numberwidth,
+          \ len(line('$') + len(a:files))+1])
+  endif
+
+  let padding += &l:foldcolumn
+
+  if has('signs')
+    " Delete signs.
+    silent execute 'sign unplace buffer='.bufnr('%')
+  endif
+
+  return max([max([winwidth(0), &winwidth]) - padding, 10])
+endfunction"}}}
 
 function! s:check_tree(files) "{{{
   let level = 0
