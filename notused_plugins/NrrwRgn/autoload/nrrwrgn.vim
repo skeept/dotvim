@@ -336,8 +336,16 @@ fun! <sid>GeneratePattern(startl, endl, mode, ...) "{{{1
 		return '\%>'. (a:startl[0]-1). 'l\&\%>'. (a:startl[1]-1).
 			\ 'v\&\%<'. (a:endl[0]+1). 'l\&\%<'. (a:endl[1]+1). 'v'
 	elseif a:mode ==# 'v' && a:startl[0] > 0 && a:startl[1] > 0
-		return '\%>'. (a:startl[0]-1). 'l\&\%>'. (a:startl[1]-1).
-			\ 'v\_.*\%<'. (a:endl[0]+1). 'l\&\%<'. (a:endl[1]+1). 'v'
+		" Need to generate concat 3 patterns:
+		"  1) from startline, startcolumn till end of line
+		"  2) all lines between startline and end line
+		"  3) from start of endline until end column
+		"
+		" example: Start at line 1 col. 6 until line 3 column 12:
+		" \%(\%1l\%>6v.*\)\|\(\%>1l\%<3l.*\)\|\(\%3l.*\%<12v\)
+		return  '\%(\%'.  (a:startl[0]). 'l\%>'.   (a:startl[1]-1). 'v.*\)\|'.
+			\	'\%(\%>'. (a:startl[0]). 'l\%<'.   (a:endl[0]).     'l.*\)\|'.
+			\   '\%(\%'.  (a:endl[0]).   'l.*\%<'. (a:endl[1]+1).   'v\)'
 	elseif a:startl[0] > 0
 		return '\%>'. (a:startl[0]-1). 'l\&\%<'. (a:endl[0]+1). 'l'
 	else
@@ -896,7 +904,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	if (orig_win == -1)
 		if bufexists(orig_buf)
 			" buffer not in current window, switch to it!
-			exe winnr "wincmd w"
+			exe "noa" winnr "wincmd w"
 			exe "noa" orig_buf "b!"
 			" Make sure highlighting will be removed
 			let close = (&g:hid ? 0 : 1)
@@ -947,7 +955,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 					\ s:nrrw_rgn_lines[instn].vmode)
 		if s:nrrw_rgn_lines[instn].vmode == 'v' &&
 			\ s:nrrw_rgn_lines[instn].end[1] -
-			\ s:nrrw_rgn_lines[instn].start[1] + 1 == len(cont) + 1
+			\ s:nrrw_rgn_lines[instn].start[1] + 1 == len(cont)
 		   " in characterwise selection, remove trailing \n
 		   call setreg('a', substitute(@a, '\n$', '', ''), 
 			\ s:nrrw_rgn_lines[instn].vmode)
@@ -1098,7 +1106,7 @@ fun! nrrwrgn#UnifiedDiff() "{{{1
 			.+,$NR
 		endif
 	   " Split vertically
-	   wincmd H
+	   noa wincmd H
 	   if i==0
 		   silent! g/^-/d _
 	   else
