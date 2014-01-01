@@ -1,6 +1,6 @@
 "=============================================================================
-" FILE: variables.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
+" FILE: converter_remove_last_paren.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " Last Modified: 01 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -27,39 +27,22 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplete#variables#get_frequencies() "{{{
-  if !exists('s:filetype_frequencies')
-    let s:filetype_frequencies = {}
-  endif
-  let filetype = neocomplete#get_context_filetype()
-  if !has_key(s:filetype_frequencies, filetype)
-    let s:filetype_frequencies[filetype] = {}
-  endif
-
-  let frequencies = s:filetype_frequencies[filetype]
-
-  return frequencies
+function! neocomplete#filters#converter_remove_last_paren#define() "{{{
+  return s:converter
 endfunction"}}}
 
-function! neocomplete#variables#get_sources() "{{{
-  if !exists('s:sources')
-    let s:sources = {}
-  endif
-  return s:sources
-endfunction"}}}
+let s:converter = {
+      \ 'name' : 'converter_remove_last_paren',
+      \ 'description' : 'remove last parenthesis',
+      \}
 
-function! neocomplete#variables#get_source(name) "{{{
-  if !exists('s:sources')
-    let s:sources = {}
-  endif
-  return get(s:sources, a:name, {})
-endfunction"}}}
+function! s:converter.filter(context) "{{{
+  for candidate in a:context.candidates
+    let candidate.word =
+          \ substitute(candidate.word, '[\[<({]$', '', '')
+  endfor
 
-function! neocomplete#variables#get_filters() "{{{
-  if !exists('s:filters')
-    let s:filters = {}
-  endif
-  return s:filters
+  return a:context.candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo

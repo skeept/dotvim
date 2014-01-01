@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: commands.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Dec 2013.
+" Last Modified: 01 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,6 +33,13 @@ let s:edit_options = [
       \ '-vertical', '-horizontal', '-direction=', '-split',
       \]
 "}}}
+
+function! s:get_list() "{{{
+  if !exists('s:List')
+    let s:List = vital#of('neosnippet').import('Data.List')
+  endif
+  return s:List
+endfunction"}}}
 
 function! neosnippet#commands#_edit(args) "{{{
   if neosnippet#util#is_sudo()
@@ -99,18 +106,19 @@ function! neosnippet#commands#_make_cache(filetype) "{{{
     return
   endif
 
-  let snippets_dir = neosnippet#helpers#get_snippets_directory()
-  let snippet = {}
-  let snippets_files =
-        \   split(globpath(join(snippets_dir, ','),
-        \   filetype .  '.snip*'), '\n')
-        \ + split(globpath(join(snippets_dir, ','),
-        \   filetype .  '_*.snip*'), '\n')
-        \ + split(globpath(join(snippets_dir, ','),
-        \   filetype .  '/**/*.snip*'), '\n')
-  for snippets_file in reverse(snippets_files)
-    call neosnippet#parser#_parse(snippet, snippets_file)
+  let path = join(neosnippet#helpers#get_snippets_directory(), ',')
+  let snippets_files = []
+  for glob in s:get_list().flatten(
+        \ map(split(get(g:neosnippet#scope_aliases,
+        \   filetype, filetype), '\s*,\s*'), "
+        \   [v:val . '.snip*', v:val .  '/**/*.snip*']
+        \ + (v:val ==# filetype ? [v:val . '_*.snip*'] : [])"))
+    let snippets_files += split(globpath(path, glob), '\n')
   endfor
+
+  let snippet = {}
+  call map(reverse(snippets_files),
+        \ "neosnippet#parser#_parse(snippet, v:val)")
 
   let snippets = neosnippet#variables#snippets()
   let snippets[filetype] = snippet
