@@ -84,7 +84,7 @@ function! signature#SignInfo(...)                 " {{{2
     if l:temp_file != ""
       let l:match_file = l:temp_file
       let l:signs_dic[l:match_file] = {}
-    else
+    elseif l:match_file != ""
       " Get sign info
       let l:info_match = matchlist( i, '\vline\=(\d+)\s*id\=(\S+)\s*name\=(\S+)' )
       if !empty( l:info_match )
@@ -280,11 +280,12 @@ function! s:ToggleSign( sign, mode, lnum )        " {{{2
   " If Signature is not enabled, return
   if !b:sig_enabled | return | endif
 
+  " FIXME: Highly inefficient. Needs work
   " Place sign only if there are no signs from other plugins (eg. syntastic)
-  let l:present_signs = signature#SignInfo(1)
-  if l:SignatureDeferPlacement && has_key( l:present_signs, a:lnum ) && l:present_signs[a:lnum]['name'] !~# '^sig_Sign_'
-    return
-  endif
+  "let l:present_signs = signature#SignInfo(1)
+  "if l:SignatureDeferPlacement && has_key( l:present_signs, a:lnum ) && l:present_signs[a:lnum]['name'] !~# '^sig_Sign_'
+    "return
+  "endif
 
   let l:lnum = a:lnum
   let l:id   = ( winbufnr(0) + 1 ) * l:lnum
