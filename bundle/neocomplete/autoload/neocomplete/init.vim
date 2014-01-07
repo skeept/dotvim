@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Jan 2014.
+" Last Modified: 05 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -49,9 +49,7 @@ endfunction"}}}
 
 function! neocomplete#init#disable() "{{{
   if !neocomplete#is_enabled()
-    call neocomplete#print_warning(
-          \ 'neocomplete is disabled! This command is ignored.')
-    return
+    call neocomplete#init#enable()
   endif
 
   let s:is_enabled = 0
@@ -631,6 +629,7 @@ function! neocomplete#init#_current_neocomplete() "{{{
         \ 'completed_item' : {},
         \ 'sources' : [],
         \ 'sources_filetype' : '',
+        \ 'within_comment' : 0,
         \}
 endfunction"}}}
 
@@ -690,8 +689,10 @@ function! neocomplete#init#_source(source) "{{{
         \ 'disabled_filetypes' : {},
         \ 'hooks' : {},
         \ 'mark' : '',
-        \ 'matchers' : g:neocomplete#enable_fuzzy_completion ?
-        \        ['matcher_fuzzy'] : ['matcher_head'],
+        \ 'matchers' :
+        \        (g:neocomplete#enable_fuzzy_completion ?
+        \          ['matcher_fuzzy'] : ['matcher_head'])
+        \      + ['matcher_length'],
         \ 'sorters' : ['sorter_rank'],
         \ 'converters' : [
         \      'converter_remove_next_keyword',

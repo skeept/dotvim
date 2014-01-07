@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: complete.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Jan 2014.
+" Last Modified: 02 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -143,6 +143,10 @@ function! neocomplete#complete#_get_results(cur_text, ...) "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.start_time = reltime()
 
+  " Comment check.
+  let neocomplete.within_comment =
+        \ neocomplete#helper#get_syn_name(1) ==# 'Comment'
+
   let complete_sources = call(
         \ 'neocomplete#complete#_set_results_pos', [a:cur_text] + a:000)
   call neocomplete#complete#_set_results_words(complete_sources)
@@ -171,7 +175,6 @@ function! neocomplete#complete#_get_words(sources, complete_pos, complete_str) "
   " Append prefix.
   let candidates = []
   let len_words = 0
-  let sources_len = 0
   for source in sort(filter(copy(a:sources),
         \ '!empty(v:val.neocomplete__context.candidates)'),
         \  's:compare_source_rank')
@@ -236,7 +239,6 @@ EOF
 
     let candidates += words
     let len_words += len(words)
-    let sources_len += 1
 
     if g:neocomplete#max_list > 0
           \ && len_words > g:neocomplete#max_list
@@ -250,22 +252,6 @@ EOF
 
   if g:neocomplete#max_list > 0
     let candidates = candidates[: g:neocomplete#max_list]
-  endif
-
-  if sources_len == 1
-    " Remove default menu.
-    lua << EOF
-    do
-      local candidates = vim.eval('candidates')
-      local mark = vim.eval('mark')
-      local sources_len = vim.eval('sources_len')
-      for i = 0, #candidates-1 do
-        if candidates[i].menu == mark then
-          candidates[i].menu = nil
-        end
-      end
-    end
-EOF
   endif
 
   " Check dup and set icase.
