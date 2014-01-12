@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: resume.vim
+" FILE: matcher_project_files.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Jan 2014.
+" Last Modified: 11 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,42 +27,19 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#resume#define() "{{{
-  return s:source
+function! unite#filters#matcher_project_files#define() "{{{
+  return s:matcher
 endfunction"}}}
 
-let s:source = {
-      \ 'name' : 'resume',
-      \ 'description' : 'candidates from resume list',
-      \ 'default_kind' : 'command',
+let s:matcher = {
+      \ 'name' : 'matcher_project_files',
+      \ 'description' : 'project files matcher',
       \}
 
-function! s:source.gather_candidates(args, context) "{{{
-  let a:context.source__unite_list = map(filter(range(1, bufnr('$')), "
-        \ getbufvar(v:val, '&filetype') ==# 'unite'
-        \  && getbufvar(v:val, 'unite').sources[0].name != 'resume'"),
-        \ "getbufvar(v:val, 'unite')")
+function! s:matcher.filter(candidates, context) "{{{
+  let project = unite#util#path2project_directory(getcwd()) . '/'
 
-  let max_width = max(map(copy(a:context.source__unite_list),
-        \ 'len(v:val.buffer_name)'))
-  let candidates = map(copy(a:context.source__unite_list), "{
-        \ 'word' : v:val.buffer_name,
-        \ 'abbr' : printf('%-'.max_width.'s | '
-        \          . join(map(filter(copy(v:val.args),
-        \           'type(v:val) == type([])'),
-        \           'len(v:val[1]) == 0 ? v:val[0] :
-        \            v:val[0].'':''.join(v:val[1], '':'')')),
-        \            v:val.buffer_name),
-        \ 'action__command' : 'UniteResume ' . v:val.buffer_name,
-        \ 'source__time' : v:val.access_time,
-        \}")
-
-  return sort(candidates, 's:compare')
-endfunction"}}}
-
-" Misc.
-function! s:compare(candidate_a, candidate_b) "{{{
-  return a:candidate_b.source__time - a:candidate_a.source__time
+  return filter(a:candidates, "stridx(v:val.action__path, project) == 0")
 endfunction"}}}
 
 let &cpo = s:save_cpo
