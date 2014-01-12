@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Jan 2014.
+" Last Modified: 11 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -169,6 +169,7 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
 
   " Start complete.
   return "\<C-x>\<C-u>\<C-p>"
+        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
 endfunction"}}}
 
 function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete_str, candidates) "{{{
@@ -182,6 +183,7 @@ function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete
 
   " Start complete.
   return "\<C-x>\<C-u>\<C-p>"
+        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
 endfunction"}}}
 
 let &cpo = s:save_cpo

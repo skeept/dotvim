@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Dec 2013.
+" Last Modified: 11 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -563,15 +563,22 @@ function! s:switch() "{{{
 
   call vimfiler#set_current_vimfiler(vimfiler)
 
-  if winnr('$') == 2
-    wincmd w
+  if empty(unite#helper#get_choose_windows())
+    wincmd p
   else
-    let winnr = unite#helper#choose_window()
-
-    if winnr == 0 || winnr == winnr()
-      rightbelow vnew
+    if exists('g:loaded_choosewin')
+          \ || hasmapto('<Plug>(choosewin)', 'n')
+      " Use vim-choosewin.
+      call choosewin#start(unite#helper#get_choose_windows())
     else
-      execute winnr.'wincmd w'
+      " Use unite-builtin choose.
+      let winnr = unite#helper#choose_window()
+
+      if winnr == 0 || winnr == winnr()
+        rightbelow vnew
+      else
+        execute winnr.'wincmd w'
+      endif
     endif
   endif
 
@@ -891,8 +898,7 @@ function! s:expand_tree(is_recursive) "{{{
 
   setlocal nomodifiable
 
-  if !a:is_recursive && !empty(files) &&
-        \ !(len(files) == 1 && files[0].vimfiler__is_directory)
+  if !a:is_recursive && !is_fold
     " Move to next line.
     call cursor(line('.')+1, 0)
   endif
