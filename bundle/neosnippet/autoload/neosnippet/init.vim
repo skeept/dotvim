@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Dec 2013.
+" Last Modified: 11 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -45,14 +45,20 @@ function! s:initialize_script_variables() "{{{
   " Set runtime dir.
   let runtime_dir = neosnippet#variables#runtime_dir()
   let runtime_dir += split(globpath(&runtimepath, 'neosnippets'), '\n')
+  if empty(runtime_dir) && empty(g:neosnippet#disable_runtime_snippets)
+    call neosnippet#util#print_error(
+          \ 'neosnippet default snippets cannot be loaded.')
+    call neosnippet#util#print_error(
+          \ 'You must install neosnippet-snippets or disable runtime snippets.')
+  endif
   if g:neosnippet#enable_snipmate_compatibility
     " Load snipMate snippet directories.
     let runtime_dir += split(globpath(&runtimepath,
           \ 'snippets'), '\n')
+    if exists('g:snippets_dir')
+      let runtime_dir += neosnippet#util#option2list(g:snippets_dir)
+    endif
   endif
-  let runtime_dir += (exists('g:snippets_dir') ?
-        \ split(g:snippets_dir, '\s*,\s*')
-        \ : split(globpath(&runtimepath, 'snippets'), '\n'))
   call map(runtime_dir, 'substitute(v:val, "[\\\\/]$", "", "")')
 
   " Set snippets_dir.
