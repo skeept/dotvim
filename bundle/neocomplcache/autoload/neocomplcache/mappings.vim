@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 May 2013.
+" Last Modified: 15 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -49,17 +49,16 @@ endfunction
 "}}}
 function! neocomplcache#mappings#close_popup() "{{{
   let neocomplcache = neocomplcache#get_current_neocomplcache()
-  let neocomplcache.complete_str = ''
+  let neocomplcache.cur_keyword_str = ''
   let neocomplcache.skip_next_complete = 2
-  let neocomplcache.candidates = []
+  let neocomplcache.complete_words = []
 
   return pumvisible() ? "\<C-y>" : ''
 endfunction
 "}}}
 function! neocomplcache#mappings#cancel_popup() "{{{
-  let neocomplcache = neocomplcache#get_current_neocomplcache()
-  let neocomplcache.skip_next_complete = 1
-  call neocomplcache#helper#clear_result()
+  call neocomplcache#skip_next_complete()
+  call neocomplcache#_clear_result()
 
   return pumvisible() ? "\<C-e>" : ''
 endfunction
@@ -79,14 +78,14 @@ function! neocomplcache#mappings#undo_completion() "{{{
   let neocomplcache = neocomplcache#get_current_neocomplcache()
 
   " Get cursor word.
-  let [complete_pos, complete_str] =
+  let [cur_keyword_pos, cur_keyword_str] =
         \ neocomplcache#match_word(neocomplcache#get_cur_text(1))
-  let old_keyword_str = neocomplcache.complete_str
-  let neocomplcache.complete_str = complete_str
+  let old_keyword_str = neocomplcache.cur_keyword_str
+  let neocomplcache.cur_keyword_str = cur_keyword_str
 
   return (!pumvisible() ? '' :
-        \ complete_str ==# old_keyword_str ? "\<C-e>" : "\<C-y>")
-        \. repeat("\<BS>", len(complete_str)) . old_keyword_str
+        \ cur_keyword_str ==# old_keyword_str ? "\<C-e>" : "\<C-y>")
+        \. repeat("\<BS>", len(cur_keyword_str)) . old_keyword_str
 endfunction"}}}
 
 function! neocomplcache#mappings#complete_common_string() "{{{
@@ -98,12 +97,12 @@ function! neocomplcache#mappings#complete_common_string() "{{{
   let ignorecase_save = &ignorecase
 
   " Get cursor word.
-  let [complete_pos, complete_str] =
+  let [cur_keyword_pos, cur_keyword_str] =
         \ neocomplcache#match_word(neocomplcache#get_cur_text(1))
 
   if neocomplcache#is_text_mode()
     let &ignorecase = 1
-  elseif g:neocomplcache_enable_smart_case && complete_str =~ '\u'
+  elseif g:neocomplcache_enable_smart_case && cur_keyword_str =~ '\u'
     let &ignorecase = 0
   else
     let &ignorecase = g:neocomplcache_enable_ignore_case
@@ -114,20 +113,20 @@ function! neocomplcache#mappings#complete_common_string() "{{{
   try
     let g:neocomplcache_enable_fuzzy_completion = 0
     let neocomplcache = neocomplcache#get_current_neocomplcache()
-    let candidates = neocomplcache#keyword_filter(
-          \ copy(neocomplcache.candidates), complete_str)
+    let complete_words = neocomplcache#keyword_filter(
+          \ copy(neocomplcache.complete_words), cur_keyword_str)
   finally
     let g:neocomplcache_enable_fuzzy_completion = is_fuzzy
   endtry
 
-  if empty(candidates)
+  if empty(complete_words)
     let &ignorecase = ignorecase_save
 
     return ''
   endif
 
-  let common_str = candidates[0].word
-  for keyword in candidates[1:]
+  let common_str = complete_words[0].word
+  for keyword in complete_words[1:]
     while !neocomplcache#head_match(keyword.word, common_str)
       let common_str = common_str[: -2]
     endwhile
@@ -143,7 +142,7 @@ function! neocomplcache#mappings#complete_common_string() "{{{
   endif
 
   return (pumvisible() ? "\<C-e>" : '')
-        \ . repeat("\<BS>", len(complete_str)) . common_str
+        \ . repeat("\<BS>", len(cur_keyword_str)) . common_str
 endfunction"}}}
 
 " Manual complete wrapper.
@@ -155,13 +154,6 @@ function! neocomplcache#mappings#start_manual_complete(...) "{{{
   " Set context filetype.
   call neocomplcache#context_filetype#set()
 
-  let neocomplcache = neocomplcache#get_current_neocomplcache()
-
-  let sources = get(a:000, 0,
-        \ keys(neocomplcache#available_sources()))
-  let neocomplcache.manual_sources = neocomplcache#helper#get_sources_list(
-        \ neocomplcache#util#convert2list(sources))
-
   " Set function.
   let &l:completefunc = 'neocomplcache#complete#sources_manual_complete'
 
@@ -169,11 +161,11 @@ function! neocomplcache#mappings#start_manual_complete(...) "{{{
   return "\<C-x>\<C-u>\<C-p>"
 endfunction"}}}
 
-function! neocomplcache#mappings#start_manual_complete_list(complete_pos, complete_str, candidates) "{{{
+function! neocomplcache#mappings#start_manual_complete_list(cur_keyword_pos, cur_keyword_str, complete_words) "{{{
   let neocomplcache = neocomplcache#get_current_neocomplcache()
-  let [neocomplcache.complete_pos,
-        \ neocomplcache.complete_str, neocomplcache.candidates] =
-        \ [a:complete_pos, a:complete_str, a:candidates]
+  let [neocomplcache.cur_keyword_pos,
+        \ neocomplcache.cur_keyword_str, neocomplcache.complete_words] =
+        \ [a:cur_keyword_pos, a:cur_keyword_str, a:complete_words]
 
   " Set function.
   let &l:completefunc = 'neocomplcache#complete#auto_complete'

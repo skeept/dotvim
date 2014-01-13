@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: sorter_rank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 08 Aug 2013.
+" Last Modified: 02 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,7 +37,7 @@ let s:sorter = {
       \}
 
 function! s:sorter.filter(candidates, context) "{{{
-  if a:context.input == '' || !has('float') || empty(a:candidates)
+  if a:context.input == '' || !has('float')
     return a:candidates
   endif
 
@@ -46,112 +46,34 @@ function! s:sorter.filter(candidates, context) "{{{
     let candidate.filter__rank = 0
   endfor
 
-  " let is_path = has_key(a:candidates[0], 'action__path')
-
   for input in split(a:context.input, '\\\@<! ')
-    let input = substitute(substitute(input, '\\ ', ' ', 'g'),
-          \ '\*', '', 'g')
+    let input = substitute(substitute(input, '\\ ', ' ', 'g'), '\*', '', 'g')
 
     " Calc rank.
-    let l1 = len(input)
-
-    " for candidate in a:candidates
-    "   let word = is_path ? fnamemodify(candidate.word, ':t') : candidate.word
-    "   let index = stridx(word, input[0])
-    "   let candidate.filter__rank +=
-    "         \ len(word) + (index > 0 ? index * 2 : len(word))
-    " endfor
-
-    if unite#util#has_lua()
-      for candidate in a:candidates
-        let candidate.filter__rank +=
-              \ s:calc_word_distance_lua(input, candidate.word, l1)
-      endfor
-    else
-      for candidate in a:candidates
-        let candidate.filter__rank +=
-              \ s:calc_word_distance(input, candidate.word, l1)
-      endfor
-    endif
-  endfor
-
-  return unite#util#has_lua() ?
-        \ s:sort_lua(a:candidates) :
-        \ unite#util#sort_by(a:candidates, 'v:val.filter__rank')
-endfunction"}}}
-
-function! s:calc_word_distance(str1, str2, l1) "{{{
-  return 
-
-  let l2 = len(a:str2)
-  let p1 = range(l2+1)
-  let p2 = []
-
-  for i in range(l2+1)
-    call add(p2, 0)
-  endfor
-
-  for i in range(a:l1)
-    let p2[0] = p1[0] + 1
-    for j in range(l2)
-      let p2[j+1] = min([p1[j+1] + 1, p2[j]+1])
+    for candidate in a:candidates
+      let candidate.filter__rank +=
+            \ s:calc_rank_sequential_match(candidate.word, input)
     endfor
-    let [p1, p2] = [p2, p1]
+
+    for boundary_input in split(input, '\W')
+      for candidate in a:candidates
+        let candidate.filter__rank +=
+              \ s:calc_rank_sequential_match(candidate.word, boundary_input)
+      endfor
+    endfor
   endfor
 
-  " echomsg string([a:str1, a:str2, p1[l2]])
-  return p1[l2]
+  return reverse(unite#util#sort_by(a:candidates, 'v:val.filter__rank'))
 endfunction"}}}
 
-function! s:calc_word_distance_lua(str1, str2, l1) "{{{
-  lua << EOF
-  local str1 = vim.eval('a:str1')
-  local str2 = vim.eval('a:str2')
-  local l1 = vim.eval('a:l1')
-  local l2 = string.len(str2)
-  local p1 = {}
-  local p2 = {}
+function! s:calc_rank_sequential_match(word, input) "{{{
+  let pos = strridx(a:word, a:input)
+  if pos < 0
+    return 0
+  endif
+  let len = len(a:word)
 
-  local cnt = 0
-  for i = 0, l2+1 do
-    p1[i] = cnt
-    p2[i] = 0
-
-    cnt = cnt + 1
-  end
-
-  for i = 0, l1 do
-    p2[0] = p1[0] + 1
-    for j = 0, l2 do
-      p2[j+1] = math.min(p1[j+1] + 1, p2[j]+1)
-    end
-  end
-
-  vim.command('let distance = ' .. p1[l2])
-EOF
-
-  " echomsg string([a:str1, a:str2, distance])
-  return distance
-endfunction"}}}
-
-function! s:sort_lua(candidates) "{{{
-  lua << EOF
-do
-  local candidates = vim.eval('a:candidates')
-  local t = {}
-  for i = 1, #candidates do
-    t[i] = candidates[i-1]
-  end
-  table.sort(t, function(a, b)
-        return a.filter__rank < b.filter__rank
-      end)
-  for i = 0, #candidates-1 do
-    candidates[i] = t[i+1]
-  end
-end
-EOF
-  " echomsg string(map(copy(a:candidates), '[v:val.word, v:val.filter__rank]'))
-  return a:candidates
+  return 80.0 * (pos + len(a:input)) / len
 endfunction"}}}
 
 let &cpo = s:save_cpo

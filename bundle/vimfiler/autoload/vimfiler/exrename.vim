@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: exrename.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Oct 2013.
+" Last Modified: 20 Sep 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -48,7 +48,7 @@ function! vimfiler#exrename#create_buffer(files) "{{{
 
   nnoremap <buffer><silent> q    :<C-u>call <SID>exit()<CR>
   augroup vimfiler-exrename
-    autocmd! * <buffer>
+    autocmd!
     autocmd BufWriteCmd <buffer> call s:do_rename()
     autocmd CursorMoved,CursorMovedI <buffer> call s:check_lines()
   augroup END
@@ -56,7 +56,7 @@ function! vimfiler#exrename#create_buffer(files) "{{{
   setfiletype exrename
 
   " Clean up the screen.
-  silent % delete _
+  % delete _
 
   silent! syntax clear exrenameOriginal
 
@@ -95,7 +95,7 @@ function! s:exit() "{{{
   else
     call s:custom_alternate_buffer()
   endif
-  silent execute 'bdelete!' exrename_buf
+  execute 'bdelete!' exrename_buf
 
   call vimfiler#redraw_all_vimfiler()
 endfunction"}}}
@@ -107,14 +107,8 @@ function! s:do_rename() "{{{
 
   " Rename files.
   let linenr = 1
-  let max = line('$')
-  while linenr <= max
+  while linenr <= line('$')
     let filename = b:exrename.current_filenames[linenr - 1]
-
-    redraw
-    echo printf('(%'.len(max).'d/%d): %s -> %s',
-          \ linenr, max, filename, getline(linenr))
-
     if filename !=# getline(linenr)
       let file = b:exrename.current_files[linenr - 1]
       let new_file = vimfiler#util#expand(getline(linenr))
@@ -130,9 +124,6 @@ function! s:do_rename() "{{{
 
     let linenr += 1
   endwhile
-
-  redraw
-  echo 'Rename done!'
 
   setlocal nomodified
   call s:exit()

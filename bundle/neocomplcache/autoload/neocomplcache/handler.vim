@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Oct 2013.
+" Last Modified: 14 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,6 +31,18 @@ function! neocomplcache#handler#_on_moved_i() "{{{
   " Get cursor word.
   let cur_text = neocomplcache#get_cur_text(1)
 
+  " Make cache.
+  if cur_text =~ '^\s*$\|\s\+$'
+    if neocomplcache#is_enabled_source('buffer_complete')
+      " Caching current cache line.
+      call neocomplcache#sources#buffer_complete#caching_current_line()
+    endif
+    if neocomplcache#is_enabled_source('member_complete')
+      " Caching current cache line.
+      call neocomplcache#sources#member_complete#caching_current_line()
+    endif
+  endif
+
   call s:close_preview_window()
 endfunction"}}}
 function! neocomplcache#handler#_on_insert_enter() "{{{
@@ -50,16 +62,20 @@ function! neocomplcache#handler#_on_write_post() "{{{
   let neocomplcache = neocomplcache#get_current_neocomplcache()
 
   " Restore foldinfo.
-  for winnr in filter(range(1, winnr('$')),
-        \ "!empty(getwinvar(v:val, 'neocomplcache_foldinfo'))")
-    let neocomplcache_foldinfo =
-          \ getwinvar(winnr, 'neocomplcache_foldinfo')
-    call setwinvar(winnr, '&foldmethod',
-          \ neocomplcache_foldinfo.foldmethod)
-    call setwinvar(winnr, '&foldexpr',
-          \ neocomplcache_foldinfo.foldexpr)
-    call setwinvar(winnr,
-          \ 'neocomplcache_foldinfo', {})
+  " Note: settabwinvar() in insert mode has bug before 7.3.768.
+  for tabnr in (v:version > 703 || (v:version == 703 && has('patch768')) ?
+        \ range(1, tabpagenr('$')) : [tabpagenr()])
+    for winnr in filter(range(1, tabpagewinnr(tabnr, '$')),
+          \ "!empty(gettabwinvar(tabnr, v:val, 'neocomplcache_foldinfo'))")
+      let neocomplcache_foldinfo =
+            \ gettabwinvar(tabnr, winnr, 'neocomplcache_foldinfo')
+      call settabwinvar(tabnr, winnr, '&foldmethod',
+            \ neocomplcache_foldinfo.foldmethod)
+      call settabwinvar(tabnr, winnr, '&foldexpr',
+            \ neocomplcache_foldinfo.foldexpr)
+      call settabwinvar(tabnr, winnr,
+            \ 'neocomplcache_foldinfo', {})
+    endfor
   endfor
 endfunction"}}}
 function! neocomplcache#handler#_on_complete_done() "{{{
@@ -70,7 +86,7 @@ function! neocomplcache#handler#_on_complete_done() "{{{
     return
   endif
 
-  let frequencies = neocomplcache#variables#get_frequencies()
+  let frequencies = neocomplcache#_get_frequencies()
   if !has_key(frequencies, candidate)
     let frequencies[candidate] = 20
   else
@@ -110,23 +126,11 @@ function! neocomplcache#handler#_do_auto_complete(event) "{{{
 
   " Prevent infinity loop.
   if s:is_skip_auto_complete(cur_text)
-    " Make cache.
-    if cur_text =~ '^\s*$\|\s\+$'
-      if neocomplcache#is_enabled_source('buffer_complete')
-        " Caching current cache line.
-        call neocomplcache#sources#buffer_complete#caching_current_line()
-      endif
-      if neocomplcache#is_enabled_source('member_complete')
-        " Caching current cache line.
-        call neocomplcache#sources#member_complete#caching_current_line()
-      endif
-    endif
-
     if g:neocomplcache_enable_debug
       echomsg 'Skipped.'
     endif
 
-    call neocomplcache#helper#clear_result()
+    call neocomplcache#_clear_result()
     return
   endif
 
@@ -171,7 +175,7 @@ function! neocomplcache#handler#_do_auto_complete(event) "{{{
 
       " Skip completion.
       let &l:completefunc = 'neocomplcache#complete#manual_complete'
-      call neocomplcache#helper#clear_result()
+      call neocomplcache#_clear_result()
       return
     endif
   endif
@@ -191,21 +195,28 @@ endfunction"}}}
 
 function! s:save_foldinfo() "{{{
   " Save foldinfo.
-  let winnrs = filter(range(1, winnr('$')),
-        \ "winbufnr(v:val) == bufnr('%')")
+  " Note: settabwinvar() in insert mode has bug before 7.3.768.
+  for tabnr in filter((v:version > 703 || (v:version == 703 && has('patch768')) ?
+        \ range(1, tabpagenr('$')) : [tabpagenr()]),
+        \ "index(tabpagebuflist(v:val), bufnr('%')) >= 0")
+    let winnrs = range(1, tabpagewinnr(tabnr, '$'))
+    if tabnr == tabpagenr()
+      call filter(winnrs, "winbufnr(v:val) == bufnr('%')")
+    endif
 
-  " Note: for foldmethod=expr or syntax.
-  call filter(winnrs, "
-        \  (getwinvar(v:val, '&foldmethod') ==# 'expr' ||
-        \   getwinvar(v:val, '&foldmethod') ==# 'syntax') &&
-        \  getwinvar(v:val, '&modifiable')")
-  for winnr in winnrs
-    call setwinvar(winnr, 'neocomplcache_foldinfo', {
-          \ 'foldmethod' : getwinvar(winnr, '&foldmethod'),
-          \ 'foldexpr'   : getwinvar(winnr, '&foldexpr')
-          \ })
-    call setwinvar(winnr, '&foldmethod', 'manual')
-    call setwinvar(winnr, '&foldexpr', 0)
+    " Note: for foldmethod=expr or syntax.
+    call filter(winnrs, "
+          \  (gettabwinvar(tabnr, v:val, '&foldmethod') ==# 'expr' ||
+          \   gettabwinvar(tabnr, v:val, '&foldmethod') ==# 'syntax') &&
+          \  gettabwinvar(tabnr, v:val, '&modifiable')")
+    for winnr in winnrs
+      call settabwinvar(tabnr, winnr, 'neocomplcache_foldinfo', {
+            \ 'foldmethod' : gettabwinvar(tabnr, winnr, '&foldmethod'),
+            \ 'foldexpr'   : gettabwinvar(tabnr, winnr, '&foldexpr')
+            \ })
+      call settabwinvar(tabnr, winnr, '&foldmethod', 'manual')
+      call settabwinvar(tabnr, winnr, '&foldexpr', 0)
+    endfor
   endfor
 endfunction"}}}
 function! s:check_in_do_auto_complete() "{{{
@@ -213,23 +224,18 @@ function! s:check_in_do_auto_complete() "{{{
     return 1
   endif
 
-  if &l:completefunc == ''
-    let &l:completefunc = 'neocomplcache#complete#manual_complete'
-  endif
-
   " Detect completefunc.
-  if &l:completefunc !~# '^neocomplcache#'
-    if &l:buftype =~ 'nofile'
-      return 1
-    endif
-
+  if &l:completefunc != 'neocomplcache#complete#manual_complete'
+        \ && &l:completefunc != 'neocomplcache#complete#auto_complete'
     if g:neocomplcache_force_overwrite_completefunc
+          \ || &l:completefunc == ''
+          \ || &l:completefunc ==# 'neocomplcache#complete#sources_manual_complete'
       " Set completefunc.
       let &l:completefunc = 'neocomplcache#complete#manual_complete'
     else
       " Warning.
       redir => output
-      99verbose setl completefunc?
+      99verbose setl completefunc
       redir END
       call neocomplcache#print_error(output)
       call neocomplcache#print_error(
@@ -287,8 +293,7 @@ function! s:is_skip_auto_complete(cur_text) "{{{
 endfunction"}}}
 function! s:close_preview_window() "{{{
   if g:neocomplcache_enable_auto_close_preview &&
-        \ bufname('%') !=# '[Command Line]' &&
-        \ winnr('$') != 1 && !&l:previewwindow
+        \ bufname('%') !=# '[Command Line]' && winnr('$') != 1
     " Close preview window.
     pclose!
   endif

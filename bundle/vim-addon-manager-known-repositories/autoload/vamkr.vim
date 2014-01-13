@@ -17,11 +17,9 @@ function! vamkr#LoadDBFile(file) abort
         " and gets the job done. Little bit uncommon :)
         "
         " limitations: You can’t use line continuation here
-        execute "function! s:Vim()\n".join(readfile(file, 'b'), "\n")."\nreturn r\nendfunction"
+        execute "function s:Vim()\n".join(readfile(file, 'b'), "\n")."\nreturn r\nendfunction"
         try
             let r=s:Vim()
-        catch /.*/
-            throw "error: ".v:exception.' real error location ('.a:file.'): '.v:throwpoint
         endtry
         delfunction s:Vim
         return r
@@ -29,7 +27,7 @@ function! vamkr#LoadDBFile(file) abort
         try
             return eval(join(readfile(file, 'b'), ''))
         catch /.*/
-            throw 'Failed to read json file “'.file.'”: '.v:exception.' '.v:throwpoint
+            throw 'Failed to read json file “'.file.'”: '.v:exception
         endtry
     else
         throw 'Unknown file type: '.ext
@@ -54,8 +52,6 @@ endfunction
 
 function! vamkr#GetSCMSources(snr_to_name, www_vim_org)
     let [scm, scmnr]=vamkr#LoadDBFile('scmsources.vim')
-    let scmnr_generated=vamkr#LoadDBFile('scm_generated.json')
-    call extend(scmnr, scmnr_generated, 'keep')
     let scmvoconflicts=s:FilterConflicts(scm, a:www_vim_org, '!')
     if !empty(scmvoconflicts)
         call s:Log('The following scm keys are the same as vim.org ones: '.join(scmvoconflicts, ', ').".\n".
@@ -83,31 +79,20 @@ function! vamkr#GetSCMSources(snr_to_name, www_vim_org)
 endfunction
 
 function! vamkr#PatchSources(sources, snr_to_name)
-    let [patch_repo, addon_info, addon_info_deps, renamings]=vamkr#LoadDBFile('patchinfo.vim')
-    " short documentation see patchinfo.vim
-
-    for [snr, deps] in items(addon_info_deps)
-        if !has_key(addon_info, snr)
-            let addon_info[snr]={}
+    let [add_by_snr, mai_snr, mai_snr_deps]=vamkr#LoadDBFile('patchinfo.vim')
+    for [snr, deps] in items(mai_snr_deps)
+        if !has_key(mai_snr, snr)
+            let mai_snr[snr]={}
         endif
-        let ms = addon_info[snr]
-        let ms.dependencies = get(addon_info, 'dependencies', {})
+        let ms = mai_snr[snr]
+        let ms.dependencies = get(mai_snr, 'dependencies', {})
         call map(deps, 'extend( ms.dependencies, {(type(v:val) == type(0) ? a:snr_to_name[v:val] : v:val) : {}})')
     endfor
-    call filter(addon_info, 'has_key(a:snr_to_name, v:key)')
-    call map(addon_info, 'extend(patch_repo, {v:key : extend(get(patch_repo, v:key, {}), {"addon-info": v:val})})')
+    call filter(mai_snr, 'has_key(a:snr_to_name, v:key)')
+    call map(mai_snr, 'extend(add_by_snr, {v:key : extend(get(add_by_snr, v:key, {}), {"addon-info": v:val})})')
     let add_by_name={}
-    call map(patch_repo, 'extend(add_by_name, {a:snr_to_name[v:key] : v:val})')
+    call map(add_by_snr, 'extend(add_by_name, {a:snr_to_name[v:key] : v:val})')
     call map(filter(add_by_name, 'has_key(a:sources, v:key)'), 'extend(a:sources[v:key], v:val)')
-
-    for [from, to_] in items(renamings)
-      if has_key(a:sources, to_) | throw "cannot rename ".from.' to '.to_ | endif
-      let a:sources[to_] = a:sources[from]
-      call remove(a:sources, from)
-      let a:sources[to_].old_title = from
-      unlet from to_
-    endfor
-
     return a:sources
 endfunction
 

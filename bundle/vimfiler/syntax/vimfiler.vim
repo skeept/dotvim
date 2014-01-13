@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax/vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Jul 2013.
+" Last Modified: 16 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -30,6 +30,18 @@ elseif exists('b:current_syntax')
   finish
 endif
 
+syntax match   vimfilerDirectory         '^..$'
+
+syntax match   vimfilerPrompt            '^\[in\]: .*$'
+      \ contains=vimfilerSpecial,vimfilerCurrentDirectory
+syntax match   vimfilerPromptUnSafe        '^! \[in\]: .*$'
+      \ contains=vimfilerSpecial,vimfilerSpecialUnSafe,vimfilerCurrentDirectory
+syntax match   vimfilerSpecialUnSafe       '^! ' contained
+syntax match   vimfilerSpecial           '\[in\]:' contained
+syntax match   vimfilerCurrentDirectory  '\s\zs.*$' contained contains=vimfilerMask
+syntax match   vimfilerMask  '\[.*\]$' contained
+syntax match   vimfilerFileLine          '\[.*\]$' contained
+
 " Initialize icon patterns."{{{
 let s:leaf_icon = vimfiler#util#escape_pattern(
       \ g:vimfiler_tree_leaf_icon)
@@ -43,6 +55,10 @@ let s:file_icon = vimfiler#util#escape_pattern(
       \ g:vimfiler_file_icon)
 let s:marked_file_icon = vimfiler#util#escape_pattern(
       \ g:vimfiler_marked_file_icon)
+
+execute 'syntax match   vimfilerMarkedFile'
+      \ '''^\s*\%('  . s:leaf_icon .'\)*'
+      \ . s:marked_file_icon . ' .*$'''
 
 execute 'syntax match   vimfilerNormalFile'
       \ '''^\s*\%('.s:leaf_icon.'\)\?'.
@@ -58,10 +74,6 @@ execute 'syntax match   vimfilerROFile'
       \ '''^\s*\%('.s:leaf_icon.'\)\?'.
       \ s:ro_file_icon.'.*'' contains=vimfilerNonMark oneline'
 
-execute 'syntax match   vimfilerMarkedFile'
-      \ '''^\s*\%('  . s:leaf_icon .'\)\?'
-      \ . s:marked_file_icon . ' .*$'''
-
 execute 'syntax match   vimfilerNonMark'
       \ '''^\s*\%('.s:leaf_icon.'\)\?\%('.s:opened_icon.'\|'
       \ .s:closed_icon.'\|'.s:ro_file_icon.'\|'.s:file_icon.'\)'' contained'
@@ -73,17 +85,11 @@ unlet s:file_icon
 unlet s:marked_file_icon
 "}}}
 
-syntax match   vimfilerStatus            '^\%1l\[in\]: \%(\[unsafe\]\)\?'
-      \ nextgroup=vimfilerCurrentDirectory
-syntax match   vimfilerCurrentDirectory  '.*$'
-      \ contained contains=vimfilerMask
-syntax match   vimfilerMask  '\[.*\]$' contained
-
-syntax match   vimfilerDirectory         '^..$'
-
-highlight def link vimfilerStatus Special
 highlight def link vimfilerCurrentDirectory Identifier
 highlight def link vimfilerMask Statement
+
+highlight def link vimfilerSpecial Special
+highlight def link vimfilerSpecialUnSafe Statement
 
 highlight def link vimfilerNonMark Special
 highlight def link vimfilerMarkedFile Type
@@ -94,15 +100,5 @@ highlight def link vimfilerClosedFile Preproc
 highlight def link vimfilerROFile Comment
 
 let b:current_syntax = 'vimfiler'
-
-if !empty(b:vimfiler.syntaxes)
-  " Redraw syntax.
-  for column in filter(
-        \ copy(b:vimfiler.columns), "get(v:val, 'syntax', '') != ''")
-    call column.define_syntax(b:vimfiler.context)
-  endfor
-
-  call vimfiler#view#_redraw_screen()
-endif
 
 " vim: foldmethod=marker

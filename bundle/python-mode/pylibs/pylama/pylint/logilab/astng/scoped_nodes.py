@@ -1,5 +1,7 @@
-# copyright 2003-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2003-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
+# copyright 2003-2010 Sylvain Thenault, all rights reserved.
+# contact mailto:thenault@gmail.com
 #
 # This file is part of logilab-astng.
 #
@@ -29,14 +31,15 @@ from itertools import chain
 from ..common.compat import builtins
 from ..common.decorators import cached
 
-from .exceptions import NotFoundError, \
+from . import BUILTINS_MODULE
+from .exceptions import NotFoundError, NoDefault, \
      ASTNGBuildingException, InferenceError
 from .node_classes import Const, DelName, DelAttr, \
-     Dict, From, List, Pass, Raise, Return, Tuple, Yield, \
-     LookupMixIn, const_factory as cf, unpack_infer
+     Dict, From, List, Name, Pass, Raise, Return, Tuple, Yield, \
+     are_exclusive, LookupMixIn, const_factory as cf, unpack_infer
 from .bases import NodeNG, InferenceContext, Instance,\
      YES, Generator, UnboundMethod, BoundMethod, _infer_stmts, copy_context, \
-     BUILTINS
+     BUILTINS_NAME
 from .mixins import FilterStmtsMixin
 from .bases import Statement
 from .manager import ASTNGManager
@@ -265,7 +268,7 @@ class Module(LocalsDictNodeNG):
         return self._scope_lookup(node, name, offset)
 
     def pytype(self):
-        return '%s.module' % BUILTINS
+        return '%s.module' % BUILTINS_MODULE
 
     def display_type(self):
         return 'Module'
@@ -478,8 +481,8 @@ class Lambda(LocalsDictNodeNG, FilterStmtsMixin):
 
     def pytype(self):
         if 'method' in self.type:
-            return '%s.instancemethod' % BUILTINS
-        return '%s.function' % BUILTINS
+            return '%s.instancemethod' % BUILTINS_MODULE
+        return '%s.function' % BUILTINS_MODULE
 
     def display_type(self):
         if 'method' in self.type:
@@ -605,14 +608,14 @@ class Function(Statement, Lambda):
         """return true if this is a generator function"""
         # XXX should be flagged, not computed
         try:
-            return self.nodes_of_class(Yield, skip_klass=(Function, Lambda)).next()
+            return self.nodes_of_class(Yield, skip_klass=Function).next()
         except StopIteration:
             return False
 
     def infer_call_result(self, caller, context=None):
         """infer what a function is returning when called"""
         if self.is_generator():
-            yield Generator()
+            yield Generator(self)
             return
         returns = self.nodes_of_class(Return, skip_klass=Function)
         for returnnode in returns:
@@ -737,8 +740,8 @@ class Class(Statement, LocalsDictNodeNG, FilterStmtsMixin):
 
     def pytype(self):
         if self.newstyle:
-            return '%s.type' % BUILTINS
-        return '%s.classobj' % BUILTINS
+            return '%s.type' % BUILTINS_MODULE
+        return '%s.classobj' % BUILTINS_MODULE
 
     def display_type(self):
         return 'Class'
@@ -869,14 +872,15 @@ class Class(Statement, LocalsDictNodeNG, FilterStmtsMixin):
         if name in self.special_attributes:
             if name == '__module__':
                 return [cf(self.root().qname())] + values
-            # FIXME: do we really need the actual list of ancestors?
-            # returning [Tuple()] + values don't break any test
+            # FIXME : what is expected by passing the list of ancestors to cf:
+            # you can just do [cf(tuple())] + values without breaking any test
             # this is ticket http://www.logilab.org/ticket/52785
+            if name == '__bases__':
+                return [cf(tuple(self.ancestors(recurs=False, context=context)))] + values
             # XXX need proper meta class handling + MRO implementation
-            if name == '__bases__' or (name == '__mro__' and self.newstyle):
-                node = Tuple()
-                node.items = self.ancestors(recurs=True, context=context)
-                return [node] + values
+            if name == '__mro__' and self.newstyle:
+                # XXX mro is read-only but that's not our job to detect that
+                return [cf(tuple(self.ancestors(recurs=True, context=context)))] + values
             return std_special_attributes(self, name)
         # don't modify the list in self.locals!
         values = list(values)
@@ -928,7 +932,7 @@ class Class(Statement, LocalsDictNodeNG, FilterStmtsMixin):
             #if self.newstyle: XXX cause an infinite recursion error
             try:
                 getattribute = self.getattr('__getattribute__', context)[0]
-                if getattribute.root().name != BUILTINS:
+                if getattribute.root().name != BUILTINS_NAME:
                     # class has a custom __getattribute__ defined
                     return True
             except NotFoundError:

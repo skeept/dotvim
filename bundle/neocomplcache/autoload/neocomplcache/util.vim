@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: util.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Sep 2013.
+" Last Modified: 14 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,7 +29,6 @@ set cpo&vim
 
 let s:V = vital#of('neocomplcache')
 let s:List = vital#of('neocomplcache').import('Data.List')
-let s:String = vital#of('neocomplcache').import('Data.String')
 
 function! neocomplcache#util#truncate_smart(...) "{{{
   return call(s:V.truncate_smart, a:000)
@@ -40,7 +39,7 @@ function! neocomplcache#util#truncate(...) "{{{
 endfunction"}}}
 
 function! neocomplcache#util#strchars(...) "{{{
-  return call(s:String.strchars, a:000)
+  return call(s:V.strchars, a:000)
 endfunction"}}}
 function! neocomplcache#util#wcswidth(...) "{{{
   return call(s:V.wcswidth, a:000)
@@ -56,7 +55,7 @@ function! neocomplcache#util#substitute_path_separator(...) "{{{
   return call(s:V.substitute_path_separator, a:000)
 endfunction"}}}
 function! neocomplcache#util#mb_strlen(...) "{{{
-  return call(s:String.strchars, a:000)
+  return call(s:V.strchars, a:000)
 endfunction"}}}
 function! neocomplcache#util#uniq(list) "{{{
   let dict = {}
@@ -96,16 +95,6 @@ function! neocomplcache#util#iconv(...) "{{{
 endfunction"}}}
 function! neocomplcache#util#uniq(...) "{{{
   return call(s:List.uniq, a:000)
-endfunction"}}}
-function! neocomplcache#util#sort_by(...) "{{{
-  return call(s:List.sort_by, a:000)
-endfunction"}}}
-
-" Sudo check.
-function! neocomplcache#util#is_sudo() "{{{
-  return $SUDO_USER != '' && $USER !=# $SUDO_USER
-      \ && $HOME !=# expand('~'.$USER)
-      \ && $HOME ==# expand('~'.$SUDO_USER)
 endfunction"}}}
 
 function! neocomplcache#util#glob(pattern, ...) "{{{
@@ -223,10 +212,6 @@ function! neocomplcache#util#dup_filter(list) "{{{
   endfor
 
   return values(dict)
-endfunction"}}}
-
-function! neocomplcache#util#convert2list(expr) "{{{
-  return type(a:expr) ==# type([]) ? a:expr : [a:expr]
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: history_yank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Jun 2013.
+" Last Modified: 24 Jan 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -44,20 +44,14 @@ function! unite#sources#history_yank#define() "{{{
 endfunction"}}}
 function! unite#sources#history_yank#_append() "{{{
   if (!empty(s:yank_histories) && s:yank_histories[0][0] ==# @")
-    return
-  endif
-
-  let len_history = len(@")
-  " Ignore too long yank.
-  if len_history < 2 || len_history > 100000
+        \ || len(@") < 2
     return
   endif
 
   call s:load()
 
   " Append @" value.
-  call unite#util#uniq(insert(s:yank_histories,
-        \ [getreg('"'), getregtype('"')]))
+  call insert(s:yank_histories, [getreg('"'), getregtype('"')])
 
   if g:unite_source_history_yank_limit < len(s:yank_histories)
     let s:yank_histories =
@@ -75,8 +69,6 @@ let s:source = {
       \}
 
 function! s:source.gather_candidates(args, context) "{{{
-  call s:load()
-
   let max_width = winwidth(0) - 5
   return map(copy(s:yank_histories), "{
         \ 'word' : v:val[0],
@@ -96,8 +88,6 @@ function! s:source.action_table.delete.func(candidates) "{{{
   for candidate in a:candidates
     call filter(s:yank_histories, 'v:val[0] !=# candidate.word')
   endfor
-
-  call s:save()
 endfunction"}}}
 "}}}
 

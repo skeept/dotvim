@@ -14,19 +14,19 @@ fun! pymode#lint#Check() "{{{
 
     let g:pymode_lint_buffer = bufnr('%')
 
-    Python from pymode import lint
-    Python lint.check_file()
+    py from pymode import lint
+    py lint.check_file()
 
 endfunction " }}}
 
 
-fun! pymode#lint#Parse(bnum)
+fun! pymode#lint#Parse()
     " DESC: Parse result of code checking.
     "
     call setqflist(g:qf_list, 'r')
 
     if g:pymode_lint_signs
-        call pymode#PlaceSigns(a:bnum)
+        call pymode#PlaceSigns()
     endif
 
     if g:pymode_lint_cwindow
@@ -100,8 +100,8 @@ fun! pymode#lint#Auto() "{{{
             return 0
         endtry
     endif
-    Python from pymode import auto
-    Python auto.fix_current_file()
+    py from pymode import auto
+    py auto.fix_current_file()
     cclose
     edit
     call pymode#WideMessage("AutoPep8 done.")

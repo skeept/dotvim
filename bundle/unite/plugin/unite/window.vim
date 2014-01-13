@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: window.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 09 Jul 2013.
+" Last Modified: 20 Jan 2012.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -25,9 +25,7 @@
 "=============================================================================
 
 if exists('g:loaded_unite_source_window')
-      \ || ($SUDO_USER != '' && $USER !=# $SUDO_USER
-      \     && $HOME !=# expand('~'.$USER)
-      \     && $HOME ==# expand('~'.$SUDO_USER))
+      \ || $SUDO_USER != ''
   finish
 endif
 
@@ -36,23 +34,10 @@ set cpo&vim
 
 augroup plugin-unite-source-window
   autocmd!
-  autocmd WinEnter,BufWinEnter * call s:append()
+  autocmd WinEnter,BufWinEnter * call unite#sources#window#_append()
 augroup END
 
 let g:loaded_unite_source_window = 1
-
-function! s:append() "{{{
-  if &filetype == 'unite'
-    " Ignore unite window.
-    return
-  endif
-
-  " Save unite window information.
-  let w:unite_window = {
-        \ 'time' : localtime(),
-        \ 'cwd' : getcwd(),
-        \}
-endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

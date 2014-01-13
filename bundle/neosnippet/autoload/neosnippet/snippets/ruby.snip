@@ -111,26 +111,10 @@ options word
 
 snippet lambda
 options word
-    -> (${1:#:args}) { ${2} }
-
-snippet lambda-keyword
-options word
     lambda {|${1:#:args}| ${2} }
 
 snippet     main
 options     head
     if __FILE__ == \$0
-        ${0:TARGET}
+        ${1:TARGET}
     end
-
-# This idiom is only for legacy ruby such as 1.9.3
-snippet filedir-legacy-compatibility
-alias __dir__
-abbr File.dirname(...)
-    File.dirname(File.expand_path(__FILE__))
-
-snippet     glob
-options     head
-  Dir.glob(${1:'**/*'}) do |fname|
-    ${0:TARGET}
-  end

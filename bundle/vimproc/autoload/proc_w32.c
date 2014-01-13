@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
- * Copyright (c) 2009
+ * Copyright (c) 2009       
  * Kazuo Ishii        - <k-ishii at wb4.so-net.ne.jp> original version(ckw)
  * Yukihiro Nakadaira - <yukihiro.nakadaira at gmail.com> original version(vimproc)
  * Shougo Matsushita  - <Shougo.Matsu at gmail.com> modified version
@@ -481,14 +481,18 @@ vp_pipe_open(char *args)
 
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
+    /*si.dwFlags = STARTF_USESTDHANDLES;*/
     si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
+    si.wShowWindow = SW_HIDE;
     si.hStdInput = hInputRead;
     si.hStdOutput = hOutputWrite;
     si.hStdError = hErrorWrite;
 
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE,
-                        CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+                        CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
+                        /*0, NULL, NULL, &si, &pi))*/
+                        /*DETACHED_PROCESS, NULL, NULL, &si, &pi))*/
+                        /*CREATE_NO_WINDOW, NULL, NULL, &si, &pi))*/
         return vp_stack_return_error(&_result, "CreateProcess() error: %s %s",
                 lasterror());
 
@@ -526,8 +530,8 @@ vp_pipe_close(char *args)
     VP_RETURN_IF_FAIL(vp_stack_from_args(&stack, args));
     VP_RETURN_IF_FAIL(vp_stack_pop_num(&stack, "%d", &fd));
 
-    if (_close(fd))
-        return vp_stack_return_error(&_result, "_close() error: %s",
+    if (!CloseHandle((HANDLE)_get_osfhandle(fd)))
+        return vp_stack_return_error(&_result, "CloseHandle() error: %s",
                 lasterror());
     return NULL;
 }
@@ -645,8 +649,7 @@ vp_kill(char *args)
                 lasterror());
     }
 
-    vp_stack_push_num(&_result, "%d", 0);
-    return vp_stack_return(&_result);
+    return NULL;
 }
 
 /* Improved kill function. */
@@ -965,10 +968,8 @@ vp_readdir(char *args)
     }
 
     do {
-        if (strcmp(fd.cFileName, ".") && strcmp(fd.cFileName, "..")) {
-            snprintf(buf, sizeof(buf), "%s/%s", dirname, fd.cFileName);
-            vp_stack_push_str(&_result, buf);
-        }
+        snprintf(buf, sizeof(buf), "%s/%s", dirname, fd.cFileName);
+        vp_stack_push_str(&_result, buf);
     } while (FindNextFile(h, &fd));
 
     FindClose(h);

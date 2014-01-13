@@ -1,6 +1,7 @@
-b6a796b
+dbf7878
 
 Data.List
 System.Cache
+Vim.Buffer.Manager
 Data.String
 System.File

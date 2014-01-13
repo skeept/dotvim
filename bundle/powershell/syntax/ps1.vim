@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:           Windows PowerShell
 " Maintainer:         Peter Provost <peter@provost.org>
-" Version:            2.10
+" Version:            2.9
 " Project Repository: https://github.com/PProvost/vim-ps1
 " Vim Script Page:    http://www.vim.org/scripts/script.php?script_id=1327"
 "
@@ -85,8 +85,8 @@ syn region ps1String start=/"/ skip=/`"/ end=/"/ contains=@ps1StringSpecial
 syn region ps1String start=/'/ skip=/''/ end=/'/
 
 " Here-Strings
-syn region ps1String start=/@"$/ end=/^"@/ contains=@ps1StringSpecial
-syn region ps1String start=/@'$/ end=/^'@/
+syn region ps1String start=/@"$/ end=/^"@$/ contains=@ps1StringSpecial
+syn region ps1String start=/@'$/ end=/^'@$/
 
 " Interpolation
 syn match ps1Escape /`./ contained

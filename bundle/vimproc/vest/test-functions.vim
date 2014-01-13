@@ -9,7 +9,7 @@ set cpo&vim
 
 Context Function.run()
   It tests kill
-    let errmsg_save = v:exception
+    let errmsg_save = vimproc#get_last_errmsg()
     ShouldEqual vimproc#kill(9999, 0), 1
     ShouldNotEqual errmsg_save, vimproc#get_last_errmsg()
   End

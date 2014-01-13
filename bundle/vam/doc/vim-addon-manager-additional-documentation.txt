@@ -466,6 +466,8 @@ repository                                             *addon-info-repository*
         script-type
                  One of `plugin', `syntax', `color scheme', or `indent'. The 
                  .vim file will be moved into the specific subdirectory.
+                 Also accepts `after/syntax' which is a hack that makes VAM 
+                 move source into after/syntax directory.
         archive_name
                  If `type' key contains an empty string, then archive which
                  location is described by the `url' key will be saved in file
@@ -474,18 +476,14 @@ repository                                             *addon-info-repository*
                  installed no other archive tools are required):
                  Extension     How it is handled ~
                  .vim          This extension designates that plugin is
-                               a single file. Depending on `script-type' and 
-                               `target_dir' keys this file will be put 
-                               under:
-                               1. {root}/{target_dir} if `target_dir' key 
-                                  exists.
-                               2. {root}/syntax, {root}/indent, 
-                                  {root}/ftplugin if `script-type' is equal to 
-                                  "syntax", "indent" or "ftplugin" 
-                                  respectively.
-                               3. {root}/colors if `script-type' is equal to 
-                                  "color scheme".
-                               4. {root}/plugin otherwise.
+                               a single file. So, if exists key `script-type'
+                               and it is equal to `syntax' or `indent', then
+                               this file is put under {plugname}/syntax or
+                               under {plugname}/indent, otherwise it is put
+                               under directory described by
+                               {plugname}/{target_dir} (where {target_dir} is
+                               a value of `target_dir' key if it is present
+                               and `plugin' otherwise).
                 .tar.gz, .tgz  This extension designates that plugin is
                                contained inside tar archive compressed by
                                gzip. In this case, archive is uncompressed by
@@ -670,7 +668,7 @@ What features are missing?
 
 Run (assuming you installed it in ~/.vim/vim-addons) >
     cd ~/.vim/vim-addons
-    hg clone http://hg.code.sf.net/p/vimpluginloader/dev-tools
+    hg clone http://vimpluginloader.hg.sourceforge.net:8000/hgroot/vimpluginloader/dev-tools
     cd dev-tools
     ./test.zsh -a vim-addon-manager
 . If test fails test.zsh prints out a list of failed tests and exits with 
@@ -809,14 +807,14 @@ SetupVAM because it works on any unix like system - and its files are that
 small so its debatable whether its worth sharing.
 
 The overlay is accessible via mercurial, url:
-http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay or 
-https://bitbucket.org/ZyX_I/pluginloader-overlay (mirror).
+http://vimpluginloader.hg.sourceforge.net:8000/hgroot/vimpluginloader/pluginloader-overlay
+or https://bitbucket.org/ZyX_I/pluginloader-overlay (mirror).
 
 In order to use this overlay paludis users can add the pluginloader.conf file
 to /etc/paludis/repositories/ with the following contents: >
     location = /var/paludis/repositories/pluginloader
     format = e
-    sync = hg+http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay
+    sync = hg+http://vimpluginloader.hg.sourceforge.net:8000/hgroot/vimpluginloader/pluginloader-overlay
 
     master_repository = gentoo
     names_cache = ${location}/.cache/names
@@ -837,7 +835,7 @@ For portage+layman users:
           <repo quality="experimental" status="unofficial">
             <name>pluginloader-overlay</name>
             <description>Overlay that contains some additional vim plugins</description>
-            <source type="mercurial">http://hg.code.sf.net/p/vimpluginloader/pluginloader-overlay</source>
+            <source type="mercurial">http://vimpluginloader.hg.sourceforge.net:8000/hgroot/vimpluginloader/pluginloader-overlay</source>
           </repo>
         </repositories>
 2. Add the following line to /etc/layman/layman.cfg just after the line that
@@ -867,8 +865,6 @@ what's going to happen.
 
 ==============================================================================
 12. Troubleshooting and known bugs                      *VAM-trouble-shooting*
-
-Using a $SHELL setting other than /bin/sh may not work on *nix like systems
 
 [BUG 101] Directories with commas are not supported.
   Any discussion is here: https://github.com/MarcWeber/vim-addon-manager/issues/101
@@ -928,7 +924,7 @@ Using a $SHELL setting other than /bin/sh may not work on *nix like systems
 
   " slow performance. This could be optimized some more - I do no longer
   " care about such old Vim versions. Think about upgrading.
-  for f in split(glob(vam_install_path.'/vim-addon-manager*/**/*.vim', 1),"\n")
+  for f in split(glob(vam_install_path.'/vim-addon-manager*/**/*.vim'),"\n")
     if f =~ 'plugin/vim-addon-manager-known-repositories.vim' | continue | endif
     exec 'source '.fnameescape(f)
   endfor
@@ -1260,7 +1256,7 @@ code: >
 
   " this is ~/.vim/vim-addons/foo/autoload/x.vim
   " does not work inside a function!
-  let s:plugin_base_dir = expand('<sfile>:p:h:h', 1)
+  let s:plugin_base_dir = expand('<sfile>:p:h:h')
   " now s:plugin_base_dir contains ~/.vim/vim-addons/foo
 <
 Then plugins can find additional resources (templates, python files, ..)
@@ -1334,7 +1330,7 @@ Create these directories: >
     ~/my/ftdetect/ftdetect-foreign.vim
 
 and add the following line to the each of them: >
-    echomsg expand('<sfile>:t', 1)
+    echomsg expand('<sfile>:t')
 <
 
 ~/.vimrc contents: >

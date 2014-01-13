@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Sep 2013.
+" Last Modified: 03 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -34,18 +34,20 @@ endif
 
 let s:source = {
       \ 'name' : 'syntax_complete',
-      \ 'kind' : 'keyword',
+      \ 'kind' : 'plugin',
       \ 'mark' : '[S]',
-      \ 'rank' : 4,
       \}
 
 function! s:source.initialize() "{{{
+  " Set rank.
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_source_rank', 'syntax_complete', 7)
+
   " Set caching event.
   autocmd neocomplcache Syntax * call s:caching()
 
   " Create cache directory.
   if !isdirectory(neocomplcache#get_temporary_directory() . '/syntax_cache')
-     \ && !neocomplcache#util#is_sudo()
     call mkdir(neocomplcache#get_temporary_directory() . '/syntax_cache')
   endif
 
@@ -57,7 +59,11 @@ function! s:source.finalize() "{{{
   delcommand NeoComplCacheCachingSyntax
 endfunction"}}}
 
-function! s:source.get_keyword_list(complete_str) "{{{
+function! s:source.get_keyword_list(cur_keyword_str) "{{{
+  if neocomplcache#within_comment()
+    return []
+  endif
+
   let list = []
 
   let filetype = neocomplcache#get_context_filetype()
@@ -65,9 +71,8 @@ function! s:source.get_keyword_list(complete_str) "{{{
     call s:caching()
   endif
 
-  for syntax in neocomplcache#get_sources_list(
-        \ s:syntax_list, filetype)
-    let list += neocomplcache#dictionary_filter(syntax, a:complete_str)
+  for source in neocomplcache#get_sources_list(s:syntax_list, filetype)
+    let list += neocomplcache#dictionary_filter(source, a:cur_keyword_str)
   endfor
 
   return list
@@ -131,19 +136,19 @@ function! s:caching_from_syn(filetype) "{{{
 
   let dup_check = {}
 
-  let filetype_pattern = tolower(a:filetype)
+  let filetype_pattern = substitute(a:filetype, '\W', '\\A', 'g') . '\u'
 
   let keyword_lists = {}
   for line in split(syntax_list, '\n')
     if line =~ '^\h\w\+'
       " Change syntax group name.
       let group_name = matchstr(line, '^\S\+')
-      let line = substitute(line, '^\S\+\s*xxx', '', '')
+      let line = substitute(line, '^\S\s*xxx', '', '')
     endif
 
     if line =~ 'Syntax items' || line =~ '^\s*links to' ||
           \ line =~ '^\s*nextgroup=' ||
-          \ strridx(tolower(group_name), filetype_pattern) != 0
+          \ group_name !~# filetype_pattern
       " Next line.
       continue
     endif

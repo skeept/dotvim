@@ -50,24 +50,18 @@ fun! pymode#QuickfixOpen(onlyRecognized, holdCursor, maxHeight, minHeight, jumpE
 endfunction "}}}
 
 
-fun! pymode#PlaceSigns(bnum) "{{{
+fun! pymode#PlaceSigns() "{{{
     " DESC: Place error signs
     "
     if has('signs')
-        call pymode#Default('b:pymode_signs', [])
-
-        for item in b:pymode_signs
-            execute printf('sign unplace %d buffer=%d', item.lnum, item.bufnr)
-        endfor
-        let b:pymode_signs = []
+        sign unplace *
 
         if !pymode#Default("g:pymode_lint_signs_always_visible", 0) || g:pymode_lint_signs_always_visible
             call RopeShowSignsRulerIfNeeded()
         endif
 
         for item in filter(getqflist(), 'v:val.bufnr != ""')
-            call add(b:pymode_signs, item)
-            execute printf('sign place %d line=%d name=%s buffer=%d', item.lnum, item.lnum, "Pymode".item.type, item.bufnr)
+            execute printf('silent! sign place 1 line=%d name=%s buffer=%d', item.lnum, item.type, item.bufnr)
         endfor
 
     endif
@@ -182,6 +176,7 @@ fun! pymode#Modeline() "{{{
             let {'b:pymode_'.name} = value
         endfor
     endif
+    au BufRead <buffer> call pymode#Modeline()
 endfunction "}}}
 
 

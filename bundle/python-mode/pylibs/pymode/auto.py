@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import vim
 from autopep8 import fix_file
 

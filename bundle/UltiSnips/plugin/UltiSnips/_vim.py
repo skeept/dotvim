@@ -119,7 +119,7 @@ def new_scratch_buffer(text):
     command("set ft=text")
     command("set buftype=nofile")
 
-    vim.current.buffer[:] = text.splitlines()
+    vim.buffers[-1][:] = text.splitlines()
 
     feedkeys(r"\<Esc>")
 

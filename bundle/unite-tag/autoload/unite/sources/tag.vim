@@ -1,6 +1,6 @@
 " tag source for unite.vim
 " Version:     0.1.0
-" Last Change: 23 Sep 2013.
+" Last Change: 28 Feb 2011
 " Author:      tsukkee <takayuki0510 at gmail.com>
 "              thinca <thinca+vim@gmail.com>
 "              Shougo <ShougoMatsu at gmail.com>
@@ -31,8 +31,7 @@ endfunction
 
 
 " cache
-let s:tagfile_cache = {}
-let s:input_cache = {}
+let s:cache = {}
 
 " source
 let s:source = {
@@ -46,7 +45,7 @@ let s:source = {
 
 function! s:source.hooks.on_syntax(args, context)
   syntax match uniteSource__Tag_File /  @.\{-}  /ms=s+2,me=e-2
-              \ containedin=uniteSource__Tag contained
+              \ containedin=uniteSource__Tag contained 
               \ nextgroup=uniteSource__Tag_Pat,uniteSource__Tag_Line skipwhite
   syntax match uniteSource__Tag_Pat /pat:.\{-}\ze\s*$/ contained
   syntax match uniteSource__Tag_Line /line:.\{-}\ze\s*$/ contained
@@ -62,10 +61,6 @@ endfunction
 
 function! s:source.gather_candidates(args, context)
     let a:context.source__continuation = []
-    if a:context.input != ''
-        return s:taglist_filter(a:context.input)
-    endif
-
     let result = []
     for tagfile in a:context.source__tagfiles
         let tagdata = s:get_tagdata(tagfile)
@@ -105,12 +100,12 @@ function! s:source.async_gather_candidates(args, context)
         endwhile
     elseif has('reltime') && has('float')
         let time = reltime()
-        while str2float(reltimestr(reltime(time))) < 1.0
+        while str2float(reltimestr(reltime(time))) < 0.05
         \       && !empty(tagdata.cont.lines)
             let result += s:next(tagdata, remove(tagdata.cont.lines, 0), is_file)
         endwhile
     else
-        let i = 1000
+        let i = 100
         while 0 < i && !empty(tagdata.cont.lines)
             let result += s:next(tagdata, remove(tagdata.cont.lines, 0), is_file)
             let i -= 1
@@ -179,19 +174,11 @@ let s:source_include = {
 \}
 
 function! s:source_include.hooks.on_init(args, context)
-    if exists('*neocomplete#sources#include#get_include_files')
-        let a:context.source__tagfiles = filter(map(
-                    \ copy(neocomplete#sources#include#get_include_files(bufnr('%'))),
-                    \ "neocomplete#cache#encode_name('tags_output', v:val)"),
-                    \ 'filereadable(v:val)')
-    elseif exists('*neocomplcache#sources#include_complete#get_include_files')
-        let a:context.source__tagfiles = filter(map(
-                    \ copy(neocomplcache#sources#include_complete#get_include_files(bufnr('%'))),
-                    \ "neocomplcache#cache#encode_name('tags_output', v:val)"),
-                    \ 'filereadable(v:val)')
-    else
-        let a:context.source__tagfiles = []
-    endif
+    let a:context.source__tagfiles =
+          \ exists('*neocomplcache#sources#include_complete#get_include_files') ?
+          \ filter(map(
+          \ copy(neocomplcache#sources#include_complete#get_include_files(bufnr('%'))),
+          \ "neocomplcache#cache#encode_name('tags_output', v:val)"), 'filereadable(v:val)') : []
     let a:context.source__name = 'tag/include'
 endfunction
 
@@ -241,10 +228,9 @@ function! s:get_tagdata(tagfile)
     if !filereadable(tagfile)
         return {}
     endif
-    if !has_key(s:tagfile_cache, tagfile) ||
-                \ s:tagfile_cache[tagfile].time != getftime(tagfile)
+    if !has_key(s:cache, tagfile) || s:cache[tagfile].time != getftime(tagfile)
         let lines = readfile(tagfile)
-        let s:tagfile_cache[tagfile] = {
+        let s:cache[tagfile] = {
         \   'time': getftime(tagfile),
         \   'tags': [],
         \   'files': {},
@@ -257,50 +243,7 @@ function! s:get_tagdata(tagfile)
         \   },
         \}
     endif
-    return s:tagfile_cache[tagfile]
-endfunction
-
-function! s:taglist_filter(input)
-    let key = string(tagfiles()).a:input
-    if has_key(s:input_cache, key)
-        return s:input_cache[key]
-    endif
-
-    let taglist = map(taglist(a:input), "{
-    \   'word':    v:val.name,
-    \   'abbr':    printf('%s  @%s  %s',
-    \                  v:val.name,
-    \                  unite#util#substitute_path_separator(
-    \                        fnamemodify(v:val.filename, ':.')),
-    \                  'pat:' . v:val.cmd),
-    \   'kind':    'jump_list',
-    \   'action__path':    unite#util#substitute_path_separator(
-    \                   v:val.filename),
-    \   'action__tagname': v:val.name,
-    \   'source__cmd': v:val.cmd,
-    \}")
-
-    " Set search pattern.
-    for tag in taglist
-        let cmd = tag.source__cmd
-
-        if cmd =~ '^\d\+$'
-            let linenr = cmd - 0
-            let tag.action__line = linenr
-        else
-            " remove / or ? at the head and the end
-            let pattern = matchstr(cmd, '^\([/?]\)\?\zs.*\ze\1$')
-            " unescape /
-            let pattern = substitute(pattern, '\\\/', '/', 'g')
-            " use 'nomagic'
-            let pattern = '\M' . pattern
-
-            let tag.action__pattern = pattern
-        endif
-    endfor
-
-    let s:input_cache[key] = taglist
-    return taglist
+    return s:cache[tagfile]
 endfunction
 
 function! s:next(tagdata, line, is_file)

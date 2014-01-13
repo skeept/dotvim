@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Sep 2013.
+" Last Modified: 09 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,11 +31,6 @@ function! vimfiler#handler#_event_handler(event_name, ...)  "{{{1
   let context = vimfiler#initialize_context(get(a:000, 0, {}))
   let path = get(context, 'path',
         \ vimfiler#util#substitute_path_separator(expand('<afile>')))
-
-  if filereadable(path)
-    call vimfiler#print_error('You cannot open the file contained ":"(see FAQ).')
-    return
-  endif
 
   let ret = vimfiler#parse_path(path)
   let source_name = ret[0]
@@ -141,11 +136,8 @@ endfunction"}}}
 
 " Event functions.
 function! vimfiler#handler#_event_bufwin_enter(bufnr) "{{{
-  let prev_winnr = winnr('#')
-
   if a:bufnr != bufnr('%') && bufwinnr(a:bufnr) > 0
     let winnr = winnr()
-    let prev_winnr = winnr
     execute bufwinnr(a:bufnr) 'wincmd w'
   endif
 
@@ -181,16 +173,12 @@ function! vimfiler#handler#_event_bufwin_enter(bufnr) "{{{
       endif
     endif
 
-    let context.vimfiler__prev_winnr = prev_winnr
-
     let winwidth = (winwidth(0)+1)/2*2
     if exists('vimfiler.winwidth')
       if vimfiler.winwidth != winwidth
         call vimfiler#view#_redraw_screen()
       endif
     endif
-
-    call s:restore_statusline()
   finally
     if exists('winnr')
       execute winnr.'wincmd w'
@@ -211,37 +199,6 @@ function! vimfiler#handler#_event_bufwin_leave(bufnr) "{{{
     let &l:winfixwidth = context.vimfiler__winfixwidth
   elseif context.winheight != 0 && context.split
     let &l:winfixheight = context.vimfiler__winfixheight
-  endif
-endfunction"}}}
-
-function! vimfiler#handler#_event_cursor_moved() "{{{
-  if line('.') <= line('$') / 2 ||
-        \ b:vimfiler.all_files_len == len(b:vimfiler.current_files)
-    return
-  endif
-
-  " Update current files.
-  let len_files = len(b:vimfiler.current_files)
-  let new_files = b:vimfiler.all_files[
-        \ len_files : (len_files + winheight(0) * 2)]
-  let b:vimfiler.current_files += new_files
-
-  setlocal modifiable
-  try
-    call append('$', vimfiler#view#_get_print_lines(new_files))
-  finally
-    setlocal nomodifiable
-  endtry
-endfunction"}}}
-
-function! s:restore_statusline()  "{{{
-  if &filetype !=# 'vimfiler' || !g:vimfiler_force_overwrite_statusline
-    return
-  endif
-
-  if &l:statusline != b:vimfiler.statusline
-    " Restore statusline.
-    let &l:statusline = b:vimfiler.statusline
   endif
 endfunction"}}}
 

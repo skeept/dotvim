@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Sep 2013.
+" Last Modified: 12 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -30,27 +30,20 @@ set cpo&vim
 " Important variables.
 if !exists('s:buffer_sources')
   let s:buffer_sources = {}
-  let s:async_dictionary_list = {}
 endif
 
 let s:source = {
       \ 'name' : 'buffer_complete',
-      \ 'kind' : 'manual',
+      \ 'kind' : 'complfunc',
       \ 'mark' : '[B]',
-      \ 'rank' : 5,
-      \ 'min_pattern_length' :
-      \     g:neocomplcache_auto_completion_start_length,
-      \ 'hooks' : {},
       \}
 
-function! s:source.hooks.on_init(context) "{{{
+function! s:source.initialize() "{{{
   let s:buffer_sources = {}
 
   augroup neocomplcache "{{{
     " Caching events
-    autocmd BufEnter,BufRead,BufWinEnter *
-          \ call s:check_source()
-    autocmd CursorHold,CursorHoldI *
+    autocmd CursorHold *
           \ call s:check_cache()
     autocmd BufWritePost *
           \ call s:check_recache()
@@ -58,9 +51,13 @@ function! s:source.hooks.on_init(context) "{{{
           \ call neocomplcache#sources#buffer_complete#caching_current_line()
   augroup END"}}}
 
+  " Set rank.
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_source_rank',
+        \ 'buffer_complete', 5)
+
   " Create cache directory.
   if !isdirectory(neocomplcache#get_temporary_directory() . '/buffer_cache')
-     \ && !neocomplcache#util#is_sudo()
     call mkdir(neocomplcache#get_temporary_directory() . '/buffer_cache', 'p')
   endif
 
@@ -72,11 +69,14 @@ function! s:source.hooks.on_init(context) "{{{
   let s:async_dictionary_list = {}
   "}}}
 
+  call neocomplcache#set_completion_length('buffer_complete',
+        \ g:neocomplcache_auto_completion_start_length)
+
   call s:check_source()
 endfunction
 "}}}
 
-function! s:source.hooks.on_final(context) "{{{
+function! s:source.finalize() "{{{
   delcommand NeoComplCacheCachingBuffer
   delcommand NeoComplCachePrintSource
   delcommand NeoComplCacheOutputKeyword
@@ -86,7 +86,13 @@ function! s:source.hooks.on_final(context) "{{{
   let s:buffer_sources = {}
 endfunction"}}}
 
-function! s:source.gather_candidates(context) "{{{
+function! s:source.get_keyword_pos(cur_text) "{{{
+  let [cur_keyword_pos, _] = neocomplcache#match_word(a:cur_text)
+
+  return cur_keyword_pos
+endfunction"}}}
+
+function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
   call s:check_source()
 
   let keyword_list = []
@@ -95,7 +101,7 @@ function! s:source.gather_candidates(context) "{{{
           \ source.path, s:async_dictionary_list, source.keyword_cache, 1)
 
     let keyword_list += neocomplcache#dictionary_filter(
-          \ source.keyword_cache, a:context.complete_str)
+          \ source.keyword_cache, a:cur_keyword_str)
     if key == bufnr('%')
       let source.accessed_time = localtime()
     endif
@@ -115,7 +121,7 @@ endfunction"}}}
 function! neocomplcache#sources#buffer_complete#caching_current_line() "{{{
   " Current line caching.
   return s:caching_current_buffer(
-        \ max([1, line('.') - 10]), min([line('.') + 10, line('$')]))
+        \ max([1, line('.') - 5]), min([line('.') + 5, line('$')]))
 endfunction"}}}
 function! neocomplcache#sources#buffer_complete#caching_current_block() "{{{
   " Current line caching.
@@ -256,27 +262,29 @@ function! s:check_source() "{{{
     return
   endif
 
-  for bufnumber in range(1, bufnr('$'))
-    " Check new buffer.
-    let bufname = fnamemodify(bufname(bufnumber), ':p')
-    if (!has_key(s:buffer_sources, bufnumber)
-          \ || s:check_changed_buffer(bufnumber))
-          \ && !has_key(s:disable_caching_list, bufnumber)
-          \ && (!neocomplcache#is_locked(bufnumber) ||
-          \    g:neocomplcache_disable_auto_complete)
-          \ && !getwinvar(bufwinnr(bufnumber), '&previewwindow')
-          \ && getfsize(bufname) <
-          \      g:neocomplcache_caching_limit_file_size
-      " Caching.
-      call s:word_caching(bufnumber)
-    endif
+  let bufnumber = bufnr('%')
 
-    if has_key(s:buffer_sources, bufnumber)
-      let source = s:buffer_sources[bufnumber]
-      call neocomplcache#cache#check_cache_list('buffer_cache',
-            \ source.path, s:async_dictionary_list, source.keyword_cache, 1)
-    endif
-  endfor
+  " Check new buffer.
+  let bufname = fnamemodify(bufname(bufnumber), ':p')
+  if (!has_key(s:buffer_sources, bufnumber)
+        \ || s:check_changed_buffer(bufnumber))
+        \ && !has_key(s:disable_caching_list, bufnumber)
+        \ && (!neocomplcache#is_locked(bufnumber) ||
+        \    g:neocomplcache_disable_auto_complete)
+        \ && !getwinvar(bufwinnr(bufnumber), '&previewwindow')
+        \ && getfsize(bufname) <
+        \      g:neocomplcache_caching_limit_file_size
+    " Caching.
+    call s:word_caching(bufnumber)
+  endif
+
+  if !has_key(s:buffer_sources, bufnumber)
+    return
+  endif
+
+  let source = s:buffer_sources[bufnumber]
+  call neocomplcache#cache#check_cache_list('buffer_cache',
+        \ source.path, s:async_dictionary_list, source.keyword_cache, 1)
 endfunction"}}}
 function! s:check_cache() "{{{
   let release_accessd_time =

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: jump_list.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Oct 2013.
+" Last Modified: 20 Mar 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -74,62 +74,21 @@ function! unite#kinds#jump_list#define() "{{{
     let preview_windows = filter(range(1, winnr('$')),
           \ 'getwinvar(v:val, "&previewwindow") != 0')
     if empty(preview_windows)
-      noautocmd silent execute 'pedit!' fnameescape(filename)
-      if !buflisted
-        let prev_winnr = winnr('#')
-        let winnr = winnr()
-        wincmd P
-        doautoall BufRead
-        setlocal nomodified
-        execute prev_winnr.'wincmd w'
-        execute winnr.'wincmd w'
-      endif
+      pedit! `=filename`
+      let preview_windows = filter(range(1, winnr('$')),
+            \ 'getwinvar(v:val, "&previewwindow") != 0')
     endif
 
-    let prev_winnr = winnr('#')
     let winnr = winnr()
-    wincmd P
+    execute preview_windows[0].'wincmd w'
     let bufnr = s:open(a:candidate)
     call s:jump(a:candidate, 1)
-    execute prev_winnr.'wincmd w'
     execute winnr.'wincmd w'
 
     if !buflisted
       call unite#add_previewed_buffer_list(bufnr)
     endif
   endfunction"}}}
-
-  let kind.action_table.highlight = {
-        \ 'description' : 'highlight this position',
-        \ 'is_quit' : 0,
-        \ }
-  function! kind.action_table.highlight.func(candidate) "{{{
-    let candidate_winnr = bufwinnr(s:get_bufnr(a:candidate))
-
-    if candidate_winnr > 0
-      let unite = unite#get_current_unite()
-      let context = unite.context
-      let current_winnr = winnr()
-
-      if context.vertical 
-          setlocal winfixwidth
-      else 
-          setlocal winfixheight
-      endif
-
-      noautocmd execute candidate_winnr 'wincmd w'
-
-      call s:jump(a:candidate, 1)
-      let unite_winnr = bufwinnr(unite.bufnr)
-      if unite_winnr < 0
-        let unite_winnr = current_winnr
-      endif
-      if unite_winnr > 0
-        noautocmd execute unite_winnr 'wincmd w'
-      endif
-    endif
-  endfunction"}}}
-
 
   let kind.action_table.replace = {
         \ 'description' : 'replace with qfreplace',
@@ -170,10 +129,6 @@ function! s:jump(candidate, is_highlight) "{{{
   let line = get(a:candidate, 'action__line', 1)
   let pattern = get(a:candidate, 'action__pattern', '')
 
-  if line == ''
-    " Use default line number.
-    let line = 1
-  endif
   if line !~ '^\d\+$'
     call unite#print_error('unite: jump_list: Invalid action__line format.')
     return
@@ -272,11 +227,9 @@ function! s:open(candidate) "{{{
   let bufnr = s:get_bufnr(a:candidate)
   if bufnr != bufnr('%')
     if has_key(a:candidate, 'action__buffer_nr')
-      silent execute 'buffer' bufnr
+      execute 'buffer' bufnr
     else
-      call unite#util#smart_execute_command(
-            \ 'edit!', unite#util#substitute_path_separator(
-            \   fnamemodify(a:candidate.action__path, ':~:.')))
+      edit `=a:candidate.action__path`
     endif
   endif
 

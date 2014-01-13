@@ -12,7 +12,7 @@ fun! pymode#virtualenv#Activate() "{{{
 
     call add(g:pymode_virtualenv_enabled, $VIRTUAL_ENV)
 
-Python << EOF
+python << EOF
 import sys, vim, os
 
 ve_dir = vim.eval('$VIRTUAL_ENV')
@@ -23,13 +23,7 @@ activate_this = os.path.join(os.path.join(ve_dir, 'bin'), 'activate_this.py')
 if not os.path.exists(activate_this):
     activate_this = os.path.join(os.path.join(ve_dir, 'Scripts'), 'activate_this.py')
 
-f = open(activate_this)
-try:
-    source = f.read()
-finally:
-    f.close()
-
-exec(compile(source, activate_this, 'exec'), dict(__file__=activate_this))
+execfile(activate_this, dict(__file__=activate_this))
 EOF
 
     call pymode#WideMessage("Activate virtualenv: ".$VIRTUAL_ENV)

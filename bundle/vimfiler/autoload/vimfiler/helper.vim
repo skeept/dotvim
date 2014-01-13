@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helper.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Sep 2013.
+" Last Modified: 06 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -41,9 +41,7 @@ function! vimfiler#helper#_get_directory_files(directory, ...) "{{{
     let path = b:vimfiler.source . ':' . path
   endif
   let args = vimfiler#parse_path(path)
-  let current_files = vimfiler#init#_initialize_candidates(
-        \ unite#get_vimfiler_candidates([args], context),
-        \ b:vimfiler.source)
+  let current_files = unite#get_vimfiler_candidates([args], context)
 
   for file in current_files
     " Initialize.
@@ -85,74 +83,6 @@ function! vimfiler#helper#_parse_path(path) "{{{
         \      'substitute(v:val, ''\\\(.\)'', "\\1", "g")')
 
   return insert(source_args, source_name)
-endfunction"}}}
-function! vimfiler#helper#_get_cd_path(dir) "{{{
-  let dir = vimfiler#util#substitute_path_separator(a:dir)
-  if b:vimfiler.source !=# 'file' &&
-        \ dir !~ ':' && dir =~ '^/\|^\a:'
-    " Use file source.
-    let dir = 'file:' . dir
-  endif
-
-  if dir =~ '^\h\w*:'
-    " Parse path.
-    let ret = vimfiler#parse_path(dir)
-    let b:vimfiler.source = ret[0]
-    let dir = join(ret[1:], ':')
-  endif
-
-  let current_dir = b:vimfiler.current_dir
-
-  if dir == '..'
-    let chars = split(current_dir, '\zs')
-    if count(chars, '/') <= 1
-      if count(chars, ':') < 1
-            \ || b:vimfiler.source ==# 'file'
-        " Ignore.
-        return current_dir
-      endif
-      let dir = substitute(current_dir, ':[^:]*$', '', '')
-    else
-      let dir = fnamemodify(substitute(current_dir, '[/\\]$', '', ''), ':h')
-    endif
-
-    if dir =~ '//$'
-      return current_dir
-    endif
-
-  elseif dir == '/'
-    " Root.
-
-    if vimfiler#util#is_windows() && current_dir =~ '^//'
-      " For UNC path.
-      let dir = matchstr(current_dir, '^//[^/]*/[^/]*')
-    else
-      let dir = vimfiler#util#is_windows() ?
-            \ matchstr(fnamemodify(current_dir, ':p'),
-            \         '^\a\+:[/\\]') : dir
-    endif
-  elseif dir == '~'
-    " Home.
-    let dir = expand('~')
-  elseif dir =~ ':'
-        \ || (vimfiler#util#is_windows() && dir =~ '^//')
-        \ || (!vimfiler#util#is_windows() && dir =~ '^/')
-    " Network drive or absolute path.
-  else
-    " Relative path.
-    let dir = simplify(current_dir . dir)
-  endif
-  let fullpath = vimfiler#util#substitute_path_separator(dir)
-
-  if vimfiler#util#is_windows()
-    let fullpath = vimfiler#util#resolve(fullpath)
-  endif
-
-  if fullpath !~ '/$'
-    let fullpath .= '/'
-  endif
-
-  return fullpath
 endfunction"}}}
 
 function! vimfiler#helper#_complete(arglead, cmdline, cursorpos) "{{{
@@ -235,34 +165,26 @@ function! vimfiler#helper#_set_cursor()
 endfunction
 
 function! s:sort(files, type) "{{{
-  let ignorecase_save = &ignorecase
-  try
-    let &ignorecase = vimfiler#util#is_windows()
-
-    if a:type =~? '^n\%[one]$'
-      " Ignore.
-      let files = a:files
-    elseif a:type =~? '^s\%[ize]$'
-      let files = vimfiler#util#sort_by(
-            \ a:files, 'v:val.vimfiler__filesize')
-    elseif a:type =~? '^e\%[xtension]$'
-      let files = vimfiler#util#sort_by(
-            \ a:files, 'v:val.vimfiler__extension')
-    elseif a:type =~? '^f\%[ilename]$'
-      let files = vimfiler#helper#_sort_human(
-            \ a:files, vimfiler#util#has_lua())
-    elseif a:type =~? '^t\%[ime]$'
-      let files = vimfiler#util#sort_by(
-            \ a:files, 'v:val.vimfiler__filetime')
-    elseif a:type =~? '^m\%[anual]$'
-      " Not implemented.
-      let files = a:files
-    else
-      throw 'Invalid sort type.'
-    endif
-  finally
-    let &ignorecase = ignorecase_save
-  endtry
+  if a:type =~? '^n\%[one]$'
+    " Ignore.
+    let files = a:files
+  elseif a:type =~? '^s\%[ize]$'
+    let files = vimfiler#util#sort_by(
+          \ a:files, 'v:val.vimfiler__filesize')
+  elseif a:type =~? '^e\%[xtension]$'
+    let files = vimfiler#util#sort_by(
+          \ a:files, 'v:val.vimfiler__extension')
+  elseif a:type =~? '^f\%[ilename]$'
+    let files = sort(a:files, 's:compare_filename')
+  elseif a:type =~? '^t\%[ime]$'
+    let files = vimfiler#util#sort_by(
+          \ a:files, 'v:val.vimfiler__filetime')
+  elseif a:type =~? '^m\%[anual]$'
+    " Not implemented.
+    let files = a:files
+  else
+    throw 'Invalid sort type.'
+  endif
 
   if a:type =~ '^\u'
     " Reverse order.
@@ -271,37 +193,6 @@ function! s:sort(files, type) "{{{
 
   return files
 endfunction"}}}
-
-function! vimfiler#helper#_sort_human(candidates, has_lua) "{{{
-  if !a:has_lua
-    return sort(a:candidates, 's:compare_filename')
-  endif
-
-  " Use lua interface.
-  lua << EOF
-do
-  local ignorecase = vim.eval('&ignorecase')
-  local candidates = vim.eval('a:candidates')
-  local t = {}
-  for i = 1, #candidates do
-    t[i] = candidates[i-1]
-    if ignorecase ~= 0 then
-      t[i].vimfiler__filename = string.lower(t[i].vimfiler__filename)
-    end
-  end
-
-  table.sort(t, function(a, b)
-    return a.vimfiler__filename < b.vimfiler__filename
-  end)
-
-  for i = 0, #candidates-1 do
-    candidates[i] = t[i+1]
-  end
-end
-EOF
-  return a:candidates
-endfunction"}}}
-
 " Compare filename by human order. "{{{
 function! s:compare_filename(i1, i2)
   let words_1 = map(split(a:i1.vimfiler__filename, '\D\zs\ze\d\+'),

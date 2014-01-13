@@ -1,5 +1,5 @@
 *neosnippet.txt*
-		The neo-snippet plugin contains snippet source
+		The neo-snippet plugin contains the neocomplcache snippet source
 
 Version: 3.1
 Author: Shougo <Shougo.Matsu@gmail.com>
@@ -35,14 +35,15 @@ Interface		|neosnippet-interface|
 Examples		|neosnippet-examples|
 Snippet syntax		|neosnippet-snippet-syntax|
 FAQ			|neosnippet-faq|
+Changelog		|neosnippet-changelog|
 
 ==============================================================================
 INTRODUCTION					*neosnippet-introduction*
 
 This plugin analyzes snippet files which you can use for completion. It offers
 functionality similar to snipMate.vim or snippetsEmu.vim. Since you can choose
-snippets with the neocomplcache/neocomplete interface, you might have less
-trouble using them, because you do not have to remember each snippet name.
+snippets with the neocomplcache interface, you might have less trouble using
+them, because you do not have to remember each snippet name.
 
 ==============================================================================
 INSTALL						*neosnippet-install*
@@ -51,17 +52,12 @@ INSTALL						*neosnippet-install*
    (usually ~/.vim/ or Program Files/Vim/vimfiles on Windows).
 
 Note: If you want to complete snippets, you must install neocomplcache
-(https://github.com/Shougo/neocomplcache.vim) or
-neocomplete(https://github.com/Shougo/neocomplete.vim).
+(https://github.com/Shougo/neocomplcache).
 
-Note: neocomplcache or neocomplete is NOT required! But recommended.
+Note: neocomplcache is NOT required! But recommended.
 
 Extra snippets files are available in:
 https://github.com/honza/vim-snippets
-
-Note: To enable context filetype feature, you must install
-context_filetype.vim.
-https://github.com/Shougo/context_filetype.vim
 
 ==============================================================================
 INTERFACE					*neosnippet-interface*
@@ -75,6 +71,9 @@ COMMANDS 					*neosnippet-commands*
 		Creates a cache for the snippets of the given [filetype]. It
 		automatically chooses the current buffer's file type unless you
 		specify another one by [filetype].
+
+					*:NeoComplCacheCachingSnippets*
+		Note: |:NeoComplCacheCachingSnippets| is an obsolete name.
 
 :NeoSnippetEdit [{options}] [filetype]
 					*:NeoSnippetEdit*
@@ -90,6 +89,7 @@ COMMANDS 					*neosnippet-commands*
 		with precedence. The snippets are re-cached automatically
 		when you save the file after edit.
 
+					*:NeoComplCacheEditSnippets*
 		The following parameters can be used as {options} to modify
 		the behavior of the command. Note: You must escape spaces with
 		a backslash "\".
@@ -118,6 +118,18 @@ COMMANDS 					*neosnippet-commands*
 		Edit the runtime snippets (built-in defaults) instead of the
 		user snippets defined by 'g:neosnippet#snippets_directory'.
 
+		Note: |:NeoComplCacheEditSnippets| is an obsolete name.
+
+:NeoComplCacheEdit -runtime [filetype]
+
+		Opens the built in snippet file for the [filetype] to edit. It
+		automatically selects the current buffer's file type 
+		unless you specify a file type by [filetype]. The snippets are
+		re-cached automatically when you save the file after edit.
+
+					*:NeoComplCacheEditRuntimeSnippets*
+		Note: |:NeoComplCacheEditRuntimeSnippets| is an obsolete name.
+
 :NeoSnippetSource [filename]
 							*:NeoSnippetSource*
 
@@ -144,6 +156,9 @@ g:neosnippet#snippets_directory		*g:neosnippet#snippets_directory*
 		- "vim_*.snip*" 
 	        - "vim/**/*.snip" 
 
+						*g:neocomplcache_snippets_dir*
+		Note: |g:neocomplcache_snippets_dir| is an obsolete name.
+
 		This variable doesn't exist unless you declare it.
 
 g:neosnippet#disable_select_mode_mappings
@@ -153,6 +168,10 @@ g:neosnippet#disable_select_mode_mappings
 		is better to leave it as it is. But if you have troubles with
 		the buffer switcher LustyJuggler you can switch them off.
 		
+				*g:neocomplcache_disable_select_mode_mappings*
+		Note: |g:neocomplcache_disable_select_mode_mappings| is an
+		obsolete name.
+
 		The default value is 1.
 
 g:neosnippet#disable_runtime_snippets
@@ -174,11 +193,16 @@ g:neosnippet#disable_runtime_snippets
 		\   'c' : 1, 'cpp' : 1,
 		\ }
 		
+		" Works like g:neocomplcache_snippets_disable_runtime_snippets
 		" which disables all runtime snippets
 		let g:neosnippet#disable_runtime_snippets = {
 		\   '_' : 1,
 		\ }
 <
+			*g:neocomplcache_snippets_disable_runtime_snippets*
+		Note: |g:neocomplcache_snippets_disable_runtime_snippets| is
+		an obsolete name.
+
 		The default value is {}.
 
 g:neosnippet#enable_snipmate_compatibility
@@ -205,6 +229,10 @@ s_<Plug>(neosnippet_expand_or_jump)
 		no snippet available it jumps to the next placeholder of the
 		buffer.
 
+				*<Plug>(neocomplcache_snippets_expand)*
+		Note: |<Plug>(neocomplcache_snippets_expand)| is an obsolete
+		name.
+
 <Plug>(neosnippet_jump_or_expand)
 				*<Plug>(neosnippet_jump_or_expand)*
 s_<Plug>(neosnippet_jump_or_expand)
@@ -213,13 +241,21 @@ s_<Plug>(neosnippet_jump_or_expand)
 		is no placeholder it expands a snippet in the current cursor
 		position.
 
+				*<Plug>(neocomplcache_snippets_jump)*
+		Note: |<Plug>(neocomplcache_snippets_jump)| is an obsolete
+		name.
+
 <Plug>(neosnippet_expand)
 						*<Plug>(neosnippet_expand)*
 s_<Plug>(neosnippet_expand)
 						*s_<Plug>(neosnippet_expand)*
 		Expand a snippet in current cursor position. It only takes
 		effect if there is a snippet text to expand or if you have
-		chosen a snippet from popup menu.
+		chosen a snippet from the neocomplcache drop down menu.
+
+				*<Plug>(neocomplcache_snippets_force_expand)*
+		Note: |<Plug>(neocomplcache_snippets_force_expand)| is
+		an obsolete name.
 
 <Plug>(neosnippet_jump)
 						*<Plug>(neosnippet_jump)*
@@ -228,11 +264,19 @@ s_<Plug>(neosnippet_jump)
 		Jump to the next placeholder key. It does not expand any
 		snippets.
 
+				*<Plug>(neocomplcache_snippets_force_jump)*
+		Note: |<Plug>(neocomplcache_snippets_force_jump)| is
+		an obsolete name.
+
 i_<Plug>(neosnippet_start_unite_snippet)
 				*i_<Plug>(neosnippet_start_unite_snippet)*
 		Starts the unite snippet source. You can expand a snippet by
 		the unite interface.
 		Note: The plug-in |unite.vim| is required for that feature.
+
+				*<Plug>(neocomplcache_start_unite_snippet)*
+		Note: |<Plug>(neocomplcache_start_unite_snippet)| is an
+		obsolete name.
 
 x_<Plug>(neosnippet_expand_target)
 					*x_<Plug>(neosnippet_expand_target)*
@@ -253,12 +297,27 @@ neosnippet#expandable()
 		You can use this function with imap <expr>. It checks if
 		the cursor text is a snippet trigger. This is is useful to
 		save key mappings.
+		Note: If you are used to
+		|neocomplcache#sources#snippets_complete#expandable()|, you
+		must use |neosnippet#expandable_or_jumpable()|.
+
+		*neocomplcache#sources#snippets_complete#expandable()*
+		*neocomplcache#sources#snippets_complete#force_expandable()*
+		Note:
+		|neocomplcache#sources#snippets_complete#expandable()|
+		and
+		|neocomplcache#sources#snippets_complete#force_expandable()|
+		are obsolete names.
 
 neosnippet#jumpable()
 						*neosnippet#jumpable()*
 		You can use this function with imap <expr>. It checks if the
 		cursor text is an existing placeholder in current buffer. This
 		is useful to save key mappings.
+
+		*neocomplcache#sources#snippets_complete#jumpable()*
+		Note: |neocomplcache#sources#snippets_complete#jumpable()| is
+		an obsolete name.
 
 neosnippet#expandable_or_jumpable()
 					*neosnippet#expandable_or_jumpable()*
@@ -282,6 +341,10 @@ neosnippet#get_snippets_directory()
 		snippets directories and |g:neosnippet#snippets_directory|
 		directories.
 
+		*neocomplcache#sources#snippets_complete#get_snippets_dir()*
+		Note:
+		|neocomplcache#sources#snippets_complete#get_snippets_dir()|
+		is an obsolete name.
 
 ==============================================================================
 EXAMPLES					*neosnippet-examples*
@@ -312,7 +375,7 @@ EXAMPLES					*neosnippet-examples*
 SNIPPET SYNTAX					*neosnippet-snippet-syntax*
 
 It is quite easy to create your own snippets. You can use the example below to
-get started.
+get started. 
 
 Example:
 
@@ -325,29 +388,28 @@ Example:
 	   if ${1:condition}
 	     ${2}
 	   endif
+< 
 
 The snippet syntax is close to the one of |snipMate|. Each snippet starts with
-some keywords that define the name and modify the expansion and treatment of
-the snippet.
+some keywords that define the name and modify the expansion and treatment of the
+snippet.
 
 Snippet Keywords:
 
 - snippet [name] (Required)
 
-	Each snippet starts with the keyword "snippet". This keyword is
-	directly followed by the snippet name. The snippet name is used to
-	expand the snippet.
+	Each snippet starts with the keyword "snippet". This keyword is directly
+	followed by the snippet name. The snippet name is used to expand the snippet.
 
 - abbr [name] (Optional)
 
-	You can define an abbreviation for the snippet name. It will be
-	displayed in the drop down selection menu.
+	You can define an abbreviation for the snippet name. It will be displayed in
+	the drop down selection menu of the neocomplcache plugin.
 
 - alias [aliases] (Optional)
 
-	Alias names can be use as additional keywords to expand the snippet.
-	You can define multiple aliases using  either spaces ' ' or commas ','
-	as separator.
+	Alias names can be use as additional keywords to expand the snippet. You can
+	define multiple aliases using  either spaces ' ' or commas ',' as separator.
 
 	Example
 
@@ -357,34 +419,27 @@ Snippet Keywords:
 
 - regexp [pattern] (Optional)
 
-	A pattern can be defined via a regular expression. The snippet expands
-	only when the expression pattern is matched.
+	A pattern can be defined via a regular expression. The snippet expands only 
+	when the expression pattern is matched.
 
 	Example
 
 >
 	regexp '^% '
 <
-	This snippet works same as "options head".
->
-	snippet     if
-	regexp     '^\s*'
-	  if ${1:condition}
-	     ${2}
-	  endif
-<
+
 - options [options] (Optional)
 
 	Options influence the snippet behavior. The possible values are:
 
-	+ word	This snippet expands by a word boundary.
-		Note: To complete the trigger with snippets_complete, it must
-		be a word character (digits, alphabetical characters or "_").
+	+ word	This snippet expands by a word boundary. Note: To complete
+		the trigger with snippets_complete, it must be a word character 
+		(digits, alphabetical characters or "_"). 
 
 >
-	snippet     date
-	options     word
-	    `strftime("%d %b %Y")`
+		snippet     date
+		options     word
+		    `strftime("%d %b %Y")`
 <
 
 	+ head	This snippet expands at the beginning of a line only.
@@ -392,33 +447,32 @@ Snippet Keywords:
 		there for backwards compatibility.
 
 >
-	snippet     if
-	options     head
-	  if ${1:condition}
-	     ${2}
-	  endif
+		snippet     if
+		options     head
+		  if ${1:condition}
+		     ${2}
+		  endif
 <
 
-	+ indent The horizontal position of the snippet will be adjusted
+	+ indent 	The horizontal position of the snippet will be adjusted 
 		to the indent of the line above the snippet after expansion.
 
 The snippet itself starts below the part that contains the options, snippet
 aliases and keywords, described above. It contains the snippet which gets
 expanded which can contain several placeholders. The placeholders are used as
-jump points while expanding the snippet. There are several placeholders
-available providing different functionality.
+jump points while expanding the snippet. There are several placeholders available
+providing different functionality.
 
 The structure of a placeholder can be:
 
 - ${number:placeholder text}
 
-	The placeholder starts with a dollar sign "$". The number of a
-	placeholder and the placeholder text are separated by a colon ":".
-	They are surrounded by a pair of curly braces "{}". The placeholder
-	text is displayed after the snippet expansion and will be replaced by
-	your text. If you jump over the snippet and do not insert any text in
-	that placeholder position the text remains there. This can be used as
-	a default value for a certain position.
+	The placeholder starts with a dollar sign "$". The number of a placeholder 
+	and the placeholder text are separated by a colon ":". They are surrounded 
+	by a pair of curly braces "{}". The placeholder text is displayed after 
+	the snippet expansion and will be replaced by your text. If you jump over 
+	the snippet and do not insert any text in that placeholder position the text 
+	remains there. This can be used as a default value for a certain position.
 
 	Example
 
@@ -431,9 +485,9 @@ The structure of a placeholder can be:
 
 - ${number:#:placeholder text}
 
-	In this kind of placeholder the number is followed by the hash
-	character "#".  If you jump over this placeholder and do not insert
-	any text, the placeholder text will be removed.
+	In this kind of placeholder the number is followed by the hash character "#". 
+	If you jump over this placeholder and do not insert any text, the placeholder 
+	text will be removed.
 
 	Example
 
@@ -446,9 +500,8 @@ The structure of a placeholder can be:
 
 - ${number:TARGET}
 
-	This is the target placeholder which is replaced by text from a visual
-	selection.
-	Note: You need to make a visual selection and expand your
+	This is the target placeholder which is replaced by text from a visual 
+	selection. Note: You need to make a visual selection and expand your 
 	snippet with the key mapping below for this to work.
 
 	|<Plug>(neosnippet_expand_target)|.
@@ -467,9 +520,9 @@ The structure of a placeholder can be:
 
 - ${number}
 
-	This is a placeholder which you can use as a simple jump position.
-	This can be useful if you edit a placeholder inside of some sort of
-	brackets or environment and want to go on behind it after that.
+	This is a placeholder which you can use as a simple jump position. This can be
+	useful if you edit a placeholder inside of some sort of brackets or environment
+	and want to go on behind it after that.
 
 	Example
 
@@ -483,27 +536,24 @@ The structure of a placeholder can be:
 <
 
 - $number
-- ${0}
 
-	This is a synchronized placeholder. Sometimes it is required to repeat
-	a value in several positions inside a snippet. If you set the number
-	of this placeholder to the same number as one of the other
-	placeholders in the snippet, it will repeat its content. $1 is
-	synchronized to ${1} and so on. ${0} will be the final jump
-	placeholder.
+	This is a synchronized placeholder. Sometimes it is required to repeat a value
+	in several positions inside a snippet. If you set the number of this placeholder
+	to the same number as one of the other placeholders in the snippet, it will
+	repeat its content. $1 is synchronized to ${1} and so on. $0 will be the final
+	jump placeholder.
 
 	Example
 
 >
 	snippet namespace
 	namespace ${1:name} {
-	    ${0}
-	} // namespace $1
+		${0}
+	   } // namespace $1
 <
 
-	Note: If you like to include characters in snippets that already have
-	a special meaning to neosnippet you need to escape them with a
-	backslash.
+	Note: If you like to include characters in snippets that already have a
+	special meaning to neosnippet you need to escape them with a backslash.
 
 >
 	snippet code
@@ -520,8 +570,7 @@ The structure of a placeholder can be:
 	    end
 <
 
-	A placeholder value can not contain new lines. The snippet below is
-	not valid.
+	A placeholder value can not contain new lines. The snippet below is not valid.
 
 >
 	snippet invalid
@@ -547,7 +596,7 @@ You can also nest placeholders if you escape the special characters.
 	   <div ${1:id="${2:someid\}"}>${3}</div>${4}
 <
 
-In some cases you need to escape the curly brace "}" twice as shown in the
+In some cases you need to escape the curly brace "}" twice as shown in the 
 example below.
 
 >
@@ -586,7 +635,7 @@ detects this. If you want to overwrite a snippet explicitly, please use:
 After that you can redefine the snippet. But this does not work if you include
 external snippet files. There will be no warning when snippets get overwritten.
 
-Multi snippet feature in snipMate is available. Neosnippet substitutes trigger
+Multi snippet feature in snipMate is available. Neosnippet substitutes trigger 
 and descriptions spaces to '_'.
 
 >
@@ -612,8 +661,8 @@ Note: "#{string}" is comment string. But it must be in head.
 	  # It is not comment string!
 <
 
-Note: Neosnippet ignores empty or spaces lines in snippet end. If you want to
-insert empty line in snippet end, you must insert placeholder.
+Note: Neosnippet ignores empty or spaces lines in snippet end. If you want to insert empty
+line in snippet end, you must insert placeholder.
 >
 	# This is valid.
 	snippet     #!
@@ -720,9 +769,243 @@ A:
 >
 	set completeopt-=preview
 <
-Q: I want to add snippets dynamically.
+==============================================================================
+CHANGELOG			*neosnippet-changelog*
 
-A: You can use |:NeoSnippetSource| for it.
+2013-04-16
+- Improved changing foldmethod feature.
+
+2013-04-12
+- Fixed syntax file.
+
+2013-04-11
+- Improved syntax file.
+
+2013-04-02
+- Improved escape placeholder behavior.
+
+2013-03-30
+- Added rst snippets.
+- Added g:neosnippet#enable_preview option.
+
+2013-03-24
+- Improved documentation.
+- Added ruby snippets.
+- Disabled partial match.
+
+2013-03-21
+- Added sql snippet.
+
+2013-03-16
+- Supported preview window.
+
+2013-03-10
+- Fixed menu error.
+
+2013-03-06
+- Changed filtering behavior.
+
+2013-03-05
+- Fixed error in snippet source.
+
+2013-03-02
+- Ver.3.1 development is started.
+- Improved truncate menu behavior.
+
+------------------------------------------------------------------------------
+ChangeLog 3.0:
+
+2013-02-17
+- Improved :NeoSnippetEdit.
+- Added neosnippet/runtime and neosnippet/user sources.
+- Added unite__new_candidate action.
+
+2013-02-16
+- Added sh snippet.
+- Added html snippet.
+- Delete simple markers when InsertLeave.
+- Fixed s:get_sources_filetypes() error.
+
+2013-02-03
+- Improved php snippets.
+
+2013-02-01
+- Added vim snippets.
+
+2013-01-30
+- Added autoload snippet in Vim snip.
+
+2013-01-22
+- Added NeoBundleLazy snippet.
+
+2013-01-20
+- Lazy initialization.
+
+2013-01-13
+- Added neosnippet#expandable_or_jumpable().
+
+2013-01-07
+- Changed neosnippet#expandable() behavior.
+
+2013-01-02
+- Improved initialization timing.
+
+2012-12-21
+- Improved tex snippets.
+
+2012-12-13
+- Skip neocomplcache completion when expand or jump snippets.
+- Fixed expand target behavior.
+
+2012-11-09
+- Improved syntax error.
+- Fixed error in java snippet.
+- Improved snippet rank.
+- Improved keyword filter behavior.
+- Fixed convert description.
+
+2012-11-07
+- Fixed s:indent_snippet().
+
+2012-11-06
+- Improved default tex snippets.
+- Fixed expand target.
+
+2012-11-05
+- Fixed for comment string.
+- Fixed snippet parser.
+- Improved syntax description.
+- Changed spaces behavior.
+
+2012-11-04
+- Improved completion behavior.
+
+2012-11-03
+- Refactored documentation.
+- Added :NeoSnippetSource.
+- Refactored parse routine.
+- Added regexp syntax.
+
+2012-11-02
+- Added g:neosnippet#enable_snipmate_compatibility option.
+- Used partial match for neocomplcache completion.
+- Fixed for neocomplcache.
+- Improved partial match behavior.
+- Added python snippets.
+
+2012-11-01
+- Fixed snippet mirror behavior.
+- Fixed substitute of target.
+- Fixed convert description.
+- Improved java snippets.
+
+2012-10-31
+- Improved indent_snippet().
+- Added <Plug>(neosnippet_start_unite_snippet_target).
+
+2012-10-30
+- Implemented commented placeholder.
+- Improved python snippets.
+- Fixed for alias.
+- Implemented targetted placeholder.
+- Improved documentation.
+- Added FAQ section.
+- Added indent option.
+- Added <Plug>(neosnippet_register_oneshot_snippet).
+- Refactored snippets files.
+
+2012-10-29
+- Improved parse of snippets file.
+- Improved syntax of markers.
+- Improved clear select mode mappings.
+- Added get_selected_text().
+
+2012-10-28
+- Improved snipMate compatibility.
+- Improved expand behavior.
+- Improved filter behavior.
+
+2012-10-27
+- Fixed for :SnippetEdit.
+- Improved g:neosnippet#disable_select_mode_mappings behavior.
+
+2012-10-26
+- Improved javascript snippet file.
+
+2012-10-25
+- Deleted sandbox execution.
+
+2012-10-23
+- Improved neosnippet#util#expand().
+
+2012-10-21
+- Added options head.
+- Added options word.
+- Improved options word behavior.
+- Use head instead of prev_word.
+
+2012-10-20
+- Improved scala snip.
+- Added haskell snip.
+- Added vim/vital snip.
+
+2012-10-19
+- Fixed syntax highlight.
+- Improved documentation.
+- Search snippets recursively.
+- Fixed make cache behavior.
+
+2012-10-18
+- Fixed s:get_sources_list().
+- Added unite__new_candidate action in snippet source.
+- Fixed menu pattern.
+
+2012-10-17
+- Fixed alias problem.
+- Improved escape placeholder.
+
+2012-10-15
+- Improved lua snip.
+- Improved c++ snip.
+
+2012-10-07
+- Improved vim snip.
+- Improved c snip.
+
+2012-10-06
+- Improved indent snippet behavior.
+- Fixed substitute marker.
+- Fixed for E749.
+
+2012-10-04
+- Refactored snippets filter.
+- Changed :NeoSnippetEdit behavior.
+- Added scala snip.
+- Fixed s:get_cursor_snippet().
+- Changed g:neosnippet#disable_runtime_snippets behavior.
+- Changed prev_word behavior.
+
+2012-10-01
+- Deleted neosnippet#force_expandable().
+- Improved python snippets.
+
+2012-09-30
+- Changed runtime directory.
+- Vitalized.
+- Deleted neocomplcache#util functions.
+- Refactored variables.
+- Deleted s:get_cursor_keyword_snippet().
+- Improved for filetype.
+- Improved filetype complete.
+- Improved documentation.
+- Changed neocomplcache source behavior.
+- Renamed commands.
+- Fixed snippet source errors.
+
+2012-09-27
+- Ver.3 development is started.
+- Renamed documentation.
+- Renamed keymappings.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:

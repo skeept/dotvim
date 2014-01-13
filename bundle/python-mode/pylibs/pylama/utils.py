@@ -1,32 +1,26 @@
-""" Interfaces for code checking. """
-from __future__ import absolute_import, with_statement
-
 import _ast
-from os import path as op, environ
 
-from .checkers.pep8 import BaseReport, StyleGuide
-
-
-__all__ = 'pep8', 'pep257', 'mccabe', 'pyflakes', 'pylint', 'gjslint'
-
-PYLINT_RC = op.abspath(op.join(op.dirname(__file__), 'pylint.rc'))
+from .mccabe import get_code_complexity
+from .pep8 import BaseReport, StyleGuide
+from .pyflakes import checker
 
 
-class _PEP8Report(BaseReport):
+__all__ = 'pep8', 'mccabe', 'pyflakes', 'pylint'
+
+
+class PEP8Report(BaseReport):
 
     def __init__(self, *args, **kwargs):
-        super(_PEP8Report, self).__init__(*args, **kwargs)
+        super(PEP8Report, self).__init__(*args, **kwargs)
         self.errors = []
 
     def init_file(self, filename, lines, expected, line_offset):
-        """ Prepare storage for errors. """
-        super(_PEP8Report, self).init_file(
+        super(PEP8Report, self).init_file(
             filename, lines, expected, line_offset)
         self.errors = []
 
     def error(self, line_number, offset, text, check):
-        """ Save errors. """
-        code = super(_PEP8Report, self).error(
+        code = super(PEP8Report, self).error(
             line_number, offset, text, check)
 
         self.errors.append(dict(
@@ -37,47 +31,30 @@ class _PEP8Report(BaseReport):
         ))
 
     def get_file_results(self):
-        """ Get errors.
-
-        :return list: List of errors.
-
-        """
         return self.errors
+
+P8Style = StyleGuide(reporter=PEP8Report)
 
 
 def pep8(path, **meta):
-    """ PEP8 code checking.
+    " PEP8 code checking. "
 
-    :return list: List of errors.
-
-    """
-    P8Style = StyleGuide(reporter=_PEP8Report)
     return P8Style.input_file(path)
 
 
 def mccabe(path, code=None, complexity=8, **meta):
-    """ MCCabe code checking.
+    " MCCabe code checking. "
 
-    :return list: List of errors.
-
-    """
-    from .checkers.mccabe import get_code_complexity
-
-    return get_code_complexity(code, complexity, filename=path) or []
+    return get_code_complexity(code, complexity, filename=path)
 
 
 def pyflakes(path, code=None, **meta):
-    """ Pyflake code checking.
-
-    :return list: List of errors.
-
-    """
-    from .checkers.pyflakes import checker
+    " PyFlakes code checking. "
 
     errors = []
     tree = compile(code, path, "exec", _ast.PyCF_ONLY_AST)
     w = checker.Checker(tree, path)
-    w.messages = sorted(w.messages, key=lambda m: m.lineno)
+    w.messages.sort(lambda a, b: cmp(a.lineno, b.lineno))
     for w in w.messages:
         errors.append(dict(
             lnum=w.lineno,
@@ -87,22 +64,11 @@ def pyflakes(path, code=None, **meta):
 
 
 def pylint(path, **meta):
-    """ Pylint code checking.
+    from .pylint.lint import Run
+    from .pylint.reporters import BaseReporter
 
-    :return list: List of errors.
-
-    """
-    from sys import version_info
-    if version_info > (3, 0):
-        import logging
-        logging.warn("Pylint don't supported python3 and will be disabled.")
-        return []
-
-    from .checkers.pylint.lint import Run
-    from .checkers.pylint.reporters import BaseReporter
-    from .checkers.pylint.astroid import MANAGER
-
-    MANAGER.astroid_cache.clear()
+    from .pylint.logilab.astng.builder import MANAGER
+    MANAGER.astng_cache.clear()
 
     class Reporter(BaseReporter):
 
@@ -122,63 +88,10 @@ def pylint(path, **meta):
                 type=msg_id[0]
             ))
 
-    pylintrc = op.join(environ.get('HOME', ''), '.pylintrc')
-    defattrs = '-r n'
-    if not op.exists(pylintrc):
-        defattrs += ' --rcfile={0}'.format(PYLINT_RC)
-    attrs = meta.get('pylint', defattrs.split())
+    attrs = meta.get('pylint', [])
 
     runner = Run(
         [path] + attrs, reporter=Reporter(), exit=False)
     return runner.linter.reporter.errors
-
-
-def pep257(path, **meta):
-    """ PEP257 code checking.
-
-    :return list: List of errors.
-
-    """
-    f = open(path)
-    from .checkers.pep257 import check_source
-
-    errors = []
-    for er in check_source(f.read(), path):
-        errors.append(dict(
-            lnum=er.line,
-            col=er.char,
-            text='C0110 %s' % er.explanation.split('\n')[0].strip(),
-            type='W',
-        ))
-    return errors
-
-
-def gjslint(path, code=None, **meta):
-    """ gjslint code checking.
-
-    :return list: List of errors.
-
-    """
-    from .checkers.closure_linter import gjslint as lint
-
-    errors = []
-    records_iter = lint.main(["", path])
-
-    import re
-    regExErrStr = re.compile(r'Line\s(\d+),\s(E:\d+):\s(.*)')
-    for record in records_iter:
-        matchErrStr = re.match(regExErrStr, record.error_string)
-        if matchErrStr:
-            errors.append(
-                dict(
-                    type=matchErrStr.group(2),
-                    lnum=matchErrStr.group(1),
-                    # due to errors filtering type is combined with the
-                    # text
-                    text=" ".join([matchErrStr.group(
-                        2), matchErrStr.group(3)])
-                ))
-
-    return errors
 
 # pymode:lint_ignore=W0231

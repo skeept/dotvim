@@ -82,10 +82,7 @@ class BaseReporter:
             encoding = (getattr(self.out, 'encoding', None) or
                         locale.getdefaultlocale()[1] or
                         sys.getdefaultencoding())
-            # errors=replace, we don't want to crash when attempting to show
-            # source code line that can't be encoded with the current locale
-            # settings
-            return string.encode(encoding, 'replace')
+            return string.encode(encoding)
         self.encode = encode
 
     def writeln(self, string=''):

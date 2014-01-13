@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Oct 2013.
+" Last Modified: 14 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -69,8 +69,6 @@ let g:vimfiler_max_directories_history =
       \ get(g:, 'vimfiler_max_directories_history', 50)
 let g:vimfiler_safe_mode_by_default =
       \ get(g:, 'vimfiler_safe_mode_by_default', 1)
-let g:vimfiler_force_overwrite_statusline =
-      \ get(g:, 'vimfiler_force_overwrite_statusline', 1)
 let g:vimfiler_time_format =
       \ get(g:, 'vimfiler_time_format', '%y/%m/%d %H:%M')
 let g:vimfiler_tree_leaf_icon =
@@ -79,8 +77,6 @@ let g:vimfiler_tree_opened_icon =
       \ get(g:, 'vimfiler_tree_opened_icon', '-')
 let g:vimfiler_tree_closed_icon =
       \ get(g:, 'vimfiler_tree_closed_icon', '+')
-let g:vimfiler_tree_indentation =
-      \ get(g:, 'vimfiler_tree_indentation', 1)
 let g:vimfiler_file_icon =
       \ get(g:, 'vimfiler_file_icon', ' ')
 let g:vimfiler_readonly_file_icon =
@@ -95,8 +91,13 @@ let g:vimfiler_default_columns =
       \ get(g:, 'vimfiler_default_columns', 'type:size:time')
 let g:vimfiler_explorer_columns =
       \ get(g:, 'vimfiler_explorer_columns', 'type')
-let g:vimfiler_ignore_pattern =
-      \ get(g:, 'vimfiler_ignore_pattern', '^\.')
+let g:vimfiler_data_directory =
+      \ substitute(fnamemodify(get(
+      \   g:, 'vimfiler_data_directory', '~/.vimfiler'),
+      \  ':p'), '\\', '/', 'g')
+if !isdirectory(g:vimfiler_data_directory)
+  call mkdir(g:vimfiler_data_directory)
+endif
 
 " Set extensions.
 let g:vimfiler_extensions =
@@ -132,9 +133,10 @@ command! -nargs=? -complete=customlist,vimfiler#complete VimFilerSimple
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerSplit
       \ call s:call_vimfiler({ 'split' : 1, }, <q-args>)
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerTab
-      \ call s:call_vimfiler({ 'tab' : 1 }, <q-args>)
+      \ tabnew | call s:call_vimfiler({ 'create' : 1 }, <q-args>)
 command! -nargs=? -complete=customlist,vimfiler#complete VimFilerExplorer
       \ call s:call_vimfiler({ 'explorer' : 1, }, <q-args>)
+command! VimFilerDetectDrives call vimfiler#detect_drives()
 command! -nargs=1 VimFilerClose call vimfiler#mappings#close(<q-args>)
 
 augroup vimfiler
@@ -146,7 +148,7 @@ augroup vimfiler
         \ call vimfiler#handler#_event_handler('FileAppendCmd')
   autocmd FileReadCmd ??*:{*,*/*}
         \ call vimfiler#handler#_event_handler('FileReadCmd')
-  autocmd BufEnter,VimEnter,BufNew,BufWinEnter
+  autocmd BufEnter,VimEnter,BufNew
         \ * call s:browse_check(expand('<amatch>'))
 augroup END
 

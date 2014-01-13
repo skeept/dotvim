@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neosnippet.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Oct 2013.
+" Last Modified: 16 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,9 +31,11 @@ set cpo&vim
 call neosnippet#util#set_default(
       \ 'g:neosnippet#disable_runtime_snippets', {})
 call neosnippet#util#set_default(
-      \ 'g:neosnippet#snippets_directory', '')
+      \ 'g:neosnippet#snippets_directory',
+      \ '', 'g:neocomplcache_snippets_dir')
 call neosnippet#util#set_default(
-      \ 'g:neosnippet#disable_select_mode_mappings', 1)
+      \ 'g:neosnippet#disable_select_mode_mappings',
+      \ 1, 'g:neocomplcache_disable_select_mode_mappings')
 call neosnippet#util#set_default(
       \ 'g:neosnippet#enable_snipmate_compatibility', 0)
 "}}}
@@ -45,17 +47,30 @@ let s:neosnippet_options = [
       \]
 "}}}
 
-function! neosnippet#initialize() "{{{
-  let s:is_initialized = 1
+function! neosnippet#_lazy_initialize() "{{{
+  if !exists('s:lazy_progress')
+    let s:lazy_progress = 0
+  endif
 
-  call s:initialize_script_variables()
-  call s:initialize_others()
-  call s:initialize_cache()
+  if s:lazy_progress == 0
+  elseif s:lazy_progress == 1
+    call s:initialize_script_variables()
+  elseif s:lazy_progress == 2
+    call s:initialize_others()
+  else
+    call s:initialize_cache()
+  endif
+
+  let s:lazy_progress += 1
 endfunction"}}}
 
 function! s:check_initialize() "{{{
   if !exists('s:is_initialized')
-    call neosnippet#initialize()
+    let s:is_initialized = 1
+
+    call s:initialize_script_variables()
+    call s:initialize_others()
+    call s:initialize_cache()
   endif
 endfunction"}}}
 
@@ -172,12 +187,6 @@ function! s:initialize_snippet_options() "{{{
 endfunction"}}}
 
 function! neosnippet#edit_snippets(args) "{{{
-  if neosnippet#util#is_sudo()
-    call neosnippet#util#print_error(
-          \ '"sudo vim" is detected. This feature is disabled.')
-    return
-  endif
-
   call s:check_initialize()
 
   let [args, options] = neosnippet#util#parse_options(
@@ -827,8 +836,7 @@ function! s:expand_placeholder(start, end, holder_cnt, line, ...) "{{{
         \ s:get_mirror_placeholder_marker_substitute_pattern(),
         \ '<|\1|>', 'g')
 
-  " len() cannot use for multibyte.
-  let default_len = len(substitute(default, '.', 'x', 'g'))
+  let default_len = len(default)
 
   let pos = getpos('.')
   let pos[1] = a:line
@@ -947,7 +955,7 @@ function! s:substitute_placeholder_marker(start, end, snippet_holder_cnt) "{{{
         let sub = escape(matchstr(getline(line),
               \ substitute(s:get_sync_placeholder_marker_default_pattern(),
               \ '\\d\\+', cnt, '')), '/\')
-        silent execute printf('%d,%ds/\m' . mirror_marker . '/%s/'
+        silent execute printf('%d,%ds/' . mirror_marker . '/%s/'
           \ . (&gdefault ? '' : 'g'), a:start, a:end, sub)
         call setline(line, substitute(getline(line), sync_marker, sub, ''))
       endif
@@ -961,7 +969,7 @@ function! s:substitute_placeholder_marker(start, end, snippet_holder_cnt) "{{{
     let mirror_marker = substitute(
           \ s:get_mirror_placeholder_marker_pattern(),
           \ '\\d\\+', cnt, '')
-    silent execute printf('%%s/\m' . mirror_marker . '/%s/'
+    silent execute printf('%%s/' . mirror_marker . '/%s/'
           \ . (&gdefault ? 'g' : ''), sub)
     let sync_marker = substitute(s:get_sync_placeholder_marker_pattern(),
         \ '\\d\\+', cnt, '')
@@ -1047,33 +1055,14 @@ function! neosnippet#get_runtime_snippets_directory() "{{{
   return copy(s:runtime_dir)
 endfunction"}}}
 function! neosnippet#get_filetype() "{{{
-  if !exists('s:exists_context_filetype')
-    " context_filetype.vim installation check.
-    try
-      call context_filetype#version()
-      let s:exists_context_filetype = 1
-    catch
-      let s:exists_context_filetype = 0
-    endtry
-  endif
-
-  let context_filetype =
-        \ s:exists_context_filetype ?
-        \ context_filetype#get_filetype() : &filetype
-  if context_filetype == ''
-    let context_filetype = 'nothing'
-  endif
-
-  return context_filetype
+  return exists('*neocomplcache#get_context_filetype') ?
+        \ neocomplcache#get_context_filetype(1) :
+        \ (&filetype == '' ? 'nothing' : &filetype)
 endfunction"}}}
 function! s:get_sources_filetypes(filetype) "{{{
-  let filetypes =
-        \ exists('*neocomplete#get_source_filetypes') ?
-        \   neocomplete#get_source_filetypes(a:filetype) :
-        \ exists('*neocomplcache#get_source_filetypes') ?
-        \   neocomplcache#get_source_filetypes(a:filetype) :
-        \   [(a:filetype == '') ? 'nothing' : a:filetype]
-  return filetypes + ['_']
+  return (exists('*neocomplcache#get_source_filetypes') ?
+        \ neocomplcache#get_source_filetypes(a:filetype) :
+        \ [(a:filetype == '') ? 'nothing' : a:filetype]) + ['_']
 endfunction"}}}
 
 function! neosnippet#edit_complete(arglead, cmdline, cursorpos) "{{{
@@ -1238,7 +1227,7 @@ function! neosnippet#clear_select_mode_mappings() "{{{
   redir END
 
   for line in map(filter(split(mappings, '\n'),
-        \ "v:val !~# '^s'"),
+        \ "v:val !~# 'neosnippet\\|neocomplcache_snippets'"),
         \ "substitute(v:val, '<NL>', '<C-J>', 'g')")
     let map = matchstr(line, '^\a*\s*\zs\S\+')
     let map = substitute(map, '<NL>', '<C-j>', 'g')
@@ -1252,15 +1241,14 @@ function! neosnippet#clear_select_mode_mappings() "{{{
   snoremap <BS>     a<BS>
   snoremap <Del>    a<BS>
   snoremap <C-h>    a<BS>
+  snoremap <right> <ESC>a
+  snoremap <left>  <ESC>bi
 endfunction"}}}
 
 function! s:skip_next_auto_completion() "{{{
   " Skip next auto completion.
   if exists('*neocomplcache#skip_next_complete')
     call neocomplcache#skip_next_complete()
-  endif
-  if exists('*neocomplete#skip_next_complete')
-    call neocomplete#skip_next_complete()
   endif
 
   let neosnippet = neosnippet#get_current_neosnippet()
@@ -1288,25 +1276,17 @@ function! s:on_insert_leave() "{{{
         \ expand_info.end_patterns)
 
   let pos = getpos('.')
-
-  " Found snippet.
-  let found = 0
   try
     while s:search_snippet_range(begin, end, expand_info.holder_cnt, 0)
       " Next count.
       let expand_info.holder_cnt += 1
-      let found = 1
     endwhile
 
     " Search placeholder 0.
-    if s:search_snippet_range(begin, end, 0)
-      let found = 1
-    endif
-  finally
-    if found
-      stopinsert
-    endif
+    call s:search_snippet_range(begin, end, 0)
 
+  finally
+    stopinsert
     call setpos('.', pos)
   endtry
 endfunction"}}}
@@ -1344,6 +1324,11 @@ function! s:initialize_script_variables() "{{{
   let s:snippets_expand_stack = []
   let s:snippets = {}
 
+  if get(g:, 'neocomplcache_snippets_disable_runtime_snippets', 0)
+    " Set for backward compatibility.
+    let g:neosnippet#disable_runtime_snippets._ = 1
+  endif
+
   " Set runtime dir.
   let s:runtime_dir = split(globpath(&runtimepath,
         \ 'autoload/neosnippet/snippets'), '\n')
@@ -1356,7 +1341,7 @@ function! s:initialize_script_variables() "{{{
   let s:snippets_dir = []
   for dir in split(g:neosnippet#snippets_directory, '\s*,\s*')
     let dir = neosnippet#util#expand(dir)
-    if !isdirectory(dir) && !neosnippet#util#is_sudo()
+    if !isdirectory(dir)
       call mkdir(dir, 'p')
     endif
     call add(s:snippets_dir, dir)
@@ -1407,8 +1392,6 @@ function! s:initialize_others() "{{{
   if get(g:, 'loaded_echodoc', 0)
     call echodoc#register('snippets_complete', s:doc_dict)
   endif
-
-  call neosnippet#clear_select_mode_mappings()
 endfunction"}}}
 
 let &cpo = s:save_cpo

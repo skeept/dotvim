@@ -1,16 +1,17 @@
 " ftimproved.vim - Better f/t command for Vim
 " -------------------------------------------------------------
-" Version:	   0.7
+" Version:	   0.6
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 14 Aug 2013 22:33:14 +0200
-" Script:  http://www.vim.org/scripts/script.php?script_id=3877
+" Last Change: Sat, 16 Mar 2013 14:59:42 +0100
+"
+" Script: 
 " Copyright:   (c) 2009 - 2013  by Christian Brabandt
-"			   The VIM LICENSE applies to ft_improved.vim 
+"			   The VIM LICENSE applies to histwin.vim 
 "			   (see |copyright|) except use "ft_improved.vim" 
 "			   instead of "Vim".
 "			   No warranty, express or implied.
 "	 *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3877 7 :AutoInstall: ft_improved.vim
+" GetLatestVimScripts: 3877 6 :AutoInstall: ft_improved.vim
 "
 " Functions:
 let s:cpo= &cpo
@@ -41,7 +42,6 @@ fun! <sid>ReturnOperatorOffset(f_mot, fwd, mode) "{{{1
 	endif
 	return ['', '']
 endfun
-
 fun! <sid>DebugOutput(string) "{{{1
 	if s:debug
 		echo strtrans(a:string)
@@ -56,7 +56,7 @@ fun! <sid>Opposite(char) "{{{1
 endfun
 
 fun! <sid>SearchForChar(char) "{{{1
-	if a:char =~# '[ft]'
+	if a:char =~ '[ft]'
 		return '/'
 	else
 		return '?'
@@ -64,20 +64,10 @@ fun! <sid>SearchForChar(char) "{{{1
 endfun
 
 fun! <sid>EscapePat(pat, vmagic) "{{{1
-	let pat = escape(a:pat, '\''')
-	if pat ==# ''
-		let pat = '\r'
-	elseif pat ==# '	'
-		let pat = '\t'
-	" elseif pat ==# ''  " Will be skipped anyhow
-	"	let pat = '\e'
-	"
-	" TODO: Other characters to take care of?
-	endif
-	return (a:vmagic ? '\V' : '').pat
+	return (a:vmagic ? '\V' : '').escape(a:pat, '\')
 endfun
 
-fun! <sid>ColonPattern(cmd, pat, off, f, fwd) "{{{1
+fun! <sid>ColonPattern(cmd, pat, off, f) "{{{1
 	if !exists("s:colon")
 		let s:colon = {}
 	endif
@@ -90,24 +80,14 @@ fun! <sid>ColonPattern(cmd, pat, off, f, fwd) "{{{1
 	elseif a:cmd == 'F'
 		let cmd = '?'
 	endif
-	if a:fwd
-		let s:colon[';'] = cmd[-1:]. pat. 
-			\ (empty(a:off) ? cmd[-1:] : a:off)
-		let s:colon[','] = cmd[:-2]. opp. pat.
-			\ (empty(a:off) ? opp : opp_off . a:off[1])
-	else
-		let s:colon[','] = cmd[-1:]. pat. 
-			\ (empty(a:off) ? cmd[-1:] : a:off)
-		let s:colon[';'] = cmd[:-2]. opp. pat.
-			\ (empty(a:off) ? opp : opp_off . a:off[1])
-	endif
+	let s:colon[';'] = cmd[-1:]. pat. 
+		\ (empty(a:off) ? cmd[-1:] : a:off)
+	let s:colon[','] = cmd[:-2]. opp. pat.
+	    \ (empty(a:off) ? opp : opp_off . a:off[1])
 	let s:colon['cmd'] = a:f
 endfun
 
 fun! <sid>HighlightMatch(char, dir) "{{{1
-	if get(g:, 'ft_improved_nohighlight', 0)
-		return
-	endif
 	if exists("s:matchid")
 		sil! call matchdelete(s:matchid)
 	endif
@@ -121,12 +101,12 @@ fun! <sid>HighlightMatch(char, dir) "{{{1
 			let pat = '\%(\%>'. col('.'). 'c\&\%'. line('.'). 'l'
 			let pat .= '\|\%>'. line('.'). 'l\)'. a:char
 			" Make sure, it only matches within the current viewport
-			let pat = '\%('. pat. '\m\)\ze\&\%<'.(line('w$')+1).'l'.a:char
+			let pat = '\%('. pat. '\m\)\ze\&\%<'.(line('w$')+1).'l'
 		else
 			let pat = '\%(\%<'. col('.'). 'c\&\%'. line('.'). 'l'
 			let pat .= '\|\%<'. line('.'). 'l\)'. a:char
 			" Make sure, it only matches within the current viewport
-			let pat = '\%('. pat. '\m\)\ze\&\%>'.(line('w0')-1).'l'.a:char
+			let pat = '\%('. pat. '\m\)\ze\&\%>'.(line('w0')-1).'l'
 		endif
 		let s:matchid = matchadd('IncSearch', pat)
 		redraw!
@@ -207,7 +187,7 @@ fun! <sid>CountMatchesWin(pat, forward) "{{{1
 endfu
 
 fun! ftimproved#ColonCommand(f, mode) "{{{1
-	" a:f f/F command, a:mode: map mode
+	" should be a noop
 	if !exists("s:searchforward")
 	    let s:searchforward = 1
 	endif
@@ -231,20 +211,12 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	endif
 	if res != fcmd
 		try
-			let pat = matchlist(res, '^v\?\([/?]\)\(.*\)\1\([bse].\)\?')
+			let pat = matchlist(res, '^v\?\([/?]\)\(.*\)\1')
 			" ?-search, means, we need to escape '?' in the pattern
 			let spat = pat[2]
 			if pat[1] =~ '[?/]'
 				let pat[2] = escape(pat[2], pat[1])
-				if !s:colon['cmd'] && pat[1] == '?' " t or T command
-					" T command
-					let res = pat[1]. '\('. pat[2]. '\m\)\@<=.' . pat[1]
-				elseif !s:colon['cmd']
-					" t command and forward search
-					let res = pat[1]. '.\@>\(' . pat[2]. '\)'. pat[1]
-				else
-					let res = pat[1] . pat[2] . pat[1]
-				endif
+				let res = pat[1] . pat[2] . pat[1]
 			endif
 			if !search(spat, (pat[1]=='?' ? 'b' : '').'nW') || 
 				\ <sid>CheckSearchWrap(spat, pat[1]!='?', v:count1)
@@ -270,9 +242,6 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 endfun
 
 fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
-	" f: its an f-command
-	" fwd: forward motion
-	" mode: mapping mode
 	try
 		let char = nr2char(getchar())
 		if  char == s:escape
@@ -281,11 +250,10 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		elseif empty(char) || char ==? "\x80\xFD\x60" "CursorHoldEvent"
 			return s:escape
 		endif
-		let orig_char = char
 		let char  = <sid>EscapePat(char, 1)
 		" ignore case of pattern? Does only work with search, not with original
 		" f/F/t/T commands
-		if get(g:, "ft_improved_ignorecase", 0)
+		if !get(g:, "ft_improved_ignorecase", 0)
 			let char = '\c'.char
 		endif
 		if get(g:, "ft_improved_multichars", 0) &&
@@ -340,21 +308,19 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		let pat = char
 		if !get(g:, "ft_improved_multichars", 0)
 		" Check if normal f/t commands would work:
-			if search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'nW') == line('.')
-				\ && a:fwd
+			if search(pat, 'nW') == line('.') && a:fwd
 				let s:searchforward = 1
 				let cmd = (a:f ? 'f' : 't')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
-						\ pat, '', a:f, a:fwd)
-				return cmd.orig_char
+						\ pat, '', a:f)
+				return cmd.char
 
-			elseif search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'bnW') == line('.')
-				\ && !a:fwd
+			elseif search(pat, 'bnw') == line('.') && !a:fwd
 				let s:searchforward = 0
 				let cmd = (a:f ? 'F' : 'T')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
-						\ pat, '', a:f, a:fwd)
-				return cmd.orig_char
+						\ pat, '', a:f)
+				return cmd. char
 			endif
 		endif
 
@@ -363,7 +329,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 			\  (search(pat, 'bnW') == 0 && !a:fwd)
 			" return ESC
 			call <sid>ColonPattern(<sid>SearchForChar(cmd),
-					\ pat, '', a:f, a:fwd)
+					\ pat, '', a:f)
 			return s:escape
 		endif
 
@@ -397,10 +363,8 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 			let cmd  = op_off[0].cmd
 			" if match is on previous line the last char, don't add offset
 			if !a:fwd
-				let pos=searchpos(pat, 'bnW')
-				if ((pos[0] < line('.') &&
-					\ pos[1] != strlen(substitute(getline(pos[0]), '.', 'X', 'g'))) ||
-					\ pos[0] == line('.'))
+				let tline=search(pat, 'bnW')
+				if tline < line('.') && getline(tline) !~ pat.'\$'
 					let off .= op_off[1]
 				else
 					let no_offset = 1
@@ -421,29 +385,23 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 
 		" save pattern for ';' and ','
 		call <sid>ColonPattern(cmd, pat,
-				\ off. (no_offset ? op_off[1] : ''), a:f, a:fwd)
+				\ off. (no_offset ? op_off[1] : ''), a:f)
 
 		let pat = pat1
-		let post_cmd = ''
-		" If operator is c, don't switch to normal mode after the
-		" command, else we would lose the repeatability using '.'
-		" (e.g. cf,foobar<esc> is not repeatable anymore)
-		if a:mode != 'o' && v:operator != 'c'
-		    if v:operator == 'c'
-			    let mode = "\<C-\>\<C-O>"
-		    else
-			    let mode = "\<C-\>\<C-N>"
-		    endif
-		    let post_cmd = (a:mode == 'o' ? mode : '').
-			    \ ":\<C-U>call histdel('/', -1)\<cr>".
-			    \ (a:mode == 'o' ? mode : '').
-			    \ ":\<C-U>let @/='". oldsearchpat. "'\<cr>"
+		call <sid>DebugOutput(res)
+		if v:operator == 'c'
+			let mode = "\<C-\>\<C-O>"
+		else
+			let mode = "\<C-\>\<C-N>"
 		endif
+		let post_cmd = (a:mode == 'o' ? mode : '').
+			\ ":call histdel('/', -1)\<cr>".
+			\ (a:mode == 'o' ? mode : '').
+			\ ":let @/='". oldsearchpat. "'\<cr>"
 
-		" For visual mode, the :Ex commands exit the visual selection, so need
-		" to reselect it
-		call <sid>DebugOutput(res.post_cmd. ((a:mode ==? 'x' && mode() !~ '[vV]') ? 'gv' : ''))
-		return res.post_cmd. (a:mode ==? 'x' ? 'gv' : '')
+		" for operator-pending mappings, don't return the post_cmd, it could
+		" end up in insert mode
+		return res.post_cmd
 		"return res. ":let @/='".oldsearchpat."'\n"
 	finally 
 		call <sid>HighlightMatch('', a:fwd)

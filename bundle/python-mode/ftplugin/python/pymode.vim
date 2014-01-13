@@ -1,6 +1,6 @@
 runtime ftplugin/python/init-pymode.vim
 
-if !g:pymode
+if pymode#Default('b:pymode', 1)
     finish
 endif
 
@@ -26,7 +26,6 @@ if pymode#Option('options')
     endif
     setlocal nowrap
     setlocal textwidth=79
-    setlocal commentstring=#%s
 endif
 
 " }}}
@@ -74,11 +73,9 @@ if pymode#Option('lint')
     endif
 
     " DESC: Run queue
-    if pymode#Option('lint_async')
-        let &l:updatetime = g:pymode_updatetime
-        au CursorHold <buffer> call pymode#queue#Poll()
-        au BufLeave <buffer> Python queue.stop_queue()
-    endif
+    let &l:updatetime = g:pymode_updatetime
+    au CursorHold <buffer> call pymode#queue#Poll()
+    au BufLeave <buffer> py queue.stop_queue()
 
 endif
 
@@ -96,11 +93,10 @@ if pymode#Option('rope')
     exe "noremap <silent> <buffer> " . g:pymode_rope_short_prefix . "m :emenu Rope . <TAB>"
     inoremap <silent> <buffer> <S-TAB> <C-R>=RopeLuckyAssistInsertMode()<CR>
 
-    let s:prascm = g:pymode_rope_always_show_complete_menu ? "<C-P>" : ""
-
-    exe "inoremap <silent> <buffer> " . g:pymode_rope_autocomplete_map . " <C-R>=RopeCodeAssistInsertMode()<CR>" . s:prascm
-    if tolower(g:pymode_rope_autocomplete_map) == '<c-space>'
+    if g:pymode_rope_map_space
+        let s:prascm = g:pymode_rope_always_show_complete_menu ? "<C-P>" : ""
         exe "inoremap <silent> <buffer> <Nul> <C-R>=RopeCodeAssistInsertMode()<CR>" . s:prascm
+        exe "inoremap <silent> <buffer> <c-space> <C-R>=RopeCodeAssistInsertMode()<CR>" . s:prascm
     endif
 
 endif

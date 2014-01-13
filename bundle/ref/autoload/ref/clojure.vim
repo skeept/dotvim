@@ -1,6 +1,6 @@
 " A ref source for clojure.
-" Version: 0.1.1
-" Author:  thinca <thinca+vim@gmail.com>
+" Version: 0.1.0
+" Author : thinca <thinca+vim@gmail.com>
 " License: Creative Commons Attribution 2.1 Japan License
 "          <http://creativecommons.org/licenses/by/2.1/jp/deed.en>
 
@@ -9,9 +9,7 @@ set cpo&vim
 
 " options. {{{1
 if !exists('g:ref_clojure_cmd')  " {{{2
-  let g:ref_clojure_cmd =
-        \ executable('clj') ? 'clj' :
-        \ executable('clojure-1.5') ? 'clojure-1.5' : ''
+  let g:ref_clojure_cmd = executable('clj') ? 'clj' : ''
 endif
 
 if !exists('g:ref_clojure_overview')  " {{{2
@@ -99,11 +97,8 @@ function! s:classpath()
 endfunction
 
 function! s:precode()
-  let given = get(g:, 'ref_clojure_precode', '')
-  \         . get(b:, 'ref_clojure_precode', '')
-  return given ==# '' ?
-        \ '(ns vim-ref (:use [clojure.repl :only (doc find-doc)]))' :
-        \ given
+  return get(g:, 'ref_clojure_precode', '')
+  \    . get(b:, 'ref_clojure_precode', '')
 endfunction
 
 function! s:syntax()

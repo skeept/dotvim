@@ -6,12 +6,11 @@ small templates for commonly used code that you can fill in on the
 fly. To use snippets can increase your productivity in Vim a lot.
 The functionality of this plug-in is quite similar to plug-ins like
 snipMate.vim or snippetsEmu.vim. But since you can choose snippets with the
-[neocomplcache](https://github.com/Shougo/neocomplcache.vim) /
-[neocomplete](https://github.com/Shougo/neocomplete.vim) interface, you might
+[Neocomplcache](https://github.com/Shougo/neocomplcache) interface, you might
 have less trouble using them, because you do not have to remember each snippet
 name.
 
-Note: neocomplcache/neocomplete is NOT required! But recommended.
+Note: neocomplcache is NOT required! But recommended.
 
 Extra snippets files are available in:
 [vim-snippets](https://github.com/honza/vim-snippets)
@@ -25,25 +24,18 @@ required files into your `.vim` folder.
 
 ### Manual (not recommended)
 
-1. Install the
-   [neocomplcache](https://github.com/Shougo/neocomplcache.vim)/
-   [neocomplete](https://github.com/Shougo/neocomplete.vim) plugin first.
+1. Install the [Neocomplcache](https://github.com/Shougo/neocomplcache) plugin first.
 2. Put files in your Vim directory (usually `~/.vim/` or
    `%PROGRAMFILES%/Vim/vimfiles` on Windows).
 
 ### Vundle 
 
-1. Setup the [vundle](https://github.com/gmarik/vundle) package manager
-2. Set the bundles for [Neocomplcache](https://github.com/Shougo/neocomplcache)
-   or [neocomplete](https://github.com/Shougo/neocomplete.vim)
-   And [Neosnippet](https://github.com/Shougo/neosnippet)
+1. Setup the [vundle](https://github.com/gmarik/vundle) package manager 
+2. Set the bundles for [Neocomplcache](https://github.com/Shougo/neocomplcache) and [Neosnippet](https://github.com/Shougo/neosnippet) 
 
-    ```vim
-    Bundle 'Shougo/neocomplcache'
-    or
-    Bundle 'Shougo/neocomplete'
-
-    Bundle 'Shougo/neosnippet'
+    ```
+    Bundle 'Shougo/neocomplcache.git'
+    Bundle 'Shougo/neosnippet.git'
     ```
 
 3. Open up Vim and start installation with `:BundleInstall`
@@ -51,23 +43,18 @@ required files into your `.vim` folder.
 ### Neobundle 
 
 1. Setup the [neobundle](https://github.com/Shougo/neobundle.vim) package manager 
-2. Set the bundles for [Neocomplcache](https://github.com/Shougo/neocomplcache)
-   or [neocomplete](https://github.com/Shougo/neocomplete.vim)
-   And [Neosnippet](https://github.com/Shougo/neosnippet)
+2. Set the bundles for [Neocomplcache](https://github.com/Shougo/neocomplcache) and [Neosnippet](https://github.com/Shougo/neosnippet) 
 
-    ```vim
-    NeoBundle 'Shougo/neocomplcache'
-    or
-    NeoBundle 'Shougo/neocomplete'
-
-    NeoBundle 'Shougo/neosnippet'
+    ```
+    NeoBundle 'Shougo/neocomplcache.git'
+    NeoBundle 'Shougo/neosnippet.git'
     ```
 
 3. Open up Vim and start installation with `:NeoBundleInstall`
 
 ### VAM (vim-addon-manager)
 
-1. Setup the [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager)
+1. Setup the [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager) 
    package manager.
 2. Add `neosnippet` to the list of addons in your vimrc:
 
@@ -93,20 +80,16 @@ can use the following keys:
 " Plugin key-mappings.
 imap <C-k>     <Plug>(neosnippet_expand_or_jump)
 smap <C-k>     <Plug>(neosnippet_expand_or_jump)
-xmap <C-k>     <Plug>(neosnippet_expand_target)
 
 " SuperTab like snippets behavior.
-imap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: pumvisible() ? "\<C-n>" : "\<TAB>"
-smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)"
-\: "\<TAB>"
+imap <expr><TAB> neosnippet#expandable_or_jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
+smap <expr><TAB> neosnippet#expandable_or_jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
 " For snippet_complete marker.
 if has('conceal')
   set conceallevel=2 concealcursor=i
 endif
+
 ```
 
 If you want to use a different collection of snippets than the
@@ -115,9 +98,6 @@ the `g:neosnippet#snippets_directory` variable (e.g [Honza's
 Snippets](https://github.com/honza/vim-snippets))
 
 ```vim
-" Enable snipMate compatibility feature.
-let g:neosnippet#enable_snipmate_compatibility = 1
-
 " Tell Neosnippet about the other snippets
 let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
 ```

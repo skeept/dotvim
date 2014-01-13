@@ -7,8 +7,6 @@ call vimtap#Plan(testsnumber)
 let tcount = 1
 let expect = 0
 let evaluate = 0
-let commands = []
-let header = ''
 for item in lines
   if item =~ '^=\{80}$'
     let expect = 1
@@ -16,20 +14,14 @@ for item in lines
     continue
   endif
 
-  if item =~ '^#' && expect == 0
-    " A comment.
-    let header = empty(header) ? item[1:] : 'Lines should match.'
-    continue
-  endif
-  if item =~ '^\s*$' && expect == 0
-    " An empty line.
+  if item =~ '^#\|^\s*$' && expect == 0
+    " A comment or empty line.
     continue
   endif
   if ! expect
     " A command.
-    call add(commands, item)
     exec item
-    "call vimtap#Diag(item)
+    call vimtap#Diag(item)
     continue
   endif
   if item =~ '^-\{80}$'
@@ -43,13 +35,8 @@ for item in lines
   let passed = lines == expected
   echom string(lines)
   echom string(expected)
-  call vimtap#Is(lines, expected, header)
-  echom string(commands)
-  for cmd in commands
-    call vimtap#Diag(cmd)
-  endfor
-  let commands = []
-  let header = ''
+  call vimtap#Ok(passed, string(expected) .
+        \ (passed ? ' =' : ' !') . '= ' . string(lines))
   let tcount += 1
 endfor
 call vimtest#Quit()

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: util.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 18 Aug 2013.
+" Last Modified: 01 Apr 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,20 +28,18 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:V = vital#of('vimfiler')
-
-function! vimfiler#util#get_vital() "{{{
-  return s:V
-endfunction"}}}
-
-let s:List = s:V.import('Data.List')
+let s:List = vital#of('vimfiler').import('Data.List')
 
 let s:is_windows = has('win16') || has('win32') || has('win64')
 
 function! vimfiler#util#truncate_smart(...)
-  return call(s:V.truncate_skipping, a:000)
+  return call(s:V.truncate_smart, a:000)
 endfunction
 function! vimfiler#util#truncate(...)
   return call(s:V.truncate, a:000)
+endfunction
+function! vimfiler#util#strchars(...)
+  return call(s:V.strchars, a:000)
 endfunction
 function! vimfiler#util#strwidthpart(...)
   return call(s:V.strwidthpart, a:000)
@@ -96,12 +94,6 @@ function! vimfiler#util#sort_by(...)
 endfunction
 function! vimfiler#util#escape_file_searching(...)
   return call(s:V.escape_file_searching, a:000)
-endfunction
-
-function! vimfiler#util#has_lua()
-  " Note: Disabled if_lua feature if less than 7.3.885.
-  " Because if_lua has double free problem.
-  return has('lua') && (v:version > 703 || v:version == 703 && has('patch885'))
 endfunction
 
 function! vimfiler#util#is_cmdwin() "{{{
@@ -172,22 +164,15 @@ function! vimfiler#util#alternate_buffer() "{{{
 endfunction"}}}
 function! vimfiler#util#delete_buffer(...) "{{{
   let context = vimfiler#get_context()
-  let delete_bufnr = get(a:000, 0, bufnr('%'))
+  let bufnr = get(a:000, 0, bufnr('%'))
 
   if winnr('$') != 1 && (context.split || context.toggle
         \ || vimfiler#exists_another_vimfiler())
-    " Move to delete buffer window.
-    let current_bufnr = winbufnr(winnr())
-    try
-      execute bufwinnr(delete_bufnr).'wincmd w'
-      close
-    finally
-      execute bufwinnr(current_bufnr).'wincmd w'
-    endtry
+    close
   else
     call vimfiler#util#alternate_buffer()
   endif
-  execute 'silent bdelete!' delete_bufnr
+  execute 'silent bdelete!' bufnr
 endfunction"}}}
 function! s:buflisted(bufnr) "{{{
   return exists('t:unite_buffer_dictionary') ?
