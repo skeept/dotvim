@@ -3,8 +3,9 @@
 " Version:	   0.31
 " Maintainer:  Christian Brabandt <cb@256bit.org>
 " Last Change: Sat, 16 Feb 2013 22:28:31 +0100
+"
 " Script: http://www.vim.org/scripts/script.php?script_id=3075 
-" Copyright:   (c) 2009-2013 by Christian Brabandt
+" Copyright:   (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
 "			   The VIM LICENSE applies to NrrwRgn.vim 
 "			   (see |copyright|) except use "NrrwRgn.vim" 
 "			   instead of "Vim".
@@ -346,23 +347,6 @@ fun! <sid>GeneratePattern(startl, endl, mode, ...) "{{{1
 endfun 
 
 fun! <sid>Options(search) "{{{1
-	" return buffer local options (generated from $VIMRUNTIME/doc/options.txt
-
-	return
-	\ ['autoindent', 'autoread', 'balloonexpr', 'binary', 'bomb',
-	\  'cindent', 'cinkeys', 'cinoptions', 'cinwords', 'commentstring',
-	\  'complete', 'completefunc', 'copyindent', 'cryptmethod', 'define',
-	\  'dictionary', 'endofline', 'equalprg', 'errorformat', 'expandtab',
-	\  'fileencoding', 'filetype', 'formatoptions', 'formatlistpat',
-	\  'formatexpr', 'iminsert', 'imsearch', 'include', 'includeexpr',
-	\  'indentexpr', 'indentkeys', 'infercase', 'key', 'keymap', 'lisp',
-	\  'makeprg', 'matchpairs', 'nrformats', 'omnifunc', 'osfiletype',
-	\  'preserveindent', 'quoteescape', 'shiftwidth', 'shortname', 'smartindent',
-	\  'softtabstop', 'spellcapcheck', 'spellfile', 'spelllang', 'suffixesadd',
-	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'undofile',
-	\  'wrapmargin']
-
-	" old function, only used to generate above list
 	let c=[]
 	let buf=bufnr('')
 	try
@@ -398,7 +382,7 @@ fun! <sid>Options(search) "{{{1
 	finally
 		if fnamemodify(bufname(''),':p') ==
 		   \expand("$VIMRUNTIME/doc/options.txt")
-			noa bwipe
+			bwipe
 		endif
 		exe "noa "	bufwinnr(buf) "wincmd  w"
 		return c
@@ -439,7 +423,7 @@ fun! <sid>CheckProtected() "{{{1
 	if !&l:ma || &l:ro
 		let b:orig_buf_ro=1
 		call s:WarningMsg("Buffer is protected, won't be able to write".
-			\ " the changes back!")
+			\ "the changes back!")
 	else 
 	" Protect the original buffer,
 	" so you won't accidentally modify those lines,
@@ -782,7 +766,6 @@ fun! nrrwrgn#NrrwRgn(...) range  "{{{1
 		let s:nrrw_rgn_lines[s:instn].single = 1
 	else
 		noa wincmd p
-		let s:nrrw_rgn_lines[s:instn].winnr  = winnr()
 		" Set highlighting in original window
 		call <sid>AddMatches(<sid>GeneratePattern(
 			\s:nrrw_rgn_lines[s:instn].start[1:2], 
@@ -825,22 +808,13 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	let orig_buf = b:orig_buf
 	let orig_tab = tabpagenr()
 	let instn    = b:nrrw_instn
-	let winnr    = get(s:nrrw_rgn_lines[instn], 'winnr', winnr())
 	let close    = has_key(s:nrrw_rgn_lines[instn], 'single')
 	let vmode    = has_key(s:nrrw_rgn_lines[instn], 'vmode')
-	" Save current state
-	let nr = changenr()
 	" Execute autocommands
 	if has_key(s:nrrw_aucmd, "close")
 		exe s:nrrw_aucmd["close"]
 	endif
 	let cont	 = getline(1,'$')
-	if has_key(s:nrrw_aucmd, "close") && nr != changenr()
-		" Restore buffer contents before the autocommand
-		" (in case the window isn't closed, the user sees
-		" the correct input)
-		exe "undo" nr
-	endif
 
 	let tab=<sid>BufInTab(orig_buf)
 	if tab != tabpagenr() && tab > 0
@@ -851,7 +825,6 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	if (orig_win == -1)
 		if bufexists(orig_buf)
 			" buffer not in current window, switch to it!
-			exe winnr "wincmd w"
 			exe "noa" orig_buf "b!"
 			" Make sure highlighting will be removed
 			let close = (&g:hid ? 0 : 1)
@@ -1080,7 +1053,6 @@ fun! nrrwrgn#VisualNrrwRgn(mode, ...) "{{{1
 	else
 		" Set the highlighting
 		noa wincmd p
-		let s:nrrw_rgn_lines[s:instn].winnr  = winnr()
 		call <sid>AddMatches(<sid>GeneratePattern(
 				\s:nrrw_rgn_lines[s:instn].start[1:2],
 				\s:nrrw_rgn_lines[s:instn].end[1:2],
