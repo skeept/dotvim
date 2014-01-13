@@ -190,6 +190,11 @@ vnoremap aa VGo1G
 
 nnoremap <Leader>tc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
+
+" useful mapping to convert time, get the word under cursor and convert it to
+" regular date format
+nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
+      \ time.localtime(<C-R><C-w>))<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
