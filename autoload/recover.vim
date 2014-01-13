@@ -1,11 +1,11 @@
 " Vim plugin for diffing when swap file was found
 " ---------------------------------------------------------------
 " Author: Christian Brabandt <cb@256bit.org>
-" Version: 0.18
-" Last Change: Wed, 14 Aug 2013 22:39:13 +0200
+" Version: 0.17
+" Last Change: Sat, 16 Feb 2013 23:04:09 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=3068
 " License: VIM License
-" GetLatestVimScripts: 3068 18 :AutoInstall: recover.vim
+" GetLatestVimScripts: 3068 17 :AutoInstall: recover.vim
 "
 fu! recover#Recover(on) "{{{1
     if a:on
@@ -16,7 +16,7 @@ fu! recover#Recover(on) "{{{1
 	augroup Swap
 	    au!
 	    au SwapExists * nested :call recover#ConfirmSwapDiff()
-	    au BufWinEnter,InsertEnter,InsertLeave,FocusGained *
+	    au BufWinEnter,InsertEnter,InsertLeave,FocusGained * 
 			\ call <sid>CheckSwapFileExists()
 	augroup END
     else
@@ -41,7 +41,7 @@ fu! s:Swapname() "{{{1
 endfu
 
 fu! s:CheckSwapFileExists() "{{{1
-    if !&swapfile
+    if !&swapfile 
 	return
     endif
 
@@ -80,7 +80,6 @@ fu! s:CheckRecover() "{{{1
 		" can trigger SwapExists autocommands again!
 		call s:SetSwapfile()
 	    endif
-	    call recover#AutoCmdBRP(0)
 	else
 	    echo "Found Swapfile '". b:swapname. "', showing diff!"
 	    call recover#DiffRecoveredFile()
@@ -101,9 +100,6 @@ fu! s:CheckRecover() "{{{1
 	let b:did_recovery = 1
 	" Don't delete the auto command yet.
 	"call recover#AutoCmdBRP(0)
-    endif
-    if get(s:, 'fencview_autodetect', 0)
-	setl buftype=
     endif
 endfun
 
@@ -163,7 +159,7 @@ fu! recover#ConfirmSwapDiff() "{{{1
 	    let tfile = substitute(tfile, '/', '\\', 'g')
 	endif
 	let cmd = printf("vim -u NONE -N %s -r %s -c \":w %s|:q!\" %s diff %s %s",
-		    \ (s:isWin() ? '' : '-es'),
+		    \ (s:isWin() ? '' : '-es'), 
 		    \ (s:isWin() ? fnamemodify(v:swapname, ':p:8') : shellescape(v:swapname)),
 		    \ tfile, (s:isWin() ? '&' : '&&'),
 		    \ bufname, tfile)
@@ -209,13 +205,6 @@ fu! recover#ConfirmSwapDiff() "{{{1
 	if (p == 1)
 	    call recover#AutoCmdBRP(1)
 	endif
-	" disable fencview (issue #23)
-	" This is a hack, fencview doesn't allow to selectively disable it :(
-        let s:fencview_autodetect = get(g:, 'fencview_autodetect', 0)
-        if s:fencview_autodetect
-	    setl buftype=help
-	    au BufReadPost <buffer> :setl buftype=
-        endif
     elseif p == 2
 	" Open Read-Only
 	" Don't show the Recovery dialog
