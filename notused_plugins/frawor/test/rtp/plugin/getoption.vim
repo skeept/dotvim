@@ -21,9 +21,6 @@ let s:_options={
             \      'merger': s:F.merger,
             \     'default': ['default']},
             \'F': {'default': function("tr")},
-            \'b': {'default': '1',
-            \      'merger': 'extend',
-            \      'override': 'g',},
         \}
 function s:F.writeoption(...)
     call WriteFile('('.string(a:000)[1:-2].'): '.
@@ -76,9 +73,3 @@ call s:F.testoptions(['a'])
 let g:getoptionOptions.F=function('string')
 call s:F.testoptions(['F'])
 call s:F.testoptions(['F', 'b'])
-
-call s:F.testoptions(['b'])
-let b:getoption_b='b'
-call s:F.testoptions(['b'])
-let g:getoption_b='g'
-call s:F.testoptions(['b'])

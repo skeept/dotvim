@@ -24,7 +24,7 @@ def bzrmethod(func):
     globals()[func.__name__+'_unchanged'] = func
     return f
 
-outermethod      = outermethodgen(g_repo, flush, globals())
+outermethod      = outermethodgen(g_repo, flush)
 autoexportmethod = autoexportmethodgen(g_repo, globals())
 
 def g_revid(repo, rev):

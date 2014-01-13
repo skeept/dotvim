@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from importlib import import_module
 from collections import namedtuple
 from time import time
 import aurum.rcdriverfuncs as rcdfuncs
@@ -133,8 +134,7 @@ def process_repo(vim_repo):
     try:
         if vcs not in vcss:
             try:
-                module_last_name = 'au' + vcs
-                module = getattr(__import__('aurum', fromlist=(module_last_name,)), module_last_name)
+                module = import_module('aurum.au'+vcs)
             except:
                 module = None
 

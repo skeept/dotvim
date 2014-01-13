@@ -27,23 +27,23 @@ function s:F.opts(opts, cmd, ver)
                 \a:opts)
 endfunction
 for [s:cmd, s:ver, s:opts, s:wipe] in [
-            \['Annotate',  [0],{},             0                              ],
+            \['Update',    [0],{'bang': 1},    ["branch","changeset","status"]],
+            \['Move',      [0],{'bang': 1},    [                     "status"]],
+            \['Junk',      [0],{},             [                     "status"]],
+            \['Track',     [0],{},             [                     "status"]],
+            \['Hyperlink', [0],{'range': '%'}, 0                              ],
+            \['Grep',      [0],{},             0                              ],
             \['Branch',    [0],{'bang': 1},    ["branch","changeset"         ]],
+            \['Name',      [0],{'bang': 1},    ["branch","changeset"         ]],
+            \['Other',     [0],{'bang': 1},    'all'                          ],
+            \['Annotate',  [0],{},             0                              ],
             \['Commit',    [0],{},             'all'                          ],
             \['Diff',      [0],{},             0                              ],
             \['File',      [0],{},             0                              ],
-            \['Grep',      [0],{},             0                              ],
-            \['Hyperlink', [0],{'range': '%'}, 0                              ],
-            \['Junk',      [0],{},             [                     "status"]],
-            \['Log',       [0],{},             0                              ],
-            \['Move',      [0],{'bang': 1},    [                     "status"]],
-            \['Name',      [0],{'bang': 1},    ["branch","changeset"         ]],
-            \['Other',     [0],{'bang': 1},    'all'                          ],
             \['Record',    [0],{},             0                              ],
             \['Status',    [0],{},             0                              ],
-            \['Track',     [0],{},             [                     "status"]],
-            \['Update',    [0],{'bang': 1},    ["branch","changeset","status"]],
             \['VimDiff',   [0],{},             0                              ],
+            \['Log',       [0],{},             0                              ],
             \]
     call s:_f.command.add('Au'.s:cmd,
                 \extend({'function': ['@%aurum/'.tolower(s:cmd), s:ver, 'cmd']},
@@ -80,7 +80,7 @@ call s:_f.mapgroup.add('Aurum', {
 call s:_f.mapgroup.add('AurumNP', {
             \'CurRevHex': {'lhs': '<C-r><C-h>', 'rhs': '<C-r>=aurum#currev("hex")<CR>'},
             \'CurRev'   : {'lhs': '<C-r><C-v>', 'rhs': '<C-r>=aurum#currev("rev")<CR>'},
-        \}, {'mode': 'ic', 'silent': 0})
+        \}, {'mode': 'ic', 'silent': 1})
 "▶1 Autocommands
 let s:aurun={'function': ['@%aurum/edit', [1], 'event']}
 call s:_f.augroup.add('Aurum',

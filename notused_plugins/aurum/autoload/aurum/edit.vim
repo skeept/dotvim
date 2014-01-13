@@ -1,6 +1,6 @@
 "▶1
 scriptencoding utf-8
-execute frawor#Setup('1.6', {'@/resources': '0.0',
+execute frawor#Setup('1.5', {'@/resources': '0.0',
             \                       '@/os': '0.0',
             \                '@/functions': '0.1',
             \               '@%aurum/repo': '5.0',
@@ -11,7 +11,6 @@ let s:_messages={
             \    'ucmd': 'Unknown command: %s',
             \     'nwr': 'Write feature is not implemented for command %s',
             \'nosource': 'Can not source %s',
-            \  'noread': 'Can not read %s',
             \   'nrepo': 'No repository found for path %s',
         \}
 call extend(s:_messages, map({
@@ -355,8 +354,6 @@ function s:_aufunctions.event.function(rw)
     "▶2 Check SourceCmd support
     if a:rw==2 && !get(cdescr, 'sourceable', 0)
         call s:_f.throw('nosource', amatch)
-    elseif a:rw==1 && !get(cdescr, 'readable', 1)
-        call s:_f.throw('noread', amatch)
     endif
     "▲2
     let arguments=get(cdescr, 'arguments', 0)
@@ -436,8 +433,8 @@ function s:F.newcommand(plugdict, fdict, cdescr)
         endif
         let cdescr[key]=a:cdescr[key]
     endfor
-    "▶2 Boolean keys: modifiable, sourceable, readable, requiresbvar
-    for key in ['modifiable', 'sourceable', 'readable', 'requiresbvar']
+    "▶2 Boolean keys: modifiable, sourceable, requiresbvar
+    for key in ['modifiable', 'sourceable', 'requiresbvar']
         if has_key(a:cdescr, key)
             if type(a:cdescr[key])!=type(0)
                 call s:_f.throw('nbl')

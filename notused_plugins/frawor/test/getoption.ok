@@ -8,6 +8,3 @@
 ('a'): ['default', 'gvar', 'gdict', 'bvar', 'bdict', 'tvar', 'tdict', 'wvar']
 ('F'): function('string')
 ('F', 'b'): function('tr')
-('b'): '1'
-('b'): 'b1'
-('b'): 'bg'

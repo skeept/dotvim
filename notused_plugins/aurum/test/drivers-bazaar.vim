@@ -13,18 +13,6 @@ function FormatRepository(repo)
     endfor
 endfunction
 let skippednewcsprops=['hex', 'time', 'user', 'parents']
-function SortedString(l)
-    if type(a:l)==type([])
-        return string(sort(copy(a:l)))
-    elseif type(a:l)==type({}) && len(keys(a:l))>1
-        return '{'.join(sort(map(items(a:l),
-                    \            'string(v:val[0]).": ".string(v:val[1])')),
-                    \   ', ').
-                    \'}'
-    else
-        return string(a:l)
-    endif
-endfunction
 function FormatCS(repo, cs, ...)
     let g:r+=[' >> Changeset']
     let maxlen=len('description')
@@ -41,7 +29,7 @@ function FormatCS(repo, cs, ...)
             continue
         endif
         let g:r+=['  '.printf('%-*s', maxlen, p).':'.
-                    \SortedString(a:repo.functions.getcsprop(a:repo, a:cs, p))]
+                    \string(a:repo.functions.getcsprop(a:repo, a:cs, p))]
     endfor
 endfunction
 function FormatStatus(repo, args, ...)

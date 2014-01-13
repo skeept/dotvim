@@ -13,7 +13,7 @@ setlocal noswapfile
 setlocal nomodeline
 execute frawor#Setup('0.0', {'@%aurum/bufvars': '0.0',
             \                '@%aurum/vimdiff': '1.1',
-            \               '@%aurum/annotate': '2.0',
+            \               '@%aurum/annotate': '1.0',
             \               '@%aurum/cmdutils': '4.0',
             \               '@%aurum/maputils': '0.1',
             \                   '@%aurum/edit': '1.2',
@@ -55,8 +55,8 @@ function s:F.runmap(action, ...)
     let file=bvar.files[line('.')-1]
     let hasannbuf=has_key(bvar, 'annbuf')
     if hasannbuf
-        let annwin=s:_r.annotate.findwin(bvar.winid)
-        let hasannbuf=!!annwin
+        let annwin=bufwinnr(bvar.annbuf)
+        let hasannbuf=(annwin!=-1)
     endif
     "▶2 Various *diff actions
     if a:action[-4:] is# 'diff'
@@ -160,7 +160,7 @@ function s:F.runmap(action, ...)
                 call s:_r.annotate.foldopen()
             endif
             wincmd p
-            call s:_r.annotate.setannbuf(newbvar, annbuf, bvar.winid)
+            call s:_r.annotate.setannbuf(newbvar, annbuf)
         endif
     "▶2 `update' action
     elseif a:action is# 'update'
@@ -187,7 +187,7 @@ function s:F.runmap(action, ...)
         let existed=s:_r.mrun('silent edit', 'file', bvar.repo, rev, file)
         let annbuf=bufnr('%')
         wincmd p
-        call s:_r.annotate.setannbuf(newbvar, annbuf, bvar.winid)
+        call s:_r.annotate.setannbuf(newbvar, annbuf)
     endif
     "▲2
     if exists('existed') && !existed

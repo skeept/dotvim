@@ -12,8 +12,7 @@ CONTENTS                                                      *aurum-contents*
     5. Globs                                         |aurum-globs|
     6. Log templates                                 |aurum-logtemplates|
         6.1. Built-in template styles                |aurum-logstyles|
-    7. Special tabs
-        7.1. Record tab                              |aurum-record|
+    7. Record mode                                   |aurum-record|
     8. Internal objects                              |aurum-objects|
         8.1. Repository                              |aurum-repository|
         8.2. Changeset                               |aurum-changeset|
@@ -423,7 +422,7 @@ AuOther[!] {action} [{rev}[ {url}[ {repo}]]]                        *:AuOther*
     incoming  View what will be pulled if you replace “incoming” with “pull”
 
 AuRecord {opts} [glob1 [...]]                                      *:AuRecord*
-    Start record tab (|aurum-record|). Possible options are just the same as 
+    Start record mode (|aurum-record|). Possible options are just the same as 
     |:AuCommit| has (except for “type” option that is absent).
     Note: `AuRecord amend` preserves changes from previous commit.
 
@@ -972,7 +971,7 @@ FVdiff     gD   AuVimDiff full
 Annotate    a   AuAnnotate  Annotate current buffer
 Status      s   AuStatus | wincmd p
                             Open status window and switch back
-Record      r   AuRecord    Open record tab
+Record      r   AuRecord    Switch to record mode
 Log         L   AuLog       View the revision history
 LogFile     l   AuLog : files :
                             View revisions where current file was changed
@@ -1130,28 +1129,9 @@ loglimit                                                    *g:aurum_loglimit*
 
 recheight                                                  *g:aurum_recheight*
     VimL |expression| that evaluates to unsigned integer or unsigned integer. 
-    Determines height of status window shown in record tab (|aurum-record|).
+    Determines height of status window shown in record mode (|aurum-record|).
     Default: winheight/5 (in empty tab |winheight()| will return roughly the 
              same value as 'lines').
-
-recautowrite                                            *g:aurum_recautowrite*
-    Boolean. Determines whether files opened for editing should be 
-    automatically written on |BufWinLeave| and |BufLeave| events in record tab 
-    (|aurum-record|) (only files in top left window are supported; others are 
-    not modifiable anyway).
-    See |aurum-m-AuRecord_Edit|.
-    Default: 1.
-
-fullundo                                                    *g:aurum_fullundo*
-    Boolean. Determines whether full undo tree should be kept for status 
-    window. With this option you will be able to undo changes done while using 
-    |aurum-m-AuRecord_Edit| and redo them (note: changes are atomic: undo 
-    information for edited files is not kept and all changes done during 
-    editing are squashed in one change no matter how often do you save). 
-    Without this option each time you use |aurum-m-AuRecord_Edit| undo history 
-    is discarded. This option keeps edited version in memory thus set it to 
-    true if you use |:AuRecord| to partially commit large files.
-    Default: 1.
 
 diffopts                                                    *g:aurum_diffopts*
     Dictionary. For possible keys see |aurum-diffoptions| (no truncations are 
@@ -1483,12 +1463,9 @@ bzrline                                                  *aurum-style-bzrline*
       1 Bob 2011-01-01 {tip} Guess bar is better name for baz
 
 ==============================================================================
-7. Special tabs
+7. Record mode                                                  *aurum-record*
 
-------------------------------------------------------------------------------
-7.1. Record tab                                                 *aurum-record*
-
-Record tab is used to interactively select changes that should be committed. 
+Record mode is used to interactively select changes that should be committed. 
 |:AuRecord| command opens a new tab page and splits it into three windows: 
 recorded, original and status:
   +------------------+------------------+ `
@@ -1504,16 +1481,16 @@ recorded, original and status:
   |                status               | `
   |                                     | `
   +-------------------------------------+ `
-After entering record tab status window becomes focused. It contains output 
+After entering record mode status window becomes focused. It contains output 
 similar to the output of |:AuStatus| command, but with one additional column 
 added at the beginning of the line. This column may contain one of four status 
 characters:
 Character  Meaning ~
     -      Changes done to this file won’t be committed (default)
     +      All changes done to this file will be committed
-    *      You have made changes to this file in record tab. These changes 
+    *      You have made changes to this file in record mode. These changes 
            will be commited
-    ^      You have made changes to this file in record tab, but then chose 
+    ^      You have made changes to this file in record mode, but then chose 
            not to commit them. They will reappear again when you use 
            |aurum-m-AuRecord_Edit| mapping
 In status window there are additional mappings available (mgid=AuRecord, 
@@ -1530,7 +1507,7 @@ Edit      O   Edit file under cursor. In original window there will be changed
               window there will be version of file that will be committed 
               (initially unmodified compared to version stored in repository). 
               If file is edited for the second time in recorded window there 
-              will be version of file modified in record tab and in original 
+              will be version of file modified in record mode and in original 
               window there will be backup of the file (or version from 
               repository if file in question was removed or deleted).
 Undo      u   Undo adds/removes of the file (|u|). Won’t undo changes made to 
@@ -1541,16 +1518,16 @@ Later     g+  Like above, but uses |g+|. Unlike |g+| is subject to 'timeout'.
 Note: undoing/redoing changes using other ways is not supported unless 
       |g:aurum_fullundo| is set.
 
-|:AuRecord| also makes some AuStatus mappings change their meaning:
+:AuRecord also makes some AuStatus mappings change their meaning:
 Mapping                 New meaning ~
 |aurum-m-AuStatus_Track|  select changes made to file(s) for committing
-|aurum-m-AuStatus_Commit| close record tab and commit selected changes
+|aurum-m-AuStatus_Commit| finish record mode and commit selected changes
 |aurum-m-AuStatus_Forget| unselect changes made to file(s), don’t commit them
 
-Note that if you close status window you will also close record tab discarding 
+Note that if you close status window you will also exit record mode discarding 
      all changes you have made.
 
-|:AuRecord| defines the following mappings in recorded window 
+:AuRecord defines the following mappings in recorded window 
 (mgid=AuRecordLeft, default leader: "<Leader>"):    *g:frawormap_AuRecordLeft*
           *g:frawormap_AuRecordLeft_Discard* *g:frawormap_AuRecordLeft_Exit*
           *g:frawormap_AuRecordLeft_Commit*  *g:frawormap_AuRecordLeft_Remove*
@@ -1560,9 +1537,9 @@ Note that if you close status window you will also close record tab discarding
 Mapping  LHS  Description ~
 Discard   x   Discard all changes made to edited file. If file is opened for 
               the second time only unsaved changes will be discarded.
-Exit      X   Close record tab, discarding all changes made to all files and 
+Exit      X   Exit record mode, discarding all changes made to all files and 
               not committing anything.
-Commit    i   Commit selected changes and close record tab.
+Commit    i   Commit selected changes and exit record mode.
 Remove    R   Like Discard, but also unselect it (makes difference if file is 
               edited for the second time).
 Finish    A   Write changes and switch to status buffer.
@@ -1688,19 +1665,10 @@ functions :: {String : FRef}                            *aurum-repo.functions*
     |aurum-cs.hex|.
   getwork :: () -> cs                                       *aurum-rf-getwork*
     Get changeset object for the working directory revision.
-  getnthparent :: hex, n[, [ file ]] -> cs             *aurum-rf-getnthparent*
+  getnthparent :: hex, n -> cs                         *aurum-rf-getnthparent*
     Get nth generation grand-parent of given revision. Use negative n to get 
     nth generation child instead. With n equal to zero it must work like 
     |aurum-rf-getcs|(hex).
-                                                    *aurum-rf-getnthchangerev*
-  getnthchangerev :: hex, n, [ file ] -> (cs, [ file ])
-    Like above, but with two differences:
-    1. Only changesets containing changes to files listed in the fourth 
-       argument are taken into account.
-    2. Returns a pair of |aurum-changeset| object and a list of files. In case 
-       there were no renames returned list is equal to the list given in 
-       arguments, otherwise it returns list with new filenames.
-       Note: copies are ignored.
   getchangesets :: () -> [ cs ]                       *aurum-rf-getchangesets*
     Pull all changesets contained in repository into |aurum-repo.changesets| 
     dictionary. If this function is not called, then |aurum-repo.changesets| 
@@ -2120,7 +2088,7 @@ Python driver was not tested under windows (wine) at all.
 |aurum-cs.time| is always 0 if “date” programm from coreutils is missing.
 |aurum-cs.children| is always empty.
 |aurum-cs.phase| is always “unknown”.
-|aurum-rf-getchangesets|, |aurum-rf-getcs| are unable to work with commits 
+|aurum-rf-getchasgesets|, |aurum-rf-getcs| are unable to work with commits 
     where description contains line with two spaces followed by 60 dashes.
 |aurum-rf-updatechangesets| is doing nothing.
 |aurum-rf-getrevhex| calls |aurum-rf-getcs| thus it may be slow.
@@ -2179,8 +2147,6 @@ Python driver was not tested under windows (wine) at all.
          |aurum-rf-aget| and |aurum-rf-aremove|.
     5.5: Added |aurum-rf-apause| and |aurum-rf-aresume|.
     5.6: Added |aurum-rf-strip|.
-    5.7: Now exporting default functions in _r.repo.defaultfuncs
-    5.8: Added |aurum-rf-getnthchangerev|.
 @aurum:
     0.1: Added |:AuBranch| and |:AuName|.
     0.2: Added |:AuOther|.
@@ -2199,7 +2165,6 @@ Python driver was not tested under windows (wine) at all.
     1.3: Added prevbuf function.
     1.4: Added “plstrgen” _f.newcommand option.
     1.5: Added possibility to use custom writer function for aurum://edit
-    1.6: Added “readable” setting.
 @%aurum/vimdiff:
     0.1: Added full, untracked, onlymodified and files options to |:AuVimDiff|
     0.2: Added _r.vimdiff.full.
@@ -2221,7 +2186,6 @@ Python driver was not tested under windows (wine) at all.
          respectively. Same for |aurum://status| “rev1” and “rev2” options.
     1.1: Added |:AuStatus| changes.
     1.2: Made _r.status.parseshow handle “all” “status”.
-    2.0: Refactored code to ease use with special tabs (like |:AuRecord|)
 @%aurum/commit:
     1.0: Added fifth argument to _r.commit.commit().
     1.1: Added sixth optional argument to _r.commit.commit().
@@ -2234,8 +2198,6 @@ Python driver was not tested under windows (wine) at all.
          a:opts.amend.
 @%aurum/annotate:
     1.0: Removed one argument to _r.annotate.setannbuf().
-    2.0: Add one argument to _r.annotate.setannbuf(): window ID; add 
-         _r.annotate.findwin().
 @%aurum/cmdutils:
     1.0: Removed cmdutils.prevbuf().
     2.0: Splitted it into @aurum/cmdutils and @aurum/computils.
@@ -2284,12 +2246,5 @@ ftplugin/aurumlog:
     0.2: Added optional argument to _r.maputils.getnthparentfile().
 @%aurum/record:
     0.1: Added |:AuRecord| amend.
-    0.2: Officially added |g:aurum_fullundo|, added |g:aurum_recautowrite|.
-@%aurum/undo:
-    1.0: Moved |g:aurum_fullundo| definition here.
-@%aurum/tabutils:
-    1.0: Moved some functions and |g:aurum_recautowrite| and 
-         |g:aurum_recheight| definitions here, moved some options to tabdesc 
-         argument.
 
 vim: ft=help:tw=78

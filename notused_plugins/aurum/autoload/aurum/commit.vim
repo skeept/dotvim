@@ -5,7 +5,7 @@ execute frawor#Setup('1.5', {'@/resources': '0.0',
             \                  '@/options': '0.0',
             \                       '@/os': '0.0',
             \                      '@/fwc': '0.0',
-            \             '@%aurum/status': '2.0',
+            \             '@%aurum/status': '1.2',
             \           '@%aurum/cmdutils': '4.3',
             \            '@%aurum/bufvars': '0.0',
             \            '@%aurum/vimdiff': '1.1',
@@ -14,6 +14,7 @@ execute frawor#Setup('1.5', {'@/resources': '0.0',
 let s:_messages={
             \'emptmsg': 'Message must contain at least one non-blank character',
             \'nocfile': 'Unsure what should be commited',
+            \'nocread': 'Cannot read aurum://commit',
             \  'nocom': 'Nothing to commit',
         \}
 let s:_options={
@@ -418,7 +419,6 @@ let s:commit={'arguments': 3,
             \  'listargs': 1,
             \'modifiable': 1,
             \  'filetype': 'aurumcommit',
-            \  'readable': 0,
             \}
 function s:F.bufleave()
     let bvar=s:_r.bufvars[+expand('<abuf>')]
@@ -428,6 +428,9 @@ function s:F.bufleave()
     endif
 endfunction
 function s:commit.function(read, repo, user, date, cb, files)
+    if a:read
+        call s:_f.throw('nocread')
+    endif
     augroup AuCommit
         autocmd! BufLeave <buffer> :call s:F.bufleave()
     augroup END

@@ -22,5 +22,3 @@ option: ['abc']
 checker: ['abc']
 .20: autoload/frawor/options:chkfail
 .21: autoload/frawor/options:mergefref
-.22: autoload/frawor/options:overridenstr
-.23: autoload/frawor/options:invoverride

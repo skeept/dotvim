@@ -15,7 +15,6 @@
 :command -nargs=1 -bar WGF  :WG * | WF <args>
 :command -nargs=* -bar WGFs :WG * | for file in [<f-args>] | execute 'WF' file | endfor
 :W{{{1 no fullundo
-:let g:aurum_fullundo=0
 :AuRecord
 uAi:RZC{{{2 Add
 ui:RZ{{{2 Undo
