@@ -1182,5 +1182,22 @@ Q: I want to open bookmark files in vimfiler.
 A: You can open unite bookmark files in vimfiler by below command. >
   VimFiler bookmark:
 
+Q: Why I must choose window in |<Plug>(vimfiler_edit_file)| when I use vimfiler
+explorer mode?  I want to restore old behavior...
+https://github.com/Shougo/vimfiler.vim/issues/157
+
+A: Because, vimfiler must know your wanted window.
+Last accessed window like old version behavior?  No.  You may have mistake
+window select.  I was inspired this documentation.  You should see it.
+http://vimcasts.org/blog/2013/01/oil-and-vinegar-split-windows-and-project-drawer/
+The project drawers are |vimfiler| with explorer mode and |NERDTree|.
+The split explorers are |vimfiler| with default mode and |unite.vim| and |netrw|.
+
+You must choose the window by the keys in the statusline. If
+you input <CR> key, vimfiler will split window.  You can change the keys by
+|g:unite_quick_match_table|.
+Note: If you install |vim-choosewin|, vimfiler will use it.
+https://github.com/t9md/vim-choosewin
+
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:

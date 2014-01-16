@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Jan 2014.
+" Last Modified: 14 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -36,6 +36,7 @@ function! neocomplete#init#enable() "{{{
     return
   endif
 
+  call neocomplete#init#_current_neocomplete()
   call neocomplete#init#_autocmds()
   call neocomplete#init#_others()
 
@@ -700,8 +701,8 @@ function! neocomplete#init#_source(source) "{{{
         \      'converter_case',
         \      'converter_abbr',
         \ ],
-        \ 'keyword_patterns' : {},
-        \ 'next_keyword_patterns' : {},
+        \ 'keyword_patterns' : g:neocomplete#keyword_patterns,
+        \ 'next_keyword_patterns' : g:neocomplete#next_keyword_patterns,
         \ 'neocomplete__context' : neocomplete#init#_context({}),
         \ }
 
@@ -734,12 +735,6 @@ function! neocomplete#init#_source(source) "{{{
     let source.min_pattern_length = (source.kind ==# 'keyword') ?
           \ g:neocomplete#auto_completion_start_length : 0
   endif
-
-  " Merge default patterns.
-  call extend(source.keyword_patterns,
-        \ g:neocomplete#keyword_patterns, 'keep')
-  call extend(source.next_keyword_patterns,
-        \ g:neocomplete#next_keyword_patterns, 'keep')
 
   let source.neocomplete__matchers = neocomplete#init#_filters(
         \ neocomplete#util#convert2list(source.matchers))
