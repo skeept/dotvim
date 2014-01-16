@@ -73,12 +73,13 @@ function s:utils.run(cmd, hasnulls, cdpath)
         let savedlazyredraw=&lazyredraw
         let savedeventignore=&eventignore
         let savedbufhidden=&l:bufhidden
-        set eventignore=all
-        set lazyredraw
-        set bufhidden=hide
+        let savedpwd=fnamemodify('.', ':p')
+        set      eventignore=all
+        set      lazyredraw
+        setlocal bufhidden=hide
         let prevbufnr=bufnr('%')
         try
-            enew
+            silent enew
             let newbufnr=bufnr('%')
             setlocal buftype=nofile modifiable noreadonly bufhidden=wipe
             if !empty(a:cdpath)
@@ -89,8 +90,13 @@ function s:utils.run(cmd, hasnulls, cdpath)
             silent execute '%!'.join(map(copy(a:cmd), 'shellescape(v:val, 1)'))
             let r=getline(1, '$')
         finally
-            execute 'silent buffer!' prevbufnr
-            call setbufvar(prevbufnr, 'bufhidden', savedbufhidden)
+            if newbufnr == prevbufnr
+                silent enew!
+                execute 'lcd' fnameescape(savedpwd)
+            elseif bufexists(prevbufnr)
+                execute 'unsilent buffer!' prevbufnr
+                call setbufvar(prevbufnr, 'bufhidden', savedbufhidden)
+            endif
             let &lazyredraw=savedlazyredraw
             let &eventignore=savedeventignore
         endtry

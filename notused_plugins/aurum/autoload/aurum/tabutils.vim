@@ -114,13 +114,24 @@ endfunction
 function s:F.getlrwnrs(tabspec)
     return s:F.getwinnrs(a:tabspec.layout.top[0:1])
 endfunction
-"▶1 tabunload :: {f}
+"▶1 unsetautowrite
+function s:F.unsetautowrite()
+    if exists('t:aurum_tabautowrite')
+        if bufexists(t:aurum_tabautowrite)
+            execute printf('autocmd! AuRecordAutowrite BufLeave <buffer=%u>',
+                        \  t:aurum_tabautowrite)
+        endif
+        unlet t:aurum_tabautowrite
+    endif
+endfunction
+"▶1 tabunload :: tabspec
 function s:F.tabunload(tabspec)
     let swnr=s:F.getswnr(a:tabspec)
     if !swnr
         tabclose
         return -1
     endif
+    call s:F.unsetautowrite()
     execute swnr.'wincmd w'
     let bvar=s:_r.bufvars[bufnr('%')]
     return a:tabspec.unload(bvar)
@@ -242,9 +253,12 @@ endfunction
 function s:f.cons.setautowrite(plugdict, fdict)
     let [tabid, tabspec]=s:F.gettabspec(a:fdict)
     if s:_f.getoption(tabspec.oprefix . 'autowrite')
+        let t:aurum_tabautowrite=bufnr('%')
         augroup AuRecordAutowrite
             autocmd! BufLeave <buffer> nested write
         augroup END
+    else
+        unlet! t:aurum_tabautowrite
     endif
 endfunction
 "▶1 f.cons.restore :: {f}, bvar
@@ -359,6 +373,7 @@ function s:f.cons.unload(plugdict, fdict, tabid, bvar)
         let sbuf=winbufnr(swnr)
         let sbvar=s:_r.bufvars[sbuf]
     endif
+    call s:F.unsetautowrite()
     call tabspec.unload(sbvar)
     if sbuf isnot 0 && bufexists(sbuf)
         unlet sbvar.bwfunc

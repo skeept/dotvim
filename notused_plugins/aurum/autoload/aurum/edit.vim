@@ -33,7 +33,7 @@ call extend(s:_messages, map({
         \}, '"Error while registering command %s for plugin %s: ".v:val'))
 "▶1 globtopat :: glob[, catchstars] → pattern
 function s:F.globtopat(glob, ...)
-    let r='\V\^'
+    let r='\V\C\^'
     let g=substitute(a:glob, '\V//\+', '/', 'g')
     if g[-1:] is# '/'
         let g=g[:-2]
@@ -144,7 +144,7 @@ endfunction
 "▶1 ounescape :: String → String
 let s:unecodes={}
 call map(copy(s:ecodes), 'extend(s:unecodes, {v:val : v:key}, "error")')
-let s:unepattern='\V%\(\['.escape(join(keys(s:unecodes), ''), '\]-^').']\)'
+let s:unepattern='\V\C%\(\['.escape(join(keys(s:unecodes), ''), '\]-^').']\)'
 function s:F.ounescape(str)
     if substitute('a', '.', '\="a"', '') is# 'a'
         return substitute(a:str, s:unepattern, '\=s:unecodes[submatch(1)]', 'g')

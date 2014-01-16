@@ -182,12 +182,13 @@ function s:F.resetlines(bvar)
         call setline(idx+1, s:statchars[a:bvar.statuses[idx]].a:bvar.lines[idx])
     endfor
 endfunction
-"▶1 restorebackup
+"▶1 restorebackup :: file, backupfile → 0 + FS
+" Returns 0 for the filter() command
 function s:F.restorebackup(file, backupfile)
     if a:backupfile isnot 0
         if !filereadable(a:backupfile)
             call s:_f.warn('bkpmis', a:backupfile)
-            return
+            return 0
         endif
     endif
     if delete(a:file)
@@ -198,6 +199,7 @@ function s:F.restorebackup(file, backupfile)
             call s:_f.warn('renfail', a:backupfile, a:file)
         endif
     endif
+    return 0
 endfunction
 "▶1 unload
 function s:F.unload(bvar)
@@ -205,8 +207,8 @@ function s:F.unload(bvar)
     let newfiles=copy(a:bvar.newfiles)
     call filter(backupfiles, 'filereadable(v:key)')
     call filter(newfiles,    'filereadable(v:key)')
-    call map(backupfiles, 's:F.restorebackup(v:val, v:key)')
-    call map(newfiles,    's:F.restorebackup(v:key,   0  )')
+    call filter(backupfiles, 's:F.restorebackup(v:val, v:key)')
+    call filter(newfiles,    's:F.restorebackup(v:key,   0  )')
     for [buf, savedopts] in items(filter(a:bvar.oldbufs, 'bufexists(v:key)'))
         for [opt, optval] in items(savedopts)
             call setbufvar(buf, '&'.opt, optval)
@@ -638,6 +640,9 @@ function s:F.runleftmap(action)
         execute swnr.'wincmd w'
         return s:F.runstatmap('commit')
     elseif a:action is# 'discardall'
+        " First discard. Otherwise when wiping out left buffer it may trigger 
+        " writing contents to the file.
+        call s:F.runleftmap('discard')
         execute swnr.'wincmd w'
         return s:F.runstatmap('discard')
     elseif a:action is# 'remove'

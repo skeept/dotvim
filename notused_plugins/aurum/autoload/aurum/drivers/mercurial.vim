@@ -1134,9 +1134,9 @@ function s:hg.diffre(repo, opts)
     " XXX first characters must be identical for hg.getstats(), but it must not 
     " match lines not containing filename for getdifffile()
     if get(a:opts, 'git', 0)
-        return '\m^diff \V--git a/\(\.\{-}\) b/'
+        return '\m\C^diff \V--git a/\(\.\{-}\) b/'
     else
-        return '\m^diff \v.*\-r\ \w+\s(.*)$'
+        return '\m\C^diff \v.*\-r\ \w+\s(.*)$'
     endif
 endfunction
 "▶1 hg.getrepoprop :: repo, prop → a

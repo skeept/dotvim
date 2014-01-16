@@ -782,7 +782,7 @@ function s:svn.diff(repo, rev1, rev2, files, opts)
 endfunction
 "▶1 svn.diffre :: _, opts → Regex
 function s:svn.diffre(repo, opts)
-    return '\m^Index: \v(.*)'
+    return '\m\C^Index: \v(.*)'
 endfunction
 "▶1 svn.getrepoprop :: repo, propname → a
 function s:svn.getrepoprop(repo, prop)

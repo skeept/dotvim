@@ -119,4 +119,31 @@ R:WThree After second remove
 :Run 0
 :bwipeout!
 :
+:W{{{1 edit-discardall
+:R let g:oldhglines=readfile('hglines.lst', 'b')
+:R call writefile(['abcdef'], 'hglines.lst', 'b')
+:R AuRecord
+0:let g:fname=getline('.')[3:]
+:R let g:lines=readfile(g:fname, 'b')
+O,X
+:
+:
+:R let g:new_lines=readfile(g:fname, 'b')
+:R call WriteFile(glob('*.orig'))
+:if g:lines !=# g:new_lines | call WriteFile(['Lines differ for file '.g:fname.' (TEST FAILURE):', '{{{ old'] + g:lines + ['}}}', '{{{ new'] + g:new_lines + ['}}}']) | else | call WriteFile(['Lines do not differ for '.g:fname.' (expected)', '{{{'] + g:lines + ['}}}']) | endif
+:R call writefile(g:oldhglines, 'hglines.lst', 'b')
+:W{{{1 edit-discardall (status)
+:R let g:oldhglines=readfile('hglines.lst', 'b')
+:R call writefile(['abcdef'], 'hglines.lst', 'b')
+:R AuRecord
+0:let g:fname=getline('.')[3:]
+:R let g:lines=readfile(g:fname, 'b')
+O:wincmd j
+X
+:
+:
+:R let g:new_lines=readfile(g:fname, 'b')
+:R call WriteFile(glob('*.orig'))
+:if g:lines !=# g:new_lines | call WriteFile(['Lines differ for file '.g:fname.' (TEST FAILURE):', '{{{ old'] + g:lines + ['}}}', '{{{ new'] + g:new_lines + ['}}}']) | else | call WriteFile(['Lines do not differ for '.g:fname.' (expected)', '{{{'] + g:lines + ['}}}']) | endif
+:R call writefile(g:oldhglines, 'hglines.lst', 'b')
 :source addmessages.vim

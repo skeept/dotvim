@@ -149,7 +149,7 @@ function s:F.runmap(action, ...)
             execute lnr
         elseif exists('line')
             0
-            call search('\V\^'.escape(line, '\').'\$', 'cW')
+            call search('\V\C\^'.escape(line, '\').'\$', 'cW')
             let lnr=line('.')
             wincmd p
             execute lnr

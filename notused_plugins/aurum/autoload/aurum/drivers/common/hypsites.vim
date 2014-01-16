@@ -25,7 +25,8 @@ let s:bbdict={
 \}
 let s:hyp={}
 let s:gcproj='matchstr(domain, "\\v^[^.]+")'
-let s:gcprojr='matchstr(path, "\\v[^/]+", 3)'
+let s:cgproj='matchstr(path, "\\v[^/]+", 3)'
+let s:gcpath='substitute(path, "/$", "", "")'
 "▶1 mercurial
 "  https://bitbucket.org/ZyX_I/aurum / ssh://hg@bitbucket.org/ZyX_I/aurum
 "  ssh://zyxsf@translit3.hg.sourceforge.net/hgroot/translit3/translit3 / http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3
@@ -89,6 +90,15 @@ let s:sfdict={
 \  'changeset': '"https://sourceforge.net".path."/ci/".hex."/"',
 \        'log': '"https://sourceforge.net".path."/commit_browser"',
 \}
+let s:cgdict={
+\       'html': '"http://".domain."/".'.s:gcpath.'."/source/browse/".file."?r=".hex', 'hline': 'line',
+\        'raw': '"http://".'.s:cgproj.'.".googlecode.com/hg-history/".hex."/".file',
+\   'filehist': '"http://".domain."/".'.s:gcpath.'."/source/list?path=/".file."&r=".hex',
+\  'changeset': '"http://".domain."/".'.s:gcpath.'."/source/detail?r=".hex',
+\        'log': '"http://".domain."/".'.s:gcpath.'."/source/list"',
+\      'clone': 'url',
+\       'push': 'url',
+\}
 " XXX The following URL is correct, but useless: sf.net only generates files 
 "     available by this link after the request from the above page.
 let s:sfbundle='"http://sourceforge.net/code-snapshots/%s".substitute(path, ''\v\/[^/]+\/([^/])([^/]?)([^/]*)\/(.*)'', ''/\1/\1\2/\1\2\3/\4%s/\1\2\3-\4'', "")."-".hex.".zip"'
@@ -131,14 +141,7 @@ let s:hyp.mercurial=[
 \        'log': '"http://code.google.com/p/".'.s:gcproj.'."/source/list"',
 \      'clone': 'url',
 \       'push': 'url',}],
-\['domain is? "code.google.com" && path[:1] is? "/r"',
-\ {     'html': '"http://code.google.com/r/".'.s:gcprojr.'."/source/browse/".file."?r=".hex', 'hline': 'line',
-\        'raw': '"http://".'.s:gcprojr.'.".googlecode.com/hg-history/".hex."/".file',
-\   'filehist': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list?path=/".file."&r=".hex',
-\  'changeset': '"http://code.google.com/r/".'.s:gcprojr.'."/source/detail?r=".hex',
-\        'log': '"http://code.google.com/r/".'.s:gcprojr.'."/source/list"',
-\      'clone': 'url',
-\       'push': 'url',}],
+\['domain is? "code.google.com"', s:cgdict],
 \['domain is? "hg.assembla.com"',
 \ {     'html': '"http://trac-".domain.path."/browser/".file."?rev=".hex',                'hline': '"L".line',
 \   'annotate': '"http://trac-".domain.path."/browser/".file."?annotate=blame&rev=".hex', 'aline': '"L".line',
@@ -257,8 +260,7 @@ let s:hyp.git=[
 \      'clone': '"git://".domain.path',
 \       'push': '"ssh://".user."@".domain.path',
 \}, extend({'bundle': printf(s:sfbundle, 'git', '.git')}, s:sfdict))],
-\['domain is? "code.google.com"',
-\ {     'html': '"http://code.google.com/".substitute(path, "/$", "", "")."/source/browse/".file."?r=".hex',}],
+\['domain is? "code.google.com"', s:cgdict],
 \['domain =~? ''\v^%(git\.)?gitorious\.org$''',
 \ {     'html': s:gobase.'."/blobs/".hex."/".file',       'hline': '"line".line',
 \        'raw': s:gobase.'."/blobs/raw/".hex."/".file',

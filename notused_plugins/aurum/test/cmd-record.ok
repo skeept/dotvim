@@ -61,6 +61,16 @@ After first remove: 3 3.orig
 ^? 3
 After second remove: 3
 -? 3
+{{{1 edit-discardall
+Lines do not differ for hglines.lst (expected)
+{{{
+abcdef
+}}}
+{{{1 edit-discardall (status)
+Lines do not differ for hglines.lst (expected)
+{{{
+abcdef
+}}}
 >>> Messages:
 
 
