@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 15 Apr 2013.
+" Last Modified: 25 Oct 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,6 +26,66 @@
 
 let s:save_cpo = &cpo
 set cpo&vim
+
+if !exists('s:is_enabled')
+  let s:is_enabled = 0
+endif
+
+function! neocomplcache#init#lazy() "{{{
+  if !exists('s:lazy_progress')
+    let s:lazy_progress = 0
+  endif
+
+  if s:lazy_progress == 0
+    call neocomplcache#init#_others()
+    let s:is_enabled = 0
+  elseif s:lazy_progress == 1
+    call neocomplcache#init#_sources(get(g:neocomplcache_sources_list,
+          \ neocomplcache#get_context_filetype(), ['_']))
+  else
+    call neocomplcache#init#_autocmds()
+    let s:is_enabled = 1
+  endif
+
+  let s:lazy_progress += 1
+endfunction"}}}
+
+function! neocomplcache#init#enable() "{{{
+  if neocomplcache#is_enabled()
+    return
+  endif
+
+  call neocomplcache#init#_autocmds()
+  call neocomplcache#init#_others()
+
+  call neocomplcache#init#_sources(get(g:neocomplcache_sources_list,
+        \ neocomplcache#get_context_filetype(), ['_']))
+  let s:is_enabled = 1
+endfunction"}}}
+
+function! neocomplcache#init#disable() "{{{
+  if !neocomplcache#is_enabled()
+    call neocomplcache#print_warning(
+          \ 'neocomplcache is disabled! This command is ignored.')
+    return
+  endif
+
+  let s:is_enabled = 0
+
+  augroup neocomplcache
+    autocmd!
+  augroup END
+
+  delcommand NeoComplCacheDisable
+
+  call neocomplcache#helper#call_hook(filter(values(
+        \ neocomplcache#variables#get_sources()), 'v:val.loaded'),
+        \ 'on_final', {})
+endfunction"}}}
+
+function! neocomplcache#init#is_enabled() "{{{
+  return s:is_enabled
+endfunction"}}}
 
 function! neocomplcache#init#_autocmds() "{{{
   augroup neocomplcache
@@ -76,8 +136,11 @@ function! neocomplcache#init#_others() "{{{
   let s:completeopt_save = &completeopt
 
   " Set completefunc.
+  let completefunc_save = &l:completefunc
   let &completefunc = 'neocomplcache#complete#manual_complete'
-  let &l:completefunc = 'neocomplcache#complete#manual_complete'
+  if completefunc_save != ''
+    let &l:completefunc = completefunc_save
+  endif
 
   " For auto complete keymappings.
   call neocomplcache#mappings#define_default_mappings()
@@ -91,6 +154,9 @@ function! neocomplcache#init#_others() "{{{
     call neocomplcache#print_error(
           \ 'Detected set paste! Disabled neocomplcache.')
   endif
+
+  command! -nargs=0 -bar NeoComplCacheDisable
+        \ call neocomplcache#init#disable()
 endfunction"}}}
 
 function! neocomplcache#init#_variables() "{{{
@@ -114,7 +180,7 @@ function! neocomplcache#init#_variables() "{{{
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_keyword_patterns',
         \'ruby,int-irb',
-        \'^=\%(b\%[egin]\|e\%[nd]\)\|\%(@@\|[:$@]\)\h\w*\|\h\w*\%(::\w*\)*[!?]\?')
+        \'^=\%(b\%[egin]\|e\%[nd]\)\|\%(@@\|[$@]\)\h\w*\|\h\w*\%(::\w*\)*[!?]\?')
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_keyword_patterns',
         \'php,int-php',
@@ -219,7 +285,7 @@ function! neocomplcache#init#_variables() "{{{
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_keyword_patterns',
         \'erlang,int-erl',
-        \'^\s*-\h\w*\|\%(\h\w*:\)*\h\w\|\h[[:alnum:]_@]*')
+        \'^\s*-\h\w*\|\%(\h\w*:\)*\h\w*\|\h[[:alnum:]_@]*')
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_keyword_patterns',
         \'html,xhtml,xml,markdown,eruby',
@@ -339,7 +405,7 @@ function! neocomplcache#init#_variables() "{{{
         \'[[:alnum:]:_]\+[*[{}]')
   call neocomplcache#util#set_default_dictionary(
         \'g:neocomplcache_next_keyword_patterns', 'html,xhtml,xml,mkd',
-        \'[[:alnum:]_:-]*>\|[^"]*"')
+        \'[^"]*"\|[[:alnum:]_:-]*>')
   "}}}
 
   " Initialize same file type lists. "{{{
@@ -387,6 +453,12 @@ function! neocomplcache#init#_variables() "{{{
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_same_filetype_lists',
         \ 'lingr-say', 'lingr-messages,lingr-members')
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_same_filetype_lists',
+        \ 'J6uil_say', 'J6uil')
+  call neocomplcache#util#set_default_dictionary(
+        \ 'g:neocomplcache_same_filetype_lists',
+        \ 'vimconsole', 'vim')
 
   " Interactive filetypes.
   call neocomplcache#util#set_default_dictionary(
@@ -528,7 +600,8 @@ function! neocomplcache#init#_variables() "{{{
         \ 'g:neocomplcache_text_mode_filetypes', {})
   call neocomplcache#util#set_default_dictionary(
         \ 'g:neocomplcache_text_mode_filetypes',
-        \ 'text,help,tex,gitcommit,vcs-commit', 1)
+        \ 'hybrid,text,help,tex,gitcommit,gitrebase,vcs-commit,markdown,'.
+        \   'textile,creole,org,rdoc,mediawiki,rst,asciidoc,pod', 1) 
   "}}}
 
   " Initialize tags filter patterns. "{{{
@@ -565,10 +638,19 @@ function! neocomplcache#init#_variables() "{{{
     let g:neocomplcache_omni_functions = {}
   endif
   "}}}
+
+  " Set custom.
+  call s:set_default_custom()
 endfunction"}}}
 
 function! neocomplcache#init#_current_neocomplcache() "{{{
   let b:neocomplcache = {
+        \ 'context' : {
+        \      'input' : '',
+        \      'complete_pos' : -1,
+        \      'complete_str' : '',
+        \      'candidates' : [],
+        \ },
         \ 'lock' : 0,
         \ 'skip_next_complete' : 0,
         \ 'filetype' : '',
@@ -583,12 +665,203 @@ function! neocomplcache#init#_current_neocomplcache() "{{{
         \ 'event' : '',
         \ 'cur_text' : '',
         \ 'old_cur_text' : '',
-        \ 'cur_keyword_str' : '',
-        \ 'cur_keyword_pos' : -1,
-        \ 'complete_words' : [],
-        \ 'complete_results' : {},
+        \ 'complete_str' : '',
+        \ 'complete_pos' : -1,
+        \ 'candidates' : [],
+        \ 'complete_results' : [],
+        \ 'complete_sources' : [],
+        \ 'manual_sources' : [],
         \ 'start_time' : reltime(),
         \}
+endfunction"}}}
+
+function! neocomplcache#init#_sources(names) "{{{
+  if !exists('s:loaded_source_files')
+    " Initialize.
+    let s:loaded_source_files = {}
+    let s:loaded_all_sources = 0
+    let s:runtimepath_save = ''
+  endif
+
+  " Initialize sources table.
+  if s:loaded_all_sources && &runtimepath ==# s:runtimepath_save
+    return
+  endif
+
+  let runtimepath_save = neocomplcache#util#split_rtp(s:runtimepath_save)
+  let runtimepath = neocomplcache#util#join_rtp(
+        \ filter(neocomplcache#util#split_rtp(),
+        \ 'index(runtimepath_save, v:val) < 0'))
+  let sources = neocomplcache#variables#get_sources()
+
+  for name in filter(copy(a:names), '!has_key(sources, v:val)')
+    " Search autoload.
+    for source_name in map(split(globpath(runtimepath,
+          \ 'autoload/neocomplcache/sources/*.vim'), '\n'),
+          \ "fnamemodify(v:val, ':t:r')")
+      if has_key(s:loaded_source_files, source_name)
+        continue
+      endif
+
+      let s:loaded_source_files[source_name] = 1
+
+      let source = neocomplcache#sources#{source_name}#define()
+      if empty(source)
+        " Ignore.
+        continue
+      endif
+
+      call neocomplcache#define_source(source)
+    endfor
+
+    if name == '_'
+      let s:loaded_all_sources = 1
+      let s:runtimepath_save = &runtimepath
+    endif
+  endfor
+endfunction"}}}
+
+function! neocomplcache#init#_source(source) "{{{
+  let default = {
+        \ 'max_candidates' : 0,
+        \ 'filetypes' : {},
+        \ 'hooks' : {},
+        \ 'matchers' : ['matcher_old'],
+        \ 'sorters' : ['sorter_rank'],
+        \ 'converters' : [
+        \      'converter_remove_next_keyword',
+        \      'converter_delimiter',
+        \      'converter_case',
+        \      'converter_abbr',
+        \ ],
+        \ 'neocomplcache__context' : copy(neocomplcache#get_context()),
+        \ }
+
+  let source = extend(copy(default), a:source)
+
+  " Overwritten by user custom.
+  let custom = neocomplcache#variables#get_custom().sources
+  let source = extend(source, get(custom, source.name,
+        \ get(custom, '_', {})))
+
+  let source.loaded = 0
+  " Source kind convertion.
+  if source.kind ==# 'plugin' ||
+        \ (!has_key(source, 'gather_candidates') &&
+        \  !has_key(source, 'get_complete_words'))
+    let source.kind = 'keyword'
+  elseif source.kind ==# 'ftplugin' || source.kind ==# 'complfunc'
+    " For compatibility.
+    let source.kind = 'manual'
+  else
+    let source.kind = 'manual'
+  endif
+
+  if !has_key(source, 'rank')
+    " Set default rank.
+    let source.rank = (source.kind ==# 'keyword') ? 5 :
+          \ empty(source.filetypes) ? 10 : 100
+  endif
+
+  if !has_key(source, 'min_pattern_length')
+    " Set min_pattern_length.
+    let source.min_pattern_length = (source.kind ==# 'keyword') ?
+          \ g:neocomplcache_auto_completion_start_length : 0
+  endif
+
+  let source.neocomplcache__context.source_name = source.name
+
+  " Note: This routine is for compatibility of old sources implementation.
+  " Initialize sources.
+  if empty(source.filetypes) && has_key(source, 'initialize')
+    try
+      call source.initialize()
+    catch
+      call neocomplcache#print_error(v:throwpoint)
+      call neocomplcache#print_error(v:exception)
+      call neocomplcache#print_error(
+            \ 'Error occured in source''s initialize()!')
+      call neocomplcache#print_error(
+            \ 'Source name is ' . source.name)
+    endtry
+
+    let source.loaded = 1
+  endif
+
+  return source
+endfunction"}}}
+
+function! neocomplcache#init#_filters(names) "{{{
+  let _ = []
+  let filters = neocomplcache#variables#get_filters()
+
+  for name in a:names
+    if !has_key(filters, name)
+      " Search autoload.
+      for filter_name in map(split(globpath(&runtimepath,
+            \ 'autoload/neocomplcache/filters/'.
+            \   substitute(name,
+            \'^\%(matcher\|sorter\|converter\)_[^/_-]\+\zs[/_-].*$', '', '')
+            \  .'*.vim'), '\n'), "fnamemodify(v:val, ':t:r')")
+        let filter = neocomplcache#filters#{filter_name}#define()
+        if empty(filter)
+          " Ignore.
+          continue
+        endif
+
+        call neocomplcache#define_filter(filter)
+      endfor
+
+      if !has_key(filters, name)
+        " Not found.
+        call neocomplcache#print_error(
+              \ printf('filter name : %s is not found.', string(name)))
+        continue
+      endif
+    endif
+
+    if has_key(filters, name)
+      call add(_, filters[name])
+    endif
+  endfor
+
+  return _
+endfunction"}}}
+
+function! neocomplcache#init#_filter(filter) "{{{
+  let default = {
+        \ }
+
+  let filter = extend(default, a:filter)
+  if !has_key(filter, 'kind')
+    let filter.kind =
+          \ (filter.name =~# '^matcher_') ? 'matcher' :
+          \ (filter.name =~# '^sorter_') ? 'sorter' : 'converter'
+  endif
+
+  return filter
+endfunction"}}}
+
+function! s:set_default_custom() "{{{
+  let custom = neocomplcache#variables#get_custom().sources
+
+  " Initialize completion length.
+  for [source_name, length] in items(
+        \ g:neocomplcache_source_completion_length)
+    if !has_key(custom, source_name)
+      let custom[source_name] = {}
+    endif
+    let custom[source_name].min_pattern_length = length
+  endfor
+
+  " Initialize rank.
+  for [source_name, rank] in items(
+        \ g:neocomplcache_source_rank)
+    if !has_key(custom, source_name)
+      let custom[source_name] = {}
+    endif
+    let custom[source_name].rank = rank
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo

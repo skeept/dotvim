@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: openable.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 05 Aug 2012.
+" Last Modified: 28 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -29,8 +29,6 @@ set cpo&vim
 
 " Variables  "{{{
 call unite#util#set_default('g:unite_kind_openable_persist_open_blink_time', '250m')
-call unite#util#set_default('g:unite_kind_openable_cd_command', 'cd')
-call unite#util#set_default('g:unite_kind_openable_lcd_command', 'lcd')
 "}}}
 function! unite#kinds#openable#define() "{{{
   return s:kind
@@ -45,10 +43,28 @@ let s:kind = {
 let s:kind.action_table.tabopen = {
       \ 'description' : 'tabopen items',
       \ 'is_selectable' : 1,
+      \ 'is_tab' : 1,
       \ }
 function! s:kind.action_table.tabopen.func(candidates) "{{{
   for candidate in a:candidates
     tabnew
+    call unite#take_action('open', candidate)
+  endfor
+endfunction"}}}
+
+let s:kind.action_table.choose = {
+      \ 'description' : 'choose windows and open items',
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.choose.func(candidates) "{{{
+  for candidate in a:candidates
+    if winnr('$') != 1
+      let winnr = unite#helper#choose_window()
+      if winnr > 0 && winnr != winnr()
+        execute winnr.'wincmd w'
+      endif
+    endif
+
     call unite#take_action('open', candidate)
   endfor
 endfunction"}}}
@@ -71,6 +87,26 @@ function! s:kind.action_table.tabdrop.func(candidates) "{{{
     endif
   endfor
 endfunction"}}}
+
+let s:kind.action_table.switch = {
+      \ 'description' : 'switch files by ":sbuffer" command',
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.switch.func(candidates) "{{{
+  let bufpath = unite#util#substitute_path_separator(expand('%:p'))
+
+  for candidate in a:candidates
+    if bufpath !=# candidate.action__path
+      call unite#util#smart_execute_command('sbuffer',
+            \ candidate.action__path)
+
+      call unite#remove_previewed_buffer_list(
+            \ bufnr(unite#util#escape_file_searching(
+            \       candidate.action__path)))
+    endif
+  endfor
+endfunction"}}}
+
 
 let s:kind.action_table.split = {
       \ 'description' : 'horizontal split open items',

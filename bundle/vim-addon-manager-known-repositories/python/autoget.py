@@ -1,699 +1,234 @@
 #!/usr/bin/env python
 # vim:fileencoding=utf-8
 '''
-Utility that generates SCM URLs based on comparison of file lists generated
-from www.vim.org archives and repository URLs found in script descriptions
-or installation details found on www.vim.org.
+Utility for processing non-standardased data found on www.vim.org.
 
-Found SCM URLs are saved in ./db/scm_generated.json.
-List of script numbers which were checked, but with no result, is saved in
-./db/not_found.json.
-List of script numbers which should not be processed for some reason can be
-found in ./db/omitted.json.
+Usage:
+    autoget.py [-d] [-c | -w] last [-nif] <N>
+    autoget.py [-d] [-c | -w] new [-nDi]
+    autoget.py [-d] [-c | -w] recheck
+    autoget.py [-d] [-c | -w] scripts [-nif] <SID>...
+    autoget.py [-d] [-c | -w] annotate [--no-extra-check --print-other-candidate]
+    autoget.py -h | --help
 
-It uses these files and ./db/scmsources.vim to determine which scripts
-should not be rechecked.
+Options:
+    -h --help         Show this screen
+    -d --debug        Print additional output
 
-Vim.org archive URLs and plugin descriptions are obtained from dump found at
-http://www.vim.org/script-info.php. If there is file ./script-info.json it is
-used instead.
+    -c --use-cache    Use cache. Cache is located in ./cache.pickle.
+    -w --write-cache  Merge cache from ./cache.pickle with data obtained
+                      in the current run. Do not use cache from
+                      ./cache.pickle though.
+Commands:
+    last              Process last N script numbers.
+    scripts           Process given scripts.
+        -f --force    Normally autoget.py omits reprocessing scripts which were
+                      already processed. This option makes autoget.py process
+                      them regardless.
+                      Already processed scripts are scripts mentioned in
+                        ∙ ./db/scm_generated.json
+                        ∙ ./db/not_found.json
+                        ∙ ./db/scmsources.vim
+                        ∙ ./db/omitted.json
 
-Currently supports only git and mercurial repositories.
+    new               Check scripts with script numbers above the greatest number
+                      found in aforementioned list (list attached to -f argument).
+        -D --no-descriptions
+                      Do not check description hashes.
+
+    The following options are supported by “last”, “scripts” and “new” subcommands:
+        -n --dry-run  Do not write data to ./db/*.
+        -i --interrupt-write
+                      Write to ./db/* on interrupt.
+
+    recheck           Recheck contents of ./db/scm_generate.json.
+
+    annotate          Annotate scripts found in ./db/scmsources.vim.
+        -x --no-extra-check
+                      Do not check lines that contain information that autoget.py
+                      is not able to generate.
+        -p --print-other-candidate
+                      If autoget.py found candidate other then present in
+                      ./db/scmsources.vim print it.
+
+When searching for candidates autoget.py checks plugin description and
+installation details for common repository URL patterns. When such pattern
+is found it compares list of files present in given repository URL with
+the list of files present in www.vim.org archive. If lists match (exact match
+is not required) then URL is considered to point to VCS-managed version of
+the plugin.
+
+Files used by this utility:
+    ./db/scm_generated.json   Contains found candidates. This file is generated
+                              automatically.
+    ./db/not_found.json       Contains a list of script numbers which were
+                              processed, but with no candidates found. This file
+                              is generated automatically.
+    ./db/omitted.json         Contains a list of plugins which should not be
+                              processed by autoget.py. This file is populated
+                              manually.
+    ./db/scmsources.json      Contains SCM sources found by VAM-kr contributors.
+                              This file is populated manually.
+    ./db/description_hashes.json
+                              Contains hashes of description + installation
+                              details. Used to determine whether plugin
+                              description changed: when it changes autoget.py
+                              rechecks plugin.
+    ./cache.pickle            Contains cached lists of files.
+    ./script-info.json        Contains data downloaded from
+                              http://www.vim.org/script-info.php.
+                              If it is present then script uses it in place of
+                              downloading data from the above URL.
+
+Currently supports git, mercurial and subversion repositories.
 '''
 from __future__ import unicode_literals, division, print_function
 
-from github import Github, GithubException
-from collections import namedtuple
-from subprocess import check_call, CalledProcessError
-import codecs
 import yaml
 import os
-import urllib
-import httplib
 import json
 import re
 import logging
 import sys
-import locale
-
-import bz2
-import gzip
-import tarfile
-import zipfile
-import io
-
-import magic
-
-try:
-    import lzma
-except ImportError:
-    from backports import lzma
-
+import argparse
+from functools import partial
+import pickle
+import docopt
 
 sys.path.append(os.path.dirname(__file__))
 
-
 import list_hg_files as lshg
-import list_git_files as lsgit
+import list_github_files as lsgh
 
+from vimorg import (getdb, get_file_list, compare_file_lists, get_voinfo_hash,
+                    update_vo_cache, get_vo_cache)
+from vomatch import (NotLoggedError, update_scm_cache, get_scm_cache, find_repo_candidate,
+                     set_remote_parser, scm_matches, get_scm_file_list)
 
 logger = logging.getLogger('autoget')
 
 
-MAX_ATTEMPTS = 5
+cache_name = os.path.join('.', 'cache.pickle')
+scmsources_name = os.path.join('.', 'db', 'scmsources.vim')
+scm_generated_name = os.path.join('.', 'db', 'scm_generated.json')
+not_found_name = os.path.join('.', 'db', 'not_found.json')
+omitted_name = os.path.join('.', 'db', 'omitted.json')
+description_hashes_name = os.path.join('.', 'db', 'description_hashes.json')
 
 
 def dump_json(obj, F):
+    '''Dump object to JSON in a VCS- and human-friendly way
+
+    VCS-friendly implies having newlines and dictionary key sorting, without spaces after commas.
+    Human-friendly implies using indentation and spaces after colons.
+    '''
     return json.dump(obj, F, indent=2, sort_keys=True, separators=(',', ': '))
 
 
 def dump_json_nr_set(st, F):
+    '''Dump set() to json as a sorted list in a VCS- and human-friendly way
+
+    set() is supposed to contain only string integer keys (i.e. integers represented as strings). 
+    For the definition of VCS- and human-friendly check out dump_json above.
+    '''
     dump_json(list(sorted(st, key=int)), F)
 
 
-class cached_property(object):
-    def __init__(self, func):
-        self.func = func
+def load_scmnrs_json(scmnrs, fname, typ=dict):
+    '''Load json file, recording its contents into scmnrs
 
-    def __get__(self, instance, cls=None):
-        result = instance.__dict__[self.func.__name__] = self.func(instance)
-        return result
-
-
-def getdb():
-    if os.path.isfile('script-info.json'):
-        logger.info('Using file script-info.json')
-        with codecs.open('script-info.json', 'r', encoding='utf-8') as F:
-            return json.load(F)
-    else:
-        logger.info('Processing http://www.vim.org/script-info.php')
-        return json.load(urllib.urlopen('http://www.vim.org/script-info.php'))
-
-
-def get_ext(fname):
-    return fname.rpartition('.')[-1]
-
-
-def guess_fix_dir(voinfo):
-    if voinfo['script_type'] in ('syntax', 'indent', 'ftplugin'):
-        return voinfo['script_type']
-    elif voinfo['script_type'] == 'color scheme':
-        return 'colors'
-    else:
-        return 'plugin'
-
-
-def get_voinfo_hash(voinfo):
-    return hash(voinfo.get('description',     '') + voinfo.get('install_details', ''))
-
-
-def get_tar_names(tf):
-    for ti in tf:
-        if not ti.isdir():
-            yield ti.name
-
-
-# Namespace
-class FileListers:
-    @staticmethod
-    def gz(AF):
-        # GzipFile requires tell
-        return gzip.GzipFile(fileobj=io.BytesIO(AF.read()))
-
-    @staticmethod
-    def bz2(AF):
-        return io.BytesIO(bz2.decompress(AF.read()))
-
-    @staticmethod
-    def lzma(AF):
-        return lzma.LZMAFile(AF)
-
-    @staticmethod
-    def xz(AF):
-        return lzma.LZMAFile(AF)
-
-    @staticmethod
-    def tar(AF):
-        # tar requires tell on its own
-        return set(get_tar_names(tarfile.TarFile(fileobj=io.BytesIO(AF.read()))))
-
-    @staticmethod
-    def tgz(AF):
-        # gz requires tell
-        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.gz(AF), format='gz')))
-
-    @staticmethod
-    def tbz(AF):
-        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.bz2(AF), format='bz2')))
-    tbz2 = tbz
-
-    @staticmethod
-    def txz(AF):
-        return set(get_tar_names(tarfile.TarFile(fileobj=FileListers.xz(AF))))
-
-    @staticmethod
-    def zip(AF):
-        # ZipFile requires seek
-        return set(zipfile.ZipFile(io.BytesIO(AF.read())).namelist())
-
-    @staticmethod
-    def vmb(AF):
-        af = iter(AF)
-        while not next(af).startswith('finish'):
-            pass
-
-        files = set()
-        filere = re.compile('^\S+')
-        try:
-            while True:
-                files.add(filere.match(next(af)).group(0))
-                numlines = int(next(af))
-                while numlines:
-                    next(af)
-                    numlines -= 1
-        except StopIteration:
-            pass
-        return files
-
-    vba = vmb
-
-
-mime_to_ext = {
-    'application/x-gzip': 'gz',
-    'application/x-tar': 'tar',
-}
-
-_magic = None
-
-def find_mime(AF):
-    global _magic
-    if not _magic:
-        _magic = magic.open(magic.MAGIC_MIME_TYPE)
-        _magic.load('/usr/share/misc/magic.mgc')
-    af = AF.read()
-    return io.BytesIO(af), mime_to_ext[_magic.buffer(af)]
-
-
-def get_result(AF, ext, aname, had_to_guess=False):
+    If file is not present instance of typ is returned. If file is present loaded object is 
+    converted to the given typ.
+    '''
     try:
-        ret = getattr(FileListers, ext)(AF)
+        with open(fname) as F:
+            ret = json.load(F)
+            scmnrs.update(ret)
+            return typ(ret)
+    except IOError:
+        return typ()
+
+
+def candidate_to_sg(candidate):
+    '''Convert candidate to dictionary suitable for recording into scm_generated.json'''
+    return {'type': candidate.scm, 'url': candidate.scm_url}
+
+
+def process_voinfo(scm_generated, found, not_found, description_hashes, key, voinfo, recheck=False):
+    '''Process given plugin
+
+    If ``recheck`` is ``True`` then it only prints to stderr whether something changed.
+
+    If ``recheck`` is ``False`` then it records found URL in scm_generated and puts corresponding 
+    plugin number into ``found``. If no URL was found it records plugin number into ``not_found``.
+    '''
+    logger.info('> Checking plugin {script_name} (vimscript #{script_id})'
+                .format(**voinfo))
+    try:
+        candidate = find_repo_candidate(voinfo)
+        if recheck:
+            desc = '%s : %s' % (voinfo['script_id'], voinfo['script_name'])
+            if candidate:
+                c_sg = candidate_to_sg(candidate)
+                s_sg = scm_generated[voinfo['script_id']]
+                if c_sg == s_sg:
+                    print ('== ' + desc)
+                else:
+                    logger.info('> {0!r} (new) /= {1!r} (old)'.format(c_sg, s_sg))
+                    print ('/= ' + desc)
+            else:
+                print ('no ' + desc)
+        else:
+            if candidate:
+                scm_generated[key] = candidate_to_sg(candidate)
+                logger.info('> Recording found candidate for {0}: {1}'
+                            .format(key, scm_generated[key]))
+                not_found.discard(key)
+            else:
+                logger.info('> Recording failure to find candidates for {0}'.format(key))
+                not_found.add(key)
+            found.add(key)
+            if not args['--no-descriptions']:
+                description_hashes[key] = get_voinfo_hash(voinfo)
     except Exception as e:
         logger.exception(e)
-        if not had_to_guess:
-            AF.seek(0)
-            AF, ext = find_mime(AF)
-            ret = get_result(AF, ext, aname, True)
-            had_to_guess = True
-        else:
-            raise
-    if not isinstance(ret, set):
-        if had_to_guess:
-            AF, ext = find_mime(ret)
-            return get_result(AF, ext, None, had_to_guess)
-        else:
-            aname = aname[:-1-len(ext)]
-            ext = get_ext(aname).lower()
-            return get_result(ret, ext, aname, had_to_guess)
-    else:
-        return ret
 
 
-def get_file_list(voinfo):
-    rinfo = voinfo['releases'][0]
-    aname = rinfo['package']
-    aurl = 'http://www.vim.org/scripts/download_script.php?src_id='+rinfo['src_id']
-    ext = get_ext(aname).lower()
-    logger.info('>>> Processing archive %s (ext %s)' % (aname, ext))
-    if ext == 'vim':
-        return [guess_fix_dir(voinfo) + '/' + aname]
-    elif ext in FileListers.__dict__:
-        return get_result(io.BytesIO(urllib.urlopen(aurl).read()), ext, aname)
-    else:
-        raise ValueError('Unknown extension')
-
-
-# Only directories that may be automatically loaded by vim are listed below.
-specialdirs = {'plugin', 'ftplugin', 'syntax', 'indent', 'after'}
-
-def isvimvofile(fname):
-    return ((fname.endswith('.vim') and fname.partition('/')[0] in specialdirs))
-           #or (fname.endswith('.py') and
-           #    (fname.startswith('pythonx/')
-           #        or fname.startswith('python2/')
-           #        or fname.startswith('python3/'))))
-
-
-# Directories corresponding to plugin types on www.vim.org
-vodirs = {'plugin', 'colors', 'ftplugin', 'indent', 'syntax'}
-expected_extensions = {'vim', 'txt', 'py', 'pl', 'lua', 'pm', 'rb'}
-def check_candidate_with_file_list(vofiles, files, prefix=None):
-    expvofiles = {fname for fname in vofiles if get_ext(fname) in expected_extensions}
-    vimvofiles = {fname for fname in expvofiles if isvimvofile(fname)}
-    vimfiles = {fname for fname in files if isvimvofile(fname)}
-    if vofiles <= files:
-        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
-            logger.info('>>>> Rejected because there are significant files not present in archive: '
-                    '%s'
-                    % (repr(vimfiles - vimvofiles)))
-            return (prefix, 0)
-        logger.info('>>>> Accepted with score 100 because all files '
-                'are contained in the repository')
-        return (prefix, 100)
-    elif expvofiles and expvofiles <= files:
-        if vimvofiles < vimfiles and len(vimfiles) - len(vimvofiles) > 5:
-            logger.info('>>>> Rejected because there are significant files not present in archive: '
-                    '%s'
-                    % (repr(vimfiles - vimvofiles)))
-            return (prefix, 0)
-        logger.info('>>>> Accepted with score 90 because all files that are considered significant '
-                'are contained in the repository: %s' % repr(expvofiles))
-        return (prefix, 90)
-    else:
-        vofileparts = [fname.partition('/') for fname in vofiles]
-        leadingdir = vofileparts[0][0]
-        if (leadingdir
-                and leadingdir not in vodirs
-                and all((part[0] == leadingdir for part in vofileparts[1:]))
-                and all((part[1] for part in vofileparts))):
-            logger.info('>>>> Trying to match with leading path component removed: %s'
-                    % leadingdir)
-            return check_candidate_with_file_list(
-                {part[-1] for part in vofileparts},
-                files,
-                leadingdir,
-            )
-        else:
-            # TODO Detect the need in vamkr#AddCopyHook
-            logger.info('>>>> Rejected because not all significant files were found '
-                    'in the repository: %s' % repr(expvofiles - files))
-            return (prefix, 0)
-
-
-github_url              = re.compile(r'github\.com/([0-9a-zA-Z\-_]+)/([0-9a-zA-Z\-_.]+)(?:\.git)?')
-vundle_github_url       = re.compile('\\b(?:Neo)?Bundle\\b\\s*[\'"]([0-9a-zA-Z\-_]+)/([0-9a-zA-Z\-_.]+)(?:.git)?[\'"]')
-gist_url                = re.compile(r'gist\.github\.com/(\d+)')
-bitbucket_mercurial_url = re.compile(r'\bhg\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)')
-bitbucket_git_url       = re.compile(r'\bgit\b[^\n]*bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_.]+)|bitbucket\.org/([0-9a-zA-Z_.]+)/([0-9a-zA-Z\-_.]+)\.git')
-bitbucket_noscm_url     = re.compile(r'bitbucket\.org/([0-9a-zA-Z_]+)/([0-9a-zA-Z\-_]+)')
-googlecode_url          = re.compile(r'code\.google\.com/p/([^/\s]+)')
-mercurial_url           = re.compile(r'hg\s+clone\s+(\S+)')
-git_url                 = re.compile(r'git\s+clone\s+(\S+)')
-
-
-class NotLoggedError(Exception):
-    pass
-
-
-def novimext(s):
-    if s.endswith('.vim'):
-        return s[:-4]
-    else:
-        return s
-
-
-def novimprefix(s):
-    if s.startswith('vim-'):
-        return s[4:]
-    else:
-        return s
-
-
-class Match(object):
-    def __init__(self, match, voinfo):
-        self.match = match
-        self.voinfo = voinfo
-
-    @cached_property
-    def key(self):
-        name = self.name
-        # TODO Also compare author names
-        try:
-            voname = self.voinfo['script_name']
-        except KeyError:
-            return 0
-        if not name or not voname:
-            return 0
-        elif name == voname:
-            return 10
-        elif name.lower() == voname.lower():
-            return 9
-        elif novimext(name) == novimext(voname):
-            return 9
-        elif novimext(name.lower()) == novimext(voname.lower()):
-            return 8
-        elif novimprefix(name) == novimprefix(voname):
-            return 7
-        elif novimprefix(name.lower()) == novimprefix(voname.lower()):
-            return 6
-        else:
-            name = novimext(novimprefix(name.lower()))
-            voname = novimext(novimprefix(voname.lower()))
-            if name == voname:
-                return 5
-            elif name.startswith(voname) or voname.startswith(name):
-                return 4
-            elif name.endswith(voname) or voname.endswith(name):
-                return 4
-            elif name in voname:
-                return 3
-            elif voname in name:
-                return 2
-            else:
-                return -1
-
-    for level in ('info', 'warning', 'error', 'critical'):
-        exec(('def {0}(self, msg):\n'+
-              '   return logger.{0}(">>> " + msg)\n').format(level))
-
-    def exception(self, e):
-        logger.exception(e)
-
-    def __cmp__(self, other):
-        if not isinstance(other, Match):
-            raise NotImplementedError
-        return cmp(self.key, other.key)
-
-    def __repr__(self):
-        return ('<%s: %s (from match %s)>'
-                % (type(self).__name__, self.url, self.match.group(0)))
-
-
-class GithubMatch(Match):
-    re = github_url
-
-    scm = 'git'
-
-    def __init__(self, *args, **kwargs):
-        super(GithubMatch, self).__init__(*args, **kwargs)
-        self.name = self.match.group(2)
-        self.repo_path = self.match.group(1) + '/' + self.name
-        if self.repo_path.endswith('.git'):
-            self.repo_path = self.repo_path[:-4]
-        self.url = 'https://github.com/' + self.repo_path
-        self._check_redirects()
-
-    def _check_redirects(self, attempt=0):
-        c = httplib.HTTPSConnection('github.com')
-        c.request('HEAD', '/' + self.repo_path)
-        r = c.getresponse()
-        if r.status == httplib.MOVED_PERMANENTLY:
-            new_url = r.msg['location']
-            assert new_url.startswith('https://github.com/')
-            if new_url != self.url:
-                self.info('Found redirect to %s' % new_url)
-                self.url = new_url
-                self.repo_path = self.url[len('https://github.com/'):]
-                self.name = self.repo_path.rpartition('/')[-1]
-        elif 400 <= r.status < 500:
-            self.error('Cannot use this match: request failed with code %u (%s)'
-                       % (r.status, httplib.responses[r.status]))
-            raise NotLoggedError
-        elif 500 <= r.status:
-            if attempt < MAX_ATTEMPTS:
-                self.error('Retrying: request failed with code %u (%s)'
-                           % (r.status, httplib.responses[r.status]))
-                self._check_redirects(attempt + 1)
-            else:
-                self.error('Cannot use this match: request failed with code %u (%s), attempt %u'
-                           % (r.status, httplib.responses[r.status], attempt))
-
-        self.scm_url = 'git://github.com/' + self.repo_path
-
-    @cached_property
-    def repo(self):
-        global gh
-        return gh.get_repo(self.repo_path)
-
-    def list_files(self, dir=None, attempt=0):
-        try:
-            for f in self.repo.get_dir_contents(dir or '/'):
-                name = (dir + '/' + f.name if dir else f.name)
-                if f.type == 'file':
-                    yield name
-                elif f.type == 'dir':
-                    for subf in self.list_files(name):
-                        yield subf
-        except GithubException as e:
-            if 500 <= e.status:
-                if attempt < MAX_ATTEMPTS:
-                    self.error('Received exception, retrying: %s' % repr(e))
-                    for fname in self.list_files(dir, attempt + 1):
-                        yield fname
-                else:
-                    raise
-            else:
-                raise
-
-    @cached_property
-    def files(self):
-        if self.scm_url.startswith('git://github.com/vim-scripts'):
-            raise ValueError('vim-scripts repositories are not used by VAM')
-        return set(self.list_files())
-
-
-class VundleGithubMatch(GithubMatch):
-    re = vundle_github_url
-
-
-class GistMatch(GithubMatch):
-    re = gist_url
-
-    scm = 'git'
-
-    def __init__(self, *args, **kwargs):
-        Match.__init__(self, *args, **kwargs)
-        self.name = self.match.group(1)
-        self.scm_url = 'git://gist.github.com/' + self.name
-        self.url = 'https://gist.github.com/' + self.name
-
-    @cached_property
-    def repo(self):
-        global gh
-        return gh.get_gist(self.name)
-
-    @cached_property
-    def files(self):
-        return set(self.repo.files)
-
-
-class MercurialMatch(Match):
-    re = mercurial_url
-
-    scm = 'hg'
-
-    def __init__(self, *args, **kwargs):
-        super(MercurialMatch, self).__init__(*args, **kwargs)
-        self.scm_url = self.match.group(1)
-        self.name = self.scm_url.rpartition('/')[-1]
-
-    @cached_property
-    def files(self):
-        global remote_parser
-        parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
-        return set(next(iter(parsing_result['tips'])).files)
-
-
-class BitbucketMercurialMatch(MercurialMatch):
-    re = bitbucket_mercurial_url
-
-    scm = 'hg'
-
-    def __init__(self, *args, **kwargs):
-        super(BitbucketMercurialMatch, self).__init__(*args, **kwargs)
-        self.name = self.match.group(2)
-        self.scm_url = 'https://bitbucket.org/' + self.match.group(1) + '/' + self.name
-
-
-class BitbucketMatch(Match):
-    re = bitbucket_noscm_url
-
-    def __init__(self, *args, **kwargs):
-        global remote_parser
-        super(BitbucketMatch, self).__init__(*args, **kwargs)
-        self.name = self.match.group(2)
-        self.scm_url = 'https://bitbucket.org/' + self.match.group(1) + '/' + self.name
-        try:
-            self.info('Checking whether {0} is a mercurial repository'.format(self.scm_url))
-            parsing_result = remote_parser.parse_url(self.scm_url, 'tip')
-        except Exception as e:
-            self.info('Checking whether {0} is a git repository'.format(self.scm_url))
-            self.files = lsgit.list_git_files(self.scm_url)
-            self.scm = 'git'
-        else:
-            self.files = list(next(iter(parsing_result['tips'])).files)
-            self.scm = 'hg'
-
-
-class GithubLazy(object):
-    __slots__ = ('user', 'password', 'gh')
-
-    def __init__(self, user, password):
-        self.user = user
-        self.password = password
-
-    def __getattr__(self, attr):
-        if attr == 'gh':
-            self.gh = Github(self.user, self.password)
-            return self.gh
-        else:
-            return getattr(self.gh, attr)
-
-
-candidate_classes = (
-    GithubMatch,
-    VundleGithubMatch,
-    GistMatch,
-    MercurialMatch,
-    BitbucketMercurialMatch,
-    BitbucketMatch,
-)
-
-
-def find_repo_candidates(voinfo):
-    foundstrings = set()
-    for C in candidate_classes:
-        for key in ('install_details', 'description'):
-            try:
-                string = voinfo[key]
-            except KeyError:
-                logger.error('>> Key {0} was not found in voinfo of script {script_name}'
-                             .format(key, **voinfo))
-                continue
-            for match in C.re.finditer(string):
-                if not match.group(0) in foundstrings:
-                    foundstrings.add(match.group(0))
-                    try:
-                        yield C(match, voinfo)
-                    except NotLoggedError:
-                        pass
-
-
-def find_repo_candidate(voinfo):
-    vofiles = None
-    candidates = sorted(find_repo_candidates(voinfo), key=lambda o: o.key, reverse=True)
-    best_candidate = None
-    for candidate in candidates:
-        if vofiles is None:
-            vofiles = get_file_list(voinfo)
-            vofiles = {fname for fname in vofiles if not fname.endswith('/')}
-            logger.info('>> vim.org files: ' + repr(vofiles))
-        logger.info('>> Checking candidate {0}: {1}'.format(candidate.__class__.__name__,
-                                                            candidate.match.group(0)))
-        try:
-            files = set(candidate.files)
-            logger.info('>>> Repository files: {0!r}'.format(files))
-            prefix, key2 = check_candidate_with_file_list(vofiles, files)
-        except NotLoggedError:
-            pass
-        except Exception as e:
-            logger.exception(e)
-        else:
-            candidate.prefix = prefix
-            if key2 == 100:
-                logger.info('>> Found candidate {0}: {1} (100)'.format(candidate.__class__.__name__,
-                                                                    candidate.match.group(0)))
-                return candidate
-            elif key2 and (not best_candidate or key2 > best_candidate.key2):
-                best_candidate = candidate
-                best_candidate.key2 = key2
-    if best_candidate:
-        logger.info('Found candidate {0}: {1} ({2})'.format(
-                                                best_candidate.__class__.__name__,
-                                                best_candidate.match.group(0),
-                                                best_candidate.key2))
-    return best_candidate
-
-if __name__ == '__main__':
-    import argparse
-    p = argparse.ArgumentParser(
-            description=__doc__.partition('\n\n')[0],
-            epilog=__doc__.partition('\n\n')[-1],
-            formatter_class=argparse.RawDescriptionHelpFormatter
-        )
-    p.add_argument('-n', '--dry-run', action='store_const', const=True,
-            help='do not edit any files')
-    p.add_argument('-l', '--last', metavar='N', type=int,
-            help='process only last N script numbers. Implies -D')
-    p.add_argument('-a', '--all-last', action='store_const', const=True,
-            help='process scripts in reversed order until already processed script was not found')
-    p.add_argument('-D', '--no-descriptions', action='store_const', const=True,
-            help='do not check description hashes')
-    p.add_argument('-R', '--recheck', action='store_const', const=True,
-            help='recheck URLs found in scm_generated.json and report the result. '
-                 'Does not modify scm_generated.json. Implies -D')
-    p.add_argument('-f', '--force', action='store_const', const=True,
-            help='do not check whether given numbers were already processed')
-    p.add_argument('sids', nargs='*', metavar='SID',
-            help='process only this script. May be passed more then once. Also see --force. '
-                 'Implies -D')
-
-    args = p.parse_args()
-
-    if ((args.sids and args.last)
-            or (args.sids and args.all_last)
-            or (args.last and args.all_last)):
-        raise ValueError('You may specify only one of SID, --last or --all-last')
-
-    if (args.all_last and args.force):
-        raise ValueError('You may not specify both --force and --all-last')
-
-    if (args.recheck and (args.sids or args.last or args.all_last)):
-        raise ValueError('You may not specify --recheck and --sids, --last or --all-last at '
-                'the time')
-
-    if (args.sids or args.recheck or args.last):
-        args.no_descriptions = True
-
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    logger.addHandler(handler)
+def process_scmsources(return_scmnrs=True):
     scmnrs = set()
-    with open(os.path.join('.', 'db', 'scmsources.vim')) as SF:
+    scmnr_lines = []
+    with open(scmsources_name) as SF:
         scmnr_re = re.compile(r'^let scmnr\.(\d+)')
         for line in SF:
             match = scmnr_re.match(line)
             if match:
                 scmnrs.add(match.group(1))
+                scmnr_lines.append(line)
+    return scmnrs if return_scmnrs else scmnr_lines
 
-    scm_generated_name = os.path.join('.', 'db', 'scm_generated.json')
-    not_found_name = os.path.join('.', 'db', 'not_found.json')
-    omitted_name = os.path.join('.', 'db', 'omitted.json')
-    description_hashes_name = os.path.join('.', 'db', 'description_hashes.json')
 
-    def load_scmnrs_json(fname, typ=dict):
-        global scmnrs
-        try:
-            with open(fname) as F:
-                ret = json.load(F)
-                scmnrs.update(ret)
-                return typ(ret)
-        except IOError:
-            return typ()
+def main():
+    scmnrs = process_scmsources()
 
-    scm_generated = load_scmnrs_json(scm_generated_name)
-    omitted       = load_scmnrs_json(omitted_name)
+    omitted       = load_scmnrs_json(scmnrs, omitted_name)
     found = scmnrs.copy()
-    not_found     = load_scmnrs_json(not_found_name, set)
+    scm_generated = load_scmnrs_json(scmnrs, scm_generated_name)
+    not_found     = load_scmnrs_json(scmnrs, not_found_name, set)
 
-    if not args.no_descriptions:
+    if not args['--no-descriptions']:
         try:
             with open(description_hashes_name) as DHF:
                 description_hashes = json.load(DHF)
         except IOError:
             description_hashes = {}
+    else:
+        description_hashes = {}
 
-    with open(os.path.expanduser('~/.settings/passwords.yaml')) as PF:
-        passwords = yaml.load(PF)
-        user, password = iter(passwords['github.com'][0].items()).next()
-    gh = GithubLazy(user, password)
-
-    db = getdb()
-
-    if args.sids:
-        keys = args.sids
+    if args['scripts']:
+        keys = args['<SID>']
         not_found -= set(keys)
-    elif args.last:
-        i = args.last
+    elif args['last']:
+        i = args['last']
         _keys = reversed(sorted(db, key=int))
         keys = []
         while i:
@@ -702,57 +237,23 @@ if __name__ == '__main__':
     else:
         keys = reversed(sorted(db, key=int))
 
-    def candidate_to_sg(candidate):
-        return {'type': candidate.scm, 'url': candidate.scm_url}
-
-    def process_voinfo(voinfo, recheck=False):
-        global scm_generated
-        global found
-        global not_found
-        logger.info('> Checking plugin {script_name} (vimscript #{script_id})'
-                    .format(**voinfo))
-        try:
-            candidate = find_repo_candidate(voinfo)
-            if recheck:
-                desc = '%s : %s' % (voinfo['script_id'], voinfo['script_name'])
-                if candidate:
-                    c_sg = candidate_to_sg(candidate)
-                    s_sg = scm_generated[voinfo['script_id']]
-                    if c_sg == s_sg:
-                        print ('== ' + desc)
-                    else:
-                        logger.info('> {0!r} (new) /= {1!r} (old)'.format(c_sg, s_sg))
-                        print ('/= ' + desc)
-                else:
-                    print ('no ' + desc)
-            else:
-                if candidate:
-                    scm_generated[key] = candidate_to_sg(candidate)
-                    logger.info('> Recording found candidate for {0}: {1}'
-                                .format(key, scm_generated[key]))
-                    found.add(key)
-                else:
-                    logger.info('> Recording failure to find candidates for {0}'.format(key))
-                    not_found.add(key)
-                    found.add(key)
-        except Exception as e:
-            logger.exception(e)
-
+    _process_voinfo = partial(process_voinfo, scm_generated,found,not_found,description_hashes)
     with lshg.MercurialRemoteParser() as remote_parser:
-        if args.recheck:
+        set_remote_parser(remote_parser)
+        if args['recheck']:
             for key in scm_generated:
-                process_voinfo(db[key], recheck=True)
+                _process_voinfo(key, db[key], recheck=True)
         else:
             for key in keys:
-                if not args.force and key in scmnrs:
-                    if args.all_last:
+                if not args['--force'] and key in scmnrs:
+                    if args['new']:
                         break
                     else:
                         continue
                 logger.info('Considering key {0}'.format(key))
-                process_voinfo(db[key])
+                _process_voinfo(key, db[key])
 
-            if not args.no_descriptions:
+            if not args['--no-descriptions']:
                 logger.info('Starting descriptions check')
                 for key in keys:
                     voinfo = db[key]
@@ -762,7 +263,6 @@ if __name__ == '__main__':
                         description_hashes[key] = h
                         changed = True
                     if key in found:
-                        # TODO Check whether old URL should change
                         continue
                     if not changed:
                         h = get_voinfo_hash(voinfo)
@@ -773,17 +273,200 @@ if __name__ == '__main__':
                     else:
                         logger.info('New hash for key {0}'.format(key))
                     if changed:
-                        process_voinfo(voinfo)
+                        _process_voinfo(key, voinfo)
 
-    if not args.dry_run:
+    return scm_generated, not_found, description_hashes
+
+
+def write(msg):
+    '''Write msg to sys.stdout, encoding it to utf-8
+
+    If msg contains newline this function also calls .flush().'''
+    sys.stdout.write(msg.encode('utf-8'))
+    if '\n' in msg:
+        sys.stdout.flush()
+
+
+def prnt(msg):
+    '''Like write(), but adds newline to the end of the message'''
+    return write(msg + '\n')
+
+
+def annotate_scmsources():
+    url_regex = re.compile('^(.*)$')
+    line_regex_strict = re.compile(r"^let\s+scmnr\.(\d+)\s*=\s*\{'type':\s*'(\w+)',\s*'url':\s*'([^']+)'\s*\}\s*")
+    line_snr_regex = re.compile(r'(\d+)')
+    line_url_regex = re.compile(r"'url': '([^']+)'")
+    line_scm_regex = re.compile(r"'type': '([^']+)'")
+    prnt ('┌ X if line contains information besides repository URL and SCM used')
+    prnt ('│┌ ? or ! if line failes to be parsed by regular expressions')
+    prnt ('││┌ A if scm type is unknown')
+    prnt ('│││┌ F if match failes')
+    prnt ('││││┌ O if match deduced from the description is different, M if there are no')
+    prnt ('│││││┌ E if exception occurred, C if printing candidate on this line')
+    prnt ('┴┴┴┴┴┴┬─────────────────────────────────────────────────────────────────────────')
+    with lshg.MercurialRemoteParser() as remote_parser:
+        set_remote_parser(remote_parser)
+        for line in process_scmsources(False):
+            try:
+                numcolumns = 5
+                best_candidate = None
+                line = line.decode('utf-8')
+                logger.info('Checking line ' + line)
+                match = line_regex_strict.match(line)
+                if match:
+                    write('  ')
+                    numcolumns -= 2
+                    snr, scm, url = match.groups()
+                else:
+                    write('X')
+                    numcolumns -= 1
+                    if args['--no-extra-check']:
+                        raise NotLoggedError
+                    snr = line_snr_regex.search(line)
+                    scm = line_scm_regex.search(line)
+                    url = line_url_regex.search(line)
+                    if snr:
+                        snr = snr.group(1)
+                    if scm:
+                        scm = scm.group(1)
+                    if url:
+                        url = url.group(1)
+                    if not snr:
+                        write('!')
+                        numcolumns -= 1
+                        raise ValueError('snr key not found')
+                    if not scm:
+                        write('?A')
+                        numcolumns -= 2
+                        url = None
+                    elif not url:
+                        write('?-')
+                        numcolumns -= 2
+                        scm = None
+                    else:
+                        write(' ')
+                        numcolumns -= 1
+                if scm not in scm_matches:
+                    write('A')
+                    numcolumns -= 1
+                    url = None
+                    scm = None
+                else:
+                    write(' ')
+                    numcolumns -= 1
+
+                voinfo = db[snr]
+                vofiles = set(get_file_list(voinfo))
+                if url:
+                    match = url_regex.match(url)
+                    candidate = scm_matches[scm](match, voinfo)
+                    files = get_scm_file_list(candidate)
+                    prefix, key2 = compare_file_lists(candidate, vofiles, files)
+                    write(' ' if key2 else 'F')
+                    numcolumns -= 1
+                else:
+                    write('-')
+                    numcolumns -= 1
+
+                best_candidate = find_repo_candidate(voinfo, vofiles)
+                if not best_candidate:
+                    write('M')
+                    numcolumns -= 1
+                elif not (url and best_candidate.scm_url == url and best_candidate.scm == scm):
+                    write('O')
+                    numcolumns -= 1
+                else:
+                    write(' ')
+                    numcolumns -= 1
+                    best_candidate = None
+                write(' ')
+                numcolumns -= 1
+            except Exception as e:
+                if not isinstance(e, NotLoggedError):
+                    logger.exception(e)
+                write(('-' * numcolumns) + 'E')
+            finally:
+                # XXX line ends with \n, thus not writing `+ '\n'` here.
+                write('│' + line)
+                if best_candidate and args['--print-other-candidate']:
+                    write("-----C│let scmnr.%-4u = {'type': '%s', 'url': '%s'}\n"
+                            % (int(snr), best_candidate.scm, best_candidate.scm_url))
+
+
+if __name__ == '__main__':
+    args = docopt.docopt(__doc__)
+
+    if (args['scripts'] or args['recheck'] or args['last']):
+        args['--no-descriptions'] = True
+
+    if args['--use-cache'] or args['--write-cache']:
+        try:
+            with open(cache_name) as CF:
+                scm_cache, vo_cache = pickle.load(CF)
+                if args['--use-cache']:
+                    update_scm_cache(scm_cache)
+                    update_vo_cache(vo_cache)
+        except IOError:
+            pass
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG if args['--debug'] else logging.INFO)
+    handler = logging.StreamHandler()
+    root_logger.addHandler(handler)
+
+    db = getdb()
+
+    with open(os.path.expanduser('~/.settings/passwords.yaml')) as PF:
+        passwords = yaml.load(PF)
+        user, password = iter(passwords['github.com'][0].items()).next()
+    lsgh.init_gh(user, password)
+
+    ret = 0
+    write_cache = False
+    write_db = False
+    try:
+        if args['annotate']:
+            if args['--interrupt-write']:
+                write_cache = True
+            annotate_scmsources()
+            write_cache = True
+        else:
+            if args['--interrupt-write']:
+                write_cache = True
+                write_db = True
+            scm_generated, not_found, description_hashes = main()
+            write_cache = True
+            write_db = True
+    except Exception as e:
+        logger.exception(e)
+        ret = 1
+    except KeyboardInterrupt:
+        pass
+
+    if write_cache and (args['--use-cache'] or args['--write-cache']):
+        if args['--use-cache']:
+            scm_cache = get_scm_cache()
+            vo_cache = get_vo_cache()
+        else:
+            scm_cache.update(get_scm_cache())
+            vo_cache.update(get_vo_cache())
+        with open(cache_name, 'w') as CF:
+            pickle.dump((scm_cache, vo_cache), CF)
+
+    if write_db and not args['--dry-run'] and 'scm_generated' in locals():
+        # FIXME: Should actually handle KeyboardInterrupt in main()
         with open(scm_generated_name, 'w') as SGF:
             dump_json(scm_generated, SGF)
 
         with open(not_found_name, 'w') as NF:
             dump_json_nr_set(list(not_found), NF)
 
-        if not args.no_descriptions:
+        if not args['--no-descriptions']:
             with open(description_hashes_name, 'w') as DHF:
                 dump_json(description_hashes, DHF)
+
+    sys.exit(ret)
+
 
 # vim: tw=100 ft=python fenc=utf-8 ts=4 sts=4 sw=4

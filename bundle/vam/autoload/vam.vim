@@ -4,7 +4,7 @@
 " code which is used for installing / updating etc should go into vam/install.vim
 
 " if people use VAM they also want nocompatible
-if &compatible | set nocomptable  | endif
+if &compatible | set nocompatible | endif
 
 
 " don't need a plugin. If you want to use this plugin you call Activate once
@@ -32,11 +32,11 @@ let s:c.activated_plugins          = get(s:c,'activated_plugins',           {})
 let s:c.create_addon_info_handlers = get(s:c, 'create_addon_info_handlers', 1)
 
 " Users may install VAM system wide. In that case s:d is not writeable.
-let s:d = expand('<sfile>:h:h:h')
+let s:d = expand('<sfile>:h:h:h', 1)
 let s:c.plugin_root_dir = get(s:c, 'plugin_root_dir', filewritable(s:d) ? s:d : '~/.vim/vim-addons')
 unlet s:d
 
-if s:c.plugin_root_dir is# expand('~')
+if s:c.plugin_root_dir is# expand('~', 1)
   echohl Error
   echomsg "VAM: Don't install VAM into ~/.vim the normal way. See docs -> SetupVAM function. Put it int ~/.vim/vim-addons/vim-addon-manager for example."
   echohl None
@@ -44,10 +44,10 @@ if s:c.plugin_root_dir is# expand('~')
 endif
 
 " ensure we have absolute paths (windows doesn't like ~/.. ) :
-let s:c.plugin_root_dir = expand(fnameescape(s:c.plugin_root_dir))
+let s:c.plugin_root_dir = expand(fnameescape(s:c.plugin_root_dir), 1)
 
 let s:c.additional_addon_dirs = get(s:c, 'additional_addon_dirs', [])
-call map(s:c.additional_addon_dirs, 'expand(fnameescape(v:val))')
+call map(s:c.additional_addon_dirs, 'expand(fnameescape(v:val), 1)')
 
 let s:c.dont_source          = get(s:c, 'dont_source',          0)
 let s:c.plugin_dir_by_name   = get(s:c, 'plugin_dir_by_name',   'vam#DefaultPluginDirFromName')
@@ -77,11 +77,11 @@ if g:is_win && has_key(s:c, 'binary_utils')
 endif
 
 " additional plugin sources should go into your .vimrc or into the repository
-" called "vim-addon-manager-known-repositories" referenced here:
+" called "vim-pi" referenced here:
 if executable('git')
-  let s:c.plugin_sources["vim-addon-manager-known-repositories"] = {'type' : 'git', 'url': 'git://github.com/MarcWeber/vim-addon-manager-known-repositories'}
+  let s:c.plugin_sources['vim-pi'] = {'type' : 'git', 'url': 'https://bitbucket.org/vimcommunity/vim-pi'}
 else
-  let s:c.plugin_sources["vim-addon-manager-known-repositories"] = {'type' : 'archive', 'url': 'http://github.com/MarcWeber/vim-addon-manager-known-repositories/tarball/master', 'archive_name': 'vim-addon-manager-known-repositories-tip.tar.gz'}
+  let s:c.plugin_sources['vim-pi'] = {'type' : 'archive', 'url': 'https://bitbucket.org/vimcommunity/vim-pi/get/master.tar.bz2', 'archive_name': 'vim-pi.tar.gz'}
 endif
 
 if s:c.create_addon_info_handlers
@@ -91,7 +91,7 @@ if s:c.create_addon_info_handlers
       \ setlocal ft=addon-info
       \ | setlocal syntax=json
       \ | syn match Error "^\s*'"
-    autocmd BufWritePost *-addon-info.txt,addon-info.json call vam#ReadAddonInfo(expand('%'))
+    autocmd BufWritePost *-addon-info.txt,addon-info.json call vam#ReadAddonInfo(expand('%', 1))
   augroup END
 endif
 
@@ -234,6 +234,15 @@ fun! s:GetAuGroups()
   return augs
 endfun
 
+fun! s:ResetVars(buf)
+  let filetype = getbufvar(a:buf, '&filetype')
+  let syntax   = getbufvar(a:buf, '&syntax')
+  call setbufvar(a:buf, '&filetype', filetype)
+  if filetype isnot# syntax
+    call setbufvar(a:buf, '&syntax', syntax)
+  endif
+endfun
+
 " see also ActivateRecursively
 " Activate activates the plugins and their dependencies recursively.
 " I sources both: plugin/*.vim and after/plugin/*.vim files when called after
@@ -361,7 +370,7 @@ fun! vam#ActivateAddons(...) abort
         " Let's see how much this breaks.
         call map(filter(range(1, bufnr('$')),
               \         'bufexists(v:val)'),
-              \  'setbufvar(v:val, "&filetype", getbufvar(v:val, "&filetype"))')
+              \  's:ResetVars(v:val)')
       endif
     endif
 
@@ -491,7 +500,7 @@ fun! vam#OutputAsList(command) "{{{3
     return split(lines, '\n')
 endfun
 
-let s:sep=fnamemodify(expand('<sfile>:h'), ':p')[-1:]
+let s:sep=fnamemodify(expand('<sfile>:h', 1), ':p')[-1:]
 let s:sesep=escape(s:sep, '\&~')
 let s:resep='\V'.escape(s:sep, '\').'\+'
 fun! s:normpath(path)
@@ -591,6 +600,7 @@ command! -nargs=* -bar -complete=customlist,vam#install#AddonCompletion AddonsIn
 command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion ActivateInstalledAddons :call vam#ActivateAddons([<f-args>])
 command! -nargs=* -bar -complete=customlist,vam#install#UpdateCompletion UpdateAddons :call vam#install#Update([<f-args>])
 command! -nargs=0 -bar UpdateActivatedAddons exec 'UpdateAddons '.join(keys(g:vim_addon_manager.activated_plugins),' ')
+command! -nargs=0 -bar ListActivatedAddons :echo join(keys(g:vim_addon_manager.activated_plugins))
 command! -nargs=* -bar -complete=customlist,vam#install#UninstallCompletion UninstallNotLoadedAddons :call vam#install#UninstallAddons([<f-args>])
 
 command! -nargs=* -complete=customlist,vam#bisect#BisectCompletion AddonsBisect :call vam#bisect#Bisect(<f-args>)

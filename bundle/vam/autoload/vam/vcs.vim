@@ -23,15 +23,31 @@ let s:c.scms = get(s:c, 'scms', {})
 "
 " Later we can even add additional implementations telling user that upstream
 " has changed etc .. (TODO)
-let s:git_checkout='git clone $.url $p'
-if executable('git') && stridx(system('git clone --help'), '--depth')!=-1
-  let s:git_checkout='git clone --depth 1 $.url $p'
-endif
+
+fun! vam#vcs#GitCheckoutFixDepth(repository, targetDir)
+  " older git versions don't support shallow clone, check by reading --help
+  " output
+  "
+  " Neither does google code support it (yet)
+  let use_shallow_clone = s:c.scms.git.supports_shallow_clone
+
+  if (use_shallow_clone is# 'auto')
+    unlet use_shallow_clone
+    let use_shallow_clone = g:is_win ? 1 : (executable('git') && stridx(system('git help --man clone'), '--depth')!=-1)
+  endif
+  let use_shallow_clone = use_shallow_clone && a:repository.url !~? 'code\.google\.com'
+
+  let git_checkout='git clone --recursive '.(use_shallow_clone ? '--depth 1' : '').' $.url $p'
+  return vam#utils#RunShell(git_checkout, a:repository, a:targetDir)
+endf
+
 let s:scm_defaults={
-      \  'git': {'clone': ['vam#utils#RunShell', [s:git_checkout             ]],
+      \  'git': {'clone': ['vam#vcs#GitCheckoutFixDepth', []],
       \         'update': ['vam#utils#RunShell', ['cd $p && git pull'        ]],
       \          'wdrev': ['vam#utils#System',   ['git --git-dir=$p/.git rev-parse HEAD']],
-      \            'log': ['vam#utils#System',   ['git --git-dir=$2p/.git log $1 $[3]..$[4]', '--pretty=format:%s%n']],},
+      \            'log': ['vam#utils#System',   ['git --git-dir=$2p/.git log $1 $[3]..$[4]', '--pretty=format:%s%n']],
+      \           'supports_shallow_clone': 'auto',
+      \          },
       \   'hg': {'clone': ['vam#utils#RunShell', ['hg clone $.url $p'        ]],
       \         'update': ['vam#utils#RunShell', ['hg pull -u -R $p'         ]],
       \          'wdrev': ['vam#utils#System',   ['hg log --template $ -R $p -r .', '{rev}']],
@@ -88,7 +104,8 @@ fun! s:WriteBundleDir(targetDir, url, archive)
   call mkdir(a:targetDir.'/._bundle')
   call writefile([a:url, a:archive], a:targetDir.'/._bundle/opts', 'b')
 endfun
-fun! vam#vcs#GetBundle(repository, targetDir)
+
+fun! vam#vcs#UrlFromRepository(repository)
   let [dummystr, protocol, user, domain, port, path; dummylst]=
               \matchlist(a:repository.url, '\v^%(([^:]+)\:\/\/)?'.
               \                               '%(([^@/:]+)\@)?'.
@@ -107,7 +124,12 @@ fun! vam#vcs#GetBundle(repository, targetDir)
   else
     throw 'Don’t know how to get bundle from '.domain
   endif
-  call vam#install#Checkout(a:targetDir, {'type': 'archive', 'url': url, 'archive_name': archive})
+  return {'archive': archive, 'url': url}
+endfun
+
+fun! vam#vcs#GetBundle(repository, targetDir)
+  let x = vam#vcs#UrlFromRepository(a:repository)
+  call vam#install#Checkout(a:targetDir, {'type': 'archive', 'url': x.url, 'archive_name': x.archive})
   call s:WriteBundleDir(a:targetDir, url, archive)
   return 0
 endfun
@@ -133,7 +155,7 @@ endfun
 
 fun! vam#vcs#GitCheckout(repository, targetDir)
   if executable('git')
-    return vam#utils#RunShell(s:git_checkout, a:repository, a:targetDir)
+    return vam#vcs#GitCheckoutFixDepth(a:repository, a:targetDir)
   elseif executable('hg') && !s:TryCmdSilent('hg help gexport')
     call vam#Log('Trying to checkout git source '.a:repository.url.' using mercurial.', 'None')
     return s:TryCmd('hg clone $ $p', ((a:repository.url[:2] is# 'git')?

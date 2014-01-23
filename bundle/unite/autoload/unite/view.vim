@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Oct 2013.
+" Last Modified: 22 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -64,8 +64,13 @@ function! unite#view#_redraw_candidates(...) "{{{
   call s:set_syntax()
 endfunction"}}}
 function! unite#view#_redraw_line(...) "{{{
+  let prompt_linenr = unite#get_current_unite().prompt_linenr
   let linenr = a:0 > 0 ? a:1 : line('.')
-  if linenr <= unite#get_current_unite().prompt_linenr || &filetype !=# 'unite'
+  if linenr ==# prompt_linenr
+    let linenr += 1
+  endif
+
+  if linenr <= prompt_linenr || &filetype !=# 'unite'
     " Ignore.
     return
   endif
@@ -74,7 +79,7 @@ function! unite#view#_redraw_line(...) "{{{
   setlocal modifiable
 
   let candidate = unite#get_unite_candidates()[linenr -
-        \ (unite#get_current_unite().prompt_linenr+1)]
+        \ (prompt_linenr+1)]
   call setline(linenr, unite#view#_convert_lines([candidate])[0])
 
   let &l:modifiable = modifiable_save
@@ -150,7 +155,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     if a:winnr > 0
       if unite.prompt_linenr != line_save
         " Updated.
-        normal! G
+        call cursor(line('$'), 0)
       endif
 
       " Restore current unite.
@@ -184,7 +189,7 @@ function! unite#view#_set_highlight() "{{{
   execute 'syntax region uniteNonMarkedLine start=/^'.
         \ candidate_icon.' / end=''$'' keepend'.
         \ ' contains=uniteCandidateMarker,'.
-        \ 'uniteCandidateSourceName,uniteCandidateAbbr'
+        \ 'uniteCandidateSourceName'
   execute 'syntax match uniteCandidateMarker /^'.
         \ candidate_icon.' / contained'
 
@@ -202,11 +207,15 @@ function! unite#view#_set_highlight() "{{{
           \ candidate_icon.' / contained'
   endif
 
-  execute 'highlight default link uniteCandidateAbbr'
-        \ g:unite_abbr_highlight
-
   " Set syntax.
+  let syntax = {}
   for source in filter(copy(unite.sources), 'v:val.syntax != ""')
+    " Skip previous syntax
+    if has_key(syntax, source.name)
+      continue
+    endif
+    let syntax[source.name] = 1
+
     let name = unite.max_source_name > 0 ?
           \ unite#helper#convert_source_name(source.name) : ''
 
@@ -251,7 +260,7 @@ function! unite#view#_resize_window() "{{{
     return
   endif
 
-  if context.auto_resize && line('.') == unite.prompt_linenr
+  if context.auto_resize
     " Auto resize.
     let max_len = unite.prompt_linenr + len(unite.candidates)
     silent! execute 'resize' min([max_len, context.winheight])
@@ -412,10 +421,16 @@ function! unite#view#_init_cursor() "{{{
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    call cursor(unite.prompt_linenr, 0)
+    if is_restore
+      " Restore position.
+      call setpos('.', positions[key].pos)
+      startinsert
+    else
+      call cursor(unite.prompt_linenr, 0)
+      startinsert!
+    endif
 
     setlocal modifiable
-    startinsert!
   else
     let unite.is_insert = 0
 
@@ -426,7 +441,7 @@ function! unite#view#_init_cursor() "{{{
       call cursor(unite#helper#get_current_candidate_linenr(0), 0)
     endif
 
-    normal! 0
+    call cursor(0, 1)
     stopinsert
   endif
 
@@ -451,6 +466,9 @@ function! unite#view#_init_cursor() "{{{
   endif
 
   if context.quick_match
+    " Move to prompt linenr.
+    call cursor(unite.prompt_linenr, 0)
+
     call unite#mappings#_quick_match(0)
   endif
 endfunction"}}}
@@ -526,6 +544,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
     call s:clear_previewed_buffer_list()
 
     if winnr('$') != 1 && !unite.context.temporary
+          \ && winnr('$') == unite.winmax
       execute unite.win_rest_cmd
       execute unite.prev_winnr 'wincmd w'
     endif
@@ -590,7 +609,7 @@ function! unite#view#_print_message(message) "{{{
   if !empty(unite)
     let unite.msgs += message
   endif
-  echohl Comment | call s:redraw_echo(message) | echohl None
+  echohl Comment | call s:redraw_echo(message[: &cmdheight-1]) | echohl None
 endfunction"}}}
 function! unite#view#_print_source_message(message, source_name) "{{{
   call unite#view#_print_message(
@@ -630,12 +649,6 @@ endfunction"}}}
 
 function! s:set_syntax() "{{{
   let unite = unite#get_current_unite()
-  let source_padding = 3
-
-  let abbr_head = unite.max_source_name+source_padding
-  silent! syntax clear uniteCandidateAbbr
-  execute 'syntax region uniteCandidateAbbr' 'start=/\%'
-        \ .(abbr_head).'c/ end=/$/ keepend contained'
 
   " Set syntax.
   for source in filter(copy(unite.sources), 'v:val.syntax != ""')

@@ -44,12 +44,12 @@ function! dispatch#tmux#make(request) abort
     let cmd = 'split-window -l 10 -d'
   endif
 
-  let cmd .= ' ' . dispatch#shellescape('-P', '-t', session.':', dispatch#set_title(a:request) . '; exec ' . script)
+  let cmd .= ' ' . dispatch#shellescape('-P', '-t', session.':', 'exec ' . script)
 
   let filter = 'sed'
   let uname = system('uname')[0:-2]
   if uname ==# 'Darwin'
-    let filter .= ' -l'
+    let filter = '/usr/bin/sed -l'
   elseif uname ==# 'Linux'
     let filter .= ' -u'
   endif

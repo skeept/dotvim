@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 30 Oct 2013.
+" Last Modified: 23 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -71,6 +71,9 @@ function! unite#init#_context(context, ...) "{{{
   if context.tab
     let context.no_split = 1
   endif
+  if context.quick_match
+    let context.auto_quit = 1
+  endif
   if !has_key(context, 'short_source_names')
     let context.short_source_names = g:unite_enable_short_source_names
   endif
@@ -119,6 +122,10 @@ function! unite#init#_unite_buffer() "{{{
     setlocal buftype=nofile
     setlocal nolist
     setlocal nobuflisted
+    if has('cursorbind')
+      setlocal nocursorbind
+    endif
+    setlocal noscrollbind
     setlocal noswapfile
     setlocal nospell
     setlocal noreadonly
@@ -232,6 +239,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   " Set parameters.
   let unite = {}
   let unite.winnr = winnr
+  let unite.winmax = winnr('$')
   let unite.win_rest_cmd = (!context.unite__direct_switch) ?
         \ win_rest_cmd : ''
   let unite.context = context
@@ -594,6 +602,7 @@ function! unite#init#_sources(...) "{{{
         \ 'is_volatile' : 0,
         \ 'is_listed' : 1,
         \ 'is_forced' : 0,
+        \ 'is_grouped' : 0,
         \ 'required_pattern_length' : 0,
         \ 'action_table' : {},
         \ 'default_action' : {},
@@ -635,6 +644,13 @@ function! unite#init#_sources(...) "{{{
         endif
 
         let source = extend(source, default_source, 'keep')
+        if source.syntax == ''
+          " Set default syntax.
+          let source.syntax = 'uniteSource__' .
+                \ substitute(substitute(source.name,
+                \   '\%(^\|[^[:alnum:]]\+\)\zs[[:alnum:]]',
+                \   '\u\0', 'g'), '[^[:alnum:]]', '', 'g')
+        endif
 
         if !empty(source.action_table)
           let action = values(source.action_table)[0]

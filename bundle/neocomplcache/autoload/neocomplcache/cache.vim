@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cache.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Mar 2013.
+" Last Modified: 26 Sep 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -121,10 +121,18 @@ function! neocomplcache#cache#list2index(list, dictionary, is_string) "{{{
 endfunction"}}}
 
 function! neocomplcache#cache#save_cache(cache_dir, filename, keyword_list) "{{{
+  if neocomplcache#util#is_sudo()
+    return
+  endif
+
   call neocomplcache#cache#writefile(
         \ a:cache_dir, a:filename, [string(a:keyword_list)])
 endfunction"}}}
 function! neocomplcache#cache#save_cache_old(cache_dir, filename, keyword_list) "{{{
+  if neocomplcache#util#is_sudo()
+    return
+  endif
+
   " Create dictionary key.
   for keyword in a:keyword_list
     if !has_key(keyword, 'abbr')
@@ -163,6 +171,10 @@ function! neocomplcache#cache#readfile(cache_dir, filename) "{{{
   return s:Cache.readfile(cache_dir, a:filename)
 endfunction"}}}
 function! neocomplcache#cache#writefile(cache_dir, filename, list) "{{{
+  if neocomplcache#util#is_sudo()
+    return
+  endif
+
   let cache_dir = neocomplcache#get_temporary_directory() . '/' . a:cache_dir
   return s:Cache.writefile(cache_dir, a:filename, a:list)
 endfunction"}}}
@@ -179,37 +191,9 @@ endfunction"}}}
 let s:sdir = neocomplcache#util#substitute_path_separator(
       \ fnamemodify(expand('<sfile>'), ':p:h'))
 
-" Async test.
-function! neocomplcache#cache#test_async() "{{{
-  if !neocomplcache#cache#check_old_cache(a:cache_dir, a:filename)
-    return neocomplcache#cache#encode_name(a:cache_dir, a:filename)
-  endif
-
-  let filename = neocomplcache#util#substitute_path_separator(
-        \ fnamemodify(expand('%'), ':p'))
-  let pattern_file_name =
-        \ neocomplcache#cache#encode_name('keyword_patterns', 'vim')
-  let cache_name =
-        \ neocomplcache#cache#encode_name('test_cache', filename)
-
-  " Create pattern file.
-  call neocomplcache#cache#writefile(
-        \ 'keyword_patterns', a:filename, [a:pattern])
-
-  " args: funcname, outputname, filename pattern mark
-  "       minlen maxlen encoding
-  let fileencoding =
-        \ &fileencoding == '' ? &encoding : &fileencoding
-  let argv = [
-        \  'load_from_file', cache_name, filename, pattern_file_name, '[B]',
-        \  g:neocomplcache_min_keyword_length,
-        \  g:neocomplcache_max_menu_width, fileencoding
-        \ ]
-  return s:async_load(argv, 'test_cache', filename)
-endfunction"}}}
-
 function! neocomplcache#cache#async_load_from_file(cache_dir, filename, pattern, mark) "{{{
   if !neocomplcache#cache#check_old_cache(a:cache_dir, a:filename)
+        \ || neocomplcache#util#is_sudo()
     return neocomplcache#cache#encode_name(a:cache_dir, a:filename)
   endif
 
@@ -235,6 +219,7 @@ function! neocomplcache#cache#async_load_from_file(cache_dir, filename, pattern,
 endfunction"}}}
 function! neocomplcache#cache#async_load_from_tags(cache_dir, filename, filetype, mark, is_create_tags) "{{{
   if !neocomplcache#cache#check_old_cache(a:cache_dir, a:filename)
+        \ || neocomplcache#util#is_sudo()
     return neocomplcache#cache#encode_name(a:cache_dir, a:filename)
   endif
 

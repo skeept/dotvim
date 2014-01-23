@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handler.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Oct 2013.
+" Last Modified: 22 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,6 +37,10 @@ function! neocomplete#handler#_on_moved_i() "{{{
   call s:close_preview_window()
 endfunction"}}}
 function! neocomplete#handler#_on_insert_enter() "{{{
+  if !neocomplete#is_enabled()
+    return
+  endif
+
   let neocomplete = neocomplete#get_current_neocomplete()
   if neocomplete.linenr != line('.')
     call neocomplete#helper#clear_result()
@@ -54,8 +58,8 @@ function! neocomplete#handler#_on_insert_leave() "{{{
 
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.cur_text = ''
-  let neocomplete.old_cur_text = ''
-  let neocomplete.old_linenr = -1
+  let neocomplete.completed_item = {}
+  let neocomplete.overlapped_items = {}
 endfunction"}}}
 function! neocomplete#handler#_on_write_post() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
@@ -74,18 +78,57 @@ function! neocomplete#handler#_on_write_post() "{{{
   endfor
 endfunction"}}}
 function! neocomplete#handler#_on_complete_done() "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+
   " Get cursor word.
-  let [_, candidate] = neocomplete#match_word(
-        \ neocomplete#get_cur_text(1))
-  if candidate == ''
-    return
+  if exists('v:completed_item')
+    " Use v:completed_item feature.
+    if empty(v:completed_item)
+      return
+    endif
+
+    let complete_str = v:completed_item.word
+    if complete_str == ''
+      return
+    endif
+
+    if (v:completed_item.abbr != ''
+          \ && len(v:completed_item.word) < len(v:completed_item.abbr))
+          \ || v:completed_item.info != ''
+      let neocomplete.completed_item = v:completed_item
+    endif
+  else
+    let [_, complete_str] =
+          \ neocomplete#helper#match_word(
+          \   matchstr(getline('.'), '^.*\%'.col('.').'c'))
+    if complete_str == ''
+      return
+    endif
+
+    let candidates = filter(copy(neocomplete.candidates),
+          \   "v:val.word ==# complete_str &&
+          \    (get(v:val, 'abbr', '') != '' &&
+          \     v:val.word !=# v:val.abbr && v:val.abbr[-1] != '~') ||
+          \     get(v:val, 'info', '') != ''")
+    if !empty(candidates)
+      let neocomplete.completed_item = candidates[0]
+    endif
+  endif
+
+  " Restore overlapped item
+  if has_key(neocomplete.overlapped_items, complete_str)
+    " Move cursor
+    call cursor(0, col('.') - len(complete_str) +
+          \ len(neocomplete.overlapped_items[complete_str]))
+
+    let complete_str = neocomplete.overlapped_items[complete_str]
   endif
 
   let frequencies = neocomplete#variables#get_frequencies()
-  if !has_key(frequencies, candidate)
-    let frequencies[candidate] = 20
+  if !has_key(frequencies, complete_str)
+    let frequencies[complete_str] = 20
   else
-    let frequencies[candidate] += 20
+    let frequencies[complete_str] += 20
   endif
 endfunction"}}}
 function! neocomplete#handler#_change_update_time() "{{{
@@ -121,13 +164,18 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
 
   " Prevent infinity loop.
   if s:is_skip_auto_complete(cur_text)
+    let neocomplete.old_cur_text = cur_text
+    let neocomplete.old_linenr = line('.')
+
     if cur_text =~ '^\s*$\|\s\+$'
       " Make cache.
-      if neocomplete#is_enabled_source('buffer')
+      if neocomplete#helper#is_enabled_source('buffer',
+            \ neocomplete.context_filetype)
         " Caching current cache line.
         call neocomplete#sources#buffer#make_cache_current_line()
       endif
-      if neocomplete#is_enabled_source('member')
+      if neocomplete#helper#is_enabled_source('member',
+            \ neocomplete.context_filetype)
         " Caching current cache line.
         call neocomplete#sources#member#make_cache_current_line()
       endif
@@ -143,7 +191,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
   let neocomplete.old_linenr = line('.')
 
   if neocomplete#helper#is_omni(cur_text)
-    call feedkeys("\<C-x>\<C-o>\<C-p>", 'n')
+    call feedkeys("\<Plug>(neocomplete_start_omni_complete)")
     return
   endif
 

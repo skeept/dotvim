@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: bookmark.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 29 Mar 2013.
+" Last Modified: 03 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,7 +33,8 @@ let s:VERSION = '0.1.0'
 
 let s:bookmarks = {}
 
-call unite#util#set_default('g:unite_source_bookmark_directory',  g:unite_data_directory . '/bookmark')
+call unite#util#set_default('g:unite_source_bookmark_directory',
+      \ g:unite_data_directory . '/bookmark')
 "}}}
 
 function! unite#sources#bookmark#define() "{{{
@@ -68,7 +69,7 @@ function! unite#sources#bookmark#_append(filename) "{{{
   endif
 
   let path = unite#substitute_path_separator(
-        \ simplify(fnamemodify(unite#util#expand(path), ':p')))
+        \ simplify(fnamemodify(unite#util#expand(path), ':p:~')))
 
   redraw
   echo 'Path: ' . path
@@ -88,30 +89,89 @@ endfunction"}}}
 let s:source = {
       \ 'name' : 'bookmark',
       \ 'description' : 'candidates from bookmark list',
+      \ 'syntax' : 'uniteSource__Bookmark',
       \ 'action_table' : {},
+      \ 'hooks' : {},
       \}
 
 function! s:source.gather_candidates(args, context) "{{{
-  let bookmark_name = get(a:args, 0, 'default')
+  let bookmark_name = get(a:args, 0, '')
+  if bookmark_name =~ '/$'
+    let bookmark_name = bookmark_name[: -2]
+  endif
+  if bookmark_name == ''
+    let bookmark_name = 'default'
+  endif
 
-  let bookmark = s:load(bookmark_name)
-  return map(copy(bookmark.files), "{
-        \ 'word' : (v:val[0] != '' ? '[' . v:val[0] . '] ' : '') .
-        \          (fnamemodify(v:val[1], ':~:.') != '' ?
-        \           fnamemodify(v:val[1], ':~:.') : v:val[1]),
-        \ 'kind' : (isdirectory(v:val[1]) ? 'directory' : 'jump_list'),
-        \ 'source_bookmark_name' : bookmark_name,
-        \ 'source_entry_name' : v:val[0],
-        \ 'action__path' : v:val[1],
-        \ 'action__line' : v:val[2],
-        \ 'action__pattern' : v:val[3],
-        \ 'action__directory' : unite#path2directory(v:val[1]),
-        \   }")
+  if bookmark_name == '_'
+    let bookmark_name = '*'
+  endif
+
+  if stridx(bookmark_name, '*') != -1
+    let bookmarks = map(filter(
+          \ unite#util#glob(
+          \     g:unite_source_bookmark_directory . '/' . bookmark_name),
+          \ 'filereadable(v:val)'),
+          \ 'fnamemodify(v:val, ":t:r")'
+          \)
+  else
+    let bookmarks = [bookmark_name]
+  endif
+
+  let candidates = []
+  for bookmark_name in bookmarks
+    let bookmark = s:load(bookmark_name)
+    let candidates += map(copy(bookmark.files), "{
+          \ 'word' : (v:val[0] != '' ? '[' . v:val[0] . '] ' : '') .
+          \          (fnamemodify(v:val[1], ':~:.') != '' ?
+          \           fnamemodify(v:val[1], ':~:.') : v:val[1]),
+          \ 'kind' : (isdirectory(fnamemodify(v:val[1],':p')) ? 'directory' : 'jump_list'),
+          \ 'source__bookmark_name' : bookmark_name,
+          \ 'source__bookmark_orig' : v:val,
+          \ 'action__path' : substitute(v:val[1], '[/\\\\]$', '', ''),
+          \ 'action__line' : v:val[2],
+          \ 'action__pattern' : v:val[3],
+          \ 'action__directory' : unite#path2directory(v:val[1]),
+          \   }")
+  endfor
+  return candidates
+endfunction"}}}
+function! s:source.hooks.on_syntax(args, context) "{{{
+  syntax match uniteSource__Bookmark_Name /\[.\{-}\] /
+        \ contained containedin=uniteSource__Bookmark
+  highlight default link uniteSource__Bookmark_Name Statement
 endfunction"}}}
 function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
-  return ['default'] + map(split(glob(
+  return ['_', '*', 'default'] + map(split(glob(
         \ g:unite_source_bookmark_directory . '/' . a:arglead . '*'), '\n'),
         \ "fnamemodify(v:val, ':t')")
+endfunction"}}}
+function! s:source.vimfiler_complete(args, context, arglead, cmdline, cursorpos) "{{{
+  return self.complete(a:args, a:context, a:arglead, a:cmdline, a:cursorpos)
+endfunction"}}}
+function! s:source.vimfiler_check_filetype(args, context) "{{{
+  return ['directory', get(a:args, 0, 'default')]
+endfunction"}}}
+function! s:source.vimfiler_gather_candidates(args, context) "{{{
+  let exts = unite#util#is_windows() ?
+        \ escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.') : ''
+
+  if join(a:args, ':') =~ '^/.\|^\a:'
+    " Fall back to file source.
+    return unite#sources#file#get_file_source().vimfiler_gather_candidates(
+          \ a:args, a:context)
+  endif
+
+  let candidates = self.gather_candidates(a:args, a:context)
+  for candidate in candidates
+    let candidate.vimfiler__is_directory =
+          \ isdirectory(candidate.action__path)
+    call unite#sources#file#create_vimfiler_dict(candidate, exts)
+    let candidate.vimfiler__filename =
+          \ fnamemodify(candidate.action__path, ':t')
+  endfor
+
+  return candidates
 endfunction"}}}
 
 " Actions "{{{
@@ -123,11 +183,10 @@ let s:source.action_table.delete = {
       \ }
 function! s:source.action_table.delete.func(candidates) "{{{
   for candidate in a:candidates
-    let bookmark = s:bookmarks[candidate.source_bookmark_name]
+    let bookmark = get(s:bookmarks, candidate.source__bookmark_name, [])
     call filter(bookmark.files, 'v:val !=# ' .
-          \ string([candidate.source_entry_name, candidate.action__path,
-          \      candidate.action__line, candidate.action__pattern]))
-    call s:save(candidate.source_bookmark_name, bookmark)
+          \ string(candidate.source__bookmark_orig))
+    call s:save(candidate.source__bookmark_name, bookmark)
   endfor
 endfunction"}}}
 

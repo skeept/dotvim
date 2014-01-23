@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: include.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 15 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -65,18 +65,10 @@ function! s:source.hooks.on_init(context) "{{{
 
   " Create cache directory.
   call neocomplete#cache#make_directory('include_cache')
-
-  if neocomplete#exists_echodoc()
-    call echodoc#register('include', s:doc_dict)
-  endif
 endfunction"}}}
 
 function! s:source.hooks.on_final(context) "{{{
   silent! delcommand NeoCompleteIncludeMakeCache
-
-  if neocomplete#exists_echodoc()
-    call echodoc#unregister('include')
-  endif
 endfunction"}}}
 
 function! s:source.gather_candidates(context) "{{{
@@ -155,59 +147,9 @@ function! neocomplete#sources#include#get_current_include_files() "{{{
   return s:get_buffer_include_files(bufnr('%'))
 endfunction"}}}
 
-" For echodoc. "{{{
-let s:doc_dict = {
-      \ 'name' : 'include',
-      \ 'rank' : 5,
-      \ 'filetypes' : {},
-      \ }
-function! s:doc_dict.search(cur_text) "{{{
-  if &filetype ==# 'vim' || !has_key(s:include_info, bufnr('%'))
-    return []
-  endif
-
-  let completion_length = 2
-
-  " Collect words.
-  let words = []
-  let i = 0
-  while i >= 0
-    let word = matchstr(a:cur_text, '\k\+', i)
-    if len(word) >= completion_length
-      call add(words, word)
-    endif
-
-    let i = matchend(a:cur_text, '\k\+', i)
-  endwhile
-
-  for word in reverse(words)
-    for include in filter(copy(s:include_info[bufnr('%')].include_files),
-          \ 'has_key(s:include_cache, v:val)')
-      for matched in filter(s:include_cache[include],
-            \ 'v:val.word ==# word && has_key(v:val, "kind") && v:val.kind != ""')
-        let ret = []
-
-        let match = match(matched.abbr, neocomplete#escape_match(word))
-        if match > 0
-          call add(ret, { 'text' : matched.abbr[ : match-1] })
-        endif
-
-        call add(ret, { 'text' : word, 'highlight' : 'Identifier' })
-        call add(ret, { 'text' : matched.abbr[match+len(word) :] })
-
-        if match > 0 || len(ret[-1].text) > 0
-          return ret
-        endif
-      endfor
-    endfor
-  endfor
-
-  return []
-endfunction"}}}
-"}}}
-
 function! s:check_buffer(bufnumber, is_force) "{{{
-  if !neocomplete#is_enabled_source('include')
+  if !neocomplete#helper#is_enabled_source('include',
+        \ neocomplete#get_context_filetype())
     return
   endif
 
@@ -305,7 +247,11 @@ function! s:get_buffer_include_files(bufnumber) "{{{
     call neocomplete#util#set_default_dictionary(
           \ 'g:neocomplete#sources#include#paths', 'cpp',
           \ getbufvar(a:bufnumber, '&path') .
-          \ ','.join(split(glob('/usr/include/c++/*'), '\n'), ','))
+          \ ','.join(filter(
+          \       split(glob('/usr/include/c++/*'), '\n') +
+          \       split(glob('/usr/include/*/c++/*'), '\n') +
+          \       split(glob('/usr/include/*/'), '\n'),
+          \     'isdirectory(v:val)'), ','))
   endif
 
   let pattern = get(g:neocomplete#sources#include#patterns, filetype,
@@ -359,7 +305,8 @@ function! s:get_include_files(nestlevel, lines, filetype, pattern, path, expr) "
       if filereadable(filename)
         call add(include_files, filename)
 
-        if (a:filetype == 'c' || a:filetype == 'cpp') && a:nestlevel < 1
+        if a:nestlevel < 1
+          " Nested include files.
           let include_files += s:get_include_files(
                 \ a:nestlevel + 1, readfile(filename)[:100],
                 \ a:filetype, a:pattern, a:path, a:expr)
@@ -377,7 +324,8 @@ function! s:get_include_files(nestlevel, lines, filetype, pattern, path, expr) "
 endfunction"}}}
 
 function! s:check_cache() "{{{
-  if !neocomplete#is_enabled_source('include')
+  if !neocomplete#helper#is_enabled_source('include',
+        \ neocomplete#get_context_filetype())
     return
   endif
 

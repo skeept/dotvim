@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handlers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Sep 2013.
+" Last Modified: 22 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -39,7 +39,7 @@ function! unite#handlers#_on_insert_leave()  "{{{
   let unite = unite#get_current_unite()
 
   if line('.') != unite.prompt_linenr
-    normal! 0
+    call cursor(0, 1)
   endif
 
   let unite.is_insert = 0
@@ -170,10 +170,6 @@ function! unite#handlers#_on_cursor_moved()  "{{{
           \ <ESC>:call unite#mappings#loop_cursor_up_call(
           \    1, 'i')<CR>
   else
-    if winline() <= winheight('$') / 2
-      normal! zz
-    endif
-
     nnoremap <expr><buffer> <Plug>(unite_loop_cursor_up)
           \ unite#mappings#loop_cursor_up_expr(0)
     nnoremap <expr><buffer> <Plug>(unite_skip_cursor_up)
@@ -185,7 +181,7 @@ function! unite#handlers#_on_cursor_moved()  "{{{
   endif
 
   if exists('b:current_syntax') && !context.no_cursor_line
-    match
+    2match
 
     if line('.') <= prompt_linenr+1 || mode('.') == 'i' ||
           \ split(reltimestr(reltime(unite.cursor_line_time)))[0] > '0.10'
@@ -205,7 +201,7 @@ function! unite#handlers#_on_cursor_moved()  "{{{
 
   " Check lines. "{{{
   if !context.auto_resize &&
-        \ winheight(0) < line('$') && line('.') + winheight(0) / 2 < line('$')
+        \ winheight(0) < line('$') && line('.') + winheight(0) < line('$')
     return
   endif
 
@@ -239,7 +235,7 @@ function! unite#handlers#_on_cursor_moved()  "{{{
   endif"}}}
 endfunction"}}}
 function! unite#handlers#_on_buf_unload(bufname)  "{{{
-  match
+  2match
 
   " Save unite value.
   let unite = getbufvar(a:bufname, 'unite')
@@ -301,15 +297,22 @@ function! s:change_highlight()  "{{{
 
   syntax case ignore
 
-  for input in unite#helper#get_substitute_input(
+  for input_str in unite#helper#get_substitute_input(
         \ unite#helper#get_input())
-    for pattern in map(split(input, '\\\@<! '),
-          \ "substitute(escape(unite#util#escape_match(v:val), '/'),
-          \   '\\\\\\@<!|', '\\\\|', 'g')")
-      execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
-            \ 'containedin=uniteCandidateAbbr contained'
-      for source in filter(copy(unite.sources), 'v:val.syntax != ""')
-        execute 'syntax match uniteCandidateInputKeyword' '/'.pattern.'/'
+    let input_list = map(filter(split(input_str, '\\\@<! '),
+          \ "v:val !~ '^[!:]'"),
+          \ "substitute(v:val, '\\\\ ', ' ', 'g')")
+
+    for source in filter(copy(unite.sources), "v:val.syntax != ''")
+      for matcher in filter(copy(map(filter(
+            \ copy(source.filters),
+            \ "type(v:val) == type('')"), 'unite#get_filters(v:val)')),
+            \ "has_key(v:val, 'pattern')")
+        let patterns = map(copy(input_list),
+              \ "escape(matcher.pattern(v:val), '/~')")
+
+        silent! execute 'syntax match uniteCandidateInputKeyword'
+              \ '/'.join(patterns, '\|').'/'
               \ 'containedin='.source.syntax.' contained'
       endfor
     endfor
@@ -363,11 +366,11 @@ function! s:set_cursor_line()
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
 
-  execute 'match' (line('.') <= prompt_linenr ?
+  execute '2match' (line('.') <= prompt_linenr ?
         \ line('$') <= prompt_linenr ?
-        \ 'uniteError /\%'.prompt_linenr.'l/' :
-        \ context.cursor_line_highlight.' /\%'.(prompt_linenr+1).'l/' :
-        \ context.cursor_line_highlight.' /\%'.line('.').'l/')
+        \ 'uniteError /^\%'.prompt_linenr.'l.*/' :
+        \ context.cursor_line_highlight.' /^\%'.(prompt_linenr+1).'l.*/' :
+        \ context.cursor_line_highlight.' /^\%'.line('.').'l.*/')
   let unite.cursor_line_time = reltime()
 endfunction
 

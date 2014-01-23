@@ -316,6 +316,16 @@ g:neocomplete#enable_smart_case
 
 		Default value is 'infercase'.
 
+					*g:neocomplete#enable_camel_case*
+g:neocomplete#enable_camel_case
+		When a capital letter is matched with the uppercase, but a
+		lower letter is matched with the upper- and lowercase.
+		Ex: "foB" is matched with "FooBar" not "foobar".
+		Note: This feature is only available in
+		|neocomplete-filter-matcher_fuzzy|.
+
+		Default value is 0.
+
 					*g:neocomplete#disable_auto_complete*
 g:neocomplete#disable_auto_complete
 		This variable controls whether you invalidate automatic
@@ -439,16 +449,6 @@ g:neocomplete#keyword_patterns
 		endif
 		let g:neocomplete#keyword_patterns._ = '\h\w*'
 <
-					*g:neocomplete#next_keyword_patterns*
-g:neocomplete#next_keyword_patterns
-		This dictionary records regular expression to recognize a
-		keyword pattern of the next than a cursor.  The form is the
-		same as |g:neocomplete#keyword_patterns|.
-
-		Because it is complicated, refer to
-		neocomplete#init#_variables() in
-		autoload/neocomplete/init.vim for the initial value.
-
 				*g:neocomplete#force_omni_input_patterns*
 g:neocomplete#force_omni_input_patterns
 		This dictionary records keyword patterns to Omni completion.
@@ -456,7 +456,8 @@ g:neocomplete#force_omni_input_patterns
 		If this pattern is not defined or empty pattern, neocomplete
 		does not call 'omnifunc'.
 		Note: If it is a set, neocomplete will call 'omnifunc'
-		directly.  So almost neocomplete features are disabled.  But
+		directly.  So almost neocomplete features are disabled(for
+		example: auto select first candidate).  But
 		all Omni completion works instead of
 		|g:neocomplete#sources#omni#input_patterns|.
 >
@@ -697,6 +698,9 @@ g:neocomplete#sources#file_include#exprs
 
 		Example: Perl
 >
+		if !exists('g:neocomplete#sources#file_include#exprs')
+		  let g:neocomplete#sources#file_include#exprs = {}
+		endif
 		let g:neocomplete#sources#file_include#exprs.perl =
 		\ 'fnamemodify(substitute(v:fname, "/", "::", "g"), ":r")'
 <
@@ -709,13 +713,29 @@ g:neocomplete#sources#file_include#exprs
 g:neocomplete#sources#file_include#exts
 		It is the list of include file name extensions.  When there
 		is not it, all file name is used.  It is the dictionary of
-		the list that assumed file type a key.
+		the list that assumed file type a key.  In order to use this
+		feature you have to initialize
+		'g:neocomplete#sources#file_include#exts' as shown in the
+		following example.
 
 		Example: C++
 >
+		if !exists('g:neocomplete#sources#file_include#exts')
+		  let g:neocomplete#sources#file_include#exts = {}
+		endif
 		let g:neocomplete#sources#file_include#exts.cpp =
 		\ ['', 'h', 'hpp', 'hxx']
 <
+		Because it is complicated, refer to s:source.initialize() in
+		autoload/neocomplete/sources/file.vim for the
+		initial value.
+
+				*g:neocomplete#sources#file_include#delimiters*
+g:neocomplete#sources#file_include#delimiters
+		It is the delimiter character of include path.  When there is
+		not it, "." is used.  It is the dictionary of the string that
+		assumed file type a key.
+
 		Because it is complicated, refer to s:source.initialize() in
 		autoload/neocomplete/sources/file.vim for the
 		initial value.
@@ -894,7 +914,7 @@ neocomplete#custom#source({source-name}, {option-name}, {value})
 		separating "," in {source-name}.
 		If {source-name} is "_", sources default option will be
 		change.
-		
+
 		These options below are available:
 		|neocomplete-source-attributes|
 		Note: User customization for neocomplete must be set before
@@ -957,11 +977,13 @@ neocomplete#cancel_popup()
 <
 				*neocomplete#smart_close_popup()*
 neocomplete#smart_close_popup()
-		Insert candidate and close popup menu for neocomplete.
+		Insert candidate and re-generate popup menu for neocomplete.
 		Unlike |neocomplete#close_popup()|, this function changes
 		behavior by |g:neocomplete#enable_auto_select| smart.
 		Note: This mapping is conflicted with |SuperTab| or |endwise|
 		plugins.
+		Note: This key mapping is for <C-h> or <BS> keymappings.
+		You should not use it for <CR>.
 
 				*neocomplete#undo_completion()*
 neocomplete#undo_completion()
@@ -1027,7 +1049,7 @@ EXAMPLES					*neocomplete-examples*
 	" <CR>: close popup and save indent.
 	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
 	function! s:my_cr_function()
-	  return neocomplete#smart_close_popup() . "\<CR>"
+	  return neocomplete#close_popup() . "\<CR>"
 	  " For no inserting <CR> key.
 	  "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
 	endfunction
@@ -1206,24 +1228,29 @@ Default sources are below. But you can create original filters(cf:
 
 	" Change default matcher.
 	call neocomplete#custom#source('_', 'matchers',
-	\ ['matcher_head'])
+	\ ['matcher_head', 'matcher_length'])
 
 	" Change default sorter.
 	call neocomplete#custom#source('_', 'sorters',
 	\ ['sorter_length'])
+
+	" Change default converter.
+	call neocomplete#custom#source('_', 'converters',
+	\ ['converter_remove_overlap', 'converter_remove_last_paren',
+        \  'converter_delimiter', 'converter_case', 'converter_abbr'])
 <
 					*neocomplete-filter-matcher_default*
 Default matchers:
 	if |g:neocomplete#enable_fuzzy_completion| :
-		['matcher_head']
+		['matcher_head', 'matcher_length']
 	else :
-		['matcher_fuzzy']
+		['matcher_fuzzy', 'matcher_length']
 
 					*neocomplete-filter-sorter_default*
 Default sorters: ['sorter_rank'].
 
 					*neocomplete-filter-converter_default*
-Default converters: ['converter_remove_next_keyword',
+Default converters: ['converter_remove_overlap',
         \      'converter_delimiter', 'converter_case', 'converter_abbr'].
 
 					*neocomplete-filter-matcher_head*
@@ -1231,6 +1258,10 @@ matcher_head	Head matching matcher.
 
 					*neocomplete-filter-matcher_fuzzy*
 matcher_fuzzy	Fuzzy matching matcher.
+
+					*neocomplete-filter-matcher_length*
+matcher_length	Input keyword length matcher. It removes candidates which is
+		less than input keyword length.
 
 					*neocomplete-filter-sorter_rank*
 sorter_rank	Matched rank order sorter.  The higher the matched word is
@@ -1246,6 +1277,10 @@ sorter_word	Candidates word order sorter.
 converter_abbr
 		The converter which abbreviates a candidate's abbr.
 
+				*neocomplete-filter-converter_disable_abbr*
+converter_disable_abbr
+		The converter which disables a candidate's abbr.
+
 					*neocomplete-filter-converter_case*
 converter_case
 		The converter which converts a candidate's word in text mode.
@@ -1258,9 +1293,20 @@ converter_delimiter
 
 			*neocomplete-filter-converter_remove_next_keyword*
 converter_remove_next_keyword
-		The converter which removes matched next keyword part in a
-		candidate's word.
-		(cf: |g:neocomplete#next_keyword_patterns|)
+		Note: It is deprecated.
+
+			*neocomplete-filter-converter_remove_overlap*
+converter_remove_overlap
+		The converter which removes overlapped text in a candidate's
+		word.
+		Note: It removes candidates which is not overlapped
+		(it is in auto completion only).
+
+			*neocomplete-filter-converter_remove_last_paren*
+converter_remove_last_paren
+		The converter which removes last parentheses in a
+		candidate's word. It is useful if you use auto closing
+		parentheses plugins.
 
 ==============================================================================
 CREATE SOURCE					*neocomplete-create-source*
@@ -1292,12 +1338,14 @@ kind			String			(Optional)
 			Source kind.
 			Following values are available.
 			"manual"  : This source decides complete position
-			            manually.
-			            Note: "complfunc" or "ftplugin" are old
-				    values.
+				manually.
+				Note: "complfunc" or "ftplugin" are old
+				values.
 			"keyword" : This source decides complete position by
-			           |g:neocomplete#keyword_patterns|.
-			            Note: "plugin" is old value.
+				|g:neocomplete#keyword_patterns|.
+				Note: "plugin" is old value.
+				Note: The candidates are filtered by
+				|g:neocomplete#keyword_patterns|.
 
 				*neocomplete-source-attribute-filetypes*
 filetypes		Dictionary		(Optional)
@@ -1413,6 +1461,10 @@ get_complete_position	Function	(Optional)
 			source is called(|neocomplete-notation-{context}|).
 			If you omit it, neocomplete will use the position
 			using |g:neocomplete#keyword_patterns|.
+			Note: If the source returns candidates which are not
+			matched |g:neocomplete#keyword_patterns|, you must
+			define
+			|neocomplete-source-attribute-get_complete_position|.
 
 			*neocomplete-source-attribute-gather_candidates*
 gather_candidates	Function	(Required)
@@ -1562,7 +1614,7 @@ A:
 or
 >
 	call neocomplete#custom#source('_', 'matchers',
-	\ ['matcher_head'])
+	\ ['matcher_head', 'matcher_length'])
 <
 Q: I want to sort candidates by different way.
 
@@ -1694,7 +1746,7 @@ source code's complete function, and find out the omni pattern).
 >
 	" Go (plugin: gocode)
 	let g:neocomplete#sources#omni#functions.go =
-	\ 'gocomplete#Complete'
+	\ 'go#complete#Complete'
 	" Clojure (plugin: vim-clojure)
 	let g:neocomplete#sources#omni#functions.clojure =
 	\ 'vimclojure#OmniCompletion'
@@ -1732,7 +1784,7 @@ A: Please try below settings.
 	" <CR>: close popup and save indent.
 	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
 	function! s:my_cr_function()
-	  return neocomplete#smart_close_popup() . "\<CR>"
+	  return neocomplete#close_popup() . "\<CR>"
 	  " For no inserting <CR> key.
 	  "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
 	endfunction
@@ -1787,8 +1839,10 @@ https://github.com/davidhalter/jedi-vim
 A: Please set |g:neocomplete#force_omni_input_patterns| as below.
 >
 	autocmd FileType python setlocal omnifunc=jedi#completions
+	let g:jedi#completions_enabled = 0
 	let g:jedi#auto_vim_configuration = 0
-	let g:neocomplete#force_omni_input_patterns.python = '[^. \t]\.\w*'
+	let g:neocomplete#force_omni_input_patterns.python =
+	\ '\%([^. \t]\.\|^\s*@\|^\s*from\s.\+import \|^\s*from \|^\s*import \)\w*'
 <
 Q: Candidates are not found in heavy completion(neco-look, etc).
 
@@ -1866,7 +1920,7 @@ because if_lua has double-free problem.
 	let g:lua_check_syntax = 0
 	let g:lua_complete_omni = 1
 	let g:lua_complete_dynamic = 0
-	
+
 	let g:neocomplete#sources#omni#functions.lua =
 	      \ 'xolox#lua#omnifunc'
 	let g:neocomplete#sources#omni#input_patterns.lua =
@@ -1968,6 +2022,69 @@ https://github.com/Shougo/neocomplcache.vim/issues/350
 A: It is autoclose mappings problem. I cannot fix it. You should use
 auto-pairs plugin instead of it.
 https://github.com/jiangmiao/auto-pairs
+
+Q: I want to move to cursor by arrow key.
+https://github.com/Shougo/neocomplete.vim/issues/114
+
+A: First, I don't recommend to move cursor by arrow key. It is not Vim's
+theory. But if you want to move cursor forcely, you can config it by following
+settings. >
+
+	" For cursor moving in insert mode(Not recommended)
+	"inoremap <expr><Left>  neocomplete#close_popup() . "\<Left>"
+	"inoremap <expr><Right> neocomplete#close_popup() . "\<Right>"
+	"inoremap <expr><Up>    neocomplete#close_popup() . "\<Up>"
+	"inoremap <expr><Down>  neocomplete#close_popup() . "\<Down>"
+	" Or set this.
+	"let g:neocomplete#enable_cursor_hold_i = 1
+	" Or set this.
+	"let g:neocomplete#enable_insert_char_pre = 1
+
+Q: I want to complete by Erlang omnifunc.
+https://github.com/vim-erlang/vim-erlang-omnicomplete
+
+A: >
+	if !exists('g:neocomplete#force_omni_input_patterns')
+	  let g:neocomplete#force_omni_input_patterns = {}
+	endif
+	g:neocomplete#force_omni_input_patterns.erlang =
+	\ '\<[[:digit:][:alnum:]_-]\+:[[:digit:][:alnum:]_-]*'
+
+Q: I want to complete candidates from header files.
+https://github.com/Shougo/neocomplete.vim/issues/118
+
+A: You can do it by |neocomplete-source-include|, but you must install
+|vimproc|.
+		http://github.com/Shougo/vimproc.vim
+
+Q: I want to look selected function's arguments in neocomplete. But I don't
+like preview window feature.
+https://github.com/Shougo/neocomplete.vim/issues/120
+
+A: You can do it by |echodoc|.
+http://github.com/Shougo/echodoc.vim
+Note: This feature is available from neocomplete candidates only.
+You cannot get it from |g:neocomplete#force_omni_input_patterns|.
+
+Q: In ||g:neocomplete#force_omni_input_patterns|,
+|g:neocomplete#enable_auto_select| feature is not work.
+https://github.com/Shougo/neocomplete.vim/issues/139
+
+A: It is feature. See |g:neocomplete#force_omni_input_patterns| documentation.
+
+Q: I want to disable all sources by default.
+
+A: >
+	call neocomplete#custom#source('_', 'disabled', 1)
+
+Q: I want to disable candidates abbr in tag source.
+https://github.com/Shougo/neocomplete.vim/issues/158
+
+A: >
+	call neocomplete#custom#source('tags', 'converters',
+	\ ['converter_remove_overlap', 'converter_remove_last_paren',
+	\  'converter_delimiter', 'converter_case',
+	\ 'converter_disable_abbr', 'converter_abbr'])
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:

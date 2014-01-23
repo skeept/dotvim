@@ -18,6 +18,7 @@ UltiSnips                                      *snippet* *snippets* *UltiSnips*
    3.5 Functions                                |UltiSnips-functions|
       3.5.1 UltiSnips_AddSnippet                |UltiSnips_AddSnippet|
       3.5.2 UltiSnips_Anon                      |UltiSnips_Anon|
+      3.5.3 UltiSnips_SnippetsInCurrentScope    |UltiSnips_SnippetsInCurrentScope|
    3.6 Missing python support                   |UltiSnips-python-warning|
 4. Syntax                                       |UltiSnips-syntax|
    4.1 Adding Snippets                          |UltiSnips-adding-snippets|
@@ -330,11 +331,20 @@ If you do not want to use the snippets that come with UltiSnips, define the
 variable accordingly. >
    let g:UltiSnipsSnippetDirectories=["mycoolsnippets"]
 
-UltiSnips searches in 'runtimepath' for snippet directories but traverses
-'runtimepath' in reverse order (last item first). If you would like to have
-UltiSnips traverse 'runtimepath' in the standard order, add this to your vimrc
+You can also redefine the search path on a buffer by buffer basis by setting
+the variable b:UltiSnipsSnippetDirectories.  This variable takes precedence
+over the global variable.
+
+UltiSnips searches in 'runtimepath' for snippet directories and attempts to
+determine if 'runtimepath' should be traversed in normal or reverse order. If
+you would like to override the order UltiSnips detected for 'runtimepath', add
+this to your vimrc
 file: >
+   " Traverse in normal order
    let g:UltiSnipsDontReverseSearchPath="1"
+
+   " Traverse in reverse order
+   let g:UltiSnipsDontReverseSearchPath="0"
 
 By default, whenever a snippet expand is triggered, UltiSnips will check for
 modifications to the snippet file associated with the filetype and reload it
@@ -376,7 +386,7 @@ complete definition as listed by the |:smap| command. >
 3.5 Functions                                           *UltiSnips-functions*
 -------------
 
-UltiSnips provides two functions for extending core functionality.
+UltiSnips provides some functions for extending core functionality.
 
 
  3.5.1 UltiSnips_AddSnippet                            *UltiSnips_AddSnippet*
@@ -410,6 +420,51 @@ Note: The right-hand side of the mapping starts with an immediate retype of
 the '$$' trigger and passes '$$' to the function as the trigger argument.
 This is required in order for UltiSnips to have access to the characters
 typed so it can determine if the trigger matches or not.
+
+ 3.5.3 UltiSnips_SnippetsInCurrentScope    *UltiSnips_SnippetsInCurrentScope*
+
+A third function is UltiSnips_SnippetsInCurrentScope which is the equivalent
+of snipmate GetSnipsInCurrentScope function.
+This function simply returns a vim dictionary with the snippets whose trigger
+matches the current word.
+This function does not add any new functionality to ultisnips directly but
+allows to use third party plugins to integrate the current available snippets.
+
+An example of such third party plugin is SnippetCompleteSnipMate which uses
+the function GetSnipsInCurrentScope to integrate the current available
+snippets with user defined abbreviations and provides these and a completion
+menu.
+This script is located in
+http://www.vim.org/scripts/script.php?script_id=4276.
+Note: If you check the above website it lists two dependencies: the
+SnippetComplete plugin and snipmate.
+You do need the SnippetComplete plugin but you obviously don't need snipmate,
+you just have to define the function GetSnipsInCurrentScope. Put the following
+in your vimrc:
+
+function! GetSnipsInCurrentScope()
+  return UltiSnips_SnippetsInCurrentScope()
+endfunction
+
+
+As a second example on how to use this function consider the following
+function and mapping definition:
+
+function! ExpandPossibleShorterSnippet()
+  if len(UltiSnips_SnippetsInCurrentScope()) == 1 "only one candidate...
+    let curr_key = keys(UltiSnips_SnippetsInCurrentScope())[0]
+    normal diw
+    exe "normal a" . curr_key
+    exe "normal a "
+    return 1
+  endif
+  return 0
+endfunction
+inoremap <silent> <C-L> <C-R>=(ExpandPossibleShorterSnippet() == 0? '': UltiSnips_ExpandSnippet())<CR>
+
+If the trigger for your snippet is lorem, you type lor, and you have no other
+snippets whose trigger matches lor then hitting <C-L> will expand to whatever
+lorem expands to.
 
 
 3.6 Warning about missing python support           *UltiSnips-python-warning*
@@ -538,10 +593,13 @@ a word without spaces.
 
 The options currently supported are: >
    !   Overwrite - A snippet with this option will overwrite all previously
-       defined snippets with an identical tab trigger. The default behavior
-       is to display list of snippets matching the tab trigger and let the
-       user pick the one they want. Use this option to overwrite bundled
-       snippets with user defined ones.
+       defined snippets with an identical tab trigger. What previously means
+       in this context depends on the order UltiSnips traverses the
+       'runtimepath'. (Compare g:UltiSnipsDontReverseSearchPath). This might
+       depend on your installation type (Pathogen, Bzr, Vundle). The default
+       behavior is to display list of snippets matching the tab trigger and
+       let the user pick the one they want. Use this option to overwrite
+       bundled snippets with user defined ones.
 
    b   Beginning of line - A snippet with this option is expanded only if the
        tab trigger is the first word on the line. In other words, if only
@@ -559,7 +617,7 @@ The options currently supported are: >
        the tab trigger start matches a word boundary and the tab trigger end
        matches a word boundary. In other words the tab trigger must be
        preceded and followed by non-word characters. Word characters are
-       letters, digits and the underscore. Use this option, for example, to
+       defined by the 'iskeyword' setting. Use this option, for example, to
        permit expansion where the tab trigger follows punctuation without
        expanding suffixes of larger words.
 
@@ -1102,6 +1160,11 @@ The options can be any combination of >
    i    - case insensitive
           By default, regular expression matching is case sensitive. With this
           option, matching is done without regard to case.
+   a    - ascii conversion
+          By default, transformation are made on the raw utf-8 string. With
+          this option, matching is done on the corresponding ASCII string
+          instead, for example 'à' will become 'a'.
+          This option required the python package 'unidecode'.
 
 The syntax of regular expressions is beyond the scope of this document. Python
 regular expressions are used internally, so the python 're' module can be used
@@ -1159,6 +1222,18 @@ endsnippet
 title<tab>this is a title ->
 this is a title
 This Is A Title
+
+
+Demo: ASCII transformation
+------------------- SNIP -------------------
+snippet ascii "Replace non ascii chars"
+${1: an accentued text}
+${1/.*/$0/a}
+endsnippet
+------------------- SNAP -------------------
+ascii<tab>à la pêche aux moules
+à la pêche aux moules
+a la peche aux moules
 
 
 Demo: Regular expression grouping
@@ -1316,6 +1391,12 @@ Contributors listed in chronological order:
    Stanislav Golovanov - JazzCore
    David Briscoe - DavidBriscoe
    Keith Welch - paralogiki
+   Zhao Cai - zhaocai
+   John Szakmeister - jszakmeister
+   Jonas Diemer - diemer
+   Romain Giot - rgiot
+   Sergey Alexandrov - taketwo
+   Brian Mock - saikobee
 
 
 8.2 Snippets                                       *UltiSnips-contrisnippets*
@@ -1361,6 +1442,14 @@ Contributors listed in chronological order:
    Rudi Grinberg (rgrinberg)
    javipolo
    Matthew Strawbridge (pxc)
+   Josh Strater (jstrater)
+   jinzhu
+   Rene Vergara (ravl1084)
+   Johan Haals (JHaals)
+   Danilo Bargen (dbrgn)
+   Bernhard Vallant (lazerscience)
+   Von Welch (von)
+   Nikola Petrov (nikolavp)
 
 Thank you for your support.
 

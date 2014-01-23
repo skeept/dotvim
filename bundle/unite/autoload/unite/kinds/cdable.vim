@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: cdable.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 13 Apr 2013.
+" Last Modified: 10 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,6 +27,12 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+" Variables {{{
+call unite#util#set_default('g:unite_kind_cdable_cd_command',
+      \ 'cd', 'g:unite_kind_openable_cd_command')
+call unite#util#set_default('g:unite_kind_cdable_lcd_command',
+      \ 'lcd', 'g:unite_kind_openable_lcd_command')
+" }}}
 function! unite#kinds#cdable#define() "{{{
   return s:kind
 endfunction"}}}
@@ -49,7 +55,7 @@ function! s:kind.action_table.cd.func(candidate) "{{{
   if &filetype ==# 'vimfiler' || &filetype ==# 'vimshell'
     call s:external_cd(a:candidate)
   elseif a:candidate.action__directory != ''
-    execute g:unite_kind_openable_cd_command '`=a:candidate.action__directory`'
+    execute g:unite_kind_cdable_cd_command '`=a:candidate.action__directory`'
   endif
 endfunction"}}}
 
@@ -64,7 +70,7 @@ function! s:kind.action_table.lcd.func(candidate) "{{{
   if &filetype ==# 'vimfiler' || &filetype ==# 'vimshell'
     call s:external_cd(a:candidate)
   elseif a:candidate.action__directory != ''
-    execute g:unite_kind_openable_lcd_command '`=a:candidate.action__directory`'
+    execute g:unite_kind_cdable_lcd_command '`=a:candidate.action__directory`'
   endif
 endfunction"}}}
 
@@ -93,6 +99,7 @@ endfunction"}}}
 
 let s:kind.action_table.tabnew_cd = {
       \ 'description' : 'open a new tab page here',
+      \ 'is_tab' : 1,
       \ }
 function! s:kind.action_table.tabnew_cd.func(candidate) "{{{
   if !s:check_is_directory(a:candidate.action__directory)
@@ -102,20 +109,21 @@ function! s:kind.action_table.tabnew_cd.func(candidate) "{{{
   if &filetype ==# 'vimfiler' || &filetype ==# 'vimshell'
     tabnew | call s:external_cd(a:candidate)
   elseif a:candidate.action__directory != ''
-    tabnew | execute g:unite_kind_openable_cd_command '`=a:candidate.action__directory`'
+    tabnew | execute g:unite_kind_cdable_cd_command '`=a:candidate.action__directory`'
   endif
 endfunction"}}}
 
 let s:kind.action_table.narrow = {
       \ 'description' : 'narrowing candidates by directory name',
       \ 'is_quit' : 0,
+      \ 'is_start' : 1,
       \ }
 function! s:kind.action_table.narrow.func(candidate) "{{{
   if !s:check_is_directory(a:candidate.action__directory)
     return
   endif
 
-  call unite#start_temporary([['file'], ['file/new']])
+  call unite#start_temporary([['file'], ['file/new'], ['directory/new']])
   let directory = isdirectory(a:candidate.word) ?
         \ a:candidate.word : a:candidate.action__directory
   if directory[-1:] != '/'
@@ -141,6 +149,7 @@ endfunction"}}}
 
 let s:kind.action_table.tabvimshell = {
       \ 'description' : 'tabopen vimshell buffer here',
+      \ 'is_tab' : 1,
       \ }
 function! s:kind.action_table.tabvimshell.func(candidate) "{{{
   if !exists(':VimShellTab')
@@ -159,7 +168,7 @@ let s:kind.action_table.vimfiler = {
       \ 'description' : 'open vimfiler buffer here',
       \ }
 function! s:kind.action_table.vimfiler.func(candidate) "{{{
-  if !exists(':VimFilerCreate')
+  if !exists(':VimFiler')
     echo 'vimfiler is not installed.'
     return
   endif
@@ -168,7 +177,7 @@ function! s:kind.action_table.vimfiler.func(candidate) "{{{
     return
   endif
 
-  execute 'VimFilerCreate' escape(a:candidate.action__directory, '\ ')
+  execute 'VimFiler' escape(a:candidate.action__directory, '\ ')
 
   if has_key(a:candidate, 'action__path')
         \ && a:candidate.action__directory !=# a:candidate.action__path
@@ -180,6 +189,7 @@ endfunction"}}}
 
 let s:kind.action_table.tabvimfiler = {
       \ 'description' : 'tabopen vimfiler buffer here',
+      \ 'is_tab' : 1,
       \ }
 function! s:kind.action_table.tabvimfiler.func(candidate) "{{{
   if !exists(':VimFilerTab')
@@ -200,6 +210,90 @@ function! s:kind.action_table.tabvimfiler.func(candidate) "{{{
     call s:move_vimfiler_cursor(a:candidate)
   endif
 endfunction"}}}
+
+" For rec. "{{{
+let s:cdable_action_rec = {
+      \ 'description' : 'open this directory by file_rec source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec.func(candidate)
+  call unite#start_script([['file_rec', a:candidate.action__directory]])
+endfunction
+
+let s:cdable_action_rec_parent = {
+      \ 'description' : 'open parent directory by file_rec source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec_parent.func(candidate)
+  call unite#start_script([['file_rec', unite#util#substitute_path_separator(
+        \ fnamemodify(a:candidate.action__directory, ':h'))
+        \ ]])
+endfunction
+
+let s:cdable_action_rec_project = {
+      \ 'description' : 'open project directory by file_rec source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec_project.func(candidate)
+  call unite#start_script([['file_rec', unite#util#substitute_path_separator(
+        \ unite#util#path2project_directory(a:candidate.action__directory))
+        \ ]])
+endfunction
+
+let s:cdable_action_rec_async = {
+      \ 'description' : 'open this directory by file_rec/async source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec_async.func(candidate)
+  call unite#start_script([['file_rec/async', a:candidate.action__directory]])
+endfunction
+
+let s:cdable_action_rec_parent_async = {
+      \ 'description' : 'open parent directory by file_rec/async source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec_parent_async.func(candidate)
+  call unite#start_script([['file_rec/async', unite#util#substitute_path_separator(
+        \ fnamemodify(a:candidate.action__directory, ':h'))
+        \ ]])
+endfunction
+
+let s:cdable_action_rec_project_async = {
+      \ 'description' : 'open project directory by file_rec/async source',
+      \ 'is_start' : 1,
+      \}
+
+function! s:cdable_action_rec_project_async.func(candidate)
+  call unite#start_script([['file_rec/async', unite#util#substitute_path_separator(
+        \ unite#util#path2project_directory(a:candidate.action__directory))
+        \ ]])
+endfunction
+
+let s:kind.action_table['rec'] =
+      \ s:cdable_action_rec
+let s:kind.action_table['rec_parent'] =
+      \ s:cdable_action_rec_parent
+let s:kind.action_table['rec_project'] =
+      \ s:cdable_action_rec_project
+let s:kind.action_table['rec/async'] =
+      \ s:cdable_action_rec_async
+let s:kind.action_table['rec_parent/async'] =
+      \ s:cdable_action_rec_parent_async
+let s:kind.action_table['rec_project/async'] =
+      \ s:cdable_action_rec_project_async
+unlet! s:cdable_action_rec
+unlet! s:cdable_action_rec_async
+unlet! s:cdable_action_rec_project
+unlet! s:cdable_action_rec_project_async
+unlet! s:cdable_action_rec_parent
+unlet! s:cdable_action_rec_parent_async
+"}}}
+
 
 function! s:external_cd(candidate) "{{{
   if &filetype ==# 'vimfiler'

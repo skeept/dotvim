@@ -1,5 +1,5 @@
 
-let s:plugin_root_dir = fnamemodify(expand('<sfile>'),':h:h:h')
+let s:plugin_root_dir = fnamemodify(expand('<sfile>', 1),':h:h:h')
 
 " called by vim-addon-manager-test.sh
 fun! vam#test#Test()
@@ -10,7 +10,7 @@ fun! vam#test#Test()
   exec '!cp -r'  s:plugin_root_dir test_dir
 
   " keep it simple:
-  let g:vim_addon_manager.activated_plugins['vim-addon-manager-known-repositories'] = 1
+  let g:vim_addon_manager.activated_plugins['vim-pi'] = 1
   let plugin_sources = g:vim_addon_manager.plugin_sources
 
   " test mercurial

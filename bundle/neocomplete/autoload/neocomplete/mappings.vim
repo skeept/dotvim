@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 25 Oct 2013.
+" Last Modified: 11 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -32,6 +32,8 @@ function! neocomplete#mappings#define_default_mappings() "{{{
         \ unite#sources#neocomplete#start_complete()
   inoremap <expr><silent> <Plug>(neocomplete_start_unite_quick_match)
         \ unite#sources#neocomplete#start_quick_match()
+  inoremap <silent> <Plug>(neocomplete_start_omni_complete)
+        \ <C-x><C-o><C-p>
   if neocomplete#util#is_complete_select()
     inoremap <silent> <Plug>(neocomplete_start_auto_complete)
           \ <C-x><C-u>
@@ -58,7 +60,6 @@ function! neocomplete#mappings#close_popup() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.complete_str = ''
   let neocomplete.skip_next_complete = 2
-  let neocomplete.candidates = []
 
   return pumvisible() ? "\<C-y>" : ''
 endfunction
@@ -86,7 +87,7 @@ function! neocomplete#mappings#undo_completion() "{{{
 
   " Get cursor word.
   let [complete_pos, complete_str] =
-        \ neocomplete#match_word(neocomplete#get_cur_text(1))
+        \ neocomplete#helper#match_word(neocomplete#get_cur_text(1))
   let old_keyword_str = neocomplete.complete_str
   let neocomplete.complete_str = complete_str
 
@@ -105,12 +106,12 @@ function! neocomplete#mappings#complete_common_string() "{{{
 
   " Get cursor word.
   let [complete_pos, complete_str] =
-        \ neocomplete#match_word(neocomplete#get_cur_text(1))
+        \ neocomplete#helper#match_word(neocomplete#get_cur_text(1))
 
   if neocomplete#is_text_mode()
     let &ignorecase = 1
-  elseif g:neocomplete#enable_smart_case && complete_str =~ '\u'
-    let &ignorecase = 0
+  elseif g:neocomplete#enable_smart_case || g:neocomplete#enable_camel_case
+    let &ignorecase = complete_str !~ '\u'
   else
     let &ignorecase = g:neocomplete#enable_ignore_case
   endif
@@ -168,6 +169,7 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
 
   " Start complete.
   return "\<C-x>\<C-u>\<C-p>"
+        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
 endfunction"}}}
 
 function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete_str, candidates) "{{{
@@ -181,6 +183,7 @@ function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete
 
   " Start complete.
   return "\<C-x>\<C-u>\<C-p>"
+        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
 endfunction"}}}
 
 let &cpo = s:save_cpo

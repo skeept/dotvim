@@ -16,6 +16,48 @@ from UltiSnips.text_objects import SnippetInstance
 from UltiSnips.util import IndentUtil
 import UltiSnips._vim as _vim
 
+def _plugin_dir():
+    """ Calculates the plugin directory for UltiSnips. This depends on the
+    current file being 3 levels deep from the plugin directory, so it needs to
+    be updated if the code moves.
+    """
+    d = __file__
+    for i in range(10):
+        d = os.path.dirname(d)
+        if os.path.isdir(os.path.join(d, "plugin")) and os.path.isdir(os.path.join(d, "doc")):
+            return d
+    raise Exception("Unable to find the plugin directory.")
+
+def _snippets_dir_is_before_plugin_dir():
+    """ Returns True if the snippets directory comes before the plugin
+    directory in Vim's runtime path. False otherwise.
+    """
+    paths = [ os.path.realpath(os.path.expanduser(p)).rstrip(os.path.sep)
+        for p in _vim.eval("&runtimepath").split(',') ]
+    home = _vim.eval("$HOME")
+    def vim_path_index(suffix):
+        path = os.path.realpath(os.path.join(home, suffix)).rstrip(os.path.sep)
+        try:
+            return paths.index(path)
+        except ValueError:
+            return -1
+    try:
+        real_vim_path_index = max(vim_path_index(".vim"), vim_path_index("vimfiles"))
+        plugin_path_index = paths.index(_plugin_dir())
+        return plugin_path_index < real_vim_path_index
+    except ValueError:
+        return False
+
+def _should_reverse_search_path():
+    """ If the user defined g:UltiSnipsDontReverseSearchPath then return True
+    or False based on the value of that variable, else defer to
+    _snippets_dir_is_before_plugin_dir to determine whether this is True or
+    False.
+    """
+    if _vim.eval("exists('g:UltiSnipsDontReverseSearchPath')") != "0":
+       return _vim.eval("g:UltiSnipsDontReverseSearchPath") != "0"
+    return not _snippets_dir_is_before_plugin_dir()
+
 def err_to_scratch_buffer(f):
     @wraps(f)
     def wrapper(self, *args, **kwds):
@@ -315,7 +357,8 @@ class Snippet(object):
             if match and words_prefix:
                 # Require a word boundary between prefix and suffix.
                 boundaryChars = words_prefix[-1:] + words_suffix[:1]
-                match = re.match(r'.\b.', boundaryChars)
+                boundaryChars = boundaryChars.replace('"', '\\"')
+                match = _vim.eval('"%s" =~# "\\\\v.<."' % boundaryChars) != '0'
         elif "i" in self._opts:
             match = words.endswith(self._t)
         else:
@@ -350,7 +393,8 @@ class Snippet(object):
             match = self._re_match(trigger)
         elif "w" in self._opts:
             # Trim non-empty prefix up to word boundary, if present.
-            words_suffix = re.sub(r'^.+\b(.+)$', r'\1', words)
+            qwords = words.replace('"', '\\"')
+            words_suffix = _vim.eval('substitute("%s", "\\\\v^.+<(.+)", "\\\\1", "")' % qwords)
             match = self._t.startswith(words_suffix)
             self._matched = words_suffix
 
@@ -546,9 +590,35 @@ class SnippetManager(object):
             self._handle_failure(self.expand_trigger)
 
     @err_to_scratch_buffer
+    def list_snippets_dict(self):
+        before, after = _vim.buf.current_line_splitted
+        snippets = self._snips(before, True)
+
+        # Sort snippets alphabetically
+        snippets.sort(key=lambda x: x.trigger)
+        for snip in snippets:
+            description = snip.description[snip.description.find(snip.trigger) +
+                len(snip.trigger) + 2:]
+
+            key = as_unicode(snip.trigger)
+            description = as_unicode(description)
+
+            #remove surrounding "" or '' in snippet description if it exists
+            if len(description) > 2:
+              if description[0] == description[-1] and description[0] in ['"', "'"]:
+                description = description[1:-1]
+
+            _vim.command(as_unicode("let g:current_ulti_dict['{key}'] = '{val}'").format(
+              key=key.replace("'", "''"), val=description.replace("'", "''")))
+
+    @err_to_scratch_buffer
     def list_snippets(self):
         before, after = _vim.buf.current_line_splitted
         snippets = self._snips(before, True)
+
+        if len(snippets) == 0:
+            self._handle_failure(self.backward_trigger)
+            return True
 
         # Sort snippets alphabetically
         snippets.sort(key=lambda x: x.trigger)
@@ -763,6 +833,7 @@ class SnippetManager(object):
                 jumped = self._jump(backwards)
         if jumped:
             self._vstate.remember_position()
+            self._ignore_movements = True
         return jumped
 
     def _handle_failure(self, trigger):
@@ -770,6 +841,8 @@ class SnippetManager(object):
         Mainly make sure that we play well with SuperTab
         """
         if trigger.lower() == "<tab>":
+            feedkey = "\\" + trigger
+        elif trigger.lower() == "<s-tab>":
             feedkey = "\\" + trigger
         else:
             feedkey = None
@@ -845,6 +918,8 @@ class SnippetManager(object):
             # Likely "invalid expression", but might be translated. We have no way
             # of knowing the exact error, therefore, we ignore all errors silently.
             return None
+        except KeyboardInterrupt:
+            return None
 
     def _do_snippet(self, snippet, before, after):
         """ Expands the given snippet, and handles everything
@@ -858,6 +933,17 @@ class SnippetManager(object):
         if self._cs:
             start = Position(_vim.buf.cursor.line, len(text_before))
             end = Position(_vim.buf.cursor.line, len(before))
+
+            # It could be that our trigger contains the content of TextObjects
+            # in our containing snippet. If this is indeed the case, we have to
+            # make sure that those are properly killed. We do this by
+            # pretending that the user deleted and retyped the text that our
+            # trigger matched.
+            edit_actions = [
+                ("D", start.line, start.col, snippet.matched),
+                ("I", start.line, start.col, snippet.matched),
+            ]
+            self._csnippets[0].replay_user_edits(edit_actions)
 
             si = snippet.launch(text_before, self._visual_content,
                     self._cs.find_parent_for_new_to(start), start, end)
@@ -915,14 +1001,16 @@ class SnippetManager(object):
         the filetype.
         """
 
-        snippet_dirs = _vim.eval("g:UltiSnipsSnippetDirectories")
+        if _vim.eval("exists('b:UltiSnipsSnippetDirectories')") == "1":
+            snippet_dirs = _vim.eval("b:UltiSnipsSnippetDirectories")
+        else:
+            snippet_dirs = _vim.eval("g:UltiSnipsSnippetDirectories")
         base_snippets = os.path.realpath(os.path.join(__file__, "../../../UltiSnips"))
         ret = []
 
         paths = _vim.eval("&runtimepath").split(',')
 
-        if _vim.eval("exists('g:UltiSnipsDontReverseSearchPath')") == "0" or \
-           _vim.eval("g:UltiSnipsDontReverseSearchPath") == "0":
+        if _should_reverse_search_path():
             paths = paths[::-1]
 
         for rtp in paths:
@@ -1085,4 +1173,3 @@ class SnippetManager(object):
 
 
 UltiSnips_Manager = SnippetManager()
-

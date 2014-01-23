@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: helpers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Jul 2013.
+" Last Modified: 19 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -302,6 +302,66 @@ function! unite#helper#get_source_args(sources) "{{{
   return map(copy(a:sources),
         \ 'type(v:val) == type([]) ? [v:val[0], v:val[1:]] : [v:val, []]')
 endfunction"}}}
+
+function! unite#helper#choose_window() "{{{
+  " Create key table.
+  let keys = {}
+  for [key, number] in items(g:unite_quick_match_table)
+    let keys[number] = key
+  endfor
+
+  " Save statusline.
+  let save_statuslines = map(unite#helper#get_choose_windows(),
+        \ "[v:val, getbufvar(winbufnr(v:val), '&statusline')]")
+
+  try
+    let winnr_save = winnr()
+    for [winnr, statusline] in save_statuslines
+      noautocmd execute winnr.'wincmd w'
+      let &l:statusline =
+            \ repeat(' ', winwidth(0)/2-len(winnr())).get(keys, winnr()-1, 0)
+      redraw
+    endfor
+
+    noautocmd execute winnr_save.'wincmd w'
+    redraw
+
+    while 1
+      echohl PreProc
+      echon 'choose > '
+      echohl Normal
+
+      let num = get(g:unite_quick_match_table,
+            \ nr2char(getchar()), 0) + 1
+      if num < 0 || winbufnr(num) > 0
+        return num
+      endif
+
+      echo ''
+    endwhile
+  finally
+    echo ''
+
+    let winnr_save = winnr()
+    for [winnr, statusline] in save_statuslines
+      noautocmd execute winnr.'wincmd w'
+      let &l:statusline = statusline
+      redraw
+    endfor
+
+    noautocmd execute winnr_save.'wincmd w'
+    redraw
+  endtry
+endfunction"}}}
+
+function! unite#helper#get_choose_windows() "{{{
+  return filter(range(1, winnr('$')), "v:val != winnr()
+        \ && !getwinvar(v:val, '&previewwindow')
+        \ && (getwinvar(v:val, '&buftype') !~# 'nofile'
+        \   || getwinvar(v:val, '&buftype') =~# 'acwrite')
+        \ && !getwinvar(v:val, '&filetype') !=# 'qf'")
+endfunction"}}}
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

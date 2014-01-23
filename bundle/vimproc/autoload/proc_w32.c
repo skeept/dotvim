@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
- * Copyright (c) 2009       
+ * Copyright (c) 2009
  * Kazuo Ishii        - <k-ishii at wb4.so-net.ne.jp> original version(ckw)
  * Yukihiro Nakadaira - <yukihiro.nakadaira at gmail.com> original version(vimproc)
  * Shougo Matsushita  - <Shougo.Matsu at gmail.com> modified version
@@ -63,7 +63,7 @@ const int debug = 0;
 /* API */
 EXPORT const char *vp_dlopen(char *args);      /* [handle] (path) */
 EXPORT const char *vp_dlclose(char *args);     /* [] (handle) */
-EXPORT const char *vp_dlversion(char *args);     /* [] (version) */
+EXPORT const char *vp_dlversion(char *args);     /* [version] () */
 
 EXPORT const char *vp_file_open(char *args);   /* [fd] (path, flags, mode) */
 EXPORT const char *vp_file_close(char *args);  /* [] (fd) */
@@ -102,6 +102,8 @@ EXPORT const char *vp_readdir(char *args);  /* [files] (dirname) */
 
 
 EXPORT const char * vp_delete_trash(char *args);  /* [filename] */
+
+EXPORT const char *vp_get_signals(char *args); /* [signals] () */
 
 static BOOL ExitRemoteProcess(HANDLE hProcess, UINT_PTR uExitCode);
 
@@ -481,18 +483,14 @@ vp_pipe_open(char *args)
 
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
-    /*si.dwFlags = STARTF_USESTDHANDLES;*/
     si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
+    si.wShowWindow = SW_SHOW;
     si.hStdInput = hInputRead;
     si.hStdOutput = hOutputWrite;
     si.hStdError = hErrorWrite;
 
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE,
-                        CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
-                        /*0, NULL, NULL, &si, &pi))*/
-                        /*DETACHED_PROCESS, NULL, NULL, &si, &pi))*/
-                        /*CREATE_NO_WINDOW, NULL, NULL, &si, &pi))*/
+                        CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
         return vp_stack_return_error(&_result, "CreateProcess() error: %s %s",
                 lasterror());
 
@@ -530,8 +528,8 @@ vp_pipe_close(char *args)
     VP_RETURN_IF_FAIL(vp_stack_from_args(&stack, args));
     VP_RETURN_IF_FAIL(vp_stack_pop_num(&stack, "%d", &fd));
 
-    if (!CloseHandle((HANDLE)_get_osfhandle(fd)))
-        return vp_stack_return_error(&_result, "CloseHandle() error: %s",
+    if (_close(fd))
+        return vp_stack_return_error(&_result, "_close() error: %s",
                 lasterror());
     return NULL;
 }
@@ -649,7 +647,8 @@ vp_kill(char *args)
                 lasterror());
     }
 
-    return NULL;
+    vp_stack_push_num(&_result, "%d", 0);
+    return vp_stack_return(&_result);
 }
 
 /* Improved kill function. */
@@ -968,8 +967,10 @@ vp_readdir(char *args)
     }
 
     do {
-        snprintf(buf, sizeof(buf), "%s/%s", dirname, fd.cFileName);
-        vp_stack_push_str(&_result, buf);
+        if (strcmp(fd.cFileName, ".") && strcmp(fd.cFileName, "..")) {
+            snprintf(buf, sizeof(buf), "%s/%s", dirname, fd.cFileName);
+            vp_stack_push_str(&_result, buf);
+        }
     } while (FindNextFile(h, &fd));
 
     FindClose(h);
@@ -1091,6 +1092,37 @@ vp_decode(char *args)
     buf[bi] = '\0';
     vp_stack_push_str(&_result, buf);
     free(buf);
+    return vp_stack_return(&_result);
+}
+
+const char *
+vp_get_signals(char *args)
+{
+    const char *signames[] = {
+        "SIGABRT",
+        "SIGFPE",
+        "SIGILL",
+        "SIGINT",
+        "SIGSEGV",
+        "SIGTERM",
+        "SIGALRM",
+        "SIGCHLD",
+        "SIGCONT",
+        "SIGHUP",
+        "SIGKILL",
+        "SIGPIPE",
+        "SIGQUIT",
+        "SIGSTOP",
+        "SIGTSTP",
+        "SIGTTIN",
+        "SIGTTOU",
+        "SIGUSR1",
+        "SIGUSR2"
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(signames) / sizeof(*signames); ++i)
+        vp_stack_push_num(&_result, "%s:%d", signames[i], i + 1);
     return vp_stack_return(&_result);
 }
 

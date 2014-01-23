@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: candidates.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 01 Oct 2013.
+" Last Modified: 23 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -62,7 +62,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
     let source.unite__is_invalidate = 0
 
     if !context.no_buffer && source.max_candidates != 0
-          \ && !context.unite__is_interactive
+          \ && context.unite__is_interactive
           \ && !unite.disabled_max_candidates
           \ && len(source.unite__candidates) > source.max_candidates
       " Filtering too many candidates.
@@ -75,6 +75,11 @@ function! unite#candidates#_recache(input, is_force) "{{{
               \ | echohl None
         let filtered_count += 1
       endif
+    endif
+
+    if source.is_grouped
+      let source.unite__candidates =
+            \ unite#candidates#_group_post_filters(source.unite__candidates)
     endif
 
     " Call post_filter hook.
@@ -118,6 +123,11 @@ function! unite#candidates#gather(...) "{{{
     let candidates = unite#helper#call_filter(
           \ filter_name, candidates, unite.context)
   endfor
+
+  if unite.context.unique
+    " Uniq filter.
+    let candidates = unite#util#uniq_by(candidates, 'v:val.word')
+  endif
 
   return candidates
 endfunction"}}}
@@ -309,7 +319,7 @@ function! s:get_source_candidates(source) "{{{
         let a:source.unite__cached_candidates +=
               \ a:source.async_gather_candidates(a:source.args, context)
 
-        if context.unite__is_interactive
+        if (!context.sync && context.unite__is_interactive)
               \ || !a:source.unite__context.is_async
           break
         endif
@@ -338,6 +348,30 @@ function! s:get_source_candidates(source) "{{{
 
   return a:source.unite__cached_candidates
         \ + a:source.unite__cached_change_candidates
+endfunction"}}}
+
+function! unite#candidates#_group_post_filters(candidates) "{{{
+  " Post filters for group
+  let groups = {}
+  for i in range(0, len(a:candidates) - 1)
+    let group = a:candidates[i].group
+    if has_key(groups, 'group')
+      call add(groups[group].indexes, i)
+    else
+      let groups[group] = { 'index' : i, 'indexes' : [i] }
+    endif
+  endfor
+
+  let _ = []
+  for [group, val] in unite#util#sort_by(items(groups), 'v:val[1].index')
+    " Add group candidate
+    call add(_, {'word' : group, 'is_dummy' : 1})
+
+    " Add children candidates
+    let _ += map(val.indexes, 'a:candidates[v:val]')
+  endfor
+
+  return _
 endfunction"}}}
 
 let &cpo = s:save_cpo

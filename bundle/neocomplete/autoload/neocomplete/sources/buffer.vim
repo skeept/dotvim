@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 31 Oct 2013.
+" Last Modified: 14 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -124,8 +124,10 @@ function! neocomplete#sources#buffer#get_frequencies() "{{{
 endfunction"}}}
 function! neocomplete#sources#buffer#make_cache_current_line() "{{{
   " Make cache from current line.
-  return s:make_cache_current_buffer(
-        \ max([1, line('.') - 5]), min([line('.') + 5, line('$')]))
+  let [start, end] = line('.') == line('$') ?
+        \ [max([1, line('.') - 10]), line('$')] :
+        \ [max([1, line('.') - 5]), min([line('.') + 5, line('$')])]
+  return s:make_cache_current_buffer(start, end)
 endfunction"}}}
 function! s:make_cache_current_block() "{{{
   " Make cache from current block.
@@ -209,7 +211,7 @@ function! s:get_sources_list() "{{{
     if has_key(filetypes_dict, source.filetype)
           \ || has_key(filetypes_dict, '_')
           \ || bufnr('%') == key
-          \ || (source.name ==# '[Command Line]' && bufnr('#') == key)
+          \ || (bufname('%') ==# '[Command Line]' && bufwinnr('#') == key)
       call add(sources_list, [key, source])
     endif
   endfor
@@ -231,8 +233,7 @@ function! s:initialize_source(srcname) "{{{
   endif
 
   let buflines = getbufline(a:srcname, 1, '$')
-  let keyword_pattern = neocomplete#get_keyword_pattern(
-        \ ft, s:source.name)
+  let keyword_pattern = neocomplete#get_keyword_pattern(ft, s:source.name)
 
   let s:buffer_sources[a:srcname] = {
         \ 'keyword_cache' : [],
@@ -253,14 +254,13 @@ endfunction"}}}
 
 function! s:make_cache(srcname) "{{{
   " Initialize source.
-  if !has_key(s:buffer_sources, a:srcname)
-    call s:initialize_source(a:srcname)
-  endif
+  call s:initialize_source(a:srcname)
 
   let source = s:buffer_sources[a:srcname]
 
   if !filereadable(source.path)
         \ || getbufvar(a:srcname, '&buftype') =~ 'nofile'
+    call s:make_cache_current_buffer(1, line('$'))
     return
   endif
 
@@ -269,6 +269,7 @@ function! s:make_cache(srcname) "{{{
         \     'buffer_cache', source.path,
         \     source.keyword_pattern, 'B')
   let source.cached_time = localtime()
+  let source.filetype = &filetype
   let source.end_line = len(getbufline(a:srcname, 1, '$'))
   let s:async_dictionary_list[source.path] = [{
         \ 'filename' : source.path,
@@ -276,21 +277,20 @@ function! s:make_cache(srcname) "{{{
         \ }]
 endfunction"}}}
 
-function! s:check_changed_buffer(bufnumber) "{{{
-  let source = s:buffer_sources[a:bufnumber]
+function! s:check_changed_buffer() "{{{
+  let source = s:buffer_sources[bufnr('%')]
 
-  let ft = getbufvar(a:bufnumber, '&filetype')
+  let ft = &filetype
   if ft == ''
     let ft = 'nothing'
   endif
 
-  let filename = fnamemodify(bufname(a:bufnumber), ':t')
+  let filename = fnamemodify(bufname('%'), ':t')
   if filename == ''
     let filename = '[No Name]'
   endif
 
-  return s:buffer_sources[a:bufnumber].name != filename
-        \ || s:buffer_sources[a:bufnumber].filetype != ft
+  return source.name != filename || source.filetype != ft
 endfunction"}}}
 
 function! s:check_source() "{{{
@@ -299,18 +299,19 @@ function! s:check_source() "{{{
     return
   endif
 
-  for bufnumber in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    " Check new buffer.
-    if (!has_key(s:buffer_sources, bufnumber)
-          \ || (bufwinnr(bufnumber) > 0 && s:check_changed_buffer(bufnumber)))
-          \ && (!neocomplete#is_locked(bufnumber) ||
-          \    g:neocomplete#disable_auto_complete)
-          \ && !getwinvar(bufwinnr(bufnumber), '&previewwindow')
-          \ && getfsize(fnamemodify(bufname(bufnumber), ':p')) <
-          \      g:neocomplete#sources#buffer#cache_limit_size
-      call s:make_cache(bufnumber)
-    endif
-  endfor
+  if s:check_changed_buffer()
+    call s:make_cache(bufnr('%'))
+  endif
+
+  " Check new buffer.
+  call map(filter(range(1, bufnr('$')), "
+        \ !has_key(s:buffer_sources, v:val) && buflisted(v:val)
+        \ && (!neocomplete#is_locked(v:val) ||
+        \    g:neocomplete#disable_auto_complete)
+        \ && !getwinvar(bufwinnr(v:val), '&previewwindow')
+        \ && getfsize(fnamemodify(bufname(v:val), ':p')) <
+        \      g:neocomplete#sources#buffer#cache_limit_size
+        \ "), 's:make_cache(v:val)')
 endfunction"}}}
 function! s:check_cache() "{{{
   let release_accessd_time =
@@ -385,7 +386,6 @@ function! neocomplete#sources#buffer#make_cache(name) "{{{
   endif
 
   call s:make_cache(number)
-  call s:make_cache_current_buffer(1, line('$'))
 endfunction"}}}
 "}}}
 

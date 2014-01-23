@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 22 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,8 +31,9 @@ let s:source = {
       \ 'name' : 'file',
       \ 'kind' : 'manual',
       \ 'mark' : '[F]',
-      \ 'rank' : 3,
+      \ 'rank' : 10,
       \ 'sorters' : 'sorter_filename',
+      \ 'converters' : ['converter_remove_overlap', 'converter_abbr'],
       \ 'is_volatile' : 1,
       \}
 
@@ -45,9 +46,9 @@ function! s:source.get_complete_position(context) "{{{
   " Filename pattern.
   let pattern = neocomplete#get_keyword_pattern_end('filename', self.name)
   let [complete_pos, complete_str] =
-        \ neocomplete#match_word(a:context.input, pattern)
+        \ neocomplete#helper#match_word(a:context.input, pattern)
 
-  if (complete_str =~ '//' ||
+  if (complete_str =~ '//' || complete_str == '/' ||
         \ (neocomplete#is_auto_complete() &&
         \    (complete_str !~ '/' || len(complete_str) <
         \          g:neocomplete#auto_completion_start_length ||
@@ -69,10 +70,12 @@ function! s:source.get_complete_position(context) "{{{
 endfunction"}}}
 
 function! s:source.gather_candidates(context) "{{{
-  let pattern = neocomplete#get_keyword_pattern_end(
-        \ 'filename', self.name)
+  let pattern = neocomplete#get_keyword_pattern_end('filename', self.name)
   let [complete_pos, complete_str] =
-        \ neocomplete#match_word(a:context.input, pattern)
+        \ neocomplete#helper#match_word(a:context.input, pattern)
+  if neocomplete#is_windows() && complete_str =~ '^[\\/]'
+    return []
+  endif
 
   let files = s:get_glob_files(complete_str, '')
 
@@ -114,6 +117,7 @@ function! s:get_glob_files(complete_str, path) "{{{
         \ files, "{
         \    'word' : fnamemodify(v:val, ':t'),
         \    'action__is_directory' : isdirectory(v:val),
+        \    'kind' : (isdirectory(v:val) ? 'dir' : 'file'),
         \ }")
 
   let candidates = []

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vim.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 01 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -58,10 +58,6 @@ endfunction"}}}
 
 function! s:source.hooks.on_final(context) "{{{
   silent! delcommand NeoCompleteVimMakeCache
-
-  if neocomplete#exists_echodoc()
-    call echodoc#unregister('vim')
-  endif
 endfunction"}}}
 
 function! s:source.get_complete_position(context) "{{{
@@ -80,17 +76,16 @@ function! s:source.get_complete_position(context) "{{{
           \ neocomplete#sources#vim#helper#get_completion_name(
           \   neocomplete#sources#vim#get_command(cur_text))
     if command_completion =~ '\%(dir\|file\|shellcmd\)'
-      let pattern = neocomplete#get_keyword_pattern_end(
-            \ 'filename', self.name)
+      let pattern = neocomplete#get_keyword_pattern_end('filename', self.name)
     endif
   endif
 
   let [complete_pos, complete_str] =
-        \ neocomplete#match_word(a:context.input, pattern)
+        \ neocomplete#helper#match_word(a:context.input, pattern)
   if complete_pos < 0
     " Use args pattern.
     let [complete_pos, complete_str] =
-          \ neocomplete#match_word(a:context.input, '\S\+$')
+          \ neocomplete#helper#match_word(a:context.input, '\S\+$')
   endif
 
   if a:context.input !~ '\.\%(\h\w*\)\?$' && neocomplete#is_auto_complete()

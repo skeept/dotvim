@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: vimfiler/sort.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Nov 2011.
+" Last Modified: 05 Oct 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -31,7 +31,7 @@ function! unite#sources#vimfiler_sort#define() "{{{
   return s:source
 endfunction"}}}
 
-let s:Cache = vital#of('vimfiler').import('System.Cache')
+let s:Cache = vimfiler#util#get_vital().import('System.Cache')
 
 let s:source = {
       \ 'name' : 'vimfiler/sort',
@@ -55,7 +55,7 @@ function! s:source.gather_candidates(args, context) "{{{
     return []
   endif
 
-  let cache_dir = g:vimfiler_data_directory . '/' . 'sort'
+  let cache_dir = vimfiler#variables#get_data_directory() . '/' . 'sort'
   let path = b:vimfiler.source.'/'.b:vimfiler.current_dir
 
   call unite#print_message(
@@ -84,7 +84,7 @@ function! s:action_table.sort.func(candidate) "{{{
     return
   endif
 
-  let cache_dir = g:vimfiler_data_directory . '/' . 'sort'
+  let cache_dir = vimfiler#variables#get_data_directory() . '/' . 'sort'
   let path = b:vimfiler.source.'/'.b:vimfiler.current_dir
   if a:candidate.action__sort ==# 'save'
     " Save current sort type.
@@ -92,7 +92,7 @@ function! s:action_table.sort.func(candidate) "{{{
   elseif a:candidate.action__sort ==# 'nosave'
     " Nosave current sort type.
     if s:Cache.filereadable(cache_dir, path)
-      call s:Cache.delete(cache_dir, path)
+      call s:Cache.deletefile(cache_dir, path)
     endif
   else
     let b:vimfiler.local_sort_type = a:candidate.action__sort

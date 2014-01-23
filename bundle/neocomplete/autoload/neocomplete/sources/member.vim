@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: member.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Sep 2013.
+" Last Modified: 01 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -60,7 +60,10 @@ function! s:source.hooks.on_init(context) "{{{
   " Initialize member prefix patterns. "{{{
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#sources#member#prefix_patterns',
-        \ 'c,cpp,objc,objcpp', '\.\|->')
+        \ 'c,objc', '\.\|->')
+  call neocomplete#util#set_default_dictionary(
+        \ 'g:neocomplete#sources#member#prefix_patterns',
+        \ 'cpp,objcpp', '\.\|->\|::')
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#sources#member#prefix_patterns',
         \ 'perl,php', '->')
@@ -229,8 +232,7 @@ function! s:initialize_source(srcname) "{{{
 
   let s:member_sources[a:srcname] = {
         \ 'member_cache' : {}, 'filetype' : ft,
-        \ 'keyword_pattern' : neocomplete#get_keyword_pattern(
-        \                ft, s:source.name),
+        \ 'keyword_pattern' : neocomplete#get_keyword_pattern(ft, s:source.name),
         \}
 endfunction"}}}
 

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax/unite.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 26 Jan 2013.
+" Last Modified: 19 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,35 +33,12 @@ endif
 let s:save_cpo = &cpo
 set cpo&vim
 
-syntax match uniteSourcePrompt /^Sources/ contained nextgroup=uniteSourceSeparator
-syntax match uniteSourceSeparator /:/ contained nextgroup=uniteSourceNames
-syntax match uniteSourceNames / [[:alnum:]_\/-]\+/ contained nextgroup=uniteSourceArgs
-syntax match uniteSourceArgs /:\S\+/ contained
-
-syntax match uniteMessage /^\[.\{-}\].*$/  contains=uniteMessageSource
-syntax match uniteMessageSource /^\[.\{-}\]/ contained
-
 syntax match uniteQuickMatchLine /^.|.*/
-      \ contains=uniteQuickMatchTrigger,uniteCandidateSourceName,uniteCandidateAbbr
-syntax region uniteNonMarkedLine start=/^- / end='$' keepend
-      \ contains=uniteCandidateMarker,uniteCandidateSourceName,uniteCandidateAbbr
-syntax match uniteCandidateMarker /^- / contained
+      \ contains=uniteQuickMatchTrigger,uniteCandidateSourceName
 syntax match uniteQuickMatchTrigger /^.|/ contained
+syntax match uniteInputCommand /\\\@<! :\S\+/ contained
 
-syntax region   uniteError   start=+!!!+ end=+!!!+ contains=uniteErrorHidden oneline
-if has('conceal')
-  " Supported conceal features.
-  syntax match   uniteErrorHidden            '!!!' contained conceal
-else
-  syntax match   uniteErrorHidden            '!!!' contained
-endif
-
-highlight default link uniteSourcePrompt  Statement
-highlight default link uniteSourceSeparator  NONE
-highlight default link uniteSourceNames  Type
-highlight default link uniteSourceArgs  Function
-highlight default link uniteMessage Comment
-highlight default link uniteMessageSource Constant
+highlight default link uniteError  Error
 
 highlight default link uniteQuickMatchTrigger  Special
 highlight default link uniteMarkedLine  Statement
@@ -79,14 +56,11 @@ highlight default link uniteChooseSource  uniteSourceNames
 
 highlight default link uniteInputPrompt  Identifier
 highlight default link uniteInputPromptError  Error
-highlight default link uniteInputSpecial  Special
-
-highlight default link uniteError Error
-highlight default link uniteErrorHidden Ignore
+highlight default link uniteInputCommand  Statement
 
 let b:current_syntax = 'unite'
 
-call unite#set_highlight()
+call unite#view#_set_highlight()
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

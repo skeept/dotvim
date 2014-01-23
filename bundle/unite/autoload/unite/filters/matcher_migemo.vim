@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: matcher_migemo.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 04 Sep 2012.
+" Last Modified: 28 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -46,8 +46,10 @@ function! unite#filters#matcher_migemo#define() "{{{
 endfunction"}}}
 
 function! s:search_dict()
-  let dict = s:search_dict2('migemo/'.&encoding.'/migemo-dict')
-
+  let dict = s:search_dict2('cmigemo/'.&encoding.'/migemo-dict')
+  if dict == ''
+    let dict = s:search_dict2('migemo/'.&encoding.'/migemo-dict')
+  endif
   if dict == ''
     let dict = s:search_dict2(&encoding.'/migemo-dict')
   endif
@@ -65,13 +67,18 @@ function! s:search_dict2(name)
     let dict = globpath(path, a:name)
   endif
   if dict == ''
-    let dict = '/usr/local/share/migemo/'.a:name
-    if !filereadable(dict)
-      return ''
-    endif
+    " Search dictionary file from system.
+    for path in [
+          \ '/usr/local/share/'.a:name,
+          \ '/usr/share/'.a:name,
+          \ ]
+      if filereadable(path)
+        let dict = path
+      endif
+    endfor
   endif
 
-  return split(dict, '\n')[0]
+  return get(split(dict, '\n'), 0, '')
 endfunction
 
 let s:matcher = {
@@ -93,13 +100,17 @@ function! s:matcher.filter(candidates, context) "{{{
       " Exclusion match.
       let expr = 'v:val.word !~ ' .
             \ string(s:get_migemo_pattern(input[1:]))
+    elseif input =~ '^:'
+      " Executes command.
+      let a:context.execute_command = input[1:]
+      continue
     else
       let expr = 'v:val.word =~ ' .
             \ string(s:get_migemo_pattern(input))
     endif
 
     try
-      let candidates = unite#util#filter_matcher(
+      let candidates = unite#filters#filter_matcher(
             \ candidates, expr, a:context)
     catch
       let candidates = []
@@ -107,6 +118,9 @@ function! s:matcher.filter(candidates, context) "{{{
   endfor
 
   return candidates
+endfunction"}}}
+function! s:matcher.pattern(input) "{{{
+  return s:get_migemo_pattern(a:input)
 endfunction"}}}
 
 function! s:get_migemo_pattern(input)

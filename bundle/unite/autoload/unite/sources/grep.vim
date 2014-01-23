@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 16 Mar 2013.
+" Last Modified: 08 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,15 +26,20 @@
 "=============================================================================
 
 " Variables  "{{{
-call unite#util#set_default('g:unite_source_grep_command', 'grep')
-call unite#util#set_default('g:unite_source_grep_default_opts', '-iHn')
-call unite#util#set_default('g:unite_source_grep_recursive_opt', '-R')
+" Set from grepprg.
+call unite#util#set_default(
+      \ 'g:unite_source_grep_command', 'grep')
+call unite#util#set_default(
+      \ 'g:unite_source_grep_default_opts', '-inH')
+
+call unite#util#set_default('g:unite_source_grep_recursive_opt', '-r')
 call unite#util#set_default('g:unite_source_grep_max_candidates', 100)
 call unite#util#set_default('g:unite_source_grep_search_word_highlight', 'Search')
 call unite#util#set_default('g:unite_source_grep_ignore_pattern',
       \'\~$\|\.\%(o\|exe\|dll\|bak\|sw[po]\)$\|'.
       \'\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)\|'.
       \'\%(^\|/\)tags\%(-\a*\)\?$')
+call unite#util#set_default('g:unite_source_grep_encoding', 'char')
 "}}}
 
 function! unite#sources#grep#define() "{{{
@@ -75,6 +80,7 @@ function! s:source.hooks.on_init(args, context) "{{{
 
     if type(get(a:args, 0, '')) == type('')
           \ && get(a:args, 0, '') == ''
+          \ && a:context.input == ''
       let target = unite#util#substitute_path_separator(
             \ unite#util#input('Target: ', default, 'file'))
     else
@@ -98,12 +104,12 @@ function! s:source.hooks.on_init(args, context) "{{{
     let a:context.source__target = [target]
 
     let targets = map(filter(split(target), 'v:val !~ "^-"'),
-          \ 'substitute(v:val, "*\\+$", "", "")')
+          \ 'substitute(v:val, "\\*\\+$", "", "")')
   endif
 
   let a:context.source__extra_opts = get(a:args, 1, '')
 
-  let a:context.source__input = get(a:args, 2, '')
+  let a:context.source__input = get(a:args, 2, a:context.input)
   if a:context.source__input == ''
     let a:context.source__input = unite#util#input('Pattern: ')
   endif
@@ -135,16 +141,34 @@ function! s:source.hooks.on_init(args, context) "{{{
   endif
 endfunction"}}}
 function! s:source.hooks.on_syntax(args, context) "{{{
+  if !unite#util#has_vimproc()
+    return
+  endif
+
   syntax case ignore
-  execute 'syntax match uniteSource__GrepPattern /:.*\zs'
+  syntax region uniteSource__GrepLine
+        \ start=' ' end='$'
+        \ containedin=uniteSource__Grep
+  syntax match uniteSource__GrepFile /^[^:]*/ contained
+        \ containedin=uniteSource__GrepLine
+        \ nextgroup=uniteSource__GrepSeparator
+  syntax match uniteSource__GrepSeparator /:/ contained
+        \ containedin=uniteSource__GrepLine
+        \ nextgroup=uniteSource__GrepLineNr
+  syntax match uniteSource__GrepLineNr /\d\+\ze:/ contained
+        \ containedin=uniteSource__GrepLine
+        \ nextgroup=uniteSource__GrepPattern
+  execute 'syntax match uniteSource__GrepPattern /'
         \ . substitute(a:context.source__input, '\([/\\]\)', '\\\1', 'g')
-        \ . '/ contained containedin=uniteSource__Grep'
+        \ . '/ contained containedin=uniteSource__GrepLine'
+  highlight default link uniteSource__GrepFile Directory
+  highlight default link uniteSource__GrepLineNr LineNR
   execute 'highlight default link uniteSource__GrepPattern'
         \ unite#get_source_variables(a:context).search_word_highlight
 endfunction"}}}
 function! s:source.hooks.on_close(args, context) "{{{
   if has_key(a:context, 'source__proc')
-    call a:context.source__proc.waitpid()
+    call a:context.source__proc.kill()
   endif
 endfunction "}}}
 function! s:source.hooks.on_post_filter(args, context) "{{{
@@ -153,6 +177,7 @@ function! s:source.hooks.on_post_filter(args, context) "{{{
           \ 'file/ssh' : 'file'), 'jump_list']
     let candidate.action__directory =
           \ unite#util#path2directory(candidate.action__path)
+    let candidate.action__col_pattern = a:context.source__input
     let candidate.is_multiline = 1
   endfor
 endfunction"}}}
@@ -161,14 +186,23 @@ function! s:source.gather_candidates(args, context) "{{{
   let variables = unite#get_source_variables(a:context)
   if !executable(variables.command)
     call unite#print_source_message(printf(
-          \ 'command "%s" is not executable.', variables.command), s:source.name)
+          \ 'command "%s" is not executable.',
+          \    variables.command), s:source.name)
+    let a:context.is_async = 0
+    return []
+  endif
+
+  if !unite#util#has_vimproc()
+    call unite#print_source_message(
+          \ 'vimproc plugin is not installed.', self.name)
+    let a:context.is_async = 0
     return []
   endif
 
   if empty(a:context.source__target)
         \ || a:context.source__input == ''
+    call unite#print_source_message('Canceled.', s:source.name)
     let a:context.is_async = 0
-    call unite#print_source_message('Completed.', s:source.name)
     return []
   endif
 
@@ -177,7 +211,7 @@ function! s:source.gather_candidates(args, context) "{{{
   endif
 
   let cmdline = printf('%s %s %s %s %s %s',
-    \   variables.command,
+    \   unite#util#substitute_path_separator(variables.command),
     \   variables.default_opts,
     \   variables.recursive_opt,
     \   a:context.source__extra_opts,
@@ -207,13 +241,15 @@ function! s:source.gather_candidates(args, context) "{{{
     let $TERM = save_term
   endtry
 
-  return []
+  return self.async_gather_candidates(a:args, a:context)
 endfunction "}}}
 
 function! s:source.async_gather_candidates(args, context) "{{{
   let variables = unite#get_source_variables(a:context)
 
   if !has_key(a:context, 'source__proc')
+    let a:context.is_async = 0
+    call unite#print_source_message('Completed.', s:source.name)
     return []
   endif
 
@@ -230,12 +266,14 @@ function! s:source.async_gather_candidates(args, context) "{{{
   let stdout = a:context.source__proc.stdout
   if stdout.eof
     " Disable async.
-    call unite#print_source_message('Completed.', s:source.name)
     let a:context.is_async = 0
+    call unite#print_source_message('Completed.', s:source.name)
+
+    call a:context.source__proc.waitpid()
   endif
 
   let candidates = map(stdout.read_lines(-1, 100),
-          \ "unite#util#iconv(v:val, 'char', &encoding)")
+          \ "unite#util#iconv(v:val, g:unite_source_grep_encoding, &encoding)")
   if variables.default_opts =~ '^-[^-]*l'
         \ || a:context.source__extra_opts =~ '^-[^-]*l'
     let candidates = map(filter(candidates,
@@ -243,13 +281,8 @@ function! s:source.async_gather_candidates(args, context) "{{{
           \ '[v:val, [v:val[2:], 0]]')
   else
     let candidates = map(filter(candidates,
-          \  'v:val =~ "^.\\+:.\\+:.\\+$"'),
-          \ '[v:val, split(v:val[2:], ":")]')
-  endif
-
-  let cwd = getcwd()
-  if isdirectory(a:context.source__directory)
-    lcd `=a:context.source__directory`
+          \  'v:val =~ "^.\\+:.\\+$"'),
+          \ '[v:val, split(v:val[2:], ":", 1)]')
   endif
 
   if a:context.source__ssh_path != ''
@@ -260,11 +293,25 @@ function! s:source.async_gather_candidates(args, context) "{{{
 
   let _ = []
   for candidate in candidates
-    let dict = {
-          \   'action__path' : candidate[0][:1].candidate[1][0],
-          \   'action__line' : candidate[1][1],
-          \   'action__text' : join(candidate[1][2:], ':'),
-          \ }
+    if len(candidate[1]) <= 1 || candidate[1][1] !~ '^\d\+$'
+      let dict = {
+            \   'action__path' : a:context.source__target[0],
+            \ }
+      if len(candidate[1]) <= 1
+        let dict.action__line = candidate[0][:1][0]
+        let dict.action__text = candidate[1][0]
+      else
+        let dict.action__line = candidate[0][:1].candidate[1][0]
+        let dict.action__text = join(candidate[1][1:], ':')
+      endif
+    else
+      let dict = {
+            \   'action__path' : candidate[0][:1].candidate[1][0],
+            \   'action__line' : candidate[1][1],
+            \   'action__text' : join(candidate[1][2:], ':'),
+            \ }
+    endif
+
     if a:context.source__ssh_path != ''
       let dict.action__path =
             \ a:context.source__ssh_path . dict.action__path
@@ -281,8 +328,6 @@ function! s:source.async_gather_candidates(args, context) "{{{
 
     call add(_, dict)
   endfor
-
-  lcd `=cwd`
 
   return _
 endfunction "}}}

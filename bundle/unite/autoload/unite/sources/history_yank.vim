@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: history_yank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 24 Jan 2013.
+" Last Modified: 10 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,32 +33,41 @@ let s:yank_histories = []
 " the last modified time of the yank histories file.
 let s:yank_histories_file_mtime = 0
 
+let s:prev_registers = {}
+
 call unite#util#set_default('g:unite_source_history_yank_file',
       \ g:unite_data_directory . '/history_yank')
 
 call unite#util#set_default('g:unite_source_history_yank_limit', 100)
+
+call unite#util#set_default(
+      \ 'g:unite_source_history_yank_save_clipboard', 0)
 "}}}
 
 function! unite#sources#history_yank#define() "{{{
   return s:source
 endfunction"}}}
 function! unite#sources#history_yank#_append() "{{{
-  if (!empty(s:yank_histories) && s:yank_histories[0][0] ==# @")
-        \ || len(@") < 2
-    return
-  endif
-
   call s:load()
 
-  " Append @" value.
-  call insert(s:yank_histories, [getreg('"'), getregtype('"')])
+  let prev_histories = copy(s:yank_histories)
 
-  if g:unite_source_history_yank_limit < len(s:yank_histories)
-    let s:yank_histories =
-          \ s:yank_histories[ : g:unite_source_history_yank_limit - 1]
+  call s:add_register('"')
+
+  if g:unite_source_history_yank_save_clipboard
+    call s:add_register('+')
   endif
 
-  call s:save()
+  if prev_histories !=# s:yank_histories
+    " Updated.
+
+    if g:unite_source_history_yank_limit < len(s:yank_histories)
+      let s:yank_histories =
+            \ s:yank_histories[ : g:unite_source_history_yank_limit - 1]
+    endif
+
+    call s:save()
+  endif
 endfunction"}}}
 
 let s:source = {
@@ -69,6 +78,8 @@ let s:source = {
       \}
 
 function! s:source.gather_candidates(args, context) "{{{
+  call s:load()
+
   let max_width = winwidth(0) - 5
   return map(copy(s:yank_histories), "{
         \ 'word' : v:val[0],
@@ -88,6 +99,8 @@ function! s:source.action_table.delete.func(candidates) "{{{
   for candidate in a:candidates
     call filter(s:yank_histories, 'v:val[0] !=# candidate.word')
   endfor
+
+  call s:save()
 endfunction"}}}
 "}}}
 
@@ -122,8 +135,28 @@ function! s:load()  "{{{
   endtry
 
   let s:yank_histories_file_mtime = getftime(g:unite_source_history_yank_file)
+
+  let s:yank_histories = unite#util#uniq(s:yank_histories)
 endfunction"}}}
 
+function! s:add_register(name) "{{{
+  let reg = [getreg(a:name), getregtype(a:name)]
+  if get(s:prev_registers, a:name, []) ==# reg
+    " Skip same register value.
+    return
+  endif
+
+  let len_history = len(reg[0])
+  " Ignore too long yank.
+  if len_history < 2 || len_history > 100000
+    return
+  endif
+
+  let s:prev_registers[a:name] = reg
+
+  " Append register value.
+  call insert(s:yank_histories, reg)
+endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neocomplcache.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Apr 2013.
+" Last Modified: 27 Jul 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -28,11 +28,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! unite#sources#neocomplcache#define() "{{{
-  if !exists('*unite#version') || unite#version() < 150
-    echoerr 'Your unite.vim is too old.'
-    return []
-  endif
-
   return s:neocomplcache_source
 endfunction "}}}
 
@@ -44,15 +39,14 @@ let s:neocomplcache_source = {
 
 function! s:neocomplcache_source.hooks.on_init(args, context) "{{{
   if !neocomplcache#is_enabled()
-    let a:context.source__cur_keyword_pos = -1
-    let a:context.source__complete_words = []
+    let a:context.source__complete_pos = -1
+    let a:context.source__candidates = []
     return
   endif
 
   " Save options.
   let max_list_save = g:neocomplcache_max_list
   let max_keyword_width_save = g:neocomplcache_max_keyword_width
-  let completefunc_save = &l:completefunc
   let manual_start_length = g:neocomplcache_manual_completion_start_length
 
   try
@@ -63,11 +57,11 @@ function! s:neocomplcache_source.hooks.on_init(args, context) "{{{
 
     let cur_text = neocomplcache#get_cur_text(1)
     let complete_results = neocomplcache#complete#_get_results(cur_text)
-    let a:context.source__cur_keyword_pos =
-          \ neocomplcache#complete#_get_cur_keyword_pos(complete_results)
-    let a:context.source__complete_words = neocomplcache#complete#_get_words(
-          \ complete_results, a:context.source__cur_keyword_pos,
-          \ cur_text[a:context.source__cur_keyword_pos :])
+    let a:context.source__complete_pos =
+          \ neocomplcache#complete#_get_complete_pos(complete_results)
+    let a:context.source__candidates = neocomplcache#complete#_get_words(
+          \ complete_results, a:context.source__complete_pos,
+          \ cur_text[a:context.source__complete_pos :])
   finally
     " Restore options.
     let g:neocomplcache_max_list = max_list_save
@@ -78,13 +72,12 @@ function! s:neocomplcache_source.hooks.on_init(args, context) "{{{
 endfunction"}}}
 
 function! s:neocomplcache_source.gather_candidates(args, context) "{{{
-  let keyword_pos = a:context.source__cur_keyword_pos
+  let keyword_pos = a:context.source__complete_pos
   let list = []
-  for keyword in a:context.source__complete_words
+  for keyword in a:context.source__candidates
     let dict = {
         \   'word' : keyword.word,
-        \   'abbr' : printf('%-50s', (has_key(keyword, 'abbr') ?
-        \             keyword.abbr : keyword.word)),
+        \   'abbr' : printf('%-50s', get(keyword, 'abbr', keyword.word)),
         \   'kind': 'completion',
         \   'action__complete_word' : keyword.word,
         \   'action__complete_pos' : keyword_pos,
@@ -123,9 +116,6 @@ function! s:start_complete(is_quick_match) "{{{
   endif
   if !exists(':Unite')
     echoerr 'unite.vim is not installed.'
-    return ''
-  elseif unite#version() < 300
-    echoerr 'Your unite.vim is too old.'
     return ''
   endif
 

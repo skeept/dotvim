@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: neosnippet.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 20 Jan 2013.
+" Last Modified: 31 Dec 2013.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -39,82 +39,55 @@ set cpo&vim
 
 " Plugin key-mappings. "{{{
 inoremap <silent><expr> <Plug>(neosnippet_expand_or_jump)
-      \ neosnippet#expand_or_jump_impl()
+      \ neosnippet#mappings#expand_or_jump_impl()
 inoremap <silent><expr> <Plug>(neosnippet_jump_or_expand)
-      \ neosnippet#jump_or_expand_impl()
+      \ neosnippet#mappings#jump_or_expand_impl()
 inoremap <silent><expr> <Plug>(neosnippet_expand)
-      \ neosnippet#expand_impl()
+      \ neosnippet#mappings#expand_impl()
 inoremap <silent><expr> <Plug>(neosnippet_jump)
-      \ neosnippet#jump_impl()
+      \ neosnippet#mappings#jump_impl()
 snoremap <silent><expr> <Plug>(neosnippet_expand_or_jump)
-      \ neosnippet#expand_or_jump_impl()
+      \ neosnippet#mappings#expand_or_jump_impl()
 snoremap <silent><expr> <Plug>(neosnippet_jump_or_expand)
-      \ neosnippet#jump_or_expand_impl()
+      \ neosnippet#mappings#jump_or_expand_impl()
 snoremap <silent><expr> <Plug>(neosnippet_expand)
-      \ neosnippet#expand_impl()
+      \ neosnippet#mappings#expand_impl()
 snoremap <silent><expr> <Plug>(neosnippet_jump)
-      \ neosnippet#jump_impl()
+      \ neosnippet#mappings#jump_impl()
 
 xnoremap <silent> <Plug>(neosnippet_get_selected_text)
-      \ :call neosnippet#get_selected_text(visualmode(), 1)<CR>
-
-imap <silent> <Plug>(neocomplcache_snippets_expand)
-      \ <Plug>(neosnippet_expand_or_jump)
-smap <silent> <Plug>(neocomplcache_snippets_expand)
-      \ <Plug>(neosnippet_expand_or_jump)
-imap <silent> <Plug>(neocomplcache_snippets_jump)
-      \ <Plug>(neosnippet_jump_or_expand)
-smap <silent> <Plug>(neocomplcache_snippets_jump)
-      \ <Plug>(neosnippet_expand_or_jump)
-imap <silent> <Plug>(neocomplcache_snippets_force_expand)
-      \ <Plug>(neosnippet_expand)
-smap <silent> <Plug>(neocomplcache_snippets_force_expand)
-      \ <Plug>(neosnippet_expand)
-imap <silent> <Plug>(neocomplcache_snippets_force_jump)
-      \ <Plug>(neosnippet_jump)
-smap <silent> <Plug>(neocomplcache_snippets_force_jump)
-      \ <Plug>(neosnippet_jump)
+      \ :call neosnippet#helpers#get_selected_text(visualmode(), 1)<CR>
 
 xnoremap <silent> <Plug>(neosnippet_expand_target)
-      \ :<C-u>call neosnippet#expand_target()<CR>
+      \ :<C-u>call neosnippet#mappings#_expand_target()<CR>
 xnoremap <silent><expr> <Plug>(neosnippet_start_unite_snippet_target)
-      \ unite#sources#snippet_target#start()
+      \ unite#sources#neosnippet_target#start()
 xnoremap <silent> <Plug>(neosnippet_register_oneshot_snippet)
-      \ :<C-u>call neosnippet#register_oneshot_snippet()<CR>
+      \ :<C-u>call neosnippet#mappings#_register_oneshot_snippet()<CR>
 
-imap <silent> <Plug>(neocomplcache_start_unite_snippet)
-      \ <Plug>(neosnippet_start_unite_snippet)
 inoremap <expr><silent> <Plug>(neosnippet_start_unite_snippet)
-      \ unite#sources#snippet#start_complete()
+      \ unite#sources#neosnippet#start_complete()
 "}}}
 
 augroup neosnippet "{{{
-    autocmd CursorHold,CursorMovedI
-          \ * call neosnippet#_lazy_initialize()
+  autocmd InsertEnter * call neosnippet#init#_initialize()
 augroup END"}}}
 
 " Commands. "{{{
-command! -nargs=? -complete=customlist,neosnippet#edit_complete
+command! -nargs=? -complete=customlist,neosnippet#commands#_edit_complete
       \ NeoSnippetEdit
-      \ call neosnippet#edit_snippets(<q-args>)
+      \ call neosnippet#commands#_edit(<q-args>)
 
-command! -nargs=? -complete=customlist,neosnippet#filetype_complete
+command! -nargs=? -complete=customlist,neosnippet#commands#_filetype_complete
       \ NeoSnippetMakeCache
-      \ call neosnippet#make_cache(<q-args>)
-
-command! -nargs=? -complete=customlist,neosnippet#filetype_complete
-      \ NeoComplCacheCachingSnippets
-      \ NeoSnippetMakeCache <args>
-command! -nargs=? -complete=customlist,neosnippet#filetype_complete
-      \ NeoComplCacheEditSnippets
-      \ NeoSnippetEdit <args>
-command! -nargs=? -complete=customlist,neosnippet#filetype_complete
-      \ NeoComplCacheEditRuntimeSnippets
-      \ NeoSnippetEdit -runtime <args>
+      \ call neosnippet#commands#_make_cache(<q-args>)
 
 command! -nargs=1 -complete=file
       \ NeoSnippetSource
-      \ call neosnippet#source_file(<q-args>)
+      \ call neosnippet#commands#_source(<q-args>)
+
+command! NeoSnippetClearMarkers
+      \ call neosnippet#commands#_clear_markers()
 "}}}
 
 let g:loaded_neosnippet = 1

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: converter_delimiter.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Sep 2013.
+" Last Modified: 22 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -44,8 +44,6 @@ function! s:converter.filter(context) "{{{
   " Delimiter check.
   let filetype = neocomplete#get_context_filetype()
 
-  let next_keyword = neocomplete#filters#
-        \converter_remove_next_keyword#get_next_keyword(a:context.source_name)
   for delimiter in get(g:neocomplete#delimiter_patterns, filetype, [])
     " Count match.
     let delim_cnt = 0
@@ -65,7 +63,7 @@ function! s:converter.filter(context) "{{{
         if string.find(candidates[i].word, pattern, 1) ~= nil then
           vim.command('call s:process_delimiter(a:context, '..
             'a:context.candidates['.. i ..
-            '], delimiter_vim, delim_cnt, next_keyword)')
+            '], delimiter_vim, delim_cnt)')
         end
       end
     end
@@ -75,12 +73,12 @@ EOF
   return a:context.candidates
 endfunction"}}}
 
-function! s:process_delimiter(context, candidate, delimiter, delim_cnt, next_keyword)
+function! s:process_delimiter(context, candidate, delimiter, delim_cnt)
   let candidate = a:candidate
 
   let split_list = split(candidate.word, a:delimiter.'\ze.', 1)
   let delimiter_sub = substitute(
-        \ a:delimiter, '\\\([.^$]\)', '\1', 'g')
+        \ a:delimiter, '\\\(.\)', '\1', 'g')
   let candidate.abbr = join(
         \ split(get(candidate, 'abbr', candidate.word),
         \             a:delimiter.'\ze.', 1)[ : a:delim_cnt],
@@ -96,7 +94,7 @@ function! s:process_delimiter(context, candidate, delimiter, delim_cnt, next_key
     let candidate.abbr .= delimiter_sub . '~'
     let candidate.dup = 0
 
-    if g:neocomplete#enable_auto_delimiter && a:next_keyword == ''
+    if g:neocomplete#enable_auto_delimiter
       let candidate.word .= delimiter_sub
     endif
   endif

@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: converter_abbr.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 02 Sep 2013.
+" Last Modified: 15 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -33,7 +33,7 @@ endfunction"}}}
 
 let s:converter = {
       \ 'name' : 'converter_abbr',
-      \ 'description' : 'abbr converter',
+      \ 'description' : 'abbreviate abbr converter',
       \}
 
 function! s:converter.filter(context) "{{{

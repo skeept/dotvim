@@ -4,7 +4,7 @@ exec vam#DefineAndBind('s:c','g:vim_addon_manager','{}')
 
 let s:c.change_to_unix_ff               = get(s:c, 'change_to_unix_ff', (g:os=~#'unix'))
 let s:c.do_diff                         = get(s:c, 'do_diff',           1)
-let s:c.known                           = get(s:c, 'known', 'vim-addon-manager-known-repositories')
+let s:c.known                           = get(s:c, 'known', 'vim-pi')
 let s:c.MergeSources                    = get(s:c, 'MergeSources', 'vam_known_repositories#MergeSources')
 let s:c.pool_fun                        = get(s:c, 'pool_fun', 'vam#install#Pool')
 let s:c.name_rewriting                  = get(s:c, 'name_rewriting',    {})
@@ -56,18 +56,21 @@ fun! vam#install#CheckPoolItem(key, i)
 endfun
 
 fun! vam#install#RewriteName(name)
-  if a:name[:6]==#'github:'
+  let match = matchlist(a:name, '^\(github\|git\|darcs\|hg\):\(.*\)$')
+  if empty(match)
+    return 0
+  endif
+  if match[1] ==# 'github'
     " github:{Name}      {"type": "git", "url": "git://github.com/{Name}/vim-addon-{Name}}
     " github:{N}/{Repo}  {"type": "git", "url": "git://github.com/{N}/{Repo}"}
-    let rest = a:name[len('github:'):]
-    return {'type' : 'git', 'url' : 'git://github.com/'.(rest =~ '/' ? rest : rest.'/vim-addon-'.rest)}
-  elseif a:name[:3]==#'git:'
-    " git:{URL}          {"type": "git", "url": {URL}}
-    return {'type' : 'git', 'url' : a:name[len('git:'):]}
-  elseif a:name[:2]==#'hg:'
-    return {'type' : 'hg', 'url' : a:name[len('hg:'):]}
+    return {'type' : 'git', 'url' : 'git://github.com/'.(match[2] =~ '/' ? match[2] : match[2].'/vim-addon-'.match[2])}
+  else
+    " hg:{URL}
+    " svn:{URL}
+    " darcs:{URL}
+    " -> {"type" : "hg/svn/darcs", url : URL}
+    return {'type' : match[1], 'url' : match[2]}
   endif
-
 endfun
 
 fun! vam#install#GetRepo(name, opts)
@@ -94,13 +97,13 @@ fun! vam#install#GetRepo(name, opts)
           call add(maybe_fixes, a:name.' might be a typo, did you mean: '.x.' ?')
         endif
       endfor
-      " try finding new name (VAM-kr only)
+      " try finding new name (vim-pi only)
       try
-        " using try because pool implementations other then VAM-kr could be
+        " using try because pool implementations other then vim-pi could be
         " used
-        call extend(maybe_fixes, vamkr#SuggestNewName(a:name))
+        call extend(maybe_fixes, vimpi#SuggestNewName(a:name))
       catch /Vim(call):E117:/
-        " If VAM-kr activation policy is never, then the above will yield 
+        " If vim-pi activation policy is never, then the above will yield 
         " unknown function error
       endtry
       call vam#Log(join(["No repository location info known for plugin ".a:name."."] + maybe_fixes,"\n"))
@@ -266,7 +269,7 @@ fun! vam#install#CreatePatch(info, repository, pluginDir, hook_opts)
       call mkdir(a:pluginDir.'/archive', 'p')
 
       let rep_copy = deepcopy(a:repository)
-      let rep_copy.url = 'file://'.expand(archiveFileBackup)
+      let rep_copy.url = 'file://'.expand(archiveFileBackup, 1)
       call vam#install#Checkout(a:pluginDir, rep_copy)
       silent! call delete(a:pluginDir.'/version')
       try
@@ -556,7 +559,7 @@ fun! vam#install#UninstallAddons(list)
 endfun
 
 fun! vam#install#HelpTags(name)
-  let d=vam#PluginDirFromName(a:name).'/doc'
+  let d=vam#PluginRuntimePath(a:name).'/doc'
   if isdirectory(d) | exec 'helptags '.fnameescape(d) | endif
 endfun
 
@@ -595,10 +598,14 @@ fun! vam#install#Checkout(targetDir, repository) abort
 
     call vam#utils#Download(a:repository.url, archiveFile)
 
-    call vam#utils#Unpack(archiveFile, a:targetDir,
-                \                  {'strip-components': get(a:repository,'strip-components',-1),
+    let opts = {'strip-components': get(a:repository,'strip-components',-1),
                 \                   'script-type': tolower(get(a:repository, 'script-type', 'plugin')),
-                \                   'unix_ff': get(a:repository, 'unix_ff', get(s:c, 'change_to_unix_ff')) })
+                \                   'unix_ff': get(a:repository, 'unix_ff', get(s:c, 'change_to_unix_ff')) }
+    if (has_key(a:repository, 'target_dir'))
+      let opts.target_dir = a:repository.target_dir
+    endif
+
+    call vam#utils#Unpack(archiveFile, a:targetDir, opts)
 
     call writefile([get(a:repository, 'version', '?')], a:targetDir.'/version', 'b')
   endif
@@ -781,7 +788,7 @@ fun! vam#install#LoadKnownRepos()
   endif
 endfun
 
-" The default pool of know plugins for VAM: vim-addon-manager-known-repositories
+" The default pool of know plugins for VAM: vim-pi
 fun! vam#install#Pool()
   if vam#install#LoadKnownRepos()
     return vam_known_repositories#Pool()
@@ -838,7 +845,7 @@ if g:is_win
       echo "__ its your turn: __"
       echom "__ move all files of the zip directory into ".s:c.binary_utils.'/dist . Close the Explorer window and the shell window to continue. Press any key'
       call getchar()
-      exec "!".expand(s:c.binary_utils.'/'. tools.zip[1])
+      exec "!".expand(s:c.binary_utils.'/'. tools.zip[1], 1)
       let $PATH=$PATH.';'.s:c.binary_utils_bin
       if !executable('unzip')
         throw "can't execute unzip. Something failed!"

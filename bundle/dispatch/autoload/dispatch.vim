@@ -36,7 +36,7 @@ function! dispatch#shellescape(...) abort
   return join(args, ' ')
 endfunction
 
-let s:flags = '\%(:[p8~.htre]\|:g\=s\(\.\).\{-\}\1.\{-\}\1\)*'
+let s:flags = '\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*'
 let s:expandable = '\\*\%(<\w\+>\|%\|#\d*\)' . s:flags
 function! dispatch#expand(string) abort
   return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
@@ -62,18 +62,25 @@ endfunction
 function! dispatch#vim_executable() abort
   if !exists('s:vim')
     if has('win32')
-      let root = fnamemodify($VIMRUNTIME, ':8') . dispatch#slash()
+      let roots = [fnamemodify($VIMRUNTIME, ':8') . dispatch#slash(),
+                  \ fnamemodify($VIM, ':8') . dispatch#slash()]
     elseif has('gui_macvim')
-      let root = fnamemodify($VIM, ':h:h') . '/MacOS/'
+      let roots = [fnamemodify($VIM, ':h:h') . '/MacOS/']
     else
-      let root = fnamemodify($VIM, ':h:h') . '/bin/'
+      let roots = [fnamemodify($VIM, ':h:h') . '/bin/']
     endif
-    if executable(root . v:progname)
-      let s:vim = root . v:progname
-    elseif executable(v:progname)
-      let s:vim = v:progname
-    else
-      let s:vim = 'vim'
+    for root in roots
+      if executable(root . v:progname)
+        let s:vim = root . v:progname
+        break
+      endif
+    endfor
+    if !exists('s:vim')
+      if executable(v:progname)
+        let s:vim = v:progname
+      else
+        let s:vim = 'vim'
+      endif
     endif
   endif
   return s:vim
@@ -193,9 +200,9 @@ function! dispatch#compiler_for_program(program) abort
   if a:program ==# 'make'
     return 'make'
   endif
-  for plugin in reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim', 1), "\n"))
+  for plugin in reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim'), "\n"))
     for line in readfile(plugin, '', 100)
-      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_]\+') == a:program
+      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_-]\+') == a:program
         return fnamemodify(plugin, ':t:r')
       endif
     endfor
@@ -295,7 +302,7 @@ function! dispatch#compile_command(bang, args) abort
   endif
   let request.title = get(request, 'compiler', 'make')
 
-  if &autowrite
+  if &autowrite || &autowriteall
     wall
   endif
 
@@ -430,7 +437,7 @@ function! s:cgetfile(request, all, copen) abort
   let dir = getcwd()
   try
     call s:set_current_compiler(get(request, 'compiler', ''))
-    exe cd request.directory
+    exe cd fnameescape(request.directory)
     if a:all
       let &l:efm = '%+G%.%#'
     else
@@ -442,7 +449,7 @@ function! s:cgetfile(request, all, copen) abort
   catch '^E40:'
     return v:exception
   finally
-    exe cd dir
+    exe cd fnameescape(dir)
     let &l:efm = efm
     let &l:makeprg = makeprg
     call s:set_current_compiler(compiler)

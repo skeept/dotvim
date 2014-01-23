@@ -69,13 +69,14 @@ Context Source.run()
   End
 
   It get candidates
+    call unite#custom_max_candidates('file_mru', 1)
     let candidates = unite#get_candidates(['file_mru'])
-    Should len(candidates) == len(readfile(
+    ShouldEqual len(candidates), len(readfile(
           \ g:unite_data_directory . '/file_mru'))-1
 
     let candidates = unite#get_candidates([
           \ ['grep', 'unite.vim/plugin', '', 'vim']])
-    call unite#do_candidates_action('replace', candidates)
+    call unite#action#do_candidates('replace', candidates)
   End
 
   It check custom variables.
