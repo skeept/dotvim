@@ -3,8 +3,8 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-06-30.
-" @Last Change: 2013-09-30.
-" @Revision:    0.0.1262
+" @Last Change: 2014-01-22.
+" @Revision:    0.0.1275
 
 
 " :filedoc:
@@ -443,14 +443,7 @@ function! tlib#input#ListW(world, ...) "{{{3
                             " TLogDBG 5
                             " TLogDBG len(world.list)
                             " TLogVAR world.list
-                            let dlist = copy(world.list)
-                            " TLogVAR world.display_format
-                            if !empty(world.display_format)
-                                let display_format = world.display_format
-                                let cache = world.fmt_display
-                                " TLogVAR display_format, fmt_entries
-                                call map(dlist, 'world.FormatName(cache, display_format, v:val)')
-                            endif
+                            let dlist = world.DisplayFormat(world.list)
                             " TLogVAR world.prefidx
                             " TLogDBG 6
                             " let time6 = str2float(reltimestr(reltime()))  " DBG
@@ -545,20 +538,15 @@ function! tlib#input#ListW(world, ...) "{{{3
                             exec exec_cmd
                         endif
                     elseif has('gui_gtk') || has('gui_gtk2')
-                        let c = getchar()
-                        let cmod = getcharmod()
-                        " TLogVAR c, cmod
-                        if c !~ '\D' && c > 0 && cmod != 0
-                            let c = printf("<%s-%s>", cmod, c)
-                        endif
+                        let c = s:GetModdedChar(world)
+                        " TLogVAR c
                     endif
                 else
                     " TLogVAR world.timeout
-                    let c = tlib#char#Get(world.timeout, world.timeout_resolution)
+                    let c = s:GetModdedChar(world)
                     " TLogVAR c, has_key(world.key_map[world.key_mode],c)
-                    let cmod = getcharmod()
                 endif
-                " TLogVAR c, cmod
+                " TLogVAR c
                 " TLogDBG string(sort(keys(world.key_map[world.key_mode])))
 
                 " TLogVAR world.next_agent, world.next_eval
@@ -602,7 +590,7 @@ function! tlib#input#ListW(world, ...) "{{{3
                         " let world.offset  = world.prefidx
                         if empty(world.prefidx)
                             " call feedkeys(c, 't')
-                            let c = tlib#char#Get(world.timeout)
+                            let c = s:GetModdedChar(world)
                             let world.state = 'help'
                             continue
                         endif
@@ -826,6 +814,16 @@ function! tlib#input#ListW(world, ...) "{{{3
             call feedkeys(post_keys)
         endif
     endtry
+endf
+
+
+function! s:GetModdedChar(world) "{{{3
+    let [char, mode] = tlib#char#Get(a:world.timeout, a:world.timeout_resolution, 1)
+    if char !~ '\D' && char > 0 && mode != 0
+        return printf("<%s-%s>", mode, char)
+    else
+        return char
+    endif
 endf
 
 
