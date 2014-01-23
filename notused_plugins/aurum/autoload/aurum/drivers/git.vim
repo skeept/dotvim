@@ -115,6 +115,7 @@ function s:F.parsecs(csdata)
     let aemail=remove(a:csdata, 0)
     let cs.user=aname.' <'.aemail.'>'
     let cs.tags=split(remove(a:csdata, 0)[2:-2], ', ')
+    call map(cs.tags, 'v:val[:4] is# "tag: " ? v:val[5:] : v:val')
     "▶2 get description
     let description=[]
     while !empty(a:csdata) && a:csdata[0][0] is# ' '
@@ -210,6 +211,15 @@ function s:git.updatechangesets(...)
 endfunction
 "▶1 git.getrevhex :: repo, rev → hex
 let s:prevrevhex={}
+if s:usepythondriver
+function s:git.getrevhex(repo, rev)
+    let d={}
+    try
+        execute s:pya.'getrevhex(vim.eval("a:repo.path"), vim.eval("a:rev"))'
+    endtry
+    return d.hex
+endfunction
+else
 function s:git.getrevhex(repo, rev)
     if a:rev=~#'\v^[0-9a-f]{40}$'
         if has_key(s:prevrevhex, a:repo.path)
@@ -221,6 +231,7 @@ function s:git.getrevhex(repo, rev)
     let s:prevrevhex[a:repo.path]=[a:rev, r]
     return r
 endfunction
+endif
 "▶1 git.getworkhex :: repo → hex
 function s:git.getworkhex(repo)
     return a:repo.functions.getrevhex(a:repo, 'HEAD')
@@ -679,7 +690,7 @@ function s:git.diff(repo, rev1, rev2, files, opts)
     return r
 endfunction
 "▶1 git.diffre :: _, opts → Regex
-let s:diffre='\m^diff --git \v((\")?%s\/.{-}\2) \2%s\/'
+let s:diffre='\m\C^diff --git \v((\")?%s\/.{-}\2) \2%s\/'
 function s:git.diffre(repo, opts)
     if get(a:opts, 'reverse', 0)
         return printf(s:diffre, 'b', 'a')

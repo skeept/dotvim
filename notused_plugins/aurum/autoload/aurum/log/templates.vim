@@ -406,14 +406,14 @@ function s:F.strappend(func, s, nl)
                 for i in spsets
                     let func[i]=substitute(substitute(substitute(substitute(
                                 \func[i],
-                                \'\Vlen(text[-1])', lstr,  'g'),
+                                \'\V\Clen(text[-1])', lstr,  'g'),
                                 \'\v\ (\d+%([+\-]\d+)+)',
                                 \       '\='.tr(s:addexpr, '+', '1'),
-                                \                          'g'),
-                                \'\Vlen(text)',     '&+1', 'g'),
-                                \'\Vlen(text)\v(%([+\-]\d+)+)',
+                                \                            'g'),
+                                \'\V\Clen(text)',     '&+1', 'g'),
+                                \'\V\Clen(text)\v(%([+\-]\d+)+)',
                                 \       '\="len(text)".'.s:addexpr,
-                                \                          'g')
+                                \                            'g')
                 endfor
                 let func+=['let text+=['.str.'.'.a:s.']']
                 return
@@ -661,11 +661,11 @@ function s:F.compile(template, opts, repo)
                 "▲3
                 let expr=substitute(substitute(substitute(substitute(
                             \substitute(expr,
-                            \'\V@@@', marg,      'g'),
-                            \'\V@.@', 'a:cs',    'g'),
-                            \'\V@:@', 'a:repo',  'g'),
-                            \'\V@o@', 'a:opts',  'g'),
-                            \'\V@-@', 'a:width', 'g')
+                            \'\V\C@@@', marg,      'g'),
+                            \'\V\C@.@', 'a:cs',    'g'),
+                            \'\V\C@:@', 'a:repo',  'g'),
+                            \'\V\C@o@', 'a:opts',  'g'),
+                            \'\V\C@-@', 'a:width', 'g')
                 "▶2 Process positional parameters
                 for j in range(len(ke)-2)
                     let expr=substitute(expr, '@'.j.'@',

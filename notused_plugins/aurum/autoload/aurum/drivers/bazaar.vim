@@ -577,7 +577,7 @@ function s:bzr.diff(repo, rev1, rev2, files, opts)
     return r
 endfunction
 "▶1 bzr.diffre :: _, opts → Regex
-let s:diffre='\m^=== \v(\a+)\ file\ (.*)'
+let s:diffre='\m\C^=== \v(\a+)\ file\ (.*)'
 function s:bzr.diffre(repo, opts)
     return s:diffre
 endfunction

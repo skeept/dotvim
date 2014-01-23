@@ -72,19 +72,16 @@ function s:utils.run(cmd, hasnulls, cdpath)
         "     some cases?
         let savedlazyredraw=&lazyredraw
         let savedeventignore=&eventignore
-        set eventignore=all
-        set lazyredraw
+        let savedbufhidden=&l:bufhidden
+        let savedpwd=fnamemodify('.', ':p')
+        set      eventignore=all
+        set      lazyredraw
+        setlocal bufhidden=hide
+        let prevbufnr=bufnr('%')
         try
-            try
-                tabnew
-            catch /^Vim(tabnew):E523:/
-                let r=s:utils.run(a:cmd, 2, a:cdpath)
-                if empty(r[-1])
-                    call remove(r, -1)
-                endif
-                return r
-            endtry
-            setlocal buftype=nofile modifiable noreadonly
+            silent enew
+            let newbufnr=bufnr('%')
+            setlocal buftype=nofile modifiable noreadonly bufhidden=wipe
             if !empty(a:cdpath)
                 execute 'lcd' fnameescape(a:cdpath)
             endif
@@ -92,8 +89,14 @@ function s:utils.run(cmd, hasnulls, cdpath)
             " without trailing newline, and also is “smart” about lineendings
             silent execute '%!'.join(map(copy(a:cmd), 'shellescape(v:val, 1)'))
             let r=getline(1, '$')
-            bwipeout!
         finally
+            if newbufnr == prevbufnr
+                silent enew!
+                execute 'lcd' fnameescape(savedpwd)
+            elseif bufexists(prevbufnr)
+                execute 'unsilent buffer!' prevbufnr
+                call setbufvar(prevbufnr, 'bufhidden', savedbufhidden)
+            endif
             let &lazyredraw=savedlazyredraw
             let &eventignore=savedeventignore
         endtry
@@ -243,7 +246,7 @@ if has('python')
         let a:fdict.reloadcmd=(g.py.' reload('.g.pp.')')
     endfunction
 else
-    function s:F.pyimport(plugdict, fdict, pkg)
+    function s:F.pyimport(plugdict, fdict)
         let a:plugdict.g.usepythondriver=0
     endfunction
 endif

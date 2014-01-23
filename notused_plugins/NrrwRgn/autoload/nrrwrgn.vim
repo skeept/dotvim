@@ -3,9 +3,8 @@
 " Version:	   0.31
 " Maintainer:  Christian Brabandt <cb@256bit.org>
 " Last Change: Sat, 16 Feb 2013 22:28:31 +0100
-"
 " Script: http://www.vim.org/scripts/script.php?script_id=3075 
-" Copyright:   (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
+" Copyright:   (c) 2009-2013 by Christian Brabandt
 "			   The VIM LICENSE applies to NrrwRgn.vim 
 "			   (see |copyright|) except use "NrrwRgn.vim" 
 "			   instead of "Vim".
@@ -337,8 +336,16 @@ fun! <sid>GeneratePattern(startl, endl, mode, ...) "{{{1
 		return '\%>'. (a:startl[0]-1). 'l\&\%>'. (a:startl[1]-1).
 			\ 'v\&\%<'. (a:endl[0]+1). 'l\&\%<'. (a:endl[1]+1). 'v'
 	elseif a:mode ==# 'v' && a:startl[0] > 0 && a:startl[1] > 0
-		return '\%>'. (a:startl[0]-1). 'l\&\%>'. (a:startl[1]-1).
-			\ 'v\_.*\%<'. (a:endl[0]+1). 'l\&\%<'. (a:endl[1]+1). 'v'
+		" Need to generate concat 3 patterns:
+		"  1) from startline, startcolumn till end of line
+		"  2) all lines between startline and end line
+		"  3) from start of endline until end column
+		"
+		" example: Start at line 1 col. 6 until line 3 column 12:
+		" \%(\%1l\%>6v.*\)\|\(\%>1l\%<3l.*\)\|\(\%3l.*\%<12v\)
+		return  '\%(\%'.  (a:startl[0]). 'l\%>'.   (a:startl[1]-1). 'v.*\)\|'.
+			\	'\%(\%>'. (a:startl[0]). 'l\%<'.   (a:endl[0]).     'l.*\)\|'.
+			\   '\%(\%'.  (a:endl[0]).   'l.*\%<'. (a:endl[1]+1).   'v\)'
 	elseif a:startl[0] > 0
 		return '\%>'. (a:startl[0]-1). 'l\&\%<'. (a:endl[0]+1). 'l'
 	else
@@ -347,6 +354,23 @@ fun! <sid>GeneratePattern(startl, endl, mode, ...) "{{{1
 endfun 
 
 fun! <sid>Options(search) "{{{1
+	" return buffer local options (generated from $VIMRUNTIME/doc/options.txt
+
+	return
+	\ ['autoindent', 'autoread', 'balloonexpr', 'binary', 'bomb',
+	\  'cindent', 'cinkeys', 'cinoptions', 'cinwords', 'commentstring',
+	\  'complete', 'completefunc', 'copyindent', 'cryptmethod', 'define',
+	\  'dictionary', 'endofline', 'equalprg', 'errorformat', 'expandtab',
+	\  'fileencoding', 'filetype', 'formatoptions', 'formatlistpat',
+	\  'formatexpr', 'iminsert', 'imsearch', 'include', 'includeexpr',
+	\  'indentexpr', 'indentkeys', 'infercase', 'key', 'keymap', 'lisp',
+	\  'makeprg', 'matchpairs', 'nrformats', 'omnifunc', 'osfiletype',
+	\  'preserveindent', 'quoteescape', 'shiftwidth', 'shortname', 'smartindent',
+	\  'softtabstop', 'spellcapcheck', 'spellfile', 'spelllang', 'suffixesadd',
+	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'undofile',
+	\  'wrapmargin']
+
+	" old function, only used to generate above list
 	let c=[]
 	let buf=bufnr('')
 	try
@@ -382,7 +406,7 @@ fun! <sid>Options(search) "{{{1
 	finally
 		if fnamemodify(bufname(''),':p') ==
 		   \expand("$VIMRUNTIME/doc/options.txt")
-			bwipe
+			noa bwipe
 		endif
 		exe "noa "	bufwinnr(buf) "wincmd  w"
 		return c
@@ -423,7 +447,7 @@ fun! <sid>CheckProtected() "{{{1
 	if !&l:ma || &l:ro
 		let b:orig_buf_ro=1
 		call s:WarningMsg("Buffer is protected, won't be able to write".
-			\ "the changes back!")
+			\ " the changes back!")
 	else 
 	" Protect the original buffer,
 	" so you won't accidentally modify those lines,
@@ -736,48 +760,94 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 	let &lz   = o_lz
 endfun
 
-fun! nrrwrgn#NrrwRgn(...) range  "{{{1
+fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
+	let visual = !empty(a:mode)
+    " a:mode is set when using visual mode
+    if visual
+	" This beeps, when called from command mode
+	" e.g. by using :NRV, so using :sil!
+	" else exiting visual mode
+		exe "sil! norm! \<ESC>"
+    endif
+	let bang = (a:0 > 0 && !empty(a:1))
 	let o_lz = &lz
 	let s:o_s  = @/
 	set lz
-	let orig_buf=bufnr('')
-	let bang = (a:0 > 0 && !empty(a:1))
-
-	" initialize Variables
 	call <sid>Init()
-    call <sid>CheckProtected()
-	let first = a:firstline
-	let last  = a:lastline
-	" If first line is in a closed fold,
-	" include complete fold in Narrowed window
-	if first == last && foldclosed(first) != -1
-		let first = foldclosed(first)
-		let last  = foldclosedend(last)
+	if visual
+	    let s:nrrw_rgn_lines[s:instn].vmode=a:mode
 	endif
-	let s:nrrw_rgn_lines[s:instn].start = [ 0, first, 0, 0 ]
-	let s:nrrw_rgn_lines[s:instn].end	= [ 0, last , 0, 0 ]
-	let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
-	let a=getline(
-		\s:nrrw_rgn_lines[s:instn].start[1], 
-		\s:nrrw_rgn_lines[s:instn].end[1])
+	" Protect the original buffer,
+	" so you won't accidentally modify those lines,
+	" that will later be overwritten
+	let orig_buf=bufnr('')
+	let _opts = <sid>SaveRestoreRegister([])
+
+	call <sid>CheckProtected()
+	if visual
+	    let [ s:nrrw_rgn_lines[s:instn].start,
+		    \s:nrrw_rgn_lines[s:instn].end ] = <sid>RetVisRegionPos()
+	    norm! gv"ay
+	    if len(split(@a, "\n", 1)) != 
+			\ (s:nrrw_rgn_lines[s:instn].end[1] -
+			\ s:nrrw_rgn_lines[s:instn].start[1] + 1)
+			" remove trailing "\n"
+			let @a=substitute(@a, '\n$', '', '') 
+	    endif
+		let a = split(@a, "\n")
+
+	    if visual && a:mode ==# '' && <sid>CheckRectangularRegion(@a)
+			" Rectangular selection
+			let s:nrrw_rgn_lines[s:instn].blockmode = 1
+	    else
+			" Non-Rectangular selection
+			let s:nrrw_rgn_lines[s:instn].blockmode = 0
+		endif
+	else
+	    let first = a:firstline
+	    let last  = a:lastline
+	    " If first line is in a closed fold,
+	    " include complete fold in Narrowed window
+	    if first == last && foldclosed(first) != -1
+		    let first = foldclosed(first)
+		    let last  = foldclosedend(last)
+	    endif
+	    let s:nrrw_rgn_lines[s:instn].start = [ 0, first, 0, 0 ]
+	    let s:nrrw_rgn_lines[s:instn].end	= [ 0, last , 0, 0 ]
+	    let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
+	    let a=getline(s:nrrw_rgn_lines[s:instn].start[1],
+		    \ s:nrrw_rgn_lines[s:instn].end[1])
+	endif
 	call <sid>DeleteMatches(s:instn)
 	let win=<sid>NrrwRgnWin(bang)
 	if bang
-		let s:nrrw_rgn_lines[s:instn].single = 1
+	    let s:nrrw_rgn_lines[s:instn].single = 1
 	else
-		noa wincmd p
-		" Set highlighting in original window
-		call <sid>AddMatches(<sid>GeneratePattern(
-			\s:nrrw_rgn_lines[s:instn].start[1:2], 
-			\s:nrrw_rgn_lines[s:instn].end[1:2], 
-			\'V'), s:instn)
+	    " Set the highlighting
+	    noa wincmd p
+	    let s:nrrw_rgn_lines[s:instn].winnr  = winnr()
+	    " Set highlighting in original window
+	    if visual
+			call <sid>AddMatches(<sid>GeneratePattern(
+		    \s:nrrw_rgn_lines[s:instn].start[1:2],
+		    \s:nrrw_rgn_lines[s:instn].end[1:2],
+		    \s:nrrw_rgn_lines[s:instn].vmode, 
+		    \s:nrrw_rgn_lines[s:instn].blockmode),
+		    \s:instn)
+	    else
+			call <sid>AddMatches(<sid>GeneratePattern(
+		    \s:nrrw_rgn_lines[s:instn].start[1:2], 
+		    \s:nrrw_rgn_lines[s:instn].end[1:2], 
+		    \'V'), s:instn)
+	    endif
 		" move back to narrowed window
 		noa wincmd p
 	endif
 	let b:orig_buf = orig_buf
+	let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
 	call setline(1, a)
-	setl nomod
 	let b:nrrw_instn = s:instn
+	setl nomod
 	call <sid>SetupBufLocalCommands()
 	call <sid>NrrwRgnAuCmd(0)
 	if has_key(s:nrrw_aucmd, "create")
@@ -786,11 +856,11 @@ fun! nrrwrgn#NrrwRgn(...) range  "{{{1
 	if has_key(s:nrrw_aucmd, "close")
 		let b:nrrw_aucmd_close = s:nrrw_aucmd["close"]
 	endif
+	call <sid>SaveRestoreRegister(_opts)
 
 	" restore settings
 	let &lz   = o_lz
 endfun
-
 fun! nrrwrgn#Prepare() "{{{1
 	let ltime = localtime()
 	if  (!exists("s:nrrw_rgn_last") || s:nrrw_rgn_last + 10 < ltime)
@@ -808,13 +878,22 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	let orig_buf = b:orig_buf
 	let orig_tab = tabpagenr()
 	let instn    = b:nrrw_instn
+	let winnr    = get(s:nrrw_rgn_lines[instn], 'winnr', winnr())
 	let close    = has_key(s:nrrw_rgn_lines[instn], 'single')
 	let vmode    = has_key(s:nrrw_rgn_lines[instn], 'vmode')
+	" Save current state
+	let nr = changenr()
 	" Execute autocommands
 	if has_key(s:nrrw_aucmd, "close")
 		exe s:nrrw_aucmd["close"]
 	endif
 	let cont	 = getline(1,'$')
+	if has_key(s:nrrw_aucmd, "close") && nr != changenr()
+		" Restore buffer contents before the autocommand
+		" (in case the window isn't closed, the user sees
+		" the correct input)
+		exe "undo" nr
+	endif
 
 	let tab=<sid>BufInTab(orig_buf)
 	if tab != tabpagenr() && tab > 0
@@ -825,6 +904,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	if (orig_win == -1)
 		if bufexists(orig_buf)
 			" buffer not in current window, switch to it!
+			exe "noa" winnr "wincmd w"
 			exe "noa" orig_buf "b!"
 			" Make sure highlighting will be removed
 			let close = (&g:hid ? 0 : 1)
@@ -875,7 +955,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 					\ s:nrrw_rgn_lines[instn].vmode)
 		if s:nrrw_rgn_lines[instn].vmode == 'v' &&
 			\ s:nrrw_rgn_lines[instn].end[1] -
-			\ s:nrrw_rgn_lines[instn].start[1] + 1 == len(cont) + 1
+			\ s:nrrw_rgn_lines[instn].start[1] + 1 == len(cont)
 		   " in characterwise selection, remove trailing \n
 		   call setreg('a', substitute(@a, '\n$', '', ''), 
 			\ s:nrrw_rgn_lines[instn].vmode)
@@ -1001,85 +1081,6 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	endif
 endfun
 
-fun! nrrwrgn#VisualNrrwRgn(mode, ...) "{{{1
-	" bang: open the narrowed buffer in the current window and don't open a
-	" new split window
-	if empty(a:mode)
-		" in case, visual mode wasn't entered, visualmode()
-		" returns an empty string and in that case, we finish
-		" here
-		call <sid>WarningMsg("There was no region visually selected!")
-		return
-	endif
-	" This beeps, when called from command mode
-	" e.g. by using :NRV, so using :sil!
-	" else exiting visual mode
-	exe "sil! norm! \<ESC>"
-	let bang = (a:0 > 0 && !empty(a:1))
-	" stop visualmode
-	let o_lz = &lz
-	let s:o_s  = @/
-	set lz
-	call <sid>Init()
-	let s:nrrw_rgn_lines[s:instn].vmode=a:mode
-	" Protect the original buffer,
-	" so you won't accidentally modify those lines,
-	" that will later be overwritten
-	let orig_buf=bufnr('')
-	let _opts = <sid>SaveRestoreRegister([])
-
-	call <sid>CheckProtected()
-	let [ s:nrrw_rgn_lines[s:instn].start,
-		\s:nrrw_rgn_lines[s:instn].end ] = <sid>RetVisRegionPos()
-	call <sid>DeleteMatches(s:instn)
-	norm! gv"ay
-	if len(split(@a, "\n", 1)) != 
-			\ (s:nrrw_rgn_lines[s:instn].end[1] -
-			\ s:nrrw_rgn_lines[s:instn].start[1] + 1)
-		" remove trailing "\n"
-		let @a=substitute(@a, '\n$', '', '') 
-	endif
-
-	if a:mode == '' && <sid>CheckRectangularRegion(@a)
-		" Rectangular selection
-		let s:nrrw_rgn_lines[s:instn].blockmode = 1
-	else
-		" Non-Rectangular selection
-		let s:nrrw_rgn_lines[s:instn].blockmode = 0
-	endif
-	let win=<sid>NrrwRgnWin(bang)
-	if bang
-		let s:nrrw_rgn_lines[s:instn].single = 1
-	else
-		" Set the highlighting
-		noa wincmd p
-		call <sid>AddMatches(<sid>GeneratePattern(
-				\s:nrrw_rgn_lines[s:instn].start[1:2],
-				\s:nrrw_rgn_lines[s:instn].end[1:2],
-				\s:nrrw_rgn_lines[s:instn].vmode, 
-				\s:nrrw_rgn_lines[s:instn].blockmode),
-				\s:instn)
-		noa wincmd p
-	endif
-	let b:orig_buf = orig_buf
-	let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
-	silent put a
-	let b:nrrw_instn = s:instn
-	silent 0d _
-	setl nomod
-	call <sid>SetupBufLocalCommands()
-	" Setup autocommands
-	call <sid>NrrwRgnAuCmd(0)
-	" Execute autocommands
-	if has_key(s:nrrw_aucmd, "create")
-		exe s:nrrw_aucmd["create"]
-	endif
-	call <sid>SaveRestoreRegister(_opts)
-
-	" restore settings
-	let &lz   = o_lz
-endfun
-
 fun! nrrwrgn#UnifiedDiff() "{{{1
 	let save_winposview=winsaveview()
 	let orig_win = winnr()
@@ -1105,7 +1106,7 @@ fun! nrrwrgn#UnifiedDiff() "{{{1
 			.+,$NR
 		endif
 	   " Split vertically
-	   wincmd H
+	   noa wincmd H
 	   if i==0
 		   silent! g/^-/d _
 	   else
@@ -1173,7 +1174,7 @@ fun! nrrwrgn#LastNrrwRgn(bang) "{{{1
 			exe "keepj norm!" s:nrrw_rgn_lines['last'][1][1][1]. '|'
 		endif
 		" Call VisualNrrwRgn()
-		call nrrwrgn#VisualNrrwRgn(visualmode(), bang)
+		call nrrwrgn#NrrwRgn(visualmode(), bang)
 	endif
 endfu
 " Debugging options "{{{1

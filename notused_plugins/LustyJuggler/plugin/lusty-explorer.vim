@@ -1021,7 +1021,7 @@ class BufferExplorer < Explorer
 
   private
     def title
-      '[LustyExplorer-Buffers]'
+      'LustyExplorer--Buffers'
     end
 
     def set_syntax_matching
@@ -1180,7 +1180,7 @@ class FilesystemExplorer < Explorer
 
   private
     def title
-      '[LustyExplorer-Files]'
+      'LustyExplorer--Files'
     end
 
     def set_syntax_matching
@@ -1387,7 +1387,7 @@ class BufferGrep < Explorer
 
   private
     def title
-      '[LustyExplorer-BufferGrep]'
+      'LustyExplorer--BufferGrep'
     end
 
     def set_syntax_matching
@@ -1852,6 +1852,7 @@ class Display
       VIM::command "setlocal nobuflisted"
       VIM::command "setlocal textwidth=0"
       VIM::command "setlocal noreadonly"
+      VIM::command "setlocal colorcolumn=0"
 
       if VIM::exists? '&relativenumber'
         VIM::command "setlocal norelativenumber"

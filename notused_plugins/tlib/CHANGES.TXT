@@ -387,3 +387,88 @@ version: "1.02"
   MD5 checksum: b64ce6764f39f40bfc95f3916bbb0057
 version: "1.04"
 
+version: "1.05"
+  - tlib#hash: Adler32 & CRC32 (using zlib via ruby) algorithms
+  - tlib#cache#Filename(): If the cache filename is too long, add the Adler32 checksum to the shortened path
+  - tlib#cache#Filename(): Use tlib#hash#Adler32() only if the or() function exists
+  - tlib#hash#Adler32(): Raise error, if or() doesn't exist
+  - tlib#hash#CRC32(): Alternative implementation of crc32 (doesn't work yet, thus currently disabled)
+  - tlib#bitwise: Bitwise operations for older versions of vim
+  - tlib#number: Base conversion
+  - tlib#input#ListW(): Handle mouse clicks more correctly
+  - tlib#bitwise#Num2Bits(): Supports returning floats
+  - tlib#hash#CRC32(): Alternative implementation of crc32 (doesn't work yet)
+  - tlib#hash#CRC32(): Re-enable ruby version
+  - tlib#hash#CRC32B(): Implementation of CRC32B checksum in vimscript (used only if +ruby isn't available)
+  - tlib#hash#CRC32B(): vim version: cache the crc table
+  - tlib#cache#Filename(): Use tlib#hash#CRC32B(file) instead of not Adler32 for filenames too long
+  - tlib#hash#CRC32B(): ruby version: return upper case hex value
+  - g:tlib#hash#use_crc32: define which crc32b version should be used
+  - Moved spec files from vimtlib to tlib_vim
+  - tlib#bitwise#Add() and tlib#bitwise#Sub()
+  - tlib#file#Relative(): Wrong results for filenames that don't exist
+  - Implementation of hash#Adler32 for earlier vim versions; g:tlib#hash#use_adler32
+  - tlib#cache#Filename(): Use adler32 again
+  - addon-info
+  - tlib#file#Absolute(): remove redundant "." parts in full filename
+  - win32: Fix moving window when using :vertical for tlib#inpu#List()
+  - tlib#cache#Filename(): Don't create wrong directory if the cache filename is too long
+  - tlib#file#Join(): if strip_slashes, also strip redundant (back)slashes
+  - tlib#input#ListW(): Always set post_keys variable
+  - tlib#file#With(): escape backslashes
+  - tlib#cmd#OutputAsList(): Support for nesting
+  - tlib#dir#NativeName(dirname)
+  MD5 checksum: 493f9beca44374de386f20d1613155e3
+
+  - Rename g:tlib_debug to g:tlib#debug
+  - Renamed g:tlib_sortprefs_threshold to g:tlib#input#sortprefs_threshold
+  - Renamed g:tlib#input#livesearch_threshold
+  - Renamed g:tlib_inputlist_match to g:tlib#input#filter_mode
+  - Renamed g:tlib_inputlist_higroup to g:tlib#input#higroup
+  - Renamed g:tlib#debug
+  - Moved g:tlib_pick_last_item
+  - Renamed g:tlib#input#and, g:tlib#input#or, g:tlib#input#not
+  - Moved g:tlib_numeric_chars to autoload/tlib/input.vim
+  - Renamed g:tlib#input#keyagents_InputList_s, g:tlib#input#keyagents_InputList_m, g:tlib#input#handlers_EditList
+  - Moved g:tlib_inputlist_pct, g:tlib_inputlist_width_filename, g:tlib_inputlist_filename_indicators, g:tlib_inputlist_shortmessage to autoload/tlib/World.vim
+  - Renamed tlib#input#pick_last_item (2)
+  - prototype.SelectItemsByNames()
+  - filtered_items: Restricted view
+  - prototype.PrintLines()
+  - Restricted view (2)
+  - Moved g:tlib_scroll_lines to autoload/tlib/agent.vim
+  - prototype.PrintLines() (2)
+  - tlib#input: Improved handling of popup menu (allows submenu)
+  - tlib#input: Allow mods in keys
+  - Moved g:tlib_scratch_pos to autoload/tlib/scratch.vim
+  - Moved g:tlib_tags_extra, g:tlib_tag_substitute to autoload/tlib/tag.vim
+  - tlib#agent#CompleteAgentNames(): Respect Arglead
+  - Move g:tlib_viewline_position to autoload/tlib/buffer.vim
+  - Move g:tlib_cache to autoload/tlib/cache.vim
+  - Renamed g:tlib_filename_sep to g:tlib#dir#sep
+  - prototype.UseScratch(): Set b:tlib_world
+  - tlib#input: f9 toggles resticted view
+  - tlib#input: next_agent, next_eval
+  - tlib#input: Revised use of the popup menu
+  - tlib#input: Disable popup menu for gui_gtk
+  - tlib#input: Re-enabled the popup menu for gtk gui
+  - tlib#input: FIX popup menu on Windows
+  - Renamed g:tlib_numeric_chars to g:tlib#input#numeric_chars (disabled per-buffer values) (fixes #35)
+  - Improve scratch list
+  - New: tlib#grep
+  - Merge branch 'master' of https://github.com/bruno-/tlib_vim into pull16
+  - g:tlib_scratch_hidden: Configure how to "hide" the scratch buffer
+  - tlib#grep#Do: don't escape "*" in patterns
+  - Optimize use of visible scratch buffers
+  - World.scratch_hidden parameter
+  - scratch: Always use keepalt & keepjumps
+  MD5 checksum: 2e40449c47dc606ccef57aa0b1e22e8e
+version: "1.06"
+
+version: "1.07"
+  - Help template
+  - prototype.Highlight_filename(): Use matchstr() instead of fnamemodify()
+  - Display buffer-related filename indicators only if g:tlib_inputlist_filename_indicators is true
+  - tlib#file#Join(): strip_slashes defaults to 1
+  MD5 checksum: 6c8fa96fd3747be05df848ee93dd789b
+

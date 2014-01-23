@@ -11,7 +11,7 @@ def emptystatdct():
             'clean'   : [],
             }
 
-def outermethodgen(g_repo, flush):
+def outermethodgen(g_repo, flush, g):
     def outermethod(func):
         """
             Decorator used to make functions omit showing python traceback in 
@@ -36,6 +36,7 @@ def outermethodgen(g_repo, flush):
 def autoexportmethodgen(g_repo, g):
     def autoexportmethod(*extargs, **extkwargs):
         def autoexportmethoddec(func):
+            g['_'+func.__name__+'_orig']=func
             def f2(path, *args, **kwargs):
                 return func(g_repo(path), *args, **kwargs)
             g['_'+func.__name__]=f2
@@ -86,13 +87,20 @@ def utf_dumps(obj):
     return json.dumps(obj, encoding='utf8')
 
 if hasattr(vim, 'bindeval'):
-    def vim_extend(val, var='d', utf=True, list=False):
-        d_vim = vim.bindeval(var)
-        if list:
-            d_vim.extend(val)
-        else:
-            for key in val:
-                d_vim[key] = val[key]
+    if hasattr(vim, 'Dictionary') and hasattr(vim.Dictionary, 'update'):
+        def vim_extend(val, var='d', utf=True, list=False):
+            if list:
+                vim.bindeval(var).extend(val)
+            else:
+                vim.bindeval(var).update(val)
+    else:
+        def vim_extend(val, var='d', utf=True, list=False):
+            d_vim = vim.bindeval(var)
+            if list:
+                d_vim.extend(val)
+            else:
+                for key in val:
+                    d_vim[key] = val[key]
 else:
     def vim_extend(val, var='d', utf=True, list=False):
         vim.eval('extend('+var+', '+((utf_dumps if utf else nonutf_dumps)(val))+')')

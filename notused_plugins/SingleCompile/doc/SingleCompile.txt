@@ -1,9 +1,9 @@
 *SingleCompile.txt*
 
 File: SingleCompile.txt
-Version: 2.10.7
+Version: 2.11.0
 Original Author and Current Maintainer: Hong Xu <hong@topbug.net>
-Last Change: 13 Feb 2013
+Last Change: 20 May 2013
 Homepage: http://www.topbug.net/SingleCompile
 GitHub repo: https://github.com/xuhdev/SingleCompile
 Description: Make it more convenient to compile or run a single source file.
@@ -47,7 +47,7 @@ This plugin is aimed at making it more convenient to compile or run a single
 source file without leaving vim.
 
 A short introduction is available here:
-http://www.topbug.net/blog/2012/03/07/use-singlecompile-to-compile-and-run-a-single-source-file-easily-in-vim/ 
+http://www.topbug.net/blog/2012/03/07/use-singlecompile-to-compile-and-run-a-single-source-file-easily-in-vim/
 
 Consider this situation: you have just written a small c source file for a
 small test, but you have to write a Makefile to compile it or exit vim to
@@ -261,7 +261,7 @@ command for Windows:
 http://gnuwin32.sourceforge.net/packages/coreutils.htm
 
 NOTE: When you disable "tee" by setting |SingleCompile_usetee| to 0, you
-will disable this feature. 
+will disable this feature.
 
                                             *:SCViewResultAsync*
 Command:
@@ -367,6 +367,7 @@ Replace a_number to any number you want, such as "10", "4". The default value
 of g:SingleCompile_resultheight is 5.
 
                                             *SingleCompile-showquickfixiferror*
+                                            *g:SingleCompile_showquickfixiferror*
 If |quickfix| is enabled and used, and you want the quickfix window to show
 automatically if there is a compilation error, then add the following line to
 your vimrc file:
@@ -376,12 +377,13 @@ your vimrc file:
 The default value of g:SingleCompile_showquickfixiferror is 0. You may want to
 use this option with |SingleCompile-silentcompileifshowquickfix|. Note that
 this option will be ignored if you are using interpreting languages on
-Windows, such as python, ruby.
+Windows, such as Python, Ruby. Also see |SingleCompile-showquickfixifwarning|.
 
                                           *SingleCompile-showquickfixifwarning*
+                                          *g:SingleCompile_showquickfixifwarning*
 If |quickfix| is enabled and used, and you want the quickfix window to show
 automatically if there is a compilation warning.  This setting is only valid
-when g:SingleCompile_showquickfixiferror = 1.
+when |g:SingleCompile_showquickfixiferror| is set to 1.
 >
  let g:SingleCompile_showquickfixifwarning = 0
 <
@@ -638,6 +640,7 @@ C:
     msvc80 (Microsoft Visual C++ 2005), Windows only
     msvc90 (Microsoft Visual C++ 2008), Windows only
     msvc100 (Microsoft Visual C++ 2010), Windows only
+    msvc110 (Microsoft Visual C++ 2012), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C Compiler), UNIX only
     pcc (Portable C Compiler)
@@ -655,6 +658,7 @@ C++:
     msvc80 (Microsoft Visual C++ 2005), Windows only
     msvc90 (Microsoft Visual C++ 2008), Windows only
     msvc100 (Microsoft Visual C++ 2010), Windows only
+    msvc110 (Microsoft Visual C++ 2012), Windows only
     open-watcom (Open Watcom C/C++32 Compiler)
     open64 (Open64 C++ Compiler), UNIX only
     sol-studio (Sun C++ Compiler(Sun Solaris Studio)), UNIX only
@@ -665,6 +669,9 @@ C#:
 
 cmake:
     cmake (cmake)
+
+CoffeeScript:
+    coffee (CoffeeScript)
 
 csh:
     csh (C Shell)
@@ -736,6 +743,9 @@ LISP:
     ecl (Embeddable Common-Lisp)
     gcl (GNU Common Lisp)
 
+LiveScript:
+    lsc (LiveScript)
+
 lua:
     lua (Lua Interpreter)
 
@@ -747,6 +757,11 @@ Makefile:
 Markdown:
     markdown (text-to-HTML conversion tool)
     rdiscount (Discount Markdown Processor for Ruby)
+
+Matlab:
+    matlab (MathWorks MATLAB)
+        Note: For Matlab, I highly recommend you to try out vim-matlab-behave plugin: https://github.com/elmanuelito/vim-matlab-behave
+    octave (GNU Octave)
 
 Object-C:
     clang (the Clang C and Objective-C compiler)
@@ -778,6 +793,14 @@ reStructuredText:
 
 ruby:
     ruby (Ruby Interpreter)
+    jruby (Ruby on top of Java JVM, default mode)
+    jruby1.8 (Ruby on top of Java JVM, Ruby 1.8 mode)
+    jruby1.9 (Ruby on top of Java JVM, Ruby 1.9 mode)
+    jruby2.0 (Ruby on top of Java JVM, Ruby 2.0 mode, requires JRuby 1.7.4 or
+later)
+
+rust:
+    rust (Rust compiler)
 
 scala:
     scala (Scala compiler)
@@ -991,8 +1014,6 @@ TODO~
                                             *SingleCompile-todo*
 ----------------------------------------------------------------------------
 Add asynchronous compilation support.
-
-Add matlab built-in template.
 
 If "tee" is used when we are executing ":make" command, currently we can't get
 the exit code of the compiler. We need to fix this.

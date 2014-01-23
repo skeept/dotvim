@@ -1,6 +1,6 @@
 "▶1
 scriptencoding utf-8
-execute frawor#Setup('1.5', {'@/resources': '0.0',
+execute frawor#Setup('1.6', {'@/resources': '0.0',
             \                       '@/os': '0.0',
             \                '@/functions': '0.1',
             \               '@%aurum/repo': '5.0',
@@ -11,6 +11,7 @@ let s:_messages={
             \    'ucmd': 'Unknown command: %s',
             \     'nwr': 'Write feature is not implemented for command %s',
             \'nosource': 'Can not source %s',
+            \  'noread': 'Can not read %s',
             \   'nrepo': 'No repository found for path %s',
         \}
 call extend(s:_messages, map({
@@ -32,7 +33,7 @@ call extend(s:_messages, map({
         \}, '"Error while registering command %s for plugin %s: ".v:val'))
 "▶1 globtopat :: glob[, catchstars] → pattern
 function s:F.globtopat(glob, ...)
-    let r='\V\^'
+    let r='\V\C\^'
     let g=substitute(a:glob, '\V//\+', '/', 'g')
     if g[-1:] is# '/'
         let g=g[:-2]
@@ -143,7 +144,7 @@ endfunction
 "▶1 ounescape :: String → String
 let s:unecodes={}
 call map(copy(s:ecodes), 'extend(s:unecodes, {v:val : v:key}, "error")')
-let s:unepattern='\V%\(\['.escape(join(keys(s:unecodes), ''), '\]-^').']\)'
+let s:unepattern='\V\C%\(\['.escape(join(keys(s:unecodes), ''), '\]-^').']\)'
 function s:F.ounescape(str)
     if substitute('a', '.', '\="a"', '') is# 'a'
         return substitute(a:str, s:unepattern, '\=s:unecodes[submatch(1)]', 'g')
@@ -354,6 +355,8 @@ function s:_aufunctions.event.function(rw)
     "▶2 Check SourceCmd support
     if a:rw==2 && !get(cdescr, 'sourceable', 0)
         call s:_f.throw('nosource', amatch)
+    elseif a:rw==1 && !get(cdescr, 'readable', 1)
+        call s:_f.throw('noread', amatch)
     endif
     "▲2
     let arguments=get(cdescr, 'arguments', 0)
@@ -433,8 +436,8 @@ function s:F.newcommand(plugdict, fdict, cdescr)
         endif
         let cdescr[key]=a:cdescr[key]
     endfor
-    "▶2 Boolean keys: modifiable, sourceable, requiresbvar
-    for key in ['modifiable', 'sourceable', 'requiresbvar']
+    "▶2 Boolean keys: modifiable, sourceable, readable, requiresbvar
+    for key in ['modifiable', 'sourceable', 'readable', 'requiresbvar']
         if has_key(a:cdescr, key)
             if type(a:cdescr[key])!=type(0)
                 call s:_f.throw('nbl')
@@ -570,7 +573,7 @@ function s:F.run(vcommand, command, repo, ...)
                 let &eventignore=savedei
             endtry
             setlocal modifiable noreadonly
-            silent call s:F.runcmd(s:commands[a:command], file, [0, a:repo]+args)
+            silent call s:F.runcmd(s:commands[a:command], file, [0,a:repo]+args)
             if bufexists(prevbuf)
                 let s:_r.bufvars[bufnr('%')].prevbuf=prevbuf
             endif

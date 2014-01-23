@@ -1,7 +1,7 @@
 "▶1
 scriptencoding utf-8
 execute frawor#Setup('0.1', {'@%aurum/drivers/common/hypsites': '0.0',
-            \                                   '@%aurum/repo': '5.0',
+            \                                   '@%aurum/repo': '5.8',
             \                   '@%aurum/drivers/common/utils': '1.1',
             \                     '@%aurum/drivers/common/xml': '0.0',
             \                                           '@/os': '0.0',
@@ -256,20 +256,17 @@ endfunction
 function s:svn.getwork(repo)
     return a:repo.functions.getcs(a:repo, 'BASE')
 endfunction
-"▶1 svn.getnthparent :: repo, rev, n → cs
-function s:svn.getnthparent(repo, rev, n)
-    let rev=a:repo.functions.getrevhex(a:repo, a:rev)-a:n
-    if a:n<0 && rev<=0
-        let rev=0
-    elseif a:n>0
-        let tiprev=+a:repo.functions.gettiphex(a:repo)
-        if rev>tiprev
-            let rev=tiprev
-        endif
+"▶1 svn.getnthchangerev :: repo, rev, n, [ file ] → (cs, [ file ])
+function s:svn.getnthchangerev(repo, rev, n, files)
+    " TODO Do not download all changesets
+    if empty(a:repo.mutable.cslist)
+        call a:repo.functions.getchangesets(a:repo)
+    else
+        call a:repo.functions.updatechangesets(a:repo)
     endif
-    return a:repo.functions.getcs(a:repo, rev)
+    return s:_r.repo.defaultfuncs.getnthchangerev(a:repo, a:rev, a:n, a:files)
 endfunction
-"▶1 getchangesets :: repo → [cs]
+"▶1 getchangesets :: repo[, hex[, hex]|limit] → [cs]
 function s:F.getchangesets(repo, ...)
     let args=['--', a:repo.svnroot]
     let kwargs={'xml': 1, 'verbose': 1}
@@ -289,8 +286,15 @@ function s:F.getchangesets(repo, ...)
         call xml.skipctag()
         call xml.skipws()
         let a:repo.changesets[cs.hex]=cs
-        call insert(cslist, cs)
+        if !empty(cslist)
+            let cs.children=[cslist[-1].hex]
+            let cslist[-1].parents=[cs.hex]
+        endif
+        call add(cslist, cs)
     endwhile
+    if !has_key(kwargs, 'revision')
+        call reverse(cslist)
+    endif
     return cslist
 endfunction
 "▶1 svn.getchangesets :: repo → [cs]
@@ -298,7 +302,6 @@ function s:svn.getchangesets(repo)
     if empty(a:repo.mutable.cslist)
         let cslist=s:F.getchangesets(a:repo)
         let cslist[-1].children=[]
-        call map(cslist[:-2], 'extend(v:val, {"children": ["".(v:val.rev-1)]})')
         let a:repo.mutable.cslist+=cslist
     else
         call a:repo.functions.updatechangesets(a:repo)
@@ -339,12 +342,10 @@ function s:svn.updatechangesets(repo)
             call remove(a:repo.mutable.cslist, -1)
         endwhile
     elseif tiprev>oldtiprev
-        let cslist=s:F.getchangesets(a:repo, ''.oldtiprev, ''.tiprev)
+        let cslist=s:F.getchangesets(a:repo, ''.(oldtiprev+1), ''.tiprev)
         if !empty(cslist)
-            let a:repo.mutable.cslist[-1].children=
-                        \''.(a:repo.mutable.cslist[-1].rev+1)
-            call map(cslist[:-2], 'extend(v:val, {"children": '.
-                        \                                '["".(v:val.rev-1)]})')
+            let a:repo.mutable.cslist[-1].children=[cslist[0].hex]
+            let cslist[0].parents=[a:repo.mutable.cslist[-1].hex]
             let a:repo.mutable.cslist+=cslist
         endif
     endif
@@ -516,7 +517,14 @@ function s:svn.status(repo, ...)
         endif
     "▶2 Not so complicated case: cs and its parent or itself
     elseif a:0>1 && !empty(a:1) && !empty(a:2) && a:1.a:2!~#'\D' &&
-                \abs(a:1-a:2)<=1
+                \(abs(a:1-a:2)<=1 || (has_key(a:repo.changesets, a:1) &&
+                \                     index(a:repo.changesets[a:1].parents+
+                \                           a:repo.changesets[a:1].children,
+                \                           a:2)!=-1) ||
+                \                    (has_key(a:repo.changesets, a:2) &&
+                \                     index(a:repo.changesets[a:2].parents+
+                \                           a:repo.changesets[a:2].children,
+                \                           a:1)!=-1))
         let r=copy(s:_r.utils.emptystatdct)
         if requiresclean
             let allfiles=copy(a:repo.functions.getcsprop(a:repo,a:1,'allfiles'))
@@ -524,24 +532,22 @@ function s:svn.status(repo, ...)
                 call filter(allfiles, 'index(a:3, v:val)!=-1')
             endif
         endif
-        if abs(a:1-a:2)==1
-            let reverse=(a:2<a:1)
-            let s=a:repo.functions.getcs(a:repo, ''.max([+a:1, +a:2])).status
-            if a:0>2 && !empty(a:3)
-                call map(copy(s), 'filter(copy(v:val), "index(a:3,v:val)!=-1")')
-            endif
-            let revs=s:F.statreverse(s)
-            if requiresclean
-                call filter(allfiles, '!has_key(revs, v:val)')
-            endif
-            call extend(r, s)
-            "▶3 Reversing range
-            if reverse
-                let [r.deleted, r.unknown]=[r.unknown, r.deleted]
-                let [r.added,   r.removed]=[r.removed, r.added  ]
-            endif
-            "▲3
+        let reverse=(a:2<a:1)
+        let s=a:repo.functions.getcs(a:repo, ''.max([+a:1, +a:2])).status
+        if a:0>2 && !empty(a:3)
+            let s=map(deepcopy(s), 'filter(v:val, "index(a:3,v:val)!=-1")')
         endif
+        if requiresclean
+            let revs=s:F.statreverse(s)
+            call filter(allfiles, '!has_key(revs, v:val)')
+        endif
+        call extend(r, s)
+        "▶3 Reversing range
+        if reverse
+            let [r.deleted, r.unknown]=[r.unknown, r.deleted]
+            let [r.added,   r.removed]=[r.removed, r.added  ]
+        endif
+        "▲3
         if requiresclean
             let r.clean=allfiles
         endif
@@ -776,7 +782,7 @@ function s:svn.diff(repo, rev1, rev2, files, opts)
 endfunction
 "▶1 svn.diffre :: _, opts → Regex
 function s:svn.diffre(repo, opts)
-    return '\m^Index: \v(.*)'
+    return '\m\C^Index: \v(.*)'
 endfunction
 "▶1 svn.getrepoprop :: repo, propname → a
 function s:svn.getrepoprop(repo, prop)

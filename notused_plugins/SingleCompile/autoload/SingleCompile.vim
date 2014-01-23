@@ -16,7 +16,7 @@
 " along with SingleCompile.  If not, see <http://www.gnu.org/licenses/>.
 
 " File: autoload/SingleCompile.vim
-" Version: 2.10.7
+" Version: 2.11.0
 " check doc/SingleCompile.txt for more information
 
 
@@ -72,7 +72,7 @@ function! SingleCompile#GetVersion() " get the script version {{{1
     " For example, 2.9.2 is corresponding to 292
     " From 2.10.0, the return value is: major * 1000 + minor * 10 + subminor
     " For example, 2.10.1 is corresponding to 2101
-    return 2107
+    return 2110
 endfunction
 
 " util {{{1
@@ -117,6 +117,10 @@ function! s:IsShellCsh(shell_name) " is the shell C Shell? {{2
     endif
 endfunction
 
+function! s:IsShellFish(shell_name) " is the shell FISH shell {{2
+    return a:shell_name =~ '^fish'
+endfunction
+
 function! s:GetShellLastExitCodeVariable() " {{{2
     " Get the variable that presents the exit code of last command.
 
@@ -124,7 +128,7 @@ function! s:GetShellLastExitCodeVariable() " {{{2
 
         let l:cur_shell = s:GetCurrentShell()
 
-        if s:IsShellCsh(l:cur_shell)
+        if s:IsShellCsh(l:cur_shell) || s:IsShellFish(l:cur_shell)
             return '$status'
         elseif s:IsShellSh(l:cur_shell)
             return '$?'
@@ -153,7 +157,7 @@ function! s:GetShellPipe(tee_used) " {{{2
             else
                 return '>&'
             endif
-        elseif s:IsShellSh(l:cur_shell)
+        elseif s:IsShellSh(l:cur_shell) || s:IsShellFish(l:cur_shell)
             if a:tee_used
                 return '2>&1| tee'
             else
@@ -605,6 +609,7 @@ function! s:Initialize() "{{{1
                 \ 'c',
                 \ 'cmake',
                 \ 'cpp',
+                \ 'coffee',
                 \ 'cs',
                 \ 'csh',
                 \ 'd',
@@ -619,9 +624,11 @@ function! s:Initialize() "{{{1
                 \ 'javascript',
                 \ 'ksh',
                 \ 'lisp',
+                \ 'ls',
                 \ 'lua',
                 \ 'make',
                 \ 'markdown',
+                \ 'matlab',
                 \ 'objc',
                 \ 'pascal',
                 \ 'perl',
@@ -630,6 +637,7 @@ function! s:Initialize() "{{{1
                 \ 'r',
                 \ 'rst',
                 \ 'ruby',
+                \ 'rust',
                 \ 'scala',
                 \ 'sh',
                 \ 'tcl',

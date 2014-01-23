@@ -177,8 +177,8 @@ R def
 A ghi
 A mno
 A subdir2/stu
-A subdir/pqr
 A subdir/file-2
+A subdir/pqr
 A .
 A new-file
 M file-under-svn-control
@@ -187,19 +187,19 @@ M file-under-svn-control
 R ghi
 R mno
 R subdir2/stu
-R subdir/pqr
 R subdir/file-2
+R subdir/pqr
 R .
 R new-file
 {{{1 Status: between two revisions
 M file-under-svn-control
+R def
 R ghi
 R --force
 R subdir/pqr
 R subdir/file-2
 R mno
 R subdir2/stu
-R def
 {{{1 Commit
 o Changeset 10
 | @ Added newfile.vim

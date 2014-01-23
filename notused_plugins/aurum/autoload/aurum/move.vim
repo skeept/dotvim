@@ -69,8 +69,7 @@ function s:_aufunctions.cmd.function(bang, opts, ...)
     elseif a:0==2 && a:2=~#'[*?]' &&
                 \substitute(a:1, '\v%(^|$|\\.|[^*])[^*?]*', '-', 'g') is#
                 \substitute(a:2, '\v%(^|$|\\.|[^*])[^*?]*', '-', 'g')
-        let pattern=s:_r.globtopat(repo.functions.reltorepo(repo, a:1),
-                    \                       1)
+        let pattern=s:_r.globtopat(repo.functions.reltorepo(repo, a:1), 1)
         let repl=split(a:2, '\V\(**\?\|?\)', 1)
         let moves={}
         for [file, match] in filter(map(copy(allfiles),
