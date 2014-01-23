@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: init.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 16 Jan 2014.
+" Last Modified: 23 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -71,6 +71,9 @@ function! unite#init#_context(context, ...) "{{{
   if context.tab
     let context.no_split = 1
   endif
+  if context.quick_match
+    let context.auto_quit = 1
+  endif
   if !has_key(context, 'short_source_names')
     let context.short_source_names = g:unite_enable_short_source_names
   endif
@@ -119,7 +122,9 @@ function! unite#init#_unite_buffer() "{{{
     setlocal buftype=nofile
     setlocal nolist
     setlocal nobuflisted
-    setlocal nocursorbind
+    if has('cursorbind')
+      setlocal nocursorbind
+    endif
     setlocal noscrollbind
     setlocal noswapfile
     setlocal nospell
@@ -476,7 +481,7 @@ function! unite#init#_default_scripts(kind, names) "{{{
     endif
 
     let files = []
-    for prefix in filter(unite#util#uniq_by([
+    for prefix in filter(unite#util#uniq([
           \ prefix_name, postfix_name, postfix_name2]),
           \ "name == '' || v:val != ''")
       let files += split(globpath(&runtimepath,

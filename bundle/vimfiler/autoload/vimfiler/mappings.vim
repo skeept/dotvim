@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 14 Jan 2014.
+" Last Modified: 21 Jan 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -567,7 +567,7 @@ function! s:switch() "{{{
   if empty(windows)
     rightbelow vnew
   elseif len(windows) == 1
-    wincmd p
+    execute windows[0].'wincmd w'
   else
     let [tabnr, winnr] = [tabpagenr(), winnr()]
 
@@ -620,11 +620,11 @@ function! s:toggle_mark_current_line(...) "{{{
 
   if map ==# 'j'
     if line('.') != line('$')
-      normal! j
+      call cursor(line('.') + 1, 0)
     endif
   elseif map ==# 'k'
     if line('.') > 2
-      normal! k
+      call cursor(line('.') - 1, 0)
     endif
   else
     execute 'normal!' map
@@ -912,7 +912,7 @@ function! s:expand_tree(is_recursive) "{{{
 
   if !a:is_recursive && !is_fold
     " Move to next line.
-    call cursor(line('.')+1, 0)
+    call cursor(line('.') + 1, 0)
   endif
 
   call vimfiler#view#_check_redraw()
