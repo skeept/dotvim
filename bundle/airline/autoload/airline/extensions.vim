@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013 Bailey Ling.
+" MIT License. Copyright (c) 2013-2014 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
 
 let s:ext = {}
@@ -20,7 +20,6 @@ endfunction
 let s:script_path = tolower(resolve(expand('<sfile>:p:h')))
 
 let s:filetype_overrides = {
-      \ 'netrw': [ 'netrw', '%f' ],
       \ 'nerdtree': [ 'NERD', '' ],
       \ 'gundo': [ 'Gundo', '' ],
       \ 'diff': [ 'diff', '' ],
@@ -126,6 +125,10 @@ function! airline#extensions#load()
 
   if get(g:, 'loaded_unite', 0)
     call airline#extensions#unite#init(s:ext)
+  endif
+
+  if exists(':NetrwSettings')
+    call airline#extensions#netrw#init(s:ext)
   endif
 
   if get(g:, 'loaded_vimfiler', 0)

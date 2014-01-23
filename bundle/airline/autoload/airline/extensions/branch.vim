@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013 Bailey Ling.
+" MIT License. Copyright (c) 2013-2014 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
 
 let s:has_fugitive = exists('*fugitive#head')
@@ -47,7 +47,6 @@ function! airline#extensions#branch#get_head()
   let empty_message = get(g:, 'airline#extensions#branch#empty_message',
       \ get(g:, 'airline_branch_empty_message', ''))
   let symbol = get(g:, 'airline#extensions#branch#symbol', g:airline_symbols.branch)
-  
   return empty(head)
         \ ? empty_message
         \ : printf('%s%s', empty(symbol) ? '' : symbol.(g:airline_symbols.space), head)
