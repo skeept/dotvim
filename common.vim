@@ -445,6 +445,7 @@ noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
 "==============================================================================}}}
 
+if 0 "unite not working to good these days... To bad :(
 "================== Unite ====================================================={{{
 function! UniteColorSchemeResume()
   if !exists("s:unite_init_colorscheme")
@@ -572,6 +573,7 @@ else
 endif
 "}}}
 "==============================================================================}}}
+endif
 
 "================== Buffergator ==============================================={{{
 "nmap <silent> <Leader>bb :TSelectBuffer<CR>
