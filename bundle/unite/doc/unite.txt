@@ -254,7 +254,6 @@ More advanced configuration example:
 	function! s:unite_my_settings()"{{{
 	  " Overwrite settings.
 
-	  nmap <buffer> <ESC>      <Plug>(unite_exit)
 	  imap <buffer> jj      <Plug>(unite_insert_leave)
 	  "imap <buffer> <C-w>     <Plug>(unite_delete_backward_path)
 
@@ -3612,5 +3611,10 @@ A: You should use |unite-filter-matcher_project_files|. >
         \ 'file_mru', 'matchers',
         \ ['matcher_project_files', 'matcher_fuzzy'])
 <
+Q: I want to disable mru source.
+
+A: You should set g:loaded_unite_source_mru option. >
+  let g:loaded_unite_source_mru = 1
+
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:
