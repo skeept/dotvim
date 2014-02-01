@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: view.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 28 Jan 2014.
+" Last Modified: 01 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -70,7 +70,7 @@ function! unite#view#_redraw_line(...) "{{{
     let linenr += 1
   endif
 
-  if linenr <= prompt_linenr || &filetype !=# 'unite'
+  if linenr == prompt_linenr || &filetype !=# 'unite'
     " Ignore.
     return
   endif
@@ -173,12 +173,18 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   endif
 endfunction"}}}
 
-function! unite#view#_set_highlight() "{{{
+function! unite#view#_set_syntax() "{{{
+  syntax clear
+
+  syntax match uniteQuickMatchLine /^.|.*/
+        \ contains=uniteQuickMatchTrigger,uniteCandidateSourceName
+  syntax match uniteQuickMatchTrigger /^.|/ contained
+  syntax match uniteInputCommand /\\\@<! :\S\+/ contained
+
   let unite = unite#get_current_unite()
 
   " Set highlight.
   let match_prompt = escape(unite.prompt, '\/*~.^$[]')
-  silent! syntax clear uniteInputPrompt
   execute 'syntax match uniteInputPrompt'
         \ '/^'.match_prompt.'/ contained'
 
@@ -235,6 +241,8 @@ function! unite#view#_set_highlight() "{{{
   endfor
 
   call s:set_syntax()
+
+  let b:current_syntax = 'unite'
 endfunction"}}}
 
 function! unite#view#_resize_window() "{{{

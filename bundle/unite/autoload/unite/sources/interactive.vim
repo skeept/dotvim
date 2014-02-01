@@ -1,7 +1,7 @@
 "=============================================================================
-" FILE: manual.vim
+" FILE: interactive.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" Last Modified: 29 Jan 2014.
+" Last Modified: 01 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,17 +27,30 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#manual#define()
+function! unite#sources#interactive#define()
   return s:source
 endfunction
 
 let s:source = {
-      \ 'name' : 'manual',
-      \ 'description' : 'candidates from unite sources by manual',
+      \ 'name' : 'interactive',
+      \ 'description' : 'candidates from unite sources by interactive',
       \ 'action_table' : {},
       \ 'default_action' : 'narrow',
       \ 'is_listed' : 0,
+      \ 'hooks' : {},
+      \ 'syntax' : 'uniteSource__Interactive',
       \}
+
+function! s:source.hooks.on_syntax(args, context) "{{{
+  syntax match uniteSource__InteractiveDescriptionLine / -- .*$/
+        \ contained containedin=uniteSource__Interactive
+  syntax match uniteSource__InteractiveDescription /.*$/
+        \ contained containedin=uniteSource__InteractiveDescriptionLine
+  syntax match uniteSource__InteractiveMarker / -- /
+        \ contained containedin=uniteSource__InteractiveDescriptionLine
+  highlight default link uniteSource__InteractiveMarker Special
+  highlight default link uniteSource__InteractiveDescription Comment
+endfunction"}}}
 
 function! s:source.change_candidates(args, context) "{{{
   let _ = []
@@ -54,6 +67,15 @@ function! s:source.change_candidates(args, context) "{{{
             \ 'word' : v:val,
             \ 'source__word' : v:val . ':',
             \ }")
+    endif
+    if exists('g:unite_source_menu_menus')
+      " Add menu sources
+      let _ += values(map(copy(g:unite_source_menu_menus), "{
+            \ 'word' : 'menu:'.v:key,
+            \ 'abbr' : unite#util#truncate('menu:'.v:key, 25) .
+            \         (get(v:val, 'description') != '' ?
+            \            ' -- ' . v:val.description : '')
+            \ }"))
     endif
   else
     let _ += map(unite#complete#source(a:context.input,

@@ -1875,17 +1875,11 @@ function! s:CloseWindow() abort
         " Go to the tagbar window, close it and then come back to the original
         " window. Save a win-local variable in the original window so we can
         " jump back to it even if the window number changed.
-        let w:tagbar_returnhere = 1
+        call s:mark_window()
         call s:goto_win(tagbarwinnr)
         close
 
-        for window in range(1, winnr('$'))
-            call s:goto_win(window)
-            if exists('w:tagbar_returnhere')
-                unlet w:tagbar_returnhere
-                break
-            endif
-        endfor
+        call s:goto_markedwin()
     endif
 
     call s:ShrinkIfExpanded()
@@ -3026,6 +3020,9 @@ function! s:ShowInPreviewWin() abort
         return
     endif
 
+    call s:GotoFileWindow(taginfo.fileinfo, 1)
+    call s:mark_window()
+
     " Check whether the preview window is already open and open it if not.
     " This has to be done before the :psearch below so the window is relative
     " to the Tagbar window.
@@ -3052,17 +3049,16 @@ function! s:ShowInPreviewWin() abort
     " find the correct tag in case of tags with the same name and to speed up
     " the searching. Unfortunately the /\%l pattern doesn't seem to work with
     " psearch.
-    call s:GotoFileWindow(taginfo.fileinfo, 1)
     let include_save = &include
     set include=
     silent! execute taginfo.fields.line . ',$psearch! /' . taginfo.pattern . '/'
     let &include = include_save
-    call s:goto_tagbar(1)
 
     call s:goto_win('P', 1)
     normal! zv
     normal! zz
-    call s:goto_win('p', 1)
+    call s:goto_markedwin()
+    call s:goto_tagbar(1)
 endfunction
 
 " s:ShowPrototype() {{{2
@@ -3613,48 +3609,61 @@ function! s:GetTagInfo(linenr, ignorepseudo) abort
     return taginfo
 endfunction
 
-" s:GotoFileWindow() {{{2
-" Try to switch to the window that has Tagbar's current file loaded in it, or
-" open the file in a window otherwise.
-function! s:GotoFileWindow(fileinfo, ...) abort
-    let noauto = a:0 > 0 ? a:1 : 0
+" s:GetFileWinnr() {{{2
+" Get the number of the window that has Tagbar's current file loaded into it,
+" or 0 if no window has loaded it. It tries the previous window first, if that
+" does not have the correct buffer loaded it will look for the first one with
+" the correct buffer in it.
+function! s:GetFileWinnr(fileinfo) abort
+    let filewinnr = 0
+    let prevwinnr = winnr("#")
 
-    let tagbarwinnr = bufwinnr('__Tagbar__')
-
-    call s:goto_win('p', noauto)
-
-    let filebufnr = bufnr(a:fileinfo.fpath)
-    if bufnr('%') != filebufnr || &previewwindow
+    if winbufnr(prevwinnr) == a:fileinfo.bufnr &&
+     \ !getwinvar(prevwinnr, '&previewwindow')
+        let filewinnr = prevwinnr
+    else
         " Search for the first real window that has the correct buffer loaded
         " in it. Similar to bufwinnr() but skips the previewwindow.
-        let found = 0
         for i in range(1, winnr('$'))
             call s:goto_win(i, 1)
-            if bufnr('%') == filebufnr && !&previewwindow
-                let found = 1
+            if bufnr('%') == a:fileinfo.bufnr && !&previewwindow
+                let filewinnr = winnr()
                 break
             endif
         endfor
 
-        " If there is no window with the correct buffer loaded then load it
-        " into the first window that has a non-special buffer in it.
-        if !found
-            for i in range(1, winnr('$'))
-                call s:goto_win(i, 1)
-                if &buftype == '' && !&previewwindow
-                    execute 'buffer ' . filebufnr
-                    break
-                endif
-            endfor
-        endif
-
-        " To make ctrl-w_p work we switch between the Tagbar window and the
-        " correct window once
-        call s:goto_win(tagbarwinnr, noauto)
-        call s:goto_win('p', noauto)
+        call s:goto_tagbar(1)
     endif
 
-    return winnr()
+    return filewinnr
+endfunction
+
+" s:GotoFileWindow() {{{2
+" Try to switch to the window that has Tagbar's current file loaded in it, or
+" open the file in an existing window otherwise.
+function! s:GotoFileWindow(fileinfo, ...) abort
+    let noauto = a:0 > 0 ? a:1 : 0
+
+    let filewinnr = s:GetFileWinnr(a:fileinfo)
+
+    " If there is no window with the correct buffer loaded then load it
+    " into the first window that has a non-special buffer in it.
+    if filewinnr == 0
+        for i in range(1, winnr('$'))
+            call s:goto_win(i, 1)
+            if &buftype == '' && !&previewwindow
+                execute 'buffer ' . a:fileinfo.bufnr
+                break
+            endif
+        endfor
+    else
+        call s:goto_win(filewinnr, 1)
+    endif
+
+    " To make ctrl-w_p work we switch between the Tagbar window and the
+    " correct window once
+    call s:goto_tagbar(noauto)
+    call s:goto_win('p', noauto)
 endfunction
 
 " s:IsValidFile() {{{2
@@ -3819,6 +3828,25 @@ endfunction
 function! s:goto_tagbar(...) abort
     let noauto = a:0 > 0 ? a:1 : 0
     call s:goto_win(bufwinnr('__Tagbar__'), noauto)
+endfunction
+
+" s:mark_window() {{{2
+" Mark window with a window-local variable so we can jump back to it even if
+" the window numbers have changed.
+function! s:mark_window() abort
+    let w:tagbar_mark = 1
+endfunction
+
+" s:goto_markedwin() {{{2
+" Go to a previously marked window and delete the mark.
+function! s:goto_markedwin() abort
+    for window in range(1, winnr('$'))
+        call s:goto_win(window)
+        if exists('w:tagbar_mark')
+            unlet w:tagbar_mark
+            break
+        endif
+    endfor
 endfunction
 
 " TagbarBalloonExpr() {{{2
