@@ -97,7 +97,11 @@ endif
 " define default "localvimrc_persistence_file" {{{2
 " file where to store persistence information
 if (!exists("g:localvimrc_persistence_file"))
-  let s:localvimrc_persistence_file = expand('$HOME') . "/localvimrc_persistent"
+  if has(win16) || has(win32) || has(win64) || has(win95)
+    let s:localvimrc_persistence_file = expand('$HOME') . "/_localvimrc_persistent"
+  else
+    let s:localvimrc_persistence_file = expand('$HOME') . "/.localvimrc_persistent"
+  endif
 else
   let s:localvimrc_persistence_file = g:localvimrc_persistence_file
 endif
@@ -108,7 +112,14 @@ if (!exists("g:localvimrc_debug"))
 endif
 
 " initialize data dictionary {{{2
+" key: localvimrc file
+" value: [ answer, checksum ]
 let s:localvimrc_data = {}
+
+" initialize sourced dictionary {{{2
+" key: localvimrc file
+" value: [ list of files triggered sourcing ]
+let s:localvimrc_sourced = {}
 
 " initialize persistence file checksum {{{2
 let s:localvimrc_persistence_file_checksum = ""
@@ -116,13 +127,6 @@ let s:localvimrc_persistence_file_checksum = ""
 " initialize persistent data {{{2
 let s:localvimrc_persistent_data = {}
 
-" remove old persistence data {{{2
-if exists("g:LOCALVIMRC_ANSWERS")
-  unlet g:LOCALVIMRC_ANSWERS
-endif
-if exists("g:LOCALVIMRC_CHECKSUMS")
-  unlet g:LOCALVIMRC_CHECKSUMS
-endif
 " Section: Autocmd setup {{{1
 
 if has("autocmd")
@@ -185,10 +189,6 @@ function! s:LocalVimRC()
   endif
 
   call s:LocalVimRCDebug(1, "candidate files: " . string(l:rcfiles))
-
-  " store name and directory of file
-  let g:localvimrc_file = resolve(expand("<afile>"))
-  let g:localvimrc_file_dir = fnamemodify(g:localvimrc_file, ":h")
 
   " source all found local vimrc files along path from root (reverse order)
   let l:answer = ""
@@ -300,10 +300,29 @@ function! s:LocalVimRC()
 
       " should this rc file be loaded?
       if (l:rcfile_load == "yes")
+        " store name and directory of file
+        let g:localvimrc_file = resolve(expand("<afile>"))
+        let g:localvimrc_file_dir = fnamemodify(g:localvimrc_file, ":h")
+
         " store name and directory of script
         let g:localvimrc_script = l:rcfile
         let g:localvimrc_script_dir = fnamemodify(g:localvimrc_script, ":h")
 
+        " detect if this local vimrc file had been loaded
+        let g:localvimrc_sourced_once = 0
+        let g:localvimrc_sourced_once_for_file = 0
+        if has_key(s:localvimrc_sourced, l:rcfile)
+          let g:localvimrc_sourced_once = 1
+          if index(s:localvimrc_sourced[l:rcfile], g:localvimrc_file) >= 0
+            let g:localvimrc_sourced_once_for_file = 1
+          else
+            call add(s:localvimrc_sourced[l:rcfile], g:localvimrc_file)
+          endif
+        else
+          let s:localvimrc_sourced[l:rcfile] = [ g:localvimrc_file ]
+        endif
+
+        " initialize command
         let l:command = "silent "
 
         " add 'sandbox' if requested
@@ -318,8 +337,12 @@ function! s:LocalVimRC()
         call s:LocalVimRCDebug(1, "sourced " . l:rcfile)
 
         " remove global variables again
+        unlet g:localvimrc_file
+        unlet g:localvimrc_file_dir
         unlet g:localvimrc_script
         unlet g:localvimrc_script_dir
+        unlet g:localvimrc_sourced_once
+        unlet g:localvimrc_sourced_once_for_file
       else
         call s:LocalVimRCDebug(1, "skipping " . l:rcfile)
       endif
@@ -331,10 +354,6 @@ function! s:LocalVimRC()
       let s:localvimrc_data[l:rcfile] = [ l:stored_answer, l:stored_checksum ]
     endif
   endfor
-
-  " remove global variables again
-  unlet g:localvimrc_file
-  unlet g:localvimrc_file_dir
 
   " make information persistent
   call s:LocalVimRCWritePersistent()
@@ -449,6 +468,14 @@ function! s:LocalVimRCWritePersistent()
     if filewritable(s:localvimrc_persistence_file)
       call delete(s:localvimrc_persistence_file)
     endif
+  endif
+
+  " remove old persistence data {{{2
+  if exists("g:LOCALVIMRC_ANSWERS")
+    unlet g:LOCALVIMRC_ANSWERS
+  endif
+  if exists("g:LOCALVIMRC_CHECKSUMS")
+    unlet g:LOCALVIMRC_CHECKSUMS
   endif
 
 endfunction
