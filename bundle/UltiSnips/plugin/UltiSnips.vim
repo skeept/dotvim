@@ -84,6 +84,12 @@ endif
 if !exists("g:UltiSnipsSnippetDirectories")
     let g:UltiSnipsSnippetDirectories = [ "UltiSnips" ]
 endif
+
+" Should UltiSnips map JumpForwardTrigger and JumpBackwardTrigger only during
+" snippet expansion?
+if !exists("g:UltiSnipsClearJumpTrigger")
+    let g:UltiSnipsClearJumpTrigger = 1
+endif
 " }}}
 
 " Global Commands {{{
@@ -147,7 +153,7 @@ endfunction
 
 function! UltiSnips_SnippetsInCurrentScope()
     let g:current_ulti_dict = {}
-    exec g:_uspy "UltiSnips_Manager.list_snippets_dict()"
+    exec g:_uspy "UltiSnips_Manager.snippets_in_current_scope()"
     return g:current_ulti_dict
 endfunction
 
@@ -204,12 +210,16 @@ function! UltiSnips_MapKeys()
     else
         exec "inoremap <silent> " . g:UltiSnipsExpandTrigger . " <C-R>=UltiSnips_ExpandSnippet()<cr>"
         exec "snoremap <silent> " . g:UltiSnipsExpandTrigger . " <Esc>:call UltiSnips_ExpandSnippet()<cr>"
-        exec "inoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <C-R>=UltiSnips_JumpForwards()<cr>"
-        exec "snoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <Esc>:call UltiSnips_JumpForwards()<cr>"
+        if g:UltiSnipsClearJumpTrigger == 0
+            exec "inoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <C-R>=UltiSnips_JumpForwards()<cr>"
+            exec "snoremap <silent> " . g:UltiSnipsJumpForwardTrigger  . " <Esc>:call UltiSnips_JumpForwards()<cr>"
+        endif
     endif
     exec 'xnoremap ' . g:UltiSnipsExpandTrigger. ' :call UltiSnips_SaveLastVisualSelection()<cr>gvs'
-    exec "inoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <C-R>=UltiSnips_JumpBackwards()<cr>"
-    exec "snoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <Esc>:call UltiSnips_JumpBackwards()<cr>"
+    if g:UltiSnipsClearJumpTrigger == 0
+        exec "inoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <C-R>=UltiSnips_JumpBackwards()<cr>"
+        exec "snoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <Esc>:call UltiSnips_JumpBackwards()<cr>"
+    endif
     exec "inoremap <silent> " . g:UltiSnipsListSnippets . " <C-R>=UltiSnips_ListSnippets()<cr>"
     exec "snoremap <silent> " . g:UltiSnipsListSnippets . " <Esc>:call UltiSnips_ListSnippets()<cr>"
 
@@ -217,6 +227,23 @@ function! UltiSnips_MapKeys()
     snoremap <silent> <DEL> <c-g>c
     snoremap <silent> <c-h> <c-g>c
 endf
+function! UltiSnips_MapInnerKeys()
+    if g:UltiSnipsExpandTrigger != g:UltiSnipsJumpForwardTrigger
+        exec "inoremap <buffer> <silent> " . g:UltiSnipsJumpForwardTrigger . " <C-R>=UltiSnips_JumpForwards()<cr>"
+        exec "snoremap <buffer> <silent> " . g:UltiSnipsJumpForwardTrigger . " <Esc>:call UltiSnips_JumpForwards()<cr>"
+    endif
+    exec "inoremap <buffer> <silent> " . g:UltiSnipsJumpBackwardTrigger . " <C-R>=UltiSnips_JumpBackwards()<cr>"
+    exec "snoremap <buffer> <silent> " . g:UltiSnipsJumpBackwardTrigger . " <Esc>:call UltiSnips_JumpBackwards()<cr>"
+endf
+function! UltiSnips_RestoreInnerKeys()
+    if g:UltiSnipsExpandTrigger != g:UltiSnipsJumpForwardTrigger
+        exec "iunmap <buffer> " . g:UltiSnipsJumpForwardTrigger
+        exec "sunmap <buffer> " . g:UltiSnipsJumpForwardTrigger
+    endif
+    exec "iunmap <buffer> " . g:UltiSnipsJumpBackwardTrigger
+    exec "sunmap <buffer> " . g:UltiSnipsJumpBackwardTrigger
+endf
+
 
 function! UltiSnips_CursorMoved()
     exec g:_uspy "UltiSnips_Manager.cursor_moved()"
@@ -227,6 +254,11 @@ endf
 function! UltiSnips_LeavingBuffer()
     exec g:_uspy "UltiSnips_Manager.leaving_buffer()"
 endf
+
+function! UltiSnips_LeavingInsertMode()
+    exec g:_uspy "UltiSnips_Manager.restore_unnamed_register()"
+endfunction
+
 " }}}
 " COMPLETE FUNCTIONS {{{
 function! UltiSnipsFiletypeComplete(arglead, cmdline, cursorpos)
@@ -254,14 +286,16 @@ exec g:_uspy "import vim, os, sys"
 exec g:_uspy "new_path = vim.eval('expand(\"<sfile>:h\")')"
 exec g:_uspy "vim.command(\"let g:UltiSnipsPythonPath = '%s'\" % new_path)"
 exec g:_uspy "sys.path.append(new_path)"
-exec g:_uspy "from UltiSnips import UltiSnips_Manager"
-exec g:_uspy "UltiSnips_Manager.expand_trigger = vim.eval('g:UltiSnipsExpandTrigger')"
-exec g:_uspy "UltiSnips_Manager.forward_trigger = vim.eval('g:UltiSnipsJumpForwardTrigger')"
-exec g:_uspy "UltiSnips_Manager.backward_trigger = vim.eval('g:UltiSnipsJumpBackwardTrigger')"
+exec g:_uspy "from UltiSnips import SnippetManager"
+exec g:_uspy "UltiSnips_Manager = SnippetManager(
+    \ vim.eval('g:UltiSnipsExpandTrigger'),
+    \ vim.eval('g:UltiSnipsJumpForwardTrigger'),
+    \ vim.eval('g:UltiSnipsJumpBackwardTrigger'))"
 
 au CursorMovedI * call UltiSnips_CursorMoved()
 au CursorMoved * call UltiSnips_CursorMoved()
 au BufLeave * call UltiSnips_LeavingBuffer()
+au InsertLeave * call UltiSnips_LeavingInsertMode()
 
 call UltiSnips_MapKeys()
 

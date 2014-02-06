@@ -1263,6 +1263,10 @@
     "type": "git",
     "url": "git://github.com/pydave/AsyncCommand"
   },
+  "3434": {
+    "type": "git",
+    "url": "git://github.com/xuhdev/vim-IniParser"
+  },
   "3439": {
     "type": "git",
     "url": "git://github.com/dterei/VimCobaltColourScheme"
@@ -1679,6 +1683,10 @@
     "type": "git",
     "url": "git://github.com/avakarev/vim-watchdog"
   },
+  "3747": {
+    "type": "git",
+    "url": "git://github.com/xuhdev/syntax-dosini.vim"
+  },
   "3750": {
     "type": "git",
     "url": "git://github.com/LStinson/TclShell-Vim"
@@ -1902,6 +1910,10 @@
   "3898": {
     "type": "git",
     "url": "https://bitbucket.org/aliva/vim-gtk-mode"
+  },
+  "3899": {
+    "type": "git",
+    "url": "git://github.com/xuhdev/indent-java.vim"
   },
   "3900": {
     "type": "git",
@@ -3534,6 +3546,22 @@
   "4848": {
     "type": "git",
     "url": "git://github.com/sk1418/blockit"
+  },
+  "4850": {
+    "type": "git",
+    "url": "git://github.com/reedes/vim-colors-pencil"
+  },
+  "4851": {
+    "type": "git",
+    "url": "git://github.com/santiycr/grin.vim"
+  },
+  "4852": {
+    "type": "hg",
+    "url": "https://bitbucket.org/sras/vawa"
+  },
+  "4853": {
+    "type": "git",
+    "url": "git://github.com/pavoljuhas/smart-change-directory"
   },
   "521": {
     "type": "git",

@@ -924,12 +924,13 @@ function! s:MapKeys() abort
                             \ <LeftRelease><C-o>:call <SID>CheckMouseClick()<CR>
 
     let maps = [
-        \ ['jump',       'JumpToTag(0)'],
-        \ ['preview',    'JumpToTag(1)'],
-        \ ['previewwin', 'ShowInPreviewWin()'],
-        \ ['nexttag',    'GotoNextToplevelTag(1)'],
-        \ ['prevtag',    'GotoNextToplevelTag(-1)'],
-        \ ['showproto',  'ShowPrototype(0)'],
+        \ ['jump',          'JumpToTag(0)'],
+        \ ['preview',       'JumpToTag(1)'],
+        \ ['previewwin',    'ShowInPreviewWin()'],
+        \ ['nexttag',       'GotoNextToplevelTag(1)'],
+        \ ['prevtag',       'GotoNextToplevelTag(-1)'],
+        \ ['showproto',     'ShowPrototype(0)'],
+        \ ['hidenonpublic', 'ToggleHideNonPublicTags()'],
         \
         \ ['openfold',      'OpenFold()'],
         \ ['closefold',     'CloseFold()'],
@@ -1929,12 +1930,21 @@ endfunction
 " s:ZoomWindow() {{{2
 function! s:ZoomWindow() abort
     if s:is_maximized
-        execute 'vert resize ' . g:tagbar_width
+        execute 'vertical resize ' . g:tagbar_width
         execute s:winrestcmd
         let s:is_maximized = 0
     else
         let s:winrestcmd = winrestcmd()
-        vert resize
+        if g:tagbar_zoomwidth == 1
+            vertical resize
+        elseif g:tagbar_zoomwidth == 0
+            let func = exists('*strdisplaywidth') ? 'strdisplaywidth' : 'strlen'
+            let maxline = max(map(getline(line('w0'), line('w$')),
+                                \ func . '(v:val)'))
+            execute 'vertical resize ' . maxline
+        elseif g:tagbar_zoomwidth > 1
+            execute 'vertical resize ' . g:tagbar_zoomwidth
+        endif
         let s:is_maximized = 1
     endif
 endfunction
@@ -2649,7 +2659,7 @@ endfunction
 function! s:PrintKinds(typeinfo, fileinfo) abort
     call s:LogDebugMessage('PrintKinds called')
 
-    let first_tag = 1
+    let is_first_tag = 1
 
     for kind in a:typeinfo.kinds
         let curtags = filter(copy(a:fileinfo.tags),
@@ -2665,53 +2675,13 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
          \ has_key(a:typeinfo.kind2scope, kind.short)
             " Scoped tags
             for tag in curtags
-                if g:tagbar_compact && first_tag && s:short_help
-                    silent 0put =tag.strfmt()
-                else
-                    silent  put =tag.strfmt()
-                endif
-
-                " Save the current tagbar line in the tag for easy
-                " highlighting access
-                let curline                   = line('.')
-                let tag.tline                 = curline
-                let a:fileinfo.tline[curline] = tag
-
-                " Print children
-                if tag.isFoldable() && !tag.isFolded()
-                    for ckind in a:typeinfo.kinds
-                        let childtags = filter(copy(tag.children),
-                                          \ 'v:val.fields.kind ==# ckind.short')
-                        if len(childtags) > 0
-                            " Print 'kind' header of following children, but
-                            " only if they are not scope-defining tags (since
-                            " those already have an identifier)
-                            if !has_key(a:typeinfo.kind2scope, ckind.short)
-                                let indent  = g:tagbar_indent
-                                let indent += g:tagbar_show_visibility
-                                let indent += 1 " fold symbol
-                                silent put =repeat(' ', indent) .
-                                                 \ '[' . ckind.long . ']'
-                                " Add basic tag to allow folding when on the
-                                " header line
-                                let headertag = s:BaseTag.New(ckind.long)
-                                let headertag.parent = tag
-                                let headertag.fileinfo = tag.fileinfo
-                                let a:fileinfo.tline[line('.')] = headertag
-                            endif
-                            for childtag in childtags
-                                call s:PrintTag(childtag, 1,
-                                              \ a:fileinfo, a:typeinfo)
-                            endfor
-                        endif
-                    endfor
-                endif
+                call s:PrintTag(tag, 0, is_first_tag, a:fileinfo, a:typeinfo)
 
                 if !g:tagbar_compact
                     silent put _
                 endif
 
-                let first_tag = 0
+                let is_first_tag = 0
             endfor
         else
             " Non-scoped tags
@@ -2724,7 +2694,7 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
             endif
 
             let padding = g:tagbar_show_visibility ? ' ' : ''
-            if g:tagbar_compact && first_tag && s:short_help
+            if g:tagbar_compact && is_first_tag && s:short_help
                 silent 0put =foldmarker . padding . kind.long
             else
                 silent  put =foldmarker . padding . kind.long
@@ -2752,18 +2722,28 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
                 silent put _
             endif
 
-            let first_tag = 0
+            let is_first_tag = 0
         endif
     endfor
 endfunction
 
 " s:PrintTag() {{{2
-function! s:PrintTag(tag, depth, fileinfo, typeinfo) abort
-    " Print tag indented according to depth
-    silent put =repeat(' ', a:depth * g:tagbar_indent) . a:tag.strfmt()
+function! s:PrintTag(tag, depth, is_first, fileinfo, typeinfo) abort
+    if g:tagbar_hide_nonpublic &&
+     \ get(a:tag.fields, 'access', 'public') !=# 'public'
+        let a:tag.tline = -1
+        return
+    endif
 
-    " Save the current tagbar line in the tag for easy
-    " highlighting access
+    " Print tag indented according to depth
+    let tagstr = repeat(' ', a:depth * g:tagbar_indent) . a:tag.strfmt()
+    if a:is_first && g:tagbar_compact && s:short_help
+        silent 0put =tagstr
+    else
+        silent  put =tagstr
+    endif
+
+    " Save the current tagbar line in the tag for easy highlighting access
     let curline                   = line('.')
     let a:tag.tline               = curline
     let a:fileinfo.tline[curline] = a:tag
@@ -2771,8 +2751,12 @@ function! s:PrintTag(tag, depth, fileinfo, typeinfo) abort
     " Recursively print children
     if a:tag.isFoldable() && !a:tag.isFolded()
         for ckind in a:typeinfo.kinds
-            let childtags = filter(copy(a:tag.children),
-                                 \ 'v:val.fields.kind ==# ckind.short')
+            let childfilter = 'v:val.fields.kind ==# ckind.short'
+            if g:tagbar_hide_nonpublic
+                let childfilter .=
+                      \ ' && get(v:val.fields, "access", "public") ==# "public"'
+            endif
+            let childtags = filter(copy(a:tag.children), childfilter)
             if len(childtags) > 0
                 " Print 'kind' header of following children, but only if they
                 " are not scope-defining tags (since those already have an
@@ -2789,7 +2773,7 @@ function! s:PrintTag(tag, depth, fileinfo, typeinfo) abort
                     let a:fileinfo.tline[line('.')] = headertag
                 endif
                 for childtag in childtags
-                    call s:PrintTag(childtag, a:depth + 1,
+                    call s:PrintTag(childtag, a:depth + 1, 0,
                                   \ a:fileinfo, a:typeinfo)
                 endfor
             endif
@@ -2914,7 +2898,7 @@ function! s:HighlightTag(openfolds, ...) abort
     let tagline = tag.getClosedParentTline()
 
     " Parent tag line number is invalid, better don't do anything
-    if tagline == 0
+    if tagline <= 0
         call s:goto_win(prevwinnr)
         redraw
         return
@@ -3664,6 +3648,12 @@ function! s:GotoFileWindow(fileinfo, ...) abort
     " correct window once
     call s:goto_tagbar(noauto)
     call s:goto_win('p', noauto)
+endfunction
+
+" s:ToggleHideNonPublicTags() {{{2
+function! s:ToggleHideNonPublicTags() abort
+    let g:tagbar_hide_nonpublic = !g:tagbar_hide_nonpublic
+    call s:RenderKeepView()
 endfunction
 
 " s:IsValidFile() {{{2
