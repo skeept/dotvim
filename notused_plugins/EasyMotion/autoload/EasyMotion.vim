@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 05 Feb 2014.
+" Last Change: 07 Feb 2014.
 "=============================================================================
 " Saving 'cpoptions' {{{
 scriptencoding utf-8
@@ -72,6 +72,7 @@ function! EasyMotion#reset()
         "   backward find motion is exclusive
     let s:current = {
         \ 'is_operator' : 0,
+        \ 'is_search' : 0,
         \ 'dot_repeat_target_cnt' : 0,
         \ 'dot_prompt_user_cnt' : 0,
         \ 'changedtick' : 0,
@@ -363,6 +364,34 @@ function! s:RestoreValue() "{{{
     call s:VarReset('&virtualedit')
     call s:VarReset('&foldmethod')
 endfunction "}}}
+function! s:turn_on_hl_error() "{{{
+    if exists("s:old_hl_error")
+        execute "highlight Error " . s:old_hl_error
+        unlet s:old_hl_error
+    endif
+endfunction "}}}
+function! s:turn_off_hl_error() "{{{
+    if exists("s:old_hl_error")
+        return s:old_hl_error
+    endif
+    if hlexists("Error")
+        let save_verbose = &verbose
+        let &verbose = 0
+        try
+            redir => cursor
+            silent highlight Error
+            redir END
+        finally
+            let &verbose = save_verbose
+        endtry
+        let hl = substitute(matchstr(cursor, 'xxx \zs.*'), '[ \t\n]\+\|cleared', ' ', 'g')
+        if !empty(substitute(hl, '\s', '', 'g'))
+            let s:old_hl_error = hl
+        endif
+        highlight Error NONE
+        return s:old_hl_error
+    endif
+endfunction "}}}
 " -- Draw --------------------------------
 function! s:SetLines(lines, key) " {{{
     for [line_num, line] in a:lines
@@ -386,7 +415,8 @@ function! s:findMotion(num_strokes, direction) "{{{
     let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
     " store cursor pos because 'n' key find motion could be jump to offscreen
     let s:current.original_position = [line('.'), col('.')]
-    let s:flag.regexp = a:num_strokes == -1 ? 1 : 0
+    let s:current.is_search = a:num_strokes == -1 ? 1: 0
+    let s:flag.regexp = a:num_strokes == -1 ? 1 : 0 " TODO: remove?
 
     if g:EasyMotion_add_search_history && a:num_strokes == -1
         let s:previous['input'] = @/
@@ -432,7 +462,8 @@ function! s:convertRegep(input) "{{{
         let re = s:convertSmartsign(re, a:input)
     endif
 
-    let case_flag = EasyMotion#helper#should_use_smartcase(a:input) ? '\c' : '\C'
+    let case_flag = EasyMotion#helper#should_case_sensitive(
+                        \ a:input, s:current.is_search) ? '\c' : '\C'
     let re = case_flag . re
     return re
 endfunction "}}}
@@ -511,13 +542,7 @@ function! s:should_use_smartsign(char) "{{{
         return 0
     endif
 endfunction "}}}
-function! s:should_use_smartcase(input) "{{{
-    if g:EasyMotion_smartcase == 0
-        return 0
-    endif
-    " return 1 if input didn't match uppercase letter
-    return match(a:input, '\u') == -1
-endfunction "}}}
+
 function! s:handleEmpty(input, visualmode) "{{{
     " if empty, reselect and return 1
     if empty(a:input)
@@ -541,7 +566,7 @@ endfunction "}}}
 " -- Handle Visual Mode ------------------
 function! s:GetVisualStartPosition(c_pos, v_start, v_end, search_direction) "{{{
     let vmode = mode(1)
-    if match('Vv',vmode) < 0
+    if vmode !~# "^[Vv\<C-v>]"
         throw 'Unkown visual mode:'.vmode
     endif
 
@@ -924,8 +949,9 @@ function! s:PromptUser(groups) "{{{
             let char = toupper(char)
         endif "}}}
 
-        " Jump first target when Enter key is pressed "{{{
-        if char ==# "\<CR>" && g:EasyMotion_enter_jump_first == 1
+        " Jump first target when Enter or Space key is pressed "{{{
+        if (char ==# "\<CR>" && g:EasyMotion_enter_jump_first == 1) ||
+        \  (char ==# " " && g:EasyMotion_space_jump_first == 1)
             let char = g:EasyMotion_keys[0]
         endif "}}}
 
@@ -1049,6 +1075,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
         " -- Reset properties -------------------- {{{
         " Save original value and set new value
         call s:SaveValue()
+        call s:turn_off_hl_error()
         " }}}
         " Setup searchpos args {{{
         let search_direction = (a:direction >= 1 ? 'b' : '')
@@ -1361,6 +1388,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
     finally
         " -- Restore properties ------------------ {{{
         call s:RestoreValue()
+        call s:turn_on_hl_error()
         call EasyMotion#reset()
         " }}}
         " -- Remove shading ---------------------- {{{

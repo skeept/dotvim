@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 05 Feb 2014.
+" Last Change: 06 Feb 2014.
 " == Script initialization {{{
 if expand("%:p") ==# expand("<sfile>:p")
   unlet! g:EasyMotion_loaded
@@ -23,7 +23,8 @@ set cpo&vim
 " == Default configuration {{{
 " -- Option ------------------------------ {{{
 let g:EasyMotion_keys               = get(g:,
-    \ 'EasyMotion_keys', 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    \ 'EasyMotion_keys', 'asdghklqwertyuiopzxcvbnmfj;')
+    " \ 'EasyMotion_keys', 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
 let g:EasyMotion_do_mapping         = get(g: , 'EasyMotion_do_mapping'         , 1)
 let g:EasyMotion_do_shade           = get(g: , 'EasyMotion_do_shade'           , 1)
 let g:EasyMotion_grouping           = get(g: , 'EasyMotion_grouping'           , 1)
@@ -33,6 +34,7 @@ let g:EasyMotion_skipfoldedline     = get(g: , 'EasyMotion_skipfoldedline'     ,
 let g:EasyMotion_use_migemo         = get(g: , 'EasyMotion_use_migemo'         , 0)
 let g:EasyMotion_use_upper          = get(g: , 'EasyMotion_use_upper'          , 0)
 let g:EasyMotion_enter_jump_first   = get(g: , 'EasyMotion_enter_jump_first'   , 0)
+let g:EasyMotion_space_jump_first   = get(g: , 'EasyMotion_space_jump_first'   , 0)
 let g:EasyMotion_inc_highlight      = get(g: , 'EasyMotion_inc_highlight'      , 1)
 let g:EasyMotion_move_highlight     = get(g: , 'EasyMotion_move_highlight'     , 1)
 let g:EasyMotion_landing_highlight  = get(g: , 'EasyMotion_landing_highlight'  , 0)
@@ -70,12 +72,14 @@ call s:find_motion_map_helper({
     \ 'f'   : {'fnc': 'S' , 'cnt': 1, 'direction': 0},
     \ 'F'   : {'fnc': 'S' , 'cnt': 1, 'direction': 1},
     \ 's'   : {'fnc': 'S' , 'cnt': 1, 'direction': 2},
+    \ 'bd-f'   : {'fnc': 'S' , 'cnt': 1, 'direction': 2},
     \ 't'   : {'fnc': 'T' , 'cnt': 1, 'direction': 0},
     \ 'T'   : {'fnc': 'T' , 'cnt': 1, 'direction': 1},
     \ 'bd-t'  : {'fnc': 'T', 'cnt': 1, 'direction': 2},
     \ 'fl'  : {'fnc': 'SL', 'cnt': 1, 'direction': 0},
     \ 'Fl'  : {'fnc': 'SL', 'cnt': 1, 'direction': 1},
     \ 'sl'  : {'fnc': 'SL', 'cnt': 1, 'direction': 2},
+    \ 'bd-fl'  : {'fnc': 'SL', 'cnt': 1, 'direction': 2},
     \ 'tl'  : {'fnc': 'TL', 'cnt': 1, 'direction': 0},
     \ 'Tl'  : {'fnc': 'TL', 'cnt': 1, 'direction': 1},
     \ 'bd-tl'  : {'fnc': 'TL', 'cnt': 1, 'direction': 2},
@@ -83,12 +87,14 @@ call s:find_motion_map_helper({
     \ 'f2'  : {'fnc': 'S' , 'cnt': 2, 'direction': 0},
     \ 'F2'  : {'fnc': 'S' , 'cnt': 2, 'direction': 1},
     \ 's2'  : {'fnc': 'S' , 'cnt': 2, 'direction': 2},
+    \ 'bd-f2'  : {'fnc': 'S' , 'cnt': 2, 'direction': 2},
     \ 't2'  : {'fnc': 'T' , 'cnt': 2, 'direction': 0},
     \ 'T2'  : {'fnc': 'T' , 'cnt': 2, 'direction': 1},
     \ 'bd-t2'  : {'fnc': 'T', 'cnt': 2, 'direction': 2},
     \ 'fl2' : {'fnc': 'SL', 'cnt': 2, 'direction': 0},
     \ 'Fl2' : {'fnc': 'SL', 'cnt': 2, 'direction': 1},
     \ 'sl2' : {'fnc': 'SL', 'cnt': 2, 'direction': 2},
+    \ 'bd-fl2' : {'fnc': 'SL', 'cnt': 2, 'direction': 2},
     \ 'tl2' : {'fnc': 'TL', 'cnt': 2, 'direction': 0},
     \ 'Tl2' : {'fnc': 'TL', 'cnt': 2, 'direction': 1},
     \ 'bd-tl2'  : {'fnc': 'TL', 'cnt': 2, 'direction': 2},
@@ -96,12 +102,14 @@ call s:find_motion_map_helper({
     \ 'fn'  : {'fnc': 'S' , 'cnt': -1, 'direction': 0},
     \ 'Fn'  : {'fnc': 'S' , 'cnt': -1, 'direction': 1},
     \ 'sn'  : {'fnc': 'S' , 'cnt': -1, 'direction': 2},
+    \ 'bd-fn'  : {'fnc': 'S' , 'cnt': -1, 'direction': 2},
     \ 'tn'  : {'fnc': 'T' , 'cnt': -1, 'direction': 0},
     \ 'Tn'  : {'fnc': 'T' , 'cnt': -1, 'direction': 1},
     \ 'bd-tn'  : {'fnc': 'T', 'cnt': -1, 'direction': 2},
     \ 'fln' : {'fnc': 'SL', 'cnt': -1, 'direction': 0},
     \ 'Fln' : {'fnc': 'SL', 'cnt': -1, 'direction': 1},
     \ 'sln' : {'fnc': 'SL', 'cnt': -1, 'direction': 2},
+    \ 'bd-fln' : {'fnc': 'SL', 'cnt': -1, 'direction': 2},
     \ 'tln' : {'fnc': 'TL', 'cnt': -1, 'direction': 0},
     \ 'Tln' : {'fnc': 'TL', 'cnt': -1, 'direction': 1},
     \ 'bd-tln'  : {'fnc': 'TL', 'cnt': -1, 'direction': 2},
@@ -252,12 +260,12 @@ xnoremap <silent><Plug>(easymotion-lineanywhere)
 "}}}
 "}}}
 
-map <silent><expr><Plug>(easymotion-clever-s)
-    \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-s)'
-map <silent><expr><Plug>(easymotion-clever-s2)
-    \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-s2)'
-map <silent><expr><Plug>(easymotion-clever-sn)
-    \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-sn)'
+" map <silent><expr><Plug>(easymotion-clever-s)
+"     \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-s)'
+" map <silent><expr><Plug>(easymotion-clever-s2)
+"     \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-s2)'
+" map <silent><expr><Plug>(easymotion-clever-sn)
+"     \ EasyMotion#is_active() ? '<Plug>(easymotion-next)' : '<Plug>(easymotion-sn)'
 
 noremap  <silent><Plug>(easymotion-activate) :<C-u>call EasyMotion#activate(0)<CR>
 xnoremap <silent><Plug>(easymotion-activate) :<C-u>call EasyMotion#activate(1)<CR>
@@ -281,7 +289,6 @@ if g:EasyMotion_do_mapping == 1
         \   'f' : { 'name': 'S'      , 'dir': 0 }
         \ , 'F' : { 'name': 'S'      , 'dir': 1 }
         \ , 's' : { 'name': 'S'      , 'dir': 2 }
-        \ , 'S' : { 'name': 'WB'     , 'dir': 2 }
         \ , 't' : { 'name': 'T'      , 'dir': 0 }
         \ , 'T' : { 'name': 'T'      , 'dir': 1 }
         \ , 'w' : { 'name': 'WB'     , 'dir': 0 }
@@ -300,18 +307,15 @@ if g:EasyMotion_do_mapping == 1
 endif "}}}
 
 " == CommandLine Mapping {{{
-function! s:key_mapping(lhs, rhs)
-	let g:EasyMotion_command_line_key_mappings[a:lhs] = a:rhs
-endfunction
-
-function! s:as_keymapping(key)
-	execute 'let result = "' . substitute(a:key, '\(<.\{-}>\)', '\\\1', 'g') . '"'
-	return result
-endfunction
-
 command! -nargs=*
-\	EMCommandLineNoremap
-\	call call("s:key_mapping", map([<f-args>], "s:as_keymapping(v:val)"))
+\	EMCommandLineNoreMap
+\   call EasyMotion#command_line#cnoremap([<f-args>])
+command! -nargs=*
+\	EMCommandLineMap
+\   call EasyMotion#command_line#cmap([<f-args>])
+command! -nargs=1
+\	EMCommandLineUnMap
+\   call EasyMotion#command_line#cunmap(<f-args>)
 "}}}
 
 " == Restore 'cpoptions' {{{
