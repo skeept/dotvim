@@ -415,6 +415,10 @@
     "type": "git",
     "url": "git://github.com/tomtom/shymenu_vim"
   },
+  "2438": {
+    "type": "git",
+    "url": "git://github.com/dkprice/vim-easygrep"
+  },
   "2446": {
     "type": "git",
     "url": "git://github.com/jkramer/vim-narrow"
@@ -2600,8 +2604,8 @@
     "url": "git://github.com/mihaifm/vimpanel"
   },
   "441": {
-    "type": "git",
-    "url": "git://github.com/embear/vim-localvimrc"
+    "type": "hg",
+    "url": "https://bitbucket.org/embear/localvimrc"
   },
   "4410": {
     "type": "git",
