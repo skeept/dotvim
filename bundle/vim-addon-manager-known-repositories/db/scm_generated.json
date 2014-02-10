@@ -3461,7 +3461,7 @@
   },
   "4811": {
     "type": "git",
-    "url": "git://github.com/reedes/vim-quotable"
+    "url": "git://github.com/reedes/vim-textobj-quote"
   },
   "4812": {
     "type": "git",
@@ -3551,6 +3551,10 @@
     "type": "git",
     "url": "git://github.com/sk1418/blockit"
   },
+  "4849": {
+    "type": "git",
+    "url": "git://github.com/coot/EnchantedVim"
+  },
   "4850": {
     "type": "git",
     "url": "git://github.com/reedes/vim-colors-pencil"
@@ -3566,6 +3570,14 @@
   "4853": {
     "type": "git",
     "url": "git://github.com/pavoljuhas/smart-change-directory"
+  },
+  "4858": {
+    "type": "git",
+    "url": "git://github.com/sdanielf/vim-stdtabs"
+  },
+  "4859": {
+    "type": "git",
+    "url": "git://github.com/ntpeters/vim-better-whitespace"
   },
   "521": {
     "type": "git",
