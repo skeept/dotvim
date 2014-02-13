@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 07 Feb 2014.
+" Last Change: 13 Feb 2014.
 "=============================================================================
 " Saving 'cpoptions' {{{
 scriptencoding utf-8
@@ -378,13 +378,15 @@ function! s:turn_off_hl_error() "{{{
         let save_verbose = &verbose
         let &verbose = 0
         try
-            redir => cursor
+            redir => error
             silent highlight Error
             redir END
         finally
             let &verbose = save_verbose
         endtry
-        let hl = substitute(matchstr(cursor, 'xxx \zs.*'), '[ \t\n]\+\|cleared', ' ', 'g')
+        " NOTE: do not match across newlines, to remove 'links to Foo'
+        " (https://github.com/Lokaltog/vim-easymotion/issues/95)
+        let hl = substitute(matchstr(error, 'xxx \zs[^\n]*'), '[ \t\n]\+\|cleared', ' ', 'g')
         if !empty(substitute(hl, '\s', '', 'g'))
             let s:old_hl_error = hl
         endif
@@ -435,9 +437,9 @@ function! s:findMotion(num_strokes, direction) "{{{
     let re = s:convertRegep(input)
 
     if g:EasyMotion_add_search_history && a:num_strokes == -1
-        let @/ = re "For textobject: 'gn'
-        call histadd('search',
-                    \ substitute(re, '\\c\|\\C', '', ''))
+        let history_re = substitute(re, '\\c\|\\C', '', '')
+        let @/ = history_re "For textobject: 'gn'
+        call histadd('search', history_re)
     endif
 
     return re
@@ -824,7 +826,8 @@ function! s:PromptUser(groups) "{{{
     if len(group_values) == 1
         if mode(1) ==# 'no'
             " Consider jump to first match
-            let s:dot_repeat['target'] = g:EasyMotion_keys[0]
+            " NOTE: matchstr() handles multibyte characters.
+            let s:dot_repeat['target'] = matchstr(g:EasyMotion_keys, '^.')
         endif
         redraw
         return group_values[0]
@@ -952,7 +955,8 @@ function! s:PromptUser(groups) "{{{
         " Jump first target when Enter or Space key is pressed "{{{
         if (char ==# "\<CR>" && g:EasyMotion_enter_jump_first == 1) ||
         \  (char ==# " " && g:EasyMotion_space_jump_first == 1)
-            let char = g:EasyMotion_keys[0]
+            " NOTE: matchstr() is multibyte aware.
+            let char = matchstr(g:EasyMotion_keys, '^.')
         endif "}}}
 
         " For dot repeat {{{
@@ -1362,6 +1366,16 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
             let s:dot_repeat.true_direction = true_direction " Check inclusive
             "}}}
             silent! call repeat#set("\<Plug>(easymotion-dotrepeat)")
+        endif "}}}
+
+        " Highlight all the matches by n-key find motions {{{
+        if s:current.is_search == 1
+            " It seems let &hlsearch=&hlsearch doesn't work when called
+            " in script, so use :h feedkeys() instead.
+            " Ref: :h v:hlsearch
+            call EasyMotion#helper#silent_feedkeys(
+                                    \ ":let &hlsearch=&hlsearch\<CR>",
+                                    \ 'hlsearch', 'n')
         endif "}}}
 
         call s:Message('Jumping to [' . coords[0] . ', ' . coords[1] . ']')
