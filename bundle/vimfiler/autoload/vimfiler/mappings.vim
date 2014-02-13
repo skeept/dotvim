@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Jan 2014.
+" Last Modified: 13 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -570,6 +570,7 @@ function! s:switch() "{{{
     execute windows[0].'wincmd w'
   else
     let [tabnr, winnr] = [tabpagenr(), winnr()]
+    let [old_tabnr, old_winnr] = [tabnr, winnr]
 
     if exists('g:loaded_choosewin')
           \ || hasmapto('<Plug>(choosewin)', 'n')
@@ -587,7 +588,7 @@ function! s:switch() "{{{
       execute 'tabnext' tabnr
     endif
 
-    if winnr == 0
+    if winnr == 0 || (winnr == old_winnr && tabnr == old_tabnr)
       rightbelow vnew
     else
       execute winnr.'wincmd w'
@@ -1141,7 +1142,8 @@ function! s:edit_binary_file() "{{{
   endif
 
   if !exists(':Vinarise')
-    call vimfiler#print_error('vinarise is not found. Please install it.')
+    call vimfiler#util#print_error(
+          \ '[vimfiler] vinarise is not found. Please install it.')
     return
   endif
 
@@ -1528,7 +1530,7 @@ endfunction"}}}
 function! s:clipboard_paste() "{{{
   let clipboard = vimfiler#variables#get_clipboard()
   if empty(clipboard.files)
-    call vimfiler#print_error('Clipboard is empty.')
+    call vimfiler#util#print_error('[vimfiler] Clipboard is empty.')
     return
   endif
 
@@ -1591,7 +1593,8 @@ endfunction"}}}
 function! vimfiler#mappings#_change_vim_current_dir() "{{{
   let vimfiler = vimfiler#get_current_vimfiler()
   if vimfiler.source !=# 'file'
-    call vimfiler#print_error('Invalid operation in not file source.')
+    call vimfiler#util#print_error(
+          \ '[vimfiler] Invalid operation in not file source.')
     return
   endif
 
@@ -1603,7 +1606,8 @@ function! vimfiler#mappings#_change_vim_current_dir() "{{{
 endfunction"}}}
 function! s:grep() "{{{
   if !vimfiler#util#has_vimproc()
-    call vimfiler#print_error('Sorry, vimproc is not installed. '.
+    call vimfiler#util#print_error(
+          \ '[vimfiler] Sorry, vimproc is not installed. '.
           \ 'This mapping use vimproc.')
     return
   endif
@@ -1620,7 +1624,8 @@ function! s:grep() "{{{
 endfunction"}}}
 function! s:find() "{{{
   if !vimfiler#util#has_vimproc()
-    call vimfiler#print_error('Sorry, vimproc is not installed. '.
+    call vimfiler#util#print_error(
+          \ '[vimfiler] Sorry, vimproc is not installed. '.
           \ 'This mapping use vimproc.')
     return
   endif
@@ -1665,8 +1670,8 @@ function! s:on_double_click() "{{{
 endfunction"}}}
 function! s:quick_look() "{{{
   if !vimfiler#util#has_vimproc()
-    call vimfiler#print_error(
-          \ 'vimproc is needed for this feature.')
+    call vimfiler#util#print_error(
+          \ '[vimfiler] vimproc is needed for this feature.')
     return
   endif
 
@@ -1682,8 +1687,8 @@ function! s:quick_look() "{{{
   try
     call vimproc#system_gui(command)
   catch /vimproc#get_command_name: /
-    call vimfiler#print_error(
-          \ 'g:vimfiler_quick_look_command "'.
+    call vimfiler#util#print_error(
+          \ '[vimfiler] g:vimfiler_quick_look_command "'.
           \ g:vimfiler_quick_look_command.'" is not executable.')
     return
   endtry
@@ -1742,7 +1747,8 @@ function! s:unmapping_file_operations() "{{{
         \ :<C-u>call <SID>disable_operation()<CR>
 endfunction"}}}
 function! s:disable_operation() "{{{
-  call vimfiler#print_error('In safe mode, this operation is disabled.')
+  call vimfiler#util#print_error(
+        \ '[vimfiler] In safe mode, this operation is disabled.')
 endfunction"}}}
 
 function! s:toggle_simple_mode() "{{{

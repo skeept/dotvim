@@ -14,8 +14,8 @@ from UltiSnips._diff import diff, guess_edit
 from UltiSnips.compatibility import as_unicode
 from UltiSnips.position import Position
 from UltiSnips.snippet import Snippet
+from UltiSnips.snippet_definitions import parse_snippets_file
 from UltiSnips.snippet_dictionary import SnippetDictionary
-from UltiSnips.snippets_file_parser import SnippetsFileParser
 from UltiSnips.vim_state import VimState, VisualContentPreserver
 import UltiSnips._vim as _vim
 
@@ -168,10 +168,6 @@ class SnippetManager(object):
         while len(self._csnippets):
             self._current_snippet_is_done()
 
-        # needed to retain the unnamed register at all times
-        self._unnamed_reg_cached = False
-        self._last_placeholder = None
-
         self._reinit()
 
     @err_to_scratch_buffer
@@ -300,24 +296,6 @@ class SnippetManager(object):
             return False
 
     @err_to_scratch_buffer
-    def clear_snippets(self, triggers=None, ft="all"):
-        """Forget all snippets for the given 'ft'. If 'triggers' is given only
-        forget those with the given trigger."""
-        if triggers is None:
-            triggers = []
-        if ft in self._snippets:
-            self._snippets[ft].clear_snippets(triggers)
-
-    @err_to_scratch_buffer
-    def add_extending_info(self, ft, parents):
-        """Add the list of 'parents' as being extended by the 'ft'."""
-        sd = self._snippets[ft]
-        for parent in parents:
-            if parent in sd.extends:
-                continue
-            sd.extends.append(parent)
-
-    @err_to_scratch_buffer
     def cursor_moved(self):
         """Called whenever the cursor moved."""
         self._vstate.remember_position()
@@ -389,8 +367,10 @@ class SnippetManager(object):
             self._current_snippet_is_done()
         self._reinit()
 
-    # TODO(sirver): This is only used by SnippetsFileParser
-    def report_error(self, msg):
+    ###################################
+    # Private/Protect Functions Below #
+    ###################################
+    def _report_error(self, msg):
         """Shows 'msg' as error to the user."""
         msg = _vim.escape("UltiSnips: " + msg)
         if self._test_error:
@@ -406,9 +386,14 @@ class SnippetManager(object):
         else:
             _vim.command("echoerr %s" % msg)
 
-    ###################################
-    # Private/Protect Functions Below #
-    ###################################
+    def _add_extending_info(self, ft, parents):
+        """Add the list of 'parents' as being extended by the 'ft'."""
+        sd = self._snippets[ft]
+        for parent in parents:
+            if parent in sd.extends:
+                continue
+            sd.extends.append(parent)
+
     def _reinit(self):
         """Resets transient state."""
         self._ctab = None
@@ -428,7 +413,7 @@ class SnippetManager(object):
         self._csnippets.pop()
         if (not self._csnippets and
                 _vim.eval("g:UltiSnipsClearJumpTrigger") != "0"):
-            _vim.command("call UltiSnips_RestoreInnerKeys()")
+            _vim.command("call UltiSnips#RestoreInnerKeys()")
 
     def _jump(self, backwards=False):
         """Helper method that does the actual jump."""
@@ -450,25 +435,14 @@ class SnippetManager(object):
                 self._current_snippet_is_done()
                 jumped = self._jump(backwards)
         if jumped:
-            self._cache_unnamed_register()
             self._vstate.remember_position()
+            self._vstate.remember_unnamed_register(self._ctab.current_text)
             self._ignore_movements = True
         return jumped
 
-    def _cache_unnamed_register(self):
-        """Save the unnamed register."""
-        self._unnamed_reg_cached = True
-        unnamed_reg = _vim.eval('@"')
-        if self._last_placeholder != unnamed_reg:
-            self._unnamed_reg_cache = unnamed_reg
-        self._last_placeholder = self._ctab.current_text
-
-    def restore_unnamed_register(self):
-        """Restores the unnamed register from the cache."""
-        if self._unnamed_reg_cached:
-            escaped_cache = self._unnamed_reg_cache.replace("'", "''")
-            _vim.command("let @\"='%s'" % escaped_cache)
-            self._unnamed_register_cached = False
+    def leaving_insert_mode(self):
+        """Called whenever we leave the insert mode."""
+        self._vstate.restore_unnamed_register()
 
     def _handle_failure(self, trigger):
         """Mainly make sure that we play well with SuperTab."""
@@ -538,7 +512,7 @@ class SnippetManager(object):
         """Expands the given snippet, and handles everything
         that needs to be done with it."""
         if _vim.eval("g:UltiSnipsClearJumpTrigger") == "1":
-            _vim.command("call UltiSnips_MapInnerKeys()")
+            _vim.command("call UltiSnips#MapInnerKeys()")
         # Adjust before, maybe the trigger is not the complete word
         text_before = before
         if snippet.matched:
@@ -602,9 +576,29 @@ class SnippetManager(object):
 
     def _parse_snippets(self, ft, filename, file_data=None):
         """Parse the file 'filename' for the given 'ft' and watch it for
-        changes in the future."""
+        changes in the future. 'file_data' can be injected in tests."""
         self._snippets[ft].addfile(filename)
-        SnippetsFileParser(ft, filename, self, file_data).parse()
+        if file_data is None:
+            file_data = open(filename, "r").read()
+        for event, data in parse_snippets_file(file_data):
+            if event == "error":
+                msg, line_index = data
+                filename = _vim.eval("""fnamemodify(%s, ":~:.")""" %
+                        _vim.escape(filename))
+                self._report_error("%s in %s(%d)" % (msg, filename, line_index))
+                break
+            elif event == "clearsnippets":
+                triggers, = data
+                self._snippets[ft].clear_snippets(triggers)
+            elif event == "extends":
+                filetypes, = data
+                self._add_extending_info(ft, filetypes)
+            elif event == "snippet":
+                trigger, value, descr, opts, globals = data
+                self.add_snippet(trigger, value, descr,
+                        opts, ft, globals, filename)
+            else:
+                assert False, "Unhandled %s: %r" % (event, data)
 
     @property
     def primary_filetype(self):
@@ -719,7 +713,6 @@ class SnippetManager(object):
             except ValueError:
                 self._filetypes[_vim.buf.number].insert(idx + 1, ft)
                 idx += 1
-        self._ensure_all_loaded()
 
     def _find_snippets(self, ft, trigger, potentially=False, seen=None):
         """Find snippets matching trigger

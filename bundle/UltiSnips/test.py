@@ -358,7 +358,7 @@ class ParseSnippets_MissingEndSnippet(_PS_Base):
     keys = "testsnip" + EX
     wanted = "testsnip" + EX
     expected_error = dedent("""
-        UltiSnips: Missing 'endsnippet' for 'testsnip' in test_file(5)
+        UltiSnips: Missing 'endsnippet' for 'testsnip' in test_file(4)
         """).strip()
 
 class ParseSnippets_UnknownDirective(_PS_Base):
@@ -2305,7 +2305,7 @@ class MultiWord_SnippetOptions_ExpandWordSnippets_ExpandSuffix(
 class _AnonBase(_VimTest):
     args = ""
     def _options_on(self):
-        self.send(":inoremap <silent> " + EA + ' <C-R>=UltiSnips_Anon('
+        self.send(":inoremap <silent> " + EA + ' <C-R>=UltiSnips#Anon('
                 + self.args + ')<cr>\n')
     def _options_off(self):
         self.send(":iunmap <silent> " + EA + '\n')
@@ -2358,7 +2358,7 @@ class Anon_Trigger_Opts(_AnonBase):
 class _AddFuncBase(_VimTest):
     args = ""
     def _options_on(self):
-        self.send(":call UltiSnips_AddSnippet("
+        self.send(":call UltiSnips#AddSnippet("
                 + self.args + ')\n')
 
 class AddFunc_Simple(_AddFuncBase):
@@ -2687,7 +2687,7 @@ class LeaveTrailingWhitespace(_VimTest):
     snippets = ("test", """Hello \t ${1:default}\n$2""")
     wanted = """Hello \t \nGoodbye"""
     keys = "test" + EX + BS + JF + "Goodbye"
-# End: Trailing whitespace }}}#
+# End: Trailing whitespace #}}}
 
 # Cursor Movement  {{{#
 class CursorMovement_Multiline_ECR(_VimTest):
@@ -3043,11 +3043,15 @@ class Bug1251994(_VimTest):
     wanted = "  world hello;blub"
 # End: 1251994  #}}}
 
-# Test for Github Pull Request #134 {{{#
+# Test for Github Pull Request #134 - Retain unnamed register {{{#
 class RetainsTheUnnamedRegister(_VimTest):
     snippets = ("test", "${1:hello} ${2:world} ${0}")
     keys = "yank" + ESC + "by4lea test" + EX + "HELLO" + JF + JF + ESC + "p"
     wanted = "yank HELLO world yank"
+class RetainsTheUnnamedRegister_ButOnlyOnce(_VimTest):
+    snippets = ("test", "${1:hello} ${2:world} ${0}")
+    keys = "blahfasel" + ESC + "v" + 4*ARR_L + "xotest" + EX + ESC + ARR_U + "v0xo" + ESC + "p"
+    wanted = "\nblah\nhello world "
 # End: Github Pull Request # 134 #}}}
 
 class VerifyVimDict1(_VimTest):
@@ -3059,9 +3063,9 @@ class VerifyVimDict1(_VimTest):
     """
 
     snippets = ('testâ', 'abc123ά', '123\'êabc')
-    keys = ('test=(type(UltiSnips_SnippetsInCurrentScope()) . len(UltiSnips_SnippetsInCurrentScope()) . ' +
-       'UltiSnips_SnippetsInCurrentScope()["testâ"]' + ')\n' +
-       '=len(UltiSnips_SnippetsInCurrentScope())\n')
+    keys = ('test=(type(UltiSnips#SnippetsInCurrentScope()) . len(UltiSnips#SnippetsInCurrentScope()) . ' +
+       'UltiSnips#SnippetsInCurrentScope()["testâ"]' + ')\n' +
+       '=len(UltiSnips#SnippetsInCurrentScope())\n')
 
     wanted = 'test41123\'êabc0'
 
@@ -3072,7 +3076,7 @@ class VerifyVimDict2(_VimTest):
 
     snippets = ('te"stâ', 'abc123ά', '123êabc')
     akey = "'te{}stâ'".format('"')
-    keys = ('te"=(UltiSnips_SnippetsInCurrentScope()[{}]'.format(akey) + ')\n')
+    keys = ('te"=(UltiSnips#SnippetsInCurrentScope()[{}]'.format(akey) + ')\n')
     wanted = 'te"123êabc'
 
 class VerifyVimDict3(_VimTest):
@@ -3082,7 +3086,7 @@ class VerifyVimDict3(_VimTest):
 
     snippets = ("te'stâ", 'abc123ά', '123êabc')
     akey = '"te{}stâ"'.format("'")
-    keys = ("te'=(UltiSnips_SnippetsInCurrentScope()[{}]".format(akey) + ')\n')
+    keys = ("te'=(UltiSnips#SnippetsInCurrentScope()[{}]".format(akey) + ')\n')
     wanted = "te'123êabc"
 
 ###########################################################################

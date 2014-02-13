@@ -523,6 +523,10 @@
     "type": "git",
     "url": "git://github.com/Twinside/vim-syntax-haskell-cabal"
   },
+  "2626": {
+    "type": "git",
+    "url": "https://bitbucket.org/goeb/vimya"
+  },
   "2627": {
     "type": "git",
     "url": "git://github.com/exdev/exvim"
@@ -3314,6 +3318,10 @@
   "4742": {
     "type": "git",
     "url": "git://github.com/fifthposition/columcille"
+  },
+  "4743": {
+    "type": "git",
+    "url": "git://github.com/nachumk/systemverilog.vim"
   },
   "4744": {
     "type": "git",
