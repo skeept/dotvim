@@ -49,3 +49,31 @@ nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR>
 nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR>
 vnoremap ,n :<C-U>call JumpToNextNonMatching(2)<CR>gvoo
 vnoremap ,N :<C-U>call JumpToNextNonMatching(-2)<CR>gv
+
+" useful mapping to convert time, get the word under cursor and convert it to
+" regular date format
+function! EchoOrPrintTime()
+  if v:count != 0
+    let g:echoOrPrintTimeSetting = v:count
+  endif
+  python << EOF
+import time
+import vim
+currWord = float(vim.eval('expand("<cWORD>")'))
+vim.command('let g:echoOrPrintTimeSettingTime = "{}"'.format(
+  time.strftime("%a, %d %b %Y %H:%M", time.localtime(currWord))))
+EOF
+
+  if g:echoOrPrintTimeSetting != 1 
+    " try writting text after current word
+    let @u = " " . g:echoOrPrintTimeSettingTime
+    normal he"up
+    "put u
+  endif
+  echo g:echoOrPrintTimeSettingTime
+endfunction
+let g:echoOrPrintTimeSetting = 1
+
+"nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
+      "\ time.localtime(<C-R><C-w>))<CR>
+nnoremap \e :<C-U>call EchoOrPrintTime()<CR>

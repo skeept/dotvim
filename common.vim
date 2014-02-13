@@ -191,10 +191,6 @@ vnoremap aa VGo1G
 nnoremap <Leader>tc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
 
-" useful mapping to convert time, get the word under cursor and convert it to
-" regular date format
-nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
-      \ time.localtime(<C-R><C-w>))<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
@@ -812,6 +808,8 @@ augroup py_pylint
   "autocmd FileType python compiler pylint
   autocmd FileType python setlocal errorformat=%f:%l:\ %m
   autocmd FileType python setlocal makeprg=epylint\ %
+  autocmd filetype python setlocal completefunc=pysmell#Complete
+  autocmd FileType python setlocal completeopt=menuone,longest
 augroup END
 "==============================================================================}}}
 
@@ -848,7 +846,6 @@ EOF
       setlocal completefunc=pysmell#Complete
       augroup ft_py_pysmellcomp
         autocmd!
-        autocmd filetype python setlocal completefunc=pysmell#Complete
       augroup END
     else
       echom "No Pysmell installed!"
@@ -875,7 +872,8 @@ except:
 EOF
 
     if s:has_jedi == 1
-      let g:jedi#show_function_definition = "0"
+      let g:jedi#show_call_signatures = 0
+      let g:jedi#auto_vim_configuration = 0
       ActivateAddons jedi-vim
       setlocal omnifunc=jedi#complete
     else
