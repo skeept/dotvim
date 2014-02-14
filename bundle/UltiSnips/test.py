@@ -29,6 +29,8 @@
 # for this to work properly as SendKeys is a piece of chunk. (i.e. it sends
 # <F13> when you send a | symbol while using german key mappings)
 
+# pylint: skip-file
+
 import os
 import tempfile
 import unittest
@@ -291,15 +293,15 @@ class _VimTest(unittest.TestCase):
 
         for s in self.snippets:
             sv,content = s[:2]
-            descr = ""
+            description = ""
             options = ""
             if len(s) > 2:
-                descr = s[2]
+                description = s[2]
             if len(s) > 3:
                 options = s[3]
 
             self.send_py("UltiSnips_Manager.add_snippet(%r, %r, %r, %r)" %
-                (sv, content, descr, options))
+                (sv, content, description, options))
 
         ft, fn, file_data = self.snippets_test_file
         if ft:
@@ -356,7 +358,7 @@ class ParseSnippets_MissingEndSnippet(_PS_Base):
     keys = "testsnip" + EX
     wanted = "testsnip" + EX
     expected_error = dedent("""
-        UltiSnips: Missing 'endsnippet' for 'testsnip' in test_file(5)
+        UltiSnips: Missing 'endsnippet' for 'testsnip' in test_file(4)
         """).strip()
 
 class ParseSnippets_UnknownDirective(_PS_Base):
@@ -701,24 +703,24 @@ class TabStopTestJumpingRLExampleWithZeroTab_ExceptCorrectResult(_VimTest):
 class TabStopTestJumpingDontJumpToEndIfThereIsTabZero_ExceptCorrectResult(_VimTest):
     snippets = ("hallo", "hallo $0 $1")
     keys = "hallo" + EX + "Test" + JF + "Hi" + JF + JF + "du"
-    wanted = "hallo Hidu Test"
+    wanted = "hallo Hi" + 2*JF + "du Test"
 
 class TabStopTestBackwardJumping_ExceptCorrectResult(_VimTest):
     snippets = ("hallo", "hallo ${2:End} mitte${1:Beginning}")
     keys = "hallo" + EX + "Somelengthy Text" + JF + "Hi" + JB + \
             "Lets replace it again" + JF + "Blah" + JF + JB*2 + JF
-    wanted = "hallo Blah mitteLets replace it again"
+    wanted = "hallo Blah mitteLets replace it again" + JB*2 + JF
 class TabStopTestBackwardJumping2_ExceptCorrectResult(_VimTest):
     snippets = ("hallo", "hallo $2 $1")
     keys = "hallo" + EX + "Somelengthy Text" + JF + "Hi" + JB + \
             "Lets replace it again" + JF + "Blah" + JF + JB*2 + JF
-    wanted = "hallo Blah Lets replace it again"
+    wanted = "hallo Blah Lets replace it again" + JB*2 + JF
 
 class TabStopTestMultilineExpand_ExceptCorrectResult(_VimTest):
     snippets = ("hallo", "hallo $0\nnice $1 work\n$3 $2\nSeem to work")
     keys ="test hallo World" + ESC + "02f i" + EX + "world" + JF + "try" + \
-            JF + "test" + JF + "one more" + JF + JF
-    wanted = "test hallo one more\nnice world work\n" \
+            JF + "test" + JF + "one more" + JF
+    wanted = "test hallo one more" + JF + "\nnice world work\n" \
             "test try\nSeem to work World"
 
 class TabStop_TSInDefaultTextRLExample_OverwriteNone_ECR(_VimTest):
@@ -1185,12 +1187,12 @@ snip.rv = "nothing"` `!p snip.rv = a
 
 class PythonCode_LongerTextThanSource_Chars(_VimTest):
     snippets = ("test", r"""hi`!p snip.rv = "a" * 100`end""")
-    keys = """test""" + EX + JF + "ups"
+    keys = """test""" + EX + "ups"
     wanted = "hi" + 100*"a" + "endups"
 
 class PythonCode_LongerTextThanSource_MultiLine(_VimTest):
     snippets = ("test", r"""hi`!p snip.rv = "a" * 100 + '\n'*100 + "a"*100`end""")
-    keys = """test""" + EX + JF + "ups"
+    keys = """test""" + EX + "ups"
     wanted = "hi" + 100*"a" + 100*"\n" + 100*"a" + "endups"
 
 class PythonCode_AccessKilledTabstop_OverwriteSecond(_VimTest):
@@ -2303,7 +2305,7 @@ class MultiWord_SnippetOptions_ExpandWordSnippets_ExpandSuffix(
 class _AnonBase(_VimTest):
     args = ""
     def _options_on(self):
-        self.send(":inoremap <silent> " + EA + ' <C-R>=UltiSnips_Anon('
+        self.send(":inoremap <silent> " + EA + ' <C-R>=UltiSnips#Anon('
                 + self.args + ')<cr>\n')
     def _options_off(self):
         self.send(":iunmap <silent> " + EA + '\n')
@@ -2356,7 +2358,7 @@ class Anon_Trigger_Opts(_AnonBase):
 class _AddFuncBase(_VimTest):
     args = ""
     def _options_on(self):
-        self.send(":call UltiSnips_AddSnippet("
+        self.send(":call UltiSnips#AddSnippet("
                 + self.args + ')\n')
 
 class AddFunc_Simple(_AddFuncBase):
@@ -2685,7 +2687,7 @@ class LeaveTrailingWhitespace(_VimTest):
     snippets = ("test", """Hello \t ${1:default}\n$2""")
     wanted = """Hello \t \nGoodbye"""
     keys = "test" + EX + BS + JF + "Goodbye"
-# End: Trailing whitespace }}}#
+# End: Trailing whitespace #}}}
 
 # Cursor Movement  {{{#
 class CursorMovement_Multiline_ECR(_VimTest):
@@ -2724,7 +2726,7 @@ class IMMoving_NoExitingEventAtEnd_ECR(_VimTest):
 class IMMoving_ExitWhenOutsideRight_ECR(_VimTest):
     snippets = ("test", r"$1 ${2:blub} ${1:Tab}")
     keys = "hello test this" + ESC + "02f i" + EX + "tab" + ARR_R + JF + "hallo"
-    wanted = "hello tab blub tab hallothis"
+    wanted = "hello tab blub tab " + JF + "hallothis"
 class IMMoving_NotExitingWhenBarelyOutsideLeft_ECR(_VimTest):
     snippets = ("test", r"${1:Hi} ${2:blub}")
     keys = "hello test this" + ESC + "02f i" + EX + "tab" + 3*ARR_L + \
@@ -2734,17 +2736,17 @@ class IMMoving_ExitWhenOutsideLeft_ECR(_VimTest):
     snippets = ("test", r"${1:Hi} ${2:blub}")
     keys = "hello test this" + ESC + "02f i" + EX + "tab" + 4*ARR_L + \
             JF + "hallo"
-    wanted = "hellohallo tab blub this"
+    wanted = "hello" + JF + "hallo tab blub this"
 class IMMoving_ExitWhenOutsideAbove_ECR(_VimTest):
     snippets = ("test", "${1:Hi}\n${2:blub}")
-    keys = "hello test this" + ESC + "02f i" + EX + "tab" + 1*ARR_U + JF + \
-            "\nhallo"
-    wanted = "hallo\nhello tab\nblub this"
+    keys = "hello test this" + ESC + "02f i" + EX + "tab" + 1*ARR_U + "\n" + JF + \
+            "hallo"
+    wanted = JF + "hallo\nhello tab\nblub this"
 class IMMoving_ExitWhenOutsideBelow_ECR(_VimTest):
     snippets = ("test", "${1:Hi}\n${2:blub}")
     keys = "hello test this" + ESC + "02f i" + EX + "tab" + 2*ARR_D + JF + \
             "testhallo\n"
-    wanted = "hello tab\nblub this\ntesthallo"
+    wanted = "hello tab\nblub this\n" + JF + "testhallo"
 # End: Insert Mode Moving  #}}}
 # Undo of Snippet insertion  {{{#
 class Undo_RemoveMultilineSnippet(_VimTest):
@@ -2762,8 +2764,8 @@ class Undo_RemoveWholeSnippet(_VimTest):
     wanted = "first line\n\n\nupsy\n\n\nthird line"
 class JumpForward_DefSnippet(_VimTest):
     snippets = ("test", "${1}\n`!p snip.rv = '\\n'.join(t[1].split())`\n\n${0:pass}")
-    keys = "test" + EX + "a b c" + JF + "shallnot" + JF + "end"
-    wanted = "a b c\na\nb\nc\n\nshallnotend"
+    keys = "test" + EX + "a b c" + JF + "shallnot"
+    wanted = "a b c\na\nb\nc\n\nshallnot"
 class DeleteSnippetInsertion0(_VimTest):
     snippets = ("test", "${1:hello} $1")
     keys = "test" + EX + ESC + "Vkx" + "i\nworld\n"
@@ -3041,6 +3043,17 @@ class Bug1251994(_VimTest):
     wanted = "  world hello;blub"
 # End: 1251994  #}}}
 
+# Test for Github Pull Request #134 - Retain unnamed register {{{#
+class RetainsTheUnnamedRegister(_VimTest):
+    snippets = ("test", "${1:hello} ${2:world} ${0}")
+    keys = "yank" + ESC + "by4lea test" + EX + "HELLO" + JF + JF + ESC + "p"
+    wanted = "yank HELLO world yank"
+class RetainsTheUnnamedRegister_ButOnlyOnce(_VimTest):
+    snippets = ("test", "${1:hello} ${2:world} ${0}")
+    keys = "blahfasel" + ESC + "v" + 4*ARR_L + "xotest" + EX + ESC + ARR_U + "v0xo" + ESC + "p"
+    wanted = "\nblah\nhello world "
+# End: Github Pull Request # 134 #}}}
+
 class VerifyVimDict1(_VimTest):
     """check:
     correct type (4 means vim dictionary)
@@ -3050,9 +3063,9 @@ class VerifyVimDict1(_VimTest):
     """
 
     snippets = ('testâ', 'abc123ά', '123\'êabc')
-    keys = ('test=(type(UltiSnips_SnippetsInCurrentScope()) . len(UltiSnips_SnippetsInCurrentScope()) . ' +
-       'UltiSnips_SnippetsInCurrentScope()["testâ"]' + ')\n' +
-       '=len(UltiSnips_SnippetsInCurrentScope())\n')
+    keys = ('test=(type(UltiSnips#SnippetsInCurrentScope()) . len(UltiSnips#SnippetsInCurrentScope()) . ' +
+       'UltiSnips#SnippetsInCurrentScope()["testâ"]' + ')\n' +
+       '=len(UltiSnips#SnippetsInCurrentScope())\n')
 
     wanted = 'test41123\'êabc0'
 
@@ -3063,7 +3076,7 @@ class VerifyVimDict2(_VimTest):
 
     snippets = ('te"stâ', 'abc123ά', '123êabc')
     akey = "'te{}stâ'".format('"')
-    keys = ('te"=(UltiSnips_SnippetsInCurrentScope()[{}]'.format(akey) + ')\n')
+    keys = ('te"=(UltiSnips#SnippetsInCurrentScope()[{}]'.format(akey) + ')\n')
     wanted = 'te"123êabc'
 
 class VerifyVimDict3(_VimTest):
@@ -3073,7 +3086,7 @@ class VerifyVimDict3(_VimTest):
 
     snippets = ("te'stâ", 'abc123ά', '123êabc')
     akey = '"te{}stâ"'.format("'")
-    keys = ("te'=(UltiSnips_SnippetsInCurrentScope()[{}]".format(akey) + ')\n')
+    keys = ("te'=(UltiSnips#SnippetsInCurrentScope()[{}]".format(akey) + ')\n')
     wanted = "te'123êabc"
 
 ###########################################################################

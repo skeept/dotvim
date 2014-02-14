@@ -21,7 +21,7 @@ endfor
 let g:is_win = g:os[:2] == 'win'
 
 exec vam#DefineAndBind('s:c','g:vim_addon_manager','{}')
-let s:c.auto_install               = get(s:c,'auto_install',                0)
+let s:c.auto_install               = get(s:c,'auto_install',                1)
 " repository locations:
 let s:c.plugin_sources             = get(s:c,'plugin_sources',              {})
 " if a plugin has an item here the dict value contents will be written as plugin info file
@@ -172,17 +172,18 @@ endfun
 "   'auto_install': when 1 overrides global setting, so you can autoinstall
 "   trusted repositories only
 " }
-fun! vam#ActivateRecursively(list_of_names, ...)
+fun! vam#ActivateRecursively(list_of_scripts, ...)
   let opts = extend({'run_install_hooks': 1}, a:0 == 0 ? {} : a:1)
 
-  for name in a:list_of_names
+  for script_ in a:list_of_scripts
+    let name = script_.name
     if !has_key(s:c.activated_plugins,  name)
       " break circular dependencies..
       let s:c.activated_plugins[name] = 0
 
       let infoFile = vam#AddonInfoFile(name)
       if !filereadable(infoFile) && !vam#IsPluginInstalled(name)
-        if empty(vam#install#Install([name], opts))
+        if empty(vam#install#Install([script_], opts))
           unlet s:c.activated_plugins[name]
           continue
         endif
@@ -243,10 +244,33 @@ fun! s:ResetVars(buf)
   endif
 endfun
 
+fun! vam#PreprocessScriptIdentifier(list)
+  " turn name into dictionary
+  for i in range(0, len(a:list)-1)
+    " 1 is string
+    if type(a:list[i]) == 1
+      let a:list[i] = {'name': a:list[i]}
+    endif
+  endfor
+
+  " Merging with the pool will be done in install.vim because that's only
+  " sourced when installations take place
+  " only be loaded when installations take place
+endf
+
 " see also ActivateRecursively
 " Activate activates the plugins and their dependencies recursively.
 " I sources both: plugin/*.vim and after/plugin/*.vim files when called after
 " .vimrc has been sourced which happens when you activate plugins manually.
+"
+" The script names will be turned into {'name': name}. Dictionaries can
+" contain additional keys. Which ones depends also on future usage. Use cases
+"  - vundle emualtion ('rtp' key)
+"  - version locking
+"
+" Additional keys from pool or name rewriting will be merged unless keys exist
+" and unless 'type' key exists (which signals that the data is already complete)
+" This happens in vam#install#CompleteRepoData
 fun! vam#ActivateAddons(...) abort
   let args = copy(a:000)
   if a:0 == 0 | return | endif
@@ -283,8 +307,12 @@ fun! vam#ActivateAddons(...) abort
   let opts = args[1]
   let topLevel = !has_key(opts, 'new_runtime_paths')
 
+  let to_activate = args[0]
+
+  call vam#PreprocessScriptIdentifier(args[0])
+
   if exists('g:vam_plugin_whitelist') && topLevel
-    call filter(args[0],   'index(g:vam_plugin_whitelist, v:val) != -1')
+    call filter(args[0],   'index(g:vam_plugin_whitelist, v:val.name) != -1')
   endif
 
   " add new_runtime_paths state if not present in opts yet
@@ -296,7 +324,7 @@ fun! vam#ActivateAddons(...) abort
   let opts.to_be_activated   = to_be_activated
 
   for a in args[0]
-    let to_be_activated[a] = 1
+    let to_be_activated[a.name] = a
   endfor
 
   call call('vam#ActivateRecursively', args)
@@ -588,12 +616,7 @@ endfun
 " vam#ActivateAddons([]) with empty list. Not moving them into plugin/vam.vim
 " to prevent additional IO seeks.
 
-" its likely that the command names change introducing nice naming sheme
-" Not sure which is best. Options:
-" 1) *VAM  2) Addon* 3) VAM*
-" 3 seems to be best but is more to type.
-" Using 1) you can still show all commands by :*VAM<c-d> but this scheme is
-" less common. So 2) is my favorite right now. I'm too lazy to break things at
+" old names:
 command! -nargs=* -bar -complete=customlist,vam#install#NotInstalledAddonCompletion InstallAddons :call vam#install#Install([<f-args>])
 command! -nargs=* -bar -complete=customlist,vam#install#AddonCompletion ActivateAddons :call vam#ActivateAddons([<f-args>])
 command! -nargs=* -bar -complete=customlist,vam#install#AddonCompletion AddonsInfo :call vam#DisplayAddonsInfo([<f-args>])
@@ -602,8 +625,19 @@ command! -nargs=* -bar -complete=customlist,vam#install#UpdateCompletion UpdateA
 command! -nargs=0 -bar UpdateActivatedAddons exec 'UpdateAddons '.join(keys(g:vim_addon_manager.activated_plugins),' ')
 command! -nargs=0 -bar ListActivatedAddons :echo join(keys(g:vim_addon_manager.activated_plugins))
 command! -nargs=* -bar -complete=customlist,vam#install#UninstallCompletion UninstallNotLoadedAddons :call vam#install#UninstallAddons([<f-args>])
-
 command! -nargs=* -complete=customlist,vam#bisect#BisectCompletion AddonsBisect :call vam#bisect#Bisect(<f-args>)
+
+
+" new names (not documented, ZyX may change some of these in the near future)
+command! -nargs=* -bar -complete=customlist,vam#install#NotInstalledAddonCompletion VAMInstall :call vam#install#Install([<f-args>])
+command! -nargs=* -bar -complete=customlist,vam#install#AddonCompletion VAMActivate :call vam#ActivateAddons([<f-args>])
+command! -nargs=* -bar -complete=customlist,vam#install#AddonCompletion VAMPluginInfo :call vam#DisplayAddonsInfo([<f-args>])
+command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion VAMActivateInstalled :call vam#ActivateAddons([<f-args>])
+command! -nargs=* -bar -complete=customlist,vam#install#UpdateCompletion VAMUpdate :call vam#install#Update([<f-args>])
+command! -nargs=0 -bar VAMUpdateActivated exec 'UpdateAddons '.join(keys(g:vim_addon_manager.activated_plugins),' ')
+command! -nargs=0 -bar VAMListActivated :echo join(keys(g:vim_addon_manager.activated_plugins))
+command! -nargs=* -bar -complete=customlist,vam#install#UninstallCompletion VAMUninstallNotLoadedPlugins :call vam#install#UninstallAddons([<f-args>])
+command! -nargs=* -complete=customlist,vam#bisect#BisectCompletion VAMBisect :call vam#bisect#Bisect(<f-args>)
 
 fun! s:RunInstallHooks(plugins)
   for name in a:plugins

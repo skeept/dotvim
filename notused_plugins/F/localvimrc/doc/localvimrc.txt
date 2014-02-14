@@ -47,6 +47,10 @@ a local vimrc in the root directory of a project modify the behavior of
 
   let &l:makeprg="cd ".g:localvimrc_script_dir."/build && make"
 
+NOTE: This is only possible if you disable sandbox mode.
+
+Other variables provide a way to prevent multiple execution of commands.
+
 ------------------------------------------------------------------------------
 *g:localvimrc_file*
 
@@ -66,6 +70,18 @@ Fully qualified file name of the currently loaded local vimrc file.
 *g:localvimrc_script_dir*
 
 Fully qualified directory of the currently loaded local vimrc file.
+
+------------------------------------------------------------------------------
+*g:localvimrc_sourced_once*
+
+Set to "1" if the currently loaded local vimrc file had already been loaded in
+this session. Set to "0" otherwise.
+
+------------------------------------------------------------------------------
+*g:localvimrc_sourced_once_for_file*
+
+Set to "1" if the currently loaded local vimrc file had already been loaded in
+this session for the currently edited file. Set to "0" otherwise.
 
 ==============================================================================
 SETTINGS                                                   *localvimrc-settings*
@@ -127,9 +143,8 @@ Default: 1
 *g:localvimrc_persistent*
 
 Make the decisions given when asked before sourcing local vimrc files
-persistent over multiple vim runs. This is done by storing the decisions in
-viminfo. Therefore it is required to include the |viminfo-!| flag in your
-viminfo setting.
+persistent over multiple vim runs and instances. The decisions are written to
+the file defined by and |g:localvimrc_persistence_file|.
 
 Value    Description~
 0        Don't store and restore any decisions.
@@ -138,6 +153,15 @@ Value    Description~
 2        Store and restore all decisions.
 
 Default: 0
+
+------------------------------------------------------------------------------
+*g:localvimrc_persistence_file*
+
+Filename used for storing persistent decisions made when asked before sourcing
+local vimrc files.
+
+Default: "$HOME/.localvimrc_persistent" on Unix
+         "$HOME/_localvimrc_persistent" on MS-Windows
 
 ------------------------------------------------------------------------------
 *g:localvimrc_whitelist*

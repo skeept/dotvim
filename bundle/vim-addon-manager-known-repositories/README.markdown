@@ -1,8 +1,8 @@
 # DEPRECATION WARNING
 
 **[VAM-KR][1] REPOSITORY IS NOW A MIRROR OF [VIM-PI][2]. YOU SHOULD POST ALL 
-ISSUES AND PULL REQUESTS THERE. ANY CHANGES TO THIS REPOSITORY RESULTING IN 
-A MERGE CONFLICT WITH UPSTREAM WILL BE DELETED BY A CRON JOB.**
+ISSUES AND PULL REQUESTS TO THE LATTER. ANY CHANGES TO THIS REPOSITORY RESULTING
+IN A MERGE CONFLICT WITH UPSTREAM WILL BE DELETED BY A CRON JOB.**
 
 [1]: https://github.com/MarcWeber/vim-addon-manager-known-repositories
 [2]: https://bitbucket.org/vimcommunity/vim-pi
@@ -16,6 +16,33 @@ all
 - distribution systems (Gentoo Portag, Nix, npackd)
 
 can benefit the most.
+
+We strongly welcome everybody who wants to contribute (also Pathogen and Vundle
+and .. lovers).
+
+## GOALS
+- list all known Vim plugins
+- do so in a way that everybody who is interested can reuse the information
+- provide hints about deprecations or replacements
+- collaborate with interested parties (other plugin managers etc)
+- maybe cerate a website which provides advanced features
+- setup standards for dependency management if possible.
+
+## SUPPORT
+Open tickets, thanks
+
+## important contents of this repository
+- The database files: db/\*.json
+- Manually maintained packages and patches db/\*.vim
+- The Vim supporting code: autoload/\*.vim
+  Suggested main entry ponit (default implementation): vam_known_repositories#Pool()
+  It returns a list of all known plugins. Each plugin is a dictionary. An easy way to view
+  contents is the :VAMPluginInfo command of VAM.
+- python/\*.py files: scripts to update the database files
+- doc/\*: additional documentation
+
+If you're looking for code which actually knowns how to download the known plugins
+we recommend VAM or NeoBundle.
 
 ### discussions going on:
 
@@ -36,6 +63,7 @@ tracker](https://bitbucket.org/vimcommunity/vim-pi/issues).
 ## Older vim-addon-manager-known-repository README contents:
 
 This repository is an extension to http://github.com/MarcWeber/vim-addon-manager
+(and NeoBundle).
 
 It is the "default source" of descriptions where to get which addons for vim-addon-manager.
 
@@ -67,7 +95,7 @@ installed but a warning will be shown†:
 - a plugin is obviously broken in a way so that its causing more harm than 
   value.
 
-† If in doubt create a github ticket and let's discuss the issue.
+† If in doubt create a bitbucket ticket and let's discuss the issue.
 
 ### BUGS:
 

@@ -1,10 +1,7 @@
-" input.vim
 " @Author:      Tom Link (micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Created:     2007-06-30.
-" @Last Change: 2014-01-22.
-" @Revision:    0.0.1275
+" @Revision:    1315
 
 
 " :filedoc:
@@ -23,16 +20,15 @@ TLet g:tlib#input#livesearch_threshold = 1000
 
 
 " Determine how |tlib#input#List()| and related functions work.
-" Can be "cnf", "cnfd", "cnfx", "seq", or "fuzzy". See:
-"   cnfx ... Like cnfd but |g:tlib#Filter_cnfx#expander| is interpreted 
-"            as a wildcard (this is the default method)
-"     - A plus character ("+") acts as a wildcard as if ".\{-}" (see 
-"       |/\{-|) were entered.
+" Can be "glob", "cnf", "cnfd", "seq", or "fuzzy". See:
+"   glob ... Like cnf but "*" and "?" (see |g:tlib#Filter_glob#seq|, 
+"       |g:tlib#Filter_glob#char|) are interpreted as glob-like 
+"       |wildcards| (this is the default method)
 "     - Examples:
-"         - "f+o" matches "fo", "fxo", and "fxxxoo", but doesn't match 
+"         - "f*o" matches "fo", "fxo", and "fxxxoo", but doesn't match 
 "           "far".
 "     - Otherwise it is a derivate of the cnf method (see below).
-"     - See also |tlib#Filter_cnfx#New()|.
+"     - See also |tlib#Filter_glob#New()|.
 "   cnfd ... Like cnf but "." is interpreted as a wildcard, i.e. it is 
 "            expanded to "\.\{-}"
 "     - A period character (".") acts as a wildcard as if ".\{-}" (see 
@@ -60,7 +56,7 @@ TLet g:tlib#input#livesearch_threshold = 1000
 "     - |tlib#Filter_seq#New()|
 "   fuzzy .. Match fuzzy character sequences
 "     - |tlib#Filter_fuzzy#New()|
-TLet g:tlib#input#filter_mode = 'cnfx'
+TLet g:tlib#input#filter_mode = 'glob'
 
 
 " The highlight group to use for showing matches in the input list 
@@ -126,6 +122,8 @@ TLet g:tlib#input#numeric_chars = {
 TLet g:tlib#input#keyagents_InputList_s = {
             \ "\<PageUp>":   'tlib#agent#PageUp',
             \ "\<PageDown>": 'tlib#agent#PageDown',
+            \ "\<Home>":     'tlib#agent#Home',
+            \ "\<End>":      'tlib#agent#End',
             \ "\<Up>":       'tlib#agent#Up',
             \ "\<Down>":     'tlib#agent#Down',
             \ "\<c-Up>":     'tlib#agent#UpN',
@@ -140,7 +138,6 @@ TLet g:tlib#input#keyagents_InputList_s = {
             \ 26:            'tlib#agent#Suspend',
             \ 250:           'tlib#agent#Suspend',
             \ 15:            'tlib#agent#SuspendToParentWindow',  
-            \ 63:            'tlib#agent#Help',
             \ "\<F1>":       'tlib#agent#Help',
             \ "\<F10>":      'tlib#agent#ExecAgentByName',
             \ "\<S-Esc>":    'tlib#agent#ExecAgentByName',
@@ -155,6 +152,7 @@ TLet g:tlib#input#keyagents_InputList_s = {
             \ char2nr(g:tlib#input#or):  'tlib#agent#OR',
             \ char2nr(g:tlib#input#and): 'tlib#agent#AND',
             \ }
+            " \ 63:            'tlib#agent#Help',
 
 
 " :nodefault:
@@ -344,6 +342,16 @@ function! tlib#input#ListW(world, ...) "{{{3
             " TLogVAR time01, time01 - time0
             try
                 call s:RunStateHandlers(world)
+
+                " if exists('b:tlib_world_event')
+                "     let event = b:tlib_world_event
+                "     unlet! b:tlib_world_event
+                "     if event == 'WinLeave'
+                "         " let world.resume_state = world.state
+                "         let world = tlib#agent#Suspend(world, world.rv)
+                "         break
+                "     endif
+                " endif
 
                 " let time02 = str2float(reltimestr(reltime()))  " DBG
                 " TLogVAR time02, time02 - time0
@@ -842,6 +850,9 @@ function! s:Init(world, cmd) "{{{3
         else
             call a:world.Retrieve(1)
         endif
+        " if !empty(a:world.resume_state)
+        "     let a:world.state = a:world.resume_state
+        " endif
     elseif !a:world.initialized
         " TLogVAR a:world.initialized, a:world.win_wnr, a:world.bufnr
         let a:world.filetype = &filetype
