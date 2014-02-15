@@ -74,7 +74,8 @@ function! SetupVAM()
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
   VAMAddToActiveAddons neocomplete argumentative
-  VAMAddToActiveAddons Ultisnips-neocomplete-unite
+  VAMAddToActiveAddons UltiSnips-unite
+  VAMAddToActiveAddons UltiSnips-neocomplete
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
