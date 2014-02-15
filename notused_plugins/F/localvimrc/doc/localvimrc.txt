@@ -1,6 +1,6 @@
-*localvimrc.txt*             For Vim version 7.4    Last change: 2013 November 9
+*localvimrc.txt*             For Vim version 7.4    Last change: 2014 February 6
 
-localvimrc                 Version 2.2.0                     *localvimrc* *lvimrc*
+localvimrc                 Version 2.3.0                     *localvimrc* *lvimrc*
 
 |localvimrc-description|     Description
 |localvimrc-commands|        Commands
@@ -49,7 +49,24 @@ a local vimrc in the root directory of a project modify the behavior of
 
 NOTE: This is only possible if you disable sandbox mode.
 
-Other variables provide a way to prevent multiple execution of commands.
+Other variables provide a way to prevent multiple execution of commands. They
+can be used to implement guards:
+
+  " do stuff you want to do on every buffer enter event
+
+  " guard to end loading if it has been loaded for the currently edited file
+  if g:localvimrc_sourced_once_for_file
+    finish
+  endif
+
+  " do stuff you want to do only once for a edited file
+
+  " guard to end loading if it has been loaded for the running vim instance
+  if g:localvimrc_sourced_once
+    finish
+  endif
+
+  " do stuff you want to do only once for a running vim instance
 
 ------------------------------------------------------------------------------
 *g:localvimrc_file*
@@ -226,6 +243,12 @@ CREDITS                                                     *localvimrc-credits*
 
 ==============================================================================
 CHANGELOG                                                 *localvimrc-changelog*
+
+v2.3.0 : 2014-02-06
+  - private persistence file to enable persistence over concurrent vim
+    instances.
+  - add convenience variables g:localvimrc_sourced_once and
+    g:localvimrc_sourced_once_for_file.
 
 v2.2.0 : 2013-11-09
   - remove redraw calls for better performance and fixing a bug on windows.

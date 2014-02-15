@@ -1,5 +1,5 @@
 " Name:    localvimrc.vim
-" Version: 2.2.0
+" Version: 2.3.0
 " Author:  Markus Braun <markus.braun@krawel.de>
 " Summary: Vim plugin to search local vimrc files and load them.
 " Licence: This program is free software: you can redistribute it and/or modify
@@ -97,7 +97,7 @@ endif
 " define default "localvimrc_persistence_file" {{{2
 " file where to store persistence information
 if (!exists("g:localvimrc_persistence_file"))
-  if has(win16) || has(win32) || has(win64) || has(win95)
+  if has("win16") || has("win32") || has("win64") || has("win95")
     let s:localvimrc_persistence_file = expand('$HOME') . "/_localvimrc_persistent"
   else
     let s:localvimrc_persistence_file = expand('$HOME') . "/.localvimrc_persistent"
