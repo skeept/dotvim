@@ -50,7 +50,7 @@ def err_to_scratch_buffer(func):
             msg = \
 """An error occured. This is either a bug in UltiSnips or a bug in a
 snippet definition. If you think this is a bug, please report it to
-https://bugs.launchpad.net/ultisnips/+filebug.
+https://github.com/SirVer/ultisnips/issues/new.
 
 Following is the full stack trace:
 """
@@ -169,10 +169,10 @@ class SnippetManager(object):
 
     @err_to_scratch_buffer
     def add_snippet(self, trigger, value, description,
-                    options, ft="all", globals=None, fn=None):
+                    options, ft="all", globals=None):
         """Add a snippet to the list of known snippets of the given 'ft'."""
         self._added_snippets_provider.add_snippet(ft, SnippetDefinition(
-            trigger, value, description, options, globals or {}), fn
+            trigger, value, description, options, globals or {})
         )
 
     @err_to_scratch_buffer
