@@ -724,42 +724,44 @@ let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
 let g:UltiSnipsEditSplit = "horizontal"
 
 "nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
-inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
-snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
+inoremap <F9> <C-R>=UltiSnips#JumpBackwards()<CR>
+snoremap <F9> <ESC>:call UltiSnips#JumpBackwards()<CR>
 ""inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
 ""snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
 "inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
 "snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
 
-function! LoadUltisnips()
-  if has("python")
-    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    if has("autocmd")
-      augroup load_ulti
-        autocmd!
-        autocmd FileType * call UltiSnips_FileTypeChanged()
-        autocmd BufNewFile,BufRead *.snippets setf snippets
-      augroup END
-    endif
-    call UltiSnips_FileTypeChanged()
-    inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <NL> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
-    xnoremap <silent> <NL> :call UltiSnips_SaveLastVisualSelection()<CR>gvs
+" ############## Load Ultisnips ###############
+"function! LoadUltisnips()
+  "if has("python")
+    "call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    "if has("autocmd")
+      "augroup load_ulti
+        "autocmd!
+        "autocmd FileType * call UltiSnips_FileTypeChanged()
+        "autocmd BufNewFile,BufRead *.snippets setf snippets
+      "augroup END
+    "endif
+    "call UltiSnips_FileTypeChanged()
+    "inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+    "nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
+    "snoremap <silent> <NL> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
+    "xnoremap <silent> <NL> :call UltiSnips#SaveLastVisualSelection()<CR>gvs
 
-    inoremap <silent> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <F10> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
-endfunction
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+    "inoremap <silent> <F10> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+    "nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
+    "snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
+    "return 1
+  "else
+    "echom "vim compiled without python"
+    "return 0
+  "endif
+"endfunction
+"nnoremap <F10> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+"inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+"nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+"inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+" ############## Load Ultisnips END ###############
 endif
 "==============================================================================}}}
 
