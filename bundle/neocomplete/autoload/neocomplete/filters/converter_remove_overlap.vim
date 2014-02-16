@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: converter_overlap.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 23 Jan 2014.
+" Last Modified: 15 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -37,7 +37,8 @@ let s:converter = {
       \}
 
 function! s:converter.filter(context) "{{{
-  let next = matchstr(getline('.')[len(neocomplete#get_cur_text(1))+1 :], '^\S\+')
+  let next = matchstr(getline('.')[
+        \ len(neocomplete#helper#get_cur_text(1))+1 :], '^\S\+')
   if next == ''
     return a:context.candidates
   endif
@@ -57,7 +58,9 @@ function! s:converter.filter(context) "{{{
 
       let word = candidate.word
       let candidate.word = candidate.word[: -overlapped_len-1]
-      let neocomplete.overlapped_items[candidate.word] = word
+      if candidate.word != ''
+        let neocomplete.overlapped_items[candidate.word] = word
+      endif
       call add(candidates, candidate)
     elseif !neocomplete#is_auto_complete()
       call add(candidates, candidate)

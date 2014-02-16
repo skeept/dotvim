@@ -13,6 +13,11 @@ endif
 function! UltiSnips_FileTypeChanged()
 endfunction
 
+" Kludge to make sure that if the python module is loaded first, all of this
+" initialization in this file is indeed done.
+function! UltiSnips#EnsureAutoloadScriptWasRun()
+endfunction
+
 if !exists("g:UltiSnipsUsePythonVersion")
     let g:_uspy=":py3 "
     if !has("python3")
@@ -95,7 +100,7 @@ function! s:compensate_for_pum()
     """ to explicitly check for the presence of the popup menu, and update
     """ the vim-state accordingly.
     if pumvisible()
-        exec g:_uspy "UltiSnips_Manager.cursor_moved()"
+        exec g:_uspy "UltiSnips_Manager._cursor_moved()"
     endif
 endfunction
 
@@ -103,9 +108,9 @@ function! UltiSnips#Edit(...)
     if a:0 == 1 && a:1 != ''
         let type = a:1
     else
-        exec g:_uspy "vim.command(\"let type = '%s'\" % UltiSnips_Manager.primary_filetype)"
+        exec g:_uspy "vim.command(\"let type = '%s'\" % UltiSnips_Manager._primary_filetype)"
     endif
-    exec g:_uspy "vim.command(\"let file = '%s'\" % UltiSnips_Manager.file_to_edit(vim.eval(\"type\")))"
+    exec g:_uspy "vim.command(\"let file = '%s'\" % UltiSnips_Manager._file_to_edit(vim.eval(\"type\")))"
 
     let mode = 'e'
     if exists('g:UltiSnipsEditSplit')
@@ -207,7 +212,7 @@ function! UltiSnips#SnippetsInCurrentScope()
 endfunction
 
 function! UltiSnips#SaveLastVisualSelection()
-    exec g:_uspy "UltiSnips_Manager.save_last_visual_selection()"
+    exec g:_uspy "UltiSnips_Manager._save_last_visual_selection()"
     return ""
 endfunction
 
@@ -252,19 +257,15 @@ endfunction
 
 
 function! UltiSnips#CursorMoved()
-    exec g:_uspy "UltiSnips_Manager.cursor_moved()"
-endf
-
-function! UltiSnips#EnteredInsertMode()
-    exec g:_uspy "UltiSnips_Manager.entered_insert_mode()"
+    exec g:_uspy "UltiSnips_Manager._cursor_moved()"
 endf
 
 function! UltiSnips#LeavingBuffer()
-    exec g:_uspy "UltiSnips_Manager.leaving_buffer()"
+    exec g:_uspy "UltiSnips_Manager._leaving_buffer()"
 endf
 
 function! UltiSnips#LeavingInsertMode()
-    exec g:_uspy "UltiSnips_Manager.leaving_insert_mode()"
+    exec g:_uspy "UltiSnips_Manager._leaving_insert_mode()"
 endfunction
 " }}}
 
@@ -274,10 +275,6 @@ exec g:_uspy "new_path = os.path.abspath(os.path.join(
     \ vim.eval('expand(\"<sfile>:h\")'), '..', 'pythonx'))"
 exec g:_uspy "vim.command(\"let g:UltiSnipsPythonPath = '%s'\" % new_path)"
 exec g:_uspy "if not hasattr(vim, 'VIM_SPECIAL_PATH'): sys.path.append(new_path)"
-exec g:_uspy "from UltiSnips import SnippetManager"
-exec g:_uspy "UltiSnips_Manager = SnippetManager(
-    \ vim.eval('g:UltiSnipsExpandTrigger'),
-    \ vim.eval('g:UltiSnipsJumpForwardTrigger'),
-    \ vim.eval('g:UltiSnipsJumpBackwardTrigger'))"
+exec g:_uspy "from UltiSnips import UltiSnips_Manager"
 
 let did_UltiSnips_autoload=1

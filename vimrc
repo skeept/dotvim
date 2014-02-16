@@ -73,8 +73,9 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
-  VAMAddToActiveAddons gtags notes funky-ctrlp neocomplete
-  VAMAddToActiveAddons neosnippet argumentative
+  VAMAddToActiveAddons neocomplete argumentative gtags notes
+  VAMAddToActiveAddons UltiSnips-unite
+  VAMAddToActiveAddons UltiSnips-neocomplete
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
