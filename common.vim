@@ -481,7 +481,7 @@ let g:unite_abbr_highlight = 'TabLine'
 
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
-let g:unite_source_history_yank_enable = 1
+let g:unite_source_history_yank_enable = 0
 
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
