@@ -56,7 +56,10 @@ function! SetupVAM()
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
   exec 'set rtp+='.vam_install_path.'/vam'
-  let g:vim_addon_manager.additional_addon_dirs = [escape(expand(g:p0 . '/notused_plugins'), ' \')]
+  let g:vim_addon_manager.additional_addon_dirs = [
+        \ escape(expand(g:p0 . '/notused_plugins'), ' \'),
+        \ escape(expand(g:p0 . '/local_plugins'), ' \'),
+        \ ]
 
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
