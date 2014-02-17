@@ -1,10 +1,7 @@
-" World.vim -- The World prototype for tlib#input#List()
 " @Author:      Tom Link (micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Created:     2007-05-01.
-" @Last Change: 2014-01-22.
-" @Revision:    0.1.1354
+" @Revision:    1389
 
 " :filedoc:
 " A prototype used by |tlib#input#List|.
@@ -75,6 +72,7 @@ let s:prototype = tlib#Object#New({
             \ 'resize_vertical': 0,
             \ 'restore_from_cache': [],
             \ 'filtered_items': [],
+            \ 'resume_state': '', 
             \ 'retrieve_eval': '',
             \ 'return_agent': '',
             \ 'rv': '',
@@ -92,6 +90,7 @@ let s:prototype = tlib#Object#New({
             \ 'temp_prompt': [],
             \ 'timeout': 0,
             \ 'timeout_resolution': 2,
+            \ 'tabpagenr': -1,
             \ 'type': '', 
             \ 'win_wnr': -1,
             \ 'win_height': -1,
@@ -809,6 +808,7 @@ function! s:prototype.UseInputListScratch() dict "{{{3
     if !exists('b:tlib_list_init')
         call tlib#autocmdgroup#Init()
         autocmd TLib VimResized <buffer> call feedkeys("\<c-j>", 't')
+        " autocmd TLib WinLeave <buffer> let b:tlib_world_event = 'WinLeave' | call feedkeys("\<c-j>", 't')
         let b:tlib_list_init = 1
     endif
     if !exists('w:tlib_list_init')
@@ -968,16 +968,17 @@ function! s:prototype.DisplayHelp() dict "{{{3
     let self.temp_lines = self.InitHelp()
     call self.PushHelp('<Esc>', self.key_mode == 'default' ? 'Abort' : 'Reset keymap')
     call self.PushHelp('Enter, <cr>', 'Pick the current item')
-    call self.PushHelp('<M-Number>',  'Pick an item')
     call self.PushHelp('Mouse', 'L: Pick item, R: Show menu')
+    call self.PushHelp('<M-Number>',  'Select an item')
     call self.PushHelp('<BS>, <C-BS>', 'Reduce filter')
     call self.PushHelp('<S-Esc>, <F10>', 'Enter command')
 
     if self.key_mode == 'default'
-        call self.PushHelp('<C|M-r>',     'Reset the display')
+        call self.PushHelp('<C|M-r>',      'Reset the display')
         call self.PushHelp('Up/Down',      'Next/previous item')
-        call self.PushHelp('<C|M-q>',     'Edit top filter string')
+        call self.PushHelp('<C|M-q>',      'Edit top filter string')
         call self.PushHelp('Page Up/Down', 'Scroll')
+        call self.PushHelp('<S-Space>',    'Enter * Wildcard')
         if self.allow_suspend
             call self.PushHelp('<C|M-z>', 'Suspend/Resume')
             call self.PushHelp('<C-o>', 'Switch to origin')
@@ -1209,7 +1210,7 @@ function! s:prototype.Query() dict "{{{3
     if g:tlib_inputlist_shortmessage
         let query = 'Filter: '. self.DisplayFilter()
     else
-        let query = self.query .' (filter: '. self.DisplayFilter() .'; press "?" for help)'
+        let query = self.query .' (filter: '. self.DisplayFilter() .'; press <F1> for help)'
     endif
     return query
 endf
@@ -1281,6 +1282,9 @@ endf
 " :nodoc:
 function! s:prototype.SwitchWindow(where) dict "{{{3
     " TLogDBG string(tlib#win#List())
+    if self.tabpagenr != tabpagenr()
+        call tlib#tab#Set(self.tabpagenr)
+    endif
     let wnr = get(self, a:where.'_wnr')
     " TLogVAR self, wnr
     return tlib#win#Set(wnr)
@@ -1355,5 +1359,10 @@ function! s:prototype.RestoreOrigin(...) dict "{{{3
     exec 'buffer! '. self.bufnr
     call setpos('.', self.cursor)
     " TLogDBG "RestoreOrigin1 ". string(tlib#win#List())
+endf
+
+
+function! s:prototype.Suspend() dict "{{{3
+    call tlib#agent#Suspend(self, self.rv)
 endf
 

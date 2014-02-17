@@ -105,7 +105,7 @@ let g:vim_addon_manager = {}
   let g:vim_addon_manager.auto_install = 1
   let g:vim_addon_manager.log_to_buf = 1
 
-  \" activation is disabled manually enabling VAM-kr
+  \" activation is disabled manually enabling vim-pi
   exec 'set runtimepath+='.filter([\$HOME.'/.vim', \$HOME.'/vimfiles'],'isdirectory(v:val)')[0].'/vim-addons/vim-pi'
   " : "")."
 
@@ -182,7 +182,7 @@ $cmd = '
   mkdir -p .vim/vim-addons
   export PATH=/var/run/current-system/sw/bin
   git clone --depth 1 git://github.com/MarcWeber/vim-addon-manager.git .vim/vim-addons/vim-addon-manager
-  ( cd  vim-addon-manager; git chekout HEAD~20; )
+  # ( cd  vim-addon-manager; git chekout HEAD~20; )
   # git clone --depth 1 https://bitbucket.org/vimcommunity/vim-pi .vim/vim-addons/vim-pi
 
   export HOME=$dir

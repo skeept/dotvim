@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 07 Jan 2014.
+" Last Modified: 13 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -113,7 +113,7 @@ function! unite#mappings#define_default_mappings() "{{{
   inoremap <silent><buffer> <Plug>(unite_exit)
         \ <ESC>:<C-u>call <SID>exit()<CR>
   inoremap <silent><expr><buffer> <Plug>(unite_insert_leave)
-        \ "\<ESC>0".((line('.') <= unite#get_current_unite().prompt_linenr) ?
+        \ "\<ESC>0".((line('.') == unite#get_current_unite().prompt_linenr) ?
         \ (unite#get_current_unite().prompt_linenr+1)."G" : "")
         \ . ":call unite#redraw()\<CR>"
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_char)
@@ -225,6 +225,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ unite#smart_map('t', unite#do_action('tabopen'))
   nnoremap <silent><buffer><expr> yy
         \ unite#smart_map('yy', unite#do_action('yank'))
+  nnoremap <silent><buffer><expr> o
+        \ unite#smart_map('o', unite#do_action('open'))
 
   " Visual mode key-mappings.
   xmap <buffer> <Space>
@@ -264,12 +266,19 @@ function! unite#mappings#define_default_mappings() "{{{
         \ unite#do_action('tabopen')
   inoremap <silent><buffer><expr> <C-y>
         \ unite#do_action('yank')
+  inoremap <silent><buffer><expr> <C-o>
+        \ unite#do_action('open')
 endfunction"}}}
 
 function! unite#mappings#narrowing(word) "{{{
   setlocal modifiable
   let unite = unite#get_current_unite()
-  let unite.input = escape(a:word, ' *')
+
+  let unite.input = (empty(unite.args)
+        \ && unite.input =~ '^.\{-}\%(\\\@<!\s\)\+\zs.*') ?
+        \ matchstr(unite.input, '^.\{-}\%(\\\@<!\s\)\+') : ''
+
+  let unite.input .= escape(a:word, ' *')
   let prompt_linenr = unite.prompt_linenr
   call setline(prompt_linenr, unite.prompt . unite.input)
   call unite#redraw()
@@ -352,7 +361,7 @@ function! s:delete_backward_path() "{{{
         \      matchstr(getline('.'),
         \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
   let path = matchstr(cur_text[
-        \ len(unite#get_context().prompt):], '[^/]*.$')
+        \ len(unite#get_context().prompt):], '[^/ ]*.$')
   return repeat("\<C-h>", unite#util#strchars(path))
 endfunction"}}}
 function! s:normal_delete_backward_path() "{{{
@@ -361,7 +370,7 @@ function! s:normal_delete_backward_path() "{{{
   call setline(unite#get_current_unite().prompt_linenr,
         \ substitute(getline(unite#get_current_unite().prompt_linenr)[
         \    len(unite#get_current_unite().prompt):],
-        \                 '[^/]*.$', '', ''))
+        \                 '[^/ ]*.$', '', ''))
   call unite#redraw()
   let &l:modifiable = modifiable_save
 endfunction"}}}
@@ -477,7 +486,7 @@ function! s:rotate_source(is_next) "{{{
   call unite#view#_redraw_candidates()
 endfunction"}}}
 function! s:print_candidate() "{{{
-  if line('.') <= unite#get_current_unite().prompt_linenr
+  if line('.') == unite#get_current_unite().prompt_linenr
     " Ignore.
     return
   endif
@@ -495,7 +504,7 @@ function! s:print_message_log() "{{{
   endfor
 endfunction"}}}
 function! s:insert_selected_candidate() "{{{
-  if line('.') <= unite#get_current_unite().prompt_linenr
+  if line('.') == unite#get_current_unite().prompt_linenr
     " Ignore.
     return
   endif
@@ -558,7 +567,7 @@ function! s:loop_cursor_down(is_skip_not_matched) "{{{
   let is_insert = mode() ==# 'i'
   let prompt_linenr = unite#get_current_unite().prompt_linenr
 
-  if line('.') <= prompt_linenr && !is_insert
+  if line('.') == prompt_linenr && !is_insert
     return line('.') == line('$') &&
           \ empty(unite#get_unite_candidates()) ? '2G' : 'j'
   endif
@@ -574,7 +583,7 @@ function! s:loop_cursor_down(is_skip_not_matched) "{{{
 
   let num = line('.') - (prompt_linenr + 1)
   let cnt = 1
-  if line('.') <= prompt_linenr
+  if line('.') == prompt_linenr
     let cnt += prompt_linenr - line('.')
   endif
   if is_insert && line('.') == prompt_linenr
@@ -623,7 +632,7 @@ function! unite#mappings#loop_cursor_up_expr(is_skip_not_matched) "{{{
 
   let num = line('.') - (prompt_linenr + 1)
   let cnt = 1
-  if line('.') <= prompt_linenr
+  if line('.') == prompt_linenr
     let cnt += prompt_linenr - line('.')
   endif
   if is_insert && line('.') == prompt_linenr+2
@@ -692,7 +701,7 @@ function! s:disable_max_candidates() "{{{
   call s:redraw_all_candidates()
 endfunction"}}}
 function! s:narrowing_path() "{{{
-  if line('.') <= unite#get_current_unite().prompt_linenr
+  if line('.') == unite#get_current_unite().prompt_linenr
     " Ignore.
     return
   endif

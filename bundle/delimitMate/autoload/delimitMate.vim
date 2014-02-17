@@ -352,16 +352,17 @@ function! delimitMate#ParenDelim(right) " {{{
 	endif
 	let line = getline('.')
 	let col = col('.')-2
-	let tail = len(line) == (col + 1) ? s:g('eol_marker') : ''
-	let smart_matchpairs = substitute(s:g('smart_matchpairs'), '\\!', left, 'g')
-	let smart_matchpairs = substitute(smart_matchpairs, '\\#', a:right, 'g')
-
-	if s:g('smart_matchpairs') != '' &&
-				\ line[col+1:] =~ smart_matchpairs
-		return left
-	"elseif (col) < 0
-	"	call setline('.',a:right.line)
+	if s:g('smart_matchpairs') != ''
+		let smart_matchpairs = substitute(s:g('smart_matchpairs'), '\\!', left, 'g')
+		let smart_matchpairs = substitute(smart_matchpairs, '\\#', a:right, 'g')
+		if line[col+1:] =~ smart_matchpairs
+			return left
+		endif
 	endif
+	let tail = len(line) == (col + 1) ? s:g('eol_marker') : ''
+	"if (col) < 0
+	"	call setline('.',a:right.line)
+	"endif
 	return left . a:right . tail . repeat("\<Left>", len(split(tail, '\zs')) + 1)
 endfunction " }}}
 
@@ -382,9 +383,9 @@ function! delimitMate#QuoteDelim(char) "{{{
 	elseif char_at == a:char
 		" Inside an empty pair, jump out
 		return a:char . "\<Del>"
-	elseif &ft == "vim" && a:char == '"' && getline('.') =~ '^\s*$'
+	elseif a:char == '"' && index(split(&ft, '\.'), "vim") != -1 && getline('.') =~ '^\s*$'
 		" If we are in a vim file and it looks like we're starting a comment, do
-		" not add a second
+		" not add a closing char.
 		return a:char
 	elseif delimitMate#IsSmartQuote(a:char)
 		" Seems like a smart quote, insert a single char.

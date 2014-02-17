@@ -1,6 +1,6 @@
-*localvimrc.txt*             For Vim version 7.4    Last change: 2013 November 9
+*localvimrc.txt*             For Vim version 7.4    Last change: 2014 February 6
 
-localvimrc                 Version 2.2.0                     *localvimrc* *lvimrc*
+localvimrc                 Version 2.3.0                     *localvimrc* *lvimrc*
 
 |localvimrc-description|     Description
 |localvimrc-commands|        Commands
@@ -47,6 +47,27 @@ a local vimrc in the root directory of a project modify the behavior of
 
   let &l:makeprg="cd ".g:localvimrc_script_dir."/build && make"
 
+NOTE: This is only possible if you disable sandbox mode.
+
+Other variables provide a way to prevent multiple execution of commands. They
+can be used to implement guards:
+
+  " do stuff you want to do on every buffer enter event
+
+  " guard to end loading if it has been loaded for the currently edited file
+  if g:localvimrc_sourced_once_for_file
+    finish
+  endif
+
+  " do stuff you want to do only once for a edited file
+
+  " guard to end loading if it has been loaded for the running vim instance
+  if g:localvimrc_sourced_once
+    finish
+  endif
+
+  " do stuff you want to do only once for a running vim instance
+
 ------------------------------------------------------------------------------
 *g:localvimrc_file*
 
@@ -66,6 +87,18 @@ Fully qualified file name of the currently loaded local vimrc file.
 *g:localvimrc_script_dir*
 
 Fully qualified directory of the currently loaded local vimrc file.
+
+------------------------------------------------------------------------------
+*g:localvimrc_sourced_once*
+
+Set to "1" if the currently loaded local vimrc file had already been loaded in
+this session. Set to "0" otherwise.
+
+------------------------------------------------------------------------------
+*g:localvimrc_sourced_once_for_file*
+
+Set to "1" if the currently loaded local vimrc file had already been loaded in
+this session for the currently edited file. Set to "0" otherwise.
 
 ==============================================================================
 SETTINGS                                                   *localvimrc-settings*
@@ -127,9 +160,8 @@ Default: 1
 *g:localvimrc_persistent*
 
 Make the decisions given when asked before sourcing local vimrc files
-persistent over multiple vim runs. This is done by storing the decisions in
-viminfo. Therefore it is required to include the |viminfo-!| flag in your
-viminfo setting.
+persistent over multiple vim runs and instances. The decisions are written to
+the file defined by and |g:localvimrc_persistence_file|.
 
 Value    Description~
 0        Don't store and restore any decisions.
@@ -138,6 +170,15 @@ Value    Description~
 2        Store and restore all decisions.
 
 Default: 0
+
+------------------------------------------------------------------------------
+*g:localvimrc_persistence_file*
+
+Filename used for storing persistent decisions made when asked before sourcing
+local vimrc files.
+
+Default: "$HOME/.localvimrc_persistent" on Unix
+         "$HOME/_localvimrc_persistent" on MS-Windows
 
 ------------------------------------------------------------------------------
 *g:localvimrc_whitelist*
@@ -202,6 +243,12 @@ CREDITS                                                     *localvimrc-credits*
 
 ==============================================================================
 CHANGELOG                                                 *localvimrc-changelog*
+
+v2.3.0 : 2014-02-06
+  - private persistence file to enable persistence over concurrent vim
+    instances.
+  - add convenience variables g:localvimrc_sourced_once and
+    g:localvimrc_sourced_once_for_file.
 
 v2.2.0 : 2013-11-09
   - remove redraw calls for better performance and fixing a bug on windows.

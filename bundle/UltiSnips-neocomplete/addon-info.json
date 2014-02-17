@@ -1,0 +1,10 @@
+{
+    "name" : "ultisnips-Unite",
+    "author" : "Jorge Rodrigues (Skeept@github)",
+    "repository" : {"type": "git", "url": "git://github.com/skeept/Ultisnips-neocomplete.git"},
+    "dependencies" : {
+    "UltiSnips": {},
+    "neocomplete": {}
+  },
+    "description" : "list matching Ultisnips snippets"
+}

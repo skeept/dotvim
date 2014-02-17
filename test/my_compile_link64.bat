@@ -24,4 +24,3 @@ CPU=AMD64 WINVER=0x0601
 
 nmake -f Make_mvc.mak %VIM_CONFIG_OPTIONS% GUI=no %*
 nmake -f Make_mvc.mak %VIM_CONFIG_OPTIONS% GUI=yes %*
-

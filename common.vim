@@ -8,16 +8,16 @@
 set backspace=2
 set esckeys
 
-set autoindent          " always set autoindenting on
+set autoindent		" always set autoindenting on
 if 1 || !exists("g:is_vimrc_simple")
   set splitright          "split the window to the right
   set splitbelow          "open the window to the bottom
 endif
 
 set history=200
-set ruler               " show the cursor position all the time
-set showcmd             " display incomplete commands
-set incsearch           " do incremental searching
+set ruler		" show the cursor position all the time
+set showcmd		" display incomplete commands
+set incsearch		" do incremental searching
 set ignorecase
 "set smartcase
 set showmatch           " show matching parenthesis
@@ -48,7 +48,6 @@ set scrolloff=2 "kepp XX lines of contex when editing
 set clipboard+=unnamed " turns out I do like is sharing windows clipboard
 set wildmenu                    "wmnu:  enhanced ex command completion
 set wildmode=longest:full,list:full  "wim:   helps wildmenu auto-completion
-set wildignorecase
 cabbrev tabh tab help
 set nostartofline
 
@@ -79,7 +78,6 @@ endif
 set cot-=preview
 
 set viminfo=h,'100,<10000,s1000,/1000,:1000
-set path+=**
 
 set showtabline=0
 "set regexpengine=1
@@ -190,11 +188,6 @@ vnoremap aa VGo1G
 
 nnoremap <Leader>tc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
-
-" useful mapping to convert time, get the word under cursor and convert it to
-" regular date format
-nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
-      \ time.localtime(<C-R><C-w>))<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
@@ -445,7 +438,6 @@ noremap <Leader>tn :call ToggleRelativeNumber()<CR>
 "set relativenumber
 "==============================================================================}}}
 
-if 0 "unite not working to good these days... To bad :(
 "================== Unite ====================================================={{{
 function! UniteColorSchemeResume()
   if !exists("s:unite_init_colorscheme")
@@ -489,16 +481,17 @@ let g:unite_abbr_highlight = 'TabLine'
 
 " For optimize.
 let g:unite_source_file_mru_filename_format = ''
-let g:unite_source_history_yank_enable = 1
+let g:unite_source_history_yank_enable = 0
 
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
-        \ 'unite-tag', 'unite-colorscheme', 'unite-history'],
+	\ 'unite-tag', 'unite-colorscheme', 'unite-history',
+        \ 'UltiSnips-unite', 'UltiSnips-neocomplete'],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
-        \ buffer file_mru bookmark file<CR>
+	\ buffer file_mru bookmark file<CR>
   nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
-        \ -prompt=%\  buffer file_mru bookmark file<CR>
+	\ -prompt=%\  buffer file_mru bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
   nnoremap ,uf :<C-U>Unite source<CR>
@@ -573,7 +566,6 @@ else
 endif
 "}}}
 "==============================================================================}}}
-endif
 
 "================== Buffergator ==============================================={{{
 "nmap <silent> <Leader>bb :TSelectBuffer<CR>
@@ -728,8 +720,8 @@ let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
 let g:UltiSnipsEditSplit = "horizontal"
 
 "nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
-inoremap <F9> <C-R>=UltiSnips_JumpBackwards()<CR>
-snoremap <F9> <ESC>:call UltiSnips_JumpBackwards()<CR>
+inoremap <F9> <C-R>=UltiSnips#JumpBackwards()<CR>
+snoremap <F9> <ESC>:call UltiSnips#JumpBackwards()<CR>
 ""inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
 ""snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
 "inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
@@ -741,29 +733,29 @@ function! LoadUltisnips()
     if has("autocmd")
       augroup load_ulti
         autocmd!
-        autocmd FileType * call UltiSnips_FileTypeChanged()
+        autocmd FileType * call UltiSnips#FileTypeChanged()
         autocmd BufNewFile,BufRead *.snippets setf snippets
       augroup END
     endif
-    call UltiSnips_FileTypeChanged()
-    inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <NL> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
-    xnoremap <silent> <NL> :call UltiSnips_SaveLastVisualSelection()<CR>gvs
+    call UltiSnips#FileTypeChanged()
+    inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
+    snoremap <silent> <NL> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
+    xnoremap <silent> <NL> :call UltiSnips#SaveLastVisualSelection()<CR>gvs
 
-    inoremap <silent> <F10> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <F10> :call UltiSnips_ListSnippets()<CR>
-    snoremap <silent> <F10> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+    inoremap <silent> <F10> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+    nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
+    snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
     return 1
   else
     echom "vim compiled without python"
     return 0
   endif
 endfunction
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
-nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips_ListSnippets() \| endif<CR>
-inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips_ExpandSnippet():""<CR>
+nnoremap <F10> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 endif
 "==============================================================================}}}
 
@@ -1014,7 +1006,8 @@ augroup END
 "==============================================================================}}}
 
 "================== scrollbind mappings ======================================={{{
-nnoremap ,ss :windo set scrollbind!<CR>
+noremap ,sbt :windo set scrollbind<CR>
+noremap ,sbf :windo set noscrollbind<CR>
 "==============================================================================}}}
 
 "================== Fix shell=bash in windows ================================={{{

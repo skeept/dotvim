@@ -1,14 +1,14 @@
 snippet iter
-for(${1:vector}<${2:double}>::${3:iterator} ${4:itr}=${5:container}.begin(); $4 != $5.end(); ++$4)
+for( ${1:vector}<${2:double}>::${3:const_iterator} ${4:itr} = ${5:container}.begin(); $4 != $5.end(); ++$4 )
 {
-	${6}
+   ${6}
 }${0}
 endsnippet
 
 snippet ff "a for with int default"
-for(int ${1:i}=${2:0}; $1<${3:_N}; ${4:++}$1)
+for( int ${1:i}=${2:0}; $1 < ${3:_N}; ${4:++}$1 )
 {
-	${5}
+   ${5}
 }${0}
 endsnippet
 
