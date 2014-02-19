@@ -2,7 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" Last Modified: 18 Feb 2014.
+" Last Modified: 19 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -66,11 +66,6 @@ function! s:source.hooks.on_init(args, context) "{{{
     call unite#print_source_error(
           \ 'vimproc is not installed.', s:source.name)
     return
-  endif
-
-  if a:context.is_restart
-    let directory = unite#util#input('Target: ',
-          \ directory, 'dir', a:context.source_name)
   endif
 
   if type(get(a:args, 0, '')) == type([])

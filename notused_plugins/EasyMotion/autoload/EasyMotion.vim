@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 16 Feb 2014.
+" Last Change: 19 Feb 2014.
 "=============================================================================
 " Saving 'cpoptions' {{{
 scriptencoding utf-8
@@ -141,9 +141,9 @@ function! EasyMotion#T(num_strokes, visualmode, direction) " {{{
     if a:direction == 2
         let s:flag.bd_t = 1
     elseif a:direction == 1
-        let re = '\('.re.'\)\zs.'
+        let re = s:convert_t_regexp(re, 1) " backward
     else
-        let re = '.\ze\('.re.'\)'
+        let re = s:convert_t_regexp(re, 0) " forward
     endif
     call s:EasyMotion(re, a:direction, a:visualmode ? visualmode() : '', is_inclusive)
     return s:EasyMotion_is_cancelled
@@ -160,6 +160,12 @@ function! EasyMotion#WBW(visualmode, direction) " {{{
     call s:EasyMotion('\(\(^\|\s\)\@<=\S\|^$\)', a:direction, a:visualmode ? visualmode() : '', 0)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
+function! EasyMotion#WBK(visualmode, direction) " {{{
+    " vim's iskeyword style word motion
+    let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
+    call s:EasyMotion('\(\(\<\|\>\|\s\)\@<=\S\|^$\)', a:direction, a:visualmode ? visualmode() : '', 0)
+    return s:EasyMotion_is_cancelled
+endfunction " }}}
 function! EasyMotion#E(visualmode, direction) " {{{
     let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
     let is_inclusive = mode(1) ==# 'no' ? 1 : 0
@@ -170,6 +176,13 @@ function! EasyMotion#EW(visualmode, direction) " {{{
     let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
     let is_inclusive = mode(1) ==# 'no' ? 1 : 0
     call s:EasyMotion('\(\S\(\s\|$\)\|^$\)', a:direction, a:visualmode ? visualmode() : '', is_inclusive)
+    return s:EasyMotion_is_cancelled
+endfunction " }}}
+function! EasyMotion#EK(visualmode, direction) " {{{
+    " vim's iskeyword style word motion
+    let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
+    let is_inclusive = mode(1) ==# 'no' ? 1 : 0
+    call s:EasyMotion('\(\S\(\>\|\<\|\s\)\@=\|^$\)', a:direction, a:visualmode ? visualmode() : '', is_inclusive)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 " -- JK Motion ---------------------------
@@ -219,12 +232,12 @@ function! EasyMotion#TL(num_strokes, visualmode, direction) " {{{
 endfunction " }}}
 function! EasyMotion#WBL(visualmode, direction) " {{{
     let s:flag.within_line = 1
-    call EasyMotion#WB(a:visualmode, a:direction)
+    call EasyMotion#WBK(a:visualmode, a:direction)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 function! EasyMotion#EL(visualmode, direction) " {{{
     let s:flag.within_line = 1
-    call EasyMotion#E(a:visualmode, a:direction)
+    call EasyMotion#EK(a:visualmode, a:direction)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 function! EasyMotion#LineAnywhere(visualmode, direction) " {{{
@@ -531,6 +544,13 @@ function! s:should_use_smartsign(char) "{{{
         return 0
     endif
 endfunction "}}}
+function! s:convert_t_regexp(re, direction)
+    if a:direction == 0 "forward
+        return '\_.\ze\('.a:re.'\)'
+    elseif a:direction == 1 "backward
+        return '\('.a:re.'\)\@<=\_.'
+    endif
+endfunction
 
 function! s:handleEmpty(input, visualmode) "{{{
     " if empty, reselect and return 1
@@ -867,7 +887,9 @@ function! s:PromptUser(groups) "{{{
         if strlen(lines[line_num]['marker']) > 0
         " Substitute marker character if line length > 0
             let c = 0
-            while c < target_key_len && c < 2
+            let marker_max_length = g:EasyMotion_disable_two_key_combo == 1
+                                  \ ? 1 : 2
+            while c < target_key_len && c < marker_max_length
                 if strlen(lines[line_num]['marker']) >= col_num + c
                     " Substitute marker character if line length > 0
                     if c == 0
@@ -902,9 +924,11 @@ function! s:PromptUser(groups) "{{{
             call EasyMotion#highlight#add_highlight(
                 \ '\%' . line_num . 'l\%' . col_num . 'c',
                 \ g:EasyMotion_hl2_first_group_target)
-            call EasyMotion#highlight#add_highlight(
-                \ '\%' . line_num . 'l\%' . (col_num + 1) . 'c',
-                \ g:EasyMotion_hl2_second_group_target)
+            if g:EasyMotion_disable_two_key_combo != 1
+                call EasyMotion#highlight#add_highlight(
+                    \ '\%' . line_num . 'l\%' . (col_num + 1) . 'c',
+                    \ g:EasyMotion_hl2_second_group_target)
+            endif
         endif
         "}}}
 
@@ -1099,7 +1123,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
 
         " Handle bi-directional t motion {{{
         if s:flag.bd_t == 1
-            let regexp = '\('.a:regexp.'\)\zs.'
+            let regexp = s:convert_t_regexp(a:regexp, 1) "backward
         else
             let regexp = a:regexp
         endif
@@ -1135,7 +1159,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
         " Handle bidirection "{{{
         " For bi-directional t motion {{{
         if s:flag.bd_t == 1
-            let regexp = '.\ze\('.a:regexp.'\)'
+            let regexp = s:convert_t_regexp(a:regexp, 0) "forward
         endif
         "}}}
         " Reconstruct match dict
