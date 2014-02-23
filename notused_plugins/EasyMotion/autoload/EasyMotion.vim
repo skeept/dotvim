@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 20 Feb 2014.
+" Last Change: 22 Feb 2014.
 "=============================================================================
 " Saving 'cpoptions' {{{
 scriptencoding utf-8
@@ -258,7 +258,7 @@ endfunction " }}}
 " -- Repeat Motion -----------------------
 function! EasyMotion#Repeat(visualmode) " {{{
     " Repeat previous motion with previous targets
-    if s:previous ==# {}
+    if !has_key(s:previous, 'regexp')
         call s:Message("Previous targets doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -278,7 +278,7 @@ function! EasyMotion#Repeat(visualmode) " {{{
 endfunction " }}}
 function! EasyMotion#DotRepeat(visualmode) " {{{
     " Repeat previous '.' motion with previous targets and operator
-    if s:dot_repeat ==# {}
+    if !has_key(s:dot_repeat, 'regexp')
         call s:Message("Previous motion doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -301,7 +301,7 @@ function! EasyMotion#DotRepeat(visualmode) " {{{
 endfunction " }}}
 function! EasyMotion#NextPrevious(visualmode, direction) " {{{
     " Move next/previous destination using previous motion regexp
-    if s:previous ==# {}
+    if !has_key(s:previous, 'regexp')
         call s:Message("Previous targets doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -340,44 +340,25 @@ function! s:Prompt(message) " {{{
     echohl None
 endfunction " }}}
 " -- Save & Restore values ---------------
-function! s:VarReset(var, ...) " {{{
-    if ! exists('s:var_reset')
-        let s:var_reset = {}
-    endif
-
-    if a:0 == 0 && has_key(s:var_reset, a:var)
-        " Reset var to original value
-        " setbufbar( or bufname): '' or '%' can be used for the current buffer
-        call setbufvar("", a:var, s:var_reset[a:var])
-    elseif a:0 == 1
-        " Save original value and set new var value
-
-        let new_value = a:0 == 1 ? a:1 : ''
-
-        " Store original value
-        let s:var_reset[a:var] = getbufvar("", a:var)
-
-        " Set new var value
-        call setbufvar("", a:var, new_value)
-    endif
-endfunction " }}}
 function! s:SaveValue() "{{{
-    call s:VarReset('&scrolloff', 0)
-    call s:VarReset('&modified', 0)
-    call s:VarReset('&modifiable', 1)
-    call s:VarReset('&readonly', 0)
-    call s:VarReset('&spell', 0)
-    call s:VarReset('&virtualedit', '')
-    call s:VarReset('&foldmethod', 'manual')
+    if ! s:current.is_search
+        call EasyMotion#helper#VarReset('&scrolloff', 0)
+    endif
+    call EasyMotion#helper#VarReset('&modified', 0)
+    call EasyMotion#helper#VarReset('&modifiable', 1)
+    call EasyMotion#helper#VarReset('&readonly', 0)
+    call EasyMotion#helper#VarReset('&spell', 0)
+    call EasyMotion#helper#VarReset('&virtualedit', '')
+    call EasyMotion#helper#VarReset('&foldmethod', 'manual')
 endfunction "}}}
 function! s:RestoreValue() "{{{
-    call s:VarReset('&scrolloff')
-    call s:VarReset('&modified')
-    call s:VarReset('&modifiable')
-    call s:VarReset('&readonly')
-    call s:VarReset('&spell')
-    call s:VarReset('&virtualedit')
-    call s:VarReset('&foldmethod')
+    call EasyMotion#helper#VarReset('&scrolloff')
+    call EasyMotion#helper#VarReset('&modified')
+    call EasyMotion#helper#VarReset('&modifiable')
+    call EasyMotion#helper#VarReset('&readonly')
+    call EasyMotion#helper#VarReset('&spell')
+    call EasyMotion#helper#VarReset('&virtualedit')
+    call EasyMotion#helper#VarReset('&foldmethod')
 endfunction "}}}
 function! s:turn_off_hl_error() "{{{
     let s:error_hl = EasyMotion#highlight#capture('Error')
@@ -399,7 +380,7 @@ endfunction "}}}
 " -- Draw --------------------------------
 function! s:SetLines(lines, key) " {{{
     for [line_num, line] in a:lines
-        call setline(line_num, line[a:key])
+        keepjumps call setline(line_num, line[a:key])
     endfor
 endfunction " }}}
 " -- Get characters from user input ------
@@ -523,8 +504,7 @@ function! s:should_use_migemo(char) "{{{
         let end_line = line('w$')
     endif
 
-
-    " Skip folded line and check if text include multibyte haracters
+    " Skip folded line and check if text include multibyte characters
     for line in range(first_line, end_line)
         if EasyMotion#helper#is_folded(line)
             continue
@@ -798,7 +778,7 @@ function! s:CreateCoordKeyDict(groups, ...)
         let key = group_key . key
         "let key = ( ! empty(group_key) ? group_key : key)
 
-        if type(item) == 3 " List
+        if type(item) == type([]) " List
             " Destination coords
 
             " The key needs to be zero-padded in order to
@@ -1004,11 +984,11 @@ function! s:PromptUser(groups) "{{{
             " Break undo history (undobreak)
             let old_undolevels = &undolevels
             set undolevels=-1
-            call setline('.', getline('.'))
+            keepjumps call setline('.', getline('.'))
             let &undolevels = old_undolevels
             unlet old_undolevels
             " FIXME: Error occur by GundoToggle for undo number 2 is empty
-            call setline('.', getline('.'))
+            keepjumps call setline('.', getline('.'))
         endif "}}}
 
         redraw
@@ -1027,7 +1007,7 @@ function! s:PromptUser(groups) "{{{
 
     let target = a:groups[char]
 
-    if type(target) == 3
+    if type(target) == type([])
         " Return target coordinates
         return target
     else
@@ -1044,7 +1024,7 @@ function! s:DotPromptUser(groups) "{{{
 
     let target = a:groups[char]
 
-    if type(target) == 3
+    if type(target) == type([])
         " Return target coordinates
         return target
     else
