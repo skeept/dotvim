@@ -36,7 +36,7 @@ UltiSnips                                      *snippet* *snippets* *UltiSnips*
       4.7.1 Replacement String                  |UltiSnips-replacement-string|
       4.7.2 Demos                               |UltiSnips-demos|
    4.8 Clearing snippets                        |UltiSnips-clearing-snippets|
-5. Support for other plugins                    |UltiSnips-other-plugins|
+5. UltiSnips and Other Plugins                  |UltiSnips-other-plugins|
 6. Helping Out                                  |UltiSnips-helping|
 7. Contact                                      |UltiSnips-contact|
 8. Contributors                                 |UltiSnips-contributors|
@@ -180,7 +180,9 @@ g:UltiSnipsSnippetsDir
                             files are stored in. For example, if the variable
                             is set to "~/.vim/mydir/UltiSnips" and the current
                             'filetype' is "cpp", then :UltiSnipsEdit will open
-                            "~/.vim/mydir/UltiSnips/cpp.snippets".
+                            "~/.vim/mydir/UltiSnips/cpp.snippets". Note that
+                            directories named "snippets" are reserved for
+                            snipMate snippets and cannot be used.
 
                                                        *:UltiSnipsAddFiletypes*
 The UltiSnipsAddFiletypes command allows for explicit merging of other snippet
@@ -306,9 +308,10 @@ how UltiSnips loads snippets.
 Snippet definition files are stored in snippet directories. A snippet
 directory must be a subdirectory of a directory defined in the 'runtimepath'
 option. The variable g:UltiSnipsSnippetDirectories defines a list of names
-used for snippet directories. The default is shown below. >
+used for snippet directories. Note that "snippets" is reserved for snipMate
+snippets and cannot be used. The default is shown below. >
 
-   g:UltiSnipsSnippetDirectories          ["UltiSnips"]
+   let g:UltiSnipsSnippetDirectories=["UltiSnips"]
 
 UltiSnips will search each 'runtimepath' directory for the subdirectory names
 defined in g:UltiSnipsSnippetDirectories in the order they are defined. For
@@ -316,8 +319,8 @@ example, if you keep your snippets in a .vim subdirectory called
 "mycoolsnippets" and you want to make use of the default snippets that come
 with UltiSnips, add the following to your vimrc file. >
    let g:UltiSnipsSnippetDirectories=["UltiSnips", "mycoolsnippets"]
-If you do not want to use the snippets that come with UltiSnips, define the
-variable accordingly. >
+If you do not want to use the third party snippets that come with plugins,
+define the variable accordingly: >
    let g:UltiSnipsSnippetDirectories=["mycoolsnippets"]
 
 You can also redefine the search path on a buffer by buffer basis by setting
@@ -516,7 +519,7 @@ permitted in a snippet file, and they can be included anywhere in the file.
 A line beginning with the keyword 'priority' sets the priority for all
 snippets defined in the current file after this line. The default priority for
 a file is always 0. When a snippet should be expanded, UltiSnips will collect
-all snippet definitons from all sources that match the trigger and keep only
+all snippet definitions from all sources that match the trigger and keep only
 the ones with the highest priority. For example, all shipped snippets have a
 priority < 0, so that user defined snippets always overwrite shipped snippets.
 
@@ -1249,12 +1252,20 @@ snippets if you wish to replace them. Simply use the '!' option. (See
 
 
 ==============================================================================
-5. Support for other plugins             *UltiSnips-other-plugins*
+5. UltiSnips and Other Plugins                      *UltiSnips-other-plugins*
 
 UltiSnips has built-in support for some common plugins and there are others
 that are aware of UltiSnips and use it to improve the user experience. This is
 an incomplete list - if you want to have your plugin listed here, just sent me
 a pull request.
+
+                                                    *UltiSnips-snipMate*
+
+snipMate - UltiSnips is a drop in replacement for snipMate. It has many more
+features, so porting snippets is still a good idea, but switching has low
+friction now. UltiSnips is trying hard to truly emulate snipMate, for example
+recursive tabstops are not supported in snipMate snippets (but of course in
+UltiSnips snippets).
 
 YouCompleteMe - comes with out of the box completion support for UltiSnips. It
 offers a really nice completion dialogue for snippets.

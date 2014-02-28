@@ -4,7 +4,7 @@
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-06-30.
 " @Last Change: 2013-09-25.
-" @Revision:    0.1.230
+" @Revision:    0.1.231
 
 
 " The cache directory. If empty, use |tlib#dir#MyRuntime|.'/cache'.
@@ -88,7 +88,11 @@ function! tlib#cache#Filename(type, ...) "{{{3
     " TLogVAR file, dir, mkdir
     let cache_file = tlib#file#Join([dir, file])
     if len(cache_file) > g:tlib#cache#max_filename
-        let shortfilename = pathshorten(file) .'_'. tlib#hash#Adler32(file)
+        if v:version >= 704
+            let shortfilename = pathshorten(file) .'_'. sha256(file)
+        else
+            let shortfilename = pathshorten(file) .'_'. tlib#hash#Adler32(file)
+        endif
         let cache_file = tlib#cache#Filename(a:type, shortfilename, mkdir, dir0)
     else
         if mkdir && !isdirectory(dir)
@@ -130,14 +134,9 @@ endf
 " or does not exist, create it calling a generator function.
 function! tlib#cache#Value(cfile, generator, ftime, ...) "{{{3
     if !filereadable(a:cfile) || (a:ftime != 0 && getftime(a:cfile) < a:ftime)
-        if empty(a:generator) && a:0 >= 1
-            " TLogVAR a:1
-            let val = a:1
-        else
-            let args = a:0 >= 1 ? a:1 : []
-            " TLogVAR a:generator, args
-            let val = call(a:generator, args)
-        endif
+        let args = a:0 >= 1 ? a:1 : []
+        " TLogVAR a:generator, args
+        let val = call(a:generator, args)
         " TLogVAR val
         let cval = {'val': val}
         " TLogVAR cval
