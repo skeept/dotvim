@@ -1279,9 +1279,12 @@ let scm['vtd'] = {'type': 'git', 'url': 'git://github.com/chiphogg/vim-vtd'}
 " Tom McDonald
 let scm['vim-exchange'] = {'type': 'git', 'url': 'git://github.com/tommcdo/vim-exchange' }
 
-" its synced with bigger rust repository
-let scm['rust'] = {'type': 'git', 'url': 'https://github.com/wting/rust.vim'}
+" leaf
+let scm['moonscript'] = {'type': 'git', 'url': 'git://github.com/leafo/moonscript-vim'}
 
+" William Ting
+" its synced with bigger rust repository
+let scm['rust'] = {'type': 'git', 'url': 'git://github.com/wting/rust.vim'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
