@@ -72,6 +72,10 @@ def running_on_windows():
     if platform.system() == "Windows":
         return "Does not work on Windows."
 
+def python3():
+    if PYTHON3:
+        return "Test does not work on python3."
+
 def no_unidecode_available():
     if not UNIDECODE_IMPORTED:
         return "unidecode is not available."
@@ -86,12 +90,51 @@ def is_process_running(pid):
     else:
         return True
 
-def random_string(n):
-    return ''.join(random.choice(string.ascii_lowercase) for x in range(n))
-
 def silent_call(cmd):
     """Calls 'cmd' and returns the exit value."""
     return subprocess.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+def create_directory(dirname):
+    """Creates 'dirname' and its parents if it does not exist."""
+    try:
+        os.makedirs(dirname)
+    except OSError:
+        pass
+
+def plugin_cache_dir():
+    """The directory that we check out our bundles to."""
+    return os.path.join(tempfile.gettempdir(), "UltiSnips_test_vim_plugins")
+
+def clone_plugin(plugin):
+    """Clone the given plugin into our plugin directory."""
+    dirname = os.path.join(plugin_cache_dir(), os.path.basename(plugin))
+    print("Cloning %s -> %s" % (plugin, dirname))
+    if os.path.exists(dirname):
+        print("Skip cloning of %s. Already there." % plugin)
+        return
+    create_directory(dirname)
+    subprocess.call(["git", "clone", "--recursive",
+        "--depth", "1", "https://github.com/%s" % plugin, dirname])
+
+    if plugin == "Valloric/YouCompleteMe":
+        ## CLUTCH: this plugin needs something extra.
+        subprocess.call(os.path.join(dirname, "./install.sh"), cwd=dirname)
+
+def setup_other_plugins(all_plugins):
+    """Creates /tmp/UltiSnips_test_vim_plugins and clones all plugins into this."""
+    clone_plugin("tpope/vim-pathogen")
+    for plugin in all_plugins:
+        clone_plugin(plugin)
+
+def read_text_file(filename):
+    """Reads the contens of a text file."""
+    if PYTHON3:
+        return open(filename,"r", encoding="utf-8").read()
+    else:
+        return open(filename,"r").read()
+
+def random_string(n):
+    return ''.join(random.choice(string.ascii_lowercase) for x in range(n))
 
 class VimInterface(object):
     def get_buffer_data(self):
@@ -105,10 +148,7 @@ class VimInterface(object):
         tries = 50
         while tries:
             if os.path.exists(fn):
-                if PYTHON3:
-                    return open(fn,"r", encoding="utf-8").read()[:-1]
-                else:
-                    return open(fn,"r").read()[:-1]
+                return read_text_file(fn)[:-1]
             time.sleep(.01)
             tries -= 1
 
@@ -263,8 +303,10 @@ class _VimTest(unittest.TestCase):
     keys = ""
     sleeptime = 0.00
     output = ""
+    plugins = []
     # Skip this test for the given reason or None for not skipping it.
     skip_if = lambda self: None
+    version = None  # Will be set to vim --version output
 
     def runTest(self):
         # Only checks the output. All work is done in setUp().
@@ -280,9 +322,11 @@ class _VimTest(unittest.TestCase):
                 self.setUp()
         self.assertEqual(self.output, wanted)
 
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         """Adds extra lines to the vim_config list."""
-        pass
+
+    def _extra_options_post_init(self, vim_config):
+        """Adds extra lines to the vim_config list."""
 
     def _before_test(self):
         """Send these keys before the test runs. Used for buffer local
@@ -293,10 +337,7 @@ class _VimTest(unittest.TestCase):
         """Creates a file in the runtimepath that is created for this test.
         Returns the absolute path to the file."""
         abs_path = os.path.join(self._temporary_directory, *file_path.split("/"))
-        try:
-            os.makedirs(os.path.dirname(abs_path))
-        except OSError:
-            pass
+        create_directory(os.path.dirname(abs_path))
 
         content = dedent(content + "\n")
         if PYTHON3:
@@ -307,7 +348,21 @@ class _VimTest(unittest.TestCase):
                 file_handle.write(content)
         return abs_path
 
+    def _link_file(self, source, relative_destination):
+        """Creates a link from 'source' to the 'relative_destination' in our temp dir."""
+        absdir = os.path.join(self._temporary_directory, relative_destination)
+        create_directory(absdir)
+        os.symlink(source, os.path.join(absdir, os.path.basename(source)))
+
     def setUp(self):
+        if not _VimTest.version:
+            _VimTest.version, _ = subprocess.Popen(["vim", "--version"],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            if PYTHON3:
+                _VimTest.version = _VimTest.version.decode("utf-8")
+
+        if self.plugins and not self.test_plugins:
+            return self.skipTest("Not testing integration with other plugins.")
         reason_for_skipping = self.skip_if()
         if reason_for_skipping is not None:
             return self.skipTest(reason_for_skipping)
@@ -315,13 +370,22 @@ class _VimTest(unittest.TestCase):
         self._temporary_directory = tempfile.mkdtemp(prefix="UltiSnips_Test")
 
         vim_config = []
-        # Vim parameters.
         vim_config.append('set nocompatible')
+        vim_config.append('set runtimepath=$VIMRUNTIME,.,%s' % self._temporary_directory)
+
+        if self.plugins:
+            self._link_file(os.path.join(plugin_cache_dir(), "vim-pathogen", "autoload"), ".")
+            for plugin in self.plugins:
+                self._link_file(os.path.join(plugin_cache_dir(), os.path.basename(plugin)), "bundle")
+            vim_config.append("execute pathogen#infect()")
+
+        # Vim parameters.
+        vim_config.append('syntax on')
+        vim_config.append('filetype plugin indent on')
         vim_config.append('set clipboard=""')
         vim_config.append('set encoding=utf-8')
         vim_config.append('set fileencoding=utf-8')
         vim_config.append('set buftype=nofile')
-        vim_config.append('set runtimepath=$VIMRUNTIME,.,%s' % self._temporary_directory)
         vim_config.append('set shortmess=at')
         vim_config.append('let g:UltiSnipsExpandTrigger="<tab>"')
         vim_config.append('let g:UltiSnipsJumpForwardTrigger="?"')
@@ -329,10 +393,13 @@ class _VimTest(unittest.TestCase):
         vim_config.append('let g:UltiSnipsListSnippets="@"')
         vim_config.append('let g:UltiSnipsUsePythonVersion="%i"' % (3 if PYTHON3 else 2))
         vim_config.append('let g:UltiSnipsSnippetDirectories=["us"]')
-        vim_config.append('filetype plugin on')
+
+        self._extra_options_pre_init(vim_config)
 
         # Now activate UltiSnips.
-        vim_config.append('so plugin/UltiSnips.vim')
+        vim_config.append('call UltiSnips#bootstrap#Bootstrap()')
+
+        self._extra_options_post_init(vim_config)
 
         # Finally, add the snippets and some configuration for the test.
         vim_config.append("%s << EOF" % ("py3" if PYTHON3 else "py"))
@@ -367,8 +434,6 @@ class _VimTest(unittest.TestCase):
 
         # End of python stuff.
         vim_config.append("EOF")
-
-        self._extra_options(vim_config)
 
         for name, content in self.files.items():
             self._create_file(name, content)
@@ -632,7 +697,7 @@ class SimpleExpandTwice_ExpectCorrectResult(_SimpleExpands):
 class SimpleExpandNewLineAndBackspae_ExpectCorrectResult(_SimpleExpands):
     keys = "hallo" + EX + "\nHallo Welt!\n\n\b\b\b\b\b"
     wanted = "Hallo Welt!\nHallo We"
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set backspace=eol,start")
 
 class SimpleExpandTypeAfterExpand_ExpectCorrectResult(_SimpleExpands):
@@ -1151,7 +1216,7 @@ i0
 	End"""
 
 class PythonCode_IndentEtSw(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set expandtab")
     snippets = ("test", r"""hi
@@ -1173,7 +1238,7 @@ i0
    End"""
 
 class PythonCode_IndentEtSwOffset(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set expandtab")
     snippets = ("test", r"""hi
@@ -1195,7 +1260,7 @@ End""")
     End"""
 
 class PythonCode_IndentNoetSwTs(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set ts=4")
     snippets = ("test", r"""hi
@@ -1218,7 +1283,7 @@ i0
 
 # Test using 'opt'
 class PythonCode_OptExists(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append('let g:UStest="yes"')
     snippets = ("test", r"""hi `!p snip.rv = snip.opt("g:UStest") or "no"` End""")
     keys = """test""" + EX
@@ -2236,31 +2301,31 @@ class No_Tab_Expand_Leading_Tabs(_No_Tab_Expand):
     keys = "\ttest" + EX
     wanted = "\t\t\tExpand\tme!\t"
 class No_Tab_Expand_No_TS(_No_Tab_Expand):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set sts=3")
     keys = "test" + EX
     wanted = "\t\tExpand\tme!\t"
 class No_Tab_Expand_ET(_No_Tab_Expand):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set expandtab")
     keys = "test" + EX
     wanted = "\t\tExpand\tme!\t"
 class No_Tab_Expand_ET_Leading_Spaces(_No_Tab_Expand):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set expandtab")
     keys = "  test" + EX
     wanted = "  \t\tExpand\tme!\t"
 class No_Tab_Expand_ET_SW(_No_Tab_Expand):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=8")
         vim_config.append("set expandtab")
     keys = "test" + EX
     wanted = "\t\tExpand\tme!\t"
 class No_Tab_Expand_ET_SW_TS(_No_Tab_Expand):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set sts=3")
         vim_config.append("set ts=3")
@@ -2283,7 +2348,7 @@ snip.rv = repr(snip.rv)
 End""")
 
 class No_Tab_Expand_RealWorld(_TabExpand_RealWorld,_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set noexpandtab")
     keys = "\t\thi" + EX
     wanted = """\t\thi
@@ -2404,7 +2469,7 @@ class MultiWord_SnippetOptions_ExpandWordSnippets_ExpandSuffix(
 # Anonymous Expansion  {{{#
 class _AnonBase(_VimTest):
     args = ""
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("inoremap <silent> %s <C-R>=UltiSnips#Anon(%s)<cr>"
                 % (EA, self.args))
 
@@ -2455,7 +2520,7 @@ class Anon_Trigger_Opts(_AnonBase):
 # AddSnippet Function  {{{#
 class _AddFuncBase(_VimTest):
     args = ""
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append(":call UltiSnips#AddSnippetWithPriority(%s)" %
                 self.args)
 
@@ -2472,7 +2537,7 @@ class AddFunc_Opt(_AddFuncBase):
 
 # ExpandTab  {{{#
 class _ExpandTabs(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set sw=3")
         vim_config.append("set expandtab")
 
@@ -2495,8 +2560,8 @@ class RecTabStopsWithExpandtab_SpecialIndentProblem_ECR(_ExpandTabs):
     )
     keys = "m" + EX + "m1" + EX + '\nHallo'
     wanted = "   Something\n        Hallo"
-    def _extra_options(self, vim_config):
-        _ExpandTabs._extra_options(self, vim_config)
+    def _extra_options_pre_init(self, vim_config):
+        _ExpandTabs._extra_options_pre_init(self, vim_config)
         vim_config.append("set indentkeys=o,O,*<Return>,<>>,{,}")
         vim_config.append("set indentexpr=8")
 # End: ExpandTab  #}}}
@@ -2513,7 +2578,7 @@ class ProperIndenting_AutoIndentAndNewline_ECR(_VimTest):
     snippets = ("test", "hui")
     keys = "    test" + EX + "\n"+ "blah"
     wanted = "    hui\n    blah"
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set autoindent")
 # Test for bug 1073816
 class ProperIndenting_FirstLineInFile_ECR(_VimTest):
@@ -2544,7 +2609,7 @@ class ProperIndenting_FirstLineInFileComplete_ECR(ProperIndenting_FirstLineInFil
 # End: Proper Indenting  #}}}
 # Format options tests  {{{#
 class _FormatoptionsBase(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set tw=20")
         vim_config.append("set fo=lrqntc")
 
@@ -2608,7 +2673,7 @@ $0""")
 and a mirror: hi1
 hi2...hi3
 hi4"""
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set langmap=dj,rk,nl,ln,jd,kr,DJ,RK,NL,LN,JD,KR")
 
 # Test for https://bugs.launchpad.net/bugs/501727 #
@@ -2656,7 +2721,7 @@ class _SelectModeMappings(_VimTest):
     do_unmapping = True
     ignores = []
 
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append(":let g:UltiSnipsRemoveSelectModeMappings=%i" % int(self.do_unmapping))
         vim_config.append(":let g:UltiSnipsMappingsToIgnore=%s" % repr(self.ignores))
 
@@ -2698,7 +2763,7 @@ class SelectModeMappings_BufferLocalMappings_ECR(_SelectModeMappings):
 # End: Unmap SelectMode Mappings  #}}}
 # Folding Interaction  {{{#
 class FoldingEnabled_SnippetWithFold_ExpectNoFolding(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set foldlevel=0")
         vim_config.append("set foldmethod=marker")
     snippets = ("test", r"""Hello {{{
@@ -2723,7 +2788,7 @@ class Fold_DeleteMiddleLine_ECR(_VimTest):
     wanted = "# hi  {{{\n\n# End: hi  }}}"
 
 class PerlSyntaxFold(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set foldlevel=0")
         vim_config.append("syntax enable")
         vim_config.append("set foldmethod=syntax")
@@ -2753,7 +2818,7 @@ class CursorMovement_Multiline_ECR(_VimTest):
     wanted = "this is something\nvery nice\nnot " \
             "this is something\nvery nice\nnotmore text"
 class CursorMovement_BS_InEditMode(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set backspace=eol,indent,start")
     snippets = ("<trh", "<tr>\n\t<th>$1</th>\n\t$2\n</tr>\n$3")
     keys = "<trh" + EX + "blah" + JF + BS + BS + JF + "end"
@@ -3048,7 +3113,7 @@ class Snippet_With_Umlauts_Python(_UmlautsBase):
 # End: Umlauts and Special Chars  #}}}
 # Exclusive Selection  {{{#
 class _ES_Base(_VimTest):
-    def _extra_options(self, vim_config):
+    def _extra_options_pre_init(self, vim_config):
         vim_config.append("set selection=exclusive")
 class ExclusiveSelection_SimpleTabstop_Test(_ES_Base):
     snippets = ("test", "h${1:blah}w $1")
@@ -3204,9 +3269,7 @@ snippet test1
     keys = "test" + EX
     wanted = "blub\n\nblah\n"
 # End: snipMate support  #}}}
-
-
-
+# SnippetsInCurrentScope  {{{#
 class VerifyVimDict1(_VimTest):
     """check:
     correct type (4 means vim dictionary)
@@ -3241,6 +3304,102 @@ class VerifyVimDict3(_VimTest):
     akey = '"te{}stâ"'.format("'")
     keys = ("te'=(UltiSnips#SnippetsInCurrentScope()[{}]".format(akey) + ')\n')
     wanted = "te'123êabc"
+# End: SnippetsInCurrentScope  #}}}
+# Snippet Source  {{{#
+class AddNewSnippetSource(_VimTest):
+    keys = ( "blumba" + EX + ESC +
+      ":%(python)s UltiSnips_Manager.register_snippet_source(" +
+          "'temp', MySnippetSource())\n" +
+      "oblumba" + EX + ESC +
+      ":%(python)s UltiSnips_Manager.unregister_snippet_source('temp')\n" +
+      "oblumba" + EX ) % { 'python': 'py3' if PYTHON3 else 'py' }
+    wanted = (
+      "blumba" + EX + "\n" +
+      "this is a dynamic snippet" + "\n" +
+      "blumba" + EX
+    )
+
+    def _extra_options_post_init(self, vim_config):
+        self._create_file("snippet_source.py","""
+from UltiSnips.snippet.source import SnippetSource
+from UltiSnips.snippet.definition import UltiSnipsSnippetDefinition
+
+class MySnippetSource(SnippetSource):
+  def get_snippets(self, filetypes, before, possible):
+    if before.endswith('blumba'):
+      return [
+          UltiSnipsSnippetDefinition(
+              -100, "blumba", "this is a dynamic snippet", "", "", {})
+        ]
+    return []
+""")
+        pyfile = 'py3file' if PYTHON3 else 'pyfile'
+        vim_config.append("%s %s" % (pyfile, os.path.join(
+            self._temporary_directory, "snippet_source.py")))
+# End: Snippet Source  #}}}
+
+# Plugin: YouCompleteMe  {{{#
+class YouCompleteMe_IntegrationTest(_VimTest):
+    def skip_if(self):
+        r = python3()
+        if r:
+            return r
+        if "7.4" not in self.version:
+            return "Needs Vim 7.4."
+    plugins = ["Valloric/YouCompleteMe"]
+    snippets = ("superlongtrigger", "Hello")
+    keys = "superlo\ty"
+    wanted = "Hello"
+
+    def _extra_options_pre_init(self, vim_config):
+        # Not sure why, but I need to make a new tab for this to work.
+        vim_config.append('let g:UltiSnipsExpandTrigger="y"')
+        vim_config.append('tabnew')
+
+    def _before_test(self):
+        self.vim.send(":set ft=python\n")
+        # Give ycm a chance to catch up.
+        time.sleep(1)
+# End: Plugin: YouCompleteMe  #}}}
+# Plugin: Neocomplete {{{#
+class Neocomplete_BugTest(_VimTest):
+    # Test for https://github.com/SirVer/ultisnips/issues/228
+    def skip_if(self):
+        if "+lua" not in self.version:
+            return "Needs +lua"
+    plugins = ["Shougo/neocomplete.vim"]
+    snippets = ("t", "Hello", "", "w")
+    keys = "iab\\ t" + EX
+    wanted = "iab\\ Hello"
+
+    def _extra_options_pre_init(self, vim_config):
+        vim_config.append(r'set iskeyword+=\\ ')
+        vim_config.append('let g:neocomplete#enable_at_startup = 1')
+        vim_config.append('let g:neocomplete#enable_smart_case = 1')
+        vim_config.append('let g:neocomplete#enable_camel_case = 1')
+        vim_config.append('let g:neocomplete#enable_auto_delimiter = 1')
+        vim_config.append('let g:neocomplete#enable_refresh_always = 1')
+# End: Plugin: Neocomplete  #}}}
+# Plugin: Supertab {{{#
+class SuperTab_SimpleTest(_VimTest):
+    plugins = ["ervandew/supertab"]
+    snippets = ("long", "Hello", "", "w")
+    keys = ( "longtextlongtext\n" +
+        "longt" + EX + "\n" +  # Should complete word
+        "long" + EX )  # Should expand
+    wanted = "longtextlongtext\nlongtextlongtext\nHello"
+
+    def _before_test(self):
+        # Make sure that UltiSnips has the keymap
+        self.vim.send(":call UltiSnips#map_keys#MapKeys()\n")
+
+    def _extra_options_post_init(self, vim_config):
+        assert EX == "\t"  # Otherwise this test needs changing.
+        vim_config.append('let g:SuperTabDefaultCompletionType = "<c-p>"')
+        vim_config.append('let g:SuperTabRetainCompletionDuration = "insert"')
+        vim_config.append('let g:SuperTabLongestHighlight = 1')
+        vim_config.append('let g:SuperTabCrMapping = 0')
+# End: Plugin: Supertab   #}}}
 
 ###########################################################################
 #                               END OF TEST                               #
@@ -3255,10 +3414,14 @@ if __name__ == '__main__':
         p = optparse.OptionParser("%prog [OPTIONS] <test case names to run>")
 
         p.set_defaults(session="vim", interrupt=False,
-                verbose=False, interface="screen", retries=4)
+                verbose=False, interface="screen", retries=4, plugins=False)
 
         p.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="print name of tests as they are executed")
+        p.add_option("--clone-plugins", action="store_true",
+            help="Only clones dependant plugins and exits the test runner.")
+        p.add_option("--plugins", action="store_true",
+            help="Run integration tests with other Vim plugins.")
         p.add_option("--interface", type=str,
                 help="interface to vim to use on Mac and or Linux [screen|tmux].")
         p.add_option("-s", "--session", dest="session",  metavar="SESSION",
@@ -3280,38 +3443,51 @@ if __name__ == '__main__':
 
         return o, args
 
-    options,selected_tests = parse_args()
+    def main():
+        options,selected_tests = parse_args()
 
-    test_loader = unittest.TestLoader()
-    all_test_suites = test_loader.loadTestsFromModule(__import__("test"))
+        test_loader = unittest.TestLoader()
+        all_test_suites = test_loader.loadTestsFromModule(__import__("test"))
 
-    if platform.system() == "Windows":
-        raise RuntimeError("TODO: TestSuite is broken under windows. Volunteers wanted!.")
-        # vim = VimInterfaceWindows()
-        vim.focus()
-    else:
-        if options.interface == "screen":
-            vim = VimInterfaceScreen(options.session)
-        elif options.interface == "tmux":
-            vim = VimInterfaceTmux(options.session)
+        vim = None
+        if not options.clone_plugins:
+            if platform.system() == "Windows":
+                raise RuntimeError("TODO: TestSuite is broken under windows. Volunteers wanted!.")
+                # vim = VimInterfaceWindows()
+                vim.focus()
+            else:
+                if options.interface == "screen":
+                    vim = VimInterfaceScreen(options.session)
+                elif options.interface == "tmux":
+                    vim = VimInterfaceTmux(options.session)
 
-    # Inform all test case which screen session to use
-    suite = unittest.TestSuite()
-    for s in all_test_suites:
-        for test in s:
-            test.vim = vim
-            test.interrupt = options.interrupt
-            test.retries = options.retries
-            if len(selected_tests):
-                id = test.id().split('.')[1]
-                if not any([ id.startswith(t) for t in selected_tests ]):
-                    continue
-            suite.addTest(test)
+        suite = unittest.TestSuite()
+        all_other_plugins = set()
+        for s in all_test_suites:
+            for test in s:
+                test.interrupt = options.interrupt
+                test.retries = options.retries
+                test.test_plugins = options.plugins
+                test.vim = vim
+                all_other_plugins.update(test.plugins)
 
-    if options.verbose:
-        v = 2
-    else:
-        v = 1
-    res = unittest.TextTestRunner(verbosity=v).run(suite)
+                if len(selected_tests):
+                    id = test.id().split('.')[1]
+                    if not any([ id.startswith(t) for t in selected_tests ]):
+                        continue
+                suite.addTest(test)
+
+        if options.plugins or options.clone_plugins:
+            setup_other_plugins(all_other_plugins)
+            if options.clone_plugins:
+                return
+
+        if options.verbose:
+            v = 2
+        else:
+            v = 1
+        res = unittest.TextTestRunner(verbosity=v).run(suite)
+
+    main()
 
 # vim:fileencoding=utf-8:foldmarker={{{#,#}}}:
