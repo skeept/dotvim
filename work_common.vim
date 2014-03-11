@@ -68,7 +68,6 @@ EOF
     " try writting text after current word
     let @u = " " . g:echoOrPrintTimeSettingTime
     normal he"up
-    "put u
   endif
   echo g:echoOrPrintTimeSettingTime
 endfunction

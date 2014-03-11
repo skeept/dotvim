@@ -867,7 +867,7 @@ except:
 EOF
 
     if s:has_jedi == 1
-      let g:jedi#show_function_definition = "0"
+      let g:jedi#show_call_signatures = "0"
       ActivateAddons jedi-vim
       setlocal omnifunc=jedi#complete
     else
