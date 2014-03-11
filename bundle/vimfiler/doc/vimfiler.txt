@@ -362,8 +362,16 @@ g:vimfiler_ignore_pattern			 *g:vimfiler_ignore_pattern*
 						*g:vimfiler_draw_files_limit*
 g:vimfiler_draw_files_limit
 		Specify the limit of redraw files.
+		If it is less than equal 0, this feature is disabled.
 
 		Default value is 0.
+
+						*g:vimfiler_min_cache_files*
+g:vimfiler_min_cache_files
+		Specify the minimum number of files that vimfiler saves the
+		caches.
+
+		Default value is 100.
 
 SOURCES VARIABLES 				*vimfiler-sources-variables*
 
@@ -1157,7 +1165,7 @@ A:
 >
 	:VimFilerExplorer -find
 <
-Q: I cannot open the file contained ":" if enabled
+Q: I cannot open the file not contained ":" if enabled
 g:vimfiler_as_default_explorer.
 
 A: It is feature now.

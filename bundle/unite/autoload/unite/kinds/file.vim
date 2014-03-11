@@ -894,6 +894,7 @@ function! unite#kinds#file#do_rename(old_filename, new_filename) "{{{
       noautocmd execute 'buffer' bufnr
       execute 'saveas!' fnameescape(new_filename)
       noautocmd execute 'buffer' bufnr_save
+      silent! execute 'bdelete!' fnameescape(old_filename)
       silent! call delete(old_filename)
     elseif rename(old_filename, new_filename)
       call unite#print_error(

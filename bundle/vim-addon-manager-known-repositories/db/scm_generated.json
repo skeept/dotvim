@@ -1127,6 +1127,10 @@
     "type": "git",
     "url": "git://github.com/ujihisa/unite-locate"
   },
+  "3334": {
+    "type": "git",
+    "url": "git://github.com/orthecreedence/void.vim"
+  },
   "3339": {
     "type": "git",
     "url": "git://github.com/tangledhelix/vim-rdist"
@@ -2351,6 +2355,10 @@
     "type": "git",
     "url": "git://github.com/megaannum/colorschemer"
   },
+  "4241": {
+    "type": "git",
+    "url": "git://github.com/kenng/vim-bettersearch"
+  },
   "4244": {
     "type": "git",
     "url": "git://github.com/gokcehan/vim-yacom"
@@ -2798,6 +2806,10 @@
   "4496": {
     "type": "git",
     "url": "git://github.com/sangwich/colorful-statusline"
+  },
+  "4497": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/git-support"
   },
   "4499": {
     "type": "git",
@@ -3535,6 +3547,10 @@
     "type": "git",
     "url": "git://github.com/guns/vim-clojure-highlight"
   },
+  "4834": {
+    "type": "git",
+    "url": "git://github.com/suxpert/vimcaps"
+  },
   "4836": {
     "type": "git",
     "url": "git@github.com:markgandolfo/nerdtree-wget.vim.git"
@@ -3594,6 +3610,54 @@
   "4865": {
     "type": "git",
     "url": "git://github.com/AndrewRadev/writable_search.vim"
+  },
+  "4867": {
+    "type": "git",
+    "url": "git://github.com/zardus/fuckpep8"
+  },
+  "4868": {
+    "type": "git",
+    "url": "git://github.com/gcmt/wildfire.vim"
+  },
+  "4869": {
+    "type": "git",
+    "url": "git://github.com/jcorbin/vim-searchmatch"
+  },
+  "4872": {
+    "type": "git",
+    "url": "git://github.com/stevensons/vim-decfile"
+  },
+  "4874": {
+    "type": "git",
+    "url": "git://github.com/Yggdroot/LeaderF"
+  },
+  "4877": {
+    "type": "git",
+    "url": "git://github.com/glts/vim-magnum"
+  },
+  "4878": {
+    "type": "git",
+    "url": "git://github.com/justindomingue/Abridge"
+  },
+  "4879": {
+    "type": "git",
+    "url": "git://github.com/tell-k/vim-autoflake"
+  },
+  "4880": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-columnmove"
+  },
+  "4881": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-patternjump"
+  },
+  "4883": {
+    "type": "git",
+    "url": "git://github.com/zweifisch/pipe2eval"
+  },
+  "4884": {
+    "type": "git",
+    "url": "git://github.com/FelikZ/ctrlp-py-matcher"
   },
   "521": {
     "type": "git",

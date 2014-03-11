@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: t/easymotion_spec.vim
 " AUTHOR: haya14busa
-" Last Change: 12 Feb 2014.
+" Last Change: 22 Feb 2014.
 " Test: https://github.com/kana/vim-vspec
 " Refer: https://github.com/rhysd/clever-f.vim
 " Description: EasyMotion test with vim-vspec
@@ -242,6 +242,18 @@ describe 'Default settings'
         Expect maparg('<Plug>(easymotion-bd-W)', 'v') ==# '<Esc>:<C-U>call EasyMotion#WBW(1,2)<CR>'
         " }}}
 
+        " Word Motion IsKeyWord: {{{
+        Expect maparg('<Plug>(easymotion-iskeyword-w)', 'n') ==# ':<C-U>call EasyMotion#WBK(0,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-w)', 'o') ==# ':<C-U>call EasyMotion#WBK(0,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-w)', 'v') ==# '<Esc>:<C-U>call EasyMotion#WBK(1,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-b)', 'n') ==# ':<C-U>call EasyMotion#WBK(0,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-b)', 'o') ==# ':<C-U>call EasyMotion#WBK(0,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-b)', 'v') ==# '<Esc>:<C-U>call EasyMotion#WBK(1,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-w)', 'n') ==# ':<C-U>call EasyMotion#WBK(0,2)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-w)', 'o') ==# ':<C-U>call EasyMotion#WBK(0,2)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-w)', 'v') ==# '<Esc>:<C-U>call EasyMotion#WBK(1,2)<CR>'
+        " }}}
+
         " End Of Word Motion: {{{
         Expect maparg('<Plug>(easymotion-e)', 'n')    ==# ':<C-U>call EasyMotion#E(0,0)<CR>'
         Expect maparg('<Plug>(easymotion-e)', 'o')    ==# ':<C-U>call EasyMotion#E(0,0)<CR>'
@@ -264,6 +276,18 @@ describe 'Default settings'
         Expect maparg('<Plug>(easymotion-bd-E)', 'n') ==# ':<C-U>call EasyMotion#EW(0,2)<CR>'
         Expect maparg('<Plug>(easymotion-bd-E)', 'o') ==# ':<C-U>call EasyMotion#EW(0,2)<CR>'
         Expect maparg('<Plug>(easymotion-bd-E)', 'v') ==# '<Esc>:<C-U>call EasyMotion#EW(1,2)<CR>'
+        " }}}
+
+        " End Of Word Motion IsKeyWord: {{{
+        Expect maparg('<Plug>(easymotion-iskeyword-e)', 'n')    ==# ':<C-U>call EasyMotion#EK(0,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-e)', 'o')    ==# ':<C-U>call EasyMotion#EK(0,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-e)', 'v')    ==# '<Esc>:<C-U>call EasyMotion#EK(1,0)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-ge)', 'n')   ==# ':<C-U>call EasyMotion#EK(0,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-ge)', 'o')   ==# ':<C-U>call EasyMotion#EK(0,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-ge)', 'v')   ==# '<Esc>:<C-U>call EasyMotion#EK(1,1)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-e)', 'n') ==# ':<C-U>call EasyMotion#EK(0,2)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-e)', 'o') ==# ':<C-U>call EasyMotion#EK(0,2)<CR>'
+        Expect maparg('<Plug>(easymotion-iskeyword-bd-e)', 'v') ==# '<Esc>:<C-U>call EasyMotion#EK(1,2)<CR>'
         " }}}
 
         " JK Motion: {{{
@@ -463,6 +487,7 @@ describe 'Default settings'
         Expect g:EasyMotion_prompt             ==# 'Search for {n} character(s): '
         Expect g:EasyMotion_command_line_key_mappings ==# {}
         Expect g:EasyMotion_force_csapprox ==# 0
+        Expect g:EasyMotion_disable_two_key_combo ==# 0
         " }}}
 
         " highlight {{{
@@ -1345,6 +1370,52 @@ describe 'off-screen search scroll'
         exec "normal /deco-chan\<Tab>\<CR>a"
         Expect CursorPos() == [503,1,'d']
 
+    end
+    "}}}
+end
+"}}}
+
+"Word motion {{{
+describe 'Word motion'
+    before
+        new
+        let g:EasyMotion_keys = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        map w <Plug>(easymotion-w)
+        map b <Plug>(easymotion-b)
+        map <Leader>w <Plug>(easymotion-iskeyword-w)
+        map <Leader>b <Plug>(easymotion-iskeyword-b)
+        call EasyMotion#init()
+        call AddLine('vim vim vim')
+        call AddLine('poge1 2huga 3hiyo 4poyo 5:test')
+        "             12345678901234567890123
+        " 0        1         2         3
+        " 123456789012345678901234567890
+        " poge1 2huga 3hiyo 4poyo 5:test
+        " vim vim vim
+    end
+
+    after
+        close!
+    end
+
+    " Default word motion {{
+    it 'Default word motion'
+        normal! 0
+        let l = line('.')
+        Expect CursorPos() == [l,1,'p']
+        normal wc
+        Expect CursorPos() == [l,19,'4']
+
+        normal bb
+        Expect CursorPos() == [l,7,'2']
+
+        normal! 0
+        Expect CursorPos() == [l,1,'p']
+
+        normal wh
+        Expect CursorPos() == [2,9,'v']
+        normal bh
+        Expect CursorPos() == [l,1,'p']
     end
     "}}}
 end

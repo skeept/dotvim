@@ -1,5 +1,6 @@
-Vim motion on speed! [![Build Status](https://travis-ci.org/Lokaltog/vim-easymotion.png?branch=master)](https://travis-ci.org/Lokaltog/vim-easymotion)
+Vim motion on speed!
 =====
+ [![Build Status](https://travis-ci.org/Lokaltog/vim-easymotion.png?branch=master)](https://travis-ci.org/Lokaltog/vim-easymotion)
 
 ![Animated demonstration](https://f.cloud.github.com/assets/3797062/2039359/a8e938d6-899f-11e3-8789-60025ea83656.gif)
 
@@ -135,7 +136,7 @@ nmap t <Plug>(easymotion-t2)
 ### n-character search motion
 
 You can also search for `n` characters, which basically can be used to replace the default search of Vim.
-It suports incremental highlighting and you can use `<Tab>` and `<S-Tab>` to scroll down/up a page. If you press
+It supports incremental highlighting and you can use `<Tab>` and `<S-Tab>` to scroll down/up a page. If you press
 `<CR>` you get the usual EasyMotion highlighting and can jump to any matching target destination with a
 single keystroke.
 

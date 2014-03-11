@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 13 Feb 2014.
+" Last Change: 20 Feb 2014.
 " == Script initialization {{{
 if expand("%:p") ==# expand("<sfile>:p")
   unlet! g:EasyMotion_loaded
@@ -42,12 +42,14 @@ let g:EasyMotion_cursor_highlight   = get(g: , 'EasyMotion_cursor_highlight'   ,
 let g:EasyMotion_use_regexp         = get(g: , 'EasyMotion_use_regexp'         , 1)
 let g:EasyMotion_add_search_history = get(g: , 'EasyMotion_add_search_history' , 1)
 let g:EasyMotion_off_screen_search  = get(g: , 'EasyMotion_off_screen_search'  , 1)
-let g:EasyMotion_force_csapprox      = get(g: , 'EasyMotion_force_csapprox'    , 0)
+let g:EasyMotion_force_csapprox     = get(g: , 'EasyMotion_force_csapprox'    , 0)
 let g:EasyMotion_show_prompt        = get(g: , 'EasyMotion_show_prompt'        , 1)
 let g:EasyMotion_prompt             =
     \ get(g: , 'EasyMotion_prompt' , 'Search for {n} character(s): ')
 let g:EasyMotion_command_line_key_mappings =
     \ get(g: , 'EasyMotion_command_line_key_mappings' , {})
+let g:EasyMotion_disable_two_key_combo     =
+    \ get(g: , 'EasyMotion_disable_two_key_combo' , 0)
 
 "}}}
 
@@ -136,6 +138,15 @@ noremap  <silent><Plug>(easymotion-bd-W)      :<C-u>call EasyMotion#WBW(0,2)<CR>
 xnoremap <silent><Plug>(easymotion-bd-W) <Esc>:<C-u>call EasyMotion#WBW(1,2)<CR>
 "}}}
 
+" iskeyword {{{
+noremap  <silent><Plug>(easymotion-iskeyword-w)         :<C-u>call EasyMotion#WBK(0,0)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-w)    <Esc>:<C-u>call EasyMotion#WBK(1,0)<CR>
+noremap  <silent><Plug>(easymotion-iskeyword-b)         :<C-u>call EasyMotion#WBK(0,1)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-b)    <Esc>:<C-u>call EasyMotion#WBK(1,1)<CR>
+noremap  <silent><Plug>(easymotion-iskeyword-bd-w)      :<C-u>call EasyMotion#WBK(0,2)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-bd-w) <Esc>:<C-u>call EasyMotion#WBK(1,2)<CR>
+" }}}
+
 " End Word: {{{
 noremap  <silent><Plug>(easymotion-e)         :<C-u>call EasyMotion#E(0,0)<CR>
 xnoremap <silent><Plug>(easymotion-e)    <Esc>:<C-u>call EasyMotion#E(1,0)<CR>
@@ -152,6 +163,15 @@ noremap  <silent><Plug>(easymotion-gE)        :<C-u>call EasyMotion#EW(0,1)<CR>
 xnoremap <silent><Plug>(easymotion-gE)   <Esc>:<C-u>call EasyMotion#EW(1,1)<CR>
 noremap  <silent><Plug>(easymotion-bd-E)      :<C-u>call EasyMotion#EW(0,2)<CR>
 xnoremap <silent><Plug>(easymotion-bd-E) <Esc>:<C-u>call EasyMotion#EW(1,2)<CR>
+"}}}
+
+" iskeyword End: {{{
+noremap  <silent><Plug>(easymotion-iskeyword-e)         :<C-u>call EasyMotion#EK(0,0)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-e)    <Esc>:<C-u>call EasyMotion#EK(1,0)<CR>
+noremap  <silent><Plug>(easymotion-iskeyword-ge)        :<C-u>call EasyMotion#EK(0,1)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-ge)   <Esc>:<C-u>call EasyMotion#EK(1,1)<CR>
+noremap  <silent><Plug>(easymotion-iskeyword-bd-e)      :<C-u>call EasyMotion#EK(0,2)<CR>
+xnoremap <silent><Plug>(easymotion-iskeyword-bd-e) <Esc>:<C-u>call EasyMotion#EK(1,2)<CR>
 "}}}
 "}}}
 
@@ -279,7 +299,7 @@ if g:EasyMotion_do_mapping == 1
     "}}}
 
     function! s:default_mapping(motions, do_mapping) "{{{
-        for [motion, fn] in items(a:motions)
+        for motion in a:motions
             " Mapping {{{
             if exists('g:EasyMotion_mapping_' . motion)
                 " Backward compatible mapping [deprecated]
@@ -297,25 +317,10 @@ if g:EasyMotion_do_mapping == 1
     endfunction "}}}
 
     " Default Mapping:
-    call s:default_mapping({
-        \   'f' : { 'name': 'S'      , 'dir': 0 }
-        \ , 'F' : { 'name': 'S'      , 'dir': 1 }
-        \ , 's' : { 'name': 'S'      , 'dir': 2 }
-        \ , 't' : { 'name': 'T'      , 'dir': 0 }
-        \ , 'T' : { 'name': 'T'      , 'dir': 1 }
-        \ , 'w' : { 'name': 'WB'     , 'dir': 0 }
-        \ , 'W' : { 'name': 'WBW'    , 'dir': 0 }
-        \ , 'b' : { 'name': 'WB'     , 'dir': 1 }
-        \ , 'B' : { 'name': 'WBW'    , 'dir': 1 }
-        \ , 'e' : { 'name': 'E'      , 'dir': 0 }
-        \ , 'E' : { 'name': 'EW'     , 'dir': 0 }
-        \ , 'ge': { 'name': 'E'      , 'dir': 1 }
-        \ , 'gE': { 'name': 'EW'     , 'dir': 1 }
-        \ , 'j' : { 'name': 'JK'     , 'dir': 0 }
-        \ , 'k' : { 'name': 'JK'     , 'dir': 1 }
-        \ , 'n' : { 'name': 'Search' , 'dir': 0 }
-        \ , 'N' : { 'name': 'Search' , 'dir': 1 }
-        \ }, g:EasyMotion_do_mapping)
+    call s:default_mapping(
+        \ ['f', 'F', 's', 't', 'T',
+        \  'w', 'W', 'b', 'B', 'e', 'E', 'ge', 'gE',
+        \  'j', 'k', 'n', 'N'], g:EasyMotion_do_mapping)
 endif "}}}
 
 " == CommandLine Mapping {{{

@@ -3,7 +3,7 @@
 " Author: Kim Silkebækken <kim.silkebaekken+vim@gmail.com>
 "         haya14busa <hayabusa1419@gmail.com>
 " Source: https://github.com/Lokaltog/vim-easymotion
-" Last Change: 16 Feb 2014.
+" Last Change: 03 Mar 2014.
 "=============================================================================
 " Saving 'cpoptions' {{{
 scriptencoding utf-8
@@ -96,7 +96,7 @@ function! EasyMotion#reset()
         " start_position:
         "   Original, start cursor position.
         " cursor_position:
-        "   Usually, this valuse is same with start_position, but in
+        "   Usually, this values is same with start_position, but in
         "   visualmode and 'n' key motion, this value could be different.
     return ""
 endfunction "}}}
@@ -141,9 +141,9 @@ function! EasyMotion#T(num_strokes, visualmode, direction) " {{{
     if a:direction == 2
         let s:flag.bd_t = 1
     elseif a:direction == 1
-        let re = '\('.re.'\)\zs.'
+        let re = s:convert_t_regexp(re, 1) " backward
     else
-        let re = '.\ze\('.re.'\)'
+        let re = s:convert_t_regexp(re, 0) " forward
     endif
     call s:EasyMotion(re, a:direction, a:visualmode ? visualmode() : '', is_inclusive)
     return s:EasyMotion_is_cancelled
@@ -160,6 +160,12 @@ function! EasyMotion#WBW(visualmode, direction) " {{{
     call s:EasyMotion('\(\(^\|\s\)\@<=\S\|^$\)', a:direction, a:visualmode ? visualmode() : '', 0)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
+function! EasyMotion#WBK(visualmode, direction) " {{{
+    " vim's iskeyword style word motion
+    let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
+    call s:EasyMotion('\(\(\<\|\>\|\s\)\@<=\S\|^$\)', a:direction, a:visualmode ? visualmode() : '', 0)
+    return s:EasyMotion_is_cancelled
+endfunction " }}}
 function! EasyMotion#E(visualmode, direction) " {{{
     let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
     let is_inclusive = mode(1) ==# 'no' ? 1 : 0
@@ -170,6 +176,13 @@ function! EasyMotion#EW(visualmode, direction) " {{{
     let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
     let is_inclusive = mode(1) ==# 'no' ? 1 : 0
     call s:EasyMotion('\(\S\(\s\|$\)\|^$\)', a:direction, a:visualmode ? visualmode() : '', is_inclusive)
+    return s:EasyMotion_is_cancelled
+endfunction " }}}
+function! EasyMotion#EK(visualmode, direction) " {{{
+    " vim's iskeyword style word motion
+    let s:current.is_operator = mode(1) ==# 'no' ? 1: 0
+    let is_inclusive = mode(1) ==# 'no' ? 1 : 0
+    call s:EasyMotion('\(\S\(\>\|\<\|\s\)\@=\|^$\)', a:direction, a:visualmode ? visualmode() : '', is_inclusive)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 " -- JK Motion ---------------------------
@@ -219,12 +232,12 @@ function! EasyMotion#TL(num_strokes, visualmode, direction) " {{{
 endfunction " }}}
 function! EasyMotion#WBL(visualmode, direction) " {{{
     let s:flag.within_line = 1
-    call EasyMotion#WB(a:visualmode, a:direction)
+    call EasyMotion#WBK(a:visualmode, a:direction)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 function! EasyMotion#EL(visualmode, direction) " {{{
     let s:flag.within_line = 1
-    call EasyMotion#E(a:visualmode, a:direction)
+    call EasyMotion#EK(a:visualmode, a:direction)
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 function! EasyMotion#LineAnywhere(visualmode, direction) " {{{
@@ -245,7 +258,7 @@ endfunction " }}}
 " -- Repeat Motion -----------------------
 function! EasyMotion#Repeat(visualmode) " {{{
     " Repeat previous motion with previous targets
-    if s:previous ==# {}
+    if !has_key(s:previous, 'regexp')
         call s:Message("Previous targets doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -265,7 +278,7 @@ function! EasyMotion#Repeat(visualmode) " {{{
 endfunction " }}}
 function! EasyMotion#DotRepeat(visualmode) " {{{
     " Repeat previous '.' motion with previous targets and operator
-    if s:dot_repeat ==# {}
+    if !has_key(s:dot_repeat, 'regexp')
         call s:Message("Previous motion doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -278,15 +291,17 @@ function! EasyMotion#DotRepeat(visualmode) " {{{
     let s:flag.bd_t = s:dot_repeat.bd_t_flag
 
     let s:current.is_operator = 1
-    for cnt in range(v:count1)
+    let i = 0
+    while i < v:count1
         let s:flag.dot_repeat = 1 " s:EasyMotion() always call reset
         silent call s:EasyMotion(re, direction, 0, is_inclusive)
-    endfor
+        let i += 1
+    endwhile
     return s:EasyMotion_is_cancelled
 endfunction " }}}
 function! EasyMotion#NextPrevious(visualmode, direction) " {{{
     " Move next/previous destination using previous motion regexp
-    if s:previous ==# {}
+    if !has_key(s:previous, 'regexp')
         call s:Message("Previous targets doesn't exist")
         let s:EasyMotion_is_cancelled = 1
         return s:EasyMotion_is_cancelled
@@ -325,44 +340,25 @@ function! s:Prompt(message) " {{{
     echohl None
 endfunction " }}}
 " -- Save & Restore values ---------------
-function! s:VarReset(var, ...) " {{{
-    if ! exists('s:var_reset')
-        let s:var_reset = {}
-    endif
-
-    if a:0 == 0 && has_key(s:var_reset, a:var)
-        " Reset var to original value
-        " setbufbar( or bufname): '' or '%' can be used for the current buffer
-        call setbufvar("", a:var, s:var_reset[a:var])
-    elseif a:0 == 1
-        " Save original value and set new var value
-
-        let new_value = a:0 == 1 ? a:1 : ''
-
-        " Store original value
-        let s:var_reset[a:var] = getbufvar("", a:var)
-
-        " Set new var value
-        call setbufvar("", a:var, new_value)
-    endif
-endfunction " }}}
 function! s:SaveValue() "{{{
-    call s:VarReset('&scrolloff', 0)
-    call s:VarReset('&modified', 0)
-    call s:VarReset('&modifiable', 1)
-    call s:VarReset('&readonly', 0)
-    call s:VarReset('&spell', 0)
-    call s:VarReset('&virtualedit', '')
-    call s:VarReset('&foldmethod', 'manual')
+    if ! s:current.is_search
+        call EasyMotion#helper#VarReset('&scrolloff', 0)
+    endif
+    call EasyMotion#helper#VarReset('&modified', 0)
+    call EasyMotion#helper#VarReset('&modifiable', 1)
+    call EasyMotion#helper#VarReset('&readonly', 0)
+    call EasyMotion#helper#VarReset('&spell', 0)
+    call EasyMotion#helper#VarReset('&virtualedit', '')
+    call EasyMotion#helper#VarReset('&foldmethod', 'manual')
 endfunction "}}}
 function! s:RestoreValue() "{{{
-    call s:VarReset('&scrolloff')
-    call s:VarReset('&modified')
-    call s:VarReset('&modifiable')
-    call s:VarReset('&readonly')
-    call s:VarReset('&spell')
-    call s:VarReset('&virtualedit')
-    call s:VarReset('&foldmethod')
+    call EasyMotion#helper#VarReset('&scrolloff')
+    call EasyMotion#helper#VarReset('&modified')
+    call EasyMotion#helper#VarReset('&modifiable')
+    call EasyMotion#helper#VarReset('&readonly')
+    call EasyMotion#helper#VarReset('&spell')
+    call EasyMotion#helper#VarReset('&virtualedit')
+    call EasyMotion#helper#VarReset('&foldmethod')
 endfunction "}}}
 function! s:turn_off_hl_error() "{{{
     let s:error_hl = EasyMotion#highlight#capture('Error')
@@ -384,7 +380,7 @@ endfunction "}}}
 " -- Draw --------------------------------
 function! s:SetLines(lines, key) " {{{
     for [line_num, line] in a:lines
-        call setline(line_num, line[a:key])
+        keepjumps call setline(line_num, line[a:key])
     endfor
 endfunction " }}}
 " -- Get characters from user input ------
@@ -508,8 +504,7 @@ function! s:should_use_migemo(char) "{{{
         let end_line = line('w$')
     endif
 
-
-    " Skip folded line and check if text include multibyte haracters
+    " Skip folded line and check if text include multibyte characters
     for line in range(first_line, end_line)
         if EasyMotion#helper#is_folded(line)
             continue
@@ -531,6 +526,13 @@ function! s:should_use_smartsign(char) "{{{
         return 0
     endif
 endfunction "}}}
+function! s:convert_t_regexp(re, direction)
+    if a:direction == 0 "forward
+        return '\_.\ze\('.a:re.'\)'
+    elseif a:direction == 1 "backward
+        return '\('.a:re.'\)\@<=\_.'
+    endif
+endfunction
 
 function! s:handleEmpty(input, visualmode) "{{{
     " if empty, reselect and return 1
@@ -734,7 +736,7 @@ endfunction "}}}
 function! s:GroupingAlgorithmOriginal(targets, keys)
     " Split targets into groups (1 level)
     let targets_len = len(a:targets)
-    let keys_len = len(a:keys)
+    " let keys_len = len(a:keys)
 
     let groups = {}
 
@@ -776,7 +778,7 @@ function! s:CreateCoordKeyDict(groups, ...)
         let key = group_key . key
         "let key = ( ! empty(group_key) ? group_key : key)
 
-        if type(item) == 3 " List
+        if type(item) == type([]) " List
             " Destination coords
 
             " The key needs to be zero-padded in order to
@@ -820,19 +822,34 @@ function! s:PromptUser(groups) "{{{
         return group_values[0]
     endif
     " }}}
+
     " -- Prepare marker lines ---------------- {{{
     let lines = {}
 
     let coord_key_dict = s:CreateCoordKeyDict(a:groups)
 
     for dict_key in sort(coord_key_dict[0])
-        let target_key = coord_key_dict[1][dict_key]
+        " NOTE: {{{
+        " let g:EasyMotion_keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        " Perform <Plug>(easymotion-w)
+        "
+        " lines[line_num]['orig']:
+        "   Lorem ipsum dolor sit amet consectetur adipisicing
+        "
+        " {target_char}:
+        "   {L}orem {i}psum {d}olor {s}it {a}met {c}onsectetur {a}dipisicing
+        "
+        " lines[line_num]['marker'], {marker_chars}:
+        "   {A}orem {B}psum {C}olor {D}it {E}met {F}onsectetur {G}dipisicing
+        "   2-key-combo: {marker_chars} could be 1 or 2 chars like {AB}
+        "
+        " }}}
+
+        " Prepare original line and marker line {{{
         let [line_num, col_num] = split(dict_key, ',')
 
         let line_num = str2nr(line_num)
         let col_num = str2nr(col_num)
-
-        " Add original line and marker line
         if ! has_key(lines, line_num)
             let current_line = getline(line_num)
             let lines[line_num] = {
@@ -840,78 +857,78 @@ function! s:PromptUser(groups) "{{{
                 \ 'marker': current_line,
                 \ 'mb_compensation': 0,
                 \ }
-        endif
+            " mb_compensation -> multibyte compensation
+            let prev_col_num = 0
+        endif "}}}
 
+        " Multibyte Compensation: {{{
         " Solve multibyte issues by matching the byte column
         " number instead of the visual column
-        let col_num -= lines[line_num]['mb_compensation']
-
         " Compensate for byte difference between marker
         " character and target character
         "
         " This has to be done in order to match the correct
         " column; \%c matches the byte column and not display
         " column.
-        let target_char_len = strdisplaywidth(
-                                \ matchstr(lines[line_num]['marker'],
-                                \          '\%' . col_num . 'c.'))
-        let target_key_len = strdisplaywidth(target_key)
-
-
-        let target_line_byte_len = strlen(lines[line_num]['marker'])
-
-        let target_char_byte_len = strlen(matchstr(
-                                            \ lines[line_num]['marker'],
-                                            \ '\%' . col_num . 'c.'))
-
-        if strlen(lines[line_num]['marker']) > 0
-        " Substitute marker character if line length > 0
-            let c = 0
-            while c < target_key_len && c < 2
-                if strlen(lines[line_num]['marker']) >= col_num + c
-                    " Substitute marker character if line length > 0
-                    if c == 0
-                        let lines[line_num]['marker'] = substitute(
-                            \ lines[line_num]['marker'],
-                            \ '\%' . (col_num + c) . 'c.',
-                            \ strpart(target_key, c, 1) . repeat(' ', target_char_len - 1),
-                            \ '')
-                    else
-                        let lines[line_num]['marker'] = substitute(
-                            \ lines[line_num]['marker'],
-                            \ '\%' . (col_num + c) . 'c.',
-                            \ strpart(target_key, c, 1),
-                            \ '')
-                    endif
-                else
-                    let lines[line_num]['marker'] .= strpart(target_key, c, 1)
-                endif
-                let c += 1
-            endwhile
-        else
-        " Set the line to the marker character if the line is empty
-            let lines[line_num]['marker'] = target_key
-        endif
-
-        " -- Highlight targets ------------------- {{{
-        if target_key_len == 1
-            call EasyMotion#highlight#add_highlight(
-                \ '\%' . line_num . 'l\%' . col_num . 'c',
-                \ g:EasyMotion_hl_group_target)
-        else
-            call EasyMotion#highlight#add_highlight(
-                \ '\%' . line_num . 'l\%' . col_num . 'c',
-                \ g:EasyMotion_hl2_first_group_target)
-            call EasyMotion#highlight#add_highlight(
-                \ '\%' . line_num . 'l\%' . (col_num + 1) . 'c',
-                \ g:EasyMotion_hl2_second_group_target)
-        endif
+        let col_num = max([prev_col_num + 1,
+                        \  col_num - lines[line_num]['mb_compensation']])
+        let prev_col_num = col_num
         "}}}
 
-        " Add marker/target length difference for multibyte
-        " compensation
-        let lines[line_num]['mb_compensation'] +=
-            \ (target_line_byte_len - strlen(lines[line_num]['marker']))
+        " Prepare marker characters {{{
+        let marker_chars = coord_key_dict[1][dict_key]
+        let marker_chars_len = EasyMotion#helper#strchars(marker_chars)
+        let marker_chars_first_byte_len = strlen(matchstr(marker_chars,
+                                                        \ '^.'))
+        "}}}
+
+        " Replace {target} with {marker} & Highlight {{{
+        let col_add = 0 " Column add byte length
+        " Disable two-key-combo feature?
+        let marker_max_length = g:EasyMotion_disable_two_key_combo == 1
+                                \ ? 1 : 2
+        for i in range(min([marker_chars_len, marker_max_length]))
+            let marker_char = split(marker_chars, '\zs')[i]
+            " EOL {{{
+            if strlen(lines[line_num]['marker']) < col_num + col_add
+                " Append marker chars if target is EOL
+                let lines[line_num]['marker'] .= ' '
+            endif "}}}
+
+            let target_col = '\%' . (col_num + col_add) . 'c.'
+            let target_char = matchstr(lines[line_num]['marker'],
+                                      \ target_col)
+            let space_len = strdisplaywidth(target_char)
+                        \ - strdisplaywidth(marker_char)
+            " Substitute marker character
+            let substitute_expr = marker_char . repeat(' ', space_len)
+
+            let lines[line_num]['marker'] = substitute(
+                \ lines[line_num]['marker'],
+                \ target_col,
+                \ escape(substitute_expr,'&'),
+                \ '')
+
+            " Highlight targets {{{
+            if marker_chars_len == 1
+                let _hl_group = g:EasyMotion_hl_group_target
+            elseif i == 0
+                let _hl_group = g:EasyMotion_hl2_first_group_target
+            else
+                let _hl_group = g:EasyMotion_hl2_second_group_target
+            endif
+            call EasyMotion#highlight#add_highlight(
+                \ '\%' . line_num . 'l' . target_col,
+                \ _hl_group)
+            "}}}
+
+            " Add marker/target length difference for multibyte compensation
+            let lines[line_num]['mb_compensation'] +=
+                \ strlen(target_char) - strlen(substitute_expr)
+            " Shift column
+            let col_add += strlen(marker_char)
+        endfor
+        "}}}
     endfor
 
     let lines_items = items(lines)
@@ -941,7 +958,7 @@ function! s:PromptUser(groups) "{{{
 
         " Jump first target when Enter or Space key is pressed "{{{
         if (char ==# "\<CR>" && g:EasyMotion_enter_jump_first == 1) ||
-        \  (char ==# " " && g:EasyMotion_space_jump_first == 1)
+        \  (char ==# "\<Space>" && g:EasyMotion_space_jump_first == 1)
             " NOTE: matchstr() is multibyte aware.
             let char = matchstr(g:EasyMotion_keys, '^.')
         endif "}}}
@@ -978,11 +995,11 @@ function! s:PromptUser(groups) "{{{
             " Break undo history (undobreak)
             let old_undolevels = &undolevels
             set undolevels=-1
-            call setline('.', getline('.'))
+            keepjumps call setline('.', getline('.'))
             let &undolevels = old_undolevels
             unlet old_undolevels
             " FIXME: Error occur by GundoToggle for undo number 2 is empty
-            call setline('.', getline('.'))
+            keepjumps call setline('.', getline('.'))
         endif "}}}
 
         redraw
@@ -1001,7 +1018,7 @@ function! s:PromptUser(groups) "{{{
 
     let target = a:groups[char]
 
-    if type(target) == 3
+    if type(target) == type([])
         " Return target coordinates
         return target
     else
@@ -1018,7 +1035,7 @@ function! s:DotPromptUser(groups) "{{{
 
     let target = a:groups[char]
 
-    if type(target) == 3
+    if type(target) == type([])
         " Return target coordinates
         return target
     else
@@ -1094,12 +1111,13 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
             keepjumps call cursor(s:current.cursor_position)
             "}}}
             " Update s:current.original_position
-            let s:current.original_position = v_original_pos " overwrite original start positio
+            " overwrite original start position
+            let s:current.original_position = v_original_pos
         endif "}}}
 
         " Handle bi-directional t motion {{{
         if s:flag.bd_t == 1
-            let regexp = '\('.a:regexp.'\)\zs.'
+            let regexp = s:convert_t_regexp(a:regexp, 1) "backward
         else
             let regexp = a:regexp
         endif
@@ -1135,7 +1153,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
         " Handle bidirection "{{{
         " For bi-directional t motion {{{
         if s:flag.bd_t == 1
-            let regexp = '.\ze\('.a:regexp.'\)'
+            let regexp = s:convert_t_regexp(a:regexp, 0) "forward
         endif
         "}}}
         " Reconstruct match dict
@@ -1208,7 +1226,7 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
             elseif a:direction == 0
                 " Forward
                 let shade_hl_re = '\%#\_.*\%'. win_last_line .'l'
-            elseif a:direction == 2
+            else
                 " Both directions"
                 let shade_hl_re = '\_.*'
             endif

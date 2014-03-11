@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: mappings.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Feb 2014.
+" Last Modified: 27 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -165,13 +165,13 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
         \ keys(neocomplete#available_sources()))
   let neocomplete.manual_sources = neocomplete#helper#get_sources_list(
         \ neocomplete#util#convert2list(sources))
+  let neocomplete.sources_filetype = ''
 
   " Set function.
   let &l:completefunc = 'neocomplete#complete#sources_manual_complete'
 
   " Start complete.
-  return "\<C-x>\<C-u>\<C-p>"
-        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
+  return "\<C-x>\<C-u>\<C-r>=neocomplete#mappings#popup_post()\<CR>"
 endfunction"}}}
 
 function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete_str, candidates) "{{{
@@ -184,8 +184,7 @@ function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete
   let &l:completefunc = 'neocomplete#complete#auto_complete'
 
   " Start complete.
-  return "\<C-x>\<C-u>\<C-p>"
-        \ . (g:neocomplete#enable_auto_select ? "\<Down>" : "")
+  return "\<C-x>\<C-u>\<C-r>=neocomplete#mappings#popup_post()\<CR>"
 endfunction"}}}
 
 let &cpo = s:save_cpo

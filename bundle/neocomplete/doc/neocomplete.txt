@@ -163,8 +163,8 @@ further information in the vimproc documentation.
 						*neocomplete-snippets*
 
 If you like to use the snippet feature with neocomplete you need to install
-the neosnippet plugin. You can find it under:
-https://github.com/Shougo/neosnippet
+the neosnippet plugin (https://github.com/Shougo/neosnippet) or UltiSnips
+(https://github.com/SirVer/ultisnips).
 
 						*neocomplete-context-filetype*
 
@@ -1195,6 +1195,7 @@ suffix of complete candidates in popup menu declaration.
     syntax            -> [S] {syntax-keyword}
     include           -> [I]
     neosnippet        -> [neosnip]
+    UltiSnips         -> [US]
     vim               -> [vim] type
     omni              -> [O]
     tag               -> [T]
@@ -1209,10 +1210,14 @@ neosnippet				*neocomplete-sources-neosnippet*
 		This source is for snippets completion.
 		https://github.com/Shougo/neosnippet
 
+UltiSnips				*neocomplete-sources-ultisnips*
+		This source is for UltiSnips snippets completion.
+		https://github.com/SirVer/ultisnips
+
 neco-ghc				*neocomplete-sources-neco-ghc*
-		https://github.com/ujihisa/neco-ghc
-		eagletmt originally implemented and now ujihisa is maintaining
-		this source.  It completes a source file written in Haskell.
+		https://github.com/eagletmt/neco-ghc
+		eagletmt originally implemented and ujihisa added some new
+		features. It completes a source file written in Haskell.
 		It requires ghc-mod <http://www.mew.org/~kazu/proj/ghc-mod/>.
 
 ==============================================================================
@@ -1326,9 +1331,8 @@ can use |neocomplete#define_source()|.
 SOURCE ATTRIBUTES			*neocomplete-source-attributes*
 
 					*neocomplete-source-attribute-name*
-name			String		(Required)
-			The name of a source.  It must consist of the
-			following characters:
+name			String				(Required)
+			The name of a source.  Allowed characters are:
 			- a-z
 			- 0-9
 			- _
@@ -1336,21 +1340,26 @@ name			String		(Required)
 			- - (Not head)
 
 					*neocomplete-source-attribute-kind*
-kind			String			(Optional)
-			Source kind.
-			Following values are available.
-			"manual"  : This source decides complete position
-				manually.
-				Note: "complfunc" or "ftplugin" are old
-				values.
-			"keyword" : This source decides complete position by
-				|g:neocomplete#keyword_patterns|.
-				Note: "plugin" is old value.
-				Note: The candidates are filtered by
-				|g:neocomplete#keyword_patterns|.
+kind			String				(Optional)
+			The kind of the source.  It decides the behaviour of
+			the complete position.  The following values are
+			available:
+
+			"manual" : The source decides the complete position
+				manually with the "get_complete_position"
+				attribute.  See also:
+				|neocomplete-source-attribute-get_complete_position|
+
+			"keyword": The source decides the complete position
+				with |g:neocomplete#keyword_patterns|.  This
+				pattern is also used to filter the candidates.
+
+			Note that "plugin", "complfunc" and "ftplugin" are old
+			values that are no longer accepted.
+
 
 				*neocomplete-source-attribute-filetypes*
-filetypes		Dictionary		(Optional)
+filetypes		Dictionary			(Optional)
 			Available filetype dictionary.
 
 			For example:
@@ -1373,7 +1382,7 @@ disabled_filetypes		Dictionary		(Optional)
 			sources.
 
 					*neocomplete-source-attribute-rank*
-rank			Number		(Optional)
+rank			Number				(Optional)
 			Source priority.
 
 			If you omit it, it is set below value.
@@ -1383,7 +1392,7 @@ rank			Number		(Optional)
 
 			*neocomplete-source-attribute-min_pattern_length*
 min_pattern_length
-			Number		(Optional)
+			Number				(Optional)
 			Required pattern length for completion.
 
 			If you omit it, it is set below value.
@@ -1583,6 +1592,10 @@ neosnippet source :
 
 https://github.com/Shougo/neosnippet.vim
 
+UltiSnips source :
+
+https://github.com/SirVer/ultisnips
+
 vimshell source :
 
 https://github.com/Shougo/vimshell.vim
@@ -1593,7 +1606,7 @@ https://github.com/ujihisa/neco-look
 
 ghc source :
 
-https://github.com/ujihisa/neco-ghc
+https://github.com/eagletmt/neco-ghc
 
 calc source :
 
@@ -1657,9 +1670,10 @@ A: Please set this in your .vimrc.
 	let g:neocomplete#enable_insert_char_pre = 1
 <
 
-Q: Where is snippets set for neocomplete?
+Q: Where are the snippets for neocomplete?
 
-A: https://github.com/Shougo/neosnippet
+A: https://github.com/Shougo/neosnippet or
+https://github.com/SirVer/ultisnips
 
 
 Q: How can I disable python omni complete of neocomplete?:
@@ -1748,7 +1762,7 @@ source code's complete function, and find out the omni pattern).
 >
 	" Go (plugin: gocode)
 	let g:neocomplete#sources#omni#functions.go =
-	\ 'go#complete#Complete'
+	\ 'gocomplete#Complete'
 	" Clojure (plugin: vim-clojure)
 	let g:neocomplete#sources#omni#functions.clojure =
 	\ 'vimclojure#OmniCompletion'
