@@ -21,8 +21,8 @@ vmap <c-s> <Plug>IMAP_DeleteAndJumpForward
 set iskeyword+=:
 
 "just for latex switch keys for ultisnip
-"inoremap <silent> <C-L> <c-r>=UltiSnips_ExpandSnippetOrJump()<CR>
-"snoremap <silent> <C-L> <esc>:call UltiSnips_ExpandSnippetOrJump()<CR>
+"inoremap <silent> <C-L> <c-r>=UltiSnips#ExpandSnippetOrJump()<CR>
+"snoremap <silent> <C-L> <esc>:call UltiSnips#ExpandSnippetOrJump()<CR>
 
 if 0
   "imap <silent> <NL> <Plug>IMAP_JumpForward
@@ -31,7 +31,7 @@ if 0
   "vmap <silent> <NL> <Plug>IMAP_DeleteAndJumpForward
 
   "function! SelectImapOrUlti(pref, mode)
-  "" pref: 0 for IMAP_Jumpfunc, 1 for UltiSnips_ExpandSnippetOrJump
+  "" pref: 0 for IMAP_Jumpfunc, 1 for UltiSnips#ExpandSnippetOrJump
   "" mode: 0 for insert, 1 for visual,...
   "let save_cursor = getpos(".")
 
@@ -39,15 +39,15 @@ if 0
   "if a:pref == 0
   "call feedkeys("\<C-R>=IMAP_Jumpfunc('', 0)\<CR>")
   "else
-  "call feedkeys("\<C-R>=UltiSnips_ExpandSnippetOrJump()\<CR>")
+  "call feedkeys("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
   "endif
   "elseif a:mode == 1
   "if a:pref == 0
   "call feedkeys("\<C-R>=IMAP_Jumpfunc('', 0)<CR>")
   ""call IMAP_Jumpfunc('', 0)
   "else
-  ""call UltiSnips_ExpandSnippetOrJump()
-  "call feedkeys("\<C-R>=UltiSnips_ExpandSnippetOrJump()")
+  ""call UltiSnips#ExpandSnippetOrJump()
+  "call feedkeys("\<C-R>=UltiSnips#ExpandSnippetOrJump()")
   "endif
   "endif
 
@@ -55,13 +55,13 @@ if 0
   "if save_cursor == current_cursor
   "if a:mode == 0
   "if a:pref == 0
-  "call feedkeys("\<C-R>=UltiSnips_ExpandSnippetOrJump()\<CR>")
+  "call feedkeys("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
   "else
   "call feedkeys("\<C-R>=IMAP_Jumpfunc('', 0)\<CR>")
   "endif
   "elseif a:mode == 1
   "if a:pref == 0
-  "call UltiSnips_ExpandSnippetOrJump()
+  "call UltiSnips#ExpandSnippetOrJump()
   "else
   "call IMAP_Jumpfunc('', 0)
   "endif
@@ -81,7 +81,7 @@ if 0
   endfunction
 
   function! SelectImapOrUlti(pref)
-    " pref: 0 for IMAP_Jumpfunc, 1 for UltiSnips_ExpandSnippetOrJump
+    " pref: 0 for IMAP_Jumpfunc, 1 for UltiSnips#ExpandSnippetOrJump
     " mode: 0 for insert, 1 for visual,...
     normal mz
     let g:moved = 0
@@ -95,7 +95,7 @@ if 0
       silent call feedkeys("\<C-R>=IMAP_Jumpfunc('', 0)\<CR>")
       let g:called_imap = 1
     else
-      silent call feedkeys("\<C-R>=UltiSnips_ExpandSnippetOrJump()\<CR>")
+      silent call feedkeys("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
       let g:called_ulti = 1
     endif
 
@@ -104,7 +104,7 @@ if 0
     let g:curpos = current_cursor
     if save_cursor == current_cursor
       if a:pref == 0
-        silent call feedkeys("\<C-R>=UltiSnips_ExpandSnippetOrJump()\<CR>")
+        silent call feedkeys("\<C-R>=UltiSnips#ExpandSnippetOrJump()\<CR>")
         let g:called_ulti = 2
       else
         silent call feedkeys("\<C-R>=IMAP_Jumpfunc('', 0)\<CR>")
@@ -126,7 +126,7 @@ if 0
   "nnoremap <NL> :call SelectImapOrUlti(1)<CR>
 else
   inoremap <silent> <buffer> <C-L> <C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
-        \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+        \ UltiSnips#ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 endif
 
 "inoremap <silent> {{ {{<C-R>=UltiSnips_Anon('\\{ $1 \\}${0:<++>}', '{{', 'paren', "r")<cr>
@@ -135,13 +135,13 @@ endif
 "inoremap <silent> __ __<C-R>=UltiSnips_Anon('_{$1}${0:<++>}', '__', 'unders', "r")<cr>
 
 
-"inoremap <silent> <buffer> {{ __LTXSPlbraces<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-"inoremap <silent> <buffer> $$ __LTXSPddolar<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-"inoremap <silent> <buffer> ^^ __LTXSPdhat<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-"inoremap <silent> <buffer> __ __LTXSPdunders<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+"inoremap <silent> <buffer> {{ __LTXSPlbraces<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+"inoremap <silent> <buffer> $$ __LTXSPddolar<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+"inoremap <silent> <buffer> ^^ __LTXSPdhat<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+"inoremap <silent> <buffer> __ __LTXSPdunders<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
 
-"inoremap `1 snip1<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-"inoremap `2 snip2<C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
+"inoremap `1 snip1<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
+"inoremap `2 snip2<C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
 
 let b:SuperTabDefaultCompletionType = "\<C-N>"
 execute "setlocal dictionary+=" . g:p0 . "/dictionaries/dictionary"
@@ -157,7 +157,7 @@ endfunction
 
 function! Ulti_ExpandOrJump_and_getRes() "{{{
   " use only for latex new
-  call UltiSnips_ExpandSnippetOrJump()
+  call UltiSnips#ExpandSnippetOrJump()
   return g:ulti_expand_or_jump_res
 endfunction "}}}
 
@@ -169,9 +169,9 @@ snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
 inoremap <silent> <F10> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
       \ "" : UltiSnips_ListSnippets()<CR>
 snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
-      \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+      \ UltiSnips#ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
-      \ UltiSnips_ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+      \ UltiSnips#ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 
 inoremap <silent> <buffer> `. \cdot
 
