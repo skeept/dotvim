@@ -3675,6 +3675,26 @@
     "type": "git",
     "url": "git://github.com/buztard/vim-nomad"
   },
+  "4892": {
+    "type": "git",
+    "url": "git://github.com/genoma/vim-less"
+  },
+  "4893": {
+    "type": "git",
+    "url": "git://github.com/MattesGroeger/vim-bookmarks"
+  },
+  "4894": {
+    "type": "git",
+    "url": "git://github.com/jeetsukumaran/vim-markology"
+  },
+  "4895": {
+    "type": "git",
+    "url": "git://github.com/ardagnir/pterosaur"
+  },
+  "4900": {
+    "type": "hg",
+    "url": "https://bitbucket.org/atimholt/arrowkeyrepurpose"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
