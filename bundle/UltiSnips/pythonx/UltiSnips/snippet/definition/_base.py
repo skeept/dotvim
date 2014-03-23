@@ -39,7 +39,7 @@ class SnippetDefinition(object):
     _TABS = re.compile(r"^\t*")
 
     def __init__(self, priority, trigger, value, description,
-            options, globals):
+            options, globals, location):
         self._priority = priority
         self._trigger = as_unicode(trigger)
         self._value = as_unicode(value)
@@ -48,6 +48,7 @@ class SnippetDefinition(object):
         self._matched = ""
         self._last_re = None
         self._globals = globals
+        self._location = location
 
         # Make sure that we actually match our trigger in case we are
         # immediately expanded.
@@ -97,6 +98,11 @@ class SnippetDefinition(object):
         could_match()."""
         return self._matched
 
+    @property
+    def location(self):
+        """Where this snippet was defined."""
+        return self._location
+
     def matches(self, trigger):
         """Returns True if this snippet matches 'trigger'."""
         # If user supplies both "w" and "i", it should perhaps be an
@@ -120,7 +126,8 @@ class SnippetDefinition(object):
             match = (words_suffix == self._trigger)
             if match and words_prefix:
                 # Require a word boundary between prefix and suffix.
-                boundary_chars = escape(words_prefix[-1:] + words_suffix[:1], r'\"')
+                boundary_chars = escape(words_prefix[-1:] + \
+                        words_suffix[:1], r'\"')
                 match = _vim.eval('"%s" =~# "\\\\v.<."' % boundary_chars) != '0'
         elif "i" in self._opts:
             match = words.endswith(self._trigger)
