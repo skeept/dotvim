@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: handlers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 19 Mar 2014.
+" Last Modified: 24 Mar 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -77,7 +77,7 @@ function! unite#handlers#_on_cursor_moved_i()  "{{{
   endif
 endfunction"}}}
 function! unite#handlers#_on_bufwin_enter(bufnr)  "{{{
-  let unite = getbufvar(a:bufnr, 'unite')
+  silent! let unite = getbufvar(a:bufnr, 'unite')
   if type(unite) != type({})
         \ || bufwinnr(a:bufnr) < 1
     return
@@ -239,7 +239,7 @@ function! unite#handlers#_on_buf_unload(bufname)  "{{{
   2match
 
   " Save unite value.
-  let unite = getbufvar(a:bufname, 'unite')
+  silent! let unite = getbufvar(a:bufname, 'unite')
   if type(unite) != type({})
     " Invalid unite.
     return
@@ -367,7 +367,7 @@ function! s:check_redraw() "{{{
     call s:change_highlight()
   endif
 endfunction"}}}
-function! s:set_cursor_line()
+function! s:set_cursor_line() "{{{
   let unite = unite#get_current_unite()
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
@@ -378,7 +378,7 @@ function! s:set_cursor_line()
         \ context.cursor_line_highlight.' /^\%'.(prompt_linenr+1).'l.*/' :
         \ context.cursor_line_highlight.' /^\%'.line('.').'l.*/')
   let unite.cursor_line_time = reltime()
-endfunction
+endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
