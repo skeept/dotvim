@@ -92,21 +92,6 @@ bzr pull 2>&1 |\
 EOF
 )
 
-  #all remote heads known locally
-  #no changes found
-
-  #if test -n "$git_folders"; then
-    ##parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-    #parallel -j 20 "${git_cmd}" ::: $git_folders
-  #fi
-  #if test -n "$hg_folders"; then
-    ##parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
-    #parallel -j 20 "${hg_cmd}" ::: $hg_folders
-  #fi
-  #if test -n "$bzr_folders"; then
-    #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
-  #fi
-
   if test -n "$git_folders"; then
     #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
     parallel -j 20 "./move2_git.sh update_cmd git {}" ::: $git_folders
