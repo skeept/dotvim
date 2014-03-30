@@ -92,18 +92,22 @@ bzr pull 2>&1 |\
 EOF
 )
 
+#num parallel jobs
+num_parallel=1
+verbose_cmd=pwd
+
   if test -n "$git_folders"; then
     #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-    parallel -j 20 "./move2_git.sh update_cmd git {}" ::: $git_folders
+    parallel -j $num_parallel "./move2_git.sh update_cmd git {}" ::: $git_folders
   fi
   if test -n "$hg_folders"; then
     #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
     #parallel -j 20 "${hg_cmd}" ::: $hg_folders
-    parallel -j 20 "./move2_git.sh update_cmd hg {}" ::: $hg_folders
+    parallel -j $num_parallel "./move2_git.sh update_cmd hg {}" ::: $hg_folders
   fi
   if test -n "$bzr_folders"; then
     #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
-    parallel -j 20 "./move2_git.sh update_cmd bzr {}" ::: $bzr_folders
+    parallel -j $num_parallel "./move2_git.sh update_cmd bzr {}" ::: $bzr_folders
   fi
 }
 
@@ -114,6 +118,7 @@ function update_cmd()
   if test "$1" = "git"; then
     prog="git"
     cd "$2" 2>&1 > /dev/null
+    $verbose_cmd
     output=$(GIT_SSL_NO_VERIFY=true git pull 2>&1 |\
       grep -v "Already up-to-date" |\
       grep -v "github.com" |\
@@ -127,6 +132,7 @@ function update_cmd()
   if test "$1" = "hg"; then
     prog="hg"
     cd "$2" 2>&1 > /dev/null
+    $verbose_cmd
     output=$(hg pull -u 2>&1 |\
       grep -v "searching for changes" |\
       grep -v "all remote heads known locally" |\
@@ -138,6 +144,7 @@ function update_cmd()
   if test "$1" = "bzr"; then
     prog="bzr"
     cd "$2" 2>&1 > /dev/null
+    $verbose_cmd
     output=$(bzr pull 2>&1 |\
       grep -v "All changes applied successfully" |\
       grep -v "Now on revision" |\
@@ -175,11 +182,3 @@ function main()
 }
 
 main "$@"
-#if test "$#" -eq 0; then
-  #main "$@"
-#else
-  #if test "$1" = "update_cmd"; then
-    #shift
-    #update_cmd "$@"
-  #fi
-#fi
