@@ -51,24 +51,26 @@ let s:OUTLINE_ALIASES = {
 
 let s:OUTLINE_CACHE_DIR = g:unite_data_directory . '/outline'
 
+let s:supported_arguments = [ 'filetype', 'folding', 'update' ]
+
 " Rename the cache directory if its name is still old, dotted style name.
 " See http://d.hatena.ne.jp/tyru/20110824/unite_file_mru
 "
-let old_cache_dir = g:unite_data_directory . '/.outline'
+let s:old_cache_dir = g:unite_data_directory . '/.outline'
 if isdirectory(s:OUTLINE_CACHE_DIR)
-  if isdirectory(old_cache_dir) 
+  if isdirectory(s:old_cache_dir)
     call unite#print_message("[unite-outline] Warning: Please remove the old cache directory: ")
-    call unite#print_message("[unite-outline] " . old_cache_dir)
+    call unite#print_message("[unite-outline] " . s:old_cache_dir)
   endif
 else " if !isdirectory(s:OUTLINE_CACHE_DIR)
-  if isdirectory(old_cache_dir)
-    if rename(old_cache_dir, s:OUTLINE_CACHE_DIR) != 0
-      let s:OUTLINE_CACHE_DIR = old_cache_dir
+  if isdirectory(s:old_cache_dir)
+    if rename(s:old_cache_dir, s:OUTLINE_CACHE_DIR) != 0
+      let s:OUTLINE_CACHE_DIR = s:old_cache_dir
       call unite#util#print_error("unite-outline: Couldn't rename the cache directory.")
     endif
   endif
 endif
-unlet old_cache_dir
+unlet s:old_cache_dir
 
 let s:FILECACHE_FORMAT_VERSION = 2
 let s:FILECACHE_FORMAT_VERSION_KEY = '__unite_outline_filecache_format_version__'
@@ -494,8 +496,8 @@ endif
 " Aliases
 
 " Define the default filetype aliases.
-for [ftype, aliases] in items(s:OUTLINE_ALIASES)
-  call call('s:define_filetype_aliases', [aliases, ftype])
+for [s:ftype, s:aliases] in items(s:OUTLINE_ALIASES)
+  call call('s:define_filetype_aliases', [s:aliases, s:ftype])
 endfor
 
 "-----------------------------------------------------------------------------
@@ -642,6 +644,10 @@ function! s:Source_gather_candidates(source_args, unite_context)
   endtry
 endfunction
 let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
+
+function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
+	return s:supported_arguments
+endfunction"}}}
 
 function! s:parse_source_arguments(source_args, unite_context)
   let options = {
@@ -793,10 +799,12 @@ function! s:extract_headings(context)
   let save_lazyredraw  = &lazyredraw
   try
     set eventignore=all
-    set winheight=1
-    set winwidth=1
+
     " NOTE: To keep the window size on :wincmd, set 'winheight' and 'winwidth'
     " to a small value.
+    let &winheight=&winminheight
+    let &winwidth=&winminwidth
+
     set lazyredraw
 
     " Switch: current window -> source buffer's window
@@ -839,9 +847,9 @@ function! s:extract_headings(context)
 
   finally
     " Remove the temporary context data.
-    unlet a:context.lines
-    unlet a:context.heading_lnum
-    unlet a:context.matched_lnum
+    unlet! a:context.lines
+    unlet! a:context.heading_lnum
+    unlet! a:context.matched_lnum
 
     " Restore the cursor and scroll.
     let save_scrolloff = &scrolloff
@@ -1133,7 +1141,7 @@ function! s:skip_while(pattern, from)
 endfunction
 
 function! s:skip_until(pattern, from)
-  let lnum = a:from + 1 | let num_lines = line('$')
+  let lnum = a:from | let num_lines = line('$')
   while lnum <= num_lines
     let line = getline(lnum)
     let lnum += 1
