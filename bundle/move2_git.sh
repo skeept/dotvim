@@ -93,7 +93,7 @@ EOF
 )
 
 #num parallel jobs
-num_parallel=1
+num_parallel=20
 verbose_cmd=pwd
 
   if test -n "$git_folders"; then

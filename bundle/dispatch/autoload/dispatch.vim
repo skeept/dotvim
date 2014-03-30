@@ -154,6 +154,7 @@ function! s:dispatch(request) abort
     if !empty(response)
       redraw
       echo ':!'.a:request.expanded . ' ('.handler.')'
+      let a:request.handler = handler
       return 1
     endif
   endfor
@@ -167,13 +168,14 @@ function! dispatch#start(command, ...) abort
   let command = a:command
   if empty(command) && type(get(b:, 'start', [])) == type('')
     let command = b:start
-    if command =~# '^:.'
-      return substitute(command, '\>', get(a:0 ? a:1 : {}, 'background', 0) ? '!' : '', '')
-    endif
   endif
   let title = matchstr(command, '-title=\zs\%(\\.\|\S\)*')
   if !empty(title)
     let command = command[strlen(title) + 8 : -1]
+  endif
+  if command =~# '^:.'
+    unlet! g:dispatch_last_start
+    return substitute(command, '\>', get(a:0 ? a:1 : {}, 'background', 0) ? '!' : '', '')
   endif
   if empty(command)
     let command = &shell
@@ -190,6 +192,7 @@ function! dispatch#start(command, ...) abort
         \ 'expanded': dispatch#expand(command),
         \ 'title': title,
         \ }, a:0 ? a:1 : {})
+  let g:dispatch_last_start = request
   if !s:dispatch(request)
     execute '!' . request.command
   endif
@@ -402,11 +405,17 @@ endfunction
 function! s:request(request) abort
   if type(a:request) == type({})
     return a:request
-  elseif type(a:request) == type(0)
+  elseif type(a:request) == type(0) && a:request > 0
     return get(s:makes, a:request-1, {})
-  else
+  elseif type(a:request) == type('') && !empty(a:request)
     return get(s:files, a:request, {})
+  else
+    return {}
   endif
+endfunction
+
+function! dispatch#request(...) abort
+  return a:0 ? s:request(a:1) : get(s:makes, -1, {})
 endfunction
 
 function! dispatch#completed(request) abort

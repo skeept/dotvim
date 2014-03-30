@@ -20,20 +20,22 @@ function! dispatch#tmux#handle(request) abort
   if a:request.action ==# 'make'
     return dispatch#tmux#make(a:request)
   elseif a:request.action ==# 'start'
-    let command = 'tmux new-window -t '.shellescape(session.':')
+    let command = 'tmux new-window -P -t '.shellescape(session.':')
     let command .= ' -n '.shellescape(a:request.title)
     if a:request.background
       let command .= ' -d'
     endif
     let command .= ' ' . shellescape('exec ' . dispatch#isolate(a:request.expanded))
-    call system(command)
+    let a:request.tmux_pane = s:pane_id(system(command)[0:-2])
     return 1
   endif
 endfunction
 
 function! dispatch#tmux#make(request) abort
+  let pipepane = &shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee'
   let session = get(g:, 'tmux_session', '')
-  let script = dispatch#isolate(dispatch#prepare_make(a:request, a:request.expanded))
+  let script = dispatch#isolate(call('dispatch#prepare_make',
+        \ [a:request] + (pipepane ? [a:request.expanded] : [])))
 
   let title = shellescape(get(a:request, 'compiler', 'make'))
   if get(a:request, 'background', 0)
@@ -54,13 +56,18 @@ function! dispatch#tmux#make(request) abort
     let filter .= ' -u'
   endif
   let filter .= " -e \"s/\r//g\" -e \"s/\e[[0-9;]*m//g\" > ".a:request.file
-  call system('tmux ' . cmd . '|tee ' . s:make_pane . '|xargs -I {} tmux pipe-pane -t {} '.shellescape(filter))
+  call system('tmux ' . cmd . '|tee ' . s:make_pane .
+        \ (pipepane ? '|xargs -I {} tmux pipe-pane -t {} '.shellescape(filter) : ''))
 
-  let pane = get(readfile(s:make_pane, '', 1), 0, '')
-  return s:record(pane, a:request)
+  let pane = s:pane_id(get(readfile(s:make_pane, '', 1), 0, ''))
+  if !empty(pane)
+    let a:request.tmux_pane = pane
+    let s:waiting[pane] = a:request
+    return 1
+  endif
 endfunction
 
-function! s:record(pane, request)
+function! s:pane_id(pane)
   if a:pane =~# '\.\d\+$'
     let [window, index] = split(a:pane, '\.\%(\d\+$\)\@=')
     let out = system('tmux list-panes -F "#P #{pane_id}" -t '.shellescape(window))
@@ -68,13 +75,7 @@ function! s:record(pane, request)
   else
     let id = system('tmux list-panes -F "#{pane_id}" -t '.shellescape(a:pane))[0:-2]
   endif
-
-  if empty(id)
-    return 0
-  endif
-  let s:waiting[id] = a:request
-  return 1
-
+  return id
 endfunction
 
 function! dispatch#tmux#poll() abort
