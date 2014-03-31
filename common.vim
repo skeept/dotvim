@@ -486,7 +486,7 @@ let g:unite_source_history_yank_enable = 0
 function! LoadUnite() "{{{
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
 	\ 'unite-tag', 'unite-colorscheme', 'unite-history',
-        \ 'UltiSnips-unite', 'UltiSnips-neocomplete'],
+        \ ],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
 	\ buffer file_mru bookmark file<CR>
