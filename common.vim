@@ -484,6 +484,11 @@ let g:unite_source_file_mru_filename_format = ''
 let g:unite_source_history_yank_enable = 0
 
 function! LoadUnite() "{{{
+  if exists("g:loadUnite_done")
+    return ""
+  endif
+  let g:loadUnite_done = 1
+
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
 	\ 'unite-tag', 'unite-colorscheme', 'unite-history',
         \ ],
@@ -746,6 +751,9 @@ function! LoadUltisnips()
     inoremap <silent> <F10> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
     nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
     snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
+
+    nnoremap <silent> <F12> :Unite -start-insert ultisnips<CR>
+    inoremap <silent> <F12> <ESC>:Unite -start-insert ultisnips<CR>
     return 1
   else
     echom "vim compiled without python"
@@ -756,6 +764,10 @@ nnoremap <F10> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+nnoremap <F12> :call LoadUnite() \| call LoadUltisnips() \|
+      \ :Unite -start-insert ultisnips<CR>
+inoremap <F12> <ESC>:call LoadUnite() \| call LoadUltisnips() \| 
+      \ :Unite -start-insert ultisnips<CR>
 endif
 "==============================================================================}}}
 
