@@ -20,7 +20,10 @@ let s:Util = unite#sources#outline#import('Util')
 "---------------------------------------
 " Sub Pattern
 
-let s:pat_heading = '^\s*\%(\h\w*\s\+\)*\zs\<\%(class\|object\|trait\|def\)\>'
+let s:pat_def_prefix='^\s*\%(\h\w*\(\[[^\]]\+]\)\?\s\+\)*'
+let s:pat_def='\<\%(class\|object\|trait\|def\)\>'
+
+let s:pat_heading = s:pat_def_prefix.'\zs'.s:pat_def
 
 "-----------------------------------------------------------------------------
 " Outline Info
@@ -34,7 +37,7 @@ let s:outline_info = {
       \  },
       \
       \ 'not_match_patterns': [
-      \   s:Util.shared_pattern('*', 'after_lbracket'),
+      \   s:pat_def_prefix.s:pat_def.'\s\+[^[:space:](\[:]\+\zs.\+',
       \   s:Util.shared_pattern('*', 'after_lparen'),
       \   s:Util.shared_pattern('*', 'after_colon'),
       \ ],
