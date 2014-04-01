@@ -752,22 +752,29 @@ function! LoadUltisnips()
     nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
     snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
 
-    nnoremap <silent> <F12> :Unite -start-insert ultisnips<CR>
-    inoremap <silent> <F12> <ESC>:Unite -start-insert ultisnips<CR>
+    nnoremap <silent> <F12> :call UtilUlti()<CR>
+    inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UtilUlti()<CR>
+
     return 1
   else
     echom "vim compiled without python"
     return 0
   endif
 endfunction
+
+function! UtilUlti()
+  Unite -start-insert -winheight=100 -immediately -no-empty ultisnips
+  return ''
+endfunction
+
 nnoremap <F10> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
 inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 nnoremap <F12> :call LoadUnite() \| call LoadUltisnips() \|
-      \ :Unite -start-insert ultisnips<CR>
+      \ :call UtilUlti()<CR>
 inoremap <F12> <ESC>:call LoadUnite() \| call LoadUltisnips() \| 
-      \ :Unite -start-insert ultisnips<CR>
+      \ :call UtilUlti()<CR>
 endif
 "==============================================================================}}}
 

@@ -152,7 +152,6 @@ function! UltiSnips#Anon(value, ...)
     return ""
 endfunction
 
-
 function! UltiSnips#CursorMoved()
     exec g:_uspy "UltiSnips_Manager._cursor_moved()"
 endf
