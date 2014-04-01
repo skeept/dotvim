@@ -9,26 +9,18 @@
 
 " Location of the ack utility
 if !exists("g:ackprg")
-  let s:ackcommand = executable('ack-grep') ? 'ack-grep' : 'ack'
-  let g:ackprg = s:ackcommand." -H --nocolor --nogroup --column"
+  let s:ack_default_options = " -s -H --nocolor --nogroup --column"
+  if executable('ack')
+    let g:ackprg = "ack"
+  elseif executable('ack-grep')
+    let g:ackprg = "ack-grep"
+  else
+    finish
+  endif
+  let g:ackprg .= s:ack_default_options
 endif
 
-if !exists("g:ack_wildignore")
-  let g:ack_wildignore = 1
-endif
-
-if g:ack_wildignore
-  for s:ignore in split(&wildignore, ",")
-    if s:ignore =~ "\*\..*"
-      let g:ackprg = g:ackprg . " " . substitute(s:ignore, "\*", '--ignore-file=match:', "g")
-    else
-      let g:ackprg = g:ackprg . " --ignore-dir=" . s:ignore
-    endif
-  endfor
-end
-
-" this works despite the other options given for ack in g:ackprg
-let s:ackprg_version = eval(matchstr(system(g:ackprg . " --version"),  '[0-9.]\+'))
+let s:ackprg_version = str2nr(matchstr(system(g:ackprg . " --version"),  '[0-9.]\+'))
 
 if !exists("g:ack_apply_qmappings")
   let g:ack_apply_qmappings = !exists("g:ack_qhandler")
@@ -72,7 +64,7 @@ function! s:Ack(cmd, args)
   let grepformat_bak=&grepformat
   try
     let l:ackprg_run = g:ackprg
-    if a:cmd =~# '-g$' && s:ackprg_version > 2
+    if a:cmd =~# '-g$' && s:ackprg_version >= 2
       " remove arguments that conflict with -g
       let l:ackprg_run = substitute(l:ackprg_run, '-H\|--column', '', 'g')
     end
@@ -96,35 +88,35 @@ function! s:Ack(cmd, args)
     let l:close_cmd = ':cclose<CR>'
   endif
 
-  if l:apply_mappings
+  if l:apply_mappings && &ft == "qf"
     if !exists("g:ack_autoclose") || !g:ack_autoclose
-      exec "nnoremap <silent> <buffer> q " . l:close_cmd
-      exec "nnoremap <silent> <buffer> t <C-W><CR><C-W>T"
-      exec "nnoremap <silent> <buffer> T <C-W><CR><C-W>TgT<C-W>j"
-      exec "nnoremap <silent> <buffer> o <CR>"
-      exec "nnoremap <silent> <buffer> O <CR><C-W><C-W>:ccl<CR>"
-      exec "nnoremap <silent> <buffer> go <CR><C-W>j"
-      exec "nnoremap <silent> <buffer> h <C-W><CR><C-W>K"
-      exec "nnoremap <silent> <buffer> H <C-W><CR><C-W>K<C-W>b"
-      exec "nnoremap <silent> <buffer> v <C-W><CR><C-W>H<C-W>b<C-W>J<C-W>t"
-      exec "nnoremap <silent> <buffer> gv <C-W><CR><C-W>H<C-W>b<C-W>J"
+      exec "nnoremap <buffer> <silent> q " . l:close_cmd
+      exec "nnoremap <buffer> <silent> t <C-W><CR><C-W>T"
+      exec "nnoremap <buffer> <silent> T <C-W><CR><C-W>TgT<C-W>j"
+      exec "nnoremap <buffer> <silent> o <CR>"
+      exec "nnoremap <buffer> <silent> O <CR><C-W><C-W>:ccl<CR>"
+      exec "nnoremap <buffer> <silent> go <CR><C-W>j"
+      exec "nnoremap <buffer> <silent> h <C-W><CR><C-W>K"
+      exec "nnoremap <buffer> <silent> H <C-W><CR><C-W>K<C-W>b"
+      exec "nnoremap <buffer> <silent> v <C-W><CR><C-W>H<C-W>b<C-W>J<C-W>t"
+      exec "nnoremap <buffer> <silent> gv <C-W><CR><C-W>H<C-W>b<C-W>J"
     else
-      exec "nnoremap <silent> <buffer> q " . l:close_cmd
-      exec "nnoremap <silent> <buffer> t <C-W><CR><C-W>T" . l:close_cmd
-      exec "nnoremap <silent> <buffer> T <C-W><CR><C-W>TgT<C-W>j" . l:close_cmd
-      exec "nnoremap <silent> <buffer> o <CR>" . l:close_cmd
-      exec "nnoremap <silent> <buffer> O <CR><C-W><C-W>:ccl<CR>" . l:close_cmd
-      exec "nnoremap <silent> <buffer> go <CR><C-W>j" . l:close_cmd
-      exec "nnoremap <silent> <buffer> h <C-W><CR><C-W>K" . l:close_cmd
-      exec "nnoremap <silent> <buffer> H <C-W><CR><C-W>K<C-W>b" . l:close_cmd
-      exec "nnoremap <silent> <buffer> v <C-W><CR><C-W>H<C-W>b<C-W>J<C-W>t" . l:close_cmd
-      exec "nnoremap <silent> <buffer> gv <C-W><CR><C-W>H<C-W>b<C-W>J" . l:close_cmd
+      exec "nnoremap <buffer> <silent> q " . l:close_cmd
+      exec "nnoremap <buffer> <silent> t <C-W><CR><C-W>T" . l:close_cmd
+      exec "nnoremap <buffer> <silent> T <C-W><CR><C-W>TgT<C-W>j" . l:close_cmd
+      exec "nnoremap <buffer> <silent> o <CR>" . l:close_cmd
+      exec "nnoremap <buffer> <silent> O <CR><C-W><C-W>:ccl<CR>" . l:close_cmd
+      exec "nnoremap <buffer> <silent> go <CR><C-W>j" . l:close_cmd
+      exec "nnoremap <buffer> <silent> h <C-W><CR><C-W>K" . l:close_cmd
+      exec "nnoremap <buffer> <silent> H <C-W><CR><C-W>K<C-W>b" . l:close_cmd
+      exec "nnoremap <buffer> <silent> v <C-W><CR><C-W>H<C-W>b<C-W>J<C-W>t" . l:close_cmd
+      exec "nnoremap <buffer> <silent> gv <C-W><CR><C-W>H<C-W>b<C-W>J" . l:close_cmd
     endif
 
     " If auto preview in on, remap j and k keys
     if exists("g:ackpreview")
-      exec "nnoremap <silent> <buffer> j j<CR><C-W><C-W>"
-      exec "nnoremap <silent> <buffer> k k<CR><C-W><C-W>"
+      exec "nnoremap <buffer> <silent> j j<CR><C-W><C-W>"
+      exec "nnoremap <buffer> <silent> k k<CR><C-W><C-W>"
     endif
   endif
 
@@ -132,6 +124,7 @@ function! s:Ack(cmd, args)
   if g:ackhighlight
     let @/ = substitute(l:grepargs,'["'']','','g')
     set hlsearch
+    call feedkeys(":let &hlsearch=1\<CR>", "n")
   end
 
   redraw!

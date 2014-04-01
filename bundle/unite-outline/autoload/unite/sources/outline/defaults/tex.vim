@@ -50,7 +50,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     " Bibliography
     let heading.level = s:bib_level
     let bib_label = s:Util.neighbor_matchstr(a:context, h_lnum,
-          \ '\\renewcommand{\\bibname}{\zs.*\ze}\s*$', 3)
+          \ '\\renewcommand{\\bibname}{\zs.*\ze}\s*\%(%.*\)\?$', 3)
     let heading.word = (empty(bib_label) ? "Bibliography" : bib_label)
   else
     " Parts, Chapters, Sections, etc
@@ -61,7 +61,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
       let s:bib_level = heading.level
     endif
     let heading.word = s:normalize_heading_word(
-          \ s:Util.join_to(a:context, h_lnum, '}\s*$'), unit)
+          \ s:Util.join_to(a:context, h_lnum, '}\s*\%(%.*\)\?$'), unit)
   endif
 
   if heading.level > 0
@@ -73,7 +73,7 @@ endfunction
 
 function! s:normalize_heading_word(word, unit)
   let word = substitute(a:word, '\\\\\n', '', 'g')
-  let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*$')
+  let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*\%(%.*\)\?$')
   let word = s:unit_seqnr_prefix(a:unit) . word
   return word
 endfunction

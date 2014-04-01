@@ -92,7 +92,7 @@ call s:Util.function('join_to')
 
 function! s:join_to_backward(context, lnum, pattern, limit)
   let lines = a:context.lines
-  let limit = max(1, a:lnum - a:limit])
+  let lnum = max([1, a:lnum - a:limit])
   while lnum > 0
     let line = lines[lnum]
     if line =~# a:pattern
@@ -223,8 +223,8 @@ unlet s:List
 "-----------------------------------------------------------------------------
 " Path
 
-let Path = unite#sources#outline#modules#base#new('Path', s:SID)
-let s:Util.Path = Path
+let s:Path = unite#sources#outline#modules#base#new('Path', s:SID)
+let s:Util.Path = s:Path
 
 " Path.normalize( {path} [, {mods}])
 function! s:Path_normalize(path, ...)
@@ -236,22 +236,22 @@ function! s:Path_normalize(path, ...)
   let path = substitute(path, '[/\\]', '/', 'g')
   return path
 endfunction
-call Path.function('normalize')
+call s:Path.function('normalize')
 
-unlet Path
+unlet s:Path
 
 "-----------------------------------------------------------------------------
 " String
 
-let String = unite#sources#outline#modules#base#new('String', s:SID)
-let s:Util.String = String
+let s:String = unite#sources#outline#modules#base#new('String', s:SID)
+let s:Util.String = s:String
 
 " String.capitalize( {str} [, {flag}])
 function! s:String_capitalize(str, ...)
   let flag = (a:0 ? a:1 : '')
   return substitute(a:str, '\<\(\h\)\(\w\+\)\>', '\u\1\L\2', flag)
 endfunction
-call String.function('capitalize')
+call s:String.function('capitalize')
 
 " Ported from:
 " Sample code from Programing Ruby, page 145
@@ -277,7 +277,7 @@ function! s:String_nr2roman(nr)
   endfor
   return roman
 endfunction
-call String.function('nr2roman')
+call s:String.function('nr2roman')
 
 function! s:String_shellescape(str)
   if &shell =~? '^\%(cmd\%(\.exe\)\=\|command\.com\)\%(\s\|$\)'
@@ -286,9 +286,9 @@ function! s:String_shellescape(str)
     return "'" . substitute(a:str, "'", "'\\\\''", 'g') . "'"
   endif
 endfunction
-call String.function('shellescape')
+call s:String.function('shellescape')
 
-unlet String
+unlet s:String
 
 "-----------------------------------------------------------------------------
 " Misc
