@@ -1,3 +1,4 @@
+ActivateAddons markdown@tpope
 function! GetFoldLevel_Log(lnum)
   let numChars = g:numCharsFront
   let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
