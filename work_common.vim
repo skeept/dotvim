@@ -1,4 +1,3 @@
-ActivateAddons markdown@tpope
 function! GetFoldLevel_Log(lnum)
   let numChars = g:numCharsFront
   let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
@@ -69,6 +68,7 @@ EOF
     " try writting text after current word
     let @u = " " . g:echoOrPrintTimeSettingTime
     normal he"up
+    "put u
   endif
   echo g:echoOrPrintTimeSettingTime
 endfunction
