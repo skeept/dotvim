@@ -164,8 +164,13 @@ endfunction
 " }}}1
 " :Start {{{1
 
-function! dispatch#start(command, ...) abort
+function! dispatch#start_command(bang, command) abort
   let command = a:command
+  if empty(command) && exists('*projectile#query_exec')
+    for [root, command] in projectile#query_exec('start')
+      break
+    endfor
+  endif
   if empty(command) && type(get(b:, 'start', [])) == type('')
     let command = b:start
   endif
@@ -173,37 +178,65 @@ function! dispatch#start(command, ...) abort
   if !empty(title)
     let command = command[strlen(title) + 8 : -1]
   endif
-  if command =~# '^:.'
-    unlet! g:dispatch_last_start
-    return substitute(command, '\>', get(a:0 ? a:1 : {}, 'background', 0) ? '!' : '', '')
-  endif
-  if empty(command)
-    let command = &shell
-  endif
-  if empty(title)
-    let title = fnamemodify(matchstr(command, '\%(\\.\|\S\)\+'), ':t:r')
-  endif
   let title = substitute(title, '\\\(\s\)', '\1', 'g')
+  let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
+  let restore = ''
+  try
+    if exists('root')
+      let restore = cd . ' ' . fnameescape(getcwd())
+      exe cd fnameescape(root)
+    endif
+    if command =~# '^:.'
+      unlet! g:dispatch_last_start
+      return substitute(command, '\>', get(a:0 ? a:1 : {}, 'background', 0) ? '!' : '', '')
+    endif
+    if empty(command)
+      let command = &shell
+    endif
+    call dispatch#start(command, {'background': a:bang, 'title': title})
+  finally
+    if exists('root')
+      execute restore
+    endif
+  endtry
+  return ''
+endfunction
+
+function! dispatch#start(command, ...) abort
   let request = extend({
         \ 'action': 'start',
         \ 'background': 0,
-        \ 'command': command,
+        \ 'command': a:command,
         \ 'directory': getcwd(),
-        \ 'expanded': dispatch#expand(command),
-        \ 'title': title,
+        \ 'title': '',
+        \ 'expanded': dispatch#expand(a:command),
         \ }, a:0 ? a:1 : {})
+  if empty(request.title)
+    let request.title = substitute(fnamemodify(matchstr(request.command, '\%(\\.\|\S\)\+'), ':t:r'), '\\\(\s\)', '\1', 'g')
+  endif
   let g:dispatch_last_start = request
   if !s:dispatch(request)
     execute '!' . request.command
   endif
-  return ''
+  return request
 endfunction
 
 " }}}1
 " :Dispatch, :Make {{{1
 
+let g:dispatch_compilers = get(g:, 'dispatch_compilers', {})
+
 function! dispatch#compiler_for_program(args) abort
-  let program = fnamemodify(matchstr(a:args, '\S\+'), ':t:r')
+  let remove = keys(filter(copy(g:dispatch_compilers), 'empty(v:val)'))
+  let pattern = '\%('.join(map(remove, 'substitute(escape(v:val, ".*^$~[]\\"), "\\w\\zs$", " ", "")'), '\s*\|').'\)'
+  let args = substitute(a:args, '\s\+', ' ', 'g')
+  let args = substitute(args, '^\s*'.pattern.'*', '', '')
+  for [command, plugin] in items(g:dispatch_compilers)
+    if strpart(args.' ', 0, len(command)+1) ==# command.' ' && !empty(plugin)
+      return plugin
+    endif
+  endfor
+  let program = fnamemodify(matchstr(args, '\S\+'), ':t:r')
   if program ==# 'make'
     return 'make'
   endif
@@ -214,14 +247,14 @@ function! dispatch#compiler_for_program(args) abort
             \ matchstr(line, '\<CompilerSet\s\+makeprg=\zs\a\%(\\.\|[^[:space:]"]\)*'),
             \ '\\\(.\)', '\1', 'g'),
             \ ' \=["'']\=\%(%\|\$\*\|--\w\@!\).*', '', '')
-      if !empty(full) && strpart(a:args, 0, len(full)) ==# full
+      if !empty(full) && strpart(args.' ', 0, len(full)+1) ==# full.' '
         return plugin
       endif
     endfor
   endfor
   for [plugin, lines] in plugins
     for line in lines
-      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_-]\+') == program
+      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_-]\+') ==# program
         return plugin
       endif
     endfor
@@ -287,7 +320,7 @@ function! dispatch#compile_command(bang, args) abort
   if args =~# '^!'
     return 'Start' . (a:bang ? '!' : '') . ' ' . args[1:-1]
   elseif args =~# '^:.'
-    return substitute(a:args, '\>', (a:bang ? '!' : ''), '')
+    return substitute(args, '\>', (a:bang ? '!' : ''), '')
   endif
   let executable = matchstr(args, '\S\+')
 
