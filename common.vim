@@ -752,7 +752,7 @@ function! LoadUltisnips()
     nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
     snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
 
-    nnoremap <silent> <F12> :call UtilUlti()<CR>
+    nnoremap <silent> <F12> a<C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UtilUlti()<CR>
     inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UtilUlti()<CR>
 
     return 1
