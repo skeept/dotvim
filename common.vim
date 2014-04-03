@@ -1055,13 +1055,18 @@ command! -range=% DelTrailWhiteSpace
       \ | <line1>,<line2>call StripTrailingWhitespace()
 "==============================================================================}}}
 
-"================== Tab Settings ==============================================={{{
+"================== Statusline Settings/functions ======================={{{
 function! GetNumTabsStr()
   if tabpagenr('$') == 1
     return ''
   else
     return '[T' . tabpagenr() . '/' . tabpagenr('$') . ']'
   endif
+endfunction
+
+function! GetWindowNR()
+  if winnr('$') < 3 |  return '' | endif
+  return 'W' . winnr()
 endfunction
 "==============================================================================}}}
 

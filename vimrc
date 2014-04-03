@@ -212,6 +212,7 @@ endfunction
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
 "set statusline+=%{XgetTagbarFunc()}
+"set statusline+=%{GetWindowNR()}
 set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
 set statusline+=%{DispLTXCF()}
