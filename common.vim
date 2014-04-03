@@ -752,8 +752,8 @@ function! LoadUltisnips()
     nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
     snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
 
-    nnoremap <silent> <F12> a<C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UtilUlti()<CR>
-    inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UtilUlti()<CR>
+    nnoremap <silent> <F12> a<C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UltiSnipsCallUnite()<CR>
+    inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UltiSnipsCallUnite()<CR>
 
     return 1
   else
@@ -762,7 +762,7 @@ function! LoadUltisnips()
   endif
 endfunction
 
-function! UtilUlti()
+function! UltiSnipsCallUnite()
   Unite -start-insert -winheight=100 -immediately -no-empty ultisnips
   return ''
 endfunction
@@ -772,9 +772,9 @@ inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
 inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
 nnoremap <F12> :call LoadUnite() \| call LoadUltisnips() \|
-      \ :call UtilUlti()<CR>
+      \ :call UltiSnipsCallUnite()<CR>
 inoremap <F12> <ESC>:call LoadUnite() \| call LoadUltisnips() \| 
-      \ :call UtilUlti()<CR>
+      \ :call UltiSnipsCallUnite()<CR>
 endif
 "==============================================================================}}}
 
