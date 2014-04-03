@@ -1,6 +1,6 @@
-" dispatch.vim - Asynchronous build and test dispatcher
+" Location:     plugin/dispatch.vim
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.0
+" Version:      1.1
 
 if exists("g:loaded_dispatch") || v:version < 700 || &cp
   finish
@@ -21,7 +21,7 @@ command! -bang -nargs=* -complete=custom,dispatch#command_complete Start
 
 command! -bang -bar Copen call dispatch#copen(<bang>0)
 
-function! DispatchComplete(id)
+function! DispatchComplete(id) abort
   return dispatch#complete(a:id)
 endfunction
 

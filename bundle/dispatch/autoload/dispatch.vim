@@ -1,4 +1,5 @@
-" autoload/dispatch.vim
+" Location:     autoload/dispatch.vim
+
 if exists('g:autoloaded_dispatch')
   finish
 endif
@@ -42,7 +43,7 @@ function! dispatch#expand(string) abort
   return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
 endfunction
 
-function! s:expand(string)
+function! s:expand(string) abort
   let slashes = len(matchstr(a:string, '^\%(\\\\\)*'))
   return repeat('\', slashes/2) . expand(a:string[slashes : -1])
 endfunction
@@ -115,14 +116,14 @@ function! dispatch#prepare_make(request, ...) abort
   endif
 endfunction
 
-function! dispatch#set_title(request)
+function! dispatch#set_title(request) abort
   return dispatch#shellescape('printf',
         \ '\033]1;%s\007\033]2;%s\007',
         \ a:request.title,
         \ a:request.expanded)
 endfunction
 
-function! dispatch#isolate(...)
+function! dispatch#isolate(...) abort
   let command = ['cd ' . shellescape(getcwd())]
   for line in split(system('env'), "\n")
     let var = matchstr(line, '^\w\+\ze=')
@@ -140,7 +141,7 @@ function! dispatch#isolate(...)
   return 'env -i ' . &shell . ' ' . temp
 endfunction
 
-function! s:set_current_compiler(name)
+function! s:set_current_compiler(name) abort
   if empty(a:name)
     unlet! b:current_compiler
   else
