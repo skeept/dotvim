@@ -20,10 +20,11 @@ let s:Util = unite#sources#outline#import('Util')
 "---------------------------------------
 " Sub Pattern
 
-let s:pat_def_prefix='^\s*\%(\h\w*\(\[[^\]]\+]\)\?\s\+\)*'
+let s:pat_def_prefix='\%(\h\w*\(\[[^\]]\+]\)\?\s\+\)*'
 let s:pat_def='\<\%(class\|object\|trait\|def\)\>'
+let s:pat_bol='^\s*'
 
-let s:pat_heading = s:pat_def_prefix.'\zs'.s:pat_def
+let s:pat_heading = s:pat_bol.s:pat_def_prefix.'\zs'.s:pat_def
 
 "-----------------------------------------------------------------------------
 " Outline Info
@@ -37,10 +38,14 @@ let s:outline_info = {
       \  },
       \
       \ 'not_match_patterns': [
-      \   s:pat_def_prefix.s:pat_def.'\s\+[^[:space:](\[:]\+\zs.\+',
+      \   s:pat_bol.s:pat_def_prefix.s:pat_def.'\s\+[^[:space:](\[:]\+\zs.\+',
       \   s:Util.shared_pattern('*', 'after_lparen'),
       \   s:Util.shared_pattern('*', 'after_colon'),
       \ ],
+      \ 'highlight_rules': [
+      \   {'name': 'def', 'pattern': '/'.s:pat_def_prefix.s:pat_def.'/', 'highlight': 'Comment'},
+      \   {'name': 'args', 'pattern': '/\%([\[({]\|\<\%(extends\|with\)\>\).*/', 'highlight': 'Comment'},
+      \ ]
       \}
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context)

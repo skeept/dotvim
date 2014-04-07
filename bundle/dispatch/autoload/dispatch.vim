@@ -88,7 +88,7 @@ function! dispatch#vim_executable() abort
 endfunction
 
 function! dispatch#callback(request) abort
-  if !empty(v:servername)
+  if !empty(v:servername) && has_key(s:request(a:request), 'id')
     return dispatch#shellescape(dispatch#vim_executable()) .
           \ ' --servername ' . dispatch#shellescape(v:servername) .
           \ ' --remote-expr "' . 'DispatchComplete(' . s:request(a:request).id . ')' . '"'
@@ -96,24 +96,29 @@ function! dispatch#callback(request) abort
   return ''
 endfunction
 
-function! dispatch#prepare_make(request, ...) abort
+function! dispatch#prepare_start(request, ...) abort
   let exec = 'echo $$ > ' . a:request.file . '.pid; '
-  if executable('perl')
-    let exec .= 'perl -e "select(undef,undef,undef,0.1)"; '
-  else
-    let exec .= 'sleep 1; '
-  endif
-  let exec .= a:0 ? a:1 : (a:request.expanded . dispatch#shellpipe(a:request.file))
-
+  let exec .= a:0 ? a:1 : a:request.expanded
+  let callback = dispatch#callback(a:request)
   let after = 'rm -f ' . a:request.file . '.pid; ' .
-        \ 'touch ' . a:request.file . '.complete; ' .
-        \ dispatch#callback(a:request)
+        \ 'touch ' . a:request.file . '.complete' .
+        \ (empty(callback) ? '' : '; ' . callback)
   if &shellpipe =~# '2>&1'
     return 'trap ' . shellescape(after) . ' EXIT INT TERM; ' . exec
   else
     " csh
     return exec . '; ' . after
   endif
+endfunction
+
+function! dispatch#prepare_make(request, ...) abort
+  if executable('perl')
+    let exec = 'perl -e "select(undef,undef,undef,0.1)"; '
+  else
+    let exec = 'sleep 1; '
+  endif
+  let exec .= a:0 ? a:1 : (a:request.expanded . dispatch#shellpipe(a:request.file))
+  return dispatch#prepare_start(a:request, exec, 1)
 endfunction
 
 function! dispatch#set_title(request) abort
@@ -123,11 +128,11 @@ function! dispatch#set_title(request) abort
         \ a:request.expanded)
 endfunction
 
-function! dispatch#isolate(...) abort
+function! dispatch#isolate(keep, ...) abort
   let command = ['cd ' . shellescape(getcwd())]
   for line in split(system('env'), "\n")
     let var = matchstr(line, '^\w\+\ze=')
-    if !empty(var) && var !=# '_'
+    if !empty(var) && var !=# '_' && index(a:keep, var) < 0
       if &shell =~# 'csh'
         let command += ['setenv '.var.' '.shellescape(eval('$'.var))]
       else
@@ -138,7 +143,7 @@ function! dispatch#isolate(...) abort
   let command += a:000
   let temp = tempname()
   call writefile(command, temp)
-  return 'env -i ' . &shell . ' ' . temp
+  return 'env -i ' . join(map(copy(a:keep), 'v:val."=\"$". v:val ."\" "'), '') . &shell . ' ' . temp
 endfunction
 
 function! s:set_current_compiler(name) abort
@@ -209,12 +214,14 @@ function! dispatch#start(command, ...) abort
         \ 'background': 0,
         \ 'command': a:command,
         \ 'directory': getcwd(),
-        \ 'title': '',
         \ 'expanded': dispatch#expand(a:command),
+        \ 'file': tempname(),
+        \ 'title': '',
         \ }, a:0 ? a:1 : {})
   if empty(request.title)
     let request.title = substitute(fnamemodify(matchstr(request.command, '\%(\\.\|\S\)\+'), ':t:r'), '\\\(\s\)', '\1', 'g')
   endif
+  let s:files[request.file] = request
   let g:dispatch_last_start = request
   if !s:dispatch(request)
     execute '!' . request.command
@@ -372,6 +379,7 @@ function! dispatch#compile_command(bang, args) abort
   if !s:dispatch(request)
     execute '!'.request.command dispatch#shellpipe(request.file)
     call dispatch#complete(request.id, 'quiet')
+    execute 'cgetfile '.request.file
   endif
   return ''
 endfunction
@@ -452,6 +460,38 @@ function! dispatch#request(...) abort
   return a:0 ? s:request(a:1) : get(s:makes, -1, {})
 endfunction
 
+function! dispatch#pid(request) abort
+  let request = s:request(a:request)
+  let file = request.file
+  if !has_key(request, 'pid')
+    for i in range(50)
+      if getfsize(file.'.pid') > 0 || filereadable(file.'.complete')
+        break
+      endif
+      sleep 10m
+    endfor
+    try
+      let request.pid = +readfile(file.'.pid')[0]
+    catch
+      let request.pid = 0
+    endtry
+  endif
+  if request.pid && getfsize(file.'.pid') > 0
+    if has('win32')
+      let running = system('tasklist /fi "pid eq '.request.pid.'"') =~# '==='
+    else
+      call system('kill -0 '.request.pid)
+      let running = !v:shell_error
+    endif
+    if running
+      return request.pid
+    else
+      let request.pid = 0
+      call delete(file)
+    endif
+  endif
+endfunction
+
 function! dispatch#completed(request) abort
   return get(s:request(a:request), 'completed', 0)
 endfunction
@@ -467,7 +507,7 @@ function! dispatch#complete(file, ...) abort
         echo 'Finished :Dispatch' request.command
       endif
     endif
-    if !request.background
+    if !a:0 && !request.background
       call s:cgetfile(request, 0, 0)
       redraw
     endif
@@ -505,6 +545,7 @@ function! s:cgetfile(request, all, copen) abort
       let &l:efm = request.format
     endif
     let &l:makeprg = request.command
+    silent doautocmd QuickFixCmdPre cgetfile
     execute 'cgetfile '.fnameescape(request.file)
     silent doautocmd QuickFixCmdPost cgetfile
   catch '^E40:'
