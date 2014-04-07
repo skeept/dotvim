@@ -25,8 +25,9 @@ function! dispatch#tmux#handle(request) abort
     if a:request.background
       let command .= ' -d'
     endif
-    let command .= ' ' . shellescape('exec ' . dispatch#isolate(a:request.expanded))
-    let a:request.tmux_pane = s:pane_id(system(command)[0:-2])
+    let command .= ' ' . shellescape('exec ' . dispatch#isolate(
+          \ ['TMUX', 'TMUX_PANE'], dispatch#prepare_start(a:request)))
+    call system(command)
     return 1
   endif
 endfunction
@@ -34,7 +35,8 @@ endfunction
 function! dispatch#tmux#make(request) abort
   let pipepane = &shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee'
   let session = get(g:, 'tmux_session', '')
-  let script = dispatch#isolate(call('dispatch#prepare_make',
+  let script = dispatch#isolate(['TMUX', 'TMUX_PANE'],
+        \ call('dispatch#prepare_make',
         \ [a:request] + (pipepane ? [a:request.expanded] : [])))
 
   let title = shellescape(get(a:request, 'compiler', 'make'))
@@ -61,13 +63,12 @@ function! dispatch#tmux#make(request) abort
 
   let pane = s:pane_id(get(readfile(s:make_pane, '', 1), 0, ''))
   if !empty(pane)
-    let a:request.tmux_pane = pane
     let s:waiting[pane] = a:request
     return 1
   endif
 endfunction
 
-function! s:pane_id(pane)
+function! s:pane_id(pane) abort
   if a:pane =~# '\.\d\+$'
     let [window, index] = split(a:pane, '\.\%(\d\+$\)\@=')
     let out = system('tmux list-panes -F "#P #{pane_id}" -t '.shellescape(window))
@@ -89,6 +90,23 @@ function! dispatch#tmux#poll() abort
       call dispatch#complete(request)
     endif
   endfor
+endfunction
+
+function! dispatch#tmux#activate(pid) abort
+  let out = system('ps ewww -p '.a:pid)
+  let pane = matchstr(out, 'TMUX_PANE=\zs%\d\+')
+  if empty(pane)
+    return 0
+  endif
+  let session = get(g:, 'tmux_session', '')
+  if !empty(session)
+    let session = ' -t '.shellescape(session)
+  endif
+  let panes = split(system('tmux list-panes -s -F "#{pane_id}"'.session), "\n")
+  if index(panes, pane) >= 0
+    call system('tmux select-window -t '.pane.'; tmux select-pane -t '.pane)
+    return !v:shell_error
+  endif
 endfunction
 
 augroup dispatch_tmux

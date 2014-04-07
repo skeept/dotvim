@@ -50,6 +50,16 @@ COMMANDS                                        *dispatch-commands*
 
                         " CompilerSet makeprg={program}
 <
+                        If you need more control, *g:dispatch_compilers* can
+                        be set to a dictionary with commands for keys and
+                        compiler plugins for values.  Use an empty value to
+                        skip the matched string and try again with the rest of
+                        the command.
+>
+                        let g:dispatch_compilers = {
+                              \ 'latex': 'tex',
+                              \ 'bundle exec': ''}
+<
                                                 *b:dispatch*
 :Dispatch[!]            Invoke |:Dispatch| with the command and arguments
                         found in b:dispatch.  When absent, equivalent to
@@ -99,6 +109,8 @@ The tmux strategy can be used from the GUI as well.  Either start Vim from
 inside of tmux or assign g:tmux_session.  This will use a new window for
 foreground makes rather than a split.
 
+Tmux 1.6 or newer is required.
+
 GNU Screen ~
 
 Not used for foreground |:Make| invocations unless you're in GUI Vim.
@@ -117,8 +129,8 @@ for foreground |:Make| invocations.
 
 X11 ~
 
-Uses $TERMINAL, x-terminal-emulator, or xterm.  Used only for |:Start|, as its
-insistence on stealing focus makes it infuriating for much else.
+Uses $TERMINAL, x-terminal-emulator, or xterm.  Used for |:Start| and, if
+wmctrl installed to aid in switching the focus back, |:Start!|.
 
 Headless ~
 
