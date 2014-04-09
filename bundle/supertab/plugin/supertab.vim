@@ -1,7 +1,7 @@
 " Author: Eric Van Dewoestine <ervandew@gmail.com>
 "         Original concept and versions up to 0.32 written by
 "         Gergely Kontra <kgergely@mcl.hu>
-" Version: 2.0
+" Version: 2.1
 " GetLatestVimScripts: 1643 1 :AutoInstall: supertab.vim
 "
 " Description: {{{
@@ -312,6 +312,8 @@ function! s:ManualCompletionEnter() " {{{
     if complType == "\<c-x>\<c-v>"
       return s:CommandLineCompletion()
     endif
+
+    call s:InitBuffer()
 
     " optionally enable enhanced longest completion
     if g:SuperTabLongestEnhanced && &completeopt =~ 'longest'

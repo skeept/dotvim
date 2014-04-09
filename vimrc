@@ -79,7 +79,7 @@ function! SetupVAM()
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
   "ActivateAddons neocomplete
-  VAMAddToActiveAddons argumentative
+  VAMAddToActiveAddons argumentative projectile
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
