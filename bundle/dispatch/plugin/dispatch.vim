@@ -1,6 +1,6 @@
-" dispatch.vim - Asynchronous build and test dispatcher
+" Location:     plugin/dispatch.vim
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.0
+" Version:      1.1
 
 if exists("g:loaded_dispatch") || v:version < 700 || &cp
   finish
@@ -17,11 +17,11 @@ command! -bang -nargs=* -complete=file Make
       \ Dispatch<bang> _ <args>
 
 command! -bang -nargs=* -complete=custom,dispatch#command_complete Start
-      \ call dispatch#start(<q-args>, {'background': <bang>0})
+      \ execute dispatch#start_command(<bang>0, <q-args>)
 
-command! -bang Copen call dispatch#copen(<bang>0)
+command! -bang -bar Copen call dispatch#copen(<bang>0)
 
-function! DispatchComplete(id)
+function! DispatchComplete(id) abort
   return dispatch#complete(a:id)
 endfunction
 

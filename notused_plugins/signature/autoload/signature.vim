@@ -115,8 +115,34 @@ function! signature#SignInfo(...)                 " {{{2
 
   return l:signs_dic
 endfunction
+
+function! s:ReportNoAvailableMarks()
+    if g:SignatureErrorIfNoAvailableMarks
+      echoe "Signature: No free marks left."
+    else
+      echohl WarningMsg
+      echomsg "Signature: No free marks left."
+      echohl None
+    endif
+endfunction
+
 " }}}2
 
+" Patched-in support fron Nark-Tools                                  {{{2
+let s:local_marks_nlist = split("abcdefghijklmnopqrstuvwxyz", '\zs')
+
+function! s:LocalMarkList()
+  return map(copy(s:local_marks_nlist), '[v:val, line("''" . v:val)]')
+endfunction
+
+function! s:MarksAt(pos)
+  return join(map(filter(s:LocalMarkList(), 'v:val[1]==' . a:pos), 'v:val[0]'), '')
+endfunction
+
+function! s:UsedMarks()
+  return join(map(s:LocalMarkList(), '(v:val[1]>0 ? v:val[0] : " ")'),'')
+endfunction
+" }}}2
 
 "
 " Toggle Marks/Signs                                {{{1
@@ -132,17 +158,25 @@ function! signature#Input()                       " {{{2
   let l:char  = nr2char( l:ascii )
 
   " Check if 'PlaceNextMark', 'PurgeMarks' or 'PurgeMarkers' was called
-  if g:SignatureMap['PlaceNextMark'] == "<CR>"    && l:ascii == 13  | return s:ToggleMark('next')     | endif
-  if g:SignatureMap['PlaceNextMark'] == "<Space>" && l:ascii == 32  | return s:ToggleMark('next')     | endif
-  if l:char == eval( '"\' . g:SignatureMap['PlaceNextMark'] . '"' ) | return s:ToggleMark('next')     | endif
+  if g:SignatureMap['PlaceNextMark'] == "<CR>"    && l:ascii == 13     | return s:ToggleMark('next')     | endif
+  if g:SignatureMap['PlaceNextMark'] == "<Space>" && l:ascii == 32     | return s:ToggleMark('next')     | endif
+  if l:char == eval( '"\' . g:SignatureMap['PlaceNextMark'] . '"' )    | return s:ToggleMark('next')     | endif
 
-  if g:SignatureMap['PurgeMarks']    == "<CR>"    && l:ascii == 13  | return signature#PurgeMarks()   | endif
-  if g:SignatureMap['PurgeMarks']    == "<Space>" && l:ascii == 32  | return signature#PurgeMarks()   | endif
-  if l:char == eval( '"\' . g:SignatureMap['PurgeMarks'] . '"' )    | return signature#PurgeMarks()   | endif
+  if g:SignatureMap['ToggleMarkAtLine'] == "<CR>"    && l:ascii == 13  | return s:ToggleMarkAtLine()      | endif
+  if g:SignatureMap['ToggleMarkAtLine'] == "<Space>" && l:ascii == 32  | return s:ToggleMarkAtLine()      | endif
+  if l:char == eval( '"\' . g:SignatureMap['ToggleMarkAtLine'] . '"' ) | return s:ToggleMarkAtLine()      | endif
 
-  if g:SignatureMap['PurgeMarkers']  == "<CR>"    && l:ascii == 13  | return signature#PurgeMarkers() | endif
-  if g:SignatureMap['PurgeMarkers']  == "<Space>" && l:ascii == 32  | return signature#PurgeMarkers() | endif
-  if l:char == eval( '"\' . g:SignatureMap['PurgeMarkers'] . '"' )  | return signature#PurgeMarkers() | endif
+  if g:SignatureMap['PurgeMarksAtLine'] == "<CR>"    && l:ascii == 13  | return s:PurgeMarksAtLine()      | endif
+  if g:SignatureMap['PurgeMarksAtLine'] == "<Space>" && l:ascii == 32  | return s:PurgeMarksAtLine()      | endif
+  if l:char == eval( '"\' . g:SignatureMap['PurgeMarksAtLine'] . '"' ) | return s:PurgeMarksAtLine()      | endif
+
+  if g:SignatureMap['PurgeMarks']    == "<CR>"    && l:ascii == 13     | return signature#PurgeMarks()   | endif
+  if g:SignatureMap['PurgeMarks']    == "<Space>" && l:ascii == 32     | return signature#PurgeMarks()   | endif
+  if l:char == eval( '"\' . g:SignatureMap['PurgeMarks'] . '"' )       | return signature#PurgeMarks()   | endif
+
+  if g:SignatureMap['PurgeMarkers']  == "<CR>"    && l:ascii == 13     | return signature#PurgeMarkers() | endif
+  if g:SignatureMap['PurgeMarkers']  == "<Space>" && l:ascii == 32     | return signature#PurgeMarkers() | endif
+  if l:char == eval( '"\' . g:SignatureMap['PurgeMarkers'] . '"' )     | return signature#PurgeMarkers() | endif
 
   " ... if the input is not a number eg. '!' ==> Delete all '!' markers
   if stridx( l:SignatureIncludeMarkers, l:char ) >= 0
@@ -162,6 +196,39 @@ function! signature#Input()                       " {{{2
 
 endfunction
 
+function! s:ToggleMarkAtLine()                    " {{{2
+  " Description: If no mark on current line, add one. If marks are on the
+  " current line, remove one.
+  let l:lnum = line('.')
+  " get list of marks wt this line (from s:MarksAt())
+  let l:marks_here = join(map(filter(s:LocalMarkList(), 'v:val[1]==' . l:lnum), 'v:val[0]'), '')
+  if empty(l:marks_here)
+    " set up for adding a mark
+    call s:ToggleMark('next')
+    return
+  else
+    " delete one mark
+    call s:ToggleMark(l:marks_here[0])
+    return
+  endif
+endfunction
+" }}}2
+
+function! s:PurgeMarksAtLine()                    " {{{2
+  " Description: If no mark on current line, add one. If marks are on the
+  " current line, remove one.
+  let l:lnum = line('.')
+  " get list of marks wt this line (from s:MarksAt())
+  let l:marks_here = map(filter(s:LocalMarkList(), 'v:val[1]==' . l:lnum), 'v:val[0]')
+  if !empty(l:marks_here)
+    " delete one mark
+    for l:mark in l:marks_here
+      call s:ToggleMark(l:mark)
+    endfor
+    return
+  endif
+endfunction
+" }}}2
 
 function! s:ToggleMark( mark )                    " {{{2
   " Description: mark = 'next' : Place new mark on current line else toggle specified mark on current line
@@ -171,11 +238,29 @@ function! s:ToggleMark( mark )                    " {{{2
 
   if a:mark == "next"
     " Place new mark
-    let l:mark = s:MarksList( "free" )[0]
-    if l:mark == ""
-      echoe "Signature: No free marks left."
-      return
+
+    " get new mark
+    let l:marks_list = s:MarksList( "free" )
+    if empty(l:marks_list)
+      if g:SignatureUnconditionallyRecycleMarks
+        " reuse existing mark
+        let l:used_marks = s:UsedMarks()
+        if empty(l:used_marks)
+          " no existing mark available
+          call s:ReportNoAvailableMarks()
+          return
+        else
+          " reuse first used mark
+          call s:ToggleMark(l:used_marks[0])
+          return
+        endif
+      else
+        " no marks available and mark re-use not in effect
+        call s:ReportNoAvailableMarks()
+        return
+      endif
     endif
+    let l:mark = l:marks_list[0]
 
     execute 'normal! m' . l:mark
     call s:ToggleSign( l:mark, "place", l:lnum )
@@ -585,3 +670,22 @@ function! signature#Toggle()                      " {{{2
   endif
 
 endfunction
+
+function! signature#ListLocalMarks()              " {{{2
+  " Description: Opens and populates location list with local marks
+    call setloclist(0,
+                \filter(
+                \map(
+                \copy(s:local_marks_nlist),
+                \'{"bufnr": bufnr("%"), "lnum": line("''" . v:val), "col": col("''" . v:val),
+                \"type": "m", "text": v:val . ": " . getline(line("''" . v:val))}'),
+                \'v:val.lnum > 0'))
+    lopen
+    if !exists("g:signature_set_location_list_convenience_maps") || g:signature_set_location_list_convenience_maps
+        nnoremap <buffer> <silent> q        :q<CR>
+        noremap  <buffer> <silent> <ESC>    :q<CR>
+        noremap  <buffer> <silent> <ENTER>  <CR>:lcl<CR>
+    endif
+endfunction
+
+" }}}2

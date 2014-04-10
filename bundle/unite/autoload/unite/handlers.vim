@@ -1,7 +1,6 @@
 "=============================================================================
 " FILE: handlers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 21 Feb 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -77,7 +76,7 @@ function! unite#handlers#_on_cursor_moved_i()  "{{{
   endif
 endfunction"}}}
 function! unite#handlers#_on_bufwin_enter(bufnr)  "{{{
-  let unite = getbufvar(a:bufnr, 'unite')
+  silent! let unite = getbufvar(a:bufnr, 'unite')
   if type(unite) != type({})
         \ || bufwinnr(a:bufnr) < 1
     return
@@ -184,7 +183,8 @@ function! unite#handlers#_on_cursor_moved()  "{{{
     2match
 
     if abs(line('.') - prompt_linenr) <= 1 || mode('.') == 'i' ||
-          \ split(reltimestr(reltime(unite.cursor_line_time)))[0] > '0.10'
+          \ split(reltimestr(reltime(unite.cursor_line_time)))[0]
+          \    > g:unite_cursor_line_time
       call s:set_cursor_line()
     endif
     let unite.cursor_line_time = reltime()
@@ -238,7 +238,7 @@ function! unite#handlers#_on_buf_unload(bufname)  "{{{
   2match
 
   " Save unite value.
-  let unite = getbufvar(a:bufname, 'unite')
+  silent! let unite = getbufvar(a:bufname, 'unite')
   if type(unite) != type({})
     " Invalid unite.
     return
@@ -328,7 +328,8 @@ endfunction"}}}
 function! unite#handlers#_save_updatetime()  "{{{
   let unite = unite#get_current_unite()
 
-  if unite.is_async && &updatetime > unite.context.update_time
+  if unite.is_async && unite.context.update_time > 0
+        \ && &updatetime > unite.context.update_time
     let unite.update_time_save = &updatetime
     let &updatetime = unite.context.update_time
   endif
@@ -340,7 +341,8 @@ function! unite#handlers#_restore_updatetime()  "{{{
     return
   endif
 
-  if &updatetime < unite.update_time_save
+  if unite.context.update_time > 0
+        \ && &updatetime < unite.update_time_save
     let &updatetime = unite.update_time_save
   endif
 endfunction"}}}
@@ -366,7 +368,7 @@ function! s:check_redraw() "{{{
     call s:change_highlight()
   endif
 endfunction"}}}
-function! s:set_cursor_line()
+function! s:set_cursor_line() "{{{
   let unite = unite#get_current_unite()
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
@@ -377,7 +379,7 @@ function! s:set_cursor_line()
         \ context.cursor_line_highlight.' /^\%'.(prompt_linenr+1).'l.*/' :
         \ context.cursor_line_highlight.' /^\%'.line('.').'l.*/')
   let unite.cursor_line_time = reltime()
-endfunction
+endfunction"}}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

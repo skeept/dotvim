@@ -232,7 +232,7 @@ vp_file_open(char *args)
     if (strstr(flags, "O_RANDOM"))      f |= O_RANDOM;
 #endif
 #ifdef O_SEQUENTIAL
-    if (strstr(flags, "O_SEQENTIAL"))   f |= O_SEQUENTIAL;
+    if (strstr(flags, "O_SEQUENTIAL"))  f |= O_SEQUENTIAL;
 #endif
 #ifdef O_BINARY
     if (strstr(flags, "O_BINARY"))      f |= O_BINARY;
@@ -970,7 +970,7 @@ vp_readdir(char *args)
     if (h == INVALID_HANDLE_VALUE) {
         return vp_stack_return_error(&_result,
                 "FindFirstFileEx() error: %s",
-                GetLastError());
+                lasterror());
     }
 
     do {

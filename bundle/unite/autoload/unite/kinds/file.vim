@@ -1,7 +1,6 @@
 "=============================================================================
 " FILE: file.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 11 Mar 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,6 +25,12 @@
 
 let s:save_cpo = &cpo
 set cpo&vim
+
+" Variables  "{{{
+if !exists('g:unite_kind_file_vertical_preview')
+  let g:unite_kind_file_vertical_preview = 0
+endif
+"}}}
 
 " Global options definition. "{{{
 call unite#util#set_default(
@@ -100,9 +105,17 @@ function! s:kind.action_table.preview.func(candidate) "{{{
         \ a:candidate.action__path))
   if filereadable(a:candidate.action__path)
     " If execute this command, unite.vim will be affected by events.
-    noautocmd silent execute 'pedit!'
-          \ fnameescape(a:candidate.action__path)
-
+    if g:unite_kind_file_vertical_preview
+      let unite_winwidth = winwidth(0)
+      noautocmd silent execute 'vert pedit!'
+            \ fnameescape(a:candidate.action__path)
+      wincmd P
+      let target_winwidth = (unite_winwidth + winwidth(0)) / 2
+      execute 'wincmd p | vert resize ' . target_winwidth
+    else
+      noautocmd silent execute 'pedit!'
+            \ fnameescape(a:candidate.action__path)
+    endif
     let prev_winnr = winnr('#')
     let winnr = winnr()
     wincmd P
@@ -111,13 +124,13 @@ function! s:kind.action_table.preview.func(candidate) "{{{
     execute prev_winnr.'wincmd w'
     execute winnr.'wincmd w'
   endif
-
   if !buflisted
     call unite#add_previewed_buffer_list(
         \ bufnr(unite#util#escape_file_searching(
         \       a:candidate.action__path)))
   endif
 endfunction"}}}
+
 
 let s:kind.action_table.mkdir = {
       \ 'description' : 'make this directory and parents directory',

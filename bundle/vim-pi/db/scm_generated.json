@@ -123,6 +123,10 @@
     "type": "git",
     "url": "git://github.com/mbbill/code_complete"
   },
+  "1788": {
+    "type": "git",
+    "url": "https://bitbucket.org/fboender/bexec"
+  },
   "1863": {
     "type": "git",
     "url": "git://github.com/tomtom/tlib_vim"
@@ -585,7 +589,7 @@
   },
   "2715": {
     "type": "git",
-    "url": "git://github.com/SirVer/ultisnips"
+    "url": "git://github.com/sirver/ultisnips"
   },
   "2716": {
     "type": "git",
@@ -650,6 +654,10 @@
   "2796": {
     "type": "git",
     "url": "git://github.com/chrisbra/CheckAttach"
+  },
+  "2805": {
+    "type": "git",
+    "url": "git://github.com/alvan/assistant.vim"
   },
   "2809": {
     "type": "git",
@@ -1470,6 +1478,10 @@
   "3582": {
     "type": "git",
     "url": "git://github.com/mrtazz/simplenote.vim"
+  },
+  "3584": {
+    "type": "git",
+    "url": "git://github.com/ctruett/Checklist.vim"
   },
   "3585": {
     "type": "git",
@@ -3674,6 +3686,70 @@
   "4891": {
     "type": "git",
     "url": "git://github.com/buztard/vim-nomad"
+  },
+  "4892": {
+    "type": "git",
+    "url": "git://github.com/genoma/vim-less"
+  },
+  "4893": {
+    "type": "git",
+    "url": "git://github.com/MattesGroeger/vim-bookmarks"
+  },
+  "4894": {
+    "type": "git",
+    "url": "git://github.com/jeetsukumaran/vim-markology"
+  },
+  "4895": {
+    "type": "git",
+    "url": "git://github.com/ardagnir/pterosaur"
+  },
+  "4900": {
+    "type": "hg",
+    "url": "https://bitbucket.org/atimholt/arrowkeyrepurpose"
+  },
+  "4901": {
+    "type": "git",
+    "url": "git://github.com/gradzikb/vim-lsdyna"
+  },
+  "4902": {
+    "type": "git",
+    "url": "git://github.com/ajh17/VimCompletesMe"
+  },
+  "4903": {
+    "type": "git",
+    "url": "git://github.com/jaxbot/github-issues.vim"
+  },
+  "4905": {
+    "type": "git",
+    "url": "git://github.com/romainl/Apprentice"
+  },
+  "4906": {
+    "type": "git",
+    "url": "git://github.com/EinfachToll/peggi"
+  },
+  "4907": {
+    "type": "git",
+    "url": "git://github.com/burnettk/vim-angular"
+  },
+  "4908": {
+    "type": "git",
+    "url": "git://github.com/hl037/vim-visualHtml"
+  },
+  "4909": {
+    "type": "git",
+    "url": "git://github.com/rsludge/vim-sails"
+  },
+  "4915": {
+    "type": "git",
+    "url": "git://github.com/tpope/vim-heroku"
+  },
+  "4916": {
+    "type": "git",
+    "url": "git://github.com/vitalk/vim-onoff"
+  },
+  "4917": {
+    "type": "git",
+    "url": "git://github.com/gilligan/vim-lldb"
   },
   "521": {
     "type": "git",

@@ -1,7 +1,6 @@
 "=============================================================================
 " FILE: buffer.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 03 Mar 2014.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -297,13 +296,17 @@ function! s:check_changed_buffer() "{{{
 endfunction"}}}
 
 function! s:check_source() "{{{
-  if !s:exists_current_source()
-    call s:make_cache_current_block()
-    return
-  endif
+  let current_buffer_size = getfsize(fnamemodify(bufname(bufnr('%')), ':p'))
+  if current_buffer_size <
+        \        g:neocomplete#sources#buffer#cache_limit_size
+    if !s:exists_current_source()
+      call s:make_cache_current_block()
+      return
+    endif
 
-  if s:check_changed_buffer()
-    call s:make_cache(bufnr('%'))
+    if s:check_changed_buffer()
+      call s:make_cache(bufnr('%'))
+    endif
   endif
 
   " Check new buffer.
@@ -311,6 +314,8 @@ function! s:check_source() "{{{
         \ !has_key(s:buffer_sources, v:val) && buflisted(v:val)
         \ && (!neocomplete#is_locked(v:val) ||
         \    g:neocomplete#disable_auto_complete)
+        \ && fnamemodify(bufname(v:val), ':p') !~#
+        \      g:neocomplete#sources#buffer#disabled_pattern
         \ && !getwinvar(bufwinnr(v:val), '&previewwindow')
         \ && getfsize(fnamemodify(bufname(v:val), ':p')) <
         \      g:neocomplete#sources#buffer#cache_limit_size

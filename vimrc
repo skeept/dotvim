@@ -76,7 +76,9 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
-  VAMAddToActiveAddons neocomplete argumentative
+  VAMAddToActiveAddons neocomplete
+  VAMAddToActiveAddons UltiSnips
+  VAMAddToActiveAddons argumentative projectile
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
@@ -475,7 +477,7 @@ command! -complete=file -nargs=* Mtorig call MyThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if (s:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
+if (1 || s:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
   let g:neocomplete#enable_at_startup = 1
   " Use smartcase.
   let g:neocomplete#enable_smart_case = 1

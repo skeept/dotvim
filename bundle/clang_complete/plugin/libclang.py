@@ -409,6 +409,12 @@ def formatResult(result):
 class CompleteThread(threading.Thread):
   def __init__(self, line, column, currentFile, fileName, params, timer):
     threading.Thread.__init__(self)
+    # Complete threads are daemon threads. Python and consequently vim does not
+    # wait for daemon threads to finish execution when existing itself. As
+    # clang may compile for a while, we do not have to wait for the compilation
+    # to finish before vim can quit. Before adding this flags, vim was hanging
+    # for a couple of seconds before it exited.
+    self.daemon = True
     self.line = line
     self.column = column
     self.currentFile = currentFile
@@ -442,19 +448,6 @@ def WarmupCache():
   t = CompleteThread(-1, -1, getCurrentFile(), vim.current.buffer.name,
                      params, timer)
   t.start()
-
-def ForceExit():
-  # Close the current buffer to not leave any backup files.
-  vim.command("bd!")
-
-  # Now just kill vim. We do not really have another way to control the clang
-  # threads. Without killing vim, we would hang until all clang processes
-  # return. As we already closed the current buffer, we do not risk to loose
-  # a lot. The only remaining issue is that vim prints the 'Killed' text on
-  # exit.
-  import os
-  import signal
-  os.kill(os.getpid(), signal.SIGKILL)
 
 def getCurrentCompletions(base):
   global debug
@@ -511,20 +504,24 @@ def getAbbr(strings):
       return chunks.spelling
   return ""
 
-def jumpToLocation(filename, line, column):
-  if filename != vim.current.buffer.name:
-    try:
-      vim.command("edit %s" % filename)
-    except:
-      # For some unknown reason, whenever an exception occurs in
-      # vim.command, vim goes crazy and output tons of useless python
-      # errors, catch those.
-      return
+def jumpToLocation(filename, line, column, preview):
+  if preview:
+    command = "pedit +%d %s" % (line, filename)
+  elif filename != vim.current.buffer.name:
+    command = "edit %s" % filename
   else:
-    vim.command("normal m'")
-  vim.current.window.cursor = (line, column - 1)
+    command = "normal m"
+  try:
+    vim.command(command)
+  except:
+    # For some unknown reason, whenever an exception occurs in
+    # vim.command, vim goes crazy and output tons of useless python
+    # errors, catch those.
+    return
+  if not preview:
+    vim.current.window.cursor = (line, column - 1)
 
-def gotoDeclaration():
+def gotoDeclaration(preview=True):
   global debug
   debug = int(vim.eval("g:clang_debug")) == 1
   params = getCompileParams(vim.current.buffer.name)
@@ -549,8 +546,8 @@ def gotoDeclaration():
         if d is not None and loc != d.location:
           loc = d.location
           if loc.file is not None:
-            jumpToLocation(loc.file.name, loc.line, loc.column)
-            break
+            jumpToLocation(loc.file.name, loc.line, loc.column, preview)
+          break
 
   timer.finish()
 

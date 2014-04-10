@@ -1,14 +1,16 @@
 Vim motion on speed!
 =====
- [![Build Status](https://travis-ci.org/Lokaltog/vim-easymotion.png?branch=master)](https://travis-ci.org/Lokaltog/vim-easymotion)
+[![Build Status](https://travis-ci.org/Lokaltog/vim-easymotion.svg?branch=master)](https://travis-ci.org/Lokaltog/vim-easymotion)
 
 ![Animated demonstration](https://f.cloud.github.com/assets/3797062/2039359/a8e938d6-899f-11e3-8789-60025ea83656.gif)
 
 About the authors
 =====
 
-- Kim Silkebækken (https://github.com/Lokaltog)
-- haya14busa (https://github.com/haya14busa) (since version 2.0)
+| Authors          |                               |
+|------------------|-------------------------------|
+| Kim Silkebækken | https://github.com/Lokaltog   |
+| haya14busa       | https://github.com/haya14busa |
 
 The EasyMotion project, revived!
 ======
@@ -22,8 +24,8 @@ EasyMotion is now completely
 
 - **Well-behaved**: It's consistent with the default motions of Vim and works
   well in all modes. And it now supports repeating with the dot operator.
-- **Configurable**. You can easily configure its behavior and map it to any key
-  you want.
+- **Configurable**: You can easily configure its behavior and map it to any key
+- **Sophisticated**: Provide flawless, smooth and fast motions with minimal keystrokes
 
 Even though some default behaviors were modified and many new features were
 added, I carefully considered backward compatibility. So those of you updating
@@ -150,6 +152,10 @@ What sounds complicated should become clear if you look at the following example
 " Gif config
 map  / <Plug>(easymotion-sn)
 omap / <Plug>(easymotion-tn)
+
+" These `n` & `N` mappings are options. You do not have to map `n` & `N` to EasyMotion.
+" Without these mappings, `n` & `N` works fine. (These mappings just provide
+" different highlight method and have some other features )
 map  n <Plug>(easymotion-next)
 map  N <Plug>(easymotion-prev)
 ```
@@ -256,3 +262,60 @@ let g:EasyMotion_smartcase = 1
 let g:EasyMotion_use_smartsign_us = 1
 ```
 
+
+Installation
+------------
+### Pathogen (https://github.com/tpope/vim-pathogen)
+```
+git clone https://github.com/Lokaltog/vim-easymotion ~/.vim/bundle/vim-easymotion
+```
+
+### Vundle (https://github.com/gmarik/vundle)
+```
+Bundle 'Lokaltog/vim-easymotion'
+```
+
+### NeoBundle (https://github.com/Shougo/neobundle.vim)
+```
+NeoBundle 'Lokaltog/vim-easymotion'
+```
+
+Minimal Configuration Tutorial
+------------------------------
+**I recommend to configure and map keys by yourself if you are true Vimmer.**
+
+**Please do not be satisfied with just installing vim-easymotion, configuring it yourself boost your productivity more and more!**
+
+Default `<Leader><Leader>` prefix isn't easy to press, and I leave them just for backwards compatibility.
+You should at least change prefix key like this `map <Leader> <Plug>(easymotion-prefix)`
+
+Minimal but useful vimrc example:
+
+```
+let g:EasyMotion_do_mapping = 0 " Disable default mappings
+
+" Bi-directional find motion
+" Jump to anywhere you want with minimal keystrokes, with just one key binding.
+" `s{char}{label}`
+nmap s <Plug>(easymotion-s)
+" or
+" `s{char}{char}{label}`
+" Need one more keystroke, but on average, it may be more comfortable.
+nmap s <Plug>(easymotion-s2)
+
+" Turn on case sensitive feature
+let g:EasyMotion_smartcase = 1
+
+" JK motions: Line motions
+map <Leader>j <Plug>(easymotion-j)
+map <Leader>k <Plug>(easymotion-k)
+```
+Now, all you need to remember is `s` and JK motions bindings, and it's good enough to boost your cursor speed!
+
+**`s`** is bidirectional find motion, you can move to anywhere with it.
+
+**`<Leader>j`** & **`<Leader>k`** make it easy to move to the lines.
+
+Of course you can use any key you want instead of `s` such as `<Space>`, `<Leader>s`, etc...
+
+If you want to use more useful mappings, please see [:h easymotion.txt](https://github.com/Lokaltog/vim-easymotion/blob/master/doc/easymotion.txt) for more detail.

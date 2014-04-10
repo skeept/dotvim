@@ -72,16 +72,11 @@ provides just enough reference to get you going.  I also highly recommend you
 check out the docs for the Perl script 'ack', for obvious reasons:
 [ack - grep-like text finder](http://beyondgrep.com/).
 
-## Using `ag` with ack.vim
+### Gotchas
 
-Basically you can use [ag](https://github.com/ggreer/the_silver_searcher) with
-ack.vim, you just need to do some changes on your setup:
-
-    let g:ackprg = 'ag'
-    let g:g:ack_wildignore = 0
-
-For more information see ack.vim
-[documentation](https://github.com/mileszs/ack.vim/blob/master/doc/ack.txt)
+Some characters have special meaning, and need to be escaped your search
+pattern. For instance, '#'. You have to escape it like this :Ack '\\\#define
+foo' to search for #define foo. (From blueyed in issue #5.)
 
 ## RoadMap
 
@@ -91,4 +86,3 @@ Goals for 1.0:
 * Use `autoload` directory to define functions, instead of `plugin`.
 * Add a help toggle `?`(like NERDTree)
 * Add option to open all files from result list
-* Respect wildignore - DONE on master
