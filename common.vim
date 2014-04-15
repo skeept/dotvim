@@ -500,7 +500,7 @@ function! LoadUnite() "{{{
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
   nnoremap ,uf :<C-U>Unite -start-insert source<CR>
-  nnoremap ,uu :<C-U>Unite -start-insert -resume source<CR>
+  nnoremap ,uu :<C-U>Unite -start-insert source<CR>
   nnoremap ,rr :<C-U>UniteResume<CR>
   nnoremap ,rd :<C-U>Unite -buffer-name=mru_folders -resume directory_mru<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
