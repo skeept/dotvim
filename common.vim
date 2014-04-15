@@ -494,16 +494,15 @@ function! LoadUnite() "{{{
         \ ],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
-	\ buffer file_mru bookmark file<CR>
-  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -buffer-name=files
-	\ -prompt=%\  buffer file_mru bookmark file<CR>
+	\ buffer bookmark file<CR>
+  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -start-insert -buffer-name=files
+	\ -prompt=%\  buffer bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline<CR>
-  nnoremap ,uf :<C-U>Unite source<CR>
-  nnoremap ,uu :<C-U>Unite source -resume<CR>
+  nnoremap ,uf :<C-U>Unite -start-insert source<CR>
+  nnoremap ,uu :<C-U>Unite -start-insert -resume source<CR>
   nnoremap ,rr :<C-U>UniteResume<CR>
   nnoremap ,rd :<C-U>Unite -buffer-name=mru_folders -resume directory_mru<CR>
-  "nnoremap ,uc :<C-U>Unite -buffer-name=colorscheme colorscheme<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
 
   " Ref {{{
@@ -542,8 +541,8 @@ endfunction
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
 nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
-nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite source<CR>
-nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite source<CR>
+nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
+nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
 nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
 " }}}
 
