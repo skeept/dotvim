@@ -179,6 +179,16 @@ function! s:expand_placeholders(value, expansions) abort
   return value =~# "\001" ? '' : value
 endfunction
 
+let s:valid_key = '^[^*{}]*\*\=[^*{}]*$'
+
+function! s:match(file, pattern) abort
+  let [prefix, suffix; _] = split(a:pattern, '\*', 1)
+  if s:startswith(a:file, prefix) && s:endswith(a:file, suffix)
+    return tr(name[strlen(prefix) : -strlen(suffix)-1], projectile#slash(), '/')
+  endif
+  return ''
+endfunction
+
 function! projectile#query(key, ...) abort
   let candidates = []
   let file = a:0 > 1 ? a:2 : expand('%:p')
@@ -192,10 +202,9 @@ function! projectile#query(key, ...) abort
     if has_key(projections, name) && has_key(projections[name], a:key)
       call add(candidates, [pre, s:expand_placeholders(projections[name][a:key], expansions)])
     endif
-    for pattern in reverse(sort(filter(keys(projections), 'v:val =~# "^[^*{}]*\\*[^*{}]*$"'), function('projectile#lencmp')))
-      let [prefix, suffix; _] = split(pattern, '\*', 1)
-      if s:startswith(name, prefix) && s:endswith(name, suffix) && has_key(projections[pattern], a:key)
-        let expansions.match = tr(name[strlen(prefix) : -strlen(suffix)-1], projectile#slash(), '/')
+    for pattern in reverse(sort(filter(keys(projections), 'v:val =~# s:valid_key && v:val =~# "\\*"'), function('projectile#lencmp')))
+      let expansions.match = s:match(name, pattern)
+      if (!empty(expansions.match) || pattern ==# '*') && has_key(projections[pattern], a:key)
         call add(candidates, [pre, s:expand_placeholders(projections[pattern][a:key], expansions)])
       endif
     endfor
@@ -207,7 +216,7 @@ function! projectile#query_file(key) abort
   let files = []
   let _ = {}
   for [root, _.match] in projectile#query(a:key)
-    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'root . v:val'))
+    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'simplify(root . v:val)'))
   endfor
   return files
 endfunction
@@ -309,7 +318,7 @@ function! projectile#activate() abort
 
   for [root, command] in projectile#query_exec('start')
     let offset = index(s:paths(), root[0:-2]) + 1
-    let b:start = ':ProjectDo' . (offset == 1 ? '' : offset) . ' ' .
+    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
           \ substitute('Start '.command, 'Start :', '', '')
     break
   endfor
@@ -318,7 +327,7 @@ function! projectile#activate() abort
     let command = s:shellcmd(dispatch)
     let offset = index(s:paths(), root[0:-2]) + 1
     if !empty(command)
-      let b:dispatch = ':ProjectDo' . (offset == 1 ? '' : offset) . ' ' .
+      let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
             \ substitute('Dispatch '.command, 'Dispatch :', '', '')
       break
     endif
@@ -369,7 +378,7 @@ function! projectile#navigation_commands() abort
   for [path, projections] in s:projectiles()
     for [pattern, projection] in items(projections)
       let name = s:gsub(get(projection, 'command', get(projection, 'type', get(projection, 'name', ''))), '\A', '')
-      if !empty(name) && pattern =~# '^[^*{}]*\*\=[^*{}]*$'
+      if !empty(name) && pattern =~# s:valid_key
         if !has_key(commands, name)
           let commands[name] = []
         endif
