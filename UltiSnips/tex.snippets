@@ -101,7 +101,7 @@ snippet lr| "left| right|" !w
 \left| ${1:${VISUAL}} \right| ${2:<++>}
 endsnippet
 
-snippet lr{ "left\{ right\}" !w
+snippet lrr "left\{ right\}" !w
 \left\\{ ${1:${VISUAL}} \right\\} ${0:<++>}
 endsnippet
 
@@ -223,6 +223,10 @@ endsnippet
 
 snippet s7k10 "s7k10" w
 {\slftkTen}
+endsnippet
+
+snippet cc "\comm" w
+\comm{$1}$0
 endsnippet
 
 # vim:ft=snippets:
