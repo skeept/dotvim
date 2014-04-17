@@ -1,22 +1,26 @@
 /*-----------------------------------------------------------------------------
- * Copyright (c) 2009
- * Kazuo Ishii        - <k-ishii at wb4.so-net.ne.jp> original version(ckw)
- * Yukihiro Nakadaira - <yukihiro.nakadaira at gmail.com> original version(vimproc)
- * Shougo Matsushita  - <Shougo.Matsu at gmail.com> modified version
+ * Copyright (c) 2006 Yukihiro Nakadaira - <yukihiro.nakadaira at gmail.com> original version(vimproc)
+ * Copyright (c) 2009 Shougo Matsushita  - <Shougo.Matsu at gmail.com> modified version
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * License: MIT license
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *---------------------------------------------------------------------------*/
 
 #include <stdio.h>
@@ -127,9 +131,6 @@ lasterror()
 #define write _write
 #define lseek _lseek
 
-#define CSI_WndCols(csi) ((csi)->srWindow.Right - (csi)->srWindow.Left +1)
-#define CSI_WndRows(csi) ((csi)->srWindow.Bottom - (csi)->srWindow.Top +1)
-
 static vp_stack_t _result = VP_STACK_NULL;
 
 const char *
@@ -232,7 +233,7 @@ vp_file_open(char *args)
     if (strstr(flags, "O_RANDOM"))      f |= O_RANDOM;
 #endif
 #ifdef O_SEQUENTIAL
-    if (strstr(flags, "O_SEQENTIAL"))   f |= O_SEQUENTIAL;
+    if (strstr(flags, "O_SEQUENTIAL"))  f |= O_SEQUENTIAL;
 #endif
 #ifdef O_BINARY
     if (strstr(flags, "O_BINARY"))      f |= O_BINARY;
@@ -970,7 +971,7 @@ vp_readdir(char *args)
     if (h == INVALID_HANDLE_VALUE) {
         return vp_stack_return_error(&_result,
                 "FindFirstFileEx() error: %s",
-                GetLastError());
+                lasterror());
     }
 
     do {

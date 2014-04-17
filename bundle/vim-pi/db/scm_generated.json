@@ -51,6 +51,10 @@
     "type": "git",
     "url": "git://github.com/PProvost/vim-ps1"
   },
+  "1343": {
+    "type": "git",
+    "url": "git://github.com/craigemery/vim-autotag"
+  },
   "1431": {
     "type": "git",
     "url": "git://github.com/tomtom/checksyntax_vim"
@@ -533,7 +537,7 @@
   },
   "2627": {
     "type": "git",
-    "url": "git://github.com/exdev/exvim"
+    "url": "git://github.com/exvim/main"
   },
   "2628": {
     "type": "git",
@@ -3499,6 +3503,10 @@
     "type": "git",
     "url": "git://github.com/guns/vim-sexp"
   },
+  "4813": {
+    "type": "git",
+    "url": "git://github.com/ercolanelli-leo/candyVirus"
+  },
   "4814": {
     "type": "git",
     "url": "git://github.com/laurentgoudet/vim-howdoi"
@@ -3738,6 +3746,26 @@
   "4909": {
     "type": "git",
     "url": "git://github.com/rsludge/vim-sails"
+  },
+  "4915": {
+    "type": "git",
+    "url": "git://github.com/tpope/vim-heroku"
+  },
+  "4916": {
+    "type": "git",
+    "url": "git://github.com/vitalk/vim-onoff"
+  },
+  "4917": {
+    "type": "git",
+    "url": "git://github.com/gilligan/vim-lldb"
+  },
+  "4919": {
+    "type": "git",
+    "url": "git://github.com/Kazark/vim-tabv"
+  },
+  "4920": {
+    "type": "hg",
+    "url": "https://bitbucket.org/atimholt/spiffy_foldtext"
   },
   "521": {
     "type": "git",

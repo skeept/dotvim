@@ -209,6 +209,10 @@ function! dispatch#start_command(bang, command) abort
   return ''
 endfunction
 
+if !exists('g:DISPATCH_STARTS')
+  let g:DISPATCH_STARTS = {}
+endif
+
 function! dispatch#start(command, ...) abort
   let request = extend({
         \ 'action': 'start',
@@ -216,15 +220,38 @@ function! dispatch#start(command, ...) abort
         \ 'command': a:command,
         \ 'directory': getcwd(),
         \ 'expanded': dispatch#expand(a:command),
-        \ 'file': tempname(),
         \ 'title': '',
         \ }, a:0 ? a:1 : {})
+  let g:dispatch_last_start = request
   if empty(request.title)
     let request.title = substitute(fnamemodify(matchstr(request.command, '\%(\\.\|\S\)\+'), ':t:r'), '\\\(\s\)', '\1', 'g')
   endif
+  let key = request.directory."\t".substitute(request.expanded, '\s*$', '', '')
+  let i = 0
+  while i < len(get(g:DISPATCH_STARTS, key, []))
+    let [handler, pid] = split(g:DISPATCH_STARTS[key][i], '@')
+    if !s:running(pid)
+      call remove(g:DISPATCH_STARTS[key], i)
+      continue
+    endif
+    try
+      if request.background || dispatch#{handler}#activate(pid)
+        let request.handler = handler
+        let request.pid = pid
+        return request
+      endif
+    catch
+    endtry
+    let i += 1
+  endwhile
+  let request.file = tempname()
   let s:files[request.file] = request
-  let g:dispatch_last_start = request
-  if !s:dispatch(request)
+  if s:dispatch(request)
+    if !has_key(g:DISPATCH_STARTS, key)
+      let g:DISPATCH_STARTS[key] = []
+    endif
+    call add(g:DISPATCH_STARTS[key], request.handler.'@'.dispatch#pid(request))
+  else
     execute '!' . request.command
   endif
   return request
@@ -314,7 +341,7 @@ if !exists('s:makes')
   let s:files = {}
 endif
 
-function! dispatch#compile_command(bang, args) abort
+function! dispatch#compile_command(bang, args, count) abort
   if !empty(a:args)
     let args = a:args
   else
@@ -329,14 +356,14 @@ function! dispatch#compile_command(bang, args) abort
   if args =~# '^!'
     return 'Start' . (a:bang ? '!' : '') . ' ' . args[1:-1]
   elseif args =~# '^:.'
-    return substitute(args, '\>', (a:bang ? '!' : ''), '')
+    return (a:count ? a:count : '').substitute(args[1:-1], '\>', (a:bang ? '!' : ''), '')
   endif
   let executable = matchstr(args, '\S\+')
 
   let request = {
         \ 'action': 'make',
         \ 'background': a:bang,
-        \ 'directory': getcwd(),
+        \ 'file': tempname(),
         \ 'format': '%+G%.%#'
         \ }
 
@@ -359,6 +386,11 @@ function! dispatch#compile_command(bang, args) abort
     endif
     let request.command = args
   endif
+  if a:count
+    let request.command = substitute(request.command, '<lnum>'.s:flags, '\=fnamemodify(a:count, submatch(0)[6:-1])', 'g')
+  else
+    let request.command = substitute(request.command, '<lnum>'.s:flags, '', 'g')
+  endif
 
   if empty(request.compiler)
     unlet request.compiler
@@ -368,19 +400,24 @@ function! dispatch#compile_command(bang, args) abort
   if &autowrite || &autowriteall
     wall
   endif
-
-  let request.expanded = dispatch#expand(request.command)
-  let request.file = tempname()
-  call extend(s:makes, [request])
-  let request.id = len(s:makes)
-  let s:files[request.file] = request
+  cclose
   let &errorfile = request.file
 
-  cclose
-  if !s:dispatch(request)
-    execute 'silent !'.request.command dispatch#shellpipe(request.file)
-    call feedkeys(":redraw!|call dispatch#complete(".request.id.")\r")
-  endif
+  try
+    silent doautocmd QuickFixCmdPre dispatch
+    let request.directory = getcwd()
+    let request.expanded = dispatch#expand(request.command)
+    call extend(s:makes, [request])
+    let request.id = len(s:makes)
+    let s:files[request.file] = request
+
+    if !s:dispatch(request)
+      execute 'silent !'.request.command dispatch#shellpipe(request.file)
+      call feedkeys(":redraw!|call dispatch#complete(".request.id.")\r", 'n')
+    endif
+  finally
+    silent doautocmd QuickFixCmdPost dispatch
+  endtry
   return ''
 endfunction
 
@@ -413,6 +450,7 @@ function! dispatch#focus() abort
 endfunction
 
 function! dispatch#focus_command(bang, args) abort
+  let args = a:args =~# '^:.' ? a:args : escape(dispatch#expand(a:args), '#%')
   if empty(a:args) && a:bang
     unlet! w:dispatch t:dispatch g:dispatch
     let [what, why] = dispatch#focus()
@@ -421,12 +459,12 @@ function! dispatch#focus_command(bang, args) abort
     let [what, why] = dispatch#focus()
     echo printf('%s is %s', why, what)
   elseif a:bang
-    let w:dispatch = escape(dispatch#expand(a:args), '#%')
+    let w:dispatch = args
     let [what, why] = dispatch#focus()
     echo 'Set window local focus to ' . what
   else
     unlet! w:dispatch t:dispatch
-    let g:dispatch = escape(dispatch#expand(a:args), '#%')
+    let g:dispatch = args
     let [what, why] = dispatch#focus()
     echo 'Set global focus to ' . what
   endif
@@ -462,12 +500,27 @@ function! dispatch#request(...) abort
   return a:0 ? s:request(a:1) : get(s:makes, -1, {})
 endfunction
 
+function! s:running(pid) abort
+  if !a:pid
+    return 0
+  elseif has('win32')
+    return system('tasklist /fi "pid eq '.a:pid.'"') =~# '==='
+  else
+    call system('kill -0 '.a:pid)
+    return !v:shell_error
+  endif
+endfunction
+
 function! dispatch#pid(request) abort
   let request = s:request(a:request)
   let file = request.file
   if !has_key(request, 'pid')
+    if has('win32') && !executable('wmic')
+      let request.pid = 0
+      return 0
+    endif
     for i in range(50)
-      if filereadable(file.'.pid') || filereadable(file.'.complete')
+      if getfsize(file.'.pid') > 0 || filereadable(file.'.complete')
         break
       endif
       sleep 10m
@@ -479,13 +532,7 @@ function! dispatch#pid(request) abort
     endtry
   endif
   if request.pid && getfsize(file.'.pid') > 0
-    if has('win32')
-      let running = system('tasklist /fi "pid eq '.request.pid.'"') =~# '==='
-    else
-      call system('kill -0 '.request.pid)
-      let running = !v:shell_error
-    endif
-    if running
+    if s:running(request.pid)
       return request.pid
     else
       let request.pid = 0
@@ -502,11 +549,7 @@ function! dispatch#complete(file) abort
   if !dispatch#completed(a:file)
     let request = s:request(a:file)
     let request.completed = 1
-    if has_key(request, 'args')
-      echo 'Finished :Make' request.args
-    else
-      echo 'Finished :Dispatch' request.command
-    endif
+    echo 'Finished:' request.command
     if !request.background
       call s:cgetfile(request, 0, 0)
       redraw
