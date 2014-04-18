@@ -46,6 +46,7 @@ let s:gcpath='substitute(path, "/$", "", "")'
 "  http://mercurial.tuxfamily.org/mercurialroot/slitaz/tazlito/
 "t http://anonscm.debian.org/hg/minicom/
 "  https://zyx.repositoryhosting.com/hg/zyx/t3 / ssh://hg@zyx.repositoryhosting.com/zyx/t3
+"  http://hg.python.org/cpython
 " len("hgroot")=6
 let s:pkbase='"http://".matchstr(domain, ''\v[^.]+\.[^.]+$'')."/projects/".matchstr(path, ''\v.*\/\zs[^~]+'').'.
             \                                                '"/sources/". matchstr(path, "\\v[^~]+$")'
@@ -197,7 +198,7 @@ let s:hyp.mercurial=[
 \['domain =~? "\\Vrepositoryhosting.com\\$" && protocol is? "ssh" && user is? "hg"',        s:rhdicts.hg.1],
 \['domain is? "sharesource.org" && path[:2] is? "/hg"',
 \ map(copy(s:hgwebdict), 'substitute(v:val, "http", "https", "")')],
-\[ 'domain =~? ''\v^%(mercurial\.%(intuxication|tuxfamily)|hg\.mozdev|hg\.savannah\.%(non)?gnu)\.org$'' || '.
+\[ 'domain =~? ''\v^%(mercurial\.%(intuxication|tuxfamily)|hg\.%(mozdev|python|savannah\.%(non)?gnu))\.org$'' || '.
 \ '(domain is? "anonscm.debian.org" && path[:2] is? "/hg") || '.
 \ '('.s:dl.'=~#''\V<link rel="icon" href="\[^"]\*static/hgicon.png" type="image/png" />'')',
 \ s:hgwebdict],
@@ -287,6 +288,14 @@ let s:hyp.git=[
 \        'log': '"http://".domain."/?p=".'.s:roproj.'.";a=log"',
 \      'clone': '"git://".domain."/".'.s:roproj,
 \       'push': '"ssh://".domain."/srv/git/".'.s:roproj,}],
+\['domain =~? ''\v^%(code\.%(stapelberg\.de|i3wm\.org))''',
+\ {     'html': '"http://".domain.path."/tree/".file."?id=".hex', 'hline': '"n".line',
+\        'raw': '"http://".domain.path."/plain/".file."?id=".hex',
+\     'bundle': '"http://".domain.path."/snapshot/".hex.".tar.bz2"',
+\   'filehist': '"http://".domain.path."/log/".file."?id=".hex',
+\  'changeset': '"http://".domain.path."/commit/?id=".hex',
+\        'log': '"http://".domain.path."/log/"',
+\      'clone': '"git://".domain.path."/".path',}],
 \['domain =~? "\\Vrepositoryhosting.com\\$" && protocol is? "https" && path[:3] is? "/git"', s:rhdicts.git.0],
 \['domain =~? "\\Vrepositoryhosting.com\\$" && protocol is? "ssh" && user is? "git"',        s:rhdicts.git.1],
 \]
