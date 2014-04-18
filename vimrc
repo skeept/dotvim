@@ -20,35 +20,42 @@ let g:is_win = has('win32') || has('win64')
 "}}}
 
 " decide on pathogen or vam (pathogen: 1, vam: 2)
-let s:addon_manager = 2
+let g:addon_manager = 2
+let g:is_vimrc_simple = 0
 
 "================== pathogen ================================================{{{
 "we still use g:pathogen_disabled
 let g:pathogen_disabled = []
-"call pathogen#helptags()
-"call pathogen#runtime_append_all_bundles()
-let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
-let g:pathogen_disabled += ['powerline']
-let g:pathogen_disabled += ['hilinks']
-let g:pathogen_disabled += ['snipmate']
-let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
-"let g:pathogen_disabled += ['supertab']
-"let g:pathogen_disabled += ['vlatex']
-let g:pathogen_disabled += ['Align', 'AutoAlign']
-if !has("python")
-  let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
-  let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
-endif
-if g:is_win
-  let g:pathogen_disabled += ['pysmell']
-endif
-if s:addon_manager == 1
-  call pathogen#infect()
+
+if g:addon_manager == 1
+  function! PathogenSetup()
+    "call pathogen#helptags()
+    "call pathogen#runtime_append_all_bundles()
+    let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
+    let g:pathogen_disabled += ['powerline']
+    let g:pathogen_disabled += ['hilinks']
+    let g:pathogen_disabled += ['snipmate']
+    let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
+    "let g:pathogen_disabled += ['supertab']
+    "let g:pathogen_disabled += ['vlatex']
+    let g:pathogen_disabled += ['Align', 'AutoAlign']
+    if !has("python")
+      let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
+      let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
+    endif
+    if g:is_win
+      let g:pathogen_disabled += ['pysmell']
+    endif
+
+    call pathogen#infect()
+  endfunction
+
+  call PathogenSetup()
 endif
 "==============================================================================}}}
 
 "================== vim-addon-manager========================================{{{
-if s:addon_manager == 2
+if g:addon_manager == 2
 function! SetupVAM()
   let g:active_addons = []
   command! -nargs=* -bar VAMAddToActiveAddons let g:active_addons += [<f-args>]
@@ -75,7 +82,7 @@ function! SetupVAM()
 
   VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
-  VAMAddToActiveAddons ManPageView vimproc Tagbar tlib NrrwRgn
+  VAMAddToActiveAddons ManPageView vimproc tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
   VAMAddToActiveAddons argumentative projectile
@@ -104,29 +111,6 @@ if filereadable(s:work_common)
   execute "source " . s:work_common
 endif
 
-"================== Taglist ==================================================={{{
-"taglist options
-"let Tlist_Close_On_Select = 1
-let Tlist_Enable_Fold_Column = 0
-let Tlist_GainFocus_On_ToggleOpen = 1
-let Tlist_Use_Horiz_Window = 0
-let Tlist_WinWidth = 31
-let Tlist_Compact_Format = 1
-let Tlist_Exit_OnlyWindow = 1
-let Tlist_Use_SingleClick = 1
-" the following is useful to use configure ctags for using taglist with gams
-let tlist_gams_settings='gams;e:Equation;c:Variable;m:Model;s:Solve Statement'
-let tlist_gamslst_settings = 'gamslst;m:Model Solution Report;'
-let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
-"noremap <F3> :TlistToggle<CR>
-"inoremap <F3> <ESC>:TlistToggle<CR>
-"==============================================================================}}}
-
-"================== NerdTree =================================================={{{
-"NERDTree settings
-let NERDTreeShowBookmarks = 1
-"==============================================================================}}}
-
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
 nnoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
@@ -138,27 +122,15 @@ onoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>
 let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
 "file (:e!) and chill out
-function! LoadClangComplete()
-  if 1 || exists("s:loaded_clang_complete") || g:is_win | return '' | endif
-  ActivateAddons clang_complete
-  let s:loaded_clang_complete = 1
-endfunction
+
 augroup ft_cpp_clang
   autocmd!
-  autocmd FileType c,cpp call LoadClangComplete()
+  autocmd FileType c,cpp call jraf#loadClangComplete()
 augroup END
 "==============================================================================}}}
 
 "================== Bufstop ==================================================={{{
-function! MyBuffStopCall()
-  if     v:count == 1 | Bufstop
-  elseif v:count == 2 | BufstopFast
-  elseif v:count == 3 | BufstopMode
-  else
-    BufstopModeFast
-  endif
-endfunction
-nnoremap <Leader>b :<C-U>call MyBuffStopCall()<CR>
+nnoremap <Leader>b :<C-U>call jraf#myBuffStopCall()<CR>
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
@@ -175,38 +147,6 @@ nnoremap <Leader>b :<C-U>call MyBuffStopCall()<CR>
 "set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
 "set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "
-function! CondDispFtFf()
-  if v:version < 702
-    return ''
-  endif
-  if winwidth(0) < 70 || &filetype == 'help'
-    let val = ''
-  else
-    let xft = &filetype
-    let xff = &fileformat
-    let val =  '[' . xft . ( xft == '' ? '' : ',' ) . xff . ']'
-  endif
-  return val
-endfunction
-
-function! XgetTagbarFunc()
-  if &ft == "help"
-    return ""
-  else
-    return tagbar#currenttag('[%s] ', '')
-  endif
-endfunction
-
-let g:displtxcf = '' "one time display
-function! DispLTXCF()
-  "use this to debug other things
-  " by displaying information in statusline
-  " redifine it where appropriate
-  "return '[' . len(getline(".")) . ',' . getpos(".")[2] . ']'
-  "return '[' . g:displtxcf . ']'
-  return ''
-endfunction
-
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
@@ -247,20 +187,6 @@ let g:pymode_breakpoint = 0
 
 "==============================================================================}}}
 
-"================== powerline ================================================={{{
-if index(g:pathogen_disabled, 'powerline') == -1
-  let g:Powerline_cache_file = expand(g:p0 . "/.Powerline.cache")
-  "let g:Powerline_symbols = 'unicode'
-  "let g:Powerline_theme       = 'skwp'
-  "let g:Powerline_colorscheme = 'skwp'
-  "let g:Powerline_theme = 'solarized256'
-  "let g:Powerline_colorscheme = 'solarized256'
-  let g:Powerline_stl_path_style = 'filename'
-  call Pl#Theme#RemoveSegment('currenttag')
-  call Pl#Theme#RemoveSegment('branch')
-endif
-"==============================================================================}}}
-
 "================== Other commands/mappings/settings =========================={{{
 
 "source explorer
@@ -290,6 +216,7 @@ endif
 "==============================================================================}}}
 
 "================== autocomplpop (acp) ========================================{{{
+if 0
 "don't want to start this completion thing before x chars
 let g:acp_behaviorKeywordLength = 12
 let g:acp_completeOption = '.,w,b,k,t'
@@ -308,6 +235,7 @@ endfunction
 
 "noremap <f11> :call ToggleAcpDisable()<CR>
 "inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
+endif
 "==============================================================================}}}
 
 "================== ManPageView ==============================================={{{
@@ -354,6 +282,12 @@ noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
 "==============================================================================}}}
 
+"================== LycosaExplorer ============================================{{{
+if index(g:active_addons, 'lycosaexplorer') >= 0
+  call jrar#setupLycosa()
+endif
+"==============================================================================}}}
+
 "some plugins don't work well with some enviroments, just try to adjust them
 let g:LustyExplorerSuppressRubyWarning = 1
 if !has("python")
@@ -388,284 +322,122 @@ nnoremap ,gdf :<C-U>Git diff<CR>
 "==============================================================================}}}
 
 "================== Thesis Specific Settings =================================={{{
-"let compname = ($COMPUTERNAME == "") ? $HOSTNAME : $COMPUTERNAME
-let compname = hostname()
-if compname == "MIDDLE-EARTH" || compname == "Gondor" || compname == 'Erebor'
-    let g:thesis_path = $HOME . "/Desktop/tmp/Thesis"
-  elseif compname == "ISENGARD2"
-    let g:thesis_path = $HOME . ""
-  elseif compname == "Isengard-3000-N100"
-    let g:thesis_path = $HOME .  "/Documents/Thesis"
-  elseif compname == "SHABBIRSTU3"
-    let g:thesis_path = 'U:\WORK\Thesis'
-  elseif compname =~ 'isye.gatech.edu' || compname == 'ISENGARD'
-    let g:thesis_path = $HOME . "/WORK/Thesis"
-endif
-
-function! MyThesisEnv(...)
-  if a:0 > 0
-    let s:thesis_target = substitute(a:1, ".pdf", "", "")
-  else
-    "let s:thesis_target = 'tdraft'
-    "let s:thesis_target = 'defensePresentation'
-    let s:thesis_target = 'thesis-main'
-  endif
-  if has("gui")
-    winpos 0 0
-    set guioptions-=m "no menu bar for now
-    set lines=100 columns=91
-  endif
-  silent exec "cd " . g:thesis_path
-  nmap <silent> \tt :silent !perl OtherFiles/do_tags.pl<CR>
-  "command! ThesisCompileView !start perl run_latexmk.pl
-  command! ThesisCompileView exec "!start perl run_latexmk.pl " . s:thesis_target
-
-  set wildignore+=*.log,*.aux,*.toc,*.blg,*.fls
-
-  "exe "command! MLRT1 '<'>s/\(xl\|xu\|yl\|yu\|zl\|zu\)/\=" .
-        "\ "{'xu':'x^u', 'xl':'x^l', 'yl':'y^l', 'yu':'y^u', 'zl':'z^l', 'yu':'y^u'}" .
-        "\ "[submatch(0)]/gc"
-  command! MLRT1 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)/\1^\2/gc')
-  command! MLRT2 call histadd("cmd", "'<,'>s/" . '\(x\|y\|z\)\(l\|u\)^/(\1^\2)^/gc')
-  command! MLRT3 call histadd("cmd", "'<,'>s/" . '\\text{\([^}]*\)}/\1/gc')
-  function! MyLatexReplaceText(...)
-    call histadd("cmd", "'<,'>s/\\\\text{\\([^}]*\\)}/\\1/gc")
-    if a:0 > 0
-      if a:0 != 2
-        echom "provide two lists to the function"
-        return ''
-      endif
-      let g:replace_list_in = a:1
-      let g:replace_list_out = a:2
-      let g:replace_ncur = 0
-    endif
-    if a:0 == 0 && !exists("g:replace_ncur")
-      let g:replace_list_in = ['xl^', 'xl', 'xu^', 'xu', 'yl', 'yu', 'zl', 'zu']
-      let g:replace_list_out = ['(x^l)^', 'x^l', '(x^u)^', 'x^u', 'y^l', 'y^u', 'z^l', 'z^u']
-      let g:replace_ncur = 0
-    endif
-    if g:replace_ncur == len(g:replace_list_in)
-      let g:replace_cmd = ":echom 'reached end of list'\<CR>"
-      let g:replace_ncur = -1
-    else
-      let range_ = "'<,'>"
-      let extra_flags = 'gc'
-      let g:replace_cmd = ':' .range_ . "s/" .  g:replace_list_in[g:replace_ncur]
-            \ . "/" . g:replace_list_out[g:replace_ncur] . "/" . extra_flags
-            \ . "\<CR>"
-      call histadd("cmd", g:replace_cmd)
-    endif
-    let g:replace_ncur += 1
-    return g:replace_cmd
-  endfunction
-  nnoremap <silent><expr> <Leader>ns MyLatexReplaceText()
-
-  function! MyForwardSearch()
-    let target = g:thesis_path . '/' . s:thesis_target . '.pdf'
-    let cmd = g:SumatraPdfLoc .  " -reuse-instance -forward-search " . expand('%:p') . " " . line('.') . " " . target
-    let execString = 'silent! !start ' . cmd
-    exe execString
-  endfunction
-  if g:is_win
-    nnoremap <Leader>la :<C-U>call MyForwardSearch()<CR>
-  else
-    nnoremap <Leader>la <Leader>ls
-  endif
-
-endfunction
-
-command! -complete=file -nargs=* Mtorig call MyThesisEnv(<f-args>)
+command! -complete=file -nargs=* Mtorig call jraf#myThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if (1 || s:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
-  let g:neocomplete#enable_at_startup = 1
-  " Use smartcase.
-  let g:neocomplete#enable_smart_case = 1
-  " Set minimum syntax keyword length.
-  let g:neocomplete#sources#syntax#min_keyword_length = 3
-  let g:neocomplete#lock_buffer_name_pattern = '\*ku\*'
-
-  " Define dictionary.
-  let g:neocomplete#sources#dictionary#dictionaries = {
-        \ 'default' : '',
-        \ 'vimshell' : $HOME.'/.vimshell_hist',
-        \ 'scheme' : $HOME.'/.gosh_completions'
-        \ }
-
-  " Define keyword.
-  if !exists('g:neocomplete#keyword_patterns')
-    let g:neocomplete#keyword_patterns = {}
-  endif
-  let g:neocomplete#keyword_patterns['default'] = '\h\w*'
-
-  " Plugin key-mappings.
-  inoremap <expr><C-g>     neocomplete#undo_completion()
-  inoremap <expr><C-l>     neocomplete#complete_common_string()
-
-  " Recommended key-mappings.
-  " <CR>: close popup and save indent.
-  inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
-  function! s:my_cr_function()
-    return neocomplete#smart_close_popup() . "\<CR>"
-    " For no inserting <CR> key.
-    "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
-  endfunction
-  " <TAB>: completion.
-  inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-  " <C-h>, <BS>: close popup and delete backword char.
-  inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-  inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-  "inoremap <expr><C-y>  neocomplete#close_popup()
-  "inoremap <expr><C-e>  neocomplete#cancel_popup()
-  inoremap <expr><C-y> pumvisible() ? neocomplete#close_popup() : "\<C-Y>"
-  inoremap <expr><C-e> pumvisible() ? neocomplete#cancel_popup() :
-        \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
-  " Close popup by <Space>.
-  "inoremap <expr><Space> pumvisible() ? neocomplete#close_popup() : "\<Space>"
-
-  " For cursor moving in insert mode(Not recommended)
-  "inoremap <expr><Left>  neocomplete#close_popup() . "\<Left>"
-  "inoremap <expr><Right> neocomplete#close_popup() . "\<Right>"
-  "inoremap <expr><Up>    neocomplete#close_popup() . "\<Up>"
-  "inoremap <expr><Down>  neocomplete#close_popup() . "\<Down>"
-  " Or set this.
-  "let g:neocomplete#enable_cursor_hold_i = 1
-  " Or set this.
-  "let g:neocomplete#enable_insert_char_pre = 1
-
-  " AutoComplPop like behavior.
-  "let g:neocomplete#enable_auto_select = 1
-
-  " Shell like behavior(not recommended).
-  "set completeopt+=longest
-  "let g:neocomplete#enable_auto_select = 1
-  "let g:neocomplete#disable_auto_complete = 1
-  "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-
-  " Enable omni completion.
-  autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-  autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-  autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-  autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-  autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-
-  " Enable heavy omni completion.
-  if !exists('g:neocomplete#sources#omni#input_patterns')
-    let g:neocomplete#sources#omni#input_patterns = {}
-  endif
-  let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-  let g:neocomplete#sources#omni#input_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
-  let g:neocomplete#sources#omni#input_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-
-  " For perlomni.vim setting.
-  " https://github.com/c9s/perlomni.vim
-  let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
+if (1 || g:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
+  call SetupNeocomplete()
 endif
 "==============================================================================}}}
 
 "================== neocomplcache ============================================={{{
-" Use neocomplcache?
-let g:neocomplcache_enable_at_startup = 1 && (
-      \ (s:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
-      \ (s:addon_manager == 2 && index(g:active_addons, 'neocomplcache') >= 0))
-if g:neocomplcache_enable_at_startup == 1
-  let g:acp_enableAtStartup = 0
-  " Use smartcase.
-  let g:neocomplcache_enable_smart_case = 0
-  " Use camel case completion.
-  let g:neocomplcache_enable_camel_case_completion = 0
-  " Use underbar completion.
-  let g:neocomplcache_enable_underbar_completion = 1
-  " Set minimum syntax keyword length.
-  let g:neocomplcache_min_syntax_length = 6
-  let g:neocomplcache_min_keyword_length = 6
-  let g:neocomplcache_lock_buffer_name_pattern = '\*ku\*'
+" Use neocomplcache? Not for now!
+if 0
+  call SetupNeocomplcache()
+  function! SetupNeocomplcache()
+    let g:neocomplcache_enable_at_startup = 1 && (
+          \ (g:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
+          \ (g:addon_manager == 2 && index(g:active_addons, 'neocomplcache') >= 0))
+    if g:neocomplcache_enable_at_startup == 1
+      let g:acp_enableAtStartup = 0
+      " Use smartcase.
+      let g:neocomplcache_enable_smart_case = 0
+      " Use camel case completion.
+      let g:neocomplcache_enable_camel_case_completion = 0
+      " Use underbar completion.
+      let g:neocomplcache_enable_underbar_completion = 1
+      " Set minimum syntax keyword length.
+      let g:neocomplcache_min_syntax_length = 6
+      let g:neocomplcache_min_keyword_length = 6
+      let g:neocomplcache_lock_buffer_name_pattern = '\*ku\*'
 
-  " Define dictionary.
-  let g:neocomplcache_dictionary_filetype_lists = {
-        \ 'default' : '',
-        \ 'vimshell' : $HOME.'/.vimshell_hist',
-        \ 'scheme' : $HOME.'/.gosh_completions'
-        \ }
+      " Define dictionary.
+      let g:neocomplcache_dictionary_filetype_lists = {
+            \ 'default' : '',
+            \ 'vimshell' : $HOME.'/.vimshell_hist',
+            \ 'scheme' : $HOME.'/.gosh_completions'
+            \ }
 
-  " disable file name completion
-  let g:neocomplcache_source_disable = {
-        \ 'filename_complete' : 1
-        \ }
+      " disable file name completion
+      let g:neocomplcache_source_disable = {
+            \ 'filename_complete' : 1
+            \ }
 
-  " Define keyword.
-  if !exists('g:neocomplcache_keyword_patterns')
-    let g:neocomplcache_keyword_patterns = {}
-  endif
-  let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
+      " Define keyword.
+      if !exists('g:neocomplcache_keyword_patterns')
+        let g:neocomplcache_keyword_patterns = {}
+      endif
+      let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
 
-  " Plugin key-mappings.
-  "inoremap <expr><C-G>     neocomplcache#undo_completion()
-  "inoremap <expr><C-L>     neocomplcache#complete_common_string()
+      " Plugin key-mappings.
+      "inoremap <expr><C-G>     neocomplcache#undo_completion()
+      "inoremap <expr><C-L>     neocomplcache#complete_common_string()
 
-  " Recommended key-mappings.
-  " <CR>: close popup and save indent.
-  inoremap <expr><silent> <CR> <SID>my_cr_function()
-  function! s:my_cr_function()
-    return pumvisible() ? neocomplcache#close_popup() . "\<CR>" : "\<CR>"
+      " Recommended key-mappings.
+      " <CR>: close popup and save indent.
+      inoremap <expr><silent> <CR> <SID>my_cr_function()
+      function! s:my_cr_function()
+        return pumvisible() ? neocomplcache#close_popup() . "\<CR>" : "\<CR>"
+      endfunction
+      " <TAB>: completion.
+      "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+      " <C-h>, <BS>: close popup and delete backword char.
+      inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
+      inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
+      inoremap <expr><C-y> pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
+      inoremap <expr><C-e> pumvisible() ? neocomplcache#cancel_popup() :
+            \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
+
+      " For cursor moving in insert mode(Not recommended)
+      "inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
+      "inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
+      "inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
+      "inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
+      "let g:neocomplcache_enable_cursor_hold_i = 1
+      "let g:neocomplcache_enable_insert_char_pre = 1
+
+      " AutoComplPop like behavior.
+      "let g:neocomplcache_enable_auto_select = 1
+
+      " Shell like behavior(not recommended).
+      set completeopt+=longest
+      let g:neocomplcache_enable_auto_select = 0
+      let g:neocomplcache_disable_auto_complete = 1
+      "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
+      "inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
+      "inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
+      inoremap <expr><F12> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
+      "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
+      inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
+
+      inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-G>u\<C-U>"
+
+      " Enable omni completion.
+      augroup neocomplcache_1
+        autocmd!
+        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+        autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
+        autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+      augroup END
+
+      " Enable heavy omni completion.
+      if !exists('g:neocomplcache_omni_patterns')
+        let g:neocomplcache_omni_patterns = {}
+      endif
+      let g:neocomplcache_omni_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
+      "autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
+      let g:neocomplcache_omni_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
+      let g:neocomplcache_omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
+      let g:neocomplcache_omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+
+      " For perlomni.vim setting.
+      " https://github.com/c9s/perlomni.vim
+      let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
+    endif
   endfunction
-  " <TAB>: completion.
-  "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-  " <C-h>, <BS>: close popup and delete backword char.
-  inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
-  inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-  inoremap <expr><C-y> pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
-  inoremap <expr><C-e> pumvisible() ? neocomplcache#cancel_popup() :
-        \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
-
-  " For cursor moving in insert mode(Not recommended)
-  "inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
-  "inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
-  "inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
-  "inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
-  "let g:neocomplcache_enable_cursor_hold_i = 1
-  "let g:neocomplcache_enable_insert_char_pre = 1
-
-  " AutoComplPop like behavior.
-  "let g:neocomplcache_enable_auto_select = 1
-
-  " Shell like behavior(not recommended).
-  set completeopt+=longest
-  let g:neocomplcache_enable_auto_select = 0
-  let g:neocomplcache_disable_auto_complete = 1
-  "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-  "inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
-  "inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
-  inoremap <expr><F12> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
-  "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
-  inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
-
-  inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-G>u\<C-U>"
-
-  " Enable omni completion.
-  augroup neocomplcache_1
-    autocmd!
-    autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-    autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-    autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-    autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-    autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-  augroup END
-
-  " Enable heavy omni completion.
-  if !exists('g:neocomplcache_omni_patterns')
-    let g:neocomplcache_omni_patterns = {}
-  endif
-  let g:neocomplcache_omni_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
-  "autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
-  let g:neocomplcache_omni_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-  let g:neocomplcache_omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
-  let g:neocomplcache_omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-
-  " For perlomni.vim setting.
-  " https://github.com/c9s/perlomni.vim
-  let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
 endif
 "==============================================================================}}}
 
