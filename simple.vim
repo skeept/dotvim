@@ -22,10 +22,10 @@ let g:is_win = has('win32') || has('win64')
 "}}}
 
 " decide on pathogen or vam (pathogen: 1, vam: 2)
-let s:addon_manager = 2
+let g:addon_manager = 2
 
 "================== vim-addon-manager========================================{{{
-if s:addon_manager == 2
+if g:addon_manager == 2
 function! SetupVAM()
   let g:vim_addon_manager = {}
   let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
@@ -69,20 +69,6 @@ endif
 "set statusline+=%{&ff}]\ \ \ %{strftime(\"[%H:%M%p]\")}
 "set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "
-function! CondDispFtFf()
-  if v:version < 702
-    return ''
-  endif
-  if winwidth(0) < 70 || &filetype == 'help'
-    let val = ''
-  else
-    let xft = &filetype
-    let xff = &fileformat
-    let val =  '[' . xft . ( xft == '' ? '' : ',' ) . xff . ']'
-  endif
-  return val
-endfunction
-
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t\ %h%m%r%=
 set statusline+=%{GetNumTabsStr()}
@@ -105,33 +91,12 @@ runtime plugin/unimpaired.vim
 runtime plugin/scratch.vim
 "}}}
 
-function! LoadTagbar() "{{{
-  call vam#ActivateAddons(['Tagbar'],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <F3> :<C-U>call ToggleTBarListNT() <CR>
-  inoremap <F3> <ESC>:<C-U>call ToggleTBarListNT() <CR>
-endf
-nnoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-inoremap <F3> :<C-U>call LoadTagbar()<CR>:<C-U>call ToggleTBarListNT()<CR>
-"}}}
-
-function! LoadCtrlP() "{{{
-  call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
-        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-  nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
-endf
 nnoremap <C-P> :<C-U>let curr_vcount=v:count
-      \ \| call LoadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(curr_vcount)
+      \ \| call jrar#loadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(curr_vcount)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[curr_vcount]<CR>
-nnoremap ,b :<C-U>call LoadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
-"}}}
+nnoremap ,b :<C-U>call jraf#loadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 
-function! LoadLycosa() "{{{
-  call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  call SetupLycosa()
-endfunction
-nnoremap ,e :call LoadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
+nnoremap ,e :call jraf#loadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
 "}}}
 
 "for filetype tex we need imap.vim

@@ -9,10 +9,8 @@ set backspace=2
 set esckeys
 
 set autoindent		" always set autoindenting on
-if 1 || !exists("g:is_vimrc_simple")
-  set splitright          "split the window to the right
-  set splitbelow          "open the window to the bottom
-endif
+set splitright          "split the window to the right
+set splitbelow          "open the window to the bottom
 
 set history=200
 set ruler		" show the cursor position all the time
@@ -384,7 +382,7 @@ if !has("gui_running") && !g:is_win
   "colorscheme anotherdark_cs
   "colorscheme  koehler_cs
    "colorscheme xoria256
-   if !exists("g:is_vimrc_simple")
+   if g:is_vimrc_simple == 0
      colorscheme  graywh_cs1
    else
      set bg=dark | colorscheme peaksea
@@ -394,100 +392,28 @@ endif
 
 "================== number/relativenumber ====================================={{{
 let g:relativenumber = 2
-"set relativenumber
-function! ToggleRelativeNumber()
-  if g:relativenumber == 0
-    let g:relativenumber = 1
-    set nonumber
-    set relativenumber
-  elseif g:relativenumber == 1
-    let g:relativenumber = 2
-    set norelativenumber
-    set number
-  else
-    let g:relativenumber = 0
-    set nonumber
-    set norelativenumber
-  endif
-endfunction
-
-noremap <Leader>tn :call ToggleRelativeNumber()<CR>
-"set relativenumber
-"==============================================================================}}}
-
-"================== number/relativenumber ====================================={{{
-let g:relativenumber = 2
-"set relativenumber
-function! ToggleRelativeNumber()
-  if g:relativenumber == 0
-    let g:relativenumber = 1
-    set nonumber
-    set relativenumber
-  elseif g:relativenumber == 1
-    let g:relativenumber = 2
-    set norelativenumber
-    set number
-  else
-    let g:relativenumber = 0
-    set nonumber
-    set norelativenumber
-  endif
-endfunction
-
-noremap <Leader>tn :call ToggleRelativeNumber()<CR>
-"set relativenumber
+noremap <Leader>tn :call jraf#toggleRelativeNumber()<CR>
 "==============================================================================}}}
 
 "================== Unite ====================================================={{{
-function! UniteColorSchemeResume()
-  if !exists("s:unite_init_colorscheme")
-    let s:unite_init_colorscheme = 1
-    Unite -buffer-name=colorscheme colorscheme
-  else
-    UniteResume colorscheme
-  endif
-endfunction
-
 augroup ft_unite
   autocmd!
-  autocmd FileType unite call s:unite_my_settings()
+  autocmd FileType unite call jraf#unite_my_settings()
 augroup END
-
-function! s:unite_my_settings()"{{{
-  " Overwrite settings.
-
-  nmap <buffer> <ESC> <Plug>(unite_exit)
-  "inoremap <buffer> jj <Plug>(unite_insert_leave)
-  "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
-
-  nmap <buffer> s jp
-  nmap <buffer> S kp
-
-  " <C-L>: manual neocomplcache completion.
-  inoremap <buffer> <C-;> <C-X><C-U><C-P><Down>
-
-  inoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
-  nnoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
-
-  " Start insert.
-  "let g:unite_enable_start_insert = 1
-  setlocal nonumber
-  setlocal norelativenumber
-endfunction"}}}
-
-let g:unite_source_file_mru_limit = 200
-let g:unite_cursor_line_highlight = 'TabLineSel'
-let g:unite_abbr_highlight = 'TabLine'
-
-" For optimize.
-let g:unite_source_file_mru_filename_format = ''
-let g:unite_source_history_yank_enable = 0
 
 function! LoadUnite() "{{{
   if exists("g:loadUnite_done")
     return ""
   endif
   let g:loadUnite_done = 1
+
+  let g:unite_source_file_mru_limit = 200
+  let g:unite_cursor_line_highlight = 'TabLineSel'
+  let g:unite_abbr_highlight = 'TabLine'
+
+  " For optimize.
+  let g:unite_source_file_mru_filename_format = ''
+  let g:unite_source_history_yank_enable = 0
 
   call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
 	\ 'unite-tag', 'unite-colorscheme', 'unite-history',
@@ -537,14 +463,15 @@ function! LoadUnite() "{{{
         \ -toggle -default-action=split -profile-name=files
         \ -input=~/vimfiles/Vimwiki/<CR>
   " }}}
-endfunction
+endfunction " }}}
+if 0
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
-nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call UniteColorSchemeResume()<CR>
+nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call jraf#uniteColorSchemeResume()<CR>
 nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
 nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
 nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
-" }}}
+endif
 
 if 0 && has('python') "{{{ LoadPythonDelayed
 function! LoadPythonDelayed()
@@ -571,26 +498,102 @@ endif
 "}}}
 "==============================================================================}}}
 
+"================== neocomplete ============================================={{{
+if (1 && g:is_vimrc_simple == 0 || g:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
+function SetupNeocomplete()
+  let g:neocomplete#enable_at_startup = 1
+  " Use smartcase.
+  let g:neocomplete#enable_smart_case = 1
+  " Set minimum syntax keyword length.
+  let g:neocomplete#sources#syntax#min_keyword_length = 3
+  let g:neocomplete#lock_buffer_name_pattern = '\*ku\*'
+
+  " Define dictionary.
+  let g:neocomplete#sources#dictionary#dictionaries = {
+        \ 'default' : '',
+        \ 'vimshell' : $HOME.'/.vimshell_hist',
+        \ 'scheme' : $HOME.'/.gosh_completions'
+        \ }
+
+  " Define keyword.
+  if !exists('g:neocomplete#keyword_patterns')
+    let g:neocomplete#keyword_patterns = {}
+  endif
+  let g:neocomplete#keyword_patterns['default'] = '\h\w*'
+
+  " Plugin key-mappings.
+  inoremap <expr><C-g>     neocomplete#undo_completion()
+  inoremap <expr><C-l>     neocomplete#complete_common_string()
+
+  " Recommended key-mappings.
+  " <CR>: close popup and save indent.
+  inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
+  function! s:my_cr_function()
+    return neocomplete#smart_close_popup() . "\<CR>"
+    " For no inserting <CR> key.
+    "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
+  endfunction
+  " <TAB>: completion.
+  inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+  " <C-h>, <BS>: close popup and delete backword char.
+  inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
+  inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
+  "inoremap <expr><C-y>  neocomplete#close_popup()
+  "inoremap <expr><C-e>  neocomplete#cancel_popup()
+  inoremap <expr><C-y> pumvisible() ? neocomplete#close_popup() : "\<C-Y>"
+  inoremap <expr><C-e> pumvisible() ? neocomplete#cancel_popup() :
+        \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
+  " Close popup by <Space>.
+  "inoremap <expr><Space> pumvisible() ? neocomplete#close_popup() : "\<Space>"
+
+  " For cursor moving in insert mode(Not recommended)
+  "inoremap <expr><Left>  neocomplete#close_popup() . "\<Left>"
+  "inoremap <expr><Right> neocomplete#close_popup() . "\<Right>"
+  "inoremap <expr><Up>    neocomplete#close_popup() . "\<Up>"
+  "inoremap <expr><Down>  neocomplete#close_popup() . "\<Down>"
+  " Or set this.
+  "let g:neocomplete#enable_cursor_hold_i = 1
+  " Or set this.
+  "let g:neocomplete#enable_insert_char_pre = 1
+
+  " AutoComplPop like behavior.
+  "let g:neocomplete#enable_auto_select = 1
+
+  " Shell like behavior(not recommended).
+  "set completeopt+=longest
+  "let g:neocomplete#enable_auto_select = 1
+  "let g:neocomplete#disable_auto_complete = 1
+  "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
+
+  " Enable omni completion.
+  autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+  autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+  autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+  autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
+  autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
+
+  " Enable heavy omni completion.
+  if !exists('g:neocomplete#sources#omni#input_patterns')
+    let g:neocomplete#sources#omni#input_patterns = {}
+  endif
+  let g:neocomplete#sources#omni#input_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
+  let g:neocomplete#sources#omni#input_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
+  let g:neocomplete#sources#omni#input_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
+
+  " For perlomni.vim setting.
+  " https://github.com/c9s/perlomni.vim
+  let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
+endfunction
+endif
+"==============================================================================}}}
+
 "================== Buffergator ==============================================={{{
-"nmap <silent> <Leader>bb :TSelectBuffer<CR>
-"Buffergator settings
 let g:buffergator_suppress_keymaps      = 1
 let g:buffergator_viewport_split_policy = "R"
 let g:buffergator_split_size            = 26
-"Load Buffergator only on Demand
-function! LoadBuffergator()
-  if exists("s:loaded_buffergator") | return '' | endif
-  ActivateAddons Buffergator
-  "noremap <Leader>bb :BuffergatorOpen<CR>
-  "noremap <Leader>bB :BuffergatorClose<CR>
-  "noremap <Leader>bt :BuffergatorTabsOpen<CR>
-  "noremap <Leader>bT :BuffergatorTabsClose<CR>
-  let s:loaded_buffergator = 1
-endfunction
 "==============================================================================}}}
 
 "================== CtrlP ====================================================={{{
-"some ctrl settings and mappings
 let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes', 'funky']
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
@@ -609,185 +612,48 @@ let g:ctrlp_prompt_mappings = {
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
          \ }
 let g:ctrlp_map = ''
-command! CtrlPShowArr call CtrlpShowArrFun(-1)
-function! CtrlpShowArrFun(count)
-  let i = 0
-  let msg = ''
-  for v in g:ctrlp_comm
-    if a:count == i | let msg .= '*' | endif
-    let msg .= i
-    let msg .= ':'
-    let msg .= g:ctrlp_comm[i]
-    let msg .= ' '
-    let i = i + 1
-  endfor
-  echo msg
-endfunction
+command! CtrlPShowArr call jraf#ctrlpShowArrFun(-1)
+
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile', 'BookmarkDir']
-nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
+nnoremap <silent> <C-P> :<C-U>call jfaf#ctrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 noremap ,b :CtrlPBuffer<CR>
 noremap ,e :CtrlPCurFile<CR>
 "==============================================================================}}}
 
 "================== Tagbar ===================================================={{{
-"tagbar gms and gamslst settings
-
-let g:tagbar_autofocus = 1
-let g:tagbar_width = 30 "tagbar width (default is 40)
-let g:tagbar_sort = 0 "by default sort by order in the file
-
-let g:tagbar_type_gams = {
-  \ 'ctagstype': 'gams',
-  \ 'kinds' : [
-  \ 'e:equation',
-  \ 'c:variable',
-  \ 'm:model',
-  \ 's:Solve Statement',
-  \ ],
-  \ }
-
-let g:tagbar_type_gamslst = {
-  \ 'ctagstype': 'gamslst',
-  \ 'kinds' : [
-  \ 'm:Model Solution Report',
-  \ 'e:Equation',
-  \ 'c:Variable Val:1',
-  \ 'a:Equation val:1',
-  \ ],
-  \ }
-
-let g:tagbar_type_tex = {
-  \ 'ctagstype' : 'latex',
-  \ 'kinds'     : [
-    \ 's:sections',
-    \ 'l:labels',
-    \ 'r:refs:1',
-    \ 'g:graphics:1:0',
-    \ 'p:pagerefs:1:0'
-  \ ],
-  \ 'sort'    : 0,
-  \ }
-
-"noremap <F5> :TagbarToggle<CR>
-""aditonal map, since vim-latex takes over f5
-"noremap ,gt :TagbarToggle<CR>
-
-function! ToggleTBarListNT()
-  "always use last explicit argument
-  if !exists("s:tbartoggle")
-    let s:tbartoggle = 1
-  endif
-
-  let s:tbartoggle_names = ['1: tagbar', '2: taglist', '3: nerdtree', '4: buffergator']
-
-  if v:count >= 1 && v:count <= 4
-    let s:tbartoggle = v:count
-  endif
-
-  if v:count <= 4
-    if s:tbartoggle == 1
-      TagbarToggle
-    elseif s:tbartoggle == 2
-      if !exists("s:loaded_taglist")
-        ActivateAddons taglist
-        let s:loaded_taglist = 1
-      endif
-      TlistToggle
-    elseif s:tbartoggle == 3
-      if !exists("s:loaded_nerdtree")
-        silent ActivateAddons nerdtree
-        let s:loaded_nerdtree = 1
-      endif
-      NERDTreeToggle
-    elseif s:tbartoggle == 4
-      if !exists("s:loaded_buffergator") | call LoadBuffergator() | endif
-      BuffergatorToggle
-    endif
-  endif
-  let s:tbartoggle_display = copy(s:tbartoggle_names)
-  let s:tbartoggle_display[s:tbartoggle-1] .= '(*)'
-  echom join(s:tbartoggle_display, ', ')
-endfunction
-nnoremap <F3> :<c-u>call ToggleTBarListNT()<CR>
-inoremap <F3> <esc>:<c-u>call ToggleTBarListNT()<CR>
+nnoremap <F3> :<c-u>call jraf#toggleTBarListNT()<CR>
+inoremap <F3> <esc>:<c-u>call jraf#toggleTBarListNT()<CR>
 "==============================================================================}}}
 
-"================== UltiSnips ================================================={{{
+"================== Snippets / UltiSnips ======================================{{{
 let s:ulti_or_neosnip = 1 "1 UltiSnips, 2 neosnippet
+
 if s:ulti_or_neosnip == 1
-let g:UltiSnipsExpandTrigger = "<F10>"
-let g:UltiSnipsListSnippets = "<C-F10>"
-let g:UltiSnipsJumpForwardTrigger = "<F10>"
-let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
-let g:UltiSnipsEditSplit = "horizontal"
+  let g:UltiSnipsExpandTrigger = "<F10>"
+  let g:UltiSnipsListSnippets = "<C-F10>"
+  let g:UltiSnipsJumpForwardTrigger = "<F10>"
+  let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
+  let g:UltiSnipsEditSplit = "horizontal"
 
-"nnoremap <F10> :call UltiSnips_ListSnippets()<CR>
-inoremap <F9> <C-R>=UltiSnips#JumpBackwards()<CR>
-snoremap <F9> <ESC>:call UltiSnips#JumpBackwards()<CR>
-""inoremap <silent> <NL> <C-R>=UltiSnips_JumpForwards()<CR>
-""snoremap <silent> <NL> <ESC>:call UltiSnips_JumpForwards()<CR>
-"inoremap <silent> <NL> <C-R>=UltiSnips_ExpandSnippetOrJump()<CR>
-"snoremap <silent> <NL> <ESC>:call UltiSnips_ExpandSnippetOrJump()<CR>
+  inoremap <F9> <C-R>=UltiSnips#JumpBackwards()<CR>
+  snoremap <F9> <ESC>:call UltiSnips#JumpBackwards()<CR>
 
-function! LoadUltisnips()
-  if has("python")
-    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    if has("autocmd")
-      augroup load_ulti
-        autocmd!
-        autocmd FileType * call UltiSnips#FileTypeChanged()
-        autocmd BufNewFile,BufRead *.snippets setf snippets
-      augroup END
-    endif
-    call UltiSnips#FileTypeChanged()
-    inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
-    snoremap <silent> <NL> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
-    xnoremap <silent> <NL> :call UltiSnips#SaveLastVisualSelection()<CR>gvs
-
-    inoremap <silent> <F10> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
-    snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
-
-    nnoremap <silent> <F12> a<C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UltiSnipsCallUnite()<CR>
-    inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=UltiSnipsCallUnite()<CR>
-
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
-endfunction
-
-function! UltiSnipsCallUnite()
-  Unite -start-insert -winheight=100 -immediately -no-empty ultisnips
-  return ''
-endfunction
-
-nnoremap <F10> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
-inoremap <F10> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
-nnoremap <C-J> :if LoadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
-inoremap <C-J> <C-R>=LoadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
-nnoremap <F12> :call LoadUnite() \| call LoadUltisnips() \|
-      \ :call UltiSnipsCallUnite()<CR>
-inoremap <F12> <ESC>:call LoadUnite() \| call LoadUltisnips() \| 
-      \ :call UltiSnipsCallUnite()<CR>
+  nnoremap <F10> :if jraf#loadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+  inoremap <F10> <C-R>=jraf#loadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+  nnoremap <C-J> :if jraf#loadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
+  inoremap <C-J> <C-R>=jraf#loadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
+  nnoremap <F12> :call LoadUnite() \| call jraf#loadUltisnips() \|
+        \ :call jraf#ultiSnipsCallUnite()<CR>
+  inoremap <F12> <ESC>:call LoadUnite() \| call jraf#loadUltisnips() \|
+        \ :call jraf#ultiSnipsCallUnite()<CR>
 endif
 "==============================================================================}}}
 
 "================== NeoSnippet ================================================{{{
-"Shoud decide on either neosnippet or UltiSnips
 if s:ulti_or_neosnip == 2
-inoremap <silent><expr> <NL>
-      \ neosnippet#expand_or_jump_impl()
-snoremap <silent><expr> <NL>
-      \ neosnippet#expand_or_jump_impl()
-xnoremap <silent> <NL>
-      \ :<C-u>call neosnippet#expand_target()<CR>
-xnoremap <silent><expr> <C-L>
-      \ unite#sources#snippet_target#start()
+  call jraf#LoadNeoSnipppet()
 endif
 "==============================================================================}}}
 
@@ -797,21 +663,7 @@ let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabContextTextOmniPrecedence = ['&omnifunc', '&completefunc']
 "inoremap <nul> <c-r>=SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")<CR>
 let g:mysupertabaltcom = 1
-function! MySupertabAltCompletion()
-  "alternate between keyword completion and user omni completion
-  "when in latex complete tags
-  let g:mysupertabaltcom = 1 - g:mysupertabaltcom
-  if g:mysupertabaltcom == 0 && (&completefunc != "" || &filetype == 'tex')
-    if &completefunc != ""
-      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-u>")
-    else
-      return SuperTabAlternateCompletion("\<lt>c-x>\<lt>c-]>")
-    endif
-  else
-    return SuperTabAlternateCompletion("\<lt>c-p>")
-  endif
-endfunction
-inoremap <nul> <c-r>=MySupertabAltCompletion()<CR>
+inoremap <nul> <C-R>=jraf#mySupertabAltCompletion()<CR>
 "==============================================================================}}}
 
 "================== Python Settings ==========================================={{{
@@ -838,172 +690,34 @@ augroup END
 let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 
-"pysmell {{{
-function! LoadPysmell()
-  if exists("s:loadedPysmell")
-    return ''
-  endif
-  if has("python")
-    silent python << EOF
-import vim
-try:
-  import pysmell
-  vim.command('let s:has_pysmell = 1')
-except:
-  vim.command('let s:has_pysmell = 0')
-EOF
-
-    if s:has_pysmell == 1
-        ActivateAddons pysmell
-      setlocal completefunc=pysmell#Complete
-      augroup ft_py_pysmellcomp
-        autocmd!
-        autocmd filetype python setlocal completefunc=pysmell#Complete
-      augroup END
-    else
-      echom "No Pysmell installed!"
-    endif
-  else
-    echom "Cannot Load PySmell: No Python!"
-  endif
-  let s:loadedPysmell = 1
-endfunction "}}}
-
-"Jedi {{{
-function! LoadJedi()
-  if exists("s:loadedJedi")
-    return ''
-  endif
-  if has("python")
-    silent python << EOF
-import vim
-try:
-  import jedi
-  vim.command('let s:has_jedi = 1')
-except:
-  vim.command('let s:has_jedi = 0')
-EOF
-
-    if s:has_jedi == 1
-      let g:jedi#show_call_signatures = "0"
-      ActivateAddons jedi-vim
-      setlocal omnifunc=jedi#complete
-    else
-      echom "No Jedi installed!"
-    endif
-  else
-    echom "Cannot Load Jedi No Python!"
-  endif
-  let s:loadedJedi = 1
-endfunction "}}}
-
 "choose one of pysmell or jedi for the completion in python
-if !exists("g:is_vimrc_simple")
+if g:is_vimrc_simple == 0
   augroup ft_py_pysmell_or_jedi
     autocmd!
-    "autocmd FileType python call LoadPysmell()
-    autocmd FileType python call LoadJedi()
+    "autocmd FileType python call jraf#loadPysmell()
+    autocmd FileType python call jraf#loadJedi()
   augroup END
 endif
 
 "==============================================================================}}}
 
 "================== Latex ====================================================={{{
-"latex options
-"let g:Tex_CompileRule_dvi = 'latex -interaction=nonstopmode -src-specials $*'
-" in case we get errors when using compiling because of python set to 0
-let g:Tex_UsePython=1
-let g:Tex_MultipleCompileFormats='dvi,pdf'
-"make vim load .tex files as latex files
-"let g:tex_flavor='latex'
-let g:tex_flavor='pdflatex'
-let g:Tex_DefaultTargetFormat='pdf'
-let g:Tex_CompileRule_pdf = 'pdflatex --synctex=-1 -src-specials -interaction=nonstopmode $*'
-"let g:Tex_CompileRule_pdf = 'pdflatex  --synctex=1 -interaction=nonstopmode $*'
-let g:Tex_IgnoreLevel = 3
-let g:tex_comment_nospell= 1 "don't do spelling in comments
-"if has("autocmd") && g:is_win "why only on windows? don't remember now
-if has("autocmd")
-  augroup ft_tex_setCompiler
-    autocmd!
-    autocmd BufRead,BufNewFile *.tex compiler tex
-          \ | setlocal textwidth=90
-  augroup END
-endif
-
-if g:is_win
-  let g:SumatraPdfLoc = expand("$HOME" .
-        \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
-  if hostname() == "SHABBIRSTU3"
-    let g:SumatraPdfLoc = 'C:\Documents and Settings\hinacio\Applications' .
-          \ '\PortableApps\PortableApps\SumatraPDFPortable\SumatraPDFPortable'
-  endif
-  let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
-else
-  let g:Tex_ViewRule_pdf = 'okular'
-endif
-
-function! LoadLatexPlugins()
-  if exists("s:loaded_latex_plugins") | return '' | endif
-
-  imap <F8> <Plug>IMAP_JumpForward
-  nmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_JumpForward
-  vmap <F8> <Plug>IMAP_DeleteAndJumpForward
-  ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
-  "will it be necessary to load after/ftplugin/tex again?
-  let s:loaded_latex_plugins = 1
-endfunction
+augroup ft_tex_setCompiler
+  autocmd!
+  autocmd BufRead,BufNewFile *.tex compiler tex
+        \ | setlocal textwidth=90 ft=tex | echom "give Mt a try!"
+augroup END
 
 augroup ft_tex_loadLatexPlugins
   autocmd!
-  autocmd FileType tex call LoadLatexPlugins()
+  autocmd FileType tex call jraf#loadLatexSettings() | call jraf#loadLatexPlugins()
 augroup END
 
 "remoteOpen must be loaded in order to open from external viewer
 runtime bundle/vlatex/plugin/remoteOpen.vim
 
-"for plugin in ftplugin/tex/tex_pdf.vim
-let g:tex_pdf_map_keys = 0
+command! -complete=file -nargs=* Mt call jraf#setPdfDestination(<f-args>)
 
-"" fix viewing pdf, using \la to view pdf by default
-function! SetPdfDestination(...)
-  "without args get current working file and add pdf, else specific arg
-  if a:0 > 0
-    let g:fix_pdf_dest = substitute(a:1, '.pdf', '', '')
-  else
-    let g:fix_pdf_dest = substitute(expand('%:t'), '.tex', '', '')
-  endif
-
-  "just change to the folder of the current file already. Should be there in
-  "the first place
-  silent exe "cd " . expand('%:p:h')
-  echo "changed folder to " . expand('%p:h')
-
-  if has("gui")
-    winpos 0 0
-    set guioptions-=m "no menu bar for now
-    set lines=100 columns=91
-  endif
-
-  let g:did_setpdfdestination = 1
-  let g:fix_pdf_dest_target = expand('%:p:h') . '/' . g:fix_pdf_dest
-  nnoremap <Leader>la :<C-U>call FixForwardSeach()<CR>
-  command! -complete=file -nargs=* CompileViewLatex
-        \ exec "!start latexmk -pvc " . g:fix_pdf_dest_target
-endfunction
-
-function! FixForwardSeach()
-  if !exists("g:did_setpdfdestination")
-    call SetPdfDestination()
-  endif
-  let target = g:fix_pdf_dest_target . '.pdf'
-  let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search "
-        \ . expand('%:p') . ' ' . line('.') . ' ' . target
-  let execString = 'silent! !start ' . cmd
-  exe execString
-endfunction
-command! -complete=file -nargs=* Mt call SetPdfDestination(<f-args>)
 " the following settings seems to work for sumartraPDF:
 " "C:\Program Files\Vim\vim74\gvim.exe"  -c ":RemoteOpen +%l %f"
 "==============================================================================}}}
@@ -1037,24 +751,13 @@ endif
 "==============================================================================}}}
 
 "================== Delete Whitespace ========================================={{{
-function! StripTrailingWhitespace() range
-  if !&binary && &filetype != 'diff'
-    "normal mz
-    "normal Hmy
-    let cmd = '' . a:firstline . ',' . a:lastline
-    let cmd .= 's/\s\+$//e'
-    execute cmd
-    normal 'yz<CR>
-    normal `z
-  endif
-endfunction
-
 command! -range=% DelTrailWhiteSpace
       \ exe "normal mz" | exe "normal Hmy"
-      \ | <line1>,<line2>call StripTrailingWhitespace()
+      \ | <line1>,<line2>call jraf#stripTrailingWhitespace()
 "==============================================================================}}}
 
 "================== Statusline Settings/functions ======================={{{
+" These cannot go into auload because always called by statusline
 function! GetNumTabsStr()
   if tabpagenr('$') == 1
     return ''
@@ -1067,29 +770,39 @@ function! GetWindowNR()
   if winnr('$') < 3 |  return '' | endif
   return 'W' . winnr()
 endfunction
-"==============================================================================}}}
 
-function! Uniq () range "{{{
-  " from Damian Conway scripting the vim editor
-  " Nothing unique seen yet...
-  let have_already_seen = {}
-  let unique_lines = []
-
-  " Walk through the lines, remembering only the hitherto-unseen ones...
-  for original_line in getline(a:firstline, a:lastline)
-    let normalized_line = '>' . original_line
-    if !has_key(have_already_seen, normalized_line)
-      call add(unique_lines, original_line)
-      let have_already_seen[normalized_line] = 1
-    endif
-  endfor
-
-  " Replace the range of original lines with just the unique lines...
-  exec a:firstline . ',' . a:lastline . 'delete'
-  call append(a:firstline-1, unique_lines)
+function! CondDispFtFf()
+  if v:version < 702
+    return ''
+  endif
+  if winwidth(0) < 70 || &filetype == 'help'
+    let val = ''
+  else
+    let xft = &filetype
+    let xff = &fileformat
+    let val =  '[' . xft . ( xft == '' ? '' : ',' ) . xff . ']'
+  endif
+  return val
 endfunction
-command! -range Uniq <line1>,<line2>call Uniq()
-"}}}
+
+function! XgetTagbarFunc()
+  if &ft == "help"
+    return ""
+  else
+    return tagbar#currenttag('[%s] ', '')
+  endif
+endfunction
+
+let g:displtxcf = '' "one time display
+function! DispLTXCF()
+  "use this to debug other things
+  " by displaying information in statusline
+  " redifine it where appropriate
+  "return '[' . len(getline(".")) . ',' . getpos(".")[2] . ']'
+  "return '[' . g:displtxcf . ']'
+  return ''
+endfunction
+"==============================================================================}}}
 
 function! IsLineEndInsert() "{{{
   "in insert mode last is +1 len"
@@ -1108,6 +821,8 @@ nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 " delete current buffer but don't delete the view
 command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 
+command! -range Uniq <line1>,<line2>call jraf#uniq()
+
 "fix not having <c-i> for the jumplist after mapping tab
 command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
@@ -1115,6 +830,7 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 
 " change to path of current file
 command! ChgDirCurrFileFolder lcd %:p:h
+
 " print current files pwd
 command! Pcp echo expand('%:p')
 " }}}
@@ -1144,25 +860,7 @@ let g:alternateExtensions_h = "C,cpp,c++,CPP"
 "plugin: http://www.vim.org/scripts/script.php?script_id=2596
 if g:is_win
   let g:isMaximized = 0
-  function! FullScreenToogleFun()
-    if g:isMaximized == 0
-      let g:defaultNumCols = &columns
-      let g:defaultNumLines = &lines
-      let g:currposx = getwinposx()
-      let g:currposy = getwinposy()
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 1
-    else
-      call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-      let g:isMaximized = 0
-      exec "set columns=" . g:defaultNumCols
-      exec "set lines=" . g:defaultNumLines
-      exec "winpos" . g:currposx . " " . g:currposy
-    endif
-  endfunction
-
-  "command! FullScreenToogle call libcallnr("gvimfullscreen.dll", "ToggleFullScreen", 0)
-  command! FullScreenToogle call FullScreenToogleFun()
+  command! FullScreenToogle call jraf#fullScreenToogle()
   noremap  <Leader>tf :FullScreenToogle<CR>
 else
   nnoremap <Leader>tf :silent! !wmctrl -r GVIM -b toggle,fullscreen<CR>
@@ -1170,28 +868,9 @@ endif
 "==============================================================================}}}
 
 "================== LycosaExplorer ============================================{{{
-function! SetupLycosa()
-  noremap ,b :LycosaBufferExplorer<CR>
-  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
-  noremap ,le :LycosaFilesystemExplorer<CR>
-
-  function! ToggleLycosa()
-    if v:count == 0
-      LycosaFilesystemExplorer
-    elseif v:count == 1
-      LycosaBufferExplorer
-    elseif v:count == 2
-      LycosaFilesystemExplorerFromHere
-    else
-      echo "0: File System, 1:buffer, 2: File from here"
-    endif
-  endfunction
-  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-endfunction
-
 "if index(g:pathogen_disabled, 'lycosaexplorer') == -1
 if index(g:active_addons, 'lycosaexplorer') >= 0
-  call SetupLycosa()
+  call jraf#setupLycosa()
 endif
 "==============================================================================}}}
 
