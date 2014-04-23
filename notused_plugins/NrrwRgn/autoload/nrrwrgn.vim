@@ -71,7 +71,6 @@ fun! <sid>Init() "{{{1
 endfun 
 
 fun! <sid>NrrwRgnWin(bang) "{{{1
-	let local_options = <sid>GetOptions(s:opts)
 	let bufname = substitute(expand('%:t:r'), ' ', '_', 'g')[0:8]
 	let nrrw_winname = s:nrrw_winname. '_'. bufname . '_'. s:instn
 	let nrrw_win = bufwinnr('^'.nrrw_winname.'$')
@@ -85,9 +84,10 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 		if !exists('g:nrrw_topbot_leftright')
 			let g:nrrw_topbot_leftright = 'topleft'
 		endif
+		let cmd=printf(':noa %s %d%s %s', g:nrrw_topbot_leftright, s:nrrw_rgn_wdth,
+				\ (s:nrrw_rgn_vert ? 'vsp' : 'sp'), nrrw_winname)
 		if !a:bang
-			exe  g:nrrw_topbot_leftright s:nrrw_rgn_wdth.
-				\(s:nrrw_rgn_vert?'v':''). "sp ". nrrw_winname
+			exe cmd
 		else
 			try 
 				" if hidden is set, set the original buffer to be modified, so
@@ -103,8 +103,7 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 				exe 'f' s:nrrw_winname. '_'. s:instn
 			catch /^Vim\%((\a\+)\)\=:E37/	" catch error E37
 				" Fall back and use a new window
-				exe  g:nrrw_topbot_leftright s:nrrw_rgn_wdth.
-					\(s:nrrw_rgn_vert?'v':''). "sp ". nrrw_winname
+				exe cmd
 			endtry
 		endif
 
@@ -118,7 +117,6 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 		call <sid>NrrwSettings(1)
 		let nrrw_win = bufwinnr("")
 	endif
-	call <sid>SetOptions(local_options)
 	" We are in the narrowed buffer now!
 	return nrrw_win
 endfun
@@ -419,8 +417,7 @@ fun! <sid>Options(search) "{{{1
 	\  'makeprg', 'matchpairs', 'nrformats', 'omnifunc', 'osfiletype',
 	\  'preserveindent', 'quoteescape', 'shiftwidth', 'shortname', 'smartindent',
 	\  'softtabstop', 'spellcapcheck', 'spellfile', 'spelllang', 'suffixesadd',
-	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'undofile',
-	\  'wrapmargin']
+	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'wrapmargin']
 
 	" old function, only used to generate above list
 	let c=[]
@@ -449,7 +446,7 @@ fun! <sid>Options(search) "{{{1
 		call filter(b, 'v:val =~ "^''"')
 		" the following options should be set
 		let filter_opt='\%(modifi\%(ed\|able\)\|readonly\|swapfile\|'.
-				\ 'buftype\|bufhidden\|foldcolumn\|buflisted\)'
+				\ 'buftype\|bufhidden\|foldcolumn\|buflisted\|undofile\)'
 		call filter(b, 'v:val !~ "^''".filter_opt."''"')
 		for item in b
 			let item=substitute(item, '''', '', 'g')
@@ -810,6 +807,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 				\ [c_s.' End NrrwRgn'.nr.c_e, '']
 	endfor
 
+	let local_options = <sid>GetOptions(s:opts)
 	let win=<sid>NrrwRgnWin(bang)
 	if bang
 		let s:nrrw_rgn_lines[s:instn].single = 1
@@ -820,6 +818,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 	let b:nrrw_instn = s:instn
 	call <sid>SetupBufLocalCommands()
 	call <sid>NrrwRgnAuCmd(0)
+	call <sid>SetOptions(local_options)
 	call <sid>CleanRegions()
 	call <sid>HideNrrwRgnLines()
 
@@ -886,6 +885,7 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 		    \ s:nrrw_rgn_lines[s:instn].end[1])
 	endif
 	call <sid>DeleteMatches(s:instn)
+	let local_options = <sid>GetOptions(s:opts)
 	let win=<sid>NrrwRgnWin(bang)
 	if bang
 	    let s:nrrw_rgn_lines[s:instn].single = 1
@@ -923,6 +923,7 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 	if has_key(s:nrrw_aucmd, "close")
 		let b:nrrw_aucmd_close = s:nrrw_aucmd["close"]
 	endif
+	call <sid>SetOptions(local_options)
 	call <sid>SaveRestoreRegister(_opts)
 
 	" restore settings
