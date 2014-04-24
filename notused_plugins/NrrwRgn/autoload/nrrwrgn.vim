@@ -71,7 +71,7 @@ fun! <sid>Init() "{{{1
 endfun 
 
 fun! <sid>NrrwRgnWin(bang) "{{{1
-	let bufname = substitute(expand('%:t:r'), ' ', '_', 'g')[0:8]
+	let bufname = matchstr(substitute(expand('%:t:r'), ' ', '_', 'g'), '^.\{0,8}')
 	let nrrw_winname = s:nrrw_winname. '_'. bufname . '_'. s:instn
 	let nrrw_win = bufwinnr('^'.nrrw_winname.'$')
 	if nrrw_win != -1
@@ -128,9 +128,7 @@ fun! <sid>CleanRegions() "{{{1
 endfun
 
 fun! <sid>CompareNumbers(a1,a2) "{{{1
-	return (a:a1+0) == (a:a2+0) ? 0
-		\ : (a:a1+0) > (a:a2+0) ? 1
-		\ : -1
+	return (a:a1+0) == (a:a2+0) ? 0 : (a:a1+0) > (a:a2+0) ? 1 : -1
 endfun
 
 fun! <sid>ParseList(list) "{{{1
@@ -197,7 +195,7 @@ endfun
 fun! <sid>SaveRestoreRegister(values) "{{{1
 	if empty(a:values)
 		" Save
-		let reg        = ['a', getreg('a'), getregtype('a') ]
+		let reg  =  ['a', getreg('a'), getregtype('a') ]
 		let fold =  [ &fen, &l:fdm ]
 		if &fen
 			setl nofoldenable
@@ -206,10 +204,6 @@ fun! <sid>SaveRestoreRegister(values) "{{{1
 		return  [ reg, fold, visual ]
 	else
 		" Restore
-		if empty(a:values)
-			call <sid>WarningMsg("Error setting options back!")
-			return
-		endif
 		call call('setreg', a:values[0])
 		if a:values[1][0]
 			setl foldenable
@@ -224,6 +218,8 @@ fun! <sid>SaveRestoreRegister(values) "{{{1
 endfun!
 
 fun! <sid>UpdateOrigWin() abort
+	" Tries to keep the original windo in the same viewport, that
+	" is currently being edited in the narrowed window
 	if !get(g:, 'nrrw_rgn_update_orig_win', 0)
 		return
 	endif
@@ -1003,7 +999,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 		call <sid>JumpToBufinTab(orig_tab, nrw_buf, instn)
 		return
 	endif
-	if !&l:ma && !( exists("b:orig_buf_ro") && b:orig_buf_ro)
+	if !&l:ma && !(exists("b:orig_buf_ro") && b:orig_buf_ro)
 		setl ma
 	endif
 	" This is needed to adjust all other narrowed regions
@@ -1252,6 +1248,40 @@ fun! nrrwrgn#LastNrrwRgn(bang) "{{{1
 		call nrrwrgn#NrrwRgn(visualmode(), bang)
 	endif
 endfu
+fun! nrrwrgn#NrrwRgnStatus() "{{{1
+	if !exists("b:nrrw_instn")
+		return {}
+	else
+		let dict={}
+		try
+			let cur = copy(s:nrrw_rgn_lines[b:nrrw_instn])
+			if has_key(cur, 'multi')
+				let multi = cur.multi
+			else
+				let multi = []
+			endif
+			let dict.shortname = bufname('')
+			let dict.fullname  = fnamemodify(expand(bufname(cur.orig_buf)),':p')
+			let dict.multi     = has_key(cur, 'multi')
+			if has_key(cur, 'multi')
+				let dict.startl= map(copy(multi), 'v:val[0]')
+				let dict.endl  = map(copy(multi), 'v:val[1]')
+			else
+				let dict.start = cur.start
+				let dict.end   = cur.end
+			endif
+			let dict.matchid   = cur.matchid
+			let dict.visual    = has_key(cur, 'vmode') ? cur.vmode : ''
+			let dict.enabled   = has_key(cur, 'disable') ? !cur.disable : 0
+			unlet cur
+		catch
+			" oh oh, something is wrong...
+			return {}
+		endtry
+		return dict
+	endif
+endfu
+
 " Debugging options "{{{1
 fun! nrrwrgn#Debug(enable) "{{{1
 	if (a:enable)
