@@ -1,7 +1,7 @@
 " Location:     plugin/projectile.vim
 " Author:       Tim Pope <http://tpo.pe/>
 
-if exists("g:loaded_projectile") || v:version < 700 || &cp
+if exists("g:loaded_projectile") || v:version < 700 || !empty(findfile('plugin/projectionist.vim', &rtp))
   finish
 endif
 let g:loaded_projectile = 1
@@ -29,15 +29,15 @@ function! ProjectileDetect(path) abort
   while root !=# previous
     if s:has(root, '.projections.json')
       try
-        let value = projectile#json_parse(readfile(root.'/.projections.json'))
-        call projectile#append(root, value)
+        let value = projectionist#json_parse(readfile(root.'/.projections.json'))
+        call projectionist#append(root, value)
       catch /^invalid JSON:/
       endtry
     endif
     for [key, value] in items(g:projectiles)
       for test in split(key, '|')
         if empty(filter(split(test, '&'), '!s:has(root, v:val)'))
-          call projectile#append(root, value)
+          call projectionist#append(root, value)
           break
         endif
       endfor
@@ -48,17 +48,21 @@ function! ProjectileDetect(path) abort
 
   try
     let g:projectile_file = file
+    let g:projectionist_file = file
     if v:version + has('patch438') >= 704
       silent doautocmd <nomodeline> User ProjectileDetect
+      silent doautocmd <nomodeline> User ProjectionistDetect
     else
       silent doautocmd User ProjectileDetect
+      silent doautocmd User ProjectionistDetect
     endif
   finally
     unlet! g:projectile_file
+    unlet! g:projectionist_file
   endtry
 
   if !empty(b:projectiles)
-    call projectile#activate()
+    call projectionist#activate()
   endif
 endfunction
 
@@ -83,6 +87,6 @@ augroup projectile
   autocmd BufWritePost .projections.json call ProjectileDetect(expand('<afile>:p'))
   autocmd BufNewFile *
         \ if !empty(b:projectiles) |
-        \   call projectile#apply_template() |
+        \   call projectionist#apply_template() |
         \ endif
 augroup END
