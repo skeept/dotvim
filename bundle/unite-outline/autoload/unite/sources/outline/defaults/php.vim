@@ -22,7 +22,7 @@ let s:Util = unite#sources#outline#import('Util')
 "---------------------------------------
 " Sub Pattern
 
-let s:pat_type = '\%(interface\|class\|function\)\>'
+let s:pat_type = '\%(interface\|class\|trait\|function\)\>'
 
 "-----------------------------------------------------------------------------
 " Outline Info
@@ -39,7 +39,7 @@ let s:outline_info = {
       \ },
       \
       \ 'heading_groups': {
-      \   'type'     : ['interface', 'class'],
+      \   'type'     : ['interface', 'class', 'trait'],
       \   'function' : ['function'],
       \ },
       \
@@ -51,7 +51,7 @@ let s:outline_info = {
       \   { 'name'   : 'comment',
       \     'pattern': "'/[/*].*'" },
       \   { 'name'   : 'type',
-      \     'pattern': '/\S\+\ze : \%(interface\|class\)/' },
+      \     'pattern': '/\S\+\ze : \%(interface\|class\|trait\)/' },
       \   { 'name'   : 'function',
       \     'pattern': '/\h\w*\ze\s*(/' },
       \   { 'name'   : 'parameter_list',
@@ -84,6 +84,10 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
       " Class
       let heading.type = 'class'
       let heading.word = matchstr(heading.word, '\zs\<class\s\+\zs\h\w*') . ' : class'
+    elseif heading.word =~ '\<trait\>'
+      " Trait
+      let heading.type = 'trait'
+      let heading.word = matchstr(heading.word, '\zs\<trait\s\+\zs\h\w*') . ' : trait'
     else
       " Function or Method
       let heading.type = 'function'

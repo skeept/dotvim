@@ -144,7 +144,7 @@ function! neocomplete#init#_variables() "{{{
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'_',
-        \'\k\+')
+        \'\h\w*')
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#keyword_patterns',
         \'filename',
@@ -709,6 +709,12 @@ function! neocomplete#init#_source(source) "{{{
     " Set default rank.
     let source.rank = (source.kind ==# 'keyword') ? 5 :
           \ empty(source.filetypes) ? 10 : 100
+  endif
+
+  if !has_key(source.keyword_patterns, '_')
+    " Set default keyword pattern.
+    let source.keyword_patterns['_'] =
+          \ get(g:neocomplete#keyword_patterns, '_', '\h\w*')
   endif
 
   if !has_key(source, 'min_pattern_length')

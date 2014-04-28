@@ -71,8 +71,7 @@ fun! <sid>Init() "{{{1
 endfun 
 
 fun! <sid>NrrwRgnWin(bang) "{{{1
-	let local_options = <sid>GetOptions(s:opts)
-	let bufname = substitute(expand('%:t:r'), ' ', '_', 'g')[0:8]
+	let bufname = matchstr(substitute(expand('%:t:r'), ' ', '_', 'g'), '^.\{0,8}')
 	let nrrw_winname = s:nrrw_winname. '_'. bufname . '_'. s:instn
 	let nrrw_win = bufwinnr('^'.nrrw_winname.'$')
 	if nrrw_win != -1
@@ -85,9 +84,10 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 		if !exists('g:nrrw_topbot_leftright')
 			let g:nrrw_topbot_leftright = 'topleft'
 		endif
+		let cmd=printf(':noa %s %d%s %s', g:nrrw_topbot_leftright, s:nrrw_rgn_wdth,
+				\ (s:nrrw_rgn_vert ? 'vsp' : 'sp'), nrrw_winname)
 		if !a:bang
-			exe  g:nrrw_topbot_leftright s:nrrw_rgn_wdth.
-				\(s:nrrw_rgn_vert?'v':''). "sp ". nrrw_winname
+			exe cmd
 		else
 			try 
 				" if hidden is set, set the original buffer to be modified, so
@@ -103,8 +103,7 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 				exe 'f' s:nrrw_winname. '_'. s:instn
 			catch /^Vim\%((\a\+)\)\=:E37/	" catch error E37
 				" Fall back and use a new window
-				exe  g:nrrw_topbot_leftright s:nrrw_rgn_wdth.
-					\(s:nrrw_rgn_vert?'v':''). "sp ". nrrw_winname
+				exe cmd
 			endtry
 		endif
 
@@ -118,7 +117,6 @@ fun! <sid>NrrwRgnWin(bang) "{{{1
 		call <sid>NrrwSettings(1)
 		let nrrw_win = bufwinnr("")
 	endif
-	call <sid>SetOptions(local_options)
 	" We are in the narrowed buffer now!
 	return nrrw_win
 endfun
@@ -130,9 +128,7 @@ fun! <sid>CleanRegions() "{{{1
 endfun
 
 fun! <sid>CompareNumbers(a1,a2) "{{{1
-	return (a:a1+0) == (a:a2+0) ? 0
-		\ : (a:a1+0) > (a:a2+0) ? 1
-		\ : -1
+	return (a:a1+0) == (a:a2+0) ? 0 : (a:a1+0) > (a:a2+0) ? 1 : -1
 endfun
 
 fun! <sid>ParseList(list) "{{{1
@@ -199,7 +195,7 @@ endfun
 fun! <sid>SaveRestoreRegister(values) "{{{1
 	if empty(a:values)
 		" Save
-		let reg        = ['a', getreg('a'), getregtype('a') ]
+		let reg  =  ['a', getreg('a'), getregtype('a') ]
 		let fold =  [ &fen, &l:fdm ]
 		if &fen
 			setl nofoldenable
@@ -208,10 +204,6 @@ fun! <sid>SaveRestoreRegister(values) "{{{1
 		return  [ reg, fold, visual ]
 	else
 		" Restore
-		if empty(a:values)
-			call <sid>WarningMsg("Error setting options back!")
-			return
-		endif
 		call call('setreg', a:values[0])
 		if a:values[1][0]
 			setl foldenable
@@ -226,6 +218,8 @@ fun! <sid>SaveRestoreRegister(values) "{{{1
 endfun!
 
 fun! <sid>UpdateOrigWin() abort
+	" Tries to keep the original windo in the same viewport, that
+	" is currently being edited in the narrowed window
 	if !get(g:, 'nrrw_rgn_update_orig_win', 0)
 		return
 	endif
@@ -419,8 +413,7 @@ fun! <sid>Options(search) "{{{1
 	\  'makeprg', 'matchpairs', 'nrformats', 'omnifunc', 'osfiletype',
 	\  'preserveindent', 'quoteescape', 'shiftwidth', 'shortname', 'smartindent',
 	\  'softtabstop', 'spellcapcheck', 'spellfile', 'spelllang', 'suffixesadd',
-	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'undofile',
-	\  'wrapmargin']
+	\  'synmaxcol', 'syntax', 'tabstop', 'textwidth', 'thesaurus', 'wrapmargin']
 
 	" old function, only used to generate above list
 	let c=[]
@@ -449,7 +442,7 @@ fun! <sid>Options(search) "{{{1
 		call filter(b, 'v:val =~ "^''"')
 		" the following options should be set
 		let filter_opt='\%(modifi\%(ed\|able\)\|readonly\|swapfile\|'.
-				\ 'buftype\|bufhidden\|foldcolumn\|buflisted\)'
+				\ 'buftype\|bufhidden\|foldcolumn\|buflisted\|undofile\)'
 		call filter(b, 'v:val !~ "^''".filter_opt."''"')
 		for item in b
 			let item=substitute(item, '''', '', 'g')
@@ -810,6 +803,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 				\ [c_s.' End NrrwRgn'.nr.c_e, '']
 	endfor
 
+	let local_options = <sid>GetOptions(s:opts)
 	let win=<sid>NrrwRgnWin(bang)
 	if bang
 		let s:nrrw_rgn_lines[s:instn].single = 1
@@ -820,6 +814,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 	let b:nrrw_instn = s:instn
 	call <sid>SetupBufLocalCommands()
 	call <sid>NrrwRgnAuCmd(0)
+	call <sid>SetOptions(local_options)
 	call <sid>CleanRegions()
 	call <sid>HideNrrwRgnLines()
 
@@ -886,6 +881,7 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 		    \ s:nrrw_rgn_lines[s:instn].end[1])
 	endif
 	call <sid>DeleteMatches(s:instn)
+	let local_options = <sid>GetOptions(s:opts)
 	let win=<sid>NrrwRgnWin(bang)
 	if bang
 	    let s:nrrw_rgn_lines[s:instn].single = 1
@@ -923,6 +919,7 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 	if has_key(s:nrrw_aucmd, "close")
 		let b:nrrw_aucmd_close = s:nrrw_aucmd["close"]
 	endif
+	call <sid>SetOptions(local_options)
 	call <sid>SaveRestoreRegister(_opts)
 
 	" restore settings
@@ -1002,7 +999,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 		call <sid>JumpToBufinTab(orig_tab, nrw_buf, instn)
 		return
 	endif
-	if !&l:ma && !( exists("b:orig_buf_ro") && b:orig_buf_ro)
+	if !&l:ma && !(exists("b:orig_buf_ro") && b:orig_buf_ro)
 		setl ma
 	endif
 	" This is needed to adjust all other narrowed regions
@@ -1251,6 +1248,40 @@ fun! nrrwrgn#LastNrrwRgn(bang) "{{{1
 		call nrrwrgn#NrrwRgn(visualmode(), bang)
 	endif
 endfu
+fun! nrrwrgn#NrrwRgnStatus() "{{{1
+	if !exists("b:nrrw_instn")
+		return {}
+	else
+		let dict={}
+		try
+			let cur = copy(s:nrrw_rgn_lines[b:nrrw_instn])
+			if has_key(cur, 'multi')
+				let multi = cur.multi
+			else
+				let multi = []
+			endif
+			let dict.shortname = bufname('')
+			let dict.fullname  = fnamemodify(expand(bufname(cur.orig_buf)),':p')
+			let dict.multi     = has_key(cur, 'multi')
+			if has_key(cur, 'multi')
+				let dict.startl= map(copy(multi), 'v:val[0]')
+				let dict.endl  = map(copy(multi), 'v:val[1]')
+			else
+				let dict.start = cur.start
+				let dict.end   = cur.end
+			endif
+			let dict.matchid   = cur.matchid
+			let dict.visual    = has_key(cur, 'vmode') ? cur.vmode : ''
+			let dict.enabled   = has_key(cur, 'disable') ? !cur.disable : 0
+			unlet cur
+		catch
+			" oh oh, something is wrong...
+			return {}
+		endtry
+		return dict
+	endif
+endfu
+
 " Debugging options "{{{1
 fun! nrrwrgn#Debug(enable) "{{{1
 	if (a:enable)

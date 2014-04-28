@@ -1,10 +1,10 @@
-" Location:     plugin/projectile.vim
+" Location:     plugin/projectionist.vim
 " Author:       Tim Pope <http://tpo.pe/>
 
-if exists("g:loaded_projectile") || v:version < 700 || &cp
+if exists("g:loaded_projectionist") || v:version < 700 || &cp
   finish
 endif
-let g:loaded_projectile = 1
+let g:loaded_projectionist = 1
 
 if !exists('g:projectiles')
   let g:projectiles = {}
@@ -20,8 +20,8 @@ function! s:has(root, file) abort
   endif
 endfunction
 
-function! ProjectileDetect(path) abort
-  let b:projectiles = {}
+function! ProjectionistDetect(path) abort
+  let b:projectionist = {}
   let file = simplify(fnamemodify(a:path, ':p:s?[\/]$??'))
 
   let root = file
@@ -29,15 +29,15 @@ function! ProjectileDetect(path) abort
   while root !=# previous
     if s:has(root, '.projections.json')
       try
-        let value = projectile#json_parse(readfile(root.'/.projections.json'))
-        call projectile#append(root, value)
+        let value = projectionist#json_parse(readfile(root.'/.projections.json'))
+        call projectionist#append(root, value)
       catch /^invalid JSON:/
       endtry
     endif
     for [key, value] in items(g:projectiles)
       for test in split(key, '|')
         if empty(filter(split(test, '&'), '!s:has(root, v:val)'))
-          call projectile#append(root, value)
+          call projectionist#append(root, value)
           break
         endif
       endfor
@@ -48,41 +48,45 @@ function! ProjectileDetect(path) abort
 
   try
     let g:projectile_file = file
+    let g:projectionist_file = file
     if v:version + has('patch438') >= 704
-      silent doautocmd <nomodeline> User ProjectileDetect
+      silent doautocmd <nomodeline> User ProjectionistDetect
+      silent doautocmd <nomodeline> User ProjectionistDetect
     else
-      silent doautocmd User ProjectileDetect
+      silent doautocmd User ProjectionistDetect
+      silent doautocmd User ProjectionistDetect
     endif
   finally
     unlet! g:projectile_file
+    unlet! g:projectionist_file
   endtry
 
-  if !empty(b:projectiles)
-    call projectile#activate()
+  if !empty(b:projectionist)
+    call projectionist#activate()
   endif
 endfunction
 
-augroup projectile
+augroup projectionist
   autocmd!
   autocmd FileType *
         \ if &filetype ==# 'netrw' || &buftype !~# 'nofile\|quickfix' |
-        \   call ProjectileDetect(expand('%:p')) |
+        \   call ProjectionistDetect(expand('%:p')) |
         \  endif
-  autocmd BufFilePost * call ProjectileDetect(expand('<afile>:p'))
+  autocmd BufFilePost * call ProjectionistDetect(expand('<afile>:p'))
   autocmd BufNewFile,BufReadPost *
         \ if empty(&filetype) |
-        \   call ProjectileDetect(expand('<afile>:p')) |
+        \   call ProjectionistDetect(expand('<afile>:p')) |
         \ endif
-  autocmd CmdWinEnter * call ProjectileDetect(expand('#:p'))
+  autocmd CmdWinEnter * call ProjectionistDetect(expand('#:p'))
   autocmd User NERDTreeInit,NERDTreeNewRoot
-        \ call ProjectileDetect(b:NERDTreeRoot.path.str())
+        \ call ProjectionistDetect(b:NERDTreeRoot.path.str())
   autocmd VimEnter *
         \ if empty(expand('<afile>:p')) |
-        \   call ProjectileDetect(getcwd()) |
+        \   call ProjectionistDetect(getcwd()) |
         \ endif
-  autocmd BufWritePost .projections.json call ProjectileDetect(expand('<afile>:p'))
+  autocmd BufWritePost .projections.json call ProjectionistDetect(expand('<afile>:p'))
   autocmd BufNewFile *
-        \ if !empty(b:projectiles) |
-        \   call projectile#apply_template() |
+        \ if !empty(b:projectionist) |
+        \   call projectionist#apply_template() |
         \ endif
 augroup END
