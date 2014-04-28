@@ -616,7 +616,7 @@ command! CtrlPShowArr call jraf#ctrlpShowArrFun(-1)
 
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile', 'BookmarkDir']
-nnoremap <silent> <C-P> :<C-U>call jfaf#ctrlpShowArrFun(v:count)
+nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 noremap ,b :CtrlPBuffer<CR>
 noremap ,e :CtrlPCurFile<CR>

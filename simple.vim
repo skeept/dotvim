@@ -92,7 +92,7 @@ runtime plugin/scratch.vim
 "}}}
 
 nnoremap <C-P> :<C-U>let curr_vcount=v:count
-      \ \| call jrar#loadCtrlP()<CR>:<C-U>call CtrlpShowArrFun(curr_vcount)
+      \ \| call jraf#loadCtrlP()<CR>:<C-U>call jraf#ctrlpShowArrFun(curr_vcount)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[curr_vcount]<CR>
 nnoremap ,b :<C-U>call jraf#loadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 

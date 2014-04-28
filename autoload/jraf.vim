@@ -580,7 +580,7 @@ endfunction "}}}
 "================== Plugin Loading (simple.vim) ==============================={{{
 function! jraf#loadCtrlP()
   call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> <C-P> :<C-U>call CtrlpShowArrFun(v:count)
+  nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
         \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
