@@ -43,7 +43,6 @@ function! s:entries(path)
   call map(files,'substitute(v:val,"[\\/]$","","")')
   call filter(files,'v:val !~# "[\\\\/]\\.\\.\\=$"')
 
-  " filter out &suffixes
   let filter_suffixes = substitute(escape(&suffixes, '~.*$^'), ',', '$\\|', 'g') .'$'
   call filter(files, 'v:val !~# filter_suffixes')
 
@@ -167,14 +166,14 @@ nmap ]<Space> <Plug>unimpairedBlankDown
 
 function! s:Move(cmd, count, map) abort
   normal! m`
-  exe 'move'.a:cmd.a:count
+  silent! exe 'move'.a:cmd.a:count
   norm! ``
   silent! call repeat#set("\<Plug>unimpairedMove".a:map, a:count)
 endfunction
 
 function! s:MoveSelectionUp(count) abort
   normal! m`
-  exe "'<,'>move'<--".a:count
+  silent! exe "'<,'>move'<--".a:count
   norm! ``
   silent! call repeat#set("\<Plug>unimpairedMoveSelectionUp", a:count)
 endfunction
@@ -227,6 +226,9 @@ call s:option_map('w', 'wrap')
 nnoremap [ox :set cursorline cursorcolumn<CR>
 nnoremap ]ox :set nocursorline nocursorcolumn<CR>
 nnoremap cox :set <C-R>=&cursorline && &cursorcolumn ? 'nocursorline nocursorcolumn' : 'cursorline cursorcolumn'<CR><CR>
+nnoremap [ov :set virtualedit+=all<CR>
+nnoremap ]ov :set virtualedit-=all<CR>
+nnoremap cov :set <C-R>=(&virtualedit =~# "all") ? 'virtualedit-=all' : 'virtualedit+=all'<CR><CR>
 
 function! s:setup_paste() abort
   let s:paste = &paste
@@ -237,14 +239,8 @@ endfunction
 
 nnoremap <silent> <Plug>unimpairedPaste :call <SID>setup_paste()<CR>
 
-nnoremap <silent> yp  :call <SID>setup_paste()<CR>a
-nnoremap <silent> yP  :call <SID>setup_paste()<CR>i
 nnoremap <silent> yo  :call <SID>setup_paste()<CR>o
 nnoremap <silent> yO  :call <SID>setup_paste()<CR>O
-nnoremap <silent> yA  :call <SID>setup_paste()<CR>A
-nnoremap <silent> yI  :call <SID>setup_paste()<CR>I
-nnoremap <silent> ygi :call <SID>setup_paste()<CR>gi
-nnoremap <silent> ygI :call <SID>setup_paste()<CR>gI
 
 augroup unimpaired_paste
   autocmd!
