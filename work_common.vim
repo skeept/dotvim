@@ -1,3 +1,5 @@
+let work_settings=1
+
 function! GetFoldLevel_Log(lnum)
   let numChars = g:numCharsFront
   let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
@@ -77,3 +79,6 @@ let g:echoOrPrintTimeSetting = 1
 "nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
       "\ time.localtime(<C-R><C-w>))<CR>
 nnoremap \e :<C-U>call EchoOrPrintTime()<CR>
+
+let work_lines=52
+let work_columns=126
