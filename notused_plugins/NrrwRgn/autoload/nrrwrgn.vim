@@ -1261,7 +1261,12 @@ fun! nrrwrgn#NrrwRgnStatus() "{{{1
 				let multi = []
 			endif
 			let dict.shortname = bufname('')
-			let dict.fullname  = fnamemodify(expand(bufname(cur.orig_buf)),':p')
+			let bufname=bufname(cur.orig_buf)
+			if !empty(bufname)
+				let dict.fullname  = fnamemodify(expand(bufname(cur.orig_buf)),':p')
+			else
+				let dict.fullname  = '[No Name]' " vim default
+			endif
 			let dict.multi     = has_key(cur, 'multi')
 			if has_key(cur, 'multi')
 				let dict.startl= map(copy(multi), 'v:val[0]')
@@ -1272,12 +1277,14 @@ fun! nrrwrgn#NrrwRgnStatus() "{{{1
 			endif
 			let dict.matchid   = cur.matchid
 			let dict.visual    = has_key(cur, 'vmode') ? cur.vmode : ''
-			let dict.enabled   = has_key(cur, 'disable') ? !cur.disable : 0
+			let dict.enabled   = has_key(cur, 'disable') ? (cur.disable ? 0 : 1) : 1
+			let dict.instn     = b:nrrw_instn
 			unlet cur
 		catch
 			" oh oh, something is wrong...
-			return {}
+			let dict={}
 		endtry
+		lockvar dict
 		return dict
 	endif
 endfu

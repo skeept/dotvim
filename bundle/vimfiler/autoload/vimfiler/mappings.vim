@@ -918,7 +918,7 @@ function! s:expand_tree(is_recursive) "{{{
 
   setlocal nomodifiable
 
-  if !a:is_recursive && !is_fold
+  if g:vimfiler_expand_jump_to_first_child && !a:is_recursive && !is_fold
     " Move to next line.
     call cursor(line('.') + 1, 0)
   endif
@@ -1784,6 +1784,9 @@ endfunction"}}}
 
 function! s:get_action_current_dir(files) "{{{
   let current_dir = b:vimfiler.current_dir
+  if b:vimfiler.source != 'file'
+    let current_dir = b:vimfiler.source . ':' . current_dir
+  endif
   if len(a:files) == 1
     let current_dir = a:files[0].action__directory
     if a:files[0].vimfiler__is_directory
