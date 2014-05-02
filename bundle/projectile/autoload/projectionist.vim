@@ -340,7 +340,7 @@ function! projectionist#activate() abort
     endif
     let &l:makeprg = makeprg
     if !(type(makeopt) ==# type([]) && !empty(filter(copy(makeopt), 'stridx(v:val, root) >= 0')))
-      let &l:errorformat .= ',projectionist.vim@'.escape(root, ',')
+      let &l:errorformat .= ',chdir '.escape(root, ',')
     endif
     break
   endfor
@@ -435,7 +435,7 @@ function! s:open_projection(cmd, variants, ...) abort
     call filter(formats, 'v:val =~# "\\*"')
     let dir = matchstr(a:1, '.*\ze/')
     let base = matchstr(a:1, '[^\/]*$')
-    call map(formats, 'simplify(substitute(substitute(v:val, "\\*\\*", dir, ""), "\\*", base, ""))')
+    call map(formats, 'substitute(substitute(v:val, "\\*\\*\\([\\/]\\=\\)", empty(dir) ? "" : dir . "\\1", ""), "\\*", base, "")')
   else
     call filter(formats, 'v:val !~# "\\*"')
   endif
@@ -462,7 +462,8 @@ function! s:projection_complete(lead, cmdline, _) abort
     if format !~# '\*'
       continue
     endif
-    let results += map(split(glob(format), "\n"), 's:match(v:val, format)')
+    let glob = substitute(format, '[^\/]*\ze\*\*[\/]\*', '', 'g')
+    let results += map(split(glob(glob), "\n"), 's:match(v:val, format)')
   endfor
   return s:completion_filter(results, a:lead)
 endfunction
@@ -521,9 +522,9 @@ endfunction
 " Section: Make
 
 function! s:qf_pre() abort
-  let dir = substitute(matchstr(&l:errorformat, 'projectionist\.vim@\zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
-  if !empty(dir)
-    let cwd = getcwd()
+  let dir = substitute(matchstr(','.&l:errorformat, ',chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
+  let cwd = getcwd()
+  if !empty(dir) && dir !=# cwd
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
     execute cd fnameescape(dir)
     let s:qf_post = cd . ' ' . fnameescape(cwd)

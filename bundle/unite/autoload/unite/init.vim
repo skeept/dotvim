@@ -90,6 +90,9 @@ function! unite#init#_context(context, ...) "{{{
     " Set buffer-name automatically.
     let context.buffer_name = join(source_names)
   endif
+  if get(context, 'auto_preview', 0)
+    let context.winheight -= &previewheight
+  endif
 
   let context.is_changed = 0
 
@@ -203,27 +206,17 @@ endfunction"}}}
 function! unite#init#_current_unite(sources, context) "{{{
   let context = a:context
 
-  " Quit previous unite buffer.
+  " Overwrite previous unite buffer.
   if !context.create && !context.temporary
         \ && context.unite__is_interactive
     let winnr = unite#helper#get_unite_winnr(context.buffer_name)
-    if winnr > 0 && unite#helper#get_source_args(a:sources) !=#
-          \ getbufvar(winbufnr(winnr), 'unite').args
-      " Quit unite buffer.
+    if winnr > 0
       execute winnr 'wincmd w'
 
       if context.input == ''
         " Get input text.
         let context.input = unite#helper#get_input()
       endif
-
-      " Get winwidth.
-      let context.winwidth = winwidth(0)
-
-      " Get winheight.
-      let context.winheight = winheight(0)
-
-      call unite#force_quit_session()
     endif
   endif
 

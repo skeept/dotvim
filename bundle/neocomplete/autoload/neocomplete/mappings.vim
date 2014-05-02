@@ -74,7 +74,7 @@ endfunction
 function! neocomplete#mappings#popup_post() "{{{
   return  !pumvisible() ? "" :
         \ g:neocomplete#enable_auto_select ? "\<C-p>\<Down>" :
-        \ "\<C-p>"
+        \ neocomplete#is_auto_complete() ? "\<C-p>" : ""
 endfunction"}}}
 
 function! neocomplete#mappings#undo_completion() "{{{
@@ -141,7 +141,7 @@ function! neocomplete#mappings#complete_common_string() "{{{
     let &ignorecase = ignorecase_save
   endtry
 
-  if common_str == ''
+  if common_str == '' || complete_str ==# common_str
     return ''
   endif
 

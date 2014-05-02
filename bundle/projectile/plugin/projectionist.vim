@@ -49,19 +49,22 @@ function! ProjectionistDetect(path) abort
   try
     let g:projectile_file = file
     let g:projectionist_file = file
+    let b:projectionist_file = file
     if v:version + has('patch438') >= 704
-      silent doautocmd <nomodeline> User ProjectionistDetect
+      silent doautocmd <nomodeline> User ProjectileDetect
       silent doautocmd <nomodeline> User ProjectionistDetect
     else
-      silent doautocmd User ProjectionistDetect
+      silent doautocmd User ProjectileDetect
       silent doautocmd User ProjectionistDetect
     endif
   finally
     unlet! g:projectile_file
     unlet! g:projectionist_file
+    unlet! b:projectionist_file
   endtry
 
   if !empty(b:projectionist)
+    let b:projectionist_file = file
     call projectionist#activate()
   endif
 endfunction
