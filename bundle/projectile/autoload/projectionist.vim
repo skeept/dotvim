@@ -235,7 +235,7 @@ function! projectionist#query(key, ...) abort
   let file = a:0 > 1 ? a:2 : expand('%:p')
   for [value, expansions] in projectionist#query_raw(a:key, file)
     call extend(expansions, a:0 ? a:1 : {})
-    call add(candidates, [expansions.project . projectionist#slash(), s:expand_placeholders(value, expansions)])
+    call add(candidates, [expansions.project, s:expand_placeholders(value, expansions)])
     unlet value
   endfor
   return candidates
@@ -245,7 +245,7 @@ function! projectionist#query_file(key) abort
   let files = []
   let _ = {}
   for [root, _.match] in projectionist#query(a:key)
-    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'simplify(root . v:val)'))
+    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'simplify(root . projectionist#slash() . v:val)'))
   endfor
   return files
 endfunction
@@ -346,17 +346,17 @@ function! projectionist#activate() abort
   endfor
 
   for [root, command] in projectionist#query_exec('start')
-    let offset = index(s:paths(), root[0:-2]) + 1
-    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
+    let offset = index(s:paths(), root) + 1
+    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
           \ substitute('Start '.command, 'Start :', '', '')
     break
   endfor
 
   for [root, dispatch] in projectionist#query_with_alternate('dispatch')
     let command = s:shellcmd(dispatch)
-    let offset = index(s:paths(), root[0:-2]) + 1
+    let offset = index(s:paths(), root) + 1
     if !empty(command)
-      let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
+      let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
             \ substitute('Dispatch '.command, 'Dispatch :', '', '')
       break
     endif
@@ -533,8 +533,8 @@ endfunction
 
 augroup projectionist_make
   autocmd!
-  autocmd QuickFixCmdPre  dispatch,make,lmake call s:qf_pre()
-  autocmd QuickFixCmdPost dispatch,make,lmake
+  autocmd QuickFixCmdPre  dispatch,*make call s:qf_pre()
+  autocmd QuickFixCmdPost dispatch,*make
         \ if exists('s:qf_post') | execute remove(s:, 'qf_post') | endif
 augroup END
 
