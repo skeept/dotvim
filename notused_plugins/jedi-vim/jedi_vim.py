@@ -6,11 +6,15 @@ with VIM.
 import traceback  # for exception output
 import re
 import os
+import sys
 from shlex import split as shsplit
 
 import vim
 import jedi
-from jedi._compatibility import unicode, is_py3k
+
+is_py3 = sys.version_info[0] >= 3
+if is_py3:
+    unicode = str
 
 
 def catch_and_print_exceptions(func):
@@ -62,7 +66,7 @@ class PythonToVimStr(unicode):
     __slots__ = []
 
     def __new__(cls, obj, encoding='UTF-8'):
-        if is_py3k or isinstance(obj, unicode):
+        if is_py3 or isinstance(obj, unicode):
             return unicode.__new__(cls, obj)
         else:
             return unicode.__new__(cls, obj, encoding)
@@ -466,5 +470,11 @@ def escape_file_path(path):
 def print_to_stdout(level, str_out):
     print(str_out)
 
-if not hasattr(jedi, '__version__') or jedi.__version__ < (0, 7, 0):
+
+version = jedi.__version__
+if isinstance(version, str):
+    # the normal use case, now.
+    from jedi import utils
+    version = utils.version_info()
+if version < (0, 7):
     echo_highlight('Please update your Jedi version, it is to old.')
