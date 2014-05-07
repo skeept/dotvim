@@ -506,10 +506,7 @@ function! s:get_escaped_group_char(dict, char) "{{{
     return escape(get(a:dict, a:char, ''), '^')
 endfunction "}}}
 function! s:escape_regexp_char(char) "{{{
-    " Get escaped char from given dictionary
-    " return '' if char is not find
-    " Used inside `[]`
-    return escape(a:char, '.$^~\[]')
+    return escape(a:char, '.$^~\[]*')
 endfunction "}}}
 function! s:convertSmartcase(re, char) "{{{
     let re = a:re
@@ -1175,7 +1172,8 @@ function! s:EasyMotion(regexp, direction, visualmode, is_inclusive) " {{{
             " Skip folded lines {{{
             if EasyMotion#helper#is_folded(pos[0])
                 if search_direction ==# 'b'
-                    keepjumps call cursor(foldclosed(pos[0]-1), 0)
+                    " FIXME: Hmm... I should use filter()
+                    " keepjumps call cursor(foldclosed(pos[0]), 0)
                 else
                     keepjumps call cursor(foldclosedend(pos[0]+1), 0)
                 endif
