@@ -4,9 +4,11 @@
 " Author: Ming Bai <mbbill@gmail.com>
 " License: BSD
 
-" TODO status line.
-" TODO Diff between 2 specific revisions.
-" TODO support horizontal split.
+" Avoid installing twice.
+if exists('g:loaded_undotree')
+    finish
+endif
+let g:loaded_undotree = 0
 
 " At least version 7.3 with 005 patch is needed for undo branches.
 " Refer to https://github.com/mbbill/undotree/issues/4 for details.
@@ -19,6 +21,7 @@ if (v:version == 703 && !has("patch005"))
     command! -n=0 -bar UndotreeToggle :echoerr "undotree.vim needs vim7.3 with patch005 applied."
     finish
 endif
+let g:loaded_undotree = 1   " Signal plugin availability with a value of 1.
 
 "=================================================
 "Options:
@@ -1316,18 +1319,29 @@ endfunction
 function! UndotreeShow()
     if ! UndotreeIsVisible()
         call UndotreeToggle()
+    else
+        call t:undotree.SetFocus()
+    endif
+endfunction
+
+function! UndotreeFocus()
+    if UndotreeIsVisible()
+        call t:undotree.SetFocus()
     endif
 endfunction
 
 
 "let s:auEvents = "InsertEnter,InsertLeave,WinEnter,WinLeave,CursorMoved"
 let s:auEvents = "BufEnter,InsertLeave,CursorMoved,BufWritePost"
-exec "au ".s:auEvents." * call UndotreeUpdate()"
+augroup Undotree
+    exec "au! ".s:auEvents." * call UndotreeUpdate()"
+augroup END
 
 "=================================================
 " User commands.
 command! -n=0 -bar UndotreeToggle   :call UndotreeToggle()
 command! -n=0 -bar UndotreeHide     :call UndotreeHide()
 command! -n=0 -bar UndotreeShow     :call UndotreeShow()
+command! -n=0 -bar UndotreeFocus    :call UndotreeFocus()
 
 " vim: set et fdm=marker sts=4 sw=4:

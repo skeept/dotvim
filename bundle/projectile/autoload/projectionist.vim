@@ -208,7 +208,7 @@ endfunction
 
 function! projectionist#query_raw(key, ...) abort
   let candidates = []
-  let file = a:0 ? a:1 : expand('%:p')
+  let file = a:0 ? a:1 : get(b:, 'projectionist_file', expand('%:p'))
   for [path, projections] in s:all()
     let pre = path . projectionist#slash()
     let attrs = {'project': path, 'file': file}
@@ -232,10 +232,10 @@ endfunction
 
 function! projectionist#query(key, ...) abort
   let candidates = []
-  let file = a:0 > 1 ? a:2 : expand('%:p')
+  let file = a:0 > 1 ? a:2 : get(a:0 ? a:1 : {}, 'file', get(b:, 'projectionist_file', expand('%:p')))
   for [value, expansions] in projectionist#query_raw(a:key, file)
-    call extend(expansions, a:0 ? a:1 : {})
-    call add(candidates, [expansions.project . projectionist#slash(), s:expand_placeholders(value, expansions)])
+    call extend(expansions, a:0 ? a:1 : {}, 'keep')
+    call add(candidates, [expansions.project, s:expand_placeholders(value, expansions)])
     unlet value
   endfor
   return candidates
@@ -245,13 +245,13 @@ function! projectionist#query_file(key) abort
   let files = []
   let _ = {}
   for [root, _.match] in projectionist#query(a:key)
-    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'simplify(root . v:val)'))
+    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 'simplify(root . projectionist#slash() . v:val)'))
   endfor
   return files
 endfunction
 
-function! projectionist#query_exec(key) abort
-  return filter(map(projectionist#query(a:key), '[v:val[0], s:shellcmd(v:val[1])]'), '!empty(v:val[1])')
+function! projectionist#query_exec(key, ...) abort
+  return filter(map(projectionist#query(a:key, a:0 ? a:1 : {}), '[v:val[0], s:shellcmd(v:val[1])]'), '!empty(v:val[1])')
 endfunction
 
 function! projectionist#query_scalar(key) abort
@@ -267,10 +267,10 @@ function! projectionist#query_scalar(key) abort
   return values
 endfunction
 
-function! projectionist#query_with_alternate(key) abort
-  let values = projectionist#query(a:key)
+function! s:query_exec_with_alternate(key) abort
+  let values = projectionist#query_exec(a:key)
   for file in projectionist#query_file('alternate')
-    for [root, match] in projectionist#query(a:key, {}, file)
+    for [root, match] in projectionist#query_exec(a:key, {'file': file})
       if filereadable(file)
         call add(values, [root, match])
       endif
@@ -346,21 +346,17 @@ function! projectionist#activate() abort
   endfor
 
   for [root, command] in projectionist#query_exec('start')
-    let offset = index(s:paths(), root[0:-2]) + 1
-    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
+    let offset = index(s:paths(), root) + 1
+    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
           \ substitute('Start '.command, 'Start :', '', '')
     break
   endfor
 
-  for [root, dispatch] in projectionist#query_with_alternate('dispatch')
-    let command = s:shellcmd(dispatch)
-    let offset = index(s:paths(), root[0:-2]) + 1
-    if !empty(command)
-      let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset) . ' ' .
-            \ substitute('Dispatch '.command, 'Dispatch :', '', '')
-      break
-    endif
-    unlet dispatch b:dispatch
+  for [root, command] in s:query_exec_with_alternate('dispatch')
+    let offset = index(s:paths(), root) + 1
+    let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
+          \ substitute('Dispatch '.command, 'Dispatch :', '', '')
+    break
   endfor
 
   silent doautocmd User ProjectileActivate
@@ -533,8 +529,8 @@ endfunction
 
 augroup projectionist_make
   autocmd!
-  autocmd QuickFixCmdPre  dispatch,make,lmake call s:qf_pre()
-  autocmd QuickFixCmdPost dispatch,make,lmake
+  autocmd QuickFixCmdPre  dispatch,*make call s:qf_pre()
+  autocmd QuickFixCmdPost dispatch,*make
         \ if exists('s:qf_post') | execute remove(s:, 'qf_post') | endif
 augroup END
 

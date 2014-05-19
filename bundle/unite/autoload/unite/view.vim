@@ -643,22 +643,22 @@ endfunction"}}}
 
 function! unite#view#_add_previewed_buffer_list(bufnr) "{{{
   let unite = unite#get_current_unite()
-  call add(unite.previewd_buffer_list, a:bufnr)
+  call add(unite.previewed_buffer_list, a:bufnr)
 endfunction"}}}
 function! unite#view#_remove_previewed_buffer_list(bufnr) "{{{
   let unite = unite#get_current_unite()
-  call filter(unite.previewd_buffer_list, 'v:val != a:bufnr')
+  call filter(unite.previewed_buffer_list, 'v:val != a:bufnr')
 endfunction"}}}
 
 function! s:clear_previewed_buffer_list() "{{{
   let unite = unite#get_current_unite()
-  for bufnr in unite.previewd_buffer_list
+  for bufnr in unite.previewed_buffer_list
     if buflisted(bufnr)
       silent execute 'bdelete!' bufnr
     endif
   endfor
 
-  let unite.previewd_buffer_list = []
+  let unite.previewed_buffer_list = []
 endfunction"}}}
 
 function! s:set_syntax() "{{{
@@ -687,12 +687,23 @@ function! s:redraw_echo(expr) "{{{
     return
   endif
 
-  let msg = s:msg2list(a:expr)
-  let height = max([1, &cmdheight])
-  for i in range(0, len(msg)-1, height)
-    redraw
-    echo join(msg[i : i+height-1], "\n")
-  endfor
+  let more_save = &more
+  let showcmd_save = &showcmd
+  try
+    set nomore
+    set noshowcmd
+
+    let msg = map(s:msg2list(a:expr), "unite#util#truncate_smart(
+          \ v:val, &columns-1, &columns/2, '...')")
+    let height = max([1, &cmdheight])
+    for i in range(0, len(msg)-1, height)
+      redraw
+      echo join(msg[i : i+height-1], "\n")
+    endfor
+  finally
+    let &more = more_save
+    let &showcmd = showcmd_save
+  endtry
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -551,8 +551,8 @@ function! neocomplete#init#_variables() "{{{
   " Initialize text mode filetypes. "{{{
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#text_mode_filetypes',
-        \ 'hybrid,text,help,tex,gitcommit,gitrebase,vcs-commit,markdown,'.
-        \   'textile,creole,org,rdoc,mediawiki,rst,asciidoc,pod', 1)
+        \ 'hybrid,text,help,tex,gitcommit,gitrebase,vcs-commit,markdown,mkd,'.
+        \ 'textile,creole,org,rdoc,mediawiki,rst,asciidoc,pod', 1)
   "}}}
 
   " Initialize tags filter patterns. "{{{
@@ -600,6 +600,7 @@ function! neocomplete#init#_current_neocomplete() "{{{
         \ 'cur_text' : '',
         \ 'old_cur_text' : '',
         \ 'old_linenr' : line('.'),
+        \ 'old_complete_pos' : -1,
         \ 'complete_str' : '',
         \ 'complete_pos' : -1,
         \ 'candidates' : [],

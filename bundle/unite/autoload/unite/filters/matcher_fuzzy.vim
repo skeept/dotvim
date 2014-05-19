@@ -39,7 +39,7 @@ let s:matcher = {
 
 function! s:matcher.pattern(input) "{{{
   return substitute(substitute(unite#util#escape_match(a:input),
-        \ '\([[:alnum:]_-]\|\\\.\)\ze.', '\0.\\{-}', 'g'), '\*\*', '*', 'g')
+        \ '\([[:alnum:]_/-]\|\\\.\)\ze.', '\0.\\{-}', 'g'), '\*\*', '*', 'g')
 endfunction"}}}
 
 function! s:matcher.filter(candidates, context) "{{{
@@ -68,8 +68,7 @@ function! s:matcher.filter(candidates, context) "{{{
       continue
     endif
 
-    let input = substitute(substitute(unite#util#escape_match(input),
-          \ '\([[:alnum:]_-]\|\\\.\)\ze.', '\0.\\{-}', 'g'), '\*\*', '*', 'g')
+    let input = s:matcher.pattern(input)
 
     let expr = (input =~ '^!') ?
           \ 'v:val.word !~ ' . string(input[1:]) :

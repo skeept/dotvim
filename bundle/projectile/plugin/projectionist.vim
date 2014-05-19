@@ -11,17 +11,20 @@ if !exists('g:projectiles')
 endif
 
 function! s:has(root, file) abort
-  if a:file =~# '\*'
-    return !empty(glob(a:root . '/' . a:file))
-  elseif a:file =~# '/$'
-    return isdirectory(a:root . '/' . a:file)
+  let file = matchstr(a:file, '[^!].*')
+  if file =~# '\*'
+    let found = !empty(glob(a:root . '/' . file))
+  elseif file =~# '/$'
+    let found = isdirectory(a:root . '/' . file)
   else
-    return filereadable(a:root . '/' . a:file)
+    let found = filereadable(a:root . '/' . file)
   endif
+  return a:file =~# '^!' ? !found : found
 endfunction
 
 function! ProjectionistDetect(path) abort
   let b:projectionist = {}
+  unlet! b:projectionist_file
   let file = simplify(fnamemodify(a:path, ':p:s?[\/]$??'))
 
   let root = file
@@ -46,21 +49,17 @@ function! ProjectionistDetect(path) abort
     let root = fnamemodify(root, ':h')
   endwhile
 
+  let modelines = &modelines
   try
+    set modelines=0
     let g:projectile_file = file
     let g:projectionist_file = file
-    let b:projectionist_file = file
-    if v:version + has('patch438') >= 704
-      silent doautocmd <nomodeline> User ProjectileDetect
-      silent doautocmd <nomodeline> User ProjectionistDetect
-    else
-      silent doautocmd User ProjectileDetect
-      silent doautocmd User ProjectionistDetect
-    endif
+    silent doautocmd User ProjectileDetect
+    silent doautocmd User ProjectionistDetect
   finally
+    let &modelines = modelines
     unlet! g:projectile_file
     unlet! g:projectionist_file
-    unlet! b:projectionist_file
   endtry
 
   if !empty(b:projectionist)
