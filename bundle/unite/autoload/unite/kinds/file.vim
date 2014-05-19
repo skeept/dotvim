@@ -30,6 +30,9 @@ set cpo&vim
 if !exists('g:unite_kind_file_vertical_preview')
   let g:unite_kind_file_vertical_preview = 0
 endif
+if !exists('g:unite_kind_file_preview_max_filesize')
+  let g:unite_kind_file_preview_max_filesize = 1000000
+endif
 "}}}
 
 " Global options definition. "{{{
@@ -104,6 +107,14 @@ function! s:kind.action_table.preview.func(candidate) "{{{
         \ unite#util#escape_file_searching(
         \ a:candidate.action__path))
   if filereadable(a:candidate.action__path)
+    if getfsize(a:candidate.action__path) >
+          \ g:unite_kind_file_preview_max_filesize
+      call unite#print_error(printf(
+            \ '[unite.vim] The file size of "%s" is too huge.' ,
+            \    a:candidate.action__path))
+      return
+    endif
+
     " If execute this command, unite.vim will be affected by events.
     if g:unite_kind_file_vertical_preview
       let unite_winwidth = winwidth(0)
@@ -116,18 +127,20 @@ function! s:kind.action_table.preview.func(candidate) "{{{
       noautocmd silent execute 'pedit!'
             \ fnameescape(a:candidate.action__path)
     endif
-    let prev_winnr = winnr('#')
+
     let winnr = winnr()
     wincmd P
-    doautoall BufRead
-    setlocal nomodified
-    execute prev_winnr.'wincmd w'
-    execute winnr.'wincmd w'
-  endif
-  if !buflisted
-    call unite#add_previewed_buffer_list(
-        \ bufnr(unite#util#escape_file_searching(
-        \       a:candidate.action__path)))
+    try
+      if !buflisted
+        doautocmd BufRead
+        setlocal nomodified
+        call unite#add_previewed_buffer_list(
+              \ unite#util#escape_file_searching(
+              \       a:candidate.action__path))
+      endif
+    finally
+      execute winnr.'wincmd w'
+    endtry
   endif
 endfunction"}}}
 
@@ -521,6 +534,12 @@ function! s:kind.action_table.vimfiler__rename.func(candidate) "{{{
     if filename != '' && filename !=# a:candidate.action__path
       call unite#kinds#file#do_rename(a:candidate.action__path, filename)
     endif
+
+    if &filetype ==# 'vimfiler'
+      call vimfiler#view#_force_redraw_screen()
+      call vimfiler#mappings#search_cursor(
+            \ unite#util#substitute_path_separator(fnamemodify(filename, ':p')))
+    endif
   finally
     if isdirectory(current_dir)
       lcd `=current_dir`
@@ -683,6 +702,12 @@ function! s:kind.action_table.vimfiler__mkdir.func(candidates) "{{{
     if !get(context, 'vimfiler__is_dummy', 1) && len(dirnames) == 1
       call unite#sources#file#move_files(dirname, a:candidates)
     endif
+
+    if &filetype ==# 'vimfiler'
+      call vimfiler#view#_force_redraw_screen()
+      call vimfiler#mappings#search_cursor(
+            \ unite#util#substitute_path_separator(fnamemodify(dirname, ':p')))
+    endif
   finally
     if isdirectory(current_dir)
       lcd `=current_dir`
@@ -722,6 +747,56 @@ function! s:kind.action_table.vimfiler__execute.func(candidates) "{{{
   endtry
 endfunction"}}}
 
+let s:kind.action_table.vimfiler__external_filer = {
+      \ 'description' : 'open file with external file explorer',
+      \ 'is_listed' : 0,
+      \ }
+function! s:kind.action_table.vimfiler__external_filer.func(candidate) "{{{
+  let vimfiler_current_dir =
+        \ get(unite#get_context(), 'vimfiler__current_directory', '')
+  if vimfiler_current_dir == ''
+    let vimfiler_current_dir = getcwd()
+  endif
+  let current_dir = getcwd()
+
+  try
+    lcd `=vimfiler_current_dir`
+
+    let path = a:candidate.action__path
+    if unite#util#is_windows()
+      let path = substitute(path, '/', '\\', 'g')
+    endif
+
+    let filer = ''
+    if unite#util#is_mac()
+      let filer = 'open -a Finder -R '
+    elseif unite#util#is_windows()
+      let filer = 'explorer /SELECT,'
+    elseif executable('nautilus')
+      " Note: Older nautilus does not support "-s" option...
+      let filer = 'nautilus '
+
+      if isdirectory(path)
+        " Use parent path
+        let path = fnamemodify(path, ':h')
+      endif
+    else
+      " Not supported
+      call s:System.open(fnamemodify(path, ':h'))
+      return
+    endif
+
+    let output = unite#util#system(filer . '"' . path . '"' .
+          \ (!unite#util#is_windows() ? ' &' : ''))
+    if output != ''
+      call unite#util#print_error('[unite] ' . output)
+    endif
+  finally
+    if isdirectory(current_dir)
+      lcd `=current_dir`
+    endif
+  endtry
+endfunction"}}}
 let s:kind.action_table.vimfiler__write = {
       \ 'description' : 'save file',
       \ 'is_listed' : 0,

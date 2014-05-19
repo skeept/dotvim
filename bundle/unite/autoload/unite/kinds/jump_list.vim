@@ -51,11 +51,11 @@ function! unite#kinds#jump_list#define() "{{{
         \ }
   function! kind.action_table.open.func(candidates) "{{{
     for candidate in a:candidates
-      if s:convert_path(bufname('%')) ==#
+      " Save current line in jump_list
+      execute 'normal!' line('.').'G'
+
+      if s:convert_path(bufname('%')) !=#
             \ s:convert_path(s:get_filename(candidate))
-        " Save current line in jump_list
-        execute 'normal!' line('.').'G'
-      else
         let bufnr = s:open(candidate)
         call unite#remove_previewed_buffer_list(bufnr)
       endif
@@ -82,20 +82,19 @@ function! unite#kinds#jump_list#define() "{{{
       noautocmd silent! execute 'pedit!' fnameescape(filename)
     endif
 
-    let prev_winnr = winnr('#')
     let winnr = winnr()
     wincmd P
-
-    let bufnr = s:open(a:candidate)
-    if !buflisted
-      doautocmd BufRead
-      setlocal nomodified
-      call unite#add_previewed_buffer_list(bufnr)
-    endif
-    call s:jump(a:candidate, 1)
-
-    execute prev_winnr.'wincmd w'
-    execute winnr.'wincmd w'
+    try
+      let bufnr = s:open(a:candidate)
+      if !buflisted
+        doautocmd BufRead
+        setlocal nomodified
+        call unite#add_previewed_buffer_list(bufnr)
+      endif
+      call s:jump(a:candidate, 1)
+    finally
+      execute winnr.'wincmd w'
+    endtry
   endfunction"}}}
 
   let kind.action_table.highlight = {
@@ -282,6 +281,7 @@ function! s:open(candidate) "{{{
       call unite#util#smart_execute_command(
             \ 'keepjumps edit!', unite#util#substitute_path_separator(
             \   fnamemodify(a:candidate.action__path, ':~:.')))
+      let bufnr = bufnr('%')
     endif
   endif
 
