@@ -110,6 +110,10 @@ function! neocomplete#mappings#complete_common_string() "{{{
         \ neocomplete#helper#match_word(neocomplete#get_cur_text(1))
   let neocomplete.event = ''
 
+  if complete_str == ''
+    return ''
+  endif
+
   if neocomplete#is_text_mode()
     let &ignorecase = 1
   elseif g:neocomplete#enable_smart_case || g:neocomplete#enable_camel_case
