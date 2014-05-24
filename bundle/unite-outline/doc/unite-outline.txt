@@ -256,6 +256,18 @@ VARIABLES				*unite-outline-variables*
 
 		See |unite-outline-info-highlight_rules|.
 
+					*g:unite_source_outline_ctags_program*
+	g:unite_source_outline_ctags_program
+
+		String pointing to the absolute path of the ctags executable.
+
+		Default value is ''
+
+		Example: >
+		let g:unite_source_outline_ctags_program =
+		      \ '/usr/local/bin/ctags'
+<
+
 ------------------------------------------------------------------------------
 SETTINGS EXAMPLE			*unite-outline-settings-example*
 >
