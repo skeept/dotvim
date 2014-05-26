@@ -62,7 +62,7 @@ function! s:find_exuberant_ctags()
         \ 'ctags',
         \ 'tags',
         \ ]
-  if exists('g:unite_source_outline_ctags_program') && !empty(g:neocomplcache_ctags_program)
+  if exists('g:unite_source_outline_ctags_program') && !empty(g:unite_source_outline_ctags_program)
     let ctags_exe_names = [g:unite_source_outline_ctags_program] + ctags_exe_names
   endif
   for ctags in ctags_exe_names
