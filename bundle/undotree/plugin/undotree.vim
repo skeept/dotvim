@@ -139,8 +139,8 @@ endif
 "will be called after undotree window initialized.
 "
 "function g:undotree_CustomMap()
-"    map <c-n> J
-"    map <c-p> K
+"    map <buffer> <c-n> J
+"    map <buffer> <c-p> K
 "endfunction
 
 "=================================================
@@ -534,7 +534,7 @@ function! s:undotree.Show()
         let cmd = "botright vertical" .
                     \self.width . ' new ' . self.bufname
     endif
-    call s:exec("silent ".cmd)
+    call s:exec("silent keepalt ".cmd)
     call self.SetFocus()
     setlocal winfixwidth
     setlocal noswapfile

@@ -62,20 +62,23 @@ function! s:find_exuberant_ctags()
         \ 'ctags',
         \ 'tags',
         \ ]
-  if exists('g:neocomplcache_ctags_program') && !empty(g:neocomplcache_ctags_program)
-    let ctags_exe_names = [g:neocomplcache_ctags_program] + ctags_exe_names
+  if exists('g:unite_source_outline_ctags_program') && !empty(g:unite_source_outline_ctags_program)
+    let ctags_exe_names = [g:unite_source_outline_ctags_program] + ctags_exe_names
   endif
   for ctags in ctags_exe_names
     if executable(ctags)
       " Make sure it is Exuberant.
       let ctags_out = unite#util#system(ctags . ' --version')
-      if split(ctags_out, "\<NL>")[0] =~? '\<Exuberant Ctags\>'
+      if ctags_out =~? '\<Exuberant Ctags\>'
         return ctags
       endif
     endif
   endfor
+
+  call unite#print_error("unite-outline: ctags is not found.")
+
   return ''
-endfunction 
+endfunction
 
 let s:Ctags.exe = s:find_exuberant_ctags()
 let s:Ctags.lang_info = {}
@@ -107,7 +110,8 @@ function! s:execute_ctags(context)
   let input = join(a:context.lines[1:], "\<NL>")
   let input = s:Process.iconv(input, &encoding, &termencoding)
   let temp_file = tempname()
-  if writefile(split(input, "\<NL>"), temp_file) == -1
+  if unite#util#is_sudo() ||
+        \ writefile(split(input, "\<NL>"), temp_file) == -1
     call unite#util#print_message(
           \ "[unite-outline] Couldn't make a temporary file at " . temp_file)
     return []

@@ -42,9 +42,7 @@ call unite#util#set_default('g:unite_source_rec_unit', 200)
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command', (
       \  executable('ag') ?
-      \  'ag --nocolor --nogroup --hidden -g ""' :
-      \  executable('pt') ?
-      \  'pt --nocolor --nogroup -l ""' :
+      \  'ag --follow --nocolor --nogroup --hidden -g ""' :
       \  !unite#util#is_windows() && executable('find') ? 'find' : ''),
       \ 'g:unite_source_file_rec_async_command')
 call unite#util#set_default(
@@ -316,7 +314,7 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   if command !~# '^find '
     let command .= ' ' . string(directory)
     if command ==# 'find'
-      let command .= ' -type '.
+      let command .= ' -follow -type '.
         \    (a:context.source__is_directory ? 'd' : 'f')
     endif
   endif
@@ -490,7 +488,7 @@ function! s:get_path(args, context) "{{{
 
   let directory = unite#util#expand(directory)
 
-  if directory =~ '/$'
+  if directory != '/' && directory =~ '/$'
     let directory = directory[: -2]
   endif
 
@@ -597,7 +595,7 @@ function! s:on_init(args, context) "{{{
   augroup END
 endfunction"}}}
 function! s:init_continuation(context, directory) "{{{
-  let cache_dir = g:unite_data_directory . '/rec/' .
+  let cache_dir = unite#get_data_directory() . '/rec/' .
         \ (a:context.source__is_directory ? 'directory' : 'file')
   let continuation = (a:context.source__is_directory) ?
         \ s:continuation.directory : s:continuation.file
@@ -635,10 +633,11 @@ function! s:init_continuation(context, directory) "{{{
         \   'filereadable(v:val.action__path)')
 endfunction"}}}
 function! s:write_cache(context, directory, files) "{{{
-  let cache_dir = g:unite_data_directory . '/rec/' .
+  let cache_dir = unite#get_data_directory() . '/rec/' .
         \ (a:context.source__is_directory ? 'directory' : 'file')
 
   if g:unite_source_rec_min_cache_files > 0
+        \ && !unite#util#is_sudo()
         \ && len(a:files) >
         \ g:unite_source_rec_min_cache_files
     call s:Cache.writefile(cache_dir, a:directory,

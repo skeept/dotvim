@@ -339,6 +339,11 @@ function! vimfiler#mappings#do_switch_action(action) "{{{
   let current_linenr = line('.')
   call s:switch()
 
+  let context = vimfiler#get_context()
+  if !context.no_quit && buflisted(context.alternate_buffer)
+    execute 'buffer' context.alternate_buffer
+  endif
+
   call vimfiler#mappings#do_action(a:action, current_linenr)
 endfunction"}}}
 
@@ -880,7 +885,7 @@ function! s:expand_tree(is_recursive) "{{{
   endif
 
   if !a:is_recursive && !b:vimfiler.is_visible_ignore_files
-    call filter(files, 'v:val.vimfiler__filename !~ "^\\."')
+    call filter(files, 'v:val.vimfiler__filename !~ ''' . g:vimfiler_ignore_pattern . '''')
   endif
 
   let index = vimfiler#get_file_index(line('.'))

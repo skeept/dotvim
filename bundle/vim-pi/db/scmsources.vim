@@ -1272,6 +1272,7 @@ let scm['viceroy'] = {'type': 'git', 'url': 'git://github.com/csexton/viceroy'}
 
 " David Barnett
 let scm['maktaba'] = {'type': 'git', 'url': 'git://github.com/google/maktaba'}
+let scm['glaive'] = {'type': 'git', 'url': 'git://github.com/google/glaive'}
 
 " Charles Hogg
 let scm['vtd'] = {'type': 'git', 'url': 'git://github.com/chiphogg/vim-vtd'}
@@ -1285,6 +1286,9 @@ let scm['moonscript'] = {'type': 'git', 'url': 'git://github.com/leafo/moonscrip
 " William Ting
 " its synced with bigger rust repository
 let scm['rust'] = {'type': 'git', 'url': 'git://github.com/wting/rust.vim'}
+
+" Hisashi Nakamura, Shinya Ohynagi
+let scm['vim-jsdoc'] = {'type': 'git', 'url': 'git://github.com/heavenshell/vim-jsdoc'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
