@@ -172,9 +172,10 @@ function! vimfiler#util#restore_variables(variables_save) "{{{
 endfunction"}}}
 
 function! vimfiler#util#alternate_buffer() "{{{
-  if getbufvar('#', '&filetype') !=# 'vimfiler'
-        \ && s:buflisted(bufnr('#'))
-    buffer #
+  let context = vimfiler#get_context()
+
+  if s:buflisted(context.alternate_buffer)
+    execute 'buffer' context.alternate_buffer
     return
   endif
 
@@ -231,6 +232,12 @@ function! vimfiler#util#get_vimfiler_winnr(buffer_name) "{{{
   endfor
 
   return -1
+endfunction"}}}
+
+function! vimfiler#util#is_sudo() "{{{
+  return $SUDO_USER != '' && $USER !=# $SUDO_USER
+        \ && $HOME !=# expand('~'.$USER)
+        \ && $HOME ==# expand('~'.$SUDO_USER)
 endfunction"}}}
 
 let &cpo = s:save_cpo

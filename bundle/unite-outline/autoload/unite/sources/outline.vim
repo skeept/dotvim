@@ -49,14 +49,14 @@ let s:OUTLINE_ALIASES = {
       \ 'sh'      : ['zsh'],
       \ }
 
-let s:OUTLINE_CACHE_DIR = g:unite_data_directory . '/outline'
+let s:OUTLINE_CACHE_DIR = unite#get_data_directory() . '/outline'
 
 let s:supported_arguments = [ 'filetype', 'folding', 'update' ]
 
 " Rename the cache directory if its name is still old, dotted style name.
 " See http://d.hatena.ne.jp/tyru/20110824/unite_file_mru
 "
-let s:old_cache_dir = g:unite_data_directory . '/.outline'
+let s:old_cache_dir = unite#get_data_directory() . '/.outline'
 if isdirectory(s:OUTLINE_CACHE_DIR)
   if isdirectory(s:old_cache_dir)
     call unite#print_message("[unite-outline] Warning: Please remove the old cache directory: ")
