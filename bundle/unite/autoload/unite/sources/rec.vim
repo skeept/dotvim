@@ -120,11 +120,7 @@ function! s:source_file_rec.async_gather_candidates(args, context) "{{{
     let continuation.end = 1
   endif
 
-  let candidates = map(files, "{
-        \ 'word' : unite#util#substitute_path_separator(
-        \    fnamemodify(v:val, ':p')),
-        \ 'action__path' : v:val,
-        \ }")
+  let candidates = unite#helper#paths2candidates(files)
 
   let continuation.files += candidates
   if empty(continuation.rest)
@@ -340,19 +336,12 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let continuation = a:context.source__continuation
   let stdout = a:context.source__proc.stdout
 
-  let candidates = []
-  for filename in map(filter(
-        \ stdout.read_lines(-1, 100), 'v:val != ""'),
-        \ "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
-    if filename !=# a:context.source__directory
-          \ && filename !~? a:context.source.ignore_pattern
-      call add(candidates, {
-            \ 'word' : unite#util#substitute_path_separator(
-            \    fnamemodify(filename, ':p')),
-            \ 'action__path' : filename,
-            \ })
-    endif
-  endfor
+  let candidates = unite#helper#paths2candidates(
+        \ filter(map(filter(
+        \   stdout.read_lines(-1, 100), 'v:val != ""'),
+        \   "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')"),
+        \   'v:val !=# a:context.source__directory
+        \ && v:val !~? a:context.source.ignore_pattern'))
 
   if stdout.eof || (
         \  g:unite_source_rec_max_cache_files > 0 &&
@@ -431,7 +420,8 @@ function! s:source_file_git.gather_candidates(args, context) "{{{
     return deepcopy(continuation.files)
   endif
 
-  let command = g:unite_source_rec_git_command . ' ls-files ' . join(a:args)
+  let command = g:unite_source_rec_git_command
+        \ . ' ls-files --full-name ' . join(a:args)
   let args = split(command) + a:args
   if empty(args) || !executable(args[0])
     call unite#print_source_message('git command : "'.
@@ -486,7 +476,7 @@ function! s:get_path(args, context) "{{{
           \ directory, 'dir', a:context.source_name)
   endif
 
-  let directory = unite#util#expand(directory)
+  let directory = unite#util#expand(fnamemodify(directory, ':p'))
 
   if directory != '/' && directory =~ '/$'
     let directory = directory[: -2]
@@ -604,11 +594,8 @@ function! s:init_continuation(context, directory) "{{{
         \ && s:Cache.filereadable(cache_dir, a:directory)
     " Use cache file.
 
-    let files = map(s:Cache.readfile(cache_dir, a:directory), "{
-          \   'word' : unite#util#substitute_path_separator(
-          \      fnamemodify(v:val, ':p')),
-          \   'action__path' : v:val,
-          \ }")
+    let files = unite#helper#paths2candidates(
+          \ s:Cache.readfile(cache_dir, a:directory))
 
     let continuation[a:directory] = {
           \ 'files' : files,

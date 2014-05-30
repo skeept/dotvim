@@ -1,6 +1,6 @@
 *vimproc.txt*	Asynchronous execution plugin for Vim
 
-Version: 7.1
+Version: 8.0
 Author : Shougo <Shougo.Matsu at gmail.com>
 Original Author : Yukihiro Nakadaira <yukihiro.nakadaira at gmail.com>
 License: MIT license  {{{
@@ -49,12 +49,12 @@ INSTALL						*vimproc-install*
 
 In first, you get vimproc from git repository.
 
-http://github.com/Shougo/vimproc
+http://github.com/Shougo/vimproc.vim
 
 Next, make external dll "vimproc_xxx.so (or vimproc_win32.dll,
 vimproc_cygwin.dll)".  Because vimproc depends on "vimproc_xxx.so (or
-vimproc_win32.dll, vimproc_cygwin.dll)"'s function, vimproc echo error message
-when "vimproc_xxx.so(vimproc_xxx.dll)" don't exist.
+vimproc_win32.dll, vimproc_cygwin.dll)"'s function, vimproc echoes error
+message when "vimproc_xxx.so (vimproc_xxx.dll)" doesn't exist.
 
 Note: The vimproc_cygwin.dll compiled in Cygwin won't work with Windows Vim.
 
@@ -130,14 +130,16 @@ http://github.com/Shougo/neobundle.vim
 
 Example for neobundle:
 >
-	NeoBundle 'Shougo/vimproc', {
+	let vimproc_updcmd = has('win64') ?
+	      \ 'tools\\update-dll-mingw 64' : 'tools\\update-dll-mingw 32'
+	execute "NeoBundle 'Shougo/vimproc.vim'," . string({
 	      \ 'build' : {
-	      \     'windows' : 'make -f make_mingw32.mak',
+	      \     'windows' : vimproc_updcmd,
 	      \     'cygwin' : 'make -f make_cygwin.mak',
 	      \     'mac' : 'make -f make_mac.mak',
 	      \     'unix' : 'make -f make_unix.mak',
 	      \    },
-	      \ }
+	      \ })
 <
 
 ==============================================================================
@@ -159,8 +161,8 @@ FUNCTIONS 					*vimproc-functions*
 
 vimproc#version()				*vimproc#version()*
 		Returns vimproc version number as string.  Version 5.0 is
-		"500".  Version 5.1 (5.01) is "501" which is the same format
-		as |v:version|.
+		"500".  Version 5.1 (5.01) is "501".  It has a similar format
+		to |v:version|, but the type is different.
 
 vimproc#dll_version()				*vimproc#dll_version()*
 		Same to |vimproc#version()|, but it returns vimproc dll
@@ -219,9 +221,12 @@ vimproc#system_gui({expr})			*vimproc#system_gui()*
 		in the background.
 
 vimproc#cmd#system({expr})			*vimproc#cmd#system()*
-		Similar to |vimproc#system()|.  But it executes "cmd.exe" by
-		background.
-		Note: It is available in Windows only.
+		Same as |vimproc#system()| on non-Windows platforms.
+		On Windows, it is similar to |vimproc#system()| but faster.
+		It executes a "cmd.exe" process in the background when it is
+		called first time. After the next call, it reuses the
+		"cmd.exe" process. The process will be automatically closed
+		when Vim exits.
 
 vimproc#get_last_status()			*vimproc#get_last_status()*
 		Gets the last |vimproc#system()| status value.

@@ -224,7 +224,7 @@ vp_dlclose(char *args)
 const char *
 vp_dlversion(char *args)
 {
-    vp_stack_push_num(&_result, "%2d%02d", 7, 1);
+    vp_stack_push_num(&_result, "%2d%02d", 8, 0);
     return vp_stack_return(&_result);
 }
 
@@ -552,18 +552,12 @@ vp_pipe_open(char *args)
 
 error:
     errmsg = lasterror();
-    {
-        int i;
-        HANDLE handles[] = {
-            hInputWrite, hInputRead,
-            hOutputWrite, hOutputRead,
-            hErrorWrite, hErrorRead,
-        };
-        for (i = 0; i < lengthof(handles); i++) {
-            if (handles[i] != INVALID_HANDLE_VALUE)
-                CloseHandle(handles[i]);
-        }
-    }
+    if (hInputWrite  != INVALID_HANDLE_VALUE) CloseHandle(hInputWrite);
+    if (hInputRead   != INVALID_HANDLE_VALUE) CloseHandle(hInputRead);
+    if (hOutputWrite != INVALID_HANDLE_VALUE) CloseHandle(hOutputWrite);
+    if (hOutputRead  != INVALID_HANDLE_VALUE) CloseHandle(hOutputRead);
+    if (hErrorWrite  != INVALID_HANDLE_VALUE) CloseHandle(hErrorWrite);
+    if (hErrorRead   != INVALID_HANDLE_VALUE) CloseHandle(hErrorRead);
     return vp_stack_return_error(&_result, errfmt, errmsg);
 #undef VP_DUP_HANDLE
 #undef VP_GOTO_ERROR
