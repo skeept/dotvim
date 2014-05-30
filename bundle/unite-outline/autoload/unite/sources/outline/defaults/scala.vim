@@ -11,6 +11,9 @@
 " Default outline info for Scala
 " Version: 0.1.3
 
+let g:unite_source_outline_scala_show_all_declarations =
+	\ get(g:, 'unite_source_outline_scala_show_all_declarations', 0)
+
 function! unite#sources#outline#defaults#scala#outline_info()
   return s:outline_info
 endfunction
@@ -21,7 +24,11 @@ let s:Util = unite#sources#outline#import('Util')
 " Sub Pattern
 
 let s:pat_def_prefix='\%(\h\w*\(\[[^\]]\+]\)\?\s\+\)*'
-let s:pat_def='\<\%(class\|object\|trait\|def\)\>'
+if g:unite_source_outline_scala_show_all_declarations
+	let s:pat_def='\<\%(class\|object\|trait\|def\|var\|val\|type\)\>'
+else
+	let s:pat_def='\<\%(class\|object\|trait\|def\)\>'
+endif
 let s:pat_bol='^\s*'
 
 let s:pat_heading = s:pat_bol.s:pat_def_prefix.'\zs'.s:pat_def

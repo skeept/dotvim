@@ -510,12 +510,13 @@ function! vimfiler#mappings#search_cursor(path) "{{{
     endif
 
     if file.action__path ==# a:path
+          \ || file.action__path . '/' ==# a:path
       " Move cursor.
       call cursor(cnt, 0)
       return 1
-    elseif file.vimfiler__is_directory &&
-          \ stridx(a:path, file.action__path . '/') == 0 &&
-          \ !file.vimfiler__is_opened
+    elseif file.vimfiler__is_directory
+          \ && stridx(a:path, file.action__path . '/') == 0
+          \ && !file.vimfiler__is_opened
       " Expand tree.
       call cursor(cnt, 0)
       call s:expand_tree(0)
@@ -525,21 +526,6 @@ function! vimfiler#mappings#search_cursor(path) "{{{
 
     let cnt += 1
   endwhile
-endfunction"}}}
-
-function! s:search_new_file(old_files) "{{{
-  let cnt = 0
-  for file in
-        \ vimfiler#get_current_vimfiler().current_files
-    if file.action__path !=#
-          \ get(get(a:old_files, cnt, {}), 'action__path', '')
-      " Move cursor.
-      call cursor(vimfiler#get_line_number(cnt), 0)
-      break
-    endif
-
-    let cnt += 1
-  endfor
 endfunction"}}}
 
 function! vimfiler#mappings#close(buffer_name) "{{{
@@ -1264,6 +1250,7 @@ function! vimfiler#mappings#create_another_vimfiler() "{{{
   let context.double = 0
   let context.create = 1
   let context.tab = 0
+  let context.alternate_buffer = -1
   let context.direction = 'belowright'
 
   call vimfiler#start(
@@ -1418,8 +1405,6 @@ function! s:copy() "{{{
         \       s:get_action_current_dir(marked_files),
         \ })
   call s:clear_mark_all_lines()
-
-  call s:search_new_file(old_files)
 endfunction"}}}
 function! s:move() "{{{
   let marked_files = vimfiler#get_marked_files()
@@ -1495,8 +1480,6 @@ function! s:make_directory() "{{{
   finally
     let context.quit = is_quit
   endtry
-
-  call s:search_new_file(old_files)
 endfunction"}}}
 function! s:new_file() "{{{
   let directory = vimfiler#get_file_directory()
