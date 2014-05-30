@@ -1,6 +1,6 @@
 *unite.txt*	Unite and create user interfaces.
 
-Version: 6.0
+Version: 6.1
 Author : Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -1678,7 +1678,12 @@ the context dictionary.
 
 						*unite-options-prompt*
 		-prompt={prompt-text}
-		Specify a prompt.  The default value is '> '.
+		Specify the prompt.  The default value is '> '.
+
+						*unite-options-prompt-direction*
+		-prompt-direction="top" or "below"
+		Specify the prompt direction.  The default value is "below" if
+		|unite-options-direction| contains "below".
 
 						*unite-options-default-action*
 		-default-action={default-action}
