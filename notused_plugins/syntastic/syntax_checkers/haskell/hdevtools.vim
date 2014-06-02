@@ -10,21 +10,45 @@
 "
 "============================================================================
 
-function! SyntaxCheckers_haskell_GetLocList()
-    let makeprg = 'hdevtools check ' . get(g:, 'hdevtools_options', '') .
-                \ ' ' . shellescape(expand('%'))
+if exists("g:loaded_syntastic_haskell_hdevtools_checker")
+    finish
+endif
+let g:loaded_syntastic_haskell_hdevtools_checker = 1
 
-    let errorformat= '\%-Z\ %#,'.
-                \ '%W%f:%l:%c:\ Warning:\ %m,'.
-                \ '%E%f:%l:%c:\ %m,'.
-                \ '%E%>%f:%l:%c:,'.
-                \ '%+C\ \ %#%m,'.
-                \ '%W%>%f:%l:%c:,'.
-                \ '%+C\ \ %#%tarning:\ %m,'
+let s:save_cpo = &cpo
+set cpo&vim
 
-    return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
+function! SyntaxCheckers_haskell_hdevtools_GetLocList() dict
+    if exists('g:hdevtools_options')
+        let g:syntastic_haskell_hdevtools_args = g:hdevtools_options
+    endif
+
+    let makeprg = self.makeprgBuild({
+        \ 'exe_after': 'check',
+        \ 'fname': syntastic#util#shexpand('%:p') })
+
+    let errorformat =
+        \ '%-Z %#,'.
+        \ '%W%f:%l:%v: Warning: %m,'.
+        \ '%W%f:%l:%v: Warning:,'.
+        \ '%E%f:%l:%v: %m,'.
+        \ '%E%>%f:%l:%v:,'.
+        \ '%+C  %#%m,'.
+        \ '%W%>%f:%l:%v:,'.
+        \ '%+C  %#%tarning: %m,'
+
+    return SyntasticMake({
+        \ 'makeprg': makeprg,
+        \ 'errorformat': errorformat,
+        \ 'defaults': {'vcol': 1},
+        \ 'postprocess': ['compressWhitespace'] })
 endfunction
 
-function! SyntaxCheckers_lhaskell_GetLocList()
-    return SyntaxCheckers_haskell_GetLocList()
-endfunction
+call g:SyntasticRegistry.CreateAndRegisterChecker({
+    \ 'filetype': 'haskell',
+    \ 'name': 'hdevtools'})
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
+
+" vim: set et sts=4 sw=4:
