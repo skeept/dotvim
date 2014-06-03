@@ -76,7 +76,7 @@ function! unite#view#_redraw_candidates(...) "{{{
 
   let candidates = unite#candidates#gather(is_gather_all)
   if context.prompt_direction ==# 'below'
-    let unite.init_prompt_linenr = len(candidates)
+    let unite.init_prompt_linenr = len(candidates) + 1
   endif
 
   let pos = getpos('.')
@@ -91,7 +91,7 @@ function! unite#view#_redraw_candidates(...) "{{{
     call unite#view#_set_candidates_lines(
           \ unite#view#_convert_lines(candidates))
 
-    if context.prompt_direction ==# 'below'
+    if context.prompt_direction ==# 'below' && unite.prompt_linenr != 0
       if empty(candidates)
         let unite.prompt_linenr = 1
       else
@@ -163,7 +163,9 @@ function! unite#view#_set_candidates_lines(lines) "{{{
     if unite.context.prompt_direction ==# 'below'
       silent! execute '1,'.(unite.prompt_linenr-1).'$delete _'
       call setline(1, a:lines)
-      silent! execute (unite.prompt_linenr+1).',$delete _'
+      let start = (unite.prompt_linenr == 0) ?
+            \ len(a:lines)+1 : unite.prompt_linenr+1
+      silent! execute start.',$delete _'
     else
       silent! execute (unite.prompt_linenr+1).',$delete _'
       call setline(unite.prompt_linenr+1, a:lines)
@@ -340,15 +342,21 @@ function! unite#view#_resize_window() "{{{
     if unite.prompt_linenr > 0
       let max_len += 1
     endif
+
+    let pos = getpos('.')
+    let winheight = winheight(0)
+
     silent! execute 'resize' min([max_len, context.winheight])
+
     if line('.') <= winheight(0)
       call unite#view#_set_syntax()
     endif
     if mode() ==# 'i' && col('.') == (col('$') - 1)
+      normal! zb
       startinsert!
     endif
 
-    let context.is_resize = 1
+    let context.is_resize = winheight != winheight(0)
   elseif context.vertical
         \ && context.unite__old_winwidth  == 0
     execute 'vertical resize' context.winwidth
@@ -550,6 +558,8 @@ function! unite#view#_init_cursor() "{{{
       execute bufwinnr(unite.prev_bufnr).'wincmd w'
     endif
   endif
+
+  call unite#view#_set_cursor_line()
 endfunction"}}}
 
 function! unite#view#_quit(is_force, ...)  "{{{
@@ -661,19 +671,26 @@ function! unite#view#_quit(is_force, ...)  "{{{
 endfunction"}}}
 
 function! unite#view#_set_cursor_line() "{{{
+  if !exists('b:current_syntax')
+    return
+  endif
+
   let unite = unite#get_current_unite()
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
 
-  execute '2match' (line('.') == prompt_linenr ?
-        \     (context.prompt_direction !=# 'below'
-        \   && line('$') == prompt_linenr)
-        \  || (context.prompt_direction ==# 'below'
-        \   && 1 == prompt_linenr)
-        \ && context.input != '' ?
-        \ 'uniteError /^\%'.prompt_linenr.'l.*/' :
-        \ context.cursor_line_highlight.' /^\%'.(prompt_linenr+1).'l.*/' :
-        \ context.cursor_line_highlight.' /^\%'.line('.').'l.*/')
+  if line('.') == prompt_linenr
+    execute '2match' (context.prompt_direction !=# 'below'
+          \   && line('$') == prompt_linenr)
+          \  || (context.prompt_direction ==# 'below'
+          \   && prompt_linenr == 1) ? context.input == '' ? '' :
+          \ 'uniteError /^\%'.prompt_linenr.'l.*/' :
+          \ context.cursor_line_highlight.' /^\%'.
+          \   (prompt_linenr+(context.prompt_direction ==#
+          \                   'below' ? -1 : 1)).'l.*/'
+  else
+    execute '2match' context.cursor_line_highlight.' /^\%'.line('.').'l.*/'
+  endif
   let unite.cursor_line_time = reltime()
 endfunction"}}}
 
@@ -695,16 +712,15 @@ function! unite#view#_print_source_error(message, source_name) "{{{
 endfunction"}}}
 function! unite#view#_print_message(message) "{{{
   let context = unite#get_context()
-  if get(context, 'silent', 0)
-    return
-  endif
-
   let unite = unite#get_current_unite()
   let message = s:msg2list(a:message)
   if !empty(unite)
     let unite.msgs += message
   endif
-  echohl Comment | call s:redraw_echo(message[: &cmdheight-1]) | echohl None
+
+  if !get(context, 'silent', 0)
+    echohl Comment | call s:redraw_echo(message[: &cmdheight-1]) | echohl None
+  endif
 endfunction"}}}
 function! unite#view#_print_source_message(message, source_name) "{{{
   call unite#view#_print_message(

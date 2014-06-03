@@ -95,7 +95,11 @@ function! unite#init#_context(context, ...) "{{{
   endif
   if context.prompt_direction == ''
     let context.prompt_direction =
-          \ (context.direction =~# 'below') ? 'below' : 'top'
+          \ (context.direction =~# 'bel\|bot')
+          \  && !context.vertical && !context.log ? 'below' : 'top'
+  endif
+  if context.prompt_direction ==# 'below'
+    let context.auto_resize = 1
   endif
 
   let context.is_changed = 0
@@ -186,9 +190,9 @@ function! unite#init#_unite_buffer() "{{{
       autocmd plugin-unite InsertCharPre <buffer>
             \ call unite#handlers#_on_insert_char_pre()
     endif
-
-    call unite#mappings#define_default_mappings()
   endif
+
+  call unite#mappings#define_default_mappings()
 
   let &l:wrap = context.wrap
 
@@ -267,9 +271,11 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.sidescrolloff_save = &sidescrolloff
   let unite.init_prompt_linenr = 1
   let unite.prompt_linenr =
-        \ (context.input == '' && !context.start_insert
-        \  && context.prompt_direction !=# 'below') ?
+        \ (context.input == '' && !context.start_insert) ?
         \ 0 : unite.init_prompt_linenr
+        " \ (context.input == '' && !context.start_insert
+        " \  && context.prompt_direction !=# 'below') ?
+        " \ 0 : unite.init_prompt_linenr
   let unite.is_async =
         \ len(filter(copy(sources),
         \  'v:val.unite__context.is_async')) > 0
