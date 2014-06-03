@@ -35,16 +35,27 @@ function! unite#mappings#define_default_mappings() "{{{
         \ :<C-u>call <SID>all_exit()<CR>
   nnoremap <silent><buffer> <Plug>(unite_choose_action)
         \ :<C-u>call <SID>choose_action()<CR>
-  nnoremap <expr><buffer> <Plug>(unite_insert_enter)
-        \ <SID>insert_enter('i')
-  nnoremap <expr><buffer> <Plug>(unite_insert_head)
-        \ <SID>insert_enter('A'.
-        \  (repeat("\<Left>", len(substitute(
-        \    unite#helper#get_input(), '.', 'x', 'g')))))
-  nnoremap <expr><buffer> <Plug>(unite_append_enter)
-        \ <SID>insert_enter('a')
-  nnoremap <expr><buffer> <Plug>(unite_append_end)
-        \ <SID>insert_enter('A')
+  if b:unite.prompt_linenr == 0
+    nnoremap <silent><buffer> <Plug>(unite_insert_enter)
+          \ :<C-u>call <SID>insert_enter2()<CR>
+    nnoremap <silent><buffer> <Plug>(unite_insert_head)
+          \ :<C-u>call <SID>insert_enter2()<CR>
+    nnoremap <silent><buffer> <Plug>(unite_append_enter)
+          \ :<C-u>call <SID>insert_enter2()<CR>
+    nnoremap <silent><buffer> <Plug>(unite_append_end)
+          \ :<C-u>call <SID>insert_enter2()<CR>
+  else
+    nnoremap <expr><buffer> <Plug>(unite_insert_enter)
+          \ <SID>insert_enter('i')
+    nnoremap <expr><buffer> <Plug>(unite_insert_head)
+          \ <SID>insert_enter('A'.
+          \  (repeat("\<Left>", len(substitute(
+          \    unite#helper#get_input(), '.', 'x', 'g')))))
+    nnoremap <expr><buffer> <Plug>(unite_append_enter)
+          \ <SID>insert_enter('a')
+    nnoremap <expr><buffer> <Plug>(unite_append_end)
+          \ <SID>insert_enter('A')
+  endif
   nnoremap <silent><buffer> <Plug>(unite_toggle_mark_current_candidate)
         \ :<C-u>call <SID>toggle_mark('j')<CR>
   nnoremap <silent><buffer> <Plug>(unite_toggle_mark_current_candidate_up)
@@ -282,7 +293,11 @@ function! unite#mappings#narrowing(word, ...) "{{{
   let unite.input .= is_escape ? escape(a:word, ' *') : a:word
   let unite.context.input = unite.input
   if unite.context.prompt_direction ==# 'below'
-    call unite#view#_remove_prompt()
+    if unite.prompt_linenr != 0
+      let unite.prompt_linenr = 1
+    else
+      call unite#view#_remove_prompt()
+    endif
     call unite#redraw()
     call unite#view#_redraw_prompt()
   else
@@ -291,6 +306,7 @@ function! unite#mappings#narrowing(word, ...) "{{{
   endif
 
   call unite#helper#cursor_prompt()
+  normal! zb
   startinsert!
 endfunction"}}}
 
@@ -398,7 +414,9 @@ function! s:toggle_mark(map) "{{{
 
   call unite#view#_redraw_line()
 
-  execute 'normal!' a:map ==# 'j' ?
+  let context = unite#get_context()
+  execute 'normal!' (a:map ==# 'j' && context.prompt_direction !=# 'below'
+        \ || a:map ==# 'k' && context.prompt_direction ==# 'below') ?
         \ unite#mappings#cursor_down(1) : unite#mappings#cursor_up(1)
 endfunction"}}}
 function! s:toggle_mark_all_candidates() "{{{
@@ -462,12 +480,34 @@ function! s:insert_enter(key) "{{{
 
   let unite = unite#get_current_unite()
 
-  if unite.prompt_linenr == 0
-    return unite.init_prompt_linenr . 'GzbA'
-  elseif line('.') != unite.prompt_linenr || col('.') <= len(unite.prompt)
-    return unite.prompt_linenr.'GzbA'
+  if line('.') != unite.prompt_linenr || col('.') <= len(unite.prompt)
+    return unite.prompt_linenr.'Gzb0' .
+          \ repeat('l', unite#util#strchars(unite.prompt)
+          \   + unite#util#strchars(unite.context.input)-1) . 'a'
   endif
   return a:key
+endfunction"}}}
+function! s:insert_enter2() "{{{
+  nnoremap <expr><buffer> <Plug>(unite_insert_enter)
+        \ <SID>insert_enter('i')
+  nnoremap <expr><buffer> <Plug>(unite_insert_head)
+        \ <SID>insert_enter('A'.
+        \  (repeat("\<Left>", len(substitute(
+        \    unite#helper#get_input(), '.', 'x', 'g')))))
+  nnoremap <expr><buffer> <Plug>(unite_append_enter)
+        \ <SID>insert_enter('a')
+  nnoremap <expr><buffer> <Plug>(unite_append_end)
+        \ <SID>insert_enter('A')
+
+  setlocal modifiable
+
+  " Restore prompt
+  call unite#handlers#_on_insert_enter()
+
+  let unite = unite#get_current_unite()
+  call cursor(unite.init_prompt_linenr, 0)
+  normal! zb
+  startinsert!
 endfunction"}}}
 function! s:insert_leave() "{{{
   call unite#helper#skip_prompt()
@@ -710,15 +750,16 @@ endfunction"}}}
 function! s:narrowing_dot() "{{{
   call unite#mappings#narrowing(unite#helper#get_input().'.')
 endfunction"}}}
-
 function! s:get_quick_match_table() "{{{
   let unite = unite#get_current_unite()
   let offset = unite.context.prompt_direction ==# 'below' ?
-        \ (unite.prompt_linenr - line('.')) :
+        \ (unite.prompt_linenr == 0 ?
+        \  line('$') - line('.') + 1 :
+        \  unite.prompt_linenr - line('.')) :
         \ (line('.') - unite.prompt_linenr - 1)
-  let offset += 1
   if line('.') == unite.prompt_linenr
-    let offset = 2
+    let offset = unite.context.prompt_direction
+          \ ==# 'below' ? 1 : 0
   endif
   if unite.context.prompt_direction ==# 'below'
     let offset = offset * -1
