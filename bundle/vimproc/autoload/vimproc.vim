@@ -57,8 +57,10 @@ elseif vimproc#util#is_cygwin()
   let s:vimproc_dll_basename = 'vimproc_cygwin.dll'
 elseif vimproc#util#is_mac()
   let s:vimproc_dll_basename = 'vimproc_mac.so'
+elseif glob('/lib*/ld-linux*64.so.2') != ''
+  let s:vimproc_dll_basename = 'vimproc_unix64.so'
 else
-  let s:vimproc_dll_basename = 'vimproc_unix.so'
+  let s:vimproc_dll_basename = 'vimproc_unix32.so'
 endif
 "}}}
 
@@ -108,7 +110,7 @@ let g:vimproc#dll_path =
 " Backward compatibility.
 let g:vimproc_password_pattern = g:vimproc#password_pattern
 
-if !filereadable(g:vimproc#dll_path) "{{{
+if !filereadable(g:vimproc#dll_path) || !has('libcall') "{{{
   function! vimproc#get_last_status()
     return v:shell_error
   endfunction
@@ -121,8 +123,13 @@ if !filereadable(g:vimproc#dll_path) "{{{
     return call('system', a:000)
   endfunction
 
-  echoerr printf('vimproc''s DLL: "%s" is not found.
-        \ Please read :help vimproc and make it.', g:vimproc#dll_path)
+  if !filereadable(g:vimproc#dll_path)
+    call s:print_error(printf('vimproc''s DLL: "%s" is not found.
+          \  Please read :help vimproc and make it.', g:vimproc#dll_path))
+  else
+    call s:print_error('vimproc: libcall feature is disabled in this Vim.
+          \  To use vimproc, you must enable libcall feature.')
+  endif
 
   finish
 endif"}}}
@@ -859,8 +866,7 @@ function! s:read(...) dict "{{{
     return ''
   endif
 
-  " Note: if output string is too long, if_lua is too slow.
-  return (vimproc#util#has_lua() && len(hd) < 1024) ?
+  return vimproc#util#has_lua() ?
         \ s:hd2str_lua([hd]) : s:hd2str([hd])
   " return s:hd2str([hd])
 endfunction"}}}
@@ -991,17 +997,14 @@ function! s:hd2str_lua(hd)
   lua << EOF
 do
   local ret = vim.eval('ret')
-  local hd = vim.eval('a:hd')
-  if hd[0] == nil then
-    hd[0] = ''
-  end
-  local len = string.len(hd[0])
-  local s = ''
+  local hd = vim.eval('a:hd[0]')
+  local len = string.len(hd)
+  local s = {}
   for i = 1, len, 2 do
-    s = s .. string.char(tonumber(string.sub(hd[0], i, i+1), 16))
+    table.insert(s, string.char(tonumber(string.sub(hd, i, i+1), 16)))
   end
 
-  ret:add(s)
+  ret:add(table.concat(s))
 end
 EOF
   return ret[0]
@@ -1098,23 +1101,23 @@ if vimproc#util#has_lua()
     let result = []
     lua << EOF
     do
-    local result = vim.eval('result')
-    local str = vim.eval('a:str')
-    local sep = vim.eval('a:sep')
-    local last
+      local result = vim.eval('result')
+      local str = vim.eval('a:str')
+      local sep = vim.eval('a:sep')
+      local last
 
-    if string.find(str, sep, 1, true) == nil then
-      result:add(str)
-    else
-      for part, pos in string.gmatch(str,
-          '(.-)' .. sep .. '()') do
-        result:add(part)
-        last = pos
+      if string.find(str, sep, 1, true) == nil then
+        result:add(str)
+      else
+        for part, pos in string.gmatch(str,
+            '(.-)' .. sep .. '()') do
+          result:add(part)
+          last = pos
+        end
+
+        result:add(string.sub(str, last))
       end
-
-      result:add(string.sub(str, last))
     end
-  end
 EOF
 
     return result
