@@ -114,11 +114,7 @@ function! unite#view#_redraw_candidates(...) "{{{
     " Move to bottom.
     call cursor(line('$'), 0)
     if context.prompt_direction ==# 'below' && mode() == 'i'
-      let col = col('.')
-      normal! zb
-
-      " Restore position
-      call cursor(0, col)
+      call unite#view#_bottom_cursor()
     endif
   endif
 
@@ -348,12 +344,8 @@ function! unite#view#_resize_window() "{{{
 
     silent! execute 'resize' min([max_len, context.winheight])
 
-    if line('.') <= winheight(0)
-      call unite#view#_set_syntax()
-    endif
-    if mode() ==# 'i' && col('.') == (col('$') - 1)
-      normal! zb
-      startinsert!
+    if mode() ==# 'i'
+      call unite#view#_bottom_cursor()
     endif
 
     let context.is_resize = winheight != winheight(0)
@@ -534,7 +526,7 @@ function! unite#view#_init_cursor() "{{{
   if line('.') <= winheight(0)
         \ || (context.prompt_direction ==# 'below'
         \     && (line('$') - line('.')) <= winheight(0))
-    normal! zb
+    call unite#view#_bottom_cursor()
   endif
 
   if context.select != 0
@@ -671,7 +663,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
 endfunction"}}}
 
 function! unite#view#_set_cursor_line() "{{{
-  if !exists('b:current_syntax')
+  if !exists('b:current_syntax') || &filetype !=# 'unite'
     return
   endif
 
@@ -692,6 +684,15 @@ function! unite#view#_set_cursor_line() "{{{
     execute '2match' context.cursor_line_highlight.' /^\%'.line('.').'l.*/'
   endif
   let unite.cursor_line_time = reltime()
+endfunction"}}}
+
+function! unite#view#_bottom_cursor() "{{{
+  let pos = getpos('.')
+  try
+    normal! zb
+  finally
+    call setpos('.', pos)
+  endtry
 endfunction"}}}
 
 " Message output.
