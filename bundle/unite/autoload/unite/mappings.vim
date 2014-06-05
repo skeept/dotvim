@@ -421,24 +421,31 @@ function! s:toggle_mark(map) "{{{
 endfunction"}}}
 function! s:toggle_mark_all_candidates() "{{{
   call s:redraw_all_candidates()
-  call s:toggle_mark_candidates(0,
-        \     len(unite#get_unite_candidates()) - 1)
+  call s:toggle_mark_candidates(1,
+        \     len(unite#get_unite_candidates()))
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end) "{{{
-  if a:start < 0 || a:end >= len(unite#get_unite_candidates())
+  if a:start < 0 || a:end > len(unite#get_unite_candidates())
     " Ignore.
     return
   endif
 
   let unite = unite#get_current_unite()
-  call cursor(a:start, 1)
-  for cnt in range(a:start, a:end)
-    if line('.') == unite.prompt_linenr
-      call unite#helper#skip_prompt()
-    else
-      call s:toggle_mark('j')
-    endif
-  endfor
+
+  let pos = getpos('.')
+  try
+    call cursor(a:start, 1)
+    for cnt in range(a:start, a:end)
+      if line('.') == unite.prompt_linenr
+        call unite#helper#skip_prompt()
+      else
+        call s:toggle_mark('j')
+      endif
+    endfor
+  finally
+    call setpos('.', pos)
+    call unite#view#_bottom_cursor()
+  endtry
 endfunction"}}}
 function! s:quick_help() "{{{
   let unite = unite#get_current_unite()
@@ -644,12 +651,13 @@ function! unite#mappings#cursor_up(is_skip_not_matched) "{{{
 
   let num = line('.') - 1
   let cnt = 1
+  let offset = prompt_linenr == 1 ? 1 : 0
   if line('.') == prompt_linenr
     let cnt += 1
   endif
 
   while 1
-    let candidate = get(unite#get_unite_candidates(), num - cnt, {})
+    let candidate = get(unite#get_unite_candidates(), num - offset - cnt, {})
     if num >= cnt && !empty(candidate) && (candidate.is_dummy
           \ || (a:is_skip_not_matched && !candidate.is_matched))
       let cnt += 1
@@ -672,12 +680,13 @@ function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
 
   let num = line('.') - 1
   let cnt = 1
+  let offset = prompt_linenr == 1 ? 1 : 0
   if line('.') == prompt_linenr
     let cnt += 1
   endif
 
   while 1
-    let candidate = get(unite#get_unite_candidates(), num + cnt, {})
+    let candidate = get(unite#get_unite_candidates(), num - offset + cnt, {})
     if !empty(candidate) && (candidate.is_dummy
           \ || (a:is_skip_not_matched && !candidate.is_matched))
       let cnt += 1
