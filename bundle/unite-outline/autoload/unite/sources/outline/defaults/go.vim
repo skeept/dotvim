@@ -58,7 +58,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
         let level = s:Util.get_comment_heading_level(a:context, m_lnum)
         let word = a:heading_line
     elseif a:which ==# 'heading' && a:heading_line =~# '^\s*type'
-        let matches = matchlist(a:heading_line, '^\s*\zstype\s\+\(\h\w*\)\s\+\(\h\w*\)')
+        let matches = matchlist(a:heading_line, '^\s*\zstype\s\+\(\h\w*\)\s\+\([[:alpha:][\]_][[:alnum:][\]_]*\)')
         if matches[2] =~# '\%(interface\|struct\)'
             let type = matches[2]
             let word = matches[1] . ' : ' . matches[2]

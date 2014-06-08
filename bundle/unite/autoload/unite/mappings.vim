@@ -178,6 +178,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <C-o>:<C-u>call <SID>do_new_candidate_action()<CR>
   inoremap <silent><buffer> <Plug>(unite_print_message_log)
         \ <C-o>:<C-u>call <SID>print_message_log()<CR>
+  inoremap <expr><silent><buffer> <Plug>(unite_complete)
+        \ <SID>complete()
   "}}}
 
   if exists('g:unite_no_default_keymappings')
@@ -306,7 +308,7 @@ function! unite#mappings#narrowing(word, ...) "{{{
   endif
 
   call unite#helper#cursor_prompt()
-  normal! zb
+  call unite#view#_bottom_cursor()
   startinsert!
 endfunction"}}}
 
@@ -326,11 +328,13 @@ function! unite#mappings#set_current_filters(filters) "{{{
 endfunction"}}}
 
 function! s:smart_imap(lhs, rhs) "{{{
+  call s:clear_complete()
   return line('.') != unite#get_current_unite().prompt_linenr ||
         \ col('.') <= (unite#util#wcswidth(unite#get_current_unite().prompt)) ?
         \ a:lhs : a:rhs
 endfunction"}}}
 function! s:smart_imap2(lhs, rhs) "{{{
+  call s:clear_complete()
   return line('.') <= (len(unite#get_current_unite().prompt)+1) ?
        \ a:lhs : a:rhs
 endfunction"}}}
@@ -421,24 +425,31 @@ function! s:toggle_mark(map) "{{{
 endfunction"}}}
 function! s:toggle_mark_all_candidates() "{{{
   call s:redraw_all_candidates()
-  call s:toggle_mark_candidates(0,
-        \     len(unite#get_unite_candidates()) - 1)
+  call s:toggle_mark_candidates(1,
+        \     len(unite#get_unite_candidates()))
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end) "{{{
-  if a:start < 0 || a:end >= len(unite#get_unite_candidates())
+  if a:start < 0 || a:end > len(unite#get_unite_candidates())
     " Ignore.
     return
   endif
 
   let unite = unite#get_current_unite()
-  call cursor(a:start, 1)
-  for cnt in range(a:start, a:end)
-    if line('.') == unite.prompt_linenr
-      call unite#helper#skip_prompt()
-    else
-      call s:toggle_mark('j')
-    endif
-  endfor
+
+  let pos = getpos('.')
+  try
+    call cursor(a:start, 1)
+    for cnt in range(a:start, a:end)
+      if line('.') == unite.prompt_linenr
+        call unite#helper#skip_prompt()
+      else
+        call s:toggle_mark('j')
+      endif
+    endfor
+  finally
+    call setpos('.', pos)
+    call unite#view#_bottom_cursor()
+  endtry
 endfunction"}}}
 function! s:quick_help() "{{{
   let unite = unite#get_current_unite()
@@ -506,7 +517,7 @@ function! s:insert_enter2() "{{{
 
   let unite = unite#get_current_unite()
   call cursor(unite.init_prompt_linenr, 0)
-  normal! zb
+  call unite#view#_bottom_cursor()
   startinsert!
 endfunction"}}}
 function! s:insert_leave() "{{{
@@ -644,12 +655,13 @@ function! unite#mappings#cursor_up(is_skip_not_matched) "{{{
 
   let num = line('.') - 1
   let cnt = 1
+  let offset = prompt_linenr == 1 ? 1 : 0
   if line('.') == prompt_linenr
     let cnt += 1
   endif
 
   while 1
-    let candidate = get(unite#get_unite_candidates(), num - cnt, {})
+    let candidate = get(unite#get_unite_candidates(), num - offset - cnt, {})
     if num >= cnt && !empty(candidate) && (candidate.is_dummy
           \ || (a:is_skip_not_matched && !candidate.is_matched))
       let cnt += 1
@@ -672,12 +684,13 @@ function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
 
   let num = line('.') - 1
   let cnt = 1
+  let offset = prompt_linenr == 1 ? 1 : 0
   if line('.') == prompt_linenr
     let cnt += 1
   endif
 
   while 1
-    let candidate = get(unite#get_unite_candidates(), num + cnt, {})
+    let candidate = get(unite#get_unite_candidates(), num - offset + cnt, {})
     if !empty(candidate) && (candidate.is_dummy
           \ || (a:is_skip_not_matched && !candidate.is_matched))
       let cnt += 1
@@ -774,6 +787,50 @@ function! s:get_quick_match_table() "{{{
     let table[key] += offset
   endfor
   return table
+endfunction"}}}
+
+function! s:complete() "{{{
+  let unite = unite#get_current_unite()
+  let input = matchstr(unite#get_input(), '\h\w*$')
+  let cur_text = unite#get_input()[: -len(input)-1]
+
+  if !has_key(unite, 'complete_cur_text')
+        \ || cur_text !=# unite.complete_cur_text
+        \ || index(unite.complete_candidates, input) < 0
+    " Recache
+    let start = reltime()
+    let unite.complete_candidates =
+          \ unite#complete#gather(unite.current_candidates, input)
+    echomsg string(reltimestr(reltime(start)))
+    let unite.complete_candidate_num = 0
+    let unite.complete_cur_text = cur_text
+    let unite.complete_input = input
+  endif
+
+  call unite#view#_redraw_echo(printf('match %d of %d : %s',
+        \ unite.complete_candidate_num+1, len(unite.complete_candidates),
+        \ join(unite.complete_candidates[unite.complete_candidate_num+1 :
+        \      unite.complete_candidate_num + 10])))
+
+  let candidate = get(unite.complete_candidates,
+        \ unite.complete_candidate_num, input)
+  let unite.complete_candidate_num += 1
+  if unite.complete_candidate_num >= len(unite.complete_candidates)
+    " Cycle
+    let unite.complete_candidate_num = 0
+  endif
+
+  return repeat("\<C-h>", unite#util#strchars(input)) . candidate
+endfunction"}}}
+function! s:clear_complete() "{{{
+  let unite = unite#get_current_unite()
+  if has_key(unite, 'complete_cur_text')
+    call remove(unite, 'complete_cur_text')
+    redraw
+    echo ''
+  endif
+
+  return ''
 endfunction"}}}
 "}}}
 
