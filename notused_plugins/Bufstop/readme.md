@@ -1,18 +1,19 @@
 ##Bufstop
 
 If you find yourself frequently switching back and forth between files, and looking for 
-a faster way to do it, well, your journey has come to an end. Welcome to the **Bufstop** !
+a faster way to do it, well...your journey has come to an end. Welcome to the **Bufstop** !
 
 **Bufstop** is a plugin for faster buffer switching, built for efficiency and less keystrokes.
 It provides no less than 6 ways to display and switch buffers.
 
-Here are some **[screenshots](https://github.com/mihaifm/bufstop/tree/master/img)** and a
-**[short demo](http://www.youtube.com/watch?v=IwZSI-ZEoUY)**.
+![screenshot1](https://cloud.githubusercontent.com/assets/981184/3208138/651a0f36-ee1c-11e3-9a40-5191fdcab2df.png)
 
-##Elegant and fast
+![screenshot2](https://cloud.githubusercontent.com/assets/981184/3208142/0306711c-ee1d-11e3-9121-0bfad5d43909.png)
+
+###Elegant and fast
 
 The `:Bufstop` command opens a new window at the bottom of the screen containing the list of 
-current buffers, ordered by most recently used.Each buffer has an associated hotkey 
+current buffers, ordered by most recently used. Each buffer has an associated hotkey 
 displayed besides it. When pressed, the correspoding buffer
 is loaded, with the focus remaining in the Bufstop window. This way you can quickly preview
 buffers with only 1 keystroke !
@@ -26,7 +27,7 @@ you select a buffer.
 **_Tip:_** If you're using the recommended mappings (see below), `,b2` will always take you to 
 the previously opened file (aka *alternate buffer*)
 
-##Minimal mode 
+###Minimal mode
 
 Don't like a pottentially huge file list popping on the screen? Use the `:BufstopMode` command.
 Buffers will be displayed in the command line, in the same order: by most recently used.
@@ -42,7 +43,7 @@ which dismisses the mode once you select a buffer.
 
 **_Tip:_** The first buffer labeled with `1` will always be the current file.
 
-##On the statusline
+###On the statusline
 
 The `:BufstopStatusline` command works the same way as `:BufstopMode`, but displays the buffers
 on the statusline. As before, there is a fast alternative, `:BufstopStatuslineFast` that
@@ -50,7 +51,7 @@ will close the mode once you select something.
 
 **_Tip:_** No worries, your old statusline is restored once you exit the mode.
 
-##Extreme speed
+###Extreme speed
 
 The previous methods are cool, but they still require a mapping to bring up the buffer list
 (typically `<leader>b`).    
@@ -63,7 +64,7 @@ Using `:BufstopSpeedToggle` again will clear out these mappings.
 
 **_Tip:_** Pressing `,5,5,5...` will cycle the last 5 buffers.
 
-##Ultimate
+###Ultimate
 
 The previous speed method requires 2 keys to open any arbitrary buffer. Too much? Put this 
 in your `vimrc`:
@@ -74,19 +75,21 @@ in your `vimrc`:
 
 Yes, you guessed it. __*1 key to open arbitrary buffers*__ !
 
-Once again, pressing `<F4><F4><F4>...` will cycle between the last 4 buffer.
+Once again, pressing `<F4><F4><F4>...` will cycle between the last 4 buffers.
 
 **_Tip:_** Already had something mapped to `<Fx>`? Use `:BufstopSpeedToggle` to switch off
-these mapping. Bufstop will attempt to restore your old mapping (given that you didn't use
+these mappings. Bufstop will attempt to restore your old mapping (given that you didn't use
 `noremap`).
 
-##Bonus
+###Bonuses
 
-As a bonus, this plugin provides __*navigation history for each window*__. 
-
+As a bonus, this plugin provides __*navigation history for each window*__.    
 Use the `:BufstopBack` and `:BufstopForward` to navigate this history.
 
-##Recommended mappings
+The other bonus is the ability to sort the buffers by __*MFU (most frequently
+used)*__. Use the `g:BufstopSorting` option to activate this powerful feature.
+
+###Recommended mappings
 
 Hopefully we're not crazy to type in those long command names. You can use the below 
 mappings or create your own:
@@ -97,7 +100,7 @@ mappings or create your own:
     map <S-tab>   :BufstopForward<CR>
     let g:BufstopAutoSpeedToggle = 1       " now I can press ,3,3,3 to cycle the last 3 buffers
 
-##Don't like this plugin?
+###Don't like this plugin?
 
 At least put this in your `vimrc`:
 
@@ -109,9 +112,9 @@ when you're dealing with a lot of files.
 In addition to this plugin, you can use a fuzzy finder like 
 [CtrlP](https://github.com/kien/ctrlp.vim), which requires you to type parts of the file name.
 
-##Reference documentation
+###Reference documentation
 
-###Commands:
+####Commands:
 
 * `:Bufstop`  
 
@@ -181,20 +184,24 @@ Default: `["1", "2", "3", "4", "5", "6"]`
 The key that is appended to the speed mappings. 
 Default: `"<leader>"`
 
-* `g:BufstopModeNumFiles`
-
-The number of files to be displayed in the bufstop mode. Default is 8.
-
 * `g:BufstopAutoSpeedToggle`
 
 Mount the speed mappings automatically when loading the plugin. Default is 0.
 
 * `g:BufstopSplit`
 
-Location of `Bufstop` split in the buffer or window. Default is `"botright"`.
+The split location of the Bufstop window. Valid options are the ones that
+influence the `:split` command in Vim: `topleft`, `leftabove`, `rigthbelow`, etc.
+Default: `"botright"`
 
-    "topleft"    : window horizontal up
-    "botright"   : window horizontal down
-    "leftabove"  : buffer horizontal up
-    "rightbelow" : buffer horizontal down
+* `g:BufstopSorting`
 
+Controls the way buffers are sorted before being displayed. Valid options are:
+
+    "MRU" - sort by most recently used
+    "MFU" - sort by most frequently used
+    "none" or "" - disable sorting
+
+Default: `"MRU"`
+
+More options with `:help Bufstop`

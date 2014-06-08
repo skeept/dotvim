@@ -63,6 +63,9 @@ function! s:source_buffer_all.hooks.on_syntax(args, context) "{{{
   syntax match uniteSource__Buffer_Name /[^/ \[\]]\+\s/
         \ contained containedin=uniteSource__Buffer
   highlight default link uniteSource__Buffer_Name Function
+  syntax match uniteSource__Buffer_Prefix /\s\d\+\s\%(\S\+\)\?/
+        \ contained containedin=uniteSource__Buffer
+  highlight default link uniteSource__Buffer_Prefix Constant
   syntax match uniteSource__Buffer_Info /\[.\{-}\] /
         \ contained containedin=uniteSource__Buffer
   highlight default link uniteSource__Buffer_Info PreProc
@@ -109,7 +112,7 @@ function! s:source_buffer_all.gather_candidates(args, context) "{{{
   return candidates
 endfunction"}}}
 function! s:source_buffer_all.complete(args, context, arglead, cmdline, cursorpos) "{{{
-  return ['!', '?']
+  return ['!', '?', '+', '-']
 endfunction"}}}
 
 let s:source_buffer_tab = deepcopy(s:source_buffer_all)
