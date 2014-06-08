@@ -309,14 +309,15 @@ function! unite#view#_set_syntax() "{{{
 endfunction"}}}
 
 function! unite#view#_resize_window() "{{{
-  if &filetype !=# 'unite' || winnr('$') == 1
+  if &filetype !=# 'unite'
     return
   endif
 
   let context = unite#get_context()
   let unite = unite#get_current_unite()
 
-  if context.no_split && !context.auto_resize
+  if winheight(0) + &cmdheight + 2 >= &lines
+    " Cannot resize.
     let context.is_resize = 0
     return
   endif
@@ -344,9 +345,7 @@ function! unite#view#_resize_window() "{{{
 
     silent! execute 'resize' min([max_len, context.winheight])
 
-    if mode() ==# 'i'
-      call unite#view#_bottom_cursor()
-    endif
+    call unite#view#_bottom_cursor()
 
     let context.is_resize = winheight != winheight(0)
   elseif context.vertical
@@ -720,7 +719,7 @@ function! unite#view#_print_message(message) "{{{
   endif
 
   if !get(context, 'silent', 0)
-    echohl Comment | call s:redraw_echo(message[: &cmdheight-1]) | echohl None
+    echohl Comment | call unite#view#_redraw_echo(message[: &cmdheight-1]) | echohl None
   endif
 endfunction"}}}
 function! unite#view#_print_source_message(message, source_name) "{{{
@@ -733,6 +732,31 @@ function! unite#view#_clear_message() "{{{
   let unite.msgs = []
   redraw
 endfunction"}}}
+function! unite#view#_redraw_echo(expr) "{{{
+  if has('vim_starting')
+    echo join(s:msg2list(a:expr), "\n")
+    return
+  endif
+
+  let more_save = &more
+  let showcmd_save = &showcmd
+  try
+    set nomore
+    set noshowcmd
+
+    let msg = map(s:msg2list(a:expr), "unite#util#truncate_smart(
+          \ v:val, &columns-1, &columns/2, '...')")
+    let height = max([1, &cmdheight])
+    for i in range(0, len(msg)-1, height)
+      redraw
+      echo join(msg[i : i+height-1], "\n")
+    endfor
+  finally
+    let &more = more_save
+    let &showcmd = showcmd_save
+  endtry
+endfunction"}}}
+
 
 function! unite#view#_get_status_string() "{{{
   return !exists('b:unite') ? '' : ((b:unite.is_async ? '[async] ' : '') .
@@ -777,31 +801,6 @@ endfunction"}}}
 
 function! s:msg2list(expr) "{{{
   return type(a:expr) ==# type([]) ? a:expr : split(a:expr, '\n')
-endfunction"}}}
-
-function! s:redraw_echo(expr) "{{{
-  if has('vim_starting')
-    echo join(s:msg2list(a:expr), "\n")
-    return
-  endif
-
-  let more_save = &more
-  let showcmd_save = &showcmd
-  try
-    set nomore
-    set noshowcmd
-
-    let msg = map(s:msg2list(a:expr), "unite#util#truncate_smart(
-          \ v:val, &columns-1, &columns/2, '...')")
-    let height = max([1, &cmdheight])
-    for i in range(0, len(msg)-1, height)
-      redraw
-      echo join(msg[i : i+height-1], "\n")
-    endfor
-  finally
-    let &more = more_save
-    let &showcmd = showcmd_save
-  endtry
 endfunction"}}}
 
 let &cpo = s:save_cpo
