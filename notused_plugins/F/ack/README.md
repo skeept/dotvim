@@ -114,3 +114,13 @@ with versions that does not have this variable.
 * Fixes #128. Fixes the `errorformat` for ack when using vim-dispatch.
 * Do not use vim-dispatch by default. To use vim-dispath must set
 `g:ack_use_dispatch`
+
+### 1.0.6
+
+* Fixes highlight function to work when user passes options. Ex.: Ack -i test
+  Thank's @mannih. (#131, #134)
+
+### 1.0.7
+
+* Fixes highlight function to work when passes more than one option, or options
+with double dashes(--option) Thank's to @MiguelLatorre and @mannih
