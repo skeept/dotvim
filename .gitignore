@@ -42,3 +42,5 @@ doc/tags*
 .bzr/
 .Powerline.cache
 test/cur_color.vim
+
+notused_plugins/ultisnips/

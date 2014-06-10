@@ -244,9 +244,7 @@ endfunction"}}}
 function! unite#view#_set_syntax() "{{{
   syntax clear
 
-  syntax match uniteQuickMatchLine /^.|.*/
-        \ contains=uniteQuickMatchTrigger,uniteCandidateSourceName
-  syntax match uniteQuickMatchTrigger /^.|/ contained
+  syntax match uniteQuickMatchMarker /^.|/ contained
   syntax match uniteInputCommand /\\\@<! :\S\+/ contained
 
   let unite = unite#get_current_unite()
@@ -292,9 +290,9 @@ function! unite#view#_set_syntax() "{{{
     execute 'highlight default link'
           \ source.syntax g:unite_abbr_highlight
 
-    execute printf('syntax match %s "^['.g:unite_candidate_icon.' ] %s" '.
-          \ 'nextgroup='.source.syntax.
-          \ ' keepend contains=uniteCandidateMarker,%s',
+    execute printf('syntax match %s "^\%(['.g:unite_candidate_icon.' ] \|.|\)%s" '.
+          \ 'nextgroup='.source.syntax. ' keepend
+          \ contains=uniteCandidateMarker,uniteQuickMatchMarker,%s',
           \ 'uniteSourceLine__'.source.syntax,
           \ (name == '' ? '' : name . '\>'),
           \ (name == '' ? '' : 'uniteCandidateSourceName')
@@ -345,7 +343,9 @@ function! unite#view#_resize_window() "{{{
 
     silent! execute 'resize' min([max_len, context.winheight])
 
-    call unite#view#_bottom_cursor()
+    if line('.') == unite.prompt_linenr
+      call unite#view#_bottom_cursor()
+    endif
 
     let context.is_resize = winheight != winheight(0)
   elseif context.vertical
@@ -670,17 +670,21 @@ function! unite#view#_set_cursor_line() "{{{
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
 
-  if line('.') == prompt_linenr
-    execute '2match' (context.prompt_direction !=# 'below'
+  call unite#view#_clear_match()
+
+  if line('.') != prompt_linenr
+    call matchadd(context.cursor_line_highlight,
+          \ '^\%'.line('.').'l.*', 10, unite.match_id)
+  elseif (context.prompt_direction !=# 'below'
           \   && line('$') == prompt_linenr)
-          \  || (context.prompt_direction ==# 'below'
-          \   && prompt_linenr == 1) ? context.input == '' ? '' :
-          \ 'uniteError /^\%'.prompt_linenr.'l.*/' :
-          \ context.cursor_line_highlight.' /^\%'.
-          \   (prompt_linenr+(context.prompt_direction ==#
-          \                   'below' ? -1 : 1)).'l.*/'
+          \ || (context.prompt_direction ==# 'below'
+          \   && prompt_linenr == 1)
+    call matchadd('uniteError',
+          \ '^\%'.prompt_linenr.'l.*', 10, unite.match_id)
   else
-    execute '2match' context.cursor_line_highlight.' /^\%'.line('.').'l.*/'
+    call matchadd(context.cursor_line_highlight,
+          \ '^\%'.(prompt_linenr+(context.prompt_direction ==#
+          \                   'below' ? -1 : 1)).'l.*', 10, unite.match_id)
   endif
   let unite.cursor_line_time = reltime()
 endfunction"}}}
@@ -692,6 +696,12 @@ function! unite#view#_bottom_cursor() "{{{
   finally
     call setpos('.', pos)
   endtry
+endfunction"}}}
+function! unite#view#_clear_match() "{{{
+  let unite = unite#get_current_unite()
+  if unite.match_id > 0
+    silent! call matchdelete(unite.match_id)
+  endif
 endfunction"}}}
 
 " Message output.
