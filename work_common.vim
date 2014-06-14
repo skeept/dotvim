@@ -66,7 +66,7 @@ vim.command('let g:echoOrPrintTimeSettingTime = "{}"'.format(
   time.strftime("%a, %d %b %Y %H:%M", time.localtime(currWord))))
 EOF
 
-  if g:echoOrPrintTimeSetting != 1 
+  if g:echoOrPrintTimeSetting != 1
     " try writting text after current word
     let @u = " " . g:echoOrPrintTimeSettingTime
     normal he"up
