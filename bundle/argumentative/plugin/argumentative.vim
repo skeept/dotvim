@@ -242,8 +242,9 @@ function! s:getchar(...)
 endfunction
 
 function! s:PlugMap(mode, lhs, rhs)
-  if !hasmapto(a:lhs, a:mode)
-    exe a:mode . 'map ' . a:lhs . ' <Plug>Argumentative_' . a:rhs
+  let plugmap = '<Plug>Argumentative_' . a:rhs
+  if !hasmapto(plugmap, a:mode)
+    exe a:mode . 'map ' . a:lhs . ' ' . plugmap
   endif
 endfunction
 
@@ -327,10 +328,13 @@ noremap <script> <silent> <Plug>Argumentative_XNext :<c-u>call <SID>Count("", "\
 noremap <script> <silent> <Plug>Argumentative_MoveLeft :<c-u>call  <SID>Count("MoveLeft", "\<SID>MoveLeft")<cr>
 noremap <script> <silent> <Plug>Argumentative_MoveRight :<c-u>call <SID>Count("MoveRight", "\<SID>MoveRight")<cr>
 
+noremap <SID>Argumentative_InnerTextObject :<c-u>call <SID>VisualTextObject("\<SID>InnerTextObject")<cr>
+noremap <SID>Argumentative_OuterTextObject :<c-u>call <SID>VisualTextObject("\<SID>OuterTextObject")<cr>
+
 noremap <script> <silent> <Plug>Argumentative_InnerTextObject :<c-u>call <SID>VisualTextObject("\<SID>InnerTextObject")<cr>
 noremap <script> <silent> <Plug>Argumentative_OuterTextObject :<c-u>call <SID>VisualTextObject("\<SID>OuterTextObject")<cr>
-noremap <script> <silent> <Plug>Argumentative_OpPendingInnerTextObject :exe "normal v\<Plug>Argumentative_InnerTextObject"<cr>
-noremap <script> <silent> <Plug>Argumentative_OpPendingOuterTextObject :exe "normal v\<Plug>Argumentative_OuterTextObject"<cr>
+noremap <script> <silent> <Plug>Argumentative_OpPendingInnerTextObject :exe "normal v\<SID>Argumentative_InnerTextObject"<cr>
+noremap <script> <silent> <Plug>Argumentative_OpPendingOuterTextObject :exe "normal v\<SID>Argumentative_OuterTextObject"<cr>
 
 if !exists("g:argumentative_no_mappings") || ! g:argumentative_no_mappings
   call s:PlugMap('n', '[,', 'Prev')

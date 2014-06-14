@@ -41,10 +41,10 @@ Elixir, Erlang, eRuby, Fortran, Gentoo metadata, GLSL, Go, Haml, Haskell, Haxe,
 Handlebars, HSS, HTML, Java, JavaScript, JSON, JSX, LESS, Lex, Limbo, LISP,
 LLVM intermediate language, Lua, MATLAB, NASM, Objective-C, Objective-C++,
 OCaml, Perl, Perl POD, PHP, gettext Portable Object, OS X and iOS property
-lists, Puppet, Python, Racket, R, reStructuredText, Ruby, Rust, SASS/SCSS,
-Scala, Slim, Tcl, TeX, Texinfo, Twig, TypeScript, Vala, Verilog, VHDL, VimL,
-xHtml, XML, XSLT, YACC, YAML, z80, Zope page templates, and zsh.  See the
-[wiki][3] for details about the corresponding supported checkers.
+lists, Puppet, Python, Racket, R, reStructuredText, Ruby, SASS/SCSS, Scala,
+Slim, Tcl, TeX, Texinfo, Twig, TypeScript, Vala, Verilog, VHDL, VimL, xHtml,
+XML, XSLT, YACC, YAML, z80, Zope page templates, and zsh.  See the [wiki][3]
+for details about the corresponding supported checkers.
 
 Below is a screenshot showing the methods that Syntastic uses to display syntax
 errors.  Note that, in practise, you will only have a subset of these methods
@@ -141,6 +141,18 @@ still producing useful results, the checker is now disabled by default.  To
 ```vim
 let g:syntastic_enable_perl_checker = 1
 ```
+
+<a name="faqrust"></a>
+
+__Q. What happened to the `rustc` checker?__
+
+A. Sadly, it had to be [removed](https://github.com/scrooloose/syntastic/commit/1383c0f),
+since maintaining it in syntastic generated too much
+[controversy](https://github.com/scrooloose/syntastic/pull/1114#issuecomment-45945696).
+If you'd like to take over its maintenance as an external checker please read the
+[relevant section](https://github.com/scrooloose/syntastic/wiki/Syntax-Checker-Guide#external)
+in the wiki, and feel free to contact syntastic maintainers if you need
+further help.
 
 <a name="faqloclist"></a>
 
