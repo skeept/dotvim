@@ -40,12 +40,10 @@ function! unite#start#standard(sources, ...) "{{{
         \ unite#helper#get_source_names(a:sources))
 
   if empty(a:sources)
-    if !get(context, 'no_start_insert', 0)
-      let context.start_insert = 1
-    endif
-
-    call unite#print_message(
+    echohl Comment
+    call unite#view#_redraw_echo(
           \ '[unite.vim] interactive mode: Please input source name')
+    echohl None
   endif
 
   if context.resume
@@ -80,7 +78,7 @@ function! unite#start#standard(sources, ...) "{{{
   call unite#candidates#_recache(context.input, context.is_redraw)
 
   if !current_unite.is_async &&
-        \ (context.immediately || context.no_empty) "{{{
+        \ (context.immediately || !context.empty) "{{{
     let candidates = unite#candidates#gather()
 
     if empty(candidates)
@@ -130,7 +128,7 @@ function! unite#start#temporary(sources, ...) "{{{
 
   if !empty(unite) && !empty(old_context)
     let context = deepcopy(old_context)
-    let context.old_buffer_info = insert(context.old_buffer_info, {
+    let context.unite__old_buffer_info = insert(context.unite__old_buffer_info, {
           \ 'buffer_name' : unite.buffer_name,
           \ 'pos' : getpos('.'),
           \ 'profile_name' : unite.profile_name,
@@ -139,13 +137,15 @@ function! unite#start#temporary(sources, ...) "{{{
     let context = {}
     let context = unite#init#_context(context,
           \ unite#helper#get_source_names(a:sources))
-    let context.old_buffer_info = []
+    let context.unite__old_buffer_info = []
   endif
 
   let new_context = get(a:000, 0, {})
 
   " Overwrite context.
   let context = extend(context, new_context)
+
+  let default_context = unite#custom#get_profile('default', 'context')
 
   let context.temporary = 1
   let context.unite__direct_switch = 1
@@ -159,8 +159,7 @@ function! unite#start#temporary(sources, ...) "{{{
   let context.is_resize = 0
   let context.is_restart = 0
   let context.quick_match = 0
-  let context.start_insert = g:unite_enable_start_insert
-  let context.no_start_insert = 0
+  let context.start_insert = get(default_context, 'start_insert', 0)
 
   if context.script
     " Set buffer-name automatically.
@@ -169,7 +168,7 @@ function! unite#start#temporary(sources, ...) "{{{
 
   let buffer_name = get(a:000, 1,
         \ matchstr(context.buffer_name, '^\S\+')
-        \ . '-' . len(context.old_buffer_info))
+        \ . '-' . len(context.unite__old_buffer_info))
 
   let context.buffer_name = buffer_name
 
@@ -243,7 +242,7 @@ function! unite#start#get_candidates(sources, ...) "{{{
     let context = get(a:000, 0, {})
     let context = unite#init#_context(context,
           \ unite#helper#get_source_names(a:sources))
-    let context.no_buffer = 1
+    let context.buffer = 0
     let context.unite__is_interactive = 0
 
     " Finalize.
@@ -268,7 +267,7 @@ function! unite#start#get_vimfiler_candidates(sources, ...) "{{{
     let context = get(a:000, 0, {})
     let context = unite#init#_context(context,
           \ unite#helper#get_source_names(a:sources))
-    let context.no_buffer = 1
+    let context.unite__not_buffer = 1
     let context.unite__is_vimfiler = 1
     let context.unite__is_interactive = 0
     if !has_key(context, 'vimfiler__is_dummy')
@@ -341,10 +340,11 @@ function! unite#start#resume(buffer_name, ...) "{{{
         \ '' : winrestcmd()
 
   let new_context = get(a:000, 0, {})
-  if has_key(new_context, 'no_start_insert')
-        \ && new_context.no_start_insert
-    let new_context.start_insert = 0
-  endif
+  " Generic no.
+  for [option, value] in filter(items(new_context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]")
+    let new_context[option[3:]] = 0
+  endfor
   call extend(context, new_context)
 
   call unite#view#_switch_unite_buffer(context.buffer_name, context)
@@ -359,16 +359,18 @@ function! unite#start#resume(buffer_name, ...) "{{{
   let unite.access_time = localtime()
   let unite.context = context
   let unite.is_finalized = 0
+  let unite.is_resume = 1
   let unite.preview_candidate = {}
   let unite.highlight_candidate = {}
 
   call unite#set_current_unite(unite)
 
+  call unite#view#_resize_window()
   call unite#view#_init_cursor()
 endfunction"}}}
 
 function! unite#start#resume_from_temporary(context)  "{{{
-  if empty(a:context.old_buffer_info)
+  if empty(a:context.unite__old_buffer_info)
     return
   endif
 
@@ -377,11 +379,11 @@ function! unite#start#resume_from_temporary(context)  "{{{
   let unite_save = unite#get_current_unite()
 
   " Resume unite buffer.
-  let buffer_info = a:context.old_buffer_info[0]
+  let buffer_info = a:context.unite__old_buffer_info[0]
   call unite#start#resume(buffer_info.buffer_name,
         \ {'unite__direct_switch' : 1})
   call setpos('.', buffer_info.pos)
-  let a:context.old_buffer_info = a:context.old_buffer_info[1:]
+  let a:context.unite__old_buffer_info = a:context.unite__old_buffer_info[1:]
 
   " Overwrite unite.
   let unite = unite#get_current_unite()

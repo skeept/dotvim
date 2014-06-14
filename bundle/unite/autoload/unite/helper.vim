@@ -178,10 +178,15 @@ function! unite#helper#get_marked_candidates() "{{{
         \ 'v:val.unite__is_marked'), 'v:val.unite__marked_time')
 endfunction"}}}
 
-function! unite#helper#get_input() "{{{
+function! unite#helper#get_input(...) "{{{
+  let is_force = get(a:000, 0, 0)
   let unite = unite#get_current_unite()
-  if mode() !=# 'i'
+  if !is_force && mode() !=# 'i'
     return unite.context.input
+  endif
+
+  if unite.prompt_linenr == 0
+    return ''
   endif
 
   " Prompt check.
@@ -254,10 +259,10 @@ function! unite#helper#get_unite_winnr(buffer_name) "{{{
     if !empty(buffer_context) &&
           \ buffer_context.buffer_name ==# a:buffer_name
       if buffer_context.temporary
-            \ && !empty(filter(copy(buffer_context.old_buffer_info),
+            \ && !empty(filter(copy(buffer_context.unite__old_buffer_info),
             \ 'v:val.buffer_name ==# buffer_context.buffer_name'))
         " Disable resume.
-        let buffer_context.old_buffer_info = []
+        let buffer_context.unite__old_buffer_info = []
       endif
       return winnr
     endif
@@ -272,10 +277,10 @@ function! unite#helper#get_unite_bufnr(buffer_name) "{{{
     if !empty(buffer_context) &&
           \ buffer_context.buffer_name ==# a:buffer_name
       if buffer_context.temporary
-            \ && !empty(filter(copy(buffer_context.old_buffer_info),
+            \ && !empty(filter(copy(buffer_context.unite__old_buffer_info),
             \ 'v:val.buffer_name ==# buffer_context.buffer_name'))
         " Disable resume.
-        let buffer_context.old_buffer_info = []
+        let buffer_context.unite__old_buffer_info = []
       endif
 
       return bufnr

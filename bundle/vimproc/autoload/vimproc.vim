@@ -857,12 +857,19 @@ function! s:read(...) dict "{{{
   let timeout = get(a:000, 1, s:read_timeout)
 
   let max = 100
-  let hd = ''
+  let hds = []
+  let rest_num = number
   for cnt in range(1, max)
-    let [hd_r, eof] = self.f_read(number, timeout/max)
-    let hd .= hd_r
+    let timeout1 = timeout / (max + 1 - cnt)
+    if timeout > 0 && timeout1 == 0
+      let timeout1 = 1
+    endif
+    let [hd_r, eof] = self.f_read(number, timeout1)
+    let rest_num -= strlen(hd_r) / 2
+    let timeout -= timeout1
+    let hds += [hd_r]
 
-    if eof
+    if eof || (number >= 0 && rest_num <= 0) || (timeout <= 0)
       break
     endif
   endfor
@@ -870,6 +877,7 @@ function! s:read(...) dict "{{{
   let self.eof = eof
   let self.__eof = eof
 
+  let hd = join(hds, '')
   return hd == '' ? '' :
         \ vimproc#util#has_lua() ?
         \   s:hd2str_lua([hd]) : s:hd2str([hd])
@@ -878,14 +886,17 @@ endfunction"}}}
 function! s:read_lines(...) dict "{{{
   let res = self.buffer
 
+  let outs = []
   while !self.eof && stridx(res, "\n") < 0
     let out = call(self.read, a:000, self)
     if out  == ''
       break
     endif
 
-    let res .= out
+    let outs += [out]
   endwhile
+
+  let res .= join(outs, '')
 
   let self.buffer = ''
   let lines = split(res, '\r*\n', 1)

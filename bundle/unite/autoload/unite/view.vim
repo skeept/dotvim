@@ -202,7 +202,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
       call unite#clear_message()
     endif
 
-    let input = unite#helper#get_input()
+    let input = unite#helper#get_input(1)
     if !context.is_redraw && input ==# unite.last_input
           \ && !unite.is_async
           \ && !context.is_resize
@@ -254,17 +254,19 @@ function! unite#view#_set_syntax() "{{{
   execute 'syntax match uniteInputPrompt'
         \ '/^'.match_prompt.'/ contained'
 
-  let marked_icon = unite#util#escape_pattern(g:unite_marked_icon)
-  execute 'syntax region uniteMarkedLine start=/^'.
-        \ marked_icon.'/ end=''$'' keepend'
-
-  let candidate_icon = unite#util#escape_pattern(g:unite_candidate_icon)
+  let candidate_icon = unite#util#escape_pattern(
+        \ unite.context.candidate_icon)
   execute 'syntax region uniteNonMarkedLine start=/^'.
         \ candidate_icon.' / end=''$'' keepend'.
         \ ' contains=uniteCandidateMarker,'.
         \ 'uniteCandidateSourceName'
   execute 'syntax match uniteCandidateMarker /^'.
         \ candidate_icon.' / contained'
+
+  let marked_icon = unite#util#escape_pattern(
+        \ unite.context.marked_icon)
+  execute 'syntax region uniteMarkedLine start=/^'.
+        \ marked_icon.'/ end=''$'' keepend'
 
   silent! syntax clear uniteCandidateSourceName
   if unite.max_source_name > 0
@@ -288,9 +290,10 @@ function! unite#view#_set_syntax() "{{{
           \ unite#helper#convert_source_name(source.name) : ''
 
     execute 'highlight default link'
-          \ source.syntax g:unite_abbr_highlight
+          \ source.syntax unite.context.abbr_highlight
 
-    execute printf('syntax match %s "^\%(['.g:unite_candidate_icon.' ] \|.|\)%s" '.
+    execute printf('syntax match %s "^\%(['.
+          \ unite.context.candidate_icon.' ] \|.|\)%s" '.
           \ 'nextgroup='.source.syntax. ' keepend
           \ contains=uniteCandidateMarker,uniteQuickMatchMarker,%s',
           \ 'uniteSourceLine__'.source.syntax,
@@ -344,6 +347,7 @@ function! unite#view#_resize_window() "{{{
     silent! execute 'resize' min([max_len, context.winheight])
 
     if line('.') == unite.prompt_linenr
+          \ || line('$') < winheight
       call unite#view#_bottom_cursor()
     endif
 
@@ -385,8 +389,8 @@ function! unite#view#_convert_lines(candidates, ...) "{{{
 
   return map(copy(a:candidates),
         \ "(v:val.is_dummy ? '  ' :
-        \   v:val.unite__is_marked ? g:unite_marked_icon . ' ' :
-        \   empty(quick_match_table) ? g:unite_candidate_icon . ' ' :
+        \   v:val.unite__is_marked ? context.marked_icon . ' ' :
+        \   empty(quick_match_table) ? context.candidate_icon . ' ' :
         \   get(keys, v:key, '  '))
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(unite#helper#convert_source_name(
@@ -426,7 +430,7 @@ endfunction"}}}
 function! unite#view#_switch_unite_buffer(buffer_name, context) "{{{
   " Search unite window.
   let winnr = unite#helper#get_unite_winnr(a:buffer_name)
-  if !a:context.no_split && winnr > 0
+  if a:context.split && winnr > 0
     silent execute winnr 'wincmd w'
     return
   endif
@@ -434,7 +438,7 @@ function! unite#view#_switch_unite_buffer(buffer_name, context) "{{{
   " Search unite buffer.
   let bufnr = unite#helper#get_unite_bufnr(a:buffer_name)
 
-  if !a:context.no_split && !a:context.unite__direct_switch
+  if a:context.split && !a:context.unite__direct_switch
     " Split window.
     execute a:context.direction ((bufnr > 0) ?
           \ ((a:context.vertical) ? 'vsplit' : 'split') :
@@ -497,17 +501,22 @@ function! unite#view#_init_cursor() "{{{
   let positions = unite#custom#get_profile(
         \ unite.profile_name, 'unite__save_pos')
   let key = unite#loaded_source_names_string()
-  let is_restore = has_key(positions, key) && context.select == 0 &&
+  let is_restore = has_key(positions, key) && context.select <= 0 &&
         \   positions[key].candidate ==#
         \     unite#helper#get_current_candidate(positions[key].pos[1])
 
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    call unite#helper#cursor_prompt()
-    startinsert!
-
-    setlocal modifiable
+    if is_restore && unite.is_resume
+      " Restore position.
+      call setpos('.', positions[key].pos)
+      call cursor(0, 1)
+      startinsert
+    else
+      call unite#helper#cursor_prompt()
+      startinsert!
+    endif
   else
     let unite.is_insert = 0
 
@@ -522,13 +531,7 @@ function! unite#view#_init_cursor() "{{{
     stopinsert
   endif
 
-  if line('.') <= winheight(0)
-        \ || (context.prompt_direction ==# 'below'
-        \     && (line('$') - line('.')) <= winheight(0))
-    call unite#view#_bottom_cursor()
-  endif
-
-  if context.select != 0
+  if context.select > 0
     " Select specified candidate.
     call cursor(unite#helper#get_current_candidate_linenr(
           \ context.select), 0)
@@ -542,7 +545,13 @@ function! unite#view#_init_cursor() "{{{
     call unite#mappings#_quick_match(0)
   endif
 
-  if context.no_focus
+  if line('.') <= winheight(0)
+        \ || (context.prompt_direction ==# 'below'
+        \     && (line('$') - line('.')) <= winheight(0))
+    call unite#view#_bottom_cursor()
+  endif
+
+  if !context.focus
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
@@ -596,10 +605,10 @@ function! unite#view#_quit(is_force, ...)  "{{{
     endif
   endif
 
-  if a:is_force || !context.no_quit
+  if a:is_force || context.quit
     let bufname = bufname('%')
 
-    if winnr('$') == 1 || context.no_split
+    if winnr('$') == 1 || !context.split
       call unite#util#alternate_buffer()
     elseif is_all || !context.temporary
       close!
@@ -750,9 +759,11 @@ function! unite#view#_redraw_echo(expr) "{{{
 
   let more_save = &more
   let showcmd_save = &showcmd
+  let ruler_save = &ruler
   try
     set nomore
     set noshowcmd
+    set noruler
 
     let msg = map(s:msg2list(a:expr), "unite#util#truncate_smart(
           \ v:val, &columns-1, &columns/2, '...')")
@@ -764,6 +775,7 @@ function! unite#view#_redraw_echo(expr) "{{{
   finally
     let &more = more_save
     let &showcmd = showcmd_save
+    let &ruler = ruler_save
   endtry
 endfunction"}}}
 

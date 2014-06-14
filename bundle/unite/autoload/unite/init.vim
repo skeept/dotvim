@@ -34,14 +34,18 @@ let g:unite_ignore_source_files =
 function! unite#init#_context(context, ...) "{{{
   let source_names = get(a:000, 0, [])
 
+  let default_context = extend(copy(unite#variables#default_context()),
+        \ unite#custom#get_profile('default', 'context'))
+
   let profile_name = get(a:context, 'profile_name',
         \ ((len(source_names) == 1 && !has_key(a:context, 'buffer_name')) ?
         \    'source/' . source_names[0] :
         \    get(a:context, 'buffer_name', 'default')))
-
-  " Overwrite default_context by profile context.
-  let default_context = extend(copy(unite#variables#default_context()),
-        \ unite#custom#get_profile(profile_name, 'context'))
+  if profile_name !=# 'default'
+    " Overwrite default_context by profile context.
+    call extend(default_context,
+          \ unite#custom#get_profile(profile_name, 'context'))
+  endif
 
   let context = extend(default_context, a:context)
 
@@ -51,13 +55,15 @@ function! unite#init#_context(context, ...) "{{{
           \ unite#custom#get_profile(profile_name, 'context'))
   endif
 
+  " Generic no.
+  for [option, value] in filter(items(context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]")
+    let context[option[3:]] = 0
+  endfor
+
   " Complex initializer.
   if get(context, 'complete', 1) && !has_key(a:context, 'start_insert')
     let context.start_insert = 1
-  endif
-  if get(context, 'no_start_insert', 0)
-    " Disable start insert.
-    let context.start_insert = 0
   endif
   if has_key(context, 'horizontal')
     " Disable vertically.
@@ -65,13 +71,10 @@ function! unite#init#_context(context, ...) "{{{
   endif
   if context.immediately
     " Ignore empty unite buffer.
-    let context.no_empty = 1
+    let context.empty = 0
   endif
   if context.tab
-    let context.no_split = 1
-  endif
-  if !has_key(context, 'short_source_names')
-    let context.short_source_names = g:unite_enable_short_source_names
+    let context.split = 0
   endif
   if get(context, 'long_source_names', 0)
     " Disable short name.
@@ -84,7 +87,7 @@ function! unite#init#_context(context, ...) "{{{
   endif
   if &l:modified && !&l:hidden
     " Split automatically.
-    let context.no_split = 0
+    let context.split = 1
   endif
   if !has_key(a:context, 'buffer_name') && context.script
     " Set buffer-name automatically.
@@ -189,6 +192,11 @@ function! unite#init#_unite_buffer() "{{{
       " Enable auto narrow feature.
       autocmd plugin-unite InsertCharPre <buffer>
             \ call unite#handlers#_on_insert_char_pre()
+    endif
+    if v:version > 703 || v:version == 703 && has('patch867')
+      " Enable auto narrow feature.
+      autocmd plugin-unite TextChanged <buffer>
+            \ call unite#handlers#_on_text_changed()
     endif
   endif
 
@@ -297,6 +305,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.disabled_max_candidates = 0
   let unite.cursor_line_time = reltime()
   let unite.match_id = 11
+  let unite.is_resume = 0
 
   if context.here
     let context.winheight = winheight(0) - winline() + 1

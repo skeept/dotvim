@@ -88,6 +88,9 @@ function! unite#handlers#_on_cursor_moved_i()  "{{{
     startinsert!
   endif
 endfunction"}}}
+function! unite#handlers#_on_text_changed()  "{{{
+  call s:check_redraw()
+endfunction"}}}
 function! unite#handlers#_on_bufwin_enter(bufnr)  "{{{
   silent! let unite = getbufvar(a:bufnr, 'unite')
   if type(unite) != type({})
@@ -104,7 +107,7 @@ function! unite#handlers#_on_bufwin_enter(bufnr)  "{{{
 
   call s:restore_statusline()
 
-  if !unite.context.no_split && winnr('$') != 1
+  if unite.context.split && winnr('$') != 1
     call unite#view#_resize_window()
   endif
 
@@ -197,13 +200,16 @@ function! unite#handlers#_on_cursor_moved()  "{{{
     call s:cursor_down()
   endif
 
-  if exists('b:current_syntax') && !context.no_cursor_line
+  if exists('b:current_syntax') && context.cursor_line
     call unite#view#_clear_match()
 
-    if prompt_linenr == 0 ||
-          \ line('.') == prompt_linenr || mode('.') == 'i' ||
+    let is_prompt = (prompt_linenr == 0 &&
+          \ (context.prompt_direction == 'below'
+          \   && line('.') == line('$') || line('.') == 1))
+          \ || line('.') == prompt_linenr
+    if is_prompt || mode('.') == 'i' ||
           \ split(reltimestr(reltime(unite.cursor_line_time)))[0]
-          \    > g:unite_cursor_line_time
+          \    > context.cursor_line_time
       call unite#view#_set_cursor_line()
     endif
     let unite.cursor_line_time = reltime()
@@ -225,7 +231,7 @@ function! unite#handlers#_on_cursor_moved()  "{{{
   endif
 
   let height =
-        \ (unite.context.no_split
+        \ (!unite.context.split
         \  || unite.context.winheight == 0) ?
         \ winheight(0) : unite.context.winheight
   let candidates = unite#candidates#_gather_pos(height)
@@ -309,7 +315,7 @@ function! s:change_highlight()  "{{{
 
   let context = unite#get_context()
   let prompt_linenr = unite.prompt_linenr
-  if !context.no_cursor_line
+  if context.cursor_line
     call unite#view#_set_cursor_line()
   endif
 
