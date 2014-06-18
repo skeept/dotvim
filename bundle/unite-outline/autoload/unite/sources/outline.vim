@@ -472,8 +472,8 @@ let s:default_highlight = {
       \ 'id'      : 'Special',
       \ 'macro'   : 'Macro',
       \ 'method'  : 'Function',
-      \ 'normal'  : g:unite_abbr_highlight,
-      \ 'package' : g:unite_abbr_highlight,
+      \ 'normal'  : 'Normal',
+      \ 'package' : 'Normal',
       \ 'special' : 'Macro',
       \ 'type'    : 'Type',
       \ 'level_1' : 'Type',
@@ -481,8 +481,8 @@ let s:default_highlight = {
       \ 'level_3' : 'Identifier',
       \ 'level_4' : 'Constant',
       \ 'level_5' : 'Special',
-      \ 'level_6' : g:unite_abbr_highlight,
-      \ 'parameter_list': g:unite_abbr_highlight,
+      \ 'level_6' : 'Normal',
+      \ 'parameter_list': 'Normal',
       \ }
 if !exists('g:unite_source_outline_highlight')
   let g:unite_source_outline_highlight = {}

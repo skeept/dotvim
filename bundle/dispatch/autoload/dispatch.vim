@@ -401,7 +401,7 @@ function! dispatch#compile_command(bang, args, count) abort
         \ 'action': 'make',
         \ 'background': a:bang,
         \ 'file': tempname(),
-        \ 'format': '%+G%.%#'
+        \ 'format': '%+I%.%#'
         \ }
 
   if executable ==# '_'
@@ -423,6 +423,7 @@ function! dispatch#compile_command(bang, args, count) abort
     endif
     let request.command = args
   endif
+  let request.format = substitute(request.format, ',%-G%\.%#\%($\|,\@=\)', '', '')
   if a:count
     let request.command = substitute(request.command, '<lnum>'.s:flags, '\=fnamemodify(a:count, submatch(0)[6:-1])', 'g')
   else
@@ -641,7 +642,11 @@ endfunction
 
 function! s:open_quickfix(request, copen) abort
   let was_qf = &buftype ==# 'quickfix'
-  execute 'botright' (!empty(getqflist()) || a:copen) ? 'copen' : 'cwindow'
+  if a:copen || !empty(filter(getqflist(), 'v:val.valid'))
+    copen
+  else
+    cclose
+  endif
   if &buftype ==# 'quickfix' && !was_qf && !a:copen
     wincmd p
   endif

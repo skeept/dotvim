@@ -62,10 +62,10 @@ function! unite#init#_context(context, ...) "{{{
   endfor
 
   " Complex initializer.
-  if get(context, 'complete', 1) && !has_key(a:context, 'start_insert')
+  if context.complete
     let context.start_insert = 1
   endif
-  if has_key(context, 'horizontal')
+  if context.horizontal
     " Disable vertically.
     let context.vertical = 0
   endif
@@ -76,11 +76,7 @@ function! unite#init#_context(context, ...) "{{{
   if context.tab
     let context.split = 0
   endif
-  if get(context, 'long_source_names', 0)
-    " Disable short name.
-    let context.short_source_names = 0
-  endif
-  if get(context, 'here', 0)
+  if context.here
     " Set direction.
     let context.horizontal = 1
     let context.direction = 'belowright'
@@ -93,7 +89,7 @@ function! unite#init#_context(context, ...) "{{{
     " Set buffer-name automatically.
     let context.buffer_name = join(source_names)
   endif
-  if get(context, 'auto_preview', 0)
+  if context.auto_preview
     let context.winheight -= &previewheight
   endif
   if context.prompt_direction == ''
@@ -102,6 +98,7 @@ function! unite#init#_context(context, ...) "{{{
           \  && !context.vertical && !context.log ? 'below' : 'top'
   endif
   if context.prompt_direction ==# 'below'
+        \ && !get(context, 'no_auto_resize', 0)
     let context.auto_resize = 1
   endif
 
@@ -129,6 +126,7 @@ function! unite#init#_unite_buffer() "{{{
   let unite = unite#get_current_unite()
 
   let unite.bufnr = bufnr('%')
+  let unite.prev_line = line('.')
 
   " Note: If unite buffer initialize is incomplete, &modified or &modifiable.
   if !is_bufexists || &modified || &modifiable
