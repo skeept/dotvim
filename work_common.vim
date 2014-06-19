@@ -74,7 +74,7 @@ EOF
   endif
   echo g:echoOrPrintTimeSettingTime
 endfunction
-let g:echoOrPrintTimeSetting = 1
+let g:echoOrPrintTimeSetting = 2
 
 "nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
       "\ time.localtime(<C-R><C-w>))<CR>
