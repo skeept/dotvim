@@ -655,10 +655,8 @@ function! s:GitComplete(A,L,P) abort
   let cmds = map(split(glob(s:exec_path.'/git-*'),"\n"),'s:sub(v:val[strlen(s:exec_path)+5 : -1],"\\.exe$","")')
   if a:L =~ ' [[:alnum:]-]\+ '
     return s:repo().superglob(a:A)
-  elseif a:A == ''
-    return sort(cmds+keys(s:repo().aliases()))
   else
-    return filter(sort(cmds+keys(s:repo().aliases())),'v:val[0:strlen(a:A)-1] ==# a:A')
+    return filter(sort(cmds+keys(s:repo().aliases())), 'strpart(v:val, 0, strlen(a:A)) ==# a:A')
   endif
 endfunction
 
@@ -1072,14 +1070,16 @@ function! s:Grep(cmd,bang,arg) abort
       if bufname(entry.bufnr) =~ ':'
         let entry.filename = s:repo().translate(bufname(entry.bufnr))
         unlet! entry.bufnr
+        let changed = 1
       elseif a:arg =~# '\%(^\| \)--cached\>'
         let entry.filename = s:repo().translate(':0:'.bufname(entry.bufnr))
         unlet! entry.bufnr
+        let changed = 1
       endif
     endfor
-    if a:cmd =~# '^l'
+    if a:cmd =~# '^l' && exists('changed')
       call setloclist(0, list, 'r')
-    else
+    elseif exists('changed')
       call setqflist(list, 'r')
     endif
     if !a:bang && !empty(list)

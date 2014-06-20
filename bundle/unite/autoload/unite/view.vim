@@ -559,6 +559,7 @@ function! unite#view#_init_cursor() "{{{
     endif
   endif
 
+  let unite.prev_line = line('.')
   call unite#view#_set_cursor_line()
 endfunction"}}}
 
@@ -686,18 +687,18 @@ function! unite#view#_set_cursor_line() "{{{
   call unite#view#_clear_match()
 
   if line('.') != prompt_linenr
-    call matchadd(context.cursor_line_highlight,
-          \ '^\%'.line('.').'l.*', 10, unite.match_id)
+    call unite#view#_match_line(context.cursor_line_highlight,
+          \ line('.'), unite.match_id)
   elseif (context.prompt_direction !=# 'below'
           \   && line('$') == prompt_linenr)
           \ || (context.prompt_direction ==# 'below'
           \   && prompt_linenr == 1)
-    call matchadd('uniteError',
-          \ '^\%'.prompt_linenr.'l.*', 10, unite.match_id)
+    call unite#view#_match_line('uniteError',
+          \ prompt_linenr, unite.match_id)
   else
-    call matchadd(context.cursor_line_highlight,
-          \ '^\%'.(prompt_linenr+(context.prompt_direction ==#
-          \                   'below' ? -1 : 1)).'l.*', 10, unite.match_id)
+    call unite#view#_match_line(context.cursor_line_highlight,
+          \ prompt_linenr+(context.prompt_direction ==#
+          \                   'below' ? -1 : 1), unite.match_id)
   endif
   let unite.cursor_line_time = reltime()
 endfunction"}}}
@@ -783,6 +784,11 @@ function! unite#view#_redraw_echo(expr) "{{{
   endtry
 endfunction"}}}
 
+function! unite#view#_match_line(highlight, line, id) "{{{
+  return (v:version > 704 || (v:version == 704 && has("patch330"))) ?
+        \ matchaddpos(a:highlight, [a:line], 10, a:id) :
+        \ matchadd(a:highlight, '^\%'.a:line.'l.*', 10, a:id)
+endfunction"}}}
 
 function! unite#view#_get_status_string() "{{{
   return !exists('b:unite') ? '' : ((b:unite.is_async ? '[async] ' : '') .
