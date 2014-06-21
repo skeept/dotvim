@@ -1057,11 +1057,6 @@ function! s:FinishCommit() abort
   return ''
 endfunction
 
-augroup fugitive_commit
-  autocmd!
-  autocmd VimLeavePre,BufDelete COMMIT_EDITMSG execute s:sub(s:FinishCommit(), '^echoerr (.*)', 'echohl ErrorMsg|echo \1|echohl NONE')
-augroup END
-
 " Section: Ggrep, Glog
 
 if !exists('g:fugitive_summary_format')
@@ -1159,7 +1154,9 @@ function! s:Edit(cmd,bang,...) abort
           if winnr != mywinnr && getwinvar(winnr,'&diff')
             execute winnr.'wincmd w'
             close
-            wincmd p
+            if winnr('$') > 1
+              wincmd p
+            endif
           endif
         endfor
       endif
