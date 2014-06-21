@@ -344,11 +344,11 @@ function! s:compiler_complete(compiler, A, L, P) abort
     return results
   elseif type(results) != type('')
     unlet! results
-    let results = map(split(glob(a:A.'*'), "\n"),
-          \           'isdirectory(v:val) ? v:val . dispatch#slash() : v:val')
+    let results = join(map(split(glob(a:A.'*'), "\n"),
+          \ 'isdirectory(v:val) ? v:val . dispatch#slash() : v:val'), "\n")
   endif
 
-  return s:completion_filter(split(results, "\n"))
+  return s:completion_filter(split(results, "\n"), a:A)
 endfunction
 
 function! dispatch#command_complete(A, L, P) abort
@@ -642,11 +642,7 @@ endfunction
 
 function! s:open_quickfix(request, copen) abort
   let was_qf = &buftype ==# 'quickfix'
-  if a:copen || !empty(filter(getqflist(), 'v:val.valid'))
-    copen
-  else
-    cclose
-  endif
+  execute 'botright' (a:copen ? 'copen' : 'cwindow')
   if &buftype ==# 'quickfix' && !was_qf && !a:copen
     wincmd p
   endif
