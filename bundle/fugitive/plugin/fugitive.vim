@@ -27,7 +27,7 @@ function! s:gsub(str,pat,rep) abort
 endfunction
 
 function! s:winshell() abort
-  return exists('+shellslash') && !&shellslash
+  return &shell =~? 'cmd' || exists('+shellslash') && !&shellslash
 endfunction
 
 function! s:shellesc(arg) abort
@@ -792,9 +792,9 @@ function! s:StageUndo() abort
     if section ==# 'untracked'
       call delete(s:repo().tree(filename))
     elseif section ==# 'unstaged'
-      call repo.get_chomp('checkout', '--', filename)
+      call repo.git_chomp('checkout', '--', filename)
     else
-      call repo.get_chomp('checkout', 'HEAD', '--', filename)
+      call repo.git_chomp('checkout', 'HEAD', '--', filename)
     endif
     call s:StageReloadSeek(filename, line('.'), line('.'))
     let @" = hash
@@ -1327,9 +1327,9 @@ function! s:Write(force,...) abort
   endif
 
   if a:force
-    let error = s:repo().git_chomp_in_tree('add', '--force', file)
+    let error = s:repo().git_chomp_in_tree('add', '--force', '--', path)
   else
-    let error = s:repo().git_chomp_in_tree('add', file)
+    let error = s:repo().git_chomp_in_tree('add', '--', path)
   endif
   if v:shell_error
     let v:errmsg = 'fugitive: '.error
@@ -1395,6 +1395,11 @@ function! s:Wq(force,...) abort
     return result.'|quit'.bang
   endif
 endfunction
+
+augroup fugitive_commit
+  autocmd!
+  autocmd VimLeavePre,BufDelete COMMIT_EDITMSG execute s:sub(s:FinishCommit(), '^echoerr (.*)', 'echohl ErrorMsg|echo \1|echohl NONE')
+augroup END
 
 " Section: Gdiff
 
