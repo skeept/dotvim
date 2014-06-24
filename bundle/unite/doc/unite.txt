@@ -516,8 +516,17 @@ g:unite_source_rec_async_command
 >
 		" Using ack-grep as recursive command.
 		let g:unite_source_rec_async_command = 'ack -f --nofilter'
+
+		" Using ag as recursive command.
+		let g:unite_source_rec_async_command =
+                \ 'ag --follow --nocolor --nogroup --hidden -g ""'
+
+		" Using pt as recursive command.
+		let g:unite_source_rec_async_command =
+		\ 'pt --nocolor --nogroup -g .'
 <
 		The default value is "find" and the args.
+		Because, "find" command is fastest.
 
 					*g:unite_source_file_rec_async_command*
 		Note: This variable is obsolete.
@@ -1488,6 +1497,8 @@ unite#custom#profile({profile-name}, {option-name}, {value})
 		default context.
 		Note: If you want to change default context, you should use
 		"default" profile name.
+		Valid key context is in |unite-options|.  But "-" is
+		substituted to "_", and "-" prefix is removed.
 
 		Example:
 >
@@ -1643,19 +1654,19 @@ unite#undef_filter({name})			*unite#undef_filter()*
 		|unite#define_filter()|.  If such a filter doesn't exist,
 		this function does nothing.
 
-					*unite#filters#matcher_default#use(()*
+					*unite#filters#matcher_default#use()*
 unite#filters#matcher_default#use({matchers})
 		Changes the default match used by
 		|unite-filter-matcher_default| into {matchers}.
 		{matchers} must be specified with a list of matcher names.
 
-					*unite#filters#sorter_default#use(()*
+					*unite#filters#sorter_default#use()*
 unite#filters#sorter_default#use({sorters})
 		Changes the default sorter used by
 		|unite-filter-sorter_default| into {sorters}.
 		{sorters} must be specified with a list of sorter names.
 
-					*unite#filters#converter_default#use(()*
+					*unite#filters#converter_default#use()*
 unite#filters#converter_default#use({converters})
 		Changes the default converter used by
 		|unite-filter-converter_default| into {converters}.
