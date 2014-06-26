@@ -3831,6 +3831,10 @@
     "type": "git",
     "url": "git://github.com/KabbAmine/zeavim.vim"
   },
+  "4959": {
+    "type": "git",
+    "url": "git://github.com/rudrab/vimf90"
+  },
   "4961": {
     "type": "git",
     "url": "git@github.com:gagoar/SmartColumnColors.git"
@@ -3850,6 +3854,10 @@
   "4967": {
     "type": "git",
     "url": "git://github.com/jeetsukumaran/vim-nefertiti"
+  },
+  "4969": {
+    "type": "git",
+    "url": "git://github.com/ajh17/vim-fist"
   },
   "521": {
     "type": "git",
