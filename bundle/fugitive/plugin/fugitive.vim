@@ -1802,6 +1802,9 @@ function! s:linechars(pattern) abort
 endfunction
 
 function! s:Blame(bang,line1,line2,count,args) abort
+  if exists('b:fugitive_blamed_bufnr')
+    return 'bdelete'
+  endif
   try
     if s:buffer().path() == ''
       call s:throw('file or blob required')
@@ -2144,6 +2147,8 @@ function! s:Browse(bang,line1,count,...) abort
     if a:bang
       let @* = url
       return 'echomsg '.string(url)
+    elseif exists(':Browse') == 2
+      return 'echomsg '.string(url).'|Browse '.url
     else
       return 'echomsg '.string(url).'|call netrw#NetrwBrowseX('.string(url).', 0)'
     endif
