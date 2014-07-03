@@ -136,13 +136,9 @@ function! g:projectionist_transformations.dirname(input, o) abort
   return substitute(a:input, '.[^'.projectionist#slash().'/]*$', '', '')
 endfunction
 
-let g:projectionist_transformations.head = g:projectionist_transformations.dirname
-
 function! g:projectionist_transformations.basename(input, o) abort
   return substitute(a:input, '.*['.projectionist#slash().'/]', '', '')
 endfunction
-
-let g:projectionist_transformations.tail = g:projectionist_transformations.basename
 
 function! g:projectionist_transformations.open(input, o) abort
   return '{'
@@ -324,24 +320,20 @@ function! projectionist#activate() abort
   command! -buffer -bar -bang -nargs=* -complete=customlist,s:edit_complete A AE<bang> <args>
   command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo execute s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
 
-  for [root, makeopt] in projectionist#query('make')
-    let makeprg = s:shellcmd(makeopt)
-    if empty(makeprg)
-      continue
-    endif
+  for [root, makeprg] in projectionist#query_exec('make')
     unlet! b:current_compiler
-    setlocal errorformat<
     let compiler = fnamemodify(matchstr(makeprg, '\S\+'), ':t:r')
+    setlocal errorformat=%+I%.%#,
     if exists(':Dispatch')
       silent! let compiler = dispatch#compiler_for_program(makeprg)
     endif
     if !empty(findfile('compiler/'.compiler.'.vim', escape(&rtp, ' ')))
       execute 'compiler' compiler
+    elseif compiler ==# 'make'
+      setlocal errorformat<
     endif
     let &l:makeprg = makeprg
-    if !(type(makeopt) ==# type([]) && !empty(filter(copy(makeopt), 'stridx(v:val, root) >= 0')))
-      let &l:errorformat .= ',chdir '.escape(root, ',')
-    endif
+    let &l:errorformat .= ',chdir '.escape(root, ',')
     break
   endfor
 
@@ -359,19 +351,25 @@ function! projectionist#activate() abort
     break
   endfor
 
-  silent doautocmd User ProjectileActivate
   silent doautocmd User ProjectionistActivate
 endfunction
 
 " Section: Completion
 
 function! projectionist#completion_filter(results, query, sep, ...) abort
+  if a:query =~# '\*'
+    let regex = s:gsub(a:A, '\*', '.*')
+    return filter(results,'v:val =~# "^".regex')
+  endif
 
   let C = get(g:, 'projectionist_completion_filter')
   if type(C) == type({}) && has_key(C, 'Apply')
-    return call(C.Apply, [a:results, a:query, a:sep, a:0 ? a:1 : {}], C)
+    let results = call(C.Apply, [a:results, a:query, a:sep, a:0 ? a:1 : {}], C)
   elseif type(C) == type('') && exists('*'.C)
-    return call(C, [a:results, a:query, a:sep, a:0 ? a:1 : {}])
+    let results = call(C, [a:results, a:query, a:sep, a:0 ? a:1 : {}])
+  endif
+  if get(l:, 'results') isnot# 0
+    return results
   endif
 
   let results = s:uniq(sort(copy(a:results)))
@@ -457,7 +455,7 @@ function! s:open_projection(cmd, variants, ...) abort
   if !isdirectory(fnamemodify(target, ':h'))
     call mkdir(fnamemodify(target, ':h'), 'p')
   endif
-  return a:cmd . ' ' . fnameescape(target)
+  return a:cmd . ' ' . fnameescape(fnamemodify(target, ':~:.'))
 endfunction
 
 function! s:projection_complete(lead, cmdline, _) abort
@@ -495,7 +493,7 @@ function! s:edit_command(cmd, count, ...) abort
   if !isdirectory(fnamemodify(file, ':h'))
     call mkdir(fnamemodify(file, ':h'), 'p')
   endif
-  return a:cmd . ' ' . fnameescape(file)
+  return a:cmd . ' ' . fnameescape(fnamemodify(file, ':~:.'))
 endfunction
 
 function! s:edit_complete(lead, cmdline, _) abort

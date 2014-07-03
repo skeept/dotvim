@@ -44,13 +44,7 @@ function! neocomplete#init#enable() "{{{
   call neocomplete#init#_sources(get(g:neocomplete#sources,
         \ neocomplete#get_context_filetype(), ['_']))
 
-  let modeline_save = &modeline
-  try
-    set nomodeline
-    doautocmd neocomplete InsertEnter
-  finally
-    let &modeline = modeline_save
-  endtry
+  doautocmd <nomodeline> neocomplete InsertEnter
 
   let s:is_enabled = 1
 endfunction"}}}
@@ -674,6 +668,7 @@ function! neocomplete#init#_source(source) "{{{
         \ 'is_volatile' : 0,
         \ 'max_candidates' : 0,
         \ 'filetypes' : {},
+        \ 'disabled' : 0,
         \ 'disabled_filetypes' : {},
         \ 'hooks' : {},
         \ 'mark' : '',

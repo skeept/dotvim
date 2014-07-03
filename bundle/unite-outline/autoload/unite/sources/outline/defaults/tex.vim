@@ -128,7 +128,7 @@ function! s:unit_seqnr_prefix(unit)
       let seqnr = [s:unit_count.section, s:unit_count.subsection]
     endif
   elseif a:unit ==# 'subsubsection'
-    if s:unit_count.chapter > 0
+    if s:unit_count.chapter == 0
       let seqnr = [s:unit_count.section, s:unit_count.subsection, s:unit_count.subsubsection]
     endif
   endif

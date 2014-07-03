@@ -6,9 +6,10 @@ if exists("g:loaded_projectionist") || v:version < 700 || &cp
 endif
 let g:loaded_projectionist = 1
 
-if !exists('g:projectiles')
-  let g:projectiles = {}
+if !exists('g:projectionist_heuristics')
+  let g:projectionist_heuristics = get(g:, 'projectiles', {})
 endif
+let g:projectiles = g:projectionist_heuristics
 
 function! s:has(root, file) abort
   let file = matchstr(a:file, '[^!].*')
@@ -37,7 +38,7 @@ function! ProjectionistDetect(path) abort
       catch /^invalid JSON:/
       endtry
     endif
-    for [key, value] in items(g:projectiles)
+    for [key, value] in items(g:projectionist_heuristics)
       for test in split(key, '|')
         if empty(filter(split(test, '&'), '!s:has(root, v:val)'))
           call projectionist#append(root, value)
@@ -52,13 +53,10 @@ function! ProjectionistDetect(path) abort
   let modelines = &modelines
   try
     set modelines=0
-    let g:projectile_file = file
     let g:projectionist_file = file
-    silent doautocmd User ProjectileDetect
     silent doautocmd User ProjectionistDetect
   finally
     let &modelines = modelines
-    unlet! g:projectile_file
     unlet! g:projectionist_file
   endtry
 
@@ -71,7 +69,8 @@ endfunction
 augroup projectionist
   autocmd!
   autocmd FileType *
-        \ if &filetype ==# 'netrw' || &buftype !~# 'nofile\|quickfix' |
+        \ if (&filetype ==# 'netrw' && !exists('b:projectionist')) ||
+        \     &buftype !~# 'nofile\|quickfix' |
         \   call ProjectionistDetect(expand('%:p')) |
         \  endif
   autocmd BufFilePost * call ProjectionistDetect(expand('<afile>:p'))

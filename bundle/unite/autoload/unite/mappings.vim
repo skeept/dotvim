@@ -294,22 +294,12 @@ function! unite#mappings#narrowing(word, ...) "{{{
 
   let unite.input .= is_escape ? escape(a:word, ' *') : a:word
   let unite.context.input = unite.input
-  if unite.context.prompt_direction ==# 'below'
-    if unite.prompt_linenr != 0
-      let unite.prompt_linenr = 1
-    else
-      call unite#view#_remove_prompt()
-    endif
-    call unite#redraw()
-    call unite#view#_redraw_prompt()
-  else
-    call unite#view#_redraw_prompt()
-    call unite#redraw()
-  endif
 
+  call unite#handlers#_on_insert_enter()
+  call unite#view#_redraw_prompt()
   call unite#helper#cursor_prompt()
   call unite#view#_bottom_cursor()
-  startinsert
+  startinsert!
 endfunction"}}}
 
 function! unite#mappings#do_action(...) "{{{
@@ -481,6 +471,7 @@ function! unite#mappings#_choose_action(candidates, ...) "{{{
   let context.buffer_name = 'action'
   let context.profile_name = 'action'
   let context.start_insert = 1
+  let context.truncate = 1
 
   call call((has_key(context, 'vimfiler__current_directory') ?
         \ 'unite#start' : 'unite#start_temporary'),
@@ -675,7 +666,7 @@ function! unite#mappings#cursor_up(is_skip_not_matched) "{{{
     return repeat("\<Up>", cnt) .
           \ ((line('.') - cnt) <= prompt_linenr ? "\<End>" : "\<Home>")
   else
-    return repeat('k', cnt)
+    return cnt == 1 ? 'k' : cnt.'k'
   endif
 endfunction"}}}
 function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
@@ -704,7 +695,7 @@ function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
     return repeat("\<Down>", cnt) .
           \ ((line('.') + cnt) <= prompt_linenr ? "\<End>" : "\<Home>")
   else
-    return repeat('j', cnt)
+    return cnt == 1 ? 'j' : cnt.'j'
   endif
 endfunction"}}}
 function! s:toggle_transpose_window() "{{{
