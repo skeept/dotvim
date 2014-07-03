@@ -320,24 +320,20 @@ function! projectionist#activate() abort
   command! -buffer -bar -bang -nargs=* -complete=customlist,s:edit_complete A AE<bang> <args>
   command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo execute s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
 
-  for [root, makeopt] in projectionist#query('make')
-    let makeprg = s:shellcmd(makeopt)
-    if empty(makeprg)
-      continue
-    endif
+  for [root, makeprg] in projectionist#query_exec('make')
     unlet! b:current_compiler
-    setlocal errorformat<
     let compiler = fnamemodify(matchstr(makeprg, '\S\+'), ':t:r')
+    setlocal errorformat=%+I%.%#,
     if exists(':Dispatch')
       silent! let compiler = dispatch#compiler_for_program(makeprg)
     endif
     if !empty(findfile('compiler/'.compiler.'.vim', escape(&rtp, ' ')))
       execute 'compiler' compiler
+    elseif compiler ==# 'make'
+      setlocal errorformat<
     endif
     let &l:makeprg = makeprg
-    if !(type(makeopt) ==# type([]) && !empty(filter(copy(makeopt), 'stridx(v:val, root) >= 0')))
-      let &l:errorformat .= ',chdir '.escape(root, ',')
-    endif
+    let &l:errorformat .= ',chdir '.escape(root, ',')
     break
   endfor
 
@@ -459,7 +455,7 @@ function! s:open_projection(cmd, variants, ...) abort
   if !isdirectory(fnamemodify(target, ':h'))
     call mkdir(fnamemodify(target, ':h'), 'p')
   endif
-  return a:cmd . ' ' . fnameescape(target)
+  return a:cmd . ' ' . fnameescape(fnamemodify(target, ':~:.'))
 endfunction
 
 function! s:projection_complete(lead, cmdline, _) abort
@@ -497,7 +493,7 @@ function! s:edit_command(cmd, count, ...) abort
   if !isdirectory(fnamemodify(file, ':h'))
     call mkdir(fnamemodify(file, ':h'), 'p')
   endif
-  return a:cmd . ' ' . fnameescape(file)
+  return a:cmd . ' ' . fnameescape(fnamemodify(file, ':~:.'))
 endfunction
 
 function! s:edit_complete(lead, cmdline, _) abort
