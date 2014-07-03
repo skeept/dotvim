@@ -306,6 +306,8 @@ function! unite#view#_set_syntax() "{{{
 
   call s:set_syntax()
 
+  call unite#view#_redraw_prompt()
+
   let b:current_syntax = 'unite'
 endfunction"}}}
 
@@ -318,6 +320,7 @@ function! unite#view#_resize_window() "{{{
   let unite = unite#get_current_unite()
 
   if winheight(0) + &cmdheight + 2 >= &lines
+        \ && !context.vertical
     " Cannot resize.
     let context.is_resize = 0
     return
@@ -440,7 +443,7 @@ function! unite#view#_switch_unite_buffer(buffer_name, context) "{{{
 
   if a:context.split && !a:context.unite__direct_switch
     " Split window.
-    execute a:context.direction ((bufnr > 0) ?
+    noautocmd execute a:context.direction ((bufnr > 0) ?
           \ ((a:context.vertical) ? 'vsplit' : 'split') :
           \ ((a:context.vertical) ? 'vnew' : 'new'))
   endif
@@ -559,6 +562,7 @@ function! unite#view#_init_cursor() "{{{
     endif
   endif
 
+  let unite.prev_line = line('.')
   call unite#view#_set_cursor_line()
 endfunction"}}}
 
@@ -676,24 +680,28 @@ function! unite#view#_set_cursor_line() "{{{
   endif
 
   let unite = unite#get_current_unite()
-  let prompt_linenr = unite.prompt_linenr
   let context = unite.context
+  if !context.cursor_line
+    return
+  endif
+
+  let prompt_linenr = unite.prompt_linenr
 
   call unite#view#_clear_match()
 
   if line('.') != prompt_linenr
-    call matchadd(context.cursor_line_highlight,
-          \ '^\%'.line('.').'l.*', 10, unite.match_id)
+    call unite#view#_match_line(context.cursor_line_highlight,
+          \ line('.'), unite.match_id)
   elseif (context.prompt_direction !=# 'below'
           \   && line('$') == prompt_linenr)
           \ || (context.prompt_direction ==# 'below'
           \   && prompt_linenr == 1)
-    call matchadd('uniteError',
-          \ '^\%'.prompt_linenr.'l.*', 10, unite.match_id)
+    call unite#view#_match_line('uniteError',
+          \ prompt_linenr, unite.match_id)
   else
-    call matchadd(context.cursor_line_highlight,
-          \ '^\%'.(prompt_linenr+(context.prompt_direction ==#
-          \                   'below' ? -1 : 1)).'l.*', 10, unite.match_id)
+    call unite#view#_match_line(context.cursor_line_highlight,
+          \ prompt_linenr+(context.prompt_direction ==#
+          \                   'below' ? -1 : 1), unite.match_id)
   endif
   let unite.cursor_line_time = reltime()
 endfunction"}}}
@@ -779,6 +787,11 @@ function! unite#view#_redraw_echo(expr) "{{{
   endtry
 endfunction"}}}
 
+function! unite#view#_match_line(highlight, line, id) "{{{
+  return exists('*matchaddpos') ?
+        \ matchaddpos(a:highlight, [a:line], 10, a:id) :
+        \ matchadd(a:highlight, '^\%'.a:line.'l.*', 10, a:id)
+endfunction"}}}
 
 function! unite#view#_get_status_string() "{{{
   return !exists('b:unite') ? '' : ((b:unite.is_async ? '[async] ' : '') .

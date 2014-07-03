@@ -238,13 +238,15 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
     call subproc.stdin.close()
   endif
 
-  let output = ''
   let s:last_errmsg = ''
+  let outbuf = []
+  let errbuf = []
   while !subproc.stdout.eof || !subproc.stderr.eof
     if timeout > 0 "{{{
       " Check timeout.
-      let end = split(reltimestr(reltime(start)))[0] * 1000
-      if end > timeout && !subproc.stdout.eof
+      let tick = reltimestr(reltime(start))
+      let elapse = str2nr(tick[:-8] . tick[-6:-4], 10)
+      if elapse > timeout && !subproc.stdout.eof
         " Kill process.
         try
           call subproc.kill(g:vimproc#SIGTERM)
@@ -258,7 +260,7 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
     endif"}}}
 
     if !subproc.stdout.eof "{{{
-      let out = subproc.stdout.read(1000, 0)
+      let out = subproc.stdout.read(10000, 10)
 
       if a:is_passwd && out =~# g:vimproc_password_pattern
         redraw
@@ -271,12 +273,12 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
 
         call subproc.stdin.write(in)
       else
-        let output .= out
+        let outbuf += [out]
       endif
     endif"}}}
 
     if !subproc.stderr.eof "{{{
-      let out = subproc.stderr.read(1000, 0)
+      let out = subproc.stderr.read(10000, 10)
 
       if a:is_passwd && out =~# g:vimproc_password_pattern
         redraw
@@ -289,11 +291,14 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
 
         call subproc.stdin.write(in)
       else
-        let s:last_errmsg .= out
-        let output .= out
+        let outbuf += [out]
+        let errbuf += [out]
       endif
     endif"}}}
   endwhile
+
+  let output = join(outbuf, '')
+  let s:last_errmsg = join(errbuf, '')
 
   let [cond, status] = subproc.waitpid()
 
@@ -855,6 +860,7 @@ function! s:read(...) dict "{{{
 
   let number = get(a:000, 0, -1)
   let timeout = get(a:000, 1, s:read_timeout)
+  let is_oneline = get(a:000, 2, 0)
 
   let max = 100
   let hds = []
@@ -869,7 +875,8 @@ function! s:read(...) dict "{{{
     let timeout -= timeout1
     let hds += [hd_r]
 
-    if eof || (number >= 0 && rest_num <= 0) || (timeout <= 0)
+    if eof || (is_oneline && stridx(hd_r, '0A') % 2 == 0)
+          \ || (number >= 0 && rest_num <= 0) || (timeout <= 0)
       break
     endif
   endfor
@@ -886,8 +893,8 @@ endfunction"}}}
 function! s:read_lines(...) dict "{{{
   let res = self.buffer
 
-  let outs = []
-  while !self.eof && stridx(res, "\n") < 0
+  let outs = ['']
+  while !self.eof && stridx(outs[-1], "\n") < 0
     let out = call(self.read, a:000, self)
     if out  == ''
       break
@@ -908,7 +915,7 @@ function! s:read_lines(...) dict "{{{
   return lines
 endfunction"}}}
 function! s:read_line(...) dict "{{{
-  let lines = call(self.read_lines, a:000, self)
+  let lines = call(self.read_lines, a:000 + [1], self)
   let self.buffer = join(lines[1:], "\n") . self.buffer
   let self.eof = (self.buffer != '') ?
         \ (self.__eof && self.buffer == '') : self.__eof
@@ -1588,11 +1595,11 @@ endif
 
 " vimproc dll version check. "{{{
 try
-  let dll_version = vimproc#dll_version()
-  if dll_version < vimproc#version()
+  let s:dll_version = vimproc#dll_version()
+  if s:dll_version < vimproc#version()
     call s:print_error(printf('Your vimproc binary version is "%d",'.
           \ ' but vimproc version is "%d".',
-          \ dll_version, vimproc#version()))
+          \ s:dll_version, vimproc#version()))
   endif
 catch
   call s:print_error(v:throwpoint)
@@ -1601,7 +1608,7 @@ catch
   call s:print_error('Please re-compile it.')
 endtry
 
-unlet dll_version
+unlet s:dll_version
 "}}}
 
 " Restore 'cpoptions' {{{

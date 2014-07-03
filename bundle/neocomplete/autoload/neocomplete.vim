@@ -121,7 +121,10 @@ endfunction"}}}
 function! neocomplete#define_source(source) "{{{
   let sources = neocomplete#variables#get_sources()
   for source in neocomplete#util#convert2list(a:source)
-    let sources[source.name] = neocomplete#init#_source(source)
+    let source = neocomplete#init#_source(source)
+    if !source.disabled
+      let sources[source.name] = source
+    endif
   endfor
 endfunction"}}}
 function! neocomplete#define_filter(filter) "{{{
@@ -248,9 +251,6 @@ endfunction"}}}
 function! neocomplete#get_source_filetypes(filetype) "{{{
   return neocomplete#helper#get_source_filetypes(a:filetype)
 endfunction"}}}
-function! neocomplete#get_sources_list(dictionary, filetype) "{{{
-  return neocomplete#helper#ftdictionary2list(a:dictionary, a:filetype)
-endfunction"}}}
 function! neocomplete#escape_match(str) "{{{
   return escape(a:str, '~"*\.^$[]')
 endfunction"}}}
@@ -290,7 +290,9 @@ function! neocomplete#print_debug(expr) "{{{
 endfunction"}}}
 function! neocomplete#get_data_directory() "{{{
   let g:neocomplete#data_directory =
-        \ get(g:, 'neocomplete#data_directory', '~/.cache/neocomplete')
+        \ get(g:, 'neocomplete#data_directory',
+        \  ($XDG_CACHE_DIR != '' ?
+        \   $XDG_CACHE_DIR . '/neocomplete' : '~/.cache/neocomplete'))
   let directory = neocomplete#util#substitute_path_separator(
         \ neocomplete#util#expand(g:neocomplete#data_directory))
   if !isdirectory(directory)

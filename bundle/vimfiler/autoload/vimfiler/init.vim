@@ -249,12 +249,7 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
     execute 'vertical resize' a:context.winwidth
   endif
 
-  " Defind syntax.
-  for column in filter(
-        \ copy(b:vimfiler.columns), "get(v:val, 'syntax', '') != ''")
-    call column.define_syntax(b:vimfiler.context)
-  endfor
-
+  call vimfiler#view#_define_syntax()
   call vimfiler#view#_force_redraw_all_vimfiler()
 
   " Initialize cursor position.
@@ -556,6 +551,8 @@ function! vimfiler#init#_default_settings() "{{{
           \ call vimfiler#handler#_event_bufwin_leave(expand('<abuf>'))
     autocmd CursorMoved <buffer>
           \ call vimfiler#handler#_event_cursor_moved()
+    autocmd FocusGained <buffer>
+          \ call vimfiler#view#_force_redraw_all_vimfiler()
     autocmd VimResized <buffer>
           \ call vimfiler#view#_redraw_all_vimfiler()
   augroup end"}}}

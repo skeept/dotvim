@@ -41,8 +41,6 @@ call unite#util#set_default(
 call unite#util#set_default('g:unite_source_rec_unit', 4000)
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command', (
-      \  executable('ag') ?
-      \  'ag --follow --nocolor --nogroup --hidden -g ""' :
       \  !unite#util#is_windows() && executable('find') ? 'find' : ''),
       \ 'g:unite_source_file_rec_async_command')
 call unite#util#set_default(
@@ -307,14 +305,18 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   endif
 
   " Note: If find command and args used, uses whole command line.
-  if command !~# '^find '
+  if args[0] ==# 'find'
     let command .= ' ' . string(directory)
-    if command ==# 'find'
-      let command .= ' -follow -type '.
-        \    (a:context.source__is_directory ? 'd' : 'f')
+
+    if g:unite_source_rec_async_command ==# 'find'
+      " Default option.
+      let command .= ' -path ''*/\.*'' -prune -o -type l -print -o -type '
+            \ . (a:context.source__is_directory ? 'd' : 'f') . ' -print'
     endif
+  else
+    let command .= ' ' . string(directory)
   endif
-  let a:context.source__proc = vimproc#pgroup_open(command)
+  let a:context.source__proc = vimproc#pgroup_open(command, 1)
 
   " Close handles.
   call a:context.source__proc.stdin.close()
@@ -336,12 +338,14 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let continuation = a:context.source__continuation
   let stdout = a:context.source__proc.stdout
 
-  let candidates = unite#helper#paths2candidates(
-        \ filter(map(filter(
-        \   stdout.read_lines(-1, 1000), 'v:val != ""'),
-        \   "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')"),
-        \   'v:val !=# a:context.source__directory
-        \ && v:val !~? a:context.source.ignore_pattern'))
+  let paths = map(filter(
+        \   stdout.read_lines(-1, 2000), 'v:val != ""'),
+        \   "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
+  if unite#util#is_windows()
+    let paths = map(paths, 'unite#util#substitute_path_separator(v:val)')
+  endif
+
+  let candidates = unite#helper#paths2candidates(paths)
 
   if stdout.eof || (
         \  g:unite_source_rec_max_cache_files > 0 &&
