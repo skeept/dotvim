@@ -50,7 +50,7 @@ function! projectionist#slash() abort
   return exists('+shellslash') && !&shellslash ? '\' : '/'
 endfunction
 
-function! s:slash(str)
+function! s:slash(str) abort
   return tr(a:str, projectionist#slash(), '/')
 endfunction
 
@@ -65,6 +65,20 @@ function! projectionist#json_parse(string) abort
     endtry
   endif
   throw "invalid JSON: ".string
+endfunction
+
+function! projectionist#shellescape(arg) abort
+  return a:arg =~# "^[[:alnum:]_/.:-]\\+$" ? a:arg : shellescape(a:arg)
+endfunction
+
+function! s:join(arg) abort
+  if type(a:arg) == type([])
+    return join(a:arg, ' ')
+  elseif type(a:arg) == type('')
+    return a:arg
+  else
+    return ''
+  endif
 endfunction
 
 " Section: Querying
@@ -140,6 +154,26 @@ function! g:projectionist_transformations.basename(input, o) abort
   return substitute(a:input, '.*['.projectionist#slash().'/]', '', '')
 endfunction
 
+function! g:projectionist_transformations.singular(input, o) abort
+  let input = a:input
+  let input = s:sub(input, '%([Mm]ov|[aeio])@<!ies$', 'ys')
+  let input = s:sub(input, '[rl]@<=ves$', 'fs')
+  let input = s:sub(input, '%(nd|rt)@<=ices$', 'exs')
+  let input = s:sub(input, 's@<!s$', '')
+  let input = s:sub(input, '%([nrt]ch|tatus|lias|ss)@<=e$', '')
+  return input
+endfunction
+
+function! g:projectionist_transformations.plural(input, o) abort
+  let input = a:input
+  let input = s:sub(input, '[aeio]@<!y$', 'ie')
+  let input = s:sub(input, '[rl]@<=f$', 've')
+  let input = s:sub(input, '%(nd|rt)@<=ex$', 'ice')
+  let input = s:sub(input, '%([osxz]|[cs]h)$', '&e')
+  let input .= 's'
+  return input
+endfunction
+
 function! g:projectionist_transformations.open(input, o) abort
   return '{'
 endfunction
@@ -163,6 +197,9 @@ function! s:expand_placeholder(placeholder, expansions) abort
     endif
     let value = g:projectionist_transformations[transform](value, a:expansions)
   endfor
+  if has_key(a:expansions, 'post_function')
+    let value = call(a:expansions.post_function, [value])
+  endif
   return value
 endfunction
 
@@ -170,12 +207,7 @@ function! s:expand_placeholders(value, expansions) abort
   if type(a:value) ==# type([]) || type(a:value) ==# type({})
     return map(copy(a:value), 's:expand_placeholders(v:val, a:expansions)')
   endif
-  let legacy = {
-        \ '%s': 'replace %s with {}',
-        \ '%d': 'replace %d with {dot}',
-        \ '%u': 'replace %u with {underscore}'}
   let value = substitute(a:value, '{[^{}]*}', '\=s:expand_placeholder(submatch(0), a:expansions)', 'g')
-  let value = substitute(value, '%[sdu]', '\=get(legacy, submatch(0), "\001")', 'g')
   return value =~# "\001" ? '' : value
 endfunction
 
@@ -247,7 +279,8 @@ function! projectionist#query_file(key) abort
 endfunction
 
 function! projectionist#query_exec(key, ...) abort
-  return filter(map(projectionist#query(a:key, a:0 ? a:1 : {}), '[v:val[0], s:shellcmd(v:val[1])]'), '!empty(v:val[1])')
+  let opts = extend({'post_function': 'projectionist#shellescape'}, a:0 ? a:1 : {})
+  return filter(map(projectionist#query(a:key, opts), '[v:val[0], s:join(v:val[1])]'), '!empty(v:val[1])')
 endfunction
 
 function! projectionist#query_scalar(key) abort
@@ -285,20 +318,12 @@ function! projectionist#append(root, ...) abort
   call add(b:projectionist[a:root], get(a:000, -1, {}))
 endfunction
 
-function! projectionist#define_navigation_command(command, patterns)
+function! projectionist#define_navigation_command(command, patterns) abort
   for [prefix, excmd] in items(s:prefixes)
     execute 'command! -buffer -bar -bang -nargs=* -complete=customlist,s:projection_complete'
           \ prefix . substitute(a:command, '\A', '', 'g')
           \ ':execute s:open_projection("'.excmd.'<bang>",'.string(a:patterns).',<f-args>)'
   endfor
-endfunction
-
-function! s:shellcmd(arg) abort
-  if type(a:arg) == type([])
-    return join(map(copy(a:arg), 'v:val =~# "^[[:alnum:]_/.:=-]\\+$" ? v:val : shellescape(v:val)'), ' ')
-  elseif type(a:arg) == type('')
-    return a:arg
-  endif
 endfunction
 
 function! projectionist#activate() abort
