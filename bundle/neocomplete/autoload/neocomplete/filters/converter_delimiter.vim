@@ -35,6 +35,7 @@ let s:converter = {
       \ 'description' : 'delimiter converter',
       \}
 
+" @vimlint(EVL102, 1, l:delim_cnt)
 function! s:converter.filter(context) "{{{
   if g:neocomplete#max_keyword_width < 0
     return a:context.candidates
@@ -71,6 +72,7 @@ EOF
 
   return a:context.candidates
 endfunction"}}}
+" @vimlint(EVL102, 0, l:delim_cnt)
 
 function! s:process_delimiter(context, candidate, delimiter, delim_cnt)
   let candidate = a:candidate

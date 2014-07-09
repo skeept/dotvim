@@ -128,6 +128,10 @@ function! neocomplete#sources#member#make_cache_current_line() "{{{
   return s:make_cache_current_buffer(line('.')-1, line('.')+1)
 endfunction"}}}
 function! neocomplete#sources#member#make_cache_current_buffer() "{{{
+  if !neocomplete#is_enabled()
+    call neocomplete#initialize()
+  endif
+
   " Make cache from current buffer.
   return s:make_cache_current_buffer(1, line('$'))
 endfunction"}}}
@@ -186,8 +190,8 @@ endfunction"}}}
 
 function! s:get_member_list(cur_text, var_name) "{{{
   let keyword_list = []
-  for [key, source] in filter(s:get_sources_list(),
-        \ 'has_key(v:val[1].member_cache, a:var_name)')
+  for source in filter(s:get_sources_list(),
+        \ 'has_key(v:val.member_cache, a:var_name)')
     let keyword_list +=
           \ values(source.member_cache[a:var_name])
   endfor
@@ -196,24 +200,17 @@ function! s:get_member_list(cur_text, var_name) "{{{
 endfunction"}}}
 
 function! s:get_sources_list() "{{{
-  let sources_list = []
-
   let filetypes_dict = {}
   for filetype in neocomplete#get_source_filetypes(
         \ neocomplete#get_context_filetype())
     let filetypes_dict[filetype] = 1
   endfor
 
-  for [key, source] in items(s:member_sources)
-    if has_key(filetypes_dict, source.filetype)
-          \ || has_key(filetypes_dict, '_')
-          \ || bufnr('%') == key
-          \ || (bufname('%') ==# '[Command Line]' && bufnr('#') == key)
-      call add(sources_list, [key, source])
-    endif
-  endfor
-
-  return sources_list
+  return values(filter(copy(s:member_sources),
+        \ "has_key(filetypes_dict, v:val.filetype)
+        \ || has_key(filetypes_dict, '_')
+        \ || bufnr('%') == v:key
+        \ || (bufname('%') ==# '[Command Line]' && bufwinnr('#') == v:key)"))
 endfunction"}}}
 
 function! s:initialize_source(srcname) "{{{

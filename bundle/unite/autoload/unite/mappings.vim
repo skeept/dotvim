@@ -74,10 +74,6 @@ function! unite#mappings#define_default_mappings() "{{{
         \ 'gg0z.'
   nnoremap <silent><buffer> <Plug>(unite_cursor_bottom)
         \ :<C-u>call <SID>redraw_all_candidates()<CR>G
-  nnoremap <buffer><expr> <Plug>(unite_loop_cursor_down)
-        \ <SID>loop_cursor_down(0)
-  nnoremap <buffer><expr> <Plug>(unite_skip_cursor_down)
-        \ <SID>loop_cursor_down(1)
   nnoremap <buffer><silent> <Plug>(unite_next_screen)
         \ :<C-u>call <SID>move_screen(1)<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_half_screen)
@@ -102,8 +98,6 @@ function! unite#mappings#define_default_mappings() "{{{
         \ :<C-u>call <SID>toggle_auto_preview()<CR>
   nnoremap <buffer><silent> <Plug>(unite_toggle_auto_highlight)
         \ :<C-u>call <SID>toggle_auto_highlight()<CR>
-  nnoremap <buffer><silent> <Plug>(unite_narrowing_path)
-        \ :<C-u>call <SID>narrowing_path()<CR>
   nnoremap <buffer><silent> <Plug>(unite_narrowing_input_history)
         \ :<C-u>call <SID>narrowing_input_history()<CR>
   nnoremap <buffer><silent> <Plug>(unite_narrowing_dot)
@@ -134,10 +128,6 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <SID>smart_imap('', "\<C-w>")
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_path)
         \ <SID>smart_imap('', <SID>delete_backward_path())
-  inoremap <expr><buffer> <Plug>(unite_select_next_line)
-        \ pumvisible() ? "\<C-n>" : <SID>loop_cursor_down(0)
-  inoremap <silent><buffer> <Plug>(unite_skip_previous_line)
-        \ <ESC>:call unite#mappings#loop_cursor_up_call(1, 'i')<CR>
   inoremap <expr><buffer> <Plug>(unite_select_next_page)
         \ pumvisible() ? "\<PageDown>" : repeat("\<Down>", winheight(0))
   inoremap <expr><buffer> <Plug>(unite_select_previous_page)
@@ -166,8 +156,6 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <C-o>:<C-u>call <SID>toggle_auto_preview()<CR>
   inoremap <silent><buffer> <Plug>(unite_toggle_auto_highlight)
         \ <C-o>:<C-u>call <SID>toggle_auto_highlight()<CR>
-  inoremap <silent><buffer> <Plug>(unite_narrowing_path)
-        \ <C-o>:<C-u>call <SID>narrowing_path()<CR>
   inoremap <silent><buffer> <Plug>(unite_narrowing_input_history)
         \ <C-o>:<C-u>call <SID>narrowing_input_history()<CR>
   inoremap <silent><buffer> <Plug>(unite_disable_max_candidates)
@@ -429,6 +417,7 @@ function! s:toggle_mark_candidates(start, end) "{{{
   let pos = getpos('.')
   try
     call cursor(a:start, 1)
+    " @vimlint(EVL102, 0, l:cnt)
     for cnt in range(a:start, a:end)
       if line('.') == unite.prompt_linenr
         call unite#helper#skip_prompt()
@@ -436,14 +425,13 @@ function! s:toggle_mark_candidates(start, end) "{{{
         call s:toggle_mark('j')
       endif
     endfor
+    " @vimlint(EVL102, 1, l:cnt)
   finally
     call setpos('.', pos)
     call unite#view#_bottom_cursor()
   endtry
 endfunction"}}}
 function! s:quick_help() "{{{
-  let unite = unite#get_current_unite()
-
   call unite#start_temporary([['mapping', bufnr('%')]], {}, 'mapping-help')
 endfunction"}}}
 function! s:choose_action() "{{{
@@ -517,13 +505,12 @@ function! s:insert_leave() "{{{
 endfunction"}}}
 function! s:redraw() "{{{
   call unite#clear_message()
-
-  let unite = unite#get_current_unite()
   call unite#force_redraw()
 endfunction"}}}
 function! s:rotate_source(is_next) "{{{
   let unite = unite#get_current_unite()
 
+  " @vimlint(EVL102, 0, l:source)
   for source in unite#loaded_sources_list()
     let unite.sources = a:is_next ?
           \ add(unite.sources[1:], unite.sources[0]) :
@@ -533,6 +520,7 @@ function! s:rotate_source(is_next) "{{{
       break
     endif
   endfor
+  " @vimlint(EVL102, 1, l:source)
 
   call unite#view#_redraw_candidates()
 endfunction"}}}
@@ -729,15 +717,6 @@ function! s:disable_max_candidates() "{{{
 
   call unite#force_redraw()
   call s:redraw_all_candidates()
-endfunction"}}}
-function! s:narrowing_path() "{{{
-  let candidate = unite#helper#get_current_candidate()
-  if empty(unite#helper#get_current_candidate())
-    " Ignore.
-    return
-  endif
-  call unite#mappings#narrowing(has_key(candidate, 'action__path')?
-        \ candidate.action__path : candidate.word)
 endfunction"}}}
 function! s:narrowing_input_history() "{{{
   call unite#start_temporary(

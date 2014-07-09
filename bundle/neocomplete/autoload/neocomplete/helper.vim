@@ -49,8 +49,6 @@ function! neocomplete#helper#get_cur_text(...) "{{{
     let complete_str .= v:char
   endif
 
-  let filetype = neocomplete#get_context_filetype()
-
   let neocomplete.cur_text = cur_text . complete_str
 
   " Save cur_text.
@@ -111,8 +109,6 @@ endfunction"}}}
 function! neocomplete#helper#get_source_filetypes(filetype) "{{{
   let filetype = (a:filetype == '') ? 'nothing' : a:filetype
 
-  let filetype_dict = {}
-
   let filetypes = [filetype]
   if filetype =~ '\.'
     if exists('g:neocomplete#ignore_composite_filetypes')
@@ -151,10 +147,7 @@ function! neocomplete#helper#complete_check() "{{{
     let neocomplete = neocomplete#get_current_neocomplete()
     let neocomplete.skipped = 1
 
-    if g:neocomplete#enable_debug
-      redraw
-      echomsg 'Skipped.'
-    endif
+    call neocomplete#print_debug('Skipped.')
   endif
 
   return ret
@@ -325,7 +318,6 @@ endfunction"}}}
 
 function! neocomplete#helper#call_filters(filters, source, context) "{{{
   let context = extend(a:source.neocomplete__context, a:context)
-  let _ = []
   for filter in a:filters
     try
       let context.candidates = call(filter.filter, [context], filter)

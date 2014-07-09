@@ -37,110 +37,43 @@ let s:source_directory = {
       \ 'description' : 'candidates from directory list',
       \ 'default_kind' : 'directory',
       \ 'alias_table' : { 'unite__new_candidate' : 'vimfiler__mkdir' },
+      \ 'hooks' : {},
       \}
 
 function! s:source_directory.change_candidates(args, context) "{{{
-  if !has_key(a:context, 'source__cache') || a:context.is_redraw
-        \ || a:context.is_invalidate
-    " Initialize cache.
-    let a:context.source__cache = {}
-  endif
+  let path = unite#sources#file#_get_path(a:args, a:context)
+  let input = unite#sources#file#_get_input(path, a:context)
 
-  let input_list = filter(split(a:context.input,
-        \                     '\\\@<! ', 1), 'v:val !~ "!"')
-  let input = empty(input_list) ? '' : input_list[0]
-  let input = substitute(substitute(
-        \ a:context.input, '\\ ', ' ', 'g'), '^\a\+:\zs\*/', '/', '')
-
-  let path = join(a:args, ':')
-  if path !=# '/' && path =~ '[\\/]$'
-    " Chomp.
-    let path = path[: -2]
-  endif
-
-  if input !~ '^\%(/\|\a\+:/\)' && path != '' && path != '/'
-    let input = path . '/' .  input
-  endif
-  let is_relative_path = input !~ '^\%(/\|\a\+:/\)' && path == ''
-
-  " Substitute *. -> .* .
-  let input = substitute(input, '\*\.', '.*', 'g')
-
-  if input !~ '\*' && unite#util#is_windows() && getftype(input) == 'link'
-    " Resolve link.
-    let input = resolve(input)
-  endif
-
-  " Glob by directory name.
-  let input = substitute(input, '[^/.]*$', '', '')
-  let glob = input . (input =~ '\*$' ? '' : '*')
-
-  if !has_key(a:context.source__cache, glob)
-    let files = sort(filter(copy(unite#util#glob(glob)),
+  return map(sort(filter(unite#sources#file#_get_files(input, a:context),
           \ "isdirectory(v:val) && v:val !~
-          \ '^\\%(/\\|\\a\\+:/\\)$\\|\\%(^\\|/\\)\\.$'"), 1)
-
-    let a:context.source__cache[glob] = map(files,
-          \ 'unite#sources#file#create_file_dict(v:val, is_relative_path)')
-  endif
-
-  let candidates = copy(a:context.source__cache[glob])
-
-  return candidates
+          \ '^\\%(/\\|\\a\\+:/\\)$\\|\\%(^\\|/\\)\\.$'"), 1),
+          \ 'unite#sources#file#create_file_dict(v:val, 0)')
 endfunction"}}}
 function! s:source_directory.complete(args, context, arglead, cmdline, cursorpos) "{{{
   return map(filter(split(glob(a:arglead . '*'), '\n'),
         \ 'isdirectory(v:val)'), "v:val.'/'")
 endfunction"}}}
+function! s:source_directory.hooks.on_close(args, context) "{{{
+  call unite#sources#file#_clear_cache()
+endfunction "}}}
 
 let s:source_directory_new = {
       \ 'name' : 'directory/new',
       \ 'description' : 'directory candidates from input',
       \ 'default_kind' : 'directory',
       \ 'alias_table' : { 'unite__new_candidate' : 'vimfiler__mkdir' },
-      \ 'hooks' : {},
       \ }
 
-function! s:source_directory_new.hooks.on_init(args, context) "{{{
-  let path = unite#util#substitute_path_separator(
-        \ expand(join(a:args, ':')))
-  let path = unite#util#substitute_path_separator(
-        \ fnamemodify(path, ':p'))
-  if path !=# '/' && path =~ '[\\/]$'
-    " Chomp.
-    let path = path[: -2]
-  endif
-  let a:context.source__path = path
-endfunction"}}}
-
 function! s:source_directory_new.change_candidates(args, context) "{{{
-  let input = unite#util#expand(a:context.path)
-  if input == ''
-    return []
-  endif
-
-  let path = a:context.source__path
-  if input !~ '^\%(/\|\a\+:/\)' && path != '' && path != '/'
-    let input = path . '/' .  input
-  endif
-
-  " Substitute *
+  let path = unite#sources#file#_get_path(a:args, a:context)
+  let input = unite#sources#file#_get_input(path, a:context)
   let input = substitute(input, '\*', '', 'g')
 
-  if s:is_windows && getftype(input) == 'link'
-    " Resolve link.
-    let input = unite#util#substitute_path_separator(resolve(input))
-  endif
-
-  if filereadable(input) || isdirectory(input)
+  if input == '' || filereadable(input) || isdirectory(input)
     return []
   endif
 
-  let is_relative_path = path !~ '^\%(/\|\a\+:/\)'
-
-  " Return new directory candidate.
-  return [unite#sources#file#create_file_dict(
-        \ input, is_relative_path, 2)]
+  return [unite#sources#file#create_file_dict(input, 0, 2)]
 endfunction"}}}
 
 let &cpo = s:save_cpo
