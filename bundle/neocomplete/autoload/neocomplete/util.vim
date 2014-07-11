@@ -96,9 +96,6 @@ endfunction"}}}
 function! neocomplete#util#system(...) "{{{
   return call(s:get_process().system, a:000)
 endfunction"}}}
-function! neocomplete#util#has_vimproc(...) "{{{
-  return call(s:get_process().has_vimproc, a:000)
-endfunction"}}}
 function! neocomplete#util#has_lua() "{{{
   " Note: Disabled if_lua feature if less than 7.3.885.
   " Because if_lua has double free problem.
@@ -181,8 +178,12 @@ function! neocomplete#util#set_default(var, val, ...)  "{{{
           \ {alternate_var} : a:val
   endif
 endfunction"}}}
-function! neocomplete#util#set_dictionary_helper(...) "{{{
-  return call(s:get_prelude().set_dictionary_helper, a:000)
+function! neocomplete#util#set_dictionary_helper(variable, keys, pattern) "{{{
+  for key in split(a:keys, '\s*,\s*')
+    if !has_key(a:variable, key)
+      let a:variable[key] = a:pattern
+    endif
+  endfor
 endfunction"}}}
 
 function! neocomplete#util#set_default_dictionary(variable, keys, value) "{{{

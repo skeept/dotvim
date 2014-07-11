@@ -54,6 +54,7 @@ function! s:source.hooks.on_syntax(args, context) "{{{
   highlight default link uniteSource__ActionKind Type
 endfunction"}}}
 
+" @vimlint(EVL102, 1, l:sources)
 function! s:source.gather_candidates(args, context) "{{{
   if empty(a:args)
     return
@@ -107,6 +108,7 @@ function! s:source.gather_candidates(args, context) "{{{
         \   'source__source_names' : sources,
         \ }"), 's:compare_word')
 endfunction"}}}
+" @vimlint(EVL102, 0, l:sources)
 
 function! s:compare_word(i1, i2)
   return (a:i1.word ># a:i2.word) ? 1 : -1
@@ -168,8 +170,6 @@ endfunction"}}}
 "}}}
 
 function! s:get_actions(candidates, sources) "{{{
-  let Self = unite#get_self_functions()[-1]
-
   let actions = unite#action#_get_candidate_action_table(
         \ a:candidates[0], a:sources)
 

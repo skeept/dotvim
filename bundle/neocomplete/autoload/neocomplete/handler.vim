@@ -61,8 +61,6 @@ function! neocomplete#handler#_on_insert_leave() "{{{
   let neocomplete.overlapped_items = {}
 endfunction"}}}
 function! neocomplete#handler#_on_write_post() "{{{
-  let neocomplete = neocomplete#get_current_neocomplete()
-
   " Restore foldinfo.
   for winnr in filter(range(1, winnr('$')),
         \ "!empty(getwinvar(v:val, 'neocomplete_foldinfo'))")
@@ -76,6 +74,7 @@ function! neocomplete#handler#_on_write_post() "{{{
           \ 'neocomplete_foldinfo', {})
   endfor
 endfunction"}}}
+" @vimlint(EVL102, 1, v:completed_item)
 function! neocomplete#handler#_on_complete_done() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
 
@@ -97,9 +96,9 @@ function! neocomplete#handler#_on_complete_done() "{{{
       let neocomplete.completed_item = v:completed_item
     endif
   else
-    let [_, complete_str] =
+    let complete_str =
           \ neocomplete#helper#match_word(
-          \   matchstr(getline('.'), '^.*\%'.col('.').'c'))
+          \   matchstr(getline('.'), '^.*\%'.col('.').'c'))[1]
     if complete_str == ''
       return
     endif
@@ -131,6 +130,7 @@ function! neocomplete#handler#_on_complete_done() "{{{
     let frequencies[complete_str] += 20
   endif
 endfunction"}}}
+" @vimlint(EVL102, 0, v:completed_item)
 function! neocomplete#handler#_change_update_time() "{{{
   if &updatetime > g:neocomplete#cursor_hold_i_time
     " Change updatetime.
@@ -158,9 +158,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
 
   let cur_text = neocomplete#get_cur_text(1)
 
-  if g:neocomplete#enable_debug
-    echomsg 'cur_text = ' . cur_text
-  endif
+  call neocomplete#print_debug('cur_text = ' . cur_text)
 
   " Prevent infinity loop.
   if s:is_skip_auto_complete(cur_text)
@@ -181,9 +179,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
       endif
     endif
 
-    if g:neocomplete#enable_debug
-      echomsg 'Skipped.'
-    endif
+    call neocomplete#print_debug('Skipped.')
     return
   endif
 
@@ -195,9 +191,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
   " Check multibyte input or eskk.
   if neocomplete#is_eskk_enabled()
         \ || neocomplete#is_multibyte_input(cur_text)
-    if g:neocomplete#enable_debug
-      echomsg 'Skipped.'
-    endif
+    call neocomplete#print_debug('Skipped.')
 
     return
   endif
@@ -205,9 +199,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
   " Check complete position.
   let complete_sources = neocomplete#complete#_set_results_pos(cur_text)
   if empty(complete_sources)
-    if g:neocomplete#enable_debug
-      echomsg 'Skipped.'
-    endif
+    call neocomplete#print_debug('Skipped.')
 
     return
   endif
@@ -234,9 +226,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
           \ neocomplete#complete#_get_results(cur_text)
 
     if empty(neocomplete.complete_sources)
-      if g:neocomplete#enable_debug
-        echomsg 'Skipped.'
-      endif
+      call neocomplete#print_debug('Skipped.')
       return
     endif
   endif
