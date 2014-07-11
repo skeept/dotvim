@@ -252,6 +252,7 @@ function! s:TreeDirNode._initChildren(silent)
             try
                 let path = g:NERDTreePath.New(i)
                 call self.createChild(path, 0)
+                call g:NERDTreeRefreshNotifier.NotifyListeners(path)
             catch /^NERDTree.\(InvalidArguments\|InvalidFiletype\)Error/
                 let invalidFilesFound += 1
             endtry
@@ -436,6 +437,15 @@ function! s:TreeDirNode.refresh()
             call nerdtree#echoWarning("some files could not be loaded into the NERD tree")
         endif
     endif
+endfunction
+
+"FUNCTION: TreeDirNode.refreshFlags() {{{1
+unlet s:TreeDirNode.refreshFlags
+function! s:TreeDirNode.refreshFlags()
+    call self.path.refreshFlags()
+    for i in self.children
+        call i.refreshFlags()
+    endfor
 endfunction
 
 "FUNCTION: TreeDirNode.reveal(path) {{{1

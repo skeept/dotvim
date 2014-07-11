@@ -113,9 +113,10 @@ function! unite#view#_redraw_candidates(...) "{{{
         \ || context.prompt_direction ==# 'below'
     " Move to bottom.
     call cursor(line('$'), 0)
-    if context.prompt_direction ==# 'below' && mode() == 'i'
-      call unite#view#_bottom_cursor()
-    endif
+  endif
+
+  if context.prompt_direction ==# 'below' && mode() ==# 'i'
+    call unite#view#_bottom_cursor()
   endif
 
   " Set syntax.
@@ -187,13 +188,13 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   endif
 
   let pos = getpos('.')
+  let unite = unite#get_current_unite()
+  let context = unite.context
+
   try
     if &filetype !=# 'unite'
       return
     endif
-
-    let unite = unite#get_current_unite()
-    let context = unite.context
 
     if !context.is_redraw
       let context.is_redraw = a:is_force
@@ -227,8 +228,13 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     call unite#view#_redraw_candidates(is_gather_all)
     let unite.context.is_redraw = 0
   finally
-    if getpos('.') !=# pos
+    if empty(unite.args) && getpos('.') !=# pos
       call setpos('.', pos)
+
+      if context.prompt_direction ==# 'below'
+        call cursor(line('$'), 0)
+        call unite#view#_bottom_cursor()
+      endif
     endif
 
     if a:winnr > 0

@@ -33,8 +33,10 @@ function! s:Path.bookmarkNames()
 endfunction
 
 "FUNCTION: Path.cacheDisplayString() {{{1
-function! s:Path.cacheDisplayString()
-    let self.cachedDisplayString = self.getLastPathComponent(1)
+function! s:Path.cacheDisplayString() abort
+    let self.cachedDisplayString = self.flagSet.renderToString()
+
+    let self.cachedDisplayString .= self.getLastPathComponent(1)
 
     if self.isExecutable
         let self.cachedDisplayString = self.cachedDisplayString . '*'
@@ -469,6 +471,7 @@ function! s:Path.New(path)
     call newPath.readInfoFromDisk(s:Path.AbsolutePathFor(a:path))
 
     let newPath.cachedDisplayString = ""
+    let newPath.flagSet = g:NERDTreeFlagSet.New()
 
     return newPath
 endfunction
@@ -546,6 +549,13 @@ endfunction
 "FUNCTION: Path.refresh() {{{1
 function! s:Path.refresh()
     call self.readInfoFromDisk(self.str())
+    call g:NERDTreeRefreshNotifier.NotifyListeners(self)
+    call self.cacheDisplayString()
+endfunction
+
+"FUNCTION: Path.refreshFlags() {{{1
+function! s:Path.refreshFlags()
+    call g:NERDTreeRefreshNotifier.NotifyListeners(self)
     call self.cacheDisplayString()
 endfunction
 

@@ -267,7 +267,8 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.prev_winnr = winnr()
   let unite.prev_line = 0
   let unite.update_time_save = &updatetime
-  let unite.statusline = '*unite* : %{unite#get_status_string()}'
+  let unite.statusline = "*unite* : %{unite#get_status_string()} "
+        \."%=%{line('.')}/%{(b:unite.candidates_len+b:unite.prompt_linenr)}"
 
   " Create new buffer name.
   let postfix = unite#helper#get_postfix(
@@ -331,13 +332,12 @@ function! unite#init#_current_unite(sources, context) "{{{
   return unite
 endfunction"}}}
 
+" @vimlint(EVL102, 1, l:max_source_name)
 function! unite#init#_candidates(candidates) "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
-  " @vimlint(EVL102, 0, l:max_source_name)
   let [max_width, max_source_name] = unite#helper#adjustments(winwidth(0)-5,
         \ unite.max_source_name, 2)
-  " @vimlint(EVL102, 1, l:max_source_name)
   let is_multiline = 0
 
   let candidates = []
@@ -426,6 +426,7 @@ function! unite#init#_candidates(candidates) "{{{
 
   return candidates
 endfunction"}}}
+" @vimlint(EVL102, 0, l:max_source_name)
 
 function! unite#init#_candidates_source(candidates, source_name) "{{{
   let source = unite#variables#loaded_sources(a:source_name)
