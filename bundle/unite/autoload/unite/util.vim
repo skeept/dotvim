@@ -280,22 +280,6 @@ function! s:buflisted(bufnr) "{{{
 endfunction"}}}
 
 function! unite#util#glob(pattern, ...) "{{{
-  if a:pattern =~ "'"
-    " Use glob('*').
-    let cwd = getcwd()
-    let base = unite#util#substitute_path_separator(
-          \ fnamemodify(a:pattern, ':h'))
-    lcd `=base`
-
-    let files = map(split(unite#util#substitute_path_separator(
-          \ glob('*')), '\n'), "base . '/' . v:val")
-
-    lcd `=cwd`
-
-    return files
-  endif
-
-  " let is_force_glob = get(a:000, 0, 0)
   let is_force_glob = get(a:000, 0, 1)
 
   if !is_force_glob && (a:pattern =~ '\*$' || a:pattern == '*')
@@ -304,8 +288,11 @@ function! unite#util#glob(pattern, ...) "{{{
   else
     " Escape [.
     let glob = escape(a:pattern, '?={}[]')
+    let glob2 = escape(substitute(a:pattern,
+          \ '[^/]*$', '', '') . '.*', '?={}[]')
 
-    return split(unite#util#substitute_path_separator(glob(glob)), '\n')
+    return unite#util#uniq(split(unite#util#substitute_path_separator(glob(glob)), '\n')
+          \ + split(unite#util#substitute_path_separator(glob(glob2)), '\n'))
   endif
 endfunction"}}}
 function! unite#util#command_with_restore_cursor(command) "{{{
