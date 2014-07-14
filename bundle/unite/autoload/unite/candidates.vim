@@ -43,6 +43,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
   let context = unite.context
   let context.is_redraw = a:is_force
   let context.is_changed = a:input !=# unite.last_input
+        \ || context.path !=# unite.last_path
 
   if empty(unite.args)
     if a:input == ''
@@ -52,8 +53,8 @@ function! unite#candidates#_recache(input, is_force) "{{{
       let sources = unite#init#_loaded_sources(['interactive'], context)
     else
       " Use specified source.
-      let [args, _] = unite#helper#parse_options_args(
-            \ matchstr(a:input, '^.\{-}\%(\\\@<!\s\)\+'))
+      let args = unite#helper#parse_options_args(
+            \ matchstr(a:input, '^.\{-}\%(\\\@<!\s\)\+'))[0]
       try
         let sources = unite#init#_loaded_sources(args, context)
       catch
@@ -226,6 +227,7 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     " Set context.
     let context = source.unite__context
     let context.input = a:context.input
+    let context.path = a:context.path
     let context.source_name = source.name
 
     if source.required_pattern_length > 0
@@ -240,10 +242,6 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     let context.is_invalidate = source.unite__is_invalidate
     let context.is_list_input = a:context.is_list_input
     let context.input_list = split(context.input, '\\\@<! ', 1)
-    let context.path = get(filter(
-          \ map(copy(context.input_list),
-          \         "substitute(v:val, '\\\\\\ze.', '', 'g')"),
-          \ "v:val !~ '^[!:]'"), 0, '')
     let context.unite__max_candidates =
           \ (unite.disabled_max_candidates ? 0 : source.max_candidates)
     if context.unite__is_vimfiler
@@ -364,24 +362,9 @@ function! s:get_source_candidates(source) "{{{
         let a:source.unite__cached_candidates +=
               \ s:ignore_candidates(copy(
               \  a:source.gather_candidates(a:source.args,
-              \  a:source.unite__context)), a:source.ignore_pattern)
+              \  a:source.unite__context)),
+              \ a:source.ignore_pattern, context.path)
       endif
-    endif
-
-    if a:source.unite__context.is_async
-      " Get asynchronous candidates.
-      let funcname = 'async_gather_candidates'
-      while 1
-        let a:source.unite__cached_candidates +=
-              \ s:ignore_candidates(
-              \  a:source.async_gather_candidates(a:source.args, context),
-              \  a:source.ignore_pattern)
-
-        if (!context.sync && context.unite__is_interactive)
-              \ || !a:source.unite__context.is_async
-          break
-        endif
-      endwhile
     endif
 
     if has_key(a:source, 'change_candidates')
@@ -392,7 +375,23 @@ function! s:get_source_candidates(source) "{{{
       let a:source.unite__cached_change_candidates =
             \ s:ignore_candidates(a:source.change_candidates(
             \     a:source.args, a:source.unite__context),
-            \   a:source.ignore_pattern)
+            \   a:source.ignore_pattern, context.path)
+    endif
+
+    if a:source.unite__context.is_async
+      " Get asynchronous candidates.
+      let funcname = 'async_gather_candidates'
+      while 1
+        let a:source.unite__cached_candidates +=
+              \ s:ignore_candidates(
+              \  a:source.async_gather_candidates(a:source.args, context),
+              \  a:source.ignore_pattern, context.path)
+
+        if (!context.sync && context.unite__is_interactive)
+              \ || !a:source.unite__context.is_async
+          break
+        endif
+      endwhile
     endif
   catch
     call unite#print_error(v:throwpoint)
@@ -409,10 +408,20 @@ function! s:get_source_candidates(source) "{{{
         \ + a:source.unite__cached_change_candidates
 endfunction"}}}
 
-function! s:ignore_candidates(candidates, pattern) "{{{
-  return a:pattern == '' ? a:candidates :
-        \ filter(copy(a:candidates),
+function! s:ignore_candidates(candidates, pattern, path) "{{{
+  let candidates = copy(a:candidates)
+
+  if a:pattern != ''
+    let candidates = filter(candidates,
         \ "get(v:val, 'action__path', v:val.word) !~# a:pattern")
+  endif
+
+  if a:path != ''
+    let candidates = unite#filters#{unite#util#has_lua()? 'lua' : 'vim'}
+          \_filter_head(candidates, a:path)
+  endif
+
+  return a:candidates
 endfunction"}}}
 
 function! unite#candidates#_group_post_filters(candidates) "{{{

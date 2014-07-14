@@ -55,24 +55,16 @@ function! s:source.hooks.on_init(context) "{{{
   let s:buffer_sources = {}
 
   augroup neocomplete "{{{
-    " Make cache events
-    autocmd BufEnter,BufRead,BufWinEnter *
+    autocmd BufEnter,BufRead,BufWinEnter,BufWritePost *
           \ call s:check_source()
-    autocmd CursorHold,CursorHoldI *
-          \ call s:check_cache()
-    autocmd BufWritePost *
-          \ call s:check_recache()
-    autocmd InsertEnter,InsertLeave *
-          \ call neocomplete#sources#buffer#make_cache_current_line()
   augroup END"}}}
 
   " Create cache directory.
   call neocomplete#cache#make_directory('buffer_cache')
+  call neocomplete#cache#make_directory('buffer_temp')
 
   " Initialize script variables. "{{{
   let s:buffer_sources = {}
-  let s:cache_line_count = 70
-  let s:rank_cache_count = 1
   let s:async_dictionary_list = {}
   "}}}
 
@@ -84,6 +76,11 @@ function! s:source.hooks.on_final(context) "{{{
   silent! delcommand NeoCompleteBufferMakeCache
 
   let s:buffer_sources = {}
+
+  " Remove temporary files
+  call map(glob(printf('%s/%d_*',
+        \ neocomplete#get_data_directory() . '/buffer_temp',
+        \ getpid()), 1, 1), 'delete(v:val)')
 endfunction"}}}
 
 function! s:source.hooks.on_post_filter(context) "{{{
@@ -96,21 +93,9 @@ function! s:source.gather_candidates(context) "{{{
   call s:check_source()
 
   let keyword_list = []
-  for [key, source] in s:get_sources_list()
-    let file_cache = neocomplete#cache#get_cache_dictionary(
-          \ 'buffer_cache', source.path, s:async_dictionary_list)
-    if !empty(file_cache)
-      let source.file_cache = file_cache
-      let source.keyword_cache = extend(
-            \ keys(source.buffer_cache), source.file_cache)
-    endif
-
-    let keyword_list += source.keyword_cache
-    if key == bufnr('%')
-      let source.accessed_time = localtime()
-    endif
+  for source in s:get_sources_list()
+    let keyword_list += source.words
   endfor
-
   return keyword_list
 endfunction"}}}
 
@@ -121,128 +106,34 @@ endfunction"}}}
 function! neocomplete#sources#buffer#get_frequencies() "{{{
   return get(get(s:buffer_sources, bufnr('%'), {}), 'frequencies', {})
 endfunction"}}}
+
 function! neocomplete#sources#buffer#make_cache_current_line() "{{{
-  " Make cache from current line.
-  let [start, end] = line('.') == line('$') ?
-        \ [max([1, line('.') - 10]), line('$')] :
-        \ [max([1, line('.') - 5]), min([line('.') + 5, line('$')])]
-  return s:make_cache_current_buffer(start, end)
-endfunction"}}}
-function! s:make_cache_current_block() "{{{
-  " Make cache from current block.
-  return s:make_cache_current_buffer(
-          \ max([1, line('.') - 500]), min([line('.') + 500, line('$')]))
+  " let start = reltime()
+  call s:make_cache_current_buffer()
+  " echomsg reltimestr(reltime(start))
 endfunction"}}}
 
-function! s:should_create_cache() " {{{
-  let filepath = fnamemodify(bufname('%'), ':p')
-  return getfsize(filepath) < g:neocomplete#sources#buffer#cache_limit_size &&
-          \ (g:neocomplete#sources#buffer#disabled_pattern == '' ||
-          \  filepath !~# g:neocomplete#sources#buffer#disabled_pattern)
-endfunction"}}}
-
-function! s:make_cache_current_buffer(start, end) "{{{
-  " Make cache from current buffer.
-
-  if !s:should_create_cache()
-      let filepath = fnamemodify(bufname('%'), ':p')
-      if g:neocomplete#enable_debug
-        try
-          throw ''
-        catch
-          echomsg '[neocomplete] Stopped make buffer cache in ' . filepath
-                \ . ' start: ' . a:start . ' end: ' . a:end
-                \ . ' getfsize(filepath): ' . getfsize(filepath)
-          echomsg '  call_stack: ' . v:throwpoint
-        endtry
-      endif
-      return
-  endif
-
-  if !s:exists_current_source()
-    call s:make_cache(bufnr('%'))
-  endif
-
-  let source = s:buffer_sources[bufnr('%')]
-  let keyword_pattern = source.keyword_pattern
-  if keyword_pattern == ''
-    return
-  endif
-
-  lua << EOF
-do
-  local keywords = vim.eval('source.buffer_cache')
-  local lines_cache = vim.eval('source.lines_cache')
-  local b = vim.buffer()
-  local min_length = vim.eval('g:neocomplete#min_keyword_length')
-  for linenr = vim.eval('a:start'), vim.eval('a:end') do
-    if lines_cache[linenr] == nil then
-      lines_cache[linenr] = vim.list()
-    end
-
-    local line_cache = lines_cache[linenr]
-
-    -- Clear previous line cache.
-    for i = 0, #line_cache-1 do
-      local keyword = keywords[line_cache[i]]
-      if keywords[line_cache[i]] ~= nil then
-        keywords[line_cache[i]] = keywords[line_cache[i]] - 1
-
-        if keywords[line_cache[i]] < 0 then
-          keywords[line_cache[i]] = nil
-        end
-      end
-    end
-
-    local match = 0
-    while match >= 0 do
-      match = vim.eval('match(getline(' .. linenr ..
-        '), keyword_pattern, ' .. match .. ')')
-      if match >= 0 then
-        local match_end = vim.eval('matchend(getline('..linenr..
-          '), keyword_pattern, '..match..')')
-        local match_str = string.sub(b[linenr], match+1, match_end)
-        if string.len(match_str) >= min_length then
-          if keywords[match_str] == nil then
-            keywords[match_str] = 1
-          else
-            keywords[match_str] = keywords[match_str] + 1
-          end
-
-          line_cache:insert(match_str)
-        end
-
-        -- Next match.
-        match = match_end
-      end
-    end
-  end
-end
-EOF
-
-  let source.keyword_cache = extend(
-        \ keys(source.buffer_cache), source.file_cache)
+function! s:should_create_cache(bufnr) " {{{
+  let filepath = fnamemodify(bufname(a:bufnr), ':p')
+  return getfsize(filepath) < g:neocomplete#sources#buffer#cache_limit_size
+        \ && getbufvar(a:bufnr, '&modifiable')
+        \ && !getwinvar(bufwinnr(a:bufnr), '&previewwindow')
+        \ && (g:neocomplete#sources#buffer#disabled_pattern == ''
+        \  || filepath !~# g:neocomplete#sources#buffer#disabled_pattern)
 endfunction"}}}
 
 function! s:get_sources_list() "{{{
-  let sources_list = []
-
   let filetypes_dict = {}
   for filetype in neocomplete#get_source_filetypes(
         \ neocomplete#get_context_filetype())
     let filetypes_dict[filetype] = 1
   endfor
 
-  for [key, source] in items(s:buffer_sources)
-    if has_key(filetypes_dict, source.filetype)
-          \ || has_key(filetypes_dict, '_')
-          \ || bufnr('%') == key
-          \ || (bufname('%') ==# '[Command Line]' && bufwinnr('#') == key)
-      call add(sources_list, [key, source])
-    endif
-  endfor
-
-  return sources_list
+  return values(filter(copy(s:buffer_sources),
+        \ "has_key(filetypes_dict, v:val.filetype)
+        \ || has_key(filetypes_dict, '_')
+        \ || bufnr('%') == v:key
+        \ || (bufname('%') ==# '[Command Line]' && bufwinnr('#') == v:key)"))
 endfunction"}}}
 
 function! s:initialize_source(srcname) "{{{
@@ -258,139 +149,209 @@ function! s:initialize_source(srcname) "{{{
     let ft = 'nothing'
   endif
 
-  let buflines = getbufline(a:srcname, 1, '$')
   let keyword_pattern = neocomplete#get_keyword_pattern(ft, s:source.name)
 
   let s:buffer_sources[a:srcname] = {
-        \ 'keyword_cache' : [],
-        \ 'file_cache' : [],
-        \ 'buffer_cache' : {},
-        \ 'lines_cache' : {},
+        \ 'words' : [],
         \ 'frequencies' : {},
         \ 'name' : filename, 'filetype' : ft,
         \ 'keyword_pattern' : keyword_pattern,
-        \ 'end_line' : len(buflines),
-        \ 'accessed_time' : 0,
         \ 'cached_time' : 0,
-        \ 'path' : path, 'loaded_cache' : 0,
-        \ 'cache_name' : neocomplete#cache#encode_name(
-        \   'buffer_cache', path),
+        \ 'changedtick' : getbufvar(a:srcname, 'changedtick'),
+        \ 'path' : path,
+        \ 'cache_name' : neocomplete#cache#encode_name('buffer_cache', path),
         \}
 endfunction"}}}
 
-function! s:make_cache(srcname) "{{{
+function! s:make_cache_file(srcname) "{{{
   " Initialize source.
   call s:initialize_source(a:srcname)
 
   let source = s:buffer_sources[a:srcname]
 
   if !filereadable(source.path)
-        \ || getbufvar(a:srcname, '&buftype') =~ 'nofile'
-    call s:make_cache_current_buffer(1, line('$'))
+        \ || getbufvar(a:srcname, '&modified')
+        \ || getbufvar(a:srcname, '&buftype') =~ 'nofile\|acwrite'
+    call s:make_cache_buffer(a:srcname)
     return
   endif
+
+  call neocomplete#print_debug('make_cache_buffer: ' . source.path)
 
   let source.cache_name =
         \ neocomplete#cache#async_load_from_file(
         \     'buffer_cache', source.path,
         \     source.keyword_pattern, 'B')
+  let source.changedtick = getbufvar(a:srcname, 'changedtick')
   let source.cached_time = localtime()
-  let source.filetype = &filetype
-  let source.end_line = len(getbufline(a:srcname, 1, '$'))
+  let source.filetype = getbufvar(a:srcname, '&filetype')
   let s:async_dictionary_list[source.path] = [{
         \ 'filename' : source.path,
         \ 'cachename' : source.cache_name,
         \ }]
 endfunction"}}}
 
-function! s:check_changed_buffer() "{{{
-  let source = s:buffer_sources[bufnr('%')]
+function! s:make_cache_buffer(srcname) "{{{
+  if !s:should_create_cache(a:srcname)
+    return
+  endif
 
-  let ft = &filetype
+  call neocomplete#print_debug('make_cache_buffer: ' . a:srcname)
+
+  if !s:exists_current_source()
+    call s:initialize_source(a:srcname)
+  endif
+
+  let source = s:buffer_sources[a:srcname]
+  let temp = neocomplete#cache#getfilename(
+        \ 'buffer_temp', getpid() . '_' . a:srcname)
+  let lines = getbufline(a:srcname, 1, '$')
+  call writefile(lines, temp)
+
+  " Create temporary file
+  let source.cache_name =
+        \ neocomplete#cache#async_load_from_file(
+        \     'buffer_cache', temp,
+        \     source.keyword_pattern, 'B')
+  let source.changedtick = getbufvar(a:srcname, 'changedtick')
+  let source.cached_time = localtime()
+  let source.filetype = getbufvar(a:srcname, '&filetype')
+  if source.filetype == ''
+    let source.filetype = 'nothing'
+  endif
+  let s:async_dictionary_list[source.path] = [{
+        \ 'filename' : temp,
+        \ 'cachename' : source.cache_name,
+        \ }]
+endfunction"}}}
+
+function! s:check_changed_buffer(bufnr) "{{{
+  let source = s:buffer_sources[a:bufnr]
+
+  let ft = getbufvar(a:bufnr, '&filetype')
   if ft == ''
     let ft = 'nothing'
   endif
 
-  let filename = fnamemodify(bufname('%'), ':t')
+  let filename = fnamemodify(bufname(a:bufnr), ':t')
   if filename == ''
     let filename = '[No Name]'
   endif
 
   return source.name != filename || source.filetype != ft
+        \ || source.changedtick != getbufvar(a:bufnr, 'changedtick')
 endfunction"}}}
 
 function! s:check_source() "{{{
   let current_buffer_size = getfsize(fnamemodify(bufname(bufnr('%')), ':p'))
   if current_buffer_size <
         \        g:neocomplete#sources#buffer#cache_limit_size
-    if !s:exists_current_source()
-      call s:make_cache_current_block()
-      return
-    endif
-
-    if s:check_changed_buffer()
-      call s:make_cache(bufnr('%'))
+    if !s:exists_current_source() || s:check_changed_buffer(bufnr('%'))
+      call s:make_cache_buffer(bufnr('%'))
     endif
   endif
 
   " Check new buffer.
   call map(filter(range(1, bufnr('$')), "
-        \ !has_key(s:buffer_sources, v:val) && buflisted(v:val)
+        \ v:val != bufnr('%')
+        \ && (!has_key(s:buffer_sources, v:val) && buflisted(v:val)
+        \   || (has_key(s:buffer_sources, v:val) &&
+        \     s:buffer_sources[v:val].cached_time
+        \         < getftime(s:buffer_sources[v:val].path)))
         \ && (!neocomplete#is_locked(v:val) ||
         \    g:neocomplete#disable_auto_complete)
-        \ && fnamemodify(bufname(v:val), ':p') !~#
-        \      g:neocomplete#sources#buffer#disabled_pattern
-        \ && !getwinvar(bufwinnr(v:val), '&previewwindow')
-        \ && getfsize(fnamemodify(bufname(v:val), ':p')) <
-        \      g:neocomplete#sources#buffer#cache_limit_size
-        \ "), 's:make_cache(v:val)')
-endfunction"}}}
-function! s:check_cache() "{{{
-  let release_accessd_time =
-        \ localtime() - g:neocomplete#release_cache_time
+        \ && s:should_create_cache(v:val)
+        \ "), 's:make_cache_file(v:val)')
 
-  for [key, source] in items(s:buffer_sources)
-    " Check deleted buffer and access time.
-    if !bufloaded(str2nr(key))
-          \ || (source.accessed_time > 0 &&
-          \ source.accessed_time < release_accessd_time)
-      " Remove item.
-      call remove(s:buffer_sources, key)
-    endif
-  endfor
-endfunction"}}}
-function! s:check_recache() "{{{
-  if !s:exists_current_source()
-    return
-  endif
+  call s:check_async_cache()
 
-  let release_accessd_time =
-        \ localtime() - g:neocomplete#release_cache_time
-
-  let source = s:buffer_sources[bufnr('%')]
-
-  " Check if current buffer was changed.
-  if neocomplete#util#has_vimproc() && line('$') != source.end_line
-    " Buffer recache.
-    if g:neocomplete#enable_debug
-      echomsg 'Make cache from buffer: ' . bufname('%')
-    endif
-
-    if filereadable(source.path)
-      " Clear buffer cache.
-      let source.buffer_cache = {}
-    endif
-
-    call s:make_cache(bufnr('%'))
-  endif
+  " Remove unlisted buffers.
+  call filter(s:buffer_sources,
+        \ "v:key == bufnr('%') || buflisted(str2nr(v:key))")
 endfunction"}}}
 
 function! s:exists_current_source() "{{{
   return has_key(s:buffer_sources, bufnr('%'))
 endfunction"}}}
 
+function! s:make_cache_current_buffer() "{{{
+  let srcname = bufnr('%')
+
+  " Make cache from current buffer.
+  if !s:should_create_cache(srcname)
+    return
+  endif
+
+  if !s:exists_current_source()
+    call s:initialize_source(srcname)
+  endif
+
+  let source = s:buffer_sources[srcname]
+  let keyword_pattern = source.keyword_pattern
+  if keyword_pattern == ''
+    return
+  endif
+
+  let words = []
+
+  lua << EOF
+do
+  local words = vim.eval('words')
+  local dup = {}
+  local b = vim.buffer()
+  local min_length = vim.eval('g:neocomplete#min_keyword_length')
+  for linenr = 1, #b do
+    local match = (string.find(b[linenr], '[^%s]'))
+    while match ~= nil and match >= 0 do
+      match = vim.eval('match(getline(' .. linenr ..
+        '), keyword_pattern, ' .. match-1 .. ')')
+      if match >= 0 then
+        local match_end = vim.eval('matchend(getline('..linenr..
+          '), keyword_pattern, '..match..')')
+        local match_str = string.sub(b[linenr], match+1, match_end)
+        if dup[match_str] == nil
+              and string.len(match_str) >= min_length then
+          dup[match_str] = 1
+          words:add(match_str)
+        end
+
+        -- Next match.
+        match = match_end + 1
+      end
+    end
+  end
+end
+EOF
+
+  let source.words = words
+  let source.changedtick = b:changedtick
+endfunction"}}}
+
+function! s:check_async_cache() "{{{
+  for source in s:get_sources_list()
+    if !has_key(s:async_dictionary_list, source.path)
+      continue
+    endif
+
+    " Load from cache.
+    let [loaded, file_cache] = neocomplete#cache#get_cache_list(
+          \ 'buffer_cache', s:async_dictionary_list[source.path])
+    if loaded
+      let source.words = file_cache
+    endif
+
+    if empty(s:async_dictionary_list[source.path])
+      call remove(s:async_dictionary_list, source.path)
+    endif
+  endfor
+endfunction"}}}
+
 " Command functions. "{{{
 function! neocomplete#sources#buffer#make_cache(name) "{{{
+  if !neocomplete#is_enabled()
+    call neocomplete#initialize()
+  endif
+
   if a:name == ''
     let number = bufnr('%')
   else
@@ -417,7 +378,7 @@ function! neocomplete#sources#buffer#make_cache(name) "{{{
     let number = bufnr(a:name)
   endif
 
-  call s:make_cache(number)
+  call s:make_cache_file(number)
 endfunction"}}}
 "}}}
 

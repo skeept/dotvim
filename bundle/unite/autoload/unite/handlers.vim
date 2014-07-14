@@ -164,14 +164,8 @@ function! unite#handlers#_on_cursor_moved()  "{{{
   let prompt_linenr = unite.prompt_linenr
   let context = unite.context
 
-  if prompt_linenr > 0
-    if line('.') == prompt_linenr && !&l:modifiable
-      let &l:modifiable = col('.') > len(context.prompt)
-    endif
-    if line('.') != prompt_linenr && &l:modifiable
-      setlocal nomodifiable
-    endif
-  endif
+  let &l:modifiable = line('.') == prompt_linenr
+        \ && col('.') >= len(context.prompt)
 
   if line('.') == 1
     nnoremap <silent><buffer> <Plug>(unite_loop_cursor_up)
@@ -317,7 +311,6 @@ function! s:change_highlight()  "{{{
   endif
 
   let context = unite#get_context()
-  let prompt_linenr = unite.prompt_linenr
   call unite#view#_set_cursor_line()
 
   silent! syntax clear uniteCandidateInputKeyword

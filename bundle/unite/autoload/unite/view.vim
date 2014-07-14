@@ -113,9 +113,10 @@ function! unite#view#_redraw_candidates(...) "{{{
         \ || context.prompt_direction ==# 'below'
     " Move to bottom.
     call cursor(line('$'), 0)
-    if context.prompt_direction ==# 'below' && mode() == 'i'
-      call unite#view#_bottom_cursor()
-    endif
+  endif
+
+  if context.prompt_direction ==# 'below' && mode() ==# 'i'
+    call unite#view#_bottom_cursor()
   endif
 
   " Set syntax.
@@ -177,22 +178,23 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     return
   endif
 
+  let unite_save = unite#variables#current_unite()
+  let winnr_save = winnr()
   if a:winnr > 0
     " Set current unite.
     let unite = getbufvar(winbufnr(a:winnr), 'unite')
-    let unite_save = unite#variables#current_unite()
-    let winnr_save = winnr()
 
     execute a:winnr 'wincmd w'
   endif
+
+  let pos = getpos('.')
+  let unite = unite#get_current_unite()
+  let context = unite.context
 
   try
     if &filetype !=# 'unite'
       return
     endif
-
-    let unite = unite#get_current_unite()
-    let context = unite.context
 
     if !context.is_redraw
       let context.is_redraw = a:is_force
@@ -203,7 +205,9 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     endif
 
     let input = unite#helper#get_input(1)
-    if !context.is_redraw && input ==# unite.last_input
+    if !context.is_redraw
+          \ && input ==# unite.last_input
+          \ && context.path ==# unite.last_path
           \ && !unite.is_async
           \ && !context.is_resize
           \ && !a:is_gather_all
@@ -214,6 +218,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
 
     if context.is_redraw
           \ || input !=# unite.last_input
+          \ || context.path !=# unite.last_path
           \ || unite.is_async
           \ || empty(unite.args)
       " Recaching.
@@ -221,11 +226,21 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     endif
 
     let unite.last_input = input
+    let unite.last_path = context.path
 
     " Redraw.
     call unite#view#_redraw_candidates(is_gather_all)
     let unite.context.is_redraw = 0
   finally
+    if empty(unite.args) && getpos('.') !=# pos
+      call setpos('.', pos)
+
+      if context.prompt_direction ==# 'below'
+        call cursor(line('$'), 0)
+        call unite#view#_bottom_cursor()
+      endif
+    endif
+
     if a:winnr > 0
       " Restore current unite.
       call unite#set_current_unite(unite_save)
@@ -319,8 +334,9 @@ function! unite#view#_resize_window() "{{{
   let context = unite#get_context()
   let unite = unite#get_current_unite()
 
-  if winheight(0) + &cmdheight + 2 >= &lines
-        \ && !context.vertical
+  if (winheight(0) + &cmdheight + 2 >= &lines
+        \ && !context.vertical)
+        \ || !context.resize
     " Cannot resize.
     let context.is_resize = 0
     return
@@ -330,7 +346,7 @@ function! unite#view#_resize_window() "{{{
         \ && context.unite__old_winheight != 0
         \ && winheight(0) != context.unite__old_winheight
         \ && winwidth(0) != context.unite__old_winwidth
-    " Disabled auto resize.
+    " Disabled resize.
     let context.winwidth = 0
     let context.winheight = 0
     let context.is_resize = 1
@@ -344,7 +360,6 @@ function! unite#view#_resize_window() "{{{
       let max_len += 1
     endif
 
-    let pos = getpos('.')
     let winheight = winheight(0)
 
     silent! execute 'resize' min([max_len, context.winheight])
@@ -373,13 +388,15 @@ function! unite#view#_resize_window() "{{{
   let context.unite__old_winwidth = winwidth(winnr())
 endfunction"}}}
 
+" @vimlint(EVL102, 1, l:max_source_name)
+" @vimlint(EVL102, 1, l:context)
 function! unite#view#_convert_lines(candidates, ...) "{{{
   let quick_match_table = get(a:000, 0, {})
 
   let unite = unite#get_current_unite()
-  let context = unite.context
-  let [max_width, max_source_name] =
-        \ unite#helper#adjustments(winwidth(0)-1, unite.max_source_name, 2)
+  let context = unite#get_context()
+  let [max_width, max_source_name] = unite#helper#adjustments(
+        \ winwidth(0)-1, unite.max_source_name, 2)
   if unite.max_source_name == 0
     let max_width -= 1
   endif
@@ -401,6 +418,8 @@ function! unite#view#_convert_lines(candidates, ...) "{{{
         \ . unite#util#truncate_wrap(v:val.unite__abbr, " . max_width
         \    .  ", (context.truncate ? 0 : max_width/2), '..')")
 endfunction"}}}
+" @vimlint(EVL102, 0, l:max_source_name)
+" @vimlint(EVL102, 0, l:context)
 
 function! unite#view#_do_auto_preview() "{{{
   let unite = unite#get_current_unite()
@@ -414,7 +433,6 @@ function! unite#view#_do_auto_preview() "{{{
   call unite#action#do('preview', [], {})
 
   " Restore window size.
-  let context = unite#get_context()
   if s:has_preview_window()
     call unite#view#_resize_window()
   endif
@@ -564,6 +582,7 @@ function! unite#view#_init_cursor() "{{{
 
   let unite.prev_line = line('.')
   call unite#view#_set_cursor_line()
+  call unite#handlers#_on_cursor_moved()
 endfunction"}}}
 
 function! unite#view#_quit(is_force, ...)  "{{{
@@ -795,7 +814,8 @@ endfunction"}}}
 
 function! unite#view#_get_status_string() "{{{
   return !exists('b:unite') ? '' : ((b:unite.is_async ? '[async] ' : '') .
-        \ join(unite#helper#loaded_source_names_with_args(), ', '))
+        \ join(unite#helper#loaded_source_names_with_args(), ', ')
+        \ . (b:unite.context.path == '' ? '' : ' ['. b:unite.context.path.']'))
 endfunction"}}}
 
 function! unite#view#_add_previewed_buffer_list(bufnr) "{{{

@@ -60,7 +60,7 @@ let s:kind.action_table.delete = {
       \ 'is_quit' : 0,
       \ }
 function! s:kind.action_table.delete.func(candidates) "{{{
-  for candidate in sort(a:candidates, 's:compare')
+  for _ in sort(a:candidates, 's:compare')
     close
   endfor
 endfunction"}}}

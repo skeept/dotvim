@@ -90,10 +90,36 @@ function! s:make_cache(filetype) "{{{
 endfunction"}}}
 
 function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
-  if !exists('g:neocomplete#sources#dictionary#dictionaries')
+  if !neocomplete#is_enabled()
     call neocomplete#initialize()
   endif
 
+  let filetype = a:filetype
+  if filetype == ''
+    let filetype = neocomplete#get_context_filetype(1)
+  endif
+
+  let dictionaries =
+        \ neocomplete#sources#dictionary#get_dictionaries(filetype)
+
+  let s:async_dictionary_list[filetype] = []
+
+  let pattern = neocomplete#get_keyword_pattern(filetype, s:source.name)
+  for dictionary in split(dictionaries, ',')
+    let dictionary = neocomplete#util#substitute_path_separator(
+          \ fnamemodify(dictionary, ':p'))
+    if filereadable(dictionary)
+      call neocomplete#print_debug('Make cache dictionary: ' . dictionary)
+      call add(s:async_dictionary_list[filetype], {
+            \ 'filename' : dictionary,
+            \ 'cachename' : neocomplete#cache#async_load_from_file(
+            \       'dictionary_cache', dictionary, pattern, 'D')
+            \ })
+    endif
+  endfor
+endfunction"}}}
+
+function! neocomplete#sources#dictionary#get_dictionaries(filetype) "{{{
   let filetype = a:filetype
   if filetype == ''
     let filetype = neocomplete#get_context_filetype(1)
@@ -115,21 +141,7 @@ function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
     endif
   endif
 
-  let s:async_dictionary_list[filetype] = []
-
-  let pattern = neocomplete#get_keyword_pattern(filetype, s:source.name)
-  for dictionary in split(dictionaries, ',')
-    let dictionary = neocomplete#util#substitute_path_separator(
-          \ fnamemodify(dictionary, ':p'))
-    if filereadable(dictionary)
-      call neocomplete#print_debug('Make cache dictionary: ' . dictionary)
-      call add(s:async_dictionary_list[filetype], {
-            \ 'filename' : dictionary,
-            \ 'cachename' : neocomplete#cache#async_load_from_file(
-            \       'dictionary_cache', dictionary, pattern, 'D')
-            \ })
-    endif
-  endfor
+  return dictionaries
 endfunction"}}}
 
 let &cpo = s:save_cpo

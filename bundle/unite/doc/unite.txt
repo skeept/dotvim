@@ -453,6 +453,13 @@ g:unite_source_file_ignore_pattern	*g:unite_source_file_ignore_pattern*
 
 		Refer to autoload/unite/sources/file.vim for the default value.
 
+					*g:unite_source_file_async_command*
+g:unite_source_file_async_command
+		Specify the filelist command and arguments in file/async
+		source.
+
+		The default value is "ls -a".
+
 g:unite_source_bookmark_directory	*g:unite_source_bookmark_directory*
 		Specify the directory where |unite-source-bookmark| writes
 		its bookmarks.
@@ -1052,9 +1059,6 @@ Normal mode mappings.
 				*<Plug>(unite_toggle_transpose_window)*
 <Plug>(unite_toggle_transpose_window)
 		Change the unite buffer's split direction.
-
-<Plug>(unite_narrowing_path)			*<Plug>(unite_narrowing_path)*
-		Narrowing candidates by candidate path (or word).
 
 				*<Plug>(unite_narrowing_input_history)*
 <Plug>(unite_narrowing_input_history)
@@ -1728,6 +1732,10 @@ the context dictionary.
 		-input={input-text}
 		Specify an initial narrowing text.  The default value is ''.
 
+						*unite-options-path*
+		-path={input-text}
+		Specify an initial narrowing path.  The default value is ''.
+
 						*unite-options-prompt*
 		-prompt={prompt-text}
 		Specify the prompt.  The default value is '> '.
@@ -1821,6 +1829,10 @@ the context dictionary.
 						*unite-options-auto-resize*
 		-auto-resize
 		Auto resize unite buffer height by candidates number.
+
+						*unite-options-no-resize*
+		-no-resize
+		Do not resize the unite buffer after opening it.
 
 						*unite-options-toggle*
 		-toggle
@@ -1964,6 +1976,9 @@ file/new	Nominates a new input file as a candidate.
 
 		Source arguments:
 		1. the file/directory path.
+
+						*unite-source-file/async*
+file/async	Similar to |unite-source-file|, but get files asynchronously.
 
 						*unite-source-file_rec*
 file_rec	Gather files recursive and nominates all directory or file

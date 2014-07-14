@@ -189,6 +189,7 @@ endfunction"}}}
 function! s:initialize_default() "{{{
   let s:default_context = {
         \ 'input' : '',
+        \ 'path' : '',
         \ 'start_insert' : 0,
         \ 'complete' : 0,
         \ 'script' : 0,
@@ -211,6 +212,7 @@ function! s:initialize_default() "{{{
         \ 'temporary' : 0,
         \ 'verbose' : 0,
         \ 'auto_resize' : 0,
+        \ 'resize' : 1,
         \ 'toggle' : 0,
         \ 'quick_match' : 0,
         \ 'create' : 0,

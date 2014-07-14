@@ -75,6 +75,7 @@ function! unite#start#standard(sources, ...) "{{{
   let current_unite = unite#variables#current_unite()
   let current_unite.last_input = context.input
   let current_unite.input = context.input
+  let current_unite.last_path = context.path
   call unite#candidates#_recache(context.input, context.is_redraw)
 
   if !current_unite.is_async &&
@@ -97,8 +98,6 @@ function! unite#start#standard(sources, ...) "{{{
   call unite#init#_unite_buffer()
 
   call unite#variables#disable_current_unite()
-
-  let unite = unite#get_current_unite()
 
   setlocal modifiable
 
@@ -140,6 +139,9 @@ function! unite#start#temporary(sources, ...) "{{{
     let context.unite__old_buffer_info = []
   endif
 
+  let context.input = ''
+  let context.path = ''
+
   let new_context = get(a:000, 0, {})
 
   " Overwrite context.
@@ -150,7 +152,6 @@ function! unite#start#temporary(sources, ...) "{{{
 
   let context.temporary = 1
   let context.unite__direct_switch = 1
-  let context.input = ''
   let context.auto_preview = 0
   let context.auto_highlight = 0
   let context.unite__is_vimfiler = 0
@@ -264,7 +265,6 @@ function! unite#start#get_vimfiler_candidates(sources, ...) "{{{
   let unite_save = unite#get_current_unite()
 
   try
-    let unite = unite#get_current_unite()
     let context = get(a:000, 0, {})
     let context = unite#init#_context(context,
           \ unite#helper#get_source_names(a:sources))
@@ -342,8 +342,8 @@ function! unite#start#resume(buffer_name, ...) "{{{
 
   let new_context = get(a:000, 0, {})
   " Generic no.
-  for [option, value] in filter(items(new_context),
-        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]")
+  for option in map(filter(items(new_context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]"), "v:val[0]")
     let new_context[option[3:]] = 0
   endfor
   call extend(context, new_context)
@@ -419,6 +419,7 @@ function! s:get_candidates(sources, context) "{{{
   " Caching.
   let current_unite.last_input = a:context.input
   let current_unite.input = a:context.input
+  let current_unite.last_path = a:context.path
   call unite#set_current_unite(current_unite)
   call unite#set_context(a:context)
 

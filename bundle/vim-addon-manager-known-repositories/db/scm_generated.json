@@ -3783,6 +3783,10 @@
     "type": "hg",
     "url": "https://bitbucket.org/atimholt/spiffy_foldtext"
   },
+  "4923": {
+    "type": "git",
+    "url": "git://github.com/gioele/vim-autoswap"
+  },
   "4926": {
     "type": "git",
     "url": "git://github.com/justmao945/vim-clang"
@@ -3866,6 +3870,42 @@
   "4973": {
     "type": "git",
     "url": "git://github.com/edkolev/erlang-motions.vim"
+  },
+  "4974": {
+    "type": "git",
+    "url": "git://github.com/othree/yajs.vim"
+  },
+  "4975": {
+    "type": "git",
+    "url": "git://github.com/lambdalisue/unite-linephrase"
+  },
+  "4976": {
+    "type": "git",
+    "url": "git://github.com/lambdalisue/vim-gista"
+  },
+  "4977": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-textobj-delimited"
+  },
+  "4978": {
+    "type": "git",
+    "url": "https://tpo.pe/vim/fireplace.git"
+  },
+  "4979": {
+    "type": "git",
+    "url": "git://github.com/berdandy/AnsiEsc.vim"
+  },
+  "4980": {
+    "type": "git",
+    "url": "git://github.com/zhchang/quick_file"
+  },
+  "4981": {
+    "type": "git",
+    "url": "git://github.com/sergey-vlasov/JustDo.vim"
+  },
+  "4983": {
+    "type": "git",
+    "url": "git://github.com/bbchung/clighter"
   },
   "521": {
     "type": "git",

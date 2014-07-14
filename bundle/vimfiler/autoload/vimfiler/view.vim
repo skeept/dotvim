@@ -74,6 +74,7 @@ function! vimfiler#view#_force_redraw_screen(...) "{{{
   else
     sandbox let files = eval(s:Cache.readfile(
           \ cache_dir, b:vimfiler.current_dir)[0])
+    let files = vimfiler#helper#_sort_files(files)
   endif
 
   " Use matcher_glob.
@@ -100,11 +101,11 @@ function! vimfiler#view#_redraw_screen(...) "{{{
   let is_all = get(a:000, 0, 0)
 
   let is_switch = &filetype !=# 'vimfiler'
+  let save_winnr = winnr()
   if is_switch
     " Switch vimfiler.
     let vimfiler = vimfiler#get_current_vimfiler()
 
-    let save_winnr = winnr()
     let winnr = bufwinnr(vimfiler.bufnr)
     if winnr < 0
       " Not vimfiler window.
@@ -378,7 +379,6 @@ endfunction"}}}
 function! vimfiler#view#_get_max_len(files) "{{{
   let columns = (b:vimfiler.context.simple) ? [] : b:vimfiler.columns
 
-  let start = 0
   for column in columns
     let column.vimfiler__length = column.length(
           \ a:files, b:vimfiler.context)

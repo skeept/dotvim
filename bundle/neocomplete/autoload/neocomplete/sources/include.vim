@@ -278,9 +278,7 @@ function! s:get_buffer_include_files(bufnumber) "{{{
         \ getbufvar(a:bufnumber, '&path'))
   let expr = get(g:neocomplete#sources#include#exprs, filetype,
         \ getbufvar(a:bufnumber, '&includeexpr'))
-  if has_key(g:neocomplete#sources#include#suffixes, filetype)
-    let suffixes = &l:suffixesadd
-  endif
+  let suffixes = &l:suffixesadd
 
   " Change current directory.
   let cwd_save = getcwd()
@@ -365,6 +363,10 @@ function! s:initialize_include(filename, filetype) "{{{
         \ }
 endfunction"}}}
 function! neocomplete#sources#include#make_cache(bufname) "{{{
+  if !neocomplete#is_enabled()
+    call neocomplete#initialize()
+  endif
+
   let bufnumber = (a:bufname == '') ? bufnr('%') : bufnr(a:bufname)
   if has_key(s:async_include_cache, bufnumber)
         \ && filereadable(s:async_include_cache[bufnumber].cache_name)

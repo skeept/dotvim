@@ -522,7 +522,7 @@ function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
       let child_index = 0
       let children = exists('*vimproc#readdir') ?
             \ vimproc#readdir(file) :
-            \ unite#util#glob(file.'/*') + unite#util#glob(file.'/.*')
+            \ unite#util#glob(file.'/*')
       for child in children
         let child = substitute(child, '\/$', '', '')
         let child_index += 1
@@ -607,8 +607,7 @@ function! s:init_continuation(context, directory) "{{{
           \ 'rest' : [],
           \ 'directory' : a:directory, 'end' : 1,
           \ }
-  elseif a:context.is_redraw
-        \ || !has_key(continuation, a:directory)
+  else
     let a:context.is_async = 1
 
     let continuation[a:directory] = {
@@ -628,7 +627,7 @@ function! s:write_cache(context, directory, files) "{{{
   let cache_dir = unite#get_data_directory() . '/rec/' .
         \ (a:context.source__is_directory ? 'directory' : 'file')
 
-  if g:unite_source_rec_min_cache_files > 0
+  if g:unite_source_rec_min_cache_files >= 0
         \ && !unite#util#is_sudo()
         \ && len(a:files) >
         \ g:unite_source_rec_min_cache_files
