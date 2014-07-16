@@ -90,7 +90,7 @@ function! s:source.hooks.on_post_filter(context) "{{{
 endfunction"}}}
 
 function! s:source.gather_candidates(context) "{{{
-  call s:check_source()
+  call s:check_async_cache()
 
   let keyword_list = []
   for source in s:get_sources_list()
@@ -109,7 +109,9 @@ endfunction"}}}
 
 function! neocomplete#sources#buffer#make_cache_current_line() "{{{
   " let start = reltime()
-  call s:make_cache_current_buffer()
+  if line('$') < 1500
+    call s:make_cache_current_buffer()
+  endif
   " echomsg reltimestr(reltime(start))
 endfunction"}}}
 
@@ -198,8 +200,14 @@ function! s:make_cache_buffer(srcname) "{{{
 
   call neocomplete#print_debug('make_cache_buffer: ' . a:srcname)
 
-  if !s:exists_current_source()
+  if !s:exists_current_source() 
     call s:initialize_source(a:srcname)
+
+    if a:srcname ==# bufnr('%')
+      " Force sync cache
+      call s:make_cache_current_buffer()
+      return
+    endif
   endif
 
   let source = s:buffer_sources[a:srcname]
