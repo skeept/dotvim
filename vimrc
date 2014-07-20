@@ -86,7 +86,7 @@ function! SetupVAM()
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
   VAMAddToActiveAddons argumentative projectile
-  VAMAddToActiveAddons syntastic powershell
+  VAMAddToActiveAddons syntastic powershell fugitive
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack

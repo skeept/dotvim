@@ -530,6 +530,7 @@ function! unite#view#_init_cursor() "{{{
     let unite.is_insert = 1
 
     if is_restore && unite.is_resume
+          \ && positions[key].pos[1] != unite.prompt_linenr
       " Restore position.
       call setpos('.', positions[key].pos)
       call cursor(0, 1)
