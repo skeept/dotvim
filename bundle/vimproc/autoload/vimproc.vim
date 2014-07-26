@@ -106,7 +106,7 @@ endfunction
 
 let g:vimproc#dll_path =
       \ vimproc#util#iconv(
-      \ vimproc#util#substitute_path_separator(g:vimproc#dll_path),
+      \ vimproc#util#expand(g:vimproc#dll_path),
       \ &encoding, vimproc#util#termencoding())
 
 " Backward compatibility.
@@ -425,7 +425,8 @@ endfunction"}}}
 
 function! vimproc#fopen(path, flags, ...) "{{{
   let mode = get(a:000, 0, 0644)
-  let fd = s:vp_file_open(a:path, a:flags, mode)
+  let fd = s:vp_file_open((s:is_null_device(a:path)
+        \ ? s:null_device : a:path), a:flags, mode)
   let proc = s:fdopen(fd, 'vp_file_close', 'vp_file_read', 'vp_file_write')
   return proc
 endfunction"}}}
@@ -593,6 +594,12 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
   return proc
 endfunction"}}}
 
+let s:null_device = vimproc#util#is_windows() ? 'NUL' : '/dev/null'
+
+function! s:is_null_device(filename)
+  return a:filename ==# '/dev/null'
+endfunction
+
 function! s:is_pseudo_device(filename) "{{{
   if vimproc#util#is_windows() && (
     \    a:filename ==# '/dev/stdin'
@@ -602,7 +609,6 @@ function! s:is_pseudo_device(filename) "{{{
   endif
 
   return a:filename == ''
-        \ || a:filename ==# '/dev/null'
         \ || a:filename ==# '/dev/clip'
         \ || a:filename ==# '/dev/quickfix'
 endfunction"}}}
@@ -709,7 +715,7 @@ function! vimproc#write(filename, string, ...) "{{{
   let filename = a:filename =~ '^>' ?
         \ a:filename[1:] : a:filename
 
-  if filename ==# '/dev/null'
+  if s:is_null_device(filename)
     " Nothing.
   elseif filename ==# '/dev/clip'
     " Write to clipboard.
@@ -980,10 +986,8 @@ function! s:garbage_collect(is_force) "{{{
   for pid in values(s:bg_processes)
     " Check processes.
     try
-      " @vimlint(EVL102, 0, l:status)
-      let [cond, status] = s:libcall('vp_waitpid', [pid])
-      " @vimlint(EVL102, 1, l:status)
-      " echomsg string([pid, cond, status])
+      let [cond, _] = s:libcall('vp_waitpid', [pid])
+      " echomsg string([pid, cond, _])
       if cond !=# 'run' || a:is_force
         if cond !=# 'exit'
           " Kill process.
@@ -1503,9 +1507,10 @@ function! s:waitpid(pid)
       call s:libcall('vp_close_handle', [a:pid])
     endif
 
-    let s:last_status = status
+    let s:last_status = str2nr(status)
   catch
     let [cond, status] = ['error', '0']
+    let s:last_status = -1
   endtry
 
   return [cond, str2nr(status)]

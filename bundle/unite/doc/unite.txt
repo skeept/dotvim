@@ -1053,7 +1053,7 @@ Normal mode mappings.
 		Narrows with inputting directory name.
 
 <Plug>(unite_delete_backward_path)	*<Plug>(unite_delete_backward_path)*
-		Deletes a path upward.  Refer to
+		Deletes a narrowing text or a path upward.  Refer to
 		|i_<Plug>(unite_delete_backward_path)|.
 
 				*<Plug>(unite_toggle_transpose_window)*
@@ -2324,12 +2324,26 @@ openable	An interface that can open.  This doesn't require any keys,
 						*unite-kind-cdable*
 cdable		An interface that can change the working directory.
 
-			action__directory	(String)	(Required)
+			action__directory	(String)	(Optional)
 				The target directory.
 
+						*unite-kind-file_base*
+file_base	An interface for file operations.
+
+			action__path		(String)	(Required)
+				The path of the target directory.
+
+						*unite-kind-file_vimfiler_base*
+file_vimfiler_base
+		An interface for vimfiler file operations.
+
+			action__path		(String)	(Required)
+				The path of the target directory.
+
 						*unite-kind-file*
-file		An interface for files.  This kind inherits cdable, uri
-		and openable, so this requires kinds that they require.
+file		An interface for files.  This kind inherits cdable, file_base,
+		file_vimfiler_base, uri and openable, so this requires kinds
+		that they require.
 
 			action__path		(String)	(Required)
 				The path of the target directory.

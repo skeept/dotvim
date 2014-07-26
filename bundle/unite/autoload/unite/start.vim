@@ -147,9 +147,6 @@ function! unite#start#temporary(sources, ...) "{{{
   " Overwrite context.
   let context = extend(context, new_context)
 
-  let default_context = extend(copy(unite#variables#default_context()),
-        \ unite#custom#get_profile('default', 'context'))
-
   let context.temporary = 1
   let context.unite__direct_switch = 1
   let context.auto_preview = 0
@@ -161,7 +158,6 @@ function! unite#start#temporary(sources, ...) "{{{
   let context.unite__is_resize = 0
   let context.unite__is_restart = 0
   let context.quick_match = 0
-  let context.start_insert = get(default_context, 'start_insert', 0)
 
   if context.script
     " Set buffer-name automatically.
@@ -283,8 +279,6 @@ function! unite#start#get_vimfiler_candidates(sources, ...) "{{{
             \ "v:val.action__path =~# '[^\\x00-\\x7f]'")
         let item.action__path = unite#util#iconv(
               \ item.action__path, 'utf-8-mac', &encoding)
-        let item.action__directory = unite#util#iconv(
-              \ item.action__directory, 'utf-8-mac', &encoding)
         let item.word = unite#util#iconv(item.word, 'utf-8-mac', &encoding)
         let item.abbr = unite#util#iconv(item.abbr, 'utf-8-mac', &encoding)
         let item.vimfiler__filename = unite#util#iconv(
