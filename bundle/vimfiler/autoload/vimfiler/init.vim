@@ -74,7 +74,7 @@ let g:vimfiler_ignore_pattern =
 let g:vimfiler_expand_jump_to_first_child =
       \ get(g:, 'vimfiler_expand_jump_to_first_child', 1)
 let g:vimfiler_restore_alternate_file =
-      \ get(g:, 'vimfiler_restore_alternate_file', 0)
+      \ get(g:, 'vimfiler_restore_alternate_file', 1)
 
 let g:vimfiler_execute_file_list =
       \ get(g:, 'vimfiler_execute_file_list', {})
@@ -259,6 +259,8 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
     " Change current directory.
     call vimfiler#mappings#_change_vim_current_dir()
   endif
+
+  call vimfiler#mappings#cd(b:vimfiler.current_dir)
 endfunction"}}}
 function! vimfiler#init#_vimfiler_file(path, lines, dict) "{{{1
   " Set current unite.
@@ -404,6 +406,7 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
   let search_path = fnamemodify(bufname('%'), ':p')
 
   let context = vimfiler#initialize_context(a:context)
+  let context.alternate_buffer = bufnr('%')
 
   if bufwinnr(a:bufnr) < 0
     if context.split
