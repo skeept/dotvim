@@ -132,15 +132,6 @@ function! s:source_file_rec.hooks.on_init(args, context) "{{{
   let a:context.source__is_directory = 0
   call s:on_init(a:args, a:context)
 endfunction"}}}
-function! s:source_file_rec.hooks.on_post_filter(args, context) "{{{
-  let directory = unite#util#substitute_path_separator(
-        \ fnamemodify(a:context.source__directory, ':p'))
-  for candidate in filter(a:context.candidates,
-        \ "v:val.action__path !=# directory")
-    let candidate.action__directory =
-          \ unite#util#path2directory(candidate.action__path)
-  endfor
-endfunction"}}}
 
 function! s:source_file_rec.vimfiler_check_filetype(args, context) "{{{
   let path = unite#util#substitute_path_separator(
@@ -470,8 +461,8 @@ function! s:get_path(args, context) "{{{
   let args = unite#helper#parse_project_bang(a:args)
   let directory = get(args, 0, '')
   if directory == ''
-    let directory = isdirectory(a:context.input) ?
-          \ a:context.input : getcwd()
+    let directory = isdirectory(a:context.path) ?
+          \ a:context.path : getcwd()
   endif
 
   if a:context.unite__is_restart

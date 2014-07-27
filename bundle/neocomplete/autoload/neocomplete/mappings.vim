@@ -60,16 +60,14 @@ function! neocomplete#mappings#close_popup() "{{{
   let neocomplete.complete_str = ''
   let neocomplete.skip_next_complete = 2
 
-  return pumvisible() ? "\<C-y>"
-        \ . (&l:indentexpr != '' ? "\<C-f>" : '') : ''
+  return pumvisible() ? "\<C-y>" : ''
 endfunction
 "}}}
 function! neocomplete#mappings#cancel_popup() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.skip_next_complete = 1
 
-  return pumvisible() ? "\<C-e>"
-        \ . (&l:indentexpr != '' ? "\<C-f>" : '') : ''
+  return pumvisible() ? "\<C-e>" : ''
 endfunction
 "}}}
 
@@ -178,19 +176,6 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
 
   " Set function.
   let &l:completefunc = 'neocomplete#complete#sources_manual_complete'
-
-  " Start complete.
-  return "\<C-x>\<C-u>\<C-r>=neocomplete#mappings#popup_post()\<CR>"
-endfunction"}}}
-
-function! neocomplete#mappings#start_manual_complete_list(complete_pos, complete_str, candidates) "{{{
-  let neocomplete = neocomplete#get_current_neocomplete()
-  let [neocomplete.complete_pos,
-        \ neocomplete.complete_str, neocomplete.candidates] =
-        \ [a:complete_pos, a:complete_str, a:candidates]
-
-  " Set function.
-  let &l:completefunc = 'neocomplete#complete#auto_complete'
 
   " Start complete.
   return "\<C-x>\<C-u>\<C-r>=neocomplete#mappings#popup_post()\<CR>"
