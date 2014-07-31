@@ -119,8 +119,19 @@ function! neosnippet#mappings#_expand_target_trigger(trigger) "{{{
 
   call cursor(line, col)
 
-  call neosnippet#view#_expand(
-        \ neosnippet#util#get_cur_text(). ' ', col, a:trigger)
+  if col == 1
+    let cur_text = a:trigger
+  else
+    let cur_text = neosnippet#util#get_cur_text()
+    let cur_text = cur_text[: col-2] . a:trigger . cur_text[col :]
+  endif
+
+  call neosnippet#view#_expand(cur_text, col, a:trigger)
+
+  if !neosnippet#mappings#jumpable()
+    call cursor(0, col('.') - 1)
+    stopinsert
+  endif
 endfunction"}}}
 
 function! s:snippets_expand(cur_text, col) "{{{
