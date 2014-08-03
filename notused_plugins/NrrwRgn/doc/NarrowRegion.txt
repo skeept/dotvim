@@ -328,14 +328,6 @@ changes in the narrowed window (using a |CursorMoved| autocommand).
 Note: that this might slow down scrolling and cursor movement a bit.
 
 (default: 0)
-------------------------------------------------------------------------------
-If you want the original file to be written, whenever the narrowed window is
-written to the original file, set the variable g:nrrw_rgn_write_on_sync, e.g.
-in your |.vimrc| >
-
-    let g:nrrw_rgn_write_on_sync = 1
-<
-(default: 0)
 ----------------------------------------------------------------------------
                                                  *NrrwRgn-hook*  *NR-hooks*
 
@@ -366,6 +358,21 @@ This will execute the commands in the narrowed window: >
 and before writing the changes back, it'll execute: >
 
     :%UnArrangeCol
+
+Note: These hooks are executed in the narrowed window (i.e. after creating the
+narrowed window and its content and before writing the changes back to the
+original buffer).
+
+A third hook 'b:nrrw_aucmd_written' is provided, when the data is written back
+in the original window. This allows to execute scripts, whenever the data is
+written back in the original window. For example, consider you want to write
+the original buffer whenever the narrowed window is written back to the
+original window. You can therefore set: >
+    
+    :let b:nrrw_aucmd_written = ':update'
+<
+This will write the original buffer, whenever it was modified after writing
+the changes from the narrowed window back.
 
 2.4 NrrwRgn functions                                    *NrrwRgn-func*
 ---------------------
@@ -426,6 +433,10 @@ looking at my Amazon whishlist: http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
   (issue #29, reported by fmorales, thanks!)
 - <Leader><Space> Toggles the Narrowed Window Size (idea by David Fishburn,
   thanks!)
+- New hook b:nrrw_aucmd_written, to be executed, whenever the narrowed info
+  has been written back into the original buffer.
+- g:nrrw_rgn_write_on_sync is being deprecated in favor of using the newly
+  "written" hook
 0.32 Mar 27, 2014 {{{1
 - hooks could corrupt the narrowed buffer, if it wasn't closed (reported by
   jszakemeister https://github.com/chrisbra/NrrwRgn/issues/19, thanks!)
