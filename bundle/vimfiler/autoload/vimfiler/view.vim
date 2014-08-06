@@ -26,9 +26,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let g:vimfiler_draw_files_limit =
-      \ get(g:, 'vimfiler_draw_files_limit', 0)
-
 let g:vimfiler_min_cache_files =
       \ get(g:, 'vimfiler_min_cache_files', 100)
 
@@ -98,8 +95,6 @@ function! vimfiler#view#_force_redraw_screen(...) "{{{
   call vimfiler#view#_redraw_screen()
 endfunction"}}}
 function! vimfiler#view#_redraw_screen(...) "{{{
-  let is_all = get(a:000, 0, 0)
-
   let is_switch = &filetype !=# 'vimfiler'
   let save_winnr = winnr()
   if is_switch
@@ -139,9 +134,7 @@ function! vimfiler#view#_redraw_screen(...) "{{{
 
   let b:vimfiler.winwidth = (winwidth(0)+1)/2*2
 
-  let b:vimfiler.current_files = (is_all || g:vimfiler_draw_files_limit <= 0) ?
-        \ b:vimfiler.all_files : b:vimfiler.all_files[ :
-        \      max([g:vimfiler_draw_files_limit, winheight(0) * 2]) - 1]
+  let b:vimfiler.current_files = b:vimfiler.all_files
 
   setlocal modifiable
 
@@ -219,13 +212,17 @@ function! s:redraw_prompt() "{{{
     return
   endif
 
-  let mask = !b:vimfiler.is_visible_ignore_files
-        \ && b:vimfiler.current_mask == '' ?
+  let mask = (!b:vimfiler.is_visible_ignore_files
+        \      && b:vimfiler.current_mask == '') ?
         \ '' : '[' . (b:vimfiler.is_visible_ignore_files ? '.:' : '')
         \       . b:vimfiler.current_mask . ']'
 
-  let prefix = (b:vimfiler.is_safe_mode ? '[safe] ' : '') .
-        \ (b:vimfiler.source ==# 'file' ? '' : b:vimfiler.source.':')
+  let sort = (b:vimfiler.local_sort_type ==# g:vimfiler_sort_type) ?
+        \ '' : ' <' . b:vimfiler.local_sort_type . '>'
+
+  let safe = (b:vimfiler.is_safe_mode) ? ' *safe*' : ''
+
+  let prefix = (b:vimfiler.source ==# 'file') ? '' : b:vimfiler.source.':'
 
   let dir = b:vimfiler.current_dir
   if b:vimfiler.source ==# 'file'
@@ -242,7 +239,7 @@ function! s:redraw_prompt() "{{{
   if dir !~ '/$'
     let dir .= '/'
   endif
-  let b:vimfiler.status = prefix .  dir . mask
+  let b:vimfiler.status = prefix .  dir . mask . sort . safe
 
   let context = vimfiler#get_context()
 

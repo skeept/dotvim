@@ -85,7 +85,7 @@ function! s:KeyMap.Invoke(key)
     "is in first
     "
     "TODO: remove this check when the vim bug is fixed
-    if !nerdtree#treeExistsForBuf()
+    if !g:NERDTree.ExistsForBuf()
         return {}
     endif
 
@@ -134,8 +134,14 @@ endfunction
 
 "FUNCTION: KeyMap.Create(options) {{{1
 function! s:KeyMap.Create(options)
-    let newKeyMap = copy(self)
     let opts = extend({'scope': 'all', 'quickhelpText': ''}, copy(a:options))
+
+    "dont override other mappings unless the 'override' option is given
+    if get(opts, 'override', 0) == 0 && !empty(s:KeyMap.FindFor(opts['key'], opts['scope']))
+        return
+    end
+
+    let newKeyMap = copy(self)
     let newKeyMap.key = opts['key']
     let newKeyMap.quickhelpText = opts['quickhelpText']
     let newKeyMap.callback = opts['callback']

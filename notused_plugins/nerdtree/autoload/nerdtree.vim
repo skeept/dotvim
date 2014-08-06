@@ -74,10 +74,11 @@ function! nerdtree#loadClassFiles()
     runtime lib/nerdtree/tree_dir_node.vim
     runtime lib/nerdtree/opener.vim
     runtime lib/nerdtree/creator.vim
-    runtime lib/nerdtree/refresh_notifier.vim
     runtime lib/nerdtree/flag_set.vim
     runtime lib/nerdtree/nerdtree.vim
     runtime lib/nerdtree/ui.vim
+    runtime lib/nerdtree/event.vim
+    runtime lib/nerdtree/notifier.vim
 endfunction
 
 " FUNCTION: nerdtree#postSourceActions() {{{2
@@ -92,18 +93,6 @@ endfunction
 "FUNCTION: nerdtree#runningWindows(dir) {{{2
 function! nerdtree#runningWindows()
     return has("win16") || has("win32") || has("win64")
-endfunction
-
-" Function: nerdtree#treeExistsForBuffer()   {{{2
-" Returns 1 if a nerd tree root exists in the current buffer
-function! nerdtree#treeExistsForBuf()
-    return exists("b:NERDTreeRoot")
-endfunction
-
-" Function: nerdtree#treeExistsForTab()   {{{2
-" Returns 1 if a nerd tree root exists in the current tab
-function! nerdtree#treeExistsForTab()
-    return exists("t:NERDTreeBufName")
 endfunction
 
 "FUNCTION: nerdtree#treeMarkupReg(dir) {{{2
@@ -127,12 +116,6 @@ endfunction
 
 " SECTION: View Functions {{{1
 "============================================================
-"
-" FUNCTION: nerdtree#chRoot(node) {{{2
-" changes the current root to the selected one
-function! nerdtree#chRoot(node)
-    call s:chRoot(a:node)
-endfunction
 
 "FUNCTION: nerdtree#closeTree() {{{2
 "Closes the primary NERD tree window for this tab

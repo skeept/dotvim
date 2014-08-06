@@ -1,5 +1,7 @@
 " Location:     plugin/projectionist.vim
 " Author:       Tim Pope <http://tpo.pe/>
+" Version:      1.0
+" GetLatestVimScripts: 4989 1 :AutoInstall: projectionist.vim
 
 if exists("g:loaded_projectionist") || v:version < 700 || &cp
   finish
@@ -7,9 +9,8 @@ endif
 let g:loaded_projectionist = 1
 
 if !exists('g:projectionist_heuristics')
-  let g:projectionist_heuristics = get(g:, 'projectiles', {})
+  let g:projectionist_heuristics = {}
 endif
-let g:projectiles = g:projectionist_heuristics
 
 function! s:has(root, file) abort
   let file = matchstr(a:file, '[^!].*')

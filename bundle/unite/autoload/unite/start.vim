@@ -75,6 +75,7 @@ function! unite#start#standard(sources, ...) "{{{
   let current_unite = unite#variables#current_unite()
   let current_unite.last_input = context.input
   let current_unite.input = context.input
+  let current_unite.last_path = context.path
   call unite#candidates#_recache(context.input, context.is_redraw)
 
   if !current_unite.is_async &&
@@ -146,9 +147,6 @@ function! unite#start#temporary(sources, ...) "{{{
   " Overwrite context.
   let context = extend(context, new_context)
 
-  let default_context = extend(copy(unite#variables#default_context()),
-        \ unite#custom#get_profile('default', 'context'))
-
   let context.temporary = 1
   let context.unite__direct_switch = 1
   let context.auto_preview = 0
@@ -157,10 +155,9 @@ function! unite#start#temporary(sources, ...) "{{{
   let context.default_action = 'default'
   let context.unite__old_winwidth = 0
   let context.unite__old_winheight = 0
-  let context.is_resize = 0
-  let context.is_restart = 0
+  let context.unite__is_resize = 0
+  let context.unite__is_restart = 0
   let context.quick_match = 0
-  let context.start_insert = get(default_context, 'start_insert', 0)
 
   if context.script
     " Set buffer-name automatically.
@@ -282,8 +279,6 @@ function! unite#start#get_vimfiler_candidates(sources, ...) "{{{
             \ "v:val.action__path =~# '[^\\x00-\\x7f]'")
         let item.action__path = unite#util#iconv(
               \ item.action__path, 'utf-8-mac', &encoding)
-        let item.action__directory = unite#util#iconv(
-              \ item.action__directory, 'utf-8-mac', &encoding)
         let item.word = unite#util#iconv(item.word, 'utf-8-mac', &encoding)
         let item.abbr = unite#util#iconv(item.abbr, 'utf-8-mac', &encoding)
         let item.vimfiler__filename = unite#util#iconv(
@@ -418,6 +413,7 @@ function! s:get_candidates(sources, context) "{{{
   " Caching.
   let current_unite.last_input = a:context.input
   let current_unite.input = a:context.input
+  let current_unite.last_path = a:context.path
   call unite#set_current_unite(current_unite)
   call unite#set_context(a:context)
 

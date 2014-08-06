@@ -188,7 +188,7 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
     return
   endif
 
-  if a:context.split || a:context.no_quit || a:context.explorer
+  if a:context.split || !a:context.quit || a:context.explorer
     " Change default mapping.
     nmap <buffer> <TAB> <Plug>(vimfiler_switch_to_other_window)
   else
@@ -326,7 +326,7 @@ function! vimfiler#mappings#do_action(action, ...) "{{{
 
   call s:clear_mark_all_lines()
 
-  if vimfiler.context.quit
+  if vimfiler.context.force_quit
     call s:exit(vimfiler)
   endif
 
@@ -339,7 +339,7 @@ function! vimfiler#mappings#do_switch_action(action) "{{{
   call s:switch()
 
   let context = vimfiler#get_context()
-  if !context.no_quit && buflisted(context.alternate_buffer)
+  if context.quit && buflisted(context.alternate_buffer)
       \ && g:vimfiler_restore_alternate_file
     execute 'buffer' context.alternate_buffer
   endif
@@ -385,10 +385,6 @@ function! vimfiler#mappings#do_dir_action(action, directory, ...) "{{{
   endif
 
   call s:clear_mark_all_lines()
-
-  if vimfiler.context.quit
-    call s:exit(vimfiler)
-  endif
 
   " Execute action.
   call unite#mappings#do_action(a:action, files, context)
@@ -545,7 +541,7 @@ endfunction"}}}
 
 function! s:switch() "{{{
   let context = vimfiler#get_context()
-  if !context.no_quit
+  if context.quit
     return
   endif
 
@@ -1242,7 +1238,8 @@ function! vimfiler#mappings#create_another_vimfiler() "{{{
   let line = line('.')
 
   " Create another vimfiler.
-  let context = deepcopy(vimfiler#get_context())
+  let original_context = deepcopy(vimfiler#get_context())
+  let context = deepcopy(original_context)
   if context.split || context.explorer
     " Note: Horizontal automatically.
     let context.horizontal = 1
@@ -1261,6 +1258,10 @@ function! vimfiler#mappings#create_another_vimfiler() "{{{
   call vimfiler#start(
         \ current_vimfiler.source.':'.
         \ current_vimfiler.current_dir, context)
+
+  " Restore split option.
+  let b:vimfiler.context.split = original_context.split
+
   call cursor(line, 0)
   call vimfiler#helper#_set_cursor()
 
@@ -1280,8 +1281,9 @@ function! vimfiler#mappings#switch_another_vimfiler(...) "{{{
   else
     " Open another vimfiler buffer.
     let current_vimfiler = vimfiler#get_current_vimfiler()
+    let original_context = deepcopy(vimfiler#get_context())
 
-    let context = deepcopy(vimfiler#get_context())
+    let context = deepcopy(original_context)
     let context.split = 1
     let context.double = 0
     let context.direction = 'belowright'
@@ -1293,6 +1295,9 @@ function! vimfiler#mappings#switch_another_vimfiler(...) "{{{
     call vimfiler#init#_switch_vimfiler(
           \ current_vimfiler.another_vimfiler_bufnr,
           \ context, directory)
+
+    " Restore split option.
+    let b:vimfiler.context.split = original_context.split
   endif
 endfunction"}}}
 function! s:sync_with_current_vimfiler() "{{{
@@ -1371,7 +1376,7 @@ function! s:split_edit_file() "{{{
   let context = vimfiler#get_context()
   let winwidth = (winnr('$') != 1) ?
         \ &columns - (winwidth(0)+1)/2*2 :
-        \ (context.winwidth == 0) ?
+        \ (context.winwidth >= 0) ?
         \ &columns / 2 :
         \ &columns - context.winwidth
   call vimfiler#mappings#do_action(g:vimfiler_split_action)
@@ -1779,7 +1784,7 @@ function! s:get_action_current_dir(files) "{{{
     let current_dir = b:vimfiler.source . ':' . current_dir
   endif
   if len(a:files) == 1
-    let current_dir = a:files[0].action__directory
+    let current_dir = unite#helper#get_candidate_directory(a:files[0])
     if a:files[0].vimfiler__is_directory
       let current_dir = vimfiler#util#substitute_path_separator(
             \   fnamemodify(current_dir, ':h'))

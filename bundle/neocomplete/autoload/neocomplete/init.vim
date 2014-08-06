@@ -84,6 +84,8 @@ function! neocomplete#init#_autocmds() "{{{
           \ call neocomplete#handler#_on_write_post()
     autocmd VimLeavePre *
           \ call neocomplete#init#disable()
+    autocmd InsertCharPre *
+          \ call neocomplete#handler#_on_insert_char_pre()
   augroup END
 
   if g:neocomplete#enable_insert_char_pre
@@ -99,8 +101,10 @@ function! neocomplete#init#_autocmds() "{{{
             \ call neocomplete#handler#_restore_update_time()
     augroup END
   else
-    autocmd neocomplete InsertEnter,CursorMovedI *
+    autocmd neocomplete CursorMovedI *
           \ call neocomplete#handler#_do_auto_complete('CursorMovedI')
+    autocmd neocomplete InsertEnter *
+          \ call neocomplete#handler#_do_auto_complete('InsertEnter')
   endif
 
   autocmd neocomplete CompleteDone *
@@ -462,7 +466,7 @@ function! neocomplete#init#_variables() "{{{
         \ 'int-ocaml', 'ocaml')
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#same_filetypes',
-        \ 'int-clj', 'clojure')
+        \ 'int-clj,int-lein', 'clojure')
   call neocomplete#util#set_default_dictionary(
         \ 'g:neocomplete#same_filetypes',
         \ 'int-sml,int-smlsharp', 'sml')
@@ -601,6 +605,7 @@ function! neocomplete#init#_current_neocomplete() "{{{
         \ 'old_cur_text' : '',
         \ 'old_linenr' : line('.'),
         \ 'old_complete_pos' : -1,
+        \ 'old_char' : '',
         \ 'complete_str' : '',
         \ 'complete_pos' : -1,
         \ 'candidates' : [],

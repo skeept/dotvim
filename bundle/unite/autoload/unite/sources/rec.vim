@@ -98,8 +98,7 @@ function! s:source_file_rec.async_gather_candidates(args, context) "{{{
 
   let [continuation.rest, files] =
         \ s:get_files(a:context, continuation.rest,
-        \   1, g:unite_source_rec_unit,
-        \   a:context.source.ignore_pattern)
+        \   1, g:unite_source_rec_unit)
 
   if empty(continuation.rest) || (
         \  g:unite_source_rec_max_cache_files > 0 &&
@@ -132,15 +131,6 @@ endfunction"}}}
 function! s:source_file_rec.hooks.on_init(args, context) "{{{
   let a:context.source__is_directory = 0
   call s:on_init(a:args, a:context)
-endfunction"}}}
-function! s:source_file_rec.hooks.on_post_filter(args, context) "{{{
-  let directory = unite#util#substitute_path_separator(
-        \ fnamemodify(a:context.source__directory, ':p'))
-  for candidate in filter(a:context.candidates,
-        \ "v:val.action__path !=# directory")
-    let candidate.action__directory =
-          \ unite#util#path2directory(candidate.action__path)
-  endfor
 endfunction"}}}
 
 function! s:source_file_rec.vimfiler_check_filetype(args, context) "{{{
@@ -310,7 +300,7 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
 
     if g:unite_source_rec_async_command ==# 'find'
       " Default option.
-      let command .= ' -path ''*/\.*'' -prune -o -type l -print -o -type '
+      let command .= ' -path ''*/\.git/*'' -prune -o -type l -print -o -type '
             \ . (a:context.source__is_directory ? 'd' : 'f') . ' -print'
     endif
   else
@@ -471,11 +461,11 @@ function! s:get_path(args, context) "{{{
   let args = unite#helper#parse_project_bang(a:args)
   let directory = get(args, 0, '')
   if directory == ''
-    let directory = isdirectory(a:context.input) ?
-          \ a:context.input : getcwd()
+    let directory = isdirectory(a:context.path) ?
+          \ a:context.path : getcwd()
   endif
 
-  if a:context.is_restart
+  if a:context.unite__is_restart
     let directory = unite#util#input('Target: ',
           \ directory, 'dir', a:context.source_name)
   endif
@@ -489,7 +479,7 @@ function! s:get_path(args, context) "{{{
 
   return directory
 endfunction"}}}
-function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
+function! s:get_files(context, files, level, max_unit) "{{{
   let continuation_files = []
   let ret_files = []
   let files_index = 0
@@ -497,14 +487,14 @@ function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
   for file in a:files
     let files_index += 1
 
-    if file =~ '/\.\+$' || file =~? a:ignore_pattern
+    if file =~? '/\.\+$\|/\%(\.hg\|\.git\|\.bzr\|\.svn\)/'
       continue
     endif
 
     if isdirectory(file)
       if getftype(file) ==# 'link'
-        let file = s:resolve(file)
-        if file == ''
+        let real_file = s:resolve(file)
+        if real_file == ''
           continue
         endif
       endif
@@ -522,19 +512,19 @@ function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
       let child_index = 0
       let children = exists('*vimproc#readdir') ?
             \ vimproc#readdir(file) :
-            \ unite#util#glob(file.'/*') + unite#util#glob(file.'/.*')
+            \ unite#util#glob(file.'/*')
       for child in children
         let child = substitute(child, '\/$', '', '')
         let child_index += 1
 
-        if child =~ '/\.\+$' || child =~? a:ignore_pattern
+        if child =~? '/\.\+$\|/\%(\.hg\|\.git\|\.bzr\|\.svn\)/'
           continue
         endif
 
         if isdirectory(child)
           if getftype(child) ==# 'link'
-            let child = s:resolve(child)
-            if child == ''
+            let real_file = s:resolve(child)
+            if real_file == ''
               continue
             endif
           endif
@@ -547,7 +537,7 @@ function! s:get_files(context, files, level, max_unit, ignore_pattern) "{{{
           if a:level < 5 && ret_files_len < a:max_unit
             let [continuation_files_child, ret_files_child] =
                   \ s:get_files(a:context, [child], a:level + 1,
-                  \  a:max_unit - ret_files_len, a:ignore_pattern)
+                  \  a:max_unit - ret_files_len)
             let continuation_files += continuation_files_child
 
             if !a:context.source__is_directory
@@ -607,8 +597,7 @@ function! s:init_continuation(context, directory) "{{{
           \ 'rest' : [],
           \ 'directory' : a:directory, 'end' : 1,
           \ }
-  elseif a:context.is_redraw
-        \ || !has_key(continuation, a:directory)
+  else
     let a:context.is_async = 1
 
     let continuation[a:directory] = {

@@ -53,6 +53,13 @@ function! s:common_head(strs)
   return pat == '' ? '' : matchstr(strs[-1], '^\%[' . pat . ']')
 endfunction
 
+" Split to two elements of List. ([left, right])
+" e.g.: s:split3('neocomplcache', 'compl') returns ['neo', 'compl', 'cache']
+function! s:split_leftright(expr, pattern)
+  let [left, _, right] = s:split3(a:expr, a:pattern)
+  return [left, right]
+endfunction
+
 function! s:split3(expr, pattern)
   let ERROR = ['', '', '']
   if a:expr ==# '' || a:pattern ==# ''

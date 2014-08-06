@@ -205,9 +205,11 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     endif
 
     let input = unite#helper#get_input(1)
-    if !context.is_redraw && input ==# unite.last_input
+    if !context.is_redraw
+          \ && input ==# unite.last_input
+          \ && context.path ==# unite.last_path
           \ && !unite.is_async
-          \ && !context.is_resize
+          \ && !context.unite__is_resize
           \ && !a:is_gather_all
       return
     endif
@@ -216,6 +218,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
 
     if context.is_redraw
           \ || input !=# unite.last_input
+          \ || context.path !=# unite.last_path
           \ || unite.is_async
           \ || empty(unite.args)
       " Recaching.
@@ -223,6 +226,7 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     endif
 
     let unite.last_input = input
+    let unite.last_path = context.path
 
     " Redraw.
     call unite#view#_redraw_candidates(is_gather_all)
@@ -330,10 +334,11 @@ function! unite#view#_resize_window() "{{{
   let context = unite#get_context()
   let unite = unite#get_current_unite()
 
-  if winheight(0) + &cmdheight + 2 >= &lines
-        \ && !context.vertical
+  if (winheight(0) + &cmdheight + 2 >= &lines
+        \ && !context.vertical)
+        \ || !context.resize
     " Cannot resize.
-    let context.is_resize = 0
+    let context.unite__is_resize = 0
     return
   endif
 
@@ -341,10 +346,10 @@ function! unite#view#_resize_window() "{{{
         \ && context.unite__old_winheight != 0
         \ && winheight(0) != context.unite__old_winheight
         \ && winwidth(0) != context.unite__old_winwidth
-    " Disabled auto resize.
+    " Disabled resize.
     let context.winwidth = 0
     let context.winheight = 0
-    let context.is_resize = 1
+    let context.unite__is_resize = 1
     return
   endif
 
@@ -364,19 +369,19 @@ function! unite#view#_resize_window() "{{{
       call unite#view#_bottom_cursor()
     endif
 
-    let context.is_resize = winheight != winheight(0)
+    let context.unite__is_resize = winheight != winheight(0)
   elseif context.vertical
         \ && context.unite__old_winwidth  == 0
     execute 'vertical resize' context.winwidth
 
-    let context.is_resize = 1
+    let context.unite__is_resize = 1
   elseif !context.vertical
         \ && (context.unite__old_winheight == 0 || context.auto_preview)
     execute 'resize' context.winheight
 
-    let context.is_resize = 1
+    let context.unite__is_resize = 1
   else
-    let context.is_resize = 0
+    let context.unite__is_resize = 0
   endif
 
   let context.unite__old_winheight = winheight(winnr())
@@ -525,6 +530,7 @@ function! unite#view#_init_cursor() "{{{
     let unite.is_insert = 1
 
     if is_restore && unite.is_resume
+          \ && positions[key].pos[1] != unite.prompt_linenr
       " Restore position.
       call setpos('.', positions[key].pos)
       call cursor(0, 1)
@@ -826,6 +832,9 @@ function! s:clear_previewed_buffer_list() "{{{
   let unite = unite#get_current_unite()
   for bufnr in unite.previewed_buffer_list
     if buflisted(bufnr)
+      if bufnr == bufnr('%')
+        call unite#util#alternate_buffer()
+      endif
       silent execute 'bdelete!' bufnr
     endif
   endfor

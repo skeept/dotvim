@@ -212,6 +212,7 @@ function! s:initialize_default() "{{{
         \ 'temporary' : 0,
         \ 'verbose' : 0,
         \ 'auto_resize' : 0,
+        \ 'resize' : 1,
         \ 'toggle' : 0,
         \ 'quick_match' : 0,
         \ 'create' : 0,
@@ -225,9 +226,6 @@ function! s:initialize_default() "{{{
         \ 'silent' : 0,
         \ 'keep_focus' : 0,
         \ 'auto_quit' : 0,
-        \ 'is_redraw' : 0,
-        \ 'is_restart' : 0,
-        \ 'is_resize' : 0,
         \ 'focus' : 1,
         \ 'multi_line' : 0,
         \ 'resume' : 0,
@@ -245,6 +243,7 @@ function! s:initialize_default() "{{{
         \ 'candidate_icon' : ' ',
         \ 'marked_icon' : '*',
         \ 'cursor_line_time' : '0.10',
+        \ 'is_redraw' : 0,
         \ 'unite__old_buffer_info' : [],
         \ 'unite__direct_switch' : 0,
         \ 'unite__is_interactive' : 1,
@@ -255,6 +254,8 @@ function! s:initialize_default() "{{{
         \ 'unite__disable_hooks' : 0,
         \ 'unite__disable_max_candidates' : 0,
         \ 'unite__not_buffer' : 0,
+        \ 'unite__is_resize' : 0,
+        \ 'unite__is_restart' : 0,
         \ }
 
   " For compatibility(deprecated variables)

@@ -43,16 +43,6 @@ endif"}}}
 
 " Variables "{{{
 let s:current_vimfiler = {}
-
-let s:vimfiler_current_histories = []
-
-let s:vimfiler_options = [
-      \ '-buffer-name=', '-no-quit', '-quit', '-toggle', '-create',
-      \ '-simple', '-double', '-split', '-horizontal', '-direction=',
-      \ '-winheight=', '-winwidth=', '-winminwidth=', '-auto-cd', '-explorer',
-      \ '-reverse', '-project', '-columns=', '-status', '-find', '-tab',
-      \ '-no-focus',
-      \]
 "}}}
 
 " User utility functions. "{{{
@@ -106,9 +96,6 @@ function! vimfiler#set_context(context) "{{{
   endif
 
   return old_context
-endfunction"}}}
-function! vimfiler#get_options() "{{{
-  return copy(s:vimfiler_options)
 endfunction"}}}
 function! vimfiler#start(path, ...) "{{{
   return call('vimfiler#init#_start', [a:path] + a:000)
@@ -177,7 +164,8 @@ function! vimfiler#get_filetype(file) "{{{
   return vimfiler#init#_get_filetype(a:file)
 endfunction"}}}
 function! vimfiler#exists_another_vimfiler() "{{{
-  return bufnr('%') != b:vimfiler.another_vimfiler_bufnr
+  return exists('b:vimfiler')
+        \ && bufnr('%') != b:vimfiler.another_vimfiler_bufnr
         \ && getbufvar(b:vimfiler.another_vimfiler_bufnr,
         \         '&filetype') ==# 'vimfiler'
         \ && bufloaded(b:vimfiler.another_vimfiler_bufnr) > 0
@@ -197,6 +185,9 @@ function! vimfiler#initialize_context(context) "{{{
   return vimfiler#init#_context(a:context)
 endfunction"}}}
 function! vimfiler#get_histories() "{{{
+  if !exists('s:vimfiler_current_histories')
+    let s:vimfiler_current_histories = []
+  endif
   return copy(s:vimfiler_current_histories)
 endfunction"}}}
 function! vimfiler#set_histories(histories) "{{{

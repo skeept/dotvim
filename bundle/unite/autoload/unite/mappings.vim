@@ -87,7 +87,7 @@ function! unite#mappings#define_default_mappings() "{{{
   nnoremap <silent><buffer><expr> <Plug>(unite_do_default_action)
         \ unite#do_action(unite#get_current_unite().context.default_action)
   nnoremap <silent><buffer> <Plug>(unite_delete_backward_path)
-        \ :<C-u>call <SID>normal_delete_backward_path()<CR>
+        \ :<C-u>call <SID>delete_backward_path()<CR>
   nnoremap <silent><buffer> <Plug>(unite_restart)
         \ :<C-u>call <SID>restart()<CR>
   nnoremap <buffer><silent> <Plug>(unite_toggle_mark_all_candidates)
@@ -126,8 +126,8 @@ function! unite#mappings#define_default_mappings() "{{{
         \     col('.')-(len(unite#get_current_unite().prompt)+1)))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_word)
         \ <SID>smart_imap('', "\<C-w>")
-  inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_path)
-        \ <SID>smart_imap('', <SID>delete_backward_path())
+  inoremap <silent><buffer> <Plug>(unite_delete_backward_path)
+        \ <C-o>:<C-u>call <SID>delete_backward_path()<CR>
   inoremap <expr><buffer> <Plug>(unite_select_next_page)
         \ pumvisible() ? "\<PageDown>" : repeat("\<Down>", winheight(0))
   inoremap <expr><buffer> <Plug>(unite_select_previous_page)
@@ -237,9 +237,9 @@ function! unite#mappings#define_default_mappings() "{{{
   " Insert mode key-mappings.
   imap <buffer> <TAB>     <Plug>(unite_choose_action)
   imap <buffer> <C-n>     <Plug>(unite_select_next_line)
-  imap <buffer> <Down>     <Plug>(unite_select_next_line)
+  imap <buffer> <Down>    <Plug>(unite_select_next_line)
   imap <buffer> <C-p>     <Plug>(unite_select_previous_line)
-  imap <buffer> <Up>     <Plug>(unite_select_previous_line)
+  imap <buffer> <Up>      <Plug>(unite_select_previous_line)
   imap <buffer> <C-f>     <Plug>(unite_select_next_page)
   imap <buffer> <C-b>     <Plug>(unite_select_previous_page)
   imap <buffer> <CR>      <Plug>(unite_do_default_action)
@@ -280,7 +280,7 @@ function! unite#mappings#narrowing(word, ...) "{{{
   setlocal modifiable
   let unite = unite#get_current_unite()
 
-  let unite.input .= is_escape ? escape(a:word, ' *') : a:word
+  let unite.input = is_escape ? escape(a:word, ' *') : a:word
   let unite.context.input = unite.input
 
   call unite#handlers#_on_insert_enter()
@@ -353,33 +353,19 @@ function! s:restart() "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
   let context.resume = 0
-  let context.is_restart = 1
+  let context.unite__is_restart = 1
   let sources = map(deepcopy(unite.sources),
         \ 'empty(v:val.args) ? v:val.name : [v:val.name] + v:val.args')
   call unite#force_quit_session()
   call unite#start(sources, context)
 endfunction"}}}
 function! s:delete_backward_path() "{{{
-  let cur_text =
-        \ (mode() ==# 'i' ? (col('.')-1) : col('.')) >= len(getline('.')) ?
-        \      getline('.') :
-        \      matchstr(getline('.'),
-        \         '^.*\%' . col('.') . 'c' . (mode() ==# 'i' ? '' : '.'))
-  let path = matchstr(cur_text[
-        \ len(unite#get_context().prompt):], '[^/ ]*.$')
-  return repeat("\<C-h>", unite#util#strchars(path))
-endfunction"}}}
-function! s:normal_delete_backward_path() "{{{
-  let unite = unite#get_current_unite()
-  let unite.context.input = substitute(unite#helper#get_input(),
-        \ '[^/ ]*.$', '', '')
-
-  if unite.context.prompt_direction ==# 'below'
-    call unite#view#_remove_prompt()
-    call unite#redraw()
-    call unite#view#_redraw_prompt()
+  let context = unite#get_context()
+  if context.input != ''
+    call unite#mappings#narrowing(
+          \ substitute(context.input, '[^/ ]*.$', '', ''), 0)
   else
-    call unite#view#_redraw_prompt()
+    let context.path = substitute(context.path, '[^/ ]*.$', '', '')
     call unite#redraw()
   endif
 endfunction"}}}
@@ -403,7 +389,6 @@ function! s:toggle_mark_all_candidates() "{{{
   call s:redraw_all_candidates()
   call s:toggle_mark_candidates(1, line('$'))
 endfunction"}}}
-" @vimlint(EVL102, 1, l:cnt)
 function! s:toggle_mark_candidates(start, end) "{{{
   if a:start < 0
     " Ignore.
@@ -415,7 +400,7 @@ function! s:toggle_mark_candidates(start, end) "{{{
   let pos = getpos('.')
   try
     call cursor(a:start, 1)
-    for cnt in range(a:start, a:end)
+    for _ in range(a:start, a:end)
       if line('.') == unite.prompt_linenr
         call unite#helper#skip_prompt()
       else
@@ -427,7 +412,6 @@ function! s:toggle_mark_candidates(start, end) "{{{
     call unite#view#_bottom_cursor()
   endtry
 endfunction"}}}
-" @vimlint(EVL102, 0, l:cnt)
 function! s:quick_help() "{{{
   call unite#start_temporary([['mapping', bufnr('%')]], {}, 'mapping-help')
 endfunction"}}}
@@ -504,11 +488,10 @@ function! s:redraw() "{{{
   call unite#clear_message()
   call unite#force_redraw()
 endfunction"}}}
-" @vimlint(EVL102, 1, l:source)
 function! s:rotate_source(is_next) "{{{
   let unite = unite#get_current_unite()
 
-  for source in unite#loaded_sources_list()
+  for _ in unite#loaded_sources_list()
     let unite.sources = a:is_next ?
           \ add(unite.sources[1:], unite.sources[0]) :
           \ insert(unite.sources[: -2], unite.sources[-1])
@@ -520,7 +503,6 @@ function! s:rotate_source(is_next) "{{{
 
   call unite#view#_redraw_candidates()
 endfunction"}}}
-" @vimlint(EVL102, 0, l:source)
 function! s:print_candidate() "{{{
   let candidate = unite#helper#get_current_candidate()
   if empty(candidate)

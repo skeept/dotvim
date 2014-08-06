@@ -129,6 +129,14 @@ function! neocomplete#handler#_on_complete_done() "{{{
   else
     let frequencies[complete_str] += 20
   endif
+
+  " indent line matched by indentkeys
+  for word in filter(map(split(&l:indentkeys, ','),
+        \ "matchstr(v:val, '.*=\\zs.*')"), "v:val != ''")
+    if stridx(complete_str, word) == 0
+      call neocomplete#helper#indent_current_line()
+    endif
+  endfor
 endfunction"}}}
 " @vimlint(EVL102, 0, v:completed_item)
 function! neocomplete#handler#_change_update_time() "{{{
@@ -145,6 +153,28 @@ function! neocomplete#handler#_restore_update_time() "{{{
     " Restore updatetime.
     let &updatetime = neocomplete.update_time_save
   endif
+endfunction"}}}
+function! neocomplete#handler#_on_insert_char_pre() "{{{
+  if neocomplete#is_locked()
+    return
+  endif
+
+  let neocomplete = neocomplete#get_current_neocomplete()
+  if neocomplete.old_char != ' ' && v:char == ' '
+    " Make cache.
+    if neocomplete#helper#is_enabled_source('buffer',
+          \ neocomplete.context_filetype)
+      " Caching current cache line.
+      call neocomplete#sources#buffer#make_cache_current_line()
+    endif
+    if neocomplete#helper#is_enabled_source('member',
+          \ neocomplete.context_filetype)
+      " Caching current cache line.
+      call neocomplete#sources#member#make_cache_current_line()
+    endif
+  endif
+
+  let neocomplete.old_char = v:char
 endfunction"}}}
 
 function! neocomplete#handler#_do_auto_complete(event) "{{{
@@ -164,20 +194,6 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
   if s:is_skip_auto_complete(cur_text)
     let neocomplete.old_cur_text = cur_text
     let neocomplete.old_linenr = line('.')
-
-    if cur_text =~ '^\s*$\|\s\+$'
-      " Make cache.
-      if neocomplete#helper#is_enabled_source('buffer',
-            \ neocomplete.context_filetype)
-        " Caching current cache line.
-        call neocomplete#sources#buffer#make_cache_current_line()
-      endif
-      if neocomplete#helper#is_enabled_source('member',
-            \ neocomplete.context_filetype)
-        " Caching current cache line.
-        call neocomplete#sources#member#make_cache_current_line()
-      endif
-    endif
 
     call neocomplete#print_debug('Skipped.')
     return

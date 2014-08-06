@@ -2,9 +2,9 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Navigation                                        {{{1
+"" Navigation                                                                                                       {{{1
 "
-function! signature#GotoMark( dir, loc, mode )    " {{{2
+function! signature#GotoMark( dir, loc, mode )                                                                    " {{{2
   " Arguments:
   "   dir  = next  : Jump forward
   "          prev  : Jump backward
@@ -34,7 +34,7 @@ function! signature#GotoMark( dir, loc, mode )    " {{{2
 endfunction
 
 
-function! s:GotoMarkByPos( dir )                  " {{{2
+function! s:GotoMarkByPos( dir )                                                                                  " {{{2
   " Description: Jump to next/prev mark by location.
   " Arguments: dir = next : Jump forward
   "                  prev : Jump backward
@@ -59,7 +59,7 @@ function! s:GotoMarkByPos( dir )                  " {{{2
 endfunction
 
 
-function! s:GotoMarkByAlpha( dir )                " {{{2
+function! s:GotoMarkByAlpha( dir )                                                                                " {{{2
   " Description: Jump to next/prev mark by alphabetical order. Direction specified as input argument
 
   let l:used_marks = signature#MarksList( "used", "b" )
@@ -104,7 +104,7 @@ function! s:GotoMarkByAlpha( dir )                " {{{2
 endfunction
 
 
-function! signature#GotoMarker( dir, type )       " {{{2
+function! signature#GotoMarker( dir, type )                                                                       " {{{2
   " Description: Jump to next/prev marker by location.
   " Arguments: dir  = next : Jump forward
   "                   prev : Jump backward
@@ -151,7 +151,7 @@ endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Toggle Marks/Signs                                                                                               {{{1
 "
-function! signature#Input()                       " {{{2
+function! signature#Input()                                                                                       " {{{2
   " Description: Grab input char
 
   call signature#Init()
@@ -174,11 +174,14 @@ function! signature#Input()                       " {{{2
     return s:ToggleMarker( l:char )
   elseif stridx( b:SignatureIncludeMarks, l:char ) >= 0
     return signature#ToggleMark( l:char )
+  else
+    " l:char is probably one of `'[]<>
+    execute 'normal! m' . l:char
   endif
 endfunction
 
 
-function! signature#ToggleMarkAtLine()                    " {{{2
+function! signature#ToggleMarkAtLine()                                                                            " {{{2
   " Description: If no mark on current line, add one. If marks are on the
   " current line, remove one.
   let l:lnum = line('.')
@@ -196,7 +199,7 @@ function! signature#ToggleMarkAtLine()                    " {{{2
 endfunction
 
 
-function! signature#PurgeMarksAtLine()                    " {{{2
+function! signature#PurgeMarksAtLine()                                                                            " {{{2
   " Description: If no mark on current line, add one. If marks are on the
   " current line, remove one.
   let l:lnum = line('.')
@@ -212,7 +215,7 @@ function! signature#PurgeMarksAtLine()                    " {{{2
 endfunction
 
 
-function! signature#ToggleMark( mark )                    " {{{2
+function! signature#ToggleMark( mark )                                                                            " {{{2
   " Description: mark = 'next' : Place new mark on current line else toggle specified mark on current line
   " Arguments:   mark [a-z,A-Z]
 
@@ -260,6 +263,7 @@ function! signature#ToggleMark( mark )                    " {{{2
       " Mark is present on the current line. Remove it and return
       execute 'delmarks ' . l:mark
       call signature#ToggleSign( l:mark, "remove", l:lnum )
+      call signature#ForceGlobalMarkRemoval( l:mark )
       return
 
     else
@@ -285,7 +289,24 @@ function! signature#ToggleMark( mark )                    " {{{2
 endfunction
 
 
-function! signature#PurgeMarks()                  " {{{2
+function! signature#ForceGlobalMarkRemoval( mark )
+  " Description: Edit .viminfo file to forcibly delete Global mark since vim's handling is iffy
+  " Arguments:   mark - The mark to delete
+
+  if a:mark !~# '[A-Z]'
+    return
+  endif
+  if !g:SignatureForceRemoveGlobal
+    return
+  endif
+
+  if has('unix')
+    silent! call system('command sed -i "/^' . "'" . a:mark . '/d" ~/.viminfo > /dev/null' )
+  endif
+endfunction
+
+
+function! signature#PurgeMarks()                                                                                  " {{{2
   " Description: Remove all marks
 
   let l:used_marks = signature#MarksList( "used", "b" )
@@ -299,11 +320,12 @@ function! signature#PurgeMarks()                  " {{{2
   for i in l:used_marks
     silent execute 'delmarks ' . i[0]
     silent call signature#ToggleSign( i[0], "remove", i[1] )
+    call signature#ForceGlobalMarkRemoval(i[0])
   endfor
 endfunction
 
 
-function! s:ToggleMarker( marker )                " {{{2
+function! s:ToggleMarker( marker )                                                                                " {{{2
   " Description: Toggle marker on current line
   " Arguments: marker [!@#$%^&*()]
 
@@ -314,7 +336,7 @@ function! s:ToggleMarker( marker )                " {{{2
 endfunction
 
 
-function! signature#PurgeMarkers(...)             " {{{2
+function! signature#PurgeMarkers(...)                                                                             " {{{2
   " Description: If argument is given, removes marker only of the specified type else all markers are removed
 
   if empty( b:sig_markers ) | return | endif
@@ -338,7 +360,7 @@ function! signature#PurgeMarkers(...)             " {{{2
 endfunction
 
 
-function! signature#Toggle()                      " {{{2
+function! signature#Toggle()                                                                                      " {{{2
   " Description: Toggles and refreshes sign display in the buffer.
 
   call signature#Init()
@@ -368,7 +390,7 @@ endfunction
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"" Misc Functions                                                                                                 {{{1
+"" Misc Functions                                                                                                   {{{1
 "
 function! s:NumericSort(x, y)                                                                                     " {{{2
   return a:x - a:y
@@ -458,7 +480,7 @@ endfunction
 let s:local_marks_nlist = split("abcdefghijklmnopqrstuvwxyz", '\zs')
 
 
-function! signature#LocalMarkList()                                                                                       " {{{2
+function! signature#LocalMarkList()                                                                               " {{{2
   return map(copy(s:local_marks_nlist), '[v:val, line("''" . v:val)]')
 endfunction
 
@@ -473,7 +495,7 @@ function! s:UsedMarks()                                                         
 endfunction
 
 
-function! signature#ListLocalMarks()              " {{{2
+function! signature#ListLocalMarks()                                                                              " {{{2
   " Description: Opens and populates location list with local marks
     call setloclist(0,
                 \filter(

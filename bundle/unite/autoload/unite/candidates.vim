@@ -43,6 +43,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
   let context = unite.context
   let context.is_redraw = a:is_force
   let context.is_changed = a:input !=# unite.last_input
+        \ || context.path !=# unite.last_path
 
   if empty(unite.args)
     if a:input == ''
@@ -226,6 +227,7 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     " Set context.
     let context = source.unite__context
     let context.input = a:context.input
+    let context.path = a:context.path
     let context.source_name = source.name
 
     if source.required_pattern_length > 0
@@ -334,6 +336,9 @@ endfunction"}}}
 
 function! s:get_source_candidates(source) "{{{
   let context = a:source.unite__context
+  let custom_source = get(unite#custom#get().sources, a:source.name, {})
+  let ignore_pattern = get(custom_source,
+        \ 'ignore_pattern', a:source.ignore_pattern)
 
   let funcname = 's:get_source_candidates()'
   try
@@ -361,7 +366,7 @@ function! s:get_source_candidates(source) "{{{
               \ s:ignore_candidates(copy(
               \  a:source.gather_candidates(a:source.args,
               \  a:source.unite__context)),
-              \ a:source.ignore_pattern, context.path)
+              \ ignore_pattern, context.path)
       endif
     endif
 
@@ -373,7 +378,7 @@ function! s:get_source_candidates(source) "{{{
       let a:source.unite__cached_change_candidates =
             \ s:ignore_candidates(a:source.change_candidates(
             \     a:source.args, a:source.unite__context),
-            \   a:source.ignore_pattern, context.path)
+            \   ignore_pattern, context.path)
     endif
 
     if a:source.unite__context.is_async
@@ -383,7 +388,7 @@ function! s:get_source_candidates(source) "{{{
         let a:source.unite__cached_candidates +=
               \ s:ignore_candidates(
               \  a:source.async_gather_candidates(a:source.args, context),
-              \  a:source.ignore_pattern, context.path)
+              \  ignore_pattern, context.path)
 
         if (!context.sync && context.unite__is_interactive)
               \ || !a:source.unite__context.is_async
@@ -419,7 +424,7 @@ function! s:ignore_candidates(candidates, pattern, path) "{{{
           \_filter_head(candidates, a:path)
   endif
 
-  return a:candidates
+  return candidates
 endfunction"}}}
 
 function! unite#candidates#_group_post_filters(candidates) "{{{
