@@ -109,10 +109,6 @@ if has("gui")
   set lines=40 columns=100
 endif
 
-if exists("work_settings")
-  exe "set lines=" . work_lines  . " columns=" . work_columns
-endif
-
 map <c-tab> gt
 map <c-s-tab> gT
 
