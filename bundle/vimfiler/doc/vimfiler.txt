@@ -865,8 +865,8 @@ parameters for an option.  You need to escape spaces with "\".
 		-no-quit
 		Doesn't close the vimfiler buffer after firing an action.
 
-						*vimfiler-options-quit*
-		-quit
+						*vimfiler-options-force-quit*
+		-force-quit
 		Close the vimfiler buffer after firing an action.
 
 						*vimfiler-options-winwidth*
@@ -960,6 +960,10 @@ parameters for an option.  You need to escape spaces with "\".
 		-no-focus
 		No the focus on the vimfiler buffer after opening a vimfiler
 		buffer.
+
+						*vimfiler-options-invisible*
+		-invisible
+		Search inivisible vimfiler buffer.
 
 ==============================================================================
 COLUMNS						*vimfiler-columns*
