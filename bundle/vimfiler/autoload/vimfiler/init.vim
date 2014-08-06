@@ -37,8 +37,6 @@ let g:vimfiler_sort_type =
       \ get(g:, 'vimfiler_sort_type', 'filename')
 let g:vimfiler_directory_display_top =
       \ get(g:, 'vimfiler_directory_display_top', 1)
-let g:vimfiler_split_rule =
-      \ get(g:, 'vimfiler_split_rule', 'topleft')
 let g:vimfiler_max_directories_history =
       \ get(g:, 'vimfiler_max_directories_history', 50)
 let g:vimfiler_safe_mode_by_default =
@@ -61,12 +59,8 @@ let g:vimfiler_readonly_file_icon =
       \ get(g:, 'vimfiler_readonly_file_icon', 'X')
 let g:vimfiler_marked_file_icon =
       \ get(g:, 'vimfiler_marked_file_icon', '*')
-let g:vimfiler_enable_auto_cd =
-      \ get(g:, 'vimfiler_enable_auto_cd', 0)
 let g:vimfiler_quick_look_command =
       \ get(g:, 'vimfiler_quick_look_command', '')
-let g:vimfiler_default_columns =
-      \ get(g:, 'vimfiler_default_columns', 'type:size:time')
 let g:vimfiler_explorer_columns =
       \ get(g:, 'vimfiler_explorer_columns', 'type')
 let g:vimfiler_ignore_pattern =
@@ -118,7 +112,7 @@ function! vimfiler#init#_command(default, args) "{{{
     let arg = substitute(arg, '\\\( \)', '\1', 'g')
 
     let arg_key = substitute(arg, '=\zs.*$', '', '')
-    let matched_list = filter(copy(vimfiler#get_options()),
+    let matched_list = filter(copy(vimfiler#variables#options()),
           \  'v:val ==# arg_key')
     for option in matched_list
       let key = substitute(substitute(option, '-', '_', 'g'),
@@ -136,34 +130,7 @@ function! vimfiler#init#_command(default, args) "{{{
   call vimfiler#init#_start(join(args), options)
 endfunction"}}}
 function! vimfiler#init#_context(context) "{{{
-  let default_context = {
-    \ 'buffer_name' : 'default',
-    \ 'no_quit' : 0,
-    \ 'quit' : 0,
-    \ 'toggle' : 0,
-    \ 'create' : 0,
-    \ 'simple' : 0,
-    \ 'double' : 0,
-    \ 'split' : 0,
-    \ 'status' : 0,
-    \ 'horizontal' : 0,
-    \ 'winheight' : 0,
-    \ 'winwidth' : 0,
-    \ 'winminwidth' : 0,
-    \ 'direction' : g:vimfiler_split_rule,
-    \ 'auto_cd' : g:vimfiler_enable_auto_cd,
-    \ 'explorer' : 0,
-    \ 'reverse' : 0,
-    \ 'project' : 0,
-    \ 'find' : 0,
-    \ 'tab' : 0,
-    \ 'alternate_buffer' : bufnr('%'),
-    \ 'no_focus' : 0,
-    \ 'columns' : g:vimfiler_default_columns,
-    \ 'vimfiler__prev_bufnr' : bufnr('%'),
-    \ 'vimfiler__winfixwidth' : &l:winfixwidth,
-    \ 'vimfiler__winfixheight' : &l:winfixheight,
-    \ }
+  let default_context = vimfiler#variables#default_context()
 
   if get(a:context, 'explorer', 0)
     " Change default value.
@@ -171,12 +138,18 @@ function! vimfiler#init#_context(context) "{{{
     let default_context.split = 1
     let default_context.simple = 1
     let default_context.toggle = 1
-    let default_context.no_quit = 1
+    let default_context.quit = 0
     let default_context.winwidth = 35
     let default_context.columns = g:vimfiler_explorer_columns
   endif
 
   let context = extend(default_context, a:context)
+
+  " Generic no.
+  for option in map(filter(items(context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]"), 'v:val[0]')
+    let context[option[3:]] = 0
+  endfor
 
   if !has_key(context, 'profile_name')
     let context.profile_name = context.buffer_name
@@ -246,7 +219,7 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
     wincmd p
   endif
 
-  if a:context.winwidth != 0
+  if a:context.winwidth >= 0
     execute 'vertical resize' a:context.winwidth
   endif
 
@@ -393,6 +366,7 @@ function! vimfiler#init#_start(path, ...) "{{{
             \ && vimfiler.context.profile_name ==# context.profile_name
             \ && (!exists('t:unite_buffer_dictionary')
             \      || has_key(t:unite_buffer_dictionary, bufnr))
+            \ && (!context.invisible || bufwinnr(bufnr) < 0)
         call vimfiler#init#_switch_vimfiler(bufnr, context, path)
         return
       endif
@@ -460,7 +434,7 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
 
   call vimfiler#view#_force_redraw_all_vimfiler()
 
-  if context.no_focus
+  if !context.focus
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
@@ -505,7 +479,7 @@ function! s:create_vimfiler_buffer(path, context) "{{{
   endif
 
   if context.tab
-    tabnew
+    noautocmd tabnew
   endif
 
   " Save swapfile option.
@@ -537,7 +511,7 @@ function! s:create_vimfiler_buffer(path, context) "{{{
           \ search_path), '/$', '', ''))
   endif
 
-  if context.no_focus
+  if !context.focus
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
