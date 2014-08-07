@@ -109,7 +109,7 @@ function! s:source_file.vimfiler_gather_candidates(args, context) "{{{
   if path !=# old_dir
         \ && isdirectory(path)
     try
-      lcd `=path`
+      call unite#util#lcd(path)
     catch
       call unite#print_error('cd failed in "' . path . '"')
       return []
@@ -123,7 +123,7 @@ function! s:source_file.vimfiler_gather_candidates(args, context) "{{{
 
   if path !=# old_dir
         \ && isdirectory(path)
-    lcd `=old_dir`
+    call unite#util#lcd(old_dir)
   endif
 
   return candidates
@@ -138,7 +138,7 @@ function! s:source_file.vimfiler_dummy_candidates(args, context) "{{{
   let old_dir = getcwd()
   if path !=# old_dir
         \ && isdirectory(path)
-    lcd `=path`
+    call unite#util#lcd(path)
   endif
 
   let exts = s:is_windows ?
@@ -154,7 +154,7 @@ function! s:source_file.vimfiler_dummy_candidates(args, context) "{{{
 
   if path !=# old_dir
         \ && isdirectory(path)
-    lcd `=old_dir`
+    call unite#util#lcd(old_dir)
   endif
 
   return candidates
@@ -403,6 +403,7 @@ function! unite#sources#file#create_file_dict(file, is_relative_path, ...) "{{{
       " New directory.
       let dict.abbr = '[new directory] ' . dict.abbr
       let dict.kind = 'directory'
+      let dict.action__directory = dict.action__path
     endif
   else
     let dict.kind = 'file'
@@ -415,7 +416,7 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts) "{{{
     if len(a:candidate.action__path) > 200
       " Convert to relative path.
       let current_dir_save = getcwd()
-      lcd `=unite#helper#get_candidate_directory(a:candidate)`
+      call unite#util#lcd(unite#helper#get_candidate_directory(a:candidate))
 
       let filename = unite#util#substitute_path_separator(
             \ fnamemodify(a:candidate.action__path, ':.'))
@@ -427,7 +428,7 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts) "{{{
   finally
     if exists('current_dir_save')
       " Restore path.
-      lcd `=current_dir_save`
+      call unite#util#lcd(current_dir_save)
     endif
   endtry
 
