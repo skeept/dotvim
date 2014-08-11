@@ -212,9 +212,10 @@ function! vimproc#get_command_name(command, ...) "{{{
 endfunction"}}}
 
 function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
+  let s:last_status = 0
+  let s:last_errmsg = ''
+
   if empty(a:cmdline)
-    let s:last_status = 0
-    let s:last_errmsg = ''
     return ''
   endif
 
@@ -223,86 +224,90 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
         \ a:is_pty ? vimproc#ptyopen(a:cmdline):
         \ vimproc#pgroup_open(a:cmdline)
 
-  if a:input != ''
-    " Write input.
-    call subproc.stdin.write(a:input)
-  endif
-
-  if a:timeout > 0 && has('reltime') && v:version >= 702
-    let start = reltime()
-    let timeout = a:timeout
-  else
-    let start = 0
-    let timeout = 0
-  endif
-
-  if !a:is_passwd
-    call subproc.stdin.close()
-  endif
-
-  let s:last_errmsg = ''
   let outbuf = []
   let errbuf = []
-  while !subproc.stdout.eof || !subproc.stderr.eof
-    if timeout > 0 "{{{
-      " Check timeout.
-      let tick = reltimestr(reltime(start))
-      let elapse = str2nr(tick[:-8] . tick[-6:-4], 10)
-      if elapse > timeout && !subproc.stdout.eof
-        " Kill process.
-        try
-          call subproc.kill(g:vimproc#SIGTERM)
-          call subproc.waitpid()
-        catch
-          " Ignore error.
-        endtry
 
-        throw 'vimproc: vimproc#system(): Timeout.'
-      endif
-    endif"}}}
+  try
+    if a:input != ''
+      " Write input.
+      call subproc.stdin.write(a:input)
+    endif
 
-    if !subproc.stdout.eof "{{{
-      let out = subproc.stdout.read(10000, 10)
+    if a:timeout > 0 && has('reltime') && v:version >= 702
+      let start = reltime()
+      let deadline = a:timeout
+      let timeout = a:timeout / 2
+    else
+      let start = 0
+      let deadline = 0
+      let timeout = s:read_timeout
+    endif
 
-      if a:is_passwd && out =~# g:vimproc_password_pattern
-        redraw
-        echo out
+    if !a:is_passwd
+      call subproc.stdin.close()
+    endif
 
-        " Password input.
-        set imsearch=0
-        let in = vimproc#util#iconv(inputsecret('Input Secret : ')."\<NL>",
-              \ &encoding, vimproc#util#termencoding())
+    while !subproc.stdout.eof || !subproc.stderr.eof
+      if deadline "{{{
+        " Check timeout.
+        let tick = reltimestr(reltime(start))
+        let elapse = str2nr(tick[:-8] . tick[-6:-4], 10)
+        if deadline <= elapse && !subproc.stdout.eof
+          " Kill process.
+          throw 'vimproc: vimproc#system(): Timeout.'
+        endif
+        let timeout = (deadline - elapse) / 2
+      endif"}}}
 
-        call subproc.stdin.write(in)
-      else
-        let outbuf += [out]
-      endif
-    endif"}}}
+      if !subproc.stdout.eof "{{{
+        let out = subproc.stdout.read(-1, timeout)
 
-    if !subproc.stderr.eof "{{{
-      let out = subproc.stderr.read(10000, 10)
+        if a:is_passwd && out =~# g:vimproc_password_pattern
+          redraw
+          echo out
 
-      if a:is_passwd && out =~# g:vimproc_password_pattern
-        redraw
-        echo out
+          " Password input.
+          set imsearch=0
+          let in = vimproc#util#iconv(inputsecret('Input Secret : ')."\<NL>",
+                \ &encoding, vimproc#util#termencoding())
 
-        " Password input.
-        set imsearch=0
-        let in = vimproc#util#iconv(inputsecret('Input Secret : ') . "\<NL>",
-              \ &encoding, vimproc#util#termencoding())
+          call subproc.stdin.write(in)
+        else
+          let outbuf += [out]
+        endif
+      endif"}}}
 
-        call subproc.stdin.write(in)
-      else
-        let outbuf += [out]
-        let errbuf += [out]
-      endif
-    endif"}}}
-  endwhile
+      if !subproc.stderr.eof "{{{
+        let out = subproc.stderr.read(-1, timeout)
 
-  let output = join(outbuf, '')
-  let s:last_errmsg = join(errbuf, '')
+        if a:is_passwd && out =~# g:vimproc_password_pattern
+          redraw
+          echo out
 
-  call subproc.waitpid()
+          " Password input.
+          set imsearch=0
+          let in = vimproc#util#iconv(inputsecret('Input Secret : ') . "\<NL>",
+                \ &encoding, vimproc#util#termencoding())
+
+          call subproc.stdin.write(in)
+        else
+          let outbuf += [out]
+          let errbuf += [out]
+        endif
+      endif"}}}
+    endwhile
+  catch
+    call subproc.kill(g:vimproc#SIGTERM)
+
+    if v:exception !~ '^Vim:Interrupt'
+      throw v:exception
+    endif
+  finally
+    let output = join(outbuf, '')
+    let s:last_errmsg = join(errbuf, '')
+
+    call subproc.waitpid()
+  endtry
 
   " Newline convert.
   if vimproc#util#is_mac()
@@ -887,35 +892,45 @@ function! s:read(...) dict "{{{
   return join(buf, '')
 endfunction"}}}
 function! s:read_lines(...) dict "{{{
-  let res = self.buffer
+  if self.__eof
+    return []
+  endif
 
-  let outs = ['']
-  while !self.eof && stridx(outs[-1], "\n") < 0
-    let out = call(self.read, a:000, self)
-    if out  == ''
-      break
+  let lines = self.buffer[:-2]
+  let res = get(self.buffer, -1, '')
+
+  let out = call(self.read, a:000, self)
+  if out !=# ''
+    let outs = split(out, '\r*\n', 1)
+    let res .= outs[0]
+    if len(outs) > 1
+      let lines += [substitute(res, '\r*$', '', '')] + outs[1:-2]
+      let res = outs[-1]
     endif
+  endif
 
-    let outs += [out]
-  endwhile
-
-  let res .= join(outs, '')
-
-  let self.buffer = ''
-  let lines = split(res, '\r*\n', 1)
-  if !self.__eof
-    let self.buffer = get(lines, -1, '')
-    let lines = lines[ : -2]
+  if self.__eof || out ==# ''
+    if res !=# ''
+      let lines += [res]
+    endif
+    let self.buffer = []
+  else
+    let self.buffer = [res]
   endif
 
   return lines
 endfunction"}}}
 function! s:read_line(...) dict "{{{
-  let lines = call(self.read_lines, a:000 + [1], self)
-  let self.buffer = join(lines[1:], "\n") . self.buffer
-  let self.eof = (self.buffer != '') ?
-        \ (self.__eof && self.buffer == '') : self.__eof
-  return get(lines, 0, '')
+  let line = ''
+  if !self.__eof && len(self.buffer) <= 1
+    let lines = call(self.read_lines, a:000, self)
+    let self.buffer = lines[1:] + self.buffer
+    let line = get(lines, 0, '')
+  elseif !empty(self.buffer)
+    let [line; self.buffer] = self.buffer
+  endif
+  let self.eof = self.__eof && empty(self.buffer)
+  return line
 endfunction"}}}
 
 function! s:write(str, ...) dict "{{{
@@ -926,7 +941,7 @@ endfunction"}}}
 function! s:fdopen(fd, f_close, f_read, f_write) "{{{
   return {
         \ 'fd' : a:fd,
-        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : '',
+        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : [],
         \ 'f_close' : s:funcref(a:f_close), 'f_read' : s:funcref(a:f_read), 'f_write' : s:funcref(a:f_write),
         \ 'close' : s:funcref('close'), 'read' : s:funcref('read'), 'write' : s:funcref('write'),
         \ 'read_line' : s:funcref('read_line'), 'read_lines' : s:funcref('read_lines'),
@@ -935,7 +950,7 @@ endfunction"}}}
 function! s:closed_fdopen(f_close, f_read, f_write) "{{{
   return {
         \ 'fd' : -1,
-        \ 'eof' : 1, '__eof' : 1, 'is_valid' : 0, 'buffer' : '',
+        \ 'eof' : 1, '__eof' : 1, 'is_valid' : 0, 'buffer' : [],
         \ 'f_close' : s:funcref(a:f_close), 'f_read' : s:funcref(a:f_read), 'f_write' : s:funcref(a:f_write),
         \ 'close' : s:funcref('close'), 'read' : s:funcref('read'), 'write' : s:funcref('write'),
         \ 'read_line' : s:funcref('read_line'), 'read_lines' : s:funcref('read_lines'),
@@ -943,7 +958,7 @@ function! s:closed_fdopen(f_close, f_read, f_write) "{{{
 endfunction"}}}
 function! s:fdopen_pty(fd_stdin, fd_stdout, f_close, f_read, f_write) "{{{
   return {
-        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : '',
+        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : [],
         \ 'fd_stdin' : a:fd_stdin, 'fd_stdout' : a:fd_stdout,
         \ 'f_close' : s:funcref(a:f_close), 'f_read' : s:funcref(a:f_read), 'f_write' : s:funcref(a:f_write), 
         \ 'close' : s:funcref('close'), 'read' : s:funcref('read'), 'write' : s:funcref('write'),
@@ -952,7 +967,7 @@ function! s:fdopen_pty(fd_stdin, fd_stdout, f_close, f_read, f_write) "{{{
 endfunction"}}}
 function! s:fdopen_pipes(fd, f_close, f_read, f_write) "{{{
   return {
-        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : '',
+        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : [],
         \ 'fd' : a:fd,
         \ 'f_close' : s:funcref(a:f_close),
         \ 'close' : s:funcref('close'), 'read' : s:funcref(a:f_read), 'write' : s:funcref(a:f_write),
@@ -961,7 +976,7 @@ function! s:fdopen_pipes(fd, f_close, f_read, f_write) "{{{
 endfunction"}}}
 function! s:fdopen_pgroup(proc, fd, f_close, f_read, f_write) "{{{
   return {
-        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : '',
+        \ 'eof' : 0, '__eof' : 0, 'is_valid' : 1, 'buffer' : [],
         \ 'proc' : a:proc, 'fd' : a:fd,
         \ 'f_close' : s:funcref(a:f_close),
         \ 'close' : s:funcref('close'), 'read' : s:funcref(a:f_read), 'write' : s:funcref(a:f_write),
