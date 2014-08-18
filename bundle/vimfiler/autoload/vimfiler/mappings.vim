@@ -605,9 +605,11 @@ function! s:toggle_mark_current_line(...) "{{{
 
   try
     setlocal modifiable
+    setlocal noreadonly
     call setline('.', vimfiler#view#_get_print_lines([file]))
   finally
     setlocal nomodifiable
+    setlocal readonly
   endtry
 
   let map = get(a:000, 0, '')
@@ -639,9 +641,11 @@ function! s:mark_current_line() "{{{
 
   try
     setlocal modifiable
+    setlocal noreadonly
     call setline('.', vimfiler#view#_get_print_lines([file]))
   finally
     setlocal nomodifiable
+    setlocal readonly
   endtry
 endfunction"}}}
 function! s:toggle_mark_all_lines() "{{{
@@ -714,8 +718,18 @@ function! s:execute() "{{{
         \ s:cd_file_directory() : s:execute_vimfiler_associated()
 endfunction"}}}
 function! s:execute_vimfiler_associated() "{{{
-  call unite#start(['vimfiler/execute'],
-        \ { 'immediately' : 1, 'buffer_name' : 'vimfiler/execute', 'script' : 1 })
+  let bufnr = bufnr('%')
+  call s:switch()
+  call unite#start(['vimfiler/execute'], {
+        \ 'immediately' : 1,
+        \ 'buffer_name' : 'vimfiler/execute',
+        \ 'script' : 1,
+        \ 'vimfiler__winnr' : bufwinnr(bufnr),
+        \ })
+  let vimfiler = vimfiler#get_current_vimfiler()
+  if vimfiler.context.force_quit
+    call s:exit(vimfiler)
+  endif
 endfunction"}}}
 function! s:execute_system_associated() "{{{
   let marked_files = vimfiler#get_marked_files()
@@ -1019,9 +1033,11 @@ function! s:unexpand_tree() "{{{
   let cursor_file.vimfiler__is_opened = 0
   try
     setlocal modifiable
+    setlocal noreadonly
     call setline('.', vimfiler#view#_get_print_lines([cursor_file]))
   finally
     setlocal nomodifiable
+    setlocal readonly
   endtry
 
   " Unexpand tree.
