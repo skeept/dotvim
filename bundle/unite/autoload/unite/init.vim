@@ -29,6 +29,9 @@ set cpo&vim
 " Global options definition. "{{{
 let g:unite_ignore_source_files =
       \ get(g:, 'unite_ignore_source_files', [])
+let g:unite_redraw_hold_candidates =
+      \ get(g:, 'unite_redraw_hold_candidates',
+      \     (unite#util#has_lua() ? 20000 : 10000))
 "}}}
 
 function! unite#init#_context(context, ...) "{{{
@@ -201,6 +204,10 @@ function! unite#init#_unite_buffer() "{{{
     endif
   endif
 
+  if context.wipe
+    setlocal bufhidden=wipe
+  endif
+
   call unite#mappings#define_default_mappings()
 
   let &l:wrap = context.wrap
@@ -305,7 +312,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.args = unite#helper#get_source_args(a:sources)
   let unite.msgs = []
   let unite.err_msgs = []
-  let unite.redraw_hold_candidates = (unite#util#has_lua() ? 20000 : 10000)
+  let unite.redraw_hold_candidates = g:unite_redraw_hold_candidates
   let unite.disabled_max_candidates = 0
   let unite.cursor_line_time = reltime()
   let unite.match_id = 11
@@ -337,8 +344,8 @@ endfunction"}}}
 function! unite#init#_candidates(candidates) "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
-  let [max_width, max_source_name] = unite#helper#adjustments(winwidth(0)-5,
-        \ unite.max_source_name, 2)
+  let [max_width, max_source_name] = unite#helper#adjustments(
+        \ winwidth(0), unite.max_source_name, 2)
   let is_multiline = 0
 
   let candidates = []

@@ -38,7 +38,8 @@ call unite#util#set_default(
 call unite#util#set_default(
       \ 'g:unite_source_rec_max_cache_files', 20000,
       \ 'g:unite_source_file_rec_max_cache_files')
-call unite#util#set_default('g:unite_source_rec_unit', 4000)
+call unite#util#set_default('g:unite_source_rec_unit',
+      \ unite#util#is_windows() ? 1000 : 2000)
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command', (
       \  !unite#util#is_windows() && executable('find') ? 'find' : ''),
@@ -84,8 +85,6 @@ function! s:source_file_rec.gather_candidates(args, context) "{{{
 
   if empty(continuation.rest) || continuation.end
     " Disable async.
-    call unite#print_source_message(
-          \ 'Directory traverse was completed.', self.name)
     let a:context.is_async = 0
     let continuation.end = 1
   endif
@@ -104,10 +103,7 @@ function! s:source_file_rec.async_gather_candidates(args, context) "{{{
         \  g:unite_source_rec_max_cache_files > 0 &&
         \    len(continuation.files) >
         \        g:unite_source_rec_max_cache_files)
-    if empty(continuation.rest)
-      call unite#print_source_message(
-            \ 'Directory traverse was completed.', self.name)
-    else
+    if !empty(continuation.rest)
       call unite#print_source_message(
             \ 'Too many candidates.', self.name)
     endif
@@ -255,13 +251,6 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   endif
 
   let directory = a:context.source__directory
-  if directory == ''
-    " Not in project directory.
-    call unite#print_source_message(
-          \ 'Not in project directory.', self.name)
-    let a:context.is_async = 0
-    return []
-  endif
 
   call unite#print_source_message(
         \ 'directory: ' . directory, self.name)
@@ -272,8 +261,6 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
 
   if empty(continuation.rest) || continuation.end
     " Disable async.
-    call unite#print_source_message(
-          \ 'Directory traverse was completed.', self.name)
     let a:context.is_async = 0
     let continuation.end = 1
 
@@ -306,7 +293,10 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   else
     let command .= ' ' . string(directory)
   endif
-  let a:context.source__proc = vimproc#pgroup_open(command, 1)
+
+  " Note: "pt" needs pty.
+  let a:context.source__proc = vimproc#pgroup_open(command,
+        \ fnamemodify(args[0], ':t') ==# 'pt')
 
   " Close handles.
   call a:context.source__proc.stdin.close()
@@ -318,7 +308,7 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let stderr = a:context.source__proc.stderr
   if !stderr.eof
     " Print error.
-    let errors = filter(stderr.read_lines(-1, 100),
+    let errors = filter(unite#util#read_lines(stderr, 100),
           \ "v:val !~ '^\\s*$'")
     if !empty(errors)
       call unite#print_source_error(errors, self.name)
@@ -329,7 +319,7 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let stdout = a:context.source__proc.stdout
 
   let paths = map(filter(
-        \   stdout.read_lines(-1, 2000), 'v:val != ""'),
+        \   unite#util#read_lines(stdout, 2000), 'v:val != ""'),
         \   "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
   if unite#util#is_windows()
     let paths = map(paths, 'unite#util#substitute_path_separator(v:val)')
@@ -342,10 +332,7 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
         \    len(continuation.files) >
         \        g:unite_source_rec_max_cache_files)
     " Disable async.
-    if stdout.eof
-      call unite#print_source_message(
-            \ 'Directory traverse was completed.', self.name)
-    else
+    if !stdout.eof
       call unite#print_source_message(
             \ 'Too many candidates.', self.name)
     endif
@@ -406,8 +393,6 @@ function! s:source_file_git.gather_candidates(args, context) "{{{
 
   if empty(continuation.rest) || continuation.end
     " Disable async.
-    call unite#print_source_message(
-          \ 'Directory traverse was completed.', self.name)
     let a:context.is_async = 0
     let continuation.end = 1
 

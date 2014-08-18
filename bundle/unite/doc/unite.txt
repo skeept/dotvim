@@ -436,6 +436,13 @@ g:unite_no_default_keymappings		*g:unite_no_default_keymappings*
 
 		This variable doesn't exist unless you define it explicitly.
 
+g:unite_redraw_hold_candidates		*g:unite_redraw_hold_candidates*
+		If the number of unite candidates is not greater than this
+		variable, all the candidates are holded for redrawing.
+
+		If lua is enabled, the default value is 20000, otherwise
+		10000.
+
 SOURCES VARIABLES 				*unite-sources-variables*
 
 					*g:unite_source_buffer_time_format*
@@ -514,7 +521,7 @@ g:unite_source_rec_unit
 		Note: This option does not work in
 		|unite-source-file_rec/async| source.
 
-		The default value is 4000.
+		The default value is 1000(windows environment), 2000(other).
 
 					*g:unite_source_rec_async_command*
 g:unite_source_rec_async_command
@@ -1956,6 +1963,12 @@ the context dictionary.
 		If you scroll cursor quickly less than it, unite will skip
 		cursor line highlight.
 		If it is "0.0", this feature will be disabled.
+
+						*unite-options-wipe*
+		-wipe
+		Wipeout unite buffer when quit.
+		It is useful for using jumplist.
+		Note: If it is used, you cannot use |:UniteResume| feature.
 
 ==============================================================================
 SOURCES						*unite-sources*
@@ -3549,16 +3562,10 @@ A: >
 	endfunction
 <
 Q: Unite adds unite buffer to jumplist automatically.
-
-A: Sorry, but it is hard to fix. You should use |unite-source-jump| instead of
-<C-i>/<C-o> mappings. It ignores unite buffer.
-
-Note: In this issue, experimental settings are suggested.
 https://github.com/Shougo/unite.vim/issues/278
-However, I don't reccomend them because:
-1. Unite buffer name may be changed in a later version.
-2. You cannot use the |:UniteResume| feature.
-3. It has side effects. I cannot guarantee it works.
+
+A: You can use |unite-options-wipe| option.  But it is used, you cannot use
+the |:UniteResume| feature.
 
 Q: unite.vim is too slow.
 
@@ -3613,7 +3620,7 @@ Also, the default max candidates are limited. You can customize it by
 	\ 'max_candidates', 0)
 
 Also, you must clear previous cache in file_rec sources and wait until the cache
-is completed ("Directory traverse was completed" message is showed).
+is completed.
 In a directory including large file, making the cache is slow. Thus, I don't
 recommend it.
 To clear cache, you must execute |<Plug>(unite_redraw)| in unite
@@ -3682,6 +3689,14 @@ A: >
 	call unite#custom#profile('default', 'context', {
 	\   'prompt_direction': 'top'
 	\ })
+
+Q: I want to use file_rec/async in Windows environment.
+You can use "files" command.  It is slower than find command, however, it is
+useful in Windows environment.
+https://github.com/mattn/files
+
+A: >
+	let g:unite_source_rec_async_command = 'files'
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:

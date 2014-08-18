@@ -67,6 +67,7 @@ function! s:source.hooks.on_init(args, context) "{{{
     return
   endif
 
+  let target = ''
   if type(get(a:args, 0, '')) == type([])
     let args = a:args
 
@@ -115,6 +116,13 @@ function! s:source.hooks.on_init(args, context) "{{{
   let a:context.source__input = get(args, 2, a:context.input)
   if a:context.source__input == ''
     let a:context.source__input = unite#util#input('Pattern: ')
+  endif
+
+  call unite#print_source_message('Pattern: '
+        \ . a:context.source__input, s:source.name)
+
+  if target != ''
+    call unite#print_source_message('Target: ' . target, s:source.name)
   endif
 
   let a:context.source__directory =
@@ -250,14 +258,13 @@ function! s:source.async_gather_candidates(args, context) "{{{
 
   if !has_key(a:context, 'source__proc')
     let a:context.is_async = 0
-    call unite#print_source_message('Completed.', s:source.name)
     return []
   endif
 
   let stderr = a:context.source__proc.stderr
   if !stderr.eof
     " Print error.
-    let errors = filter(stderr.read_lines(-1, 100),
+    let errors = filter(unite#util#read_lines(stderr, 100),
           \ "v:val !~ '^\\s*$'")
     if !empty(errors)
       call unite#print_source_error(errors, s:source.name)
@@ -268,12 +275,10 @@ function! s:source.async_gather_candidates(args, context) "{{{
   if stdout.eof
     " Disable async.
     let a:context.is_async = 0
-    call unite#print_source_message('Completed.', s:source.name)
-
     call a:context.source__proc.waitpid()
   endif
 
-  let candidates = map(stdout.read_lines(-1, 1000),
+  let candidates = map(unite#util#read_lines(stdout, 1000),
           \ "unite#util#iconv(v:val, g:unite_source_grep_encoding, &encoding)")
   if variables.default_opts =~ '^-[^-]*l'
         \ || a:context.source__extra_opts =~ '^-[^-]*l'

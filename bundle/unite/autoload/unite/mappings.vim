@@ -404,7 +404,12 @@ function! s:toggle_mark_candidates(start, end) "{{{
       if line('.') == unite.prompt_linenr
         call unite#helper#skip_prompt()
       else
-        call s:toggle_mark('j')
+        let context = unite#get_context()
+        if context.prompt_direction ==# 'below'
+          call s:toggle_mark('k')
+        else
+          call s:toggle_mark('j')
+        endif
       endif
     endfor
   finally
@@ -451,12 +456,12 @@ function! s:insert_enter(key) "{{{
 
   let unite = unite#get_current_unite()
 
-  if line('.') != unite.prompt_linenr || col('.') <= len(unite.prompt)
-    return unite.prompt_linenr.'Gzb0' .
-          \ repeat('l', unite#util#strchars(unite.prompt)
-          \   + unite#util#strchars(unite.context.input)-1) . 'a'
-  endif
-  return a:key
+  return (line('.') != unite.prompt_linenr) ?
+        \     unite.prompt_linenr . 'Gzb$a' :
+        \ (a:key == 'i' && col('.') <= len(unite.prompt)
+        \     || a:key == 'a' && col('.') < len(unite.prompt)) ?
+        \     'A' :
+        \     a:key
 endfunction"}}}
 function! s:insert_enter2() "{{{
   nnoremap <expr><buffer> <Plug>(unite_insert_enter)
@@ -630,7 +635,7 @@ function! unite#mappings#cursor_up(is_skip_not_matched) "{{{
 
   if is_insert
     return repeat("\<Up>", cnt) .
-          \ ((line('.') - cnt) <= prompt_linenr ? "\<End>" : "\<Home>")
+        \ (unite#helper#is_prompt(line('.') - cnt) ? "\<End>" : "\<Home>")
   else
     return cnt == 1 ? 'k' : cnt.'k'
   endif
@@ -659,7 +664,7 @@ function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
 
   if is_insert
     return repeat("\<Down>", cnt) .
-          \ ((line('.') + cnt) <= prompt_linenr ? "\<End>" : "\<Home>")
+          \ (unite#helper#is_prompt(line('.') + cnt) ? "\<End>" : "\<Home>")
   else
     return cnt == 1 ? 'j' : cnt.'j'
   endif

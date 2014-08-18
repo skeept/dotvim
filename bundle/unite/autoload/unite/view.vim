@@ -325,6 +325,50 @@ function! unite#view#_set_syntax() "{{{
 
   let b:current_syntax = 'unite'
 endfunction"}}}
+function! unite#view#_change_highlight()  "{{{
+  if &filetype !=# 'unite'
+        \ || !exists('b:current_syntax')
+    return
+  endif
+
+  let unite = unite#get_current_unite()
+  if empty(unite)
+    return
+  endif
+
+  call unite#view#_set_cursor_line()
+
+  silent! syntax clear uniteCandidateInputKeyword
+
+  if unite#helper#get_input() == ''
+    return
+  endif
+
+  syntax case ignore
+
+  for input_str in unite#helper#get_substitute_input(
+        \ unite#helper#get_input())
+    let input_list = map(filter(split(input_str, '\\\@<! '),
+          \ "v:val !~ '^[!:]'"),
+          \ "substitute(v:val, '\\\\ ', ' ', 'g')")
+
+    for source in filter(copy(unite.sources), "v:val.syntax != ''")
+      for matcher in filter(copy(map(filter(
+            \ copy(source.filters),
+            \ "type(v:val) == type('')"), 'unite#get_filters(v:val)')),
+            \ "has_key(v:val, 'pattern')")
+        let patterns = map(copy(input_list),
+              \ "escape(matcher.pattern(v:val), '/~')")
+
+        silent! execute 'syntax match uniteCandidateInputKeyword'
+              \ '/'.join(patterns, '\|').'/'
+              \ 'containedin='.source.syntax.' contained'
+      endfor
+    endfor
+  endfor
+
+  syntax case match
+endfunction"}}}
 
 function! unite#view#_resize_window() "{{{
   if &filetype !=# 'unite'
@@ -396,10 +440,7 @@ function! unite#view#_convert_lines(candidates, ...) "{{{
   let unite = unite#get_current_unite()
   let context = unite#get_context()
   let [max_width, max_source_name] = unite#helper#adjustments(
-        \ winwidth(0)-1, unite.max_source_name, 2)
-  if unite.max_source_name == 0
-    let max_width -= 1
-  endif
+        \ winwidth(0), unite.max_source_name, 2)
 
   " Create key table.
   let keys = {}
@@ -815,9 +856,18 @@ function! unite#view#_match_line(highlight, line, id) "{{{
 endfunction"}}}
 
 function! unite#view#_get_status_string() "{{{
-  return !exists('b:unite') ? '' : ((b:unite.is_async ? '[async] ' : '') .
+  if !exists('b:unite')
+    return ''
+  endif
+
+  let head = (b:unite.is_async ? '[async] ' : '') .
         \ join(unite#helper#loaded_source_names_with_args(), ', ')
-        \ . (b:unite.context.path == '' ? '' : ' ['. b:unite.context.path.']'))
+  let tail = b:unite.context.path != '' ? ' ['. b:unite.context.path.']' :
+        \    b:unite.is_async ? '' :
+        \    ' |' . substitute(get(b:unite.msgs, 0, ''), '^\[.\{-}\]', '', '')
+  let tail = unite#util#strwidthpart(tail,
+        \ winwidth(0) - (unite#util#wcswidth('*unite* : ' . head) + 10))
+  return head . tail
 endfunction"}}}
 
 function! unite#view#_add_previewed_buffer_list(bufnr) "{{{
@@ -852,6 +902,8 @@ function! s:set_syntax() "{{{
     execute 'syntax region' source.syntax
           \ 'start=// end=/$/ keepend contained'
   endfor
+
+  call unite#view#_change_highlight()
 endfunction"}}}
 
 function! s:has_preview_window() "{{{

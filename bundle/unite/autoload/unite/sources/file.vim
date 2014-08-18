@@ -195,7 +195,8 @@ let s:source_file_async = {
       \ 'description' : 'asynchronous candidates from file list',
       \ 'ignore_pattern' : g:unite_source_file_ignore_pattern,
       \ 'default_kind' : 'file',
-      \ 'matchers' : [ 'converter_relative_word',
+      \ 'matchers' : [
+      \     'converter_relative_word', 'converter_relative_abbr',
       \     'matcher_default', 'matcher_hide_hidden_files' ],
       \ 'hooks' : {},
       \}
@@ -244,6 +245,9 @@ function! s:source_file_async.change_candidates(args, context) "{{{
   if directory == ''
     let directory = unite#util#substitute_path_separator(getcwd())
   endif
+  if directory !~ '/$'
+    let directory .= '/'
+  endif
   let command .= ' ' . string(directory)
   let a:context.source__proc = vimproc#pgroup_open(command, 0)
   let a:context.source__directory = directory
@@ -259,7 +263,7 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let stderr = a:context.source__proc.stderr
   if !stderr.eof
     " Print error.
-    let errors = filter(stderr.read_lines(-1, 100),
+    let errors = filter(unite#util#read_lines(stderr, 100),
           \ "v:val !~ '^\\s*$'")
     if !empty(errors)
       call unite#print_source_error(errors, self.name)
@@ -269,9 +273,10 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   let stdout = a:context.source__proc.stdout
 
   let paths = map(filter(
-        \   stdout.read_lines(-1, 2000),
+        \   unite#util#read_lines(stdout, 2000),
         \   "v:val != '' && v:val !=# '.'"),
-        \   "fnamemodify(unite#util#iconv(v:val, 'char', &encoding), ':p')")
+        \   "a:context.source__directory .
+        \    unite#util#iconv(v:val, 'char', &encoding)")
   if unite#util#is_windows()
     let paths = map(paths, 'unite#util#substitute_path_separator(v:val)')
   endif
@@ -281,8 +286,6 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
 
   if stdout.eof
     " Disable async.
-    call unite#print_source_message(
-          \ 'Directory traverse was completed.', self.name)
     let a:context.is_async = 0
     call a:context.source__proc.waitpid()
   endif
@@ -458,7 +461,8 @@ function! unite#sources#file#create_vimfiler_dict(candidate, exts) "{{{
 endfunction"}}}
 
 function! unite#sources#file#complete_file(args, context, arglead, cmdline, cursorpos) "{{{
-  let files = unite#util#glob(a:arglead . '*')
+  let files = filter(unite#util#glob(a:arglead . '*'),
+        \ "stridx(tolower(v:val), tolower(a:arglead)) == 0")
   if a:arglead =~ '^\~'
     let home_pattern = '^'.
           \ unite#util#substitute_path_separator(expand('~')).'/'
