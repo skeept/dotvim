@@ -807,6 +807,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 		let s:nrrw_rgn_lines[s:instn].single = 1
 	endif
 	let b:orig_buf = orig_buf
+	let s:nrrw_rgn_lines[s:instn].winnr  = bufwinnr(orig_buf)
 	call setline(1, buffer)
 	setl nomod
 	let b:nrrw_instn = s:instn
