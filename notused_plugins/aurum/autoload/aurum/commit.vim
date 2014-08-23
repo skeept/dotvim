@@ -15,6 +15,7 @@ let s:_messages={
             \'emptmsg': 'Message must contain at least one non-blank character',
             \'nocfile': 'Unsure what should be commited',
             \  'nocom': 'Nothing to commit',
+            \'nomatch': 'Provided patterns did not match any files',
         \}
 let s:_options={
             \'remembermsg':         {'default': 1, 'filter': 'bool'},
@@ -407,6 +408,9 @@ function s:_aufunctions.cmd.function(opts, ...)
                 let files+=curfiles
             endif
         endfor
+        if empty(files)
+            call s:_f.throw('nomatch')
+        endif
     elseif files is 0
         call s:_f.throw('nocfile')
     endif

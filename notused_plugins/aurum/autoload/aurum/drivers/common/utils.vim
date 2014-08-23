@@ -184,14 +184,16 @@ else
     let s:utils.using_ansi_esc_echo=0
 endif
 "▶1 utils.pyeval
-if exists('*pyeval')
-    let s:utils.pyeval=function('pyeval')
-else
-    python import aurum.auutils
-    function s:utils.pyeval(e)
-        python vim.command('return '+
-                    \aurum.auutils.nonutf_dumps(eval(vim.eval('a:e'))))
-    endfunction
+if has('python')
+    if exists('*pyeval')
+        let s:utils.pyeval=function('pyeval')
+    else
+        python import aurum.auutils
+        function s:utils.pyeval(e)
+            python vim.command('return '+
+                        \aurum.auutils.nonutf_dumps(eval(vim.eval('a:e'))))
+        endfunction
+    endif
 endif
 "▶1 utils.pystring
 function s:utils.pystring(v)
