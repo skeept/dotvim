@@ -222,7 +222,7 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
     wincmd p
   endif
 
-  if a:context.winwidth >= 0
+  if a:context.winwidth > 0
     execute 'vertical resize' a:context.winwidth
   endif
 
@@ -359,6 +359,10 @@ function! vimfiler#init#_start(path, ...) "{{{
     endif
   endif
 
+  if context.project
+    let path = vimfiler#util#path2project_directory(path)
+  endif
+
   if !context.create
     " Search vimfiler buffer.
     for bufnr in filter(insert(range(1, bufnr('$')), bufnr('%')),
@@ -473,7 +477,6 @@ function! s:create_vimfiler_buffer(path, context) "{{{
   let bufname = prefix . postfix
 
   " Set buffer_name.
-  let context.profile_name = context.buffer_name
   let context.buffer_name = bufname
 
   if context.split
@@ -482,7 +485,7 @@ function! s:create_vimfiler_buffer(path, context) "{{{
   endif
 
   if context.tab
-    noautocmd tabnew
+    tabnew
   endif
 
   " Save swapfile option.

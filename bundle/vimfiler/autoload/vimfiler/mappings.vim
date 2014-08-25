@@ -340,7 +340,8 @@ function! vimfiler#mappings#do_switch_action(action) "{{{
 
   let context = vimfiler#get_context()
   if context.quit && buflisted(context.alternate_buffer)
-      \ && g:vimfiler_restore_alternate_file
+        \ && getbufvar(context.alternate_buffer, '&filetype') !=# 'vimfiler'
+        \ && g:vimfiler_restore_alternate_file
     execute 'buffer' context.alternate_buffer
   endif
 
@@ -1392,7 +1393,7 @@ function! s:split_edit_file() "{{{
   let context = vimfiler#get_context()
   let winwidth = (winnr('$') != 1) ?
         \ &columns - (winwidth(0)+1)/2*2 :
-        \ (context.winwidth >= 0) ?
+        \ (context.winwidth > 0) ?
         \ &columns / 2 :
         \ &columns - context.winwidth
   call vimfiler#mappings#do_action(g:vimfiler_split_action)

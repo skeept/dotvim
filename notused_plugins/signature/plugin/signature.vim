@@ -19,54 +19,30 @@ let g:loaded_Signature = "3"
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Global variables                                                                                                 {{{1
 "
-if !exists( 'g:SignaturePrioritizeMarks' )
-  let g:SignaturePrioritizeMarks = 1
-endif
-if !exists( 'g:SignatureIncludeMarks' )
-  let g:SignatureIncludeMarks = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-endif
-if !exists( 'g:SignatureIncludeMarkers' )
-  let g:SignatureIncludeMarkers = ")!@#$%^&*("
-endif
-if !exists( 'g:SignatureMarkTextHL' )
-  let g:SignatureMarkTextHL = "Exception"
-endif
-if !exists( 'g:SignatureMarkerTextHL' )
-  let g:SignatureMarkerTextHL = "WarningMsg"
-endif
-if !exists( 'g:SignatureWrapJumps' )
-  let g:SignatureWrapJumps = 1
-endif
-if !exists( 'g:SignatureMarkOrder' )
-  let g:SignatureMarkOrder = "\p\m"
-endif
-if !exists( 'g:SignatureDeleteConfirmation' )
-  let g:SignatureDeleteConfirmation = 0
-endif
-if !exists( 'g:SignaturePurgeConfirmation' )
-  let g:SignaturePurgeConfirmation = 0
-endif
-if !exists( 'g:SignatureMenu' )
-  let g:SignatureMenu = 'P&lugin.&Signature'
-endif
-if !exists( 'g:SignaturePeriodicRefresh' )
-  let g:SignaturePeriodicRefresh = 1
-endif
-if !exists( 'g:SignatureEnabledAtStartup' )
-  let g:SignatureEnabledAtStartup = 1
-endif
-if !exists( 'g:SignatureDeferPlacement' )
-  let g:SignatureDeferPlacement = 1
-endif
-if !exists( 'g:SignatureUnconditionallyRecycleMarks' )
-  let g:SignatureUnconditionallyRecycleMarks = 0
-endif
-if !exists( 'g:SignatureErrorIfNoAvailableMarks' )
-  let g:SignatureErrorIfNoAvailableMarks = 1
-endif
-if !exists( 'g:SignatureForceRemoveGlobal' )
-  let g:SignatureForceRemoveGlobal = 1
-endif
+function! s:Set(var, default)
+  if !exists(a:var)
+    if type(a:default)
+      execute 'let' a:var '=' string(a:default)
+    else
+      execute 'let' a:var '=' a:default
+    endif
+  endif
+endfunction
+call s:Set( 'g:SignaturePrioritizeMarks',             1                                                      )
+call s:Set( 'g:SignatureIncludeMarks',                'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' )
+call s:Set( 'g:SignatureIncludeMarkers',              ')!@#$%^&*('                                           )
+call s:Set( 'g:SignatureMarkTextHL',                  'Exception'                                            )
+call s:Set( 'g:SignatureMarkerTextHL',                'WarningMsg'                                           )
+call s:Set( 'g:SignatureWrapJumps',                   1                                                      )
+call s:Set( 'g:SignatureMarkOrder',                   "\p\m"                                                 )
+call s:Set( 'g:SignatureDeleteConfirmation',          0                                                      )
+call s:Set( 'g:SignaturePurgeConfirmation',           0                                                      )
+call s:Set( 'g:SignaturePeriodicRefresh',             1                                                      )
+call s:Set( 'g:SignatureEnabledAtStartup',            1                                                      )
+call s:Set( 'g:SignatureDeferPlacement',              1                                                      )
+call s:Set( 'g:SignatureUnconditionallyRecycleMarks', 0                                                      )
+call s:Set( 'g:SignatureErrorIfNoAvailableMarks',     1                                                      )
+call s:Set( 'g:SignatureForceRemoveGlobal',           1                                                      )
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -103,16 +79,16 @@ function! signature#Init()                                                      
     let b:sig_enabled = g:SignatureEnabledAtStartup
   endif
 
-  if !exists('b:SignatureIncludeMarks'   ) | let b:SignatureIncludeMarks    = g:SignatureIncludeMarks    | endif
-  if !exists('b:SignatureIncludeMarkers' ) | let b:SignatureIncludeMarkers  = g:SignatureIncludeMarkers  | endif
-  if !exists('b:SignatureMarkOrder'      ) | let b:SignatureMarkOrder       = g:SignatureMarkOrder       | endif
-  if !exists('b:SignaturePrioritizeMarks') | let b:SignaturePrioritizeMarks = g:SignaturePrioritizeMarks | endif
-  if !exists('b:SignatureDeferPlacement' ) | let b:SignatureDeferPlacement  = g:SignatureDeferPlacement  | endif
-  if !exists('b:SignatureWrapJumps'      ) | let b:SignatureWrapJumps       = g:SignatureWrapJumps       | endif
+  call s:Set( 'b:SignatureIncludeMarks',    g:SignatureIncludeMarks    )
+  call s:Set( 'b:SignatureIncludeMarkers',  g:SignatureIncludeMarkers  )
+  call s:Set( 'b:SignatureMarkOrder',       g:SignatureMarkOrder       )
+  call s:Set( 'b:SignaturePrioritizeMarks', g:SignaturePrioritizeMarks )
+  call s:Set( 'b:SignatureDeferPlacement',  g:SignatureDeferPlacement  )
+  call s:Set( 'b:SignatureWrapJumps',       g:SignatureWrapJumps       )
 endfunction
 
 
-function! signature#MarksList(...)                                                                                        " {{{2
+function! signature#MarksList(...)                                                                                " {{{2
   " Description: Takes two optional arguments - mode/line no. and scope
   "              If no arguments are specified, returns a list of [mark, line no.] pairs that are in use in the buffer
   "              or are free to be placed in which case, line no. is 0
@@ -154,6 +130,23 @@ function! signature#MarksList(...)                                              
 endfunction
 
 
+function! signature#ToggleSignDummy( mode )                                                                       " {{{2
+  " Arguments:
+  "   mode : 'remove'
+  "        : 'place'
+
+  if a:mode ==? 'place'
+    sign define Signature_Dummy
+    " When only 1 sign is present and we delete the line that the sign is on and undo the delete,
+    " ToggleSignDummy('place') is called again. To avoid placing multiple dummy signs we unplace and place it.
+    execute 'sign unplace 666 buffer=' . bufnr('%')
+    execute 'sign place 666 line=1 name=Signature_Dummy buffer=' . bufnr('%')
+  else
+    execute 'sign unplace 666 buffer=' . bufnr('%')
+  endif
+endfunction
+
+
 function! signature#ToggleSign( sign, mode, lnum )        " {{{2
   " Description: Enable/Disable/Toggle signs for marks/markers on the specified line number, depending on value of mode
   " Arguments:
@@ -176,12 +169,12 @@ function! signature#ToggleSign( sign, mode, lnum )        " {{{2
   "endif
 
   let l:lnum = a:lnum
-  let l:id   = ( winbufnr(0) + 1 ) * l:lnum
+  let l:id   = l:lnum * 1000 + bufnr('%')
 
   " Toggle sign for markers                         {{{3
   if stridx( b:SignatureIncludeMarkers, a:sign ) >= 0
 
-    if a:mode ==? "place"
+    if a:mode ==? 'place'
       let b:sig_markers[l:lnum] = a:sign . get( b:sig_markers, l:lnum, "" )
     else
       let b:sig_markers[l:lnum] = substitute( b:sig_markers[l:lnum], "\\C" . escape( a:sign, '$^' ), "", "" )
@@ -206,7 +199,7 @@ function! signature#ToggleSign( sign, mode, lnum )        " {{{2
       endif
 
       for l:lnum in l:arr
-        let l:id   = ( winbufnr(0) + 1 ) * l:lnum
+        let l:id   = l:lnum * 1000 + bufnr('%')
         let b:sig_marks[l:lnum] = substitute( b:sig_marks[l:lnum], "\\C" . a:sign, "", "" )
 
         " If there are no marks on the line, delete signs on that line
@@ -222,15 +215,31 @@ function! signature#ToggleSign( sign, mode, lnum )        " {{{2
   if ( has_key( b:sig_marks, l:lnum ) && ( b:SignaturePrioritizeMarks || !has_key( b:sig_markers, l:lnum )))
     let l:str = substitute( b:SignatureMarkOrder, "\m", strpart( b:sig_marks[l:lnum], 0, 1 ), "" )
     let l:str = substitute( l:str,                "\p", strpart( b:sig_marks[l:lnum], 1, 1 ), "" )
-    execute 'sign define sig_Sign_' . l:id . ' text=' . l:str . ' texthl=' . g:SignatureMarkTextHL
+
+    " If g:SignatureMarkTextHL points to a function, call it and use its output as the highlight group.
+    " If it is a string, use it directly
+    let l:SignatureMarkTextHL = eval( g:SignatureMarkTextHL )
+    execute 'sign define Signature_' . l:str . ' text=' . l:str . ' texthl=' . l:SignatureMarkTextHL
+
   elseif has_key( b:sig_markers, l:lnum )
-      let l:str = strpart( b:sig_markers[l:lnum], 0, 1 )
-      execute 'sign define sig_Sign_' . l:id . ' text=' . l:str . ' texthl=' . g:SignatureMarkerTextHL
+    let l:str = strpart( b:sig_markers[l:lnum], 0, 1 )
+
+    " If g:SignatureMarkerTextHL points to a function, call it and use its output as the highlight group.
+    " If it is a string, use it directly
+    let l:SignatureMarkerTextHL = eval( g:SignatureMarkerTextHL )
+    execute 'sign define Signature_' . l:str . ' text=' . l:str . ' texthl=' . l:SignatureMarkerTextHL
+
   else
+    " FIXME: Clean-up. Undefine the sign
     execute 'sign unplace ' . l:id
     return
   endif
-  execute 'sign place ' . l:id . ' line=' . l:lnum . ' name=sig_Sign_' . l:id . ' buffer=' . winbufnr(0)
+  execute 'sign place ' . l:id . ' line=' . l:lnum . ' name=Signature_' . l:str . ' buffer=' . bufnr('%')
+
+  " If there is only 1 mark/marker in the file, also place a dummy sign to prevent flickering of the gutter
+  if len(b:sig_marks) + len(b:sig_markers) == 1
+    call signature#ToggleSignDummy( 'place' )
+  endif
 endfunction
 
 
@@ -259,65 +268,6 @@ function! signature#SignRefresh(...)              " {{{2
 
   " We do not add signs for markers as SignRefresh is executed periodically and we don't have a way to determine if the
   " marker already has a sign or not
-endfunction
-
-
-function! s:CreateMenu()                                                                                  " {{{2
-  if ( g:SignatureMenu != 0 ) && has('gui_running')
-    if s:SignatureMap.PlaceNextMark != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Pl&ace\ next\ mark<Tab>' . s:SignatureMap.Leader . s:SignatureMap.PlaceNextMark . ' :call signature#ToggleMark("next")<CR>'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Pl&ace\ next\ mark :call signature#ToggleMark("next")<CR>'
-    endif
-    if s:SignatureMap.PurgeMarks != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Re&move\ all\ marks\ \ \ \ <Tab>' . s:SignatureMap.Leader . s:SignatureMap.PurgeMarks ' :call signature#PurgeMarks()<CR>'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Re&move\ all\ marks :call signature#PurgeMarks()<CR>'
-    endif
-    execute  'amenu <silent> ' . g:SignatureMenu . '.-s1- :'
-    if s:SignatureMap.GotoNextSpotByPos != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ &next\ mark\ (pos)<Tab>' . s:SignatureMap.GotoNextSpotByPos . ' :call signature#GotoMark( "next", "spot", "pos" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ &next\ mark\ (pos) :call signature#GotoMark( "next", "spot", "pos" )'
-    endif
-    if s:SignatureMap.PrevSpotByPos != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ p&rev\ mark\ (pos)<Tab>' . s:SignatureMap.GotoPrevSpotByPos . ' :call signature#GotoMark( "prev", "spot", "pos" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ p&rev\ mark\ (pos) :call signature#GotoMark( "prev", "spot", "pos" )'
-    endif
-    if s:SignatureMap.NextSpotByAlpha != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ next\ mark\ (a&lpha)<Tab>' . s:SignatureMap.GotoNextSpotByAlpha . ' :call signature#GotoMark( "next", "spot", "alpha" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ next\ mark\ (a&lpha) :call signature#GotoMark( "next", "spot", "alpha" )'
-    endif
-    if s:SignatureMap.PrevSpotByAlpha != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ prev\ mark\ (alp&ha)<Tab>' . s:SignatureMap.GotoPrevSpotByAlpha . ' :call signature#GotoMark( "prev", "spot", "alpha" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ prev\ mark\ (alp&ha)<Tab> :call signature#GotoMark( "prev", "spot", "alpha" )'
-    endif
-    execute  'amenu <silent> ' . g:SignatureMenu . '.-s2- :'
-    if s:SignatureMap.GotoNextMarker != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ nex&t\ marker<Tab>' . s:SignatureMap.GotoNextMarker . ' :call signature#GotoMarker( "next", "same" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ nex&t\ marker :call signature#GotoMarker( "next", "same" )'
-    endif
-    if s:SignatureMap.GotoPrevMarker != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ pre&v\ marker<Tab>' . s:SignatureMap.GotoPrevMarker . ' :call signature#GotoMarker( "prev", "same" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ pre&v\ marker :call signature#GotoMarker( "prev", "same" )'
-    endif
-    if s:SignatureMap.GotoNextMarkerAny != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ nex&t\ marker\ (any)<Tab>' . s:SignatureMap.GotoNextMarkerAny . ' :call signature#GotoMarker( "next", "any" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ nex&t\ marker\ (any) :call signature#GotoMarker( "next", "any" )'
-    endif
-    if s:SignatureMap.GotoPrevMarkerAny != ""
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ pre&v\ marker\ (any)<Tab>' . s:SignatureMap.GotoPrevMarkerAny . ' :call signature#GotoMarker( "prev", "any" )'
-    else
-      execute 'menu <silent> ' . g:SignatureMenu . '.Goto\ pre&v\ marker\ (any) :call signature#GotoMarker( "prev", "any" )'
-    endif
-    execute   'menu <silent> ' . g:SignatureMenu . '.Rem&ove\ all\ markers<Tab>' . s:SignatureMap.Leader . s:SignatureMap.PurgeMarkers . ' :call signature#PurgeMarkers()<CR>'
-  endif
 endfunction
 
 
@@ -403,9 +353,6 @@ function! signature#CreateMaps()                                                
   if s:SignatureMap.ListLocalMarks    != ""
     execute 'nnoremap <silent> <unique> ' . s:SignatureMap.ListLocalMarks    . ' :call signature#ListLocalMarks()<CR>'
   endif
-
-  " Update the menu
-  call s:CreateMenu()
 endfunction
 call signature#CreateMaps()
 " }}}1

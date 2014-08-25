@@ -301,7 +301,24 @@ function! signature#ForceGlobalMarkRemoval( mark )
   endif
 
   if has('unix')
-    silent! call system('command sed -i "/^' . "'" . a:mark . '/d" ~/.viminfo > /dev/null' )
+    let l:filename = expand($HOME . '/.viminfo')
+  else
+    let l:filename = expand($HOME . '/_viminfo')
+  endif
+  if filewritable(l:filename) == 1
+    let l:lines = readfile(l:filename, 'b')
+    call filter(l:lines, 'v:val !~ "^''' . a:mark. '"')
+    if has('win32')
+      " for some reason writefile(_viminfo) only works after editing directly
+      exe "noautocmd split " . l:filename
+      noautocmd write
+      noautocmd bdelete
+    endif
+    call writefile(l:lines, l:filename, 'b')
+  else
+      echohl WarningMsg
+      echomsg "Signature: Unable to read/write .viminfo ('" . l:filename . "')"
+      echohl None
   endif
 endfunction
 
@@ -322,6 +339,11 @@ function! signature#PurgeMarks()                                                
     silent call signature#ToggleSign( i[0], "remove", i[1] )
     call signature#ForceGlobalMarkRemoval(i[0])
   endfor
+
+  " If there are no marks and markers left, also remove the dummy sign
+  if len(b:sig_marks) + len(b:sig_markers) == 0
+    call signature#ToggleSignDummy( 'remove' )
+  endif
 endfunction
 
 
@@ -357,6 +379,11 @@ function! signature#PurgeMarkers(...)                                           
       call signature#ToggleSign( l:marker, "remove", l:lnum )
     endfor
   endfor
+
+  " If there are no marks and markers left, also remove the dummy sign
+  if len(b:sig_marks) + len(b:sig_markers) == 0
+    call signature#ToggleSignDummy( 'remove' )
+  endif
 endfunction
 
 
@@ -376,11 +403,11 @@ function! signature#Toggle()                                                    
   else
     " Signature disabled ==> Remove signs
     for i in keys( b:sig_markers )
-      let l:id = ( winbufnr(0) + 1 ) * i
+      let l:id = i * 1000 + bufnr('%')
       silent! execute 'sign unplace ' . l:id
     endfor
     for i in keys( b:sig_marks )
-      let l:id = ( winbufnr(0) + 1 ) * i
+      let l:id = i * 1000 + bufnr('%')
       silent! execute 'sign unplace ' . l:id
     endfor
     unlet b:sig_marks
