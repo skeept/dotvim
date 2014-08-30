@@ -62,7 +62,11 @@ function! unite#candidates#_recache(input, is_force) "{{{
       endtry
     endif
 
-    if unite.sources !=# sources
+    if get(unite.sources, 0, {'name' : ''}).name
+          \ !=# get(sources, 0, {'name' : ''}).name
+      " Finalize previous sources.
+      call unite#helper#call_hook(unite.sources, 'on_close')
+
       let unite.sources = sources
       let unite.source_names = unite#helper#get_source_names(sources)
 
@@ -129,6 +133,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
         \           'v:val.unite__context.is_async')) > 0
 
   let &ignorecase = ignorecase_save
+  call unite#handlers#_save_updatetime()
 endfunction"}}}
 
 function! unite#candidates#gather(...) "{{{
