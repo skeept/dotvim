@@ -204,7 +204,7 @@ def switch():
 
 def setup_buffer(bufnr, func_name, funcs=None, *args):
     if not started:
-        vim.eval('FraworLoad(@%aurum/powerline)')
+        vim.eval('FraworLoad("@%aurum/powerline")')
 
     newbuffer = (bufnr not in buffers)
     if newbuffer:

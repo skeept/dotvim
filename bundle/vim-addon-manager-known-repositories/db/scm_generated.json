@@ -3589,7 +3589,7 @@
   },
   "4836": {
     "type": "git",
-    "url": "git@github.com:markgandolfo/nerdtree-wget.vim.git"
+    "url": "git@github.com:markgandolfo/nerdtree-fetch.vim.git"
   },
   "4838": {
     "type": "git",
@@ -3629,7 +3629,7 @@
   },
   "4853": {
     "type": "git",
-    "url": "git://github.com/pavoljuhas/smart-change-directory"
+    "url": "git://github.com/pavoljuhas/scd.vim"
   },
   "4858": {
     "type": "git",
@@ -3982,6 +3982,22 @@
   "5010": {
     "type": "git",
     "url": "git://github.com/XadillaX/json-formatter.vim"
+  },
+  "5011": {
+    "type": "git",
+    "url": "git://github.com/daisuzu/autorepeat.vim"
+  },
+  "5012": {
+    "type": "git",
+    "url": "git://github.com/JamshedVesuna/vim-markdown-preview"
+  },
+  "5013": {
+    "type": "git",
+    "url": "git://github.com/Rykka/autotype.vim"
+  },
+  "5014": {
+    "type": "git",
+    "url": "git://github.com/aufgang001/vim-nerdtree_plugin_open"
   },
   "521": {
     "type": "git",

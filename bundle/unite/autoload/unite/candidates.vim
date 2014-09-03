@@ -62,7 +62,11 @@ function! unite#candidates#_recache(input, is_force) "{{{
       endtry
     endif
 
-    if unite.sources !=# sources
+    if get(unite.sources, 0, {'name' : ''}).name
+          \ !=# get(sources, 0, {'name' : ''}).name
+      " Finalize previous sources.
+      call unite#helper#call_hook(unite.sources, 'on_close')
+
       let unite.sources = sources
       let unite.source_names = unite#helper#get_source_names(sources)
 
@@ -129,6 +133,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
         \           'v:val.unite__context.is_async')) > 0
 
   let &ignorecase = ignorecase_save
+  call unite#handlers#_save_updatetime()
 endfunction"}}}
 
 function! unite#candidates#gather(...) "{{{
@@ -150,6 +155,7 @@ function! unite#candidates#gather(...) "{{{
   endif
 
   if is_gather_all || unite.context.prompt_direction ==# 'below'
+        \ || unite.context.quick_match
     let unite.candidates_pos = len(unite.candidates)
   elseif unite.context.is_redraw || unite.candidates_pos == 0
     let unite.candidates_pos = line('.') + winheight(0)

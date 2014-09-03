@@ -182,11 +182,14 @@ fun! <sid>WriteNrrwRgn(...) "{{{1
 	endif
 	if &l:mod && exists("a:1") && a:1
 		" Write the buffer back to the original buffer
+		let _wsv = winsaveview()
 		setl nomod
 		exe ":WidenRegion"
 		if bufname('') !~# 'NrrwRgn' && bufwinnr(s:nrrw_winname. '_'. s:instn) > 0
 			exe ':noa'. bufwinnr(s:nrrw_winname. '_'. s:instn). 'wincmd w'
 		endif
+		" prevent E315
+		call winrestview(_wsv)
 	else
 		call <sid>StoreLastNrrwRgn(nrrw_instn)
 		" b:orig_buf might not exists (see issue #2)
@@ -935,6 +938,10 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	let winnr    = get(s:nrrw_rgn_lines[instn], 'winnr', winnr())
 	let close    = has_key(s:nrrw_rgn_lines[instn], 'single')
 	let vmode    = has_key(s:nrrw_rgn_lines[instn], 'vmode')
+	if winnr > winnr('$')
+		" window doesn't exists anymore
+		let winnr = winnr()
+	endif
 	" Save current state
 	let nr = changenr()
 	" Execute autocommands
@@ -958,7 +965,9 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	if (orig_win == -1)
 		if bufexists(orig_buf)
 			" buffer not in current window, switch to it!
-			exe "noa" winnr "wincmd w"
+			if (winnr != winnr())
+				exe "noa" winnr "wincmd w"
+			endif
 			exe "noa" orig_buf "b!"
 			" Make sure highlighting will be removed
 			let close = (&g:hid ? 0 : 1)
@@ -1037,7 +1046,11 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 		endif
 
 		" also, renew the highlighted region
-		if !has_key(s:nrrw_rgn_lines[instn], 'single')
+		" only highlight, if we are in a different window
+		" then where we started, else we might accidentally
+		" set a match in the narrowed window (might happen if the
+		" user typed Ctrl-W o in the narrowed window)
+		if !has_key(s:nrrw_rgn_lines[instn], 'single') && winnr != winnr()
 			call <sid>AddMatches(<sid>GeneratePattern(
 				\ s:nrrw_rgn_lines[instn].start[1:2],
 				\ s:nrrw_rgn_lines[instn].end[1:2],
@@ -1071,7 +1084,11 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 		if s:nrrw_rgn_lines[instn].end[1] > line('$')
 			let s:nrrw_rgn_lines[instn].end[1] = line('$')
 		endif
-		if !has_key(s:nrrw_rgn_lines[instn], 'single')
+		" only highlight, if we are in a different window
+		" then where we started, else we might accidentally
+		" set a match in the narrowed window (might happen if the
+		" user typed Ctrl-W o in the narrowed window)
+		if !has_key(s:nrrw_rgn_lines[instn], 'single') && winnr != winnr()
 			call <sid>AddMatches(<sid>GeneratePattern(
 				\s:nrrw_rgn_lines[instn].start[1:2], 
 				\s:nrrw_rgn_lines[instn].end[1:2], 
@@ -1109,9 +1126,13 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 	elseif close
 		call <sid>CleanUpInstn(instn)
 	endif
+	let bufnr = bufnr('')
 	" jump back to narrowed window
 	call <sid>JumpToBufinTab(orig_tab, nrw_buf)
-	setl nomod
+	if bufnr('') != bufnr
+		" do not set the original buffer unmodified
+		setl nomod
+	endif
 	if a:force
 		" trigger auto command
 		bw
@@ -1220,7 +1241,7 @@ fun! nrrwrgn#NrrwRgnStatus() "{{{1
 	else
 		let dict={}
 		try
-			let cur = copy(s:nrrw_rgn_lines[b:nrrw_instn])
+			let cur = deepcopy(s:nrrw_rgn_lines[b:nrrw_instn])
 			if has_key(cur, 'multi')
 				let multi = cur.multi
 			else
