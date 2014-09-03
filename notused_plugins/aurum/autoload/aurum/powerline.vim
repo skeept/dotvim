@@ -34,8 +34,7 @@ powerline.add_local_theme("aurum.powerline.is_commit", {
     u"segments": {
         u"left": [
             {
-                u"name": u"mode",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.mode",
                 u"priority": 40,
             },
             {
@@ -45,15 +44,14 @@ powerline.add_local_theme("aurum.powerline.is_commit", {
                 u"priority": 20,
             },
             {
-                u"name": u"branch",
+                u"function": u"branch",
                 u"priority": 35,
             },
             filler_segment
         ],
         u"right": [
             {
-                u"name": "virtcol_current",
-                u"module": u"powerline.segments.vim",
+                u"function": "powerline.segments.vim.virtcol_current",
                 u"priority": 30,
             },
         ],
@@ -70,7 +68,7 @@ powerline.add_local_theme("aurum.powerline.is_annotate", {
                 u"priority": 30,
             },
             {
-                u"name": u"annotated_changeset",
+                u"function": u"annotated_changeset",
                 u"priority": 40,
             },
         ],
@@ -89,7 +87,7 @@ powerline.add_local_theme("aurum.powerline.is_status", {
                 u"priority": 30,
             },
             {
-                u"name": u"status_changesets",
+                u"function": u"status_changesets",
                 u"priority": 40,
             },
         ],
@@ -108,26 +106,24 @@ powerline.add_local_theme("aurum.powerline.is_log", {
                 u"priority": 30,
             },
             {
-                u"name": u"repository_root",
+                u"function": u"repository_root",
                 u"priority": 33,
             },
             {
-                u"name": u"log_options",
+                u"function": u"log_options",
                 u"priority": 40,
             },
             filler_segment
         ],
         u"right": [
             {
-                u"name": "line_percent",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_percent",
                 u"priority": 37,
                 # Keys args, after, width and align must be inherited from the 
                 # top theme (currently not implemented)
             },
             {
-                u"name": "line_current",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_current",
                 u"priority": 35,
             },
         ],
@@ -144,30 +140,28 @@ powerline.add_local_theme("aurum.powerline.is_file", {
                 u"priority": 30,
             },
             {
-                u"name": u"repository_root",
+                u"function": u"repository_root",
                 u"priority": 33,
             },
             {
-                u"name": u"file_directory",
+                u"function": u"file_directory",
                 u"priority": 40,
             },
             {
-                u"name": u"file_name",
+                u"function": u"file_name",
                 u"priority": 45,
             },
             filler_segment
         ],
         u"right": [
             {
-                u"name": "line_percent",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_percent",
                 u"priority": 37,
                 # Keys args, after, width and align must be inherited from the 
                 # top theme (currently not implemented)
             },
             {
-                u"name": "line_current",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_current",
                 u"priority": 35,
             },
         ],
@@ -184,30 +178,28 @@ powerline.add_local_theme("aurum.powerline.is_diff", {
                 u"priority": 30,
             },
             {
-                u"name": u"repository_root",
+                u"function": u"repository_root",
                 u"priority": 33,
             },
             {
-                u"name": u"diff_files",
+                u"function": u"diff_files",
                 u"priority": 40,
             },
             filler_segment
         ],
         u"right": [
             {
-                u"name": u"diff_changesets",
+                u"function": u"diff_changesets",
                 u"priority": 38,
             },
             {
-                u"name": "line_percent",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_percent",
                 u"priority": 37,
                 # Keys args, after, width and align must be inherited from the 
                 # top theme (currently not implemented)
             },
             {
-                u"name": "line_current",
-                u"module": u"powerline.segments.vim",
+                u"function": u"powerline.segments.vim.line_current",
                 u"priority": 35,
             },
         ],
