@@ -133,7 +133,8 @@ function! vimfiler#init#_command(default, args) "{{{
   call vimfiler#init#_start(join(args), options)
 endfunction"}}}
 function! vimfiler#init#_context(context) "{{{
-  let default_context = vimfiler#variables#default_context()
+  let default_context = extend(copy(vimfiler#variables#default_context()),
+        \ vimfiler#custom#get_profile('default', 'context'))
 
   if get(a:context, 'explorer', 0)
     " Change default value.
@@ -146,6 +147,15 @@ function! vimfiler#init#_context(context) "{{{
     let default_context.columns = g:vimfiler_explorer_columns
   endif
 
+  let profile_name = get(a:context, 'profile_name',
+        \ get(a:context, 'buffer_name', 'default'))
+
+  if profile_name !=# 'default'
+    " Overwrite default_context by profile context.
+    call extend(default_context,
+          \ unite#custom#get_profile(profile_name, 'context'))
+  endif
+
   let context = extend(default_context, a:context)
 
   " Generic no.
@@ -154,9 +164,7 @@ function! vimfiler#init#_context(context) "{{{
     let context[option[3:]] = 0
   endfor
 
-  if !has_key(context, 'profile_name')
-    let context.profile_name = context.buffer_name
-  endif
+  let context.profile_name = profile_name
   if context.toggle && context.find
     " Disable toggle feature.
     let context.toggle = 0
@@ -196,7 +204,7 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
 
   let b:vimfiler.global_sort_type = g:vimfiler_sort_type
   let b:vimfiler.local_sort_type = g:vimfiler_sort_type
-  let b:vimfiler.is_safe_mode = g:vimfiler_safe_mode_by_default
+  let b:vimfiler.is_safe_mode = a:context.safe
   let b:vimfiler.winwidth = winwidth(0)
   let b:vimfiler.another_vimfiler_bufnr = -1
   let b:vimfiler.prompt_linenr =
@@ -385,6 +393,11 @@ function! vimfiler#init#_start(path, ...) "{{{
   call s:create_vimfiler_buffer(path, context)
 endfunction"}}}
 function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
+  if a:bufnr < 0
+    call s:create_vimfiler_buffer(a:directory, a:context)
+    return
+  endif
+
   let search_path = fnamemodify(bufname('%'), ':p')
 
   let context = vimfiler#initialize_context(a:context)
