@@ -97,18 +97,21 @@ function! neocomplete#handler#_on_complete_done() "{{{
       let neocomplete.completed_item = v:completed_item
     endif
   else
-    let complete_str =
-          \ neocomplete#helper#match_word(
-          \   matchstr(getline('.'), '^.*\%'.col('.').'c'))[1]
+    let cur_text = matchstr(getline('.'), '^.*\%'.col('.').'c')
+    let complete_str = neocomplete#helper#match_word(cur_text)[1]
     if complete_str == ''
-      return
+      " Use default keyword pattern.
+      let complete_str = matchstr(cur_text, '\h\w*\(()\?\)\?$')
+      if complete_str == ''
+        return
+      endif
     endif
 
     let candidates = filter(copy(neocomplete.candidates),
           \   "v:val.word ==# complete_str &&
-          \    (get(v:val, 'abbr', '') != '' &&
+          \    ((get(v:val, 'abbr', '') != '' &&
           \     v:val.word !=# v:val.abbr && v:val.abbr[-1] != '~') ||
-          \     get(v:val, 'info', '') != ''")
+          \     get(v:val, 'info', '') != '')")
     if !empty(candidates)
       let neocomplete.completed_item = candidates[0]
     endif
@@ -190,7 +193,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
 
     if neocomplete#helper#is_omni(cur_text)
           \ && neocomplete.old_cur_text !=# cur_text
-      call feedkeys("\<Plug>(neocomplete_start_omni_complete)")
+      call s:complete_key("\<Plug>(neocomplete_start_omni_complete)")
       return
     endif
 
@@ -232,37 +235,20 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
           \ neocomplete#complete#_get_results(cur_text)
 
     if empty(neocomplete.complete_sources)
-      call neocomplete#print_debug('Skipped.')
+      if g:neocomplete#enable_omni_fallback
+            \ && &l:omnifunc != ''
+        " Fallback to omnifunc
+        call s:complete_key("\<Plug>(neocomplete_start_omni_complete)")
+      else
+        call neocomplete#print_debug('Skipped.')
+        return
+      endif
       return
     endif
   endif
 
-  call s:save_foldinfo()
-
-  set completeopt-=menu
-  set completeopt-=longest
-  set completeopt+=menuone
-
-  " Set options.
-  let neocomplete.completeopt = &completeopt
-
-  if neocomplete#util#is_complete_select()
-    if g:neocomplete#enable_auto_select
-      set completeopt-=noselect
-      set completeopt+=noinsert
-    else
-      set completeopt+=noinsert,noselect
-    endif
-  endif
-
-  " Do not display completion messages
-  " Patch: https://groups.google.com/forum/#!topic/vim_dev/WeBBjkXE8H8
-  if has('patch-7.4.314')
-    set shortmess+=c
-  endif
-
   " Start auto complete.
-  call feedkeys("\<Plug>(neocomplete_start_auto_complete)")
+  call s:complete_key("\<Plug>(neocomplete_start_auto_complete)")
 endfunction"}}}
 
 function! s:save_foldinfo() "{{{
@@ -380,6 +366,35 @@ function! s:make_cache_current_line() "{{{
     " Caching current cache line.
     call neocomplete#sources#member#make_cache_current_line()
   endif
+endfunction"}}}
+
+function! s:complete_key(key) "{{{
+  call s:save_foldinfo()
+
+  set completeopt-=menu
+  set completeopt-=longest
+  set completeopt+=menuone
+
+  " Set options.
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.completeopt = &completeopt
+
+  if neocomplete#util#is_complete_select()
+    if g:neocomplete#enable_auto_select
+      set completeopt-=noselect
+      set completeopt+=noinsert
+    else
+      set completeopt+=noinsert,noselect
+    endif
+  endif
+
+  " Do not display completion messages
+  " Patch: https://groups.google.com/forum/#!topic/vim_dev/WeBBjkXE8H8
+  if has('patch-7.4.314')
+    set shortmess+=c
+  endif
+
+  call feedkeys(a:key)
 endfunction"}}}
 
 let &cpo = s:save_cpo

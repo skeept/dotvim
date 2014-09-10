@@ -27,14 +27,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " Global options definition. "{{{
-let g:vimfiler_split_action =
-      \ get(g:, 'vimfiler_split_action', 'right')
-let g:vimfiler_edit_action =
-      \ get(g:, 'vimfiler_edit_action', 'open')
-let g:vimfiler_preview_action =
-      \ get(g:, 'vimfiler_preview_action', 'preview')
-let g:vimfiler_sort_type =
-      \ get(g:, 'vimfiler_sort_type', 'filename')
 let g:vimfiler_directory_display_top =
       \ get(g:, 'vimfiler_directory_display_top', 1)
 let g:vimfiler_max_directories_history =
@@ -61,8 +53,6 @@ let g:vimfiler_marked_file_icon =
       \ get(g:, 'vimfiler_marked_file_icon', '*')
 let g:vimfiler_quick_look_command =
       \ get(g:, 'vimfiler_quick_look_command', '')
-let g:vimfiler_explorer_columns =
-      \ get(g:, 'vimfiler_explorer_columns', 'type')
 let g:vimfiler_ignore_pattern =
       \ get(g:, 'vimfiler_ignore_pattern', '^\.')
 let g:vimfiler_expand_jump_to_first_child =
@@ -139,12 +129,13 @@ function! vimfiler#init#_context(context) "{{{
   if get(a:context, 'explorer', 0)
     " Change default value.
     let default_context.buffer_name = 'explorer'
+    let default_context.profile_name = 'explorer'
     let default_context.split = 1
     let default_context.simple = 1
     let default_context.toggle = 1
     let default_context.quit = 0
     let default_context.winwidth = 35
-    let default_context.columns = g:vimfiler_explorer_columns
+    let default_context.columns = default_context.explorer_columns
   endif
 
   let profile_name = get(a:context, 'profile_name',
@@ -202,8 +193,8 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
         \ b:vimfiler.column_names, b:vimfiler.context)
   let b:vimfiler.syntaxes = []
 
-  let b:vimfiler.global_sort_type = g:vimfiler_sort_type
-  let b:vimfiler.local_sort_type = g:vimfiler_sort_type
+  let b:vimfiler.global_sort_type = a:context.sort_type
+  let b:vimfiler.local_sort_type = a:context.sort_type
   let b:vimfiler.is_safe_mode = a:context.safe
   let b:vimfiler.winwidth = winwidth(0)
   let b:vimfiler.another_vimfiler_bufnr = -1
@@ -483,14 +474,11 @@ function! s:create_vimfiler_buffer(path, context) "{{{
 
   " Create new buffer name.
   let prefix = 'vimfiler:'
-  let prefix .= context.profile_name
+  let prefix .= context.buffer_name
 
   let postfix = vimfiler#init#_get_postfix(prefix, 1)
 
   let bufname = prefix . postfix
-
-  " Set buffer_name.
-  let context.buffer_name = bufname
 
   if context.split
     execute context.direction

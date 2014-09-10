@@ -44,8 +44,9 @@ endfun
 
 fun! <sid>DebugOutput(string) "{{{1
 	if s:debug
-		echo strtrans(a:string)
+		echom strtrans(a:string)
 	endif
+	return a:string
 endfun
 fun! <sid>Opposite(char) "{{{1
 	if a:char == '/' || a:char =~ '[ft]'
@@ -224,6 +225,7 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	endif
 	let res = ''
 	let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
+	let oldsearchpat = @/
 	if a:mode =~ 'o' &&
 		\ s:colon['cmd'] " last search was 'f' command
 		" operator pending. For f cmd, make sure the motion is inclusive
@@ -265,8 +267,11 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	endif
 	" Ctrl-C should be a noop
 	let res = (empty(res) ? s:escape : res."\n")
-	call <sid>DebugOutput(res)
-	return res
+	if a:mode != 'o' && v:operator != 'c'
+		let res .= ":\<C-U>call histdel('/', -1)\<cr>".
+			\ ":\<C-U>let @/='". oldsearchpat. "'\<cr>"
+	endif
+	return <sid>DebugOutput(res)
 endfun
 
 fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
@@ -277,9 +282,9 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		let char = nr2char(getchar())
 		if  char == s:escape
 			" abort when Escape has been hit
-			return char
+			return <sid>DebugOutput(char)
 		elseif empty(char) || char ==? "\x80\xFD\x60" "CursorHoldEvent"
-			return s:escape
+			return <sid>DebugOutput(s:escape)
 		endif
 		let orig_char = char
 		let char  = <sid>EscapePat(char, 1)
@@ -309,7 +314,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 
 				if matches == 0
 					" no match within the windows viewport, abort
-					return s:escape
+					return <sid>DebugOutput(s:escape)
 				elseif matches == 1
 					break
 				endif
@@ -322,16 +327,16 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 				endif
 				if !search(char, (a:fwd ? '' : 'b'). 'Wn')
 					" Pattern not found, abort
-					return s:escape
+					return <sid>DebugOutput(s:escape)
 				endif
 				" Get next character
 				let next = getchar()
 			endw
 			if nr2char(next) == s:escape
 				" abort when Escape has been hit
-				return s:escape
+				return <sid>DebugOutput(s:escape)
 			elseif empty(next) || next ==? "\x80\xFD\x60" "CursorHold Event"
-				return s:escape
+				return <sid>DebugOutput(s:escape)
 			endif
 		endif
 		let oldsearchpat = @/
@@ -346,7 +351,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 				let cmd = (a:f ? 'f' : 't')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f, a:fwd)
-				return cmd.orig_char
+				return <sid>DebugOutput(cmd.orig_char)
 
 			elseif search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'bnW') == line('.')
 				\ && !a:fwd
@@ -354,7 +359,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 				let cmd = (a:f ? 'F' : 'T')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f, a:fwd)
-				return cmd.orig_char
+				return <sid>DebugOutput(cmd.orig_char)
 			endif
 		endif
 
@@ -364,7 +369,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 			" return ESC
 			call <sid>ColonPattern(<sid>SearchForChar(cmd),
 					\ pat, '', a:f, a:fwd)
-			return s:escape
+			return <sid>DebugOutput(s:escape)
 		endif
 
 		let cnt  = v:count1
@@ -429,22 +434,13 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		" command, else we would lose the repeatability using '.'
 		" (e.g. cf,foobar<esc> is not repeatable anymore)
 		if a:mode != 'o' && v:operator != 'c'
-		    if v:operator == 'c'
-			    let mode = "\<C-\>\<C-O>"
-		    else
-			    let mode = "\<C-\>\<C-N>"
-		    endif
-		    let post_cmd = (a:mode == 'o' ? mode : '').
-			    \ ":\<C-U>call histdel('/', -1)\<cr>".
-			    \ (a:mode == 'o' ? mode : '').
+		    let post_cmd =  ":\<C-U>call histdel('/', -1)\<cr>".
 			    \ ":\<C-U>let @/='". oldsearchpat. "'\<cr>"
 		endif
 
 		" For visual mode, the :Ex commands exit the visual selection, so need
 		" to reselect it
-		call <sid>DebugOutput(res.post_cmd. ((a:mode ==? 'x' && mode() !~ '[vV]') ? 'gv' : ''))
-		return res.post_cmd. (a:mode ==? 'x' ? 'gv' : '')
-		"return res. ":let @/='".oldsearchpat."'\n"
+		return <sid>DebugOutput(res.post_cmd. ((a:mode ==? 'x') ? 'gv' : ''))
 	finally 
 		call <sid>HighlightMatch('', a:fwd)
 	endtry

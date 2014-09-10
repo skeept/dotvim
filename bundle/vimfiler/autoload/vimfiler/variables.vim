@@ -26,11 +26,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" Global options definition. "{{{
-let g:vimfiler_default_columns =
-      \ get(g:, 'vimfiler_default_columns', 'type:size:time')
-"}}}
-
 function! vimfiler#variables#get_clipboard() "{{{
   if !exists('s:clipboard')
     let s:clipboard = {'operation' : '', 'files' : []}
@@ -103,8 +98,13 @@ function! s:initialize_default_options() "{{{
         \ 'focus' : 1,
         \ 'invisible' : 0,
         \ 'columns' : 'type:size:time',
+        \ 'explorer_columns' : 'type',
         \ 'safe' : 1,
         \ 'auto_expand' : 0,
+        \ 'sort_type' : 'filename',
+        \ 'edit_action' : 'open',
+        \ 'split_action' : 'right',
+        \ 'preview_action' : 'preview',
         \ 'vimfiler__prev_bufnr' : bufnr('%'),
         \ 'vimfiler__winfixwidth' : &l:winfixwidth,
         \ 'vimfiler__winfixheight' : &l:winfixheight,
@@ -115,7 +115,12 @@ function! s:initialize_default_options() "{{{
         \ ['direction', 'g:vimfiler_split_rule'],
         \ ['auto_cd', 'g:vimfiler_enable_auto_cd'],
         \ ['columns', 'g:vimfiler_default_columns'],
+        \ ['explorer_columns', 'g:vimfiler_explorer_columns'],
         \ ['safe', 'g:vimfiler_safe_mode_by_default'],
+        \ ['sort_type', 'g:vimfiler_sort_type'],
+        \ ['split_action', 'g:vimfiler_split_action'],
+        \ ['edit_action', 'g:vimfiler_edit_action'],
+        \ ['preview_action', 'g:vimfiler_preview_action'],
         \ ], "exists(v:val[1])")
     let s:default_context[context] = {var}
   endfor
