@@ -928,6 +928,7 @@ parameters for an option.  You need to escape spaces with "\".
 						*vimfiler-options-simple*
 		-simple
 		Enable vimfiler simple mode.
+		Note: It is default in explorer mode.
 
 						*vimfiler-options-split*
 		-split
@@ -975,11 +976,17 @@ parameters for an option.  You need to escape spaces with "\".
 
 					*vimfiler-options-explorer-columns*
 		-explorer-columns={columns1:columns2:...}
-		Specify vimfiler columns. If omit it, "type" will be used.
+		Specify vimfiler columns in explorer mode. If omit it, "" will
+		be used.
 
 						*vimfiler-options-status*
 		-status
 		Display status line in vimfiler buffer.
+
+						*vimfiler-options-parent*
+		-parent
+		Display parent directory line in vimfiler buffer.
+		Note: It is not default in explorer mode.
 
 						*vimfiler-options-find*
 		-find

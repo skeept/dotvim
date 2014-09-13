@@ -118,14 +118,28 @@ fun! <sid>HighlightMatch(char, dir) "{{{1
 		let output = matchstr(a:char, '^\%(\\c\)\?\\V\zs.*')
 		" remove escaping for display
 		let output = substitute(output, '\\\\', '\\', 'g')
+		let pos    = [line('.'), col('.')]
 		if a:dir
-			let pat = '\%(\%>'. col('.'). 'c\&\%'. line('.'). 'l'
-			let pat .= '\|\%>'. line('.'). 'l\)'. a:char
+			" If a count has been given, first move to the count'th match and
+			" then highlight all matches after that (the count works only for
+			" the first entered char
+			while s:count > 1
+				" skip that many matches
+				let pos = searchpos(a:char, 'eW')
+				let s:count -= 1
+			endw
+
+			let pat = '\%(\%>'. pos[1]. 'c\&\%'. pos[0]. 'l'
+			let pat .= '\|\%>'. pos[0]. 'l\)'. a:char
 			" Make sure, it only matches within the current viewport
 			let pat = '\%('. pat. '\m\)\ze\&\%<'.(line('w$')+1).'l'.a:char
 		else
-			let pat = '\%(\%<'. col('.'). 'c\&\%'. line('.'). 'l'
-			let pat .= '\|\%<'. line('.'). 'l\)'. a:char
+			while s:count > 1
+				let pos = searchpos(a:char, 'bW')
+				let s:count -= 1
+			endw
+			let pat = '\%(\%<'. pos[1]. 'c\&\%'. pos[0]. 'l'
+			let pat .= '\|\%<'. pos[0]. 'l\)'. a:char
 			" Make sure, it only matches within the current viewport
 			let pat = '\%('. pat. '\m\)\ze\&\%>'.(line('w0')-1).'l'.a:char
 		endif
@@ -286,6 +300,10 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		elseif empty(char) || char ==? "\x80\xFD\x60" "CursorHoldEvent"
 			return <sid>DebugOutput(s:escape)
 		endif
+		" Use a script local var, so that you can use 3fi (and afterwards
+		" further redefine the search term, without skipping the next 2
+		" matching patterns!
+		let s:count   = v:count1
 		let orig_char = char
 		let char  = <sid>EscapePat(char, 1)
 		" ignore case of pattern? Does only work with search, not with original
@@ -433,9 +451,9 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		" If operator is c, don't switch to normal mode after the
 		" command, else we would lose the repeatability using '.'
 		" (e.g. cf,foobar<esc> is not repeatable anymore)
-		if a:mode != 'o' && v:operator != 'c'
-		    let post_cmd =  ":\<C-U>call histdel('/', -1)\<cr>".
-			    \ ":\<C-U>let @/='". oldsearchpat. "'\<cr>"
+		if a:mode != 'o' || (a:mode == 'o' && v:operator != 'c')
+		    let post_cmd = ":\<C-U>call histdel('/', -1)\<cr>".
+						 \ ":\<C-U>let @/='". oldsearchpat. "'\<cr>"
 		endif
 
 		" For visual mode, the :Ex commands exit the visual selection, so need

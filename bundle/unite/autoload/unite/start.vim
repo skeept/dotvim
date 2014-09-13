@@ -388,7 +388,7 @@ function! unite#start#complete(sources, ...) "{{{
         \  string(sources), string(context))
 endfunction "}}}
 
-function! unite#start#_pos(buffer_name, direction) "{{{
+function! unite#start#_pos(buffer_name, direction, count) "{{{
   let bufnr = s:get_unite_buffer(a:buffer_name)
   if bufnr < 0
     return
@@ -399,10 +399,11 @@ function! unite#start#_pos(buffer_name, direction) "{{{
   let next =
         \ (a:direction ==# 'first') ? 0 :
         \ (a:direction ==# 'last') ? len(unite.candidates)-1 :
-        \ (a:direction ==# 'next') ? unite.candidate_cursor+1 :
-        \ unite.candidate_cursor-1
+        \ (a:direction ==# 'next') ? unite.candidate_cursor+a:count :
+        \ unite.candidate_cursor-a:count
   if next < 0 || next >= len(unite.candidates)
     " Ignore.
+    call unite#view#_print_error('No more items')
     return
   endif
 
@@ -411,8 +412,8 @@ function! unite#start#_pos(buffer_name, direction) "{{{
   let candidate = unite.candidates[next]
 
   " Immediately action.
-  silent call unite#action#do(
-        \ unite.context.default_action, [candidate])
+  silent call unite#action#do_candidates(
+        \ unite.context.default_action, [candidate], unite.context)
 
   call unite#view#_redraw_echo(printf('[%d/%d] %s',
         \ unite.candidate_cursor+1, len(unite.candidates),
