@@ -64,9 +64,14 @@ function! UltiSnips#Edit(bang, ...)
             let mode = 'vs'
         elseif g:UltiSnipsEditSplit == 'horizontal'
             let mode = 'sp'
+        elseif g:UltiSnipsEditSplit == 'context'
+            let mode = 'vs'
+            if winwidth(0) <= 2 * (&tw ? &tw : 80)
+                let mode = 'sp'
+            endif
         endif
     endif
-    exe ':'.mode.' '.file
+    exe ':'.mode.' '.escape(file, ' ')
 endfunction
 
 function! UltiSnips#AddFiletypes(filetypes)
@@ -167,6 +172,7 @@ function! UltiSnips#Anon(value, ...)
     exec g:_uspy "UltiSnips_Manager.expand_anon(value, *args)"
     return ""
 endfunction
+
 
 function! UltiSnips#CursorMoved()
     exec g:_uspy "UltiSnips_Manager._cursor_moved()"

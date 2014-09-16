@@ -27,14 +27,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " Global options definition. "{{{
-let g:vimfiler_split_action =
-      \ get(g:, 'vimfiler_split_action', 'right')
-let g:vimfiler_edit_action =
-      \ get(g:, 'vimfiler_edit_action', 'open')
-let g:vimfiler_preview_action =
-      \ get(g:, 'vimfiler_preview_action', 'preview')
-let g:vimfiler_sort_type =
-      \ get(g:, 'vimfiler_sort_type', 'filename')
 let g:vimfiler_directory_display_top =
       \ get(g:, 'vimfiler_directory_display_top', 1)
 let g:vimfiler_max_directories_history =
@@ -61,8 +53,6 @@ let g:vimfiler_marked_file_icon =
       \ get(g:, 'vimfiler_marked_file_icon', '*')
 let g:vimfiler_quick_look_command =
       \ get(g:, 'vimfiler_quick_look_command', '')
-let g:vimfiler_explorer_columns =
-      \ get(g:, 'vimfiler_explorer_columns', 'type')
 let g:vimfiler_ignore_pattern =
       \ get(g:, 'vimfiler_ignore_pattern', '^\.')
 let g:vimfiler_expand_jump_to_first_child =
@@ -133,17 +123,27 @@ function! vimfiler#init#_command(default, args) "{{{
   call vimfiler#init#_start(join(args), options)
 endfunction"}}}
 function! vimfiler#init#_context(context) "{{{
-  let default_context = vimfiler#variables#default_context()
+  let default_context = extend(copy(vimfiler#variables#default_context()),
+        \ vimfiler#custom#get_profile('default', 'context'))
 
   if get(a:context, 'explorer', 0)
     " Change default value.
     let default_context.buffer_name = 'explorer'
+    let default_context.profile_name = 'explorer'
     let default_context.split = 1
-    let default_context.simple = 1
+    let default_context.parent = 0
     let default_context.toggle = 1
     let default_context.quit = 0
     let default_context.winwidth = 35
-    let default_context.columns = g:vimfiler_explorer_columns
+  endif
+
+  let profile_name = get(a:context, 'profile_name',
+        \ get(a:context, 'buffer_name', 'default'))
+
+  if profile_name !=# 'default'
+    " Overwrite default_context by profile context.
+    call extend(default_context,
+          \ unite#custom#get_profile(profile_name, 'context'))
   endif
 
   let context = extend(default_context, a:context)
@@ -154,9 +154,7 @@ function! vimfiler#init#_context(context) "{{{
     let context[option[3:]] = 0
   endfor
 
-  if !has_key(context, 'profile_name')
-    let context.profile_name = context.buffer_name
-  endif
+  let context.profile_name = profile_name
   if context.toggle && context.find
     " Disable toggle feature.
     let context.toggle = 0
@@ -165,6 +163,9 @@ function! vimfiler#init#_context(context) "{{{
     " Force create new vimfiler buffer.
     let context.create = 1
     let context.alternate_buffer = -1
+  endif
+  if context.explorer
+    let context.columns = context.explorer_columns
   endif
 
   return context
@@ -194,14 +195,13 @@ function! vimfiler#init#_vimfiler_directory(directory, context) "{{{1
         \ b:vimfiler.column_names, b:vimfiler.context)
   let b:vimfiler.syntaxes = []
 
-  let b:vimfiler.global_sort_type = g:vimfiler_sort_type
-  let b:vimfiler.local_sort_type = g:vimfiler_sort_type
-  let b:vimfiler.is_safe_mode = g:vimfiler_safe_mode_by_default
+  let b:vimfiler.global_sort_type = a:context.sort_type
+  let b:vimfiler.local_sort_type = a:context.sort_type
+  let b:vimfiler.is_safe_mode = a:context.safe
   let b:vimfiler.winwidth = winwidth(0)
   let b:vimfiler.another_vimfiler_bufnr = -1
   let b:vimfiler.prompt_linenr =
-        \ (b:vimfiler.context.explorer) ?  0 :
-        \ (b:vimfiler.context.status)   ?  2 : 1
+        \ b:vimfiler.context.status + b:vimfiler.context.parent
   let b:vimfiler.all_files_len = 0
   let b:vimfiler.status = ''
   let b:vimfiler.statusline =
@@ -385,12 +385,18 @@ function! vimfiler#init#_start(path, ...) "{{{
   call s:create_vimfiler_buffer(path, context)
 endfunction"}}}
 function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
+  if a:bufnr < 0
+    call s:create_vimfiler_buffer(a:directory, a:context)
+    return
+  endif
+
   let search_path = fnamemodify(bufname('%'), ':p')
 
   let context = vimfiler#initialize_context(a:context)
   if !context.tab
     let context.alternate_buffer = bufnr('%')
   endif
+  let context.vimfiler__prev_winnr = winnr()
 
   if bufwinnr(a:bufnr) < 0
     if context.split
@@ -409,8 +415,7 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
   let b:vimfiler.context = extend(b:vimfiler.context, context)
   call vimfiler#set_current_vimfiler(b:vimfiler)
   let b:vimfiler.prompt_linenr =
-        \ (b:vimfiler.context.explorer) ?  0 :
-        \ (b:vimfiler.context.status)   ?  2 : 1
+        \ b:vimfiler.context.status + b:vimfiler.context.parent
 
   let directory = vimfiler#util#substitute_path_separator(
         \ a:directory)
@@ -445,7 +450,7 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
-      execute bufwinnr(a:context.vimfiler__prev_bufnr).'wincmd w'
+      execute bufwinnr(a:context.alternate_buffer).'wincmd w'
     endif
   endif
 endfunction"}}}
@@ -470,14 +475,11 @@ function! s:create_vimfiler_buffer(path, context) "{{{
 
   " Create new buffer name.
   let prefix = 'vimfiler:'
-  let prefix .= context.profile_name
+  let prefix .= context.buffer_name
 
   let postfix = vimfiler#init#_get_postfix(prefix, 1)
 
   let bufname = prefix . postfix
-
-  " Set buffer_name.
-  let context.buffer_name = bufname
 
   if context.split
     execute context.direction
@@ -521,7 +523,7 @@ function! s:create_vimfiler_buffer(path, context) "{{{
     if winbufnr(winnr('#')) > 0
       wincmd p
     else
-      execute bufwinnr(a:context.vimfiler__prev_bufnr).'wincmd w'
+      execute bufwinnr(a:context.alternate_buffer).'wincmd w'
     endif
   endif
 endfunction"}}}

@@ -219,7 +219,7 @@ function! s:redraw_prompt() "{{{
         \ '' : '[' . (b:vimfiler.is_visible_ignore_files ? '.:' : '')
         \       . b:vimfiler.current_mask . ']'
 
-  let sort = (b:vimfiler.local_sort_type ==# g:vimfiler_sort_type) ?
+  let sort = (b:vimfiler.local_sort_type ==# b:vimfiler.global_sort_type) ?
         \ '' : ' <' . b:vimfiler.local_sort_type . '>'
 
   let safe = (b:vimfiler.is_safe_mode) ? ' *safe*' : ''
@@ -252,7 +252,7 @@ function! s:redraw_prompt() "{{{
   setlocal noreadonly
 
   try
-    if getline(b:vimfiler.prompt_linenr) != '..'
+    if context.parent && getline(b:vimfiler.prompt_linenr) != '..'
       if line('$') == 1
         " Note: Dirty Hack for open file.
         call append(1, '')
@@ -263,17 +263,12 @@ function! s:redraw_prompt() "{{{
       endif
     endif
 
-    if context.status || context.explorer
+    if context.status
       if getline(1) == '..'
         call append(0, '[in]: ' . b:vimfiler.status)
       else
         call setline(1, '[in]: ' . b:vimfiler.status)
       endif
-    endif
-
-    if context.explorer
-      " Delete prompt
-      silent 1,2delete _
     endif
   finally
     let &l:modifiable = modifiable_save

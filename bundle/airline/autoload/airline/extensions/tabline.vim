@@ -7,7 +7,9 @@ let s:tab_nr_type = get(g:, 'airline#extensions#tabline#tab_nr_type', 0)
 let s:show_buffers = get(g:, 'airline#extensions#tabline#show_buffers', 1)
 let s:show_tab_nr = get(g:, 'airline#extensions#tabline#show_tab_nr', 1)
 let s:show_tab_type = get(g:, 'airline#extensions#tabline#show_tab_type', 1)
+let s:show_close_button = get(g:, 'airline#extensions#tabline#show_close_button', 1)
 let s:close_symbol = get(g:, 'airline#extensions#tabline#close_symbol', 'X')
+let s:buffer_idx_mode = get(g:, 'airline#extensions#tabline#buffer_idx_mode', 0)
 
 let s:builder_context = {
       \ 'active'        : 1,
@@ -37,6 +39,9 @@ function! airline#extensions#tabline#init(ext)
 
   call s:toggle_on()
   call a:ext.add_theme_func('airline#extensions#tabline#load_theme')
+  if s:buffer_idx_mode
+    call s:define_buffer_idx_mode_mappings()
+  endif
 endfunction
 
 function! s:toggle_off()
@@ -71,12 +76,20 @@ function! airline#extensions#tabline#load_theme(palette)
   let l:tabtype = get(colors, 'airline_tabtype', a:palette.visual.airline_a)
   let l:tabfill = get(colors, 'airline_tabfill', a:palette.normal.airline_c)
   let l:tabmod  = get(colors, 'airline_tabmod', a:palette.insert.airline_a)
+  if has_key(a:palette, 'normal_modified') && has_key(a:palette.normal_modified, 'airline_c')
+    let l:tabmodu = get(colors, 'airline_tabmod_unsel', a:palette.normal_modified.airline_c)
+  else
+    "Fall back to normal airline_c if modified airline_c isn't present
+    let l:tabmodu = get(colors, 'airline_tabmod_unsel', a:palette.normal.airline_c)
+  endif
+
   let l:tabhid  = get(colors, 'airline_tabhid', a:palette.normal.airline_c)
   call airline#highlighter#exec('airline_tab', l:tab)
   call airline#highlighter#exec('airline_tabsel', l:tabsel)
   call airline#highlighter#exec('airline_tabtype', l:tabtype)
   call airline#highlighter#exec('airline_tabfill', l:tabfill)
   call airline#highlighter#exec('airline_tabmod', l:tabmod)
+  call airline#highlighter#exec('airline_tabmod_unsel', l:tabmodu)
   call airline#highlighter#exec('airline_tabhid', l:tabhid)
 endfunction
 
@@ -201,6 +214,10 @@ function! s:get_buffers()
     endif
   endif
 
+  if s:buffer_idx_mode
+    let s:buffer_idx_mode_buffers = []
+    let l:index = 1
+  endif
   let b = airline#builder#new(s:builder_context)
   let tab_bufs = tabpagebuflist(tabpagenr())
   for nr in s:get_visible_buffers()
@@ -216,13 +233,21 @@ function! s:get_buffers()
       endif
       let s:current_modified = (group == 'airline_tabmod') ? 1 : 0
     else
-      if index(tab_bufs, nr) > -1
+      if g:airline_detect_modified && getbufvar(nr, '&modified')
+        let group = 'airline_tabmod_unsel'
+      elseif index(tab_bufs, nr) > -1
         let group = 'airline_tab'
       else
         let group = 'airline_tabhid'
       endif
     endif
-    call b.add_section(group, s:spc.'%(%{airline#extensions#tabline#get_buffer_name('.nr.')}%)'.s:spc)
+    if s:buffer_idx_mode
+      call b.add_section(group, '['.l:index.s:spc.'%(%{airline#extensions#tabline#get_buffer_name('.nr.')}%)'.']')
+      let l:index = l:index + 1
+      call add(s:buffer_idx_mode_buffers, nr)
+    else
+      call b.add_section(group, s:spc.'%(%{airline#extensions#tabline#get_buffer_name('.nr.')}%)'.s:spc)
+    endif
   endfor
 
   call b.add_section('airline_tabfill', '')
@@ -232,6 +257,28 @@ function! s:get_buffers()
   let s:current_bufnr = cur
   let s:current_tabline = b.build()
   return s:current_tabline
+endfunction
+
+function! s:select_tab(buf_index)
+  " no-op when called in the NERDTree buffer
+  if exists('t:NERDTreeBufName') && bufname('%') == t:NERDTreeBufName
+    return
+  endif
+  if a:buf_index <= len(s:buffer_idx_mode_buffers)
+    exec "b!" . s:buffer_idx_mode_buffers[a:buf_index - 1]
+  endif
+endfunction
+
+function! s:define_buffer_idx_mode_mappings()
+  noremap <unique> <Plug>AirlineSelectTab1 :call <SID>select_tab(1)<CR>
+  noremap <unique> <Plug>AirlineSelectTab2 :call <SID>select_tab(2)<CR>
+  noremap <unique> <Plug>AirlineSelectTab3 :call <SID>select_tab(3)<CR>
+  noremap <unique> <Plug>AirlineSelectTab4 :call <SID>select_tab(4)<CR>
+  noremap <unique> <Plug>AirlineSelectTab5 :call <SID>select_tab(5)<CR>
+  noremap <unique> <Plug>AirlineSelectTab6 :call <SID>select_tab(6)<CR>
+  noremap <unique> <Plug>AirlineSelectTab7 :call <SID>select_tab(7)<CR>
+  noremap <unique> <Plug>AirlineSelectTab8 :call <SID>select_tab(8)<CR>
+  noremap <unique> <Plug>AirlineSelectTab9 :call <SID>select_tab(9)<CR>
 endfunction
 
 function! s:get_tabs()
@@ -272,7 +319,9 @@ function! s:get_tabs()
   call b.add_raw('%T')
   call b.add_section('airline_tabfill', '')
   call b.split()
-  call b.add_section('airline_tab', ' %999X'.s:close_symbol.' ')
+  if s:show_close_button
+    call b.add_section('airline_tab', ' %999X'.s:close_symbol.' ')
+  endif
   if s:show_tab_type
     call b.add_section('airline_tabtype', ' tabs ')
   endif

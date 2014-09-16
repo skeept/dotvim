@@ -26,15 +26,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" Global options definition. "{{{
-let g:vimfiler_default_columns =
-      \ get(g:, 'vimfiler_default_columns', 'type:size:time')
-let g:vimfiler_split_rule =
-      \ get(g:, 'vimfiler_split_rule', 'topleft')
-let g:vimfiler_enable_auto_cd =
-      \ get(g:, 'vimfiler_enable_auto_cd', 0)
-"}}}
-
 function! vimfiler#variables#get_clipboard() "{{{
   if !exists('s:clipboard')
     let s:clipboard = {'operation' : '', 'files' : []}
@@ -92,12 +83,13 @@ function! s:initialize_default_options() "{{{
         \ 'double' : 0,
         \ 'split' : 0,
         \ 'status' : 0,
+        \ 'parent' : 1,
         \ 'horizontal' : 0,
         \ 'winheight' : -1,
         \ 'winwidth' : -1,
         \ 'winminwidth' : -1,
-        \ 'direction' : g:vimfiler_split_rule,
-        \ 'auto_cd' : g:vimfiler_enable_auto_cd,
+        \ 'direction' : 'topleft',
+        \ 'auto_cd' : 0,
         \ 'explorer' : 0,
         \ 'reverse' : 0,
         \ 'project' : 0,
@@ -106,11 +98,33 @@ function! s:initialize_default_options() "{{{
         \ 'alternate_buffer' : bufnr('%'),
         \ 'focus' : 1,
         \ 'invisible' : 0,
-        \ 'columns' : g:vimfiler_default_columns,
-        \ 'vimfiler__prev_bufnr' : bufnr('%'),
+        \ 'columns' : 'type:size:time',
+        \ 'explorer_columns' : '',
+        \ 'safe' : 1,
+        \ 'auto_expand' : 0,
+        \ 'sort_type' : 'filename',
+        \ 'edit_action' : 'open',
+        \ 'split_action' : 'right',
+        \ 'preview_action' : 'preview',
+        \ 'vimfiler__prev_winnr' : winnr(),
         \ 'vimfiler__winfixwidth' : &l:winfixwidth,
         \ 'vimfiler__winfixheight' : &l:winfixheight,
         \ }
+
+  " For compatibility(deprecated variables)
+  for [context, var] in filter([
+        \ ['direction', 'g:vimfiler_split_rule'],
+        \ ['auto_cd', 'g:vimfiler_enable_auto_cd'],
+        \ ['columns', 'g:vimfiler_default_columns'],
+        \ ['explorer_columns', 'g:vimfiler_explorer_columns'],
+        \ ['safe', 'g:vimfiler_safe_mode_by_default'],
+        \ ['sort_type', 'g:vimfiler_sort_type'],
+        \ ['split_action', 'g:vimfiler_split_action'],
+        \ ['edit_action', 'g:vimfiler_edit_action'],
+        \ ['preview_action', 'g:vimfiler_preview_action'],
+        \ ], "exists(v:val[1])")
+    let s:default_context[context] = {var}
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -649,6 +649,17 @@ g:neocomplete#enable_auto_close_preview
 
 		Default value is 1.
 
+					*g:neocomplete#fallback_mappings*
+g:neocomplete#fallback_mappings
+		Neocomplete fallback mappings.
+		If you want to complete keywords by neocomplete and the
+		omnifunc, it is useful. >
+		" Search from neocomplete, omni candidates, vim keywords.
+		let g:neocomplete#fallback_mappings =
+		\ ["\<C-x>\<C-o>", "\<C-x>\<C-n>"]
+<
+		Default value is [].
+
 SOURCES VARIABLES 			*neocomplete-sources-variables*
 
 			*g:neocomplete#sources#buffer#cache_limit_size*

@@ -1,6 +1,6 @@
 "=============================================================================
-" FILE: sorter_length.vim
-" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
+" FILE: custom.vim
+" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,18 +26,46 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#sorter_length#define() "{{{
-  return s:sorter
+function! vimfiler#custom#get() "{{{
+  if !exists('s:custom')
+    let s:custom = {}
+    let s:custom.profiles = {}
+  endif
+
+  return s:custom
 endfunction"}}}
 
-let s:sorter = {
-      \ 'name' : 'sorter_length',
-      \ 'description' : 'sort by length order',
-      \}
+function! vimfiler#custom#profile(profile_name, option_name, value) "{{{
+  let custom = vimfiler#custom#get()
+  let profile_name =
+        \ has_key(custom.profiles, a:profile_name) ?
+        \ a:profile_name : 'default'
 
-function! s:sorter.filter(candidates, context) "{{{
-  return unite#util#sort_by(a:candidates,
-        \ "len(v:val.word) + 100*len(substitute(v:val.word, '[^/]', '', 'g'))")
+  for key in split(profile_name, '\s*,\s*')
+    if !has_key(custom.profiles, key)
+      let custom.profiles[key] = s:init_profile()
+    endif
+
+    let custom.profiles[key][a:option_name] = a:value
+  endfor
+endfunction"}}}
+function! vimfiler#custom#get_profile(profile_name, option_name) "{{{
+  let custom = vimfiler#custom#get()
+  let profile_name =
+        \ has_key(custom.profiles, a:profile_name) ?
+        \ a:profile_name : 'default'
+
+  if !has_key(custom.profiles, profile_name)
+    let custom.profiles[profile_name] = s:init_profile()
+  endif
+
+  return custom.profiles[profile_name][a:option_name]
+endfunction"}}}
+
+function! s:init_profile() "{{{
+  return {
+        \ 'context' : {},
+        \ }
 endfunction"}}}
 
 let &cpo = s:save_cpo

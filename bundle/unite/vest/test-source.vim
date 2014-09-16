@@ -32,11 +32,6 @@ function! g:source.gather_candidates(args, context) "{{{
         \ "kind" : "hoge",
         \}')
 
-  if g:unite_source_file_ignore_pattern != ''
-    call filter(g:candidates, 'v:val.word !~ ' .
-          \ string(g:unite_source_file_ignore_pattern))
-  endif
-
   return g:candidates
 endfunction"}}}
 
@@ -74,11 +69,6 @@ Context Source.run()
     let g:candidates = unite#get_candidates([
           \ ['grep', 'unite.vim/plugin', '', 'vim']])
     call unite#action#do_candidates('replace', g:candidates)
-  End
-
-  It check custom variables.
-    call unite#custom_source('hoge', 'variables', { 'foo' : 'bar' })
-    call unite#get_candidates([['hoge']])
   End
 End
 
