@@ -159,7 +159,7 @@ function! neocomplete#handler#_restore_update_time() "{{{
   endif
 endfunction"}}}
 function! neocomplete#handler#_on_insert_char_pre() "{{{
-  if neocomplete#is_locked()
+  if neocomplete#is_cache_disabled()
     return
   endif
 
@@ -169,6 +169,15 @@ function! neocomplete#handler#_on_insert_char_pre() "{{{
   endif
 
   let neocomplete.old_char = v:char
+endfunction"}}}
+function! neocomplete#handler#_on_text_changed() "{{{
+  if neocomplete#is_cache_disabled()
+    return
+  endif
+
+  if getline('.') == ''
+    call s:make_cache_current_line()
+  endif
 endfunction"}}}
 
 function! neocomplete#handler#_do_auto_complete(event) "{{{
