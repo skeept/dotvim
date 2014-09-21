@@ -186,6 +186,10 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
         \ neocomplete#util#convert2list(sources))
   let neocomplete.sources_filetype = ''
 
+  " Don't support menu configuration
+  set completeopt+=menuone
+  set completeopt-=menu
+
   " Set function.
   let &l:completefunc = 'neocomplete#complete#sources_manual_complete'
 
