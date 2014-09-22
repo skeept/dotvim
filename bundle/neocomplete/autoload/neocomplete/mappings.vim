@@ -171,6 +171,10 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
     return ''
   endif
 
+  if neocomplete#helper#is_omni(neocomplete#get_cur_text(1))
+    return "\<C-x>\<C-o>\<C-p>"
+  endif
+
   " Set context filetype.
   call neocomplete#context_filetype#set()
 
@@ -181,6 +185,10 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
   let neocomplete.manual_sources = neocomplete#helper#get_sources_list(
         \ neocomplete#util#convert2list(sources))
   let neocomplete.sources_filetype = ''
+
+  " Don't support menu configuration
+  set completeopt+=menuone
+  set completeopt-=menu
 
   " Set function.
   let &l:completefunc = 'neocomplete#complete#sources_manual_complete'

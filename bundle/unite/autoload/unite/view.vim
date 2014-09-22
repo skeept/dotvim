@@ -564,14 +564,15 @@ function! unite#view#_init_cursor() "{{{
   let positions = unite#custom#get_profile(
         \ unite.profile_name, 'unite__save_pos')
   let key = unite#loaded_source_names_string()
-  let is_restore = has_key(positions, key) && context.select <= 0 &&
-        \   positions[key].candidate ==#
+  let is_restore = context.restore
+        \ && has_key(positions, key) && context.select <= 0
+        \ && positions[key].candidate ==#
         \     unite#helper#get_current_candidate(positions[key].pos[1])
 
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    if is_restore && unite.is_resume
+    if is_restore && context.resume
           \ && positions[key].pos[1] != unite.prompt_linenr
       " Restore position.
       call setpos('.', positions[key].pos)
