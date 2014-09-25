@@ -14,6 +14,8 @@
 "
 " Functions:
 
+let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
+
 fun! <sid>WarningMsg(msg) "{{{1
 	let msg = "NarrowRegion: ". a:msg
 	echohl WarningMsg
@@ -133,7 +135,6 @@ endfun
 
 fun! <sid>CleanRegions() "{{{1
 	 let s:nrrw_rgn_line=[]
-	 unlet! s:nrrw_rgn_last
 	 unlet! s:nrrw_rgn_buf
 endfun
 
@@ -148,7 +149,7 @@ fun! <sid>ParseList(list) "{{{1
      let start=0
      let temp=0
      let i=1
-     for item in sort(a:list, "<sid>CompareNumbers")
+     for item in sort(a:list, (s:numeric_sort ? 'n' : "<sid>CompareNumbers"))
          if start==0
             let start=item
 		 elseif temp!=item-1
@@ -593,8 +594,8 @@ fun! <sid>WidenRegionMulti(content, instn) "{{{1
 	" We must put the regions back from top to bottom,
 	" otherwise, changing lines in between messes up the list of lines that
 	" still need to put back from the narrowed buffer to the original buffer
-	for key in sort(keys(s:nrrw_rgn_lines[a:instn].multi),
-			\ "<sid>CompareNumbers")
+	for key in sort(keys(s:nrrw_rgn_lines[a:instn].multi), (s:numeric_sort ? 'n' :
+			\ "<sid>CompareNumbers"))
 		let adjust   = line('$') - lastline
 		let range    = s:nrrw_rgn_lines[a:instn].multi[key]
 		let last     = (len(range)==2) ? range[1] : range[0]
@@ -722,7 +723,7 @@ endfun
 
 fun! <sid>SetupBufLocalMaps() "{{{1
 	if !hasmapto('<Plug>NrrwrgnWinIncr', 'n')
-		nmap <buffer><unique> <Leader><Space> <Plug>NrrwrgnWinIncr
+		nmap <buffer> <Leader><Space> <Plug>NrrwrgnWinIncr
 	endif
 	if !hasmapto('NrrwRgnIncr')
 		nmap <buffer><unique> <Plug>NrrwrgnWinIncr NrrwRgnIncr
@@ -733,7 +734,7 @@ endfun
 fun! <sid>IncrementWindowSize() "{{{1
 	let nrrw_rgn_incr = get(g:, 'nrrw_rgn_incr', 10)
 	if s:nrrw_rgn_vert
-		let cmd = printf("%s %d", ':vert resize'
+		let cmd = printf("%s %d", ':vert resize',
 			\ (winwidth(0) > s:nrrw_rgn_wdth ? s:nrrw_rgn_wdth : (s:nrrw_rgn_wdth + nrrw_rgn_incr)))
 	else
 		let cmd = printf("%s %d", ':resize',
@@ -787,7 +788,7 @@ fun! nrrwrgn#NrrwRgnDoPrepare(...) "{{{1
 	let buffer=[]
 
 	let keys = keys(s:nrrw_rgn_buf)
-	call sort(keys,"<sid>CompareNumbers")
+	call sort(keys, (s:numeric_sort ? 'n' : "<sid>CompareNumbers"))
 	"for [ nr,lines] in items(s:nrrw_rgn_buf)
 	let [c_s, c_e] =  <sid>ReturnComments()
 	for nr in keys
@@ -912,11 +913,6 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 	let &lz   = o_lz
 endfun
 fun! nrrwrgn#Prepare() "{{{1
-	let ltime = localtime()
-	if  (!exists("s:nrrw_rgn_last") || s:nrrw_rgn_last + 10 < ltime)
-		let s:nrrw_rgn_last = ltime
-		let s:nrrw_rgn_line = []
-	endif
 	if !exists("s:nrrw_rgn_line") | let s:nrrw_rgn_line=[] | endif
 	call add(s:nrrw_rgn_line, line('.'))
 endfun

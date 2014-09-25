@@ -85,6 +85,7 @@ let scm['vim-clang@lh'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/v
 let scm['lh-compil-hints'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/compil-hints/trunk'}
 let scm['lh-cmake'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-cmake'}
 let scm['dirdiff-svn'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/dirdiff-svn'}
+let scm['VimFold4C'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/VimFold4C'}
 " system-tools are required for vim-spell.tar.gz (vimscript #135), which are 
 " part of misc. Cannot install using 'type':'archive': it won’t pull in 
 " documentation. Alternative: use cpp (vimscript #336, above) in place of a@lh
@@ -390,6 +391,14 @@ let scm['syslib'] = {'type': 'git', 'url': 'git://github.com/tyru/syslib.vim'}
 let scm['undoclosewin'] = {'type': 'git', 'url': 'git://github.com/tyru/undoclosewin.vim'}
 let scm['cmdwincomplete'] = {'type': 'git', 'url': 'git://github.com/tyru/cmdwincomplete.vim', 'addon-info': {'dependencies': {'%2620': {}}}}
 let scm['wim'] = {'type': 'git', 'url': 'git://github.com/tyru/wim', 'addon-info': {'dependencies': {'wwwrenderer-vim': {}, 'openbuf': {}}}}
+
+" noc7c9
+" https://github.com/noc7c9/vim-iced-coffee-script says "You will also need to install a vanilla coffeescript vim plugin, such as this one."
+" Thus if this default dependency hurts someone we'll remove it again
+let scm['vim-iced-coffe-script'] = {'type': 'git', 'url': 'git://github.com/noc7c9/vim-iced-coffee-script', 'addon-info': {'dependencies': {'vim-coffee-script': {}}}}
+
+" chikatoike
+let scm['sourcemap.vim'] = {'type': 'git', 'url': 'git://github.com/chikatoike/sourcemap.vim'}
 
 " Joe Stelmach
 let scmnr.2578 = {'type': 'git', 'url': 'git://github.com/joestelmach/lint.vim'}
