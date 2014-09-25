@@ -1523,6 +1523,7 @@ function! s:clipboard_paste() "{{{
 endfunction"}}}
 
 function! s:set_current_mask() "{{{
+  call vimfiler#redraw_screen()
   call unite#start(['vimfiler/mask'],
         \ { 'start_insert' : 1, 'buffer_name' : 'vimfiler/mask', 'script' : 1 })
 endfunction"}}}
