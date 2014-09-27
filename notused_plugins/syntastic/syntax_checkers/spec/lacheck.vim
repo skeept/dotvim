@@ -1,41 +1,41 @@
 "============================================================================
-"File:        handlebars.vim
+"File:        rpmlint.vim
 "Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Martin Grenfell <martin.grenfell at gmail dot com>
+"Maintainer:  LCD 47 <lcd047 at gmail dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
 "             Want To Public License, Version 2, as published by Sam Hocevar.
 "             See http://sam.zoy.org/wtfpl/COPYING for more details.
+"
 "============================================================================
 
-if exists("g:loaded_syntastic_handlebars_handlebars_checker")
+if exists('g:loaded_syntastic_spec_rpmlint_checker')
     finish
 endif
-let g:loaded_syntastic_handlebars_handlebars_checker = 1
+let g:loaded_syntastic_spec_rpmlint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_handlebars_handlebars_GetLocList() dict
-    let makeprg = self.makeprgBuild({ 'args_after': '-f ' . syntastic#util#DevNull() })
+function! SyntaxCheckers_spec_rpmlint_GetLocList() dict
+    let makeprg = self.makeprgBuild({})
 
     let errorformat =
-        \ '%EError: %m on line %l:,'.
-        \ "%EError: %m,".
-        \ '%Z%p^,' .
+        \ '%E%f:%l: E: %m,' .
+        \ '%E%f: E: %m,' .
+        \ '%W%f:%l: W: %m,' .
+        \ '%W%f: W: %m,' .
         \ '%-G%.%#'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
-        \ 'errorformat': errorformat,
-        \ 'postprocess': ['guards'],
-        \ 'defaults': {'bufnr': bufnr("")} })
+        \ 'errorformat': errorformat })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'handlebars',
-    \ 'name': 'handlebars'})
+    \ 'filetype': 'spec',
+    \ 'name': 'rpmlint'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
