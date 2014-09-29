@@ -128,7 +128,7 @@ function! RemoteOpenMod(arglist)
 	call remote_foreground(targetServer)
 	" quit this vim session
 	if v:servername != targetServer
-		quit!
+		silent quit!
 	endif
 endfunction " }}}
 " Strntok: extract the n^th token from a list {{{
