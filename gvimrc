@@ -106,7 +106,7 @@ endfunction
 
 
 if has("gui")
-  set lines=40 columns=100
+  set lines=53 columns=114
 endif
 
 map <c-tab> gt
