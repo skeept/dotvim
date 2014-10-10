@@ -341,6 +341,16 @@ function! vimfiler#init#_start(path, ...) "{{{
     return
   endif
 
+  " Detect autochdir option. "{{{
+  if exists('+autochdir') && &autochdir
+    call vimfiler#util#print_error(
+          \ '[vimfiler] Detected autochdir!')
+    call vimfiler#util#print_error(
+          \ '[vimfiler] vimfiler don''t work if you set autochdir option.')
+    return
+  endif
+  "}}}
+
   let path = a:path
   if vimfiler#util#is_win_path(path)
     let path = vimfiler#util#substitute_path_separator(
@@ -410,6 +420,8 @@ function! vimfiler#init#_switch_vimfiler(bufnr, context, directory) "{{{
     execute bufwinnr(a:bufnr).'wincmd w'
   endif
 
+  " Set window local options
+  call s:buffer_default_settings()
   call vimfiler#handler#_event_bufwin_enter(a:bufnr)
 
   let b:vimfiler.context = extend(b:vimfiler.context, context)
@@ -553,15 +565,13 @@ function! s:buffer_default_settings() "{{{
   setlocal nowrap
   setlocal nospell
   setlocal bufhidden=hide
-  setlocal nolist
   setlocal foldcolumn=0
   setlocal nofoldenable
   setlocal nowrap
   setlocal nomodifiable
   setlocal nomodified
-  if has('netbeans_intg') || has('sun_workshop')
-    setlocal noautochdir
-  endif
+  setlocal nolist
+
   if exists('&colorcolumn')
     setlocal colorcolumn=
   endif
