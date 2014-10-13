@@ -1394,6 +1394,11 @@ function! s:NormalTag.getPrototype(short) abort dict
     else
         let bufnr = self.fileinfo.bufnr
 
+        if self.fields.line == 0
+            " No linenumber available, try the pattern instead
+            return substitute(self.pattern, '^\\V\\^\\C\s*\(.*\)\\$$', '\1', '')
+        endif
+
         let line = getbufline(bufnr, self.fields.line)[0]
         let list = split(line, '\zs')
 
@@ -3502,6 +3507,12 @@ endfunction
 function! s:ExecuteCtags(ctags_cmd) abort
     call s:debug('Executing ctags command: ' . a:ctags_cmd)
 
+    if has('unix')
+        " Reset shell in case it is set to something incompatible like fish
+        let shell_save = &shell
+        set shell=sh
+    endif
+
     if exists('+shellslash')
         let shellslash_save = &shellslash
         set noshellslash
@@ -3529,6 +3540,10 @@ function! s:ExecuteCtags(ctags_cmd) abort
 
     if exists('+shellslash')
         let &shellslash = shellslash_save
+    endif
+
+    if has('unix')
+        let &shell = shell_save
     endif
 
     return ctags_output
