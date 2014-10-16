@@ -517,8 +517,7 @@ let s:outline_buffer_id = 1
 let s:source = {
       \ 'name'       : 'outline',
       \ 'description': 'candidates from heading list',
-      \ 'matchers'   : 'outline_matcher_glob',
-      \ 'converters' : 'outline_formatter',
+      \ 'matchers'   : ['outline_matcher_glob', 'outline_formatter'],
       \ 'syntax'     : 'uniteSource__Outline',
       \
       \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
