@@ -380,8 +380,10 @@ function! vimfiler#init#_start(path, ...) "{{{
           \ getbufvar(v:val, '&filetype') ==# 'vimfiler'")
       let vimfiler = getbufvar(bufnr, 'vimfiler')
       if type(vimfiler) == type({})
-            \ && vimfiler.context.profile_name ==# context.profile_name
-            \ && (!exists('t:tabpagebuffer')
+            \ && vimfiler.context.buffer_name ==# context.buffer_name
+            \ && ((context.buffer_name !=# 'default'
+            \         && context.buffer_name !=# 'explorer')
+            \      || !exists('t:tabpagebuffer')
             \      || has_key(t:tabpagebuffer, bufnr))
             \ && (!context.invisible || bufwinnr(bufnr) < 0)
         call vimfiler#init#_switch_vimfiler(bufnr, context, path)
