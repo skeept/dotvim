@@ -54,10 +54,14 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
         \ :<C-u>call <SID>clear_mark_all_lines()<CR>
   nnoremap <buffer><silent> <Plug>(vimfiler_mark_current_line)
         \ :<C-u>call <SID>mark_current_line()<CR>
-  nmap <buffer><silent><expr> <Plug>(vimfiler_execute)
+  nmap <buffer><silent><expr> <Plug>(vimfiler_cd_or_edit)
         \ vimfiler#mappings#smart_cursor_map(
         \  "\<Plug>(vimfiler_cd_file)",
-        \  "\<Plug>(vimfiler_execute_vimfiler_associated)")
+        \  "\<Plug>(vimfiler_edit_file)")
+  nmap <buffer><silent><expr> <Plug>(vimfiler_expand_or_edit)
+        \ vimfiler#mappings#smart_cursor_map(
+        \  "\<Plug>(vimfiler_expand_tree)",
+        \  "\<Plug>(vimfiler_edit_file)")
   nmap <buffer> <Plug>(vimfiler_execute_file)
         \ <Plug>(vimfiler_execute_system_associated)
   nnoremap <buffer><silent> <Plug>(vimfiler_execute_system_associated)
@@ -151,13 +155,13 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
   if a:context.explorer
     nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_h)
           \ ":\<C-u>call \<SID>unexpand_tree()\<CR>"
-    nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_l)
-          \ ":\<C-u>call \<SID>expand_tree(0)\<CR>"
+    nmap <buffer><silent> <Plug>(vimfiler_smart_l)
+          \ <Plug>(vimfiler_expand_or_edit)
   else
-    nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_h)
-          \ ":\<C-u>call vimfiler#mappings#cd('..')\<CR>"
-    nnoremap <buffer><silent><expr> <Plug>(vimfiler_smart_l)
-          \ ":\<C-u>call \<SID>execute()\<CR>"
+    nmap <buffer><silent> <Plug>(vimfiler_smart_h)
+          \ <Plug>(vimfiler_switch_to_parent_directory)
+    nmap <buffer><silent> <Plug>(vimfiler_smart_l)
+          \ <Plug>(vimfiler_cd_or_edit)
   endif
   nnoremap <buffer><silent><expr> <Plug>(vimfiler_cursor_top)
         \ (vimfiler#get_file_offset()+1).'Gzb'
@@ -236,7 +240,8 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
   nmap <buffer> Cp <Plug>(vimfiler_clipboard_paste)
 
   " Execute or change directory.
-  nmap <buffer> <Enter> <Plug>(vimfiler_execute)
+  nmap <buffer> <Enter> <Plug>(vimfiler_cd_or_edit)
+  nmap <buffer> o <Plug>(vimfiler_expand_or_edit)
   nmap <buffer> l <Plug>(vimfiler_smart_l)
 
   nmap <buffer> x
@@ -273,27 +278,27 @@ function! vimfiler#mappings#define_default_mappings(context) "{{{
   nmap <buffer> ge <Plug>(vimfiler_execute_external_filer)
   nmap <buffer> <RightMouse> <Plug>(vimfiler_execute_external_filer)
 
-  nmap <buffer> ! <Plug>(vimfiler_execute_shell_command)
-  nmap <buffer> ? <Plug>(vimfiler_help)
-  nmap <buffer> v <Plug>(vimfiler_preview_file)
-  nmap <buffer> o <Plug>(vimfiler_sync_with_current_vimfiler)
-  nmap <buffer> O <Plug>(vimfiler_open_file_in_another_vimfiler)
-  nmap <buffer> <C-g> <Plug>(vimfiler_print_filename)
-  nmap <buffer> g<C-g> <Plug>(vimfiler_toggle_maximize_window)
-  nmap <buffer> yy <Plug>(vimfiler_yank_full_path)
-  nmap <buffer> M <Plug>(vimfiler_set_current_mask)
-  nmap <buffer> gr <Plug>(vimfiler_grep)
-  nmap <buffer> gf <Plug>(vimfiler_find)
-  nmap <buffer> S <Plug>(vimfiler_select_sort_type)
-  nmap <buffer> <C-v> <Plug>(vimfiler_switch_vim_buffer_mode)
-  nmap <buffer> gc <Plug>(vimfiler_cd_vim_current_dir)
-  nmap <buffer> gs <Plug>(vimfiler_toggle_safe_mode)
-  nmap <buffer> gS <Plug>(vimfiler_toggle_simple_mode)
-  nmap <buffer> gg <Plug>(vimfiler_cursor_top)
-  nmap <buffer> G <Plug>(vimfiler_cursor_bottom)
-  nmap <buffer> t <Plug>(vimfiler_expand_tree)
-  nmap <buffer> T <Plug>(vimfiler_expand_tree_recursive)
-  nmap <buffer> I <Plug>(vimfiler_cd_input_directory)
+  nmap <buffer> !       <Plug>(vimfiler_execute_shell_command)
+  nmap <buffer> g?      <Plug>(vimfiler_help)
+  nmap <buffer> v       <Plug>(vimfiler_preview_file)
+  nmap <buffer> O       <Plug>(vimfiler_sync_with_current_vimfiler)
+  nmap <buffer> go       <Plug>(vimfiler_open_file_in_another_vimfiler)
+  nmap <buffer> <C-g>   <Plug>(vimfiler_print_filename)
+  nmap <buffer> g<C-g>  <Plug>(vimfiler_toggle_maximize_window)
+  nmap <buffer> yy      <Plug>(vimfiler_yank_full_path)
+  nmap <buffer> M       <Plug>(vimfiler_set_current_mask)
+  nmap <buffer> gr      <Plug>(vimfiler_grep)
+  nmap <buffer> gf      <Plug>(vimfiler_find)
+  nmap <buffer> S       <Plug>(vimfiler_select_sort_type)
+  nmap <buffer> <C-v>   <Plug>(vimfiler_switch_vim_buffer_mode)
+  nmap <buffer> gc      <Plug>(vimfiler_cd_vim_current_dir)
+  nmap <buffer> gs      <Plug>(vimfiler_toggle_safe_mode)
+  nmap <buffer> gS      <Plug>(vimfiler_toggle_simple_mode)
+  nmap <buffer> gg      <Plug>(vimfiler_cursor_top)
+  nmap <buffer> G       <Plug>(vimfiler_cursor_bottom)
+  nmap <buffer> t       <Plug>(vimfiler_expand_tree)
+  nmap <buffer> T       <Plug>(vimfiler_expand_tree_recursive)
+  nmap <buffer> I       <Plug>(vimfiler_cd_input_directory)
   nmap <buffer> <2-LeftMouse>
         \ <Plug>(vimfiler_double_click)
 
@@ -720,13 +725,6 @@ function! s:clear_mark_all_lines() "{{{
   endfor
 
   call vimfiler#redraw_screen()
-endfunction"}}}
-function! s:execute() "{{{
-  let filename = vimfiler#get_filename()
-  let file = vimfiler#get_file()
-  return  filename == '..' || empty(file)
-        \ || file.vimfiler__is_directory ?
-        \ s:cd_file_directory() : s:execute_vimfiler_associated()
 endfunction"}}}
 function! s:execute_vimfiler_associated() "{{{
   let bufnr = bufnr('%')
