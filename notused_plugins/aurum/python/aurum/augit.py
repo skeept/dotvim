@@ -44,7 +44,7 @@ def get_branch(repo):
     except ValueError:
         return ''
 
-    if target.startswith('refs/heads/'):
+    if isinstance(target, (str, unicode)) and target.startswith('refs/heads/'):
         return target[11:]
     else:
         return ''

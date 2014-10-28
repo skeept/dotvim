@@ -220,18 +220,22 @@ function! unite#helper#get_postfix(prefix, is_create, ...) "{{{
 endfunction"}}}
 
 function! unite#helper#convert_source_name(source_name) "{{{
-  let context = unite#get_context()
-  return !context.short_source_names ? a:source_name :
+  let unite = unite#get_current_unite()
+  return (len(unite.sources) == 1 ||
+        \  !unite.context.short_source_names) ? a:source_name :
         \ a:source_name !~ '\A'  ? a:source_name[:1] :
         \ substitute(a:source_name, '\a\zs\a\+', '', 'g')
 endfunction"}}}
 
 function! unite#helper#loaded_source_names_with_args() "{{{
+  let len_source = len(unite#loaded_sources_list())
   return map(copy(unite#loaded_sources_list()), "
+        \ (len_source == 0) ? ['interactive'] :
+        \ (len_source > 1 && v:val.unite__len_candidates == 0) ? '_' :
         \ join(insert(filter(copy(v:val.args),
         \  'type(v:val) <= 1'),
         \   unite#helper#convert_source_name(v:val.name)), ':')
-        \ . (v:val.unite__orig_len_candidates == 0 ? '' :
+        \ . (v:val.unite__len_candidates == 0 ? '' :
         \      v:val.unite__orig_len_candidates ==
         \            v:val.unite__len_candidates ?
         \            '(' .  v:val.unite__len_candidates . ')' :
