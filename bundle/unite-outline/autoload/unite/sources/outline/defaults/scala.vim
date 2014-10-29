@@ -11,9 +11,6 @@
 " Default outline info for Scala
 " Version: 0.1.3
 
-let g:unite_source_outline_scala_show_all_declarations =
-	\ get(g:, 'unite_source_outline_scala_show_all_declarations', 0)
-
 function! unite#sources#outline#defaults#scala#outline_info()
   return s:outline_info
 endfunction
@@ -23,15 +20,7 @@ let s:Util = unite#sources#outline#import('Util')
 "---------------------------------------
 " Sub Pattern
 
-let s:pat_def_prefix='\%(\h\w*\(\[[^\]]\+]\)\?\s\+\)*'
-if g:unite_source_outline_scala_show_all_declarations
-	let s:pat_def='\<\%(class\|object\|trait\|def\|var\|val\|type\)\>'
-else
-	let s:pat_def='\<\%(class\|object\|trait\|def\)\>'
-endif
-let s:pat_bol='^\s*'
-
-let s:pat_heading = s:pat_bol.s:pat_def_prefix.'\zs'.s:pat_def
+let s:pat_heading = '^\s*\%(\h\w*\s\+\)*\zs\<\%(class\|object\|trait\|def\)\>'
 
 "-----------------------------------------------------------------------------
 " Outline Info
@@ -45,14 +34,10 @@ let s:outline_info = {
       \  },
       \
       \ 'not_match_patterns': [
-      \   s:pat_bol.s:pat_def_prefix.s:pat_def.'\s\+[^[:space:](\[:]\+\zs.\+',
+      \   s:Util.shared_pattern('*', 'after_lbracket'),
       \   s:Util.shared_pattern('*', 'after_lparen'),
       \   s:Util.shared_pattern('*', 'after_colon'),
       \ ],
-      \ 'highlight_rules': [
-      \   {'name': 'def', 'pattern': '/'.s:pat_def_prefix.s:pat_def.'/', 'highlight': 'Comment'},
-      \   {'name': 'args', 'pattern': '/\%([\[({]\|\<\%(extends\|with\)\>\).*/', 'highlight': 'Comment'},
-      \ ]
       \}
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context)
