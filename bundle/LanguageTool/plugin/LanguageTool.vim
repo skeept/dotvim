@@ -2,83 +2,20 @@
 " Maintainer:   Dominique Pellé <dominique.pelle@gmail.com>
 " Screenshots:  http://dominique.pelle.free.fr/pic/LanguageToolVimPlugin_en.png
 "               http://dominique.pelle.free.fr/pic/LanguageToolVimPlugin_fr.png
-" Last Change:  2013/02/08
-" Version:      1.25
+" Last Change:  2014/02/20
+" Version:      1.28
 "
 " Long Description: {{{1
 "
 " This plugin integrates the LanguageTool grammar checker into Vim.
 " Current version of LanguageTool can check grammar in many languages:
 " ast, be, br, ca, da, de, el, en, eo, es, fr, gl, is, it, km, lt, ml, nl,
-" pl, pt, ro, ru, sk, sl, sv, tl, uk, zh. See http://www.languagetool.org/
-" for more information about LanguageTool.
+" pl, pt, ro, ru, sk, sl, sv, tl, uk, zh.
 "
-" The script defines 2 Ex commands:
+" See doc/LanguageTool.txt for more details about how to use the
+" LanguageTool plugin.
 "
-" * Use  :LanguageToolCheck  to check grammar in current buffer.
-"   This will check for grammar mistakes in text of current buffer
-"   and highlight the errors. It also opens a new scratch window with the
-"   list of grammar errors with further explanations for each error.
-"   Pressing <Enter> in scratch buffer will jump to that error. The
-"   location list for the buffer being checked is also populated.
-"   So you can use location commands such as :lopen to open the location
-"   list window, :lne to jump to the next error, etc.
-"
-" * Use  :LanguageToolClear  to remove highlighting of grammar mistakes,
-"   close the scratch window containing the list of errors, clear and
-"   close the location list.
-"
-" See screenshots of grammar checking in English and French at:
-"   http://dominique.pelle.free.fr/pic/LanguageToolVimPlugin_en.png
-"   http://dominique.pelle.free.fr/pic/LanguageToolVimPlugin_fr.png
-"
-" See also screencast demo at:
-"    http://shelr.tv/records/4fba8ef99660803e4f00001f
-"
-" See  :help LanguageTool  for more details
-"
-" Install Details: {{{1
-"
-" Install the plugin with:
-"
-"   $ mkdir ~/.vim
-"   $ cd ~/.vim
-"   $ unzip /path-to/LanguageTool.zip
-"   $ vim -c 'helptags ~/.vim/doc'
-"
-" You also need to install the Java LanguageTool program in order to use
-" this plugin. There are 3 possibilities:
-"
-" 1/ Download the stand-alone latest version of LanguageTool file
-"    (LanguageTool-*.zip) from http://www.languagetool.org/ and
-"    Unzip it. This should extract LanguageTool.jar among several
-"    other files.
-"
-" 2/ Or download an unofficial nightly build available at:
-"    http://www.languagetool.org/download/snapshots/
-"
-" 3/ Or download the latest LanguageTool from subversion and build
-"    it. This ensures that you get the latest version. On Ubuntu, you need
-"    to install the maven, openjdk-7-jdk and subversion packages as a
-"    prerequisite:
-"
-"    $ sudo apt-get install openjdk-7-jdk maven subversion
-"
-"    LanguageTool can then be downloaded and built as follows:
-"
-"    $ svn co https://languagetool.svn.sourceforge.net/svnroot/languagetool/trunk/languagetool
-"    $ cd languagetool
-"    $ mvn package
-"
-"    This should build the command line version of LanguageTool:
-"
-"    ./languagetool-standalone/target/LanguageTool-2.1-SNAPSHOT/LanguageTool-2.1-SNAPSHOT/languagetool-commandline.jar
-"
-" You then need to set up g:languagetool_jar in your ~/.vimrc with
-" the location of this languagetool-commandline.jar file (or
-" LanguageTool.jar prior to version 2.1). For example:
-"
-"  let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-2.1-SNAPSHOT/LanguageTool-2.1-SNAPSHOT/languagetool-commandline.jar'
+" See http://www.languagetool.org/ for more information about LanguageTool.
 "
 " License: {{{1
 "
@@ -222,15 +159,16 @@ function s:LanguageToolSetUp() "{{{1
 
   let s:languagetool_jar = exists("g:languagetool_jar")
   \ ? g:languagetool_jar
-  \ : $HOME . '/languagetool/dist/LanguageTool.jar'
+  \ : $HOME . '/languagetool-2.4.1/languagetool-commandline.jar'
 
   if !filereadable(s:languagetool_jar)
     " Hmmm, can't find the jar file.  Try again with expand() in case user
-    " set it up as: let g:languagetool_jar = '$HOME/LanguageTool.jar'
+    " set it up as: let g:languagetool_jar = '$HOME/.../languagetool-commandline.jar'
     let l:languagetool_jar = expand(s:languagetool_jar)
     if !filereadable(expand(l:languagetool_jar))
       echomsg "LanguageTool cannot be found at: " . s:languagetool_jar
       echomsg "You need to install LanguageTool and/or set up g:languagetool_jar"
+      echomsg "to indicate the location of the languagetool-commandline.jar file."
       return -1
     endif
     let s:languagetool_jar = l:languagetool_jar
@@ -293,6 +231,7 @@ function s:LanguageToolCheck(line1, line2) "{{{1
   " reading from stdin so we need to use a temporary file to get
   " correct results.
   let l:tmpfilename = tempname()
+  let l:tmperror    = tempname()
 
   let l:range = a:line1 . ',' . a:line2
   silent exe l:range . 'w!' . l:tmpfilename
@@ -303,6 +242,7 @@ function s:LanguageToolCheck(line1, line2) "{{{1
   \ . ' -d '    . s:languagetool_disable_rules
   \ . ' -l '    . s:languagetool_lang
   \ . ' --api ' . l:tmpfilename
+  \ . ' 2> '    . l:tmperror
 
   sil exe '%!' . l:languagetool_cmd
   call delete(l:tmpfilename)
@@ -310,9 +250,14 @@ function s:LanguageToolCheck(line1, line2) "{{{1
   if v:shell_error
     echoerr 'Command [' . l:languagetool_cmd . '] failed with error: '
     \      . v:shell_error
+    if filereadable(l:tmperror)
+      echoerr string(readfile(l:tmperror))
+    endif
+    call delete(l:tmperror)
     call s:LanguageToolClear()
     return -1
   endif
+  call delete(l:tmperror)
 
   " Loop on all errors in XML output of LanguageTool and
   " collect information about all errors in list s:errors
@@ -403,15 +348,12 @@ function s:LanguageToolCheck(line1, line2) "{{{1
     \                                       l:error['errorlength'])
     if l:error['ruleId'] =~ 'HUNSPELL_RULE\|HUNSPELL_NO_SUGGEST_RULE\|MORFOLOGIK_RULE_.*\|GERMAN_SPELLER_RULE'
       exe "syn match LanguageToolSpellingError '" . l:re . "'"
-      laddexpr expand('%') . ':'
-      \ . l:error['fromy'] . ':'  . l:error['fromx'] . ':'
-      \ . l:error['ruleId'] . ' ' . l:error['msg']
     else
       exe "syn match LanguageToolGrammarError '" . l:re . "'"
-      laddexpr expand('%') . ':'
-      \ . l:error['fromy'] . ':'  . l:error['fromx'] . ':'
-      \ . l:error['ruleId'] . ' ' . l:error['msg']
     endif
+    laddexpr expand('%') . ':'
+    \ . l:error['fromy'] . ':'  . l:error['fromx'] . ':'
+    \ . l:error['ruleId'] . ' ' . l:error['msg']
   endfor
   return 0
 endfunction

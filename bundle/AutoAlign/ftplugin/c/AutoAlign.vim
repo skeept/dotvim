@@ -1,10 +1,10 @@
 " AutoAlign: ftplugin support for C
-" Author:    Charles E. Campbell, Jr.
-" Date:      Jan 06, 2011
-" Version:   16d	ASTRO-ONLY
+" Author:    Charles E. Campbell
+" Date:      Nov 25, 2013
+" Version:   16
 " ---------------------------------------------------------------------
 if &ft != "cpp"
- let b:loaded_autoalign_c = "v16d"
+ let b:loaded_autoalign_c = "v16"
 
  "  overloading '=' to keep things lined up {{{1
  ino <silent> = =<c-r>=AutoAlign(1)<cr>

@@ -68,24 +68,13 @@ function! SetupVAM()
         \ escape(expand(g:p0 . '/local_plugins'), ' \'),
         \ ]
 
-  " let g:vim_addon_manager = { your config here see "commented version" example and help
-
-  "let g:active_addons  = ['ctrlp', 'SmartusLine', 'TaskList']
-  ""let g:active_addons += ['Indent_Guides'
-  "let g:active_addons += ['d.0']
-  "let g:active_addons += ['Bufstop', 'delimitMate']
-  ""let g:active_addons += ['clang_complete']
-  "let g:active_addons += ['supertab', 'CountJump']
-  "let g:active_addons += ['ManPageView', 'vimproc', 'Tagbar']
-  ""let g:active_addons += ['undotree', 'textobj-word-column']
-  ""let g:active_addons += ['fugitive', 'gitv']
-
-  VAMAddToActiveAddons ctrlp SmartusLine TaskList supertab
+  "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
+  VAMAddToActiveAddons ctrlp TaskList Supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
-  VAMAddToActiveAddons ManPageView vimproc tlib NrrwRgn
+  VAMAddToActiveAddons vimproc tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
-  VAMAddToActiveAddons argumentative projectile
+  VAMAddToActiveAddons argumentative projectionist
   VAMAddToActiveAddons syntastic powershell fugitive
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
