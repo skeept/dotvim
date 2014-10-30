@@ -1,8 +1,8 @@
-*AutoAlign.txt*		Automatic Alignment		Aug 21, 2011
+*AutoAlign.txt*		Automatic Alignment		Nov 25, 2013
 
-Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
+Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
 (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*autoalign-copyright*
+Copyright: (c) 2004-2013 by Charles E. Campbell		*autoalign-copyright*
            The VIM LICENSE applies to AutoAlign.vim and AutoAlign.txt
            (see |copyright|) except use "AutoAlign" instead of "Vim"
 	   No warranty, express or implied.  Use At-Your-Own-Risk.
@@ -25,7 +25,7 @@ Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*autoalign-copyright*
            which are available from either:
 >
                 http://vim.sourceforge.net/scripts/script.php?script_id=294
-                http://mysite.verizon.net/astronaut/vim/index.html#AUTOALIGN
+                http://www.drchip.org/astronaut/vim/index.html#AUTOALIGN
 <
         2. Using vim 7.1 or later: >
 
@@ -182,6 +182,16 @@ Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*autoalign-copyright*
     the mark ('a) was made, AutoAlign will start aligning from the current
     line.
 
+    AUTOALIGN FUNCREF				*AutoAlign_funcref*
+
+    When AutoAlign is invoked and changes the line, an optional function
+    (or functions) may be called via |Funcref|(s): >
+
+    	let g:AutoAlign_funcref10= function("SomeFunctionName")
+<   or a list of such |Funcref|(s): >
+    	let g:AutoAlign_funcref10=[function("SomeFunctionName"),function("AnotherFunc"]
+<   These functions will be executed after the aligning has been done, but
+    before control has been passed back to the user via a |:startinsert|.
 
 ==============================================================================
 5. AutoAlign Internals					*autoalign-internals*
@@ -205,34 +215,53 @@ Copyright: (c) 2004-2011 by Charles E. Campbell, Jr.	*autoalign-copyright*
     AutoAlign region is terminated.  There are several ways that an AutoAlign
     region may be terminated; see below.
 
-    Associated with each trigger character are three or four patterns.  Also,
-    each trigger character inoremap is to have an associated count, referred
-    to as "#" below.
->
-    b:autoalign_reqdpat#
-<       This pattern is required for AutoAlign to deem that an AutoAlign
+    Associated with each trigger character are several patterns and/or line
+    numbers.  Also, each trigger character inoremap is to have an associated
+    numeric identifier (referred to as "#") below.
+
+							*b:autoalign_reqdpat*
+    b:autoalign_reqdpat#~
+	This pattern is required for AutoAlign to deem that an AutoAlign
         region has started.  If a positive # is passed to AutoAlign(), then
         the required pattern is needed to allow the AutoAlign region to
         continue whenever a trigger character is encountered.  A negative #, a
         trigger character, and a failed match to b:autoalign_reqdpat# will
         terminate the AutoAlign region.
->
-    b:autoalign_notpat#
-<       This pattern must match just before the AutoAlign region starts.  It
+
+							*b:autoalign_notpat*
+    b:autoalign_notpat#~
+	This pattern must match just before the AutoAlign region starts.  It
         is used to search before the current line.  If the non-pattern
         matching line is not the same as it was when the AutoAlign region
         began, then the AutoAlign region is terminated.
->
-    b:autoalign_suspend#
-<       This pattern is optional; if it matches, the AutoAlign region is
-    terminated.  The fplugin/html/AutoAlign.vim script uses </table>, for
+
+							*b:autoalign_start*
+    b:autoalign_start#~
+	This holds a line number specifying where the AutoAlign region
+	starts.  It is used instead of b:autoalign_reqdpat# and
+	b:autoalign_notpat#, in conjunction with b:autoalign_stop#.
+	(not a pattern)
+
+							*b:autoalign_stop*
+    b:autoalign_stop#~
+	This holds a line number specifying where the AutoAlign region
+	starts.  It is used instead of b:autoalign_reqdpat# and
+	b:autoalign_notpat#, in conjunction with b:autoalign_start#.
+	(not a pattern)
+
+							*b:autoalign_suspend*
+    b:autoalign_suspend#~
+	This pattern is optional; if it matches, the AutoAlign region is
+	terminated.  The fplugin/html/AutoAlign.vim script uses </table>, for
         example, to terminate table aligning.
->
-    b:autoalign_cmd#
-<       This is the command used to invoke alignment on the AutoAlign region.
->
-    b:autoalign_trigger#
-<       This variable holds the trigger character.
+
+							*b:autoalign_cmd*
+    b:autoalign_cmd#~
+	This is the command used to invoke alignment on the AutoAlign region.
+
+							*b:autoalign_trigger*
+    b:autoalign_trigger#~
+	This variable holds the trigger character.
 
     Of course, the :AA command is also available to turn AutoAlign off.
 
@@ -270,6 +299,10 @@ entire file, align it).
 		     * The c plugin's AutoAlign.vim was overriding
 		       the c++ plugin's AutoAlign.vim settings.
 	Feb 22, 2011 * for menus, &go =~# used to insure correct case
+	Apr 25, 2012 * added |AutoAlign_funcref|
+	Sep 18, 2012 * added |b:autoalign_start| and |b:autoalign_stop|
+	Nov 25, 2013 * (Gary Johnson) reported a problem with using C=
+		       while atop an "=" sign.  Fixed.
    13 : Oct 19, 2006 * ftplugin/cpp/AutoAlign.vim fixed for < and >.
                        Introduced b:autoalign_trigger# so AutoAlign
 		       can put cursor back where it belongs.

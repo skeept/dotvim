@@ -602,16 +602,10 @@ g:unite_source_find_max_candidates
 
 					*g:unite_source_line_enable_highlight*
 g:unite_source_line_enable_highlight
-		Control whether search keyword is highlighted in unite buffer.
+		Control whether highlighted in unite buffer.
+		Note: It is slow.
 
-		The default value is 1.
-
-				*g:unite_source_line_search_word_highlight*
-g:unite_source_line_search_word_highlight
-		Highlight group applied to search keyword when
-		|g:unite_source_enable_highlight| is true.
-
-		The default value is "Search".
+		The default value is 0.
 
 g:unite_source_alias_aliases			*g:unite_source_alias_aliases*
 		Set |unite-source-alias| settings.  This variable is a
@@ -2238,6 +2232,9 @@ line		Nominates current buffer lines as candidates.
 		2. the wrap option. "wrap" or "nowrap". This is used when the
 		direction is "forward" or "backward". If it is omitted,
 		'wrapscan' option will be used.
+
+		Source custom options:
+		-custom-line-enable-highlight : enable buffer highlight
 
 		Example: >
 	nnoremap <silent> /  :<C-u>Unite -buffer-name=search

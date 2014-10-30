@@ -1,7 +1,6 @@
 "=============================================================================
 " File    : autoload/unite/source/outline/lib/ctags.vim
 " Author  : h1mesuke <himesuke@gmail.com>
-"           Shougo Matsushita <Shougo.Matsu at gmail.com>
 " Updated : 2012-01-11
 " Version : 0.5.1
 " License : MIT license {{{
@@ -38,7 +37,7 @@ endfunction
 
 let s:Tree  = unite#sources#outline#import('Tree')
 let s:Util  = unite#sources#outline#import('Util')
-let s:Process = vital#of('unite').import('Process')
+let s:Vital = vital#of('unite')
 
 function! s:get_SID()
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
@@ -62,23 +61,20 @@ function! s:find_exuberant_ctags()
         \ 'ctags',
         \ 'tags',
         \ ]
-  if exists('g:unite_source_outline_ctags_program') && !empty(g:unite_source_outline_ctags_program)
-    let ctags_exe_names = [g:unite_source_outline_ctags_program] + ctags_exe_names
+  if exists('g:neocomplcache_ctags_program') && !empty(g:neocomplcache_ctags_program)
+    let ctags_exe_names = [g:neocomplcache_ctags_program] + ctags_exe_names
   endif
   for ctags in ctags_exe_names
     if executable(ctags)
       " Make sure it is Exuberant.
       let ctags_out = unite#util#system(ctags . ' --version')
-      if ctags_out =~? '\<Exuberant Ctags\>'
+      if split(ctags_out, "\<NL>")[0] =~? '\<Exuberant Ctags\>'
         return ctags
       endif
     endif
   endfor
-
-  call unite#print_error("unite-outline: ctags is not found.")
-
   return ''
-endfunction
+endfunction 
 
 let s:Ctags.exe = s:find_exuberant_ctags()
 let s:Ctags.lang_info = {}
@@ -108,10 +104,9 @@ call s:Ctags.function('supports')
 function! s:execute_ctags(context)
   " Write the current content of the buffer to a temporary file.
   let input = join(a:context.lines[1:], "\<NL>")
-  let input = s:Process.iconv(input, &encoding, &termencoding)
+  let input = s:Vital.iconv(input, &encoding, &termencoding)
   let temp_file = tempname()
-  if unite#util#is_sudo() ||
-        \ writefile(split(input, "\<NL>"), temp_file) == -1
+  if writefile(split(input, "\<NL>"), temp_file) == -1
     call unite#util#print_message(
           \ "[unite-outline] Couldn't make a temporary file at " . temp_file)
     return []
@@ -124,8 +119,8 @@ function! s:execute_ctags(context)
   let filetype = a:context.buffer.filetype
   " Assemble the command-line.
   let lang_info = s:Ctags.lang_info[filetype]
-  let opts  = ' -f - --excmd=number --fields=afiKmsSzt --sort=no --append=no'
-  let opts .= " --language-force='" . lang_info.name . "' "
+  let opts  = ' -f - --excmd=number --fields=afiKmsSzt --sort=no '
+  let opts .= ' --language-force=' . lang_info.name . ' '
   let opts .= lang_info.ctags_options
 
   let path = s:Util.Path.normalize(temp_file)
@@ -137,14 +132,14 @@ function! s:execute_ctags(context)
   let ctags_out = unite#util#system(cmdline)
   let status = unite#util#get_last_status()
   if status != 0
-    call unite#print_message(
+    call unite#util#print_message(
           \ "[unite-outline] ctags failed with status " . status . ".")
     return []
   endif
 
   " Delete the used temporary file.
   if delete(temp_file) != 0
-    call unite#print_error(
+    call unite#util#print_error(
           \ "unite-outline: Couldn't delete a temporary file: " . temp_file)
   endif
 
@@ -441,13 +436,6 @@ call extend(s:Ctags.lang_info.c, {
       \ 'name': 'C',
       \ 'ctags_options': ' --c-kinds=cdfgnstu '
       \ }, 'force')
-
-let s:Ctags.lang_info.cs = {
-      \ 'name': 'C#',
-      \ 'ctags_options': " '--C#-kinds=cdgnsmt' ",
-      \ 'scope_kinds'  : ['namespace', 'class', 'enum'],
-      \ 'scope_delim'  : '.',
-      \ }
 
 "-----------------------------------------------------------------------------
 " Java

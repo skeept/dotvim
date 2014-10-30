@@ -1,9 +1,9 @@
 " yankring.vim - Yank / Delete Ring for Vim
 " ---------------------------------------------------------------
-" Version:       15.0
+" Version:       18.0
 " Author:        David Fishburn <dfishburn dot vim at gmail dot com>
 " Maintainer:    David Fishburn <dfishburn dot vim at gmail dot com>
-" Last Modified: 2012 Dec 14
+" Last Modified: 2013 Sep 19
 " Script:        http://www.vim.org/scripts/script.php?script_id=1234
 " Based On:      Mocked up version by Yegappan Lakshmanan
 "                http://groups.yahoo.com/group/vim/post?act=reply&messageNum=34406
@@ -19,7 +19,7 @@ if v:version < 700
   finish
 endif
 
-let loaded_yankring = 150
+let loaded_yankring = 180
 
 " Turn on support for line continuations when creating the script
 let s:cpo_save = &cpo
@@ -33,7 +33,17 @@ endif
 if !exists('g:yankring_history_dir')
     let g:yankring_history_dir = expand('$HOME')
 else
-    let g:yankring_history_dir = expand(g:yankring_history_dir)
+    " let g:yankring_history_dir = expand(g:yankring_history_dir)
+    for dir in split(g:yankring_history_dir, ",")
+        if isdirectory(expand(dir))
+            let g:yankring_history_dir = expand(dir)
+            break
+        endif
+    endfor   
+endif
+
+if !exists('g:yankring_buffer_name')
+    let g:yankring_buffer_name = '[YankRing]'
 endif
 
 if !exists('g:yankring_history_file')
@@ -136,6 +146,11 @@ endif
 " top of the yankring.
 if !exists('g:yankring_ignore_duplicate')
     let g:yankring_ignore_duplicate = 1
+endif
+
+" Determine whether to record inserted data
+if !exists('g:yankring_record_insert')
+    let g:yankring_record_insert = 0
 endif
 
 " Vim automatically manages the numbered registers:
@@ -252,7 +267,6 @@ if !exists('g:yankring_default_menu_mode')
 endif
 
 " Script variables for the yankring buffer
-let s:yr_buffer_name       = '[YankRing]'
 let s:yr_buffer_last_winnr = -1
 let s:yr_buffer_last       = -1
 let s:yr_buffer_id         = -1
@@ -264,16 +278,18 @@ let s:yr_history_v1_nl_pat = '\%(\\\)\@<!@@@'
 let s:yr_history_v2_nl     = "\2" " Use double quotes for a special character
 let s:yr_history_v2_nl_pat = "\2"
 let s:yr_history_last_upd  = 0
-let s:yr_history_file_v1   =
-            \ g:yankring_history_dir.'/'.
-            \ g:yankring_history_file.
-            \ (g:yankring_share_between_instances==1?'':'_'.v:servername).
-            \ '.txt'
-let s:yr_history_file_v2   =
-            \ g:yankring_history_dir.'/'.
-            \ g:yankring_history_file.
-            \ (g:yankring_share_between_instances==1?'':'_'.v:servername).
-            \ '_v2.txt'
+if g:yankring_persist == 1
+    let s:yr_history_file_v1   =
+                \ g:yankring_history_dir.'/'.
+                \ g:yankring_history_file.
+                \ (g:yankring_share_between_instances==1?'':'_'.v:servername).
+                \ '.txt'
+    let s:yr_history_file_v2   =
+                \ g:yankring_history_dir.'/'.
+                \ g:yankring_history_file.
+                \ (g:yankring_share_between_instances==1?'':'_'.v:servername).
+                \ '_v2.txt'
+endif
 
 
 " Vim window size is changed by the yankring plugin or not
@@ -525,7 +541,7 @@ function! s:YRGetElem(...)
     if a:0 > 1
         " If the user indicated to paste above or below
         " let direction = ((a:2 ==# 'P') ? 'P' : 'p')
-        if a:2 =~ '\(p\|gp\|P\|gP\)'
+        if a:2 =~ '\<\(p\|gp\|P\|gP\)\>'
             let direction = a:2
         endif
     endif
@@ -752,7 +768,7 @@ function! s:YRInit(...)
     " reset prior to issuing the YRReplace
     let s:yr_prev_vis_mode         = 0
 
-    if a:0 == 0 && g:yankring_persist == 0
+    if a:0 == 0 && g:yankring_persist != 1
         " The user wants the yankring reset each time Vim is started
         call s:YRClear()
     endif
@@ -1386,37 +1402,83 @@ function! s:YRPaste(replace_last_paste_selection, nextvalue, direction, ...)
         let cmd_mode = ((a:1 == 'v') ? 'v' : 'n')
     endif
 
+    if a:replace_last_paste_selection == 1
+        " Replacing the previous put
+        let start = line("'[")
+        let end = line("']")
+
+        if start != line('.')
+            call s:YRWarningMsg( 'YR: You must paste text first, before you can replace' )
+            return
+        endif
+
+        if start == 0 || end == 0
+            return
+        endif
+
+        " If a count was provided (ie 5<C-P>), multiply the
+        " nextvalue accordingly and position the next paste index
+        " let which_elem = a:nextvalue * ((v_count > 0)?(v_count):1) * -1
+        let which_elem = matchstr(a:nextvalue, '-\?\d\+') * ((v_count > 0)?(v_count):1) * -1
+        let s:yr_last_paste_idx = s:YRGetNextElem(
+		    \ s:yr_last_paste_idx, which_elem
+		    \ )
+
+        let save_reg            = getreg(default_register)
+        let save_reg_type       = getregtype(default_register)
+        call setreg( default_register
+                    \ , s:YRGetValElemNbr((s:yr_last_paste_idx-1),'v')
+                    \ , s:YRGetValElemNbr((s:yr_last_paste_idx-1),'t')
+                    \ )
+
+        " First undo the previous paste
+        exec "normal! u"
+        " Check if the visual selection should be reselected
+        " Next paste the correct item from the ring
+        " This is done as separate statements since it appeared that if
+        " there was nothing to undo, the paste never happened.
+        exec "normal! ".
+                    \ ((s:yr_prev_vis_mode==0) ? "" : "gv").
+                    \ '"'.default_register.
+                    \ s:yr_paste_dir
+        call setreg(default_register, save_reg, save_reg_type)
+        call s:YRSetPrevOP('', '', '', 'n')
+
+        return
+    endif
+
     " User has decided to bypass the yankring and specify a specific
     " register
     if user_register != default_register
-        if a:replace_last_paste_selection == 1
-            call s:YRWarningMsg( 'YR: A register cannot be specified in replace mode' )
-            return
+        " if a:replace_last_paste_selection == 1
+        "     call s:YRWarningMsg( 'YR: A register cannot be specified in replace mode' )
+        "     return
+        " endif
+
+        " Check for the expression register, in this special case
+        " we must copy it's evaluation into the default buffer and paste
+        if user_register == '='
+            " Save the default register since Vim will only
+            " allow the expression register to be pasted once
+            " and will revert back to the default buffer
+            let save_default_reg = @"
+            call setreg(default_register, eval(histget('=', -1)) )
         else
-            " Check for the expression register, in this special case
-            " we must copy it's evaluation into the default buffer and paste
-            if user_register == '='
-                " Save the default register since Vim will only
-                " allow the expression register to be pasted once
-                " and will revert back to the default buffer
-                let save_default_reg = @"
-                call setreg(default_register, eval(histget('=', -1)) )
-            else
-                let user_register = '"'.user_register
-            endif
-            exec "normal! ".
-                        \ ((cmd_mode=='n') ? "" : "gv").
-                        \ ((v_count > 0)?(v_count):'').
-                        \ ((user_register=='=')?'':user_register).
-                        \ a:direction
-            if user_register == '='
-                let @" = save_default_reg
-            endif
-            " In this case, we have bypassed the yankring
-            " If the user hits next or previous we want the
-            " next item pasted to be the top of the yankring.
-            let s:yr_last_paste_idx = 1
+            let user_register = '"'.user_register
         endif
+        exec "normal! ".
+                    \ ((cmd_mode=='n') ? "" : "gv").
+                    \ ((v_count > 0)?(v_count):'').
+                    \ ((user_register=='=')?'':user_register).
+                    \ a:direction
+        if user_register == '='
+            let @" = save_default_reg
+        endif
+        " In this case, we have bypassed the yankring
+        " If the user hits next or previous we want the
+        " next item pasted to be the top of the yankring.
+        let s:yr_last_paste_idx = 1
+    
         let s:yr_paste_dir     = a:direction
         let s:yr_prev_vis_mode = ((cmd_mode=='n') ? 0 : 1)
         return
@@ -1489,73 +1551,31 @@ function! s:YRPaste(replace_last_paste_selection, nextvalue, direction, ...)
     "     return
     " endif
 
-    if a:replace_last_paste_selection == 1
-        " Replacing the previous put
-        let start = line("'[")
-        let end = line("']")
+    " User hit p or P
+    " Supports this for example -   5"ayy
+    " And restores the current register
+    let save_reg            = getreg(default_register)
+    let save_reg_type       = getregtype(default_register)
+    let s:yr_last_paste_idx = 1
+    call setreg(default_register
+                \ , s:YRGetValElemNbr(0,'v')
+                \ , s:YRGetValElemNbr(0,'t')
+                \ )
+    exec "normal! ".
+                \ ((cmd_mode=='n') ? "" : "gv").
+                \ ((v_count > 0)?(v_count):'').
+                \ '"'.default_register.
+                \ a:direction
+    call setreg(default_register, save_reg, save_reg_type)
+    call s:YRSetPrevOP(
+                \ a:direction
+                \ , v_count
+                \ , default_register
+                \ , 'n'
+                \ )
+    let s:yr_paste_dir     = a:direction
+    let s:yr_prev_vis_mode = ((cmd_mode=='n') ? 0 : 1)
 
-        if start != line('.')
-            call s:YRWarningMsg( 'YR: You must paste text first, before you can replace' )
-            return
-        endif
-
-        if start == 0 || end == 0
-            return
-        endif
-
-        " If a count was provided (ie 5<C-P>), multiply the
-        " nextvalue accordingly and position the next paste index
-        " let which_elem = a:nextvalue * ((v_count > 0)?(v_count):1) * -1
-        let which_elem = matchstr(a:nextvalue, '-\?\d\+') * ((v_count > 0)?(v_count):1) * -1
-        let s:yr_last_paste_idx = s:YRGetNextElem(
-		    \ s:yr_last_paste_idx, which_elem
-		    \ )
-
-        let save_reg            = getreg(default_register)
-        let save_reg_type       = getregtype(default_register)
-        call setreg( default_register
-                    \ , s:YRGetValElemNbr((s:yr_last_paste_idx-1),'v')
-                    \ , s:YRGetValElemNbr((s:yr_last_paste_idx-1),'t')
-                    \ )
-
-        " First undo the previous paste
-        exec "normal! u"
-        " Check if the visual selection should be reselected
-        " Next paste the correct item from the ring
-        " This is done as separate statements since it appeared that if
-        " there was nothing to undo, the paste never happened.
-        exec "normal! ".
-                    \ ((s:yr_prev_vis_mode==0) ? "" : "gv").
-                    \ '"'.default_register.
-                    \ s:yr_paste_dir
-        call setreg(default_register, save_reg, save_reg_type)
-        call s:YRSetPrevOP('', '', '', 'n')
-    else
-        " User hit p or P
-        " Supports this for example -   5"ayy
-        " And restores the current register
-        let save_reg            = getreg(default_register)
-        let save_reg_type       = getregtype(default_register)
-        let s:yr_last_paste_idx = 1
-        call setreg(default_register
-                    \ , s:YRGetValElemNbr(0,'v')
-                    \ , s:YRGetValElemNbr(0,'t')
-                    \ )
-        exec "normal! ".
-                    \ ((cmd_mode=='n') ? "" : "gv").
-                    \ ((v_count > 0)?(v_count):'').
-                    \ '"'.default_register.
-                    \ a:direction
-        call setreg(default_register, save_reg, save_reg_type)
-        call s:YRSetPrevOP(
-                    \ a:direction
-                    \ , v_count
-                    \ , default_register
-                    \ , 'n'
-                    \ )
-        let s:yr_paste_dir     = a:direction
-        let s:yr_prev_vis_mode = ((cmd_mode=='n') ? 0 : 1)
-    endif
 endfunction
 
 
@@ -1634,8 +1654,6 @@ endfunction
 
 
 " Handle macros (@).
-" This routine is not used, YRMapsExpression is used to
-" handle the @ symbol.
 function! s:YRMapsMacro(bang, ...)
     " If we are repeating a series of commands we must
     " unmap the _zap_ keys so that the user is not
@@ -1656,7 +1674,7 @@ function! s:YRMapsMacro(bang, ...)
         return ""
     endif
 
-    if zapto !~ '\(\w\|@\)'
+    if zapto !~ '\(\w\|@\|:\)'
         " Abort if the user does not specify a register
         call s:YRWarningMsg( "YR:No register specified, aborting macro" )
         return ""
@@ -1773,10 +1791,10 @@ function! s:YRMapsCreate(...)
         exec 'xnoremap <silent>'.g:yankring_paste_v_akey." :<C-U>YRPaste 'p', 'v'<CR>"
     endif
     if g:yankring_replace_n_pkey != ''
-        exec 'nnoremap <silent>'.g:yankring_replace_n_pkey." :<C-U>YRReplace '-1', 'P'<CR>"
+        exec 'nnoremap <silent>'.g:yankring_replace_n_pkey." :<C-U>YRReplace '-1', P<CR>"
     endif
     if g:yankring_replace_n_nkey != ''
-        exec 'nnoremap <silent>'.g:yankring_replace_n_nkey." :<C-U>YRReplace '1', 'p'<CR>"
+        exec 'nnoremap <silent>'.g:yankring_replace_n_nkey." :<C-U>YRReplace '1', p<CR>"
     endif
 
     let g:yankring_enabled    = 1
@@ -1990,6 +2008,7 @@ function! s:YRMRUAdd( mru_list, element, element_type )
             call remove({a:mru_list}, found)
         endif
         call insert({a:mru_list}, elem, 0)
+        let s:yr_count = len({a:mru_list})
         call s:YRHistorySave()
     endif
 
@@ -1999,6 +2018,7 @@ endfunction
 function! s:YRMRUDel( mru_list, elem_nbr )
     if a:elem_nbr >= 0 && a:elem_nbr < s:yr_count
         call remove({a:mru_list}, a:elem_nbr)
+        let s:yr_count = len({a:mru_list})
         call s:YRHistorySave()
     endif
 
@@ -2007,6 +2027,11 @@ endfunction
 
 function! s:YRHistoryDelete()
     let s:yr_history_list = []
+    let s:yr_count        = 0
+
+    if g:yankring_persist != 1
+        return 
+    endif
     let yr_filename       = s:yr_history_file_{s:yr_history_version}
 
     if filereadable(yr_filename)
@@ -2023,6 +2048,9 @@ function! s:YRHistoryDelete()
 endfunction
 
 function! s:YRHistoryRead()
+    if g:yankring_persist != 1
+        return
+    endif
     let refresh_needed  = 1
     let yr_history_list = []
     let yr_filename     = s:yr_history_file_{s:yr_history_version}
@@ -2056,22 +2084,25 @@ function! s:YRHistoryRead()
 
     let s:yr_history_list = yr_history_list
     call s:YRHistorySave()
-
 endfunction
 
 function! s:YRHistorySave()
-    let yr_filename     = s:yr_history_file_{s:yr_history_version}
 
     if len(s:yr_history_list) > g:yankring_max_history
         " Remove items which exceed the max # specified
-        call remove(s:yr_history_list, g:yankring_max_history)
+        call remove(s:yr_history_list, g:yankring_max_history, (len(s:yr_history_list)-1))
+        let s:yr_count = len(s:yr_history_list)
     endif
 
+    if g:yankring_persist != 1
+        return 
+    endif
+
+    let yr_filename     = s:yr_history_file_{s:yr_history_version}
     let rc = writefile(s:yr_history_list, yr_filename)
 
     if rc == 0
         let s:yr_history_last_upd = getftime(yr_filename)
-        let s:yr_count = len(s:yr_history_list)
     else
         call s:YRErrorMsg(
                     \ 'YRHistorySave: Unable to save yankring history file: '.
@@ -2140,7 +2171,8 @@ function! s:YRWindowStatus(show_help)
 
     let msg = 'AutoClose='.g:yankring_window_auto_close.
                 \ ';ClipboardMonitor='.g:yankring_clipboard_monitor.
-                \ ';Cmds:<enter>,[g]p,[g]P,1-9,d,r,s,a,c,u,R,q,<space>;Help=?'.
+                \ ';Inserts='.g:yankring_record_insert.
+                \ ';Cmds:<enter>,[g]p,[g]P,1-9,d,r,s,a,c,i,u,R,q,<space>;Help=?'.
                 \ (s:yr_search==""?"":';SearchRegEx='.s:yr_search)
 
     if s:yr_has_voperator == 0
@@ -2163,6 +2195,7 @@ function! s:YRWindowStatus(show_help)
                     \ '" R            : [R]egisters display'."\n".
                     \ '" a            : toggle [a]utoclose setting'."\n".
                     \ '" c            : toggle [c]lipboard monitor setting'."\n".
+                    \ '" i            : toggle [i]nsert recording'."\n".
                     \ '" q            : [q]uit / close the yankring window'."\n".
                     \ '" ?            : Remove help text'."\n".
                     \ '" <space>      : toggles the width of the window'."\n".
@@ -2270,7 +2303,7 @@ function! s:YRWindowOpen(results)
 
         " Using :e and hide prevents the alternate buffer
         " from being changed.
-        exec ":e " . escape(s:yr_buffer_name, ' ')
+        exec ":e " . escape(g:yankring_buffer_name, ' ')
         " Save buffer id
         let s:yr_buffer_id = bufnr('%') + 0
     else
@@ -2310,13 +2343,15 @@ function! s:YRWindowOpen(results)
 
     syn match yankringKey #^AutoClose.*<enter>#hs=e-6
     syn match yankringKey #^AutoClose.*\[g\]p#hs=e-3 contains=yankringKey
-    syn match yankringKey #^AutoClose.*\[p\]P#hs=e-3 contains=yankringKey
+    syn match yankringKey #^AutoClose.*\[g\]P#hs=e-3 contains=yankringKey
     syn match yankringKey #^AutoClose.*,d,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,r,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,s,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,a,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,c,#hs=e-1,he=e-1 contains=yankringKey
+    syn match yankringKey #^AutoClose.*,i,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,u,#hs=e-1,he=e-1 contains=yankringKey
+    syn match yankringKey #^AutoClose.*,R,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*,q,#hs=e-1,he=e-1 contains=yankringKey
     syn match yankringKey #^AutoClose.*<space>#hs=e-6 contains=yankringKey
     syn match yankringKey #^AutoClose.*?$#hs=e contains=yankringKey
@@ -2361,6 +2396,7 @@ function! s:YRWindowOpen(results)
     nnoremap <buffer> <silent> s             :call <SID>YRWindowAction ('s'   , 'n')<CR>
     nnoremap <buffer> <silent> a             :call <SID>YRWindowAction ('a'   , 'n')<CR>
     nnoremap <buffer> <silent> c             :call <SID>YRWindowAction ('c'   , 'n')<CR>
+    nnoremap <buffer> <silent> i             :call <SID>YRWindowAction ('i'   , 'n')<CR>
     nnoremap <buffer> <silent> ?             :call <SID>YRWindowAction ('?'   , 'n')<CR>
     nnoremap <buffer> <silent> u             :call <SID>YRWindowAction ('u'   , 'n')<CR>
     nnoremap <buffer> <silent> q             :call <SID>YRWindowAction ('q'   , 'n')<CR>
@@ -2465,7 +2501,7 @@ function! s:YRWindowAction(op, cmd_mode) range
     " so set it to at least 1
     let v_count = ((v_count > 0)?(v_count):1)
 
-    if '[dr]' =~ opcode
+    if '\<[drP]\>' =~# opcode
         " Reverse the order of the lines to act on
         let begin = lastline
         while begin >= firstline
@@ -2532,6 +2568,15 @@ function! s:YRWindowAction(op, cmd_mode) range
         " Toggle the clipboard monitor setting
         let g:yankring_clipboard_monitor =
                     \ (g:yankring_clipboard_monitor == 1?0:1)
+        " Display the status line / help
+        call s:YRWindowStatus(0)
+        call cursor(l:curr_line,0)
+        return
+    elseif opcode ==# 'i'
+        let l:curr_line = line(".")
+        " Toggle the auto close setting
+        let g:yankring_record_insert =
+                    \ (g:yankring_record_insert == 1?0:1)
         " Display the status line / help
         call s:YRWindowStatus(0)
         call cursor(l:curr_line,0)
@@ -2728,6 +2773,24 @@ function! s:YRInsertLeave()
         call s:YRMapsCreate('add_only_zap_keys')
     endif
 
+    " Check if we should record inserted text
+    if g:yankring_record_insert == 1
+        if !empty(@.) && @. != s:yr_prev_reg_insert
+            let elem    = s:YRMRUElemFormat(
+                        \   getreg('.')
+                        \ , getregtype('.')
+                        \ )
+            let found   = s:YRMRUHas('s:yr_history_list', elem)
+
+            " Only add the item to the "top" of the ring if it is
+            " not in the ring already.
+            if found == -1
+                call YRRecord3(".")
+            endif
+            let s:yr_prev_reg_insert = @.
+        endif
+    endif
+
 endfunction
 
 " Deleting autocommands first is a good idea especially if we want to reload
@@ -2800,7 +2863,7 @@ if has("menu") && g:yankring_default_menu_mode != 0
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.YankRing\ Window  :YRShow<CR>'
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.YankRing\ Search  :YRSearch<CR>'
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Replace\ with\ Previous<TAB>'.leader.g:yankring_replace_n_pkey.' :YRReplace -1, ''P''<CR>'
-    exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Replace\ with\ Next<TAB>'.leader.g:yankring_replace_n_pkey.' :YRReplace 1, ''P''<CR>'
+    exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Replace\ with\ Next<TAB>'.leader.g:yankring_replace_n_nkey.' :YRReplace 1, ''P''<CR>'
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Clear  :YRClear<CR>'
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Toggle :YRToggle<CR>'
     exec 'noremenu  <script> '.menuPriority.' '.menuRoot.'.Check\ Clipboard :YRCheckClipboard<CR>'

@@ -78,9 +78,6 @@ endfunction
 function! s:cache_dir_exists()
   if isdirectory(s:FileCache.DIR)
     return 1
-  elseif unite#util#is_sudo()
-    call unite#util#print_error("unite-outline: Couldn't create the cache directory.")
-    return isdirectory(s:FileCache.DIR)
   else
     try
       call mkdir(iconv(s:FileCache.DIR, &encoding, &termencoding), 'p')
@@ -141,7 +138,7 @@ function! s:load_cache_file(path)
     throw "unite-outline: Couldn't load the cache file: " . cache_file
   endif
   " Touch; Update the timestamp.
-  if !unite#util#is_sudo() && writefile([dumped_data], cache_file) == 0
+  if writefile([dumped_data], cache_file) == 0
     call s:print_debug("[TOUCHED] cache file: " . cache_file)
   endif
   sandbox let data = eval(dumped_data)
@@ -168,7 +165,7 @@ call s:FileCache.function('set')
 function! s:save_cache_file(path, data)
   let cache_file = s:get_cache_file_path(a:path)
   let dumped_data = string(a:data)
-  if !unite#util#is_sudo() && writefile([dumped_data], cache_file) == 0
+  if writefile([dumped_data], cache_file) == 0
     call s:print_debug("[SAVED] cache file: " . cache_file)
   else
     throw "unite-outline: Couldn't save the cache to: " . cache_file

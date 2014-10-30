@@ -1,0 +1,3 @@
+[console_scripts]
+pysmell = pysmell.tags:main
+

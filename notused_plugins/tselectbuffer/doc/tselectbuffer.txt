@@ -44,7 +44,7 @@ See :help vimball for details. If you have difficulties or use vim 7.0,
 please make sure, you have the current version of vimball
 (vimscript #1502) installed or update your runtime.
 
-Also available via git: http://github.com/tomtom/vimtlib/
+Also available via git: http://github.com/tomtom/tselectbuffer_vim/
 
 
 ========================================================================

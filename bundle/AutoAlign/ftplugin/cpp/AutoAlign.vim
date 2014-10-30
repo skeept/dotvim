@@ -1,9 +1,9 @@
 " AutoAlign: ftplugin support for C++
 " Author:    Charles E. Campbell, Jr.
-" Date:      Jan 06, 2011
-" Version:   15a	ASTRO-ONLY
+" Date:      Nov 25, 2013
+" Version:   15
 " ---------------------------------------------------------------------
-let b:loaded_autoalign_cpp= "v15a"
+let b:loaded_autoalign_cpp= "v15"
 
 "  overloading '=' to keep things lined up {{{1
 ino <silent> = =<c-r>=AutoAlign(1)<cr>

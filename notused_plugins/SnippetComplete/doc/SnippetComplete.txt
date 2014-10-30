@@ -23,12 +23,26 @@ but switching to command mode for that is cumbersome.
 This plugin offers a context-sensitive insert mode completion to quickly list
 and complete defined abbreviations directly while typing.
 
+SEE ALSO								     *
+
+- The |SnippetCompleteSnipMate.vim| plugin (vimscript #4276) extends the
+  completion with snippets for the popular snipMate plugin (vimscript #2540).
+
 ==============================================================================
 USAGE						       *SnippetComplete-usage*
+
+In insert mode, optionally type part of the snippet shortcut or a fragment
+from its expected expansion, and invoke the snippet completion via CTRL-X ].
+You can then search forward and backward via CTRL-N / CTRL-P, as usual.
 								  *i_CTRL-X_]*
-i_CTRL-X_]		Find matches for abbreviations that start with the
+CTRL-X ]		Find matches for abbreviations that start with the
 			text in front of the cursor. If other snippet types
 			are registered, show those, too.
+			If no matches were found that way, matches anywhere in
+			the snippet or in the snippet's expanded text will be
+			shown. So if you can't remember the shortcut, but a
+			word fragment from the resulting expansion, just try
+			with that.
 
 			There are three types of |abbreviations| (full-id,
 			end-id and non-id), which can consist of different
@@ -46,28 +60,40 @@ i_CTRL-X_]		Find matches for abbreviations that start with the
 			<Space> or |i_CTRL-]| to select an abbreviation, it'll
 			be expanded automatically.
 
+								 *i_CTRL-X_g]*
+CTRL-X g]		Find matches for buffer-local abbreviations that start
+			with the text in front of the cursor. If other snippet
+			types are registered, show those (local ones), too.
+
 ==============================================================================
 INSTALLATION					*SnippetComplete-installation*
 
 This script is packaged as a |vimball|. If you have the "gunzip" decompressor
-in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
 the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
 vimball or via the |:UseVimball| command. >
-    vim SnippetComplete.vba.gz
+    vim SnippetComplete*.vmb.gz
     :so %
 To uninstall, use the |:RmVimball| command.
 
 DEPENDENCIES					*SnippetComplete-dependencies*
 
 - Requires Vim 7.0 or higher.
+- Requires the |CompleteHelper.vim| plugin (vimscript #3914), version 1.10 or
+  higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.009 or
+  higher.
 
 ==============================================================================
 CONFIGURATION				       *SnippetComplete-configuration*
 
+For a permanent configuration, put the following commands into your |vimrc|:
+
+						       *SnippetComplete-remap*
 If you want to use a different mapping, map your keys to the
-<Plug>(SnippetComplete) mapping target _before_ sourcing this script (e.g. in
-your |vimrc|).
-For example, to use CTRL-X <Tab>, use this: >
+<Plug>(SnippetComplete...) mapping targets _before_ sourcing the script (e.g.
+in your |vimrc|).
+For example, to use CTRL-X <Tab> as the completion trigger, define this: >
     imap <C-x><Tab> <Plug>(SnippetComplete)
 <
 ==============================================================================
@@ -104,7 +130,11 @@ To include the snippets in the |i_CTRL-X_]| completion mapping provided here: >
 <
 To create a separate completion mapping for your type: >
     inoremap <silent> <C-x>% <C-r>=SnippetComplete#PreSnippetCompleteExpr()<CR><C-r>=SnippetComplete#SnippetComplete(typeDefinition)<CR>
-<
+<				      *g:SnippetComplete_LocalRegisteredTypes*
+Like |g:SnippetComplete_RegisteredTypes|, but to include (preferably only
+local) snippets in the |i_CTRL-X_g]| completion mapping for buffer-local
+abbreviation https://github.com/tek/vim-argh/blob/master/autoload/argh.vim#L54 s.
+
 ==============================================================================
 LIMITATIONS					 *SnippetComplete-limitations*
 
@@ -117,12 +147,30 @@ KNOWN PROBLEMS				      *SnippetComplete-known-problems*
 TODO							*SnippetComplete-todo*
 
 - Getting and sorting of matches when 'ignorecase' is on.
-- Limiting the length of the snippet expansion shown in the popup menu.
 
 IDEAS						       *SnippetComplete-ideas*
 
 ==============================================================================
 HISTORY						     *SnippetComplete-history*
+
+2.20	03-Apr-2014
+- ENH: Add CTRL-X g] mapping variant that limits the results to buffer-local
+  abbreviations. This is useful to quickly get an overview of
+  filetype-specific abbreviations, which are usually drowned in the sea of
+  global ones (and snippets if integrated).
+- Add dependency to ingo-library (vimscript #4433). *** You need to separately
+  install ingo-library (vimscript #4433) version 1.009 (or higher)! ***
+
+2.11	15-Jan-2013
+FIX: Must use numerical sort() for s:lastCompletionsByBaseCol.
+
+2.10	19-Oct-2012
+- ENH: When no base doesn't match with the beginning of a snippet, fall back
+  to matches either anywhere in the snippet or in the snippet expansion.
+- Truncate very long or multi-line snippet expansions in the popup menu. This
+  requires the CompleteHelper plugin. When the entire snippet doesn't fit into
+  the popup menu, offer it for showing in the preview window.
+  *** THIS PLUGIN NOW REQUIRES THE CompleteHelper PLUGIN (vimscript #3914) ***
 
 2.01	13-Aug-2012
 - FIX: Vim 7.0/1 need preloading of functions referenced in Funcrefs.
@@ -141,8 +189,8 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2010-2012 Ingo Karkat
-The VIM LICENSE applies to this script; see |copyright|.
+Copyright: (C) 2010-2014 Ingo Karkat
+The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
 ==============================================================================

@@ -6,12 +6,18 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:V = vital#of('quickrun').load('Data.List', 'System.File', 'System.Filepath')
+let s:V = vital#of('quickrun').load(
+\   'Data.List',
+\   'System.File',
+\   'System.Filepath',
+\   'Vim.Message',
+\   'Process',
+\   'Prelude')
 unlet! g:quickrun#V
 let g:quickrun#V = s:V
 lockvar! g:quickrun#V
 
-let s:is_win = s:V.is_windows()
+let s:is_win = s:V.Prelude.is_windows()
 
 " Default config.  " {{{1
 unlet! g:quickrun#default_config
@@ -57,6 +63,27 @@ let g:quickrun#default_config = {
 \   'tempfile': '%{tempname()}.c',
 \   'hook/sweep/files': ['%S:p:r.exe', '%S:p:r.obj'],
 \ },
+\ 'clojure': {
+\   'type': executable('jark') ? 'clojure/jark':
+\           executable('clj') ? 'clojure/clj':
+\           '',
+\ },
+\ 'clojure/jark': {
+\   'command': 'jark',
+\   'exec': '%c ns load %s',
+\ },
+\ 'clojure/clj': {
+\   'command': 'clj',
+\   'exec': '%c %s',
+\ },
+\ 'clojure/process_manager': {
+\   'command': 'clojure-1.6',
+\   'cmdopt': '-e ''(clojure.main/repl :prompt #(print "\nquickrun/pm=> "))''',
+\   'runner': 'process_manager',
+\   'runner/process_manager/load': '(load-file "%S")',
+\   'runner/process_manager/prompt': 'quickrun/pm=> ',
+\ },
+\ 'coffee': {},
 \ 'cpp': {
 \   'type':
 \     s:is_win && executable('cl') ? 'cpp/vc'  :
@@ -86,20 +113,12 @@ let g:quickrun#default_config = {
 \   'tempfile': '%{tempname()}.cpp',
 \   'hook/sweep/files': ['%S:p:r.exe', '%S:p:r.obj'],
 \ },
-\ 'clojure': {
-\   'type': executable('jark') ? 'clojure/jark':
-\           executable('clj') ? 'clojure/clj':
-\           '',
+\ 'crystal': {
+\   'command': 'crystal',
+\   'exec': ['%c %s', '%s:p:r %a'],
+\   'tempfile': '%{tempname()}.cr',
+\   'hook/sweep/files': '%S:p:r',
 \ },
-\ 'clojure/jark': {
-\   'command': 'jark',
-\   'exec': '%c ns load %s',
-\ },
-\ 'clojure/clj': {
-\   'command': 'clj',
-\   'exec': '%c %s',
-\ },
-\ 'coffee': {},
 \ 'cs': {
 \   'type': executable('csc')  ? 'cs/csc'  :
 \           executable('dmcs') ? 'cs/dmcs' :
@@ -179,6 +198,9 @@ let g:quickrun#default_config = {
 \   'command': 'dart',
 \   'tempfile': '%{tempname()}.dart',
 \ },
+\ 'elixir': {
+\   'command': 'elixir',
+\ },
 \ 'erlang': {
 \   'command': 'escript',
 \ },
@@ -194,6 +216,24 @@ let g:quickrun#default_config = {
 \   'exec': ['%c %o -o %s:p:r %s', '%s:p:r %a'],
 \   'tempfile': '%{tempname()}.f95',
 \   'hook/sweep/files': ['%S:p:r'],
+\ },
+\ 'fsharp': {
+\   'type': executable('fsharpc') ? 'fsharp/mono' :
+\           executable('fsc') ? 'fsharp/vs' : '',
+\ },
+\ 'fsharp/mono': {
+\   'exec': ['%c %o --out:%s:p:r.exe %s', 'mono %s:p:r.exe %a'],
+\   'command': 'fsharpc',
+\   'cmdopt': '--nologo',
+\   'hook/sweep/files': '%S:p:r.exe',
+\   'tempfile': '%{fnamemodify(tempname(), ":r")}.fs',
+\ },
+\ 'fsharp/vs': {
+\   'exec': ['%c %o --out:%s:p:r.exe %s', '%s:p:r.exe %a'],
+\   'command': 'fsc',
+\   'cmdopt': '--nologo',
+\   'hook/sweep/files': '%S:p:r.exe',
+\   'tempfile': '%{fnamemodify(tempname(), ":r")}.fs',
 \ },
 \ 'go': {
 \   'command': 'go',
@@ -227,7 +267,7 @@ let g:quickrun#default_config = {
 \ },
 \ 'io': {},
 \ 'java': {
-\   'exec': ['javac %o %s', '%c %s:t:r %a'],
+\   'exec': ['javac %o -d %s:p:h %s', '%c -cp %s:p:h %s:t:r %a'],
 \   'hook/output_encode/encoding': '&termencoding',
 \   'hook/sweep/files': '%S:p:r.class',
 \ },
@@ -270,13 +310,28 @@ let g:quickrun#default_config = {
 \   'hook/eval/template':
 \     'class _Main { static function main(args : string[]) :void { %s }}',
 \ },
+\ 'kotlin': {
+\   'exec': [
+\     'kotlinc-jvm %s -jar %s:p:r.jar',
+\     'java -Xbootclasspath/a:%%{fnamemodify(' .
+\       'g:quickrun#V.System.Filepath.which("kotlinc-jvm"), ":h")}' .
+\       '/../lib/kotlin-runtime.jar -jar %s:p:r.jar'
+\   ],
+\   'tempfile': '%{tempname()}.kt',
+\   'hook/sweep/files': ['%S:p:r.jar'],
+\ },
 \ 'lisp': {
 \   'command': 'clisp',
 \ },
 \ 'llvm': {
-\   'command': 'llvm-as %s -o=- | lli - %a',
+\   'exec' : 'llvm-as %s:p -o=- | lli - %a',
 \ },
 \ 'lua': {},
+\ 'lua/vim': {
+\   'command': ':luafile',
+\   'exec': '%C %s',
+\   'runner': 'vimscript',
+\ },
 \ 'markdown': {
 \   'type': executable('Markdown.pl') ? 'markdown/Markdown.pl':
 \           executable('kramdown') ? 'markdown/kramdown':
@@ -305,6 +360,10 @@ let g:quickrun#default_config = {
 \ 'markdown/markdown_py': {
 \   'command': 'markdown_py',
 \ },
+\ 'nimrod': {
+\   'cmdopt': 'compile --run',
+\   'hook/sweep/files': '%S:p:r',
+\ },
 \ 'ocaml': {},
 \ 'perl': {
 \   'hook/eval/template': join([
@@ -316,11 +375,32 @@ let g:quickrun#default_config = {
 \ 'perl6': {'hook/eval/template': '{%s}().perl.print'},
 \ 'python': {'hook/eval/template': 'print(%s)'},
 \ 'php': {},
+\ 'ps1': {
+\   'exec': '%c %o -File %s %a',
+\   'command': 'powershell.exe',
+\   'cmdopt': '-ExecutionPolicy RemoteSigned',
+\   'tempfile': '%{tempname()}.ps1',
+\   'hook/output_encode/encoding': '&termencoding',
+\ },
 \ 'r': {
 \   'command': 'R',
 \   'exec': '%c %o --no-save --slave %a < %s',
 \ },
 \ 'ruby': {'hook/eval/template': " p proc {\n%s\n}.call"},
+\ 'ruby/irb': {
+\   'command': 'irb',
+\   'exec': '%c %o --simple-prompt',
+\   'runner': 'process_manager',
+\   'runner/process_manager/load': "load '%s'",
+\   'runner/process_manager/prompt': '>> ',
+\ },
+\ 'ruby/pry': {
+\   'command': 'pry',
+\   'exec': '%c %o --no-color --simple-prompt',
+\   'runner': 'process_manager',
+\   'runner/process_manager/load': "load '%s'",
+\   'runner/process_manager/prompt': '>> ',
+\ },
 \ 'rust': {
 \   'command': 'rustc',
 \   'exec': ['%c %o %s -o %s:p:r', '%s:p:r %a'],
@@ -330,6 +410,13 @@ let g:quickrun#default_config = {
 \ 'scala': {
 \   'cmdopt': '-Dfile.encoding=' . &termencoding,
 \   'hook/output_encode/encoding': '&termencoding',
+\ },
+\ 'scala/process_manager': {
+\   'command': 'scala',
+\   'cmdopt': '-nc',
+\   'runner': 'process_manager',
+\   'runner/process_manager/load': ':load %S',
+\   'runner/process_manager/prompt': 'scala> ',
 \ },
 \ 'scheme': {
 \   'type': executable('gosh')     ? 'scheme/gauche':
@@ -346,9 +433,23 @@ let g:quickrun#default_config = {
 \ },
 \ 'sed': {},
 \ 'sh': {},
+\ 'sql': {
+\   'type': executable('psql') ? 'sql/postgres' : '',
+\ },
+\ 'sql/postgres': {
+\   'command': 'psql',
+\   'exec': ['%c %o -f %s'],
+\ },
+\ 'swift': {
+\   'type' : executable('xcrun') ? 'swift/apple' : '',
+\ },
+\ 'swift/apple': {
+\   'command': 'xcrun',
+\   'exec': ['%c swift %s'],
+\ },
 \ 'typescript': {
 \   'command': 'tsc',
-\   'cmdopt': '--exec',
+\   'exec': ['%c --target es5 --module commonjs %o %s', 'node %s:r.js'],
 \   'tempfile': '%{tempname()}.ts',
 \ },
 \ 'vim': {
@@ -388,6 +489,8 @@ function! s:Session.normalize(config)
     let config.input = ''
   endif
 
+  let exec = get(config, 'exec', '')
+  let config.exec = type(exec) == type([]) ? exec : [exec]
   let config.command = get(config, 'command', config.type)
 
   if has_key(config, 'srcfile')
@@ -406,7 +509,7 @@ function! s:Session.normalize(config)
       " Executes on the temporary file.
       let body = s:get_region(config.region)
 
-      let body = s:V.iconv(body, &encoding, &fileencoding)
+      let body = s:V.Process.iconv(body, &encoding, &fileencoding)
 
       if &l:fileformat ==# 'mac'
         let body = substitute(body, "\n", "\r", 'g')
@@ -452,9 +555,8 @@ function! s:Session.setup()
     let self.outputter = self.make_module('outputter', self.config.outputter)
     call self.invoke_hook('module_loaded')
 
-    let exec = get(self.config, 'exec', '')
-    let commands = type(exec) == type([]) ? copy(exec) : [exec]
-    call filter(map(commands, 'self.build_command(v:val)'),
+    let commands = copy(self.config.exec)
+    call filter(map(commands, 'self.build_command(quickrun#expand(v:val))'),
     \           'v:val =~# "\\S"')
     let self.commands = commands
   catch /^quickrun:/
@@ -590,12 +692,11 @@ function! s:Session.build_command(tmpl)
         let value = command =~# '^\s*:' ? fnameescape(value)
         \                               : self.runner.shellescape(value)
       endif
-      let value = escape(value, '\@&$%')
       let rest = rest[len(mod) :]
     endif
     let result .= value
   endwhile
-  return substitute(quickrun#expand(result), '[\r\n]\+', ' ', 'g')
+  return substitute(result, '[\r\n]\+', ' ', 'g')
 endfunction
 
 function! s:Session.tempname(...)
@@ -657,12 +758,23 @@ endfunction
 function! s:Session.invoke_hook(point, ...)
   let context = a:0 ? a:1 : {}
   let func = 'on_' . a:point
-  let pri = printf('v:val.priority(%s) - 0', string(a:point))
-  for hook in s:V.Data.List.sort_by(self.hooks, pri)
-    if has_key(hook, func) && s:V.is_funcref(hook[func])
+  let hooks = copy(self.hooks)
+  let hooks = map(hooks, '[v:val, s:get_hook_priority(v:val, a:point)]')
+  let hooks = s:V.Data.List.sort_by(hooks, 'v:val[1]')
+  let hooks = map(hooks, 'v:val[0]')
+  for hook in hooks
+    if has_key(hook, func) && s:V.Prelude.is_funcref(hook[func])
       call call(hook[func], [self, context], hook)
     endif
   endfor
+endfunction
+
+function! s:get_hook_priority(hook, point)
+  try
+    return a:hook.priority(a:point) - 0
+  catch
+    return 0
+  endtry
 endfunction
 
 
@@ -746,7 +858,7 @@ function! quickrun#command(config, use_range, line1, line2)
     endif
     call quickrun#run([config, a:config])
   catch /^quickrun:/
-    call s:V.print_error(v:exception)
+    call s:V.Vim.Message.error(v:exception)
   endtry
 endfunction
 
@@ -892,8 +1004,10 @@ function! quickrun#config(config)
       unlet c
     endfor
     return config
+  elseif type(a:config) == type({})
+    return deepcopy(a:config)
   endif
-  return a:config
+  throw 'quickrun: Unsupported config type: ' . type(a:config)
 endfunction
 
 
@@ -1010,8 +1124,8 @@ function! s:build_module(module, configs)
         \            name]
           if has_key(config, conf)
             let val = config[conf]
-            if s:V.is_list(a:module.config[name])
-              let a:module.config[name] += s:V.is_list(val) ? val : [val]
+            if s:V.Prelude.is_list(a:module.config[name])
+              let a:module.config[name] += s:V.Prelude.is_list(val) ? val : [val]
             else
               let a:module.config[name] = val
             endif
