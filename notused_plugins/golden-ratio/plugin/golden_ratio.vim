@@ -6,6 +6,21 @@ if exists("g:loaded_golden_ratio")
 endif
 let g:loaded_golden_ratio = 1
 
+if !exists("g:golden_ratio_autocommand")
+  let s:gr_auto = 1
+else
+  let s:gr_auto = g:golden_ratio_autocommand
+  unlet g:golden_ratio_autocommand
+endif
+
+if !exists('g:golden_ratio_wrap_ignored')
+  let g:golden_ratio_wrap_ignored = 0
+endif
+
+if !exists('g:golden_ratio_exclude_nonmodifiable')
+  let g:golden_ratio_exclude_nonmodifiable = 0
+endif
+
 function! s:golden_ratio_width()
   return &columns / 1.618
 endfunction
@@ -14,19 +29,31 @@ function! s:golden_ratio_height()
   return &lines / 1.618
 endfunction
 
+function! s:window_list()
+  let wl = range(1, winnr('$'))
+  if g:golden_ratio_exclude_nonmodifiable
+    let wl = filter(wl, 'getwinvar(v:val, "&modifiable")')
+  endif
+  return wl
+endfunction
+
 function! s:find_parallel_windows(current_window)
   return {
-         \ 'width' : filter(reverse(range(1, winnr('$'))),
+         \ 'width' : filter(reverse(s:window_list()),
            \ 'winheight(v:val) == winheight(a:current_window) ' .
            \ '&& v:val != a:current_window'),
-         \ 'height': filter(reverse(range(1, winnr('$'))),
+         \ 'height': filter(reverse(s:window_list()),
            \ 'winwidth(v:val) == winwidth(a:current_window) ' .
            \ '&& v:val != a:current_window')
         \}
 endfunction
 
 function! s:resize_ignored_window(windows, ignored_width, ignored_height)
-  setl nowrap
+  if !exists('b:golden_ratio_saved_wrap')
+    let b:golden_ratio_saved_wrap = &wrap
+  endif
+
+  let &l:wrap = g:golden_ratio_wrap_ignored
 
   if len(a:windows.width) > 0 && index(a:windows.width, winnr()) >= 0
     let l:width_size = a:ignored_width / len(a:windows.width)
@@ -60,7 +87,10 @@ endfunction
 function! s:resize_main_window(window,
       \ main_width, main_height,
       \ ignored_width, ignored_height)
-  setl wrap
+  if exists('b:golden_ratio_saved_wrap')
+    " restore previously saved state
+    let &l:wrap = b:golden_ratio_saved_wrap
+  endif
 
   " Height has an special condition:
   " When there is only one window, or just windows
@@ -84,8 +114,12 @@ function! s:resize_main_window(window,
 endfunction
 
 function! s:resize_to_golden_ratio()
-  if exists("b:golden_ration_resizing_ignored") &&
+  if exists("b:golden_ratio_resizing_ignored") &&
         \ b:golden_ratio_resizing_ignored
+    return
+  endif
+
+  if g:golden_ratio_exclude_nonmodifiable && !&modifiable
     return
   endif
 
@@ -100,16 +134,42 @@ function! s:resize_to_golden_ratio()
   call s:resize_main_window(winnr(), l:aw, l:ah, l:bw, l:bh)
 endfunction
 
+function! s:toggle_global_golden_ratio()
+  if s:gr_auto
+    let s:gr_auto = 0
+    au! GoldenRatioAug
+  else
+    let s:gr_auto = 1
+    call <SID>initiate_golden_ratio()
+    call <SID>resize_to_golden_ratio()
+  endif
+endfunction
+
+function! s:initiate_golden_ratio()
+  if s:gr_auto
+    aug GoldenRatioAug
+      au!
+      au WinEnter,BufEnter * call <SID>resize_to_golden_ratio()
+      au BufLeave * let b:golden_ratio_saved_wrap = &wrap
+    aug END
+  endif
+endfunction
+
 " Do plugin mappings
 
 nnoremap <Plug>(golden_ratio_resize) :<C-u>call <SID>resize_to_golden_ratio()<CR>
 inoremap <Plug>(golden_ratio_resize) <Esc>:call <SID>resize_to_golden_ratio()<CR>a
+nnoremap <Plug>(golden_ratio_toggle) :<C-u>call <SID>toggle_global_golden_ratio()<CR>
+inoremap <Plug>(golden_ratio_toggle) <Esc>:call <SID>toggle_global_golden_ratio()<CR>a
 
-if !exists("g:golden_ratio_autocommand") ||
-      \ (exists("g:golden_ratio_autocommand") &&
-      \  g:golden_ratio_autocommand)
+command! GoldenRatioResize call <SID>resize_to_golden_ratio()
+command! GoldenRatioToggle call <SID>toggle_global_golden_ratio()
 
-  au WinEnter,BufEnter * call <SID>resize_to_golden_ratio()
-endif
+cabbrev grresize GoldenRatioResize
+cabbrev grtoggle GoldenRatioToggle
+
+call <SID>initiate_golden_ratio()
 
 let &cpo = s:save_cpo
+
+" vim:et:ts=2:sw=2:sts=2

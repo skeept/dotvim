@@ -55,9 +55,9 @@ function! s:FileByOffset(num)
   while num
     let files = s:entries(fnamemodify(file,':h'))
     if a:num < 0
-      call reverse(sort(filter(files,'v:val < file')))
+      call reverse(sort(filter(files,'v:val <# file')))
     else
-      call sort(filter(files,'v:val > file'))
+      call sort(filter(files,'v:val ># file'))
     endif
     let temp = get(files,0,'')
     if temp == ''
@@ -86,8 +86,8 @@ function! s:fnameescape(file) abort
   endif
 endfunction
 
-nnoremap <silent> <Plug>unimpairedDirectoryNext     :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(v:count1))<CR><CR>
-nnoremap <silent> <Plug>unimpairedDirectoryPrevious :<C-U>edit <C-R>=<SID>fnameescape(<SID>FileByOffset(-v:count1))<CR><CR>
+nnoremap <silent> <Plug>unimpairedDirectoryNext     :<C-U>edit <C-R>=fnamemodify(<SID>fnameescape(<SID>FileByOffset(v:count1)), ':.')<CR><CR>
+nnoremap <silent> <Plug>unimpairedDirectoryPrevious :<C-U>edit <C-R>=fnamemodify(<SID>fnameescape(<SID>FileByOffset(-v:count1)), ':.')<CR><CR>
 nmap ]f <Plug>unimpairedDirectoryNext
 nmap [f <Plug>unimpairedDirectoryPrevious
 
@@ -262,7 +262,7 @@ function! s:putline(how, map) abort
   exe 'normal! "'.v:register.a:how
   call setreg(v:register, body, type)
   if type !=# 'V'
-    call repeat#set("\<Plug>unimpairedPut".a:map)
+    silent! call repeat#set("\<Plug>unimpairedPut".a:map)
   endif
 endfunction
 

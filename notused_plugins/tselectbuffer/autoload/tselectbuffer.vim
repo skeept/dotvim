@@ -3,8 +3,8 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2010-01-03.
-" @Last Change: 2010-09-23.
-" @Revision:    0.0.21
+" @Last Change: 2013-11-06.
+" @Revision:    0.0.24
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -64,7 +64,7 @@ function! s:GetBufNr(buffer)
     " TLogVAR bi
     let bx = s:selectbuffer_nr[bi]
     " TLogVAR bx
-    return 0 + bx
+    return str2nr(bx)
 endf
 
 function! s:RenameThisBuffer(buffer)
@@ -141,7 +141,7 @@ function! s:AgentDeleteBuffer(world, selected)
 endf
 
 function! s:GetBufferNames(selected) "{{{3
-    return map(copy(a:selected), 'bufname(s:GetBufNr(v:val))')
+    return map(copy(a:selected), 'fnamemodify(bufname(s:GetBufNr(v:val)), ":p")')
 endf
 
 function! s:AgentSplitBuffer(world, selected)
