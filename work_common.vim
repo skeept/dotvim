@@ -58,26 +58,17 @@ function! EchoOrPrintTime()
   if v:count != 0
     let g:echoOrPrintTimeSetting = v:count
   endif
-  python << EOF
-import time
-import vim
-currWord = float(vim.eval('expand("<cWORD>")'))
-vim.command('let g:echoOrPrintTimeSettingTime = "{}"'.format(
-  time.strftime("%a, %d %b %Y %H:%M", time.localtime(currWord))))
-EOF
+  let time_display = strftime("%a, %d %b %Y %H:%M", expand("<cWORD>"))
 
   if g:echoOrPrintTimeSetting != 1
     " try writting text after current word
-    let @u = " " . g:echoOrPrintTimeSettingTime
+    let @u = " " . time_display
     normal he"up
-    "put u
   endif
-  echo g:echoOrPrintTimeSettingTime
+  echo time_display
 endfunction
 let g:echoOrPrintTimeSetting = 2
 
-"nnoremap \e :<C-U>py import time; print time.strftime("%a, %d %b %Y %H:%M",
-      "\ time.localtime(<C-R><C-w>))<CR>
 nnoremap \e :<C-U>call EchoOrPrintTime()<CR>
 
 let work_lines=52
