@@ -160,8 +160,6 @@ nnoremap <C-L> :nohl<CR><C-L>
 noremap <Leader>v :view<CR>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
-"open scratch buffer
-noremap <Leader>os :Scratch<CR>
 
 nmap <TAB> <C-W>
 nmap <TAB><TAB> <C-W><C-W>
@@ -245,6 +243,16 @@ nnoremap ,cq :CaptureOutScratch<SPACE>
 nnoremap <Leader>cq :CaptureOutScratch<SPACE>
 nnoremap <Leader>rr :<C-U>call CaptureToRegisterU()<CR>
 nnoremap <Leader>rs :call RedirToScratch()<CR>
+"==============================================================================}}}
+
+"================== Scratch Edit =============================================={{{
+"open scratch buffer
+noremap <Leader>os :Scratch<CR>
+nnoremap ,ss :ScratchToggle<CR>
+command! -bar -nargs=* Sedit call jraf#ScratchEdit('edit', <q-args>)
+command! -bar -nargs=* OSsplit call jraf#ScratchEdit('split', <q-args>)
+command! -bar -nargs=* Svsplit call jraf#ScratchEdit('vsplit', <q-args>)
+command! -bar -nargs=* Stabedit call jraf#ScratchEdit('tabe', <q-args>)
 "==============================================================================}}}
 
 "================== Spelling =================================================={{{

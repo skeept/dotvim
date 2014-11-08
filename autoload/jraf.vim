@@ -211,7 +211,7 @@ endfunction
 "==============================================================================}}}
 
 "================== NeoSnippet ================================================{{{
-function jraf#LoadNeoSnipppet()
+function! jraf#LoadNeoSnipppet()
   inoremap <silent><expr> <NL>
         \ neosnippet#expand_or_jump_impl()
   snoremap <silent><expr> <NL>
@@ -303,7 +303,7 @@ endfunction "}}}
 "==============================================================================}}}
 
 "================== Latex ====================================================={{{
-function jraf#loadLatexSettings()
+function! jraf#loadLatexSettings()
   if exists("g:loaded_LatexSettings")
     return ''
   endif
@@ -591,6 +591,13 @@ function! jraf#loadLycosa()
 endfunction
 "==============================================================================}}}
 
+"================== Scratch Edit =============================================={{{
+function! jraf#ScratchEdit(cmd, options)
+	exe a:cmd tempname()
+	setl buftype=nofile bufhidden=wipe nobuflisted
+	if !empty(a:options) | exe 'setl' a:options | endif
+endfunction
+"==============================================================================}}}
 
 " vim: foldmethod=marker
 
