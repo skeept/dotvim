@@ -746,8 +746,7 @@ augroup END
 "==============================================================================}}}
 
 "================== scrollbind mappings ======================================={{{
-noremap ,sbt :windo set scrollbind<CR>
-noremap ,sbf :windo set noscrollbind<CR>
+noremap ,sb :windo setlocal scrollbind!<CR>
 "==============================================================================}}}
 
 "================== Fix shell=bash in windows ================================={{{
