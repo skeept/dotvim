@@ -157,7 +157,7 @@ nnoremap <C-L> :nohl<CR><C-L>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
 
-noremap <Leader>v :view<CR>
+noremap <Leader>v :<C-U>silent! view<CR>
 " for clearing search views
 noremap <Leader>ch :nohlsearch<CR>
 
