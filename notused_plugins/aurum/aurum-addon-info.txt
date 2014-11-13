@@ -83,7 +83,6 @@
         "python/aurum/repeatedcmd.py",
         "python/aurum/utils.py",
         "ruby/aurum-command-t-rubyinit.rb",
-        "ruby/command-t/aurum_controller.rb",
         "ruby/command-t/finder/aurum_finder.rb",
         "ruby/command-t/scanner/aurum_scanner.rb",
         "syntax/aurumannotate.vim",
