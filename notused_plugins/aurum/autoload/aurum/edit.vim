@@ -289,7 +289,7 @@ function s:F.runcmd(cdescr, amatch, args)
         return
     endif
     if !get(a:cdescr, 'modifiable', 0)
-        setlocal nomodifiable readonly
+        setlocal nomodifiable readonly noswapfile
         augroup AurumNoInsert
             autocmd! InsertEnter <buffer> : if !&modifiable
                         \                 |     call feedkeys("\e", 'n')
@@ -568,7 +568,11 @@ function s:F.run(vcommand, command, repo, ...)
             try
                 let savedei=&eventignore
                 set eventignore+=BufReadCmd
-                execute a:vcommand fnameescape(file)
+                let vcommand=a:vcommand
+                if exists(':noswapfile') && a:command isnot# 'edit'
+                    let vcommand='noswapfile '.vcommand
+                endif
+                execute vcommand fnameescape(file)
             finally
                 let &eventignore=savedei
             endtry

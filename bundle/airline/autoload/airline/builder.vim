@@ -4,8 +4,7 @@
 let s:prototype = {}
 
 function! s:prototype.split(...)
-  let self._side = 0
-  let self._line .= '%#'.self._curgroup.'#'.(a:0 ? a:1 : '%=')
+  call add(self._sections, ['|', a:0 ? a:1 : '%='])
 endfunction
 
 function! s:prototype.add_section_spaced(group, contents)
@@ -13,21 +12,68 @@ function! s:prototype.add_section_spaced(group, contents)
 endfunction
 
 function! s:prototype.add_section(group, contents)
-  if self._curgroup != ''
-    if self._curgroup == a:group
-      let self._line .= self._side ? self._context.left_alt_sep : self._context.right_alt_sep
+  call add(self._sections, [a:group, a:contents])
+endfunction
+
+function! s:prototype.add_raw(text)
+  call add(self._sections, ['', a:text])
+endfunction
+
+function! s:prototype.build()
+  let side = 1
+  let prev_group = ''
+  let line = ''
+  let i = 0
+  let length = len(self._sections)
+
+  while i < length
+    let section = self._sections[i]
+    let group = section[0]
+    let contents = section[1]
+
+    if group == ''
+      let line .= contents
+    elseif group == '|'
+      let side = 0
+      let line .= contents
+      let prev_group = ''
     else
-      call airline#highlighter#add_separator(self._curgroup, a:group, self._side)
-      let self._line .= '%#'.self._curgroup.'_to_'.a:group.'#'
-      let self._line .= self._side ? self._context.left_sep : self._context.right_sep
+      if i == 0
+        let line .= '%#'.group.'#'
+      endif
+
+      if prev_group != '' && group != ''
+        let line .= s:get_seperator(self, prev_group, group, side)
+      endif
+
+      let line .= s:get_accented_line(self, group, contents)
+      let prev_group = group
     endif
-  endif
 
-  if self._curgroup != a:group
-    let self._line .= '%#'.a:group.'#'
-  endif
+    let i = i + 1
+  endwhile
 
-  if self._context.active
+  if !self._context.active
+    let line = substitute(line, '%#.\{-}\ze#', '\0_inactive', 'g')
+  endif
+  return line
+endfunction
+
+function! s:get_seperator(self, prev_group, group, side)
+  let line = ''
+  if airline#highlighter#is_same_bg(a:prev_group, a:group)
+    let line .= a:side ? a:self._context.left_alt_sep : a:self._context.right_alt_sep
+  else
+    call airline#highlighter#add_separator(a:prev_group, a:group, a:side)
+    let line .= '%#'.a:prev_group.'_to_'.a:group.'#'
+    let line .= a:side ? a:self._context.left_sep : a:self._context.right_sep
+    let line .= '%#'.a:group.'#'
+  endif
+  return line
+endfunction
+
+function! s:get_accented_line(self, group, contents)
+  if a:self._context.active
     let contents = []
     let content_parts = split(a:contents, '__accent')
     for cpart in content_parts
@@ -40,28 +86,13 @@ function! s:prototype.add_section(group, contents)
     let line = substitute(a:contents, '%#__accent[^#]*#', '', 'g')
     let line = substitute(line, '%#__restore__#', '', 'g')
   endif
-
-  let self._line .= line
-  let self._curgroup = a:group
-endfunction
-
-function! s:prototype.add_raw(text)
-  let self._line .= a:text
-endfunction
-
-function! s:prototype.build()
-  if !self._context.active
-    let self._line = substitute(self._line, '%#.\{-}\ze#', '\0_inactive', 'g')
-  endif
-  return self._line
+  return line
 endfunction
 
 function! airline#builder#new(context)
   let builder = copy(s:prototype)
   let builder._context = a:context
-  let builder._side = 1
-  let builder._curgroup = ''
-  let builder._line = ''
+  let builder._sections = []
 
   call extend(builder._context, {
         \ 'left_sep': g:airline_left_sep,
