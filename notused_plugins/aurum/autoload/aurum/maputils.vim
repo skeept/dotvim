@@ -23,6 +23,12 @@ let s:plug=0
 let s:F.listplugs.commandt={}
 function s:F.listplugs.commandt.init()
     try
+        if exists(':CommandTLoad')
+            silent CommandTLoad
+        else
+            runtime! autoload/commandt.vim
+        endif
+        call s:_f.require('@/ruby', [0, 0], 1)
         execute 'rubyfile' fnameescape(s:_r.os.path.join(s:_frawor.runtimepath,
                     \'ruby', 'aurum-command-t-rubyinit.rb'))
         return 1
@@ -32,10 +38,7 @@ function s:F.listplugs.commandt.init()
 endfunction
 function s:F.listplugs.commandt.call(files, cbargs, pvargs)
     let [b:aurum_cbfun; b:aurum_cbargs]=a:cbargs
-    ruby $aurum_old_command_t = $command_t
-    ruby $command_t = $aurum_command_t
     ruby $command_t.show_aurum_finder
-    autocmd BufUnload <buffer> ruby $command_t = $aurum_old_command_t
 endfunction
 "▶2 ctrlp
 function s:CtrlpAccept(mode, str)
