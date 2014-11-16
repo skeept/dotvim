@@ -40,7 +40,7 @@ function! Tex_SetTeXCompilerTarget(type, target)
 		let s:target = target
 
 	else
-		let s:origdir = fnameescape(getcwd())
+		let l:origdir = fnameescape(getcwd())
 		exe 'cd '.fnameescape(expand('%:p:h'))
 		if !Tex_GetVarValue('Tex_UseMakefile') || (glob('makefile*') == '' && glob('Makefile*') == '')
 			if has('gui_running')
@@ -62,7 +62,7 @@ function! Tex_SetTeXCompilerTarget(type, target)
 			echomsg 'Assuming target is for makefile'
 			let s:target = target
 		endif
-		exe 'cd '.s:origdir
+		exe 'cd '.l:origdir
 	endif
 endfunction
 
@@ -97,7 +97,7 @@ function! Tex_CompileLatex()
 	" close any preview windows left open.
 	pclose!
 
-	let s:origdir = fnameescape(getcwd())
+	let l:origdir = fnameescape(getcwd())
 
 	" Find the main file corresponding to this file. Always cd to the
 	" directory containing the file to avoid problems with the directory
@@ -142,7 +142,7 @@ function! Tex_CompileLatex()
 	endif
 	redraw!
 
-	exe 'cd '.s:origdir
+	exe 'cd '.l:origdir
 endfunction " }}}
 " Tex_RunLaTeX: compilation function {{{
 " this function runs the latex command on the currently open file. often times
@@ -158,7 +158,7 @@ function! Tex_RunLaTeX()
 	call Tex_Debug('+Tex_RunLaTeX, b:fragmentFile = '.exists('b:fragmentFile'), 'comp')
 
 	let dir = expand("%:p:h").'/'
-	let s:origdir = fnameescape(getcwd())
+	let l:origdir = fnameescape(getcwd())
 	call Tex_CD(expand("%:p:h"))
 
 	let initTarget = s:target
@@ -209,7 +209,7 @@ function! Tex_RunLaTeX()
 	let s:origwinnum = winnr()
 	call Tex_SetupErrorWindow()
 
-	exe 'cd '.s:origdir
+	exe 'cd '.l:origdir
 	call Tex_Debug("-Tex_RunLaTeX", "comp")
 endfunction
 
@@ -224,7 +224,7 @@ function! Tex_ViewLaTeX()
 		return
 	end
 
-	let s:origdir = fnameescape(getcwd())
+	let l:origdir = fnameescape(getcwd())
 
 	" If b:fragmentFile is set, it means this file was compiled as a fragment
 	" using Tex_PartCompile, which means that we want to ignore any
@@ -306,9 +306,22 @@ function! Tex_ViewLaTeX()
 		redraw!
 	endif
 
-	exe 'cd '.s:origdir
+	exe 'cd '.l:origdir
 endfunction
 
+" }}}
+" Tex_Stringformat: Build strings from formatstrings. {{{
+" Descriptions: Build strings from format strings containing %s placeholders
+function! Tex_Stringformat(fmt, ...)
+	let l:items = split(a:fmt, "%s", 1)
+	let l:index = 0
+	let l:length = len(a:000)
+	while l:index < l:length
+		call insert(l:items, a:000[l:index], 2 * l:index + 1)
+		let l:index += 1
+	endwhile
+	return join(l:items, "")
+endfunction
 " }}}
 " Tex_ForwardSearchLaTeX: searches for current location in dvi file. {{{
 " Description: if the DVI viewer is compatible, then take the viewer to that
@@ -332,39 +345,42 @@ function! Tex_ForwardSearchLaTeX()
 	endif
 	let viewer = Tex_GetVarValue('Tex_ViewRule_'.s:target)
 
-	let s:origdir = fnameescape(getcwd())
+	let l:origdir = fnameescape(getcwd())
 
-	let mainfname = Tex_GetMainFileName(':t')
-	let mainfnameRoot = fnamemodify(Tex_GetMainFileName(), ':t:r')
-	let mainfnameFull = Tex_GetMainFileName(':p:r')
+	let mainfnameRoot = fnameescape(fnamemodify(Tex_GetMainFileName(), ':t:r'))
+	let mainfnameFull = fnameescape(Tex_GetMainFileName(':p:r'))
+	let target_file = mainfnameFull . "." . s:target
+	let sourcefile = fnameescape(expand('%'))
+	let sourcefileFull = fnameescape(expand('%:p'))
+	let linenr = line('.')
 	" cd to the location of the file to avoid problems with directory name
 	" containing spaces.
 	call Tex_CD(Tex_GetMainFileName(':p:h'))
 
 	" inverse search tips taken from Dimitri Antoniou's tip and Benji Fisher's
 	" tips on vim.sf.net (vim.sf.net tip #225)
+	let execString = 'silent! !'
 	if (has('win32') && (viewer =~? '^ *yap\( \|$\)'))
 
-		let execString = 'silent! !start '. viewer.' -s '.line('.').expand('%').' '.mainfnameRoot
-
+		let execString .= Tex_Stringformat('start %s -s %s%s %s', viewer, linenr, sourcefile, mainfnameRoot)
 
 	elseif (has('macunix') && (viewer =~ '^ *\(Skim\|PDFView\|TeXniscope\)\( \|$\)'))
 		" We're on a Mac using a traditional Mac viewer
 
 		if viewer =~ '^ *Skim'
 
-				let execString = 'silent! !/Applications/Skim.app/Contents/SharedSupport/displayline '.
-					\ line('.').' "'.mainfnameFull.'.'.s:target.'" "'.expand("%:p").'"'
+				let execString .= '/Applications/Skim.app/Contents/SharedSupport/displayline '
+				let execString .= join([curlLine, target_file, sourcefileFull])
 
 		elseif viewer =~ '^ *PDFView'
 
-				let execString = 'silent! !/Applications/PDFView.app/Contents/MacOS/gotoline.sh '.
-					\ line('.').' "'.mainfnameFull.'.'.s:target.'" "'.expand("%:p").'"'
+				let execString .= '/Applications/PDFView.app/Contents/MacOS/gotoline.sh '
+				let execString .= join([curlLine, target_file, sourcefileFull])
 
 		elseif viewer =~ '^ *TeXniscope'
 
-				let execString = 'silent! !/Applications/TeXniscope.app/Contents/Resources/forward-search.sh '.
-					\ line('.').' "'.expand("%:p").'" "'.mainfnameFull.'.'.s:target.'"'
+				let execString .= '/Applications/TeXniscope.app/Contents/Resources/forward-search.sh '
+				let execString .= join([curlLine, sourcefileFull, target_file])
 
 		endif
 
@@ -373,26 +389,25 @@ function! Tex_ForwardSearchLaTeX()
 
 		" Check for the special DVI viewers first
 		if viewer =~ '^ *\(xdvi\|xdvik\|kdvi\|okular\)\( \|$\)'
+			let execString .= viewer." "
 
 			if Tex_GetVarValue('Tex_UseEditorSettingInDVIViewer') == 1 &&
 						\ exists('v:servername') &&
 						\ viewer =~ '^ *xdvik\?\( \|$\)'
 
-				let execString = 'silent! !'.viewer.' -name xdvi -sourceposition "'.line('.').' '.expand("%").'"'.
-							\ ' -editor "gvim --servername '.v:servername.' --remote-silent +\%l \%f" '.
-							\ mainfnameRoot.'.dvi'
+				let execString .= Tex_Stringformat('-name xdvi -sourceposition "%s %s" -editor "gvim --servername %s --remote-silent +\%l \%f" %s', linenr, sourcefile, v:servername, target_file)
 
 			elseif viewer =~ '^ *kdvi'
 
-				let execString = 'silent! !'.viewer.' --unique file:'.mainfnameRoot.'.dvi\#src:'.line('.').expand("%")
+				let execString .= Tex_Stringformat('--unique file:%s\#src:%s%s', target_file, linenr, sourcefile)
 
 			elseif viewer =~ '^ *xdvik\?\( \|$\)'
 
-				let execString = 'silent! !'.viewer.' -name xdvi -sourceposition "'.line('.').' '.expand("%").'" '.mainfnameRoot.'.dvi'
+				let execString .= Tex_Stringformat('-name xdvi -sourceposition "%s %s" %s', linenr, sourcefile, target_file)
 
 			elseif viewer =~ '^ *okular'
 
-				let execString = 'silent! !'.viewer.' --unique '.mainfnameRoot.'.'.s:target.'\#src:'.line('.').expand("%:p")
+				let execString .= Tex_Stringformat('--unique %s\#src:%s%s', target_file, linenr, sourcefileFull)
 
 			endif
 
@@ -400,7 +415,7 @@ function! Tex_ForwardSearchLaTeX()
 			" We must be using a generic UNIX viewer
 			" syntax is: viewer TARGET_FILE LINE_NUMBER SOURCE_FILE
 
-			let execString = 'silent! !'.viewer.' "'.mainfnameRoot.'.'.s:target.'" '.line('.').' "'.expand('%').'"'
+			let execString .= join([target_file, linenr, sourcefile])
 
 		endif
 
@@ -418,7 +433,7 @@ function! Tex_ForwardSearchLaTeX()
 		redraw!
 	endif
 
-	exe 'cd '.s:origdir
+	exe 'cd '.l:origdir
 endfunction
 
 " }}}
@@ -504,7 +519,7 @@ endfunction " }}}
 function! Tex_CompileMultipleTimes()
 	" Just extract the root without any extension because we want to construct
 	" the log file names etc from it.
-	let s:origdir = fnameescape(getcwd())
+	let l:origdir = fnameescape(getcwd())
 	let mainFileName_root = Tex_GetMainFileName(':p:t:r')
 	call Tex_CD(Tex_GetMainFileName(':p:h'))
 
@@ -607,7 +622,7 @@ function! Tex_CompileMultipleTimes()
 	" emptied because of bibtex/makeindex being run as the last step.
 	exec 'silent! cfile '.mainFileName_root.'.log'
 
-	exe 'cd '.s:origdir
+	exe 'cd '.l:origdir
 endfunction " }}}
 " Tex_GetAuxFile: get the contents of the AUX file {{{
 " Description: get the contents of the AUX file recursively including any
