@@ -23,6 +23,7 @@ call signature#utils#Set('g:SignaturePrioritizeMarks',             1            
 call signature#utils#Set('g:SignatureIncludeMarks',                'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
 call signature#utils#Set('g:SignatureIncludeMarkers',              ')!@#$%^&*('                                          )
 call signature#utils#Set('g:SignatureMarkTextHL',                  '"Exception"'                                         )
+call signature#utils#Set('g:SignatureMarkLineHL',                  '""'                                         )
 call signature#utils#Set('g:SignatureMarkerTextHL',                '"WarningMsg"'                                        )
 call signature#utils#Set('g:SignatureWrapJumps',                   1                                                     )
 call signature#utils#Set('g:SignatureMarkOrder',                   "\p\m"                                                )
@@ -98,22 +99,18 @@ function! signature#Toggle()                                                    
     call signature#sign#Refresh()
 
     " Add signs for markers ...
-    for i in keys( b:sig_markers )
-      call signature#sign#Toggle( b:sig_markers[i], "place", i )
+    for i in keys(b:sig_markers)
+      call signature#sign#Place(b:sig_markers[i], i)
     endfor
   else
     " Signature disabled ==> Remove signs
-    for i in keys( b:sig_markers )
-      let l:id = i * 1000 + bufnr('%')
-      silent! execute 'sign unplace ' . l:id
+    for l:lnum in keys(b:sig_markers)
+      call signature#sign#Unplace(l:lnum)
     endfor
-    for i in keys( b:sig_marks )
-      let l:id = i * 1000 + bufnr('%')
-      silent! execute 'sign unplace ' . l:id
+    for l:lnum in keys(b:sig_marks)
+      call signature#sign#Unplace(l:lnum)
     endfor
     unlet b:sig_marks
-    " Also remove the dummy sign
-    call signature#sign#ToggleDummy('remove')
   endif
 endfunction
 
@@ -132,10 +129,5 @@ function! signature#Remove(lnum)                                                
     call signature#marker#Remove(lnum, l:char)
   elseif (l:char =~? '^[a-z]$')
     call signature#mark#Remove(l:char)
-  endif
-
-  " If there are no marks and markers left, also remove the dummy sign
-  if (len(b:sig_marks) + len(b:sig_markers) == 0)
-    call signature#sign#ToggleDummy('remove')
   endif
 endfunction
