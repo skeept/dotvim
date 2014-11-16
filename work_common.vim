@@ -26,19 +26,31 @@ endfunction
 
 nnoremap ,z1 :<C-U>call SetFoldingPatternNumCharsFront()<CR>
 
+function! JumpToNextNonMatchingSetLength()
+  if v:count != 0
+    let g:jumpToNextNonMatchingNTimes = v:count
+    echom "Setting numbers of matching chars to " . v:count
+  endif
+endfunction
+nnoremap ,sj :<C-U>call JumpToNextNonMatchingSetLength()<CR>
+
 function! JumpToNextNonMatching(direction)
+  if !exists("g:jumpToNextNonMatchingNTimes")
+    let g:jumpToNextNonMatchingNTimes = 2
+  endif
   let flags = ''
   if a:direction < 0
     let flags = flags . 'b'
   endif
   let ntimes = max([v:count, 1])
-  let i = 1
-  while i <= ntimes
-    let i = i + 1
+  for icnt in range(ntimes)
     let curr_line = getline('.')
-    let spattern = '^[^' . curr_line[0] . '][^' . curr_line[1] . ']'
+    let spattern = '^'
+    for icol in range(g:jumpToNextNonMatchingNTimes)
+      let spattern .= '[^' . curr_line[icol] . ']'
+    endfor
     call search(spattern, flags)
-  endwhile
+  endfor
   nohlsearch
   if a:direction == 2
     mark >
