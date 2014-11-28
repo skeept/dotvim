@@ -46,9 +46,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
           \ || context.path !=# unite.last_path
 
     if empty(unite.args)
-      if a:input == ''
-        let sources = []
-      elseif a:input !~ '^.\{-}\%(\\\@<!\s\)\+'
+      if a:input !~ '^.\{-}\%(\\\@<!\s\)\+'
         " Use interactive source.
         let sources = unite#init#_loaded_sources(['interactive'], context)
       else
@@ -56,23 +54,41 @@ function! unite#candidates#_recache(input, is_force) "{{{
         let args = unite#helper#parse_options_args(
               \ matchstr(a:input, '^.\{-}\%(\\\@<!\s\)\+'))[0]
         try
+          " Ignore source name
+          let context.input = matchstr(context.input,
+                \ '^.\{-}\%(\\\@<!\s\)\+\zs.*')
+
           let sources = unite#init#_loaded_sources(args, context)
         catch
           let sources = []
+        finally
+          let context.input = a:input
         endtry
       endif
 
       if get(unite.sources, 0, {'name' : ''}).name
-            \ !=# get(sources, 0, {'name' : ''}).name
+            \   !=# get(sources, 0, {'name' : ''}).name
         " Finalize previous sources.
         call unite#helper#call_hook(unite.sources, 'on_close')
 
         let unite.sources = sources
         let unite.source_names = unite#helper#get_source_names(sources)
 
-        " Initialize.
-        call unite#helper#call_hook(sources, 'on_init')
-        call unite#view#_set_syntax()
+        let prev_winnr = winnr()
+        try
+          execute bufwinnr(unite.prev_bufnr).'wincmd w'
+
+          " Initialize.
+          call unite#helper#call_hook(sources, 'on_init')
+        finally
+          if winnr() != prev_winnr
+            execute prev_winnr . 'wincmd w'
+          endif
+        endtry
+
+        if &filetype ==# 'unite'
+          call unite#view#_set_syntax()
+        endif
       endif
     endif
 

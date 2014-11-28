@@ -20,11 +20,12 @@ function! s:s(name, value, ...) "{{{
 		let s:options[bufnr] = {}
 	endif
 	if scope == 's'
-		let name = 'options.' . bufnr . '.' . a:name
+		let name = 's:options.' . bufnr . '.' . a:name
 	else
-		let name = 'delimitMate_' . a:name
+		let name = scope . ':delimitMate_' . a:name
 	endif
-	exec 'let ' . scope . ':' . name . ' = a:value'
+	exec 'silent! unlet! ' . name
+	exec 'let ' . name . ' = a:value'
 endfunction "}}}
 
 function! s:g(name, ...) "{{{
@@ -185,6 +186,10 @@ function! delimitMate#IsSpaceExpansion() " {{{
 endfunction " }}} IsSpaceExpansion()
 
 function! delimitMate#WithinEmptyPair() "{{{
+	" if cursor is at column 1 return 0
+	if col('.') == 1
+		return 0
+	endif
 	" get char before the cursor.
 	let char1 = delimitMate#GetCharFromCursor(-1)
 	" get char under the cursor.
@@ -293,19 +298,18 @@ function! delimitMate#BalancedParens(char) "{{{
 endfunction "}}}
 
 function! delimitMate#IsSmartQuote(char) "{{{
-	if !s:g('smart_quotes')
+	" TODO: Allow using a:char in the pattern.
+	let tmp = s:g('smart_quotes')
+	if empty(tmp)
 		return 0
 	endif
-	let char_at = delimitMate#GetCharFromCursor(0)
-	let char_before = delimitMate#GetCharFromCursor(-1)
-	let valid_char_re = '\w\|[^[:punct:][:space:]]'
-	let word_before = char_before =~ valid_char_re
-	let word_at = char_at  =~ valid_char_re
-	let escaped = delimitMate#CursorIdx() >= 1
-				\ && delimitMate#GetCharFromCursor(-1) == '\'
+	let regex = matchstr(tmp, '^!\?\zs.*')
+	" Flip matched value if regex starts with !
+	let mod = tmp =~ '^!' ? [1, 0] : [0, 1]
+	let matched = search(regex, 'ncb', line('.')) > 0
 	let noescaped = substitute(getline('.'), '\\.', '', 'g')
 	let odd =  (count(split(noescaped, '\zs'), a:char) % 2)
-	let result = word_before || escaped || word_at || odd
+	let result = mod[matched] || odd
 	return result
 endfunction "delimitMate#SmartQuote }}}
 
@@ -391,7 +395,7 @@ function! delimitMate#QuoteDelim(char) "{{{
 		" Seems like a smart quote, insert a single char.
 		return a:char
 	elseif (char_before == a:char && char_at != a:char)
-				\ && s:g('smart_quotes')
+				\ && !empty(s:g('smart_quotes'))
 		" Seems like we have an unbalanced quote, insert one quotation
 		" mark and jump to the middle.
 		return a:char . "\<Left>"
@@ -484,10 +488,21 @@ function! delimitMate#ExpandReturn() "{{{
 				\ && (delimitMate#WithinEmptyMatchpair()
 				\     || expand_right_matchpair
 				\     || expand_inside_quotes)
+		let val = "\<Esc>a\<CR>"
+		if &smartindent && !&cindent && !&indentexpr
+					\ && delimitMate#GetCharFromCursor(0) == '}'
+			" indentation is controlled by 'smartindent', and the first character on
+			" the new line is '}'. If this were typed manually it would reindent to
+			" match the current line. Let's reproduce that behavior.
+			let shifts = indent('.') / &sw
+			let spaces = indent('.') - (shifts * &sw)
+			let val .= "^\<C-D>".repeat("\<C-T>", shifts).repeat(' ', spaces)
+		endif
 		" Expand:
 		" XXX zv prevents breaking expansion with syntax folding enabled by
 		" InsertLeave.
-		return "\<Esc>a\<CR>\<Esc>zvO"
+		let val .= "\<Esc>zvO"
+		return val
 	else
 		return "\<CR>"
 	endif
@@ -534,13 +549,30 @@ endfunction " }}} delimitMate#BS()
 function! delimitMate#TestMappings() "{{{
 	echom 1
 	%d
-	let options = sort(keys(delimitMate#OptionsList()))
+	let options = sort([
+				\ 'apostrophes',
+				\ 'autoclose',
+				\ 'balance_matchpairs',
+				\ 'jump_expansion',
+				\ 'eol_marker',
+				\ 'excluded_ft',
+				\ 'excluded_regions',
+				\ 'expand_cr',
+				\ 'expand_space',
+				\ 'matchpairs',
+				\ 'nesting_quotes',
+				\ 'quotes',
+				\ 'smart_matchpairs',
+				\ 'smart_quotes',
+				\ 'expand_inside_quotes',
+				\])
 	let optoutput = ['delimitMate Report', '==================', '',
 				\ '* Options: ( ) default, (g) global, (b) buffer','']
 	for option in options
 		let scope = s:exists(option, 'b') ? 'b'
 					\ : s:exists(option, 'g') ? 'g' : ' '
-		call add(optoutput, '(' . scope . ')' . ' delimitMate_' . option . ' = ' . string(s:g(option)))
+		call add(optoutput,
+					\'(' . scope . ')' . ' delimitMate_' . option . ' = ' . string(s:g(option)))
 	endfor
 	call append(line('$'), optoutput + ['--------------------',''])
 
@@ -656,25 +688,6 @@ function! delimitMate#TestMappings() "{{{
 	setlocal nowrap
 	call feedkeys("\<Esc>\<Esc>", 'n')
 endfunction "}}}
-
-function! delimitMate#OptionsList() "{{{
-	return {
-				\ 'apostrophes'        : '',
-				\ 'autoclose'          : 1,
-				\ 'balance_matchpairs' : 0,
-				\ 'jump_expansion'     : 0,
-				\ 'eol_marker'         : '',
-				\ 'excluded_ft'        : '',
-				\ 'excluded_regions'   : 'Comment',
-				\ 'expand_cr'          : 0,
-				\ 'expand_space'       : 0,
-				\ 'matchpairs'         : &matchpairs,
-				\ 'nesting_quotes'     : [],
-				\ 'quotes'             : '" '' `',
-				\ 'smart_matchpairs'   : '\w',
-				\ 'smart_quotes'       : 1,
-				\}
-endfunction " delimitMate#OptionsList }}}
 "}}}
 
 " vim:foldmethod=marker:foldcolumn=4:ts=2:sw=2
