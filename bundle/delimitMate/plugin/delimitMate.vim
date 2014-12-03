@@ -108,7 +108,8 @@ function! s:init() "{{{
 	call s:option_init("smart_matchpairs", '^\%(\w\|\!\|£\|\$\|_\|["'']\s*\S\)')
 	" smart_quotes
 	" XXX: backward compatibility. Ugly, should go the way of the dodo soon.
-	let default_smart_quotes = '\%(\w\|[^[:punct:][:space:]]\|\%(\\\\\)*\\\)\%#\|\%#\%(\w\|[^[:space:][:punct:]]\)'
+	let quotes = escape(join(s:g('quotes_list'), ''), '\-^[]')
+	let default_smart_quotes = '\%(\w\|[^[:punct:][:space:]' . quotes . ']\|\%(\\\\\)*\\\)\%#\|\%#\%(\w\|[^[:space:][:punct:]' . quotes . ']\)'
 	if exists('g:delimitMate_smart_quotes') && type(g:delimitMate_smart_quotes) == type(0)
 		if g:delimitMate_smart_quotes
 			unlet g:delimitMate_smart_quotes
@@ -182,10 +183,10 @@ endfunction "}}} Map()
 
 function! s:Unmap() " {{{
 	let imaps =
-				\ s:g('right_delims') +
-				\ s:g('left_delims') +
-				\ s:g('quotes_list') +
-				\ s:g('apostrophes_list') +
+				\ s:g('right_delims', []) +
+				\ s:g('left_delims', []) +
+				\ s:g('quotes_list', []) +
+				\ s:g('apostrophes_list', []) +
 				\ ['<BS>', '<C-h>', '<S-BS>', '<Del>', '<CR>', '<Space>', '<S-Tab>', '<Esc>'] +
 				\ ['<Up>', '<Down>', '<Left>', '<Right>', '<LeftMouse>', '<RightMouse>'] +
 				\ ['<C-Left>', '<C-Right>'] +
