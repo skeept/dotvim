@@ -9,7 +9,7 @@ Set-StrictMode -version 1
 $vim_version = "vim74"
 
 $computername = Get-Content Env:computername
-If($computername -match "ISENGARD|MIDDLE-EARTH|Gondor|H8460305022398" -OR
+If($computername -match "ISENGARD|MIDDLE-EARTH|Gondor|H8460305022398|H9470305476189" -OR
     $computername -match "Erebor"
     ) {
     $install = "C:\Program Files\Vim\$vim_version"
