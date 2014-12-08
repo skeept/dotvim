@@ -28,9 +28,9 @@
 
 /* for poll() */
 #if defined __APPLE__
-#include "fakepoll.h"
+# include "fakepoll.h"
 #else
-#include <poll.h>
+# include <poll.h>
 #endif
 
 /* for forkpty() / login_tty() */
@@ -40,9 +40,7 @@
 #elif defined __APPLE__ || defined __NetBSD__ || defined __OpenBSD__
 # include <util.h>
 #elif defined __sun__ || defined __ANDROID__
-# include <termios.h>
-int openpty(int *, int *, char *, struct termios *, struct winsize *);
-int forkpty(int *, char *, struct termios *, struct winsize *);
+# include "ptytty.h"
 #else
 # include <termios.h>
 # include <libutil.h>
@@ -64,20 +62,25 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 #include <sys/types.h>
 #include <sys/wait.h>
 #if defined __NetBSD__
-#define WIFCONTINUED(x) (_WSTATUS(x) == _WSTOPPED && WSTOPSIG(x) == 0x13)
+# define WIFCONTINUED(x) (_WSTATUS(x) == _WSTOPPED && WSTOPSIG(x) == 0x13)
 #elif defined __ANDROID__
-#define WIFCONTINUED(x) (WIFSTOPPED(x) && WSTOPSIG(x) == 0x13)
+# define WIFCONTINUED(x) (WIFSTOPPED(x) && WSTOPSIG(x) == 0x13)
 #endif
 
 /* for socket */
 #if defined __FreeBSD__
-#define __BSD_VISIBLE 1
-#include <arpa/inet.h>
+# define __BSD_VISIBLE 1
+# include <arpa/inet.h>
 #endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+/* for ctermid */
+#if defined __ANDROID__
+# define ctermid(x) "/dev/tty"
+#endif
 
 #include "vimstack.c"
 
@@ -992,8 +995,8 @@ vp_decode(char *args)
 
         hb = CHR2XD[(int)*(p++)];
         lb = CHR2XD[(int)*(p++)];
-        if (hb >= 0 && lb >= 0) {
-            *(q++) = (char)((hb << 4) | lb);
+        if (hb != (char)-1 && lb != (char)-1) {
+            *(q++) = (hb << 4) | lb;
         }
     }
     *(q++) = VP_EOV;
