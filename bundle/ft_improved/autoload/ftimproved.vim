@@ -91,17 +91,10 @@ fun! <sid>ColonPattern(cmd, pat, off, f, fwd) "{{{1
 	elseif a:cmd == 'F'
 		let cmd = '?'
 	endif
-	if a:fwd
-		let s:colon[';'] = cmd[-1:]. pat. 
-			\ (empty(a:off) ? cmd[-1:] : a:off)
-		let s:colon[','] = cmd[:-2]. opp. pat.
-			\ (empty(a:off) ? opp : opp_off . a:off[1])
-	else
-		let s:colon[','] = cmd[-1:]. pat. 
-			\ (empty(a:off) ? cmd[-1:] : a:off)
-		let s:colon[';'] = cmd[:-2]. opp. pat.
-			\ (empty(a:off) ? opp : opp_off . a:off[1])
-	endif
+	let s:colon[';'] = cmd[-1:]. pat. 
+		\ (empty(a:off) ? cmd[-1:] : a:off)
+	let s:colon[','] = cmd[:-2]. opp. pat.
+		\ (empty(a:off) ? opp : opp_off . a:off[1])
 	let s:colon['cmd'] = a:f
 endfun
 
@@ -174,14 +167,6 @@ fun! <sid>CheckSearchWrap(pat, fwd, cnt) "{{{1
 endfun
 
 
-fun! <sid>Unmap(lhs) "{{{1
-	"if hasmapto('ftimproved#FTCommand', 'nov')
-	if !empty(maparg(a:lhs, 'nov'))
-		exe "nunmap" a:lhs
-		exe "xunmap" a:lhs
-		exe "ounmap" a:lhs
-	endif
-endfun
 
 fun! <sid>CountMatchesWin(pat, forward) "{{{1
 	" Return number of matches of pattern window start and cursor (backwards)
@@ -231,6 +216,15 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	endif
 	let res = ''
 	let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
+
+	if get(g:, 'ft_improved_consistent_comma', 0)
+		let fcmd = (a:f ? ',' : ';')
+		if (a:f && res[0] !=? '/')
+			let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
+		elseif (!a:f && res[0] !=? '?')
+			let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
+		endif
+	endif
 	let oldsearchpat = @/
 	if a:mode =~ 'o' &&
 		\ s:colon['cmd'] " last search was 'f' command

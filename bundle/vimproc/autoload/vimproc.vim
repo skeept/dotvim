@@ -1068,7 +1068,7 @@ function! s:convert_args(args) "{{{
   endif
 
   let args = map(copy(a:args), 'vimproc#util#iconv(
-	\ v:val, &encoding, vimproc#util#systemencoding())')
+        \ v:val, &encoding, vimproc#util#systemencoding())')
 
   if vimproc#util#is_windows() && !executable(a:args[0])
     " Search from internal commands.
@@ -1086,7 +1086,7 @@ function! s:convert_args(args) "{{{
   let command_name = vimproc#get_command_name(a:args[0])
 
   return map(vimproc#analyze_shebang(command_name), 'vimproc#util#iconv(
-	\ v:val, &encoding, vimproc#util#systemencoding())') + args[1:]
+        \ v:val, &encoding, vimproc#util#systemencoding())') + args[1:]
 endfunction"}}}
 
 function! vimproc#analyze_shebang(filename) "{{{
@@ -1294,21 +1294,35 @@ function! s:quote_arg(arg)
 endfunction
 
 function! s:vp_pipe_open(npipe, hstdin, hstdout, hstderr, argv) "{{{
-  if vimproc#util#is_windows()
-    let cmdline = s:quote_arg(substitute(a:argv[0], '/', '\', 'g'))
-    for arg in a:argv[1:]
-      let cmdline .= ' ' . s:quote_arg(arg)
-    endfor
-    let [pid; fdlist] = s:libcall('vp_pipe_open',
-          \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, cmdline])
-  else
-    let [pid; fdlist] = s:libcall('vp_pipe_open',
-          \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, len(a:argv)] + a:argv)
-  endif
+  try
+    if vimproc#util#is_windows()
+      let cmdline = s:quote_arg(substitute(a:argv[0], '/', '\', 'g'))
+      for arg in a:argv[1:]
+        let cmdline .= ' ' . s:quote_arg(arg)
+      endfor
+      let [pid; fdlist] = s:libcall('vp_pipe_open',
+            \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, cmdline])
+    else
+      let [pid; fdlist] = s:libcall('vp_pipe_open',
+            \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, len(a:argv)] + a:argv)
+    endif
+  catch
+    call s:print_error(v:throwpoint)
+    call s:print_error(v:exception)
+    call s:print_error(
+          \ 'vimproc: Error occurred in calling s:vp_pipe_open()')
+    call s:print_error(printf(
+          \ 'a:argv = %s', string(a:argv)))
+    call s:print_error(printf(
+          \ 'original a:argv = %s', vimproc#util#iconv(
+          \   string(a:argv), vimproc#util#systemencoding(), &encoding)))
+  endtry
 
   if a:npipe != len(fdlist)
-    call s:print_error(printf('a:npipe = %d, a:argv = %s', a:npipe, string(a:argv)))
-    call s:print_error(printf('pid = %d, fdlist = %s', pid, string(fdlist)))
+    call s:print_error(printf(
+          \ 'a:npipe = %d, a:argv = %s', a:npipe, string(a:argv)))
+    call s:print_error(printf(
+          \ 'pid = %d, fdlist = %s', pid, string(fdlist)))
     echoerr 'Bug behavior is detected!: ' . pid
   endif
 

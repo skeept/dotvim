@@ -226,7 +226,8 @@ The priority will then be rails -> ruby -> programming -> all.
 You can define the keys used to trigger UltiSnips actions by setting global
 variables. Variables define the keys used to expand a snippet, jump forward
 and jump backwards within a snippet, and list all available snippets in the
-current expand context. The variables with their default values are: >
+current expand context. Be advised, that some terminal emulators don't send
+<c-tab> to the running program. The variables with their default values are: >
    g:UltiSnipsExpandTrigger               <tab>
    g:UltiSnipsListSnippets                <c-tab>
    g:UltiSnipsJumpForwardTrigger          <c-j>
@@ -262,9 +263,9 @@ to the same value then the function you are actually going to use is
 UltiSnips#ExpandSnippetOrJump.
 
 Each time any of the functions UltiSnips#ExpandSnippet,
-UltiSnips#ExpandSnippet, UltiSnips#JumpBackwards or UltiSnips#JumpBackwards is
-called a global variable is set that contains the return value of the
-corresponding function.
+UltiSnips#ExpandSnippetOrJump, UltiSnips#JumpForwards or
+UltiSnips#JumpBackwards is called a global variable is set that contains the
+return value of the corresponding function.
 
 The corresponding variables and functions are:
 UltiSnips#ExpandSnippet       --> g:ulti_expand_res (0: fail, 1: success)
@@ -930,7 +931,7 @@ directly inside your snippets. For example to use
 
    global !p
    from my_snippet_helpers import *
-   endglobals
+   endglobal
 
 
 4.4 Tabstops and Placeholders   *UltiSnips-tabstops* *UltiSnips-placeholders*
