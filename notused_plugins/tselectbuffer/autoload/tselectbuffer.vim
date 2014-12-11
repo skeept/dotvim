@@ -1,10 +1,7 @@
-" tselectbuffer.vim
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Created:     2010-01-03.
-" @Last Change: 2013-11-06.
-" @Revision:    0.0.24
+" @Revision:    35
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -15,6 +12,7 @@ function! s:SNR()
     return matchstr(expand('<sfile>'), '<SNR>\d\+_\zeSNR$')
 endf
 
+
 " For possible values please see the documentation of 
 " |tlib#buffer#GetList()|'s order argument.
 TLet g:tselectbuffer#order = 'bufnr'
@@ -23,6 +21,7 @@ TLet g:tselectbuffer#order = 'bufnr'
 " start typing a name and there is only one item left matching that name 
 " it is automatically picked and you don't have to type <cr>.
 TLet g:tselectbuffer#autopick = 1
+
 
 if !exists('g:tselectbuffer#handlers')
     let g:tselectbuffer#handlers = [
@@ -58,6 +57,7 @@ function! s:PrepareSelectBuffer()
     return s:selectbuffer_list
 endf
 
+
 function! s:GetBufNr(buffer)
     " TLogVAR a:buffer
     let bi = index(s:selectbuffer_list, a:buffer)
@@ -66,6 +66,7 @@ function! s:GetBufNr(buffer)
     " TLogVAR bx
     return str2nr(bx)
 endf
+
 
 function! s:RenameThisBuffer(buffer)
     let bx = s:GetBufNr(a:buffer)
@@ -88,6 +89,7 @@ function! s:RenameThisBuffer(buffer)
     return 0
 endf
 
+
 function! s:AgentRenameBuffer(world, selected)
     call a:world.CloseScratch()
     for buffer in a:selected
@@ -98,6 +100,7 @@ function! s:AgentRenameBuffer(world, selected)
     " let a:world.index_table = s:selectbuffer_nr
     return a:world
 endf
+
 
 function! s:DeleteThisBuffer(buffer)
     let bx = s:GetBufNr(a:buffer)
@@ -125,6 +128,7 @@ function! s:DeleteThisBuffer(buffer)
     return 1
 endf
 
+
 function! s:AgentDeleteBuffer(world, selected)
     call a:world.CloseScratch(0)
     let s:delete_this_buffer_default = ''
@@ -140,25 +144,31 @@ function! s:AgentDeleteBuffer(world, selected)
     return a:world
 endf
 
+
 function! s:GetBufferNames(selected) "{{{3
     return map(copy(a:selected), 'fnamemodify(bufname(s:GetBufNr(v:val)), ":p")')
 endf
+
 
 function! s:AgentSplitBuffer(world, selected)
     return tlib#agent#EditFileInSplit(a:world, s:GetBufferNames(a:selected))
 endf
 
+
 function! s:AgentVSplitBuffer(world, selected)
     return tlib#agent#EditFileInVSplit(a:world, s:GetBufferNames(a:selected))
 endf
+
 
 function! s:AgentOpenBuffer(world, selected)
     return tlib#agent#ViewFile(a:world, s:GetBufferNames(a:selected))
 endf
 
+
 function! s:AgentTabBuffer(world, selected)
     return tlib#agent#EditFileInTab(a:world, s:GetBufferNames(a:selected))
 endf
+
 
 function! s:AgentJumpBuffer(world, selected) "{{{3
     let bn = s:GetBufNr(a:selected[0])
@@ -181,12 +191,17 @@ function! s:AgentJumpBuffer(world, selected) "{{{3
     return a:world
 endf
 
+
 function! s:SwitchToBuffer(world, buffer, ...)
-    TVarArg ['cmd', 'buffer']
-    let bi = s:GetBufNr(a:buffer)
+    TVarArg ['cmd', 'drop'], ['use_bufnr', 0]
+    if use_bufnr
+        let bi = s:GetBufNr(a:buffer)
+    else
+        let bi = fnameescape(a:buffer)
+    endif
     " TLogVAR a:buffer
     " TLogVAR bi
-    if bi > 0
+    if !empty(bi)
         let back = a:world.SwitchWindow('win')
         " TLogDBG cmd .' '. bi
         exec cmd .' '. bi
@@ -196,10 +211,16 @@ endf
 
 
 function! s:Callback(world, selected) "{{{3
-    let cmd = len(a:selected) > 1 ? 'sbuffer' : 'buffer'
+    if len(a:selected) > 1
+        let cmd = 'sbuffer'
+        let use_bufnr = 1
+    else
+        let cmd = 'drop'
+        let use_bufnr = 0
+    endf
     for b in a:selected
         " TLogVAR b
-        call s:SwitchToBuffer(a:world, b, cmd)
+        call s:SwitchToBuffer(a:world, b, cmd, use_bufnr)
     endfor
 endf
 
