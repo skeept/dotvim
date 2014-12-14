@@ -1,7 +1,7 @@
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    37
+" @Revision:    41
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -194,17 +194,19 @@ endf
 
 function! s:SwitchToBuffer(world, buffer, ...)
     TVarArg ['cmd', 'drop'], ['use_bufnr', 0]
-    if use_bufnr
-        let bi = s:GetBufNr(a:buffer)
-    else
-        let bi = fnameescape(a:buffer)
-    endif
+    let bi = s:GetBufNr(a:buffer)
     " TLogVAR a:buffer
     " TLogVAR bi
     if !empty(bi)
         let back = a:world.SwitchWindow('win')
         " TLogDBG cmd .' '. bi
-        exec cmd .' '. bi
+        if use_bufnr
+            exec cmd bi
+        else
+            let bn = bufname(bi)
+            " TLogVAR bn
+            exec cmd bn
+        endif
         " exec back
     endif
 endf
