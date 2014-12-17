@@ -52,7 +52,6 @@ function! s:source_line.hooks.on_init(args, context) "{{{
   let a:context.source__linemax = line('$')
   let a:context.source__is_bang =
         \ (get(a:args, 0, '') ==# '!')
-  let a:context.source__syntax = &l:syntax
 
   let options = filter(copy(a:args), "v:val != '!'")
   let direction = get(options, 0, '')
@@ -72,6 +71,10 @@ function! s:source_line.hooks.on_init(args, context) "{{{
         \ (direction ==# 'args') ?
         \    filter(map(argv(), "bufnr(v:val)"), 'v:val > 0') :
         \ [bufnr('%')]
+  if len(a:context.source__bufnrs) == 1
+    let a:context.source__syntax =
+          \ getbufvar(a:context.source__bufnrs[0], '&l:syntax')
+  endif
 
   let a:context.source__input = a:context.input
   if a:context.source__linemax > 10000 && a:context.source__input == ''
@@ -102,10 +105,20 @@ function! s:source_line.hooks.on_syntax(args, context) "{{{
   let highlight = get(a:context, 'custom_line_enable_highlight',
         \ g:unite_source_line_enable_highlight)
 
-  syntax match uniteSource__Line_LineNr
-        \ '\(^- *+\? *\)\@<=\<\d\+\>'
-        \ contained containedin=uniteSource__Line
-  highlight default link uniteSource__Line_LineNr LineNr
+  syntax region uniteSource__LineLine
+        \ start=' ' end='$'
+        \ containedin=uniteSource__Line
+  if len(a:context.source__bufnrs) > 1
+    syntax match uniteSource__LineFile /^[^:]*:/ contained
+          \ containedin=uniteSource__LineLine
+          \ nextgroup=uniteSource__LineSeparator
+    highlight default link uniteSource__LineFile Comment
+  endif
+  syntax match uniteSource__LineLineNR /\d\+:/ contained
+        \ containedin=uniteSource__LineLine
+  syntax match uniteSource__LineSeparator /:/ contained conceal
+        \ containedin=uniteSource__LineFile,uniteSource__LineLineNR
+  highlight default link uniteSource__LineLineNR LineNR
 
   if !highlight || len(a:context.source__bufnrs) > 1
     return
@@ -120,7 +133,7 @@ function! s:source_line.hooks.on_syntax(args, context) "{{{
     syntax region uniteSource__Line_LineSyntax
           \ start='' end='$'
           \ contains=@LineSyntax
-          \ containedin=uniteSource__Line contained
+          \ containedin=uniteSource__LineLine contained
   finally
     let b:current_syntax = save_current_syntax
   endtry
@@ -130,6 +143,9 @@ function! s:source_line.hooks.on_post_filter(args, context) "{{{
   for candidate in a:context.candidates
     let candidate.is_multiline = 1
     let candidate.action__col_pattern = a:context.source__input
+    let candidate.action__buffer_nr = candidate.source__info[0]
+    let candidate.action__line = candidate.source__info[1][0]
+    let candidate.action__text = candidate.source__info[1][1]
   endfor
 endfunction"}}}
 
@@ -152,7 +168,23 @@ function! s:source_line.complete(args, context, arglead, cmdline, cursorpos) "{{
 endfunction"}}}
 
 function! s:source_line.source__converter(candidates, context) "{{{
-  return s:converter(a:candidates, a:context)
+  if len(a:context.source__bufnrs) > 1
+    for candidate in a:candidates
+      let candidate.abbr = printf(a:context.source__format,
+            \  unite#util#substitute_path_separator(
+            \     fnamemodify(bufname(candidate.source__info[0]), ':.')),
+            \ candidate.source__info[1][0],
+            \ candidate.source__info[1][1])
+    endfor
+  else
+    for candidate in a:candidates
+      let candidate.abbr = printf(a:context.source__format,
+            \ candidate.source__info[1][0],
+            \ candidate.source__info[1][1])
+    endfor
+  endif
+
+  return a:candidates
 endfunction"}}}
 
 let s:source_line.converters = [s:source_line.source__converter]
@@ -162,12 +194,11 @@ let s:source_line.converters = [s:source_line.source__converter]
 function! s:on_gather_candidates(direction, context, start, max) "{{{
   let candidates = []
   for bufnr in a:context.source__bufnrs
+    " source__info = [bufnr, [line, text]]
     let candidates += map(s:get_lines(a:context, a:direction,
           \ bufnr, a:start, a:max), "{
           \ 'word' : v:val[1],
-          \ 'action__buffer_nr' : bufnr,
-          \ 'action__line' : v:val[0],
-          \ 'action__text' : v:val[1],
+          \ 'source__info' : [bufnr, v:val],
           \ }")
   endfor
 
@@ -197,23 +228,6 @@ function! s:get_lines(context, direction, bufnr, start, max) "{{{
   return _
 endfunction"}}}
 
-function! s:converter(candidates, context) "{{{
-  if len(a:context.source__bufnrs) > 1
-    for candidate in a:candidates
-      let candidate.abbr = printf(a:context.source__format,
-            \  unite#util#substitute_path_separator(
-            \     fnamemodify(bufname(candidate.action__buffer_nr), ':.')),
-            \ candidate.action__line, candidate.action__text)
-    endfor
-  else
-    for candidate in a:candidates
-      let candidate.abbr = printf(a:context.source__format,
-            \ candidate.action__line, candidate.action__text)
-    endfor
-  endif
-
-  return a:candidates
-endfunction"}}}
 function! s:get_context_lines(context, direction, start) "{{{
   if a:direction !=# 'forward' && a:direction !=# 'backward'
     let lines = s:on_gather_candidates('forward', a:context, 1, 0)
