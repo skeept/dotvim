@@ -83,5 +83,13 @@ let g:echoOrPrintTimeSetting = 2
 
 nnoremap \e :<C-U>call EchoOrPrintTime()<CR>
 
+if has("autocmd")
+  augroup log_files
+    autocmd!
+    autocmd! BufRead *.log
+          \ setlocal nowrap
+  augroup END
+endif
+
 let work_lines=52
 let work_columns=126
