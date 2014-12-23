@@ -29,11 +29,11 @@ elseif exists('b:current_syntax')
   finish
 endif
 
-syntax match exrenameModified '^.*$'
+syntax match uniteExrenameModified '^.*$'
 
-highlight def link exrenameModified Todo
-highlight def link exrenameOriginal Normal
+highlight def link uniteExrenameModified Todo
+highlight def link uniteExrenameOriginal Normal
 
-let b:current_syntax = 'exrename'
+let b:current_syntax = 'unite_exrename'
 
 " vim: foldmethod=marker
