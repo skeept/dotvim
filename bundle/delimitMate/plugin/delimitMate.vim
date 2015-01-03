@@ -65,8 +65,6 @@ function! s:init() "{{{
 	call s:option_init("excluded_regions_list", split(s:g('excluded_regions'), ',\s*'))
 	let enabled = len(s:g('excluded_regions_list')) > 0
 	call s:option_init("excluded_regions_enabled", enabled)
-	" excluded filetypes
-	call s:option_init("excluded_ft", "")
 	" expand_space
 	if exists("b:delimitMate_expand_space") && type(b:delimitMate_expand_space) == type("")
 		echom "b:delimitMate_expand_space is '".b:delimitMate_expand_space."' but it must be either 1 or 0!"
@@ -105,7 +103,7 @@ function! s:init() "{{{
 	" jump_expansion
 	call s:option_init("jump_expansion", 0)
 	" smart_matchpairs
-	call s:option_init("smart_matchpairs", '^\%(\w\|\!\|£\|\$\|_\|["'']\s*\S\)')
+	call s:option_init("smart_matchpairs", '^\%(\w\|\!\|£\|\$\|_\)')
 	" smart_quotes
 	" XXX: backward compatibility. Ugly, should go the way of the dodo soon.
 	let quotes = escape(join(s:g('quotes_list'), ''), '\-^[]')
@@ -164,6 +162,7 @@ function! s:Map() "{{{
 		let save_cpo = &cpo
 		set keymap=
 		set cpo&vim
+		silent! doautocmd <nomodeline> User delimitMate_map
 		if s:g('autoclose')
 			call s:AutoClose()
 		else
@@ -193,13 +192,14 @@ function! s:Unmap() " {{{
 				\ ['<Home>', '<End>', '<PageUp>', '<PageDown>', '<S-Down>', '<S-Up>', '<C-G>g']
 
 	for map in imaps
-		if maparg(map, "i") =~? 'delimitMate'
+		if maparg(map, "i") =~# '^<Plug>delimitMate'
 			if map == '|'
 				let map = '<Bar>'
 			endif
 			exec 'silent! iunmap <buffer> ' . map
 		endif
 	endfor
+	silent! doautocmd <nomodeline> User delimitMate_unmap
 	let b:delimitMate_enabled = 0
 endfunction " }}} s:Unmap()
 
