@@ -27,9 +27,17 @@ EOF
 "▶1 VimEnter
 function s:F.define_local_themes()
 python <<EOF
-buffer_type_hl = [u"aurum_buffer_type", u"line_current_symbol"]
-filler_segment = {u"type": u"string", u"width": u"auto", u"highlight_group": [u"background"], "draw_divider": False, "draw_soft_divider": False, "draw_hard_divider": False}
-powerline.add_local_theme("aurum.powerline.is_commit", {
+aurum_buffer_type_hl = [u"aurum_buffer_type", u"line_current_symbol"]
+aurum_filler_segment = {u"type": u"string", u"width": u"auto", u"highlight_groups": [u"background"], "draw_divider": False, "draw_soft_divider": False, "draw_hard_divider": False}
+def aurum_add_local_theme(name, theme):
+    for k in ("left", "right"):
+        for seg in theme["segments"][k]:
+            try:
+                seg.update(highlight_group=seg["highlight_groups"])
+            except KeyError:
+                pass
+    powerline.add_local_theme(name, theme)
+aurum_add_local_theme("aurum.powerline.is_commit", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
@@ -40,14 +48,14 @@ powerline.add_local_theme("aurum.powerline.is_commit", {
             {
                 u"type": u"string",
                 u"contents": u"Commit",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 20,
             },
             {
                 u"function": u"branch",
                 u"priority": 35,
             },
-            filler_segment
+            aurum_filler_segment
         ],
         u"right": [
             {
@@ -57,14 +65,14 @@ powerline.add_local_theme("aurum.powerline.is_commit", {
         ],
     }
 })
-powerline.add_local_theme("aurum.powerline.is_annotate", {
+aurum_add_local_theme("aurum.powerline.is_annotate", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
             {
                 u"type": u"string",
                 u"contents": u"Ann",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 30,
             },
             {
@@ -76,14 +84,14 @@ powerline.add_local_theme("aurum.powerline.is_annotate", {
         ],
     }
 })
-powerline.add_local_theme("aurum.powerline.is_status", {
+aurum_add_local_theme("aurum.powerline.is_status", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
             {
                 u"type": u"string",
                 u"contents": u"Status",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 30,
             },
             {
@@ -95,14 +103,14 @@ powerline.add_local_theme("aurum.powerline.is_status", {
         ],
     }
 })
-powerline.add_local_theme("aurum.powerline.is_log", {
+aurum_add_local_theme("aurum.powerline.is_log", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
             {
                 u"type": u"string",
                 u"contents": u"Log",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 30,
             },
             {
@@ -113,7 +121,7 @@ powerline.add_local_theme("aurum.powerline.is_log", {
                 u"function": u"log_options",
                 u"priority": 40,
             },
-            filler_segment
+            aurum_filler_segment
         ],
         u"right": [
             {
@@ -129,14 +137,14 @@ powerline.add_local_theme("aurum.powerline.is_log", {
         ],
     }
 })
-powerline.add_local_theme("aurum.powerline.is_file", {
+aurum_add_local_theme("aurum.powerline.is_file", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
             {
                 u"type": u"string",
                 u"contents": u"File",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 30,
             },
             {
@@ -151,7 +159,7 @@ powerline.add_local_theme("aurum.powerline.is_file", {
                 u"function": u"file_name",
                 u"priority": 45,
             },
-            filler_segment
+            aurum_filler_segment
         ],
         u"right": [
             {
@@ -167,14 +175,14 @@ powerline.add_local_theme("aurum.powerline.is_file", {
         ],
     }
 })
-powerline.add_local_theme("aurum.powerline.is_diff", {
+aurum_add_local_theme("aurum.powerline.is_diff", {
     u"default_module": u"aurum.powerline",
     u"segments": {
         u"left": [
             {
                 u"type": u"string",
                 u"contents": u"Diff",
-                u"highlight_group": buffer_type_hl,
+                u"highlight_groups": aurum_buffer_type_hl,
                 u"priority": 30,
             },
             {
@@ -185,7 +193,7 @@ powerline.add_local_theme("aurum.powerline.is_diff", {
                 u"function": u"diff_files",
                 u"priority": 40,
             },
-            filler_segment
+            aurum_filler_segment
         ],
         u"right": [
             {
