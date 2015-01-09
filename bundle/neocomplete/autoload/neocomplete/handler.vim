@@ -174,7 +174,9 @@ function! neocomplete#handler#_on_text_changed() "{{{
   let cur_text = matchstr(getline('.'), '^.*\%'.col('.').'c')
   " indent line matched by indentkeys
   for word in filter(map(split(&l:indentkeys, ','),
-        \ "matchstr(v:val, '.*=\\zs.*')"), "v:val != ''")
+        \ "v:val =~ '^<.*>$' ? matchstr(v:val, '^<\\zs.*\\ze>$')
+        \                  : matchstr(v:val, '.*=\\zs.*')"),
+        \ "v:val != ''")
     if stridx(cur_text, word, len(cur_text)-len(word)-1) >= 0
       call neocomplete#helper#indent_current_line()
       break
