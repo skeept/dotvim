@@ -61,7 +61,8 @@ endfunction " }}}2
 
 " Recursively remove a directory
 function! syntastic#util#rmrf(what) " {{{2
-    if a:what == '.'
+    " try to make sure we don't delete directories we didn't create
+    if a:what !~? 'vim-syntastic-'
         return
     endif
 
@@ -376,6 +377,10 @@ function! s:_rmrf(what) " {{{2
     endif
 
     if getftype(a:what) ==# 'dir'
+        if filewritable(a:what) != 2
+            return
+        endif
+
         for f in split(globpath(a:what, '*', 1), "\n")
             call s:_rmrf(f)
         endfor
