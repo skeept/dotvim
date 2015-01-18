@@ -360,9 +360,10 @@ let g:quickrun#default_config = {
 \ 'markdown/markdown_py': {
 \   'command': 'markdown_py',
 \ },
-\ 'nimrod': {
-\   'cmdopt': 'compile --run',
+\ 'nim': {
+\   'cmdopt': 'compile --run --verbosity:0',
 \   'hook/sweep/files': '%S:p:r',
+\   'tempfile': '%{substitute(tempname(), ''/\(\d\+\)$'', ''nim\1'', '''')}.nim'
 \ },
 \ 'ocaml': {},
 \ 'perl': {
