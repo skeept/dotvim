@@ -586,8 +586,10 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
+  let unite = unite#get_current_unite()
+
   let quick_match_table = s:get_quick_match_table()
-  call unite#view#_quick_match_redraw(quick_match_table)
+  call unite#view#_quick_match_redraw(quick_match_table, 1)
 
   if mode() !~# '^c'
     echo 'Input quick match key: '
@@ -601,11 +603,8 @@ function! unite#mappings#_quick_match(is_choose) "{{{
   redraw
   echo ''
 
-  call unite#view#_redraw_candidates()
-
   stopinsert
-
-  let unite = unite#get_current_unite()
+  call unite#view#_quick_match_redraw(quick_match_table, 0)
 
   if !has_key(quick_match_table, char)
         \ || quick_match_table[char] >= len(unite.current_candidates)
@@ -776,14 +775,13 @@ function! s:get_quick_match_table() "{{{
   let unite = unite#get_current_unite()
   let offset = unite.context.prompt_direction ==# 'below' ?
         \ (unite.prompt_linenr == 0 ?
-        \  line('$') - line('.') + 1 :
-        \  unite.prompt_linenr - line('.')) :
-        \ (line('.') - unite.prompt_linenr - 1)
+        \  line('$') - line('.') :
+        \  unite.prompt_linenr - line('.') - 1) :
+        \ line('.')
   if line('.') == unite.prompt_linenr
-    let offset = unite.context.prompt_direction
-          \ ==# 'below' ? 1 : 0
-  endif
-  if unite.context.prompt_direction ==# 'below'
+    let offset = (unite.context.prompt_direction ==# 'below' ?
+          \  0 : 2)
+  elseif unite.context.prompt_direction ==# 'below'
     let offset = offset * -1
   endif
 
