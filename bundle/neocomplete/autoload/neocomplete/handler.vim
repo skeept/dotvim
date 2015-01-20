@@ -204,9 +204,17 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
       return
     endif
 
-    if neocomplete#helper#is_omni(cur_text)
-          \ && neocomplete.old_cur_text !=# cur_text
-      call s:complete_key("\<Plug>(neocomplete_start_omni_complete)")
+    let complete_pos = neocomplete#helper#get_force_omni_complete_pos(cur_text)
+    if complete_pos >= 0
+      if neocomplete.skip_next_complete
+            \ && complete_pos == neocomplete.old_complete_pos
+            \ && stridx(cur_text, neocomplete.old_cur_text) == 0
+        " Same position.
+      else
+        let neocomplete.old_complete_pos = complete_pos
+        call s:complete_key("\<Plug>(neocomplete_start_omni_complete)")
+      endif
+
       return
     endif
 
@@ -362,6 +370,7 @@ endfunction"}}}
 function! s:complete_key(key) "{{{
   set completeopt-=longest
   call neocomplete#helper#complete_configure()
+
   call feedkeys(a:key)
 endfunction"}}}
 
