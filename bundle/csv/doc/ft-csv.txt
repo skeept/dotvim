@@ -219,12 +219,20 @@ if the '!' has not been given.
 
 If [range] is not given, it defaults to the current line.
 
-By default, the columns will be righ-aligned. If you want them to be
-left-aligned, set the buffer variable b:csv_arrange_leftalign = 1 for that
-particular buffer, e.g. >
+By default, the columns will be righ-aligned. If you want a different
+alignment you need to specify this through the b:csv_arrange_align variable.
+This is a string of flags ('r': right align, 'l': left align, 'c': center
+alignment, '.': decimal alignment) where each flag defines the alignment for
+a particular column (starting from left). Missing columns will be right aligned.
+So this: >
 
-    :let b:csv_arrange_leftalign = 1
+    :let b:csv_arrange_align = 'lc.'
 <
+Will left-align the first column, center align the second column, decimal
+align the third column and all following columns right align. (Note: decimal
+aligning might slow down Vim and additionally, if the value is no decimal
+number it will be right aligned).
+
 Note, arranging the columns can be very slow on large files or many columns (see
 |csv-slow| on how to increase performance for this command). To prevent you
 from accidently changing your csv file, the buffer will be set 'readonly'
@@ -308,7 +316,16 @@ If you want a vertical header line, use `:VHeader` or `:CSVVHeader`. This works
 similar to the |Header_CSV| command, except that it will open a vertical split
 window with the first column always visible. It will always open the first
 column in the new split window. Use the '!' to close the window. If you
-specify a count, that many columns will be visible (default: the first).
+specify a count, that many columns will be visible (default: the first). Add
+the bang to the count, if you only want the specific column to be visible.
+>
+    :VHeader 2
+<
+This will open a vertical split window containing the first 2 columns, while
+>
+    :VHeader 2!
+<
+Opens a new vertical split window containing only the 2 second column.
 
 Note, this won't work with linebreaks in the column.
 Note also: this command does not work for fixed width columns |csv-fixedwidth|
@@ -999,6 +1016,16 @@ own syntax highlighting like this in your |.vimrc| >
     hi CSVColumnHeaderEven ...
     hi CSVColumnHeaderOdd ...
 
+Alternatively, you can simply link those highlighting groups to some other
+ones, you really like: >
+
+    hi link CSVColumnOdd MoreMsg
+    hi link CSVColumnEven Question
+<
+If you do not want column highlighting, set the variable
+g:csv_no_column_highlight to 1 >
+
+    :let g:csv_no_column_highlight = 1
 <
 Note, these changes won't take effect, until you restart Vim.
 
@@ -1415,7 +1442,16 @@ Index;Value1;Value2~
 ==============================================================================
 7. CSV Changelog					       *csv-changelog*
 
-0.31 Jan 15, 2015 "{{{1
+0.32 (unreleased) {{{1
+- Remove old Vim 7.3 workarounds (plugin needs now a Vim version 7.4)
+- allow to align columns differently (right/left or center align) for
+  |ArrangeColumn_CSV| (suggested by Giorgio Robino, thanks!)
+- document better how to adjust syntax highlighting (suggested by Giorgio
+  Robino, thanks!)
+- Allow the |:CSVHeader| command to only display a specific column (suggested
+  by Giorgio Robino, thanks!)
+
+0.31 Jan 15, 2015 {{{1
 - fix that H on the very first cell, results in an endless loop
   (https://github.com/chrisbra/csv.vim/issues/31, reported by lahvak, thanks!)
 - fix that count for |AddColumn| did not work (according to the documentation)
