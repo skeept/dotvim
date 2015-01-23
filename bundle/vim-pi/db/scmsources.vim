@@ -72,8 +72,8 @@ let scmnr.214 = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/vim-lib
 let scmnr.229 = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/SiR/trunk'}
 let scmnr.336 = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/cpp/trunk'}
 " The following plugins do not have a separate repository:
-let scmnr.83  = {'url': 'http://lh-vim.googlecode.com/svn/misc/trunk/plugin/let-modeline.vim', 'archive_name': 'let-modeline.vim', 'type': 'archive', 'script-type': 'utility'}
 let scmnr.727 = {'type': 'git', 'url': 'git://github.com/LucHermitte/local_vimrc'}
+let scmnr.83  = {'url': 'http://lh-vim.googlecode.com/svn/misc/trunk/plugin/let-modeline.vim', 'archive_name': 'let-modeline.vim', 'type': 'archive', 'script-type': 'utility'}
 " let scm['lh-vim-lib']          = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/vim-lib/trunk'}
 let scm['build-tools-wrapper'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/BTW/trunk'}
 let scm['lh-tags'] = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/tags/trunk'}
@@ -145,9 +145,6 @@ let scmnr.2736 = {'type': 'git', 'url': 'git://github.com/scrooloose/syntastic'}
 " Rene de Zwart
 let scmnr.1397 = {'type': 'git', 'url': 'git://github.com/othree/xml.vim'}
 
-" Dayle Rees
-let scm['color-schemes'] = {'type': 'git', 'url': 'git://github.com/daylerees/colour-schemes', 'addon-info': {'runtimepath': 'vim'}}
-
 " Tim Pope
 let scmnr.1433 = {'type': 'git', 'url': 'git://github.com/tpope/vim-haml'}
 let scmnr.2332 = {'type': 'git', 'url': 'git://github.com/tpope/vim-pathogen'}
@@ -156,7 +153,6 @@ let scm['vim-rvm'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-rvm'}
 let scm['markdown@tpope'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-markdown'}
 let scm['vim-fireplace'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-fireplace'}
 let scm['vim-classpath'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-classpath'}
-let scm['projectionist'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-projectionist'}
 let scm['vinegar'] = {'type': 'git', 'url': 'git://github.com/tpope/vim-vinegar'}
 " " The below plugin is present on vim.org, but does not belong to Tim Pope
 " let scmnr.1626 = {'type': 'git', 'url': 'git://github.com/tpope/vim-liquid'}
@@ -197,9 +193,6 @@ let scm['toptions'] = {'type': 'git', 'url': 'git://github.com/tomtom/toptions_v
 let scm['worksheet'] = {'type': 'git', 'url': 'git://github.com/tomtom/worksheet_vim'}
 let scm['prototype'] = {'type': 'git', 'url': 'git://github.com/tomtom/prototype_vim'}
 
-" Tomoharu Saito
-let scm['w3m'] = {'type': 'git', 'url': 'git://github.com/yuratomo/w3m.vim'}
-
 " Yukihiro Nakadaira
 let scmnr.1939 = {'type': 'svn', 'url': 'http://vim-soko.googlecode.com/svn/trunk/autofmt'}
 let scmnr.2193 = {'type': 'svn', 'url': 'http://vim-soko.googlecode.com/svn/trunk/fpdf-vim'}
@@ -218,6 +211,7 @@ let scm['vim-guess'] = {'type': 'git', 'url': 'git://github.com/ynkdir/vim-guess
 let scmnr.1963 = {'type': 'git', 'url': 'git://github.com/MarcWeber/theonevimlib'}
 let scmnr.2376 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-sql'}
 let scmnr.2540 = {'type': 'git', 'url': 'git://github.com/garbas/vim-snipmate'}
+let scmnr.2905 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-manager'}
 let scmnr.2933 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-fcsh'}
 let scmnr.2934 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-actions'}
 let scmnr.3018 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-completion'}
@@ -257,7 +251,6 @@ let scm['SmartTag'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/SmartTa
 let scm['vim-addon-text-objects'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-text-objects'}
 let scm['vim-haxe-syntax'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-haxe-syntax'}
 let scm['vim-addon-qf-layout'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-qf-layout'}
-let scmnr.2905 = {'type': 'git', 'url': 'git://github.com/MarcWeber/vim-addon-manager'}
 " There was key {'branch': 'master-vim-cleaned-up'}, but it is not processed
 " anywhere thus removed
 let scm['ensime'] = {'type': 'git', 'url': 'git://github.com/MarcWeber/ensime'}
@@ -392,14 +385,6 @@ let scm['syslib'] = {'type': 'git', 'url': 'git://github.com/tyru/syslib.vim'}
 let scm['undoclosewin'] = {'type': 'git', 'url': 'git://github.com/tyru/undoclosewin.vim'}
 let scm['cmdwincomplete'] = {'type': 'git', 'url': 'git://github.com/tyru/cmdwincomplete.vim', 'addon-info': {'dependencies': {'%2620': {}}}}
 let scm['wim'] = {'type': 'git', 'url': 'git://github.com/tyru/wim', 'addon-info': {'dependencies': {'wwwrenderer-vim': {}, 'openbuf': {}}}}
-
-" noc7c9
-" https://github.com/noc7c9/vim-iced-coffee-script says "You will also need to install a vanilla coffeescript vim plugin, such as this one."
-" Thus if this default dependency hurts someone we'll remove it again
-let scm['vim-iced-coffee-script'] = {'type': 'git', 'url': 'git://github.com/noc7c9/vim-iced-coffee-script', 'addon-info': {'dependencies': {'vim-coffee-script': {}}}}
-
-" chikatoike
-let scm['sourcemap.vim'] = {'type': 'git', 'url': 'git://github.com/chikatoike/sourcemap.vim'}
 
 " Joe Stelmach
 let scmnr.2578 = {'type': 'git', 'url': 'git://github.com/joestelmach/lint.vim'}
@@ -1136,6 +1121,20 @@ let scmnr.51   = {'url': 'http://cscope.sourceforge.net/cscope_maps.vim', 'archi
 
 "-----------------------------------------------------------------------------------------------------------------------
 
+" noc7c9
+" https://github.com/noc7c9/vim-iced-coffee-script says "You will also need to install a vanilla coffeescript vim plugin, such as this one."
+" Thus if this default dependency hurts someone we'll remove it again
+let scm['vim-iced-coffee-script'] = {'type': 'git', 'url': 'git://github.com/noc7c9/vim-iced-coffee-script', 'addon-info': {'dependencies': {'vim-coffee-script': {}}}}
+
+" chikatoike
+let scm['sourcemap'] = {'type': 'git', 'url': 'git://github.com/chikatoike/sourcemap.vim'}
+
+" Tomoharu Saito
+let scm['w3m'] = {'type': 'git', 'url': 'git://github.com/yuratomo/w3m.vim'}
+
+" Dayle Rees
+let scm['color-schemes'] = {'type': 'git', 'url': 'git://github.com/daylerees/colour-schemes', 'addon-info': {'runtimepath': 'vim'}}
+
 " Devin Weaver (sukima)
 let scm['LSLvim'] = {'type': 'git', 'url': 'git://github.com/sukima/LSLvim'}
 
@@ -1295,9 +1294,11 @@ let scm['viceroy'] = {'type': 'git', 'url': 'git://github.com/csexton/viceroy'}
 " David Barnett
 let scm['maktaba'] = {'type': 'git', 'url': 'git://github.com/google/vim-maktaba'}
 let scm['glaive'] = {'type': 'git', 'url': 'git://github.com/google/vim-glaive'}
+let scm['ft-vroom'] = {'type': 'git', 'url': 'git://github.com/google/vim-ft-vroom'}
 
 " Charles Hogg
 let scm['vtd'] = {'type': 'git', 'url': 'git://github.com/chiphogg/vim-vtd'}
+let scm['syncopate'] = {'type': 'git', 'url': 'git://github.com/google/vim-syncopate'}
 
 " Tom McDonald
 let scm['vim-exchange'] = {'type': 'git', 'url': 'git://github.com/tommcdo/vim-exchange' }

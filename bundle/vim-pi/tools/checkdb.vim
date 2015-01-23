@@ -24,6 +24,7 @@ function CheckVal(s, mes, curauthor)
     endtry
 endfunction
 "▲1
+call feedkeys("\n\n\n\n\n")
 let types = ['SCM unhooked source',
             \'SCM hooked source',
             \'archive source',
@@ -129,10 +130,11 @@ try
             let curauthor.vo=1
         elseif line[:6] is# 'let scm'
             let match=matchlist(line, '^let scm\v\[\''([a-zA-Z0-9_\-]+)(\@[a-zA-Z0-9_\-]+|\#[a-zA-Z0-9_\-]+%(\%\d+)?)?\''\]\s+\=\s+(.*)$')
-            let name=match[1].match[2]
             if empty(match)
                 throw lnr.':Invalid scm line: '.line
-            elseif has_key(www_vim_org, name)
+            endif
+            let name=match[1].match[2]
+            if has_key(www_vim_org, name)
                 throw lnr.':Key '.name.' already present in www_vim_org dictionary'
             endif
             if has_key(def.name, name)
@@ -479,7 +481,7 @@ try
     endfor
     "▲1
 catch
-    call writefile([v:exception], 'exception.fail', 'b')
+    call writefile([v:exception, v:throwpoint], 'exception.fail', 'b')
     let exception=1
 endtry
 "▶1 Check whether vam_known_repositories#Pool works
@@ -491,11 +493,11 @@ try
         qall!
     endif
 catch
-    call writefile([v:exception], 'exception.fail', 'b')
+    call writefile([v:exception, v:throwpoint], 'exception.fail', 'b')
 endtry
 "▲1
 redir! > messages.fail
-messages
+silent messages
 redir END
 cquit
 " vim: tw=0 ts=4 sts=4 sw=4 et fmr=▶,▲
