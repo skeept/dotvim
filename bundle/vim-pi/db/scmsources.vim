@@ -1295,6 +1295,7 @@ let scm['viceroy'] = {'type': 'git', 'url': 'git://github.com/csexton/viceroy'}
 let scm['maktaba'] = {'type': 'git', 'url': 'git://github.com/google/vim-maktaba'}
 let scm['glaive'] = {'type': 'git', 'url': 'git://github.com/google/vim-glaive'}
 let scm['ft-vroom'] = {'type': 'git', 'url': 'git://github.com/google/vim-ft-vroom'}
+let scm['codefmt'] = {'type': 'git', 'url': 'git://github.com/google/vim-codefmt'}
 
 " Charles Hogg
 let scm['vtd'] = {'type': 'git', 'url': 'git://github.com/chiphogg/vim-vtd'}
