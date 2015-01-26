@@ -379,6 +379,21 @@ function! LatexBox_TOC(...)
 
 	" Check if window already exists
 	let winnr = bufwinnr(bufnr('LaTeX TOC'))
+	" Two types of splits, horizontal and vertical
+	let l:hori = "new"
+	let l:vert = "vnew"
+
+	" Set General Vars and initialize size
+	let l:type = g:LatexBox_split_type
+	let l:size = 10
+
+	" Size detection
+	if l:type == l:hori
+	  let l:size = g:LatexBox_split_length
+	elseif l:type == l:vert
+	  let l:size = g:LatexBox_split_width
+	endif
+
 	if winnr >= 0
 		if a:0 == 0
 			silent execute winnr . 'wincmd w'
@@ -386,13 +401,12 @@ function! LatexBox_TOC(...)
 			" Supplying an argument to this function causes toggling instead
 			" of jumping to the TOC window
 			if g:LatexBox_split_resize
-				silent exe "set columns-=" . g:LatexBox_split_width
+				silent exe "set columns-=" . l:size
 			endif
 			silent execute 'bwipeout' . bufnr('LaTeX TOC')
 		endif
 		return
 	endif
-
 	" Read TOC
 	let [toc, fileindices] = s:ReadTOC(LatexBox_GetAuxFile(),
 									 \ LatexBox_GetMainTexFile())
@@ -403,9 +417,10 @@ function! LatexBox_TOC(...)
 
 	" Create TOC window and set local settings
 	if g:LatexBox_split_resize
-		silent exe "set columns+=" . g:LatexBox_split_width
+		silent exe "set columns+=" . l:size
 	endif
-	silent exe g:LatexBox_split_side g:LatexBox_split_width . 'vnew LaTeX\ TOC'
+	silent exe g:LatexBox_split_side l:size . l:type . ' LaTeX\ TOC'
+
 	let b:toc = toc
 	let b:toc_numbers = 1
 	let b:calling_win = bufwinnr(calling_buf)

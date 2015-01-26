@@ -135,6 +135,10 @@
     "type": "git",
     "url": "https://bitbucket.org/fboender/bexec"
   },
+  "1861": {
+    "type": "git",
+    "url": "git://github.com/mh21/errormarker.vim"
+  },
   "1863": {
     "type": "git",
     "url": "git://github.com/tomtom/tlib_vim"
@@ -4198,6 +4202,10 @@
   "5090": {
     "type": "git",
     "url": "git://github.com/dietsche/vim-lastplace"
+  },
+  "5093": {
+    "type": "git",
+    "url": "git://github.com/ap/vim-readdir"
   },
   "521": {
     "type": "git",
