@@ -1,10 +1,10 @@
 # LaTeX-BoX
-![LaTeX-BoX](https://raw.github.com/LaTeX-Box-Team/LaTeX-Box/master/doc/LaTeX-BoX.png)
+![LaTeX-BoX](https://raw.github.com/LaTeX-Box-Team/LaTeX-Box/master/.assets/LaTeX-BoX.png)
 
 ## This plugin provides:
 - Background compilation using latexmk.
 - Completion for commands, environments, labels, bibtex entries, and inline maths.
-- A simple table of contents.
+- A simple table of contents improving the navigation of large files. 
 - Smart indentation.
 - Highlight matching \begin/\end and \left\right pairs.
 - Motion between \begin/\end and \left\right pairs with the % key.
@@ -57,9 +57,32 @@ Copy the directories to your `.vim/` folder.
 Users working with (g)vim on Windows must have a Perl environment installed.
 Such an environment can be downloaded at : http://strawberryperl.com/
 
+### Installation Notes
+
+Make sure `filetype plugin on` is set in host `.vimrc`, else LaTeX-Box
+will not load.
+
+Note that there are configurable global variables that can be put in the
+`.vimrc`. These are documented, but as an example, one can have the 
+table of contents open as a horizontal split by utilizing this:
+
+    ~/.vimrc
+    ...
+    if s:extfname ==? "tex"
+      ...
+      let g:LatexBox_split_type="new"
+      ...
+    endif
+
 ## Mirror information
 
 This is mirrored on 
 
 - http://www.vim.org/scripts/script.php?script_id=3109
 - https://launchpad.net/~vim-latex-box
+
+## Example Table of Contents
+
+![LaTeX-BoX TOC](https://raw.github.com/LaTeX-Box-Team/LaTeX-Box/master/.assets/LaTeX-BoX-TOC-demo.png)
+
+

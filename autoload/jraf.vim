@@ -333,6 +333,8 @@ function! jraf#loadLatexSettings()
     let g:SumatraPdfLoc = expand("$HOME" .
           \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
     let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
+    " setting for summatra pdf
+    " "C:\Program Files\Vim\vim74\gvim.exe" -c ":RemoteOpen +%l %f"
   else
     let g:Tex_ViewRule_pdf = 'okular'
   endif

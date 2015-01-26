@@ -1,4 +1,5 @@
 {
+"readdir":{"archive_name":"readdir.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22826","version":"067ed489","vim_script_nr":5093},
 "screensaver":{"archive_name":"screensaver.vim-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22819","version":"0.1","vim_script_nr":5092},
 "perline-diff":{"archive_name":"perline-diff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22804","version":"1.0","vim_script_nr":5091},
 "vim-lastplace":{"archive_name":"vim-lastplace.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22821","version":"2.0.0","vim_script_nr":5090},
@@ -3143,7 +3144,7 @@
 "tmru":{"archive_name":"tmru.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22183","version":"1.03","vim_script_nr":1864},
 "tlib":{"archive_name":"tlib.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22592","version":"1.13","vim_script_nr":1863},
 "kpl":{"archive_name":"kpl.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6994","version":"1.0","vim_script_nr":1862},
-"errormarker":{"archive_name":"errormarker.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14142","version":"0.1.13","vim_script_nr":1861},
+"errormarker":{"archive_name":"errormarker-0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22825","version":"0.2","vim_script_nr":1861},
 "Directory-specific_settings":{"archive_name":"dirsettings.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6980","version":"1.0","vim_script_nr":1860},
 "eZVim":{"archive_name":"ezvim-0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9834","version":"0.2","vim_script_nr":1859},
 "mako%1858":{"archive_name":"mako.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9244","version":"0.6.1","vim_script_nr":1858},
