@@ -349,7 +349,7 @@ function! s:ReadTOC(auxfile, texfile, ...)
 		if len(tree) > 3 && empty(tree[1])
 			call remove(tree, 1)
 		endif
-		if len(tree) > 1 && tree[0] =~ '^\\\(numberline\|tocsection\)'
+		if len(tree) > 1 && type(tree[0]) == type("") && tree[0] =~ '^\\\(numberline\|tocsection\)'
 			let secnum = LatexBox_TreeToTex(tree[1])
 			let secnum = substitute(secnum, '\\\S\+\s', '', 'g')
 			let secnum = substitute(secnum, '\\\S\+{\(.\{-}\)}', '\1', 'g')
