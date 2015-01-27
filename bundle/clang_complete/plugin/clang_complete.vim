@@ -494,8 +494,12 @@ endfunction
 function! s:StopMonitoring()
   if b:snippet_chosen
     call s:TriggerSnippet()
-  else
-    " Restore original return key mapping
+    return
+  endif
+
+  if g:clang_make_default_keymappings == 1
+    " Restore original return and Ctrl-Y key mappings
+
     if s:use_maparg
       if get(s:old_cr, 'buffer', 0)
         silent! execute s:old_cr.mode.
@@ -513,13 +517,14 @@ function! s:StopMonitoring()
     endif
 
     silent! iunmap <buffer> <C-Y>
-    augroup ClangComplete
-      au! CursorMovedI,InsertLeave <buffer>
-      if exists('##CompleteDone')
-        au! CompleteDone <buffer>
-      endif
-    augroup END
   endif
+
+  augroup ClangComplete
+    au! CursorMovedI,InsertLeave <buffer>
+    if exists('##CompleteDone')
+      au! CompleteDone <buffer>
+    endif
+  augroup END
 endfunction
 
 function! s:TriggerSnippet()
