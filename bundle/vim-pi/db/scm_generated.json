@@ -4211,6 +4211,18 @@
     "type": "git",
     "url": "git://github.com/jbgutierrez/vim-partial"
   },
+  "5095": {
+    "type": "git",
+    "url": "git://github.com/noahfrederick/vim-codekit"
+  },
+  "5097": {
+    "type": "git",
+    "url": "git://github.com/luishdez/vim-less"
+  },
+  "5098": {
+    "type": "git",
+    "url": "https://bitbucket.org/ericgarver/cscope_dynamic"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

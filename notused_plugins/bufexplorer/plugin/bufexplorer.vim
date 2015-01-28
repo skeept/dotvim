@@ -1,5 +1,5 @@
 "=============================================================================
-"    Copyright: Copyright (c) 2001-2014, Jeff Lanzarotta
+"    Copyright: Copyright (c) 2001-2015, Jeff Lanzarotta
 "               All rights reserved.
 "
 "               Redistribution and use in source and binary forms, with or
@@ -36,7 +36,7 @@
 " Name Of File: bufexplorer.vim
 "  Description: Buffer Explorer Vim Plugin
 "   Maintainer: Jeff Lanzarotta (delux256-vim at yahoo dot com)
-" Last Changed: Tuesday, 20 January 2015
+" Last Changed: Tuesday, 27 January 2015
 "      Version: See g:bufexplorer_version for version number.
 "        Usage: This file should reside in the plugin directory and be
 "               automatically sourced.
@@ -75,7 +75,7 @@ endif
 "2}}}
 
 " Version number
-let g:bufexplorer_version = "7.4.7"
+let g:bufexplorer_version = "7.4.8"
 
 " Check for Vim version {{{2
 if v:version < 700
@@ -116,8 +116,6 @@ let s:sort_by = ["number", "name", "fullpath", "mru", "extension"]
 let s:splitMode = ""
 let s:tabSpace = []
 let s:types = {"fullname": ':p', "path": ':p:h', "relativename": ':~:.', "relativepath": ':~:.:h', "shortname": ':t'}
-let s:altBufferOnEntry = ""
-let s:activeBufferOnEntry = ""
 
 " Setup the autocommands that handle the MRUList and other stuff. {{{2
 autocmd VimEnter * call s:Setup()
@@ -698,12 +696,6 @@ function! s:BuildBufferList()
             endif
         endif
 
-        if buf.attributes =~ "%"
-            let s:activeBufferOnEntry = matchstr(buf.attributes, '[0-9]\+')
-        elseif buf.attributes =~ "#"
-            let s:altBufferOnEntry =  matchstr(buf.attributes, '[0-9]\+')
-        endif
-
         let line = buf.attributes." "
 
         " Are we to split the path and file name?
@@ -937,8 +929,9 @@ function! s:Close()
     else
         " Since there are buffers left to switch to, switch to the previous and
         " then the current.
-        execute "keepjumps silent b ".s:altBufferOnEntry
-        execute "keepjumps silent b ".s:activeBufferOnEntry
+        for b in reverse(listed[0:1])
+            execute "keepjumps silent b ".b
+        endfor
     endif
 
     " Clear any messages.
