@@ -123,7 +123,7 @@ function! unite#mappings#define_default_mappings() "{{{
         \ "\<ESC>:\<C-u>call \<SID>all_exit()\<CR>" : "\<C-h>"))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_line)
         \ <SID>smart_imap('', repeat("\<C-h>",
-        \     col('.')-(1+1)))
+        \     unite#util#strchars(unite#helper#get_input())))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_word)
         \ <SID>smart_imap('', "\<C-w>")
   inoremap <silent><buffer> <Plug>(unite_delete_backward_path)
@@ -396,6 +396,7 @@ function! s:restart() "{{{
   let unite = unite#get_current_unite()
   let context = unite.context
   let context.resume = 0
+  let context.unite__is_restart = 1
   let sources = map(deepcopy(unite.sources),
         \ 'empty(v:val.args) ? v:val.name : [v:val.name] + v:val.args')
   call unite#force_quit_session()
