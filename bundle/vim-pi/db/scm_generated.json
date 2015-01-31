@@ -4223,6 +4223,10 @@
     "type": "git",
     "url": "https://bitbucket.org/ericgarver/cscope_dynamic"
   },
+  "5100": {
+    "type": "git",
+    "url": "git://github.com/itchyny/vim-cursorword"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
