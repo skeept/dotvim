@@ -44,3 +44,4 @@ doc/tags*
 test/cur_color.vim
 
 notused_plugins/ultisnips/
+frawor/test/
