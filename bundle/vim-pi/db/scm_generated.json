@@ -4239,6 +4239,18 @@
     "type": "git",
     "url": "git://github.com/haya14busa/vital-snoop.vim"
   },
+  "5104": {
+    "type": "git",
+    "url": "git://github.com/Konfekt/FastFold"
+  },
+  "5105": {
+    "type": "git",
+    "url": "git://github.com/xuqix/h2cppx"
+  },
+  "5106": {
+    "type": "git",
+    "url": "git://github.com/jeetsukumaran/vim-indentwise"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
