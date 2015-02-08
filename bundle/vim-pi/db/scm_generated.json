@@ -4251,6 +4251,10 @@
     "type": "git",
     "url": "git://github.com/jeetsukumaran/vim-indentwise"
   },
+  "5107": {
+    "type": "git",
+    "url": "git://github.com/cjrh/vim-conda"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
