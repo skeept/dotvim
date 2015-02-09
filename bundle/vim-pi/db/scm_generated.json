@@ -4255,6 +4255,10 @@
     "type": "git",
     "url": "git://github.com/cjrh/vim-conda"
   },
+  "5108": {
+    "type": "git",
+    "url": "git://github.com/ryanss/vim-hackernews"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
