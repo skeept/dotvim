@@ -107,6 +107,9 @@ function! neocomplete#init#_autocmds() "{{{
   else
     autocmd neocomplete CursorMovedI *
           \ call neocomplete#handler#_do_auto_complete('CursorMovedI')
+  endif
+
+  if !g:neocomplete#enable_cursor_hold_i
     autocmd neocomplete InsertEnter *
           \ call neocomplete#handler#_do_auto_complete('InsertEnter')
   endif
@@ -690,7 +693,6 @@ function! neocomplete#init#_source(source) "{{{
         \ 'converters' : [
         \      'converter_remove_overlap',
         \      'converter_delimiter',
-        \      'converter_case',
         \      'converter_abbr',
         \ ],
         \ 'keyword_patterns' : g:neocomplete#keyword_patterns,

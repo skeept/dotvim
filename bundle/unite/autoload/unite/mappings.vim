@@ -607,7 +607,7 @@ function! unite#mappings#_quick_match(is_choose) "{{{
   call unite#view#_quick_match_redraw(quick_match_table, 0)
 
   if !has_key(quick_match_table, char)
-        \ || quick_match_table[char] >= len(unite.current_candidates)
+        \ || quick_match_table[char] > len(unite.current_candidates)
     call unite#util#print_error('Canceled.')
 
     if unite.context.quick_match && char == "\<ESC>"
@@ -616,7 +616,7 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
-  let candidate = unite.current_candidates[quick_match_table[char]]
+  let candidate = unite.current_candidates[quick_match_table[char] - 1]
   if candidate.is_dummy
     call unite#util#print_error('Canceled.')
     return

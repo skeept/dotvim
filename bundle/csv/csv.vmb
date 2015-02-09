@@ -2,7 +2,7 @@
 UseVimball
 finish
 ftplugin/csv.vim	[[[1
-2626
+2668
 " Filetype plugin for editing CSV files. "{{{1
 " Author:  Christian Brabandt <cb@256bit.org>
 " Version: 0.31
@@ -46,7 +46,9 @@ fu! <sid>Warn(mess) "{{{3
     echohl Normal
 endfu
 
-fu! <sid>Init(startline, endline) "{{{3
+fu! <sid>Init(startline, endline, ...) "{{{3
+    " if a:1 is set, keep the b:delimiter
+    let keep = exists("a:1") && a:1
     " Hilight Group for Columns
     if exists("g:csv_hiGroup")
         let s:hiGroup = g:csv_hiGroup
@@ -61,10 +63,12 @@ fu! <sid>Init(startline, endline) "{{{3
     exe "hi link CSVHeaderLine" s:hiHeader
 
     " Determine default Delimiter
-    if !exists("g:csv_delim")
-        let b:delimiter=<SID>GetDelimiter(a:startline, a:endline)
-    else
-        let b:delimiter=g:csv_delim
+    if !keep
+        if !exists("g:csv_delim")
+            let b:delimiter=<SID>GetDelimiter(a:startline, a:endline)
+        else
+            let b:delimiter=g:csv_delim
+        endif
     endif
 
     " Define custom commentstring
@@ -343,6 +347,7 @@ fu! <sid>SearchColumn(arg) "{{{3
     endif
     let @/ = <sid>GetPat(colnr, maxcolnr, '\%('.pat. '\)')
     try
+        " force redraw, so that the search pattern isn't shown
         exe "norm! n\<c-l>"
     catch /^Vim\%((\a\+)\)\=:E486/
         " Pattern not found
@@ -583,7 +588,15 @@ fu! <sid>ColWidth(colnr) "{{{3
 
     if !exists("b:csv_fixed_width_cols")
         if !exists("b:csv_list")
-            let b:csv_list=getline(1,'$')
+            " only check first 10000 lines, to be faster
+            let last = line('$')
+            if !get(b:, 'csv_arrange_use_all_rows', 0)
+                if last > 10000
+                    let last = 10000
+                    call <sid>Warn('File too large, only checking the first 10000 rows for the width')
+                endif
+            endif
+            let b:csv_list=getline(1,last)
             let pat = '^\s*\V'. escape(b:csv_cmt[0], '\\')
             call filter(b:csv_list, 'v:val !~ pat')
             call filter(b:csv_list, '!empty(v:val)')
@@ -650,15 +663,40 @@ fu! <sid>ArrangeCol(first, last, bang, limit) range "{{{3
     else
        let ro = 0
     endif
-    exe "sil". a:first . ',' . a:last .'s/' . (b:col) .
-    \ '/\=<SID>Columnize(submatch(0))/' . (&gd ? '' : 'g')
-    " Clean up variables, that were only needed for <sid>Columnize() function
-    unlet! s:columnize_count s:max_cols s:prev_line
-    if ro
-        setl ro
-        unlet ro
+    let s:count = 0
+    let _stl  = &stl
+    let s:max   = (a:last - a:first + 1) * len(b:col_width)
+    let s:temp  = 0
+    try
+        exe "sil". a:first . ',' . a:last .'s/' . (b:col) .
+        \ '/\=<SID>Columnize(submatch(0))/' . (&gd ? '' : 'g')
+    finally
+        " Clean up variables, that were only needed for <sid>Columnize() function
+        unlet! s:columnize_count s:max_cols s:prev_line s:max s:count s:temp s:val
+        if ro
+            setl ro
+            unlet ro
+        endif
+        let &stl = _stl
+        call winrestview(cur)
+    endtry
+endfu
+
+fu! <sid>ProgressBar(cnt, max) "{{{3
+    if get(g:, 'csv_no_progress', 0)
+        return
     endif
-    call winrestview(cur)
+    let width = 40 " max width of progressbar
+    if width > &columns
+        let width = &columns
+    endif
+    let s:val = a:cnt * width / a:max
+    if (s:val > s:temp || a:cnt==1)
+        let &stl='%#DiffAdd#['.repeat('=', s:val).'>'. repeat(' ', width-s:val).']'.
+                \ (width < &columns  ? ' '.100*s:val/width. '%%' : '')
+        redrawstatus
+        let s:temp = s:val
+    endif
 endfu
 
 fu! <sid>PrepUnArrangeCol(first, last) "{{{3
@@ -710,9 +748,7 @@ fu! <sid>CalculateColumnWidth() "{{{3
     endtry
     " delete buffer content in variable b:csv_list,
     " this was only necessary for calculating the max width
-    unlet! b:csv_list
-    unlet! s:columnize_count
-    unlet! s:decimal_column
+    unlet! b:csv_list s:columnize_count s:decimal_column
 endfu
 
 fu! <sid>Columnize(field) "{{{3
@@ -729,6 +765,7 @@ fu! <sid>Columnize(field) "{{{3
     if exists("s:prev_line") && s:prev_line != line('.')
         let s:columnize_count = 0
     endif
+    let s:count+=1
 
     let s:prev_line = line('.')
     " convert zero based indexed list to 1 based indexed list,
@@ -737,8 +774,8 @@ fu! <sid>Columnize(field) "{{{3
     " let width=get(b:col_width,<SID>WColumn()-1,20)
     " is too slow, so we are using:
     let colnr = s:columnize_count % s:max_cols
-    let width=get(b:col_width, colnr, 20)
-    let align='r'
+    let width = get(b:col_width, colnr, 20)
+    let align = 'r'
     if exists('b:csv_arrange_align')
         let align_list=split(get(b:, 'csv_arrange_align', " "), '\zs')
         try
@@ -751,9 +788,10 @@ fu! <sid>Columnize(field) "{{{3
        \ align isnot? 'c' && align isnot? '.') || get(b:, 'csv_arrange_leftalign', 0))
        let align = 'r'
     endif
+    call <sid>ProgressBar(s:count,s:max)
 
     let s:columnize_count += 1
-    let has_delimiter = (a:field =~# b:delimiter.'$')
+    let has_delimiter = (a:field[-1:] is? b:delimiter)
     if align is? 'l'
         " left-align content
         return printf("%-*S%s", width+1 , 
@@ -1914,7 +1952,8 @@ fu! <sid>CommandDefinitions() "{{{3
     call <sid>LocalCmd("UnArrangeColumn",
         \':call <sid>PrepUnArrangeCol(<line1>, <line2>)',
         \ '-range')
-    call <sid>LocalCmd("InitCSV", ':call <sid>Init(<line1>,<line2>)', '-range=%')
+    call <sid>LocalCmd("InitCSV", ':call <sid>Init(<line1>,<line2>,<bang>0)',
+        \ '-bang -range=%')
     call <sid>LocalCmd('Header',
         \ ':call <sid>SplitHeaderLine(<q-args>,<bang>0,1)',
         \ '-nargs=? -bang')
@@ -2236,6 +2275,10 @@ fu! <sid>NrColumns(bang) "{{{3
 endfu
 
 fu! <sid>Tabularize(bang, first, last) "{{{3
+    if match(split(&ft, '\.'),'csv') == -1
+        call <sid>Warn("No CSV filetype, aborting!")
+        return
+    endif
     let _c = winsaveview()
     " Table delimiter definition "{{{4
     if !exists("s:td")
@@ -2311,10 +2354,7 @@ fu! <sid>Tabularize(bang, first, last) "{{{3
         call <sid>Warn('An error occured, aborting!')
         return
     endif
-    if get(b:, 'csv_arrange_leftalign', 0)
-        call map(b:col_width, 'v:val+1')
-    endif
-    if b:delimiter == "\t" && !get(b:, 'csv_arrange_leftalign',0)
+    if getline(a:first)[-1:] isnot? b:delimiter
         let b:col_width[-1] += 1
     endif
     let marginline = s:td.scol. join(map(copy(b:col_width), 'repeat(s:td.hbar, v:val)'), s:td.cros). s:td.ecol
@@ -2339,12 +2379,14 @@ fu! <sid>Tabularize(bang, first, last) "{{{3
         call append(a:first + s:csv_fold_headerline, marginline)
         let adjust_last += 1
     endif
+    " Syntax will be turned off, so disable this part
+    "
     " Adjust headerline to header of new table
-    let b:csv_headerline = (exists('b:csv_headerline')?b:csv_headerline+2:3)
-    call <sid>CheckHeaderLine()
+    "let b:csv_headerline = (exists('b:csv_headerline')?b:csv_headerline+2:3)
+    "call <sid>CheckHeaderLine()
     " Adjust syntax highlighting
-    unlet! b:current_syntax
-    ru syntax/csv.vim
+    "unlet! b:current_syntax
+    "ru syntax/csv.vim
 
     if a:bang
         exe printf('sil %d,%ds/^%s\zs\n/&%s&/e', a:first + s:csv_fold_headerline, a:last + adjust_last,
@@ -2630,7 +2672,7 @@ unlet s:cpo_save
 " Vim Modeline " {{{2
 " vim: set foldmethod=marker et:
 doc/ft-csv.txt	[[[1
-1746
+1771
 *ft-csv.txt*	For Vim version 7.4	Last Change: Thu, 15 Jan 2015
 
 Author:		Christian Brabandt <cb@256bit.org>
@@ -2842,7 +2884,8 @@ If you would like all columns to be visually arranged, you can use the
 Beware, that this will change your file and depending on the size of
 your file may slow down Vim significantly. This is highly experimental.
 :ArrangeCommand will try to vertically align all columns by their maximum
-column size.
+column size. While the command is run, a progressbar in the statusline 'stl'
+will be shown.
 
 Use the bang attribute to force recalculating the column width. This is
 slower, but especially if you have modified the file, this will correctly
@@ -2867,10 +2910,23 @@ aligning might slow down Vim and additionally, if the value is no decimal
 number it will be right aligned).
 
 Note, arranging the columns can be very slow on large files or many columns (see
-|csv-slow| on how to increase performance for this command). To prevent you
-from accidently changing your csv file, the buffer will be set 'readonly'
-afterwards. Note: this command does not work for fixed width columns
-|csv-fixedwidth|
+|csv-slow| on how to increase performance for this command). For large files,
+calculating the column width can take long and take a consierable amount of
+memory. Therefore, the csv plugin will at most check 10.000 lines for the
+width. Set the variable b:csv_arrange_use_all_rows to 1 to use all records: >
+
+    :let b:csv_arrange_use_all_rows = 1
+<
+(this could however in the worst case lead to a crash).
+
+To disable the statusline progressbar set the variable g:csv_no_progress: >
+
+    :let g:csv_no_progress = 1
+<
+This will disable the progressbar and slightly improve performance (since no
+additional redraws are needed).
+
+Note: this command does not work for fixed width columns |csv-fixedwidth|
 
 See also |csv-arrange-autocmd| on how to have vim automaticaly arrange a CSV
 file upon entering it.
@@ -2913,6 +2969,8 @@ will delete all columns where the pattern "foobar" matches.
 -----------
 Reinitialize the Plugin. Use this, if you have changed the configuration
 of the plugin (see |csv-configuration| ).
+If you use the bang (!) attribute, it will keep the b:delimiter configuration
+variable.
 
                                                                 *:CSVHeader*
 3.9 Header lines						 *Header_CSV*
@@ -4085,7 +4143,16 @@ Index;Value1;Value2~
   by Giorgio Robino, thanks!)
 - When using |VHeader_CSV| or |Header_CSV| command, check
   number/relativenumber and foldcolumn to make sure, header line is always
-  aligened with main window (suggested by Giorgio Robino, thanks)
+  aligened with main window (suggested by Giorgio Robino, thanks!)
+- hide search pattern, when calling |SearchInColumn_CSV| (suggested by Giorgio
+  Robino, thanks!)
+- compute correct width of marginline for |:CSVTable|
+- do not allow |:CSVTable| command for csv files, that's what the
+  |:CSVTabularize| command is for.
+- add progressbar for the |:CSVArrangeCol| command. 
+- |InitCSV| accepts a '!' for keeping the b:delimiter (|csv-delimiter|) variable
+  (https://github.com/chrisbra/csv.vim/issues/43 reported by Jeet Sukumaran,
+  thanks!)
 
 0.31 Jan 15, 2015 {{{1
 - fix that H on the very first cell, results in an endless loop
@@ -4548,7 +4615,7 @@ ftdetect/csv.vim	[[[1
 au BufRead,BufNewFile *.csv,*.dat,*.tsv,*.tab set filetype=csv
 
 plugin/csv.vim	[[[1
-86
+93
 if exists('g:loaded_csv') && g:loaded_csv
   finish
 endif
@@ -4576,6 +4643,13 @@ endif
 com! -range -bang -nargs=? CSVTable call <sid>Table(<bang>0, <line1>, <line2>, <q-args>)
 
 fu! <sid>Table(bang, line1, line2, delim)
+    if match(split(&ft, '\.'), 'csv') > -1
+	" Use CSVTabularize command
+	echohl WarningMsg
+	echomsg "For CSV files, use the :CSVTabularize command!"
+	echohl None
+	return
+    endif
     " save and restore some options
     if has("conceal")
 	let _a = [ &l:lz, &l:syntax, &l:ft, &l:sol, &l:tw, &l:wrap, &l:cole, &l:cocu, &l:fen, &l:fdm, &l:fdl, &l:fdc, &l:fml, &l:fdt, &l:ma, &l:ml]
