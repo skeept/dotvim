@@ -837,7 +837,11 @@ command! -count=1 Jump exe ":norm! <count>\<C-I>"
 " path related commands {{{
 
 " change to path of current file
-command! ChgDirCurrFileFolder lcd %:p:h
+command! -bang ChgDirCurrFileFolder
+      \ if "<bang>" == ""  |
+      \ lcd %:p:h |
+      \ else |
+      \ cd! %:p:h | endif
 
 " print current files pwd
 command! Pcp echo expand('%:p')
