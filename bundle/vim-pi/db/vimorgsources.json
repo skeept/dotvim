@@ -2368,7 +2368,7 @@
 "plumbing":{"archive_name":"plumbing.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10735","version":"1.2","vim_script_nr":2661},
 "clips":{"archive_name":"clips.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11333","version":"0.3","vim_script_nr":2660},
 "g15vim":{"archive_name":"g15vim-20110722.tar.xz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16128","version":"20110722","vim_script_nr":2659},
-"Auto_Changing_color_script":{"archive_name":"changingColor.vba","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22862","version":"20.1","vim_script_nr":2658},
+"Auto_Changing_color_script":{"archive_name":"changingColor.vba","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22902","version":"20.2","vim_script_nr":2658},
 "VOoM":{"archive_name":"VOoM-5.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22082","version":"5.1","vim_script_nr":2657},
 "Simple_R_Omni_Completion":{"archive_name":"r_omni.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10676","version":"0.1","vim_script_nr":2656},
 "squirrel":{"archive_name":"squirrel.0.2.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=12575","version":"0.2","vim_script_nr":2655},
