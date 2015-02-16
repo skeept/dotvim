@@ -344,8 +344,7 @@ endfunction
 
 " ToggleBufExplorer {{{2
 function! ToggleBufExplorer()
-    if exists("s:running") && s:running == 1
-        call BufExplorer()
+    if exists("s:running") && s:running == 1 && bufname(winbufnr(0)) == s:name
         call s:Close()
     else
         call BufExplorer()
@@ -575,7 +574,7 @@ function! s:CreateHelp()
         call add(header, '" d : delete buffer')
         call add(header, '" D : wipe buffer')
         call add(header, '" f : toggle find active buffer')
-        call add(header, '" p : toggle spliting of file and path name')
+        call add(header, '" p : toggle splitting of file and path name')
         call add(header, '" q : quit')
         call add(header, '" r : reverse sort')
         call add(header, '" R : toggle showing relative or full paths')
