@@ -1,6 +1,0 @@
-id: 'plugin/register-return-value'
-runtimepath: '%TMPDIR%/test/rtp'
-type: 'plugin'
-id: 'plugin/plugin-with-dependencies'
-runtimepath: '%TMPDIR%/test/rtp'
-type: 'plugin'

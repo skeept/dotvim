@@ -1,6 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp '
-:let &rtp.=",".escape($TESTDIR, ',\')."/rtpb"
-:let g:testfile="plugin/register-return-value.vim"
-:let g:testcmd="runtime!"
-:source test.vim

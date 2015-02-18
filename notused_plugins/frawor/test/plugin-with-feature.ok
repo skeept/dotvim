@@ -1,6 +1,0 @@
-feature-load: plugin/plugin-depends-on-plugin-with-feature
-Frawor:plugin/plugin-with-feature:testmsg:This is a test message: test
-cons: plugin/plugin-depends-on-plugin-with-feature
->>> plugin/plugin-depends-on-plugin-with-feature: messages
-plugin/plugin-with-feature:testmsg
-<<< messages

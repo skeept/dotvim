@@ -4259,6 +4259,10 @@
     "type": "git",
     "url": "git://github.com/ryanss/vim-hackernews"
   },
+  "5111": {
+    "type": "git",
+    "url": "git://github.com/zeduckmaster/vim-glsl"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

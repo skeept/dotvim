@@ -1,7 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let g:testfile="plugin/version-errors.1.vim"
-:source test.vim
-:let g:testfile="plugin/version-errors.2.vim"
-:source test.vim
-:let g:testfile="plugin/version-errors.3.vim"
-:source test.vim

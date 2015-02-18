@@ -1,1 +1,0 @@
-execute frawor#Setup({}, {})

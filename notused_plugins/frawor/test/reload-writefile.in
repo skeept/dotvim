@@ -1,4 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let g:testfile="plugin/ignoredeps-feature.vim"
-:source test.vim
-:for file in FraworUnload('plugin/writefile-feature') | execute "source" fnameescape(file) | endfor

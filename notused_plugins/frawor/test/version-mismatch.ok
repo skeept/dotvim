@@ -1,6 +1,0 @@
-newfeature
-require
-throw
-warn
-plugin/major-version-mismatch: plugin/frawor:majmismatch
-plugin/minor-version-mismatch: plugin/frawor:oldversion

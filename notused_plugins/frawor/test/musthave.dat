@@ -1,7 +1,0 @@
-tcl tcl
-perl perl|perl/dyn
-python python|python/dyn
-python3 python3|python3/dyn
-lua lua|lua/dyn
-ruby ruby|ruby/dyn
-allinterp tcl,perl|perl/dyn,lua|lua/dyn,ruby|ruby/dyn,python|python3|python/dyn|python3/dyn

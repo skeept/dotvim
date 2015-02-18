@@ -727,7 +727,7 @@ runtime bundle/vlatex/plugin/remoteOpen.vim
 
 command! -complete=file -nargs=* Mt call jraf#setPdfDestination(<f-args>)
 
-" the following settings seems to work for sumartraPDF:
+" the following settings seems to work for sumatraPDF:
 " "C:\Program Files\Vim\vim74\gvim.exe"  -c ":RemoteOpen +%l %f"
 "==============================================================================}}}
 

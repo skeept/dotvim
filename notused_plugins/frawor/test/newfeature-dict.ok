@@ -1,8 +1,0 @@
-args: (1)
-fdict: {'calls': 1}
-args2: (2)
-fdict2: {'calls': 2}
-args: (3)
-fdict: {'calls': 3}
-args2: (4)
-fdict2: {'calls': 4}
