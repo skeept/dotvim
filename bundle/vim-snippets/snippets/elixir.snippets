@@ -46,6 +46,13 @@ snippet def
 	def ${1:name} do
 		${0}
 	end
+snippet defd
+	@doc """
+	${1:doc string}
+	"""
+	def ${2:name} do
+		${0}
+	end
 snippet defim
 	defimpl ${1:protocol_name}, for: ${2:data_type} do
 		${0}
@@ -71,7 +78,7 @@ snippet doc
 	${0}
 	"""
 snippet fn
-	fn(${1:args}) -> ${0} end
+	fn ${1:args} -> ${0} end
 snippet fun
 	function do
 		${0}
@@ -93,6 +100,10 @@ snippet ali
 	alias ${0:module_name}
 snippet test
 	test "${1:test_name}" do
+		${0}
+	end
+snippet test "A ExUnit test" b
+	test "${1:test_name}", %{${2:arg: arg}} do
 		${0}
 	end
 snippet try try .. rescue .. end

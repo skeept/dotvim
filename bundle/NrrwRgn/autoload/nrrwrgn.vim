@@ -4,7 +4,7 @@
 " Maintainer:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 15 Jan 2015 20:52:29 +0100
 " Script: http://www.vim.org/scripts/script.php?script_id=3075 
-" Copyright:   (c) 2009-2013 by Christian Brabandt
+" Copyright:   (c) 2009-2015 by Christian Brabandt
 "			   The VIM LICENSE applies to NrrwRgn.vim 
 "			   (see |copyright|) except use "NrrwRgn.vim" 
 "			   instead of "Vim".
@@ -886,6 +886,10 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 	let b:orig_buf = orig_buf
 	let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
 	call setline(1, a)
+	if !s:nrrw_rgn_vert && len(a) < s:nrrw_rgn_wdth
+		" Resize narrowed window to size of buffer
+		exe "sil resize" len(a)+1
+	endif
 	let b:nrrw_instn = s:instn
 	setl nomod
 	call <sid>SetupBufLocalCommands()
