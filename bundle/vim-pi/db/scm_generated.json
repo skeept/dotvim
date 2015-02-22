@@ -4263,6 +4263,10 @@
     "type": "git",
     "url": "git://github.com/zeduckmaster/vim-glsl"
   },
+  "5114": {
+    "type": "git",
+    "url": "git://github.com/ryanoasis/vim-webdevicons"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

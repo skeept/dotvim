@@ -4,7 +4,7 @@
 " Maintainer:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 15 Jan 2015 20:52:29 +0100
 " Script: http://www.vim.org/scripts/script.php?script_id=3075 
-" Copyright:   (c) 2009-2013 by Christian Brabandt
+" Copyright:   (c) 2009-2015 by Christian Brabandt
 "			   The VIM LICENSE applies to NrrwRgn.vim 
 "			   (see |copyright|) except use "NrrwRgn.vim" 
 "			   instead of "Vim".
@@ -886,6 +886,10 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  "{{{1
 	let b:orig_buf = orig_buf
 	let s:nrrw_rgn_lines[s:instn].orig_buf  = orig_buf
 	call setline(1, a)
+	if !s:nrrw_rgn_vert && len(a) < s:nrrw_rgn_wdth
+		" Resize narrowed window to size of buffer
+		exe "sil resize" len(a)+1
+	endif
 	let b:nrrw_instn = s:instn
 	setl nomod
 	call <sid>SetupBufLocalCommands()
@@ -911,7 +915,7 @@ fun! nrrwrgn#Prepare(bang) "{{{1
 endfun
 
 fun! nrrwrgn#WidenRegion(force)  "{{{1
-	" a:close: original narrowed window is going to be closed
+	" a:force: original narrowed window is going to be closed
 	" so, clean up, don't renew highlighting, etc.
 	let nrw_buf  = bufnr('')
 	let orig_buf = b:orig_buf
@@ -1003,8 +1007,7 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 			\ s:nrrw_rgn_lines[instn].end[1] -
 			\ s:nrrw_rgn_lines[instn].start[1] + 1 == len(cont)
 		   " in characterwise selection, remove trailing \n
-		   call setreg('a', substitute(@a, '\n$', '', ''), 
-			\ s:nrrw_rgn_lines[instn].vmode)
+		   call setreg('a', substitute(@a, '\n$', '', ''), 'v')
 		endif
 		" settable '< and '> marks
 		let _v = []
@@ -1045,8 +1048,6 @@ fun! nrrwrgn#WidenRegion(force)  "{{{1
 				\ s:nrrw_rgn_lines[instn].end[1:2],
 				\ s:nrrw_rgn_lines[instn].vmode),
 				\ instn)
-		else
-			noa b #
 		endif
 	" 3) :NR started selection
 	else 

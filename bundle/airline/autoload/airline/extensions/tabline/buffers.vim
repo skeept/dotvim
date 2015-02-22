@@ -4,6 +4,7 @@
 scriptencoding utf-8
 
 let s:buffer_idx_mode = get(g:, 'airline#extensions#tabline#buffer_idx_mode', 0)
+let s:show_tab_type = get(g:, 'airline#extensions#tabline#show_tab_type', 1)
 let s:spc = g:airline_symbols.space
 
 let s:current_bufnr = -1
@@ -37,10 +38,6 @@ function! airline#extensions#tabline#buffers#on()
     autocmd!
     autocmd BufDelete * call airline#extensions#tabline#buffers#invalidate()
   augroup END
-
-  if s:buffer_idx_mode
-    call s:define_buffer_idx_mode_mappings()
-  endif
 endfunction
 
 function! airline#extensions#tabline#buffers#invalidate()
@@ -96,7 +93,9 @@ function! airline#extensions#tabline#buffers#get()
   call b.add_section('airline_tabfill', '')
   call b.split()
   call b.add_section('airline_tabfill', '')
-  call b.add_section('airline_tabtype', ' buffers ')
+  if s:show_tab_type
+    call b.add_section('airline_tabtype', ' buffers ')
+  endif
 
   let s:current_bufnr = cur
   let s:current_tabline = b.build()
@@ -173,14 +172,14 @@ function! s:select_tab(buf_index)
   endif
 endfunction
 
-function! s:define_buffer_idx_mode_mappings()
-  noremap! <unique> <Plug>AirlineSelectTab1 :call <SID>select_tab(0)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab2 :call <SID>select_tab(1)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab3 :call <SID>select_tab(2)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab4 :call <SID>select_tab(3)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab5 :call <SID>select_tab(4)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab6 :call <SID>select_tab(5)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab7 :call <SID>select_tab(6)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab8 :call <SID>select_tab(7)<CR>
-  noremap! <unique> <Plug>AirlineSelectTab9 :call <SID>select_tab(8)<CR>
-endfunction
+if s:buffer_idx_mode
+  noremap <unique> <Plug>AirlineSelectTab1 :call <SID>select_tab(0)<CR>
+  noremap <unique> <Plug>AirlineSelectTab2 :call <SID>select_tab(1)<CR>
+  noremap <unique> <Plug>AirlineSelectTab3 :call <SID>select_tab(2)<CR>
+  noremap <unique> <Plug>AirlineSelectTab4 :call <SID>select_tab(3)<CR>
+  noremap <unique> <Plug>AirlineSelectTab5 :call <SID>select_tab(4)<CR>
+  noremap <unique> <Plug>AirlineSelectTab6 :call <SID>select_tab(5)<CR>
+  noremap <unique> <Plug>AirlineSelectTab7 :call <SID>select_tab(6)<CR>
+  noremap <unique> <Plug>AirlineSelectTab8 :call <SID>select_tab(7)<CR>
+  noremap <unique> <Plug>AirlineSelectTab9 :call <SID>select_tab(8)<CR>
+endif

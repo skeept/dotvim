@@ -48,14 +48,32 @@ function! g:SyntasticChecker.getName() " {{{2
     return self._name
 endfunction " }}}2
 
-function! g:SyntasticChecker.getExec() " {{{2
-    return
+" Synchronise _exec with user's setting.  Force re-validation if needed.
+"
+" XXX: This function must be called at least once before calling either
+" getExec() or getExecEscaped().  Normally isAvailable() does that for you
+" automatically, but you should keep still this in mind if you change the
+" current checker workflow.
+function! g:SyntasticChecker.syncExec() dict " {{{2
+    let user_exec =
         \ expand( exists('b:syntastic_' . self._name . '_exec') ? b:syntastic_{self._name}_exec :
-        \ syntastic#util#var(self._filetype . '_' . self._name . '_exec', self._exec), 1 )
+        \ syntastic#util#var(self._filetype . '_' . self._name . '_exec'), 1 )
+
+    if user_exec != '' && user_exec !=# self._exec
+        let self._exec = user_exec
+        if has_key(self, '_available')
+            " we have a new _exec on the block, it has to be validated
+            call remove(self, '_available')
+        endif
+    endif
+endfunction " }}}2
+
+function! g:SyntasticChecker.getExec() " {{{2
+    return self._exec
 endfunction " }}}2
 
 function! g:SyntasticChecker.getExecEscaped() " {{{2
-    return syntastic#util#shescape(self.getExec())
+    return syntastic#util#shescape(self._exec)
 endfunction " }}}2
 
 function! g:SyntasticChecker.getLocListRaw() " {{{2
@@ -121,6 +139,7 @@ function! g:SyntasticChecker.makeprgBuild(opts) " {{{2
 endfunction " }}}2
 
 function! g:SyntasticChecker.isAvailable() " {{{2
+    call self.syncExec()
     if !has_key(self, '_available')
         let self._available = self._isAvailableFunc()
     endif
