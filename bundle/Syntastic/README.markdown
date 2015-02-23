@@ -52,7 +52,7 @@ can be done on demand, or automatically as files are saved. If syntax errors
 are detected, the user is notified and is happy because they didn't have to
 compile their code or execute their script to find them.
 
-At the time of this writing, syntax checking plugins exist for ActionScript,
+At the time of this writing, syntastic has checking plugins for ActionScript,
 Ada, AppleScript, AsciiDoc, ASM, BEMHTML, Bro, Bourne shell, C, C++, C#, Cabal,
 Chef, CoffeeScript, Coco, Coq, CSS, Cucumber, CUDA, D, Dart, DocBook, Dust,
 Elixir, Erlang, eRuby, Fortran, Gentoo metadata, GLSL, Go, Haml, Haskell,
@@ -60,10 +60,14 @@ Haxe, Handlebars, HSS, HTML, Java, JavaScript, JSON, JSX, LESS, Lex, Limbo,
 LISP, LLVM intermediate language, Lua, Markdown, MATLAB, NASM, Objective-C,
 Objective-C++, OCaml, Perl, Perl POD, PHP, gettext Portable Object, OS X and
 iOS property lists, Puppet, Python, R, Racket, Relax NG, reStructuredText, RPM
-spec, Ruby, SASS/SCSS, Scala, Slim, Tcl, TeX, Texinfo, Twig, TypeScript, Vala,
-Verilog, VHDL, VimL, xHtml, XML, XSLT, YACC, YAML, z80, Zope page templates,
-and zsh.  See the [wiki][3] for details about the corresponding supported
-checkers.
+spec, Ruby, SASS/SCSS, Scala, Slim, SML, Tcl, TeX, Texinfo, Twig, TypeScript,
+Vala, Verilog, VHDL, VimL, xHtml, XML, XSLT, YACC, YAML, z80, Zope page
+templates, and zsh.  See the [wiki][3] for details about the corresponding
+supported checkers.
+
+A number of third-party Vim plugins also provide checkers for syntastic,
+for example: [omnisharp-vim][25], [rust.vim][12], [syntastic-extras][26],
+[syntastic-more][27], [vim-swift][24], and [vint-syntastic][28].
 
 Below is a screenshot showing the methods that Syntastic uses to display syntax
 errors.  Note that, in practise, you will only have a subset of these methods
@@ -184,18 +188,18 @@ supported, look at the [wiki][3]. Note that aliases do not work; the actual
 executables must be available in your `$PATH`. Symbolic links are okay though.
 You can see syntastic's idea of available checkers by running `:SyntasticInfo`.
 
-A second reason is that the checker you want to run might not be enabled,
-even though it is available. Syntastic comes preconfigured with a default
-list of enabled checkers per filetype, but this list is deliberatley kept
-short in order to prevent slowing down Vim or trying to run conflicting
-checkers. The same command `:SyntasticInfo` will also show you which checkers
-are enabled. You can tell syntastic which checkers you want to run by setting
-`g:syntastic_<filetype>_checkers` in your `vimrc` (see [below](#faqcheckers)).
+A second probable reason is that none of the available checkers are
+enabled. Syntastic comes preconfigured with a default list of enabled checkers
+per filetype, but this list is kept short in order to prevent slowing down Vim
+or trying to run conflicting checks. The command `:SyntasticInfo` will show you
+which checkers are enabled. You can tell syntastic which checkers (among the
+available ones) you want to run by setting `g:syntastic_<filetype>_checkers` in
+your `vimrc` (see [below](#faqcheckers)).
 
 Another reason it could fail is that either the command line options or the
 error output for a syntax checker may have changed. In this case, make sure you
 have the latest version of the syntax checker installed. If it still fails then
-create an issue - or better yet, create a pull request.
+post an [issue][4] - or better yet, create a pull request.
 
 <a name="faqpython3"></a>
 
@@ -245,9 +249,8 @@ let g:syntastic_enable_perl_checker = 1
 
 __4.5. Q. What happened to the `rustc` checker?__
 
-A. It has been included in the [Rust compiler package][12].  If you have
-a recent version of the Rust compiler, the checker should be picked up
-automatically by syntastic.
+A. It is now part of the [rust.vim][12] plugin.  If you install this plugin the
+checker should be picked up automatically by syntastic.
 
 <a name="faqxcrun"></a>
 
@@ -421,7 +424,7 @@ a look at [jedi-vim][7], [python-mode][8], or [YouCompleteMe][9].
 [9]: http://valloric.github.io/YouCompleteMe/
 [10]: http://perldoc.perl.org/perlrun.html#*-c*
 [11]: https://github.com/scrooloose/syntastic/wiki/Syntax-Checker-Guide
-[12]: https://github.com/rust-lang/rust/
+[12]: https://github.com/rust-lang/rust.vim
 [13]: http://www.vim.org/
 [14]: https://github.com/Shougo/neobundle.vim
 [15]: https://github.com/MarcWeber/vim-addon-manager
@@ -434,6 +437,10 @@ a look at [jedi-vim][7], [python-mode][8], or [YouCompleteMe][9].
 [22]: https://github.com/scrooloose/syntastic/wiki/HTML%3A---validator
 [23]: http://validator.github.io/validator/#standalone
 [24]: https://github.com/kballard/vim-swift
+[25]: https://github.com/OmniSharp/omnisharp-vim
+[26]: https://github.com/myint/syntastic-extras
+[27]: https://github.com/roktas/syntastic-more
+[28]: https://github.com/todesking/vint-syntastic
 
 <!--
 vim:tw=79:sw=4:
