@@ -4267,6 +4267,10 @@
     "type": "git",
     "url": "git://github.com/ryanoasis/vim-webdevicons"
   },
+  "5117": {
+    "type": "git",
+    "url": "git://github.com/phongvcao/vim-stardict"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
