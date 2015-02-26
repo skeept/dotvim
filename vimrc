@@ -72,7 +72,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp TaskList Supertab
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons vimproc tlib NrrwRgn
-  VAMAddToActiveAddons neocomplete
+  VAMAddToActiveAddons neocomplete repeat
   VAMAddToActiveAddons UltiSnips
   VAMAddToActiveAddons argumentative projectionist
   VAMAddToActiveAddons Syntastic powershell fugitive
