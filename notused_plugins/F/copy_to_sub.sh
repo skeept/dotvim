@@ -13,3 +13,5 @@ cp pathogen/autoload/* ~/.vim/autoload/
 cp Recover/autoload/* ~/.vim/autoload/
 cp Recover/plugin/* ~/.vim/plugin/
 cp Recover/doc/* ~/.vim/doc/
+
+cp repeat/autoload/repeat.vim ~/.vim/autoload/
