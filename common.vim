@@ -172,7 +172,6 @@ nnoremap ; :
 nnoremap : ;
 vnoremap ; :
 vnoremap : ;
-nnoremap <CR> :
 
 "nnoremap ,; :<UP>
 nnoremap ,; :Unite history/command -start-insert<CR>
