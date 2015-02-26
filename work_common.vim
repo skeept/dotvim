@@ -59,8 +59,14 @@ function! JumpToNextNonMatching(direction)
     mark <
   endif
 endfunction
-nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR>
-nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR>
+nnoremap <Plug>JumpToNextNonMatchingFMap :<C-U>call JumpToNextNonMatching(1)<CR>
+      \:call repeat#set("\<Plug>JumpToNextNonMatchingFMap")<CR>
+nmap ,n <Plug>JumpToNextNonMatchingFMap
+"nnoremap ,n :<C-U>call JumpToNextNonMatching(1)<CR>
+nnoremap <Plug>JumpToNextNonMatchingBMap :<C-U>call JumpToNextNonMatching(-1)<CR>
+      \:call repeat#set("\<Plug>JumpToNextNonMatchingBMap")<CR>
+nmap ,N <Plug>JumpToNextNonMatchingBMap
+"nnoremap ,N :<C-U>call JumpToNextNonMatching(-1)<CR>
 vnoremap ,n :<C-U>call JumpToNextNonMatching(2)<CR>gvoo
 vnoremap ,N :<C-U>call JumpToNextNonMatching(-2)<CR>gv
 
@@ -90,6 +96,37 @@ if has("autocmd")
           \ setlocal nowrap
   augroup END
 endif
+
+
+function! JumpToUncovered()
+  normal G
+  call search('**Uncovered crews:', 'b')
+endfunction
+nnoremap glu :call JumpToUncovered()<CR>
+"nnoremap <silent> <Plug>JumpToUncoveredMap :call JumpToUncovered()<CR>
+      "\:call repeat#set("\<Plug>JumpToUncoveredMap")<CR>
+"nmap glu <Plug>JumpToUncoveredMap
+
+function! JumpToLoadedData()
+  normal gg
+  call search('Loaded Data informaton')
+  normal zt
+endfunction
+nnoremap gli :call JumpToLoadedData()<CR>
+
+function! JumpToStartGlobal()
+  let flags = ''
+  if v:count == 1
+    let flags = 'b'
+  endif
+  let ntimes = max([v:count, 1])
+  for _ in range(max([v:count, 1]))
+    call search('Start of Global Iteration', flags)
+  endfor
+endfunction
+nnoremap <silent> <Plug>JumpToStartGlobalMap :call JumpToStartGlobal()<CR>
+      \:call repeat#set("\<Plug>JumpToStartGlobalMap")<CR>
+nmap glg <Plug>JumpToStartGlobalMap
 
 let work_lines=52
 let work_columns=126
