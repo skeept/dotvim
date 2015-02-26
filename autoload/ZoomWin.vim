@@ -1,8 +1,8 @@
 " ZoomWin:	Brief-like ability to zoom into/out-of a window
 " Author:	Charles Campbell
 "			original version by Ron Aaron
-" Date:		Feb 07, 2013 
-" Version:	25g	NOT RELEASED
+" Date:		Mar 09, 2014 
+" Version:	25n	ASTRO-ONLY
 " History: see :help zoomwin-history {{{1
 " GetLatestVimScripts: 508 1 :AutoInstall: ZoomWin.vim
 
@@ -18,9 +18,9 @@ if v:version < 702
  finish
 endif
 let s:keepcpo        = &cpo
-let g:loaded_ZoomWin = "v25f"
+let g:loaded_ZoomWin = "v25n"
 if !exists("g:zoomwin_localoptlist")
- let s:localoptlist   = ["ai","ar","bh","bin","bl","bomb","bt","cfu","ci","cin","cink","cino","cinw","cms","com","cpt","diff","efm","eol","ep","et","fenc","fex","ff","flp","fo","ft","gp","imi","ims","inde","inex","indk","inf","isk","key","kmp","lisp","mps","ml","ma","mod","nf","ofu","oft","pi","qe","ro","sw","sn","si","sts","spc","spf","spl","sua","swf","smc","syn","ts","tx","tw","udf","wm"]
+ let s:localoptlist   = ["ai","ar","bh","bin","bl","bomb","bt","cfu","ci","cin","cink","cino","cinw","cms","com","cpt","diff","efm","eol","ep","et","fenc","fex","ff","flp","fo","ft","gp","imi","ims","inde","inex","indk","inf","isk","key","kmp","lisp","mps","ml","ma","mod","nf","ofu","oft","pi","qe","ro","sw","sn","si","sts","spc","spf","spl","sua","swf","smc","syn","ts","tx","tw","udf","wfh","wfw","wm"]
 else
  let s:localoptlist   = g:zoomwin_localoptlist
 endif
@@ -85,9 +85,10 @@ fun! ZoomWin#ZoomWin()
 
       " source session file to restore window layout
 	  let ei_keep = &ei
-	  set ei=all noswf
+	  set ei=all noswf bh=hide
 	  exe 'sil! so '.fnameescape(s:sessionfile)
       let v:this_session= s:sesskeep
+	  let winrestore = winrestcmd()
 	  " restore any and all window variables
 	  call s:RestoreWinVars()
 
@@ -96,6 +97,7 @@ fun! ZoomWin#ZoomWin()
 "		call Decho("restore windows, positions, buffers")
 		noautocmd windo call s:RestorePosn(s:savedposn{winnr()})|unlet s:savedposn{winnr()}
         call s:GotoWinNum(s:winkeep)
+		execute winrestore
         unlet s:winkeep
       endif
 
@@ -124,13 +126,15 @@ fun! ZoomWin#ZoomWin()
 
 	" I don't know why -- but netrw-generated windows end up as [Scratch] even though the bufname is correct.
 	" Following code fixes this.  Without the if..[Scratch] test, though, when one attempts to write a file
-	" one gets an E13.  Thus, only [Scratch] windows will be effected by this windo command.
+	" one gets an E13.  Thus, only [Scratch] windows will be affected by this windo command.
 	let curwin= winnr()
+	let winrestore = winrestcmd()
 	noautocmd windo if bufname(winbufnr(winnr())) == '[Scratch]'|exe "sil! file ".fnameescape(bufname(winbufnr(winnr())))|endif
 	exe curwin."wincmd w"
 
 	" Restore local window settings
 	call s:RestoreWinSettings()
+	execute winrestore
 
 	" zoomwinstate used by g:ZoomWin_funcref()
 	let zoomwinstate= 0
@@ -153,6 +157,7 @@ fun! ZoomWin#ZoomWin()
 "	call Decho("disable events")
     let ei_keep= &ei
 	set ei=all
+	let winrestore = winrestcmd()
 
 	" Save local window settings
 	call s:SaveWinSettings()
@@ -164,6 +169,7 @@ fun! ZoomWin#ZoomWin()
 "	call Decho("save window positioning commands")
 	noautocmd windo let s:savedposn{winnr()}= s:SavePosn(1)
     call s:GotoWinNum(s:winkeep)
+	execute winrestore
 
     " set up name of session file
     let s:sessionfile= tempname()
@@ -187,19 +193,32 @@ fun! ZoomWin#ZoomWin()
 	let keepy9= @9
     set lz ei=all bh=
 	if v:version >= 700
+	 let curwin = winnr()
+
 	 try
 	  exe "keepalt keepmarks new! ".fnameescape(s:sessionfile)
 	 catch /^Vim\%((\a\+)\)\=:E/
-	  echoerr "Too many windows"
-      sil! call delete(s:sessionfile)
-      unlet s:sessionfile
-      let &lz= lzkeep
-"      call Dret("ZoomWin#ZoomWin : too many windows")
-      return
+	  let seswin = -1
+	  windo if winheight(winnr()) > 1 | let seswin= winnr() | endif
+	  if seswin < 0
+	   echoerr "Too many windows (not enough room)"
+       sil! call delete(s:sessionfile)
+       unlet s:sessionfile
+       let &lz= lzkeep
+"       call Dret("ZoomWin#ZoomWin : too many windows")
+       return
+	  endif
+	  exe seswin."wincmd w"
+	  exe "keepalt keepmarks new! ".fnameescape(s:sessionfile)
 	 endtry
+	 " modify the session (so that it merely restores window layout)
      sil! keepjumps keepmarks v/wincmd\|split\|resize/d
+	 " save modified session
+	 " wipe out session window and buffer
+	 " restore cursor to the window that was current before editing the session file
      keepalt w!
      keepalt bw!
+	 exe curwin."wincmd w"
 	else
 	 exe "new! ".fnameescape(s:sessionfile)
      v/wincmd\|split\|resize/d
@@ -246,8 +265,8 @@ fun! ZoomWin#ZoomWin()
 	call g:ZoomWin_funcref(zoomwinstate)
    elseif type(g:ZoomWin_funcref) == 3
     for Fncref in g:ZoomWin_funcref
-     if type(FncRef) == 2
-	  call FncRef(zoomwinstate)
+     if type(Fncref) == 2
+	  call Fncref(zoomwinstate)
      endif
     endfor
    endif
@@ -298,16 +317,19 @@ fun! s:SavePosn(savewinhoriz)
    "   bufhidden buftype buflisted
    let settings= ""
    if &bh != ""
+"	call Decho("special handling: changing buf#".bufnr("%")."'s bh=".&bh." to hide")
    	let settings="bh=".&bh
-	setlocal bh=hide
+	setl bh=hide
    endif
    if !&bl
+"	call Decho("special handling: changing buf#".bufnr("%")."'s bl=".&bl." to bl")
    	let settings= settings." nobl"
-	setlocal bl
+	setl bl
    endif
    if &bt != ""
+"	call Decho("special handling: changing buf#".bufnr("%")."'s bt=".&bt.' to ""')
    	let settings= settings." bt=".&bt
-	setlocal bt=
+	setl bt=
    endif
    if settings != ""
    	let savedposn= savedposn.":setl ".settings."\<cr>"
@@ -316,20 +338,28 @@ fun! s:SavePosn(savewinhoriz)
   else
    let savedposn= savedposn.":sil! call cursor(".swline.",".swcol.")\<cr>"
   endif
-"  call Dret("SavePosn savedposn<".savedposn.">")
+"  call Dret("SavePosn savedposn<".savedposn."> : buf#".bufnr("%")." bh=".&bh." bl=".&bl." bt=".&bt)
   return savedposn
 endfun
 
 " ---------------------------------------------------------------------
 " s:RestorePosn: this function restores noname and scratch windows {{{2
 fun! s:RestorePosn(savedposn)
-"  call Dfunc("RestorePosn(savedposn<".a:savedposn.">)")
+"  call Dfunc("RestorePosn(savedposn<".a:savedposn.">) win#".winnr()." scb=".&scb)
   if &scb
    setl noscb
-   exe a:savedposn
+"   try " Decho
+    exe a:savedposn
+"   catch /^Vim\%((\a\+)\)\=:E/   " Decho
+"	call Decho("error occurred") " Decho
+"   endtry " Decho
    setl scb
   else
-   exe a:savedposn
+"   try " Decho
+    exe a:savedposn
+"   catch /^Vim\%((\a\+)\)\=:E/   " Decho
+"	call Decho("error occurred") " Decho
+"   endtry                        " Decho
   endif
 "  call Dret("RestorePosn")
 endfun
@@ -422,7 +452,7 @@ endfun
 "                where # is the current window number, for all windows.
 fun! s:SaveWinVars()
 "  call Dfunc("s:SaveWinVars()")
-  noautocmd windo let s:swv_{winnr()}= deepcopy(getwinvar(winnr(),""),1)
+  noautocmd windo let s:swv_{winnr()}= deepcopy(getwinvar(winnr(),""),1)|let s:swvmatches_{winnr()}= getmatches()
 "  call Dret("s:SaveWinVars")
 endfun
 
@@ -431,8 +461,7 @@ endfun
 fun! s:RestoreWinVars()
 "  call Dfunc("s:RestoreWinVars()")
 "  windo call Decho(string(s:swv_{winnr()}))
-  noautocmd windo if exists("s:swv_{winnr()}")     |sil! unlet s:key s:value     |for [s:key,s:value] in items(s:swv_{winnr()})|call setwinvar(winnr(),s:key,s:value)|exe "sil! unlet s:key s:value"|endfor|endif
-  noautocmd windo if exists("s:swv_{winnr()}")     |unlet s:swv_{winnr()}        |endif
+  noautocmd windo if exists("s:swv_{winnr()}")     |sil! unlet s:key s:value     |for [s:key,s:value] in items(s:swv_{winnr()})|call setwinvar(winnr(),s:key,s:value)|exe "sil! unlet s:key s:value"|endfor|call setmatches(s:swvmatches_{winnr()})|unlet s:swvmatches_{winnr()}|unlet s:swv_{winnr()}|endif
 "  call Dret("s:RestoreWinVars")
 endfun
 
@@ -442,14 +471,17 @@ endfun
 fun! s:SaveUserSettings()
 "  call Dfunc("s:SaveUserSettings()")
 
-  let s:keep_wfh    = &wfh
   let s:keep_hidden = &hidden
-  let s:keep_write  = &write
-  let s:keep_so     = &so
+  let s:keep_shm    = &shm
   let s:keep_siso   = &siso
+  let s:keep_so     = &so
   let s:keep_ss     = &ss
-  if has("xterm_clipboard")
+  let s:keep_wfh    = &wfh
+  let s:keep_write  = &write
+  if has("clipboard")
+"   call Decho("@* save    before: s:keep_star=".@*)
    let s:keep_star   = @*
+"   call Decho("@* save    after : s:keep_star=".@*)
   endif
   let s:keep_swf    = &swf
 
@@ -460,7 +492,7 @@ fun! s:SaveUserSettings()
     sil! set wmh=1 wmw=1
    endif
   endif
-  set hidden write nowfh so=0 siso=0 ss=0
+  set hidden write nowfh so=0 siso=0 ss=0 shm+=A
 "  call Dret("s:SaveUserSettings")
 endfun
 
@@ -470,13 +502,16 @@ fun! s:RestoreUserSettings()
 "  call Dfunc("s:RestoreUserSettings()")
 "  call Decho("restore user option settings")
   let &hidden= s:keep_hidden
-  let &write = s:keep_write
-  let &wfh   = s:keep_wfh
-  let &so    = s:keep_so
+  let &shm   = s:keep_shm
   let &siso  = s:keep_siso
+  let &so    = s:keep_so
   let &ss    = s:keep_ss
-  if has("xterm_clipboard") && exists("s:keep_star")
+  let &wfh   = s:keep_wfh
+  let &write = s:keep_write
+  if has("clipboard") && exists("s:keep_star")
+"   call Decho( "@* restore before: s:keep_star=".@*)
    let @*     = s:keep_star
+"   call Decho("@* restore after : s:keep_star=".@*)
   endif
   let &swf   = s:keep_swf
   if v:version < 603
@@ -505,28 +540,28 @@ endfun
 " ---------------------------------------------------------------------
 " s:RestoreWinSettings: restores all windows' local settings {{{2
 fun! s:RestoreWinSettings()
-"  call Dfunc("s:RestoreWinSettings()")
+"  call Dfunc("s:RestoreWinSettings() bh=".&bh." bt=".&bt." bl=".&bl)
   if exists("s:localoptlist") && !empty(s:localoptlist)
    let curwin= winnr()
    for localopt in s:localoptlist
-    exe 'noautocmd windo if exists("s:swv_'.localopt.'_{winnr()}")|let &'.localopt.'= s:swv_'.localopt.'_{winnr()}|unlet s:swv_'.localopt.'_{winnr()}|endif'
+    exe 'noautocmd windo if exists("s:swv_'.localopt.'_{winnr()}")|if &'.localopt.'!=# s:swv_'.localopt.'_{winnr()}|let &'.localopt.'= s:swv_'.localopt.'_{winnr()}|endif|unlet s:swv_'.localopt.'_{winnr()}|endif'
    endfor
    exe "noautocmd ".curwin."wincmd w"
   endif
-"  call Dret("s:RestoreWinSettings : &bt=".&bt)
+"  call Dret("s:RestoreWinSettings : bh=".&bh." bt=".&bt." bl=".&bl)
 endfun
 
 " ---------------------------------------------------------------------
 " s:RestoreOneWinSettings: assumes that s:SaveWinSettings() was called previously; this function restores the specified window's local settings {{{2
 fun! s:RestoreOneWinSettings(wnum)
-"  call Dfunc("s:RestoreOneWinSettings(wnum=".a:wnum.") s:swv_bt_".a:wnum."=".s:swv_bt_{a:wnum})
+"  call Dfunc("s:RestoreOneWinSettings(wnum=".a:wnum.") s:swv_bt_".a:wnum."=".s:swv_bt_{a:wnum}." bh=".&bh." bt=".&bt." bl=".&bl)
   if exists("s:localoptlist") && !empty(s:localoptlist)
    for localopt in s:localoptlist
 "    call Decho('windo if exists("s:swv_'.localopt.'_{a:wnum}")|let &'.localopt.'= s:swv_'.localopt.'_{a:wnum}|unlet s:swv_'.localopt.'_{a:wnum}|endif')
-    exe 'noautocmd windo if exists("s:swv_'.localopt.'_{a:wnum}")|let &'.localopt.'= s:swv_'.localopt.'_{a:wnum}|unlet s:swv_'.localopt.'_{a:wnum}|endif'
+    exe 'noautocmd windo if exists("s:swv_'.localopt.'_{a:wnum}")|if &'.localopt.'!=# s:swv_'.localopt.'_{a:wnum}|let &'.localopt.'= s:swv_'.localopt.'_{a:wnum}|endif|unlet s:swv_'.localopt.'_{a:wnum}|endif'
    endfor
   endif
-"  call Dret("s:RestoreOneWinSettings : &bt=".&bt)
+"  call Dret("s:RestoreOneWinSettings : bh=".&bh." bt=".&bt." bl=".&bl)
 endfun
 
 " =====================================================================
