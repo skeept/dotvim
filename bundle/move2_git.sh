@@ -2,6 +2,8 @@
 
 # I want to use git when it matters 
 
+THIS_SCRIPT="$0"
+
 
 function do_git2_()
 {
@@ -98,16 +100,16 @@ verbose_cmd=pwd
 
   if test -n "$git_folders"; then
     #parallel -j 20 "cd {}; echo \">>> git  >>> {} \" ; GIT_SSL_NO_VERIFY=true git pull origin master" ::: $git_folders
-    parallel -j $num_parallel "./move2_git.sh update_cmd git {}" ::: $git_folders
+    parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd git {}" ::: $git_folders
   fi
   if test -n "$hg_folders"; then
     #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
     #parallel -j 20 "${hg_cmd}" ::: $hg_folders
-    parallel -j $num_parallel "./move2_git.sh update_cmd hg {}" ::: $hg_folders
+    parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd hg {}" ::: $hg_folders
   fi
   if test -n "$bzr_folders"; then
     #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
-    parallel -j $num_parallel "./move2_git.sh update_cmd bzr {}" ::: $bzr_folders
+    parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd bzr {}" ::: $bzr_folders
   fi
 }
 
