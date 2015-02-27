@@ -1,9 +1,11 @@
 let work_settings=1
 
+let g:work = {}
+
 function! GetFoldLevel_Log(lnum)
   let numChars = g:numCharsFront
   let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
-  return flag?1:0
+  return flag ? 1 : 0
 endfunction
 
 if has("autocmd")
@@ -107,12 +109,12 @@ nnoremap glu :call JumpToUncovered()<CR>
       "\:call repeat#set("\<Plug>JumpToUncoveredMap")<CR>
 "nmap glu <Plug>JumpToUncoveredMap
 
-function! JumpToLoadedData()
+function! g:work.jumpToLoadedData()
   normal gg
   call search('Loaded Data informaton')
   normal zt
 endfunction
-nnoremap gli :call JumpToLoadedData()<CR>
+nnoremap gli :call g:work.jumpToLoadedData()<CR>
 
 function! JumpToStartGlobal()
   let flags = ''
