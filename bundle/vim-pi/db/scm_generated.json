@@ -4271,6 +4271,10 @@
     "type": "git",
     "url": "git://github.com/phongvcao/vim-stardict"
   },
+  "5121": {
+    "type": "git",
+    "url": "git://github.com/chrisbra/vim-diff-enhanced"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
