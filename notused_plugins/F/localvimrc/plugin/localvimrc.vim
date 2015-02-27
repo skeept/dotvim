@@ -583,9 +583,23 @@ function! s:LocalVimRCWritePersistent()
           endfor
 
           call s:LocalVimRCDebug(3, "write persistent data: " . string(l:serialized))
-          call writefile(l:serialized, s:localvimrc_persistence_file)
+
+          " first write backup file to avoid lost persistence information
+          " on write errors if partition is full. Done this way because
+          " write/rename approach causes permission problems with sudo.
+          let l:backup_name = s:localvimrc_persistence_file . "~"
+          let l:backup_content = readfile(s:localvimrc_persistence_file, "b")
+          if (writefile(l:backup_content, l:backup_name, "b") == 0)
+            if (writefile(l:serialized, s:localvimrc_persistence_file) == 0)
+              call delete(l:backup_name)
+            else
+              call s:LocalVimRCError("error while writing persistence file, backup stored in '" . l:backup_name . "'")
+            endif
+          else
+            call s:LocalVimRCError("unable to write persistence file backup '" . l:backup_name . "'")
+          endif
         else
-          call s:LocalVimRCDebug(1, "unable to write persistence file '" . s:localvimrc_persistence_file . "'")
+          call s:LocalVimRCError("unable to write persistence file '" . s:localvimrc_persistence_file . "'")
         endif
 
         " store persistence file checksum
@@ -635,7 +649,7 @@ endfunction
 " output error message
 "
 function! s:LocalVimRCError(text)
-  echohl ErrorMsg | echo "localvimrc: " . a:text | echohl None
+  echohl ErrorMsg | echom "localvimrc: " . a:text | echohl None
 endfunction
 
 " Function: s:LocalVimRCDebug(level, text) {{{2
