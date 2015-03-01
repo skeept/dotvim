@@ -242,6 +242,15 @@ cost.  You can disable the check with the following flag. >
   Note: Third party plugins that rely on this behavior will be affected. You
   will need to manually load them.
 
+Alternatively, if you want a minimalistic setup and would rather opt-in which
+extensions get loaded instead of disabling each individually, you can declare
+the following list variable: >
+  " an empty list disables all extensions
+  let g:airline_extensions = []
+
+  " or only load what you want
+  let g:airline_extensions = ['branch', 'tabline']
+<
 -------------------------------------                      *airline-default*
 The default extension understands all of the `g:` variables in the
 |airline-configuration| section, however it also has some more fine-tuned
@@ -428,9 +437,10 @@ eclim <https://eclim.org>
 * configure filename match rules to exclude from the tabline. >
   let g:airline#extensions#tabline#excludes = []
 <
-* configure how numbers are calculated in tab mode. >
+* configure how numbers are displayed in tab mode. >
   let g:airline#extensions#tabline#tab_nr_type = 0 " # of splits (default)
   let g:airline#extensions#tabline#tab_nr_type = 1 " tab number
+  let g:airline#extensions#tabline#tab_nr_type = 2 " splits and tab number
 <
 * enable/disable displaying tab number in tabs mode. >
   let g:airline#extensions#tabline#show_tab_nr = 1
