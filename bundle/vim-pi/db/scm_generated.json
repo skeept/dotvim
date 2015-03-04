@@ -4275,6 +4275,14 @@
     "type": "git",
     "url": "git://github.com/chrisbra/vim-diff-enhanced"
   },
+  "5123": {
+    "type": "git",
+    "url": "git://github.com/Igorjan94/codeforces.vim"
+  },
+  "5124": {
+    "type": "git",
+    "url": "git://github.com/alx741/vinfo"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
