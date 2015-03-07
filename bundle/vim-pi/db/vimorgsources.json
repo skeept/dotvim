@@ -3857,7 +3857,7 @@
 "oceanlight":{"archive_name":"oceanlight.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3753","version":"0.1","vim_script_nr":1176},
 "C_Syntax":{"archive_name":"cs.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3752","version":"0.9","vim_script_nr":1175},
 "Rhythmbox_Control_Plugin":{"archive_name":"rhythmbox-vim.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3750","version":"0.1","vim_script_nr":1174},
-"tComment":{"archive_name":"tcomment.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22948","version":"3.05","vim_script_nr":1173},
+"tComment":{"archive_name":"tcomment.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22982","version":"3.06","vim_script_nr":1173},
 "templates":{"archive_name":"templates.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22750","version":"d368246953","vim_script_nr":1172},
 "DetectIndent":{"archive_name":"detectindent-1.0.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3743","version":"1.0","vim_script_nr":1171},
 "Abc-Menu":{"archive_name":"abc-menu.txt","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3738","version":"0.9","vim_script_nr":1170},
