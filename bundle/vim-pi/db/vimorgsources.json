@@ -1723,7 +1723,7 @@
 "js-mask":{"archive_name":"js-mask-0.1.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14267","version":"0.1","vim_script_nr":3324},
 "lilypink":{"archive_name":"lilypink.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20978","version":"1.3","vim_script_nr":3323},
 "FTPDEV":{"archive_name":"FTPDEV_6.2.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18901","version":"6.2","vim_script_nr":3322},
-"VimCoder.jar":{"archive_name":"VimCoder-0.3.5.jar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19786","version":"0.3.5","vim_script_nr":3321},
+"VimCoder.jar":{"archive_name":"VimCoder-0.3.6.jar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22983","version":"0.3.6","vim_script_nr":3321},
 "vim-addon-xdebug":{"archive_name":"vim-addon-xdebug-0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14299","version":"0.2","vim_script_nr":3320},
 "unite-font":{"archive_name":"unite-font-1.4.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19797","version":"1.4","vim_script_nr":3319},
 "unite-colorscheme":{"archive_name":"unite-colorscheme-1.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15119","version":"1.3","vim_script_nr":3318},
