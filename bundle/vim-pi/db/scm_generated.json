@@ -4283,6 +4283,10 @@
     "type": "git",
     "url": "git://github.com/alx741/vinfo"
   },
+  "5126": {
+    "type": "git",
+    "url": "git://github.com/haya14busa/vim-snoopy"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
