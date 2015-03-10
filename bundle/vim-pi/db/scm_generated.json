@@ -4287,6 +4287,10 @@
     "type": "git",
     "url": "git://github.com/haya14busa/vim-snoopy"
   },
+  "5128": {
+    "type": "git",
+    "url": "git://github.com/tell-k/vim-quick-radon"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
