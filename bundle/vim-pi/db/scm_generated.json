@@ -4291,6 +4291,10 @@
     "type": "git",
     "url": "git://github.com/tell-k/vim-quick-radon"
   },
+  "5129": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-textobj-functioncall"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
