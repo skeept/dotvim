@@ -73,7 +73,7 @@ function! SetupVAM()
   VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
   VAMAddToActiveAddons vimproc tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
-  VAMAddToActiveAddons UltiSnips
+  VAMAddToActiveAddons UltiSnips startify
   VAMAddToActiveAddons argumentative projectionist
   VAMAddToActiveAddons Syntastic powershell fugitive
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
