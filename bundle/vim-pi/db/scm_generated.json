@@ -4295,6 +4295,10 @@
     "type": "git",
     "url": "git://github.com/machakann/vim-textobj-functioncall"
   },
+  "5130": {
+    "type": "git",
+    "url": "git://github.com/xolox/vim-tlv-mode"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
