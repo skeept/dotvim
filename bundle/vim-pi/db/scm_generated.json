@@ -4299,6 +4299,10 @@
     "type": "git",
     "url": "git://github.com/xolox/vim-tlv-mode"
   },
+  "5131": {
+    "type": "git",
+    "url": "git://github.com/degyves/VimPyServer"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
