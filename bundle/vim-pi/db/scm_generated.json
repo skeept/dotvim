@@ -4303,6 +4303,22 @@
     "type": "git",
     "url": "git://github.com/degyves/VimPyServer"
   },
+  "5132": {
+    "type": "git",
+    "url": "git://github.com/dbeniamine/vim-mail"
+  },
+  "5133": {
+    "type": "git",
+    "url": "git://github.com/dbeniamine/vim-compile"
+  },
+  "5134": {
+    "type": "git",
+    "url": "git://github.com/dbeniamine/todo.txt-vim"
+  },
+  "5135": {
+    "type": "git",
+    "url": "git://github.com/kbairak/ColumnTags.vim"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
