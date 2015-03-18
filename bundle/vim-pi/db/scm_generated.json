@@ -4319,6 +4319,10 @@
     "type": "git",
     "url": "git://github.com/kbairak/ColumnTags.vim"
   },
+  "5136": {
+    "type": "git",
+    "url": "git://github.com/niboan/plugconf"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
