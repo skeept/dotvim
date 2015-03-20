@@ -4323,6 +4323,14 @@
     "type": "git",
     "url": "git://github.com/niboan/plugconf"
   },
+  "5137": {
+    "type": "git",
+    "url": "git://github.com/cloudformdesign/vim.ergonomic"
+  },
+  "5140": {
+    "type": "git",
+    "url": "git://github.com/aquach/vim-http-client"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
