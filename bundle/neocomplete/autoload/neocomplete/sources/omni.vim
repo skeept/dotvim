@@ -188,10 +188,8 @@ function! s:set_complete_results_pos(funcs, cur_text) "{{{
 
     " Save pos.
     let pos = getpos('.')
-    let line = getline('.')
 
     try
-      silent! call setline('.', s:get_current_line())
       let complete_pos = call(omnifunc, [1, ''])
     catch
       call neocomplete#print_error(
@@ -201,9 +199,8 @@ function! s:set_complete_results_pos(funcs, cur_text) "{{{
       let complete_pos = -1
     finally
       if getpos('.') != pos
-        silent! call setpos('.', pos)
+        call setpos('.', pos)
       endif
-      silent! call setline('.', line)
     endtry
 
     if complete_pos < 0
@@ -231,11 +228,9 @@ function! s:set_complete_results_words(complete_results) "{{{
     endif
 
     let pos = getpos('.')
-    let line = getline('.')
 
     try
-      silent! call cursor(0, result.complete_pos)
-      silent! call setline('.', s:get_current_line())
+      call cursor(0, result.complete_pos)
       let ret = call(omnifunc, [0, result.complete_str])
       let list = type(ret) == type([]) ? ret : ret.words
     catch
@@ -245,10 +240,7 @@ function! s:set_complete_results_words(complete_results) "{{{
       call neocomplete#print_error(v:exception)
       let list = []
     finally
-      if getpos('.') != pos
-        silent! call setpos('.', pos)
-      endif
-      silent! call setline('.', line)
+      call setpos('.', pos)
     endtry
 
     let list = s:get_omni_list(list)
@@ -289,10 +281,6 @@ function! s:get_candidates(complete_results, complete_pos, complete_str) "{{{
   endfor
 
   return candidates
-endfunction"}}}
-function! s:get_current_line() abort "{{{
-  return (col('.') == 1) ? '' :
-        \ substitute(getline('.')[ : col('.')-1], '\h\w*$', '', '')
 endfunction"}}}
 
 let &cpo = s:save_cpo

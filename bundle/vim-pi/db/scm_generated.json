@@ -4331,6 +4331,10 @@
     "type": "git",
     "url": "git://github.com/aquach/vim-http-client"
   },
+  "5141": {
+    "type": "git",
+    "url": "git://github.com/Cofyc/vim-uncrustify"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
