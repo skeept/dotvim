@@ -4335,6 +4335,10 @@
     "type": "git",
     "url": "git://github.com/Cofyc/vim-uncrustify"
   },
+  "5144": {
+    "type": "git",
+    "url": "git://github.com/KabbAmine/gulp-vim"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
