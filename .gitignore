@@ -45,3 +45,4 @@ test/cur_color.vim
 
 notused_plugins/ultisnips/
 frawor/test/
+__pycache__/
