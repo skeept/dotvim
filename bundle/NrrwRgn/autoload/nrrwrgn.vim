@@ -15,7 +15,6 @@
 " Functions:
 
 let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
-
 let s:window_type = { "source": 0, "target": 1}
 
 fun! <sid>WarningMsg(msg) abort "{{{1
@@ -87,7 +86,12 @@ endfun
 
 fun! <sid>NrrwRgnWin(bang) abort "{{{1
 	" Create new scratch window
-	let bufname = matchstr(substitute(expand('%:t:r'), ' ', '_', 'g'), '^.\{0,8}')
+	if has_key(s:nrrw_rgn_lines, s:instn) &&
+		\ has_key(s:nrrw_rgn_lines[s:instn], 'multi')
+		let bufname = 'multi'
+	else
+		let bufname = matchstr(substitute(expand('%:t:r'), ' ', '_', 'g'), '^.\{0,8}')
+	endif
 	let nrrw_winname = s:nrrw_winname. '_'. bufname . '_'. s:instn
 	let nrrw_win = bufwinnr('^'.nrrw_winname.'$')
 	if nrrw_win != -1
@@ -611,7 +615,11 @@ fun! <sid>HideNrrwRgnLines() abort "{{{1
 endfun
 
 fun! <sid>ReturnCommentFT() abort "{{{1
-	return substitute(&l:commentstring, '%s', ' ', '')
+	if !empty(&l:commentstring)
+		return substitute(&l:commentstring, '%s', ' ', '')
+	else
+		return "# "
+	endif
 endfun
 
 fun! <sid>WidenRegionMulti(content, instn) abort "{{{1
@@ -622,6 +630,8 @@ fun! <sid>WidenRegionMulti(content, instn) abort "{{{1
 		return
 	endif
 	" we are not yet in the correct buffer, start loading it
+	let _hid  = &hidden
+	set hidden
 	let c_win = winnr()
 	let c_buf = bufnr('')
 	" let's pretend, splitting windows is always possible .... :(
@@ -634,60 +644,64 @@ fun! <sid>WidenRegionMulti(content, instn) abort "{{{1
 			call add(_list, printf("let &l:%s=%s", item, get(g:, '&l:'.item)))
 		endfor
 		setl ma noro
-
-	let output= []
-	let list  = []
-	let [c_s, c_e] =  <sid>ReturnComments()
-	let lastline = line('$')
-	" We must put the regions back from top to bottom,
-	" otherwise, changing lines in between messes up the list of lines that
-	" still need to put back from the narrowed buffer to the original buffer
-	for key in sort(keys(s:nrrw_rgn_lines[a:instn].multi[buf]), (s:numeric_sort ? 'n' :
-			\ "<sid>CompareNumbers"))
-		let adjust   = line('$') - lastline
-		let range    = s:nrrw_rgn_lines[a:instn].multi[buf][key]
-		let last     = (len(range)==2) ? range[1] : range[0]
-		let first    = range[0]
-		let pattern  = printf("%s %%s %s %s %s%s", c_s, "NrrwRgn".key, "buffer:", simplify(bufname(buf+0)), c_e)
-		let indexs   = index(a:content, printf(pattern, 'Start')) + 1
-		let indexe   = index(a:content, printf(pattern, 'End')) - 1
-		if indexs <= 0 || indexe < -1
-			call s:WarningMsg("Skipping Region ". key)
-			continue
-		endif
-		" Adjust line numbers. Changing the original buffer, might also 
-		" change the regions we have remembered. So we must adjust these
-		" numbers.
-		" This only works, if we put the regions from top to bottom!
-		let first += adjust
-		let last  += adjust
-		if last == line('$') &&  first == 1
-			let delete_last_line=1
-		else
-			let delete_last_line=0
-		endif
-		exe ':silent :'. first. ','. last. 'd _'
-		call append((first-1), a:content[indexs : indexe])
-		" Recalculate the start and end positions of the narrowed window
-		" so subsequent calls will adjust the region accordingly
-		let  last = first + len(a:content[indexs : indexe]) - 1
-		if last > line('$')
-			let last = line('$')
-		endif
-		if !has_key(s:nrrw_rgn_lines[a:instn].multi, 'single')
-			" original narrowed buffer is going to be closed
-			" so don't renew the matches
-			call <sid>AddMatches(<sid>GeneratePattern([first, 0 ],
-						\ [last, 0], 'V'), a:instn)
-		endif
-		if delete_last_line
-			silent! $d _
+		let output= []
+		let list  = []
+		let [c_s, c_e] =  <sid>ReturnComments()
+		let lastline = line('$')
+		" We must put the regions back from top to bottom,
+		" otherwise, changing lines in between messes up the
+		" list of lines that still need to put back from the
+		" narrowed buffer to the original buffer
+		for key in sort(keys(s:nrrw_rgn_lines[a:instn].multi[buf]),
+			\ (s:numeric_sort ? 'n' : "<sid>CompareNumbers"))
+			let adjust   = line('$') - lastline
+			let range    = s:nrrw_rgn_lines[a:instn].multi[buf][key]
+			let last     = (len(range)==2) ? range[1] : range[0]
+			let first    = range[0]
+			let pattern  = printf("%s %%s %s %s %s%s", c_s, "NrrwRgn".key,
+					\ "buffer:", simplify(bufname(buf+0)), c_e)
+			let indexs   = index(a:content, printf(pattern, 'Start')) + 1
+			let indexe   = index(a:content, printf(pattern, 'End')) - 1
+			if indexs <= 0 || indexe < -1
+				call s:WarningMsg("Skipping Region ". key)
+				continue
+			endif
+			" Adjust line numbers. Changing the original buffer, might also 
+			" change the regions we have remembered. So we must adjust these
+			" numbers.
+			" This only works, if we put the regions from top to bottom!
+			let first += adjust
+			let last  += adjust
+			if last == line('$') &&  first == 1
+				let delete_last_line=1
+			else
+				let delete_last_line=0
+			endif
+			exe ':silent :'. first. ','. last. 'd _'
+			call append((first-1), a:content[indexs : indexe])
+			" Recalculate the start and end positions of the narrowed window
+			" so subsequent calls will adjust the region accordingly
+			let  last = first + len(a:content[indexs : indexe]) - 1
+			if last > line('$')
+				let last = line('$')
+			endif
+			if !has_key(s:nrrw_rgn_lines[a:instn].multi, 'single')
+				" original narrowed buffer is going to be closed
+				" so don't renew the matches
+				call <sid>AddMatches(<sid>GeneratePattern([first, 0 ],
+							\ [last, 0], 'V'), a:instn)
+			endif
+			if delete_last_line
+				silent! $d _
 			endif
 		endfor
 		for item in _list
 			exe item
 		endfor
 	endfor
+	if !_hid
+		set nohidden
+	endif
 	" remove scratch window
 	exe ":noa ".s_win."wincmd c"
 endfun
@@ -757,11 +771,13 @@ fun! <sid>NrrwSettings(on) abort "{{{1
 	if a:on
 		setl noswapfile buftype=acwrite foldcolumn=0
 		setl nobuflisted
-		let instn = matchstr(bufname(''), '_\zs\d\+')+0
-		if  !&hidden && !has_key(s:nrrw_rgn_lines[instn], "single")
-			setl bufhidden=wipe
-		else
-			setl bufhidden=hide
+		let instn = matchstr(bufname(''), '_\zs\d\+$')+0
+		if has_key(s:nrrw_rgn_lines, 'instn')
+			if  !&hidden && !has_key(s:nrrw_rgn_lines[instn], "single")
+				setl bufhidden=wipe
+			else
+				setl bufhidden=hide
+			endif
 		endif
 	else
 		setl swapfile buftype= bufhidden= buflisted
@@ -1006,13 +1022,14 @@ fun! nrrwrgn#NrrwRgnDoMulti(...) abort "{{{1
 			let start = lines[0]
 			let end   = len(lines)==2 ? lines[1] : lines[0]
 			if !bang
-				call <sid>AddMatches(<sid>GeneratePattern([start,0], [end,0], 'V'),
-						\s:instn)
+				call <sid>AddMatches(<sid>GeneratePattern([start,0],
+					\ [end,0], 'V'), s:instn)
 			endif
-			call add(buffer, c_s.' Start NrrwRgn'.nr.c_e.' buffer: '.simplify(bufname("")))
+			call add(buffer, c_s.' Start NrrwRgn'.nr.' buffer: '.simplify(bufname("")).c_e)
 			let buffer = buffer +
 					\ getline(start,end) +
-					\ [c_s.' End NrrwRgn'.nr.c_e. ' buffer: '.simplify(bufname("")), '']
+					\ [c_s.' End NrrwRgn'.nr. ' buffer: '.
+					\ simplify(bufname("")).c_e, '']
 		endfor
 	endfor
 	if bufnr('') !=# orig_buf
