@@ -3275,6 +3275,10 @@
     "type": "git",
     "url": "git://github.com/gcmt/surfer.vim"
   },
+  "4705": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
   "4706": {
     "type": "git",
     "url": "git://github.com/dirkwallenstein/vim-excess-lines"
@@ -4338,6 +4342,10 @@
   "5144": {
     "type": "git",
     "url": "git://github.com/KabbAmine/gulp-vim"
+  },
+  "5146": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
   },
   "521": {
     "type": "git",
