@@ -371,6 +371,10 @@
     "type": "hg",
     "url": "https://bitbucket.org/embear/foldsearch"
   },
+  "233": {
+    "type": "hg",
+    "url": "https://bitbucket.org/MrDubya/print_bw"
+  },
   "2335": {
     "type": "git",
     "url": "git://github.com/kana/vim-metarw"

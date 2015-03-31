@@ -4807,7 +4807,7 @@
 "SourceSafe_Integration":{"archive_name":"srcsafe.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=2195","version":"1.16","vim_script_nr":236},
 "Naught_n_crosses":{"archive_name":"X-and-O.vim","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=652","version":"0.1","vim_script_nr":235},
 "std_c.zip":{"archive_name":"std_c.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5856","version":"12.5","vim_script_nr":234},
-"print_bw.zip":{"archive_name":"print_bw.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23089","version":"1.1","vim_script_nr":233},
+"print_bw.zip":{"archive_name":"print_bw.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23102","version":"1.1a","vim_script_nr":233},
 "spell":{"archive_name":"spell.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4163","version":"1.2","vim_script_nr":232},
 "Smart_Tabs":{"archive_name":"ctab.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14989","version":"2.6","vim_script_nr":231},
 "Brace_Complete_for_CC":{"archive_name":"complete.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=639","version":"0.2","vim_script_nr":230},
