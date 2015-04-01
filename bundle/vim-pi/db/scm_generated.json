@@ -1659,6 +1659,10 @@
     "type": "git",
     "url": "git://github.com/veloce/vim-aldmeris"
   },
+  "3678": {
+    "type": "git",
+    "url": "git://github.com/cybertk/vim-syntax-rfc5424"
+  },
   "3684": {
     "type": "git",
     "url": "git://github.com/abadcafe/ctags_cache"
@@ -1928,12 +1932,12 @@
     "url": "git://github.com/Rykka/easydigraph.vim"
   },
   "3883": {
-    "type": "hg",
-    "url": "https://code.google.com/p/vim-plugin-autosess"
+    "type": "git",
+    "url": "git://github.com/powerman/vim-plugin-autosess"
   },
   "3885": {
-    "type": "hg",
-    "url": "https://code.google.com/p/vim-plugin-ruscmd"
+    "type": "git",
+    "url": "git://github.com/powerman/vim-plugin-ruscmd"
   },
   "3886": {
     "type": "git",
@@ -1960,8 +1964,8 @@
     "url": "git://github.com/kana/vim-gf-diff"
   },
   "3893": {
-    "type": "hg",
-    "url": "https://code.google.com/p/vim-plugin-viewdoc"
+    "type": "git",
+    "url": "git://github.com/powerman/vim-plugin-viewdoc"
   },
   "3896": {
     "type": "hg",
@@ -4350,6 +4354,10 @@
   "5146": {
     "type": "git",
     "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
+  "5148": {
+    "type": "git",
+    "url": "git://github.com/guiniol/vim-showspaces"
   },
   "521": {
     "type": "git",
