@@ -4363,6 +4363,14 @@
     "type": "git",
     "url": "git://github.com/haya14busa/underscore.vim"
   },
+  "5150": {
+    "type": "git",
+    "url": "git://github.com/aquach/vim-mediawiki-editor"
+  },
+  "5151": {
+    "type": "git",
+    "url": "git://github.com/Quramy/tsuquyomi"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
