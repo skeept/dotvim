@@ -4375,6 +4375,22 @@
     "type": "git",
     "url": "git://github.com/caglartoklu/createfilenext.vim"
   },
+  "5153": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
+  "5154": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
+  "5155": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
+  "5156": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

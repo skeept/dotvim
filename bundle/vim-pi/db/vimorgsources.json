@@ -1,6 +1,10 @@
 {
+"AtelierEstuary":{"archive_name":"base16-atelierestuary.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23140","version":"1.0","vim_script_nr":5156},
+"AtelierSavanna":{"archive_name":"base16-ateliersavanna.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23139","version":"1.0","vim_script_nr":5155},
+"AtelierCave":{"archive_name":"base16-ateliercave.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23138","version":"1.0","vim_script_nr":5154},
+"AtelierPlateau":{"archive_name":"base16-atelierplateau.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23137","version":"1.0","vim_script_nr":5153},
 "createfilenext":{"archive_name":"createfilenext.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23135","version":"0.1","vim_script_nr":5152},
-"tsuquyomi":{"archive_name":"tsuquyomi-0.2.2.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23131","version":"0.2.2","vim_script_nr":5151},
+"tsuquyomi":{"archive_name":"tsuquyomi-0.3.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23136","version":"0.3.0","vim_script_nr":5151},
 "vim-mediawiki-editor":{"archive_name":"vim-mediawiki-editor-1.0.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23120","version":"1.0","vim_script_nr":5150},
 "underscore":{"archive_name":"underscore.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23112","version":"1.0.0","vim_script_nr":5149},
 "ShowSpaces":{"archive_name":"vim-showspaces-1.0.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23105","version":"1.0","vim_script_nr":5148},
