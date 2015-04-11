@@ -323,6 +323,10 @@
     "type": "git",
     "url": "git://github.com/lxmzhv/vim"
   },
+  "2204": {
+    "type": "git",
+    "url": "https://bitbucket.org/mortonfox/twitvim"
+  },
   "2227": {
     "type": "git",
     "url": "git://github.com/mjbrownie/browser.vim"

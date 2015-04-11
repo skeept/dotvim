@@ -85,7 +85,13 @@ USAGE						*unite-usage*
 >
 	:Unite -input=foo file
 <
-
+	You don't have to use |:execute| for dynamic arguments.
+	You can use evaluation cmdline by ``.
+	Note: In the evaluation, The special characters(spaces,  "\" and ":")
+	are escaped automatically.
+>
+        :Unite -buffer-name=search%`bufnr('%')` line:forward:wrap<CR>
+<
 Invoking unite will create a horizontal split buffer by default.
 >
 	:Unite file
@@ -517,16 +523,11 @@ g:unite_source_rec_async_command
 		" Using ag as recursive command.
 		let g:unite_source_rec_async_command =
                 \ 'ag --follow --nocolor --nogroup --hidden -g ""'
-
-		" Using pt as recursive command.
-		let g:unite_source_rec_async_command =
-		\ 'pt --nocolor --nogroup -g .'
 <
 		The default value is "find" and the args.
 		Because, "find" command is fastest.
 		Note: In windows environment, you must install file list
 		command and specify the variable.
-
 
 					*g:unite_source_rec_git_command*
 g:unite_source_rec_git_command
@@ -2071,7 +2072,7 @@ file_rec/async	Similar to |unite-source-file_rec|, but get files asynchronously.
 		caching will be disabled.
 
 		Source arguments:
-		1. the search directory.
+		1. the target directories splitted by newlines.
 
 						*unite-source-file_rec/neovim*
 file_rec/neovim	Similar to |unite-source-file_rec|, but get files
@@ -2083,7 +2084,7 @@ file_rec/neovim	Similar to |unite-source-file_rec|, but get files
 		update its cache.
 
 		Source arguments:
-		1. the search directory.
+		1. the target directories splitted by newlines.
 
 						*unite-source-file_rec/git*
 file_rec/git	Similar to |unite-source-file_rec|, but get files by "git
@@ -2228,7 +2229,7 @@ grep		Nominates "grep" command output as candidates.
 		http://github.com/Shougo/vimproc
 
 		Source arguments:
-		1. the target directory.
+		1. the target directories splitted by newlines.
 		2. "grep" options.
 		3. the narrowing pattern (if you omit it, |unite-options-input|
 		or input prompt is used).
@@ -2840,7 +2841,6 @@ Opens a file into a new buffer.  This kind extends |unite-action-openable| and
 	rename		Change the file name.
 	exrename	Batch rename selected files.
 	grep		Grep the files.
-	grep_directory	Grep the files in the directories.
 	wunix		Write by unix fileformat.
 	read		|:read| files. It is useful to insert template files.
 	diff		diff with the other candidate or current buffer.
