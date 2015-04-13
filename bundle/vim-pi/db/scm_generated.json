@@ -4283,6 +4283,10 @@
     "type": "git",
     "url": "git://github.com/ryanoasis/vim-webdevicons"
   },
+  "5115": {
+    "type": "git",
+    "url": "https://bitbucket.org/vappolinario/vim-fixprotocol"
+  },
   "5117": {
     "type": "git",
     "url": "git://github.com/phongvcao/vim-stardict"
