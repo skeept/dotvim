@@ -4399,6 +4399,10 @@
     "type": "git",
     "url": "git://github.com/atelierbram/vim-colors_atelier-schemes"
   },
+  "5157": {
+    "type": "git",
+    "url": "git://github.com/Data-Statiker/VIM-TREEMAP"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

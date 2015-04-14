@@ -1,4 +1,5 @@
 {
+"Treemap":{"archive_name":"treemap.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23170","version":"0.7","vim_script_nr":5157},
 "AtelierEstuary":{"archive_name":"base16-atelierestuary.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23140","version":"1.0","vim_script_nr":5156},
 "AtelierSavanna":{"archive_name":"base16-ateliersavanna.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23139","version":"1.0","vim_script_nr":5155},
 "AtelierCave":{"archive_name":"base16-ateliercave.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23138","version":"1.0","vim_script_nr":5154},
