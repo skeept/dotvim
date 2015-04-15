@@ -185,6 +185,7 @@ function! neocomplete#is_enabled() "{{{
 endfunction"}}}
 function! neocomplete#is_locked(...) "{{{
   return neocomplete#is_cache_disabled() || &paste
+        \ || (&t_Co != '' && &t_Co < 8)
         \ || g:neocomplete#disable_auto_complete
 endfunction"}}}
 function! neocomplete#is_cache_disabled() "{{{
@@ -234,10 +235,10 @@ function! neocomplete#within_comment() "{{{
   return neocomplete#get_current_neocomplete().within_comment
 endfunction"}}}
 function! neocomplete#print_error(string) "{{{
-  echohl Error | echomsg a:string | echohl None
+  echohl Error | echomsg '[neocomplete] ' . a:string | echohl None
 endfunction"}}}
 function! neocomplete#print_warning(string) "{{{
-  echohl WarningMsg | echomsg a:string | echohl None
+  echohl WarningMsg | echomsg '[neocomplete] ' . a:string | echohl None
 endfunction"}}}
 function! neocomplete#head_match(checkstr, headstr) "{{{
   let checkstr = &ignorecase ?

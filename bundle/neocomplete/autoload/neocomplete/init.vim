@@ -44,9 +44,9 @@ function! neocomplete#init#enable() "{{{
   call neocomplete#init#_sources(get(g:neocomplete#sources,
         \ neocomplete#get_context_filetype(), ['_']))
 
-  doautocmd <nomodeline> neocomplete InsertEnter
-
   let s:is_enabled = 1
+
+  doautocmd <nomodeline> neocomplete InsertEnter
 endfunction"}}}
 
 function! neocomplete#init#disable() "{{{
@@ -137,6 +137,12 @@ function! neocomplete#init#_others() "{{{
     call neocomplete#print_error(output)
     call neocomplete#print_error(
           \ 'Detected set paste! Disabled neocomplete.')
+  endif
+
+  " Detect poor color
+  if &t_Co != '' && &t_Co < 8
+    call neocomplete#print_error(
+          \ 'Your terminal color is very limited. Disabled neocomplete.')
   endif
 
   command! -nargs=0 -bar NeoCompleteDisable
