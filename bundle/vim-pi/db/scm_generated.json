@@ -4403,6 +4403,10 @@
     "type": "git",
     "url": "git://github.com/Data-Statiker/VIM-TREEMAP"
   },
+  "5158": {
+    "type": "git",
+    "url": "git://github.com/Data-Statiker/VIM-XML"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
