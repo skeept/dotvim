@@ -177,7 +177,7 @@ class Swap(object):
 
         tfile = tempfile.NamedTemporaryFile()
         name = tfile.name
-        cmd = u'{0} -X -u NONE -r -c"w! {1}|q" {2}'.format(EDITOR, name, self.swap)
+        cmd = u'{0} -X -u NONE -r -c"w! {1}|q" "{2}"'.format(EDITOR, name, self.swap)
         exit = subprocess.call(cmd, shell=True)
         if exit != os.EX_OK:
             e = SwapDecodeError(swap.swap)
@@ -251,8 +251,7 @@ if __name__ == '__main__':
         '-a', '--ask',
         dest='ask',
         action='store_true',
-        help='ask before deleting swap files which do not '
-             'differ from the associated file.',
+        help='ask before deleting any swap files.'
     )
     args = parser.parse_args(sys.argv[1:])
     if not hasattr(args, 'directories'):
@@ -263,7 +262,10 @@ if __name__ == '__main__':
 
     swaps = defaultdict(list)
     _swaps = []
-    swap_re = re.compile('\.sw[a-z]+$')
+
+    # Note: this will skip .swf files as these are usually Flash content
+    # TODO: print some warning when a *.swf file is found
+    swap_re = re.compile('\.sw[a-eg-z]+$')
     for dir_ in args.directories:
         if args.recursive:
             os.chdir(os.path.abspath(dir_))
@@ -340,14 +342,16 @@ if __name__ == '__main__':
 
             if not swap.is_modified:
                 if args.ask:
-                    inp = input('The swap file "{0}" and "{1}" do not differ.'
-                                ' Do you want to delete it?  [Y/N]\n'
+                    inp = input('The swap file "{0}" and "{1}" have the same content.'
+                                ' Do you want to delete "{0}"?  [Y/N]\n'
                                 .format(os.path.basename(swap._swap),
                                         os.path.basename(swap.file_name))
                                 )
                     inp = inp.lower()
                     if inp in ('y', 'yes'):
                         swap.remove()
+                    else:
+                        print('Skipping removal')
                 else:
                     print(u'Deleting "{0}" swap file (matching the content)'
                           .format(swap))
@@ -371,6 +375,8 @@ if __name__ == '__main__':
                         swap.remove()
                         delete = True
                         break
+                    else:
+                        print('Skipping removal')
         if delete and sws:
             print(u'Deleting swap files:')
             for swap in sws:
