@@ -53,10 +53,15 @@ class StdOut(object):
 
 
     def write(self, s):
+        if sys.stdout.isatty():
+            default_encoding = sys.stdout.encoding
+        else:
+            default_encoding = locale.getpreferredencoding()
+
         if isinstance(s, unicode):
-            s = s.encode(self.encoding)
+            s = s.encode(default_encoding)
         if isinstance(s, bytes):
-            s = s.decode(self.encoding)
+            s = s.decode(default_encoding)
         sys.__stdout__.write(s)
 
 
@@ -263,9 +268,8 @@ if __name__ == '__main__':
     swaps = defaultdict(list)
     _swaps = []
 
-    # Note: this will skip .swf files as these are usually Flash content
-    # TODO: print some warning when a *.swf file is found
-    swap_re = re.compile('\.sw[a-eg-z]+$')
+    # Note: also find .swf files
+    swap_re = re.compile('(\.[^/]+)?\.sw[a-z]+$')
     for dir_ in args.directories:
         if args.recursive:
             os.chdir(os.path.abspath(dir_))

@@ -3937,7 +3937,7 @@
   },
   "4981": {
     "type": "git",
-    "url": "git://github.com/sergey-vlasov/JustDo.vim"
+    "url": "git://github.com/noscript/JustDo.vim"
   },
   "4983": {
     "type": "git",
@@ -4410,6 +4410,14 @@
   "5159": {
     "type": "git",
     "url": "git://github.com/m42e/vim-gcov-marker"
+  },
+  "5160": {
+    "type": "git",
+    "url": "git://github.com/google/vim-colorscheme-primary"
+  },
+  "5161": {
+    "type": "git",
+    "url": "git://github.com/HerringtonDarkholme/yats.vim"
   },
   "521": {
     "type": "git",
