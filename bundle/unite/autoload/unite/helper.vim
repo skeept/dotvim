@@ -192,13 +192,16 @@ endfunction"}}}
 function! unite#helper#parse_project_bang(args) "{{{
   let args = filter(copy(a:args), "v:val != '!'")
   if empty(args)
-    let args = ['']
+    return []
   endif
 
-  if get(a:args, 0, '') == '!'
+  if a:args[0] == '!'
     " Use project directory.
     let args[0] = unite#util#path2project_directory(args[0], 1)
   endif
+
+  let args[0] = unite#util#substitute_path_separator(
+        \ fnamemodify(unite#util#expand(args[0]), ':p'))
 
   return args
 endfunction"}}}
@@ -360,15 +363,15 @@ function! unite#helper#call_filter(filter_name, candidates, context) "{{{
 endfunction"}}}
 function! unite#helper#call_source_filters(filters, candidates, context, source) "{{{
   let candidates = a:candidates
-  for Filter in a:filters
-    if type(Filter) == type('')
+  for l:Filter in a:filters
+    if type(l:Filter) == type('')
       let candidates = unite#helper#call_filter(
-            \ Filter, candidates, a:context)
+            \ l:Filter, candidates, a:context)
     else
-      let candidates = call(Filter, [candidates, a:context], a:source)
+      let candidates = call(l:Filter, [candidates, a:context], a:source)
     endif
 
-    unlet Filter
+    unlet l:Filter
   endfor
 
   return candidates

@@ -15,7 +15,7 @@ except ImportError:
 
 
 def no_jedi_warning():
-    vim.command('echoerr "Please install Jedi if you want to use jedi_vim."')
+    vim.command('echohl WarningMsg | echom "Please install Jedi if you want to use jedi_vim." | echohl None')
 
 
 def echo_highlight(msg):
@@ -218,7 +218,7 @@ def goto(is_definition=False, is_related_name=False, no_output=False):
                     echo_highlight("Cannot get the definition of Python keywords.")
                 else:
                     echo_highlight("Builtin modules cannot be displayed (%s)."
-                                   % d.module_path)
+                                   % d.desc_with_module)
             else:
                 if d.module_path != vim.current.buffer.name:
                     result = new_buffer(d.module_path)
@@ -280,7 +280,7 @@ def clear_call_signatures():
     # 2. Actually replace the line and redo the status quo.
     py_regex = r'%sjedi=([0-9]+), (.*?)%s.*?%sjedi%s'.replace('%s', e)
     for i, line in enumerate(vim.current.buffer):
-        match = re.search(r'%s' % py_regex, line)
+        match = re.search(py_regex, line)
         if match is not None:
             # Some signs were added to minimize syntax changes due to call
             # signatures. We have to remove them again. The number of them is

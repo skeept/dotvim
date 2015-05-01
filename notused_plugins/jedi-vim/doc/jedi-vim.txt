@@ -17,6 +17,7 @@ Contents				*jedi-vim-contents*
     2.1. Manually			|jedi-vim-installation-manually|
     2.2. Using Pathogen			|jedi-vim-installation-pathogen|
     2.3. Using Vundle			|jedi-vim-installation-vundle|
+    2.4. Installing from Repositories	|jedi-vim-installation-repos|
 3. Supported Python features		|jedi-vim-support|
 4. Usage				|jedi-vim-usage|
 5. Mappings				|jedi-vim-keybindings|
@@ -145,6 +146,13 @@ Pathogen simplifies installation considerably.
     :PluginInstall
 
 Help tags are generated automatically, so you should be good to go.
+
+------------------------------------------------------------------------------
+2.4. Installing from Repositories	*jedi-vim-installation-repos*
+
+Some Linux distributions have jedi-vim packages in their official 
+repositories. On Arch Linux, install vim-jedi. On Debian (8+) or Ubuntu 
+(14.04+) install vim-python-jedi.
 
 ==============================================================================
 3. Supported Python features		*jedi-vim-support*
@@ -328,9 +336,11 @@ Default: 1 (Perform automatic initialization)
 ------------------------------------------------------------------------------
 6.2. `g:jedi#auto_vim_configuration`	*g:jedi#auto_vim_configuration*
 
-Jedi-vim sets 'completeopt' to `menuone,longest,preview` by default. It also
-remaps <Ctrl-C> to <Esc> in insert mode. If you want to keep your own
-configuration, disable this setting.
+Jedi-vim sets 'completeopt' to `menuone,longest,preview` by default, if
+'completeopt' is not changed from Vim's default.
+It also remaps <Ctrl-C> to <Esc> in insert mode.
+
+If you want to keep your own configuration, disable this setting.
 
 Options: 0 or 1
 Default: 1 (Set 'completeopt' and mapping as described above)
@@ -454,7 +464,7 @@ or set directly using this function, which has the same name as the variable:
 Function: `jedi#force_py_version(py_version)`
 
 Options: 2 or 3
-Default: 2
+Default: "auto" (will use sys.version_info from "python" in your $PATH)
 
 ==============================================================================
 7. Testing				*jedi-vim-testing*

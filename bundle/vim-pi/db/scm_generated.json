@@ -4423,6 +4423,10 @@
     "type": "git",
     "url": "git://github.com/Quramy/vison"
   },
+  "5163": {
+    "type": "git",
+    "url": "git://github.com/jiangxincode/mpi.vim"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
