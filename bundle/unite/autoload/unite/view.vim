@@ -182,6 +182,8 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   let pos = getpos('.')
   let unite = unite#get_current_unite()
   let context = unite.context
+  let current_candidate = (line('.') == unite.prompt_linenr) ?
+        \ {} : unite#helper#get_current_candidate()
 
   try
     if &filetype !=# 'unite'
@@ -232,6 +234,8 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
         call cursor(line('$'), 0)
         call unite#view#_bottom_cursor()
       endif
+    else
+      call unite#view#_search_cursor(current_candidate)
     endif
 
     if a:winnr > 0
@@ -246,6 +250,12 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   endif
   if context.auto_highlight
     call unite#view#_do_auto_highlight()
+  endif
+endfunction"}}}
+function! unite#view#_redraw_all_candidates() "{{{
+  let unite = unite#get_current_unite()
+  if len(unite.candidates) != len(unite.current_candidates)
+    call unite#redraw(0, 1)
   endif
 endfunction"}}}
 
@@ -378,8 +388,8 @@ function! unite#view#_resize_window() "{{{
 
   if context.unite__old_winwidth != 0
         \ && context.unite__old_winheight != 0
-        \ && winheight(0) != context.unite__old_winheight
         \ && winwidth(0) != context.unite__old_winwidth
+        \ && winheight(0) != context.unite__old_winheight
     " Disabled resize.
     let context.winwidth = 0
     let context.winheight = 0
@@ -405,7 +415,7 @@ function! unite#view#_resize_window() "{{{
 
     let context.unite__is_resize = winheight != winheight(0)
   elseif context.vertical
-        \ && context.unite__old_winwidth  == 0
+        \ && context.unite__old_winwidth == 0
     execute 'vertical resize' context.winwidth
 
     let context.unite__is_resize = 1
@@ -532,8 +542,14 @@ function! unite#view#_init_cursor() "{{{
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    call unite#helper#cursor_prompt()
-    startinsert!
+    if is_restore
+      " Restore position.
+      call setpos('.', positions[key].pos)
+      startinsert
+    else
+      call unite#helper#cursor_prompt()
+      startinsert!
+    endif
   else
     let unite.is_insert = 0
 
@@ -991,6 +1007,30 @@ endfunction"}}}
 " @vimlint(EVL102, 0, l:max_source_name)
 " @vimlint(EVL102, 0, l:context)
 " @vimlint(EVL102, 0, l:padding)
+
+function! unite#view#_search_cursor(candidate) "{{{
+  " Optimized
+  if empty(a:candidate) ||
+        \ unite#helper#get_current_candidate() ==# a:candidate
+    return
+  endif
+
+  call unite#view#_redraw_all_candidates()
+
+  let max = line('$')
+  let cnt = 1
+  while cnt <= max
+    let candidate = unite#helper#get_current_candidate(cnt)
+
+    if candidate ==# a:candidate
+      " Move cursor.
+      call cursor(cnt, 0)
+      return
+    endif
+
+    let cnt += 1
+  endwhile
+endfunction"}}}
 
 function! s:set_syntax() "{{{
   let unite = unite#get_current_unite()

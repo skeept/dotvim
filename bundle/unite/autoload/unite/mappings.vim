@@ -80,7 +80,7 @@ function! unite#mappings#define_default_mappings() "{{{
         \ :<C-u>call <SID>move_half_screen(1)<CR>
   nnoremap <silent><buffer> <Plug>(unite_quick_match_default_action)
         \ :<C-u>call unite#mappings#_quick_match(0)<CR>
-  nnoremap <silent><buffer> <Plug>(unite_quick_match_choose_action)
+  nnoremap <silent><buffer> <Plug>(unite_quick_match_jump)
         \ :<C-u>call unite#mappings#_quick_match(1)<CR>
   nnoremap <silent><buffer> <Plug>(unite_input_directory)
         \ :<C-u>call <SID>input_directory()<CR>
@@ -120,14 +120,13 @@ function! unite#mappings#define_default_mappings() "{{{
   inoremap <silent><buffer> <Plug>(unite_insert_leave)
         \ <ESC>:<C-u>call <SID>insert_leave()<CR>
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_char)
-        \ <SID>smart_imap("\<ESC>:\<C-u>call \<SID>all_exit()\<CR>",
-        \ (unite#helper#get_input() == '' ?
+        \ <SID>smart_imap((unite#helper#get_input() == '' ?
         \ "\<ESC>:\<C-u>call \<SID>all_exit()\<CR>" : "\<C-h>"))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_line)
-        \ <SID>smart_imap('', repeat("\<C-h>",
+        \ <SID>smart_imap(repeat("\<C-h>",
         \     unite#util#strchars(unite#helper#get_input())))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_word)
-        \ <SID>smart_imap('', "\<C-w>")
+        \ <SID>smart_imap("\<C-w>")
   inoremap <silent><buffer> <Plug>(unite_delete_backward_path)
         \ <C-o>:<C-u>call <SID>delete_backward_path()<CR>
   inoremap <expr><buffer> <Plug>(unite_select_next_page)
@@ -141,16 +140,15 @@ function! unite#mappings#define_default_mappings() "{{{
   inoremap <silent><buffer> <Plug>(unite_choose_action)
         \ <C-o>:<C-u>call <SID>choose_action()<CR>
   inoremap <expr><buffer> <Plug>(unite_move_head)
-        \ <SID>smart_imap("\<ESC>".<SID>insert_enter('A'),
-        \   repeat("\<Left>", len(substitute(
+        \ <SID>smart_imap(repeat("\<Left>", len(substitute(
         \     unite#helper#get_input(), '.', 'x', 'g'))))
   inoremap <expr><buffer> <Plug>(unite_move_left)
-        \ <SID>smart_imap('', "\<Left>")
+        \ <SID>smart_imap("\<Left>")
   inoremap <expr><buffer> <Plug>(unite_move_right)
-        \ <SID>smart_imap2('', "\<Right>")
+        \ <SID>smart_imap2("\<Right>")
   inoremap <silent><buffer> <Plug>(unite_quick_match_default_action)
         \ <C-o>:<C-u>call unite#mappings#_quick_match(0)<CR>
-  inoremap <silent><buffer> <Plug>(unite_quick_match_choose_action)
+  inoremap <silent><buffer> <Plug>(unite_quick_match_jump)
         \ <C-o>:<C-u>call unite#mappings#_quick_match(1)<CR>
   inoremap <silent><buffer> <Plug>(unite_input_directory)
         \ <C-o>:<C-u>call <SID>input_directory()<CR>
@@ -359,17 +357,25 @@ function! unite#mappings#set_current_filters(filters) "{{{
   return mode() ==# 'i' ? "\<C-r>\<ESC>" : "g\<ESC>"
 endfunction"}}}
 
-function! s:smart_imap(lhs, rhs) "{{{
+function! s:smart_imap(map) "{{{
   call s:clear_complete()
-  return (line('.') != unite#get_current_unite().prompt_linenr ||
-        \ col('.') <= len(unite#get_context().prompt)) ?
-        \ a:lhs : a:rhs
+  if line('.') == b:unite.prompt_linenr
+        \ && col('.') <= len(b:unite.context.prompt)
+    return ''
+  else
+    return (line('.') != b:unite.prompt_linenr ?
+          \     "\<ESC>" . b:unite.prompt_linenr . 'Gzb$a' : '') . a:map
+  endif
 endfunction"}}}
-function! s:smart_imap2(lhs, rhs) "{{{
+function! s:smart_imap2(map) "{{{
   call s:clear_complete()
-  return (line('.') != unite#get_current_unite().prompt_linenr ||
-        \ col('.') >= col('$')) ?
-        \ a:lhs : a:rhs
+  if line('.') == b:unite.prompt_linenr
+        \ && col('.') >= col('$')
+    return ''
+  else
+    return (line('.') != b:unite.prompt_linenr ?
+          \     "\<ESC>" . b:unite.prompt_linenr . 'Gzb$a' : '') . a:map
+  endif
 endfunction"}}}
 
 function! s:do_new_candidate_action() "{{{
@@ -441,7 +447,7 @@ function! s:toggle_mark(map) "{{{
         \ unite#mappings#cursor_down(1) : unite#mappings#cursor_up(1)
 endfunction"}}}
 function! s:toggle_mark_all_candidates() "{{{
-  call s:redraw_all_candidates()
+  call unite#view#_redraw_all_candidates()
   call s:toggle_mark_candidates(1, line('$'))
 endfunction"}}}
 function! s:toggle_mark_candidates(start, end) "{{{
@@ -512,7 +518,7 @@ function! s:insert_enter(key) "{{{
   let unite = unite#get_current_unite()
 
   return (line('.') != unite.prompt_linenr) ?
-        \     unite.prompt_linenr . 'Gzb$a' :
+        \     '0i' :
         \ (a:key == 'i' && col('.') <= 1
         \     || a:key == 'a' && col('.') < 1) ?
         \     'A' :
@@ -592,7 +598,7 @@ function! s:insert_selected_candidate() "{{{
 
   call unite#mappings#narrowing(candidate.word)
 endfunction"}}}
-function! unite#mappings#_quick_match(is_choose) "{{{
+function! unite#mappings#_quick_match(is_jump) "{{{
   if !empty(unite#helper#get_marked_candidates())
     call unite#util#print_error('Marked candidates is detected.')
     return
@@ -634,8 +640,8 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
-  if a:is_choose
-    call unite#mappings#_choose_action([candidate])
+  if a:is_jump
+    call unite#view#_search_cursor(candidate)
   else
     call unite#action#do(
           \ unite.context.default_action, [candidate])
@@ -650,7 +656,7 @@ function! s:input_directory() "{{{
 endfunction"}}}
 function! unite#mappings#loop_cursor_up(mode) "{{{
   " Loop.
-  call s:redraw_all_candidates()
+  call unite#view#_redraw_all_candidates()
 
   if a:mode ==# 'i'
     noautocmd startinsert
@@ -660,7 +666,7 @@ function! unite#mappings#loop_cursor_up(mode) "{{{
 endfunction"}}}
 function! unite#mappings#loop_cursor_down(mode) "{{{
   " Loop.
-  call s:redraw_all_candidates()
+  call unite#view#_redraw_all_candidates()
 
   if a:mode ==# 'i'
     noautocmd startinsert
@@ -772,19 +778,13 @@ function! s:disable_max_candidates() "{{{
   let unite.disabled_max_candidates = 1
 
   call unite#force_redraw()
-  call s:redraw_all_candidates()
+  call unite#view#_redraw_all_candidates()
 endfunction"}}}
 function! s:narrowing_input_history() "{{{
   call unite#start_temporary(
         \ [unite#sources#history_input#define()],
         \ { 'old_source_names_string' : unite#loaded_source_names_string() },
         \ 'history/input')
-endfunction"}}}
-function! s:redraw_all_candidates() "{{{
-  let unite = unite#get_current_unite()
-  if len(unite.candidates) != len(unite.current_candidates)
-    call unite#redraw(0, 1)
-  endif
 endfunction"}}}
 function! s:narrowing_dot() "{{{
   call unite#mappings#narrowing(unite#helper#get_input().'.')

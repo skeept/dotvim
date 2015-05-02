@@ -4427,6 +4427,14 @@
     "type": "git",
     "url": "git://github.com/jiangxincode/mpi.vim"
   },
+  "5165": {
+    "type": "git",
+    "url": "git://github.com/alexeymuranov/vim-MapToSideEffects"
+  },
+  "5166": {
+    "type": "git",
+    "url": "git://github.com/Bozar/foldMarker"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
