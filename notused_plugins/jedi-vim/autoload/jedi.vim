@@ -28,6 +28,7 @@ let s:default_settings = {
     \ 'show_call_signatures': 1,
     \ 'call_signature_escape': "'=`='",
     \ 'auto_close_doc': 1,
+    \ 'max_doc_height': 30,
     \ 'popup_select_first': 1,
     \ 'quickfix_window_height': 10,
     \ 'completions_enabled': 1,
@@ -154,6 +155,25 @@ function! jedi#force_py_version_switch()
 endfunction
 
 
+" Helper function instead of `python vim.eval()`, and `.command()` because
+" these also return error definitions.
+function! jedi#_vim_exceptions(str, is_eval)
+    let l:result = {}
+    try
+        if a:is_eval
+            let l:result.result = eval(a:str)
+        else
+            execute a:str
+            let l:result.result = ''
+        endif
+    catch
+        let l:result.exception = v:exception
+        let l:result.throwpoint = v:throwpoint
+    endtry
+    return l:result
+endfunction
+
+
 if !jedi#init_python()
     " Do not define any functions when Python initialization failed.
     finish
@@ -177,6 +197,10 @@ endfunction
 
 function! jedi#rename(...)
     PythonJedi jedi_vim.rename()
+endfunction
+
+function! jedi#rename_visual(...)
+    PythonJedi jedi_vim.rename_visual()
 endfunction
 
 function! jedi#completions(findstart, base)
@@ -233,8 +257,8 @@ function! jedi#show_documentation()
     setlocal nomodified
     setlocal filetype=rst
 
-    if l:doc_lines > 30  " max lines for plugin
-        let l:doc_lines = 30
+    if l:doc_lines > g:jedi#max_doc_height " max lines for plugin
+        let l:doc_lines = g:jedi#max_doc_height
     endif
     execute "resize ".l:doc_lines
 
@@ -324,6 +348,7 @@ function! jedi#configure_call_signatures()
     autocmd CursorMovedI <buffer> PythonJedi jedi_vim.show_call_signatures()
 endfunction
 
+
 " Determine where the current window is on the screen for displaying call
 " signatures in the correct column.
 function! s:save_first_col()
@@ -370,24 +395,6 @@ function! s:save_first_col()
             endtry
         endif
     endtry
-endfunction
-
-" Helper function instead of `python vim.eval()`, and `.command()` because
-" these also return error definitions.
-function! jedi#_vim_exceptions(str, is_eval)
-    let l:result = {}
-    try
-        if a:is_eval
-            let l:result.result = eval(a:str)
-        else
-            execute a:str
-            let l:result.result = ''
-        endif
-    catch
-        let l:result.exception = v:exception
-        let l:result.throwpoint = v:throwpoint
-    endtry
-    return l:result
 endfunction
 
 

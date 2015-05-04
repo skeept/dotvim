@@ -62,7 +62,7 @@ function! s:expand_lnum(string, ...) abort
   let old = v:lnum
   try
     let v:lnum = a:0 ? a:1 : 0
-    let sbeval = '\=s:sandbox_eval(submatch(1))'
+    let sbeval = '\=escape(s:sandbox_eval(submatch(1)), "!#%")'
     let v = substitute(v, '`=\([^`]*\)`', sbeval, 'g')
     let v = substitute(v, '`-=\([^`]*\)`', v:lnum < 1 ? sbeval : '', 'g')
     let v = substitute(v, '`+=\([^`]*\)`', v:lnum > 0 ? sbeval : '', 'g')
@@ -76,6 +76,11 @@ endfunction
 
 function! s:escape_path(path) abort
   return substitute(fnameescape(a:path), '^\\\~', '\~', '')
+endfunction
+
+function! dispatch#dir_arg(...) abort
+  let dir = fnamemodify(a:0 ? a:1 : getcwd(), ':p:~:s?[^:]\zs[\\/]$??')
+  return '-dir=' . s:escape_path(dir) . ' '
 endfunction
 
 function! dispatch#cd_helper(dir) abort
@@ -656,7 +661,14 @@ function! dispatch#focus(...) abort
 endfunction
 
 function! dispatch#focus_command(bang, args, count) abort
-  let args = a:args =~# '^:\S' ? a:args : escape(dispatch#expand(a:args), '#%')
+  let [args, opts] = s:extract_opts(a:args)
+  let args = escape(dispatch#expand(args), '#%')
+  if has_key(opts, 'compiler')
+    let args = '-compiler=' . opts.compiler . ' ' . args
+  endif
+  if has_key(opts, 'directory')
+    let args = dispatch#dir_arg(opts.directory) . args
+  endif
   if empty(a:args) && a:bang
     unlet! w:dispatch t:dispatch g:dispatch
     let [what, why] = dispatch#focus(a:count)
