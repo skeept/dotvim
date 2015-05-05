@@ -73,7 +73,7 @@ function! unite#mappings#define_default_mappings() "{{{
   nnoremap <buffer><expr> <Plug>(unite_cursor_top)
         \ 'gg0z.'
   nnoremap <silent><buffer> <Plug>(unite_cursor_bottom)
-        \ :<C-u>call <SID>redraw_all_candidates()<CR>G
+        \ :<C-u>call unite#view#_redraw_all_candidates()<CR>G
   nnoremap <buffer><silent> <Plug>(unite_next_screen)
         \ :<C-u>call <SID>move_screen(1)<CR>
   nnoremap <buffer><silent> <Plug>(unite_next_half_screen)
@@ -710,9 +710,6 @@ function! unite#mappings#cursor_down(is_skip_not_matched) "{{{
   let num = line('.') - 1
   let cnt = 1
   let offset = prompt_linenr == 1 ? 1 : 0
-  if line('.') == prompt_linenr
-    let cnt += 1
-  endif
 
   while 1
     let candidate = get(unite#get_unite_candidates(), num - offset + cnt, {})
