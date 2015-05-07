@@ -282,14 +282,6 @@ function! s:check_in_do_auto_complete() "{{{
   if &l:completefunc != '' && &l:buftype =~ 'nofile'
     return 1
   endif
-
-  " Detect AutoComplPop.
-  if exists('g:acp_enableAtStartup') && g:acp_enableAtStartup
-    call neocomplete#print_error(
-          \ 'Detected enabled AutoComplPop! Disabled neocomplete.')
-    NeoCompleteLock
-    return 1
-  endif
 endfunction"}}}
 function! s:is_skip_auto_complete(cur_text) "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
@@ -330,7 +322,7 @@ function! s:close_preview_window() "{{{
   if g:neocomplete#enable_auto_close_preview
         \ && bufname('%') !=# '[Command Line]'
         \ && winnr('$') != 1 && !&l:previewwindow
-        \ && !s:check_in_do_auto_complete()
+        \ && !neocomplete#is_cache_disabled()
     " Close preview window.
     pclose!
   endif

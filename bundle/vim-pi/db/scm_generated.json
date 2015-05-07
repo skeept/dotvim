@@ -4435,6 +4435,10 @@
     "type": "git",
     "url": "git://github.com/Bozar/foldMarker"
   },
+  "5169": {
+    "type": "git",
+    "url": "git://github.com/akalyaev/vim-erlang-spec"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
