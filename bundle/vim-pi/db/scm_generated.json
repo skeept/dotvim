@@ -15,6 +15,10 @@
     "type": "git",
     "url": "git://github.com/ciaranm/inkpot"
   },
+  "1147": {
+    "type": "git",
+    "url": "git://github.com/qpkorr/vim-bufkill"
+  },
   "1160": {
     "type": "git",
     "url": "git://github.com/tomtom/tskeleton_vim"
@@ -114,6 +118,10 @@
   "1697": {
     "type": "git",
     "url": "git://github.com/tpope/vim-surround"
+  },
+  "1721": {
+    "type": "git",
+    "url": "git://github.com/qpkorr/vim-renamer"
   },
   "1725": {
     "type": "git",
