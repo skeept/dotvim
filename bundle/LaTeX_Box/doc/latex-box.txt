@@ -609,6 +609,9 @@ Compilation ~
         Set output directory for build files. This overrides the global
         setting.
 
+*g:LatexBox_jobname*                            Default: ""
+        Sets the name of the output build files.
+
 ------------------------------------------------------------------------------
 
                                                   *latex-box-settings-windows*
