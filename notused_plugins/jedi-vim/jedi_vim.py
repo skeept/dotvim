@@ -199,9 +199,10 @@ def completions():
 @catch_and_print_exceptions
 def goto(mode = "goto", no_output=False):
     """
-    mode: "related_name", "definition", "assignment", "auto".
+    :param str mode: "related_name", "definition", "assignment", "auto"
+    :return: list of definitions/assignments
+    :rtype: list
     """
-    definitions = []
     script = get_script()
     try:
         if mode == "goto":
@@ -217,6 +218,7 @@ def goto(mode = "goto", no_output=False):
             definitions = script.goto_assignments()
     except jedi.NotFoundError:
         echo_highlight("Cannot follow nothing. Put your cursor on a valid name.")
+        definitions = []
     else:
         if no_output:
             return definitions
@@ -239,7 +241,7 @@ def goto(mode = "goto", no_output=False):
                 if d.module_path != vim.current.buffer.name:
                     result = new_buffer(d.module_path)
                     if not result:
-                        return
+                        return []
                 vim.current.window.cursor = d.line, d.column
         else:
             # multiple solutions
@@ -474,8 +476,8 @@ def do_rename(replace, orig = None):
     saved_tab = int(vim_eval('tabpagenr()'))
     saved_win = int(vim_eval('winnr()'))
 
-    temp_rename = goto(is_related_name=True, no_output=True)
-    # sort the whole thing reverse (positions at the end of the line
+    temp_rename = goto(mode="related_name", no_output=True)
+    # Sort the whole thing reverse (positions at the end of the line
     # must be first, because they move the stuff before the position).
     temp_rename = sorted(temp_rename, reverse=True,
                          key=lambda x: (x.module_path, x.start_pos))
