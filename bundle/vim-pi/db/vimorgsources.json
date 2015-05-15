@@ -1,4 +1,7 @@
 {
+"logsyntax":{"archive_name":"logsyntax.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23274","version":"1.0","vim_script_nr":5172},
+"liblognorm":{"archive_name":"liblognorm.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23273","version":"0.1","vim_script_nr":5171},
+"oasisprj":{"archive_name":"oasisprj.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23272","version":"0.1","vim_script_nr":5170},
 "erlang_spec":{"archive_name":"erlang_spec.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23264","version":"0.2.1","vim_script_nr":5169},
 "vim-radioss":{"archive_name":"vim-radioss-1.0.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23262","version":"1.0.0","vim_script_nr":5168},
 "greekde_utf-8":{"archive_name":"greekde_utf-8.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23261","version":"1.0","vim_script_nr":5167},
