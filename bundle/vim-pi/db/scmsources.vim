@@ -88,8 +88,8 @@ let scm['lh-cmake']            = {'type': 'git', 'url': 'git://github.com/LucHer
 let scm['dirdiff-svn']         = {'type': 'git', 'url': 'git://github.com/LucHermitte/dirdiff-svn'}
 let scm['VimFold4C']           = {'type': 'git', 'url': 'git://github.com/LucHermitte/VimFold4C'}
 let scm['system-tools']        = {'type': 'git', 'url': 'git://github.com/LucHermitte/vim-system-tools'}
-" system-tools are required for vim-spell.tar.gz (vimscript #135), which are 
-" part of misc. Cannot install using 'type':'archive': it won’t pull in 
+" system-tools are required for vim-spell.tar.gz (vimscript #135), which are
+" part of misc. Cannot install using 'type':'archive': it won’t pull in
 " documentation. Alternative: use cpp (vimscript #336, above) in place of a@lh
 " Triggers.vim (vimscript #48) which is also here requires fileuptodate.
 let scm['lh-misc'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-misc', 'dependencies': {'system-tools': {}, 'a@lh': {}, 'fileuptodate': {}}}
@@ -464,7 +464,7 @@ let scmnr.3011 = {'type': 'git', 'url': 'git://github.com/inky/tumblr'}
 
 " David Terei
 let scmnr.3022 = {'type': 'git', 'url': 'git://github.com/dterei/VimBookmarking'}
-" It is not a copy-paste bug, descriptions of 2828 and 3439 plugins point to 
+" It is not a copy-paste bug, descriptions of 2828 and 3439 plugins point to
 " the same repository
 
 " Wincent Colaiuta
@@ -887,7 +887,7 @@ let scmnr.4432 = {'type': 'git', 'url': 'git://github.com/troydm/zoomwintab.vim'
 let scmnr.4451 = {'type': 'git', 'url': 'git://github.com/rking/pry-de', 'addon-info': {'runtimepath': 'vim'}}
 
 " Josh Perez
-" Old maintainer gave write access to old repository to the new one, thus URL 
+" Old maintainer gave write access to old repository to the new one, thus URL
 " have not changed and is equal to that of #2765 now.
 let scmnr.4452 = {'type': 'git', 'url': 'git://github.com/pangloss/vim-javascript'}
 
@@ -1330,6 +1330,8 @@ let scm['vim-go'] = {'type': 'git', 'url': 'git://github.com/fatih/vim-go'}
 " Dario Sneidermanis
 let scm['YUNOcommit'] = {'type': 'git', 'url': 'git://github.com/esneide/YUNOcommit.vim'}
 
+" Leaf Garland
+let scm['typescript-vim'] = {'type': 'git', 'url': 'git://github.com/leafgarland/typescript-vim'}
 
 "-----------------------------------------------------------------------------------------------------------------------
 
