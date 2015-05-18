@@ -185,6 +185,8 @@ vnoremap aa VGo1G
 nnoremap <Leader>tc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
 nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
+
+nnoremap <Leader>Q :BD!<CR>
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
