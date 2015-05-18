@@ -4447,6 +4447,10 @@
     "type": "git",
     "url": "git://github.com/akalyaev/vim-erlang-spec"
   },
+  "5175": {
+    "type": "git",
+    "url": "git://github.com/renyard/vim-git-flow-format"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

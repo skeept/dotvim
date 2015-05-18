@@ -1,4 +1,5 @@
 {
+"git-flow-format":{"archive_name":"git-flow-format.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23280","version":"0.1","vim_script_nr":5175},
 "slashcomment":{"archive_name":"slashcomment.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23279","version":"1.0.0","vim_script_nr":5174},
 "systemrdl":{"archive_name":"systemrdl.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23275","version":"1.0","vim_script_nr":5173},
 "logsyntax":{"archive_name":"logsyntax.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23274","version":"1.0","vim_script_nr":5172},
