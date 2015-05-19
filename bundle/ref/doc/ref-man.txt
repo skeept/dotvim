@@ -1,6 +1,6 @@
 *ref-man.txt*	A ref source for manpage.
 
-Version: 0.4.2
+Version: 0.4.3
 Author : thinca <thinca+vim@gmail.com>
 License: Creative Commons Attribution 2.1 Japan License
          <http://creativecommons.org/licenses/by/2.1/jp/deed.en>
@@ -19,6 +19,10 @@ INTRODUCTION					*ref-man-introduction*
 
 *ref-man* is a source for |ref| to man command.  man is a command to view
 manual pages on UNIX-like operating systems.
+
+You can use [count] when you use |<Plug>(ref-keyword)|.
+For example, when you type "3K" on the text "printf", the manpage of printf
+function will be opened.
 
 
 Requirements:
@@ -48,6 +52,9 @@ g:ref_man_lang					*g:ref_man_lang*
 
 ==============================================================================
 CHANGELOG					*ref-man-changelog*
+
+0.4.3	2015-03-22
+	- Fix [count] behavior.
 
 0.4.2	2010-10-26
 	- Fixed the bug not completed the item with ".".

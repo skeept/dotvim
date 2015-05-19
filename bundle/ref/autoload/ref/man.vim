@@ -1,5 +1,5 @@
 " A ref source for manpage.
-" Version: 0.4.2
+" Version: 0.4.3
 " Author : thinca <thinca+vim@gmail.com>
 " License: Creative Commons Attribution 2.1 Japan License
 "          <http://creativecommons.org/licenses/by/2.1/jp/deed.en>
@@ -27,6 +27,9 @@ endfunction
 
 function! s:source.get_body(query)
   let [query, sec] = s:parse(a:query)
+  if sec !~# '\d' && v:count
+    let sec = v:count
+  endif
   let q = sec =~ '\d' ? [sec, query] : [query]
 
   let opt_lang = self.option('lang')
