@@ -8,11 +8,11 @@
 if &cp || exists("loaded_tselectbuffer")
     finish
 endif
-if !exists('loaded_tlib') || loaded_tlib < 40
-    echoerr 'tlib >= 0.40 is required'
+if !exists('loaded_tlib') || loaded_tlib < 114
+    echoerr 'tlib >= 1.14 is required'
     finish
 endif
-let loaded_tselectbuffer = 7
+let loaded_tselectbuffer = 8
 
 
 command! -count=0 -bang TSelectBuffer call tselectbuffer#Select(!empty("<bang>") || v:count)

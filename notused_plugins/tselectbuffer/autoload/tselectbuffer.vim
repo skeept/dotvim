@@ -3,8 +3,6 @@
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Revision:    41
 
-let s:save_cpo = &cpo
-set cpo&vim
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
 
 
@@ -15,7 +13,7 @@ endf
 
 " For possible values please see the documentation of 
 " |tlib#buffer#GetList()|'s order argument.
-TLet g:tselectbuffer#order = 'bufnr'
+TLet g:tselectbuffer#order = 'mru'
 
 " If non-null, automatically pick the last item in the list. I.e. if you 
 " start typing a name and there is only one item left matching that name 
@@ -41,18 +39,20 @@ endif
 
 function! s:PrepareSelectBuffer()
     let [s:selectbuffer_nr, s:selectbuffer_list] = tlib#buffer#GetList(s:selectbuffer_hidden, 1, g:tselectbuffer#order)
-    let s:selectbuffer_alternate = ''
-    let s:selectbuffer_alternate_n = 0
-    for b in s:selectbuffer_list
-        let s:selectbuffer_alternate_n -= 1
-        if b =~ '^\s*\d\+\s\+#'
-            let s:selectbuffer_alternate = b
-            let s:selectbuffer_alternate_n = -s:selectbuffer_alternate_n
-            break
-        endif
-    endfor
-    if s:selectbuffer_alternate_n < 0
+    if g:tselectbuffer#order == 'mru'
+        let s:selectbuffer_alternate_n = len(s:selectbuffer_nr) > 1 ? 2 : 1
+    else
         let s:selectbuffer_alternate_n = 0
+        for b in s:selectbuffer_list
+            let s:selectbuffer_alternate_n -= 1
+            if b =~ '^\s*\d\+\s\+#'
+                let s:selectbuffer_alternate_n = -s:selectbuffer_alternate_n
+                break
+            endif
+        endfor
+        if s:selectbuffer_alternate_n < 0
+            let s:selectbuffer_alternate_n = 0
+        endif
     endif
     return s:selectbuffer_list
 endf
@@ -64,7 +64,7 @@ function! s:GetBufNr(buffer)
     " TLogVAR bi
     let bx = s:selectbuffer_nr[bi]
     " TLogVAR bx
-    return str2nr(bx)
+    return bx
 endf
 
 
@@ -192,37 +192,12 @@ function! s:AgentJumpBuffer(world, selected) "{{{3
 endf
 
 
-function! s:SwitchToBuffer(world, buffer, ...)
-    TVarArg ['cmd', 'drop'], ['use_bufnr', 0]
-    let bi = s:GetBufNr(a:buffer)
-    " TLogVAR a:buffer
-    " TLogVAR bi
-    if !empty(bi)
-        let back = a:world.SwitchWindow('win')
-        " TLogDBG cmd .' '. bi
-        if use_bufnr
-            exec cmd bi
-        else
-            let bn = bufname(bi)
-            " TLogVAR bn
-            exec cmd bn
-        endif
-        " exec back
-    endif
-endf
-
-
 function! s:Callback(world, selected) "{{{3
-    if len(a:selected) > 1
-        let cmd = 'sbuffer'
-        let use_bufnr = 1
-    else
-        let cmd = 'drop'
-        let use_bufnr = 0
-    endif
     for b in a:selected
-        " TLogVAR b
-        call s:SwitchToBuffer(a:world, b, cmd, use_bufnr)
+        let bi = s:GetBufNr(b)
+        let bn = bufname(bi)
+        " TLogVAR bi, bn, b
+        call tlib#file#Edit(bn)
     endfor
 endf
 
@@ -239,6 +214,3 @@ function! tselectbuffer#Select(show_hidden)
     let b = tlib#input#List('m', msg, bs, bhs)
 endf
 
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
