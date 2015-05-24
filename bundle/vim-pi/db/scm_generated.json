@@ -4451,6 +4451,22 @@
     "type": "git",
     "url": "git://github.com/renyard/vim-git-flow-format"
   },
+  "5177": {
+    "type": "git",
+    "url": "git://github.com/NLKNguyen/papercolor-theme"
+  },
+  "5178": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-sandwich"
+  },
+  "5179": {
+    "type": "git",
+    "url": "git://github.com/4Evergreen4/vim-scrawl"
+  },
+  "5180": {
+    "type": "git",
+    "url": "git://github.com/4Evergreen4/vim-hardy"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
