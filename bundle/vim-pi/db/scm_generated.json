@@ -4467,6 +4467,10 @@
     "type": "git",
     "url": "git://github.com/4Evergreen4/vim-hardy"
   },
+  "5181": {
+    "type": "git",
+    "url": "git://github.com/artur-shaik/vim-javacomplete2"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
