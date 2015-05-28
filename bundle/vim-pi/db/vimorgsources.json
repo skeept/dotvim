@@ -1,4 +1,6 @@
 {
+"vim-gitignore":{"archive_name":"vim-gitignore-1.0.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23316","version":"1.0.0","vim_script_nr":5183},
+"Vim_REST_Console_VRC":{"archive_name":"vim-rest-console.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23315","version":"1.0.0","vim_script_nr":5182},
 "vim-javacomplete2":{"archive_name":"vim-javacomplete2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23312","version":"2.0","vim_script_nr":5181},
 "Hardy":{"archive_name":"hardy.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23307","version":"1.0.0","vim_script_nr":5180},
 "Scrawl":{"archive_name":"scrawl.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23306","version":"1.0.0","vim_script_nr":5179},
@@ -54,7 +56,7 @@
 "vim-quick-radon":{"archive_name":"vim-quick-radon.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23001","version":"0.1.1","vim_script_nr":5128},
 "vim-ranger":{"archive_name":"ranger.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22998","version":"0.3","vim_script_nr":5127},
 "vim-snoopy":{"archive_name":"vim-snoopy-0.9.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22986","version":"0.9.0","vim_script_nr":5126},
-"love-launch":{"archive_name":"love-launch.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23258","version":"0.2.0","vim_script_nr":5125},
+"love-launch":{"archive_name":"love-launch.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23314","version":"0.3.0","vim_script_nr":5125},
 "Vinfo":{"archive_name":"vinfo.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22975","version":"0.1","vim_script_nr":5124},
 "codeforces":{"archive_name":"0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23092","version":"0.2","vim_script_nr":5123},
 "RedirCommands":{"archive_name":"redircommands.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22960","version":"1.0.0","vim_script_nr":5122},

@@ -333,7 +333,7 @@ function! startify#session_list_as_string(lead, ...) abort
 endfunction
 
 " Function: #open_buffers {{{1
-function! startify#open_buffers() abort
+function! startify#open_buffers()
   " markers found; open one or more buffers
   if exists('s:marked') && !empty(s:marked)
     enew
@@ -342,6 +342,9 @@ function! startify#open_buffers() abort
     for val in values(s:marked)
       let [path, type] = val[1:2]
       let path = fnameescape(path)
+      if has('win32')
+        let path = substitute(path, '\[', '\[[]', 'g')
+      endif
 
       if line2byte('$') == -1
         " open in current window
@@ -367,14 +370,9 @@ function! startify#open_buffers() abort
     if exists('s:marked')
       unlet s:marked
     endif
-  " no markers found; open a single buffer
-  else
-    try
-      execute 'normal' expand('<cword>')
-    catch /E832/  " don't ask for undo encryption key twice
-      edit
-    catch /E325/  " swap file found
-    endtry
+  else  " no markers found; open a single buffer
+    call s:set_mark('B')
+    return startify#open_buffers()
   endif
 endfunction
 
@@ -392,6 +390,9 @@ function! s:display_by_path(path_prefix, path_format) abort
     for [absolute_path, entry_path] in oldfiles
       let index = s:get_index_as_string(s:entry_number)
       call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . entry_path)
+      if has('win32')
+        let absolute_path = substitute(absolute_path, '\[', '\[[]', 'g')
+      endif
       execute 'nnoremap <buffer><silent>' index ':edit' absolute_path '<bar> call <sid>check_user_options()<cr>'
       let s:entry_number += 1
     endfor
@@ -412,7 +413,7 @@ function! s:filter_oldfiles(path_prefix, path_format) abort
       break
     endif
 
-    let absolute_path = glob(fnamemodify(resolve(fname), ":p"))
+    let absolute_path = fnamemodify(resolve(fname), ":p")
 
     " filter duplicates, bookmarks and entries from the skiplist
     if has_key(entries, absolute_path)
@@ -567,7 +568,7 @@ function! s:set_mappings() abort
   nnoremap <buffer><silent> t             :call <sid>set_mark('T')<cr>
   nnoremap <buffer><silent> v             :call <sid>set_mark('V')<cr>
   nnoremap <buffer><silent> <cr>          :call startify#open_buffers()<cr>
-  nnoremap <buffer><silent> <2-LeftMouse> :execute 'normal' matchstr(getline('.'), '\w\+')<cr>
+  nnoremap <buffer><silent> <2-LeftMouse> :call startify#open_buffers()<cr>
   nnoremap <buffer><silent> q             :call <sid>close()<cr>
 
   " Prevent 'nnoremap j gj' mappings, since they would break navigation.

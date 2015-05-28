@@ -4471,6 +4471,14 @@
     "type": "git",
     "url": "git://github.com/artur-shaik/vim-javacomplete2"
   },
+  "5182": {
+    "type": "git",
+    "url": "git://github.com/diepm/vim-rest-console"
+  },
+  "5183": {
+    "type": "git",
+    "url": "git://github.com/gisphm/vim-gitignore"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
