@@ -4479,6 +4479,22 @@
     "type": "git",
     "url": "git://github.com/gisphm/vim-gitignore"
   },
+  "5184": {
+    "type": "git",
+    "url": "git://github.com/4Evergreen4/vim-contextcomplete"
+  },
+  "5186": {
+    "type": "git",
+    "url": "git://github.com/manicmaniac/betterga"
+  },
+  "5187": {
+    "type": "git",
+    "url": "git://github.com/manicmaniac/ftcompl"
+  },
+  "5189": {
+    "type": "git",
+    "url": "git://github.com/dyng/ctrlsf.vim"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
