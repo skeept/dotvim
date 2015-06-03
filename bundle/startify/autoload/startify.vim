@@ -69,14 +69,19 @@ function! startify#insane_in_the_membrane() abort
     call append('$', g:startify_custom_header)
   endif
 
+  let s:tick = 0
+  let s:entries = {}
+
   if s:show_special
     call append('$', ['   [e]  <empty buffer>', ''])
   endif
+  call s:register(line('$')-1, 'e', 'special', 'enew', '')
 
   let s:entry_number = 0
   if filereadable('Session.vim')
     call append('$', ['   [0]  '. getcwd() . s:sep .'Session.vim', ''])
-    execute 'nnoremap <silent><buffer> 0 :call startify#session_delete_buffers() <bar> source Session.vim<cr>'
+    call s:register(line('$')-1, '0', 'session',
+          \ 'call startify#session_delete_buffers() | source', 'Session.vim')
     let s:entry_number = 1
     let l:show_session = 1
   endif
@@ -99,10 +104,6 @@ function! startify#insane_in_the_membrane() abort
         \ 'bookmarks',
         \ ])
 
-  let s:tick = 0
-  let s:entries = {}
-  let s:markers = {}
-
   for item in s:lists
     if type(item) == 1
       call s:show_{item}()
@@ -116,6 +117,10 @@ function! startify#insane_in_the_membrane() abort
 
   if s:show_special
     call append('$', ['', '   [q]  <quit>'])
+    call s:register(line('$'), 'q', 'special', 'call s:close()', '')
+  else
+    " Don't overwrite the last regular entry, thus +1
+    call s:register(line('$')+1, 'q', 'special', 'call s:close()', '')
   endif
 
   " compute first line offset
@@ -336,35 +341,50 @@ function! startify#session_list_as_string(lead, ...) abort
   return join(map(split(globpath(s:session_dir, '*'.a:lead.'*'), '\n'), 'fnamemodify(v:val, ":t")'), "\n")
 endfunction
 
+" Function: #debug {{{1
+function! startify#debug()
+  if exists('s:entries')
+    for k in sort(keys(s:entries))
+      echomsg '['. k .'] = '. string(s:entries[k])
+    endfor
+  endif
+endfunction
+
 " Function: #open_buffers {{{1
 function! startify#open_buffers(...) abort
   if exists('a:1')  " used in mappings
-    execute 'edit' s:entries[a:1]
-  elseif empty(s:markers)  " open the current entry
-    call s:set_mark('B')
-    return startify#open_buffers()
-  else  " open all marked entries in the order they were given
-    enew
-    setlocal nobuflisted
+    call s:open_buffer(s:entries[a:1])
+    return
+  endif
 
-    for markers in sort(values(s:markers), 's:sort_by_tick')
-      let path = s:entries[markers.original_index]
-      let type = markers.type
+  let marked = filter(copy(s:entries), 'v:val.marked')
+  if empty(marked)  " open current entry
+    call s:open_buffer(s:entries[line('.')])
+    return
+  endif
 
-      if line2byte('$') == -1
-        execute 'edit' path
-      elseif type == 'S'
-        execute 'split' path
-      elseif type == 'V'
-        execute 'vsplit' path
-      elseif type == 'T'
-        execute 'tabnew' path
-      else
-        execute 'edit' path
-      endif
+  enew
+  setlocal nobuflisted
 
-      call s:check_user_options()
-    endfor
+  " Open all marked entries.
+  for entry in sort(values(marked), 's:sort_by_tick')
+    call s:open_buffer(entry)
+  endfor
+endfunction
+
+" Function: s:open_buffer {{{1
+function! s:open_buffer(entry)
+  if a:entry.type == 'special'
+    execute a:entry.cmd
+  elseif a:entry.type == 'session'
+    execute a:entry.cmd a:entry.path
+  elseif a:entry.type == 'file'
+    if line2byte('$') == -1
+      execute 'edit' a:entry.path
+    else
+      execute a:entry.cmd a:entry.path
+    endif
+    call s:check_user_options()
   endif
 endfunction
 
@@ -384,7 +404,7 @@ function! s:display_by_path(path_prefix, path_format) abort
       if has('win32')
         let absolute_path = substitute(absolute_path, '\[', '\[[]', 'g')
       endif
-      let s:entries[index] = absolute_path
+      call s:register(line('$'), index, 'file', 'edit', absolute_path)
       let s:entry_number += 1
     endfor
 
@@ -479,8 +499,12 @@ function! s:show_sessions() abort
 
   for i in range(len(sfiles))
     let index = s:get_index_as_string(s:entry_number)
-    call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . fnamemodify(sfiles[i], ':t'))
-    execute 'nnoremap <buffer><silent>' index ':SLoad' fnamemodify(sfiles[i], ':t') '<cr>'
+    let fname = fnamemodify(sfiles[i], ':t')
+    call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . fname)
+    if has('win32')
+      let fname = substitute(fname, '\[', '\[[]', 'g')
+    endif
+    call s:register(line('$'), index, 'session', 'SLoad', fname)
     let s:entry_number += 1
   endfor
 
@@ -501,9 +525,9 @@ function! s:show_bookmarks() abort
     let index = s:get_index_as_string(s:entry_number)
     call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . fname)
     if has('win32')
-      let absolute_path = substitute(fname, '\[', '\[[]', 'g')
+      let fname = substitute(fname, '\[', '\[[]', 'g')
     endif
-    let s:entries[index] = fname
+    call s:register(line('$'), index, 'file', 'edit', fname)
     let s:entry_number += 1
   endfor
 
@@ -554,11 +578,11 @@ endfunction
 
 " Function: s:set_mappings {{{1
 function! s:set_mappings() abort
-  for index in keys(s:entries)
-    execute 'nnoremap <buffer><silent>' index ':call startify#open_buffers('. string(index) .')<cr>'
+  for k in keys(s:entries)
+    execute 'nnoremap <buffer><silent>' s:entries[k].index
+          \ ':call startify#open_buffers('. string(k) .')<cr>'
   endfor
 
-  nnoremap <buffer><silent> e             :enew<cr>
   nnoremap <buffer><silent> i             :enew <bar> startinsert<cr>
   nnoremap <buffer><silent> <insert>      :enew <bar> startinsert<cr>
   nnoremap <buffer><silent> b             :call <sid>set_mark('B')<cr>
@@ -567,7 +591,6 @@ function! s:set_mappings() abort
   nnoremap <buffer><silent> v             :call <sid>set_mark('V')<cr>
   nnoremap <buffer><silent> <cr>          :call startify#open_buffers()<cr>
   nnoremap <buffer><silent> <2-LeftMouse> :call startify#open_buffers()<cr>
-  nnoremap <buffer><silent> q             :call <sid>close()<cr>
 
   " Prevent 'nnoremap j gj' mappings, since they would break navigation.
   " (One can't leave the [x].)
@@ -580,33 +603,32 @@ function! s:set_mappings() abort
 endfunction
 
 " Function: s:set_mark {{{1
-function! s:set_mark(type) abort
+function! s:set_mark(type, ...) abort
   let index = expand('<cword>')
-  let line  = line('.')
+  let line  = exists('a:1') ? a:1 : line('.')
+  let entry = s:entries[line]
 
-  if index =~# '[eq]'
+  if entry.type != 'file'
     return
   endif
 
+  let default_cmds = {
+        \ 'B': 'edit',
+        \ 'S': 'split',
+        \ 'V': 'vsplit',
+        \ 'T': 'tabnew',
+        \ }
+
   setlocal modifiable
 
-  if has_key(s:markers, line)
-    if s:markers[line].type == a:type  " remove type
-      execute 'normal! ci]'. s:markers[line].original_index
-      call remove(s:markers, line)
-    else  " update type
-      execute 'normal! ci]'. repeat(a:type, len(index))
-      let s:markers[line].type = a:type
-      let s:markers[line].tick = s:tick
-      let s:tick += 1
-    endif
-  else  " set type
-    let s:markers[line] = {
-          \ 'line': line,
-          \ 'type': a:type,
-          \ 'original_index': index,
-          \ 'tick': s:tick,
-          \ }
+  if entry.marked && index[0] == a:type
+    let entry.cmd = 'edit'
+    let entry.marked = 0
+    execute 'normal! ci]'. entry.index
+  else
+    let entry.cmd = default_cmds[a:type]
+    let entry.marked = 1
+    let entry.tick = s:tick
     let s:tick += 1
     execute 'normal! ci]'. repeat(a:type, len(index))
   endif
@@ -634,7 +656,7 @@ function! s:check_user_options() abort
     if isdirectory(path)
       lcd %
     else
-      lcd %:h
+      lcd %:p:h
     endif
   endif
 endfunction
@@ -686,4 +708,15 @@ function! s:print_section_header() abort
 
   call append('$', s:last_message + [''])
   unlet s:last_message
+endfunction
+
+" Function: s:register {{{1
+function! s:register(line, index, type, cmd, path)
+  let s:entries[a:line] = {
+        \ 'index':  a:index,
+        \ 'type':   a:type,
+        \ 'cmd':    a:cmd,
+        \ 'path':   a:path,
+        \ 'marked': 0,
+        \ }
 endfunction

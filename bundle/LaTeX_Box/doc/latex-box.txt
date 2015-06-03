@@ -286,10 +286,10 @@ Viewing ~
 Folding ~
 
 *:LatexFold*
-	Recalculate the folds in the file.
+        Recalculate the folds in the file.
         This is especially useful if you are editing a large file with
         automatic folding disabled for performance reasons.
-	See |g:LatexBox_fold_automatic|.
+        See |g:LatexBox_fold_automatic|.
 
 ------------------------------------------------------------------------------
 
@@ -721,14 +721,14 @@ folded.
         Set number of section levels to fold in TOC.
 
 *g:LatexBox_fold_automatic*             Default: 1
-	Turn on/off automatic calculation of folds.
-	By default LaTeX-Box recalculates the folds every time you exit insert
-	mode. However for large files this can be a rather slow process: a
-	couple of seconds to 10s of seconds.
-	If this option is set to 0 the folding code is still enabled but isn't
-	activated by default. Hence you need to manually tell vim to
-	recalculate folds every time you find it apropriate.
-	You can recalculate the folds using <LocalLeader>lf or |:LatexFold|
+        Turn on/off automatic calculation of folds.
+        By default LaTeX-Box recalculates the folds every time you exit insert
+        mode. However for large files this can be a rather slow process: a
+        couple of seconds to 10s of seconds.
+        If this option is set to 0 the folding code is still enabled but isn't
+        activated by default. Hence you need to manually tell vim to
+        recalculate folds every time you find it apropriate.
+        You can recalculate the folds using <LocalLeader>lf or |:LatexFold|
 
 ==============================================================================
 
