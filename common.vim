@@ -124,7 +124,7 @@ inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
 
 "do I really change colorscheme that often?
-nnoremap ,sc :<C-U>colorscheme<space>
+"nnoremap ,sc :<C-U>colorscheme<space>
 nnoremap ,di :registers<CR>
 
 " make <BS> <DEL> <C-U> and <C-W> undoable
@@ -183,8 +183,13 @@ nnoremap <Leader>tp :set paste!<CR>
 vnoremap aa VGo1G
 
 nnoremap <Leader>tc :tabclose<CR>
+nnoremap ,sc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
+nnoremap <Leader>st :tab split<CR>
+nnoremap ,st :tab split<CR>
+nnoremap ,ts :tab split<CR>
 nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
+nnoremap ,sq :bw!<CR>
 
 nnoremap <Leader>Q :BD!<CR>
 "==============================================================================}}}
@@ -263,11 +268,14 @@ command! -bar -nargs=* Stabedit call jraf#ScratchEdit('tabe', <q-args>)
 setlocal nospell
 let g:togglespell = 0
 let g:default_langn = 1 "1 for English, 2 for Portuguese
-function! ToggleSpell()
-  if v:count != 0
-    let g:default_langn = v:count
-    let g:togglespell = 0 " force spelling this time
+function! ToggleSpellFun(...)
+  if a:0 > 0 && a:1 == -1
+    if v:count != 0
+      let g:default_langn = v:count
+      let g:togglespell = 0 " force spelling this time
+    endif
   endif
+
   if g:togglespell == 0
     if g:default_langn == 1
       setlocal spell spelllang=en_us
@@ -285,7 +293,8 @@ function! ToggleSpell()
     echo "No spell Checking"
   endif
 endfunction
-noremap <Leader>st :<C-U>call ToggleSpell()<CR>
+command! -nargs=* ToggleSpell call ToggleSpellFun(<f-args>)
+"noremap <Leader>st :<C-U>call ToggleSpell()<CR>
 "==============================================================================}}}
 
 "================== Autocommands =============================================={{{
