@@ -74,7 +74,6 @@ set statusline=%2.2n\ %t\ %h%m%r%=
 set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
-set statusline+=%{GetNumTabsStr()}
 set statusline+=\ %l/%L\ %2c\ %P
 
 "" SmartusLine
