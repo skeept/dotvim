@@ -4495,6 +4495,14 @@
     "type": "git",
     "url": "git://github.com/dyng/ctrlsf.vim"
   },
+  "5193": {
+    "type": "git",
+    "url": "git://github.com/dsaenztagarro/zftool.vim"
+  },
+  "5195": {
+    "type": "git",
+    "url": "git://github.com/luochen1990/indent-detector.vim"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"

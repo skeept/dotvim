@@ -1333,6 +1333,9 @@ let scm['YUNOcommit'] = {'type': 'git', 'url': 'git://github.com/esneide/YUNOcom
 " Leaf Garland
 let scm['typescript-vim'] = {'type': 'git', 'url': 'git://github.com/leafgarland/typescript-vim'}
 
+" Dmitry Vasiliev
+let scm['python-syntax'] = {'type': 'git', 'url': 'git://github.com/hdima/python-syntax'}
+
 "-----------------------------------------------------------------------------------------------------------------------
 
 " lei fw
