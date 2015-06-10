@@ -401,6 +401,13 @@ function! projectionist#activate() abort
     break
   endfor
 
+  for root in s:paths()
+    let tags = root . projectionist#slash() . 'tags'
+    if stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
+      let &l:tags = &tags . ',' . escape(tags, ', ')
+    endif
+  endfor
+
   if exists('#User#ProjectionistActivate')
     doautocmd User ProjectionistActivate
   endif

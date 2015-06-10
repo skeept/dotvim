@@ -2,7 +2,7 @@
 "vim-phpfmt":{"archive_name":"phpfmt.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23365","version":"1.0","vim_script_nr":5198},
 "Dokumentary":{"archive_name":"dokumentary.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23366","version":"1.1","vim_script_nr":5197},
 "Indent_Detector":{"archive_name":"indentdetector.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23355","version":"0.0.2","vim_script_nr":5195},
-"cpp_doxygen":{"archive_name":"cpp_doxygen.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23352","version":"1","vim_script_nr":5194},
+"cpp_doxygen":{"archive_name":"cpp_doxygen.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23371","version":"1.2","vim_script_nr":5194},
 "zftool":{"archive_name":"zftool.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23351","version":"0.1.0","vim_script_nr":5193},
 "cpp_cppcheck":{"archive_name":"cpp_cppcheck.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23346","version":"1","vim_script_nr":5192},
 "Scilab_syntax_highlighting":{"archive_name":"scilab.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23343","version":"1.0","vim_script_nr":5191},
