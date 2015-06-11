@@ -16,6 +16,12 @@ fu! <sid>DetermineSID()
 endfu
 call s:DetermineSID()
 delf s:DetermineSID
+let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
+if !s:numeric_sort
+    fu! <sid>MySortValues(i1, i2) "{{{3
+        return (a:i1+0) == (a:i2+0) ? 0 : (a:i1+0) > (a:i2+0) ? 1 : -1
+    endfu
+endif
 
 fu! CSVArrangeCol(first, last, bang, limit) range "{{{2
     if &ft =~? 'csv'
@@ -280,11 +286,10 @@ fu! <sid>GetPat(colnr, maxcolnr, pat) "{{{3
     elseif a:colnr == a:maxcolnr
         if !exists("b:csv_fixed_width_cols")
             return '^' . <SID>GetColPat(a:colnr - 1,0) .
-                \ '\%([^' . b:delimiter .
-                \ ']\{-}\)\?\zs' . a:pat . '\ze'
+                \ '\zs' . a:pat . '\ze$'
         else
             return '\%' . b:csv_fixed_width_cols[-1] .
-                \ 'c\zs' . a:pat . '\ze'
+                \ 'c\zs' . a:pat . '\ze$'
         endif
     else " colnr = 1
         if !exists("b:csv_fixed_width_cols")
@@ -611,6 +616,8 @@ fu! <sid>ColWidth(colnr, ...) "{{{3
             " and then return the maximum strlen
             " That could be done in 1 line, but that would look ugly
             "call map(list, 'split(v:val, b:col."\\zs")[a:colnr-1]')
+            " strip leading whitespace
+            call map(tlist, 'substitute(v:val, ''^\s*'', "", "g")')
             call map(tlist, 'substitute(v:val, ".", "x", "g")')
             call map(tlist, 'strlen(v:val)')
             return max(tlist)
@@ -643,7 +650,7 @@ fu! <sid>ArrangeCol(first, last, bang, limit, ...) range "{{{3
         return
     endif
     let cur=winsaveview()
-    if a:bang || exists("a:1")
+    if a:bang || (exists("a:1") && !empty(a:1))
         " Force recalculating the Column width
         unlet! b:csv_list b:col_width
     elseif a:limit > -1 && a:limit < getfsize(fnamemodify(bufname(''), ':p'))
@@ -1371,6 +1378,24 @@ fu! <sid>SumColumn(list) "{{{3
     endif
 endfu
 
+fu! <sid>CountColumn(list) "{{{3
+    if empty(a:list)
+        return 0
+    elseif has_key(get(s:, 'additional', {}), 'distinct') && s:additional['distinct']
+      if exists("*uniq")
+        return len(uniq(sort(a:list)))
+      else
+        let l = {}
+        for item in a:list
+          let l[item] =  get(l, 'item', 0) + 1
+        endfor
+        return len(keys(l))
+      endif
+    else
+        return len(a:list)
+    endif
+endfu
+
 fu! <sid>DoForEachColumn(start, stop, bang) range "{{{3
     " Do something for each column,
     " e.g. generate SQL-Statements, convert to HTML,
@@ -1517,6 +1542,7 @@ fu! <sid>PrepareFolding(add, match)  "{{{3
             \ (exists("b:csv_fixed_width") ? '.*' : '') .
             \ <sid>GetPat(col, max, <sid>EscapeValue(a) . '\m') .
             \ '\)'
+"            \ (max == col ? '$' : '') . '\)'
 
         let s:filter_count += 1
         let b:csv_filter[s:filter_count] = { 'pat': b, 'id': s:filter_count,
@@ -1705,10 +1731,12 @@ fu! <sid>AnalyzeColumn(...) "{{{3
         let res[item]+=1
     endfor
 
-    let max_items = reverse(sort(values(res)))
+    let max_items = reverse(sort(values(res), s:numeric_sort ? 'n' : 's:MySortValues'))
+    " What about the minimum 5 items?
     let count_items = keys(res)
     if len(max_items) > 5
         call remove(max_items, 5, -1)
+        call map(max_items, 'printf(''\V%s\m'', escape(v:val, ''\\''))')
         call filter(res, 'v:val =~ ''^''.join(max_items, ''\|'').''$''')
     endif
 
@@ -1725,7 +1753,7 @@ fu! <sid>AnalyzeColumn(...) "{{{3
     let i=1
     for val in max_items
         for key in keys(res)
-            if res[key] == val && i <= len(max_items)
+            if res[key] =~ val && i <= len(max_items)
                 if !empty(b:delimiter)
                     let k = substitute(key, b:delimiter . '\?$', '', '')
                 else
@@ -1918,9 +1946,9 @@ fu! <sid>CSVMappings() "{{{3
     call <sid>Map('noremap', '<C-Left>', ':<C-U>call <SID>MoveCol(-1, line("."))<CR>')
     call <sid>Map('noremap', 'H', ':<C-U>call <SID>MoveCol(-1, line("."), 1)<CR>')
     call <sid>Map('noremap', 'K', ':<C-U>call <SID>MoveCol(0, line(".")-v:count1)<CR>')
-    call <sid>Map('noremap', '<Up>', ':<C-U>call <SID>MoveCol(0, line(".")-v:count1)<CR>')
+    call <sid>Map('nnoremap', '<Up>', ':<C-U>call <SID>MoveCol(0, line(".")-v:count1)<CR>')
     call <sid>Map('noremap', 'J', ':<C-U>call <SID>MoveCol(0, line(".")+v:count1)<CR>')
-    call <sid>Map('noremap', '<Down>', ':<C-U>call <SID>MoveCol(0, line(".")+v:count1)<CR>')
+    call <sid>Map('nnoremap', '<Down>', ':<C-U>call <SID>MoveCol(0, line(".")+v:count1)<CR>')
     call <sid>Map('nnoremap', '<CR>', ':<C-U>call <SID>PrepareFolding(1, 1)<CR>')
     call <sid>Map('nnoremap', '<Space>', ':<C-U>call <SID>PrepareFolding(1, 0)<CR>')
     call <sid>Map('nnoremap', '<BS>', ':<C-U>call <SID>PrepareFolding(0, 1)<CR>')
@@ -1983,6 +2011,9 @@ fu! <sid>CommandDefinitions() "{{{3
         \ '-range=% -nargs=* -complete=custom,<sid>SortComplete')
     call <sid>LocalCmd("SumCol",
         \ ':echo csv#EvalColumn(<q-args>, "<sid>SumColumn", <line1>,<line2>)',
+        \ '-nargs=? -range=% -complete=custom,<sid>SortComplete')
+    call <sid>LocalCmd("CountCol",
+        \ ':echo csv#EvalColumn(<q-args>, "<sid>CountColumn", <line1>,<line2>)',
         \ '-nargs=? -range=% -complete=custom,<sid>SortComplete')
     call <sid>LocalCmd("ConvertData",
         \ ':call <sid>PrepareDoForEachColumn(<line1>,<line2>,<bang>0)',
@@ -2604,6 +2635,7 @@ fu! csv#EvalColumn(nr, func, first, last) range "{{{3
 
     " parse the optional number format
     let format = matchstr(a:nr, '/[^/]*/')
+    let s:additional={}
     call <sid>NumberFormat()
     if !empty(format)
         try
@@ -2623,6 +2655,10 @@ fu! csv#EvalColumn(nr, func, first, last) range "{{{3
                 let s:nr_format[1] = s[1]
             endif
         endtry
+    endif
+    let distinct = matchstr(a:nr, '\<distinct\>')
+    if !empty(distinct)
+      let s:additional.distinct=1
     endif
     try
         let result=call(function(a:func), [column])
@@ -2687,6 +2723,26 @@ fu! CSVSum(col, fmt, first, last) "{{{3
         let last = line('$')
     endif
     return csv#EvalColumn(a:col, '<sid>SumColumn', first, last)
+endfu
+fu! CSVCount(col, fmt, first, last, ...) "{{{3
+    let first = a:first
+    let last  = a:last
+    let distinct = 0
+    if empty(first)
+        let first = 1
+    endif
+    if empty(last)
+        let last = line('$')
+    endif
+    if !exists('s:additional')
+      let s:additional = {}
+    endif
+    if exists("a:1") &&  !empty(a:1)
+      let s:additional['distinct'] = 1
+    endif
+    let result=csv#EvalColumn(a:col, '<sid>CountColumn', first, last, distinct)
+    unlet! s:additional['distinct']
+    return (empty(result) ? 0 : result)
 endfu
 fu! CSV_WCol(...) "{{{3
     " Needed for airline
