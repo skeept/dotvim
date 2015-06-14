@@ -451,6 +451,9 @@ fu! <sid>HiCol(colnr, bang) "{{{3
         " Additionally, filter all matches, that could have been used earlier
         let matchlist=getmatches()
         call filter(matchlist, 'v:val["group"] !~ s:hiGroup')
+        " remove matches, that come from matchaddpos()
+        " setmatches() can't handle them.
+        call filter(matchlist, 'has_key(v:val, "pattern")')
         call setmatches(matchlist)
         if a:bang
             return
@@ -1418,6 +1421,10 @@ fu! <sid>DoForEachColumn(start, stop, bang) range "{{{3
     endif
 
     for item in range(a:start, a:stop, 1)
+        if foldlevel(line)
+          " Filter out folded lines (from dynamic filter)
+          continue
+        endif
         let t = g:csv_convert
         let line = getline(item)
         if line =~ '^\s*\V'. escape(b:csv_cmt[0], '\\')

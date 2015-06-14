@@ -24,11 +24,13 @@
 #=============================================================================
 
 import re
+from .base import Base
 
-class Source(object):
+class Source(Base):
     def __init__(self):
-        self.filters = ['matcher_fuzzy']
-        pass
+        Base.__init__(self)
+
+        self.mark = '[nsnip]'
 
     def get_complete_position(self, vim, context):
         m = re.search(context.input, r'[a-zA-Z_][a-zA-Z0-9_]')
@@ -38,4 +40,10 @@ class Source(object):
             return -1
 
     def gather_candidates(self, vim, context):
-        return vim.eval("map(values(neosnippet#helpers#get_snippets()), 'v:val.word')")
+        return vim.eval("values(neosnippet#helpers#get_snippets())")
+
+    def on_post_filter(self, vim, context):
+        for candidate in context['candidates']:
+            candidate['dup'] = 1
+        return context['candidates']
+
