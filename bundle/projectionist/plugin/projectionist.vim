@@ -72,23 +72,28 @@ augroup projectionist
   autocmd FileType *
         \ if (&filetype ==# 'netrw' && !exists('b:projectionist')) ||
         \     &buftype !~# 'nofile\|quickfix' |
-        \   call ProjectionistDetect(expand('%:p')) |
+        \   call ProjectionistDetect(resolve(expand('%:p'))) |
         \ endif
-  autocmd BufFilePost * call ProjectionistDetect(expand('<afile>:p'))
+  autocmd BufFilePost * call ProjectionistDetect(resolve(expand('<afile>:p')))
   autocmd BufNewFile,BufReadPost *
         \ if empty(&filetype) |
-        \   call ProjectionistDetect(expand('<afile>:p')) |
+        \   call ProjectionistDetect(resolve(expand('<afile>:p'))) |
         \ endif
-  autocmd CmdWinEnter * call ProjectionistDetect(expand('#:p'))
+  autocmd CmdWinEnter *
+        \ if !empty(getbufvar('#', 'projectionist_file')) |
+        \   let b:projectionist_file = getbufvar('#', 'projectionist_file') |
+        \   let b:projectionist = getbufvar('#', 'projectionist') |
+        \   call projectionist#activate() |
+        \ endif
   autocmd User NERDTreeInit,NERDTreeNewRoot
         \ call ProjectionistDetect(b:NERDTreeRoot.path.str())
   autocmd VimEnter *
         \ if empty(expand('<afile>:p')) |
-        \   call ProjectionistDetect(getcwd()) |
+        \   call ProjectionistDetect(resolve(getcwd())) |
         \ endif
-  autocmd BufWritePost .projections.json call ProjectionistDetect(expand('<afile>:p'))
+  autocmd BufWritePost .projections.json call ProjectionistDetect(resolve(expand('<afile>:p')))
   autocmd BufNewFile *
-        \ if has_key(b:, 'projectionist') && !empty(b:projectionist) |
+        \ if !empty(get(b:, 'projectionist')) |
         \   call projectionist#apply_template() |
         \ endif
 augroup END
