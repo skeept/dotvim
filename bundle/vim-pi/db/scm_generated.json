@@ -4503,6 +4503,10 @@
     "type": "git",
     "url": "git://github.com/luochen1990/indent-detector.vim"
   },
+  "5202": {
+    "type": "git",
+    "url": "git://github.com/c-wind/supersearch"
+  },
   "521": {
     "type": "git",
     "url": "git://github.com/yegappan/mru"
