@@ -74,8 +74,8 @@ let scmnr.336 = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-cpp'}
 let scmnr.727 = {'type': 'git', 'url': 'git://github.com/LucHermitte/local_vimrc'}
 " The following plugins do not have a separate repository:
 let scmnr.83            = {'url': 'http://lh-vim.googlecode.com/svn/misc/trunk/plugin/let-modeline.vim', 'archive_name': 'let-modeline.vim', 'type': 'archive', 'script-type': 'utility'}
-let scm['fileuptodate'] = {'url': 'http://hermitte.free.fr/vim/ressources/dollar_VIM/plugin/fileuptodate.vim', 'archive_name': 'fileuptodate.vim', 'type': 'archive', 'script-type': 'utility'}
-let scm['a@lh']         = {'url': 'http://code.google.com/p/lh-vim/source/browse/cpp/trunk/plugin/a-old.vim', 'archive_name': 'a-old.vim', 'type': 'archive', 'script-type': 'utility'}
+" Not owned by Luc Hermitte, but forked and enhanced...
+" let scmnr.222 = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/mu-template/trunk'}
 " let scm['lh-vim-lib']          = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-vim-lib'}
 let scm['build-tools-wrapper'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/vim-build-tools-wrapper'}
 let scm['lh-tags']             = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-tags'}
@@ -93,9 +93,9 @@ let scm['system-tools']        = {'type': 'git', 'url': 'git://github.com/LucHer
 " documentation. Alternative: use cpp (vimscript #336, above) in place of a@lh
 " Triggers.vim (vimscript #48) which is also here requires fileuptodate.
 let scm['lh-misc'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/lh-misc', 'dependencies': {'system-tools': {}, 'a@lh': {}, 'fileuptodate': {}}}
-" Not owned by Luc Hermitte, but forked and enhanced...
-" let scmnr.222 = {'type': 'svn', 'url': 'http://lh-vim.googlecode.com/svn/mu-template/trunk'}
 let scm['mu-template@lh'] = {'type': 'git', 'url': 'git://github.com/LucHermitte/mu-template'}
+let scm['fileuptodate'] = {'url': 'http://hermitte.free.fr/vim/ressources/dollar_VIM/plugin/fileuptodate.vim', 'archive_name': 'fileuptodate.vim', 'type': 'archive', 'script-type': 'utility'}
+let scm['a@lh']         = {'url': 'http://code.google.com/p/lh-vim/source/browse/cpp/trunk/plugin/a-old.vim', 'archive_name': 'a-old.vim', 'type': 'archive', 'script-type': 'utility'}
 
 " Yasuhiro Matsumoto
 let scmnr.52 = {'type': 'git', 'url': 'git://github.com/mattn/calendar-vim'}
