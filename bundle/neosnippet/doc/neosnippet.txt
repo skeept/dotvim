@@ -212,6 +212,13 @@ g:neosnippet#expand_word_boundary
 
 		The default value is 0.
 
+					*g:neosnippet#enable_conceal_markers*
+g:neosnippet#enable_conceal_markers
+		If this variable is not 0, neosnippet will use the |conceal|
+		markers.
+
+		The default value is 1.
+
 						*g:neosnippet#scope_aliases*
 g:neosnippet#scope_aliases
 		It is a dictionary that associating certain filetypes with
@@ -330,7 +337,7 @@ EXAMPLES					*neosnippet-examples*
 	" \ "\<Plug>(neosnippet_expand_or_jump)"
 	" \: "\<TAB>"
 
-	" For snippet_complete marker.
+	" For conceal markers.
 	if has('conceal')
 	  set conceallevel=2 concealcursor=niv
 	endif

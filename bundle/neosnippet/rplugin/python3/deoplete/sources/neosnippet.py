@@ -30,17 +30,11 @@ class Source(Base):
     def __init__(self):
         Base.__init__(self)
 
+        self.name = 'vimshell'
         self.mark = '[nsnip]'
 
-    def get_complete_position(self, vim, context):
-        m = re.search(context.input, r'[a-zA-Z_][a-zA-Z0-9_]')
-        if m:
-            return m.start()
-        else:
-            return -1
-
     def gather_candidates(self, vim, context):
-        return vim.eval("values(neosnippet#helpers#get_snippets())")
+        return vim.eval('values(neosnippet#helpers#get_snippets())')
 
     def on_post_filter(self, vim, context):
         for candidate in context['candidates']:
