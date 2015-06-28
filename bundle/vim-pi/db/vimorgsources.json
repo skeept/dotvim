@@ -1,5 +1,6 @@
 {
-"mirror":{"archive_name":"mirror.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23413","version":"1.0.0","vim_script_nr":5204},
+"ShaderHighLight":{"archive_name":"ShaderHighLight.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23416","version":"0.1","vim_script_nr":5205},
+"mirror":{"archive_name":"mirror.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23415","version":"1.0.2","vim_script_nr":5204},
 "asynccompl":{"archive_name":"asynccompl-0.100-build20150621.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23407","version":"0.100","vim_script_nr":5203},
 "supersearch":{"archive_name":"supersearch.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23401","version":"1.2","vim_script_nr":5202},
 "scilab%5201":{"archive_name":"scilab.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23392","version":"1.0","vim_script_nr":"5201"},
