@@ -592,8 +592,8 @@ fu! <sid>ColWidth(colnr, ...) "{{{3
             " and then return the maximum strlen
             " That could be done in 1 line, but that would look ugly
             "call map(list, 'split(v:val, b:col."\\zs")[a:colnr-1]')
-            " strip leading whitespace
-            call map(tlist, 'substitute(v:val, ''^\s*'', "", "g")')
+            " do not strip leading whitespace
+            " call map(tlist, 'substitute(v:val, ''^\s*'', "", "g")')
             call map(tlist, 'substitute(v:val, ".", "x", "g")')
             call map(tlist, 'strlen(v:val)')
             return max(tlist)
@@ -707,11 +707,12 @@ endfu
 
 fu! <sid>UnArrangeCol(match) "{{{3
     " Strip leading white space, also trims empty records:
-    if get(b:, 'csv_arrange_leftalign',0)
-        return substitute(a:match, '\s\+\ze'. b:delimiter. '\?$', '', '')
-    else
-        return substitute(a:match, '^\s\+', '', '')
-    endif
+    "if get(b:, 'csv_arrange_leftalign',0)
+    "    return substitute(a:match, '\s\+\ze'. b:delimiter. '\?$', '', '')
+    "else
+    "    return substitute(a:match, '^\s\+', '', '')
+    "endif
+    return substitute(a:match, '\%(^\s\+\)\|\%(\s\+\ze'.b:delimiter. '\?$\)', '', 'g')
     " only strip leading white space, if a non-white space follows:
     "return substitute(a:match, '^\s\+\ze\S', '', '')
 endfu
