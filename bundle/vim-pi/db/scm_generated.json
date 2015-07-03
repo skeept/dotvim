@@ -4515,6 +4515,10 @@
     "type": "git",
     "url": "git://github.com/yegappan/mru"
   },
+  "5212": {
+    "type": "git",
+    "url": "git://github.com/andreax79/vim-on-write"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
