@@ -4519,6 +4519,10 @@
     "type": "git",
     "url": "git://github.com/andreax79/vim-on-write"
   },
+  "5213": {
+    "type": "git",
+    "url": "git://github.com/huleiak47/vim-AHKcomplete"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

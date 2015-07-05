@@ -334,7 +334,7 @@ function! projectionist#append(root, ...) abort
   endif
   let projections = get(a:000, -1, {})
   if type(projections) == type({})
-    call add(b:projectionist[a:root], projections)
+    call add(b:projectionist[a:root], filter(projections, 'type(v:val) == type({})'))
   endif
 endfunction
 
@@ -545,41 +545,64 @@ endfunction
 
 " Section: :A
 
+function! s:jumpopt(file) abort
+  let pattern = '!$\|[:+@#]\d\+$\|[+@#].*$'
+  let file = substitute(a:file, pattern, '', '')
+  let jump = matchstr(a:file, pattern)
+  if jump =~# '^[:+@#]\d\+$'
+    return [file, '+'.jump[1:-1].' ']
+  elseif jump ==# '!'
+    return [file, '+AD ']
+  elseif !empty(jump)
+    return [file, '+A'.escape(jump, ' ').' ']
+  else
+    return [file, '']
+  endif
+endfunction
+
 function! s:edit_command(cmd, count, ...) abort
   if a:0
-    let file = projectionist#path(a:1, a:count)
-    if empty(file)
+    if a:1 =~# '^[@#+]'
+      return 'echoerr ":A: @/#/+ not supported"'
+    endif
+    let open = s:jumpopt(projectionist#path(a:1, a:count))
+    if empty(open[0])
       return 'echoerr "Invalid count"'
     endif
+  elseif a:cmd =~# 'read'
+    call projectionist#apply_template()
+    return ''
   else
     let alternates = projectionist#query_file('alternate')
     let warning = get(filter(copy(alternates), 'v:val =~# "replace %.*}"'), 0, '')
     if !empty(warning)
       return 'echoerr '.string(matchstr(warning, 'replace %.*}').' in alternate projection')
     endif
-    let file = get(filter(copy(alternates), '!empty(getftype(v:val))'), 0, '')
+    call map(alternates, 's:jumpopt(v:val)')
+    let open = get(filter(copy(alternates), '!empty(getftype(v:val[0]))'), 0, [])
     if empty(alternates)
       return 'echoerr "No alternate file"'
-    elseif empty(file)
+    elseif empty(open)
       let choices = ['Create alternate file?']
       let i = 0
-      for alt in alternates
+      for [alt, _] in alternates
         let i += 1
         call add(choices, i.' '.alt)
       endfor
       let i = inputlist(choices)
       if i > 0
-        let file = get(alternates, i-1, '')
+        let open = get(alternates, i-1, [])
       endif
-      if empty(file)
+      if empty(open)
         return ''
       endif
     endif
   endif
+  let [file, jump] = open
   if !isdirectory(fnamemodify(file, ':h'))
     call mkdir(fnamemodify(file, ':h'), 'p')
   endif
-  return a:cmd . ' ' . fnameescape(fnamemodify(file, ':~:.'))
+  return a:cmd . ' ' . jump . fnameescape(fnamemodify(file, ':~:.'))
 endfunction
 
 function! s:edit_complete(lead, cmdline, _) abort
@@ -641,7 +664,6 @@ function! projectionist#apply_template() abort
     endif
     %delete_
     call setline(1, split(template, "\n"))
-    setlocal nomodified
     doautocmd BufReadPost
   endif
   return ''
