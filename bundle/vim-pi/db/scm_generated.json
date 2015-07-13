@@ -531,6 +531,10 @@
     "type": "git",
     "url": "git://github.com/tomtom/quickfixsigns_vim"
   },
+  "2590": {
+    "type": "git",
+    "url": "git://github.com/derekwyatt/vim-fswitch"
+  },
   "2594": {
     "type": "git",
     "url": "git://github.com/tomtom/tmarks_vim"
@@ -4522,6 +4526,18 @@
   "5213": {
     "type": "git",
     "url": "git://github.com/huleiak47/vim-AHKcomplete"
+  },
+  "5218": {
+    "type": "git",
+    "url": "git://github.com/vitapluvia/vim-gurl"
+  },
+  "5219": {
+    "type": "git",
+    "url": "git://github.com/ntpeters/vim-airline-colornum"
+  },
+  "5221": {
+    "type": "git",
+    "url": "git://github.com/ompugao/ctrlp-locate"
   },
   "586": {
     "type": "git",
