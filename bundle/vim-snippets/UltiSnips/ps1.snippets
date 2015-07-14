@@ -3,24 +3,24 @@ priority -50
 snippet doc "multiline documentation"
 <#
 .Synopsis
-   $(1:Short description}
+	${1:Short description}
 .DESCRIPTION
-   ${2:Long description}
+	${2:Long description}
 .EXAMPLE
-   ${3:Example of how to use this cmdlet}
+	${3:Example of how to use this cmdlet}
 .INPUTS
-   ${4:Inputs to this cmdlet (if any)}
+	${4:Inputs to this cmdlet (if any)}
 .OUTPUTS
-   ${5:Output from this cmdlet (if any)}
+	${5:Output from this cmdlet (if any)}
 .NOTES
-   ${6:General notes}
+	${6:General notes}
 .COMPONENT
-   ${7:The component this cmdlet belongs to}
+	${7:The component this cmdlet belongs to}
 .ROLE
-   ${8:The role this cmdlet belongs to}j
+	${8:The role this cmdlet belongs to}j
 .FUNCTIONALITY
-   ${9:The functionality that best describes this cmdlet}
-#>
+	${9:The functionality that best describes this cmdlet}
+#>${10}
 endsnippet
 
 snippet comm "Multiline Comment"
@@ -35,17 +35,17 @@ Function ${1:Verb-Noun}
 	Param
 	(
 		# Param1 help description
-		[Parameter(Mandatory=$true, 
+		[Parameter(Mandatory=$true,
 			ValueFromPipeline=$true,
-			ValueFromPipelineByPropertyName=$true, 
-			ValueFromRemainingArguments=$false, 
+			ValueFromPipelineByPropertyName=$true,
+			ValueFromRemainingArguments=$false,
 			Position=0,
 			ParameterSetName='Parameter Set 1')]
 		[ValidateNotNull()]
 		[ValidateNotNullOrEmpty()]
 		[ValidateCount(0,5)]
 		[ValidateSet("sun", "moon", "earth")]
-		[Alias("p1")] 
+		[Alias("p1")]
 		$Param1,
 
 		# Param2 help description
@@ -83,14 +83,14 @@ endsnippet
 
 snippet do-until "Do until condition"
 Do {
-	${1}
-} Until (${2:condition})
+	${2}
+} Until (${1:condition})${3}
 endsnippet
 
 snippet do-while "Do while condition"
 Do {
-	${1}
-} While (${2:condition})
+	${2}
+} While (${1:condition})${3}
 endsnippet
 
 snippet foreach "ForEach item in collection"
@@ -116,8 +116,6 @@ endsnippet
 snippet ifeol "If else in one line"
 If(${1:condition}) {${2}} Else {${3}}${4}
 endsnippet
-
-
 
 
 # vim:ft=snippets:
