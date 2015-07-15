@@ -79,7 +79,7 @@ function! EchoOrPrintTime()
     let g:echoOrPrintTimeSetting = v:count
   endif
   "We now adjust for time zone right here. This might lead to some confusion
-  let time_display = strftime("%a, %d %b %Y %H:%M", (expand("<cWORD>") + 6*3600))
+  let time_display = strftime("%a, %d %b %Y %H:%M", (expand("<cWORD>") + 7*3600))
 
   if g:echoOrPrintTimeSetting != 1
     " try writting text after current word
