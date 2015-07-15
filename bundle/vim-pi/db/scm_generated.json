@@ -4293,7 +4293,7 @@
   },
   "5114": {
     "type": "git",
-    "url": "git://github.com/ryanoasis/vim-webdevicons"
+    "url": "git://github.com/ryanoasis/vim-devicons"
   },
   "5115": {
     "type": "git",
@@ -4538,6 +4538,10 @@
   "5221": {
     "type": "git",
     "url": "git://github.com/ompugao/ctrlp-locate"
+  },
+  "5222": {
+    "type": "git",
+    "url": "git://github.com/Quramy/vim-js-pretty-template"
   },
   "586": {
     "type": "git",
