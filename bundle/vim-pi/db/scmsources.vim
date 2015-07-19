@@ -475,11 +475,11 @@ let scmnr.3026 = {'type': 'git', 'url': 'git://github.com/Raimondi/PickAColor'}
 let scm['bufring'] = {'type': 'git', 'url': 'git://github.com/Raimondi/bufring'}
 
 " ZyX
-let scmnr.3056 = {'type': 'hg', 'url': 'http://translit3.hg.sourceforge.net:8000/hgroot/translit3/translit3'}
-let scmnr.3113 = {'type': 'hg', 'url': 'http://formatvim.hg.sourceforge.net:8000/hgroot/formatvim/formatvim'}
-let scmnr.3185 = {'type': 'hg', 'url': 'http://jsonvim.hg.sourceforge.net:8000/hgroot/jsonvim/jsonvim'}
-let scmnr.3189 = {'type': 'hg', 'url': 'http://vimoop.hg.sourceforge.net:8000/hgroot/vimoop/vimoop'}
-let scmnr.3190 = {'type': 'hg', 'url': 'http://yamlvim.hg.sourceforge.net:8000/hgroot/yamlvim/yamlvim'}
+let scmnr.3056 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/translit3'}
+let scmnr.3113 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/formatvim'}
+let scmnr.3185 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/jsonvim'}
+let scmnr.3189 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/vimoop'}
+let scmnr.3190 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/yamlvim'}
 let scmnr.3828 = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/aurum'}
 let scm['zvim'] = {'type': 'hg', 'url': 'https://bitbucket.org/ZyX_I/zvim'}
 
