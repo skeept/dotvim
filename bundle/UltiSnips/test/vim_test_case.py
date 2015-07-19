@@ -9,7 +9,7 @@ import textwrap
 import time
 import unittest
 
-from test.constant import PYTHON3, SEQUENCES
+from test.constant import PYTHON3, SEQUENCES, EX
 from test.vim_interface import create_directory, TempFileManager
 
 
@@ -34,12 +34,16 @@ class VimTestCase(unittest.TestCase, TempFileManager):
     version = None  # Will be set to vim --version output
     maxDiff = None  # Show all diff output, always.
     vim_flavor = None # will be 'vim' or 'neovim'.
+    expected_python_version = None # If set, we need to check that our Vim is running this python version.
 
     def __init__(self, *args, **kwargs):
         unittest.TestCase.__init__(self, *args, **kwargs)
         TempFileManager.__init__(self, 'Case')
 
     def runTest(self):
+        if self.expected_python_version:
+            self.assertEqual(self.in_vim_python_version, self.expected_python_version)
+
         # Only checks the output. All work is done in setUp().
         wanted = self.text_before + self.wanted + self.text_after
         if self.expected_error:
@@ -125,6 +129,7 @@ class VimTestCase(unittest.TestCase, TempFileManager):
         vim_config.append('set buftype=nofile')
         vim_config.append('set shortmess=at')
         vim_config.append('let @" = ""')
+        assert EX == "\t"  # Otherwise you need to change the next line
         vim_config.append('let g:UltiSnipsExpandTrigger="<tab>"')
         vim_config.append('let g:UltiSnipsJumpForwardTrigger="?"')
         vim_config.append('let g:UltiSnipsJumpBackwardTrigger="+"')
@@ -173,7 +178,7 @@ class VimTestCase(unittest.TestCase, TempFileManager):
         for name, content in self.files.items():
             self._create_file(name, content)
 
-        self.vim.launch(vim_config)
+        self.in_vim_python_version = self.vim.launch(vim_config)
 
         self._before_test()
 
