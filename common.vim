@@ -523,7 +523,7 @@ endif
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if (1 && g:is_vimrc_simple == 0 || g:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
+if (1 && g:is_vimrc_simple == 0 || GetIsAddonActive('neocomplete'))
 function! SetupNeocomplete()
   let g:neocomplete#enable_at_startup = 1
   " Use smartcase.
@@ -895,8 +895,7 @@ endif
 "==============================================================================}}}
 
 "================== LycosaExplorer ============================================{{{
-"if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-if index(g:active_addons, 'lycosaexplorer') >= 0
+if GetIsAddonActive('lycosaexplorer')
   call jraf#setupLycosa()
 endif
 "==============================================================================}}}

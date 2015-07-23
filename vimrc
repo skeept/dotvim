@@ -31,22 +31,17 @@ if g:addon_manager == 1
   function! PathogenSetup()
     "call pathogen#helptags()
     "call pathogen#runtime_append_all_bundles()
-    let g:pathogen_disabled += ['pyflakes', 'python-mode', 'pysmell']
-    let g:pathogen_disabled += ['powerline']
+    let g:pathogen_disabled += ['pyflakes', 'python-mode', 'PySmell']
+    let g:pathogen_disabled += ['powerline', 'startify']
     let g:pathogen_disabled += ['hilinks']
     let g:pathogen_disabled += ['snipmate']
     let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
-    "let g:pathogen_disabled += ['supertab']
-    "let g:pathogen_disabled += ['vlatex']
     let g:pathogen_disabled += ['Align', 'AutoAlign']
+    let g:pathogen_disabled += ['UltiSnips']
     if !has("python")
       let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
       let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
     endif
-    if g:is_win
-      let g:pathogen_disabled += ['pysmell']
-    endif
-
     call pathogen#infect()
   endfunction
 
@@ -93,6 +88,16 @@ function! SetupVAM()
 endfunction
 call SetupVAM()
 endif
+"==============================================================================}}}
+
+"================== GetIsAddonActive =========================================={{{
+function! GetIsAddonActive(addon)
+  if g:addon_manager == 1 "Pathogen"
+    return index(g:pathogen_disabled, a:addon) == -1
+  else "vam-addon-manager
+    return index(g:active_addons, a:addon) >= 0
+  endif
+endfunction
 "==============================================================================}}}
 
 "this is where all vimrc and simple settings go
@@ -201,7 +206,7 @@ let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
 
-if index(g:active_addons, 'yankstack') >= 0
+if GetIsAddonActive('yankstack')
   nmap ,y <Plug>yankstack_substitute_older_paste
   nmap ,Y <Plug>yankstack_substitute_newer_paste
 endif
@@ -275,7 +280,7 @@ noremap <leader>td :TaskList<CR>
 "==============================================================================}}}
 
 "================== LycosaExplorer ============================================{{{
-if index(g:active_addons, 'lycosaexplorer') >= 0
+if GetIsAddonActive('lycosaexplorer')
   call jrar#setupLycosa()
 endif
 "==============================================================================}}}
@@ -318,7 +323,7 @@ command! -complete=file -nargs=* Mtorig call jraf#myThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if (1 || g:addon_manager == 2 && index(g:active_addons, 'neocomplete') >= 0)
+if (1 || GetIsAddonActive('neocomplete'))
   call SetupNeocomplete()
 endif
 "==============================================================================}}}
@@ -328,10 +333,7 @@ endif
 if 0
   call SetupNeocomplcache()
   function! SetupNeocomplcache()
-    let g:neocomplcache_enable_at_startup = 1 && (
-          \ (g:addon_manager == 1 && index(g:pathogen_disabled, 'neocomplcache') == -1) ||
-          \ (g:addon_manager == 2 && index(g:active_addons, 'neocomplcache') >= 0))
-    if g:neocomplcache_enable_at_startup == 1
+    if 1 && GetIsAddonActive('neocomplcache')
       let g:acp_enableAtStartup = 0
       " Use smartcase.
       let g:neocomplcache_enable_smart_case = 0

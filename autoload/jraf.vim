@@ -183,7 +183,7 @@ endfunction
 
 "================== UltiSnips ================================================={{{
 function! jraf#loadUltisnips()
-  if has("python")
+  if has("python") && g:addon_manager == 2
     call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
     inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
     nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
@@ -519,7 +519,7 @@ function! jraf#setupLycosa()
 endfunction
 
 "if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-if index(g:active_addons, 'lycosaexplorer') >= 0
+if GetIsAddonActive('lycosaexplorer')
   call SetupLycosa()
 endif
 "==============================================================================}}}
@@ -588,8 +588,10 @@ function! jraf#loadCtrlP()
 endf
 
 function! jraf#loadLycosa()
-  call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  call SetupLycosa()
+  if g:addon_manager == 2
+    call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    call SetupLycosa()
+  endif
 endfunction
 "==============================================================================}}}
 
@@ -601,5 +603,5 @@ function! jraf#ScratchEdit(cmd, options)
 endfunction
 "==============================================================================}}}
 
-" vim: foldmethod=marker
 
+" vim: foldmethod=marker
