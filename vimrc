@@ -17,10 +17,22 @@ else
 endif
 
 let g:is_win = has('win32') || has('win64')
+
+" put it at the start of vimrc but define function LocalSettingsEndingVimRC
+" and call it at the end of vimrc
+let g:read_localVimrc = 0
+let s:local_settings = expand(g:p0 . "/local_settings.vim")
+if filereadable(s:local_settings)
+  execute "source " . s:local_settings
+endif
+
 "}}}
 
+
 " decide on pathogen or vam (pathogen: 1, vam: 2)
-let g:addon_manager = 2
+if exists('g:addon_manager') == 0
+  let g:addon_manager = 2
+endif
 let g:is_vimrc_simple = 0
 
 "================== pathogen ================================================{{{
@@ -323,120 +335,18 @@ command! -complete=file -nargs=* Mtorig call jraf#myThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-if (1 || GetIsAddonActive('neocomplete'))
+if g:load_neocomplete
   call SetupNeocomplete()
-endif
-"==============================================================================}}}
-
-"================== neocomplcache ============================================={{{
-" Use neocomplcache? Not for now!
-if 0
-  call SetupNeocomplcache()
-  function! SetupNeocomplcache()
-    if 1 && GetIsAddonActive('neocomplcache')
-      let g:acp_enableAtStartup = 0
-      " Use smartcase.
-      let g:neocomplcache_enable_smart_case = 0
-      " Use camel case completion.
-      let g:neocomplcache_enable_camel_case_completion = 0
-      " Use underbar completion.
-      let g:neocomplcache_enable_underbar_completion = 1
-      " Set minimum syntax keyword length.
-      let g:neocomplcache_min_syntax_length = 6
-      let g:neocomplcache_min_keyword_length = 6
-      let g:neocomplcache_lock_buffer_name_pattern = '\*ku\*'
-
-      " Define dictionary.
-      let g:neocomplcache_dictionary_filetype_lists = {
-            \ 'default' : '',
-            \ 'vimshell' : $HOME.'/.vimshell_hist',
-            \ 'scheme' : $HOME.'/.gosh_completions'
-            \ }
-
-      " disable file name completion
-      let g:neocomplcache_source_disable = {
-            \ 'filename_complete' : 1
-            \ }
-
-      " Define keyword.
-      if !exists('g:neocomplcache_keyword_patterns')
-        let g:neocomplcache_keyword_patterns = {}
-      endif
-      let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
-
-      " Plugin key-mappings.
-      "inoremap <expr><C-G>     neocomplcache#undo_completion()
-      "inoremap <expr><C-L>     neocomplcache#complete_common_string()
-
-      " Recommended key-mappings.
-      " <CR>: close popup and save indent.
-      inoremap <expr><silent> <CR> <SID>my_cr_function()
-      function! s:my_cr_function()
-        return pumvisible() ? neocomplcache#close_popup() . "\<CR>" : "\<CR>"
-      endfunction
-      " <TAB>: completion.
-      "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-      " <C-h>, <BS>: close popup and delete backword char.
-      inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
-      inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-      inoremap <expr><C-y> pumvisible() ? neocomplcache#close_popup() : "\<C-Y>"
-      inoremap <expr><C-e> pumvisible() ? neocomplcache#cancel_popup() :
-            \ IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
-
-      " For cursor moving in insert mode(Not recommended)
-      "inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
-      "inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
-      "inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
-      "inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
-      "let g:neocomplcache_enable_cursor_hold_i = 1
-      "let g:neocomplcache_enable_insert_char_pre = 1
-
-      " AutoComplPop like behavior.
-      "let g:neocomplcache_enable_auto_select = 1
-
-      " Shell like behavior(not recommended).
-      set completeopt+=longest
-      let g:neocomplcache_enable_auto_select = 0
-      let g:neocomplcache_disable_auto_complete = 1
-      "inoremap <expr><TAB>  pumvisible() ? "\<Down>" : "\<C-x>\<C-u>"
-      "inoremap <expr><TAB>  pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
-      "inoremap <expr><S-TAB>  pumvisible() ? "\<C-P>" : "\<C-X>\<C-U>\<C-P>"
-      inoremap <expr><F12> pumvisible() ? "\<C-N>" : "\<C-X>\<C-U>\<C-N>"
-      "inoremap <expr><CR>  pumvisible() ? neocomplcache#smart_close_popup() : "\<CR>"
-      inoremap <expr><CR>  pumvisible() ? neocomplcache#close_popup() : "\<CR>"
-
-      inoremap <expr><C-U> pumvisible() ? neocomplcache#smart_close_popup() . "\<C-U>" : "\<C-G>u\<C-U>"
-
-      " Enable omni completion.
-      augroup neocomplcache_1
-        autocmd!
-        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-        autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-        autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-      augroup END
-
-      " Enable heavy omni completion.
-      if !exists('g:neocomplcache_omni_patterns')
-        let g:neocomplcache_omni_patterns = {}
-      endif
-      let g:neocomplcache_omni_patterns.ruby = '[^. *\t]\.\h\w*\|\h\w*::'
-      "autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
-      let g:neocomplcache_omni_patterns.php = '[^. \t]->\h\w*\|\h\w*::'
-      let g:neocomplcache_omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)'
-      let g:neocomplcache_omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\|\h\w*::'
-
-      " For perlomni.vim setting.
-      " https://github.com/c9s/perlomni.vim
-      let g:neocomplcache_omni_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
-    endif
-  endfunction
 endif
 "==============================================================================}}}
 
 if g:is_win
   let Grep_Path = 'C:\cygwin\bin\grep'
 endif
+
+if g:read_localVimrc == 1
+  call LocalSettingsEndingVimRC()
+endif
+
 
 " vim: foldmethod=marker
