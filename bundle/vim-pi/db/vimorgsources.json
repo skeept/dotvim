@@ -6,7 +6,7 @@
 "airline-colornum":{"archive_name":"airline-colornum.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23468","version":"1.1","vim_script_nr":5219},
 "vim-gurl":{"archive_name":"vim-gurl.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23452","version":"1.0","vim_script_nr":5218},
 "vim-clipper":{"archive_name":"vim-clipper-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23450","version":"0.1","vim_script_nr":5217},
-"Terminus":{"archive_name":"terminus-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23447","version":"0.1","vim_script_nr":5216},
+"Terminus":{"archive_name":"terminus-0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23478","version":"0.2","vim_script_nr":5216},
 "Loupe":{"archive_name":"loupe-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23446","version":"0.1","vim_script_nr":5215},
 "vim-qlist":{"archive_name":"vim-qlist.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23442","version":"0.0.1","vim_script_nr":5214},
 "vim-AHKcomplete":{"archive_name":"vim-AHKcomplete.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23440","version":"1.0","vim_script_nr":5213},
