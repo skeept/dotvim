@@ -44,5 +44,5 @@ doc/tags*
 test/cur_color.vim
 
 notused_plugins/ultisnips/
-frawor/test/
+notused_plugins/frawor/test/
 __pycache__/
