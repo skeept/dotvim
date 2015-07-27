@@ -11,13 +11,14 @@ import sys
 def find_matching(folder_name, folder_criteria=None, folder_action=None, file_criteria=None, file_action=None):
     """find files or folders according to criteria and apply criteria"""
     default_action = lambda x : sys.stdout.write("{}\n".format(x))
+    to_skip = ['.git', '.svn', 'dd_']
     if file_action is None:
         file_action = default_action
     if folder_action is None:
         folder_action = default_action
     for root, dirs, files in os.walk(folder_name):
-        if '.git' in dirs:
-            dirs.remove('.git')
+        for name in (n for n in to_skip if n in dirs):
+            dirs.remove(name)
         if file_criteria is not None:
             for ff in files:
                 fname = os.path.join(root,)
