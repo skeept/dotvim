@@ -1,0 +1,3 @@
+:let g:testfile="rtp/plugin/register-return-value.vim"
+:let g:testcmd="source"
+:source test.vim

@@ -1,0 +1,3 @@
+:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
+:let g:testfile="plugin/plugin-depends-on-plugin-with-feature.vim"
+:source test.vim

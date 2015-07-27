@@ -30,7 +30,7 @@ endif
 
 
 " decide on pathogen or vam (pathogen: 1, vam: 2)
-if exists('g:addon_manager') == 0
+if !exists('g:addon_manager')
   let g:addon_manager = 2
 endif
 let g:is_vimrc_simple = 0
@@ -47,9 +47,9 @@ if g:addon_manager == 1
     let g:pathogen_disabled += ['powerline', 'startify']
     let g:pathogen_disabled += ['hilinks']
     let g:pathogen_disabled += ['snipmate']
-    let g:pathogen_disabled += ['powershell', 'lycosaexplorer'] "lycosa is to heavy
+    let g:pathogen_disabled += ['lycosaexplorer'] "lycosa is to heavy
     let g:pathogen_disabled += ['Align', 'AutoAlign']
-    let g:pathogen_disabled += ['UltiSnips']
+    "let g:pathogen_disabled += ['UltiSnips']
     if !has("python")
       let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
       let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
@@ -73,6 +73,7 @@ function! SetupVAM()
   let g:vim_addon_manager.additional_addon_dirs = [
         \ escape(expand(g:p0 . '/notused_plugins'), ' \'),
         \ escape(expand(g:p0 . '/local_plugins'), ' \'),
+        \ escape(expand(g:p0 . '/notused_plugins/Infrequent'), ' \'),
         \ ]
 
   "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
@@ -83,7 +84,7 @@ function! SetupVAM()
   "VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
   VAMAddToActiveAddons argumentative projectionist
-  VAMAddToActiveAddons Syntastic powershell fugitive
+  VAMAddToActiveAddons Syntastic ps1 fugitive
   VAMAddToActiveAddons gitv aurum
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete

@@ -1,0 +1,2 @@
+:let &rtp.=",".escape($TESTDIR, ',\').'/intrtp'
+:for interpreter in ["python", "perl", "lua", "ruby"] | call FraworLoad('plugin/'.interpreter) | endfor
