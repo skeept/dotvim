@@ -1,13 +1,15 @@
 #!/bin/sh
 
+PROG="$HOME/.vim/bundle/move2_git.sh"
 
-(cd bundle/ ; sh move2_git.sh)
 
-(cd notused_plugins/ ; sh ../bundle/move2_git.sh)
+(cd bundle/ ; sh "$PROG")
 
-(cd notused_plugins/F ; sh ../../bundle/move2_git.sh)
+(cd notused_plugins/ ; sh "$PROG")
+
+(cd notused_plugins/F ; sh "$PROG")
 
 if test "a$1" = "a-a"; then
-  (cd notused_plugins/Infrequent/ ; sh ../../bundle/move2_git.sh)
+  (cd notused_plugins/Infrequent/ ; sh "$PROG")
 fi
 
