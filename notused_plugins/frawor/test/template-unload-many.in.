@@ -1,3 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let i=1
-:while filereadable("rtp/plugin/".g:curtest.".".i.".vim") | let g:testfile="plugin/".g:curtest.".".i.".vim" | source test.vim | call FraworUnload(g:testfile[:-5]) | let i+=1 | endwhile
