@@ -78,12 +78,12 @@ function! SetupVAM()
 
   "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
   VAMAddToActiveAddons ctrlp TaskList Supertab
-  VAMAddToActiveAddons d.0 Bufstop delimitMate CountJump
+  VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
   "VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
-  VAMAddToActiveAddons argumentative projectionist
+  "VAMAddToActiveAddons argumentative projectionist
   VAMAddToActiveAddons Syntastic ps1 fugitive
   VAMAddToActiveAddons gitv aurum
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
