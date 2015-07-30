@@ -122,7 +122,6 @@ function! JumpToStartGlobal()
   if v:count == 1
     let flags = 'b'
   endif
-  let ntimes = max([v:count, 1])
   for _ in range(max([v:count, 1]))
     call search('Start of Global Iteration', flags)
   endfor
@@ -130,6 +129,25 @@ endfunction
 nnoremap <silent> <Plug>JumpToStartGlobalMap :call JumpToStartGlobal()<CR>
       \:call repeat#set("\<Plug>JumpToStartGlobalMap")<CR>
 nmap glg <Plug>JumpToStartGlobalMap
+
+
+function! g:work.jumpToGlobalProblem()
+  let flags = ''
+  if v:count == 1
+    let flags = 'b'
+  endif
+  for _ in range(max([v:count, 1]))
+    " should search for: 'Selector Ended:'
+    " and then
+    " search for: 'Initializing Optimization Controller'
+    " but what if the cursor is between the 2? it will go to next global iteration...
+    call search('Selector Ended:', flags)
+  endfor
+  call search('Initializing Optimization Controller', flags)
+endfunction
+nnoremap <silent> <Plug>JumpStartGlobalProb :call g:work.jumpToGlobalProblem()<CR>
+      \:call repeat#set("\<Plug>JumpStartGlobalProb")<CR>
+nmap glm <Plug>JumpStartGlobalProb
 
 let work_lines=52
 let work_columns=126
