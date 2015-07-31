@@ -112,7 +112,7 @@ nnoremap glu :call JumpToUncovered()<CR>
 
 function! g:work.jumpToLoadedData()
   normal gg
-  call search('Loaded Data informaton')
+  call search('Loaded Data information')
   normal zt
 endfunction
 nnoremap gli :call g:work.jumpToLoadedData()<CR>
