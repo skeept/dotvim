@@ -59,7 +59,8 @@ endfunction
 execute "source " . g:p0 . "/common.vim"
 
 " load machine specific file if it exists. In this case work related functions
-let s:work_common = expand(g:p0 . "/work_common.vim")
+" We don't load most plugins. Must load this one explicitly
+let s:work_common = expand(g:p0 . "/plugin/work_common.vim")
 if filereadable(s:work_common)
   execute "source " . s:work_common
 endif

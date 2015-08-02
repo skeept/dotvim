@@ -113,13 +113,9 @@ function! GetIsAddonActive(addon)
 endfunction
 "==============================================================================}}}
 
-"this is where all vimrc and simple settings go
+" this is where all vimrc and simple settings go
+" should I just move it to plugins folder?
 execute "source " . g:p0 . "/common.vim"
-
-let s:work_common = expand(g:p0 . "/work_common.vim")
-if filereadable(s:work_common)
-  execute "source " . s:work_common
-endif
 
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
