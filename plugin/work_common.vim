@@ -58,6 +58,3 @@ nmap glg <Plug>JumpToStartGlobalMap
 nnoremap <silent> <Plug>JumpStartGlobalProb :call wk#jumpToGlobalProblem()<CR>
       \:call repeat#set("\<Plug>JumpStartGlobalProb")<CR>
 nmap glm <Plug>JumpStartGlobalProb
-
-let work_lines=52
-let work_columns=126

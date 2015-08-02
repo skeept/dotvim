@@ -1,6 +1,6 @@
-let work_settings=1
-
-let g:work = {}
+"
+" Functions specific for my work enviroment
+"
 
 function! wk#getFoldLevel_Log(lnum)
   let numChars = g:numCharsFront
@@ -85,10 +85,6 @@ function! wk#jumpToStartGlobal()
     call search('Start of Global Iteration', flags)
   endfor
 endfunction
-nnoremap <silent> <Plug>JumpToStartGlobalMap :call JumpToStartGlobal()<CR>
-      \:call repeat#set("\<Plug>JumpToStartGlobalMap")<CR>
-nmap glg <Plug>JumpToStartGlobalMap
-
 
 function! wk#jumpToGlobalProblem()
   let flags = ''
@@ -104,9 +100,3 @@ function! wk#jumpToGlobalProblem()
   endfor
   call search('Initializing Optimization Controller', flags)
 endfunction
-nnoremap <silent> <Plug>JumpStartGlobalProb :call g:work.jumpToGlobalProblem()<CR>
-      \:call repeat#set("\<Plug>JumpStartGlobalProb")<CR>
-nmap glm <Plug>JumpStartGlobalProb
-
-let work_lines=52
-let work_columns=126
