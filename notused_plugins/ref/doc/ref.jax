@@ -34,7 +34,14 @@ License: クリエイティブ・コモンズの表示 2.1 日本ライセンス
 - perldoc	(|ref-perldoc.txt|)
 - phpmanual	(|ref-phpmanual.txt|)
 - pydoc		(|ref-pydoc.txt|)
+- redis
 - refe		(|ref-refe.txt|)
+- rfc
+- webdict	(|ref-webdict.txt|)
+
+他のインターフェースも利用できます:
+- ku-ref	(|ku-ref.txt|)
+- unite-ref	(|unite-ref.txt|)
 
 要件:
 - Vim 7.2 以降
@@ -267,7 +274,7 @@ g:ref_open					*g:ref_open*
 g:ref_cache_dir					*g:ref_cache_dir*
 	キャッシュを保持しておくためのディレクトリです。|ref#cache()| はこの値
 	を参照してキャッシュファイルを生成します。デフォルト値は
-	"~/.vim_ref_cache" です。~ はホームディレクトリを表します。
+	"~/.cache/vim-ref" です。~ はホームディレクトリを表します。
 
 g:ref_use_vimproc				*g:ref_use_vimproc*
 	真の時、|ref#system()| は |vimproc| を使います。デフォルト値は、
