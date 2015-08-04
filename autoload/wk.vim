@@ -1,30 +1,30 @@
 "
-" Functions specific for my work enviroment
+" Functions specific for work enviroment
 "
 
 function! wk#getFoldLevel_Log(lnum)
-  let numChars = g:numCharsFront
+  let numChars = g:wk.numCharsFront
   let flag = getline(a:lnum)[:numChars] ==? getline(a:lnum-1)[:numChars]
   return flag ? 1 : 0
 endfunction
 
 function! wk#setFoldingPatternNumCharsFront()
   if v:count > 0
-    let g:numCharsFront = v:count
+    let g:wk.numCharsFront = v:count
   endif
   setlocal fdm=expr foldexpr=wk#getFoldLevel_Log(v:lnum)
 endfunction
 
 function! wk#jumpToNextNonMatchingSetLength()
   if v:count != 0
-    let g:jumpToNextNonMatchingNTimes = v:count
+    let g:wk.jumpToNextNonMatchingNTimes = v:count
     echom "Setting numbers of matching chars to " . v:count
   endif
 endfunction
 
 function! wk#jumpToNextNonMatching(direction)
-  if !exists("g:jumpToNextNonMatchingNTimes")
-    let g:jumpToNextNonMatchingNTimes = 2
+  if !exists("g:wk.jumpToNextNonMatchingNTimes")
+    let g:wk.jumpToNextNonMatchingNTimes = 2
   endif
   let flags = ''
   if a:direction < 0
@@ -34,7 +34,7 @@ function! wk#jumpToNextNonMatching(direction)
   for icnt in range(ntimes)
     let curr_line = getline('.')
     let spattern = '^'
-    for icol in range(g:jumpToNextNonMatchingNTimes)
+    for icol in range(g:wk.jumpToNextNonMatchingNTimes)
       let spattern .= '[^' . curr_line[icol] . ']'
     endfor
     call search(spattern, flags)
@@ -52,7 +52,7 @@ endfunction
 " regular date format
 function! wk#echoOrPrintTime()
   if v:count != 0
-    let g:echoOrPrintTimeSetting = v:count
+    let g:wk.echoOrPrintTimeSetting = v:count
   endif
   "We now adjust for time zone right here. This might lead to some confusion
   let time_display = strftime("%a, %d %b %Y %H:%M", (expand("<cWORD>") + 7*3600))
@@ -66,14 +66,25 @@ function! wk#echoOrPrintTime()
 endfunction
 
 function! wk#jumpToUncovered()
-  normal G
-  call search('**Uncovered crews:', 'b')
+  let save_cursor = getcurpos()
+  call cursor([line('$'), 1, 0])
+  let search_res = search('**Uncovered crews:', 'b')
+  if search_res > 0
+    normal zz
+  else
+    call cursor(save_cursor)
+  endif
 endfunction
 
 function! wk#jumpToLoadedData()
-  normal gg
-  call search('Loaded Data information')
-  normal zt
+  let save_cursor = getcurpos()
+  call cursor([1, 1, 0])
+  let search_res = search('Loaded Data information')
+  if search_res > 0
+    normal zt
+  else
+    call cursor(save_cursor)
+  endif
 endfunction
 
 function! wk#jumpToStartGlobal()
