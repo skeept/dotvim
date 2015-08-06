@@ -4543,6 +4543,14 @@
     "type": "git",
     "url": "git://github.com/Quramy/vim-js-pretty-template"
   },
+  "5226": {
+    "type": "git",
+    "url": "git://github.com/unblevable/quick-scope"
+  },
+  "5227": {
+    "type": "git",
+    "url": "git://github.com/7kfpun/finance.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
