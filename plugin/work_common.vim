@@ -1,6 +1,6 @@
 let work_settings=1
 
-let g:work = {}
+let g:wk = {}
 
 if has("autocmd")
   augroup ft_scratch
@@ -11,7 +11,7 @@ if has("autocmd")
 endif
 
 "by default 6 chars
-let g:numCharsFront = 6
+let g:wk.numCharsFront = 6
 
 nnoremap ,z1 :<C-U>call wk#setFoldingPatternNumCharsFront()<CR>
 nnoremap ,sj :<C-U>call wk#jumpToNextNonMatchingSetLength()<CR>
@@ -32,7 +32,10 @@ vnoremap ,N :<C-U>call wk#jumpToNextNonMatching(-2)<CR>gv
 
 " useful mapping to convert time, get the word under cursor and convert it to
 " regular date format
-let g:echoOrPrintTimeSetting = 2
+"
+" settings 1: displays time in last line 2: writes time in front of current
+" word
+let g:wk.echoOrPrintTimeSetting = 2
 nnoremap \e :<C-U>call wk#echoOrPrintTime()<CR>
 
 if has("autocmd")
@@ -58,6 +61,3 @@ nmap glg <Plug>JumpToStartGlobalMap
 nnoremap <silent> <Plug>JumpStartGlobalProb :call wk#jumpToGlobalProblem()<CR>
       \:call repeat#set("\<Plug>JumpStartGlobalProb")<CR>
 nmap glm <Plug>JumpStartGlobalProb
-
-let work_lines=52
-let work_columns=126
