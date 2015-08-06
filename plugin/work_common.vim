@@ -32,6 +32,9 @@ vnoremap ,N :<C-U>call wk#jumpToNextNonMatching(-2)<CR>gv
 
 " useful mapping to convert time, get the word under cursor and convert it to
 " regular date format
+"
+" settings 1: displays time in last line 2: writes time in front of current
+" word
 let g:wk.echoOrPrintTimeSetting = 2
 nnoremap \e :<C-U>call wk#echoOrPrintTime()<CR>
 
