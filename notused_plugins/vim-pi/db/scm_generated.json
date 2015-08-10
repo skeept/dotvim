@@ -4551,6 +4551,14 @@
     "type": "git",
     "url": "git://github.com/7kfpun/finance.vim"
   },
+  "5228": {
+    "type": "git",
+    "url": "git://github.com/NLKNguyen/copy-cut-paste.vim"
+  },
+  "5229": {
+    "type": "git",
+    "url": "git://github.com/brobeson/glslVim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
