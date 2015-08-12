@@ -4766,7 +4766,7 @@
 "ABAP":{"archive_name":"abap.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=2085","version":"0.3","vim_script_nr":359},
 "java_apidoc":{"archive_name":"java_apidoc.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3152","version":"3.1.1","vim_script_nr":358},
 "openroad":{"archive_name":"openroad.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1060","version":"1.0","vim_script_nr":357},
-"dbext":{"archive_name":"dbext_2100.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22865","version":"21.00","vim_script_nr":356},
+"dbext":{"archive_name":"dbext_2200.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23512","version":"22.00","vim_script_nr":356},
 "vimrc_nopik":{"archive_name":"vimrc","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1057","version":"1.9","vim_script_nr":355},
 "variableSort":{"archive_name":"variableSort.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1050","version":"1.0","vim_script_nr":354},
 "getVar":{"archive_name":"GetVar.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15512","version":"2.0","vim_script_nr":353},
