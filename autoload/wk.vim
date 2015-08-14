@@ -112,3 +112,9 @@ function! wk#jumpToGlobalProblem()
   endfor
   call search('Initializing Optimization Controller', flags)
 endfunction
+
+function! wk#cleanVSCallStack()
+  %substitute/) Line.*/)/e
+  %substitute/=.\{-},/,/eg
+  %substitute/=.\{-})/)/eg
+endfunction
