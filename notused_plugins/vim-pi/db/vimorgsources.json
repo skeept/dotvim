@@ -1,4 +1,5 @@
 {
+"vim-es6":{"archive_name":"vim-es6-2.0.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23513","version":"2.0","vim_script_nr":5230},
 "glsl%5229":{"archive_name":"glsl.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23510","version":"0.3","vim_script_nr":"5229"},
 "copy-cut-paste":{"archive_name":"copy-cut-paste.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23507","version":"0.1.0","vim_script_nr":5228},
 "finance":{"archive_name":"finance-0.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23504","version":"0.0.1","vim_script_nr":5227},

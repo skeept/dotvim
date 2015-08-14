@@ -4559,6 +4559,10 @@
     "type": "git",
     "url": "git://github.com/brobeson/glslVim"
   },
+  "5230": {
+    "type": "git",
+    "url": "git://github.com/isRuslan/vim-es6"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
