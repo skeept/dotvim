@@ -4563,6 +4563,14 @@
     "type": "git",
     "url": "git://github.com/isRuslan/vim-es6"
   },
+  "5231": {
+    "type": "git",
+    "url": "git://github.com/joanrivera/vim-zimwiki-syntax"
+  },
+  "5232": {
+    "type": "git",
+    "url": "git://github.com/haya14busa/vital-power-assert"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

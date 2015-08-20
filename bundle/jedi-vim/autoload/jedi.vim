@@ -32,7 +32,8 @@ let s:default_settings = {
     \ 'popup_select_first': 1,
     \ 'quickfix_window_height': 10,
     \ 'completions_enabled': 1,
-    \ 'force_py_version': "'auto'"
+    \ 'force_py_version': "'auto'",
+    \ 'smart_auto_mappings': 1
 \ }
 
 for [key, val] in items(s:deprecations)
@@ -87,6 +88,18 @@ function! s:init_python()
         if !has('nvim') || has('python'.(s:def_py == 2 ? '' : s:def_py))
             return jedi#force_py_version(s:def_py)
         endif
+
+        " Add a warning in case the auto-detected version is not available,
+        " usually because of a missing neovim module in a VIRTUAL_ENV.
+        if has('nvim')
+            echohl WarningMsg
+            echom "jedi-vim: the detected Python version (".s:def_py.")"
+                        \ "is not functional."
+                        \ "Is the 'neovim' module installed?"
+                        \ "While jedi-vim will work, it might not use the"
+                        \ "expected Python path."
+            echohl None
+        endif
     endif
 
     if has('python')
@@ -117,13 +130,16 @@ function! jedi#init_python()
 endfunction
 
 
+let s:python_version = 'null'
 function! jedi#setup_py_version(py_version)
     if a:py_version == 2
         let cmd_init = 'pyfile'
         let cmd_exec = 'python'
+        let s:python_version = 2
     elseif a:py_version == 3
         let cmd_init = 'py3file'
         let cmd_exec = 'python3'
+        let s:python_version = 3
     else
         throw "jedi#setup_py_version: invalid py_version: ".a:py_version
     endif
@@ -135,6 +151,11 @@ function! jedi#setup_py_version(py_version)
     catch
         throw "jedi#setup_py_version: ".v:exception
     endtry
+endfunction
+
+
+function! jedi#debug_info()
+    echom "Using Python version:" s:python_version
 endfunction
 
 
@@ -419,6 +440,16 @@ function! jedi#complete_opened(is_popup_on_dot)
         endif
     endif
     return ""
+endfunction
+
+
+function! jedi#smart_auto_mappings()
+    " Auto put import statement after from module.name<space> and complete
+    if search('\<from\s\+[A-Za-z0-9._]\{1,50}\%#\s*$', 'bcn', line('.'))
+        " Enter character and start completion.
+        return "\<space>import \<C-x>\<C-o>\<C-r>=jedi#complete_opened(1)\<CR>"
+    endif
+    return "\<space>"
 endfunction
 
 
