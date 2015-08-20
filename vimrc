@@ -88,6 +88,7 @@ function! SetupVAM()
   VAMAddToActiveAddons gitv aurum
   VAMAddToActiveAddons junkfile
   VAMAddToActiveAddons nerdcommenter
+  VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
