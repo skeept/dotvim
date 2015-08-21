@@ -4571,6 +4571,18 @@
     "type": "git",
     "url": "git://github.com/haya14busa/vital-power-assert"
   },
+  "5233": {
+    "type": "git",
+    "url": "git://github.com/7kfpun/pypi.vim"
+  },
+  "5234": {
+    "type": "git",
+    "url": "git://github.com/KabbAmine/lazyList.vim"
+  },
+  "5235": {
+    "type": "git",
+    "url": "git://github.com/dbeniamine/vizardry"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
