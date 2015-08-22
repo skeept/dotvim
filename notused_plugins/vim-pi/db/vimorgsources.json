@@ -1,6 +1,7 @@
 {
+"proteinFasta":{"archive_name":"proteinFasta.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23537","version":"1.0","vim_script_nr":5236},
 "Vizardry":{"archive_name":"vizardry.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23533","version":"1.1","vim_script_nr":5235},
-"lazyList":{"archive_name":"lazyList.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23528","version":"v0.1","vim_script_nr":5234},
+"lazyList":{"archive_name":"lazyList.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23536","version":"v0.3","vim_script_nr":5234},
 "pypi":{"archive_name":"pypi-0.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23531","version":"0.0.2","vim_script_nr":5233},
 "vital-power-assert":{"archive_name":"vital-power-assert-0.9.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23524","version":"v0.9.0","vim_script_nr":5232},
 "vim-zimwiki-syntax":{"archive_name":"vim-zimwiki-syntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23519","version":"1.0","vim_script_nr":5231},
@@ -213,7 +214,7 @@
 "vim-lamdify":{"archive_name":"vim-lambdify.tar","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23505","version":"v0.6","vim_script_nr":5021},
 "VIM_PHP_Refactoring_Toolbox":{"archive_name":"php-refactoring-toolbox.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23304","version":"1.0.2","vim_script_nr":5020},
 "oengsimple":{"archive_name":"oengsimple.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23133","version":"2.0","vim_script_nr":5019},
-"VullScreen":{"archive_name":"vullScreen.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22474","version":"0.3","vim_script_nr":5018},
+"vullScreen":{"archive_name":"vullScreen.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22474","version":"0.3","vim_script_nr":5018},
 "rogue":{"archive_name":"rogue.vim-1.0.1.zip","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22450","version":"1.0.1","vim_script_nr":5017},
 "autocdls":{"archive_name":"autocdls.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22417","version":"1.0","vim_script_nr":5016},
 "C64":{"archive_name":"C64.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22394","version":"0.02","vim_script_nr":5015},
