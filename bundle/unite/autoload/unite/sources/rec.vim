@@ -783,8 +783,12 @@ function! s:init_continuation(context, directory) "{{{
   let continuation = (a:context.source__is_directory) ?
         \ s:continuation.directory : s:continuation.file
 
-  if !has_key(continuation, a:directory)
-        \ && s:Cache.filereadable(cache_dir, a:directory)
+  if a:context.is_redraw
+    " Delete old cache files.
+    call s:Cache.deletefile(cache_dir, a:directory)
+  endif
+
+  if s:Cache.filereadable(cache_dir, a:directory)
     " Use cache file.
 
     let files = unite#helper#paths2candidates(
@@ -819,7 +823,6 @@ function! s:write_cache(context, directory, files) "{{{
         \ && !unite#util#is_sudo()
         \ && len(a:files) >
         \ g:unite_source_rec_min_cache_files
-        \ && stridx(a:directory, "\n") < 0
     call s:Cache.writefile(cache_dir, a:directory,
           \ map(copy(a:files), 'v:val.action__path'))
   elseif s:Cache.filereadable(cache_dir, a:directory)
