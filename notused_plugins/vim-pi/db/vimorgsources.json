@@ -1,4 +1,5 @@
 {
+"coco":{"archive_name":"coco.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23547","version":"1.0","vim_script_nr":5237},
 "proteinFasta":{"archive_name":"proteinFasta.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23537","version":"1.0","vim_script_nr":5236},
 "Vizardry":{"archive_name":"vizardry.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23542","version":"1.2.1","vim_script_nr":5235},
 "lazyList":{"archive_name":"lazyList.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23536","version":"v0.3","vim_script_nr":5234},
@@ -253,7 +254,7 @@
 "Buddy_Challenge":{"archive_name":"buddyChalWIN.vim","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22567","version":"3.0","vim_script_nr":4982},
 "JustDo":{"archive_name":"JustDo.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22174","version":"0.1","vim_script_nr":4981},
 "quick-file":{"archive_name":"quick_file.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23098","version":"0.1.4","vim_script_nr":4980},
-"Improved_AnsiEsc":{"archive_name":"AnsiEsc.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22162","version":"13.1","vim_script_nr":4979},
+"Improved_AnsiEsc":{"archive_name":"AnsiEsc.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23546","version":"13.2","vim_script_nr":4979},
 "fireplace":{"archive_name":"fireplace.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23429","version":"1.1","vim_script_nr":4978},
 "textobj-delimited":{"archive_name":"textobj-delimited.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22340","version":"1.1.0","vim_script_nr":4977},
 "vim-gista":{"archive_name":"vim-gista-0.1.15.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22155","version":"0.1.15","vim_script_nr":4976},
