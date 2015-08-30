@@ -546,8 +546,6 @@ endfunction
 "================== Delete Whitespace (DeltTrailWhiteSpace) ==================={{{
 function! jraf#stripTrailingWhitespace() range
   if !&binary && &filetype != 'diff'
-    "normal mz
-    "normal Hmy
     let cmd = '' . a:firstline . ',' . a:lastline
     let cmd .= 's/\s\+$//e'
     execute cmd
@@ -581,10 +579,12 @@ endfunction "}}}
 
 "================== Plugin Loading (simple.vim) ==============================={{{
 function! jraf#loadCtrlP()
-  call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
-        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-  nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
+  if g:addon_manager == 2
+    call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
+          \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+    nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
+  endif
 endf
 
 function! jraf#loadLycosa()
@@ -597,11 +597,26 @@ endfunction
 
 "================== Scratch Edit =============================================={{{
 function! jraf#ScratchEdit(cmd, options)
-	exe a:cmd tempname()
-	setl buftype=nofile bufhidden=wipe nobuflisted
-	if !empty(a:options) | exe 'setl' a:options | endif
+  exe a:cmd tempname()
+  setl buftype=nofile bufhidden=wipe nobuflisted
+  if !empty(a:options) | exe 'setl' a:options | endif
 endfunction
 "==============================================================================}}}
 
+"================== QuoteCommaJoin ============================================{{{
+function! jraf#quoteCommaJoin() range
+  let cmd = '' . a:firstline . ',' . a:lastline
+  execute cmd . "yank u"
+  call jraf#ScratchEdit('split', '')
+  normal "upggdd
+  DelTrailWhiteSpace
+  %s/^/"/
+  %s/$/",/
+  normal G$x
+  %join
+  normal O
+  normal "uPG^yg_
+endfunction
+"==============================================================================}}}
 
 " vim: foldmethod=marker
