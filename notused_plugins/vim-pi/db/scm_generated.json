@@ -4583,6 +4583,10 @@
     "type": "git",
     "url": "git://github.com/dbeniamine/vizardry"
   },
+  "5239": {
+    "type": "git",
+    "url": "git://github.com/romgrk/replace.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
