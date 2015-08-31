@@ -1,4 +1,5 @@
 {
+"true-monochrome":{"archive_name":"true-monochrome.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23566","version":"0.1.3","vim_script_nr":5240},
 "Replace_operator":{"archive_name":"replace.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23559","version":"1.0","vim_script_nr":5239},
 "CBOT":{"archive_name":"cbot.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23563","version":"1.0a","vim_script_nr":5238},
 "coco":{"archive_name":"coco.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23547","version":"1.0","vim_script_nr":5237},
