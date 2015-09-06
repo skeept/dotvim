@@ -319,12 +319,9 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.access_time = localtime()
   let unite.is_finalized = 0
   let unite.previewed_buffer_list = []
-  let unite.current_matchers = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'matchers'))
-  let unite.current_sorters = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'converters'))
-  let unite.current_converters = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'converters'))
+  let unite.current_matchers = []
+  let unite.current_sorters = []
+  let unite.current_converters = []
   let unite.preview_candidate = {}
   let unite.highlight_candidate = {}
   let unite.max_source_name = 0
@@ -658,7 +655,6 @@ function! unite#init#_sources(...) "{{{
         \ 'is_volatile' : 0,
         \ 'is_listed' : 1,
         \ 'is_forced' : 0,
-        \ 'is_grouped' : 0,
         \ 'action_table' : {},
         \ 'default_action' : {},
         \ 'default_kind' : 'common',

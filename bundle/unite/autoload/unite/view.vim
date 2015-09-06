@@ -62,6 +62,14 @@ function! unite#view#_redraw_candidates(...) "{{{
     let unite.init_prompt_linenr = len(candidates) + 1
   endif
 
+  if context.immediately && len(candidates) == 1
+    " Immediately action.
+    call unite#action#do(
+          \ context.default_action, [candidates[0]])
+    call unite#variables#disable_current_unite()
+    return
+  endif
+
   let pos = getpos('.')
   let modifiable_save = &l:modifiable
   try
@@ -353,9 +361,7 @@ function! unite#view#_change_highlight()  "{{{
       continue
     endif
 
-    let input_list = map(filter(split(input_str, '\\\@<! '),
-          \ "v:val !~ '^[!:]'"),
-          \ "substitute(v:val, '\\\\ ', ' ', 'g')")
+    let input_list = unite#helper#get_input_list(input_str)
 
     for source in filter(copy(unite.sources), "v:val.syntax != ''")
       for matcher in filter(copy(map(filter(

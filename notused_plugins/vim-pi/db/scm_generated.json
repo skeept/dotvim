@@ -3425,7 +3425,7 @@
   },
   "4750": {
     "type": "git",
-    "url": "git://github.com/vivien/vim-addon-human"
+    "url": "git://github.com/vivien/vim-human"
   },
   "4751": {
     "type": "git",
@@ -4586,6 +4586,14 @@
   "5239": {
     "type": "git",
     "url": "git://github.com/romgrk/replace.vim"
+  },
+  "5242": {
+    "type": "git",
+    "url": "git://github.com/NLKNguyen/easy-navigate.vim"
+  },
+  "5243": {
+    "type": "git",
+    "url": "git://github.com/esoytekin/vim-sipindex"
   },
   "586": {
     "type": "git",

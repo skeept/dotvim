@@ -718,12 +718,12 @@ g:unite_source_history_yank_file
 		Example:
 >
 		let g:unite_source_history_yank_file=$HOME.'/.vim/yankring.txt'
+<
+					*g:unite_source_history_save_registers*
+g:unite_source_history_yank_save_registers
+		Specify the save registers to yank history.
 
-					*g:unite_source_history_save_clipboard*
-g:unite_source_history_yank_save_clipboard
-		If defined and not 0, unite saves the clipboard register value.
-
-		The default value is 0.
+		The default value is ['"'].
 
 					*g:unite_source_process_enable_confirm*
 g:unite_source_process_enable_confirm
@@ -2179,9 +2179,10 @@ buffer		Nominates opened buffers as candidates, ordering by time
 		If argument 1 is "?", non-listed buffers are displayed.
 		If argument 1 is "+", only modified buffers are displayed.
 		If argument 1 is "-", only file buffers are displayed.
+		If argument 1 is "t", only terminal buffers are displayed.
 
 		Source arguments:
-		1. "!", "?", "+" or "-".
+		1. "!", "?", "+", "-", or "t"
 
 						*unite-source-buffer_tab*
 buffer_tab	Nominates opened buffers only in the current tab as
@@ -2211,6 +2212,13 @@ tab		Nominates opened tabs as candidates, regarding t:cwd as the
 
 						*unite-source-register*
 register	Nominates the strings stored in registers as candidates.
+
+		Source arguments:
+		1. register names
+
+		Example: >
+	nnoremap <silent> ,ur  :<C-u>Unite
+	\ register:abcdef<CR>
 
 						*unite-source-bookmark*
 bookmark	Nominates files or directories you bookmarked as candidates.
@@ -2433,6 +2441,9 @@ history/yank	Nominates yanked words.
 		|g:unite_source_history_yank_enable| is 1.
 		Note: This source is disabled when
 		|g:unite_source_history_yank_enable| is 0 or not defined.
+
+		Source arguments:
+		1. register names
 
 						*unite-source-process*
 process		Nominates processes.
@@ -2767,12 +2778,12 @@ sorter_rank	Matched rank order sorter.  The higher the matched word is or
 		call unite#custom#source('buffer,file,file_rec',
 		\ 'sorters', 'sorter_rank')
 <
-						*unite-filter-sorter_selecta
+						*unite-filter-sorter_selecta*
 sorter_selecta	Another matched rank order sorter. Uses the scoring algorithm
 		from selecta: https://github.com/garybernhardt/selecta.
 		If the matched length is shorter, the rank is higher.
 		This sorter is useful for file candidate source.
-		Note: This sorter requires |if_ruby| support.
+		Note: This sorter requires |if_python| support.
 >
 		call unite#custom#source('buffer,file,file_rec',
 		\ 'sorters', 'sorter_selecta')
@@ -2810,6 +2821,10 @@ converter_relative_abbr
 		corresponding relative path.
 		Specification of this term is similar to
 		|unite-filter-converter_relative_word|.
+
+					*unite-filter-converter_abbr_word*
+converter_abbr_word
+		A converter which converts a candidate's abbr into a word.
 
 					*unite-filter-converter_tail*
 converter_tail
@@ -3272,13 +3287,6 @@ is_listed		Number		(Optional)
 			If the source is internal, it must be set to 0.
 			Defaults to 1.
 
-					*unite-source-attribute-is_grouped*
-is_grouped		Number		(Optional)
-			Whether the source candidates are grouped.
-			Defaults to 0.
-			Grouped candidates must have "group" attribute; see
-			|unite-notation-{candidate}|
-
 					*unite-source-attribute-description*
 description		String		(Optional)
 			User-friendly description of the source.
@@ -3408,13 +3416,6 @@ NOTATION					*unite-notation*
 				"command"], "file" (default) actions will be
 				overwritten by "command" action.  You should
 				use source default action instead of kind.
-
-			group			(String)	(Optional)
-				The candidate group name.
-				It is inserted in candidates automatically.
-				Note: Required and used when
-				|unite-source-attribute-is_grouped| is non
-				zero.
 
 			is_dummy		(Number)	(Optional)
 				If the candidate is dummy.
@@ -3891,5 +3892,12 @@ Q: "ag" does not work in grep source.
 
 A: Please check |unite-source-grep| example.
 
+Q: How can I specify source args split by newlines for grep or file_rec
+sources?
+
+A: You can use eval arguments feature.
+>
+	Unite grep:`=glob('/dir1/*.txt')."\n".glob('/dir2/*.txt')`
+<
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:

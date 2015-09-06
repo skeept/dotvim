@@ -575,8 +575,16 @@ function! unite#helper#is_pty(command) "{{{
 endfunction"}}}
 
 function! unite#helper#complete_search_history(arglead, cmdline, cursorpos) "{{{
-  return filter(unite#util#uniq(s:histget('search') + s:histget('input')),
+  return filter(map(unite#util#uniq(s:histget('search')
+        \                           + s:histget('input')),
+        \           "substitute(v:val, '^\\\\<\\|\\\\>$', '', 'g')"),
         \ "stridx(tolower(v:val), tolower(a:arglead)) == 0")
+endfunction"}}}
+
+function! unite#helper#get_input_list(input) abort "{{{
+  return filter(map(split(a:input, '\\\@<! ', 1), "
+        \ substitute(unite#util#expand(v:val), '\\\\ ', ' ', 'g')"),
+        \ "v:val !~ '^[!:]'")
 endfunction"}}}
 
 function! s:histget(type) abort "{{{

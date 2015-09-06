@@ -127,11 +127,6 @@ function! unite#candidates#_recache(input, is_force) "{{{
         endif
       endif
 
-      if source.is_grouped
-        let source.unite__candidates =
-              \ unite#candidates#_group_post_filters(source.unite__candidates)
-      endif
-
       " Call post_filter hook.
       let source.unite__context.candidates =
             \ source.unite__candidates
@@ -254,7 +249,8 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     let context.is_changed = a:context.is_changed
     let context.is_invalidate = source.unite__is_invalidate
     let context.is_list_input = a:context.is_list_input
-    let context.input_list = split(context.input, '\\\@<! ', 1)
+    let context.input_list =
+          \ unite#helper#get_input_list(context.input)
     let context.unite__max_candidates =
           \ (unite.disabled_max_candidates ? 0 : source.max_candidates)
     if context.unite__is_vimfiler
@@ -268,6 +264,20 @@ function! s:recache_candidates_loop(context, is_force) "{{{
     " Call pre_filter hook.
     let context.candidates = source_candidates
     call unite#helper#call_hook([source], 'on_pre_filter')
+
+    " Restore current filters.
+    if empty(unite.current_matchers)
+      let unite.current_matchers = unite#util#convert2list(
+            \ unite#custom#get_profile(unite.profile_name, 'matchers'))
+    endif
+    if empty(unite.current_sorters)
+      let unite.current_sorters = unite#util#convert2list(
+            \ unite#custom#get_profile(unite.profile_name, 'sorters'))
+    endif
+    if empty(unite.current_converters)
+      let unite.current_converters = unite#util#convert2list(
+            \ unite#custom#get_profile(unite.profile_name, 'converters'))
+    endif
 
     " Set filters.
     let matchers = !empty(unite.current_matchers) ?
