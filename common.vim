@@ -717,6 +717,7 @@ let g:pep8_args = " --ignore=E111,E221,E225,E501"
 "==============================================================================}}}
 
 "choose one of pysmell or jedi for the completion in python
+let g:jedi#popup_on_dot = 0
 if g:is_vimrc_simple == 0
   augroup ft_py_pysmell_or_jedi
     autocmd!
