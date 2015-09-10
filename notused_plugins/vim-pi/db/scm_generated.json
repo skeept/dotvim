@@ -4595,6 +4595,10 @@
     "type": "git",
     "url": "git://github.com/esoytekin/vim-sipindex"
   },
+  "5244": {
+    "type": "git",
+    "url": "git://github.com/ktonga/vim-follow-my-lead"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
