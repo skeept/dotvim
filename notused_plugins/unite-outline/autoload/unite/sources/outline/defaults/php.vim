@@ -22,7 +22,7 @@ let s:Util = unite#sources#outline#import('Util')
 "---------------------------------------
 " Sub Pattern
 
-let s:pat_type = '\%(interface\|class\|function\)\>'
+let s:pat_type = '\%(interface\|class\|trait\|function\)\>'
 
 "-----------------------------------------------------------------------------
 " Outline Info
@@ -39,7 +39,7 @@ let s:outline_info = {
       \ },
       \
       \ 'heading_groups': {
-      \   'type'     : ['interface', 'class'],
+      \   'type'     : ['interface', 'class', 'trait'],
       \   'function' : ['function'],
       \ },
       \
@@ -51,7 +51,7 @@ let s:outline_info = {
       \   { 'name'   : 'comment',
       \     'pattern': "'/[/*].*'" },
       \   { 'name'   : 'type',
-      \     'pattern': '/\S\+\ze : \%(interface\|class\)/' },
+      \     'pattern': '/\S\+\ze : \%(interface\|class\|trait\)/' },
       \   { 'name'   : 'function',
       \     'pattern': '/\h\w*\ze\s*(/' },
       \   { 'name'   : 'parameter_list',
@@ -76,23 +76,27 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   elseif a:which == 'heading'
     let modifiers = matchstr(heading.word, '^.*\ze' . s:pat_type)
     let heading.word = substitute(heading.word, '\s*{.*$', '', '')
-    if heading.word =~ '\<interface\>'
+    if heading.word =~ '^\s*interface\>'
       " Interface
       let heading.type = 'interface'
       let heading.word = matchstr(heading.word, '\zs\<interface\s\+\zs\h\w*') . ' : interface'
-    elseif heading.word =~ '\<class\>'
+    elseif heading.word =~ '^\s*class\>'
       " Class
       let heading.type = 'class'
       let heading.word = matchstr(heading.word, '\zs\<class\s\+\zs\h\w*') . ' : class'
+    elseif heading.word =~ '^\s*trait\>'
+      " Trait
+      let heading.type = 'trait'
+      let heading.word = matchstr(heading.word, '\zs\<trait\s\+\zs\h\w*') . ' : trait'
     else
       " Function or Method
       let heading.type = 'function'
       let heading.word = matchstr(heading.word, '\<function\s*\zs.*', '', '')
-      if modifiers =~ '\<public\>'
+      if modifiers =~ '^\s*public\>'
         let heading.word = '+ ' . heading.word
-      elseif modifiers =~ '\<protected\>'
+      elseif modifiers =~ '^\s*protected\>'
         let heading.word = '# ' . heading.word
-      elseif modifiers =~ '\<private\>'
+      elseif modifiers =~ '^\s*private\>'
         let heading.word = '- ' . heading.word
       elseif heading.level > 3
         let heading.word = substitute(heading.word, '\%(&\|\h\)\@=', '+ ', '')

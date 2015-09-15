@@ -9,7 +9,7 @@
 "=============================================================================
 
 " Default outline info for TeX
-" Version: 0.1.0
+" Version: 0.1.1
 
 function! unite#sources#outline#defaults#tex#outline_info()
   return s:outline_info
@@ -21,7 +21,22 @@ let s:Util = unite#sources#outline#import('Util')
 " Outline Info
 
 let s:outline_info = {
-      \ 'heading': '^\s*\\\%(title\|part\|chapter\|\%(sub\)\{,2}section\|begin{thebibliography}\){',
+      \ 'heading': '^\s*\\\%(title\|part\|chapter\|\%(sub\)\{,2}section\|label\|bibliography\|begin{thebibliography}\){',
+      \ 'highlight_rules': [
+      \   { 
+      \     'name' : 'type',
+      \     'pattern' : '/[0-9\.]\+/' 
+      \   },
+      \   { 
+      \     'name' : 'special',
+      \     'pattern' : '/.*\ze (label)/' 
+      \   },
+      \   { 
+      \     'name' : 'comment',
+      \     'pattern' : '/(label)/' 
+      \   },
+      \ ],
+      \ 'is_volatile': 1,
       \}
 
 let s:unit_level_map = {
@@ -31,11 +46,12 @@ let s:unit_level_map = {
       \ 'section'      : 4,
       \ 'subsection'   : 5,
       \ 'subsubsection': 6,
+      \ 'label'        : 7,
       \ }
 
 function! s:outline_info.before(context)
   let s:unit_count = map(copy(s:unit_level_map), '0')
-  let s:bib_level = 6
+  let s:bib_level = 7
 endfunction
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context)
@@ -46,22 +62,33 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
         \ }
 
   let h_lnum = a:context.heading_lnum
-  if a:heading_line =~ '^\s*\\begin{thebibliography}{'
+  if a:heading_line =~ '^\s*\\\%(begin{thebibliography}\|bibliography\){'
     " Bibliography
     let heading.level = s:bib_level
     let bib_label = s:Util.neighbor_matchstr(a:context, h_lnum,
-          \ '\\renewcommand{\\bibname}{\zs.*\ze}\s*$', 3)
+          \ '\\renewcommand{\\bibname}{\zs.*\ze}\s*\%(%.*\)\?$', 3)
     let heading.word = (empty(bib_label) ? "Bibliography" : bib_label)
   else
     " Parts, Chapters, Sections, etc
     let unit = matchstr(a:heading_line, '^\s*\\\zs\w\+\ze{')
     let s:unit_count[unit] += 1
+    if unit ==# 'chapter'
+      let s:unit_count['section'] = 0
+      let s:unit_count['subsection'] = 0
+      let s:unit_count['subsubsection'] = 0
+    elseif unit ==# 'section'
+      let s:unit_count['subsection'] = 0
+      let s:unit_count['subsubsection'] = 0
+    elseif unit ==# 'subsection'
+      let s:unit_count['subsubsection'] = 0
+    endif
+
     let heading.level = s:unit_level_map[unit]
     if 1 < heading.level && heading.level < s:bib_level
       let s:bib_level = heading.level
     endif
     let heading.word = s:normalize_heading_word(
-          \ s:Util.join_to(a:context, h_lnum, '}\s*$'), unit)
+          \ s:Util.join_to(a:context, h_lnum, '}\s*\%(%.*\)\?$'), unit)
   endif
 
   if heading.level > 0
@@ -73,15 +100,18 @@ endfunction
 
 function! s:normalize_heading_word(word, unit)
   let word = substitute(a:word, '\\\\\n', '', 'g')
-  let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*$')
+  let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*\%(%.*\)\?$')
   let word = s:unit_seqnr_prefix(a:unit) . word
+  if a:unit ==# 'label'
+    let word .= ' (label)'
+  endif
   return word
 endfunction
 
 function! s:unit_seqnr_prefix(unit)
-  if a:unit ==# 'title'
-    let seqnr = []
-  elseif a:unit ==# 'part'
+  let seqnr = []
+
+  if a:unit ==# 'part'
     let seqnr = [s:Util.String.nr2roman(s:unit_count.part)]
   elseif a:unit ==# 'chapter'
     let seqnr = [s:unit_count.chapter]
@@ -90,7 +120,6 @@ function! s:unit_seqnr_prefix(unit)
       let seqnr = [s:unit_count.chapter, s:unit_count.section]
     elseif a:unit ==# 'section'
       let seqnr = [s:unit_count.section]
-    else
     endif
   elseif a:unit ==# 'subsection'
     if s:unit_count.chapter > 0
@@ -99,10 +128,8 @@ function! s:unit_seqnr_prefix(unit)
       let seqnr = [s:unit_count.section, s:unit_count.subsection]
     endif
   elseif a:unit ==# 'subsubsection'
-    if s:unit_count.chapter > 0
+    if s:unit_count.chapter == 0
       let seqnr = [s:unit_count.section, s:unit_count.subsection, s:unit_count.subsubsection]
-    else
-      let seqnr = []
     endif
   endif
   let prefix = join(seqnr, '.')

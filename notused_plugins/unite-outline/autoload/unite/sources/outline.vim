@@ -49,26 +49,28 @@ let s:OUTLINE_ALIASES = {
       \ 'sh'      : ['zsh'],
       \ }
 
-let s:OUTLINE_CACHE_DIR = g:unite_data_directory . '/outline'
+let s:OUTLINE_CACHE_DIR = unite#get_data_directory() . '/outline'
+
+let s:supported_arguments = [ 'filetype', 'folding', 'update' ]
 
 " Rename the cache directory if its name is still old, dotted style name.
 " See http://d.hatena.ne.jp/tyru/20110824/unite_file_mru
 "
-let old_cache_dir = g:unite_data_directory . '/.outline'
+let s:old_cache_dir = unite#get_data_directory() . '/.outline'
 if isdirectory(s:OUTLINE_CACHE_DIR)
-  if isdirectory(old_cache_dir) 
+  if isdirectory(s:old_cache_dir)
     call unite#print_message("[unite-outline] Warning: Please remove the old cache directory: ")
-    call unite#print_message("[unite-outline] " . old_cache_dir)
+    call unite#print_message("[unite-outline] " . s:old_cache_dir)
   endif
 else " if !isdirectory(s:OUTLINE_CACHE_DIR)
-  if isdirectory(old_cache_dir)
-    if rename(old_cache_dir, s:OUTLINE_CACHE_DIR) != 0
-      let s:OUTLINE_CACHE_DIR = old_cache_dir
+  if isdirectory(s:old_cache_dir)
+    if rename(s:old_cache_dir, s:OUTLINE_CACHE_DIR) != 0
+      let s:OUTLINE_CACHE_DIR = s:old_cache_dir
       call unite#util#print_error("unite-outline: Couldn't rename the cache directory.")
     endif
   endif
 endif
-unlet old_cache_dir
+unlet s:old_cache_dir
 
 let s:FILECACHE_FORMAT_VERSION = 2
 let s:FILECACHE_FORMAT_VERSION_KEY = '__unite_outline_filecache_format_version__'
@@ -470,8 +472,8 @@ let s:default_highlight = {
       \ 'id'      : 'Special',
       \ 'macro'   : 'Macro',
       \ 'method'  : 'Function',
-      \ 'normal'  : g:unite_abbr_highlight,
-      \ 'package' : g:unite_abbr_highlight,
+      \ 'normal'  : 'Normal',
+      \ 'package' : 'Normal',
       \ 'special' : 'Macro',
       \ 'type'    : 'Type',
       \ 'level_1' : 'Type',
@@ -479,8 +481,8 @@ let s:default_highlight = {
       \ 'level_3' : 'Identifier',
       \ 'level_4' : 'Constant',
       \ 'level_5' : 'Special',
-      \ 'level_6' : g:unite_abbr_highlight,
-      \ 'parameter_list': g:unite_abbr_highlight,
+      \ 'level_6' : 'Normal',
+      \ 'parameter_list': 'Normal',
       \ }
 if !exists('g:unite_source_outline_highlight')
   let g:unite_source_outline_highlight = {}
@@ -494,8 +496,8 @@ endif
 " Aliases
 
 " Define the default filetype aliases.
-for [ftype, aliases] in items(s:OUTLINE_ALIASES)
-  call call('s:define_filetype_aliases', [aliases, ftype])
+for [s:ftype, s:aliases] in items(s:OUTLINE_ALIASES)
+  call call('s:define_filetype_aliases', [s:aliases, s:ftype])
 endfor
 
 "-----------------------------------------------------------------------------
@@ -515,7 +517,7 @@ let s:outline_buffer_id = 1
 let s:source = {
       \ 'name'       : 'outline',
       \ 'description': 'candidates from heading list',
-      \ 'filters'    : ['outline_matcher_glob', 'outline_formatter'],
+      \ 'matchers'   : ['outline_matcher_glob', 'outline_formatter'],
       \ 'syntax'     : 'uniteSource__Outline',
       \
       \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
@@ -642,6 +644,10 @@ function! s:Source_gather_candidates(source_args, unite_context)
   endtry
 endfunction
 let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
+
+function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
+	return s:supported_arguments
+endfunction"}}}
 
 function! s:parse_source_arguments(source_args, unite_context)
   let options = {
@@ -793,10 +799,12 @@ function! s:extract_headings(context)
   let save_lazyredraw  = &lazyredraw
   try
     set eventignore=all
-    set winheight=1
-    set winwidth=1
+
     " NOTE: To keep the window size on :wincmd, set 'winheight' and 'winwidth'
     " to a small value.
+    let &winheight=&winminheight
+    let &winwidth=&winminwidth
+
     set lazyredraw
 
     " Switch: current window -> source buffer's window
@@ -839,9 +847,9 @@ function! s:extract_headings(context)
 
   finally
     " Remove the temporary context data.
-    unlet a:context.lines
-    unlet a:context.heading_lnum
-    unlet a:context.matched_lnum
+    unlet! a:context.lines
+    unlet! a:context.heading_lnum
+    unlet! a:context.matched_lnum
 
     " Restore the cursor and scroll.
     let save_scrolloff = &scrolloff
@@ -1133,7 +1141,7 @@ function! s:skip_while(pattern, from)
 endfunction
 
 function! s:skip_until(pattern, from)
-  let lnum = a:from + 1 | let num_lines = line('$')
+  let lnum = a:from | let num_lines = line('$')
   while lnum <= num_lines
     let line = getline(lnum)
     let lnum += 1
@@ -1146,31 +1154,54 @@ endfunction
 
 function! s:extract_folding_headings(context)
   let headings = []
-  let cur_level = 0
-  let lnum = 1 | let num_lines = line('$')
+  let foldinfo = []
+  let num_lines = line('$')
+
+  " save informaiton of folding.
+  let lnum = 1
   while lnum < num_lines
-    let foldlevel = foldlevel(lnum)
-    if foldlevel > cur_level
-      let heading_lnum = lnum
-      if &l:foldmethod ==# 'indent'
-        let heading_lnum -=1
-      endif
-      let heading = {
-            \ 'word' : getline(heading_lnum),
-            \ 'level': foldlevel,
-            \ 'type' : 'folding',
-            \ 'lnum' : heading_lnum,
-            \ }
-      call add(headings, s:normalize_heading(heading, a:context))
-      if len(headings) >= g:unite_source_outline_max_headings
-        call unite#print_message("[unite-outline] " .
-              \ "Too many headings, the extraction was interrupted.")
-        break
-      endif
-    endif
-    let cur_level = foldlevel
+    call add(foldinfo, foldclosed(lnum))
     let lnum += 1
   endwhile
+
+  normal zM
+
+  let lnum = 1
+  while lnum < num_lines
+    let heading_lnum = foldclosed(lnum)
+    if heading_lnum != -1
+        let foldlevel = foldlevel(lnum)
+        let heading = {
+        \ 'word' : getline(heading_lnum),
+        \ 'level': foldlevel,
+        \ 'type' : 'folding',
+        \ 'lnum' : heading_lnum,
+        \ }
+        call add(headings, s:normalize_heading(heading, a:context))
+        if len(headings) >= g:unite_source_outline_max_headings
+            call unite#print_message("[unite-outline] " .
+            \ "Too many headings, the extraction was interrupted.")
+            break
+        endif
+        " open folding to get information of deeper folding
+        call cursor(lnum, 0)
+        foldopen
+    endif
+    let lnum += 1
+  endwhile
+
+  " restore folding
+  let lnum = 1
+  while lnum < num_lines
+      if foldinfo[lnum - 1] != -1
+          call cursor(lnum, 0)
+          foldclose
+          let lnum = foldclosedend(lnum) + 1
+      else
+          let lnum += 1
+      endif
+  endwhile
+
   return headings
 endfunction
 
@@ -1498,7 +1529,7 @@ function! s:find_outline_buffers(src_bufnr)
   while bufnr <= bufnr('$')
     if bufwinnr(bufnr) > 0
       try
-        " NOTE: This code depands on the current implementation of unite.vim.
+        " NOTE: This code depends on the current implementation of unite.vim.
         if s:is_unite_buffer(bufnr)
           let unite = getbufvar(bufnr, 'unite')
           let outline_source = s:Unite_find_outline_source(unite)
@@ -1520,11 +1551,7 @@ function! s:find_outline_buffers(src_bufnr)
 endfunction
 
 function! s:is_unite_buffer(bufnr)
-  if unite#is_win()
-    return (bufname(a:bufnr) =~# '^\[unite\]')
-  else
-    return (bufname(a:bufnr) =~# '^\*unite\*')
-  endif
+  return (bufname(a:bufnr) =~# '^\[unite\]')
 endfunction
 
 function! s:Unite_find_outline_source(unite)

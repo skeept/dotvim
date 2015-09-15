@@ -59,11 +59,11 @@ function! s:matcher.filter(candidates, unite_context)
         continue
       endif
       " Exclusion
-      let input = unite#escape_match(input)
+      let input = unite#util#escape_match(input)
       let pred = 'v:val.word !~ ' . string(input[1:])
     elseif input =~ '\\\@<!\*'
       " Wildcard
-      let input = unite#escape_match(input)
+      let input = unite#util#escape_match(input)
       let pred = 'v:val.word =~ ' . string(input)
     else
       let input = substitute(input, '\\\(.\)', '\1', 'g')
