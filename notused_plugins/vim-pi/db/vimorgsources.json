@@ -1,4 +1,7 @@
 {
+"quickBuf":{"archive_name":"quickBuf.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23594","version":"1.1","vim_script_nr":5247},
+"ansible-vim":{"archive_name":"ansible-vim-0.8.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23592","version":"0.8","vim_script_nr":5246},
+"8ch":{"archive_name":"8chan.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23591","version":"0.1","vim_script_nr":5245},
 "vim-follow-my-lead":{"archive_name":"vim-follow-my-lead.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23582","version":"0.1","vim_script_nr":5244},
 "vim-sipindex":{"archive_name":"vim-sipindex.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23577","version":"1.0","vim_script_nr":5243},
 "easy-navigate":{"archive_name":"easy-navigate.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23575","version":"1.0","vim_script_nr":5242},
@@ -22,7 +25,7 @@
 "progress":{"archive_name":"progress.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23480","version":"14","vim_script_nr":5224},
 "vim3diff":{"archive_name":"vim3diff.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23485","version":"1.01","vim_script_nr":5223},
 "vim-js-pretty-template":{"archive_name":"vim-js-pretty-template-0.1.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23472","version":"0.1.0","vim_script_nr":5222},
-"ctrlp-locate":{"archive_name":"ctrlp-locate-0.5.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23562","version":"0.5","vim_script_nr":5221},
+"ctrlp-locate":{"archive_name":"ctrlp-locate-0.7.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23590","version":"0.7","vim_script_nr":5221},
 "Ferret":{"archive_name":"ferret-0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23479","version":"0.3","vim_script_nr":5220},
 "airline-colornum":{"archive_name":"airline-colornum.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23468","version":"1.1","vim_script_nr":5219},
 "vim-gurl":{"archive_name":"vim-gurl.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23452","version":"1.0","vim_script_nr":5218},

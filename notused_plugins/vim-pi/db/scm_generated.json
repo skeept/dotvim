@@ -4599,6 +4599,10 @@
     "type": "git",
     "url": "git://github.com/ktonga/vim-follow-my-lead"
   },
+  "5246": {
+    "type": "git",
+    "url": "git://github.com/pearofducks/ansible-vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
