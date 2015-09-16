@@ -448,7 +448,7 @@ function! LoadUnite() "{{{
   nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -start-insert -buffer-name=files
 	\ -prompt=%\  buffer bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-  nnoremap <silent> ,uo :<C-u>Unite outline<CR>
+  nnoremap <silent> ,uo :<C-u>Unite outline -start-insert<CR>
   nnoremap ,uf :<C-U>Unite -start-insert source<CR>
   nnoremap ,uu :<C-U>Unite -start-insert source<CR>
   nnoremap ,rr :<C-U>UniteResume<CR>
