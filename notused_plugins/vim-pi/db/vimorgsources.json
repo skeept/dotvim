@@ -130,7 +130,7 @@
 "vim-stardict":{"archive_name":"vim-stardict-0.4.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23412","version":"0.4.3","vim_script_nr":5117},
 "vim-consul":{"archive_name":"vim-consul.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22932","version":"1.0.0","vim_script_nr":5116},
 "vim-fixprotocol":{"archive_name":"vim-fixprotocol.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23164","version":"0.2","vim_script_nr":5115},
-"vim-webdevicons":{"archive_name":"vim-devicons-v0.5.4.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23570","version":"v0.5.4","vim_script_nr":5114},
+"vim-webdevicons":{"archive_name":"vim-devicons-v0.6.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23595","version":"v0.6.0","vim_script_nr":5114},
 "sonicpi":{"archive_name":"sonicpi.vim.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22926","version":"0.1","vim_script_nr":5113},
 "Perfect_Dark":{"archive_name":"PerfectDark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23587","version":"1.1","vim_script_nr":5112},
 "glsl_es_100":{"archive_name":"glsl_es_100.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22914","version":"0.2","vim_script_nr":5111},
