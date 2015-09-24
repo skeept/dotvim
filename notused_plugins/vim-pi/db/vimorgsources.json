@@ -1,4 +1,5 @@
 {
+"logo":{"archive_name":"logo.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23614","version":"1.0","vim_script_nr":5248},
 "quickBuf":{"archive_name":"quickBuf.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23600","version":"1.2.1","vim_script_nr":5247},
 "ansible-vim":{"archive_name":"ansible-vim-0.9.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23604","version":"0.9","vim_script_nr":5246},
 "8ch":{"archive_name":"8chan.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23591","version":"0.1","vim_script_nr":5245},
