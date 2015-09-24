@@ -371,7 +371,7 @@ endfunction
 "   l  local variables
 "   m  class, struct, and union members
 "  [n] namespaces
-"   p  function prototypes
+"  [p] function prototypes, pure virtual functions
 "  [s] structure names
 "  [t] typedefs
 "  [u] union names
@@ -380,7 +380,7 @@ endfunction
 "
 let s:Ctags.lang_info.cpp = {
       \ 'name': 'C++',
-      \ 'ctags_options': ' --c++-kinds=cdfgnstu ',
+      \ 'ctags_options': ' --c++-kinds=cdfgnstup ',
       \ 'scope_kinds'  : ['namespace', 'class', 'struct'],
       \ 'scope_delim'  : '::',
       \ }
