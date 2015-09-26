@@ -4603,6 +4603,14 @@
     "type": "git",
     "url": "git://github.com/pearofducks/ansible-vim"
   },
+  "5249": {
+    "type": "git",
+    "url": "git://github.com/tkhoa2711/vim-togglenumber"
+  },
+  "5250": {
+    "type": "git",
+    "url": "git://github.com/axiaoxin/vim-json-line-format"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

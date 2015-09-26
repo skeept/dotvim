@@ -94,14 +94,16 @@ function! neocomplete#init#_autocmds() "{{{
           \ call neocomplete#handler#_on_insert_char_pre()
     autocmd TextChangedI *
           \ call neocomplete#handler#_on_text_changed()
-    autocmd VimLeavePre *
-          \ call neocomplete#init#disable()
+    autocmd CompleteDone *
+          \ call neocomplete#handler#_on_complete_done()
   augroup END
 
   if g:neocomplete#enable_cursor_hold_i
     augroup neocomplete
       autocmd CursorHoldI *
             \ call neocomplete#handler#_do_auto_complete('CursorHoldI')
+      autocmd CursorMovedI *
+            \ call neocomplete#handler#_do_auto_complete('CursorMovedI')
       autocmd InsertEnter *
             \ call neocomplete#handler#_change_update_time()
       autocmd InsertLeave *
@@ -119,11 +121,6 @@ function! neocomplete#init#_autocmds() "{{{
   if !g:neocomplete#enable_cursor_hold_i
     autocmd neocomplete InsertEnter *
           \ call neocomplete#handler#_do_auto_complete('InsertEnter')
-  endif
-
-  if exists('v:completed_item')
-    autocmd neocomplete CompleteDone *
-          \ call neocomplete#handler#_on_complete_done()
   endif
 endfunction"}}}
 

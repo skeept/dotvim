@@ -77,7 +77,7 @@ unlet s:vimproc_dll_basename
 
 call vimproc#util#set_default(
       \ 'g:vimproc#password_pattern',
-      \ '\%(Enter \|[Oo]ld \|[Nn]ew \|login '  .
+      \ '\%(Enter \|Repeat \|[Oo]ld \|[Nn]ew \|login ' .
       \'\|Kerberos \|EncFS \|CVS \|UNIX \| SMB \|LDAP \|\[sudo] ' .
       \'\|^\|\n\|''s \)\%([Pp]assword\|[Pp]assphrase\)\>',
       \ 'g:vimproc_password_pattern')
@@ -303,7 +303,8 @@ function! s:system(cmdline, is_passwd, input, timeout, is_pty) "{{{
     call subproc.kill(g:vimproc#SIGTERM)
 
     if v:exception !~ '^Vim:Interrupt'
-      throw v:exception
+      call s:print_error(v:throwpoint)
+      call s:print_error(v:exception)
     endif
   finally
     let output = join(outbuf, '')
