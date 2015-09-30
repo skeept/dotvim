@@ -240,7 +240,7 @@ function! s:reload_autoload_script(funcname)
   let path = get(split(globpath(&runtimepath, path), "\<NL>"), 0, '')
   let path = fnamemodify(path, ':p')
   " Re-source the autoload script.
-  source `=path`
+  execute 'source' fnameescape(path)
 endfunction
 
 function! s:load_outline_info(load_func, context, reload)

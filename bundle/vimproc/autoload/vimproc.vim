@@ -141,7 +141,7 @@ if !filereadable(g:vimproc#dll_path) || !has('libcall') "{{{
 endif"}}}
 
 function! vimproc#version() "{{{
-  return str2nr(printf('%2d%02d', 9, 0))
+  return str2nr(printf('%2d%02d', 9, 1))
 endfunction"}}}
 function! vimproc#dll_version() "{{{
   let [dll_version] = s:libcall('vp_dlversion', [])
@@ -1259,7 +1259,8 @@ endfunction"}}}
 
 " args[0]: fd, args[1]: count, args[2]: timeout
 function! s:libcall_raw_read(func, args) "{{{
-  return s:libcall(a:func, a:args)
+  let [err, hd] = s:libcall(a:func, a:args)
+  return [hd, err]
 endfunction "}}}
 
 " args[0]: fd, args[1]: data, args[2]: timeout
