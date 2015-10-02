@@ -4611,6 +4611,10 @@
     "type": "git",
     "url": "git://github.com/axiaoxin/vim-json-line-format"
   },
+  "5252": {
+    "type": "git",
+    "url": "git://github.com/jreybert/vimagit"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
