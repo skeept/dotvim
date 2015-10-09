@@ -40,7 +40,7 @@ let s:OUTLINE_INFO_PATH = [
 
 " NOTE: source <- [aliases...]
 let s:OUTLINE_ALIASES = {
-      \ 'markdown': ['mkd'],
+      \ 'markdown': ['mkd', 'pandoc'],
       \ 'cpp'     : ['c'],
       \ 'dosini'  : ['cfg'],
       \ 'tex'     : ['plaintex'],
