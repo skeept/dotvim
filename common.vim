@@ -17,7 +17,7 @@ set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
 set incsearch		" do incremental searching
 set ignorecase
-"set smartcase
+set smartcase
 set showmatch           " show matching parenthesis
 set laststatus=2
 set cmdheight=1
