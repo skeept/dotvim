@@ -46,3 +46,8 @@ test/cur_color.vim
 notused_plugins/ultisnips/
 notused_plugins/frawor/test/
 __pycache__/
+
+*.pdb
+*.dll
+*.exp
+*.lib
