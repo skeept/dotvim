@@ -6,9 +6,6 @@ undodir/*
 
 .VimballRecord
 
-._git/
-.git/
-
 !backup
 !swapdir
 !undodir
@@ -21,9 +18,6 @@ doc/tags
 doc/tags-ja
 plugin/totd.vim
 
-ftplugin/latex-suite/bibtools.pyc 
-ftplugin/latex-suite/outline.pyc
-
 *.pyc
 
 tags*
@@ -34,20 +28,13 @@ tmp/
 
 colors/not_used/
 
+._git/
+.git/
 .hg/
 .svn/
-
-doc/tags*
-
 .bzr/
+
 .Powerline.cache
 test/cur_color.vim
-
-notused_plugins/ultisnips/
 notused_plugins/frawor/test/
 __pycache__/
-
-*.pdb
-*.dll
-*.exp
-*.lib
