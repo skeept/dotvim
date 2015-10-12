@@ -25,8 +25,8 @@ Not supported platforms:
 
 * Clone this repo
 * Build vimproc's native extensions (see Building for details)
-* Copy `autoload/*` and `plugin/*` files to your 'runtimepath' directory (see
-  `:help runtimepath`).
+* Copy `autoload/*`, `lib/*` and `plugin/*` files to your 'runtimepath'
+  directory (see `:help runtimepath`).
 
 ### NeoBundle
 
@@ -38,7 +38,7 @@ NeoBundle 'Shougo/vimproc.vim', {
 \ 'build' : {
 \     'windows' : 'tools\\update-dll-mingw',
 \     'cygwin' : 'make -f make_cygwin.mak',
-\     'mac' : 'make -f make_mac.mak',
+\     'mac' : 'make',
 \     'linux' : 'make',
 \     'unix' : 'gmake',
 \    },
