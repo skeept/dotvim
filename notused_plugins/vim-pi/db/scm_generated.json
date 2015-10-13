@@ -1115,6 +1115,10 @@
     "type": "git",
     "url": "git://github.com/claytron/RevealExtends"
   },
+  "3292": {
+    "type": "git",
+    "url": "git://github.com/jalvesaq/southernlights"
+  },
   "3294": {
     "type": "git",
     "url": "git://github.com/tyru/grass.vim"
@@ -4622,6 +4626,10 @@
   "5253": {
     "type": "git",
     "url": "git://github.com/tomtom/autolinker_vim"
+  },
+  "5256": {
+    "type": "git",
+    "url": "git://github.com/MikeCoder/markdown-preview.vim"
   },
   "586": {
     "type": "git",
