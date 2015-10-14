@@ -1,5 +1,6 @@
 {
-"markdown-preview":{"archive_name":"markdown-preview.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23665","version":"1.0.1","vim_script_nr":5256},
+"groovyindent-unix":{"archive_name":"groovy.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23668","version":"0.1","vim_script_nr":5257},
+"markdown-preview":{"archive_name":"markdown-preview.vim.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23670","version":"1.0.2","vim_script_nr":5256},
 "Tabtastic":{"archive_name":"vim-tabtastic.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23649","version":"1.0","vim_script_nr":5255},
 "Typer":{"archive_name":"typer.vim","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23639","version":"1.0","vim_script_nr":5254},
 "autolinker":{"archive_name":"autolinker.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23638","version":"0.01","vim_script_nr":5253},

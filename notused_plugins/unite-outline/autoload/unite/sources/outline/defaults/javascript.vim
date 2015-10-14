@@ -26,7 +26,7 @@ let s:Util = unite#sources#outline#import('Util')
 
 let s:pat_indent  = '\<\h\w*\>'
 
-let s:pat_assign = '\%(var\s\+\)\=\(' . s:pat_indent . '\%(\.' . s:pat_indent . '\)*\)\s*='
+let s:pat_assign = '\%(\%(var\|let\|const\)\s\+\)\=\(' . s:pat_indent . '\%(\.' . s:pat_indent . '\)*\)\s*='
 " NOTE: This sub pattern contains 1 capture;  1:lvalue
 
 let s:pat_label  = '\(' . s:pat_indent . '\)\s*:'
@@ -35,12 +35,14 @@ let s:pat_label  = '\(' . s:pat_indent . '\)\s*:'
 let s:pat_rvalue = '\(function\s*(\([^)]*\))\|{\)'
 " NOTE: This sub pattern contains 2 captures; 1:rvalue [, 2:arg_list]
 
+let s:pat_def =  '\%(\%(export\s\+\%(default\s\+\)\=\)\=function\>\)'
+
 "-----------------------------------------------------------------------------
 " Outline Info
 
 let s:outline_info = {
       \ 'heading-1': s:Util.shared_pattern('cpp', 'heading-1'),
-      \ 'heading'  : '^\s*\%(function\>\|' .
+      \ 'heading'  : '^\s*\%(' . s:pat_def . '\|' .
       \   '\%(' . s:pat_assign . '\|' . s:pat_label . '\)\s*' . s:pat_rvalue . '\)',
       \
       \ 'skip': {
@@ -70,7 +72,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   elseif a:which ==# 'heading'
 
     let matched_list = matchlist(a:heading_line,
-          \ '^\s*function\s\+\(' . s:pat_indent . '\)\s*(\(.*\))')
+          \ '^\s*' . s:pat_def . '\s\+\(' . s:pat_indent . '\)\s*(\(.*\))')
     if len(matched_list) > 0
       " function Foo(...) -> Foo(...)
       " function foo(...) -> foo(...)
