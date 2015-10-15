@@ -1,4 +1,5 @@
 {
+"vim-gradle":{"archive_name":"vim-gradle-0.1.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23671","version":"0.1","vim_script_nr":5258},
 "groovyindent-unix":{"archive_name":"groovy.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23668","version":"0.1","vim_script_nr":5257},
 "markdown-preview":{"archive_name":"markdown-preview.vim.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23670","version":"1.0.2","vim_script_nr":5256},
 "Tabtastic":{"archive_name":"vim-tabtastic.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23649","version":"1.0","vim_script_nr":5255},

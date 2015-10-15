@@ -4631,6 +4631,10 @@
     "type": "git",
     "url": "git://github.com/MikeCoder/markdown-preview.vim"
   },
+  "5258": {
+    "type": "hg",
+    "url": "https://bitbucket.org/sw-samuraj/vim-gradle"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
