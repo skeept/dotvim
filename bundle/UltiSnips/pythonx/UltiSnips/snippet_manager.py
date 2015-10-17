@@ -374,6 +374,10 @@ class SnippetManager(object):
             'autocmd CmdwinEnter * call UltiSnips#LeavingBuffer()')
         _vim.command(
             'autocmd CmdwinLeave * call UltiSnips#LeavingBuffer()')
+
+        # Also exit the snippet when we enter a unite complete buffer.
+        _vim.command('autocmd Filetype unite call UltiSnips#LeavingBuffer()')
+
         _vim.command('augroup END')
 
         _vim.command('silent doautocmd <nomodeline> User UltiSnipsEnterFirstSnippet')
@@ -554,8 +558,7 @@ class SnippetManager(object):
         clear_priority = None
         cleared = {}
         for _, source in self._snippet_sources:
-            if not autotrigger_only or not source.loaded(filetypes):
-                source.ensure(filetypes)
+            source.ensure(filetypes, cached=autotrigger_only)
 
         # Collect cleared information from sources.
         for _, source in self._snippet_sources:
