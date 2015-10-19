@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 The Python parts of the Jedi library for VIM. It is mostly about communicating
 with VIM.
@@ -7,6 +8,8 @@ import traceback  # for exception output
 import re
 import os
 import sys
+import string
+import random
 from shlex import split as shsplit
 try:
     from itertools import zip_longest
@@ -16,7 +19,10 @@ except ImportError:
 
 is_py3 = sys.version_info[0] >= 3
 if is_py3:
+    ELLIPSIS = "…"
     unicode = str
+else:
+    ELLIPSIS = u"…"
 
 
 class PythonToVimStr(unicode):
@@ -244,9 +250,22 @@ def goto(mode="goto", no_output=False):
                                    % d.desc_with_module)
             else:
                 if d.module_path != vim.current.buffer.name:
-                    result = new_buffer(d.module_path)
+                    result = new_buffer(d.module_path, using_tagstack=True)
                     if not result:
                         return []
+                if d.module_path and vim_eval('g:jedi#use_tag_stack') == '1':
+                    with open(vim_eval('tempname()'), 'w') as f:
+                        tagname = d.name
+                        while vim_eval('taglist("^%s$")' % tagname) != []:
+                            tagname = d.name + ' ' + ''.join(
+                                [random.choice(string.ascii_lowercase)
+                                 for _ in range(4)])
+                        f.write('{0}\t{1}\t{2}'.format(tagname, d.module_path,
+                            'call cursor({0}, {1})'.format(d.line, d.column + 1)))
+                        f.seek(0)
+                        vim.command('set tags+=%s' % f.name)
+                        vim.command('tjump %s' % tagname)
+                        vim.command('set tags-=%s' % f.name)
                 vim.current.window.cursor = d.line, d.column
         else:
             # multiple solutions
@@ -391,32 +410,65 @@ def cmdline_call_signatures(signatures):
     def get_params(s):
         return [p.description.replace('\n', '') for p in s.params]
 
+    def escape(string):
+        return string.replace('"', '\\"').replace(r'\n', r'\\n')
+
+    def join():
+        return ', '.join(filter(None, (left, center, right)))
+
+    def too_long():
+        return len(join()) > max_msg_len
+
     if len(signatures) > 1:
         params = zip_longest(*map(get_params, signatures), fillvalue='_')
         params = ['(' + ', '.join(p) + ')' for p in params]
     else:
         params = get_params(signatures[0])
-    text = ', '.join(params).replace('"', '\\"').replace(r'\n', r'\\n')
 
-    # Allow 12 characters for ruler/showcmd - setting noruler/noshowcmd
-    # here causes incorrect undo history
+    index = next(iter(s.index for s in signatures if s.index is not None), None)
+
+    # Allow 12 characters for showcmd plus 18 for ruler - setting
+    # noruler/noshowcmd here causes incorrect undo history
     max_msg_len = int(vim_eval('&columns')) - 12
-    max_num_spaces = (max_msg_len - len(signatures[0].call_name)
-                      - len(text) - 2)  # 2 accounts for parentheses
-    if max_num_spaces < 0:
-        return  # No room for the message
-    _, column = signatures[0].bracket_start
-    num_spaces = min(int(vim_eval('g:jedi#first_col +'
-                     'wincol() - col(".")')) +
-                     column - len(signatures[0].call_name),
-                     max_num_spaces)
-    spaces = ' ' * num_spaces
+    if int(vim_eval('&ruler')):
+        max_msg_len -= 18
+    max_msg_len -= len(signatures[0].call_name) + 2  # call name + parentheses
 
-    try:
-        index = [s.index for s in signatures if isinstance(s.index, int)][0]
-        escaped_param = params[index].replace(r'\n', r'\\n')
-        left = text.index(escaped_param)
-        right = left + len(escaped_param)
+    if max_msg_len < 0:
+        return
+    elif index is None:
+        pass
+    elif max_msg_len < len(ELLIPSIS):
+        return
+    else:
+        left = escape(', '.join(params[:index]))
+        center = escape(params[index])
+        right = escape(', '.join(params[index + 1:]))
+        while too_long():
+            if left and left != ELLIPSIS:
+                left = ELLIPSIS
+                continue
+            if right and right != ELLIPSIS:
+                right = ELLIPSIS
+                continue
+            if (left or right) and center != ELLIPSIS:
+                left = right = None
+                center = ELLIPSIS
+                continue
+            if too_long():
+                # Should never reach here
+                return
+
+    max_num_spaces = max_msg_len
+    if index is not None:
+        max_num_spaces -= len(join())
+    _, column = signatures[0].bracket_start
+    spaces = min(int(vim_eval('g:jedi#first_col +'
+                              'wincol() - col(".")')) +
+                 column - len(signatures[0].call_name),
+                 max_num_spaces) * ' '
+
+    if index is not None:
         vim_command('                      echon "%s" | '
                     'echohl Function     | echon "%s" | '
                     'echohl None         | echon "("  | '
@@ -424,15 +476,14 @@ def cmdline_call_signatures(signatures):
                     'echohl jediFat      | echon "%s" | '
                     'echohl jediFunction | echon "%s" | '
                     'echohl None         | echon ")"'
-                    % (spaces, signatures[0].call_name, text[:left],
-                       text[left:right], text[right:]))
-    except (TypeError, IndexError):
+                    % (spaces, signatures[0].call_name,
+                       left + ', ' if left else '',
+                       center, ', ' + right if right else ''))
+    else:
         vim_command('                      echon "%s" | '
                     'echohl Function     | echon "%s" | '
-                    'echohl None         | echon "("  | '
-                    'echohl jediFunction | echon "%s" | '
-                    'echohl None         | echon ")"'
-                    % (spaces, signatures[0].call_name, text))
+                    'echohl None         | echon "()"'
+                    % (spaces, signatures[0].call_name))
 
 
 @_check_jedi_availability(show_error=True)
@@ -567,7 +618,7 @@ def py_import_completions():
 
 
 @catch_and_print_exceptions
-def new_buffer(path, options=''):
+def new_buffer(path, options='', using_tagstack=False):
     # options are what you can to edit the edit options
     if vim_eval('g:jedi#use_tabs_not_buffers') == '1':
         _tabnew(path, options)
@@ -593,6 +644,8 @@ def new_buffer(path, options=''):
                 return False
             else:
                 vim_command('w')
+        if using_tagstack:
+            return True
         vim_command('edit %s %s' % (options, escape_file_path(path)))
     # sometimes syntax is being disabled and the filetype not set.
     if vim_eval('!exists("g:syntax_on")') == '1':

@@ -34,7 +34,8 @@ let s:default_settings = {
     \ 'quickfix_window_height': 10,
     \ 'completions_enabled': 1,
     \ 'force_py_version': "'auto'",
-    \ 'smart_auto_mappings': 1
+    \ 'smart_auto_mappings': 1,
+    \ 'use_tag_stack': 1
 \ }
 
 for [s:key, s:val] in items(s:deprecations)
@@ -375,15 +376,15 @@ function! jedi#show_call_signatures()
 
     " Caching.  On the same line only.
     if line == s:show_call_signatures_last[0]
-        " Check if the number of commas before or after the cursor has
-        " not changed: this means that the argument position was not
-        " changed and we can skip repainting.
+        " Check if the number of commas and parenthesis before or after the
+        " cursor has not changed since the last call, which means that the
+        " argument position was not changed and we can skip repainting.
         let prevcol = s:show_call_signatures_last[1]
         let prevline = s:show_call_signatures_last[2]
-        if substitute(curline[:col-2], '[^,]', '', 'g')
-                    \ == substitute(prevline[:prevcol-2], '[^,]', '', 'g')
-                    \ && substitute(curline[(col-2):], '[^,]', '', 'g')
-                    \ == substitute(prevline[(prevcol-2):], '[^,]', '', 'g')
+        if substitute(curline[:col-2], '[^,()]', '', 'g')
+                    \ == substitute(prevline[:prevcol-2], '[^,()]', '', 'g')
+                    \ && substitute(curline[(col-2):], '[^,()]', '', 'g')
+                    \ == substitute(prevline[(prevcol-2):], '[^,()]', '', 'g')
             let reload_signatures = 0
         endif
     endif
@@ -407,6 +408,7 @@ function! jedi#configure_call_signatures()
     if g:jedi#show_call_signatures == 2  " Command line call signatures
         autocmd InsertEnter <buffer> let g:jedi#first_col = s:save_first_col()
     endif
+    autocmd InsertEnter <buffer> let s:show_call_signatures_last = [0, 0, '']
     autocmd InsertLeave <buffer> call jedi#clear_call_signatures()
     if g:jedi#show_call_signatures_delay > 0
         autocmd InsertEnter <buffer> let b:_jedi_orig_updatetime = &updatetime
