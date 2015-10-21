@@ -146,33 +146,9 @@ function! neocomplete#handler#_on_text_changed() "{{{
     return
   endif
 
-  let neocomplete = neocomplete#get_current_neocomplete()
-
   if getline('.') == ''
     call s:make_cache_current_line()
   endif
-
-  " indent line matched by indentkeys
-  let cur_text = matchstr(getline('.'), '^.*\%'.col('.').'c')
-  if neocomplete.indent_text == matchstr(getline('.'), '\S.*$')
-    return
-  endif
-
-  for word in filter(map(split(&l:indentkeys, ','),
-        \ "v:val =~ '^<.*>$' ? matchstr(v:val, '^<\\zs.*\\ze>$')
-        \                  : matchstr(v:val, 'e\\|=\\zs.*')"),
-        \ "v:val != ''")
-
-    if word ==# 'e'
-      let word = 'else'
-    endif
-
-    if stridx(cur_text, word, len(cur_text)-len(word)-1) >= 0
-      call neocomplete#helper#indent_current_line()
-      let neocomplete.indent_text = matchstr(getline('.'), '\S.*$')
-      break
-    endif
-  endfor
 endfunction"}}}
 
 function! neocomplete#handler#_do_auto_complete(event) "{{{
@@ -184,6 +160,8 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
         \ || s:check_in_do_auto_complete()
     return
   endif
+
+  call s:indent_current_line()
 
   let neocomplete.skipped = 0
   let neocomplete.event = a:event
@@ -225,7 +203,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
     endtry
 
     if empty(neocomplete.complete_sources)
-      let complete_pos = s:check_fallback(cur_text)
+      call s:check_fallback(cur_text)
       return
     endif
 
@@ -304,31 +282,55 @@ function! s:check_fallback(cur_text) "{{{
   let cur_text = a:cur_text
   let complete_pos = match(cur_text, '\h\w*$')
   let neocomplete = neocomplete#get_current_neocomplete()
-  if !empty(g:neocomplete#fallback_mappings)
-        \ && len(matchstr(cur_text, '\h\w*$'))
-        \   >= g:neocomplete#auto_completion_start_length
-        \ && !neocomplete.skip_next_complete
-        \ && !neocomplete#complete#_check_previous_position(
+  if empty(g:neocomplete#fallback_mappings)
+        \ || len(matchstr(cur_text, '\h\w*$'))
+        \   < g:neocomplete#auto_completion_start_length
+        \ || neocomplete.skip_next_complete
+        \ || neocomplete#complete#_check_previous_position(
         \      cur_text, complete_pos)
-    let key = ''
-    for i in range(0, len(g:neocomplete#fallback_mappings)-1)
-      let key .= '<C-r>=neocomplete#mappings#fallback(' . i . ')<CR>'
-    endfor
-    execute 'inoremap <silent> <Plug>(neocomplete_fallback)' key
-
-    " Fallback
-    call s:complete_key("\<Plug>(neocomplete_fallback)")
-
-    return complete_pos
+    return
   endif
 
-  return -1
+  let key = ''
+  for i in range(0, len(g:neocomplete#fallback_mappings)-1)
+    let key .= '<C-r>=neocomplete#mappings#fallback(' . i . ')<CR>'
+  endfor
+  execute 'inoremap <silent> <Plug>(neocomplete_fallback)' key
+
+  " Fallback
+  call s:complete_key("\<Plug>(neocomplete_fallback)")
 endfunction"}}}
 
 function! s:complete_key(key) "{{{
   call neocomplete#helper#complete_configure()
 
   call feedkeys(a:key)
+endfunction"}}}
+
+function! s:indent_current_line() abort "{{{
+  " indent line matched by indentkeys
+  let neocomplete = neocomplete#get_current_neocomplete()
+
+  let cur_text = matchstr(getline('.'), '^.*\%'.col('.').'c')
+  if neocomplete.indent_text == matchstr(getline('.'), '\S.*$')
+    return
+  endif
+
+  for word in filter(map(split(&l:indentkeys, ','),
+        \ "v:val =~ '^<.*>$' ? matchstr(v:val, '^<\\zs.*\\ze>$')
+        \                  : matchstr(v:val, ':\\|e\\|=\\zs.*')"),
+        \ "v:val != ''")
+
+    if word ==# 'e'
+      let word = 'else'
+    endif
+
+    if stridx(cur_text, word, len(cur_text)-len(word)-1) >= 0
+      call neocomplete#helper#indent_current_line()
+      let neocomplete.indent_text = matchstr(getline('.'), '\S.*$')
+      break
+    endif
+  endfor
 endfunction"}}}
 
 let &cpo = s:save_cpo

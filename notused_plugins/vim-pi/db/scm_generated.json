@@ -4635,6 +4635,10 @@
     "type": "hg",
     "url": "https://bitbucket.org/sw-samuraj/vim-gradle"
   },
+  "5259": {
+    "type": "git",
+    "url": "git://github.com/romgrk/pp.vim"
+  },
   "5260": {
     "type": "git",
     "url": "git://github.com/iago-lito/vim-visualMarks"
