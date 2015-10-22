@@ -4643,6 +4643,10 @@
     "type": "git",
     "url": "git://github.com/iago-lito/vim-visualMarks"
   },
+  "5261": {
+    "type": "git",
+    "url": "git://github.com/romgrk/vim-exeline"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

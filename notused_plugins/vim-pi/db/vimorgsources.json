@@ -1,4 +1,5 @@
 {
+"Exeline":{"archive_name":"vim-exeline.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23680","version":"1.0","vim_script_nr":5261},
 "visualMarks%5260":{"archive_name":"visualMarks-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23679","version":"0.1","vim_script_nr":"5260"},
 "pp":{"archive_name":"pp.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23676","version":"0.77","vim_script_nr":5259},
 "vim-gradle":{"archive_name":"vim-gradle-0.1.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23671","version":"0.1","vim_script_nr":5258},
