@@ -89,6 +89,7 @@ function! SetupVAM()
   VAMAddToActiveAddons junkfile
   VAMAddToActiveAddons nerdcommenter
   VAMAddToActiveAddons unite-outline unite-qf
+  VAMAddToActiveAddons vim-diff-enhanced
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
