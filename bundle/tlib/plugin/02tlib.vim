@@ -1,8 +1,8 @@
 " @Author:      Tom Link (micathom AT gmail com?subject=[vim])
 " @Created:     2007-04-10.
-" @Last Change: 2015-10-13.
+" @Last Change: 2015-10-27.
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    757
+" @Revision:    763
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " GetLatestVimScripts: 1863 1 tlib.vim
 " tlib.vim -- Some utility functions
@@ -14,7 +14,7 @@ if v:version < 700 "{{{2
     echoerr "tlib requires Vim >= 7"
     finish
 endif
-let g:loaded_tlib = 115
+let g:loaded_tlib = 116
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -112,6 +112,9 @@ command! -nargs=0 -complete=command TBrowseScriptnames call
 " :display: :TTimeCommand CMD
 " Time the execution time of CMD.
 command! -nargs=1 -complete=command TTimeCommand call tlib#cmd#Time(<q-args>)
+
+
+command! -nargs=+ TLibTrace :
 
 
 let &cpo = s:save_cpo
