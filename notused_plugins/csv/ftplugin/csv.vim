@@ -226,20 +226,20 @@ fu! <sid>LocalSettings(type) "{{{3
 endfu
 
 fu! <sid>DoAutoCommands() "{{{3
-    " Highlight column, on which the cursor is?
-    if exists("g:csv_highlight_column") && g:csv_highlight_column =~? 'y' &&
-        \ !exists("#CSV_HI#CursorMoved")
-        aug CSV_HI
+    " Highlight column, on which the cursor is
+    if exists("g:csv_highlight_column") && g:csv_highlight_column =~? 'y'
+        exe "aug CSV_HI".bufnr('')
             au!
-            au CursorMoved <buffer> HiColumn
+            exe "au CursorMoved <buffer=".bufnr('')."> HiColumn"
+            exe "au BufWinLeave <buffer=".bufnr('')."> HiColumn!"
         aug end
         " Set highlighting for column, on which the cursor is currently
         HiColumn
-    elseif exists("#CSV_HI#CursorMoved")
-        aug CSV_HI
-            au! CursorMoved <buffer>
+    else
+        exe "aug CSV_HI".bufnr('')
+            exe "au! CursorMoved <buffer=".bufnr('').">"
         aug end
-        aug! CSV_HI
+        exe "aug! CSV_HI".bufnr('')
         " Remove any existing highlighting
         HiColumn!
     endif
@@ -1981,7 +1981,7 @@ fu! <sid>CommandDefinitions() "{{{3
     call <sid>LocalCmd("UnArrangeColumn",
         \':call <sid>PrepUnArrangeCol(<line1>, <line2>)',
         \ '-range')
-    call <sid>LocalCmd("InitCSV", ':call <sid>Init(<line1>,<line2>,<bang>0)',
+    call <sid>LocalCmd("CSVInit", ':call <sid>Init(<line1>,<line2>,<bang>0)',
         \ '-bang -range=%')
     call <sid>LocalCmd('Header',
         \ ':call <sid>SplitHeaderLine(<q-args>,<bang>0,1)',
@@ -2076,7 +2076,7 @@ endfu
 fu! <sid>Menu(enable) "{{{3
     if a:enable
         " Make a menu for the graphical vim
-        amenu CSV.&Init\ Plugin             :InitCSV<cr>
+        amenu CSV.&Init\ Plugin             :CSVInit<cr>
         amenu CSV.SetUp\ &fixedwidth\ Cols  :CSVFixed<cr>
         amenu CSV.-sep1-                    <nul>
         amenu &CSV.&Column.&Number          :WhatColumn<cr>
@@ -2358,6 +2358,8 @@ fu! <sid>Tabularize(bang, first, last) "{{{3
     new
     call setline(1,content)
     let b:delimiter=delim
+    let csv_highlight_column = get(g:, 'csv_highlight_column', '')
+    unlet! g:csv_highlight_column
     call <sid>Init(1,line('$'), 1)
     if exists("b:csv_fixed_width_cols")
         let cols=copy(b:csv_fixed_width_cols)
@@ -2430,6 +2432,9 @@ fu! <sid>Tabularize(bang, first, last) "{{{3
 
     syn clear
     let &l:ma = _ma
+    if !empty(csv_highlight_column)
+      let g:csv_highlight_column = csv_highlight_column
+    endif
     call winrestview(_c)
 endfu
 fu! <sid>SubstituteInColumn(command, line1, line2) range "{{{3
@@ -2493,6 +2498,20 @@ fu! <sid>SubstituteInColumn(command, line1, line2) range "{{{3
             for colnr in columns
                 let @/ = <sid>GetPat(colnr, maxcolnr, cmd[1], 1)
                 while search(@/)
+                    let curpos = getpos('.')
+                    " safety check
+                    if (<sid>WColumn() != colnr)
+                      break
+                    endif
+                    if  len(split(getline('.'), '\zs')) > curpos[2] && <sid>GetCursorChar() is# b:delimiter
+                      " Cursor is on delimiter and next char belongs to the
+                      " next field, skip this match
+                      norm! l
+                      if (<sid>WColumn() != colnr)
+                        break
+                      endif
+                      call setpos('.', curpos)
+                    endif
                     exe printf("%d,%ds//%s%s", a:line1, a:line2, cmd[2], (has_flags ? '/'. cmd[3] : ''))
                     if !has_flags || (has_flags && cmd[3] !~# 'g')
                         break
@@ -2534,6 +2553,17 @@ endfu
 fu! <sid>Timeout(start) "{{{3
     return localtime()-a:start < 2
 endfu
+fu! <sid>GetCursorChar() "{{{3
+    let register = ['a', getreg('a'), getregtype('a')]
+    try
+      norm! v"ay
+      let s=getreg('a')
+      return s
+    finally
+      call call('setreg', register)
+    endtry
+endfu
+
 fu! <sid>SameFieldRegion() "{{{3
     " visually select the region, that has the same value in the cursor field
     let col = <sid>WColumn()

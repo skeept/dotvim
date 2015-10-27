@@ -4647,6 +4647,10 @@
     "type": "git",
     "url": "git://github.com/romgrk/vim-exeline"
   },
+  "5262": {
+    "type": "git",
+    "url": "git://github.com/tomtom/ttodo_vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
