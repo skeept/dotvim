@@ -4651,6 +4651,14 @@
     "type": "git",
     "url": "git://github.com/tomtom/ttodo_vim"
   },
+  "5263": {
+    "type": "git",
+    "url": "git://github.com/Dalker/vim-now"
+  },
+  "5264": {
+    "type": "git",
+    "url": "git://github.com/sergei-dyshel/vim-abbrev-matcher"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
