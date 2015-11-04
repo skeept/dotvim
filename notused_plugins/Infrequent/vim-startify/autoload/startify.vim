@@ -439,7 +439,6 @@ function! s:filter_oldfiles(path_prefix, path_format) abort
     if has_key(entries, absolute_path)
           \ || !filereadable(absolute_path)
           \ || s:is_in_skiplist(absolute_path)
-          \ || (exists('g:startify_bookmarks') && s:is_bookmark(absolute_path))
           \ || match(absolute_path, path_prefix)
       continue
     endif
@@ -494,7 +493,7 @@ endfunction
 
 " Function: s:show_sessions {{{1
 function! s:show_sessions() abort
-  let sfiles = split(globpath(s:session_dir, '*'), '\n')
+  let sfiles = filter(split(globpath(s:session_dir, '*'), '\n'), 'v:val !~# "x\.vim$"')
   if empty(sfiles)
     if exists('s:last_message')
       unlet s:last_message
@@ -530,14 +529,19 @@ function! s:show_bookmarks() abort
     call s:print_section_header()
   endif
 
-  for fname in g:startify_bookmarks
-    let index = s:get_index_as_string(s:entry_number)
+  for bookmark in g:startify_bookmarks
+    if type(bookmark) == 4  " dict?
+      let [index, fname] = items(bookmark)[0]
+    else  " string
+      let [index, fname] = [s:get_index_as_string(s:entry_number), bookmark]
+      let s:entry_number += 1
+    endif
     call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . fname)
     if has('win32')
       let fname = substitute(fname, '\[', '\[[]', 'g')
     endif
     call s:register(line('$'), index, 'file', 'edit', fname)
-    let s:entry_number += 1
+    unlet bookmark  " avoid type mismatch for heterogeneous lists
   endfor
 
   call append('$', '')
@@ -555,15 +559,6 @@ function! s:is_in_skiplist(arg) abort
       echomsg 'startify: Pattern '. string(regexp) .' threw an exception. Read :help g:startify_skiplist'
       echohl NONE
     endtry
-  endfor
-endfunction
-
-" Function: s:is_bookmark {{{1
-function! s:is_bookmark(arg) abort
-  for foo in map(filter(copy(g:startify_bookmarks), '!isdirectory(v:val)'), 'resolve(fnamemodify(v:val, ":p"))')
-    if foo == a:arg
-      return 1
-    endif
   endfor
 endfunction
 
@@ -593,19 +588,19 @@ endfunction
 
 " Function: s:set_mappings {{{1
 function! s:set_mappings() abort
+  nnoremap <buffer><nowait><silent> i             :enew <bar> startinsert<cr>
+  nnoremap <buffer><nowait><silent> <insert>      :enew <bar> startinsert<cr>
+  nnoremap <buffer><nowait><silent> b             :call <sid>set_mark('B')<cr>
+  nnoremap <buffer><nowait><silent> s             :call <sid>set_mark('S')<cr>
+  nnoremap <buffer><nowait><silent> t             :call <sid>set_mark('T')<cr>
+  nnoremap <buffer><nowait><silent> v             :call <sid>set_mark('V')<cr>
+  nnoremap <buffer><nowait><silent> <cr>          :call startify#open_buffers()<cr>
+  nnoremap <buffer><nowait><silent> <2-LeftMouse> :call startify#open_buffers()<cr>
+
   for k in keys(s:entries)
-    execute 'nnoremap <buffer><silent>' s:entries[k].index
+    execute 'nnoremap <buffer><nowait><silent>' s:entries[k].index
           \ ':call startify#open_buffers('. string(k) .')<cr>'
   endfor
-
-  nnoremap <buffer><silent> i             :enew <bar> startinsert<cr>
-  nnoremap <buffer><silent> <insert>      :enew <bar> startinsert<cr>
-  nnoremap <buffer><silent> b             :call <sid>set_mark('B')<cr>
-  nnoremap <buffer><silent> s             :call <sid>set_mark('S')<cr>
-  nnoremap <buffer><silent> t             :call <sid>set_mark('T')<cr>
-  nnoremap <buffer><silent> v             :call <sid>set_mark('V')<cr>
-  nnoremap <buffer><silent> <cr>          :call startify#open_buffers()<cr>
-  nnoremap <buffer><silent> <2-LeftMouse> :call startify#open_buffers()<cr>
 
   " Prevent 'nnoremap j gj' mappings, since they would break navigation.
   " (One can't leave the [x].)

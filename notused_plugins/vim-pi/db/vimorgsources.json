@@ -3636,7 +3636,7 @@
 "Highlighter":{"archive_name":"highlighter.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7496","version":"1.5","vim_script_nr":1539},
 "colorsmartin_krischik":{"archive_name":"martin_krischik.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6433","version":"3.2","vim_script_nr":1538},
 "pluginbackup":{"archive_name":"backup.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7386","version":"2.2","vim_script_nr":1537},
-"remind":{"archive_name":"remind.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23661","version":"0.6","vim_script_nr":1536},
+"remind":{"archive_name":"remind.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23709","version":"0.7","vim_script_nr":1536},
 "TagsParser":{"archive_name":"TagsParser-0.9.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6835","version":"0.9.1","vim_script_nr":1535},
 "vimproject":{"archive_name":"vimproject.py","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5646","version":"1.0","vim_script_nr":1534},
 "amarok":{"archive_name":"amarok.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5644","version":"1.0","vim_script_nr":1533},
