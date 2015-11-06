@@ -1,8 +1,8 @@
 " @Author:      Tom Link (micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Last Change: 2015-10-28.
-" @Revision:    216
+" @Last Change: 2015-11-03.
+" @Revision:    236
 
 
 " :def: function! tlib#arg#Get(n, var, ?default="", ?test='')
@@ -128,7 +128,9 @@ function! s:SetOpt(def, opts, idx, opt) abort "{{{3
     " TLogVAR a:def
     let idx = a:idx + 1
     let break = 0
-    if a:opt =~# '^\%(-[?h]\|--help\)$'
+    let long = get(a:def, 'long', 1)
+    let short = get(a:def, 'short', 1)
+    if (short && a:opt =~# '^-[?h]$') || (long && a:opt ==# '--help')
         if has_key(a:def, 'help')
             exec 'help' a:def.help
         else
@@ -167,25 +169,25 @@ function! s:SetOpt(def, opts, idx, opt) abort "{{{3
             endif
         endif
         let break = 2
-    elseif a:opt =~# '^--no-.\+'
+    elseif long &&  a:opt =~# '^--no-.\+'
         let key = matchstr(a:opt, '^--no-\zs.\+$')
         let a:opts[key] = 0
-    elseif a:opt =~# '^--\w\+$'
+    elseif long &&  a:opt =~# '^--\w\+$'
         let key = matchstr(a:opt, '^--\zs.\+$')
         let a:opts[key] = 1
-    elseif a:opt =~# '^--\w\+='
+    elseif long &&  a:opt =~# '^--\w\+='
         let ml = matchlist(a:opt, '^--\(\w\+\)=\(.*\)$')
         if empty(ml)
             throw 'tlib#arg#GetOpts: Cannot parse: '. a:opt
         else
             let a:opts[ml[1]] = ml[2]
         endif
-    elseif a:opt =~# '^-\w='
+    elseif short && a:opt =~# '^-\w='
         let flagdefs = get(a:def, 'flags', {})
         let flag = matchstr(a:opt, '^-\zs\w')
         let rest = matchstr(a:opt, '^-\w\zs.*$')
         call s:SetFlag(a:def, a:opts, idx, flag, rest, flagdefs)
-    elseif a:opt =~# '^-\w\+$'
+    elseif short && a:opt =~# '^-\w\+$'
         let flagdefs = get(a:def, 'flags', {})
         for flag in split(substitute(a:opt, '^-', '', ''), '\zs')
             call s:SetFlag(a:def, a:opts, idx, flag, '', flagdefs)
@@ -212,8 +214,30 @@ endf
 
 ":nodoc:
 function! tlib#arg#CComplete(def, ArgLead) abort "{{{3
-    let cs = {'-h': 1, '--help': 1}
     let values = get(a:def, 'values', {})
+    let opt = matchstr(a:ArgLead, '^--\zs\w\+\ze=')
+    if has_key(values, opt)
+        let words = []
+        let vals = values[opt]
+        let complete_customlist = get(vals, 'complete_customlist', '')
+        if !empty(complete_customlist)
+            let words = eval(complete_customlist)
+        " else
+        "     let complete = get(vals, 'complete', '')
+        "     if !empty(complete)
+        "     endif
+        endif
+        if !empty(words)
+            let lead = substitute(a:ArgLead, '^--\w\+=', '', '')
+            if !empty(lead)
+                let nchar = len(lead)
+                call filter(words, 'strpart(v:val, 0, nchar) ==# lead')
+            endif
+            let words = map(words, '"--". opt ."=". v:val')
+            return sort(words)
+        endif
+    endif
+    let cs = {'-h': 1, '--help': 1}
     for [name, vdef] in items(values)
         let type = s:GetValueType(vdef)
         if type >= 0

@@ -4659,6 +4659,10 @@
     "type": "git",
     "url": "git://github.com/sergei-dyshel/vim-abbrev-matcher"
   },
+  "5265": {
+    "type": "git",
+    "url": "git://github.com/kkoenig/wimproved.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
