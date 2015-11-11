@@ -4663,6 +4663,10 @@
     "type": "git",
     "url": "git://github.com/kkoenig/wimproved.vim"
   },
+  "5266": {
+    "type": "git",
+    "url": "git://github.com/sirtaj/vim-maildrop"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
