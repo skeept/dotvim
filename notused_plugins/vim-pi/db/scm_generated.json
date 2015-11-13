@@ -4667,6 +4667,10 @@
     "type": "git",
     "url": "git://github.com/sirtaj/vim-maildrop"
   },
+  "5267": {
+    "type": "git",
+    "url": "git://github.com/jingz/simple_playground"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
