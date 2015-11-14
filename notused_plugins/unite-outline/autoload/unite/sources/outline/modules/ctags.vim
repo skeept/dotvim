@@ -365,11 +365,11 @@ endfunction
 "
 "  [c] classes
 "  [d] macro definitions
-"   e  enumerators (values inside an enumeration)
+"  [e] enumerators (values inside an enumeration)
 "  [f] function definitions
 "  [g] enumeration names
 "   l  local variables
-"   m  class, struct, and union members
+"  [m] class, struct, and union members
 "  [n] namespaces
 "  [p] function prototypes, pure virtual functions
 "  [s] structure names
@@ -380,8 +380,8 @@ endfunction
 "
 let s:Ctags.lang_info.cpp = {
       \ 'name': 'C++',
-      \ 'ctags_options': ' --c++-kinds=cdfgnstup ',
-      \ 'scope_kinds'  : ['namespace', 'class', 'struct'],
+      \ 'ctags_options': ' --c++-kinds=cdefgmnstup ',
+      \ 'scope_kinds'  : ['namespace', 'class', 'struct', 'enum'],
       \ 'scope_delim'  : '::',
       \ }
 function! s:Ctags.lang_info.cpp.create_heading(tag, context)

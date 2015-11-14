@@ -475,13 +475,16 @@ user autocmd is issued. You can hook into it like this:
 ==============================================================================
 COMMANDS                                                     *startify-commands*
 >
-    :SLoad
-    :SSave
-    :SDelete
+    :SSave [session]
+    :SDelete [session]
 <
-Commands to load, save or delete a session. These take either 0 or 1 argument.
-If you don't specify the session name as an argument, they will just ask for
-it.
+Save or delete a session. If you don't specify a session name, it will prompt
+you for one.
+>
+    :SLoad [session]
+<
+Load a session. If you don't specify a session name, it will either prompt you
+for one (Windows) or load the last used session (Unix).
 
 Providing only a part of the session name works too, if you complete the
 argument with either <c-d> or <tab> afterwards.
@@ -580,6 +583,7 @@ FAQ                                                               *startify-faq*
                      startup?
     |startify-faq-07|  The session autoload feature is not working!
     |startify-faq-08|  How do I center my header/footer?
+    |startify-faq-09|  tmux-resurrect?
 
 ------------------------------------------------------------------------------
                                                                *startify-faq-01*
@@ -680,6 +684,15 @@ Try something along these lines:
         return centered_lines
     endfunction
     let g:startify_custom_header = s:filter_header(['a', 'bb', 'ccc'])
+<
+------------------------------------------------------------------------------
+                                                               *startify-faq-09*
+tmux-resurrect?~
+
+If you use tmux-resurrect to restore your tmux environment, you can use :SLoad
+to load your last used session right away:
+>
+    set -g @resurrect-processes '"vim->vim +SLoad"'
 <
 ==============================================================================
 EXAMPLE                                                       *startify-example*
