@@ -2,7 +2,6 @@
 " File:        fs_menu.vim
 " Description: plugin for the NERD Tree that provides a file system menu
 " Maintainer:  Martin Grenfell <martin.grenfell at gmail dot com>
-" Last Change: 17 July, 2009
 " License:     This program is free software. It comes without any warranty,
 "              to the extent permitted by applicable law. You can redistribute
 "              it and/or modify it under the terms of the Do What The Fuck You
@@ -36,20 +35,9 @@ endif
 
 if has("unix") || has("osx")
     call NERDTreeAddMenuItem({'text': '(l)ist the current node', 'shortcut': 'l', 'callback': 'NERDTreeListNode'})
+else
+    call NERDTreeAddMenuItem({'text': '(l)ist the current node', 'shortcut': 'l', 'callback': 'NERDTreeListNodeWin32'})
 endif
-
-"FUNCTION: s:echo(msg){{{1
-function! s:echo(msg)
-    redraw
-    echomsg "NERDTree: " . a:msg
-endfunction
-
-"FUNCTION: s:echoWarning(msg){{{1
-function! s:echoWarning(msg)
-    echohl warningmsg
-    call s:echo(a:msg)
-    echohl normal
-endfunction
 
 "FUNCTION: s:promptToDelBuffer(bufnum, msg){{{1
 "prints out the given msg and, if the user responds by pushing 'y' then the
@@ -111,7 +99,7 @@ function! NERDTreeAddNode()
                           \ "", curDirNode.path.str() . g:NERDTreePath.Slash(), "file")
 
     if newNodeName ==# ''
-        call s:echo("Node Creation Aborted.")
+        call nerdtree#echo("Node Creation Aborted.")
         return
     endif
 
@@ -129,7 +117,7 @@ function! NERDTreeAddNode()
             call newTreeNode.putCursorHere(1, 0)
         endif
     catch /^NERDTree/
-        call s:echoWarning("Node Not Created.")
+        call nerdtree#echoWarning("Node Not Created.")
     endtry
 endfunction
 
@@ -142,7 +130,7 @@ function! NERDTreeMoveNode()
                           \ "", curNode.path.str(), "file")
 
     if newNodePath ==# ''
-        call s:echo("Node Renaming Aborted.")
+        call nerdtree#echo("Node Renaming Aborted.")
         return
     endif
 
@@ -163,7 +151,7 @@ function! NERDTreeMoveNode()
 
         redraw
     catch /^NERDTree/
-        call s:echoWarning("Node Not Renamed.")
+        call nerdtree#echoWarning("Node Not Renamed.")
     endtry
 endfunction
 
@@ -203,10 +191,33 @@ function! NERDTreeDeleteNode()
 
             redraw
         catch /^NERDTree/
-            call s:echoWarning("Could not remove node")
+            call nerdtree#echoWarning("Could not remove node")
         endtry
     else
-        call s:echo("delete aborted")
+        call nerdtree#echo("delete aborted")
+    endif
+
+endfunction
+
+" FUNCTION: NERDTreeListNode() {{{1
+function! NERDTreeListNode()
+    let treenode = g:NERDTreeFileNode.GetSelected()
+    if treenode != {}
+        let metadata = split(system('ls -ld ' . shellescape(treenode.path.str())), '\n')
+        call nerdtree#echo(metadata[0])
+    else
+        call nerdtree#echo("No information avaialable")
+    endif
+endfunction
+
+" FUNCTION: NERDTreeListNodeWin32() {{{1
+function! NERDTreeListNodeWin32()
+    let treenode = g:NERDTreeFileNode.GetSelected()
+    if treenode != {}
+        let metadata = split(system('DIR /Q ' . shellescape(treenode.path.str()) . ' | FINDSTR "^[012][0-9]/[0-3][0-9]/[12][0-9][0-9][0-9]"'), '\n')
+        call nerdtree#echo(metadata[0])
+    else
+        call nerdtree#echo("No information avaialable")
     endif
 
 endfunction
@@ -225,7 +236,7 @@ function! NERDTreeCopyNode()
 
         let confirmed = 1
         if currentNode.path.copyingWillOverwrite(newNodePath)
-            call s:echo("Warning: copying may overwrite files! Continue? (yN)")
+            call nerdtree#echo("Warning: copying may overwrite files! Continue? (yN)")
             let choice = nr2char(getchar())
             let confirmed = choice ==# 'y'
         endif
@@ -241,15 +252,16 @@ function! NERDTreeCopyNode()
                     call newNode.putCursorHere(0, 0)
                 endif
             catch /^NERDTree/
-                call s:echoWarning("Could not copy node")
+                call nerdtree#echoWarning("Could not copy node")
             endtry
         endif
     else
-        call s:echo("Copy aborted.")
+        call nerdtree#echo("Copy aborted.")
     endif
     redraw
 endfunction
 
+" FUNCTION: NERDTreeQuickLook() {{{1
 function! NERDTreeQuickLook()
     let treenode = g:NERDTreeFileNode.GetSelected()
     if treenode != {}
@@ -257,28 +269,19 @@ function! NERDTreeQuickLook()
     endif
 endfunction
 
+" FUNCTION: NERDTreeRevealInFinder() {{{1
 function! NERDTreeRevealInFinder()
     let treenode = g:NERDTreeFileNode.GetSelected()
     if treenode != {}
-        let x = system("open -R '" . treenode.path.str() . "'")
+        call system("open -R '" . treenode.path.str() . "'")
     endif
 endfunction
 
+" FUNCTION: NERDTreeExecuteFile() {{{1
 function! NERDTreeExecuteFile()
     let treenode = g:NERDTreeFileNode.GetSelected()
     if treenode != {}
-        let x = system("open '" . treenode.path.str() . "'")
+        call system("open '" . treenode.path.str() . "'")
     endif
 endfunction
-
-function! NERDTreeListNode()
-    let treenode = g:NERDTreeFileNode.GetSelected()
-    if treenode != {}
-        let metadata = split(system('ls -ld ' . shellescape(treenode.path.str())), '\n')
-        call s:echo(metadata[0])
-    else
-        call s:echo("No information avaialable")
-    endif
-endfunction
-
 " vim: set sw=4 sts=4 et fdm=marker:
