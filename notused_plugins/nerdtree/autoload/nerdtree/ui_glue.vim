@@ -208,8 +208,8 @@ endfunction
 " FUNCTION: s:closeTreeWindow() {{{1
 " close the tree window
 function! s:closeTreeWindow()
-    if b:NERDTreeType ==# "secondary" && b:NERDTreePreviousBuf != -1
-        exec "buffer " . b:NERDTreePreviousBuf
+    if b:NERDTree.isWinTree() && b:NERDTree.previousBuf() != -1
+        exec "buffer " . b:NERDTree.previousBuf()
     else
         if winnr("$") > 1
             call g:NERDTree.Close()
@@ -241,7 +241,7 @@ endfunction
 " FUNCTION: s:displayHelp() {{{1
 " toggles the help display
 function! s:displayHelp()
-    let b:treeShowHelp = b:treeShowHelp ? 0 : 1
+    call b:NERDTree.ui.toggleHelp()
     call b:NERDTree.render()
     call b:NERDTree.ui.centerView()
 endfunction
@@ -269,22 +269,22 @@ function! s:findAndRevealPath()
         endtry
 
         if p.isUnder(cwd)
-            call g:NERDTreeCreator.CreatePrimary(cwd.str())
+            call g:NERDTreeCreator.CreateTabTree(cwd.str())
         else
-            call g:NERDTreeCreator.CreatePrimary(p.getParent().str())
+            call g:NERDTreeCreator.CreateTabTree(p.getParent().str())
         endif
     else
         if !p.isUnder(g:NERDTreeFileNode.GetRootForTab().path)
             if !g:NERDTree.IsOpen()
-                call g:NERDTreeCreator.TogglePrimary('')
+                call g:NERDTreeCreator.ToggleTabTree('')
             else
                 call g:NERDTree.CursorToTreeWin()
             endif
-            let b:NERDTreeShowHidden = g:NERDTreeShowHidden
+            call b:NERDTree.setShowHidden(g:NERDTreeShowHidden)
             call s:chRoot(g:NERDTreeDirNode.New(p.getParent()))
         else
             if !g:NERDTree.IsOpen()
-                call g:NERDTreeCreator.TogglePrimary("")
+                call g:NERDTreeCreator.ToggleTabTree("")
             endif
         endif
     endif
@@ -545,10 +545,10 @@ endfunction
 
 " FUNCTION: nerdtree#ui_glue#setupCommands() {{{1
 function! nerdtree#ui_glue#setupCommands()
-    command! -n=? -complete=dir -bar NERDTree :call g:NERDTreeCreator.CreatePrimary('<args>')
-    command! -n=? -complete=dir -bar NERDTreeToggle :call g:NERDTreeCreator.TogglePrimary('<args>')
+    command! -n=? -complete=dir -bar NERDTree :call g:NERDTreeCreator.CreateTabTree('<args>')
+    command! -n=? -complete=dir -bar NERDTreeToggle :call g:NERDTreeCreator.ToggleTabTree('<args>')
     command! -n=0 -bar NERDTreeClose :call g:NERDTree.Close()
-    command! -n=1 -complete=customlist,nerdtree#completeBookmarks -bar NERDTreeFromBookmark call g:NERDTreeCreator.CreatePrimary('<args>')
+    command! -n=1 -complete=customlist,nerdtree#completeBookmarks -bar NERDTreeFromBookmark call g:NERDTreeCreator.CreateTabTree('<args>')
     command! -n=0 -bar NERDTreeMirror call g:NERDTreeCreator.CreateMirror()
     command! -n=0 -bar NERDTreeFind call s:findAndRevealPath()
     command! -n=0 -bar NERDTreeFocus call NERDTreeFocus()

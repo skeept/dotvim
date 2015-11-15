@@ -9,7 +9,7 @@ function! s:NERDTree.AddPathFilter(callback)
 endfunction
 
 "FUNCTION: s:NERDTree.Close() {{{1
-"Closes the primary NERD tree window for this tab
+"Closes the tab tree window for this tab
 function! s:NERDTree.Close()
     if !s:NERDTree.IsOpen()
         return
@@ -43,7 +43,7 @@ endfunction
 "FUNCTION: s:NERDTree.CursorToBookmarkTable(){{{1
 "Places the cursor at the top of the bookmarks table
 function! s:NERDTree.CursorToBookmarkTable()
-    if !b:NERDTreeShowBookmarks
+    if !b:NERDTree.ui.getShowBookmarks()
         throw "NERDTree.IllegalOperationError: cant find bookmark table, bookmarks arent active"
     endif
 
@@ -105,6 +105,16 @@ function! s:NERDTree.IsOpen()
     return s:NERDTree.GetWinNum() != -1
 endfunction
 
+"FUNCTION: s:NERDTree.isTabTree() {{{1
+function! s:NERDTree.isTabTree()
+    return self._type == "tab"
+endfunction
+
+"FUNCTION: s:NERDTree.isWinTree() {{{1
+function! s:NERDTree.isWinTree()
+    return self._type == "window"
+endfunction
+
 "FUNCTION: s:NERDTree.MustBeOpen() {{{1
 function! s:NERDTree.MustBeOpen()
     if !s:NERDTree.IsOpen()
@@ -113,11 +123,11 @@ function! s:NERDTree.MustBeOpen()
 endfunction
 
 "FUNCTION: s:NERDTree.New() {{{1
-function! s:NERDTree.New(path)
+function! s:NERDTree.New(path, type)
     let newObj = copy(self)
     let newObj.ui = g:NERDTreeUI.New(newObj)
     let newObj.root = g:NERDTreeDirNode.New(a:path)
-
+    let newObj._type = a:type
     return newObj
 endfunction
 
@@ -129,6 +139,10 @@ function! s:NERDTree.PathFilters()
     return s:NERDTree._PathFilters
 endfunction
 
+"FUNCTION: s:NERDTree.previousBuf() {{{1
+function! s:NERDTree.previousBuf()
+    return self._previousBuf
+endfunction
 
 "FUNCTION: s:NERDTree.render() {{{1
 "A convenience function - since this is called often

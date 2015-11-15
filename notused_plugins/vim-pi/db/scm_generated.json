@@ -4671,6 +4671,10 @@
     "type": "git",
     "url": "git://github.com/jingz/simple_playground"
   },
+  "5269": {
+    "type": "git",
+    "url": "git://github.com/fpob/nette.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
