@@ -87,18 +87,26 @@ OPTIONS                                                       *startify-options*
 Put these variables into your vimrc. The shown assignments are also the
 default values.
 
+    Most used options:~
     |g:startify_bookmarks|
     |g:startify_change_to_dir|
     |g:startify_change_to_vcs_root|
-    |g:startify_custom_footer|
     |g:startify_custom_header|
-    |g:startify_custom_indices|
-    |g:startify_disable_at_vimenter|
     |g:startify_enable_special|
-    |g:startify_enable_unsafe|
-    |g:startify_files_number|
     |g:startify_list_order|
     |g:startify_relative_path|
+    |g:startify_skiplist|
+
+    Misc options:~
+    |g:startify_custom_footer|
+    |g:startify_custom_indices|
+    |g:startify_disable_at_vimenter|
+    |g:startify_enable_unsafe|
+    |g:startify_files_number|
+    |g:startify_mapping_nowait|
+    |g:startify_skiplist_server|
+
+    Sessions:~
     |g:startify_session_autoload|
     |g:startify_session_delete_buffers|
     |g:startify_session_dir|
@@ -106,8 +114,6 @@ default values.
     |g:startify_session_remove_lines|
     |g:startify_session_savecmds|
     |g:startify_session_savevars|
-    |g:startify_skiplist_server|
-    |g:startify_skiplist|
 
 ------------------------------------------------------------------------------
                                                         *g:startify_session_dir*
@@ -463,6 +469,20 @@ Don't run Startify at Vim startup. You can still call it anytime via
 Show filenames relative to the current working directory instead of as
 absolute paths. This only applies to the "files" list, since the "dir" list is
 relative by nature.
+
+-----------------------------------------------------------------------------
+                                                    *g:startify_mapping_nowait*
+>
+    let g:startify_mapping_nowait = 0
+<
+Force the usage of |<nowait>| in all mappings.
+
+This helps guarding against global mappings that start with the same
+characters as a Startify index, but might break local mappings, e.g. when you
+have indexes "1" and "11", the "11" won't be accessable anymore, since "1"
+will be opened right way.
+
+Only use this when you know what you're doing.
 
 ==============================================================================
 AUTOCMD                                                       *startify-autocmd*
