@@ -147,7 +147,7 @@ endfunction
 " searchFromAbsoluteRoot: specifies whether we should search from the current
 " tree root, or the highest cached node
 function! s:Bookmark.getNode(searchFromAbsoluteRoot)
-    let searchRoot = a:searchFromAbsoluteRoot ? g:NERDTreeDirNode.AbsoluteTreeRoot() : b:NERDTreeRoot
+    let searchRoot = a:searchFromAbsoluteRoot ? g:NERDTreeDirNode.AbsoluteTreeRoot() : b:NERDTree.root
     let targetNode = searchRoot.findNode(self.path)
     if empty(targetNode)
         throw "NERDTree.BookmarkedNodeNotFoundError: no node was found for bookmark: " . self.name
@@ -275,9 +275,7 @@ function! s:Bookmark.toRoot()
         catch /^NERDTree.BookmarkedNodeNotFoundError/
             let targetNode = g:NERDTreeFileNode.New(s:Bookmark.BookmarkFor(self.name).path)
         endtry
-        call targetNode.makeRoot()
-        call b:NERDTree.render()
-        call targetNode.putCursorHere(0, 0)
+        call b:NERDTree.changeRoot(targetNode)
     endif
 endfunction
 
