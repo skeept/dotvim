@@ -112,6 +112,16 @@ function! s:NERDTree.ForCurrentBuf()
     endif
 endfunction
 
+"FUNCTION: s:NERDTree.ForCurrentTab() {{{1
+function! s:NERDTree.ForCurrentTab()
+    if !s:NERDTree.ExistsForTab()
+        return
+    endif
+
+    let bufnr = bufnr(t:NERDTreeBufName)
+    return getbufvar(bufnr, "NERDTree")
+endfunction
+
 "FUNCTION: s:NERDTree.GetWinNum() {{{1
 "gets the nerd tree window number for this tab
 function! s:NERDTree.GetWinNum()
@@ -148,7 +158,7 @@ endfunction
 function! s:NERDTree.New(path, type)
     let newObj = copy(self)
     let newObj.ui = g:NERDTreeUI.New(newObj)
-    let newObj.root = g:NERDTreeDirNode.New(a:path)
+    let newObj.root = g:NERDTreeDirNode.New(a:path, newObj)
     let newObj._type = a:type
     return newObj
 endfunction

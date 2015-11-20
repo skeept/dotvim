@@ -4675,6 +4675,14 @@
     "type": "git",
     "url": "git://github.com/fpob/nette.vim"
   },
+  "5270": {
+    "type": "git",
+    "url": "git://github.com/Dimercel/todo-vim"
+  },
+  "5271": {
+    "type": "git",
+    "url": "git://github.com/davidosomething/EasyClipRing.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
