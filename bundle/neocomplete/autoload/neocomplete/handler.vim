@@ -107,6 +107,16 @@ function! neocomplete#handler#_on_complete_done() "{{{
     return
   endif
 
+  if g:neocomplete#enable_auto_pairs
+        \ && v:completed_item.word =~ '[\[<({]$'
+    " Auto close pairs
+    let pairs = { '[': ']', '<': '>', '(': ')', '{': '}' }
+    let cur_text = neocomplete#helper#get_cur_text()
+    call setline('.', cur_text
+          \ . pairs[ v:completed_item.word[-1:]]
+          \ . getline('.')[len(cur_text):])
+  endif
+
   let frequencies = neocomplete#variables#get_frequencies()
   if !has_key(frequencies, complete_str)
     let frequencies[complete_str] = 20
@@ -150,7 +160,9 @@ function! neocomplete#handler#_on_text_changed() "{{{
     call s:make_cache_current_line()
   endif
 
-  call s:indent_current_line()
+  if !neocomplete#util#is_text_changed()
+    call s:indent_current_line()
+  endif
 endfunction"}}}
 
 function! neocomplete#handler#_do_auto_complete(event) "{{{

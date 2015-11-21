@@ -80,7 +80,7 @@
 "cpp_cppcheck":{"archive_name":"cpp_cppcheck.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23346","version":"1","vim_script_nr":5192},
 "scilab%5191":{"archive_name":"scilab.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23343","version":"1.0","vim_script_nr":5191},
 "vim-tag-comment":{"archive_name":"vim-tag-comment.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23403","version":"1.2","vim_script_nr":5190},
-"ctrlsf":{"archive_name":"ctrlsf.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23607","version":"1.30","vim_script_nr":5189},
+"ctrlsf":{"archive_name":"ctrlsf.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23743","version":"1.40","vim_script_nr":5189},
 "vim-web2py":{"archive_name":"vim-web2py.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23335","version":"1.0","vim_script_nr":5188},
 "ftcompl":{"archive_name":"ftcompl-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23329","version":"0.1.0","vim_script_nr":5187},
 "betterga":{"archive_name":"betterga-0.3.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23494","version":"0.3.0","vim_script_nr":5186},
