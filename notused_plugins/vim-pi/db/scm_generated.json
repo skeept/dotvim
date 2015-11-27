@@ -4683,6 +4683,10 @@
     "type": "git",
     "url": "git://github.com/davidosomething/EasyClipRing.vim"
   },
+  "5272": {
+    "type": "git",
+    "url": "git://github.com/bsdelf/bufferhint"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
