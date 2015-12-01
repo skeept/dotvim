@@ -4691,6 +4691,10 @@
     "type": "git",
     "url": "git://github.com/sergio-ivanuzzo/optcmd"
   },
+  "5277": {
+    "type": "git",
+    "url": "git://github.com/jbgutierrez/vim-cloud-buffer"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
