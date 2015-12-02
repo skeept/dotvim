@@ -2,7 +2,7 @@
 UseVimball
 finish
 ftplugin/csv.vim	[[[1
-2797
+2813
 " Filetype plugin for editing CSV files. "{{{1
 " Author:  Christian Brabandt <cb@256bit.org>
 " Version: 0.31
@@ -647,12 +647,22 @@ fu! <sid>ArrangeCol(first, last, bang, limit, ...) range "{{{3
     else
        let ro = 0
     endif
+    call <sid>CheckHeaderLine()
     let s:count = 0
     let _stl  = &stl
-    let s:max   = (a:last - a:first + 1) * len(b:col_width)
+    if a:first < b:csv_headerline
+      let first = b:csv_headerline
+    else
+      let first = a:first
+    endif
+    let last = a:last
+    if a:last < b:csv_headerline
+      let last = b:csv_headerline
+    endif
+    let s:max   = (last - first + 1) * len(b:col_width)
     let s:temp  = 0
     try
-        exe "sil". a:first . ',' . a:last .'s/' . (b:col) .
+        exe "sil". first . ',' . last .'s/' . (b:col) .
         \ '/\=<SID>Columnize(submatch(0))/' . (&gd ? '' : 'g')
     finally
         " Clean up variables, that were only needed for <sid>Columnize() function
@@ -666,7 +676,7 @@ fu! <sid>ArrangeCol(first, last, bang, limit, ...) range "{{{3
     endtry
 endfu
 fu! <sid>ProgressBar(cnt, max) "{{{3
-    if get(g:, 'csv_no_progress', 0)
+    if get(g:, 'csv_no_progress', 0) || a:max == 0
         return
     endif
     let width = 40 " max width of progressbar
@@ -712,6 +722,12 @@ fu! <sid>CalculateColumnWidth(row) "{{{3
     let b:col_width=[]
     try
         let s:max_cols=<SID>MaxColumns(line('.'))
+        if !exists("b:csv_headerline")
+          call <sid>CheckHeaderLine()
+        endif
+        if line('.') < b:csv_headerline
+          call cursor(b:csv_headerline,1)
+        endif
         for i in range(1,s:max_cols)
             if empty(a:row)
                 call add(b:col_width, <SID>ColWidth(i))
@@ -2801,7 +2817,7 @@ unlet s:cpo_save
 " Vim Modeline " {{{2
 " vim: set foldmethod=marker et:
 doc/ft-csv.txt	[[[1
-1903
+1904
 *ft-csv.txt*	For Vim version 7.4	Last Change: Thu, 15 Jan 2015
 
 Author:		Christian Brabandt <cb@256bit.org>
@@ -4413,6 +4429,7 @@ Index;Value1;Value2~
   jjaderberg at https://github.com/chrisbra/csv.vim/issues/66, thanks!)
 - Do not remove highlighting when calling ":CSVTabularize" (reported by
    hyiltiz at https://github.com/chrisbra/csv.vim/issues/70, thanks!)
+- Make |:ArrangeCol| respect given headerlines
 
 0.31 Jan 15, 2015 {{{1
 - supports for Vim 7.3 dropped
