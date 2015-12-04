@@ -1,4 +1,7 @@
 {
+"snpsMan2VimSyntax":{"archive_name":"snpsMan2VimSyntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23773","version":"1.6.1","vim_script_nr":5280},
+"vim-stata":{"archive_name":"vim-stata.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23772","version":"1.0.2","vim_script_nr":5279},
+"vim-uci":{"archive_name":"vim-uci.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23771","version":"1","vim_script_nr":5278},
 "vim-cloud-buffer":{"archive_name":"vim-cloud-buffer.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23767","version":"1.0","vim_script_nr":5277},
 "optcmd":{"archive_name":"optcmd_1.0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23766","version":"1.0.2","vim_script_nr":5276},
 "Delphi":{"archive_name":"delphi.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23762","version":"1","vim_script_nr":5275},
