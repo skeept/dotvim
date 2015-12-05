@@ -248,13 +248,16 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
 
       let &ignorecase = (g:neocomplete#enable_smart_case
             \ || g:neocomplete#enable_camel_case) ?
-            \   context.complete_str !~ '\u' : g:neocomplete#enable_ignore_case
+            \   context.complete_str !~ '\u'
+            \ : g:neocomplete#enable_ignore_case
 
       if !source.is_volatile
-            \ && context.prev_complete_pos == context.complete_pos
+            \ && substitute(context.input, '\w\+$', '', '')
+            \    ==# substitute(context.prev_line, '\w\+$', '', '')
+            \ && stridx(context.input, context.prev_line) == 0
             \ && !empty(context.prev_candidates)
         " Use previous candidates.
-        let context.candidates = context.prev_candidates
+        let context.candidates = deepcopy(context.prev_candidates)
       else
         try
           let context.candidates = source.gather_candidates(context)
@@ -272,10 +275,11 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
             call winrestview(pos)
           endif
         endtry
-      endif
 
-      let context.prev_candidates = copy(context.candidates)
-      let context.prev_complete_pos = context.complete_pos
+        let context.prev_line = context.input
+        let context.prev_candidates = copy(context.candidates)
+        let context.prev_complete_pos = context.complete_pos
+      endif
 
       if !empty(context.candidates)
         let matchers = empty(source.neocomplete__matchers) ?

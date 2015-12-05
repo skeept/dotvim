@@ -4695,6 +4695,10 @@
     "type": "git",
     "url": "git://github.com/jbgutierrez/vim-cloud-buffer"
   },
+  "5278": {
+    "type": "git",
+    "url": "git://github.com/cmcaine/vim-uci"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
