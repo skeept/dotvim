@@ -141,7 +141,7 @@
   },
   "1788": {
     "type": "git",
-    "url": "https://bitbucket.org/fboender/bexec"
+    "url": "git://github.com/fboender/bexec"
   },
   "1861": {
     "type": "git",
