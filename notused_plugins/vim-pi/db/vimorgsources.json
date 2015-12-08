@@ -1,4 +1,5 @@
 {
+"Tabstuff":{"archive_name":"tabstuff-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23781","version":"1.0","vim_script_nr":5281},
 "snpsMan2VimSyntax":{"archive_name":"snpsMan2VimSyntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23773","version":"1.6.1","vim_script_nr":5280},
 "vim-stata":{"archive_name":"vim-stata.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23772","version":"1.0.2","vim_script_nr":5279},
 "vim-uci":{"archive_name":"vim-uci.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23771","version":"1","vim_script_nr":5278},
@@ -2480,7 +2481,7 @@
 "mutt-canned":{"archive_name":"mutt-canned.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11042","version":"0.9","vim_script_nr":2718},
 "mutt-aliases":{"archive_name":"mutt-aliases.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11048","version":"0.93","vim_script_nr":2717},
 "textobj-syntax":{"archive_name":"vim-textobj-syntax-0.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11035","version":"0.0.0","vim_script_nr":2716},
-"UltiSnips":{"archive_name":"UltiSnips-3.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21651","version":"3.0","vim_script_nr":2715},
+"UltiSnips":{"archive_name":"UltiSnips-3.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23779","version":"3.1","vim_script_nr":2715},
 "Tag_Signature_Balloons":{"archive_name":"tag_signature.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19929","version":"r736","vim_script_nr":2714},
 "nextCS":{"archive_name":"nextCS.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22705","version":"0.0.4","vim_script_nr":2713},
 "sign-diff":{"archive_name":"sign-diff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11065","version":"0.0.3","vim_script_nr":2712},
