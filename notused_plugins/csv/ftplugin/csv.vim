@@ -165,7 +165,9 @@ fu! <sid>Init(startline, endline, ...) "{{{3
     " enable CSV Menu
     call <sid>Menu(1)
     call <sid>DisableFolding()
-    silent do Syntax
+    if !exists("b:current_syntax")
+      silent do Syntax
+    endif
     unlet! b:csv_start b:csv_end
 
     " Remove configuration variables
@@ -405,11 +407,11 @@ fu! <sid>DelColumn(colnr) "{{{3
     endif
 endfu
 fu! <sid>HiCol(colnr, bang) "{{{3
-    if a:colnr > <SID>MaxColumns() && !a:bang
-        call <SID>Warn("There exists no column " . a:colnr)
-        return
-    endif
     if !a:bang
+        if a:colnr > <SID>MaxColumns()
+            call <SID>Warn("There exists no column " . a:colnr)
+            return
+        endif
         if empty(a:colnr)
             let colnr=<SID>WColumn()
         else
@@ -433,9 +435,6 @@ fu! <sid>HiCol(colnr, bang) "{{{3
         " Additionally, filter all matches, that could have been used earlier
         let matchlist=getmatches()
         call filter(matchlist, 'v:val["group"] !~ s:hiGroup')
-        " remove matches, that come from matchaddpos()
-        " setmatches() can't handle them.
-        call filter(matchlist, 'has_key(v:val, "pattern")')
         call setmatches(matchlist)
         if a:bang
             return
@@ -720,12 +719,12 @@ fu! <sid>CalculateColumnWidth(row) "{{{3
     " does not work with fixed width columns
     let b:col_width=[]
     try
-        let s:max_cols=<SID>MaxColumns(line('.'))
         if exists("b:csv_headerline")
           if line('.') < b:csv_headerline
             call cursor(b:csv_headerline,1)
           endif
         endif
+        let s:max_cols=<SID>MaxColumns(line('.'))
         for i in range(1,s:max_cols)
             if empty(a:row)
                 call add(b:col_width, <SID>ColWidth(i))
