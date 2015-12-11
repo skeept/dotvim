@@ -237,5 +237,4 @@ command! -nargs=0 -bar ScratchToggle call s:ScratchBufferToggle(0)
 command! -nargs=0 -bar VscratchToggle call s:ScratchBufferToggle(1)
 
 " Command to open the scratch buffer in a new tab
-command! -nargs=0 Tscratch call s:ScratchBufferOpen(2, 0)
-
+command! -nargs=0 Ttscratch call s:ScratchBufferOpen(2, 0)
