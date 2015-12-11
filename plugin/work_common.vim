@@ -53,11 +53,22 @@ nnoremap glu :call wk#jumpToUncovered()<CR>
 nnoremap gli :call wk#jumpToLoadedData()<CR>
 
 " Jump to start of next global iteration
-nnoremap <silent> <Plug>JumpToStartGlobalMap :call wk#jumpToStartGlobal()<CR>
+nnoremap <silent> <Plug>JumpToStartGlobalMap :call wk#jumpToStartGlobal(1)<CR>
       \:call repeat#set("\<Plug>JumpToStartGlobalMap")<CR>
 nmap glg <Plug>JumpToStartGlobalMap
+
+" Global Backward
+nnoremap <silent> <Plug>JumpToStartGlobalMapBack :call wk#jumpToStartGlobal(-1)<CR>
+      \:call repeat#set("\<Plug>JumpToStartGlobalMapBack")<CR>
+nmap glG <Plug>JumpToStartGlobalMapBack
 
 " Jump to start of global problem
 nnoremap <silent> <Plug>JumpStartGlobalProb :call wk#jumpToGlobalProblem()<CR>
       \:call repeat#set("\<Plug>JumpStartGlobalProb")<CR>
 nmap glm <Plug>JumpStartGlobalProb
+
+" mnemonic: glc: get log content
+" i: iteration s: selection g: global
+nnoremap <silent> glci :call wk#getIteration()<CR>
+nnoremap <silent> glcs :call wk#getSelection()<CR>
+nnoremap <silent> glcg :call wk#getGlobal()<CR>

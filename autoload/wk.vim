@@ -89,9 +89,9 @@ function! wk#jumpToLoadedData()
   endif
 endfunction
 
-function! wk#jumpToStartGlobal()
+function! wk#jumpToStartGlobal(direction)
   let flags = ''
-  if v:count == 1
+  if a:direction == -1
     let flags = 'b'
   endif
   for _ in range(max([v:count, 1]))
@@ -100,6 +100,10 @@ function! wk#jumpToStartGlobal()
 endfunction
 
 function! wk#jumpToGlobalProblem()
+  " Improve this call. In general should go to start of current iteration
+  " global problem. Also maybe it is not necessary to account for v:count
+  " here.
+  " But should consider before or after current selection in current iteration
   let flags = ''
   if v:count == 1
     let flags = 'b'
@@ -112,6 +116,34 @@ function! wk#jumpToGlobalProblem()
     call search('Selector Ended:', flags)
   endfor
   call search('Initializing Optimization Controller', flags)
+endfunction
+
+function wk#getIteration()
+  " search back for previous start of global iteration
+  " mark where iteration starts
+  " search forward for end of this iteration
+  " copy iteration lines to new buffer (scratch buffer)
+  " open that scratch buffer
+  mark q
+  let curr_line = line('.')
+  call search('Start of Global Iteration', 'bW')
+  let start_line = line('.')
+  call search('Start of Global Iteration', 'W')
+  let end_line = line('.')
+  let to_copy = start_line . ',' . end_line . 'yank w'
+  execute to_copy
+  enew 
+  normal "wp
+endfunction
+
+function wk#getSelection()
+  " search back for start of iteration
+  " search for start of global problem
+  " save selection to scratch buffer and open it
+endfunction
+
+function wk#getGlobal()
+  "similar to wk#getSelection() but get global part instead
 endfunction
 
 function! wk#cleanVSCallStack()
