@@ -4699,6 +4699,10 @@
     "type": "git",
     "url": "git://github.com/cmcaine/vim-uci"
   },
+  "5282": {
+    "type": "git",
+    "url": "git://github.com/joonty/vim-do"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

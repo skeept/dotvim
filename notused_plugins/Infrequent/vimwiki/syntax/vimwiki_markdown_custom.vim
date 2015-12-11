@@ -204,9 +204,6 @@ let g:vimwiki_rxMkdRefMatchUrl = '\['.g:vimwiki_rxWikiLinkDescr.']:\%(\s\+\|\n\)
 
 " LINKS: highlighting is complicated due to "nonexistent" links feature {{{
 function! s:add_target_syntax_ON(target, type) " {{{
-  if g:vimwiki_debug > 1
-    echom '[vimwiki_debug] syntax target > '.a:target
-  endif
   let prefix0 = 'syntax match '.a:type.' `'
   let suffix0 = '` display contains=@NoSpell,VimwikiLinkRest,'.a:type.'Char'
   let prefix1 = 'syntax match '.a:type.'T `'
@@ -216,9 +213,6 @@ function! s:add_target_syntax_ON(target, type) " {{{
 endfunction "}}}
 
 function! s:add_target_syntax_OFF(target, type) " {{{
-  if g:vimwiki_debug > 1
-    echom '[vimwiki_debug] syntax target > '.a:target
-  endif
   let prefix0 = 'syntax match VimwikiNoExistsLink `'
   let suffix0 = '` display contains=@NoSpell,VimwikiLinkRest,'.a:type.'Char'
   let prefix1 = 'syntax match VimwikiNoExistsLinkT `'
@@ -291,14 +285,10 @@ if VimwikiGet('maxhi')
   call s:add_target_syntax_OFF(g:vimwiki_rxWikiLink1, 'VimwikiWikiLink1')
 
   " Subsequently, links verified on vimwiki's path are highlighted as existing
-  let s:time01 = vimwiki#u#time(g:starttime)  "XXX
   call s:highlight_existing_links()
-  let s:time02 = vimwiki#u#time(g:starttime)  "XXX
 else
-  let s:time01 = vimwiki#u#time(g:starttime)  "XXX
   " Wikilink
   call s:add_target_syntax_ON(g:vimwiki_rxWikiLink1, 'VimwikiWikiLink1')
-  let s:time02 = vimwiki#u#time(g:starttime)  "XXX
 endif
 
 " Weblink
@@ -339,13 +329,6 @@ if exists("+conceallevel")
 endif
 
 syntax spell toplevel
-
-if g:vimwiki_debug > 1
-  echom 'WikiLink1 Prefix: '.g:vimwiki_rxWikiLink1Prefix1
-  echom 'WikiLink1 Suffix: '.g:vimwiki_rxWikiLink1Suffix1
-  echom 'Weblink1 Prefix: '.g:vimwiki_rxWeblink1Prefix1
-  echom 'Weblink1 Suffix: '.g:vimwiki_rxWeblink1Suffix1
-endif
 
 " VimwikiWikiLink1Char is for syntax markers (and also URL when a description
 " is present) and may be concealed

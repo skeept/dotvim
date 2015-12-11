@@ -141,18 +141,12 @@ endfunction " }}}
 
 " vimwiki#base#cache_buffer_state
 function! vimwiki#base#cache_buffer_state() "{{{
-  if !exists('g:vimwiki_current_idx') && g:vimwiki_debug
-    echo "[Vimwiki Internal Error]: Missing global state variable: 'g:vimwiki_current_idx'"
-  endif
   let b:vimwiki_idx = g:vimwiki_current_idx
 endfunction "}}}
 
 " vimwiki#base#recall_buffer_state
 function! vimwiki#base#recall_buffer_state() "{{{
   if !exists('b:vimwiki_idx')
-    if g:vimwiki_debug
-      echo "[Vimwiki Internal Error]: Missing buffer state variable: 'b:vimwiki_idx'"
-    endif
     return 0
   else
     let g:vimwiki_current_idx = b:vimwiki_idx
@@ -191,7 +185,6 @@ endfunction "}}}
 " vimwiki#base#subdir
 "FIXME TODO slow and faulty
 function! vimwiki#base#subdir(path, filename) "{{{
-  let g:VimwikiLog.subdir += 1  "XXX
   let path = a:path
   " ensure that we are not fooled by a symbolic link
   "FIXME if we are not "fooled", we end up in a completely different wiki?
@@ -380,7 +373,7 @@ function! vimwiki#base#system_open_link(url) "{{{
     execute 'silent ! start "Title" /B ' . url
   endfunction
   function! s:macunix_handler(url)
-    execute '!open ' . shellescape(a:url, 1)
+    call system('open ' . shellescape(a:url).' &')
   endfunction
   function! s:linux_handler(url)
     call system('xdg-open ' . shellescape(a:url).' &')
@@ -403,10 +396,6 @@ endfunction "}}}
 " vimwiki#base#open_link
 function! vimwiki#base#open_link(cmd, link, ...) "{{{
   let link_infos = vimwiki#base#resolve_link(a:link)
-
-  if g:vimwiki_debug
-    echom 'open_link:' string(link_infos)
-  endif
 
   if link_infos.filename == ''
     echom 'Vimwiki Error: Unable to resolve link!'
@@ -1143,20 +1132,39 @@ function! vimwiki#base#update_listing_in_buffer(strings, start_header,
     return
   endif
 
-  let old_cursor_pos = getpos('.')
+  let winview_save = winsaveview()
+  let cursor_line = winview_save.lnum
+  let is_cursor_after_listing = 0
+
+  let is_fold_closed = 1
+
+  let lines_diff = 0
 
   if already_there
+    let is_fold_closed = ( foldclosed(start_lnum) > -1 )
     " delete the old listing
     let whitespaces_in_first_line = matchstr(getline(start_lnum), '\m^\s*')
     let end_lnum = start_lnum + 1
     while end_lnum <= line('$') && getline(end_lnum) =~# a:content_regex
       let end_lnum += 1
     endwhile
+    let is_cursor_after_listing = ( cursor_line >= end_lnum )
+    " We'll be removing a range.  But, apparently, if folds are enabled, Vim
+    " won't let you remove a range that overlaps with closed fold -- the entire
+    " fold gets deleted.  So we temporarily disable folds, and then reenable
+    " them right back.
+    let foldenable_save = &l:foldenable
+    setlo nofoldenable
     silent exe start_lnum.','.string(end_lnum - 1).'delete _'
+    let &l:foldenable = foldenable_save
+    let lines_diff = 0 - (end_lnum - start_lnum)
   else
     let start_lnum = a:default_lnum
+    let is_cursor_after_listing = ( cursor_line > a:default_lnum )
     let whitespaces_in_first_line = ''
   endif
+
+  let start_of_listing = start_lnum
 
   " write new listing
   let new_header = whitespaces_in_first_line
@@ -1164,6 +1172,7 @@ function! vimwiki#base#update_listing_in_buffer(strings, start_header,
         \ '__Header__', '\='."'".a:start_header."'", '')
   call append(start_lnum - 1, new_header)
   let start_lnum += 1
+  let lines_diff += 1 + len(a:strings)
   for string in a:strings
     call append(start_lnum - 1, string)
     let start_lnum += 1
@@ -1171,9 +1180,19 @@ function! vimwiki#base#update_listing_in_buffer(strings, start_header,
   " append an empty line if there is not one
   if start_lnum <= line('$') && getline(start_lnum) !~# '\m^\s*$'
     call append(start_lnum - 1, '')
+    let lines_diff += 1
   endif
 
-  call setpos('.', old_cursor_pos)
+  " Open fold, if needed
+  if !is_fold_closed && ( foldclosed(start_of_listing) > -1 )
+    exe start_of_listing
+    norm! zo
+  endif
+
+  if is_cursor_after_listing
+    let winview_save.lnum += lines_diff
+  endif
+  call winrestview(winview_save)
 endfunction "}}}
 
 " WIKI link following functions {{{
@@ -1280,10 +1299,7 @@ function! vimwiki#base#goto_index(wnum, ...) "{{{
     let cmd = 'edit'
   endif
 
-  if g:vimwiki_debug == 3
-    echom "--- Goto_index g:curr_idx=".g:vimwiki_current_idx." ww_idx=".idx.""
-  endif
-
+  call Validate_wiki_options(idx)
   call vimwiki#base#edit_file(cmd,
         \ VimwikiGet('path', idx).VimwikiGet('index', idx).
         \ VimwikiGet('ext', idx),
@@ -1878,9 +1894,6 @@ function! s:normalize_link_syntax_n() " {{{
           \ g:vimwiki_rxWikiLinkMatchUrl, g:vimwiki_rxWikiLinkMatchDescr,
           \ g:vimwiki_WikiLinkTemplate2)
     call vimwiki#base#replacestr_at_cursor(g:vimwiki_rxWikiLink, sub)
-    if g:vimwiki_debug > 1
-      echomsg "WikiLink: ".lnk." Sub: ".sub
-    endif
     return
   endif
   
@@ -1888,9 +1901,6 @@ function! s:normalize_link_syntax_n() " {{{
   let lnk = vimwiki#base#matchstr_at_cursor(g:vimwiki_rxWikiIncl)
   if !empty(lnk)
     " NO-OP !!
-    if g:vimwiki_debug > 1
-      echomsg "WikiIncl: ".lnk." Sub: ".lnk
-    endif
     return
   endif
 
@@ -1907,9 +1917,6 @@ function! s:normalize_link_syntax_n() " {{{
             \ g:vimwiki_WikiLinkTemplate1)
     endif
     call vimwiki#base#replacestr_at_cursor('\V'.lnk, sub)
-    if g:vimwiki_debug > 1
-      echomsg "Word: ".lnk." Sub: ".sub
-    endif
     return
   endif
 

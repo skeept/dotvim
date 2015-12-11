@@ -2595,19 +2595,6 @@ Default: 15
 
 
 ------------------------------------------------------------------------------
-*g:vimwiki_debug*
-
-Controls verbosity of debugging output, for example, the diagnostic
-information about HTML conversion.
-
-Value           Description~
-0               Do not show debug messages.
-1               Show debug messages.
-
-Default: 0
-
-
-------------------------------------------------------------------------------
 *g:vimwiki_diary_months*
 
 It is a |Dictionary| with the numbers of months and corresponding names. Diary
@@ -2713,12 +2700,28 @@ Contributors and their Github usernames in roughly chronological order:
     - 修昊 (Svtter)
     - Marcelo D Montu (mMontu)
     - John Kaul
+    - Hongbo Liu (hiberabyss)
 
 
 ==============================================================================
 15. Changelog                                              *vimwiki-changelog*
 
-2.2~
+
+2.2.1 (2015-12-10)~
+
+Removed:~
+    * Removed the option g:vimwiki_debug, which probably nobody used. If you
+      want it back, file an issue at Github.
+
+Fixed:~
+    * Don't do random things when the user has remapped the z key
+    * Don't ask for confirmation when following an URL in MacOS
+    * Always jump to the first occurrence of a tag in a file
+    * Don't move the cursor when updating the TOC
+    * Fix some issues with the TOC when folding is enabled
+
+
+2.2 (2015-11-25)~
 
 New:~
     * Support for anchors, see |vimwiki-anchors|
@@ -2744,6 +2747,8 @@ New:~
     * Add Chinese Readme file
 
 Changed:~
+    * Wiki files must not contain # anymore, because # is used to separate the
+      file from an anchor in a link.
     * replace the function vimwiki#base#resolve_scheme() by
       vimwiki#base#resolve_link() (relevant if you have a custom
       |VimwikiLinkHandler| which used this function)
