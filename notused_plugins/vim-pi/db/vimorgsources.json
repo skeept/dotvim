@@ -173,7 +173,7 @@
 "vim-conda":{"archive_name":"vim-conda.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22880","version":"0.0.0","vim_script_nr":5107},
 "Indentwise":{"archive_name":"vim-indentwise-v1.0.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22879","version":"1.0.0","vim_script_nr":5106},
 "h2cppx":{"archive_name":"h2cppx.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22881","version":"0.11","vim_script_nr":5105},
-"FastFold":{"archive_name":"fastfold.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23746","version":"3.4","vim_script_nr":5104},
+"FastFold":{"archive_name":"FastFold.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23784","version":"4","vim_script_nr":5104},
 "haystack":{"archive_name":"haystack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22868","version":"1.0","vim_script_nr":5103},
 "vital-snoop":{"archive_name":"vital-snoop.vim-0.9.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22858","version":"0.9.1","vim_script_nr":5102},
 "enabler":{"archive_name":"enabler.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23635","version":"1.00","vim_script_nr":5101},

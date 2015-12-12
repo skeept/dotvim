@@ -27,7 +27,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! neosnippet#handlers#_complete_done() "{{{
-  if empty(v:completed_item)
+  if empty(v:completed_item) || !g:neosnippet#enable_complete_done
     return
   endif
 
@@ -50,7 +50,7 @@ function! neosnippet#handlers#_complete_done() "{{{
     let abbr = split(item.info, '\n')[0]
   endif
 
-  if abbr !~ '(.*)'
+  if abbr !~ '('
     return
   endif
 
@@ -69,14 +69,19 @@ function! neosnippet#handlers#_complete_done() "{{{
     let snippet .= printf('${%d:#:%s}', cnt, escape(arg, '{}'))
     let cnt += 1
   endfor
-  if snippet !~ ')$'
-    let snippet .= ')'
-  endif
+
   if s:is_auto_pairs()
     " Remove auto pair from the snippet
     let snippet = substitute(snippet, ')$', '', '')
+  else
+    if snippet =~ '($'
+      let snippet .= '${'. cnt .'})'
+    elseif snippet !~ ')$'
+      let snippet .= ')'
+    endif
+
+    let snippet .= '${0}'
   endif
-  let snippet .= '${0}'
 
   let options = neosnippet#parser#_initialize_snippet_options()
   let options.word = 1
@@ -88,6 +93,9 @@ function! neosnippet#handlers#_complete_done() "{{{
         \ neosnippet#parser#_initialize_snippet(
         \   { 'name' : trigger, 'word' : snippet, 'options' : options },
         \   '', 0, '', trigger)
+
+  let [cur_text, col, expr] = neosnippet#mappings#_pre_trigger()
+  call neosnippet#view#_expand(cur_text, col, trigger)
 endfunction"}}}
 
 function! neosnippet#handlers#_cursor_moved() "{{{
@@ -124,15 +132,16 @@ function! neosnippet#handlers#_get_in_paren(str) abort "{{{
       endif
     endif
 
-    let s .= c
+    if level > 0
+      let s .= c
+    endif
   endfor
 
-  return s
+  return ''
 endfunction"}}}
 
 function! s:is_auto_pairs() abort "{{{
-  return get(g:, 'deoplete#enable_auto_pairs', 0)
-        \ || get(g:, 'neocomplete#enable_auto_pairs', 0)
+  return get(g:, 'neopairs#enable', 0)
 endfunction"}}}
 
 let &cpo = s:save_cpo

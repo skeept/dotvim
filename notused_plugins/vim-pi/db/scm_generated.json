@@ -333,7 +333,7 @@
   },
   "2204": {
     "type": "git",
-    "url": "https://bitbucket.org/mortonfox/twitvim"
+    "url": "git://github.com/twitvim/twitvim"
   },
   "2227": {
     "type": "git",
