@@ -1,6 +1,6 @@
 "=============================================================================
-" FILE: context_filetype.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
+" FILE: converter_add_paren.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,43 +26,25 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" context_filetype.vim installation check.
-if !exists('s:exists_context_filetype')
-  try
-    call context_filetype#version()
-    let s:exists_context_filetype = 1
-  catch
-    let s:exists_context_filetype = 0
-  endtry
-endif
-
-function! neocomplete#context_filetype#set() "{{{
-  let neocomplete = neocomplete#get_current_neocomplete()
-  let context_filetype =
-        \ s:exists_context_filetype ?
-        \ context_filetype#get_filetype() : &filetype
-  if context_filetype == ''
-    let context_filetype = 'nothing'
-  endif
-  let neocomplete.context_filetype = context_filetype
-  let neocomplete.context_filetypes = s:exists_context_filetype ?
-        \  context_filetype#get_filetypes(context_filetype) :
-        \  [context_filetype] + split(context_filetype, '\.')
-
-  return neocomplete.context_filetype
+function! neocomplete#filters#converter_add_paren#define() "{{{
+  return s:converter
 endfunction"}}}
-function! neocomplete#context_filetype#get(filetype) "{{{
-  let context_filetype =
-        \ s:exists_context_filetype ?
-        \ context_filetype#get_filetype(a:filetype) : a:filetype
-  if context_filetype == ''
-    let context_filetype = 'nothing'
-  endif
 
-  return context_filetype
-endfunction"}}}
-function! neocomplete#context_filetype#filetypes() "{{{
-  return copy(neocomplete#get_current_neocomplete().context_filetypes)
+let s:converter = {
+      \ 'name' : 'converter_add_paren',
+      \ 'description' : 'add parenthesis if needed',
+      \}
+
+function! s:converter.filter(context) "{{{
+  for candidate in filter(copy(a:context.candidates), "
+        \ v:val.word !~ '()\\?$' &&
+        \   (get(v:val, 'abbr', '') =~ '(.*)'
+        \ || get(v:val, 'info', '') =~ '(.*)')
+        \ ")
+    let candidate.word .= '('
+  endfor
+
+  return a:context.candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -28,13 +28,7 @@ set cpo&vim
 
 function! neosnippet#handlers#_complete_done() "{{{
   if empty(v:completed_item) || !g:neosnippet#enable_complete_done
-    return
-  endif
-
-  let snippets = neosnippet#helpers#get_snippets()
-  if has_key(snippets, v:completed_item.word)
-        \ && !get(snippets[v:completed_item.word], 'oneshot', 0)
-    " Don't overwrite exists snippets
+        \ || v:completed_item.word !~ '($'
     return
   endif
 
@@ -56,13 +50,18 @@ function! neosnippet#handlers#_complete_done() "{{{
 
   " Make snippet arguments
   let cnt = 1
-  let snippet = item.word
-  if snippet !~ '()\?$'
+  let snippet = ''
+  if item.word !~ '()\?$'
     let snippet .= '('
   endif
 
   for arg in split(substitute(neosnippet#handlers#_get_in_paren(abbr),
         \ '(\zs.\{-}\ze)', '', 'g'), '[^[]\zs\s*,\s*')
+    if arg ==# 'self' && &filetype ==# 'python'
+      " Ignore self argument
+      continue
+    endif
+
     if cnt != 1
       let snippet .= ', '
     endif
@@ -83,19 +82,8 @@ function! neosnippet#handlers#_complete_done() "{{{
     let snippet .= '${0}'
   endif
 
-  let options = neosnippet#parser#_initialize_snippet_options()
-  let options.word = 1
-  let options.oneshot = 1
-
-  let neosnippet = neosnippet#variables#current_neosnippet()
-  let trigger = item.word
-  let neosnippet.snippets[trigger] =
-        \ neosnippet#parser#_initialize_snippet(
-        \   { 'name' : trigger, 'word' : snippet, 'options' : options },
-        \   '', 0, '', trigger)
-
-  let [cur_text, col, expr] = neosnippet#mappings#_pre_trigger()
-  call neosnippet#view#_expand(cur_text, col, trigger)
+  let [cur_text, col, _] = neosnippet#mappings#_pre_trigger()
+  call neosnippet#view#_insert(snippet, {}, cur_text, col)
 endfunction"}}}
 
 function! neosnippet#handlers#_cursor_moved() "{{{
@@ -125,7 +113,7 @@ function! neosnippet#handlers#_get_in_paren(str) abort "{{{
         continue
       endif
     elseif c == ')'
-      if level == 1
+      if level == 1 && s != ''
         return s
       else
         let level -= 1
