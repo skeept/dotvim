@@ -1,4 +1,6 @@
 {
+"vim-babel":{"archive_name":"source-tree.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23788","version":"1.0","vim_script_nr":5285},
+"vim-dtsm":{"archive_name":"vim-dtsm-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23787","version":"1.0.0","vim_script_nr":5284},
 "PAM-CRASH_Syntax_Highlighting":{"archive_name":"pamcrash_syntax_41.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23785","version":"4.1","vim_script_nr":5283},
 "vim-do":{"archive_name":"vim-do-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23783","version":"0.1.0","vim_script_nr":5282},
 "Tabstuff":{"archive_name":"tabstuff-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23781","version":"1.0","vim_script_nr":5281},
@@ -36,7 +38,7 @@
 "quickBuf":{"archive_name":"quickBuf.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23626","version":"2.1.2.1","vim_script_nr":5247},
 "ansible-vim":{"archive_name":"ansible-vim-1.0.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23720","version":"1.0","vim_script_nr":5246},
 "8ch":{"archive_name":"8chan.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23591","version":"0.1","vim_script_nr":5245},
-"vim-follow-my-lead":{"archive_name":"vim-follow-my-lead-v0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23734","version":"0.2","vim_script_nr":5244},
+"vim-follow-my-lead":{"archive_name":"vim-follow-my-lead-v0.3.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23786","version":"0.3","vim_script_nr":5244},
 "vim-sipindex":{"archive_name":"vim-sipindex.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23623","version":"1.1","vim_script_nr":5243},
 "easy-navigate":{"archive_name":"easy-navigate.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23575","version":"1.0","vim_script_nr":5242},
 "log4j_highlighter":{"archive_name":"log4j_syntax_highlighter.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23574","version":"1","vim_script_nr":5241},

@@ -4703,6 +4703,14 @@
     "type": "git",
     "url": "git://github.com/joonty/vim-do"
   },
+  "5284": {
+    "type": "git",
+    "url": "git://github.com/Quramy/vim-dtsm"
+  },
+  "5285": {
+    "type": "git",
+    "url": "git://github.com/jbgutierrez/vim-babel"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
