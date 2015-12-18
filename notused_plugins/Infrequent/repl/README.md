@@ -39,16 +39,30 @@ Run `:Repl` without saving the code on a file.
 
 * Ruby
 * Haskell
+* Python (You can chose python2 or python3 interpreter)
 * Erlang
 
 ## Installation
 
-    $ jolt install repl.vim
+Example for [neobundle.vim](https://github.com/Shougo/neobundle.vim)
 
-will be available soon.
+Please add the following line into your .vimrc
 
-This plugin depends on quickrun, vimshell and their dependencies.
+    NeoBundle 'ujihisa/repl.vim'
 
-## Author
+and run `:NeoBundleInstall`.
 
-Tatsuhiro Ujihisa
+## Requirements
+
+* [vimshell.vim](https://github.com/Shougo/vimshell.vim)
+* [vimproc.vim](https://github.com/Shougo/vimproc.vim) (vimproc.vim is required by vimshell.vim)
+
+## Authors
+
+* Tatsuhiro Ujihisa <ujihisa at gmail com>
+* aiya000 <aiya000.develop at gmail com>
+
+## Licence
+
+GPL version 3 or any later version
+Copyright (c) Tatsuhiro Ujihisa

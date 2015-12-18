@@ -3065,7 +3065,7 @@
   },
   "4591": {
     "type": "git",
-    "url": "git://github.com/jimsei/winresizer"
+    "url": "git://github.com/simeji/winresizer"
   },
   "4592": {
     "type": "git",
@@ -4710,6 +4710,14 @@
   "5285": {
     "type": "git",
     "url": "git://github.com/jbgutierrez/vim-babel"
+  },
+  "5286": {
+    "type": "git",
+    "url": "git://github.com/amitab/vim-unite-cscope"
+  },
+  "5287": {
+    "type": "git",
+    "url": "git://github.com/itegulov/vim-epl-syntax"
   },
   "586": {
     "type": "git",
