@@ -4719,6 +4719,18 @@
     "type": "git",
     "url": "git://github.com/itegulov/vim-epl-syntax"
   },
+  "5288": {
+    "type": "git",
+    "url": "git://github.com/radovskyb/vim-rubyformat"
+  },
+  "5289": {
+    "type": "git",
+    "url": "git://github.com/YuKill/tgf-vim"
+  },
+  "5291": {
+    "type": "git",
+    "url": "git://github.com/radovskyb/vim-uncommenter"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
