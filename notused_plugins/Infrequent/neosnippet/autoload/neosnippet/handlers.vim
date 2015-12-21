@@ -72,13 +72,14 @@ function! neosnippet#handlers#_complete_done() "{{{
   endif
 
   if !s:is_auto_pairs()
-    if key != '(' && snippet =~ key.'$'
-      let snippet .= '${'. cnt .'}'.pair
-    elseif snippet !~ pair.'$'
+    if key != '(' && snippet[-1:] ==# key
+      let snippet .= '${' . cnt . '}' . pair
+      let cnt += 1
+    elseif snippet[-1:] !=# pair
       let snippet .= pair
     endif
 
-    let snippet .= '${0}'
+    let snippet .= '${' . cnt . '}'
   endif
 
   let [cur_text, col, _] = neosnippet#mappings#_pre_trigger()
@@ -97,7 +98,7 @@ function! neosnippet#handlers#_cursor_moved() "{{{
   let expand_info = expand_stack[-1]
   if expand_info.begin_line == expand_info.end_line
         \ && line('.') != expand_info.begin_line
-    call neosnippet#commands#_clear_markers()
+    call neosnippet#view#_clear_markers(expand_info)
   endif
 endfunction"}}}
 
@@ -105,15 +106,14 @@ function! neosnippet#handlers#_all_clear_markers() "{{{
   let pos = getpos('.')
 
   try
-    " Search out of range.
-    while neosnippet#view#_search_outof_range(col('.'))
+    while !empty(neosnippet#variables#expand_stack())
+      call neosnippet#view#_clear_markers(
+            \ neosnippet#variables#expand_stack()[-1])
     endwhile
   finally
     stopinsert
 
     call setpos('.', pos)
-
-    call neosnippet#variables#clear_expand_stack()
   endtry
 endfunction"}}}
 

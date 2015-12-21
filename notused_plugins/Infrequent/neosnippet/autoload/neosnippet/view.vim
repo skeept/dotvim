@@ -113,6 +113,7 @@ function! neosnippet#view#_insert(snippet, options, cur_text, col) "{{{
     let end_patterns =  (end_line < line('$')) ?
           \ [getline(end_line + 1)] : []
     call add(expand_stack, {
+          \ 'snippet' : a:snippet,
           \ 'begin_line' : begin_line,
           \ 'begin_patterns' : begin_patterns,
           \ 'end_line' : end_line,
@@ -152,14 +153,17 @@ function! neosnippet#view#_jump(_, col) "{{{
         \ expand_info.end_patterns)
 
   let begin_cnt = expand_info.holder_cnt
-  while (expand_info.holder_cnt - begin_cnt) < 5
-    " Next count.
-    let expand_info.holder_cnt += 1
-    if neosnippet#view#_search_snippet_range(
-          \ begin, end, expand_info.holder_cnt - 1)
-      return 1
-    endif
-  endwhile
+  if expand_info.snippet =~
+        \ neosnippet#get_placeholder_marker_substitute_nonzero_pattern()
+    while (expand_info.holder_cnt - begin_cnt) < 5
+      " Next count.
+      let expand_info.holder_cnt += 1
+      if neosnippet#view#_search_snippet_range(
+            \ begin, end, expand_info.holder_cnt - 1)
+        return 1
+      endif
+    endwhile
+  endif
 
   " Search placeholder 0.
   if neosnippet#view#_search_snippet_range(begin, end, 0)
@@ -167,10 +171,9 @@ function! neosnippet#view#_jump(_, col) "{{{
   endif
 
   " Not found.
-  let expand_stack = neosnippet#variables#expand_stack()
-  let expand_stack = expand_stack[: -2]
+  call neosnippet#variables#pop_expand_stack()
 
-  return neosnippet#view#_search_outof_range(a:col)
+  return neosnippet#view#_jump(a:_, a:col)
 endfunction"}}}
 
 function! s:indent_snippet(begin, end) "{{{
@@ -227,6 +230,10 @@ function! neosnippet#view#_get_snippet_range(begin_line, begin_patterns, end_lin
   endif
   if begin <= 0
     let begin = 1
+  endif
+
+  if a:begin_line == a:end_line
+    return [begin, begin]
   endif
 
   call cursor(a:end_line, 0)
@@ -293,6 +300,42 @@ function! neosnippet#view#_search_outof_range(col) "{{{
 
   " Not found.
   return 0
+endfunction"}}}
+function! neosnippet#view#_clear_markers(expand_info) "{{{
+  " Search patterns.
+  let [begin, end] = neosnippet#view#_get_snippet_range(
+        \ a:expand_info.begin_line,
+        \ a:expand_info.begin_patterns,
+        \ a:expand_info.end_line,
+        \ a:expand_info.end_patterns)
+
+  let mode = mode()
+  let pos = getpos('.')
+
+  " Found snippet.
+  let found = 0
+  try
+    while neosnippet#view#_search_snippet_range(
+          \ begin, end, a:expand_info.holder_cnt, 0)
+
+      " Next count.
+      let a:expand_info.holder_cnt += 1
+      let found = 1
+    endwhile
+
+    " Search placeholder 0.
+    if neosnippet#view#_search_snippet_range(begin, end, 0)
+      let found = 1
+    endif
+  finally
+    if found && mode !=# 'i'
+      stopinsert
+    endif
+
+    call setpos('.', pos)
+
+    call neosnippet#variables#pop_expand_stack()
+  endtry
 endfunction"}}}
 function! s:expand_placeholder(start, end, holder_cnt, line, ...) "{{{
   let is_select = get(a:000, 0, 1)
