@@ -7,6 +7,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 "-------------------"
 
+" If didn't define g:repl_filetype_repl, repl.vim use this
 let g:repl#default_filetype_repl = {
 \ 'haskell' : {
 \   'repl' : 'ghci',
@@ -31,6 +32,16 @@ let g:repl_split_command = get(g:, 'repl_split_command', 'split')
 
 command! -bar -nargs=0 Repl call repl#run_repl()
 nnoremap <silent> <Plug>(repl-run) :<C-u>call repl#run_repl()<CR>
+
+"-------------------"
+
+" Define default keymappings
+function! s:define_default_keymappings()
+  if !exists('g:repl_no_default_keymappings') || !g:repl_no_default_keymappings
+    nmap <leader>i <Plug>(repl-run)
+  endif
+endfunction
+call s:define_default_keymappings()
 
 "-------------------"
 let &cpo = s:save_cpo
