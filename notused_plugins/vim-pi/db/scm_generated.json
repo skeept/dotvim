@@ -4731,6 +4731,18 @@
     "type": "git",
     "url": "git://github.com/radovskyb/vim-uncommenter"
   },
+  "5293": {
+    "type": "git",
+    "url": "git://github.com/haya14busa/vim-operator-flashy"
+  },
+  "5294": {
+    "type": "git",
+    "url": "git://github.com/itchyny/lightline.vim"
+  },
+  "5295": {
+    "type": "git",
+    "url": "git://github.com/othree/csscomplete.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
