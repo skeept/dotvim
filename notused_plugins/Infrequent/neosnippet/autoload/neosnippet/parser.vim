@@ -316,7 +316,13 @@ function! neosnippet#parser#_get_completed_snippet(completed_item) "{{{
   let cnt = 1
   let snippet = ''
 
-  if abbr =~ '<.\+>'
+  if empty(filter(values(pairs), 'stridx(abbr, v:val) > 0'))
+    " Pairs not found pattern
+    let snippet .= '${' . cnt . '}'
+    let cnt += 1
+  endif
+
+  if abbr =~ '<.\+>(.*)'
     " Add angle analysis
     let snippet .= '<'
 
@@ -324,10 +330,12 @@ function! neosnippet#parser#_get_completed_snippet(completed_item) "{{{
     for arg in split(substitute(
           \ neosnippet#parser#_get_in_paren('<', '>', abbr),
           \ '<\zs.\{-}\ze>', '', 'g'), '[^[]\zs\s*,\s*')
-      if args != ''
+      if args != '' && arg !=# '...'
         let args .= ', '
       endif
-      let args .= printf('${%d:#:%s}', cnt, escape(arg, '{}'))
+      let args .= printf('${%d:#:%s%s}',
+            \ cnt, ((args != '' && arg ==# '...') ? ', ' : ''),
+            \ escape(arg, '{}'))
       let cnt += 1
     endfor
     let snippet .= args
@@ -343,10 +351,12 @@ function! neosnippet#parser#_get_completed_snippet(completed_item) "{{{
       continue
     endif
 
-    if args != ''
+    if args != '' && arg !=# '...'
       let args .= ', '
     endif
-    let args .= printf('${%d:#:%s}', cnt, escape(arg, '{}'))
+    let args .= printf('${%d:#:%s%s}',
+          \ cnt, ((args != '' && arg ==# '...') ? ', ' : ''),
+          \ escape(arg, '{}'))
     let cnt += 1
   endfor
   let snippet .= args
