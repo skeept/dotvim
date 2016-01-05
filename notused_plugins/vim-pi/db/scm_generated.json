@@ -4743,6 +4743,18 @@
     "type": "git",
     "url": "git://github.com/othree/csscomplete.vim"
   },
+  "5296": {
+    "type": "git",
+    "url": "git://github.com/chemzqm/vim-run"
+  },
+  "5298": {
+    "type": "git",
+    "url": "git://github.com/davisdude/vim-love-docs"
+  },
+  "5301": {
+    "type": "git",
+    "url": "git://github.com/atelierbram/vim-colors_duotones"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
