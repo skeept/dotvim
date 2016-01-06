@@ -4755,6 +4755,10 @@
     "type": "git",
     "url": "git://github.com/atelierbram/vim-colors_duotones"
   },
+  "5302": {
+    "type": "git",
+    "url": "git://github.com/pavoljuhas/oldfilesearch.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
