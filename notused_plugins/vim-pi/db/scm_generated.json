@@ -4759,6 +4759,18 @@
     "type": "git",
     "url": "git://github.com/pavoljuhas/oldfilesearch.vim"
   },
+  "5303": {
+    "type": "git",
+    "url": "git://github.com/svermeulen/vim-NotableFt"
+  },
+  "5304": {
+    "type": "git",
+    "url": "git://github.com/chemzqm/vim-easygit"
+  },
+  "5305": {
+    "type": "git",
+    "url": "git://github.com/chemzqm/unite-git-log"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
