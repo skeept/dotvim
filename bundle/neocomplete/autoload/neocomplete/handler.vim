@@ -63,6 +63,8 @@ function! neocomplete#handler#_on_complete_done() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
 
   if neocomplete.event !=# 'mapping'
+        \ && exists('v:completed_item')
+        \ && get(v:completed_item, 'word', '') == ''
     " Check delimiter pattern.
     let is_delimiter = 0
     let filetype = neocomplete#get_context_filetype()
@@ -147,6 +149,8 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
         \ && empty(neocomplete.candidates)
         \ && a:event ==# 'CursorMovedI')
         \ || s:check_in_do_auto_complete()
+        \ || (a:event ==# 'InsertEnter'
+        \     && neocomplete.old_cur_text != '')
     return
   endif
 
