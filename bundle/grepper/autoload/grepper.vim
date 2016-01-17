@@ -86,7 +86,7 @@ endfunction
 
 " s:on_stderr() {{{1
 function! s:on_stderr(id, data) abort
-  call jobstop(a:id)
+  silent! call jobstop(a:id)
   let self.errmsg = join(a:data)
 endfunction
 
@@ -298,9 +298,13 @@ function! s:run()
     endif
 
     let tempfile = fnameescape(tempname())
-    if exists('*mkdir')
-      silent! call mkdir(fnamemodify(tempfile, ':h'), 'p', 0600)
-    endif
+    try
+      call mkdir(fnamemodify(tempfile, ':h'), 'p', 0600)
+    catch /E739/
+      call s:error(v:exeption)
+      call s:restore_settings()
+      return
+    endtry
 
     let cmd = ['sh', '-c', printf('%s > %s', s:cmdline, tempfile)]
 
