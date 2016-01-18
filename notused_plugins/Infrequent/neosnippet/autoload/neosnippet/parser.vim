@@ -304,8 +304,9 @@ function! neosnippet#parser#_get_completed_snippet(completed_item, next_text) "{
   if item.info != ''
     let abbr = split(item.info, '\n')[0]
   endif
-
-  let pairs = { '(' : ')', '{' : '}', '"' : '"' }
+  let pairs = neosnippet#util#get_buffer_config(
+      \ &filetype, '',
+      \ 'g:neosnippet#completed_pairs', 'g:neosnippet#_completed_pairs', {})
   let word_pattern = neosnippet#util#escape_pattern(item.word)
   let angle_pattern = word_pattern . '<.\+>(.*)'
   let no_key = index(keys(pairs), item.word[-1:]) < 0
@@ -363,7 +364,8 @@ function! neosnippet#parser#_get_completed_snippet(completed_item, next_text) "{
   let args = ''
   for arg in split(substitute(
         \ neosnippet#parser#_get_in_paren(key, pair, abbr),
-        \ key.'\zs.\{-}\ze'.pair, '', 'g'), '[^[]\zs\s*,\s*')
+        \ key.'\zs.\{-}\ze'.pair . '\|<\zs.\{-}\ze>', '', 'g'),
+        \ '[^[]\zs\s*,\s*')
     if key ==# '(' && arg ==# 'self' && &filetype ==# 'python'
       " Ignore self argument
       continue
@@ -379,10 +381,8 @@ function! neosnippet#parser#_get_completed_snippet(completed_item, next_text) "{
   endfor
   let snippet .= args
 
-  if a:next_text[:0] !=# pair
-    let snippet .= pair
-    let snippet .= '${' . cnt . '}'
-  endif
+  let snippet .= pair
+  let snippet .= '${' . cnt . '}'
 
   return snippet
 endfunction"}}}

@@ -4731,6 +4731,10 @@
     "type": "git",
     "url": "git://github.com/radovskyb/vim-uncommenter"
   },
+  "5292": {
+    "type": "git",
+    "url": "git://github.com/alepez/vim-gtest"
+  },
   "5293": {
     "type": "git",
     "url": "git://github.com/haya14busa/vim-operator-flashy"
@@ -4751,6 +4755,14 @@
     "type": "git",
     "url": "git://github.com/davisdude/vim-love-docs"
   },
+  "5299": {
+    "type": "git",
+    "url": "git://github.com/rafaqz/citation.vim"
+  },
+  "5300": {
+    "type": "git",
+    "url": "git://github.com/rafaqz/ranger.vim"
+  },
   "5301": {
     "type": "git",
     "url": "git://github.com/atelierbram/vim-colors_duotones"
@@ -4770,6 +4782,22 @@
   "5305": {
     "type": "git",
     "url": "git://github.com/chemzqm/unite-git-log"
+  },
+  "5307": {
+    "type": "git",
+    "url": "git://github.com/haya14busa/vim-signjk-motion"
+  },
+  "5308": {
+    "type": "git",
+    "url": "git://github.com/haya14busa/vim-keeppad"
+  },
+  "5310": {
+    "type": "git",
+    "url": "git://github.com/KabbAmine/vZoom.vim"
+  },
+  "5312": {
+    "type": "git",
+    "url": "git://github.com/wgurecky/vimSum"
   },
   "586": {
     "type": "git",

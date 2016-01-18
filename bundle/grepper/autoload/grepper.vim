@@ -4,11 +4,11 @@
 " ..ad\\f40+$':-# @=,!;%^&&*()_{}/ /4304\'""?`9$343%$ ^adfadf[ad)[(
 
 let s:options = {
-      \ 'dispatch':  !has('nvim') && exists(':FocusDispatch'),
+      \ 'dispatch':  0,
       \ 'quickfix':  1,
-      \ 'open':      0,
-      \ 'switch':    0,
-      \ 'jump':      1,
+      \ 'open':      1,
+      \ 'switch':    1,
+      \ 'jump':      0,
       \ 'cword':     0,
       \ 'next_tool': '<tab>',
       \ 'tools':     ['git', 'ag', 'sift', 'pt', 'ack', 'grep', 'findstr'],
@@ -86,7 +86,7 @@ endfunction
 
 " s:on_stderr() {{{1
 function! s:on_stderr(id, data) abort
-  call jobstop(a:id)
+  silent! call jobstop(a:id)
   let self.errmsg = join(a:data)
 endfunction
 
@@ -135,12 +135,8 @@ endfunction
 " }}}
 
 " #parse_flags() {{{1
-function! grepper#parse_flags(bang, args) abort
-  let s:flags = {
-        \ 'jump':   !a:bang,
-        \ 'prompt': 1,
-        \ 'query':  '',
-        \ }
+function! grepper#parse_flags(args) abort
+  let s:flags = { 'prompt': 1, 'query':  '' }
   let args = split(a:args, '\s\+')
   let len = len(args)
   let i = 0
@@ -152,6 +148,7 @@ function! grepper#parse_flags(bang, args) abort
     elseif flag =~? '\v^-%(no)?quickfix$' | let s:flags.quickfix = flag !~? '^-no'
     elseif flag =~? '\v^-%(no)?open$'     | let s:flags.open     = flag !~? '^-no'
     elseif flag =~? '\v^-%(no)?switch$'   | let s:flags.switch   = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?jump$'     | let s:flags.jump     = flag !~? '^-no'
     elseif flag =~? '^-cword!\=$'
       let s:flags.cword = 1
       let s:flags.prompt = flag !~# '!$'
@@ -207,6 +204,15 @@ endfunction
 
 " s:process_flags() {{{1
 function! s:process_flags()
+  " check for vim-dispatch
+  if has('nvim') || !exists(':FocusDispatch')
+    let s:flags.dispatch = 0
+  endif
+  " vim-dispatch always uses the quickfix window
+  if s:option('dispatch')
+    let s:flags.quickfix = 1
+  endif
+
   if get(s:flags, 'cword')
     let s:flags.query = s:escape_query(expand('<cword>'))
     if s:flags.prompt
@@ -273,18 +279,10 @@ endfunction
 function! s:build_cmdline(grepprg) abort
   if stridx(a:grepprg, '$*') >= 0
     let [a, b] = split(a:grepprg, '\V$*', 1)
-    let cmdline = printf('%s%s%s', a, s:flags.query, b)
+    return printf('%s%s%s', a, s:flags.query, b)
   else
-    let cmdline = printf('%s %s', a:grepprg, s:flags.query)
+    return printf('%s %s', a:grepprg, s:flags.query)
   endif
-  if !has('nvim') && s:option('dispatch')
-    " The 'cat' is currently needed to strip these control sequences from
-    " tmux output (http://stackoverflow.com/a/13608153):
-    "   - CSI ? 1h + ESC =
-    "   - CSI ? 1l + ESC >
-    let cmdline .= ' | cat'
-  endif
-  return cmdline
 endfunction
 
 " s:run() {{{1
@@ -301,9 +299,13 @@ function! s:run()
     endif
 
     let tempfile = fnameescape(tempname())
-    if exists('*mkdir')
-      silent! call mkdir(fnamemodify(tempfile, ':h'), 'p', 0600)
-    endif
+    try
+      call mkdir(fnamemodify(tempfile, ':h'), 'p', 0600)
+    catch /E739/
+      call s:error(v:exeption)
+      call s:restore_settings()
+      return
+    endtry
 
     let cmd = ['sh', '-c', printf('%s > %s', s:cmdline, tempfile)]
 
@@ -428,7 +430,7 @@ function! s:finish_up(...) abort
       endif
     endif
 
-    execute (qf ? 'copen' : 'lopen') (size > 10 ? 10 : size)
+    execute (qf ? 'botright copen' : 'lopen') (size > 10 ? 10 : size)
     let w:quickfix_title = s:cmdline
 
     nnoremap <silent><buffer> <cr> <cr>zv
