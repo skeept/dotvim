@@ -4731,6 +4731,10 @@
     "type": "git",
     "url": "git://github.com/radovskyb/vim-uncommenter"
   },
+  "5292": {
+    "type": "git",
+    "url": "git://github.com/alepez/vim-gtest"
+  },
   "5293": {
     "type": "git",
     "url": "git://github.com/haya14busa/vim-operator-flashy"

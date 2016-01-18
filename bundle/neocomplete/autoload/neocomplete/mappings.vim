@@ -61,6 +61,9 @@ function! neocomplete#mappings#define_default_mappings() "{{{
       inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
     endif
   endif
+
+  inoremap <silent> <Plug>(neocomplete_auto_refresh)
+        \ <C-r>=neocomplete#mappings#refresh()<CR>
 endfunction"}}}
 
 function! neocomplete#mappings#auto_complete() "{{{
@@ -193,7 +196,7 @@ function! neocomplete#mappings#complete_common_string() "{{{
           \   'complete_str' : complete_str})
 
     if empty(candidates)
-      return "a\<BS>"
+      return ''
     endif
 
     let common_str = candidates[0].word
@@ -212,8 +215,7 @@ function! neocomplete#mappings#complete_common_string() "{{{
 
   if common_str == ''
         \ || complete_str ==? common_str
-        \ || len(common_str) == len(candidates[0].word)
-    return "a\<BS>"
+    return ''
   endif
 
   return (pumvisible() ? "\<C-e>" : '')
@@ -226,6 +228,12 @@ function! neocomplete#mappings#fallback(i) "{{{
         \                   && &l:omnifunc == '')) ? "" :
         \ (mapping . (neocomplete#util#is_complete_select() ?
         \             "" : "\<C-p>"))
+endfunction"}}}
+
+function! neocomplete#mappings#refresh() "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.refresh = 1
+  return pumvisible() ? "\<C-e>" : ''
 endfunction"}}}
 
 " Manual complete wrapper.

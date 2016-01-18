@@ -79,7 +79,7 @@ function! neocomplete#handler#_on_complete_done() "{{{
       endif
     endfor
 
-    if !is_delimiter
+    if !is_delimiter && !get(neocomplete, 'refresh', 0)
       call neocomplete#mappings#close_popup()
     endif
   endif
@@ -117,11 +117,18 @@ function! neocomplete#handler#_restore_update_time() "{{{
   endif
 endfunction"}}}
 function! neocomplete#handler#_on_insert_char_pre() "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let neocomplete.skip_next_complete = 0
+
+  if pumvisible() && g:neocomplete#enable_refresh_always
+    " Auto refresh
+    call feedkeys("\<Plug>(neocomplete_auto_refresh)")
+  endif
+
   if neocomplete#is_cache_disabled()
     return
   endif
 
-  let neocomplete = neocomplete#get_current_neocomplete()
   if neocomplete.old_char != ' ' && v:char == ' ' && v:count == 0
     call s:make_cache_current_line()
   endif

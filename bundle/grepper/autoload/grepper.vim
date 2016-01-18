@@ -4,7 +4,7 @@
 " ..ad\\f40+$':-# @=,!;%^&&*()_{}/ /4304\'""?`9$343%$ ^adfadf[ad)[(
 
 let s:options = {
-      \ 'dispatch':  !has('nvim') && exists(':FocusDispatch'),
+      \ 'dispatch':  0,
       \ 'quickfix':  1,
       \ 'open':      1,
       \ 'switch':    1,
@@ -204,6 +204,15 @@ endfunction
 
 " s:process_flags() {{{1
 function! s:process_flags()
+  " check for vim-dispatch
+  if has('nvim') || !exists(':FocusDispatch')
+    let s:flags.dispatch = 0
+  endif
+  " vim-dispatch always uses the quickfix window
+  if s:option('dispatch')
+    let s:flags.quickfix = 1
+  endif
+
   if get(s:flags, 'cword')
     let s:flags.query = s:escape_query(expand('<cword>'))
     if s:flags.prompt
@@ -270,18 +279,10 @@ endfunction
 function! s:build_cmdline(grepprg) abort
   if stridx(a:grepprg, '$*') >= 0
     let [a, b] = split(a:grepprg, '\V$*', 1)
-    let cmdline = printf('%s%s%s', a, s:flags.query, b)
+    return printf('%s%s%s', a, s:flags.query, b)
   else
-    let cmdline = printf('%s %s', a:grepprg, s:flags.query)
+    return printf('%s %s', a:grepprg, s:flags.query)
   endif
-  if !has('nvim') && s:option('dispatch')
-    " The 'cat' is currently needed to strip these control sequences from
-    " tmux output (http://stackoverflow.com/a/13608153):
-    "   - CSI ? 1h + ESC =
-    "   - CSI ? 1l + ESC >
-    let cmdline .= ' | cat'
-  endif
-  return cmdline
 endfunction
 
 " s:run() {{{1
@@ -429,7 +430,7 @@ function! s:finish_up(...) abort
       endif
     endif
 
-    execute (qf ? 'copen' : 'lopen') (size > 10 ? 10 : size)
+    execute (qf ? 'botright copen' : 'lopen') (size > 10 ? 10 : size)
     let w:quickfix_title = s:cmdline
 
     nnoremap <silent><buffer> <cr> <cr>zv
