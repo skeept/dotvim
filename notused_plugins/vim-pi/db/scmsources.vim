@@ -405,6 +405,7 @@ let scm['vinarise'] = {'type': 'git', 'url': 'git://github.com/Shougo/vinarise'}
 let scm['neoui'] = {'type': 'git', 'url': 'git://github.com/Shougo/neoui'}
 let scm['neobundle'] = {'type': 'git', 'url': 'git://github.com/Shougo/neobundle.vim'}
 let scm['neocomplete'] = {'type': 'git', 'url': 'git://github.com/Shougo/neocomplete'}
+let scm['neomru'] = {'type': 'git', 'url': 'git://github.com/Shougo/neomru.vim'}
 
 " Al Budden
 let scmnr.2646 = {'type': 'hg', 'url': 'https://bitbucket.org/abudden/taghighlight'}
@@ -1197,6 +1198,12 @@ let scm['VimLint'] = {'type': 'git', 'url': 'git://github.com/dahu/VimLint'}
 " Brian Collins
 let scm['vim-jst'] = {'type': 'git', 'url': 'git://github.com/briancollins/vim-jst'}
 
+" JuliaLang - The Julia Language
+let scm['julia-vim'] = {'type': 'git', 'url': 'git://github.com/JuliaLang/julia-vim'}
+
+" Linda_pp
+let scm['vim-clang-format'] = {'type': 'git', 'url': 'git://github.com/rhysd/vim-clang-format'}
+
 " Luke Randall
 let scm['haskellmode-vim'] = {'type': 'git', 'url': 'git://github.com/lukerandall/haskellmode-vim'}
 
@@ -1246,6 +1253,7 @@ let scm['factor'] = {'type': 'git', 'url': 'git://github.com/slavapestov/factor'
 let scm['html-template-syntax'] = {'type': 'git', 'url': 'git://github.com/pbrisbin/html-template-syntax'}
 let scm['opalang'] = {'type': 'git', 'url': 'git://github.com/MLstate/opalang', 'addon-info': {'runtimepath': 'tools/editors/vim'}}
 let scm['SkyBison'] = {'type': 'git', 'url': 'git://github.com/paradigm/SkyBison'}
+let scm['TextObjectify'] = {'type': 'git', 'url': 'git://github.com/paradigm/TextObjectify'}
 let scm['jedi-vim'] = {'type': 'git', 'url': 'git://github.com/davidhalter/jedi-vim'}
 let scm['vim-css3-syntax'] = {'type': 'git', 'url': 'git://github.com/hail2u/vim-css3-syntax'}
 let scm['neco-tweetvim'] = {'type': 'git', 'url': 'git://github.com/yomi322/neco-tweetvim'}
@@ -1271,6 +1279,9 @@ let scm['vim-elixir'] = {'type': 'git', 'url': 'git://github.com/elixir-lang/vim
 
 " Carlos Galdino
 let scm['elixir-snippets'] = {'type': 'git', 'url': 'git://github.com/carlosgaldino/elixir-snippets'}
+
+" Jim Garvin
+let scm['textobj-word-column'] = {'type': 'git', 'url': 'git://github.com/coderifous/textobj-word-column.vim'}
 
 " Matthew Kitt
 let scm['tabline'] = {'type': 'git', 'url': 'git://github.com/mkitt/tabline.vim'}
@@ -1300,6 +1311,9 @@ let scm['codefmt'] = {'type': 'git', 'url': 'git://github.com/google/vim-codefmt
 " Charles Hogg
 let scm['vtd'] = {'type': 'git', 'url': 'git://github.com/chiphogg/vim-vtd'}
 let scm['syncopate'] = {'type': 'git', 'url': 'git://github.com/google/vim-syncopate'}
+
+" Karl Yngve Lervag
+let scm['vimtex'] = {'type': 'git', 'url': 'git://github.com/lervag/vimtex'}
 
 " Tom McDonald
 let scm['vim-exchange'] = {'type': 'git', 'url': 'git://github.com/tommcdo/vim-exchange' }
