@@ -45,7 +45,7 @@ options head
 
 snippet for
 options head
-  for (var ${1:i}=0; $1 < ${2:#:Things}.length; ++$1) {
+  for (var ${1:i} = 0; $1 < ${2:#:Things}.length; $1++) {
     ${0:TARGET}
   }
 
@@ -100,6 +100,11 @@ options word
 snippet setTimeout-function
 options head
   setTimeout(function() { ${0} }, ${1:10});
+
+snippet debugger
+alias db
+options head
+  debugger;
 
 snippet console-log
 alias cl
