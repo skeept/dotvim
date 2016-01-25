@@ -4799,6 +4799,18 @@
     "type": "git",
     "url": "git://github.com/wgurecky/vimSum"
   },
+  "5315": {
+    "type": "git",
+    "url": "git://github.com/chemzqm/macdown.vim"
+  },
+  "5316": {
+    "type": "git",
+    "url": "git://github.com/chemzqm/vim-macos"
+  },
+  "5317": {
+    "type": "git",
+    "url": "git://github.com/KabbAmine/vBox.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

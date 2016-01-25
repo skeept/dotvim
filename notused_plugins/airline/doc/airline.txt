@@ -493,8 +493,15 @@ exposed.
   nmap <leader>7 <Plug>AirlineSelectTab7
   nmap <leader>8 <Plug>AirlineSelectTab8
   nmap <leader>9 <Plug>AirlineSelectTab9
+  nmap <leader>- <Plug>AirlineSelectPrevTab
+  nmap <leader>+ <Plug>AirlineSelectNextTab
 
   Note: Mappings will be ignored within a NERDTree buffer.
+
+  Note: In buffer_idx_mode these mappings won't change the
+  current tab, but switch to the buffer visible in that tab.
+  Use |gt| for switching tabs.
+  In tabmode, those mappings will switch to the specified tab.
 
 * defines the name of a formatter for how buffer names are displayed. >
   let g:airline#extensions#tabline#formatter = 'default'
@@ -656,6 +663,10 @@ greater than a minimum width. >
 <
 Parts can be configured to be visible conditionally. >
   call airline#parts#define_condition('foo', 'getcwd() =~ "work_dir"')
+<
+
+Now add part "foo" to section section airline_section_y: >
+  let g:airline_section_y = airline#section#create_right(['ffenc','foo'])
 <
 Note: Part definitions are combinative; e.g. the two examples above modify the
 same `foo` part.

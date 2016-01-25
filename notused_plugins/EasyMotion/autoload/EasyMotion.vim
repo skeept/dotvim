@@ -140,7 +140,10 @@ function! EasyMotion#S(num_strokes, visualmode, direction) " {{{
 endfunction " }}}
 function! EasyMotion#OverwinF(num_strokes) " {{{
     let re = s:findMotion(a:num_strokes, s:DIRECTION.bidirection)
-    return EasyMotion#overwin#move(re)
+    call EasyMotion#reset()
+    if re isnot# ''
+        return EasyMotion#overwin#move(re)
+    endif
 endfunction "}}}
 function! EasyMotion#T(num_strokes, visualmode, direction) " {{{
     if a:direction == 1
@@ -468,16 +471,28 @@ function! s:SetLines(lines, key) " {{{
 endfunction " }}}
 
 " -- Get characters from user input ------
-function! s:GetChar() " {{{
-    let char = getchar()
-    if char == 27
-        " Escape key pressed
-        redraw
-        call s:Message('Cancelled')
-        return ''
-    endif
-    return nr2char(char)
-endfunction " }}}
+function! s:GetChar(...) abort "{{{
+    let mode = get(a:, 1, 0)
+    while 1
+        " Workaround for https://github.com/osyo-manga/vital-over/issues/53
+        try
+            let char = call('getchar', a:000)
+        catch /^Vim:Interrupt$/
+            let char = 3 " <C-c>
+        endtry
+        if char == 27 || char == 3
+            " Escape or <C-c> key pressed
+            redraw
+            call s:Message('Cancelled')
+            return ''
+        endif
+        " Workaround for the <expr> mappings
+        if string(char) !=# "\x80\xfd`"
+            return mode == 1 ? !!char
+            \    : type(char) == type(0) ? nr2char(char) : char
+        endif
+    endwhile
+endfunction "}}}
 
 " -- Find Motion Helper ------------------
 function! s:findMotion(num_strokes, direction) "{{{
