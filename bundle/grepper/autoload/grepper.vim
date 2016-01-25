@@ -4,14 +4,14 @@
 " ..ad\\f40+$':-# @=,!;%^&&*()_{}/ /4304\'""?`9$343%$ ^adfadf[ad)[(
 
 let s:options = {
-      \ 'dispatch':  0,
       \ 'quickfix':  1,
       \ 'open':      1,
       \ 'switch':    1,
       \ 'jump':      0,
       \ 'cword':     0,
+      \ 'prompt':    1,
       \ 'next_tool': '<tab>',
-      \ 'tools':     ['git', 'ag', 'sift', 'pt', 'ack', 'grep', 'findstr'],
+      \ 'tools':     ['ag', 'ack', 'grep', 'findstr', 'sift', 'pt', 'git'],
       \ 'git':       { 'grepprg':    'git grep -nI',
       \                'grepformat': '%f:%l:%m',
       \                'escape':     '\$.*%#[]' },
@@ -72,9 +72,7 @@ let s:cmdline = ''
 let s:id      = 0
 let s:slash   = exists('+shellslash') && !&shellslash ? '\' : '/'
 
-let s:magic = {
-      \ 'next': '$$$next###',
-      \ 'esc':  '$$$esc###' }
+let s:magic = { 'next': '$$$next###', 'esc': '$$$esc###' }
 
 " s:error() {{{1
 function! s:error(msg)
@@ -95,12 +93,12 @@ function! s:on_exit() abort
   execute 'tabnext' self.tabpage
   execute self.window .'wincmd w'
 
-  execute (s:option('quickfix') ? 'cgetfile' : 'lgetfile') self.tempfile
+  execute (self.flags.quickfix ? 'cgetfile' : 'lgetfile') self.tempfile
   call delete(self.tempfile)
 
   let s:id = 0
   call s:restore_settings()
-  return s:finish_up(self.errmsg)
+  return s:finish_up(self.flags, self.errmsg)
 endfunction
 " }}}
 
@@ -136,7 +134,7 @@ endfunction
 
 " #parse_flags() {{{1
 function! grepper#parse_flags(args) abort
-  let s:flags = { 'prompt': 1, 'query':  '' }
+  let flags = extend({ 'query': ''}, s:options)
   let args = split(a:args, '\s\+')
   let len = len(args)
   let i = 0
@@ -144,23 +142,21 @@ function! grepper#parse_flags(args) abort
   while i < len
     let flag = args[i]
 
-    if     flag =~? '\v^-%(no)?dispatch$' | let s:flags.dispatch = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?quickfix$' | let s:flags.quickfix = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?open$'     | let s:flags.open     = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?switch$'   | let s:flags.switch   = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?jump$'     | let s:flags.jump     = flag !~? '^-no'
-    elseif flag =~? '^-cword!\=$'
-      let s:flags.cword = 1
-      let s:flags.prompt = flag !~# '!$'
+    if     flag =~? '\v^-%(no)?quickfix$' | let flags.quickfix = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?open$'     | let flags.open     = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?switch$'   | let flags.switch   = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?jump$'     | let flags.jump     = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?prompt$'   | let flags.prompt   = flag !~? '^-no'
+    elseif flag =~? '^-cword$'            | let flags.cword    = 1
     elseif flag =~? '^-grepprg$'
       let i += 1
       if i < len
         if !exists('tool')
           let tool = s:options.tools[0]
         endif
-        let s:flags.tools = [tool]
-        let s:flags[tool] = copy(s:options[tool])
-        let s:flags[tool].grepprg = join(args[i :])
+        let flags.tools = [tool]
+        let flags[tool] = copy(s:options[tool])
+        let flags[tool].grepprg = join(args[i :])
       else
         echomsg 'Missing argument for: -grepprg'
       endif
@@ -169,8 +165,8 @@ function! grepper#parse_flags(args) abort
       let i += 1
       if i < len
         " Funny Vim bug: [i:] doesn't work. [(i):] and [i :] do.
-        let s:flags.query = join(args[i :])
-        let s:flags.prompt = 0
+        let flags.query = join(args[i :])
+        let flags.prompt = 0
         break
       else
         " No warning message here. This allows for..
@@ -187,7 +183,7 @@ function! grepper#parse_flags(args) abort
         break
       endif
       if index(s:options.tools, tool) >= 0
-        let s:flags.tools =
+        let flags.tools =
               \ [tool] + filter(copy(s:options.tools), 'v:val != tool')
       else
         echomsg 'No such tool: '. tool
@@ -199,56 +195,46 @@ function! grepper#parse_flags(args) abort
     let i += 1
   endwhile
 
-  return s:start()
+  return s:start(flags)
 endfunction
 
 " s:process_flags() {{{1
-function! s:process_flags()
-  " check for vim-dispatch
-  if has('nvim') || !exists(':FocusDispatch')
-    let s:flags.dispatch = 0
-  endif
-  " vim-dispatch always uses the quickfix window
-  if s:option('dispatch')
-    let s:flags.quickfix = 1
+function! s:process_flags(flags)
+  if a:flags.cword
+    let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
   endif
 
-  if get(s:flags, 'cword')
-    let s:flags.query = s:escape_query(expand('<cword>'))
-    if s:flags.prompt
-      let s:flags.query = s:prompt(s:flags.query)
-    endif
-  else
-    if s:flags.prompt
-      let s:flags.query = s:prompt(s:flags.query)
-    endif
-    if empty(s:flags.query)
-      let s:flags.query = s:escape_query(expand('<cword>'))
-    endif
+  if !a:flags.prompt
+    return
   endif
 
-  silent! unlet s:original_query
+  call s:prompt(a:flags)
+
+  if empty(a:flags.query)
+    let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
+  endif
 endfunction
 
 " s:start() {{{1
-function! s:start() abort
+function! s:start(flags) abort
   if empty(s:options.tools)
     call s:error('No grep tool found!')
     return
   endif
 
-  call s:process_flags()
+  call s:process_flags(a:flags)
 
-  if s:flags.query =~# s:magic.esc
+  if a:flags.query =~# s:magic.esc
     redraw!
     return
   endif
 
-  return s:run()
+  return s:run(a:flags)
 endfunction
 
 " s:prompt() {{{1
-function! s:prompt(query)
+function! s:prompt(flags)
+  let tool = s:get_current_tool(a:flags)
   let mapping = maparg(s:options.next_tool, 'c', '', 1)
   execute 'cnoremap' s:options.next_tool s:magic.next .'<cr>'
   execute 'cnoremap <esc>' s:magic.esc .'<cr>'
@@ -256,7 +242,7 @@ function! s:prompt(query)
   call inputsave()
 
   try
-    let query = input(s:option('deftool').grepprg .'> ', a:query,
+    let a:flags.query = input(tool.grepprg .'> ', a:flags.query,
           \ 'customlist,grepper#complete_files')
   finally
     execute 'cunmap' s:options.next_tool
@@ -266,34 +252,40 @@ function! s:prompt(query)
     echohl NONE
   endtry
 
-  if query =~# s:magic.next
+  if a:flags.query =~# s:magic.next
     call histdel('input')
-    call s:tool_next()
-    return s:prompt(exists('s:original_query')
-          \ ? s:tool_escape(a:query)
-          \ : query[:-len(s:magic.next)-1])
+    call s:next_tool(a:flags)
+    let a:flags.query = has_key(a:flags, 'query_orig')
+          \ ? s:escape_query(a:flags, a:flags.query_orig)
+          \ : a:flags.query[:-len(s:magic.next)-1]
+    return s:prompt(a:flags)
   endif
-
-  return query
 endfunction
 
 " s:build_cmdline() {{{1
-function! s:build_cmdline(grepprg) abort
-  if stridx(a:grepprg, '$*') >= 0
-    let [a, b] = split(a:grepprg, '\V$*', 1)
-    return printf('%s%s%s', a, s:flags.query, b)
-  else
-    return printf('%s %s', a:grepprg, s:flags.query)
+function! s:build_cmdline(flags) abort
+  let grepprg = s:get_current_tool(a:flags).grepprg
+  let grepprg = substitute(grepprg, '\V$.', bufname(''), '')
+
+  if stridx(grepprg, '$+') >= 0
+    let buffers = filter(map(filter(range(1, bufnr('$')), 'bufloaded(v:val)'),
+          \ 'bufname(v:val)'), 'filereadable(v:val)')
+    let grepprg = substitute(grepprg, '\V$+', join(buffers), '')
   endif
+
+  if stridx(grepprg, '$*') >= 0
+    let grepprg = substitute(grepprg, '\V$*', a:flags.query, '')
+  else
+    let grepprg .= ' ' . a:flags.query
+  endif
+
+  return grepprg
 endfunction
 
 " s:run() {{{1
-function! s:run()
-  let prog = s:option('deftool')
-
-  let s:cmdline = s:build_cmdline(prog.grepprg)
-
-  call s:set_settings(prog)
+function! s:run(flags)
+  let s:cmdline = s:build_cmdline(a:flags)
+  call s:store_settings(a:flags)
 
   if has('nvim')
     if s:id
@@ -312,6 +304,7 @@ function! s:run()
     let cmd = ['sh', '-c', printf('%s > %s', s:cmdline, tempfile)]
 
     let s:id = jobstart(cmd, {
+          \ 'flags':     a:flags,
           \ 'tempfile':  tempfile,
           \ 'cmd':       s:cmdline,
           \ 'tabpage':   tabpagenr(),
@@ -320,48 +313,27 @@ function! s:run()
           \ 'on_exit':   function('s:on_exit'),
           \ 'errmsg':    '' })
     return
-  elseif s:option('dispatch')
-    augroup grepper
-      autocmd FileType qf call s:finish_up()
-    augroup END
+  else
     try
-      let &makeprg = s:cmdline
-      silent Make
+      execute 'silent' (a:flags.quickfix ? 'grep!' : 'lgrep!')
     finally
       call s:restore_settings()
     endtry
-  else
-    try
-      execute 'silent' (s:option('quickfix') ? 'grep!' : 'lgrep!') escape(s:flags.query, '#%')
-    finally
-      call s:restore_settings()
-    endtry
-    call s:finish_up()
+    call s:finish_up(a:flags)
   endif
 endfunction
 
-" s:option() {{{1
-function! s:option(opt) abort
-  if a:opt == 'deftool'
-    if exists('s:flags') && has_key(s:flags, 'tools')
-      if has_key(s:flags, s:flags.tools[0])
-        return s:flags[s:flags.tools[0]]
-      else
-        return s:options[s:flags.tools[0]]
-      endif
-    else
-      return s:options[s:options.tools[0]]
-    endif
-  else
-    return has_key(s:flags, a:opt) ? s:flags[a:opt] : s:options[a:opt]
-  endif
+" s:get_current_tool() {{{1
+function! s:get_current_tool(flags) abort
+  return a:flags[a:flags.tools[0]]
 endfunction
 
-" s:set_settings() {{{1
-function! s:set_settings(prog) abort
+" s:store_settings() {{{1
+function! s:store_settings(flags) abort
   let s:settings = {}
+  let prog = s:get_current_tool(a:flags)
 
-  if !has('nvim') || !s:option('dispatch')
+  if !has('nvim')
     let s:settings.t_ti = &t_ti
     let s:settings.t_te = &t_te
     set t_ti= t_te=
@@ -369,14 +341,14 @@ function! s:set_settings(prog) abort
 
   let s:settings.grepprg = &grepprg
   let s:settings.makeprg = &makeprg
-  let &grepprg = a:prog.grepprg
-  let &makeprg = a:prog.grepprg
+  let &grepprg = s:cmdline
+  let &makeprg = s:cmdline
 
-  if has_key(a:prog, 'grepformat')
+  if has_key(prog, 'grepformat')
     let s:settings.grepformat  = &grepformat
     let s:settings.errorformat = &errorformat
-    let &grepformat  = a:prog.grepformat
-    let &errorformat = a:prog.grepformat
+    let &grepformat  = prog.grepformat
+    let &errorformat = prog.grepformat
   endif
 endfunction
 
@@ -411,12 +383,12 @@ function! s:restore_mapping(mapping)
 endfunction
 
 " s:finish_up() {{{1
-function! s:finish_up(...) abort
+function! s:finish_up(flags, ...) abort
   augroup grepper
     autocmd!
   augroup END
 
-  let qf = s:option('quickfix')
+  let qf = a:flags.quickfix
   let size = len(qf ? getqflist() : getloclist(0))
 
   if a:0 && !empty(a:1)
@@ -425,15 +397,13 @@ function! s:finish_up(...) abort
     execute (qf ? 'cclose' : 'lclose')
     echo 'No matches found.'
   else
-    if s:option('jump')
+    if a:flags.jump
       execute (qf ? 'cfirst' : 'lfirst')
-      if s:option('dispatch')
-        doautocmd BufRead
-      endif
     endif
 
     execute (qf ? 'botright copen' : 'lopen') (size > 10 ? 10 : size)
     let w:quickfix_title = s:cmdline
+    setlocal nowrap
 
     nnoremap <silent><buffer> <cr> <cr>zv
     nnoremap <silent><buffer> o    <cr>zv
@@ -445,19 +415,14 @@ function! s:finish_up(...) abort
     nnoremap <silent><buffer> t    <c-w>gFzv
     nmap     <silent><buffer> T    tgT
 
-    if s:option('dispatch')
-      if s:option('switch')
-        call feedkeys("\<c-w>p", 'n')
-      endif
-    else
-      if !s:option('open')
-        execute (qf ? 'cclose' : 'lclose')
-      elseif !s:option('switch')
-        call feedkeys("\<c-w>p", 'n')
-      endif
-      if !has('nvim')
-        redraw!
-      endif
+    if !a:flags.open
+      execute (qf ? 'cclose' : 'lclose')
+    elseif !a:flags.switch
+      call feedkeys("\<c-w>p", 'n')
+    endif
+
+    if !has('nvim')
+      redraw!
     endif
 
     echo printf('Found %d matches.', size)
@@ -477,15 +442,10 @@ function! s:open_entry(cmd, jump)
     if winnr('$') == 1
       execute "normal! \<cr>"
     else
+      wincmd p
+      execute 'rightbelow' a:cmd
+      let win = s:jump_to_qf_win()
       execute "normal! \<cr>"
-      if bufexists('#')
-        buffer #
-        execute a:cmd '#'
-      else
-        execute "normal! ``"
-        execute a:cmd
-        execute "normal! ``"
-      end
     endif
     normal! zv
   catch /E36/
@@ -493,46 +453,40 @@ function! s:open_entry(cmd, jump)
   finally
     " Window numbers get reordered after creating new windows.
     if !a:jump
-      for buf in filter(tabpagebuflist(), 'buflisted(v:val)')
-        if getbufvar(buf, '&filetype') == 'qf'
-          execute bufwinnr(buf) 'wincmd w'
-          return
-        endif
-      endfor
+      if exists('win') && win >= 0
+        execute win 'wincmd w'
+      else
+        call s:jump_to_qf_win()
+      endif
     endif
     let &switchbuf = swb
   endtry
 endfunction
 
-" s:tool_escape() {{{1
-function! s:tool_escape(query)
-  let tool = s:option('deftool')
-
-  if exists('s:original_query')
-    let query = has_key(tool, 'escape')
-          \ ? escape(s:original_query, tool.escape)
-          \ : s:original_query
-    return shellescape(query)
-  else
-    return a:query
-  endif
-endfunction
-
-" s:tool_next() {{{1
-function! s:tool_next()
-  if has_key(s:flags, 'tools')
-    let s:flags.tools = s:flags.tools[1:-1] + [s:flags.tools[0]]
-  else
-    let s:options.tools = s:options.tools[1:-1] + [s:options.tools[0]]
-  endif
+" s:jump_to_qf_win() {{{1
+function! s:jump_to_qf_win() abort
+  for buf in filter(tabpagebuflist(), 'buflisted(v:val)')
+    if getbufvar(buf, '&filetype') == 'qf'
+      let win = bufwinnr(buf)
+      execute win 'wincmd w'
+      return win
+    endif
+  endfor
+  return 0
 endfunction
 
 " s:escape_query() {{{1
-function! s:escape_query(query)
-  let s:original_query = a:query
-  return s:tool_escape(s:original_query)
+function! s:escape_query(flags, query)
+  let tool = s:get_current_tool(a:flags)
+  return shellescape(has_key(tool, 'escape')
+        \ ? escape(a:query, tool.escape)
+        \ : a:query)
 endfunction
-" }}}
+
+" s:next_tool() {{{1
+function! s:next_tool(flags)
+  let a:flags.tools = a:flags.tools[1:-1] + [a:flags.tools[0]]
+endfunction
 
 " #operator() {{{1
 function! grepper#operator(type) abort
@@ -549,11 +503,10 @@ function! grepper#operator(type) abort
   endif
 
   let &selection = selsave
-  let s:flags = {
-        \ 'prompt': 1,
-        \ 'query': s:escape_query(@@)
-        \ }
+  let flags = deepcopy(s:options)
+  let flags.query_orig = @@
+  let flags.query = s:escape_query(flags, @@)
   let @@ = regsave
 
-  return s:start()
+  return s:start(flags)
 endfunction

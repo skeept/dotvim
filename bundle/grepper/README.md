@@ -25,8 +25,7 @@ _Features:_
   **findstr**
 - quick switching between grep tools
 - adding new grep tools or replacing parameters of default ones is easy
-- asynchronous search with Neovim or
-  [vim-dispatch](https://github.com/tpope/vim-dispatch)
+- asynchronous search with Neovim
 - operator for selecting search queries by motion
 - operator action is repeatable if
   [vim-repeat](https://github.com/tpope/vim-repeat) is installed
@@ -42,9 +41,6 @@ Use your favorite plugin manager.
 Using [vim-plug](https://github.com/junegunn/vim-plug):
 
     Plug 'mhinz/vim-grepper'
-
-    " Optional: used for asynchronous searching on Vim
-    Plug 'tpope/vim-dispatch'
 
     " Optional: used for repeating operator actions via "."
     Plug 'tpope/vim-repeat'
@@ -94,11 +90,11 @@ Create mappings for `:Grepper` with different configurations:
 ```viml
 nnoremap <leader>git :Grepper -tool git -noswitch<cr>
 nnoremap <leader>ag  :Grepper -tool ag  -grepprg ag --vimgrep -G '^.+\.txt'<cr>
-nnoremap <leader>*   :Grepper -tool ack -cword<cr>
+nnoremap <leader>*   :Grepper -tool ack -cword -noprompt<cr>
 ```
 
-All three mappings open a prompt. The first two are empty, the last one
-populated with the word under the cursor.
+The first two mappings open a prompt whereas the last one will search for the
+word under the cursor right away.
 
 Related help: `:h :Grepper`
 
@@ -108,11 +104,12 @@ Build you own commands:
 
 ```viml
 command! -nargs=* -complete=file GG Grepper -tool git -query <args>
-command! -nargs=* -complete=file Ag Grepper -tool ag  -query <args>
+command! -nargs=* Ag Grepper -noprompt -tool ag -grepprg ag --vimgrep <args> %
 ```
 
-Now you can use them like this: `:Ag foo` or `:GG 'foo bar' *.txt`. Mind that
-`<tab>` can be used for file completion, too.
+Now `:GG 'foo bar' *.txt` would search all text files for the string "foo bar"
+and `:Ag foo` would search for "foo", but only in the current file. (Vim will
+replace `%` in a command with the buffer name.)
 
 __Example 3:__
 

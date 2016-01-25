@@ -38,22 +38,21 @@ supports most common grep tools, and is easily extendable.
 
 You choose a tool, enter a query, and get your matches into a |quickfix| list.
 
-If you use Neovim or vim-dispatch, the search will be executed asynchronously.
-Thus you will be able to continue editing while the grep program is still
-running.
+If you use Neovim, the search will be executed asynchronously. Thus you will
+be able to continue editing while the grep program is still running.
 
 ==============================================================================
 TOOLS                                                            *grepper-tools*
 
 These tools are supported by default:
 
-    'git'
     'ag'
-    'sift'
-    'pt'
     'ack'
     'grep'
     'findstr'
+    'sift'
+    'pt'
+    'git'
 
 ==============================================================================
 COMMANDS                                                      *grepper-:Grepper*
@@ -78,18 +77,18 @@ Flags:~
 -[no]switch          Switch to quickfix/location window.
 
 -[no]quickfix        Use the quickfix list. If -noquickfix is given, use the
-                     location list instead. When using -dispatch, the quickfix
-                     window will be forced.
+                     location list instead.
 
--[no]dispatch        If vim-dispatch is installed, use |dispatch-:Make| for
-                     executing the query.
+-[no]prompt          To prompt or not to prompt! Common uses are together with
+                     -cword or -grepprg in a command.
 
 -tool <tool>         Any supported tool. Either from |grepper-tools| or ones
                      you added yourself via |grepper-add-tool|.
 
 -grepprg <cmd>       Use this flag to overwrite the default |'grepprg'| which
                      is set according to the used tool. Also use -tool first,
-                     so the output gets escaped properly.
+                     so the output gets escaped properly. See |grepper-add-tool|
+                     for examples.
 
                      This must be the last flag!~
 
@@ -103,13 +102,12 @@ Flags:~
 
                      This must be the last flag!~
 
--cword[!]            Populate the prompt with the word under cursor. If [!] is
-                     given, the prompt is skipped and the search is started
-                     right away.
+-cword               Populate the prompt with the word under cursor. Useful
+                     when paired with -noprompt.
 
 Examples:~
 >
-    nnoremap <leader>* :Grepper -tool git -open -switch -cword!<cr>
+    nnoremap <leader>* :Grepper -tool git -open -switch -cword -noprompt<cr>
 
     :Grepper -tool ag -grepprg ag --vimgrep -G '^.+\.txt'
 <
@@ -177,8 +175,7 @@ switch       When the quickfix/location window opens, switch to it.
 
 jump         Automatically jump to the first match. Defaults to 0.
 
-dispatch     Can be used to start an async search with Vim. It uses
-             |dispatch-:Make| from vim-dispatch. Defaults to 0.
+prompt       To prompt or not to prompt! Defaults to 1.
 
 tools        These are the tools that you can choose between. The order
              matters. The first element is the default tool and will be used
@@ -190,7 +187,7 @@ tools        These are the tools that you can choose between. The order
 
              Defaults to:
 >
-                 ['git', 'ag', 'sift', 'pt', 'ack', 'grep', 'findstr']
+                 ['ag', 'ack', 'grep', 'findstr', 'sift', 'pt', 'git']
 <
 next_tool    These keys will be used at the prompt for switching to the next
              tool. Defaults to <tab>.
@@ -225,6 +222,16 @@ grepprg:~
     In cases where the arguments don't come last, use $* as a placeholder:
 >
     'grepprg': 'grep -Rn $* .'
+<
+    If you want to use the tool on all currently opened files (instead of the
+    current directory), use $+ as a placeholder:
+>
+    'grepprg': 'ag --vimgrep $* $+'
+<
+    If you want to use the tool only on the current file, use $. as a
+    placeholder:
+>
+    'grepprg': 'ag --vimgrep $* $.'
 <
 grepformat:~
 
@@ -315,7 +322,7 @@ This is a possible configuration..
 
     nnoremap <leader>g :Grepper -tool git<cr>
     nnoremap <leader>G :Grepper -tool ag<cr>
-    nnoremap <leader>* :Grepper -tool ag -cword!<cr>
+    nnoremap <leader>* :Grepper -tool ag -cword -noprompt<cr>
 
     let g:grepper = {
         \ 'tools':     ['git', 'ag', 'grep'],
