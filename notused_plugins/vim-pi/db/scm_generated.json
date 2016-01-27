@@ -4811,6 +4811,10 @@
     "type": "git",
     "url": "git://github.com/KabbAmine/vBox.vim"
   },
+  "5319": {
+    "type": "git",
+    "url": "git://github.com/Yggdroot/hiPairs"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
