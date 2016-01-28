@@ -78,6 +78,7 @@ function! SetupVAM()
 
   "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
   VAMAddToActiveAddons ctrlp TaskList Supertab
+  VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
