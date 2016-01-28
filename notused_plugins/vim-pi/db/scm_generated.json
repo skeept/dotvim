@@ -4815,6 +4815,10 @@
     "type": "git",
     "url": "git://github.com/Yggdroot/hiPairs"
   },
+  "5320": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-swap"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
