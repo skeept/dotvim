@@ -3855,6 +3855,10 @@
     "type": "git",
     "url": "git://github.com/brauner/vimtux"
   },
+  "4932": {
+    "type": "git",
+    "url": "git://github.com/rickhowe/diffchar.vim"
+  },
   "4937": {
     "type": "git",
     "url": "git://github.com/xmisao/rubyjump.vim"
@@ -4818,6 +4822,10 @@
   "5320": {
     "type": "git",
     "url": "git://github.com/machakann/vim-swap"
+  },
+  "5322": {
+    "type": "git",
+    "url": "git://github.com/tkhren/vim-fake"
   },
   "586": {
     "type": "git",
