@@ -19,7 +19,12 @@ function! s:init()
 
   let s:airline_theme_defined = exists('g:airline_theme')
   if s:airline_theme_defined || !airline#switch_matching_theme()
-    let g:airline_theme = get(g:, 'airline_theme', 'dark')
+    try
+      let palette = g:airline#themes#{g:airline_theme}#palette
+    catch
+      echom 'Could not resolve airline theme "' . g:airline_theme . '". Themes have been migrated to github.com/vim-airline/vim-airline-themes.'
+      let g:airline_theme = 'dark'
+    endtry
     call airline#switch_theme(g:airline_theme)
   endif
 
@@ -103,7 +108,7 @@ function! s:airline_theme(...)
 endfunction
 
 function! s:airline_refresh()
-  unlet! b:airline_head
+  silent doautocmd User AirlineBeforeRefresh
   call airline#load_theme()
   call airline#update_statusline()
 endfunction
@@ -115,6 +120,3 @@ command! -bar AirlineRefresh call s:airline_refresh()
 
 call airline#init#bootstrap()
 call s:airline_toggle()
-
-autocmd VimEnter * call airline#deprecation#check()
-
