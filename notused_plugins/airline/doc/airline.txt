@@ -82,8 +82,12 @@ values):
 <
 * themes are automatically selected based on the matching colorscheme. this
   can be overridden by defining a value. >
-  let g:airline_theme=
+  let g:airline_theme='dark'
 <
+  Note: Only the dark theme is distributed with vim-airline. For more themes,
+  checkout the vim-airline-themes repository
+  (github.com/vim-airline/vim-airline-themes)
+
 * if you want to patch the airline theme before it gets applied, you can
   supply the name of a function where you can modify the palette. >
   let g:airline_theme_patch_func = 'AirlineThemePatch'
@@ -667,6 +671,9 @@ vim-ctrlspace <https://github.com/szw/vim-ctrlspace>
 YouCompleteMe <https://github.com/Valloric/YouCompleteMe>
 
 Shows number of errors and warnings in the current file detected by YCM.
+
+* enable/disable YCM integration >
+  let g:airline#extensions#ycm#enabled = 1
 
 * set error count prefix >
   let g:airline#extensions#ycm#error_symbol = 'E:'

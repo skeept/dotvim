@@ -84,7 +84,8 @@ function! airline#init#bootstrap()
         \ 'raw': '%{g:airline_symbols.linenr}%#__accent_bold#%4l%#__restore__#',
         \ 'accent': 'bold'})
   call airline#parts#define_function('ffenc', 'airline#parts#ffenc')
-  call airline#parts#define_empty(['hunks', 'branch', 'tagbar', 'syntastic', 'eclim', 'whitespace','windowswap'])
+  call airline#parts#define_empty(['hunks', 'branch', 'tagbar', 'syntastic',
+        \ 'eclim', 'whitespace','windowswap', 'ycm_error_count', 'ycm_warning_count'])
   call airline#parts#define_text('capslock', '')
 
   unlet g:airline#init#bootstrapping
@@ -118,10 +119,10 @@ function! airline#init#sections()
     let g:airline_section_z = airline#section#create(['windowswap', '%3p%%'.spc, 'linenr', ':%3v '])
   endif
   if !exists('g:airline_section_error')
-    let g:airline_section_error = airline#section#create(['ycm_error_count'])
+    let g:airline_section_error = airline#section#create(['ycm_error_count', 'syntastic', 'eclim'])
   endif
   if !exists('g:airline_section_warning')
-    let g:airline_section_warning = airline#section#create(['ycm_warning_count', 'syntastic', 'eclim', 'whitespace'])
+    let g:airline_section_warning = airline#section#create(['ycm_warning_count', 'whitespace'])
   endif
 endfunction
 
