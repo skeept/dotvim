@@ -4827,6 +4827,10 @@
     "type": "git",
     "url": "git://github.com/tkhren/vim-fake"
   },
+  "5323": {
+    "type": "git",
+    "url": "git://github.com/alepez/vim-llvmcov"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
