@@ -1195,6 +1195,10 @@
     "type": "git",
     "url": "git://github.com/orthecreedence/void.vim"
   },
+  "3335": {
+    "type": "git",
+    "url": "git://github.com/JPR75/vip"
+  },
   "3339": {
     "type": "git",
     "url": "git://github.com/tangledhelix/vim-rdist"

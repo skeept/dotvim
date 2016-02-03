@@ -1902,7 +1902,7 @@
 "newspaper":{"archive_name":"newspaper.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14495","version":"2.0","vim_script_nr":3338},
 "tracwiki":{"archive_name":"tracwiki.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16162","version":"0.5","vim_script_nr":3337},
 "Smart_Home_Key%3336":{"archive_name":"smarthomekey.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14351","version":"0.2","vim_script_nr":"3336"},
-"VIP":{"archive_name":"vip.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14484","version":"1.2.0","vim_script_nr":3335},
+"VIP":{"archive_name":"vip.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23982","version":"1.4.0","vim_script_nr":3335},
 "void":{"archive_name":"void.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21505","version":"2.2","vim_script_nr":3334},
 "mheg":{"archive_name":"mheg.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14327","version":"1.02","vim_script_nr":3333},
 "verilog_systemverilog_fix":{"archive_name":"verilog_systemverilog_fix.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14293","version":"1.3","vim_script_nr":3332},
