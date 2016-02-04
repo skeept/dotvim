@@ -1,0 +1,24 @@
+Before:
+  Startify
+  doautocmd CursorMoved
+
+Execute (Between brackets -> StartifyNumber):
+  AssertEqual SyntaxAt(), 'StartifyNumber'
+
+Execute (Brackets -> StartifyBracket):
+  AssertEqual SyntaxAt(3), 'StartifyBracket'
+
+Execute (First entry -> StartifySpecial):
+  AssertEqual SyntaxAt(9), 'StartifySpecial'
+
+Execute (Section header -> StartifySection):
+  normal! 2j
+  AssertEqual SyntaxAt(9), 'StartifySection'
+
+Execute (Second entry (separator) -> StartifySlash):
+  normal! 4j
+  AssertEqual SyntaxAt(9), 'StartifySlash'
+
+Execute (Second entry (path) -> StartifyFile):
+  normal! 4j
+  AssertEqual SyntaxAt(10), 'StartifyFile'
