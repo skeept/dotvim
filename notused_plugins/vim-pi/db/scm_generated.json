@@ -4835,6 +4835,10 @@
     "type": "git",
     "url": "git://github.com/alepez/vim-llvmcov"
   },
+  "5324": {
+    "type": "git",
+    "url": "git://github.com/iamcco/markdown-preview.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

@@ -206,9 +206,13 @@ function! startify#session_save(...) abort
   endif
 
   call inputsave()
+  let vsession = fnamemodify(v:this_session, ':t')
+  if vsession ==# '__LAST__'
+    let vsession = ''
+  endif
   let sname = exists('a:1')
         \ ? a:1
-        \ : input('Save under this session name: ', fnamemodify(v:this_session, ':t'), 'custom,startify#session_list_as_string')
+        \ : input('Save under this session name: ', vsession, 'custom,startify#session_list_as_string')
         \ | redraw
   call inputrestore()
 
@@ -305,7 +309,7 @@ function! startify#session_write(spath)
 endfunction
 
 " Function: #session_delete {{{1
-function! startify#session_delete(...) abort
+function! startify#session_delete(bang, ...) abort
   if !isdirectory(s:session_dir)
     echo 'The session directory does not exist: '. s:session_dir
     return
@@ -321,8 +325,13 @@ function! startify#session_delete(...) abort
         \ | redraw
   call inputrestore()
 
+  if !filereadable(spath)
+    echomsg 'No such session: '. spath
+    return
+  endif
+
   echo 'Really delete '. spath .'? [y/n]' | redraw
-  if (nr2char(getchar()) == 'y')
+  if a:bang || nr2char(getchar()) == 'y'
     if delete(spath) == 0
       echo 'Deleted session '. spath .'!'
     else
@@ -334,14 +343,20 @@ function! startify#session_delete(...) abort
 endfunction
 
 " Function: #session_delete_buffers {{{1
-function! startify#session_delete_buffers() abort
+function! startify#session_delete_buffers()
   if !s:delete_buffers
     return
   endif
   let n = 1
   while n <= bufnr('$')
     if buflisted(n)
-      silent execute 'bdelete' n
+      try
+        silent execute 'bdelete' n
+      catch
+        echohl ErrorMsg
+        echomsg v:exception
+        echohl NONE
+      endtry
     endif
     let n += 1
   endwhile
@@ -756,7 +771,7 @@ endfunction
 function! s:create_last_session_link(spath)
   if !has('win32') && a:spath !~# '__LAST__$'
     let cmd = printf('ln -sf %s %s',
-          \ shellescape(a:spath),
+          \ shellescape(fnamemodify(a:spath, ':t')),
           \ shellescape(s:session_dir .'/__LAST__'))
     silent! call system(cmd)
     if v:shell_error
