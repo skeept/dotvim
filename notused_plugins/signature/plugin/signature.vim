@@ -51,13 +51,21 @@ if has('autocmd')
   augroup sig_autocmds
     autocmd!
     autocmd BufEnter,CmdwinEnter * call signature#sign#Refresh()
-    autocmd CursorHold * if g:SignaturePeriodicRefresh | call signature#sign#Refresh() | endif
-    autocmd BufEnter,FileType * if (&filetype ==? 'nerdtree') | call signature#utils#Maps('remove') | endif
-    autocmd BufLeave * if (&filetype ==? 'nerdtree') | call signature#utils#Maps('create') | endif
+    autocmd CursorHold * if g:SignaturePeriodicRefresh
+                       \|  call signature#sign#Refresh()
+                       \|endif
+    autocmd BufEnter,FileType * if (  (&filetype ==? 'nerdtree')
+                                 \ || (&filetype ==? 'netrw')
+                                 \ )
+                              \|  call signature#utils#Maps('remove')
+                              \|endif
+    autocmd BufLeave * if (&filetype ==? 'nerdtree')
+                     \|  call signature#utils#Maps('create')
+                     \| endif
   augroup END
 endif
 
 command! -nargs=0 SignatureToggleSigns call signature#utils#Toggle()
 command! -nargs=0 SignatureRefresh     call signature#sign#Refresh('force')
-command! -nargs=0 SignatureListMarks   call signature#mark#List('buf_curr')
+command! -nargs=? SignatureListMarks   call signature#mark#List('buf_curr', <args>)
 command! -nargs=? SignatureListMarkers call signature#marker#List(<args>)
