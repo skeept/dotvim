@@ -92,7 +92,7 @@ function! SetupVAM()
   VAMAddToActiveAddons unite-outline unite-qf
   VAMAddToActiveAddons vim-diff-enhanced
   VAMAddToActiveAddons magit fuzzysearch grepper
-  VAMAddToActiveAddons airline
+  "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
