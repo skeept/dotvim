@@ -1,4 +1,5 @@
 {
+"vim-maven-syntax":{"archive_name":"vim-maven-syntax.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23985","version":"0.1.0","vim_script_nr":5325},
 "markdown-preview%5324":{"archive_name":"markdown-preview.vim-0.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23983","version":"0.2.0","vim_script_nr":"5324"},
 "vim-llvmcov":{"archive_name":"vim-llvmcov.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23974","version":"0.1.0","vim_script_nr":5323},
 "vim-fake":{"archive_name":"vim-fake.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23968","version":"0.1.0","vim_script_nr":5322},

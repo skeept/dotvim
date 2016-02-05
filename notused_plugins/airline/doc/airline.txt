@@ -191,6 +191,7 @@ its contents. >
   let g:airline_symbols.paste = 'ρ'
   let g:airline_symbols.paste = 'Þ'
   let g:airline_symbols.paste = '∥'
+  let g:airline_symbols.notexists = '∄'
   let g:airline_symbols.whitespace = 'Ξ'
 
   " powerline symbols
@@ -284,6 +285,10 @@ configuration values that you can use.
       \ [ 'a', 'b', 'c' ],
       \ [ 'x', 'y', 'z', 'error', 'warning' ]
       \ ]
+<
+* configure the layout to not use %(%) grouping items in the statusline.
+  Try setting this to zero, if you notice bleeding color artifacts >
+  let airline#extensions#default#section_use_groupitems = 1
 <
 -------------------------------------                     *airline-quickfix*
 The quickfix extension is a simple built-in extension which determines

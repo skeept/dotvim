@@ -4839,6 +4839,10 @@
     "type": "git",
     "url": "git://github.com/iamcco/markdown-preview.vim"
   },
+  "5325": {
+    "type": "git",
+    "url": "git://github.com/NLKNguyen/vim-maven-syntax"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
