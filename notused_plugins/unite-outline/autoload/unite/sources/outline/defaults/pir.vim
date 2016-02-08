@@ -11,7 +11,7 @@
 " Default outline info for PIR
 " Version: 0.0.3 (draft)
 
-function! unite#sources#outline#defaults#pir#outline_info()
+function! unite#sources#outline#defaults#pir#outline_info() abort
   return s:outline_info
 endfunction
 

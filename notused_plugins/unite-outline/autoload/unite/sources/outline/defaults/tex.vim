@@ -11,7 +11,7 @@
 " Default outline info for TeX
 " Version: 0.1.1
 
-function! unite#sources#outline#defaults#tex#outline_info()
+function! unite#sources#outline#defaults#tex#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -49,12 +49,12 @@ let s:unit_level_map = {
       \ 'label'        : 7,
       \ }
 
-function! s:outline_info.before(context)
+function! s:outline_info.before(context) abort
   let s:unit_count = map(copy(s:unit_level_map), '0')
   let s:bib_level = 7
 endfunction
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,
@@ -98,7 +98,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   endif
 endfunction
 
-function! s:normalize_heading_word(word, unit)
+function! s:normalize_heading_word(word, unit) abort
   let word = substitute(a:word, '\\\\\n', '', 'g')
   let word = matchstr(word, '^\s*\\\w\+{\zs.*\ze}\s*\%(%.*\)\?$')
   let word = s:unit_seqnr_prefix(a:unit) . word
@@ -108,7 +108,7 @@ function! s:normalize_heading_word(word, unit)
   return word
 endfunction
 
-function! s:unit_seqnr_prefix(unit)
+function! s:unit_seqnr_prefix(unit) abort
   let seqnr = []
 
   if a:unit ==# 'part'

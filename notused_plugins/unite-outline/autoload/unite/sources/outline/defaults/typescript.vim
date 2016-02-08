@@ -13,7 +13,7 @@
 
 " Download typescript ctags at https://github.com/jb55/typescript-ctags
 
-function! unite#sources#outline#defaults#typescript#outline_info()
+function! unite#sources#outline#defaults#typescript#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -37,6 +37,6 @@ let s:outline_info = {
       \ ],
       \}
 
-function! s:outline_info.extract_headings(context)
+function! s:outline_info.extract_headings(context) abort
   return s:Ctags.extract_headings(a:context)
 endfunction

@@ -29,13 +29,13 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#outline#modules#util#import()
+function! unite#sources#outline#modules#util#import() abort
   return s:Util
 endfunction
 
 "-----------------------------------------------------------------------------
 
-function! s:get_SID()
+function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
 endfunction
 let s:SID = s:get_SID()
@@ -46,7 +46,7 @@ let s:Util = unite#sources#outline#modules#base#new('Util', s:SID)
 "-----------------------------------------------------------------------------
 " Heading
 
-function! s:Util_get_indent_level(context, lnum)
+function! s:Util_get_indent_level(context, lnum) abort
   let line = a:context.lines[a:lnum]
   let sw = a:context.buffer.sw
   let ts = a:context.buffer.ts
@@ -55,7 +55,7 @@ function! s:Util_get_indent_level(context, lnum)
 endfunction
 call s:Util.function('get_indent_level')
 
-function! s:Util_get_comment_heading_level(context, lnum, ...)
+function! s:Util_get_comment_heading_level(context, lnum, ...) abort
   let line = a:context.lines[a:lnum]
   if line =~ '^\s'
     let level =  (a:0 ? a:1 : s:Util_get_indent_level(a:context, a:lnum) + 3)
@@ -71,7 +71,7 @@ call s:Util.function('get_comment_heading_level')
 " Matching
 
 " join_to( {context}, {lnum}, {pattern} [, {limit}])
-function! s:Util_join_to(context, lnum, pattern, ...)
+function! s:Util_join_to(context, lnum, pattern, ...) abort
   let lines = a:context.lines
   let limit = (a:0 ? a:1 : 3)
   if limit < 0
@@ -90,7 +90,7 @@ function! s:Util_join_to(context, lnum, pattern, ...)
 endfunction
 call s:Util.function('join_to')
 
-function! s:join_to_backward(context, lnum, pattern, limit)
+function! s:join_to_backward(context, lnum, pattern, limit) abort
   let lines = a:context.lines
   let lnum = max([1, a:lnum - a:limit])
   while lnum > 0
@@ -103,7 +103,7 @@ function! s:join_to_backward(context, lnum, pattern, limit)
   return join(lines[lnum : a:lnum], "\n")
 endfunction
 
-function! s:Util_join_to_rparen(context, lnum, ...)
+function! s:Util_join_to_rparen(context, lnum, ...) abort
   let limit = (a:0 ? a:1 : 3)
   let line = s:Util_join_to(a:context, a:lnum, ')', limit)
   let line = substitute(line, "\\s*\n\\s*", ' ', 'g')
@@ -113,7 +113,7 @@ endfunction
 call s:Util.function('join_to_rparen')
 
 " neighbor_match( {context}, {lnum}, {pattern} [, {range} [, {exclusive}])
-function! s:Util_neighbor_match(context, lnum, pattern, ...)
+function! s:Util_neighbor_match(context, lnum, pattern, ...) abort
   let lines = a:context.lines
   let range = get(a:000, 0, 1)
   let exclusive = !!get(a:000, 1, 0)
@@ -137,7 +137,7 @@ function! s:Util_neighbor_match(context, lnum, pattern, ...)
 endfunction
 call s:Util.function('neighbor_match')
 
-function! s:neighbor_ranges(context, lnum, prev, next, exclusive)
+function! s:neighbor_ranges(context, lnum, prev, next, exclusive) abort
   let max_lnum = len(a:context.lines) - 1
   let bwd_range = range(max([1, a:lnum - a:prev]), max([1, a:lnum - a:exclusive]))
   let fwd_range = range(min([a:lnum + a:exclusive, max_lnum]), min([a:lnum + a:next, max_lnum]))
@@ -145,7 +145,7 @@ function! s:neighbor_ranges(context, lnum, prev, next, exclusive)
 endfunction
 
 " neighbor_matchstr( {context}, {lnum}, {pattern} [, {range} [, {exclusive}])
-function! s:Util_neighbor_matchstr(context, lnum, pattern, ...)
+function! s:Util_neighbor_matchstr(context, lnum, pattern, ...) abort
   let lines = a:context.lines
   let range = get(a:000, 0, 1)
   let exclusive = !!get(a:000, 1, 0)
@@ -197,7 +197,7 @@ let s:SHARED_PATTERNS = {
       \ },
       \}
 
-function! s:Util_shared_pattern(filetype, which)
+function! s:Util_shared_pattern(filetype, which) abort
   return s:SHARED_PATTERNS[a:filetype][a:which]
 endfunction
 call s:Util.function('shared_pattern')
@@ -208,10 +208,10 @@ call s:Util.function('shared_pattern')
 let s:List = unite#sources#outline#modules#base#new('List', s:SID)
 let s:Util.List = s:List
 
-function! s:List_sort_by_lnum(dicts)
+function! s:List_sort_by_lnum(dicts) abort
   return sort(a:dicts, 's:compare_by_lnum')
 endfunction
-function! s:compare_by_lnum(d1, d2)
+function! s:compare_by_lnum(d1, d2) abort
   let n1 = a:d1.lnum
   let n2 = a:d2.lnum
   return n1 == n2 ? 0 : n1 > n2 ? 1 : -1
@@ -227,7 +227,7 @@ let s:Path = unite#sources#outline#modules#base#new('Path', s:SID)
 let s:Util.Path = s:Path
 
 " Path.normalize( {path} [, {mods}])
-function! s:Path_normalize(path, ...)
+function! s:Path_normalize(path, ...) abort
   let path = a:path
   if a:0
     let mods = a:0
@@ -247,7 +247,7 @@ let s:String = unite#sources#outline#modules#base#new('String', s:SID)
 let s:Util.String = s:String
 
 " String.capitalize( {str} [, {flag}])
-function! s:String_capitalize(str, ...)
+function! s:String_capitalize(str, ...) abort
   let flag = (a:0 ? a:1 : '')
   return substitute(a:str, '\<\(\h\)\(\w\+\)\>', '\u\1\L\2', flag)
 endfunction
@@ -256,7 +256,7 @@ call s:String.function('capitalize')
 " Ported from:
 " Sample code from Programing Ruby, page 145
 "
-function! s:String_nr2roman(nr)
+function! s:String_nr2roman(nr) abort
   if a:nr <= 0 || 4999 < a:nr
     return string(a:nr)
   endif
@@ -279,7 +279,7 @@ function! s:String_nr2roman(nr)
 endfunction
 call s:String.function('nr2roman')
 
-function! s:String_shellescape(str)
+function! s:String_shellescape(str) abort
   if &shell =~? '^\%(cmd\%(\.exe\)\=\|command\.com\)\%(\s\|$\)' || unite#util#is_windows()
     return '"' . substitute(a:str, '"', '""', 'g') . '"'
   else
@@ -293,20 +293,20 @@ unlet s:String
 "-----------------------------------------------------------------------------
 " Misc
 
-function! s:Util_print_debug(which, msg)
+function! s:Util_print_debug(which, msg) abort
   if get(g:, 'unite_source_outline_' . a:which . '_debug', 0)
     echomsg "unite-outline: " . a:msg
   endif
 endfunction
 call s:Util.function('print_debug')
 
-function! s:Util_print_progress(msg)
+function! s:Util_print_progress(msg) abort
   echon a:msg
   redraw
 endfunction
 call s:Util.function('print_progress')
 
-function! s:Util__cpp_is_in_comment(heading_line, matched_line)
+function! s:Util__cpp_is_in_comment(heading_line, matched_line) abort
   return ((a:matched_line =~ '^\s*//'  && a:heading_line =~ '^\s*//') ||
         \ (a:matched_line =~ '^\s*/\*' && a:matched_line !~ '\*/\s*$'))
 endfunction

@@ -29,13 +29,13 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#outline#modules#tree#import()
+function! unite#sources#outline#modules#tree#import() abort
   return s:Tree
 endfunction
 
 "-----------------------------------------------------------------------------
 
-function! s:get_SID()
+function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
 endfunction
 let s:SID = s:get_SID()
@@ -79,14 +79,14 @@ let s:Tree.MAX_DEPTH = 20
 
 " Creates a new root node.
 "
-function! s:Tree_new()
+function! s:Tree_new() abort
   return { '__root__': 1, 'id': 0, 'level': 0, 'children': [] }
 endfunction
 call s:Tree.function('new')
 
 " Append {child} to a List of children of {node}.
 "
-function! s:Tree_append_child(node, child)
+function! s:Tree_append_child(node, child) abort
   if !has_key(a:node, 'children')
     let a:node.children = []
   endif
@@ -115,7 +115,7 @@ call s:Tree.function('append_child')
 "                                 |  |              |  |
 "                                 :  +--2           :  +--2
 "
-function! s:Tree_build(elems)
+function! s:Tree_build(elems) abort
   let root = s:Tree_new()
   if empty(a:elems) | return root | endif
   " Build a Tree.
@@ -146,7 +146,7 @@ call s:Tree.function('build')
 "    |  |             |  |
 "    :  +--2          :  +--2
 "
-function! s:normalize_levels(node)
+function! s:normalize_levels(node) abort
   for child in a:node.children
     let child.level = a:node.level + 1
     call s:normalize_levels(child)
@@ -155,7 +155,7 @@ endfunction
 
 " Flattens a Tree into a List with setting the levels of nodes.
 "
-function! s:Tree_flatten(node)
+function! s:Tree_flatten(node) abort
   let elems = []
   for child in a:node.children
     let child.level = a:node.level + 1
@@ -177,7 +177,7 @@ let s:Tree.List = s:List
 
 " Normalize the levels of {objs}.
 "
-function! s:List_normalize_levels(objs)
+function! s:List_normalize_levels(objs) abort
   let tree = s:Tree_build(a:objs)
   let objs = s:fast_flatten(tree)
   return objs
@@ -186,7 +186,7 @@ call s:List.function('normalize_levels')
 
 " Flattens a Tree into a List without setting the levels of nodes.
 "
-function! s:fast_flatten(node)
+function! s:fast_flatten(node) abort
   let objs = []
   " Push toplevel nodes.
   let stack = reverse(copy(a:node.children))
@@ -202,7 +202,7 @@ endfunction
 
 " Resets the matched-marks of the candidates.
 "
-function! s:List_reset_marks(candidates)
+function! s:List_reset_marks(candidates) abort
   if empty(a:candidates) | return a:candidates | endif
   let prev_cand = {
         \ 'is_matched': 1, 'source__is_marked': 1,
@@ -227,7 +227,7 @@ call s:List.function('reset_marks')
 " NOTE: unite-outline's matcher and formatter see these flags to accomplish
 " their tree-aware filtering and formatting tasks.
 "
-function! s:List_mark(candidates, pred, ...)
+function! s:List_mark(candidates, pred, ...) abort
   let pred = substitute(a:pred, '\<v:val\>', 'cand', 'g')
   let mark_reserved = map(range(0, s:Tree.MAX_DEPTH), 0)
   for cand in reverse(copy(a:candidates))
@@ -255,7 +255,7 @@ call s:List.function('mark')
 
 " Remove the matched headings and their descendants.
 "
-function! s:List_remove(headings, pred)
+function! s:List_remove(headings, pred) abort
   let pred = substitute(a:pred, '\<v:val\>', 'head', 'g')
   let matched_level = s:Tree.MAX_DEPTH + 1
   let headings = []

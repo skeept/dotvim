@@ -13,7 +13,7 @@
 " Default outline info for Ruby/RSpec
 " Version: 0.1.2
 
-function! unite#sources#outline#defaults#ruby#rspec#outline_info()
+function! unite#sources#outline#defaults#ruby#rspec#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -61,14 +61,14 @@ call extend(s:outline_info, {
       \ ],
       \})
 
-function! s:outline_info.initialize()
+function! s:outline_info.initialize() abort
   let self.rspec_heading = '^\s*\(' . join(self.rspec_heading_keywords, '\|') . '\)\>'
   let self.heading_keywords += self.rspec_heading_keywords
   let self.highlight_rules += self.rspec_highlight_rules
   call call(self.super.initialize, [], self)
 endfunction
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let word = a:heading_line
   let type = 'generic'
   let level = 0

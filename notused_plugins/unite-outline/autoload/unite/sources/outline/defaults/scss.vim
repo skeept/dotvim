@@ -11,7 +11,7 @@
 " Default outline info for SCSS
 " Version: 0.0.1
 
-function! unite#sources#outline#defaults#scss#outline_info()
+function! unite#sources#outline#defaults#scss#outline_info() abort
   return unite#sources#outline#defaults#css#outline_info()
 endfunction
 

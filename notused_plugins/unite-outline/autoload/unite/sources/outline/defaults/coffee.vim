@@ -19,11 +19,11 @@ let s:outline_info = {
       \ 'heading': s:heading
       \ }
 
-function! unite#sources#outline#defaults#coffee#outline_info()
+function! unite#sources#outline#defaults#coffee#outline_info() abort
   return s:outline_info
 endfunction
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let h_lnum = a:context.heading_lnum
   let level = s:Util.get_indent_level(a:context, h_lnum)
   let heading = {

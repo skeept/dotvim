@@ -11,7 +11,7 @@
 " Default outline info for HTML
 " Version: 0.0.8
 
-function! unite#sources#outline#defaults#html#outline_info()
+function! unite#sources#outline#defaults#html#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -45,7 +45,7 @@ let s:outline_info = {
       \ ],
       \}
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,
@@ -70,7 +70,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   endif
 endfunction
 
-function! s:get_text_content(level, context)
+function! s:get_text_content(level, context) abort
   let h_lnum = a:context.heading_lnum
   let text = s:Util.join_to(a:context, h_lnum, '</[hH]' . a:level . '[^>]*>')
   let text = substitute(text, '\n', '', 'g')

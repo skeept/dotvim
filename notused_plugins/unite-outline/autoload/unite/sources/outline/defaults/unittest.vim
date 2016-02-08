@@ -14,7 +14,7 @@
 " h1mesuke/vim-unittest - GitHub
 " https://github.com/h1mesuke/vim-unittest
 
-function! unite#sources#outline#defaults#unittest#outline_info()
+function! unite#sources#outline#defaults#unittest#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -28,7 +28,7 @@ let s:outline_info = {
       \ 'heading'  : '^\s*\d\+) \%(Failure\|Error\): ',
       \}
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,

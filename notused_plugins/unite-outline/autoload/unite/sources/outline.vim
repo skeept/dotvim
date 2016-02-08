@@ -81,13 +81,13 @@ let s:WINVAR_OUTLINE_BUFFER_IDS = 'unite_source_outline_buffer_ids'
 "-----------------------------------------------------------------------------
 " Functions
 
-function! unite#sources#outline#define()
+function! unite#sources#outline#define() abort
   return s:source
 endfunction
 
 " Defines an alias of filetype {ftype}.
 "
-function! unite#sources#outline#alias(alias, ftype)
+function! unite#sources#outline#alias(alias, ftype) abort
   if type(a:alias) == type([])
     call s:define_filetype_aliases(a:alias, a:ftype)
   elseif type(a:alias) == type('')
@@ -99,7 +99,7 @@ endfunction
 
 let s:ftype_alias_table = {}
 
-function! s:define_filetype_aliases(aliases, ftype)
+function! s:define_filetype_aliases(aliases, ftype) abort
   for alias in a:aliases
     let s:ftype_alias_table[alias] = a:ftype
   endfor
@@ -108,10 +108,10 @@ endfunction
 " Accessor functions for the outline data, that is a Dictionary assigned to
 " the buffer local variable.
  
-function! unite#sources#outline#has_outline_data(...)
+function! unite#sources#outline#has_outline_data(...) abort
   return call('s:has_outline_data', a:000)
 endfunction
-function! s:has_outline_data(bufnr, ...)
+function! s:has_outline_data(bufnr, ...) abort
   if a:0
     let key = a:1
     let data = getbufvar(a:bufnr, s:BUFVAR_OUTLINE_DATA)
@@ -126,10 +126,10 @@ endfunction
 " isn't available, returns {default}. When {key} is omitted, returns an
 " outline data's Dictionary.
 "
-function! unite#sources#outline#get_outline_data(...)
+function! unite#sources#outline#get_outline_data(...) abort
   return call('s:get_outline_data', a:000)
 endfunction
-function! s:get_outline_data(bufnr, ...)
+function! s:get_outline_data(bufnr, ...) abort
   let data = getbufvar(a:bufnr, s:BUFVAR_OUTLINE_DATA)
   let argc = len(a:000)
   if argc == 0
@@ -143,30 +143,30 @@ endfunction
 
 " Sets the value of outline data {key} for buffer {bufnr} to {value}.
 "
-function! unite#sources#outline#set_outline_data(...)
+function! unite#sources#outline#set_outline_data(...) abort
   call call('s:set_outline_data', a:000)
 endfunction
-function! s:set_outline_data(bufnr, key, value)
+function! s:set_outline_data(bufnr, key, value) abort
   let data = getbufvar(a:bufnr, s:BUFVAR_OUTLINE_DATA)
   let data[a:key] = a:value
 endfunction
 
 " Removes the value of outline data {key} for buffer {bufnr}.
 "
-function! unite#sources#outline#remove_outline_data(...)
+function! unite#sources#outline#remove_outline_data(...) abort
   call call('s:remove_outline_data', a:000)
 endfunction
-function! s:remove_outline_data(bufnr, key)
+function! s:remove_outline_data(bufnr, key) abort
   let data = getbufvar(a:bufnr, s:BUFVAR_OUTLINE_DATA)
   unlet data[a:key]
 endfunction
 
-function! s:has_outline_buffer_ids(winnr)
+function! s:has_outline_buffer_ids(winnr) abort
   let winvars  = getwinvar(a:winnr, '')
   return has_key(winvars, s:WINVAR_OUTLINE_BUFFER_IDS)
 endfunction
 
-function! s:get_outline_buffer_ids(winnr)
+function! s:get_outline_buffer_ids(winnr) abort
   let winvars  = getwinvar(a:winnr, '')
   return winvars[s:WINVAR_OUTLINE_BUFFER_IDS]
 endfunction
@@ -175,10 +175,10 @@ endfunction
 " empty Dictionary. When {ftype} is a Dictionary, assumes it is a Context and
 " takes the context buffer's filetype.
 "
-function! unite#sources#outline#get_outline_info(...)
+function! unite#sources#outline#get_outline_info(...) abort
   return call('s:get_outline_info', a:000)
 endfunction
-function! s:get_outline_info(ftype, ...)
+function! s:get_outline_info(ftype, ...) abort
   if type(a:ftype) == type({})
     let ftype = join(a:ftype.buffer.filetypes, '.')
     let context = a:ftype
@@ -214,7 +214,7 @@ function! s:get_outline_info(ftype, ...)
   return {}
 endfunction
 
-function! s:find_loadable_func(ftype, paths)
+function! s:find_loadable_func(ftype, paths) abort
   let ftype = substitute(a:ftype, '\.', '_', 'g')
   for path in a:paths
     let path = substitute(path, '^autoload/', '', '') . ftype
@@ -234,7 +234,7 @@ endfunction
 
 " Reloads an autoload script where autoload function {funcname} is defined.
 "
-function! s:reload_autoload_script(funcname)
+function! s:reload_autoload_script(funcname) abort
   " path#to#file#func() -> autoload/path/to/file.vim -> full path
   let path = 'autoload/' . join(split(a:funcname, '#')[:-2], '/') . '.vim'
   let path = get(split(globpath(&runtimepath, path), "\<NL>"), 0, '')
@@ -243,7 +243,7 @@ function! s:reload_autoload_script(funcname)
   execute 'source' fnameescape(path)
 endfunction
 
-function! s:load_outline_info(load_func, context, reload)
+function! s:load_outline_info(load_func, context, reload) abort
   if a:reload
     call s:reload_autoload_script(a:load_func)
   endif
@@ -260,7 +260,7 @@ function! s:load_outline_info(load_func, context, reload)
   return oinfo
 endfunction
 
-function! s:initialize_outline_info(oinfo, name)
+function! s:initialize_outline_info(oinfo, name) abort
   if has_key(a:oinfo, 'super')
     if a:oinfo.__initialized__ > a:oinfo.super.__initialized__
       return
@@ -289,7 +289,7 @@ function! s:initialize_outline_info(oinfo, name)
   endif
 endfunction
 
-function! s:normalize_skip_info(oinfo)
+function! s:normalize_skip_info(oinfo) abort
   if has_key(a:oinfo.skip, 'header')
     let value_type = type(a:oinfo.skip.header)
     if value_type == type("")
@@ -313,11 +313,11 @@ function! s:normalize_skip_info(oinfo)
   endif
 endfunction
 
-function! s:normalize_block_patterns(patterns)
+function! s:normalize_block_patterns(patterns) abort
   return { 'begin': a:patterns[0], 'end': a:patterns[1] }
 endfunction
 
-function! s:normalize_heading_groups(oinfo)
+function! s:normalize_heading_groups(oinfo) abort
   if !has_key(a:oinfo, 'heading_groups')
     let a:oinfo.heading_groups = {}
     let group_map = {}
@@ -338,10 +338,10 @@ endfunction
 " Returns the value of filetype option {key} for filetype {ftype}.
 " If the value isn't available, returns {default}.
 "
-function! unite#sources#outline#get_filetype_option(...)
+function! unite#sources#outline#get_filetype_option(...) abort
   return call('s:get_filetype_option', a:000)
 endfunction
-function! s:get_filetype_option(ftype, key, ...)
+function! s:get_filetype_option(ftype, key, ...) abort
   for ftype in s:resolve_filetype(a:ftype)
     if has_key(g:unite_source_outline_filetype_options, ftype)
       let options = g:unite_source_outline_filetype_options[ftype]
@@ -367,7 +367,7 @@ endfunction
 "     |/
 "   (9)aaa         -> ($)aliases
 "
-function! s:resolve_filetype(ftype)
+function! s:resolve_filetype(ftype) abort
   let ftcands = []
   let ftype = a:ftype
   while 1
@@ -388,7 +388,7 @@ function! s:resolve_filetype(ftype)
   return ftcands
 endfunction
 
-function! s:resolve_filetype_alias(ftype)
+function! s:resolve_filetype_alias(ftype) abort
   let seen = {}
   let ftcands = []
   let ftype = a:ftype
@@ -407,10 +407,10 @@ function! s:resolve_filetype_alias(ftype)
   return ftcands
 endfunction
 
-function! unite#sources#outline#get_highlight(...)
+function! unite#sources#outline#get_highlight(...) abort
   return call('s:get_highlight', a:000)
 endfunction
-function! s:get_highlight(...)
+function! s:get_highlight(...) abort
   for name in a:000
     if has_key(g:unite_source_outline_highlight, name)
       return g:unite_source_outline_highlight[name]
@@ -421,12 +421,12 @@ function! s:get_highlight(...)
   return s:default_highlight.normal
 endfunction
 
-function! unite#sources#outline#import(name, ...)
+function! unite#sources#outline#import(name, ...) abort
   let name = tolower(substitute(a:name, '\(\l\)\(\u\)', '\1_\2', 'g'))
   return call('unite#sources#outline#modules#' . name . '#import', a:000)
 endfunction
 
-function! unite#sources#outline#remove_cache_files()
+function! unite#sources#outline#remove_cache_files() abort
   call s:FileCache.clear()
 endfunction
 
@@ -507,7 +507,7 @@ let s:FileCache = unite#sources#outline#import('FileCache', s:OUTLINE_CACHE_DIR)
 let s:Tree = unite#sources#outline#import('Tree')
 let s:Util = unite#sources#outline#import('Util')
 
-function! s:get_SID()
+function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
 endfunction
 let s:SID = s:get_SID()
@@ -523,7 +523,7 @@ let s:source = {
       \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
       \ }
 
-function! s:Source_Hooks_on_init(source_args, unite_context)
+function! s:Source_Hooks_on_init(source_args, unite_context) abort
   let a:unite_context.source__outline_buffer_id = s:outline_buffer_id
   let a:unite_context.source__outline_source_bufnr = bufnr('%')
   call s:initialize_outline_data()
@@ -535,7 +535,7 @@ let s:source.hooks.on_init = function(s:SID . 'Source_Hooks_on_init')
 " Initialize the current buffer's outline data and register autocommands to
 " manage the data if the buffer hasn't been initialized yet.
 "
-function! s:initialize_outline_data()
+function! s:initialize_outline_data() abort
   let bufnr = bufnr('%')
   let bufvars  = getbufvar(bufnr, '')
   if !has_key(bufvars, s:BUFVAR_OUTLINE_DATA)
@@ -548,7 +548,7 @@ endfunction
 " Associate the current buffer's window with the outline buffer {buffer_id}
 " where the headings from the buffer will be displayed.
 "
-function! s:attach_outline_buffer(buffer_id)
+function! s:attach_outline_buffer(buffer_id) abort
   let winnr = winnr()
   let winvars  = getwinvar(winnr, '')
   if !has_key(winvars, s:WINVAR_OUTLINE_BUFFER_IDS)
@@ -557,7 +557,7 @@ function! s:attach_outline_buffer(buffer_id)
   call add(winvars[s:WINVAR_OUTLINE_BUFFER_IDS], a:buffer_id)
 endfunction
 
-function! s:Source_Hooks_on_syntax(source_args, unite_context)
+function! s:Source_Hooks_on_syntax(source_args, unite_context) abort
   let bufnr = a:unite_context.source__outline_source_bufnr
   let odata = s:get_outline_data(bufnr)
   if type(odata) != type({}) || odata.state !=# 'OK'
@@ -583,7 +583,7 @@ function! s:Source_Hooks_on_syntax(source_args, unite_context)
 endfunction
 let s:source.hooks.on_syntax = function(s:SID . 'Source_Hooks_on_syntax')
 
-function! s:Source_gather_candidates(source_args, unite_context)
+function! s:Source_gather_candidates(source_args, unite_context) abort
   " Save the Vim options.
   let save_cpoptions  = &cpoptions
   let save_ignorecase = &ignorecase
@@ -645,11 +645,11 @@ function! s:Source_gather_candidates(source_args, unite_context)
 endfunction
 let s:source.gather_candidates = function(s:SID . 'Source_gather_candidates')
 
-function! s:source.complete(args, context, arglead, cmdline, cursorpos) "{{{
+function! s:source.complete(args, context, arglead, cmdline, cursorpos) abort "{{{
 	return s:supported_arguments
 endfunction"}}}
 
-function! s:parse_source_arguments(source_args, unite_context)
+function! s:parse_source_arguments(source_args, unite_context) abort
   let options = {
         \ 'is_force': 0,
         \ 'extracted_by': '?',
@@ -675,7 +675,7 @@ endfunction
 
 " Creates a context Dictionary.
 "
-function! s:create_context(bufnr, ...)
+function! s:create_context(bufnr, ...) abort
   let buffer = {
         \ 'nr'  : a:bufnr,
         \ 'path': fnamemodify(bufname(a:bufnr), ':p'),
@@ -694,7 +694,7 @@ endfunction
 
 " Returns True if the cached {candidates} is valid and reusable.
 "
-function! s:is_valid_candidates(candidates, context)
+function! s:is_valid_candidates(candidates, context) abort
   let last_method = (!empty(a:candidates) &&
         \ a:candidates[0].source__heading_type ==# 'folding' ? 'folding' : 'filetype')
   if a:context.extracted_by == '?'
@@ -706,13 +706,13 @@ endfunction
 " Returns False if {cache_data}'s format is not compatible with the current
 " version of unite-outline.
 "
-function! s:is_valid_filecache(cache_data)
+function! s:is_valid_filecache(cache_data) abort
   return (type(a:cache_data) == type({})
         \ && has_key(a:cache_data, s:FILECACHE_FORMAT_VERSION_KEY)
         \ && a:cache_data[s:FILECACHE_FORMAT_VERSION_KEY] == s:FILECACHE_FORMAT_VERSION)
 endfunction
 
-function! s:get_candidates(bufnr, options)
+function! s:get_candidates(bufnr, options) abort
   " Update the context Dictionary.
   let context = s:create_context(a:bufnr, a:options)
   call s:set_outline_data(a:bufnr, 'context', context)
@@ -777,7 +777,7 @@ function! s:get_candidates(bufnr, options)
   return candidates
 endfunction
 
-function! s:extract_headings(context)
+function! s:extract_headings(context) abort
   let src_winnr = bufwinnr(a:context.buffer.nr)
   if src_winnr == -1
     throw "NoWindowError:"
@@ -881,7 +881,7 @@ function! s:extract_headings(context)
   endtry
 endfunction
 
-function! s:benchmark_start()
+function! s:benchmark_start() abort
   if get(g:, 'unite_source_outline_profile', 0) && has("reltime")
     return s:get_reltime()
   else
@@ -889,7 +889,7 @@ function! s:benchmark_start()
   endif
 endfunction
 
-function! s:benchmark_stop(start_time, num_lines)
+function! s:benchmark_stop(start_time, num_lines) abort
   if get(g:, 'unite_source_outline_profile', 0) && has("reltime")
     let used_time = s:get_reltime() - a:start_time
     let used_time_100l = used_time * (str2float("100") / a:num_lines)
@@ -898,14 +898,14 @@ function! s:benchmark_stop(start_time, num_lines)
   endif
 endfunction
 
-function! s:get_reltime()
+function! s:get_reltime() abort
   return str2float(reltimestr(reltime()))
 endfunction
 
 " Extract headings from the source buffer in its filetype specific way using
 " the filetype's outline info.
 "
-function! s:extract_filetype_headings(context)
+function! s:extract_filetype_headings(context) abort
   let buffer = a:context.buffer
   let oinfo = a:context.outline_info
   if empty(oinfo)
@@ -951,7 +951,7 @@ function! s:extract_filetype_headings(context)
   return headings
 endfunction
 
-function! s:builtin_extract_headings(context)
+function! s:builtin_extract_headings(context) abort
   let oinfo = a:context.outline_info
   let [which, pattern] = s:build_heading_pattern(oinfo)
 
@@ -1041,7 +1041,7 @@ endfunction
 "   [ ['dummy', 'dummy', 'heading-1', 'heading', 'heading+1'],
 "     '\%(\(heading-1\)\|\(heading\)\|\(heading+1\)\)' ]
 "
-function! s:build_heading_pattern(oinfo)
+function! s:build_heading_pattern(oinfo) abort
   let which = ['dummy', 'dummy']
   " NOTE: searchpos() returns submatch counted from 2.
   let sub_patterns = []
@@ -1061,7 +1061,7 @@ function! s:build_heading_pattern(oinfo)
   let pattern = '\%(' . join(sub_patterns, '\|') . '\)'
   return [which, pattern]
 endfunction
-function! s:_substitue_sub_pattern(pattern)
+function! s:_substitue_sub_pattern(pattern) abort
   " Substitute all '\(' with '\%('
   let meta_lparen = '\(\(^\|[^\\]\)\(\\\{2}\)*\)\@<=\\('
   return '\(' . substitute(a:pattern, meta_lparen, '\\%(', 'g') . '\)'
@@ -1069,7 +1069,7 @@ endfunction
 
 " Returns a List of ranges to be skipped while the extraction.
 "
-function! s:get_skip_ranges(context)
+function! s:get_skip_ranges(context) abort
   let oinfo = a:context.outline_info
   if !has_key(oinfo, 'skip') | return [] | endif
   let ranges = []
@@ -1103,7 +1103,7 @@ function! s:get_skip_ranges(context)
   return ranges
 endfunction
 
-function! s:get_header_range(context)
+function! s:get_header_range(context) abort
   let oinfo = a:context.outline_info
   let header = oinfo.skip.header
   let has_leading = has_key(header, 'leading')
@@ -1128,7 +1128,7 @@ function! s:get_header_range(context)
   endif
 endfunction
 
-function! s:skip_while(pattern, from)
+function! s:skip_while(pattern, from) abort
   let lnum = a:from + 1 | let num_lines = line('$')
   while lnum <= num_lines
     let line = getline(lnum)
@@ -1140,7 +1140,7 @@ function! s:skip_while(pattern, from)
   return lnum
 endfunction
 
-function! s:skip_until(pattern, from)
+function! s:skip_until(pattern, from) abort
   let lnum = a:from | let num_lines = line('$')
   while lnum <= num_lines
     let line = getline(lnum)
@@ -1152,7 +1152,7 @@ function! s:skip_until(pattern, from)
   return lnum
 endfunction
 
-function! s:extract_folding_headings(context)
+function! s:extract_folding_headings(context) abort
   let headings = []
   let foldinfo = []
   let num_lines = line('$')
@@ -1205,7 +1205,7 @@ function! s:extract_folding_headings(context)
   return headings
 endfunction
 
-function! s:normalize_heading(heading, context)
+function! s:normalize_heading(heading, context) abort
   let oinfo = a:context.outline_info
   let a:heading.id = s:heading_id
   let a:heading.word = s:normalize_heading_word(a:heading.word)
@@ -1231,7 +1231,7 @@ function! s:normalize_heading(heading, context)
   return a:heading
 endfunction
 
-function! s:normalize_heading_word(word)
+function! s:normalize_heading_word(word) abort
   let word = substitute(substitute(a:word, '^\s*', '', ''), '\s*$', '', '')
   let word = substitute(word, '\s\+', ' ', 'g')
   return word
@@ -1240,7 +1240,7 @@ endfunction
 let s:SIGNATURE_RANGE = 10
 let s:SIGNATURE_PRECISION = 2
 
-function! s:calc_signature(lnum, lines)
+function! s:calc_signature(lnum, lines) abort
   let range = s:SIGNATURE_RANGE
   let from = max([1, a:lnum - range])
   let to   = min([a:lnum + range, len(a:lines) - 1])
@@ -1248,7 +1248,7 @@ function! s:calc_signature(lnum, lines)
   let fwd_lines = a:lines[a:lnum  : to]
   return s:_calc_signature(bwd_lines, fwd_lines)
 endfunction
-function! s:_calc_signature(bwd_lines, fwd_lines)
+function! s:_calc_signature(bwd_lines, fwd_lines) abort
   let precision = s:SIGNATURE_PRECISION
   let is_not_blank = 'v:val =~ "\\S"'
   let bwd_lines = filter(a:bwd_lines, is_not_blank)[-precision-1 : -2]
@@ -1257,7 +1257,7 @@ function! s:_calc_signature(bwd_lines, fwd_lines)
 endfunction
 
 " Quick and Dirty Digest
-function! s:digest_line(line)
+function! s:digest_line(line) abort
   let line = substitute(a:line, '\s*', '', 'g')
   if s:strchars(line) <= 20
     let digest = line
@@ -1269,17 +1269,17 @@ function! s:digest_line(line)
 endfunction
 
 if v:version >= 703
-  function! s:strchars(str)
+  function! s:strchars(str) abort
     return strchars(a:str)
   endfunction
 else
-  function! s:strchars(str)
+  function! s:strchars(str) abort
     return strlen(substitute(a:str, '.', 'c', 'g'))
   endfunction
 endif
 
 " Heading Type Filter
-function! s:filter_headings(headings, ignore_types)
+function! s:filter_headings(headings, ignore_types) abort
   if empty(a:ignore_types) | return a:headings | endif
   let headings = a:headings
   let ignore_types = copy(a:ignore_types)
@@ -1299,14 +1299,14 @@ function! s:filter_headings(headings, ignore_types)
   return headings
 endfunction
 
-function! s:convert_headings_to_candidates(headings, bufnr)
+function! s:convert_headings_to_candidates(headings, bufnr) abort
   if empty(a:headings) | return [] | endif
   let path = fnamemodify(bufname(a:bufnr), ':p')
   let candidates = map(copy(a:headings), 's:create_candidate(v:val, path)')
   return candidates
 endfunction
 
-function! s:create_candidate(heading, path)
+function! s:create_candidate(heading, path) abort
   " NOTE:
   "   abbr - String for displaying
   "   word - String for narrowing
@@ -1328,7 +1328,7 @@ function! s:create_candidate(heading, path)
   return cand
 endfunction
 
-function! s:Source_calc_signature(lnum)
+function! s:Source_calc_signature(lnum) abort
   let range = s:SIGNATURE_RANGE
   let from = max([1, a:lnum - range])
   let to   = min([a:lnum + range, line('$')])
@@ -1347,7 +1347,7 @@ let s:action_table.preview = {
       \ 'is_selectable': 0,
       \ 'is_quit'      : 0,
       \ }
-function! s:Action_preview(candidate)
+function! s:Action_preview(candidate) abort
   let cand = a:candidate
 
   " NOTE: Executing :pedit for a nofile buffer clears the buffer content at
@@ -1370,7 +1370,7 @@ function! s:Action_preview(candidate)
 endfunction
 let s:action_table.preview.func = function(s:SID . 'Action_preview')
 
-function! s:save_window_cursors(bufnr)
+function! s:save_window_cursors(bufnr) abort
   let save_cursors = {}
   let save_winnr = winnr()
   let winnr = 1
@@ -1388,7 +1388,7 @@ function! s:save_window_cursors(bufnr)
   return save_cursors
 endfunction
 
-function! s:restore_window_cursors(save_cursors, preview_winnr, is_new)
+function! s:restore_window_cursors(save_cursors, preview_winnr, is_new) abort
   let save_winnr = winnr()
   for [winnr, saved] in items(a:save_cursors)
     if winnr == a:preview_winnr
@@ -1405,11 +1405,11 @@ function! s:restore_window_cursors(save_cursors, preview_winnr, is_new)
   execute save_winnr . 'wincmd w'
 endfunction
 
-function! s:best_winline()
+function! s:best_winline() abort
   return max([1, winheight(0) * g:unite_kind_jump_list_after_jump_scroll / 100])
 endfunction
 
-function! s:adjust_scroll(best_winline)
+function! s:adjust_scroll(best_winline) abort
   normal! zt
   let save_cursor = getpos('.')
   let winl = 1
@@ -1434,7 +1434,7 @@ let s:source.action_table.jump_list = s:action_table
 "-----------------------------------------------------------------------------
 " Auto-update
 
-function! s:register_autocmds()
+function! s:register_autocmds() abort
   augroup plugin-unite-source-outline
     autocmd! * <buffer>
     autocmd CursorHold   <buffer> call s:on_cursor_hold()
@@ -1447,7 +1447,7 @@ augroup plugin-unite-source-outline-win-enter
   autocmd BufWinEnter * call s:on_buf_win_enter()
 augroup END
 
-function! s:on_cursor_hold()
+function! s:on_cursor_hold() abort
   let bufnr = bufnr('%')
   if !s:has_outline_data(bufnr)
     return
@@ -1459,7 +1459,7 @@ function! s:on_cursor_hold()
   endif
 endfunction
 
-function! s:on_buf_write_post()
+function! s:on_buf_write_post() abort
   let bufnr = bufnr('%')
   if !s:has_outline_data(bufnr)
     return
@@ -1473,14 +1473,14 @@ endfunction
 
 " Update the change count of the current buffer.
 "
-function! s:update_buffer_changenr()
+function! s:update_buffer_changenr() abort
   call s:set_outline_data(bufnr('%'), 'buffer_changenr', changenr())
 endfunction
 
 " Returns True if the current buffer has been changed and the headings of the
 " buffer should be updated.
 "
-function! s:should_update(event)
+function! s:should_update(event) abort
   let auto_update_enabled = s:get_filetype_option(&l:filetype, 'auto_update')
   if !auto_update_enabled
     return 0
@@ -1499,7 +1499,7 @@ function! s:should_update(event)
   " commands decrease the changenr.
 endfunction
 
-function! s:update_headings(bufnr)
+function! s:update_headings(bufnr) abort
   call s:Util.print_debug('event', 'update_headings')
   try
     " Update the Model data (headings).
@@ -1523,7 +1523,7 @@ endfunction
 " Returns a List of bufnrs of the outline buffers that are displaying the
 " heading list of the buffer {src_bufnr}.
 "
-function! s:find_outline_buffers(src_bufnr)
+function! s:find_outline_buffers(src_bufnr) abort
   let outline_bufnrs = []
   let bufnr = 1
   while bufnr <= bufnr('$')
@@ -1550,11 +1550,11 @@ function! s:find_outline_buffers(src_bufnr)
   return outline_bufnrs
 endfunction
 
-function! s:is_unite_buffer(bufnr)
+function! s:is_unite_buffer(bufnr) abort
   return (bufname(a:bufnr) =~# '^\[unite\]')
 endfunction
 
-function! s:Unite_find_outline_source(unite)
+function! s:Unite_find_outline_source(unite) abort
   let result = filter(copy(a:unite.sources), 'v:val.name ==# "outline"')
   if empty(result)
     return {}
@@ -1563,7 +1563,7 @@ function! s:Unite_find_outline_source(unite)
   endif
 endfunction
 
-function! s:on_buf_win_enter()
+function! s:on_buf_win_enter() abort
   let winnr = winnr()
   if !s:has_outline_buffer_ids(winnr)
     return
@@ -1582,7 +1582,7 @@ endfunction
 " Swaps the heading lists displayed in the outline buffers whose buffer ids
 " are one of {outline_buffer_ids} for the heading list of buffer {new_bufnr}.
 "
-function! s:swap_headings(outline_buffer_ids, new_bufnr)
+function! s:swap_headings(outline_buffer_ids, new_bufnr) abort
   let bufnr = 1
   while bufnr <= bufnr('$')
     if bufwinnr(bufnr) > 0

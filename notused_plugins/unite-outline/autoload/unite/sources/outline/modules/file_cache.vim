@@ -29,7 +29,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#outline#modules#file_cache#import(dir)
+function! unite#sources#outline#modules#file_cache#import(dir) abort
   let s:FileCache.DIR = a:dir
   return s:FileCache
 endfunction
@@ -38,7 +38,7 @@ endfunction
 
 let s:Util = unite#sources#outline#import('Util')
 
-function! s:get_SID()
+function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
 endfunction
 let s:SID = s:get_SID()
@@ -69,13 +69,13 @@ call s:FileCache.function('has')
 
 " Returns True if the cache file associated with file {path} exists.
 "
-function! s:cache_file_exists(path)
+function! s:cache_file_exists(path) abort
   return (s:cache_dir_exists() && filereadable(s:get_cache_file_path(a:path)))
 endfunction
 
 " Returns True if the cache directory exists.
 "
-function! s:cache_dir_exists()
+function! s:cache_dir_exists() abort
   if isdirectory(s:FileCache.DIR)
     return 1
   elseif unite#util#is_sudo()
@@ -93,13 +93,13 @@ endfunction
 
 " Returns a full pathname of the file opened at the buffer {bufnr}.
 "
-function! s:get_buffer_path(bufnr)
+function! s:get_buffer_path(bufnr) abort
   return fnamemodify(bufname(a:bufnr), ':p')
 endfunction
 
 " Returns a full pathname of the cache file for the file {path}.
 "
-function! s:get_cache_file_path(path)
+function! s:get_cache_file_path(path) abort
   return s:FileCache.DIR . '/' . s:encode_file_path(a:path)
 endfunction
 
@@ -108,7 +108,7 @@ endfunction
 " Original source from Shougo's neocomplcache
 " https://github.com/Shougo/neocomplcache
 "
-function! s:encode_file_path(path)
+function! s:encode_file_path(path) abort
   if len(s:FileCache.DIR) + len(a:path) < 150
     " Encode {path} to a basename.
     return substitute(substitute(a:path, ':', '=-', 'g'), '[/\\]', '=+', 'g')
@@ -131,7 +131,7 @@ function! s:FileCache_get(bufnr) dict
 endfunction
 call s:FileCache.function('get')
 
-function! s:load_cache_file(path)
+function! s:load_cache_file(path) abort
   let cache_file = s:get_cache_file_path(a:path)
   let lines = readfile(cache_file)
   if !empty(lines)
@@ -165,7 +165,7 @@ function! s:FileCache_set(bufnr, data) dict
 endfunction
 call s:FileCache.function('set')
 
-function! s:save_cache_file(path, data)
+function! s:save_cache_file(path, data) abort
   let cache_file = s:get_cache_file_path(a:path)
   let dumped_data = string(a:data)
   if !unite#util#is_sudo() && writefile([dumped_data], cache_file) == 0
@@ -189,7 +189,7 @@ function! s:FileCache_remove(bufnr) dict
 endfunction
 call s:FileCache.function('remove')
 
-function! s:remove_file(path)
+function! s:remove_file(path) abort
     if delete(a:path) == 0
       call s:print_debug("[DELETED] cache file: " . a:path)
     else
@@ -199,7 +199,7 @@ endfunction
 
 " Remove all cache files.
 "
-function! s:FileCache_clear()
+function! s:FileCache_clear() abort
   if s:cache_dir_exists()
     call s:cleanup_all_cache_files()
     echomsg "unite-outline: Deleted all cache files."
@@ -209,13 +209,13 @@ function! s:FileCache_clear()
 endfunction
 call s:FileCache.function('clear')
 
-function! s:cleanup_all_cache_files()
+function! s:cleanup_all_cache_files() abort
   call s:cleanup_cache_files(1)
 endfunction
 
 " Remove old cache files.
 "
-function! s:cleanup_cache_files(...)
+function! s:cleanup_cache_files(...) abort
   let delete_all = (a:0 ? a:1 : 0)
   let cache_files = split(globpath(s:FileCache.DIR, '*'), "\<NL>")
   let dlt_files = []
@@ -241,7 +241,7 @@ function! s:cleanup_cache_files(...)
   endfor
 endfunction
 
-function! s:print_debug(msg)
+function! s:print_debug(msg) abort
   call s:Util.print_debug('cache', a:msg)
 endfunction
 

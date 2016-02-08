@@ -11,7 +11,7 @@
 " Default outline info for ReVIEW
 " Version: 0.0.2
 
-function! unite#sources#outline#defaults#review#outline_info()
+function! unite#sources#outline#defaults#review#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -22,7 +22,7 @@ let s:outline_info = {
       \ 'heading': '^=\+',
       \ }
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : substitute(a:heading_line, '^=\+\s*', '', ''),
         \ 'level': strlen(matchstr(a:heading_line, '^=\+')),

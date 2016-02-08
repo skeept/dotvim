@@ -29,7 +29,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#outline_matcher_glob#define()
+function! unite#filters#outline_matcher_glob#define() abort
   return s:matcher
 endfunction
 
@@ -43,7 +43,7 @@ let s:matcher = {
 " Derived from:
 " unite/autoload/filters/matcher_glob.vim
 "
-function! s:matcher.filter(candidates, unite_context)
+function! s:matcher.filter(candidates, unite_context) abort
   if empty(a:candidates) | return a:candidates | endif
 
   call s:Tree.List.reset_marks(a:candidates)

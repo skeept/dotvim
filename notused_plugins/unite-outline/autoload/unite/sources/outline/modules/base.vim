@@ -29,7 +29,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#outline#modules#base#new(name, sid)
+function! unite#sources#outline#modules#base#new(name, sid) abort
   let module = copy(s:Module)
   let module.__name__ = a:name
   let module.__prefix__ = a:sid . a:name . '_'
@@ -39,7 +39,7 @@ endfunction
 
 "-----------------------------------------------------------------------------
 
-function! s:get_SID()
+function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
 endfunction
 let s:SID = s:get_SID()

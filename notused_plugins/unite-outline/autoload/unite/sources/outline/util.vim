@@ -37,75 +37,75 @@ let s:Util = unite#sources#outline#import('Util')
 "-----------------------------------------------------------------------------
 " Heading
 
-function! unite#sources#outline#util#get_indent_level(...)
+function! unite#sources#outline#util#get_indent_level(...) abort
   return call(s:Util.get_indent_level, a:000)
 endfunction
 
-function! unite#sources#outline#util#get_comment_heading_level(...)
+function! unite#sources#outline#util#get_comment_heading_level(...) abort
   return call(s:Util.get_comment_heading_level, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------
 " Matching
 
-function! unite#sources#outline#util#join_to(...)
+function! unite#sources#outline#util#join_to(...) abort
   return call(s:Util.join_to, a:000)
 endfunction
 
-function! unite#sources#outline#util#join_to_rparen(...)
+function! unite#sources#outline#util#join_to_rparen(...) abort
   return call(s:Util.join_to_rparen, a:000)
 endfunction
 
-function! unite#sources#outline#util#neighbor_match(...)
+function! unite#sources#outline#util#neighbor_match(...) abort
   return call(s:Util.neighbor_match, a:000)
 endfunction
 
-function! unite#sources#outline#util#neighbor_matchstr(...)
+function! unite#sources#outline#util#neighbor_matchstr(...) abort
   return call(s:Util.neighbor_matchstr, a:000)
 endfunction
 
-function! unite#sources#outline#util#shared_pattern(...)
+function! unite#sources#outline#util#shared_pattern(...) abort
   return call(s:Util.shared_pattern, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------
 " Path
 
-function! unite#sources#outline#util#normalize_path(...)
+function! unite#sources#outline#util#normalize_path(...) abort
   return call(s:Util.Path.normalize, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------
 " String
 
-function! unite#sources#outline#util#capitalize(...)
+function! unite#sources#outline#util#capitalize(...) abort
   return call(s:Util.String.capitalize, a:000)
 endfunction
 
-function! unite#sources#outline#util#nr2roman(...)
+function! unite#sources#outline#util#nr2roman(...) abort
   return call(s:Util.String.nr2roman, a:000)
 endfunction
 
-function! unite#sources#outline#util#shellescape(...)
+function! unite#sources#outline#util#shellescape(...) abort
   return call(s:Util.String.shellescape, a:000)
 endfunction
 
 "-----------------------------------------------------------------------------
 " Misc
 
-function! unite#sources#outline#util#print_debug(...)
+function! unite#sources#outline#util#print_debug(...) abort
   return call(s:Util.print_debug, a:000)
 endfunction
 
-function! unite#sources#outline#util#print_progress(...)
+function! unite#sources#outline#util#print_progress(...) abort
   return call(s:Util.print_progress, a:000)
 endfunction
 
-function! unite#sources#outline#util#sort_by_lnum(...)
+function! unite#sources#outline#util#sort_by_lnum(...) abort
   return call(s:Util.List.sort_by_lnum, a:000)
 endfunction
 
-function! unite#sources#outline#util#_cpp_is_in_comment(...)
+function! unite#sources#outline#util#_cpp_is_in_comment(...) abort
   return call(s:Util._cpp_is_in_comment, a:000)
 endfunction
 

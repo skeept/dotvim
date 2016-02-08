@@ -11,7 +11,7 @@
 " Default outline info for reStructuredText
 " Version: 0.0.3
 
-function! unite#sources#outline#defaults#rst#outline_info()
+function! unite#sources#outline#defaults#rst#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -22,12 +22,12 @@ let s:outline_info = {
       \ 'heading+1': '^[[:punct:]]\{4,}$',
       \ }
 
-function! s:outline_info.before(context)
+function! s:outline_info.before(context) abort
   let s:adornment_levels = {}
   let s:adornment_id = 2
 endfunction
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,

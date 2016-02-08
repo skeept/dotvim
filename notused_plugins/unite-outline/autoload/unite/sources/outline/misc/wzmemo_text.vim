@@ -21,7 +21,7 @@
 "
 "    autocmd BufRead,BufNewFile *.txt  set filetype=text
 
-function! unite#sources#outline#defaults#text#outline_info()
+function! unite#sources#outline#defaults#text#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -29,7 +29,7 @@ let s:outline_info = {
       \ 'heading'  : '^\.\+',
       \ }
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let level = strlen(matchstr(a:heading_line, '^\.\+'))
   let heading = {
         \ 'word' : substitute(a:heading_line, '^\.\+\s*', '', ''),

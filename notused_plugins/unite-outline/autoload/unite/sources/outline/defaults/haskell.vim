@@ -31,6 +31,6 @@ let s:outline_info = {
       \ 'skip': s:skip
       \ }
 
-function! unite#sources#outline#defaults#haskell#outline_info()
+function! unite#sources#outline#defaults#haskell#outline_info() abort
   return s:outline_info
 endfunction

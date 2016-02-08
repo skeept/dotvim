@@ -29,7 +29,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#filters#outline_formatter#define()
+function! unite#filters#outline_formatter#define() abort
   return s:formatter
 endfunction
 
@@ -47,7 +47,7 @@ let s:formatter = {
       \ 'description': 'view formatter for outline tree',
       \ }
 
-function! s:formatter.filter(candidates, unite_context)
+function! s:formatter.filter(candidates, unite_context) abort
   if empty(a:candidates) | return a:candidates | endif
 
   let bufnr = a:unite_context.source__outline_source_bufnr
@@ -72,7 +72,7 @@ function! s:formatter.filter(candidates, unite_context)
   return candidates
 endfunction
 
-function! s:insert_blanks(candidates, context)
+function! s:insert_blanks(candidates, context) abort
   let oinfo = a:context.outline_info
   if a:context.extracted_by !=# 'filetype' ||
         \ (empty(oinfo.heading_groups) && !has_key(oinfo, 'need_blank_between'))

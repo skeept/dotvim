@@ -11,7 +11,7 @@
 " Default outline info for Ruby
 " Version: 0.1.5
 
-function! unite#sources#outline#defaults#ruby#outline_info(...)
+function! unite#sources#outline#defaults#ruby#outline_info(...) abort
   if a:0
     " Redirect to DSL's outline info.
     let context = a:1
@@ -72,11 +72,11 @@ let s:outline_info = {
       \ ],
       \}
 
-function! s:outline_info.initialize()
+function! s:outline_info.initialize() abort
   let self.heading = '^\s*\(' . join(self.heading_keywords, '\|') . '\)\>'
 endfunction
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let word = a:heading_line
   let type = 'generic'
   let level = 0
@@ -157,7 +157,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   return heading
 endfunction
 
-function! s:outline_info.fold_ruby_block(context, lnum)
+function! s:outline_info.fold_ruby_block(context, lnum) abort
   let line = a:context.lines[a:lnum]
   let indent = matchlist(line, '^\(\s*\)')[1]
   let line = s:Util.join_to(a:context, a:lnum, indent . '%\(end\>\|}\)')
@@ -166,7 +166,7 @@ function! s:outline_info.fold_ruby_block(context, lnum)
   return line
 endfunction
 
-function! s:outline_info.need_blank_between(cand1, cand2, memo)
+function! s:outline_info.need_blank_between(cand1, cand2, memo) abort
   if a:cand1.source__heading_group == 'method' && a:cand2.source__heading_group == 'method'
     " Don't insert a blank between two sibling methods.
     return 0

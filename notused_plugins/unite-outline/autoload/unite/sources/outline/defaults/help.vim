@@ -11,7 +11,7 @@
 " Default outline info for Vim Help
 " Version: 0.1.2
 
-function! unite#sources#outline#defaults#help#outline_info()
+function! unite#sources#outline#defaults#help#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -58,7 +58,7 @@ let s:outline_info = {
       \   s:pat_upper_word . '.*\%(' . s:pat_helptag . '\|\~\)\)',
       \ }
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,
@@ -97,7 +97,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   endif
 endfunction
 
-function! s:normalize_heading_word(word)
+function! s:normalize_heading_word(word) abort
   let word = substitute(a:word, '\%(\~\|{{{\d\=\)\s*$', '', '')
   let word = substitute(word, s:pat_helptag, '', 'g')
   if word !~ '\l'

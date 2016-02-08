@@ -11,7 +11,7 @@
 " Default outline info for Python
 " Version: 0.2.0
 
-function! unite#sources#outline#defaults#python#outline_info()
+function! unite#sources#outline#defaults#python#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -47,7 +47,7 @@ let s:outline_info = {
       \ ],
       \}
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let h_lnum = a:context.heading_lnum
   let level = s:Util.get_indent_level(a:context, h_lnum)
   let heading = {
@@ -70,7 +70,7 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
   return heading
 endfunction
 
-function! s:outline_info.need_blank_between(cand1, cand2, memo)
+function! s:outline_info.need_blank_between(cand1, cand2, memo) abort
   if a:cand1.source__heading_group == 'function' && a:cand2.source__heading_group == 'function'
     " Don't insert a blank between two sibling functions.
     return 0

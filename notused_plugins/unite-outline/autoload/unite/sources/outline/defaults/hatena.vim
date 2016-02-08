@@ -11,7 +11,7 @@
 " Default outline info for Hatena annotation
 " Version: 0.0.1
 
-function! unite#sources#outline#defaults#hatena#outline_info()
+function! unite#sources#outline#defaults#hatena#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -19,7 +19,7 @@ let s:outline_info = {
       \ 'heading'  : '^\*\+',
       \ }
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': strlen(matchstr(a:heading_line, '^*\+')),

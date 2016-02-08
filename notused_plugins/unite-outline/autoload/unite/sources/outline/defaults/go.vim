@@ -10,7 +10,7 @@
 
 " Default outline info for Go
 
-function! unite#sources#outline#defaults#go#outline_info()
+function! unite#sources#outline#defaults#go#outline_info() abort
     return s:outline_info
 endfunction
 
@@ -48,7 +48,7 @@ let s:outline_info = {
             \ ],
             \ }
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
     let type = 'generic'
     let level = 0
 

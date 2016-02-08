@@ -14,7 +14,7 @@
 let g:unite_source_outline_scala_show_all_declarations =
 	\ get(g:, 'unite_source_outline_scala_show_all_declarations', 0)
 
-function! unite#sources#outline#defaults#scala#outline_info()
+function! unite#sources#outline#defaults#scala#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -55,7 +55,7 @@ let s:outline_info = {
       \ ]
       \}
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let h_lnum = a:context.heading_lnum
   " Level 1 to 3 are reserved for comment headings.
   let level = s:Util.get_indent_level(a:context, h_lnum) + 3

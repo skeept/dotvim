@@ -11,7 +11,7 @@
 " Default outline info for Magma files
 " Version: 0.1.0
 
-function! unite#sources#outline#defaults#magma#outline_info()
+function! unite#sources#outline#defaults#magma#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -46,7 +46,7 @@ let s:outline_info = {
     \ ],
     \}
 
-function! s:strip(input_string)
+function! s:strip(input_string) abort
     return substitute(a:input_string, '^\s*\(.\{-}\)\s*$', '\1', '')
 endfunction
 

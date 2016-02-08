@@ -11,7 +11,7 @@
 " Default outline info for SASS
 " Version: 0.0.1
 
-function! unite#sources#outline#defaults#sass#outline_info()
+function! unite#sources#outline#defaults#sass#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -25,7 +25,7 @@ let s:outline_info = {
       \ 'header'   : '^//|^/\*',
       \}
 
-function! s:outline_info.create_heading(which, heading_line, matched_line, context)
+function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
   let heading = {
         \ 'word' : a:heading_line,
         \ 'level': 0,

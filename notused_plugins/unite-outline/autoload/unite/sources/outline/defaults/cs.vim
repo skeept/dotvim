@@ -11,7 +11,7 @@
 " Default outline info for C#
 " Version: 0.2.0
 
-function! unite#sources#outline#defaults#cs#outline_info()
+function! unite#sources#outline#defaults#cs#outline_info() abort
   return s:outline_info
 endfunction
 
@@ -48,6 +48,6 @@ let s:outline_info = {
       \ ],
       \}
 
-function! s:outline_info.extract_headings(context)
+function! s:outline_info.extract_headings(context) abort
   return s:Ctags.extract_headings(a:context)
 endfunction
