@@ -4843,6 +4843,10 @@
     "type": "git",
     "url": "git://github.com/NLKNguyen/vim-maven-syntax"
   },
+  "5327": {
+    "type": "git",
+    "url": "git://github.com/ninja/sky"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
