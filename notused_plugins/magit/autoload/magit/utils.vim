@@ -1,11 +1,4 @@
 
-" s:magit#utils#is_binary: check if file is a binary file
-" param[in] filename: the file path. it must quoted if it contains spaces
-function! magit#utils#is_binary(filename)
-	return ( match(system("file --mime " . a:filename ),
-				\ ".*charset=binary") != -1 )
-endfunction
-
 " magit#utils#ls_all: list all files (including hidden ones) in a given path
 " return : list of filenames
 function! magit#utils#ls_all(path)
@@ -33,6 +26,21 @@ let s:magit_cd_cmd = exists('*haslocaldir') && haslocaldir() ? 'lcd ' : 'cd '
 " magit#utils#lcd: helper function to lcd. use cd if lcd doesn't exists
 function! magit#utils#lcd(dir)
 	execute s:magit_cd_cmd . a:dir
+endfunction
+
+" magit#utils#clear_undo: this function clear local undo history.
+" vimagit wants to clear undo history after each changes in vimagit buffer by
+" vimagit backend.
+" Use this function with caution: to be effective, the undo must be ack'ed
+" with a change. The hack is the line
+" exe "normal a \<BS>\<Esc>"
+" If the cursor is on a closed folding, it will open it!
+function! magit#utils#clear_undo()
+	let old_undolevels = &l:undolevels
+	setlocal undolevels=-1
+	exe "normal a \<BS>\<Esc>"
+	let &l:undolevels = old_undolevels
+	unlet old_undolevels
 endfunction
 
 " magit#utils#system: wrapper for system, which only takes String as input in vim,
