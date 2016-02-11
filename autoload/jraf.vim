@@ -278,8 +278,8 @@ function! jraf#loadJedi()
   if exists("s:loadedJedi")
     return ''
   endif
-  if has("python")
-    silent python << EOF
+  if has("python3")
+    silent python3 << EOF
 import vim
 try:
   import jedi
@@ -289,6 +289,7 @@ except:
 EOF
 
     if s:has_jedi == 1
+      let g:jedi#force_py_version = 3
       let g:jedi#show_call_signatures = "0"
       ActivateAddons jedi-vim
       setlocal omnifunc=jedi#complete
