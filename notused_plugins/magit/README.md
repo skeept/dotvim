@@ -57,6 +57,8 @@ Travis status:
 * **[master status](https://travis-ci.org/jreybert/vimagit/branches)**: [![Master build status](https://travis-ci.org/jreybert/vimagit.svg?branch=master)](https://travis-ci.org/jreybert/vimagit/branches)
 * **[next status](https://travis-ci.org/jreybert/vimagit/branches)**: [![next build status](https://travis-ci.org/jreybert/vimagit.svg?branch=next)](https://travis-ci.org/jreybert/vimagit/branches)
 
+A lot a features are developped in dev/feature_name branches. While it may be asked to users to test these branches (during a bug fix for example), one is warned that these branches may be heavily rebased/deleted.
+
 ## TL;DR
 
 This is the minimal required set of command you must know to start playing with vimagit. See [Mapping](#mapping) for a complete description.
@@ -201,6 +203,9 @@ Following mappings are set locally, for magit buffer only, in normal mode.
 ##### CF
  * Amend the staged changes into the previous commit, without modifying previous commit message.
 
+##### CU
+ * Close a commit section (If you need soon after open or editing commit message, pressing 'u' is good enough).
+
 ##### I
  * Add the file under the cursor in .gitgnore
 
@@ -262,6 +267,12 @@ buffer. If user answer is 'yes', vimagit will display diff lines as expected.
 If user answer is 'no', vimagit will close all file diffs before refreshing.
 Default value is 10000.
 > let g:magit_warning_max_lines=val
+
+#### g:magit_discard_untracked_do_delete
+
+When set to 1, discard an untracked file will indeed delete this file.
+Default value is 0.
+> let g:magit_discard_untracked_do_delete=[01]
 
 ## Installation
 
