@@ -80,7 +80,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ctrlp TaskList Supertab
   VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons delimitMate CountJump
-  VAMAddToActiveAddons vimproc tlib NrrwRgn
+  VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
   "VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
