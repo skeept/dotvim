@@ -1550,7 +1550,7 @@
 "html_emogrifier":{"archive_name":"emogrifier.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16337","version":"1.0.1","vim_script_nr":3698},
 "cssbaseline":{"archive_name":"cssbaseline.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16352","version":"1.0.2","vim_script_nr":3697},
 "prefixer":{"archive_name":"prefixer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16304","version":"1.0","vim_script_nr":3696},
-"commentary":{"archive_name":"commentary.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21594","version":"1.2","vim_script_nr":3695},
+"commentary":{"archive_name":"commentary.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24002","version":"1.3","vim_script_nr":3695},
 "enablelvimrc":{"archive_name":"enablelvimrc.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16298","version":"0.1","vim_script_nr":3694},
 "FixCSS":{"archive_name":"FixCSS.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16296","version":"0.1","vim_script_nr":3693},
 "quickhl":{"archive_name":"vim-quickhl-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20960","version":"1.0","vim_script_nr":3692},
