@@ -4847,6 +4847,10 @@
     "type": "git",
     "url": "git://github.com/ninja/sky"
   },
+  "5329": {
+    "type": "git",
+    "url": "git://github.com/rbnvrw/vim-latex-light"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
