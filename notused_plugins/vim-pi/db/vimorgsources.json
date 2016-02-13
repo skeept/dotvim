@@ -1,4 +1,6 @@
 {
+"Sierra":{"archive_name":"sierra.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24006","version":"1.4.12","vim_script_nr":5331},
+"Hunter":{"archive_name":"hunter.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24005","version":"1.0","vim_script_nr":5330},
 "vim-latex-light":{"archive_name":"vim-latex-light-0.3.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24004","version":"0.3","vim_script_nr":5329},
 "lib.kom":{"archive_name":"lib_kom.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24003","version":"1.0","vim_script_nr":5328},
 "sky":{"archive_name":"sky-1.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24000","version":"1.1","vim_script_nr":5327},

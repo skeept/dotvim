@@ -4851,6 +4851,14 @@
     "type": "git",
     "url": "git://github.com/rbnvrw/vim-latex-light"
   },
+  "5330": {
+    "type": "git",
+    "url": "git://github.com/ogranada/hunter"
+  },
+  "5331": {
+    "type": "git",
+    "url": "git://github.com/AlessandroYorba/Sierra"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
