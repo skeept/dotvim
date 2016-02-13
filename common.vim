@@ -653,6 +653,10 @@ nnoremap <F3> :<c-u>call jraf#toggleTBarListNT()<CR>
 inoremap <F3> <esc>:<c-u>call jraf#toggleTBarListNT()<CR>
 "==============================================================================}}}
 
+"================== Gundo  ===================================================={{{
+let g:gundo_prefer_python3 = 1
+"==============================================================================}}}
+
 "================== Snippets / UltiSnips ======================================{{{
 let s:ulti_or_neosnip = 1 "1 UltiSnips, 2 neosnippet
 
