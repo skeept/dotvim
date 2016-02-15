@@ -70,23 +70,23 @@ endif
 " do stuff you want to do only once for a running vim instance
 ```
 
-### The `g:localvimrc_file` setting
+### The `g:localvimrc_file` variable
 
 Fully qualified file name of file that triggered loading the local vimrc file.
 
-### The `g:localvimrc_file_dir` setting
+### The `g:localvimrc_file_dir` variable
 
 Fully qualified directory of file that triggered loading the local vimrc file.
 
-### The `g:localvimrc_script` setting
+### The `g:localvimrc_script` variable
 
 Fully qualified file name of the currently loaded local vimrc file.
 
-### The `g:localvimrc_script_dir` setting
+### The `g:localvimrc_script_dir` variable
 
 Fully qualified directory of the currently loaded local vimrc file.
 
-### The `g:localvimrc_sourced_once` setting
+### The `g:localvimrc_sourced_once` variable
 
 Set to `1` if the currently loaded local vimrc file had already been loaded in
 this session. Set to `0` otherwise.
@@ -245,12 +245,13 @@ send a pull request or just tell me your ideas.
 
 ## Changelog
 
-vA.B.C : XXXX-YY-ZZ
+v2.4.0 : 2016-02-05
 
-  - add setting for autocommand events that trigger local vimrc file loading.
-  - make it possible to supply a list of local vimrc filenames.
-  - ask user when sourcing local vimrc fails and |g:localvimrc_sandbox| and |g:localvimrc_ask| is set whether the file should be sourced without sandbox.
+  - add setting |g:localvimrc_event| which defines the autocommand events that trigger local vimrc file loading.
   - don't lose persistence file on full partitions.
+  - make it possible to supply a list of local vimrc filenames in |g:localvimrc_name|.
+  - ask user when sourcing local vimrc fails and |g:localvimrc_sandbox| and |g:localvimrc_ask| is set whether the file should be sourced without sandbox.
+  - fix a bug where local vimrc files are sourced in wrong order when some of them are symlinks to a different directory.
 
 v2.3.0 : 2014-02-06
 
