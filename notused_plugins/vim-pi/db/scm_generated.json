@@ -4847,6 +4847,10 @@
     "type": "git",
     "url": "git://github.com/ninja/sky"
   },
+  "5328": {
+    "type": "git",
+    "url": "git://github.com/romgrk/lib.kom"
+  },
   "5329": {
     "type": "git",
     "url": "git://github.com/rbnvrw/vim-latex-light"
@@ -4858,6 +4862,10 @@
   "5331": {
     "type": "git",
     "url": "git://github.com/AlessandroYorba/Sierra"
+  },
+  "5332": {
+    "type": "git",
+    "url": "git://github.com/tweekmonster/braceless.vim"
   },
   "586": {
     "type": "git",
