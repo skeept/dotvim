@@ -4867,6 +4867,10 @@
     "type": "git",
     "url": "git://github.com/tweekmonster/braceless.vim"
   },
+  "5333": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-vimhelplint"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

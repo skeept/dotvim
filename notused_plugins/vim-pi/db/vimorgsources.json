@@ -1,4 +1,5 @@
 {
+"vimhelplint":{"archive_name":"vim-vimhelplint-1.0.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24014","version":"1.0.0","vim_script_nr":5333},
 "braceless":{"archive_name":"braceless.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24012","version":"v0.1","vim_script_nr":5332},
 "Sierra":{"archive_name":"sierra.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24010","version":"1.10.15","vim_script_nr":5331},
 "Hunter":{"archive_name":"hunter.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24005","version":"1.0","vim_script_nr":5330},
@@ -11,7 +12,7 @@
 "vim-llvmcov":{"archive_name":"vim-llvmcov.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23974","version":"0.1.0","vim_script_nr":5323},
 "vim-fake":{"archive_name":"vim-fake.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23968","version":"0.1.0","vim_script_nr":5322},
 "alduin":{"archive_name":"alduin.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23991","version":"1.8.3","vim_script_nr":5321},
-"vim-swap":{"archive_name":"vim-swap-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23993","version":"1.0.1","vim_script_nr":5320},
+"vim-swap":{"archive_name":"vim-swap-1.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24015","version":"1.0.2","vim_script_nr":5320},
 "hiPairs":{"archive_name":"hiPairs.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23950","version":"0.1","vim_script_nr":5319},
 "todoapp":{"archive_name":"todoapp.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23940","version":"0.1.0","vim_script_nr":5318},
 "vBox":{"archive_name":"vBox.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23939","version":"0.1.0","vim_script_nr":5317},

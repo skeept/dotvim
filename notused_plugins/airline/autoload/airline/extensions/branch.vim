@@ -102,13 +102,7 @@ endfunction
 
 function! s:get_hg_branch()
   if s:has_lawrencium
-    let stl=lawrencium#statusline()
-    let mq=system('hg qtop')
-    if v:shell_error==0 && !empty(stl)
-      let mq=matchstr(mq, '.*\ze\n') 
-      return printf("%s/%s", stl, mq)
-    endif
-    return stl
+    return lawrencium#statusline()
   endif
   return ''
 endfunction
