@@ -26,7 +26,9 @@ function! dispatch#tmux#handle(request) abort
       let command .= ' -d'
     endif
     let command .= ' ' . shellescape('exec ' . dispatch#isolate(
-          \ ['TMUX', 'TMUX_PANE'], dispatch#prepare_start(a:request)))
+          \ ['TMUX', 'TMUX_PANE'],
+          \ dispatch#set_title(a:request),
+          \ dispatch#prepare_start(a:request)))
     call system(command)
     return 1
   endif
