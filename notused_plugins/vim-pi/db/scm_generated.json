@@ -4871,6 +4871,10 @@
     "type": "git",
     "url": "git://github.com/machakann/vim-vimhelplint"
   },
+  "5336": {
+    "type": "git",
+    "url": "git://github.com/chilicuil/vim-checksum"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
