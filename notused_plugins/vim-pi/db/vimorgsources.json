@@ -1,7 +1,7 @@
 {
 "vim-checksum":{"archive_name":"vim-checksum.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24028","version":"0.0.1","vim_script_nr":5336},
 "vulkan1.0":{"archive_name":"vulkan1.0.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24017","version":"1.0","vim_script_nr":5335},
-"wordmotion":{"archive_name":"wordmotion.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24016","version":"1.0","vim_script_nr":5334},
+"wordmotion":{"archive_name":"wordmotion.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24035","version":"1.1","vim_script_nr":5334},
 "vimhelplint":{"archive_name":"vim-vimhelplint-1.0.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24014","version":"1.0.0","vim_script_nr":5333},
 "braceless":{"archive_name":"braceless.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24012","version":"v0.1","vim_script_nr":5332},
 "Sierra":{"archive_name":"sierra.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24010","version":"1.10.15","vim_script_nr":5331},
