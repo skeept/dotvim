@@ -344,6 +344,12 @@ if has("autocmd")
           \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
   augroup END
 
+  augroup ft_rmclog
+    autocmd!
+    autocmd BufRead,BufNewFile *.log
+          \ set filetype=rmclog
+  augroup END
+
   "for now set scip compatible settings (3 spaces indentation for c files)
   augroup ft_ccpp
     autocmd!

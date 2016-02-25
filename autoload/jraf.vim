@@ -109,6 +109,13 @@ function! jraf#tagbarSettings()
         \ ],
         \ }
 
+  let g:tagbar_type_rmclog = {
+        \ 'ctagstype': 'rmclog',
+        \ 'kinds' : [
+        \'g:Global Iteration',
+        \],
+        \}
+
   let g:tagbar_type_tex = {
         \ 'ctagstype' : 'latex',
         \ 'kinds'     : [
