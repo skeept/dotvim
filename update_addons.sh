@@ -1,6 +1,8 @@
 #!/bin/sh
 
-PROG="$HOME/.vim/bundle/move2_git.sh"
+unset GREP_OPTIONS
+
+PROG="$(readlink -f bundle/move2_git.sh)"
 
 
 (cd bundle/ ; sh "$PROG")

@@ -344,6 +344,12 @@ if has("autocmd")
           \ | nnoremap <buffer> <Leader>e /\*\*\*\*.*$<CR>:set nohls<CR><C-L>
   augroup END
 
+  augroup ft_rmclog
+    autocmd!
+    autocmd BufRead,BufNewFile *.log
+          \ set filetype=rmclog
+  augroup END
+
   "for now set scip compatible settings (3 spaces indentation for c files)
   augroup ft_ccpp
     autocmd!
@@ -651,6 +657,10 @@ noremap ,e :CtrlPCurFile<CR>
 "================== Tagbar ===================================================={{{
 nnoremap <F3> :<c-u>call jraf#toggleTBarListNT()<CR>
 inoremap <F3> <esc>:<c-u>call jraf#toggleTBarListNT()<CR>
+"==============================================================================}}}
+
+"================== Gundo  ===================================================={{{
+let g:gundo_prefer_python3 = 1
 "==============================================================================}}}
 
 "================== Snippets / UltiSnips ======================================{{{
