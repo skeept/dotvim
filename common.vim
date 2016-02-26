@@ -355,9 +355,9 @@ if has("autocmd")
     autocmd!
     "scip settings
     "autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.c++ setlocal shiftwidth=3
-    " Sabre Settings
-    autocmd FileType c setlocal noexpandtab shiftwidth=2 tabstop=2
-    autocmd FileType cpp setlocal noexpandtab shiftwidth=2 tabstop=2
+
+    autocmd BufRead,BufNewFile *.C setlocal filetype=cpp
+    autocmd FileType cpp setlocal tabstop=3 shiftwidth=3 expandtab
   augroup END
 
   "help buffers mappings
