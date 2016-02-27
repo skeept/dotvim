@@ -1,0 +1,10 @@
+VimL:"{catch(...){...}} Template-File, Luc Hermitte
+VimL:" hint: catch(...){...}
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1 
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+catch(<+...+>){
+    ¡s:Surround(1, '<+catch-code+>')¡
+}<++>

@@ -1,0 +1,7 @@
+VimL:" vector File Template, Luc Hermitte, 28th Apr 2014
+VimL:" hint: std::vector<>
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: call s:AddPostExpandCallback('lh#dev#import#add("<vector>")')
+MuT:  let s:type = s:SurroundableParam('type', 1)
+std::vector<<+s:type+>> <+s:TerminalPlaceHolder()+>

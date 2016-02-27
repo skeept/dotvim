@@ -1,0 +1,60 @@
+VimL:" C++ Singleton-Class Template, Luc Hermitte
+VimL:" «Meyers singleton», cf. More Effective C++ Item 26
+VimL:" For a more precise definition, cf. A. Alexandrescu's Modern C++ Design
+VimL:" hint: singleton class Wizard
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: let s:clsname = empty(s:Args()) ? INPUT("singleton name ?", Marker_Txt(expand('%:t:r'))) : (s:Args()[0])
+VimL: call CppDox_SingletonWizard(s:clsname)
+MuT:  if g:CppDox_inherits =~ 'boost::noncopyable'
+VimL:    call s:AddPostExpandCallback('lh#dev#import#add("<boost/noncopyable.hpp>")')
+MuT:  endif
+VimL:"
+VimL: call s:Include("section-sep", "c", s:clsname." singleton")
+/**<+lh#dox#tag('ingroup')+> g¡lh#option#get('dox_group', '<+Group+>')¡
+ * <+lh#dox#brief()+>
+ *
+ * <+doc+>
+ *
+ * <+lh#dox#tag("invariant")+>
+ *
+ * <p><b>Semantics</b><br>
+ <+g:CppDox_semantics+>
+ * <+ <li> sem+>
+ *
+ * <+lh#dox#tag('version')+> <+'$'+>revision$
+ * <+lh#dox#author()+>
+ */
+class <+s:clsname+>
+¡g:CppDox_inherits¡
+{
+    /** <+lh#dox#tag('name')+> Singleton related functions */
+    //@{
+private:
+    /** Constructor. */
+    <+g:CppDox_constructors+>
+    /** Destructor. */
+    ~<+s:clsname+>() ;
+
+    <+g:CppDox_instance+>
+    //@}
+
+
+    /** <+lh#dox#tag('name')+> Public functions */
+    //@{
+public:
+    <+Public functions+>;
+    //@}
+
+private:
+    ¡g:CppDox_forbidden_members¡
+
+	<+Private functions+>;
+
+    ¡g:CppDox_private_members¡
+};<++>
+
+¡g:CppDox_stuff_for_cpp_file¡

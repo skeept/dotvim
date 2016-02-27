@@ -1,0 +1,64 @@
+VimL:" C++ Class Template, Luc Hermitte
+VimL:" hint: Class Wizard (asks for class semantics)
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = '¡'
+VimL: let s:reindent = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: let s:clsname = empty(s:Args()) ? INPUT("class name ?", lh#marker#txt(expand('%:t:r'))) : (s:Args()[0])
+VimL: call CppDox_ClassWizard(s:clsname)
+VimL:"
+VimL: call s:Include("section-sep", "c", s:clsname." class")
+VimL: silent! unlet s:doc
+VimL: let s:doc = []
+VimL: let s:doc += [{ "tag": "ingroup", "text": "g".lh#option#get('dox_group', lh#marker#txt('Group')) }]
+VimL: let s:doc += [{ "tag": "brief" }]
+VimL: let s:doc += [{ "text": "\n" }]
+VimL: let s:doc += [{ "text": "<+doc+>" }]
+VimL: let s:doc += [{ "text": "\n" }]
+VimL: let s:doc += [{ "tag": "invariant"}]
+VimL: let s:doc += [{ "text": "\n" }]
+VimL: let s:doc += [{ "tag": "semantics"}]
+VimL: let s:doc += [{ "text": g:CppDox_semantics}]
+VimL: let s:doc += [{ "text": "\n" }]
+VimL: let s:doc += [{ "tag": "version", "text": "$"."revision$"}]
+VimL: let s:doc += [{ "tag": "author"}]
+VimL: call s:Include("formatted-comment", "cpp/internals", s:doc)
+class <+s:clsname+>
+¡g:CppDox_inherits¡
+{
+public:
+    /**<+lh#dox#tag('name')+> Construction/destruction
+     */
+    //<+lh#dox#tag('{')+>
+VimL: let s:fn_comments = { }
+VimL: let s:fn_comments.brief = "Default constructor."
+VimL: let s:fn_comments.throw = {"optional": 1}
+VimL: " let s:fn_comments.text  = []
+VimL: call s:Include("function-comment", "cpp/internals",s:fn_comments)
+    <+s:clsname+>();
+
+VimL: " not documented, this is :DOX's job
+    <+s:clsname+>(<+define the params, and document me w/ :DOX+>);
+
+VimL: " todo: support using default implementations
+MuT: if g:CppDox_do_copy
+VimL:     call s:Include("copy-constructor", "cpp", s:clsname)
+VimL:     call s:Inject([""])
+VimL:     call s:Include("copy-and-swap", "cpp", s:clsname)
+
+MuT: endif
+VimL: call s:Include("destructor", "cpp",{"name":(s:clsname), "virtual": (g:CppDox_isVirtualDest) })
+    //<+lh#dox#tag('}')+>
+
+    <+Other public functions+>;
+
+    ¡IF(strlen(g:CppDox_protected_members), "protected:\n", '')¡
+    ¡g:CppDox_protected_members¡
+private:
+    ¡g:CppDox_forbidden_members¡
+
+    <+Private functions+>;
+
+    <+Attributes+>;
+};<++>

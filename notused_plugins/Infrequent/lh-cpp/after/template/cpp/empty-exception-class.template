@@ -1,0 +1,19 @@
+VimL:" empty-exception-class File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 27th Nov 2015
+VimL:" hint: Minimalist exception class
+VimL: let s:default_constructor = s:Param("default-constructor", {"visibility": "none"})
+VimL: let s:destructor = s:Param("destructor", {})
+VimL: let s:destructor.virtual = 1
+MuT:  let s:parents = s:Param("parents", [])
+MuT:  let s:default_exception = lh#option#get('cpp_root_exception', {"std::runtime_error": {"includes": "<stdexcept>"}})
+MuT:  let s:parent_exception = s:Param("root-exception", s:default_exception)
+VimL: let s:parents += [s:parent_exception]
+VimL: call s:Include('list-constructors', 'cpp/internals')
+MuT:  let s:functions = s:Param("functions", lh#cpp#snippets#new_function_list())
+MuT:  if lh#cpp#use_cpp11() && empty(s:constructors)
+VimL:   call s:functions.insert({"signature": "using ". lh#cpp#snippets#constructor_name(s:parent_exception) })
+MuT:  else
+VimL:   " override any previous "parameters" argument
+VimL:   " TODO: search for new attributes => parameters ; and merge with parent parameters
+VimL:   call s:functions.insert({"kind": "init-constructor", 'parameters': lh#option#unset()})
+MuT:  endif
+VimL: call s:Include("class-skeleton", "cpp/internals")

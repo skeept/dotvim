@@ -1,0 +1,10 @@
+VimL:" doxygen <code/> File Template, Luc Hermitte, 11th Apr 2012
+VimL:" hint: <code>|</code>
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: let s:reindent     = 1
+VimL: let s:code = s:Param("code", lh#marker#txt())
+VimL: let s:text = s:Surround(1, s:code)
+<+lh#dox#tag("code")+>
+VimL: unlet s:code
+VimL: unlet s:text

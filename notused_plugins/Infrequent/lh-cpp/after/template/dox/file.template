@@ -1,0 +1,16 @@
+VimL:" dox/file Template, Luc Hermitte
+VimL:" hint: /** @file ... */
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL:"
+/**<+lh#dox#tag("ingroup")+> g¡lh#option#get('dox_group', '<+Projet+>')¡
+ * <+lh#dox#tag("file")+>    ¡expand('%:t')¡
+ * <+lh#dox#author()+>
+ * <+lh#dox#tag("version")+> ¡'$'¡Revision$
+ * <+lh#dox#since()+>
+ * ¡'$'¡Id$
+ */
+

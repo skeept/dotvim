@@ -1,0 +1,18 @@
+VimL:" C++ Doxygen snippet for functions, Luc Hermitte
+VimL:" Meant to be used through the command :DOX
+VimL:" hint: /** @ingroup, @params, @exceptions, ... */
+VimL:" TODO: rewrite to rely on function-comment.template
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+/**¡CppDox_snippet('ingroup', '')¡
+ ¡CppDox_snippet('brief', '* ')¡
+ * <+details+>
+ ¡CppDox_snippet('Params', '* ')¡
+ *
+ ¡CppDox_snippet('return', '* ')¡
+ ¡CppDox_snippet('exceptions', '* ')¡
+ ¡CppDox_snippet('preconditions', '* ')¡
+ */

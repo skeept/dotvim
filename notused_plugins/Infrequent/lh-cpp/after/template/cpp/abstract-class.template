@@ -1,0 +1,7 @@
+VimL:" abstract-class File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 25th Nov 2015
+VimL:" hint: abstract (base) class to inherit from
+MuT:  let s:destructor = s:Param("destructor", {})
+VimL: " Override any previous setting on visibility and 'how'
+VimL: let s:destructor["visibility"] = "public"
+VimL: let s:destructor["how"] = "pure"
+VimL: call s:Include("base-class", "cpp")

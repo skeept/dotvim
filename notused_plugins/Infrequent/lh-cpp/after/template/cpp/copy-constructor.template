@@ -1,0 +1,26 @@
+VimL:" copy-constructor File Template, Luc Hermitte, 21st Aug 2011
+VimL:" hint: T(T const&);
+VimL: let s:marker_open  = "<+"
+VimL: let s:marker_close = "+>"
+VimL: let s:reindent     = 1
+VimL: call s:Include('get-class-name', 'cpp/internals')
+VimL: let s:how = get(s:Param("copy-constructor", {}), "how", "")
+MuT:  if s:how =~ "deleted\\|defaulted"
+<+s:clsname+>(<+s:clsname+> const&) <+lh#cpp#snippets#{s:how}()+>;
+MuT:  else
+VimL:   let s:lead = lh#dox#comment_leading_char()." "
+VimL:   let s:param = lh#dev#naming#param("rhs")
+VimL:   let s:fn_comments = { }
+VimL:   let s:fn_comments.brief = "Copy constructor."
+VimL:   let s:fn_comments.throw = {"optional": 1}
+VimL:   " let s:fn_comments.text  = []
+VimL:   let s:fn_comments.param = [{"dir": "in", "name": (s:param), "text": "source data to be copied." } ]
+VimL:   call s:Include("function-comment", "cpp/internals",s:fn_comments)
+MuT:    let s:attributes = s:Param("attributes", lh#option#unset())
+MuT:    if lh#option#is_set(s:attributes) && !empty(s:attributes)
+MuT:      let s:definition = (len(s:attributes)>1?"\n": "").": ".join(map(copy(s:attributes), 'lh#dev#naming#member(v:val.name)."(".lh#cpp#snippets#duplicate_param(s:param.".".lh#dev#naming#member(v:val.name), v:val.type).")"'), "\n, ").'{}'
+MuT:    else
+MuT:      let s:definition = ';'
+MuT:    endif
+<+s:clsname+>(<+s:clsname+> const& <+s:param+>)<+s:definition+>
+MuT:  endif

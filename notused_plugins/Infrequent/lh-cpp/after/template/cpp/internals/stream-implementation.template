@@ -1,0 +1,6 @@
+VimL:" «stream-implementation» File Template, Luc Hermitte
+VimL: call s:AddPostExpandCallback('lh#dev#import#add("<'.s:direction.'stream>")')
+{
+VimL: " The space for the second argument is madatory at the moment.
+    return ¡s:stream_param.' '.s:op¡ <+fields+>;
+}
