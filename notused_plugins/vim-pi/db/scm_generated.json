@@ -2023,6 +2023,10 @@
     "type": "git",
     "url": "git://github.com/matthijsk/motoman-inform-vim-syntax"
   },
+  "3931": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/vim-support"
+  },
   "3933": {
     "type": "git",
     "url": "git://github.com/PeterRincker/vim-argumentative"
@@ -2690,6 +2694,10 @@
   "4404": {
     "type": "git",
     "url": "git://github.com/Elzair/vim-line-numbers"
+  },
+  "4405": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/latex-support"
   },
   "4409": {
     "type": "git",
@@ -4874,6 +4882,18 @@
   "5336": {
     "type": "git",
     "url": "git://github.com/chilicuil/vim-checksum"
+  },
+  "5337": {
+    "type": "git",
+    "url": "git://github.com/mateusz-pietruch/proto.vim"
+  },
+  "5341": {
+    "type": "git",
+    "url": "git://github.com/Ron89/thesaurus_query.vim"
+  },
+  "556": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/perl-support"
   },
   "586": {
     "type": "git",
