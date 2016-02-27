@@ -112,9 +112,10 @@ function! jraf#tagbarSettings()
   let g:tagbar_type_rmclog = {
         \ 'ctagstype': 'rmclog',
         \ 'kinds' : [
-        \'g:Global Iteration',
-        \],
-        \}
+        \ 'a:Affected Crew Group',
+        \ 'g:Global Iteration',
+        \ ],
+        \ }
 
   let g:tagbar_type_tex = {
         \ 'ctagstype' : 'latex',
