@@ -4891,6 +4891,10 @@
     "type": "git",
     "url": "git://github.com/Ron89/thesaurus_query.vim"
   },
+  "5342": {
+    "type": "git",
+    "url": "git://github.com/zizhongyan/vim-stata"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

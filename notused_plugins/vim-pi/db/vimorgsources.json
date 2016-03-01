@@ -1,4 +1,5 @@
 {
+"stata-syntax":{"archive_name":"stata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24057","version":"0.3","vim_script_nr":5342},
 "Thesaurus_Query":{"archive_name":"thesaurus_query.vim-version0_0_3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24056","version":"0.0.3","vim_script_nr":5341},
 "password_bunny":{"archive_name":"pwbunny-1.3.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24044","version":"1.3","vim_script_nr":5340},
 "helplink":{"archive_name":"helplink.vim-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24043","version":"1.0","vim_script_nr":5339},
