@@ -145,7 +145,7 @@
 "cpp_doxygen":{"archive_name":"cpp_doxygen.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23371","version":"1.2","vim_script_nr":5194},
 "zftool":{"archive_name":"zftool.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23351","version":"0.1.0","vim_script_nr":5193},
 "cpp_cppcheck":{"archive_name":"cpp_cppcheck.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23346","version":"1","vim_script_nr":5192},
-"scilab%5191":{"archive_name":"scilab.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23343","version":"1.0","vim_script_nr":5191},
+"scilab%5191":{"archive_name":"scilab.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24058","version":"1.5","vim_script_nr":5191},
 "vim-tag-comment":{"archive_name":"vim-tag-comment.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23403","version":"1.2","vim_script_nr":5190},
 "ctrlsf":{"archive_name":"ctrlsf.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23743","version":"1.40","vim_script_nr":5189},
 "vim-web2py":{"archive_name":"vim-web2py.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23335","version":"1.0","vim_script_nr":5188},
