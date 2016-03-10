@@ -318,7 +318,7 @@ fu! s:Close()
 	if s:winres[1] >= &lines && s:winres[2] == winnr('$')
 		exe s:winres[0].s:winres[0]
 	en
-	unl! s:focus s:hisidx s:hstgot s:marked s:statypes s:cline s:init s:savestr
+	unl! s:focus s:hisidx s:hstgot s:marked s:statypes s:init s:savestr
 		\ s:mrbs s:did_exp
 	cal ctrlp#recordhist()
 	cal s:execextvar('exit')
@@ -593,9 +593,6 @@ fu! s:Render(lines, pat)
 	exe cur_cmd
 	cal s:unmarksigns()
 	cal s:remarksigns()
-	if exists('s:cline') && s:nolim != 1
-		cal cursor(s:cline, 1)
-	en
 	" Highlighting
 	if s:dohighlight()
 		cal s:highlight(pat, s:mathi[1])
@@ -621,11 +618,12 @@ fu! s:Update(str)
 endf
 
 fu! s:ForceUpdate()
+	let wv = winsaveview()
 	sil! cal s:Update(escape(s:getinput(), '\'))
+	cal winrestview(wv)
 endf
 
 fu! s:BuildPrompt(upd)
-	if a:upd == 0 && line('$') <= winheight(0) | | redr | retu | en
 	let base = ( s:regexp ? 'r' : '>' ).( s:byfname() ? 'd' : '>' ).'> '
 	let str = escape(s:getinput(), '\')
 	let lazy = str == '' || exists('s:force') || !has('autocmd') ? 0 : s:lazy
@@ -806,8 +804,9 @@ fu! s:PrtSelectMove(dir)
 	let wht = winheight(0)
 	let dirs = {'t': 'gg','b': 'G','j': 'j','k': 'k','u': wht.'k','d': wht.'j'}
 	exe 'keepj norm!' dirs[a:dir]
-	if s:nolim != 1 | let s:cline = line('.') | en
+	let wv = winsaveview()
 	cal s:BuildPrompt(0)
+	cal winrestview(wv)
 endf
 
 fu! s:PrtSelectJump(char)
@@ -830,8 +829,9 @@ fu! s:PrtSelectJump(char)
 			let [jmpln, s:jmpchr] = [npos == -1 ? pos : npos, [chr, npos]]
 		en
 		exe 'keepj norm!' ( jmpln + 1 ).'G'
-		if s:nolim != 1 | let s:cline = line('.') | en
+		let wv = winsaveview()
 		cal s:BuildPrompt(0)
+		cal winrestview(wv)
 	en
 endf
 " Misc {{{2
@@ -930,23 +930,26 @@ endf
 
 fu! s:KeyLoop()
 	let [t_ve, guicursor] = [&t_ve, &guicursor]
-	set t_ve=
-	set guicursor=a:NONE
-	try
-		wh exists('s:init') && s:keyloop
+	wh exists('s:init') && s:keyloop
+		try
+			set t_ve=
+			set guicursor=a:NONE
 			let nr = getchar()
-			let chr = !type(nr) ? nr2char(nr) : nr
-			if nr >=# 0x20
-				cal s:PrtFocusMap(chr)
-			el
-				let cmd = matchstr(maparg(chr), ':<C-U>\zs.\+\ze<CR>$')
+		fina
+			let &t_ve = t_ve
+			let &guicursor = guicursor
+		endt
+		let chr = !type(nr) ? nr2char(nr) : nr
+		if nr >=# 0x20
+			cal s:PrtFocusMap(chr)
+		el
+			let cmd = matchstr(maparg(chr), ':<C-U>\zs.\+\ze<CR>$')
+			try
 				exe ( cmd != '' ? cmd : 'norm '.chr )
-			en
-		endw
-	fina
-		let &t_ve = t_ve
-		let &guicursor = guicursor
-	endt
+			cat
+			endt
+		en
+	endw
 endf
 " * Toggling {{{1
 fu! s:ToggleFocus()

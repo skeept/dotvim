@@ -3099,6 +3099,10 @@
     "type": "git",
     "url": "git://github.com/xolox/vim-misc"
   },
+  "4598": {
+    "type": "git",
+    "url": "git://github.com/mechatroner/rainbow_csv"
+  },
   "4601": {
     "type": "git",
     "url": "git://github.com/hoffoo/vim-grails-console"
