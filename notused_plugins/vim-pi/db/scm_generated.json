@@ -3217,7 +3217,7 @@
   },
   "4661": {
     "type": "git",
-    "url": "git://github.com/bling/vim-airline"
+    "url": "git://github.com/vim-airline/vim-airline"
   },
   "4662": {
     "type": "git",
