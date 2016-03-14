@@ -4883,6 +4883,10 @@
     "type": "git",
     "url": "git://github.com/machakann/vim-vimhelplint"
   },
+  "5334": {
+    "type": "git",
+    "url": "git://github.com/chaoren/vim-wordmotion"
+  },
   "5336": {
     "type": "git",
     "url": "git://github.com/chilicuil/vim-checksum"
@@ -4898,6 +4902,10 @@
   "5342": {
     "type": "git",
     "url": "git://github.com/zizhongyan/vim-stata"
+  },
+  "5345": {
+    "type": "git",
+    "url": "git://github.com/alpertuna/vim-header"
   },
   "556": {
     "type": "git",
