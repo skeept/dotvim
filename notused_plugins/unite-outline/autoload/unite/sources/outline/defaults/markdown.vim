@@ -21,6 +21,7 @@ endfunction
 let s:outline_info = {
       \ 'heading'  : '^#\+',
       \ 'heading+1': '^[-=]\+$',
+      \ 'skip': {'block': ['^\s*```.*$', '^\s*```$']},
       \ }
 
 function! s:outline_info.create_heading(which, heading_line, matched_line, context) abort
