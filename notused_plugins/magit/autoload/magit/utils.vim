@@ -34,11 +34,14 @@ endfunction
 " Use this function with caution: to be effective, the undo must be ack'ed
 " with a change. The hack is the line
 " exe "normal a \<BS>\<Esc>"
-" If the cursor is on a closed folding, it will open it!
+" We move on first line to make this trick where it should be no folding
 function! magit#utils#clear_undo()
 	let old_undolevels = &l:undolevels
+	let cur_pos = line('.')
 	setlocal undolevels=-1
+	call cursor(1, 0)
 	exe "normal a \<BS>\<Esc>"
+	call cursor(cur_pos, 0)
 	let &l:undolevels = old_undolevels
 	unlet old_undolevels
 endfunction
@@ -112,6 +115,22 @@ function! magit#utils#strip(string)
 	return substitute(a:string, '^\s*\(.\{-}\)\s*\n\=$', '\1', '')
 endfunction
 
+" magit#utils#strip_array: helper function to strip an array (remove empty rows
+" on both sides)
+" param[in] array: array to strop
+" return: stripped array
+function! magit#utils#strip_array(array)
+	let start = 0
+	while ( a:array[start] == '' )
+		let start += 1
+	endwhile
+	let end = len(a:array) - 1
+	while ( a:array[end] == '' )
+		let end -= 1
+	endwhile
+	return a:array[ start : end ]
+endfunction
+
 " magit#utils#join_list: helper function to concatente a list of strings with newlines
 " param[in] list: List to to concat
 " return: concatenated list
@@ -180,6 +199,23 @@ endfunction
 " return: current magit buffer id
 function! magit#utils#bufnr()
 	return s:bufnr
+endfunction
+
+" magit#utils#search_buffer_in_windows: search if a buffer is displayed in one
+" of opened windows
+" NOTE: windo command modify winnr('#'), if you want to use it, save it before
+" calling this function
+" param[in] filename: filename to search
+" return: window id, 0 if not found
+function! magit#utils#search_buffer_in_windows(filename)
+	let cur_win = winnr()
+	let last_win = winnr('#')
+	let files={}
+	windo if ( !empty(@%) ) | let files[@%] = winnr() | endif
+	execute last_win."wincmd w"
+	execute cur_win."wincmd w"
+	return ( has_key(files, buffer_name(a:filename)) ) ?
+				\files[buffer_name(a:filename)] : 0
 endfunction
 
 function! magit#utils#start_profile(...)

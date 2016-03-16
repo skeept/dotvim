@@ -1,25 +1,10 @@
-Add bootstrap file
-
-Some description text
-On multiple lines
-
-With blanks
+Uber commit message
 
 
 diff --git books/models.py books/models.py
 --- books/models.py
 +++ books/models.py
-@@ -1,5 +1,9 @@
- from django.db import models
- 
-+import urllib2 as urllib
-+from PIL import Image
-+import io
-+
- import isbn_search
- 
- class User(models.Model):
-@@ -20,20 +24,26 @@ class BookManager(models.Manager):
+@@ -24,20 +24,26 @@ class BookManager(models.Manager):
  				eisbn   = product.eisbn,
  				author  = product.author,
  				title   = product.title,
@@ -50,13 +35,4 @@ diff --git books/models.py books/models.py
 -
  	objects = BookManager()
  
- 
-@@ -47,7 +57,7 @@ class Book_copy(models.Model):
- class Borrowing(models.Model):
- 	book_copy = models.ForeignKey(Book_copy)
- 	borrower = models.ForeignKey(User)
--	borrow_date = models.DateTimeField('date published')
-+	date = models.DateTimeField(auto_now_add=True)
- 	def __unicode__(self):
- 		return u'%s loaned by %s since %s' % (self.book_copy.book, self.borrower, self.borrow_date,)
  

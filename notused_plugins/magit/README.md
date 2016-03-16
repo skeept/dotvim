@@ -24,16 +24,17 @@ Take a look at [TL;DR](#tldr) to start using it immediatly.
 * [x] Stage part of hunks, by visual select, lines or selecting bunch of lines with marks.
 * [x] Start to write the commit message in one key press, commit also in one key press.
 * [x] Modify in line the content just before staging it.
-* [x] Move easily through hunks.
+* [x] From a hunk in magit buffer, jump to the file at the diff position.
+* [x] Move easily through hunks in the magit buffer.
 * [x] Handle multiple git repositories within one vim instance.
 * [x] Add file to .gitignore file.
+* [x] Update vim-gitgutter signs when git status is updated.
 * [ ] Chase all corner cases. Please remember that vimagit is at an early development stage. If you try vimagit and nothing is working, please don't throw it, fill an [issue](https://github.com/jreybert/vimagit/issues/new) on github :heart: !
 
 More to come:
 * Make vimagit more efficient for huge repositories, with a lot of diffs.
 * Add a push function, taking care if needed about the remote repository and branch.
 * Handle commit fixup! and squash!, with a smart git log popup.
-* Handle multiple git repositories within one vim session.
 * Stage multiple hunks or file by visually selecting them.
 * Go through history, cherry-pick changes.
 * Handle stash: add, pop, apply, drop...
@@ -189,6 +190,20 @@ Following mappings are set locally, for magit buffer only, in normal mode.
  * If cursor is in diff header, discard whole file at cursor position.
  * Only works in "Unstaged changes" section.
 
+##### E
+If cursor is in a hunk, cursor will move in the file containing this hunk, at
+ the line of the beginning of the hunk.
+ * if the file is already visible in a |window|, cursor moves to this window at
+ the hunk line
+ * if there is more than one window open, cursor moves to last accessed window
+ and open buffer at the hunk line
+ * if there is only magit window opened, split vertically, moves cursor to new
+ split and open buffer at the hunk line
+
+E means 'edit'.
+
+:exclamation: this function is extremly powerful, just give it a try!
+
 ##### N,P
  * Move to **N**ext or **P**revious hunk.
 
@@ -218,6 +233,57 @@ Following mappings are set locally, for magit buffer only, in normal mode.
 ##### h
  * Toggle help showing in magit buffer
 
+#### Autocommand events
+
+Magit will raise some events at some point. User can plug some specific
+commands to these events (see [example](autocommand_example).
+
+##### VimagitBufferInit
+
+This event is raised when the magit buffer is initialized (i.e. each time
+[magit#show_magit()](magitshow_magit) is called.
+
+#### VimagitRefresh
+
+This event is raised every time the magit buffer is refreshed, event if no
+file is updated.
+
+#### VimagitUpdateFile
+
+This event is raised each time a file status is updated in magit buffer
+(typically when a file or a hunk is staged or unstaged). The variable
+`g:magit_last_updated_buffer` is set to the last updated file, with its
+absolute path.
+
+*Note:* `g:magit_last_updated_buffer` will be updated and VimagitUpdateFile event will
+be raised only if the buffer is currently opened in vim.
+
+##### VimagitCommitEnter
+
+This event is raised when the commit section opens and the cursor is
+placed in this section. For example, the user may want to go straight into
+insert mode when committing, defining this |autocmd| in its vimrc:
+
+```
+  autocmd User VimagitEnterCommit startinsert
+```
+
+#### Autocmd example
+
+The following example calls the vim-gitgutter refresh function on a specific
+buffer each time vimagit update the git status of this file.
+
+```
+  autocmd User VimagitUpdateFile
+    \ if ( exists("*gitgutter#process_buffer") ) |
+    \ 	call gitgutter#process_buffer(bufnr(g:magit_last_updated_buffer), 0) |
+    \ endif
+```
+
+The following example is already embeded in vimagit plugin (see
+[g:magit_refresh_gitgutter](gmagit_refresh_gitgutter)), then you shouldn't add this particular
+example to your vimrc.
+
 ### Options
 
 User can define in its prefered |vimrc| some options.
@@ -227,6 +293,11 @@ User can define in its prefered |vimrc| some options.
 To enable or disable vimagit plugin.
 Default value is 1.
 > let g:magit_enabled=[01]
+
+#### g:magit_git_cmd
+
+Git command, may be simply simply "git" if git is in your path. Defualt is "git"
+> let g:magit_git_cmd="git"
 
 #### g:magit_show_help
 
@@ -273,6 +344,14 @@ Default value is 10000.
 When set to 1, discard an untracked file will indeed delete this file.
 Default value is 0.
 > let g:magit_discard_untracked_do_delete=[01]
+
+#### g:magit_refresh_gitgutter
+
+When set to 1, and if vim-gitgutter plugin is installed, gitgutter signs will
+be updated each time magit update the git status of a file (i.e. when a file
+or a hunk is staged/unstaged).
+Default value is 1.
+> let g:magit_refresh_gitgutter=[01]
 
 ## Installation
 
