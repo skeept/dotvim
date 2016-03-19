@@ -4911,6 +4911,10 @@
     "type": "git",
     "url": "git://github.com/dkarter/bullets.vim"
   },
+  "5349": {
+    "type": "git",
+    "url": "git://github.com/ararslan/license-to-vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
