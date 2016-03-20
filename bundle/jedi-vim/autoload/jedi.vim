@@ -126,12 +126,11 @@ function! jedi#init_python()
         try
             let s:_init_python = s:init_python()
         catch
-            if !exists("g:jedi#squelch_py_warning")
-                echohl WarningMsg
-                echom "Error: jedi-vim failed to initialize Python: ".v:exception." (in ".v:throwpoint.")"
-                echohl None
-            endif
             let s:_init_python = 0
+            if !exists("g:jedi#squelch_py_warning")
+                echoerr "Error: jedi-vim failed to initialize Python: "
+                            \ .v:exception." (in ".v:throwpoint.")"
+            endif
         endtry
     endif
     return s:_init_python
@@ -154,11 +153,11 @@ function! jedi#setup_py_version(py_version)
 
     try
         execute cmd_init.' '.s:script_path.'/initialize.py'
-        execute 'command! -nargs=1 PythonJedi '.cmd_exec.' <args>'
-        return 1
     catch
         throw "jedi#setup_py_version: ".v:exception
     endtry
+    execute 'command! -nargs=1 PythonJedi '.cmd_exec.' <args>'
+    return 1
 endfunction
 
 
@@ -202,12 +201,7 @@ function! jedi#_vim_exceptions(str, is_eval)
     return l:result
 endfunction
 
-
-if !jedi#init_python()
-    " Do not define any functions when Python initialization failed.
-    finish
-endif
-
+call jedi#init_python()  " Might throw an error.
 
 " ------------------------------------------------------------------------
 " functions that call python code
@@ -503,7 +497,7 @@ endfunction
 
 function! jedi#smart_auto_mappings()
     " Auto put import statement after from module.name<space> and complete
-    if search('^\s*from\s\+[A-Za-z0-9._]\{1,50}\%#\s*$', 'bcn', line('.'))
+    if search('\m^\s*from\s\+[A-Za-z0-9._]\{1,50}\%#\s*$', 'bcn', line('.'))
         " Enter character and start completion.
         return "\<space>import \<C-x>\<C-o>\<C-r>=jedi#complete_opened(1)\<CR>"
     endif

@@ -581,7 +581,7 @@
   },
   "2628": {
     "type": "git",
-    "url": "git://github.com/jcfaria/Vim-R-plugin"
+    "url": "git://github.com/jalvesaq/Nvim-R"
   },
   "2632": {
     "type": "git",
