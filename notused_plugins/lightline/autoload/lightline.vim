@@ -2,7 +2,7 @@
 " Filename: autoload/lightline.vim
 " Author: itchyny
 " License: MIT License
-" Last Change: 2016/03/20 19:00:31.
+" Last Change: 2016/03/21 17:50:47.
 " =============================================================================
 
 let s:save_cpo = &cpo
@@ -362,21 +362,38 @@ function! lightline#statusline(inactive) abort
   return s:line(0, a:inactive)
 endfunction
 
-function! s:_expand(a, c, _, e, t, i, j, x) abort
+function! s:normalize(result) abort
+  if type(a:result) == 3
+    return map(a:result, 'type(v:val) == 1 ? v:val : string(v:val)')
+  elseif type(a:result) == 1
+    return [a:result]
+  else
+    return [string(a:result)]
+  endif
+endfunction
+
+function! s:evaluate_expand(component) abort
   try
-    let r = exists('*'.a:e[a:x[a:i][a:j]]) ? eval(a:e[a:x[a:i][a:j]] . '()') : ''
-    if type(r) == 1 && r ==# ''
-      return
+    let result = eval(a:component . '()')
+    if type(result) == type('') && result ==# ''
+      return []
     endif
-    let s = type(r) == 3 ? (len(r) < 3 ? r + [[], [], []] : r) : [[], [r], []]
   catch
-    return
+    return []
   endtry
+  return map(type(result) == 3 ? (result + [[], [], []])[:2] : [[], [result], []], 'filter(s:normalize(v:val), "v:val !=# ''''")')
+endfunction
+
+function! s:_expand(a, c, _, component, type, i) abort
+  let results = s:evaluate_expand(a:component)
+  if results == []
+    return
+  endif
   for k in [0, 1, 2]
-    let sk = filter(type(s[k])==3?map(s[k],'type(v:val)==1?(v:val):string(v:val)'):type(s[k])==1?[s[k]]:[string(s[k])],'strlen(v:val)')
+    let sk = results[k]
     if len(sk)
       unlet! m
-      let m = k == 1 && has_key(a:t, a:x[a:i][a:j]) ? a:t[a:x[a:i][a:j]] : a:i
+      let m = k == 1 ? a:type : a:i
       if !len(a:a) || type(a:a[-1]) != type(m) || a:a[-1] != m
         if len(a:_[-1])
           call add(a:_, sk)
@@ -399,17 +416,18 @@ function! s:_expand(a, c, _, e, t, i, j, x) abort
 endfunction
 
 function! s:expand(x) abort
-  let [e, t, d, f] = [ s:lightline.component_expand, s:lightline.component_type, s:lightline.component, s:lightline.component_function ]
+  let component_expand = s:lightline.component_expand
+  let component_type = s:lightline.component_type
   let [a, c, _] = [[], [], []]
   for i in range(len(a:x))
     if !len(_) || len(_[-1])
       call add(_, [])
       call add(c, [])
     endif
-    for j in range(len(a:x[i]))
-      if has_key(e, a:x[i][j])
-        call s:_expand(a, c, _, e, t, i, j, a:x)
-      elseif has_key(d, a:x[i][j]) || has_key(f, a:x[i][j])
+    for name in a:x[i]
+      if has_key(component_expand, name)
+        call s:_expand(a, c, _, component_expand[name], get(component_type, name, i), i)
+      else
         if !len(a) || type(a[-1]) != type(i) || a[-1] != i
           call add(a, i)
           if len(_) && len(_[-1])
@@ -417,7 +435,7 @@ function! s:expand(x) abort
             call add(c, [])
           endif
         endif
-        call add(_[-1], a:x[i][j])
+        call add(_[-1], name)
         call add(c[-1], 0)
       endif
     endfor
@@ -427,7 +445,7 @@ function! s:expand(x) abort
     call remove(_, -1)
     call remove(c, -1)
   endwhile
-  return [a, c, _]
+  return [_, c, a]
 endfunction
 
 function! s:line(tabline, inactive) abort
@@ -440,9 +458,9 @@ function! s:line(tabline, inactive) abort
   let [c, f, t] = [s:lightline.component, s:lightline.component_function, s:lightline.component_type]
   let mode = a:tabline ? 'tabline' : a:inactive ? 'inactive' : 'active'
   let l_ = has_key(s:lightline, mode) ? s:lightline[mode].left : s:lightline.active.left
-  let [ll, lc, lt] = s:expand(copy(l_))
+  let [lt, lc, ll] = s:expand(copy(l_))
   let r_ = has_key(s:lightline, mode) ? s:lightline[mode].right : s:lightline.active.right
-  let [rl, rc, rt] = s:expand(copy(r_))
+  let [rt, rc, rl] = s:expand(copy(r_))
   for i in range(len(lt))
     let _ .= printf('%%#LightLineLeft_%s_%s#', mode, ll[i])
     for j in range(len(lt[i]))

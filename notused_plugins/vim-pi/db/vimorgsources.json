@@ -1,5 +1,5 @@
 {
-"GoDiff":{"archive_name":"godiff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24124","version":"1.0","vim_script_nr":5350},
+"GoDiff":{"archive_name":"godiff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24127","version":"1.1","vim_script_nr":5350},
 "license-to-vim":{"archive_name":"license-to-vim-0.0.1.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24120","version":"v0.0.1","vim_script_nr":5349},
 "RAPID-Syntax":{"archive_name":"rapid.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24122","version":"0.9.1","vim_script_nr":5348},
 "color":{"archive_name":"color.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24105","version":"1.0","vim_script_nr":5347},
