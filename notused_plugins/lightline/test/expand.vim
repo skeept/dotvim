@@ -1,18 +1,22 @@
 let s:suite = themis#suite('expand')
 let s:assert = themis#helper('assert')
 
+function! s:expand(...)
+  return call(SID('expand'), a:000)
+endfunction
+
 function! s:suite.expand()
   let g:lightline = {}
   call lightline#init()
-  call s:assert.equals(SID('expand')([]),
-        \ [[], [], [0]])
+  call s:assert.equals(s:expand([]),
+        \ [[], [], ['0']])
 endfunction
 
 function! s:suite.default()
   let g:lightline = {}
   call lightline#init()
-  call s:assert.equals(SID('expand')([['mode', 'paste'], ['readonly', 'filename', 'modified']]),
-        \ [[['mode', 'paste'], ['readonly', 'filename', 'modified']], [[0, 0], [0, 0, 0]], [0, 1, 2]])
+  call s:assert.equals(s:expand([['mode', 'paste'], ['readonly', 'filename', 'modified']]),
+        \ [[['mode', 'paste'], ['readonly', 'filename', 'modified']], [[0, 0], [0, 0, 0]], ['0', '1', '2']])
 endfunction
 
 function! s:suite.custom()
@@ -21,10 +25,10 @@ function! s:suite.custom()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left', 'middle', 'right'], ['modified']], [[0, 0], [1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', 'middle', 'right', 'modified']], [[0, 0, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left', 'middle', 'right'], ['modified']], [[0, 0], [1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', 'middle', 'right', 'modified']], [[0, 0, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -34,10 +38,10 @@ function! s:suite.custom_type()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['middle'], ['right'], ['modified']], [[0, 0], [1], [1], [1], [0]], [0, 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left'], ['middle'], ['right', 'modified']], [[0, 0, 1], [1], [1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['middle'], ['right'], ['modified']], [[0, 0], [1], [1], [1], [0]], ['0', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left'], ['middle'], ['right', 'modified']], [[0, 0, 1], [1], [1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -47,10 +51,10 @@ function! s:suite.multiple()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['x0', 'x1', 'x2', 'y0', 'y1', 'y2', 'z0', 'z1', 'z2'], ['modified']], [[0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2', 'z0', 'z1', 'z2', 'modified']], [[0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['x0', 'x1', 'x2', 'y0', 'y1', 'y2', 'z0', 'z1', 'z2'], ['modified']], [[0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2', 'z0', 'z1', 'z2', 'modified']], [[0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -60,10 +64,10 @@ function! s:suite.multiple_type()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['x0', 'x1', 'x2'], ['y0', 'y1', 'y2'], ['z0', 'z1', 'z2'], ['modified']], [[0, 0], [1, 1, 1], [1, 1, 1], [1, 1, 1], [0]], [0, 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'x0', 'x1', 'x2'], ['y0', 'y1', 'y2'], ['z0', 'z1', 'z2', 'modified']], [[0, 0, 1, 1, 1], [1, 1, 1], [1, 1, 1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['x0', 'x1', 'x2'], ['y0', 'y1', 'y2'], ['z0', 'z1', 'z2'], ['modified']], [[0, 0], [1, 1, 1], [1, 1, 1], [1, 1, 1], [0]], ['0', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'x0', 'x1', 'x2'], ['y0', 'y1', 'y2'], ['z0', 'z1', 'z2', 'modified']], [[0, 0, 1, 1, 1], [1, 1, 1], [1, 1, 1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -73,10 +77,10 @@ function! s:suite.flatten()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left', 'middle', 'right'], ['modified']], [[0, 0], [1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', 'middle', 'right', 'modified']], [[0, 0, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left', 'middle', 'right'], ['modified']], [[0, 0], [1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', 'middle', 'right', 'modified']], [[0, 0, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -86,10 +90,10 @@ function! s:suite.custom_type_flatten()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['middle'], ['right'], ['modified']], [[0, 0], [1], [1], [1], [0]], [0, 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left'], ['middle'], ['right', 'modified']], [[0, 0, 1], [1], [1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['middle'], ['right'], ['modified']], [[0, 0], [1], [1], [1], [0]], ['0', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left'], ['middle'], ['right', 'modified']], [[0, 0, 1], [1], [1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -99,10 +103,10 @@ function! s:suite.custom_string()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -112,10 +116,10 @@ function! s:suite.custom_type_string()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -125,10 +129,10 @@ function! s:suite.custom_void_string()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -138,10 +142,10 @@ function! s:suite.custom_type_void_string()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -151,10 +155,10 @@ function! s:suite.custom_number()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', '24', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', '24', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -164,10 +168,10 @@ function! s:suite.custom_type_number()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename'], ['24'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -177,10 +181,10 @@ function! s:suite.custom_void_string_array()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -190,10 +194,10 @@ function! s:suite.custom_type_void_string_array()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -203,10 +207,10 @@ function! s:suite.custom_void_string_array_2()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -216,10 +220,10 @@ function! s:suite.custom_type_void_string_array_2()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -229,10 +233,10 @@ function! s:suite.custom_void_string_array_3()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -242,10 +246,10 @@ function! s:suite.custom_type_void_string_array_3()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -255,10 +259,10 @@ function! s:suite.custom_void_string_array_4()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'custom', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -268,10 +272,10 @@ function! s:suite.custom_type_void_string_array_4()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename'], ['custom'], ['modified']], [[0, 0], [1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -281,10 +285,10 @@ function! s:suite.custom_left_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1', 'z0', 'z1'], ['modified']], [[0], [1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'modified']]),
-        \ [[['filename', 'y0', 'y1', 'z0', 'z1', 'modified']], [[0, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1', 'z0', 'z1'], ['modified']], [[0], [1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'modified']]),
+        \ [[['filename', 'y0', 'y1', 'z0', 'z1', 'modified']], [[0, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -294,10 +298,10 @@ function! s:suite.custom_type_left_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['modified']], [[0], [1, 1], [1, 1], [0]], [0, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'modified']]),
-        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1', 'modified']], [[0], [1, 1], [1, 1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['modified']], [[0], [1, 1], [1, 1], [0]], ['0', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'modified']]),
+        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1', 'modified']], [[0], [1, 1], [1, 1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -307,10 +311,10 @@ function! s:suite.custom_right_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom'], ['modified']]),
-        \ [[['filename'], ['x0', 'x1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'modified']]),
-        \ [[['filename', 'x0', 'x1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom'], ['modified']]),
+        \ [[['filename'], ['x0', 'x1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'modified']]),
+        \ [[['filename', 'x0', 'x1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -320,10 +324,10 @@ function! s:suite.custom_type_right_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom'], ['modified']]),
-        \ [[['filename'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0], [1, 1], [1, 1], [0]], [0, 1, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'modified']]),
-        \ [[['filename', 'x0', 'x1'], ['y0', 'y1'], ['modified']], [[0, 1, 1], [1, 1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom'], ['modified']]),
+        \ [[['filename'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0], [1, 1], [1, 1], [0]], ['0', '1', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'modified']]),
+        \ [[['filename', 'x0', 'x1'], ['y0', 'y1'], ['modified']], [[0, 1, 1], [1, 1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -333,10 +337,10 @@ function! s:suite.custom_one()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -346,10 +350,10 @@ function! s:suite.custom_type_one()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['modified']], [[0, 0], [1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', 'modified']], [[0, 0, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['modified']], [[0, 0], [1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', 'modified']], [[0, 0, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -359,10 +363,10 @@ function! s:suite.custom_two()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left', 'middle'], ['modified']], [[0, 0], [1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', 'middle', 'modified']], [[0, 0, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left', 'middle'], ['modified']], [[0, 0], [1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', 'middle', 'modified']], [[0, 0, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -372,10 +376,10 @@ function! s:suite.custom_type_two()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['middle'], ['modified']], [[0, 0], [1], [1], [0]], [0, 1, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left'], ['middle'], ['modified']], [[0, 0, 1], [1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['middle'], ['modified']], [[0, 0], [1], [1], [0]], ['0', '1', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left'], ['middle'], ['modified']], [[0, 0, 1], [1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -385,10 +389,10 @@ function! s:suite.custom_mixed()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left', '{''custom'': 24}', 'function(''tr'')'], ['modified']], [[0, 0], [1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', '{''custom'': 24}', 'function(''tr'')', 'modified']], [[0, 0, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left', '{''custom'': 24}', 'function(''tr'')'], ['modified']], [[0, 0], [1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', '{''custom'': 24}', 'function(''tr'')', 'modified']], [[0, 0, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -398,10 +402,10 @@ function! s:suite.custom_type_mixed()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['{''custom'': 24}'], ['function(''tr'')'], ['modified']], [[0, 0], [1], [1], [1], [0]], [0, 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left'], ['{''custom'': 24}'], ['function(''tr'')', 'modified']], [[0, 0, 1], [1], [1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['{''custom'': 24}'], ['function(''tr'')'], ['modified']], [[0, 0], [1], [1], [1], [0]], ['0', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left'], ['{''custom'': 24}'], ['function(''tr'')', 'modified']], [[0, 0, 1], [1], [1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -411,10 +415,10 @@ function! s:suite.custom_mixed_2()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left', '{''custom'': 24}', '[function(''tr'')]'], ['modified']], [[0, 0], [1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left', '{''custom'': 24}', '[function(''tr'')]', 'modified']], [[0, 0, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left', '{''custom'': 24}', '[function(''tr'')]'], ['modified']], [[0, 0], [1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left', '{''custom'': 24}', '[function(''tr'')]', 'modified']], [[0, 0, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -424,10 +428,10 @@ function! s:suite.custom_type_mixed_2()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['left'], ['{''custom'': 24}'], ['[function(''tr'')]'], ['modified']], [[0, 0], [1], [1], [1], [0]], [0, 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'left'], ['{''custom'': 24}'], ['[function(''tr'')]', 'modified']], [[0, 0, 1], [1], [1, 0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['left'], ['{''custom'': 24}'], ['[function(''tr'')]'], ['modified']], [[0, 0], [1], [1], [1], [0]], ['0', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'left'], ['{''custom'': 24}'], ['[function(''tr'')]', 'modified']], [[0, 0, 1], [1], [1, 0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -438,10 +442,10 @@ function! s:suite.custom_error()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -452,29 +456,29 @@ function! s:suite.custom_type_error()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
 function! s:suite.notfound()
   let g:lightline = { 'component_expand': { 'custom': 'NotFound' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
 endfunction
 
 function! s:suite.custom_type_notfound()
   let g:lightline = { 'component_expand': { 'custom': 'NotFound' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['readonly', 'filename'], ['custom'], ['modified']]),
-        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], [0, 2, 3]])
-  call s:assert.equals(SID('expand')([['readonly', 'filename', 'custom', 'modified']]),
-        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['readonly', 'filename'], ['custom'], ['modified']]),
+        \ [[['readonly', 'filename'], ['modified']], [[0, 0], [0]], ['0', '2', '3']])
+  call s:assert.equals(s:expand([['readonly', 'filename', 'custom', 'modified']]),
+        \ [[['readonly', 'filename', 'modified']], [[0, 0, 0]], ['0', '1']])
 endfunction
 
 function! s:suite.duplicated_left_nil()
@@ -483,10 +487,10 @@ function! s:suite.duplicated_left_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1', 'z0', 'z1', 'y0', 'y1', 'z0', 'z1'], ['modified']], [[0], [1, 1, 1, 1, 1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename', 'y0', 'y1', 'z0', 'z1', 'y0', 'y1', 'z0', 'z1', 'modified']], [[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1', 'z0', 'z1', 'y0', 'y1', 'z0', 'z1'], ['modified']], [[0], [1, 1, 1, 1, 1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename', 'y0', 'y1', 'z0', 'z1', 'y0', 'y1', 'z0', 'z1', 'modified']], [[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -496,10 +500,10 @@ function! s:suite.duplicated_type_left_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['y0', 'y1'], ['z0', 'z1'], ['modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1], [0]], [0, 'custom', 1, 'custom', 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['y0', 'y1'], ['z0', 'z1', 'modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1, 0]], [0, 'custom', 0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['y0', 'y1'], ['z0', 'z1'], ['modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1], [0]], ['0', 'custom', '1', 'custom', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename'], ['y0', 'y1'], ['z0', 'z1'], ['y0', 'y1'], ['z0', 'z1', 'modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1, 0]], ['0', 'custom', '0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -509,10 +513,10 @@ function! s:suite.duplicated_right_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['x0', 'x1', 'y0', 'y1', 'x0', 'x1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1, 1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename', 'x0', 'x1', 'y0', 'y1', 'x0', 'x1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['x0', 'x1', 'y0', 'y1', 'x0', 'x1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1, 1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename', 'x0', 'x1', 'y0', 'y1', 'x0', 'x1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -522,10 +526,10 @@ function! s:suite.duplicated_type_right_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['x0', 'x1'], ['y0', 'y1'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1], [0]], [0, 1, 'custom', 1, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename', 'x0', 'x1'], ['y0', 'y1'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0, 1, 1], [1, 1], [1, 1], [1, 1], [0]], [0, 'custom', 0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['x0', 'x1'], ['y0', 'y1'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0], [1, 1], [1, 1], [1, 1], [1, 1], [0]], ['0', '1', 'custom', '1', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename', 'x0', 'x1'], ['y0', 'y1'], ['x0', 'x1'], ['y0', 'y1'], ['modified']], [[0, 1, 1], [1, 1], [1, 1], [1, 1], [0]], ['0', 'custom', '0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -535,10 +539,10 @@ function! s:suite.duplicated_both_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], [0, 1, 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename', 'y0', 'y1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], ['0', '1', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename', 'y0', 'y1', 'y0', 'y1', 'modified']], [[0, 1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -548,10 +552,10 @@ function! s:suite.duplicated_type_both_nil()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom'], ['modified']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], [0, 'custom', 2, 3]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom', 'modified']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], [0, 'custom', 0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom'], ['modified']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], ['0', 'custom', '2', '3']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom', 'modified']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1'], ['modified']], [[0], [1, 1, 1, 1], [0]], ['0', 'custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -561,10 +565,10 @@ function! s:suite.duplicated_both_nil_left_most()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['custom', 'custom'], ['modified']]),
-        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], [0, 1, 2]])
-  call s:assert.equals(SID('expand')([['custom', 'custom', 'modified']]),
-        \ [[['y0', 'y1', 'y0', 'y1', 'modified']], [[1, 1, 1, 1, 0]], [0, 1]])
+  call s:assert.equals(s:expand([['custom', 'custom'], ['modified']]),
+        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], ['0', '1', '2']])
+  call s:assert.equals(s:expand([['custom', 'custom', 'modified']]),
+        \ [[['y0', 'y1', 'y0', 'y1', 'modified']], [[1, 1, 1, 1, 0]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -574,10 +578,10 @@ function! s:suite.duplicated_type_both_nil_left_most()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['custom', 'custom'], ['modified']]),
-        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], ['custom', 1, 2]])
-  call s:assert.equals(SID('expand')([['custom', 'custom', 'modified']]),
-        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], ['custom', 0, 1]])
+  call s:assert.equals(s:expand([['custom', 'custom'], ['modified']]),
+        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], ['custom', '1', '2']])
+  call s:assert.equals(s:expand([['custom', 'custom', 'modified']]),
+        \ [[['y0', 'y1', 'y0', 'y1'], ['modified']], [[1, 1, 1, 1], [0]], ['custom', '0', '1']])
   delfunction Custom
 endfunction
 
@@ -587,10 +591,10 @@ function! s:suite.duplicated_both_nil_right_most()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], [0, 1, 2]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom']]),
-        \ [[['filename', 'y0', 'y1', 'y0', 'y1']], [[0, 1, 1, 1, 1]], [0, 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], ['0', '1', '2']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom']]),
+        \ [[['filename', 'y0', 'y1', 'y0', 'y1']], [[0, 1, 1, 1, 1]], ['0', '1']])
   delfunction Custom
 endfunction
 
@@ -600,9 +604,9 @@ function! s:suite.duplicated_type_both_nil_right_most()
   endfunction
   let g:lightline = { 'component_expand': { 'custom': 'Custom' }, 'component_type': { 'custom': 'custom' } }
   call lightline#init()
-  call s:assert.equals(SID('expand')([['filename'], ['custom', 'custom']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], [0, 'custom', 2]])
-  call s:assert.equals(SID('expand')([['filename', 'custom', 'custom']]),
-        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], [0, 'custom', 1]])
+  call s:assert.equals(s:expand([['filename'], ['custom', 'custom']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], ['0', 'custom', '2']])
+  call s:assert.equals(s:expand([['filename', 'custom', 'custom']]),
+        \ [[['filename'], ['y0', 'y1', 'y0', 'y1']], [[0], [1, 1, 1, 1]], ['0', 'custom', '1']])
   delfunction Custom
 endfunction
