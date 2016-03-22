@@ -78,7 +78,6 @@ function! SetupVAM()
 
   "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
   VAMAddToActiveAddons ctrlp TaskList Supertab
-  VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
@@ -93,6 +92,8 @@ function! SetupVAM()
   VAMAddToActiveAddons vim-diff-enhanced
   VAMAddToActiveAddons magit fuzzysearch grepper
   VAMAddToActiveAddons FastFold
+  VAMAddToActiveAddons lightline
+  "VAMAddToActiveAddons SmartusLine
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
