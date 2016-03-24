@@ -1,3 +1,7 @@
 execute frawor#Setup('0.0', {'autoload/frawor/resources': '0.0'})
-call s:_f.postresource('r', {}, function('s:Eval'))
+function Test()
+endfunction
+let s:T=function('Test')
+delfunction Test
+call s:_f.postresource('r', {}, s:T)
 

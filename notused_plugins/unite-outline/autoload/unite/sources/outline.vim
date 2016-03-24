@@ -520,7 +520,7 @@ let s:source = {
       \ 'matchers'   : ['outline_matcher_glob', 'outline_formatter'],
       \ 'syntax'     : 'uniteSource__Outline',
       \
-      \ 'hooks': {}, 'action_table': {}, 'alias_table': {}, 'default_action': {},
+      \ 'hooks': {}, 'alias_table': {}, 'default_action': {},
       \ }
 
 function! s:Source_Hooks_on_init(source_args, unite_context) abort
@@ -1337,99 +1337,6 @@ function! s:Source_calc_signature(lnum) abort
   return s:_calc_signature(bwd_lines, fwd_lines)
 endfunction
 let s:source.calc_signature = function(s:SID . 'Source_calc_signature')
-
-"---------------------------------------
-" Actions
-
-let s:action_table = {}
-let s:action_table.preview = {
-      \ 'description'  : 'preview this position',
-      \ 'is_selectable': 0,
-      \ 'is_quit'      : 0,
-      \ }
-function! s:Action_preview(candidate) abort
-  let cand = a:candidate
-
-  " NOTE: Executing :pedit for a nofile buffer clears the buffer content at
-  " all, so prohibit it.
-  let bufnr = bufnr(unite#util#escape_file_searching(cand.action__path))
-  if getbufvar(bufnr, '&buftype') =~# '\<nofile\>'
-    call unite#print_error("unite-outline: Can't preview the nofile buffer.")
-    return
-  endif
-
-  " workaround for `cursor-goes-to-top' problem on :pedit %
-  let save_cursors = s:save_window_cursors(bufnr)
-  let n_wins = winnr('$')
-  call unite#take_action('preview', cand)
-  wincmd p
-  let preview_winnr = winnr()
-  call s:adjust_scroll(s:best_winline())
-  wincmd p
-  call s:restore_window_cursors(save_cursors, preview_winnr, (winnr('$') > n_wins))
-endfunction
-let s:action_table.preview.func = function(s:SID . 'Action_preview')
-
-function! s:save_window_cursors(bufnr) abort
-  let save_cursors = {}
-  let save_winnr = winnr()
-  let winnr = 1
-  while winnr <= winnr('$')
-    if winbufnr(winnr) == a:bufnr
-      execute winnr . 'wincmd w'
-      let save_cursors[winnr] = {
-            \ 'cursor' : getpos('.'),
-            \ 'winline': winline(),
-            \ }
-    endif
-    let winnr += 1
-  endwhile
-  execute save_winnr . 'wincmd w'
-  return save_cursors
-endfunction
-
-function! s:restore_window_cursors(save_cursors, preview_winnr, is_new) abort
-  let save_winnr = winnr()
-  for [winnr, saved] in items(a:save_cursors)
-    if winnr == a:preview_winnr
-      continue
-    elseif a:is_new && winnr >= a:preview_winnr
-      let winnr += 1
-    endif
-    execute winnr . 'wincmd w'
-    if getpos('.') != saved.cursor
-      call setpos('.', saved.cursor)
-      call s:adjust_scroll(saved.winline)
-    endif
-  endfor
-  execute save_winnr . 'wincmd w'
-endfunction
-
-function! s:best_winline() abort
-  return max([1, winheight(0) * g:unite_kind_jump_list_after_jump_scroll / 100])
-endfunction
-
-function! s:adjust_scroll(best_winline) abort
-  normal! zt
-  let save_cursor = getpos('.')
-  let winl = 1
-  " Scroll the cursor line down to the best position.
-  while winl <= a:best_winline
-    let prev_winl = winl
-    execute "normal! \<C-y>"
-    let winl = winline()
-    if winl == prev_winl
-      break
-    end
-    let prev_winl = winl
-  endwhile
-  if winl > a:best_winline
-    execute "normal! \<C-e>"
-  endif
-  call setpos('.', save_cursor)
-endfunction
-
-let s:source.action_table.jump_list = s:action_table
 
 "-----------------------------------------------------------------------------
 " Auto-update

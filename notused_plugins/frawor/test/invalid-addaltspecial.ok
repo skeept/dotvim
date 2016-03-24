@@ -5,5 +5,5 @@
 .5: autoload/frawor/decorators/altervars:setnotfunc
 .6: autoload/frawor/decorators/altervars:ssmanyargs
 .7: autoload/frawor/decorators/altervars:ssoptsndct
-.8: autoload/frawor/decorators/altervars:sssavuref
-.9: autoload/frawor/decorators/altervars:ssseturef
+.8: autoload/frawor/decorators:sssavuref
+.9: autoload/frawor/decorators:ssseturef

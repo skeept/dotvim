@@ -1,6 +1,6 @@
 "▶1 Header
 scriptencoding utf-8
-execute frawor#Setup('0.1', {'@/decorators': '0.0',
+execute frawor#Setup('0.1', {'@/decorators': '0.1',
             \              '@/autocommands': '0.0',})
 "▶1 _messages
 if v:lang=~?'ru'
@@ -8,8 +8,6 @@ if v:lang=~?'ru'
                 \    'fnotdict': 'аргумент, описывающий функции, '.
                 \                'должен быть словарём',
                 \    'invfname': 'строка «%s» не может являться именем функции',
-                \        'uref': 'ключ «%s» описания фунцкции %s содержит '.
-                \                'ссылку на неизвестную функцию',
             \}
     call map(s:_messages, '"Ошибка создания функций для дополнения %s: ".'.
                 \           'v:val')
@@ -55,8 +53,6 @@ else
     let s:_messages={
                 \    'fnotdict': 'functions argument must be a dictionary',
                 \    'invfname': '%s is not a valid function name',
-                \        'uref': 'key `%s'' of %s function description '.
-                \                'provides a reference to unknown function',
             \}
     call map(s:_messages, '"Error while creating functions for plugin %s: ".'.
                 \           'v:val')
@@ -98,32 +94,10 @@ else
                 \    'deceqpri': 'Decorators %s and %s have equal priority',
             \})
 endif
-"▶1 rewritefname    :: sid, Funcref → funcname
-function s:F.rewritefname(sid, Fref)
-    if type(a:Fref)==2
-        let fstr=string(a:Fref)[10:-3]
-    else
-        let fstr=a:Fref
-    endif
-    if fstr[:1] is# 's:'
-        let fstr='<SNR>'.a:sid.'_'.fstr[2:]
-    elseif fstr[:4] ==? '<SID>'
-        let fstr='<SNR>'.a:sid.'_'.fstr[5:]
-    endif
-    return fstr
-endfunction
-"▶1 refref          :: sid, Funcref → Funcref
-function s:F.refref(sid, Fref)
-    let fstr=s:F.rewritefname(a:sid, a:Fref)
-    if string(+fstr) is# fstr
-        return a:Fref
-    else
-        if !exists('*'.fstr)
-            call s:_f.throw('uref', a:plugdict.id, 'function', a:fname)
-            call call(s:_f.throw, a:000, {})
-        endif
-        return function(fstr)
-    endif
+"▶1 refunction      :: sid, Funcref → Funcref
+function s:F.refunction(sid, Fref, plugdict, fname)
+    return s:_r.refunction(a:sid, a:Fref,
+                \          'uref', a:plugdict.id, 'function', a:fname)
 endfunction
 "▶1 fundef          :: plugdict, funopts, fundef, fname → Funcref
 function s:F.fundef(plugdict, funopts, fundef, fname)
@@ -171,14 +145,15 @@ function s:F.fundef(plugdict, funopts, fundef, fname)
     else
         let sid=a:plugdict.sid
     endif
-    let fundefext.function=s:F.refref(sid, fundefext.function)
+    let fundefext.function=s:F.refunction(sid, fundefext.function,
+                \                         a:plugdict, a:fname)
     call extend(a:fundef, fundefext)
     let a:fundef.decdeps=decdeps
     return a:fundef
 endfunction
 "▶1 delfunction     :: sid, Funcref → + :delfunction
 function s:F.delfunction(sid, Fref)
-    let fstr=s:F.rewritefname(a:sid, a:Fref)
+    let fstr=s:_r.rewritefname(a:sid, a:Fref)
     if string(+fstr) is# fstr || fstr=~#'^[a-z_]\+$'
         return 3
     elseif !exists('*'.fstr)
@@ -410,7 +385,7 @@ function s:F.addfunctions(plugdict, fdict, functions)
             call s:_f.throw('foptsnotdict', fname, a:plugdict.id)
         endif
         "▶2 Replace s: prefix with <SNR>{SID}_
-        let fstr=s:F.rewritefname(a:plugdict.sid, fname)
+        let fstr=s:_r.rewritefname(a:plugdict.sid, fname)
         "▶2 Check function name
         if fname!~#'\v^%((h:|\<SNR\>\d+_)\w+|[A-Z_]\w*)$'
             call s:_f.throw('invfname', fname, a:plugdict.id)

@@ -1,6 +1,6 @@
 "▶1 Header
 scriptencoding utf-8
-execute frawor#Setup('0.1', {'@/decorators': '0.0',
+execute frawor#Setup('0.1', {'@/decorators': '0.1',
             \                    '@/checks': '0.0',
             \      '@/decorators/altervars': '0.0'})
 "▶1 Define messages
@@ -76,10 +76,6 @@ if v:lang=~?'ru'
                 \                'ссылкой на функцию',
                 \  'ssmanyargs': 'слишком большое количество аргументов',
                 \  'ssoptsndct': 'дополнительный аргумент не является словарём',
-                \   'sssavuref': 'сохраняющая функция является ссылкой '.
-                \                'на неизвестную функцию',
-                \   'ssseturef': 'восстанавливающая функция является ссылкой '.
-                \                'на неизвестную функцию',
             \},
             \'"Ошибка создания сохраняющей и восстанавливающей функций '.
             \ '%s для дополнения %s: ".v:val'))
@@ -145,32 +141,10 @@ else
                 \  'setnotfunc': 'setter is not a function reference',
                 \  'ssmanyargs': 'too many arguments',
                 \  'ssoptsndct': 'options argument is not a Dictionary',
-                \   'sssavuref': 'saver is a reference to unknown function',
-                \   'ssseturef': 'setter is a reference to unknown function',
             \},
             \'"Error while creating saver and setter functions with id %s '.
             \ 'for plugin %s: ".v:val'))
 endif
-"▶1 rewritefname    :: sid, Funcref → funcname
-function s:F.rewritefname(sid, Fref)
-    let fstr=string(a:Fref)[10:-3]
-    if fstr[:1] is# 's:'
-        let fstr='<SNR>'.a:sid.'_'.fstr[2:]
-    endif
-    return fstr
-endfunction
-"▶1 refunction      :: sid, Funcref, throwargs → Funcref
-function s:F.refunction(sid, Fref, ...)
-    let fstr=s:F.rewritefname(a:sid, a:Fref)
-    if string(+fstr) is# fstr
-        return a:Fref
-    else
-        if !exists('*'.fstr)
-            call call(s:_f.throw, a:000, {})
-        endif
-        return function(fstr)
-    endif
-endfunction
 "▶1 Decorator
 let s:altervars={'lastid': 0}
 let s:ss={}
@@ -388,10 +362,10 @@ function s:F.addaltspecial(plugdict, fdict, ssid, Saver, Setter, ...)
     let ssdef={
                 \    'id': a:ssid,
                 \  'plid': a:plugdict.id,
-                \ 'saver': s:F.refunction(a:plugdict.sid, a:Saver,
-                \                         'sssavuref', a:ssid, a:plugdict.id),
-                \'setter': s:F.refunction(a:plugdict.sid, a:Setter,
-                \                         'ssseturef', a:ssid, a:plugdict.id),
+                \ 'saver': s:_r.refunction(a:plugdict.sid, a:Saver,
+                \                          'sssavuref', a:ssid, a:plugdict.id),
+                \'setter': s:_r.refunction(a:plugdict.sid, a:Setter,
+                \                          'ssseturef', a:ssid, a:plugdict.id),
                 \'hasarg': 0,
             \}
     if a:0

@@ -4915,6 +4915,14 @@
     "type": "git",
     "url": "git://github.com/ararslan/license-to-vim"
   },
+  "5351": {
+    "type": "git",
+    "url": "git://github.com/gglynne/vedict"
+  },
+  "5352": {
+    "type": "git",
+    "url": "git://github.com/lag13/vim-cwdtabline"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

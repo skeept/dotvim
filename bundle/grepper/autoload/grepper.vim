@@ -10,6 +10,7 @@ let s:options = {
       \ 'jump':      0,
       \ 'cword':     0,
       \ 'prompt':    1,
+      \ 'highlight': 0,
       \ 'next_tool': '<tab>',
       \ 'tools':     ['ag', 'ack', 'grep', 'findstr', 'sift', 'pt', 'git'],
       \ 'git':       { 'grepprg':    'git grep -nI',
@@ -18,7 +19,7 @@ let s:options = {
       \ 'ag':        { 'grepprg':    'ag --vimgrep',
       \                'grepformat': '%f:%l:%c:%m,%f:%l:%m',
       \                'escape':     '\^$.*+?()[]%#' },
-      \ 'sift':      { 'grepprg':    'sift -n --binary-skip $* .',
+      \ 'sift':      { 'grepprg':    'sift -n --binary-skip',
       \                'grepformat': '%f:%l:%m',
       \                'escape':     '\+*?^$%#()[]' },
       \ 'pt':        { 'grepprg':    'pt --nogroup',
@@ -133,7 +134,7 @@ endfunction
 
 " #parse_flags() {{{1
 function! grepper#parse_flags(args) abort
-  let flags = extend({ 'query': ''}, s:options)
+  let flags = extend({ 'query': '', 'query_escaped': 0 }, s:options)
   let args = split(a:args, '\s\+')
   let len = len(args)
   let i = 0
@@ -141,12 +142,13 @@ function! grepper#parse_flags(args) abort
   while i < len
     let flag = args[i]
 
-    if     flag =~? '\v^-%(no)?quickfix$' | let flags.quickfix = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?open$'     | let flags.open     = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?switch$'   | let flags.switch   = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?jump$'     | let flags.jump     = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?prompt$'   | let flags.prompt   = flag !~? '^-no'
-    elseif flag =~? '^-cword$'            | let flags.cword    = 1
+    if     flag =~? '\v^-%(no)?quickfix$'  | let flags.quickfix  = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?open$'      | let flags.open      = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?switch$'    | let flags.switch    = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?jump$'      | let flags.jump      = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?prompt$'    | let flags.prompt    = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?highlight$' | let flags.highlight = flag !~? '^-no'
+    elseif flag =~? '^-cword$'             | let flags.cword     = 1
     elseif flag =~? '^-grepprg$'
       let i += 1
       if i < len
@@ -203,17 +205,56 @@ function! s:process_flags(flags)
     let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
   endif
 
-  if !a:flags.prompt
-    call histadd('input', a:flags.query)
-    return
+  if a:flags.prompt
+    call s:prompt(a:flags)
+    if empty(a:flags.query)
+      let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
+    elseif a:flags.query =~# s:magic.esc
+      return
+    endif
   endif
 
-  call s:prompt(a:flags)
-
-  if empty(a:flags.query)
-    let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
-    call histadd('input', a:flags.query)
+  if a:flags.highlight
+    call s:highlight_query(a:flags)
   endif
+
+  call histadd('input', a:flags.query)
+endfunction
+
+" s:highlight_query() {{{1
+function! s:highlight_query(flags)
+  " Change Vim's '\'' to ' so it can be understood by /.
+  let vim_query = substitute(a:flags.query, "'\\\\''", "'", 'g')
+
+  " Remove surrounding quotes that denote a string.
+  let start = vim_query[0]
+  let end = vim_query[-1:-1]
+  if start == end && start =~ "\['\"]"
+    let vim_query = vim_query[1:-2]
+  endif
+
+  if a:flags.query_escaped
+    let vim_query = s:unescape_query(a:flags, vim_query)
+    let vim_query = escape(vim_query, '\')
+    let vim_query = '\V'. vim_query
+  else
+    " \bfoo\b -> \<foo\> Assume only one pair.
+    let vim_query = substitute(vim_query, '\v\\b(.{-})\\b', '\\<\1\\>', '')
+  endif
+
+  let @/ = vim_query
+  call histadd('search', vim_query)
+  call feedkeys(":set hls\<bar>echo\<cr>", 'n')
+endfunction
+
+" s:unescape_query() {{{1
+function! s:unescape_query(flags, query)
+  let tool = s:get_current_tool(a:flags)
+  let q = a:query
+  for c in reverse(split(tool.escape, '\zs'))
+    let q = substitute(q, '\V\\'.c, c, 'g')
+  endfor
+  return q
 endfunction
 
 " s:start() {{{1
@@ -254,12 +295,14 @@ function! s:prompt(flags)
   endtry
 
   if a:flags.query =~# s:magic.next
-    call histdel('input')
+    call histdel('input', -1)
     call s:next_tool(a:flags)
     let a:flags.query = has_key(a:flags, 'query_orig')
           \ ? s:escape_query(a:flags, a:flags.query_orig)
           \ : a:flags.query[:-len(s:magic.next)-1]
     return s:prompt(a:flags)
+  elseif a:flags.query =~# s:magic.esc
+    call histdel('input', -1)
   endif
 endfunction
 
@@ -305,6 +348,7 @@ function! s:run(flags)
     let cmd = ['sh', '-c', printf('%s > %s', s:cmdline, tempfile)]
 
     let s:id = jobstart(cmd, {
+          \ 'pty':       1,
           \ 'flags':     a:flags,
           \ 'tempfile':  tempfile,
           \ 'cmd':       s:cmdline,
@@ -472,6 +516,7 @@ endfunction
 " s:escape_query() {{{1
 function! s:escape_query(flags, query)
   let tool = s:get_current_tool(a:flags)
+  let a:flags.query_escaped = 1
   return shellescape(has_key(tool, 'escape')
         \ ? escape(a:query, tool.escape)
         \ : a:query)
@@ -499,6 +544,7 @@ function! grepper#operator(type) abort
   let &selection = selsave
   let flags = deepcopy(s:options)
   let flags.query_orig = @@
+  let flags.query_escaped = 0
   let flags.query = s:escape_query(flags, @@)
   let @@ = regsave
 

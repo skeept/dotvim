@@ -1,6 +1,6 @@
 "▶1 Header
 scriptencoding utf-8
-execute frawor#Setup('0.0', {'@/resources': '0.0'})
+execute frawor#Setup('0.1', {'@/resources': '0.0'})
 "▶1 Define messages
 if v:lang=~?'ru'
     let s:_messages={
@@ -9,6 +9,12 @@ if v:lang=~?'ru'
                 \                'не является строкой',
                 \     'invdeid': 'Ошибка создания обвязки для дополнения %s: '.
                 \                'строка «%s» не может являться именем обвязки',
+                \        'uref': 'ключ «%s» описания фунцкции %s содержит '.
+                \                'ссылку на неизвестную функцию',
+                \   'sssavuref': 'сохраняющая функция является ссылкой '.
+                \                'на неизвестную функцию',
+                \   'ssseturef': 'восстанавливающая функция является ссылкой '.
+                \                'на неизвестную функцию',
             \}
     call extend(s:_messages, map({
                 \     'deiddef': 'обвязка уже определена дополнением %s',
@@ -18,6 +24,14 @@ if v:lang=~?'ru'
                 \                'на неизвестную функцию',
             \},
             \'"Ошибка создания обвязки %s для дополнения %s: ".v:val'))
+    call extend(s:_messages, map({
+                \   'sssavuref': 'сохраняющая функция является ссылкой '.
+                \                'на неизвестную функцию',
+                \   'ssseturef': 'восстанавливающая функция является ссылкой '.
+                \                'на неизвестную функцию',
+            \},
+            \'"Ошибка создания сохраняющей и восстанавливающей функций '.
+            \ '%s для дополнения %s: ".v:val'))
 else
     let s:_messages={
                 \       'nodec': 'Decorator `%s'' does not exist',
@@ -27,6 +41,8 @@ else
                 \     'invdeid': 'Error while creating decorator '.
                 \                'for plugin %s: String `%s'' is not a valid '.
                 \                'decorator identifier',
+                \        'uref': 'key `%s'' of %s function description '.
+                \                'provides a reference to unknown function',
             \}
     call extend(s:_messages, map({
                 \     'deiddef': 'decorator already defined by plugin %s',
@@ -34,15 +50,31 @@ else
                 \      'deuref': 'decorator is a reference to unknown function',
             \},
             \'"Error while creating decorator %s for plugin %s: ".v:val'))
+    call extend(s:_messages, map({
+                \   'sssavuref': 'saver is a reference to unknown function',
+                \   'ssseturef': 'setter is a reference to unknown function',
+            \},
+            \'"Error while creating saver and setter functions with id %s '.
+            \ 'for plugin %s: ".v:val'))
 endif
 "▶1 rewritefname    :: sid, Funcref → funcname
 function s:F.rewritefname(sid, Fref)
-    let fstr=string(a:Fref)[10:-3]
+    if type(a:Fref)==type(function('tr'))
+                \|| type(a:Fref)==type(s:F.rewritefname)
+        " Partials passed to rewritefname may contain self-containing containers 
+        " which results in `string()` failing. If errors are ignored then fstr 
+        " still contains something usable.
+        silent! let fstr=matchstr(string(a:Fref),
+                    \             '\C\v(^function\(\'')@<=%([^'']|'''')+\''@=')
+    else
+        let fstr=a:Fref
+    endif
     if fstr[:1] is# 's:'
         let fstr='<SNR>'.a:sid.'_'.fstr[2:]
     endif
     return fstr
 endfunction
+call s:_f.postresource('rewritefname', s:F.rewritefname)
 "▶1 refunction      :: sid, Funcref, throwargs → Funcref
 function s:F.refunction(sid, Fref, ...)
     let fstr=s:F.rewritefname(a:sid, a:Fref)
@@ -55,6 +87,7 @@ function s:F.refunction(sid, Fref, ...)
         return function(fstr)
     endif
 endfunction
+call s:_f.postresource('refunction', s:F.refunction)
 "▶1 adddecorator feature
 "▶2 adddecorator    :: {f}, deid, Decorator::Funcref → + fdict, s:decorators
 let s:decorators={}

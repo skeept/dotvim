@@ -1471,5 +1471,7 @@ changes.
     0.1: Added usedictcompsplitfunc option.
 @/options:
     0.1: Added |frawor-od-override|.
+@/decorators:
+    0.1: Added rewritefname and refunction resources. For internal uses.
 
 vim: ft=help:tw=78
