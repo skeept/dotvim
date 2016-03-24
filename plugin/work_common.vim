@@ -72,3 +72,30 @@ nmap glm <Plug>JumpStartGlobalProb
 nnoremap <silent> glci :call wk#getIteration()<CR>
 nnoremap <silent> glcs :call wk#getSelection()<CR>
 nnoremap <silent> glcg :call wk#getGlobal()<CR>
+
+function ToStatic1()
+  " (type) b -> static_cast<type>(b)
+  " it is assumed cursor is inside the first cast
+
+  normal di(
+  let @a = @"
+  normal da(
+  normal istatic_cast<>
+  normal h
+  normal "ap
+  normal f>l
+  while 1
+    "get current char
+    let c = getline('.')[col('.')-1]
+    if c == ' '
+      normal x
+    else
+      break
+    endif
+  endwhile
+  normal i(
+  normal w
+  normal a)
+endfunction
+
+nnoremap <silent> ,a :call ToStatic1()<CR>
