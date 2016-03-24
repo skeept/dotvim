@@ -98,4 +98,4 @@ function ToStatic1()
   normal a)
 endfunction
 
-nnoremap <silent> ,a :call ToStatic1()<CR>
+" nnoremap <silent> ,a :call ToStatic1()<CR>
