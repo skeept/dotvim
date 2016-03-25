@@ -2,7 +2,7 @@
 " Filename: autoload/lightline.vim
 " Author: itchyny
 " License: MIT License
-" Last Change: 2016/03/24 08:46:19.
+" Last Change: 2016/03/25 09:05:58.
 " =============================================================================
 
 let s:save_cpo = &cpo
@@ -255,18 +255,22 @@ function! s:term(l) abort
   return len(a:l) == 5 && type(a:l[4]) == 1 && strlen(a:l[4]) ? 'term='.a:l[4].' cterm='.a:l[4].' gui='.a:l[4] : ''
 endfunction
 
-function! s:uniq(l) abort
-  let [l,i,s] = [a:l,0,{}]
-  while i < len(l)
-    let k = string(l[i])
-    if has_key(s, k)
-      call remove(l, i)
-    else
-      let [s[k],i] = [1,i+1]
-    endif
-  endwhile
-  return l
-endfunction
+if exists('*uniq')
+  function! s:uniq(xs) abort
+    return uniq(a:xs)
+  endfunction
+else
+  function! s:uniq(xs) abort
+    let i = len(a:xs) - 1
+    while i > 0
+      if a:xs[i] ==# a:xs[i - 1]
+        call remove(a:xs, i)
+      endif
+      let i -= 1
+    endwhile
+    return a:xs
+  endfunction
+endif
 
 function! lightline#highlight(...) abort
   let [c, f, g] = [s:lightline.palette, s:lightline.mode_fallback, s:lightline.component_type]
@@ -281,7 +285,7 @@ function! lightline#highlight(...) abort
   endif
   let [s:lightline.llen, s:lightline.rlen] = [len(c.normal.left), len(c.normal.right)]
   let [s:lightline.tab_llen, s:lightline.tab_rlen] = [len(has_key(c,'tabline') && has_key(c.tabline, 'left') ? c.tabline.left : c.normal.left), len(has_key(c,'tabline') && has_key(c.tabline, 'right') ? c.tabline.right : c.normal.right)]
-  let h = s:uniq(filter(copy(values(g)), 'v:val !=# "raw"'))
+  let h = s:uniq(sort(filter(values(g), 'v:val !=# "raw"')))
   let modes = a:0 ? [a:1] : extend(['normal', 'insert', 'replace', 'visual', 'inactive', 'command', 'select', 'tabline'], has('nvim') ? ['terminal'] : [])
   for mode in modes
     let s:highlight[mode] = 1
