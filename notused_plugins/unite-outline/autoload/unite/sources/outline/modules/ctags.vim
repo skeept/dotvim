@@ -38,7 +38,7 @@ endfunction
 
 let s:Tree  = unite#sources#outline#import('Tree')
 let s:Util  = unite#sources#outline#import('Util')
-let s:Process = vital#of('unite').import('Process')
+let s:Process = unite#util#get_vital().import('Process')
 
 function! s:get_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_')
