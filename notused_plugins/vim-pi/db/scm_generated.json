@@ -4897,7 +4897,7 @@
   },
   "5341": {
     "type": "git",
-    "url": "git://github.com/Ron89/thesaurus_query.vim"
+    "url": "git://github.com/ron89/thesaurus_query.vim"
   },
   "5342": {
     "type": "git",
@@ -4926,6 +4926,10 @@
   "5354": {
     "type": "git",
     "url": "git://github.com/westporch/codeFrame"
+  },
+  "5357": {
+    "type": "git",
+    "url": "git://github.com/ron89/md_insert_equation.vim"
   },
   "556": {
     "type": "git",
