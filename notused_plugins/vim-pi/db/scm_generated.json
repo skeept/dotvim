@@ -4923,6 +4923,10 @@
     "type": "git",
     "url": "git://github.com/lag13/vim-cwdtabline"
   },
+  "5354": {
+    "type": "git",
+    "url": "git://github.com/westporch/codeFrame"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
