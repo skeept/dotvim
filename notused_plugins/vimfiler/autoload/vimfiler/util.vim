@@ -26,10 +26,20 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:V = vital#of('vimfiler')
-
 function! vimfiler#util#get_vital() abort "{{{
+  if !exists('s:V')
+    let s:V = vital#vimfiler#of()
+  endif
   return s:V
+endfunction"}}}
+function! vimfiler#util#get_vital_cache() abort "{{{
+  if !exists('s:Cache')
+    let s:Cache = vimfiler#util#get_vital().import('System.Cache.Deprecated')
+  endif
+  return s:Cache
+endfunction"}}}
+function! vimfiler#util#get_vital_buffer() abort "{{{
+  return vimfiler#util#get_vital().import('Vim.Buffer')
 endfunction"}}}
 function! s:get_prelude() abort "{{{
   if !exists('s:Prelude')
@@ -84,7 +94,7 @@ function! vimfiler#util#escape_file_searching(...) abort
   return call(s:get_prelude().escape_file_searching, a:000)
 endfunction
 function! vimfiler#util#escape_pattern(...) abort
-  return call(s:get_prelude().escape_pattern, a:000)
+  return call(s:get_string().escape_pattern, a:000)
 endfunction
 function! vimfiler#util#set_default(...) abort
   return call(s:get_prelude().set_default, a:000)
