@@ -93,6 +93,7 @@ function! SetupVAM()
   VAMAddToActiveAddons magit fuzzysearch grepper
   VAMAddToActiveAddons FastFold
   VAMAddToActiveAddons lightline
+  VAMAddToActiveAddons leader-guide
   "VAMAddToActiveAddons SmartusLine
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
