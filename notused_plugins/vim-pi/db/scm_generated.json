@@ -4931,6 +4931,10 @@
     "type": "git",
     "url": "git://github.com/ron89/md_insert_equation.vim"
   },
+  "5358": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/pgsql.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
