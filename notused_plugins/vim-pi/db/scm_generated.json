@@ -4935,6 +4935,14 @@
     "type": "git",
     "url": "git://github.com/lifepillar/pgsql.vim"
   },
+  "5362": {
+    "type": "git",
+    "url": "git://github.com/vitalk/vim-shebang"
+  },
+  "5363": {
+    "type": "git",
+    "url": "git://github.com/aserebryakov/you-debug-it"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
