@@ -1,17 +1,18 @@
 #!/bin/bash
 
+DEST=../../
 
-cp ack/autoload/* ~/.vim/autoload/
-cp ack/plugin/* ~/.vim/plugin/
-cp ack/doc/* ~/.vim/doc/
+cp ack/autoload/* ${DEST}/autoload/
+cp ack/plugin/* ${DEST}/plugin/
+cp ack/doc/* ${DEST}/doc/
 
-cp unimpaired/plugin/* ~/.vim/plugin/
-cp unimpaired/doc/* ~/.vim/doc/
+cp unimpaired/plugin/* ${DEST}/plugin/
+cp unimpaired/doc/* ${DEST}/doc/
 
-cp pathogen/autoload/* ~/.vim/autoload/
+cp pathogen/autoload/* ${DEST}/autoload/
 
-cp recover/autoload/* ~/.vim/autoload/
-cp recover/plugin/* ~/.vim/plugin/
-cp recover/doc/* ~/.vim/doc/
+cp recover/autoload/* ${DEST}/autoload/
+cp recover/plugin/* ${DEST}/plugin/
+cp recover/doc/* ${DEST}/doc/
 
-cp repeat/autoload/repeat.vim ~/.vim/autoload/
+cp repeat/autoload/repeat.vim ${DEST}/autoload/
