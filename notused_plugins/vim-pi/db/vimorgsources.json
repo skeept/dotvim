@@ -121,7 +121,7 @@
 "CBOT":{"archive_name":"cbot.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23563","version":"1.0a","vim_script_nr":5238},
 "coco":{"archive_name":"coco.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24097","version":"1.1","vim_script_nr":5237},
 "proteinFasta":{"archive_name":"proteinFasta.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23537","version":"1.0","vim_script_nr":5236},
-"Vizardry":{"archive_name":"vizardry.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24047","version":"1.4.1","vim_script_nr":5235},
+"Vizardry":{"archive_name":"vizardry.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24155","version":"2.0.1","vim_script_nr":5235},
 "lazyList":{"archive_name":"lazyList.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23612","version":"v0.6","vim_script_nr":5234},
 "pypi":{"archive_name":"pypi-0.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23531","version":"0.0.2","vim_script_nr":5233},
 "vital-power-assert":{"archive_name":"vital-power-assert-0.9.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23524","version":"v0.9.0","vim_script_nr":5232},
