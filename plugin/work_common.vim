@@ -73,7 +73,7 @@ nnoremap <silent> glci :call wk#getIteration()<CR>
 nnoremap <silent> glcs :call wk#getSelection()<CR>
 nnoremap <silent> glcg :call wk#getGlobal()<CR>
 
-function ToStatic1()
+function! ToStatic1()
   " (type) b -> static_cast<type>(b)
   " it is assumed cursor is inside the first cast
 
