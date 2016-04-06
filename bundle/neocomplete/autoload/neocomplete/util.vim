@@ -26,9 +26,11 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:V = vital#of('neocomplete')
 
 function! neocomplete#util#get_vital() abort "{{{
+  if !exists('s:V')
+    let s:V = vital#neocomplete#of()
+  endif
   return s:V
 endfunction"}}}
 function! s:get_prelude() abort "{{{
@@ -59,11 +61,9 @@ endfunction"}}}
 function! neocomplete#util#truncate_smart(...) abort "{{{
   return call(s:get_string().truncate_skipping, a:000)
 endfunction"}}}
-
 function! neocomplete#util#truncate(...) abort "{{{
   return call(s:get_string().truncate, a:000)
 endfunction"}}}
-
 function! neocomplete#util#strchars(...) abort "{{{
   return call(s:get_string().strchars, a:000)
 endfunction"}}}
@@ -109,7 +109,7 @@ function! neocomplete#util#get_last_status(...) abort "{{{
   return call(s:get_process().get_last_status, a:000)
 endfunction"}}}
 function! neocomplete#util#escape_pattern(...) abort "{{{
-  return call(s:get_prelude().escape_pattern, a:000)
+  return call(s:get_string().escape_pattern, a:000)
 endfunction"}}}
 function! neocomplete#util#iconv(...) abort "{{{
   return call(s:get_process().iconv, a:000)
