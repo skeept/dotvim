@@ -1,4 +1,5 @@
 {
+"vim-alias":{"archive_name":"vim-alias.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24159","version":"1.0","vim_script_nr":5364},
 "you-debug-it":{"archive_name":"you-debug-it-you-debug-it-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24154","version":"0.1.0","vim_script_nr":5363},
 "vim-shebang":{"archive_name":"vim-shebang-0.3.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24153","version":"0.3","vim_script_nr":5362},
 "expresso":{"archive_name":"vim-expresso.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24150","version":"1.0","vim_script_nr":5361},
@@ -60,7 +61,7 @@
 "DuoTones_Dark":{"archive_name":"duotone-dark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24011","version":"1.4","vim_script_nr":5301},
 "Ranger":{"archive_name":"ranger.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23894","version":"1.0","vim_script_nr":5300},
 "Citation":{"archive_name":"citation.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23890","version":"1.0","vim_script_nr":5299},
-"vim-love-docs":{"archive_name":"master[1].zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24079","version":"0.4.0","vim_script_nr":5298},
+"vim-love-docs":{"archive_name":"vim-love-docs.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24158","version":"0.4.1","vim_script_nr":5298},
 "iterm-start":{"archive_name":"iterm-start.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23880","version":"0.2.0","vim_script_nr":5297},
 "vim-run":{"archive_name":"vim-run.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23857","version":"0.1.0","vim_script_nr":5296},
 "csscomplete":{"archive_name":"csscomplete.vim-0.1.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23851","version":"0.1","vim_script_nr":5295},
@@ -250,7 +251,7 @@
 "vim-conda":{"archive_name":"vim-conda.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22880","version":"0.0.0","vim_script_nr":5107},
 "Indentwise":{"archive_name":"vim-indentwise-v1.0.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22879","version":"1.0.0","vim_script_nr":5106},
 "h2cppx":{"archive_name":"h2cppx.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22881","version":"0.11","vim_script_nr":5105},
-"FastFold":{"archive_name":"FastFold.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24108","version":"4.1","vim_script_nr":5104},
+"FastFold":{"archive_name":"FastFold.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24160","version":"4.1","vim_script_nr":5104},
 "haystack":{"archive_name":"haystack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22868","version":"1.0","vim_script_nr":5103},
 "vital-snoop":{"archive_name":"vital-snoop.vim-0.9.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22858","version":"0.9.1","vim_script_nr":5102},
 "enabler":{"archive_name":"enabler.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23635","version":"1.00","vim_script_nr":5101},
