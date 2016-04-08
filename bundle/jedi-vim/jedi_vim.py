@@ -62,19 +62,19 @@ def _catch_exception(string, is_eval):
     Interface between vim and python calls back to it.
     Necessary, because the exact error message is not given by `vim.error`.
     """
-    e = 'jedi#_vim_exceptions(%s, %s)'
-    result = vim.eval(e % (repr(PythonToVimStr(string, 'UTF-8')), is_eval))
+    result = vim.eval('jedi#_vim_exceptions({0}, {1})'.format(
+        repr(PythonToVimStr(string, 'UTF-8')), int(is_eval)))
     if 'exception' in result:
         raise VimError(result['exception'], result['throwpoint'], string)
     return result['result']
 
 
 def vim_command(string):
-    _catch_exception(string, 0)
+    _catch_exception(string, False)
 
 
 def vim_eval(string):
-    return _catch_exception(string, 1)
+    return _catch_exception(string, True)
 
 
 def no_jedi_warning(error=None):
@@ -653,7 +653,9 @@ def new_buffer(path, options='', using_tagstack=False):
         if user_split_option == 'winwidth' and vim.current.window.width <= 2 * int(vim_eval("&textwidth ? &textwidth : 80")):
             split_options['winwidth'] = 'sp'
         if user_split_option not in split_options:
-            print('g:jedi#use_splits_not_buffers value is not correct, valid options are: %s' % ','.join(split_options.keys()))
+            print('Unsupported value for g:jedi#use_splits_not_buffers: {0}. '
+                  'Valid options are: {1}.'.format(
+                      user_split_option, ', '.join(split_options.keys())))
         else:
             vim_command(split_options[user_split_option] + " %s" % escape_file_path(path))
     else:
