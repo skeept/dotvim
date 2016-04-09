@@ -1,4 +1,5 @@
 {
+"cpp-devel":{"archive_name":"cpp-devel-vim_v1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24161","version":"1.0.0","vim_script_nr":5365},
 "vim-alias":{"archive_name":"vim-alias.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24159","version":"1.0","vim_script_nr":5364},
 "you-debug-it":{"archive_name":"you-debug-it-you-debug-it-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24154","version":"0.1.0","vim_script_nr":5363},
 "vim-shebang":{"archive_name":"vim-shebang-0.3.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24153","version":"0.3","vim_script_nr":5362},
@@ -3279,7 +3280,7 @@
 "undo_tags":{"archive_name":"undo_tags-1.2.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7609","version":"1.2","vim_script_nr":1997},
 "bruce":{"archive_name":"bruce.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7523","version":"1.0","vim_script_nr":1996},
 "railscasts":{"archive_name":"railscasts.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10645","version":"1.3","vim_script_nr":1995},
-"confluencewiki":{"archive_name":"confluencewiki.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21715","version":"1.0.0","vim_script_nr":1994},
+"confluencewiki":{"archive_name":"confluencewiki.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24162","version":"1.0.1","vim_script_nr":1994},
 "NightVision":{"archive_name":"nightVision.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7504","version":"1.0","vim_script_nr":1993},
 "triangle":{"archive_name":"triangle.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7500","version":"1.0","vim_script_nr":1992},
 "Shell_History":{"archive_name":"shell_history.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7499","version":"0.1","vim_script_nr":1991},

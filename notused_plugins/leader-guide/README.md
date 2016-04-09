@@ -13,7 +13,7 @@ This Plugin is not stable yet. The configuration and commands might change in th
 The plugin configuration is based on vim's dictionarys.
 
 ```vim
-" Define Top Level Dictionary
+" Define prefix dictionary
 let g:lmap =  {}
 
 " Second level dictionarys:
@@ -118,6 +118,52 @@ In the example above `leader-f` will open up the file menu.
 
 Please note that no matter which mappings and menus you configure, your original leader mappings will remain unaffected.
 The key guide is an additional layer. It will only activate, when you do not complete your input during the timeoutlen duration.
+
+
+## Display mappings without prefix:
+
+Additionally it is possible to display all buffer local mappings with `:LeaderGuide '<buffer>'`.
+
+This feature is useful to explore mappings defined by plugins in their respecive buffers. (fugitive, tagbar, vimfiler, Nerdtree, etc.)
+To make the usage of `LeaderGuide '<buffer>'` in those plugin buffers more convenient one can make use of autocommands.
+
+Examples:
+
+```vim
+autocmd FileType gitcommit  noremap <buffer> <leader> :LeaderGuide '<buffer>'<CR>
+" for fugitive
+
+autocmd BufEnter __Tagbar__  noremap <buffer> <leader> :LeaderGuide '<buffer>'<CR>
+" for tagbar
+```
+
+
+To open a guide showing not only the buffer-local but all mappings use
+```vim
+:LeaderGuide '  '
+```
+Note the two whitespaces.
+
+To name items on this level, the dictionaries for `leader`, `localleader`, from the examples above, as well as other dictionaries one might have defined, can be combined into a single top-level dictionary:
+
+```vim
+let g:topdict = {}
+let g:topdict[' '] = g:lmap
+let g:topdict[' ']['name'] = '<leader>'
+let g:topdict[','] = g:llmap
+let g:topdict[',']['name'] = '<localleader>'
+
+call leaderGuide#register_prefix_descriptions("", "g:topd")
+
+" Remove the old prefixes
+"call leaderGuide#register_prefix_descriptions(",", "g:llmap")
+"call leaderGuide#register_prefix_descriptions("<Space>", "g:lmap")
+```
+
+This configuration will provide access to the `leader` and `localleader` spaces when calling with
+```vim
+:LeaderGuide '  '
+```
 
 
 ## Special keys and Mappings

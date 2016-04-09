@@ -5,11 +5,16 @@ let s:displaynames = {'<C-I>': '<Tab>',
 					\ '<C-H>': '<BS>'}
 
 function! leaderGuide#register_prefix_descriptions(key, dictname)
+    let key = a:key == '<Space>' ? ' ' : a:key
 	if !exists('s:desc_lookup')
 		call s:create_cache()
 	endif
-	if !has_key(s:desc_lookup, a:key)
-		let s:desc_lookup[a:key] = a:dictname
+	if strlen(key) == 0
+	    let s:desc_lookup['top'] = a:dictname
+	    return
+	endif
+	if !has_key(s:desc_lookup, key)
+		let s:desc_lookup[key] = a:dictname
 	endif
 endfunction
 
@@ -25,21 +30,21 @@ endfunction
 
 function! leaderGuide#start_by_prefix(vis, key)
 	let s:vis = a:vis
-    let startkey = a:key ==? ' ' ? "<Space>" : s:escape_keys(a:key)
+	let s:toplevel = a:key ==? '  '
 
-	if !has_key(s:cached_dicts, startkey) || g:leaderGuide_run_map_on_popup
+	if !has_key(s:cached_dicts, a:key) || g:leaderGuide_run_map_on_popup
 		"first run
-		let s:cached_dicts[startkey] = {}
-		call s:start_parser(startkey, s:cached_dicts[startkey])
+		let s:cached_dicts[a:key] = {}
+		call s:start_parser(a:key, s:cached_dicts[a:key])
 	endif
 	
-	if has_key(s:desc_lookup, startkey)
-		let rundict = s:create_target_dict(startkey)
+	if has_key(s:desc_lookup, a:key) || has_key(s:desc_lookup , 'top')
+		let rundict = s:create_target_dict(a:key)
 	else
-		let rundict = s:cached_dicts[startkey]
+		let rundict = s:cached_dicts[a:key]
 	endif
 	
-	call s:start_guide(rundict)
+    call s:start_guide(rundict)
 endfunction
 
 function! leaderGuide#start(vis, dict)
@@ -53,36 +58,35 @@ function! s:create_cache()
 endfunction
 
 function! s:start_parser(key, dict)
+    let key = a:key ==? ' ' ? "<Space>" : a:key
 	let readmap = ""
 	redir => readmap
-	silent execute 'map '.a:key
+	silent execute 'map '.key
 	redir END
 	let lines = split(readmap, "\n")
 
 	for line in lines
-		let maps = s:split_mapline(line)
-		let display = maps[3]
-		let maps[1] = substitute(maps[1], a:key, "", "")
-		let maps[1] = substitute(maps[1], "<Space>", " ", "g")
-		let maps[3] = substitute(maps[3], "<Space>", "<lt>Space>", "g")
-		let maps[1] = substitute(maps[1], "<Tab>", "<C-I>", "g")
-		let maps[3] = substitute(maps[3], "^ *", "", "")
-		let display = substitute(display, "^[:| ]*", "", "")
+	    let mapd = maparg(split(line[3:])[0], line[0], 0, 1)
+		if mapd.lhs =~ '<Plug>.*'
+		    continue
+        endif
+		let display = mapd.rhs
+        let mapd.lhs = substitute(mapd.lhs, key, "", "")
+		let mapd.lhs = substitute(mapd.lhs, "<Space>", " ", "g")
+		let mapd.lhs = substitute(mapd.lhs, "<Tab>", "<C-I>", "g")
+		let mapd.rhs = substitute(mapd.rhs, "<Space>", "<lt>Space>", "g")
+		let mapd.rhs = substitute(mapd.rhs, "<SID>", "<SNR>".mapd['sid']."_", "g")
+		"let display = substitute(display, "^[:| ]*", "", "")
+		let display = substitute(display, "<cr>$", "", "")
 		let display = substitute(display, "<CR>$", "", "")
-		if maps[1] != ''
-			if (s:vis && match(maps[0], "[vx ]") >= 0) ||
-						\ (!s:vis && match(maps[0], "[vx]") == -1)
-			call s:add_map_to_dict(s:string_to_keys(maps[1]), maps[3],
-						\display, 0, a:dict, maps[0])
+		if mapd.lhs != '' && display !~ 'LeaderGuide.*'
+			if (s:vis && match(mapd.mode, "[vx ]") >= 0) ||
+						\ (!s:vis && match(mapd.mode, "[vx]") == -1)
+			call s:add_map_to_dict(s:string_to_keys(mapd.lhs), mapd.rhs,
+						\display, 0, a:dict, mapd.mode)
 			endif
 		endif
 	endfor
-endfunction
-
-function! s:split_mapline(line)
-	let mlist =
-	\matchlist(a:line,'\([xnvco]\{0,3}\) *\([^ ]*\) *\([@&\*]\{0,3}\)\(.*\)$')
-	return mlist[1:]
 endfunction
 
 function! s:add_map_to_dict(key, cmd, desc, level, dict, mode)
@@ -101,7 +105,8 @@ function! s:add_map_to_dict(key, cmd, desc, level, dict, mode)
 endfunction
 
 function! s:escape_mappings(string)
-	let rstring = substitute(a:string, '<\([^<>]*\)>', '\\<\1>', 'g')
+	let rstring = substitute(a:string, '\', '\\\\', 'g')
+	let rstring = substitute(rstring, '<\([^<>]*\)>', '\\<\1>', 'g')
 	let rstring = substitute(rstring, '"', '\\"', 'g')
 	let rstring = 'call feedkeys("'.rstring.'")'
 	return rstring
@@ -132,7 +137,12 @@ function! s:string_to_keys(input)
 endfunction
 
 function! s:create_target_dict(key)
-	if has_key(s:desc_lookup, a:key)
+	if has_key(s:desc_lookup, 'top')
+	    let toplevel = deepcopy({s:desc_lookup['top']})
+		let tardict = s:toplevel ? toplevel : toplevel[a:key]
+		let mapdict = s:cached_dicts[a:key]
+		call s:merge(tardict, mapdict)
+    elseif has_key(s:desc_lookup, a:key)
 		let tardict = deepcopy({s:desc_lookup[a:key]})
 		let mapdict = s:cached_dicts[a:key]
 		call s:merge(tardict, mapdict)
@@ -201,7 +211,8 @@ function! s:create_string(dkmap, ncols, colwidth)
 			let colnum += 1
             call add(output, repeat(' ', a:colwidth - strdisplaywidth(displaystring)))
 		endif
-		execute "cmap <nowait> <buffer> " . k . " " . s:escape_keys(k) ."<CR>"
+        execute "cnoremap <nowait> <buffer> " . k . " " . s:escape_keys(k) ."<CR>"
+        "let cmd = "cnoremap <nowait> <buffer> " . k . " " . k ."<CR>"
 	endfor
 	cmap <nowait> <buffer> <Space> <Space><CR>
 	return [output, nrows]
@@ -232,13 +243,14 @@ function! s:start_buffer(lmap)
 	execute s:winnr.'wincmd w'
 	call winrestview(s:winv)
 	if type(fsel) ==? type({})
-		call s:start_buffer(fsel)
+        call s:start_buffer(fsel)
 	else
 		redraw
 		if s:vis
 			normal! gv
 		endif
         try
+            echo fsel[0]
             execute fsel[0]
         catch
             echom v:exception
