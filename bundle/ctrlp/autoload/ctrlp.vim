@@ -1371,7 +1371,16 @@ endf
 fu! s:compmreb(...)
 	" By last entered time (bufnr)
 	let [id1, id2] = [index(s:mrbs, a:1), index(s:mrbs, a:2)]
-	retu id1 == id2 ? 0 : id1 > id2 ? 1 : -1
+	if id1 == id2
+		return 0
+	endif
+	if id1 < 0
+		return 1
+	endif
+	if id2 < 0
+		return -1
+	endif
+	return id1 > id2 ? 1 : -1
 endf
 
 fu! s:compmref(...)
@@ -1915,8 +1924,25 @@ fu! s:bufwins(bufnr)
 	retu winns
 endf
 
+fu! s:isabs(path)
+	if (has('win32') || has('win64'))
+		return a:path =~ '^\([a-zA-Z]:\)\{-}[/\\]'
+	el
+		return a:path =~ '^[/\\]'
+	en
+endf
+
 fu! s:bufnrfilpath(line)
-	let filpath = fnamemodify(a:line, ':p')
+	if s:isabs(a:line)
+		let filpath = a:line
+	el
+		if (has('win32') || has('win64')) && !&shellslash
+			let filpath = s:dyncwd.'\'.a:line
+		el
+			let filpath = s:dyncwd.'/'.a:line
+		en
+	en
+	let filpath = fnamemodify(filpath, ':p')
 	let bufnr = bufnr('^'.filpath.'$')
 	if (a:line =~ '[\/]\?\[\d\+\*No Name\]$' && !filereadable(filpath) && bufnr < 1)
 		let bufnr = str2nr(matchstr(a:line, '[\/]\?\[\zs\d\+\ze\*No Name\]$'))

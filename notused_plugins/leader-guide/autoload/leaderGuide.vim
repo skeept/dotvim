@@ -2,15 +2,15 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:displaynames = {'<C-I>': '<Tab>',
-					\ '<C-H>': '<BS>'}
+                    \ '<C-H>': '<BS>'}
 
 function! leaderGuide#register_prefix_descriptions(key, dictname)
     let key = a:key == '<Space>' ? ' ' : a:key
-	if !exists('s:desc_lookup')
-		call s:create_cache()
-	endif
-	if strlen(key) == 0
-	    let s:desc_lookup['top'] = a:dictname
+    if !exists('s:desc_lookup')
+        call s:create_cache()
+    endif
+    if strlen(key) == 0
+        let s:desc_lookup['top'] = a:dictname
 	    return
 	endif
 	if !has_key(s:desc_lookup, key)
@@ -29,7 +29,9 @@ function! leaderGuide#parseMappings()
 endfunction
 
 function! leaderGuide#start_by_prefix(vis, key)
-	let s:vis = a:vis
+	let s:vis = a:vis ? 'gv' : ''
+	let s:count = v:count != 0 ? v:count : ''
+	let s:reg = v:register != '"' ? '\"'.v:register : ''
 	let s:toplevel = a:key ==? '  '
 
 	if !has_key(s:cached_dicts, a:key) || g:leaderGuide_run_map_on_popup
@@ -48,7 +50,7 @@ function! leaderGuide#start_by_prefix(vis, key)
 endfunction
 
 function! leaderGuide#start(vis, dict)
-	let s:vis = a:vis
+	let s:vis = a:vis ? 'gv' : 0
 	call s:start_guide(a:dict)
 endfunction
 
@@ -108,7 +110,7 @@ function! s:escape_mappings(string)
 	let rstring = substitute(a:string, '\', '\\\\', 'g')
 	let rstring = substitute(rstring, '<\([^<>]*\)>', '\\<\1>', 'g')
 	let rstring = substitute(rstring, '"', '\\"', 'g')
-	let rstring = 'call feedkeys("'.rstring.'")'
+    let rstring = 'call feedkeys("'.rstring.'")'
 	return rstring
 endfunction
 
@@ -139,7 +141,7 @@ endfunction
 function! s:create_target_dict(key)
 	if has_key(s:desc_lookup, 'top')
 	    let toplevel = deepcopy({s:desc_lookup['top']})
-		let tardict = s:toplevel ? toplevel : toplevel[a:key]
+		let tardict = s:toplevel ? toplevel : get(toplevel, a:key, {})
 		let mapdict = s:cached_dicts[a:key]
 		call s:merge(tardict, mapdict)
     elseif has_key(s:desc_lookup, a:key)
@@ -176,7 +178,7 @@ function! s:calc_layout(dkmap)
 	let length = values(map(filter(copy(a:dkmap), 'v:key != "name"'), 
                 \ 'strdisplaywidth("[".v:key."]".'.
                 \ '(type(v:val) == type({}) ? v:val["name"] : v:val[1]))'))
-	let maxlength = max(length) + g:leaderGuide_vspace
+	let maxlength = max(length) + g:leaderGuide_hspace
 	let cols = winwidth(0) / maxlength
 	let colwidth = winwidth(0) / cols
 	return [cols, colwidth, maxlength]
@@ -212,7 +214,6 @@ function! s:create_string(dkmap, ncols, colwidth)
             call add(output, repeat(' ', a:colwidth - strdisplaywidth(displaystring)))
 		endif
         execute "cnoremap <nowait> <buffer> " . k . " " . s:escape_keys(k) ."<CR>"
-        "let cmd = "cnoremap <nowait> <buffer> " . k . " " . k ."<CR>"
 	endfor
 	cmap <nowait> <buffer> <Space> <Space><CR>
 	return [output, nrows]
@@ -246,11 +247,9 @@ function! s:start_buffer(lmap)
         call s:start_buffer(fsel)
 	else
 		redraw
-		if s:vis
-			normal! gv
-		endif
         try
             echo fsel[0]
+            call feedkeys(s:vis.s:reg.s:count, "n")
             execute fsel[0]
         catch
             echom v:exception
