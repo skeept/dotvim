@@ -4943,6 +4943,10 @@
     "type": "git",
     "url": "git://github.com/aserebryakov/you-debug-it"
   },
+  "5364": {
+    "type": "git",
+    "url": "git://github.com/konfekt/vim-alias"
+  },
   "5365": {
     "type": "git",
     "url": "https://bitbucket.org/JohnKaul/cpp-devel-vim"
