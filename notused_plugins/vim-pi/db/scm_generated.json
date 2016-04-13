@@ -4945,11 +4945,15 @@
   },
   "5364": {
     "type": "git",
-    "url": "git://github.com/konfekt/vim-alias"
+    "url": "git://github.com/Konfekt/vim-alias"
   },
   "5365": {
     "type": "git",
     "url": "https://bitbucket.org/JohnKaul/cpp-devel-vim"
+  },
+  "5366": {
+    "type": "git",
+    "url": "git://github.com/vhalholl/vim-apthogen"
   },
   "556": {
     "type": "git",
