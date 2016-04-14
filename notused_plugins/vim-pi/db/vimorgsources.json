@@ -1,4 +1,5 @@
 {
+"Outlaw":{"archive_name":"v0.1.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24171","version":"0.1.0","vim_script_nr":5367},
 "apthogen":{"archive_name":"vim-apthogen-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24170","version":"2016.04","vim_script_nr":5366},
 "cpp-devel":{"archive_name":"cpp-devel-vim_v1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24161","version":"1.0.0","vim_script_nr":5365},
 "vim-alias":{"archive_name":"vim-alias.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24164","version":"1.1","vim_script_nr":5364},

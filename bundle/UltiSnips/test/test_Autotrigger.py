@@ -57,10 +57,7 @@ class Autotrigger_WillProduceNoExceptionWithVimLowerThan214(_VimTest):
 
 
 class Autotrigger_CanMatchPreviouslySelectedPlaceholder(_VimTest):
-    if not test.vim.has_patch(214):
-        return 'Vim newer than 7.4.214 is required'
-    else:
-        return None
+    skip_if = check_required_vim_version
 
     files = { 'us/all.snippets': r"""
         snippet if "desc"

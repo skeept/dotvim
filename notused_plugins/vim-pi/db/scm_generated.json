@@ -4955,6 +4955,10 @@
     "type": "git",
     "url": "git://github.com/vhalholl/vim-apthogen"
   },
+  "5367": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/vim-outlaw"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
