@@ -72,15 +72,12 @@ function! s:start_parser(key, dict)
         if mapd.lhs =~ '<Plug>.*'
             continue
         endif
-        let display = mapd.rhs
+        let display = s:format_displaystring(mapd.rhs)
         let mapd.lhs = substitute(mapd.lhs, key, "", "")
         let mapd.lhs = substitute(mapd.lhs, "<Space>", " ", "g")
         let mapd.lhs = substitute(mapd.lhs, "<Tab>", "<C-I>", "g")
         let mapd.rhs = substitute(mapd.rhs, "<Space>", "<lt>Space>", "g")
         let mapd.rhs = substitute(mapd.rhs, "<SID>", "<SNR>".mapd['sid']."_", "g")
-        "let display = substitute(display, "^[:| ]*", "", "")
-        let display = substitute(display, "<cr>$", "", "")
-        let display = substitute(display, "<CR>$", "", "")
         if mapd.lhs != '' && display !~# 'LeaderGuide.*'
             if (s:vis && match(mapd.mode, "[vx ]") >= 0) ||
                         \ (!s:vis && match(mapd.mode, "[vx]") == -1)
@@ -89,6 +86,19 @@ function! s:start_parser(key, dict)
             endif
         endif
     endfor
+endfunction
+
+function! s:format_displaystring(map)
+    let g:leaderGuide#displayname = a:map
+    "let Fun = g:leaderGuide_displayfunc
+    "let test = [g:leaderGuide_displayfunc]
+    for Fun in g:leaderGuide_displayfunc
+        call Fun()
+    endfor
+    "call g:leaderGuide_displayfunc()
+    let display = g:leaderGuide#displayname
+    unlet g:leaderGuide#displayname
+    return display
 endfunction
 
 function! s:add_map_to_dict(key, cmd, desc, level, dict)

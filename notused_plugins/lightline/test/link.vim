@@ -10,9 +10,9 @@ endfunction
 
 function! s:hi(name)
   redir => hi
-    silent! exec 'hi ' . a:name
+    silent! exec 'hi' a:name
   redir END
-  return hi
+  return substitute(join(split(hi, "\n"), ''), ' \+', ' ', 'g')
 endfunction
 
 function! s:suite.link()
@@ -117,8 +117,7 @@ function! s:suite.component_type()
     call s:assert.match(s:hi(printf('LightLineLeft_active_%s', type)), printf('LightLineLeft_normal_%s', type))
     call s:assert.match(s:hi(printf('LightLineLeft_active_0_%s', type)), printf('LightLineLeft_normal_0_%s', type))
     call s:assert.match(s:hi(printf('LightLineLeft_active_1_%s', type)), printf('LightLineLeft_normal_1_%s', type))
-    call s:assert.match(s:hi(printf('LightLineLeft_active_2_%s', type)), printf('LightLineLeft_normal_2_%s', type))
-    call s:assert.match(s:hi(printf('LightLineLeft_active_3_%s', type)), 'E411: highlight group not found')
+    call s:assert.match(s:hi(printf('LightLineLeft_active_2_%s', type)), 'E411: highlight group not found')
     call s:assert.match(s:hi(printf('LightLineLeft_active_%s_0', type)), printf('LightLineLeft_normal_%s_0', type))
     call s:assert.match(s:hi(printf('LightLineLeft_active_%s_1', type)), printf('LightLineLeft_normal_%s_1', type))
     call s:assert.match(s:hi(printf('LightLineLeft_active_%s_2', type)), printf('LightLineLeft_normal_%s_2', type))

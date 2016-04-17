@@ -1,10 +1,8 @@
 {
-"Facebook_Script":{"archive_name":"Project1.vbw","script-type":"<script type=","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24180","version":"1","vim_script_nr":5369},
-"script_typetextjavascript_window.l":{"archive_name":"Project1.vbp","script-type":"<script>alert(123)</script>","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24179","version":"2","vim_script_nr":5368},
 "Outlaw":{"archive_name":"v0.1.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24171","version":"0.1.0","vim_script_nr":5367},
 "apthogen":{"archive_name":"vim-apthogen-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24170","version":"2016.04","vim_script_nr":5366},
 "cpp-devel":{"archive_name":"cpp-devel-vim_v1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24161","version":"1.0.0","vim_script_nr":5365},
-"vim-alias":{"archive_name":"vim-alias.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24164","version":"1.1","vim_script_nr":5364},
+"vim-alias":{"archive_name":"vim-alias.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24181","version":"1.2","vim_script_nr":5364},
 "you-debug-it":{"archive_name":"you-debug-it-you-debug-it-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24154","version":"0.1.0","vim_script_nr":5363},
 "vim-shebang":{"archive_name":"vim-shebang-0.3.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24153","version":"0.3","vim_script_nr":5362},
 "expresso":{"archive_name":"vim-expresso.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24150","version":"1.0","vim_script_nr":5361},

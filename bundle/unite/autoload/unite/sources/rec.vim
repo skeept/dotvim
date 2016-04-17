@@ -222,10 +222,8 @@ function! s:source_file_rec.vimfiler_dummy_candidates(args, context) abort "{{{
   let exts = unite#util#is_windows() ?
         \ escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.') : ''
 
-  let is_relative_path = path !~ '^\%(/\|\a\+:/\)'
-
   " Set vimfiler property.
-  let candidates = [ unite#sources#file#create_file_dict(path, is_relative_path) ]
+  let candidates = [ unite#sources#file#create_file_dict(path, '') ]
   for candidate in candidates
     call unite#sources#file#create_vimfiler_dict(candidate, exts)
   endfor

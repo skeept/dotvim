@@ -30,6 +30,13 @@ if !exists("g:leaderGuide_flatten")
     let g:leaderGuide_flatten = 1
 endif
 
+if !exists("g:leaderGuide_displayfunc")
+    function! s:leaderGuide_display()
+        let g:leaderGuide#displayname = substitute(g:leaderGuide#displayname, '\c<cr>$', '', '')
+    endfunction
+    let g:leaderGuide_displayfunc = [function("s:leaderGuide_display")]
+endif
+
 command -nargs=1 LeaderGuideD call leaderGuide#start('0', <args>)
 command -range -nargs=1 LeaderGuideVisualD call leaderGuide#start('1', <args>)
 
