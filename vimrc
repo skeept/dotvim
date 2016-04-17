@@ -92,9 +92,9 @@ function! SetupVAM()
   VAMAddToActiveAddons vim-diff-enhanced
   VAMAddToActiveAddons magit fuzzysearch grepper
   VAMAddToActiveAddons FastFold
-  VAMAddToActiveAddons lightline
+  "VAMAddToActiveAddons lightline
   VAMAddToActiveAddons leader-guide
-  "VAMAddToActiveAddons SmartusLine
+  VAMAddToActiveAddons SmartusLine
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
