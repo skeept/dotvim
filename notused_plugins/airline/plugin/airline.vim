@@ -37,6 +37,13 @@ function! s:on_window_changed()
   if pumvisible() && (!&previewwindow || g:airline_exclude_preview)
     return
   endif
+  " Handle each window only once, since we might come here several times for
+  " different autocommands.
+  let l:key = [bufnr('%'), winnr(), winnr('$')]
+  if get(t:, 'airline_last_window_changed', []) == l:key
+    return
+  endif
+  let t:airline_last_window_changed = l:key
   call s:init()
   call airline#update_statusline()
 endfunction
@@ -52,7 +59,7 @@ function! s:on_colorscheme_changed()
   call airline#load_theme()
 endfunction
 
-function airline#cmdwinenter(...)
+function! airline#cmdwinenter(...)
   call airline#extensions#apply_left_override('Command Line', '')
 endfunction
 

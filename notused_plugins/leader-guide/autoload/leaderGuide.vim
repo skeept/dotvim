@@ -18,6 +18,21 @@ function! s:create_cache() " {{{
     let s:desc_lookup = {}
     let s:cached_dicts = {}
 endfunction " }}}
+function! s:create_target_dict(key) " {{{
+    if has_key(s:desc_lookup, 'top')
+        let toplevel = deepcopy({s:desc_lookup['top']})
+        let tardict = s:toplevel ? toplevel : get(toplevel, a:key, {})
+        let mapdict = s:cached_dicts[a:key]
+        call s:merge(tardict, mapdict)
+    elseif has_key(s:desc_lookup, a:key)
+        let tardict = deepcopy({s:desc_lookup[a:key]})
+        let mapdict = s:cached_dicts[a:key]
+        call s:merge(tardict, mapdict)
+    else
+        let tardict = s:cached_dicts[a:key]
+    endif
+    return tardict
+endfunction " }}}
 function! s:merge(dict_t, dict_o) " {{{
     let target = a:dict_t
     let other = a:dict_o
@@ -29,14 +44,18 @@ function! s:merge(dict_t, dict_o) " {{{
                 endif
                 call s:merge(target[k], other[k])
             elseif type(other[k]) == type([])
-                let target[k.'m'] = target[k]
+                if g:leaderGuide_flatten == 0 || type(target[k]) == type({})
+                    let target[k.'m'] = target[k]
+                endif
                 let target[k] = other[k]
+                if has_key(other, k."m") && type(other[k."m"]) == type({})
+                    call s:merge(target[k."m"], other[k."m"])
+                endif
             endif
         endif
     endfor
     call extend(target, other, "keep")
 endfunction " }}}
-
 
 function! leaderGuide#populate_dictionary(key, dictname) " {{{
     call s:start_parser(a:key, s:cached_dicts[a:key])
@@ -77,21 +96,32 @@ function! s:start_parser(key, dict) " {{{
     endfor
 endfunction " }}}
 
-
 function! s:add_map_to_dict(key, cmd, desc, level, dict) " {{{
     if len(a:key) > a:level+1
-        if !has_key(a:dict, a:key[a:level])
-            let a:dict[a:key[a:level]] = { 'name' : '' }
+        let curkey = a:key[a:level]
+        let nlevel = a:level+1
+        if !has_key(a:dict, curkey)
+            let a:dict[curkey] = { 'name' : '' }
         " mapping defined already, flatten this map
-        elseif type(a:dict[a:key[a:level]]) == type([]) && g:leaderGuide_flatten
+        elseif type(a:dict[curkey]) == type([]) && g:leaderGuide_flatten
             let cmd = s:escape_mappings(a:cmd)
-            if !has_key(a:dict, a:key[a:level+1:])
-                let a:dict[a:key[a:level+1:]] = [cmd, a:desc]
+            let curkey = join(a:key[a:level+0:], '')
+            let nlevel = a:level
+            if !has_key(a:dict, curkey)
+                let a:dict[curkey] = [cmd, a:desc]
+            endif
+        elseif type(a:dict[curkey]) == type([]) && g:leaderGuide_flatten == 0
+            let cmd = s:escape_mappings(a:cmd)
+            let curkey = curkey."m"
+            if !has_key(a:dict, curkey)
+                let a:dict[curkey] = {'name' : ''}
             endif
         endif
         " next level
-        call s:add_map_to_dict(a:key, a:cmd, a:desc, a:level + 1,
-                    \a:dict[a:key[a:level]])
+        if type(a:dict[curkey]) == type({})
+            call s:add_map_to_dict(a:key, a:cmd, a:desc, nlevel,
+                        \a:dict[curkey])
+        endif
     else
         let cmd = s:escape_mappings(a:cmd)
         if !has_key(a:dict, a:key[a:level])
@@ -114,21 +144,6 @@ function! s:format_displaystring(map) " {{{
     let display = g:leaderGuide#displayname
     unlet g:leaderGuide#displayname
     return display
-endfunction " }}}
-function! s:create_target_dict(key) " {{{
-    if has_key(s:desc_lookup, 'top')
-        let toplevel = deepcopy({s:desc_lookup['top']})
-        let tardict = s:toplevel ? toplevel : get(toplevel, a:key, {})
-        let mapdict = s:cached_dicts[a:key]
-        call s:merge(tardict, mapdict)
-    elseif has_key(s:desc_lookup, a:key)
-        let tardict = deepcopy({s:desc_lookup[a:key]})
-        let mapdict = s:cached_dicts[a:key]
-        call s:merge(tardict, mapdict)
-    else
-        let tardict = s:cached_dicts[a:key]
-    endif
-    return tardict
 endfunction " }}}
 function! s:flattenmap(dict, str) " {{{
     let ret = {}
@@ -293,7 +308,6 @@ function! s:start_buffer(lmap) " {{{
         call feedkeys(s:vis.s:reg.s:count, 'ti')
         redraw
         try
-            "echo fsel[0]
             execute fsel[0]
         catch
             echom v:exception
@@ -340,7 +354,7 @@ function! leaderGuide#start_by_prefix(vis, key) " {{{
         let rundict = s:cached_dicts[a:key]
     endif
 
-    call s:start_guide(rundict)
+    silent call s:start_guide(rundict)
 endfunction " }}}
 function! leaderGuide#start(vis, dict) " {{{
     let s:vis = a:vis ? 'gv' : 0
