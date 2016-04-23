@@ -13,7 +13,7 @@ let s:dl=    '(executable("curl")?'.
             \   '(0)))'
 unlet s:link
 let s:bbdict={
-\       'html': '"https://".domain.path."/src/".hex."/".file',      'hline': '"cl-".line',
+\       'html': '"https://".domain.path."/src/".hex."/".file',      'hline': 'fnamemodify(file, ":t")."-".line',
 \        'raw': '"https://".domain.path."/raw/".hex."/".file',
 \   'annotate': '"https://".domain.path."/annotate/".hex."/".file', 'aline': '"line-".line',
 \   'filehist': '"https://".domain.path."/history/".file',

@@ -6,7 +6,6 @@ import aurum.repeatedcmd as rc
 import vim
 from os.path import dirname, isdir, join, relpath
 from powerline.theme import requires_segment_info
-from powerline.bindings.vim import getbufvar, vim_get_func
 from powerline.lib.memoize import memoize
 
 Funcs = namedtuple('Funcs', 'branch status')
@@ -36,6 +35,8 @@ func_generators = {
     'branch': generate_branch_func,
 }
 
+getbufvar = vim.Function('getbufvar')
+
 def specialize(funcs, path):
     def status(fname):
         return funcs.status(path, fname)
@@ -48,7 +49,7 @@ fname_cache = {}
 
 def plugin_eval(expr):
     global plugin_eval
-    plugin_eval = vim_get_func('<SNR>'+sid+'_Eval')
+    plugin_eval = vim.Function('<SNR>'+sid+'_Eval')
     return plugin_eval(expr)
 
 if hasattr(vim, 'bindeval'):

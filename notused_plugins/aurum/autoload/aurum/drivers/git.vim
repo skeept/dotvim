@@ -798,7 +798,8 @@ function s:git.repo(path)
                 \'local': (stridx(a:path, '://')==-1),
                 \'labeltypes': ['tag', 'branch'],
                 \'hasrevisions': 0, 'requires_sort': 0,
-                \'githpath': s:_r.os.path.join(a:path, '.git', 'refs', 'heads'),
+                \'githpath': s:_r.os.path.join(s:F.gitdir(a:path),
+                \                              'refs', 'heads'),
                 \'hypsites': deepcopy(s:hypsites),
                 \'maxitercsnum': s:_f.getoption('git_maxitercsnum'),
                 \'iterfuncs': deepcopy(s:iterfuncs),
@@ -808,9 +809,32 @@ function s:git.repo(path)
     endif
     return repo
 endfunction
+"▶1 git._gitdir :: dir → 0|dir
+function s:F.gitdir(dir)
+    let gitdir=s:_r.os.path.join(a:dir, '.git')
+    if s:_r.os.path.exists(gitdir)
+        if s:_r.os.path.isdir(gitdir)
+            return gitdir
+        elseif s:_r.os.path.isfile(gitdir)
+            let fcontents=readfile(gitdir, 'b')
+            if (len(fcontents)==2 && empty(fcontents[-1])) || len(fcontents)==1
+                if fcontents[0][:7] is# 'gitdir: '
+                    let gitdir = fcontents[0][8:]
+                    if gitdir[0] is# '/'
+                        return s:_r.os.path.normpath(gitdir)
+                    else
+                        return s:_r.os.path.normpath(s:_r.os.path.join(a:dir,
+                                    \                                  gitdir))
+                    endif
+                endif
+            endif
+        endif
+    endif
+    return 0
+endfunction
 "▶1 git.checkdir :: dir → Bool
 function s:git.checkdir(dir)
-    return s:_r.os.path.isdir(s:_r.os.path.join(a:dir, '.git'))
+    return !empty(s:F.gitdir(a:dir))
 endfunction
 "▶1 iterfuncs
 let s:iterfuncs={}

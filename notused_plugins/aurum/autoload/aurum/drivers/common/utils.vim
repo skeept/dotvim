@@ -160,8 +160,12 @@ if s:_f.require('autoload/ansi_esc_echo', [0, 0], 0)
     let s:utils.using_ansi_esc_echo=1
     if exists('*pyeval')
         python import aurum.auutils
-        execute 'python aurum.auutils.register_ansi_esc_echo_func('.
-                    \               'vim.bindeval("s:utils.printm"))'
+        execute "python\n"
+                    \."try:\n"
+                    \."    aurum.auutils.register_ansi_esc_echo_func("
+                    \.                       "vim.bindeval('s:utils.printm'))\n"
+                    \."except vim.error:\n"
+                    \."    pass"
     endif
 else
     function s:utils.printm(m, ...)
