@@ -15,6 +15,7 @@ This Plugin is not stable yet. The configuration and commands might change in th
     - Show all mappings following a prefix (<leader>, <localleader>, etc.)
     - Dynamic update on every call
     - Define group names and arbitrary descriptions.
+    - No default mappings, no autocomands. Does nothing on it's own.
 
 ## Usage Examples
 For a more detailed description of available commands and functions, as well
@@ -26,7 +27,7 @@ The plugin configuration is based on vim's dictionaries.
 " Define prefix dictionary
 let g:lmap =  {}
 
-" Second level dictionarys:
+" Second level dictionaries:
 let g:lmap.f = { 'name' : 'File Menu' }
 let g:lmap.o = { 'name' : 'Open Stuff' }
 " 'name' is a special field. It will define the name of the group.
