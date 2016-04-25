@@ -743,7 +743,7 @@ endif
 augroup ft_tex_setCompiler
   autocmd!
   autocmd BufRead,BufNewFile *.tex compiler tex
-        \ | setlocal textwidth=90 ft=tex | echom "give Mt a try!"
+        \ | setlocal textwidth=90 ft=tex | echom "Mt <file> (sets LaTeX goodies)"
 augroup END
 
 augroup ft_tex_loadLatexPlugins
