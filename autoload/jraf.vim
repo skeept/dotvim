@@ -400,19 +400,19 @@ function! jraf#setPdfDestination(...)
   endif
 
   let g:did_setpdfdestination = 1
-  let g:fix_pdf_dest_target = '"' + shellescape(expand('%:p:h') . '/' . g:fix_pdf_dest) + '"'
+  let g:fix_pdf_dest_target = (expand('%:p:h') . '/' . g:fix_pdf_dest)
   nnoremap <Leader>la :<C-U>call jraf#fixForwardSeach()<CR>
   command! -complete=file -nargs=* CompileViewLatex
-        \ exec "!start latexmk -pvc " . g:fix_pdf_dest_target
+        \ exec "!start latexmk -pvc " . shellescape(g:fix_pdf_dest_target)
 endfunction
 
 function! jraf#fixForwardSeach()
   if !exists("g:did_setpdfdestination")
     call jraf#setPdfDestination()
   endif
-  let target = g:fix_pdf_dest_target . '.pdf'
+  let target = shellescape(g:fix_pdf_dest_target . '.pdf')
   let cmd = g:SumatraPdfLoc . " -reuse-instance -forward-search "
-        \ . expand('%:p') . ' ' . line('.') . ' ' . target
+        \ . shellescape(expand('%:p')) . ' ' . line('.') . ' ' . target
   let execString = 'silent! !start ' . cmd
   exe execString
 endfunction
