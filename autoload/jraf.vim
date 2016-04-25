@@ -370,7 +370,11 @@ function! jraf#loadLatexPlugins()
   nmap <F8> <Plug>IMAP_JumpForward
   vmap <F8> <Plug>IMAP_JumpForward
   vmap <F8> <Plug>IMAP_DeleteAndJumpForward
-  ActivateAddons LaTeX-Box vlatex SpellCheck LanguageTool
+
+  "ActivateAddons LaTeX-Box
+  ActivateAddons vlatex
+  ActivateAddons SpellCheck
+  ActivateAddons LanguageTool
   "will it be necessary to load after/ftplugin/tex again?
   let s:loaded_latex_plugins = 1
 endfunction
@@ -396,7 +400,7 @@ function! jraf#setPdfDestination(...)
   endif
 
   let g:did_setpdfdestination = 1
-  let g:fix_pdf_dest_target = shellescape(expand('%:p:h') . '/' . g:fix_pdf_dest)
+  let g:fix_pdf_dest_target = '"' + shellescape(expand('%:p:h') . '/' . g:fix_pdf_dest) + '"'
   nnoremap <Leader>la :<C-U>call jraf#fixForwardSeach()<CR>
   command! -complete=file -nargs=* CompileViewLatex
         \ exec "!start latexmk -pvc " . g:fix_pdf_dest_target
