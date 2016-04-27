@@ -4971,6 +4971,10 @@
     "type": "git",
     "url": "git://github.com/ntnn/vim-diction"
   },
+  "5376": {
+    "type": "git",
+    "url": "git@github.com:ochaloup/vim-syntax-match.git"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

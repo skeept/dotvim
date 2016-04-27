@@ -1,5 +1,6 @@
 {
-"vim-diction":{"archive_name":"vim-diction.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24198","version":"1","vim_script_nr":5375},
+"Syntax_match":{"archive_name":"vim-syntax-match-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24202","version":"0.1","vim_script_nr":5376},
+"vim-diction":{"archive_name":"vim-diction.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24203","version":"2","vim_script_nr":5375},
 "droWMark":{"archive_name":"droWMark-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24197","version":"1.0","vim_script_nr":5374},
 "Google_Translate_Py":{"archive_name":"Google_Translate_Py.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24191","version":"1.0","vim_script_nr":5373},
 "extra-instant-markdown":{"archive_name":"extra-instant-markdown-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24185","version":"0.1.0","vim_script_nr":5371},
