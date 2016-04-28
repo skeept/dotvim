@@ -4975,6 +4975,14 @@
     "type": "git",
     "url": "git@github.com:ochaloup/vim-syntax-match.git"
   },
+  "5377": {
+    "type": "git",
+    "url": "git://github.com/adelarsq/vim-grimmjow"
+  },
+  "5378": {
+    "type": "git",
+    "url": "git://github.com/igankevich/mesonic"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
