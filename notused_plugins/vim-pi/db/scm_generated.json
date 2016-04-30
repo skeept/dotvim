@@ -4983,6 +4983,10 @@
     "type": "git",
     "url": "git://github.com/igankevich/mesonic"
   },
+  "5381": {
+    "type": "git",
+    "url": "https://bitbucket.org/ghurrell/scalpel"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
