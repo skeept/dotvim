@@ -4987,6 +4987,10 @@
     "type": "git",
     "url": "https://bitbucket.org/ghurrell/scalpel"
   },
+  "5383": {
+    "type": "git",
+    "url": "git://github.com/tyru/caw.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
