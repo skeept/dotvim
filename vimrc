@@ -94,6 +94,7 @@ function! SetupVAM()
   VAMAddToActiveAddons FastFold
   "VAMAddToActiveAddons lightline
   VAMAddToActiveAddons leader-guide
+  VAMAddToActiveAddons gv
   VAMAddToActiveAddons SmartusLine
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
