@@ -85,7 +85,7 @@ function! SetupVAM()
   "VAMAddToActiveAddons startify
   "VAMAddToActiveAddons argumentative projectionist
   VAMAddToActiveAddons Syntastic ps1 fugitive
-  VAMAddToActiveAddons gitv targets
+  "VAMAddToActiveAddons gitv targets
   VAMAddToActiveAddons junkfile
   VAMAddToActiveAddons nerdcommenter
   VAMAddToActiveAddons unite-outline unite-qf
