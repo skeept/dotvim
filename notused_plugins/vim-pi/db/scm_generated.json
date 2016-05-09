@@ -4991,6 +4991,10 @@
     "type": "git",
     "url": "git://github.com/tyru/caw.vim"
   },
+  "5385": {
+    "type": "git",
+    "url": "git://github.com/andreshazard/vim-freemarker"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

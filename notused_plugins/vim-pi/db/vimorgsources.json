@@ -1,4 +1,5 @@
 {
+"vim-freemarker":{"archive_name":"vim-freemarker.tar","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24239","version":"1.0","vim_script_nr":5385},
 "vim-stackoverflow":{"archive_name":"stackoverflow.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24236","version":"1.0","vim_script_nr":5384},
 "caw":{"archive_name":"caw-v1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24223","version":"1.0","vim_script_nr":5383},
 "ensime-vim":{"archive_name":"ensime-vim.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24221","version":"0.1","vim_script_nr":5382},
@@ -46,7 +47,7 @@
 "wordmotion":{"archive_name":"wordmotion.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24096","version":"1.2","vim_script_nr":5334},
 "vimhelplint":{"archive_name":"vim-vimhelplint-1.0.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24014","version":"1.0.0","vim_script_nr":5333},
 "braceless":{"archive_name":"braceless.vim.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24119","version":"v0.4.1","vim_script_nr":5332},
-"Sierra":{"archive_name":"sierra.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24010","version":"1.10.15","vim_script_nr":5331},
+"Sierra":{"archive_name":"sierra.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24237","version":"2.3.6","vim_script_nr":5331},
 "Hunter":{"archive_name":"hunter.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24005","version":"1.0","vim_script_nr":5330},
 "vim-latex-light":{"archive_name":"vim-latex-light-0.3.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24004","version":"0.3","vim_script_nr":5329},
 "lib.kom":{"archive_name":"lib_kom.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24106","version":"1.1","vim_script_nr":5328},
@@ -56,7 +57,7 @@
 "markdown-preview%5324":{"archive_name":"markdown-preview.vim-0.2.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24033","version":"0.2.2","vim_script_nr":"5324"},
 "vim-llvmcov":{"archive_name":"vim-llvmcov.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23974","version":"0.1.0","vim_script_nr":5323},
 "vim-fake":{"archive_name":"vim-fake.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23968","version":"0.1.0","vim_script_nr":5322},
-"alduin":{"archive_name":"alduin.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24026","version":"2.2.2","vim_script_nr":5321},
+"alduin":{"archive_name":"alduin.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24238","version":"2.4.4","vim_script_nr":5321},
 "vim-swap":{"archive_name":"vim-swap-1.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24021","version":"1.0.3","vim_script_nr":5320},
 "hiPairs":{"archive_name":"hiPairs.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23950","version":"0.1","vim_script_nr":5319},
 "todoapp":{"archive_name":"todoapp.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23940","version":"0.1.0","vim_script_nr":5318},
