@@ -4995,6 +4995,10 @@
     "type": "git",
     "url": "git://github.com/andreshazard/vim-freemarker"
   },
+  "5386": {
+    "type": "git",
+    "url": "git://github.com/andreshazard/vim-logreview"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
