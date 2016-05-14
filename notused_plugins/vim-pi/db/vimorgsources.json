@@ -1,4 +1,5 @@
 {
+"definition":{"archive_name":"definition.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24244","version":"1.0","vim_script_nr":5387},
 "vim-logreview":{"archive_name":"vim-logreview.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24240","version":"1.0","vim_script_nr":5386},
 "vim-freemarker":{"archive_name":"vim-freemarker.tar","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24239","version":"1.0","vim_script_nr":5385},
 "vim-stackoverflow":{"archive_name":"stackoverflow.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24236","version":"1.0","vim_script_nr":5384},
@@ -283,7 +284,7 @@
 "readdir":{"archive_name":"readdir.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22826","version":"067ed489","vim_script_nr":5093},
 "screensaver":{"archive_name":"screensaver.vim-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22819","version":"0.1","vim_script_nr":5092},
 "perline-diff":{"archive_name":"perline-diff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23650","version":"1.2","vim_script_nr":5091},
-"vim-lastplace":{"archive_name":"vim-lastplace-3.0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23919","version":"3.0.1","vim_script_nr":5090},
+"vim-lastplace":{"archive_name":"vim-lastplace-3.0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24243","version":"3.0.2","vim_script_nr":5090},
 "vim-fetch":{"archive_name":"vim-fetch-2.0.2.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23339","version":"2.0.2","vim_script_nr":5089},
 "vim-pandoc-bundle":{"archive_name":"vim-pandoc-bundle.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22786","version":"20150113","vim_script_nr":5088},
 "DidYouMean":{"archive_name":"DidYouMean.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23218","version":"1.0.2","vim_script_nr":5086},
