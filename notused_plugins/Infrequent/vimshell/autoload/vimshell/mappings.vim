@@ -111,8 +111,8 @@ function! vimshell#mappings#define_default_mappings() abort "{{{
         \ <ESC>:call <SID>hide()<CR>
   inoremap <expr><buffer><silent> <Plug>(vimshell_history_unite)
         \ unite#sources#vimshell_history#start_complete(!0)
-  inoremap <expr><buffer><silent> <Plug>(vimshell_history_neocomplete)
-        \ neocomplete#start_manual_complete('vimshell/history')
+  inoremap <expr><buffer><silent> <Plug>(vimshell_history_complete)
+        \ <SID>start_history_complete()
   "}}}
 
   if get(g:, 'vimshell_no_default_keymappings', 0)
@@ -161,13 +161,13 @@ function! vimshell#mappings#define_default_mappings() abort "{{{
 
   " History completion.
   imap <buffer> <C-l> <Plug>(vimshell_history_unite)
-  inoremap <buffer><expr> <C-p> pumvisible() ? "\<C-p>" :
+  inoremap <buffer><silent><expr> <C-p> pumvisible() ? "\<C-p>" :
         \ <SID>start_history_complete()
-  inoremap <buffer><expr> <C-n> pumvisible() ? "\<C-n>" :
+  inoremap <buffer><silent><expr> <C-n> pumvisible() ? "\<C-n>" :
         \ <SID>start_history_complete()
-  inoremap <buffer><expr> <Up> pumvisible() ? "\<C-p>" :
+  inoremap <buffer><silent><expr> <Up> pumvisible() ? "\<C-p>" :
         \ <SID>start_history_complete()
-  inoremap <buffer><expr> <Down> pumvisible() ? "\<C-n>" :
+  inoremap <buffer><silent><expr> <Down> pumvisible() ? "\<C-n>" :
         \ <SID>start_history_complete()
 
   " Command completion.
@@ -664,7 +664,10 @@ function! s:execute_by_background(is_insert) abort "{{{
         \ new_pos, old_pos, a:is_insert)
 endfunction"}}}
 function! s:start_history_complete() abort "{{{
-  return exists('*neocomplete#start_manual_complete') ?
+  return
+        \ exists('*deoplete#mappings#manual_complete') ?
+        \ deoplete#mappings#manual_complete('vimshell_history') :
+        \ exists('*neocomplete#start_manual_complete') ?
         \ neocomplete#start_manual_complete('vimshell/history') :
         \ ''
 endfunction"}}}
