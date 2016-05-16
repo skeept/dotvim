@@ -4,16 +4,24 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.0.0
-let s:k_version = '300'
+" Version:      3.0.6
+let s:k_version = '306'
 " Created:      03rd Nov 2015
-" Last Update:  10th Dec 2015
+" Last Update:  04th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.0.6 Fix Indenting regression
+"       v3.0.5 Use lh#log() framework
+"              Fix Indenting issue when indentation changes between opening and
+"              closing brackets
+"       v3.0.4 Support definitions like ":Bracket \Q{ } -trigger=µ"
+"              Some olther mappings may not work anymore. Alas I have no tests
+"              for them ^^'
+"       v3.0.1 Support older versions of vim, thanks to Troy Curtis Jr
 "       v3.0.0 !mark! & co have been deprecated as mappings
 "       v2.3.0 functions moved from plugin/misc_map.vim
 " TODO:
@@ -37,17 +45,19 @@ function! lh#map#version()
 endfunction
 
 " # Debug   {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#map#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log', a:000)
   endif
 endfunction
 
@@ -211,7 +221,9 @@ endfunction
 
 " Function: lh#map#smart_insert_seq2(key, expr, ...) {{{3
 function! lh#map#smart_insert_seq2(key, expr, ...) abort
-  let rhs = escape(a:expr, '\')
+  " let rhs = escape(a:expr, '\')
+  let rhs = a:expr
+
   " Strip marks (/placeholders) if they are not wanted
   if ! lh#brackets#usemarks()
     let rhs = substitute(rhs, '\v!mark!|\<+\k*+\>', '', 'g')
@@ -219,13 +231,15 @@ function! lh#map#smart_insert_seq2(key, expr, ...) abort
   " Interpret the sequence if it is meant to
   if rhs =~ '\m!\(mark\%(here\)\=\|movecursor\)!'
     " may be, the regex should be '\m!\S\{-}!'
-    let rhs = lh#map#build_map_seq(escape(rhs, '\'))
+    " let rhs = lh#map#build_map_seq(escape(rhs, '\'))
+    let rhs = lh#map#build_map_seq(rhs)
   elseif rhs =~ '<+.\{-}+>'
     " @todo: add a move to cursor + jump/select
     let rhs = substitute(rhs, '<+\(.\{-}\)+>', "!cursorhere!&", '')
     let rhs = substitute(rhs, '<+\(.\{-}\)+>', "\<c-r>=lh#marker#txt(".string('\1').")\<cr>", 'g')
     let rhs .= "!movecursor!"
-    let rhs = lh#map#build_map_seq(escape(rhs, '\'))."\<c-\>\<c-n>@=Marker_Jump({'direction':1, 'mode':'n'})\<cr>"
+    " let rhs = lh#map#build_map_seq(escape(rhs, '\'))."\<c-\>\<c-n>@=Marker_Jump({'direction':1, 'mode':'n'})\<cr>"
+    let rhs = lh#map#build_map_seq(rhs."\<c-\>\<c-n>@=Marker_Jump({'direction':1, 'mode':'n'})\<cr>")
   endif
   " Build & return the context dependent sequence to insert
   if a:0 > 0
@@ -256,6 +270,7 @@ function! lh#map#insert_seq(key, seq, ...) abort
     " purge the dummy mappings
     call cleanup.finalize()
   endtry
+  call s:Verbose(strtrans(res))
   return res
 endfunction
 
@@ -362,7 +377,7 @@ function! lh#map#surround(begin, end, isLine, isIndented, goback, mustInterpret,
   " Call the function that really insert the text around the selection
   :'<,'>call lh#map#insert_around_visual(begin, end, a:isLine, a:isIndented)
   " Return the nomal-mode sequence to execute at the end.
-  " let g:goback =goback
+  let g:goback =goback
   return goback
 endfunction
 
@@ -417,7 +432,12 @@ function! lh#map#insert_around_visual(begin,end,isLine,isIndented) range abort
     endif
     " The substitute is here to compensate a little problem with HTML tags
     " let g:action= "normal! gv". BL.substitute(a:end,'>',"\<c-v>>",'').BR.HL.a:begin.HR
-    silent exe "normal! gv". BL.substitute(a:end,'>',"\<c-v>>",'').BR.HL.a:begin.HR
+    call s:Verbose(strtrans("normal! gv". BL.substitute(a:end,'>',"\<c-v>>",'').BR.HL.a:begin.HR))
+    if s:verbose >= 2
+      debug exe "normal! gv". BL.substitute(a:end,'>',"\<c-v>>",'').BR.HL.a:begin.HR
+    else
+      silent exe "normal! gv". BL.substitute(a:end,'>',"\<c-v>>",'').BR.HL.a:begin.HR
+    endif
     " 'gv' is used to refocus on the current visual zone
     "  call confirm(strtrans( "normal! gv". BL.a:end.BR.HL.a:begin.HR), "&Ok")
   finally
@@ -436,17 +456,16 @@ function! lh#map#_cursor_here(...) abort
   " NB: ``|'' requires virtcol() but cursor() requires col()
   " let s:gotomark = line('.') . 'normal! '.virtcol('.')."|"
   " let s:gotomark = 'call cursor ('.line('.').','.col('.').')'
+  let s:old_indent = indent(line('.'))
   if a:0 > 0
     let s:goto_lin_{a:1} = line('.')
     let s:goto_col_{a:1} = virtcol('.')
-    " let g:repos = "Repos (".a:1.") at: ". s:goto_lin_{a:1} . 'normal! ' . s:goto_col_{a:1} . '|'
+    call s:Verbose("Record cursor %1 at %2normal! %3|   indent=%4", a:1, s:goto_lin_{a:1}, s:goto_col_{a:1}, s:old_indent)
   else
     let s:goto_lin = line('.')
     let s:goto_col = virtcol('.')
-    " let g:repos = "Repos at: ". s:goto_lin . 'normal! ' . s:goto_col . '|'
+    call s:Verbose("Record cursor at %1normal! %2|   indent=%3", s:goto_lin, s:goto_col, s:old_indent)
   endif
-  let s:old_indent = indent(line('.'))
-  " let g:repos .= "   indent=".s:old_indent
   return ''
 endfunction
 
@@ -454,15 +473,11 @@ endfunction
 function! lh#map#_goto_mark(...) abort
   " Bug: if line is empty, indent() value is 0 => expect old_indent to be the One
   let crt_indent = indent(s:goto_lin)
-  if crt_indent < s:old_indent
-    let s:fix_indent = s:old_indent - crt_indent
-  else
-    let s:old_indent = crt_indent - s:old_indent
-    let s:fix_indent = 0
-  endif
-  " let g:fix_indent = s:fix_indent
-  if s:old_indent != 0
-    let s:goto_col += s:old_indent
+  let s:fix_indent = s:old_indent - crt_indent
+  call s:Verbose('fix indent <- %1 (old_indent:%2 - crt_indent:%3)', s:fix_indent, s:old_indent, crt_indent)
+  if s:fix_indent != 0
+    let s:goto_col -= s:fix_indent
+    call s:Verbose('goto_col -= %1 (old_indent:%3 - crt_indent:%4) => %2', s:fix_indent, s:goto_col, s:old_indent, crt_indent)
   endif
   let new_behaviour = (a:0 > 0) ? (!a:1) : 1
   if new_behaviour && s:goto_lin == line('.')
@@ -473,6 +488,7 @@ function! lh#map#_goto_mark(...) abort
     return move
   else
     " " uses {lig}'normal! {col}|' because of the possible reindent
+    call s:Verbose("Restore cursor to %1normal! %2|", s:goto_lin, s:goto_col)
     execute s:goto_lin . 'normal! ' . (s:goto_col) . '|'
     " call cursor(s:goto_lin, s:goto_col)
     return ''
@@ -503,7 +519,8 @@ endfunction
 
 " Function: lh#map#_fix_indent() {{{3
 function! lh#map#_fix_indent() abort
-  return repeat( ' ', s:fix_indent)
+  return ''
+  " return repeat( ' ', s:fix_indent)
 endfunction
 
 
@@ -512,8 +529,10 @@ endfunction
 " the text inserted.
 " See vim patch 7.4.849
 function! lh#map#_move_cursor_on_the_current_line(offset) abort
+  let abs_offset = lh#math#abs(a:offset)
+  call s:Verbose("Moving cursor %1 x %2", abs_offset, a:offset>0 ? "right" : "left")
   let move = a:offset > 0 ? "\<right>" : "\<left>"
-  return repeat(s:k_move_prefix.move, abs(a:offset))
+  return repeat(s:k_move_prefix.move, abs_offset)
 endfunction
 
 "------------------------------------------------------------------------

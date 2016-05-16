@@ -3,9 +3,10 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-brackets/License.md>
-" Version:      3.0.0
+"               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
+" Version:      3.0.7
 " Created:      28th Feb 2008
+" Last Update:  13th May 2016
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -23,6 +24,39 @@
 "
 "------------------------------------------------------------------------
 " History:
+" Version 3.0.7:
+"               * Refactoring: simplify lh#brackets#define() debugging
+"               * Fix lh#brackets#_string() to have <localleader>1 works in
+"               C&C++
+"               * Revert v3.0.4 changes, the mapping shall be done with:
+"                 ":Bracket \\\\Q{ } -trigger=µ"
+"                 This is related to command mode handling of backslash: 
+"                 - Odd number backslashes are an oddity that are sometimes
+"                   interpreted by the command line (e.g. "\ ", "\|"),
+"                   sometimes not (most other cases like "\n", "\Q", ...)
+"                 - Even number of backslashes are reduced by half when passed
+"                   to the function behind the command (i.e. "\\n" becomes
+"                   "\n", "\\Q" becomes "\Q"). All in all, there is no way to
+"                   distinguish "\n" from '\n' except by using twice the number
+"                   of backslahes again, i.e. 2 (real backslash) x 2 (command
+"                   line) to write things like '\n'.
+"                 Hence
+"                 ":Bracket \\\\Q{ } -trigger=µ"
+"               TODO: Add an entry into the documentation.
+"
+" Version 3.0.5:
+"               * Use lh#log() framework
+" Version 3.0.4:
+"               * Support definitions like ":Bracket \Q{ } -trigger=µ"
+"                 Some olther mappings may not work anymore. Alas I have no tests
+"                 for them ^^'
+" Version 3.0.3:
+"               * Fix JumpOverAllClose when marker characters contains active
+"                 characters in very-magic regex ':h /\v'
+" Version 3.0.2:
+"               * Fix regression introduced by the support of older versions
+" Version 3.0.1:
+"               * Support older versions of vim, thanks to Troy Curtis Jr
 " Version 3.0.0:
 "               * Support for closing all markers and jumping to the last one
 " Version 2.3.5:
@@ -80,13 +114,19 @@ let s:cpo_save=&cpo
 set cpo&vim
 
 " ## Debug {{{1
-function! lh#brackets#verbose(level) abort
-  let s:verbose = a:level
+let s:verbose = get(s:, 'verbose', 0)
+function! lh#brackets#verbose(...) abort
+  if a:0 > 0 | let s:verbose = a:1 | endif
+  return s:verbose
 endfunction
 
-function! s:Verbose(expr) abort
-  if exists('s:verbose') && s:verbose
-    echomsg a:expr
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
+  if s:verbose
+    call call('s:Log', a:000)
   endif
 endfunction
 
@@ -251,16 +291,19 @@ augroup END
 " ## Brackets definition functions {{{1
 "------------------------------------------------------------------------
 
-" s:String(s) {{{2
-function! s:String(s)
+" Function: lh#brackets#_string(s) {{{2
+function! lh#brackets#_string(s)
   if type(a:s) == type(function('has()'))
     return string(a:s)
   endif
-  return '"'.escape(a:s, '"').'"'
-  " return string(a:s)
+  " See Version 3.0.7 comment note.
+  " return '"'.substitute(a:s, '\v(\\\\|\\[a-z]\@!)', '&&', 'g').'"'
+  " return '"'.escape(a:s, '"\').'"'  " version that works with most keys, like \\
+  return '"'.a:s.'"'                " version that works with \n
+  " return string(a:s) " version that doesn't work: need to return something enclosed in double quotes
 endfunction
 
-" s:UnMap(m) {{{2
+" Function: s:UnMap(m) {{{2
 function! s:UnMap(m) abort
   try
     let cmd = a:m.mode[0].'unmap '. a:m.buffer . a:m.trigger
@@ -271,14 +314,14 @@ function! s:UnMap(m) abort
   endtry
 endfunction
 
-" s:Map(m) {{{2
+" Function: s:Map(m) {{{2
 function! s:Map(m) abort
   let cmd = a:m.mode.'map <silent> ' . a:m.expr . a:m.buffer . a:m.trigger .' '.a:m.action
   if &verbose >= 1 | echomsg cmd | endif
   exe cmd
 endfunction
 
-" s:DefineMap(mode, trigger, action, isLocal, isExpr) {{{2
+" Function: s:DefineMap(mode, trigger, action, isLocal, isExpr) {{{2
 function! s:DefineMap(mode, trigger, action, isLocal, isExpr) abort
   let crt_definitions = s:GetDefinitions(a:isLocal)
   let crt_mapping = {}
@@ -305,7 +348,7 @@ function! s:DefineMap(mode, trigger, action, isLocal, isExpr) abort
   endif
 endfunction
 
-" s:DefineImap(trigger, inserter, isLocal) {{{2
+" Function: s:DefineImap(trigger, inserter, isLocal) {{{2
 function! s:DefineImap(trigger, inserter, isLocal) abort
   if exists('*IMAP') && a:trigger !~? '<bs>\|<cr>\|<up>\|<down>\|<left>\|<right>'
     if a:isLocal
@@ -319,7 +362,7 @@ function! s:DefineImap(trigger, inserter, isLocal) abort
   endif
 endfunction
 
-" s:ListMappings(isLocal) {{{2
+" Function: s:ListMappings(isLocal) {{{2
 function! s:ListMappings(isLocal) abort
   let crt_definitions = s:GetDefinitions(a:isLocal)
   for m in crt_definitions
@@ -328,7 +371,7 @@ function! s:ListMappings(isLocal) abort
   endfor
 endfunction
 
-" s:ClearMappings(isLocal) {{{2
+" Function: s:ClearMappings(isLocal) {{{2
 function! s:ClearMappings(isLocal) abort
   let crt_definitions = s:GetDefinitions(a:isLocal)
   if s:state.isActive
@@ -340,7 +383,7 @@ function! s:ClearMappings(isLocal) abort
 endfunction
 
 "------------------------------------------------------------------------
-" s:thereIsAnException(Ft_exceptions) {{{2
+" Function: s:thereIsAnException(Ft_exceptions) {{{2
 function! s:thereIsAnException(Ft_exceptions) abort
   if empty(a:Ft_exceptions)
     return 0
@@ -352,7 +395,7 @@ function! s:thereIsAnException(Ft_exceptions) abort
 endfunction
 
 "------------------------------------------------------------------------
-" lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTriggers,Ft_exceptions) {{{2
+" Function: lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTriggers,Ft_exceptions) {{{2
 " NB: this function is made public because IMAPs.vim need it to not be private
 " (s:)
 function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTriggers, Ft_exceptions) abort
@@ -367,7 +410,7 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
   elseif has('*IMAP')
     return s:ImapBrackets(a:trigger)
   elseif a:escapable
-    let e = (escaped ? '\\' : "")
+    let e = (escaped ? '\' : "")
     " todo: support \%(\) with vim
     " let open = '\<c-v\>'.a:Open
     " let close = e.'\<c-v\>'.a:Close
@@ -390,6 +433,7 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
     return lh#map#insert_seq(a:trigger, open.a:nl.close.'!mark!\<esc\>O')
   else
     let c = virtcol('.')
+    " call s:Verbose(c)
     let current = matchstr(line, '.*\%'.(c).'c\S*')
     if 0 && &tw > 0 && lh#encoding#strlen(current.open.close.lh#marker#txt()) > &tw
       " v2.3.0 update:
@@ -410,10 +454,10 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
       " Now the mapping is a :map-<expr>, we cannot break the line with a
       " :setline(), we'll have to move the cursor
       if 0
-	call setline(line('.'), head)
-	" An undo break is added here. I'll have to investigate that someday
-	let before = "\<cr>".substitute(before, '^\s\+', '', '')
-	return lh#map#insert_seq(a:trigger, before.open.'!cursorhere!'.close.'!mark!'.after)
+        call setline(line('.'), head)
+        " An undo break is added here. I'll have to investigate that someday
+        let before = "\<cr>".substitute(before, '^\s\+', '', '')
+        return lh#map#insert_seq(a:trigger, before.open.'!cursorhere!'.close.'!mark!'.after)
       endif
       let delta_to_line_cut = lh#encoding#strlen(before)
       let delta_to_insertion = lh#encoding#strlen(substitute(before, '^\s\+', '', ''))
@@ -429,7 +473,7 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
 endfunction
 
 "------------------------------------------------------------------------
-" lh#brackets#closer(trigger, Action, Ft_exceptions) {{{2
+" Function: lh#brackets#closer(trigger, Action, Ft_exceptions) {{{2
 function! lh#brackets#closer(trigger, Action, Ft_exceptions) abort
   if s:thereIsAnException(a:Ft_exceptions)
     return a:trigger
@@ -444,7 +488,7 @@ function! lh#brackets#closer(trigger, Action, Ft_exceptions) abort
 endfunction
 
 "------------------------------------------------------------------------
-" s:JumpOrClose(trigger) {{{2
+" Function: s:JumpOrClose(trigger) {{{2
 function! s:JumpOrClose(trigger) abort
   if lh#option#get('cb_jump_on_close',1) && lh#position#char_at_mark('.') == a:trigger
     " todo: detect even if there is a newline in between
@@ -460,12 +504,11 @@ function! s:JumpOverAllClose(chars, ...) abort
   let del_mark = ''
   let p = col('.')
   let ll = getline('.')[p : ] " ignore char under cursor, look after
-  let m = matchstr(ll, '\v^(['.a:chars.']|'.lh#marker#txt('.{-}').')+')
+  let m = matchstr(ll, '\v^(['.a:chars.']|'.lh#marker#very_magic('.{-}').')+')
   " echomsg ll.'##'.m.'##'
-  let lm = strwidth(m)
   let len_match = lh#encoding#strlen(m)
-  if lm
-    let del_mark = repeat("\<del>", lm)
+  if len_match
+    let del_mark = repeat("\<del>", len_match)
     let del_mark .= substitute(m, '[^'.a:chars.']', '', 'g')
   endif
   " Is there an optional terminal mark to check and merge/add (like: «»;«») ?
@@ -473,7 +516,7 @@ function! s:JumpOverAllClose(chars, ...) abort
     let remaining = ll[len_match : ]
     " echomsg "rem: <<".remaining.">>"
     let match_rem = matchstr(remaining, '^\('.lh#marker#txt('.\{-}').'\)*'.a:1.'\('.lh#marker#txt('.\{-}').'\)*')
-    let len_match_rem = strwidth(match_rem)
+    let len_match_rem = lh#encoding#strlen(match_rem)
     if len_match_rem
       let del_mark = repeat("\<del>", len_match_rem).del_mark
     endif
@@ -506,7 +549,7 @@ function! s:Jump() abort
   let ll = getline('.')[p : ]
   " echomsg ll
   let m = matchstr(ll, '^'.lh#marker#txt('.\{-}'))
-  let lm = strwidth(m)
+  let lm = lh#encoding#strlen(m)
   let del_mark = repeat("\<del>", lm)
   return s:k_move_prefix."\<right>".del_mark
 endfunction
@@ -575,16 +618,15 @@ function! lh#brackets#enrich_imap(trigger, case, isLocal, ...) abort
   call s:DefineImap(a:trigger, sCase, a:isLocal)
 endfunction
 "------------------------------------------------------------------------
-" lh#brackets#define(bang, ...) {{{2
-function! lh#brackets#define(bang, ...) abort
-  " Parse Options {{{3
-  let isLocal    = a:bang != "!"
+" Function: s:DecodeDefineOptions(a000)   {{{2
+function! s:DecodeDefineOptions(a000)
   let nl         = ''
   let insert     = 1
   let visual     = 1
   let normal     = 'default=1'
+  let escapable  = 0
   let options    = []
-  for p in a:000
+  for p in a:a000
     if     p =~ '-l\%[list]'        | call s:ListMappings(isLocal)  | return
     elseif p =~ '-cle\%[ar]'        | call s:ClearMappings(isLocal) | return
     elseif p =~ '-nl\|-ne\%[wline]' | let nl        = '\n'
@@ -634,15 +676,25 @@ function! lh#brackets#define(bang, ...) abort
   if !exists('Close')      | let Close      = options[1] | endif
   if !exists('Exceptions') | let Exceptions = ''         | endif
 
+  return [nl, insert, visual, normal, options, trigger, Open, Close, Exceptions, escapable]
+endfunction
+
+" Function: lh#brackets#define(bang, ...) {{{2
+function! lh#brackets#define(bang, ...) abort
+  " Parse Options {{{3
+  let isLocal    = a:bang != "!"
+  let [nl, insert, visual, normal, options, trigger, Open, Close, Exceptions, escapable]
+        \ = s:DecodeDefineOptions(a:000)
+
   " INSERT-mode open {{{3
   if insert
     " INSERT-mode close
     let areSameTriggers = options[0] == options[1]
-    let inserter = 'lh#brackets#opener('.string(trigger).','. exists('escapable').',"'.(nl).
-          \'",'. s:String(Open).','.s:String(Close).','.string(areSameTriggers).','.string(Exceptions).')'
+    let inserter = 'lh#brackets#opener('.string(trigger).','. escapable.',"'.(nl).
+          \'",'. lh#brackets#_string(Open).','.lh#brackets#_string(Close).','.string(areSameTriggers).','.string(Exceptions).')'
     call s:DefineImap(trigger, inserter, isLocal)
     if ! areSameTriggers
-      let inserter = 'lh#brackets#closer('.s:String(options[1]).','.s:String (Close).','.s:String(Exceptions).')'
+      let inserter = 'lh#brackets#closer('.lh#brackets#_string(options[1]).','.lh#brackets#_string (Close).','.lh#brackets#_string(Exceptions).')'
       call s:DefineImap(options[1], inserter, isLocal)
       if len(options[1])
         " TODO: enrich <bs> & <del> imaps for the close triggers
@@ -654,11 +706,11 @@ function! lh#brackets#define(bang, ...) abort
   if visual
     if strlen(nl) > 0
       let action = ' <c-\><c-n>@=lh#map#surround('.
-            \ s:String(options[0].'!cursorhere!').', '.
-            \ s:String(options[1].'!mark!').", 1, 1, '', 1, ".s:String(trigger).")\<cr>"
+            \ lh#brackets#_string(options[0].'!cursorhere!').', '.
+            \ lh#brackets#_string(options[1].'!mark!').", 1, 1, '', 1, ".lh#brackets#_string(trigger).")\<cr>"
     else
       let action = ' <c-\><c-n>@=lh#map#surround('.
-            \ s:String(options[0]).', '.s:String(options[1]).", 0, 0, '`>ll', 1)\<cr>"
+            \ lh#brackets#_string(options[0]).', '.lh#brackets#_string(options[1]).", 0, 0, '`>ll', 1)\<cr>"
     endif
     call s:DefineMap(s:k_vmap_type.'nore', trigger, action, isLocal, 0)
 
