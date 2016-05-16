@@ -231,6 +231,8 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#window#split()`              | Forces to open a new split, ignoring E36                                                                                         |
 | `lh#window#new()`                | Forces to open a new window, ignoring E36                                                                                        |
 | `lh#window#create_window_with()` | Forces to create a new split, with any split related command, ignoring E36                                                       |
+| `lh#window#getid()`              | Emulates recent `win_getid()` function                                                                                           |
+| `lh#window#gotoid()`             | Emulates recent `win_gotoid()` function                                                                                          |
 
 
 ### Syntax related functions
@@ -298,6 +300,11 @@ flavor LucHermitte/lh-vim-lib
 ```vim
 Bundle 'LucHermitte/lh-vim-lib'
 ```
+
+## Credits
+  * Luc Hermitte, maintainer
+  * Troy Curtis Jr, for portability functions, and many tests/issues he raised
+  * Many other I've forgotten :(
 
 ## Some other VimL libraries
   * [genutils](http://www.vim.org/scripts/script.php?script_id=197)

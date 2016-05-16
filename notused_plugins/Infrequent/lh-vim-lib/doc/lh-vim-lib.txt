@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v3.7.1)
-                        For Vim version 7+      Last change: 23rd Feb 2016
+*lh-vim-lib.txt*        Vim common libraries (v3.8.3)
+                        For Vim version 7+      Last change: 13th May 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -40,9 +40,12 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#event#register_for_one_execution_at()|
 - |lh#exception#callstack()|
 - |lh#fmt#printf()|
+- |lh#float#min()|, |lh#float#max()|,
+  |lh#float#arg_min()|, |lh#float#arg_max()|
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
+- |lh#math#abs()|
 - |lh#on#exit()|
 - |lh#position#char_at()|
 - |lh#position#char_at_mark()|
@@ -85,8 +88,20 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#Transform()| and |lh#list#transform()|
 - |lh#list#transform_if()|
 - |lh#list#unique_sort()| and |lh#list#unique_sort2()|
+Stack related functions:                                |lhvl#stack|
+- |lh#stack#push()|
+- |lh#stack#pop()|
+- |lh#stack#top()|
+- |lh#stack#top_or()|
+- |lh#stack#new()|, |lh#stack#new_list()|
+    - |lh#stack-push()|
+    - |lh#stack-pop()|
+    - |lh#stack-top()|
+    - |lh#stack-top_or()|
 String related functions:                               |lhvl#string|
+- |lh#string#as()|
 - |lh#string#matches()|
+- |lh#string#substitute_unless()|
 - |lh#string#trim()|
 Graphs related functions:                               |lhvl#graph|
 - |lh#graph#tsort#depth()|
@@ -133,6 +148,10 @@ Buffers related functions:                              |lhvl#buffer|
     - |lh#buffer#dialog#select()|
     - |lh#buffer#dialog#quit()|
     - |lh#buffer#dialog#update()|
+Windows related functions:                              |lhvl#window|
+- |lh#window#create_window_with()|
+- |lh#window#new()|
+- |lh#window#split()|
 Syntax related functions:                               |lhvl#syntax|
 - |lh#syntax#name_at()|
 - |lh#syntax#name_at_mark()|
@@ -155,6 +174,7 @@ Completion related functions                            |lhvl#completion|
 - |lh#icomplete#new_on()|
 - |lh#icomplete#run()|
 Log related functions                                   |lhvl#log|
+- |:LHLog|, |lh#log#set_logger()|
 - |lh#log#new()|
 - |lh#log#none()|
 
@@ -247,6 +267,15 @@ Unlike |printf()|, this function takes positional parameters, i.e. >
   AssertEquals(lh#fmt#printf("foo %1 bar", 42), "foo 42 bar")
   AssertEquals(lh#fmt#printf("foo %1 bar %2", 42, "toto"), "foo 42 bar toto")
   AssertEquals(lh#fmt#printf("foo %2 bar %1", 42, "toto"), "foo toto bar 42")
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#math#abs()*                   {{{3
+lh#math#abs(val)~
+@returns the absolute value of the number {val}.
+@author Troy Curtis Jr
+
+The purpose of the function is to emulate |abs()| on vim version where it
+isn't defined.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
@@ -619,6 +648,16 @@ The evaluation is meant to be done with |eval()|.
 STRINGS RELATED FUNCTIONS                             *lhvl#string*     {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#as()*                  {{{3
+lh#string#as(val)~
+@param    {val} any value/expression.
+@return the {val} as a string. Unlike |string()| function, this one doesn't
+add quotes around strings.
+
+@note if {val} is a |Dict| that has a field named `"_to_string"`, this field
+will be used and called a member function whose result will be returned.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#matches()*             {{{3
 lh#string#matches(string, pattern)~
 @param    {string} |expr-string|
@@ -630,6 +669,20 @@ Example: >
    let matches = lh#string#matches('sqjg %1 msqkg ml %2 mihs m%43%8', '%\zs\d\+')
    let expected= ['1', '2', '43', '8']
    AssertEquals(matches, expected)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#substitute_unless()*   {{{3
+lh#string#substitute_unless(string, pat, char)~
+@param    {string} |expr-string|
+@param       {pat} |regexp|
+@param      {char} character (any string will do though)
+
+This is somehow the equivalent of >
+    substitute(string, '[^{pat}]', char', 'g')
+except |substitute()| doesn't accept this syntax to replace patterns that
+don't match.
+Note that the pattern will be applied on each character independently of the
+others.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#trim()*                {{{3
@@ -657,12 +710,26 @@ Removes a value from the stack and returns it.
                                                 *lh#stack#top()*                  {{{3
 lh#stack#top({stack})~
 @pre `!empty({stack})`
+@see |lh#stack#top_or()|
 Returns the top value of the stack.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#stack#top_or()*               {{{3
+lh#stack#top_or({stack}, {default})~
+@see |lh#stack#top_or()|
+Returns the top value of the stack, or the {default} value if the stack is
+empty.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#stack#new()*                  {{{3
-lh#stack#new({[values]})~
+lh#stack#new([{values}])~
 Returns a new stack object on which the usual methods can be called:
+- `empty()`           returns if empty     *lh#stack-empty*
+- `len()`             returns nb elements  *lh#stack-len*
+- `push({value})`                          *lh#stack-push* ,    see |lh#stack#push()|
+- `pop()`                                  *lh#stack-pop* ,     see |lh#stack#pop()|
+- `pop_or({default})`                      *lh#stack-pop_or* ,  see |lh#stack#pop_or()|
+- `top()`                                  *lh#stack-top* ,     see |lh#stack#top()|
 NB: the {values} parameter is optional.
 >
    let s = lh#stack#new([12, 42])
@@ -682,7 +749,7 @@ NB: the {values} parameter is optional.
                                                 *lh#stack#new_list()*             {{{3
 lh#stack#new_list({nb_stacks})~
 Returns a new object that implements a list a stacks.
-The usual operations can be called on the indexed stacks
+The usual operations can be called on the indexed stacks. See |lh#stack#new()|.
 NB: the {values} parameter is optional.
 >
    let s = lh#stack#new_list(10)
@@ -1935,6 +2002,7 @@ Split-opens a new scratch buffer.
 
 @param {bname} Name for the new scratch buffer
 @param {where} Where the new scratch buffer will be opened ('', or 'v')
+@return The buffer number of the new scratch buffer.
 @post          The buffer has the following properties set:
                    'bt'=nofile, 'bh'=wipe, 'nobl', 'noswf', 'ro'
 
@@ -2041,6 +2109,57 @@ years of evolution), and it is a little bit cumbersome.
   in the end.
 - and of course, it requires many other functions from |lh-vim-lib|, but
   nothing else.
+
+------------------------------------------------------------------------------
+WINDOWS RELATED FUNCTIONS                             *lhvl#window*     {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#window#create_window_with()*  {{{3
+lh#window#create_window_with(cmd)~
+@param {cmd} |window| creation |command|
+This function tries to create a new window with the window creation command
+passed, typically |:new|, |:split|, |:vsplit|, etc.
+If the creation fails because of |E36|, it will be attempted again, and once
+only, after increasing by one the current windows size.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#window#new()*                 {{{3
+                                                *lh#window#split()*
+lh#window#new({bufname})~
+lh#window#split([{options}])~
+Encapsulations over |lh#window#create_window_with()|.
+The first tries to execute `:new {bufname}`;
+The second tries to execute `:split {options}`
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#window#getid()*               {{{3
+                                                *lh#window#gotoid()*
+lh#window#getid([{win}])~
+Encapsulation over vim recent function |win_getid()|.
+An emulation is provided for older versions of vim.
+This function associates (on-the-fly) a unique window-id to a |window| know from
+its window number, and return the associated window-id.
+
+Notes:
+- While window numbers may change as windows get reorganized, window ids are
+  stable and never change.
+- The emulation injects a *w:id* variable into each window for which an id is
+  requested.
+- The emulation doesn't emulate yet the second optional {tab} argument of
+  |win_getid()|.
+
+Function meant to be used along with |lh#window#gotoid()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#window#gotoid()*              {{{3
+lh#window#gotoid({id})~
+Encapsulation over vim recent function |win_gotoid()|.
+An emulation is provided for older versions of vim.
+This function jumps to the window that has the window id {id}.
+
+Note: While window numbers may change as windows get reorganized, window ids
+are stable and never change.
+Function meant to be used along with |lh#window#getid()|.
 
 ------------------------------------------------------------------------------
 SYNTAX RELATED FUNCTIONS                              *lhvl#syntax*     {{{2
@@ -2230,12 +2349,12 @@ When in completion, the following keybindings are made in complement of
 
 Example: >
   let entries = [
-	\ {'word': 'un', 'menu': 1, 'kind': 's', 'info': ' '},
-	\ {'word': 'deux', 'menu': 2, 'kind': 's', 'info': 'takes a parameter'},
-	\ {'word': 'trois', 'menu': 3, 'info': ''},
-	\ {'word': 'trentre-deux', 'menu': 32, 'info': ''},
-	\ 'unité'
-	\ ]
+        \ {'word': 'un', 'menu': 1, 'kind': 's', 'info': ' '},
+        \ {'word': 'deux', 'menu': 2, 'kind': 's', 'info': 'takes a parameter'},
+        \ {'word': 'trois', 'menu': 3, 'info': ''},
+        \ {'word': 'trentre-deux', 'menu': 32, 'info': ''},
+        \ 'unité'
+        \ ]
   inoremap <silent> <buffer> µ <c-o>:call lh#icomplete#new_on('\w', entries, 'lh#common#warning_msg("nominal: ".v:val)').start_completion()<cr>
 
 
@@ -2310,6 +2429,17 @@ Sets the global logger.
                 Takes another parameter that tells {where} the window is opened.
   - `"log`      -> |lh#log#new()| and log in |location-list-window|
                 Takes another parameter that tells {where} the window is opened.
+
+
+                                                *:LHLog*                          {{{3
+:LHLog {kind}~
+Sets the global logger.
+@param {kind} any of `"none"`, `"echomsg"`, `"qf"`, `"log"`, and `"clear"`
+
+This command is simply a helper command that'll execute
+|lh#log#set_logger()||. It presents the advantage to support completion: i.e.
+no need to remember all possible parameter values. However, the {options}
+cannot be passed (for now).
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#log#this()*                   {{{3
