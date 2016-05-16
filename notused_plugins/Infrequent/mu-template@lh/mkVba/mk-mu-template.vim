@@ -3,11 +3,11 @@
 " Author:	Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/mu-template>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-brackets/License.md>
-" Version:	4.0.2
-let s:version = '4.0.2'
+"               <URL:http://github.com/LucHermitte/mu-template/tree/master/License.md>
+" Version:	4.1.0
+let s:version = '4.1.0'
 " Created:	06th Nov 2007
-" Last Update:	15th Dec 2015
+" Last Update:	05th Apr 2016
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -130,10 +130,12 @@ after/template/sh/default_value.template
 after/template/sh/does_match.template
 after/template/sh/field.template
 after/template/sh/for.template
+after/template/sh/function.template
 after/template/sh/if-nb-args.template
 after/template/sh/if.template
 after/template/sh/lvalue.template
 after/template/sh/rvalue.template
+after/template/sh/while.template
 after/template/tcl.template
 after/template/template.template
 after/template/template/arg.template
