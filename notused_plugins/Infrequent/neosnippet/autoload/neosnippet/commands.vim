@@ -31,7 +31,7 @@ let s:edit_options = [
       \ '-runtime',
       \ '-vertical', '-horizontal', '-direction=', '-split',
       \]
-let s:Cache = neosnippet#util#get_vital().import('System.Cache')
+let s:Cache = neosnippet#util#get_vital().import('System.Cache.Deprecated')
 "}}}
 
 function! s:get_list() abort "{{{
@@ -66,6 +66,10 @@ function! neosnippet#commands#_edit(args) abort "{{{
   if snippet_dir == ''
     call neosnippet#util#print_error('Snippet directory is not found.')
     return
+  endif
+
+  if !isdirectory(snippet_dir) && !neosnippet#util#is_sudo()
+    call mkdir(snippet_dir, 'p')
   endif
 
   " Edit snippet file.

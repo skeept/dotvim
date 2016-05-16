@@ -39,8 +39,9 @@ snippet if-else
 abbr ife
 options head
   if (${1:#:condition}) {
-    ${0:TARGET}
+    ${2:TARGET}
   } else {
+    ${3}
   }
 
 snippet for
@@ -137,3 +138,12 @@ options head
     'use strict';
     ${0:TARGET}
   })(${2});
+
+snippet js
+options head
+  JSON.stringify(${1:TARGET}, ${2:null}, ${3:2});
+
+snippet jsc
+options head
+  console.log(JSON.stringify(${1:TARGET}, ${2:null}, ${3:2}));
+
