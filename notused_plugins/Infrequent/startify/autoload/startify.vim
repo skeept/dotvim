@@ -18,6 +18,7 @@ let s:delete_buffers = get(g:, 'startify_session_delete_buffers')
 let s:relative_path  = get(g:, 'startify_relative_path') ? ':.:~' : ':p:~'
 let s:session_dir    = resolve(expand(get(g:, 'startify_session_dir',
       \ has('win32') ? '$HOME\vimfiles\session' : '~/.vim/session')))
+let s:tf             = exists('g:startify_transformations')
 
 let s:skiplist = get(g:, 'startify_skiplist', [
       \ 'COMMIT_EDITMSG',
@@ -67,9 +68,20 @@ function! startify#insane_in_the_membrane() abort
     setlocal norelativenumber
   endif
 
+  " Must be global so that it can be read by syntax/startify.vim.
   if exists('g:startify_custom_header')
-    call append('$', g:startify_custom_header)
+    if type(g:startify_custom_header) == type([])
+      let g:startify_header = copy(g:startify_custom_header)
+    else
+      let g:startify_header = eval(g:startify_custom_header)
+    endif
+  else
+    let g:startify_header = startify#fortune#cowsay()
   endif
+  if !empty(g:startify_header)
+    let g:startify_header += ['']  " add blank line
+  endif
+  call append('$', g:startify_header)
 
   let s:tick = 0
   let s:entries = {}
@@ -124,12 +136,9 @@ function! startify#insane_in_the_membrane() abort
 
   " compute first line offset
   let s:firstline = 2
-  " increase offset if there is a custom header
-  if exists('g:startify_custom_header')
-    let s:firstline += len(g:startify_custom_header)
-  endif
+  let s:firstline += len(g:startify_header)
   " no special, no local Session.vim, but a section header
-  if !s:show_special && !exists('l:show_session') && type(s:lists[0]) == 3
+  if !s:show_special && !exists('l:show_session') && type(s:lists[0]) == type([])
     let s:firstline += len(s:lists[0]) + 1
   endif
 
@@ -142,7 +151,7 @@ function! startify#insane_in_the_membrane() abort
   setlocal nomodifiable nomodified
 
   call s:set_mappings()
-  call cursor(s:firstline + (s:show_special ? 2 : 0), 5)
+  call cursor(s:firstline, 5)
   autocmd startify CursorMoved <buffer> call s:set_cursor()
 
   set filetype=startify
@@ -281,7 +290,7 @@ function! startify#session_write(spath)
   if exists('g:startify_session_remove_lines')
         \ || exists('g:startify_session_savevars')
         \ || exists('g:startify_session_savecmds')
-    execute 'split' a:spath
+    silent execute 'split' a:spath
 
     " remove lines from the session file
     if exists('g:startify_session_remove_lines')
@@ -477,7 +486,14 @@ function! s:filter_oldfiles(path_prefix, path_format, use_env) abort
       continue
     endif
 
-    let entry_path              = fnamemodify(absolute_path, a:path_format)
+    let entry_path = ''
+    if s:tf
+      let entry_path = s:transform(absolute_path)
+    endif
+    if empty(entry_path)
+      let entry_path = fnamemodify(absolute_path, a:path_format)
+    endif
+
     let entries[absolute_path]  = 1
     let counter                -= 1
     let oldfiles               += [[fnameescape(absolute_path), entry_path]]
@@ -578,17 +594,27 @@ function! s:show_bookmarks() abort
   endif
 
   for bookmark in g:startify_bookmarks
-    if type(bookmark) == 4  " dict?
-      let [index, fname] = items(bookmark)[0]
+    if type(bookmark) == type({})
+      let [index, path] = items(bookmark)[0]
     else  " string
-      let [index, fname] = [s:get_index_as_string(s:entry_number), bookmark]
+      let [index, path] = [s:get_index_as_string(s:entry_number), bookmark]
       let s:entry_number += 1
     endif
-    call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . fname)
-    if has('win32')
-      let fname = substitute(fname, '\[', '\[[]', 'g')
+
+    let entry_path = ''
+    if s:tf
+      let entry_path = s:transform(fnamemodify(resolve(expand(path)), ':p'))
     endif
-    call s:register(line('$'), index, 'file', 'edit', fname, s:nowait)
+    if empty(entry_path)
+      let entry_path = path
+    endif
+    call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . entry_path)
+
+    if has('win32')
+      let path = substitute(path, '\[', '\[[]', 'g')
+    endif
+    call s:register(line('$'), index, 'file', 'edit', path, s:nowait)
+
     unlet bookmark  " avoid type mismatch for heterogeneous lists
   endfor
 
@@ -733,7 +759,7 @@ endfunction
 
 " Function: s:close {{{1
 function! s:close() abort
-  if len(filter(range(0, bufnr('$')), 'buflisted(v:val)'))
+  if len(filter(range(0, bufnr('$')), 'buflisted(v:val)')) - &buflisted
     if bufloaded(bufnr('#')) && bufnr('#') != bufnr('%')
       buffer #
     else
@@ -799,7 +825,11 @@ function! s:init_env()
   let ignore = { 'PWD': 1, 'OLDPWD': 1 }
 
   function! s:get_env()
-    silent execute "normal! :return $\<c-a>')\<c-b>\<c-right>\<right>\<del>split('\<cr>"
+    redir => s
+      silent! execute "norm!:ec$\<c-a>'\<c-b>\<right>\<right>\<del>'\<cr>"
+    redir END
+    redraw
+    return split(s)
   endfunction
 
   function! s:compare_by_key_len(foo, bar)
@@ -822,3 +852,15 @@ function! s:init_env()
   let s:env = sort(s:env, 's:compare_by_key_len')
   let s:env = sort(s:env, 's:compare_by_val_len')
 endfunction
+
+" Function: s:transform {{{1
+function s:transform(absolute_path)
+  for [k,V] in g:startify_transformations
+    if a:absolute_path =~ k
+      return type(V) == type('') ? V : V(a:absolute_path)
+    endif
+    unlet V
+  endfor
+  return ''
+endfunction
+

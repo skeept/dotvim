@@ -11,9 +11,7 @@ let g:loaded_startify = 1
 let g:startify_locked = 0
 
 augroup startify
-  if !get(g:, 'startify_disable_at_vimenter')
-    autocmd VimEnter * nested call s:genesis()
-  endif
+  autocmd VimEnter * nested call s:genesis()
 
   if get(g:, 'startify_session_persistence')
     autocmd VimLeave * call s:extinction()
@@ -38,12 +36,15 @@ function! s:genesis()
   if !argc() && (line2byte('$') == -1)
     if get(g:, 'startify_session_autoload') && filereadable('Session.vim')
       source Session.vim
-    else
+    elseif !get(g:, 'startify_disable_at_vimenter')
       call startify#insane_in_the_membrane()
     endif
   endif
-  autocmd startify BufNewFile,BufRead,BufFilePre *
-        \ call s:update_oldfiles(expand('<afile>'))
+  if get(g:, 'startify_update_oldfiles')
+    call map(v:oldfiles, 'fnamemodify(v:val, ":p")')
+    autocmd startify BufNewFile,BufRead,BufFilePre *
+          \ call s:update_oldfiles(expand('<afile>:p'))
+  endif
   autocmd! startify VimEnter
 endfunction
 
