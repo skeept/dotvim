@@ -252,6 +252,26 @@ function! s:Test_remove_ptr() abort
     endfor
 endfunction
 
+" Function: s:Test_remove_reference() {{{1
+function! s:Test_remove_reference() abort
+    AssertEqual (lh#dev#cpp#types#remove_reference('std::string&'), 'std::string')
+    AssertEqual (lh#dev#cpp#types#remove_reference('std::string'),  'std::string')
+    AssertEqual (lh#dev#cpp#types#remove_reference('std::string const&'), 'std::string const')
+    AssertEqual (lh#dev#cpp#types#remove_reference('std::string const'),  'std::string const')
+    AssertEqual (lh#dev#cpp#types#remove_reference('const std::string&'), 'const std::string')
+    AssertEqual (lh#dev#cpp#types#remove_reference('const std::string'),  'const std::string')
+endfunction
+
+" Function: s:Test_remove_reference() {{{1
+function! s:Test_remove_cv() abort
+    AssertEqual (lh#dev#cpp#types#remove_cv('std::string'), 'std::string')
+    AssertEqual (lh#dev#cpp#types#remove_cv('std::string const'),  'std::string')
+    AssertEqual (lh#dev#cpp#types#remove_cv('const std::string'),  'std::string')
+    AssertEqual (lh#dev#cpp#types#remove_cv('T const*'), 'T const*')
+    AssertEqual (lh#dev#cpp#types#remove_cv('T const* const'), 'T const*')
+    AssertEqual (lh#dev#cpp#types#remove_cv('T const* const*'), 'T const* const*')
+endfunction
+
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save

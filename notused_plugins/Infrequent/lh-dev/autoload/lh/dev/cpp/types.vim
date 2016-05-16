@@ -4,16 +4,17 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:	1.3.9
-let s:k_version = '1.3.9'
+" Version:	1.5.0
+let s:k_version = '1.5.0'
 " Created:	10th Feb 2009
-" Last Update:	04th Dec 2015
+" Last Update:	18th Apr 2016
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
 "
 "------------------------------------------------------------------------
 " History:
+" 	v1.5.0: - #_of_var
 " 	v1.3.9: - better magic/nomagic neutrality
 " 	        - snake_case enforced
 " 	        #is_base_type
@@ -58,9 +59,13 @@ function! lh#dev#cpp#types#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -72,7 +77,7 @@ endfunction
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
 
-" # const correction {{{2
+" # const related functions {{{2
 " Function:	s:ExtractPattern(str, pat)                        : str	{{{3
 " Note:		Internal, used by is_base_type
 function! s:ExtractPattern(expr, pattern) abort
@@ -149,6 +154,41 @@ function! lh#dev#cpp#types#ConstCorrectType(type) abort
   return lh#dev#cpp#types#const_correct_type(a:type)
 endfunction
 
+" Function: lh#dev#cpp#types#is_const(type)                   : bool {{{3
+function! lh#dev#cpp#types#is_const(type) abort
+  return a:type =~ '\v<const>'
+endfunction
+
+" Function: lh#dev#cpp#types#remove_cv(type)                  : string {{{3
+" FIXME: 'T const * const' -> 'T const*'
+function! lh#dev#cpp#types#remove_cv(type) abort
+  let parts = split(a:type, '\v\s+|\zs\ze[*&]')
+  let b = 0
+  let e = len(parts)-1
+  if e==-1
+    return ''
+  endif
+  if e == 1 && parts[0] =~ '\v<(const|volatile)>'
+    return substitute(a:type, '\v^\s*<(const|volatile)>\s*', '', '')
+  endif
+  return substitute(a:type, '\v\s*<(const|volatile)>\s*$', '', '')
+
+
+  " This way of proceding alters the spaces between tokens
+  if e == 1 && parts[0] =~ '\v<(const|volatile)>'
+    let b += 1
+  elseif parts[e] =~ '\v<(const|volatile)>'
+    let e -= 1
+  endif
+  return join(parts[b : e], ' ')
+endfunction
+
+" # References related functions {{{2
+" Function: lh#dev#cpp#types#remove_reference(type)           : string {{{3
+function! lh#dev#cpp#types#remove_reference(type) abort
+  return substitute(a:type, '\s*&\s*', '', '')
+endfunction
+
 " # Pointer related functions {{{2
 " Function: lh#dev#cpp#types#is_pointer(type)                 : bool {{{3
 function! lh#dev#cpp#types#is_pointer(type) abort
@@ -211,6 +251,7 @@ endfunction
 
 " ## Overridden functions {{{1
 
+" # Type Deduction {{{2
 " Function: lh#dev#cpp#types#_deduce(expr) {{{3
 function! lh#dev#cpp#types#_deduce(expr)
   " 1- C++ 11 or more ?
@@ -222,7 +263,66 @@ function! lh#dev#cpp#types#_deduce(expr)
   return lh#dev#c#types#_deduce(a:expr)
 endfunction
 
+" Function: lh#dev#cpp#types#_of_var(name, ...) {{{3
+function! lh#dev#cpp#types#_of_var(name, ...) abort
+  try
+    let p = getpos('.')
+    let cleanup = lh#on#exit()
+          \.register('call setpos(".",'.string(p).')')
+    if a:name =~ '^\s*$'
+      return call('s:NoDecl', [a:name]+a:000)
+    endif
+    if searchdecl(a:name) == 0
+      " First: let Vim find the variable definitions
+      let def_line = getline('.')
+      call s:Verbose('Definition of %1 found line %2: %3', a:name, line('.'), def_line)
+    else
+      " Then: search in the tags DB (it may be an attribute from the current
+      " class)
+      let cleanup = cleanup
+            \.register('call lh#dev#end_tag_session()')
+      let tags = lh#dev#start_tag_session()
+      let pat = '.*\<'.a:name.'\>.*'
+      " FIXME: get the scopename of the current function as well=> ClassName::foobar()
+      " TODO: And move the function into lh-dev!!!
+      let classname = lh#cpp#AnalysisLib_Class#CurrentScope(line('.'), 'class')
+      let defs = filter(copy(tags), 'v:val.name =~ classname."::".pat || (v:val.name =~ pat && s:GetClassName(v:val) =~ classname)')
+      call s:Verbose('Attributes of %1 matching %2: %3', classname, pat, defs)
+      let t_vars  = lh#list#copy_if(defs, [], 'v:1_.kind =~ "[lvx]"')
+      if empty(t_vars)
+        return call('s:NoDecl', [a:name]+a:000)
+      elseif len(t_vars) == 1
+        let def_line = t_vars[0].cmd
+      else
+        throw "Too many matching variables"
+      endif
+    endif
+    let def_line = substitute(def_line, '\s*;\s*$\|\s*=.*', '', '')
+    let def_line = substitute(def_line, '^\s*', '', '')
+    let def = split(def_line, ',') " split function lists
+    call filter(def, 'v:val =~ "\\<".a:name."\\s*$"')
+    let var = lh#dev#option#call('function#_analyse_parameter', &ft, def[0])
+    return var.type
+  finally
+    call cleanup.finalize()
+  endtry
+endfunction
+
 " ## Internal functions {{{1
+
+" Function: s:NoDecl(name, [default]) {{{3
+function! s:NoDecl(name, ...) abort
+  if a:0 == 0
+    throw "Cannot find variable <".a:name."> declaration. Impossible to deduce its type."
+  else
+    return a:1
+  endif
+endfunction
+
+" Function: s:GetClassName(dict) {{{3
+function! s:GetClassName(dict) abort
+  return get(a:dict, "class", get(a:dict, "struct", ""))
+endfunction
 
 "------------------------------------------------------------------------
 " }}}1

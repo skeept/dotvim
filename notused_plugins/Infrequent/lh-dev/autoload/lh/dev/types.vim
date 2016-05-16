@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.1.3.
-let s:k_version = '1.1.3'
+" Version:      1.5.0.
+let s:k_version = '1.5.0'
 " Created:      26th Feb 2015
-" Last Update:  03rd Dec 2015
+" Last Update:  18th Apr 2016
 "------------------------------------------------------------------------
 " Description:
 "       Generic functions related to types.
@@ -32,9 +32,13 @@ function! lh#dev#types#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -50,6 +54,12 @@ endfunction
 " Function: lh#dev#types#deduce(expr) {{{3
 function! lh#dev#types#deduce(expr)
   let res = lh#dev#option#call('types#_deduce', &ft, a:expr)
+  return res
+endfunction
+
+" Function: lh#dev#types#of_var(expr) {{{3
+function! lh#dev#types#of_var(expr, ...)
+  let res = call('lh#dev#option#call',['types#_of_var', &ft, a:expr]+a:000)
   return res
 endfunction
 
@@ -77,6 +87,7 @@ function! lh#dev#types#_deduce(expr)
   endif
 endfunction
 
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

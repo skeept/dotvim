@@ -8,7 +8,7 @@
 " Created:	06th Nov 2007
 " Last Update:	22nd Dec 2015
 "------------------------------------------------------------------------
-let s:version = '2.1.7'
+let s:version = '2.2.0'
 let s:project = 'lh-cpp'
 cd <sfile>:p:h
 try
@@ -63,6 +63,7 @@ after/template/cpp/for-iterator.template
 after/template/cpp/for-range.template
 after/template/cpp/fori.template
 after/template/cpp/foriN.template
+after/template/cpp/forward.template
 after/template/cpp/getter.template
 after/template/cpp/init-constructor.template
 after/template/cpp/internals/abs-rel-shared.template
@@ -104,6 +105,7 @@ after/template/cpp/swap-function.template
 after/template/cpp/throw.template
 after/template/cpp/traits.template
 after/template/cpp/try.template
+after/template/cpp/typeid.template
 after/template/cpp/unique_ptr.template
 after/template/cpp/utf8.template
 after/template/cpp/value-class.template

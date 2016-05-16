@@ -1,11 +1,13 @@
 "=============================================================================
-" $Id$
 " File:         autoload/lh/dev/function.vim                      {{{1
-" Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://code.google.com/p/lh-vim/>
-" Version:      0.0.3
+" Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
+"               <URL:http://github.com/LucHermitte>
+" License:      GPLv3 with exceptions
+"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
+" Version:      1.5.0.
+let s:k_version = '1.5.0'
 " Created:      28th May 2010
-" Last Update:  $Date$
+" Last Update:  18th Apr 2016
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on functions
@@ -25,7 +27,6 @@ set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
-let s:k_version = 003
 function! lh#dev#function#version()
   return s:k_version
 endfunction
@@ -37,9 +38,13 @@ function! lh#dev#function#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -199,6 +204,7 @@ function! s:AddOffset(lTags, function_start)
   endfor
 endfunction
 
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

@@ -1,22 +1,16 @@
 "=============================================================================
-" $Id$
 " File:         autoload/lh/dev/cpp.vim                           {{{1
-" Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://code.google.com/p/lh-vim/>
-" Version:      001
+" Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
+"               <URL:http://github.com/LucHermitte>
+" License:      GPLv3 with exceptions
+"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
+" Version:      1.5.0.
+let s:k_version = '1.5.0'
 " Created:      31st Aug 2011
-" Last Update:  $Date$
+" Last Update:  18th Apr 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
-" 
-"------------------------------------------------------------------------
-" Installation:
-"       Drop this file into {rtp}/autoload/lh/dev
-"       Requires Vim7+
-"       «install details»
-" History:      «history»
-" TODO:         «missing features»
 " }}}1
 "=============================================================================
 
@@ -37,9 +31,13 @@ function! lh#dev#cpp#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -60,6 +58,7 @@ endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================
