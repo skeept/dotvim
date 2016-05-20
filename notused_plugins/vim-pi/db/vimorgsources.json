@@ -1,4 +1,5 @@
 {
+"RougherExp":{"archive_name":"rougherexp.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24256","version":"0.1","vim_script_nr":5389},
 "Solarized_8":{"archive_name":"vim-solarized8-0.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24249","version":"0.1","vim_script_nr":5388},
 "definition":{"archive_name":"definition.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24244","version":"1.0","vim_script_nr":5387},
 "vim-logreview":{"archive_name":"vim-logreview.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24240","version":"1.0","vim_script_nr":5386},
@@ -3663,7 +3664,7 @@
 "liquid":{"archive_name":"liquid.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6028","version":"2","vim_script_nr":1626},
 "x12_syntax":{"archive_name":"x12.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7778","version":"0.2","vim_script_nr":1625},
 "pastie":{"archive_name":"pastie.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10260","version":"2.0","vim_script_nr":1624},
-"phpfolding":{"archive_name":"phpfolding.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21976","version":"1.9","vim_script_nr":1623},
+"phpfolding":{"archive_name":"phpfolding.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24257","version":"2.0","vim_script_nr":1623},
 "TIMEIT":{"archive_name":"TimeIt.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7793","version":"071014","vim_script_nr":1622},
 "phpx":{"archive_name":"phpx.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6019","version":"1.1","vim_script_nr":1621},
 "scvim":{"archive_name":"scvim-beta12.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9118","version":"beta12","vim_script_nr":1620},
