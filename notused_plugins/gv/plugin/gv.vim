@@ -290,22 +290,25 @@ function! s:gl(buf, visual)
   tab split
   silent execute a:visual ? "'<,'>" : "" 'Gllog'
   call setloclist(0, insert(getloclist(0), {'bufnr': a:buf}, 0))
-  " b #
+  b #
   lopen
   xnoremap <buffer> o :call <sid>gld()<cr>
   nnoremap <buffer> o <cr><c-w><c-w>
+  nnoremap <buffer> O :call <sid>gld()<cr>
   nnoremap <buffer> q :tabclose<cr>
   call matchadd('Conceal', '^fugitive:///.\{-}\.git//')
   call matchadd('Conceal', '^fugitive:///.\{-}\.git//\x\{7}\zs.\{-}||')
   setlocal concealcursor=nv conceallevel=3 nowrap
-  let w:quickfix_title = 'o: open / o (in visual): diff / q: quit'
+  let w:quickfix_title = 'o: open / o (in visual): diff / O: open (tab) / q: quit'
 endfunction
 
 function! s:gld() range
   let [to, from] = map([a:firstline, a:lastline], 'split(getline(v:val), "|")[0]')
-  execute 'tabedit' to
-  execute 'vsplit'  from
-  windo diffthis
+  execute (tabpagenr()-1).'tabedit' to
+  if from !=# to
+    execute 'vsplit' from
+    windo diffthis
+  endif
 endfunction
 
 function! s:gv(bang, visual, line1, line2, args) abort
