@@ -2,9 +2,9 @@
 " File:         tests/lh/dev-params.vim                           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.3.9
+" Version:      1.5.1
 " Created:      31st May 2010
-" Last Update:  06th Dec 2015
+" Last Update:  23rd May 2016
 "------------------------------------------------------------------------
 " Description:
 "       Unit Tests for lh#dev#c#function# functions
@@ -41,21 +41,72 @@ function! s:Test_Param_data()
   AssertEqual(pa.type, 'int')
   AssertEqual(pa.default, 'f()')
 
-  let pa = lh#dev#c#function#_analyse_parameter('int * foo')
+  let pa = lh#dev#c#function#_analyse_parameter('int * foo', 1)
   AssertEqual(pa.name, 'foo')
-  AssertEqual(pa.type, 'int *')
+  AssertEqual(pa.type, 'int*')
 
-  let pa = lh#dev#c#function#_analyse_parameter('int ** foo')
+  let pa = lh#dev#c#function#_analyse_parameter('int ** foo', 1)
   AssertEqual(pa.name, 'foo')
-  AssertEqual(pa.type, 'int **')
+  AssertEqual(pa.type, 'int**')
 
-  let pa = lh#dev#c#function#_analyse_parameter('int *& foo')
+  let pa = lh#dev#c#function#_analyse_parameter('int *& foo', 1)
   AssertEqual(pa.name, 'foo')
-  AssertEqual(pa.type, 'int *&')
+  AssertEqual(pa.type, 'int*&')
 
-  let pa = lh#dev#c#function#_analyse_parameter('int * foo = 0')
+  let pa = lh#dev#c#function#_analyse_parameter('int * foo = 0', 1)
   AssertEqual(pa.name, 'foo')
-  AssertEqual(pa.type, 'int *')
+  AssertEqual(pa.type, 'int*')
+  AssertEqual(pa.default, '0')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int* foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int** foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int**')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int*& foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*&')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int* foo = 0', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
+  AssertEqual(pa.default, '0')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int*foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int**foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int**')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int*&foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*&')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int*foo = 0', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
+  AssertEqual(pa.default, '0')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int *foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int **foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int**')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int *&foo', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*&')
+
+  let pa = lh#dev#c#function#_analyse_parameter('int *foo = 0', 1)
+  AssertEqual(pa.name, 'foo')
+  AssertEqual(pa.type, 'int*')
   AssertEqual(pa.default, '0')
 
   let pa = lh#dev#c#function#_analyse_parameter('long int foo')

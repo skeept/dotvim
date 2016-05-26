@@ -2,16 +2,19 @@
 " File:         autoload/lh/dev/c/function.vim                    {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.3.9
-let s:k_version = 1309
+" Version:      1.5.1
+let s:k_version = 1501
 " Created:      31st May 2010
-" Last Update:  07th Dec 2015
+" Last Update:  23rd May 2016
 "------------------------------------------------------------------------
 " Description:
 "       Overridden functions from lh#dev#function, for C and derived languages
 "
 "------------------------------------------------------------------------
 " History:
+"       1.5.1
+"       * lh#dev#c#function#_analyse_parameter() supports "foo *ptr"
+"         (C way of putting star near pointer variables)
 "       1.3.9
 "       * lh#dev#c#function#_analyse_parameter() supports arrays and function
 "       pointers
@@ -36,22 +39,25 @@ function! lh#dev#c#function#version()
 endfunction
 
 " # Debug   {{{2
-let s:verbose = 0
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#dev#c#function#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#c#function#debug(expr)
+function! lh#dev#c#function#debug(expr) abort
   return eval(a:expr)
 endfunction
-
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -185,10 +191,11 @@ endfunction
 " [X] new line before (when analysing non ctags-signatures, but real text)
 " [/] TU
 " [X] variadic parameter "..."
-function! lh#dev#c#function#_analyse_parameter( param ) abort
+function! lh#dev#c#function#_analyse_parameter( param, ...) abort
+  let mustCleanSpace = a:0 > 0 ? a:1 : 0
   let res = {}
 
-  " Strip spaces
+  " Merge spaces
   let param = substitute(a:param, '\v\_s+', ' ', 'g')
   " variadic ?
   if param == '...'
@@ -224,8 +231,8 @@ function! lh#dev#c#function#_analyse_parameter( param ) abort
     let res.type = ret_type.'(*)'
     let purge_inner_dimension = 0
   else
-    " Name: last part in usual case
-    let res.name = matchstr(param, '\v\S\s+\zs\S+$')
+    " Name: last part in usual case, or separated with * or &
+    let res.name = matchstr(param, '\v\S([*& ])+\zs\S+$')
     " unless the last part is
     " - "int", "float", "char", "short", ...
     " - or "something>(::othething)="
@@ -239,6 +246,11 @@ function! lh#dev#c#function#_analyse_parameter( param ) abort
     if res.type =~ '\v(::)$' " merge back
       let res.name = ''
       let res.type = param
+    endif
+    " Remove spaces around *, &
+    " TODO: remove space around < and > (in C++11 only?)
+    if mustCleanSpace
+      let res.type = substitute(res.type, '\v\s*([*&]+)\s*', '\1', 'g')
     endif
   endif
 

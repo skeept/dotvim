@@ -83,8 +83,8 @@ function! s:ConvertNames(repl_arg) range abort
   let ConvertFunc = function(s:k_convertions[i][1])
   let action = '\=(ConvertFunc(submatch(0)))'
   let cmd = a:firstline . ',' . a:lastline . 's'
-	\. sep . fields[0]
-	\. sep . action
+        \. sep . fields[0]
+        \. sep . action
         \. sep.(len(fields)>=3 ? fields[2] : '')
   " echomsg cmd
   exe cmd

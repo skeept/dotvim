@@ -4,16 +4,18 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.0.6
-let s:k_version = '306'
+" Version:      3.1.0
+let s:k_version = '310'
 " Created:      03rd Nov 2015
-" Last Update:  04th May 2016
+" Last Update:  20th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.1.0
+"       v3.0.8 Fix Indenting issue when surrounding
 "       v3.0.6 Fix Indenting regression
 "       v3.0.5 Use lh#log() framework
 "              Fix Indenting issue when indentation changes between opening and
@@ -249,7 +251,7 @@ function! lh#map#smart_insert_seq2(key, expr, ...) abort
   endif
 endfunction
 
-" Function: lh#map#insert_seq(key, seq, ...) {{{3
+" Function: lh#map#insert_seq(key, seq[, context]) {{{3
 function! lh#map#insert_seq(key, seq, ...) abort
   " TODO: if no escape nor newline -> use s:k_move_prefix
   let mark = a:seq =~ '!cursorhere!'
@@ -390,10 +392,24 @@ function! lh#map#insert_around_visual(begin,end,isLine,isIndented) range abort
   endif
 
   " Note: to detect a marker before surrounding it, use Surround()
+  " Changing 'paste' changes many settings => we record them
   let cleanup = lh#on#exit()
         \.restore('&paste')
+        \.restore('&autoindent')
+        \.restore('&expandtab')
+        \.restore('&formatoptions')
+        \.restore('&revins')
+        \.restore('&ruler')
+        \.restore('&showmatch')
+        \.restore('&smartindent')
+        \.restore('&smarttab')
+        \.restore('&softtabstop')
+        \.restore('&tw')
+        \.restore('&wrapmargin')
+  let crt_expandtab = &expandtab
   try
     set paste
+    let &expandtab = crt_expandtab
     " 'H' stands for 'High' ; 'B' stands for 'Bottom'
     " 'L' stands for 'Left', 'R' for 'Right'
     let HL = "`<i"

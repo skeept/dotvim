@@ -3,17 +3,19 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.3.5
-let s:k_version = 135
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:      1.5.2
+let s:k_version = 152
 " Created:      28th May 2010
-" Last Update:  17th Nov 2015
+" Last Update:  25th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
 "
 "------------------------------------------------------------------------
 " History:
+"       v1.5.0: ~ Adapt c(pp)_ctags_understands_local_variables_in_one_pass to
+"                 ctags flavor.
 "       v1.3.4: ~ bug fix in lh#dev#reinterpret_escaped_char
 "       v1.1.1: ~ bug fixed in lh#dev# comment related functions
 "       v1.0.4: ~ bug fixed in lh#dev#__FindFunctions(line)
@@ -89,8 +91,14 @@ endfunction
 " # lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
-let c_ctags_understands_local_variables_in_one_pass = 0
-let cpp_ctags_understands_local_variables_in_one_pass = 0
+if lh#tags#ctags_flavor() == 'utags'
+  let c_ctags_understands_local_variables_in_one_pass = 1
+  let cpp_ctags_understands_local_variables_in_one_pass = 1
+else
+  let c_ctags_understands_local_variables_in_one_pass = 0
+  let cpp_ctags_understands_local_variables_in_one_pass = 0
+endif
+
 function! lh#dev#get_variables(function_boundaries, ...) abort
   let lVariables = lh#dev#option#call('function#_local_variables', &ft, a:function_boundaries)
 
@@ -263,6 +271,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
 
   let cmd_line = lh#tags#cmd_line(ctags_pathname)
   let cmd_line = substitute(cmd_line, '--fields=\S\+', '&n', '') " inject line numbers in fields
+  " let cmd_line = substitute(cmd_line, '--fields=\S\+', '&t', '') " inject types in fields
   let cmd_line = substitute(cmd_line, '-kinds=\S\+\zsp', '', '') " remove prototypes, todo: ft-specific
   if a:0>0 || lh#dev#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
     if stridx(cmd_line, '-kinds=') != -1
@@ -344,7 +353,8 @@ function! lh#dev#_end_func(line) abort
     let line = getline(l)
     let c = match(line, start_pat) " todo: check in utf-8
     " this keepjumps seems useless
-    keepjumps exe l.'normal! 0'.c.'l'
+    keepjumps call cursor(l, c)
+    " keepjumps exe l.'normal! 0'.c.'l'
     " assert l < next func start
     " use matchit g%, to cycle backward => jump to the end of the function from
     " the beginning, avoiding any return instruction on the way
@@ -408,6 +418,13 @@ function! lh#dev#_line_comment() abort
   return ""
 endfunction
 
+" Function: lh#dev#_select_current_function() {{{3
+function! lh#dev#_select_current_function() abort
+  let fn = lh#dev#find_function_boundaries(line('.'))
+  exe fn.lines[0]
+  normal! v
+  exe fn.lines[1]
+endfunction
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save

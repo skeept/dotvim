@@ -1,5 +1,5 @@
-*lh-dev.txt*            Vim library for development oriented scripts (v1.4.0.)
-                        For Vim version 7+.    Last change: 15th Dec 2015
+*lh-dev.txt*            Vim library for development oriented scripts (v1.5.2.)
+                        For Vim version 7+.    Last change: 25th May 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -12,6 +12,7 @@ CONTENTS                                *lhdev-contents*      {{{1
 |lhdev-style|           Coding style
 |lhdev-naming|          Naming policies
 |lhdev-import|          Importing modules/includes
+|lhdev-analysis|        Code Analysis
 |add-local-help|        Instructions on installing this file (:helptags %:h)
 
 
@@ -236,7 +237,26 @@ TBD
 *lh#dev#import#add_any()*
 *n_CTRL-X_i*  *<Plug>ImportModule*
 
+
 ------------------------------------------------------------------------------
-© Luc Hermitte, 2011-2015, http://github.com/LucHermitte/lh-dev
+CODE ANALYSIS                           *lhdev-analysis* {{{1
+
+Function boundaries~
+Function boundaries can be obtained with *lh#dev#find_function_boundaries()*
+The analysis currently relies on ctags and on |matchit|. The code can be
+specialized though (see |lhdev-filetype|).
+
+Two mappings are also provided to select function boundaries, or to apply
+operators on function boundaries.
+- *v_if* in strict visual mode (not in select mode)
+- *o_if* on operators.
+
+For instance:
+- `vif` selects the current function
+- `yif`  |yank|s the current function
+- `dif`  |delete|s the current function
+
+------------------------------------------------------------------------------
+© Luc Hermitte, 2011-2016, http://github.com/LucHermitte/lh-dev }}}1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:isk=!-~,^*,^\|,^\":ft=help:fdm=marker:

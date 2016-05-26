@@ -3,9 +3,9 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.5.0.
-let s:k_version = '1.5.0'
+"               <URL:http://github.com/LucHermitte/lh-dev/blob/master/License.md>
+" Version:      1.5.1.
+let s:k_version = '1.5.1'
 " Created:      28th May 2010
 " Last Update:  18th Apr 2016
 "------------------------------------------------------------------------
@@ -84,22 +84,24 @@ function! lh#dev#function#_signature(fn_tag)
   " return a:fn_tag.signature
 endfunction
 
-" Function: lh#dev#function#_parameters(fn_tag) {{{2
-function! lh#dev#function#_parameters(fn_tag)
+" Function: lh#dev#function#_parameters(fn_tag, [mustCleanSpace]) {{{2
+function! lh#dev#function#_parameters(fn_tag, ...)
+  let mustCleanSpace = a:0 > 0 ? a:1 : 0
   " ctags signature ensure a comments free signature => a comments free list of
   " parameters
   let signature = lh#dev#function#get_(a:fn_tag, 'signature')
 
-  let params = lh#dev#option#call('function#_signature_to_parameters', &ft, signature)
+  let params = lh#dev#option#call('function#_signature_to_parameters', &ft, signature, mustCleanSpace)
   return params
 endfunction
 
-" Function: lh#dev#function#_signature_to_parameters(signature) {{{2
-function! lh#dev#function#_signature_to_parameters(signature)
+" Function: lh#dev#function#_signature_to_parameters(signature, " [mustCleanSpace]) {{{2
+function! lh#dev#function#_signature_to_parameters(signature, ...)
+  let mustCleanSpace = a:0 > 0 ? a:1 : 0
   " Most languages are free of pointer to function types, or even templates
   " Finding each parameter == spliting the string on commas
   " 1- find the list of formal parameters
-  let sParameters = matchstr(a:signature, '(\zs.*\ze)')
+  let sParameters = matchstr(a:signature, '(\s*\zs.*\ze\s*)')
 
   " 2- split it
   let lParameters = lh#dev#option#call('function#_split_list_of_parameters',&ft,sParameters)
@@ -109,7 +111,7 @@ function! lh#dev#function#_signature_to_parameters(signature)
   "    depending on the language, a type, a direction, etc may be provided
   let res = []
   for p in lParameters
-    let ap = lh#dev#option#call('function#_analyse_parameter', &ft, p)
+    let ap = lh#dev#option#call('function#_analyse_parameter', &ft, p, mustCleanSpace)
     let res += [ap]
   endfor
   return res
@@ -122,8 +124,8 @@ function! lh#dev#function#_split_list_of_parameters(sParameters)
   return lParameters
 endfunction
 
-" Function: lh#dev#function#_analyse_parameter( param ) {{{2
-function! lh#dev#function#_analyse_parameter( param )
+" Function: lh#dev#function#_analyse_parameter( param, mustCleanSpace ) {{{2
+function! lh#dev#function#_analyse_parameter( param, mustCleanSpace )
   " default case: implicitly typed languages like viml
   return { 'name': a:param }
 endfunction

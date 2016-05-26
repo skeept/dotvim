@@ -1,11 +1,11 @@
 "=============================================================================
 " File:         mkVba/mk-lh-dev.vim                               {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"               <URL:http://github.com/LucHermitte>
+"               <URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.4.1
-let s:version = '1.4.01'
+"               <URL:http://github.com/LucHermitte/lh-dev/blob/master/License.md>
+" Version:      1.5.2
+let s:version = '1.5.02'
 " Created:      02nd Mar 2012
 "------------------------------------------------------------------------
 " Description:
@@ -52,6 +52,7 @@ doc/lh-dev.txt
 addon-info.txt
 lh-dev.README
 plugin/dev.vim
+plugin/boundaries.vim
 tests/lh/dev-comments.vim
 tests/lh/dev-naming.vim
 tests/lh/dev-option.vim

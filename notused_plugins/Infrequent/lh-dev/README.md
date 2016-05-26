@@ -175,14 +175,32 @@ This part is just a draft for the moment.
 
 ### Themes
 
-  * style
-  * naming
-  * class
-  * type
-  * function
-  * instruction
-  * tags
-  * Import statements can be automatically added in files with
+#### style
+#### naming
+#### class
+#### type
+#### function
+
+Function boundaries can be obtained with `lh#dev#find_function_boundaries()`
+The analysis currently relies on ctags and on |matchit|. The code can be
+specialized though (see [Inherited filetypes](#inherited-filetypes)).
+
+Two mappings are also provided to select function boundaries, or to apply
+operators on function boundaries.
+  
+  - `v_if` in strict visual mode (not in select mode)
+  - `o_if` on operators.
+
+For instance:
+
+  - `vif` selects the current function
+  - `yif`  |yank|s the current function
+  - `dif`  |delete|s the current function
+
+
+#### instruction
+#### tags
+#### Import statements can be automatically added in files with
     `lh#dev#import#add()`.  See the following templates that exploit it:
 
 ```

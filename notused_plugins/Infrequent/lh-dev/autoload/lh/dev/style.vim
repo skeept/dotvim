@@ -1,11 +1,11 @@
 "=============================================================================
 " File:         autoload/lh/dev/style.vim                         {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"               <URL:http://github.com/LucHermitte>
+"               <URL:http://github.com/LucHermitte/lh-dev/>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.4.1
-let s:k_version = 1401
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:      1.5.2
+let s:k_version = 1502
 " Created:      12th Feb 2014
 "------------------------------------------------------------------------
 " Description:
@@ -37,19 +37,23 @@ function! lh#dev#style#version()
 endfunction
 
 " # Debug   {{{2
-let s:verbose = 0
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#dev#style#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#style#debug(expr)
+function! lh#dev#style#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -74,7 +78,7 @@ endfunction
 "
 " TODO: priority n-1 seems much better than priority 2: I may have to change
 " that
-function! lh#dev#style#get(ft)
+function! lh#dev#style#get(ft) abort
   let res = {}
 
   let fts = lh#dev#option#inherited_filetypes(a:ft) + ['*']
@@ -154,7 +158,7 @@ function! lh#dev#style#surround(
       \ begin, end, isLine, isIndented, goback, mustInterpret, ...) range
   let begin = lh#dev#style#apply(a:begin)
   let end   = lh#dev#style#apply(a:end)
-  return call(function('Surround'), [begin, end, a:isLine, a:isIndented, a:goback, a:mustInterpret]+a:000)
+  return call(function('lh#map#surround'), [begin, end, a:isLine, a:isIndented, a:goback, a:mustInterpret]+a:000)
 endfunction
 
 "------------------------------------------------------------------------
@@ -165,11 +169,12 @@ endif
 
 " # :AddStyle API {{{2
 " Function: lh#dev#style#_add(pattern, ...) {{{3
-function! lh#dev#style#_add(pattern, ...)
+function! lh#dev#style#_add(...) abort
   " Analyse params {{{4
   let local = -1
   let ft    = '*'
   let prio  = 1
+  let list  = 0
   for o in a:000
     if     o =~ '-b\%[uffer]'
       let local = bufnr('%')
@@ -180,10 +185,29 @@ function! lh#dev#style#_add(pattern, ...)
       if empty(ft)
         let ft = &ft
       endif
+    elseif o =~ '-l\%[ist]'
+      let list = 1
+    elseif !exists('pattern')
+      let pattern = o
     else
       let repl = o
     endif
   endfor
+
+  " list styles
+  if list == 1
+    let styles = lh#dev#style#get(ft)
+    if exists('pattern')
+      let styles = filter(copy(styles), 'v:key =~ pattern')
+    endif
+    echo join(map(items(styles), 'string(v:val)'), "\n")
+    return
+  endif
+
+
+  if !exists('pattern')
+    throw "Pattern unspecified in ".string(a:000)
+  endif
   if !exists('repl')
     throw "Replacement text unspecified in ".string(a:000)
   endif
@@ -191,7 +215,7 @@ function! lh#dev#style#_add(pattern, ...)
   let repl = lh#dev#reinterpret_escaped_char(repl)
 
   " Add the new style {{{4
-  let previous = get(s:style, a:pattern, [])
+  let previous = get(s:style, pattern, [])
   " but first check whether there is already something before adding anything
   for style in previous
     if style.local == local && style.ft == ft
@@ -201,8 +225,10 @@ function! lh#dev#style#_add(pattern, ...)
     endif
   endfor
   " This is new => add ;; note the "return" in the search loop
-  let s:style[a:pattern] = previous +
+  let s:style[pattern] = previous +
         \ [ {'local': local, 'ft': ft, 'replacement': repl, 'prio': prio }]
+  call s:Verbose('Register %1 style for %2 filetype%3, of priority %4 on %5 -> %6',
+        \ local < 0 ? 'global' : 'bufnr('.local.')' , ft=='*' ? 'all' : ft, ft=='*' ? 's' : '', prio, pattern, repl)
 endfunction
 
 " # Internals {{{2

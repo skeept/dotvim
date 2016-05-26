@@ -1,15 +1,15 @@
 "=============================================================================
-" File:		autoload/lh/dev/option.vim                        {{{1
+" File:         autoload/lh/dev/option.vim                        {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:	1.2.2
+" Version:      1.2.2
 let s:k_version = 122
-" Created:	05th Oct 2009
-" Last Update:	24th Apr 2015
+" Created:      05th Oct 2009
+" Last Update:  24th Apr 2015
 "------------------------------------------------------------------------
-" Description:	«description»
+" Description:  «description»
 " }}}1
 "=============================================================================
 
@@ -61,7 +61,7 @@ function! lh#dev#option#get(name, ft,...)
     let i = 0
     while i != strlen(scope)
       if exists(scope[i].':'.ft.name)
-	return {scope[i]}:{ft}{name}
+        return {scope[i]}:{ft}{name}
       endif
       let i += 1
     endwhile
@@ -85,7 +85,7 @@ function! lh#dev#option#get_postfixed(name, ft,...)
     let i = 0
     while i != strlen(scope)
       if exists(scope[i].':'.name.ft)
-	return {scope[i]}:{name}{ft}
+        return {scope[i]}:{name}{ft}
       endif
       let i += 1
     endwhile
@@ -149,8 +149,8 @@ function! lh#dev#option#pre_load_overrides(name, ft) abort
   let files = map(copy(fts), 'prefix."/".v:val."/".name.".vim"')
   " let files += [prefix.'/'.name.'.vim'] " Don't load the default again!
   for file in files
-    " TODO: here, check for timestamps in order to avoir reload files that
-    " haven' changed
+    " TODO: here, check for timestamps in order to avoid reloading files that
+    " haven't changed
     exe 'runtime autoload/'.file
   endfor
 endfunction
@@ -188,6 +188,8 @@ endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 
+" # Load
+
 " # List of inherited properties between languages {{{2
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3
 " - todo, this may required to be specific to each property considered
@@ -203,7 +205,7 @@ endfunction
 
 LetIfUndef g:cpp_inherits 'c'
 
-
+" }}}1
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:
