@@ -1,12 +1,12 @@
 "=============================================================================
 " File:         autoload/lh/cpp/AnalysisLib_Function.vim                  {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"               <URL:http://code.google.com/p/lh-vim/>
+"               <URL:http://github.com/LucHermitte/lh-cpp>
 " License:      GPLv3 with exceptions
-"               <URL:http://code.google.com/p/lh-vim/wiki/License>
+"               <URL:http://github.com/LucHermitte/lh-cpp/tree/master/License.md>
 " Version:      2.2.0
 " Created:      05th Oct 2006
-" Last Update:  18th Apr 2016
+" Last Update:  30th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       This plugin defines VimL functions specialized in the analysis of C++
@@ -45,6 +45,7 @@
 "       v2.0.0
 "       (*) GPLv3 w/ exception
 "       (*) AnalysePrototype() accepts spaces between functionname and (
+"       (*) Fix :GOTOIMPL to support operators like +=
 "       v1.1.1
 "       (*) lh#cpp#AnalysisLib_Function#GetListOfParams() is not messed up by
 "       throw-spec ; TODO support new C++11 noexcept spec
@@ -339,6 +340,8 @@ function! lh#cpp#AnalysisLib_Function#LoadTags(id) abort
   " Remove inline definitions
   " -> a definition with an access specifier is an inline definition
   call filter(definitions, '! has_key(v:val, "access")')
+  " -> We can also use universal ctags {c++.properties} field option
+  call filter(definitions, 'get(v:val, "properties","") =~ "inline"')
   call s:Verbose('%1 functions definitions kept (class-inline definitions removed)', len(definitions))
 
   " # Declarations (p)
@@ -353,6 +356,8 @@ function! lh#cpp#AnalysisLib_Function#LoadTags(id) abort
   " -> not present in the signature.
   " -> at best, it may be in the command
   call filter(declarations, 'v:val.cmd !~ "=\\v\\s*(default|delete)"')
+  " -> We can also use universal ctags {c++.properties} field option
+  call filter(declarations, 'get(v:val, "properties","") =~ "default\\|delete"')
   call s:Verbose('%1 functions declarations found and kept (defaulted/deleted function removed)', len(declarations))
 
   let result = { 'definitions':definitions, 'declarations': declarations }
@@ -530,13 +535,14 @@ function! lh#cpp#AnalysisLib_Function#SignatureToSearchRegex(signature,className
   " operator* {{{4
   let impl2search = substitute(impl2search, 'operator\s*\*', 'operator \\*', '')
   "  <, >, =, (, ), ',' and references {{{4
-  let impl2search = substitute(impl2search, '\s*\([<>=(),&]\)\s*', ' \1 ', 'g')
+  let impl2search = substitute(impl2search, '\s*\([-+*/%^=<>!]=\|&&\|||\|[<>=(),&]\)\s*', ' \1 ', 'g')
   " Check pure virtual functions: {{{4
   let isPure =  impl2search =~ '=\s*0\s*;\s*$'
   " Start and end {{{4
   let impl2search = substitute(impl2search, '^\s*\|\s*;\s*$', '', 'g')
   " Default parameters -> comment => ignored along with spaces {{{4
-  let impl2search = substitute(impl2search, '\%(\<operator\>\s*\)\@<!=[^,)]\+', '', 'g')
+  " -> recognize "=" to strip what follows when not operator[-+*/=!^]=
+  let impl2search = substitute(impl2search, '\%(\<operator\>\s*\([-+*/=!^%]\s*\)\=\)\@<!=[^,)]\+', '', 'g')
   " virtual, static and explicit -> comment => ignored along with spaces {{{4
   let impl2search = substitute(impl2search,
         \ '\_s*\<\%(virtual\|static\|explicit\)\>\_s*', '', 'g')

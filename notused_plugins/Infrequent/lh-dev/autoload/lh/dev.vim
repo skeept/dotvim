@@ -4,16 +4,19 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
-" Version:      1.5.2
-let s:k_version = 152
+" Version:      1.6.1
+let s:k_version = 161
 " Created:      28th May 2010
-" Last Update:  25th May 2016
+" Last Update:  27th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
 "
 "------------------------------------------------------------------------
 " History:
+"       v1.6.1: + lh#dev#_goto_function_begin and end
+"       v1.5.3: ~ enh: have lh#dev#find_function_boundaries support any
+"                 language
 "       v1.5.0: ~ Adapt c(pp)_ctags_understands_local_variables_in_one_pass to
 "                 ctags flavor.
 "       v1.3.4: ~ bug fix in lh#dev#reinterpret_escaped_char
@@ -34,16 +37,20 @@ function! lh#dev#version()
   return s:k_version
 endfunction
 
-" # Debug {{{2
-let s:verbose = 0
+" # Debug   {{{2
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#dev#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -53,7 +60,6 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
-
 
 " because C&C++ b:match_words have (:) before {:} =>
 let c_function_start_pat = '{'
@@ -208,6 +214,7 @@ endif
 
 " # lh#dev#__FindFunctions(line) {{{2
 function! lh#dev#__FindFunctions(line) abort
+  let func_kind = lh#tags#func_kind(&ft)
   try
     let lTags = lh#dev#start_tag_session()
     if empty(lTags)
@@ -215,7 +222,7 @@ function! lh#dev#__FindFunctions(line) abort
     endif
 
     " 1- filter to keep functions only
-    let lFunctions = filter(copy(lTags), 'v:val.kind=="f"')
+    let lFunctions = filter(copy(lTags), 'v:val.kind==func_kind')
 
     " Several cases to consider:
     " - no function starting before => fail
@@ -270,7 +277,17 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
   let ctags_pathname = s:temp_tags
 
   let cmd_line = lh#tags#cmd_line(ctags_pathname)
-  let cmd_line = substitute(cmd_line, '--fields=\S\+', '&n', '') " inject line numbers in fields
+  let lang = lh#tags#option_force_lang(&ft)
+  if lh#option#is_unset(lang)
+    call lh#common#warning_msg("lh-tags may not know how to recognize and parse ".&ft." files")
+  else
+    let cmd_line .= ' --language-force='.lang
+  endif
+  if cmd_line =~ '--fields'
+    let cmd_line = substitute(cmd_line, '--fields=\S\+', '&n', '') " inject line numbers in fields
+  else
+    let cmd_line .= ' --fields=n'
+  endif
   " let cmd_line = substitute(cmd_line, '--fields=\S\+', '&t', '') " inject types in fields
   let cmd_line = substitute(cmd_line, '-kinds=\S\+\zsp', '', '') " remove prototypes, todo: ft-specific
   if a:0>0 || lh#dev#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
@@ -345,7 +362,7 @@ function! lh#dev#_end_func(line) abort
     :exe a:line
     let start_pat = lh#dev#option#get('function_start_pat', &ft, '')
     if empty(start_pat)
-      let starts = split(b:match_words, ',')
+      let starts = split(get(b:, 'match_words', '{,}'), ',')
       call map(starts, 'matchstr(v:val, "[^:]*")')
       let start_pat = join(starts, '\|')
     endif
@@ -421,8 +438,20 @@ endfunction
 " Function: lh#dev#_select_current_function() {{{3
 function! lh#dev#_select_current_function() abort
   let fn = lh#dev#find_function_boundaries(line('.'))
-  exe fn.lines[0]
+  call lh#dev#_goto_function_begin(fn)
   normal! v
+  call lh#dev#_goto_function_end(fn)
+endfunction
+
+" Function: lh#dev#_goto_function_begin() {{{3
+function! lh#dev#_goto_function_begin(...) abort
+  let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
+  exe fn.lines[0]
+endfunction
+
+" Function: lh#dev#_goto_function_end() {{{3
+function! lh#dev#_goto_function_end(...) abort
+  let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
   exe fn.lines[1]
 endfunction
 " }}}1

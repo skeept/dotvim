@@ -2,16 +2,18 @@
 " File:         autoload/lh/dev/c/function.vim                    {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.5.1
-let s:k_version = 1501
+" Version:      1.6.2
+let s:k_version = 1602
 " Created:      31st May 2010
-" Last Update:  23rd May 2016
+" Last Update:  30th May 2016
 "------------------------------------------------------------------------
 " Description:
 "       Overridden functions from lh#dev#function, for C and derived languages
 "
 "------------------------------------------------------------------------
 " History:
+"       1.6.2
+"       (*) Fix :GOTOIMPL to support operators like +=
 "       1.5.1
 "       * lh#dev#c#function#_analyse_parameter() supports "foo *ptr"
 "         (C way of putting star near pointer variables)
@@ -64,7 +66,7 @@ endfunction
 
 " # Prototype {{{2
 " definitions also in AnalysisLib_Function
-let s:re_operators       = '\<operator\%([=~%+-\*/^&|]\|\[]\|()\|&&\|||\|->\|<<\|>>\|==\| \)'
+let s:re_operators       = '\<operator\%([=~%+-\*/^&|]=\=\|\[]\|()\|&&\|||\|->\|<<\|>>\| \)'
 "   What looks like to a "space" operator is actually used in next regex to
 "   match convertion operators
 " let s:re_qualified_oper  = '\%('.s:re_qualified_name . '\s*::\s*\)\=' . s:re_operators . '.\{-}\ze('

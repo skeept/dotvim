@@ -187,7 +187,7 @@ specialized though (see [Inherited filetypes](#inherited-filetypes)).
 
 Two mappings are also provided to select function boundaries, or to apply
 operators on function boundaries.
-  
+
   - `v_if` in strict visual mode (not in select mode)
   - `o_if` on operators.
 
@@ -197,6 +197,15 @@ For instance:
   - `yif`  |yank|s the current function
   - `dif`  |delete|s the current function
 
+This can also be used to define a way to jump to the start/end of the current
+function in languages such as C++:
+```vim
+" excerpt from [lh-cpp](https://github.com/LucHermitte/lh-cpp).
+nnoremap <silent> <buffer> [[ :call lh#dev#_goto_function_begin()<cr>
+onoremap <silent> <buffer> [[ :<c-u>call lh#dev#_goto_function_begin()<cr>
+nnoremap <silent> <buffer> ][ :call lh#dev#_goto_function_end()<cr>
+onoremap <silent> <buffer> ][ :<c-u>call lh#dev#_goto_function_end()<cr>
+```
 
 #### instruction
 #### tags
