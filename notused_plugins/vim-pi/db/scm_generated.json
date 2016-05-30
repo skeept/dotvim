@@ -5003,6 +5003,10 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-solarized8"
   },
+  "5394": {
+    "type": "git",
+    "url": "git://github.com/nelsyeung/twig.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
