@@ -5007,6 +5007,10 @@
     "type": "git",
     "url": "git://github.com/nelsyeung/twig.vim"
   },
+  "5395": {
+    "type": "git",
+    "url": "git://github.com/webdevel/tabulous"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

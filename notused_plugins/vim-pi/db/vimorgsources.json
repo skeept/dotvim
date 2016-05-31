@@ -1,4 +1,5 @@
 {
+"tabulous":{"archive_name":"tabulous-0.1.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24293","version":"0.1.0","vim_script_nr":5395},
 "twig":{"archive_name":"twig.vim.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24290","version":"1.0.0","vim_script_nr":5394},
 "vim_eslint":{"archive_name":"vim-eslint.rar","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24288","version":"1.0","vim_script_nr":5393},
 "SIDECAR_Assembly_Syntax_Highlighting_Fil":{"archive_name":"sidecar.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24279","version":"1.0","vim_script_nr":5392},
