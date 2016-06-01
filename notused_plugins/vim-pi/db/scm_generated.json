@@ -5011,6 +5011,14 @@
     "type": "git",
     "url": "git://github.com/webdevel/tabulous"
   },
+  "5396": {
+    "type": "git",
+    "url": "git://github.com/francoiscabrol/ranger.vim"
+  },
+  "5397": {
+    "type": "git",
+    "url": "git://github.com/tpenguinltg/vim-closing-brackets"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
