@@ -191,7 +191,7 @@ endfunction
 
 "================== UltiSnips ================================================={{{
 function! jraf#loadUltisnips()
-  if has("python") && g:addon_manager == 2
+  if (has("python") || has("python3")) && g:addon_manager == 2
     call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
     inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
     nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
