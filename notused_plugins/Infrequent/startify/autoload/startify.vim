@@ -52,20 +52,18 @@ function! startify#insane_in_the_membrane() abort
     endfor
   endif
 
-  setlocal
+  silent! setlocal
         \ bufhidden=wipe
-        \ buftype=nofile
         \ nobuflisted
         \ nocursorcolumn
         \ nocursorline
         \ nolist
         \ nonumber
+        \ norelativenumber
+        \ nospell
         \ noswapfile
   if empty(&statusline)
     setlocal statusline=\ startify
-  endif
-  if v:version >= 703
-    setlocal norelativenumber
   endif
 
   " Must be global so that it can be read by syntax/startify.vim.
@@ -113,6 +111,7 @@ function! startify#insane_in_the_membrane() abort
         \ ['   MRU '. getcwd()], 'dir',
         \ ['   Sessions'],       'sessions',
         \ ['   Bookmarks'],      'bookmarks',
+        \ ['   Commands'],       'commands',
         \ ])
 
   for item in s:lists
@@ -154,6 +153,7 @@ function! startify#insane_in_the_membrane() abort
   call cursor(s:firstline, 5)
   autocmd startify CursorMoved <buffer> call s:set_cursor()
 
+  silent file Startify
   set filetype=startify
   silent! doautocmd <nomodeline> User Startified
 endfunction
@@ -272,6 +272,10 @@ function! startify#session_write(spath)
     if !buflisted(arg)
       execute 'silent! argdelete' fnameescape(arg)
     endif
+  endfor
+  " clean up session before saving it
+  for cmd in get(g:, 'startify_session_before_save', [])
+    execute cmd
   endfor
 
   let ssop = &sessionoptions
@@ -419,17 +423,17 @@ function! s:open_buffer(entry)
   if a:entry.type == 'special'
     execute a:entry.cmd
   elseif a:entry.type == 'session'
-    execute a:entry.cmd a:entry.path
+    execute a:entry.cmd fnameescape(a:entry.path)
   elseif a:entry.type == 'file'
     if line2byte('$') == -1
-      execute 'edit' a:entry.path
+      execute 'edit' fnameescape(a:entry.path)
     else
       if a:entry.cmd == 'tabnew'
         wincmd =
       endif
-      execute a:entry.cmd a:entry.path
+      execute a:entry.cmd fnameescape(a:entry.path)
     endif
-    call s:check_user_options()
+    call s:check_user_options(a:entry.path)
   endif
 endfunction
 
@@ -440,7 +444,7 @@ function! s:display_by_path(path_prefix, path_format, use_env) abort
 
   let entry_format = "'   ['. index .']'. repeat(' ', (3 - strlen(index)))"
   if exists('*WebDevIconsGetFileTypeSymbol')  " support for vim-devicons
-    let entry_format .= ". '('. WebDevIconsGetFileTypeSymbol(entry_path) .') '. entry_path"
+    let entry_format .= ". WebDevIconsGetFileTypeSymbol(entry_path) .' '.  entry_path"
   else
     let entry_format .= '. entry_path'
   endif
@@ -569,6 +573,13 @@ function! s:show_sessions() abort
     call s:print_section_header()
   endif
 
+  if get(g:, 'startify_session_sort')
+    function! s:sort_by_mtime(foo, bar)
+      return getftime(a:foo) <= getftime(a:bar)
+    endfunction
+    call sort(sfiles, 's:sort_by_mtime')
+  endif
+
   for i in range(len(sfiles))
     let index = s:get_index_as_string(s:entry_number)
     let fname = fnamemodify(sfiles[i], ':t')
@@ -616,6 +627,36 @@ function! s:show_bookmarks() abort
     call s:register(line('$'), index, 'file', 'edit', path, s:nowait)
 
     unlet bookmark  " avoid type mismatch for heterogeneous lists
+  endfor
+
+  call append('$', '')
+endfunction
+
+" Function: s:show_commands {{{1
+function! s:show_commands() abort
+  if !exists('g:startify_commands') || empty(g:startify_commands)
+    return
+  endif
+
+  if exists('s:last_message')
+    call s:print_section_header()
+  endif
+
+  for entry in g:startify_commands
+    if type(entry) == type({})  " with custom index
+      let [index, command] = items(entry)[0]
+    else
+      let command = entry
+      let index = s:get_index_as_string(s:entry_number)
+      let s:entry_number += 1
+    endif
+    " If no list is given, the description is the command itself.
+    let [desc, cmd] = type(command) == type([]) ? command : [command, command]
+
+    call append('$', '   ['. index .']'. repeat(' ', (3 - strlen(index))) . desc)
+    call s:register(line('$'), index, 'special', cmd, '', s:nowait_string)
+
+    unlet entry command
   endfor
 
   call append('$', '')
@@ -670,6 +711,11 @@ function! s:set_mappings() abort
   execute "nnoremap <buffer>". s:nowait_string ."<silent> v             :call <sid>set_mark('V')<cr>"
   execute "nnoremap <buffer>". s:nowait_string ."<silent> <cr>          :call startify#open_buffers()<cr>"
   execute "nnoremap <buffer>". s:nowait_string ."<silent> <2-LeftMouse> :call startify#open_buffers()<cr>"
+
+  " Without these mappings n/N wouldn't work properly, since autocmds always
+  " force the cursor back on the index.
+  nnoremap <buffer><expr> n ' j'[v:searchforward].'n'
+  nnoremap <buffer><expr> N 'j '[v:searchforward].'N'
 
   for k in keys(s:entries)
     execute 'nnoremap <buffer><silent>'. s:entries[k].nowait s:entries[k].index
@@ -726,22 +772,15 @@ function! s:sort_by_tick(one, two)
 endfunction
 
 " Function: s:check_user_options {{{1
-function! s:check_user_options() abort
-  let path    = expand('%')
-  let session = path . s:sep .'Session.vim'
+function! s:check_user_options(path) abort
+  let session = a:path . s:sep .'Session.vim'
 
-  " change to VCS root directory
   if get(g:, 'startify_session_autoload') && filereadable(session)
     execute 'source' session
   elseif get(g:, 'startify_change_to_vcs_root')
-    call s:cd_to_vcs_root(path)
-  " change directory
+    call s:cd_to_vcs_root(a:path)
   elseif get(g:, 'startify_change_to_dir', 1)
-    if isdirectory(path)
-      lcd %
-    else
-      lcd %:p:h
-    endif
+    execute 'lcd' fnameescape(isdirectory(a:path) ? a:path : fnamemodify(a:path, ':h'))
   endif
 endfunction
 
@@ -751,7 +790,7 @@ function! s:cd_to_vcs_root(path) abort
   for vcs in [ '.git', '.hg', '.bzr', '.svn' ]
     let root = finddir(vcs, dir .';')
     if !empty(root)
-      execute 'cd '. fnamemodify(root, ':h')
+      execute 'cd '. fnameescape(fnamemodify(root, ':h'))
       return
     endif
   endfor

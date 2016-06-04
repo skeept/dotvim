@@ -1,4 +1,5 @@
 {
+"Cheat40":{"archive_name":"vim-cheat40-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24305","version":"0.1","vim_script_nr":5400},
 "ember_tools":{"archive_name":"ember_tools.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24302","version":"0.0.1","vim_script_nr":5399},
 "verilog_emacsauto%5398":{"archive_name":"verilog_emacsauto.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24299","version":"0.5","vim_script_nr":"5398"},
 "Closing_Brackets":{"archive_name":"vim-closing-brackets.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24297","version":"1.0.0","vim_script_nr":5397},
@@ -48,7 +49,7 @@
 "color":{"archive_name":"color.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24105","version":"1.0","vim_script_nr":5347},
 "Bullets":{"archive_name":"bullets.vim-1.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24104","version":"1.0.2","vim_script_nr":5346},
 "vim-header":{"archive_name":"vim-header-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24099","version":"v0.1.0","vim_script_nr":5345},
-"KRL-Syntax":{"archive_name":"krl_for_vim_v117_20160526.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24274","version":"1.1.7","vim_script_nr":5344},
+"KRL-Syntax":{"archive_name":"krl_for_vim_v120_20160604.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24303","version":"1.2.0","vim_script_nr":5344},
 "VimFlowy_Outliner":{"archive_name":"vimflowy.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24069","version":"1.0","vim_script_nr":5343},
 "stata-syntax":{"archive_name":"stata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24057","version":"0.3","vim_script_nr":5342},
 "thesaurus_query":{"archive_name":"thesaurus_query.vim-0.4.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24295","version":"0.4.0","vim_script_nr":5341},
@@ -171,7 +172,7 @@
 "Ferret":{"archive_name":"ferret-1.2a.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24250","version":"1.2a","vim_script_nr":5220},
 "airline-colornum":{"archive_name":"airline-colornum.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23468","version":"1.1","vim_script_nr":5219},
 "vim-gurl":{"archive_name":"vim-gurl.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23452","version":"1.0","vim_script_nr":5218},
-"vim-clipper":{"archive_name":"vim-clipper-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23450","version":"0.1","vim_script_nr":5217},
+"vim-clipper":{"archive_name":"vim-clipper-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24304","version":"1.0","vim_script_nr":5217},
 "Terminus":{"archive_name":"terminus-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23966","version":"1.0.1","vim_script_nr":5216},
 "Loupe":{"archive_name":"loupe-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23831","version":"1.0","vim_script_nr":5215},
 "vim-qlist":{"archive_name":"vim-qlist-0.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23678","version":"0.0.3","vim_script_nr":5214},
