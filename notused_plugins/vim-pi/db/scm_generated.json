@@ -5019,6 +5019,14 @@
     "type": "git",
     "url": "git://github.com/tpenguinltg/vim-closing-brackets"
   },
+  "5399": {
+    "type": "git",
+    "url": "git://github.com/AndrewRadev/ember_tools.vim"
+  },
+  "5400": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/vim-cheat40"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

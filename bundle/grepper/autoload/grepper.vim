@@ -142,13 +142,13 @@ function! grepper#parse_flags(args) abort
   while i < len
     let flag = args[i]
 
-    if     flag =~? '\v^-%(no)?quickfix$'  | let flags.quickfix  = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?open$'      | let flags.open      = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?switch$'    | let flags.switch    = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?jump$'      | let flags.jump      = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?prompt$'    | let flags.prompt    = flag !~? '^-no'
-    elseif flag =~? '\v^-%(no)?highlight$' | let flags.highlight = flag !~? '^-no'
-    elseif flag =~? '^-cword$'             | let flags.cword     = 1
+    if     flag =~? '\v^-%(no)?(quickfix|qf)$' | let flags.quickfix  = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?open$'          | let flags.open      = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?switch$'        | let flags.switch    = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?jump$'          | let flags.jump      = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?prompt$'        | let flags.prompt    = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?highlight$'     | let flags.highlight = flag !~? '^-no'
+    elseif flag =~? '^-cword$'                 | let flags.cword     = 1
     elseif flag =~? '^-grepprg$'
       let i += 1
       if i < len
@@ -454,7 +454,7 @@ function! s:finish_up(flags) abort
 
     nnoremap <silent><buffer> <cr> <cr>zv
     nnoremap <silent><buffer> o    <cr>zv
-    nnoremap <silent><buffer> O    <cr>zv<c-w>p
+    nnoremap <silent><buffer> O    :let grwin=winnr()<cr><cr>zv:exec grwin 'wincmd p'<bar>unlet grwin<cr>
     nnoremap <silent><buffer> s    :call <sid>open_entry('split',  1)<cr>
     nnoremap <silent><buffer> S    :call <sid>open_entry('split',  0)<cr>
     nnoremap <silent><buffer> v    :call <sid>open_entry('vsplit', 1)<cr>
@@ -481,6 +481,8 @@ endfunction
 function! s:open_entry(cmd, jump)
   let swb = &switchbuf
   let &switchbuf = ''
+  " Set a mark to find this window again in s:jump_to_qf_win.
+  let w:grepper_qf_win = 1
   try
     if winnr('$') == 1
       execute "normal! \<cr>"
@@ -508,10 +510,10 @@ endfunction
 
 " s:jump_to_qf_win() {{{1
 function! s:jump_to_qf_win() abort
-  for buf in filter(tabpagebuflist(), 'buflisted(v:val)')
-    if getbufvar(buf, '&filetype') == 'qf'
-      let win = bufwinnr(buf)
+  for win in range(1, winnr('$'))
+    if getwinvar(win, 'grepper_qf_win', 0)
       execute win 'wincmd w'
+      unlet w:grepper_qf_win
       return win
     endif
   endfor

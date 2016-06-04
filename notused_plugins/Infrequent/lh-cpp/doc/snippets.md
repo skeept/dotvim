@@ -34,6 +34,7 @@
       * [c/rand_init](#crand_init)
       * [c/realloc](#crealloc)
       * [cpp/array_size](#cpparray_size)
+      * [cpp/internals/get-b-e](#cppinternalsget-b-e)
       * [cpp/b-e](#cppb-e)
       * [cpp/cerr](#cppcerr)
       * [cpp/cin](#cppcin)
@@ -42,11 +43,13 @@
       * [cpp/cout](#cppcout)
       * [cpp/ends_with](#cppends_with)
       * [cpp/erase-remove](#cpperase-remove)
+      * [cpp/forward](#cppforward)
       * [cpp/iss](#cppiss)
       * [cpp/oss](#cpposs)
       * [cpp/sort](#cppsort)
       * [cpp/starts_with](#cppstarts_with)
       * [cpp/static_assert](#cppstatic_assert)
+      * [cpp/typeid](#cpptypeid)
   * [Classes](#classes)
     * [Class Elements](#class-elements)
       * [cpp/assignment-operator](#cppassignment-operator)
@@ -228,11 +231,24 @@ for («std::size_t» «i»=0, «N»=...;«i»!=«N»;++«i») {
   * or `@throw «exception_type»«»` (within Doxygen comments)
 
 **Parameters:**
-  * `exception_text`, default: «text»
+  * `exception_text`, default: `_vimrc_local.vim`
 
 **Options:**
   * `(bg):({ft}_)exception_type`, default: `std:runtime_error`
-  * `(bg):({ft}_)exception_args`, default: `v:1_`, functor that gets `exception_txt` injected as parameter
+  * `(bg):({ft}_)exception_args`, default: `v:1_`, functor that gets `exception_txt` injected as parameter. A typical value would be:
+
+  ```vim
+:let b:exception_args = 'v:1_.lh#marker#txt(", ".b:cpp_project_namespace."::ExitCode::")'
+  ```
+  Note that this expression dynamically adapts to the current
+  `b:cpp_project_namespace`, and to the current marker characters.
+  *  Doxygen related options:
+    * [`(bg):({ft_}dox_TagLeadingChar)`](options.mg#bgft_dox_tagleadingchar)
+    * [`(bg):({ft_}dox_throw)`](options.mg#bgft_dox_throw)
+
+**Relies on:**
+  * [`lh#dox#tag()`](API.md#lhdoxtag)
+  * [`lh#dox#throw()`](API.md#lhdoxthrow)
 
 **Also includes:**
   * `<stdexcept>` if `exception_type` starts with `std::`
@@ -455,50 +471,107 @@ std::extent<decltype(«array»)>::value`
 std::size(«array»)
 ```
 
+Or whatever is specified into
+[`(bg):({ft}_)array_size`](options.md#bgcpp_array_size). Up to C++14, it's
+recommended to follow the instructions generated as comments, and to put an
+equivalent of C++17 `std::size()` in a header file and use it. Let's say the
+function is named `myarray_size()` and put into `myrange.h`, then define into
+your project configuration file (e.g. a
+[`_vimrc_local.vim`](https://github.com/LucHermitte/local_vimrc)):
+
+```vim
+let b:cpp_array_size = {'file': 'myrange.h', 'funcname': 'myarray_size(%1)'}
+```
+
 **Parameters:**
   * _array_, default «array»
 
 **Options:**
   * [`lh#cpp#use_cpp11()` and `lh#cpp#use_cpp17()`](options.md#bgcpp_std_flavour)
+  * [`(bg):({ft}_)array_size`](options.md#bgcpp_array_size)
 
 **Surround:**
   1. The selection can be surrounded to become the array name
 
 **Also includes:**
-  * `<type_traits>` in C++11
+  * `<type_traits>` in C++11 and C++14
+  * `<iterator>` from C++17 onward
 
 **Notes:**
   * In C++98/03, the definition of `array_size()` macro is provided along the
     way
 
 **TODO:**
-  * Make the snippet easier to use multiple times in C++98/03
   * Define the unsafe C equivalent `c/array_size`:
     `sizeof «array»/sizeof «array»[0]`
 
-#### cpp/b-e
-**Produces:**
-  * or `std::begin(«container»), std::end(«container»)`
+#### cpp/internals/get-b-e
+**Assign values to mu-template snippet variables:**
+  * `s:begin`
+  * `s:end`
+  * `s:container`
+
+Their values will be:
+  * either `std::begin(«container»)` and `std::end(«container»)`
     if [C++11 flavour](options.md#bgcpp_std_flavour) is used, or
-    if [`(bg):({ft}_)begin_end_style`](options.md#bgft_begin_end_style) equals
-    "std"
-  * or `boost::begin(«container»), boost::end(«container»)`
-    if [`(bg):({ft}_)begin_end_style`](options.md#bgft_begin_end_style) equals
-    "boost"
-  * or `begin(«container»), end(«container»)`
-  * or `«container».begin(), «container».end()`
-    if [`(bg):({ft}_)begin_end_style`](options.md#bgft_begin_end_style) equals
-    "adl"
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "std ;"
+  * or `boost::begin(«container»)` and `boost::end(«container»)`
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "boost ;"
+  * or `begin(«container»)` and `end(«container»)`
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "adl ;"
+  * or `«container».begin()` and `«container».end()` otherwise.
+
+**Also includes:**
+  * `<iterator>` when [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style) is `"std"`
+  * `<boost/range/begin.hpp>` and `<boost/range/end.hpp>` when [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style) is `"boost"`
+  * or whatever [`(bg):cpp_begin_end_includes`](options.md#bgcpp_begin_end_includes) specifies
 
 **Parameters:**
   * _container_, default: «container»
 
+**Surround:**
+  1. The selection can be surrounded to become the container name
+
 **Options:**
   * [C++11 flavour](options.md#bgcpp_std_flavour)
-  * [`(bg):({ft}_)begin_end_style`](options.md#bgft_begin_end_style)
+  * [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style)
+  * [`(bg):cpp_begin_end_includes`](options.md#bgcpp_begin_end_includes)
 
-**TODO:**
-  * Surround container
+#### cpp/b-e
+**Produces:**
+  * either `std::begin(«container»), std::end(«container»)`
+    if [C++11 flavour](options.md#bgcpp_std_flavour) is used, or
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "std" ;
+  * or `boost::begin(«container»), boost::end(«container»)`
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "boost" ;
+  * or `«container».begin(), «container».end()`
+    if [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style) equals
+    "adl" ;
+  * or `begin(«container»), end(«container»)` otherwise.
+
+**Also includes:**
+  * `<iterator>` when [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style) is `"std"`
+  * `<boost/range/begin.hpp>` and `<boost/range/end.hpp>` when [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style) is `"boost"`
+  * or whatever [`(bg):cpp_begin_end_includes`](options.md#bgcpp_begin_end_includes) specifies
+
+**Parameters:**
+  * _container_, default: «container»
+
+**Surround:**
+  1. The selection can be surrounded to become the container name
+
+**Options:**
+  * [C++11 flavour](options.md#bgcpp_std_flavour)
+  * [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style)
+  * [`(bg):cpp_begin_end_includes`](options.md#bgcpp_begin_end_includes)
+
+**Variation Points:**
+  * [`cpp/internals/get-b-e`](#cppinternalsget-b-e) snippet
 
 #### cpp/cerr
 **Produces:** `std::cerr <<`
@@ -939,13 +1012,43 @@ TBD:
 **See:** [lh-cpp enums generation](Enums.md)
 
 #### cpp/enum2
-TBD:
+TBD
 
-**See:** [lh-cpp enums generation](Enums.md)
+Meant to be used through [`:InsertEnum`](Enum.md#enum-snippet) command.
+
+**Options:**
+  * [`(bg):({ft}_)dox_group`](#options.md#bgft_dox_group)
+  * [`(bg):cpp_begin_end_style`](options.md#bgft_begin_end_style)
+  * [`lh#cpp#use_cpp11()` and `lh#cpp#use_cpp17()`](options.md#bgcpp_std_flavour)
+  * [`(bg):({ft}_)array_size`](options.md#bgcpp_array_size)
+  * `(bg):({ft}_)exception_type`, default: `std:runtime_error`
+  * `(bg):({ft}_)exception_args`, default: `v:1_`, functor that gets `exception_txt` injected as parameter
+
+**Variation Points/Relies on:**
+  * [`cpp/array_size`](#cpparray_size) snippet
+  * [`cpp/static_assert`](#cppstatic_assert) snippet
+  * [`cpp/throw`](#cppthrow) snippet
+  * [`cpp/internals/formatted-comment`](#cppinternalsformatted-comment) snippet
+
+**See:** [lh-cpp enums generation](Enums.md#enum-snippet)
+
 #### cpp/enum2-impl
 TBD:
 
-**See:** [lh-cpp enums generation](Enums.md)
+Meant to be used through [`:InsertEnum`](Enum.md#enum-snippet) command.
+
+**Options:**
+  * `(bg):({ft}_)exception_type`, default: `std:runtime_error`
+  * `(bg):({ft}_)exception_args`, default: `v:1_`, functor that gets `exception_txt` injected as parameter
+  * [`(bg):cpp_begin_end_style`](options.md#bgcpp_begin_end_style)
+  * [`(bg):cpp_begin_end_includes`](options.md#bgcpp_begin_end_includes)
+
+**Variation Points/Relies on:**
+  * [`cpp/throw`](#cppthrow) snippet
+  * [`cpp/internals/get-b-e`](#cppinternalsget-b-e) snippet
+  * [`cpp/internals/formatted-comment`](#cppinternalsformatted-comment) snippet
+
+**See:** [lh-cpp enums generation](Enums.md#enum-snippet)
 
 #### cpp/exception-class
 TBD:
@@ -1018,10 +1121,10 @@ template <typename «T»> struct «name»_traits
   * [`lh#dox#tag()`](API.md#lhdoxtag)
 
 #### dox/em
-**Produces:** `<em>«text»</em>`
+**Produces:** `<em>`_vimrc_local.vim`</em>`
 
 **Parameters:**
-  * «text», default: empty placeholder «»
+  * `_vimrc_local.vim`, default: empty placeholder «»
 
 **Options:**
   * [`(bg):({ft_}dox_TagLeadingChar)`](options.mg#bgft_dox_tagleadingchar)
@@ -1071,10 +1174,10 @@ template <typename «T»> struct «name»_traits
   1. The selection can be surrounded by the group tags
 
 #### dox/html
-**Produces:** `<html-tag>«text»</html-tag>`
+**Produces:** `<html-tag>`_vimrc_local.vim`</html-tag>`
 
 **Parameters:**
-  * «text», default: empty placeholder «»
+  * `_vimrc_local.vim`, default: empty placeholder «»
 
 **Options:**
   * [`(bg):({ft_}dox_TagLeadingChar)`](options.mg#bgft_dox_tagleadingchar)
@@ -1108,10 +1211,10 @@ template <typename «T»> struct «name»_traits
   * [`lh#dox#since()`](API.md#lhdoxsince)
 
 #### dox/tt
-**Produces:** `<tt>«text»</tt>`
+**Produces:** `<tt>`_vimrc_local.vim`</tt>`
 
 **Parameters:**
-  * «text», default: empty placeholder «»
+  * `_vimrc_local.vim`, default: empty placeholder «»
 
 **Options:**
   * [`(bg):({ft_}dox_TagLeadingChar)`](options.mg#bgft_dox_tagleadingchar)

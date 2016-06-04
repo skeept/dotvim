@@ -36,7 +36,7 @@ CONTENTS                                                     *startify-contents*
 ==============================================================================
 INTRO                                                           *startify-intro*
 
-Startify is a plugin that shows recently used files, bookmarks and
+Startify is a plugin that shows recently used files, bookmarks, commands and
 sessions that were saved to a certain directory.
 
 ==============================================================================
@@ -48,8 +48,8 @@ Startify basically provides two things:
    it reads from STDIN), startify will show a small but pretty start screen
    that shows recently used files (using viminfo) and sessions by default.
 
-   Additionally, you can define bookmarks, thus entries for files that always
-   should be available on the start screen.
+   Additionally, you can define bookmarks (thus entries for files) and
+   commands that always should be available on the start screen.
 
    You can either navigate to a certain menu entry and hit enter or you just
    key in whatever is written between the square brackets on that line. You
@@ -97,6 +97,7 @@ default values.
     |g:startify_update_oldfiles|
 
     Misc options:~
+    |g:startify_commands|
     |g:startify_custom_footer|
     |g:startify_custom_header_quotes|
     |g:startify_custom_indices|
@@ -109,12 +110,14 @@ default values.
 
     Sessions:~
     |g:startify_session_autoload|
+    |g:startify_session_before_save|
     |g:startify_session_delete_buffers|
     |g:startify_session_dir|
     |g:startify_session_persistence|
     |g:startify_session_remove_lines|
     |g:startify_session_savecmds|
     |g:startify_session_savevars|
+    |g:startify_session_sort|
 
 ------------------------------------------------------------------------------
                                                         *g:startify_session_dir*
@@ -128,7 +131,8 @@ The default for Windows systems is '$HOME\vimfiles\session'.
 ------------------------------------------------------------------------------
                                                          *g:startify_list_order*
 >
-    let g:startify_list_order = ['files', 'dir', 'bookmarks', 'sessions']
+    let g:startify_list_order = ['files', 'dir', 'bookmarks', 'sessions',
+        \ 'commands']
 <
 At the moment startify supports these lists:~
 
@@ -150,6 +154,10 @@ At the moment startify supports these lists:~
 4) "sessions"
 
    This lists all the sessions saved in the directory |g:startify_session_dir|.
+
+5) "commands"
+
+    This lists commands defined in |g:startify_commands|.
 
 Section headers:~
 
@@ -174,6 +182,8 @@ Section headers example:~
             \ 'sessions',
             \ ['   These are my bookmarks:'],
             \ 'bookmarks',
+            \ ['   These are my commands:'],
+            \ 'commands',
             \ ]
 <
 Feel free to add some cool ASCII action!
@@ -194,6 +204,25 @@ Example:
 NOTE: Avoid using keys from |startify-mappings| if providing custom indices.
 
 ------------------------------------------------------------------------------
+                                                           *g:startify_commands*
+>
+    let g:startify_commands = []
+<
+A list of commands to execute on selection. Leading colons are optional. It
+supports optional custom indices and/or command descriptions.
+
+Example:
+>
+    let g:startify_commands = [
+        \ ':help reference',
+        \ ['Vim Reference', 'h ref'],
+        \ {'h': 'h ref'},
+        \ {'m': ['My magical function', 'call Magic()']},
+        \ ]
+<
+NOTE: Avoid using keys from |startify-mappings| if providing custom indices.
+
+------------------------------------------------------------------------------
                                                        *g:startify_files_number*
 >
     let g:startify_files_number = 10
@@ -205,7 +234,6 @@ The number of files to list.
 >
     let g:startify_update_oldfiles = 0
 <
-
 Usually |v:oldfiles| only gets updated when Vim exits. Using this option updates
 it on-the-fly, so that :Startify is always up-to-date.
 
@@ -222,6 +250,20 @@ This also works if you open a bookmarked directory.
 
 Great way to create a portable project folder.
 
+------------------------------------------------------------------------------
+                                                *g:startify_session_before_save*
+>
+    let g:startify_session_before_save = []
+<
+This is a list of commands to be executed before saving a session.
+
+Example:
+>
+    let g:startify_session_before_save = [
+        \ 'echo "Cleaning up before saving.."',
+        \ 'silent! NERDTreeTabsClose'
+        \ ]
+<
 ------------------------------------------------------------------------------
                                                 *g:startify_session_persistence*
 >
@@ -385,6 +427,14 @@ Example:
            \ 'silent !pdfreader ~/latexproject/main.pdf &'
            \ ]
 <
+------------------------------------------------------------------------------
+                                                       *g:startify_session_sort*
+>
+    let g:startify_session_sort = 0
+<
+Sort sessions by modification time (when the session files were written)
+rather than alphabetically.
+
 ------------------------------------------------------------------------------
                                                      *g:startify_custom_indices*
 >
@@ -879,17 +929,6 @@ This is my configuration..
     let g:startify_session_autoload       = 1
     let g:startify_session_persistence    = 1
     let g:startify_session_delete_buffers = 1
-
-    let g:startify_list_order = [
-      \ ['   LRU:'],
-      \ 'files',
-      \ ['   LRU within this dir:'],
-      \ 'dir',
-      \ ['   Sessions:'],
-      \ 'sessions',
-      \ ['   Bookmarks:'],
-      \ 'bookmarks',
-      \ ]
 
     let g:startify_skiplist = [
                 \ 'COMMIT_EDITMSG',
