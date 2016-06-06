@@ -5027,6 +5027,10 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-cheat40"
   },
+  "5401": {
+    "type": "git",
+    "url": "git://github.com/tenfyzhong/vim-gencode-cpp"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
