@@ -108,6 +108,9 @@ endif
 if !exists('g:Imap_DeleteEmptyPlaceHolders')
 	let g:Imap_DeleteEmptyPlaceHolders = 1
 endif
+if !exists('g:Imap_GoToSelectMode')
+	let g:Imap_GoToSelectMode = 1
+endif
 " }}}
 " Variables {{{
 " s:LHS_{ft}_{char} will be generated automatically.  It will look like
@@ -179,13 +182,20 @@ function! IMAP(lhs, rhs, ft, ...)
 
 	" map only the last character of the left-hand side.
 	if lastLHSChar == ' '
-		let lastLHSChar = '<space>'
-	end
-	exe 'inoremap <silent>'
-				\ escape(lastLHSChar, '|')
-				\ '<C-r>=<SID>LookupCharacter("' .
-				\ escape(lastLHSChar, '\|"') .
-				\ '")<CR>'
+		for lastLHSChar in ['<space>', '<s-space>', '<c-space>', '<cs-space>']
+			exe 'inoremap <silent>'
+						\ escape(lastLHSChar, '|')
+						\ '<C-r>=<SID>LookupCharacter("' .
+						\ escape(lastLHSChar, '\|"') .
+						\ '")<CR>'
+		endfor
+	else
+		exe 'inoremap <silent>'
+					\ escape(lastLHSChar, '|')
+					\ '<C-r>=<SID>LookupCharacter("' .
+					\ escape(lastLHSChar, '\|"') .
+					\ '")<CR>'
+	endif
 endfunction
 
 " }}}
@@ -428,26 +438,35 @@ function! IMAP_Jumpfunc(direction, inclusive)
 		\          '\V\^'.phsUser.'\zs\.\{-}\ze\('.pheUser.'\|\$\)')
 	let placeHolderEmpty = !strlen(template)
 
+	" Search for the end placeholder.
+	let [lnum, lcol] = searchpos('\V'.pheUser, 'ne')
+	" How many characters should be selected?
+	let nmove = lcol - col('.')
+
 	" If we are selecting in exclusive mode, then we need to move one step to
 	" the right
-	let extramove = ''
 	if &selection == 'exclusive'
-		let extramove = 'l'
+		let nmove += 1
 	endif
 
 	" Select till the end placeholder character.
-	let movement = "\<C-o>v/\\V".pheUser."/e\<CR>".extramove
+	let movement = "\<C-o>v".nmove."l"
 
-	" First remember what the search pattern was. s:RemoveLastHistoryItem will
-	" reset @/ to this pattern so we do not create new highlighting.
-	let g:Tex_LastSearchPattern = @/
+	" Leave (insert)-visual mode and reselect.
+	let movement .= "\<C-\>\<C-N>gv"
 
 	" Now either goto insert mode or select mode.
 	if placeHolderEmpty && g:Imap_DeleteEmptyPlaceHolders
-		" delete the empty placeholder into the blackhole.
-		return movement."\"_c\<C-o>:".s:RemoveLastHistoryItem."\<CR>"
+		" Delete the empty placeholder into the blackhole.
+		return movement . '"_c'
 	else
-		return movement."\<C-\>\<C-N>:".s:RemoveLastHistoryItem."\<CR>gv\<C-g>"
+		if g:Imap_GoToSelectMode
+			" Go to select mode
+			return movement . "\<C-g>"
+		else
+			" Do not go to select mode
+			return movement
+		endif
 	endif
 	
 endfunction
