@@ -2916,7 +2916,7 @@
 "darkeclipse":{"archive_name":"darkeclipse.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10979","version":"1.2","vim_script_nr":2394},
 "QuickTemplate":{"archive_name":"_vim_Template_20081008.7z","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9319","version":"0.1","vim_script_nr":2393},
 "Django_Projects":{"archive_name":"django_projects.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9318","version":"0.1.0","vim_script_nr":2392},
-"MPC_syntax":{"archive_name":"mpc.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17110","version":"0.1.4","vim_script_nr":2391},
+"MPC_syntax":{"archive_name":"mpc.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24308","version":"0.1.5","vim_script_nr":2391},
 "CSApprox":{"archive_name":"CSApprox.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18594","version":"4.00","vim_script_nr":2390},
 "pdc":{"archive_name":"pdc.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9430","version":"1.2","vim_script_nr":2389},
 "conomode":{"archive_name":"conomode.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17340","version":"0.6.1","vim_script_nr":2388},
