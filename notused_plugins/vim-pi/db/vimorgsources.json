@@ -1,4 +1,5 @@
 {
+"columnMove":{"archive_name":"columnMove.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24314","version":"0.9","vim_script_nr":5402},
 "vim-gencode-cpp":{"archive_name":"vim-gencode-cpp-1.3.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24309","version":"1.3.0","vim_script_nr":5401},
 "Cheat40":{"archive_name":"vim-cheat40-0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24311","version":"0.2","vim_script_nr":5400},
 "ember_tools":{"archive_name":"ember_tools.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24302","version":"0.0.1","vim_script_nr":5399},
@@ -274,7 +275,7 @@
 "vim-stardict":{"archive_name":"vim-stardict-0.5.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23751","version":"0.5.0","vim_script_nr":5117},
 "vim-consul":{"archive_name":"vim-consul.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22932","version":"1.0.0","vim_script_nr":5116},
 "vim-fixprotocol":{"archive_name":"vim-fixprotocol.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23164","version":"0.2","vim_script_nr":5115},
-"vim-webdevicons":{"archive_name":"vim-devicons-v0.8.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24182","version":"v0.8.2","vim_script_nr":5114},
+"vim-webdevicons":{"archive_name":"vim-devicons-v0.8.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24312","version":"v0.8.3","vim_script_nr":5114},
 "sonicpi":{"archive_name":"sonicpi.vim.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22926","version":"0.1","vim_script_nr":5113},
 "Perfect_Dark":{"archive_name":"PerfectDark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23992","version":"1.2","vim_script_nr":5112},
 "glsl_es_100":{"archive_name":"glsl_es_100.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22914","version":"0.2","vim_script_nr":5111},
@@ -2436,7 +2437,7 @@
 "signal_dec_VHDL":{"archive_name":"signal_dec_VHDL.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11832","version":"0.1","vim_script_nr":2875},
 "php%2874":{"archive_name":"php53.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=12772","version":"1.1","vim_script_nr":"2874"},
 "record-repeat":{"archive_name":"record-repeat.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11819","version":"0.1.1","vim_script_nr":2873},
-"signature_block":{"archive_name":"signature_block.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11813","version":"0.1","vim_script_nr":2872},
+"signature_block":{"archive_name":"signature_block.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24313","version":"0.2","vim_script_nr":2872},
 "FindMate":{"archive_name":"FindMate.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11807","version":"0.1","vim_script_nr":2871},
 "OmniTags":{"archive_name":"omnitags.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=12725","version":"0.2","vim_script_nr":2870},
 "Ruby_Single_Test":{"archive_name":"ruby_single_test.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20089","version":"1.0.3","vim_script_nr":2869},

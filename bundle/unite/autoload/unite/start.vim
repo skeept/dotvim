@@ -482,16 +482,25 @@ function! unite#start#_pos(buffer_name, direction, count) abort "{{{
 endfunction"}}}
 
 function! unite#start#_do_command(cmd)
+  let bufnr = s:get_unite_buffer('')
+  if bufnr < 0
+    return
+  endif
+
+  let unite = getbufvar(bufnr, 'unite')
+  if empty(unite.candidates)
+    return
+  endif
+
   " The step by step is done backwards because, if the command happens to
   " include or exclude lines in the file, the remaining candidates don't have
   " its position changed when the default action is applied.
 
   silent! UniteLast
-  let current_pos = []
-  while current_pos != getpos('.')
-    silent! execute a:cmd
-    let current_pos = getpos('.')
+  silent! execute a:cmd
+  while unite.candidate_cursor > 0
     silent! UnitePrevious
+    silent! execute a:cmd
   endwhile
 endfunction
 
