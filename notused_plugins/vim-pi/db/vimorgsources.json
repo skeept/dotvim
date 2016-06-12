@@ -1,4 +1,5 @@
 {
+"vimport":{"archive_name":"vimport-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24316","version":"0.1","vim_script_nr":5403},
 "columnMove":{"archive_name":"columnMove.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24314","version":"0.9","vim_script_nr":5402},
 "vim-gencode-cpp":{"archive_name":"vim-gencode-cpp-1.3.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24309","version":"1.3.0","vim_script_nr":5401},
 "Cheat40":{"archive_name":"vim-cheat40-0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24311","version":"0.2","vim_script_nr":5400},
@@ -431,7 +432,7 @@
 "AdvancedSorters":{"archive_name":"AdvancedSorters-1.20.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22896","version":"1.20","vim_script_nr":4958},
 "zeavim":{"archive_name":"zeavim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23897","version":"2.1.0","vim_script_nr":4957},
 "vimbed":{"archive_name":"vimbed.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22050","version":"0.2","vim_script_nr":4956},
-"Merginal":{"archive_name":"merginal_v2.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24218","version":"2.0.1","vim_script_nr":4955},
+"Merginal":{"archive_name":"merginal_v2.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24315","version":"2.0.2","vim_script_nr":4955},
 "purpledrop":{"archive_name":"purpledrop.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21983","version":"1.0","vim_script_nr":4954},
 "dubs-green":{"archive_name":"dubs_green.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21980","version":"0.1","vim_script_nr":4953},
 "dubs-red":{"archive_name":"dubs_red.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21979","version":"0.1","vim_script_nr":4952},
