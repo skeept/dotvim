@@ -5035,6 +5035,10 @@
     "type": "git",
     "url": "git://github.com/romgrk/columnMove.vim"
   },
+  "5404": {
+    "type": "git",
+    "url": "git://github.com/timakro/vim-searchant"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
