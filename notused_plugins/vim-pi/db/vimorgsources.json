@@ -1,4 +1,5 @@
 {
+"fluid":{"archive_name":"vim-fluid-master.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24335","version":"0.1","vim_script_nr":5407},
 "Impl_Switcher":{"archive_name":"impl_switcher.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24330","version":"1","vim_script_nr":5406},
 "BTN_Better_tab_new":{"archive_name":"bettertabnew.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24329","version":"1","vim_script_nr":5405},
 "searchant":{"archive_name":"vim-searchant.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24334","version":"1.0.3","vim_script_nr":5404},
