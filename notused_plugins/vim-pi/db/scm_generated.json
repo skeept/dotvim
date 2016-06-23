@@ -5039,6 +5039,10 @@
     "type": "git",
     "url": "git://github.com/timakro/vim-searchant"
   },
+  "5409": {
+    "type": "git",
+    "url": "git://github.com/glts/vim-radical"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
