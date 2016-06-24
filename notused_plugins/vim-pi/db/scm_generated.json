@@ -5039,6 +5039,10 @@
     "type": "git",
     "url": "git://github.com/timakro/vim-searchant"
   },
+  "5408": {
+    "type": "git",
+    "url": "git://github.com/akhaku/vim-java-unused-imports"
+  },
   "5409": {
     "type": "git",
     "url": "git://github.com/glts/vim-radical"

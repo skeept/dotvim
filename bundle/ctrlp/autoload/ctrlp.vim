@@ -425,7 +425,7 @@ fu! s:UserCmd(lscmd)
 	let do_ign =
 		\ type(s:usrcmd) == 4 && has_key(s:usrcmd, 'ignore') && s:usrcmd['ignore']
 	if do_ign && ctrlp#igncwd(s:cwd) | retu | en
-	if exists('+ssl') && &ssl
+	if exists('+ssl') && &ssl && &shell !~ 'sh'
 		let [ssl, &ssl, path] = [&ssl, 0, tr(path, '/', '\')]
 	en
 	if (has('win32') || has('win64')) && match(&shellcmdflag, "/") != -1
@@ -653,9 +653,9 @@ fu! s:Update(str)
 endf
 
 fu! s:ForceUpdate()
-	let wv = winsaveview()
+	let pos = exists('*getcurpos') ? getcurpos() : getpos('.')
 	sil! cal s:Update(escape(s:getinput(), '\'))
-	cal winrestview(wv)
+	cal setpos('.', pos)
 endf
 
 fu! s:BuildPrompt(upd)
@@ -839,9 +839,9 @@ fu! s:PrtSelectMove(dir)
 	let wht = winheight(0)
 	let dirs = {'t': 'gg','b': 'G','j': 'j','k': 'k','u': wht.'k','d': wht.'j'}
 	exe 'keepj norm!' dirs[a:dir]
-	let wv = winsaveview()
+	let pos = exists('*getcurpos') ? getcurpos() : getpos('.')
 	cal s:BuildPrompt(0)
-	cal winrestview(wv)
+	cal setpos('.', pos)
 endf
 
 fu! s:PrtSelectJump(char)
@@ -864,9 +864,9 @@ fu! s:PrtSelectJump(char)
 			let [jmpln, s:jmpchr] = [npos == -1 ? pos : npos, [chr, npos]]
 		en
 		exe 'keepj norm!' ( jmpln + 1 ).'G'
-		let wv = winsaveview()
+		let pos = exists('*getcurpos') ? getcurpos() : getpos('.')
 		cal s:BuildPrompt(0)
-		cal winrestview(wv)
+		cal setpos('.', pos)
 	en
 endf
 " Misc {{{2
@@ -2348,7 +2348,8 @@ endf
 fu! s:buildpat(lst)
 	let pat = a:lst[0]
 	for item in range(1, len(a:lst) - 1)
-		let pat .= '[^'.a:lst[item - 1].']\{-}'.a:lst[item]
+		let c = a:lst[item - 1]
+		let pat .= (c == '/' ? '[^/]\{-}' : '[^'.c.'/]\{-}').a:lst[item]
 	endfo
 	retu pat
 endf
