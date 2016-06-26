@@ -35,7 +35,7 @@ function! unite#view#_redraw_prompt() abort "{{{
   let modifiable_save = &l:modifiable
   try
     setlocal modifiable
-    call setline(unite.prompt_linenr,
+    silent! call setline(unite.prompt_linenr,
           \ unite.context.prompt . unite.context.input)
 
     silent! syntax clear uniteInputLine
