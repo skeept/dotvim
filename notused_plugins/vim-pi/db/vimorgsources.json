@@ -1,4 +1,5 @@
 {
+"Srcery":{"archive_name":"srcery_0.6.0.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24347","version":"0.6.0","vim_script_nr":5411},
 "radical":{"archive_name":"radical-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24343","version":"1.0.1","vim_script_nr":5409},
 "vim-java-ununsed-imports":{"archive_name":"vim-java-unused-imports.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24338","version":"1.0.0","vim_script_nr":5408},
 "fluid":{"archive_name":"vim-fluid-master.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24335","version":"0.1","vim_script_nr":5407},
@@ -183,7 +184,7 @@
 "vim-gurl":{"archive_name":"vim-gurl.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23452","version":"1.0","vim_script_nr":5218},
 "vim-clipper":{"archive_name":"vim-clipper-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24304","version":"1.0","vim_script_nr":5217},
 "Terminus":{"archive_name":"terminus-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23966","version":"1.0.1","vim_script_nr":5216},
-"Loupe":{"archive_name":"loupe-1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24332","version":"1.1","vim_script_nr":5215},
+"Loupe":{"archive_name":"loupe-1.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24348","version":"1.2","vim_script_nr":5215},
 "vim-qlist":{"archive_name":"vim-qlist-0.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23678","version":"0.0.3","vim_script_nr":5214},
 "vim-AHKcomplete":{"archive_name":"vim-AHKcomplete.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23440","version":"1.0","vim_script_nr":5213},
 "vim-on-write":{"archive_name":"vim-on-write-1.0.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23438","version":"1.0","vim_script_nr":5212},

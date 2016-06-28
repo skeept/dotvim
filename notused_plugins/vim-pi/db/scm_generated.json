@@ -5047,6 +5047,10 @@
     "type": "git",
     "url": "git://github.com/glts/vim-radical"
   },
+  "5411": {
+    "type": "git",
+    "url": "git://github.com/roosta/srcery"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
