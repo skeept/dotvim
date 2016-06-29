@@ -70,10 +70,8 @@ if (ack >= 0) && (ackgrep >= 0)
 endif
 
 let s:cmdline = ''
-let s:id      = 0
 let s:slash   = exists('+shellslash') && !&shellslash ? '\' : '/'
-
-let s:magic = { 'next': '$$$next###', 'esc': '$$$esc###' }
+let s:magic   = { 'next': '$$$next###', 'esc': '$$$esc###' }
 
 " s:error() {{{1
 function! s:error(msg)
@@ -83,21 +81,26 @@ function! s:error(msg)
 endfunction
 " }}}
 
-" s:on_stderr() {{{1
-function! s:on_stderr(id, data) abort
-  call s:error('STDERR: '. join(a:data))
+" s:on_stdout_nvim() {{{1
+function! s:on_stdout_nvim(job_id, data) dict abort
+  let self.stdoutbuf += a:data
+endfunction
+
+" s:on_stdout_vim() {{{1
+function! s:on_stdout_vim(job_id, data) dict abort
+  let self.stdoutbuf += [a:data]
 endfunction
 
 " s:on_exit() {{{1
-function! s:on_exit() abort
+function! s:on_exit(id_or_channel) dict abort
   execute 'tabnext' self.tabpage
   execute self.window .'wincmd w'
 
-  execute (self.flags.quickfix ? 'cgetfile' : 'lgetfile') self.tempfile
-  call delete(self.tempfile)
+  execute (self.flags.quickfix ? 'cgetexpr' : 'lgetexpr')
+        \ has('nvim') ? ' split(join(self.stdoutbuf, ""), "\r")'
+        \             : ' self.stdoutbuf'
 
-  let s:id = 0
-  call s:restore_settings()
+  unlet s:id
   return s:finish_up(self.flags)
 endfunction
 " }}}
@@ -334,41 +337,40 @@ endfunction
 " s:run() {{{1
 function! s:run(flags)
   let s:cmdline = s:build_cmdline(a:flags)
-  call s:store_settings(a:flags)
+
+  " 'cmd' and 'options' are only used for async execution.
+  " Use 'cat' for stripping escape sequences.
+  let cmd = ['sh', '-c', printf('%s | cat -', s:cmdline)]
+  let options = {
+        \ 'cmd':       s:cmdline,
+        \ 'flags':     a:flags,
+        \ 'window':    winnr(),
+        \ 'tabpage':   tabpagenr(),
+        \ 'stdoutbuf': [],
+        \ }
+
+  call s:store_errorformat(a:flags)
 
   if has('nvim')
-    if s:id
+    if exists('s:id')
       silent! call jobstop(s:id)
     endif
-
-    let tempfile = fnameescape(tempname())
-    try
-      call mkdir(fnamemodify(tempfile, ':h'), 'p', 0600)
-    catch /E739/
-      call s:error(v:exeption)
-      call s:restore_settings()
-      return
-    endtry
-
-    let cmd = ['sh', '-c', printf('%s > %s', s:cmdline, tempfile)]
-
-    let s:id = jobstart(cmd, {
+    let s:id = jobstart(cmd, extend(options, {
           \ 'pty':       1,
-          \ 'flags':     a:flags,
-          \ 'tempfile':  tempfile,
-          \ 'cmd':       s:cmdline,
-          \ 'tabpage':   tabpagenr(),
-          \ 'window':    winnr(),
-          \ 'on_stderr': function('s:on_stderr'),
-          \ 'on_exit':   function('s:on_exit')})
-    return
+          \ 'on_stdout': function('s:on_stdout_nvim'),
+          \ 'on_exit':   function('s:on_exit'),
+          \ }))
+  elseif v:version > 704 || v:version == 704 && has('patch1967')
+    if exists('s:id')
+      silent! call job_stop(s:id)
+    endif
+    let s:id = job_start(cmd, {
+          \ 'err_io':   'out',
+          \ 'out_cb':   function('s:on_stdout_vim', options),
+          \ 'close_cb': function('s:on_exit', options),
+          \ })
   else
-    try
-      execute 'silent' (a:flags.quickfix ? 'grep!' : 'lgrep!')
-      redraw!
-    finally
-      call s:restore_settings()
-    endtry
+    execute 'silent' (a:flags.quickfix ? 'cgetexpr' : 'lgetexpr') 'system(s:cmdline)'
     call s:finish_up(a:flags)
   endif
 endfunction
@@ -378,44 +380,16 @@ function! s:get_current_tool(flags) abort
   return a:flags[a:flags.tools[0]]
 endfunction
 
-" s:store_settings() {{{1
-function! s:store_settings(flags) abort
-  let s:settings = {}
+" s:store_errorformat() {{{1
+function! s:store_errorformat(flags) abort
   let prog = s:get_current_tool(a:flags)
-
-  if !has('nvim')
-    let s:settings.t_ti = &t_ti
-    let s:settings.t_te = &t_te
-    set t_ti= t_te=
-  endif
-
-  let s:settings.grepprg = &grepprg
-  let s:settings.makeprg = &makeprg
-  let &grepprg = s:cmdline
-  let &makeprg = s:cmdline
-
-  if has_key(prog, 'grepformat')
-    let s:settings.grepformat  = &grepformat
-    let s:settings.errorformat = &errorformat
-    let &grepformat  = prog.grepformat
-    let &errorformat = prog.grepformat
-  endif
+  let s:errorformat = has_key(prog, 'grepformat') ? prog.grepformat : &errorformat
+  let &errorformat = s:errorformat
 endfunction
 
-" s:restore_settings() {{{1
-function! s:restore_settings() abort
-    let &grepprg = s:settings.grepprg
-    let &makeprg = s:settings.makeprg
-
-    if has_key(s:settings, 'grepformat')
-      let &grepformat  = s:settings.grepformat
-      let &errorformat = s:settings.errorformat
-    endif
-
-    if has_key(s:settings, 't_ti')
-      let &t_ti = s:settings.t_ti
-      let &t_te = s:settings.t_te
-    endif
+" s:restore_errorformat() {{{1
+function! s:restore_errorformat() abort
+  let &errorformat = s:errorformat
 endfunction
 
 " s:restore_mapping() {{{1
@@ -439,6 +413,8 @@ function! s:finish_up(flags) abort
   let llist = getloclist(0)
   let size = len(qf ? qlist : llist)
 
+  call s:restore_errorformat()
+
   if has('nvim')
     if qf
       call setqflist(qlist, 'r', s:cmdline)
@@ -446,6 +422,8 @@ function! s:finish_up(flags) abort
       call setloclist(0, llist, 'r', s:cmdline)
     endif
   endif
+
+  redraw
 
   if size == 0
     execute (qf ? 'cclose' : 'lclose')
@@ -468,7 +446,14 @@ function! s:finish_up(flags) abort
   endif
 
   echo printf('Found %d matches.', size)
-  silent! doautocmd <nomodeline> User Grepper
+  
+  if exists('#User#Grepper')
+    if v:version > 703 || v:version == 703 && has('patch442')
+      doautocmd <nomodeline> User Grepper
+    else
+      doautocmd User Grepper
+    endif
+  endif
 endfunction
 
 " s:escape_query() {{{1

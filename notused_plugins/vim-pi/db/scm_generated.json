@@ -4959,6 +4959,10 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-outlaw"
   },
+  "5370": {
+    "type": "git",
+    "url": "git://github.com/KuoE0/vim-scavenger"
+  },
   "5371": {
     "type": "git",
     "url": "git://github.com/NBUT-Developers/extra-instant-markdown"
