@@ -5055,6 +5055,14 @@
     "type": "git",
     "url": "git://github.com/roosta/srcery"
   },
+  "5412": {
+    "type": "git",
+    "url": "git://github.com/sonph/onehalf"
+  },
+  "5414": {
+    "type": "git",
+    "url": "git@github.com:au/vim-tf2.git"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
