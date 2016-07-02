@@ -775,7 +775,9 @@ endfunction
 function! s:check_user_options(path) abort
   let session = a:path . s:sep .'Session.vim'
 
-  if get(g:, 'startify_session_autoload') && filereadable(session)
+  if get(g:, 'startify_session_autoload') && filereadable(glob(session))
+    execute 'silent bwipeout' a:path
+    call startify#session_delete_buffers()
     execute 'source' session
   elseif get(g:, 'startify_change_to_vcs_root')
     call s:cd_to_vcs_root(a:path)
