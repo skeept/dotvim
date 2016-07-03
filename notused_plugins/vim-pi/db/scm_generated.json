@@ -5059,9 +5059,21 @@
     "type": "git",
     "url": "git://github.com/sonph/onehalf"
   },
+  "5413": {
+    "type": "git",
+    "url": "git://github.com/ompugao/vim-dispatch-vimproc"
+  },
   "5414": {
     "type": "git",
     "url": "git@github.com:au/vim-tf2.git"
+  },
+  "5415": {
+    "type": "git",
+    "url": "git://github.com/rakr/vim-one"
+  },
+  "5416": {
+    "type": "git",
+    "url": "git://github.com/rakr/vim-two-firewatch"
   },
   "556": {
     "type": "git",

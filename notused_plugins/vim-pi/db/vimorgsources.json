@@ -1,8 +1,10 @@
 {
+"vim-two-firewatch":{"archive_name":"vim-two-firewatch.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24357","version":"1.0.0","vim_script_nr":5416},
+"vim-one":{"archive_name":"vim-one.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24356","version":"1.0","vim_script_nr":5415},
 "vim-tf2":{"archive_name":"vim-tf2.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24354","version":"0.1","vim_script_nr":5414},
 "vim-dispatch-vimproc":{"archive_name":"vim-dispatch-vimproc_0.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24350","version":"0.0.1","vim_script_nr":5413},
 "One_Half_Color_Schemes":{"archive_name":"onehalf.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24349","version":"0.1.2","vim_script_nr":5412},
-"Srcery":{"archive_name":"srcery_0.6.0.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24347","version":"0.6.0","vim_script_nr":5411},
+"Srcery":{"archive_name":"srcery_0.6.1.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24355","version":"0.6.1","vim_script_nr":5411},
 "radical":{"archive_name":"radical-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24343","version":"1.0.1","vim_script_nr":5409},
 "vim-java-ununsed-imports":{"archive_name":"vim-java-unused-imports.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24338","version":"1.0.0","vim_script_nr":5408},
 "fluid":{"archive_name":"vim-fluid-master.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24335","version":"0.1","vim_script_nr":5407},
