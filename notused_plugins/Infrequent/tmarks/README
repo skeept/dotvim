@@ -1,0 +1,32 @@
+This plugin provides commands to browse and to manipulate (place & 
+delete) marks.
+
+Features:
+
+    - Browse marks
+    - Delete all (lower-case) marks in the current buffer
+    - Delete all (lower-case) marks in a range
+    - Set the next available (lower-case) mark at a specified line
+
+Key maps in the list view:
+
+    <c-d> ... Delete mark
+    <cr>  ... Jump to mark
+
+If g:tmarks_key is set in your |vimrc| file, this plugin also provides the 
+following maps:
+
+    <c-KEY> ... Toggle the mark at the current line
+    <KEY>   ... Jump to the next mark
+    <s-KEY> ... Jump to the previous mark
+
+
+-----------------------------------------------------------------------
+
+Status:  Not in use (I wouldn't know if there were problems)
+Dependencies:
+  tlib :: http://github.com/tomtom/tlib_vim
+      > git clone git://github.com/tomtom/tlib_vim.git
+Install: See http://github.com/tomtom/vimtlib/blob/master/INSTALL.TXT
+See http://github.com/tomtom for related plugins.
+
