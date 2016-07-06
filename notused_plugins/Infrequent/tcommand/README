@@ -1,0 +1,16 @@
+VIM plugins are cool but with time you forget about even useful 
+commands. This plugin provides a command (|:TCommand|) that lets you 
+select a command from a list (you can optionally display help on the 
+currently hightlighted command) and then run it from the command line.
+It thus provides an alternative to the built-in command-line completion.
+
+
+-----------------------------------------------------------------------
+
+Status:  Works for me (there may be some minor quirks)
+Dependencies:
+  tlib :: http://github.com/tomtom/tlib_vim
+      > git clone git://github.com/tomtom/tlib_vim.git
+Install: See http://github.com/tomtom/vimtlib/blob/master/INSTALL.TXT
+See http://github.com/tomtom for related plugins.
+

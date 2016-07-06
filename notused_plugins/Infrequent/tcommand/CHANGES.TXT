@@ -1,0 +1,19 @@
+0.1
+- Initial release
+
+0.2
+- Default to horizontal split
+- Optional integration with WhereFrom
+- Missed nore menus items
+- Display help on pressing f1 (not <c-o>)
+- Don't automatically select the only item matching the filter
+- Favourites
+- Include the file where a command was defined in the list.
+
+version: "0.03"
+  - s:FormatItem(): Items with comments had a wrong number of tabs (fixed by Sergio Nobre)
+  - CollectCommands(): Only half of the commands were included in the list
+  - The original view wasn't always properly restored
+  - F1 (help on commands) didn't always work
+  MD5 checksum: fbb7ffb5583d9a1c37eadfacb2970825
+
