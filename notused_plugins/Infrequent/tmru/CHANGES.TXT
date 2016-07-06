@@ -1,0 +1,137 @@
+0.1
+Initial release
+
+0.2
+- :TRecentlyUsedFilesEdit
+- Don't register nofile buffers or buffers with no filename.
+- <c-c> copy file name(s) (to @*)
+- When !has('fname_case'), ignore case when checking if a filename is 
+already registered.
+
+0.3
+- Autocmds use expand('%') instead of expand('<afile>')
+- Build menu (if the prefix g:tmruMenu isn't empty)
+- Key shortcuts to open files in (vertically) split windows or tabs
+- Require tlib >= 0.9
+
+0.4
+- <c-w> ... View file in original window
+- <c-i> ... Show file info
+- Require tlib >= 0.13
+
+0.5
+- Don't escape backslashes for :edit
+
+0.6
+- g:tmruEvents can be configured (eg. BufEnter)
+- Require tlib 0.28
+
+0.7
+- If viminfo doesn't include '!', then use tlib to save the file list.
+
+0.8
+- s:EditMRU(): Save tmru list only if it was changed.
+
+0.9
+- <del> ... Remove item(s)
+
+version: "0.10"
+  - .gitignore
+  - Don't check for has('vim_starting')
+  - EditMRU(): Save the new, not the old list
+  - Fix g:tmruExclude default for '+shellslash'.
+  - Attempt at canonical filenames on Windows.
+  - Merge branch 'canonical'
+  - tmruExclude, s:PS: use temporary script-local variable
+  - Also exclude *.tmp and COMMIT_EDITMSG (suggested by blueyed)
+  - Ignore `git-rebase-todo` and `quickfix` by default.
+  - Make filename relative to home dir.
+  - Fix CheckFilenames.
+  - Expand() filename in CanonicalizeFilename for "~".
+  - Optimize performace with MruRetrieve.
+  - Deactivate `:~` modification; performance reasons.
+  - Use `substitute` instead of `fnamemodify`.
+  - s:MruRetrieve(): Use single quotes
+  - Do not split &suffixes on escaped comma.
+  - Remove duplicates in CheckFilenames.
+  - Use unlet() instead of keys() to remove dupes.
+  - Exclude 'fugitive:' files by default.
+  - Fix g:tmruExclude default pattern.
+  - Normalization of entries in CheckFilenames.
+  - g:tmruEvents is a dictionary now (was a string)
+  - Some optimizations with respect to when the list should be saved
+  - Experimental: Maintain some metadata
+  - :TMRUSession command
+  - Undo some over-engineering :-), fixes #14
+  - s:CheckFilenames(): Also remove metadata when removing a dupe
+  - Fix setup of g:TMRU_METADATA; undefined "mru".
+  - s:MruRegister(): also remove metadata when removing an item
+  - disabled sessions
+  - Moved function s:MruRegister()
+  - Added BufDelete to g:tmruEvents
+  - s:AutoMRU() takes event argument
+  - g:tmru_debug
+  - g:tmru_check_disk (fixes #20)
+  - tmru#DisplayUnreadableFiles(mru)
+  MD5 checksum: 7c61e5342a1551f30a2d61fd7dd4965e
+
+version: "1.00"
+  - Use tlib#persistent
+  - Error when the list of recently used files was empty
+  - Handle multiple running instances of vim (fixes #23)
+  - s:MruRetrieve(...): call tlib#persistent#Get() only once
+  - TMRU: Alias for |:TRecentlyUsedFiles|.
+  - Removed support for metadata (which was broken anyway)
+  - on edit ignore swap file exists error + use v:exception for other errors
+  - Set g:tmruSize dependent on whether viminfo is used
+  - File properties again (only if viminfo is not used)
+  - Mark files as persistent/sticky (i.e. the won't be removed from the list)
+  - Fix problem on windows (val -> v:val)
+  - Normalize filenames when registering a buffer; minor improvements
+  - Improved synchronization of mru lists across multiple instances of vim (fixes #26)
+  - Mark sticky filenames with "s"
+  - g:tmru_drop
+  - Renamed g:tmru_single_child_mode to g:tmru_single_instance_mode
+  - Filename indicators (s for sticky files; requires tlib 1.04)
+  - Name buffer __TMRU__
+  - s:SelectMRU(): Don't use s:FindIndex() and make sure to use the currect mru list (fixes #27)
+  - Make sure to save the file list when removing outdated files
+  - Make sure to save the mru list when it has been modified upon the user's request
+  - Re-introduced :TRecentlyUsedFilesSessions command.
+  - Code reorganization
+  - Fix use of relative filenames (closes #29)
+  - Don't simply record a file's latest session but every session it was in
+  - g:tmru_sessions = 9
+  - Make sure to register file's that are already opened when tmru is loaded
+  MD5 checksum: 82ed5a7b285c6ca1ec7bd0a2d5795039
+
+version: "1.01"
+  - addon-info
+  - Use cwd as base directory for relative filenames (fixes #30)
+  - Enable configuration via g:tmru_world (fixes #31)
+  - FIX for previous commit
+  - Make automatic removal on non-existing files configurable & consistent: g:tmru#auto_remove_unreadable (fixes #32)
+  - Only use `:drop` with GUI enabled
+  - Support for b:tmru_world
+  - Support for g:tmru_select_filter (and b:tmru_select_filter) (fixes #34)
+  - Support for named sessions (requires tlib 1.06)
+  - Help template
+  - Don't call buflisted() on all files in the tmru list (fixes #36)
+  - s:SetSessions(): Use (bufexists(filename) && buflisted(filename)
+  - Really call buflisted() only for vim buffers (fixes #36)
+  - g:tmru#sessions_len: Trim list of numbered sessions
+  - g:tmru#set_filename_indicators
+  MD5 checksum: f526a3b4c97827e0c51388a916b2f4aa
+
+version: "1.02"
+  Please see http://github.com/tomtom/tmru_vim/commits/master/
+  MD5 checksum: a3bc711445407a837eb3f407454451b2
+
+  - Set the initial index in the list view to the first non-sticky file
+  - FIX #37: Clarfiy doc of g:tmru#display_relative_filename
+  - Exclude files on truecrypt volumes (linux)
+  - Always enable save on exit
+  - FIX #40: Insert files at the right position; sort list only on exit
+  MD5 checksum: 89f6d47aa31a9df4022bc3e78f887fec
+version: "1.03"
+

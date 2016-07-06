@@ -1,0 +1,342 @@
+*tmru.txt*  Most Recently Used Files
+            Author: Tom Link, micathom at gmail com
+
+This plugin allows users to open recently used files. Users can filter 
+the file list by typing a pattern. Users can open multiple files at 
+once. The list of recently used files is synchronized across multiple 
+instances of (g)vim running simultaneously.
+
+By default, tmru will remember 500 files (see |g:tmruSize|) accessible 
+via the :TRecentlyUsedFiles command. The list can be easily filtered. 
+Users can optionally use fuzzy patterns, which is not enabled by 
+default though (see |g:tlib#input#filter_mode|).
+
+Files can be grouped in sessions:
+
+     - Use named sessions to group files that are frequently edited 
+       together
+     - Use numbered sessions to open files you edited during one of the
+       latest editing sessions
+
+Files can be marked as "sticky" -- they will never be removed from the 
+list.
+
+:TRecentlyUsedFiles ... open one or more recently used file(s)
+:TRecentlyUsedFilesEdit ... edit the mru list
+
+If viminfo contains "!", the data is stored as global variable. Otherwise,
+tlib#cache is used -- which saves the data in ${vimfiles}/cache/tmru/files
+by default.
+
+By default tmru matches the search pattern on the full filename. If 
+you want to match on the basename, add the following to your |.vimrc| 
+file: >
+
+    let g:tmru_world = {}
+    let g:tmru_world.filter_format = 'fnamemodify(%s, ":t")'
+
+If you want to retain the last filter between calls of :TRecentlyUsedFiles, you 
+could also add the following lines: >
+
+    let g:tmru_world.cache_var = 'g:tmru_cache'
+    let g:tmru_world.restore_from_cache = ['filter']
+
+
+-----------------------------------------------------------------------
+Install~
+
+Edit the vba file and type: >
+
+    :so %
+
+See :help vimball for details. If you have difficulties or use vim 7.0, 
+please make sure, you have the current version of vimball
+(vimscript #1502) installed or update your runtime.
+
+This script requires tlib (vimscript #1863) to be installed.
+
+Suggested maps (to be set in ~/.vimrc): >
+    noremap <m-r> :TRecentlyUsedFiles<cr>
+
+
+========================================================================
+Contents~
+
+        g:tmruIgnoreServernamesRx .......... |g:tmruIgnoreServernamesRx|
+        g:tmruMenu ......................... |g:tmruMenu|
+        g:tmruMenuSize ..................... |g:tmruMenuSize|
+        g:tmru_sessions .................... |g:tmru_sessions|
+        g:tmru#display_relative_filename ... |g:tmru#display_relative_filename|
+        g:tmru_single_instance_mode ........ |g:tmru_single_instance_mode|
+        g:tmru_eager_save .................. |g:tmru_eager_save|
+        g:tmru_update_viminfo .............. |g:tmru_update_viminfo|
+        g:tmru_events ...................... |g:tmru_events|
+        g:tmru_resolve_method .............. |g:tmru_resolve_method|
+        g:tmru_file ........................ |g:tmru_file|
+        g:tmruSize ......................... |g:tmruSize|
+        g:tmruExclude ...................... |g:tmruExclude|
+        g:tmru_ignorecase .................. |g:tmru_ignorecase|
+        g:tmru_check_disk .................. |g:tmru_check_disk|
+        TmruObj ............................ |TmruObj()|
+        TmruGetItem ........................ |TmruGetItem()|
+        TmruInsert ......................... |TmruInsert()|
+        :Tmru .............................. |:Tmru|
+        :Tmruedit .......................... |:Tmruedit|
+        :Tmruload .......................... |:Tmruload|
+        :Tmrusave .......................... |:Tmrusave|
+        :Tmrusession ....................... |:Tmrusession|
+        g:tmru#set_filename_indicators ..... |g:tmru#set_filename_indicators|
+        g:tmru#sessions_len ................ |g:tmru#sessions_len|
+        g:tmru_select_filter ............... |g:tmru_select_filter|
+        g:tmru#auto_remove_unreadable ...... |g:tmru#auto_remove_unreadable|
+        g:tmru#close_others ................ |g:tmru#close_others|
+        tmru#SelectMRU ..................... |tmru#SelectMRU()|
+        tmru#EditMRU ....................... |tmru#EditMRU()|
+        tmru#EditFiles ..................... |tmru#EditFiles()|
+        tmru#Session ....................... |tmru#Session()|
+        tmru#Leave ......................... |tmru#Leave()|
+        tmru#DisplayUnreadableFiles ........ |tmru#DisplayUnreadableFiles()|
+        tmru#CheckFilenames ................ |tmru#CheckFilenames()|
+        tmru#RemoveItem .................... |tmru#RemoveItem()|
+        tmru#Drop .......................... |tmru#Drop()|
+        tmru#UnsetPersistent ............... |tmru#UnsetPersistent()|
+        tmru#TogglePersistent .............. |tmru#TogglePersistent()|
+        tmru#PreviousSession ............... |tmru#PreviousSession()|
+        tmru#SelectNamedSession ............ |tmru#SelectNamedSession()|
+        tmru#OpenNamedSession .............. |tmru#OpenNamedSession()|
+        tmru#SessionNames .................. |tmru#SessionNames()|
+        tmru#AddNamedSession ............... |tmru#AddNamedSession()|
+        tmru#RemoveNamedSession ............ |tmru#RemoveNamedSession()|
+        tmru#EditNamedSessions ............. |tmru#EditNamedSessions()|
+        tmru#SetFilenameIndicators ......... |tmru#SetFilenameIndicators()|
+
+
+========================================================================
+plugin/tmru.vim~
+
+                                                    *g:tmruIgnoreServernamesRx*
+g:tmruIgnoreServernamesRx      (default: '^_LIKELYCOMPLETE_$')
+    Don't load the tmru plugin for VIM servers (requires 
+    |clientserver|) matching this |regexp|.
+
+                                                    *g:tmruMenu*
+g:tmruMenu                     (default: 'File.M&RU.')
+    The menu's prefix. If the value is "", the menu will be disabled.
+
+                                                    *g:tmruMenuSize*
+g:tmruMenuSize                 (default: 20)
+    The number of recently edited files that are displayed in the 
+    menu.
+
+                                                    *g:tmru_sessions*
+g:tmru_sessions                (default: 9)
+    If greater than zero, make tmru to save the file list opened when 
+    closing vim. Save at most information for the N latest sessions.
+
+    Setting this variable to 0, disables this feature.
+
+    This variable must be set before starting vim.
+
+                                                    *g:tmru#display_relative_filename*
+g:tmru#display_relative_filename (default: 0)
+    If true, display the relative filename.
+
+    If this options is used with |g:tlib#input#format_filename| set to 
+    "l", |g:tlib_inputlist_filename_indicators| doesn't work.
+
+                                                    *g:tmru_single_instance_mode*
+g:tmru_single_instance_mode    (default: 0)
+    If true, work as if only one instance of vim is running. This 
+    results in reading and writing the mru list less frequently 
+    from/to disk. The list won't be synchronized across multiple 
+    instances of vim running in parallel.
+
+                                                    *g:tmru_eager_save*
+g:tmru_eager_save              (default: !g:tmru_single_instance_mode && !has('gui_running'))
+    If true, save the mru list more often.
+
+    If you run multiple instances of vim, synchronization of mru lists 
+    relies on |FocusGained| and |FocusLost| events but this probably 
+    does not work in all circumstances.
+
+                                                    *g:tmru_update_viminfo*
+g:tmru_update_viminfo          (default: !g:tmru_single_instance_mode)
+    If true, load and save the viminfo file on certain events -- see 
+    |g:tmru_events|.
+    This is useful if 'viminfo' includes '!' and |g:tmru_file| is 
+    empty and you run multiple instances of vim.
+
+                                                    *g:tmru_events*
+g:tmru_events                  (default: {...})
+    A dictionary of {EVENT: ACTION = BOOL, ...}, where ACTION is one 
+    of the following:
+
+    load ....... Load the external representation from disk
+    register ... Register the current buffer
+    save ....... If true, save mru list to disk
+
+
+                                                    *g:tmru_resolve_method*
+g:tmru_resolve_method          (default: 'write')
+    When running multiple instances of vim, there is a possibility of 
+    synchronization conflicts when two instances want to update the 
+    mru list.
+
+    Possible values:
+
+      write .... The current instance of vim overwrites the mru list.
+      read ..... The current instance of vim reads the mru list from 
+                 disk.
+
+    If empty, query the user what to do.
+
+                                                    *g:tmru_file*
+g:tmru_file                    (default: tlib#persistent#Filename('tmru', 'files', 1))
+    Where to save the file list. The default value is only 
+    effective, if 'viminfo' doesn't contain '!' -- in which case 
+    the 'viminfo' will be used.
+
+    CAUTION: The use of viminfo may result in various problems 
+    when you run several instances of vim at once.
+
+                                                    *g:tmruSize*
+g:tmruSize                     (default: empty(g:tmru_file) ? 50 : 500)
+    The number of recently edited files that are registered.
+    The size is smaller if viminfo is used (see |g:tmru_file|).
+
+                                                    *g:tmruExclude*
+g:tmruExclude                  (default: '/te\?mp/\|vim.\{-}/\(doc\|cache\)/\|__.\{-}__$')
+    Ignore files matching this regexp.
+    This includes 'wildignore'.
+
+                                                    *g:tmru_ignorecase*
+g:tmru_ignorecase              (default: !has('fname_case'))
+    If true, ignore case when comparing filenames.
+
+                                                    *g:tmru_check_disk*
+g:tmru_check_disk              (default: 1)
+    If TRUE, allow disk checks when adding files to the list by 
+    means of a registered event (see |g:tmru_events|).
+    This may cause annoying slow-downs in certain settings. In this 
+    case, set this variable to 0 in your |vimrc| file.
+
+                                                    *TmruObj()*
+TmruObj(...)
+
+                                                    *TmruGetItem()*
+TmruGetItem(tmruobj, filename)
+
+                                                    *TmruInsert()*
+TmruInsert(tmruobj, oldpos, item)
+
+                                                    *:Tmru*
+:Tmru
+    Display the MRU list.
+
+                                                    *:Tmruedit*
+:Tmruedit
+    Edit the MRU list.
+
+                                                    *:Tmruload*
+:Tmruload
+    (Re-)Load the MRU list.
+
+                                                    *:Tmrusave*
+:Tmrusave
+    Save the MRU list to disk.
+
+                                                    *:Tmrusession*
+:Tmrusession
+    Open files from a previous session (see |g:tmru_sessions|).
+    This command is only available if g:tmru_sessions > 0.
+
+    With the optional bang [!], close (|:bdelete|) all previously 
+    opened buffers / windows / tabs.
+
+
+========================================================================
+autoload/tmru.vim~
+
+                                                    *g:tmru#set_filename_indicators*
+g:tmru#set_filename_indicators (default: 1)
+
+                                                    *g:tmru#sessions_len*
+g:tmru#sessions_len            (default: 3)
+    Remember at most N sessions per file.
+
+                                                    *g:tmru_select_filter*
+g:tmru_select_filter           (default: '')
+    If non-empty, an expression to |filter()| the list of files.
+    Can also be buffer-local.
+
+                                                    *g:tmru#auto_remove_unreadable*
+g:tmru#auto_remove_unreadable  (default: 1)
+    If true, automatically remove unreadable files from the mru list, 
+    when trying to edit them.
+
+                                                    *g:tmru#close_others*
+g:tmru#close_others            (default: 'bdelete')
+
+                                                    *tmru#SelectMRU()*
+tmru#SelectMRU()
+
+                                                    *tmru#EditMRU()*
+tmru#EditMRU()
+
+                                                    *tmru#EditFiles()*
+tmru#EditFiles(filenames, ...)
+
+                                                    *tmru#Session()*
+tmru#Session(session_no, mru, ...)
+
+                                                    *tmru#Leave()*
+tmru#Leave()
+
+                                                    *tmru#DisplayUnreadableFiles()*
+tmru#DisplayUnreadableFiles(mru)
+
+                                                    *tmru#CheckFilenames()*
+tmru#CheckFilenames(world, selected)
+    Validate list of filenames in mru list.
+    This checks that files are readable and removes any (canonicalized)
+    duplicates.
+
+                                                    *tmru#RemoveItem()*
+tmru#RemoveItem(world, selected)
+
+                                                    *tmru#Drop()*
+tmru#Drop(world, selected)
+
+                                                    *tmru#UnsetPersistent()*
+tmru#UnsetPersistent(world, selected)
+
+                                                    *tmru#TogglePersistent()*
+tmru#TogglePersistent(world, selected)
+
+                                                    *tmru#PreviousSession()*
+tmru#PreviousSession(world, selected)
+
+                                                    *tmru#SelectNamedSession()*
+tmru#SelectNamedSession(world, selected)
+
+                                                    *tmru#OpenNamedSession()*
+tmru#OpenNamedSession(world, selected)
+
+                                                    *tmru#SessionNames()*
+tmru#SessionNames(...)
+
+                                                    *tmru#AddNamedSession()*
+tmru#AddNamedSession(world, selected)
+
+                                                    *tmru#RemoveNamedSession()*
+tmru#RemoveNamedSession(world, selected)
+
+                                                    *tmru#EditNamedSessions()*
+tmru#EditNamedSessions(world, selected)
+
+                                                    *tmru#SetFilenameIndicators()*
+tmru#SetFilenameIndicators(world, mru)
+
+
+
+vim:tw=78:fo=w2croql:isk=!-~,^*,^|,^":ts=8:ft=help:norl:
