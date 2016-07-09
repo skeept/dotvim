@@ -1235,6 +1235,10 @@
     "type": "git",
     "url": "git://github.com/ujihisa/tabpagecolorscheme"
   },
+  "3359": {
+    "type": "git",
+    "url": "git://github.com/fadein/vim-FIGlet"
+  },
   "3361": {
     "type": "git",
     "url": "git://github.com/nathanaelkane/vim-indent-guides"

@@ -1,12 +1,14 @@
 " vim: fdm=marker:et:ts=4:sw=2:sts=2
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-function! signature#utils#Set(var, default)                                                                       " {{{1
-  if !exists(a:var)
-    if type(a:default)
-      execute 'let' a:var '=' string(a:default)
+function! signature#utils#Set(var, value, ...)                                                                  " {{{1
+  " Description: Assign value to var if var is unset or if an optional 3rd arg is provided to force
+
+  if (!exists(a:var) || a:0 && a:1)
+    if type(a:value)
+      execute 'let' a:var '=' string(a:value)
     else
-      execute 'let' a:var '=' a:default
+      execute 'let' a:var '=' a:value
     endif
   endif
   return a:var
@@ -34,16 +36,16 @@ function! signature#utils#Maps(mode)                                            
   " We create separate mappings for PlaceNextMark, mark#Purge('all') and PurgeMarkers instead of combining it with
   " Leader/Input as if the user chooses to use some weird key like <BS> or <CR> for any of these 3, we need to be able
   " to identify it. Eg. the nr2char(getchar()) will fail if the user presses a <BS>
-  let s:SignatureMapLeader = get(g:SignatureMap, 'Leader', 'm')
-  if (s:SignatureMapLeader == "")
+  let l:SignatureMapLeader = get(g:SignatureMap, 'Leader', 'm')
+  if (l:SignatureMapLeader == "")
     echoe "Signature: g:SignatureMap.Leader shouldn't be left blank"
   endif
-  call s:Map(a:mode, 'Leader'           , s:SignatureMapLeader            , 'utils#Input()'                       )
-  call s:Map(a:mode, 'PlaceNextMark'    , s:SignatureMapLeader . ","      , 'mark#Toggle("next")'                 )
-  call s:Map(a:mode, 'ToggleMarkAtLine' , s:SignatureMapLeader . "."      , 'mark#ToggleAtLine()'                 )
-  call s:Map(a:mode, 'PurgeMarksAtLine' , s:SignatureMapLeader . "-"      , 'mark#Purge("line")'                  )
-  call s:Map(a:mode, 'PurgeMarks'       , s:SignatureMapLeader . "<Space>", 'mark#Purge("all")'                   )
-  call s:Map(a:mode, 'PurgeMarkers'     , s:SignatureMapLeader . "<BS>"   , 'marker#Purge()'                      )
+  call s:Map(a:mode, 'Leader'           , l:SignatureMapLeader            , 'utils#Input()'                       )
+  call s:Map(a:mode, 'PlaceNextMark'    , l:SignatureMapLeader . ","      , 'mark#Toggle("next")'                 )
+  call s:Map(a:mode, 'ToggleMarkAtLine' , l:SignatureMapLeader . "."      , 'mark#ToggleAtLine()'                 )
+  call s:Map(a:mode, 'PurgeMarksAtLine' , l:SignatureMapLeader . "-"      , 'mark#Purge("line")'                  )
+  call s:Map(a:mode, 'PurgeMarks'       , l:SignatureMapLeader . "<Space>", 'mark#Purge("all")'                   )
+  call s:Map(a:mode, 'PurgeMarkers'     , l:SignatureMapLeader . "<BS>"   , 'marker#Purge()'                      )
   call s:Map(a:mode, 'DeleteMark'       , "dm"                            , 'utils#Remove(v:count)'               )
   call s:Map(a:mode, 'GotoNextLineAlpha', "']"                            , 'mark#Goto("next", "line", "alpha")'  )
   call s:Map(a:mode, 'GotoPrevLineAlpha', "'["                            , 'mark#Goto("prev", "line", "alpha")'  )
@@ -66,25 +68,29 @@ function! signature#utils#Input()                                               
   " Description: Grab input char
 
   " Obtain input from user ...
-  let l:char = nr2char(getchar())
+  let l:in = nr2char(getchar())
 
   " ... if the input is not a number eg. '!' ==> Delete all '!' markers
-  if (b:SignatureIncludeMarkers =~# l:char)
-    return signature#marker#Purge(l:char)
+  if (b:SignatureIncludeMarkers =~# l:in)
+    return signature#marker#Purge(l:in)
   endif
 
   " ... but if input is a number, convert it to corresponding marker before proceeding
-  if match( l:char, '\d' ) >= 0
-    let l:char = split(')!@#$%^&*(', '\zs')[l:char]
+  if match(l:in, '\d') >= 0
+    let l:char = strpart(b:SignatureIncludeMarkers, l:in, 1)
+  else
+    let l:char = l:in
   endif
 
-  if (b:SignatureIncludeMarkers =~# l:char)
+  if (  (b:SignatureIncludeMarkers =~# l:char)
+   \ && (l:char != ' ')
+   \ )
     return signature#marker#Toggle(l:char)
   elseif (b:SignatureIncludeMarks =~# l:char)
     return signature#mark#Toggle(l:char)
   else
-    " l:char is probably one of `'[]<>
-    execute 'normal! m' . l:char
+    " l:char is probably one of `'[]<> or a space from the gap in b:SignatureIncludeMarkers
+    execute 'normal! m' . l:in
   endif
 endfunction
 
@@ -100,7 +106,7 @@ function! signature#utils#Remove(lnum)                                          
 
   if (l:char =~ '^\d$')
     let l:lnum = (a:lnum == 0 ? line('.') : a:lnum)
-    let l:char = split(')!@#$%^&*(', '\zs')[l:char]
+    let l:char = split(b:SignatureIncludeMarkers, '\zs')[l:char]
     call signature#marker#Remove(lnum, l:char)
   elseif (l:char =~? '^[a-z]$')
     call signature#mark#Remove(l:char)
