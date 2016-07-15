@@ -12,16 +12,13 @@ let s:options = {
       \ 'prompt':    1,
       \ 'highlight': 0,
       \ 'next_tool': '<tab>',
-      \ 'tools':     ['ag', 'ack', 'grep', 'findstr', 'sift', 'pt', 'git'],
+      \ 'tools':     ['ag', 'ack', 'grep', 'findstr', 'pt', 'git'],
       \ 'git':       { 'grepprg':    'git grep -nI',
       \                'grepformat': '%f:%l:%m',
       \                'escape':     '\$.*%#[]' },
       \ 'ag':        { 'grepprg':    'ag --vimgrep',
       \                'grepformat': '%f:%l:%c:%m,%f:%l:%m',
       \                'escape':     '\^$.*+?()[]%#' },
-      \ 'sift':      { 'grepprg':    'sift -n --binary-skip',
-      \                'grepformat': '%f:%l:%m',
-      \                'escape':     '\+*?^$%#()[]' },
       \ 'pt':        { 'grepprg':    'pt --nogroup',
       \                'grepformat': '%f:%l:%m' },
       \ 'ack':       { 'grepprg':    'ack --noheading --column',
@@ -91,14 +88,21 @@ function! s:on_stdout_vim(job_id, data) dict abort
   let self.stdoutbuf += [a:data]
 endfunction
 
+" s:on_stderr() {{{1
+function! s:on_stderr(job_id, data) dict abort
+  let self.stdoutbuf += a:data
+endfunction
+
 " s:on_exit() {{{1
 function! s:on_exit(id_or_channel) dict abort
   execute 'tabnext' self.tabpage
   execute self.window .'wincmd w'
 
-  execute (self.flags.quickfix ? 'cgetexpr' : 'lgetexpr')
-        \ has('nvim') ? ' split(join(self.stdoutbuf, ""), "\r")'
-        \             : ' self.stdoutbuf'
+  if has('nvim')
+    call filter(self.stdoutbuf, '!empty(v:val)')
+  endif
+
+  execute (self.flags.quickfix ? 'cgetexpr' : 'lgetexpr') 'self.stdoutbuf'
 
   unlet s:id
   return s:finish_up(self.flags)
@@ -358,7 +362,7 @@ function! s:run(flags)
   if has('win32') && &shell =~ 'cmd'
     let cmd = s:cmdline
   else
-    let cmd = ['sh', '-c', s:cmdline .' | cat -']
+    let cmd = ['sh', '-c', s:cmdline]
   endif
 
   let options = {
@@ -376,8 +380,8 @@ function! s:run(flags)
       silent! call jobstop(s:id)
     endif
     let s:id = jobstart(cmd, extend(options, {
-          \ 'pty':       1,
           \ 'on_stdout': function('s:on_stdout_nvim'),
+          \ 'on_stderr': function('s:on_stderr'),
           \ 'on_exit':   function('s:on_exit'),
           \ }))
   elseif !get(w:, 'testing') && (v:version > 704 || v:version == 704 && has('patch1967'))
@@ -443,10 +447,9 @@ function! s:finish_up(flags) abort
     endif
   endif
 
-  redraw
-
   if size == 0
     execute (qf ? 'cclose' : 'lclose')
+    redraw
     echo 'No matches found.'
     return
   endif
@@ -465,6 +468,7 @@ function! s:finish_up(flags) abort
     endif
   endif
 
+  redraw
   echo printf('Found %d matches.', size)
   
   if exists('#User#Grepper')
