@@ -1,7 +1,7 @@
 {
 "cpf_upf_sdc":{"archive_name":"cpf_upf_sdc.tar.z","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24372","version":"1","vim_script_nr":5420},
 "gtm-plugin":{"archive_name":"gtm-vim-plugin-v1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24368","version":"1.0.0","vim_script_nr":5419},
-"vimmake":{"archive_name":"vimmake.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24374","version":"0.0.0","vim_script_nr":5418},
+"vimmake":{"archive_name":"vimmake.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24378","version":"0.0.0","vim_script_nr":5418},
 "python-compilers":{"archive_name":"python-compilers.vim.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24360","version":"0.1","vim_script_nr":5417},
 "vim-two-firewatch":{"archive_name":"vim-two-firewatch.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24357","version":"1.0.0","vim_script_nr":5416},
 "vim-one":{"archive_name":"vim-one.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24356","version":"1.0","vim_script_nr":5415},
