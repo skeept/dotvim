@@ -1,4 +1,5 @@
 {
+"audionote":{"archive_name":"audionote.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24379","version":"1.0.0","vim_script_nr":5421},
 "cpf_upf_sdc":{"archive_name":"cpf_upf_sdc.tar.z","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24372","version":"1","vim_script_nr":5420},
 "gtm-plugin":{"archive_name":"gtm-vim-plugin-v1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24368","version":"1.0.0","vim_script_nr":5419},
 "vimmake":{"archive_name":"vimmake.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24378","version":"0.0.0","vim_script_nr":5418},
