@@ -242,10 +242,10 @@ AUTOCMD                                                        *grepper-autocmd*
 When a grep tool finishes running, the plugin emits an event. Handle it like
 this:
 >
-    autocmd User Grepper <execute any normal commands here>
+    autocmd User Grepper <any commands here>
 <
-NOTE: If you intend to use |:echo| or a similar command, also use |:unsilent|
-before it.
+NOTE: Autocmds don't nest by default. If you use any command that would
+trigger new events, be sure to add "nested": |autocmd-nested|.
 
 ==============================================================================
 COLORS                                                          *grepper-colors*

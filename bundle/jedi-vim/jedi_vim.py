@@ -15,6 +15,7 @@ try:
 except ImportError:
     from itertools import izip_longest as zip_longest  # Python 2
 
+import vim
 
 is_py3 = sys.version_info[0] >= 3
 if is_py3:
@@ -90,7 +91,6 @@ def echo_highlight(msg):
         msg.replace('"', '\\"')))
 
 
-import vim
 try:
     import jedi
 except ImportError as e:
@@ -183,7 +183,7 @@ def completions():
             out = []
             for c in completions:
                 d = dict(word=PythonToVimStr(c.name[:len(base)] + c.complete),
-                         abbr=PythonToVimStr(c.name),
+                         abbr=PythonToVimStr(c.name_with_symbols),
                          # stuff directly behind the completion
                          menu=PythonToVimStr(c.description),
                          info=PythonToVimStr(c.docstring()),  # docstr
