@@ -39,6 +39,8 @@ if([bool]$arch) {
   "& $sevenz a $output $dest"
   & $sevenz a $output $dest
   write-host "`n7Z archive: $output"
+  cp $output ~\Dropbox\tmp
+  rm -recurse "$dest"
 }
 
 
