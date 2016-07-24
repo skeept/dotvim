@@ -1,67 +1,44 @@
-# powershell script to copy over files compiled in source dir
+# Install / create archive with new compiles files
 
-$do_break = $False
-$do_backup = $False
+Param(
+    [string]$dest='C:\Program Files\vim\vim74',
+    [string]$source='C:\htemp\vim',
+    [switch]$arch
+)
 
-# similar to perl use strict;
-Set-StrictMode -version 1
-
-$vim_version = "vim74"
-
-$computername = Get-Content Env:computername
-If($computername -match "ISENGARD|MIDDLE-EARTH|Gondor|H8460305022398|H9470305476189|H9470305476169" -OR
-    $computername -match "Erebor"
-    ) {
-    $install = "C:\Program Files\Vim\$vim_version"
-    $backup = "c:\htemp\tmp"
-    $source = "c:\htemp\vim"
-}
-ELSE {
-# settings for specific computers not matching above parameters or break
-  switch ( Get-Content Env:ComputerName )
-  {
-    "WhatIsThiisMachine" {
-      $install = "C:\Program Files\vim\$vim_version"
-        $backup = "C:\htemp\tmp"
-        $source = "C:\htemp\vim"
-    }
-    default {
-      $computername = Get-Content Env:computername
-        Write-Warning "$computername not in list of know computer names!"
-        $do_break = $True
-    }
+if(-not [bool]$arch) {
+  $iden_curr = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent())
+  if(-not $iden_curr.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "you should be Administrator to perform this operation"
+    return
   }
 }
 
-
-#set the default locations for the installation
-
-
-If( $do_break ) { break }
-
-If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
-    [Security.Principal.WindowsBuiltInRole] "Administrator"))
-
-{
-    #Write-Warning "You do not have Administrator rights to run this script!`nPlease re-run this script as an Administrator!"
-    #Break
-  $testIsAdmin = $False
-  Write-Warning "You're not and Administrator!`n"
-  break
+if([bool]$arch) {
+  $name = Join-path ([io.path]::GetTempPath()) (Get-Date -UFormat "__VIM__%Y_%m_%d")
+  mkdir $name
+  $dest = $name
 }
 
-# copy the default installation to a backup location 
-If( $do_backup )
-{
-  Write-Output "Backup: $install --> $backup"
-  Copy-Item "$install" "$backup" -recurse -force
+# do the copy
+
+write-host "Copying elements to $dest"
+write-host "Copy vim.exe and gvim.exe"
+
+Copy-Item (Join-Path $source (Join-path src '*vim*.exe')) "$dest" -force
+
+write-host "Copy $source\runtime folder to $dest"
+Copy-item -recurse -force -path (Join-path $source runtime) -destination "$dest"
+
+if([bool]$arch) {
+  $sevenz = 'C:\Program Files\7-Zip\7z.exe'
+  $vimproc = Join-path "$($env:HOME)" 'vimfiles\bundle\vimproc\lib\*'
+  mkdir "$dest\vimproc_lib" | out-null
+  copy-item -recurse -force $vimproc "$dest\vimproc_lib"
+  $output = "${dest}.7z"
+  "& $sevenz a $output $dest"
+  & $sevenz a $output $dest
+  write-host "`n7Z archive: $output"
 }
 
-#copy vim and gvim to destination
-Write-Output "Copy: vim and gvim from $source\src to $install"
-Copy-Item "$source\src\vim.exe" "$install" -force
-Copy-Item "$source\src\gvim.exe" "$install" -force
 
-Write-Output "Copying $source\runtime to $install"
-# copy runtime folder to install location
-Copy-Item "$source\runtime" "$install" -force -recurse
