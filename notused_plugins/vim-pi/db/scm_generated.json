@@ -5091,6 +5091,10 @@
     "type": "git",
     "url": "git://github.com/xerron/audionote.vim"
   },
+  "5422": {
+    "type": "git",
+    "url": "git://github.com/dalance/vseq.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
