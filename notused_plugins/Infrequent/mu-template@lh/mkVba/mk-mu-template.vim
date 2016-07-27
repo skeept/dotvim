@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/mu-template>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/mu-template/tree/master/License.md>
-" Version:	4.1.0
-let s:version = '4.1.0'
+" Version:	4.2.0
+let s:version = '4.2.0'
 " Created:	06th Nov 2007
-" Last Update:	05th Apr 2016
+" Last Update:	20th Jul 2016
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -47,6 +47,7 @@ after/template/c/internals/register-file-kinds.template
 after/template/c/internals/register-file-kinds-spe.template
 after/template/c/internals/ut-boost.template
 after/template/c/main.template
+after/template/c/printf.template
 after/template/c/section-sep.template
 after/template/c/stderr.template
 after/template/c/switch.template
