@@ -1,4 +1,6 @@
 {
+"dialect":{"archive_name":"dialect.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24415","version":"0.1","vim_script_nr":5424},
+"ditto":{"archive_name":"ditto.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24414","version":"0.1","vim_script_nr":5423},
 "vseq":{"archive_name":"vseq.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24392","version":"1.0.0","vim_script_nr":5422},
 "audionote":{"archive_name":"audionote.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24379","version":"1.0.0","vim_script_nr":5421},
 "cpf_upf_sdc":{"archive_name":"cpf_upf_sdc.tar.z","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24372","version":"1","vim_script_nr":5420},

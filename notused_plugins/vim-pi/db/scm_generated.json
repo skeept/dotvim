@@ -5095,6 +5095,10 @@
     "type": "git",
     "url": "git://github.com/dalance/vseq.vim"
   },
+  "5424": {
+    "type": "git",
+    "url": "git://github.com/danielbmarques/vim-dialect"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
