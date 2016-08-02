@@ -1,4 +1,6 @@
 {
+"wildignore":{"archive_name":"wildignore.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24419","version":"1.0","vim_script_nr":5426},
+"highlightedyank":{"archive_name":"vim-highlightedyank-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24416","version":"1.0.0","vim_script_nr":5425},
 "dialect":{"archive_name":"dialect.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24415","version":"0.1","vim_script_nr":5424},
 "ditto":{"archive_name":"ditto.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24414","version":"0.1","vim_script_nr":5423},
 "vseq":{"archive_name":"vseq.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24392","version":"1.0.0","vim_script_nr":5422},
@@ -1313,7 +1315,7 @@
 "maven-plugin":{"archive_name":"vim-maven-plugin-1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23596","version":"1.1","vim_script_nr":4051},
 "jsruntime":{"archive_name":"jsruntime.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24411","version":"6.0","vim_script_nr":4050},
 "london":{"archive_name":"london.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17882","version":"0.1","vim_script_nr":4049},
-"AmbiCompletion":{"archive_name":"ambicompletion.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23754","version":"0.6","vim_script_nr":4048},
+"AmbiCompletion":{"archive_name":"ambicompletion.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24417","version":"0.7","vim_script_nr":4048},
 "RbREPL":{"archive_name":"rbrepl.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17870","version":"0.0.9","vim_script_nr":4047},
 "neocomplcache-snippets_complete":{"archive_name":"neocomplcache-snippets-complete-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17861","version":"2.0","vim_script_nr":4043},
 "Ideone":{"archive_name":"ideone-vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17898","version":"0.02","vim_script_nr":4042},
