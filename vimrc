@@ -96,6 +96,7 @@ function! SetupVAM()
   VAMAddToActiveAddons leader-guide
   VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons gv
+  VAMAddToActiveAddons neoyank peekaboo
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
