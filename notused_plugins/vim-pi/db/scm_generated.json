@@ -1651,6 +1651,10 @@
     "type": "git",
     "url": "git://github.com/jeetsukumaran/vim-filesearch"
   },
+  "365": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/bash-support"
+  },
   "3650": {
     "type": "git",
     "url": "git://github.com/ndreynolds/vim-cakephp"
@@ -2718,6 +2722,10 @@
   "4412": {
     "type": "git",
     "url": "git://github.com/gberenfield/cljfold.vim"
+  },
+  "4415": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/awk-support"
   },
   "4416": {
     "type": "git",
