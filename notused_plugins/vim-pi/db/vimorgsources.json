@@ -34,7 +34,7 @@
 "vim_eslint":{"archive_name":"vim-eslint.rar","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24288","version":"1.0","vim_script_nr":5393},
 "SIDECAR_Assembly_Syntax_Highlighting_Fil":{"archive_name":"sidecar.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24279","version":"1.0","vim_script_nr":5392},
 "easy-execute":{"archive_name":"easy-execute.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24267","version":"0.1","vim_script_nr":5391},
-"tortus":{"archive_name":"tortus.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24385","version":"1.0.2","vim_script_nr":5390},
+"tortus":{"archive_name":"tortus.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24427","version":"1.0.3","vim_script_nr":5390},
 "RougherExp":{"archive_name":"rougherexp.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24256","version":"0.1","vim_script_nr":5389},
 "Solarized_8":{"archive_name":"vim-solarized8-0.2.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24289","version":"0.2","vim_script_nr":5388},
 "definition":{"archive_name":"definition.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24244","version":"1.0","vim_script_nr":5387},
