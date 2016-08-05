@@ -1,5 +1,5 @@
 {
-"wildignore":{"archive_name":"wildignore.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24425","version":"1.0","vim_script_nr":5426},
+"wildignore":{"archive_name":"wildignore.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24429","version":"1.1","vim_script_nr":5426},
 "highlightedyank":{"archive_name":"vim-highlightedyank-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24416","version":"1.0.0","vim_script_nr":5425},
 "dialect":{"archive_name":"dialect.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24415","version":"0.1","vim_script_nr":5424},
 "ditto":{"archive_name":"ditto.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24414","version":"0.1","vim_script_nr":5423},
@@ -4106,7 +4106,7 @@
 "cool":{"archive_name":"cool.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3900","version":"1.0","vim_script_nr":1216},
 "Super_Shell_Indent":{"archive_name":"sh.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4371","version":"1.6","vim_script_nr":1215},
 "cvsdiff%1214":{"archive_name":"cvsdiff.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3897","version":"0.1","vim_script_nr":1214},
-"Vim_JDE":{"archive_name":"vjde.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17026","version":"2.6.18","vim_script_nr":1213},
+"Vim_JDE":{"archive_name":"vjde.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24430","version":"2.7.0","vim_script_nr":1213},
 "AddIfndefGuard":{"archive_name":"AddIfndefGuard.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3895","version":"0.1","vim_script_nr":1212},
 "XML_Indent":{"archive_name":"xml.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4174","version":"0.993","vim_script_nr":1211},
 "latexmenu":{"archive_name":"latexmenu.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3889","version":"0.1","vim_script_nr":1210},
