@@ -96,7 +96,9 @@ function! SetupVAM()
   VAMAddToActiveAddons leader-guide
   VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons gv
-  VAMAddToActiveAddons neoyank peekaboo
+  VAMAddToActiveAddons neoyank
+  VAMAddToActiveAddons rsi
+  "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
