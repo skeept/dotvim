@@ -1,5 +1,5 @@
 {
-"wildignore":{"archive_name":"wildignore.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24429","version":"1.1","vim_script_nr":5426},
+"wildignore":{"archive_name":"wildignore.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24432","version":"1.2","vim_script_nr":5426},
 "highlightedyank":{"archive_name":"vim-highlightedyank-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24416","version":"1.0.0","vim_script_nr":5425},
 "dialect":{"archive_name":"dialect.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24415","version":"0.1","vim_script_nr":5424},
 "ditto":{"archive_name":"ditto.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24414","version":"0.1","vim_script_nr":5423},
