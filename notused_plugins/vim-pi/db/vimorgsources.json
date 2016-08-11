@@ -2703,7 +2703,7 @@
 "dosbatch_indent":{"archive_name":"dosbatch.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10590","version":"1","vim_script_nr":2631},
 "compilerjsl":{"archive_name":"jsl.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10576","version":"1.00.003","vim_script_nr":2630},
 "explorer":{"archive_name":"explorer.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10565","version":"2.5","vim_script_nr":2629},
-"Nvim-R":{"archive_name":"Nvim-R.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24255","version":"0.9.5","vim_script_nr":2628},
+"Nvim-R":{"archive_name":"Nvim-R.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24438","version":"0.9.6","vim_script_nr":2628},
 "exVim":{"archive_name":"exvim-v0.2.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21840","version":"v0.2.0","vim_script_nr":2627},
 "Vimya":{"archive_name":"vimya-0.5.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21933","version":"0.5","vim_script_nr":2626},
 "Cabal":{"archive_name":"cabal.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16755","version":"1,4","vim_script_nr":2625},
