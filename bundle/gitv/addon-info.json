@@ -1,1 +1,5 @@
-{'dependencies': {'fugitive': {}}}
+{
+	"dependencies": {
+		"fugitive": {}
+	}
+}

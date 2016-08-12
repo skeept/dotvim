@@ -947,7 +947,7 @@
 "psearch":{"archive_name":"psearch-0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19570","version":"0.3","vim_script_nr":4436},
 "tla":{"archive_name":"tla.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19542","version":"2","vim_script_nr":4435},
 "Erroneous":{"archive_name":"erroneous_v1.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22319","version":"1.2.0","vim_script_nr":4434},
-"ingo-library":{"archive_name":"ingo-library-1.025.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24435","version":"1.025","vim_script_nr":4433},
+"ingo-library":{"archive_name":"ingo-library-1.026.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24439","version":"1.026","vim_script_nr":4433},
 "zoomwintab":{"archive_name":"zoomwintab.vim-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19497","version":"0.1","vim_script_nr":4432},
 "tcd":{"archive_name":"tcd.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23395","version":"1.0.1","vim_script_nr":4431},
 "Vimogen":{"archive_name":"vimogen-1.4.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21676","version":"1.4.1","vim_script_nr":4430},
