@@ -5107,6 +5107,14 @@
     "type": "git",
     "url": "git://github.com/danielbmarques/vim-dialect"
   },
+  "5426": {
+    "type": "git",
+    "url": "git://github.com/sstallion/vim-wildignore"
+  },
+  "5427": {
+    "type": "git",
+    "url": "git://github.com/zoubin/vim-gotofile"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
