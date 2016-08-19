@@ -5107,6 +5107,10 @@
     "type": "git",
     "url": "git://github.com/danielbmarques/vim-dialect"
   },
+  "5425": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-highlightedyank"
+  },
   "5426": {
     "type": "git",
     "url": "git://github.com/sstallion/vim-wildignore"
@@ -5114,6 +5118,10 @@
   "5427": {
     "type": "git",
     "url": "git://github.com/zoubin/vim-gotofile"
+  },
+  "5429": {
+    "type": "git",
+    "url": "git://github.com/idanarye/vim-smile"
   },
   "556": {
     "type": "git",
