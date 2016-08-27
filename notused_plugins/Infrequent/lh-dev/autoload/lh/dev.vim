@@ -14,6 +14,7 @@ let s:k_version = 161
 "
 "------------------------------------------------------------------------
 " History:
+"       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
 "       v1.5.3: ~ enh: have lh#dev#find_function_boundaries support any
 "                 language
@@ -65,7 +66,28 @@ endfunction
 let c_function_start_pat = '{'
 let cpp_function_start_pat = '{'
 
-" # Find the function that starts before {line}, and finish after. {{{2
+" Function: lh#dev#reinterpret_escaped_char(seq) {{{2
+" This function transforms '\<cr\>', '\<esc\>', ... '\<{keys}\>' into the
+" interpreted sequences "\<cr>", "\<esc>", ...  "\<{keys}>".
+" It is meant to be used by fonctions like MapNoContext(), InsertSeq(), ... as
+" we can not define mappings (/abbreviations) that contain "\<{keys}>" into the
+" sequence to insert.
+" Note:	It accepts sequences containing double-quotes.
+function! lh#dev#reinterpret_escaped_char(seq) abort
+  try
+    let seq = escape(a:seq, '"\')
+    " let seq = (substitute( seq, '\\\\<\(.\{-}\)\\\\>', "\\\\<\\1>", 'g' ))
+    " exe 'return "'.seq.'"'
+    exe 'return "' .
+          \   substitute( seq, '\\\\<\(.\{-}\)\\\\>', '"."\\<\1>"."', 'g' ) .  '"'
+  catch /.*/
+    " let g:rec_error = a:seq
+    throw v:exception
+  endtry
+endfunction
+
+" Function: lh#dev#find_function_boundaries(line) {{{2
+"# Find the function that starts before {line}, and finish after.
 " @todo: check monoline functions
 function! lh#dev#find_function_boundaries(line) abort
   try
@@ -94,7 +116,7 @@ function! lh#dev#find_function_boundaries(line) abort
   endtry
 endfunction
 
-" # lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
+" Function: lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
 if lh#tags#ctags_flavor() == 'utags'
@@ -150,6 +172,37 @@ function! lh#dev#end_tag_session() abort
   endif
 endfunction
 
+" # Cached Tags
+" New: work in progress
+let s:cached_tags = get(s:, 'cached_tags', {})
+
+" Function: lh#dev#taglist(id [, filter]) {{{3
+function! lh#dev#taglist(id, ...) abort
+  let tags = call('lh#dev#__fetch_tags',[a:id] + a:000)
+endfunction
+
+" Function: lh#dev#__fetch_tags(id [, filter]) {{{3
+function! lh#dev#__fetch_tags(id, ...) abort
+  let tags = get(s:cached_tags, a:id, lh#option#unset())
+  if lh#option#is_unset(tags)
+    try
+      " lh#dev#start_tag_session() return all tags from current buffer
+      " taglist(id) filter tags matching id in &tags
+      call lh#dev#start_tag_session()
+      let tags = taglist(a:id)
+      if a:0 > 0
+        " or lh#function#exe ...
+        let tags = call(a:1, tags)
+        let s:cached_tags[a:id] = tags
+      endif
+    finally
+      call lh#dev#end_tag_session()
+    endtry
+  else
+    call tags.check_up_to_date()
+  endif
+endfunction
+
 " # lh#dev#purge_comments(line, is_continuing_comment [, ft]) {{{2
 " @return [fixed_line, is_continuing_comment]
 function! lh#dev#purge_comments(line, is_continuing_comment, ...) abort
@@ -185,26 +238,6 @@ function! lh#dev#purge_comments(line, is_continuing_comment, ...) abort
   return [line, is_continuing_comment]
 endfunction
 
-" Function: lh#dev#reinterpret_escaped_char(seq) {{{2
-" This function transforms '\<cr\>', '\<esc\>', ... '\<{keys}\>' into the
-" interpreted sequences "\<cr>", "\<esc>", ...  "\<{keys}>".
-" It is meant to be used by fonctions like MapNoContext(), InsertSeq(), ... as
-" we can not define mappings (/abbreviations) that contain "\<{keys}>" into the
-" sequence to insert.
-" Note:	It accepts sequences containing double-quotes.
-function! lh#dev#reinterpret_escaped_char(seq) abort
-  try
-    let seq = escape(a:seq, '"\')
-    " let seq = (substitute( seq, '\\\\<\(.\{-}\)\\\\>', "\\\\<\\1>", 'g' ))
-    " exe 'return "'.seq.'"'
-    exe 'return "' .
-          \   substitute( seq, '\\\\<\(.\{-}\)\\\\>', '"."\\<\1>"."', 'g' ) .  '"'
-  catch /.*/
-    let g:rec_error = a:seq
-    throw v:exception
-  endtry
-endfunction
-"
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 if !exists('s:temp_tags')
@@ -255,6 +288,7 @@ function! lh#dev#__FindEndFunc(first_line) abort
 endfunction
 
 " # lh#dev#__BuildCrtBufferCtags(...) {{{2
+" arg1: [first-line, last-line] => imply get local variables...
 function! lh#dev#__BuildCrtBufferCtags(...) abort
   " let temp_tags = tempname()
   let ctags_dirname = fnamemodify(s:temp_tags, ':h')

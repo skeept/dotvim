@@ -51,7 +51,7 @@
 "Scalpel":{"archive_name":"scalpel-0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24324","version":"0.2","vim_script_nr":5381},
 "splat-syntax":{"archive_name":"splat.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24209","version":"0.1.0","vim_script_nr":5380},
 "Mesonic":{"archive_name":"mesonic-1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24206","version":"1.0","vim_script_nr":5378},
-"vim-grimmjow":{"archive_name":"grimmjow.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24248","version":"0.0.10","vim_script_nr":5377},
+"vim-grimmjow":{"archive_name":"grimmjow.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24470","version":"0.0.13","vim_script_nr":5377},
 "Syntax_match":{"archive_name":"vim-syntax-match-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24202","version":"0.1","vim_script_nr":5376},
 "vim-diction":{"archive_name":"vim-diction-4.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24219","version":"4","vim_script_nr":5375},
 "droWMark":{"archive_name":"droWMark-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24197","version":"1.0","vim_script_nr":5374},

@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.2.2
-let s:k_version = 122
+" Version:      1.6.3
+let s:k_version = 163
 " Created:      05th Oct 2009
-" Last Update:  24th Apr 2015
+" Last Update:  26th Aug 2016
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -23,22 +23,24 @@ function! lh#dev#option#version()
   return s:k_version
 endfunction
 
-" # Debug {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
-
-function! lh#dev#option#verbose(level)
-  let s:verbose = a:level
+" # Debug   {{{2
+let s:verbose = get(s:, 'verbose', 0)
+function! lh#dev#option#verbose(...)
+  if a:0 > 0 | let s:verbose = a:1 | endif
+  return s:verbose
 endfunction
 
-function! s:Verbose(expr)
-  if exists('s:verbose') && s:verbose
-    echomsg a:expr
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
+  if s:verbose
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#option#debug(expr)
+function! lh#dev#option#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -203,6 +205,8 @@ function! lh#dev#option#inherited_filetypes(fts)
   return res
 endfunction
 
+" Be sure lh-vim-lib :LetIfUndef command is correctly defined.
+runtime plugin/let.vim
 LetIfUndef g:cpp_inherits 'c'
 
 " }}}1
