@@ -5127,6 +5127,10 @@
     "type": "git",
     "url": "git://github.com/skywind3000/asyncrun.vim"
   },
+  "5432": {
+    "type": "git",
+    "url": "git://github.com/idanarye/vim-omnipytent"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

@@ -1,4 +1,5 @@
 {
+"Omnipytent":{"archive_name":"omnipytent_v1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24471","version":"1.0.0","vim_script_nr":5432},
 "asyncrun":{"archive_name":"asyncrun.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24465","version":"0.0.0","vim_script_nr":5431},
 "FocusPrevious":{"archive_name":"FocusPrevious.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24462","version":"1.0","vim_script_nr":5430},
 "Smile":{"archive_name":"smile_v1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24456","version":"1.0.1","vim_script_nr":5429},
