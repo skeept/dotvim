@@ -303,6 +303,10 @@
     "type": "git",
     "url": "git://github.com/davidpthomas/vim4accurev"
   },
+  "213": {
+    "type": "git",
+    "url": "git://github.com/WolfgangMehner/c-support"
+  },
   "2136": {
     "type": "git",
     "url": "git://github.com/tpope/vim-repeat"
@@ -5065,7 +5069,7 @@
   },
   "5411": {
     "type": "git",
-    "url": "git://github.com/roosta/srcery"
+    "url": "git://github.com/roosta/vim-srcery"
   },
   "5412": {
     "type": "git",
@@ -5130,6 +5134,14 @@
   "5432": {
     "type": "git",
     "url": "git://github.com/idanarye/vim-omnipytent"
+  },
+  "5433": {
+    "type": "git",
+    "url": "git://github.com/coot/speedy"
+  },
+  "5434": {
+    "type": "git",
+    "url": "git://github.com/gikmx/ctrlp-obsession"
   },
   "556": {
     "type": "git",
