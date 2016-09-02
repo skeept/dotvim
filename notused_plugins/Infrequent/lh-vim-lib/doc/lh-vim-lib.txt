@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v3.12.0)
-                        For Vim version 7+      Last change: 26th Aug 2016
+*lh-vim-lib.txt*        Vim common libraries (v3.13.1)
+                        For Vim version 7+      Last change: 01st Sep 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -29,6 +29,7 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#askvim#exe()|
 - |lh#askvim#scriptnames()|
 - |lh#askvim#scriptname()|
+- |lh#async#queue()|
 - |lh#common#check_deps()|
 - |lh#common#echomsg_multilines()|
 - |lh#common#error_msg()|
@@ -91,6 +92,10 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#transform_if()|
 - |lh#list#unique_sort()| and |lh#list#unique_sort2()|
 - |lh#list#zip()|, and |lh#list#zip_as_dict()|
+Dicts related functions:                                |lhvl#dict|
+- |lh#dict#add_new()|
+- |lh#dict#key()|
+- |lh#dict#subset()|
 Stack related functions:                                |lhvl#stack|
 - |lh#stack#push()|
 - |lh#stack#pop()|
@@ -180,6 +185,9 @@ Log related functions                                   |lhvl#log|
 - |:LHLog|, |lh#log#set_logger()|
 - |lh#log#new()|
 - |lh#log#none()|
+- |lh#log#callstack()||
+- |lh#log#exception()||
+- |lh#log#this()||
 Version Control System functions                        |lhvl#vcs|
 - |lh#vcs#get_svn_root()|
 - |lh#vcs#get_git_root()|
@@ -368,6 +376,32 @@ This function provides a way to obtain information related to a menu entry in
 Vim.
 
 The format of the result being ?to be stabilized?
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#async#queue()*                {{{3
+lh#async#queue(job)~
+This function is a wrapper around recent |job_start()|. As such it requires a
+recent version of Vim without any bugs in the job related part.
+I require v7.4-1980 at least.
+
+It implements a queue of jobs to run. Only one job can be ran simultaneously.
+When a job has finished, the next one is started.
+So far it has been designed to register a |close_cb|. There is one provided by
+default that won't do any thing.
+
+All jobs are started through the |'shell'| in order to support
+`cd dirname && cmd` and more complex things.
+Under Windows it's ran with `[&shell, &shellcmdflag, command]`
+Otherwise, it's ran with `&shell .' '. &shellcmdflag .' '. command`
+
+@param {job} |Dict| that contains:
+            - options for |job_start()|
+            - `'cmd'`: command to execute
+            - `'txt'`: optional description of what is executed for |airline|
+@todo            Support for |job_stop()|
+@todo            Support multiple queues -> `lh#async#new_queue()`
+
+Active queues and bakground job will be presented in |airline-section|`_b`.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#position#IsBefore()*          {{{3
@@ -1160,6 +1194,21 @@ Example: >
     [ 1, 5, 6, 48 ]
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#subset()*                 {{{3
+lh#dict#subset({input},{keys})~
+Returns a subset slice of the {input} dict.
+
+@param[in] {input}  Input |Dict| from which elements will be extracted
+@param[in] {keys}   |List| of keys to extract
+@return a |Dict| of the elements from {input} indexed by the {keys}.
+
+Example: >
+    :let d = {'a':1, 'b':2, 'c':3, 'd':4, 'e':5}
+    :let keys = [ 'a', 'c', 'd']
+    :echo s = lh#dict#subset(d, keys)
+    {'a':1, 'c':3, 'd':4}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#rotate()*                 {{{3
 lh#list#rotate({list}, {rot})~
 @param[in] {list} Input |List| to rotate
@@ -1220,6 +1269,13 @@ Examples: >
                                        \ {'k1': 1, 'k2': 2, 'k3': 'trois', 'k4': 'quatre'})
   AssertEquals(lh#dict#add_new(copy(d1), {'k3': 'trois', 'k1': 'un'}),
                                        \ {'k1': 1, 'k2': 2, 'k3': 'trois'})
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#key()*                    {{{3
+lh#dict#key(one_key_dict)~
+@param[in]     {one_key_dict} Dictionary to test
+@return        The first element of the dictionary
+@throw         An exception if the dictionaru has more than one element.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#push_if_new()*            {{{3
@@ -2520,6 +2576,13 @@ Logs the formatted message with the global logger.
 The message to log is prepared with |lh#fmt#printf()|.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#callstack()*              {{{3
+lh#log#callstack(msg)~
+Logs the current callstack with the global logger.
+Relies on |lh#log#exception()|
+@since Version 3.13.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#log#exception()*              {{{3
 lh#log#exception([{exception} [, {throwpoint}]])~
 Logs the {exception} with the global logger.
@@ -2596,7 +2659,7 @@ VERSION CONTROL SYSTEM RELATED FUNCTIONS              *lhvl#vcs*        {{{2
                                                  *lh#vcs#as_http()*               {{{3
 lh#vcs#as_http([dirname])~
 @param[in] {dirname} repository dirname, defaults to `expand(%:p:h)`.
-@return the url associated to the {dirname} expressed in http form. 
+@return the url associated to the {dirname} expressed in http form.
 @warning Only github is supported right now.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

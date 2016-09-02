@@ -34,6 +34,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#askvim#exe()`                              | Returns what a VimL command echoes                                                                                                                                       |
 | `lh#askvim#scriptnames()`                      | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
 | `lh#askvim#scriptname(id)`                     | Returns the name of the script associate to {id}                                                                                                                         |
+| `lh#async#queue(cmd, options)`                 | Push a `cmd` to execute in a queue of jobs. Requires Vim 7.4-1980                                                                                                        |
 | `lh#common#check_deps()`                       | Checks a VimL symbol is loaded                                                                                                                                           |
 | `lh#common#echomsg_multilines()`               | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
 | `lh#common#error_msg()`                        | Displays an error message                                                                                                                                                |
@@ -108,6 +109,8 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | Function                    | Purpose                                                                                                           |
 |:----------------------------|:------------------------------------------------------------------------------------------------------------------|
 | `lh#dict#add_new()`         | Adds elements from the second dictionary if they are not set yet in the first                                     |
+| `lh#dict#key()`             | Expects the dictionary to have only one element (throw otherwise) and returns it                                  |
+| `lh#dict#subset()`          | Builds a subset dictionary of a dict                                                                              |
 | `lh#list#accumulate()`      | Accumulates the elements from a list                                                                              |
 | `lh#list#accumulate()`      | Accumulates the elements from a list                                                                              |
 | `lh#list#accumulate2()`     | Accumulates the elements from a list -- version closer to C++ std::accumulate()                                   |
