@@ -53,6 +53,9 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#float#max(list)`                           | Returns the maximum of a list of floats                                                                                                                                  |
 | `lh#float#min(list)`                           | Returns the minimum of a list of floats                                                                                                                                  |
 | `lh#ft#is_text()`                              | Tells whether the filetype is a text filetype                                                                                                                            |
+| `lh#has#jobs()`                                | Tells whether +job are correctly implemented                                                                                                                             |
+| `lh#has#partials()`                            | Tells whether partials are correctly implemented                                                                                                                         |
+| `lh#has#default_in_getbufvar()`                | Tells whether `getbufvar()` has its 3 parameters                                                                                                                         |
 | `lh#icomplete#new(startcol, matches, Hook)`    | Prepares a smart insert mode omni-completion menu that'll trigger actions instead of inserting text. _smart_ means characters may be typed to reduce choices.            |
 | `lh#icomplete#new_on(pat, matches, Hook)`      | Same as previous, but this time the startcol is automatically deduced from the word pattern.                                                                             |
 | `lh#icomplete#run(startcol, matches, Hook)`    | Prepares an insert mode completion menu that'll trigger actions instead of inserting text as `complete()` does. **deprecated** prefer `lh#icomplete#new()`               |
@@ -187,6 +190,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#path#munge(pathlist, path)`              | Adds a path to a list on the condition the path isn't already present, and that it points to a valid node|
 | `lh#path#readlink(pathname)`                 | Returns `readlink` result on the pathname -- when the command is available on the system                 |
 | `lh#path#relative_to()`                      | Returns the relative offset to reference files in another directory                                      |
+| `lh#path#remove_dir_mark()`                  | Removes the trailing `/` or `\` in the path if any                                                       |
 | `lh#path#select_one()`                       | Asks the end-user to select one pathname                                                                 |
 | `lh#path#shellslash()`                       | Returns the shellslash character                                                                         |
 | `lh#path#simplify()`                         | Like `simplify()`, but also strips the leading `./`                                                      |

@@ -2,10 +2,10 @@
 " File:         autoload/extension/async.vim                      {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      3.13.0.
-let s:k_version = '3130'
+" Version:      3.13.2.
+let s:k_version = '3132'
 " Created:      01st Sep 2016
-" Last Update:  01st Sep 2016
+" Last Update:  02nd Sep 2016
 "------------------------------------------------------------------------
 " Description:
 "       Airline extension for lh#async queues
@@ -20,12 +20,12 @@ let s:cpo_save=&cpo
 set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
-" # Version {{{2
+" # Version      {{{2
 function! airline#extensions#async#version()
   return s:k_version
 endfunction
 
-" # Debug   {{{2
+" # Debug        {{{2
 let s:verbose = get(s:, 'verbose', 0)
 function! airline#extensions#async#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
@@ -46,6 +46,11 @@ function! airline#extensions#async#debug(expr) abort
   return eval(a:expr)
 endfunction
 
+" # Requirements {{{2
+let s:has_jobs = lh#has#jobs()
+if ! s:has_jobs
+  finish
+endif
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -92,7 +97,7 @@ function! airline#extensions#async#get_activity() abort
   else
     let txt = get(jobs[0], 'txt', lh#option#unset())
     if lh#option#is_set(txt)
-      let waiting = nb_jobs == 1 ? '' : ' + ' . (nb_jobs-1) 
+      let waiting = nb_jobs == 1 ? '' : ' + ' . (nb_jobs-1)
       return txt . waiting
     else
       return len(jobs)

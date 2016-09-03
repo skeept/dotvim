@@ -5147,6 +5147,10 @@
     "type": "git",
     "url": "git://github.com/pseewald/AnyFold"
   },
+  "5437": {
+    "type": "git",
+    "url": "git://github.com/alx741/vim-hindent"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v3.13.1)
-                        For Vim version 7+      Last change: 01st Sep 2016
+*lh-vim-lib.txt*        Vim common libraries (v3.13.2)
+                        For Vim version 7+      Last change: 02nd Sep 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -43,6 +43,9 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#fmt#printf()|
 - |lh#float#min()|, |lh#float#max()|,
   |lh#float#arg_min()|, |lh#float#arg_max()|
+- *lh#has#partials()* returns whether |Partial|s are implemented
+- *lh#has#jobs()*     returns whether |+job|s are correctly implemented
+- *lh#has#default_in_getbufvar()* returns whether |getbufvar()| has 3 parameters
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
@@ -124,6 +127,7 @@ Paths related functions:                                |lhvl#path|
 - |lh#path#is_url()|
 - |lh#path#readlink()|
 - |lh#path#relative_to()|
+- |lh#path#remove_dir_mark()|
 - |lh#path#select_one()|
 - |lh#path#simplify()|
 - |lh#path#strip_common()|
@@ -380,14 +384,15 @@ The format of the result being ?to be stabilized?
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#async#queue()*                {{{3
 lh#async#queue(job)~
-This function is a wrapper around recent |job_start()|. As such it requires a
-recent version of Vim without any bugs in the job related part.
-I require v7.4-1980 at least.
+This function is a wrapper around recent |job_start()| function. As such it
+requires a recent version of Vim without any bugs in the |+job| related part.
+I've chosen to require v7.4-1980 at least.
 
-It implements a queue of jobs to run. Only one job can be ran simultaneously.
-When a job has finished, the next one is started.
-So far it has been designed to register a |close_cb|. There is one provided by
-default that won't do any thing.
+This function implements a queue of jobs to run. Only one job can be ran
+simultaneously. When a job has finished, the next one is started.
+So far it has been designed to register a |close_cb|, and it has been used
+also with a |callback|. There is one default callback provided for |close_cb|
+that won't do any thing.
 
 All jobs are started through the |'shell'| in order to support
 `cd dirname && cmd` and more complex things.
@@ -395,11 +400,15 @@ Under Windows it's ran with `[&shell, &shellcmdflag, command]`
 Otherwise, it's ran with `&shell .' '. &shellcmdflag .' '. command`
 
 @param {job} |Dict| that contains:
-            - options for |job_start()|
-            - `'cmd'`: command to execute
-            - `'txt'`: optional description of what is executed for |airline|
-@todo            Support for |job_stop()|
-@todo            Support multiple queues -> `lh#async#new_queue()`
+  - options for |job_start()|
+  - `'cmd'`: command to execute
+  - `'txt'`: optional description of what is executed for |airline|
+  - `'before_starting_cb'`: optional callback for a function to execute before
+    starting any new job. Indeed, things that must be executed before a job
+    starts shall not be executed before the previous job has ended. This
+    callback helps to delay operations written in |VimL|.
+@todo Support for |job_stop()|
+@todo Support multiple queues -> `lh#async#new_queue()`
 
 Active queues and bakground job will be presented in |airline-section|`_b`.
 
@@ -1529,6 +1538,11 @@ Ensures the returned directory name ends with a '`/`' or a '`\`'.
       character to append.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#path#remove_dir_mark()*         {{{3
+lh#path#remove_dir_mark({dirname})~
+Remove the trailing 'shellslash' character ('`/`' or a '`\`') from {dirname}.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#path#fix()*                   {{{3
 lh#path#fix({pathname} [,{shellslash} [,{quote-char}]]~
 Discl.: This function is the old |system-tools|' |FixPathName| moved to lh-vim-lib.
@@ -1876,6 +1890,13 @@ Creates a menu entry and its associated mappings for several modes at once.
 @param[in] {menu-priority} |sub-menu-priority| for the new menu entry
 @param[in] {menu-text}      Name of the new menu entry
 @param[in] {key-binding}    Sequence of keys to execute the associated action
+                            If empty, no mapping will be done.
+                            It can be a key to help fill a menu reminder, and
+                            yet not define a mapping, it that case it takes
+                            the attributes:
+            - `'binding'`: what {key-binding} would have contained otherwise
+            - `'modes'`:   (not yet implemented)
+            - `'action'`:  (not yet implemented)
 @param[in] "<buffer>"       If the string "<buffer>" is provided, then the
                             associated mapping will be a |map-<buffer>|, and
                             the menu will be available to the current buffer
@@ -1885,7 +1906,6 @@ Creates a menu entry and its associated mappings for several modes at once.
                             or from a |local_vimrc|.
 @param[in] {action}         Action to execute when {key-binding} is typed, or
                             when the menu entry is selected.
-@todo support select ('s') and visual-not-select ('x') modes
 
 First example:~
 The following call will add the menu "LaTeX.Run LaTeX once <C-L><C-O>", with
