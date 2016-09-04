@@ -3135,7 +3135,7 @@
 "seoul":{"archive_name":"seoul.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8567","version":"1.1","vim_script_nr":2211},
 "Shobogenzo":{"archive_name":"shobogenzo.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8537","version":"1.0","vim_script_nr":2210},
 "pyrex":{"archive_name":"pyrex.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8535","version":"7.1.01","vim_script_nr":2209},
-"Txtfmt_The_Vim_Highlighter":{"archive_name":"txtfmt_v3.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24246","version":"3.0","vim_script_nr":2208},
+"Txtfmt_The_Vim_Highlighter":{"archive_name":"txtfmt_v3.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24489","version":"3.1","vim_script_nr":2208},
 "Relativize":{"archive_name":"relativize.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8518","version":"0.1","vim_script_nr":2207},
 "runzip":{"archive_name":"zip.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11942","version":"1.1","vim_script_nr":2206},
 "CoremoSearch":{"archive_name":"coremo_search.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17188","version":"0.4","vim_script_nr":2205},
