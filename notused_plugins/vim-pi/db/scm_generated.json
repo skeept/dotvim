@@ -5151,6 +5151,10 @@
     "type": "git",
     "url": "git://github.com/alx741/vim-hindent"
   },
+  "5439": {
+    "type": "git",
+    "url": "git://github.com/oinksoft/vim-sml"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
