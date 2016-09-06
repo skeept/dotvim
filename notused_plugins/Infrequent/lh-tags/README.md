@@ -1,4 +1,4 @@
-# lh-tags: a ctags wrapper for Vim
+# lh-tags v2.0.0: a ctags wrapper for Vim
 
 ## Introduction
 
@@ -17,8 +17,20 @@ This plugin has two features:
  * Is incremental: when a file under the watch of lh-tags is modified, only
    this file is parsed -- its previous information is deleted from the current
    `tags` file.
- * Can be run on the while project, when needed
- * Is, of course, [parametrisable](options).
+ * Can be run on the whole project, when needed
+ * Is, of course, [parametrisable](#options).
+ * Can be run asynchronously (this is the default starting from Vim 7.4-1980).
+   When this happens, [airline](https://github.com/vim-airline/vim-airline)
+   will display information about the background jobs.
+ * Can be done on a third-party project freshly cloned/checked out without a
+   need to define any configuration file for 
+   [local_vimrc](http://github.com/LucHermitte/local_vimrc).
+ * Doesn't have external dependencies other than `ctags` and `cd`.
+   BTW, I highly recommend [universal ctags](http://github.com/universal-ctags/ctags)
+   over exhuberant ctags.
+ * Is project friendly: i.e. multiple projects can be opened simultaneously in
+   a vim session, and we can run `ctags` on each of them with different
+   specialized options to produced dedicaded tag files.
 
 ### Tags selection
  * Presents all tags that match the selected text (`META-W-META-DOWN`), or the
@@ -39,8 +51,8 @@ In order to use lh-tags, I highly recommend to use a plugin like
 [local_vimrc](http://github.com/LucHermitte/local_vimrc).
 
 In the buffer local section, you'll have to:
- * adjust `(bg):tags_options_{ft}` if the default values don't suit you -- I
-   often add exclusion lists in my projects.
+ * adjust `(bg):tags_options.{ft}.flags` if the default values don't suit you
+   -- I used to add exclusion lists in my projects.
  * to be sure where the root directory of the source files is:
    * either set `b:tags_dirname`, or `b:project_sources_dir`, or
      `b:BTW_project_config._.paths.sources` to the project root directory --
@@ -59,10 +71,15 @@ let b:project_sources_dir = g:FooBarProject_config.paths.sources
 LetIfUndef b:BTW_project_config._ = g:FooBarProject_config
 ...
 " ======================[ tags generation {{{2
-" lh#path#fix() comes from lh-vim-lib
-let b:tags_options = ' --exclude="*.dox" --exclude="html" --exclude="*.xml" --exclude="*.xsd" --exclude=".*sw*"'
-let b:tags_options .= ' --exclude="*.txt" --exclude="cmake" --exclude="*.cmake" --exclude="*.o" --exclude="*.os" --exclude="*.tags" --exclude=tags --exclude="*.tar"'
+" Be sure tags are automatically updated on the current file 
+LetIfUndef b:tags_options.no_auto 0
+" Declare the indexed filetypes
+call lh#tags#add_indexed_ft('c', 'cpp')
+" Update Vim &tags option w/ the tag file produced for the current project
 call lh#tags#update_tagfiles() " uses b:project_sources_dir/BTW_project_config
+" Register ITK/OTB extensions as C++ extensions (universal ctags!)
+silent! unlet b:tags_options.cpp.flags
+call lh#tags#set_lang_map('cpp', '+.txx')
 ```
 
 Then, you'll have to generate the `tags` database once (`<C-X>ta`), then you
@@ -84,12 +101,37 @@ can enjoy lh-tag automagic update of the database, and improved tag selection.
    * or where `.svn/` is found in parent directories ;
    * or asked to the end-user (previous values are recorded in case several
      files from a same project are opened).
- * `(bg):tags_options` defaults to an empty string; you'll have to adjust these
-   options to your needs.
- * `(bg):tags_options_{ft}` defaults to:
-    * c: `'--c++-kinds=+p --fields=+imaS --extra=+q'`
-    * cpp: `'--c++-kinds=+p --fields=+imaS --extra=+q --language-force=C++'`
-    * vim: `'--fields=+mS --extra=+q'`
+ * `lh#tags#add_indexed_ft()`  
+   Manages the filetypes whose files will be indexed. Other files are ignored.
+   This sets the local option `b:tags_options.indexed_ft` -- prefer this
+   function when using [local_vimrc](http://github.com/LucHermitte/local_vimrc)
+   to configure project.
+   It's also possible to set the global option `b:tags_options.indexed_ft`
+   that'll be used instead. It's meant to be used when no project are defined.
+   ```vim
+   :call lh#tags#add_indexed_ft('c', 'cpp')
+   ```
+
+ * `lh#tags#set_lang_map()`  
+   Manages the extensions associated to a filetype. You could directly set
+   `b:tags_options.{ft}.flags` to `--langmap=C++:+.txx` or `--map-C++=+.txx`,
+   the point is this tool function helps to set the option to the best
+   possible value according to the current `ctags` flavour (etags or utags).
+   ```vim
+   :call lh#tags#set_lang_map('cpp', '+.txx')
+   ```
+
+ * `(bg):tags_options.flags` defaults to an empty string; It contains extra
+   flags you could pass to `ctags` execution. You'll have to adjust
+   these options to your needs.
+ * `(bg):tags_options.{ft}.flags` defaults to:
+    * c:    `'--c++-kinds=+p --fields=+imaS --extra=+q'`
+    * cpp:  `'--c++-kinds=+pf --fields=+imaSft --extra=+q --language-force=C++'`
+            `'x{c++.properties}` will also be added when using Universal ctags
+    * java: `'--c++-kinds=+acefgimp --fields=+imaSft --extra=+q --language-force=Java'`
+    * vim:  `'--fields=+mS --extra=+q'`
+
+   Warning: This was renamed from `(bg):tags_options_{ft}` in version 2.0.0.
  * `(bg):tags_filename` defaults to `'tags'`; in case you want your `tags` file
    to have another name.
  * `(bg):tags_executable` defaults to `ctags`; you should not need to change
@@ -99,10 +141,25 @@ can enjoy lh-tag automagic update of the database, and improved tag selection.
  * `(bg):tags_select` defaults to `'expand('<cword>')'`; this policy says how
    the current word under the cursor is selected by normal mode mapping
    `META-W-META-DOWN`.
- * `(bg):LHT_no_auto` defaults to 0; set it to 1 if you want to disable the
-   automatic incremental update.
+ * `(bg):tags_options.no_auto` defaults to 1; set it to 0 if you want to enable the
+   automatic incremental update.  
+   Warning: this has changed in version 2.0.0; it used to be named
+   `(bg):LHT_no_auto`, and it have the opposite default value.
  * `(bg):tags_to_spellfile` defaults to empty string; this option permits to
    add all the tags to Vim spellchecker ignore list.
+ * `(bg):tags_options.run_in_bg` ; set to 1 by default, if |+job|s are supported.
+   Tells to execute `<Plug>CTagsUpdateCurrent` and `<Plug>CTagsUpdateAll` in
+   background (through |+job| feature).  
+   This option is best set in your `.vimrc`. If you want to change or toggle
+   its value, you'd best use the menu `Project->Tags->Generate` when running
+   gvim, or the `:Toggle` command: 
+
+   ```vim
+   :Toggle ProjectTagsGenerate
+   ```
+
+A typical configuration file for
+[local_vimrc](http://github.com/LucHermitte/local_vimrc) will be:
 
 ```vim
 " #### In _vimrc_local.vim
@@ -127,19 +184,16 @@ exe 'setlocal spellfile+='.lh#path#fix(b:project_sources_dir.'/'.b:tags_to_spell
 
 ## To Do
 
- * Enhance the way `&tags` is updated to follow `b:tags_dirname`.
- * This feature will require background generation for the first time.
  * Have behaviour similar to the one from the quickfix mode (possibility to
    close and reopen the search window; prev&next moves)
  * Show/hide declarations -- merge declaration and definitions
  * Pluggable filters (that will check the number of parameters, their type, etc)
- * Simplify `tags_options`. Have a `tag_crt_languages` instead.
 
 
 ## Design Choices
 
 ## Installation
-  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v3.12.0
+  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v3.13.1
   * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-tags (this is the preferred method because of the dependencies)
 ```vim
 ActivateAddons lh-tags

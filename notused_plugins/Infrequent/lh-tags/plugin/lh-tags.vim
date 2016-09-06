@@ -3,11 +3,11 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-tags>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-tags/License.md>
-" Version:      1.3.0
-let s:k_version = '1.3.0'
+"               <URL:http://github.com/LucHermitte/lh-tags/tree/master/License.md>
+" Version:      2.0.0
+let s:k_version = '2.0.0'
 " Created:      04th Jan 2007
-" Last Update:  18th Apr 2015
+" Last Update:  01st Sep 2016
 "------------------------------------------------------------------------
 " Description:
 "       Small plugin related to tags files.
@@ -17,6 +17,9 @@ let s:k_version = '1.3.0'
 "
 "------------------------------------------------------------------------
 " History:
+"       v2.0.0:
+"       (*) LHT_no_auto defaults to 1 now, and is renamed to
+"       tags_options.no_auto
 "       v1.3.0:
 "       (*) Tags browsing enabled even without ctags installed
 "       (*) Tags filtering
@@ -144,17 +147,49 @@ if !executable(s:tags_executable)
   finish
 endif
 
+" ======================================================================
 " Mappings {{{2
 " inoremap <expr> ; lh#tags#run('UpdateTags_for_ModifiedFile',';')
 
 nnoremap <silent> <Plug>CTagsUpdateCurrent :call lh#tags#update_current()<cr>
+let s:map_UpdateCurrent = {'modes': 'n'}
 if !hasmapto('<Plug>CTagsUpdateCurrent', 'n')
   nmap <silent> <c-x>tc  <Plug>CTagsUpdateCurrent
+  let s:map_UpdateCurrent['binding'] = '<c-x>tc'
 endif
 
 nnoremap <silent> <Plug>CTagsUpdateAll     :call lh#tags#update_all()<cr>
+let s:map_UpdateAll = {'modes': 'n'}
 if !hasmapto('<Plug>CTagsUpdateAll', 'n')
   nmap <silent> <c-x>ta  <Plug>CTagsUpdateAll
+  let s:map_UpdateAll['binding'] = '<c-x>ta'
+endif
+
+" Menu {{{2
+if has('gui_running') && has ('menu')
+  amenu          50.97     &Project.-----<sep>-----       Nop
+endif
+call lh#menu#make('anore', '50.97.100',
+      \ '&Project.&Tags.&Update all',
+      \ s:map_UpdateAll,
+      \ ':call lh#tags#update_all()<cr>')
+" TODO inhibit this menu when no_auto is true
+call lh#menu#make('anore', '50.97.101',
+      \ '&Project.&Tags.&Update current',
+      \ s:map_UpdateCurrent,
+      \ ':call lh#tags#update_current()<cr>')
+
+if lh#has#jobs()
+  call lh#let#if_undef('g:tags_options.run_in_bg', 1)
+  if has('gui_running') && has ('menu')
+    amenu          50.97.200 &Project.&Tags.-----<sep>----- Nop
+  endif
+  call lh#menu#def_toggle_item(
+        \ { 'variable': 'tags_options.run_in_bg'
+        \ , 'values': [0, 1]
+        \ , 'menu': { 'priority': '50.98.201', 'name': "&Project.&Tags.&Generate"}
+        \ , 'texts': ['blocked', 'in background']
+        \ })
 endif
 
 
@@ -162,9 +197,10 @@ endif
 " Auto command for automatically tagging a file when saved {{{2
 augroup LH_TAGS
   au!
-  autocmd BufWritePost,FileWritePost * if ! lh#option#get('LHT_no_auto', 0) | call lh#tags#run('UpdateTags_for_SavedFile',0) | endif
+  autocmd BufWritePost,FileWritePost * if ! lh#option#get('tags_options.no_auto', 1) | call lh#tags#run('UpdateTags_for_SavedFile',0) | endif
 aug END
 
+" }}}1
 " ======================================================================
 let g:loaded_lh_tags = s:k_version
 let &cpo=s:cpo_save
