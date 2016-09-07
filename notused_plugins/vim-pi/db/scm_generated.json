@@ -5159,6 +5159,18 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-wwdc16-theme"
   },
+  "5441": {
+    "type": "git",
+    "url": "git://github.com/xerron/stardict.vim"
+  },
+  "5442": {
+    "type": "git",
+    "url": "git://github.com/xerron/wordbyword.vim"
+  },
+  "5443": {
+    "type": "git",
+    "url": "git://github.com/xerron/rimas.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

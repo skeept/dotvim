@@ -84,6 +84,8 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#position#is_before()`                      | Tells if a position in a buffer is before another one                                                                                                                    |
 | `lh#string#matches()`                          | Extracts a list of all matches in a string                                                                                                                               |
 | `lh#string#trim()`                             | Trim a string                                                                                                                                                            |
+| `lh#time#bench(F,...)`                         | Times the execution of `F(...)`                                                                                                                                          |
+| `lh#time#date()`                               | return the equivalent of `strftime('%D-th %b %Y)`                                                                                                                        |
 | `lh#vcs#get_type(...)`                         | Returns the type of the versioning system the file is under                                                                                                              |
 | `lh#vcs#as_http(...)`                          | Returns the url of the repository the parameter is under, or `g:url` if none is found. Enforce the result in the form http://, if possible                               |
 | `lh#vcs#decode_github_url(url)`                | Extract user name and repository name from a github url                                                                                                                  |
@@ -142,6 +144,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#subset()`          | Builds a subset slice of a list                                                                                   |
 | `lh#list#transform()`       | Applies a transformation on each element from a list ; unlike `map()`, the input list is left unchanged           |
 | `lh#list#transform_if()`    | Applies a transformation on each element from a list that match the predicate                                     |
+| `lh#list#uniq()`            | Emulates `uniq()` when not defined, calls it otherwise                                                            |
 | `lh#list#unique_sort()`     | Sorts the elements of a list, and makes sure they are all unique                                                  |
 | `lh#list#unique_sort2()`    | Another implementation of `unique_sort`                                                                           |
 | `lh#list#upper_bound()`     | See C++ [`std::upper_bound`](http://en.cppreference.com/w/cpp/algorithm/upper_bound)                              |
