@@ -1,4 +1,5 @@
 {
+"git-switcher":{"archive_name":"git-switcher.vim-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24514","version":"1.0.1","vim_script_nr":5446},
 "rimas":{"archive_name":"rimas.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24505","version":"1.1.0","vim_script_nr":5443},
 "wordbyword":{"archive_name":"wordbyword.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24504","version":"1.0.0","vim_script_nr":5442},
 "stardict":{"archive_name":"stardict.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24503","version":"1.0.0","vim_script_nr":5441},

@@ -5171,6 +5171,10 @@
     "type": "git",
     "url": "git://github.com/xerron/rimas.vim"
   },
+  "5446": {
+    "type": "git",
+    "url": "git://github.com/ToruIwashita/git-switcher.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
