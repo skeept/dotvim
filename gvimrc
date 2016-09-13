@@ -39,6 +39,7 @@ set cmdheight=1
 "set guifont=Courier\ 13
 "set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
 if g:is_win
+  set rop=type:directx
   set guifont=Terminus:h12
 else
   set guifont=Terminus\ 12,
