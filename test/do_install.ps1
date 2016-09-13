@@ -1,7 +1,7 @@
 # Install / create archive with new compiles files
 
 Param(
-    [string]$dest='C:\Program Files\vim\vim74',
+    [string]$dest='C:\Program Files\vim\vim80',
     [string]$source='C:\htemp\vim',
     [switch]$arch
 )
