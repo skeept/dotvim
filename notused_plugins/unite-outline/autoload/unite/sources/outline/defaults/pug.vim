@@ -1,5 +1,5 @@
 "=============================================================================
-" File: autoload/unite/sources/outline/defaults/jade.vim
+" File: autoload/unite/sources/outline/defaults/pug.vim
 " Author: Jens Himmelreich <jens.himmelreich@gmail.com>
 " Version: 0.1.0
 "
@@ -15,7 +15,7 @@ let s:outline_info = {
       \ 'heading': s:heading
       \ }
 
-function! unite#sources#outline#defaults#jade#outline_info() abort
+function! unite#sources#outline#defaults#pug#outline_info() abort
   return s:outline_info
 endfunction
 
