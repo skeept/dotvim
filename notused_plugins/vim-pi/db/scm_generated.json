@@ -5183,6 +5183,14 @@
     "type": "git",
     "url": "git://github.com/w0rp/ale"
   },
+  "5450": {
+    "type": "git",
+    "url": "git://github.com/andbar-ru/vim-unicon"
+  },
+  "5451": {
+    "type": "git",
+    "url": "git://github.com/mbbill/vim-seattle"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
