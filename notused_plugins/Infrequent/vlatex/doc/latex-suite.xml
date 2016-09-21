@@ -109,8 +109,8 @@ set iskeyword+=:
   </para>
   <para>
    When &ls; first starts up, it scans the
-   <literal>$VIM/ftplugin/latex-suite/templates/</literal>
-   directory and creates menu items based on the files found there. When
+   <link linkend="Tex_CustomTemplateFolder">template directory</link>
+   and creates menu items based on the files found there. When
    you select a template from this menu, the file will be read in above
    the first line of the current file.
   </para>
@@ -122,10 +122,9 @@ set iskeyword+=:
   </para>
   <para>
    You can place your own templates in the
-   <literal>$VIM/ftplugin/latex-suite/templates/</literal> directory in
-   order for them to be available via the menu. Unless &ls; releases a
-   template with the same name, these files should not get over-written
-   when you install a new release over an existing one.
+   <link linkend="Tex_CustomTemplateFolder">template directory</link>
+   in
+   order for them to be available via the menu.
   </para>
   <note>
    <para>
@@ -2356,7 +2355,7 @@ let g:Tex_CompileRule_pdf = 'ps2pdf $*.ps'</programlisting>
   <para>
    When you open up a LaTeX file, all the portions will be automatically folded
    up. However, no new folds will be created until you press
-   <literal>&lt;F6&gt;</literal> or <literal>\rf</literal>. (rf
+   <literal>\rf</literal>. (rf
    stands for "refresh folds").
   </para>
   <para>
@@ -2384,19 +2383,27 @@ let g:Tex_CompileRule_pdf = 'ps2pdf $*.ps'</programlisting>
   <section id="default-folding">
    <title>Default Folding Scheme in &ls;</title>
    <para>
-    By default &ls; creates folds in the following manner:
+    By default, &ls; creates folds in the following manner:
    </para>
-   <programlisting>\chapter
-\section
-%%fakesection
-    \subsection
-        \subsubsection
-            \item
-                \equation
-                \eqnarray
-                \figure
-                \table
-                \footnote</programlisting>
+   <programlisting>
+\part
+%%fakepart
+    \chapter
+    %%fakechapter
+        \section
+        %%fakesection
+            \subsection
+            %%fakesubsection
+                \subsubsection
+                %%fakesubsubsection
+                    \paragraph
+                    %%fakeparagraph
+                        \item
+                            \equation
+                            \eqnarray
+                            \figure
+                            \table
+                            \footnote</programlisting>
    <para>
     The indentation shows the "nestedness" of the folding scheme.
     See the <link linkend="customizing-what-to-fold">next section</link> to
@@ -2415,15 +2422,27 @@ let g:Tex_CompileRule_pdf = 'ps2pdf $*.ps'</programlisting>
      This entry defines which sections will be folded. This
      setting is a comma separated list of section names. 
      The default value is:
-     <programlisting>part,chapter,section,%%fakesection,
-subsection,subsubsection,paragraph</programlisting>
+     <programlisting>part,chapter,section,subsection,subsubsection,paragraph</programlisting>
      Each of the entries in the list will fold up a section of the
-     corresponding name. The <literal>%%fakesection</literal> section is
+     corresponding name and the corresponding <literal>%%fakesection</literal>.
+     The <literal>%%fakesection</literal> section is
      provided as a means for the user to group lines into "fake" sections.
-     A <literal>%%fakesection</literal> is assumed to start on a line which
-     begins with the string <literal>%%fakesection</literal> and continue
-     till the start of the next <literal>\section</literal>,
-     <literal>\subsection</literal> or any other section.
+     In particular, it is useful to fold the introduction of a <literal>section</literal>
+     that is not part of a <literal>subsection</literal>:
+     <programlisting>
+\section{Latex-Suite}
+%%fakesubsection Introduction
+A short introduction of the features of Latex-Suite.
+\subsection{Installation}
+Installation instructions.</programlisting>
+     Without the <literal>%%fakesubsection</literal> the introduction would not be folded separately from the section.
+    </para>
+    <para>
+      It is also possible, to add section names at the same
+      level of hierarchy. These have to be separated by "|".
+      This is, e.g., useful for the KOMA classes, which add
+      "\addcap":
+      <programlisting>" let g:Tex_FoldedSections = 'part|addpart,chapter|addchap,section|addsec,subsection,subsubsection,paragraph,subparagraph'</programlisting>
     </para>
     <para>
      See also <link linkend="fold-setting-advanced">advanced fold
@@ -4468,7 +4487,8 @@ let g:Tex_ViewRuleComplete_html = 'start MozillaFirebird $*/index.html'</program
    <title>Folding Customization</title>
    <para>
     The following settings control the <link
-     linkend="latex-folding">folding</link> functionality of &ls;.
+     linkend="latex-folding">folding</link> functionality of &ls;,
+    see also <link linkend="customizing-what-to-fold">Customizing what to fold</link>.
    </para>
    <section id="Tex_Folding">
     <title>g:Tex_Folding</title>
@@ -4533,6 +4553,30 @@ let g:Tex_ViewRuleComplete_html = 'start MozillaFirebird $*/index.html'</program
     <para>
      This string should be set in the syntax accepted by &vim;'s native
      <literal>'path'</literal> setting.
+    </para>
+   </section>
+  </section>
+  <section id="customizing-directories">
+   <title>Template Directory Customization</title>
+   <para>
+    This setting describes the directories scanned by &ls; to search for
+    templates.
+   </para>
+   <section id="Tex_CustomTemplateFolder">
+    <title>g:Tex_CustomTemplateFolder</title>
+    <informaltable frame="all">
+     <tgroup cols="2">
+      <tbody>
+       <row><entry>Type</entry><entry>string</entry></row>
+       <row><entry>Default Value</entry>
+        <entry><literal>''</literal></entry></row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+    <para>
+      A comma separated list of directories.
+      If left empty, &ls; searches in 
+      <literal>$VIM/ftplugin/latex-suite/templates/</literal>.
     </para>
    </section>
   </section>
