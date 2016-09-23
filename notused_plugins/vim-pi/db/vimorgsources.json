@@ -158,7 +158,7 @@
 "vim-dtsm":{"archive_name":"vim-dtsm-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23787","version":"1.0.0","vim_script_nr":5284},
 "PAM-CRASH_Syntax_Highlighting":{"archive_name":"pamcrash_syntax_50.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24068","version":"5.0","vim_script_nr":5283},
 "vim-do":{"archive_name":"vim-do-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23783","version":"0.1.0","vim_script_nr":5282},
-"Tabstuff":{"archive_name":"tabstuff-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23781","version":"1.0","vim_script_nr":5281},
+"Tabstuff":{"archive_name":"tabstuff-1.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24550","version":"1.1","vim_script_nr":5281},
 "snpsMan2VimSyntax":{"archive_name":"snpsMan2VimSyntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23773","version":"1.6.1","vim_script_nr":5280},
 "vim-stata":{"archive_name":"vim-stata.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23772","version":"1.0.2","vim_script_nr":5279},
 "vim-uci":{"archive_name":"vim-uci.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23771","version":"1","vim_script_nr":5278},
