@@ -774,10 +774,10 @@ function! Tex_StartOutlineCompletion()
 
     call Tex_SetupOutlineSyntax()
 
-	exec 'nnoremap <buffer> <cr> '
+	exec 'nnoremap <buffer> <silent> <cr> '
 		\ .':cd '.s:origdir.'<CR>'
 		\ .':call Tex_FinishOutlineCompletion()<CR>'
-	exec 'nnoremap <buffer> q '
+	exec 'nnoremap <buffer> <silent> q '
 		\ .':cd '.s:origdir.'<CR>'
 		\ .':close<CR>'
 		\ .':call Tex_SwitchToInsertMode()<CR>'
@@ -836,8 +836,8 @@ function! Tex_FindBibFiles()
 	call Tex_Debug(":Tex_FindBibFiles: ", "view")
 
 	let mainfname = Tex_GetMainFileName(':p')
-	new
-	exec 'e ' . fnameescape(mainfname)
+	split
+	exec 'silent! e '.fnameescape(mainfname)
 
 	if search('\(%.*\)\@<!\\\(\(no\)\?bibliography\|addbibresource\(\[.*\]\)\?\){', 'w')
 
@@ -1044,12 +1044,9 @@ endfunction " }}}
 " Tex_CompleteCiteEntry: completes cite entry {{{
 " Description: 
 function! Tex_CompleteCiteEntry()
-	normal! 0
-	call search('\[\S\+\]$', 'W')
-	if getline('.') !~ '\[\S\+\]$'
-		call search('\[\S\+\]$', 'bW')
-	endif
-	
+	normal! $
+	call search('\[\S\+\]$', 'bc')
+
 	if getline('.') !~ '\[\S\+\]$'
 		return
 	endif
