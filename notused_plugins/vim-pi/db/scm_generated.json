@@ -5191,6 +5191,10 @@
     "type": "git",
     "url": "git://github.com/mbbill/vim-seattle"
   },
+  "5452": {
+    "type": "git",
+    "url": "git://github.com/mcmlxxxiii/Buffy.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
