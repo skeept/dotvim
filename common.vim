@@ -28,7 +28,9 @@ set pastetoggle=<Leader>pt
 
 "Set terminal capabilities before the colorscheme
 "set t_Co=128
-set t_Co=256
+if !has('win32') && $TERM != 'cygwin'
+  set t_Co=256
+endif
 "set t_Co=88
 
 set backup
