@@ -98,6 +98,7 @@ function! SetupVAM()
   VAMAddToActiveAddons gv
   VAMAddToActiveAddons neoyank
   VAMAddToActiveAddons rsi
+  VAMAddToActiveAddons vinegar
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons airline
