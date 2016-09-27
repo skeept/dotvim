@@ -50,6 +50,7 @@ These tools are supported by default:
     'ack'
     'grep'
     'findstr'
+    'rg'
     'pt'
     'git'
 
@@ -182,7 +183,7 @@ tools        These are the tools that you can choose between. The order
 
              Defaults to:
 >
-                 ['ag', 'ack', 'grep', 'findstr', 'pt', 'git']
+                 ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'git']
 <
 next_tool    These keys will be used at the prompt for switching to the next
              tool. Defaults to <tab>.
@@ -274,11 +275,6 @@ directory, consider replacing the default |'grepprg'| for git like this:
 >
     let g:grepper.git =
       \ { 'grepprg': 'git grep -nI $* -- `git rev-parse --show-toplevel`' }
-<
-Alternatively, if you're using a recent enough git version, this works too:
->
-    let g:grepper.git =
-      \ { 'grepprg': 'git -C `git rev-parse --show-toplevel` grep -nI' }
 <
 ------------------------------------------------------------------------------
                                                                 *grepper-faq-02*
