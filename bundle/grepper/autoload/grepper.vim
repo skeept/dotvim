@@ -109,7 +109,7 @@ function! s:on_exit(id_or_channel) dict abort
 
   execute (self.flags.quickfix ? 'cgetexpr' : 'lgetexpr') 'self.stdoutbuf'
 
-  unlet s:id
+  silent! unlet s:id
   return s:finish_up(self.flags)
 endfunction
 " }}}
@@ -390,6 +390,7 @@ function! s:run(flags)
           \ 'on_exit':   function('s:on_exit'),
           \ }))
   elseif !get(w:, 'testing') && (v:version > 704 || v:version == 704 && has('patch1967'))
+        \ && a:flags.tools[0] !~# '\v(ack|pt|rg)'
     if exists('s:id')
       silent! call job_stop(s:id)
     endif
