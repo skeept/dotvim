@@ -19,6 +19,7 @@ This plugin makes searching in files easier then ever!
 It supports many common grep tools
 ([ag](https://github.com/ggreer/the_silver_searcher),
 [ack](http://beyondgrep.com), [git grep](https://git-scm.com/docs/git-grep),
+[ripgrep](https://github.com/BurntSushi/ripgrep),
 [pt](https://github.com/monochromegane/the_platinum_searcher),
 [findstr](https://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/findstr.mspx)
 and our beloved BSD/GNU grep) out-of-the-box and it is easy to add new ones.
@@ -30,12 +31,12 @@ and our beloved BSD/GNU grep) out-of-the-box and it is easy to add new ones.
 - **Using the operator**: search for the current visual selection or motion
   right away or pre-fill the prompt with it.
 - **Using the pre-defined commands**: All supported tools come with their own
-  command for convenience. `:Ag 'foo bar' test/` does just what you would
+  command for convenience. `:GrepperAg 'foo bar' test/` does just what you would
   expect.
-- **Build your own mappings commands**: For maximum customization simply use
-  the `:Grepper` command. It is fully configurable using flags that take
-  priority over options defined in your vimrc. Actually, all the default
-  commands like `:Ag` etc. a built atop of `:Grepper`.
+- **Build your own mappings commands**: For maximum customization simply use the
+  `:Grepper` command. It is fully configurable using flags that take priority
+  over options defined in your vimrc. Actually, all the default commands like
+  `:GrepperAck` etc. a built atop of `:Grepper`.
 
 #### Additional features
 
