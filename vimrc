@@ -99,6 +99,7 @@ function! SetupVAM()
   VAMAddToActiveAddons neoyank
   VAMAddToActiveAddons rsi
   VAMAddToActiveAddons vinegar
+  VAMAddToActiveAddons vim-qf
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons airline
