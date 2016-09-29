@@ -81,10 +81,11 @@ function! SetupVAM()
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
-  "VAMAddToActiveAddons UltiSnips
+  VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
   "VAMAddToActiveAddons argumentative projectionist
-  VAMAddToActiveAddons Syntastic ps1 fugitive
+  VAMAddToActiveAddons Syntastic
+  VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
   VAMAddToActiveAddons junkfile
   VAMAddToActiveAddons nerdcommenter
@@ -99,6 +100,7 @@ function! SetupVAM()
   VAMAddToActiveAddons neoyank
   VAMAddToActiveAddons rsi
   VAMAddToActiveAddons vinegar
+  "VAMAddToActiveAddons neomake
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons airline
