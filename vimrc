@@ -101,6 +101,7 @@ function! SetupVAM()
   VAMAddToActiveAddons rsi
   VAMAddToActiveAddons vinegar
   "VAMAddToActiveAddons neomake
+  VAMAddToActiveAddons vim-qf
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons airline
