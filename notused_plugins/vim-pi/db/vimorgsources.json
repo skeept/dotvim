@@ -1,4 +1,5 @@
 {
+"NEET":{"archive_name":"sys.txt","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24578","version":"1","vim_script_nr":5455},
 "Buffy":{"archive_name":"buffy-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24557","version":"0.1","vim_script_nr":5452},
 "vim-seattle":{"archive_name":"vim-seattle-release_1.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24556","version":"1.1","vim_script_nr":5451},
 "unicon":{"archive_name":"vim-unicon.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24536","version":"1.0","vim_script_nr":5450},
@@ -98,7 +99,7 @@
 "color":{"archive_name":"color.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24105","version":"1.0","vim_script_nr":5347},
 "Bullets":{"archive_name":"bullets.vim-1.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24104","version":"1.0.2","vim_script_nr":5346},
 "vim-header":{"archive_name":"vim-header-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24099","version":"v0.1.0","vim_script_nr":5345},
-"KRL-Syntax":{"archive_name":"krl_for_vim_v135_20160929.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24571","version":"1.3.5","vim_script_nr":5344},
+"KRL-Syntax":{"archive_name":"krl_for_vim_v136_20160930.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24577","version":"1.3.6","vim_script_nr":5344},
 "VimFlowy_Outliner":{"archive_name":"vimflowy.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24069","version":"1.0","vim_script_nr":5343},
 "stata-syntax":{"archive_name":"stata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24057","version":"0.3","vim_script_nr":5342},
 "thesaurus_query":{"archive_name":"thesaurus_query.vim-0.5.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24483","version":"v0.5.1","vim_script_nr":5341},
