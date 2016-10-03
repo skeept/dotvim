@@ -6,23 +6,21 @@ test: testnvim testvim
 VADER?=Vader!
 VIM_ARGS='+$(VADER) tests/*.vader'
 
-VADER_DIR:=tests/vim/plugins/vader
-$(VADER_DIR):
+export TESTS_VADER_DIR:=$(firstword $(wildcard tests/vim/plugins/vader.override) tests/vim/plugins/vader)
+$(TESTS_VADER_DIR):
 	mkdir -p $(dir $@)
 	git clone --depth=1 https://github.com/junegunn/vader.vim $@
 
 TEST_VIMRC:=tests/vim/vimrc
 
 testnvim: TEST_VIM:=VADER_OUTPUT_FILE=/dev/stderr nvim --headless
-testnvim: $(VADER_DIR)
-testnvim:
-	@# Use a temporary dir with Neovim (https://github.com/neovim/neovim/issues/5277).
-	tmp=$(shell mktemp -d "$${TMPDIR:-/tmp}/neomaketests.XXXXXXXXX"); \
-	HOME=$$tmp $(TEST_VIM) -nNu $(TEST_VIMRC) -i NONE $(VIM_ARGS); rx=$$?; \
-	$(RM) $$tmp; exit $$rx
+testnvim: $(TESTS_VADER_DIR)
+testnvim: build/neovim-test-home
+	@# Neovim needs a valid HOME (https://github.com/neovim/neovim/issues/5277).
+	HOME=build/neovim-test-home $(TEST_VIM) -nNu $(TEST_VIMRC) -i NONE $(VIM_ARGS)
 	
 testvim: TEST_VIM:=vim -X
-testvim: $(VADER_DIR)
+testvim: $(TESTS_VADER_DIR)
 testvim:
 	HOME=/dev/null $(TEST_VIM) -nNu $(TEST_VIMRC) -i NONE $(VIM_ARGS)
 
@@ -65,8 +63,9 @@ vimlint:
 vimlint-errors:
 	sh /tmp/vimlint/bin/vimlint.sh -E -l /tmp/vimlint -p /tmp/vimlparser .
 
-build:
+build build/neovim-test-home:
 	mkdir $@
+build/neovim-test-home: | build
 build/vim-vimhelplint: | build
 	git clone --depth=1 https://github.com/machakann/vim-vimhelplint $@
 vimhelplint: | build/vim-vimhelplint
@@ -99,7 +98,7 @@ docker_test: DOCKER_VIM:=vim-master
 docker_test: DOCKER_RUN:=$(DOCKER_VIM) '+$(VADER) tests/*.vader'
 docker_test: docker_run
 
-docker_run: $(VADER_DIR)
+docker_run: $(TESTS_VADER_DIR)
 docker_run:
 	$(DOCKER) $(if $(DOCKER_RUN),$(DOCKER_RUN),bash)
 

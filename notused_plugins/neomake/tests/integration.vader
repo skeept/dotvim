@@ -90,8 +90,9 @@ Execute (Neomake: handle output for removed window):
     NeomakeTestsWaitForFinishedJobs
     AssertEqual len(g:neomake_test_countschanged), 0
     AssertEqual len(g:neomake_test_finished), 1
-    AssertNotEqual index(g:NeomakeTestsGetMessages(), printf(
-      \ 'Neomake: [%d] No window found for output!', join(job_ids))), -1
+
+    let msg = printf('[%d] No window found for output!', job_ids[0])
+    AssertNeomakeMessage msg, 3
   endif
 
 Execute (NeomakeSh: true):
@@ -119,23 +120,37 @@ Execute (NeomakeSh: handle unfinished output on exit):
       if len(g:neomake_test_countschanged) == 1
         break
       endif
-      sleep 100m
+      sleep 50m
     endfor
-    AssertNotEqual i, 10, "counts should have changed after 1s"
+    AssertNotEqual i, 10, "counts should have changed after 500ms"
     NeomakeTestsWaitForFinishedJobs
   endif
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual map(copy(getqflist()), 'v:val.text'), ['1', '23']
   AssertEqual len(g:neomake_test_countschanged), 2
 
-Execute (NeomakeSh: project: handle removed window on exit):
+Execute (NeomakeSh: project: handle removed window on exit (quit)):
   call g:NeomakeSetupAutocmdWrappers()
   new
-  NeomakeSh sh -c 'sleep 0.5; echo finished'
+  let bufnr = bufnr('%')
+  NeomakeSh sh -c 'sleep 0.1; echo finished'
   quit
   NeomakeTestsWaitForFinishedJobs
   AssertEqual map(copy(getqflist()), 'v:val.text'), ['finished']
-  AssertEqual len(g:neomake_test_finished), 1
+  AssertEqual g:neomake_test_finished, [{'file_mode': 0}]
+  AssertEqual g:neomake_test_countschanged, [{'bufnr': bufnr, 'file_mode': 0}]
+
+Execute (NeomakeSh: project: handle removed window on exit (bwipe)):
+  call g:NeomakeSetupAutocmdWrappers()
+  new
+  let bufnr = bufnr('%')
+  NeomakeSh sh -c 'sleep 0.1; echo finished'
+  bwipe
+  Assert bufnr != bufnr('%'), 'buffer has been wiped'
+  NeomakeTestsWaitForFinishedJobs
+  AssertEqual map(copy(getqflist()), 'v:val.text'), ['finished']
+  AssertEqual g:neomake_test_finished, [{'file_mode': 0}]
+  AssertEqual g:neomake_test_countschanged, [{'bufnr': bufnr, 'file_mode': 0}]
 
 Execute (NeomakeInfo):
   Save g:neomake_c_enabled_makers

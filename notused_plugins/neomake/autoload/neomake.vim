@@ -373,16 +373,16 @@ function! s:Make(options, ...) abort
     endif
 
     " Empty the quickfix/location list (using a valid 'errorformat' setting).
-    let l:efm = &efm
+    let l:efm = &errorformat
     try
-        let &efm = '%-G'
+        let &errorformat = '%-G'
         if file_mode
             lgetexpr ''
         else
             cgetexpr ''
         endif
     finally
-        let &efm = l:efm
+        let &errorformat = l:efm
     endtry
     call s:HandleLoclistQflistDisplay(file_mode)
 
@@ -558,7 +558,8 @@ endfunction
 function! s:neomake_hook(event, context) abort
     if exists('#User#'.a:event)
         let g:neomake_hook_context = a:context
-        call neomake#utils#DebugMessage('Calling User autocmd: '.a:event)
+        call neomake#utils#DebugMessage('Calling User autocmd '.a:event
+                                      \ .' with context: '.string(a:context))
         if v:version >= 704 || (v:version == 703 && has('patch442'))
             exec 'doautocmd <nomodeline> User ' . a:event
         else
@@ -725,8 +726,9 @@ function! neomake#MakeHandler(job_id, data, event_type) abort
         call s:CleanJobinfo(jobinfo)
         if has('nvim')
             " Only report completion for neovim, since it is asynchronous
-            call neomake#utils#QuietMessage(get(maker, 'name', 'make').
-                                          \ ' completed with exit code '.status)
+            call neomake#utils#QuietMessage(printf(
+                        \ '[#%d] %s: completed with exit code %d.',
+                        \ jobinfo.id, maker.name, status))
         endif
 
         " If signs were not cleared before this point, then the maker did not return
