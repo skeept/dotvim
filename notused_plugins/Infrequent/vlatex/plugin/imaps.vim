@@ -176,12 +176,15 @@ function! IMAP(lhs, rhs, ft, ...)
 	let s:phe_{a:ft}_{hash} = phe
 
 	" Add a:lhs to the list of left-hand sides that end with lastLHSChar:
-	let lastLHSChar = s:MultiByteStrpart(a:lhs,s:MultiByteStrlen(a:lhs)-1)
+	let lastLHSChar = s:MultiByteLastCharacter(a:lhs)
 	let hash = s:Hash(lastLHSChar)
 	if !exists("s:LHS_" . a:ft . "_" . hash)
 		let s:LHS_{a:ft}_{hash} = escape(a:lhs, '\')
 	else
-		let s:LHS_{a:ft}_{hash} = escape(a:lhs, '\') .'\|'.  s:LHS_{a:ft}_{hash}
+		" Check whether this lhs is already mapped.
+		if s:LHS_{a:ft}_{hash} !~# "\\V" . escape(a:lhs, '\')
+			let s:LHS_{a:ft}_{hash} = escape(a:lhs, '\') .'\|'.  s:LHS_{a:ft}_{hash}
+		endif
 	endif
 
 	" map only the last character of the left-hand side.
@@ -207,7 +210,7 @@ endfunction
 "
 " Added mainly for debugging purposes, but maybe worth keeping.
 function! IMAP_list(lhs)
-	let char = s:MultiByteStrpart(a:lhs,s:MultiByteStrlen(a:lhs)-1)
+	let char = s:MultiByteLastCharacter(a:lhs)
 	let charHash = s:Hash(char)
 	if exists("s:LHS_" . &ft ."_". charHash) && a:lhs =~ s:LHS_{&ft}_{charHash}
 		let ft = &ft
@@ -217,8 +220,39 @@ function! IMAP_list(lhs)
 		return ""
 	endif
 	let hash = s:Hash(a:lhs)
-	return "rhs = " . s:Map_{ft}_{hash} . " place holders = " .
+	return "rhs = " . strtrans( s:Map_{ft}_{hash} ) . " place holders = " .
 				\ s:phs_{ft}_{hash} . " and " . s:phe_{ft}_{hash}
+endfunction
+" }}}
+" IMAP_list_all:  list all the rhs and place holders with lhs ending in a:char {{{
+function! IMAP_list_all(char)
+	let result = ''
+	let charHash = s:Hash(a:char)
+	if &ft == ''
+		let ft_list = ['']
+	else
+		let ft_list = [&ft, '']
+	endif
+
+	" Loop over current file type and global IMAPs
+	for ft in ft_list
+		if ft == ''
+			let ft_display = 'global: '
+		else
+			let ft_display = ft . ': '
+		endif
+		if exists("s:LHS_" . ft ."_". charHash)
+			for lhs in split( s:LHS_{ft}_{charHash}, '\\|' )
+				" Undo the escaping of backslashes in lhs
+				let lhs = substitute(lhs, '\\\\', '\', 'g')
+				let hash = s:Hash(lhs)
+				" echohl WarningMsg
+				let result .= ft_display . lhs . " => " . strtrans( s:Map_{ft}_{hash} ) . "\n"
+				" echohl None
+			endfor
+		endif
+	endfor
+	return result
 endfunction
 " }}}
 " LookupCharacter: inserts mapping corresponding to this character {{{
@@ -240,10 +274,10 @@ function! s:LookupCharacter(char)
 	" Use '\V' (very no-magic) so that only '\' is special, and it was already
 	" escaped when building up s:LHS_{&ft}_{charHash} .
 	if exists("s:LHS_" . &ft . "_" . charHash)
-				\ && text =~ "\\C\\V\\(" . s:LHS_{&ft}_{charHash} . "\\)\\$"
+				\ && text =~ "\\C\\V\\%(" . s:LHS_{&ft}_{charHash} . "\\)\\$"
 		let ft = &ft
 	elseif exists("s:LHS__" . charHash)
-				\ && text =~ "\\C\\V\\(" . s:LHS__{charHash} . "\\)\\$"
+				\ && text =~ "\\C\\V\\%(" . s:LHS__{charHash} . "\\)\\$"
 		let ft = ""
 	else
 		" If this is a character which could have been used to trigger an
@@ -285,7 +319,7 @@ function! s:LookupCharacter(char)
 	" matchstr() returns the match that starts first. This automatically
 	" ensures that the longest LHS is used for the mapping.
 	if !exists('lhs') || !exists('rhs')
-		let lhs = matchstr(text, "\\C\\V\\(" . s:LHS_{ft}_{charHash} . "\\)\\$")
+		let lhs = matchstr(text, "\\C\\V\\%(" . s:LHS_{ft}_{charHash} . "\\)\\$")
 		let hash = s:Hash(lhs)
 		let rhs = s:Map_{ft}_{hash}
 		let phs = s:phs_{ft}_{hash} 
@@ -295,12 +329,12 @@ function! s:LookupCharacter(char)
 	if strlen(lhs) == 0
 		return a:char
 	endif
-	" enough back-spaces to erase the left-hand side; -1 for the last
-	" character typed:
-	let bs = substitute(s:MultiByteStrpart(lhs, 1), ".", "\<bs>", "g")
+
+	" enough back-spaces to erase the left-hand side
+	let bs = repeat("\<bs>", s:MultiByteStrlen(lhs))
 
 	" \<c-g>u inserts an undo point
-	let result = a:char . "\<c-g>u\<bs>" . bs . IMAP_PutTextWithMovement(rhs, phs, phe)
+	let result = a:char . "\<c-g>u" . bs . IMAP_PutTextWithMovement(rhs, phs, phe)
 
 	if a:char !~? '[a-z0-9]'
 		" If 'a:char' is not a letter or number, insert it literally.
@@ -447,7 +481,7 @@ function! IMAP_Jumpfunc(direction, inclusive)
 	" description.
 	let template = 
 		\ matchstr(strpart(getline('.'), col('.')-1),
-		\          '\V\^'.phsUser.'\zs\.\{-}\ze\('.pheUser.'\|\$\)')
+		\          '\V\^'.phsUser.'\zs\.\{-}\ze\%('.pheUser.'\|\$\)')
 	let placeHolderEmpty = !strlen(template)
 
 	" Search for the end placeholder.
@@ -634,7 +668,7 @@ function! ExecMap(prefix, mode)
 		let char = getchar()
 		if char !~ '^\d\+$'
 			if char == "\<BS>"
-				let mapCmd = s:MultiByteStrpart(mapCmd, 0, s:MultiByteStrlen(mapCmd) - 1)
+				let mapCmd = s:MultiByteWOLastCharacter(mapCmd)
 			endif
 		else " It is the ascii code.
 			let char = nr2char(char)
@@ -646,7 +680,7 @@ function! ExecMap(prefix, mode)
 					let foundMap = 1
 					let breakLoop = 1
 				elseif mapcheck(mapCmd, a:mode) == ""
-					let mapCmd = s:MultiByteStrpart(mapCmd, 0, s:MultiByteStrlen(mapCmd) - 1)
+					let mapCmd = s:MultiByteWOLastCharacter(mapCmd)
 				endif
 			endif
 		endif
@@ -672,13 +706,6 @@ endfunction
 " ============================================================================== 
 " helper functions
 " ============================================================================== 
-" Strntok: extract the n^th token from a list {{{
-" example: Strntok('1,23,3', ',', 2) = 23
-fun! <SID>Strntok(s, tok, n)
-	return matchstr( a:s.a:tok[0], '\v(\zs([^'.a:tok.']*)\ze['.a:tok.']){'.a:n.'}')
-endfun
-
-" }}}
 " s:RemoveLastHistoryItem: removes last search item from search history {{{
 " Description: Execute this string to clean up the search history.
 let s:RemoveLastHistoryItem = ':call histdel("/", -1)|let @/=g:Tex_LastSearchPattern'
@@ -826,60 +853,14 @@ endfunction " }}}
 function! s:MultiByteStrlen(str)
 	return strlen(substitute(a:str, ".", "x", "g"))
 endfunction " }}}
-" s:MultiByteStrpart: Same as strpart() but counts multibyte characters {{{
-" instead of bytes.
-function! s:MultiByteStrpart(src,start,...)
-	let lensrc=s:MultiByteStrlen(a:src)
-	let start=a:start
-	let len=lensrc-a:start
-	if a:0 != 0
-		let len=a:1
-	endif
-	if start < 0
-		let len=max([0,len+start])
-		let start=0
-	endif
-	let len=min([len,lensrc-start])
-	let end=lensrc - len - start
-	let src=substitute(a:src,"^.\\{".start."\\}","","")
-	return substitute(src,".\\{".end."\\}$","","")
-endfunction
-" }}}
-
-" ============================================================================== 
-" A bonus function: Snip()
-" ============================================================================== 
-" Snip: puts a scissor string above and below block of text {{{
-" Desciption:
-"-------------------------------------%<-------------------------------------
-"   this puts a the string "--------%<---------" above and below the visually
-"   selected block of lines. the length of the 'tearoff' string depends on the
-"   maximum string length in the selected range. this is an aesthetically more
-"   pleasing alternative instead of hardcoding a length.
-"-------------------------------------%<-------------------------------------
-function! <SID>Snip() range
-	let i = a:firstline
-	let maxlen = -2
-	" find out the maximum virtual length of each line.
-	while i <= a:lastline
-		exe i
-		let length = virtcol('$')
-		let maxlen = (length > maxlen ? length : maxlen)
-		let i = i + 1
-	endwhile
-	let maxlen = (maxlen > &tw && &tw != 0 ? &tw : maxlen)
-	let half = maxlen/2
-	exe a:lastline
-	" put a string below
-	exe "norm! o\<esc>".(half - 1)."a-\<esc>A%<\<esc>".(half - 1)."a-"
-	" and above. its necessary to put the string below the block of lines
-	" first because that way the first line number doesnt change...
-	exe a:firstline
-	exe "norm! O\<esc>".(half - 1)."a-\<esc>A%<\<esc>".(half - 1)."a-"
-endfunction
-
-com! -nargs=0 -range Snip :<line1>,<line2>call <SID>Snip()
-" }}}
+" s:MultiByteLastCharacter: Return last multibyte characters {{{
+function! s:MultiByteLastCharacter(str)
+	return matchstr(a:str, ".$")
+endfunction " }}}
+" s:MultiByteWOLastCharacter: Return string without last multibyte character {{{
+function! s:MultiByteWOLastCharacter(str)
+	return substitute(a:str, ".$", "", "")
+endfunction " }}}
 
 let &cpo = s:save_cpo
 

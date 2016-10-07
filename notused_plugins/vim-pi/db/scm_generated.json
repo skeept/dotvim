@@ -3229,7 +3229,7 @@
   },
   "4659": {
     "type": "git",
-    "url": "git://github.com/shirai07/buildmenu"
+    "url": "git://github.com/andsten/buildmenu"
   },
   "4661": {
     "type": "git",
@@ -5194,6 +5194,10 @@
   "5452": {
     "type": "git",
     "url": "git://github.com/mcmlxxxiii/Buffy.vim"
+  },
+  "5457": {
+    "type": "git",
+    "url": "git://github.com/cosminadrianpopescu/vim-tail"
   },
   "556": {
     "type": "git",
