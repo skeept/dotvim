@@ -66,6 +66,7 @@ let s:nearby_disabled = 0
 let s:paused = 0
 let s:pwin_by_tagbar = 0
 let s:buffer_seqno = 0
+let s:vim_quitting = 0
 
 let s:window_expanded   = 0
 let s:expand_bufnr = -1
@@ -1039,10 +1040,15 @@ function! s:CreateAutocommands() abort
             autocmd CursorMoved __Tagbar__.* nested call s:ShowInPreviewWin()
         endif
 
+        autocmd QuitPre * let s:vim_quitting = 1
         autocmd WinEnter * nested call s:QuitIfOnlyWindow()
         autocmd WinEnter * if bufwinnr(s:TagbarBufName()) == -1 |
                          \     call s:ShrinkIfExpanded() |
                          \ endif
+        autocmd BufWinEnter * if exists('s:reopen_window') |
+                            \     unlet s:reopen_window |
+                            \     call s:OpenWindow('') |
+                            \ endif
 
         autocmd BufWritePost * call
                     \ s:AutoUpdate(fnamemodify(expand('<afile>'), ':p'), 1)
@@ -1860,6 +1866,8 @@ endfunction
 function! s:InitWindow(autoclose) abort
     call s:debug('InitWindow called with autoclose: ' . a:autoclose)
 
+    " Buffer-local options
+
     setlocal filetype=tagbar
 
     setlocal noreadonly " in case the "view" mode is used
@@ -1868,10 +1876,19 @@ function! s:InitWindow(autoclose) abort
     setlocal noswapfile
     setlocal nobuflisted
     setlocal nomodifiable
+    setlocal textwidth=0
+
+    if has('balloon_eval')
+        setlocal balloonexpr=TagbarBalloonExpr()
+        set ballooneval
+    endif
+
+
+    " Window-local options
+
     setlocal nolist
     setlocal nowrap
     setlocal winfixwidth
-    setlocal textwidth=0
     setlocal nospell
 
     if g:tagbar_show_linenumbers == 0
@@ -1898,16 +1915,12 @@ function! s:InitWindow(autoclose) abort
     setlocal foldmethod&
     setlocal foldexpr&
 
+
     let w:autoclose = a:autoclose
 
     call s:SetStatusLine()
 
     let s:new_window = 1
-
-    if has('balloon_eval')
-        setlocal balloonexpr=TagbarBalloonExpr()
-        set ballooneval
-    endif
 
     let cpoptions_save = &cpoptions
     set cpoptions&vim
@@ -4021,9 +4034,12 @@ endfunction
 " s:QuitIfOnlyWindow() {{{2
 function! s:QuitIfOnlyWindow() abort
     let tagbarwinnr = bufwinnr(s:TagbarBufName())
-    if tagbarwinnr == -1
+    if tagbarwinnr == -1 || exists('s:reopen_window')
         return
     endif
+
+    let vim_quitting = s:vim_quitting
+    let s:vim_quitting = 0
 
     let curwinnr = winnr()
     let prevwinnr = winnr('#') == 0 ? curwinnr : winnr('#')
@@ -4032,7 +4048,7 @@ function! s:QuitIfOnlyWindow() abort
     " Check if there is more than one window
     if s:NextNormalWindow() == -1
         " Check if there is more than one tab page
-        if tabpagenr('$') == 1
+        if tabpagenr('$') == 1 && vim_quitting
             " Before quitting Vim, delete the tagbar buffer so that
             " the '0 mark is correctly set to the previous buffer.
             " Also disable autocmd on this command to avoid unnecessary
@@ -4041,6 +4057,15 @@ function! s:QuitIfOnlyWindow() abort
                 noautocmd bdelete
             endif
             quit
+        elseif tabpagenr('$') == 1
+            " The last normal window closed due to a :bdelete/:bwipeout.
+            " In order to get a normal file window back delete the Tagbar
+            " buffer that we're currently displaying and reset the Tagbar-set
+            " window options, and then re-open the Tagbar window once Vim has
+            " switched to the buffer it has chosen to display next.
+            noautocmd bdelete
+            set winfixwidth<
+            let s:reopen_window = 1
         elseif exists('t:tagbar_buf_name')
             close
         endif
