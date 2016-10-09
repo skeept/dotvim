@@ -84,14 +84,6 @@
 "	call IMAP ('date`', "\<c-r>=strftime('%b %d %Y')\<cr>", '')
 "
 " sets up the map for date` to insert the current date.
-"
-"--------------------------------------%<--------------------------------------
-" Bonus: This script also provides a command Snip which puts tearoff strings,
-" '----%<----' above and below the visually selected range of lines. The
-" length of the string is chosen to be equal to the longest line in the range.
-" Recommended Usage:
-"   '<,'>Snip
-"--------------------------------------%<--------------------------------------
 " }}}
 
 if exists('b:suppress_latex_suite') && b:suppress_latex_suite == 1
@@ -286,21 +278,14 @@ function! s:LookupCharacter(char)
 			let lastword = matchstr(getline('.'), '\k\+$', '')
 			call IMAP_Debug('getting lastword = ['.lastword.']', 'imap')
 			if lastword != ''
-				" An extremeley wierd way to get around the fact that vim
-				" doesn't have the equivalent of the :mapcheck() function for
-				" abbreviations.
-				let _a = @a
-				exec "redir @a | silent! iab ".lastword." | redir END"
-				let abbreviationRHS = matchstr(@a."\n", "\n".'i\s\+'.lastword.'\s\+@\?\zs.*\ze'."\n")
+				let abbreviationRHS = maparg( lastword, 'i', 1 )
 
 				call IMAP_Debug('getting abbreviationRHS = ['.abbreviationRHS.']', 'imap')
 
-				if @a =~ "No abbreviation found" || abbreviationRHS == ""
-					call setreg("a", _a, "c")
+				if abbreviationRHS == ''
 					return a:char
 				endif
 
-				call setreg("a", _a, "c")
 				let abbreviationRHS = escape(abbreviationRHS, '\<"')
 				exec 'let abbreviationRHS = "'.abbreviationRHS.'"'
 
@@ -372,52 +357,26 @@ function! IMAP_PutTextWithMovement(str, ...)
 	let phsUser = IMAP_GetPlaceHolderStart()
 	let pheUser = IMAP_GetPlaceHolderEnd()
 
-	" Problem:  depending on the setting of the 'encoding' option, a character
-	" such as "\xab" may not match itself.  We try to get around this by
-	" changing the encoding of all our strings.  At the end, we have to
-	" convert text back.
-	let phsEnc     = s:Iconv(phs, "encode")
-	let pheEnc     = s:Iconv(phe, "encode")
-	let phsUserEnc = s:Iconv(phsUser, "encode")
-	let pheUserEnc = s:Iconv(pheUser, "encode")
-	let textEnc    = s:Iconv(text, "encode")
-	if textEnc != text
-		let textEncoded = 1
-	else
-		let textEncoded = 0
-	endif
-
 	let pattern = '\V\(\.\{-}\)' .phs. '\(\.\{-}\)' .phe. '\(\.\*\)'
 	" If there are no placeholders, just return the text.
-	if textEnc !~ pattern
-		call IMAP_Debug('Not getting '.phs.' and '.phe.' in '.textEnc, 'imap')
+	if text !~ pattern
+		call IMAP_Debug('Not getting '.phs.' and '.phe.' in '.text, 'imap')
 		return text
 	endif
 	" Break text up into "initial <+template+> final"; any piece may be empty.
-	let initialEnc  = substitute(textEnc, pattern, '\1', '')
-	let templateEnc = substitute(textEnc, pattern, '\2', '')
-	let finalEnc    = substitute(textEnc, pattern, '\3', '')
+	let initial  = substitute(text, pattern, '\1', '')
+	let template = substitute(text, pattern, '\2', '')
+	let final    = substitute(text, pattern, '\3', '')
 
 	" If the user does not want to use placeholders, then remove all but the
 	" first placeholder.
 	" Otherwise, replace all occurences of the placeholders here with the
 	" user's choice of placeholder settings.
 	if exists('g:Imap_UsePlaceHolders') && !g:Imap_UsePlaceHolders
-		let finalEnc = substitute(finalEnc, '\V'.phs.'\.\{-}'.phe, '', 'g')
+		let final = substitute(final, '\V'.phs.'\.\{-}'.phe, '', 'g')
 	else
-		let finalEnc = substitute(finalEnc, '\V'.phs.'\(\.\{-}\)'.phe,
-					\ phsUserEnc.'\1'.pheUserEnc, 'g')
-	endif
-
-	" The substitutions are done, so convert back, if necessary.
-	if textEncoded
-		let initial = s:Iconv(initialEnc, "decode")
-		let template = s:Iconv(templateEnc, "decode")
-		let final = s:Iconv(finalEnc, "decode")
-	else
-		let initial = initialEnc
-		let template = templateEnc
-		let final = finalEnc
+		let final = substitute(final, '\V'.phs.'\(\.\{-}\)'.phe,
+					\ phsUser.'\1'.pheUser, 'g')
 	endif
 
 	" Build up the text to insert:
@@ -485,9 +444,9 @@ function! IMAP_Jumpfunc(direction, inclusive)
 	let placeHolderEmpty = !strlen(template)
 
 	" Search for the end placeholder.
-	let [lnum, lcol] = searchpos('\V'.pheUser, 'ne')
+	let end_pos = searchpos('\V'.pheUser, 'ne')
 	" How many characters should be selected?
-	let nmove = lcol - col('.')
+	let nmove = virtcol(end_pos) - virtcol('.')
 
 	" If we are selecting in exclusive mode, then we need to move one step to
 	" the right
@@ -739,38 +698,6 @@ function! IMAP_GetPlaceHolderEnd()
 		return "+>"
 endfun
 " }}}
-" s:Iconv:  a wrapper for iconv()" {{{
-" Problem:  after
-" 	let text = "\xab"
-" (or using the raw 8-bit ASCII character in a file with 'fenc' set to
-" "latin1") if 'encoding' is set to utf-8, then text does not match itself:
-" 	echo text =~ text
-" returns 0.
-" Solution:  When this happens, a re-encoded version of text does match text:
-" 	echo iconv(text, "latin1", "utf8") =~ text
-" returns 1.  In this case, convert text to utf-8 with iconv().
-" TODO:  Is it better to use &encoding instead of "utf8"?  Internally, vim
-" uses utf-8, and can convert between latin1 and utf-8 even when compiled with
-" -iconv, so let's try using utf-8.
-" Arguments:
-" 	a:text = text to be encoded or decoded
-" 	a:mode = "encode" (latin1 to utf8) or "decode" (utf8 to latin1)
-" Caution:  do not encode and then decode without checking whether the text
-" has changed, becuase of the :if clause in encoding!
-function! s:Iconv(text, mode)
-	if a:mode == "decode"
-		return iconv(a:text, "utf8", "latin1")
-	endif
-	if a:text =~ '\V\^' . escape(a:text, '\') . '\$'
-		return a:text
-	endif
-	let textEnc = iconv(a:text, "latin1", "utf8")
-	if textEnc !~ '\V\^' . escape(a:text, '\') . '\$'
-		call IMAP_Debug('Encoding problems with text '.a:text.' ', 'imap')
-	endif
-	return textEnc
-endfun
-"" }}}
 " IMAP_Debug: interface to Tex_Debug if available, otherwise emulate it {{{
 " Description: 
 " Do not want a memory leak! Set this to zero so that imaps always
