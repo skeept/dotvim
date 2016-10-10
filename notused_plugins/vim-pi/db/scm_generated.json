@@ -5203,6 +5203,10 @@
     "type": "git",
     "url": "git://github.com/WarpEngineer/vim_comment_toggle"
   },
+  "5460": {
+    "type": "git",
+    "url": "git://github.com/mzlogin/vim-markdown-toc"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

@@ -1,4 +1,5 @@
 {
+"vim-markdown-toc":{"archive_name":"vim-markdown-toc-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24610","version":"v0.1","vim_script_nr":5460},
 "syn_set":{"archive_name":"setvim.txt","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24607","version":"0.1","vim_script_nr":5459},
 "vim_comment_toggle":{"archive_name":"vim_comment_toggle.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24605","version":"1.1","vim_script_nr":5458},
 "vim-tail":{"archive_name":"vim-tail.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24590","version":"1.0","vim_script_nr":5457},
@@ -22,7 +23,7 @@
 "ctrlp-obsession":{"archive_name":"ctrlp-obsession.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24477","version":"0.0.1","vim_script_nr":5434},
 "speedy":{"archive_name":"speedy-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24475","version":"1","vim_script_nr":5433},
 "Omnipytent":{"archive_name":"omnipytent_v1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24471","version":"1.0.0","vim_script_nr":5432},
-"asyncrun":{"archive_name":"asyncrun.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24606","version":"1.0.2","vim_script_nr":5431},
+"asyncrun":{"archive_name":"asyncrun.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24612","version":"1.0.3","vim_script_nr":5431},
 "FocusPrevious":{"archive_name":"FocusPrevious.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24462","version":"1.0","vim_script_nr":5430},
 "Smile":{"archive_name":"smile_v1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24456","version":"1.0.1","vim_script_nr":5429},
 "dut":{"archive_name":"dut.vim-master.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24450","version":"0.1","vim_script_nr":5428},
@@ -2096,7 +2097,7 @@
 "command-list":{"archive_name":"command-list.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14007","version":"1.1","vim_script_nr":3268},
 "omnetpp":{"archive_name":"omnetpp.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14044","version":"0.1.2","vim_script_nr":3267},
 "CodeBlocks_Dark":{"archive_name":"codeblocks-dark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22646","version":"0.4","vim_script_nr":3266},
-"cSyntaxAfter":{"archive_name":"cSyntaxAfter-0.3.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23007","version":"0.3","vim_script_nr":3265},
+"cSyntaxAfter":{"archive_name":"cSyntaxAfter-0.4.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24609","version":"0.4","vim_script_nr":3265},
 "Vimtodo":{"archive_name":"vimtodo-0.2.tgz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=13987","version":"0.2","vim_script_nr":3264},
 "Bird_Syntax":{"archive_name":"bird.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=13967","version":"0.1","vim_script_nr":3263},
 "diff-fold":{"archive_name":"diff-fold.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15000","version":"0.4","vim_script_nr":3262},
