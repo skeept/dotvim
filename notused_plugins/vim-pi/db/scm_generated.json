@@ -5207,6 +5207,10 @@
     "type": "git",
     "url": "git://github.com/mzlogin/vim-markdown-toc"
   },
+  "5462": {
+    "type": "git",
+    "url": "git://github.com/AlessandroYorba/Despacio"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
