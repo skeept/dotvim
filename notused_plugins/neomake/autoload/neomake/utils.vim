@@ -1,6 +1,13 @@
 " vim: ts=4 sw=4 et
 scriptencoding utf-8
 
+let s:level_to_name = {
+            \ 0: 'error',
+            \ 1: 'quiet',
+            \ 2: 'verb ',
+            \ 3: 'debug',
+            \ }
+
 if has('reltime')
     let s:reltime_start = reltime()
 endif
@@ -18,7 +25,7 @@ function! neomake#utils#LogMessage(level, msg) abort
 
     if exists(':Log') == 2
         " Log is defined during Vader tests.
-        let test_msg = 'Neomake ['.a:level.'] ['.s:timestr().']: '.a:msg
+        let test_msg = '['.s:level_to_name[a:level].'] ['.s:timestr().']: '.a:msg
         Log test_msg
         let g:neomake_test_messages += [[a:level, a:msg]]
     endif
@@ -39,7 +46,7 @@ function! neomake#utils#LogMessage(level, msg) abort
     endif
     if type(logfile) ==# type('') && len(logfile)
         let date = strftime('%Y-%m-%dT%H:%M:%S%z')
-        call writefile(['['.date.' @'.s:timestr().', level '.a:level.'] '.a:msg], logfile, 'a')
+        call writefile(['['.date.' @'.s:timestr().', '.s:level_to_name[a:level].'] '.a:msg], logfile, 'a')
     endif
 endfunction
 
@@ -137,22 +144,24 @@ function! neomake#utils#Random() abort
     return answer
 endfunction
 
-function! neomake#utils#MakerFromCommand(shell, command) abort
+function! neomake#utils#MakerFromCommand(command) abort
     let command = substitute(a:command, '%\(:[a-z]\)*',
                            \ '\=expand(submatch(0))', 'g')
-    let shell_name = split(a:shell, '/')[-1]
+    let shell_name = split(&shell, '/')[-1]
     if index(['sh', 'csh', 'ash', 'bash', 'dash', 'ksh', 'pdksh', 'mksh', 'zsh', 'fish'],
             \shell_name) >= 0
         let args = ['-c', command]
     else
-        let shell_name = split(a:shell, '\\')[-1]
+        let shell_name = split(&shell, '\\')[-1]
         if (shell_name ==? 'cmd.exe')
             let args = [&shellcmdflag, command]
         endif
     endif
     return {
-        \ 'exe': a:shell,
-        \ 'args': args
+        \ 'exe': &shell,
+        \ 'args': args,
+        \ 'remove_invalid_entries': 0,
+        \ 'errorformat': '%+G',
         \ }
 endfunction
 
