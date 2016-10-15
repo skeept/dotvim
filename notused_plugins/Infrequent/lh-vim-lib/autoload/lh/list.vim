@@ -4,16 +4,20 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.14.1
-let s:k_version = 3141
+" Version:      4.0.0
+let s:k_version = 40000
 " Created:      17th Apr 2007
-" Last Update:  08th Sep 2016
+" Last Update:  10th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
 "
 "------------------------------------------------------------------------
 " History: {{{2
+"       v4.0.0.0
+"       (*) ENH: Add lh#list#push_if_new_entity()
+"       (*) ENH: Add lh#list#contain_entity()
+"       (*) ENH: Add lh#list#arg_min() & max()
 "       v3.13.2
 "       (*) PERF: Optimize `lh#list#push_if_new`
 "       v3.10.3
@@ -173,7 +177,7 @@ function! lh#list#copy_if(input, output, predicate) abort
     if lh#function#execute(a:predicate, element)
       call add(a:output, element)
     endif
-    silent! unlet element " for heterogeneous lists
+    unlet element " for heterogeneous lists
   endfor
   return a:output
 endfunction
@@ -401,6 +405,44 @@ function! lh#list#equal_range(list, val, ...) abort
   return [first, first]
 endfunction
 
+" Function: lh#list#arg_max(list [, transfo]) {{{3
+function! lh#list#arg_max(list, ...) abort
+  if empty(a:list) | return -1 | endif
+  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
+  let m = Transfo(a:list[0])
+  let p = 0
+  let i = 1
+  while i != len(a:list)
+    let e = a:list[i]
+    let v = Transfo(e)
+    if v > m
+      let m = v
+      let p = i
+    endif
+    let i += 1
+  endwhile
+  return p
+endfunction
+
+" Function: lh#list#arg_min(list [, transfo]) {{{3
+function! lh#list#arg_min(list, ...) abort
+  if empty(a:list) | return -1 | endif
+  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
+  let m = Transfo(a:list[0])
+  let p = 0
+  let i = 1
+  while i != len(a:list)
+    let e = a:list[i]
+    let v = Transfo(e)
+    if v < m
+      let m = v
+      let p = i
+    endif
+    let i += 1
+  endwhile
+  return p
+endfunction
+
 " Function: lh#list#not_found(range) {{{3
 " @return whether the range returned from equal_range is empty (i.e. element not found)
 function! lh#list#not_found(range) abort
@@ -589,6 +631,27 @@ function! lh#list#push_if_new(list, value) abort
   return a:list
 endfunction
 
+" Function: lh#list#find_entity(list, value) {{{3
+" @since 4.0.0
+function! lh#list#contain_entity(list, value) abort
+  for e in a:list
+    if e is a:value
+      return 1
+    endif
+    unlet e
+  endfor
+  return 0
+endfunction
+
+" Function: lh#list#push_if_new_entity(list, value) {{{3
+" @version 4.0.0
+function! lh#list#push_if_new_entity(list, value) abort
+  if !lh#list#contain_entity(a:list, a:value)
+    call add(a:list, a:value)
+  endif
+  return a:list
+endfunction
+
 " Function: lh#list#possible_values(list [, key|index [, default_when_absent]) {{{3
 function! lh#list#possible_values(list, ...) abort
   if a:0 == 0
@@ -772,6 +835,18 @@ function! lh#list#zip_as_dict(l1, l2) abort
   return res
 endfunction
 
+" Function: lh#list#_id(a) {{{3
+function! lh#list#_id(a) abort
+  return a:a
+endfunction
+
+" Fucntion: s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
 " Functions }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save

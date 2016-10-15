@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.13.2
-let s:k_version = 31302
+" Version:      4.0.0
+let s:k_version = 40000
 " Created:      23rd Jan 2007
-" Last Update:  02nd Sep 2016
+" Last Update:  13th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to the handling of pathnames
@@ -98,6 +98,10 @@ let s:k_version = 31302
 "       (*) PERF: Optimize lh#path#glob_as_list()
 "       v3.13.2
 "       (*) ENH: Add `lh#path#remove_dir_mark()`
+"       v4.0.0
+"       (*) TST: Fix `lh#path#find()` to always work w/ vimrunner
+"       (*) Move Permission lists code from local_vimrc
+"       (*) Add `p:var` support to `lh#path#add_path_if_exists()`
 " TODO:
 "       (*) Fix #simplify('../../bar')
 " }}}1
@@ -469,15 +473,6 @@ function! lh#path#strip_start(pathname, pathslist) abort
   endif
 
   " apply a realpath like operation
-  let nb_paths = len(pathslist) " set before the loop
-  let i = 0
-  " while i != nb_paths
-    " if pathslist[i] =~ '^\.\%(/\|$\)'
-      " let path2 = getcwd().pathslist[i][1:]
-      " call add(pathslist, path2)
-    " endif
-    " let i += 1
-  " endwhile
   let pathslist_abs=filter(copy(pathslist), 'v:val =~ "^\\.\\%(/\\|$\\)"')
   let pathslist += pathslist_abs
   " replace path separators by a regex that can match them
@@ -522,12 +517,9 @@ function! lh#path#find(paths, regex) abort
   let paths = (type(a:paths) == type([]))
         \ ? (a:paths)
         \ : split(a:paths,',')
-  for path in paths
-    if match(path ,a:regex) != -1
-      return path
-    endif
-  endfor
-  return ''
+  call filter(paths, 'match(v:val, a:regex) != -1')
+  let shortest = lh#list#arg_min(paths, function('len'))
+  return empty(paths) ? '' : paths[shortest]
 endfunction
 
 " Function: lh#path#vimfiles() {{{3
@@ -566,7 +558,12 @@ endfunction
 function! lh#path#add_path_if_exists(listname, path) abort
   let path = substitute(a:path, '[/\\]\*\*$', '', '')
   if isdirectory(path)
-    let {a:listname} += [a:path]
+    if a:listname =~ '^p:'
+      let var = lh#project#_get(a:listname[2:])
+      let var += [a:path]
+    else
+      let {listname} += [a:path]
+    endif
   endif
 endfunction
 
@@ -663,6 +660,151 @@ function! lh#path#munge(pathlist, path) abort
     return a:pathlist
   endif
 endfunction
+
+" # Permission lists {{{2
+" @since v4.0.0, code moved from local_vimrc
+" Function: lh#path#new_permission_lists(options) {{{3
+" @pre a:options shall contain:
+"  - "_do_handle(file)", e.g. { file -> execute('source '.escape(file, ' \$')) }
+"  - "_action_name", e.g. source
+function! lh#path#new_permission_lists(options) abort
+  if !has_key(a:options, '_action_name')
+    throw "Invalid use of `lh#path#new_filtered_list()`
+  endif
+  let res = lh#object#make_top_type(a:options)
+  let res.valided_paths    = []
+  let res.rejected_paths   = []
+  let res.prepare          = function(s:getSNR('lists_prepare'))
+  let res.handle_paths     = function(s:getSNR('lists_handle_paths'))
+  let res.handle_file      = function(s:getSNR('lists_handle_file'))
+  let res.check_paths      = function(s:getSNR('lists_check_paths'))
+  let res.is_file_accepted = function(s:getSNR('lists_is_file_accepted'))
+
+  return res
+endfunction
+
+" Methods: {{{3
+" - prepare() {{{4
+function! s:lists_prepare() dict abort
+  let options     = self
+  let whitelist   = s:GetList('whitelist'  , options)
+  let blacklist   = s:GetList('blacklist'  , options)
+  let asklist     = s:GetList('asklist'    , options)
+  let sandboxlist = s:GetList('sandboxlist', options)
+
+  let mergedlists = whitelist + blacklist + asklist + sandboxlist
+  call reverse(sort(mergedlists, function('s:SortLists')))
+  return mergedlists
+endfunction
+
+" - handle_paths() {{{4
+function! s:lists_handle_paths(paths) dict abort
+  if !empty(a:paths)
+    let filtered_pathnames = self.prepare()
+    let fp_keys = map(copy(filtered_pathnames), '"^".lh#path#to_regex((v:val)[0])')
+    for path in a:paths
+      let idx = lh#list#find_if(fp_keys, string(fnamemodify(path, ':h')).'=~ v:1_')
+      let permission = (idx != -1)
+            \ ? filtered_pathnames[idx][1]
+            \ : "default"
+      call s:Verbose('%1 =~ fp_keys[%2]=%3 -- %4', fnamemodify(path, ':h'), idx, fp_keys[idx], permission)
+      call self.handle_file(path, permission)
+    endfor
+  endif
+endfunction
+
+" - handle_file() {{{4
+function! s:lists_handle_file(file, permission) dict abort
+  if !has_key(a:options, '_do_handle')
+    throw "Invalid use of `lh#path#new_filtered_list().handle_file()`
+  endif
+  if a:permission == 'blacklist'
+    call s:Verbose( '(blacklist) Ignoring ' . a:file)
+    return
+  elseif a:permission == 'sandboxlist'
+    call s:Verbose( '(sandbox) '. self._action_name . ' '. a:file)
+    sandbox call self._do_handle(a:file)
+    " exe 'sandbox source '.escape(a:file, ' \$,')
+    return
+  elseif a:permission == 'asklist'
+    if CONFIRM('Do you want to '. self._action_name. '"'.a:file.'"?', "&Yes\n&No", 1) != 1
+      return
+    endif
+  endif
+  call s:Verbose('('.a:permission.') '. self._action_name. ' ' . a:file)
+  call self._do_handle(a:file)
+  " exe 'source '.escape(a:file, ' \$,')
+endfunction
+
+" - check_paths() {{{4
+function! s:lists_check_paths(paths) dict abort
+  if !empty(a:paths)
+    let filtered_pathnames = self.prepare()
+    let fp_keys = map(copy(filtered_pathnames), '"^".lh#path#to_regex((v:val)[0])')
+    for path in a:paths
+      let idx = lh#list#find_if(fp_keys, string(fnamemodify(path, ':h')).'=~ v:1_')
+      let permission = (idx != -1)
+            \ ? filtered_pathnames[idx][1]
+            \ : "default"
+      call s:Verbose('%1 =~ fp_keys[%2]=%3 -- %4', fnamemodify(path, ':h'), idx, fp_keys[idx], permission)
+      return self.is_file_accepted(path, permission)
+    endfor
+  endif
+endfunction
+
+" - is_file_accepted() {{{4
+function! s:lists_is_file_accepted(file, permission) dict abort
+  if a:permission == 'blacklist'
+    call s:Verbose( '(blacklist) Ignoring ' . a:file)
+    return 0
+  elseif a:permission == 'sandboxlist'
+    call s:Verbose( '(sandbox) '. self._action_name . ' '. a:file)
+    return 'sandbox'
+  elseif match(self.rejected_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been rejected.')
+    return 0
+    " TODO: add a way to remove pathnames from validated list
+  elseif match(self.valided_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been validated.')
+    " TODO: add a way to remove pathnames from validated list
+  elseif a:permission == 'asklist'
+    if CONFIRM('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No", 1) != 1
+      call lh#path#munge(self.rejected_paths, a:file)
+      return 0
+    endif
+    " And remember previous choices!
+    call lh#path#munge(self.valided_paths, a:file)
+  endif
+  call s:Verbose('('.a:permission.') '. self._action_name. ' ' . a:file)
+  return 1
+endfunction
+
+"=============================================================================
+" ## Internal functions {{{1
+" # Prepare Permission lists {{{2
+" Function: s:SortLists(lhs, rhs) {{{3
+function! s:SortLists(lhs, rhs)
+  return    (a:lhs)[0] <  (a:rhs)[0] ? -1
+        \ : (a:lhs)[0] == (a:rhs)[0] ? 0
+        \ :                            1
+endfunction
+
+" Function: s:GetList(listname, options) {{{3
+function! s:GetList(listname, options)
+  let list = copy(get(a:options, a:listname, []))
+  call map(list, '[substitute(v:val, "[/\\\\]", lh#path#shellslash(), "g"), a:listname]')
+  return list
+endfunction
+
+" # Misc {{{2
+" s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
 " }}}1
 "=============================================================================
 let &cpo=s:cpo_save

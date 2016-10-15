@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
-" Version:	3.14.0
-let s:version = '3.14.0'
+" Version:	4.0.0.0
+let s:version = '4.00.0'
 " Created:	06th Nov 2007
-" Last Update:  06th Sep 2016
+" Last Update:  08th Sep 2016
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -51,6 +51,8 @@ autoload/lh/on.vim
 autoload/lh/option.vim
 autoload/lh/path.vim
 autoload/lh/position.vim
+autoload/lh/project.vim
+autoload/lh/ref.vim
 autoload/lh/stack.vim
 autoload/lh/string.vim
 autoload/lh/syntax.vim
@@ -60,6 +62,7 @@ autoload/lh/window.vim
 doc/lh-vim-lib.txt
 mkVba/mk-lh-vim-lib.vim
 plugin/let.vim
+plugin/lh-project.vim
 plugin/lhvl.vim
 plugin/ui-functions.vim
 plugin/words_tools.vim
@@ -69,6 +72,7 @@ tests/lh/function.vim
 tests/lh/list.vim
 tests/lh/math.vim
 tests/lh/path.vim
+tests/lh/ref.vim
 tests/lh/test-Fargs2String.vim
 tests/lh/test-askmenu.vim
 tests/lh/test-command.vim

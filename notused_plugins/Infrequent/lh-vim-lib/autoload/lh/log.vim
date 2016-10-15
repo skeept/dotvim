@@ -2,10 +2,10 @@
 " File:         autoload/lh/log.vim                               {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      3.13.0.
-let s:k_version = '3130'
+" Version:      4.00.0.
+let s:k_version = '4000'
 " Created:      23rd Dec 2015
-" Last Update:  01st Sep 2016
+" Last Update:  27th Sep 2016
 "------------------------------------------------------------------------
 " Description:
 "       Logging facilities
@@ -75,7 +75,7 @@ endfunction
 " TODO: add verbose levels
 " }}}4
 function! lh#log#new(where, kind) abort
-  let log = { 'winnr': bufwinnr('%'), 'kind': a:kind, 'where': a:where}
+  let log = lh#object#make_top_type({ 'winnr': bufwinnr('%'), 'kind': a:kind, 'where': a:where})
 
   " open loc/qf window {{{4
   function! s:open() abort dict
@@ -153,7 +153,7 @@ endfunction
 " Function: lh#log#none() {{{3
 " @return a log object that does nothing
 function! lh#log#none() abort
-  let log = {}
+  let log = lh#object#make_top_type({'kind': '(none)'})
   function! log.log(...) dict
   endfunction
   function! log.reset() dict
@@ -165,10 +165,10 @@ endfunction
 " Function: lh#log#echomsg() {{{3
 " @return a log object that prints errors with ":echomsg"
 function! lh#log#echomsg() abort
-  let log = {}
+  let log = lh#object#make_top_type({'kind': '(echomsg)'})
   function! log.log(msg) dict
     let msg = type(a:msg) == type([]) || type(a:msg) == type({})
-          \ ?  string(a:msg)
+          \ ?  lh#object#to_string(a:msg)
           \ : a:msg
     echomsg msg
   endfunction
