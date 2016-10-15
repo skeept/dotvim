@@ -5215,6 +5215,10 @@
     "type": "git",
     "url": "git://github.com/mzlogin/vim-kramdown-tab"
   },
+  "5466": {
+    "type": "git",
+    "url": "git://github.com/coot/vim-jobs"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
