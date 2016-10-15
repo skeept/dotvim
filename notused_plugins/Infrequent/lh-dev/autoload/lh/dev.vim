@@ -4,16 +4,17 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
-" Version:      1.6.1
-let s:k_version = 161
+" Version:      1.6.3
+let s:k_version = 163
 " Created:      28th May 2010
-" Last Update:  27th May 2016
+" Last Update:  30th Sep 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
 "
 "------------------------------------------------------------------------
 " History:
+"       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
 "       v1.5.3: ~ enh: have lh#dev#find_function_boundaries support any
@@ -119,7 +120,7 @@ endfunction
 " Function: lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
-if lh#tags#ctags_flavor() == 'utags'
+if lh#tags#ctags_flavour() == 'utags'
   let c_ctags_understands_local_variables_in_one_pass = 1
   let cpp_ctags_understands_local_variables_in_one_pass = 1
 else
@@ -328,7 +329,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     if stridx(cmd_line, '-kinds=') != -1
       let cmd_line = substitute(cmd_line, '-kinds=\S\+', '&l', '') " inject local variable, todo: ft-specific
     else
-      let cmd_line .= ' ' . &ft . '-kinds=lv'
+      let cmd_line .= ' --' . &ft . '-kinds=lv'
     endif
   endif
   let cmd_line .= ' ' . shellescape(source_name)

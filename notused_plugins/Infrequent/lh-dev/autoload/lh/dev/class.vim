@@ -1,7 +1,7 @@
 "=============================================================================
 " File:         autoload/lh/dev/class.vim                         {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://github.com/LucHermitte/lh-dev>
+"               <URL:http://github.com/LucHermitte/lh-dev>
 " Version:      1.3.6
 " Created:      31st May 2010
 " Last Update:  01st Dec 2015
@@ -14,12 +14,12 @@
 "       Drop this file into {rtp}/autoload/lh/dev
 "       Requires Vim7+, exhuberant ctags
 " History:
-" 	v0.0.1: code moved from lh-cpp
-" 	v0.0.2: Ways to get class separators (mostly for lh-refactor)
+"       v0.0.1: code moved from lh-cpp
+"       v0.0.2: Ways to get class separators (mostly for lh-refactor)
 " TODO:
-" 	- option to return inherited members
-" 	- option to return prototypes or function definitions
-" 	- option to use another code tool analysis that is not ft-dependant
+"       - option to return inherited members
+"       - option to return prototypes or function definitions
+"       - option to use another code tool analysis that is not ft-dependant
 " }}}1
 "=============================================================================
 
@@ -179,7 +179,7 @@ function! lh#dev#class#fetch_direct_children(id, scope_where_to_search, ...)
   let classes = s:DoFetchClasses(scope, s:instance)
   " select the classes that inherit from another ... in order to found their parents
   call filter(classes,
-	\ 'has_key(v:val, '.string(k_inherits).') && v:val.'.k_inherits.'=~'.string(a:id))
+        \ 'has_key(v:val, '.string(k_inherits).') && v:val.'.k_inherits.'=~'.string(a:id))
   " 2- Select the best match for the a:id class
   let children = lh#list#Transform(classes, [], 'v:val.name')
   return children

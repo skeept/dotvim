@@ -1,4 +1,4 @@
-# lh-tags v2.0.1: a ctags wrapper for Vim
+# lh-tags v2.0.2: a ctags wrapper for Vim
 
 ## Introduction
 
@@ -214,26 +214,16 @@ LetIfUndef g:tags_options.auto_spellfile_update 'all'
    project.
  * See to update spellfile in the background thanks to Python.
  * Auto-highlight tags
- ```vim
- :let names = lh#tags#getnames(tagsfile)
- " C++ expr
- :let ids = filter(copy(names), 'v:val =~ "\\v([: ]|operator)"')
- " But the following is still slow
- :let [ma,t] = lh#time#bench(function('map'), copy(ids), 'matchadd("MyGroup", "\\V\\<".v:val)."\\>"')
- " As well as
- "   :let r = '\V\<\('.join(ids, '\|').'\)\>'
- "   :let m = matchadd('MyGroup', r)
- " And navigating the code is slow as hell as well.
- " Beside quite everything could get highlighted. What isn't an identifier from
- " somewhere ?
- :call map(ma, 'matchdelete(v:val)) " to clear up the mess
-
- " However the following is fast and doesn't impact performances
- :let ids = filter(copy(names), 'v:val =~ "\\v^\\k+$"')
- :let [ma,t] = lh#time#bench(function('map'), copy(ids), 'execute("syn keyword MyGroup ".v:val)')
- ```
- This is slow on my code bases with up 30k unique tag remaining after clearing
- `::` and C++ `operators`.
+   * Cache tag list generated for spell file (as long it's not generated in
+   background in another vim instance)
+   * `g:tags_options.auto_highlight` should be overridable for each project.
+   * doc
+   * auto-execute
+   * Different highlighting for different Identifier kind (type, function,
+   variable, ...)
+   * Incrementally add/remove highlighted keywords when tags are incrementally
+   updated.
+     * And do the same for ignored words
  * Auto-update on other events like `CursorHold*`
  * Document API:
    * `lh#tags#getnames()`
