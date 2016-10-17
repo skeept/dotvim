@@ -56,6 +56,7 @@ The following languages and tools are supported.
 * CSS: 'csslint'
 * Cython (pyrex filetype): 'cython'
 * D: 'dmd'
+* Elixir: 'credo'
 * Fortran: 'gcc'
 * Go: 'gofmt -e', 'go vet', 'golint'
 * Haskell: 'ghc'
@@ -342,16 +343,6 @@ g:ale_statusline_format                               *g:ale_statusline_format*
   - The 1st element is for errors
   - The 2nd element is for warnings
   - The 3rd element is for when no errors are detected
-
-g:airline#extensions#ale#enabled             *g:airline#extensions#ale#enabled*
-
-  Type: |Number|
-  Default: `1`
-
-  Enables or disables the |airline|'s native extension for ale, which displays
-  warnings and errors in the status line, prefixed by
-  |airline#extensions#ale#error_symbol| and
-  |airline#extensions#ale#warning_symbol|.
 
 g:airline#extensions#ale#enabled             *g:airline#extensions#ale#enabled*
 

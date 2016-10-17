@@ -10,7 +10,7 @@ let s:k_version = 163
 " Last Update:  30th Sep 2016
 "------------------------------------------------------------------------
 " Description:
-"       «description»
+"       ?description?
 "
 "------------------------------------------------------------------------
 " History:
@@ -305,7 +305,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     let source_name = tempname()
     call writefile(getline(s, e), source_name, 'b')
   else
-    " todo: corriger le path car injecté par défaut...
+    " todo: corriger le path car inject? par d?faut...
     let source_name    = expand('%:p')
     " let source_name    = lh#path#relative_to(ctags_dirname, expand('%:p'))
   endif

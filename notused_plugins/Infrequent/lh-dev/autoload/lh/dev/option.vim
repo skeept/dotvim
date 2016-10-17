@@ -3,11 +3,11 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.6.3
-let s:k_version = 163
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:      2.0.0
+let s:k_version = 200
 " Created:      05th Oct 2009
-" Last Update:  26th Aug 2016
+" Last Update:  16th Oct 2016
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -54,21 +54,8 @@ endfunction
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
 function! lh#dev#option#get(name, ft,...)
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
-  call map(fts, 'v:val."_"')
-  let fts += [ '']
-  let scope = (a:0 == 2) ? a:2 : 'bg'
-  let name = a:name
-  for ft in fts
-    let i = 0
-    while i != strlen(scope)
-      if exists(scope[i].':'.ft.name)
-        return {scope[i]}:{ft}{name}
-      endif
-      let i += 1
-    endwhile
-  endfor
-  return a:0 > 0 ? a:1 : lh#option#unset()
+  " This function has been deprecated
+  return call('lh#ft#option#get', [a:name, a:ft] + a:000)
 endfunction
 
 " Function: lh#dev#option#get_postfixed(name, filetype, default [, scope])  {{{2
@@ -78,21 +65,8 @@ endfunction
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
 function! lh#dev#option#get_postfixed(name, ft,...)
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
-  call map(fts, '"_".v:val')
-  let fts += [ '']
-  let scope = (a:0 == 2) ? a:2 : 'bg'
-  let name = a:name
-  for ft in fts
-    let i = 0
-    while i != strlen(scope)
-      if exists(scope[i].':'.name.ft)
-        return {scope[i]}:{name}{ft}
-      endif
-      let i += 1
-    endwhile
-  endfor
-  return a:0 > 0 ? a:1 : lh#option#unset()
+  " This function has been deprecated
+  return call('lh#ft#option#get_postfixed', [a:name, a:ft] + a:000)
 endfunction
 
 " Function: lh#dev#option#call(name, filetype, [, parameters])  {{{2
@@ -110,7 +84,7 @@ function! lh#dev#option#call(name, ft, ...)
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
   call map(fts, 'v:val."#"')
   let fts += ['']
   for ft in fts
@@ -147,7 +121,7 @@ function! lh#dev#option#pre_load_overrides(name, ft) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
   let files = map(copy(fts), 'prefix."/".v:val."/".name.".vim"')
   " let files += [prefix.'/'.name.'.vim'] " Don't load the default again!
   for file in files
@@ -170,7 +144,7 @@ function! lh#dev#option#fast_call(name, ft, ...) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
   let fnames = map(copy(fts), 'prefix."#".v:val."#".name')
   let fnames += [prefix.'#'.name]
 
@@ -196,13 +170,7 @@ endfunction
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3
 " - todo, this may required to be specific to each property considered
 function! lh#dev#option#inherited_filetypes(fts)
-  let res = []
-  let lFts = split(a:fts, ',')
-  for ft in lFts
-    let parents = lh#option#get(ft.'_inherits', '')
-    let res += [ft] + lh#dev#option#inherited_filetypes(parents)
-  endfor
-  return res
+  return call('lh#ft#option#inherited_filetypes', [a:fts])
 endfunction
 
 " Be sure lh-vim-lib :LetIfUndef command is correctly defined.
