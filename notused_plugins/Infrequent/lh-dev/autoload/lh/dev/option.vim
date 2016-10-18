@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      05th Oct 2009
-" Last Update:  16th Oct 2016
+" Last Update:  18th Oct 2016
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -55,19 +55,6 @@ endfunction
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
 function! lh#dev#option#get(name, ft,...) abort
-  let fts = lh#ft#option#inherited_filetypes(a:ft)
-  call map(fts, 'v:val."_"')
-  let fts += [ '']
-  let scope = (a:0 == 2) ? a:2 : 'bpg'
-
-  for ft in fts
-    let r = lh#option#get(ft.a:name, lh#option#unset(), scope)
-    if lh#option#is_set(r)
-      return r
-    endif
-    unlet r
-  endfor
-  return a:0 > 0 ? a:1 : lh#option#unset()
   " This function has been deprecated
   return call('lh#ft#option#get', [a:name, a:ft] + a:000)
 endfunction
@@ -87,7 +74,7 @@ endfunction
 " @return lh#dev#{ft}#{name}({parameters}) if it exists, or
 " lh#dev#{name}({parameters}) otherwise
 " If {name} is a |List|, then the function name used is: {name}[0]#{ft}#{name}[1]
-function! lh#dev#option#call(name, ft, ...)
+function! lh#dev#option#call(name, ft, ...) abort
   if type(a:name) == type([])
     let prefix = a:name[0]
     let name   = a:name[1]
@@ -98,7 +85,7 @@ function! lh#dev#option#call(name, ft, ...)
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#ft#option#inherited_filetypes(a:ft)
+  let fts = lh#dev#option#inherited_filetypes(a:ft)
   call map(fts, 'v:val."#"')
   let fts += ['']
   for ft in fts
@@ -111,7 +98,8 @@ function! lh#dev#option#call(name, ft, ...)
     if exists('*'.fname) | break | endif
   endfor
 
-  call s:Verbose('Calling: '.fname.'('.join(map(copy(a:000), 'string(v:val)'), ', ').')')
+  " call s:Verbose('Calling: '.fname.'('.join(map(copy(a:000), 'string(v:val)'), ', ').')')
+  call s:Verbose('Calling: %1(%2)', fname, a:000)
   if s:verbose >= 2
     debug return call (function(fname), a:000)
   else
@@ -135,7 +123,7 @@ function! lh#dev#option#pre_load_overrides(name, ft) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#ft#option#inherited_filetypes(a:ft)
+  let fts = lh#dev#option#inherited_filetypes(a:ft)
   let files = map(copy(fts), 'prefix."/".v:val."/".name.".vim"')
   " let files += [prefix.'/'.name.'.vim'] " Don't load the default again!
   for file in files
@@ -158,7 +146,7 @@ function! lh#dev#option#fast_call(name, ft, ...) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#ft#option#inherited_filetypes(a:ft)
+  let fts = lh#dev#option#inherited_filetypes(a:ft)
   let fnames = map(copy(fts), 'prefix."#".v:val."#".name')
   let fnames += [prefix.'#'.name]
 
@@ -183,8 +171,18 @@ endfunction
 " # List of inherited properties between languages {{{2
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3
 " - todo, this may required to be specific to each property considered
-function! lh#dev#option#inherited_filetypes(fts)
-  return lh#ft#option#inherited_filetypes(a:fts)
+" For a very obscure reason, if this function is not duplicated here, tests are
+" failling on travis! But neither on my Vim 7.4-2xxx nor on my Vim 7.3-429
+" (yes, the same version than the one on travis!)
+function! lh#dev#option#inherited_filetypes(fts) abort
+  let res = []
+  let lFts = split(a:fts, ',')
+  let aux = map(copy(lFts), '[v:val] + lh#dev#option#inherited_filetypes(lh#option#get(v:val."_inherits", ""))')
+  for a in aux
+    let res += a
+  endfor
+  return res
+  " return lh#ft#option#inherited_filetypes(a:fts)
 endfunction
 
 " }}}1

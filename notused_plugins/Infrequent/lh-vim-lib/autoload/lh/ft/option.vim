@@ -100,7 +100,7 @@ endfunction
 " # List of inherited properties between languages {{{2
 " Function: lh#ft#option#inherited_filetypes(fts) {{{3
 " - todo, this may required to be specific to each property considered
-function! lh#ft#option#inherited_filetypes(fts)
+function! lh#ft#option#inherited_filetypes(fts) abort
   let res = []
   let lFts = split(a:fts, ',')
   let aux = map(copy(lFts), '[v:val] + lh#ft#option#inherited_filetypes(lh#option#get(v:val."_inherits", ""))')

@@ -7,10 +7,10 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  17th Oct 2016
+" Last Update:  18th Oct 2016
 "------------------------------------------------------------------------
 " Description:
-"       ?description?
+"       «description»
 "
 "------------------------------------------------------------------------
 " History:
@@ -210,30 +210,30 @@ endfunction
 function! lh#dev#purge_comments(line, is_continuing_comment, ...) abort
   let ft = (a:0 > 0) ? (a:1) : &ft
   let line = a:line
-  let open_comment  = escape(lh#dev#option#call('_open_comment', ft), '*\[')
-  let close_comment = escape(lh#dev#option#call('_close_comment', ft), '*\[')
-  let line_comment  = escape(lh#dev#option#call('_line_comment', ft), '*\[')
+  let open_comment  = escape(lh#dev#option#call('_open_comment', ft) , '%<>+=*\[(){')
+  let close_comment = escape(lh#dev#option#call('_close_comment', ft), '%<>+=*\[(){')
+  let line_comment  = escape(lh#dev#option#call('_line_comment', ft) , '%<>+=*\[(){')
   " purge remaining comment from a previous line
   if a:is_continuing_comment
     " assert(!empty(close_comment))
-    if empty(close_comment) || -1 == match(line, close_comment)
+    if empty(close_comment) || (-1 == match(line, close_comment))
       return ["", 1]
     else
       " todo: use p
-      let line = substitute(line, '.\{-}'.close_comment, '', '')
+      let line = substitute(line, '\v.{-}'.close_comment, '', '')
     endif
   endif
   " purge line comment (// in C++, # in perl, ...)
   if !empty(line_comment)
-    let line = substitute(line, line_comment.'.*', '', '')
+    let line = substitute(line, '\v'.line_comment.'.*', '', '')
   endif
   " purge "zone" comment (/**/ in C, ...)
   let is_continuing_comment = 0
   if !empty(open_comment)
-    let line = substitute(line, open_comment.'.\{-}'.close_comment, '', 'g')
-    let p = match(line, open_comment)
+    let line = substitute(line, '\v'.open_comment.'.{-}'.close_comment, '', 'g')
+    let p = match(line, '\v'.open_comment)
     if -1 != p
-      let line = line[0:p-1]
+      let line = line[0 : p-1]
       let is_continuing_comment = 1
     endif
   endif
@@ -365,8 +365,8 @@ function! s:EvalLines(list) abort
     if !has_key(t, 'line') " sometimes, VimL declarations are badly understood
       let fields = split(t.cmd)
       for field in fields
-        if field =~ '^\k\+:'
-          let [all, key, value; rest ] = matchlist(field, '^\(\k\+\):\(.*\)')
+        if field =~ '\v^\k+:'
+          let [all, key, value; rest ] = matchlist(field, '\v^(\k+):(.*)')
           let t[key] = value
         elseif field =~ '^.$'
           let t.kind = field
@@ -421,18 +421,17 @@ endfunction
 " # Comments related functions {{{2
 " @move to lh/dev/comments/
 " # lh#dev#_open_comment() {{{3
-" @todo cache the results until :source that clear the table
+" @todo cache the results until :source that clears the table
 function! lh#dev#_open_comment() abort
   " default asks to
   " - EnhancedCommentify
   if exists('b:ECcommentOpen') && !empty(b:ECcommentOpen) && exists('b:ECcommentClose') && !empty(b:ECcommentClose)
     return b:ECcommentOpen
-  endif
   " - tComment
   " - NERDCommenter
   " - &commentstring
-  if !empty(&commentstring) && &commentstring =~ '.\+%s.\+'
-    return matchstr(&commentstring, '.*\ze%s')
+  elseif !empty(&commentstring) && &commentstring =~ '\v.+\%s.+'
+    return matchstr(&commentstring, '\v.*\ze\%s')
   endif
   return ""
 endfunction
@@ -444,12 +443,11 @@ function! lh#dev#_close_comment() abort
   " - EnhancedCommentify
   if exists('b:ECcommentClose') && !empty(b:ECcommentClose)
     return b:ECcommentClose
-  endif
   " - tComment
   " - NERDCommenter
   " - &commentstring
-  if !empty(&commentstring) && &commentstring =~ '.\+%s.\+'
-    return matchstr(&commentstring, '.*%s\zs.*')
+  elseif !empty(&commentstring) && &commentstring =~ '\v.+\%s.+'
+    return matchstr(&commentstring, '\v.*\%s\zs.*')
   endif
   return ""
 endfunction
@@ -461,12 +459,11 @@ function! lh#dev#_line_comment() abort
   " - EnhancedCommentify
   if exists('b:ECcommentOpen') && !empty(b:ECcommentOpen) && (!exists('b:ECcommentClose') || empty(b:ECcommentClose))
     return b:ECcommentOpen
-  endif
   " - tComment
   " - NERDCommenter
   " - &commentstring
-  if !empty(&commentstring) && &commentstring =~ '.\+%s$'
-    return matchstr(&commentstring, '.*\ze%s.*')
+  elseif !empty(&commentstring) && &commentstring =~ '\v.+\%s$'
+    return matchstr(&commentstring, '\v.*\ze\%s.*')
   endif
   return ""
 endfunction
