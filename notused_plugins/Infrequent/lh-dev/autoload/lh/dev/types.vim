@@ -3,11 +3,11 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.5.0.
-let s:k_version = '1.5.0'
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:      2.0.0
+let s:k_version = '2.0.0'
 " Created:      26th Feb 2015
-" Last Update:  18th Apr 2016
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Generic functions related to types.
@@ -78,7 +78,7 @@ let g:pascal_is_explicitly_typed = 1
 " Function: lh#dev#types#_deduce(expr) {{{3
 " Default implementation
 function! lh#dev#types#_deduce(expr)
-  if lh#dev#option#get('is_explicitly_typed', &ft, 0)
+  if lh#ft#option#get('is_explicitly_typed', &ft, 0)
     " Ada, Pascal, C, C++, Java, C#
     return lh#marker#txt('type')
   else

@@ -3,17 +3,18 @@
 " Author:	Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:	1.5.0
-let s:k_version = '1.5.0'
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:	2.0.0
+let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	18th Apr 2016
+" Last Update:	17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
 "
 "------------------------------------------------------------------------
 " History:
+" 	v2.0.0: ~ deprecate lh#dev#option#get()
 " 	v1.5.0: - #_of_var
 " 	v1.3.9: - better magic/nomagic neutrality
 " 	        - snake_case enforced
@@ -107,7 +108,7 @@ function! lh#dev#cpp#types#is_base_type(type, pointerAsWell) abort
   let expr = s:ExtractPattern( expr,   s:k_sign )
   let expr = s:ExtractPattern( expr,   s:k_size )
   let expr = s:ExtractPattern( expr,   s:k_types )
-  let user_base_types = lh#dev#option#get('base_type_pattern', 'cpp')
+  let user_base_types = lh#ft#option#get('base_type_pattern', 'cpp')
   if lh#option#is_set(user_base_types)
     let expr = s:ExtractPattern( expr, user_base_types)
   endif
@@ -134,7 +135,7 @@ function! lh#dev#cpp#types#const_correct_type(type) abort
   if lh#dev#cpp#types#is_base_type(a:type,0) == 1
     return a:type
   endif
-  if lh#dev#option#get('place_const_after_type', 'cpp', 1)
+  if lh#ft#option#get('place_const_after_type', 'cpp', 1)
     let fmt = '%1 const%2'
   else
     let fmt = 'const %1 %2'
@@ -211,7 +212,7 @@ endfunction
 
 " Function: lh#dev#cpp#types#is_smart_ptr(type)               : bool {{{3
 function! lh#dev#cpp#types#is_smart_ptr(type) abort
-  let regex = lh#dev#option#get('smart_ptr_pattern', 'cpp')
+  let regex = lh#ft#option#get('smart_ptr_pattern', 'cpp')
   if lh#option#is_set(regex) && a:type =~ regex
     return 1
   elseif a:type =~ '\v^<owner>\<.*\*\s*\>\s*$'
@@ -224,7 +225,7 @@ endfunction
 " Function: lh#dev#cpp#types#is_not_owning_ptr(type)          : bool {{{3
 function! lh#dev#cpp#types#is_not_owning_ptr(type) abort
   if     a:type =~ '\v\*\s*$'
-    return lh#dev#option#get('is_following_CppCoreGuideline', 'cpp', 0)
+    return lh#ft#option#get('is_following_CppCoreGuideline', 'cpp', 0)
     " Meaning, own<T*> is defined, and no own<> <=> no need to copy
   elseif a:type =~ '\v(auto|unique|scoped|shared)_ptr'
     return 0

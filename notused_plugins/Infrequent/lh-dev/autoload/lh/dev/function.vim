@@ -4,19 +4,20 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/blob/master/License.md>
-" Version:      1.5.1.
-let s:k_version = '1.5.1'
+" Version:      2.0.0
+let s:k_version = '2.0.0'
 " Created:      28th May 2010
-" Last Update:  18th Apr 2016
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on functions
 "
 " History:
-" 	v0.0.1: code moved from lh-cpp
-" 	v0.0.2: signature manipulations made overidable
+" 	v2.0.0: Deprecate lh#dev#option#get()
 " 	v0.0.3: default lh#dev#function#_build_param_decl() uses the parameter
 " 	        type if known
+" 	v0.0.2: signature manipulations made overidable
+" 	v0.0.1: code moved from lh-cpp
 " TODO:
 " 	- option to use another code tool analysis that is not ft-dependant
 " }}}1
@@ -119,7 +120,7 @@ endfunction
 
 " Function: lh#dev#function#_split_list_of_parameters(sParameters) {{{2
 function! lh#dev#function#_split_list_of_parameters(sParameters)
-  let sep = lh#dev#option#get('parameters_separator', &ft, ',')
+  let sep = lh#ft#option#get('parameters_separator', &ft, ',')
   let lParameters = split(a:sParameters, '\s*'.sep.'\s*')
   return lParameters
 endfunction
@@ -143,7 +144,7 @@ function! lh#dev#function#_parameters_to_signature(lParams)
     let s = lh#dev#option#call('function#_build_param_decl', &ft, p)
     let params += [s]
   endfor
-  let sep = lh#dev#option#get('parameters_separator', &ft, ',')
+  let sep = lh#ft#option#get('parameters_separator', &ft, ',')
   let res = join(params, sep)
   return res
 endfunction
@@ -162,7 +163,7 @@ function! lh#dev#function#_build_real_params_list(lParams)
     let s = lh#dev#option#call('function#_build_param_call', &ft, p)
     let params += [s]
   endfor
-  let sep = lh#dev#option#get('parameters_separator', &ft, ',')
+  let sep = lh#ft#option#get('parameters_separator', &ft, ',')
   let res = join(params, sep)
   return res
 endfunction
@@ -177,14 +178,14 @@ endfunction
 function! lh#dev#function#_local_variables(function_boundaries)
   try
     let lTags = lh#dev#start_tag_session()
-    if ! lh#dev#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
+    if ! lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
       let lTags = copy(lh#dev#__BuildCrtBufferCtags(a:function_boundaries))
     endif
 
-    let var_kind = lh#dev#option#get('variable_kind', &ft, '[vl]')
+    let var_kind = lh#ft#option#get('variable_kind', &ft, '[vl]')
 
     let cond = 'v:val.kind =~ '.string(var_kind)
-    if lh#dev#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
+    if lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
       let cond .=
             \   ' && v:val.line>='. a:function_boundaries[0]
             \ . ' && v:val.line<='. a:function_boundaries[1]

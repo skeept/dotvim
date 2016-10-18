@@ -2,9 +2,9 @@
 " File:         autoload/lh/dev/class.vim                         {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.3.6
+" Version:      2.0.0
 " Created:      31st May 2010
-" Last Update:  01st Dec 2015
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on (OO) classes
@@ -16,6 +16,7 @@
 " History:
 "       v0.0.1: code moved from lh-cpp
 "       v0.0.2: Ways to get class separators (mostly for lh-refactor)
+"       v2.0.0: Deprecating lh#dev#option#get
 " TODO:
 "       - option to return inherited members
 "       - option to return prototypes or function definitions
@@ -28,28 +29,30 @@ set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
-let s:k_version = 001
 function! lh#dev#class#version()
   return s:k_version
 endfunction
 
 " # Debug   {{{2
-let s:verbose = 0
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#dev#class#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#class#debug(expr)
+function! lh#dev#class#debug(expr) abort
   return eval(a:expr)
 endfunction
-
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -76,11 +79,11 @@ endfunction
 " # Class separators {{{2
 function! lh#dev#class#sep_decl()
   " sorry, I do C++.
-  return lh#dev#option#get('class_sep_use', &ft, '::')
+  return lh#ft#option#get('class_sep_use', &ft, '::')
 endfunction
 
 function! lh#dev#class#sep_use()
-  return lh#dev#option#get('class_sep_use', &ft, '.')
+  return lh#ft#option#get('class_sep_use', &ft, '.')
 endfunction
 
 " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,7 +103,7 @@ endfunction
 " @pre relies on ctags via lh-tags
 
 function! lh#dev#class#fetch_direct_parents(id)
-  let k_inherits = lh#dev#option#get('inherits_tag', &ft, 'inherits')
+  let k_inherits = lh#ft#option#get('inherits_tag', &ft, 'inherits')
 
   let parents = []
   if !exists('s:instance')
@@ -166,8 +169,8 @@ endfunction
 " a:scope_where_to_search is a hack because listing all element to extract
 " classes is very slow!
 function! lh#dev#class#fetch_direct_children(id, scope_where_to_search, ...)
-  let k_scope_sep = lh#dev#option#get('scope_separator', &ft, '\.')
-  let k_inherits  = lh#dev#option#get('inherits_tag', &ft, 'inherits')
+  let k_scope_sep = lh#ft#option#get('scope_separator', &ft, '\.')
+  let k_inherits  = lh#ft#option#get('inherits_tag', &ft, 'inherits')
 
   let children = []
   if !exists('s:instance') || (a:0 > 0 && a:1)

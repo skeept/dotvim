@@ -56,7 +56,7 @@ endfunction
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
 let s:k_unset = lh#option#unset()
-function! lh#ft#option#get(name, ft,...)
+function! lh#ft#option#get(name, ft,...) abort
   let fts = lh#ft#option#inherited_filetypes(a:ft)
   call map(fts, 'v:val."_"')
   let fts += [ '']
@@ -78,7 +78,7 @@ endfunction
 " @note filetype inheritance is supported.
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
-function! lh#ft#option#get_postfixed(name, ft,...)
+function! lh#ft#option#get_postfixed(name, ft,...) abort
   let fts = lh#ft#option#inherited_filetypes(a:ft)
   call map(fts, '"_".v:val')
   let fts += [ '']

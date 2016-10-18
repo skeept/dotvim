@@ -3,17 +3,18 @@
 " Author:	Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:	1.3.0
-let s:k_version = 130
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:	2.0.0
+let s:k_version = 200
 " Created:	05th Oct 2009
-" Last Update:	20th Jul 2015
+" Last Update:	17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 " - Naming policies for programming styles
 "
 "------------------------------------------------------------------------
 " History:
+" 	v2.0.0: deprecate lh#dev#option#get()
 " 	v0.0.2: vim parameters specificities taken into account
 " TODO:
 " }}}1
@@ -22,32 +23,36 @@ let s:k_version = 130
 let s:cpo_save=&cpo
 set cpo&vim
 "------------------------------------------------------------------------
-
 " ## Misc Functions     {{{1
 " # Version {{{2
 function! lh#dev#naming#version()
   return s:k_version
 endfunction
 
-" # Debug {{{2
-function! lh#dev#naming#verbose(level)
-  let s:verbose = a:level
+" # Debug   {{{2
+let s:verbose = get(s:, 'verbose', 0)
+function! lh#dev#naming#verbose(...)
+  if a:0 > 0 | let s:verbose = a:1 | endif
+  return s:verbose
 endfunction
 
-function! s:Verbose(expr)
-  if exists('s:verbose') && s:verbose
-    echomsg a:expr
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
+  if s:verbose
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#naming#debug(expr)
+function! lh#dev#naming#debug(expr) abort
   return eval(a:expr)
 endfunction
 
-"------------------------------------------------------------------------
 " ## Internal functions {{{1
 function! s:Option(option, ft, default)
-  return lh#dev#option#get('naming_'.a:option, a:ft, a:default)
+  return lh#ft#option#get('naming_'.a:option, a:ft, a:default)
 endfunction
 
 "------------------------------------------------------------------------
@@ -250,6 +255,7 @@ LetIfUndef g:cs_naming_get_subst   'Get\u&'
 LetIfUndef g:cs_naming_set_subst   'Set\u&'
 LetIfUndef g:cs_naming_function    'UpperCamelCase'
 
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

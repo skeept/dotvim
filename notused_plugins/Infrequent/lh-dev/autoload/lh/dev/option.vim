@@ -15,8 +15,9 @@ let s:k_version = 200
 
 let s:cpo_save=&cpo
 set cpo&vim
-"------------------------------------------------------------------------
+runtime autoload/lh/ft/option.vim
 
+"------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
 function! lh#dev#option#version()
@@ -53,7 +54,20 @@ endfunction
 " @note filetype inheritance is supported.
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
-function! lh#dev#option#get(name, ft,...)
+function! lh#dev#option#get(name, ft,...) abort
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
+  call map(fts, 'v:val."_"')
+  let fts += [ '']
+  let scope = (a:0 == 2) ? a:2 : 'bpg'
+
+  for ft in fts
+    let r = lh#option#get(ft.a:name, lh#option#unset(), scope)
+    if lh#option#is_set(r)
+      return r
+    endif
+    unlet r
+  endfor
+  return a:0 > 0 ? a:1 : lh#option#unset()
   " This function has been deprecated
   return call('lh#ft#option#get', [a:name, a:ft] + a:000)
 endfunction
@@ -64,7 +78,7 @@ endfunction
 " @note filetype inheritance is supported.
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
-function! lh#dev#option#get_postfixed(name, ft,...)
+function! lh#dev#option#get_postfixed(name, ft,...) abort
   " This function has been deprecated
   return call('lh#ft#option#get_postfixed', [a:name, a:ft] + a:000)
 endfunction
@@ -170,12 +184,8 @@ endfunction
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3
 " - todo, this may required to be specific to each property considered
 function! lh#dev#option#inherited_filetypes(fts)
-  return call('lh#ft#option#inherited_filetypes', [a:fts])
+  return lh#ft#option#inherited_filetypes(a:fts)
 endfunction
-
-" Be sure lh-vim-lib :LetIfUndef command is correctly defined.
-runtime plugin/let.vim
-LetIfUndef g:cpp_inherits 'c'
 
 " }}}1
 let &cpo=s:cpo_save

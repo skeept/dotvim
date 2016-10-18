@@ -2,8 +2,8 @@
 " File:         autoload/lh/dev/import.vim                        {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.4.0.
-let s:k_version = '140'
+" Version:      2.0.0
+let s:k_version = '200'
 " Created:      21st Apr 2015
 " Last Update:  15th Dec 2015
 "------------------------------------------------------------------------
@@ -27,24 +27,25 @@ function! lh#dev#import#version()
 endfunction
 
 " # Debug   {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#dev#import#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#dev#import#debug(expr)
+function! lh#dev#import#debug(expr) abort
   return eval(a:expr)
 endfunction
-
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -114,7 +115,7 @@ LetIfUndef g:vim_import_preterit 'sourced'
 
 " Function: lh#dev#import#_preterit() {{{3
 function! lh#dev#import#_preterit() abort
-  return lh#dev#option#get('import_preterit', &ft, 'imported')
+  return lh#ft#option#get('import_preterit', &ft, 'imported')
 endfunction
 
 " # Import Statement {{{2
@@ -124,7 +125,7 @@ LetIfUndef g:ruby_import_statement 'require\ '.string('${module}')
 
 " Function: lh#dev#import#_statement() {{{3
 function! lh#dev#import#_statement() abort
-  let statement = lh#dev#option#get('import_statement', &ft, 'import ${module}')
+  let statement = lh#ft#option#get('import_statement', &ft, 'import ${module}')
   return statement
 endfunction
 
@@ -144,7 +145,7 @@ endfunction
 
 " Function: lh#dev#import#_do_generate_pattern(file, symbol , ft) {{{3
 function! lh#dev#import#_do_generate_pattern(file, symbol, ft) abort
-  let fmt = lh#dev#option#get('import_pattern', a:ft, '^\s*import\s\+%s\>')
+  let fmt = lh#ft#option#get('import_pattern', a:ft, '^\s*import\s\+%s\>')
   let res = lh#dev#snippet#eval(fmt, {'module': (a:file), 'symbol': (a:symbol)})
   return res
 endfunction

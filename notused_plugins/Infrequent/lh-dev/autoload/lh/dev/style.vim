@@ -4,9 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-dev/>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
-" Version:      1.5.2
-let s:k_version = 1502
+" Version:      2.0.0
+let s:k_version = 2000
 " Created:      12th Feb 2014
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to help implement coding styles (e.g. Allman or K&R
@@ -27,7 +28,6 @@ let s:k_version = 1502
 
 let s:cpo_save=&cpo
 set cpo&vim
-
 
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
@@ -81,7 +81,7 @@ endfunction
 function! lh#dev#style#get(ft) abort
   let res = {}
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft) + ['*']
+  let fts = lh#ft#option#inherited_filetypes(a:ft) + ['*']
   let bufnr = bufnr('%')
 
   for [pattern, hows] in items(s:style)

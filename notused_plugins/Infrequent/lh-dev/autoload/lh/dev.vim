@@ -4,16 +4,17 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
-" Version:      1.6.3
-let s:k_version = 163
+" Version:      2.0.0
+let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  30th Sep 2016
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       ?description?
 "
 "------------------------------------------------------------------------
 " History:
+"       v2.0.0: ~ deprecating lh#dev#option#get
 "       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
@@ -281,7 +282,7 @@ endfunction
 function! lh#dev#__FindEndFunc(first_line) abort
   " 2.1- get the hook that find the end of a function ; default hook is based
   " on matchit , we may also want to play with tags kinds
-  let end_func_hook_name = lh#dev#option#get('end_func_hook_name', &ft, 'lh#dev#_end_func')
+  let end_func_hook_name = lh#ft#option#get('end_func_hook_name', &ft, 'lh#dev#_end_func')
   let hook_str = end_func_hook_name.'('.a:first_line.')'
   " 2.2- execute the hook => last line
   let last_line = eval(hook_str)
@@ -325,7 +326,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
   endif
   " let cmd_line = substitute(cmd_line, '--fields=\S\+', '&t', '') " inject types in fields
   let cmd_line = substitute(cmd_line, '-kinds=\S\+\zsp', '', '') " remove prototypes, todo: ft-specific
-  if a:0>0 || lh#dev#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
+  if a:0>0 || lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
     if stridx(cmd_line, '-kinds=') != -1
       let cmd_line = substitute(cmd_line, '-kinds=\S\+', '&l', '') " inject local variable, todo: ft-specific
     else
@@ -395,7 +396,7 @@ function! lh#dev#_end_func(line) abort
   try
     let pos0 = getpos('.')
     :exe a:line
-    let start_pat = lh#dev#option#get('function_start_pat', &ft, '')
+    let start_pat = lh#ft#option#get('function_start_pat', &ft, '')
     if empty(start_pat)
       let starts = split(get(b:, 'match_words', '{,}'), ',')
       call map(starts, 'matchstr(v:val, "[^:]*")')
