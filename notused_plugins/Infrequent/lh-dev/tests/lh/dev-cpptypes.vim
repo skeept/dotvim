@@ -2,10 +2,10 @@
 " File:         tests/lh/dev-cpptypes.vim                         {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "               <URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.3.9.
-let s:k_version = '139'
+" Version:      2.0.0.
+let s:k_version = '200'
 " Created:      03rd Dec 2015
-" Last Update:  04th Dec 2015
+" Last Update:  19th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Tests to autoload/lh/dev/cpp/types.vim functions
@@ -24,6 +24,7 @@ let s:k_version = '139'
 UTSuite [lh-dev] Testing lh/dev/cpp/types.vim
 
 runtime autoload/lh/dev/cpp/types.vim
+call lh#askvim#scriptnames()
 
 let s:cpo_save=&cpo
 set cpo&vim
@@ -61,8 +62,19 @@ let s:k_views =
       \ , 'span<char>'
       \ ]
 
-function! s:Test_is_base_type() abort " {{{1
-  " The base types {{{2
+" ## Fixtures {{1
+function! s:Setup()
+  call lh#dev#cpp#types#verbose(1)
+endfunction
+
+function! s:Teardown()
+  call lh#dev#cpp#types#verbose(0)
+endfunction
+
+" ## Tests {{1
+
+function! s:Test_is_base_type() abort " {{{2
+  " The base types {{{3
   for sign in s:k_signs
     for prec in s:k_precs
       for num_t in s:k_prec_types
@@ -78,7 +90,7 @@ function! s:Test_is_base_type() abort " {{{1
     AssertTxt(lh#dev#cpp#types#is_base_type(type, 1), type .' not recognized as a base type')
   endfor
 
-  " C++11 typedefs {{{2
+  " C++11 typedefs {{{3
   for prec in [8, 16, 32, 64]
     for sign in ['u', '']
       for speed in ['', '_fast', '_least']
@@ -88,7 +100,7 @@ function! s:Test_is_base_type() abort " {{{1
     endfor
   endfor
 
-  " Lib traits {{{2
+  " Lib traits {{{3
   let type = 'domain::Vector<FooBar>::SizeType'
   let cleanup = lh#on#exit()
         \.restore_option('cpp_base_type_pattern')
@@ -101,7 +113,7 @@ function! s:Test_is_base_type() abort " {{{1
     call cleanup.finalize()
   endtry
 
-  " Test non-base w/ and w/o pointers {{{2
+  " Test non-base w/ and w/o pointers {{{3
   let type = 'std::string'
   AssertTxt(! lh#dev#cpp#types#is_base_type(type, 1), type .' recognized as a base type')
   let type = 'std::string*'
@@ -109,9 +121,9 @@ function! s:Test_is_base_type() abort " {{{1
 
 endfunction
 
-" Function: s:Test_const_correct_type() {{{1
+" Function: s:Test_const_correct_type() {{{2
 function! s:Test_const_correct_type() abort
-  " Base types -> unchanged {{{2
+  " Base types -> unchanged {{{3
   for sign in s:k_signs
     for prec in s:k_precs
       for num_t in s:k_prec_types
@@ -125,7 +137,7 @@ function! s:Test_const_correct_type() abort
       AssertEqual(lh#dev#cpp#types#const_correct_type(type), type)
   endfor
 
-  " C++11 typedefs -> unchanged {{{2
+  " C++11 typedefs -> unchanged {{{3
   for prec in [8, 16, 32, 64]
     for sign in ['u', '']
       for speed in ['', '_fast', '_least']
@@ -135,7 +147,7 @@ function! s:Test_const_correct_type() abort
     endfor
   endfor
 
-  " Lib traits -> unchanged {{{2
+  " Lib traits -> unchanged {{{3
   let type = 'domain::Vector<FooBar>::SizeType'
   let cleanup = lh#on#exit()
         \.restore_option('cpp_base_type_pattern')
@@ -150,7 +162,7 @@ function! s:Test_const_correct_type() abort
     call cleanup.finalize()
   endtry
 
-  " Other types {{{2
+  " Other types {{{3
   let cleanup = lh#on#exit()
         \.restore_option('cpp_place_const_after_type')
   try
@@ -172,7 +184,7 @@ function! s:Test_const_correct_type() abort
   endfor
 endfunction
 
-" Function: s:Test_is_pointer() {{{1
+" Function: s:Test_is_pointer() {{{2
 function! s:Test_is_pointer() abort
   for ptr in s:k_smart_ptr
     AssertTxt(lh#dev#cpp#types#is_pointer(ptr), ptr . ' is not a pointer type')
@@ -189,7 +201,7 @@ function! s:Test_is_pointer() abort
     Assert !lh#dev#cpp#types#is_pointer('int')
 endfunction
 
-" Function: s:Test_is_smart_ptr() {{{1
+" Function: s:Test_is_smart_ptr() {{{2
 function! s:Test_is_smart_ptr() abort
   for ptr in s:k_smart_ptr
     AssertTxt(lh#dev#cpp#types#is_smart_ptr(ptr), ptr . ' is not a smart pointer type')
@@ -205,7 +217,7 @@ function! s:Test_is_smart_ptr() abort
     Assert !lh#dev#cpp#types#is_smart_ptr('owner<T&>')
 endfunction
 
-" Function: s:Test_is_not_owning_ptr() {{{1
+" Function: s:Test_is_not_owning_ptr() {{{2
 function! s:Test_is_not_owning_ptr() abort
   for ptr in s:k_owning_ptr
     AssertTxt(!lh#dev#cpp#types#is_not_owning_ptr(ptr), ptr . ' is not a not-owning pointer type')
@@ -236,7 +248,7 @@ function! s:Test_is_not_owning_ptr() abort
   " Assert !lh#dev#cpp#types#is_not_owning_ptr('owner<T&>')
 endfunction
 
-" Function: s:Test_remove_ptr() {{{1
+" Function: s:Test_remove_ptr() {{{2
 function! s:Test_remove_ptr() abort
     AssertEqual (lh#dev#cpp#types#remove_ptr('void *'), 'void')
     AssertEqual (lh#dev#cpp#types#remove_ptr('void **'), 'void *')
@@ -252,7 +264,7 @@ function! s:Test_remove_ptr() abort
     endfor
 endfunction
 
-" Function: s:Test_remove_reference() {{{1
+" Function: s:Test_remove_reference() {{{2
 function! s:Test_remove_reference() abort
     AssertEqual (lh#dev#cpp#types#remove_reference('std::string&'), 'std::string')
     AssertEqual (lh#dev#cpp#types#remove_reference('std::string'),  'std::string')
@@ -262,7 +274,7 @@ function! s:Test_remove_reference() abort
     AssertEqual (lh#dev#cpp#types#remove_reference('const std::string'),  'const std::string')
 endfunction
 
-" Function: s:Test_remove_reference() {{{1
+" Function: s:Test_remove_reference() {{{2
 function! s:Test_remove_cv() abort
     AssertEqual (lh#dev#cpp#types#remove_cv('std::string'), 'std::string')
     AssertEqual (lh#dev#cpp#types#remove_cv('std::string const'),  'std::string')

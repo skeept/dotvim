@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	17th Oct 2016
+" Last Update:	19th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
@@ -102,13 +102,14 @@ let s:k_types.= '|<nullptr_t>'
 let s:k_types.= '|<size_type>'
 
 function! lh#dev#cpp#types#is_base_type(type, pointerAsWell) abort
-  " echomsg "Check lh#dev#cpp#types#is_base_type(".a:type.")"
+  call s:Verbose('Check lh#dev#cpp#types#is_base_type(%1)', a:type)
 
   let expr = s:ExtractPattern( a:type, s:k_scope )
   let expr = s:ExtractPattern( expr,   s:k_sign )
   let expr = s:ExtractPattern( expr,   s:k_size )
   let expr = s:ExtractPattern( expr,   s:k_types )
   let user_base_types = lh#ft#option#get('base_type_pattern', 'cpp')
+  call s:Verbose('(cpp_)base_type_pattern: %1', user_base_types)
   if lh#option#is_set(user_base_types)
     let expr = s:ExtractPattern( expr, user_base_types)
   endif
@@ -117,6 +118,7 @@ function! lh#dev#cpp#types#is_base_type(type, pointerAsWell) abort
       return 1
     endif
   endif
+  call s:Verbose('Expr: %1 => %2base_type', expr, (expr=='' ? '' : 'not a '))
   " return strlen(expr) == 0
   return expr == ''
 endfunction
