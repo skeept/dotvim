@@ -5,7 +5,7 @@
 " Version:      2.0.0.
 let s:k_version = '200'
 " Created:      03rd Dec 2015
-" Last Update:  19th Oct 2016
+" Last Update:  20th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Tests to autoload/lh/dev/cpp/types.vim functions
