@@ -62,9 +62,19 @@ call s:set_default(
       \ 'g:neoyank#limit', 100,
       \ 'g:unite_source_history_yank_limit')
 
+function! neoyank#default_register_from_clipboard()
+  if &clipboard == 'unnamed'
+    return "*"
+  elseif  &clipboard == 'unnamedplus'
+    return "+"
+  else
+    return '"'
+  endif
+endfunction
+
 call s:set_default(
       \ 'g:neoyank#save_registers',
-      \ ['"'],
+      \ [neoyank#default_register_from_clipboard()],
       \ 'g:unite_source_history_yank_save_registers')
 "}}}
 
@@ -118,6 +128,10 @@ function! neoyank#_load() abort  "{{{
     unlet! yank_histories
     let yank_histories = {}
   endtry
+  if type(yank_histories) != type({})
+    unlet! yank_histories
+    let yank_histories = {}
+  endif
 
   for register in g:neoyank#save_registers
     if !has_key(s:yank_histories, register)

@@ -19,15 +19,31 @@ function! s:timestr() abort
     return strftime('%H:%M:%S')
 endfunction
 
-function! neomake#utils#LogMessage(level, msg) abort
+function! neomake#utils#LogMessage(level, msg, ...) abort
     let verbose = get(g:, 'neomake_verbose', 1)
     let logfile = get(g:, 'neomake_logfile')
 
+    if exists(':Log') != 2 && verbose < a:level && logfile is ''
+        return
+    endif
+
+    if a:0
+        let jobinfo = a:1
+        if has_key(jobinfo, 'id')
+            let msg = printf('[%d.%d] %s', jobinfo.make_id, jobinfo.id, a:msg)
+        else
+            let msg = printf('[%d] %s', jobinfo.make_id, a:msg)
+        endif
+    else
+        let jobinfo = {}
+        let msg = a:msg
+    endif
+
     if exists(':Log') == 2
         " Log is defined during Vader tests.
-        let test_msg = '['.s:level_to_name[a:level].'] ['.s:timestr().']: '.a:msg
+        let test_msg = '['.s:level_to_name[a:level].'] ['.s:timestr().']: '.msg
         Log test_msg
-        let g:neomake_test_messages += [[a:level, a:msg]]
+        let g:neomake_test_messages += [[a:level, a:msg, jobinfo]]
     endif
 
     if verbose >= a:level
@@ -36,9 +52,9 @@ function! neomake#utils#LogMessage(level, msg) abort
             echohl ErrorMsg
         endif
         if verbose > 2
-            echom 'Neomake ['.s:timestr().']: '.a:msg
+            echom 'Neomake ['.s:timestr().']: '.msg
         else
-            echom 'Neomake: '.a:msg
+            echom 'Neomake: '.msg
         endif
         if a:level ==# 0
             echohl None
@@ -46,24 +62,24 @@ function! neomake#utils#LogMessage(level, msg) abort
     endif
     if type(logfile) ==# type('') && len(logfile)
         let date = strftime('%Y-%m-%dT%H:%M:%S%z')
-        call writefile(['['.date.' @'.s:timestr().', '.s:level_to_name[a:level].'] '.a:msg], logfile, 'a')
+        call writefile(['['.date.' @'.s:timestr().', '.s:level_to_name[a:level].'] '.msg], logfile, 'a')
     endif
 endfunction
 
-function! neomake#utils#ErrorMessage(msg) abort
-    call neomake#utils#LogMessage(0, a:msg)
+function! neomake#utils#ErrorMessage(...) abort
+    call call('neomake#utils#LogMessage', [0] + a:000)
 endfunction
 
-function! neomake#utils#QuietMessage(msg) abort
-    call neomake#utils#LogMessage(1, a:msg)
+function! neomake#utils#QuietMessage(...) abort
+    call call('neomake#utils#LogMessage', [1] + a:000)
 endfunction
 
-function! neomake#utils#LoudMessage(msg) abort
-    call neomake#utils#LogMessage(2, a:msg)
+function! neomake#utils#LoudMessage(...) abort
+    call call('neomake#utils#LogMessage', [2] + a:000)
 endfunction
 
-function! neomake#utils#DebugMessage(msg) abort
-    call neomake#utils#LogMessage(3, a:msg)
+function! neomake#utils#DebugMessage(...) abort
+    call call('neomake#utils#LogMessage', [3] + a:000)
 endfunction
 
 function! neomake#utils#Stringify(obj) abort
@@ -200,26 +216,30 @@ endfunction
 " Get a setting by key, based on filetypes, from the buffer or global
 " namespace, defaulting to default.
 function! neomake#utils#GetSetting(key, maker, default, fts, bufnr) abort
-  if len(a:fts)
-    for ft in a:fts
-      " Look through the neomake setting override vars for a filetype maker,
-      " like neomake_scss_sasslint_exe (should be a string), and 
-      " neomake_scss_sasslint_args (should be a list)
-      let config_var = 'neomake_'.ft.'_'.a:maker.name.'_'.a:key
-      if has_key(g:, config_var)
-            \ || !empty(getbufvar(a:bufnr, config_var))
-        break
-      endif
-    endfor
-  else
-    " Following this, we're checking the neomake overrides for global makers
-    let config_var = 'neomake_'.a:maker.name.'_'.a:key
+  if has_key(a:maker, 'name')
+    if len(a:fts)
+      for ft in a:fts
+        " Look through the neomake setting override vars for a filetype maker,
+        " like neomake_scss_sasslint_exe (should be a string), and 
+        " neomake_scss_sasslint_args (should be a list)
+        let config_var = 'neomake_'.ft.'_'.a:maker.name.'_'.a:key
+        if has_key(g:, config_var)
+              \ || !empty(getbufvar(a:bufnr, config_var))
+          break
+        endif
+      endfor
+    else
+      " Following this, we're checking the neomake overrides for global makers
+      let config_var = 'neomake_'.a:maker.name.'_'.a:key
+    endif
+
+    if !empty(getbufvar(a:bufnr, config_var))
+      return copy(getbufvar(a:bufnr, config_var))
+    elseif has_key(g:, config_var)
+      return copy(get(g:, config_var))
+    endif
   endif
-  if !empty(getbufvar(a:bufnr, config_var))
-    return copy(getbufvar(a:bufnr, config_var))
-  elseif has_key(g:, config_var)
-    return copy(get(g:, config_var))
-  elseif has_key(a:maker, a:key)
+  if has_key(a:maker, a:key)
     return a:maker[a:key]
   endif
   " Look for 'neomake_'.key in the buffer and global namespace.
