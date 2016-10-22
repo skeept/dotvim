@@ -532,7 +532,7 @@ endif
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
-let g:load_neocomplete = (!exists('g:load_neocomplete') ||  g:load_neocomplete == 1) && 
+let g:load_neocomplete = (!exists('g:load_neocomplete') ||  g:load_neocomplete == 1) &&
       \ (g:is_vimrc_simple == 0 || GetIsAddonActive('neocomplete'))
 if g:load_neocomplete
   function! SetupNeocomplete()
@@ -924,6 +924,11 @@ endif
 "let NERDShutUp=1
 "use nested comments by default in NerdCommenter
 let g:NERDDefaultNesting=1
+
+" use some non-standard mapping
+
+map ,ci <plug>NERDCommenterInvert
+map gc <plug>NERDCommenterInvert
 "==============================================================================}}}
 
 "==============================================================================}}}

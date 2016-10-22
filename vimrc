@@ -84,7 +84,9 @@ function! SetupVAM()
   VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
   "VAMAddToActiveAddons argumentative projectionist
-  VAMAddToActiveAddons Syntastic
+  "VAMAddToActiveAddons Syntastic
+  VAMAddToActiveAddons ale
+  VAMAddToActiveAddons neomake
   VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
   VAMAddToActiveAddons junkfile
@@ -100,7 +102,6 @@ function! SetupVAM()
   VAMAddToActiveAddons neoyank
   VAMAddToActiveAddons rsi
   VAMAddToActiveAddons vinegar
-  "VAMAddToActiveAddons neomake
   VAMAddToActiveAddons vim-qf
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
