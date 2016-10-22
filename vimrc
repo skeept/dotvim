@@ -90,6 +90,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
   VAMAddToActiveAddons junkfile
+  VAMAddToActiveAddons denite
   VAMAddToActiveAddons nerdcommenter
   VAMAddToActiveAddons unite-outline unite-qf
   VAMAddToActiveAddons vim-diff-enhanced
