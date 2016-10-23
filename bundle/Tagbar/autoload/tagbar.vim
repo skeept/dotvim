@@ -421,10 +421,19 @@ function! s:InitTypes() abort
     " HTML {{{3
     let type_html = s:TypeInfo.New()
     let type_html.ctagstype = 'html'
-    let type_html.kinds     = [
-        \ {'short' : 'f', 'long' : 'JavaScript funtions', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'a', 'long' : 'named anchors',       'fold' : 0, 'stl' : 1}
-    \ ]
+    if s:ctags_is_uctags
+        let type_html.kinds = [
+            \ {'short' : 'a', 'long' : 'named anchors', 'fold' : 0, 'stl' : 1},
+            \ {'short' : 'h', 'long' : 'H1 headings',   'fold' : 0, 'stl' : 1},
+            \ {'short' : 'i', 'long' : 'H2 headings',   'fold' : 0, 'stl' : 1},
+            \ {'short' : 'j', 'long' : 'H3 headings',   'fold' : 0, 'stl' : 1},
+        \ ]
+    else
+        let type_html.kinds = [
+            \ {'short' : 'f', 'long' : 'JavaScript functions', 'fold' : 0, 'stl' : 1},
+            \ {'short' : 'a', 'long' : 'named anchors',        'fold' : 0, 'stl' : 1}
+        \ ]
+    endif
     let s:known_types.html = type_html
     " Java {{{3
     let type_java = s:TypeInfo.New()
@@ -4021,6 +4030,12 @@ function! s:IsValidFile(fname, ftype) abort
 
     if getbufvar(a:fname, 'tagbar_ignore') == 1
         call s:debug('File is marked as ignored')
+        return 0
+    endif
+
+    let winnr = bufwinnr(a:fname)
+    if winnr != -1 && getwinvar(winnr, '&diff')
+        call s:debug('Window is in diff mode')
         return 0
     endif
 

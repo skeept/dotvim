@@ -71,7 +71,16 @@ class Default(object):
     def init_buffer(self):
         self.__winheight = int(self.__context['winheight'])
 
-        self.__vim.command('new denite | resize ' + str(self.__winheight))
+        if self.__vim.current.buffer.options['filetype'] != 'denite':
+            # Create new buffer
+            self.__vim.command('botright new denite')
+        else:
+            # Move the window to bottom
+            self.__vim.command('wincmd J')
+        self.__vim.command('resize ' + str(self.__winheight))
+        self.__vim.command('nnoremap <silent><buffer> <CR> ' +
+                           ':<C-u>Denite -resume -buffer_name=' +
+                           self.__context['buffer_name'] + '<CR>')
 
         self.__options = self.__vim.current.buffer.options
         self.__options['buftype'] = 'nofile'
@@ -245,13 +254,20 @@ class Default(object):
         if prev_id == now_id:
             # The previous window search is failed.
             # Jump to the other window.
-            self.__vim.command('wincmd w')
+            if len(self.__vim.windows) == 1:
+                self.__vim.command('topleft new')
+            else:
+                self.__vim.command('wincmd w')
         is_quit = not self.__denite.do_action(
             self.__context, kind, action, [candidate])
         self.__vim.call('win_gotoid', prev_id)
 
         if is_quit:
-            self.quit_buffer()
+            if self.__context['quit']:
+                self.quit_buffer()
+            else:
+                # Disable quit flag
+                is_quit = False
         self.__result = [candidate]
         return is_quit
 
@@ -309,3 +325,7 @@ class Default(object):
         self.__current_mode = self.__mode_stack[-1]
         self.__mode_stack = self.__mode_stack[:-1]
         self.change_mode(self.__current_mode)
+
+    def suspend(self):
+        return True
+

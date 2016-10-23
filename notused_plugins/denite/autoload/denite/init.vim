@@ -63,6 +63,7 @@ function! denite#init#_variables() abort "{{{
   let default_mode_mappings = {
         \ "\<Esc>": 'leave_mode',
         \ "\<CR>":  'do_action:default',
+        \ "\<C-z>":  'suspend',
         \}
   let insert_mode_mappings = {
         \ "\<C-h>": 'delete_backward_char',
@@ -84,6 +85,7 @@ function! denite#init#_variables() abort "{{{
         \ "j": 'move_to_next_line',
         \ "k": 'move_to_prev_line',
         \ "p": 'do_action:preview',
+        \ "q": 'quit',
         \}
   for [char, value] in items(default_mode_mappings)
     let g:denite#_default_mappings._[
@@ -119,6 +121,7 @@ function! denite#init#_user_options() abort "{{{
         \ 'path': getcwd(),
         \ 'prompt': '#',
         \ 'prompt_highlight': 'Statement',
+        \ 'quit': v:true,
         \ 'resume': v:false,
         \ 'winheight': 20,
         \}
