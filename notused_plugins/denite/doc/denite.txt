@@ -357,6 +357,11 @@ OPTIONS							*denite-options*
 		automatically.
 		Default: false
 
+						*denite-options-buffer-name*
+-buffer-name={buffer-name}
+		Specify the name of denite buffer.
+		Default: "default"
+
 						*denite-options-default-action*
 -default-action={action}
 		Specify the default action as {action}.
@@ -376,6 +381,14 @@ OPTIONS							*denite-options*
 -path={input-text}
 		Specify an initial narrowing path.
 		Default: ""
+
+							*denite-options-resume*
+-resume
+		Reuse the previous buffer.  If none exist, a new denite
+		buffer gets created.
+		Note: Uses |denite-options-buffer-name| to search for
+		previous buffers.
+		Default: false
 
 ==============================================================================
 SOURCES							*denite-sources*
