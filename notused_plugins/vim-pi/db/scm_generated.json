@@ -5223,6 +5223,10 @@
     "type": "git",
     "url": "git://github.com/petrbroz/vim-glsl"
   },
+  "5471": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/vim-mucomplete"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
