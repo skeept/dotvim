@@ -30,6 +30,7 @@ class Default(object):
         self.__input_cursor = ''
         self.__input_after = ''
         self.__bufnr = -1
+        self.__winid = -1
         self.__initialized = False
         self.__winheight = 0
 
@@ -70,14 +71,15 @@ class Default(object):
 
     def init_buffer(self):
         self.__winheight = int(self.__context['winheight'])
-        self.__prev_winnr = self.__vim.call('win_getid')
+        self.__prev_winid = self.__vim.call('win_getid')
 
-        if self.__vim.current.buffer.options['filetype'] != 'denite':
-            # Create new buffer
-            self.__vim.command('botright new denite')
-        else:
+        if self.__winid > 0 and self.__vim.call(
+                'win_gotoid', self.__winid):
             # Move the window to bottom
             self.__vim.command('wincmd J')
+        else:
+            # Create new buffer
+            self.__vim.command('botright new denite')
         self.__vim.command('resize ' + str(self.__winheight))
         self.__vim.command('nnoremap <silent><buffer> <CR> ' +
                            ':<C-u>Denite -resume -buffer_name=' +
@@ -98,6 +100,7 @@ class Default(object):
         self.__window_options['foldcolumn'] = 0
 
         self.__bufnr = self.__vim.current.buffer.number
+        self.__winid = self.__vim.call('win_getid')
 
     def init_cursor(self):
         self.__cursor = 0
@@ -157,7 +160,8 @@ class Default(object):
         self.update_buffer()
 
     def quit_buffer(self):
-        self.__vim.command('redraw | echo | wincmd p')
+        self.__vim.command('redraw | echo')
+        self.__vim.call('win_gotoid', self.__prev_winid)
         self.__vim.command('silent bdelete! ' + str(self.__bufnr))
         self.__vim.command('pclose!')
 
@@ -252,7 +256,7 @@ class Default(object):
             kind = self.__denite.get_sources()[candidate['source']].kind
 
         prev_id = self.__vim.call('win_getid')
-        self.__vim.call('win_gotoid', self.__prev_winnr)
+        self.__vim.call('win_gotoid', self.__prev_winid)
         now_id = self.__vim.call('win_getid')
         if prev_id == now_id:
             # The previous window search is failed.
@@ -266,6 +270,7 @@ class Default(object):
         self.__vim.call('win_gotoid', prev_id)
 
         if is_quit:
+            self.__denite.on_close(self.__context)
             if self.__context['quit']:
                 self.quit_buffer()
             else:
