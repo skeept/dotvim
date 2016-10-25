@@ -46,24 +46,31 @@ function! ale#cursor#EchoCursorWarning(...) abort
 
     let l:buffer = bufnr('%')
 
-    if !has_key(g:ale_buffer_loclist_map, l:buffer)
+    if !has_key(g:ale_buffer_info, l:buffer)
         return
     endif
 
     let l:pos = getcurpos()
-    let l:loclist = g:ale_buffer_loclist_map[l:buffer]
+    let l:loclist = g:ale_buffer_info[l:buffer].loclist
     let l:index = ale#util#BinarySearch(l:loclist, l:pos[1], l:pos[2])
 
     if l:index >= 0
         let l:loc = l:loclist[l:index]
         let l:msg = s:GetMessage(l:loc.linter_name, l:loc.type, l:loc.text)
         call ale#cursor#TruncatedEcho(l:msg)
+        let g:ale_buffer_info[l:buffer].echoed = 1
     else
-        echo
+        " We'll only clear the echoed message when moving off errors once,
+        " so we don't continually clear the echo line.
+        if get(g:ale_buffer_info[l:buffer], 'echoed')
+            echo
+            let g:ale_buffer_info[l:buffer].echoed = 0
+        endif
     endif
 endfunction
 
 let s:cursor_timer = -1
+let s:last_pos = [0, 0, 0]
 
 function! ale#cursor#EchoCursorWarningWithDelay() abort
     if s:cursor_timer != -1
@@ -71,5 +78,14 @@ function! ale#cursor#EchoCursorWarningWithDelay() abort
         let s:cursor_timer = -1
     endif
 
-    let s:cursor_timer = timer_start(10, function('ale#cursor#EchoCursorWarning'))
+    let l:pos = getcurpos()[0:2]
+
+    " Check the current buffer, line, and column number against the last
+    " recorded position. If the position has actually changed, *then*
+    " we should echo something. Otherwise we can end up doing processing
+    " the echo message far too frequently.
+    if l:pos != s:last_pos
+        let s:last_pos = l:pos
+        let s:cursor_timer = timer_start(10, function('ale#cursor#EchoCursorWarning'))
+    endif
 endfunction
