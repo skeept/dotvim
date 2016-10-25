@@ -70,6 +70,7 @@ class Default(object):
 
     def init_buffer(self):
         self.__winheight = int(self.__context['winheight'])
+        self.__prev_winnr = self.__vim.call('win_getid')
 
         if self.__vim.current.buffer.options['filetype'] != 'denite':
             # Create new buffer
@@ -86,6 +87,7 @@ class Default(object):
         self.__options['buftype'] = 'nofile'
         self.__options['filetype'] = 'denite'
         self.__options['swapfile'] = False
+        self.__options['modifiable'] = True
 
         self.__window_options = self.__vim.current.window.options
         self.__window_options['cursorline'] = True
@@ -122,7 +124,7 @@ class Default(object):
 
         del self.__vim.current.buffer[:]
         self.__vim.current.buffer.append(
-            [x['word'] for x in
+            [x.get('abbr', x['word']) for x in
              self.__candidates[self.__cursor:
                                self.__cursor + self.__winheight]])
         del self.__vim.current.buffer[0]
@@ -155,14 +157,15 @@ class Default(object):
         self.update_buffer()
 
     def quit_buffer(self):
-        self.__vim.command('redraw | echo')
+        self.__vim.command('redraw | echo | wincmd p')
         self.__vim.command('silent bdelete! ' + str(self.__bufnr))
         self.__vim.command('pclose!')
 
     def update_prompt(self):
         self.__vim.command('redraw')
-        echo(self.__vim, self.__context['prompt_highlight'],
-             self.__context['prompt'] + ' ')
+        if self.__context['prompt'] != '':
+            echo(self.__vim, self.__context['prompt_highlight'],
+                 self.__context['prompt'] + ' ')
         echo(self.__vim, 'Normal',
              self.__input_before)
         echo(self.__vim, self.__context['cursor_highlight'],
@@ -249,7 +252,7 @@ class Default(object):
             kind = self.__denite.get_sources()[candidate['source']].kind
 
         prev_id = self.__vim.call('win_getid')
-        self.__vim.command('wincmd p')
+        self.__vim.call('win_gotoid', self.__prev_winnr)
         now_id = self.__vim.call('win_getid')
         if prev_id == now_id:
             # The previous window search is failed.
@@ -327,5 +330,5 @@ class Default(object):
         self.change_mode(self.__current_mode)
 
     def suspend(self):
+        self.__options['modifiable'] = False
         return True
-
