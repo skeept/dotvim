@@ -39,10 +39,10 @@ function! neomake#utils#LogMessage(level, msg, ...) abort
         let msg = a:msg
     endif
 
-    if exists(':Log') == 2
+    if exists('*vader#log')
         " Log is defined during Vader tests.
         let test_msg = '['.s:level_to_name[a:level].'] ['.s:timestr().']: '.msg
-        Log test_msg
+        call vader#log(test_msg)
         let g:neomake_test_messages += [[a:level, a:msg, jobinfo]]
     endif
 
@@ -288,7 +288,7 @@ endfunction
 function! neomake#utils#CompressWhitespace(entry) abort
     let text = a:entry.text
     let text = substitute(text, "\001", '', 'g')
-    let text = substitute(text, '\n', ' ', 'g')
+    let text = substitute(text, '\r\?\n', ' ', 'g')
     let text = substitute(text, '\m\s\{2,}', ' ', 'g')
     let text = substitute(text, '\m^\s\+', '', '')
     let text = substitute(text, '\m\s\+$', '', '')
