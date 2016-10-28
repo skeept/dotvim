@@ -144,6 +144,14 @@ EXAMPLES						*denite-examples*
 
 	call denite#custom#source('file_mru', 'converters',
 	      \ ['converter_relative_word'])
+
+	" Define alias
+	call denite#custom#alias('source', 'file_rec/git', 'file_rec')
+	call denite#custom#var('file_rec/git', 'command',
+	      \ ['git', 'ls-files', '-co', '--exclude-standard'])
+
+	" Change default prompt
+	call denite#custom#option('default', 'prompt', '>')
 <
 
 ==============================================================================
@@ -180,6 +188,12 @@ COMMANDS 						*denite-commands*
 		"file_rec:foo::bar": the parameters of source file are
 		                     ["foo", "", "bar"].
 
+		You can use evaluation cmdline by ``.
+		Note: In the evaluation, The special characters(spaces,  "\"
+		and ":") are escaped automatically.
+>
+        :Denite -buffer-name=search%`bufnr('%')` line<CR>
+<
 		{options} are options for a denite buffer: |denite-options|
 
 :DeniteBufferDir [{options}] {sources}			*:DeniteBufferDir*
@@ -290,6 +304,24 @@ Note: You cannot change <C-c> default mapping.
 ------------------------------------------------------------------------------
 FUNCTIONS						*denite-functions*
 
+							*denite#custom#alias()*
+denite#custom#alias({type}, {alias-name}, {base-name})
+		Define {alias-name} alias based on {base-name}.
+		{type} must be "source" or "filter".
+
+						*denite#custom#filter()*
+denite#custom#filter({filter-name}, {variable-name}, {value})
+		Set {filter-name} filter specialized variable {variable-name}
+		to {value}.  You may specify multiple filters with the
+		separator "," in {filter-name}.
+
+						*denite#custom#option()*
+denite#custom#option({buffer-name}, {option-name}, {value})
+		Set {option-name} option to {value} in {buffer-name}
+		buffer.
+		Note: The all options are in |denite-options|.  However, "-" is
+		substituted to "_", and "-" prefix is removed.
+
 							*denite#custom#map()*
 denite#custom#map({mode}, {key}, {mapping})
 		Set {key} keymapping to function {mapping} in {mode} mode.
@@ -323,6 +355,10 @@ denite#custom#source({source-name}, {option-name}, {value})
 		converters			(List)
 		Specify a list of converter names.  The filters overwrite
 		source default converters.
+		Default:  []
+
+		args				(List)
+		Specify the source default arguments.
 		Default:  []
 
 							*denite#custom#var()*
@@ -583,6 +619,17 @@ matcher_fuzzy
 		A matcher which filters the candidates with user given fuzzy
 		string.
 
+					*denite-filter-matcher_ignore_globs*
+matcher_ignore_globs
+		A matcher which ignores the globs matched files.
+		Default globs: >
+		[
+                 '*~', '*.o', '*.exe', '*.bak',
+                 'DS_Store', '*.pyc', '*.sw[po]', '*.class',
+                 '.hg/', '.git/', '.bzr/', '.svn/',
+                 'tags', 'tags-*'
+		]
+<
 						*denite-filter-matcher_regexp*
 matcher_regexp
 		A matcher which filters the candidates with user given
@@ -769,6 +816,16 @@ Q: I want to use unite source in denite.
 A: You can use |unite-denite-source-unite| for it. >
 	Denite unite:file
 Note: unite installation is needed.
+
+Q: What is the correct way to say "if I'm in a git directory, git ls-files for
+file_rec" ?
+
+A: >
+	call denite#custom#alias('source', 'file_rec/git', 'file_rec')
+	call denite#custom#var('file_rec/git', 'command',
+	\ ['git', 'ls-files', '-co', '--exclude-standard'])
+	nnoremap <silent> <C-p> :<C-u>Denite
+	\ `finddir('.git', ';') != '' ? 'file_rec/git' : 'file_rec'`<CR>
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*
