@@ -24,17 +24,13 @@ you should read `:help provider-python`.
 
 * source kind support
 
-* map "call:funcname" support
-
-* alias support
+* neovim-prompt integration
 
 * source completion support: completion(args, arglead)
 
 * matcher_hide_hidden_files
 
 * quickmatch feature
-
-* match highlight
 
 * multiple candidates select
 

@@ -59,6 +59,8 @@ class Denite(object):
             all = ctx['all_candidates']
             if ctx['is_async']:
                 all += source.gather_candidates(ctx)
+            if not all:
+                continue
             candidates = []
             for i in range(0, len(all), 1000):
                 ctx['candidates'] = all[i:i+1000]
@@ -133,6 +135,12 @@ class Denite(object):
 
     def get_sources(self):
         return self.__sources
+
+    def get_source(self, name):
+        return self.__sources.get(name, {})
+
+    def get_current_sources(self):
+        return self.__current_sources
 
     def load_sources(self, context):
         # Load sources from runtimepath
