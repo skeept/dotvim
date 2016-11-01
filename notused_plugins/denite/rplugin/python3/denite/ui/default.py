@@ -4,8 +4,7 @@
 # License: MIT license
 # ============================================================================
 
-from denite.util import (
-    error, echo, debug, convert2fuzzy_pattern, convert2regex_pattern)
+from denite.util import error, echo, debug
 from .. import denite
 
 import re
@@ -32,8 +31,11 @@ class Default(object):
         self.__input_after = ''
         self.__bufnr = -1
         self.__winid = -1
+        self.__winrestcmd = ''
+        self.__winsaveview = {}
         self.__initialized = False
         self.__winheight = 0
+        self.__is_multi = False
 
     def start(self, sources, context):
         try:
@@ -51,6 +53,7 @@ class Default(object):
                 self.__default_mappings = self.__vim.eval(
                     'g:denite#_default_mappings')
                 self.__current_mode = context['mode']
+                self.__is_multi = len(sources) > 1
 
                 self.__denite.start(self.__context)
                 self.__denite.on_init(self.__context)
@@ -73,6 +76,10 @@ class Default(object):
     def init_buffer(self):
         self.__winheight = int(self.__context['winheight'])
         self.__prev_winid = self.__vim.call('win_getid')
+        self.__prev_bufnr = self.__vim.current.buffer.number
+        self.__prev_tabpages = self.__vim.call('tabpagebuflist')
+        self.__winrestcmd = self.__vim.call('winrestcmd')
+        self.__winsaveview = self.__vim.call('winsaveview')
 
         if self.__winid > 0 and self.__vim.call(
                 'win_gotoid', self.__winid):
@@ -107,12 +114,35 @@ class Default(object):
         self.__bufvars['denite_statusline_left'] = ''
         self.__bufvars['denite_statusline_right'] = ''
 
-        self.__vim.command('syntax case ignore')
-        self.__vim.command('highlight default link deniteMatched Search')
+        self.__init_syntax()
 
         if self.__context['statusline']:
             self.__window_options['statusline'] = \
                 '%{denite#get_status_left()} %=%{denite#get_status_right()}'
+
+    def __init_syntax(self):
+        self.__vim.command('syntax case ignore')
+        self.__vim.command('highlight default link deniteMatched Search')
+
+        # Only define highlight when multiple sources exists or source has
+        # need_highlight set to True
+        for source in [x for x in self.__denite.get_current_sources()
+                       if self.__is_multi or x.need_highlight]:
+            name = source.name
+
+            self.__vim.command(
+                'highlight default link ' +
+                'deniteSourceLine_' + name +
+                ' Type'
+            )
+
+            syntax_line = 'syntax match %s /%s/ nextgroup=%s keepend' % (
+                'deniteSourceLine_' + name,
+                name if self.__is_multi else '',
+                'deniteSource_' + name,
+            )
+            self.__vim.command(syntax_line)
+            self.__denite.get_source(name).highlight_syntax()
 
     def init_cursor(self):
         self.__cursor = 0
@@ -131,10 +161,10 @@ class Default(object):
             statusleft += '{}({}/{}) '.format(name, len(candidates), len(all))
 
             matchers = self.__denite.get_source(name).matchers
-            if ('matcher_fuzzy' or 'matcher_cpsm') in matchers:
-                pattern = convert2fuzzy_pattern(self.__context['input'])
-            elif 'matcher_regexp' in matchers:
-                pattern = convert2regex_pattern(self.__context['input'])
+            for matcher in matchers:
+                filter = self.__denite.get_filter(matcher)
+                if filter:
+                    pattern = filter.convert_pattern(self.__context['input'])
 
         if self.__denite.is_async():
             statusleft = '[async] ' + statusleft
@@ -154,9 +184,11 @@ class Default(object):
 
         del self.__vim.current.buffer[:]
         self.__vim.current.buffer.append(
-            [x.get('abbr', x['word']) for x in
-             self.__candidates[self.__cursor:
-                               self.__cursor + self.__winheight]])
+            ['%s %s' % (
+                x['source'] if self.__is_multi else '',
+                x.get('abbr', x['word']))
+             for x in self.__candidates[self.__cursor:
+                                        self.__cursor + self.__winheight]])
         del self.__vim.current.buffer[0]
 
         self.__options['modified'] = False
@@ -192,8 +224,15 @@ class Default(object):
 
         if not self.__vim.call('bufexists', self.__bufnr):
             return
+
+        # Restore the view
         self.__vim.call('win_gotoid', self.__prev_winid)
         self.__vim.command('silent bdelete! ' + str(self.__bufnr))
+
+        if self.__vim.call('tabpagebuflist') == self.__prev_tabpages:
+            self.__vim.command(self.__winrestcmd)
+        if self.__vim.current.buffer.number == self.__prev_bufnr:
+            self.__vim.call('winrestview', self.__winsaveview)
 
     def update_prompt(self):
         self.__vim.command('redraw')

@@ -5,6 +5,11 @@
 let s:lint_timer = -1
 
 function! ale#Queue(delay) abort
+    " Do nothing for blacklisted files.
+    if index(g:ale_filetype_blacklist, &filetype) >= 0
+        return
+    endif
+
     if s:lint_timer != -1
         call timer_stop(s:lint_timer)
         let s:lint_timer = -1
@@ -24,14 +29,19 @@ function! ale#Queue(delay) abort
 endfunction
 
 function! ale#Lint(...) abort
+    " Do nothing for blacklisted files.
+    if index(g:ale_filetype_blacklist, &filetype) >= 0
+        return
+    endif
+
     let l:buffer = bufnr('%')
     let l:linters = ale#linter#Get(&filetype)
 
     " Initialise the buffer information if needed.
     call ale#engine#InitBufferInfo(l:buffer)
 
-    " Set a variable telling us to clear the loclist later.
-    let g:ale_buffer_info[l:buffer].should_reset = 1
+    " Clear the new loclist again, so we will work with all new items.
+    let g:ale_buffer_info[l:buffer].new_loclist = []
 
     for l:linter in l:linters
         " Check if a given linter has a program which can be executed.
