@@ -157,6 +157,12 @@ This plugin uses a single |Dictionary| for all configuration: g:grepper. If you
 are unsure how to use a dictionary, have a look at |grepper-example|. The
 supported keys are:
 
+ buffer~
+
+    Only search the currently opened file. Make sure to write any pending
+    changes before searching, since the grep tools work on actual files, not
+    Vim buffers.
+
  highlight~
 
     Highlight found matches. Defaults to 0.
@@ -248,6 +254,13 @@ new one, just add/replace the key to g:grepper:
 >
     'grepprg': 'ag --vimgrep $* $.'
 <
+ grepprgbuf~
+
+    In the case of -buffer, 'grepprgbuf' is used. If it doesn't exist,
+    " $* $." will be appended to 'grepprg' instead.
+
+    Same goes for -buffers, only that "$+" will be used instead of "$.".
+
  grepformat~
 
     This is optional. If the output of 'grepprg' uses a format that is not

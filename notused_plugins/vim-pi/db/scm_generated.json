@@ -459,6 +459,10 @@
     "type": "git",
     "url": "git://github.com/kana/vim-arpeggio"
   },
+  "2431": {
+    "type": "git",
+    "url": "git://github.com/kamwitsta/commentToggle"
+  },
   "2437": {
     "type": "git",
     "url": "git://github.com/tomtom/shymenu_vim"
@@ -5226,6 +5230,14 @@
   "5471": {
     "type": "git",
     "url": "git://github.com/lifepillar/vim-mucomplete"
+  },
+  "5473": {
+    "type": "git",
+    "url": "git://github.com/kamwitsta/nordisk"
+  },
+  "5477": {
+    "type": "git",
+    "url": "git://github.com/devjoe/vim-codequery"
   },
   "556": {
     "type": "git",
