@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      17th Apr 2007
-" Last Update:  10th Oct 2016
+" Last Update:  02nd Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
@@ -19,6 +19,8 @@ let s:k_version = 40000
 "       (*) ENH: Add lh#list#contain_entity()
 "       (*) ENH: Add lh#list#arg_min() & max()
 "       (*) BUG: Add support for empty lists in `lh#list#find_if`
+"       (*) PERF: Simplify lh#list#uniq()
+"       (*) ENH: Add lh#list#push_if_new_elements()
 "       v3.13.2
 "       (*) PERF: Optimize `lh#list#push_if_new`
 "       v3.10.3
@@ -533,6 +535,13 @@ else
   function! lh#list#uniq(list) abort
     if len(a:list) <= 1 | return a:list | endif
     let result = [ a:list[0] ]
+    for e in a:list[1:]
+      if e != result[-1]
+        call add(result, e)
+      endif
+    endfor
+    return result
+
     let last = a:list[0]
     let i = 1
     let ll = len(a:list)
@@ -629,6 +638,13 @@ function! lh#list#push_if_new(list, value) abort
   if index(a:list, a:value) < 0
     call add (a:list, a:value)
   endif
+  return a:list
+endfunction
+
+" Function: lh#list#push_if_new_elements(list, values) {{{3
+function! lh#list#push_if_new_elements(list, values) abort
+  let new = filter(copy(a:values), 'index(a:list, v:val) < 0')
+  call extend(a:list, new)
   return a:list
 endfunction
 
