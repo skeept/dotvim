@@ -106,6 +106,7 @@ function! SetupVAM()
   VAMAddToActiveAddons vim-qf
   "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons unite-session neomru
+  VAMAddToActiveAddons textobj-entire textobj-python textobj-user
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
