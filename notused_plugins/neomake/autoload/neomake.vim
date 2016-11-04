@@ -531,6 +531,7 @@ function! s:AddExprCallback(jobinfo) abort
     let counts_changed = 0
     let index = file_mode ? s:loclist_nr[maker.winnr] : s:qflist_nr
     let maker_type = file_mode ? 'file' : 'project'
+    let cleaned_signs = 0
 
     while index < len(list)
         let entry = list[index]
@@ -579,12 +580,13 @@ function! s:AddExprCallback(jobinfo) abort
             endif
         endif
 
-        " On the first valid error identified by a maker,
-        " clear the existing signs
-        if file_mode
-            call neomake#CleanOldFileSignsAndErrors(entry.bufnr)
-        else
-            call neomake#CleanOldProjectSignsAndErrors()
+        if !cleaned_signs
+            if file_mode
+                call neomake#CleanOldFileSignsAndErrors(entry.bufnr)
+            else
+                call neomake#CleanOldProjectSignsAndErrors()
+            endif
+            let cleaned_signs = 1
         endif
 
         " Track all errors by buffer and line
@@ -818,7 +820,7 @@ function! neomake#MakeHandler(job_id, data, event_type) abort
         endif
         call s:CleanJobinfo(jobinfo)
         if neomake#has_async_support()
-            call neomake#utils#QuietMessage(printf(
+            call neomake#utils#DebugMessage(printf(
                         \ '%s: completed with exit code %d.',
                         \ maker.name, status))
         endif

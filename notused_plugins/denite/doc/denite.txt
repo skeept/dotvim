@@ -204,6 +204,10 @@ COMMANDS 						*denite-commands*
 		Equivalent to |:Denite| except that it targets the word under
 		the cursor for the initial narrowing text.
 
+:DeniteProjectDir [{options}] {sources}			*:DeniteProjectDir*
+		Equivalent to |:Denite| except that it targets the project
+		directory.
+
 ------------------------------------------------------------------------------
 KEY MAPPINGS 						*denite-key-mappings*
 
@@ -425,6 +429,11 @@ OPTIONS							*denite-options*
 -default-action={action}
 		Specify the default action as {action}.
 		Default: "default"
+
+						*denite-options-empty*
+-empty
+		Open any denite buffer if the candidate is empty.
+		Default: true
 
 							*denite-options-input*
 -input={input-text}

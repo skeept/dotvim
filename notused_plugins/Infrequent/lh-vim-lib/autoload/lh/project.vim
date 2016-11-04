@@ -5,7 +5,7 @@
 " Version:      4.0.0
 let s:k_version = '400'
 " Created:      08th Sep 2016
-" Last Update:  02nd Nov 2016
+" Last Update:  04th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Define new kind of variables: `p:` variables.
@@ -464,6 +464,7 @@ function! s:depth() dict abort " {{{4
 endfunction
 
 function! s:set(varname, value) dict abort " {{{4
+  call s:Verbose('%1.set(%2 <- %3)', self.name, a:varname, a:value)
   " call assert_true(!empty(a:varname))
   let varname = a:varname[1:]
   if     a:varname[0] == '&' " {{{5 -- options
@@ -485,6 +486,7 @@ function! s:update(varname, value, ...) dict abort " {{{4
   " possibily in a parent project), and update the "old" setting instead of
   " overridding it.
   " call assert_true(!empty(a:varname))
+  call s:Verbose('%1.set(%2 <- %3, %4)', self.name, a:varname, a:value, a:000)
   let varname = a:varname[1:]
   if     a:varname[0] == '&' " {{{5 -- options
     if has_key(self.options, varname)
@@ -518,7 +520,7 @@ function! s:update(varname, value, ...) dict abort " {{{4
   return 0
 endfunction
 
-function! s:do_update_option(bid, varname, value)
+function! s:do_update_option(bid, varname, value) " {{{4
   if     a:value =~ '^+='
     let lValue = split(getbufvar(a:bid, a:varname), ',')
     call lh#list#push_if_new_elements(lValue, split(a:value[2:], ','))
@@ -533,11 +535,13 @@ function! s:do_update_option(bid, varname, value)
   else
     let value = a:value
   endif
+  call s:Verbose('setlocal{%1} %2%3 -> %4', a:bid, a:varname, a:value, value)
   call setbufvar(a:bid, a:varname, value)
 endfunction
 
 function! s:_update_option(varname, ...) dict abort " {{{4
   let value = self.options[a:varname]
+  call s:Verbose('%1._update_option(%2 <- %3)', self.name, a:varname, value)
   if a:0 == 0
     " Apply to all buffers
     for b in self.buffers
@@ -549,6 +553,7 @@ function! s:_update_option(varname, ...) dict abort " {{{4
 endfunction
 
 function! s:_use_options(bid) dict abort " {{{4
+  call s:Verbose('%1._use_options(%2)', self.name, a:bid)
   for p in self.parents
     call p._use_options(a:bid)
   endfor
@@ -565,14 +570,14 @@ function! s:_remove_buffer(bid) dict abort " {{{4
 endfunction
 
 function! s:get(varname, ...) dict abort " {{{4
-  if     a:varname[0] == '$'
+  if     a:varname[0] == '$' && has_key(self.env, a:varname[1:])
     let r0 = self.env[a:varname[1:]]
-  elseif a:varname[0] == '&'
+  elseif a:varname[0] == '&' && has_key(self.options, a:varname[1:])
     let r0 = self.options[a:varname[1:]]
-  else
+  elseif a:varname[0] !~ '[&$]'
     let r0 = lh#dict#get_composed(self.variables, a:varname)
   endif
-  if lh#option#is_set(r0)
+  if exists('r0') && lh#option#is_set(r0)
     " may need to interpret a reference lh#ref('g:variable')
     return r0
   else
@@ -747,6 +752,11 @@ function! lh#project#crt() abort
     return s:k_unset
     " throw "The current buffer doesn't belong to a project"
   endif
+endfunction
+
+" Function: lh#project#_get_varname() {{{3
+function! lh#project#_get_varname() abort
+  return s:project_varname
 endfunction
 
 " Function: lh#project#crt_bufvar_name() {{{3
@@ -943,6 +953,7 @@ endfunction
 " # Post local vimrc hook {{{2
 " Function: lh#project#_post_local_vimrc() {{{3
 function! lh#project#_post_local_vimrc() abort
+  call s:Verbose('lh#project#_post_local_vimrc()')
   call lh#project#_auto_detect_project()
   call lh#project#_UseProjectOptions()
 endfunction
@@ -950,8 +961,10 @@ endfunction
 " Function: lh#project#_auto_detect_project() {{{3
 function! lh#project#_auto_detect_project() abort
   let auto_detect_projects = lh#option#get('lh#project.auto_detect', 0, 'g')
-  " If there already is a project defined => abort
-  if auto_detect_projects && ! lh#project#is_in_a_project()
+  " If there already is a project defined
+  " Or if this is the quickfix window
+  " => abort
+  if auto_detect_projects && ! lh#project#is_in_a_project() && &ft != 'qf'
     let root = lh#project#root()
     if !empty(root) && s:permission_lists.check_paths([root]) == 1
       " TODO: recognize patterns such as src|source to search the project in
