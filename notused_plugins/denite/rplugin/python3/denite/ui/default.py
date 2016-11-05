@@ -12,6 +12,7 @@ from .. import denite
 import re
 import traceback
 import time
+from itertools import filterfalse
 
 
 def _safe_isprint(vim, c):
@@ -217,13 +218,13 @@ class Default(object):
             self.__candidates += candidates
             sources += '{}({}/{}) '.format(name, len(candidates), len(all))
 
-            matchers = self.__denite.get_source(name).matchers
-            for filter in [self.__denite.get_filter(x) for x in matchers
-                           if self.__denite.get_filter(x)]:
-                pat = filter.convert_pattern(self.__context['input'])
-                if pat != '':
-                    pattern = pat
-                    break
+            if pattern == '':
+                matchers = self.__denite.get_source(name).matchers
+                pattern = next(filterfalse(
+                    lambda x: x == '',
+                    [self.__denite.get_filter(x).convert_pattern(
+                        self.__context['input']) for x in matchers
+                     if self.__denite.get_filter(x)]), '')
         self.__matched_pattern = pattern
         self.__candidates_len = len(self.__candidates)
 
@@ -238,7 +239,7 @@ class Default(object):
                         self.__context['cursor_highlight'],
                         [[self.__win_cursor, 1]])
         if self.__context['auto_preview']:
-            self.do_action(self.__context, 'preview')
+            self.do_action('preview')
 
     def change_mode(self, mode):
         custom = self.__context['custom']['map']
@@ -362,15 +363,15 @@ class Default(object):
         self.__result = []
         return True
 
-    def do_action(self, action):
+    def get_current_candidates(self):
         if self.__cursor >= self.__candidates_len:
-            return
+            return []
+        return [self.__candidates[self.__cursor + self.__win_cursor - 1]]
 
-        candidate = self.__candidates[self.__cursor + self.__win_cursor - 1]
-        if 'kind' in candidate:
-            kind = candidate['kind']
-        else:
-            kind = self.__denite.get_source(candidate['source']).kind
+    def do_action(self, action):
+        candidates = self.get_current_candidates()
+        if not candidates:
+            return
 
         prev_id = self.__vim.call('win_getid')
         self.__vim.call('win_gotoid', self.__prev_winid)
@@ -384,13 +385,17 @@ class Default(object):
                 self.__vim.command('wincmd w')
         try:
             is_quit = not self.__denite.do_action(
-                self.__context, kind, action, [candidate])
+                self.__context, action, candidates)
         except Exception:
             for line in traceback.format_exc().splitlines():
                 error(self.__vim, line)
             error(self.__vim,
                   'The action ' + action + ' execution is failed.')
             return
+        now_id = self.__vim.call('win_getid')
+        if now_id != self.__prev_winid:
+            self.__prev_winid = now_id
+            self.__prev_bufnr = self.__vim.current.buffer.number
         self.__vim.call('win_gotoid', prev_id)
 
         if is_quit:
@@ -400,8 +405,22 @@ class Default(object):
             else:
                 # Disable quit flag
                 is_quit = False
-        self.__result = [candidate]
+        self.__result = candidates
         return is_quit
+
+    def choose_action(self):
+        candidates = self.get_current_candidates()
+        if not candidates:
+            return
+
+        self.__vim.vars['denite#_actions'] = self.__denite.get_actions(
+            self.__context, candidates)
+        action = self.__vim.call('input', 'Action: ', '',
+                                 'customlist,denite#helper#complete_actions')
+        self.__vim.command('redraw | echo')
+        if action == '':
+            return
+        return self.do_action(action)
 
     def delete_backward_char(self):
         self.__input_before = re.sub('.$', '', self.__input_before)
@@ -439,7 +458,7 @@ class Default(object):
         self.update_buffer()
 
     def input_command_line(self):
-        self.__vim.command('redraw')
+        self.__vim.command('redraw | echo')
         input = self.__vim.call(
             'input', self.__context['prompt'] + ' ',
             self.__context['input'])
