@@ -5239,6 +5239,14 @@
     "type": "git",
     "url": "git://github.com/devjoe/vim-codequery"
   },
+  "5478": {
+    "type": "git",
+    "url": "git://github.com/kamwitsta/mythos"
+  },
+  "5479": {
+    "type": "git",
+    "url": "git://github.com/djmoch/vim-makejob"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

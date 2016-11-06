@@ -1,4 +1,6 @@
 {
+"vim-makejob":{"archive_name":"vim-makejob.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24706","version":"0.2","vim_script_nr":5479},
+"mythos":{"archive_name":"mythos.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24705","version":"0.1","vim_script_nr":5478},
 "vim-codequery":{"archive_name":"vim-codequery-0.9.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24696","version":"0.9.1","vim_script_nr":5477},
 "xdg_open":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24690","version":"1.0","vim_script_nr":5476},
 "Install_a_Plugin_in_Vim":{"archive_name":"Vim Script.png","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24684","version":"cp","vim_script_nr":5475},
