@@ -4,21 +4,16 @@
 # License: MIT license
 # ============================================================================
 
-from denite.util import error, echo, debug, escape_syntax
+from denite.util import error, echo, escape_syntax
 from ..prompt.key import Key
 from ..prompt.util import getchar
 from .. import denite
+from .compat import isprint
 
 import re
 import traceback
 import time
 from itertools import filterfalse
-
-
-def _safe_isprint(vim, c):
-    if not c or c == '\0':
-        return False
-    return vim.call('match', c, '\p') >= 0
 
 
 class Default(object):
@@ -196,7 +191,7 @@ class Default(object):
         self.__vim.current.buffer.append(
             ['%s %s' % (
                 x['source'] if self.__is_multi else '',
-                x.get('abbr', x['word']))
+                x.get('abbr', x['word'])[:400])
              for x in self.__candidates[self.__cursor:
                                         self.__cursor + self.__winheight]])
         del self.__vim.current.buffer[0]
@@ -307,12 +302,6 @@ class Default(object):
         self.update_buffer()
         self.__context['is_redraw'] = False
 
-    def debug(self, expr):
-        debug(self.__vim, expr)
-
-    def error(self, msg):
-        self.__vim.call('denite#util#print_error', '[denite]' + str(msg))
-
     def input_loop(self):
         self.__input_before = self.__context['input']
         self.__input_cursor = ''
@@ -343,8 +332,7 @@ class Default(object):
                     if ret:
                         break
                     continue
-            elif (self.__current_mode == 'insert' and
-                  _safe_isprint(self.__vim, key.char)):
+            elif (self.__current_mode == 'insert' and _safe_isprint(key.char)):
                 # Normal input string
                 self.__input_before += key.char
                 self.update_input()
@@ -383,15 +371,8 @@ class Default(object):
                 self.__vim.command('topleft new')
             else:
                 self.__vim.command('wincmd w')
-        try:
-            is_quit = not self.__denite.do_action(
-                self.__context, action, candidates)
-        except Exception:
-            for line in traceback.format_exc().splitlines():
-                error(self.__vim, line)
-            error(self.__vim,
-                  'The action ' + action + ' execution is failed.')
-            return
+        is_quit = not self.__denite.do_action(
+            self.__context, action, candidates)
         now_id = self.__vim.call('win_getid')
         if now_id != self.__prev_winid:
             self.__prev_winid = now_id
@@ -482,3 +463,9 @@ class Default(object):
     def suspend(self):
         self.__options['modifiable'] = False
         return True
+
+
+def _safe_isprint(c):
+    if not c or c == '\0':
+        return False
+    return isprint(c)
