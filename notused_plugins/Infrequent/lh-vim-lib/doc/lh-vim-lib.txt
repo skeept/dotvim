@@ -51,10 +51,13 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
 - |lh#math#abs()|
+- |lh#mapping#define()|
+- |lh#mapping#plug()|
 - |lh#on#exit()|
 - |lh#position#char_at()|
 - |lh#position#char_at_mark()|
 - |lh#position#char_at_pos()|
+- |lh#position#compare()|
 - |lh#position#extract()|
 - |lh#position#is_before()|
 - |lh#time#bench()|
@@ -338,6 +341,30 @@ The purpose of the function is to emulate |abs()| on vim version where it
 isn't defined.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#define()*             {{{3
+lh#mapping#define(map_dict)~
+Defines a |mapping| from:
+- `"mode"`  : i, n, ..
+- `"nore"`  : 1/[0]
+- `"silent"`: 1/[0]
+- `"expr"`  : 1/[0]
+- `"buffer"`: 1/[0]
+- `"lhs"`   : keybinding
+- `"rhs"`   : action bound
+- `"sid"`   : optional number
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#plug()*               {{{3
+lh#mapping#plug(keybinding, name, modes)~
+Helper function to define in one go several default and unique mappings for a
+plug mapping.
+
+For all the mode specified, it executes: >
+    if !hasmapto(name, mode) && (mapcheck(keybinding, mode) == "")
+        exe mode.'map <silent> <unique> '.keybinding.' '.name
+    endif
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
 lh#on#exit()~
 This function will register action to be executed at the end on a scope, and
@@ -509,6 +536,15 @@ lh#position#IsBefore({lhs_pos},{rhs_pos})  (*deprecated*)~
 lh#position#is_before({lhs_pos},{rhs_pos})~
 @param[in]          Positions as those returned from |getpos()|
 @return             Whether {lhs_pos} is before {rhs_pos}
+@see also |lh#position#compare()| for a result compatible with |sort()|.
+
+                                               *lh#position#compare()*           {{{3
+lh#position#compare({lhs_pos},{rhs_pos})~
+@param[in]          Positions as those returned from |getpos()|
+@return             -1 {lhs_pos} if is before {rhs_pos}
+@return             +1 {lhs_pos} if is after  {rhs_pos}
+@return              0 {lhs_pos} is at        {rhs_pos}
+@see also |lh#position#is_before()| for a boolean result.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                              *lh#position#char_at()*           {{{3

@@ -5247,6 +5247,14 @@
     "type": "git",
     "url": "git://github.com/djmoch/vim-makejob"
   },
+  "5480": {
+    "type": "git",
+    "url": "git://github.com/ltlkodae/StyleGuide.vim"
+  },
+  "5481": {
+    "type": "git",
+    "url": "git://github.com/AndrewRadev/gnugo.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
