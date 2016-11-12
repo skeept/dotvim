@@ -18,7 +18,7 @@ let s:defaults = {
       \ 'buffer':        0,
       \ 'buffers':       0,
       \ 'next_tool':     '<tab>',
-      \ 'tools':         ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'git'],
+      \ 'tools':         ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'sift', 'git'],
       \ 'git':           { 'grepprg':    'git grep -nI',
       \                    'grepformat': '%f:%l:%m',
       \                    'escape':     '\^$.*[]' },
@@ -30,6 +30,10 @@ let s:defaults = {
       \                    'escape':     '\^$.*+?()[]{}|' },
       \ 'pt':            { 'grepprg':    'pt --nogroup',
       \                    'grepformat': '%f:%l:%m' },
+      \ 'sift':          { 'grepprg':    'sift -n --column --binary-skip $* .',
+      \                    'grepprgbuf': 'sift -n --column --binary-skip --filename -- $* $.',
+      \                    'grepformat': '%f:%l:%c:%m',
+      \                    'escape':     '\+*?^$%#()[]' },
       \ 'ack':           { 'grepprg':    'ack --noheading --column',
       \                    'grepformat': '%f:%l:%c:%m',
       \                    'escape':     '\^$.*+?()[]{}|' },
@@ -473,11 +477,11 @@ function! s:run(flags)
           \ 'on_exit':   function('s:on_exit'),
           \ }))
   elseif !get(w:, 'testing') && (v:version > 704 || v:version == 704 && has('patch1967'))
-        \ && a:flags.tools[0] !~# '\v(ack|pt|rg)'
     if exists('s:id')
       silent! call job_stop(s:id)
     endif
     let s:id = job_start(cmd, {
+          \ 'in_io':    'null',
           \ 'err_io':   'out',
           \ 'out_cb':   function('s:on_stdout_vim', options),
           \ 'close_cb': function('s:on_exit', options),
