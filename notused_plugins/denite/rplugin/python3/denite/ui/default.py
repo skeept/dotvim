@@ -4,11 +4,10 @@
 # License: MIT license
 # ============================================================================
 
-from denite.util import error, echo, escape_syntax
+from denite.util import error, echo, escape_syntax, safe_isprint
 from ..prompt.key import Key
 from ..prompt.util import getchar
 from .. import denite
-from .compat import isprint
 
 import re
 import traceback
@@ -39,6 +38,7 @@ class Default(object):
         self.__winsaveview = {}
         self.__initialized = False
         self.__winheight = 0
+        self.__scroll = 0
         self.__is_multi = False
         self.__matched_pattern = ''
         self.__statusline_sources = ''
@@ -91,6 +91,9 @@ class Default(object):
         self.__prev_tabpages = self.__vim.call('tabpagebuflist')
         self.__winrestcmd = self.__vim.call('winrestcmd')
         self.__winsaveview = self.__vim.call('winsaveview')
+        self.__scroll = int(self.__context['scroll'])
+        if self.__scroll == 0:
+            self.__scroll = round(self.__winheight / 2)
 
         if self.__winid > 0 and self.__vim.call(
                 'win_gotoid', self.__winid):
@@ -332,7 +335,8 @@ class Default(object):
                     if ret:
                         break
                     continue
-            elif (self.__current_mode == 'insert' and _safe_isprint(key.char)):
+            elif (self.__current_mode == 'insert' and
+                  safe_isprint(self.__vim, key.char)):
                 # Normal input string
                 self.__input_before += key.char
                 self.update_input()
@@ -438,6 +442,39 @@ class Default(object):
             return
         self.update_buffer()
 
+    def scroll_window_upwards(self):
+        self.scroll_up(self.__scroll)
+
+    def scroll_window_downwards(self):
+        self.scroll_down(self.__scroll)
+
+    def scroll_page_backwards(self):
+        self.scroll_up(self.__winheight - 1)
+
+    def scroll_page_forwards(self):
+        self.scroll_down(self.__winheight - 1)
+
+    def scroll_down(self, scroll):
+        if (self.__win_cursor < self.__candidates_len and
+                self.__win_cursor < self.__winheight):
+            self.__win_cursor = min(self.__win_cursor + scroll,
+                                    self.__candidates_len, self.__winheight)
+        elif self.__win_cursor + self.__cursor < self.__candidates_len:
+            self.__cursor = min(self.__cursor + scroll,
+                                self.__candidates_len - self.__win_cursor)
+        else:
+            return
+        self.update_buffer()
+
+    def scroll_up(self, scroll):
+        if self.__win_cursor > 1:
+            self.__win_cursor = max(self.__win_cursor - scroll, 1)
+        elif self.__cursor > 0:
+            self.__cursor = max(self.__cursor - scroll, 0)
+        else:
+            return
+        self.update_buffer()
+
     def input_command_line(self):
         self.__vim.command('redraw | echo')
         input = self.__vim.call(
@@ -463,9 +500,3 @@ class Default(object):
     def suspend(self):
         self.__options['modifiable'] = False
         return True
-
-
-def _safe_isprint(c):
-    if not c or c == '\0':
-        return False
-    return isprint(c)
