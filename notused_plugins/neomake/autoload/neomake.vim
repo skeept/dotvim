@@ -155,6 +155,7 @@ function! s:MakeJob(make_id, maker) abort
                     endif
                 endif
             else
+                " vim-async.
                 let opts = {
                             \ 'err_cb': 'neomake#MakeHandlerVimStderr',
                             \ 'out_cb': 'neomake#MakeHandlerVimStdout',
@@ -291,7 +292,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
         \ 'args': [],
         \ 'errorformat': &errorformat,
         \ 'buffer_output': 1,
-        \ 'remove_invalid_entries': 1
+        \ 'remove_invalid_entries': 1,
         \ }
     let bufnr = bufnr('%')
     for [key, default] in items(defaults)
@@ -430,9 +431,8 @@ function! s:Make(options, ...) abort
     endif
     call neomake#signs#DefineSigns()
 
-    call neomake#utils#DebugMessage(printf(
-                \ '[%d] Running makers: %s',
-                \ make_id, string(enabled_makers)))
+    call neomake#utils#DebugMessage(printf('Running makers: %s',
+                \ string(enabled_makers)), {'make_id': make_id})
 
     let buf = bufnr('%')
     let win = winnr()
@@ -532,6 +532,7 @@ function! s:AddExprCallback(jobinfo) abort
     let index = file_mode ? s:loclist_nr[maker.winnr] : s:qflist_nr
     let maker_type = file_mode ? 'file' : 'project'
     let cleaned_signs = 0
+    let ignored_signs = 0
 
     while index < len(list)
         let entry = list[index]
@@ -596,7 +597,11 @@ function! s:AddExprCallback(jobinfo) abort
         call add(s:current_errors[maker_type][entry.bufnr][entry.lnum], entry)
 
         if place_signs
-            call neomake#signs#RegisterSign(entry, maker_type)
+            if entry.lnum is 0
+                let ignored_signs += 1
+            else
+                call neomake#signs#RegisterSign(entry, maker_type)
+            endif
         endif
     endwhile
 
@@ -612,6 +617,11 @@ function! s:AddExprCallback(jobinfo) abort
         else
             call setqflist(list, 'r')
         endif
+    endif
+    if ignored_signs
+        call neomake#utils#DebugMessage(printf(
+                    \ 'Could not place signs for %d entries without line number.',
+                    \ ignored_signs))
     endif
     return counts_changed
 endfunction
@@ -708,7 +718,9 @@ function! s:RegisterJobOutput(jobinfo, lines, source) abort
     let maker = a:jobinfo.maker
 
     if !get(maker, 'file_mode')
-        return s:ProcessJobOutput(a:jobinfo, lines, a:source)
+        call s:ProcessJobOutput(a:jobinfo, lines, a:source)
+        call neomake#signs#PlaceVisibleSigns()
+        return
     endif
 
     " file mode: append lines to jobs's window's output.
@@ -935,17 +947,11 @@ endfunction
 
 function! neomake#Make(file_mode, enabled_makers, ...) abort
     let options = a:0 ? { 'exit_callback': a:1 } : {}
-    if a:file_mode
-        let options.enabled_makers = len(a:enabled_makers) ?
-                    \ a:enabled_makers :
-                    \ neomake#GetEnabledMakers(&filetype)
-        let options.ft = &filetype
-        let options.file_mode = 1
-    else
-        let options.enabled_makers = len(a:enabled_makers) ?
-                    \ a:enabled_makers :
-                    \ neomake#GetEnabledMakers()
-    endif
+    let options.file_mode = a:file_mode
+    let options.ft = &filetype
+    let options.enabled_makers = len(a:enabled_makers)
+                    \ ? a:enabled_makers
+                    \ : neomake#GetEnabledMakers(a:file_mode ? &filetype : '')
     return s:Make(options)
 endfunction
 
