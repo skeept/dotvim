@@ -99,3 +99,6 @@ function! ToStatic1()
 endfunction
 
 " nnoremap <silent> ,a :call ToStatic1()<CR>
+
+" search for current line stripped
+nnoremap gsl /\s*<C-R>=substitute(getline('.'), '^\s*\(.\{-}\)\s*$', '\1', '')<CR>\s*$<CR>
