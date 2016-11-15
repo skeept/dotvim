@@ -460,6 +460,12 @@ OPTIONS							*denite-options*
 		Open any denite buffer if the candidate is empty.
 		Default: true
 
+						*denite-options-immediately*
+-immediately
+		If candidates are exists, it runs the default action
+		immediately.
+		Default: false
+
 							*denite-options-input*
 -input={input-text}
 		Specify an initial narrowing text.
@@ -487,6 +493,14 @@ OPTIONS							*denite-options*
 		Note: Uses |denite-options-buffer-name| to search for
 		previous buffers.
 		Default: false
+
+						*denite-options-select*
+-select={number}
+		Select {number} candidate.
+		If {number} is "+1" or "-1" when resume, selects the next or
+		previous candidate.
+		Note: 0 is the first candidate.
+		Default: ''
 
 						*denite-options-statusline*
 -statusline
@@ -645,8 +659,11 @@ file		An interface to jump to the file position.
 			open (default)
 				Open the file.
 
-			preview (default)
+			preview
 				Preview the file.
+
+			tabopen
+				Open the file in the next tab.
 
 						*denite-kind-word*
 word		An interface to paste the text.

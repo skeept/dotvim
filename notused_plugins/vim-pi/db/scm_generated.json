@@ -5259,6 +5259,10 @@
     "type": "git",
     "url": "git://github.com/adelarsq/vim-matchit"
   },
+  "5483": {
+    "type": "git",
+    "url": "https://bitbucket.org/ghurrell/replay"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
