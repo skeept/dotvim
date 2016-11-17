@@ -248,21 +248,28 @@ License:    The generated code is under license exception to GPLv3
             <http://github.com/LucHermitte/lh-cpp/blob/master/License.md>
 
 Mappings and abbreviations~
-    *#n*      expands into "#include", in respect of the context.
-    *#d*      expands into "#define", in respect of the context.
-    *#i*      expands into "#ifdef", in respect of the context.
-    *#e*      expands into "#endif", in respect of the context.
-    *<M-r>*   expands into "return ;"
-    *?:*      expands into "?...:...;"
-    *<M-v>*   surrounds the selection with `/*...*/`
-    *<localleader>0* surrounds the line selected with `#if 0...#endif`
-    *<localleader>1* surrounds the line selected with `#if 0...#else\n#endif`
+    *#n*         Expands into "#include", in respect of the context.
+    *#d*         Expands into "#define", in respect of the context.
+    *#i*         Expands into "#ifdef", in respect of the context.
+    *#e*         Expands into "#endif", in respect of the context.
+    *<M-r>*      Expands into "return ;"
+    *?:*         Expands into "?...:...;"
+    *<M-v>*      Surrounds the selection with `/*...*/`
+    *i_CTRL-X_i* Completes the current path before the cursor as a file to be
+               included. Search the files into the *(bpg):paths.includes*
+               variable (list of directory glob patterns -- see |wildcard|).
+               See also lh-dev |n_CTRL-X_i|
+    *<localleader>0* Surrounds the line selected with `#if 0...#endif`
+    *<localleader>1* Surrounds the line selected with `#if 0...#else\n#endif`
+                   See also the *c/comment* snippet that takes a count to
+                   determine where the `#else` should go.
+                   See also |KeepPoundIfPath|.
 
-To prevent these mappings and abbreviations to be defined, set
+To prevent these Mappings and abbreviations to be defined, set
 |g:lh_cpp_snippets| to 0.
 
 On the subject of `#if 0/1...#else...#endif`, the command *:KeepPoundIfPath*
-can remove the true or the false path. It takes one parameter: 1 or 0 to
+can remove the trUe or the false path. It takes one parameter: 1 or 0 to
 indicate which path must be kept.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -940,6 +947,31 @@ Functions dedicated to the analysis of C/C++ classes~
 *lh#cpp#AnalysisLib_Class#FetchDirectChildren()*
 *lh#cpp#AnalysisLib_Class#used_namespaces()*
 *lh#cpp#AnalysisLib_Class#attributes()*
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                            *lh#cpp#tags#*
+Functions analysis current situation~
+*lh#cpp#tags#find_compiler()*
+    Returns the current known C++ compiler.
+    Works best on CMake projects when |lh-cmake| is installed. Looks into
+    `$CXX` or returns which of `c++`, `g++` or `clang++` is found first.
+*lh#cpp#tags#compiler_includes()*
+    Returns the standard (hard-coded) include directories associated to the
+    current C++ compiler (|lh#cpp#tags#find_compiler()|).
+*lh#cpp#tags#get_included_paths()*
+    Returns declared included paths:
+    - the first between |(bpg):sources_root| (deprecated) and |(bpg):paths.sources|
+    - the first between |(bpg):paths.includes| and |(bpg):includes|
+      (deprecated), or optional |list| passed.
+*lh#cpp#tags#strip_included_paths()*
+    Returns the first parameter (a filename) stripped of its leading dirname
+    that belongs to the |list| of include directories (likelly obtained with
+    |lh#cpp#tags#get_included_paths()|).
+*lh#cpp#tags#fetch()*
+    Look up the symbol under the cursor in the |tag| database in header files
+    And returns its relevant information.
+    Tuned by the options *(bpg):[{ft}_]tag_kinds_for_inclusion* and
+    *(bpg):[{ft}_]file_regex_for_inclusion*
 
 ------------------------------------------------------------------------------
 Credits~
