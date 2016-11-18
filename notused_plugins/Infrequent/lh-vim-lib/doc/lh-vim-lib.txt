@@ -156,6 +156,10 @@ Paths related functions:                                |lhvl#path|
 - |lh#path#to_regex()|
 - |lh#path#to_relative()|
 Commands related functions:                             |lhvl#command|
+- |lh#command#analyse_args()|
+- |lh#command#matching_variables()|
+- |lh#command#matching_askvim()|
+- |lh#command#matching_for_command()|
 - |lh#command#new()| (alpha version)
 - |lh#command#Fargs2String()| (alpha version)
 - |lh#command#complete()| (alpha version)
@@ -377,6 +381,8 @@ It permits to do the following things:
 - `restore()`                restores a |variable| or a vim |option|.
 - `restore_option()`         restores a |lhvl#option|
 - `register()`               registers a |command| to execute.
+                           it takes a second facultative argument `"priority"`
+                           to give the highest priority to the command.
 - `restore_buffer_mapping()` restores a |map-<buffer>|
 
 e.g. >
@@ -2443,6 +2449,35 @@ The action to execute will be corrected depending on the current mode. See
 COMMANDS RELATED FUNCTIONS                            *lhvl#command*    {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#analyse_args()*       {{{3
+lh#command#analyse_args(a:ArgLead, a:CmdLine, a:CursorPos)~
+Helper function to define |:command-completion-custom| functions.
+It parses the function parameters to return a |List| of:
+" - the position of the token where the cursor is
+" - all the tokens up to cursor position
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_variables()* {{{3
+lh#command#matching_variables(lead [, scopes=all])~
+Helper function to define |:command-completion-custom| functions.
+Returns a list of variables matching the {lead}. Supported variables are:
+|g:var|, |b:var|, |t:var|, |w:var|,  |expr-env|ironment variables, |options|.
+|p:var| are not supported (yet).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_for_command()* {{{3
+lh#command#matching_for_command(lead)~
+Helper function to define |:command-completion-custom| functions.
+Returns what vim would have expanded for the command contained in the {lead}
+string.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_askvim()*    {{{3
+lh#command#matching_askvim(attribute, lead)~
+Helper function to define |:command-completion-custom| functions.
+Returns what vim would have expanded for |:command-complete| {attribute}.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#command#new()*                {{{3
 Highly Experimental.
 
@@ -3446,6 +3481,27 @@ displayed.
 :Project [{prj-name}] :echo {varname}~
 Echoes the value of the |p:|variable {varname} associated to specified
 project, or the current project otherwise.
+
+                                                    *:Project-:doonce*
+:Project [{prj-name}] :doonce {cmd}~
+Executes {cmd} in the first window found that is associated to specified
+(or current) project. If no buffer from the project is opened in a window, we
+try to open one (which'll be automatically discarded).
+@pre the project shall have listed buffers.
+
+                                                    *:Project-:windo*
+:Project [{prj-name}] :windo {cmd}~
+Executes {cmd} in all windows associated to the specified (or current)
+project. This is similar to |:windo|, except the windows used are filtered
+beforehand.
+@pre the project shall have listed buffers.
+
+                                                    *:Project-:bufdo*
+:Project [{prj-name}] :bufdo {cmd}~
+Executes {cmd} in all buffers associated to the specified (or current)
+project. A temporary window is opened for the occasion (contrary to
+|:bufdo| which uses the current window) .
+@pre the project shall have listed buffers.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#project#new()*               {{{3
