@@ -1,4 +1,6 @@
 {
+"vim-yesod":{"archive_name":"vim-yesod.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24748","version":"1.0","vim_script_nr":5486},
+"vim-shaderlab":{"archive_name":"vim-shaderlab-0.0.1.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24747","version":"0.0.1","vim_script_nr":5485},
 "syn-preproc":{"archive_name":"syn-preproc-1.00.vmb.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24741","version":"1.00","vim_script_nr":5484},
 "Replay%5483":{"archive_name":"replay-0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24736","version":"0.3","vim_script_nr":"5483"},
 "vim-matchit":{"archive_name":"matchit.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24728","version":"1.13.2","vim_script_nr":5482},
@@ -2687,7 +2689,7 @@
 "Dictionary_file_for_Luxology_Modo_Python":{"archive_name":"modo_globals.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10926","version":"1","vim_script_nr":2698},
 "elisex":{"archive_name":"elisex.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10925","version":"1.0","vim_script_nr":2697},
 "elise":{"archive_name":"elise.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10924","version":"1.0","vim_script_nr":2696},
-"EnhancedJumps":{"archive_name":"EnhancedJumps-3.02.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22466","version":"3.02","vim_script_nr":2695},
+"EnhancedJumps":{"archive_name":"EnhancedJumps-3.03.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24746","version":"3.03","vim_script_nr":2695},
 "MediaWiki_folding_and_syntax_highlight":{"archive_name":"wp.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10905","version":"0.1","vim_script_nr":2694},
 "ats-lang-vim":{"archive_name":"ats.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10904","version":"0.1","vim_script_nr":2693},
 "operator-user":{"archive_name":"vim-operator-user-0.0.7.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18077","version":"0.0.7","vim_script_nr":2692},

@@ -362,6 +362,13 @@ function! neomake#GetMakers(ft) abort
     return filter(makers, 'makers_count[v:val] ==# l')
 endfunction
 
+function! neomake#GetProjectMakers() abort
+    runtime! autoload/neomake/makers/*.vim
+    let funcs_output = neomake#utils#redir('fun /neomake#makers#\(ft#\)\@!\l')
+    return map(split(funcs_output, '\n'),
+                \ "substitute(v:val, '\\v^.*#(.*)\\(.*$', '\\1', '')")
+endfunction
+
 function! neomake#GetEnabledMakers(...) abort
     if !a:0 || type(a:1) !=# type('')
         " If we have no filetype, use the global default makers.
@@ -939,19 +946,21 @@ function! neomake#CursorMoved() abort
     endif
 endfunction
 
-function! neomake#CompleteMakers(ArgLead, ...) abort
+function! neomake#CompleteMakers(ArgLead, CmdLine, ...) abort
     if a:ArgLead =~# '[^A-Za-z0-9]'
         return []
-    else
-        return filter(neomake#GetMakers(&filetype),
-                    \ "v:val =~? '^".a:ArgLead."'")
     endif
+    let file_mode = a:CmdLine =~# '\v^(Neomake|NeomakeFile)\s'
+    let makers = file_mode ? neomake#GetMakers(&filetype) : neomake#GetProjectMakers()
+    return filter(makers, "v:val =~? '^".a:ArgLead."'")
 endfunction
 
 function! neomake#Make(file_mode, enabled_makers, ...) abort
     let options = a:0 ? { 'exit_callback': a:1 } : {}
     let options.file_mode = a:file_mode
-    let options.ft = &filetype
+    if a:file_mode
+        let options.ft = &filetype
+    endif
     let options.enabled_makers = len(a:enabled_makers)
                     \ ? a:enabled_makers
                     \ : neomake#GetEnabledMakers(a:file_mode ? &filetype : '')
