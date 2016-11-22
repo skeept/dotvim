@@ -105,6 +105,10 @@ EXAMPLES						*denite-examples*
 	call denite#custom#source(
 	\ 'file_rec', 'matchers', ['matcher_cpsm'])
 
+	" Change soters.
+	call denite#custom#source(
+	\ 'file_rec', 'sorters', ['sorter_sublime'])
+
 	" Add custom menus
 	let s:menus = {}
 
@@ -265,6 +269,14 @@ move_to_next_line
 move_to_prev_line
 		Move to previous line.
 
+						*denite-map-move_to_first_line*
+move_to_first_line
+		Move to first line.
+
+						*denite-map-move_to_last_line*
+move_to_last_line
+		Move to last line.
+
 					*denite-map-scroll_window_downwards*
 scroll_window_downwards
 		Scroll the window downwards.
@@ -333,6 +345,8 @@ All mode mappings.
 i		enter_mode:insert
 j		move_to_next_line
 k		move_to_prev_line
+g		move_to_first_line
+G		move_to_last_line
 <C-d>		scroll_window_downwards
 <C-u>		scroll_window_upwards
 <C-f>		scroll_page_forwards
@@ -452,6 +466,12 @@ OPTIONS							*denite-options*
 		Note: If you use both {option-name} and -no-{option-name} in
 		the same denite buffer, it is undefined.
 
+						*denite-options-auto-highlight*
+-auto-highlight
+		When you select a candidate, it runs the "highlight" action
+		automatically.
+		Default: false
+
 						*denite-options-auto-preview*
 -auto-preview
 		When you select a candidate, it runs the "preview" action
@@ -520,6 +540,11 @@ OPTIONS							*denite-options*
 		Enable statusline.
 		Default: true
 
+					*denite-options-vertical-preview*
+-vertical-preview
+		Open the preview window vertically.
+		Default: false
+
 ==============================================================================
 SOURCES							*denite-sources*
 
@@ -566,9 +591,25 @@ file_rec	Gather files recursive and nominates all file names under the
 		1. the search directory.
 
 		Source custom variables:
-		command		the default get files command
-				(default is used "find" command in Unix
-				environment)
+		command		the default get files command.
+				default uses "find" command in Unix
+				environments:
+
+				find -L <directory> \
+					-path "*/.git/*" -prune, -o \
+					-type l -print -o -type f -print
+
+				To customize the find command or any command
+				that does't expects the directory parameter as
+				it's last parameter one can use the positional
+				"directory" argument:
+
+				call dein#custom#var("file_rec", "command",
+					\ [ "find", "-L", ":directory",
+					\ "-path", "*/.svn/*", "-prune", "-o",
+					\ '-type', 'l', '-print', '-o',
+					\ '-type', 'f', '-print'])
+
 		min_cache_files	the minimum number of files that
 				it saves the caches.
 				(default is 10000)
@@ -675,6 +716,9 @@ file		An interface to jump to the file position.
 			preview
 				Preview the file.
 
+			highlight
+				Preview and highlight the file.
+
 			tabopen
 				Open the file in the next tab.
 
@@ -737,6 +781,12 @@ sorter_rank
 		https://github.com/garybernhardt/selecta.  If the matched
 		length is shorter, the rank is higher.  This sorter is useful
 		for file candidate source.
+
+
+						*denite-filter-sorter_sublime*
+sorter_sublime
+		Uses the scoring algorithm from this article and its implementation:
+		https://bit.ly/reverse-engineering-sublime-text-s-fuzzy-match
 
 				*denite-filter-converter_relative_word*
 converter_relative_word
@@ -894,6 +944,9 @@ filter
 
 ==============================================================================
 EXTERNAL SOURCES				*denite-external-sources*
+
+vim-denite-ghq: "ghq" source
+https://github.com/Jagua/vim-denite-ghq
 
 ==============================================================================
 FAQ							*denite-faq*

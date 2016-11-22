@@ -251,6 +251,8 @@ class Default(object):
                         [[self.__win_cursor, 1]])
         if self.__context['auto_preview']:
             self.do_action('preview')
+        if self.__context['auto_highlight']:
+            self.do_action('highlight')
 
     def change_mode(self, mode):
         custom = self.__context['custom']['map']
@@ -460,6 +462,20 @@ class Default(object):
             return
         self.update_buffer()
 
+    def move_to_first_line(self):
+        if self.__win_cursor > 1 or self.__cursor > 0:
+            self.__win_cursor = 1
+            self.__cursor = 0
+            self.update_buffer()
+
+    def move_to_last_line(self):
+        win_max = min(self.__candidates_len, self.__winheight)
+        cur_max = self.__candidates_len - win_max
+        if self.__win_cursor < win_max or self.__cursor < cur_max:
+            self.__win_cursor = win_max
+            self.__cursor = cur_max
+            self.update_buffer()
+
     def scroll_window_upwards(self):
         self.scroll_up(self.__scroll)
 
@@ -491,6 +507,7 @@ class Default(object):
             self.__cursor = max(self.__cursor - scroll, 0)
         else:
             return
+        self.update_buffer()
 
     def jump_to_next_source(self):
         if len(self.__context['sources']) == 1:

@@ -85,6 +85,8 @@ function! denite#init#_variables() abort "{{{
         \ "i": 'enter_mode:insert',
         \ "j": 'move_to_next_line',
         \ "k": 'move_to_prev_line',
+        \ "g": 'move_to_first_line',
+        \ "G": 'move_to_last_line',
         \ "<C-d>": 'scroll_window_downwards',
         \ "<C-u>": 'scroll_window_upwards',
         \ "<C-f>": 'scroll_page_forwards',
@@ -116,6 +118,7 @@ function! denite#init#_context() abort "{{{
 endfunction"}}}
 function! denite#init#_user_options() abort "{{{
   return {
+        \ 'auto_highlight': v:false,
         \ 'auto_preview': v:false,
         \ 'buffer_name': 'default',
         \ 'cursor_highlight': 'Cursor',
@@ -127,14 +130,16 @@ function! denite#init#_user_options() abort "{{{
         \ 'input': '',
         \ 'mode': 'insert',
         \ 'path': getcwd(),
+        \ 'previewheight': &previewheight,
         \ 'prompt': '#',
         \ 'prompt_highlight': 'Statement',
         \ 'quit': v:true,
         \ 'resume': v:false,
+        \ 'scroll': 0,
         \ 'select': '',
         \ 'statusline': v:true,
+        \ 'vertical_preview': v:false,
         \ 'winheight': 20,
-        \ 'scroll': 0,
         \}
 endfunction"}}}
 

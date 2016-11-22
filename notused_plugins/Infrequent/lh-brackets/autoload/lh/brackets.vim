@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
 " Version:      3.2.0
 " Created:      28th Feb 2008
-" Last Update:  11th Nov 2016
+" Last Update:  21st Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -28,6 +28,7 @@
 "               * Add `lh#brackets#jump_outside()`
 "               * Fix `Brackets -list`
 "               * Add `Brackets -context!=`
+"               : Fix `<BS>` to clear any bracket pair
 " Version 3.1.3:
 "               * Fix syntax error in `lh#brackets#_string`
 " Version 3.1.0:
@@ -811,8 +812,10 @@ function! lh#brackets#define(bang, ...) abort
         \ = res
 
   if type(Open) != type(function('has')) &&  type(Close) != type(function('has'))
-    let esc = escapable ? '\\' : ''
-    call s:AddPair(isLocal, esc.Open, esc.Close)
+    call s:AddPair(isLocal, Open, Close)
+    if escapable
+      call s:AddPair(isLocal, '\\'.Open, '\\'.Close)
+    endif
   endif
 
   " INSERT-mode open {{{3
@@ -865,26 +868,34 @@ endfunction
 function! lh#brackets#_match_any_bracket_pair() abort
   let crt_pairs = copy(s:GetPairs(0))
   call extend(crt_pairs, s:GetPairs(1))
-  let regex = '\('.join(map(copy(crt_pairs), 'escape(join(v:val,"\\%'.col('.').'c"), "[")'), '\|').'\)'
+  " let regex = '\V\('.join(map(copy(crt_pairs), 'escape(join(v:val,"\\%'.col('.').'c"), "\\")'), '\|').'\)'
+  let regex = '\V\('.join(map(crt_pairs, 'join(v:val,"\\%'.col('.').'c")'), '\|').'\)'
   return getline(".")=~ regex
 endfunction
 
 "------------------------------------------------------------------------
 " Function: lh#brackets#_delete_empty_bracket_pair() {{{2
 function! lh#brackets#_delete_empty_bracket_pair() abort
+  let crt_pairs = copy(s:GetPairs(0))
+  call extend(crt_pairs, s:GetPairs(1))
+  let regex = '\V\('.join(map(crt_pairs, 'join(v:val,"\\%'.col('.').'c")'), '\|').'\)'
+        \ . '\('.lh#marker#txt('\.\{-}').'\)\='
   let line = getline('.')
-  let l=line[col("."):]
-  if line[col('.')-1] == '\' " escaped bracket
-    let m = matchstr(l[1:], '^'.lh#marker#txt('.\{-}'))
-    let lm = lh#encoding#strlen(m)
 
-    return repeat(s:k_move_prefix."\<left>", 2).repeat("\<del>", lm+4)
-  else
-    let m = matchstr(l, '^'.lh#marker#txt('.\{-}'))
-    let lm = lh#encoding#strlen(m)
-
-    return s:k_move_prefix."\<left>".repeat("\<del>", lm+2)
+  if exists('*matchstrpos') " Since v 7.4-1685...
+    let m = matchstrpos(line, regex)
+  else " innefficient
+    let m = [matchstr(line, regex), match(line, regex), matchend(line, regex)]
   endif
+  " move right with the prefix len
+  let start = line[m[1] : col('.')-2]
+  let lenstart = lh#encoding#strlen(start)
+  " call s:Verbose('%1 in %2 -- len(%3)=%4', col('.'), m, start, lenstart)
+  return repeat(s:k_move_prefix."\<left>", lenstart).repeat("\<del>", lh#encoding#strlen(m[0]))
+
+  " Note: matchstrpos, col('.'), ... return byte offsets
+  " \<left> and \<del> use number of characters => use lh#encoding#strlen() to
+  " count the exact number of characters that match.
 endfunction
 
 "------------------------------------------------------------------------

@@ -13,10 +13,10 @@ function! denite#helper#complete(arglead, cmdline, cursorpos) abort "{{{
     " Option names completion.
     let bool_options = keys(filter(copy(denite#init#_user_options()),
           \ 'type(v:val) == type(v:true) || type(v:val) == type(v:false)'))
-    let _ += map(copy(bool_options), "'-' . v:val")
+    let _ += map(copy(bool_options), "'-' . tr(v:val, '_', '-')")
     let string_options = keys(filter(copy(denite#init#_user_options()),
           \ 'type(v:val) != type(v:true) && type(v:val) != type(v:false)'))
-    let _ += map(copy(string_options), "'-' . v:val . '='")
+    let _ += map(copy(string_options), "'-' . tr(v:val, '_', '-') . '='")
 
     " Add "-no-" option names completion.
     let _ += map(copy(bool_options), "'-no-' . v:val")
@@ -49,6 +49,24 @@ function! denite#helper#call_denite(command, args, line1, line2) abort "{{{
   endif
 
   call denite#start(args, context)
+endfunction"}}}
+
+function! denite#helper#preview_file(context, filename) abort "{{{
+  if a:context.vertical_preview
+    let denite_winwidth = winwidth(0)
+    call denite#util#execute_path('vertical pedit!', a:filename)
+    wincmd P
+    let target_winwidth = (denite_winwidth + winwidth(0)) / 2
+    execute 'wincmd p | vert resize ' . target_winwidth
+  else
+    let previewheight_save = &previewheight
+    try
+      let &previewheight = a:context.previewheight
+      call denite#util#execute_path('pedit!', a:filename)
+    finally
+      let &previewheight = previewheight_save
+    endtry
+  endif
 endfunction"}}}
 
 function! denite#helper#options() abort "{{{
