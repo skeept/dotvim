@@ -1259,6 +1259,10 @@
     "type": "hg",
     "url": "https://bitbucket.org/gryf/vimblogger_ft"
   },
+  "3370": {
+    "type": "git",
+    "url": "git://github.com/ellethee/eteSkeleton"
+  },
   "3375": {
     "type": "git",
     "url": "git://github.com/xolox/vim-notes"
@@ -5266,6 +5270,10 @@
   "5486": {
     "type": "git",
     "url": "git://github.com/alx741/vim-yesod"
+  },
+  "5487": {
+    "type": "git",
+    "url": "git://github.com/robcsi/viewmaps.vim"
   },
   "556": {
     "type": "git",

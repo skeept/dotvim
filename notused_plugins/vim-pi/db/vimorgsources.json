@@ -1,4 +1,5 @@
 {
+"ViewMaps":{"archive_name":"viewmaps.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24759","version":"0.1.0","vim_script_nr":5487},
 "vim-yesod":{"archive_name":"vim-yesod.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24748","version":"1.0","vim_script_nr":5486},
 "vim-shaderlab":{"archive_name":"vim-shaderlab-0.0.1.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24747","version":"0.0.1","vim_script_nr":5485},
 "syn-preproc":{"archive_name":"syn-preproc-1.00.vmb.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24741","version":"1.00","vim_script_nr":5484},
@@ -2015,7 +2016,7 @@
 "ColorSelect":{"archive_name":"ColorSelect.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15042","version":"0.5","vim_script_nr":3374},
 "blockle":{"archive_name":"blockle.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15538","version":"0.5","vim_script_nr":3373},
 "hdl_plugin%3371":{"archive_name":"hdl_plugin.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14648","version":"v2.1","vim_script_nr":3371},
-"eteSkeleton":{"archive_name":"eteSkeleton.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14515","version":"1.0.1","vim_script_nr":3370},
+"eteSkeleton":{"archive_name":"eteSkeleton-103.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24757","version":"1.0.3","vim_script_nr":3370},
 "softbluev2":{"archive_name":"softbluev2.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14509","version":"1.2","vim_script_nr":3369},
 "List_File":{"archive_name":"listfile-1.2.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16143","version":"1.2.1","vim_script_nr":3368},
 "vimblogger_ft":{"archive_name":"vimblogger_ft.vba","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=14619","version":"0.2","vim_script_nr":3367},
@@ -4118,7 +4119,7 @@
 "aspvbs%1256":{"archive_name":"aspvbs.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4243","version":"0.4","vim_script_nr":"1256"},
 "pike":{"archive_name":"pike.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4161","version":"1.0.7","vim_script_nr":1255},
 "VIMEN":{"archive_name":"vimen_0_00_0002a.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4133","version":"0.00.0002a","vim_script_nr":1254},
-"greens":{"archive_name":"greens.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6687","version":"2007.01.29","vim_script_nr":1253},
+"greens":{"archive_name":"greens.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24758","version":"2016.11.22","vim_script_nr":1253},
 "trt":{"archive_name":"trt.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4589","version":"1.3","vim_script_nr":1252},
 "timekeeper":{"archive_name":"j.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4105","version":"0.54","vim_script_nr":1251},
 "Teradata_syntax":{"archive_name":"teradata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4415","version":"1.2","vim_script_nr":1250},
