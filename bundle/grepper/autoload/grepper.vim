@@ -627,7 +627,7 @@ endfunction
 " }}}
 
 " -side {{{1
-let s:filename_regexp = '\v^\>\>\> ([[:alnum:][:blank:]\/\-_.~]+):(\d+)'
+let s:filename_regexp = '\v^%(\>\>\>|\]\]\]) ([[:alnum:][:blank:]\/\-_.~]+):(\d+)'
 
 " s:side() {{{2
 function! s:side() abort
@@ -639,49 +639,47 @@ endfunction
 function! s:side_create_window() abort
   " Contexts are lists of a fixed format:
   "
-  "   [0] = actual line number
-  "   [1] = begin of context
+  "   [0] = line number of the match
+  "   [1] = start of context
   "   [2] = end of context
-  let contexts = {}
+  let regions = {}
 
   " process quickfix entries
   for entry in getqflist()
     let bufname = bufname(entry.bufnr)
-    if has_key(contexts, bufname)
-      if (contexts[bufname][-1][2] + 2) > entry.lnum
+    if has_key(regions, bufname)
+      if (regions[bufname][-1][2] + 2) > entry.lnum
         " merge entries that are close to each other into the same context
-        let contexts[bufname][-1][2] = entry.lnum + 2
+        let regions[bufname][-1][2] = entry.lnum + 2
       else
         " new context in same file
-        let start = entry.lnum - 4
-        if start < 0
-          let start = 0
-        endif
-        let contexts[bufname] += [[entry.lnum, start, entry.lnum+2]]
+        let start = (entry.lnum < 4) ? 0 : (entry.lnum - 4)
+        let regions[bufname] += [[entry.lnum, start, entry.lnum + 2]]
       endif
     else
       " new context in new file
-      let start = entry.lnum - 4
-      if start < 0
-        let start = 0
-      endif
-      let contexts[bufname] = [[entry.lnum, start, entry.lnum+2]]
+      let start = (entry.lnum < 4) ? 0 : (entry.lnum - 4)
+      let regions[bufname] = [[entry.lnum, start, entry.lnum + 2]]
     end
   endfor
 
   vnew
 
   " write contexts to buffer
-  for [filename, contexts] in items(contexts)
+  for filename in sort(keys(regions))
+    let contexts = regions[filename]
     let file = readfile(expand(filename))
-    for context in contexts
-      call append('$', '>>> '. filename .':'. context[0])
+
+    let context = contexts[0]
+    call append('$', '>>> '. filename .':'. context[0])
+    call append('$', file[context[1]:context[2]])
+
+    for context in contexts[1:]
+      call append('$', ']]] '. filename .':'. context[0])
       call append('$', file[context[1]:context[2]])
     endfor
-    call append('$', '')
   endfor
 
-  silent $delete _
   silent 1delete _
 
   let nummatches = len(getqflist())
@@ -691,33 +689,72 @@ endfunction
 
 " s:side_buffer_settings() {{{2
 function! s:side_buffer_settings() abort
-  nnoremap <buffer> q    :bdelete<cr>
-  nnoremap <buffer> <cr> :call <sid>context_jump(1)<cr>
-  nnoremap <buffer> o    :call <sid>context_jump(0)<cr>
-  nnoremap <buffer> }    :call <sid>context_next()<cr>
-  nnoremap <buffer> {    :call <sid>context_previous()<cr>
+  nnoremap <silent><buffer> q :bdelete<cr>
+
+  nnoremap <silent><plug>(grepper-side-context-jump) :<c-u>call <sid>context_jump(1)
+  nnoremap <silent><plug>(grepper-side-context-open) :<c-u>call <sid>context_jump(0)
+  nnoremap <silent><plug>(grepper-side-context-next) :<c-u>call <sid>context_next()
+  nnoremap <silent><plug>(grepper-side-context-prev) :<c-u>call <sid>context_previous()
+
+  nmap <buffer> <cr> <plug>(grepper-side-context-jump)<cr>
+  nmap <buffer> o    <plug>(grepper-side-context-open)<cr>
+  nmap <buffer> }    <plug>(grepper-side-context-next)<cr>
+  nmap <buffer> {    <plug>(grepper-side-context-prev)<cr>
 
   setlocal buftype=nofile bufhidden=wipe nonumber norelativenumber foldcolumn=0
+  set nowrap
 
   normal! zR
   normal! n
 
+  set conceallevel=2
+  set concealcursor=nvic
+
   setfiletype GrepperSide
 
-  execute 'syntax match GrepperSideFile /'. s:filename_regexp .'/'
+  syntax match GrepperSideSquareBracket /]/ contained containedin=GrepperSideSquareBrackets conceal cchar=.
+  execute 'syntax match GrepperSideSquareBrackets /^]]] \v'.s:filename_regexp[20:].'/ conceal contains=GrepperSideSquareBracket'
+
+  syntax match GrepperSideAngleBracket  /> \?/ contained containedin=GrepperSideFile conceal
+  execute 'syntax match GrepperSideFile /^>>> \v'.s:filename_regexp[20:].'/ contains=GrepperSideAngleBracket'
+
   highlight default link GrepperSideFile Directory
 endfunction
 
 " s:side_context_next() {{{2
 function! s:context_next() abort
   call search(s:filename_regexp)
+  call s:side_context_scroll_into_viewport()
 endfunction
 
 " s:side_context_previous() {{{2
 function! s:context_previous() abort
   call search(s:filename_regexp, 'bc')
-  -
+  if line('.') == 1
+    $
+    call s:side_context_scroll_into_viewport()
+  else
+    -
+  endif
   call search(s:filename_regexp, 'b')
+endfunction
+
+" s:side_context_scroll_into_viewport() {{{2
+function! s:side_context_scroll_into_viewport() abort
+  redraw  " needed for line('w$')
+  let next_context_line = search(s:filename_regexp, 'nW')
+  let current_line      = line('.')
+  let last_line         = line('$')
+  let last_visible_line = line('w$')
+  if next_context_line > 0
+    let context_length = (next_context_line - 1) - current_line
+  else
+    let context_length = last_line - current_line
+  endif
+  let scroll_length = context_length - (last_visible_line - current_line)
+  if scroll_length > 0
+    execute 'normal!' scroll_length."\<c-e>"
+  endif
 endfunction
 
 " s:side_context_jump() {{{2
