@@ -488,6 +488,11 @@ OPTIONS							*denite-options*
 		Specify the default action as {action}.
 		Default: "default"
 
+						*denite-options-direction*
+-direction={direction}
+		Specify the denite window direction as {direction}.
+		Default: "botright"
+
 						*denite-options-empty*
 -empty
 		Open any denite buffer if the candidate is empty.
@@ -525,6 +530,11 @@ OPTIONS							*denite-options*
 		buffer gets created.
 		Note: Uses |denite-options-buffer-name| to search for
 		previous buffers.
+		Default: false
+
+						*denite-options-reversed*
+-reversed
+		The candidates are reversed.
 		Default: false
 
 						*denite-options-select*

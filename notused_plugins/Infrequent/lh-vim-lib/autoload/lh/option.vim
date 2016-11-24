@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 4000
 " Created:      24th Jul 2004
-" Last Update:  16th Nov 2016
+" Last Update:  24th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Defines the global function lh#option#get().
@@ -21,6 +21,7 @@ let s:k_version = 4000
 "       (*) BUG: Keep previous value for `g:lh#option#unset`
 "       (*) ENH: Extend `#to_string(#unset())` to be informative
 "       (*) ENH: Extend `lh#option#get()` to take a list of names
+"       (*) ENH: Add `lh#option#exists_in_buf()`
 "       v3.6.1
 "       (*) ENH: Use new logging framework
 "       v3.2.12
@@ -125,8 +126,8 @@ function! lh#option#get(names,...) abort
   let sScopes = (a:0 == 2) ? a:2 : 'bpg'
   let lScopes = split(sScopes, '\zs')
   let names = type(a:names) == type([]) ? a:names : [a:names]
-  for name in names
-    for scope in lScopes
+  for scope in lScopes
+    for name in names
       if scope == 'p'
         let r = lh#project#_get(name)
         if lh#option#is_set(r)
@@ -258,6 +259,13 @@ endfunction
 function! lh#option#GetNonEmpty(name,default,...)
   let scope = (a:0 == 1) ? a:1 : 'bg'
   return lh#option#get_non_empty(a:name, a:default, scope)
+endfunction
+
+" Function: lh#option#exists_in_buf(bufid, varname) {{{3
+" Return exists(varname) in bufid context
+function! lh#option#exists_in_buf(bufid, varname) abort
+  let bufvars = getbufvar(a:bufid, '')
+  return has_key(bufvars, a:varname)
 endfunction
 
 " Function: lh#option#getbufvar(expr, name [, default])            {{{3

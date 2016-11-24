@@ -679,6 +679,8 @@ function! s:side_create_window(use_quickfix) abort
       call append('$', ']]] '. filename .':'. context[0])
       call append('$', file[context[1]:context[2]])
     endfor
+
+    call append('$', '')
   endfor
 
   silent 1delete _
@@ -710,6 +712,8 @@ function! s:side_buffer_settings() abort
 
   set conceallevel=2
   set concealcursor=nvic
+
+  let b:grepper_side = s:filename_regexp
 
   setfiletype GrepperSide
 

@@ -111,7 +111,8 @@ class Default(object):
             self.__vim.command('wincmd J')
         else:
             # Create new buffer
-            self.__vim.command('silent botright new denite')
+            self.__vim.command('silent ' +
+                               self.__context['direction'] + ' new denite')
         self.__vim.command('resize ' + str(self.__winheight))
         self.__vim.command('nnoremap <silent><buffer> <CR> ' +
                            ':<C-u>Denite -resume -buffer_name=' +
@@ -179,8 +180,10 @@ class Default(object):
             source.highlight_syntax()
 
     def init_cursor(self):
-        self.__cursor = 0
-        self.__win_cursor = 1
+        if self.__context['reversed']:
+            self.move_to_last_line()
+        else:
+            self.move_to_first_line()
 
     def update_buffer(self):
         max = len(str(self.__candidates_len))
@@ -238,6 +241,8 @@ class Default(object):
                      if self.__denite.get_filter(x)]), '')
         self.__matched_pattern = pattern
         self.__candidates_len = len(self.__candidates)
+        if self.__context['reversed']:
+            self.__candidates.reverse()
 
         if self.__denite.is_async():
             sources = '[async] ' + sources
