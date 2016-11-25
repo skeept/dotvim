@@ -113,7 +113,7 @@ class Default(object):
             # Create new buffer
             self.__vim.command('silent ' +
                                self.__context['direction'] + ' new denite')
-        self.__vim.command('resize ' + str(self.__winheight))
+        self.resize_buffer()
         self.__vim.command('nnoremap <silent><buffer> <CR> ' +
                            ':<C-u>Denite -resume -buffer_name=' +
                            self.__context['buffer_name'] + '<CR>')
@@ -180,10 +180,10 @@ class Default(object):
             source.highlight_syntax()
 
     def init_cursor(self):
+        self.__win_cursor = 1
+        self.__cursor = 0
         if self.__context['reversed']:
             self.move_to_last_line()
-        else:
-            self.move_to_first_line()
 
     def update_buffer(self):
         max = len(str(self.__candidates_len))
@@ -211,10 +211,18 @@ class Default(object):
              for x in self.__candidates[self.__cursor:
                                         self.__cursor + self.__winheight]])
         del self.__vim.current.buffer[0]
+        self.resize_buffer()
 
         self.__options['modified'] = False
 
         self.move_cursor()
+
+    def resize_buffer(self):
+        winheight = self.__winheight
+        if (self.__context['auto_resize'] and
+                self.__candidates_len < self.__winheight):
+            winheight = self.__candidates_len
+        self.__vim.command('resize ' + str(winheight))
 
     def check_empty(self):
         if self.__candidates and self.__context['immediately']:
@@ -358,8 +366,7 @@ class Default(object):
             elif (self.__current_mode == 'insert' and
                   safe_isprint(self.__vim, key.char)):
                 # Normal input string
-                self.__input_before += key.char
-                self.update_input()
+                self.insert_word(key.char)
                 continue
 
             if is_async:
@@ -380,14 +387,19 @@ class Default(object):
             return []
         return [self.__candidates[self.__cursor + self.__win_cursor - 1]]
 
+    def insert_word(self, word):
+        self.__input_before += word
+        self.update_input()
+
     def do_action(self, action):
         candidates = self.get_current_candidates()
         if not candidates:
             return
 
+        prev_id = self.__vim.call('win_getid')
         is_denite = self.__vim.eval('&filetype') == 'denite'
+        self.__context['__prev_winid'] = prev_id
         if is_denite:
-            prev_id = self.__vim.call('win_getid')
             self.__vim.call('win_gotoid', self.__prev_winid)
             now_id = self.__vim.call('win_getid')
             if prev_id == now_id:
