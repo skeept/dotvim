@@ -1,4 +1,5 @@
 {
+"flatwhite":{"archive_name":"flatwhite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24763","version":"0.1","vim_script_nr":5488},
 "ViewMaps":{"archive_name":"viewmaps.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24759","version":"0.1.0","vim_script_nr":5487},
 "vim-yesod":{"archive_name":"vim-yesod.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24748","version":"1.0","vim_script_nr":5486},
 "vim-shaderlab":{"archive_name":"vim-shaderlab-0.0.1.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24747","version":"0.0.1","vim_script_nr":5485},
