@@ -1747,6 +1747,10 @@
     "type": "git",
     "url": "git://github.com/tmhedberg/indent-motion"
   },
+  "3726": {
+    "type": "git",
+    "url": "git://github.com/thomasba/mcabberlog.vim"
+  },
   "3727": {
     "type": "git",
     "url": "git://github.com/seebi/easychair.vim"
