@@ -49,6 +49,7 @@ class Default(object):
                 # Skip the initialization
                 self.__current_mode = context['mode']
                 self.__context['immediately'] = context['immediately']
+                self.__context['cursor_wrap'] = context['cursor_wrap']
 
                 self.init_buffer()
                 self.change_mode(self.__current_mode)
@@ -288,7 +289,6 @@ class Default(object):
         self.update_buffer()
 
     def quit_buffer(self):
-        self.__vim.command('redraw | echo')
         self.__vim.command('pclose!')
 
         if not self.__vim.call('bufloaded', self.__bufnr):
@@ -338,43 +338,60 @@ class Default(object):
         self.__input_cursor = ''
         self.__input_after = ''
 
-        while True:
-            self.update_prompt()
+        try:
+            while True:
+                self.update_prompt()
 
-            is_async = self.__denite.is_async()
-            if is_async:
-                time.sleep(0.005)
-                key = Key.parse(self.__vim, getchar(self.__vim, 0))
-            else:
-                key = Key.parse(self.__vim, getchar(self.__vim))
+                is_async = self.__denite.is_async()
+                if is_async:
+                    time.sleep(0.005)
+                    key = Key.parse(self.__vim, getchar(self.__vim, 0))
+                else:
+                    key = Key.parse(self.__vim, getchar(self.__vim))
 
-            # Terminate input_loop when user hit <C-c>
-            if key.code == 0x03:
-                self.quit()
-                break
+                self.__vim.command('redraw | echo')
 
-            mapping = self.__current_mappings.get(key.code, None)
-            if mapping:
-                map_args = re.split(':', mapping)
-                arg = ':'.join(map_args[1:])
-                if hasattr(self, map_args[0]):
-                    func = getattr(self, map_args[0])
-                    ret = func() if len(map_args) == 1 else func(arg)
-                    if ret:
-                        break
-                    continue
-            elif (self.__current_mode == 'insert' and
-                  safe_isprint(self.__vim, key.char)):
-                # Normal input string
-                self.insert_word(key.char)
-                continue
-
-            if is_async:
-                self.update_candidates()
-                self.update_buffer()
-                if self.check_empty():
+                # Terminate input_loop when user hit <C-c>
+                if key.code == 0x03:
                     self.quit()
                     break
+
+                mapping = self.__current_mappings.get(key.code, None)
+                if mapping:
+                    map_args = re.split(':', mapping)
+                    arg = ':'.join(map_args[1:])
+                    if hasattr(self, map_args[0]):
+                        func = getattr(self, map_args[0])
+                        ret = func() if len(map_args) == 1 else func(arg)
+                        if ret:
+                            break
+                        continue
+                elif (self.__current_mode == 'insert' and
+                        safe_isprint(self.__vim, key.char)):
+                    # Normal input string
+                    self.insert_word(key.char)
+                    continue
+
+                if is_async:
+                    self.update_candidates()
+                    self.update_buffer()
+                    if self.check_empty():
+                        self.quit()
+                        break
+        except self.__vim.error as e:
+            # NOTE:
+            # neovim raise nvim.error instead of KeyboardInterrupt so check if
+            # the error is KeyboardInterrupt or not and quit denite when the
+            # error was KeyboardInterrupt
+            if str(e) == "b'Keyboard interrupt'":
+                self.quit()
+            else:
+                raise e
+        except KeyboardInterrupt:
+            # NOTE
+            # KeyboardInterrupt may raised during the loop in Vim.
+            # In that case, simply quit the denite.
+            self.quit()
 
     def quit(self):
         self.__denite.on_close(self.__context)
@@ -439,7 +456,6 @@ class Default(object):
             self.__context, candidates)
         action = self.__vim.call('input', 'Action: ', '',
                                  'customlist,denite#helper#complete_actions')
-        self.__vim.command('redraw | echo')
         if action == '':
             return
         return self.do_action(action)
@@ -466,6 +482,8 @@ class Default(object):
             self.__win_cursor += 1
         elif self.__win_cursor + self.__cursor < self.__candidates_len:
             self.__cursor += 1
+        elif self.__context['cursor_wrap']:
+            self.move_to_first_line()
         else:
             return
         self.update_buffer()
@@ -475,6 +493,8 @@ class Default(object):
             self.__win_cursor -= 1
         elif self.__cursor >= 1:
             self.__cursor -= 1
+        elif self.__context['cursor_wrap']:
+            self.move_to_last_line()
         else:
             return
         self.update_buffer()
@@ -602,7 +622,6 @@ class Default(object):
         self.update_buffer()
 
     def input_command_line(self):
-        self.__vim.command('redraw | echo')
         input = self.__vim.call(
             'input', self.__context['prompt'] + ' ',
             self.__context['input'])

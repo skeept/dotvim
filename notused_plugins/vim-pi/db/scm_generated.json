@@ -5279,6 +5279,10 @@
     "type": "git",
     "url": "git://github.com/robcsi/viewmaps.vim"
   },
+  "5489": {
+    "type": "git",
+    "url": "git://github.com/konfekt/vim-guesslang"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
