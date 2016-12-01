@@ -1,6 +1,6 @@
 *denite.txt*	Dark powered asynchronous unite all interfaces for NeoVim/Vim.
 
-Version: 0.1
+Version: 0.5
 Author:  Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
 
@@ -340,6 +340,7 @@ All mode mappings.
 <C-r>		paste_from_register
 <C-o>		enter_mode:normal
 <C-v>		do_action:preview
+<C-l>		redraw
 <Tab>		choose_action
 
 "normal" mode mappings.
@@ -356,6 +357,7 @@ G		move_to_last_line
 <C-b>		scroll_page_backwards
 p		do_action:preview
 q		quit
+<C-l>		redraw
 <Tab>		choose_action
 
 Note: You cannot change <C-c> default mapping.
