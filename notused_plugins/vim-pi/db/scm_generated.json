@@ -5283,6 +5283,18 @@
     "type": "git",
     "url": "git://github.com/konfekt/vim-guesslang"
   },
+  "5490": {
+    "type": "git",
+    "url": "git://github.com/dikiaap/minimalist"
+  },
+  "5491": {
+    "type": "git",
+    "url": "git://github.com/christianrondeau/vim-base64"
+  },
+  "5492": {
+    "type": "git",
+    "url": "git://github.com/christianrondeau/vim-loggly-search"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
