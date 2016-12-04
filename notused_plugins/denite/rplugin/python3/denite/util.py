@@ -45,6 +45,10 @@ def error(vim, expr):
         vim.call('denite#util#print_error', expr)
 
 
+def clear_cmdline(vim):
+    vim.command('redraw | echo')
+
+
 def escape(expr):
     return expr.replace("'", "''")
 
@@ -124,12 +128,6 @@ def convert2fuzzy_pattern(input):
 
 def convert2regex_pattern(input):
     return '\|'.join(split_input(input))
-
-
-def safe_isprint(vim, c):
-    if not c or c == '\0':
-        return False
-    return vim.call('match', c, '\p') >= 0
 
 
 def parse_command(array, **kwargs):
