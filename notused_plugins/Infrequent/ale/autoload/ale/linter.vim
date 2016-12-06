@@ -9,6 +9,8 @@ let s:linters = {}
 let s:default_ale_linter_aliases = {
 \   'zsh': 'sh',
 \   'csh': 'sh',
+\   'plaintex': 'tex',
+\   'systemverilog': 'verilog',
 \}
 
 " Default linters to run for particular filetypes.

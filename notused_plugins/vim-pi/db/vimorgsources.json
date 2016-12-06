@@ -1,4 +1,5 @@
 {
+"far%5493":{"archive_name":"far.vim-beta2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24781","version":"beta 2","vim_script_nr":"5493"},
 "vim-loggly-search":{"archive_name":"vim-loggly-search-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24779","version":"7.4","vim_script_nr":5492},
 "vim-base64":{"archive_name":"vim-base64-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24778","version":"7.4","vim_script_nr":5491},
 "minimalist":{"archive_name":"minimalist.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24777","version":"1.0","vim_script_nr":5490},
@@ -20,7 +21,7 @@
 "auto_mkdir2":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24685","version":"1.0","vim_script_nr":5474},
 "nordisk":{"archive_name":"nordisk.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24724","version":"0.4","vim_script_nr":5473},
 "pace":{"archive_name":"pace-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24672","version":"1.0","vim_script_nr":5472},
-"MUcomplete":{"archive_name":"vim-mucomplete-0.4.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24764","version":"0.4.2","vim_script_nr":5471},
+"MUcomplete":{"archive_name":"vim-mucomplete-0.4.3.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24780","version":"0.4.3","vim_script_nr":5471},
 "Subnet_Search":{"archive_name":"subnetsearch.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24665","version":".01","vim_script_nr":5469},
 "glsl%5468":{"archive_name":"vim-glsl-1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24644","version":"1.0.0","vim_script_nr":"5468"},
 "vim-jobs":{"archive_name":"jobs.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24630","version":"1","vim_script_nr":5466},
@@ -3913,7 +3914,7 @@
 "lbnf":{"archive_name":"lbnf.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5234","version":"1.0","vim_script_nr":1470},
 "promela%1469":{"archive_name":"promela.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5231","version":"0.2","vim_script_nr":"1469"},
 "bayQua":{"archive_name":"bayQua.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22969","version":"2.0","vim_script_nr":1468},
-"far":{"archive_name":"far.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5218","version":"1.0","vim_script_nr":1467},
+"far%1467":{"archive_name":"far.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5218","version":"1.0","vim_script_nr":1467},
 "netrw.vim__support_to_ftp_explorer":{"archive_name":"netrw.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5180","version":"1.01","vim_script_nr":1466},
 "Ant":{"archive_name":"ant.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5255","version":"1.1","vim_script_nr":1465},
 "moria":{"archive_name":"moria.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20786","version":"2.6.5","vim_script_nr":1464},
