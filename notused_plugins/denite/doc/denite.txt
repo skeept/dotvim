@@ -456,13 +456,17 @@ are on the neovim-prompt's builtin actions/mappings.
 		Paste the text from a default register (|v:register|).
 		Note this is a neovim-prompt's builtin action.
 
+				*denite-map-quit*
+<denite:quit>
+		Close current Denite buffer.
+
 				*denite-map-redraw*
 <denite:redraw>
 		Clear the cache and redraw the candidates.
 
-				*denite-map-quit*
-<denite:quit>
-		Close current Denite buffer.
+				*denite-map-restart*
+<denite:restart>
+		Restart Denite buffer.
 
 				*denite-map-suspend*
 <denite:suspend>
@@ -554,6 +558,7 @@ n		<denite:do_action:new>
 t		<denite:do_action:tabopen>
 q		<denite:quit>
 <C-L>		<denite:redraw>
+<C-R>		<denite:restart>
 
 ------------------------------------------------------------------------------
 FUNCTIONS						*denite-functions*
@@ -822,6 +827,11 @@ OPTIONS							*denite-options*
 		Note: 0 is the first candidate.
 		Default: ''
 
+					*denite-options-short-source-names*
+-short-source-names
+		Use short source names if multiple sources.
+		Default: false
+
 						*denite-options-statusline*
 -statusline
 		Enable statusline.
@@ -866,8 +876,13 @@ directory_rec	Gather directories recursive and nominates all directory names
 				(default is used "find" command in Unix
 				environment)
 
+						*denite-source-file_old*
+file_old
+		Gather files from |v:oldfiles|.
+
 						*denite-source-file_point*
 file_point
+		Gather current line of "file:line" format as candidates.
 
 						*denite-source-file_rec*
 file_rec	Gather files recursive and nominates all file names under the

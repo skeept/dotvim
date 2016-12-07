@@ -178,6 +178,9 @@ class Default(object):
 
         for source in [x for x in self.__denite.get_current_sources()]:
             name = source.name.replace('/', '_')
+            source_name = (re.sub(r'([a-zA-Z])[a-zA-Z]+', r'\1', source.name)
+                           if self.__context['short_source_names']
+                           else source.name) if self.__is_multi else ''
 
             self.__vim.command(
                 'highlight default link ' +
@@ -187,7 +190,7 @@ class Default(object):
 
             syntax_line = 'syntax match %s /^%s/ nextgroup=%s keepend' % (
                 'deniteSourceLine_' + name,
-                escape_syntax(source.name if self.__is_multi else ''),
+                escape_syntax(source_name),
                 source.syntax_name,
             )
             self.__vim.command(syntax_line)
@@ -231,7 +234,9 @@ class Default(object):
         del self.__vim.current.buffer[:]
         self.__vim.current.buffer.append(
             ['%s %s' % (
-                x['source'] if self.__is_multi else '',
+                (re.sub(r'([a-zA-Z])[a-zA-Z]+', r'\1', x['source'])
+                 if self.__context['short_source_names']
+                 else x['source']) if self.__is_multi else '',
                 x.get('abbr', x['word'])[:400])
              for x in self.__candidates[self.__cursor:
                                         self.__cursor + self.__winheight]])
@@ -361,6 +366,14 @@ class Default(object):
         self.quit_buffer()
         self.__result = []
         return STATUS_ACCEPT
+
+    def restart(self):
+        self.quit_buffer()
+        self.__denite.on_init(self.__context)
+        self.__denite.gather_candidates(self.__context)
+        self.init_buffer()
+        self.update_candidates()
+        self.update_buffer()
 
     def do_action(self, action):
         candidates = self.get_current_candidates()
