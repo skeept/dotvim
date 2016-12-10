@@ -4,7 +4,7 @@
 "far%5493":{"archive_name":"far.vim-beta2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24781","version":"beta 2","vim_script_nr":"5493"},
 "vim-loggly-search":{"archive_name":"vim-loggly-search-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24779","version":"7.4","vim_script_nr":5492},
 "vim-base64":{"archive_name":"vim-base64-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24778","version":"7.4","vim_script_nr":5491},
-"minimalist":{"archive_name":"minimalist.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24777","version":"1.0","vim_script_nr":5490},
+"minimalist":{"archive_name":"minimalist.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24793","version":"v1.1","vim_script_nr":5490},
 "vim-guesslang":{"archive_name":"vim-guesslang.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24767","version":"1.0","vim_script_nr":5489},
 "flatwhite":{"archive_name":"flatwhite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24763","version":"0.1","vim_script_nr":5488},
 "ViewMaps":{"archive_name":"viewmaps.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24759","version":"0.1.0","vim_script_nr":5487},
