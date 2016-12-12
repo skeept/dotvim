@@ -1,4 +1,5 @@
 {
+"coverage":{"archive_name":"coverage.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24796","version":"0.1.0","vim_script_nr":5496},
 "ExpandBackspace":{"archive_name":"ExpandBackspace.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24786","version":"0.6-1","vim_script_nr":5495},
 "vtags%5494":{"archive_name":"vtags-1.21.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24790","version":"1.21","vim_script_nr":"5494"},
 "far%5493":{"archive_name":"far.vim-beta2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24781","version":"beta 2","vim_script_nr":"5493"},
@@ -310,7 +311,7 @@
 "greekde_utf-8":{"archive_name":"greekde_utf-8.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23261","version":"1.0","vim_script_nr":5167},
 "foldMarker":{"archive_name":"foldMarker.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23278","version":"1.1.0","vim_script_nr":5166},
 "MapToSideEffects":{"archive_name":"MapToSideEffects-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23251","version":"0.1.0","vim_script_nr":5165},
-"avrm48":{"archive_name":"avrm48.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23244","version":"0.2","vim_script_nr":5164},
+"avrm48":{"archive_name":"avrm48.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24798","version":"0.3","vim_script_nr":5164},
 "mpi":{"archive_name":"after.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23232","version":"0.10","vim_script_nr":5163},
 "vison":{"archive_name":"vison-0.1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23231","version":"0.1.1","vim_script_nr":5162},
 "yats":{"archive_name":"yats.vim-master.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23226","version":"1.0","vim_script_nr":5161},
@@ -1879,7 +1880,7 @@
 "Solarized":{"archive_name":"vim-colors-solarized-v1.0.0beta1.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15285","version":"1.0.0b1","vim_script_nr":3520},
 "accentuate":{"archive_name":"accentuate.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15278","version":"1.1","vim_script_nr":3518},
 "iconv":{"archive_name":"vim-iconv.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=15276","version":"1.0","vim_script_nr":3517},
-"avr8bit":{"archive_name":"avr8bit.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23243","version":"1.21","vim_script_nr":3516},
+"avr8bit":{"archive_name":"avr8bit.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24797","version":"1.3","vim_script_nr":3516},
 "VimOutliner":{"archive_name":"vimoutliner-0.4.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22551","version":"0.4.0","vim_script_nr":3515},
 "vim_activator":{"archive_name":"activator.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21878","version":"2.0","vim_script_nr":3514},
 "vim-stylus":{"archive_name":"vim-stylus-0.9.1.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21916","version":"0.9.1","vim_script_nr":3513},
