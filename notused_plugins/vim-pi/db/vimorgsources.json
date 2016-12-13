@@ -5207,7 +5207,7 @@
 "vimsh.tar.gz":{"archive_name":"vimsh.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18977","version":"0.22","vim_script_nr":165},
 "html-macros":{"archive_name":"html-macros.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1294","version":"1.0","vim_script_nr":164},
 "ruby-macros":{"archive_name":"ruby-macros.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1053","version":"1.2","vim_script_nr":163},
-"auctex":{"archive_name":"auctex.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23660","version":"2.2.17","vim_script_nr":162},
+"auctex":{"archive_name":"auctex.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24799","version":"2.2.18","vim_script_nr":162},
 "FavMenu":{"archive_name":"FavMenu.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24440","version":"0.34","vim_script_nr":161},
 "gtkvim.tgz":{"archive_name":"gtkvim.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5452","version":"2.0","vim_script_nr":160},
 "minibufexpl":{"archive_name":"minibufexpl.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=3640","version":"6.3.2","vim_script_nr":159},
