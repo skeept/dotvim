@@ -5299,6 +5299,10 @@
     "type": "git",
     "url": "git://github.com/ruanyl/coverage.vim"
   },
+  "5497": {
+    "type": "git",
+    "url": "git://github.com/dpelle/vim-Grammalecte"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

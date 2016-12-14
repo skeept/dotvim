@@ -18,6 +18,7 @@ let s:defaults = {
       \ 'highlight':     0,
       \ 'buffer':        0,
       \ 'buffers':       0,
+      \ 'dir':           '',
       \ 'next_tool':     '<tab>',
       \ 'tools':         ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'sift', 'git'],
       \ 'git':           { 'grepprg':    'git grep -nI',
@@ -100,7 +101,7 @@ let s:magic   = { 'next': '$$$next###', 'esc': '$$$esc###' }
 
 " Job handlers {{{1
 " s:on_stdout_nvim() {{{2
-function! s:on_stdout_nvim(job_id, data) dict abort
+function! s:on_stdout_nvim(job_id, data, _event) dict abort
   if empty(self.stdoutbuf) || empty(self.stdoutbuf[-1])
     let self.stdoutbuf += a:data
   else
@@ -115,13 +116,9 @@ function! s:on_stdout_vim(job_id, data) dict abort
   let self.stdoutbuf += [a:data]
 endfunction
 
-" s:on_stderr() {{{2
-function! s:on_stderr(job_id, data) dict abort
-  let self.stdoutbuf += a:data
-endfunction
 
 " s:on_exit() {{{2
-function! s:on_exit(id_or_channel) dict abort
+function! s:on_exit(...) dict abort
   execute 'tabnext' self.tabpage
   execute self.window .'wincmd w'
 
@@ -279,6 +276,29 @@ function! s:unescape_query(flags, query)
   endif
   return q
 endfunction
+
+" s:change_working_directory() {{{2
+function! s:change_working_directory(dirflag) abort
+  for dir in split(a:dirflag, ',')
+    if dir == 'repo'
+      for repo in ['.git', '.hg', '.svn']
+        let repopath = finddir(repo, '.;')
+        if !empty(repopath)
+          let repopath = fnamemodify(repopath, ':h')
+          execute 'lcd' fnameescape(repopath)
+          return
+        endif
+      endfor
+    elseif dir == 'file'
+      let cwd = getcwd()
+      let bufdir = expand('%:p:h')
+      if stridx(bufdir, cwd) != 0
+        execute 'lcd' fnameescape(bufdir)
+        return
+      endif
+    endif
+  endfor
+endfunction
 " }}}1
 
 " #parse_flags() {{{1
@@ -301,6 +321,13 @@ function! grepper#parse_flags(args) abort
     elseif flag =~? '\v^-%(no)?buffers$'       | let flags.buffers   = flag !~? '^-no'
     elseif flag =~? '^-cword$'                 | let flags.cword     = 1
     elseif flag =~? '^-side$'                  | let flags.side      = 1
+    elseif flag =~? '^-dir$'
+      let [dir, args] = s:split_one(args)
+      if empty(dir)
+        call s:error('Missing argument for: -dir')
+      else
+        let flags.dir = dir
+      endif
     elseif flag =~? '^-grepprg$'
       if args != ''
         if !exists('tool')
@@ -348,6 +375,10 @@ endfunction
 
 " s:process_flags() {{{1
 function! s:process_flags(flags)
+  if !empty(a:flags.dir)
+    call s:change_working_directory(a:flags.dir)
+  endif
+
   if a:flags.buffer
     let a:flags.buflist = [bufname('')]
     if !filereadable(a:flags.buflist[0])
@@ -497,7 +528,7 @@ function! s:run(flags)
     endif
     let s:id = jobstart(cmd, extend(options, {
           \ 'on_stdout': function('s:on_stdout_nvim'),
-          \ 'on_stderr': function('s:on_stderr'),
+          \ 'on_stderr': function('s:on_stdout_nvim'),
           \ 'on_exit':   function('s:on_exit'),
           \ }))
   elseif !get(w:, 'testing') && (v:version > 704 || v:version == 704 && has('patch1967'))
@@ -684,7 +715,7 @@ function! s:side_buffer_settings() abort
   set nowrap
 
   normal! zR
-  normal! n
+  silent! normal! n
 
   set conceallevel=2
   set concealcursor=nvic

@@ -59,6 +59,7 @@ name. That seems to be the fairest way to arrange this table.
 | Cython (pyrex filetype) | [cython](http://cython.org/) |
 | D | [dmd](https://dlang.org/dmd-linux.html)^ |
 | Elixir | [credo](https://github.com/rrrene/credo) |
+| Elm | [elm-make](https://github.com/elm-lang/elm-make) |
 | Fortran | [gcc](https://gcc.gnu.org/) |
 | Go | [gofmt -e](https://golang.org/cmd/gofmt/), [go vet](https://golang.org/cmd/vet/), [golint](https://godoc.org/github.com/golang/lint) |
 | Haskell | [ghc](https://www.haskell.org/ghc/), [hlint](https://hackage.haskell.org/package/hlint) |
@@ -79,6 +80,7 @@ name. That seems to be the fairest way to arrange this table.
 | SASS | [sass-lint](https://www.npmjs.com/package/sass-lint), [stylelint](https://github.com/stylelint/stylelint) |
 | SCSS | [sass-lint](https://www.npmjs.com/package/sass-lint), [scss-lint](https://github.com/brigade/scss-lint), [stylelint](https://github.com/stylelint/stylelint) |
 | Scala | [scalac](http://scala-lang.org) |
+| Swift | [swiftlint](https://swift.org/) |
 | Tex | [proselint](http://proselint.com/) |
 | Text | [proselint](http://proselint.com/) |
 | TypeScript | [tslint](https://github.com/palantir/tslint), typecheck |
