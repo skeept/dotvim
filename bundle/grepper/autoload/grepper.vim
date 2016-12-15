@@ -18,7 +18,7 @@ let s:defaults = {
       \ 'highlight':     0,
       \ 'buffer':        0,
       \ 'buffers':       0,
-      \ 'dir':           '',
+      \ 'dir':           'cwd',
       \ 'next_tool':     '<tab>',
       \ 'tools':         ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'sift', 'git'],
       \ 'git':           { 'grepprg':    'git grep -nI',
@@ -136,9 +136,9 @@ endfunction
 " #complete() {{{2
 function! grepper#complete(lead, line, _pos) abort
   if a:lead =~ '^-'
-    let flags = ['-buffer', '-buffers', '-cword', '-grepprg', '-highlight',
-          \ '-jump', '-open', '-prompt', '-query', '-quickfix', '-side',
-          \ '-switch', '-tool', '-nohighlight', '-nojump', '-noopen',
+    let flags = ['-buffer', '-buffers', '-cword', '-dir', '-grepprg',
+          \ '-highlight', '-jump', '-open', '-prompt', '-query', '-quickfix',
+          \ '-side', '-switch', '-tool', '-nohighlight', '-nojump', '-noopen',
           \ '-noprompt', '-noquickfix', '-noswitch']
     return filter(map(flags, 'v:val." "'), 'v:val[:strlen(a:lead)-1] ==# a:lead')
   elseif a:line =~# '-tool \w*$'
@@ -277,6 +277,12 @@ function! s:unescape_query(flags, query)
   return q
 endfunction
 
+" s:cword() {{{2
+function! s:cword(flags)
+  let word = expand('<cword>')
+  return empty(word) ? '' : s:escape_query(a:flags, word)
+endfunction
+
 " s:change_working_directory() {{{2
 function! s:change_working_directory(dirflag) abort
   for dir in split(a:dirflag, ',')
@@ -375,7 +381,7 @@ endfunction
 
 " s:process_flags() {{{1
 function! s:process_flags(flags)
-  if !empty(a:flags.dir)
+  if a:flags.dir != 'cwd'
     call s:change_working_directory(a:flags.dir)
   endif
 
@@ -397,16 +403,20 @@ function! s:process_flags(flags)
   endif
 
   if a:flags.cword
-    let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
+    let a:flags.query = s:cword(a:flags)
   endif
 
   if a:flags.prompt
     call s:prompt(a:flags)
     if empty(a:flags.query)
-      let a:flags.query = s:escape_query(a:flags, expand('<cword>'))
+      let a:flags.query = s:cword(a:flags)
     elseif a:flags.query =~# s:magic.esc
       return
     endif
+  endif
+
+  if empty(a:flags.query)
+    return 1
   endif
 
   if a:flags.side
