@@ -24,9 +24,9 @@ Execute (Test Neomake on errors.sh with one maker):
   endfor
 
   " Basic verification that signs are placed.
-  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer=4', 3, {}
-  AssertNeomakeMessage 'Unplacing sign: sign unplace 5000 buffer=4', 3, {}
-  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer=4', 3, {}
+  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer='.bufnr, 3, {}
+  AssertNeomakeMessage 'Unplacing sign: sign unplace 5000 buffer='.bufnr, 3, {}
+  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer='.bufnr, 3, {}
 
   let signs = split(neomake#utils#redir('sign place'), '\n')
   call map(signs, "substitute(substitute(v:val, '\\m^\\s\\+', '', ''), '\\m\\s\\+$', '', '')")
@@ -41,28 +41,23 @@ Execute (Test Neomake on errors.sh with two makers):
   e! tests/fixtures/errors.sh
   RunNeomake sh shellcheck
   AssertEqual len(g:neomake_test_countschanged), 2
-  AssertNeomakeMessage 'Running makers: [''sh'', ''shellcheck'']', 3,
-    \ {'make_id': neomake#GetStatus().last_make_id}
+
+  Assert len(filter(copy(g:neomake_test_messages),
+    \ "v:val[1] =~# '^Running makers: sh, shellcheck (.*)'")) == 1, '"Running makers" message found'
 
 Execute (Neomake: handle result for current window):
   call g:NeomakeSetupAutocmdWrappers()
   let orig_winnr = winnr()
-  let sleep_maker = {
-      \ 'name': 'sleep_maker',
-      \ 'exe': 'sh',
-      \ 'args': ['-c', 'sleep 0.1; echo finished'],
-      \ 'remove_invalid_entries': 0,
-      \ }
-  call neomake#Make(1, [sleep_maker])
+  call neomake#Make(1, [neomake_test_sleep_efm_maker])
   if neomake#has_async_support()
     new
     NeomakeTestsWaitForFinishedJobs
     AssertEqual len(g:neomake_test_countschanged), 0
-    AssertEqual len(g:neomake_test_finished), 1, "tests finished"
+    AssertEqual len(g:neomake_test_finished), 0, "output pending"
     AssertEqual map(copy(getloclist(0)), 'v:val.text'), []
     quit
     AssertEqual winnr(), orig_winnr
-    AssertEqual map(copy(getloclist(0)), 'v:val.text'), ['finished']
+    AssertEqual map(copy(getloclist(0)), 'v:val.text'), ['error message', 'warning', 'error2']
   endif
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual len(g:neomake_test_countschanged), 1
@@ -72,14 +67,8 @@ Execute (Neomake: handle output for removed window):
 
   call g:NeomakeSetupAutocmdWrappers()
   let orig_winnr = winnr()
-  let sleep_maker = {
-      \ 'name': 'sleep_maker',
-      \ 'exe': 'sh',
-      \ 'args': ['-c', 'sleep 0.1; echo finished'],
-      \ 'remove_invalid_entries': 0,
-      \ }
-  let job_ids = neomake#Make(1, [sleep_maker])
-  let jobinfo = neomake#GetJobs()[job_ids[0]]
+  call neomake#Make(1, [neomake_test_sleep_efm_maker])
+  let jobinfo = neomake#GetJobs()[0]
   let bufnr = bufnr('%')
   new
   exe 'bd' bufnr
@@ -91,6 +80,7 @@ Execute (Neomake: handle output for removed window):
   AssertNeomakeMessage 'No window found for output!', 2, jobinfo
 
 Execute (NeomakeSh: true):
+  call neomake#statusline#ResetCounts()
   call g:NeomakeSetupAutocmdWrappers()
   AssertEqual g:neomake_test_countschanged, []
   let bufnr = bufnr('%')
@@ -170,6 +160,7 @@ Execute (NeomakeSh: project: handle removed window on exit (quit)):
   new
   let bufnr = bufnr('%')
   NeomakeSh sh -c 'sleep 0.1; echo finished'
+  let make_id = neomake#GetStatus().last_make_id
   quit
   if neomake#has_async_support()
     AssertEqual len(g:neomake_test_finished), 0
@@ -177,7 +168,7 @@ Execute (NeomakeSh: project: handle removed window on exit (quit)):
   endif
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual map(copy(getqflist()), 'v:val.text'), ['finished']
-  AssertEqual g:neomake_test_finished, [{'file_mode': 0}]
+  AssertEqual g:neomake_test_finished, [{'file_mode': 0, 'make_id': make_id}]
   AssertEqual g:neomake_test_countschanged, [{'bufnr': bufnr, 'file_mode': 0}]
 
 Execute (NeomakeSh: project: handle removed window on exit (bwipe)):
@@ -185,6 +176,7 @@ Execute (NeomakeSh: project: handle removed window on exit (bwipe)):
   new
   let bufnr = bufnr('%')
   NeomakeSh sh -c 'sleep 0.1; echo finished'
+  let make_id = neomake#GetStatus().last_make_id
   bwipe
   Assert bufnr != bufnr('%'), 'buffer has been wiped'
   if neomake#has_async_support()
@@ -192,7 +184,7 @@ Execute (NeomakeSh: project: handle removed window on exit (bwipe)):
     NeomakeTestsWaitForFinishedJobs
   endif
   AssertEqual map(copy(getqflist()), 'v:val.text'), ['finished']
-  AssertEqual g:neomake_test_finished, [{'file_mode': 0}]
+  AssertEqual g:neomake_test_finished, [{'file_mode': 0, 'make_id': make_id}]
   AssertEqual g:neomake_test_countschanged, [{'bufnr': bufnr, 'file_mode': 0}]
 
 Execute (NeomakeInfo):
@@ -205,6 +197,28 @@ Execute (NeomakeInfo):
   Assert index(info, "g:neomake_c_enabled_makers = ['doesnotexist']") != -1,
   \ 'neomake_c_enabled_makers setting gets reported'
   AssertEqual filter(copy(info), "v:val =~ 'neomaker'"), []
+
+Execute (NeomakeInfo with FuncRef):
+  Save g:neomake_c_enabled_makers
+  set filetype=c
+  let g:neomake_c_enabled_makers = ['doesnotexist']
+  let g:neomake_c_doesnotexist_maker = {
+  \ 'args': function('tr'),
+  \ 'errorformat': 'custom_efm: %m'}
+
+  let info = split(neomake#utils#redir('NeomakeInfo'), '\n')
+  Log info
+  let idx = 0
+  for line in [
+      \ 'For the current filetype (with :Neomake):',
+      \ ' - doesnotexist',
+      \ '   errorformat: ''custom_efm: %m''',
+      \ '   args: function(''tr'')',
+      \ '   exe: ''doesnotexist''']
+    let i = index(info, line)
+    Assert i > idx, 'line not found: '.line
+    let idx = i
+  endfor
 
 Execute (Having an invalid &errorformat is OK):
   Save &errorformat

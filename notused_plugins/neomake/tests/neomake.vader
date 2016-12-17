@@ -4,14 +4,15 @@ Include: include/setup.vader
 Include (Integration tests): integration.vader
 
 ~ Features
+Include (Hooks): hooks.vader
 Include (Lists): lists.vader
 Include (Makers): makers.vader
 Include (Maker args): args.vader
 Include (Mapexpr): mapexpr.vader
 Include (Signs): signs.vader
 Include (Statusline): statusline.vader
+Include (Processing): processing.vader
 Include (Utils): utils.vader
-
 
 ~ Filetype specific
 Include (Haskell): ft_haskell.vader
@@ -63,9 +64,12 @@ Execute (neomake#Make in project mode with no filetype and no makers):
   if neomake#has_async_support()
     AssertEqual len(job_ids), 1
     let jobs = neomake#GetJobs()
+    let jobs_by_ids = neomake#GetJobs(job_ids)
+    let job_by_id = neomake#GetJob(job_ids[0])
     AssertEqual len(jobs), 1
-    let [job_id, job] = items(jobs)[0]
-    AssertEqual job.maker.name, 'makeprg'
+    AssertEqual jobs, [job_by_id]
+    AssertEqual jobs, jobs_by_ids
+    AssertEqual job_by_id.maker.name, 'makeprg'
   else
     AssertEqual len(job_ids), 0
   endif
@@ -97,13 +101,13 @@ Execute (neomake#CancelJob):
 
   NeomakeTestsWaitForFinishedJobs
   AssertEqual neomake#CancelJob(job_id), 0
-  AssertNeomakeMessage 'CancelJob: job not found: '.job_id, 3
+  AssertNeomakeMessage 'CancelJob: job not found: '.job_id, 0
 
 Execute (neomake#CancelJob with invalid job):
   if !NeomakeAsyncTestsSetup() | finish | endif
 
   let job_id = neomake#Sh("sh -c 'while true; do sleep 0.1; done'")
-  let jobinfo = neomake#GetJobs()[job_id]
+  let jobinfo = neomake#GetJob(job_id)
   if has('nvim')
     call jobstop(job_id)
   else
@@ -113,24 +117,58 @@ Execute (neomake#CancelJob with invalid job):
   AssertEqual neomake#CancelJob(job_id), 0
   AssertNeomakeMessage 'Stopping job: '.job_id, 3
   if has('nvim')
-    AssertNeomakeMessage 'jobstop failed: Vim(call):E900: Invalid job id', 3, jobinfo
+    AssertNeomakeMessage 'jobstop failed: Vim(call):E900: Invalid job id', 2, jobinfo
   else
-    AssertNeomakeMessage 'job_stop: job was not running anymore', 3, jobinfo
+    AssertNeomakeMessage 'job_stop: job was not running anymore', 2, jobinfo
   endif
+  Assert len(neomake#GetJobs()), 'There are jobs'
 
   AssertEqual neomake#CancelJob(job_id), 0
   AssertNeomakeMessage 'Stopping job: '.job_id, 3
 
-  NeomakeTestsWaitForFinishedJobs
-  AssertNeomakeMessage 'neomake#MakeHandler: exit: job was canceled.', 3, jobinfo
+  AssertNeomakeMessageAbsent 'neomake#MakeHandler: exit: job was canceled.', 3
+  NeomakeTestsWaitForNextMessage
+  AssertNeomakeMessage 'neomake#MakeHandler: exit: job was canceled.', 3
   AssertEqual neomake#CancelJob(job_id), 0
-  AssertNeomakeMessage 'CancelJob: job not found: '.job_id, 3
+  AssertNeomakeMessage 'CancelJob: job not found: '.job_id, 0
+
+Execute (neomake#CancelJob! with invalid job):
+  if !NeomakeAsyncTestsSetup() | finish | endif
+
+  let job_id = neomake#Sh("sh -c 'while true; do sleep 0.1; done'")
+  let jobinfo = neomake#GetJob(job_id)
+  if has('nvim')
+    call jobstop(job_id)
+  else
+    let vim_job = jobinfo.vim_job
+    call job_stop(vim_job)
+  endif
+  AssertEqual neomake#CancelJob(job_id, 1), 0
+  AssertEqual neomake#GetJobs(), []
+  AssertNeomakeMessage 'Stopping job: '.job_id, 3
+  if has('nvim')
+    AssertNeomakeMessage 'jobstop failed: Vim(call):E900: Invalid job id', 2, jobinfo
+  else
+    AssertNeomakeMessage 'job_stop: job was not running anymore', 2, jobinfo
+  endif
+  AssertEqual neomake#GetJobs(), []
+
+  AssertEqual neomake#CancelJob(job_id), 0
+  AssertNeomakeMessageAbsent 'Stopping job: '.job_id, 3
+
+  NeomakeTestsWaitForFinishedJobs
+  AssertNeomakeMessageAbsent 'neomake#MakeHandler: exit: job not found: '.job_id
+
+  NeomakeTestsWaitForNextMessage
+  AssertNeomakeMessage 'neomake#MakeHandler: exit: job not found: '.job_id, 1
+  AssertEqual neomake#CancelJob(job_id, 1), 0
+  AssertNeomakeMessage 'CancelJob: job not found: '.job_id, 0
 
 Execute (Reports exit status: 7):
-  let job_id = neomake#Sh("sh -c 'exit 7'")
+  call neomake#Sh("sh -c 'exit 7'")
   let exit_msg = 'sh: sh -c ''exit 7'': completed with exit code 7.'
   if neomake#has_async_support()
-    let jobinfo = neomake#GetJobs()[job_id]
+    let jobinfo = neomake#GetJobs()[-1]
     NeomakeTestsWaitForFinishedJobs
     AssertNeomakeMessage 'exit: sh: sh -c ''exit 7'': 7', 3, jobinfo
     AssertNeomakeMessage exit_msg, 3, jobinfo
@@ -149,6 +187,17 @@ Execute (neomake#Sh: job_id):
     NeomakeTestsWaitForFinishedJobs
   else
     Assert job_id == -1, 'Correct job_id for sync.'
+  endif
+
+Execute (neomake#CompleteJobs):
+  if neomake#has_async_support()
+    AssertEqual neomake#CompleteJobs(), ''
+    let job_ids = [neomake#Sh('sleep 1')]
+    AssertEqual neomake#CompleteJobs(), job_ids[0].': sh: sleep 1'
+    let job_ids += [neomake#Sh('sleep 2')]
+    AssertEqual neomake#CompleteJobs(), printf(
+      \ "%d: sh: sleep 1\n%d: sh: sleep 2", job_ids[0], job_ids[1])
+    NeomakeCancelJobs
   endif
 
 " NOTE: try/catch test, causing problems on vim8000.

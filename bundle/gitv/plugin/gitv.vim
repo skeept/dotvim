@@ -49,13 +49,29 @@ if !exists('g:Gitv_CustomMappings')
     let g:Gitv_CustomMappings = {}
 endif
 
+if !exists('g:Gitv_DisableShellEscape')
+    let g:Gitv_DisableShellEscape = 0
+endif
+
+if !exists('g:Gitv_DoNotMapCtrlKey')
+    let g:Gitv_DoNotMapCtrlKey = 0
+endif
+
+if !exists('g:Gitv_PreviewOptions')
+    let g:Gitv_PreviewOptions = ''
+endif
+
+if !exists('g:Gitv_QuietBisect')
+    let g:Gitv_QuietBisect = 0
+endif
+
 "this counts up each time gitv is opened to ensure a unique file name
 let g:Gitv_InstanceCounter = 0
 
 let s:localUncommitedMsg = 'Local uncommitted changes, not checked in to index.'
 let s:localCommitedMsg   = 'Local changes checked in to index but not committed.'
 
-command! -nargs=* -range -bang -complete=custom,s:CompleteGitv Gitv call s:OpenGitv(shellescape(<q-args>), <bang>0, <line1>, <line2>)
+command! -nargs=* -range -bang -complete=custom,s:CompleteGitv Gitv call s:OpenGitv(s:EscapeGitvArgs(<q-args>), <bang>0, <line1>, <line2>)
 cabbrev gitv <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'Gitv' : 'gitv')<CR>
 
 "Public API:"{{{
@@ -195,6 +211,14 @@ fu! s:ReapplyReservedArgs(extraArgs) "{{{
         let options = s:FilterArgs(options, ['--all', '--first-parent'])
     endif
     return [options, a:extraArgs[1]]
+endfu "}}}
+fu! s:EscapeGitvArgs(extraArgs) "{{{
+    " TODO: test whether shellescape is really needed on windows.
+    if g:Gitv_DisableShellEscape == 0
+        return shellescape(a:extraArgs)
+    else
+        return a:extraArgs
+    fi
 endfu "}}}
 fu! s:OpenGitv(extraArgs, fileMode, rangeStart, rangeEnd) "{{{
     let sanitizedArgs = s:SanitizeReservedArgs(a:extraArgs)
@@ -468,11 +492,15 @@ fu! s:SetupBuffer(commitCount, extraArgs, filePath, range) "{{{
     silent %s/refs\/tags\//t:/ge
     silent %s/refs\/remotes\//r:/ge
     silent %s/refs\/heads\///ge
-    silent %call s:Align("__SEP__", a:filePath)
-    silent %s/\s\+$//e
     call s:AddLoadMore()
     call s:AddLocalNodes(a:filePath)
     call s:AddFileModeSpecific(a:filePath, a:range, a:commitCount)
+
+    " run any autocmds the user may have defined to hook in here
+    silent doautocmd User GitvSetupBuffer
+
+    silent %call s:Align("__SEP__", a:filePath)
+    silent %s/\s\+$//e
     silent setlocal nomodifiable
     silent setlocal readonly
     silent setlocal cursorline
@@ -657,6 +685,16 @@ fu! s:SetDefaultMappings() "{{{
         \'cmd': ':call <SID>ResetBranch("--mixed")<cr>',
         \'bindings': 'rb'
     \}
+    let s:defaultMappings.resetSoft = {
+        \'mapCmd': 'nmap',
+        \'cmd': ':call <SID>ResetBranch("--soft")<cr>',
+        \'bindings': 'rbs'
+    \}
+    let s:defaultMappings.vresetSoft = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>ResetBranch("--soft")<cr>',
+        \'bindings': 'rbs'
+    \}
     let s:defaultMappings.resetHard = {
         \'mapCmd': 'nmap',
         \'cmd': ':call <SID>ResetBranch("--hard")<cr>',
@@ -765,7 +803,7 @@ fu! s:SetDefaultMappings() "{{{
     endif
 
     " bindings which use ctrl
-    if !exists('g:Gitv_DoNotMapCtrlKey')
+    if g:Gitv_DoNotMapCtrlKey != 1
         let s:defaultMappings.ctrlPreviousCommit = {
             \'mapCmd': 'nmap',
             \'cmd': '<Plug>(gitv-previous-commit)',
@@ -934,17 +972,6 @@ fu! s:ResizeWindow(fileMode) "{{{
     endif
 endf "}}} }}}
 "Utilities:"{{{
-fu! s:GetGitvSha(lineNumber) "{{{
-    let l = getline(a:lineNumber)
-    let sha = matchstr(l, "\\[\\zs[0-9a-f]\\{7}\\ze\\]$")
-    return sha
-endf "}}}
-fu! s:GetGitvRefs(line) "{{{
-    let l = getline(a:line)
-    let refstr = matchstr(l, "^\\(\\(|\\|\\/\\|\\\\\\|\\*\\)\\s\\?\\)*\\s\\+(\\zs.\\{-}\\ze)")
-    let refs = split(refstr, ', ')
-    return refs
-endf "}}}
 fu! s:GetParentSha(sha, parentNum) "{{{
     if a:parentNum < 1
         return
@@ -1218,15 +1245,22 @@ fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
         endif
         return
     endif
-    let sha = s:GetGitvSha(line('.'))
+    let sha = gitv#util#line#sha(line('.'))
     if sha == ""
         return
     endif
     if s:IsFileMode() && !a:forceOpenFugitive
         call s:OpenRelativeFilePath(sha, a:geditForm)
     else
-        let cmd = a:geditForm . " " . sha
-        let cmd = 'call s:RecordBufferExecAndWipe("'.cmd.'", '.(a:geditForm=='Gedit').')'
+        let opts = g:Gitv_PreviewOptions
+        if opts == ''
+            let cmd = a:geditForm . " " . sha
+            let cmd = 'call s:RecordBufferExecAndWipe("'.cmd.'", '.(a:geditForm=='Gedit').')'
+        else
+            let winCmd = a:geditForm[1:] == 'edit' ? '' : a:geditForm[1:]
+            let cmd = 'call Gitv_OpenGitCommand(\"show '.opts.' --no-color '.sha.'\", \"'.winCmd.'\")'
+            let cmd = 'call s:RecordBufferExecAndWipe("'.cmd.'", '.(winCmd=='').')'
+        endif
         call s:MoveIntoPreviewAndExecute(cmd, 1)
         call s:MoveIntoPreviewAndExecute('setlocal fdm=syntax', 0)
     endif
@@ -1278,7 +1312,7 @@ fu! s:BisectHasStarted() "{{{
 endf "}}}
 fu! s:BisectStart(mode) range "{{{
     if exists('b:Bisecting')
-        if !exists('g:Gitv_QuietBisect')
+        if g:Gitv_QuietBisect == 0
             echom 'Bisect disabled'
         endif
         unlet! b:Bisecting
@@ -1295,12 +1329,12 @@ fu! s:BisectStart(mode) range "{{{
             endif
         endif
         let b:Bisecting = 1
-        if !exists('g:Gitv_QuietBisect')
+        if g:Gitv_QuietBisect == 0
             echom 'Bisect started'
         endif
     else
         let b:Bisecting = 1
-        if !exists('g:Gitv_QuietBisect')
+        if g:Gitv_QuietBisect == 0
             echom 'Bisect enabled'
         endif
     endif
@@ -1312,11 +1346,11 @@ fu! s:BisectReset() "{{{
     endif
     if s:BisectHasStarted()
         call s:RunGitCommand('bisect reset', 0)
-        if !exists('g:Gitv_QuietBisect')
+        if g:Gitv_QuietBisect == 0
             echom 'Bisect stopped'
         endif
     else
-        if !exists('g:Gitv_QuietBisect')
+        if g:Gitv_QuietBisect == 0
             echom 'Bisect disabled'
         endif
     endif
@@ -1333,7 +1367,7 @@ fu! s:BisectGoodBad(goodbad) range "{{{
                 echoerr split(result, '\n')[0]
                 return
             endif
-            if !exists('g:Gitv_QuietBisect')
+            if g:Gitv_QuietBisect == 0
                 echom ref . ' marked as ' . a:goodbad
             endif
         else
@@ -1354,7 +1388,7 @@ fu! s:BisectGoodBad(goodbad) range "{{{
                     errors += 1
                 endif
             endfor
-            if !exists('g:Gitv_QuietBisect')
+            if g:Gitv_QuietBisect == 0
                 echom refs . ' commits marked as ' . a:goodbad
             endif
             if errors == len(reflist)
@@ -1378,7 +1412,7 @@ fu! s:BisectSkip(mode) range "{{{
                 endif
                 let loop += 1
             endwhile
-            if !exists('g:Gitv_QuietBisect')
+            if g:Gitv_QuietBisect == 0
                 echom loop - errors . ' commits skipped'
             endif
             if errors == loops
@@ -1396,7 +1430,7 @@ fu! s:BisectSkip(mode) range "{{{
                 echoerr split(result, '\n')[0]
                 return
             else
-                if !exists('g:Gitv_QuietBisect')
+                if g:Gitv_QuietBisect == 0
                     echom refs . 'skipped'
                 endif
             endif
@@ -1427,8 +1461,8 @@ fu! s:BisectReplay() "{{{
     call s:LoadGitv('', 1, b:Gitv_CommitCount, b:Gitv_ExtraArgs, s:GetRelativeFilePath(), s:GetRange())
 endf "}}} }}}
 fu! s:CheckOutGitvCommit() "{{{
-    let allrefs = s:GetGitvRefs('.')
-    let sha = s:GetGitvSha(line('.'))
+    let allrefs = gitv#util#line#refs('.')
+    let sha = gitv#util#line#sha(line('.'))
     if sha == ""
         return
     endif
@@ -1474,8 +1508,8 @@ fu! s:DiffGitvCommit() range "{{{
         echom "Diffing is not possible in browser mode."
         return
     endif
-    let shafirst = s:GetGitvSha(a:firstline)
-    let shalast  = s:GetGitvSha(a:lastline)
+    let shafirst = gitv#util#line#sha(a:firstline)
+    let shalast  = gitv#util#line#sha(a:lastline)
     if shafirst == "" || shalast == ""
         return
     endif
@@ -1489,8 +1523,8 @@ fu! s:MergeBranches() range "{{{
         echom 'Already up to date.'
         return
     endif
-    let refs = s:GetGitvRefs(a:firstline)
-    let refs += s:GetGitvRefs(a:lastline)
+    let refs = gitv#util#line#refs(a:firstline)
+    let refs += gitv#util#line#refs(a:lastline)
     call filter(refs, 'v:val !=? "HEAD"')
     if len(refs) < 2
         echom 'Not enough refs found to perform a merge.'
@@ -1533,7 +1567,7 @@ fu! s:PerformMerge(target, mergeBranch, ff) abort
     endif
 endfu
 fu! s:MergeToCurrent()
-    let refs = s:GetGitvRefs(".")
+    let refs = gitv#util#line#refs(".")
     call filter(refs, 'v:val !=? "HEAD"')
     if len(refs) < 1
         echoerr 'No ref found to perform a merge.'
@@ -1620,8 +1654,8 @@ fu! s:DeleteRef() range "{{{
     exec 'Git ' . command . " -d " . choice
 endfu "}}}
 fu! s:StatGitvCommit() range "{{{
-    let shafirst = s:GetGitvSha(a:firstline)
-    let shalast  = s:GetGitvSha(a:lastline)
+    let shafirst = gitv#util#line#sha(a:firstline)
+    let shalast  = gitv#util#line#sha(a:lastline)
     if shafirst == "" || shalast == ""
         return
     endif
@@ -1677,7 +1711,7 @@ fu! s:JumpToCommit(backwards) "{{{
     call s:OpenGitvCommit("Gedit", 0)
 endf "}}}
 fu! s:JumpToParent() "{{{
-    let sha = s:GetGitvSha(line('.'))
+    let sha = gitv#util#line#sha(line('.'))
     if sha == ""
         return
     endif

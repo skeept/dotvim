@@ -32,9 +32,9 @@ function! neomake#utils#LogMessage(level, msg, ...) abort
     if a:0
         let jobinfo = a:1
         if has_key(jobinfo, 'id')
-            let msg = printf('[%d.%d] %s', jobinfo.make_id, jobinfo.id, a:msg)
+            let msg = printf('[%s.%d] %s', get(jobinfo, 'make_id', '-'), jobinfo.id, a:msg)
         else
-            let msg = printf('[%d] %s', jobinfo.make_id, a:msg)
+            let msg = printf('[%s] %s', get(jobinfo, 'make_id', '?'), a:msg)
         endif
     else
         let jobinfo = {}
@@ -333,7 +333,7 @@ endfunction
 function! neomake#utils#hook(event, context) abort
     if exists('#User#'.a:event)
         let g:neomake_hook_context = a:context
-        call neomake#utils#DebugMessage('Calling User autocmd '.a:event
+        call neomake#utils#LoudMessage('Calling User autocmd '.a:event
                                       \ .' with context: '.string(a:context))
         if v:version >= 704 || (v:version == 703 && has('patch442'))
             exec 'doautocmd <nomodeline> User ' . a:event
@@ -341,5 +341,8 @@ function! neomake#utils#hook(event, context) abort
             exec 'doautocmd User ' . a:event
         endif
         unlet g:neomake_hook_context
+    else
+        call neomake#utils#DebugMessage(printf(
+                    \ 'Skipping User autocmd %s: no hooks.', a:event))
     endif
 endfunction
