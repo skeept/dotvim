@@ -221,6 +221,7 @@ fu! s:EscapeGitvArgs(extraArgs) "{{{
     fi
 endfu "}}}
 fu! s:OpenGitv(extraArgs, fileMode, rangeStart, rangeEnd) "{{{
+    let s:fugitiveSid = s:GetFugitiveSid()
     let sanitizedArgs = s:SanitizeReservedArgs(a:extraArgs)
     let g:Gitv_InstanceCounter += 1
     if !s:IsCompatible() "this outputs specific errors
@@ -846,6 +847,10 @@ fu! s:SetDefaultMappings() "{{{
         \}
     endif
 endf "}}}
+fu! s:NormalCmd(mapId, mappings) "{{{
+    let bindings = s:GetBindings(a:mapId, a:mappings)
+    exec 'normal '.bindings[0].keys
+endfu "}}}
 fu! s:TransformBindings(bindings) "{{{
     " a:bindings can be a string or list of (in)complete binding descriptors
     " a list of complete binding descriptors will be returned
@@ -948,7 +953,7 @@ fu! s:SetupMappings() "{{{
     endfor
 endf "}}} }}}
 fu! s:SetupBufferCommands(fileMode) "{{{
-    silent command! -buffer -nargs=* -complete=customlist,s:fugitive_GitComplete Git call <sid>MoveIntoPreviewAndExecute("unsilent Git <args>",1)|normal u
+    exec 'silent command! -buffer -nargs=* -complete=customlist,<SNR>'.s:fugitiveSid.'_GitComplete Git call <sid>RunGitCommand("unsilent Git <args>",1)| call <sid>NormalCmd("update", s:defaultMappings)'
 endfu "}}}
 fu! s:ResizeWindow(fileMode) "{{{
     if a:fileMode "window height determined by &previewheight
@@ -1131,10 +1136,8 @@ fu! s:SwitchBetweenWindows() "{{{
             return
         endif
         let targetType = 'git'
-    elseif currentType == 'git'
-        let targetType = 'gitv'
     else
-        return
+        let targetType = 'gitv'
     endif
     let winnum = -1
     windo exec 'if &filetype == targetType | let winnum = winnr() | endif'
@@ -1266,7 +1269,7 @@ fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
     endif
     if s:IsFileMode() && getline('.') =~ '^-- /.*/$'
         if s:EditRange(matchstr(getline('.'), '^-- /\zs.*\ze/$'))
-            normal u
+            call s:NormalCmd('update', s:defaultMappings)
         endif
         return
     endif
@@ -1349,9 +1352,9 @@ fu! s:BisectStart(mode) range "{{{
             return
         endif
         if a:mode == 'v'
-            call s:RunGitCommand('bisect bad ' . s:GetGitvSha(a:firstline), 0)[0]
+            call s:RunGitCommand('bisect bad ' . gitv#util#line#sha(a:firstline), 0)[0]
             if a:firstline != a:lastline
-                call s:RunGitCommand('bisect good ' . s:GetGitvSha(a:lastline), 0)[0]
+                call s:RunGitCommand('bisect good ' . gitv#util#line#sha(a:lastline), 0)[0]
             endif
         endif
         let b:Bisecting = 1
@@ -1387,7 +1390,7 @@ fu! s:BisectGoodBad(goodbad) range "{{{
     if exists('b:Bisecting') && s:BisectHasStarted()
         let result = ''
         if a:firstline == a:lastline
-            let ref = s:GetGitvSha('.')
+            let ref = gitv#util#line#sha('.')
             let result = s:RunGitCommand('bisect ' . goodbad . ref, 0)[0]
             if v:shell_error
                 echoerr split(result, '\n')[0]
@@ -1397,8 +1400,8 @@ fu! s:BisectGoodBad(goodbad) range "{{{
                 echom ref . ' marked as ' . a:goodbad
             endif
         else
-            let refs2 = s:GetGitvSha(a:firstline)
-            let refs1 = s:GetGitvSha(a:lastline)
+            let refs2 = gitv#util#line#sha(a:firstline)
+            let refs1 = gitv#util#line#sha(a:lastline)
             let refs = refs1 . "^.." . refs2
             let cmd = 'log --pretty=format:%h '
             let reflist = split(s:RunGitCommand(cmd . refs, 0)[0], '\n')
@@ -1446,9 +1449,9 @@ fu! s:BisectSkip(mode) range "{{{
             endif
         else "visual mode or no range
             let cmd = 'bisect skip '
-            let refs = s:GetGitvSha(a:lastline)
+            let refs = gitv#util#line#sha(a:lastline)
             if a:firstline != a:lastline
-                let refs2 = s:GetGitvSha(a:firstline)
+                let refs2 = gitv#util#line#sha(a:firstline)
                 let refs .= "^.." . refs2
             endif
             let result = s:RunGitCommand('bisect skip ' . refs, 0)[0]
@@ -1610,8 +1613,8 @@ fu! s:MergeToCurrent()
     call s:PerformMerge("HEAD", target, ff)
 endfu "}}}
 fu! s:CherryPick() range "{{{
-    let refs2 = s:GetGitvSha(a:firstline)
-    let refs1 = s:GetGitvSha(a:lastline)
+    let refs2 = gitv#util#line#sha(a:firstline)
+    let refs1 = gitv#util#line#sha(a:lastline)
     if refs1 == refs2
         let refs = refs1
     else
@@ -1622,14 +1625,14 @@ fu! s:CherryPick() range "{{{
     exec 'Git cherry-pick ' . refs
 endfu "}}}
 fu! s:ResetBranch(mode) range "{{{
-    let ref = s:GetGitvSha(a:firstline)
+    let ref = gitv#util#line#sha(a:firstline)
 
     echom "Reset " . a:mode . " to " . ref
     exec 'Git reset ' . a:mode . " " . ref
 endfu "}}}
 fu! s:Revert() range "{{{
-    let refs2 = s:GetGitvSha(a:firstline)
-    let refs1 = s:GetGitvSha(a:lastline)
+    let refs2 = gitv#util#line#sha(a:firstline)
+    let refs1 = gitv#util#line#sha(a:lastline)
     let refs = refs1
     if refs1 != refs2
         let refs = refs1 . "^.." . refs2
@@ -1654,7 +1657,7 @@ fu! s:Revert() range "{{{
     exec 'Gcommit'
 endfu "}}}
 fu! s:DeleteRef() range "{{{
-    let refs = s:GetGitvRefs(a:firstline)
+    let refs = gitv#util#line#refs(a:firstline)
     call filter(refs, 'v:val !=? "HEAD"')
     let choice = confirm("Choose branch to delete:", s:GetConfirmString(refs, "Cancel"))
     if choice == 0
@@ -1832,23 +1835,17 @@ fu! s:MaxLengths(colls) "{{{
     return lengths
 endfu "}}} }}}
 "Fugitive Functions: "{{{
-"These functions are lifted directly from fugitive and modified only to work with gitv.
-function! s:fugitive_sub(str,pat,rep) abort "{{{
-  return substitute(a:str,'\v\C'.a:pat,a:rep,'')
-endfunction "}}}
-function! s:fugitive_GitComplete(A,L,P) abort "{{{
-  if !exists('s:exec_path')
-    let s:exec_path = s:fugitive_sub(system(g:fugitive_git_executable.' --exec-path'),'\n$','')
-  endif
-  let cmds = map(split(glob(s:exec_path.'/git-*'),"\n"),'s:fugitive_sub(v:val[strlen(s:exec_path)+5 : -1],"\\.exe$","")')
-  if a:L =~ ' [[:alnum:]-]\+ '
-    return fugitive#buffer().repo().superglob(a:A)
-  elseif a:A == ''
-    return cmds
-  else
-    return filter(cmds,'v:val[0 : strlen(a:A)-1] ==# a:A')
-  endif
-endfunction "}}} }}}
+fu! s:GetFugitiveSid() "{{{
+    redir => scriptnames
+    silent! scriptnames
+    redir END
+    for script in split(l:scriptnames, "\n")
+        if l:script =~ 'fugitive'
+            return str2nr(split(l:script, ":")[0])
+        endif
+    endfor
+    throw 'Unable to find fugitive'
+endfu "}}} }}}
 
 let &cpo = s:savecpo
 unlet s:savecpo
