@@ -313,7 +313,7 @@
 "greekde_utf-8":{"archive_name":"greekde_utf-8.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23261","version":"1.0","vim_script_nr":5167},
 "foldMarker":{"archive_name":"foldMarker.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23278","version":"1.1.0","vim_script_nr":5166},
 "MapToSideEffects":{"archive_name":"MapToSideEffects-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23251","version":"0.1.0","vim_script_nr":5165},
-"avrm48":{"archive_name":"avrm48.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24798","version":"0.3","vim_script_nr":5164},
+"avrm48":{"archive_name":"avrm48.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24808","version":"0.31","vim_script_nr":5164},
 "mpi":{"archive_name":"after.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23232","version":"0.10","vim_script_nr":5163},
 "vison":{"archive_name":"vison-0.1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23231","version":"0.1.1","vim_script_nr":5162},
 "yats":{"archive_name":"yats.vim-master.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23226","version":"1.0","vim_script_nr":5161},

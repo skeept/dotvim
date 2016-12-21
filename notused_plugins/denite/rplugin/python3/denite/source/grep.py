@@ -5,25 +5,26 @@
 # ============================================================================
 
 from .base import Base
-from denite.util import parse_jump_line, escape_syntax
+from denite.util import parse_jump_line, escape_syntax, input
 from denite.process import Process
 import os
 import shlex
 
-GREP_HEADER_SYNTAX = '''
-syntax match deniteSource_grepHeader /\\v[^:]*:\d+(:\d+)? / contained keepend
-'''.strip()
+GREP_HEADER_SYNTAX = (
+    'syntax match deniteSource_grepHeader '
+    r'/\v[^:]*:\d+(:\d+)? / '
+    'contained keepend')
 
 GREP_FILE_SYNTAX = (
     'syntax match deniteSource_grepFile '
-    '/[^:]*:/ contained '
-    'containedin=deniteSource_grepHeader '
+    r'/[^:]*:/ '
+    'contained containedin=deniteSource_grepHeader '
     'nextgroup=deniteSource_grepLineNR')
 GREP_FILE_HIGHLIGHT = 'highlight default link deniteSource_grepFile Comment'
 
 GREP_LINE_SYNTAX = (
     'syntax match deniteSource_grepLineNR '
-    '/\d\+\(:\d\+\)\?/ '
+    r'/\d\+\(:\d\+\)\?/ '
     'contained containedin=deniteSource_grepHeader')
 GREP_LINE_HIGHLIGHT = 'highlight default link deniteSource_grepLineNR LineNR'
 
@@ -45,7 +46,7 @@ class Source(Base):
         self.matchers = ['matcher_ignore_globs', 'matcher_regexp']
 
     def on_init(self, context):
-        self.__proc = None
+        context['__proc'] = None
         directory = ''
         if context['args']:
             directory = context['args'][0]
@@ -55,12 +56,12 @@ class Source(Base):
         context['__directory'] = self.vim.call('expand', directory)
         context['__input'] = context['input']
         if not context['__input']:
-            context['__input'] = self.vim.call('input', 'Pattern: ')
+            context['__input'] = input(self.vim, context, 'Pattern: ')
 
     def on_close(self, context):
-        if self.__proc:
-            self.__proc.kill()
-            self.__proc = None
+        if context['__proc']:
+            context['__proc'].kill()
+            context['__proc'] = None
 
     def highlight(self):
         self.vim.command(GREP_HEADER_SYNTAX)
@@ -80,7 +81,7 @@ class Source(Base):
             'contained containedin=' + self.syntax_name)
 
     def gather_candidates(self, context):
-        if self.__proc:
+        if context['__proc']:
             return self.__async_gather_candidates(context, 0.5)
 
         if context['__input'] == '':
@@ -98,14 +99,14 @@ class Source(Base):
             # Windows needs to specify the directory.
             commands += context['__directory']
 
-        self.__proc = Process(commands, context, context['__directory'])
+        context['__proc'] = Process(commands, context, context['__directory'])
         return self.__async_gather_candidates(context, 2.0)
 
     def __async_gather_candidates(self, context, timeout):
-        outs, errs = self.__proc.communicate(timeout=timeout)
-        context['is_async'] = not self.__proc.eof()
-        if self.__proc.eof():
-            self.__proc = None
+        outs, errs = context['__proc'].communicate(timeout=timeout)
+        context['is_async'] = not context['__proc'].eof()
+        if context['__proc'].eof():
+            context['__proc'] = None
 
         candidates = []
 
