@@ -5303,6 +5303,10 @@
     "type": "git",
     "url": "git://github.com/dpelle/vim-Grammalecte"
   },
+  "5499": {
+    "type": "git",
+    "url": "git://github.com/jsfaint/gen_tags.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

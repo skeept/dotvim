@@ -54,7 +54,7 @@ def escape(expr):
 
 
 def escape_syntax(expr):
-    return re.sub(r'([/~])', r'\\\1', expr)
+    return re.sub(r'([\^$.*\/~\[\]])', r'\\\1', expr)
 
 
 def escape_fuzzy(string, camelcase):
@@ -97,7 +97,7 @@ def path2project(vim, path):
     return vim.call('denite#util#path2project_directory', path)
 
 
-def parse_jump_line(cwd, line):
+def parse_jump_line(path_head, line):
     m = re.search(r'^(.*):(\d+)(?::(\d+))?:(.*)$', line)
     if not m or not m.group(1) or not m.group(4):
         return []
@@ -113,7 +113,7 @@ def parse_jump_line(cwd, line):
     if not col:
         col = '0'
     if not os.path.isabs(path):
-        path = cwd + '/' + path
+        path = os.path.join(path_head, path)
 
     return [path, linenr, col, text]
 
@@ -132,9 +132,8 @@ def convert2regex_pattern(input):
 
 def parse_command(array, **kwargs):
     def parse_arg(arg):
-        arg = arg[1:]
-        if arg.startswith(":") and arg in kwargs:
-            return kwargs[arg]
+        if arg.startswith(':') and arg[1:] in kwargs:
+            return kwargs[arg[1:]]
         return arg
 
     return [parse_arg(i) for i in array]
