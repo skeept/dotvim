@@ -1,5 +1,5 @@
 " vi: fdl=1
-let g:pymode_version = "0.8.1"
+let g:pymode_version = "0.9.0"
 
 com! PymodeVersion echomsg "Current python-mode version: " . g:pymode_version
 com! PymodeTroubleshooting call pymode#troubleshooting#test()
@@ -314,4 +314,3 @@ endif
 command! PymodeVersion echomsg "Pymode version: " . g:pymode_version . " interpreter: " . g:pymode_python . " lint: " . g:pymode_lint . " rope: " . g:pymode_rope
 
 augroup pymode
-

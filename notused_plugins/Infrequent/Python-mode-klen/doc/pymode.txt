@@ -6,7 +6,7 @@
     (__)   (__)  (__) (_) (_)(_____)(_)\_)   (_/\/\_)(_____)(____/(____)     ~
 
 
-                          Version: 0.8.1
+                          Version: 0.9.0
 
 ==============================================================================
 CONTENTS                                                       *pymode-contents*
@@ -486,7 +486,7 @@ imported) from project                              *'g:pymode_rope_autoimport'*
 
 Load modules to autoimport by default       *'g:pymode_rope_autoimport_modules'*
 >
-    let g:pymode_rope_autoimport_modules = ['os', 'shutil', 'datetime'])
+    let g:pymode_rope_autoimport_modules = ['os', 'shutil', 'datetime']
 
 Offer to unresolved import object after completion.
 >
