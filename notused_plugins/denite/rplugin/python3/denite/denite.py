@@ -4,14 +4,13 @@
 # License: MIT license
 # ============================================================================
 
-from denite.util import globruntime, get_custom_source
+from denite.util import get_custom_source, find_rplugins
 
 import denite.source  # noqa
 import denite.filter  # noqa
 import denite.kind    # noqa
 
 import importlib.machinery
-import os.path
 import copy
 
 
@@ -144,17 +143,8 @@ class Denite(object):
 
     def load_sources(self, context):
         # Load sources from runtimepath
-        rtps = globruntime(
-            context['runtimepath'],
-            'rplugin/python3/denite/source/base.py')
-        rtps.extend(globruntime(context['runtimepath'],
-                                'rplugin/python3/denite/source/*.py'))
         loaded_paths = [x.path for x in self.__sources.values()]
-        for path in rtps:
-            name = os.path.splitext(os.path.basename(path))[0]
-            if name == 'base' or path in loaded_paths:
-                continue
-
+        for path, name in find_rplugins(context, 'source', loaded_paths):
             module = importlib.machinery.SourceFileLoader(
                 'denite.source.' + name, path).load_module()
             source = module.Source(self.__vim)
@@ -177,17 +167,8 @@ class Denite(object):
 
     def load_filters(self, context):
         # Load filters from runtimepath
-        rtps = globruntime(
-            context['runtimepath'],
-            'rplugin/python3/denite/filter/base.py')
-        rtps.extend(globruntime(context['runtimepath'],
-                                'rplugin/python3/denite/filter/*.py'))
         loaded_paths = [x.path for x in self.__filters.values()]
-        for path in rtps:
-            name = os.path.splitext(os.path.basename(path))[0]
-            if name == 'base' or path in loaded_paths:
-                continue
-
+        for path, name in find_rplugins(context, 'filter', loaded_paths):
             module = importlib.machinery.SourceFileLoader(
                 'denite.filter.' + name, path).load_module()
             filter = module.Filter(self.__vim)
@@ -203,19 +184,13 @@ class Denite(object):
 
     def load_kinds(self, context):
         # Load kinds from runtimepath
-        rtps = globruntime(
-            context['runtimepath'],
-            'rplugin/python3/denite/kind/base.py')
-        rtps.extend(globruntime(context['runtimepath'],
-                                'rplugin/python3/denite/kind/*.py'))
-        for path in rtps:
-            name = os.path.basename(path)[: -3]
-            if name == 'base' or name in self.__kinds:
-                continue
-
+        loaded_paths = [x.path for x in self.__kinds.values()]
+        for path, name in find_rplugins(context, 'kind', loaded_paths):
             module = importlib.machinery.SourceFileLoader(
                 'denite.kind.' + name, path).load_module()
-            self.__kinds[name] = module.Kind(self.__vim)
+            kind = module.Kind(self.__vim)
+            kind.path = path
+            self.__kinds[name] = kind
 
     def do_action(self, context, action_name, targets):
         action = self.get_action(context, action_name, targets)
