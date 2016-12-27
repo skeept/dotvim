@@ -65,6 +65,9 @@ if !exists('g:Gitv_QuietBisect')
     let g:Gitv_QuietBisect = 0
 endif
 
+" create a temporary file for working
+let s:workingFile = tempname()
+
 "this counts up each time gitv is opened to ensure a unique file name
 let g:Gitv_InstanceCounter = 0
 
@@ -733,6 +736,28 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'd'
     \}
 
+    " rebasing
+    let s:defaultMappings.rebase = {
+        \'cmd': ':call <SID>Rebase()<cr>',
+        \'bindings': 'grr'
+    \}
+    let s:defaultMappings.rebaseToggle = {
+        \'cmd': ':call <SID>RebaseToggle(gitv#util#line#sha("."))<cr>',
+        \'bindings': 'grs'
+    \}
+    let s:defaultMappings.rebaseSkip = {
+        \'cmd': ':call <SID>RebaseSkip()<cr>',
+        \'bindings': 'grn'
+    \}
+    let s:defaultMappings.rebaseContinue = {
+        \'cmd': ':call <SID>RebaseContinue()<cr>',
+        \'bindings': 'grc'
+    \}
+    let s:defaultMappings.rebaseEdit = {
+        \'cmd': ':call <SID>RebaseEdit()<cr>',
+        \'bindings': 'gre'
+    \}
+
     " bisecting
     let s:defaultMappings.bisectStart = {
         \'mapCmd': 'nmap',
@@ -857,9 +882,10 @@ fu! s:TransformBindings(bindings) "{{{
     " a:bindings can be a string or list of (in)complete binding descriptors
     " a list of complete binding descriptors will be returned
     " a complete binding object is a binding object with all possible fields
-    let bindings = a:bindings
-    if type(bindings) != 3 " list
-        let bindings = [bindings]
+    if type(a:bindings) != 3 " list
+        let bindings = [a:bindings]
+    else
+        let bindings = a:bindings
     endif
     let newBindings = []
     for binding in bindings
@@ -1336,6 +1362,124 @@ fu! s:EditRange(rangeDelimiter)
     call s:SetRange(idx, value)
     return 1
 endfu "}}}
+" Rebase: "{{{
+fu! s:RebaseHasStarted() " {{{
+    return !empty(glob(fugitive#buffer().repo().tree().'/.git/rebase-merge'))
+endf " }}}
+fu! s:Rebase() " {{{
+    if s:RebaseHasStarted()
+        echoerr "Rebase already in progress."
+        return
+    endif
+    let refs = gitv#util#line#refs('.')
+    let choice = confirm("Choose branch to rebase onto:", s:GetConfirmString(refs, "Cancel"))
+    if choice == 0
+        return
+    endif
+    let result=s:RunGitCommand('rebase HEAD '.refs[choice - 1], 0)[0]
+endf " }}}
+fu! s:SetRebaseEditor() " {{{
+    " change pick to edit
+    let $GIT_SEQUENCE_EDITOR='function gitv_edit() {
+                \ echo "" > '.s:workingFile.';
+                \ while read line; do
+                \ if [[ "${line:0:4}" == "pick" ]]; then
+                \ echo "edit ${line:5}";
+                \ else
+                \ echo $line;
+                \ fi;
+                \ done < $1 > '.s:workingFile.';
+                \ mv '.s:workingFile.' '.s:GetRebaseTodo().';
+                \ }; gitv_edit'
+endf " }}}
+fu! s:RebaseToggle(ref) " {{{
+    if s:RebaseHasStarted()
+        echo 'Abort current rebase? (y/n) '
+        if nr2char(getchar()) == 'y'
+            call s:RunGitCommand('rebase --abort', 0)
+        endif
+        return
+    endif
+    call s:SetRebaseEditor()
+    redir @a | echo $GIT_SEQUENCE_EDITOR | redir END
+    let result=s:RunGitCommand('rebase --interactive '.a:ref.'^', 0)[0]
+    let $GIT_SEQUENCE_EDITOR=""
+    if v:shell_error
+        echoerr split(result, '\n')[0]
+    endif
+    call s:RebaseEdit()
+endf " }}}
+fu! s:RebaseSkip() " {{{
+    if !s:RebaseHasStarted()
+        return
+    endif
+    let result = s:RunGitCommand('rebase --skip', 0)[0]
+    let result = split(result, '\n')[0]
+    if v:shell_error
+        echoerr result
+    else
+        echo result
+    endif
+endf " }}}
+fu! s:GetRebaseMode(line) " {{{
+    let output = readfile(s:GetRebaseTodo())
+    if len(output) <= a:line || len(output[a:line]) < 1
+        return ''
+    endif
+    return output[a:line][0]
+endf " }}
+fu! s:RebaseExecContinue() " {{{
+    let $GIT_EDITOR='exit 1'
+    let result = split(s:RunGitCommand('rebase --continue', 0)[0], '\n')[0]
+    let $GIT_EDITOR=""
+    if !v:shell_error
+        echo result
+    endif
+    if exists('#rebasecontinue')
+        augroup! rebasecontinue
+    endif
+    if &ft == 'gitv'
+        call s:NormalCmd('update', s:defaultMappings)
+    endif
+endf " }}}
+fu! s:RebaseContinue() " {{{
+    if !s:RebaseHasStarted()
+        return
+    endif
+    let mode = s:GetRebaseMode(0)
+    if mode == 'r' || mode == 'e' || mode == 'f' || mode == 's'
+        if mode == 'r' || mode == 'e'
+            Gcommit --amend
+        else
+            Gcommit
+        endif
+        if &ft == 'gitcommit'
+            augroup rebasecontinue
+                augroup! rebasecontinue
+                autocmd BufWipeout <buffer> call s:RebaseExecContinue()
+            augroup END
+        endif
+    else
+        call s:RebaseExecContinue()
+    endif
+endf " }}}
+fu! s:GetRebaseHeadname() " {{{
+    return fugitive#buffer().repo().tree().'/.git/rebase-merge/head-name'
+endf "}}}
+fu! s:GetRebaseTodo() " {{{
+    return fugitive#buffer().repo().tree().'/.git/rebase-merge/git-rebase-todo'
+endf "}}}
+fu! s:RebaseEdit() " {{{
+    if !s:RebaseHasStarted()
+        return
+    endif
+    let todo = s:GetRebaseTodo()
+    if empty(glob(todo))
+        echoerr 'No interactive rebase in progress.'
+        return
+    endif
+    execute 'split' todo
+endf "}}} }}}
 "Bisect: "{{{
 fu! s:BisectHasStarted() "{{{
     call s:RunGitCommand('bisect log', 0)

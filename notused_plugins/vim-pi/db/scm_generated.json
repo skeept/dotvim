@@ -5307,6 +5307,22 @@
     "type": "git",
     "url": "git://github.com/jsfaint/gen_tags.vim"
   },
+  "5501": {
+    "type": "git",
+    "url": "git://github.com/andlrc/rpgle.vim"
+  },
+  "5502": {
+    "type": "git",
+    "url": "git://github.com/thaerkh/vim-workspace"
+  },
+  "5503": {
+    "type": "git",
+    "url": "git://github.com/trkw/yarn.vim"
+  },
+  "5504": {
+    "type": "git",
+    "url": "git://github.com/pedsm/sprint"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
