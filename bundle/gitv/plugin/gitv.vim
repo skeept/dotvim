@@ -1275,6 +1275,9 @@ fu! s:OpenRelativeFilePath(sha, geditForm) "{{{
 endf "}}} }}}
 "Mapped Functions:"{{{
 "Operations: "{{{
+fu! s:GetCommitMsg() " {{{
+    return fugitive#buffer().repo().tree().'/.git/COMMIT_EDITMSG'
+endf " }}}
 fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
     let bindingsCmd = 'call s:MoveIntoPreviewAndExecute("call s:SetupMapping('."'".'toggleWindow'."'".', s:defaultMappings)", 0)'
     if getline('.') == "-- Load More --"
@@ -1392,7 +1395,18 @@ fu! s:SetRebaseEditor() " {{{
                 \ mv '.s:workingFile.' '.s:GetRebaseTodo().';
                 \ }; gitv_edit'
 endf " }}}
+fu! s:RebaseUpdateView() " {{{
+    wincmd j
+    wincmd h
+    if &ft == 'gitv'
+        call s:NormalCmd('update', s:defaultMappings)
+        normal gg
+    endif
+endf " }}}
 fu! s:RebaseToggle(ref) " {{{
+    if s:IsFileMode()
+        return
+    endif
     if s:RebaseHasStarted()
         echo 'Abort current rebase? (y/n) '
         if nr2char(getchar()) == 'y'
@@ -1401,12 +1415,12 @@ fu! s:RebaseToggle(ref) " {{{
         return
     endif
     call s:SetRebaseEditor()
-    redir @a | echo $GIT_SEQUENCE_EDITOR | redir END
-    let result=s:RunGitCommand('rebase --interactive '.a:ref.'^', 0)[0]
+    let result=s:RunGitCommand('rebase --preserve-merges --interactive '.a:ref.'~2', 0)[0]
     let $GIT_SEQUENCE_EDITOR=""
     if v:shell_error
         echoerr split(result, '\n')[0]
     endif
+    call s:RebaseUpdateView()
     call s:RebaseEdit()
 endf " }}}
 fu! s:RebaseSkip() " {{{
@@ -1421,51 +1435,64 @@ fu! s:RebaseSkip() " {{{
         echo result
     endif
 endf " }}}
-fu! s:GetRebaseMode(line) " {{{
-    let output = readfile(s:GetRebaseTodo())
-    if len(output) <= a:line || len(output[a:line]) < 1
+fu! s:GetRebaseMode() " {{{
+    let output = readfile(s:GetRebaseDone())
+    let length = len(output)
+    if length < 1
         return ''
     endif
-    return output[a:line][0]
-endf " }}
-fu! s:RebaseExecContinue() " {{{
+    return output[length - 1][0]
+endf " }}}
+fu! s:RebaseContinue() " {{{
+    if !s:RebaseHasStarted()
+        return
+    endif
     let $GIT_EDITOR='exit 1'
     let result = split(s:RunGitCommand('rebase --continue', 0)[0], '\n')[0]
     let $GIT_EDITOR=""
     if !v:shell_error
         echo result
     endif
-    if exists('#rebasecontinue')
-        augroup! rebasecontinue
+    if exists('#gitvrebasecontinue')
+        augroup! gitvrebasecontinue
     endif
-    if &ft == 'gitv'
-        call s:NormalCmd('update', s:defaultMappings)
-    endif
-endf " }}}
-fu! s:RebaseContinue() " {{{
+    call s:RebaseUpdateView()
     if !s:RebaseHasStarted()
         return
     endif
-    let mode = s:GetRebaseMode(0)
-    if mode == 'r' || mode == 'e' || mode == 'f' || mode == 's'
-        if mode == 'r' || mode == 'e'
+    let mode = s:GetRebaseMode()
+    if mode == 's'
+        call writefile([], s:workingFile)
+        call writefile(readfile(s:GetCommitMsg()), s:workingFile)
+        let result = s:RunGitCommand('reset --soft HEAD~1', 0)[0]
+        if v:shell_error
+            echoerr split(result, '\n')[0]
+            return
+        endif
+    endif
+    if mode == 'r' || mode == 's'
+        if mode == 'r'
             Gcommit --amend
         else
             Gcommit
         endif
         if &ft == 'gitcommit'
-            augroup rebasecontinue
-                augroup! rebasecontinue
-                autocmd BufWipeout <buffer> call s:RebaseExecContinue()
+            if mode == 's'
+                call writefile(readfile(s:workingFile), s:GetCommitMsg())
+            endif
+            augroup gitvrebasecontinue
+                augroup! gitvrebasecontinue
+                autocmd BufWipeout <buffer> call s:RebaseContinue()
             augroup END
         endif
-    else
-        call s:RebaseExecContinue()
     endif
 endf " }}}
 fu! s:GetRebaseHeadname() " {{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/head-name'
 endf "}}}
+fu! s:GetRebaseDone() " {{{
+    return fugitive#buffer().repo().tree().'/.git/rebase-merge/done'
+endf " }}}
 fu! s:GetRebaseTodo() " {{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/git-rebase-todo'
 endf "}}}
