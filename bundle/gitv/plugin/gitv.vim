@@ -293,6 +293,7 @@ fu! s:OpenBrowserMode(extraArgs) "{{{
         return 0
     endif
     call s:SetupBufferCommands(0)
+    let b:rebaseInstructions = {}
     "open the first commit
     if g:Gitv_OpenPreviewOnLaunch
         silent call s:OpenGitvCommit("Gedit", 0)
@@ -740,6 +741,69 @@ fu! s:SetDefaultMappings() "{{{
     let s:defaultMappings.rebase = {
         \'cmd': ':call <SID>Rebase()<cr>',
         \'bindings': 'grr'
+    \}
+    let s:defaultMappings.rebasePick = {
+        \'cmd': ':call <SID>RebaseSetInstruction("p")<cr>',
+        \'bindings': 'grP'
+    \}
+    let s:defaultMappings.vrebasePick = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("p")<cr>',
+        \'bindings': 'grP'
+    \}
+    let s:defaultMappings.rebaseReword = {
+        \'cmd': ':call <SID>RebaseSetInstruction("r")<cr>',
+        \'bindings': 'grR'
+    \}
+    let s:defaultMappings.vrebaseReword = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("r")<cr>',
+        \'bindings': 'grR'
+    \}
+    let s:defaultMappings.rebaseMarkEdit = {
+        \'cmd': ':call <SID>RebaseSetInstruction("e")<cr>',
+        \'bindings': 'grE'
+    \}
+    let s:defaultMappings.vrebaseMarkEdit = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("e")<cr>',
+        \'bindings': 'grE'
+    \}
+    let s:defaultMappings.rebaseSquash = {
+        \'cmd': ':call <SID>RebaseSetInstruction("s")<cr>',
+        \'bindings': 'grS'
+    \}
+    let s:defaultMappings.vrebaseSquash = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("s")<cr>',
+        \'bindings': 'grS'
+    \}
+    let s:defaultMappings.rebaseFixup = {
+        \'cmd': ':call <SID>RebaseSetInstruction("f")<cr>',
+        \'bindings': 'grF'
+    \}
+    let s:defaultMappings.vrebaseFixup = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("f")<cr>',
+        \'bindings': 'grF'
+    \}
+    let s:defaultMappings.rebaseExec = {
+        \'cmd': ':call <SID>RebaseSetInstruction("x")<cr>',
+        \'bindings': 'grX'
+    \}
+    let s:defaultMappings.vrebaseExec = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("x")<cr>',
+        \'bindings': 'grX'
+    \}
+    let s:defaultMappings.rebaseDrop = {
+        \'cmd': ':call <SID>RebaseSetInstruction("d")<cr>',
+        \'bindings': 'grD'
+    \}
+    let s:defaultMappings.vrebaseDrop = {
+        \'mapCmd': 'vmap',
+        \'cmd': ':call <SID>RebaseSetInstruction("d")<cr>',
+        \'bindings': 'grD'
     \}
     let s:defaultMappings.rebaseToggle = {
         \'cmd': ':call <SID>RebaseToggle(gitv#util#line#sha("."))<cr>',
@@ -1275,9 +1339,9 @@ fu! s:OpenRelativeFilePath(sha, geditForm) "{{{
 endf "}}} }}}
 "Mapped Functions:"{{{
 "Operations: "{{{
-fu! s:GetCommitMsg() " {{{
+fu! s:GetCommitMsg() "{{{
     return fugitive#buffer().repo().tree().'/.git/COMMIT_EDITMSG'
-endf " }}}
+endf "}}}
 fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
     let bindingsCmd = 'call s:MoveIntoPreviewAndExecute("call s:SetupMapping('."'".'toggleWindow'."'".', s:defaultMappings)", 0)'
     if getline('.') == "-- Load More --"
@@ -1366,10 +1430,58 @@ fu! s:EditRange(rangeDelimiter)
     return 1
 endfu "}}}
 " Rebase: "{{{
-fu! s:RebaseHasStarted() " {{{
+fu! s:RebaseHasInstructions() "{{{
+    return len(keys(b:rebaseInstructions)) > 0
+endf "}}}
+fu! s:RebaseClearInstructions() "{{{
+    let b:rebaseInstructions = {}
+endf "}}}
+fu! s:RebaseSetInstruction(instruction) range "{{{
+    if s:RebaseHasStarted() || s:IsFileMode()
+        return
+    endif
+    if a:instruction == 'x'
+        let cmd = input('Please enter a command to execute for each commit: ')
+        if cmd == ''
+            echo 'Not marking any commits for exec.'
+            return
+        endif
+    endif
+    for line in range(a:firstline, a:lastline)
+        let sha = gitv#util#line#sha(line)
+        if sha == ''
+            return
+        endif
+        if a:instruction == 'p' || a:instruction == 'pick' || a:instruction == ''
+            call remove(b:rebaseInstructions, sha)
+        else
+            if exists('cmd')
+                if !exists('b:rebaseInstructions[sha]')
+                    let b:rebaseInstructions[sha] = { 'instruction': 'p' }
+                endif
+                let b:rebaseInstructions[sha].cmd = cmd
+            else
+                let b:rebaseInstructions[sha] = { 'instruction': a:instruction }
+            endif
+        endif
+    endfor
+    let ncommits = a:lastline - a:firstline + 1
+    if ncommits > 1
+        let prettyCommit = ncommits .' commits'
+    else
+        let prettyCommit = gitv#util#line#sha('.')
+    endif
+    if exists('cmd')
+        redraw
+        echo cmd 'will be executed after' prettyCommit.'.'
+    else
+        echo prettyCommit.' marked with "'.a:instruction.'".'
+    endif
+endf "}}}
+fu! s:RebaseHasStarted() "{{{
     return !empty(glob(fugitive#buffer().repo().tree().'/.git/rebase-merge'))
-endf " }}}
-fu! s:Rebase() " {{{
+endf "}}}
+fu! s:Rebase() "{{{
     if s:RebaseHasStarted()
         echoerr "Rebase already in progress."
         return
@@ -1380,30 +1492,66 @@ fu! s:Rebase() " {{{
         return
     endif
     let result=s:RunGitCommand('rebase HEAD '.refs[choice - 1], 0)[0]
-endf " }}}
-fu! s:SetRebaseEditor() " {{{
-    " change pick to edit
-    let $GIT_SEQUENCE_EDITOR='function gitv_edit() {
-                \ echo "" > '.s:workingFile.';
-                \ while read line; do
-                \ if [[ "${line:0:4}" == "pick" ]]; then
-                \ echo "edit ${line:5}";
-                \ else
-                \ echo $line;
-                \ fi;
-                \ done < $1 > '.s:workingFile.';
-                \ mv '.s:workingFile.' '.s:GetRebaseTodo().';
-                \ }; gitv_edit'
-endf " }}}
-fu! s:RebaseUpdateView() " {{{
+    let hasError = v:shell_error
+    call s:RebaseUpdateView()
+    if hasError
+        echoerr split(result, '\n')[0]
+    endif
+endf "}}}
+fu! s:SetRebaseEditor() "{{{
+    " override the default editor used for interactive rebasing
+    if  s:RebaseHasInstructions()
+        " replace default instructions with stored instructions
+        let $GIT_SEQUENCE_EDITOR='function gitv_edit() {'
+        for sha in keys(b:rebaseInstructions)
+            let instruction = b:rebaseInstructions[sha].instruction
+            let $GIT_SEQUENCE_EDITOR .= ' SHA_'.sha.'='.instruction.';'
+            if exists('b:rebaseInstructions[sha].cmd')
+                let cmd = b:rebaseInstructions[sha].cmd
+                let $GIT_SEQUENCE_EDITOR .= ' CMD_'.sha.'='.shellescape(cmd).';'
+            endif
+        endfor
+        let $GIT_SEQUENCE_EDITOR .= 'while read line; do
+                    \ if [[ $line == "" ]]; then break; fi;
+                    \ sha=${line:5:7};
+                    \ key=SHA_$sha;
+                    \ if [[ ${!key} != "" ]]; then
+                    \ cmd=CMD_$sha;
+                    \ echo ${!key} ${line:5};
+                    \ if [[ $cmd != "" ]]; then
+                    \ echo x ${!cmd};
+                    \ fi;
+                    \ else
+                    \ echo $line;
+                    \ fi;
+                    \ done < $1 > '.s:workingFile.';
+                    \ mv '.s:workingFile.' $1;
+                    \ }; gitv_edit'
+    else
+        " change pick to edit
+        let $GIT_SEQUENCE_EDITOR='function gitv_edit() {
+                    \ echo "" > '.s:workingFile.';
+                    \ while read line; do
+                    \ if [[ "${line:0:4}" == "pick" ]]; then
+                    \ echo "edit ${line:5}";
+                    \ else
+                    \ echo $line;
+                    \ fi;
+                    \ done < $1 > '.s:workingFile.';
+                    \ mv '.s:workingFile.' $1;
+                    \ }; gitv_edit'
+    endif
+endf "}}}
+fu! s:RebaseUpdateView() "{{{
+    " attempt to move out of the rebase/commit/preview window and update
     wincmd j
     wincmd h
+    wincmd j
     if &ft == 'gitv'
         call s:NormalCmd('update', s:defaultMappings)
-        normal gg
     endif
-endf " }}}
-fu! s:RebaseToggle(ref) " {{{
+endf "}}}
+fu! s:RebaseToggle(ref) "{{{
     if s:IsFileMode()
         return
     endif
@@ -1411,57 +1559,86 @@ fu! s:RebaseToggle(ref) " {{{
         echo 'Abort current rebase? (y/n) '
         if nr2char(getchar()) == 'y'
             call s:RunGitCommand('rebase --abort', 0)
+            call s:RebaseUpdateView()
         endif
         return
     endif
     call s:SetRebaseEditor()
-    let result=s:RunGitCommand('rebase --preserve-merges --interactive '.a:ref.'~2', 0)[0]
-    let $GIT_SEQUENCE_EDITOR=""
-    if v:shell_error
-        echoerr split(result, '\n')[0]
+    if s:RebaseHasInstructions()
+        " we don't know what the instructions are, treat it like a continue
+        call s:RebaseContinueSetup()
+        " only jump to the commit before this
+        let jump = '^'
+    else
+        " jump to two commits before so we can stop and edit
+        let jump = '~2'
     endif
+    let result=s:RunGitCommand('rebase --preserve-merges --interactive '.a:ref.jump, 0)[0]
+    let result = split(result, '\n')[0]
+    let hasError = v:shell_error
+    let hasInstructions = s:RebaseHasInstructions()
+    call s:RebaseClearInstructions()
     call s:RebaseUpdateView()
-    call s:RebaseEdit()
-endf " }}}
-fu! s:RebaseSkip() " {{{
+    let $GIT_SEQUENCE_EDITOR=""
+    if hasError && !hasInstructions
+        echoerr result
+        return
+    elseif !hasError && hasInstructions
+        echo result
+    endif
+    if hasInstructions
+        call s:RebaseContinueCleanup()
+    else
+        call s:RebaseEdit()
+    endif
+endf "}}}
+fu! s:RebaseSkip() "{{{
     if !s:RebaseHasStarted()
         return
     endif
-    let result = s:RunGitCommand('rebase --skip', 0)[0]
-    let result = split(result, '\n')[0]
-    if v:shell_error
+    let result = split(s:RunGitCommand('rebase --skip', 0)[0], '\n')[0]
+    let hasError = v:shell_error
+    call s:RebaseUpdateView()
+    if hasError
         echoerr result
     else
         echo result
     endif
-endf " }}}
-fu! s:GetRebaseMode() " {{{
+endf "}}}
+fu! s:GetRebaseMode() "{{{
     let output = readfile(s:GetRebaseDone())
     let length = len(output)
     if length < 1
         return ''
     endif
     return output[length - 1][0]
-endf " }}}
-fu! s:RebaseContinue() " {{{
+endf "}}}
+fu! s:RebaseContinueSetup() "{{{
+    " override the commit editor in a way that lets us take over rebase
+    let $GIT_EDITOR='exit 1'
+endf "}}}
+fu! s:RebaseContinue() "{{{
     if !s:RebaseHasStarted()
         return
     endif
-    let $GIT_EDITOR='exit 1'
-    let result = split(s:RunGitCommand('rebase --continue', 0)[0], '\n')[0]
-    let $GIT_EDITOR=""
+    call s:RebaseContinueSetup()
+    let result = s:RunGitCommand('rebase --continue', 0)[0]
+    " we expect an error because of what we did with exit
     if !v:shell_error
-        echo result
-    endif
-    if exists('#gitvrebasecontinue')
-        augroup! gitvrebasecontinue
+        echo split(result, '\n')[0]
     endif
     call s:RebaseUpdateView()
+    call s:RebaseContinueCleanup()
+endf "}}}
+fu! s:RebaseContinueCleanup() "{{{
+    let $GIT_EDITOR=""
     if !s:RebaseHasStarted()
         return
     endif
     let mode = s:GetRebaseMode()
     if mode == 's'
+        " errors with squash cause us to fall through to the next commit
+        " the desired commit message is still in place when we fall through
         call writefile([], s:workingFile)
         call writefile(readfile(s:GetCommitMsg()), s:workingFile)
         let result = s:RunGitCommand('reset --soft HEAD~1', 0)[0]
@@ -1480,23 +1657,35 @@ fu! s:RebaseContinue() " {{{
             if mode == 's'
                 call writefile(readfile(s:workingFile), s:GetCommitMsg())
             endif
-            augroup gitvrebasecontinue
-                augroup! gitvrebasecontinue
-                autocmd BufWipeout <buffer> call s:RebaseContinue()
-            augroup END
         endif
     endif
-endf " }}}
-fu! s:GetRebaseHeadname() " {{{
+endf "}}}
+fu! s:GetRebaseHeadname() "{{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/head-name'
 endf "}}}
-fu! s:GetRebaseDone() " {{{
+fu! s:GetRebaseDone() "{{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/done'
-endf " }}}
-fu! s:GetRebaseTodo() " {{{
+endf "}}}
+fu! s:GetRebaseTodo() "{{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/git-rebase-todo'
 endf "}}}
-fu! s:RebaseEdit() " {{{
+fu! s:RebaseEdit() "{{{
+    if s:RebaseHasInstructions()
+        " rebase should not be started, but we have set instructions to view
+        let output = []
+        for key in keys(b:rebaseInstructions)
+            let line = b:rebaseInstructions[key].instruction.' '.key
+            if exists('b:rebaseInstructions[key].cmd')
+                let line .= ' '.b:rebaseInstructions[key].cmd
+            endif
+            call add(output, line)
+        endfor
+        call writefile(output, s:workingFile)
+        exec 'split' s:workingFile
+        set syntax=gitrebase
+        set nomodifiable
+        return
+    endif
     if !s:RebaseHasStarted()
         return
     endif
@@ -1645,18 +1834,18 @@ fu! s:BisectLog() "{{{
         return
     endif
     let fname = input('Enter a filename to save the log to: ', '', 'file')
-    let result = split(s:RunGitCommand('bisect log', 0)[0], '\n')
+    let result = s:RunGitCommand('bisect log', 0)[0]
     if v:shell_error
-        echoerr result[0]
+        echoerr split(result, '\n')[0]
         return
     endif
     call writefile(result, fname)
 endf "}}}
 fu! s:BisectReplay() "{{{
     let fname = input('Enter a filename to replay: ', '', 'file')
-    let result = split(s:RunGitCommand('bisect replay ' . fname, 0)[0], '\n')
+    let result = s:RunGitCommand('bisect replay ' . fname, 0)[0]
     if v:shell_error
-        echoerr result[0]
+        echoerr split(result, '\n')[0]
         return
     endif
     let b:Bisecting = 1
@@ -1824,7 +2013,7 @@ fu! s:Revert() range "{{{
     let cmd = 'revert --no-commit ' . mergearg . ' ' . refs
     let result = s:RunGitCommand(cmd, 0)[0]
     if result != ''
-        throw split(result)[0]
+        throw split(result, '\n')[0]
         return
     endif
     exec 'Gcommit'
