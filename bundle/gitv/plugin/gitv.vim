@@ -74,6 +74,9 @@ let g:Gitv_InstanceCounter = 0
 let s:localUncommitedMsg = 'Local uncommitted changes, not checked in to index.'
 let s:localCommitedMsg   = 'Local changes checked in to index but not committed.'
 
+let s:pendingRebaseMsg = 'View pending rebase instructions'
+let s:rebaseMsg = 'Edit rebase todo'
+
 command! -nargs=* -range -bang -complete=custom,s:CompleteGitv Gitv call s:OpenGitv(s:EscapeGitvArgs(<q-args>), <bang>0, <line1>, <line2>)
 cabbrev gitv <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'Gitv' : 'gitv')<CR>
 
@@ -207,11 +210,16 @@ fu! s:SanitizeReservedArgs(extraArgs) "{{{
     endwhile
     return [join(splitArgs[0:-len(selectedFiles) - 1], ' '), join(selectedFiles, ' ')]
 endfu "}}}
-fu! s:ReapplyReservedArgs(extraArgs) "{{{
+fu! s:ReapplyReservedArgs(extraArgs, filePath) "{{{
     let options = a:extraArgs[0]
     if exists('b:Bisecting')
-        let options .= " --bisect"
-        let options = s:FilterArgs(options, ['--all', '--first-parent'])
+        if a:filePath != '' && !s:IsBisectingFile(a:filePath)
+            echoerr "No longer bisecting file."
+            let b:Bisecting = 0
+        else
+            let options .= " --bisect"
+            let options = s:FilterArgs(options, ['--all', '--first-parent'])
+        endif
     endif
     return [options, a:extraArgs[1]]
 endfu "}}}
@@ -351,9 +359,9 @@ fu! s:ToggleArg(args, toggle) "{{{
 endf "}}}
 fu! s:ConstructAndExecuteCmd(direction, commitCount, extraArgs, filePath, range) "{{{
     if a:range == [] "no range, setup and execute the command
-        let extraArgs = s:ReapplyReservedArgs(a:extraArgs)
+        let extraArgs = s:ReapplyReservedArgs(a:extraArgs, a:filePath)
         let cmd  = "log " 
-        let cmd .= " --no-color --decorate=full --pretty=format:\"%d %s__SEP__%ar__SEP__%an__SEP__[%h]\" --graph -"
+        let cmd .= " --no-color --decorate=full --pretty=format:\"%d__START__ %s__SEP__%ar__SEP__%an__SEP__[%h]\" --graph -"
         let cmd .= a:commitCount
         let cmd .= " " . extraArgs[0]
         if a:filePath != ''
@@ -381,7 +389,7 @@ fu! s:ConstructRangeBuffer(commitCount, extraArgs, filePath, range) "{{{
     %delete
 
     "necessary as order is important; can't just iterate over keys(slices)
-    let extraArgs = s:ReapplyReservedArgs(a:extraArgs)
+    let extraArgs = s:ReapplyReservedArgs(a:extraArgs, a:filePath)
     let hashCmd       = "log " . extraArgs[0]
     let hashCmd      .= " --no-color --pretty=format:%H -".a:commitCount." -- " . a:filePath
     let [result, cmd] = s:RunGitCommand(hashCmd, 0)
@@ -469,7 +477,7 @@ fu! s:GetFinalOutputForHashes(hashes) "{{{
         let cmd      .= "do "
         let cmd      .= git.' log'
         let cmd      .= extraArgs[0]
-        let cmd      .=' --no-color --decorate=full --pretty=format:"%d %s__SEP__%ar__SEP__%an__SEP__[%h]%n" --graph -1 ${hash}; '
+        let cmd      .=' --no-color --decorate=full --pretty=format:"%d__START__ %s__SEP__%ar__SEP__%an__SEP__[%h]%n" --graph -1 ${hash}; '
         let cmd      .= 'done'
         let finalCmd  = "bash -c " . shellescape(cmd)
 
@@ -502,15 +510,48 @@ fu! s:SetupBuffer(commitCount, extraArgs, filePath, range) "{{{
     call s:AddLoadMore()
     call s:AddLocalNodes(a:filePath)
     call s:AddFileModeSpecific(a:filePath, a:range, a:commitCount)
+    call s:AddRebaseMessage(a:filePath)
 
     " run any autocmds the user may have defined to hook in here
     silent doautocmd User GitvSetupBuffer
 
+    silent call s:InsertRebaseInstructions()
     silent %call s:Align("__SEP__", a:filePath)
     silent %s/\s\+$//e
     silent setlocal nomodifiable
     silent setlocal readonly
     silent setlocal cursorline
+endf "}}}
+fu! s:InsertRebaseInstructions() "{{{
+    if s:RebaseHasInstructions()
+        for key in keys(b:rebaseInstructions)
+            let search = '__START__\ze.*\['.key.'\]$'
+            let replace = ' ['.b:rebaseInstructions[key].instruction
+            if exists('b:rebaseInstructions[key].cmd')
+                let replace .= 'x'
+            endif
+            let replace .= ']'
+            exec '%s/'.search.'/'.replace
+        endfor
+    endif
+    %s/__START__//
+endf "}}}
+fu! s:CleanupRebasePreview() "{{{
+    if &syntax == 'gitrebase'
+        bdelete
+    endif
+endf "}}}
+fu! s:AddRebaseMessage(filePath) "{{{
+    if a:filePath != ''
+        return
+    endif
+    if s:RebaseHasInstructions()
+        call append(0, '= '.s:pendingRebaseMsg)
+    elseif s:RebaseHasStarted()
+        call append(0, '= '.s:rebaseMsg)
+    else
+        call s:MoveIntoPreviewAndExecute('call s:CleanupRebasePreview()', 0)
+    endif
 endf "}}}
 fu! s:AddLocalNodes(filePath) "{{{
     let suffix = a:filePath == '' ? '' : ' -- '.a:filePath
@@ -565,14 +606,14 @@ fu! s:SetDefaultMappings() "{{{
 
     " convenience
     let s:defaultMappings.quit = {
-        \'cmd': ':call <SID>CloseGitv()<cr>', 'bindings': 'q'
+        \'cmd': ':<C-U>call <SID>CloseGitv()<cr>', 'bindings': 'q'
     \}
     let s:defaultMappings.update = {
-        \'cmd': ':call <SID>LoadGitv("", 1, b:Gitv_CommitCount, b:Gitv_ExtraArgs, <SID>GetRelativeFilePath(), <SID>GetRange())<cr>',
+        \'cmd': ':<C-U>call <SID>LoadGitv("", 1, b:Gitv_CommitCount, b:Gitv_ExtraArgs, <SID>GetRelativeFilePath(), <SID>GetRange())<cr>',
         \'bindings': 'u'
     \}
     let s:defaultMappings.toggleAll = {
-        \'cmd': ':call <SID>LoadGitv("", 0, b:Gitv_CommitCount, <SID>ToggleArg(b:Gitv_ExtraArgs, "--all"), <SID>GetRelativeFilePath(), <SID>GetRange())<cr>',
+        \'cmd': ':<C-U>call <SID>LoadGitv("", 0, b:Gitv_CommitCount, <SID>ToggleArg(b:Gitv_ExtraArgs, "--all"), <SID>GetRelativeFilePath(), <SID>GetRange())<cr>',
         \'bindings': 'a'
     \}
 
@@ -594,38 +635,38 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'R'
     \}
     let s:defaultMappings.head = {
-        \'cmd': ':call <SID>JumpToHead()<cr>',
+        \'cmd': ':<C-U>call <SID>JumpToHead()<cr>',
         \'bindings': 'P'
     \}
     let s:defaultMappings.parent = {
-        \'cmd': ':<c-u>call <SID>JumpToParent()<cr>',
+        \'cmd': ':call <SID>JumpToParent()<cr>',
         \'bindings': 'p'
     \}
     let s:defaultMappings.toggleWindow = {
-        \'cmd': ':<c-u>call <SID>SwitchBetweenWindows()<cr>',
+        \'cmd': ':<C-U>call <SID>SwitchBetweenWindows()<cr>',
         \'bindings': 'gw'
     \}
 
     " viewing commits
     let s:defaultMappings.editCommit = {
-        \'cmd': ':call <SID>OpenGitvCommit("Gedit", 0)<cr>',
+        \'cmd': ':<C-U>call <SID>OpenGitvCommit("Gedit", 0)<cr>',
         \'bindings': [
             \'<cr>', { 'keys': '<LeftMouse>', 'prefix': '<LeftMouse>' }
         \],
     \}
     " <Plug>(gitv-*) are fuzzyfinder style keymappings
     let s:defaultMappings.splitCommit = {
-        \'cmd': ':call <SID>OpenGitvCommit("Gsplit", 0)<cr>',
+        \'cmd': ':<C-U>call <SID>OpenGitvCommit("Gsplit", 0)<cr>',
         \'bindings': 'o',
         \'permanentBindings': '<Plug>(gitv-split)'
     \}
     let s:defaultMappings.tabeCommit = {
-        \'cmd': ':call <SID>OpenGitvCommit("Gtabedit", 0)<cr>',
+        \'cmd': ':<C-U>call <SID>OpenGitvCommit("Gtabedit", 0)<cr>',
         \'bindings': 'O' ,
         \'permanentBindings': '<Plug>(gitv-tabedit)'
     \}
     let s:defaultMappings.vsplitCommit = {
-        \'cmd': ':call <SID>OpenGitvCommit("Gvsplit", 0)<cr>',
+        \'cmd': ':<C-U>call <SID>OpenGitvCommit("Gvsplit", 0)<cr>',
         \'bindings': 's',
         \'permanentBindings': '<Plug>(gitv-vsplit)'
     \}
@@ -641,12 +682,12 @@ fu! s:SetDefaultMappings() "{{{
     \}
     " force opening the fugitive buffer for the commit
     let s:defaultMappings.editCommitDetails = {
-        \'cmd': ':call <SID>OpenGitvCommit("Gedit", 1)<cr>',
+        \'cmd': ':<C-U>call <SID>OpenGitvCommit("Gedit", 1)<cr>',
         \'bindings': 'i',
         \'permanentBindings': '<Plug>(gitv-edit)'
     \}
     let s:defaultMappings.diff = {
-        \'cmd': ':call <SID>DiffGitvCommit()<cr>',
+        \'cmd': ':<C-U>call <SID>DiffGitvCommit()<cr>',
         \'bindings': 'D'
     \}
     let s:defaultMappings.vdiff = {
@@ -655,21 +696,21 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'D'
     \}
     let s:defaultMappings.stat = {
-        \'cmd': ':call <SID>StatGitvCommit()<cr>',
+        \'cmd': ':<C-U>call <SID>StatGitvCommit()<cr>',
         \'bindings': 'S'
     \}
     let s:defaultMappings.vstat = {
         \'mapCmd': 'vnoremap',
-        \'cmd': ':call <SID>StatGitvCommit()<cr>',
+        \'cmd': ':<C-U>call <SID>StatGitvCommit()<cr>',
         \'bindings': 'S'
     \}
 
     " general git commands
     let s:defaultMappings.checkout = {
-        \'cmd': ':call <SID>CheckOutGitvCommit()<cr>', 'bindings': 'co'
+        \'cmd': ':<C-U>call <SID>CheckOutGitvCommit()<cr>', 'bindings': 'co'
     \}
     let s:defaultMappings.merge = {
-        \'cmd': ':call <SID>MergeToCurrent()<cr>', 'bindings': '<leader>m'
+        \'cmd': ':<C-U>call <SID>MergeToCurrent()<cr>', 'bindings': '<leader>m'
     \}
     let s:defaultMappings.vmerge = {
         \'mapCmd': 'vnoremap',
@@ -678,7 +719,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.cherryPick = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>CherryPick()<cr>',
+        \'cmd': ':<C-U>call <SID>CherryPick()<cr>',
         \'bindings': 'cp'
     \}
     let s:defaultMappings.vcherryPick = {
@@ -688,7 +729,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.reset = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>ResetBranch("--mixed")<cr>',
+        \'cmd': ':<C-U>call <SID>ResetBranch("--mixed")<cr>',
         \'bindings': 'rb'
     \}
     let s:defaultMappings.vreset = {
@@ -698,7 +739,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.resetSoft = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>ResetBranch("--soft")<cr>',
+        \'cmd': ':<C-U>call <SID>ResetBranch("--soft")<cr>',
         \'bindings': 'rbs'
     \}
     let s:defaultMappings.vresetSoft = {
@@ -708,7 +749,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.resetHard = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>ResetBranch("--hard")<cr>',
+        \'cmd': ':<C-U>call <SID>ResetBranch("--hard")<cr>',
         \'bindings': 'rbh'
     \}
     let s:defaultMappings.vresetHard = {
@@ -718,7 +759,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.revert = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>Revert()<cr>',
+        \'cmd': ':<C-U>call <SID>Revert()<cr>',
         \'bindings': 'rev'
     \}
     let s:defaultMappings.vrevert = {
@@ -728,7 +769,7 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.delete = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>DeleteRef()<cr>',
+        \'cmd': ':<C-U>call <SID>DeleteRef()<cr>',
         \'bindings': 'd'
     \}
     let s:defaultMappings.vdelete = {
@@ -739,7 +780,7 @@ fu! s:SetDefaultMappings() "{{{
 
     " rebasing
     let s:defaultMappings.rebase = {
-        \'cmd': ':call <SID>Rebase()<cr>',
+        \'cmd': ':<C-U>call <SID>Rebase()<cr>',
         \'bindings': 'grr'
     \}
     let s:defaultMappings.vrebase = {
@@ -748,7 +789,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grr'
     \}
     let s:defaultMappings.rebasePick = {
-        \'cmd': ':call <SID>RebaseSetInstruction("p")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("p")<cr>',
         \'bindings': 'grP'
     \}
     let s:defaultMappings.vrebasePick = {
@@ -757,7 +798,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grP'
     \}
     let s:defaultMappings.rebaseReword = {
-        \'cmd': ':call <SID>RebaseSetInstruction("r")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("r")<cr>',
         \'bindings': 'grR'
     \}
     let s:defaultMappings.vrebaseReword = {
@@ -766,7 +807,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grR'
     \}
     let s:defaultMappings.rebaseMarkEdit = {
-        \'cmd': ':call <SID>RebaseSetInstruction("e")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("e")<cr>',
         \'bindings': 'grE'
     \}
     let s:defaultMappings.vrebaseMarkEdit = {
@@ -775,7 +816,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grE'
     \}
     let s:defaultMappings.rebaseSquash = {
-        \'cmd': ':call <SID>RebaseSetInstruction("s")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("s")<cr>',
         \'bindings': 'grS'
     \}
     let s:defaultMappings.vrebaseSquash = {
@@ -784,7 +825,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grS'
     \}
     let s:defaultMappings.rebaseFixup = {
-        \'cmd': ':call <SID>RebaseSetInstruction("f")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("f")<cr>',
         \'bindings': 'grF'
     \}
     let s:defaultMappings.vrebaseFixup = {
@@ -793,7 +834,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grF'
     \}
     let s:defaultMappings.rebaseExec = {
-        \'cmd': ':call <SID>RebaseSetInstruction("x")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("x")<cr>',
         \'bindings': 'grX'
     \}
     let s:defaultMappings.vrebaseExec = {
@@ -802,7 +843,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grX'
     \}
     let s:defaultMappings.rebaseDrop = {
-        \'cmd': ':call <SID>RebaseSetInstruction("d")<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseSetInstruction("d")<cr>',
         \'bindings': 'grD'
     \}
     let s:defaultMappings.vrebaseDrop = {
@@ -811,7 +852,7 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grD'
     \}
     let s:defaultMappings.rebaseToggle = {
-        \'cmd': ':call <SID>RebaseToggle()<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseToggle()<cr>',
         \'bindings': 'grs'
     \}
     let s:defaultMappings.vrebaseToggle = {
@@ -820,22 +861,18 @@ fu! s:SetDefaultMappings() "{{{
         \'bindings': 'grs'
     \}
     let s:defaultMappings.rebaseSkip = {
-        \'cmd': ':<C-U>call <SID>RebaseSkip()<cr>',
+        \'cmd': ':call <SID>RebaseSkip()<cr>',
         \'bindings': 'grn'
     \}
     let s:defaultMappings.rebaseContinue = {
-        \'cmd': ':call <SID>RebaseContinue()<cr>',
+        \'cmd': ':<C-U>call <SID>RebaseContinue()<cr>',
         \'bindings': 'grc'
-    \}
-    let s:defaultMappings.rebaseEdit = {
-        \'cmd': ':call <SID>RebaseEdit()<cr>',
-        \'bindings': 'gre'
     \}
 
     " bisecting
     let s:defaultMappings.bisectStart = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>BisectStart("n")<cr>',
+        \'cmd': ':<C-U>call <SID>BisectStart("n")<cr>',
         \'bindings': 'gbs'
     \}
     let s:defaultMappings.vbisectStart = {
@@ -875,17 +912,17 @@ fu! s:SetDefaultMappings() "{{{
     \}
     let s:defaultMappings.bisectReset = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>BisectReset()<cr>',
+        \'cmd': ':<C-U>call <SID>BisectReset()<cr>',
         \'bindings': 'gbr'
     \}
     let s:defaultMappings.bisectLog = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>BisectLog()<cr>',
+        \'cmd': ':<C-U>call <SID>BisectLog()<cr>',
         \'bindings': 'gbl'
     \}
     let s:defaultMappings.bisectReplay = {
         \'mapCmd': 'nmap',
-        \'cmd': ':call <SID>BisectReplay()<cr>',
+        \'cmd': ':<C-U>call <SID>BisectReplay()<cr>',
         \'bindings': 'gbp'
     \}
 
@@ -1354,26 +1391,31 @@ fu! s:GetCommitMsg() "{{{
 endf "}}}
 fu! s:OpenGitvCommit(geditForm, forceOpenFugitive) "{{{
     let bindingsCmd = 'call s:MoveIntoPreviewAndExecute("call s:SetupMapping('."'".'toggleWindow'."'".', s:defaultMappings)", 0)'
-    if getline('.') == "-- Load More --"
+    let line = getline('.')
+    if line == "-- Load More --"
         call s:LoadGitv('', 1, b:Gitv_CommitCount+g:Gitv_CommitStep, b:Gitv_ExtraArgs, s:GetRelativeFilePath(), s:GetRange())
         return
     endif
-    if s:IsFileMode() && getline('.') =~ "^-- \\[.*\\] --$"
+    if s:IsFileMode() && line =~ "^-- \\[.*\\] --$"
         call s:OpenWorkingCopy(a:geditForm)
         return
     endif
-    if getline('.') =~ s:localUncommitedMsg.'$'
+    if line =~ s:pendingRebaseMsg.'$' || line =~ s:rebaseMsg.'$'
+        call s:RebaseEdit()
+        return
+    endif
+    if line =~ s:localUncommitedMsg.'$'
         call s:OpenWorkingDiff(a:geditForm, 0)
         exec bindingsCmd
         return
     endif
-    if getline('.') =~ s:localCommitedMsg.'$'
+    if line =~ s:localCommitedMsg.'$'
         call s:OpenWorkingDiff(a:geditForm, 1)
         exec bindingsCmd
         return
     endif
-    if s:IsFileMode() && getline('.') =~ '^-- /.*/$'
-        if s:EditRange(matchstr(getline('.'), '^-- /\zs.*\ze/$'))
+    if s:IsFileMode() && line =~ '^-- /.*/$'
+        if s:EditRange(matchstr(line, '^-- /\zs.*\ze/$'))
             call s:NormalCmd('update', s:defaultMappings)
         endif
         return
@@ -1441,13 +1483,17 @@ fu! s:EditRange(rangeDelimiter)
 endfu "}}}
 " Rebase: "{{{
 fu! s:RebaseHasInstructions() "{{{
-    return len(keys(b:rebaseInstructions)) > 0
+    return exists('b:rebaseInstructions') && len(keys(b:rebaseInstructions)) > 0
 endf "}}}
 fu! s:RebaseClearInstructions() "{{{
     let b:rebaseInstructions = {}
 endf "}}}
 fu! s:RebaseSetInstruction(instruction) range "{{{
-    if s:RebaseHasStarted() || s:IsFileMode()
+    if s:IsFileMode()
+        return
+    endif
+    if s:RebaseHasStarted()
+        echo "Rebase already in progress."
         return
     endif
     if a:instruction == 'x'
@@ -1463,6 +1509,9 @@ fu! s:RebaseSetInstruction(instruction) range "{{{
             return
         endif
         if a:instruction == 'p' || a:instruction == 'pick' || a:instruction == ''
+            if !exists('b:rebaseInstructions[sha]')
+                continue
+            endif
             call remove(b:rebaseInstructions, sha)
         else
             if exists('cmd')
@@ -1487,6 +1536,7 @@ fu! s:RebaseSetInstruction(instruction) range "{{{
     else
         echo prettyCommit.' marked with "'.a:instruction.'".'
     endif
+    call s:RebaseUpdateView()
 endf "}}}
 fu! s:RebaseHasStarted() "{{{
     return !empty(glob(fugitive#buffer().repo().tree().'/.git/rebase-merge'))
@@ -1578,6 +1628,10 @@ fu! s:Rebase() range "{{{
     if s:IsFileMode()
         return
     endif
+    if exists('b:Bisecting') || s:BisectHasStarted()
+        echo "Cannot rebase in bisect mode."
+        return
+    endif
     if s:RebaseHasStarted()
         echoerr "Rebase already in progress."
         return
@@ -1616,7 +1670,7 @@ fu! s:SetRebaseEditor() "{{{
                     \ if [[ ${!key} != "" ]]; then
                     \ cmd=CMD_$sha;
                     \ echo ${!key} ${line:5};
-                    \ if [[ $cmd != "" ]]; then
+                    \ if [[ ${!cmd} != "" ]]; then
                     \ echo x ${!cmd};
                     \ fi;
                     \ else
@@ -1651,6 +1705,10 @@ fu! s:RebaseUpdateView() "{{{
 endf "}}}
 fu! s:RebaseToggle() range "{{{
     if s:IsFileMode()
+        return
+    endif
+    if exists('b:Bisecting') || s:BisectHasStarted()
+        echo "Cannot rebase in bisect mode."
         return
     endif
     if s:RebaseHasStarted()
@@ -1780,6 +1838,24 @@ endf "}}}
 fu! s:GetRebaseTodo() "{{{
     return fugitive#buffer().repo().tree().'/.git/rebase-merge/git-rebase-todo'
 endf "}}}
+fu! s:RebaseViewInstructions() "{{{
+    exec 'edit' s:workingFile
+    if expand('%') == s:workingFile
+        set syntax=gitrebase
+        set nomodifiable
+    endif
+endf "}}}
+fu! s:RebaseEditTodo() "{{{
+    exec 'edit' s:GetRebaseTodo()
+    if &ft == 'gitrebase'
+        silent setlocal modifiable
+        silent setlocal noreadonly
+        silent setlocal buftype=nofile
+        silent setlocal nobuflisted
+        silent setlocal noswapfile
+        silent setlocal bufhidden=wipe
+    endif
+endf "}}
 fu! s:RebaseEdit() "{{{
     if s:RebaseHasInstructions()
         " rebase should not be started, but we have set instructions to view
@@ -1792,10 +1868,7 @@ fu! s:RebaseEdit() "{{{
             call add(output, line)
         endfor
         call writefile(output, s:workingFile)
-        exec 'split' s:workingFile
-        set syntax=gitrebase
-        set nomodifiable
-        return
+        call s:MoveIntoPreviewAndExecute('call s:RebaseViewInstructions()', 1)
     endif
     if !s:RebaseHasStarted()
         return
@@ -1805,21 +1878,37 @@ fu! s:RebaseEdit() "{{{
         echoerr 'No interactive rebase in progress.'
         return
     endif
-    execute 'split' todo
+    call s:MoveIntoPreviewAndExecute('call s:RebaseEditTodo()', 1)
+    wincmd l
 endf "}}} }}}
 "Bisect: "{{{
+fu! s:IsBisectingFile(filePath) "{{{
+    let path = fugitive#buffer().repo().tree().'/.git/BISECT_NAMES'
+    if empty(glob(path))
+        return 0
+    endif
+    return readfile(path) == [" '".a:filePath."'"]
+endf "}}}
 fu! s:BisectHasStarted() "{{{
     call s:RunGitCommand('bisect log', 0)
     return !v:shell_error
 endf "}}}
 fu! s:BisectStart(mode) range "{{{
+    if s:RebaseHasInstructions() || s:RebaseHasStarted()
+        echo "Cannot bisect in rebase mode."
+        return
+    endif
     if exists('b:Bisecting')
         if g:Gitv_QuietBisect == 0
             echom 'Bisect disabled'
         endif
         unlet! b:Bisecting
     elseif !s:BisectHasStarted()
-        let result = s:RunGitCommand('bisect start', 0)[0]
+        let cmd = 'bisect start'
+        if s:IsFileMode()
+            let cmd .= ' '.b:Gitv_FileModeRelPath
+        endif
+        let result = s:RunGitCommand(cmd, 0)[0]
         if v:shell_error
             echoerr split(result, '\n')[0]
             return
@@ -1835,6 +1924,10 @@ fu! s:BisectStart(mode) range "{{{
             echom 'Bisect started'
         endif
     else
+        if s:IsFileMode() && !s:IsBisectingFile(b:Gitv_FileModeRelPath)
+            echoerr "Not bisecting the current file, cannot enable."
+            return
+        endif
         let b:Bisecting = 1
         if g:Gitv_QuietBisect == 0
             echom 'Bisect enabled'
@@ -1945,9 +2038,9 @@ fu! s:BisectLog() "{{{
         return
     endif
     let fname = input('Enter a filename to save the log to: ', '', 'file')
-    let result = s:RunGitCommand('bisect log', 0)[0]
+    let result = split(s:RunGitCommand('bisect log', 0)[0], '\n')
     if v:shell_error
-        echoerr split(result, '\n')[0]
+        echoerr result[0]
         return
     endif
     call writefile(result, fname)
