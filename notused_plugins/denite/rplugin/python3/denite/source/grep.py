@@ -67,9 +67,9 @@ class Source(Base):
         context['__proc'] = None
 
         # Backwards compatibility for `ack`
-        if len(self.vars['command']) >= 1 and \
-                self.vars['command'][0] == 'ack' and \
-                self.vars['pattern_opt'] == ['-e']:
+        if (self.vars['command'] and
+                self.vars['command'][0] == 'ack' and
+                self.vars['pattern_opt'] == ['-e']):
             self.vars['pattern_opt'] = ['--match']
 
         args = dict(enumerate(context['args']))
@@ -127,7 +127,7 @@ class Source(Base):
             'contains=deniteSource_grepHeader,deniteMatched contained')
         self.vim.command(
             'syntax match deniteGrepPatterns ' +
-            r'/%s/ ' % r'\|'.join(util.escape_syntax(pattern)
+            r'/%s/ ' % r'\|'.join(util.regex_convert_str_vim(pattern)
                                   for pattern in self.context['__patterns']) +
             'contained containedin=' + self.syntax_name)
 
