@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      05th Oct 2009
-" Last Update:  18th Oct 2016
+" Last Update:  04th Jan 2017
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -15,7 +15,10 @@ let s:k_version = 200
 
 let s:cpo_save=&cpo
 set cpo&vim
-runtime autoload/lh/ft/option.vim
+if ! has('patch-7.2.061')
+  " Not sure that `call('lh#ft#option#get', [])` would work otherwise
+  runtime autoload/lh/ft/option.vim
+endif
 
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1

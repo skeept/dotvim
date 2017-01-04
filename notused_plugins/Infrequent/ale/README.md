@@ -64,7 +64,7 @@ name. That seems to be the fairest way to arrange this table.
 | Go | [gofmt -e](https://golang.org/cmd/gofmt/), [go vet](https://golang.org/cmd/vet/), [golint](https://godoc.org/github.com/golang/lint), [go build](https://golang.org/cmd/go/) |
 | Haskell | [ghc](https://www.haskell.org/ghc/), [hlint](https://hackage.haskell.org/package/hlint) |
 | HTML | [HTMLHint](http://htmlhint.com/), [tidy](http://www.html-tidy.org/) |
-| JavaScript | [eslint](http://eslint.org/), [jscs](http://jscs.info/), [jshint](http://jshint.com/), [FlowType](https://flowtype.org/) |
+| JavaScript | [eslint](http://eslint.org/), [jscs](http://jscs.info/), [jshint](http://jshint.com/), [flow](https://flowtype.org/) |
 | JSON | [jsonlint](http://zaa.ch/jsonlint/) |
 | LaTeX | [chktex](http://www.nongnu.org/chktex/), [lacheck](https://www.ctan.org/pkg/lacheck) |
 | Lua | [luacheck](https://github.com/mpeterv/luacheck) |
@@ -72,7 +72,7 @@ name. That seems to be the fairest way to arrange this table.
 | MATLAB | [mlint](https://www.mathworks.com/help/matlab/ref/mlint.html) |
 | OCaml | [merlin](https://github.com/the-lambda-church/merlin) see `:help ale-integration-ocaml-merlin` for configuration instructions
 | Perl | [perl -c](https://perl.org/), [perl-critic](https://metacpan.org/pod/Perl::Critic) |
-| PHP | [php -l](https://secure.php.net/), [phpcs](https://github.com/squizlabs/PHP_CodeSniffer) |
+| PHP | [hack](http://hacklang.org/), [php -l](https://secure.php.net/), [phpcs](https://github.com/squizlabs/PHP_CodeSniffer) |
 | Pug | [pug-lint](https://github.com/pugjs/pug-lint) |
 | Puppet | [puppet](https://puppet.com), [puppet-lint](https://puppet-lint.com) |
 | Python | [flake8](http://flake8.pycqa.org/en/latest/), [pylint](https://www.pylint.org/) |
