@@ -2,7 +2,7 @@
 " File:         after/plugin/mu-template.vim            {{{1
 " Maintainer:   Luc Hermitte <MAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/mu-template>
-" Last Update:  21st Oct 2016
+" Last Update:  03rd Jan 2017
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/mu-template/blob/master/License.md>
 " Version:      4.3.0
@@ -365,6 +365,7 @@ let s:k_version = 430
 "       v4.3.0
 "       (*) ENH: Use new LucHermitte/vim-build-tools-wrapper variables
 "       (*) ENH: Support fuzzier snippet expansion
+"       (*) REFACT: Remove `DateStamp()`
 "
 " BUGS: {{{2
 "       Globals should be prefixed. Eg.: g:author .
@@ -425,14 +426,6 @@ function! s:CheckDeps(Symbol, File, path) " {{{3
 endfunction
 " }}}1
 "========================================================================
-" Dependancies {{{1
-if
-      \ !s:CheckDeps('*GetCurrentWord', 'words_tools.vim',     'plugin/')
-  let &cpo=s:cpo_save
-  finish
-endif
-" }}}1
-"========================================================================
 " Default definitions and options {{{1
 function! s:Option(name, default)                        " {{{2
   if     exists('b:mt_'.a:name) | return b:mt_{a:name}
@@ -455,18 +448,6 @@ function! Author(...)
   else                            | return ''
   endif
 endfunction
-
-" Default implementation  for DateStamp()                  {{{2
-" Deprecated: prefer lh#time#date()
-if !exists('*DateStamp')
-  function! DateStamp(...)
-    if a:0 > 0
-      return strftime(a:1)
-    else
-      return strftime('%c')
-    endif
-  endfunction
-endif
 
 " }}}1
 "========================================================================
@@ -503,8 +484,8 @@ endfunction
 " i_CTRL-R stubbs                                              {{{2
 "Note: expand('<cword>') is not correct when there are characters after the
 "current curpor position
-inoremap <silent> <Plug>MuT_ckword   <C-R>=lh#mut#search_templates(GetCurrentKeyword())<cr>
-inoremap <silent> <Plug>MuT_cWORD    <C-R>=lh#mut#search_templates(GetCurrentWord())<cr>
+inoremap <silent> <Plug>MuT_ckword   <C-R>=lh#mut#search_templates(lh#ui#GetCurrentKeyword())<cr>
+inoremap <silent> <Plug>MuT_cWORD    <C-R>=lh#mut#search_templates(lh#ui#GetCurrentWord())<cr>
 " takes a count to specify where the selected texte goes (see while-snippets)
 vnoremap <silent> <Plug>MuT_Surround :<C-U>call lh#mut#surround()<cr>
 if !hasmapto('<Plug>MuT_ckword', 'i')
@@ -576,13 +557,13 @@ function! s:AddMenu(m_name, m_prio, nameslist)
       exe 'amenu '.s:menu_prio.a:m_prio.' '
             \ .escape(s:menu_name.m_name.name, '\ ')
             \ .' :MuTemplate '.substitute(name,'\.&', '/', '').'<cr>'
-      if lh#mut#verbose() >= 2
+      if &verbose >= 2
         echomsg 'amenu '.s:menu_prio.a:m_prio.' '
               \ .escape(s:menu_name.m_name.name, '\ ')
               \ .' :MuTemplate '.substitute(name,'\.&', '/', '').'<cr>'
       endif
     else
-      if lh#mut#verbose() >= 1
+      if &verbose >= 1
         echomsg "muTemplate#s:AddMenu(): discard ".name
       endif
     endif
@@ -664,10 +645,10 @@ function! s:BuildMenu(doRebuild)
     call s:AddMenu('&New.&', '100.10', new_list)
 
     " 5- constructs                   {{{3
+    " The following is very slow to build, updating hints doesn't help
     let ft_list = lh#mut#dirs#get_short_list_of_TF_matching('*', '*')
     call s:AddMenu('&', '300.10', ft_list)
 
-    let &wildignore = s:wildignore
   finally
     let &wildignore = s:wildignore
   endtry
