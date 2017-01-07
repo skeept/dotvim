@@ -5327,6 +5327,10 @@
     "type": "git",
     "url": "git://github.com/AlessandroYorba/Arcadia"
   },
+  "5509": {
+    "type": "git",
+    "url": "git://github.com/rickhowe/spotdiff.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

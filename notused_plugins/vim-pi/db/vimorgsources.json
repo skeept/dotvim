@@ -1,4 +1,5 @@
 {
+"spotdiff":{"archive_name":"spotdiff1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24876","version":"1.0","vim_script_nr":5509},
 "greek_mac":{"archive_name":"greek_mac.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24875","version":"1.0.2","vim_script_nr":5508},
 "Arcadia":{"archive_name":"arcadia.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24851","version":"1.0","vim_script_nr":5507},
 "ipynb_notedown":{"archive_name":"ipynb_notedown.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24834","version":"0.1.1","vim_script_nr":5506},
