@@ -101,7 +101,7 @@ function! s:parse(args) abort
       if len(l:file_args)
         call extend(l:expanded_args, l:file_args)
       else
-        " Let through to `ag`/`ack`/`grep`, which will throw ENOENT.
+        " Let through to `ag`/`ack`/`grep`/`rg`, which will throw ENOENT.
         call add(l:expanded_args, l:arg)
       endif
     else
@@ -192,6 +192,20 @@ function! ferret#private#ack(...) abort
   endif
 endfunction
 
+function! ferret#private#buflist() abort
+  let l:buflist=getbufinfo({'buflisted': 1})
+  let l:bufpaths=filter(map(l:buflist, 'v:val.name'), 'v:val !=# ""')
+  return l:bufpaths
+endfunction
+
+function! ferret#private#back(...) abort
+  call call('ferret#private#ack', a:000 + ferret#private#buflist())
+endfunction
+
+function! ferret#private#black(...) abort
+  call call('ferret#private#lack', a:000 + ferret#private#buflist())
+endfunction
+
 function! ferret#private#lack(...) abort
   let l:command=s:parse(a:000)
   call ferret#private#hlsearch()
@@ -222,7 +236,7 @@ function! ferret#private#hlsearch() abort
     " let g:FerretHlsearch=0
     " ```
     let l:hlsearch=get(g:, 'FerretHlsearch', &hlsearch)
-    if l:hlsearch
+    if l:hlsearch && exists('g:ferret_lastsearch')
       let @/=g:ferret_lastsearch
       call feedkeys(":let &hlsearch=1 | echo \<CR>", 'n')
     endif
@@ -237,11 +251,16 @@ endfunction
 "   :Ack foo
 "   :Acks /foo/bar/
 "
-" is equivalent to:
+" is equivalent to the following prior to Vim 8:
 "
 "   :Ack foo
 "   :Qargs
 "   :argdo %s/foo/bar/ge | update
+"
+" and the following on Vim 8 or after:
+"
+"   :Ack foo
+"   :cfdo %s/foo/bar/ge | update
 "
 " (Note: there's nothing specific to Ack in this function; it's just named this
 " way for mnemonics, as it will most often be preceded by an :Ack invocation.)
@@ -267,19 +286,25 @@ function! ferret#private#acks(command) abort
     let l:options .= 'g'
   endif
 
-  let l:filenames=ferret#private#qargs()
-  if l:filenames ==# ''
-    call ferret#private#error(
-          \ 'Ferret: Quickfix filenames must be present, but there are none ' .
-          \ '(must use :Ack to find files before :Acks can be used)'
-          \ )
-    return
+  let l:cfdo=has('listcmds') && exists(':cfdo') == 2
+  if !l:cfdo
+    let l:filenames=ferret#private#qargs()
+    if l:filenames ==# ''
+      call ferret#private#error(
+            \ 'Ferret: Quickfix filenames must be present, but there are none ' .
+            \ '(must use :Ack to find files before :Acks can be used)'
+            \ )
+      return
+    endif
+    execute 'args' l:filenames
   endif
 
-  execute 'args' l:filenames
-
   call ferret#private#autocmd('FerretWillWrite')
-  execute 'argdo' '%s' . l:pattern . l:options . ' | update'
+  if l:cfdo
+    execute 'cfdo' '%s' . l:pattern . l:options . ' | update'
+  else
+    execute 'argdo' '%s' . l:pattern . l:options . ' | update'
+  endif
   call ferret#private#autocmd('FerretDidWrite')
 endfunction
 
@@ -313,23 +338,25 @@ function! s:split(str) abort
 endfunction
 
 function! ferret#private#ackcomplete(arglead, cmdline, cursorpos) abort
-  return ferret#private#complete('Ack', a:arglead, a:cmdline, a:cursorpos)
+  return ferret#private#complete('Ack', a:arglead, a:cmdline, a:cursorpos, 1)
+endfunction
+
+function! ferret#private#backcomplete(arglead, cmdline, cursorpos) abort
+  return ferret#private#complete('Lack', a:arglead, a:cmdline, a:cursorpos, 0)
+endfunction
+
+function! ferret#private#blackcomplete(arglead, cmdline, cursorpos) abort
+  return ferret#private#complete('Lack', a:arglead, a:cmdline, a:cursorpos, 0)
 endfunction
 
 function! ferret#private#lackcomplete(arglead, cmdline, cursorpos) abort
-  return ferret#private#complete('Lack', a:arglead, a:cmdline, a:cursorpos)
+  return ferret#private#complete('Lack', a:arglead, a:cmdline, a:cursorpos, 1)
 endfunction
 
+" Return first word (the name of the binary) of the executable string.
 function! ferret#private#executable()
-  if executable('ag')
-    return 'ag'
-  elseif executable('ack')
-    return 'ack'
-  elseif executable('grep')
-    return 'grep'
-  else
-    return ''
-  endif
+  let l:executable=FerretExecutable()
+  let l:binary=matchstr(l:executable, '\v\w+')
 endfunction
 
 let s:options = {
@@ -380,14 +407,53 @@ let s:options = {
       \     '-u',
       \     '-v',
       \     '-w'
+      \   ],
+      \   'rg': [
+      \     '--case-sensitive',
+      \     '--files-with-matches',
+      \     '--follow',
+      \     '--glob',
+      \     '--hidden',
+      \     '--ignore-case',
+      \     '--invert-match',
+      \     '--max-count',
+      \     '--maxdepth',
+      \     '--mmap',
+      \     '--no-ignore',
+      \     '--no-ignore-parent',
+      \     '--no-ignore-vcs',
+      \     '--no-mmap',
+      \     '--regexp',
+      \     '--smart-case',
+      \     '--text',
+      \     '--threads',
+      \     '--type',
+      \     '--type-not',
+      \     '--unrestricted',
+      \     '--word-regexp',
+      \     '-F',
+      \     '-L',
+      \     '-R',
+      \     '-T',
+      \     '-a',
+      \     '-e',
+      \     '-g',
+      \     '-i',
+      \     '-j',
+      \     '-m',
+      \     '-s',
+      \     '-t',
+      \     '-u',
+      \     '-v',
+      \     '-w'
       \   ]
       \ }
 
 " We provide our own custom command completion because the default
 " -complete=file completion will expand special characters in the pattern (like
 " "#") before we get a chance to see them, breaking the search. As a bonus, this
-" means we can provide option completion for `ack` and `ag` options as well.
-function! ferret#private#complete(cmd, arglead, cmdline, cursorpos) abort
+" means we can provide option completion for `ack`/`ag`/`rg` options as well.
+function! ferret#private#complete(cmd, arglead, cmdline, cursorpos, files) abort
   let l:args=s:split(a:cmdline[:a:cursorpos])
 
   let l:command_seen=0
@@ -403,7 +469,7 @@ function! ferret#private#complete(cmd, arglead, cmdline, cursorpos) abort
         let l:options=get(s:options, ferret#private#executable(), [])
         return filter(l:options, 'match(v:val, l:stripped) == 0')
       endif
-    elseif l:pattern_seen
+    elseif l:pattern_seen && a:files
       if a:cursorpos <= l:position
         " Assume this is a filename, and it's the one we're trying to complete.
         " Do -complete=file style completion.

@@ -696,7 +696,7 @@ endfunction
 "
 function! s:is_valid_candidates(candidates, context) abort
   let last_method = (!empty(a:candidates) &&
-        \ a:candidates[0].source__heading_type ==# 'folding' ? 'folding' : 'filetype')
+        \ get(a:candidates[0], 'source__heading_type', '') ==# 'folding' ? 'folding' : 'filetype')
   if a:context.extracted_by == '?'
     let a:context.extracted_by = last_method
   endif

@@ -235,6 +235,7 @@ class Denite(object):
             return {}
         return {
             'name': action_name,
+            'is_redraw': action_name == 'delete',
             'func': getattr(kind, action_attr),
             'is_quit': (action_name not in kind.persist_actions)
         }
@@ -244,6 +245,9 @@ class Denite(object):
             kind_name = targets['kind']
         else:
             kind_name = self.__sources[targets[0]['source']].kind
+
+        if not isinstance(kind_name, str):
+            kind_name = kind_name.name
 
         if kind_name not in self.__kinds:
             self.error('Invalid kind: ' + kind_name)
