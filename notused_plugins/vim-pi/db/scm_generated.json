@@ -5331,6 +5331,10 @@
     "type": "git",
     "url": "git://github.com/rickhowe/spotdiff.vim"
   },
+  "5510": {
+    "type": "git",
+    "url": "git://github.com/vmchale/madlang-vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
