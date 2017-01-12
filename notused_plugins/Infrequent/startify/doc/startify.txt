@@ -243,13 +243,18 @@ it on-the-fly, so that :Startify is always up-to-date.
 >
     let g:startify_session_autoload = 0
 <
-If you fire up "vim" in a directory that contains a "Session.vim", that session
-will be loaded automatically. Otherwise it will be shown as the top entry in
-the Startify buffer.
+If this option is enabled and you start Vim in a directory that contains a
+`Session.vim`, that session will be loaded automatically. Otherwise it will be
+shown as the top entry in the Startify buffer.
 
-This also works if you open a bookmarked directory.
+The same happens when you |:cd| to a directory that contains a `Session.vim`
+and execute |:Startify|.
 
-Great way to create a portable project folder.
+It also works if you open a bookmarked directory. See |g:startify_bookmarks|.
+
+This is great way to create a portable project folder!
+
+NOTE: This option is affected by |g:startify_session_delete_buffers|.
 
 ------------------------------------------------------------------------------
                                                 *g:startify_session_before_save*
@@ -282,9 +287,14 @@ This also works for sessions started with:
 ------------------------------------------------------------------------------
                                              *g:startify_session_delete_buffers*
 >
-    let g:startify_session_delete_buffers = 0
+    let g:startify_session_delete_buffers = 1
 <
-Delete open buffers before loading a new session.
+Delete all listed buffers when loading or closing a session.
+
+    1. When using |startify-:SLoad|.
+    2. When using |startify-:SClose|.
+    3. When using |g:startify_session_autoload|.
+    4. When choosing a session from the Startify buffer.
 
 ------------------------------------------------------------------------------
                                                       *g:startify_change_to_dir*
@@ -646,12 +656,17 @@ for one (Windows) or load the last used session (Unix).
 
 Providing only a part of the session name works too, if you complete the
 argument with either <c-d> or <tab> afterwards.
+
+NOTE: This command is affected by |g:startify_session_delete_buffers|.
+
                                                               *startify-:SClose*
 >
     :SClose
 <
 Save and close the current session, close all listed buffers, and open the
 Startify buffer.
+
+NOTE: This command is affected by |g:startify_session_delete_buffers|.
 
 ==============================================================================
 MAPPINGS                                                     *startify-mappings*
@@ -838,7 +853,7 @@ How do I center my header/footer?~
 Try something along these lines:
 >
     function! s:filter_header(lines) abort
-        let longest_line   = max(map(copy(a:lines), 'len(v:val)'))
+        let longest_line   = max(map(copy(a:lines), 'strwidth(v:val)'))
         let centered_lines = map(copy(a:lines),
             \ 'repeat(" ", (&columns / 2) - (longest_line / 2)) . v:val')
         return centered_lines
@@ -938,22 +953,24 @@ This is my configuration..
     let g:startify_update_oldfiles        = 1
     let g:startify_session_autoload       = 1
     let g:startify_session_persistence    = 1
-    let g:startify_session_delete_buffers = 1
 
     let g:startify_skiplist = [
-                \ 'COMMIT_EDITMSG',
-                \ 'bundle/.*/doc',
-                \ '/data/repo/neovim/runtime/doc',
-                \ '/Users/mhi/local/vim/share/vim/vim74/doc',
-                \ ]
+            \ 'COMMIT_EDITMSG',
+            \ 'bundle/.*/doc',
+            \ '/data/repo/neovim/runtime/doc',
+            \ '/Users/mhi/local/vim/share/vim/vim74/doc',
+            \ ]
 
     let g:startify_bookmarks = [
-                \ { 'c': '~/.vim/vimrc' },
-                \ '~/golfing',
-                \ ]
+            \ { 'c': '~/.vim/vimrc' },
+            \ '~/golfing',
+            \ ]
+
+    let g:startify_custom_header =
+            \ startify#fortune#cowsay('═','║','╔','╗','╝','╚')
 
     let g:startify_custom_footer =
-          \ ['', "   Vim is charityware. Please read ':help uganda'.", '']
+           \ ['', "   Vim is charityware. Please read ':help uganda'.", '']
 
     hi StartifyBracket ctermfg=240
     hi StartifyFile    ctermfg=147
