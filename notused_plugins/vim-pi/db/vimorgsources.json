@@ -1,4 +1,6 @@
 {
+"istanbul":{"archive_name":"istanbul.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24893","version":"1.0","vim_script_nr":5513},
+"json":{"archive_name":"json.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24892","version":"0.9","vim_script_nr":5512},
 "ruta":{"archive_name":"ruta-vim-0.2.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24886","version":"0.2","vim_script_nr":5511},
 "madlang-vim":{"archive_name":"madlang.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24882","version":"0.1.0.0","vim_script_nr":5510},
 "spotdiff":{"archive_name":"spotdiff1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24876","version":"1.0","vim_script_nr":5509},

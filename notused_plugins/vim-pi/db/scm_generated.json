@@ -5339,6 +5339,14 @@
     "type": "git",
     "url": "git://github.com/soysal/ruta.vim"
   },
+  "5512": {
+    "type": "git",
+    "url": "git://github.com/retorillo/json.vim"
+  },
+  "5513": {
+    "type": "git",
+    "url": "git://github.com/retorillo/istanbul.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
