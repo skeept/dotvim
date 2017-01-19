@@ -35,7 +35,9 @@ endif
 if !exists('g:fastfold_skip_filetypes')   | let g:fastfold_skip_filetypes = [] | endif
 
 function! s:EnterWin()
-  if s:Skip()
+  if exists('w:unchanged')
+    unlet w:unchanged
+  elseif s:Skip()
     if exists('w:lastfdm')
       unlet w:lastfdm
     endif
@@ -60,8 +62,13 @@ function! s:LeaveWin()
     let w:predifffdm = w:lastfdm
   endif
 
-  if exists('w:lastfdm') && &l:foldmethod is# 'manual'
-    let &l:foldmethod = w:lastfdm
+  if exists('w:lastfdm') && &l:foldmethod is# 'manual' 
+    if b:changedtick > b:last_changedtick
+      let &l:foldmethod = w:lastfdm
+      let b:last_changedtick = b:changedtick
+    else
+      let w:unchanged = 1
+    endif
   endif
 endfunction
 
@@ -166,37 +173,40 @@ endfor
 augroup FastFold
   autocmd!
   autocmd VimEnter * call s:init()
+  autocmd BufEnter * 
+        \ if !exists('b:last_changedtick') | let b:last_changedtick = b:changedtick | endif
 augroup end
 
 function! s:init()
   call s:UpdateTab()
-  augroup FastFold
+  augroup FastFoldEnter
     autocmd!
     " Make &l:foldmethod local to Buffer and NOT Window.
-    " UpdateBuf/Win(1) = skip if another session is still loading.
     autocmd BufEnter,WinEnter *
           \ if exists('b:lastfdm') | let w:lastfdm = b:lastfdm | call s:LeaveWin() | call s:EnterWin() | endif
-    autocmd BufLeave,WinLeave             *
+    autocmd BufLeave,WinLeave *
           \ call s:LeaveWin() | call s:EnterWin() |
           \ if exists('w:lastfdm')     | let b:lastfdm = w:lastfdm |
           \ elseif exists('b:lastfdm') | unlet b:lastfdm | endif
+
     autocmd BufEnter,WinEnter *
           \ if &l:foldmethod isnot# 'diff' && exists('b:predifffdm') | call s:UpdateBuf(0) | endif
     autocmd BufLeave,WinLeave *
-          \ if exists('w:predifffdm') | let b:predifffdm = w:predifffdm |
+          \ if exists('w:predifffdm')     | let b:predifffdm = w:predifffdm |
           \ elseif exists('b:predifffdm') | unlet b:predifffdm | endif
+
+    " UpdateBuf/Win(1) = skip if another session is still loading.
+    autocmd TabEnter                      * call s:UpdateTab()
 
     " BufWinEnter = to change &l:foldmethod by modelines.
     autocmd BufWinEnter,FileType          * call s:UpdateWin(1)
     " So that FastFold functions correctly after :loadview.
     autocmd SessionLoadPost               * call s:UpdateWin(0)
 
-    autocmd TabEnter                      * call s:UpdateTab()
-
     " Update folds on reload.
     autocmd BufReadPost                   * 
-          \ if     !exists('b:already_loaded') | let b:already_loaded = 1 |
-          \ else | call s:UpdateBuf(0) | endif
+          \ if !exists('b:already_loaded') | let b:already_loaded = 1 |
+          \ else                          | call s:UpdateBuf(0) | endif
     " Update folds on saving.
     if g:fastfold_savehook
       autocmd BufWritePost                * call s:UpdateBuf(0)

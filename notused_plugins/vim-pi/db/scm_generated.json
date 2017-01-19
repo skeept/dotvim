@@ -5347,6 +5347,10 @@
     "type": "git",
     "url": "git://github.com/retorillo/istanbul.vim"
   },
+  "5514": {
+    "type": "git",
+    "url": "git://github.com/lingceng/z.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

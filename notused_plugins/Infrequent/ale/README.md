@@ -53,6 +53,7 @@ name. That seems to be the fairest way to arrange this table.
 | Bourne Shell | [-n flag](http://linux.die.net/man/1/sh), [shellcheck](https://www.shellcheck.net/) |
 | C | [cppcheck](http://cppcheck.sourceforge.net), [gcc](https://gcc.gnu.org/), [clang](http://clang.llvm.org/)|
 | C++ (filetype cpp) | [cppcheck] (http://cppcheck.sourceforge.net), [gcc](https://gcc.gnu.org/)|
+| C# | [mcs](http://www.mono-project.com/docs/about-mono/languages/csharp/) |
 | Chef | [foodcritic](http://www.foodcritic.io/) |
 | CoffeeScript | [coffee](http://coffeescript.org/), [coffeelint](https://www.npmjs.com/package/coffeelint) |
 | CSS | [csslint](http://csslint.net/), [stylelint](https://github.com/stylelint/stylelint) |
@@ -75,7 +76,7 @@ name. That seems to be the fairest way to arrange this table.
 | PHP | [hack](http://hacklang.org/), [php -l](https://secure.php.net/), [phpcs](https://github.com/squizlabs/PHP_CodeSniffer) |
 | Pug | [pug-lint](https://github.com/pugjs/pug-lint) |
 | Puppet | [puppet](https://puppet.com), [puppet-lint](https://puppet-lint.com) |
-| Python | [flake8](http://flake8.pycqa.org/en/latest/), [pylint](https://www.pylint.org/) |
+| Python | [flake8](http://flake8.pycqa.org/en/latest/), [mypy](http://mypy-lang.org/), [pylint](https://www.pylint.org/) |
 | Ruby | [rubocop](https://github.com/bbatsov/rubocop) |
 | SASS | [sass-lint](https://www.npmjs.com/package/sass-lint), [stylelint](https://github.com/stylelint/stylelint) |
 | SCSS | [sass-lint](https://www.npmjs.com/package/sass-lint), [scss-lint](https://github.com/brigade/scss-lint), [stylelint](https://github.com/stylelint/stylelint) |
