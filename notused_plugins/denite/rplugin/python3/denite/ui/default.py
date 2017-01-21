@@ -43,6 +43,7 @@ class Default(object):
         self.__winsaveview = {}
         self.__initialized = False
         self.__winheight = 0
+        self.__winminheight = -1
         self.__scroll = 0
         self.__is_multi = False
         self.__matched_pattern = ''
@@ -286,9 +287,15 @@ class Default(object):
 
     def resize_buffer(self):
         winheight = self.__winheight
-        if (self.__context['auto_resize'] and
-                self.__candidates_len < self.__winheight):
-            winheight = self.__candidates_len
+
+        if self.__context['auto_resize']:
+            if (self.__context['winminheight'] is not -1 and
+                    self.__candidates_len <
+                    int(self.__context['winminheight'])):
+                winheight = self.__context['winminheight']
+            elif (self.__candidates_len < self.__winheight):
+                winheight = self.__candidates_len
+
         self.__vim.command('resize ' + str(winheight))
 
     def check_empty(self):
@@ -380,9 +387,14 @@ class Default(object):
         # Update mode indicator
         self.update_buffer()
 
-    def quit_buffer(self):
+    def cleanup(self):
+        self.__options['modifiable'] = False
         self.__vim.command('pclose!')
+        self.__vim.command('highlight! link CursorLine CursorLine')
+        self.__vim.command('doautocmd ColorScheme')
 
+    def quit_buffer(self):
+        self.cleanup()
         if not self.__vim.call('bufloaded', self.__bufnr):
             return
 
@@ -407,6 +419,13 @@ class Default(object):
             return [self.get_cursor_candidate()
                     ] if self.get_cursor_candidate() else []
         return [self.__candidates[x] for x in self.__selected_candidates]
+
+    def toggle_select_all_candidates(self):
+        for index in range(0, self.__candidates_len):
+            if index in self.__selected_candidates:
+                self.__selected_candidates.remove(index)
+            else:
+                self.__selected_candidates.append(index)
 
     def toggle_select_cursor_candidate(self):
         index = self.__cursor + self.__win_cursor - 1
@@ -647,5 +666,5 @@ class Default(object):
         self.change_mode(self.__current_mode)
 
     def suspend(self):
-        self.__options['modifiable'] = False
+        self.cleanup()
         return STATUS_ACCEPT

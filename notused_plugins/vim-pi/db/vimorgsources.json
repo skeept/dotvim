@@ -1165,7 +1165,7 @@
 "detailed":{"archive_name":"detailed.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19920","version":"0.8","vim_script_nr":4297},
 "ViewPort":{"archive_name":"ViewPort.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22001","version":"4","vim_script_nr":4296},
 "smartgrep":{"archive_name":"smartgrep_2_1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18903","version":"2.1","vim_script_nr":4295},
-"git_log":{"archive_name":"vimgitlog-version_5.1.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24873","version":"5.1.1","vim_script_nr":4294},
+"git_log":{"archive_name":"vimgitlog-version_6.0.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24909","version":"6.0.0","vim_script_nr":4294},
 "STL_Syntax":{"archive_name":"stl.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22034","version":"0.92","vim_script_nr":4293},
 "py-coverage":{"archive_name":"vim-py-coverage.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24494","version":"0.1.2","vim_script_nr":4292},
 "last_edit_marker":{"archive_name":"last_edit_marker.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=18889","version":"1.4","vim_script_nr":4291},

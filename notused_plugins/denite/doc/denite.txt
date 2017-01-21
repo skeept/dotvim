@@ -93,7 +93,11 @@ EXAMPLES						*denite-examples*
 	" For ripgrep
 	" Note: It is slower than ag
 	call denite#custom#var('file_rec', 'command',
-	\ ['rg', '--files', '--glob', '!.git'])
+	\ ['rg', '--files', '--glob', '!.git', ''])
+	" For Pt(the platinum searcher)
+	" NOTE: It also supports windows.
+	call denite#custom#var('file_rec', 'command',
+	\ ['pt', '--follow', '--nocolor', '--nogroup', '-g:', ''])
 
 	" Change mappings.
 	call denite#custom#map(
@@ -157,6 +161,11 @@ EXAMPLES						*denite-examples*
 	call denite#custom#var('grep', 'pattern_opt', ['--regexp'])
 	call denite#custom#var('grep', 'separator', ['--'])
 	call denite#custom#var('grep', 'final_opts', [])
+	" Pt command on grep source
+	call denite#custom#var('grep', 'command',
+	\ ['pt', '--nogroup', '--nocolor', '--smart-case', '--hidden'])
+	call denite#custom#var('grep', 'default_opts', [])
+	call denite#custom#var('grep', 'recursive_opts', [])
 
 	call denite#custom#source('file_mru', 'converters',
 	      \ ['converter_relative_word'])
@@ -451,6 +460,10 @@ are on the neovim-prompt's builtin actions/mappings.
 <denite:toggle_select>
 		Toggle cursor candidate select.
 
+				*denite-map-toggle_select_all*
+<denite:toggle_select_all>
+		Toggle all candidates.
+
 				*denite-map-toggle_select_down*
 <denite:toggle_select_down>
 		Toggle cursor candidate select and move to next line.
@@ -574,6 +587,7 @@ q		<denite:quit>
 <C-L>		<denite:redraw>
 <C-R>		<denite:restart>
 <Space>		<denite:toggle_select_down>
+*		<denite:toggle_select_all>
 
 ------------------------------------------------------------------------------
 FUNCTIONS						*denite-functions*
@@ -892,6 +906,21 @@ OPTIONS							*denite-options*
 		Open the preview window vertically.
 		Default: false
 
+						*denite-options-winheight*
+-winheight={window-height}
+		Set the height of the Denite window. If auto-resize is set,
+		|denite-options-winheight| is the maximum size of the window.
+
+		Default: 20
+
+						*denite-options-winminheight*
+-winminheight={window-height}
+		Set the minimum height of an auto-resize window.
+		Note: a value of -1 for |denite-options-winminheight| leaves
+		the minimum height unset.
+		
+		Default: -1
+
 ==============================================================================
 SOURCES							*denite-sources*
 
@@ -1026,6 +1055,9 @@ menu		Gather custom menus.
 				include menus previously defined in Unite
 				configurations.
 
+						*denite-source-register*
+register	Gather the registers.
+
 						*denite-source-outline*
 outline		Gather outline and jump to the target.
 
@@ -1155,6 +1187,10 @@ word		An interface to paste the text.
 			append (default)
 				Insert the candidate word or text after the
 				cursor.
+
+			replace
+				Replace the selected text to the candidate
+				word.
 
 ==============================================================================
 FILTERS							*denite-filters*
