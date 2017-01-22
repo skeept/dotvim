@@ -5341,7 +5341,7 @@
   },
   "5512": {
     "type": "git",
-    "url": "git://github.com/retorillo/json.vim"
+    "url": "git://github.com/retorillo/json-ponyfill.vim"
   },
   "5513": {
     "type": "git",
