@@ -101,7 +101,7 @@ function! s:parse(args) abort
       if len(l:file_args)
         call extend(l:expanded_args, l:file_args)
       else
-        " Let through to `ag`/`ack`/`grep`/`rg`, which will throw ENOENT.
+        " Let through to `rg`/`ag`/`ack`/`ack-grep`, which will throw ENOENT.
         call add(l:expanded_args, l:arg)
       endif
     else
@@ -180,6 +180,7 @@ function! ferret#private#ack(...) abort
 
   let l:executable=FerretExecutable()
   if empty(l:executable)
+    call ferret#private#installprompt()
     return
   endif
 
@@ -206,12 +207,19 @@ function! ferret#private#black(...) abort
   call call('ferret#private#lack', a:000 + ferret#private#buflist())
 endfunction
 
+function! ferret#private#installprompt() abort
+  call ferret#private#error(
+        \   'Unable to find suitable executable; install rg, ag, ack or ack-grep'
+        \ )
+endfunction
+
 function! ferret#private#lack(...) abort
   let l:command=s:parse(a:000)
   call ferret#private#hlsearch()
 
   let l:executable=FerretExecutable()
   if empty(l:executable)
+    call ferret#private#installprompt()
     return
   endif
 
@@ -448,11 +456,13 @@ let s:options = {
       \     '-w'
       \   ]
       \ }
+let s:options['ack-grep']=s:options['ack']
 
 " We provide our own custom command completion because the default
 " -complete=file completion will expand special characters in the pattern (like
 " "#") before we get a chance to see them, breaking the search. As a bonus, this
-" means we can provide option completion for `ack`/`ag`/`rg` options as well.
+" means we can provide option completion for `ack`/`ack-grep`/`ag`/`rg` options
+" as well.
 function! ferret#private#complete(cmd, arglead, cmdline, cursorpos, files) abort
   let l:args=s:split(a:cmdline[:a:cursorpos])
 

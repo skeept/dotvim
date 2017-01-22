@@ -16,12 +16,11 @@
 " ## 1. Powerful multi-file search
 "
 " Ferret provides an |:Ack| command for searching across multiple files using
-" The Silver Searcher (https://github.com/ggreer/the_silver_searcher), Ack
-" (http://beyondgrep.com/), or Grep (http://www.gnu.org/software/grep/). Support
-" for passing options through to the underlying search command exists, along
-" with the ability to use full regular expression syntax without doing special
-" escaping. On Vim version 8 or higher, searches are performed asynchronously
-" (without blocking the UI).
+" The Silver Searcher (https://github.com/ggreer/the_silver_searcher), or Ack
+" (http://beyondgrep.com/). Support for passing options through to the
+" underlying search command exists, along with the ability to use full regular
+" expression syntax without doing special escaping. On Vim version 8 or higher,
+" searches are performed asynchronously (without blocking the UI).
 "
 " Shortcut mappings are provided to start an |:Ack| search (<leader>a) or to
 " search for the word currently under the cursor (<leader>s).
@@ -140,8 +139,8 @@
 " # Overrides
 "
 " Ferret overrides the 'grepformat' and 'grepprg' settings, preferentially
-" setting `rg`, `ag`, `ack` or `grep` as the 'grepprg' (in that order) and configuring
-" a suitable 'grepformat'.
+" setting `rg`, `ag`, `ack` or `ack-grep` as the 'grepprg' (in that order) and
+" configuring a suitable 'grepformat'.
 "
 " Additionally, Ferret includes an |ftplugin| for the |quickfix| listing that
 " adjusts a number of settings to improve the usability of search results.
@@ -238,7 +237,6 @@
 " :Ack \blog\((['"]).*?\1\) -i --ignore-dir=src/vendor src dist build
 " ```
 "
-"
 " # FAQ
 "
 " ## Why do Ferret commands start with "Ack", "Lack" and so on?
@@ -248,9 +246,8 @@
 " commit to my dotfiles repo in May, 2009 (https://wt.pe/h).
 "
 " So, even though Ferret has a new name now and actually prefers `rg` then `ag`
-" over `ack` when available, I prefer to keep the command names intact and
-" benefit from years of accumulated muscle-memory.
-"
+" over `ack`/`ack-grep` when available, I prefer to keep the command names
+" intact and benefit from years of accumulated muscle-memory.
 "
 "
 " # Related
@@ -364,6 +361,13 @@
 "
 " # History
 "
+" 1.4 (21 January 2017)
+"
+" - Drop broken support for `grep`, printing a prompt to install `rg`, `ag`, or
+"   `ack`/`ack-grep` instead.
+" - If an `ack` executable is not found, search for `ack-grep`, which is the
+"   name used on Debian-derived distros.
+"
 " 1.3 (8 January 2017)
 "
 " - Reset |'errorformat'| before each search (fixes issue #31).
@@ -441,14 +445,14 @@ let s:cpoptions = &cpoptions
 set cpoptions&vim
 
 ""
-" @option g:FerretExecutable string "rg,ag,ack"
+" @option g:FerretExecutable string "rg,ag,ack,ack-grep"
 "
-" Ferret will preferentially use `rg`, `ag`, `ack` and finally `grep` (in that
-" order, using the first found executable), however you can force your
+" Ferret will preferentially use `rg`, `ag` and finally `ack`/`ack-grep` (in
+" that order, using the first found executable), however you can force your
 " preference for a specific tool to be used by setting an override in your
 " |.vimrc|. Valid values are a comma-separated list of "rg", "ag", "ack" or
-" "grep". If no requested executable exists, Ferret will fall-back to
-" the next in the default list.
+" "ack-grep". If no requested executable exists, Ferret will fall-back to the
+" next in the default list.
 "
 " Example:
 "
@@ -456,12 +460,13 @@ set cpoptions&vim
 " " Prefer `ag` over `rg`.
 " let g:FerretExecutable='ag,rg'
 " ```
-let s:force=get(g:, 'FerretExecutable', 'rg,ag,ack')
+let s:force=get(g:, 'FerretExecutable', 'rg,ag,ack,ack-grep')
 
 let s:executables={
       \   'rg': 'rg --vimgrep --no-heading',
       \   'ag': 'ag --vimgrep',
-      \   'ack': 'ack'
+      \   'ack': 'ack --column --with-filename',
+      \   'ack-grep': 'ack-grep --column --with-filename'
       \ }
 
 " Would ideally have these in an autoload file, but want to defer autoload
@@ -479,20 +484,15 @@ function! FerretExecutable()
   if index(l:executables, 'ack') == -1
     call add(l:executables, 'ack')
   endif
+  if index(l:executables, 'ack-grep') == -1
+    call add(l:executables, 'ack-grep')
+  endif
   for l:executable in l:executables
     if executable(l:executable)
       return s:executables[l:executable]
     endif
   endfor
-  if executable('grep')
-    let l:grepprg=&grepprg
-    set grepprg&
-    let l:default=&grepprg " default (on UNIX) is: grep -n $* /dev/null
-    let &grepprg=l:grepprg
-    return l:default
-  else
-    return ''
-  endif
+  return ''
 endfunction
 
 " This one is also global to avoid unwanted autoloads (unlikely that you'd
@@ -512,8 +512,8 @@ endif
 " in the |quickfix| listing.
 "
 " `rg` (ripgrep) then `ag` (The Silver Searcher) will be used preferentially if
-" present on the system, because they are faster, falling back to `ack` and then
-" `grep` as needed.
+" present on the system, because they are faster, falling back to
+" `ack`/`ack-grep` as needed.
 "
 " On newer versions of Vim (version 8 and above), the search process runs
 " asynchronously in the background and does not block the UI.
@@ -564,20 +564,20 @@ command! -nargs=+ -complete=customlist,ferret#private#lackcomplete Lack call fer
 " @command :Back {pattern} {options}
 "
 " Like |:Ack|, but searches only listed buffers. Note that the search is still
-" delegated to the underlying |'grepprg'| (`rg`, `ag`, `ack` or `grep`), which means
-" that only buffers written to disk will be searched. If no buffers are written
-" to disk, then |:Back| behaves exactly like |:Ack| and will search all files in
-" the current directory.
+" delegated to the underlying |'grepprg'| (`rg`, `ag`, `ack` or `ack-grep`),
+" which means that only buffers written to disk will be searched. If no buffers
+" are written to disk, then |:Back| behaves exactly like |:Ack| and will search
+" all files in the current directory.
 command! -nargs=+ -complete=customlist,ferret#private#backcomplete Back call ferret#private#back(<f-args>)
 
 ""
 " @command :Black {pattern} {options}
 "
 " Like |:Lack|, but searches only listed buffers. As with |:Back|, the search is
-" still delegated to the underlying |'grepprg'| (`rg`, `ag`, `ack` or `grep`),
-" which means that only buffers written to disk will be searched. Likewise, If
-" no buffers are written to disk, then |:Black| behaves exactly like |:Lack| and
-" will search all files in the current directory.
+" still delegated to the underlying |'grepprg'| (`rg`, `ag`, `ack` or
+" `ack-grep`), which means that only buffers written to disk will be searched.
+" Likewise, If no buffers are written to disk, then |:Black| behaves exactly
+" like |:Lack| and will search all files in the current directory.
 command! -nargs=+ -complete=customlist,ferret#private#blackcomplete Black call ferret#private#black(<f-args>)
 
 ""
