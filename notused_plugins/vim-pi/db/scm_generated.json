@@ -5351,6 +5351,10 @@
     "type": "git",
     "url": "git://github.com/lingceng/z.vim"
   },
+  "5516": {
+    "type": "git",
+    "url": "git://github.com/rcaputo/vim-showhidefoldsby"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"

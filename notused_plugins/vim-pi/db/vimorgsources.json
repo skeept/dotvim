@@ -1,4 +1,7 @@
 {
+"rakesh_jhunjhunwala_portfolio":{"archive_name":"3120-1317633656-2.0 Inspired (1).zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24923","version":"1.1","vim_script_nr":5519},
+"wordpress_plugin":{"archive_name":"2432-1311017073-4.1.1 'Ajdija.com' Public Theme.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24922","version":"1.1","vim_script_nr":5518},
+"showhidefoldsby":{"archive_name":"showhidefoldsby.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24920","version":"1.0.0","vim_script_nr":5516},
 "z":{"archive_name":"z.vim-0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24906","version":"0.1","vim_script_nr":5514},
 "istanbul":{"archive_name":"istanbul.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24911","version":"1.1","vim_script_nr":5513},
 "json-ponyfill":{"archive_name":"json-ponyfill.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24910","version":"1.0","vim_script_nr":5512},
