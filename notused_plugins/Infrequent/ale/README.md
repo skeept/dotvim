@@ -59,6 +59,7 @@ name. That seems to be the fairest way to arrange this table.
 | CSS | [csslint](http://csslint.net/), [stylelint](https://github.com/stylelint/stylelint) |
 | Cython (pyrex filetype) | [cython](http://cython.org/) |
 | D | [dmd](https://dlang.org/dmd-linux.html)^ |
+| Dockerfile | [hadolint](https://github.com/lukasmartinelli/hadolint) |
 | Elixir | [credo](https://github.com/rrrene/credo) |
 | Elm | [elm-make](https://github.com/elm-lang/elm-make) |
 | Erlang | [erlc](http://erlang.org/doc/man/erlc.html) |
@@ -236,6 +237,15 @@ Use these options to specify what text should be used for signs:
 ```vim
 let g:ale_sign_error = '>>'
 let g:ale_sign_warning = '--'
+```
+
+ALE sets some background colors automatically for warnings and errors
+in the sign gutter, with the names `ALEErrorSign` and `ALEWarningSign`.
+These colors can be customised, or even removed completely:
+
+```vim
+highlight clear ALEErrorSign
+highlight clear ALEWarningSign
 ```
 
 <a name="faq-statusline"></a>

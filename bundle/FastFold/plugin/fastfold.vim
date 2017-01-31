@@ -63,7 +63,7 @@ function! s:LeaveWin()
   endif
 
   if exists('w:lastfdm') && &l:foldmethod is# 'manual' 
-    if b:changedtick > b:last_changedtick
+    if !exists('b:last_changedtick') || b:changedtick > b:last_changedtick
       let &l:foldmethod = w:lastfdm
       let b:last_changedtick = b:changedtick
     else
@@ -173,7 +173,7 @@ endfor
 augroup FastFold
   autocmd!
   autocmd VimEnter * call s:init()
-  autocmd BufEnter * 
+  autocmd BufEnter,WinEnter * 
         \ if !exists('b:last_changedtick') | let b:last_changedtick = b:changedtick | endif
 augroup end
 
