@@ -202,6 +202,8 @@ function! jedi#debug_info() abort
       endif
       " vint: +ProhibitUsingUndeclaredVariable
     endfor
+    echo "\n"
+    verb set omnifunc? completeopt?
     echo '```'
 endfunction
 
@@ -545,7 +547,7 @@ function! jedi#complete_opened(is_popup_on_dot) abort
             endif
         endif
     endif
-    return
+    return ''
 endfunction
 
 

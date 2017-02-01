@@ -54,7 +54,7 @@ endfunction
 function! neomake#ListJobs() abort
     call neomake#utils#DebugMessage('call neomake#ListJobs()')
     for jobinfo in values(s:jobs)
-        echom jobinfo.id.' '.jobinfo.name
+        echom jobinfo.id.' '.jobinfo.name.' '.jobinfo.maker.name
     endfor
 endfunction
 
@@ -674,8 +674,8 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
             endif
         endif
 
-        if !entry.valid
-            if maker.remove_invalid_entries
+        if entry.valid <= 0
+            if entry.valid < 0 || maker.remove_invalid_entries
                 let index -= 1
                 call remove(list, index)
                 let list_modified = 1

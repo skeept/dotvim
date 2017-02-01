@@ -57,6 +57,20 @@ function! neomake#makers#ft#javascript#semistandard() abort
         \ }
 endfunction
 
+function! neomake#makers#ft#javascript#rjsx() abort
+  return {
+        \ 'exe': 'emacs',
+        \ 'args': ['%','--quick','--batch','--eval='
+        \ .'(progn(package-initialize)(require ''rjsx-mode)'
+        \ .'  (setq js2-include-node-externs t js2-include-rhino-externs t js2-include-browser-externs t js2-strict-missing-semi-warning nil)'
+        \ .'  (rjsx-mode)(js2-reparse)(js2-display-error-list)'
+        \ .'  (princ(replace-regexp-in-string "^" (concat buffer-file-name " ")'
+        \ .'  (with-current-buffer "*js-lint*" (buffer-substring-no-properties(point-min)(point-max)))))(terpri))'],
+        \ 'errorformat': '%f line %l: %m,%-G%.%#',
+        \ 'append_file': 0,
+        \ }
+endfunction
+
 function! neomake#makers#ft#javascript#flow() abort
     return {
         \ 'args': ['--from=vim', '--show-all-errors'],
