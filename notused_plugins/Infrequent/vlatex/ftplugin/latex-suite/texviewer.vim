@@ -380,11 +380,13 @@ function! s:Tex_CompleteRefCiteCustom(type)
 
 	let prefixlength=strlen(s:prefix)
 	if a:type =~ 'cite'
-		if getline('.') =~ '\\bibitem\s*{'
-			let bibkey = matchstr(getline('.'), '\\bibitem\s*{\zs.\{-}\ze}')
-		else
-			let bibkey = matchstr(getline('.'), '\\bibitem\s*\[.\{-}\]\s*{\zs.\{-}\ze}')
+		" Look for a '\bibitem'
+		let bibkey = matchstr(getline('.'), '\\bibitem\s*\%(\[.\{-}\]\)\?\s*{\zs.\{-}\ze}')
+		if bibkey == ""
+			" Look for a '@article{bibkey,'
+			let bibkey = matchstr(getline('.'), '@\w*{\zs\w*\ze,')
 		endif
+
 		let completeword = bibkey
 
 	elseif a:type =~ 'ref'
@@ -823,29 +825,37 @@ function! Tex_FindBibFiles( currfile )
 		exec 'silent! e '.fnameescape(mainfname)
 	endif
 
+	" No bibfiles found yet
 	let bibfiles = ''
 
-	let line_start = search('\%(\\\@<!\%(\\\\\)*%.*\)\@<!\\\(\(no\)\?bibliography\|addbibresource\(\[.*\]\)\?\){', 'w')
-	if line_start > 0
+	" Position the cursor at the start of the file
+	call setpos('.', [0,1,1,0])
+
+	while 1
+		let line_start = search('\%(\\\@<!\%(\\\\\)*%.*\)\@<!\\\%(\%(no\)\?bibliography\|addbibresource\%(\[.*\]\)\?\)\zs{', 'W')
+		if line_start == 0
+			break
+		endif
 
 		call Tex_Debug('Tex_FindBibFiles: found bibliography command in '.bufname('%'), 'view')
 
 		" extract the bibliography filenames from the command.
 		" First, look for the closing brace
-		let line_end = search('\%(\\\@<!\%(\\\\\)*%.*\)\@<!}', 'Wc')
+		let line_end = search('\%(\\\@<!\%(\\\\\)*%.*\)\@<!}', 'nWc')
 
 		call Tex_Debug(":Tex_FindBibFiles: bib command from line " . line_start . " to line " . line_end, "view")
 
 		" Now, extract all these lines
-		let lines = ''
-		for line_nr in range(line_start, line_end)
+		" In the first line, start at the bib-command (current column)
+		let lines = strpart(getline(line_start), getpos('.')[2])
+		for line_nr in range(line_start+1, line_end)
 			" Strip comments and concatenate
 			let lines .= substitute(getline(line_nr), '\\\@<!\%(\\\\\)*\zs%.*$','','')
 		endfor
 		call Tex_Debug(":Tex_FindBibFiles: concatenated bib command: \"" . lines . "\"", "view")
 
 		" Finally, extract the file names
-		let bibnames = matchstr(lines, '\\\(\(no\)\?bibliography\|addbibresource\(\[.*\]\)\?\){\zs.\{-}\ze}')
+		let bibnames = matchstr(lines, '^\zs.\{-}\ze}')
 		let bibnames = substitute(bibnames, '\s', '', 'g')
 
 		call Tex_Debug(':Tex_FindBibFiles: trying to search through ['.bibnames.']', 'view')
@@ -863,8 +873,13 @@ function! Tex_FindBibFiles( currfile )
 			let i = i + 1
 		endwhile
 
-		call Tex_Debug(":Tex_FindBibFiles: returning [".bibfiles."]", "view")
-	endif
+		if getline('.') =~# '\%(\\\@<!\%(\\\\\)*%.*\)\@<!\\\%(no\)\?bibliography{'
+			" Only one \[no]bibliography allowed by LaTeX
+			break
+		endif
+	endwhile
+
+	call Tex_Debug(":Tex_FindBibFiles: returning [".bibfiles."]", "view")
 
 	if !a:currfile
 		q
