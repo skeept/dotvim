@@ -5359,6 +5359,10 @@
     "type": "git",
     "url": "git://github.com/idanarye/vim-terminalogy"
   },
+  "5521": {
+    "type": "git",
+    "url": "git://github.com/myusuf3/numbers.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
