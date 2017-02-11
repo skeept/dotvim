@@ -1,4 +1,4 @@
-" Vimball Archiver by Charles E. Campbell, Jr., Ph.D.
+" Vimball Archiver by Charles E. Campbell
 UseVimball
 finish
 plugin/ft_improved.vim	[[[1
@@ -152,7 +152,7 @@ let &cpo=s:cpo
 unlet s:cpo
 " vim: ts=4 sts=4 fdm=marker com+=l\:\"
 autoload/ftimproved.vim	[[[1
-458
+453
 " ftimproved.vim - Better f/t command for Vim
 " -------------------------------------------------------------
 " Version:	   0.9
@@ -220,7 +220,7 @@ fun! <sid>SearchForChar(char) "{{{1
 endfun
 
 fun! <sid>EscapePat(pat, vmagic) "{{{1
-	let pat = escape(a:pat, '\''')
+	let pat = escape(a:pat, '\')
 	if pat ==# ''
 		let pat = '\r'
 	elseif pat ==# '	'
@@ -237,13 +237,13 @@ fun! <sid>ColonPattern(cmd, pat, off, f, fwd) "{{{1
 	if !exists("s:colon")
 		let s:colon = {}
 	endif
-	let pat = a:pat
 	let cmd = a:cmd
+	let pat = a:pat
 	let opp = <sid>Opposite(a:cmd[-1:])
 	let opp_off = <sid>Opposite(a:off[0])
-	if a:cmd == 'f'
+	if a:cmd ==# 'f' || a:cmd ==# 't'
 		let cmd = '/'
-	elseif a:cmd == 'F'
+	elseif a:cmd == 'F' || a:cmd ==# 'T'
 		let cmd = '?'
 	endif
 	let s:colon[';'] = cmd[-1:]. pat. 
@@ -358,11 +358,7 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	if !exists("s:searchforward")
 	    let s:searchforward = 1
 	endif
-	if s:searchforward
-	    let fcmd = (a:f ? ';' : ',')
-	else
-	    let fcmd = (!a:f ? ';' : ',')
-	endif
+	let fcmd = (a:f ? ';' : ',')
 	if !exists("s:colon")
 		let s:colon={}
 		let s:colon[';']=''
@@ -373,13 +369,13 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 	let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
 
 	if get(g:, 'ft_improved_consistent_comma', 0)
-		let fcmd = (a:f ? ',' : ';')
-		if (a:f && res[0] !=? '/')
-			let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
-		elseif (!a:f && res[0] !=? '?')
-			let res = (empty(s:colon[fcmd]) ? fcmd : s:colon[fcmd])
+		if a:f
+			let res = '/'.res[1:-2]. '/'
+		else
+			let res = '?'.res[1:-2]. '?'
 		endif
 	endif
+
 	let oldsearchpat = @/
 	if a:mode =~ 'o' &&
 		\ s:colon['cmd'] " last search was 'f' command
@@ -393,7 +389,7 @@ fun! ftimproved#ColonCommand(f, mode) "{{{1
 			let spat = pat[2]
 			if pat[1] =~ '[?/]'
 				let pat[2] = escape(pat[2], pat[1])
-				if !s:colon['cmd'] && pat[1] == '?' " t or T command
+				if !s:colon['cmd'] && pat[1] == '?'
 					" T command
 					let res = pat[1]. '\('. pat[2]. '\m\)\@<=.' . pat[1]
 				elseif !s:colon['cmd']
@@ -434,6 +430,7 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 	" fwd: forward motion
 	" mode: mapping mode
 	try
+		let s:searchforward = a:fwd
 		let char = nr2char(getchar())
 		if  char == s:escape
 			" abort when Escape has been hit
@@ -506,7 +503,6 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 		" Check if normal f/t commands would work:
 			if search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'nW') == line('.')
 				\ && a:fwd
-				let s:searchforward = 1
 				let cmd = (a:f ? 'f' : 't')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f, a:fwd)
@@ -514,7 +510,6 @@ fun! ftimproved#FTCommand(f, fwd, mode) "{{{1
 
 			elseif search(matchstr(pat.'\C', '^\%(\\c\)\?\zs.*'), 'bnW') == line('.')
 				\ && !a:fwd
-				let s:searchforward = 0
 				let cmd = (a:f ? 'F' : 'T')
 				call <sid>ColonPattern(<sid>SearchForChar(cmd),
 						\ pat, '', a:f, a:fwd)
@@ -612,7 +607,7 @@ unlet s:cpo
 " Modeline {{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/ft_improved.txt	[[[1
-227
+231
 *ft_improved.txt* - Better f/t command for Vim
 
 Author:  Christian Brabandt <cb@256bit.org>
@@ -648,7 +643,8 @@ Functionality
 This plugin tries to improve the existing behaviour of the |f|, |F|, |t| and
 |T| command by letting them move the cursor not only inside the current line,
 but move to whatever line, where the character is found. Also the |,| and |;|
-command should just work as expected.
+command should consistently by default, but can be enabled to work as usual
+(see |improvedft-consistent_comma|).
 
 It does consider counts given and should work simply as a user would be
 expecting.
@@ -791,6 +787,9 @@ third line of this document.
 ==============================================================================
 4. History                                              *improvedft-history*
 
+0.10: (unreleased) "{{{
+- Make |,| and |;| work as documented (reported by JonnyRa in
+  https://github.com/chrisbra/improvedft/issues/5, thanks!)
 0.9: Jan 15, 2015 "{{{
 - do not mess up highlighting for |;| and |,| commands
 - make count work correctly with multi-highlight match, so that only the
