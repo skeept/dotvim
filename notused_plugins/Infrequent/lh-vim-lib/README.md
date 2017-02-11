@@ -27,6 +27,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Buffers related functions](#buffers-related-functions)
   * [Syntax related functions](#syntax-related-functions)
   * [UI functions](#ui-functions)
+  * [Logging framework](#logging-framework)
   * [Design by Contract function](#design-by-contract-functions)
 
 ### Miscellaneous functions
@@ -43,6 +44,8 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#common#rand()`                             | Returns a random number                                                                                                                                                  |
 | `lh#common#warning_msg()`                      | Displays a warning                                                                                                                                                       |
 | `lh#encoding#at(mb_string, i)`                 | Returns the i-th character in a multibytes string                                                                                                                        |
+| `lh#encoding#previous_character()`             | Returns the character before the cursor -- works with multi-byte characters                                                                                              |
+| `lh#encoding#current_character()`              | Returns the character under the cursor -- works with multi-byte characters                                                                                               |
 | `lh#encoding#iconv()`                          | Unlike `iconv()`, this wrapper returns {expr} when we know no conversion can be achieved.                                                                                |
 | `lh#encoding#iconv(expr, from, to)`            | Converts an expression from an encoding to another                                                                                                                       |
 | `lh#encoding#strlen(mb_string)`                | Executes `strlen()` on a multibytes string                                                                                                                               |
@@ -69,12 +72,6 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#let#if_undef()`                            | Defines an extended vim variable (with ` :let`) on the condition the variable does not exist yet                                                                         |
 | `lh#let#to()`                                  | Defines an extended vim variable (with ` :let`) -- its previous value will be overridden                                                                                 |
 | `lh#let#unlet()`                               | Undefines an extended vim variable (with ` :unlet`)                                                                                                                      |
-| `lh#log#echomsg()`                             | Returns a new logger object, that logs with `:echomsg` (internal use)                                                                                                    |
-| `lh#log#new()`                                 | Returns a new logger object (internal use)                                                                                                                               |
-| `lh#log#none()`                                | Returns a new, inactive, logger object (internal use)                                                                                                                    |
-| `lh#log#set_logger(kind, opts)`                | Sets the global logging policy (quickfix/loclist window, none, `echomsg`)                                                                                                |
-| `lh#log#this({format}, {args...})`             | Logs a formatted message with the global logger                                                                                                                          |
-| `lh#log#exception(...)`                        | Logs the exception, and possibly its callstack, with the global logger.                                                                                                  |
 | `lh#math#abs()`                                | Portable `abs()` function                                                                                                                                                |
 | `lh#mapping#define()`                          | Defines a mapping from its description                                                                                                                                   |
 | `lh#mapping#plug()`                            | Defines a series of default mappings associated to a plug mapping                                                                                                        |
@@ -105,6 +102,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#string#matches()`                          | Extracts a list of all matches in a string                                                                                                                               |
 | `lh#string#trim()`                             | Trim a string                                                                                                                                                            |
 | `lh#time#bench(F,...)`                         | Times the execution of `F(...)`                                                                                                                                          |
+| `lh#time#bench_n(n, F,...)`                    | Times n executions of `F(...)`                                                                                                                                           |
 | `lh#time#date()`                               | return the equivalent of `strftime('%D-th %b %Y)`                                                                                                                        |
 | `lh#vcs#get_type(...)`                         | Returns the type of the versioning system the file is under                                                                                                              |
 | `lh#vcs#as_http(...)`                          | Returns the url of the repository the parameter is under, or `g:url` if none is found. Enforce the result in the form http://, if possible                               |
@@ -150,6 +148,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#copy_if()`              | Copies the elements from a list that match a predicate                                                            |
 | `lh#list#cross()`                | Cross elements from two lists and produce a new list                                                              |
 | `lh#list#equal_range()`          | See C++ [`std::equal_range`](http://en.cppreference.com/w/cpp/algorithm/equal_range)                              |
+| `lh#list#find_entity()`          | Return the index where an entity is within a list, -1 if not found                                                |
 | `lh#list#find_if()`              | Searches the first element in a list that verifies a predicate                                                    |
 | `lh#list#flat_extend()`          | Extends a list with another, or add elements into a list depending on the _right-hand-side_ parameter             |
 | `lh#list#flatten()`              | Flattens a list                                                                                                   |
@@ -162,10 +161,12 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#match()`                | Searches the first element in a list that matches a pattern                                                       |
 | `lh#list#match_re()`             | Searches the first pattern in a list that  is matched by a text                                                   |
 | `lh#list#matches()`              | Returns the list of indices of elements that match the pattern                                                    |
+| `lh#list#not_contain_entity()`   | Tells whether a Dict or List entity is not present within a list                                                  |
 | `lh#list#not_found()`            | Returns whether the range returned from `equal_range` is empty (i.e. element not found)                           |
 | `lh#list#possible_values()`      | Returns a sorted list of the values that are stored: in a flat list, or at a given {index} in the lists from the input {list}, or at a given {key} in the dictionaries from the input {list} |
-| `lh#list#push_if_new()`          | Adds a elements if not already present in the list                                                                |
+| `lh#list#push_if_new()`          | Adds a value if not already present in the list                                                                   |
 | `lh#list#push_if_new_elements()` | Adds elements if not already present in the list                                                                  |
+| `lh#list#push_if_new_entity()`   | Adds an entity if not already present in the list                                                                 |
 | `lh#list#remove()`               | Remove elements from list according to a list of indices                                                          |
 | `lh#list#rotate()`               | Rotate elements from list                                                                                         |
 | `lh#list#separate()`             | Returns the list that matches the predicate and the list that doesn't match it                                    |
@@ -312,7 +313,7 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 ### UI functions
 All the functions defined in ui-functions.vim are wrappers around Vim
 interactive functions. Depending on a configuration variable
-(`[bg]:ui_type`), they will delegate the interaction to a gvim UI
+(`(bpg):ui_type`), they will delegate the interaction to a gvim UI
 function, or a plain text UI function (defined by vim, or emulated)
 
 | Function    | Purpose                                                                                                                                     |
@@ -327,25 +328,105 @@ function, or a plain text UI function (defined by vim, or emulated)
 
 In the same thematics, see also [VFT - Vim Form Toolkit](http://www.vim.org/scripts/script.php?script_id=2160)
 
+### Logging Framework
+lh-vim-lib provides a global logger since version 3.6.0.
+
+By default, it'll echo everything with `:echomsg` (through `lh#log#echomsg`).
+
+The logging policy can be set thanks to `lh#log#set_logger()`.
+In plugins, logging can be done directly thanks to `lh#log#this()`, or though
+an encapsulation, see below.
+
+This logger doesn't support log level directly. Instead, the recommended way to
+use it is to have logging helper functions in each plugins (autoload plugins,
+or plain plugins, ftplugins, ...)  and to have these functions test a plugin
+related verbose option to decide whether they log anything or not.
+I use [mu-template](http://github.com/LucHermitte/mu-template) skeletons for
+vim plugins to automatically define these
+functions in my plugins.
+
+It looks like this:
+
+```vim
+" # Debug
+let s:verbose = get(s:, 'verbose', 0)
+function! lh#icomplete#verbose(...)
+  if a:0 > 0
+    let s:verbose = a:1
+  endif
+  return s:verbose
+endfunction
+
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
+  if s:verbose
+    call call('s:Log', a:000)
+  endif
+endfunction
+```
+
+Thus, if I want to trace what is done in my icomplete autoload plugin, I call
+
+```vim
+:call lh#icomplete#verbose(1)
+" or If plugin/vim_maintain.vim from lh-misc is installed:
+:Verbose icomplete
+```
+
+If I want to disable completely all logs, I can execute:
+
+```vim
+:call lh#log#set_logger('none')
+```
+
+If I prefer to see my traces on the right side, and in a
+[|quickfix-window|](http://vimhelp.appspot.com/quickfix.txt.html#quickfix-window)
+in order to trace the files + line numbers along with the message to log, I'll
+execute
+
+```vim
+:call lh#log#set_logger('qf', 'vert')
+```
+
+**Screencast:**
+![lh-vim-lib logging framework demo](doc/screencast-log.gif "lh-vim-lib logging framework demo")
+
+**Functions:**
+
+| Function                                       | Purpose                                                                        |
+|------------------------------------------------|--------------------------------------------------------------------------------|
+| `lh#log#echomsg()`                             | Returns a new logger object, that logs with `:echomsg` (internal use)          |
+| `lh#log#new()`                                 | Returns a new logger object (internal use)                                     |
+| `lh#log#none()`                                | Returns a new, inactive, logger object (internal use)                          |
+| `lh#log#set_logger(kind, opts)`                | Sets the global logging policy (quickfix/loclist window, none, `echomsg`)      |
+| `lh#log#this({format}, {args...})`             | Logs a formatted message with the global logger                                |
+| `lh#log#exception(...)`                        | Logs the exception, and possibly its callstack, with the global logger.        |
+
 ### Design by Contract functions
 This set of functions introduce DbC helpers. There are here to help plugin
 developers to detect and eradicate VimL programming errors.
 
 When an assertion fails, we cannot expect the script to go on correctly. There
 IS an error in its logic. We cannot expect anything good after that. That's
-where `lh#assert#*()` functions differs from Vim |test-functions| and my
-[vim-UT](http://github.com/LucHermitte/vim-UT) plugin: these other functions
-aim at providing tools to write unit tests.
+where `lh#assert#*()` functions differs from Vim
+[|test-functions|](http://vimhelp.appspot.com/usr_41.txt.html#test-functions)
+and my [vim-UT](http://github.com/LucHermitte/vim-UT) plugin: these other
+functions aim at providing tools to write unit tests.
 
 | Function                       | Purpose                                                                                                                        |
 |:-------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| `lh#assert#mode()`             | Sets the assertion mode (default, `'debug'`, `'ignore'`, `'abort'`                                                             |
+| `lh#assert#mode()`             | Sets the assertion mode (default, `'debug'`, `'ignore'`, `'abort'`)                                                            |
 | `lh#assert#errors()`           | Returns the last known contract failures                                                                                       |
 | `lh#assert#clear()`            | Clears the last known contract failures                                                                                        |
 | `lh#assert#true()`             | Asserts a value is true                                                                                                        |
 | `lh#assert#false()`            | Asserts a value is false                                                                                                       |
 | `lh#assert#equal()`            | Asserts a value equals to what is expected                                                                                     |
 | `lh#assert#not_equal()`        | Asserts a value differs from a reference value                                                                                 |
+| `lh#assert#is()`               | Asserts two entities are the same                                                                                              |
+| `lh#assert#is_not()`           | Asserts two entities are not the same                                                                                          |
 | `lh#assert#match()`            | Asserts a pattern matches a value                                                                                              |
 | `lh#assert#unexpected()`       | Signals an unexpected situation                                                                                                |
 | `lh#assert#if().then_expect()` | Asserts condition1 implies condition2                                                                                          |
@@ -395,3 +476,4 @@ Bundle 'LucHermitte/lh-vim-lib'
   * [theonevimlib](http://www.vim.org/scripts/script.php?script_id=1963), initiated by Marc Weber
   * [anwolib](http://www.vim.org/scripts/script.php?script_id=3800), by Andy Wokula
   * [l9](http://www.vim.org/scripts/script.php?script_id=3252), by Takeshi NISHIDA
+  * [maktaba](https://github.com/google/vim-maktaba), by google

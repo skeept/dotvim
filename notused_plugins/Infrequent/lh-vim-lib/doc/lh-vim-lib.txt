@@ -36,7 +36,9 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#common#error_msg()|
 - |lh#common#rand()|
 - |lh#common#warning_msg()|
+- |lh#encoding#current_character()|
 - |lh#encoding#iconv()|
+- |lh#encoding#previous_character()|
 - |lh#encoding#strlen()|
 - |lh#encoding#strpart()|
 - |lh#event#register_for_one_execution_at()|
@@ -64,10 +66,11 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#position#extract()|
 - |lh#position#is_before()|
 - |lh#time#bench()|
+- |lh#time#bench_n()|
 - |lh#time#date()|
 - |lh#visual#cut()|
 - |lh#visual#selection()|
-Options related functions:                              |lhvl#option|
+Option related functions:                               |lhvl#option|
 - |lh#option#exists_in_buf()|
 - |lh#option#get()|
 - |lh#option#get_non_empty()|
@@ -81,12 +84,14 @@ Options related functions:                              |lhvl#option|
 - |lh#ft#option#get_all()|
 - |lh#ref#bind()|
 - |lh#ref#is_bound()|
-Functors related functions:                             |lhvl#function|
+Functor related functions:                              |lhvl#function|
 - |lh#function#bind()|
 - |lh#function#execute()|
 - |lh#function#prepare()|
-Lists related functions:                                |lhvl#list|
+List related functions:                                 |lhvl#list|
 - |lh#list#accumulate()|
+- |lh#list#Find_if()| and |lh#list#find_if()|
+- |lh#list#Transform()| and |lh#list#transform()|
 - |lh#list#arg_min()|, |lh#list#arg_max()|
 - |lh#list#chain_transform()|
 - |lh#list#concurrent_for()|
@@ -94,7 +99,7 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#copy_if()|
 - |lh#list#cross()|
 - |lh#list#equal_range()|
-- |lh#list#Find_if()| and |lh#list#find_if()|
+- |lh#list#find_entity()|
 - |lh#list#flat_extend()|
 - |lh#list#for_each_call()|
 - |lh#list#get()|
@@ -103,21 +108,23 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#map_on()|
 - |lh#list#mask()|
 - |lh#list#match()|
+- |lh#list#match_re()|
 - |lh#list#matches()|
+- |lh#list#not_contain_entity()|
 - |lh#list#not_found()|
 - |lh#list#possible_values()|
 - |lh#list#push_if_new()|
 - |lh#list#push_if_new_elements()|
+- |lh#list#push_if_new_entity()|
 - |lh#list#remove()|
 - |lh#list#separate()|
 - |lh#list#sort()|
 - |lh#list#subset()|
-- |lh#list#Transform()| and |lh#list#transform()|
 - |lh#list#transform_if()|
 - |lh#list#uniq()|
 - |lh#list#unique_sort()| and |lh#list#unique_sort2()|
 - |lh#list#zip()|, and |lh#list#zip_as_dict()|
-Dicts related functions:                                |lhvl#dict|
+Dict related functions:                                 |lhvl#dict|
 - |lh#dict#add_new()|
 - |lh#dict#get_composed()|
 - |lh#dict#key()|
@@ -137,10 +144,10 @@ String related functions:                               |lhvl#string|
 - |lh#string#matches()|
 - |lh#string#substitute_unless()|
 - |lh#string#trim()|
-Graphs related functions:                               |lhvl#graph|
+Graph related functions:                                |lhvl#graph|
 - |lh#graph#tsort#depth()|
 - |lh#graph#tsort#breadth()|
-Paths related functions:                                |lhvl#path|
+Path related functions:                                 |lhvl#path|
 - |lh#path#common()|
 - |lh#path#depth()|
 - |lh#path#exists()|
@@ -161,7 +168,7 @@ Paths related functions:                                |lhvl#path|
 - |lh#path#to_dirname()|
 - |lh#path#to_regex()|
 - |lh#path#to_relative()|
-Commands related functions:                             |lhvl#command|
+Command related functions:                              |lhvl#command|
 - |lh#command#analyse_args()|
 - |lh#command#matching_variables()|
 - |lh#command#matching_askvim()|
@@ -171,7 +178,7 @@ Commands related functions:                             |lhvl#command|
 - |lh#command#new()| (alpha version)
 - |lh#command#Fargs2String()| (alpha version)
 - |lh#command#complete()| (alpha version)
-Menus related functions:                                |lhvl#menu|
+Menu related functions:                                 |lhvl#menu|
 - |lh#menu#def_string_item()|
 - |lh#menu#def_toggle_item()|
 - |lh#menu#text()|
@@ -180,7 +187,7 @@ Menus related functions:                                |lhvl#menu|
 - |lh#menu#is_in_visual_mode()|
 - |lh#menu#map_all()|
 - |lh#askvim#menu()| (beta version)
-Buffers related functions:                              |lhvl#buffer|
+Buffer related functions:                               |lhvl#buffer|
 - |lh#buffer#get_nr()|
 - |lh#buffer#list()|
 - |lh#buffer#find()|
@@ -192,7 +199,7 @@ Buffers related functions:                              |lhvl#buffer|
     - |lh#buffer#dialog#select()|
     - |lh#buffer#dialog#quit()|
     - |lh#buffer#dialog#update()|
-Windows related functions:                              |lhvl#window|
+Window related functions:                               |lhvl#window|
 - |lh#window#create_window_with()|
 - |lh#window#new()|
 - |lh#window#split()|
@@ -241,7 +248,7 @@ OO helpers                                              |lhvl#oo|
 - |lh#object#make_top_type()|
 - |lh#object#to_string()|
 - |lh#object#_to_string()|
-Variables helper functions                              |lhvl#variable|
+Variable helper functions                               |lhvl#variable|
 - |lh#let#if_undef()|
 - |lh#let#to()|
 - |lh#let#undef()|
@@ -259,6 +266,8 @@ Design by Contract related functions                    |lhvl#DbC|
 - |lh#assert#errors()|
 - Assertions:
   - |lh#assert#equal()|
+  - |lh#assert#false()|
+  - |lh#assert#is()|
   - |lh#assert#false()|
   - |lh#assert#match()|
   - |lh#assert#not_equal()|
@@ -638,6 +647,17 @@ lh#time#bench(Function[, args])~
 @param[in] {Function} is expected to be something like a |function| --
 |lhvl-functor|s are not yet supported.
 @require |reltime()| support (hence, a recent Vim version)
+@since Version 3.14.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#time#bench_n()*                 {{{3
+lh#time#bench_n(n Function[, args])~
+@return the time spent by the execution of `Function()` n times.
+@param[in] {n}        Number of times the function call is benched.
+@param[in] {Function} is expected to be something like a |function| --
+|lhvl-functor|s are not yet supported.
+@require |reltime()| support (hence, a recent Vim version)
+@since Version 4.0.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#time#date()*                  {{{3
@@ -679,6 +699,14 @@ Returns the i-th character in a multi-bytes string.
 lh#encoding#strpart({mb_string}, {position}, {length})~
 Returns {length} extracted characters from {position} in a multi-bytes string.
 @param {position} 0-indexed offset.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#current_character()* {{{3
+                                                *lh#encoding#previous_character()*
+lh#encoding#current_character()~
+lh#encoding#previous_character()~
+Returns The character under/before the current.
+Works even with multi-byte characters
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                  *lh#event#RegisterForOneExecutionAt()*           {{{3
@@ -766,7 +794,7 @@ Tells whether the corresponding filetype correspond to a script filetype (sh,
 python, ruby, perl).
 
 ------------------------------------------------------------------------------
-OPTIONS RELATED FUNCTIONS                             *lhvl#option*     {{{2
+OPTION RELATED FUNCTIONS                              *lhvl#option*     {{{2
 This sub-library helps fetching option values for plugins.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -990,7 +1018,7 @@ lh#option#unset()~
 as it will get lazily loaded on need.
 
 ------------------------------------------------------------------------------
-FUNCTORS RELATED FUNCTIONS                            *lhvl#function*   {{{2
+FUNCTOR RELATED FUNCTIONS                             *lhvl#function*   {{{2
 
 This sub-library helps defining functors-like variables, and execute them.
 
@@ -1081,7 +1109,7 @@ The evaluation is meant to be done with |eval()|.
 
 
 ------------------------------------------------------------------------------
-STRINGS RELATED FUNCTIONS                             *lhvl#string*     {{{2
+STRING RELATED FUNCTIONS                              *lhvl#string*     {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#as()*                  {{{3
@@ -1127,7 +1155,7 @@ lh#string#trim(string)~
 @return            {string} trimmed of spaces
 
 ------------------------------------------------------------------------------
-STACKS RELATED FUNCTIONS                              *lhvl#stack*      {{{2
+STACK RELATED FUNCTIONS                               *lhvl#stack*      {{{2
 Stacks functions helps to implement the LIFO/FILO ADT type.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1210,7 +1238,7 @@ Other functions are also provded:
   s.expand(12)
 
 ------------------------------------------------------------------------------
-LISTS RELATED FUNCTIONS                               *lhvl#list*       {{{2
+LIST RELATED FUNCTIONS                                *lhvl#list*       {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#list#Match()*                  {{{3
@@ -1221,9 +1249,23 @@ lh#list#match({list},{pattern}[, {start-pos}])~
 @param   {pattern} |expr-string|
 @param {start-pos} First index to check
 @return            The lowest index, >= {start-pos}, in |List| {list} where
-                   the item matches {pattern}.
-@return            -1 if no item matches {pattern}.
-@see |index()|, |match()|
+                   the item where {pattern} matches.
+@return            -1 if no item is matched by {pattern}.
+@see |index()|, |match()|, |lh#list#match_re()|
+
+Starting from Vim 7.3, this function forwards all its parameters to |match()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#list#match_re()*               {{{3
+lh#list#match_re({list}, {to_be_matched}[, {start-pos}])~
+@param          {list} |List| of regexes
+@param {to-be-matched} |expr-string|
+@param     {start-pos} First index to check
+@return                The lowest index, >= {start-pos}, in |List| {list}
+                       where the |regexp| item matches {to-be-matched} text.
+@return                -1 if no regexp item matches ey {to-be-matched}.
+@since Version 3.2.4
+@see |index()|, |match()|, |lh#list#match()|
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#list#matches()*                {{{3
@@ -1237,13 +1279,20 @@ lh#list#match({list},{pattern}[, {start-pos}])~
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                         *lh#list#contain_entity()*         {{{3
-lh#list#contain_entity({list}, {entity})~
+                                        *lh#list#not_contain_entity()*
+                                        *lh#list#find_entity()*
+lh#list#contain_entity({list}, {entity})     (1)~
+lh#list#not_contain_entity({list}, {entity}) (2)~
+lh#list#find_entity({list}, {entity})        (3)~
 @param    {list}  |List|
 @param  {entity}  |List| or |Dict| to search within the list with |expr-is|.
-@return Whether an {entity} is present within {list}.
+@return (1) Whether an {entity} is present within {list}
+@return (2) Whether an {entity} is NOT present within {list}
+@return (3) The index of the {entity} in the {list}, -1 is not found
+@since Version 4.0.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                            *lh#list#find_if()* *lh#list#Find_if()*               {{{3
+                            *lh#list#find_if()* *lh#list#Find_if()*           {{{3
 lh#list#Find_if({list},{string-predicate} [, {pred-parameters}][, {start-pos}])~
 lh#list#find_if({list},{functor-predicate} [, {pred-parameters}][, {start-pos}])~
 @param             {list}  |List|
@@ -1281,7 +1330,7 @@ rewritten as: >
 NB: Expect the `Find_if()` version to be replaced with the `find_if()` one.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                        *lh#list#lower_bound()* *lh#list#upper_bound()*           {{{3
+                        *lh#list#lower_bound()* *lh#list#upper_bound()*   {{{3
                         *lh#list#equal_range()*
 lh#list#lower_bound({list}, {value} [, {first}][, {last}])~
 lh#list#upper_bound({list}, {value} [, {first}][, {last}])~
@@ -1305,7 +1354,7 @@ Returns whether the {range} is empty. This function can be used to check
 |lh#list#equal_range()| functions results
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                   *lh#list#unique_sort()* *lh#list#unique_sort2()*               {{{3
+                   *lh#list#unique_sort()* *lh#list#unique_sort2()*  {{{3
 lh#list#unique_sort({list} [, {cmp}])~
 lh#list#unique_sort2({list} [, {cmp}])~
 @param[in] {list} |List| to sort
@@ -1323,7 +1372,7 @@ The difference between the two functions is the following:
   keeps only the elements that appear once.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                           *lh#list#uniq*                     {{{3
+                                           *lh#list#uniq()*                   {{{3
 lh#list#uniq({list})~
 @return Emulates |uniq()| when it doesn't exists. Or directly call it
 otherwise.
@@ -1570,7 +1619,7 @@ Examples: >
    720
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                               *lh#list#arg_max()* *lh#list#arg_min()*            {{{3
+                               *lh#list#arg_max()* *lh#list#arg_min()*           {{{3
 lh#list#arg_min({list} [, Transfo])~
 lh#list#arg_min({list} [, Transfo])~
 @since v4.0.0
@@ -1592,8 +1641,8 @@ This function flattens a list >
   AssertEquals(lh#list#flatten(l), range(7))
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#dict#separate()*               {{{3
-lh#dict#separate(list, pred)~
+                                               *lh#list#separate()*               {{{3
+lh#list#separate(list, pred)~
 @param[in] {list} |List| to filter
 @param[in] {pred} |Function| predicate  that takes two parameters (element index, and
 element value)
@@ -1690,7 +1739,7 @@ the {input} will be returned.
 Example: >
     :let l = [ 1, 25, 5, 48, 25, 5, 28, 6]
     :let masks = [ 1, 0, 0, 1, 0, 1, 0, 1]
-    :echo lh#list#masks(l, masks)
+    :echo lh#list#mask(l, masks)
     [ 1, 48, 5, 6 ]
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1757,7 +1806,8 @@ lh#list#push_if_new(list, value)~
 @param[in,out] {list} |List| to extend
 @param[in]     {value} Element to insert, if new.
 @return        The {list}
-Adds an element into a list, if not already present
+Adds an element into a list, if not already present. Unlike
+|lh#list#push_if_new_entity()| this function compares values.
 
 Examples: >
 
@@ -1779,6 +1829,31 @@ Examples: >
   let list = [1,2,3]
 
   AssertEquals(lh#list#push_if_new_elements(copy(list), [1, 2, 5, 8]), [1,2,3,5,8])
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#list#push_if_new_entity()*     {{{3
+lh#list#push_if_new_entity(list, entity)~
+@param[in,out] {list} |List| to extend
+@param[in]     {entity} Element to insert, if a new entity.
+@return        The {list}
+Adds an element into a list, if not already present. Unlike
+|lh#list#push_if_new()| this function compares entities.
+Examples: >
+
+  let e = [1,2,3]
+  let list = [ [1,2,3], [4,5], [7,8] ]
+
+  Assert ! lh#list#contain_entity(list, e)
+  Assert lh#list#not_contain_entity(list, e)
+  AssertEquals(lh#list#find_entity(list, e), -1)
+
+  AssertEquals(lh#list#push_if_new_entity(list, e), [ [1,2,3], [4,5], [7,8], [1,2,3] ])
+
+  Assert lh#list#contain_entity(list, e)
+  Assert ! lh#list#not_contain_entity(list, e)
+  AssertEquals(lh#list#find_entity(list, e), 3)
+
+  AssertEquals(lh#list#push_if_new_entity(list, e), [ [1,2,3], [4,5], [7,8], [1,2,3] ])
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#remove()*                 {{{3
@@ -1946,20 +2021,24 @@ Examples: >
     AssertEquals (lh#list#possible_values(list, 'k2'), ['a', 'b', 'c', 15, 42, 8])
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#list#zip*                      {{{3
-lh#list#zip({list1}, {list2})~
-@pre both lists shall have the same size.
-Zip two |List|s into one. >
+                                               *lh#list#zip()*                    {{{3
+lh#list#zip({list1}, {list2}...)~
+@pre all lists shall have the same size.
+@since Version 3.10.0
+@warning, since version 4.0.0, the behaviour has drastically changed to follow
+Python's one.
+Zip any number of |List|s into one. >
 
   let l1 = ['a', 'b', 'c']
   let l2 = [1, 2, 3]
-  AssertEquals(lh#list#zip(l1, l2), ['a', 1, 'b', 2, 'c', 3])
+  AssertEquals(lh#list#zip(l1, l2), [['a', 1], ['b', 2], ['c', 3]])
   AssertThrows(lh#list#zip([1], [1,2]))
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#list#zip_as_dict*              {{{3
+                                               *lh#list#zip_as_dict()*            {{{3
 lh#list#zip_as_dict({list1}, {list2})~
 @pre both lists shall have the same size.
+@since Version 3.10.0
 Zip two |List|s into a |Dictionary|. >
 
   let l1 = ['a', 'b', 'c']
@@ -1968,7 +2047,7 @@ Zip two |List|s into a |Dictionary|. >
   AssertThrows(lh#list#zip_as_dict([1], [1,2]))
 
 ------------------------------------------------------------------------------
-GRAPHS RELATED FUNCTIONS                              *lhvl#graph*      {{{2
+GRAPH RELATED FUNCTIONS                               *lhvl#graph*      {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                              *lh#graph#tsort#depth()*             {{{3
@@ -1993,7 +2072,7 @@ These two functions implement a topological sort on the Direct Acyclic Graph.
 @test tests/lh/topological-sort.vim
 
 ------------------------------------------------------------------------------
-PATHS RELATED FUNCTIONS                               *lhvl#path*       {{{2
+PATH RELATED FUNCTIONS                                *lhvl#path*       {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                    *lh#path#depth()*                 {{{3
@@ -2282,7 +2361,7 @@ Prepares a permission lists object.
 @see |local_vimrc| documentation for more details.
 
 ------------------------------------------------------------------------------
-MENUS RELATED FUNCTIONS                               *lhvl#menu*       {{{2
+MENU RELATED FUNCTIONS                                *lhvl#menu*       {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                              *lh#menu#def_string_item()*          {{{3
@@ -2589,7 +2668,7 @@ The action to execute will be corrected depending on the current mode. See
 |lh#menu#make()_modes| for more details.
 
 ------------------------------------------------------------------------------
-COMMANDS RELATED FUNCTIONS                            *lhvl#command*    {{{2
+COMMAND RELATED FUNCTIONS                             *lhvl#command*    {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#command#analyse_args()*              {{{3
@@ -2670,7 +2749,7 @@ lh#command#complete({argLead}, {cmdLine}, {cursorPos})~
 Under developpement
 
 ------------------------------------------------------------------------------
-BUFFERS RELATED FUNCTIONS                             *lhvl#buffer*     {{{2
+BUFFER RELATED FUNCTIONS                              *lhvl#buffer*     {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#buffer#get_nr()*              {{{3
@@ -2840,7 +2919,7 @@ years of evolution), and it is a little bit cumbersome.
   nothing else.
 
 ------------------------------------------------------------------------------
-WINDOWS RELATED FUNCTIONS                             *lhvl#window*     {{{2
+WINDOW RELATED FUNCTIONS                              *lhvl#window*     {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#window#create_window_with()*  {{{3
@@ -3128,7 +3207,7 @@ LOG RELATED FUNCTIONS                                 *lhvl#log*        {{{2
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lhvl-global-logger*              {{{3
 lh-vim-lib provides a global logger since version 3.6.0.
-s_bo
+
 By default, it'll echo everything with |:echomsg| (through |lh#log#echomsg|).
 
 The logging policy can be set thanks to |lh#log#set_logger()|.
@@ -3396,7 +3475,7 @@ lh#object#is_an_object(var)~
 |lh#object#make_top_type()|.
 
 ------------------------------------------------------------------------------
-VARIABLES HELPERS                                     *lhvl#variables*  {{{2
+VARIABLE HELPERS                                      *lhvl#variables*  {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                  *lh#let#if_undef()*  *:LetIfUndef* {{{3
@@ -3832,6 +3911,8 @@ lh#assert#true({actual} [, {msg}])                     *lh#assert#true()*
 lh#assert#false({actual} [, {msg}])                    *lh#assert#false()*
 lh#assert#equal({expected}, {actual} [, {msg}])        *lh#assert#equal()*
 lh#assert#not_equal({expected}, {actual}  [, {msg}])   *lh#assert#not_equal()*
+lh#assert_is({expected}, {actual} [, {msg}])           *lh#assert#is()*
+lh#assert_is_not({expected}, {actual} [, {msg}])       *lh#assert#is_not()*
 lh#assert#match({pattern}, {actual} [, {msg}])         *lh#assert#match()*
 
 lh#assert#unexpected([, {msg}])                        *lh#assert#unexpected()*
