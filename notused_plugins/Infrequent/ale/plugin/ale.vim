@@ -25,6 +25,12 @@ if !s:has_features
     finish
 endif
 
+" Set the TMPDIR environment variable if it is not set automatically.
+" This can automatically fix some environments.
+if has('unix') && empty($TMPDIR)
+    let $TMPDIR = '/tmp'
+endif
+
 " This global variable is used internally by ALE for tracking information for
 " each buffer which linters are being run against.
 let g:ale_buffer_info = {}
@@ -59,6 +65,10 @@ let g:ale_lint_on_save = get(g:, 'ale_lint_on_save', 0)
 " This flag may be set to 0 to disable ale. After ale is loaded, :ALEToggle
 " should be used instead.
 let g:ale_enabled = get(g:, 'ale_enabled', 1)
+
+" This flag can be used to force ALE to send buffer data using ch_sendraw
+" in Vim 8. This works better for some users.
+let g:ale_use_ch_sendraw = get(g:, 'ale_use_ch_sendraw', has('win32'))
 
 " These flags dictates if ale uses the quickfix or the loclist (loclist is the
 " default, quickfix overrides loclist).

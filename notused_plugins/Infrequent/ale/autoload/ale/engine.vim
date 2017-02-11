@@ -17,7 +17,12 @@ function! s:GetJobID(job) abort
 
     " In Vim 8, the job is a special variable, and we open a channel for each
     " job. We'll use the ID of the channel instead as the job ID.
-    return ch_info(job_getchannel(a:job)).id
+    try
+        return ch_info(job_getchannel(a:job)).id
+    endtry
+
+    " If we fail to get the channel ID for a job, just return a 0 ID.
+    return 0
 endfunction
 
 function! ale#engine#InitBufferInfo(buffer) abort
@@ -33,6 +38,14 @@ function! ale#engine#InitBufferInfo(buffer) abort
     endif
 endfunction
 
+" A map from timer IDs to Vim 8 jobs, for tracking jobs that need to be killed
+" with SIGKILL if they don't terminate right away.
+let s:job_kill_timers = {}
+
+function! s:KillHandler(timer) abort
+    call job_stop(remove(s:job_kill_timers, a:timer), 'kill')
+endfunction
+
 function! ale#engine#ClearJob(job) abort
     let l:job_id = s:GetJobID(a:job)
     let l:linter = s:job_info_map[l:job_id].linter
@@ -46,10 +59,19 @@ function! ale#engine#ClearJob(job) abort
             call ch_close_in(job_getchannel(a:job))
         endif
 
+        " Ask nicely for the job to stop.
         call job_stop(a:job)
+
+        " If a job doesn't stop immediately, queue a timer which will
+        " send SIGKILL to the job, if it's alive by the time the timer ticks.
+        if job_status(a:job) ==# 'run'
+            let s:job_kill_timers[timer_start(100, function('s:KillHandler'))] = a:job
+        endif
     endif
 
-    call remove(s:job_info_map, l:job_id)
+    if has_key(s:job_info_map, l:job_id)
+        call remove(s:job_info_map, l:job_id)
+    endif
 endfunction
 
 function! s:StopPreviousJobs(buffer, linter) abort
@@ -266,21 +288,22 @@ function! s:RunJob(options) abort
             let l:job_options.out_cb = function('s:GatherOutputVim')
         endif
 
-        if has('win32')
-            " job_start commands on Windows have to be run with cmd /c,
-            " othwerwise %PATHTEXT% will not be used to programs ending int
-            " .cmd, .bat, .exe, etc.
-            let l:command = 'cmd /c ' . l:command
-        else
-            " Execute the command with the shell, to fix escaping issues.
-            let l:command = split(&shell) + split(&shellcmdflag) + [l:command]
+        " The command will be executed in a subshell. This fixes a number of
+        " issues, including reading the PATH variables correctly, %PATHEXT%
+        " expansion on Windows, etc.
+        "
+        " NeoVim handles this issue automatically if the command is a String.
+        let l:command = has('win32')
+        \   ?  'cmd /c ' . l:command
+        \   : split(&shell) + split(&shellcmdflag) + [l:command]
 
-            if l:read_buffer
-                " On Unix machines, we can send the Vim buffer directly.
-                " This is faster than reading the lines ourselves.
-                let l:job_options.in_io = 'buffer'
-                let l:job_options.in_buf = l:buffer
-            endif
+        if l:read_buffer && !g:ale_use_ch_sendraw
+            " Send the buffer via internal Vim 8 mechanisms, rather than
+            " by reading and sending it ourselves.
+            " On Unix machines, we can send the Vim buffer directly.
+            " This is faster than reading the lines ourselves.
+            let l:job_options.in_io = 'buffer'
+            let l:job_options.in_buf = l:buffer
         endif
 
         " Vim 8 will read the stdin from the file's buffer.
@@ -307,7 +330,7 @@ function! s:RunJob(options) abort
 
                 call jobsend(l:job, l:input)
                 call jobclose(l:job, 'stdin')
-            elseif has('win32')
+            elseif g:ale_use_ch_sendraw
                 " On some Vim versions, we have to send the buffer data ourselves.
                 let l:input = join(getbufline(l:buffer, 1, '$'), "\n") . "\n"
                 let l:channel = job_getchannel(l:job)

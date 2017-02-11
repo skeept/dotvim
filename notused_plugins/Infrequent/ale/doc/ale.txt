@@ -395,6 +395,22 @@ g:ale_statusline_format                               *g:ale_statusline_format*
   - The 3rd element is for when no errors are detected
 
 
+g:ale_use_ch_sendraw                                     *g:ale_use_ch_sendraw*
+
+  Type: |Number|
+  Default: `has('win32')`
+
+  This option only applies to Vim, and is ignored when the plugin is run
+  in NeoVim.
+
+  When this option is set to `1`, ALE will use |ch_sendraw()| for sending text
+  buffers to jobs, instead of setting the `in_io` option to `'buffer'` for
+  |job_start()|. See |in_io-buffer| for more information on this Vim option.
+
+  Using |ch_sendraw()| instead may lead to better performance or stability in
+  some cases. Typically for Linux users, `in_io` seems to be a better option.
+
+
 g:ale_warn_about_trailing_whitespace     *g:ale_warn_about_trailing_whitespace*
 
   Type: |Number|
@@ -1059,6 +1075,11 @@ ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
                          place of `command` when more complicated processing
                          is needed.
 
+                         If an empty string is returned from the callback,
+                         no jobs for linting will be run for that linter.
+                         This can be used for skipping a linter call,
+                         say if no configuration file was found.
+
   `command_chain`          A |List| of |Dictionary| items defining a series
                          of commands to be run. At least one |Dictionary|
                          should be provided. Each Dictionary must contain the
@@ -1074,6 +1095,13 @@ ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
                          The first callback function in a chain accepts only
                          a `(buffer)` argument, as there are no previous
                          commands to run which return `output`.
+
+                         If an empty string is returned for a command in a
+                         chain, that command in the chain will be skipped,
+                         and the next function in the chain will be called
+                         immediately instead. If the last command in a chain
+                         returns an empty string, then no linting will be
+                         performed.
 
                          Commands in the chain will all use the
                          `output_stream` value provided in the root
