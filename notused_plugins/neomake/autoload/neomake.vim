@@ -562,6 +562,9 @@ function! s:Make(options) abort
         if empty(maker)
             continue
         endif
+        if has_key(a:options, 'exit_callback')
+            let maker.exit_callback = a:options.exit_callback
+        endif
         " call neomake#utils#DebugMessage('Maker: '.string(enabled_makers), {'make_id': s:make_id})
 
         " Check for already running job for the same maker (from other runs).
@@ -729,8 +732,6 @@ endfunction
 function! s:CleanJobinfo(jobinfo) abort
     call neomake#utils#DebugMessage('Cleaning jobinfo', a:jobinfo)
 
-    call s:init_job_output(a:jobinfo)
-
     if has_key(a:jobinfo, 'id')
         call remove(s:jobs, a:jobinfo.id)
 
@@ -742,6 +743,13 @@ function! s:CleanJobinfo(jobinfo) abort
         if has_key(s:project_job_output, a:jobinfo.id)
             unlet s:project_job_output[a:jobinfo.id]
         endif
+    endif
+
+    call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
+
+    " Trigger autocmd if all jobs for a s:Make instance have finished.
+    if !len(filter(copy(s:jobs), 'v:val.make_id == a:jobinfo.make_id'))
+        call s:init_job_output(a:jobinfo)
 
         " If signs were not cleared before this point, then the maker did not return
         " any errors, so all signs must be removed
@@ -750,12 +758,7 @@ function! s:CleanJobinfo(jobinfo) abort
         else
             call neomake#CleanOldProjectSignsAndErrors()
         endif
-    endif
 
-    call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
-
-    " Trigger autocmd if all jobs for a s:Make instance have finished.
-    if !len(filter(copy(s:jobs), 'v:val.make_id == a:jobinfo.make_id'))
         " Remove make_id from its window.
         if !exists('l:t')
             let [t, w] = s:GetTabWinForMakeId(a:jobinfo.make_id)
@@ -1332,16 +1335,15 @@ endfunction
 
 function! neomake#Make(file_mode, enabled_makers, ...) abort
     let options = {'file_mode': a:file_mode}
+    if a:0
+        let options.exit_callback = a:1
+    endif
     if a:file_mode
         let options.ft = &filetype
     endif
     let options.enabled_makers = len(a:enabled_makers)
                     \ ? a:enabled_makers
                     \ : neomake#GetEnabledMakers(a:file_mode ? &filetype : '')
-    if a:0
-        let options.enabled_makers = map(copy(options.enabled_makers),
-                    \ "extend(v:val, {'exit_callback': a:1})")
-    endif
     return s:Make(options)
 endfunction
 
@@ -1350,10 +1352,10 @@ function! neomake#ShCommand(bang, sh_command, ...) abort
     let maker.name = 'sh: '.a:sh_command
     let maker.buffer_output = !a:bang
     let maker.errorformat = '%m'
-    if a:0
-        call extend(maker, a:1)
-    endif
     let options = {'enabled_makers': [maker]}
+    if a:0
+        call extend(options, a:1)
+    endif
     return get(s:Make(options), 0, -1)
 endfunction
 
