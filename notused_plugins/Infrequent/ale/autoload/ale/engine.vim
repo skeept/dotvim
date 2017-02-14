@@ -19,6 +19,7 @@ function! s:GetJobID(job) abort
     " job. We'll use the ID of the channel instead as the job ID.
     try
         return ch_info(job_getchannel(a:job)).id
+    catch
     endtry
 
     " If we fail to get the channel ID for a job, just return a 0 ID.
@@ -286,11 +287,17 @@ function! ale#engine#EscapeCommandPart(command_part) abort
 endfunction
 
 function! s:TemporaryFilename(buffer) abort
+    let l:filename = fnamemodify(bufname(a:buffer), ':t')
+
+    if empty(l:filename)
+        " If the buffer's filename is empty, create a dummy filename.
+        let l:ft = getbufvar(a:buffer, '&filetype')
+        let l:filename = 'file' . ale#filetypes#GuessExtension(l:ft)
+    endif
+
     " Create a temporary filename, <temp_dir>/<original_basename>
     " The file itself will not be created by this function.
-    return tempname()
-    \   . (has('win32') ? '\' : '/')
-    \   . fnamemodify(bufname(a:buffer), ':t')
+    return tempname() . (has('win32') ? '\' : '/') . l:filename
 endfunction
 
 " Given a command string, replace every...

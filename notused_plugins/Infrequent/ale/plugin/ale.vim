@@ -20,8 +20,13 @@ else
 endif
 
 if !s:has_features
-    echoerr 'ALE requires NeoVim >= 0.1.5 or Vim 8 with +timers +job +channel'
-    echoerr 'Please update your editor appropriately.'
+    " Only output a warning if editing some special files.
+    if index(['', 'gitcommit'], &filetype) == -1
+        echoerr 'ALE requires NeoVim >= 0.1.5 or Vim 8 with +timers +job +channel'
+        echoerr 'Please update your editor appropriately.'
+    endif
+
+    " Stop here, as it won't work.
     finish
 endif
 
@@ -185,7 +190,7 @@ command! ALENextWrap :call ale#loclist_jumping#Jump('after', 1)
 command! ALEToggle :call s:ALEToggle()
 
 " Define command to get information about current filetype.
-command! ALEInfo :call ale#linter#Info()
+command! ALEInfo :call ale#debugging#Info()
 
 " <Plug> mappings for commands
 nnoremap <silent> <Plug>(ale_previous) :ALEPrevious<Return>
