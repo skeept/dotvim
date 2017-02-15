@@ -1,7 +1,7 @@
 " @Author:      Tom Link (micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    329
+" @Revision:    332
 
 
 " :filedoc:
@@ -423,7 +423,7 @@ function! tlib#agent#ViewFile(world, selected) "{{{3
         " endif
         " call tlib#file#With(cmd0, cmd1, a:selected, a:world)
         " TLogVAR &filetype
-        exec back
+        silent! exec back
         let a:world.state = 'display'
     endif
     return a:world
@@ -432,6 +432,20 @@ endf
 
 function! tlib#agent#EditFile(world, selected) "{{{3
     return tlib#agent#Exit(tlib#agent#ViewFile(a:world, a:selected), a:selected)
+endf
+
+
+function! tlib#agent#EditFileInWindow(world, selected) "{{{3
+    if !empty(a:selected)
+        let back = a:world.SwitchWindow('win')
+        " TLogVAR back
+        for bufname in a:selected
+            let cmd = &modified && &nohidden ? 'sbuffer' : 'buffer'
+            exec cmd fnameescape(bufname)
+        endfor
+        " exec back
+    endif
+    return tlib#agent#Exit(a:world, a:selected)
 endf
 
 

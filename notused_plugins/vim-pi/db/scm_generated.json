@@ -5367,6 +5367,14 @@
     "type": "git",
     "url": "git://github.com/aklt/vim-rel"
   },
+  "5526": {
+    "type": "git",
+    "url": "git://github.com/tomtom/autopack_vim"
+  },
+  "5527": {
+    "type": "git",
+    "url": "git://github.com/tomtom/workbook_vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
