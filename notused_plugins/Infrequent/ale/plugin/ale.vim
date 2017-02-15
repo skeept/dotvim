@@ -4,11 +4,13 @@
 
 " Sanity Checks
 
-if exists('g:loaded_ale')
+if exists('g:loaded_ale_dont_use_this_in_other_plugins_please')
     finish
 endif
 
-let g:loaded_ale = 1
+" Set a special flag used only by this plugin for preventing doubly
+" loading the script.
+let g:loaded_ale_dont_use_this_in_other_plugins_please = 1
 
 " A flag for detecting if the required features are set.
 if has('nvim')
@@ -29,6 +31,9 @@ if !s:has_features
     " Stop here, as it won't work.
     finish
 endif
+
+" Set this flag so that other plugins can use it, like airline.
+let g:loaded_ale = 1
 
 " Set the TMPDIR environment variable if it is not set automatically.
 " This can automatically fix some environments.
@@ -126,6 +131,9 @@ let g:ale_statusline_format = get(g:, 'ale_statusline_format',
 let g:ale_warn_about_trailing_whitespace =
 \   get(g:, 'ale_warn_about_trailing_whitespace', 1)
 
+" A flag for controlling the maximum size of the command history to store.
+let g:ale_max_buffer_history_size = get(g:, 'ale_max_buffer_history_size', 20)
+
 function! s:ALEInitAuGroups() abort
     augroup ALERunOnTextChangedGroup
         autocmd!
@@ -191,6 +199,8 @@ command! ALEToggle :call s:ALEToggle()
 
 " Define command to get information about current filetype.
 command! ALEInfo :call ale#debugging#Info()
+" The same, but copy output to your clipboard.
+command! ALEInfoToClipboard :call ale#debugging#InfoToClipboard()
 
 " <Plug> mappings for commands
 nnoremap <silent> <Plug>(ale_previous) :ALEPrevious<Return>

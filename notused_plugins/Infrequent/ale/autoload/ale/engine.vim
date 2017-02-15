@@ -9,6 +9,30 @@
 " output: The array of lines for the output of the job.
 let s:job_info_map = {}
 
+function! ale#engine#AddToHistory(buffer, status, job_id, command) abort
+    if g:ale_max_buffer_history_size <= 0
+        " Don't save anything if the history isn't a positive number.
+        let g:ale_buffer_info[a:buffer].history = []
+
+        return
+    endif
+
+    let l:history = g:ale_buffer_info[a:buffer].history
+
+    " Remove the first item if we hit the max history size.
+    if len(l:history) >= g:ale_max_buffer_history_size
+        let l:history = l:history[1:]
+    endif
+
+    call add(l:history, {
+    \   'status': a:status,
+    \   'job_id': a:job_id,
+    \   'command': a:command,
+    \})
+
+    let g:ale_buffer_info[a:buffer].history = l:history
+endfunction
+
 function! s:GetJobID(job) abort
     if has('nvim')
         "In NeoVim, job values are just IDs.
@@ -33,12 +57,14 @@ function! ale#engine#InitBufferInfo(buffer) abort
         " new_loclist holds loclist items while jobs are being run.
         " temporary_file_list holds temporary files to be cleaned up
         " temporary_directory_list holds temporary directories to be cleaned up
+        " history holds a list of previously run commands for this buffer
         let g:ale_buffer_info[a:buffer] = {
         \   'job_list': [],
         \   'loclist': [],
         \   'new_loclist': [],
         \   'temporary_file_list': [],
         \   'temporary_directory_list': [],
+        \   'history': [],
         \}
     endif
 endfunction
@@ -155,6 +181,12 @@ function! ale#engine#RemoveManagedFiles(buffer) abort
         return
     endif
 
+    " We can't delete anything in a sandbox, so wait until we escape from
+    " it to delete temporary files and directories.
+    if ale#util#InSandbox()
+        return
+    endif
+
     " Delete files with a call akin to a plan `rm` command.
     for l:filename in g:ale_buffer_info[a:buffer].temporary_file_list
         call delete(l:filename)
@@ -194,6 +226,12 @@ function! s:HandleExit(job) abort
     " Call the same function for stopping jobs again to clean up the job
     " which just closed.
     call s:StopPreviousJobs(l:buffer, l:linter)
+
+    " Stop here if we land in the handle for a job completing if we're in
+    " a sandbox.
+    if ale#util#InSandbox()
+        return
+    endif
 
     if l:next_chain_index < len(get(l:linter, 'command_chain', []))
         call s:InvokeChain(l:buffer, l:linter, l:next_chain_index, l:output)
@@ -425,19 +463,26 @@ function! s:RunJob(options) abort
         let l:job = job_start(l:command, l:job_options)
     endif
 
+    let l:status = 'failed'
+    let l:job_id = 0
+
     " Only proceed if the job is being run.
     if has('nvim') || (l:job !=# 'no process' && job_status(l:job) ==# 'run')
         " Add the job to the list of jobs, so we can track them.
         call add(g:ale_buffer_info[l:buffer].job_list, l:job)
 
+        let l:status = 'ran'
+        let l:job_id = s:GetJobID(l:job)
         " Store the ID for the job in the map to read back again.
-        let s:job_info_map[s:GetJobID(l:job)] = {
+        let s:job_info_map[l:job_id] = {
         \   'linter': l:linter,
         \   'buffer': l:buffer,
         \   'output': [],
         \   'next_chain_index': l:next_chain_index,
         \}
     endif
+
+    call ale#engine#AddToHistory(l:buffer, l:status, l:job_id, l:command)
 endfunction
 
 " Determine which commands to run for a link in a command chain, or
