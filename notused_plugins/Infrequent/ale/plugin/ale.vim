@@ -49,7 +49,7 @@ let g:ale_buffer_info = {}
 
 " This option prevents ALE autocmd commands from being run for particular
 " filetypes which can cause issues.
-let g:ale_filetype_blacklist = ['nerdtree', 'unite']
+let g:ale_filetype_blacklist = ['nerdtree', 'unite', 'tags']
 
 " This Dictionary configures which linters are enabled for which languages.
 let g:ale_linters = get(g:, 'ale_linters', {})
@@ -162,6 +162,13 @@ function! s:ALEInitAuGroups() abort
             autocmd CursorMoved,CursorHold * call ale#cursor#EchoCursorWarningWithDelay()
         endif
     augroup END
+
+    if !g:ale_enabled
+        augroup! ALERunOnTextChangedGroup
+        augroup! ALERunOnEnterGroup
+        augroup! ALERunOnSaveGroup
+        augroup! ALECursorGroup
+    endif
 endfunction
 
 function! s:ALEToggle() abort
@@ -179,7 +186,7 @@ function! s:ALEToggle() abort
         endfor
 
         " Remove highlights for the current buffer now.
-        if g:ale_set_higlights
+        if g:ale_set_highlights
             call ale#highlight#UpdateHighlights()
         endif
     endif

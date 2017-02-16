@@ -53,6 +53,8 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#event#register_for_one_execution_at()`     | Registers a command to be executed once (and only once) when an event is triggered on the current file                                                                   |
 | `lh#exception#callstack()`                     | Parses `v:throwpoint` to extract the functions called                                                                                                                    |
 | `lh#exception#callstack()as_qf`                | Returns the callstack in a format compatible with quickfix functions                                                                                                     |
+| `lh#exception#decode()`                        | Create an object containing a callstack from a throwpoint                                                                                                                |
+| `lh#exception#get_callstack()`                 | Obtain the callstack at the current callsite                                                                                                                             |
 | `lh#file#new_cache().get()`                    | Caches and returns data associated to a file                                                                                                                             |
 | `lh#float#arg_max(list)`                       | Returns the index of the maximum element of a list of floats                                                                                                             |
 | `lh#float#arg_min(list)`                       | Returns the index of the minimum element of a list of floats                                                                                                             |
@@ -280,7 +282,6 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#buffer#jump()`               | Like `lh#buffer#find()`, but opens the buffer in a new window if it no matching window was opened before.                        |
 | `lh#buffer#list()`               | Returns the list of `buflisted` buffers.                                                                                         |
 | `lh#buffer#scratch()`            | Opens a new scratch buffer.                                                                                                      |
-|:---------------------------------|:---------------------------------------------------------------------------------------------------------------------------------|
 | `lh#window#split()`              | Forces to open a new split, ignoring E36                                                                                         |
 | `lh#window#new()`                | Forces to open a new window, ignoring E36                                                                                        |
 | `lh#window#create_window_with()` | Forces to create a new split, with any split related command, ignoring E36                                                       |
@@ -299,7 +300,6 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#syntax#name_at_mark()`                                       | Tells the syntax kind of the character at the given mark                                                                               |
 | `lh#syntax#name_at_mark()`                                       | Tells the syntax kind of the character at the given mark                                                                               |
 | `lh#syntax#skip()` `lh#syntax#SkipAt()` `lh#syntax#SkipAtMark()` | Helper functions to be used with `searchpair()` in order to ignore comments, Doxygen comments, strings, and characters while searching |
-|:-----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
 
 
 ### Functors
@@ -436,6 +436,7 @@ functions aim at providing tools to write unit tests.
 | `lh#assert#value().is_lt()`    | Asserts actual <  ref                                                                                                          |
 | `lh#assert#value().is_ge()`    | Asserts actual >= ref                                                                                                          |
 | `lh#assert#value().is_gt()`    | Asserts actual >  ref                                                                                                          |
+| `lh#assert#value().has_key()`  | Asserts `has_key(actual, key)`                                                                                                 |
 
 
 ### Word Tools
