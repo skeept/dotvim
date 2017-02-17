@@ -9,30 +9,6 @@
 " output: The array of lines for the output of the job.
 let s:job_info_map = {}
 
-function! ale#engine#AddToHistory(buffer, status, job_id, command) abort
-    if g:ale_max_buffer_history_size <= 0
-        " Don't save anything if the history isn't a positive number.
-        let g:ale_buffer_info[a:buffer].history = []
-
-        return
-    endif
-
-    let l:history = g:ale_buffer_info[a:buffer].history
-
-    " Remove the first item if we hit the max history size.
-    if len(l:history) >= g:ale_max_buffer_history_size
-        let l:history = l:history[1:]
-    endif
-
-    call add(l:history, {
-    \   'status': a:status,
-    \   'job_id': a:job_id,
-    \   'command': a:command,
-    \})
-
-    let g:ale_buffer_info[a:buffer].history = l:history
-endfunction
-
 function! s:GetJobID(job) abort
     if has('nvim')
         "In NeoVim, job values are just IDs.
@@ -238,6 +214,11 @@ function! s:HandleExit(job) abort
         return
     endif
 
+    " Log the output of the command for ALEInfo if we should.
+    if g:ale_history_enabled && g:ale_history_log_output
+        call ale#history#RememberOutput(l:buffer, l:job_id, l:output[:])
+    endif
+
     let l:linter_loclist = ale#util#GetFunction(l:linter.callback)(l:buffer, l:output)
 
     " Make some adjustments to the loclists to fix common problems.
@@ -294,12 +275,34 @@ function! ale#engine#SetResults(buffer, loclist) abort
     endif
 endfunction
 
-function! s:HandleExitNeoVim(job, data, event) abort
+function! s:SetExitCode(job, exit_code) abort
+    let l:job_id = s:GetJobID(a:job)
+
+    if !has_key(s:job_info_map, l:job_id)
+        return
+    endif
+
+    let l:buffer = s:job_info_map[l:job_id].buffer
+
+    call ale#history#SetExitCode(l:buffer, l:job_id, a:exit_code)
+endfunction
+
+function! s:HandleExitNeoVim(job, exit_code, event) abort
+    if g:ale_history_enabled
+        call s:SetExitCode(a:job, a:exit_code)
+    endif
+
     call s:HandleExit(a:job)
 endfunction
 
 function! s:HandleExitVim(channel) abort
     call s:HandleExit(ch_getjob(a:channel))
+endfunction
+
+" Vim returns the exit status with one callback,
+" and the channel will close later in another callback.
+function! s:HandleExitStatusVim(job, exit_code) abort
+    call s:SetExitCode(a:job, a:exit_code)
 endfunction
 
 function! s:FixLocList(buffer, loclist) abort
@@ -439,6 +442,12 @@ function! s:RunJob(options) abort
         \   'close_cb': function('s:HandleExitVim'),
         \}
 
+        if g:ale_history_enabled
+            " We only need to capture the exit status if we are going to
+            " save it in the history. Otherwise, we don't care.
+            let l:job_options.exit_cb = function('s:HandleExitStatusVim')
+        endif
+
         if l:output_stream ==# 'stderr'
             " Read from stderr instead of stdout.
             let l:job_options.err_cb = function('s:GatherOutputVim')
@@ -471,7 +480,7 @@ function! s:RunJob(options) abort
         " Add the job to the list of jobs, so we can track them.
         call add(g:ale_buffer_info[l:buffer].job_list, l:job)
 
-        let l:status = 'ran'
+        let l:status = 'started'
         let l:job_id = s:GetJobID(l:job)
         " Store the ID for the job in the map to read back again.
         let s:job_info_map[l:job_id] = {
@@ -482,7 +491,11 @@ function! s:RunJob(options) abort
         \}
     endif
 
-    call ale#engine#AddToHistory(l:buffer, l:status, l:job_id, l:command)
+    if g:ale_history_enabled
+        call ale#history#Add(l:buffer, l:status, l:job_id, l:command)
+    else
+        let g:ale_buffer_info[l:buffer].history = []
+    endif
 endfunction
 
 " Determine which commands to run for a link in a command chain, or
