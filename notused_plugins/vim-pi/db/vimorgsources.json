@@ -1,4 +1,5 @@
 {
+"add-git-managed-file-to-buffer":{"archive_name":"add-git-managed-file-to-buffer.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24973","version":"1.0.0","vim_script_nr":5528},
 "workbook":{"archive_name":"workbook.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24969","version":"0.01","vim_script_nr":5527},
 "autopack":{"archive_name":"autopack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24968","version":"0.01","vim_script_nr":5526},
 "vim-indentguides":{"archive_name":"vim-indentguides-0.1.0.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24965","version":"0.1.0","vim_script_nr":5525},
@@ -20,7 +21,7 @@
 "vmux":{"archive_name":"vmux-0.6.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24856","version":"0.6.1","vim_script_nr":5505},
 "Sprint":{"archive_name":"sprint-1.1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24837","version":"1.1.1","vim_script_nr":5504},
 "yarn":{"archive_name":"yarn.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24824","version":"0.1.0","vim_script_nr":5503},
-"vim-workspace":{"archive_name":"vim-workspace-1.8.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24966","version":"1.8.0","vim_script_nr":5502},
+"vim-workspace":{"archive_name":"vim-workspace-1.8.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24972","version":"1.8.1","vim_script_nr":5502},
 "rpgle":{"archive_name":"rpgle.vim.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24864","version":"1.1.0","vim_script_nr":5501},
 "vim-paragraph":{"archive_name":"vim-paragraph-2.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24836","version":"v2.0.1","vim_script_nr":5500},
 "gen_tags":{"archive_name":"gen_tags.vim-0.8.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24850","version":"0.8.1","vim_script_nr":5499},
@@ -222,7 +223,7 @@
 "vim-unite-cscope":{"archive_name":"vim-unite-cscope.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23792","version":"0.2.0","vim_script_nr":5286},
 "vim-babel":{"archive_name":"source-tree.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23788","version":"1.0","vim_script_nr":5285},
 "vim-dtsm":{"archive_name":"vim-dtsm-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23787","version":"1.0.0","vim_script_nr":5284},
-"PAM-CRASH_Syntax_Highlighting":{"archive_name":"pamcrash_syntax_50.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24068","version":"5.0","vim_script_nr":5283},
+"ESI_VPS_FEA-Solver_Syntax_Highlighting":{"archive_name":"pamcrash_syntax_60.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24975","version":"6.0","vim_script_nr":5283},
 "vim-do":{"archive_name":"vim-do-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23783","version":"0.1.0","vim_script_nr":5282},
 "Tabstuff":{"archive_name":"tabstuff-1.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24564","version":"1.2","vim_script_nr":5281},
 "snpsMan2VimSyntax":{"archive_name":"snpsMan2VimSyntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23773","version":"1.6.1","vim_script_nr":5280},
