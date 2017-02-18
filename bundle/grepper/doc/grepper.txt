@@ -476,6 +476,7 @@ FAQ                                                                *grepper-faq*
     |grepper-faq-01|  How to grep from the repository root?
     |grepper-faq-02|  How to change the colors of the quickfix window?
     |grepper-faq-03|  How to use queries that begin with dashes?
+    |grepper-faq-04|  How to use the default quickfix window height?
 
 ------------------------------------------------------------------------------
                                                                 *grepper-faq-01*
@@ -508,6 +509,7 @@ This colorscheme uses these settings:
 <
 ------------------------------------------------------------------------------
                                                                 *grepper-faq-03*
+How to use queries that begin with dashes?~
 
 A query is put on the command-line as-is. If it starts with a dash, the search
 fails. The VCS tool thinks you try to provide an option and that the actual
@@ -522,6 +524,16 @@ default like this:
 >
     runtime autoload/grepper.vim
     let g:grepper.ag.grepprg .= ' --'
+<
+------------------------------------------------------------------------------
+                                                                *grepper-faq-04*
+How to use the default quickfix window height?~
+
+If you prefer the default quickfix window height of 10 lines, no matter how
+many matches grepper found, put this in your vimrc:
+>
+    let g:grepper = { 'open': 0 }
+    autocmd User Grepper copen
 <
 ==============================================================================
 EXAMPLE                                                        *grepper-example*
