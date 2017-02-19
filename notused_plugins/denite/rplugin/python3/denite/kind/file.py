@@ -84,6 +84,9 @@ class Kind(Openable):
             self.vim.call('win_gotoid', prev_id)
 
     def __jump(self, context, target):
+        if 'action__pattern' in target:
+            self.vim.call('search', target['action__pattern'], 'w')
+
         line = int(target.get('action__line', 0))
         col = int(target.get('action__col', 0))
 

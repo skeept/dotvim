@@ -4285,7 +4285,7 @@
   },
   "5090": {
     "type": "git",
-    "url": "git://github.com/dietsche/vim-lastplace"
+    "url": "git://github.com/farmergreg/vim-lastplace"
   },
   "5093": {
     "type": "git",
