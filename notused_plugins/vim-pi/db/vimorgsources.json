@@ -525,7 +525,7 @@
 "Improved_AnsiEsc":{"archive_name":"AnsiEsc.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24019","version":"13.3","vim_script_nr":4979},
 "fireplace":{"archive_name":"fireplace.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23429","version":"1.1","vim_script_nr":4978},
 "textobj-delimited":{"archive_name":"textobj-delimited.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22340","version":"1.1.0","vim_script_nr":4977},
-"vim-gista":{"archive_name":"vim-gista-v2.3.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24167","version":"v2.3.3","vim_script_nr":4976},
+"vim-gista":{"archive_name":"vim-gista-v2.5.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24977","version":"v2.5.0","vim_script_nr":4976},
 "unite-linephrase":{"archive_name":"unite-linephrase-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22129","version":"0.1.0","vim_script_nr":4975},
 "YAJS_Yet_Another_JavaScript_Syntax":{"archive_name":"yajs.vim-1.5.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23849","version":"1.5","vim_script_nr":4974},
 "erlang-motions":{"archive_name":"erlang-motions.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22116","version":"1.0","vim_script_nr":4973},
