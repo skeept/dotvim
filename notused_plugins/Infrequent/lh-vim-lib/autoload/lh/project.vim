@@ -5,7 +5,7 @@
 " Version:      4.0.0
 let s:k_version = '400'
 " Created:      08th Sep 2016
-" Last Update:  20th Feb 2017
+" Last Update:  21st Feb 2017
 "------------------------------------------------------------------------
 " Description:
 "       Define new kind of variables: `p:` variables.
@@ -26,8 +26,6 @@ let s:k_version = '400'
 " - Toggling:
 "   - at global level: [a, b, c]
 "   - at project level: [default value from global VS force [a, b, c]]
-" - Have menu priority + menu name in all projects in order to simplify
-"   toggling definitions
 " - Completion on :Let* and :Unlet for inherited p:variables
 " - Use in plugins
 "   - p:$ENV variables
@@ -941,18 +939,25 @@ endfunction
 
 " Function: lh#project#_crt_var_name(var) {{{3
 function! lh#project#_crt_var_name(var) abort
-  call lh#assert#match('^p:', a:var)
-  let [all, kind, name; dummy] = matchlist(a:var, '\v^p:([&$])=(.*)')
+  if a:var =~ '^p:'
+    call lh#assert#match('^p:', a:var)
+    let [all, kind, name; dummy] = matchlist(a:var, '\v^p:([&$])=(.*)')
+  elseif a:var =~ '^&p:'
+    let [all, kind, name; dummy] = matchlist(a:var, '\v^(\&)p:(.*)')
+  else
+    call lh#assert#unexpected('Unexpected variable name '.string(a:var))
+  endif
   if lh#project#is_in_a_project()
+    let varname = kind.name
     if kind == '&'
       return
-            \ { 'name'    : a:var[2:]
+            \ { 'name'    : varname
             \ , 'realname': 'b:'.s:project_varname.'.options.'.name
             \ , 'project' : b:{s:project_varname}
             \ }
     elseif kind == '$'
       return
-            \ { 'name'    : a:var[2:]
+            \ { 'name'    : varname
             \ , 'realname': 'b:'.s:project_varname.'.env.'.name
             \ , 'project' : b:{s:project_varname}
             \ }

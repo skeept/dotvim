@@ -1,4 +1,5 @@
 {
+"verilog-support":{"archive_name":"verilog-support.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24982","version":"1.0","vim_script_nr":5529},
 "add-git-managed-file-to-buffer":{"archive_name":"add-git-managed-file-to-buffer.vim-1.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24976","version":"1.1.0","vim_script_nr":5528},
 "workbook":{"archive_name":"workbook.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24969","version":"0.01","vim_script_nr":5527},
 "autopack":{"archive_name":"autopack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24968","version":"0.01","vim_script_nr":5526},
@@ -207,7 +208,7 @@
 "oldfilesearch":{"archive_name":"oldfilesearch-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23872","version":"1.0","vim_script_nr":5302},
 "Base2Tone":{"archive_name":"Base2Tone-Evening-dark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24412","version":"1.5","vim_script_nr":5301},
 "Ranger%5300":{"archive_name":"ranger.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23894","version":"1.0","vim_script_nr":5300},
-"Citation":{"archive_name":"citation.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23890","version":"1.0","vim_script_nr":5299},
+"Citation":{"archive_name":"citation.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24981","version":"1.1","vim_script_nr":5299},
 "vim-love-docs":{"archive_name":"vim-love-docs.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24775","version":"0.5.0","vim_script_nr":5298},
 "iterm-start":{"archive_name":"iterm-start.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23880","version":"0.2.0","vim_script_nr":5297},
 "vim-run":{"archive_name":"vim-run.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23857","version":"0.1.0","vim_script_nr":5296},
@@ -1146,7 +1147,7 @@
 "colorpicker":{"archive_name":"colorpicker.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19032","version":"0.2","vim_script_nr":4326},
 "vimcat":{"archive_name":"vimcat","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23422","version":"2.06","vim_script_nr":4325},
 "Change_Syntax":{"archive_name":"change-syntax.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19029","version":"1.0.0","vim_script_nr":4324},
-"vim-simple-todo":{"archive_name":"vim-simple-todo-0.15.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24049","version":"0.15","vim_script_nr":4323},
+"vim-simple-todo":{"archive_name":"vim-simple-todo-0.18.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24980","version":"0.18","vim_script_nr":4323},
 "ChangeGloballySmartCase":{"archive_name":"ChangeGloballySmartCase-1.30.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22693","version":"1.30","vim_script_nr":4322},
 "ChangeGlobally":{"archive_name":"ChangeGlobally-1.30.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22692","version":"1.30","vim_script_nr":4321},
 "SearchHighlighting":{"archive_name":"SearchHighlighting-2.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24928","version":"2.00","vim_script_nr":4320},

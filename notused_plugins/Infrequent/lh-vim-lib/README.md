@@ -29,6 +29,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [UI functions](#ui-functions)
   * [Logging framework](#logging-framework)
   * [Design by Contract function](#design-by-contract-functions)
+  * [Project feature](doc/Project.md) -- other web page
 
 ### Miscellaneous functions
 
@@ -265,6 +266,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#menu#is_in_visual_mode()` | Tells whether the action triggered by a menu/map was initiated while in visual mode.                                                                     |
 | `lh#menu#make()`              | Helper function to associate menus and mappings to actions in different modes.                                                                           |
 | `lh#menu#map_all()`           | Helper function to define several mappings at once as `:amenu` would do                                                                                  |
+| `lh#menu#emove()`             | Helper function to remove a menus from as many modes as required                                                                                         |
 | `lh#menu#text()`              | Transforms a regular text into a text that can be directly used with [|`:menu`|](http://vimhelp.appspot.com/gui.txt.html#:menu) commands.                |
 
 See also the documentation of the old functions at http://hermitte.free.fr/vim/general.php#expl_menu_map
