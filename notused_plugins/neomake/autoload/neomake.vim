@@ -54,6 +54,11 @@ function! neomake#GetStatus() abort
                 \ }
 endfunction
 
+" Not documented, only used internally for now.
+function! neomake#GetMakeOptions(...) abort
+    return s:make_info[a:0 ? a:1 : s:make_id]
+endfunction
+
 function! neomake#ListJobs() abort
     call neomake#utils#DebugMessage('call neomake#ListJobs()')
     for jobinfo in values(s:jobs)
@@ -534,6 +539,7 @@ function! s:Make(options) abort
         let s:make_id += 1
         let s:make_info[s:make_id] = {
                     \ 'cwd': getcwd(),
+                    \ 'verbosity': get(g:, 'neomake_verbose', 1) + &verbose,
                     \ }
 
         if file_mode
@@ -555,7 +561,8 @@ function! s:Make(options) abort
         return []
     endif
     call neomake#utils#DebugMessage(printf('Running makers: %s',
-                \ join(map(copy(enabled_makers), 'v:val.name'), ', ')))
+                \ join(map(copy(enabled_makers), 'v:val.name'), ', ')),
+                \ {'make_id': s:make_id})
     let maker = {}
     while len(enabled_makers)
         let maker = remove(enabled_makers, 0)
@@ -635,9 +642,9 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
     let index = a:prev_index
     let maker_type = file_mode ? 'file' : 'project'
     let cleaned_signs = 0
-    let ignored_signs = 0
+    let ignored_signs = []
     let s:postprocess = get(maker, 'postprocess', function('neomake#utils#CompressWhitespace'))
-    let debug = get(g:, 'neomake_verbose', 0) >= 3
+    let debug = get(g:, 'neomake_verbose', 1) >= 3
 
     while index < len(list)
         let entry = list[index]
@@ -704,9 +711,9 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
 
         if g:neomake_place_signs
             if entry.lnum is 0
-                let ignored_signs += 1
+                let ignored_signs += [entry]
             else
-                call neomake#signs#RegisterSign(entry, maker_type)
+                call neomake#signs#PlaceSign(entry, maker_type)
             endif
         endif
         if highlight_columns || highlight_lines
@@ -721,10 +728,10 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
             call setqflist(list, 'r')
         endif
     endif
-    if ignored_signs
+    if len(ignored_signs)
         call neomake#utils#DebugMessage(printf(
-                    \ 'Could not place signs for %d entries without line number.',
-                    \ ignored_signs))
+                    \ 'Could not place signs for %d entries without line number: %s.',
+                    \ len(ignored_signs), string(ignored_signs)))
     endif
     return counts_changed
 endfunction
@@ -882,7 +889,7 @@ function! neomake#ProcessCurrentWindow() abort
 endfunction
 
 function! s:ProcessPendingOutput(outputs) abort
-    for job_id in sort(keys(a:outputs))
+    for job_id in sort(keys(a:outputs), 'N')
         let output = a:outputs[job_id]
         let jobinfo = s:jobs[job_id]
         for [source, lines] in items(output)
@@ -911,9 +918,6 @@ function! neomake#ProcessPendingOutput() abort
     call neomake#ProcessCurrentWindow()
     if len(s:project_job_output)
         call s:ProcessPendingOutput(s:project_job_output)
-        if g:neomake_place_signs
-            call neomake#signs#PlaceVisibleSigns()
-        endif
     endif
     call neomake#highlights#ShowHighlights()
 endfunction
@@ -935,9 +939,6 @@ function! s:RegisterJobOutput(jobinfo, lines, source) abort
     if !a:jobinfo.file_mode
         if s:CanProcessJobOutput()
             call s:ProcessJobOutput(a:jobinfo, a:lines, a:source)
-            if g:neomake_place_signs
-                call neomake#signs#PlaceVisibleSigns()
-            endif
             return 0
         else
             if !exists('s:project_job_output[a:jobinfo.id]')
@@ -954,7 +955,6 @@ function! s:RegisterJobOutput(jobinfo, lines, source) abort
     " Process the window directly if we can.
     if s:CanProcessJobOutput() && index(get(w:, 'neomake_make_ids', []), a:jobinfo.make_id) != -1
         call s:ProcessJobOutput(a:jobinfo, a:lines, a:source)
-        call neomake#signs#PlaceVisibleSigns()
         call neomake#highlights#ShowHighlights()
         return 0
     endif
@@ -1295,15 +1295,7 @@ function! neomake#EchoCurrentError(...) abort
     call neomake#utils#WideMessage(message)
 endfunction
 
-let s:last_cursormoved = [0, 0]
 function! neomake#CursorMoved() abort
-    let l:line = line('.')
-    if s:last_cursormoved[0] != l:line || s:last_cursormoved[1] != bufnr('%')
-        let s:last_cursormoved = [l:line, bufnr('%')]
-        if g:neomake_place_signs
-            call neomake#signs#PlaceVisibleSigns()
-        endif
-    endif
     call neomake#EchoCurrentError()
 endfunction
 
