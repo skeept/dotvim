@@ -18,6 +18,7 @@ let s:defaults = {
       \ 'highlight':     0,
       \ 'buffer':        0,
       \ 'buffers':       0,
+      \ 'stop':          5000,
       \ 'dir':           'cwd',
       \ 'next_tool':     '<tab>',
       \ 'tools':         ['ag', 'ack', 'grep', 'findstr', 'rg', 'pt', 'sift', 'git'],
@@ -102,23 +103,45 @@ let s:magic   = { 'next': '$$$next###', 'esc': '$$$esc###' }
 " Job handlers {{{1
 " s:on_stdout_nvim() {{{2
 function! s:on_stdout_nvim(_job_id, data, _event) dict abort
+  if !exists('s:id')
+    return
+  endif
   if empty(a:data[-1])
+    " Second-last item is the last complete line in a:data.
     execute self.addexpr 'self.stdoutbuf + a:data[:-2]'
     let self.stdoutbuf = []
   else
     if empty(self.stdoutbuf)
-      let self.stdoutbuf = a:data
+      " Last item in a:data is an incomplete line. Put into buffer.
+      let self.stdoutbuf = [remove(a:data, -1)]
+      execute self.addexpr 'a:data'
     else
+      " Last item in a:data is an incomplete line. Append to buffer.
       let self.stdoutbuf = self.stdoutbuf[:-2]
             \ + [self.stdoutbuf[-1] . get(a:data, 0, '')]
             \ + a:data[1:]
+    endif
+  endif
+  if self.flags.stop > 0
+    let nmatches = len(self.flags.quickfix ? getqflist() : getloclist(0))
+    if nmatches >= self.flags.stop || len(self.stdoutbuf) >= self.flags.stop
+      call jobstop(s:id)
+      unlet s:id
     endif
   endif
 endfunction
 
 " s:on_stdout_vim() {{{2
 function! s:on_stdout_vim(_job_id, data) dict abort
+  if !exists('s:id')
+    return
+  endif
   execute self.addexpr 'a:data'
+  if self.flags.stop > 0
+        \ && len(self.flags.quickfix ? getqflist() : getloclist(0)) >= self.flags.stop
+    call job_stop(s:id)
+    unlet s:id
+  endif
 endfunction
 
 " s:on_exit() {{{2
@@ -328,6 +351,13 @@ function! grepper#parse_flags(args) abort
     elseif flag =~? '\v^-%(no)?buffers$'       | let flags.buffers   = flag !~? '^-no'
     elseif flag =~? '^-cword$'                 | let flags.cword     = 1
     elseif flag =~? '^-side$'                  | let flags.side      = 1
+    elseif flag =~? '^-stop$'
+      if empty(args) || args[0] =~ '^-'
+        let flags.stop = -1
+      else
+        let [numstring, args] = s:split_one(args)
+        let flags.stop = str2nr(numstring)
+      endif
     elseif flag =~? '^-dir$'
       let [dir, args] = s:split_one(args)
       if empty(dir)
@@ -382,6 +412,18 @@ endfunction
 
 " s:process_flags() {{{1
 function! s:process_flags(flags)
+  if a:flags.stop == -1
+    if exists('s:id')
+      if has('nvim')
+        call jobstop(s:id)
+      else
+        call job_stop(s:id)
+      endif
+      unlet s:id
+    endif
+    return 1
+  endif
+
   if a:flags.dir != 'cwd'
     call s:change_working_directory(a:flags.dir)
   endif
@@ -545,7 +587,7 @@ function! s:run(flags)
           \ 'on_stderr': function('s:on_stdout_nvim'),
           \ 'on_exit':   function('s:on_exit'),
           \ }))
-  elseif !get(w:, 'testing') && (v:version > 704 || v:version == 704 && has('patch1967'))
+  elseif !get(w:, 'testing') && has('patch-7.4.1967')
     if exists('s:id')
       silent! call job_stop(s:id)
     endif

@@ -53,15 +53,15 @@ To simply test vimagit, modify/add/delete/rename some files in a git repository 
 
 - `:Magit`  
   Open magit buffer with [:Magit](#magitshow_magit) command.
-- `N`  
-  Jump to next hunk with `N`, or move the cursor as you like. The cursor is on a hunk.
+- `<C-n>`  
+  Jump to next hunk with `<C-n>`, or move the cursor as you like. The cursor is on a hunk.
 - `S`  
   While the cursor is on an unstaged hunk, press `S` in Normal mode: the hunk is now staged, and appears in "Staged changes" section (you can also unstage a hunk from "Staged section" with `S`).
 - `CC`  
   Once you have stage all the required changes, press `CC`.
   - Section "Commit message" is shown.
   - Type your commit message in this section.
-  - To commit, go back in Normal mode, and press `CC`.
+  - To commit, go back in Normal mode, and press `CC` (or `:w` if you prefer).
   
 You just created your first commit with vimagit!
 
@@ -204,16 +204,18 @@ E means 'edit'.
 
 :exclamation: this function is extremely powerful, just give it a try!
 
-##### N,P
+##### <C-n>,<C-p>
  * Move to **N**ext or **P**revious hunk.
 
 ##### CC
  * If not in commit section, set commit mode to "New commit" and show "Commit message" section with brand new commit message.
- * If in commit section, commit the all staged changes in commit mode previously set.
+ * If in commit section, create the commit with the commit message and all staged changes.
+
+##### :w :x :wq ZZ
+ * If in commit section, create the commit with the commit message and all staged changes.
 
 ##### CA
  * If not in commit section, set commit mode to "Amend commit" and show "Commit message" section with previous commit message.
- * If in commit section, commit the staged changes in commit mode previously set.
 
 ##### CF
  * Amend the staged changes into the previous commit, without modifying previous commit message.
@@ -235,6 +237,12 @@ E means 'edit'.
 
 ##### ?
  * Toggle help showing in magit buffer
+
+#### Mapping update
+
+Since vimagit 1.7, jump mappings have changed:
+ *  Jump next hunk : **N** -> **<C-n>**
+ *  Jump prev hunk : **P** -> **<C-p>**
 
 #### Autocommand events
 
@@ -307,6 +315,12 @@ Git command, may be simply simply "git" if git is in your path. Defualt is "git"
 To disable chatty inline help in magit buffer (default 1)
 > let g:magit_show_help=[01]
 
+#### g:magit_commit_title_limit
+
+Text is grayed if first line of commit message exceed this number of character (default 50)
+
+> let g:magit_commit_title_limit=[0..300]
+
 #### g:magit_default_show_all_files
 
 When this variable is set to 0, all diff files are hidden by default.
@@ -324,6 +338,13 @@ When set to 1, filenames are unfolded and hunks are folded.
 When set to 2, filenames and hunks are unfolded.
 Default value is 1.
 > let g:magit_default_fold_level=[012]
+
+#### g:magit_auto_foldopen
+
+When stage/unstage a hunk, cursor goes to the closest hunk in the same section.
+This option automatically opens the fold of the hunk cursor has jump to.
+Default value is 1.
+> let g:magit_auto_foldopen=[01]
 
 #### g:magit_default_sections
 
