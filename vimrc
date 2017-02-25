@@ -84,8 +84,8 @@ function! SetupVAM()
   VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
   "VAMAddToActiveAddons argumentative projectionist
-  VAMAddToActiveAddons Syntastic
-  "VAMAddToActiveAddons ale
+  "VAMAddToActiveAddons Syntastic
+  VAMAddToActiveAddons ale
   "VAMAddToActiveAddons neomake
   VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
