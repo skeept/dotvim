@@ -26,6 +26,9 @@ TEST_VIM_PREFIX:=SHELL=/bin/bash
 testx: export VADER_OPTIONS=-x
 testx: test
 
+testnvimx: export VADER_OPTIONS=-x
+testnvimx: testnvim
+
 # Neovim might quit after ~5s with stdin being closed.  Use --headless mode to
 # work around this.
 # > Vim: Error reading input, exiting...
@@ -64,9 +67,11 @@ _run_interactive: _REDIR_STDOUT:=
 _run_interactive: _run_vim
 
 testvim_interactive: TEST_VIM:=vim -X
+testvim_interactive: TEST_VIM_PREFIX+=HOME=/dev/null
 testvim_interactive: _run_interactive
 
 testnvim_interactive: TEST_VIM:=nvim
+testnvim_interactive: TEST_VIM_PREFIX+=HOME=build/neovim-test-home
 testnvim_interactive: _run_interactive
 
 
@@ -162,6 +167,14 @@ docker_test: docker_make
 docker_run: $(TESTS_VADER_DIR)
 docker_run:
 	$(DOCKER) $(if $(DOCKER_RUN),$(DOCKER_RUN),bash)
+
+check:
+	ret=0; \
+	for f in $(filter-out neomake.vader,$(notdir $(shell git ls-files tests/*.vader))); do \
+		if ! grep -q "^Include.*: $$f" tests/neomake.vader; then \
+			echo "Test not included: $$f" >&2; ret=1; \
+		fi; \
+	done; exit $$ret
 
 .PHONY: vint vint-errors vimlint vimlint-errors
 .PHONY: test testnvim testvim testnvim_interactive testvim_interactive

@@ -366,7 +366,8 @@ function! neomake#GetMaker(name_or_maker, ...) abort
                 endif
                 unlet m
             endfor
-        elseif exists('g:neomake_'.a:name_or_maker.'_maker')
+        endif
+        if !exists('maker') && exists('g:neomake_'.a:name_or_maker.'_maker')
             let maker = get(g:, 'neomake_'.a:name_or_maker.'_maker')
         endif
         if !exists('maker')
@@ -466,12 +467,13 @@ function! neomake#GetProjectMakers() abort
 endfunction
 
 function! neomake#GetEnabledMakers(...) abort
-    if !a:0 || type(a:1) !=# type('')
+    if !a:0
         " If we have no filetype, use the global default makers.
         " This variable is also used for project jobs, so it has no
         " buffer local ('b:') counterpart for now.
-        let enabled_makers = get(g:, 'neomake_enabled_makers', [])
-        call map(enabled_makers, 'neomake#GetMaker(v:val, ft)')
+        let enabled_makers = copy(get(g:, 'neomake_enabled_makers', []))
+        call map(enabled_makers, "extend(neomake#GetMaker(v:val, &filetype),
+                    \ {'auto_enabled': 0}, 'error')")
     else
         " If a filetype was passed, get the makers that are enabled for each of
         " the filetypes represented.
@@ -521,7 +523,6 @@ function! neomake#GetEnabledMakers(...) abort
                 let enabled_makers += [maker]
             endfor
         endfor
-
     endif
     return enabled_makers
 endfunction
@@ -687,8 +688,10 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
     let ignored_signs = []
     unlet! s:postprocess  " vim73
     let s:postprocess = get(maker, 'postprocess', function('neomake#utils#CompressWhitespace'))
-    if type(s:postprocess) == type({})
-        let s:postprocess = s:postprocess.fn
+    if type(s:postprocess) != type([])
+        let s:postprocessors = [s:postprocess]
+    else
+        let s:postprocessors = s:postprocess
     endif
     let debug = get(g:, 'neomake_verbose', 1) >= 3
 
@@ -698,21 +701,16 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
         let index += 1
 
         let before = copy(entry)
-        if type(s:postprocess) == type([])
-            for s:f in s:postprocess
-                if type(s:f) == type({})
-                    let s:this = extend(copy(s:f), {'maker': maker})
-                    call call(s:f.fn, [entry], s:this)
-                else
-                    let s:this = {'maker': maker}
-                    call call(s:f, [entry], s:this)
-                endif
-                unlet s:f  " vim73
-            endfor
-        else
-            let s:this = {'maker': maker}
-            call call(s:postprocess, [entry], s:this)
-        endif
+        for s:f in s:postprocessors
+            if type(s:f) == type({})
+                let s:this = extend(copy(s:f), {'maker': maker})
+                call call(s:f.fn, [entry], s:this)
+            else
+                let s:this = {'maker': maker}
+                call call(s:f, [entry], s:this)
+            endif
+            unlet! s:f  " vim73
+        endfor
         if entry != before
             let list_modified = 1
             if debug

@@ -5379,6 +5379,14 @@
     "type": "git",
     "url": "git://github.com/ToruIwashita/add-git-managed-file-to-buffer.vim"
   },
+  "5530": {
+    "type": "git",
+    "url": "git://github.com/jbarbero/doctabs.vim"
+  },
+  "5531": {
+    "type": "git",
+    "url": "git://github.com/lambdalisue/gina.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
