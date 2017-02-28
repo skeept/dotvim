@@ -189,7 +189,7 @@ function! s:MakeJob(make_id, options) abort
 
     try
         let error = ''
-        let argv = maker.get_argv(jobinfo.file_mode ? jobinfo.bufnr : 0)
+        let argv = maker._get_argv(jobinfo.file_mode ? jobinfo.bufnr : 0)
         if neomake#has_async_support()
             if has('nvim')
                 let opts = {
@@ -274,7 +274,7 @@ function! s:MakeJob(make_id, options) abort
 endfunction
 
 let s:maker_base = {}
-function! s:maker_base.get_argv(...) abort dict
+function! s:maker_base._get_argv(...) abort dict
     let bufnr = a:0 ? a:1 : 0
 
     " Resolve exe/args, which might be a function or dictionary.
@@ -401,7 +401,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             let maker.name = 'unnamed_maker'
         endif
     endif
-    let maker.get_argv = s:maker_base.get_argv
+    let maker._get_argv = s:maker_base._get_argv
     let defaults = copy(s:maker_defaults)
     call extend(defaults, {
         \ 'exe': maker.name,
@@ -626,7 +626,7 @@ function! s:Make(options) abort
                 call neomake#utils#LoudMessage(printf(
                             \ 'Restarting already running job (%d.%d) for the same maker.',
                             \ jobinfo.make_id, jobinfo.id), {'make_id': s:make_id})
-                let jobinfo.restarting = 1
+                let jobinfo.restarting = s:make_id
                 call neomake#CancelJob(jobinfo.id)
                 continue
             endif
@@ -814,7 +814,8 @@ function! s:CleanJobinfo(jobinfo) abort
     call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
 
     " Trigger autocmd if all jobs for a s:Make instance have finished.
-    if !len(filter(copy(s:jobs), 'v:val.make_id == a:jobinfo.make_id'))
+    if !len(filter(copy(s:jobs), 'v:val.make_id == a:jobinfo.make_id'
+                \ . "|| get(v:val, 'restarting', 0) == a:jobinfo.make_id"))
         call s:init_job_output(a:jobinfo)
 
         " If signs were not cleared before this point, then the maker did not return
@@ -1168,7 +1169,7 @@ function! s:exit_handler(job_id, data, event_type) abort
     let jobinfo = s:jobs[a:job_id]
     if get(jobinfo, 'restarting')
         call neomake#utils#DebugMessage('exit: job is restarting.', jobinfo)
-        call s:MakeJob(jobinfo.make_id, jobinfo)
+        call s:MakeJob(jobinfo.restarting, jobinfo)
         call remove(s:jobs, jobinfo.id)
         return
     endif
@@ -1443,8 +1444,11 @@ function! s:display_maker_info(...) abort
     for maker_name in maker_names
         let maker = call('neomake#GetMaker', [maker_name] + a:000)
         echo ' - '.maker.name
-        for [k, V] in items(maker)
+        for [k, V] in sort(copy(items(maker)))
             if k ==# 'name' || k ==# 'ft'
+                continue
+            endif
+            if k =~# '^_'
                 continue
             endif
             if has_key(s:maker_defaults, k)
@@ -1452,7 +1456,7 @@ function! s:display_maker_info(...) abort
                         \ && V ==# s:maker_defaults[k]
                 continue
             endif
-            echo '   '.k.': '.string(V)
+            echo '   - '.k.': '.string(V)
             unlet V
         endfor
     endfor
@@ -1486,7 +1490,7 @@ function! neomake#DisplayInfo() abort
     echo "\n"
     echo '##### Settings'
     echo '```'
-    for [k, V] in items(filter(copy(g:), "v:key =~# '^neomake_'"))
+    for [k, V] in sort(items(filter(copy(g:), "v:key =~# '^neomake_'")))
         echo 'g:'.k.' = '.string(V)
         unlet! V  " Fix variable type mismatch with Vim 7.3.
     endfor

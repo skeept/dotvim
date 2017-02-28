@@ -7,6 +7,7 @@
 import shlex
 
 from denite import util, process
+from os.path import relpath
 
 from .base import Base
 
@@ -78,13 +79,13 @@ class Source(Base):
         arg = args.get(0, [])
         if arg:
             if isinstance(arg, str):
-                arg = [self.vim.call('expand', arg)]
+                arg = [arg]
             elif not isinstance(arg, list):
                 raise AttributeError('`args[0]` needs to be a `str` or `list`')
         # Windows needs to specify the directory.
         elif context['is_windows']:
             arg = [context['path']]
-        context['__paths'] = arg
+        context['__paths'] = [util.abspath(self.vim, x) for x in arg]
 
         # arguments
         arg = args.get(1, [])
@@ -183,8 +184,9 @@ class Source(Base):
         candidates = []
 
         for line in outs:
-            result = util.parse_jump_line('', line)
+            result = util.parse_jump_line(context['path'], line)
             if not result:
                 continue
-            candidates.append(_candidate(result, result[0]))
+            path = relpath(result[0], start=context['path'])
+            candidates.append(_candidate(result, path))
         return candidates

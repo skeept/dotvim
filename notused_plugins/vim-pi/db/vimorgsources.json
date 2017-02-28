@@ -256,7 +256,7 @@
 "Tabtastic":{"archive_name":"vim-tabtastic.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23649","version":"1.0","vim_script_nr":5255},
 "Typer":{"archive_name":"typer.vim","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23639","version":"1.0","vim_script_nr":5254},
 "autolinker":{"archive_name":"autolinker.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23955","version":"0.02","vim_script_nr":5253},
-"vimagit":{"archive_name":"vimagit-1.7.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24991","version":"1.7.0","vim_script_nr":5252},
+"vimagit":{"archive_name":"vimagit-1.7.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25002","version":"1.7.1","vim_script_nr":5252},
 "robcolors":{"archive_name":"robcolors.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23627","version":"1.0","vim_script_nr":5251},
 "vim-json-line-format":{"archive_name":"vim-json-line-format.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23622","version":"0.1.1","vim_script_nr":5250},
 "togglenumber":{"archive_name":"vim-togglenumber.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23869","version":"1.2","vim_script_nr":5249},

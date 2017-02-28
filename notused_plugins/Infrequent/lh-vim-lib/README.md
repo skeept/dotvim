@@ -2,17 +2,17 @@
 
 ## Introduction
 
-_lh-vim-lib_ is a library that defines some common VimL functions I use in my various plugins and ftplugins.
+_lh-vim-lib_ is a library that defines some common vim functions I use in my various plugins and ftplugins.
 
 This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+.
 
 The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/master/doc/lh-vim-lib.txt) can be browsed.
 
-**Important:
+**Important:**
 
 - Since Version 2.2.0, the naming policy of these autoload functions have been harmonized. Now, most names are in lower cases, with words separated by underscores.
 - Since version 3.2.7, it's no longer hosted on google-code but on github
-- Version 4.0.0 breaks `lh#let#if_undef()` interface.**
+- Version 4.0.0 breaks `lh#let#if_undef()` interface.
 
 ## Functions
 
@@ -27,19 +27,19 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Buffers related functions](#buffers-related-functions)
   * [Syntax related functions](#syntax-related-functions)
   * [UI functions](#ui-functions)
-  * [Logging framework](#logging-framework)
-  * [Design by Contract function](#design-by-contract-functions)
+  * [Logging framework](doc/Log.md) -- other web page
+  * [Design by Contract functions](doc/DbC.md) -- other web page
   * [Project feature](doc/Project.md) -- other web page
 
 ### Miscellaneous functions
 
 | Function                                       | Purpose                                                                                                                                                                  |
 |------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lh#askvim#exe()`                              | Returns what a VimL command echoes                                                                                                                                       |
+| `lh#askvim#exe()`                              | Returns what a Vim command echoes                                                                                                                                        |
 | `lh#askvim#scriptnames()`                      | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
 | `lh#askvim#scriptname(id)`                     | Returns the name of the script associate to {id}                                                                                                                         |
 | `lh#async#queue(cmd, options)`                 | Push a `cmd` to execute in a queue of jobs. Requires Vim 7.4-1980                                                                                                        |
-| `lh#common#check_deps()`                       | Checks a VimL symbol is loaded                                                                                                                                           |
+| `lh#common#check_deps()`                       | Checks a Vim symbol is loaded                                                                                                                                            |
 | `lh#common#echomsg_multilines()`               | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
 | `lh#common#error_msg()`                        | Displays an error message                                                                                                                                                |
 | `lh#common#rand()`                             | Returns a random number                                                                                                                                                  |
@@ -248,7 +248,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#command#new()`                      | Experimental way to define commands that support auto-completion                            |
 | `lh#command#Fargs2String()`             | Merges a set strings into a set of parameters (experimental)                                |
 | `lh#command#analyse_args()`             | Parse `:command-completion-custom` function parameters                                      |
-| `lh#command#matching_variables()`       | Returns a list of VimL variable names matching the lead                                     |
+| `lh#command#matching_variables()`       | Returns a list of Vim variable names matching the lead                                      |
 | `lh#command#matching_for_commands()`    | Returns a list of Ex command names matching the lead                                        |
 | `lh#command#matching_askvim()`          | Returns a list of what Vim what have returned for cmdline completion given a type of things |
 | `lh#command#matching_bash_completion()` | Asks Bash what it'll complete the lead following the command with                           |
@@ -318,141 +318,30 @@ interactive functions. Depending on a configuration variable
 (`(bpg):ui_type`), they will delegate the interaction to a gvim UI
 function, or a plain text UI function (defined by vim, or emulated)
 
-| Function    | Purpose                                                                                                                                     |
-|:------------|:--------------------------------------------------------------------------------------------------------------------------------------------|
-| `CHECK()`   | Emulates a checbox UI function                                                                                                              |
-| `COMBO()`   | Emulates a combobox UI function                                                                                                             |
-| `CONFIRM()` | Similar to `confirm()`                                                                                                                      |
-| `IF()`      | Acts as the ternary operator                                                                                                                |
-| `INPUT()`   | Calls `inputdialog()` or `input()`                                                                                                          |
-| `SWITCH()`  | Â«Â»                                                                                                                                        |
-| `WHICH()`   | Wrapper around functions like `CONFIRM()` or `COMBO()` that returns the text of the selected item instead of the index of the selected item |
+| Function          | Purpose                                                                                                                                                 |
+|:------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lh#ui#check()`   | Emulates a checbox UI function                                                                                                                          |
+| `lh#ui#combo()`   | Emulates a combobox UI function                                                                                                                         |
+| `lh#ui#confirm()` | Similar to `confirm()`                                                                                                                                  |
+| `lh#ui#if()`      | Acts as the ternary operator                                                                                                                            |
+| `lh#ui#input()`   | Calls `inputdialog()` or `input()`                                                                                                                      |
+| `lh#ui#switch()`  | Emulates `switch()` in vim-script language                                                                                                              |
+| `lh#ui#which()`   | Wrapper around functions like `lh#ui#confirm()` or `lh#ui#combo()` that returns the text of the selected item instead of the index of the selected item |
 
 In the same thematics, see also [VFT - Vim Form Toolkit](http://www.vim.org/scripts/script.php?script_id=2160)
 
 ### Logging Framework
-lh-vim-lib provides a global logger since version 3.6.0.
-
-By default, it'll echo everything with `:echomsg` (through `lh#log#echomsg`).
-
-The logging policy can be set thanks to `lh#log#set_logger()`.
-In plugins, logging can be done directly thanks to `lh#log#this()`, or though
-an encapsulation, see below.
-
-This logger doesn't support log level directly. Instead, the recommended way to
-use it is to have logging helper functions in each plugins (autoload plugins,
-or plain plugins, ftplugins, ...)  and to have these functions test a plugin
-related verbose option to decide whether they log anything or not.
-I use [mu-template](http://github.com/LucHermitte/mu-template) skeletons for
-vim plugins to automatically define these
-functions in my plugins.
-
-It looks like this:
-
-```vim
-" # Debug
-let s:verbose = get(s:, 'verbose', 0)
-function! lh#icomplete#verbose(...)
-  if a:0 > 0
-    let s:verbose = a:1
-  endif
-  return s:verbose
-endfunction
-
-function! s:Log(...)
-  call call('lh#log#this', a:000)
-endfunction
-
-function! s:Verbose(...)
-  if s:verbose
-    call call('s:Log', a:000)
-  endif
-endfunction
-```
-
-Thus, if I want to trace what is done in my icomplete autoload plugin, I call
-
-```vim
-:call lh#icomplete#verbose(1)
-" or If plugin/vim_maintain.vim from lh-misc is installed:
-:Verbose icomplete
-```
-
-If I want to disable completely all logs, I can execute:
-
-```vim
-:call lh#log#set_logger('none')
-```
-
-If I prefer to see my traces on the right side, and in a
-[|quickfix-window|](http://vimhelp.appspot.com/quickfix.txt.html#quickfix-window)
-in order to trace the files + line numbers along with the message to log, I'll
-execute
-
-```vim
-:call lh#log#set_logger('qf', 'vert')
-```
-
-**Screencast:**
-![lh-vim-lib logging framework demo](doc/screencast-log.gif "lh-vim-lib logging framework demo")
-
-**Functions:**
-
-| Function                                       | Purpose                                                                        |
-|------------------------------------------------|--------------------------------------------------------------------------------|
-| `lh#log#echomsg()`                             | Returns a new logger object, that logs with `:echomsg` (internal use)          |
-| `lh#log#new()`                                 | Returns a new logger object (internal use)                                     |
-| `lh#log#none()`                                | Returns a new, inactive, logger object (internal use)                          |
-| `lh#log#set_logger(kind, opts)`                | Sets the global logging policy (quickfix/loclist window, none, `echomsg`)      |
-| `lh#log#this({format}, {args...})`             | Logs a formatted message with the global logger                                |
-| `lh#log#exception(...)`                        | Logs the exception, and possibly its callstack, with the global logger.        |
+See separate page: [doc/Log.md](doc/Log.md).
 
 ### Design by Contract functions
-This set of functions introduce DbC helpers. There are here to help plugin
-developers to detect and eradicate VimL programming errors.
-
-When an assertion fails, we cannot expect the script to go on correctly. There
-IS an error in its logic. We cannot expect anything good after that. That's
-where `lh#assert#*()` functions differs from Vim
-[|test-functions|](http://vimhelp.appspot.com/usr_41.txt.html#test-functions)
-and my [vim-UT](http://github.com/LucHermitte/vim-UT) plugin: these other
-functions aim at providing tools to write unit tests.
-
-| Function                       | Purpose                                                                                                                        |
-|:-------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| `lh#assert#mode()`             | Sets the assertion mode (default, `'debug'`, `'ignore'`, `'abort'`)                                                            |
-| `lh#assert#clear()`            | Clears the last known contract failures                                                                                        |
-| `lh#assert#empty()`            | Asserts a value is empty                                                                                                       |
-| `lh#assert#equal()`            | Asserts a value equals to what is expected                                                                                     |
-| `lh#assert#errors()`           | Returns the last known contract failures                                                                                       |
-| `lh#assert#false()`            | Asserts a value is false                                                                                                       |
-| `lh#assert#if().then_expect()` | Asserts condition1 implies condition2                                                                                          |
-| `lh#assert#is()`               | Asserts two entities are the same                                                                                              |
-| `lh#assert#is_not()`           | Asserts two entities are not the same                                                                                          |
-| `lh#assert#match()`            | Asserts a pattern matches a value                                                                                              |
-| `lh#assert#not_empty()`        | Asserts a value is not empty                                                                                                   |
-| `lh#assert#not_equal()`        | Asserts a value differs from a reference value                                                                                 |
-| `lh#assert#true()`             | Asserts a value is true                                                                                                        |
-| `lh#assert#unexpected()`       | Signals an unexpected situation                                                                                                |
-| `lh#assert#value().equal()`    | Asserts actual == ref                                                                                                          |
-| `lh#assert#value().differ()`   | Asserts actual != ref                                                                                                          |
-| `lh#assert#value().is_le()`    | Asserts actual <= ref                                                                                                          |
-| `lh#assert#value().is_lt()`    | Asserts actual <  ref                                                                                                          |
-| `lh#assert#value().is_ge()`    | Asserts actual >= ref                                                                                                          |
-| `lh#assert#value().is_gt()`    | Asserts actual >  ref                                                                                                          |
-| `lh#assert#value().has_key()`  | Asserts `has_key(actual, key)`                                                                                                 |
-| `lh#assert#value().not()`      | Inverses the logic of the next assertions                                                                                      |
-| `lh#assert#type().is()`        | Asserts the type of the expression is as expected                                                                              |
-| `lh#assert#type().belongs_to()`| Asserts the type of the expression belongs to the list of data passed                                                          |
-| `lh#assert#type().not()`       | Inverses the logic of the next assertions                                                                                      |
-
+See separate page: [doc/DbC.md](doc/DbC.md).
 
 ### Word Tools
 See http://hermitte.free.fr/vim/general.php#expl_words_tools
 
 
 ## Installation
-  * Requirements: Vim 7.4, Vim8 for `lh#async` feature.
+  * Requirements: Vim 7.4, Vim 8 for `lh#async` feature.
   * Clone from the git repository
 ```
 git clone git@github.com:LucHermitte/lh-vim-lib.git
@@ -478,7 +367,7 @@ Bundle 'LucHermitte/lh-vim-lib'
   * Troy Curtis Jr, for portability functions, and many tests/issues he raised
   * Many other I've forgotten :(
 
-## Some other VimL libraries
+## Some other Vim Scripting libraries
   * [genutils](http://www.vim.org/scripts/script.php?script_id=197)
   * [pathogen](http://www.vim.org/scripts/script.php?script_id=2332)
   * [Tom Link's tlib](http://www.vim.org/scripts/script.php?script_id=1863)

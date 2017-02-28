@@ -335,7 +335,10 @@ class Default(object):
             else:
                 terms.append(candidate['source'])
         word = candidate['word'][:self._context['max_candidate_width']]
-        terms.append(candidate.get('abbr', word))
+        encoding = self._context['encoding']
+        abbr = candidate.get('abbr', word).encode(
+            encoding, errors='replace').decode(encoding, errors='replace')
+        terms.append(abbr)
         return (self._context['selected_icon']
                 if index in self._selected_candidates
                 else ' ') + ' '.join(terms)
@@ -419,6 +422,8 @@ class Default(object):
     def cleanup(self):
         self._options['modifiable'] = False
         self._vim.command('pclose!')
+        # Redraw to clear prompt
+        self._vim.command('redraw!')
         self._vim.command('highlight! link CursorLine CursorLine')
         if self._vim.call('exists', '#ColorScheme'):
             self._vim.command('doautocmd ColorScheme')
@@ -452,7 +457,7 @@ class Default(object):
 
     def redraw(self):
         self._context['is_redraw'] = True
-        self.gather_candidates(self._context)
+        self._denite.gather_candidates(self._context)
         if self.update_candidates():
             self.update_buffer()
         else:
