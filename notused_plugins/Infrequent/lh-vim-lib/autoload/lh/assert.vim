@@ -5,7 +5,7 @@
 " Version:      4.0.0.0.
 let s:k_version = '4000'
 " Created:      23rd Nov 2016
-" Last Update:  27th Feb 2017
+" Last Update:  28th Feb 2017
 "------------------------------------------------------------------------
 " Description:
 "       Emulates assert_*() functions, but notifies as soon as possible that
@@ -47,6 +47,63 @@ function! lh#assert#debug(expr) abort
   return eval(a:expr)
 endfunction
 
+" s:getSNR([func_name]) {{{2
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
+"------------------------------------------------------------------------
+" ## Internal functions {{{1
+"
+" Function: lh#assert#_trace_assert(msg) {{{2
+function! lh#assert#_trace_assert(msg) abort
+  let cb = lh#exception#callstack_as_qf('', a:msg)
+  " let g:cb = copy(cb)
+  if len(cb) > 2
+    " Public function called from another function
+    let cb[2].text .= ': '.cb[0].text
+    call remove(cb, 0, 1)
+  elseif len(cb) > 1
+    " Public function called from command line
+    let cb[1].text .= ': ' . cb[0].text
+    call remove(cb, 0)
+  endif
+  if !empty(cb)
+    let cb[0].type = 'E'
+    let s:errors += cb
+    call s:Verbose('Assertion failed: %{1.text} -- %{1.filename}:%{1.lnum}', cb[0])
+    if empty(g:lh#assert#_mode)
+      let msg = lh#fmt#printf("Assertion failed:\n-> %{1.text} -- %{1.filename}:%{1.lnum}",cb[0])
+      let mode = lh#ui#which('confirm', msg, "&Ignore\n&Stop\n&Debug\nStack&trace...", 1)
+      if mode ==? 'stacktrace...'
+        call setqflist(cb)
+        if exists(':Copen')
+          Copen
+        else
+          copen
+        endif
+        redraw
+        let mode = lh#ui#which('confirm', msg, "...&Ignore\n...&Stop\n...&Debug", 1)
+        let mode = strpart(mode, 3)
+      endif
+    else
+      let mode = g:lh#assert#_mode
+    endif
+    if mode ==? 'stop'
+      throw a:msg
+    elseif mode ==? 'debug'
+      debug echo "You'll have to play with `:bt`, `:up` and `:echo` to explore the situation"
+    endif
+  endif
+endfunction
+
+" Function: lh#assert#_shall_ignore() {{{2
+function! lh#assert#_shall_ignore() abort
+  return g:lh#assert#_mode ==? 'ignore'
+endfunction
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
 " # Error list {{{2
@@ -63,11 +120,13 @@ function! lh#assert#errors() abort
 endfunction
 
 " # Assertion mode {{{2
-let s:mode = get(s:, 'mode', '')
+let g:lh#assert#_mode = get(g:, 'lh#assert#_mode', '')
 " Function: lh#assert#mode(...) {{{3
 function! lh#assert#mode(...) abort
-  if a:0 > 0 | let s:mode = a:1 | endif
-  return s:mode
+  if a:0 > 0
+    exe 'Toggle PluginAssertmode '.a:1
+  endif
+  return g:lh#assert#_mode
 endfunction
 
 " # Assertions {{{2
@@ -171,6 +230,9 @@ function! lh#assert#not_empty(value, ...) abort
 endfunction
 
 " Function: lh#assert#value(actual) {{{3
+function! s:__ignore(...) dict abort "{{{4
+  return self
+endfunction
 function! s:__eval(bool) dict abort "{{{4
   return a:bool
 endfunction
@@ -225,8 +287,9 @@ function! s:has_key(key) dict abort " {{{4
   return self
 endfunction
 
-function! lh#assert#value(actual) abort " {{{4
-  let res = lh#object#make_top_type({'actual': a:actual})
+" Pre-built #value() result
+function! s:pre_build_value() abort " {{{4
+  let res = lh#object#make_top_type({})
   let res.__eval  = function(s:getSNR('__eval'))
   let res.not     = function(s:getSNR('not'))
   let res.is_lt   = function(s:getSNR('is_lt'))
@@ -236,6 +299,24 @@ function! lh#assert#value(actual) abort " {{{4
   let res.eq      = function(s:getSNR('eq'))
   let res.diff    = function(s:getSNR('diff'))
   let res.has_key = function(s:getSNR('has_key'))
+
+  let ignored = lh#object#make_top_type({})
+  let ignored.not     = function(s:getSNR('__ignore'))
+  let ignored.is_lt   = ignored.not
+  let ignored.is_le   = ignored.not
+  let ignored.is_gt   = ignored.not
+  let ignored.is_ge   = ignored.not
+  let ignored.eq      = ignored.not
+  let ignored.diff    = ignored.not
+  let ignored.has_key = ignored.not
+  return [res, ignored]
+endfunction
+let [s:value_default, s:value_ignore] = s:pre_build_value()
+
+function! lh#assert#value(actual) abort " {{{4
+  " We use and modify a global object, but this is not a problem
+  let res = lh#assert#_shall_ignore() ? s:value_ignore : s:value_default
+  let res.actual = a:actual
   return res
 endfunction
 
@@ -256,56 +337,27 @@ function! s:type_belongs_to(...) dict abort " {{{4
   endif
   return self
 endfunction
-
-function! lh#assert#type(actual) abort " {{{4
-  let res = lh#object#make_top_type({'actual': a:actual})
-  let res.__eval     = function(s:getSNR('__eval'))
+function! s:pre_build_type() abort " {{{4
+  let res = lh#object#make_top_type({})
+  let res.__eval     = function(s:getSNR(lh#assert#_shall_ignore() ? '__ignore' : '__eval'))
   let res.not        = function(s:getSNR('not'))
   let res.is         = function(s:getSNR('type_is'))
   let res.belongs_to = function(s:getSNR('type_belongs_to'))
+
+  let ignored = lh#object#make_top_type({})
+  let ignored.not        = function(s:getSNR('__ignore'))
+  let ignored.is         = ignored.not
+  let ignored.belongs_to = ignored.not
+  return [res, ignored]
+endfunction
+let [s:type_default, s:type_ignore] = s:pre_build_type()
+
+function! lh#assert#type(actual) abort " {{{4
+  " We use and modify a global object, but this is not a problem
+  let res = lh#assert#_shall_ignore() ? s:type_ignore : s:type_default
+  let res.actual = a:actual
   return res
 endfunction
-"------------------------------------------------------------------------
-" ## Internal functions {{{1
-"
-" s:getSNR([func_name]) {{{3
-function! s:getSNR(...)
-  if !exists("s:SNR")
-    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
-  endif
-  return s:SNR . (a:0>0 ? (a:1) : '')
-endfunction
-
-" Function: lh#assert#_trace_assert(msg) {{{3
-function! lh#assert#_trace_assert(msg) abort
-  let cb = lh#exception#callstack_as_qf('', a:msg)
-  " let g:cb = copy(cb)
-  if len(cb) > 2
-    " Public function called from another function
-    let cb[2].text .= ': '.cb[0].text
-    call remove(cb, 0, 1)
-  elseif len(cb) > 1
-    " Public function called from command line
-    let cb[1].text .= ': ' . cb[0].text
-    call remove(cb, 0)
-  endif
-  if !empty(cb)
-    let s:errors += cb
-    call s:Verbose('Assertion failed: %{1.text} -- %{1.filename}:%{1.lnum}', cb[0])
-    if empty(s:mode)
-      let msg = lh#fmt#printf("Assertion failed:\n-> %{1.text} -- %{1.filename}:%{1.lnum}",cb[0])
-      let mode = WHICH('confirm', msg, "&Ignore\n&Stop\n&Debug", 1)
-    else
-      let mode = s:mode
-    endif
-    if mode ==? 'stop'
-      throw a:msg
-    elseif mode ==? 'debug'
-      debug echo "You'll have to play with `:bt`, `:up` and `:echo` to explore the situation"
-    endif
-  endif
-endfunction
-
 "------------------------------------------------------------------------
 " }}}1
 "------------------------------------------------------------------------

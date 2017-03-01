@@ -852,6 +852,15 @@ OPTIONS							*denite-options*
 						*denite-options-direction*
 -direction={direction}
 		Specify the Denite window direction as {direction}.
+
+		When it is "dynamictop", if each item's length is less than
+		the current window's width, the direction becomes "aboveleft",
+		otherwise - "topleft".
+		Similarly for "dynamicbottom", the direction becomes
+		"belowright" or "botright".
+		It is useful to always make best effort to show all items
+		without shortening.
+
 		Default: "botright"
 
 						*denite-options-empty*
@@ -999,6 +1008,9 @@ directory_rec	Gather directories recursive and nominates all directory names
 
 		Source args:
 			0. the search directory
+			Note: The directory is not expanded argument by
+			|expand()|.  The environment variable is only
+			expanded.
 
 		Source custom variables:
 		command		 the default get directories command
@@ -1023,6 +1035,9 @@ file_rec	Gather files recursive and nominates all file names under the
 
 		Source args:
 			0. the search directory
+			Note: The directory is not expanded argument by
+			|expand()|.  The environment variable is only
+			expanded.
 
 		Source custom variables:
 		command		the default get files command.
