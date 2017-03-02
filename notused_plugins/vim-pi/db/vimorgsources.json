@@ -2565,7 +2565,7 @@
 "NSIS_syntax_highlighting":{"archive_name":"nsis.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17564","version":"2.46-2","vim_script_nr":2864},
 "GNU_as_syntax":{"archive_name":"gas.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20660","version":"0.9","vim_script_nr":2863},
 "JumpInCode_new_update":{"archive_name":"JumpInCode_Plus.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11954","version":"1.03","vim_script_nr":2862},
-"zzzi_cant_delete_this":{"archive_name":"fastgit-vim-1.7.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11821","version":"1.7","vim_script_nr":2861},
+"i_cant_delete_this":{"archive_name":"fastgit-vim-1.7.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11821","version":"1.7","vim_script_nr":2861},
 "prettyprint":{"archive_name":"vim-prettyprint-0.3.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17102","version":"0.3.2","vim_script_nr":2860},
 "grey2":{"archive_name":"grey2.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=12379","version":"2","vim_script_nr":2859},
 "textobj-fatpack":{"archive_name":"vim-textobj-fatpack-0.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11764","version":"0.0.0","vim_script_nr":2858},
