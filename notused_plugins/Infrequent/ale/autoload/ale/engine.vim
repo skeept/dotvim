@@ -268,6 +268,12 @@ function! ale#engine#SetResults(buffer, loclist) abort
     if g:ale_set_highlights
         call ale#highlight#SetHighlights(a:buffer, a:loclist)
     endif
+
+    if g:ale_echo_cursor
+        " Try and echo the warning now.
+        " This will only do something meaningful if we're in normal mode.
+        call ale#cursor#EchoCursorWarning()
+    endif
 endfunction
 
 function! s:SetExitCode(job, exit_code) abort
@@ -331,6 +337,10 @@ function! ale#engine#FixLocList(buffer, linter, loclist) abort
         \   'nr': get(l:old_item, 'nr', -1),
         \   'linter_name': a:linter.name,
         \}
+
+        if has_key(l:old_item, 'detail')
+            let l:item.detail = l:old_item.detail
+        endif
 
         if l:item.lnum == 0
             " When errors appear at line 0, put them at line 1 instead.

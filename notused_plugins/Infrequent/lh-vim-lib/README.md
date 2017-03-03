@@ -36,8 +36,9 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | Function                                       | Purpose                                                                                                                                                                  |
 |------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lh#askvim#exe()`                              | Returns what a Vim command echoes                                                                                                                                        |
+| `lh#askvim#scriptid(name)`                     | Returns the id of the script associated to {name}                                                                                                                        |
+| `lh#askvim#scriptname(id)`                     | Returns the name of the script associated to {id}                                                                                                                        |
 | `lh#askvim#scriptnames()`                      | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
-| `lh#askvim#scriptname(id)`                     | Returns the name of the script associate to {id}                                                                                                                         |
 | `lh#async#queue(cmd, options)`                 | Push a `cmd` to execute in a queue of jobs. Requires Vim 7.4-1980                                                                                                        |
 | `lh#common#check_deps()`                       | Checks a Vim symbol is loaded                                                                                                                                            |
 | `lh#common#echomsg_multilines()`               | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
@@ -79,6 +80,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#mapping#define()`                          | Defines a mapping from its description                                                                                                                                   |
 | `lh#mapping#plug()`                            | Defines a series of default mappings associated to a plug mapping                                                                                                        |
 | `lh#on#exit()`                                 | Prepares a finalizer object to be executed in a `:finally` clause in order to restore variables and execute functions                                                    |
+| `lh#object#inject()`                           | Injects a new method in an existing object. Meant to simplify maintenance task.                                                                                          |
 | `lh#object#is_an_object()`                     | Tells whether the parameter is an object built with `lh#object#make_top_type()`                                                                                          |
 | `lh#object#make_top_type()`                    | Creates a new object                                                                                                                                                     |
 | `lh#object#to_string()`                        | Stringifies a data -- hide objects methods                                                                                                                               |
@@ -294,10 +296,12 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 ### Syntax related functions
 | Function                                                         | Purpose                                                                                                                                |
 |:-----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
+| `lh#syntax#getline_without()`                                    | Extracts a line without the characters matching a given syntax ID pattern                                                              |
 | `lh#syntax#is_a_comment()`                                       | Tells the syntax kind of the character at the given mark is a comment                                                                  |
 | `lh#syntax#is_a_comment_at()`                                    | Tells the syntax kind of the character at the given position is a comment                                                              |
 | `lh#syntax#list()`                                               | Like `lh#syntax#list_raw()`, but reinterprets the results (experimental)                                                               |
 | `lh#syntax#list_raw()`                                           | Returns the result of "`syn list {group-name}`" as a string                                                                            |
+| `lh#syntax#match_at()`                                           | Tells whether the syntax kind of the character at the given position matches a pattern                                                 |
 | `lh#syntax#name_at()`                                            | Tells the syntax kind of the character at the given position                                                                           |
 | `lh#syntax#name_at_mark()`                                       | Tells the syntax kind of the character at the given mark                                                                               |
 | `lh#syntax#name_at_mark()`                                       | Tells the syntax kind of the character at the given mark                                                                               |
@@ -368,10 +372,23 @@ Bundle 'LucHermitte/lh-vim-lib'
   * Many other I've forgotten :(
 
 ## Some other Vim Scripting libraries
-  * [genutils](http://www.vim.org/scripts/script.php?script_id=197)
-  * [pathogen](http://www.vim.org/scripts/script.php?script_id=2332)
-  * [Tom Link's tlib](http://www.vim.org/scripts/script.php?script_id=1863)
-  * [theonevimlib](http://www.vim.org/scripts/script.php?script_id=1963), initiated by Marc Weber
-  * [anwolib](http://www.vim.org/scripts/script.php?script_id=3800), by Andy Wokula
-  * [l9](http://www.vim.org/scripts/script.php?script_id=3252), by Takeshi NISHIDA
+
+### The ones that seem to be still activelly maintainded
+  * [ingo-library](http://www.vim.org/scripts/script.php?script_id=4433), by
+    Ingo Karkat
   * [maktaba](https://github.com/google/vim-maktaba), by google
+  * [tlib](http://www.vim.org/scripts/script.php?script_id=1863), by Tom Link
+  * [vim-misc](https://github.com/xolox/vim-misc), by Peter Odding 
+  * [vital](https://github.com/vim-jp/vital.vim), by the Japanese Vim User
+    Group
+
+### The other ones
+  * [anwolib](http://www.vim.org/scripts/script.php?script_id=3800), by Andy Wokula
+  * [cecutil](http://www.vim.org/scripts/script.php?script_id=1066), by Charles
+    "DrChip" Campbell
+  * [genutils](http://www.vim.org/scripts/script.php?script_id=197), by Hari
+    Krishna Dara
+  * [l9](http://www.vim.org/scripts/script.php?script_id=3252), by Takeshi NISHIDA
+  * [theonevimlib](http://www.vim.org/scripts/script.php?script_id=1963), initiated by Marc Weber
+  * [underscore](http://www.vim.org/scripts/script.php?script_id=5149), by
+    haya14busa

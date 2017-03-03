@@ -166,6 +166,10 @@ function! s:ALEInitAuGroups() abort
         autocmd!
         if g:ale_enabled && g:ale_echo_cursor
             autocmd CursorMoved,CursorHold * call ale#cursor#EchoCursorWarningWithDelay()
+            " Look for a warning to echo as soon as we leave Insert mode.
+            " The script's position variable used when moving the cursor will
+            " not be changed here.
+            autocmd InsertLeave * call ale#cursor#EchoCursorWarning()
         endif
     augroup END
 
@@ -208,6 +212,9 @@ command! ALEPreviousWrap :call ale#loclist_jumping#Jump('before', 1)
 command! ALENext :call ale#loclist_jumping#Jump('after', 0)
 command! ALENextWrap :call ale#loclist_jumping#Jump('after', 1)
 
+" A command for showing error details.
+command! ALEDetail :call ale#cursor#ShowCursorDetail()
+
 " A command for turning ALE on or off.
 command! ALEToggle :call s:ALEToggle()
 " A command for linting manually.
@@ -225,6 +232,7 @@ nnoremap <silent> <Plug>(ale_next) :ALENext<Return>
 nnoremap <silent> <Plug>(ale_next_wrap) :ALENextWrap<Return>
 nnoremap <silent> <Plug>(ale_toggle) :ALEToggle<Return>
 nnoremap <silent> <Plug>(ale_lint) :ALELint<Return>
+nnoremap <silent> <Plug>(ale_detail) :ALEDetail<Return>
 
 " Housekeeping
 

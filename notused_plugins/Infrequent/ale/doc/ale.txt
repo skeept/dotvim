@@ -73,6 +73,7 @@ ALE supports the following key features:
 The following languages and tools are supported.
 
 * Ansible: 'ansible-lint'
+* Asciidoc: 'proselint'
 * Bash: 'shell' (-n flag), 'shellcheck'
 * Bourne Shell: 'shell' (-n flag), 'shellcheck'
 * C: 'cppcheck', 'gcc', 'clang'
@@ -90,21 +91,25 @@ The following languages and tools are supported.
 * Erlang: 'erlc'
 * Fortran: 'gcc'
 * Go: 'gofmt -e', 'go vet', 'golint', 'go build'
+* Haml: 'hamllint'
 * Haskell: 'ghc', 'hlint'
-* HTML: 'HTMLHint', 'tidy'
+* HTML: 'HTMLHint', 'proselint', 'tidy'
 * Java: 'javac'
 * JavaScript: 'eslint', 'jscs', 'jshint', 'flow', 'xo'
 * JSON: 'jsonlint'
 * LaTeX: 'chktex', 'lacheck'
 * Lua: 'luacheck'
-* Markdown: 'mdl'
+* Markdown: 'mdl', 'proselint'
 * MATLAB: 'mlint'
+* nroff: 'proselint'
 * OCaml: 'merlin' (see |ale-linter-integration-ocaml-merlin|)
 * Perl: 'perl' (-c flag), 'perlcritic'
 * PHP: 'hack', 'php' (-l flag), 'phpcs', 'phpmd'
+* Pod: 'proselint'
 * Pug: 'pug-lint'
 * Puppet: 'puppet', 'puppet-lint'
 * Python: 'flake8', 'mypy', 'pylint'
+* reStructuredText: 'proselint'
 * Rust: 'rustc' (see |ale-integration-rust|)
 * Ruby: 'rubocop'
 * SASS: 'sasslint', 'stylelint'
@@ -113,10 +118,13 @@ The following languages and tools are supported.
 * SML: 'smlnj'
 * Swift: 'swiftlint'
 * Tex: 'proselint'
+* Texinfo: 'proselint'
 * Text: 'proselint'
 * TypeScript: 'tslint', 'typecheck'
 * Verilog: 'iverilog', 'verilator'
 * Vim: 'vint'
+* Vim help: 'proselint'
+* XHTML: 'proselint'
 * YAML: 'yamllint'
 
 ===============================================================================
@@ -758,7 +766,7 @@ g:ale_c_clang_options                                   *g:ale_c_clang_options*
 g:ale_cpp_clang_options                               *g:ale_cpp_clang_options*
 
   Type: |String|
-  Default: `'-std=c11 -Wall'`
+  Default: `'-std=c++14 -Wall'`
 
   This variable can be changed to modify flags given to clang.
 
@@ -988,7 +996,7 @@ g:ale_php_phpmd_ruleset                           *g:ale_php_phpmd_ruleset*
   Type: |String|
   Default: 'cleancode,codesize,controversial,design,naming,unusedcode'
 
-  This variable controls the ruleset used by phpmd.  Default is to use all of
+  This variable controls the ruleset used by phpmd. Default is to use all of
   the available phpmd rulesets
 
 ------------------------------------------------------------------------------
@@ -1166,6 +1174,14 @@ ALEToggle                                                           *ALEToggle*
   quickfix items, signs, current jobs, etc. Calling this option will change
   the |g:ale_enabled| variable.
 
+
+ALEDetail                                                           *ALEDetail*
+
+  Show the full linter message for the current line. This will only have an
+  effect on lines that contain a linter message.
+
+  A plug mapping `<Plug>(ale_detail)` is defined for this command.
+
 ===============================================================================
 7. API                                                                *ale-api*
 
@@ -1267,7 +1283,7 @@ ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
                          `nr` - Defaults to `-1`.
 
   `executable`             A |String| naming the executable itself which
-                         will be run.  This value will be used to check if the
+                         will be run. This value will be used to check if the
                          program requested is installed or not.
 
                          Either this or the `executable_callback` argument
@@ -1371,7 +1387,7 @@ ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
 <
   Any substring `%t` will be replaced with a path to a temporary file. Merely
   adding `%t` will cause ALE to create a temporary file containing the
-  contents of the the buffer being checked. All occurrences of `%t` in command
+  contents of the buffer being checked. All occurrences of `%t` in command
   strings will reference the one temporary file. The temporary file will be
   created inside a temporary directory, and the entire temporary directory
   will be automatically deleted, following the behaviour of

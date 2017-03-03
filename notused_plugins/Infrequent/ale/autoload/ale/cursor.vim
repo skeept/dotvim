@@ -18,6 +18,26 @@ function! s:GetMessage(linter, type, text) abort
     return printf(l:msg, l:text)
 endfunction
 
+function! s:EchoWithShortMess(setting, message) abort
+    " We need to remember the setting for shormess and reset it again.
+    let l:shortmess_options = getbufvar('%', '&shortmess')
+
+    try
+        " Turn shormess on or off.
+        if a:setting ==# 'on'
+            setlocal shortmess+=T
+        elseif a:setting ==# 'off'
+            setlocal shortmess-=T
+        else
+            throw 'Invalid setting: ' . string(a:setting)
+        endif
+
+        exec "norm! :echomsg a:message\n"
+    finally
+        call setbufvar('%', '&shortmess', l:shortmess_options)
+    endtry
+endfunction
+
 function! ale#cursor#TruncatedEcho(message) abort
     let l:message = a:message
     " Change tabs to spaces.
@@ -25,17 +45,23 @@ function! ale#cursor#TruncatedEcho(message) abort
     " Remove any newlines in the message.
     let l:message = substitute(l:message, "\n", '', 'g')
 
-    " We need to turn T for truncated messages on for shortmess,
-    " and then then we need to reset the option back to what it was.
-    let l:shortmess_options = getbufvar('%', '&shortmess')
+    call s:EchoWithShortMess('on', l:message)
+endfunction
 
-    try
-        " Echo the message truncated to fit without creating a prompt.
-        setlocal shortmess+=T
-        exec "norm! :echomsg message\n"
-    finally
-        call setbufvar('%', '&shortmess', l:shortmess_options)
-    endtry
+function! s:FindItemAtCursor() abort
+    let l:info = get(g:ale_buffer_info, bufnr('%'), {'loclist': []})
+    let l:pos = getcurpos()
+    let l:index = ale#util#BinarySearch(l:info.loclist, l:pos[1], l:pos[2])
+    let l:loc = l:index >= 0 ? l:info.loclist[l:index] : {}
+
+    return [l:info, l:loc]
+endfunction
+
+function! s:StopCursorTimer() abort
+    if s:cursor_timer != -1
+        call timer_stop(s:cursor_timer)
+        let s:cursor_timer = -1
+    endif
 endfunction
 
 function! ale#cursor#EchoCursorWarning(...) abort
@@ -44,28 +70,17 @@ function! ale#cursor#EchoCursorWarning(...) abort
         return
     endif
 
-    let l:buffer = bufnr('%')
+    let [l:info, l:loc] = s:FindItemAtCursor()
 
-    if !has_key(g:ale_buffer_info, l:buffer)
-        return
-    endif
-
-    let l:pos = getcurpos()
-    let l:loclist = g:ale_buffer_info[l:buffer].loclist
-    let l:index = ale#util#BinarySearch(l:loclist, l:pos[1], l:pos[2])
-
-    if l:index >= 0
-        let l:loc = l:loclist[l:index]
+    if !empty(l:loc)
         let l:msg = s:GetMessage(l:loc.linter_name, l:loc.type, l:loc.text)
         call ale#cursor#TruncatedEcho(l:msg)
-        let g:ale_buffer_info[l:buffer].echoed = 1
-    else
+        let l:info.echoed = 1
+    elseif get(l:info, 'echoed')
         " We'll only clear the echoed message when moving off errors once,
         " so we don't continually clear the echo line.
-        if get(g:ale_buffer_info[l:buffer], 'echoed')
-            echo
-            let g:ale_buffer_info[l:buffer].echoed = 0
-        endif
+        echo
+        let l:info.echoed = 0
     endif
 endfunction
 
@@ -77,10 +92,7 @@ function! ale#cursor#EchoCursorWarningWithDelay() abort
         return
     endif
 
-    if s:cursor_timer != -1
-        call timer_stop(s:cursor_timer)
-        let s:cursor_timer = -1
-    endif
+    call s:StopCursorTimer()
 
     let l:pos = getcurpos()[0:2]
 
@@ -91,5 +103,25 @@ function! ale#cursor#EchoCursorWarningWithDelay() abort
     if l:pos != s:last_pos
         let s:last_pos = l:pos
         let s:cursor_timer = timer_start(10, function('ale#cursor#EchoCursorWarning'))
+    endif
+endfunction
+
+function! ale#cursor#ShowCursorDetail() abort
+    " Only echo the warnings in normal mode, otherwise we will get problems.
+    if mode() !=# 'n'
+        return
+    endif
+
+    call s:StopCursorTimer()
+
+    let [l:info, l:loc] = s:FindItemAtCursor()
+
+    if !empty(l:loc)
+        let l:message = get(l:loc, 'detail', l:loc.text)
+
+        call s:EchoWithShortMess('off', l:message)
+
+        " Set the echo marker, so we can clear it by moving the cursor.
+        let l:info.echoed = 1
     endif
 endfunction

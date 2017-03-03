@@ -27,6 +27,20 @@ Resource all local vimrc files for the current buffer.
 Clear all stored decisions made in the past, when the plugin asked about
 sourcing a local vimrc file.
 
+## Functions
+
+### The `LocalVimRCFinish` command
+
+After a call to this function the sourcing of any remaining local vimrc files
+will be skipped. In combination with the |g:localvimrc_reverse| option it is
+possible to end the processing of local vimrc files for example at the root of
+the project by adding the following command to the local vimrc file in the root
+of the project:
+
+``` {.vim}
+call LocalVimRCFinish()
+```
+
 ## Variables
 
 The plugin provides several convenience variables to make it easier to set up
@@ -159,7 +173,27 @@ Reverse behavior of loading local vimrc files.
 
 On the way from root, the last localvimrc_count files are sourced.
 
+**NOTE:**
+
+This might load files not located in the edited files directory or even not
+located in the projects directory. If this is of concern use the
+`g:localvimrc_file_directory_only` setting.
+
   - Default: `-1` (all)
+
+### The `g:localvimrc_file_directory_only` setting
+
+Just use local vimrc file located in the edited files directory.
+
+**NOTE:**
+
+This might end in not loading any local vimrc files at all. If limiting the
+number of loaded local vimrc files is of concern use the `g:localvimrc_count`
+setting.
+
+  - Value `0`: Load all local vimrc files in the tree from root to file.
+  - Value `1`: Load only file in the same directory as edited file.
+  - Default: `0`
 
 ### The `g:localvimrc_sandbox` setting
 
@@ -290,6 +324,8 @@ vX.X.X : XXXX-XX-XX
   - add convenience variables |g:localvimrc_script_unresolved| and |g:localvimrc_script_dir_unresolved|.
   - add ability to view local vimrc before sourcing when |g:localvimrc_ask| is enabled.
   - emit autocommands before and after sourcing files.
+  - add |g:localvimrc_file_directory_only| to limit sourcing to local vimrc files in the same directory as the edited file.
+  - add |LocalVimRCFinish| function to stop loading of remaining local vimrc files from within a local vimrc file.
 
 v2.4.0 : 2016-02-05
 

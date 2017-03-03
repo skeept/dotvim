@@ -65,6 +65,15 @@ else
   let s:localvimrc_count = g:localvimrc_count
 endif
 
+" define default "localvimrc_file_directory_only" {{{2
+" copy to script local variable to prevent .lvimrc modifying the file
+" directory only option.
+if (!exists("g:localvimrc_file_directory_only"))
+  let s:localvimrc_file_directory_only = 0
+else
+  let s:localvimrc_file_directory_only = g:localvimrc_file_directory_only
+endif
+
 " define default "localvimrc_sandbox" {{{2
 " copy to script local variable to prevent .lvimrc disabling the sandbox
 " again.
@@ -155,6 +164,9 @@ let s:localvimrc_persistence_file_checksum = ""
 " initialize persistent data {{{2
 let s:localvimrc_persistent_data = {}
 
+" initialize processing finish flag {{{2
+let s:localvimrc_finish = 0
+
 " Section: Autocmd setup {{{1
 
 if has("autocmd")
@@ -200,10 +212,18 @@ function! s:LocalVimRC()
   endif
   call s:LocalVimRCDebug(2, "searching directory \"" . l:directory . "\"")
 
+  " check if the local vimrc file shall be searched just in the files
+  " directory or in the whole tree
+  if s:localvimrc_file_directory_only == 1
+    let l:search_option = ""
+  else
+    let l:search_option = ";"
+  endif
+
   " generate a list of all local vimrc files with absolute file names along path to root
   let l:rcfiles = []
   for l:rcname in s:localvimrc_name
-    for l:rcfile in findfile(l:rcname, l:directory . ";", -1)
+    for l:rcfile in findfile(l:rcname, l:directory . l:search_option, -1)
       let l:rcfile_unresolved = fnamemodify(l:rcfile, ":p")
       let l:rcfile_resolved = resolve(l:rcfile_unresolved)
       call insert(l:rcfiles, { "resolved": l:rcfile_resolved, "unresolved": l:rcfile_unresolved } )
@@ -223,7 +243,8 @@ function! s:LocalVimRC()
 
   call s:LocalVimRCDebug(1, "candidate files: " . string(l:rcfiles))
 
-  " source all found local vimrc files along path from root (reverse order)
+  " source all found local vimrc files in l:rcfiles variable
+  let s:localvimrc_finish = 0
   let l:answer = ""
   let l:sandbox_answer = ""
   for l:rcfile_dict in l:rcfiles
@@ -494,6 +515,12 @@ function! s:LocalVimRC()
             silent doautocmd User LocalVimRCPost
             call s:LocalVimRCDebug(1, "post sourcing autocommand emitted")
           endif
+
+          " check if sourcing of files should be ended by variable set by
+          " local vimrc file
+          if (s:localvimrc_finish != 0)
+            break
+          endif
         endif
 
         " remove global variables again
@@ -719,6 +746,15 @@ function! s:LocalVimRCClear()
     call delete(s:localvimrc_persistence_file)
     call s:LocalVimRCDebug(3, "deleted persistence file")
   endif
+endfunction
+
+" Function: LocalVimRCFinish() {{{2
+"
+" finish processing local vimrc files
+"
+function! LocalVimRCFinish()
+  call s:LocalVimRCDebug(1, "will finish sourcing files after this file")
+  let s:localvimrc_finish = 1
 endfunction
 
 " Function: s:LocalVimRCError(text) {{{2
