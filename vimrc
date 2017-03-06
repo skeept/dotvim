@@ -141,6 +141,8 @@ endfunction
 " should I just move it to plugins folder?
 execute "source " . g:p0 . "/common.vim"
 
+execute "source " . g:p0 . "/denite.rc.vim"
+
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
 nnoremap ,f :call PreciseJumpF(-1, -1, 0)<CR>

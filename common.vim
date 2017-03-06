@@ -6,7 +6,7 @@
 " allow backspacing over everything in insert mode
 "set backspace=indent,eol,start
 set backspace=2
-set esckeys
+if !has('nvim') | set esckeys | endif
 
 set autoindent		" always set autoindenting on
 set splitright          "split the window to the right
