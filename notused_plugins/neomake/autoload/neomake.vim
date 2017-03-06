@@ -380,9 +380,11 @@ endfunction
 
 function! neomake#GetMaker(name_or_maker, ...) abort
     if a:0
+        let file_mode = 1
         let real_ft = a:1
         let fts = neomake#utils#GetSortedFiletypes(real_ft)
     else
+        let file_mode = 0
         let fts = []
     endif
     if type(a:name_or_maker) == type({})
@@ -423,12 +425,17 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             endif
         endif
         if !exists('maker')
-            throw 'Neomake: Maker not found: '.a:name_or_maker
+            if file_mode
+                throw printf('Neomake: Maker not found (for filetypes %s): %s',
+                            \ string(fts), a:name_or_maker)
+            else
+                throw 'Neomake: project maker not found: '.a:name_or_maker
+            endif
         endif
     endif
 
     " Create the maker object.
-    let maker = deepcopy(maker)
+    let maker = extend(copy(s:maker_base), deepcopy(maker))
     if !has_key(maker, 'name')
         if type(a:name_or_maker) == type('')
             let maker.name = a:name_or_maker
@@ -436,7 +443,6 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             let maker.name = 'unnamed_maker'
         endif
     endif
-    let maker._get_argv = s:maker_base._get_argv
     let defaults = copy(s:maker_defaults)
     call extend(defaults, {
         \ 'exe': maker.name,
@@ -453,6 +459,27 @@ function! neomake#GetMaker(name_or_maker, ...) abort
         let maker.ft = real_ft
     endif
     return maker
+endfunction
+
+function! s:get_makers_for_pattern(pattern) abort
+    if exists('*getcompletion')
+        " Get function prefix based on pattern, until the first backslash.
+        let prefix = substitute(a:pattern, '\v\\.*', '', '')
+
+        " NOTE: the pattern uses &ignorecase.
+        let funcs = getcompletion(prefix.'[a-z]', 'function')
+        call filter(funcs, 'v:val =~# a:pattern')
+        " Remove prefix.
+        call map(funcs, 'v:val['.len(prefix).':]')
+        " Only keep lowercase function names.
+        call filter(funcs, "v:val =~# '\\m^[a-z].*()'")
+        " Remove parenthesis and #.* (for project makers).
+        return map(funcs, "substitute(v:val, '\\v[(#].*', '', '')")
+    endif
+
+    let funcs_output = neomake#utils#redir('fun /'.a:pattern)
+    return map(split(funcs_output, '\n'),
+                \ "substitute(v:val, '\\v^.*#(.*)\\(.*$', '\\1', '')")
 endfunction
 
 function! neomake#GetMakers(ft) abort
@@ -472,9 +499,10 @@ function! neomake#GetMakers(ft) abort
         catch /^Vim\%((\a\+)\)\=:E117/
             continue
         endtry
-        let funcs_output = neomake#utils#redir('fun /neomake#makers#ft#'.ft.'#\l')
-        for maker_name in map(split(funcs_output, '\n'),
-                    \ "substitute(v:val, '\\v^.*#(.*)\\(.*$', '\\1', '')")
+
+        let maker_names = s:get_makers_for_pattern('neomake#makers#ft#'.ft.'#\l')
+
+        for maker_name in maker_names
             let c = get(makers_count, maker_name, 0)
             let makers_count[maker_name] = c + 1
             " Add each maker only once, but keep the order.
@@ -483,7 +511,7 @@ function! neomake#GetMakers(ft) abort
             endif
         endfor
         for v in extend(keys(g:), keys(b:))
-            let maker_name = matchstr(v, '\v^neomake_'.ft.'_\zs\l+\ze_maker')
+            let maker_name = matchstr(v, '\v^neomake_'.ft.'_\zs\l+\ze_maker$')
             if len(maker_name)
                 let c = get(makers_count, maker_name, 0)
                 let makers_count[maker_name] = c + 1
@@ -497,9 +525,7 @@ endfunction
 
 function! neomake#GetProjectMakers() abort
     runtime! autoload/neomake/makers/*.vim
-    let funcs_output = neomake#utils#redir('fun /neomake#makers#\(ft#\)\@!\l')
-    return map(split(funcs_output, '\n'),
-                \ "substitute(v:val, '\\v^.*#(.*)\\(.*$', '\\1', '')")
+    return s:get_makers_for_pattern('neomake#makers#\(ft#\)\@!\l')
 endfunction
 
 function! neomake#GetEnabledMakers(...) abort
@@ -508,7 +534,7 @@ function! neomake#GetEnabledMakers(...) abort
         " This variable is also used for project jobs, so it has no
         " buffer local ('b:') counterpart for now.
         let enabled_makers = copy(get(g:, 'neomake_enabled_makers', []))
-        call map(enabled_makers, "extend(neomake#GetMaker(v:val, &filetype),
+        call map(enabled_makers, "extend(neomake#GetMaker(v:val),
                     \ {'auto_enabled': 0}, 'error')")
     else
         " If a filetype was passed, get the makers that are enabled for each of
@@ -1063,7 +1089,7 @@ function! s:vim_output_handler(channel, output, event_type) abort
     let job_id = ch_info(a:channel)['id']
     let jobinfo = s:jobs[job_id]
 
-    let data = split(a:output, "\n", 1)
+    let data = split(a:output, '\v\r?\n', 1)
 
     if exists('jobinfo._vim_in_handler')
         call neomake#utils#DebugMessage(printf('Queueing: %s: %s: %s',
@@ -1395,6 +1421,10 @@ function! neomake#CompleteMakers(ArgLead, CmdLine, ...) abort
     if a:ArgLead =~# '[^A-Za-z0-9]'
         return []
     endif
+    if a:CmdLine !~# '\s'
+        " Just 'Neomake!' without following space.
+        return [' ']
+    endif
     let file_mode = a:CmdLine =~# '\v^(Neomake|NeomakeFile)\s'
     let makers = file_mode ? neomake#GetMakers(&filetype) : neomake#GetProjectMakers()
     return filter(makers, "v:val =~? '^".a:ArgLead."'")
@@ -1462,19 +1492,14 @@ function! s:display_maker_info(...) abort
         let maker = call('neomake#GetMaker', [maker_name] + a:000)
         echo ' - '.maker.name
         for [k, V] in sort(copy(items(maker)))
-            if k ==# 'name' || k ==# 'ft'
-                continue
+            if k !=# 'name' && k !=# 'ft' && k !~# '^_'
+                if !has_key(s:maker_defaults, k)
+                            \ || type(V) != type(s:maker_defaults[k])
+                            \ || V !=# s:maker_defaults[k]
+                    echo '   - '.k.': '.string(V)
+                endif
             endif
-            if k =~# '^_'
-                continue
-            endif
-            if has_key(s:maker_defaults, k)
-                        \ && type(V) == type(s:maker_defaults[k])
-                        \ && V ==# s:maker_defaults[k]
-                continue
-            endif
-            echo '   - '.k.': '.string(V)
-            unlet V
+            unlet V  " vim73
         endfor
     endfor
 endfunction
