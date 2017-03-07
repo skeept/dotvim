@@ -9,6 +9,10 @@ if !g:Tex_EnvironmentMaps && !g:Tex_EnvironmentMenus
 	finish
 endif
 
+" line continuation used here.
+let s:save_cpo = &cpo
+set cpo&vim
+
 exe 'so '.fnameescape(expand('<sfile>:p:h').'/wizardfuncs.vim')
 
 nmap <silent> <script> <plug> i
@@ -20,6 +24,12 @@ else
 	let s:end_with_cr = ""
 end
 
+if Tex_GetVarValue('Tex_ItemsWithCR')
+	let s:items_with_cr = "\<CR>"
+else
+	let s:items_with_cr = " "
+end
+
 " The prefix of labels of figures
 let s:labelprefix_figure = Tex_GetVarValue("Tex_EnvLabelprefix_{'figure'}")
 let s:labelprefix_table = Tex_GetVarValue("Tex_EnvLabelprefix_{'table'}")
@@ -28,10 +38,10 @@ let s:labelprefix_table = Tex_GetVarValue("Tex_EnvLabelprefix_{'table'}")
 let s:figure =     "\\begin{figure}[<+htpb+>]\<cr>\\centering\<cr>\\includegraphics{<+file+>}\<cr>\\caption{<+caption text+>}\<cr>\\label{" . s:labelprefix_figure . "<+label+>}\<cr>\\end{figure}" . s:end_with_cr . "<++>"
 let s:minipage =   "\\begin{minipage}[<+tb+>]{<+width+>}\<cr><++>\<cr>\\end{minipage}" . s:end_with_cr . "<++>"
 let s:picture =    "\\begin{picture}(<+width+>, <+height+>)(<+xoff+>,<+yoff+>)\<cr>\\put(<+xoff+>,<+yoff+>){\\framebox(<++>,<++>){<++>}}\<cr>\\end{picture}" . s:end_with_cr . "<++>"
-let s:list =       "\\begin{list}{<+label+>}{<+spacing+>}\<cr>\\item <++>\<cr>\\end{list}" . s:end_with_cr . "<++>"
+let s:list =       "\\begin{list}{<+label+>}{<+spacing+>}\<cr>\\item".s:items_with_cr."<++>\<cr>\\end{list}" . s:end_with_cr . "<++>"
 let s:table =      "\\begin{table}\<cr>\\centering\<cr>\\begin{tabular}{<+dimensions+>}\<cr><++>\<cr>\\end{tabular}\<cr>\\caption{<+Caption text+>}\<cr>\\label{" . s:labelprefix_table . "<+label+>}\<cr>\\end{table}" . s:end_with_cr . "<++>"
 let s:array =      "\\left<++>\<cr>\\begin{array}{<+dimension+>}\<cr><+elements+>\<cr>\\end{array}\<cr>\\right<++>"
-let s:description ="\\begin{description}\<cr>\\item[<+label+>]<++>\<cr>\\end{description}" . s:end_with_cr . "<++>"
+let s:description ="\\begin{description}\<cr>\\item[<+label+>]".s:items_with_cr."<++>\<cr>\\end{description}" . s:end_with_cr . "<++>"
 let s:document =   "\\documentclass[<+options+>]{<+class+>}\<cr>\<cr>\\begin{document}\<cr><++>\<cr>\\end{document}"
 let s:tabular = "\\begin{tabular}[<+hbtp+>]{<+format+>}\<cr><++>\<cr>\\end{tabular}"
 let s:tabular_star = "\\begin{tabular*}[<+hbtp+>]{<+format+>}\<cr><++>\<cr>\\end{tabular*}"
@@ -58,11 +68,6 @@ endif
 " Tex_EnvMacros: sets up maps and menus for environments {{{
 " Description: 
 function! <SID>Tex_EnvMacros(lhs, submenu, name)
-
-	let extra = ''
-	if a:submenu =~ 'Lists'
-		let extra = '\item '
-	endif
 
 	let vright = ''
 	let vleft = ''
@@ -295,7 +300,9 @@ endif
 " ============================================================================== 
 " Tex_itemize: {{{
 function! Tex_itemize(env)
-	return IMAP_PutTextWithMovement('\begin{'.a:env."}\<cr>\\item <++>\<cr>\\end{".a:env."}" . s:end_with_cr . "<++>")
+	return IMAP_PutTextWithMovement('\begin{'.a:env."}\<cr>"
+				\ . "\\item" . s:items_with_cr . "<++>\<cr>"
+				\ . "\\end{".a:env."}" . s:end_with_cr . "<++>")
 endfunction
 " }}} 
 " Tex_description: {{{
@@ -305,7 +312,7 @@ function! Tex_description(env)
 		if itlabel != ''
 			let itlabel = '['.itlabel.']'
 		endif
-		return IMAP_PutTextWithMovement("\\begin{description}\<cr>\\item".itlabel." <++>\<cr>\\end{description}" . s:end_with_cr . "<++>")
+		return IMAP_PutTextWithMovement("\\begin{description}\<cr>\\item".itlabel.s:items_with_cr."<++>\<cr>\\end{description}" . s:end_with_cr . "<++>")
 	else
 		return IMAP_PutTextWithMovement(s:description)
 	endif
@@ -450,7 +457,7 @@ function! Tex_list(env)
 		else
 			let label = ''
 		endif
-		return IMAP_PutTextWithMovement('\begin{list}'.label."\<cr>\\item \<cr>\\end{list}" . s:end_with_cr . "<++>")
+		return IMAP_PutTextWithMovement('\begin{list}'.label."\<cr>\\item".s:items_with_cr."\<cr>\\end{list}" . s:end_with_cr . "<++>")
 	else
 		return IMAP_PutTextWithMovement(s:list)
 	endif
@@ -507,7 +514,8 @@ function! Tex_thebibliography(env)
 	else
 		return IMAP_PutTextWithMovement(
 			\ "\\begin{thebibliography}\<CR>".
-			\ "\\bibitem[<+biblabel+>]{<+bibkey+>} <++>\<CR>".
+			\ "\\bibitem[<+biblabel+>]{<+bibkey+>}".
+			\ s:items_with_cr .
 			\ "<++>\<CR>".
 			\ "\\end{thebibliography}" . s:end_with_cr . "<++>")
 	endif
@@ -574,7 +582,6 @@ function! Tex_PutEnvironment(env)
 		elseif exists("g:Tex_Env_{'".a:env."'}")
 			return IMAP_PutTextWithMovement(g:Tex_Env_{a:env})
 		elseif a:env =~ 'theorem\|definition\|lemma\|proposition\|corollary\|assumption\|remark\|equation\|align\*\|align\>\|multline'
-			let g:aa = a:env
 			return Tex_standard_env(a:env)
 		elseif a:env =~ "enumerate\\|itemize\\|theindex\\|trivlist"
 			return Tex_itemize(a:env)
@@ -644,44 +651,52 @@ if g:Tex_PromptedEnvironments != ''
 		let pos = Tex_GetPos()
 		let s:isvisual = a:isvisual
 
-		" decide if we are in the preamble of the document. If we are then
-		" insert a package, otherwise insert an environment.
-		"
-		if search('\C\\documentclass', 'bW') && search('\C\\begin{document}', 'W')
+		" Position the cursor at the start of the file
+		call setpos('.', [0,1,1,0])
 
-			" If there is a \documentclass line and a \begin{document} line in
-			" the file, then a part of the file is the preamble.
-
-			" search for where the document begins.
-			let begin_line = search('\C\\begin{document}', 'cW')
-			" if the document begins after where we are presently, then we are
-			" in the preamble.
-			if start_line < begin_line
-				" return to our original location and insert a package
-				" statement.
-				call Tex_SetPos(pos)
-				return Tex_package_from_line()
-			else
-				" we are after the preamble. insert an environment.
-				call Tex_SetPos(pos)
-				return Tex_DoEnvironment()
+		" Search for the first \documentclass, which is not inside a comment
+		while 1
+			let classline = search('\C\\documentclass', 'cW')
+			if classline == 0
+				break
 			endif
+			if getline('.') =~# '\%(\\\@<!\%(\\\\\)*%.*\)\@<!\\documentclass'
+				" No comment here, we have found it
+				break
+			endif
+			" Move to end of line and search again.
+			normal! $
+		endwhile
 
-		elseif search('\C\\documentclass', 'bW')
-			" if there is only a \documentclass but no \begin{document}, then
-			" the entire file is a preamble. Put a package.
+		" Search for the first \begin{document}, which is not inside a comment
+		while 1
+			let documentline = search('\C\\begin{document}', 'cW')
+			if documentline == 0
+				break
+			endif
+			if getline('.') =~# '\%(\\\@<!\%(\\\\\)*%.*\)\@<!\\begin{document}'
+				" No comment here, we have found it
+				break
+			endif
+			" Move to end of line and search again.
+			normal! $
+		endwhile
 
-			call Tex_SetPos(pos)
-			return Tex_package_from_line()
-
-		else
-			" no \documentclass, put an environment.
-
+		if documentline != 0 && start_line >= documentline
+			" We are after the '\begin{document}'.
+			" Put an environment.
 			call Tex_SetPos(pos)
 			return Tex_DoEnvironment()
-
+		elseif classline != 0 && start_line >= classline
+			" We are after the '\documentclass'.
+			" Insert a package.
+			call Tex_SetPos(pos)
+			return Tex_package_from_line()
+		else
+			" Otherwise, insert an environment.
+			call Tex_SetPos(pos)
+			return Tex_DoEnvironment()
 		endif
-
 	endfunction 
 
 	" }}}
@@ -917,20 +932,15 @@ endfunction
 "    			  Env names are stored in g: variables it can be used by
 "    			  package files. 
 
-TexLet g:Tex_ItemStyle_itemize = '\item '
-TexLet g:Tex_ItemStyle_enumerate = '\item '
-TexLet g:Tex_ItemStyle_theindex = '\item '
+for env in ['itemize', 'enumerate', 'theindex',
+			\ 'asparaenum',  'asparaitem',
+			\ 'compactenum', 'compactitem',
+			\ 'inparaenum',  'inparaitem']
+	exe "TexLet g:Tex_ItemStyle_" . env . " = '\\item" . s:items_with_cr . "'"
+endfor
 
-" paralist package
-TexLet g:Tex_ItemStyle_asparaenum = '\item '
-TexLet g:Tex_ItemStyle_asparaitem = '\item '
-TexLet g:Tex_ItemStyle_compactenum = '\item '
-TexLet g:Tex_ItemStyle_compactitem = '\item '
-TexLet g:Tex_ItemStyle_inparaenum = '\item '
-TexLet g:Tex_ItemStyle_inparaitem = '\item '
-
-TexLet g:Tex_ItemStyle_thebibliography = '\bibitem[<+biblabel+>]{<+bibkey+>} <++>'
-TexLet g:Tex_ItemStyle_description = '\item[<+label+>] <++>'
+exe "TexLet g:Tex_ItemStyle_thebibliography = '\\bibitem[<+biblabel+>]{<+bibkey+>}" . s:items_with_cr . "<++>'"
+exe "TexLet g:Tex_ItemStyle_description = '\\item[<+label+>]" . s:items_with_cr . "<++>'"
 
 function! Tex_InsertItem()
     " Get current enclosing environment
@@ -1163,6 +1173,8 @@ augroup LatexSuite
 		\ call s:SetEnvMacrosOptions()
 augroup END
 " }}}
+
+let &cpo = s:save_cpo
 
 " this statement has to be at the end.
 let s:doneOnce = 1
