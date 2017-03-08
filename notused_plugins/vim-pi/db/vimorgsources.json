@@ -35,7 +35,7 @@
 "Grammalecte":{"archive_name":"Grammalecte.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24890","version":"0.2","vim_script_nr":5497},
 "coverage":{"archive_name":"coverage.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24796","version":"0.1.0","vim_script_nr":5496},
 "ExpandBackspace":{"archive_name":"ExpandBackspace.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24786","version":"0.6-1","vim_script_nr":5495},
-"vtags%5494":{"archive_name":"vtags-1.23.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24914","version":"1.23","vim_script_nr":"5494"},
+"vtags%5494":{"archive_name":"vtags-2.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25012","version":"2.0","vim_script_nr":"5494"},
 "far%5493":{"archive_name":"far.vim-beta2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24781","version":"beta 2","vim_script_nr":"5493"},
 "vim-loggly-search":{"archive_name":"vim-loggly-search-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24779","version":"7.4","vim_script_nr":5492},
 "vim-base64":{"archive_name":"vim-base64-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24778","version":"7.4","vim_script_nr":5491},

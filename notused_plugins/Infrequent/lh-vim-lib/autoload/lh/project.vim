@@ -5,7 +5,7 @@
 " Version:      4.0.0
 let s:k_version = '400'
 " Created:      08th Sep 2016
-" Last Update:  01st Mar 2017
+" Last Update:  07th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Define new kind of variables: `p:` variables.
@@ -21,13 +21,12 @@ let s:k_version = '400'
 " @since v4.0.0
 " TODO:
 " - Doc
-"   - prj.get_names()
+"   - lh#project#_best_varname_match()
 " - :Project [<name>] :make
 "   -> rely on `:Make` if it exists, `:make` otherwise
-" - Toggling:
-"   - at global level: [a, b, c]
-"   - at project level: [default value from global VS force [a, b, c]]
-" - Completion on :Let* and :Unlet for inherited p:variables
+" - Be able to control which parent is filled with lh#let# functions
+"   - [X] `:LetTo` and `LetIfUndef` have `--overwrite` and `--hide` options
+"   - [ ] `:Project <name> :LetTo var = value`
 " - Use in plugins
 "   - p:$ENV variables
 "     - [X] lh-tags synchronous (via lh#os#system)
@@ -38,16 +37,14 @@ let s:k_version = '400'
 "     - [ ] lh-dev
 "     - [ ] µTemplate
 "     -> Test on windows!
-"   - paths.sources
-" - Be able to control which parent is filled with lh#let# functions
-"   -> `:Project <name> :LetTo var = value`
+"   - Have let-modeline support p:var, p:&opt, and p:$env
+" - Add convinience functions to fill permission lists
+" - Split autoload/lh/project.vim into several files
 " - Setlocally vim options on new files
 " - Simplify dictionaries
 "   -> no 'parents' when there are none!
 "   -> merge 'variables', 'env', 'options' in `variables`
 " - Fix find_holder() to use update() code and refactor the later
-" - Have let-modeline support p:var, p:&opt, and p:$env
-" - Add convinience functions to fill permission lists
 " - Add VimL Syntax highlight for LetTo, LetIfUndef, p:var
 " - Serialize and deserialize options from a file that'll be maintained
 "   alongside a _vimrc_local.vim file.
@@ -55,6 +52,8 @@ let s:k_version = '400'
 "   - How to insert a comment near each variable serialized
 "   - How to computed value at the last moment (e.g. path relative to current
 "     directory, and have the variable hold an absolute path)
+" - Without permission lists + _local_vimrc, it seems to try to detect project
+"   root each time we change buffer, hide_or_overwrite.
 " }}}1
 "=============================================================================
 
@@ -417,7 +416,7 @@ function! s:define_project(prjname) abort " {{{3
 
   let new_prj = s:project_list.get(a:prjname)
   if lh#option#is_set(new_prj)
-    call new_prj.register_buffer()
+    call new_prj._register_buffer()
   else
     " If there is already a project, register_buffer (called by #new) will
     " automatically inherit from it.
@@ -657,24 +656,24 @@ endfunction
 " - Methods {{{3
 " s:buffers is debug variable used to track disapearing buffers
 let s:buffers = get(s:, 'buffers', {})
-function! s:register_buffer(...) dict abort " {{{4
+function! s:_register_buffer(...) dict abort " {{{4
   let bid = a:0 > 0 ? a:1 : bufnr('%')
   if !empty(bufname(bid))
-    let s:buffers[bid] = bufname(bid).' -- ft:'.getbufvar(bid, '&ft', '???')
+    let s:buffers[bid] = bufname(bid).' -- ft:'.lh#option#getbufvar(bid, '&ft', '???')
   endif
   " if there is already a (different project), then inherit from it
   let inherited = lh#option#getbufvar(bid, s:project_varname)
   if  lh#option#is_set(inherited)
         \ && inherited isnot self
         \ && !lh#list#contain_entity(lh#list#flatten(self.parents), inherited)
-    call self.inherit(inherited)
+    call self._inherit(inherited)
     " and then override with new value
   endif
   call setbufvar(bid, s:project_varname, self)
   call lh#list#push_if_new(self.buffers, bid)
 endfunction
 
-function! s:inherit(parent) dict abort " {{{4
+function! s:_inherit(parent) dict abort " {{{4
   call lh#list#push_if_new(self.parents, a:parent)
 endfunction
 
@@ -702,12 +701,14 @@ function! s:set(varname, value) dict abort " {{{4
   if     a:varname[0] == '&' " {{{5 -- options
     let self.options[varname] = a:value
     call self._update_option(varname)
+    return self.options[varname]
   elseif a:varname[0] == '$' " {{{5 -- $ENV
     let self.env[varname] = a:value
+    return self.env[varname]
   else                       " {{{5 -- Any variable
     " This part is very similar to lh#let#to instead we don't have a variable
     " name => need to do the same work, but differently
-    call lh#dict#let(self.variables, a:varname, a:value)
+    return lh#dict#let(self.variables, a:varname, a:value)
   endif " }}}5
 endfunction
 
@@ -752,7 +753,7 @@ function! s:update(varname, value, ...) dict abort " {{{4
   return 0
 endfunction
 
-function! s:do_update_option(bid, varname, value) " {{{4
+function! s:do_update_option(bid, varname, value) abort " {{{4
   if     a:value =~ '^+='
     let lValue = split(getbufvar(a:bid, a:varname), ',')
     call lh#list#push_if_new_elements(lValue, split(a:value[2:], ','))
@@ -880,6 +881,27 @@ function! s:find_holder(varname) dict abort " {{{4
   return s:k_unset
 endfunction
 
+function! s:find_holder_name(varname, store) dict abort " {{{4
+  if     a:varname[0] == '$'
+    return '.env.'
+  else
+    let r0 = lh#dict#get_composed(self[a:store], a:varname)
+    if lh#option#is_set(r0)
+    " if has_key(self.variables, a:varname)
+      " if varname is made of multiple part, has_key cannot work!
+      return '.'.a:store.'.'
+    else
+      for p in range(len(self.parents))
+        let h = self.parents[p].find_holder_name(a:varname, a:store)
+        if !empty(h)
+          return '.parents['.p.']'.h
+        endif
+      endfor
+    endif
+  endif
+  return ''
+endfunction
+
 function! s:__lhvl_oo_type() dict abort " {{{4
   return 'project'
 endfunction
@@ -890,7 +912,6 @@ endfunction
 " Reserved fields:
 " - "name"
 " - "parents"
-" - "paths.root" ?
 " - "buffers"
 " - "variables" <- where p:foobar will be stored
 "   - "paths"
@@ -912,51 +933,53 @@ function! lh#project#new(params) abort
     let project.name = s:project_list.new_name()
   endif
 
-  let project.inherit         = function(s:getSNR('inherit'))
-  let project.register_buffer = function(s:getSNR('register_buffer'))
-  let project.set             = function(s:getSNR('set'))
-  let project.update          = function(s:getSNR('update'))
-  let project.get             = function(s:getSNR('get'))
-  let project.exists          = function(s:getSNR('exists'))
-  let project.environment     = function(s:getSNR('environment'))
-  let project.depth           = function(s:getSNR('depth'))
-  let project.children        = function(s:getSNR('children'))
-  let project.apply           = function(s:getSNR('apply'))
-  let project.map             = function(s:getSNR('map'))
-  let project.find_holder     = function(s:getSNR('find_holder'))
-  let project.get_names       = function(s:getSNR('get_names'))
-  let project._update_option  = function(s:getSNR('_update_option'))
-  let project._use_options    = function(s:getSNR('_use_options'))
-  let project._remove_buffer  = function(s:getSNR('_remove_buffer'))
-  let project.__lhvl_oo_type  = function(s:getSNR('__lhvl_oo_type'))
+  let project._inherit          = function(s:getSNR('_inherit'))
+  let project._register_buffer  = function(s:getSNR('_register_buffer'))
+  let project.set              = function(s:getSNR('set'))
+  let project.update           = function(s:getSNR('update'))
+  let project.get              = function(s:getSNR('get'))
+  let project.exists           = function(s:getSNR('exists'))
+  let project.environment      = function(s:getSNR('environment'))
+  let project.depth            = function(s:getSNR('depth'))
+  let project.children         = function(s:getSNR('children'))
+  let project.apply            = function(s:getSNR('apply'))
+  let project.map              = function(s:getSNR('map'))
+  let project.find_holder      = function(s:getSNR('find_holder'))
+  let project.find_holder_name = function(s:getSNR('find_holder_name'))
+  let project.get_names        = function(s:getSNR('get_names'))
+  let project._update_option   = function(s:getSNR('_update_option'))
+  let project._use_options     = function(s:getSNR('_use_options'))
+  let project._remove_buffer   = function(s:getSNR('_remove_buffer'))
+  let project.__lhvl_oo_type   = function(s:getSNR('__lhvl_oo_type'))
 
   " Let's automatically register the current buffer
-  call project.register_buffer()
+  call project._register_buffer()
 
   call s:project_list.add_project(project)
 
   if has_key(project, 'auto_discover_root')
     " The option can be forced through #define parameter
     let auto_discover_root = project.auto_discover_root
-    call s:Verbose("prj#new: auto_discover_root set in options: %1", auto_discover_root)
+    call s:Verbose("prj#new(%2): auto_discover_root set in options: %1", auto_discover_root, project.name)
     unlet project.auto_discover_root
   else
     let auto_discover_root = lh#project#_auto_discover_root()
-    call s:Verbose("prj#new: auto_discover_root computed: %1", auto_discover_root)
+    call s:Verbose("prj#new(%2): auto_discover_root computed: %1", auto_discover_root, project.name)
   endif
 
   if type(auto_discover_root) == type({}) && has_key(auto_discover_root, 'value')
-    call s:Verbose("prj#new: auto_discover_root set in options: %1", auto_discover_root.value)
+    call s:Verbose("prj#new(%2): auto_discover_root set in options: %1", auto_discover_root.value, project.name)
     call lh#let#if_undef('p:paths.sources', fnamemodify(auto_discover_root.value, ':p'))
   elseif auto_discover_root !~? '\v^(n%[o]|0)$'
     if ! lh#project#exists('p:paths.sources')
       let root = lh#project#root()
-      call s:Verbose("prj#new: root found: %1", root)
+      call s:Verbose("prj#new(%2): root found: %1", root, project.name)
       if !empty(root)
         call lh#let#if_undef('p:paths.sources', fnamemodify(root[:-2], ':p'))
       endif
     endif
   endif
+  call s:Verbose("prj#new => %1", project)
   return project
 endfunction
 
@@ -968,7 +991,7 @@ function! lh#project#define(s, params, ...) abort
   if !has_key(a:s, name)
     let a:s[name] = lh#project#new(a:params)
   else
-    call a:s[name].register_buffer()
+    call a:s[name]._register_buffer()
   endif
   return a:s[name]
 endfunction
@@ -1016,10 +1039,26 @@ function! lh#project#crt_bufvar_name() abort
   endif
 endfunction
 
-" Function: lh#project#_crt_var_name(var) {{{3
-function! lh#project#_crt_var_name(var) abort
+" Function: lh#project#_crt_var_name(var [, hide_or_overwrite]) {{{3
+" @return a string for variables, p:local, or b:local
+" @return a dict for p:&opt, and p:$ENV
+" @return a string for b:&opt
+" @throw for b:$ENV
+if has("patch-7.4-1707")
+  " Accept empty keys...
+  let s:k_store_for =
+        \ { '': 'variables'
+        \ , '&': 'options'
+        \ , '$': 'env'
+        \ }
+else
+  let s:k_store_for =
+        \ { '&': 'options'
+        \ , '$': 'env'
+        \ }
+endif
+function! lh#project#_crt_var_name(var, ...) abort
   if a:var =~ '^p:'
-    call lh#assert#match('^p:', a:var)
     let [all, kind, name; dummy] = matchlist(a:var, '\v^p:([&$])=(.*)')
   elseif a:var =~ '^&p:'
     let [all, kind, name; dummy] = matchlist(a:var, '\v^(\&)p:(.*)')
@@ -1027,21 +1066,25 @@ function! lh#project#_crt_var_name(var) abort
     call lh#assert#unexpected('Unexpected variable name '.string(a:var))
   endif
   if lh#project#is_in_a_project()
-    let varname = kind.name
-    if kind == '&'
-      return
-            \ { 'name'    : varname
-            \ , 'realname': 'b:'.s:project_varname.'.options.'.name
-            \ , 'project' : b:{s:project_varname}
-            \ }
-    elseif kind == '$'
-      return
-            \ { 'name'    : varname
-            \ , 'realname': 'b:'.s:project_varname.'.env.'.name
-            \ , 'project' : b:{s:project_varname}
-            \ }
+    let hide_or_overwrite = get(a:, 1, '') " empty <=> 'hide'
+    call lh#assert#value(hide_or_overwrite).match('\v\c(hide|overwrite|)')
+    let shall_overwrite = hide_or_overwrite =~? 'overwrite'
+    " TODO: Breaks old test => need to make a choice, or intrduce a new command ...
+    if shall_overwrite
+      let best_name = lh#project#_best_varname_match(kind, name)
     else
-      return 'b:'.s:project_varname.'.variables.'.name
+      let realname = 'b:'.s:project_varname.'.'.get(s:k_store_for, kind, 'variables').'.'.name
+    endif
+    if kind == ''
+      return shall_overwrite ? best_name.realname : realname
+    else
+      let varname = kind.name
+      return shall_overwrite
+            \ ? extend(best_name, {'name': varname})
+            \ : { 'name'    : varname
+            \   , 'realname': realname
+            \   , 'project' : b:{s:project_varname}
+            \   }
     endif
   else
     if kind == '&'
@@ -1090,6 +1133,44 @@ function! lh#project#exists(var) abort
   endif
 endfunction
 
+" Function: lh#project#_best_varname_match(kind, name) {{{3
+" Given:
+" - p{parent}:foo.bar = ...
+" - p{parent}:d2      = ...
+" - p{crt}:foo.b2     = ...
+" Then:
+" - lh#project#_best_varname_match(kind, 'foo') -> crt
+" - lh#project#_best_varname_match(kind, 'foo.b2') -> crt
+" - lh#project#_best_varname_match(kind, 'toto') -> crt
+" - lh#project#_best_varname_match(kind, 'foo.bar') -> parent
+" - lh#project#_best_varname_match(kind, 'd2') -> parent
+" - lh#project#_best_varname_match(kind, 'd2.l2') -> parent
+function! lh#project#_best_varname_match(kind, name) abort
+  call lh#assert#true(lh#project#is_in_a_project())
+
+  let varname = '.'.s:k_store_for[a:kind].'.'.a:name
+  let absvarname = 'b:'.s:project_varname.varname
+  let prj = b:{s:project_varname}
+  let res = {'project': prj}
+  let holded_name = prj.find_holder_name(a:name, s:k_store_for[a:kind])
+  if !empty(holded_name)
+    let res.realname = 'b:'.s:project_varname.holded_name.a:name
+    " return 'b:'.s:project_varname.holded_name.a:name
+  else
+    let parts = split(a:name, '\.')
+    if len(parts) == 1
+      " This is a the smallest part
+      " return absvarname
+      let res.realname = absvarname
+    else
+      " try for something smaller to see where it would go
+      let res = lh#project#_best_varname_match(a:kind, join(parts[:-2], '.'))
+      let res.realname .= '.'.parts[-1]
+    endif
+  endif
+  " return 'b:'.s:project_varname.'.variables.'.a:name
+  return res
+endfunction
 " # Find project root {{{2
 let s:project_roots = get(s:, 'project_roots', [])
 " Function: lh#project#root() {{{3
@@ -1198,7 +1279,7 @@ endfunction
 " Function: lh#project#is_eligible([bid]) {{{3
 function! lh#project#is_eligible(...) abort
   if a:0 > 0
-    return (getbufvar(a:1, '&ft') != 'qf') && ! lh#path#is_distant_or_scratch(bufname(a:1))
+    return (lh#option#getbufvar(a:1, '&ft') != 'qf') && ! lh#path#is_distant_or_scratch(bufname(a:1))
   else
     return (&ft != 'qf') && ! lh#path#is_distant_or_scratch(expand('%:p'))
   endif
@@ -1227,13 +1308,15 @@ endfunction
 " # Post local vimrc hook {{{2
 " Function: lh#project#_post_local_vimrc() {{{3
 function! lh#project#_post_local_vimrc() abort
-  call s:Verbose('lh#project#_post_local_vimrc()')
+  call s:Verbose('lh#project#_post_local_vimrc() {')
   call lh#project#_auto_detect_project()
   call lh#project#_UseProjectOptions()
+  call s:Verbose('lh#project#_post_local_vimrc() }')
 endfunction
 
 " Function: lh#project#_auto_detect_project() {{{3
 function! lh#project#_auto_detect_project() abort
+  call s:Verbose('lh#project#_auto_detect_project')
   let auto_detect_projects = lh#option#get('lh#project.auto_detect', 0, 'g')
   " If there already is a project defined
   " Or if this is the quickfix window
@@ -1256,6 +1339,7 @@ function! lh#project#_auto_detect_project() abort
 endfunction
 
 function! lh#project#_UseProjectOptions() " {{{3
+  call s:Verbose('lh#project#_UseProjectOptions')
   " # New buffer => update options
   let prj = lh#project#crt()
   if lh#option#is_set(prj)
