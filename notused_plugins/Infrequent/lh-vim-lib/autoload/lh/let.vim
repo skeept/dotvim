@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 4000
 " Created:      10th Sep 2012
-" Last Update:  06th Mar 2017
+" Last Update:  09th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Defines a command :LetIfUndef that sets a variable if undefined
@@ -51,7 +51,7 @@ endfunction
 "
 " # Let* {{{2
 " Function: s:BuildPublicVariableName(var, hide_or_overwrite, must_keep_previous) {{{3
-function! s:BuildPublicVariableName(var, hide_or_overwrite, must_keep_previous)
+function! s:BuildPublicVariableName(var, hide_or_overwrite, must_keep_previous) abort
   if a:var !~ '\v^[wbptgP]:|[$&]'
     throw "Invalid variable name `".a:var."`: It should be scoped like in g:foobar"
   elseif a:var =~ '^P:'
@@ -61,7 +61,7 @@ function! s:BuildPublicVariableName(var, hide_or_overwrite, must_keep_previous)
       if a:must_keep_previous
         let value = lh#project#crt().get(matchstr(a:var, '\v^p\&=:\zs.*'))
         if lh#option#is_set(value)
-          call s:Verbose("%1 is defined somewhere => non need to build its name, let's abort", a:var)
+          call s:Verbose("%1 is defined somewhere => no need to build its name, let's abort", a:var)
           return extend(copy(lh#option#unset()), {'_value': value})
           " No need to check anything,
         endif
@@ -77,7 +77,7 @@ function! s:BuildPublicVariableName(var, hide_or_overwrite, must_keep_previous)
     if a:must_keep_previous && lh#project#is_in_a_project()
       let value = lh#project#crt().get(matchstr(a:var, '\v^p\&=:\zs.*'))
       if lh#option#is_set(value)
-        call s:Verbose("%1 is defined somewhere => non need to build its name, let's abort", a:var)
+        call s:Verbose("%1 is defined somewhere => no need to build its name, let's abort", a:var)
         return extend(copy(lh#option#unset()), {'_value': value})
         " No need to check anything,
       endif
@@ -91,7 +91,7 @@ endfunction
 
 " Function: s:BuildPublicVariableNameAndValue(must_keep_previous ; string|var, value) {{{3
 let s:k_hide_or_overwite = '--(hide|overwrite)'
-function! s:BuildPublicVariableNameAndValue(must_keep_previous, ...)
+function! s:BuildPublicVariableNameAndValue(must_keep_previous, ...) abort
   if len(a:000) == 1
     " Strip --overwrite/--hide option
     let [all, hide_or_overwrite, expr ; tail] = matchlist(a:1, '\v^%('.s:k_hide_or_overwite.'\s*)=(.*)$')
@@ -202,7 +202,6 @@ function! s:LetTo(var, value) abort " {{{4
   " Here, project variables have already been resolved.
   let [all, dict, key, subscript ; dummy] = matchlist(a:var, '^\v(.{-})%(\.([^\[.]{-})%(\[(.{-})\])=)=$')
   call lh#assert#value(subscript).empty("Case not yet handled")
-  " echomsg a:var." --> dict=".dict." --- key=".key
   if !empty(key)
     " Dictionaries
     let dict2 = s:LetIfUndef(dict, {}) " Don't override the dict w/ s:LetTo()!
@@ -210,6 +209,9 @@ function! s:LetTo(var, value) abort " {{{4
 
     " let dict2[key] = type(a:value) == type(function('has')) ? (a:value) : eval(a:value)
     call s:Verbose("let %1.%2 = %3 %4 // %1=%5", dict, key, a:value, !empty(subscript) ? '@['.subscript.']' : '', dict2)
+    if ! lh#type#is_dict(dict2)
+      throw "E689: Type mismatch: Can only index a List or Dictionary."
+    endif
     let dict2[key] = a:value
     return dict2[key]
   elseif a:var =~ '^\$'
@@ -234,7 +236,7 @@ function! lh#let#to(...) abort " {{{4
   call s:Verbose('let_to(%1)', a:000)
   " try
     let [var,Value] = call('s:BuildPublicVariableNameAndValue', [0] + a:000)
-    call lh#assert#true(lh#option#is_set(var))
+    call lh#assert#value(var).is_set(var)
     if type(var) == type({}) && has_key(var, 'project')
       " Special case for p:& options (and may be someday to p:$var)
       call var.project.set(var.name, Value)
