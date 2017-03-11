@@ -53,21 +53,20 @@ Contents~
         :TSelectBuffer ............... |:TSelectBuffer|
         g:tselectbuffer#order ........ |g:tselectbuffer#order|
         g:tselectbuffer#autopick ..... |g:tselectbuffer#autopick|
-        tselectbuffer#Select ......... |tselectbuffer#Select()|
 
 
-========================================================================
-plugin/tselectbuffer.vim~
-
+------------------------------------------------------------------------
+                                                    *plugin/tselectbuffer.vim*
                                                     *:TSelectBuffer*
 :TSelectBuffer
+    Select a buffer. With the optional bang ("!"), also display hidden 
+    buffers.
 
 
-========================================================================
-autoload/tselectbuffer.vim~
-
+------------------------------------------------------------------------
+                                                    *autoload/tselectbuffer.vim*
                                                     *g:tselectbuffer#order*
-g:tselectbuffer#order          (default: 'bufnr')
+g:tselectbuffer#order          (default: 'mru')
     For possible values please see the documentation of 
     |tlib#buffer#GetList()|'s order argument.
 
@@ -77,9 +76,6 @@ g:tselectbuffer#autopick       (default: 1)
     start typing a name and there is only one item left matching that name 
     it is automatically picked and you don't have to type <cr>.
 
-                                                    *tselectbuffer#Select()*
-tselectbuffer#Select(show_hidden)
 
 
-
-vim:tw=78:fo=tcq2:isk=!-~,^*,^|,^":ts=8:ft=help:norl:
+vim:tw=78:fo=w2croql:isk=!-~,^*,^|,^":ts=8:ft=help:norl:

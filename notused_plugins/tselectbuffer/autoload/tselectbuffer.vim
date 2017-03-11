@@ -1,7 +1,7 @@
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    41
+" @Revision:    55
 
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
 
@@ -28,9 +28,8 @@ if !exists('g:tselectbuffer#handlers')
                 \ {'key': 19, 'agent': s:SNR().'AgentSplitBuffer',  'key_name': '<c-s>', 'help': 'Show in split window'},
                 \ {'key': 20, 'agent': s:SNR().'AgentTabBuffer',    'key_name': '<c-t>', 'help': 'Show in tab'},
                 \ {'key': 22, 'agent': s:SNR().'AgentVSplitBuffer', 'key_name': '<c-v>', 'help': 'Show in vsplit window'},
-                \ {'key': 23, 'agent': s:SNR().'AgentOpenBuffer',   'key_name': '<c-w>', 'help': 'View in current window'},
-                \ {'key': 60, 'agent': s:SNR().'AgentJumpBuffer',   'key_name': '<',     'help': 'Jump to opened window/tab a la swb=opentab'},
-                \ {'return_agent': s:SNR() .'Callback'},
+                \ {'key': 23, 'agent': s:SNR().'AgentOpenBufferInWindow',   'key_name': '<c-w>', 'help': 'View in current window'},
+                \ {'return_agent': s:SNR() .'AgentGotoBuffer'},
                 \ ]
     if !g:tselectbuffer#autopick
         call add(g:tselectbuffer#handlers, {'pick_last_item': 0})
@@ -160,8 +159,8 @@ function! s:AgentVSplitBuffer(world, selected)
 endf
 
 
-function! s:AgentOpenBuffer(world, selected)
-    return tlib#agent#ViewFile(a:world, s:GetBufferNames(a:selected))
+function! s:AgentOpenBufferInWindow(world, selected)
+    return tlib#agent#EditFileInWindow(a:world, s:GetBufferNames(a:selected))
 endf
 
 
@@ -170,35 +169,19 @@ function! s:AgentTabBuffer(world, selected)
 endf
 
 
-function! s:AgentJumpBuffer(world, selected) "{{{3
-    let bn = s:GetBufNr(a:selected[0])
-    " TLogVAR bn
-    let tw = tlib#tab#TabWinNr(bn)
-    " TLogVAR tw
-    if !empty(tw)
-        call a:world.CloseScratch()
-        " let w = tlib#agent#Suspend(a:world, a:selected)
-        " if w.state =~ '\<suspend\>'
-            " call w.SwitchWindow('win')
-            let [tn, wn] = tw
-            call tlib#tab#Set(tn)
-            call tlib#win#Set(wn)
-            " return w
-        " endif
-    else
-        let a:world.status = 'redisplay'
-    endif
-    return a:world
-endf
-
-
-function! s:Callback(world, selected) "{{{3
+function! s:AgentGotoBuffer(world, selected) "{{{3
+    call a:world.CloseScratch(1)
     for b in a:selected
         let bi = s:GetBufNr(b)
         let bn = bufname(bi)
-        " TLogVAR bi, bn, b
-        call tlib#file#Edit(bn)
+        if empty(bn)
+            exec 'buffer' bi
+        else
+            call tlib#file#Edit(bn)
+        endif
     endfor
+    call a:world.SetOrigin()
+    return a:world
 endf
 
 

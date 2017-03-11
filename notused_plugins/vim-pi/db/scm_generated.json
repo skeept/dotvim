@@ -5387,6 +5387,10 @@
     "type": "git",
     "url": "git://github.com/lambdalisue/gina.vim"
   },
+  "5535": {
+    "type": "git",
+    "url": "git://github.com/dreadnaut/vim-bargreybars"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
