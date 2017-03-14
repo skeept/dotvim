@@ -1424,7 +1424,7 @@
 "bestfriend":{"archive_name":"bestfriend-0.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17875","version":"0.0.3","vim_script_nr":4037},
 "ucpp-vim-syntax":{"archive_name":"ucpp-vim-syntax.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17828","version":"1.0","vim_script_nr":4036},
 "modx":{"archive_name":"modx.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17827","version":"0.1","vim_script_nr":4035},
-"SAS_Indent":{"archive_name":"sas.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25024","version":"3.0.0","vim_script_nr":4034},
+"SAS_Indent":{"archive_name":"sas.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25030","version":"3.0.1","vim_script_nr":4034},
 "vim4rally":{"archive_name":"GET_LATEST_FROM_GITHUB.txt","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21121","version":"1.1","vim_script_nr":4033},
 "muxmate":{"archive_name":"muxmate.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17823","version":"0.0.2","vim_script_nr":4032},
 "rstatusline":{"archive_name":"rstatusline.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21533","version":"0.1.4","vim_script_nr":4031},
