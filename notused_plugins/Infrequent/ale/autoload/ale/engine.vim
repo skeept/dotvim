@@ -254,12 +254,13 @@ function! s:HandleExit(job) abort
 endfunction
 
 function! ale#engine#SetResults(buffer, loclist) abort
-    if g:ale_set_quickfix || g:ale_set_loclist
-        call ale#list#SetLists(a:buffer, a:loclist)
-    endif
-
+    " Set signs first. This could potentially fix some line numbers.
     if g:ale_set_signs
         call ale#sign#SetSigns(a:buffer, a:loclist)
+    endif
+
+    if g:ale_set_quickfix || g:ale_set_loclist
+        call ale#list#SetLists(a:buffer, a:loclist)
     endif
 
     if exists('*ale#statusline#Update')
@@ -625,7 +626,15 @@ endfunction
 function! ale#engine#Invoke(buffer, linter) abort
     " Stop previous jobs for the same linter.
     call s:StopPreviousJobs(a:buffer, a:linter)
-    call s:InvokeChain(a:buffer, a:linter, 0, [])
+
+    let l:executable = has_key(a:linter, 'executable_callback')
+    \   ? ale#util#GetFunction(a:linter.executable_callback)(a:buffer)
+    \   : a:linter.executable
+
+    " Run this program if it can be executed.
+    if executable(l:executable)
+        call s:InvokeChain(a:buffer, a:linter, 0, [])
+    endif
 endfunction
 
 " Given a buffer number, return the warnings and errors for a given buffer.

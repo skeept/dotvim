@@ -6,6 +6,17 @@ require 'pp'
 # ======[ Value class w/ attributes {{{1
 RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :with_attributes, :value_attributes do
   let (:filename) { "test.cpp" }
+  
+  # ====[ Executed once before all test {{{2
+  before :all do
+    if !defined? vim.runtime
+        vim.define_singleton_method(:runtime) do |path|
+            self.command("runtime #{path}")
+        end
+    end
+    vim.runtime('spec/support/input-mock.vim')
+    expect(vim.command('verbose function lh#ui#input')).to match(/input-mock.vim/)
+  end
 
   # ====[ Always executed before each test {{{2
   before :each do
@@ -20,6 +31,13 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
     vim.command('silent! unlet g:mocked_confirm')
     vim.command('silent! unlet g:cpp_use_copy_and_swap')
     clear_buffer
+    set_buffer_contents <<-EOF
+    /** File Header line to trick auto-inclusion */
+    EOF
+    vim.command(%Q{call append(1, ['', ''])})
+    expect(vim.echo('line("$")')).to eq '3'
+    expect(vim.echo('setpos(".", [1,3,1,0])')).to eq '0'
+    expect(vim.echo('line(".")')).to eq '3'
   end
 
   # ====[ implictly copyable, explicit definitions, C++98 {{{2
@@ -28,7 +46,19 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
     expect(vim.command('call lh#mut#expand_and_jump(0, "cpp/value-class", {"attributes": [{"name": "foo", "type": "int"}, {"name": "bar", "type": "string", "functions": ["set", "get"]}]})')).to match(/^$|#include <string> added/)
     vim.feedkeys('\<c-\>\<c-n>:silent! $call append("$", ["",""])\<cr>G')
     assert_buffer_contents <<-EOF
+    /** File Header line to trick auto-inclusion */
     #include <string>
+
+    /**
+     * «Test».
+     * @invariant «»
+     * <p><b>Semantics</b><br>
+     * - Value object
+     * - «Regular object»
+     * - «Comparable»
+     * @author «author-name», creation
+     * @since Version «1.0»
+     */
     class «Test»
     {
     public:
@@ -59,14 +89,26 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
   end
 
   # ====[ implictly copyable, NO explicit definitions, C++11 {{{2
-  specify "value-attribute-class copyable, no implicit definition, C++11", :cpp11, :copyable, :defaulted do
+  specify "value-attribute-class copyable, no explicit definition, C++11", :cpp11, :copyable, :defaulted do
     expect(vim.echo('lh#mut#dirs#get_templates_for("cpp/value-class")')).to match(/value-class.template/)
     vim.command('let g:cpp_std_flavour=11')
     vim.command("let g:cpp_explicit_default = 1")
     expect(vim.command('call lh#mut#expand_and_jump(0, "cpp/value-class", {"attributes": [{"name": "foo", "type": "int"}, {"name": "bar", "type": "string", "functions": ["set", "get"]}]})')).to match(/^$|#include <string> added/)
     vim.feedkeys('\<c-\>\<c-n>:silent! $call append("$", ["",""])\<cr>G')
     assert_buffer_contents <<-EOF
+    /** File Header line to trick auto-inclusion */
     #include <string>
+
+    /**
+     * «Test».
+     * @invariant «»
+     * <p><b>Semantics</b><br>
+     * - Value object
+     * - «Regular object»
+     * - «Comparable»
+     * @author «author-name», creation
+     * @since Version «1.0»
+     */
     class «Test»
     {
     public:
@@ -128,8 +170,20 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
     # class, somehow this means that the value behind the pointer could be
     # duplicated)
     assert_buffer_contents <<-EOF
+    /** File Header line to trick auto-inclusion */
     #include <memory>
     #include <string>
+
+    /**
+     * «Test».
+     * @invariant «»
+     * <p><b>Semantics</b><br>
+     * - Value object
+     * - «Regular object»
+     * - «Comparable»
+     * @author «author-name», creation
+     * @since Version «1.0»
+     */
     class «Test»
     {
     public:
@@ -207,8 +261,20 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
     # class, somehow this means that the value behind the pointer could be
     # duplicated)
     assert_buffer_contents <<-EOF
+    /** File Header line to trick auto-inclusion */
     #include <memory>
     #include <string>
+
+    /**
+     * «Test».
+     * @invariant «»
+     * <p><b>Semantics</b><br>
+     * - Value object
+     * - «Regular object»
+     * - «Comparable»
+     * @author «author-name», creation
+     * @since Version «1.0»
+     */
     class «Test»
     {
     public:
@@ -275,52 +341,6 @@ RSpec.describe "C++ Value class w/ attributes wizard", :cpp, :class, :value, :wi
 
         int                        m_foo;
         std::auto_ptr<std::string> m_bar;
-    };
-    EOF
-  end
-
-  # ====[ explicit copy, NO explicit definitions, C++11 {{{2
-  specify "value-attribute-class copyable, no implicit definition, C++11", :cpp11, :copyable, :defaulted do
-    expect(vim.echo('lh#mut#dirs#get_templates_for("cpp/value-class")')).to match(/value-class.template/)
-    vim.command('let g:cpp_std_flavour=11')
-    vim.command("let g:cpp_explicit_default = 1")
-    expect(vim.command('call lh#mut#expand_and_jump(0, "cpp/internals/class-skeleton", {"attributes": [{"name": "foo", "type": "int"}, {"name": "bar", "type": "string", "functions": ["set", "get"]}]})')).to match(/^$|#include <string> added/)
-    vim.feedkeys('\<c-\>\<c-n>:silent! $call append("$", ["",""])\<cr>G')
-    assert_buffer_contents <<-EOF
-    #include <string>
-    class «Test»
-    {
-    public:
-
-        «Test»(«Test» const&) = default;
-        «Test»& operator=(«Test» const&) = default;
-        /**
-         * Destructor.
-         * @throw Nothing
-         * @warning this class is not meant to be publicly inherited
-         */
-        ~«Test»() = default;
-        /**
-         * Init constructor.
-         * @param[in] foo «foo-explanations»
-         * @param[in] bar «bar-explanations»
-         * «@throw »
-         */
-        «Test»(int foo, std::string const& bar)
-            : m_foo(foo)
-            , m_bar(bar)
-            {}
-        void setBar(std::string const& bar) {
-            m_bar = bar;
-        }
-        std::string const& getBar() const {
-            return m_bar;
-        }
-
-    private:
-
-        int         m_foo;
-        std::string m_bar;
     };
     EOF
   end

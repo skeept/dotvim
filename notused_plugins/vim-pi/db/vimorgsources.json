@@ -5,7 +5,7 @@
 "visual-search":{"archive_name":"visual-search.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25007","version":"1","vim_script_nr":5533},
 "dubs-midnight":{"archive_name":"dubs_midnight.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25001","version":"0.1","vim_script_nr":5532},
 "gina":{"archive_name":"gina-v0.2.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25010","version":"v0.2.1","vim_script_nr":5531},
-"doctabs":{"archive_name":"doctabs.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25022","version":"0.5.2","vim_script_nr":5530},
+"doctabs":{"archive_name":"doctabs.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25032","version":"0.7","vim_script_nr":5530},
 "verilog-support":{"archive_name":"verilog-support.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24982","version":"1.0","vim_script_nr":5529},
 "add-git-managed-file-to-buffer":{"archive_name":"add-git-managed-file-to-buffer.vim-1.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25018","version":"1.2.0","vim_script_nr":5528},
 "workbook":{"archive_name":"workbook.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24969","version":"0.01","vim_script_nr":5527},

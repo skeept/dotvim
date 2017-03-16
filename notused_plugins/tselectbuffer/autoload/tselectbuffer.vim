@@ -1,12 +1,12 @@
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    55
+" @Revision:    56
 
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
 
 
-function! s:SNR()
+function! s:SNR() abort
     return matchstr(expand('<sfile>'), '<SNR>\d\+_\zeSNR$')
 endf
 
@@ -36,15 +36,15 @@ if !exists('g:tselectbuffer#handlers')
     endif
 endif
 
-function! s:PrepareSelectBuffer()
+function! s:PrepareSelectBuffer() abort
     let [s:selectbuffer_nr, s:selectbuffer_list] = tlib#buffer#GetList(s:selectbuffer_hidden, 1, g:tselectbuffer#order)
-    if g:tselectbuffer#order == 'mru'
+    if g:tselectbuffer#order ==# 'mru'
         let s:selectbuffer_alternate_n = len(s:selectbuffer_nr) > 1 ? 2 : 1
     else
         let s:selectbuffer_alternate_n = 0
         for b in s:selectbuffer_list
             let s:selectbuffer_alternate_n -= 1
-            if b =~ '^\s*\d\+\s\+#'
+            if b =~# '^\s*\d\+\s\+#'
                 let s:selectbuffer_alternate_n = -s:selectbuffer_alternate_n
                 break
             endif
@@ -57,7 +57,7 @@ function! s:PrepareSelectBuffer()
 endf
 
 
-function! s:GetBufNr(buffer)
+function! s:GetBufNr(buffer) abort
     " TLogVAR a:buffer
     let bi = index(s:selectbuffer_list, a:buffer)
     " TLogVAR bi
@@ -67,13 +67,13 @@ function! s:GetBufNr(buffer)
 endf
 
 
-function! s:RenameThisBuffer(buffer)
+function! s:RenameThisBuffer(buffer) abort
     let bx = s:GetBufNr(a:buffer)
     let on = bufname(bx)
     let nn = input('Rename buffer: ', on)
     if !empty(nn) && nn != on
         exec 'buffer '. bx
-        if filereadable(on) && &buftype !~ '\<nofile\>'
+        if filereadable(on) && &buftype !~# '\<nofile\>'
             " if filewritable(nn)
                 call rename(on, nn)
                 echom 'Rename file: '. on .' -> '. nn
@@ -89,7 +89,7 @@ function! s:RenameThisBuffer(buffer)
 endf
 
 
-function! s:AgentRenameBuffer(world, selected)
+function! s:AgentRenameBuffer(world, selected) abort
     call a:world.CloseScratch()
     for buffer in a:selected
         call s:RenameThisBuffer(buffer)
@@ -101,7 +101,7 @@ function! s:AgentRenameBuffer(world, selected)
 endf
 
 
-function! s:DeleteThisBuffer(buffer)
+function! s:DeleteThisBuffer(buffer) abort
     let bx = s:GetBufNr(a:buffer)
     if s:delete_this_buffer_default =~# '^a'
         let doit = 'y'
@@ -128,7 +128,7 @@ function! s:DeleteThisBuffer(buffer)
 endf
 
 
-function! s:AgentDeleteBuffer(world, selected)
+function! s:AgentDeleteBuffer(world, selected) abort
     call a:world.CloseScratch(0)
     let s:delete_this_buffer_default = ''
     for buffer in a:selected
@@ -144,32 +144,32 @@ function! s:AgentDeleteBuffer(world, selected)
 endf
 
 
-function! s:GetBufferNames(selected) "{{{3
+function! s:GetBufferNames(selected) abort "{{{3
     return map(copy(a:selected), 'fnamemodify(bufname(s:GetBufNr(v:val)), ":p")')
 endf
 
 
-function! s:AgentSplitBuffer(world, selected)
+function! s:AgentSplitBuffer(world, selected) abort
     return tlib#agent#EditFileInSplit(a:world, s:GetBufferNames(a:selected))
 endf
 
 
-function! s:AgentVSplitBuffer(world, selected)
+function! s:AgentVSplitBuffer(world, selected) abort
     return tlib#agent#EditFileInVSplit(a:world, s:GetBufferNames(a:selected))
 endf
 
 
-function! s:AgentOpenBufferInWindow(world, selected)
+function! s:AgentOpenBufferInWindow(world, selected) abort
     return tlib#agent#EditFileInWindow(a:world, s:GetBufferNames(a:selected))
 endf
 
 
-function! s:AgentTabBuffer(world, selected)
+function! s:AgentTabBuffer(world, selected) abort
     return tlib#agent#EditFileInTab(a:world, s:GetBufferNames(a:selected))
 endf
 
 
-function! s:AgentGotoBuffer(world, selected) "{{{3
+function! s:AgentGotoBuffer(world, selected) abort "{{{3
     call a:world.CloseScratch(1)
     for b in a:selected
         let bi = s:GetBufNr(b)
@@ -185,7 +185,7 @@ function! s:AgentGotoBuffer(world, selected) "{{{3
 endf
 
 
-function! tselectbuffer#Select(show_hidden)
+function! tselectbuffer#Select(show_hidden) abort
     let s:selectbuffer_hidden = a:show_hidden
     let bs  = s:PrepareSelectBuffer()
     let bhs = copy(g:tselectbuffer#handlers)
