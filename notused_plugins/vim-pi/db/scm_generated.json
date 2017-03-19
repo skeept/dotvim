@@ -5391,6 +5391,18 @@
     "type": "git",
     "url": "git://github.com/dreadnaut/vim-bargreybars"
   },
+  "5537": {
+    "type": "git",
+    "url": "git://github.com/lymslive/vimloo"
+  },
+  "5538": {
+    "type": "git",
+    "url": "git://github.com/lymslive/vnote"
+  },
+  "5539": {
+    "type": "git",
+    "url": "git://github.com/robcsi/gvfilter.vim"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
