@@ -16,7 +16,7 @@ CONTENTS                                                    *neomake-contents*
     2. Commands ....................................... |neomake-commands|
     3. Configuration ............................. |neomake-configuration|
     4. Functions ..................................... |neomake-functions|
-    5. Autocommands ................................... |neomake-autocmds|
+    5. Autocommands/Hooks ............................. |neomake-autocmds|
     6. Frequently Asked Questions (FAQ) .................... |neomake-faq|
 
 ==============================================================================
@@ -80,9 +80,31 @@ Just set your |'makeprg'| and |'errorformat'| as usual, and run |:Neomake!|.
 If you want more, read on.
 
 Makers                                                        *neomake-makers*
-A maker is an object that tells Neomake how to run a job for you. A maker may
-be run with a file as input (great for linting), or with no file as input
-(great for building, project-level tasks).
+A maker is an object that tells Neomake how to run a job for you.
+
+                                             *neomake-makers-get_list_entries*
+If a maker has a `get_list_entries` function, this gets used to retrieve
+entries for the location or quickfix list directly.
+The function gets passed a jobinfo (|neomake-object-jobinfo|) object, and
+should return a list of entries that will be used to fill the
+location/quickfix list: >
+    let maker = {'name': 'My maker'}
+    function! maker.get_list_entries(jobinfo) abort
+      return [
+        \ {'text': 'Some error', 'lnum': 1},
+        \ {'text': 'Some warning', 'type': 'W', 'lnum': 2, 'col': 1,
+        \  'length': 5},
+        \ ]
+    endfunction
+<
+The required keys for entries are `text` and `lnum`.
+The `length` entry in the example is internal to Neomake, and sets the length
+for an highlight (see |neomake-highlight|).
+
+                                                          *neomake-job-makers*
+Otherwise a maker gets run as a job with a file as input ("file mode", good
+for linting), or with no file as input ("project mode", good for building and
+project-level tasks).
 
 Here is a sample maker definition: >
     let g:neomake_make_maker = {
@@ -148,6 +170,25 @@ This can be useful for makers that are filetype dependent but are typically
 run on an whole project rather than a specific file.
 
                                                    *neomake-makers-processing*
+A job maker's output gets processed in two ways:
+1. through a maker's `process_output` function, or
+2. via its `errorformat` (together with `mapexpr` and `postprocess`).
+
+                                               *neomake-makers-process_output*
+If a maker has a `process_output` function, this gets used to retrieve
+entries for the location or quickfix list for the job's output directly.
+
+The function gets called with a `context` dictionary, with the following
+entries:
+ - `output`: a list of lines
+ - `source`: the source of the output (`stderr`, `stdout`)
+ - `jobinfo`: the jobinfo object, see |neomake-object-jobinfo|
+It should return a list of entries (dictionaries), where `text` and `lnum`
+are required.
+
+Using this method skips the processing based on `errorformat` (including
+`mapexpr` and `postprocess`).
+
                                                       *neomake-makers-mapexpr*
 You can define two optional properties on a maker object to process its
 output: `mapexpr` is applied to the maker's output before any processing, and
@@ -534,7 +575,7 @@ directly if you need to force it. This function is not currently used for
 |:Neomake!|, which always processes its output as it arrives.
 
 ==============================================================================
-5. Autocommands                                             *neomake-autocmds*
+5. Autocommands/Hooks                                       *neomake-autocmds*
 
 Neomake will trigger |User| autocommands on certain events.  With all these
 events a dictionary `g:neomake_hook_context` will be set, with key/value pairs
@@ -546,26 +587,48 @@ You can register your own function as a callback like this: >
     augroup END
 <
                                                              *NeomakeFinished*
-The NeomakeFinished autocommand is triggered after all jobs for a call to
-|:Neomake| etc have finished.  This can be used to e.g. close an empty
-location or quickfix window.
-For this event `g:neomake_hook_context.file_mode` and
-`g:neomake_hook_context.make_id` will be set.
+The NeomakeFinished autocommand gets triggered after all jobs for a call to
+|:Neomake| etc have finished.
+You can use this to e.g. close an empty location or quickfix window.
+Context:
+ - `g:neomake_hook_context.jobinfo`: see |neomake-object-jobinfo|.
 
                                                         *NeomakeCountsChanged*
-The NeomakeCountsChanged autocommand is triggered after counts for the
+The NeomakeCountsChanged autocommand gets triggered after counts for the
 location/quickfix list have changed, i.e. the list got reset or new errors
-have been added.  This can be used to e.g. update the statusline.
-For this event `g:neomake_hook_context.file_mode` and
-`g:neomake_hook_context.bufnr` will be set.  If counts changed because of a
-maker's output being processed, the maker object itself will be passed in
-(which also has these attributes).
+have been added.
+You can use this to e.g. update the statusline.
+Context:
+ - `g:neomake_hook_context.reset`: 1 if the list got reset, 0 otherwise.
+ - `g:neomake_hook_context.jobinfo`: when the list is not reset; see
+   |neomake-object-jobinfo|.
 
                                                           *NeomakeJobFinished*
-The NeomakeJobFinished autocommand is triggered after a single job has
+The NeomakeJobFinished autocommand gets triggered after a single job has
 finished.
-For this event `g:neomake_hook_context.jobinfo` will be set, where `exit_code`
-is available.
+Context:
+ - `g:neomake_hook_context.jobinfo`: see |neomake-object-jobinfo|; `exit_code`
+   is available there.
+
+==============================================================================
+5. Objects                                                   *neomake-objects*
+
+                                                      *neomake-object-jobinfo*
+The `jobinfo` dictionary contains information about a job.
+(this is experimental, so not everything is documented)
+ - `maker`: a dictionary containing information about the maker that ran
+   this job.  See |neomake-object-maker|.
+ - `file_mode`: 1 for file mode, 0 for project/directory mode.
+ - `make_id`: the ID of the make run
+
+ - Relevant for file mode:
+   - `bufnr`: the number of the buffer.
+   - `ft`: the filetype.
+                                                        *neomake-object-maker*
+The `maker` dictionary contains the following keys:
+(this is experimental, so not everything is documented)
+ - `name`: name of the maker.
+ - `exe`: executable of the maker.
 
 ==============================================================================
 6. Frequently Asked Questions (FAQ)                              *neomake-faq*
