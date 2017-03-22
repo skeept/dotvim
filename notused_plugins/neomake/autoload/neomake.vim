@@ -172,7 +172,7 @@ function! s:MakeJob(make_id, options) abort
         let running_already = values(filter(copy(s:jobs),
                     \ 'v:val.make_id != a:make_id && v:val.maker == maker'
                     \ .' && v:val.bufnr == jobinfo.bufnr'
-                    \ ." && !get(v:val, 'restarting')"))
+                    \ ." && !get(v:val, 'canceled')"))
         if len(running_already)
             let jobinfo = running_already[0]
             " let jobinfo.next = copy(options)
@@ -181,8 +181,6 @@ function! s:MakeJob(make_id, options) abort
             call neomake#utils#LoudMessage(printf(
                         \ 'Restarting already running job (%d.%d) for the same maker.',
                         \ jobinfo.make_id, jobinfo.id), {'make_id': a:make_id})
-            let jobinfo.restarting = a:make_id
-
             call neomake#CancelJob(jobinfo.id)
             return s:MakeJob(a:make_id, a:options)
         endif
@@ -826,7 +824,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
 endfunction
 
 function! s:CleanJobinfo(jobinfo) abort
-    if get(a:jobinfo, 'pending_output', 0) && !get(a:jobinfo, 'restarting', 0)
+    if get(a:jobinfo, 'pending_output', 0) && !get(a:jobinfo, 'canceled', 0)
         call neomake#utils#DebugMessage(
                     \ 'Output left to be processed, not cleaning job yet.', a:jobinfo)
         return
@@ -854,14 +852,14 @@ function! s:CleanJobinfo(jobinfo) abort
         call neomake#utils#DebugMessage(printf('Removing temporary file: %s',
                     \ temp_file))
         call delete(temp_file)
-        " XXX: old Vim has no support for flags.. the patch version is not
-        " exact here!
-        if v:version >= 705 || (v:version == 704 && has('patch1689'))
+        " Only delete the dir, if Vim supports it.  It will be cleaned up
+        " when quitting Vim in any case.
+        if v:version >= 705 || (v:version == 704 && has('patch1107'))
             call delete(fnamemodify(temp_file, ':h'), 'd')
         endif
     endif
 
-    if !get(a:jobinfo, 'restarting', 0)
+    if !get(a:jobinfo, 'canceled', 0)
                 \ && !get(a:jobinfo, 'failed_to_start', 0)
         call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
         let make_info.finished_jobs += 1
@@ -963,7 +961,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
     else
         " Fix entries with get_list_entries/process_output.
         call map(a:entries, 'extend(v:val, {'
-                    \ . "'bufnr': a:jobinfo.bufnr,"
+                    \ . "'bufnr': str2nr(get(v:val, 'bufnr', a:jobinfo.bufnr)),"
                     \ . "'lnum': str2nr(v:val.lnum),"
                     \ . "'col': str2nr(get(v:val, 'col', 0)),"
                     \ . "'vcol': str2nr(get(v:val, 'vcol', 0)),"
@@ -982,7 +980,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
     endif
 
     let counts_changed = 0
-    let cleaned_signs = 0
+    let cleaned_signs = []
     let ignored_signs = []
     let maker_type = file_mode ? 'file' : 'project'
     let do_highlight = get(g:, 'neomake_highlight_columns', 1)
@@ -1004,13 +1002,13 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
             endif
         endif
 
-        if !cleaned_signs
+        if index(cleaned_signs, entry.bufnr) == -1
             if file_mode
                 call neomake#CleanOldFileSignsAndErrors(entry.bufnr)
             else
                 call neomake#CleanOldProjectSignsAndErrors()
             endif
-            let cleaned_signs = 1
+            call add(cleaned_signs, entry.bufnr)
         endif
 
         " Track all errors by buffer and line
@@ -1331,11 +1329,6 @@ function! s:exit_handler(job_id, data, event_type) abort
         return
     endif
     let jobinfo = s:jobs[a:job_id]
-    if get(jobinfo, 'restarting')
-        call neomake#utils#DebugMessage('exit: job was restarted.', jobinfo)
-        call s:CleanJobinfo(jobinfo)
-        return
-    endif
     if get(jobinfo, 'canceled')
         call neomake#utils#DebugMessage('exit: job was canceled.', jobinfo)
         call s:CleanJobinfo(jobinfo)
@@ -1409,6 +1402,10 @@ function! s:output_handler(job_id, data, event_type) abort
 
     call neomake#utils#DebugMessage(printf('%s: %s: %s',
                 \ a:event_type, jobinfo.maker.name, string(a:data)), jobinfo)
+    if get(jobinfo, 'canceled')
+        call neomake#utils#DebugMessage('Ignoring output, job was canceled.', jobinfo)
+        return
+    endif
     let last_event_type = get(jobinfo, 'event_type', a:event_type)
 
     " a:data is a list of 'lines' read. Each element *after* the first

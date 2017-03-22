@@ -5403,6 +5403,10 @@
     "type": "git",
     "url": "git://github.com/robcsi/gvfilter.vim"
   },
+  "5540": {
+    "type": "git",
+    "url": "git://github.com/pandapan0021/vim-fileHeader"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
