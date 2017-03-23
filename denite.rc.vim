@@ -58,6 +58,6 @@ call denite#custom#filter('matcher_ignore_globs', 'ignore_globs',
 
 
 " mappings
-nnoremap ,d<SPACE> :<C-U>Denite<SPACE>
+nnoremap ,d<SPACE> :<C-U>Denite<SPACE><C-D>
 nnoremap ,df :<C-U>Denite file_rec<CR>
 nnoremap ,db :<C-U>Denite buffer<CR>

@@ -463,6 +463,7 @@ function! LoadUnite() "{{{
   nnoremap ,rr :<C-U>UniteResume<CR>
   nnoremap ,rd :<C-U>Unite -buffer-name=mru_folders -resume directory_mru<CR>
   nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
+  nnoremap ,u<SPACE> :<C-U>Unite<SPACE><C-D>
 
   " Ref {{{
   let g:ref_use_vimproc = 1
@@ -504,6 +505,7 @@ nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
 nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
 nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
 nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
+nnoremap <silent> ,u<SPACE>> :call LoadUnite()<CR>:<C-U>Unite<SPACE><C-D>
 endif
 
 if 0 && has('python') "{{{ LoadPythonDelayed
