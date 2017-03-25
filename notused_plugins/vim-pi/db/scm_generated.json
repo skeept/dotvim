@@ -508,8 +508,8 @@
     "url": "git://github.com/rkitover/perl-vim-mxd"
   },
   "2531": {
-    "type": "hg",
-    "url": "https://bitbucket.org/kovisoft/slimv"
+    "type": "git",
+    "url": "git://github.com/kovisoft/slimv"
   },
   "2536": {
     "type": "git",
