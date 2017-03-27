@@ -43,6 +43,8 @@ CONTENTS                                                         *ale-contents*
     4.31. yamllint........................|ale-linter-options-yamllint|
     4.32. cmakelint.......................|ale-linter-options-cmakelint|
     4.33. perl-perl.......................|ale-linter-options-perl-perl|
+    4.34. rust-cargo......................|ale-linter-options-rust-cargo|
+    4.35. asm-gcc.........................|ale-linter-options-asm-gcc|
   5. Linter Integration Notes.............|ale-linter-integration|
     5.1.  merlin..........................|ale-linter-integration-ocaml-merlin|
     5.2. rust.............................|ale-integration-rust|
@@ -74,6 +76,7 @@ ALE supports the following key features:
 
 The following languages and tools are supported.
 
+* ASM: 'gcc'
 * Ansible: 'ansible-lint'
 * Asciidoc: 'proselint'
 * Bash: 'shell' (-n flag), 'shellcheck'
@@ -88,7 +91,7 @@ The following languages and tools are supported.
 * Cython (pyrex filetype): 'cython'
 * D: 'dmd'
 * Dockerfile: 'hadolint'
-* Elixir: 'credo'
+* Elixir: 'credo', 'dogma'
 * Elm: 'elm-make'
 * Erlang: 'erlc'
 * Fortran: 'gcc'
@@ -273,10 +276,21 @@ g:ale_lint_on_enter                                       *g:ale_lint_on_enter*
   behaviour.
 
 
+g:ale_lint_on_filetype_changed                 *g:ale_lint_on_filetype_changed*
+
+  Type: |Number|
+  Default: `1`
+
+  This option will cause ALE to run whenever the filetype is changed. A short
+  delay will be used before linting will be done, so the filetype can be
+  changed quickly several times in a row, but resulting in only one lint
+  cycle.
+
+
 g:ale_lint_on_save                                         *g:ale_lint_on_save*
 
   Type: |Number|
-  Default: `0`
+  Default: `1`
 
   This option will make ALE run the linters whenever a file is saved when it
   it set to `1` in your vimrc file. This option can be used in combination
@@ -1119,6 +1133,27 @@ g:ale_perl_perl_options                               *g:ale_perl_perl_options*
 
   This variable can be changed to alter the command-line arguments to the perl
   invocation.
+
+-------------------------------------------------------------------------------
+4.34. rust-cargo                                *ale-linter-options-rust-cargo*
+
+g:ale_rust_cargo_use_check                         *g:ale_rust_cargo_use_check*
+
+  Type: |Number|
+  Default: `1`
+
+  When set to `1`, this option will cause ALE to use "cargo check" instead of
+  "cargo build". "cargo check" is supported since version 1.16.0 of Rust.
+
+-------------------------------------------------------------------------------
+4.35. asm-gcc                                      *ale-linter-options-asm-gcc*
+
+g:ale_asm_gcc_options                                   *g:ale_asm_gcc_options*
+
+  Type: |String|
+  Default: `'-Wall'`
+
+  This variable can be set to pass additional options to gcc.
 
 ===============================================================================
 5. Linter Integration Notes                            *ale-linter-integration*

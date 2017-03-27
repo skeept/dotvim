@@ -52,6 +52,7 @@ name. That seems to be the fairest way to arrange this table.
 
 | Language | Tools |
 | -------- | ----- |
+| ASM | [gcc](https://gcc.gnu.org) |
 | Ansible | [ansible-lint](https://github.com/willthames/ansible-lint) |
 | AsciiDoc | [proselint](http://proselint.com/)|
 | Bash | [-n flag](https://www.gnu.org/software/bash/manual/bash.html#index-set), [shellcheck](https://www.shellcheck.net/) |
@@ -66,7 +67,7 @@ name. That seems to be the fairest way to arrange this table.
 | Cython (pyrex filetype) | [cython](http://cython.org/) |
 | D | [dmd](https://dlang.org/dmd-linux.html) |
 | Dockerfile | [hadolint](https://github.com/lukasmartinelli/hadolint) |
-| Elixir | [credo](https://github.com/rrrene/credo) |
+| Elixir | [credo](https://github.com/rrrene/credo), [dogma](https://github.com/lpil/dogma) |
 | Elm | [elm-make](https://github.com/elm-lang/elm-make) |
 | Erlang | [erlc](http://erlang.org/doc/man/erlc.html) |
 | Fortran | [gcc](https://gcc.gnu.org/) |
@@ -361,18 +362,20 @@ For more information, consult the online documentation with
 ### 5.viii. How can I run linters only when I save files?
 
 ALE offers an option `g:ale_lint_on_save` for enabling running the linters
-when files are saved. If you wish to run linters when files are saved, not
-as you are editing files, then you can turn the option for linting
-when text is changed off too.
+when files are saved. This option is enabled by default. If you only
+wish to run linters when files are saved, you can turn the other
+options off.
 
 ```vim
 " Write this in your vimrc file
-let g:ale_lint_on_save = 1
 let g:ale_lint_on_text_changed = 0
 " You can disable this option too
 " if you don't want linters to run on opening a file
 let g:ale_lint_on_enter = 0
 ```
+
+If for whatever reason you don't wish to run linters again when you save
+files, you can set `g:ale_lint_on_save` to `0`.
 
 <a name="faq-quickfix"></a>
 
@@ -450,11 +453,10 @@ type, and this delay can be increased so linters are run less often. See
 `:help g:ale_lint_delay` for more information.
 
 If you don't wish to run linters while you type, you can disable that
-behaviour. Set `g:ale_lint_on_text_changed` to `0`, and consider setting
-`g:ale_lint_on_save` to `1` to enable linting when you save files. You won't
-get as frequent error checking, but ALE shouldn't block your ability to edit a
-document after you save a file, so the asynchronous nature of the plugin will
-still be an advantage.
+behaviour. Set `g:ale_lint_on_text_changed` to `0`. You won't get as frequent
+error checking, but ALE shouldn't block your ability to edit a document after
+you save a file, so the asynchronous nature of the plugin will still be an
+advantage.
 
 If you are still concerned, you can turn the automatic linting off altogether,
 including the option `g:ale_lint_on_enter`, and you can run ALE manually with
