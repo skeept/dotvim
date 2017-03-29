@@ -30,24 +30,30 @@
 " opens in the present session.
 
 " Enclose <args> in single quotes so it can be passed as a function argument.
-com! -nargs=1 RemoteOpenMod :call RemoteOpenMod('<args>')
+com! -nargs=1 RemoteOpenMod :call RemoteOpenMod('<args>', 0)
+com! -nargs=1 RemoteOpenModN :call RemoteOpenMod('<args>', 1)
 
 " RemoteOpen: open a file remotely (if possible) {{{
 " Description: checks all open vim windows to see if this file has been opened
 "              anywhere and if so, opens it there instead of in this session.
 
-function! GetRemoteSession(arglist)
-	" check each file in the argument list is open in one remote vim session
-	" and use that session to open the other files there
-endfunction
-function! RemoteOpenMod(arglist)
+"function! GetRemoteSession(arglist)
+	"" check each file in the argument list is open in one remote vim session
+	"" and use that session to open the other files there
+"endfunction
+
+function! RemoteOpenMod(arglist, new_window)
 
 	" First construct line number and filename from argument. a:arglist is of
 	" the form:
 	"    +10 c:\path\to\file
 	" or just
 	" 	 c:\path\to\file
-	echom a:arglist
+	"
+	" new_window means if the file has not been found in other running
+	" windows, make it on it's own window
+	"
+
 	if a:arglist =~ '^\s*+\d\+'
 		let linenum = matchstr(a:arglist, '^\s*+\zs\d\+\ze')
 		let filename = matchstr(a:arglist, '^\s*+\d\+\s*\zs.*\ze')
@@ -56,7 +62,6 @@ function! RemoteOpenMod(arglist)
 		let filename = matchstr(a:arglist, '^\s*\zs.*\ze')
 	endif
 	let filename = escape(filename, ' ')
-	echom "linenum = ".linenum.', filename = '.filename
 
 	" If there is no clientserver functionality, then just open in the present
 	" session and return
@@ -77,7 +82,6 @@ function! RemoteOpenMod(arglist)
 		if linenum >= 0 
 			exec linenum
 		endif
-		let g:Remote_Server = 1
 		normal! zv
 		return
 	endif
@@ -85,13 +89,12 @@ function! RemoteOpenMod(arglist)
 	let i = 1
 	let server = s:Strntok(servers, "\n", i) 
 	let targetServer = v:servername
+	let defaultServer = ''
 
 	while server != ''
-		" Find out if there was any server which was used by remoteOpen before
-		" this. If a new gvim session was ever started via remoteOpen, then
-		" g:Remote_Server will be set.
-		if remote_expr(server, 'exists("g:Remote_Server")')
-			let targetServer = server
+
+		if defaultServer == '' && server != v:servername
+			let defaultServer = server
 		endif
 
 		" Ask each server if that file is being edited by them.
@@ -99,7 +102,6 @@ function! RemoteOpenMod(arglist)
 		" If it is...
 		if bufnum != -1
 			" ask the server to edit that file and come to the foreground.
-			" set a variable g:Remote_Server to indicate that this server
 			" session has at least one file opened via RemoteOpen
 			let targetServer = server
 			break
@@ -114,13 +116,17 @@ function! RemoteOpenMod(arglist)
 	" multiple vims, then at least they will all be opened by the same gvim
 	" server.
 	
-	let lineNumCmd =  ":".linenum
+	let lineNumCmd =  ":" . linenum
 	if linenum <= 0
 		let lineNumCmd = ""
 	endif
+
+	if targetServer == v:servername && defaultServer != targetServer && defaultServer != '' && a:new_window == 0
+		let targetServer = defaultServer
+	endif
+
 	call remote_send(targetServer, 
 		\ "\<C-\>\<C-n>".
-		\ ":let g:Remote_Server = 1\<CR>".
 		\ ":drop ".filename."\<CR>".
 		\ lineNumCmd .
 		\ "\<CR>zv"
@@ -131,6 +137,7 @@ function! RemoteOpenMod(arglist)
 		silent quit!
 	endif
 endfunction " }}}
+
 " Strntok: extract the n^th token from a list {{{
 " example: Strntok('1,23,3', ',', 2) = 23
 fun! <SID>Strntok(s, tok, n)
