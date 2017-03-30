@@ -5407,6 +5407,14 @@
     "type": "git",
     "url": "git://github.com/pandapan0021/vim-fileHeader"
   },
+  "5542": {
+    "type": "git",
+    "url": "git://github.com/Neur1n/note.vim"
+  },
+  "5544": {
+    "type": "git",
+    "url": "git://github.com/carlsmedstad/vim-sourcer"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
