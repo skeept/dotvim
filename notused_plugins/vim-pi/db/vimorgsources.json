@@ -1,4 +1,5 @@
 {
+"CurtineIncSw":{"archive_name":"CurtineIncSw.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25058","version":"0.2","vim_script_nr":5545},
 "vim-sourcer":{"archive_name":"vim-sourcer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25053","version":"0.1","vim_script_nr":5544},
 "eclipse-lite":{"archive_name":"eclipse-lite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25052","version":"1.0","vim_script_nr":5543},
 "note%5542":{"archive_name":"note.vim.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25050","version":"1.0.0","vim_script_nr":"5542"},
@@ -87,7 +88,7 @@
 "ALE_-_Asynchronous_Lint_Engine":{"archive_name":"vim-ale-1.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25047","version":"1.2.0","vim_script_nr":5449},
 "vim-zim":{"archive_name":"vim-zim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24524","version":"0.1","vim_script_nr":5448},
 "pgn%5447":{"archive_name":"pgn.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24529","version":"1.0","vim_script_nr":"5447"},
-"git-switcher":{"archive_name":"git-switcher.vim-1.3.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24645","version":"1.3.0","vim_script_nr":5446},
+"git-switcher":{"archive_name":"git-switcher.vim-1.4.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25055","version":"1.4.0","vim_script_nr":5446},
 "rimas":{"archive_name":"rimas.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24505","version":"1.1.0","vim_script_nr":5443},
 "wordbyword":{"archive_name":"wordbyword.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24504","version":"1.0.0","vim_script_nr":5442},
 "stardict":{"archive_name":"stardict.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24503","version":"1.0.0","vim_script_nr":5441},
