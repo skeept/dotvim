@@ -8,6 +8,12 @@ from os.path import dirname, isdir, join, relpath
 from powerline.theme import requires_segment_info
 from powerline.lib.memoize import memoize
 
+try:
+    from powerline.editors.vim import VimBufferOption
+    from powerline.editors import EditorBufferName
+except ImportError:
+    VimBufferOption = None
+
 Funcs = namedtuple('Funcs', 'branch status')
 dummy_func = lambda *args : None
 dummy_funcs = Funcs(dummy_func, dummy_func)
@@ -311,32 +317,40 @@ def file_directory(pl, segment_info):
 def file_name(pl, segment_info):
     pass
 
-def is_commit(matcher_info):
-    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumcommit'
+if VimBufferOption is None:
+    def is_commit(matcher_info):
+        return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumcommit'
 
-def is_annotate(matcher_info):
-    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumannotate'
+    def is_annotate(matcher_info):
+        return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumannotate'
 
-def is_status(matcher_info):
-    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumstatus'
+    def is_status(matcher_info):
+        return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumstatus'
 
-def is_log(matcher_info):
-    return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumlog'
+    def is_log(matcher_info):
+        return getbufvar(matcher_info['bufnr'], '&filetype') == 'aurumlog'
 
-sep = None
+    sep = None
 
-def is_file(matcher_info):
-    global sep
-    if not sep:
-        sep = vim.eval('fnamemodify(".", ":p")')[-1]
-    name = matcher_info['buffer'].name
-    return name and name.startswith('aurum:'+sep+sep+'file:')
+    def is_file(matcher_info):
+        global sep
+        if not sep:
+            sep = vim.eval('fnamemodify(".", ":p")')[-1]
+        name = matcher_info['buffer'].name
+        return name and name.startswith('aurum:'+sep+sep+'file:')
 
-def is_diff(matcher_info):
-    global sep
-    if not sep:
-        sep = vim.eval('fnamemodify(".", ":p")')[-1]
-    name = matcher_info['buffer'].name
-    return name and name.startswith('aurum:'+sep+sep+'diff:')
+    def is_diff(matcher_info):
+        global sep
+        if not sep:
+            sep = vim.eval('fnamemodify(".", ":p")')[-1]
+        name = matcher_info['buffer'].name
+        return name and name.startswith('aurum:'+sep+sep+'diff:')
+else:
+    is_commit = VimBufferOption('filetype').equals('aurumcommit')
+    is_annotate = VimBufferOption('filetype').equals('aurumannotate')
+    is_status = VimBufferOption('filetype').equals('aurumstatus')
+    is_log = VimBufferOption('filetype').equals('aurumlog')
+    is_file = EditorBufferName().startswith('aurum://file:')
+    is_diff = EditorBufferName().startswith('aurum://diff:')
 
 # vim: ft=python ts=4 sw=4 sts=4 et tw=120
