@@ -479,7 +479,9 @@ g:ale_set_signs                                               *g:ale_set_signs*
   signs marking where errors and warnings appear in the file. The
   `ALEErrorSign` and `ALEWarningSign` highlight groups will be used to provide
   highlighting for the signs. The text used for signs can be customised with
-  the |g:ale_sign_error| and |g:ale_sign_warning| options.
+  the |g:ale_sign_error| and |g:ale_sign_warning| options. The `ALEErrorSign`
+  and `ALEWarningLine` highlight groups will be used to provide highlighting
+  for the lines that the signs reside on.
 
 
 g:ale_sign_column_always                             *g:ale_sign_column_always*
@@ -633,6 +635,16 @@ ale#Queue(delay, [linting_flag])                                  *ale#Queue()*
   An optional `linting_flag` argument can be given. If `linting_flag`
   is `'lint_file'`, then linters where the `lint_file` option is set to `1` will be
   run. Linters with `lint_file` set to `1` are not run by default.
+
+
+ale#engine#CreateDirectory(buffer)               *ale#engine#CreateDirectory()*
+
+  Create a new temporary directory with a unique name, and manage that
+  directory with |ale#engine#ManageDirectory()|, so it will be removed as
+  soon as possible.
+
+  It is advised to only call this function from a callback function for
+  returning a linter command to run.
 
 
 ale#engine#EscapeCommandPart(command_part)     *ale#engine#EscapeCommandPart()*
