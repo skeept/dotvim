@@ -143,6 +143,12 @@ function! dispatch#callback(request) abort
   return ''
 endfunction
 
+function! dispatch#autowrite() abort
+  if &autowrite || &autowriteall
+    silent! wall
+  endif
+endfunction
+
 function! dispatch#prepare_start(request, ...) abort
   let exec = 'echo $$ > ' . a:request.file . '.pid; '
   if executable('perl')
@@ -314,6 +320,7 @@ function! dispatch#spawn(command, ...) abort
       let i += 1
     endwhile
   endif
+  call dispatch#autowrite()
   let request.file = tempname()
   let s:files[request.file] = request
   let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
@@ -459,7 +466,6 @@ function! dispatch#command_complete(A, L, P) abort
   let len = matchend(cmd, '\S\+\s')
   if len >= 0 && P >= 0
     let args = matchstr(a:L, '\s\zs.*')
-    let [cmd, opts] = s:extract_opts(args)
     let compiler = get(opts, 'compiler', dispatch#compiler_for_program(cmd))
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
     try
@@ -467,7 +473,7 @@ function! dispatch#command_complete(A, L, P) abort
         let cwd = getcwd()
         execute cd fnameescape(opts.directory)
       endif
-      return s:compiler_complete(compiler, a:A, 'Make '.strpart(a:L, len), P+5)
+      return s:compiler_complete(compiler, a:A, 'Make '.strpart(cmd, len), P+5)
     finally
       if exists('cwd')
         execute cd fnameescape(cwd)
@@ -568,9 +574,7 @@ function! dispatch#compile_command(bang, args, count) abort
   endif
   let request.title = get(request, 'title', get(request, 'compiler', 'make'))
 
-  if &autowrite || &autowriteall
-    silent! wall
-  endif
+  call dispatch#autowrite()
   cclose
   let request.file = tempname()
   let &errorfile = request.file
@@ -851,24 +855,29 @@ endfunction
 function! s:open_quickfix(request, copen) abort
   let was_qf = &buftype ==# 'quickfix'
   let height = get(g:, 'dispatch_quickfix_height', 10)
-  execute 'botright' (a:copen ? 'copen'.height : 'cwindow'.height)
-  if &buftype ==# 'quickfix' && !was_qf && a:copen != 1
-    wincmd p
-  endif
-  for winnr in range(1, winnr('$'))
-    if getwinvar(winnr, '&buftype') ==# 'quickfix'
-      call setwinvar(winnr, 'quickfix_title', ':' . a:request.expanded)
-      let bufnr = winbufnr(winnr)
-      call setbufvar(bufnr, '&efm', a:request.format)
-      call setbufvar(bufnr, 'dispatch', escape(a:request.expanded, '%#'))
-      if has_key(a:request, 'program')
-        call setbufvar(bufnr, '&makeprg', a:request.program)
+  try
+    execute 'botright' (a:copen ? 'copen' : 'cwindow') height
+    for winnr in &buftype == 'quickfix' ? [winnr()] : range(1, winnr('$'))
+      if getwinvar(winnr, '&buftype') ==# 'quickfix'
+        exe winnr.'wincmd w'
+        exe 'lcd' fnameescape(a:request.directory)
+        let w:quickfix_title = ':' . a:request.expanded
+        let b:dispatch = escape(a:request.expanded, '%#')
+        let &l:efm = a:request.format
+        if has_key(a:request, 'program')
+          let &l:makeprg = a:request.program
+        endif
+        if has_key(a:request, 'compiler')
+          let b:current_compiler = a:request.compiler
+        endif
+        break
       endif
-      if has_key(a:request, 'compiler')
-        call setbufvar(bufnr, 'current_compiler', a:request.compiler)
-      endif
+    endfor
+  finally
+    if &buftype ==# 'quickfix' && !was_qf && !a:copen
+      wincmd p
     endif
-  endfor
+  endtry
 endfunction
 
 " }}}1
