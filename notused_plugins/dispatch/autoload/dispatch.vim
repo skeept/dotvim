@@ -716,7 +716,7 @@ endfunction
 function! s:request(request) abort
   if type(a:request) == type({})
     return a:request
-  elseif type(a:request) == type(0) && a:request > 0
+  elseif type(a:request) == type(0) && a:request >= 0
     return get(s:makes, a:request-1, {})
   elseif type(a:request) == type('') && !empty(a:request)
     return get(s:files, a:request, {})
@@ -726,7 +726,7 @@ function! s:request(request) abort
 endfunction
 
 function! dispatch#request(...) abort
-  return a:0 ? s:request(a:1) : get(s:makes, -1, {})
+  return s:request(a:0 ? a:1 : 0)
 endfunction
 
 function! s:running(handler, pid) abort
@@ -812,7 +812,7 @@ function! dispatch#copen(bang) abort
   if empty(s:makes)
     return 'echoerr ' . string('No dispatches yet')
   endif
-  let request = s:makes[-1]
+  let request = dispatch#request()
   if !dispatch#completed(request) && filereadable(request.file . '.complete')
     let request.completed = 1
   endif
@@ -849,35 +849,33 @@ function! s:cgetfile(request, all, copen) abort
     let &l:makeprg = makeprg
     call s:set_current_compiler(compiler)
   endtry
-  call s:open_quickfix(request, a:copen)
+  let height = get(g:, 'dispatch_quickfix_height', 10)
+  execute 'botright' (a:copen ? 'copen' : 'cwindow') height
 endfunction
 
-function! s:open_quickfix(request, copen) abort
-  let was_qf = &buftype ==# 'quickfix'
-  let height = get(g:, 'dispatch_quickfix_height', 10)
-  try
-    execute 'botright' (a:copen ? 'copen' : 'cwindow') height
-    for winnr in &buftype == 'quickfix' ? [winnr()] : range(1, winnr('$'))
-      if getwinvar(winnr, '&buftype') ==# 'quickfix'
-        exe winnr.'wincmd w'
-        exe 'lcd' fnameescape(a:request.directory)
-        let w:quickfix_title = ':' . a:request.expanded
-        let b:dispatch = escape(a:request.expanded, '%#')
-        let &l:efm = a:request.format
-        if has_key(a:request, 'program')
-          let &l:makeprg = a:request.program
-        endif
-        if has_key(a:request, 'compiler')
-          let b:current_compiler = a:request.compiler
-        endif
-        break
-      endif
-    endfor
-  finally
-    if &buftype ==# 'quickfix' && !was_qf && !a:copen
-      wincmd p
+function! dispatch#quickfix_init() abort
+  let request = s:request(matchstr(w:quickfix_title, '^:noautocmd cgetfile \zs.*'))
+  if empty(request)
+    return
+  endif
+  let w:quickfix_title = ':Dispatch ' . request.expanded
+  let b:dispatch = dispatch#dir_opt(request.directory) .
+        \ escape(request.expanded, '%#')
+  if has_key(request, 'compiler')
+    let b:dispatch = '-compiler=' . request.compiler . ' ' . b:dispatch
+  endif
+  if has_key(request, 'program')
+    let w:quickfix_title = substitute(w:quickfix_title,
+          \ '^:Dispatch \M'.escape(request.program, '\'), ':Make', '')
+    let &l:efm = request.format
+    let &l:makeprg = request.program
+    if has_key(request, 'compiler')
+      let b:current_compiler = request.compiler
+    else
+      unlet! b:current_compiler
     endif
-  endtry
+  endif
+  exe 'lcd' fnameescape(request.directory)
 endfunction
 
 " }}}1

@@ -62,7 +62,7 @@
 "vim-matchit":{"archive_name":"matchit.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24728","version":"1.13.2","vim_script_nr":5482},
 "gnugo":{"archive_name":"gnugo.zip","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24714","version":"0.2.0","vim_script_nr":5481},
 "StyleGuide":{"archive_name":"vim_style_guide_1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24709","version":"1.0.0","vim_script_nr":5480},
-"vim-makejob":{"archive_name":"vim-makejob.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24951","version":"1.1.2","vim_script_nr":5479},
+"vim-makejob":{"archive_name":"vim-makejob.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25064","version":"1.2","vim_script_nr":5479},
 "mythos":{"archive_name":"mythos.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24705","version":"0.1","vim_script_nr":5478},
 "vim-codequery":{"archive_name":"vim-codequery-0.9.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24696","version":"0.9.1","vim_script_nr":5477},
 "xdg_open":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24690","version":"1.0","vim_script_nr":5476},

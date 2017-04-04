@@ -50,11 +50,57 @@ endfunction
 " with SIGKILL if they don't terminate right away.
 let s:job_kill_timers = {}
 
+" Check if a job is still running, in either Vim version.
+function! s:IsJobRunning(job) abort
+    if has('nvim')
+        try
+            " In NeoVim, if the job isn't running, jobpid() will throw.
+            call jobpid(a:job)
+            return 1
+        catch
+        endtry
+
+        return 0
+    endif
+
+    return job_status(a:job) ==# 'run'
+endfunction
+
 function! s:KillHandler(timer) abort
-    call job_stop(remove(s:job_kill_timers, a:timer), 'kill')
+    let l:job = remove(s:job_kill_timers, a:timer)
+
+    " For NeoVim, we have to send SIGKILL ourselves manually, as NeoVim
+    " doesn't do it properly.
+    if has('nvim')
+        let l:pid = 0
+
+        " We can fail to get the PID here if the job manages to stop already.
+        try
+            let l:pid = jobpid(l:job)
+        catch
+        endtry
+
+        if l:pid > 0
+            if has('win32')
+                " Windows
+                call system('taskkill /pid ' . l:pid . ' /f')
+            else
+                " Linux, Mac OSX, etc.
+                call system('kill -9 ' . l:pid)
+            endif
+        endif
+    else
+        call job_stop(l:job, 'kill')
+    endif
 endfunction
 
 function! ale#engine#ClearJob(job) abort
+    if get(g:, 'ale_run_synchronously') == 1
+        call remove(s:job_info_map, a:job)
+
+        return
+    endif
+
     let l:job_id = s:GetJobID(a:job)
 
     if has('nvim')
@@ -68,12 +114,12 @@ function! ale#engine#ClearJob(job) abort
 
         " Ask nicely for the job to stop.
         call job_stop(a:job)
+    endif
 
-        " If a job doesn't stop immediately, queue a timer which will
-        " send SIGKILL to the job, if it's alive by the time the timer ticks.
-        if job_status(a:job) ==# 'run'
-            let s:job_kill_timers[timer_start(100, function('s:KillHandler'))] = a:job
-        endif
+    " If a job doesn't stop immediately, queue a timer which will
+    " send SIGKILL to the job, if it's alive by the time the timer ticks.
+    if s:IsJobRunning(a:job)
+        let s:job_kill_timers[timer_start(100, function('s:KillHandler'))] = a:job
     endif
 
     if has_key(s:job_info_map, l:job_id)
@@ -475,7 +521,26 @@ function! s:RunJob(options) abort
         let l:read_buffer = 0
     endif
 
-    if has('nvim')
+    if !has('nvim')
+        " The command will be executed in a subshell. This fixes a number of
+        " issues, including reading the PATH variables correctly, %PATHEXT%
+        " expansion on Windows, etc.
+        "
+        " NeoVim handles this issue automatically if the command is a String.
+        let l:command = has('win32')
+        \   ?  'cmd /c ' . l:command
+        \   : split(&shell) + split(&shellcmdflag) + [l:command]
+    endif
+
+    if get(g:, 'ale_run_synchronously') == 1
+        " Find a unique Job value to use, which will be the same as the ID for
+        " running commands synchronously. This is only for test code.
+        let l:job = len(s:job_info_map) + 1
+
+        while has_key(s:job_info_map, l:job)
+            let l:job += 1
+        endwhile
+    elseif has('nvim')
         if l:output_stream ==# 'stderr'
             " Read from stderr instead of stdout.
             let l:job = jobstart(l:command, {
@@ -519,15 +584,6 @@ function! s:RunJob(options) abort
             let l:job_options.out_cb = function('s:GatherOutputVim')
         endif
 
-        " The command will be executed in a subshell. This fixes a number of
-        " issues, including reading the PATH variables correctly, %PATHEXT%
-        " expansion on Windows, etc.
-        "
-        " NeoVim handles this issue automatically if the command is a String.
-        let l:command = has('win32')
-        \   ?  'cmd /c ' . l:command
-        \   : split(&shell) + split(&shellcmdflag) + [l:command]
-
         " Vim 8 will read the stdin from the file's buffer.
         let l:job = job_start(l:command, l:job_options)
     endif
@@ -536,7 +592,9 @@ function! s:RunJob(options) abort
     let l:job_id = 0
 
     " Only proceed if the job is being run.
-    if has('nvim') || (l:job !=# 'no process' && job_status(l:job) ==# 'run')
+    if has('nvim')
+    \ || get(g:, 'ale_run_synchronously') == 1
+    \ || (l:job !=# 'no process' && job_status(l:job) ==# 'run')
         " Add the job to the list of jobs, so we can track them.
         call add(g:ale_buffer_info[l:buffer].job_list, l:job)
 
@@ -555,6 +613,16 @@ function! s:RunJob(options) abort
         call ale#history#Add(l:buffer, l:status, l:job_id, l:command)
     else
         let g:ale_buffer_info[l:buffer].history = []
+    endif
+
+    if get(g:, 'ale_run_synchronously') == 1
+        " Run a command synchronously if this test option is set.
+        let s:job_info_map[l:job_id].output = systemlist(
+        \   type(l:command) == type([])
+        \   ?  join(l:command[0:1]) . ' ' . shellescape(l:command[2])
+        \   : l:command
+        \)
+        call s:HandleExit(l:job)
     endif
 endfunction
 
