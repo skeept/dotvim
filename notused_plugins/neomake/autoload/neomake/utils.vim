@@ -5,8 +5,9 @@ let s:level_to_name = {0: 'error  ', 1: 'warning', 2: 'verbose', 3: 'debug  '}
 let s:short_level_to_name = {0: 'E', 1: 'W', 2: 'V', 3: 'D'}
 
 " Use 'append' with writefile, but only if it is available.  Otherwise, just
-" overwrite the file.
-let s:logfile_writefile_opts = has('patch-7.4.503') ? 'a' : ''
+" overwrite the file.  'S' is used to disable fsync in Neovim
+" (https://github.com/neovim/neovim/pull/6427).
+let s:logfile_writefile_opts = has('patch-7.4.503') ? 'aS' : ''
 
 if exists('*reltimefloat')
     function! s:reltimefloat() abort
@@ -552,6 +553,17 @@ function! neomake#utils#write_tempfile(bufnr, temp_file) abort
         endif
     endif
     call writefile(buflines, a:temp_file, 'b')
+endfunction
+
+function! neomake#utils#get_or_create_buffer(filename) abort
+    " TODO: Remove usage of this once not supplying a bufnr to process_output
+    " works if the filename is not opened in a buffer yet.
+    let nr = bufnr(a:filename)
+    if nr == -1
+        execute 'badd ' . substitute(a:filename, ' ', '\\ ', 'g')
+        let nr = bufnr(a:filename)
+    endif
+    return nr
 endfunction
 
 " Wrapper around fnamemodify that handles special buffers (e.g. fugitive).
