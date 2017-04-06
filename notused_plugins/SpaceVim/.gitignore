@@ -1,0 +1,12 @@
+tags
+doc/tags
+*.class
+.floo
+.flooignore
+*.netrwhist
+*-rplugin~
+*rplugin.vim
+/config/local.vim
+.SpaceVim.logA
+docs/_site/*
+docs/Gemfile.lock

@@ -82,6 +82,7 @@ function! SetupVAM()
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
+  VAMAddToActiveAddons SpaceVim
   "VAMAddToActiveAddons startify
   "VAMAddToActiveAddons argumentative projectionist
   "VAMAddToActiveAddons Syntastic
