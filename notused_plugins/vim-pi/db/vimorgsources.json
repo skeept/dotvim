@@ -2,7 +2,7 @@
 "goyo-doc":{"archive_name":"goyo-doc.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25059","version":"0.0.1","vim_script_nr":5546},
 "CurtineIncSw":{"archive_name":"CurtineIncSw.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25058","version":"0.2","vim_script_nr":5545},
 "vim-sourcer":{"archive_name":"vim-sourcer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25053","version":"0.1","vim_script_nr":5544},
-"eclipse-lite":{"archive_name":"eclipse-lite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25052","version":"1.0","vim_script_nr":5543},
+"eclipse-lite":{"archive_name":"eclipse-lite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25065","version":"1.0.1","vim_script_nr":5543},
 "note%5542":{"archive_name":"note.vim.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25050","version":"1.0.0","vim_script_nr":"5542"},
 "R4vim":{"archive_name":"R4vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25048","version":"1.0.0","vim_script_nr":5541},
 "vim-fileHeader":{"archive_name":"vim-fileHeader.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25045","version":"1.0.0","vim_script_nr":5540},
