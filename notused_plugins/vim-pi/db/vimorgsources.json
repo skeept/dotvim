@@ -1,4 +1,5 @@
 {
+"vim-custom-surround":{"archive_name":"vim-custom-surround-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25066","version":"1.0","vim_script_nr":5547},
 "goyo-doc":{"archive_name":"goyo-doc.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25059","version":"0.0.1","vim_script_nr":5546},
 "CurtineIncSw":{"archive_name":"CurtineIncSw.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25058","version":"0.2","vim_script_nr":5545},
 "vim-sourcer":{"archive_name":"vim-sourcer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25053","version":"0.1","vim_script_nr":5544},
