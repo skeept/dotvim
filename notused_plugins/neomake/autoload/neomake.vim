@@ -166,26 +166,6 @@ function! s:MakeJob(make_id, options) abort
         return
     endif
 
-    " Check for already running job for the same maker (from other runs).
-    " This used to use this key: maker.name.',ft='.maker.ft.',buf='.maker.bufnr
-    if len(s:jobs)
-        let running_already = values(filter(copy(s:jobs),
-                    \ 'v:val.make_id != a:make_id && v:val.maker == maker'
-                    \ .' && v:val.bufnr == jobinfo.bufnr'
-                    \ ." && !get(v:val, 'canceled')"))
-        if len(running_already)
-            let jobinfo = running_already[0]
-            " let jobinfo.next = copy(options)
-            " TODO: required?! (
-            " let jobinfo.next.enabled_makers = [maker]
-            call neomake#utils#LoudMessage(printf(
-                        \ 'Restarting already running job (%d.%d) for the same maker.',
-                        \ jobinfo.make_id, jobinfo.id), {'make_id': a:make_id})
-            call neomake#CancelJob(jobinfo.id)
-            return s:MakeJob(a:make_id, a:options)
-        endif
-    endif
-
     if !executable(maker.exe)
         if !get(maker, 'auto_enabled', 0)
             let error = printf('Exe (%s) of maker %s is not executable.', maker.exe, maker.name)
@@ -223,6 +203,24 @@ function! s:MakeJob(make_id, options) abort
     try
         let error = ''
         let argv = maker._get_argv(jobinfo)
+
+        " Check for already running job for the same maker (from other runs).
+        " This used to use this key: maker.name.',ft='.maker.ft.',buf='.maker.bufnr
+        if len(s:jobs)
+            let running_already = values(filter(copy(s:jobs),
+                        \ 'v:val.make_id != a:make_id && v:val.maker == maker'
+                        \ .' && v:val.bufnr == jobinfo.bufnr'
+                        \ ." && !get(v:val, 'canceled')"))
+            if len(running_already)
+                let jobinfo = running_already[0]
+                call neomake#utils#LoudMessage(printf(
+                            \ 'Restarting already running job (%d.%d) for the same maker.',
+                            \ jobinfo.make_id, jobinfo.id), {'make_id': a:make_id})
+                call neomake#CancelJob(jobinfo.id)
+                return s:MakeJob(a:make_id, a:options)
+            endif
+        endif
+
         " Lock maker to make sure it does not get changed accidentally, but
         " only with depth=1, so that a postprocess object can change itself.
         lockvar 1 maker
@@ -309,6 +307,7 @@ endfunction
 
 let s:maker_base = {}
 let s:command_maker_base = {}
+" Check if a temporary file is used, and set it in s:make_info in case it is.
 function! s:command_maker_base._get_tempfilename(jobinfo) abort dict
     if has_key(self, 'tempfile_name')
         return self.tempfile_name
@@ -319,18 +318,21 @@ function! s:command_maker_base._get_tempfilename(jobinfo) abort dict
         return ''
     endif
 
-    let bufname = bufname(a:jobinfo.bufnr)
-    if len(bufname)
-        let bufname = fnamemodify(bufname, ':t')
-    else
-        let bufname = 'neomake_tmp.'.a:jobinfo.ft
+    let make_id = a:jobinfo.make_id
+    if !has_key(s:make_info[make_id], 'tempfile_name')
+        let bufname = bufname(a:jobinfo.bufnr)
+        if len(bufname)
+            let bufname = fnamemodify(bufname, ':t')
+        else
+            let bufname = 'neomake_tmp.'.a:jobinfo.ft
+        endif
+        let temp_file = tempname() . (has('win32') ? '\' : '/') . bufname
+        let s:make_info[make_id].tempfile_name = temp_file
     endif
-
-    return tempname() . (has('win32') ? '\' : '/') . bufname
+    return s:make_info[make_id].tempfile_name
 endfunction
 
-" Check if a temporary file is used, and set a:jobinfo.tempfile_name in case
-" it is.
+" Get the filename to use for a:jobinfo's make/buffer.
 function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
     let bufnr = a:jobinfo.bufnr
     let bufname = bufname(bufnr)
@@ -339,7 +341,8 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
         let temp_file = self._get_tempfilename(a:jobinfo)
         if !empty(temp_file)
             call neomake#utils#DebugMessage(printf(
-                        \ 'Using tempfile for unnamed buffer %s: %s', bufnr, temp_file))
+                        \ 'Using tempfile for unnamed buffer: %s', temp_file),
+                        \ a:jobinfo)
         else
             throw 'Neomake: no file name'
         endif
@@ -348,17 +351,19 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
         let temp_file = self._get_tempfilename(a:jobinfo)
         if !empty(temp_file)
             call neomake#utils#DebugMessage(printf(
-                        \ 'Using tempfile for modified buffer %s: %s', bufnr, temp_file))
+                        \ 'Using tempfile for modified buffer: %s', temp_file),
+                        \ a:jobinfo)
         else
-            call neomake#utils#DebugMessage(printf(
-                        \ 'warning: buffer is modified: %s', bufnr))
+            call neomake#utils#DebugMessage('warning: buffer is modified',
+                        \ a:jobinfo)
         endif
 
     elseif !filereadable(bufname)
         let temp_file = self._get_tempfilename(a:jobinfo)
         if !empty(temp_file)
             call neomake#utils#DebugMessage(printf(
-                        \ 'Using tempfile for unreadable buffer %s: %s', bufnr, temp_file))
+                        \ 'Using tempfile for unreadable buffer: %s', temp_file),
+                        \ a:jobinfo)
         else
             throw 'Neomake: file is not readable ('.fnamemodify(bufname, ':p').')'
         endif
@@ -371,9 +376,14 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
         if !isdirectory(temp_dir)
             call mkdir(temp_dir, 'p', 0750)
         endif
-        call neomake#utils#write_tempfile(bufnr, temp_file)
+        let make_info = s:make_info[a:jobinfo.make_id]
+        if !has_key(make_info, 'tempfile')
+            let make_info.tempfile = temp_file
+            call neomake#utils#write_tempfile(bufnr, temp_file)
+        elseif temp_file !=# make_info.tempfile
+            call writefile(readfile(make_info.tempfile, 'b'), temp_file, 'b')
+        endif
         let bufname = temp_file
-        let a:jobinfo.tempfile_name = temp_file
     endif
     return bufname
 endfunction
@@ -695,15 +705,16 @@ function! s:Make(options) abort
     if file_mode
         let args += [options.ft]
     endif
-    let makers = call('s:map_makers', args)
-    if !len(makers)
+    lockvar options
+    let jobs = call('s:map_makers', args)
+    if !len(jobs)
         call neomake#utils#DebugMessage('Nothing to make: no valid makers.')
         call s:clean_make_info(make_id)
         return []
     endif
 
-    let maker_info = join(map(copy(makers),
-                \ "v:val.name . (get(v:val, 'auto_enabled', 0) ? ' (auto)' : '')"), ', ')
+    let maker_info = join(map(copy(jobs),
+                \ "v:val.maker.name . (get(v:val.maker, 'auto_enabled', 0) ? ' (auto)' : '')"), ', ')
     let log_context = {'make_id': make_id}
     if file_mode
         let log_context.bufnr = bufnr
@@ -711,7 +722,7 @@ function! s:Make(options) abort
     call neomake#utils#DebugMessage(printf(
                 \ 'Running makers: %s', maker_info), log_context)
 
-    let make_info.makers_queue = makers
+    let make_info.jobs_queue = jobs
 
     if file_mode
         " XXX: this clears counts for job's buffer only, but we add counts for
@@ -760,6 +771,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
         let s:postprocessors = s:postprocess
     endif
     let debug = neomake#utils#get_verbosity(a:jobinfo) >= 3
+    let make_info = s:make_info[a:jobinfo.make_id]
 
     let entries = []
     while index < len(list)
@@ -768,7 +780,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
         let index += 1
 
         let before = copy(entry)
-        if file_mode && has_key(a:jobinfo, 'tempfile_name')
+        if file_mode && has_key(make_info, 'tempfile')
             let entry.bufnr = a:jobinfo.bufnr
         endif
         if !empty(s:postprocessors)
@@ -846,18 +858,6 @@ function! s:CleanJobinfo(jobinfo) abort
         endif
     endif
 
-    let temp_file = get(a:jobinfo, 'tempfile_name', '')
-    if !empty(temp_file)
-        call neomake#utils#DebugMessage(printf('Removing temporary file: %s',
-                    \ temp_file))
-        call delete(temp_file)
-        " Only delete the dir, if Vim supports it.  It will be cleaned up
-        " when quitting Vim in any case.
-        if v:version >= 705 || (v:version == 704 && has('patch1107'))
-            call delete(fnamemodify(temp_file, ':h'), 'd')
-        endif
-    endif
-
     if !get(a:jobinfo, 'canceled', 0)
                 \ && !get(a:jobinfo, 'failed_to_start', 0)
         call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
@@ -869,8 +869,7 @@ function! s:CleanJobinfo(jobinfo) abort
         return
     endif
 
-    let makers_queue = s:make_info[a:jobinfo.make_id].makers_queue
-    if len(makers_queue)
+    if len(s:make_info[a:jobinfo.make_id].jobs_queue)
         return
     endif
 
@@ -903,6 +902,19 @@ function! s:clean_make_info(make_id) abort
         call remove(make_ids, idx)
         call settabwinvar(t, w, 'neomake_make_ids', make_ids)
     endif
+
+    let tempfile = get(s:make_info[a:make_id], 'tempfile')
+    if !empty(tempfile)
+        call neomake#utils#DebugMessage(printf('Removing temporary file: %s',
+                    \ tempfile))
+        call delete(tempfile)
+        " Only delete the dir, if Vim supports it.  It will be cleaned up
+        " when quitting Vim in any case.
+        if v:version >= 705 || (v:version == 704 && has('patch1107'))
+            call delete(fnamemodify(tempfile, ':h'), 'd')
+        endif
+    endif
+
     unlet s:make_info[a:make_id]
 endfunction
 
@@ -1371,7 +1383,7 @@ function! s:exit_handler(job_id, data, event_type) abort
         if l:ExitCallback isnot# 0
             let callback_dict = { 'status': status,
                                 \ 'name': maker.name,
-                                \ 'has_next': len(s:make_info[jobinfo.make_id].makers_queue) > 0 }
+                                \ 'has_next': len(s:make_info[jobinfo.make_id].jobs_queue) > 0 }
             if type(l:ExitCallback) == type('')
                 let l:ExitCallback = function(l:ExitCallback)
             endif
@@ -1430,11 +1442,11 @@ function! s:output_handler(job_id, data, event_type) abort
 endfunction
 
 function! s:abort_next_makers(make_id) abort
-    let makers_queue = s:make_info[a:make_id].makers_queue
-    if len(makers_queue)
-        let next_makers = '['.join(map(copy(makers_queue), 'v:val.name'), ', ').']'
+    let jobs_queue = s:make_info[a:make_id].jobs_queue
+    if len(jobs_queue)
+        let next_makers = '['.join(map(copy(jobs_queue), 'v:val.maker.name'), ', ').']'
         call neomake#utils#LoudMessage('Aborting next makers '.next_makers)
-        let s:make_info[a:make_id].makers_queue = []
+        let s:make_info[a:make_id].jobs_queue = []
     endif
 endfunction
 
@@ -1461,13 +1473,12 @@ function! s:handle_next_maker(prev_jobinfo) abort
         endif
     endif
 
-    while len(make_info.makers_queue)
-        let maker = remove(make_info.makers_queue, 0)
+    while len(make_info.jobs_queue)
+        let options = remove(make_info.jobs_queue, 0)
+        let maker = options.maker
         if empty(maker)
             continue
         endif
-
-        let options = extend(deepcopy(make_info.options), {'maker': maker})
 
         " Serialization of jobs, always for non-async Vim.
         if !neomake#has_async_support()
@@ -1597,21 +1608,21 @@ function! neomake#CompleteJobs(...) abort
     return join(map(neomake#GetJobs(), "v:val.id.': '.v:val.maker.name"), "\n")
 endfunction
 
-function! s:map_makers(jobinfo, makers, ...) abort
+" Map/bind a:makers to a list of job options, using a:options.
+function! s:map_makers(options, makers, ...) abort
     let r = []
     for maker_or_name in a:makers
+        let options = copy(a:options)
         try
             let maker = call('neomake#GetMaker', [maker_or_name] + a:000)
 
             " Call .fn function in maker object, if any.
             if has_key(maker, 'fn')
                 " TODO: Allow to throw and/or return 0 to abort/skip?!
-                let returned_maker = call(maker.fn, [a:jobinfo], maker)
+                let returned_maker = call(maker.fn, [options], maker)
                 if returned_maker isnot# 0
                     " This conditional assignment allows to both return a copy
-                    " (factory), while also can be used as a init method.  The maker
-                    " is deepcopied usually here already though anyway (via
-                    " s:map_makers).
+                    " (factory), while also can be used as a init method.
                     let maker = returned_maker
                 endif
             endif
@@ -1619,11 +1630,11 @@ function! s:map_makers(jobinfo, makers, ...) abort
             if has_key(maker, 'cwd')
                 let cwd = maker.cwd
                 if cwd =~# '\m^%:'
-                    let cwd = neomake#utils#fnamemodify(a:jobinfo.bufnr, cwd[1:])
+                    let cwd = neomake#utils#fnamemodify(options.bufnr, cwd[1:])
                 else
                     let cwd = expand(cwd, 1)
                 endif
-                let a:jobinfo.cwd = fnamemodify(cwd, ':p')
+                let options.cwd = fnamemodify(cwd, ':p')
             endif
 
             if has_key(maker, '_bind_args')
@@ -1648,10 +1659,11 @@ function! s:map_makers(jobinfo, makers, ...) abort
 
         catch /^Neomake: /
             let error = substitute(v:exception, '^Neomake: ', '', '')
-            call neomake#utils#ErrorMessage(error, {'make_id': a:jobinfo.make_id})
+            call neomake#utils#ErrorMessage(error, {'make_id': options.make_id})
             continue
         endtry
-        let r += [maker]
+        let options.maker = maker
+        let r += [options]
     endfor
     return r
 endfunction
