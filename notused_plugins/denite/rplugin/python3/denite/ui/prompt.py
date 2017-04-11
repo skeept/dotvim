@@ -1,4 +1,5 @@
 from .action import DEFAULT_ACTION_RULES
+from datetime import timedelta
 from ..prompt.prompt import (
     ACTION_KEYSTROKE_PATTERN,
     Prompt,
@@ -10,12 +11,13 @@ class DenitePrompt(Prompt):
     def __init__(self, vim, context, denite):
         self.context = context
         super().__init__(vim)
-        self.__previous_text = self.text
         self.denite = denite
         self.action.register_from_rules(DEFAULT_ACTION_RULES)
         # Remove prompt:accept/prompt:cancel which would break denite
         self.action.unregister('prompt:accept', fail_silently=True)
         self.action.unregister('prompt:cancel', fail_silently=True)
+
+        self.__previous_text = self.text
 
     @property
     def text(self):
@@ -41,6 +43,13 @@ class DenitePrompt(Prompt):
     def highlight_cursor(self):
         return self.context.get('highlight_cursor', 'Cursor')
 
+    @property
+    def timeout(self):
+        # Use updatetime option
+        return timedelta(
+            milliseconds=int(self.context['updatetime'])
+        )
+
     def on_init(self):
         # NOTE:
         # 'inputsave' is not required to be called while denite call it
@@ -54,12 +63,6 @@ class DenitePrompt(Prompt):
         return status
 
     def on_update(self, status):
-        if self.__previous_text != self.text:
-            self.__previous_text = self.text
-            self.denite.update_candidates()
-            self.denite.update_buffer()
-            self.denite.init_cursor()
-
         if self.denite.is_async and self.denite.check_empty():
             self.denite.quit()
             return STATUS_CANCEL
@@ -72,6 +75,10 @@ class DenitePrompt(Prompt):
             self.denite.update_buffer()
         else:
             self.denite.update_status()
+
+        if self.__previous_text != self.text:
+            self.__previous_text = self.text
+            self.denite.init_cursor()
 
         # NOTE
         # Redraw prompt to update the buffer.
