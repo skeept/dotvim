@@ -5,7 +5,7 @@
 " Version:      4.0.0
 let s:k_version = '400000'
 " Created:      02nd Sep 2016
-" Last Update:  09th Apr 2017
+" Last Update:  14th Apr 2017
 "------------------------------------------------------------------------
 " Description:
 "       Synthetize compatibility options.
