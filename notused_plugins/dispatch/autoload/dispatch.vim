@@ -353,6 +353,7 @@ function! dispatch#spawn(command, ...) abort
         call add(g:DISPATCH_STARTS[key], request.handler.'/'.dispatch#pid(request))
       endif
     else
+      let request.handler = 'sync'
       execute '!' . request.command
     endif
   finally
@@ -618,6 +619,7 @@ function! dispatch#compile_command(bang, args, count) abort
     let s:files[request.file] = request
 
     if !s:dispatch(request)
+      let request.handler = 'sync'
       let after = 'call dispatch#complete('.request.id.')'
       redraw!
       let sp = dispatch#shellpipe(request.file)
@@ -745,7 +747,12 @@ function! s:request(request) abort
     endwhile
     return {}
   elseif type(a:request) == type('') && !empty(a:request)
-    return get(s:files, a:request, {})
+    let id = matchstr(w:quickfix_title, '^:noautocmd cgetfile \zs.*\|^:Dispatch.*(\zs\w\+/\d\+\ze)$')
+    if empty(id)
+      return get(s:files, a:request, {})
+    else
+      return s:request(id)
+    endif
   else
     return {}
   endif
@@ -886,8 +893,7 @@ function! s:cgetfile(request, all, copen) abort
 endfunction
 
 function! dispatch#quickfix_init() abort
-  let id = matchstr(w:quickfix_title, '^:noautocmd cgetfile \zs.*\|^:Dispatch.*(\zs\w\+/\d\+\ze)$')
-  let request = s:request(id)
+  let request = s:request(w:quickfix_title)
   if empty(request)
     return
   endif

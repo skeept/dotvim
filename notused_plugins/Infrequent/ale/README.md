@@ -63,6 +63,7 @@ name. That seems to be the fairest way to arrange this table.
 | Chef | [foodcritic](http://www.foodcritic.io/) |
 | CMake | [cmakelint](https://github.com/richq/cmake-lint) |
 | CoffeeScript | [coffee](http://coffeescript.org/), [coffeelint](https://www.npmjs.com/package/coffeelint) |
+| Crystal | [crystal](https://crystal-lang.org/) |
 | CSS | [csslint](http://csslint.net/), [stylelint](https://github.com/stylelint/stylelint) |
 | Cython (pyrex filetype) | [cython](http://cython.org/) |
 | D | [dmd](https://dlang.org/dmd-linux.html) |
@@ -71,7 +72,7 @@ name. That seems to be the fairest way to arrange this table.
 | Elm | [elm-make](https://github.com/elm-lang/elm-make) |
 | Erlang | [erlc](http://erlang.org/doc/man/erlc.html) |
 | Fortran | [gcc](https://gcc.gnu.org/) |
-| Go | [gofmt -e](https://golang.org/cmd/gofmt/), [go vet](https://golang.org/cmd/vet/), [golint](https://godoc.org/github.com/golang/lint), [go build](https://golang.org/cmd/go/), [gosimple](https://github.com/dominikh/go-tools/tree/master/cmd/gosimple), [staticcheck](https://github.com/dominikh/go-tools/tree/master/cmd/staticcheck) |
+| Go | [gofmt -e](https://golang.org/cmd/gofmt/), [go vet](https://golang.org/cmd/vet/), [golint](https://godoc.org/github.com/golang/lint), [gometalinter](https://github.com/alecthomas/gometalinter), [go build](https://golang.org/cmd/go/), [gosimple](https://github.com/dominikh/go-tools/tree/master/cmd/gosimple), [staticcheck](https://github.com/dominikh/go-tools/tree/master/cmd/staticcheck) |
 | Haml | [haml-lint](https://github.com/brigade/haml-lint)
 | Handlebars | [ember-template-lint](https://github.com/rwjblue/ember-template-lint) |
 | Haskell | [ghc](https://www.haskell.org/ghc/), [hlint](https://hackage.haskell.org/package/hlint), [hdevtools](https://hackage.haskell.org/package/hdevtools) |
@@ -101,6 +102,7 @@ name. That seems to be the fairest way to arrange this table.
 | Scala | [scalac](http://scala-lang.org) |
 | Slim | [slim-lint](https://github.com/sds/slim-lint)
 | SML | [smlnj](http://www.smlnj.org/) |
+| SQL | [sqlint](https://github.com/purcell/sqlint) |
 | Swift | [swiftlint](https://swift.org/) |
 | Tex | [proselint](http://proselint.com/) |
 | Texinfo | [proselint](http://proselint.com/)|

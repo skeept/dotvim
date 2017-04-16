@@ -22,6 +22,7 @@ let s:default_ale_linter_aliases = {
 " Only cargo is enabled for Rust by default.
 let s:default_ale_linters = {
 \   'csh': ['shell'],
+\   'go': ['go build', 'gofmt', 'golint', 'gosimple', 'go vet', 'staticcheck'],
 \   'help': [],
 \   'rust': ['cargo'],
 \   'text': [],
@@ -178,12 +179,13 @@ function! ale#linter#GetAll(filetypes) abort
     let l:combined_linters = []
 
     for l:filetype in a:filetypes
-        " Haven't we loaded the linter files for this filetype yet?
+        " Load linter defintions from files if we haven't loaded them yet.
         if !has_key(s:linters, l:filetype)
-            " So load it
             execute 'silent! runtime! ale_linters/' . l:filetype . '/*.vim'
 
-            " Still don't have the linter files? There must be occured an error
+            " Always set an empty List for the loaded linters if we don't find
+            " any. This will prevent us from executing the runtime command
+            " many times, redundantly.
             if !has_key(s:linters, l:filetype)
                 let s:linters[l:filetype] = []
             endif
