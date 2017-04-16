@@ -1,18 +1,15 @@
 # Readme
 
 gitv is a repository viewer similar to gitk. It is an extension of the
-[fugitive git plugin][5] for vim. It allows you to perform operations on a git
-repository tree interactively.
+[fugitive git plugin][5] for vim. It is essentially a wrapper around
+`git log --graph`, allowing you to see your branching history. It allows you to
+view commits, diffstats, inline diffs, and file or folder specific history, and
+more. It allows you to perform operations on the commit tree interactively,
+such as merges, cherry picks, reversions, resets, deletions, checkouts,
+bisections, and rebase operations.
 
-<<<<<<< HEAD
-The official [matrix.org](http://matrix.org/) room is [available here](https://riot.im/app/#/room/#gitv:matrix.org).
-
-Future changes are viewable in [the roadmap](https://github.com/gregsexton/gitv/blob/master/roadmap.md).
-A tentative release schedule is available in [the milestone view](https://github.com/gregsexton/gitv/milestones).
-=======
 This repo has the most bleeding edge version of gitv. Stable versions are
 available at [the vim.org page][1].
->>>>>>> e433f18dcad10529d93ee567b73c04659c78368a
 
 [Bugs, suggestions,][2] [pull requests and patches][3] are all very welcome.
 
@@ -46,7 +43,7 @@ For Windows, use the `~\vimfiles` directory instead of `~/.vim`
 
 gitv was developed against Vim 7.3 and later 8.0 but earlier versions of Vim
 should work. Vim 7.2+ is recommended as it ships with syntax highlighting for
-many Git file types.
+many Git file types. Vim 7.3+ is recommended for UTF-8 support.
 
 gitv is known not to interract well with neovim yet.
 
