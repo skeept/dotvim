@@ -71,6 +71,8 @@ CONTENTS                                                         *ale-contents*
     sh....................................|ale-sh-options|
       shell...............................|ale-sh-shell|
       shellcheck..........................|ale-sh-shellcheck|
+    spec..................................|ale-spec-options|
+      rpmlint.............................|ale-spec-rpmlint|
     tex...................................|ale-tex-options|
       chktex..............................|ale-tex-chktex|
       lacheck.............................|ale-tex-lacheck|
@@ -151,6 +153,7 @@ The following languages and tools are supported.
 * Puppet: 'puppet', 'puppet-lint'
 * Python: 'flake8', 'mypy', 'pylint'
 * reStructuredText: 'proselint'
+* RPM spec: 'spec'
 * Rust: 'rustc' (see |ale-integration-rust|)
 * Ruby: 'rubocop'
 * SASS: 'sasslint', 'stylelint'
@@ -578,6 +581,10 @@ g:ale_warn_about_trailing_whitespace     *g:ale_warn_about_trailing_whitespace*
 
 Linter options are documented in individual help files. See the table of
 contents at |ale-contents|.
+
+Every linter variable can be set globally, or individually for each buffer.
+For example, `b:ale_python_flake8_executable` will override any values
+set for `g:ale_python_flake8_executable`.
 
 
 ===============================================================================
