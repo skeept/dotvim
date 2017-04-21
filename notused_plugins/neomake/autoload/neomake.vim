@@ -773,7 +773,6 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
     let maker = a:jobinfo.maker
     let file_mode = a:jobinfo.file_mode
     let list = file_mode ? getloclist(0) : getqflist()
-    let list_modified = 0
     let index = a:prev_index
     unlet! s:postprocess  " vim73
     let s:postprocess = get(maker, 'postprocess', function('neomake#utils#CompressWhitespace'))
@@ -784,12 +783,16 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
     endif
     let debug = neomake#utils#get_verbosity(a:jobinfo) >= 3
     let make_info = s:make_info[a:jobinfo.make_id]
+    let default_type = 'unset'
 
     let entries = []
-    while index < len(list)
+    let changed_entries = {}
+    let removed_entries = []
+    let llen = len(list)
+    while index < llen - 1
+        let index += 1
         let entry = list[index]
         let entry.maker_name = has_key(maker, 'name') ? maker.name : 'makeprg'
-        let index += 1
 
         let before = copy(entry)
         if file_mode && has_key(make_info, 'tempfile')
@@ -808,7 +811,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
             unlet! g:neomake_hook_context  " Might be unset already with sleep in postprocess.
         endif
         if entry != before
-            let list_modified = 1
+            let changed_entries[index] = entry
             if debug
                 call neomake#utils#DebugMessage(printf(
                   \ 'Modified list entry (postprocess): %s',
@@ -820,9 +823,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
 
         if entry.valid <= 0
             if entry.valid < 0 || maker.remove_invalid_entries
-                let index -= 1
-                call remove(list, index)
-                let list_modified = 1
+                call add(removed_entries, index)
                 let entry_copy = copy(entry)
                 call neomake#utils#DebugMessage(printf(
                             \ 'Removing invalid entry: %s (%s)',
@@ -832,10 +833,30 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
             continue
         endif
 
+        if empty(entry.type)
+            if default_type ==# 'unset'
+                let default_type = neomake#utils#GetSetting('default_entry_type', maker, 'W', a:jobinfo.ft, a:jobinfo.bufnr)
+            endif
+            if !empty(default_type)
+                let entry.type = default_type
+                let changed_entries[index] = entry
+            endif
+        endif
         call add(entries, entry)
     endwhile
 
-    if list_modified
+    if !empty(changed_entries) || !empty(removed_entries)
+        let list = file_mode ? getloclist(0) : getqflist()
+        if !empty(changed_entries)
+            for k in keys(changed_entries)
+                let list[k] = changed_entries[k]
+            endfor
+        endif
+        if !empty(removed_entries)
+            for k in removed_entries
+                call remove(list, k)
+            endfor
+        endif
         if file_mode
             call setloclist(0, list, 'r')
         else
@@ -1116,7 +1137,7 @@ function! s:ProcessJobOutput(jobinfo, lines, source) abort
         let &errorformat = olderrformat
     endtry
 
-    let entries = s:AddExprCallback(a:jobinfo, len(prev_list))
+    let entries = s:AddExprCallback(a:jobinfo, len(prev_list)-1)
     call s:ProcessEntries(a:jobinfo, entries, prev_list)
 endfunction
 
@@ -1706,6 +1727,7 @@ function! neomake#ShCommand(bang, sh_command, ...) abort
     let maker.name = 'sh: '.a:sh_command
     let maker.buffer_output = !a:bang
     let maker.errorformat = '%m'
+    let maker.default_entry_type = ''
     let options = {'enabled_makers': [maker], 'file_mode': 0}
     if a:0
         call extend(options, a:1)

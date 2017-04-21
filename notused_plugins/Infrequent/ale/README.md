@@ -95,8 +95,8 @@ name. That seems to be the fairest way to arrange this table.
 | Puppet | [puppet](https://puppet.com), [puppet-lint](https://puppet-lint.com) |
 | Python | [flake8](http://flake8.pycqa.org/en/latest/), [mypy](http://mypy-lang.org/), [pylint](https://www.pylint.org/) |
 | reStructuredText | [proselint](http://proselint.com/)|
-| RPM spec | [rpmlint](https://github.com/rpm-software-management/rpmlint) |
-| Ruby | [rubocop](https://github.com/bbatsov/rubocop), [ruby](https://www.ruby-lang.org) |
+| RPM spec | [rpmlint](https://github.com/rpm-software-management/rpmlint) (disabled by default; see `:help ale-integration-spec`) |
+| Ruby | [reek](https://github.com/troessner/reek), [rubocop](https://github.com/bbatsov/rubocop), [ruby](https://www.ruby-lang.org) |
 | Rust | [rustc](https://www.rust-lang.org/), cargo (see `:help ale-integration-rust` for configuration instructions) |
 | SASS | [sass-lint](https://www.npmjs.com/package/sass-lint), [stylelint](https://github.com/stylelint/stylelint) |
 | SCSS | [sass-lint](https://www.npmjs.com/package/sass-lint), [scss-lint](https://github.com/brigade/scss-lint), [stylelint](https://github.com/stylelint/stylelint) |
@@ -218,6 +218,9 @@ support can be happily added for it.
 If you are interested in the general direction of the project, check out the
 [wiki home page](https://github.com/w0rp/ale/wiki). The wiki includes a
 Roadmap for the future, and more.
+
+If you'd liked to discuss the project more directly, check out the `#vim-ale` channel
+on Freenode. Web chat is available [here](https://webchat.freenode.net/?channels=vim-ale).
 
 <a name="faq"></a>
 
