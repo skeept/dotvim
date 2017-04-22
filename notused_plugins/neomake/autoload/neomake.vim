@@ -823,7 +823,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
 
         if entry.valid <= 0
             if entry.valid < 0 || maker.remove_invalid_entries
-                call add(removed_entries, index)
+                call insert(removed_entries, index)
                 let entry_copy = copy(entry)
                 call neomake#utils#DebugMessage(printf(
                             \ 'Removing invalid entry: %s (%s)',
@@ -1080,8 +1080,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
     endif
 
     if !counts_changed
-        let counts_changed = (file_mode && getloclist(0) != prev_list)
-                    \ || (!file_mode && getqflist() != prev_list)
+        let counts_changed = (file_mode ? getloclist(0) : getqflist()) != prev_list
     endif
     if counts_changed
         call neomake#utils#hook('NeomakeCountsChanged', {
@@ -1767,9 +1766,9 @@ function! s:display_maker_info(...) abort
             for type in sort(copy(keys(issues)))
                 let items = issues[type]
                 if !empty(items)
-                    echo '   '.toupper(type) . ':'
+                    echo '   - '.toupper(type) . ':'
                     for issue in items
-                        echo '    - ' . issue
+                        echo '     - ' . issue
                     endfor
                 endif
             endfor
