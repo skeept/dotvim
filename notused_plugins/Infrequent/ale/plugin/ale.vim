@@ -60,6 +60,9 @@ let g:ale_filetype_blacklist = ['nerdtree', 'unite', 'tags']
 " This Dictionary configures which linters are enabled for which languages.
 let g:ale_linters = get(g:, 'ale_linters', {})
 
+" This Dictionary configures which functions will be used for fixing problems.
+let g:ale_fixers = get(g:, 'ale_fixers', {})
+
 " This Dictionary allows users to set up filetype aliases for new filetypes.
 let g:ale_linter_aliases = get(g:, 'ale_linter_aliases', {})
 
@@ -105,12 +108,19 @@ let g:ale_keep_list_window_open = get(g:, 'ale_keep_list_window_open', 0)
 " This is enabled by default only if the 'signs' feature exists.
 let g:ale_set_signs = get(g:, 'ale_set_signs', has('signs'))
 
+" This flag can be set to 1 to enable changing the sign column colors when
+" there are errors.
+call ale#Set('change_sign_column_color', 0)
+
 " This flag can be set to 0 to disable setting error highlights.
 let g:ale_set_highlights = get(g:, 'ale_set_highlights', has('syntax'))
 
-" These variables dicatate what sign is used to indicate errors and warnings.
-let g:ale_sign_error = get(g:, 'ale_sign_error', '>>')
-let g:ale_sign_warning = get(g:, 'ale_sign_warning', '--')
+" These variables dictate what sign is used to indicate errors and warnings.
+call ale#Set('sign_error', '>>')
+call ale#Set('sign_style_error', g:ale_sign_error)
+call ale#Set('sign_warning', '--')
+call ale#Set('sign_style_warning', g:ale_sign_warning)
+call ale#Set('sign_info', g:ale_sign_warning)
 
 " This variable sets an offset which can be set for sign IDs.
 " This ID can be changed depending on what IDs are set for other plugins.
@@ -181,7 +191,15 @@ function! ALEInitAuGroups() abort
     augroup ALERunOnFiletypeChangeGroup
         autocmd!
         if g:ale_enabled && g:ale_lint_on_filetype_changed
-            autocmd FileType * call ale#Queue(300, 'lint_file')
+            " Set the filetype after a buffer is opened or read.
+            autocmd BufEnter,BufRead * let b:ale_original_filetype = &filetype
+            " Only start linting if the FileType actually changes after
+            " opening a buffer. The FileType will fire when buffers are opened.
+            autocmd FileType *
+            \   if has_key(b:, 'ale_original_filetype')
+            \   && b:ale_original_filetype !=# expand('<amatch>')
+            \|      call ale#Queue(300, 'lint_file')
+            \|  endif
         endif
     augroup END
 
@@ -268,6 +286,11 @@ command! -bar ALEInfo :call ale#debugging#Info()
 " The same, but copy output to your clipboard.
 command! -bar ALEInfoToClipboard :call ale#debugging#InfoToClipboard()
 
+" Fix problems in files.
+command! -bar ALEFix :call ale#fix#Fix()
+" Suggest registered functions to use for fixing problems.
+command! -bar ALEFixSuggest :call ale#fix#registry#Suggest(&filetype)
+
 " <Plug> mappings for commands
 nnoremap <silent> <Plug>(ale_previous) :ALEPrevious<Return>
 nnoremap <silent> <Plug>(ale_previous_wrap) :ALEPreviousWrap<Return>
@@ -276,6 +299,7 @@ nnoremap <silent> <Plug>(ale_next_wrap) :ALENextWrap<Return>
 nnoremap <silent> <Plug>(ale_toggle) :ALEToggle<Return>
 nnoremap <silent> <Plug>(ale_lint) :ALELint<Return>
 nnoremap <silent> <Plug>(ale_detail) :ALEDetail<Return>
+nnoremap <silent> <Plug>(ale_fix) :ALEFix<Return>
 
 " Housekeeping
 

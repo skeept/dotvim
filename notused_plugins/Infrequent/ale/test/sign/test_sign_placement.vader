@@ -59,8 +59,8 @@ Before:
 
   call ale#linter#Define('testft', {
   \ 'name': 'x',
-  \ 'executable': 'echo',
-  \ 'command': 'echo',
+  \ 'executable': 'true',
+  \ 'command': 'true',
   \ 'callback': 'GenerateResults',
   \})
 
@@ -70,6 +70,38 @@ After:
   delfunction ParseSigns
   call ale#linter#Reset()
   sign unplace *
+
+Execute(ale#sign#GetSignType should return the right sign types):
+  AssertEqual 'ALEErrorSign', ale#sign#GetSignType([{'type': 'E'}])
+  AssertEqual 'ALEStyleErrorSign', ale#sign#GetSignType([{'type': 'E', 'sub_type': 'style'}])
+  AssertEqual 'ALEWarningSign', ale#sign#GetSignType([{'type': 'W'}])
+  AssertEqual 'ALEStyleWarningSign', ale#sign#GetSignType([{'type': 'W', 'sub_type': 'style'}])
+  AssertEqual 'ALEInfoSign', ale#sign#GetSignType([{'type': 'I'}])
+  AssertEqual 'ALEErrorSign', ale#sign#GetSignType([
+  \ {'type': 'E'},
+  \ {'type': 'W'},
+  \ {'type': 'I'},
+  \ {'type': 'E', 'sub_type': 'style'},
+  \ {'type': 'W', 'sub_type': 'style'},
+  \])
+  AssertEqual 'ALEWarningSign', ale#sign#GetSignType([
+  \ {'type': 'W'},
+  \ {'type': 'I'},
+  \ {'type': 'E', 'sub_type': 'style'},
+  \ {'type': 'W', 'sub_type': 'style'},
+  \])
+  AssertEqual 'ALEInfoSign', ale#sign#GetSignType([
+  \ {'type': 'I'},
+  \ {'type': 'E', 'sub_type': 'style'},
+  \ {'type': 'W', 'sub_type': 'style'},
+  \])
+  AssertEqual 'ALEStyleErrorSign', ale#sign#GetSignType([
+  \ {'type': 'E', 'sub_type': 'style'},
+  \ {'type': 'W', 'sub_type': 'style'},
+  \])
+  AssertEqual 'ALEStyleWarningSign', ale#sign#GetSignType([
+  \ {'type': 'W', 'sub_type': 'style'},
+  \])
 
 Given testft(A file with warnings/errors):
   foo
@@ -132,3 +164,6 @@ Execute(Loclist items with sign_id values should be kept):
   \   ['16', '1000004', 'ALEErrorSign'],
   \ ],
   \ ParseSigns()
+
+Execute(No excpetions should be thrown when setting signs for invalid buffers):
+  call ale#sign#SetSigns(123456789, [{'lnum': 15, 'col': 2, 'type': 'W', 'text': 'e'}])

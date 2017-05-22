@@ -3,10 +3,22 @@ ALE Java Integration                                         *ale-java-options*
 
 
 -------------------------------------------------------------------------------
+checkstyle                                                ale-java-checkstyle
+
+g:ale_java_checkstyle_options                   g:ale_java_checkstyle_options
+                                                b:ale_java_checkstyle_options
+
+  Type: String
+  Default: '-c /google_checks.xml'
+
+  This variable can be changed to modify flags given to checkstyle.
+
+
+-------------------------------------------------------------------------------
 javac                                                          *ale-java-javac*
 
 g:ale_java_javac_classpath                         *g:ale_java_javac_classpath*
-
+                                                   *b:ale_java_javac_classpath*
   Type: |String|
   Default: `''`
 
@@ -14,7 +26,7 @@ g:ale_java_javac_classpath                         *g:ale_java_javac_classpath*
 
 
 g:ale_java_javac_options                             *g:ale_java_javac_options*
-
+                                                     *b:ale_java_javac_options*
   Type: |String|
   Default: `''`
 

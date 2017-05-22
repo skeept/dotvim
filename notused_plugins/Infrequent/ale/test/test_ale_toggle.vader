@@ -11,6 +11,7 @@ Before:
   \ 'valid': 1,
   \}]
   let g:expected_groups = [
+  \ 'ALEBufferFixGroup',
   \ 'ALECleanupGroup',
   \ 'ALECursorGroup',
   \ 'ALEHighlightBufferGroup',
@@ -26,7 +27,7 @@ Before:
     \ 'lnum': 2,
     \ 'vcol': 0,
     \ 'col': 3,
-    \ 'text': a:output[0],
+    \ 'text': 'foo bar',
     \ 'type': 'E',
     \ 'nr': -1,
     \}]
@@ -56,7 +57,8 @@ Before:
   \ 'name': 'testlinter',
   \ 'callback': 'ToggleTestCallback',
   \ 'executable': 'echo',
-  \ 'command': 'echo foo bar',
+  \ 'command': 'echo',
+  \ 'read_buffer': 0,
   \})
 
 After:
@@ -100,7 +102,7 @@ Execute(ALEToggle should reset everything and then run again):
   AssertEqual [], getloclist(0)
   AssertEqual [], ale#sign#FindCurrentSigns(bufnr('%'))
   AssertEqual [], getmatches()
-  AssertEqual ['ALECleanupGroup', 'ALEHighlightBufferGroup'], ParseAuGroups()
+  AssertEqual ['ALEBufferFixGroup', 'ALECleanupGroup', 'ALEHighlightBufferGroup'], ParseAuGroups()
 
   " Toggle ALE on, everything should be set up and run again.
   ALEToggle

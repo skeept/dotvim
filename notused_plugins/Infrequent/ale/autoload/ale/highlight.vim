@@ -6,8 +6,20 @@ if !hlexists('ALEError')
     highlight link ALEError SpellBad
 endif
 
+if !hlexists('ALEStyleError')
+    highlight link ALEStyleError ALEError
+endif
+
 if !hlexists('ALEWarning')
     highlight link ALEWarning SpellCap
+endif
+
+if !hlexists('ALEStyleWarning')
+    highlight link ALEStyleWarning ALEWarning
+endif
+
+if !hlexists('ALEInfo')
+    highlight link ALEInfo ALEWarning
 endif
 
 " This map holds highlights to be set when buffers are opened.
@@ -15,10 +27,15 @@ endif
 " wait until the buffer is entered again to show the highlights, unless
 " the buffer is in focus when linting completes.
 let s:buffer_highlights = {}
+let s:buffer_restore_map = {}
 
 function! ale#highlight#UnqueueHighlights(buffer) abort
     if has_key(s:buffer_highlights, a:buffer)
         call remove(s:buffer_highlights, a:buffer)
+    endif
+
+    if has_key(s:buffer_restore_map, a:buffer)
+        call remove(s:buffer_restore_map, a:buffer)
     endif
 endfunction
 
@@ -70,12 +87,32 @@ function! ale#highlight#UpdateHighlights() abort
     " Remove anything with a current match_id
     call filter(l:loclist, '!has_key(v:val, ''match_id'')')
 
-    if l:has_new_items
+    " Restore items from the map of hidden items,
+    " if we don't have some new items to set already.
+    if empty(l:loclist) && has_key(s:buffer_restore_map, l:buffer)
+        let l:loclist = s:buffer_restore_map[l:buffer]
+    endif
+
+    if g:ale_enabled
         for l:item in l:loclist
             let l:col = l:item.col
-            let l:group = l:item.type ==# 'E' ? 'ALEError' : 'ALEWarning'
+
+            if l:item.type ==# 'W'
+                if get(l:item, 'sub_type', '') ==# 'style'
+                    let l:group = 'ALEStyleWarning'
+                else
+                    let l:group = 'ALEWarning'
+                endif
+            elseif l:item.type ==# 'I'
+                let l:group = 'ALEInfo'
+            elseif get(l:item, 'sub_type', '') ==# 'style'
+                let l:group = 'ALEStyleError'
+            else
+                let l:group = 'ALEError'
+            endif
+
             let l:line = l:item.lnum
-            let l:size = 1
+            let l:size = has_key(l:item, 'end_col') ? l:item.end_col - l:col + 1 : 1
 
             " Rememeber the match ID for the item.
             " This ID will be used to preserve loclist items which are set
@@ -85,9 +122,28 @@ function! ale#highlight#UpdateHighlights() abort
     endif
 endfunction
 
+function! ale#highlight#BufferHidden(buffer) abort
+    let l:loclist = get(g:ale_buffer_info, a:buffer, {'loclist': []}).loclist
+
+    " Remember loclist items, so they can be restored later.
+    if !empty(l:loclist)
+        " Remove match_ids, as they must be re-calculated when buffers are
+        " shown again.
+        for l:item in l:loclist
+            if has_key(l:item, 'match_id')
+                call remove(l:item, 'match_id')
+            endif
+        endfor
+
+        let s:buffer_restore_map[a:buffer] = l:loclist
+        call clearmatches()
+    endif
+endfunction
+
 augroup ALEHighlightBufferGroup
     autocmd!
     autocmd BufEnter * call ale#highlight#UpdateHighlights()
+    autocmd BufHidden * call ale#highlight#BufferHidden(expand('<abuf>'))
 augroup END
 
 function! ale#highlight#SetHighlights(buffer, loclist) abort

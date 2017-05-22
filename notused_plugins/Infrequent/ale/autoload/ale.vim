@@ -3,6 +3,7 @@
 "   Manages execution of linters when requested by autocommands
 
 let s:lint_timer = -1
+let s:queued_buffer_number = -1
 let s:should_lint_file_for_buffer = {}
 
 " A function for checking various conditions whereby ALE just shouldn't
@@ -50,6 +51,7 @@ function! ale#Queue(delay, ...) abort
     endif
 
     if a:delay > 0
+        let s:queued_buffer_number = bufnr('%')
         let s:lint_timer = timer_start(a:delay, function('ale#Lint'))
     else
         call ale#Lint()
@@ -61,8 +63,14 @@ function! ale#Lint(...) abort
         return
     endif
 
-    let l:buffer = bufnr('%')
-    let l:linters = ale#linter#Get(&filetype)
+    " Get the buffer number linting was queued for.
+    " or else take the current one.
+    let l:buffer = len(a:0) > 1 && a:1 == s:lint_timer
+    \   ? s:queued_buffer_number
+    \   : bufnr('%')
+
+    " Use the filetype from the buffer
+    let l:linters = ale#linter#Get(getbufvar(l:buffer, '&filetype'))
     let l:should_lint_file = 0
 
     " Check if we previously requested checking the file.
@@ -97,6 +105,14 @@ function! ale#ResetLintFileMarkers() abort
     let s:should_lint_file_for_buffer = {}
 endfunction
 
+let g:ale_has_override = get(g:, 'ale_has_override', {})
+
+" Call has(), but check a global Dictionary so we can force flags on or off
+" for testing purposes.
+function! ale#Has(feature) abort
+    return get(g:ale_has_override, a:feature, has(a:feature))
+endfunction
+
 " Given a buffer number and a variable name, look for that variable in the
 " buffer scope, then in global scope. If the name does not exist in the global
 " scope, an exception will be thrown.
@@ -105,5 +121,28 @@ endfunction
 function! ale#Var(buffer, variable_name) abort
     let l:full_name = 'ale_' . a:variable_name
 
-    return getbufvar(a:buffer, l:full_name, g:[l:full_name])
+    return getbufvar(str2nr(a:buffer), l:full_name, g:[l:full_name])
+endfunction
+
+" Initialize a variable with a default value, if it isn't already set.
+"
+" Every variable name will be prefixed with 'ale_'.
+function! ale#Set(variable_name, default) abort
+    let l:full_name = 'ale_' . a:variable_name
+    let l:value = get(g:, l:full_name, a:default)
+    let g:[l:full_name] = l:value
+
+    return l:value
+endfunction
+
+" Escape a string suitably for each platform.
+" shellescape does not work on Windows.
+function! ale#Escape(str) abort
+    if fnamemodify(&shell, ':t') ==? 'cmd.exe'
+        " FIXME: Fix shell escaping for Windows.
+        return fnameescape(a:str)
+    else
+        " An extra space is used here to disable the custom-checks.
+        return shellescape (a:str)
+    endif
 endfunction

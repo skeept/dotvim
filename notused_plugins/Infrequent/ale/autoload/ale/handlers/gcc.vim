@@ -3,6 +3,8 @@ scriptencoding utf-8
 " Description: This file defines a handler function which ought to work for
 " any program which outputs errors in the format that GCC uses.
 
+let s:pragma_error = '#pragma once in main file'
+
 function! s:AddIncludedErrors(output, include_lnum, include_lines) abort
     if a:include_lnum > 0
         call add(a:output, {
@@ -16,6 +18,26 @@ endfunction
 
 function! s:IsHeaderFile(filename) abort
     return a:filename =~? '\v\.(h|hpp)$'
+endfunction
+
+function! s:RemoveUnicodeQuotes(text) abort
+    let l:text = a:text
+    let l:text = substitute(l:text, '[`´‘’]', '''', 'g')
+    let l:text = substitute(l:text, '[“”]', '"', 'g')
+
+    return l:text
+endfunction
+
+function! ale#handlers#gcc#ParseGCCVersion(lines) abort
+    for l:line in a:lines
+        let l:match = matchstr(l:line, '\d\.\d\.\d')
+
+        if !empty(l:match)
+            return ale#semver#Parse(l:match)
+        endif
+    endfor
+
+    return []
 endfunction
 
 function! ale#handlers#gcc#HandleGCCFormat(buffer, lines) abort
@@ -72,11 +94,16 @@ function! ale#handlers#gcc#HandleGCCFormat(buffer, lines) abort
             let l:include_lines = []
             let l:included_filename = ''
 
+            if s:IsHeaderFile(bufname(bufnr('')))
+            \&& l:match[5][:len(s:pragma_error) - 1] ==# s:pragma_error
+                continue
+            endif
+
             call add(l:output, {
             \   'lnum': l:match[2] + 0,
             \   'col': l:match[3] + 0,
             \   'type': l:match[4] =~# 'error' ? 'E' : 'W',
-            \   'text': l:match[5],
+            \   'text': s:RemoveUnicodeQuotes(l:match[5]),
             \})
         endif
     endfor

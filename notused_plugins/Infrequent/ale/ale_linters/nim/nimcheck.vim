@@ -32,7 +32,6 @@ function! ale_linters#nim#nimcheck#Handle(buffer, lines) abort
         endif
 
         call add(l:output, {
-        \   'bufnr': a:buffer,
         \   'lnum': l:line,
         \   'col': l:column,
         \   'text': l:text,
@@ -45,7 +44,7 @@ endfunction
 
 
 function! ale_linters#nim#nimcheck#GetCommand(buffer) abort
-    let l:directory = fnameescape(fnamemodify(bufname(a:buffer), ':p:h'))
+    let l:directory = ale#Escape(fnamemodify(bufname(a:buffer), ':p:h'))
 
     return 'nim check --path:' . l:directory
     \   . ' --threads:on --verbosity:0 --colors:off --listFullPaths %t'
