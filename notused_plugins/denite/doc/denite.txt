@@ -114,7 +114,8 @@ EXAMPLES						*denite-examples*
 	" For Pt(the platinum searcher)
 	" NOTE: It also supports windows.
 	call denite#custom#var('file_rec', 'command',
-	\ ['pt', '--follow', '--nocolor', '--nogroup', '-g:', ''])
+	\ ['pt', '--follow', '--nocolor', '--nogroup',
+	\  (has('win32') ? '-g:' : '-g='), ''])
 
 	" Change mappings.
 	call denite#custom#map(
@@ -1088,6 +1089,7 @@ directory_rec	Gather directories recursive and nominates all directory names
 						*denite-source-file*
 file
 		Gather files from the user input.
+		Note: If the args 0 is "new", it will create the file.
 
 						*denite-source-file_old*
 file_old
@@ -1216,6 +1218,9 @@ outline		Gather outline and jump to the target.
 				(default: ['ctags'])
 		options 	the default options for command
 				(default: [])
+		file_opt 	the default option for writing to
+				specified file
+				(default: '-o')
 		ignore_types 	the list of ignore types
 				(default: [])
 		encoding 	the text encoding
@@ -1223,6 +1228,9 @@ outline		Gather outline and jump to the target.
 
 						*denite-source-tag*
 tag		Gather results of |tagfiles()|.
+		Note: If the args 0 is "include", it will gather the results
+		of |neoinclude| plugin.
+		https://github.com/Shougo/neoinclude.vim
 
 
 ==============================================================================
@@ -1752,6 +1760,17 @@ A: You must set the 3rd argument to "!" in grep source(|denite-source-grep|).
 If you want to use the interactive mode by default: >
 
 	call denite#custom#source('grep', 'args', ['', '', '!'])
+
+
+Q: What is "ch x was closed by the client"?
+
+A: Python process was crashed.  I cannot fix the error.
+I think the process was under heavy load.  You should change
+|denite-options-updatetime| option.
+
+Q: hg(highway) does not work in denite.nvim?
+
+A: Yes.  It is not supported.
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*

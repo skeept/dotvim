@@ -130,11 +130,11 @@ def abspath(vim, path):
 
 
 def convert2fuzzy_pattern(text):
-    return '\|'.join([escape_fuzzy(x, True) for x in split_input(text)])
+    return '|'.join([escape_fuzzy(x, True) for x in split_input(text)])
 
 
 def convert2regex_pattern(text):
-    return '\|'.join(split_input(text))
+    return '|'.join(split_input(text))
 
 
 def parse_command(array, **kwargs):
@@ -183,10 +183,17 @@ def find_rplugins(context, source, loaded_paths):
 
 def parse_tagline(line, tagpath):
     elem = [e for e in line.split("\t") if e != '']
-    return {
+    info = {
         'name': elem[0],
         'file': normpath(join(dirname(tagpath), elem[1])),
-        'pattern': re.sub(r'^/|/;"$', '', elem[2]),
         'type': elem[3],
         'ref': ' '.join(elem[4:])
     }
+    if re.match('\d+;"$', elem[2]):
+        info['pattern'] = ''
+        info['line'] = re.sub(r';"$', '', elem[2])
+    else:
+        info['pattern'] = re.sub(r'([~.*\[\]\\])', r'\\\1',
+                                 re.sub(r'^/|/;"$', '', elem[2]))
+        info['line'] = ''
+    return info

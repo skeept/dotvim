@@ -55,8 +55,18 @@ class Default(object):
             weakref.proxy(self)
         )
         self._guicursor = ''
+        self._previous_status = ''
 
     def start(self, sources, context):
+        self._result = []
+        try:
+            self._start(sources, context)
+        finally:
+            self.cleanup()
+
+        return self._result
+
+    def _start(self, sources, context):
         if re.search('\[Command Line\]$', self._vim.current.buffer.name):
             # Ignore command line window.
             return
@@ -74,6 +84,10 @@ class Default(object):
                 self.move_to_next_line()
             elif context['cursor_pos'] == '-1':
                 self.move_to_prev_line()
+
+            if self.check_empty():
+                return
+
             if context['refresh']:
                 self.redraw()
         else:
@@ -98,7 +112,7 @@ class Default(object):
             self.update_candidates()
 
             if self.check_empty():
-                return self._result
+                return
 
             self.init_buffer()
             self.init_cursor()
@@ -117,16 +131,15 @@ class Default(object):
             # interrupted.
             # In this case, denite cancel any operation and close its window.
             self.quit()
-        return self._result
+        return
 
     def init_buffer(self):
+        self._previous_status = ''
         self._displayed_texts = []
 
+        self._prev_wininfo = self._get_wininfo()
         self._winheight = int(self._context['winheight'])
         self._prev_winid = self._vim.call('win_getid')
-        self._prev_bufnr = self._vim.current.buffer.number
-        self._prev_tabpagenr = self._vim.call('tabpagenr')
-        self._prev_buflist = self._vim.call('tabpagebuflist')
         self._winrestcmd = self._vim.call('winrestcmd')
         self._winsaveview = self._vim.call('winsaveview')
         self._scroll = int(self._context['scroll'])
@@ -154,7 +167,6 @@ class Default(object):
         self._options = self._vim.current.buffer.options
         self._options['buftype'] = 'nofile'
         self._options['swapfile'] = False
-        self._options['modifiable'] = True
         self._options['buflisted'] = False
         self._options['filetype'] = 'denite'
 
@@ -205,6 +217,15 @@ class Default(object):
             else:
                 direction = 'belowright' if is_fit else 'botright'
         return direction
+
+    def _get_wininfo(self):
+        wininfo = self._vim.call('getwininfo', self._vim.call('win_getid'))[0]
+        return [
+            self._vim.options['columns'], self._vim.options['lines'],
+            self._vim.call('tabpagebuflist'),
+            wininfo['bufnr'], wininfo['winnr'],
+            wininfo['winid'], wininfo['tabnr'],
+        ]
 
     def init_syntax(self):
         self._vim.command('syntax case ignore')
@@ -272,6 +293,7 @@ class Default(object):
                     for x in matchers if self._denite.get_filter(x)
                 ))
                 pattern = next(patterns, '')
+        prev_matched_pattern = self._matched_pattern
         self._matched_pattern = pattern
         self._candidates_len = len(self._candidates)
         if self._context['reversed']:
@@ -284,7 +306,8 @@ class Default(object):
         prev_displayed_texts = self._displayed_texts
         self.update_displayed_texts()
 
-        return self._displayed_texts != prev_displayed_texts
+        return (self._displayed_texts != prev_displayed_texts or
+                self._matched_pattern != prev_matched_pattern)
 
     def update_displayed_texts(self):
         self._displayed_texts = [
@@ -297,8 +320,10 @@ class Default(object):
     def update_buffer(self):
         self.update_status()
 
-        self._vim.command('silent! syntax clear deniteMatchedRange')
-        self._vim.command('silent! syntax clear deniteMatchedChar')
+        if self._vim.call('hlexists', 'deniteMatchedRange'):
+            self._vim.command('silent! syntax clear deniteMatchedRange')
+        if self._vim.call('hlexists', 'deniteMatchedChar'):
+            self._vim.command('silent! syntax clear deniteMatchedChar')
         if self._matched_pattern != '':
             self._vim.command(
                 'silent! syntax match deniteMatchedRange /%s/ contained' % (
@@ -314,12 +339,8 @@ class Default(object):
                 self._context['input'].replace(' ', '')
             ))
 
-        del self._vim.current.buffer[:]
-        self._vim.current.buffer.append(self._displayed_texts)
-        del self._vim.current.buffer[0]
+        self._vim.current.buffer[:] = self._displayed_texts
         self.resize_buffer()
-
-        self._options['modified'] = False
 
         self.move_cursor()
 
@@ -329,12 +350,17 @@ class Default(object):
             self._cursor + self._win_cursor,
             self._candidates_len)
         mode = '-- ' + self._current_mode.upper() + ' -- '
-        self._bufvars['denite_statusline_mode'] = mode
-        self._bufvars['denite_statusline_sources'] = self._statusline_sources
-        self._bufvars['denite_statusline_path'] = (
-            '[' + self._context['path'] + ']')
-        self._bufvars['denite_statusline_linenr'] = linenr
-        self._vim.command('redrawstatus')
+        path = '[' + self._context['path'] + ']'
+        bufvars = self._bufvars
+
+        status = mode + self._statusline_sources + path + linenr
+        if status != self._previous_status:
+            bufvars['denite_statusline_mode'] = mode
+            bufvars['denite_statusline_sources'] = self._statusline_sources
+            bufvars['denite_statusline_path'] = path
+            bufvars['denite_statusline_linenr'] = linenr
+            self._vim.command('redrawstatus')
+            self._previous_status = status
 
     def update_cursor(self):
         self.update_displayed_texts()
@@ -369,7 +395,8 @@ class Default(object):
             elif (self._candidates_len < self._winheight):
                 winheight = self._candidates_len
 
-        self._vim.command('resize ' + str(winheight))
+        if self._vim.current.window.height != winheight:
+            self._vim.command('resize ' + str(winheight))
 
     def check_empty(self):
         if self._candidates and self._context['immediately']:
@@ -385,7 +412,8 @@ class Default(object):
     def move_cursor(self):
         if self._win_cursor > self._vim.call('line', '$'):
             self._win_cursor = self._vim.call('line', '$')
-        self._vim.call('cursor', [self._win_cursor, 1])
+        if self._win_cursor != self._vim.call('line', '.'):
+            self._vim.call('cursor', [self._win_cursor, 1])
 
         if self._context['auto_preview']:
             self.do_action('preview')
@@ -435,13 +463,13 @@ class Default(object):
         self.update_buffer()
 
     def cleanup(self):
-        self._options['modifiable'] = False
         self._vim.command('pclose!')
         # Redraw to clear prompt
         self._vim.command('redraw | echo ""')
         self._vim.command('highlight! link CursorLine CursorLine')
         if self._vim.call('exists', '#ColorScheme'):
             self._vim.command('silent doautocmd ColorScheme')
+        self._vim.command('set guicursor&')
         self._vim.options['guicursor'] = self._guicursor
 
     def quit_buffer(self):
@@ -453,9 +481,8 @@ class Default(object):
         self._vim.call('win_gotoid', self._prev_winid)
         self._vim.command('silent bdelete! ' + str(self._bufnr))
 
-        # if (self._vim.call('tabpagenr') == self._prev_tabpagenr and
-        #         self._vim.call('tabpagebuflist') == self._prev_buflist):
-        #     self._vim.command(self._winrestcmd)
+        if self._get_wininfo() == self._prev_wininfo:
+            self._vim.command(self._winrestcmd)
 
         # Note: Does not work for line source
         # if self._vim.current.buffer.number == self._prev_bufnr:
@@ -472,8 +499,10 @@ class Default(object):
                     ] if self.get_cursor_candidate() else []
         return [self._candidates[x] for x in self._selected_candidates]
 
-    def redraw(self):
-        self.gather_candidates()
+    def redraw(self, is_force=True):
+        self._context['is_redraw'] = is_force
+        if is_force:
+            self.gather_candidates()
         if self.update_candidates():
             self.update_buffer()
         else:
@@ -523,7 +552,7 @@ class Default(object):
         if is_quit and not self._context['quit']:
             # Re-open denite buffer
             self.init_buffer()
-            self.update_buffer()
+            self.redraw(False)
             # Disable quit flag
             is_quit = False
 
@@ -717,5 +746,4 @@ class Default(object):
         self.change_mode(self._current_mode)
 
     def suspend(self):
-        self.cleanup()
         return STATUS_ACCEPT

@@ -43,6 +43,7 @@ def _candidate(result, path):
         'action__path': result[0],
         'action__line': result[1],
         'action__col': result[2],
+        'action__text': result[3],
     }
 
 
@@ -179,6 +180,8 @@ class Source(Base):
 
     def __async_gather_candidates(self, context, timeout):
         outs, errs = context['__proc'].communicate(timeout=timeout)
+        if errs:
+            self.error_message(errs)
         context['is_async'] = not context['__proc'].eof()
         if context['__proc'].eof():
             context['__proc'] = None

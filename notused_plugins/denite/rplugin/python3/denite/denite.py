@@ -115,9 +115,9 @@ class Denite(object):
         for [name, args] in [[x['name'], x['args']]
                              for x in context['sources']]:
             if name not in self._sources:
-                self.error('Source "' + name + '" is not found.')
-                continue
-            source = self._sources[name]
+                raise NameError('Source "' + name + '" is not found.')
+
+            source = copy.copy(self._sources[name])
             source.context = copy.deepcopy(context)
             source.context['args'] = args
             source.context['is_async'] = False

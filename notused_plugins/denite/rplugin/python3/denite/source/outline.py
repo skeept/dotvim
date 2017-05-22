@@ -27,6 +27,7 @@ class Source(Base):
         self.vars = {
             'command': ['ctags'],
             'options': [],
+            'file_opt': '-o',
             'ignore_types': [],
             'encoding': 'utf-8'
         }
@@ -49,9 +50,10 @@ class Source(Base):
             args = []
             args += self.vars['command']
             args += self.vars['options']
-            args += ['-o', tf.name]
+            args += [self.vars['file_opt'], tf.name]
             args += [context['__path']]
             self.print_message(context, args)
+            tf.close()
 
             try:
                 check_output(args).decode(self.vars['encoding'], 'replace')
@@ -59,7 +61,7 @@ class Source(Base):
                 return []
 
             candidates = []
-            with open(tf.name) as f:
+            with open(tf.name, encoding=self.vars['encoding']) as f:
                 for line in f:
                     if re.match('!', line) or not line:
                         continue
