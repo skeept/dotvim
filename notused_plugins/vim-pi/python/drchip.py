@@ -12,7 +12,10 @@ def getdrchip():
     return urllib.urlopen('http://www.drchip.org/astronaut/vim/forgit.tuv')
 
 def drchip_to_source(s):
-    name, url, version = s.strip().split('|')
+    sources = s.strip().split('|')
+    if len(sources) != 3:
+        return None, None
+    name, url, version = sources
     name = dcregex.subn('', name)[0] + '@drchip'
     return name, {
         'type': 'archive',
@@ -25,7 +28,8 @@ def create_db():
     result = {}
     for line in getdrchip():
         name, source = drchip_to_source(line)
-        result[name] = source
+        if name:
+            result[name] = source
     return result
 
 def write_db(db):

@@ -114,7 +114,8 @@ sub openDBs() {
 #▶1 genName :: name, snr, scriptnames → sname + scriptnames
 sub genName {
     local $_;
-    my ($_, $snr, $scriptnames)=@_;
+    my ($snr, $scriptnames);
+    ($_, $snr, $scriptnames)=@_;
     s/\.vim$//g;
     # XXX That must purge at least ' and \n
     s/[^ a-zA-Z0-9_\-.]//g;

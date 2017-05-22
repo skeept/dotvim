@@ -633,7 +633,7 @@
   },
   "2713": {
     "type": "git",
-    "url": "git://github.com/chilicuil/nextCS"
+    "url": "git://github.com/chilicuil/nextCS.vim"
   },
   "2714": {
     "type": "hg",
@@ -2949,7 +2949,7 @@
   },
   "4505": {
     "type": "hg",
-    "url": "http://vim-autohide-plugin.googlecode.com"
+    "url": "https://bitbucket.org/fritzophrenic/vim-autohide-plugin"
   },
   "4506": {
     "type": "git",
@@ -3249,7 +3249,7 @@
   },
   "4662": {
     "type": "git",
-    "url": "git://github.com/chilicuil/vim-sprunge"
+    "url": "git://github.com/chilicuil/sprunge.vim"
   },
   "4665": {
     "type": "git",
@@ -5423,9 +5423,65 @@
     "type": "git",
     "url": "git://github.com/dunckr/js_alternate.vim"
   },
+  "5549": {
+    "type": "git",
+    "url": "git://github.com/tomtom/tstatus_vim"
+  },
+  "5550": {
+    "type": "git",
+    "url": "git://github.com/tomtom/autoproject_vim"
+  },
+  "5551": {
+    "type": "git",
+    "url": "git://github.com/tomtom/vikibase_vim"
+  },
+  "5552": {
+    "type": "git",
+    "url": "git://github.com/tomtom/foldtext_vim"
+  },
+  "5553": {
+    "type": "git",
+    "url": "git://github.com/tbazant/vim-daps"
+  },
+  "5557": {
+    "type": "git",
+    "url": "git://github.com/haolongzhangm/auto_update_cscope_ctags_database"
+  },
+  "5558": {
+    "type": "git",
+    "url": "git://github.com/shmargum/vim-sass-colors"
+  },
+  "5559": {
+    "type": "git",
+    "url": "git://github.com/digitalrounin/vim-yaml-folds"
+  },
   "556": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/perl-support"
+  },
+  "5560": {
+    "type": "git",
+    "url": "git://github.com/borissov/vim-mysql-suggestions"
+  },
+  "5561": {
+    "type": "git",
+    "url": "git://github.com/ballerinalang/plugin-vim"
+  },
+  "5563": {
+    "type": "git",
+    "url": "git://github.com/johngrib/vim-game-snake"
+  },
+  "5565": {
+    "type": "git",
+    "url": "git://github.com/evedovelli/rst-robotframework-syntax-vim"
+  },
+  "5567": {
+    "type": "git",
+    "url": "git://github.com/ballerinalang/plugin-vim"
+  },
+  "5568": {
+    "type": "git",
+    "url": "git://github.com/makerj/vim-transit"
   },
   "586": {
     "type": "git",

@@ -9,7 +9,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Align.vba.gz",
-    "version": "v39b"
+    "version": "v40"
   },
   "AlignmentMaps@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -21,19 +21,19 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/AnsiEsc.vba.gz",
-    "version": "v13f"
+    "version": "v13l"
   },
   "AsNeeded@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/AsNeeded.vba.gz",
-    "version": "v17l"
+    "version": "v17m"
   },
   "AutoAlignsuite@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/AutoAlign.vba.gz",
-    "version": "v15a"
+    "version": "v15c"
   },
   "BlockhlNestingLevelBasedHighlightingForC@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -63,7 +63,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/calutil.vba.gz",
-    "version": "v3b"
+    "version": "v3c"
   },
   "CecmatrixMatrixHandling@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -75,7 +75,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/cecscope.vba.gz",
-    "version": "v5i"
+    "version": "v5j"
   },
   "CtagExplCtagsExplorer@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -87,7 +87,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Decho.vba.gz",
-    "version": "v21s"
+    "version": "v21y"
+  },
+  "Detachdetachtabs@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/Detach.vba.gz",
+    "version": "v1b"
   },
   "DotFill@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -105,13 +111,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/cecutil.vba.gz",
-    "version": "v18i"
+    "version": "v18j"
   },
   "DrawIt@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/DrawIt.vba.gz",
-    "version": "v14b"
+    "version": "v14h"
   },
   "EasyAccents@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -135,7 +141,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/tarfiles/gdbmgr.tar.gz",
-    "version": "v2b"
+    "version": "v31"
   },
   "GetScript@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -147,7 +153,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Hdrtag.vba.gz",
-    "version": "v1v"
+    "version": "v1w"
   },
   "HelpExtractor@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -159,13 +165,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/hilinks.vba.gz",
-    "version": "v4l"
+    "version": "v4m"
   },
   "Highlight@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Highlight.vba.gz",
-    "version": "v1j"
+    "version": "v1o"
   },
   "HighlightColorsHelpandEditor@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -189,7 +195,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/HiMtchBrkt.vba.gz",
-    "version": "v23l"
+    "version": "v23m"
   },
   "HintsforLibraryFunctionsgslbased@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -203,6 +209,12 @@
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/hints_man3.vba.gz",
     "version": "v2b"
   },
+  "HintsviaBalloonUsingTags@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/hints.vba.gz",
+    "version": "v1d"
+  },
   "IndGuide@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
@@ -214,6 +226,12 @@
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/drc_indent.vba.gz",
     "version": "v1"
+  },
+  "Kwbd@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/kwbd.vba.gz",
+    "version": "v1a"
   },
   "LaTeXMaps@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -231,19 +249,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/LargeFile.vba.gz",
-    "version": "v6"
+    "version": "v7d"
   },
   "LibraryViewer@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/libview.vba.gz",
-    "version": "v1i"
-  },
-  "LogiPat@drchip": {
-    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
-    "type": "archive",
-    "url": "http://www.drchip.org/astronaut/vim/vbafiles/LogiPat.vba.gz",
-    "version": "v4a"
+    "version": "v1l"
   },
   "Maintainer@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -255,7 +267,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/manpageview.vba.gz",
-    "version": "v25o"
+    "version": "v25u"
   },
   "MapleSyrup@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -267,13 +279,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/math.vba.gz",
-    "version": "v5a"
+    "version": "v5d"
   },
   "Mines@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Mines.vba.gz",
-    "version": "v21a"
+    "version": "v21c"
   },
   "MoreHelpSyntaxHighlighting@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -291,7 +303,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/mpage.vba.gz",
-    "version": "v2a"
+    "version": "v2d"
   },
   "NetrwClean@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -303,7 +315,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/netrw.vba.gz",
-    "version": "v153r"
+    "version": "v162k"
   },
   "PassWGenPasswordGenerator@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -311,17 +323,11 @@
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/PassWGen.vba.gz",
     "version": "v1a"
   },
-  "PluginKiller@drchip": {
-    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
-    "type": "archive",
-    "url": "http://www.drchip.org/astronaut/vim/vbafiles/pluginkiller.vba.gz",
-    "version": "v4c"
-  },
   "Rainbow@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Rainbow.vba.gz",
-    "version": "v2q"
+    "version": "v2t"
   },
   "ReadStub@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -333,7 +339,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/RltvNmbr.vba.gz",
-    "version": "v4a"
+    "version": "v4b"
   },
   "Rndm@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -345,7 +351,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/RunView.vba.gz",
-    "version": "v4b"
+    "version": "v4d"
   },
   "SeeTab@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -357,7 +363,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/StlShowFunc.vba.gz",
-    "version": "v2r"
+    "version": "v2s"
   },
   "Stubs@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -381,13 +387,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/synchk.vba.gz",
-    "version": "v1d"
+    "version": "v1h"
   },
   "TarHandler@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/tar.vba.gz",
-    "version": "v30a"
+    "version": "v31"
   },
   "ToggleWindowLayout@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -405,13 +411,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/tarfiles/vimball.tar.gz",
-    "version": "v37b"
+    "version": "v31"
   },
   "VisualBlockCommands@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/vis.vba.gz",
-    "version": "v21c"
+    "version": "v21f"
   },
   "VisualCDeclarations@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -423,13 +429,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/visincr.vba.gz",
-    "version": "v21d"
+    "version": "v21g"
   },
   "VisualModeBasedSwapping@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/visswap.vba.gz",
-    "version": "v4f"
+    "version": "v4g"
   },
   "VisualSelectionBasedSorting@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -441,7 +447,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/WhereFrom.vba.gz",
-    "version": "v3a"
+    "version": "v3b"
   },
   "WindowKillRing@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -459,19 +465,25 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/zmaps.vba.gz",
-    "version": "v1d"
+    "version": "v1e"
   },
   "ZipHandler@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/zip.vba.gz",
-    "version": "v27"
+    "version": "v29"
   },
   "ZoomWin@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/ZoomWin.vba.gz",
     "version": "v25n"
+  },
+  "amsmath@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/amsmath.vba.gz",
+    "version": "v1a"
   },
   "foldcol@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -491,6 +503,12 @@
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/gvcolors.vba.gz",
     "version": "v7"
   },
+  "logiPat@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/logiPat.vba.gz",
+    "version": "v4"
+  },
   "lstlisting@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
@@ -501,6 +519,18 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/moreverb.vba.gz",
+    "version": "v1a"
+  },
+  "pchkPluginChecker@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/pchk.vba.gz",
+    "version": "v3"
+  },
+  "slide@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/slide.vba.gz",
     "version": "v1a"
   }
 }
