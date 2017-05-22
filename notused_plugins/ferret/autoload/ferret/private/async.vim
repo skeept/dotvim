@@ -10,10 +10,10 @@ function! s:info_from_channel(channel)
   endif
 endfunction
 
-function! ferret#private#async#search(command, ack) abort
+function! ferret#private#async#search(command, ack, bang) abort
   call ferret#private#async#cancel()
   call ferret#private#autocmd('FerretAsyncStart')
-  let l:command_and_args=extend(split(FerretExecutable()), a:command)
+  let l:command_and_args=extend(split(ferret#private#executable()), a:command)
   let l:job=job_start(l:command_and_args, {
         \   'in_io': 'null',
         \   'err_cb': 'ferret#private#async#err_cb',
@@ -33,64 +33,98 @@ function! ferret#private#async#search(command, ack) abort
         \   'pending_output': '',
         \   'pending_error_length': 0,
         \   'pending_output_length': 0,
+        \   'result_count': 0,
         \   'ack': a:ack,
+        \   'bang': a:bang,
         \   'window': win_getid()
         \ }
 endfunction
 
-let s:max_line_length=32768
+" Quickfix listing will truncate longer lines than this.
+let s:max_line_length=4096
 
 function! ferret#private#async#err_cb(channel, msg)
   let l:info=s:info_from_channel(a:channel)
   if type(l:info) == 4
-    let l:start=0
-    while 1
-      let l:idx=match(a:msg, '\n', l:start)
-      if l:idx==-1
+    let l:lines=split(a:msg, '\n', 1)
+    let l:count=len(l:lines)
+    for l:i in range(l:count)
+      let l:line=l:lines[l:i]
+      if l:i != l:count - 1 || l:line == '' && l:info.pending_error_length
         if l:info.pending_error_length < s:max_line_length
-          let l:rest=strpart(a:msg, l:start)
-          let l:length=strlen(l:rest)
-          let l:info.pending_error.=l:rest
-          let l:info.pending_error_length+=l:length
+          let l:rest=strpart(
+                \   l:line,
+                \   0,
+                \   s:max_line_length - l:info.pending_error_length
+                \ )
+          call add(l:info.errors, l:info.pending_error . l:rest)
+        else
+          call add(l:info.errors, l:info.pending_error)
         endif
-        break
-      else
-        if l:info.pending_error_length < s:max_line_length
-          let l:info.pending_error.=strpart(a:msg, l:start, l:idx - l:start)
-        endif
-        call add(l:info.errors, l:info.pending_error)
         let l:info.pending_error=''
         let l:info.pending_error_length=0
+      elseif l:info.pending_error_length < s:max_line_length
+        let l:info.pending_error.=l:line
+        let l:info.pending_error_length+=strlen(l:line)
       endif
-      let l:start=l:idx + 1
-    endwhile
+    endfor
   endif
 endfunction
+
+""
+" @option g:FerretMaxResults number 100000
+"
+" Controls the maximum number of results Ferret will attempt to gather before
+" displaying the results. Note that this only applies when searching
+" asynchronously; that is, on recent versions of Vim with |+job| support and
+" when |g:FerretJob| is not set to 0.
+"
+" The intent of this option is to prevent runaway search processes that produce
+" huge volumes of output (for example, searching for a common string like "test"
+" inside a |$HOME| directory containing millions of files) from locking up Vim.
+"
+" In the event that Ferret aborts a search that has hit the |g:FerretMaxResults|
+" limit, a message will be printed prompting users to run the search again
+" with |:Ack!| or |:Lack!| if they want to bypass the limit.
+"
+let s:limit=max([1, +get(g:, 'FerretMaxResults', 100000)]) - 1
 
 function! ferret#private#async#out_cb(channel, msg)
   let l:info=s:info_from_channel(a:channel)
   if type(l:info) == 4
-    let l:start=0
-    while 1
-      let l:idx=match(a:msg, '\n', l:start)
-      if l:idx==-1
+    if !l:info.bang && l:info.result_count > s:limit
+      call s:MaxResultsExceeded(l:info)
+      return
+    endif
+    let l:lines=split(a:msg, '\n', 1)
+    let l:count=len(l:lines)
+    for l:i in range(l:count)
+      let l:line=l:lines[l:i]
+      if l:i != l:count - 1 || l:line == '' && l:info.pending_output_length
         if l:info.pending_output_length < s:max_line_length
-          let l:rest=strpart(a:msg, l:start)
-          let l:length=strlen(l:rest)
-          let l:info.pending_output.=l:rest
-          let l:info.pending_output_length+=l:length
+          let l:rest=strpart(
+                \   l:line,
+                \   0,
+                \   s:max_line_length - l:info.pending_output_length
+                \ )
+          call add(l:info.output, l:info.pending_output . l:rest)
+        else
+          call add(l:info.output, l:info.pending_output)
         endif
-        break
-      else
-        if l:info.pending_output_length < s:max_line_length
-          let l:info.pending_output.=strpart(a:msg, l:start, l:idx - l:start)
-        endif
-        call add(l:info.output, l:info.pending_output)
         let l:info.pending_output=''
         let l:info.pending_output_length=0
+        if !l:info.bang
+          let l:info.result_count+=1
+          if l:info.result_count > s:limit
+            call s:MaxResultsExceeded(l:info)
+            break
+          endif
+        endif
+      elseif l:info.pending_output_length < s:max_line_length
+        let l:info.pending_output.=l:line
+        let l:info.pending_output_length+=strlen(l:line)
       endif
-      let l:start=l:idx + 1
-    endwhile
+    endfor
   endif
 endfunction
 
@@ -104,7 +138,7 @@ function! ferret#private#async#close_cb(channel) abort
       " If this is a :Lack search, try to focus appropriate window.
       call win_gotoid(l:info.window)
     endif
-    call s:finalize_search(l:info.output, l:info.ack)
+    call ferret#private#shared#finalize_search(l:info.output, l:info.ack)
     for l:error in l:info.errors
       unsilent echomsg l:error
     endfor
@@ -114,7 +148,7 @@ endfunction
 function! ferret#private#async#pull() abort
   for l:channel_id in keys(s:jobs)
     let l:info=s:jobs[l:channel_id]
-    call s:finalize_search(l:info.output, l:info.ack)
+    call ferret#private#shared#finalize_search(l:info.output, l:info.ack)
   endfor
 endfunction
 
@@ -131,24 +165,19 @@ function! ferret#private#async#cancel() abort
   endif
 endfunction
 
-function! ferret#private#async#debug() abort
-  return s:jobs
+" Stop a single job as a result of hitting g:FerretMaxResults.
+function! s:MaxResultsExceeded(info)
+  call ferret#private#shared#finalize_search(a:info.output, a:info.ack)
+  call job_stop(a:info.job)
+  call remove(s:jobs, a:info.channel_id)
+  call ferret#private#autocmd('FerretAsyncFinish')
+  call ferret#private#error(
+        \   'Maximum result count exceeded. ' .
+        \   'Either increase g:FerretMaxResults or ' .
+        \   're-run the search with :Ack!, :Lack! etc.'
+        \ )
 endfunction
 
-function! s:finalize_search(output, ack)
-  let l:original_errorformat=&errorformat
-  try
-    let &errorformat=g:FerretFormat
-    if a:ack
-      cexpr a:output
-      execute get(g:, 'FerretQFHandler', 'botright cwindow')
-      call ferret#private#post('qf')
-    else
-      lexpr a:output
-      execute get(g:, 'FerretLLHandler', 'lwindow')
-      call ferret#private#post('location')
-    endif
-  finally
-    let &errorformat=l:original_errorformat
-  endtry
+function! ferret#private#async#debug() abort
+  return s:jobs
 endfunction

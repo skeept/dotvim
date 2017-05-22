@@ -32,12 +32,28 @@ function! ferret#private#dispatch() abort
   " ```
   " let g:FerretDispatch=0
   " ```
+  "
+  " Note that on sufficiently recent versions of Vim with |+job| support, Ferret
+  " will first try to use |+job|, falling back to vim-dispatch and consulting
+  " |g:FerretDispatch| only if |g:FerretJob| is set to 0.
+  "
   let l:dispatch=get(g:, 'FerretDispatch', 1)
   return l:dispatch && exists(':Make') == 2
 endfunction
 
 " Returns 1 if we can use Vim's built-in async primitives.
 function! ferret#private#async()
+  ""
+  " @option g:FerretJob boolean 1
+  "
+  " Controls whether to use Vim's |+job| feature, when available, to run
+  " searches asynchronously. To prevent |+job| from being used, set to 0, in
+  " which case Ferret will fall back to vim-dispatch (see also:
+  " |g:FerretDispatch|):
+  "
+  " ```
+  " let g:FerretJob=0
+  " ```
   let l:async=get(g:, 'FerretJob', 1)
 
   " Nothing special about 1829; it's just the version I am testing with as I
@@ -174,18 +190,18 @@ function! ferret#private#post(type) abort
   endif
 endfunction
 
-function! ferret#private#ack(...) abort
+function! ferret#private#ack(bang, ...) abort
   let l:command=s:parse(a:000)
   call ferret#private#hlsearch()
 
-  let l:executable=FerretExecutable()
+  let l:executable=ferret#private#executable()
   if empty(l:executable)
     call ferret#private#installprompt()
     return
   endif
 
   if ferret#private#async()
-    call ferret#private#async#search(l:command, 1)
+    call ferret#private#async#search(l:command, 1, a:bang)
   elseif ferret#private#dispatch()
     call ferret#private#dispatch#search(l:command)
   else
@@ -199,12 +215,12 @@ function! ferret#private#buflist() abort
   return l:bufpaths
 endfunction
 
-function! ferret#private#back(...) abort
-  call call('ferret#private#ack', a:000 + ferret#private#buflist())
+function! ferret#private#back(bang, ...) abort
+  call call('ferret#private#ack', a:bang, a:000 + ferret#private#buflist())
 endfunction
 
-function! ferret#private#black(...) abort
-  call call('ferret#private#lack', a:000 + ferret#private#buflist())
+function! ferret#private#black(bang, ...) abort
+  call call('ferret#private#lack', a:bang, a:000 + ferret#private#buflist())
 endfunction
 
 function! ferret#private#installprompt() abort
@@ -213,18 +229,18 @@ function! ferret#private#installprompt() abort
         \ )
 endfunction
 
-function! ferret#private#lack(...) abort
+function! ferret#private#lack(bang, ...) abort
   let l:command=s:parse(a:000)
   call ferret#private#hlsearch()
 
-  let l:executable=FerretExecutable()
+  let l:executable=ferret#private#executable()
   if empty(l:executable)
     call ferret#private#installprompt()
     return
   endif
 
   if ferret#private#async()
-    call ferret#private#async#search(l:command, 0)
+    call ferret#private#async#search(l:command, 0, a:bang)
   else
     call ferret#private#vanilla#search(l:command, 0)
   endif
@@ -362,8 +378,8 @@ function! ferret#private#lackcomplete(arglead, cmdline, cursorpos) abort
 endfunction
 
 " Return first word (the name of the binary) of the executable string.
-function! ferret#private#executable()
-  let l:executable=FerretExecutable()
+function! ferret#private#executable_name()
+  let l:executable=ferret#private#executable()
   let l:binary=matchstr(l:executable, '\v\w+')
 endfunction
 
@@ -476,7 +492,7 @@ function! ferret#private#complete(cmd, arglead, cmdline, cursorpos, files) abort
 
     if ferret#private#option(l:stripped)
       if a:cursorpos <= l:position
-        let l:options=get(s:options, ferret#private#executable(), [])
+        let l:options=get(s:options, ferret#private#executable_name(), [])
         return filter(l:options, 'match(v:val, l:stripped) == 0')
       endif
     elseif l:pattern_seen && a:files
@@ -532,3 +548,86 @@ function! ferret#private#qf_delete_motion(type, ...)
   " Restore.
   let &selection=l:selection
 endfunction
+
+""
+" @option g:FerretExecutable string "rg,ag,ack,ack-grep"
+"
+" Ferret will preferentially use `rg`, `ag` and finally `ack`/`ack-grep` (in
+" that order, using the first found executable), however you can force your
+" preference for a specific tool to be used by setting an override in your
+" |.vimrc|. Valid values are a comma-separated list of "rg", "ag", "ack" or
+" "ack-grep". If no requested executable exists, Ferret will fall-back to the
+" next in the default list.
+"
+" Example:
+"
+" ```
+" " Prefer `ag` over `rg`.
+" let g:FerretExecutable='ag,rg'
+" ```
+let s:force=get(g:, 'FerretExecutable', 'rg,ag,ack,ack-grep')
+
+let s:executables={
+      \   'rg': 'rg --vimgrep --no-heading',
+      \   'ag': 'ag',
+      \   'ack': 'ack --column --with-filename',
+      \   'ack-grep': 'ack-grep --column --with-filename'
+      \ }
+
+let s:init_done=0
+
+function! ferret#private#init() abort
+  if s:init_done
+    return
+  endif
+
+  if executable('rg') && match(system('rg --help'), '--max-columns') != -1
+    let s:executables['rg'].=' --max-columns 4096'
+  endif
+
+  if executable('ag')
+    let l:ag_help=system('ag --help')
+    if match(l:ag_help, '--vimgrep') != -1
+      let s:executables['ag'].=' --vimgrep'
+    else
+      let s:executables['ag'].=' --column'
+    endif
+    if match(l:ag_help, '--width') != -1
+      let s:executables['ag'].=' --width 4096'
+    endif
+  endif
+
+  let l:executable=ferret#private#executable()
+  if !empty(l:executable)
+    let &grepprg=l:executable
+    let &grepformat=g:FerretFormat
+  endif
+
+  let s:init_done=1
+endfunction
+
+function! ferret#private#executable() abort
+  let l:valid=keys(s:executables)
+  let l:executables=split(s:force, '\v\s*,\s*')
+  let l:executables=filter(l:executables, 'index(l:valid, v:val) != -1')
+  if index(l:executables, 'rg') == -1
+    call add(l:executables, 'rg')
+  endif
+  if index(l:executables, 'ag') == -1
+    call add(l:executables, 'ag')
+  endif
+  if index(l:executables, 'ack') == -1
+    call add(l:executables, 'ack')
+  endif
+  if index(l:executables, 'ack-grep') == -1
+    call add(l:executables, 'ack-grep')
+  endif
+  for l:executable in l:executables
+    if executable(l:executable)
+      return s:executables[l:executable]
+    endif
+  endfor
+  return ''
+endfunction
+
+call ferret#private#init()

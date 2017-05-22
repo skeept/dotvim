@@ -138,6 +138,11 @@ enter |Cmdline-mode| with `:Ack` inserted on the |Cmdline|. Likewise <leader>s
 (|<Plug>(FerretAckWord)|) is a shortcut for running |:Ack| with the word
 currently under the cursor.
 
+:Ack! {pattern} {options}                                                *:Ack!*
+
+Like |:Ack|, but returns all results irrespective of the value of
+|g:FerretMaxResults|.
+
 :Lack {pattern} {options}                                                *:Lack*
 
 Just like |:Ack|, but instead of using the |quickfix| listing, which is global
@@ -147,6 +152,11 @@ per-window construct.
 Note that |:Lack| always runs synchronously via |:cexpr|, because dispatch.vim
 doesn't currently support the |location-list|.
 
+:Lack! {pattern} {options}                                              *:Lack!*
+
+Like |:Lack|, but returns all results irrespective of the value of
+|g:FerretMaxResults|.
+
 :Back {pattern} {options}                                                *:Back*
 
 Like |:Ack|, but searches only listed buffers. Note that the search is still
@@ -155,6 +165,11 @@ that only buffers written to disk will be searched. If no buffers are
 written to disk, then |:Back| behaves exactly like |:Ack| and will search all
 files in the current directory.
 
+:Back! {pattern} {options}                                              *:Back!*
+
+Like |:Back|, but returns all results irrespective of the value of
+|g:FerretMaxResults|.
+
 :Black {pattern} {options}                                              *:Black*
 
 Like |:Lack|, but searches only listed buffers. As with |:Back|, the search is
@@ -162,6 +177,11 @@ still delegated to the underlying |'grepprg'| (`rg`, `ag`, `ack` or `ack-grep`),
 means that only buffers written to disk will be searched. Likewise, If no
 buffers are written to disk, then |:Black| behaves exactly like |:Lack| and will
 search all files in the current directory.
+
+:Black! {pattern} {options}                                            *:Black!*
+
+Like |:Black|, but returns all results irrespective of the value of
+|g:FerretMaxResults|.
 
 :Acks /{pattern}/{replacement}/                                          *:Acks*
 
@@ -193,7 +213,7 @@ Circumstances where mappings do not get set up ~
 Note that Ferret will not try to set up the <leader> mappings if any of the
 following are true:
 
-- A mapping for already exists.
+- A mapping with the same |{lhs}| already exists.
 - An alternative mapping for the same functionality has already been set up
   from a |.vimrc|.
 - The mapping has been suppressed by setting |g:FerretMap| to 1 in your |.vimrc|.
@@ -257,6 +277,20 @@ used, set to 0:
 >
     let g:FerretDispatch=0
 <
+Note that on sufficiently recent versions of Vim with |+job| support, Ferret
+will first try to use |+job|, falling back to vim-dispatch and consulting
+|g:FerretDispatch| only if |g:FerretJob| is set to 0.
+
+
+                                                                   *g:FerretJob*
+|g:FerretJob|                                               boolean (default: 1)
+
+Controls whether to use Vim's |+job| feature, when available, to run searches
+asynchronously. To prevent |+job| from being used, set to 0, in which case
+Ferret will fall back to vim-dispatch (see also: |g:FerretDispatch|):
+>
+    let g:FerretJob=0
+<
 
                                                               *g:FerretHlsearch*
 |g:FerretHlsearch|                                       boolean (default: none)
@@ -268,6 +302,40 @@ running |:Ack| or |:Lack|. If left unset, Ferret will respect the current
 >
     let g:FerretHlsearch=0
 <
+
+                                                            *g:FerretExecutable*
+|g:FerretExecutable|                      string (default: "rg,ag,ack,ack-grep")
+
+Ferret will preferentially use `rg`, `ag` and finally `ack`/`ack-grep` (in that
+order, using the first found executable), however you can force your
+preference for a specific tool to be used by setting an override in your
+|.vimrc|. Valid values are a comma-separated list of "rg", "ag", "ack" or
+"ack-grep". If no requested executable exists, Ferret will fall-back to the
+next in the default list.
+
+Example:
+>
+    " Prefer `ag` over `rg`.
+    let g:FerretExecutable='ag,rg'
+<
+
+                                                            *g:FerretMaxResults*
+|g:FerretMaxResults|                                    number (default: 100000)
+
+Controls the maximum number of results Ferret will attempt to gather before
+displaying the results. Note that this only applies when searching
+asynchronously; that is, on recent versions of Vim with |+job| support and
+when |g:FerretJob| is not set to 0.
+
+The intent of this option is to prevent runaway search processes that
+produce huge volumes of output (for example, searching for a common string
+like "test" inside a |$HOME| directory containing millions of files) from
+locking up Vim.
+
+In the event that Ferret aborts a search that has hit the |g:FerretMaxResults|
+limit, a message will be printed prompting users to run the search again
+with |:Ack!| or |:Lack!| if they want to bypass the limit.
+
 
                                                              *g:FerretQFOptions*
 |g:FerretQFOptions|                                         boolean (default: 1)
@@ -309,20 +377,15 @@ To prevent Ferret from being loaded, set |g:FerretLoaded| to any value in your
     let g:FerretLoaded=1
 <
 
-                                                            *g:FerretExecutable*
-|g:FerretExecutable|                      string (default: "rg,ag,ack,ack-grep")
+                                                              *g:FerretLazyInit*
+|g:FerretLazyInit|                                          boolean (default: 1)
 
-Ferret will preferentially use `rg`, `ag` and finally `ack`/`ack-grep` (in that
-order, using the first found executable), however you can force your
-preference for a specific tool to be used by setting an override in your
-|.vimrc|. Valid values are a comma-separated list of "rg", "ag", "ack" or
-"ack-grep". If no requested executable exists, Ferret will fall-back to the
-next in the default list.
-
-Example:
+In order to minimize impact on Vim start-up time Ferret will initialize
+itself lazily on first use by default. If you wish to force immediate
+initialization (for example, to cause |'grepprg'| and |'grepformat'| to be set
+as soon as Vim launches), then set |g:FerretLazyInit| to 0 in your |.vimrc|:
 >
-    " Prefer `ag` over `rg`.
-    let g:FerretExecutable='ag,rg'
+    let g:FerrerLazyInit=0
 <
 
                                                                    *g:FerretMap*
@@ -345,6 +408,12 @@ set to 0:
 >
     let g:FerretQFCommands=0
 <
+
+                                                                *g:FerretFormat*
+|g:FerretFormat|                                 string (default: "%f:%l:%c:%m")
+
+Sets the '|grepformat|' used by Ferret.
+
 CUSTOM AUTOCOMMANDS                                 *ferret-custom-autocommands*
 
 
@@ -463,7 +532,7 @@ Why do Ferret commands start with "Ack", "Lack" and so on? ~
 
 Ferret was originally the thinnest of wrappers (7 lines of code in my
 |.vimrc|) around `ack`. The earliest traces of it can be seen in the initial
-commit to my dotfiles repo in May, 2009 (https://wt.pe/h).
+commit to my dotfiles repo in May, 2009 (https://rfr.to/h).
 
 So, even though Ferret has a new name now and actually prefers `rg` then `ag`
 over `ack`/`ack-grep` when available, I prefer to keep the command names intact
@@ -567,14 +636,25 @@ order):
 
 HISTORY                                                         *ferret-history*
 
-1.4 (21 January 2017)
+1.5 "Cinco de Cuatro" (4 May 2017) ~
+
+- Improvements to the handling of very large result sets (due to wide lines
+  or many results).
+- Added |g:FerretLazyInit|.
+- Added missing documentation for |g:FerretJob|.
+- Added |g:FerretMaxResults|.
+- Added feature-detection for `rg` and `ag`, allowing Ferret to gracefully work
+  with older versions of those tools that do not support all desired
+  command-line switches.
+
+1.4 (21 January 2017) ~
 
 - Drop broken support for `grep`, printing a prompt to install `rg`, `ag`, or
   `ack`/`ack-grep` instead.
 - If an `ack` executable is not found, search for `ack-grep`, which is the name
   used on Debian-derived distros.
 
-1.3 (8 January 2017)
+1.3 (8 January 2017) ~
 
 - Reset |'errorformat'| before each search (fixes issue #31).
 - Added |:Back| and |:Black| commands, analogous to |:Ack| and |:Lack| but scoped to

@@ -97,7 +97,7 @@
 " Note that Ferret will not try to set up the <leader> mappings if any of the
 " following are true:
 "
-" - A mapping for already exists.
+" - A mapping with the same |{lhs}| already exists.
 " - An alternative mapping for the same functionality has already been set up
 "   from a |.vimrc|.
 " - The mapping has been suppressed by setting |g:FerretMap| to 1 in your
@@ -243,7 +243,7 @@
 "
 " Ferret was originally the thinnest of wrappers (7 lines of code in my
 " |.vimrc|) around `ack`. The earliest traces of it can be seen in the initial
-" commit to my dotfiles repo in May, 2009 (https://wt.pe/h).
+" commit to my dotfiles repo in May, 2009 (https://rfr.to/h).
 "
 " So, even though Ferret has a new name now and actually prefers `rg` then `ag`
 " over `ack`/`ack-grep` when available, I prefer to keep the command names
@@ -361,14 +361,25 @@
 "
 " # History
 "
-" 1.4 (21 January 2017)
+" ## 1.5 "Cinco de Cuatro" (4 May 2017)
+"
+" - Improvements to the handling of very large result sets (due to wide lines or
+"   many results).
+" - Added |g:FerretLazyInit|.
+" - Added missing documentation for |g:FerretJob|.
+" - Added |g:FerretMaxResults|.
+" - Added feature-detection for `rg` and `ag`, allowing Ferret to gracefully
+"   work with older versions of those tools that do not support all desired
+"   command-line switches.
+"
+" ## 1.4 (21 January 2017)
 "
 " - Drop broken support for `grep`, printing a prompt to install `rg`, `ag`, or
 "   `ack`/`ack-grep` instead.
 " - If an `ack` executable is not found, search for `ack-grep`, which is the
 "   name used on Debian-derived distros.
 "
-" 1.3 (8 January 2017)
+" ## 1.3 (8 January 2017)
 "
 " - Reset |'errorformat'| before each search (fixes issue #31).
 " - Added |:Back| and |:Black| commands, analogous to |:Ack| and |:Lack| but
@@ -445,63 +456,18 @@ let s:cpoptions = &cpoptions
 set cpoptions&vim
 
 ""
-" @option g:FerretExecutable string "rg,ag,ack,ack-grep"
+" @option g:FerretLazyInit boolean 1
 "
-" Ferret will preferentially use `rg`, `ag` and finally `ack`/`ack-grep` (in
-" that order, using the first found executable), however you can force your
-" preference for a specific tool to be used by setting an override in your
-" |.vimrc|. Valid values are a comma-separated list of "rg", "ag", "ack" or
-" "ack-grep". If no requested executable exists, Ferret will fall-back to the
-" next in the default list.
-"
-" Example:
+" In order to minimize impact on Vim start-up time Ferret will initialize itself
+" lazily on first use by default. If you wish to force immediate initialization
+" (for example, to cause |'grepprg'| and |'grepformat'| to be set as soon as Vim
+" launches), then set |g:FerretLazyInit| to 0 in your |.vimrc|:
 "
 " ```
-" " Prefer `ag` over `rg`.
-" let g:FerretExecutable='ag,rg'
+" let g:FerrerLazyInit=0
 " ```
-let s:force=get(g:, 'FerretExecutable', 'rg,ag,ack,ack-grep')
-
-let s:executables={
-      \   'rg': 'rg --vimgrep --no-heading',
-      \   'ag': 'ag --vimgrep',
-      \   'ack': 'ack --column --with-filename',
-      \   'ack-grep': 'ack-grep --column --with-filename'
-      \ }
-
-" Would ideally have these in an autoload file, but want to defer autoload
-" until as late as possible.
-function! FerretExecutable()
-  let l:valid=keys(s:executables)
-  let l:executables=split(s:force, '\v\s*,\s*')
-  let l:executables=filter(l:executables, 'index(l:valid, v:val) != -1')
-  if index(l:executables, 'rg') == -1
-    call add(l:executables, 'rg')
-  endif
-  if index(l:executables, 'ag') == -1
-    call add(l:executables, 'ag')
-  endif
-  if index(l:executables, 'ack') == -1
-    call add(l:executables, 'ack')
-  endif
-  if index(l:executables, 'ack-grep') == -1
-    call add(l:executables, 'ack-grep')
-  endif
-  for l:executable in l:executables
-    if executable(l:executable)
-      return s:executables[l:executable]
-    endif
-  endfor
-  return ''
-endfunction
-
-" This one is also global to avoid unwanted autoloads (unlikely that you'd
-" want to override this).
-let g:FerretFormat=get(g:, 'FerretFormat', '%f:%l:%c:%m')
-let s:executable=FerretExecutable()
-if !empty(s:executable)
-  let &grepprg=s:executable
-  let &grepformat=g:FerretFormat
+if !get(g:, 'FerretLazyInit', 1)
+  call ferret#private#init()
 endif
 
 ""
@@ -547,7 +513,13 @@ endif
 " enter |Cmdline-mode| with `:Ack` inserted on the |Cmdline|. Likewise <leader>s
 " (|<Plug>(FerretAckWord)|) is a shortcut for running |:Ack| with the word
 " currently under the cursor.
-command! -nargs=+ -complete=customlist,ferret#private#ackcomplete Ack call ferret#private#ack(<f-args>)
+"
+" @command :Ack! {pattern} {options}
+"
+" Like |:Ack|, but returns all results irrespective of the value of
+" |g:FerretMaxResults|.
+"
+command! -bang -nargs=+ -complete=customlist,ferret#private#ackcomplete Ack call ferret#private#ack(<bang>0, <f-args>)
 
 ""
 " @command :Lack {pattern} {options}
@@ -558,7 +530,13 @@ command! -nargs=+ -complete=customlist,ferret#private#ackcomplete Ack call ferre
 "
 " Note that |:Lack| always runs synchronously via |:cexpr|, because dispatch.vim
 " doesn't currently support the |location-list|.
-command! -nargs=+ -complete=customlist,ferret#private#lackcomplete Lack call ferret#private#lack(<f-args>)
+"
+" @command :Lack! {pattern} {options}
+"
+" Like |:Lack|, but returns all results irrespective of the value of
+" |g:FerretMaxResults|.
+"
+command! -bang -nargs=+ -complete=customlist,ferret#private#lackcomplete Lack call ferret#private#lack(<bang>0, <f-args>)
 
 ""
 " @command :Back {pattern} {options}
@@ -568,7 +546,13 @@ command! -nargs=+ -complete=customlist,ferret#private#lackcomplete Lack call fer
 " which means that only buffers written to disk will be searched. If no buffers
 " are written to disk, then |:Back| behaves exactly like |:Ack| and will search
 " all files in the current directory.
-command! -nargs=+ -complete=customlist,ferret#private#backcomplete Back call ferret#private#back(<f-args>)
+"
+" @command :Back! {pattern} {options}
+"
+" Like |:Back|, but returns all results irrespective of the value of
+" |g:FerretMaxResults|.
+"
+command! -bang -nargs=+ -complete=customlist,ferret#private#backcomplete Back call ferret#private#back(<bang>0, <f-args>)
 
 ""
 " @command :Black {pattern} {options}
@@ -578,7 +562,13 @@ command! -nargs=+ -complete=customlist,ferret#private#backcomplete Back call fer
 " `ack-grep`), which means that only buffers written to disk will be searched.
 " Likewise, If no buffers are written to disk, then |:Black| behaves exactly
 " like |:Lack| and will search all files in the current directory.
-command! -nargs=+ -complete=customlist,ferret#private#blackcomplete Black call ferret#private#black(<f-args>)
+"
+" @command :Black! {pattern} {options}
+"
+" Like |:Black|, but returns all results irrespective of the value of
+" |g:FerretMaxResults|.
+"
+command! -bang -nargs=+ -complete=customlist,ferret#private#blackcomplete Black call ferret#private#black(<bang>0, <f-args>)
 
 ""
 " @command :Acks /{pattern}/{replacement}/
@@ -711,6 +701,12 @@ if s:commands
   cabbrev <silent> <expr> cp ((getcmdtype() == ':' && getcmdpos() == 3) ? 'cp <bar> normal zz' : 'cp')
   cabbrev <silent> <expr> cpf ((getcmdtype() == ':' && getcmdpos() == 4) ? 'cpf <bar> normal zz' : 'cpf')
 endif
+
+""
+" @option g:FerretFormat string "%f:%l:%c:%m"
+"
+" Sets the '|grepformat|' used by Ferret.
+let g:FerretFormat=get(g:, 'FerretFormat', '%f:%l:%c:%m')
 
 " Restore 'cpoptions' to its former value.
 let &cpoptions = s:cpoptions
