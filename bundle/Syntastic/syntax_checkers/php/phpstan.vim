@@ -1,7 +1,7 @@
 "============================================================================
-"File:        php.vim
+"File:        phpstan.vim
 "Description: Syntax checking plugin for syntastic
-"Maintainer:  Martin Grenfell <martin.grenfell at gmail dot com>
+"Maintainer:  Przepompownia przepompownia@users.noreply.github.com
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,41 +10,38 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_php_php_checker')
+if exists('g:loaded_syntastic_php_phpstan_checker')
     finish
 endif
-let g:loaded_syntastic_php_php_checker = 1
+let g:loaded_syntastic_php_phpstan_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_php_php_GetHighlightRegex(item)
-    let term = matchstr(a:item['text'], "\\munexpected '\\zs[^']\\+\\ze'")
-    return term !=# '' ? '\V' . escape(term, '\') : ''
+function! SyntaxCheckers_php_phpstan_IsAvailable() dict
+    if !executable(self.getExec())
+        return 0
+    endif
+    return syntastic#util#versionIsAtLeast(self.getVersion(), [0, 7])
 endfunction
 
-function! SyntaxCheckers_php_php_GetLocList() dict
+function! SyntaxCheckers_php_phpstan_GetLocList() dict
     let makeprg = self.makeprgBuild({
-        \ 'args': '-d error_reporting=E_ALL',
-        \ 'args_after': '-l -d error_log= -d display_errors=1 -d log_errors=0 -d xdebug.cli_color=0' })
+        \ 'exe_after': 'analyse',
+        \ 'args': '--level=5',
+        \ 'args_after': '--errorFormat raw' })
 
-    let errorformat =
-        \ '%-GNo syntax errors detected in%.%#,'.
-        \ 'Parse error: %#syntax %trror\, %m in %f on line %l,'.
-        \ 'Parse %trror: %m in %f on line %l,'.
-        \ 'Fatal %trror: %m in %f on line %l,'.
-        \ '%-G\s%#,'.
-        \ '%-GErrors parsing %.%#'
+    let errorformat = '%f:%l:%m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
-        \ 'postprocess': ['guards'] })
+        \ 'subtype' : 'Style' })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
     \ 'filetype': 'php',
-    \ 'name': 'php'})
+    \ 'name': 'phpstan'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
