@@ -42,7 +42,10 @@ works differently.
   * [Count Values inside a Column](#count-values-inside-a-column)
   * [Maximum/Minimum value of a Column](#maximumminimum-value-of-a-column)
   * [Average value of a Column](#average-value-of-a-column)
+  * [Variance of a Column](#variance-of-a-column)
+  * [Standard Deviation of a Column](#standard-deviation-of-a-column)
   * [Duplicate columns](#duplicate-columns)
+  * [Column_width](#column-width)
 - [CSV Configuration](#csv-configuration)
   * [Delimiter](#delimiter)
   * [Column](#column)
@@ -67,6 +70,7 @@ works differently.
   * [CSVMax(col, fmt, startline, endline)](#csvmaxcol-fmt-startline-endline)
   * [CSVMin(col, fmt, startline, endline)](#csvmincol-fmt-startline-endline)
   * [CSVAvg(col, fmt, startline, endline)](#csvavgcol-fmt-startline-endline)
+  * [CSVWidth()](#csvwidth)
 - [CSV Tips and Tricks](#csv-tips-and-tricks)
   * [Statusline](#statusline)
   * [Slow CSV plugin](#slow-csv-plugin)
@@ -1031,13 +1035,43 @@ You can let Vim output the value of a column using the `:CSVAvgCol` command
 
 This outputs the result of the column `<nr>` within the range given. If no range
 is given, this will calculate the average value of the whole column. If <nr> is not
-given, this calculates the sum for the column the cursor is on. Note, that the
+given, this calculates the average for the column the cursor is on. Note, that the
 delimiter will be stripped away from each value and also empty values won't be
 considered.
 
 For the `[/format/]` part, see `MaxCol_CSV`.
 
 See also `csv-aggregate-functions`
+
+## Variance of a Column
+
+```vim
+:[range]PopVarianceCol [nr] [/format/]
+```
+
+```vim
+:[range]SmplVarianceCol [nr] [/format/]
+```
+
+This outputs the result of the column `<nr>` within the range given. If no range
+is given, this will calculate the statistical variance of the whole column. If <nr> is not
+given, this calculates the variance for the column the cursor is on. Note, that the delimiter
+will be stripped away from each value and also empty values won't be considered.
+
+## Standard Deviation of a Column
+
+```vim
+:[range]PopStdCol [nr] [/format/]
+```
+
+```vim
+:[range]SmplStdCol [nr] [/format/]
+```
+
+This outputs the result of the column `<nr>` within the range given. If no range
+is given, this will calculate the standard deviation of the whole column. If <nr> is not
+given, this calculates the standard deviation for the column the cursor is on. Note, that
+the delimiter will be stripped away from each value and also empty values won't be considered.
 
 ## Duplicate columns
 
@@ -1053,6 +1087,15 @@ to which the command applies. By default it will duplicate the column on which
 the cursor is, but you can add as first argument `<column>` which column will be duplicated.
 
 Additionally, you can also provide a `<count>` to copy several columns at once.
+
+## Column width
+
+If you want to know the width of all columns, you can use the `:CSVColumnWidth` command:
+
+```vim
+:CSVColumnWidth
+```
+This will output the width of each column at the bottom. See also the [CSVWidth()](#csvwidth) function.
 
 # CSV Configuration
 
@@ -1486,6 +1529,10 @@ Returns the 10 smallest values for column col.
 ## CSVAvg(col, fmt, startline, endline)
 
 Returns the average value for column col. 
+
+## CSVWidth()
+
+Returns a list with the width of each column.
 
 # CSV Tips and Tricks
 

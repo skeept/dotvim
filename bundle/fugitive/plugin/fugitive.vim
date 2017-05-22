@@ -131,7 +131,12 @@ function! fugitive#extract_git_dir(path) abort
   if s:shellslash(a:path) =~# '^fugitive://.*//'
     return matchstr(s:shellslash(a:path), '\C^fugitive://\zs.\{-\}\ze//')
   endif
-  let root = s:shellslash(simplify(fnamemodify(a:path, ':p:s?[\/]$??')))
+  if isdirectory(a:path)
+    let path = fnamemodify(a:path, ':p:s?[\/]$??')
+  else
+    let path = fnamemodify(a:path, ':p:h:s?[\/]$??')
+  endif
+  let root = s:shellslash(resolve(path))
   let previous = ""
   while root !=# previous
     if root =~# '\v^//%([^/]+/?)?$'
@@ -183,6 +188,9 @@ function! fugitive#detect(path) abort
     let dir = fugitive#extract_git_dir(a:path)
     if dir !=# ''
       let b:git_dir = dir
+      if empty(fugitive#buffer().path())
+        silent! exe haslocaldir() ? 'lcd .' : 'cd .'
+      endif
     endif
   endif
   if exists('b:git_dir')
@@ -290,6 +298,9 @@ endfunction
 function! s:repo_tree(...) dict abort
   if self.dir() =~# '/\.git$'
     let dir = self.dir()[0:-6]
+    if dir !~# '/'
+      let dir .= '/'
+    endif
   else
     let dir = s:configured_tree(self.git_dir)
   endif
@@ -964,11 +975,14 @@ function! s:StageToggle(lnum1,lnum2) abort
         continue
       endif
       execute lnum
-      if filename =~ ' -> '
-        let cmd = ['mv','--'] + reverse(split(filename,' -> '))
-        let filename = cmd[-1]
-      elseif section ==# 'staged'
-        let cmd = ['reset','-q','--',filename]
+      if section ==# 'staged'
+        if filename =~ ' -> '
+          let files_to_unstage = split(filename,' -> ')
+        else
+          let files_to_unstage = [filename]
+        endif
+        let filename = files_to_unstage[-1]
+        let cmd = ['reset','-q','--'] + files_to_unstage
       elseif getline(lnum) =~# '^#\tdeleted:'
         let cmd = ['rm','--',filename]
       elseif getline(lnum) =~# '^#\tmodified:'
@@ -1110,7 +1124,7 @@ function! s:Commit(args, ...) abort
       elseif error ==# '!'
         return s:Status()
       else
-        call s:throw(error)
+        call s:throw(empty(error)?join(errors, ' '):error)
       endif
     endif
   catch /^fugitive:/
@@ -1377,6 +1391,7 @@ function! s:Edit(cmd,bang,...) abort
             endif
           endif
         endfor
+        diffoff!
       endif
     endif
   endif
@@ -1641,7 +1656,7 @@ function! s:Dispatch(bang, args)
   try
     let b:current_compiler = 'git'
     let &l:errorformat = s:common_efm
-    let &l:makeprg = s:git_command() . ' ' . a:args
+    let &l:makeprg = substitute(s:git_command() . ' ' . a:args, '\s\+$', '', '')
     execute cd fnameescape(s:repo().tree())
     if exists(':Make') == 2
       noautocmd Make
@@ -2200,7 +2215,7 @@ endfunction
 
 function! s:RehighlightBlame() abort
   for [hash, cterm] in items(s:hash_colors)
-    if !empty(cterm) || has('gui_running')
+    if !empty(cterm) || has('gui_running') || has('termguicolors') && &termguicolors
       exe 'hi FugitiveblameHash'.hash.' guifg=#'.hash.get(s:hash_colors, hash, '')
     else
       exe 'hi link FugitiveblameHash'.hash.' Identifier'
@@ -2313,9 +2328,14 @@ function! s:Browse(bang,line1,count,...) abort
 
     if empty(remote)
       let remote = '.'
-      let raw = s:repo().git_chomp('remote','get-url','origin')
+      let remote_for_url = 'origin'
     else
-      let raw = s:repo().git_chomp('remote','get-url',remote)
+      let remote_for_url = remote
+    endif
+    if fugitive#git_version() =~# '^[01]\.|^2\.[0-6]\.'
+      let raw = s:repo().git_chomp('config','remote.'.remote_for_url.'.url')
+    else
+      let raw = s:repo().git_chomp('remote','get-url',remote_for_url)
     endif
     if raw ==# ''
       let raw = remote
@@ -2881,7 +2901,7 @@ function! s:cfile() abort
         let ref = matchstr(getline('.'),'\x\{40\}')
         echoerr "warning: unknown context ".matchstr(getline('.'),'^\l*')
 
-      elseif getline('.') =~# '^[+-]\{3\} [ab/]'
+      elseif getline('.') =~# '^[+-]\{3\} [abciow12]\=/'
         let ref = getline('.')[4:]
 
       elseif getline('.') =~# '^[+-]' && search('^@@ -\d\+,\d\+ +\d\+,','bnW')
@@ -2895,7 +2915,7 @@ function! s:cfile() abort
           let lnum -= 1
         endwhile
         let offset += matchstr(getline(lnum), type.'\zs\d\+')
-        let ref = getline(search('^'.type.'\{3\} [ab]/','bnW'))[4:-1]
+        let ref = getline(search('^'.type.'\{3\} [abciow12]/','bnW'))[4:-1]
         let dcmds = [offset, 'normal!zv']
 
       elseif getline('.') =~# '^rename from '
@@ -2904,22 +2924,22 @@ function! s:cfile() abort
         let ref = 'b/'.getline('.')[10:]
 
       elseif getline('.') =~# '^@@ -\d\+,\d\+ +\d\+,'
-        let diff = getline(search('^diff --git \%(a/.*\|/dev/null\) \%(b/.*\|/dev/null\)', 'bcnW'))
+        let diff = getline(search('^diff --git \%([abciow12]/.*\|/dev/null\) \%([abciow12]/.*\|/dev/null\)', 'bcnW'))
         let offset = matchstr(getline('.'), '+\zs\d\+')
 
-        let dref = matchstr(diff, '\Cdiff --git \zs\%(a/.*\|/dev/null\)\ze \%(b/.*\|/dev/null\)')
-        let ref = matchstr(diff, '\Cdiff --git \%(a/.*\|/dev/null\) \zs\%(b/.*\|/dev/null\)')
+        let dref = matchstr(diff, '\Cdiff --git \zs\%([abciow12]/.*\|/dev/null\)\ze \%([abciow12]/.*\|/dev/null\)')
+        let ref = matchstr(diff, '\Cdiff --git \%([abciow12]/.*\|/dev/null\) \zs\%([abciow12]/.*\|/dev/null\)')
         let dcmd = 'Gdiff! +'.offset
 
-      elseif getline('.') =~# '^diff --git \%(a/.*\|/dev/null\) \%(b/.*\|/dev/null\)'
-        let dref = matchstr(getline('.'),'\Cdiff --git \zs\%(a/.*\|/dev/null\)\ze \%(b/.*\|/dev/null\)')
-        let ref = matchstr(getline('.'),'\Cdiff --git \%(a/.*\|/dev/null\) \zs\%(b/.*\|/dev/null\)')
+      elseif getline('.') =~# '^diff --git \%([abciow12]/.*\|/dev/null\) \%([abciow12]/.*\|/dev/null\)'
+        let dref = matchstr(getline('.'),'\Cdiff --git \zs\%([abciow12]/.*\|/dev/null\)\ze \%([abciow12]/.*\|/dev/null\)')
+        let ref = matchstr(getline('.'),'\Cdiff --git \%([abciow12]/.*\|/dev/null\) \zs\%([abciow12]/.*\|/dev/null\)')
         let dcmd = 'Gdiff!'
 
-      elseif getline('.') =~# '^index ' && getline(line('.')-1) =~# '^diff --git \%(a/.*\|/dev/null\) \%(b/.*\|/dev/null\)'
+      elseif getline('.') =~# '^index ' && getline(line('.')-1) =~# '^diff --git \%([abciow12]/.*\|/dev/null\) \%([abciow12]/.*\|/dev/null\)'
         let line = getline(line('.')-1)
-        let dref = matchstr(line,'\Cdiff --git \zs\%(a/.*\|/dev/null\)\ze \%(b/.*\|/dev/null\)')
-        let ref = matchstr(line,'\Cdiff --git \%(a/.*\|/dev/null\) \zs\%(b/.*\|/dev/null\)')
+        let dref = matchstr(line,'\Cdiff --git \zs\%([abciow12]/.*\|/dev/null\)\ze \%([abciow12]/.*\|/dev/null\)')
+        let ref = matchstr(line,'\Cdiff --git \%([abciow12]/.*\|/dev/null\) \zs\%([abciow12]/.*\|/dev/null\)')
         let dcmd = 'Gdiff!'
 
       elseif line('$') == 1 && getline('.') =~ '^\x\{40\}$'
@@ -2932,18 +2952,21 @@ function! s:cfile() abort
         let ref = ''
       endif
 
-      if myhash ==# ''
-        let ref = s:sub(ref,'^a/','HEAD:')
-        let ref = s:sub(ref,'^b/',':0:')
-        if exists('dref')
-          let dref = s:sub(dref,'^a/','HEAD:')
-        endif
-      else
-        let ref = s:sub(ref,'^a/',myhash.'^:')
-        let ref = s:sub(ref,'^b/',myhash.':')
-        if exists('dref')
-          let dref = s:sub(dref,'^a/',myhash.'^:')
-        endif
+      let prefixes = {
+            \ '1': '',
+            \ '2': '',
+            \ 'b': ':0:',
+            \ 'i': ':0:',
+            \ 'o': '',
+            \ 'w': ''}
+
+      if len(myhash)
+        let prefixes.a = myhash.'^:'
+        let prefixes.b = myhash.':'
+      endif
+      let ref = substitute(ref, '^\(\w\)/', '\=get(prefixes, submatch(1), "HEAD:")', '')
+      if exists('dref')
+        let dref = substitute(dref, '^\(\w\)/', '\=get(prefixes, submatch(1), "HEAD:")', '')
       endif
 
       if ref ==# '/dev/null'
@@ -3051,7 +3074,7 @@ function! fugitive#foldtext() abort
       endif
     endfor
     if filename ==# ''
-      let filename = matchstr(getline(v:foldstart), '^diff .\{-\} a/\zs.*\ze b/')
+      let filename = matchstr(getline(v:foldstart), '^diff .\{-\} [abciow12]/\zs.*\ze [abciow12]/')
     endif
     if filename ==# ''
       let filename = getline(v:foldstart)[5:-1]

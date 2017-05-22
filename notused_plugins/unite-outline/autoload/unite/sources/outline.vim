@@ -682,6 +682,9 @@ function! s:create_context(bufnr, ...) abort
         \ 'sw'  : getbufvar(a:bufnr, '&shiftwidth'),
         \ 'ts'  : getbufvar(a:bufnr, '&tabstop'),
         \ }
+  if buffer.sw == 0
+    let buffer.sw = buffer.ts
+  endif
   let buffer.filetypes = split(getbufvar(a:bufnr, '&filetype'), '\.')
   let buffer.filetype = get(buffer.filetypes, 0, '')
   let context = {
