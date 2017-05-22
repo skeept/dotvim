@@ -4,24 +4,30 @@ Execute (neomake#utils#LogMessage writes to logfile always):
   Save g:neomake_verbose, g:neomake_logfile
   let neomake_verbose = 0
   let g:neomake_logfile = tempname()
-  call neomake#utils#LogMessage(1, 'msg0')
-  call neomake#utils#LogMessage(1, 'msg1')
+  call neomake#utils#LogMessage(1, 'msg0.')
+  call neomake#utils#LogMessage(1, 'msg1.')
   if has('patch-7.4.503')
     let logfile_msg = readfile(g:neomake_logfile)[1]
   else
     let logfile_msg = readfile(g:neomake_logfile)[0]
   endif
-  Assert logfile_msg =~# '\v\d\d:\d\d:\d\d \[W      \] msg1$', 'unexpected msg: '.logfile_msg
+  Assert logfile_msg =~# '\v\d\d:\d\d:\d\d \[W      \] msg1.$', 'unexpected msg: '.logfile_msg
 
   sleep 10m
-  call neomake#utils#LogMessage(1, 'msg2')
+  call neomake#utils#LogMessage(1, 'msg2.')
   let logfile_msg = readfile(g:neomake_logfile)[-1]
-  Assert logfile_msg =~# '\v\d\d:\d\d:\d\d \[W \+0.0\d\] msg2$', 'Message does not match: '.logfile_msg
+  Assert logfile_msg =~# '\v\d\d:\d\d:\d\d \[W \+0.0\d\] msg2.$', 'Message does not match: '.logfile_msg
 
-Execute (NeomakeTestsEnsureExe creates exe):
+Execute (NeomakeTestsCreateExe creates exe):
   Assert !executable('boobar'), 'boobar is not executable'
-  call g:NeomakeTestsEnsureExe('boobar')
+  call g:NeomakeTestsCreateExe('boobar', [])
   Assert executable('boobar'), 'boobar is now executable'
+
+Execute (NeomakeTestsCreateExe overrides existing exe):
+  let true = system('which true')
+  Assert executable('true'), 'true is now executable'
+  call g:NeomakeTestsCreateExe('true', [])
+  AssertNotEqual system('which true'), true
 
 Execute (neomake#utils#CompressWhitespace):
   function! F(text)
@@ -55,6 +61,9 @@ Execute (neomake#utils#GetSetting serialize):
 
   let g:neomake_serialize = 7
   AssertEqual GetSetting(), 7
+  " maker-only should return default.
+  AssertEqual neomake#utils#GetSetting('serialize', g:maker, 'default',
+                                \ 'myft', bufnr('%'), 1), 'default'
   let g:neomake_serialize = 0
   AssertEqual GetSetting(), 0
   let g:neomake_serialize = 99
@@ -110,6 +119,39 @@ Execute (neomake#utils#GetSetting serialize):
   AssertEqual GetSetting(), 98
   bwipe
 
+Execute (neomake#utils#GetSetting handles maker-only settings):
+  new
+  set filetype=myft
+  AssertEqual 'default', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'))
+  let b:neomake_exe = 'buffer_exe'
+  AssertEqual 'buffer_exe', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'))
+  AssertEqual 'default', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'), 1)
+
+  let b:neomake_myft_mymaker_maker = {}
+  AssertEqual neomake#GetMaker('mymaker', 'myft').exe, 'mymaker'
+  bwipe
+
+Execute (neomake#utils#GetSetting handles maker-only settings (dict-config)):
+  new
+  set filetype=myft
+  AssertEqual 'default', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'))
+  let b:neomake = {'exe': 'buffer_exe'}
+  AssertEqual 'buffer_exe', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'))
+  AssertEqual 'default', neomake#utils#GetSetting('exe', {}, 'default', 'myft', bufnr('%'), 1)
+
+  call neomake#config#set('b:ft.myft.mymaker.maker', {})
+  AssertEqual neomake#GetMaker('mymaker', 'myft').exe, 'mymaker'
+  call neomake#config#set('b:ft.myft.mymaker.maker', {'exe': 'foo'})
+  AssertEqual neomake#GetMaker('mymaker', 'myft').exe, 'foo'
+
+  let maker = {}
+  AssertEqual neomake#config#get('mymaker.exe', 'default', {'ft': 'myft', 'bufnr': bufnr('%')}), 'default'
+  let maker = {'exe': 'maker_exe'}
+  AssertEqual neomake#config#get('mymaker.exe', 'default', {'ft': 'myft', 'bufnr': bufnr('%'), 'maker': maker}), 'default'
+  let maker = {'name': 'mymaker', 'exe': 'maker_exe'}
+  AssertEqual neomake#config#get('mymaker.exe', 'default', {'ft': 'myft', 'bufnr': bufnr('%'), 'maker': maker}), 'maker_exe'
+  bwipe
+
 Execute (neomake#utils#GetSetting for multiple fts):
   new
   function! GetSetting(key)
@@ -118,6 +160,26 @@ Execute (neomake#utils#GetSetting for multiple fts):
   endfunction
   let b:neomake_jsx_javascript_setting = '1'
   AssertEqual GetSetting('setting'), '1'
+  bwipe
+
+Execute (neomake#utils#GetSetting for multiple fts (new-style)):
+  new
+  function! GetSetting(key)
+    return neomake#utils#GetSetting(a:key, {}, 'default',
+                                  \ 'jsx.javascript', bufnr('%'))
+  endfunction
+  call neomake#config#set_buffer(bufnr('%'), ['ft', 'jsx.javascript', 'setting'], 1)
+  AssertEqual GetSetting('setting'), 1
+  call neomake#config#set(['b:ft', 'jsx.javascript', 'setting'], 2)
+  AssertEqual GetSetting('setting'), 2
+  let b:neomake = {'ft': {'jsx.javascript': {'setting': 3}}}
+  AssertEqual GetSetting('setting'), 3
+  let b:neomake = {'ft': {'jsx': {'setting': 4}}}
+  AssertEqual GetSetting('setting'), 4
+  let b:neomake = {'ft': {'javascript': {'setting': 5}}}
+  AssertEqual GetSetting('setting'), 5
+  let b:neomake = {'ft': {'javascript.jsx': {'setting': 6}}}
+  AssertEqual GetSetting('setting'), 'default'
   bwipe
 
 Execute (neomake#utils#GetSetting accepts lists):
@@ -156,6 +218,29 @@ Execute (neomake#utils#GetSetting without name):
   AssertEqual GetSetting('setting'), 42
   let g:neomake_myft_setting = {'custom': 1}
   AssertEqual GetSetting('setting'), {'custom': 1}
+
+Execute (neomake#utils#GetSetting with new-style config):
+  Save g:neomake
+  new
+  set ft=neomake_tests
+
+  let b:neomake_neomake_tests_foo = 'bar'
+  let maker = {'foo': 'baz'}
+  AssertEqual neomake#utils#GetSetting(
+  \ 'foo', maker, -1, 'neomake_tests', bufnr('%')), 'bar'
+
+  " New-style global setting overrides old-style buffer setting!
+  call neomake#config#set('ft.neomake_tests.foo', 'new_bar')
+  AssertEqual neomake#utils#GetSetting(
+  \ 'foo', maker, -1, 'neomake_tests', bufnr('%')), 'new_bar'
+  AssertNeomakeMessage "Using setting foo='new_bar' from 'global'."
+
+  call neomake#config#set('ft.neomake_tests.foo', function('tr'))
+  AssertEqual neomake#utils#GetSetting(
+  \ 'foo', maker, -1, 'neomake_tests', bufnr('%')), function('tr')
+  AssertNeomakeMessage "Using setting foo=function('tr') from 'global'."
+
+  bwipe
 
 Execute(neomake#utils#redir):
   command! NeomakeTestCommand echo 1 | echo 2
@@ -377,20 +462,20 @@ Execute (neomake#utils#MakerFromCommand uses tempfile):
   let maker = neomake#utils#MakerFromCommand('echo')
 
   new
-  file dir/\ with\ spaces
+  edit tests/fixtures/a\ filename\ with\ spaces
+  set modified
   let b:neomake_tempfile_enabled = 1
   let jobinfo = NeomakeTestsFakeJobinfo()
 
-  set buftype=nofile
   let bound_maker = neomake#GetMaker(maker).fn(jobinfo)
   let make_info = values(neomake#GetStatus().make_info)[0]
-  let temp_file = make_info.tempfile
+  let temp_file = make_info.tempfiles[0]
   AssertEqual bound_maker.args, [&shellcmdflag, 'echo '.temp_file]
   AssertEqual bound_maker.append_file, 0
   AssertEqual bound_maker.exe, &shell
   AssertEqual bound_maker.remove_invalid_entries, 0
   AssertNotEqual temp_file, fnameescape(temp_file)
-  bwipe
+  bwipe!
 
 Execute (neomake#utils#get_config_fts):
   function! F(ft) abort
@@ -406,7 +491,7 @@ Execute (neomake#utils#get_config_fts):
 Execute (neomake#utils#fnamemodify handles fugitive buffer):
   NeomakeTestsLoadPlugin 'fugitive'
   new
-  edit autoload/neomake.vim
+  edit autoload/neomake/debug.vim
   let bufname = bufname('%')
   Gedit
   AssertNotEqual bufname, bufname('%')
@@ -416,6 +501,7 @@ Execute (neomake#utils#fnamemodify handles fugitive buffer):
   AssertEqual neomake#utils#fnamemodify(bufnr('%'), ':p'), fnamemodify(bufname, ':p')
   AssertEqual neomake#utils#fnamemodify(bufnr('%'), ':p:h'), fnamemodify(bufname, ':p:h')
   bwipe
+  bwipe autoload/neomake/debug.vim
 
 Execute (neomake#utils#fnamemodify handles empty bufname):
   new
@@ -423,3 +509,55 @@ Execute (neomake#utils#fnamemodify handles empty bufname):
   AssertEqual neomake#utils#fnamemodify(bufnr('%'), ''), ''
   AssertEqual neomake#utils#fnamemodify(bufnr('%'), ':p'), ''
   bwipe
+
+Execute (neomake#utils#FindGlobFile):
+  let tempdir = tempname()
+  let slash = neomake#utils#Slash()
+  let subdir = tempdir . slash . 'sub'
+  call mkdir(subdir, 'p', 0700)
+
+  let tempfile = tempdir.slash.'temp-file'
+  call writefile([], tempfile)
+  let file_in_tempdir = tempdir.slash.'common-file'
+  call writefile([], file_in_tempdir)
+  let subfile = subdir.slash.'sub-file'
+  call writefile([], subfile)
+  let file_in_subdir = subdir.slash.'common-file'
+  call writefile([], file_in_subdir)
+
+  new
+  exe 'lcd' subdir
+  AssertEqual neomake#utils#FindGlobFile('doesnotexist'), ''
+  AssertEqual neomake#utils#FindGlobFile('sub-file'), subfile
+  AssertEqual neomake#utils#FindGlobFile('sub-file', tempdir), ''
+  AssertEqual neomake#utils#FindGlobFile('common-file'), file_in_subdir
+  AssertEqual neomake#utils#FindGlobFile('common-file', tempdir), file_in_tempdir
+
+  exe 'lcd' tempdir
+  AssertEqual neomake#utils#FindGlobFile('sub-file'), ''
+  AssertEqual neomake#utils#FindGlobFile('sub-file', subdir), subfile
+  AssertEqual neomake#utils#FindGlobFile('sub-file', tempdir), ''
+  AssertEqual neomake#utils#FindGlobFile('sub-file', tempname()), ''
+  AssertEqual neomake#utils#FindGlobFile('common-file'), file_in_tempdir
+  AssertEqual neomake#utils#FindGlobFile('common-file'), file_in_tempdir
+  AssertEqual neomake#utils#FindGlobFile('common-file', subdir), file_in_subdir
+  bwipe
+
+Execute (neomake#utils#shellescape):
+  AssertEqual neomake#utils#shellescape('foo'), 'foo'
+  AssertEqual neomake#utils#shellescape('foo-bar'), 'foo-bar'
+  AssertEqual neomake#utils#shellescape('foo_bar'), 'foo_bar'
+  AssertEqual neomake#utils#shellescape('foo bar'), "'foo bar'"
+  AssertEqual neomake#utils#shellescape('foo bar "baz"'), "'foo bar \"baz\"'"
+
+  Save &shell
+  let &shell = 'cmd.exe'
+  AssertEqual neomake#utils#shellescape('foo'), 'foo'
+  AssertEqual neomake#utils#shellescape('foo-bar'), 'foo-bar'
+  AssertEqual neomake#utils#shellescape('foo_bar'), 'foo_bar'
+  AssertEqual neomake#utils#shellescape('foo bar'), '"foo bar"'
+  AssertEqual neomake#utils#shellescape('foo bar "baz"'), '"foo bar ""baz"""'
+
+  AssertEqual neomake#utils#shellescape('"foo"'), '"""foo"""'
+  AssertEqual neomake#utils#shellescape('"foo bar"'), '"""foo bar"""'
+  AssertEqual neomake#utils#shellescape('-c "foo bar"'), '"-c ""foo bar"""'

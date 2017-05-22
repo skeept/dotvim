@@ -10,6 +10,10 @@ Execute (Instantiate all default makers):
   let errors = []
   for maker_file in ft_makers
     let ft = fnamemodify(maker_file, ':t:r')
+    if ft ==# 'haskell'
+      NeomakeTestsSkip 'Skipping haskell - expensive setup'
+      continue
+    endif
     let f = 'neomake#makers#ft#'.ft.'#EnabledMakers'
     try
       call call(f, [])
@@ -42,7 +46,7 @@ Execute (neomake#GetEnabledMakers without make_id):
   Save g:neomake_myft_enabled_makers
   let g:neomake_myft_enabled_makers = ['nonexisting_custom']
   let makers = neomake#GetEnabledMakers('myft')
-  AssertNeomakeMessage "Maker not found (for filetype myft): nonexisting_custom", 0, {}
+  AssertNeomakeMessage 'Maker not found (for filetype myft): nonexisting_custom.', 0, {}
 
 Execute (Neomake with non-existing maker (configured)):
   Save &filetype
@@ -54,20 +58,20 @@ Execute (Neomake with non-existing maker (configured)):
   let make_id_before = neomake#GetStatus().last_make_id
   RunNeomake
   let make_id = neomake#GetStatus().last_make_id
-  AssertNeomakeMessage "Maker not found (for filetype myft): nonexisting_custom", 0, {'make_id': make_id}
-  AssertNeomakeMessage 'Nothing to make: no enabled file mode makers (filetype=myft).', 3, {'make_id': make_id}
+  let log_context = {'make_id': make_id, 'bufnr': bufnr('%')}
+  AssertNeomakeMessage 'Maker not found (for filetype myft): nonexisting_custom.', 0, log_context
+  AssertNeomakeMessage 'Nothing to make: no enabled file mode makers (filetype=myft).', 3, log_context
   AssertEqual len(g:neomake_test_messages), 2
   AssertEqual make_id_before + 1, neomake#GetStatus().last_make_id
 
 Execute (Neomake with non-existing default makers):
   call g:NeomakeSetupAutocmdWrappers()
-
   new
   set filetype=neomake_tests
   Save g:neomake_test_enabledmakers
   let g:neomake_test_enabledmakers = ['maker_without_exe', 'nonexisting']
   RunNeomake
-  AssertNeomakeMessage "Maker not found (for filetype neomake_tests): nonexisting", 3
+  AssertNeomakeMessage 'Maker not found (for filetype neomake_tests): nonexisting.', 3
   AssertNeomakeMessage "Exe (maker_without_exe) of auto-configured maker maker_without_exe is not executable, skipping.", 3
   AssertNeomakeMessage 'Nothing to make: no valid makers.', 3
   AssertEqual 0, len(g:neomake_test_jobfinished)
@@ -76,14 +80,13 @@ Execute (Neomake with non-existing default makers):
 
 Execute (Neomake with non-existing default maker handles following makers):
   call g:NeomakeSetupAutocmdWrappers()
-
   new
   set filetype=neomake_tests
   Save g:neomake_test_enabledmakers
   let g:neomake_test_enabledmakers = ['maker_without_exe', 'echo_maker']
   RunNeomake
   AssertNeomakeMessage "Exe (maker_without_exe) of auto-configured maker maker_without_exe is not executable, skipping.", 3
-  AssertNeomakeMessage 'Running makers: echo_maker (auto)'
+  AssertNeomakeMessage 'Running makers: echo_maker (auto).'
   AssertEqual 1, len(g:neomake_test_jobfinished), 'echo_maker should have run'
   AssertEqual 1, len(g:neomake_test_finished)
 
@@ -106,7 +109,7 @@ Execute (neomake#GetEnabledMakers with defaults):
   set filetype=neomake_tests
   let makers = neomake#GetEnabledMakers(&ft)
   AssertEqual map(copy(makers), 'v:val.auto_enabled'), [1]
-  AssertNeomakeMessage "Maker not found (for filetype neomake_tests): nonexisting", 3
+  AssertNeomakeMessage 'Maker not found (for filetype neomake_tests): nonexisting.', 3
   AssertEqual len(g:neomake_test_messages), 1
   bwipe
 
@@ -152,7 +155,7 @@ Execute (neomake#GetEnabledMakers without filetype):
 
 Execute (neomake#GetMaker errors):
   AssertThrows call neomake#GetMaker('cargo', 'foo')
-  AssertEqual g:vader_exception, "Neomake: Maker not found (for filetype foo): cargo"
+  AssertEqual g:vader_exception, 'Neomake: Maker not found (for filetype foo): cargo'
 
 Execute (neomake#GetMaker for project maker):
   Save g:neomake_enabled_makers
@@ -160,7 +163,7 @@ Execute (neomake#GetMaker for project maker):
   set ft=myft
 
   AssertThrows call neomake#GetMaker('cargo', 'foo')
-  AssertEqual g:vader_exception, "Neomake: Maker not found (for filetype foo): cargo"
+  AssertEqual g:vader_exception, 'Neomake: Maker not found (for filetype foo): cargo'
 
 Execute (maker.fn can set env var):
   let maker = {
@@ -169,11 +172,9 @@ Execute (maker.fn can set env var):
   \ 'append_file': 0,
   \ 'errorformat': '%m',
   \ }
-
   function! maker.fn(jobinfo)
     let self.args = ['MYENV=custom', self.exe] + self.args
     let self.exe = 'env'
-
     let self.errorformat = '%m'
     return self
   endfunction
@@ -274,8 +275,8 @@ Execute (Makers: get_list_entries):
   endfunction
 
   let maker = neomake#GetMaker(maker)
-  call neomake#Make(1, [maker])
-  NeomakeTestsWaitForFinishedJobs
+  let jobinfos = neomake#Make(1, [maker])
+  Assert len(jobinfos), 1
 
   " valid=1 gets added
   let expected = map(copy(g:neomake_test_entries), "extend(v:val, {'valid': 1})")
@@ -292,7 +293,7 @@ Execute (Makers: get_list_entries via config):
 
   Save g:neomake_test_entries
   let g:neomake_test_entries = [{
-    \ 'filename': 'not_used_with_valid_bufnr',
+    \ 'filename': 'unloaded_filename_without_bufnr',
     \ 'lnum': 23,
     \ 'pattern': '',
     \ 'col': 42,
@@ -319,42 +320,79 @@ Execute (Makers: get_list_entries via config):
   let expected = map(copy(g:neomake_test_entries), "extend(v:val, {'valid': 1})")
   " filename is removed
   let expected = map(expected, "filter(v:val, 'v:key != \"filename\"')")
-  " bufnr gets added from jobinfo
-  let expected = map(expected, "extend(v:val, {'bufnr': bufnr})")
-  AssertEqual getloclist(0), g:neomake_test_entries
+  " Unlisted buffer gets added for filename.
+  let unlisted_bufnr = bufnr('unloaded_filename_without_bufnr')
+  Assert !empty(unlisted_bufnr), 'unlisted_bufnr is not empty'
+  let expected[0].bufnr = unlisted_bufnr
+
+  AssertEqual getloclist(0), expected
 
   AssertEqual len(g:neomake_test_countschanged), 1
   AssertEqual len(g:neomake_test_jobfinished), 1
   AssertEqual len(g:neomake_test_finished), 1
   bwipe
+  bwipe unloaded_filename_without_bufnr
 
-Execute (get_list_entries: minimal example (from doc)):
+Execute (get_list_entries: based on example from doc):
+  NeomakeTestsMonkeypatchHighlights
+
   new
   call g:NeomakeSetupAutocmdWrappers()
   let buf1 = bufnr('%')
+  file get_list_entries_buf1
 
-  let maker = {'name': 'My maker'}
+  let winnr = winnr()
+
+  let maker = {'name': 'My maker', 'my_orig_bufnr': buf1}
   function! maker.get_list_entries(jobinfo) abort
     " Change bufnr.
     new
     return [
-      \ {'text': 'Some error', 'lnum': 1, 'bufnr': bufnr('%')},
-      \ {'text': 'Some warning', 'type': 'W', 'lnum': 2, 'col': 1, 'length': 5},
+      \ {'text': 'Some error', 'lnum': 1, 'bufnr': a:jobinfo.bufnr},
+      \ {'text': 'Some warning without bufnr', 'type': 'W', 'lnum': 2,
+      \  'col': 1, 'length': 5},
+      \ {'text': 'Some warning', 'type': 'W', 'lnum': 2, 'col': 1,
+      \  'bufnr': a:jobinfo.maker.my_orig_bufnr, 'length': 2},
+      \ {'text': 'Some info', 'type': 'I', 'lnum': 3, 'col': 1,
+      \  'filename': '/path/to/file'},
+      \ {'text': 'Some non-type', 'type': '', 'lnum': 4, 'col': 1, 'length': 23,
+      \  'filename': 'get_list_entries_buf1'},
       \ ]
   endfunction
   call neomake#Make(1, [maker])
-  " .length was transformed into a highlight.
-  if !has('nvim')
-    AssertEqual neomake#highlights#_get()['file'][buf1]['NeomakeWarning'], [[2, 1, 5]]
-  endif
+  AssertNeomakeMessage 'Queueing action: s:ProcessEntries for WinEnter.'
+  AssertEqual [], g:neomake_tests_highlight_lengths, 'No highlights have been added yet'
+  AssertEqual [], getloclist(0)
 
-  AssertEqual getloclist(0), [
-  \ {'lnum': 1, 'bufnr': bufnr('%'), 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1,
+  wincmd p
+  AssertEqual winnr, winnr()
+  AssertEqual [[1, -1], [2, 2], [3, -1], [4, 23]], g:neomake_tests_highlight_lengths
+
+  let llist = getloclist(0)
+
+  " Check that unlisted buffer was created for filename.
+  let unlisted_bufnr = bufnr('/path/to/file')
+  Assert !empty(unlisted_bufnr), 'Unlisted buffer was created (1)'
+  Assert !buflisted(unlisted_bufnr), 'Unlisted buffer was created (2)'
+
+  " Check that existing buffer was used for filename.
+  AssertEqual llist[4].bufnr, buf1, 'get_list_entries_buf1 was picked up'
+
+  AssertEqual llist, [
+  \ {'lnum': 1, 'bufnr': buf1, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1,
   \  'type': 'E', 'pattern': '', 'text': 'Some error'},
+  \ {'lnum': 2, 'bufnr': 0, 'col': 1, 'valid': 0, 'vcol': 0, 'nr': -1,
+  \  'type': 'W', 'pattern': '', 'text': 'Some warning without bufnr'},
   \ {'lnum': 2, 'bufnr': buf1, 'col': 1, 'valid': 1, 'vcol': 0, 'nr': -1,
-  \  'type': 'W', 'pattern': '', 'text': 'Some warning'}]
+  \  'type': 'W', 'pattern': '', 'text': 'Some warning'},
+  \ {'lnum': 3, 'bufnr': unlisted_bufnr, 'col': 1, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': 'I', 'pattern': '', 'text': 'Some info'},
+  \ {'lnum': 4, 'bufnr': buf1, 'col': 1, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': '', 'pattern': '', 'text': 'Some non-type'} ]
+  wincmd p
   bwipe
   bwipe
+  exe 'bwipe '.unlisted_bufnr
 
   AssertEqual len(g:neomake_test_countschanged), 1
   AssertEqual len(g:neomake_test_finished), 1

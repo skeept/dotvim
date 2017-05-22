@@ -6,7 +6,7 @@ Execute (Test Neomake on errors.sh with one maker):
   edit tests/fixtures/errors.sh
   AssertEqual getline(1), '#! /bin/bash'
 
-  call g:NeomakeTestsEnsureExe('shellcheck')
+  call g:NeomakeTestsCreateExe('shellcheck', [])
   let enabled_makers = neomake#GetEnabledMakers('sh')
   call map(enabled_makers, 'v:val.name')
   AssertEqual enabled_makers, ['sh', 'shellcheck']
@@ -27,30 +27,69 @@ Execute (Test Neomake on errors.sh with one maker):
   endfor
 
   " Basic verification that signs are placed.
-  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer='.bufnr, 3, {}
-  AssertNeomakeMessage 'Unplacing sign: sign unplace 5000 buffer='.bufnr, 3, {}
-  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer='.bufnr, 3, {}
+  AssertNeomakeMessage 'Placing sign: sign place 5000 line=5 name=neomake_err buffer='.bufnr.'.', 3, {}
+  AssertNeomakeMessage 'Reusing sign: id=5000, type=neomake_err, lnum=5.', 3, {}
 
-  let signs = split(neomake#utils#redir('sign place'), '\n')
-  call map(signs, "substitute(substitute(v:val, '\\m^\\s\\+', '', ''), '\\m\\s\\+$', '', '')")
-  AssertEqual signs, [
-    \ '--- Signs ---',
+  AssertEqual NeomakeTestsGetSigns(), [
     \ 'Signs for tests/fixtures/errors.sh:',
     \ 'line=5  id=5000  name=neomake_err']
   bwipe
 
 Execute (Test Neomake on errors.sh with two makers):
   call g:NeomakeSetupAutocmdWrappers()
-  call g:NeomakeTestsEnsureExe('shellcheck')
   new
   edit tests/fixtures/errors.sh
+  call g:NeomakeTestsCreateExe('shellcheck', [])
   RunNeomake sh shellcheck
-  AssertEqual len(g:neomake_test_countschanged), 2
+  AssertEqual len(g:neomake_test_countschanged), 1
   AssertEqual len(g:neomake_test_finished), 1
-  AssertNeomakeMessage 'Running makers: sh, shellcheck'
+  AssertNeomakeMessage 'Running makers: sh, shellcheck.'
+  bwipe
+
+Execute (Test Neomake on errors.sh with shellcheck):
+  call g:NeomakeSetupAutocmdWrappers()
+
+  " Create shellcheck wrapper, with output from shellcheck 0.4.6.
+  let shellcheck_output = [
+        \ "tests/fixtures/errors.sh:3:1: warning: a appears unused. Verify it or export it. [SC2034]",
+        \ "tests/fixtures/errors.sh:3:3: note: Expressions don't expand in single quotes, use double quotes for that. [SC2016]",
+        \ "tests/fixtures/errors.sh:5:4: error: '(' is invalid here. Did you forget to escape it? [SC1036]",
+        \ "tests/fixtures/errors.sh:5:4: error: Parsing stopped here. Invalid use of parentheses? [SC1088]",
+        \ "tests/fixtures/errors.sh:5:4: error: Trying to declare parameters? Don't. Use () and refer to params as $1, $2.. [SC1065]",
+        \ ]
+  if executable('shellcheck')
+    let real_output = neomake#compat#systemlist('shellcheck -fgcc tests/fixtures/errors.sh')
+    AssertEqual real_output, shellcheck_output
+  endif
+  let shellcheck_contents = ['#!/bin/sh']
+        \ + map(shellcheck_output, "'printf ''%s\\n'' '.shellescape(v:val).''")
+        \ + ['exit 1']
+  call g:NeomakeTestsCreateExe('shellcheck', shellcheck_contents)
+
+  new
+  edit tests/fixtures/errors.sh
+  let bufnr = bufnr('%')
+  RunNeomake shellcheck
+  AssertEqual len(g:neomake_test_finished), 1
+  AssertNeomakeMessage 'Running makers: shellcheck.'
+  AssertEqual getloclist(0), [
+  \ {'lnum': 3, 'bufnr': bufnr, 'col': 1, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': 'w', 'pattern': '', 'text': 'a appears unused. Verify it or export it. [SC2034]'},
+  \ {'lnum': 3, 'bufnr': bufnr, 'col': 3, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \ 'type': 'I', 'pattern': '', 'text': 'Expressions don''t expand in single quotes, use double quotes for that. [SC2016]'},
+  \ {'lnum': 5, 'bufnr': bufnr, 'col': 4, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': 'e', 'pattern': '', 'text': '''('' is invalid here. Did you forget to escape it? [SC1036]'},
+  \ {'lnum': 5, 'bufnr': bufnr, 'col': 4, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': 'e', 'pattern': '', 'text': 'Parsing stopped here. Invalid use of parentheses? [SC1088]'},
+  \ {'lnum': 5, 'bufnr': bufnr, 'col': 4, 'valid': 1, 'vcol': 0, 'nr': -1,
+  \  'type': 'e', 'pattern': '', 'text': 'Trying to declare parameters? Don''t. Use () and refer to params as $1, $2.. [SC1065]'},
+  \ ]
+  AssertNeomakeMessage 'exit: shellcheck: 1.', 3
   bwipe
 
 Execute (Neomake: handle result for current window):
+  runtime autoload/neomake/signs.vim
+
   call g:NeomakeSetupAutocmdWrappers()
   new
   file file_sleep_efm
@@ -62,6 +101,7 @@ Execute (Neomake: handle result for current window):
     AssertEqual len(g:neomake_test_countschanged), 0
     AssertEqual len(g:neomake_test_finished), 0, "output pending"
     AssertEqual map(copy(getloclist(0)), 'v:val.text'), []
+    let bufnr = bufnr('%')
     quit
     AssertEqual winnr(), orig_winnr
     AssertEqual map(copy(getloclist(0)), 'v:val.text'), ['error message', 'warning', 'error2']
@@ -69,20 +109,38 @@ Execute (Neomake: handle result for current window):
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual len(g:neomake_test_countschanged), 1
   bwipe
+  if exists('bufnr')
+    exe 'bwipe' bufnr
+  endif
 
 Execute (Neomake: handle output for removed window):
   if NeomakeAsyncTestsSetup()
     new
+    file file_sleep_efm
+    let bufnr = bufnr('%')
     call neomake#Make(1, [g:sleep_efm_maker])
     let jobinfo = neomake#GetJobs()[0]
-    bd
+    quit
     NeomakeTestsWaitForFinishedJobs
     AssertEqual len(g:neomake_test_countschanged), 0,
       \ "counts changed (".len(g:neomake_test_countschanged).")"
-    AssertEqual len(g:neomake_test_finished), 1
+    AssertEqual len(g:neomake_test_finished), 0
+    AssertNeomakeMessage 'Output left to be processed, not cleaning job yet.'
 
-    AssertNeomakeMessage 'No window found for output!', 2, jobinfo
-    AssertEqual neomake#CancelJob(jobinfo.id), 0, "stale job was removed"
+    new
+    AssertEqual len(g:neomake_test_finished), 0
+    AssertNeomakeMessage 'Skipped pending job output for another buffer.', 3, jobinfo
+
+    " Opening the buffer in another window should process its output.
+    exe 'b' bufnr
+    AssertNeomakeMessage "Processing pending output for job's buffer in new window."
+    AssertNeomakeMessage 'Creating location list.'
+    AssertEqual len(g:neomake_test_finished), 1
+    AssertEqual len(g:neomake_test_countschanged), 1
+    AssertEqual map(getloclist(0), 'v:val.text'), ['error message', 'warning', 'error2']
+
+    bwipe #
+    exe 'bwipe' bufnr
   endif
 
 Execute (Neomake: handle wiped buffer):
@@ -97,11 +155,49 @@ Execute (Neomake: handle wiped buffer):
     NeomakeTestsWaitForFinishedJobs
     AssertEqual len(g:neomake_test_countschanged), 0,
       \ "counts changed (".len(g:neomake_test_countschanged).")"
+    AssertEqual len(g:neomake_test_jobfinished), 0
+    AssertEqual len(g:neomake_test_finished), 0
+
+    " Trigger processing of pending output.
+    new
+    AssertEqual len(g:neomake_test_jobfinished), 1
+    AssertEqual len(g:neomake_test_finished), 1
+    AssertNeomakeMessage 'No buffer found for output!', 2, jobinfo
+    AssertNeomakeMessage 'File-level errors cleaned in buffer '.bufnr.'.'
+    AssertEqual neomake#CancelJob(jobinfo.id), 0, "stale job was removed"
+    bwipe
+  endif
+
+Execute (Neomake: handle pending output across windows/buffers):
+  " Check that there is no error, e.g. for highlights.
+  if NeomakeAsyncTestsSetup()
+    new
+    AssertEqual winnr(), 2
+    edit tests/fixtures/errors.sh
+    let bufnr = bufnr('%')
+    Neomake sh
+    new
+    let jobinfo = neomake#GetJobs()[0]
+    NeomakeTestsWaitForFinishedJobs
+    AssertNeomakeMessage 'Output left to be processed, not cleaning job yet.'
+
+    " Trigger processing of pending output.
+    new
+    let new_bufnr = bufnr('%')
+    AssertNeomakeMessage 'Skipped pending job output for another buffer.', 3, jobinfo
+    AssertEqual len(g:neomake_test_jobfinished), 0
+    AssertEqual len(g:neomake_test_finished), 0
+    exe 'b' bufnr
+    AssertNeomakeMessage 'Skipped pending job output (not in origin window).', 3, jobinfo
+    quit
+    AssertNeomakeMessage 'Skipped pending job output for another buffer.', 3, jobinfo
+    bwipe
+    AssertEqual len(g:neomake_test_jobfinished), 1
     AssertEqual len(g:neomake_test_finished), 1
 
-    AssertNeomakeMessage 'No window found for output!', 2, jobinfo
-    AssertNeomakeMessage 'File-level errors cleaned in buffer '.bufnr
     AssertEqual neomake#CancelJob(jobinfo.id), 0, "stale job was removed"
+    exe 'bwipe' bufnr
+    exe 'bwipe' new_bufnr
   endif
 
 Execute (NeomakeSh: true):
@@ -129,10 +225,10 @@ Execute (NeomakeSh: echo foo):
     \ [{'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1,
     \   'type': '', 'pattern': '', 'text': 'foo'}]
   AssertEqual len(g:neomake_test_finished), 1
-  AssertEqual g:neomake_test_countschanged[0].bufnr, bufnr
-  AssertEqual g:neomake_test_countschanged[0].file_mode, 0
-  AssertEqual sort(keys(g:neomake_test_countschanged[0])),
-  \ ['bufnr', 'file_mode', 'jobinfo']
+  AssertEqual g:neomake_test_countschanged[0].jobinfo.bufnr, bufnr
+  AssertEqual g:neomake_test_countschanged[0].jobinfo.file_mode, 0
+  AssertEqual g:neomake_test_countschanged[0].reset, 0
+  AssertEqual sort(keys(g:neomake_test_countschanged[0])), ['jobinfo', 'reset']
 
 Execute (NeomakeSh: non-existing command):
   call g:NeomakeSetupAutocmdWrappers()
@@ -140,7 +236,7 @@ Execute (NeomakeSh: non-existing command):
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual len(g:neomake_test_countschanged), 1
   AssertEqual len(getqflist()), 1
-  AssertNeomakeMessage "exit: sh: 'nonexistingcommand': 127", 3
+  AssertNeomakeMessage "exit: sh: 'nonexistingcommand': 127.", 3
   if neomake#has_async_support()
     AssertNeomakeMessage 'sh: ''nonexistingcommand'': completed with exit code 127.', 3
   endif
@@ -149,7 +245,7 @@ Execute (NeomakeSh: non-existing command):
 
 Execute (NeomakeSh!: handle unfinished output on exit):
   call g:NeomakeSetupAutocmdWrappers()
-  NeomakeSh! sh -c 'echo 1; printf 2; sleep 0.1; echo -n 3'
+  NeomakeSh! sh -c 'echo 1; printf 2; sleep 0.01; echo -n 3'
   if neomake#has_async_support()
     for i in range(0, 10)
       if len(g:neomake_test_countschanged) == 1
@@ -157,9 +253,9 @@ Execute (NeomakeSh!: handle unfinished output on exit):
         \ "only the first line should be there (buffer_output=0)"
         break
       endif
-      sleep 50m
+      sleep 20m
     endfor
-    AssertNotEqual i, 10, "counts should have changed after 500ms"
+    AssertNotEqual i, 20, 'counts should have changed after 200ms: i='.i
     NeomakeTestsWaitForFinishedJobs
   endif
   AssertEqual len(g:neomake_test_finished), 1
@@ -168,15 +264,15 @@ Execute (NeomakeSh!: handle unfinished output on exit):
 
 Execute (NeomakeSh: buffers output):
   call g:NeomakeSetupAutocmdWrappers()
-  NeomakeSh sh -c 'echo 1; printf 2; sleep 0.1; echo -n 3'
+  NeomakeSh sh -c 'echo 1; printf 2; sleep 0.01; echo -n 3'
   if neomake#has_async_support()
     for i in range(0, 10)
       if len(g:neomake_test_countschanged)
         break
       endif
-      sleep 50m
+      sleep 5m
     endfor
-    AssertNotEqual i, 10, "counts should have changed after 500ms"
+    AssertNotEqual i, 10, "counts should have changed after 50ms"
     NeomakeTestsWaitForFinishedJobs
   endif
   AssertEqual len(g:neomake_test_finished), 1
@@ -187,7 +283,7 @@ Execute (NeomakeSh: project: handle removed window on exit (quit)):
   call g:NeomakeSetupAutocmdWrappers()
   new
   let bufnr = bufnr('%')
-  NeomakeSh sh -c 'sleep 0.1; echo finished'
+  NeomakeSh sh -c 'sleep 0.01; echo finished'
   let make_id = neomake#GetStatus().last_make_id
   quit
   if neomake#has_async_support()
@@ -197,12 +293,13 @@ Execute (NeomakeSh: project: handle removed window on exit (quit)):
   AssertEqual map(copy(getqflist()), 'v:val.text'), ['finished']
   AssertEqual len(g:neomake_test_finished), 1
   AssertEqual len(g:neomake_test_countschanged), 1
+  exe 'bwipe' bufnr
 
 Execute (NeomakeSh: project: handle removed window on exit (bwipe)):
   call g:NeomakeSetupAutocmdWrappers()
   new
   let bufnr = bufnr('%')
-  NeomakeSh sh -c 'sleep 0.1; echo finished'
+  NeomakeSh sh -c 'sleep 0.01; echo finished'
   let make_id = neomake#GetStatus().last_make_id
   bwipe
   Assert bufnr != bufnr('%'), 'buffer has been wiped'
@@ -288,6 +385,19 @@ Execute (NeomakeInfo: displays issues):
     let idx = i
   endfor
 
+Execute (NeomakeListJobs):
+  let maker1 = NeomakeTestsCommandMaker('cmd maker 1', 'sleep .1')
+  let maker2 = NeomakeTestsCommandMaker('cmd maker 2', 'sleep .1')
+  let jobs1 = neomake#Make({'enabled_makers': [maker1]})
+  let jobs2 = neomake#Make({'enabled_makers': [maker2], 'name': 'My custom name'})
+  let info = split(neomake#utils#redir('NeomakeListJobs'), '\n')
+  AssertEqual info, [
+  \        'make_id | job_id | name/maker',
+  \ printf('     %d |     %d | neomake_%d (cmd maker 1)', jobs1[0].make_id, jobs1[0].id, jobs1[0].id),
+  \ printf('     %d |     %d | My custom name (cmd maker 2)', jobs2[0].make_id, jobs2[0].id),
+  \ ]
+  NeomakeTestsWaitForFinishedJobs
+
 Execute (Having an invalid &errorformat is OK):
   Save &errorformat
   let &efm = '%E%W'
@@ -297,7 +407,7 @@ Execute (Having an invalid &errorformat is OK):
 Execute (Neomake with windo):
   if NeomakeAsyncTestsSetup()
     Assert winnr() == 1, "Starting at window 1"
-    topleft new
+    tabnew
     file b1
     topleft new
     file b2
@@ -323,9 +433,10 @@ Execute (Neomake with windo):
     AssertEqual neomake#statusline#LoclistCounts(winbufnr(2)), {'E': 2}
     AssertEqual neomake#statusline#LoclistCounts(winbufnr(3)), {'E': 1}
 
-    bd b1
-    bd b2
-    bd b3
+    tabclose
+    bwipe b1
+    bwipe b2
+    bwipe b3
   endif
 
 Execute (NeomakeSh: two jobs after each other):
@@ -375,6 +486,8 @@ Execute (Neomake!: non-existing and proper job):
     "             \ 'in_io': 'file',
     "             \ 'in_name': '/doesnotexist',
     "             \ }
+    " Reset s:exe_error_thrown.
+    runtime autoload/neomake.vim
 
     Save g:neomake_maker1_maker
     let g:neomake_maker1_maker = {
@@ -409,20 +522,20 @@ Execute (Neomake#Make: error with failing job via jobstart/argv):
   NeomakeTestsWaitForFinishedJobs
 
   if neomake#has_async_support()
-    AssertNeomakeMessage "Starting async job: ['doesnotexist']"
+    AssertNeomakeMessage "Starting async job: ['doesnotexist']."
   else
-    AssertNeomakeMessage "Starting: doesnotexist"
+    AssertNeomakeMessage "Starting: doesnotexist."
   endif
 
   if has('nvim-0.1.8')
-    AssertNeomakeMessage "Failed to start Neovim job: Executable not found: ['doesnotexist']", 0
+    AssertNeomakeMessage "Failed to start Neovim job: Executable not found: ['doesnotexist'].", 0
   elseif has('nvim')
     AssertNeomakeMessage 'Failed to start Neovim job: [''doesnotexist'']: '
-      \ .'Vim(let):E902: "doesnotexist" is not an executable'
+      \ .'Vim(let):E902: "doesnotexist" is not an executable.'
   elseif neomake#has_async_support()
-    AssertNeomakeMessage 'Vim job failed to run: executing job failed: No such file or directory'
+    AssertNeomakeMessage 'Vim job failed to run: executing job failed: No such file or directory.'
   else
-    AssertNeomakeMessage 'exit: unnamed_maker: 127', 3
+    AssertNeomakeMessage 'exit: unnamed_maker: 127.', 3
   endif
 
   if neomake#has_async_support()
@@ -448,20 +561,20 @@ Execute (Neomake#Make: error with failing job via jobstart/argv + true):
   NeomakeTestsWaitForFinishedJobs
 
   if neomake#has_async_support()
-    AssertNeomakeMessage "Starting async job: ['doesnotexist']"
+    AssertNeomakeMessage "Starting async job: ['doesnotexist']."
   else
-    AssertNeomakeMessage "Starting: doesnotexist"
+    AssertNeomakeMessage "Starting: doesnotexist."
   endif
 
   if has('nvim-0.1.8')
-    AssertNeomakeMessage "Failed to start Neovim job: Executable not found: ['doesnotexist']", 0
+    AssertNeomakeMessage "Failed to start Neovim job: Executable not found: ['doesnotexist'].", 0
   elseif has('nvim')
     AssertNeomakeMessage 'Failed to start Neovim job: [''doesnotexist'']: '
-      \ .'Vim(let):E902: "doesnotexist" is not an executable'
+      \ .'Vim(let):E902: "doesnotexist" is not an executable.'
   elseif neomake#has_async_support()
-    AssertNeomakeMessage 'Vim job failed to run: executing job failed: No such file or directory'
+    AssertNeomakeMessage 'Vim job failed to run: executing job failed: No such file or directory.'
   else
-    AssertNeomakeMessage 'exit: unnamed_maker: 127', 3
+    AssertNeomakeMessage 'exit: unnamed_maker: 127.', 3
   endif
 
   if neomake#has_async_support()
@@ -494,14 +607,14 @@ Execute (Neomake: remove_invalid_entries and default entry type):
       \ })
   call neomake#Make(1, [maker])
   NeomakeTestsWaitForFinishedJobs
-  AssertNeomakeMessage "Removing invalid entry: invalid ({'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 0, 'vcol': 0, 'nr': -1, 'type': '', 'maker_name': 'custom_maker', 'pattern': ''})"
-  " NOTE: the setloclist() makes the entry invalid?!
-  " https://github.com/vim/vim/issues/1642
+  AssertNeomakeMessage "Removing invalid entry: invalid ({'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 0, 'vcol': 0, 'nr': -1, 'type': '', 'maker_name': 'custom_maker', 'pattern': ''})."
+
+  let valid = has('patch-8.0.0580')
   AssertEqual getloclist(0),
-    \ [{'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 0, 'vcol': 0, 'nr': -1, 'type': 'W', 'pattern': '', 'text': 'valid'}]
+    \ [{'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': valid, 'vcol': 0, 'nr': -1, 'type': 'W', 'pattern': '', 'text': 'valid'}]
 
 Execute (Neomake: entry.valid < 0 and configured entry type):
-  let maker = neomake#utils#MakerFromCommand('echo invalid; echo "E: valid"')
+  let maker = neomake#utils#MakerFromCommand('echo invalid; echo "E: valid"; echo invalid_but_kept; echo invalid_but_kept_as_valid')
   call extend(maker, {
       \ 'name': 'custom_maker',
       \ 'remove_invalid_entries': 0,
@@ -512,17 +625,28 @@ Execute (Neomake: entry.valid < 0 and configured entry type):
 
   function maker.postprocess(entry) abort
     if !a:entry.valid
-      let a:entry.valid = -1
+      if a:entry.text == 'invalid_but_kept'
+        let a:entry.type = 'I'
+      elseif a:entry.text == 'invalid_but_kept_as_valid'
+        let a:entry.valid = 1
+      else
+        let a:entry.valid = -1
+      endif
     endif
   endfunction
 
   call neomake#Make(1, [maker])
   NeomakeTestsWaitForFinishedJobs
-  AssertNeomakeMessage "Removing invalid entry: invalid ({'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': -1, 'vcol': 0, 'nr': -1, 'type': '', 'maker_name': 'custom_maker', 'pattern': ''})"
-  " NOTE: the setloclist() makes the entry invalid?!
-  " https://github.com/vim/vim/issues/1642
-  AssertEqual getloclist(0),
-    \ [{'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 0, 'vcol': 0, 'nr': -1, 'type': 'I', 'pattern': '', 'text': 'valid'}]
+  AssertNeomakeMessage 'custom_maker: processing 4 lines of output.'
+  AssertNeomakeMessage "Removing invalid entry: invalid ({'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': -1, 'vcol': 0, 'nr': -1, 'type': '', 'maker_name': 'custom_maker', 'pattern': ''})."
+  AssertNeomakeMessage 'Processing 3 entries.'
+
+  " Without this patch entries are invalid always after setqflist/setloclist.
+  let valid = has('patch-8.0.0580')
+  AssertEqual getloclist(0), [
+    \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': valid, 'vcol': 0, 'nr': -1, 'type': 'I', 'pattern': '', 'text': 'valid'},
+    \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 0, 'vcol': 0, 'nr': -1, 'type': 'I', 'pattern': '', 'text': 'invalid_but_kept'},
+    \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': valid, 'vcol': 0, 'nr': -1, 'type': 'I', 'pattern': '', 'text': 'invalid_but_kept_as_valid'}]
 
 Execute (Neomake: append_file from settings and empty entry type):
   let maker = {
@@ -622,7 +746,7 @@ Execute (Location list should be cleared only after first output):
   lgetexpr 'init'
 
   let maker_success = NeomakeTestsCommandMaker('success-maker', 'true')
-  let maker_sleep = NeomakeTestsCommandMaker('sleep-maker', 'sleep .1; echo slept')
+  let maker_sleep = NeomakeTestsCommandMaker('sleep-maker', 'sleep .01; echo slept')
 
   call neomake#Make(1, [maker_success, maker_sleep])
 

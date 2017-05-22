@@ -168,10 +168,10 @@ function! neomake#makers#ft#python#pyflakes() abort
 endfunction
 
 function! neomake#makers#ft#python#pycodestyle() abort
-  if !exists('s:_pycodestyle_exe')
-    " Use the preferred exe to avoid deprecation warnings.
-    let s:_pycodestyle_exe = executable('pycodestyle') ? 'pycodestyle' : 'pep8'
-  endif
+    if !exists('s:_pycodestyle_exe')
+        " Use the preferred exe to avoid deprecation warnings.
+        let s:_pycodestyle_exe = executable('pycodestyle') ? 'pycodestyle' : 'pep8'
+    endif
     return {
         \ 'exe': s:_pycodestyle_exe,
         \ 'errorformat': '%f:%l:%c: %m',
@@ -195,11 +195,11 @@ function! neomake#makers#ft#python#Pep8EntryProcess(entry) abort
 endfunction
 
 function! neomake#makers#ft#python#pydocstyle() abort
-  if !exists('s:_pydocstyle_exe')
-    " Use the preferred exe to avoid deprecation warnings.
-    let s:_pydocstyle_exe = executable('pydocstyle') ? 'pydocstyle' : 'pep257'
-  endif
-  return {
+    if !exists('s:_pydocstyle_exe')
+        " Use the preferred exe to avoid deprecation warnings.
+        let s:_pydocstyle_exe = executable('pydocstyle') ? 'pydocstyle' : 'pep257'
+    endif
+    return {
         \ 'exe': s:_pydocstyle_exe,
         \ 'errorformat':
         \   '%W%f:%l %.%#:,' .
@@ -246,6 +246,7 @@ function! neomake#makers#ft#python#python() abort
         \ 'errorformat': '%E%f:%l:%c: %m',
         \ 'serialize': 1,
         \ 'serialize_abort_on_error': 1,
+        \ 'output_stream': 'stdout',
         \ }
 endfunction
 
@@ -271,12 +272,8 @@ endfunction
 " --fast-parser: adds experimental support for async/await syntax
 " --silent-imports: replaced by --ignore-missing-imports --follow-imports=skip
 function! neomake#makers#ft#python#mypy() abort
-    let args = ['--ignore-missing-imports', '--follow-imports=skip']
-    if !neomake#utils#IsRunningWindows()
-        let args += ['--fast-parser']
-    endif
     return {
-        \ 'args': args,
+        \ 'args': ['--ignore-missing-imports', '--follow-imports=skip'],
         \ 'errorformat':
             \ '%E%f:%l: error: %m,' .
             \ '%W%f:%l: warning: %m,' .
