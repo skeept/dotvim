@@ -184,13 +184,12 @@ function! s:mg_get_commit_section()
 			silent! call magit#utils#system("GIT_EDITOR=/bin/false " .
 						\ g:magit_git_cmd . " -c commit.verbose=no commit --amend -e 2> /dev/null")
 		endif
-		if ( filereadable(git_dir . 'COMMIT_EDITMSG') )
+		if ( !empty(b:magit_current_commit_msg) )
+			silent put =b:magit_current_commit_msg
+		elseif ( filereadable(git_dir . 'COMMIT_EDITMSG') )
 			let comment_char=magit#git#get_config("core.commentChar", '#')
 			let commit_msg=magit#utils#join_list(filter(readfile(git_dir . 'COMMIT_EDITMSG'), 'v:val !~ "^' . comment_char . '"'))
 			silent put =commit_msg
-		endif
-		if ( !empty(b:magit_current_commit_msg) )
-			silent put =b:magit_current_commit_msg
 		endif
 		silent put =''
 	endif
@@ -756,8 +755,16 @@ function! magit#show_magit(display, ...)
 	" let magit buffer in read mode when cursor is not in file, to avoid
 	" unfortunate commit with a :wall command out of magit buffer if a commit
 	" message is ongoing
-	execute "autocmd BufEnter " . buffer_name . " :if ( b:magit_current_commit_mode != '' ) | call s:set_mode_write() | endif"
-	execute "autocmd BufLeave " . buffer_name . " :if ( b:magit_current_commit_mode != '' ) | call s:set_mode_read() | endif"
+	execute "autocmd BufEnter " . buffer_name . "
+	      \ :if ( exists('b:magit_current_commit_mode') &&
+	      \ b:magit_current_commit_mode != '' ) |
+	      \   call s:set_mode_write() |
+	      \ endif"
+	execute "autocmd BufLeave " . buffer_name . "
+	      \ :if ( exists('b:magit_current_commit_mode') &&
+	      \ b:magit_current_commit_mode != '' ) |
+	      \   call s:set_mode_read() |
+	      \ endif"
 
 	let b:state = deepcopy(g:magit#state#state)
 	" s:magit_commit_mode: global variable which states in which commit mode we are

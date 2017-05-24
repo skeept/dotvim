@@ -5483,6 +5483,10 @@
     "type": "git",
     "url": "git://github.com/makerj/vim-transit"
   },
+  "5570": {
+    "type": "git",
+    "url": "git://github.com/Bozar/quickEditTab"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

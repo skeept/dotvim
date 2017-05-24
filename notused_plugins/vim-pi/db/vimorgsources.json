@@ -1,4 +1,5 @@
 {
+"quickEditTab":{"archive_name":"quickEditTab-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25225","version":"1.0.0","vim_script_nr":5570},
 "botlang-syntax":{"archive_name":"botlang.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25222","version":"1.0.0","vim_script_nr":5569},
 "vim-transit":{"archive_name":"vim-transit.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25218","version":"20170519","vim_script_nr":5568},
 "bal%5567":{"archive_name":"bal.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25209","version":"0.8","vim_script_nr":"5567"},

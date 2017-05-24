@@ -25,18 +25,22 @@ function! pathogen#infect(...) abort
   if a:0
     let paths = filter(reverse(copy(a:000)), 'type(v:val) == type("")')
   else
-    let paths = ['bundle/{}']
-    if !has('packages')
-      call add(paths, 'pack/{}/start/{}')
-    endif
+    let paths = ['bundle/{}', 'pack/{}/start/{}']
   endif
-  for path in paths
-    if path =~# '^\%({\=[$~\\/]\|{\=\w:[\\/]\).*[{}*]'
+  if has('packages')
+    call filter(paths, 'v:val !~# "^pack/[^/]*/start/[^/]*$"')
+  endif
+  let static = '^\%([$~\\/]\|\w:[\\/]\)[^{}*]*[\/]$'
+  for path in filter(copy(paths), 'v:val =~# static')
+    call pathogen#surround(path)
+  endfor
+  for path in filter(copy(paths), 'v:val !~# static')
+    if path =~# '^\%({\=[$~\\/]\|{\=\w:[\\/]\).*\%([{}*]\|[\\/]$\)'
       call pathogen#surround(path)
     elseif path =~# '^\%([$~\\/]\|\w:[\\/]\)'
       call s:warn('Change pathogen#infect('.string(path).') to pathogen#infect('.string(path.'/{}').')')
       call pathogen#surround(path . '/{}')
-    elseif path =~# '[{}*]'
+    elseif path =~# '[{}*]\|[\\/]$'
       call pathogen#interpose(path)
     else
       call s:warn('Change pathogen#infect('.string(path).') to pathogen#infect('.string(path.'/{}').')')
@@ -185,19 +189,20 @@ endfunction
 " and globbed.  Actual globs are preserved.
 function! pathogen#expand(pattern, ...) abort
   let after = a:0 ? a:1 : ''
-  if a:pattern =~# '{[^{}]\+}'
-    let [pre, pat, post] = split(substitute(a:pattern, '\(.\{-\}\){\([^{}]\+\)}\(.*\)', "\\1\001\\2\001\\3", ''), "\001", 1)
+  let pattern = substitute(a:pattern, '^[~$][^\/]*', '\=expand(submatch(0))', '')
+  if pattern =~# '{[^{}]\+}'
+    let [pre, pat, post] = split(substitute(pattern, '\(.\{-\}\){\([^{}]\+\)}\(.*\)', "\\1\001\\2\001\\3", ''), "\001", 1)
     let found = map(split(pat, ',', 1), 'pre.v:val.post')
     let results = []
     for pattern in found
       call extend(results, pathogen#expand(pattern))
     endfor
-  elseif a:pattern =~# '{}'
-    let pat = matchstr(a:pattern, '^.*{}[^*]*\%($\|[\\/]\)')
-    let post = a:pattern[strlen(pat) : -1]
+  elseif pattern =~# '{}'
+    let pat = matchstr(pattern, '^.*{}[^*]*\%($\|[\\/]\)')
+    let post = pattern[strlen(pat) : -1]
     let results = map(split(glob(substitute(pat, '{}', '*', 'g')), "\n"), 'v:val.post')
   else
-    let results = [a:pattern]
+    let results = [pattern]
   endif
   let vf = pathogen#slash() . 'vimfiles'
   call map(results, 'v:val =~# "\\*" ? v:val.after : isdirectory(v:val.vf.after) ? v:val.vf.after : isdirectory(v:val.after) ? v:val.after : ""')
