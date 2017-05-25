@@ -10,21 +10,20 @@ env:
   global:
     - NEOMAKE_DOCKER_IMAGE: neomake/vims-for-tests:5@sha256:58d233a76e29436f10a5b0f9642ceb7f6a361f65f49dfedf0a821ef182568e8b
 
-jobs:
+matrix:
   fast_finish: true
   include:
-    - stage: test
-      env: ENV=testnvim
-    - env: ENV=testvim
     - env: ENV=travis_test
       services:
         - docker
     - env: ENV=travis_lint
       language: python
+    - env: ENV=testnvim
+    - env: ENV=testvim
 
 install:
   - |
-    if [ "$ENV" = "check" ]; then
+    if [ "$ENV" = "travis_test" ]; then
       echo "Looking for changed files in $TRAVIS_COMMIT_RANGE."
       if ! git diff --exit-code --quiet "$TRAVIS_COMMIT_RANGE" doc/neomake.txt; then
         MAKE_ARGS="$MAKE_ARGS docker_vimhelplint"
@@ -49,5 +48,5 @@ script:
     umask 022
     echo "===== running: make $ENV $MAKE_ARGS ====="
     set -x
-    make $ENV $MAKE_ARGS
+    make $ENV $MAKE_ARGS || exit
     set +x
