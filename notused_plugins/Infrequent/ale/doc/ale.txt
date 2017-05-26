@@ -406,7 +406,7 @@ g:ale_lint_on_insert_leave                         *g:ale_lint_on_insert_leave*
   Default: `0`
 
   This option will make ALE run the linters whenever leaving insert mode when
-  it it set to `1` in your vimrc file.
+  it is set to `1` in your vimrc file.
 
 
 g:ale_linter_aliases                                     *g:ale_linter_aliases*
@@ -1091,10 +1091,11 @@ ale#linter#Get(filetype)                                     *ale#linter#Get()*
   components.
 
 
-ale#statusline#Count()                                 *ale#statusline#Count()*
+ale#statusline#Count(buffer)                           *ale#statusline#Count()*
 
-  Returns a |Dictionary| containing information about the number of problems
-  detected by ALE. The following keys are supported:
+  Given the number of a buffer which may have problems, return a |Dictionary|
+  containing information about the number of problems detected by ALE. The
+  following keys are supported:
 
   `error`         -> The number of problems with type `E` and `sub_type != 'style'`
   `warning`       -> The number of problems with type `W` and `sub_type != 'style'`
