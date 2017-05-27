@@ -5487,6 +5487,10 @@
     "type": "git",
     "url": "git://github.com/Bozar/quickEditTab"
   },
+  "5573": {
+    "type": "git",
+    "url": "git://github.com/nielsmadan/yankee"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
