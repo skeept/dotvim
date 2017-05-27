@@ -66,6 +66,10 @@ function! s:StopCursorTimer() abort
 endfunction
 
 function! ale#cursor#EchoCursorWarning(...) abort
+    if ale#ShouldDoNothing()
+        return
+    endif
+
     " Only echo the warnings in normal mode, otherwise we will get problems.
     if mode() !=# 'n'
         return
@@ -108,6 +112,10 @@ function! ale#cursor#EchoCursorWarningWithDelay() abort
 endfunction
 
 function! ale#cursor#ShowCursorDetail() abort
+    if ale#ShouldDoNothing()
+        return
+    endif
+
     " Only echo the warnings in normal mode, otherwise we will get problems.
     if mode() !=# 'n'
         return
