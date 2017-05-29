@@ -1,6 +1,6 @@
 {
 "yankee":{"archive_name":"yankee.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25260","version":"0.5","vim_script_nr":5573},
-"vim-prettier":{"archive_name":"vim-prettier-0.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25256","version":"0.0.2","vim_script_nr":5572},
+"vim-prettier":{"archive_name":"vim-prettier-0.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25269","version":"0.0.3","vim_script_nr":5572},
 "remaining-todos":{"archive_name":"remaining-todos.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25240","version":"1.0","vim_script_nr":5571},
 "quickEditTab":{"archive_name":"quickEditTab-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25225","version":"1.0.0","vim_script_nr":5570},
 "botlang-syntax":{"archive_name":"botlang.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25222","version":"1.0.0","vim_script_nr":5569},
@@ -1140,7 +1140,7 @@
 "vim-maximizer":{"archive_name":"vim-maximizer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19263","version":"1.0.1","vim_script_nr":4376},
 "sleuth":{"archive_name":"sleuth.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19409","version":"1.1","vim_script_nr":4375},
 "pyflakes-nopython":{"archive_name":"pyflakes-nopython.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19266","version":"0.2","vim_script_nr":4374},
-"sh%4373":{"archive_name":"sh.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25265","version":"4.27","vim_script_nr":"4373"},
+"sh%4373":{"archive_name":"sh.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25270","version":"4.30","vim_script_nr":"4373"},
 "awk":{"archive_name":"awk.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25223","version":"1.77","vim_script_nr":4372},
 "Gentooish_II":{"archive_name":"gentooishII.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19246","version":"1.0","vim_script_nr":4371},
 "visualMarks%4370":{"archive_name":"visualMarks.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24139","version":"2.4","vim_script_nr":4370},

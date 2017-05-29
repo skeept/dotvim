@@ -3,7 +3,7 @@ A light and configurable statusline/tabline plugin for Vim
 
 https://github.com/itchyny/lightline.vim
 
-### powerline theme (default)
+### powerline (default)
 
 ![lightline.vim - powerline](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/powerline.png)
 
@@ -15,31 +15,31 @@ https://github.com/itchyny/lightline.vim
 
 ![lightline.vim - jellybeans](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/jellybeans.png)
 
-### solarized theme (dark)
+### solarized dark
 
 ![lightline.vim - solarized_dark](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/solarized_dark.png)
 
-### solarized theme (light)
+### solarized light
 
 ![lightline.vim - solarized_light](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/solarized_light.png)
 
-### PaperColor theme (light)
+### PaperColor light
 
 ![lightline.vim - PaperColor](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/PaperColor.png)
 
-### seoul256 theme
+### seoul256
 
 ![lightline.vim - seoul256](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/seoul256.png)
 
-### Dracula theme
+### Dracula
 
 ![lightline.vim - Dracula](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/Dracula.png)
 
-### one theme
+### one
 
 ![lightline.vim - one](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/one.png)
 
-### landscape theme
+### landscape
 
 ![lightline.vim - landscape](https://raw.githubusercontent.com/wiki/itchyny/lightline.vim/image/landscape.png)
 
@@ -56,29 +56,26 @@ landscape is my colorscheme, which is a high-contrast cui-supported colorscheme,
 + Orthogonality. The plugin does not rely on the implementation of other plugins. Such plugin crossing settings should be configured by users.
 
 ## Installation
-### Manually
-1. Put all files under $VIM.
-
-### Pathogen
+### [Pathogen](https://github.com/tpope/vim-pathogen)
 1. Install with the following command.
 
         git clone https://github.com/itchyny/lightline.vim ~/.vim/bundle/lightline.vim
 
-### Vundle (https://github.com/VundleVim/Vundle.vim)
+### [Vundle](https://github.com/VundleVim/Vundle.vim)
 1. Add the following configuration to your `.vimrc`.
 
         Plugin 'itchyny/lightline.vim'
 
 2. Install with `:PluginInstall`.
 
-### NeoBundle (https://github.com/Shougo/neobundle.vim)
+### [NeoBundle](https://github.com/Shougo/neobundle.vim)
 1. Add the following configuration to your `.vimrc`.
 
         NeoBundle 'itchyny/lightline.vim'
 
 2. Install with `:NeoBundleInstall`.
 
-### vim-plug (https://github.com/junegunn/vim-plug)
+### [vim-plug](https://github.com/junegunn/vim-plug)
 1. Add the following configuration to your `.vimrc`.
 
         Plug 'itchyny/lightline.vim'
@@ -124,8 +121,7 @@ set noshowmode
 
 ## Colorscheme configuration
 The lightline.vim plugin provides multiple colorschemes to meet your editor colorscheme.
-Do not be confused, editor colorscheme rules how codes look like in buffers.
-The lightline.vim plugin has independent colorscheme feature beside the editor colorscheme and it roles how the statusline looks like.
+Do not be confused, editor colorscheme rules how codes look like in buffers and lightline.vim has independent colorscheme feature, which rules how the statusline looks like.
 
 If you use the wombat colorscheme, add the following settings to your `.vimrc`
 ```vim
@@ -139,7 +135,7 @@ restart Vim and the statusline looks like:
 
 If the colors of the statusline do not change from the default colors, move the settings of `g:lightline` before setting the colorscheme.
 
-There are many lightline colorschemes available. See `:h g:lightline.colorscheme` for the colorscheme list.
+There are many lightline colorschemes available as shown above in this README.md. See `:h g:lightline.colorscheme` for the complete list.
 
 ## Advanced configuration
 The default appearance of lightline.vim is carefully designed that tutorial is enough here for most people.
