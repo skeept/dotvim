@@ -14,7 +14,7 @@ let s:nowait         = v:version >= 704 || (v:version == 703 && has('patch1261')
 let s:padding_left   = repeat(' ', get(g:, 'startify_padding_left', 3))
 let s:numfiles       = get(g:, 'startify_files_number', 10)
 let s:show_special   = get(g:, 'startify_enable_special', 1)
-let s:relative_path  = get(g:, 'startify_relative_path') ? ':.:~' : ':p:~'
+let s:relative_path  = get(g:, 'startify_relative_path') ? ':~:.' : ':p:~'
 let s:session_dir    = resolve(expand(get(g:, 'startify_session_dir',
       \ has('win32') ? '$HOME\vimfiles\session' : '~/.vim/session')))
 let s:tf             = exists('g:startify_transformations')
@@ -514,7 +514,7 @@ function! s:filter_oldfiles(path_prefix, path_format, use_env) abort
     call s:init_env()
     for i in range(len(oldfiles))
       for [k,v] in s:env
-        let p = oldfiles[i][1]
+        let p = oldfiles[i][0]
         if !stridx(tolower(p), tolower(v))
           let oldfiles[i][1] = printf('$%s%s', k, p[len(v):])
           break
@@ -898,7 +898,11 @@ endfunction
 " Function: s:init_env {{{1
 function! s:init_env()
   let s:env = []
-  let ignore = { 'PWD': 1, 'OLDPWD': 1 }
+  let ignore = {
+        \ 'HOME':   1,
+        \ 'OLDPWD': 1,
+        \ 'PWD':    1,
+        \ }
 
   function! s:get_env()
     redir => s

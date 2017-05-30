@@ -1834,6 +1834,7 @@ function! s:Diff(vert,keepfocus,...) abort
     else
       let file = s:buffer().expand(arg)
     endif
+    throw file
     if file !~# ':' && file !~# '^/' && s:repo().git_chomp('cat-file','-t',file) =~# '^\%(tag\|commit\)$'
       let file = file.s:buffer().path(':')
     endif
@@ -2197,7 +2198,7 @@ function! s:BlameSyntax() abort
       continue
     endif
     let seen[hash] = 1
-    if &t_Co > 16 && exists('g:CSApprox_loaded')
+    if &t_Co > 16 && get(g:, 'CSApprox_loaded') && !empty(findfile('autoload/csapprox/per_component.vim', escape(&rtp, ' ')))
           \ && empty(get(s:hash_colors, hash))
       let [s, r, g, b; __] = map(matchlist(hash, '\(\x\x\)\(\x\x\)\(\x\x\)'), 'str2nr(v:val,16)')
       let color = csapprox#per_component#Approximate(r, g, b)
@@ -2332,7 +2333,7 @@ function! s:Browse(bang,line1,count,...) abort
     else
       let remote_for_url = remote
     endif
-    if fugitive#git_version() =~# '^[01]\.|^2\.[0-6]\.'
+    if fugitive#git_version() =~# '^[01]\.\|^2\.[0-6]\.'
       let raw = s:repo().git_chomp('config','remote.'.remote_for_url.'.url')
     else
       let raw = s:repo().git_chomp('remote','get-url',remote_for_url)
