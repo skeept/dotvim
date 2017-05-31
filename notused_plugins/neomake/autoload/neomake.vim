@@ -93,11 +93,15 @@ function! neomake#ListJobs() abort
 endfunction
 
 function! neomake#CancelMake(make_id, ...) abort
+    if !has_key(s:make_info, a:make_id)
+        return 0
+    endif
     let jobs = filter(copy(values(s:jobs)), 'v:val.make_id == a:make_id')
     for job in jobs
         call neomake#CancelJob(job.id, a:0 ? a:1 : 0)
     endfor
     call s:clean_make_info(a:make_id)
+    return 1
 endfunction
 
 " Returns 1 if a job was canceled, 0 otherwise.
@@ -206,7 +210,11 @@ function! s:MakeJob(make_id, options) abort
                     \ '%s: getting entries via get_list_entries.',
                     \ maker.name), jobinfo)
         let entries = maker.get_list_entries(jobinfo)
-        call s:ProcessEntries(jobinfo, entries)
+        if type(entries) != type([])
+            call neomake#utils#ErrorMessage(printf('The get_list_entries method for maker %s did not return a list, but: %s.', jobinfo.maker.name, string(entries)[:100]), jobinfo)
+        else
+            call s:ProcessEntries(jobinfo, entries)
+        endif
         call s:CleanJobinfo(jobinfo)
         return jobinfo
     endif
@@ -400,15 +408,21 @@ function! s:command_maker_base._get_tempfilename(jobinfo) abort dict
         else
             let orig_file = neomake#utils#fnamemodify(a:jobinfo.bufnr, ':p')
             if empty(orig_file)
-                let bufname = fnamemodify(bufname, ':t')
-                let s:make_info[make_id].tempfile_dir = tempname()
-                let temp_file = s:make_info[make_id].tempfile_dir . slash . bufname
+                let dir = tempname()
+                let filename = fnamemodify(bufname, ':t')
+                let s:make_info[make_id].tempfile_dir = dir
             else
-                let temp_file = fnamemodify(orig_file, ':h')
-                            \ .slash.'.'.fnamemodify(orig_file, ':t')
+                let dir = fnamemodify(orig_file, ':h')
+                if filewritable(dir) != 2
+                    let dir = tempname()
+                    let s:make_info[make_id].tempfile_dir = dir
+                    call neomake#utils#DebugMessage('Using temporary directory for non-writable parent directory.')
+                endif
+                let filename = fnamemodify(orig_file, ':t')
                             \ .'@neomake_'.s:pid.'_'.make_id
                             \ .'.'.fnamemodify(orig_file, ':e')
             endif
+            let temp_file = dir . slash . filename
         endif
         let s:make_info[make_id].tempfile_name = temp_file
     endif
@@ -584,8 +598,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
     elseif a:name_or_maker ==# 'makeprg'
         let maker = neomake#utils#MakerFromCommand(&makeprg)
     elseif a:name_or_maker !~# '\v^\w+$'
-        call neomake#utils#ErrorMessage('Invalid maker name: "'.a:name_or_maker.'".')
-        return {}
+        throw printf('Neomake: Invalid maker name: "%s"', a:name_or_maker)
     else
         let maker = neomake#utils#GetSetting('maker', {'name': a:name_or_maker}, s:unset_dict, ft, bufnr('%'))
         if maker is# s:unset_dict
@@ -611,7 +624,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
                             \ !empty(ft) ? 'filetype '.ft : 'empty filetype',
                             \ a:name_or_maker)
             else
-                throw 'Neomake: project maker not found: '.a:name_or_maker
+                throw 'Neomake: Project maker not found: '.a:name_or_maker
             endif
         endif
     endif
