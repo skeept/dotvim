@@ -83,7 +83,7 @@ function! SetupVAM()
   VAMAddToActiveAddons neocomplete
   VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
-  VAMAddToActiveAddons fzf
+  VAMAddToActiveAddons fzf fzf-vim
   "VAMAddToActiveAddons argumentative projectionist
   "VAMAddToActiveAddons Syntastic
   VAMAddToActiveAddons ale
