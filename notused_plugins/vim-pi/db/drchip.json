@@ -141,7 +141,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/tarfiles/gdbmgr.tar.gz",
-    "version": "v31"
+    "version": "v2f"
   },
   "GetScript@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -393,7 +393,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/tar.vba.gz",
-    "version": "v31"
+    "version": "v32a"
   },
   "ToggleWindowLayout@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -411,7 +411,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/tarfiles/vimball.tar.gz",
-    "version": "v31"
+    "version": "v37"
   },
   "VisualBlockCommands@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -471,7 +471,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/zip.vba.gz",
-    "version": "v29"
+    "version": "v30a"
   },
   "ZoomWin@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -483,6 +483,12 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/amsmath.vba.gz",
+    "version": "v1a"
+  },
+  "array@drchip": {
+    "homepage": "http://www.drchip.org/astronaut/vim/index.html",
+    "type": "archive",
+    "url": "http://www.drchip.org/astronaut/vim/vbafiles/array.vba.gz",
     "version": "v1a"
   },
   "foldcol@drchip": {
