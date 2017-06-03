@@ -23,7 +23,8 @@ let s:default_settings = {
     \ 'call_signatures_command': "'<leader>n'",
     \ 'usages_command': "'<leader>n'",
     \ 'rename_command': "'<leader>r'",
-    \ 'popup_on_dot': 1,
+    \ 'completions_enabled': 1,
+    \ 'popup_on_dot': 'g:jedi#completions_enabled',
     \ 'documentation_command': "'K'",
     \ 'show_call_signatures': 1,
     \ 'show_call_signatures_delay': 500,
@@ -32,7 +33,6 @@ let s:default_settings = {
     \ 'max_doc_height': 30,
     \ 'popup_select_first': 1,
     \ 'quickfix_window_height': 10,
-    \ 'completions_enabled': 1,
     \ 'force_py_version': "'auto'",
     \ 'smart_auto_mappings': 1,
     \ 'use_tag_stack': 1
@@ -373,6 +373,7 @@ function! jedi#show_documentation() abort
     setlocal nomodifiable
     setlocal nomodified
     setlocal filetype=rst
+    setlocal foldlevel=200 " do not fold in __doc__
 
     if l:doc_lines > g:jedi#max_doc_height " max lines for plugin
         let l:doc_lines = g:jedi#max_doc_height
