@@ -5281,7 +5281,7 @@
   },
   "5489": {
     "type": "git",
-    "url": "git://github.com/konfekt/vim-guesslang"
+    "url": "git://github.com/konfekt/vim-DetectSpellLang"
   },
   "5490": {
     "type": "git",
