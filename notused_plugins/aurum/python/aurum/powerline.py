@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import json
 from collections import namedtuple
 from time import time
 import aurum.rcdriverfuncs as rcdfuncs
@@ -41,7 +42,18 @@ func_generators = {
     'branch': generate_branch_func,
 }
 
-getbufvar = vim.Function('getbufvar')
+if hasattr(vim, 'Function'):
+    VimFunction = vim.Function
+else:
+    class VimFunction(object):
+        def __init__(self, funcname):
+            self.funcname = funcname
+
+        def __call__(self, *args):
+            return vim.eval('{0}({1})'.format(
+                self.funcname, json.dumps(args)[1:-1]))
+
+getbufvar = VimFunction('getbufvar')
 
 def specialize(funcs, path):
     def status(fname):
@@ -55,7 +67,7 @@ fname_cache = {}
 
 def plugin_eval(expr):
     global plugin_eval
-    plugin_eval = vim.Function('<SNR>'+sid+'_Eval')
+    plugin_eval = VimFunction('<SNR>'+sid+'_Eval')
     return plugin_eval(expr)
 
 if hasattr(vim, 'bindeval'):

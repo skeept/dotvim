@@ -165,7 +165,9 @@ if s:_f.require('autoload/ansi_esc_echo', [0, 0], 0)
                     \."    aurum.auutils.register_ansi_esc_echo_func("
                     \.                       "vim.bindeval('s:utils.printm'))\n"
                     \."except vim.error:\n"
-                    \."    pass"
+                    \."    pass\n"
+                    \."except AttributeError:\n"
+                    \."    pass\n"
     endif
 else
     function s:utils.printm(m, ...)

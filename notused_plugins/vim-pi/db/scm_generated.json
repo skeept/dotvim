@@ -5491,6 +5491,10 @@
     "type": "git",
     "url": "git://github.com/nielsmadan/yankee"
   },
+  "5574": {
+    "type": "git",
+    "url": "git://github.com/tenfyzhong/golint-fixer.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
