@@ -43,12 +43,16 @@ Matcher  -> EvtHeader         -> Terminal (update header)
 */
 
 // Run starts fzf
-func Run(opts *Options) {
+func Run(opts *Options, revision string) {
 	sort := opts.Sort > 0
 	sortCriteria = opts.Criteria
 
 	if opts.Version {
-		fmt.Println(version)
+		if len(revision) > 0 {
+			fmt.Printf("%s (%s)\n", version, revision)
+		} else {
+			fmt.Println(version)
+		}
 		os.Exit(exitOk)
 	}
 
@@ -95,9 +99,10 @@ func Run(opts *Options) {
 			}
 			chars, colors := ansiProcessor(data)
 			return &Item{
-				index:  int32(index),
-				text:   chars,
-				colors: colors}
+				index:      int32(index),
+				trimLength: -1,
+				text:       chars,
+				colors:     colors}
 		})
 	} else {
 		chunkList = NewChunkList(func(data []byte, index int) *Item {
@@ -110,9 +115,10 @@ func Run(opts *Options) {
 			}
 			textRunes := joinTokens(trans)
 			item := Item{
-				index:    int32(index),
-				origText: &data,
-				colors:   nil}
+				index:      int32(index),
+				trimLength: -1,
+				origText:   &data,
+				colors:     nil}
 
 			trimmed, colors := ansiProcessorRunes(textRunes)
 			item.text = trimmed

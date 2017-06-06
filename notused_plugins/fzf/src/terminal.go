@@ -58,6 +58,7 @@ type Terminal struct {
 	initDelay  time.Duration
 	inlineInfo bool
 	prompt     string
+	promptLen  int
 	reverse    bool
 	fullscreen bool
 	hscroll    bool
@@ -133,7 +134,6 @@ func (a byTimeOrder) Less(i, j int) bool {
 }
 
 var _spinner = []string{`-`, `\`, `|`, `/`, `-`, `\`, `|`, `/`}
-var _tabStop int
 
 const (
 	reqPrompt util.EventType = iota
@@ -213,6 +213,7 @@ const (
 	actExecuteSilent
 	actExecuteMulti // Deprecated
 	actSigStop
+	actTop
 )
 
 func toActions(types ...actionType) []action {
@@ -339,10 +340,9 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		wordRubout = fmt.Sprintf("%s[^%s]", sep, sep)
 		wordNext = fmt.Sprintf("[^%s]%s|(.$)", sep, sep)
 	}
-	return &Terminal{
+	t := Terminal{
 		initDelay:  delay,
 		inlineInfo: opts.InlineInfo,
-		prompt:     opts.Prompt,
 		reverse:    opts.Reverse,
 		fullscreen: fullscreen,
 		hscroll:    opts.Hscroll,
@@ -389,6 +389,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		startChan:  make(chan bool, 1),
 		tui:        renderer,
 		initFunc:   func() { renderer.Init() }}
+	t.prompt, t.promptLen = t.processTabs([]rune(opts.Prompt), 0)
+	return &t
 }
 
 // Input returns current query string
@@ -632,7 +634,7 @@ func (t *Terminal) move(y int, x int, clear bool) {
 }
 
 func (t *Terminal) placeCursor() {
-	t.move(0, t.displayWidth([]rune(t.prompt))+t.displayWidth(t.input[:t.cx]), false)
+	t.move(0, t.promptLen+t.displayWidth(t.input[:t.cx]), false)
 }
 
 func (t *Terminal) printPrompt() {
@@ -644,7 +646,7 @@ func (t *Terminal) printPrompt() {
 func (t *Terminal) printInfo() {
 	pos := 0
 	if t.inlineInfo {
-		pos = t.displayWidth([]rune(t.prompt)) + t.displayWidth(t.input) + 1
+		pos = t.promptLen + t.displayWidth(t.input) + 1
 		if pos+len(" < ") > t.window.Width() {
 			return
 		}
@@ -952,6 +954,7 @@ func (t *Terminal) printPreview() {
 	}
 	reader := bufio.NewReader(strings.NewReader(t.previewer.text))
 	lineNo := -t.previewer.offset
+	var ansi *ansiState
 	for {
 		line, err := reader.ReadString('\n')
 		eof := err == io.EOF
@@ -963,7 +966,7 @@ func (t *Terminal) printPreview() {
 			break
 		} else if lineNo > 0 {
 			var fillRet tui.FillReturn
-			extractColor(line, nil, func(str string, ansi *ansiState) bool {
+			_, _, ansi = extractColor(line, ansi, func(str string, ansi *ansiState) bool {
 				trimmed := []rune(str)
 				if !t.preview.wrap {
 					trimmed, _ = t.trimRight(trimmed, maxWidth-t.pwindow.X())
@@ -1240,7 +1243,7 @@ func (t *Terminal) buildPlusList(template string, forcePlus bool) (bool, []*Item
 }
 
 func (t *Terminal) truncateQuery() {
-	maxPatternLength := util.Max(1, t.window.Width()-t.displayWidth([]rune(t.prompt))-1)
+	maxPatternLength := util.Max(1, t.window.Width()-t.promptLen-1)
 	t.input, _ = t.trimRight(t.input, maxPatternLength)
 	t.cx = util.Constrain(t.cx, 0, len(t.input))
 }
@@ -1590,25 +1593,28 @@ func (t *Terminal) Loop() {
 			case actToggleDown:
 				if t.multi && t.merger.Length() > 0 {
 					toggle()
-					t.vmove(-1)
+					t.vmove(-1, true)
 					req(reqList)
 				}
 			case actToggleUp:
 				if t.multi && t.merger.Length() > 0 {
 					toggle()
-					t.vmove(1)
+					t.vmove(1, true)
 					req(reqList)
 				}
 			case actDown:
-				t.vmove(-1)
+				t.vmove(-1, true)
 				req(reqList)
 			case actUp:
-				t.vmove(1)
+				t.vmove(1, true)
 				req(reqList)
 			case actAccept:
 				req(reqClose)
 			case actClearScreen:
 				req(reqRedraw)
+			case actTop:
+				t.vset(0)
+				req(reqList)
 			case actUnixLineDiscard:
 				if t.cx > 0 {
 					t.yanked = copySlice(t.input[:t.cx])
@@ -1628,16 +1634,16 @@ func (t *Terminal) Loop() {
 				t.input = append(append(t.input[:t.cx], t.yanked...), suffix...)
 				t.cx += len(t.yanked)
 			case actPageUp:
-				t.vmove(t.maxItems() - 1)
+				t.vmove(t.maxItems()-1, false)
 				req(reqList)
 			case actPageDown:
-				t.vmove(-(t.maxItems() - 1))
+				t.vmove(-(t.maxItems() - 1), false)
 				req(reqList)
 			case actHalfPageUp:
-				t.vmove(t.maxItems() / 2)
+				t.vmove(t.maxItems()/2, false)
 				req(reqList)
 			case actHalfPageDown:
-				t.vmove(-(t.maxItems() / 2))
+				t.vmove(-(t.maxItems() / 2), false)
 				req(reqList)
 			case actJump:
 				t.jumping = jumpEnabled
@@ -1695,7 +1701,7 @@ func (t *Terminal) Loop() {
 						if t.multi && me.Mod {
 							toggle()
 						}
-						t.vmove(me.S)
+						t.vmove(me.S, true)
 						req(reqList)
 					} else if t.hasPreviewWindow() && t.pwindow.Enclose(my, mx) {
 						scrollPreview(-me.S)
@@ -1703,7 +1709,7 @@ func (t *Terminal) Loop() {
 				} else if t.window.Enclose(my, mx) {
 					mx -= t.window.Left()
 					my -= t.window.Top()
-					mx = util.Constrain(mx-t.displayWidth([]rune(t.prompt)), 0, len(t.input))
+					mx = util.Constrain(mx-t.promptLen, 0, len(t.input))
 					if !t.reverse {
 						my = t.window.Height() - my - 1
 					}
@@ -1749,6 +1755,11 @@ func (t *Terminal) Loop() {
 			}
 			t.truncateQuery()
 			changed = string(previousInput) != string(t.input)
+			if onChanges, prs := t.keymap[tui.Change]; changed && prs {
+				if !doActions(onChanges, tui.Change) {
+					continue
+				}
+			}
 		} else {
 			if mapkey == tui.Rune {
 				if idx := strings.IndexRune(t.jumpLabels, event.Char); idx >= 0 && idx < t.maxItems() && idx < t.merger.Length() {
@@ -1787,12 +1798,12 @@ func (t *Terminal) constrain() {
 	t.offset = util.Max(0, t.offset)
 }
 
-func (t *Terminal) vmove(o int) {
+func (t *Terminal) vmove(o int, allowCycle bool) {
 	if t.reverse {
 		o *= -1
 	}
 	dest := t.cy + o
-	if t.cycle {
+	if t.cycle && allowCycle {
 		max := t.merger.Length() - 1
 		if dest > max {
 			if t.cy == max {

@@ -683,60 +683,8 @@ class TestGoFZF < TestBase
     ]
     assert_equal output, `#{FZF} -fh < #{tempname}`.split($/)
 
-    output = %w[
-      1234567:h
-      12345:he
-      1:hell
-      123:hello
-    ]
+    # Since 0.16.8, --nth doesn't affect --tiebreak
     assert_equal output, `#{FZF} -fh -n2 -d: < #{tempname}`.split($/)
-  end
-
-  def test_tiebreak_length_with_nth_trim_length
-    input = [
-      "apple juice   bottle 1",
-      "apple  ui     bottle 2",
-      "app     ice   bottle 3",
-      "app     ic    bottle 4",
-    ]
-    writelines tempname, input
-
-    # len(1)
-    output = [
-      "app     ice   bottle 3",
-      "app     ic    bottle 4",
-      "apple juice   bottle 1",
-      "apple  ui     bottle 2",
-    ]
-    assert_equal output, `#{FZF} -fa -n1 < #{tempname}`.split($/)
-
-    # len(1 ~ 2)
-    output = [
-      "app     ic    bottle 4",
-      "app     ice   bottle 3",
-      "apple  ui     bottle 2",
-      "apple juice   bottle 1",
-    ]
-    assert_equal output, `#{FZF} -fai -n1..2 < #{tempname}`.split($/)
-
-    # len(1) + len(2)
-    output = [
-      "app     ic    bottle 4",
-      "app     ice   bottle 3",
-      "apple  ui     bottle 2",
-      "apple juice   bottle 1",
-    ]
-    assert_equal output, `#{FZF} -x -f"a i" -n1,2 < #{tempname}`.split($/)
-
-    # len(2)
-    output = [
-      "app     ic    bottle 4",
-      "app     ice   bottle 3",
-      "apple  ui     bottle 2",
-      "apple juice   bottle 1",
-    ]
-    assert_equal output, `#{FZF} -fi -n2 < #{tempname}`.split($/)
-    assert_equal output, `#{FZF} -fi -n2,1..2 < #{tempname}`.split($/)
   end
 
   def test_invalid_cache
@@ -975,15 +923,15 @@ class TestGoFZF < TestBase
     tmux.until { |lines| lines[-10].start_with? '>' }
     tmux.send_keys :Down
     tmux.until { |lines| lines[-9].start_with? '>' }
-    tmux.send_keys :PgUp
+    tmux.send_keys :Up
     tmux.until { |lines| lines[-10].start_with? '>' }
     tmux.send_keys :PgUp
-    tmux.until { |lines| lines[-3].start_with? '>' }
+    tmux.until { |lines| lines[-10].start_with? '>' }
     tmux.send_keys :Up
-    tmux.until { |lines| lines[-4].start_with? '>' }
-    tmux.send_keys :PgDn
     tmux.until { |lines| lines[-3].start_with? '>' }
     tmux.send_keys :PgDn
+    tmux.until { |lines| lines[-3].start_with? '>' }
+    tmux.send_keys :Down
     tmux.until { |lines| lines[-10].start_with? '>' }
   end
 
@@ -1303,6 +1251,20 @@ class TestGoFZF < TestBase
     tmux.until { |lines| lines[-1] == prompt }
     tmux.send_keys :Enter
     tmux.until { |lines| lines[-2] == prompt && lines[-1] == '1' }
+  end
+
+  def test_change_top
+    tmux.send_keys %[seq 1000 | #{FZF} --bind change:top], :Enter
+    tmux.until { |lines| lines.match_count == 1000 }
+    tmux.send_keys :Up
+    tmux.until { |lines| lines[-4] == '> 2' }
+    tmux.send_keys 1
+    tmux.until { |lines| lines[-3] == '> 1' }
+    tmux.send_keys :Up
+    tmux.until { |lines| lines[-4] == '> 10' }
+    tmux.send_keys 1
+    tmux.until { |lines| lines[-3] == '> 11' }
+    tmux.send_keys :Enter
   end
 end
 

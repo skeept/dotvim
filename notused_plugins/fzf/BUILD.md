@@ -13,19 +13,16 @@ Build instructions
 Makefile will set up and use its own `$GOPATH` under the project root.
 
 ```sh
-# Source files are located in src directory
-cd src
-
-# Build fzf binary for your platform in src/fzf
+# Build fzf binary for your platform in target
 make
 
 # Build fzf binary and copy it to bin directory
 make install
 
-# Build 32-bit and 64-bit executables and tarballs
+# Build 32-bit and 64-bit executables and tarballs in target
 make release
 
-# Make release archives for all supported platforms
+# Make release archives for all supported platforms in target
 make release-all
 ```
 
@@ -35,7 +32,7 @@ Alternatively, you can build fzf directly with `go get` command without
 manually cloning the repository.
 
 ```sh
-go get -u github.com/junegunn/fzf/src/fzf
+go get -u github.com/junegunn/fzf
 ```
 
 Third-party libraries used
