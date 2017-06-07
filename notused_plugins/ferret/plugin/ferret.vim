@@ -19,8 +19,9 @@
 " The Silver Searcher (https://github.com/ggreer/the_silver_searcher), or Ack
 " (http://beyondgrep.com/). Support for passing options through to the
 " underlying search command exists, along with the ability to use full regular
-" expression syntax without doing special escaping. On Vim version 8 or higher,
-" searches are performed asynchronously (without blocking the UI).
+" expression syntax without doing special escaping. On modern versions
+" of Vim (version 8 or higher, or Neovim), searches are performed
+" asynchronously (without blocking the UI).
 "
 " Shortcut mappings are provided to start an |:Ack| search (<leader>a) or to
 " search for the word currently under the cursor (<leader>s).
@@ -360,6 +361,10 @@
 "
 "
 " # History
+"
+" ## 2.0 (6 June 2017)
+"
+" - Add support for Neovim, along with |g:FerretNvim| setting.
 "
 " ## 1.5 "Cinco de Cuatro" (4 May 2017)
 "
