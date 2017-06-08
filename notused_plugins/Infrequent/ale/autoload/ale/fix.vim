@@ -233,6 +233,7 @@ function! s:RunFixer(options) abort
 
     while len(a:options.callback_list) > l:index
         let l:Function = a:options.callback_list[l:index]
+
         let l:result = ale#util#FunctionArgCount(l:Function) == 1
         \   ? call(l:Function, [l:buffer])
         \   : call(l:Function, [l:buffer, copy(l:input)])

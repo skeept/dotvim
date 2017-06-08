@@ -46,50 +46,23 @@ function! ale#handlers#python#HandlePEP8Format(buffer, lines) abort
     return l:output
 endfunction
 
-" Add blank lines before control statements.
-function! ale#handlers#python#AddLinesBeforeControlStatements(buffer, lines) abort
-    let l:new_lines = []
-    let l:last_indent_size = 0
+" Given a buffer number and a command name, find the path to the executable.
+" First search on a virtualenv for Python, if nothing is found, try the global
+" command. Returns an empty string if cannot find the executable
+function! ale#handlers#python#GetExecutable(buffer, cmd_name) abort
+    let l:virtualenv = ale#python#FindVirtualenv(a:buffer)
 
-    for l:line in a:lines
-        let l:indent_size = len(matchstr(l:line, '^ *'))
+    if !empty(l:virtualenv)
+        let l:ve_executable = l:virtualenv . '/bin/' . a:cmd_name
 
-        if l:indent_size <= l:last_indent_size
-        \&& match(l:line, '\v^ *(return|if|for|while|break|continue)') >= 0
-            call add(l:new_lines, '')
+        if executable(l:ve_executable)
+            return l:ve_executable
         endif
+    endif
 
-        call add(l:new_lines, l:line)
-        let l:last_indent_size = l:indent_size
-    endfor
+    if executable(a:cmd_name)
+        return a:cmd_name
+    endif
 
-    return l:new_lines
-endfunction
-
-function! ale#handlers#python#AutoPEP8(buffer, lines) abort
-    return {
-    \   'command': 'autopep8 -'
-    \}
-endfunction
-
-function! ale#handlers#python#ISort(buffer, lines) abort
-    let l:config = ale#path#FindNearestFile(a:buffer, '.isort.cfg')
-    let l:config_options = !empty(l:config)
-    \   ? ' --settings-path ' . ale#Escape(l:config)
-    \   : ''
-
-    return {
-    \   'command': 'isort' . l:config_options . ' -',
-    \}
-endfunction
-
-function! ale#handlers#python#YAPF(buffer, lines) abort
-    let l:config = ale#path#FindNearestFile(a:buffer, '.style.yapf')
-    let l:config_options = !empty(l:config)
-    \   ? ' --style ' . ale#Escape(l:config)
-    \   : ''
-
-    return {
-    \   'command': 'yapf --no-local-style' . l:config_options,
-    \}
+    return ''
 endfunction
