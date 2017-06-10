@@ -1,18 +1,25 @@
 " vim: ts=4 sw=4 et
 scriptencoding utf-8
 
-let s:make_id = 0
-let s:job_id = 1
-let s:jobs = {}
-let s:map_job_ids = {}
+if !exists('s:make_id')
+    let s:make_id = 0
+endif
 " A map of make_id to options, e.g. cwd when jobs where started.
-let s:make_info = {}
-let s:jobs_by_maker = {}
+if !exists('s:make_info')
+    let s:make_info = {}
+endif
+if !exists('s:job_id')
+    let s:job_id = 1
+endif
+if !exists('s:jobs')
+    let s:jobs = {}
+endif
+if !exists('s:map_job_ids')
+    let s:map_job_ids = {}
+endif
+
 " Errors by [maker_type][bufnr][lnum]
-let s:current_errors = {
-    \ 'project': {},
-    \ 'file': {}
-    \ }
+let s:current_errors = {'project': {}, 'file': {}}
 let s:maker_defaults = {
             \ 'buffer_output': 1,
             \ 'remove_invalid_entries': 0}
@@ -85,9 +92,9 @@ function! neomake#ListJobs() abort
     endif
     echom 'make_id | job_id | name/maker'
     for jobinfo in jobs
-        let desc = has_key(jobinfo, 'name')
+        let desc = !empty(jobinfo.maker.name) && jobinfo.name != jobinfo.maker.name
                     \ ? jobinfo.name. ' ('.jobinfo.maker.name.')'
-                    \ : jobinfo.maker.name
+                    \ : jobinfo.name
         echom printf('%7d | %6d | %s', jobinfo.make_id, jobinfo.id, desc)
     endfor
 endfunction
@@ -216,7 +223,7 @@ function! s:MakeJob(make_id, options) abort
     "  - exit_callback (string/function, default: 0)
     let jobinfo = extend(copy(s:jobinfo_base), extend({
         \ 'id': job_id,
-        \ 'name': 'neomake_'.job_id,
+        \ 'name': empty(get(a:options.maker, 'name', '')) ? 'neomake_'.job_id : a:options.maker.name,
         \ 'maker': a:options.maker,
         \ 'bufnr': a:options.bufnr,
         \ 'file_mode': a:options.file_mode,
