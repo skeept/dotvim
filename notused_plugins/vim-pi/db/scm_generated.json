@@ -5499,6 +5499,10 @@
     "type": "git",
     "url": "git://github.com/tenfyzhong/golint-fixer.vim"
   },
+  "5575": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/vim-wwdc17-theme"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
