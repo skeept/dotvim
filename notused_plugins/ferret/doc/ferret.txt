@@ -31,7 +31,8 @@ Ferret improves Vim's multi-file search in four ways:
 1. Powerful multi-file search ~
 
 Ferret provides an |:Ack| command for searching across multiple files using
-The Silver Searcher (https://github.com/ggreer/the_silver_searcher), or Ack
+ripgrep (https://github.com/BurntSushi/ripgrep), The Silver Searcher
+(https://github.com/ggreer/the_silver_searcher), or Ack
 (http://beyondgrep.com/). Support for passing options through to the
 underlying search command exists, along with the ability to use full regular
 expression syntax without doing special escaping. On modern versions of Vim
@@ -47,11 +48,6 @@ instead, and a <leader>l mapping as a shortcut to |:Lack|.
 
 |:Back| and |:Black| are analogous to |:Ack| and |:Lack|, but scoped to search
 within currently open buffers only.
-
-Finally, Ferret offers integration with dispatch.vim
-(https://github.com/tpope/vim-dispatch), which enables asynchronous
-searching on older versions of Vim (prior to version 8), despite the fact
-that Vim itself is single-threaded.
 
 2. Streamlined multi-file replace ~
 
@@ -74,8 +70,9 @@ easier to immediately identify matches by centering them within the viewport.
 
 Finally, Ferret provides a |:Qargs| command that puts the files currently in
 the |quickfix| listing into the |:args| list, where they can be operated on in
-bulk via the |:argdo| command. This is what's used under the covers by |:Acks|
-to do its work.
+bulk via the |:argdo| command. This is what's used under the covers on older
+versions of Vim by |:Acks| to do its work (on newer versions the built-in
+|:cfdo| is used instead).
 
 INSTALLATION                                               *ferret-installation*
 
@@ -113,11 +110,6 @@ as needed.
 On newer versions of Vim (version 8 and above), the search process runs
 asynchronously in the background and does not block the UI.
 
-On older Vim versions (prior to version 8), if dispatch.vim is installed the
-search process will run asynchronously via the |:Make| command, otherwise it
-will be run synchronously via |:cexpr|. The |g:FerretDispatch| option can be
-used to prevent the use of dispatch.vim.
-
 Asynchronous searches are preferred because they do not block, despite the
 fact that Vim itself is single threaded.
 
@@ -150,8 +142,7 @@ Just like |:Ack|, but instead of using the |quickfix| listing, which is global
 across an entire Vim instance, it uses the |location-list|, which is a
 per-window construct.
 
-Note that |:Lack| always runs synchronously via |:cexpr|, because dispatch.vim
-doesn't currently support the |location-list|.
+Note that |:Lack| always runs synchronously via |:cexpr|.
 
 :Lack! {pattern} {options}                                              *:Lack!*
 
@@ -269,20 +260,6 @@ in your |.vimrc| instead using |:nmap|:
 OPTIONS                                                         *ferret-options*
 
 
-                                                              *g:FerretDispatch*
-|g:FerretDispatch|                                          boolean (default: 1)
-
-Controls whether to use vim-dispatch (and specifically, |:Make|) to run |:Ack|
-searches asynchronously, when available. To prevent vim-dispatch from being
-used, set to 0:
->
-    let g:FerretDispatch=0
-<
-Note that on sufficiently recent versions of Vim with |+job| support, Ferret
-will first try to use |+job|, falling back to vim-dispatch and consulting
-|g:FerretDispatch| only if |g:FerretJob| is set to 0.
-
-
                                                                   *g:FerretNvim*
 |g:FerretNvim|                                              boolean (default: 1)
 
@@ -290,8 +267,7 @@ Controls whether to use Neovim's |job-control| features, when available, to
 run searches asynchronously. To prevent this from being used, set to 0, in
 which case Ferret will fall back to the next method in the list (Vim's
 built-in async primitives -- see |g:FerretJob| -- which are typically not
-available in Neovim, so will then fall back to the next method,
-vim-dispatch; see |g:FerretDispatch|).
+available in Neovim, so will then fall back to the next available method).
 >
     let g:FerretNvim=0
 <
@@ -301,7 +277,7 @@ vim-dispatch; see |g:FerretDispatch|).
 
 Controls whether to use Vim's |+job| feature, when available, to run searches
 asynchronously. To prevent |+job| from being used, set to 0, in which case
-Ferret will fall back to vim-dispatch (see also: |g:FerretDispatch|):
+Ferret will fall back to the next available method.
 >
     let g:FerretJob=0
 <
@@ -350,6 +326,22 @@ In the event that Ferret aborts a search that has hit the |g:FerretMaxResults|
 limit, a message will be printed prompting users to run the search again
 with |:Ack!| or |:Lack!| if they want to bypass the limit.
 
+
+                                                              *g:FerretAutojump*
+|g:FerretAutojump|                                           number (default: 1)
+
+Controls whether Ferret will automatically jump to the first found match.
+
+- Set to 0, Ferret will show the search results but perform no jump.
+- Set to 1 (the default), Ferret will show the search results and focus the
+  result listing.
+- Set to 2, Ferret will show the search results and jump to the first found
+  match.
+
+Example override:
+>
+    let g:FerretAutojump=2
+<
 
                                                              *g:FerretQFOptions*
 |g:FerretQFOptions|                                         boolean (default: 1)
@@ -635,9 +627,6 @@ AUTHORS                                                         *ferret-authors*
 
 Ferret is written and maintained by Greg Hurrell <greg@hurrell.net>.
 
-The idea for vim-dispatch integration was taken from Miles Sterrett's
-ack.vim plug-in (https://github.com/mileszs/ack.vim).
-
 Other contributors that have submitted patches include (in alphabetical
 order):
 
@@ -649,6 +638,13 @@ order):
 - Vaibhav Sagar
 
 HISTORY                                                         *ferret-history*
+
+3.0 (13 June 2017) ~
+
+- Improve handling of backslash escapes
+  (https://github.com/wincent/ferret/issues/41).
+- Add |g:FerretAutojump|.
+- Drop support for vim-dispatch.
 
 2.0 (6 June 2017) ~
 

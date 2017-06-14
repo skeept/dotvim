@@ -2323,6 +2323,10 @@
     "type": "git",
     "url": "git://github.com/jmcantrell/vim-spacepaste"
   },
+  "4136": {
+    "type": "git",
+    "url": "git://github.com/sonobre/briofita_vim"
+  },
   "4137": {
     "type": "git",
     "url": "git://github.com/sandeepravi/refactor-rails.vim"
@@ -5502,6 +5506,10 @@
   "5575": {
     "type": "git",
     "url": "git://github.com/lifepillar/vim-wwdc17-theme"
+  },
+  "5576": {
+    "type": "git",
+    "url": "git://github.com/AlessandroYorba/Absolute"
   },
   "586": {
     "type": "git",

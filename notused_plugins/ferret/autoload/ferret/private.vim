@@ -20,27 +20,6 @@ function! s:delete(first, last)
   execute "normal \<C-W>\<C-P>"
 endfunction
 
-" Returns 1 if we should/can use vim-dispatch.
-function! ferret#private#dispatch() abort
-  ""
-  " @option g:FerretDispatch boolean 1
-  "
-  " Controls whether to use vim-dispatch (and specifically, |:Make|) to run
-  " |:Ack| searches asynchronously, when available. To prevent vim-dispatch from
-  " being used, set to 0:
-  "
-  " ```
-  " let g:FerretDispatch=0
-  " ```
-  "
-  " Note that on sufficiently recent versions of Vim with |+job| support, Ferret
-  " will first try to use |+job|, falling back to vim-dispatch and consulting
-  " |g:FerretDispatch| only if |g:FerretJob| is set to 0.
-  "
-  let l:dispatch=get(g:, 'FerretDispatch', 1)
-  return l:dispatch && exists(':Make') == 2
-endfunction
-
 " Returns 1 if we should use Neovim's |job-control| features.
 function! ferret#private#nvim()
   ""
@@ -51,8 +30,7 @@ function! ferret#private#nvim()
   " being used, set to 0, in which case Ferret will fall back to the next
   " method in the list (Vim's built-in async primitives -- see
   " |g:FerretJob| -- which are typically not available in Neovim, so
-  " will then fall back to the next method, vim-dispatch; see
-  " |g:FerretDispatch|).
+  " will then fall back to the next available method).
   "
   " ```
   " let g:FerretNvim=0
@@ -69,8 +47,7 @@ function! ferret#private#async()
   "
   " Controls whether to use Vim's |+job| feature, when available, to run
   " searches asynchronously. To prevent |+job| from being used, set to 0, in
-  " which case Ferret will fall back to vim-dispatch (see also:
-  " |g:FerretDispatch|):
+  " which case Ferret will fall back to the next available method.
   "
   " ```
   " let g:FerretJob=0
@@ -88,24 +65,15 @@ endfunction
 "
 " (1) Using `:echomsg`
 "
-"     When not using vim-dispatch, the screen is getting cleared before the
-"     user sees it, even with a pre-emptive `:redraw!` beforehand. Note that
-"     we can get the message to linger on the screen by making it multi-line and
-"     forcing Vim to show a prompt (see `:h hit-enter-prompt`), but this is not
-"     reliable because the number of lines required to force the prompt will
-"     vary by system, depending on the value of `'cmdheight'`.
+"     The screen is getting cleared before the user sees it, even
+"     with a pre-emptive `:redraw!` beforehand. Note that we can get
+"     the message to linger on the screen by making it multi-line and
+"     forcing Vim to show a prompt (see `:h hit-enter-prompt`), but
+"     this is not reliable because the number of lines required to
+"     force the prompt will vary by system, depending on the value of
+"     `'cmdheight'`.
 "
-"     When using vim-dispatch, anything we output ends up getting swallowed
-"     before the user sees it, because something it is doing is clearing the
-"     screen. This is true no matter how many lines we output.
-"
-" (2) Writing back into the quickfix/location list
-"
-"     This interacts poorly with vim-dispatch. If we write back an error message
-"     and then call `:copen 1`, vim-dispatch ends up closing the listing before
-"     the user sees it.
-"
-" (3) Using `:echoerr`
+" (2) Using `:echoerr`
 "
 "     This works, but presents to the user as an exception (see `:h :echoerr`).
 "
@@ -127,9 +95,39 @@ function! s:parse(args) abort
     unlet g:ferret_lastsearch
   endif
 
+  " Split on unescaped spaces:
+  "
+  "   foo bar     -> [foo, bar]
+  "   foo\ bar    -> [foo\ bar] (no split)
+  "   foo\\ bar   -> [foo\\, bar]
+  "   foo\\\ bar  -> [foo\\\ bar] (no split)
+  "   foo\\\\ bar -> [foo\\\\, bar]
+  "
+  " We build a regex for this as follows:
+  "
+  "   - match an odd number of "X": X(XX)*
+  "   - add negative lookbehind (don't match after an "X"): X\@<!X(XX)*
+  "   - with whitespace (for readability): X \@<! X(XX)*
+  "   - add negative lookahead (don't match before an "X"): X\@<!X(XX)*X\@!
+  "   - with whitespace: X \@<! X(XX)* X\@!
+  "   - denote this "..."
+  "   - match a "Y" not preceded by the above: (...)\@<!Y
+  "   - with whitespace: (...) \@<! Y
+  "   - replace "..." with actual pattern: (X\@<!X(XX)*X\@!)\@<!Y
+  "   - escape ( and ): \(X\@<!X\(XX\)*X\@!\)\@<!Y
+  "   - replace "X" with "\\": \(\\\@<!\\\(\\\\\)*\\\@!\)\@<!Y
+  "   - replace "Y" with " ": '\(\\\@<!\\\(\\\\\)*\\\@!\)\@<! '
+  "
+  let l:odd_number_of_backslashes='\\\@<!\\\(\\\\\)*\\\@!'
+  let l:unescaped_space='\('.l:odd_number_of_backslashes.'\)\@<! '
+  let l:args=split(a:args, l:unescaped_space)
   let l:expanded_args=[]
 
-  for l:arg in a:args
+  for l:arg in l:args
+    " Because we split on unescaped spaces, we know any escaped spaces remaining
+    " inside arguments really are supposed to be just spaces.
+    let l:arg=substitute(l:arg, '\\ ', ' ', '')
+
     if ferret#private#option(l:arg)
       " Options get passed through as-is.
       call add(l:expanded_args, l:arg)
@@ -170,7 +168,8 @@ function! ferret#private#post(type) abort
   let l:lastsearch = get(g:, 'ferret_lastsearch', '')
   let l:qflist = a:type == 'qf' ? getqflist() : getloclist(0)
   let l:tip = ' [see `:help ferret-quotes`]'
-  if len(l:qflist) == 0
+  let l:len=len(l:qflist)
+  if l:len == 0
     let l:base = 'No results for search pattern `' . l:lastsearch . '`'
 
     " Search pattern has no spaces and is entirely enclosed in quotes;
@@ -183,7 +182,7 @@ function! ferret#private#post(type) abort
   else
     " Find any "invalid" entries in the list.
     let l:invalid = filter(copy(l:qflist), 'v:val.valid == 0')
-    if len(l:invalid) == len(l:qflist)
+    if len(l:invalid) == l:len
       " Every item in the list was invalid.
       redraw!
       echohl ErrorMsg
@@ -194,25 +193,20 @@ function! ferret#private#post(type) abort
 
       let l:base = 'Search for `' . l:lastsearch . '` failed'
 
-      " When using vim-dispatch, the messages printed above get cleared, so the
-      " only way to see them is with `:messages`.
-      let l:suffix = a:type == 'qf' && ferret#private#dispatch() ?
-            \ ' (run `:messages` to see details)' :
-            \ ''
-
       " If search pattern looks like `'foo` or `"bar`, it means the user
       " probably tried to search for 'foo bar' or "bar baz" etc.
       if l:lastsearch =~ '\v^[' . "'" . '"].+[^' . "'" . '"]$'
-        call ferret#private#error(l:base . l:tip . l:suffix)
+        call ferret#private#error(l:base . l:tip)
       else
-        call ferret#private#error(l:base . l:suffix)
+        call ferret#private#error(l:base)
       endif
     endif
   endif
+  return l:len
 endfunction
 
-function! ferret#private#ack(bang, ...) abort
-  let l:command=s:parse(a:000)
+function! ferret#private#ack(bang, args) abort
+  let l:command=s:parse(a:args)
   call ferret#private#hlsearch()
 
   let l:executable=ferret#private#executable()
@@ -225,8 +219,6 @@ function! ferret#private#ack(bang, ...) abort
     call ferret#private#nvim#search(l:command, 1, a:bang)
   elseif ferret#private#async()
     call ferret#private#async#search(l:command, 1, a:bang)
-  elseif ferret#private#dispatch()
-    call ferret#private#dispatch#search(l:command)
   else
     call ferret#private#vanilla#search(l:command, 1)
   endif
@@ -238,12 +230,12 @@ function! ferret#private#buflist() abort
   return l:bufpaths
 endfunction
 
-function! ferret#private#back(bang, ...) abort
-  call call('ferret#private#ack', a:bang, a:000 + ferret#private#buflist())
+function! ferret#private#back(bang, args) abort
+  call call('ferret#private#ack', a:bang, a:args . ' ' . ferret#private#buflist())
 endfunction
 
-function! ferret#private#black(bang, ...) abort
-  call call('ferret#private#lack', a:bang, a:000 + ferret#private#buflist())
+function! ferret#private#black(bang, args) abort
+  call call('ferret#private#lack', a:bang, a:args . ' ' . ferret#private#buflist())
 endfunction
 
 function! ferret#private#installprompt() abort
@@ -252,8 +244,8 @@ function! ferret#private#installprompt() abort
         \ )
 endfunction
 
-function! ferret#private#lack(bang, ...) abort
-  let l:command=s:parse(a:000)
+function! ferret#private#lack(bang, args) abort
+  let l:command=s:parse(a:args)
   call ferret#private#hlsearch()
 
   let l:executable=ferret#private#executable()
