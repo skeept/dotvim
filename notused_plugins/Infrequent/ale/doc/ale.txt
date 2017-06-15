@@ -33,6 +33,8 @@ CONTENTS                                                         *ale-contents*
       erlc................................|ale-erlang-erlc|
     fortran...............................|ale-fortran-options|
       gcc.................................|ale-fortran-gcc|
+    fusionscript..........................|ale-fuse-options|
+      fusion-lint.........................|ale-fuse-fusionlint|
     go....................................|ale-go-options|
       gometalinter........................|ale-go-gometalinter|
     handlebars............................|ale-handlebars-options|
@@ -151,6 +153,7 @@ The following languages and tools are supported.
 * Erlang: 'erlc'
 * Fortran: 'gcc'
 * Go: 'gofmt', 'go vet', 'golint', 'go build', 'gosimple', 'staticcheck'
+* FusionScript: 'fusion-lint'
 * Haml: 'hamllint'
 * Handlebars: 'ember-template-lint'
 * Haskell: 'ghc', 'ghc-mod', 'hlint', 'hdevtools'
@@ -740,6 +743,35 @@ g:ale_sign_warning                                         *g:ale_sign_warning*
   Default: `'--'`
 
   The sign for warnings in the sign gutter.
+
+
+g:ale_type_map                                                 *g:ale_type_map*
+                                                               *b:ale_type_map*
+  Type: |Dictionary|
+  Default: `{}`
+
+  This option can be set re-map problem types for linters. Each key in
+  the |Dictionary| should be the name of a linter, and each value must be
+  a |Dictionary| mapping error types from one type to another. The
+  following types are supported:
+
+  `'E'`  - `{'type': 'E'}`
+  `'ES'` - `{'type': 'E', 'sub_type': 'style'}`
+  `'W'`  - `{'type': 'W'}`
+  `'WS'` - `{'type': 'W', 'sub_type': 'style'}`
+  `'I'`  - `{'type': 'I'}`
+
+  For example, if you want to turn flake8 errors into warnings, you can do
+  the following: >
+
+  let g:ale_type_map = {'flake8', {'ES': 'WS', 'E': 'W'}}
+<
+  If you wanted to turn style errors and warnings into regular errors and
+  warnings, you can use the following: >
+
+  let g:ale_type_map = {'flake8', {'ES': 'E', 'WS': 'W'}}
+<
+  Type maps can be set per-buffer with `b:ale_type_map`.
 
 
 g:ale_warn_about_trailing_whitespace     *g:ale_warn_about_trailing_whitespace*

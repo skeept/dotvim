@@ -5511,6 +5511,14 @@
     "type": "git",
     "url": "git://github.com/AlessandroYorba/Absolute"
   },
+  "5577": {
+    "type": "git",
+    "url": "git://github.com/tenfyzhong/CompleteParameter.vim"
+  },
+  "5578": {
+    "type": "git",
+    "url": "git://github.com/thcipriani/literate-vimrc"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

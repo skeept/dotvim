@@ -257,6 +257,28 @@ function! ale#engine#SetResults(buffer, loclist) abort
     endif
 endfunction
 
+function! s:RemapItemTypes(type_map, loclist) abort
+    for l:item in a:loclist
+        let l:key = l:item.type
+        \   . (get(l:item, 'sub_type', '') ==# 'style' ? 'S' : '')
+        let l:new_key = get(a:type_map, l:key, '')
+
+        if l:new_key ==# 'E'
+        \|| l:new_key ==# 'ES'
+        \|| l:new_key ==# 'W'
+        \|| l:new_key ==# 'WS'
+        \|| l:new_key ==# 'I'
+            let l:item.type = l:new_key[0]
+
+            if l:new_key ==# 'ES' || l:new_key ==# 'WS'
+                let l:item.sub_type = 'style'
+            elseif has_key(l:item, 'sub_type')
+                call remove(l:item, 'sub_type')
+            endif
+        endif
+    endfor
+endfunction
+
 function! ale#engine#FixLocList(buffer, linter_name, loclist) abort
     let l:new_loclist = []
 
@@ -316,6 +338,12 @@ function! ale#engine#FixLocList(buffer, linter_name, loclist) abort
 
         call add(l:new_loclist, l:item)
     endfor
+
+    let l:type_map = get(ale#Var(a:buffer, 'type_map'), a:linter_name, {})
+
+    if !empty(l:type_map)
+        call s:RemapItemTypes(l:type_map, l:new_loclist)
+    endif
 
     return l:new_loclist
 endfunction
@@ -538,9 +566,22 @@ function! s:CheckWithTSServer(buffer, linter, executable) abort
     let l:open_documents = l:info.open_lsp_documents
     let l:is_open = index(l:open_documents, a:linter.name) >= 0
 
-    call ale#lsp#StartProgram(a:executable, a:executable, function('s:HandleLSPResponse'))
+    let l:command = ale#job#PrepareCommand(a:executable)
+    let l:job_id = ale#lsp#StartProgram(a:executable, l:command, function('s:HandleLSPResponse'))
+
+    if !l:job_id
+        if g:ale_history_enabled
+            call ale#history#Add(a:buffer, 'failed', l:job_id, l:command)
+        endif
+
+        return
+    endif
 
     if !l:is_open
+        if g:ale_history_enabled
+            call ale#history#Add(a:buffer, 'started', l:job_id, l:command)
+        endif
+
         call add(l:open_documents, a:linter.name)
         call ale#lsp#SendMessageToProgram(
         \   a:executable,
