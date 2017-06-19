@@ -5373,7 +5373,7 @@
   },
   "5524": {
     "type": "git",
-    "url": "git://github.com/aklt/vim-rel"
+    "url": "git://github.com/aklt/rel.vim"
   },
   "5526": {
     "type": "git",

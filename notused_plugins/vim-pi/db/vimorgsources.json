@@ -51,7 +51,7 @@
 "workbook":{"archive_name":"workbook.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25034","version":"0.02","vim_script_nr":5527},
 "autopack":{"archive_name":"autopack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25116","version":"0.02","vim_script_nr":5526},
 "vim-indentguides":{"archive_name":"vim-indentguides-0.1.0.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24965","version":"0.1.0","vim_script_nr":5525},
-"rel":{"archive_name":"vim-rel.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25309","version":"v0.2.1","vim_script_nr":5524},
+"rel":{"archive_name":"rel.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25319","version":"0.2.2","vim_script_nr":5524},
 "VIM_syntax_highlighting__filetype_plugi":{"archive_name":"hp-25.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24962","version":"0.2","vim_script_nr":5523},
 "vim-eslint-fix":{"archive_name":"vim-eslint-fix.vim","script-type":"patch","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24960","version":"0.0.0","vim_script_nr":5522},
 "vim-numbers":{"archive_name":"vim-numbers.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24958","version":"1.0.1","vim_script_nr":5521},
