@@ -5519,6 +5519,26 @@
     "type": "git",
     "url": "git://github.com/thcipriani/literate-vimrc"
   },
+  "5580": {
+    "type": "git",
+    "url": "git://github.com/ZSaberLv0/ZFVimTxtHighlight"
+  },
+  "5581": {
+    "type": "git",
+    "url": "git://github.com/ZSaberLv0/ZFVimIndentMove"
+  },
+  "5582": {
+    "type": "git",
+    "url": "git://github.com/ZSaberLv0/ZFVimFoldBlock"
+  },
+  "5583": {
+    "type": "git",
+    "url": "git://github.com/arithran/vim-delete-hidden-buffers"
+  },
+  "5584": {
+    "type": "git",
+    "url": "git://github.com/diepm/vim-php-wrapper"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
