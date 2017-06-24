@@ -339,9 +339,7 @@ function! neosnippet#parser#_get_completed_snippet(completed_item, cur_text, nex
     for arg in split(substitute(
           \ neosnippet#parser#_get_in_paren('<', '>', abbr),
           \ '<\zs.\{-}\ze>', '', 'g'), '[^[]\zs\s*,\s*')
-      let args .= printf('${%d:#:%s%s}',
-            \ cnt, ((args != '') ? ', ' : ''),
-            \ escape(arg, '{}'))
+      let args .= neosnippet#parser#_conceal_argument(arg, cnt, args)
       let cnt += 1
     endfor
     let snippet .= args
@@ -357,14 +355,14 @@ function! neosnippet#parser#_get_completed_snippet(completed_item, cur_text, nex
         \ neosnippet#parser#_get_in_paren(key, pair, abbr),
         \ key.'\zs.\{-}\ze'.pair . '\|<\zs.\{-}\ze>', '', 'g'),
         \ '[^[]\zs\s*,\s*')
-    if key ==# '(' && arg ==# 'self' && &filetype ==# 'python'
+    if key ==# '(' && (
+          \ (&filetype ==# 'python' && arg ==# 'self') ||
+          \ (&filetype ==# 'rust' && arg =~# '\m^&\?\(mut \)\?self$'))
       " Ignore self argument
       continue
     endif
 
-    let args .= printf('${%d:#:%s%s}',
-          \ cnt, ((args != '') ? ', ' : ''),
-          \ escape(arg, '{}'))
+    let args .= neosnippet#parser#_conceal_argument(arg, cnt, args)
     let cnt += 1
   endfor
   let snippet .= args
@@ -406,4 +404,16 @@ function! neosnippet#parser#_get_in_paren(key, pair, str) abort "{{{
   return ''
 endfunction"}}}
 
+function! neosnippet#parser#_conceal_argument(arg, cnt, args) abort "{{{
+  let outside = ''
+  let inside = ''
+  if (a:args != '')
+    if g:neosnippet#enable_optional_arguments
+      let inside = ', '
+    else
+      let outside = ', '
+    endif
+  endif
+  return printf('%s${%d:#:%s%s}', outside, a:cnt, inside, escape(a:arg, '{}'))
+endfunction"}}}
 " vim: foldmethod=marker

@@ -21,6 +21,7 @@ CONTENTS                                                         *ale-contents*
       foodcritic..........................|ale-chef-foodcritic|
     cpp...................................|ale-cpp-options|
       clang...............................|ale-cpp-clang|
+      clangcheck..........................|ale-cpp-clangcheck|
       clangtidy...........................|ale-cpp-clangtidy|
       cppcheck............................|ale-cpp-cppcheck|
       cpplint.............................|ale-cpp-cpplint|
@@ -406,6 +407,10 @@ g:ale_lint_on_enter                                       *g:ale_lint_on_enter*
   be used to apply linters when buffers are first opened. If this is not
   desired, this variable can be set to `0` in your vimrc file to disable this
   behaviour.
+
+  The |FileChangedShellPost| and |BufEnter| events will be used to check if
+  files have been changed outside of Vim. If a file is changed outside of
+  Vim, it will be checked when it is next opened.
 
 
 g:ale_lint_on_filetype_changed                 *g:ale_lint_on_filetype_changed*
