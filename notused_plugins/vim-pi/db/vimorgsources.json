@@ -27,7 +27,7 @@
 "vim-sass-colors":{"archive_name":"vim-sass-colors-0.6.4.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25313","version":"0.6.4","vim_script_nr":5558},
 "auto_update_cscope_ctags_database":{"archive_name":"auto_update_cscope_ctags_database.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25228","version":"2.0.2","vim_script_nr":5557},
 "Multiplayer":{"archive_name":"multiplayer.vim.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25094","version":"0.9","vim_script_nr":5555},
-"SumOfSelection":{"archive_name":"SumOfSelection-1.15.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25300","version":"1.15","vim_script_nr":5554},
+"SumOfSelection":{"archive_name":"SumOfSelection-1.16.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25334","version":"1.16","vim_script_nr":5554},
 "vim-daps":{"archive_name":"vim-daps-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25123","version":"0.1.0","vim_script_nr":5553},
 "foldtext":{"archive_name":"foldtext.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25085","version":"0.01","vim_script_nr":5552},
 "vikibase":{"archive_name":"vikibase.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25084","version":"5.00","vim_script_nr":5551},
