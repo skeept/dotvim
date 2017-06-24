@@ -498,6 +498,7 @@ function! LoadUnite() "{{{
         \ -input=~/vimfiles/Vimwiki/<CR>
   " }}}
 endfunction " }}}
+
 if 0
 nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
 nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call jraf#uniteColorSchemeResume()<CR>

@@ -1,10 +1,5 @@
 " is_windows, evim? {{{
 
-" When started as "evim", evim.vim will already have done these settings.
-if v:progname =~? "evim"
-  finish
-endif
-
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
@@ -68,20 +63,18 @@ function! SetupVAM()
   command! -nargs=* -bar VAMAddToActiveAddons let g:active_addons += [<f-args>]
 
   let g:vim_addon_manager = {}
-  let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
-  exec 'set rtp+='.vam_install_path.'/vam'
+  let vam_install_path = escape(g:p0 . '/bundle/vam', ' \')
+  exec 'set rtp+='. vam_install_path
   let g:vim_addon_manager.additional_addon_dirs = [
-        \ escape(expand(g:p0 . '/notused_plugins'), ' \'),
-        \ escape(expand(g:p0 . '/local_plugins'), ' \'),
-        \ escape(expand(g:p0 . '/notused_plugins/Infrequent'), ' \'),
+        \ escape(g:p0 . '/notused_plugins', ' \'),
+        \ escape(g:p0 . '/local_plugins', ' \'),
+        \ escape(g:p0 . '/notused_plugins/Infrequent', ' \'),
         \ ]
 
-  "VAMAddToActiveAddons ctrlp SmartusLine TaskList Supertab
   VAMAddToActiveAddons ctrlp TaskList Supertab
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons neocomplete
-  VAMAddToActiveAddons UltiSnips
   "VAMAddToActiveAddons startify
   VAMAddToActiveAddons fzf fzf-vim
   "VAMAddToActiveAddons argumentative projectionist
@@ -91,7 +84,6 @@ function! SetupVAM()
   VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
   VAMAddToActiveAddons junkfile
-  VAMAddToActiveAddons denite
   VAMAddToActiveAddons nerdcommenter
   VAMAddToActiveAddons unite-outline unite-qf
   VAMAddToActiveAddons vim-diff-enhanced
@@ -114,9 +106,9 @@ function! SetupVAM()
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
-  if has("python")
-    "let g:active_addons += ['UltiSnips']
-    "VAMAddToActiveAddons UltiSnips
+  if has("python3")
+    VAMAddToActiveAddons UltiSnips
+    VAMAddToActiveAddons denite
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
