@@ -40,7 +40,12 @@ function! ale#fix#ApplyQueuedFixes() abort
         endif
 
         if l:data.should_save
-            set nomodified
+            if empty(&buftype)
+                noautocmd :w!
+            else
+                call writefile(l:data.output, 'fix_test_file')
+                set nomodified
+            endif
         endif
     endif
 
@@ -74,10 +79,6 @@ function! ale#fix#ApplyFixes(buffer, output) abort
         endif
 
         let l:data.done = 1
-    endif
-
-    if l:data.changes_made && l:data.should_save
-        call writefile(a:output, l:data.filename)
     endif
 
     if !bufexists(a:buffer)
