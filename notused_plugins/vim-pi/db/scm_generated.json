@@ -5539,6 +5539,10 @@
     "type": "git",
     "url": "git://github.com/diepm/vim-php-wrapper"
   },
+  "5585": {
+    "type": "git",
+    "url": "git://github.com/aklt/stunter.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
