@@ -1,10 +1,15 @@
-# Install / create archive with new compiles files
+﻿# Install / create archive with new compiles files
 
 Param(
     [string]$dest='C:\Program Files\vim\vim80',
     [string]$source='C:\htemp\vim',
     [switch]$arch
 )
+
+$alt_source = "C:\ht\vim"
+if(test-path $alt_source) {
+  $source = $alt_source
+}
 
 if(-not [bool]$arch) {
   $iden_curr = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent())
