@@ -2779,6 +2779,10 @@
     "type": "git",
     "url": "git://github.com/oinksoft/tcd.vim"
   },
+  "4433": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-ingo-library"
+  },
   "4434": {
     "type": "git",
     "url": "git://github.com/idanarye/vim-erroneous"
