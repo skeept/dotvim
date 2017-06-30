@@ -72,6 +72,8 @@ CONTENTS                                                         *ale-contents*
     php...................................|ale-php-options|
       phpcs...............................|ale-php-phpcs|
       phpmd...............................|ale-php-phpmd|
+    pug...................................|ale-pug-options|
+      puglint.............................|ale-pug-puglint|
     python................................|ale-python-options|
       autopep8............................|ale-python-autopep8|
       flake8..............................|ale-python-flake8|
@@ -101,6 +103,9 @@ CONTENTS                                                         *ale-contents*
       eslint..............................|ale-typescript-eslint|
       tslint..............................|ale-typescript-tslint|
       tsserver............................|ale-typescript-tsserver|
+    verilog/systemverilog.................|ale-verilog-options|
+      iverilog............................|ale-verilog-iverilog|
+      verilator...........................|ale-verilog-verilator|
     vim...................................|ale-vim-options|
       vint................................|ale-vim-vint|
     xml...................................|ale-xml-options|

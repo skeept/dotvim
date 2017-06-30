@@ -1,5 +1,5 @@
 {
-"factorus":{"archive_name":"factorus.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25357","version":"1.0","vim_script_nr":5586},
+"factorus":{"archive_name":"factorus.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25361","version":"1.5","vim_script_nr":5586},
 "stunter":{"archive_name":"stunter.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25344","version":"0.1.0","vim_script_nr":5585},
 "Vim_PHP_Wrapper":{"archive_name":"vim-php-wrapper-1.0.1.tgz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25360","version":"1.0.1","vim_script_nr":5584},
 "DeleteHiddenBuffers":{"archive_name":"vim-delete-hidden-buffers-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25328","version":"1.0","vim_script_nr":5583},
