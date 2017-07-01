@@ -55,8 +55,9 @@ function! wk#echoOrPrintTime()
     let g:wk.echoOrPrintTimeSetting = v:count
   endif
 
-  "We now adjust for time zone right here. This might lead to some confusion
-  let hours_adjust = ($TZ == 'GMT0') ? 0 : 7
+  " We now adjust for time zone right here. Offset in Dallas is 6 or 7 hours
+  let is_winter = 0 "Time changes in Dallas, need to adjust computation
+  let hours_adjust = ($TZ == 'GMT0') ? 0 : (is_winter ? 7 : 6)
   let time_display = strftime("%a, %d %b %Y %H:%M", (expand("<cWORD>") + hours_adjust*3600))
 
   if g:wk.echoOrPrintTimeSetting != 1
