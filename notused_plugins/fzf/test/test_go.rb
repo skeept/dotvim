@@ -73,6 +73,7 @@ class Tmux
       else
         raise "Unknown shell: #{shell}"
       end
+    go("set-window-option -t #{@win} pane-base-index 0")
     @lines = `tput lines`.chomp.to_i
 
     if shell == :fish
@@ -257,6 +258,12 @@ class TestGoFZF < TestBase
 
     tmux.send_keys :Enter
     assert_equal 'hello', readonce.chomp
+  end
+
+  def test_fzf_default_command_failure
+    tmux.send_keys fzf.sub('FZF_DEFAULT_COMMAND=', 'FZF_DEFAULT_COMMAND=false'), :Enter
+    tmux.until { |lines| lines[-2].include?('ERROR') }
+    tmux.send_keys :Enter
   end
 
   def test_key_bindings
