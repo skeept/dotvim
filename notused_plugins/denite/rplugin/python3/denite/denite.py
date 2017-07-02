@@ -4,7 +4,7 @@
 # License: MIT license
 # ============================================================================
 
-from denite.util import get_custom_source, find_rplugins
+from denite.util import get_custom_source, find_rplugins, split_input
 
 import denite.source  # noqa
 import denite.filter  # noqa
@@ -93,10 +93,9 @@ class Denite(object):
             ctx['candidates'] = entire
             for i in range(0, len(entire), 1000):
                 ctx['candidates'] = entire[i:i+1000]
-                for matcher in [self._filters[x]
-                                for x in source.matchers
-                                if x in self._filters]:
-                    ctx['candidates'] = matcher.filter(ctx)
+                self.match_candidates(
+                    ctx, [self._filters[x] for x in source.matchers
+                          if x in self._filters])
                 partial += ctx['candidates']
                 if len(partial) >= 1000:
                     break
@@ -110,6 +109,25 @@ class Denite(object):
                 c['source'] = source.name
             ctx['candidates'] = []
             yield source.name, entire, partial
+
+    def match_candidates(self, context, matchers):
+        for pattern in split_input(context['input']):
+            ctx = copy.copy(context)
+            if pattern[0] == '!':
+                if pattern == '!':
+                    continue
+                ctx['input'] = pattern[1:]
+                ignore = self.call_matchers(ctx, matchers)
+                context['candidates'] = [x for x in context['candidates']
+                                         if x not in ignore]
+            else:
+                ctx['input'] = pattern
+                context['candidates'] = self.call_matchers(ctx, matchers)
+
+    def call_matchers(self, ctx, matchers):
+        for matcher in matchers:
+            ctx['candidates'] = matcher.filter(ctx)
+        return ctx['candidates']
 
     def on_init(self, context):
         self._current_sources = []
