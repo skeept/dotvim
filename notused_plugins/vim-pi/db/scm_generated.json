@@ -2359,6 +2359,10 @@
     "type": "git",
     "url": "git://github.com/w0ng/vim-hybrid"
   },
+  "4168": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-SyntaxRange"
+  },
   "4170": {
     "type": "git",
     "url": "git://github.com/joonty/vdebug"
