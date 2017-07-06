@@ -5551,6 +5551,10 @@
     "type": "git",
     "url": "git://github.com/aklt/stunter.vim"
   },
+  "5586": {
+    "type": "git",
+    "url": "git://github.com/apalmer1377/factorus"
+  },
   "5587": {
     "type": "git",
     "url": "git://github.com/johngrib/vim-game-code-break"
