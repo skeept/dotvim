@@ -1,4 +1,5 @@
 {
+"quickmenu":{"archive_name":"quickmenu.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25389","version":"1.1.12","vim_script_nr":5589},
 "vim-todo-lists":{"archive_name":"vim-todo-lists-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25377","version":"0.1.0","vim_script_nr":5588},
 "vim-game-code-break":{"archive_name":"vim-game-code-break-1.1.7.zip","script-type":"game","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25384","version":"1.1.7","vim_script_nr":5587},
 "factorus":{"archive_name":"factorus.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25383","version":"1.875","vim_script_nr":5586},
@@ -225,7 +226,7 @@
 "KRL-Syntax":{"archive_name":"krl_for_vim_v150_20170624.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25342","version":"1.5.0","vim_script_nr":5344},
 "VimFlowy_Outliner":{"archive_name":"vimflowy.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24069","version":"1.0","vim_script_nr":5343},
 "stata-syntax":{"archive_name":"stata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24057","version":"0.3","vim_script_nr":5342},
-"thesaurus_query":{"archive_name":"thesaurus_query.vim-0.6.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24932","version":"v0.6.1","vim_script_nr":5341},
+"thesaurus_query":{"archive_name":"thesaurus_query.vim-0.6.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25387","version":"v0.6.2","vim_script_nr":5341},
 "password_bunny":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24686","version":"1.0","vim_script_nr":5340},
 "helplink":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24687","version":"1.0","vim_script_nr":5339},
 "startscreen":{"archive_name":"download-from-homepage.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24683","version":"1.0","vim_script_nr":5338},
@@ -2821,7 +2822,7 @@
 "plumbing":{"archive_name":"plumbing.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10735","version":"1.2","vim_script_nr":2661},
 "clips":{"archive_name":"clips.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=11333","version":"0.3","vim_script_nr":2660},
 "g15vim":{"archive_name":"g15vim-20110722.tar.xz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16128","version":"20110722","vim_script_nr":2659},
-"Auto_Changing_color_script":{"archive_name":"changingColor.vmb","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25333","version":"22.3","vim_script_nr":2658},
+"Auto_Changing_color_script":{"archive_name":"changingColor.vmb","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25388","version":"22.4","vim_script_nr":2658},
 "VOoM":{"archive_name":"VOoM-5.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25011","version":"5.3","vim_script_nr":2657},
 "Simple_R_Omni_Completion":{"archive_name":"r_omni.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10676","version":"0.1","vim_script_nr":2656},
 "squirrel":{"archive_name":"squirrel.0.2.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=12575","version":"0.2","vim_script_nr":2655},
