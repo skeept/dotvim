@@ -27,6 +27,18 @@ def _move_to_previous_line(prompt, params):
     return prompt.denite.move_to_prev_line()
 
 
+def _move_to_top(prompt, params):
+    return prompt.denite.move_to_top()
+
+
+def _move_to_middle(prompt, params):
+    return prompt.denite.move_to_middle()
+
+
+def _move_to_bottom(prompt, params):
+    return prompt.denite.move_to_bottom()
+
+
 def _move_to_first_line(prompt, params):
     return prompt.denite.move_to_first_line()
 
@@ -39,8 +51,16 @@ def _scroll_window_upwards(prompt, params):
     return prompt.denite.scroll_window_upwards()
 
 
+def _scroll_window_up_one_line(prompt, params):
+    return prompt.denite.scroll_window_up_one_line()
+
+
 def _scroll_window_downwards(prompt, params):
     return prompt.denite.scroll_window_downwards()
+
+
+def _scroll_window_down_one_line(prompt, params):
+    return prompt.denite.scroll_window_down_one_line()
 
 
 def _scroll_page_forwards(prompt, params):
@@ -57,6 +77,18 @@ def _scroll_up(prompt, params):
 
 def _scroll_down(prompt, params):
     return prompt.denite.scroll_down(int(params))
+
+
+def _scroll_cursor_to_top(prompt, params):
+    return prompt.denite.scroll_cursor_to_top()
+
+
+def _scroll_cursor_to_middle(prompt, params):
+    return prompt.denite.scroll_cursor_to_middle()
+
+
+def _scroll_cursor_to_bottom(prompt, params):
+    return prompt.denite.scroll_cursor_to_bottom()
 
 
 def _jump_to_next_source(prompt, params):
@@ -176,6 +208,14 @@ def _change_line(prompt, params):
     prompt.denite.change_mode('insert')
 
 
+def _change_char(prompt, params):
+    prompt.text = ''.join([
+        prompt.caret.get_backward_text(),
+        prompt.caret.get_forward_text(),
+    ])
+    prompt.denite.change_mode('insert')
+
+
 def _move_caret_to_next_word(prompt, params):
     pattern = re.compile('^\S+\s+\S')
     original_text = prompt.caret.get_forward_text()
@@ -224,6 +264,9 @@ DEFAULT_ACTION_RULES = [
     ('denite:move_to_last_line', _move_to_last_line),
     ('denite:move_to_next_line', _move_to_next_line),
     ('denite:move_to_previous_line', _move_to_previous_line),
+    ('denite:move_to_top', _move_to_top),
+    ('denite:move_to_middle', _move_to_middle),
+    ('denite:move_to_bottom', _move_to_bottom),
     ('denite:quit', _quit),
     ('denite:redraw', _redraw),
     ('denite:restart', _restart),
@@ -232,7 +275,12 @@ DEFAULT_ACTION_RULES = [
     ('denite:scroll_page_forwards', _scroll_page_forwards),
     ('denite:scroll_up', _scroll_up),
     ('denite:scroll_window_downwards', _scroll_window_downwards),
+    ('denite:scroll_window_down_one_line', _scroll_window_down_one_line),
     ('denite:scroll_window_upwards', _scroll_window_upwards),
+    ('denite:scroll_window_up_one_line', _scroll_window_up_one_line),
+    ('denite:scroll_cursor_to_top', _scroll_cursor_to_top),
+    ('denite:scroll_cursor_to_middle', _scroll_cursor_to_middle),
+    ('denite:scroll_cursor_to_bottom', _scroll_cursor_to_bottom),
     ('denite:suspend', _suspend),
     ('denite:print_messages', _print_messages),
     ('denite:toggle_select', _toggle_select),
@@ -243,6 +291,7 @@ DEFAULT_ACTION_RULES = [
     ('denite:move_caret_to_end_of_word', _move_caret_to_end_of_word),
     ('denite:change_word', _change_word),
     ('denite:change_line', _change_line),
+    ('denite:change_char', _change_char),
     ('denite:append', _append),
     ('denite:append_to_line', _append_to_line),
     ('denite:insert_to_head', _insert_to_head),
@@ -299,10 +348,17 @@ DEFAULT_ACTION_KEYMAP = {
         ('k', '<denite:move_to_previous_line>', 'noremap'),
         ('gg', '<denite:move_to_first_line>', 'noremap'),
         ('G', '<denite:move_to_last_line>', 'noremap'),
+        ('H', '<denite:move_to_top>', 'noremap'),
+        ('L', '<denite:move_to_bottom>', 'noremap'),
         ('<C-U>', '<denite:scroll_window_upwards>', 'noremap'),
+        ('<C-Y>', '<denite:scroll_window_up_one_line>', 'noremap'),
         ('<C-D>', '<denite:scroll_window_downwards>', 'noremap'),
+        ('<C-E>', '<denite:scroll_window_down_one_line>', 'noremap'),
         ('<C-F>', '<denite:scroll_page_forwards>', 'noremap'),
         ('<C-B>', '<denite:scroll_page_backwards>', 'noremap'),
+        ('zt', '<denite:scroll_cursor_to_top>', 'noremap'),
+        ('zz', '<denite:scroll_cursor_to_middle>', 'noremap'),
+        ('zb', '<denite:scroll_cursor_to_bottom>', 'noremap'),
         ('q', '<denite:quit>', 'noremap'),
         ('<C-L>', '<denite:redraw>', 'noremap'),
         ('<C-R>', '<denite:restart>', 'noremap'),
@@ -316,7 +372,11 @@ DEFAULT_ACTION_KEYMAP = {
         ('0', '<denite:move_caret_to_head>', 'noremap'),
         ('$', '<denite:move_caret_to_tail>', 'noremap'),
         ('cc', '<denite:change_line>', 'noremap'),
+        ('S', '<denite:change_line>', 'noremap'),
         ('cw', '<denite:change_word>', 'noremap'),
+        ('S', '<denite:change_line>', 'noremap'),
+        ('s', '<denite:change_char>', 'noremap'),
+        ('x', '<denite:delete_char_under_caret>', 'noremap'),
         ('dd', '<denite:delete_entire_text>', 'noremap'),
         ('h', '<denite:move_caret_to_left>', 'noremap'),
         ('l', '<denite:move_caret_to_right>', 'noremap'),
