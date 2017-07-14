@@ -5563,6 +5563,10 @@
     "type": "git",
     "url": "git://github.com/aserebryakov/vim-todo-lists"
   },
+  "5590": {
+    "type": "git",
+    "url": "git://github.com/fedorenchik/VimCalc3"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

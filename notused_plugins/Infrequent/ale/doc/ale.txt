@@ -93,6 +93,8 @@ CONTENTS                                                         *ale-contents*
       rustc...............................|ale-rust-rustc|
     sass..................................|ale-sass-options|
       stylelint...........................|ale-sass-stylelint|
+    scala.................................|ale-scala-options|
+      scalastyle..........................|ale-scala-scalastyle|
     scss..................................|ale-scss-options|
       stylelint...........................|ale-scss-stylelint|
     sh....................................|ale-sh-options|
@@ -206,7 +208,7 @@ The following languages and tools are supported.
 * Ruby: 'reek', 'rubocop'
 * SASS: 'sasslint', 'stylelint'
 * SCSS: 'sasslint', 'scsslint', 'stylelint'
-* Scala: 'scalac'
+* Scala: 'scalac', 'scalastyle'
 * Slim: 'slim-lint'
 * SML: 'smlnj'
 * Stylus: 'stylelint'
@@ -1476,8 +1478,10 @@ ALELint                                                       *ALELint-autocmd*
 
   For example, you can echo a message when linting is complete like so:
   >
-  autocmd User ALELint echom "ALE run!"
+  autocmd User ALELint unsilent echom 'ALE run!'
 <
+  The autocmd commands are run with |:silent|, so |:unsilent| is required for
+  echoing messges.
 
 ===============================================================================
 8. Special Thanks                                          *ale-special-thanks*
