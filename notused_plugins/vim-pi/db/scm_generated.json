@@ -5563,9 +5563,17 @@
     "type": "git",
     "url": "git://github.com/aserebryakov/vim-todo-lists"
   },
+  "5589": {
+    "type": "git",
+    "url": "git://github.com/skywind3000/quickmenu.vim"
+  },
   "5590": {
     "type": "git",
     "url": "git://github.com/fedorenchik/VimCalc3"
+  },
+  "5591": {
+    "type": "git",
+    "url": "git://github.com/aklt/dirconf.vim"
   },
   "586": {
     "type": "git",
