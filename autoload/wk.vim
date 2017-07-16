@@ -58,7 +58,7 @@ function! wk#echoOrPrintTime()
   " We now adjust for time zone right here. Offset in Dallas is 6 or 7 hours
   let is_winter = 0 "Time changes in Dallas, need to adjust computation
   let hours_adjust = ($TZ == 'GMT0') ? 0 : (is_winter ? 7 : 6)
-  let time_display = strftime("%a, %d %b %Y %H:%M", (expand("<cWORD>") + hours_adjust*3600))
+  let time_display = strftime("%a, %d %b %Y %H:%M:%S %p", (expand("<cWORD>") + hours_adjust*3600))
 
   if g:wk.echoOrPrintTimeSetting != 1
     " try writting text after current word
@@ -119,7 +119,7 @@ function! wk#jumpToGlobalProblem()
   call search('Initializing Optimization Controller', flags)
 endfunction
 
-function wk#getIteration()
+function! wk#getIteration()
   " search back for previous start of global iteration
   " mark where iteration starts
   " search forward for end of this iteration
@@ -137,13 +137,13 @@ function wk#getIteration()
   normal "wp
 endfunction
 
-function wk#getSelection()
+function! wk#getSelection()
   " search back for start of iteration
   " search for start of global problem
   " save selection to scratch buffer and open it
 endfunction
 
-function wk#getGlobal()
+function! wk#getGlobal()
   "similar to wk#getSelection() but get global part instead
 endfunction
 
