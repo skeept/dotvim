@@ -234,6 +234,9 @@ EXAMPLES						*denite-examples*
 	" Custom action
 	call denite#custom#action('file', 'test',
 	      \ {context -> execute('let g:foo = 1')})
+	call denite#custom#action('file', 'test2',
+	      \ {context -> denite#do_action(
+	      \  context, 'open', context['targets'])})
 <
 ==============================================================================
 INTERFACE						*denite-interface*
@@ -761,9 +764,12 @@ P		<denite:change_path>
 FUNCTIONS						*denite-functions*
 
 						*denite#custom#action()*
-denite#custom#action({kind}, {name}, {func})
+denite#custom#action({kind}, {name}, {func}[, {options}])
 		Define {name} action for {kind}.
 		{func} must be a |Funcref| or the name of a function.
+		{options} is an optional dictionary which overrides the
+		action behaviors "is_quit" and/or "is_redraw".
+		Note: {kind} is comma separated.
 
 							*denite#custom#alias()*
 denite#custom#alias({type}, {alias-name}, {base-name})
@@ -906,6 +912,11 @@ denite#custom#var({source-name}, {var-name}, {value})
 		to {value}.  You may specify multiple sources with the
 		separator "," in {source-name}.
 
+							*denite#do_action()*
+denite#do_action({context}, {action-name}, {targets})
+		Runs an action {action-name} against {targets}.  This will
+		mainly be used in |denite#custom#action()|.
+
 denite#get_status_mode()			 *denite#get_status_mode()*
 		Returns the mode part of the status string.  It is useful to
 		customize the statusline.
@@ -981,8 +992,9 @@ OPTIONS							*denite-options*
 		Select {number} candidate.
 		If {number} is "+1" or "-1" when resume, selects the next or
 		previous candidate.
-		Note: 0 is the first candidate.
-		Default: ''
+		Note: "0" is the first candidate.
+		Note: "$" is the last candidate.
+		Default: ""
 
 						*denite-options-cursor-shape*
 -cursor-shape
@@ -1035,6 +1047,11 @@ OPTIONS							*denite-options*
 -highlight-preview-line
 		Previewed line highlight.
 		Default: "Search"
+
+						*denite-options-ignorecase*
+-ignorecase
+		If it is true, denite ignores the case.
+		Default: true
 
 						*denite-options-immediately*
 -immediately
@@ -1091,15 +1108,35 @@ OPTIONS							*denite-options*
 		Use short source names if multiple sources.
 		Default: false
 
+						*denite-options-smartcase*
+-smartcase
+		If it is true, denite ignores the case when the input contains
+		the uppercase characters.
+		Default: false
+
 						*denite-options-sorters*
 -sorters
 		Specify a list of sorter names.  They are source independent.
 		Default: ""
 
+						*denite-options-split*
+-split={direction}
+		Specify the split direction.
+
+		"vertical": Split buffer vertically
+		"horizontal": Split buffer horizontally
+
+		Default: "horizontal"
+
 						*denite-options-statusline*
 -statusline
 		Enable statusline.
 		Default: true
+
+						*denite-options-unique*
+-unique
+		Unique the candidates by word attribute.
+		Default: false
 
 						*denite-options-updatetime*
 -updatetime={time}
@@ -1125,10 +1162,19 @@ OPTIONS							*denite-options*
 
 						*denite-options-winheight*
 -winheight={window-height}
-		Set the height of the Denite window. If auto-resize is set,
-		|denite-options-winheight| is the maximum size of the window.
+		Set the width of the Denite window if |denite-options-split|
+		is "horizontal".
+		If auto-resize is set, |denite-options-winheight| is the
+		maximum size of the window.
 
 		Default: 20
+
+						*denite-options-winwidth*
+-winwidth={window-width}
+		Set the width of the Denite window if |denite-options-split|
+		is "vertical".
+
+		Default: 90
 
 						*denite-options-winminheight*
 -winminheight={window-height}
@@ -1234,17 +1280,18 @@ file_rec	Gather files recursive and nominates all file names under the
 				that does't expects the directory parameter as
 				it's last parameter one can use the positional
 				"directory" argument:
-
+>
 				call denite#custom#var("file_rec", "command",
 					\ [ "find", "-L", ":directory",
 					\ "-path", "*/.svn/*", "-prune", "-o",
 					\ '-type', 'l', '-print', '-o',
 					\ '-type', 'f', '-print'])
 					
+<
 				In windows if no command is specified file_rec
 				uses a python script scantree.py to get the list
 				of files using scandir or os.walk.
-<
+
 		min_cache_files	the minimum number of files that
 				it saves the caches.
 				(default is 10000)
@@ -1497,6 +1544,7 @@ matcher_fuzzy
 					*denite-filter-matcher_ignore_globs*
 matcher_ignore_globs
 		A matcher which ignores the globs matched files.
+		Note: This filtering is slow.
 
 		Source custom variables:
 		ignore_globs	the ignore globs pattern.
@@ -1842,8 +1890,8 @@ Q: ":UniteNext"/":UnitePrevious" like commands are available?
 
 A: >
 
-	:Denite -resume -select=+1 -immediately
-	:Denite -resume -select=-1 -immediately
+	:Denite -resume -cursor-pos=+1 -immediately
+	:Denite -resume -cursor-pos=-1 -immediately
 
 Q: I want to close denite buffer if grep results are empty.
 

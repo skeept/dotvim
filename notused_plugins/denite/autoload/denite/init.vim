@@ -99,12 +99,16 @@ function! denite#init#_user_options() abort
         \ 'reversed': v:false,
         \ 'scroll': 0,
         \ 'short_source_names': v:false,
+        \ 'smartcase': v:false,
         \ 'sorters': '',
+        \ 'split': 'horizontal',
         \ 'statusline': v:true,
         \ 'updatetime': 100,
+        \ 'unique': v:false,
         \ 'use_default_mappings': v:true,
         \ 'vertical_preview': v:false,
         \ 'winheight': 20,
+        \ 'winwidth': 90,
         \ 'winminheight': -1,
         \}
 endfunction

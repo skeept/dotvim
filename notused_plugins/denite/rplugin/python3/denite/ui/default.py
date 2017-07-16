@@ -5,7 +5,7 @@
 # ============================================================================
 import re
 import weakref
-from itertools import filterfalse, groupby, takewhile
+from itertools import groupby, takewhile
 
 from denite.util import (
     clear_cmdline, echo, error, regex_convert_py_vim,
@@ -45,6 +45,7 @@ class Default(object):
         self._winsaveview = {}
         self._initialized = False
         self._winheight = 0
+        self._winwidth = 0
         self._winminheight = -1
         self._scroll = 0
         self._is_multi = False
@@ -58,6 +59,7 @@ class Default(object):
         )
         self._guicursor = ''
         self._previous_status = ''
+        self._prev_curpos = []
 
     def start(self, sources, context):
         self._result = []
@@ -80,16 +82,10 @@ class Default(object):
             self._context['immediately'] = context['immediately']
             self._context['cursor_wrap'] = context['cursor_wrap']
 
-            self.init_buffer()
-
-            if context['cursor_pos'] == '+1':
-                self.move_to_next_line()
-            elif context['cursor_pos'] == '-1':
-                self.move_to_prev_line()
-
             if self.check_empty():
                 return
 
+            self.init_buffer()
             if context['refresh']:
                 self.redraw()
         else:
@@ -110,6 +106,7 @@ class Default(object):
             self._is_multi = len(sources) > 1
 
             self.init_denite()
+            self.init_cursor()
             self.gather_candidates()
             self.update_candidates()
 
@@ -117,14 +114,10 @@ class Default(object):
                 return
 
             self.init_buffer()
-            self.init_cursor()
 
         self.update_displayed_texts()
         self.change_mode(self._current_mode)
-
-        if self._context['cursor_pos'].isnumeric():
-            self.init_cursor()
-            self.move_to_pos(int(self._context['cursor_pos']))
+        self.update_buffer()
 
         # Make sure that the caret position is ok
         self._prompt.caret.locus = self._prompt.caret.tail
@@ -140,8 +133,10 @@ class Default(object):
         self._previous_status = ''
         self._displayed_texts = []
 
+        self._prev_curpos = self._vim.call('getcurpos')
         self._prev_wininfo = self._get_wininfo()
         self._winheight = int(self._context['winheight'])
+        self._winwidth = int(self._context['winwidth'])
         self._prev_winid = int(self._context['prev_winid'])
         self._winrestcmd = self._vim.call('winrestcmd')
         self._winsaveview = self._vim.call('winsaveview')
@@ -161,7 +156,10 @@ class Default(object):
             # Create new buffer
             self._vim.call(
                 'denite#util#execute_path',
-                'silent keepalt %s new ' % self._get_direction(),
+                'silent keepalt %s %s new ' %
+                (self._get_direction(),
+                 ('vertical' if self._context['split'] == 'vertical'
+                  else '')),
                 '[denite]')
         self.resize_buffer()
         self._vim.command('nnoremap <silent><buffer> <CR> ' +
@@ -288,18 +286,12 @@ class Default(object):
         pattern = ''
         sources = ''
         self._candidates = []
-        for name, entire, partial in self._denite.filter_candidates(
+        for name, entire, partial, patterns in self._denite.filter_candidates(
                 self._context):
             self._candidates += partial
             sources += '{}({}/{}) '.format(name, len(partial), len(entire))
 
-            if pattern == '':
-                matchers = self._denite.get_source(name).matchers
-                patterns = filterfalse(lambda x: x == '', (
-                    self._denite.get_filter(x).convert_pattern(
-                        self._context['input'])
-                    for x in matchers if self._denite.get_filter(x)
-                ))
+            if pattern == '' and patterns:
                 pattern = next(patterns, '')
 
         if self._context['sorters']:
@@ -307,6 +299,15 @@ class Default(object):
                 ctx = copy(self._context)
                 ctx['candidates'] = self._candidates
                 self._candidates = self._denite.get_filter(sorter).filter(ctx)
+
+        if self._context['unique']:
+            unique_candidates = []
+            unique_words = set()
+            for candidate in self._candidates:
+                if candidate['word'] not in unique_words:
+                    unique_words.add(candidate['word'])
+                    unique_candidates.append(candidate)
+            self._candidates = unique_candidates
 
         prev_matched_pattern = self._matched_pattern
         self._matched_pattern = pattern
@@ -333,6 +334,9 @@ class Default(object):
         ]
 
     def update_buffer(self):
+        if self._bufnr != self._vim.current.buffer.number:
+            return
+
         self.update_status()
 
         if self._vim.call('hlexists', 'deniteMatchedRange'):
@@ -394,26 +398,40 @@ class Default(object):
         encoding = self._context['encoding']
         abbr = candidate.get('abbr', candidate['word']).encode(
             encoding, errors='replace').decode(encoding, errors='replace')
-        terms.append(abbr[:self._context['max_candidate_width']])
+        terms.append(abbr[:int(self._context['max_candidate_width'])])
         return (self._context['selected_icon']
                 if index in self._selected_candidates
                 else ' ') + ' '.join(terms)
 
     def resize_buffer(self):
         winheight = self._winheight
+        winwidth = self._winwidth
+        is_vertical = self._context['split'] == 'vertical'
 
-        if self._context['auto_resize']:
+        if not is_vertical and self._context['auto_resize']:
             if (self._context['winminheight'] is not -1 and
                     self._candidates_len <
                     int(self._context['winminheight'])):
                 winheight = self._context['winminheight']
-            elif (self._candidates_len < self._winheight):
+            elif self._candidates_len < self._winheight:
                 winheight = self._candidates_len
 
-        if self._vim.current.window.height != winheight:
+        if not is_vertical and self._vim.current.window.height != winheight:
             self._vim.command('resize ' + str(winheight))
+        elif is_vertical and self._vim.current.window.width != winwidth:
+            self._vim.command('vertical resize ' + str(winwidth))
 
     def check_empty(self):
+        if self._context['cursor_pos'].isnumeric():
+            self.init_cursor()
+            self.move_to_pos(int(self._context['cursor_pos']))
+        elif self._context['cursor_pos'] == '+1':
+            self.move_to_next_line()
+        elif self._context['cursor_pos'] == '-1':
+            self.move_to_prev_line()
+        elif self._context['cursor_pos'] == '$':
+            self.move_to_last_line()
+
         if self._candidates and self._context['immediately']:
             self.do_action('default')
             candidate = self.get_cursor_candidate()
@@ -475,7 +493,7 @@ class Default(object):
         self._context['mode'] = mode
 
         # Update mode indicator
-        self.update_buffer()
+        self.update_status()
 
     def cleanup(self):
         self._vim.command('pclose!')
@@ -497,6 +515,9 @@ class Default(object):
         # Restore the view
         self._vim.command('close!')
         self._vim.call('win_gotoid', self._prev_winid)
+
+        # Restore the position
+        self._vim.call('setpos', '.', self._prev_curpos)
 
         if self._get_wininfo() and self._get_wininfo() == self._prev_wininfo:
             self._vim.command(self._winrestcmd)
@@ -587,7 +608,7 @@ class Default(object):
         if not candidates:
             return
 
-        self._vim.vars['denite#_actions'] = self._denite.get_actions(
+        self._vim.vars['denite#_actions'] = self._denite.get_action_names(
             self._context, candidates)
         clear_cmdline(self._vim)
         action = self._vim.call('input', 'Action: ', '',
