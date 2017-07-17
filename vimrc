@@ -102,6 +102,7 @@ function! SetupVAM()
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user
   VAMAddToActiveAddons ferret
   VAMAddToActiveAddons exchange
+  VAMAddToActiveAddons gina
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
