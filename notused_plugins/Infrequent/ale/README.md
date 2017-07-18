@@ -75,7 +75,7 @@ name. That seems to be the fairest way to arrange this table.
 | Elixir | [credo](https://github.com/rrrene/credo), [dogma](https://github.com/lpil/dogma) |
 | Elm | [elm-make](https://github.com/elm-lang/elm-make) |
 | Erb | [erb](https://github.com/jeremyevans/erubi) |
-| Erlang | [erlc](http://erlang.org/doc/man/erlc.html) |
+| Erlang | [erlc](http://erlang.org/doc/man/erlc.html), [SyntaxErl](https://github.com/ten0s/syntaxerl) |
 | Fortran | [gcc](https://gcc.gnu.org/) |
 | FusionScript | [fusion-lint](https://github.com/RyanSquared/fusionscript) |
 | Go | [gofmt -e](https://golang.org/cmd/gofmt/), [go vet](https://golang.org/cmd/vet/), [golint](https://godoc.org/github.com/golang/lint), [gometalinter](https://github.com/alecthomas/gometalinter), [go build](https://golang.org/cmd/go/), [gosimple](https://github.com/dominikh/go-tools/tree/master/cmd/gosimple), [staticcheck](https://github.com/dominikh/go-tools/tree/master/cmd/staticcheck) |
@@ -98,7 +98,7 @@ name. That seems to be the fairest way to arrange this table.
 | Objective-C++ | [clang](http://clang.llvm.org/) |
 | OCaml | [merlin](https://github.com/the-lambda-church/merlin) see `:help ale-integration-ocaml-merlin` for configuration instructions
 | Perl | [perl -c](https://perl.org/), [perl-critic](https://metacpan.org/pod/Perl::Critic) |
-| PHP | [hack](http://hacklang.org/), [php -l](https://secure.php.net/), [phpcs](https://github.com/squizlabs/PHP_CodeSniffer), [phpmd](https://phpmd.org) |
+| PHP | [hack](http://hacklang.org/), [php -l](https://secure.php.net/), [phpcs](https://github.com/squizlabs/PHP_CodeSniffer), [phpmd](https://phpmd.org), [phpstan](https://github.com/phpstan/phpstan) |
 | Pod | [proselint](http://proselint.com/)|
 | Pug | [pug-lint](https://github.com/pugjs/pug-lint) |
 | Puppet | [puppet](https://puppet.com), [puppet-lint](https://puppet-lint.com) |
