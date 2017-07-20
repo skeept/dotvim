@@ -220,14 +220,12 @@ endfunction
 
 "================== NeoSnippet ================================================{{{
 function! jraf#LoadNeoSnipppet()
-  inoremap <silent><expr> <NL>
-        \ neosnippet#expand_or_jump_impl()
-  snoremap <silent><expr> <NL>
-        \ neosnippet#expand_or_jump_impl()
-  xnoremap <silent> <NL>
-        \ :<C-u>call neosnippet#expand_target()<CR>
-  xnoremap <silent><expr> <C-L>
-        \ unite#sources#snippet_target#start()
+  imap <NL> <Plug>(neosnippet_expand_or_jump)
+  smap <NL> <Plug>(neosnippet_expand_or_jump)
+  xmap <NL> <Plug>(neosnippet_expand_target)
+  imap <F12> <Plug>(neosnippet_start_unite_snippet)
+  smap <F12> <Plug>(neosnippet_start_unite_snippet)
+  xmap <F12> <Plug>(neosnippet_start_unite_snippet)
 endfunction
 "==============================================================================}}}
 

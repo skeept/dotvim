@@ -1,16 +1,14 @@
-" is_windows, evim? {{{
-
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
+" differentiate this from simple.vim (there it will be 1)
+let g:is_vimrc_simple = 0
+
 "default path for runtime files
 "let g:p0 = split(&runtimepath, ',')[0]
-if has("unix")
-  let g:p0 = "~/.vim"
-else
-  let g:p0 = "~/vimfiles"
-endif
+let g:p0 = has("unix") ? "~/.vim" : "~/vimfiles"
 
+" can I always use has('win32')?
 let g:is_win = has('win32') || has('win64')
 
 " put it at the start of vimrc but define function LocalSettingsEndingVimRC
@@ -21,14 +19,11 @@ if filereadable(s:local_settings)
   execute "source " . s:local_settings
 endif
 
-"}}}
-
-
-" decide on pathogen or vam (pathogen: 1, vam: 2)
+" plan to use default package loading also
+" decide on pathogen or vam (pathogen: 1, vam: 2, default package loading: 0)
 if !exists('g:addon_manager')
   let g:addon_manager = 2
 endif
-let g:is_vimrc_simple = 0
 
 "================== pathogen ================================================{{{
 "we still use g:pathogen_disabled
@@ -124,6 +119,9 @@ endif
 
 "================== GetIsAddonActive =========================================={{{
 function! GetIsAddonActive(addon)
+  if !exists("g:addon_manager") || g:addon_manager == 0 "how can we know?
+    return 0
+  endif
   if g:addon_manager == 1 "Pathogen"
     return index(g:pathogen_disabled, a:addon) == -1
   else "vam-addon-manager
@@ -132,8 +130,12 @@ function! GetIsAddonActive(addon)
 endfunction
 "==============================================================================}}}
 
+"
 " this is where all vimrc and simple settings go
 " should I just move it to plugins folder?
+" does this contain settings that should be read by packages? Leave it like
+" this for now
+"
 execute "source " . g:p0 . "/common.vim"
 
 execute "source " . g:p0 . "/denite.rc.vim"

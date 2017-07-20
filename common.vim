@@ -435,7 +435,7 @@ augroup ft_unite
 augroup END
 
 function! LoadUnite() "{{{
-  if exists("g:loadUnite_done") || g:addon_manager != 2
+  if exists("g:loadUnite_done") || !exists("g:addon_manager") || g:addon_manager != 2
     return ""
   endif
   let g:loadUnite_done = 1
@@ -670,7 +670,9 @@ let g:gundo_prefer_python3 = 1
 "==============================================================================}}}
 
 "================== Snippets / UltiSnips ======================================{{{
-let s:ulti_or_neosnip = 1 "1 UltiSnips, 2 neosnippet
+"1 UltiSnips, 2 neosnippet
+let s:ulti_or_neosnip_default = 1
+let s:ulti_or_neosnip = has("python3") ? s:ulti_or_neosnip_default : 2
 
 if s:ulti_or_neosnip == 1
   let g:UltiSnipsExpandTrigger = "<F10>"
@@ -695,6 +697,7 @@ endif
 
 "================== NeoSnippet ================================================{{{
 if s:ulti_or_neosnip == 2
+  packadd! neosnippet
   call jraf#LoadNeoSnipppet()
 endif
 "==============================================================================}}}
@@ -914,12 +917,6 @@ if g:is_win
   noremap  <Leader>tf :FullScreenToogle<CR>
 else
   nnoremap <Leader>tf :silent! !wmctrl -r GVIM -b toggle,fullscreen<CR>
-endif
-"==============================================================================}}}
-
-"================== LycosaExplorer ============================================{{{
-if GetIsAddonActive('lycosaexplorer')
-  call jraf#setupLycosa()
 endif
 "==============================================================================}}}
 

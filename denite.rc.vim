@@ -2,7 +2,7 @@
 " denite.nvim
 "
 
-if has("python3") && index(g:active_addons, 'denite') >= 0
+if has("python3") && GetIsAddonActive('denite')
   if executable('rg')
     call denite#custom#var('file_rec', 'command',
           \ ['rg', '--files', '--glob', '!.git'])
