@@ -74,7 +74,7 @@ function! SetupVAM()
   VAMAddToActiveAddons fzf fzf-vim
   "VAMAddToActiveAddons argumentative projectionist
   "VAMAddToActiveAddons Syntastic
-  VAMAddToActiveAddons ale
+  "VAMAddToActiveAddons ale
   "VAMAddToActiveAddons neomake
   VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
