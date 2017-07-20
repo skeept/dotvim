@@ -64,6 +64,8 @@ function! SetupVAM()
         \ escape(g:p0 . '/notused_plugins', ' \'),
         \ escape(g:p0 . '/local_plugins', ' \'),
         \ escape(g:p0 . '/notused_plugins/Infrequent', ' \'),
+        \ escape(g:p0 . '/pack/bundle/start', ' \'),
+        \ escape(g:p0 . '/pack/bundle/opt', ' \'),
         \ ]
 
   VAMAddToActiveAddons ctrlp TaskList Supertab
