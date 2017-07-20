@@ -61,9 +61,7 @@ function! SetupVAM()
   let vam_install_path = escape(g:p0 . '/bundle/vam', ' \')
   exec 'set rtp+='. vam_install_path
   let g:vim_addon_manager.additional_addon_dirs = [
-        \ escape(g:p0 . '/notused_plugins', ' \'),
         \ escape(g:p0 . '/local_plugins', ' \'),
-        \ escape(g:p0 . '/notused_plugins/Infrequent', ' \'),
         \ escape(g:p0 . '/pack/bundle/start', ' \'),
         \ escape(g:p0 . '/pack/bundle/opt', ' \'),
         \ ]
