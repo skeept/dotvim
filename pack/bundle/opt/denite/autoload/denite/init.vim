@@ -67,9 +67,11 @@ function! denite#init#_context() abort
 endfunction
 function! denite#init#_user_options() abort
   return {
+        \ 'auto_accel': v:false,
         \ 'auto_highlight': v:false,
         \ 'auto_preview': v:false,
         \ 'auto_resize': v:false,
+        \ 'auto_resume': v:false,
         \ 'buffer_name': 'default',
         \ 'cursor_pos': '',
         \ 'cursor_wrap': v:false,

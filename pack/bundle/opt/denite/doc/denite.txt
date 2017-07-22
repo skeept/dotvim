@@ -960,6 +960,11 @@ OPTIONS							*denite-options*
 		Note: If you use both {option-name} and -no-{option-name} in
 		the same denite buffer, it is undefined.
 
+						*denite-options-auto-accel*
+-auto-accel
+		Accelerate the cursor moving automatically.
+		Default: false
+
 						*denite-options-auto-highlight*
 -auto-highlight
 		When you select a candidate, it runs the "highlight" action
@@ -975,6 +980,11 @@ OPTIONS							*denite-options*
 						*denite-options-auto-resize*
 -auto-resize
 		Auto resize the Denite window height automatically.
+		Default: false
+
+						*denite-options-auto-resume*
+-auto-resume
+		Auto resume when enter the Denite window.
 		Default: false
 
 						*denite-options-buffer-name*
@@ -1132,6 +1142,8 @@ OPTIONS							*denite-options*
 
 		"vertical": Split buffer vertically
 		"horizontal": Split buffer horizontally
+		"no": No split
+		"no": Create the new tab for denite buffer
 
 		Default: "horizontal"
 
