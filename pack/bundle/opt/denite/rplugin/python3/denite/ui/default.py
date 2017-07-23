@@ -60,6 +60,7 @@ class Default(object):
         self._prev_status = ''
         self._prev_curpos = []
         self._is_suspend = False
+        self._save_window_options = {}
 
     def start(self, sources, context):
         self._result = []
@@ -181,19 +182,24 @@ class Default(object):
         self._options['filetype'] = 'denite'
 
         self._window_options = self._vim.current.window.options
-        self._save_window_options = copy(self._window_options)
+        window_options = {
+            'colorcolumn': '',
+            'conceallevel': 3,
+            'concealcursor': 'n',
+            'foldenable': False,
+            'foldcolumn': 0,
+            'list': False,
+            'number': False,
+            'relativenumber': False,
+            'winfixheight': True,
+            'wrap': False,
+        }
         if self._context['cursorline']:
-            self._window_options['cursorline'] = True
-        self._window_options['colorcolumn'] = ''
-        self._window_options['number'] = False
-        self._window_options['relativenumber'] = False
-        self._window_options['foldenable'] = False
-        self._window_options['foldcolumn'] = 0
-        self._window_options['winfixheight'] = True
-        self._window_options['conceallevel'] = 3
-        self._window_options['concealcursor'] = 'n'
-        self._window_options['list'] = False
-        self._window_options['wrap'] = False
+            window_options['cursorline'] = True
+        self._save_window_options = {}
+        for k, v in window_options.items():
+            self._save_window_options[k] = self._window_options[k]
+            self._window_options[k] = v
 
         self._bufvars = self._vim.current.buffer.vars
         self._bufnr = self._vim.current.buffer.number
@@ -379,6 +385,8 @@ class Default(object):
         self.resize_buffer()
 
         self.move_cursor()
+        if self._context['reversed']:
+            self.move_to_last_line()
 
     def update_status(self):
         max_len = len(str(self._candidates_len))
@@ -540,7 +548,7 @@ class Default(object):
         # Restore the window
         if self._context['split'] == 'no':
             self._switch_prev_buffer()
-            self._vim.current.window.options = self._save_window_options
+            self._vim.current.window.options.update(self._save_window_options)
         else:
             if self._context['split'] == 'tab':
                 self._vim.command('tabclose!')
@@ -631,6 +639,7 @@ class Default(object):
             self._is_suspend = True
             self.init_buffer()
             self._is_suspend = False
+            self.change_mode(self._current_mode)
 
             self.redraw(False)
             # Disable quit flag
@@ -700,6 +709,7 @@ class Default(object):
             self._win_cursor = win_max
             self._cursor = cur_max
             self.update_cursor()
+            self._vim.command('normal! zb')
 
     def move_to_top(self):
         self._win_cursor = 1
@@ -782,17 +792,18 @@ class Default(object):
         while self._cursor >= 1 and self._win_cursor < self._winheight:
             self.scroll_window_up_one_line()
 
-    def jump_to_next_source(self):
-        if len(self._context['sources']) == 1:
+    def jump_to_next_by(self, key):
+        keyfunc = self._keyfunc(key)
+        keys = [keyfunc(candidate) for candidate in self._candidates]
+        if not keys or len(set(keys)) == 1:
             return
 
         current_index = self._cursor + self._win_cursor - 1
         forward_candidates = self._candidates[current_index:]
-        forward_sources = groupby(
-            forward_candidates,
-            lambda candidate: candidate['source']
-        )
+        forward_sources = groupby(forward_candidates, keyfunc)
         forward_times = len(list(next(forward_sources)[1]))
+        if not forward_times:
+            return
         remaining_candidates = (self._candidates_len - current_index
                                 - forward_times)
         if next(forward_sources, None) is None:
@@ -812,23 +823,22 @@ class Default(object):
 
         self.update_cursor()
 
-    def jump_to_prev_source(self):
-        if len(self._context['sources']) == 1:
+    def jump_to_prev_by(self, key):
+        keyfunc = self._keyfunc(key)
+        keys = [keyfunc(candidate) for candidate in self._candidates]
+        if not keys or len(set(keys)) == 1:
             return
 
         current_index = self._cursor + self._win_cursor - 1
         backward_candidates = reversed(self._candidates[:current_index + 1])
-        backward_sources = groupby(
-            backward_candidates,
-            lambda candidate: candidate['source']
-        )
+        backward_sources = groupby(backward_candidates, keyfunc)
         current_source = list(next(backward_sources)[1])
         try:
             prev_source = list(next(backward_sources)[1])
         except StopIteration:  # If the cursor is on the first source
             last_source = takewhile(
                 lambda candidate:
-                    candidate['source'] == self._candidates[-1]['source'],
+                    keyfunc(candidate) == keyfunc(self._candidates[-1]),
                 reversed(self._candidates)
             )
             len_last_source = len(list(last_source))
@@ -856,6 +866,16 @@ class Default(object):
                 self._win_cursor = 1
 
         self.update_cursor()
+
+    def _keyfunc(self, key):
+        def wrapped(candidate):
+            for k in key, 'action__' + key:
+                try:
+                    return str(candidate[k])
+                except Exception:
+                    pass
+            return ''
+        return wrapped
 
     def enter_mode(self, mode):
         self._mode_stack.append(self._current_mode)
