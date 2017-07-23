@@ -5575,6 +5575,10 @@
     "type": "git",
     "url": "git://github.com/aklt/dirconf.vim"
   },
+  "5593": {
+    "type": "git",
+    "url": "git://github.com/da-emzy/VimRpc"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
