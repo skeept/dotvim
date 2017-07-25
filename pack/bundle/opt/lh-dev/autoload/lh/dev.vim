@@ -7,14 +7,14 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  18th Oct 2016
+" Last Update:  24th Jul 2017
 "------------------------------------------------------------------------
 " Description:
 "       «description»
 "
 "------------------------------------------------------------------------
 " History:
-"       v2.0.0: ~ deprecating lh#dev#option#get
+"       v2.0.0: ~ deprecating lh#dev#option#get, lh#dev#reinterpret_escaped_char
 "       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
@@ -75,17 +75,10 @@ let cpp_function_start_pat = '{'
 " we can not define mappings (/abbreviations) that contain "\<{keys}>" into the
 " sequence to insert.
 " Note:	It accepts sequences containing double-quotes.
+" @deprecated: use lh#mapping#reinterpret_escaped_char() instead
 function! lh#dev#reinterpret_escaped_char(seq) abort
-  try
-    let seq = escape(a:seq, '"\')
-    " let seq = (substitute( seq, '\\\\<\(.\{-}\)\\\\>', "\\\\<\\1>", 'g' ))
-    " exe 'return "'.seq.'"'
-    exe 'return "' .
-          \   substitute( seq, '\\\\<\(.\{-}\)\\\\>', '"."\\<\1>"."', 'g' ) .  '"'
-  catch /.*/
-    " let g:rec_error = a:seq
-    throw v:exception
-  endtry
+  call lh#notify#deprecated('lh#dev#reinterpret_escaped_char', 'lh#mapping#reinterpret_escaped_char')
+  return lh#mapping#reinterpret_escaped_char(a:seq)
 endfunction
 
 " Function: lh#dev#find_function_boundaries(line) {{{2

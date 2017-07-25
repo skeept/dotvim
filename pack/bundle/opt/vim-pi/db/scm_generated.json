@@ -5579,6 +5579,10 @@
     "type": "git",
     "url": "git://github.com/da-emzy/VimRpc"
   },
+  "5595": {
+    "type": "git",
+    "url": "git://github.com/tenfyzhong/smart-tabline.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

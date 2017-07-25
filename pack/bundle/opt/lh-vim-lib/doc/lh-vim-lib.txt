@@ -60,9 +60,15 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
+- |lh#mark#find_first_unused()|
+- |lh#mark#is_unused()|
 - |lh#math#abs()|
 - |lh#mapping#define()|
 - |lh#mapping#plug()|
+- |lh#mapping#reinterpret_escaped_char()|
+- |lh#notify#clear_notifications()|
+- |lh#notify#deprecated()|
+- |lh#notify#once()|
 - |lh#on#exit()|
 - |lh#po#context()|
 - |lh#position#char_at()|
@@ -409,6 +415,21 @@ Unlike |printf()|, this function takes positional parameters, i.e. >
   AssertEquals(lh#fmt#printf("foo %{2.toto}-%{1.titi} bar %1", {'a':42, 'titi': 'tutu'}, {'toto': {'foo': 42}}), "foo {'foo': 42}-tutu bar {'a': 42, 'titi': 'tutu'}")
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mark#find_first_unused()*     {{{3
+lh#mark#find_first_unused()~
+@returns The name of the first |mark| found to be _unused_ (as in
+`lh#mark#is_unused()`).
+The mark names are searched in `A`..`Z` and `a`..`z`.
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mark#is_unused()*             {{{3
+lh#mark#is_unused(mark)~
+@returns Whether the given |mark| named {mark} is used. A mark is considered to be unused
+from the moment `getpos(mark)[1:]` equals `[0, 0, 0]`
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#math#abs()*                   {{{3
 lh#math#abs(val)~
 @returns the absolute value of the number {val}.
@@ -443,6 +464,55 @@ For all the mode specified, it's equivalent to: >
     if !hasmapto(name, mode) && (mapcheck(keybinding, mode) == "")
         exe mode.'map <silent> <unique> '.keybinding.' '.name
     endif
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#reinterpret_escaped_char()* {{{3
+lh#mapping#reinterpret_escaped_char(seq)~
+This function transforms `'\<cr\>'`, `'\<esc\>'`, ... `'\<{keys}\>'` into the
+interpreted sequences `"\<cr>"`, `"\<esc>"`, ...  `"\<{keys}>"`.
+It is meant to be used by fonctions like |lh#map#no_context()|,
+|lh#map#insert_seq()|, ... as we can not define mappings (/abbreviations) that
+contain `"\<{keys}>"` into the sequence to insert.
+
+Note:	It accepts sequences containing double-quotes.
+
+@version 4.0.0, moved from |lh-dev|' |lh#dev#reinterpret_escaped_char()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#clear_notifications()* {{{3
+lh#notify#clear_notifications()~
+Clears previous notifications. Identical notifications will be issued again.
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#deprecated()*          {{{3
+lh#notify#deprecated(old, new)~
+Notifies once that {old} is deprecated and that we should use {new} instead.
+@version 4.0.0
+>
+  call lh#notify#deprecated(
+       \ 'lh#dev#reinterpret_escaped_char',
+       \ 'lh#mapping#reinterpret_escaped_char')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#once()*                {{{3
+lh#notify#once(id [, message])~
+Issues a notification once.
+@param[in] {id}      Identifier of the notification
+@param[in] {message} displayed.
+                     Its format is the same as the one taken by |lh#fmt#printf()|
+                     When not provided, no message is displayed, the
+                     notification itself is left to the calling code.
+@return whether a notification has/shall be done.
+@version 4.0.0
+>
+  " Usage 1
+  call lh#notify#once('foo', 'Warning: %1 is unexpected %2', what, context)
+
+  " Usage 2
+  if lh#notify#once('shy_dalek')
+      echomsg "Exterminate"
+  endif
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
