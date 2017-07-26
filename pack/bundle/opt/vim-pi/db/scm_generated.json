@@ -5583,6 +5583,10 @@
     "type": "git",
     "url": "git://github.com/tenfyzhong/smart-tabline.vim"
   },
+  "5596": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-SubstituteExpression"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
