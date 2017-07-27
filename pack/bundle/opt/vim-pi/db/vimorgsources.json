@@ -5095,7 +5095,7 @@
 "Red_Black":{"archive_name":"redblack.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1113","version":"1","vim_script_nr":372},
 "timstamp":{"archive_name":"timstamp.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1730","version":"0.95","vim_script_nr":371},
 "Expmod":{"archive_name":"expmod.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1108","version":"0.3","vim_script_nr":370},
-"atomcoder-vim":{"archive_name":"atomcoder.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25332","version":"3","vim_script_nr":369},
+"atomcoder-vim":{"archive_name":"atomcoder.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25448","version":"4","vim_script_nr":369},
 "oceandeep":{"archive_name":"oceandeep.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=7799","version":"1.2.5","vim_script_nr":368},
 "DirDo":{"archive_name":"DirDo.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4583","version":"1.3","vim_script_nr":367},
 "ldraw":{"archive_name":"ldraw.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=1088","version":"1.0","vim_script_nr":366},
