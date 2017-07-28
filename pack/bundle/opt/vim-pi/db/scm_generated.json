@@ -5475,10 +5475,6 @@
     "type": "git",
     "url": "git://github.com/borissov/vim-mysql-suggestions"
   },
-  "5561": {
-    "type": "git",
-    "url": "git://github.com/ballerinalang/plugin-vim"
-  },
   "5563": {
     "type": "git",
     "url": "git://github.com/johngrib/vim-game-snake"

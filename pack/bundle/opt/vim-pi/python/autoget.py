@@ -4,11 +4,11 @@
 Utility for processing non-standardased data found on www.vim.org.
 
 Usage:
-    autoget.py [-d] [-c | -w] last [-nif] <N>
-    autoget.py [-d] [-c | -w] new [-nDi]
-    autoget.py [-d] [-c | -w] recheck
-    autoget.py [-d] [-c | -w] scripts [-nif] <SID>...
-    autoget.py [-d] [-c | -w] annotate [--no-extra-check --print-other-candidate]
+    autoget.py [-d] [-c | -w] [-r] last [-nif] <N>
+    autoget.py [-d] [-c | -w] [-r] new [-nDi]
+    autoget.py [-d] [-c | -w] [-r] recheck
+    autoget.py [-d] [-c | -w] [-r] scripts [-nif] <SID>...
+    autoget.py [-d] [-c | -w] [-r] annotate [--no-extra-check --print-other-candidate]
     autoget.py -h | --help
 
 Options:
@@ -19,6 +19,7 @@ Options:
     -w --write-cache  Merge cache from ./cache.pickle with data obtained
                       in the current run. Do not use cache from
                       ./cache.pickle though.
+    -r --no-remove    Do not remove scripts which are no longer on www.vim.org.
 Commands:
     last              Process last N script numbers.
     scripts           Process given scripts.
@@ -274,6 +275,14 @@ def main():
                         logger.info('New hash for key {0}'.format(key))
                     if changed:
                         _process_voinfo(key, voinfo)
+
+    if not args['--no-remove']:
+        logger.info('Checking for removed scripts')
+        for snr in set(scm_generated) - set(db):
+            logger.info('Removing snr {0}'.format(snr))
+            not_found.discard(snr)
+            description_hashes.pop(snr, None)
+            scm_generated.pop(snr)
 
     return scm_generated, not_found, description_hashes
 

@@ -7,7 +7,7 @@ let addon_info = {}
 let addon_info_deps = {}
 let renamings = {}
 "▶1 Hooks
-let hook = 'execute "lcd" fnameescape(%d."/ruby/command-t") | call vam#utils#RunShell("ruby extconf.rb") | call vam#utils#RunShell("make") | lcd -'
+let hook = 'execute "lcd" fnameescape(%d."/ruby/command-t/ext/command-t") | call vam#utils#RunShell("ruby extconf.rb") | call vam#utils#RunShell("make") | lcd -'
 let addon_info.3025 = {}
 let addon_info.3025['post-install-hook']     = hook
 let addon_info.3025['post-update-hook']      = hook

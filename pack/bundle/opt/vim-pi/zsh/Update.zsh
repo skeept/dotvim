@@ -3,8 +3,8 @@ set -x
 set -e
 VIMPIREP=ssh://git@bitbucket.org/vimcommunity/vim-pi
 VAMKRREP=ssh://git@github.com/MarcWeber/vim-addon-manager-known-repositories
-VIMPIDIR=~/tmp/vim-pi
-VIMPI_SAFE_REPO=~/.vam/vim-pi
+VIMPIDIR=$HOME/tmp/vim-pi
+VIMPI_SAFE_REPO=$HOME/.vam/vim-pi
 
 GIT=/usr/bin/git
 PYTHON=/usr/bin/python
