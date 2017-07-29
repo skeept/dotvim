@@ -46,6 +46,10 @@ Table of Contents
       * [Settings](#settings)
       * [Supported commands](#supported-commands)
    * [Vim plugin](#vim-plugin)
+   * [Advanced topics](#advanced-topics)
+      * [Performance](#performance)
+      * [Executing external programs](#executing-external-programs)
+      * [Preview window](#preview-window)
    * [Tips](#tips)
       * [Respecting .gitignore, <code>.hgignore</code>, and <code>svn:ignore</code>](#respecting-gitignore-hgignore-and-svnignore)
       * [git ls-tree for fast traversal](#git-ls-tree-for-fast-traversal)
@@ -387,13 +391,94 @@ Vim plugin
 
 See [README-VIM.md](README-VIM.md).
 
+Advanced topics
+---------------
+
+### Performance
+
+fzf is fast, and is [getting even faster][perf]. Performance should not be
+a problem in most use cases. However, you might want to be aware of the
+options that affect the performance.
+
+- `--ansi` tells fzf to extract and parse ANSI color codes in the input and it
+  makes the initial scanning slower. So it's not recommended that you add it
+  to your `$FZF_DEFAULT_OPTS`.
+- `--nth` makes fzf slower as fzf has to tokenize each line.
+- `--with-nth` makes fzf slower as fzf has to tokenize and reassemble each
+  line.
+- If you absolutely need better performance, you can consider using
+  `--algo=v1` (the default being `v2`) to make fzf use faster greedy
+  algorithm. However, this algorithm is not guaranteed to find the optimal
+  ordering of the matches and is not recommended.
+
+[perf]: https://junegunn.kr/images/fzf-0.16.10.png
+
+### Executing external programs
+
+You can set up key bindings for starting external processes without leaving
+fzf (`execute`, `execute-silent`).
+
+```bash
+# Press F1 to open the file with less without leaving fzf
+# Press CTRL-Y to copy the line to clipboard and aborts fzf (requires pbcopy)
+fzf --bind 'f1:execute(less -f {}),ctrl-y:execute-silent(echo {} | pbcopy)+abort'
+```
+
+See *KEY BINDINGS* section of the man page for details.
+
+### Preview window
+
+When `--preview` option is set, fzf automatically starts external process with
+the current line as the argument and shows the result in the split window.
+
+```bash
+# {} is replaced to the single-quoted string of the focused line
+fzf --preview 'cat {}'
+```
+
+Since preview window is updated only after the process is complete, it's
+important that the command finishes quickly.
+
+```bash
+# Use head instead of cat so that the command doesn't take too long to finish
+fzf --preview 'head -100 {}'
+```
+
+Preview window supports ANSI colors, so you can use programs that
+syntax-highlights the content of a file.
+
+- Highlight: http://www.andre-simon.de/doku/highlight/en/highlight.php
+- CodeRay: http://coderay.rubychan.de/
+- Rouge: https://github.com/jneen/rouge
+
+```bash
+# Try highlight, coderay, rougify in turn, then fall back to cat
+fzf --preview '[[ $(file --mime {}) =~ binary ]] &&
+                 echo {} is a binary file ||
+                 (highlight -O ansi -l {} ||
+                  coderay {} ||
+                  rougify {} ||
+                  cat {}) 2> /dev/null | head -500'
+```
+
+You can customize the size and position of the preview window using
+`--preview-window` option. For example,
+
+```bash
+fzf --height 40% --reverse --preview 'file {}' --preview-window down:1
+```
+
+For more advanced examples, see [Key bindings for git with fzf][fzf-git].
+
+[fzf-git]: https://junegunn.kr/2016/07/fzf-git/
+
 Tips
 ----
 
 #### Respecting `.gitignore`, `.hgignore`, and `svn:ignore`
 
 [ag](https://github.com/ggreer/the_silver_searcher) or
-[pt](https://github.com/monochromegane/the_platinum_searcher) will do the
+[rg](https://github.com/BurntSushi/ripgrep) will do the
 filtering:
 
 ```sh
