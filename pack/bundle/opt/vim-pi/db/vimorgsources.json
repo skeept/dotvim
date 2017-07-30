@@ -3865,7 +3865,7 @@
 "afterimage":{"archive_name":"afterimage.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19284","version":"2.2","vim_script_nr":1617},
 "tdl":{"archive_name":"tdl-syntax.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5993","version":"0.1","vim_script_nr":1616},
 "SWIG_syntax":{"archive_name":"swig.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5991","version":"0.0.1","vim_script_nr":1615},
-"Satori_Color_Scheme":{"archive_name":"satori.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21667","version":"2014","vim_script_nr":1614},
+"Satori_Color_Scheme":{"archive_name":"satori.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25458","version":"2017","vim_script_nr":1614},
 "phps":{"archive_name":"phps.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5977","version":"1.0","vim_script_nr":1613},
 "vj":{"archive_name":"vj.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5975","version":"1.0","vim_script_nr":1612},
 "Access_SQL_Syntax_file":{"archive_name":"AccessSQL.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5970","version":"1.0","vim_script_nr":1611},
