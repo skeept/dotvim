@@ -139,7 +139,7 @@ function! s:HandleLoclist(linter_name, buffer, loclist) abort
     " for efficient lookup of the messages in the cursor handler.
     call sort(g:ale_buffer_info[a:buffer].loclist, 'ale#util#LocItemCompare')
 
-    if ale#ShouldDoNothing()
+    if ale#ShouldDoNothing(a:buffer)
         return
     endif
 
@@ -225,10 +225,21 @@ function! s:HandleTSServerDiagnostics(response, error_type) abort
     call s:HandleLoclist('tsserver', l:buffer, l:loclist)
 endfunction
 
+function! s:HandleLSPErrorMessage(error_message) abort
+    echoerr 'Error from LSP:'
+
+    for l:line in split(a:error_message, "\n")
+        echoerr l:line
+    endfor
+endfunction
+
 function! ale#engine#HandleLSPResponse(response) abort
     let l:method = get(a:response, 'method', '')
 
-    if l:method ==# 'textDocument/publishDiagnostics'
+    if get(a:response, 'jsonrpc', '') ==# '2.0' && has_key(a:response, 'error')
+        " Uncomment this line to print LSP error messages.
+        " call s:HandleLSPErrorMessage(a:response.error.message)
+    elseif l:method ==# 'textDocument/publishDiagnostics'
         call s:HandleLSPDiagnostics(a:response)
     elseif get(a:response, 'type', '') ==# 'event'
     \&& get(a:response, 'event', '') ==# 'semanticDiag'
@@ -656,25 +667,26 @@ function! ale#engine#RunLinters(buffer, linters, should_lint_file) abort
     call s:StopCurrentJobs(a:buffer, a:should_lint_file)
     call s:RemoveProblemsForDisabledLinters(a:buffer, a:linters)
 
-    let l:any_linter_ran = 0
+    " We can only clear the results if we aren't checking the buffer.
+    let l:can_clear_results = !ale#engine#IsCheckingBuffer(a:buffer)
 
     for l:linter in a:linters
-        " Skip linters for checking files if we shouldn't check the file.
-        if l:linter.lint_file && !a:should_lint_file
-            continue
-        endif
-
-        if s:RunLinter(a:buffer, l:linter)
-            let l:any_linter_ran = 1
+        " Only run lint_file linters if we should.
+        if !l:linter.lint_file || a:should_lint_file
+            if s:RunLinter(a:buffer, l:linter)
+                " If a single linter ran, we shouldn't clear everything.
+                let l:can_clear_results = 0
+            endif
+        else
+            " If we skipped running a lint_file linter still in the list,
+            " we shouldn't clear everything.
+            let l:can_clear_results = 0
         endif
     endfor
 
-    " If we didn't manage to start checking the buffer with anything,
-    " and there's nothing running currently for the buffer, then clear the
-    " results.
-    "
-    " We need to use both checks, as we run some tests synchronously.
-    if !l:any_linter_ran && !ale#engine#IsCheckingBuffer(a:buffer)
+    " Clear the results if we can. This needs to be done when linters are
+    " disabled, or ALE itself is disabled.
+    if l:can_clear_results
         call ale#engine#SetResults(a:buffer, [])
     endif
 endfunction
