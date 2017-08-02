@@ -933,4 +933,6 @@ map gc <plug>NERDCommenterInvert
 
 "==============================================================================}}}
 
+packadd! editexisting
+
 " vim: foldmethod=marker
