@@ -1,9 +1,9 @@
 *gina.txt*		Asynchronously control git repositories from Vim
 
-Version: 0.2.1
+Version: 0.3.1
 Author:  Alisue <lambdalisue@hashnote.net>
 Support: Vim 8.0.0027 and above
-Support: Neovim 0.1.7 and above
+Support: Neovim 0.2.0 and above
 License: MIT License (See LICENSE)
 
 
@@ -763,12 +763,13 @@ The navigation content is width dependent. When the window width of the
 
 In this buffer, users can use the following action groups.
 
-	|gina-action-blame|	(shorten)
-	|gina-action-browse| 
-	|gina-action-changes|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-show|
+	|gina-actions-blame|	(shorten)
+	|gina-actions-browse| 
+	|gina-actions-changes|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following <Plug> mappings additional to the <Plug> mappings comes from
 actions above
@@ -820,13 +821,14 @@ BRANCH						*gina-buffer-branch*
 This is a "non file-like" buffer which is shown by |:Gina-branch| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-branch|	(shorten)
-	|gina-action-browse| 
-	|gina-action-changes|
-	|gina-action-commit|
+	|gina-actions-branch|	(shorten)
+	|gina-actions-browse| 
+	|gina-actions-changes|
+	|gina-actions-commit|
 		"commit:checkout" is aliased to "checkout"
 		"commit:checkout:track" is aliased to "checkout:track"
-	|gina-action-show|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings
 	
@@ -848,11 +850,12 @@ CHANGES						*gina-buffer-changes*
 This is a "non file-like" buffer which is shown by |:Gina-changes| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten)
-	|gina-action-show|
+	|gina-actions-browse|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten)
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -956,12 +959,13 @@ The aliases of actions and default mappings are rely on {rev} part of the
 buffer name (|gina-buffer-naming|).
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten when {rev} is missing)
-	|gina-action-expose|
-	|gina-action-show|	(shorten when {rev} exists)
+	|gina-actions-browse|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten when {rev} is missing)
+	|gina-actions-expose|
+	|gina-actions-show|	(shorten when {rev} exists)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -980,13 +984,14 @@ LOG						*gina-buffer-log*
 This is a "non file-like" buffer which is shown by |:Gina-log| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-commit|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|
-	|gina-action-show|	(shorten)
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-commit|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1007,12 +1012,13 @@ The aliases of actions and default mappings are rely on {rev} part of the
 buffer name (|gina-buffer-naming|).
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten when {rev} is missing)
-	|gina-action-show|	(shorten when {rev} exists)
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten when {rev} is missing)
+	|gina-actions-show|	(shorten when {rev} exists)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1031,9 +1037,10 @@ REFLOG						*gina-buffer-reflog*
 This is a "non file-like" buffer which is shown by |:Gina-reflog| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-changes|
-	|gina-action-commit|
-	|gina-action-show|	(shorten)
+	|gina-actions-changes|
+	|gina-actions-commit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1068,8 +1075,9 @@ STASH						*gina-buffer-stash*
 This is a "non file-like" buffer which is shown by |:Gina-stash| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-diff|
-	|gina-action-stash|	(shorten)
+	|gina-actions-diff|
+	|gina-actions-stash|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1091,10 +1099,11 @@ STASH SHOW					*gina-buffer-stash-show*
 This is a "non file-like" buffer which is shown by |:Gina-stash| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|
-	|gina-action-show|	(shorten)
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1118,15 +1127,16 @@ STATUS						*gina-buffer-status*
 This is a "non file-like" buffer which is shown by |:Gina-status| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-chaperon|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten)
-	|gina-action-export|
-	|gina-action-index|	(shorten)
-	|gina-action-patch|
-	|gina-action-show|
+	|gina-actions-browse|
+	|gina-actions-chaperon|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten)
+	|gina-actions-export|
+	|gina-actions-index|	(shorten)
+	|gina-actions-patch|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1160,13 +1170,14 @@ TAG						*gina-buffer-tag*
 This is a "non file-like" buffer which is shown by |:Gina-tag| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-commit|
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-commit|
 		"commit:checkout" is aliased to "checkout"
 		"commit:checkout:track" is aliased to "checkout:track"
-	|gina-action-show|	(shorten)
-	|gina-action-tag|	(shorten)
+	|gina-actions-show|	(shorten)
+	|gina-actions-tag|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1983,7 +1994,7 @@ g:gina#command#blame#formatter#format
 
 	Additionally, the format is splitted by "%=" like |statusline|.
 
-	Default: "%su%=on %ti %ma%in"
+	Default: "%su%=on %ti by %au %ma%in"
 
 		*g:gina#command#blame#formatter#separator*
 g:gina#command#blame#formatter#separator
@@ -2418,6 +2429,14 @@ tag:delete
 tag:verify
 	Verify a tag.
 
+					*gina-actions-yank*
+yank:rev
+	Yank a revision
+yank:path
+	Yank a path
+yank:treeish
+	Yank a treeish
+
 =============================================================================
 MISC						*gina-misc*
 
@@ -2426,8 +2445,8 @@ SHORT FORMAT					*gina-misc-short-format*
 
 gina use a short format in |gina-buffer-status|.
 The following is a cheatsheet of that format.
-
-	X          Y     Meaning ~
+>
+	X          Y     Meaning
 	          [MD]   not updated
 	M        [ MD]   updated in index
 	A        [ MD]   added to index
@@ -2448,7 +2467,7 @@ The following is a cheatsheet of that format.
 
 	?           ?    untracked
 	!           !    ignored
-
+<
 See :!man git-status for more detail.
 
 -----------------------------------------------------------------------------
@@ -2578,9 +2597,9 @@ CHANGELOG					*gina-changelog*
 
 2017.02.25 (v0.1.0)
 	Release first beta version.
+
 2017.03.05 (v0.2.1)
 	Release second beta version.
-
 	- Bug fixes
 	  - Fix commit issue on a newly checked out repository
 	  - Fix tabpage issue of Vim.Buffer.Group module
@@ -2602,6 +2621,21 @@ CHANGELOG					*gina-changelog*
 	  - Allow "Gina log v0.1.0..." to show log from v0.1.0 to HEAD
 	- Guess --line/--col from the current buffer if possible
 	- Add Gina blame
+
+2017.08.03 (v0.3.1)
+	Release third beta version.
+	- Add
+	  - Gina stash
+	  - statusline/tabline components
+	  - command completion
+	  - diff jumps on diff/commit buffer
+	  - shell/term execution via Gina!!
+	  - Yank actions
+	- Fix
+	  - 'Not allowed here' exceptions
+	  - Scroll position on Gina blame
+	  - Gina show --opener=edit :
+	  - Gina init
 
 =============================================================================
 vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl

@@ -107,7 +107,7 @@ function! s:build_args(git, args, range) abort
         \ args.pop('--group1', 'blame-body'),
         \ args.pop('--group2', 'blame-navi'),
         \]
-  let args.params.opener = args.pop('--opener', 'edit')
+  let args.params.opener = args.pop('--opener', 'tabnew')
   let args.params.width = args.pop('--width', v:null)
   let args.params.format = args.pop('--format', v:null)
 
@@ -137,7 +137,31 @@ function! s:build_args(git, args, range) abort
   call args.set('--incremental', 1)
   call args.set(1, substitute(args.params.rev, '^:0$', '', ''))
   call args.residual([args.params.path])
+
+  " Check no unknown options are specified
+  call s:validate(args)
+
   return args.lock()
+endfunction
+
+function! s:validate(args) abort
+  " Remove all known options
+  let args = a:args.clone()
+  let options = s:get_options()
+  for option in values(options._options)
+    for name in option.names
+      call args.pop(name)
+    endfor
+  endfor
+  call args.pop('--incremental')
+  " Get remaining
+  let unknown = args.get('^-')
+  if !empty(unknown)
+    throw gina#core#exception#error(printf(
+          \ 'Unknwon options %s has specified',
+          \ string(unknown)
+          \))
+  endif
 endfunction
 
 function! s:call(range, args, mods) abort
@@ -146,7 +170,9 @@ function! s:call(range, args, mods) abort
   let mods = gina#util#contain_direction(a:mods)
         \ ? 'keepalt ' . a:mods
         \ : join(['keepalt', 'rightbelow', a:mods])
-  let group = s:Group.new()
+  let group = s:Group.new({
+        \ 'on_close_fail': function('s:on_close_fail'),
+        \})
 
   " Content
   call s:open(mods, args.params.opener, args.params)
@@ -161,11 +187,12 @@ function! s:call(range, args, mods) abort
   " Navi
   let bufname = gina#core#buffer#bufname(git, 'blame', {
         \ 'treeish': args.params.treeish,
+        \ 'noautocmd': 1,
         \})
   call gina#core#buffer#open(bufname, {
         \ 'mods': 'leftabove',
         \ 'group': args.params.groups[1],
-        \ 'opener': (args.params.width ? args.params.width : 35) . 'vsplit',
+        \ 'opener': (args.params.width ? args.params.width : 80) . 'vsplit',
         \ 'cmdarg': args.params.cmdarg,
         \ 'range': 'all',
         \ 'width': args.params.width,
@@ -179,6 +206,20 @@ function! s:call(range, args, mods) abort
   setlocal scrollbind
   call gina#util#syncbind()
   call gina#core#emitter#emit('command:called', s:SCHEME)
+endfunction
+
+function! s:on_close_fail(winnr, member) abort dict
+  let bufname = bufname(winbufnr(a:winnr))
+  let abspath = gina#core#repo#abspath(
+        \ gina#core#get_or_fail(),
+        \ gina#core#buffer#param(bufname, 'path')
+        \)
+  echomsg abspath
+  if filereadable(abspath)
+    execute printf('edit %s', fnameescape(abspath))
+  else
+    enew
+  endif
 endfunction
 
 function! s:open(mods, opener, params) abort
@@ -360,7 +401,6 @@ function! s:translate_candidate(rev, chunk, revisions) abort
         \ 'line': line,
         \})
 endfunction
-
 
 
 " Writer ---------------------------------------------------------------------
