@@ -1,9 +1,6 @@
 " Author: Eric Stern <eric@ericstern.com>
 " Description: PHP Language server integration for ALE
 
-" This linter is disabled for now.
-finish
-
 call ale#Set('php_langserver_executable', 'php-language-server.php')
 call ale#Set('php_langserver_config_path', '')
 call ale#Set('php_langserver_use_global', 0)
@@ -15,7 +12,7 @@ function! ale_linters#php#langserver#GetExecutable(buffer) abort
 endfunction
 
 function! ale_linters#php#langserver#GetCommand(buffer) abort
-    return 'php ' . ale_linters#php#langserver#GetExecutable(a:buffer)
+    return 'php ' . ale#Escape(ale_linters#php#langserver#GetExecutable(a:buffer))
 endfunction
 
 function! ale_linters#php#langserver#GetLanguage(buffer) abort

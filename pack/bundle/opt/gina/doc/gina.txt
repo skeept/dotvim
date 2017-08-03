@@ -1,9 +1,9 @@
 *gina.txt*		Asynchronously control git repositories from Vim
 
-Version: 0.2.1
+Version: 0.3.1
 Author:  Alisue <lambdalisue@hashnote.net>
 Support: Vim 8.0.0027 and above
-Support: Neovim 0.1.7 and above
+Support: Neovim 0.2.0 and above
 License: MIT License (See LICENSE)
 
 
@@ -148,7 +148,8 @@ ACTION						*gina-usage-action*
 When |:Gina| opens a non file-like buffer (e.g. "gina-status" buffer), users
 may able to perform pre-defined actions on candidates shown in the buffer.
 
-For example, ":Gina status" opens a "gina-status" buffer which looks like
+For example, ":Gina status -s" opens a "gina-status" buffer with short format
+which looks like
 >
 	M  foo.txt
 	 M bar.txt
@@ -762,12 +763,13 @@ The navigation content is width dependent. When the window width of the
 
 In this buffer, users can use the following action groups.
 
-	|gina-action-blame|	(shorten)
-	|gina-action-browse| 
-	|gina-action-changes|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-show|
+	|gina-actions-blame|	(shorten)
+	|gina-actions-browse| 
+	|gina-actions-changes|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following <Plug> mappings additional to the <Plug> mappings comes from
 actions above
@@ -788,10 +790,12 @@ Users can disable the default aliases (shorten) and/or mappings by
 
 Additionally, users can customize the content via the following variables.
 
+	|g:gina#command#blame#formatter#format|
 	|g:gina#command#blame#formatter#separator|
 	|g:gina#command#blame#formatter#current_mark|
-	|g:gina#command#blame#timestamper#format1|
-	|g:gina#command#blame#timestamper#format2|
+	|g:gina#command#blame#formatter#timestamp_months|
+	|g:gina#command#blame#formatter#timestamp_format1|
+	|g:gina#command#blame#formatter#timestamp_format2|
 >
 The following is a recommended customization while gina does not show exact
 SHA1 of the revision of the chunk.
@@ -817,13 +821,14 @@ BRANCH						*gina-buffer-branch*
 This is a "non file-like" buffer which is shown by |:Gina-branch| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-branch|	(shorten)
-	|gina-action-browse| 
-	|gina-action-changes|
-	|gina-action-commit|
+	|gina-actions-branch|	(shorten)
+	|gina-actions-browse| 
+	|gina-actions-changes|
+	|gina-actions-commit|
 		"commit:checkout" is aliased to "checkout"
 		"commit:checkout:track" is aliased to "checkout:track"
-	|gina-action-show|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings
 	
@@ -845,11 +850,12 @@ CHANGES						*gina-buffer-changes*
 This is a "non file-like" buffer which is shown by |:Gina-changes| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten)
-	|gina-action-show|
+	|gina-actions-browse|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten)
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -953,12 +959,13 @@ The aliases of actions and default mappings are rely on {rev} part of the
 buffer name (|gina-buffer-naming|).
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten when {rev} is missing)
-	|gina-action-expose|
-	|gina-action-show|	(shorten when {rev} exists)
+	|gina-actions-browse|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten when {rev} is missing)
+	|gina-actions-expose|
+	|gina-actions-show|	(shorten when {rev} exists)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -977,13 +984,14 @@ LOG						*gina-buffer-log*
 This is a "non file-like" buffer which is shown by |:Gina-log| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-commit|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|
-	|gina-action-show|	(shorten)
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-commit|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1004,12 +1012,13 @@ The aliases of actions and default mappings are rely on {rev} part of the
 buffer name (|gina-buffer-naming|).
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten when {rev} is missing)
-	|gina-action-show|	(shorten when {rev} exists)
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten when {rev} is missing)
+	|gina-actions-show|	(shorten when {rev} exists)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1028,9 +1037,10 @@ REFLOG						*gina-buffer-reflog*
 This is a "non file-like" buffer which is shown by |:Gina-reflog| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-changes|
-	|gina-action-commit|
-	|gina-action-show|	(shorten)
+	|gina-actions-changes|
+	|gina-actions-commit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1065,8 +1075,9 @@ STASH						*gina-buffer-stash*
 This is a "non file-like" buffer which is shown by |:Gina-stash| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-diff|
-	|gina-action-stash|	(shorten)
+	|gina-actions-diff|
+	|gina-actions-stash|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1088,10 +1099,11 @@ STASH SHOW					*gina-buffer-stash-show*
 This is a "non file-like" buffer which is shown by |:Gina-stash| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|
-	|gina-action-show|	(shorten)
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|
+	|gina-actions-show|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1115,15 +1127,16 @@ STATUS						*gina-buffer-status*
 This is a "non file-like" buffer which is shown by |:Gina-status| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-chaperon|
-	|gina-action-compare|
-	|gina-action-diff|
-	|gina-action-edit|	(shorten)
-	|gina-action-export|
-	|gina-action-index|	(shorten)
-	|gina-action-patch|
-	|gina-action-show|
+	|gina-actions-browse|
+	|gina-actions-chaperon|
+	|gina-actions-compare|
+	|gina-actions-diff|
+	|gina-actions-edit|	(shorten)
+	|gina-actions-export|
+	|gina-actions-index|	(shorten)
+	|gina-actions-patch|
+	|gina-actions-show|
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1157,13 +1170,14 @@ TAG						*gina-buffer-tag*
 This is a "non file-like" buffer which is shown by |:Gina-tag| command.
 In this buffer, users can use the following action groups.
 
-	|gina-action-browse|
-	|gina-action-changes|
-	|gina-action-commit|
+	|gina-actions-browse|
+	|gina-actions-changes|
+	|gina-actions-commit|
 		"commit:checkout" is aliased to "checkout"
 		"commit:checkout:track" is aliased to "checkout:track"
-	|gina-action-show|	(shorten)
-	|gina-action-tag|	(shorten)
+	|gina-actions-show|	(shorten)
+	|gina-actions-tag|	(shorten)
+	|gina-actions-yank|
 
 And the following default keymappings are defined
 	
@@ -1213,14 +1227,15 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 	a newline to the shell.
 
 						*:Gina-blame*
-:Gina blame [+cmd] [++opt] [{options}] {treeish}
+:Gina blame [+cmd] [++opt] [{options}] [--root] [-L{range}...] [--reverse]
+            [-M{num}] [-C{num}] [--since={date}] {treeish}
 	Open a "gina-blame" buffer to blame changes of the content.
 	If {treeish} is missing, {rev} part of the {treeish} is guessed from a
 	current buffer and {path} part will be omitted. Use ":" instead if you
 	would like to guess {path} part as well (|gina-misc-treeish|).
 	If {path} part of the {treeish} is omitted, it warn and fail.
 
-	The followings are allowed in {options}
+	The followings are allowed in {options}.
 
 	--group1={group}
 		A window group name used for the 1st buffer
@@ -1232,45 +1247,53 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 		An opener command for the 1st buffer (|gina-options-opener|)
 	--line={line}
 		An initial line number
-	--col={col}
-		An initial column number
 	--width={width}
 		Width used for the navigation buffer
-	--use-author-instead
-		Use an author name instead of a commit summary.
+	--format={format}
+		Format string used to construct navi line.
+		(|g:gina#command#blame#formatter#format|)
 
 	See also~
 	|gina-buffer-blame|
+	:!man git-blame
 
 						*:Gina-branch*
-:Gina branch [+cmd] [++opt] [{options}]
-	Open a "gina-branch" buffer to list and manipulate branches.
+:Gina branch [+cmd] [++opt] [{options}] [-r | -a] [--list]
+             [-v | -vv | --verbose]
+             [(--merged | --no-merged | --contains)={commit}]
+             [--sort={key}] [--points-at={object}] [{pattern}...]
+:Gina branch [--set-upstream | --track | --no-track] [-l] [-f] {branchname}
+             [{start-point}]
+:Gina branch (--set-upstream-to={upstream} | -u{upstream}) [{branchname}]
+:Gina branch --unset-upstream [{branchname}]
+:Gina branch (--move | -m | -M) [-f] [{oldbranch}] {newbranch}
+:Gina branch (--delete | -d | -D) [-r] [-f] {branchname}...
+	Open a "gina-branch" buffer to list and manipulate branches or perform
+	a raw "git branch" command.
 
-	The followings are allowed in {options} additional to options for
-	a corresponding git command.
+	The followings are allowed in {options}. 
 
 	--group={group}
 		A window group name used for the buffer (|gina-options-group|)
 	--opener={opener}
 		An opener command for the new buffer (|gina-options-opener|)
 	
-	Note that a raw git command will be executed if the option contains
-	"--list", "-u/--set-upstream-to", "-m/--move", "-d/--delete", or
-	"--edit-description".
+	Note that "--edit-description" is not supported. If you need the
+	feature, create a feature request issue on the GitHub.
 
 	See also~
 	|gina-buffer-branch|
 	:!man git-branch
 
 						*:Gina-browse*
-:Gina browse [+cmd] [++opt] [{options}] [{treeish}]
+:Gina browse [{options}] [{treeish}]
 	Show a remote content of {treeish} of a connected remote in a system
 	browser (e.g. Firefox, Google Chrome, etc).
 	If {treeish} is missing, {rev} part of the {treeish} is guessed from a
 	current buffer and {path} part will be omitted. Use ":" instead if you
 	would like to guess {path} part as well (|gina-misc-treeish|).
 
-	The followings are allowed in {options}
+	The followings are allowed in {options}.
 
 	--scheme={scheme}
 		Use a specified scheme to build a remote url.
@@ -1300,8 +1323,7 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 	If {rev} is missing, it is guessed from the current buffer. Use ":0"
 	to force the index (|gina-misc-treeish|).
 
-	The followings are allowed in {options} additional to options for
-	a corresponding git command.
+	The followings are allowed in {options}.
 
 	--group={group}
 		A window group name used for the buffer (|gina-options-group|)
@@ -1320,7 +1342,7 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 	Open 3-way diff to solve conflict.
 	If {path} is missing, it is guessed from the current buffer.
 
-	The followings are allowed in {options}
+	The followings are allowed in {options}.
 	
 	--group1={group}
 		A window group name used for the 1st buffer
@@ -1361,8 +1383,26 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 	|:Gina-patch|
 
 						*:Gina-commit*
-:Gina commit [+cmd] [++opt] [{options}]
-	Open a "gina-commit" buffer to commit changes.
+:Gina commit [+cmd] [++opt] [{options}] [-a] [-s] [-v] [-u{mode}]
+             [--amend] [(-c | -C | --fixup= | --squash=){commit}]
+             [--reset-author] [--allow-empty] [--allow-empty-message]
+             [--no-verify] [-e] [--author={author}]
+             [--date={date}] [--cleanup={mode}] [--[no-]status] [-i | -o]
+             [-S{keyid}] [--] [{file}...]
+:Gina commit (-p | --interactive) [-s] [-v] [-u{mode}]
+             [--amend] [(-c | -C | --fixup= | --squash=){commit}]
+             [--reset-author] [--allow-empty] [--allow-empty-message]
+             [--no-verify] [-e] [--author={author}]
+             [--date={date}] [--cleanup={mode}] [--[no-]status] [-i | -o]
+             [-S{keyid}] [--] [{file}...]
+:Gina commit (-F{file} | -m{msg}) [-a] [-s] [-v] [-u{mode}]
+             [--amend] [(-c | -C | --fixup= | --squash=){commit}]
+             [--reset-author] [--allow-empty] [--allow-empty-message]
+             [--no-verify] [-e] [--author={author}]
+             [--date={date}] [--cleanup={mode}] [--[no-]status] [-i | -o]
+             [-S{keyid}] [--] [{file}...]
+	Open a "gina-commit" buffer to commit changes or perform a raw
+	"git commit" command.
 	Users can write a commit message on this buffer and the actual commit
 	will be performed when user close the buffer with |:q| or |:wq|.
 
@@ -1414,7 +1454,7 @@ Additionally [+cmd] and [++opt] are supported. See |gina-buffer-+cmd| and
 	|:Gina-diff|
 
 						*:Gina-diff*
-:Gina diff [+cmd] [++opt] [{options}] [{treeish}] [-- {pathspec}...]
+:Gina diff [+cmd] [++opt] [{options}] [{treeish}]
 	Show an unified diff of {path} or the repository between 1) working
 	tree vs index or {rev}, 2) index vs HEAD or {rev}.
 	If {treeish} is missing, {rev} part of the {treeish} is guessed from a
@@ -1940,6 +1980,22 @@ g:gina#command#{scheme}#use_default_mappings
 	Assign 0 if you would like to disable the default mappings.
 	Default: 1
 
+		*g:gina#command#blame#formatter#format*
+g:gina#command#blame#formatter#format
+	A format string used to construct individual lines of a blame navi
+	buffer. The following format strings are replaced by a rule which
+	explained in |gina-misc-string-format|.
+
+	"su"	A commit summary (a first line of the commit message)
+	"au"	An author name of the commit
+	"ma"	A current commit indication mark
+	"in"	A commit SHA indicator
+	"ti"	A timestamp string
+
+	Additionally, the format is splitted by "%=" like |statusline|.
+
+	Default: "%su%=on %ti by %au %ma%in"
+
 		*g:gina#command#blame#formatter#separator*
 g:gina#command#blame#formatter#separator
 	A separator text used to indicate that the content is squashed.
@@ -1951,17 +2007,30 @@ g:gina#command#blame#formatter#current_mark
 	equal to the revision of the blame content.
 	Default: "|"
 
-		*g:gina#command#blame#timestamper#format1*
-g:gina#command#blame#timestamper#format1
+		*g:gina#command#blame#formatter#timestamp_months*
+g:gina#command#blame#formatter#timestamp_months
+	Threshold number of months to use human friendly timestamp.
+	Default: 3
+
+		*g:gina#command#blame#formatter#timestamp_format1*
+g:gina#command#blame#formatter#timestamp_format1
 	A |strftime()| format used for an absolute timestamp which year is
 	equal to the year of the current time.
 	Default: "%d %b"
 
-		*g:gina#command#blame#timestamper#format2*
-g:gina#command#blame#timestamper#format2
+		*g:gina#command#blame#formatter#timestamp_format2*
+g:gina#command#blame#formatter#timestamp_format2
 	A |strftime()| format used for an absolute timestamp which year is
 	NOT equal to the year of the current time.
 	Default: "%d %b, %Y"
+
+		*g:gina#command#blame#timestamper#format1*
+g:gina#command#blame#timestamper#format1
+	Removed. Use |gina#command#blame#formatter#timestamp_format1|.
+
+		*g:gina#command#blame#timestamper#format2*
+g:gina#command#blame#timestamper#format2
+	Removed. Use |gina#command#blame#formatter#timestamp_format2|.
 
 		*g:gina#command#browse#translation_patterns*
 g:gina#command#browse#translation_patterns
@@ -2360,6 +2429,14 @@ tag:delete
 tag:verify
 	Verify a tag.
 
+					*gina-actions-yank*
+yank:rev
+	Yank a revision
+yank:path
+	Yank a path
+yank:treeish
+	Yank a treeish
+
 =============================================================================
 MISC						*gina-misc*
 
@@ -2368,8 +2445,8 @@ SHORT FORMAT					*gina-misc-short-format*
 
 gina use a short format in |gina-buffer-status|.
 The following is a cheatsheet of that format.
-
-	X          Y     Meaning ~
+>
+	X          Y     Meaning
 	          [MD]   not updated
 	M        [ MD]   updated in index
 	A        [ MD]   added to index
@@ -2390,7 +2467,7 @@ The following is a cheatsheet of that format.
 
 	?           ?    untracked
 	!           !    ignored
-
+<
 See :!man git-status for more detail.
 
 -----------------------------------------------------------------------------
@@ -2520,9 +2597,9 @@ CHANGELOG					*gina-changelog*
 
 2017.02.25 (v0.1.0)
 	Release first beta version.
+
 2017.03.05 (v0.2.1)
 	Release second beta version.
-
 	- Bug fixes
 	  - Fix commit issue on a newly checked out repository
 	  - Fix tabpage issue of Vim.Buffer.Group module
@@ -2544,6 +2621,21 @@ CHANGELOG					*gina-changelog*
 	  - Allow "Gina log v0.1.0..." to show log from v0.1.0 to HEAD
 	- Guess --line/--col from the current buffer if possible
 	- Add Gina blame
+
+2017.08.03 (v0.3.1)
+	Release third beta version.
+	- Add
+	  - Gina stash
+	  - statusline/tabline components
+	  - command completion
+	  - diff jumps on diff/commit buffer
+	  - shell/term execution via Gina!!
+	  - Yank actions
+	- Fix
+	  - 'Not allowed here' exceptions
+	  - Scroll position on Gina blame
+	  - Gina show --opener=edit :
+	  - Gina init
 
 =============================================================================
 vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl

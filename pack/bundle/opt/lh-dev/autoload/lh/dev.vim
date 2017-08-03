@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  24th Jul 2017
+" Last Update:  02nd Aug 2017
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -299,7 +299,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     let source_name = tempname()
     call writefile(getline(s, e), source_name, 'b')
   else
-    " todo: corriger le path car inject? par d?faut...
+    " todo: corriger le path car injecté par défaut...
     let source_name    = expand('%:p')
     " let source_name    = lh#path#relative_to(ctags_dirname, expand('%:p'))
   endif
