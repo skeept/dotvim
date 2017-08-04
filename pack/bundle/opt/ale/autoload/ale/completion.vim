@@ -72,7 +72,7 @@ function! ale#completion#OmniFunc(findstart, base) abort
         let l:line = b:ale_completion_info.line
         let l:column = b:ale_completion_info.column
         let l:regex = s:GetRegex(s:omni_start_map, &filetype)
-        let l:up_to_column = getline(l:line)[: l:column - 1]
+        let l:up_to_column = getline(l:line)[: l:column - 2]
         let l:match = matchstr(l:up_to_column, l:regex)
 
         return l:column - len(l:match) - 1
@@ -162,6 +162,7 @@ function! ale#completion#ParseTSServerCompletionEntryDetails(response) abort
         call add(l:results, {
         \   'word': l:suggestion.name,
         \   'kind': l:kind,
+        \   'icase': 1,
         \   'menu': join(l:displayParts, ''),
         \   'info': join(l:documentationParts, ''),
         \})

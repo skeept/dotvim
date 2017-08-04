@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      17th Apr 2007
-" Last Update:  31st Mar 2017
+" Last Update:  04th Aug 2017
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
@@ -23,6 +23,8 @@ let s:k_version = 40000
 "       (*) ENH: Add lh#list#push_if_new_elements()
 "       (*) ENH: Add lh#list#cross()
 "       (*) PERF: Improve #matches() and #match() performances
+"       (*) ENH: Add support for lh#list#sort(list[lists])
+"           Sorts on first index
 "       v3.13.2
 "       (*) PERF: Optimize `lh#list#push_if_new`
 "       v3.10.3
@@ -430,40 +432,31 @@ endfunction
 " Function: lh#list#arg_max(list [, transfo]) {{{3
 function! lh#list#arg_max(list, ...) abort
   if empty(a:list) | return -1 | endif
-  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
-  let m = Transfo(a:list[0])
-  let p = 0
-  let i = 1
-  while i != len(a:list)
-    let e = a:list[i]
-    let v = Transfo(e)
-    if v > m
-      let m = v
-      let p = i
-    endif
-    let i += 1
-  endwhile
-  return p
+  if a:0 > 0
+    let Transfo = a:1
+    let list = map(copy(a:list), '[Transfo(v:val), v:key]')
+  else
+    let list = map(copy(a:list), '[v:val, v:key]')
+  endif
+  let res = [list[0]]
+  call map(list[1:], 'add(res, v:val[0] > res[-1][0] ? v:val : res[-1])')
+  return res[-1][1]
 endfunction
+
 
 " Function: lh#list#arg_min(list [, transfo]) {{{3
 " @since Version 4.0.0
 function! lh#list#arg_min(list, ...) abort
   if empty(a:list) | return -1 | endif
-  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
-  let m = Transfo(a:list[0])
-  let p = 0
-  let i = 1
-  while i != len(a:list)
-    let e = a:list[i]
-    let v = Transfo(e)
-    if v < m
-      let m = v
-      let p = i
-    endif
-    let i += 1
-  endwhile
-  return p
+  if a:0 > 0
+    let Transfo = a:1
+    let list = map(copy(a:list), '[Transfo(v:val), v:key]')
+  else
+    let list = map(copy(a:list), '[v:val, v:key]')
+  endif
+  let res = [list[0]]
+  call map(list[1:], 'add(res, v:val[0] < res[-1][0] ? v:val : res[-1])')
+  return res[-1][1]
 endfunction
 
 " Function: lh#list#not_found(range) {{{3
@@ -488,10 +481,12 @@ endfunction
 " - 'N' -> number comp, but on strings
 let s:k_has_num_cmp = has("patch-7.4-341")
 let s:k_has_fixed_str_cmp = has("patch-7.4-411")
+let s:k_has_list_num_cmp = 0
 " For testing purposes...
 " let s:k_has_num_cmp = 0
 " let s:k_has_fixed_str_cmp = 0
 function! lh#list#sort(list,...) abort
+  if empty(a:list) | return a:list | endif
   let args = [a:list] + a:000
   if len(args) > 1
     if args[1] == 'N'
@@ -499,13 +494,19 @@ function! lh#list#sort(list,...) abort
       let args[1] = 'n'
       let was_sorting_numbers_as_strings = 1
     endif
-    if !s:k_has_num_cmp && args[1]=='n'
+    if !s:k_has_list_num_cmp && args[1]=='n' && type(a:list[0])==type([])
+      let args[1] = 'lh#list#_list_regular_cmp'
+    elseif !s:k_has_num_cmp && args[1]=='n'
       let args[1] = 'lh#list#_regular_cmp'
     elseif !s:k_has_fixed_str_cmp && args[1]==''
       let args[1] = 'lh#list#_str_cmp'
     endif
   else
-    if !s:k_has_fixed_str_cmp
+    if !s:k_has_list_num_cmp && type(a:list[0])==type([])
+          \ && empty(filter(map(copy(a:list), 'type(v:val)'), 'v:val != type([])'))
+      " The last test handle heterogenous lists
+      let args += ['lh#list#_list_regular_cmp']
+    elseif !s:k_has_fixed_str_cmp
       let args += ['lh#list#_str_cmp']
     endif
   endif
@@ -886,6 +887,15 @@ function! lh#list#_regular_cmp(lhs, rhs) abort
         \ : a:lhs == a:rhs ? 0
         \ :                  1
   return res
+endfunction
+
+" Function: lh#list#_list_regular_cmp(lhs, rhs) {{{3
+" @Version 4.0.0
+function! lh#list#_list_regular_cmp(lhs, rhs) abort
+  if type(a:lhs) != type(a:rhs) | return 0 | endif
+  call lh#assert#type(a:lhs).is([])
+  call lh#assert#type(a:rhs).is([])
+  return lh#list#_regular_cmp(a:lhs[0], a:rhs[0])
 endfunction
 
 " Function: lh#list#_apply_on(list/dict, index/key, action) {{{3
