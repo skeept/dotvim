@@ -271,7 +271,7 @@
 "easygit":{"archive_name":"easygit.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23881","version":"0.3.0","vim_script_nr":5304},
 "vim-NotableFt":{"archive_name":"vim-NotableFt-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23878","version":"1.0","vim_script_nr":5303},
 "oldfilesearch":{"archive_name":"oldfilesearch-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23872","version":"1.0","vim_script_nr":5302},
-"Base2Tone":{"archive_name":"Base2Tone-Evening-dark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24412","version":"1.5","vim_script_nr":5301},
+"Base2Tone":{"archive_name":"Base2Tone_EveningDark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25475","version":"1.6","vim_script_nr":5301},
 "Ranger%5300":{"archive_name":"ranger.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23894","version":"1.0","vim_script_nr":5300},
 "Citation":{"archive_name":"citation.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24988","version":"0.4","vim_script_nr":5299},
 "vim-love-docs":{"archive_name":"vim-love-docs.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25449","version":"0.5.3","vim_script_nr":5298},
