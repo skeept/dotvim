@@ -34,12 +34,18 @@ endif
 
 let colors_name = "apprentice"
 
-if ($TERM =~ '256' && &t_Co >= 256) || has("gui_running")
-  hi Normal           ctermbg=235  ctermfg=250  guibg=#262626 guifg=#bcbcbc cterm=NONE           gui=NONE
+if ($TERM =~ '256' || &t_Co >= 256) || has("gui_running")
+  hi Normal         ctermbg=235  ctermfg=250  guibg=#262626 guifg=#bcbcbc cterm=NONE           gui=NONE
+  hi LineNr         ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
+  hi FoldColumn     ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
+  hi Folded         ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
+  hi MatchParen     ctermbg=234  ctermfg=229  guibg=#1c1c1c guifg=#ffffaf cterm=NONE           gui=NONE
+  hi signColumn     ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
 
   set background=dark
 
   hi Comment          ctermbg=NONE ctermfg=240  guibg=NONE    guifg=#585858 cterm=NONE           gui=NONE
+  hi Conceal          ctermbg=NONE ctermfg=250  guibg=NONE    guifg=#bcbcbc cterm=NONE           gui=NONE
   hi Constant         ctermbg=NONE ctermfg=208  guibg=NONE    guifg=#ff8700 cterm=NONE           gui=NONE
   hi Error            ctermbg=NONE ctermfg=131  guibg=NONE    guifg=#af5f5f cterm=reverse        gui=reverse
   hi Identifier       ctermbg=NONE ctermfg=67   guibg=NONE    guifg=#5f87af cterm=NONE           gui=NONE
@@ -52,7 +58,6 @@ if ($TERM =~ '256' && &t_Co >= 256) || has("gui_running")
   hi Type             ctermbg=NONE ctermfg=103  guibg=NONE    guifg=#8787af cterm=NONE           gui=NONE
   hi Underlined       ctermbg=NONE ctermfg=66   guibg=NONE    guifg=#5f8787 cterm=underline      gui=underline
 
-  hi LineNr           ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
   hi NonText          ctermbg=NONE ctermfg=240  guibg=NONE    guifg=#585858 cterm=NONE           gui=NONE
 
   hi Pmenu            ctermbg=238  ctermfg=250  guibg=#444444 guifg=#bcbcbc cterm=NONE           gui=NONE
@@ -72,8 +77,8 @@ if ($TERM =~ '256' && &t_Co >= 256) || has("gui_running")
 
   hi Cursor           ctermbg=242  ctermfg=NONE guibg=#6c6c6c guifg=NONE    cterm=NONE           gui=NONE
   hi CursorColumn     ctermbg=236  ctermfg=NONE guibg=#303030 guifg=NONE    cterm=NONE           gui=NONE
-  hi CursorLine       ctermbg=236  ctermfg=NONE guibg=#303030 guifg=NONE    cterm=NONE           gui=NONE
   hi CursorLineNr     ctermbg=236  ctermfg=73   guibg=#303030 guifg=#5fafaf cterm=NONE           gui=NONE
+  hi CursorLine       ctermbg=236  ctermfg=NONE guibg=#303030 guifg=NONE    cterm=NONE           gui=NONE
 
   hi helpLeadBlank    ctermbg=NONE ctermfg=NONE guibg=NONE    guifg=NONE    cterm=NONE           gui=NONE
   hi helpNormal       ctermbg=NONE ctermfg=NONE guibg=NONE    guifg=NONE    cterm=NONE           gui=NONE
@@ -81,11 +86,8 @@ if ($TERM =~ '256' && &t_Co >= 256) || has("gui_running")
   hi StatusLine       ctermbg=101  ctermfg=235  guibg=#87875f guifg=#262626 cterm=NONE           gui=NONE
   hi StatusLineNC     ctermbg=238  ctermfg=101  guibg=#444444 guifg=#87875f cterm=NONE           gui=italic
 
-  hi Visual           ctermbg=110  ctermfg=235  guibg=#8fafd7 guifg=#262626 cterm=NONE           gui=NONE
+  hi Visual           ctermbg=235  ctermfg=110  guibg=#262626 guifg=#8fafd7 cterm=reverse        gui=reverse
   hi VisualNOS        ctermbg=NONE ctermfg=NONE guibg=NONE    guifg=NONE    cterm=underline      gui=underline
-
-  hi FoldColumn       ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
-  hi Folded           ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
 
   hi VertSplit        ctermbg=238  ctermfg=238  guibg=#444444 guifg=#444444 cterm=NONE           gui=NONE
   hi WildMenu         ctermbg=110  ctermfg=235  guibg=#8fafd7 guifg=#262626 cterm=NONE           gui=NONE
@@ -94,24 +96,29 @@ if ($TERM =~ '256' && &t_Co >= 256) || has("gui_running")
   hi SpecialKey       ctermbg=NONE ctermfg=240  guibg=NONE    guifg=#585858 cterm=NONE           gui=NONE
   hi Title            ctermbg=NONE ctermfg=231  guibg=NONE    guifg=#ffffff cterm=NONE           gui=NONE
 
-  hi DiffAdd          ctermbg=108  ctermfg=235  guibg=#87af87 guifg=#262626 cterm=NONE           gui=NONE
-  hi DiffChange       ctermbg=60   ctermfg=235  guibg=#5f5f87 guifg=#262626 cterm=NONE           gui=NONE
-  hi DiffDelete       ctermbg=131  ctermfg=235  guibg=#af5f5f guifg=#262626 cterm=NONE           gui=NONE
-  hi DiffText         ctermbg=103  ctermfg=235  guibg=#8787af guifg=#262626 cterm=NONE           gui=NONE
+  hi DiffAdd          ctermbg=235  ctermfg=108  guibg=#262626 guifg=#87af87 cterm=reverse        gui=reverse
+  hi DiffChange       ctermbg=235  ctermfg=103  guibg=#262626 guifg=#8787af cterm=reverse        gui=reverse
+  hi DiffDelete       ctermbg=235  ctermfg=131  guibg=#262626 guifg=#af5f5f cterm=reverse        gui=reverse
+  hi DiffText         ctermbg=235  ctermfg=208  guibg=#262626 guifg=#ff8700 cterm=reverse        gui=reverse
 
   hi IncSearch        ctermbg=131  ctermfg=235  guibg=#af5f5f guifg=#262626 cterm=NONE           gui=NONE
   hi Search           ctermbg=229  ctermfg=235  guibg=#ffffaf guifg=#262626 cterm=NONE           gui=NONE
 
   hi Directory        ctermbg=NONE ctermfg=73   guibg=NONE    guifg=#5fafaf cterm=NONE           gui=NONE
-  hi MatchParen       ctermbg=234  ctermfg=229  guibg=#1c1c1c guifg=#ffffaf cterm=NONE           gui=NONE
 
-  hi SpellBad         ctermbg=NONE ctermfg=131  guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#af5f5f
-  hi SpellCap         ctermbg=NONE ctermfg=73   guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#5fafaf
-  hi SpellLocal       ctermbg=NONE ctermfg=65   guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#5f875f
-  hi SpellRare        ctermbg=NONE ctermfg=208  guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#ff8700
+  if has("gui_running")
+    hi SpellBad         ctermbg=NONE ctermfg=131  guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#af5f5f
+    hi SpellCap         ctermbg=NONE ctermfg=73   guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#5fafaf
+    hi SpellLocal       ctermbg=NONE ctermfg=65   guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#5f875f
+    hi SpellRare        ctermbg=NONE ctermfg=208  guibg=NONE    guifg=NONE    cterm=undercurl      gui=undercurl guisp=#ff8700
+  else
+    hi SpellBad         ctermbg=NONE ctermfg=131  guibg=NONE    guifg=#af5f5f cterm=undercurl      gui=undercurl guisp=NONE
+    hi SpellCap         ctermbg=NONE ctermfg=73   guibg=NONE    guifg=#5fafaf cterm=undercurl      gui=undercurl guisp=NONE
+    hi SpellLocal       ctermbg=NONE ctermfg=65   guibg=NONE    guifg=#5f875f cterm=undercurl      gui=undercurl guisp=NONE
+    hi SpellRare        ctermbg=NONE ctermfg=208  guibg=NONE    guifg=#ff8700 cterm=undercurl      gui=undercurl guisp=NONE
+  endif
 
-  hi ColorColumn      ctermbg=131  ctermfg=NONE guibg=#af5f5f guifg=NONE    cterm=NONE           gui=NONE
-  hi signColumn       ctermbg=234  ctermfg=242  guibg=#1c1c1c guifg=#6c6c6c cterm=NONE           gui=NONE
+  hi ColorColumn      ctermbg=234  ctermfg=NONE guibg=#1c1c1c guifg=NONE    cterm=NONE           gui=NONE
 elseif &t_Co == 8 || $TERM !~# '^linux' || &t_Co == 16
   set t_Co=16
 
@@ -120,6 +127,7 @@ elseif &t_Co == 8 || $TERM !~# '^linux' || &t_Co == 16
   set background=dark
 
   hi Comment          ctermbg=NONE        ctermfg=gray        cterm=NONE
+  hi Conceal          ctermbg=NONE        ctermfg=white       cterm=NONE
   hi Constant         ctermbg=NONE        ctermfg=red         cterm=NONE
   hi Function         ctermbg=NONE        ctermfg=yellow      cterm=NONE
   hi Identifier       ctermbg=NONE        ctermfg=darkblue    cterm=NONE
@@ -154,17 +162,17 @@ elseif &t_Co == 8 || $TERM !~# '^linux' || &t_Co == 16
 
   hi Cursor           ctermbg=NONE        ctermfg=NONE        cterm=NONE
   hi CursorColumn     ctermbg=darkgray    ctermfg=NONE        cterm=NONE
-  hi CursorLine       ctermbg=darkgray    ctermfg=NONE        cterm=NONE
   hi CursorLineNr     ctermbg=black       ctermfg=cyan        cterm=NONE
+  hi CursorLine       ctermbg=darkgray    ctermfg=NONE        cterm=NONE
 
   hi helpLeadBlank    ctermbg=NONE        ctermfg=NONE        cterm=NONE
   hi helpNormal       ctermbg=NONE        ctermfg=NONE        cterm=NONE
 
   hi StatusLine       ctermbg=darkyellow  ctermfg=black       cterm=NONE
-  hi StatusLineNC     ctermbg=darkgray    ctermfg=black       cterm=NONE
+  hi StatusLineNC     ctermbg=darkgray    ctermfg=darkyellow  cterm=NONE
 
-  hi Visual           ctermbg=blue        ctermfg=black       cterm=NONE
-  hi VisualNOS        ctermbg=white       ctermfg=black       cterm=NONE
+  hi Visual           ctermbg=black       ctermfg=blue        cterm=reverse
+  hi VisualNOS        ctermbg=black       ctermfg=white       cterm=reverse
 
   hi FoldColumn       ctermbg=black       ctermfg=darkgray    cterm=NONE
   hi Folded           ctermbg=black       ctermfg=darkgray    cterm=NONE
@@ -175,10 +183,10 @@ elseif &t_Co == 8 || $TERM !~# '^linux' || &t_Co == 16
   hi SpecialKey       ctermbg=NONE        ctermfg=darkgray    cterm=NONE
   hi Title            ctermbg=NONE        ctermfg=white       cterm=NONE
 
-  hi DiffAdd          ctermbg=darkgreen   ctermfg=black       cterm=NONE
-  hi DiffChange       ctermbg=darkcyan    ctermfg=black       cterm=NONE
-  hi DiffDelete       ctermbg=darkred     ctermfg=black       cterm=NONE
-  hi DiffText         ctermbg=yellow      ctermfg=black       cterm=NONE
+  hi DiffAdd          ctermbg=black       ctermfg=green       cterm=reverse
+  hi DiffChange       ctermbg=black       ctermfg=magenta     cterm=reverse
+  hi DiffDelete       ctermbg=black       ctermfg=darkred     cterm=reverse
+  hi DiffText         ctermbg=black       ctermfg=red         cterm=reverse
 
   hi IncSearch        ctermbg=darkred     ctermfg=black       cterm=NONE
   hi Search           ctermbg=yellow      ctermfg=black       cterm=NONE
@@ -191,73 +199,54 @@ elseif &t_Co == 8 || $TERM !~# '^linux' || &t_Co == 16
   hi SpellLocal       ctermbg=NONE        ctermfg=darkgreen   cterm=undercurl
   hi SpellRare        ctermbg=NONE        ctermfg=darkmagenta cterm=undercurl
 
-  hi ColorColumn      ctermbg=darkred     ctermfg=NONE        cterm=NONE
+  hi ColorColumn      ctermbg=black       ctermfg=NONE        cterm=NONE
   hi SignColumn       ctermbg=black       ctermfg=darkgray    cterm=NONE
 endif
 
-hi link Boolean            Constant
-hi link Character          Constant
-hi link Conceal            Normal
-hi link Conditional        Statement
-hi link Debug              Special
-hi link Define             PreProc
-hi link Delimiter          Special
-hi link Exception          Statement
-hi link Float              Number
-hi link HelpCommand        Statement
-hi link HelpExample        Statement
-hi link Include            PreProc
-hi link Keyword            Statement
-hi link Label              Statement
-hi link Macro              PreProc
-hi link Number             Constant
-hi link Operator           Statement
-hi link PreCondit          PreProc
-hi link Repeat             Statement
-hi link SpecialChar        Special
-hi link SpecialComment     Special
-hi link StorageClass       Type
-hi link Structure          Type
-hi link Tag                Special
-hi link Typedef            Type
+hi link Boolean                  Constant
+hi link Character                Constant
+hi link Conditional              Statement
+hi link Debug                    Special
+hi link Define                   PreProc
+hi link Delimiter                Special
+hi link Exception                Statement
+hi link Float                    Number
+hi link HelpCommand              Statement
+hi link HelpExample              Statement
+hi link Include                  PreProc
+hi link Keyword                  Statement
+hi link Label                    Statement
+hi link Macro                    PreProc
+hi link Number                   Constant
+hi link Operator                 Statement
+hi link PreCondit                PreProc
+hi link Repeat                   Statement
+hi link SpecialChar              Special
+hi link SpecialComment           Special
+hi link StorageClass             Type
+hi link Structure                Type
+hi link Tag                      Special
+hi link Typedef                  Type
 
-hi link htmlEndTag         htmlTagName
-hi link htmlLink           Function
-hi link htmlSpecialTagName htmlTagName
-hi link htmlTag            htmlTagName
-hi link xmlTag             Statement
-hi link xmlTagName         Statement
-hi link xmlEndTag          Statement
+hi link htmlEndTag               htmlTagName
+hi link htmlLink                 Function
+hi link htmlSpecialTagName       htmlTagName
+hi link htmlTag                  htmlTagName
+hi link htmlBold                 Normal
+hi link htmlItalic               Normal
+hi link xmlTag                   Statement
+hi link xmlTagName               Statement
+hi link xmlEndTag                Statement
 
-hi link markdownItalic     Preproc
+hi link markdownItalic           Preproc
+hi link asciidocQuotedEmphasized Preproc
 
-hi link diffBDiffer        WarningMsg
-hi link diffCommon         WarningMsg
-hi link diffDiffer         WarningMsg
-hi link diffIdentical      WarningMsg
-hi link diffIsA            WarningMsg
-hi link diffNoEOL          WarningMsg
-hi link diffOnly           WarningMsg
-hi link diffRemoved        WarningMsg
-hi link diffAdded          String
-
-if $NVIM_TUI_ENABLE_TRUE_COLOR == 1
-  let g:terminal_foreground =  "#BCBCBC"
-  let g:terminal_background =  "#262626"
-  let g:terminal_color_0 =     "#1C1C1C"
-  let g:terminal_color_8 =     "#444444"
-  let g:terminal_color_1 =     "#AF5F5F"
-  let g:terminal_color_9 =     "#FF8700"
-  let g:terminal_color_2 =     "#5F875F"
-  let g:terminal_color_10 =    "#87AF87"
-  let g:terminal_color_3 =     "#87875F"
-  let g:terminal_color_11 =    "#FFFFAF"
-  let g:terminal_color_4 =     "#5F87AF"
-  let g:terminal_color_12 =    "#8FAFD7"
-  let g:terminal_color_5 =     "#5F5F87"
-  let g:terminal_color_13 =    "#8787AF"
-  let g:terminal_color_6 =     "#5F8787"
-  let g:terminal_color_14 =    "#5FAFAF"
-  let g:terminal_color_7 =     "#6C6C6C"
-  let g:terminal_color_15 =    "#FFFFFF"
-endif
+hi link diffBDiffer              WarningMsg
+hi link diffCommon               WarningMsg
+hi link diffDiffer               WarningMsg
+hi link diffIdentical            WarningMsg
+hi link diffIsA                  WarningMsg
+hi link diffNoEOL                WarningMsg
+hi link diffOnly                 WarningMsg
+hi link diffRemoved              WarningMsg
+hi link diffAdded                String
