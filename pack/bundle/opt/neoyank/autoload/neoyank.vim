@@ -1,30 +1,8 @@
 "=============================================================================
 " FILE: neoyank.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" License: MIT license
 "=============================================================================
-
-let s:save_cpo = &cpo
-set cpo&vim
 
 " Variables  "{{{
 let s:VERSION = '2.0'
@@ -219,15 +197,10 @@ function! s:writefile(path, list) abort "{{{
 endfunction"}}}
 
 function! s:vim2json(expr) abort "{{{
-  return   (has('nvim') && exists('*json_encode')) ? json_encode(a:expr)
-        \ : has('patch-7.4.1498') ? js_encode(a:expr) : string(a:expr)
+  return exists('*json_encode') ? json_encode(a:expr) : string(a:expr)
 endfunction "}}}
 function! s:json2vim(expr) abort "{{{
-  sandbox return (has('nvim') && exists('*json_encode') ? json_decode(a:expr)
-        \ : has('patch-7.4.1498') ? js_decode(a:expr) : eval(a:expr))
+  sandbox return (exists('*json_encode') ? json_decode(a:expr) : eval(a:expr))
 endfunction "}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
 
 " vim: foldmethod=marker
