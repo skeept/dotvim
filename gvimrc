@@ -78,7 +78,6 @@ let g:solarized_underline = 0
 let g:solarized_italic    = 0
 let g:solarized_style     = "light"
 
-"colorscheme morning
 colorscheme desert
 "set bg=light | colorscheme solarized
 

@@ -394,27 +394,6 @@ endif " has("autocmd")
 "================== Colorscheme ==============================================={{{
 " setting the color in terminals
 if !has("gui_running") && !g:is_win
-  "on windows default is better
-  "colorscheme evening_cs
-  "colorscheme default
-  "colorscheme morning
-  "colorscheme darkblue
-  "colorscheme fruit
-  "colorscheme icansee
-  "colorscheme greens
-  "colorscheme freya_cs
-  "colorscheme desert256_cs
-  "colorscheme desert
-  "colorscheme leo_cs
-  "colorscheme torte_cs
-  "colorscheme blacksea_cs
-  "colorscheme asu1dark_cs
-  "colorscheme candycode_cs
-  "colorscheme LightDefaultGrey_cs
-  "colorscheme Dark2_cs
-  "colorscheme anotherdark_cs
-  "colorscheme  koehler_cs
-   "colorscheme xoria256
    if g:is_vimrc_simple == 0
      colorscheme  graywh_cs1
    else
