@@ -2651,6 +2651,10 @@
     "type": "git",
     "url": "git://github.com/Absolight/vim-bind"
   },
+  "4364": {
+    "type": "git",
+    "url": "git://github.com/Houl/ExplainPattern-vim"
+  },
   "4365": {
     "type": "git",
     "url": "git://github.com/Rykka/trans.vim"
