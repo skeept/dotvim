@@ -38,6 +38,9 @@ function! ale#list#SetLists(buffer, loclist) abort
     " If we have errors in our list, open the list. Only if it isn't already open
     if (g:ale_open_list && !empty(a:loclist)) || g:ale_keep_list_window_open
         let l:winnr = winnr()
+        let l:mode = mode()
+        let l:reset_visual_selection = l:mode ==? 'v' || l:mode ==# "\<c-v>"
+        let l:reset_character_selection = l:mode ==? 's' || l:mode ==# "\<c-s>"
 
         if g:ale_set_quickfix
             if !ale#list#IsQuickfixOpen()
@@ -50,6 +53,16 @@ function! ale#list#SetLists(buffer, loclist) abort
         " If focus changed, restore it (jump to the last window).
         if l:winnr !=# winnr()
             wincmd p
+        endif
+
+        if l:reset_visual_selection || l:reset_character_selection
+            " If we were in a selection mode before, select the last selection.
+            normal! gv
+
+            if l:reset_character_selection
+                " Switch back to Select mode, if we were in that.
+                normal! "\<c-g>"
+            endif
         endif
     endif
 endfunction
