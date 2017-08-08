@@ -153,29 +153,20 @@ function! jedi#setup_py_version(py_version) abort
     execute 'command! -nargs=1 PythonJedi '.cmd_exec.' <args>'
 
     let s:init_outcome = 0
-    PythonJedi << EOF
-try:
-    import vim
-    import os, sys
-    jedi_path = os.path.join(vim.eval('expand(s:script_path)'), 'jedi')
-    sys.path.insert(0, jedi_path)
-
-    jedi_vim_path = vim.eval('expand(s:script_path)')
-    if jedi_vim_path not in sys.path:  # Might happen when reloading.
-        sys.path.insert(0, jedi_vim_path)
-except Exception as excinfo:
-    vim.command('let s:init_outcome = "error when adding to sys.path: {0}: {1}"'.format(excinfo.__class__.__name__, excinfo))
-else:
-    try:
-        import jedi_vim
-    except Exception as excinfo:
-        vim.command('let s:init_outcome = "error when importing jedi_vim: {0}: {1}"'.format(excinfo.__class__.__name__, excinfo))
-    else:
-        vim.command('let s:init_outcome = 1')
-    finally:
-        sys.path.remove(jedi_path)
-EOF
-    if !exists('s:init_outcome')
+    let init_lines = [
+          \ 'import vim',
+          \ 'try:',
+          \ '    import jedi_vim',
+          \ 'except Exception as exc:',
+          \ '    vim.command(''let s:init_outcome = "could not import jedi_vim: {0}: {1}"''.format(exc.__class__.__name__, exc))',
+          \ 'else:',
+          \ '    vim.command(''let s:init_outcome = 1'')']
+    try
+        exe 'PythonJedi exec('''.escape(join(init_lines, '\n'), "'").''')'
+    catch
+        throw printf('jedi#setup_py_version: failed to run Python for initialization: %s.', v:exception)
+    endtry
+    if s:init_outcome is 0
         throw 'jedi#setup_py_version: failed to run Python for initialization.'
     elseif s:init_outcome isnot 1
         throw printf('jedi#setup_py_version: %s.', s:init_outcome)
@@ -186,7 +177,12 @@ endfunction
 
 function! jedi#debug_info() abort
     if s:python_version ==# 'null'
-        call s:init_python()
+        try
+            call s:init_python()
+        catch
+            echohl WarningMsg | echom v:exception | echohl None
+            return
+        endtry
     endif
     if &verbose
       if &filetype !=# 'python'
@@ -267,12 +263,12 @@ EOF
       messages
       echo '```'
       echo "\n"
-      echo "<details><summary>:scriptnames</summary>"
+      echo '<details><summary>:scriptnames</summary>'
       echo "\n"
       echo '```'
       scriptnames
       echo '```'
-      echo "</details>"
+      echo '</details>'
     endif
 endfunction
 
