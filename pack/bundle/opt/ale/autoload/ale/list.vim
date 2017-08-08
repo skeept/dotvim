@@ -4,11 +4,20 @@
 " Return 1 if there is a buffer with buftype == 'quickfix' in bufffer list
 function! ale#list#IsQuickfixOpen() abort
     for l:buf in range(1, bufnr('$'))
-        if getbufvar(l:buf, '&buftype') ==# 'quickfix'
+        if getbufvar(l:buf, '&buftype') is# 'quickfix'
             return 1
         endif
     endfor
     return 0
+endfunction
+
+" Check if we should open the list, based on the save event being fired, and
+" that setting being on, or the setting just being set to `1`.
+function! s:ShouldOpen(buffer) abort
+    let l:val = ale#Var(a:buffer, 'open_list')
+    let l:saved = getbufvar(a:buffer, 'ale_save_event_fired', 0)
+
+    return l:val is 1 || (l:val is# 'on_save' && l:saved)
 endfunction
 
 function! ale#list#SetLists(buffer, loclist) abort
@@ -35,12 +44,14 @@ function! ale#list#SetLists(buffer, loclist) abort
         endif
     endif
 
-    " If we have errors in our list, open the list. Only if it isn't already open
-    if (g:ale_open_list && !empty(a:loclist)) || g:ale_keep_list_window_open
+    let l:keep_open = ale#Var(a:buffer, 'keep_list_window_open')
+
+    " Open a window to show the problems if we need to.
+    if s:ShouldOpen(a:buffer) && (l:keep_open || !empty(a:loclist))
         let l:winnr = winnr()
         let l:mode = mode()
-        let l:reset_visual_selection = l:mode ==? 'v' || l:mode ==# "\<c-v>"
-        let l:reset_character_selection = l:mode ==? 's' || l:mode ==# "\<c-s>"
+        let l:reset_visual_selection = l:mode is? 'v' || l:mode is# "\<c-v>"
+        let l:reset_character_selection = l:mode is? 's' || l:mode is# "\<c-s>"
 
         if g:ale_set_quickfix
             if !ale#list#IsQuickfixOpen()
@@ -68,7 +79,7 @@ function! ale#list#SetLists(buffer, loclist) abort
 endfunction
 
 function! ale#list#CloseWindowIfNeeded(buffer) abort
-    if g:ale_keep_list_window_open || !g:ale_open_list
+    if ale#Var(a:buffer, 'keep_list_window_open') || !s:ShouldOpen(a:buffer)
         return
     endif
 

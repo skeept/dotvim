@@ -4,7 +4,7 @@
 " Return a formatted message according to g:ale_echo_msg_format variable
 function! s:GetMessage(linter, type, text) abort
     let l:msg = g:ale_echo_msg_format
-    let l:type = a:type ==# 'E'
+    let l:type = a:type is# 'E'
     \   ? g:ale_echo_msg_error_str
     \   : g:ale_echo_msg_warning_str
 
@@ -22,12 +22,12 @@ function! s:EchoWithShortMess(setting, message) abort
 
     try
         " Turn shortmess on or off.
-        if a:setting ==# 'on'
+        if a:setting is# 'on'
             setlocal shortmess+=T
             " echomsg is needed for the message to get truncated and appear in
             " the message history.
             exec "norm! :echomsg a:message\n"
-        elseif a:setting ==# 'off'
+        elseif a:setting is# 'off'
             setlocal shortmess-=T
             " Regular echo is needed for printing newline characters.
             echo a:message
@@ -50,10 +50,11 @@ function! ale#cursor#TruncatedEcho(message) abort
 endfunction
 
 function! s:FindItemAtCursor() abort
-    let l:info = get(g:ale_buffer_info, bufnr('%'), {'loclist': []})
+    let l:info = get(g:ale_buffer_info, bufnr(''), {})
+    let l:loclist = get(l:info, 'loclist', [])
     let l:pos = getcurpos()
-    let l:index = ale#util#BinarySearch(l:info.loclist, l:pos[1], l:pos[2])
-    let l:loc = l:index >= 0 ? l:info.loclist[l:index] : {}
+    let l:index = ale#util#BinarySearch(l:loclist, l:pos[1], l:pos[2])
+    let l:loc = l:index >= 0 ? l:loclist[l:index] : {}
 
     return [l:info, l:loc]
 endfunction
