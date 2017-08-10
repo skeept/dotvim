@@ -47,6 +47,7 @@ type Pattern struct {
 	text          []rune
 	termSets      []termSet
 	cacheable     bool
+	cacheKey      string
 	delimiter     Delimiter
 	nth           []Range
 	procFun       map[termType]algo.Algo
@@ -134,6 +135,7 @@ func BuildPattern(fuzzy bool, fuzzyAlgo algo.Algo, extended bool, caseMode Case,
 		delimiter:     delimiter,
 		procFun:       make(map[termType]algo.Algo)}
 
+	ptr.cacheKey = ptr.buildCacheKey()
 	ptr.procFun[termFuzzy] = fuzzyAlgo
 	ptr.procFun[termEqual] = algo.EqualMatch
 	ptr.procFun[termExact] = algo.ExactMatchNaive
@@ -150,6 +152,7 @@ func parseTerms(fuzzy bool, caseMode Case, normalize bool, str string) []termSet
 	sets := []termSet{}
 	set := termSet{}
 	switchSet := false
+	afterBar := false
 	for _, token := range tokens {
 		typ, inv, text := termFuzzy, false, strings.Replace(token, "\t", " ", -1)
 		lowerText := strings.ToLower(text)
@@ -162,10 +165,12 @@ func parseTerms(fuzzy bool, caseMode Case, normalize bool, str string) []termSet
 			typ = termExact
 		}
 
-		if text == "|" {
+		if len(set) > 0 && !afterBar && text == "|" {
 			switchSet = false
+			afterBar = true
 			continue
 		}
+		afterBar = false
 
 		if strings.HasPrefix(text, "!") {
 			inv = true
@@ -173,7 +178,7 @@ func parseTerms(fuzzy bool, caseMode Case, normalize bool, str string) []termSet
 			text = text[1:]
 		}
 
-		if strings.HasSuffix(text, "$") {
+		if text != "$" && strings.HasSuffix(text, "$") {
 			if strings.HasSuffix(text, "\\$") {
 				text = text[:len(text)-2] + "$"
 			} else {
@@ -182,7 +187,9 @@ func parseTerms(fuzzy bool, caseMode Case, normalize bool, str string) []termSet
 			}
 		}
 
-		if strings.HasPrefix(text, "'") {
+		if _escapedPrefixRegex.MatchString(text) {
+			text = text[1:]
+		} else if strings.HasPrefix(text, "'") {
 			// Flip exactness
 			if fuzzy && !inv {
 				typ = termExact
@@ -197,10 +204,6 @@ func parseTerms(fuzzy bool, caseMode Case, normalize bool, str string) []termSet
 			} else {
 				typ = termPrefix
 			}
-			text = text[1:]
-		}
-
-		if _escapedPrefixRegex.MatchString(text) {
 			text = text[1:]
 		}
 
@@ -240,8 +243,7 @@ func (p *Pattern) AsString() string {
 	return string(p.text)
 }
 
-// CacheKey is used to build string to be used as the key of result cache
-func (p *Pattern) CacheKey() string {
+func (p *Pattern) buildCacheKey() string {
 	if !p.extended {
 		return p.AsString()
 	}
@@ -252,6 +254,11 @@ func (p *Pattern) CacheKey() string {
 		}
 	}
 	return strings.Join(cacheableTerms, "\t")
+}
+
+// CacheKey is used to build string to be used as the key of result cache
+func (p *Pattern) CacheKey() string {
+	return p.cacheKey
 }
 
 // Match returns the list of matches Items in the given Chunk
