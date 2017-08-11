@@ -41,9 +41,10 @@ function! s:get_syn(group, what)
 endfunction
 
 function! s:get_array(fg, bg, opts)
+  let opts=empty(a:opts) ? '' : join(a:opts, ',')
   return g:airline_gui_mode ==# 'gui'
-        \ ? [ a:fg, a:bg, '', '', join(a:opts, ',') ]
-        \ : [ '', '', a:fg, a:bg, join(a:opts, ',') ]
+        \ ? [ a:fg, a:bg, '', '', opts ]
+        \ : [ '', '', a:fg, a:bg, opts ]
 endfunction
 
 function! airline#highlighter#get_highlight(group, ...)
@@ -92,10 +93,10 @@ function! airline#highlighter#exec(group, colors)
   let colors = s:CheckDefined(colors)
   if old_hi != new_hi || !s:hl_group_exists(a:group)
     let cmd = printf('hi %s %s %s %s %s %s %s %s',
-        \ a:group, s:Get(colors, 0, 'guifg=', ''), s:Get(colors, 1, 'guibg=', ''),
-        \ s:Get(colors, 2, 'ctermfg=', ''), s:Get(colors, 3, 'ctermbg=', ''),
-        \ s:Get(colors, 4, 'gui=', ''), s:Get(colors, 4, 'cterm=', ''),
-        \ s:Get(colors, 4, 'term=', ''))
+        \ a:group, s:Get(colors, 0, 'guifg='), s:Get(colors, 1, 'guibg='),
+        \ s:Get(colors, 2, 'ctermfg='), s:Get(colors, 3, 'ctermbg='),
+        \ s:Get(colors, 4, 'gui='), s:Get(colors, 4, 'cterm='),
+        \ s:Get(colors, 4, 'term='))
     exe cmd
   endif
 endfunction
@@ -132,11 +133,12 @@ function! s:CheckDefined(colors)
   return a:colors[0:1] + [fg, bg] + [a:colors[4]]
 endfunction
 
-function! s:Get(dict, key, prefix, default)
-  if get(a:dict, a:key, a:default) isnot# a:default
-    return a:prefix. get(a:dict, a:key)
-  else
+function! s:Get(dict, key, prefix)
+  let res=get(a:dict, a:key, '')
+  if empty(res)
     return ''
+  else
+    return a:prefix. res
   endif
 endfunction
 
