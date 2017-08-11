@@ -5587,6 +5587,10 @@
     "type": "git",
     "url": "git://github.com/inkarkat/vim-SubstituteExpression"
   },
+  "5598": {
+    "type": "git",
+    "url": "git://github.com/nelqatib/mbed-vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
