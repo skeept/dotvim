@@ -1,4 +1,5 @@
 {
+"octopus":{"archive_name":"octopus.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25502","version":"1.0","vim_script_nr":5599},
 "mbed-vim":{"archive_name":"mbed.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25497","version":"0.1","vim_script_nr":5598},
 "SubstituteExpression":{"archive_name":"SubstituteExpression-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25447","version":"1.00","vim_script_nr":5596},
 "smart-tabline":{"archive_name":"smart-tabline.vim-0.0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25446","version":"0.0.2","vim_script_nr":5595},
@@ -633,7 +634,7 @@
 "mrtg":{"archive_name":"mrtg.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21873","version":"7.3","vim_script_nr":4936},
 "Syntax_for_Clustal":{"archive_name":"clustal.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21871","version":"0.1","vim_script_nr":4935},
 "lite-dfm":{"archive_name":"lite-dfm.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21852","version":"1.0.0","vim_script_nr":4933},
-"diffchar":{"archive_name":"diffchar6.7.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25406","version":"6.7","vim_script_nr":4932},
+"diffchar":{"archive_name":"diffchar6.8.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25500","version":"6.8","vim_script_nr":4932},
 "vimtux":{"archive_name":"vimtux.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23379","version":"1.6","vim_script_nr":4931},
 "EightHeader":{"archive_name":"eightheader.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23313","version":"1.0","vim_script_nr":4930},
 "unite-spell-suggest":{"archive_name":"unite-spell-suggest.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22434","version":"1.1.2","vim_script_nr":4929},
@@ -1164,7 +1165,7 @@
 "vim-maximizer":{"archive_name":"vim-maximizer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19263","version":"1.0.1","vim_script_nr":4376},
 "sleuth":{"archive_name":"sleuth.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19409","version":"1.1","vim_script_nr":4375},
 "pyflakes-nopython":{"archive_name":"pyflakes-nopython.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19266","version":"0.2","vim_script_nr":4374},
-"sh%4373":{"archive_name":"sh.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25463","version":"4.44","vim_script_nr":"4373"},
+"sh%4373":{"archive_name":"sh.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25501","version":"4.45","vim_script_nr":"4373"},
 "awk":{"archive_name":"awk.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25445","version":"1.79","vim_script_nr":4372},
 "Gentooish_II":{"archive_name":"gentooishII.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19246","version":"1.0","vim_script_nr":4371},
 "visualMarks%4370":{"archive_name":"visualMarks.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24139","version":"2.4","vim_script_nr":4370},
