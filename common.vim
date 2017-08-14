@@ -871,9 +871,12 @@ command! ML set go-=m | winpos 0 0 | set lines=100
 command! -range=% QuoteCommaJoin silent <line1>,<line2>call jraf#quoteCommaJoin()
 
 "" change some highlight
-hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
+"hi! ColorColumn term=underline ctermfg=188 ctermbg=236 guifg=fg guibg=#303030
 
-let fortran_free_source = 1
+"let fortran_free_source = 1
+
+command! WTS if &diffopt =~ 'iwhite' | set diffopt-=iwhite
+      \ | else | set diffopt+=iwhite | endif | echo &diffopt
 
 "================== QuickRun =================================================={{{
 let g:quickrun_config = {}
