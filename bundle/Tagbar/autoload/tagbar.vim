@@ -45,8 +45,8 @@ if s:ftype_out !~# 'detection:ON'
 endif
 unlet s:ftype_out
 
-let s:icon_closed = g:tagbar_iconchars[0]
-let s:icon_open   = g:tagbar_iconchars[1]
+let g:tagbar#icon_closed = g:tagbar_iconchars[0]
+let g:tagbar#icon_open   = g:tagbar_iconchars[1]
 
 let s:type_init_done    = 0
 let s:autocommands_done = 0
@@ -57,7 +57,6 @@ let s:init_done = 0
 let s:checked_ctags       = 0
 let s:checked_ctags_types = 0
 let s:ctags_is_uctags     = 0
-let s:ctags_types         = {}
 
 let s:new_window      = 1
 let s:is_maximized    = 0
@@ -78,16 +77,6 @@ let s:window_pos = {
 \}
 
 let s:delayed_update_files = []
-
-" Script-local variable needed since compare functions can't
-" take extra arguments
-let s:compare_typeinfo = {}
-
-let s:visibility_symbols = {
-    \ 'public'    : '+',
-    \ 'protected' : '#',
-    \ 'private'   : '-'
-\ }
 
 let g:loaded_tagbar = 1
 
@@ -110,10 +99,6 @@ function! s:Init(silent) abort
         endif
     endif
 
-    if !s:checked_ctags_types
-        call s:GetSupportedFiletypes()
-    endif
-
     if !s:type_init_done
         call s:InitTypes()
     endif
@@ -131,344 +116,19 @@ endfunction
 function! s:InitTypes() abort
     call s:debug('Initializing types')
 
-    let s:known_types = {}
+    let supported_types = s:GetSupportedFiletypes()
 
-    " Ant {{{3
-    let type_ant = s:TypeInfo.New()
-    let type_ant.ctagstype = 'ant'
-    let type_ant.kinds     = [
-        \ {'short' : 'p', 'long' : 'projects', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'targets',  'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.ant = type_ant
-    " Asm {{{3
-    let type_asm = s:TypeInfo.New()
-    let type_asm.ctagstype = 'asm'
-    let type_asm.kinds     = [
-        \ {'short' : 'm', 'long' : 'macros',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'types',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'd', 'long' : 'defines', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'l', 'long' : 'labels',  'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.asm = type_asm
-    " ASP {{{3
-    let type_aspvbs = s:TypeInfo.New()
-    let type_aspvbs.ctagstype = 'asp'
-    let type_aspvbs.kinds     = [
-        \ {'short' : 'd', 'long' : 'constants',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'subroutines', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.aspvbs = type_aspvbs
-    " Asymptote {{{3
-    " Asymptote gets parsed well using filetype = c
-    let type_asy = s:TypeInfo.New()
-    let type_asy.ctagstype = 'c'
-    let type_asy.kinds     = [
-        \ {'short' : 'd', 'long' : 'macros',      'fold' : 1, 'stl' : 0},
-        \ {'short' : 'p', 'long' : 'prototypes',  'fold' : 1, 'stl' : 0},
-        \ {'short' : 'g', 'long' : 'enums',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enumerators', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'typedefs',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 's', 'long' : 'structs',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'u', 'long' : 'unions',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'members',     'fold' : 0, 'stl' : 0},
-        \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'functions',   'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_asy.sro        = '::'
-    let type_asy.kind2scope = {
-        \ 'g' : 'enum',
-        \ 's' : 'struct',
-        \ 'u' : 'union'
-    \ }
-    let type_asy.scope2kind = {
-        \ 'enum'   : 'g',
-        \ 'struct' : 's',
-        \ 'union'  : 'u'
-    \ }
-    let s:known_types.asy = type_asy
-    " Awk {{{3
-    let type_awk = s:TypeInfo.New()
-    let type_awk.ctagstype = 'awk'
-    let type_awk.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.awk = type_awk
-    " Basic {{{3
-    let type_basic = s:TypeInfo.New()
-    let type_basic.ctagstype = 'basic'
-    let type_basic.kinds     = [
-        \ {'short' : 'c', 'long' : 'constants',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'g', 'long' : 'enumerations', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'l', 'long' : 'labels',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'types',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',    'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.basic = type_basic
-    " BETA {{{3
-    let type_beta = s:TypeInfo.New()
-    let type_beta.ctagstype = 'beta'
-    let type_beta.kinds     = [
-        \ {'short' : 'f', 'long' : 'fragments', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'slots',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'patterns',  'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.beta = type_beta
-    " C {{{3
-    let type_c = s:TypeInfo.New()
-    let type_c.ctagstype = 'c'
-    let type_c.kinds     = [
-        \ {'short' : 'd', 'long' : 'macros',      'fold' : 1, 'stl' : 0},
-        \ {'short' : 'p', 'long' : 'prototypes',  'fold' : 1, 'stl' : 0},
-        \ {'short' : 'g', 'long' : 'enums',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enumerators', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'typedefs',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 's', 'long' : 'structs',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'u', 'long' : 'unions',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'members',     'fold' : 0, 'stl' : 0},
-        \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'functions',   'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_c.sro        = '::'
-    let type_c.kind2scope = {
-        \ 'g' : 'enum',
-        \ 's' : 'struct',
-        \ 'u' : 'union'
-    \ }
-    let type_c.scope2kind = {
-        \ 'enum'   : 'g',
-        \ 'struct' : 's',
-        \ 'union'  : 'u'
-    \ }
-    let s:known_types.c = type_c
-    " C++ {{{3
-    let type_cpp = s:TypeInfo.New()
-    let type_cpp.ctagstype = 'c++'
-    let type_cpp.kinds     = [
-        \ {'short' : 'd', 'long' : 'macros',      'fold' : 1, 'stl' : 0},
-        \ {'short' : 'p', 'long' : 'prototypes',  'fold' : 1, 'stl' : 0},
-        \ {'short' : 'g', 'long' : 'enums',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enumerators', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'typedefs',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 'n', 'long' : 'namespaces',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'structs',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'u', 'long' : 'unions',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'members',     'fold' : 0, 'stl' : 0},
-        \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_cpp.sro        = '::'
-    let type_cpp.kind2scope = {
-        \ 'g' : 'enum',
-        \ 'n' : 'namespace',
-        \ 'c' : 'class',
-        \ 's' : 'struct',
-        \ 'u' : 'union'
-    \ }
-    let type_cpp.scope2kind = {
-        \ 'enum'      : 'g',
-        \ 'namespace' : 'n',
-        \ 'class'     : 'c',
-        \ 'struct'    : 's',
-        \ 'union'     : 'u'
-    \ }
-    let s:known_types.cpp = type_cpp
-    let s:known_types.cuda = type_cpp
-    " C# {{{3
-    let type_cs = s:TypeInfo.New()
-    let type_cs.ctagstype = 'c#'
-    let type_cs.kinds     = [
-        \ {'short' : 'd', 'long' : 'macros',      'fold' : 1, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'fields',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'g', 'long' : 'enums',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enumerators', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'typedefs',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'n', 'long' : 'namespaces',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'i', 'long' : 'interfaces',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'structs',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'E', 'long' : 'events',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'methods',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'properties',  'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_cs.sro        = '.'
-    let type_cs.kind2scope = {
-        \ 'n' : 'namespace',
-        \ 'i' : 'interface',
-        \ 'c' : 'class',
-        \ 's' : 'struct',
-        \ 'g' : 'enum'
-    \ }
-    let type_cs.scope2kind = {
-        \ 'namespace' : 'n',
-        \ 'interface' : 'i',
-        \ 'class'     : 'c',
-        \ 'struct'    : 's',
-        \ 'enum'      : 'g'
-    \ }
-    let s:known_types.cs = type_cs
-    " COBOL {{{3
-    let type_cobol = s:TypeInfo.New()
-    let type_cobol.ctagstype = 'cobol'
-    let type_cobol.kinds     = [
-        \ {'short' : 'd', 'long' : 'data items',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'file descriptions', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'g', 'long' : 'group items',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'paragraphs',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'P', 'long' : 'program ids',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'sections',          'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.cobol = type_cobol
-    " DOS Batch {{{3
-    let type_dosbatch = s:TypeInfo.New()
-    let type_dosbatch.ctagstype = 'dosbatch'
-    let type_dosbatch.kinds     = [
-        \ {'short' : 'l', 'long' : 'labels',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.dosbatch = type_dosbatch
-    " Eiffel {{{3
-    let type_eiffel = s:TypeInfo.New()
-    let type_eiffel.ctagstype = 'eiffel'
-    let type_eiffel.kinds     = [
-        \ {'short' : 'c', 'long' : 'classes',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'features', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_eiffel.sro        = '.' " Not sure, is nesting even possible?
-    let type_eiffel.kind2scope = {
-        \ 'c' : 'class',
-        \ 'f' : 'feature'
-    \ }
-    let type_eiffel.scope2kind = {
-        \ 'class'   : 'c',
-        \ 'feature' : 'f'
-    \ }
-    let s:known_types.eiffel = type_eiffel
-    " Erlang {{{3
-    let type_erlang = s:TypeInfo.New()
-    let type_erlang.ctagstype = 'erlang'
-    let type_erlang.kinds     = [
-        \ {'short' : 'm', 'long' : 'modules',            'fold' : 0, 'stl' : 1},
-        \ {'short' : 'd', 'long' : 'macro definitions',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'r', 'long' : 'record definitions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_erlang.sro        = '.' " Not sure, is nesting even possible?
-    let type_erlang.kind2scope = {
-        \ 'm' : 'module'
-    \ }
-    let type_erlang.scope2kind = {
-        \ 'module' : 'm'
-    \ }
-    let s:known_types.erlang = type_erlang
-    " Flex {{{3
-    " Vim doesn't support Flex out of the box, this is based on rough
-    " guesses and probably requires
-    " http://www.vim.org/scripts/script.php?script_id=2909
-    " Improvements welcome!
-    let type_as = s:TypeInfo.New()
-    let type_as.ctagstype = 'flex'
-    let type_as.kinds     = [
-        \ {'short' : 'v', 'long' : 'global variables', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'classes',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'methods',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'properties',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'x', 'long' : 'mxtags',           'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_as.sro        = '.'
-    let type_as.kind2scope = {
-        \ 'c' : 'class'
-    \ }
-    let type_as.scope2kind = {
-        \ 'class' : 'c'
-    \ }
-    let s:known_types.mxml = type_as
-    let s:known_types.actionscript = type_as
-    " Fortran {{{3
-    let type_fortran = s:TypeInfo.New()
-    let type_fortran.ctagstype = 'fortran'
-    let type_fortran.kinds     = [
-        \ {'short' : 'm', 'long' : 'modules',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'programs',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'k', 'long' : 'components', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'derived types and structures', 'fold' : 0,
-         \ 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'common blocks', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'b', 'long' : 'block data',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 'e', 'long' : 'entry points',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'subroutines',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'l', 'long' : 'labels',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'n', 'long' : 'namelists',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',     'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_fortran.sro        = '.' " Not sure, is nesting even possible?
-    let type_fortran.kind2scope = {
-        \ 'm' : 'module',
-        \ 'p' : 'program',
-        \ 'f' : 'function',
-        \ 's' : 'subroutine'
-    \ }
-    let type_fortran.scope2kind = {
-        \ 'module'     : 'm',
-        \ 'program'    : 'p',
-        \ 'function'   : 'f',
-        \ 'subroutine' : 's'
-    \ }
-    let s:known_types.fortran = type_fortran
-    " HTML {{{3
-    let type_html = s:TypeInfo.New()
-    let type_html.ctagstype = 'html'
     if s:ctags_is_uctags
-        let type_html.kinds = [
-            \ {'short' : 'a', 'long' : 'named anchors', 'fold' : 0, 'stl' : 1},
-            \ {'short' : 'h', 'long' : 'H1 headings',   'fold' : 0, 'stl' : 1},
-            \ {'short' : 'i', 'long' : 'H2 headings',   'fold' : 0, 'stl' : 1},
-            \ {'short' : 'j', 'long' : 'H3 headings',   'fold' : 0, 'stl' : 1},
-        \ ]
+        let s:known_types = tagbar#typedefs#uctags#init(supported_types)
     else
-        let type_html.kinds = [
-            \ {'short' : 'f', 'long' : 'JavaScript functions', 'fold' : 0, 'stl' : 1},
-            \ {'short' : 'a', 'long' : 'named anchors',        'fold' : 0, 'stl' : 1}
-        \ ]
+        let s:known_types = tagbar#typedefs#ctags#init(supported_types)
     endif
-    let s:known_types.html = type_html
-    " Java {{{3
-    let type_java = s:TypeInfo.New()
-    let type_java.ctagstype = 'java'
-    let type_java.kinds     = [
-        \ {'short' : 'p', 'long' : 'packages',       'fold' : 1, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'fields',         'fold' : 0, 'stl' : 0},
-        \ {'short' : 'g', 'long' : 'enum types',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enum constants', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'i', 'long' : 'interfaces',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'methods',        'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_java.sro        = '.'
-    let type_java.kind2scope = {
-        \ 'g' : 'enum',
-        \ 'i' : 'interface',
-        \ 'c' : 'class'
-    \ }
-    let type_java.scope2kind = {
-        \ 'enum'      : 'g',
-        \ 'interface' : 'i',
-        \ 'class'     : 'c'
-    \ }
-    let s:known_types.java = type_java
-    " JavaScript {{{3
-    " jsctags/doctorjs will be used if available.
-    let type_javascript = s:TypeInfo.New()
-    let type_javascript.ctagstype = 'javascript'
+
+    " Use jsctags/doctorjs if available
     let jsctags = s:CheckFTCtags('jsctags', 'javascript')
     if jsctags != ''
+        let type_javascript = tagbar#prototypes#typeinfo#new()
+        let type_javascript.ctagstype = 'javascript'
         let type_javascript.kinds = [
             \ {'short' : 'v', 'long' : 'variables', 'fold' : 0, 'stl' : 0},
             \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
@@ -483,402 +143,8 @@ function! s:InitTypes() abort
         \ }
         let type_javascript.ctagsbin   = jsctags
         let type_javascript.ctagsargs  = '-f -'
-    else
-        let type_javascript.kinds = [
-            \ {'short': 'v', 'long': 'global variables', 'fold': 0, 'stl': 0},
-            \ {'short': 'c', 'long': 'classes',          'fold': 0, 'stl': 1},
-            \ {'short': 'p', 'long': 'properties',       'fold': 0, 'stl': 0},
-            \ {'short': 'm', 'long': 'methods',          'fold': 0, 'stl': 1},
-            \ {'short': 'f', 'long': 'functions',        'fold': 0, 'stl': 1},
-        \ ]
-        let type_javascript.sro        = '.'
-        let type_javascript.kind2scope = {
-            \ 'c' : 'class',
-            \ 'f' : 'function',
-            \ 'm' : 'method',
-            \ 'p' : 'property',
-        \ }
-        let type_javascript.scope2kind = {
-            \ 'class'    : 'c',
-            \ 'function' : 'f',
-        \ }
+        let s:known_types.javascript = type_javascript
     endif
-    let s:known_types.javascript = type_javascript
-    " Lisp {{{3
-    let type_lisp = s:TypeInfo.New()
-    let type_lisp.ctagstype = 'lisp'
-    let type_lisp.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.lisp = type_lisp
-    let s:known_types.clojure = type_lisp
-    " Lua {{{3
-    let type_lua = s:TypeInfo.New()
-    let type_lua.ctagstype = 'lua'
-    let type_lua.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.lua = type_lua
-    " Make {{{3
-    let type_make = s:TypeInfo.New()
-    let type_make.ctagstype = 'make'
-    let type_make.kinds     = [
-        \ {'short' : 'm', 'long' : 'macros', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.make = type_make
-    " Matlab {{{3
-    let type_matlab = s:TypeInfo.New()
-    let type_matlab.ctagstype = 'matlab'
-    let type_matlab.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.matlab = type_matlab
-    " Ocaml {{{3
-    let type_ocaml = s:TypeInfo.New()
-    let type_ocaml.ctagstype = 'ocaml'
-    let type_ocaml.kinds     = [
-        \ {'short' : 'M', 'long' : 'modules or functors', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'global variables',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'classes',             'fold' : 0, 'stl' : 1},
-        \ {'short' : 'C', 'long' : 'constructors',        'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'methods',             'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'exceptions',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'type names',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'r', 'long' : 'structure fields',    'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_ocaml.sro        = '.' " Not sure, is nesting even possible?
-    let type_ocaml.kind2scope = {
-        \ 'M' : 'Module',
-        \ 'c' : 'class',
-        \ 't' : 'type'
-    \ }
-    let type_ocaml.scope2kind = {
-        \ 'Module' : 'M',
-        \ 'class'  : 'c',
-        \ 'type'   : 't'
-    \ }
-    let s:known_types.ocaml = type_ocaml
-    " Pascal {{{3
-    let type_pascal = s:TypeInfo.New()
-    let type_pascal.ctagstype = 'pascal'
-    let type_pascal.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.pascal = type_pascal
-    " Perl {{{3
-    let type_perl = s:TypeInfo.New()
-    let type_perl.ctagstype = 'perl'
-    let type_perl.kinds     = [
-        \ {'short' : 'p', 'long' : 'packages',    'fold' : 1, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'constants',   'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'formats',     'fold' : 0, 'stl' : 0},
-        \ {'short' : 'l', 'long' : 'labels',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'subroutines', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.perl = type_perl
-    " PHP {{{3
-    let type_php = s:TypeInfo.New()
-    let type_php.ctagstype = 'php'
-    let type_php.kinds     = [
-        \ {'short' : 'i', 'long' : 'interfaces',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',              'fold' : 0, 'stl' : 1},
-        \ {'short' : 'd', 'long' : 'constant definitions', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'functions',            'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',            'fold' : 0, 'stl' : 0},
-        \ {'short' : 'j', 'long' : 'javascript functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.php = type_php
-    " Python {{{3
-    let type_python = s:TypeInfo.New()
-    let type_python.ctagstype = 'python'
-    let type_python.kinds     = [
-        \ {'short' : 'i', 'long' : 'imports',   'fold' : 1, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'classes',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'members',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables', 'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_python.sro        = '.'
-    let type_python.kind2scope = {
-        \ 'c' : 'class',
-        \ 'f' : 'function',
-        \ 'm' : 'function'
-    \ }
-    let type_python.scope2kind = {
-        \ 'class'    : 'c',
-        \ 'function' : 'f'
-    \ }
-    if s:ctags_is_uctags
-        " Universal Ctags treats member functions differently from normal
-        " functions
-        let type_python.kind2scope.m = 'member'
-        let type_python.scope2kind.member = 'm'
-    endif
-    let s:known_types.python = type_python
-    let s:known_types.pyrex  = type_python
-    let s:known_types.cython = type_python
-    " REXX {{{3
-    let type_rexx = s:TypeInfo.New()
-    let type_rexx.ctagstype = 'rexx'
-    let type_rexx.kinds     = [
-        \ {'short' : 's', 'long' : 'subroutines', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.rexx = type_rexx
-    " Ruby {{{3
-    let type_ruby = s:TypeInfo.New()
-    let type_ruby.ctagstype = 'ruby'
-    let type_ruby.kinds     = [
-        \ {'short' : 'm', 'long' : 'modules',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'methods',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'F', 'long' : 'singleton methods', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_ruby.sro        = '.'
-    let type_ruby.kind2scope = {
-        \ 'c' : 'class',
-        \ 'm' : 'class',
-        \ 'f' : 'class'
-    \ }
-    let type_ruby.scope2kind = {
-        \ 'class' : 'c'
-    \ }
-    let s:known_types.ruby = type_ruby
-    " Scheme {{{3
-    let type_scheme = s:TypeInfo.New()
-    let type_scheme.ctagstype = 'scheme'
-    let type_scheme.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'sets',      'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.scheme = type_scheme
-    let s:known_types.racket = type_scheme
-    " Shell script {{{3
-    let type_sh = s:TypeInfo.New()
-    let type_sh.ctagstype = 'sh'
-    let type_sh.kinds     = [
-        \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.sh = type_sh
-    let s:known_types.csh = type_sh
-    let s:known_types.zsh = type_sh
-    " SLang {{{3
-    let type_slang = s:TypeInfo.New()
-    let type_slang.ctagstype = 'slang'
-    let type_slang.kinds     = [
-        \ {'short' : 'n', 'long' : 'namespaces', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',  'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.slang = type_slang
-    " SML {{{3
-    let type_sml = s:TypeInfo.New()
-    let type_sml.ctagstype = 'sml'
-    let type_sml.kinds     = [
-        \ {'short' : 'e', 'long' : 'exception declarations', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'function definitions',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'functor definitions',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'signature declarations', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'r', 'long' : 'structure declarations', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'type definitions',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'value bindings',         'fold' : 0, 'stl' : 0}
-    \ ]
-    let s:known_types.sml = type_sml
-    " SQL {{{3
-    " The SQL ctags parser seems to be buggy for me, so this just uses the
-    " normal kinds even though scopes should be available. Improvements
-    " welcome!
-    let type_sql = s:TypeInfo.New()
-    let type_sql.ctagstype = 'sql'
-    let type_sql.kinds     = [
-        \ {'short' : 'P', 'long' : 'packages',               'fold' : 1, 'stl' : 1},
-        \ {'short' : 'd', 'long' : 'prototypes',             'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'cursors',                'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',              'fold' : 0, 'stl' : 1},
-        \ {'short' : 'F', 'long' : 'record fields',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'L', 'long' : 'block label',            'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'procedures',             'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'subtypes',               'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'tables',                 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'T', 'long' : 'triggers',               'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',              'fold' : 0, 'stl' : 1},
-        \ {'short' : 'i', 'long' : 'indexes',                'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'events',                 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'U', 'long' : 'publications',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'R', 'long' : 'services',               'fold' : 0, 'stl' : 1},
-        \ {'short' : 'D', 'long' : 'domains',                'fold' : 0, 'stl' : 1},
-        \ {'short' : 'V', 'long' : 'views',                  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'n', 'long' : 'synonyms',               'fold' : 0, 'stl' : 1},
-        \ {'short' : 'x', 'long' : 'MobiLink Table Scripts', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'y', 'long' : 'MobiLink Conn Scripts',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'z', 'long' : 'MobiLink Properties',    'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.sql = type_sql
-    " Tcl {{{3
-    let type_tcl = s:TypeInfo.New()
-    let type_tcl.ctagstype = 'tcl'
-    let type_tcl.kinds     = [
-        \ {'short' : 'c', 'long' : 'classes',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'methods',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.tcl = type_tcl
-    " LaTeX {{{3
-    let type_tex = s:TypeInfo.New()
-    let type_tex.ctagstype = 'tex'
-    let type_tex.kinds     = [
-        \ {'short' : 'i', 'long' : 'includes',       'fold' : 1, 'stl' : 0},
-        \ {'short' : 'p', 'long' : 'parts',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'chapters',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 's', 'long' : 'sections',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'u', 'long' : 'subsections',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'b', 'long' : 'subsubsections', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'P', 'long' : 'paragraphs',     'fold' : 0, 'stl' : 0},
-        \ {'short' : 'G', 'long' : 'subparagraphs',  'fold' : 0, 'stl' : 0},
-        \ {'short' : 'l', 'long' : 'labels',         'fold' : 0, 'stl' : 0}
-    \ ]
-    let type_tex.sro        = '""'
-    let type_tex.kind2scope = {
-        \ 'p' : 'part',
-        \ 'c' : 'chapter',
-        \ 's' : 'section',
-        \ 'u' : 'subsection',
-        \ 'b' : 'subsubsection'
-    \ }
-    let type_tex.scope2kind = {
-        \ 'part'          : 'p',
-        \ 'chapter'       : 'c',
-        \ 'section'       : 's',
-        \ 'subsection'    : 'u',
-        \ 'subsubsection' : 'b'
-    \ }
-    let type_tex.sort = 0
-    let s:known_types.tex = type_tex
-    " Vala {{{3
-    " Vala is supported by the ctags fork provided by Anjuta, so only add the
-    " type if the fork is used to prevent error messages otherwise
-    if has_key(s:ctags_types, 'vala') || executable('anjuta-tags')
-        let type_vala = s:TypeInfo.New()
-        let type_vala.ctagstype = 'vala'
-        let type_vala.kinds     = [
-            \ {'short' : 'e', 'long' : 'Enumerations',       'fold' : 0, 'stl' : 1},
-            \ {'short' : 'v', 'long' : 'Enumeration values', 'fold' : 0, 'stl' : 0},
-            \ {'short' : 's', 'long' : 'Structures',         'fold' : 0, 'stl' : 1},
-            \ {'short' : 'i', 'long' : 'Interfaces',         'fold' : 0, 'stl' : 1},
-            \ {'short' : 'd', 'long' : 'Delegates',          'fold' : 0, 'stl' : 1},
-            \ {'short' : 'c', 'long' : 'Classes',            'fold' : 0, 'stl' : 1},
-            \ {'short' : 'p', 'long' : 'Properties',         'fold' : 0, 'stl' : 0},
-            \ {'short' : 'f', 'long' : 'Fields',             'fold' : 0, 'stl' : 0},
-            \ {'short' : 'm', 'long' : 'Methods',            'fold' : 0, 'stl' : 1},
-            \ {'short' : 'E', 'long' : 'Error domains',      'fold' : 0, 'stl' : 1},
-            \ {'short' : 'r', 'long' : 'Error codes',        'fold' : 0, 'stl' : 1},
-            \ {'short' : 'S', 'long' : 'Signals',            'fold' : 0, 'stl' : 1}
-        \ ]
-        let type_vala.sro = '.'
-        " 'enum' doesn't seem to be used as a scope, but it can't hurt to have
-        " it here
-        let type_vala.kind2scope = {
-            \ 's' : 'struct',
-            \ 'i' : 'interface',
-            \ 'c' : 'class',
-            \ 'e' : 'enum'
-        \ }
-        let type_vala.scope2kind = {
-            \ 'struct'    : 's',
-            \ 'interface' : 'i',
-            \ 'class'     : 'c',
-            \ 'enum'      : 'e'
-        \ }
-        let s:known_types.vala = type_vala
-    endif
-    if !has_key(s:ctags_types, 'vala') && executable('anjuta-tags')
-        let s:known_types.vala.ctagsbin = 'anjuta-tags'
-    endif
-    " Vera {{{3
-    " Why are variables 'virtual'?
-    let type_vera = s:TypeInfo.New()
-    let type_vera.ctagstype = 'vera'
-    let type_vera.kinds     = [
-        \ {'short' : 'd', 'long' : 'macros',      'fold' : 1, 'stl' : 0},
-        \ {'short' : 'g', 'long' : 'enums',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'T', 'long' : 'typedefs',    'fold' : 0, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'classes',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'enumerators', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'm', 'long' : 'members',     'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'tasks',       'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 0},
-        \ {'short' : 'p', 'long' : 'programs',    'fold' : 0, 'stl' : 1}
-    \ ]
-    let type_vera.sro        = '.' " Nesting doesn't seem to be possible
-    let type_vera.kind2scope = {
-        \ 'g' : 'enum',
-        \ 'c' : 'class',
-        \ 'v' : 'virtual'
-    \ }
-    let type_vera.scope2kind = {
-        \ 'enum'      : 'g',
-        \ 'class'     : 'c',
-        \ 'virtual'   : 'v'
-    \ }
-    let s:known_types.vera = type_vera
-    " Verilog {{{3
-    let type_verilog = s:TypeInfo.New()
-    let type_verilog.ctagstype = 'verilog'
-    let type_verilog.kinds     = [
-        \ {'short' : 'c', 'long' : 'constants',           'fold' : 0, 'stl' : 0},
-        \ {'short' : 'e', 'long' : 'events',              'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'm', 'long' : 'modules',             'fold' : 0, 'stl' : 1},
-        \ {'short' : 'n', 'long' : 'net data types',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'ports',               'fold' : 0, 'stl' : 1},
-        \ {'short' : 'r', 'long' : 'register data types', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 't', 'long' : 'tasks',               'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.verilog = type_verilog
-    " VHDL {{{3
-    " The VHDL ctags parser unfortunately doesn't generate proper scopes
-    let type_vhdl = s:TypeInfo.New()
-    let type_vhdl.ctagstype = 'vhdl'
-    let type_vhdl.kinds     = [
-        \ {'short' : 'P', 'long' : 'packages',   'fold' : 1, 'stl' : 0},
-        \ {'short' : 'c', 'long' : 'constants',  'fold' : 0, 'stl' : 0},
-        \ {'short' : 't', 'long' : 'types',      'fold' : 0, 'stl' : 1},
-        \ {'short' : 'T', 'long' : 'subtypes',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'r', 'long' : 'records',    'fold' : 0, 'stl' : 1},
-        \ {'short' : 'e', 'long' : 'entities',   'fold' : 0, 'stl' : 1},
-        \ {'short' : 'f', 'long' : 'functions',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.vhdl = type_vhdl
-    " Vim {{{3
-    let type_vim = s:TypeInfo.New()
-    let type_vim.ctagstype = 'vim'
-    let type_vim.kinds     = [
-        \ {'short' : 'n', 'long' : 'vimball filenames',  'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',          'fold' : 1, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'functions',          'fold' : 0, 'stl' : 1},
-        \ {'short' : 'a', 'long' : 'autocommand groups', 'fold' : 1, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'commands',           'fold' : 0, 'stl' : 0},
-        \ {'short' : 'm', 'long' : 'maps',               'fold' : 1, 'stl' : 0}
-    \ ]
-    let s:known_types.vim = type_vim
-    " YACC {{{3
-    let type_yacc = s:TypeInfo.New()
-    let type_yacc.ctagstype = 'yacc'
-    let type_yacc.kinds     = [
-        \ {'short' : 'l', 'long' : 'labels', 'fold' : 0, 'stl' : 1}
-    \ ]
-    let s:known_types.yacc = type_yacc
-    " }}}3
-
-    for [type, typeinfo] in items(s:known_types)
-        let typeinfo.ftype = type
-    endfor
-
-    for typeinfo in values(s:known_types)
-        call typeinfo.createKinddict()
-    endfor
 
     call s:LoadUserTypeDefs()
 
@@ -924,7 +190,7 @@ function! s:LoadUserTypeDefs(...) abort
 
     for [key, value] in items(transformed)
         if !has_key(s:known_types, key) || get(value, 'replace', 0)
-            let s:known_types[key] = s:TypeInfo.New(value)
+            let s:known_types[key] = tagbar#prototypes#typeinfo#new(value)
         else
             call extend(s:known_types[key], value)
         endif
@@ -1298,589 +564,27 @@ function! s:GetSupportedFiletypes() abort
 
     let types = split(ctags_output, '\n\+')
 
+    let supported_types = {}
     for type in types
         if match(type, '\[disabled\]') == -1
-            let s:ctags_types[tolower(type)] = 1
+            let supported_types[tolower(type)] = 1
         endif
     endfor
 
-    let s:checked_ctags_types = 1
+    return supported_types
 endfunction
 
-" Prototypes {{{1
-" Base tag {{{2
-let s:BaseTag = {}
-
-" s:BaseTag.New() {{{3
-function! s:BaseTag.New(name) abort dict
-    let newobj = copy(self)
-
-    call newobj._init(a:name)
-
-    return newobj
-endfunction
-
-" s:BaseTag._init() {{{3
-function! s:BaseTag._init(name) abort dict
-    let self.name          = a:name
-    let self.fields        = {}
-    let self.fields.line   = 0
-    let self.fields.column = 0
-    let self.prototype     = ''
-    let self.path          = ''
-    let self.fullpath      = a:name
-    let self.depth         = 0
-    let self.parent        = {}
-    let self.tline         = -1
-    let self.fileinfo      = {}
-    let self.typeinfo      = {}
-    let self._childlist    = []
-    let self._childdict    = {}
-endfunction
-
-" s:BaseTag.isNormalTag() {{{3
-function! s:BaseTag.isNormalTag() abort dict
-    return 0
-endfunction
-
-" s:BaseTag.isPseudoTag() {{{3
-function! s:BaseTag.isPseudoTag() abort dict
-    return 0
-endfunction
-
-" s:BaseTag.isKindheader() {{{3
-function! s:BaseTag.isKindheader() abort dict
-    return 0
-endfunction
-
-" s:BaseTag.getPrototype() {{{3
-function! s:BaseTag.getPrototype(short) abort dict
-    return self.prototype
-endfunction
-
-" s:BaseTag._getPrefix() {{{3
-function! s:BaseTag._getPrefix() abort dict
-    let fileinfo = self.fileinfo
-
-    if !empty(self._childlist)
-        if fileinfo.tagfolds[self.fields.kind][self.fullpath]
-            let prefix = s:icon_closed
-        else
-            let prefix = s:icon_open
-        endif
-    else
-        let prefix = ' '
-    endif
-    " Visibility is called 'access' in the ctags output
-    if g:tagbar_show_visibility
-        if has_key(self.fields, 'access')
-            let prefix .= get(s:visibility_symbols, self.fields.access, ' ')
-        elseif has_key(self.fields, 'file')
-            let prefix .= s:visibility_symbols.private
-        else
-            let prefix .= ' '
-        endif
-    endif
-
-    return prefix
-endfunction
-
-" s:BaseTag.initFoldState() {{{3
-function! s:BaseTag.initFoldState() abort dict
-    let fileinfo = self.fileinfo
-
-    if s:known_files.has(fileinfo.fpath) &&
-     \ has_key(fileinfo, '_tagfolds_old') &&
-     \ has_key(fileinfo._tagfolds_old[self.fields.kind], self.fullpath)
-        " The file has been updated and the tag was there before, so copy its
-        " old fold state
-        let fileinfo.tagfolds[self.fields.kind][self.fullpath] =
-                    \ fileinfo._tagfolds_old[self.fields.kind][self.fullpath]
-    elseif self.depth >= fileinfo.foldlevel
-        let fileinfo.tagfolds[self.fields.kind][self.fullpath] = 1
-    else
-        let fileinfo.tagfolds[self.fields.kind][self.fullpath] =
-                    \ fileinfo.kindfolds[self.fields.kind]
-    endif
-endfunction
-
-" s:BaseTag.getClosedParentTline() {{{3
-function! s:BaseTag.getClosedParentTline() abort dict
-    let tagline  = self.tline
-
-    " Find the first closed parent, starting from the top of the hierarchy.
-    let parents   = []
-    let curparent = self.parent
-    while !empty(curparent)
-        call add(parents, curparent)
-        let curparent = curparent.parent
-    endwhile
-    for parent in reverse(parents)
-        if parent.isFolded()
-            let tagline = parent.tline
-            break
-        endif
-    endfor
-
-    return tagline
-endfunction
-
-" s:BaseTag.isFoldable() {{{3
-function! s:BaseTag.isFoldable() abort dict
-    return !empty(self._childlist)
-endfunction
-
-" s:BaseTag.isFolded() {{{3
-function! s:BaseTag.isFolded() abort dict
-    return self.fileinfo.tagfolds[self.fields.kind][self.fullpath]
-endfunction
-
-" s:BaseTag.openFold() {{{3
-function! s:BaseTag.openFold() abort dict
-    if self.isFoldable()
-        let self.fileinfo.tagfolds[self.fields.kind][self.fullpath] = 0
-    endif
-endfunction
-
-" s:BaseTag.closeFold() {{{3
-function! s:BaseTag.closeFold() abort dict
-    let newline = line('.')
-
-    if !empty(self.parent) && self.parent.isKindheader()
-        " Tag is child of generic 'kind'
-        call self.parent.closeFold()
-        let newline = self.parent.tline
-    elseif self.isFoldable() && !self.isFolded()
-        " Tag is parent of a scope and is not folded
-        let self.fileinfo.tagfolds[self.fields.kind][self.fullpath] = 1
-        let newline = self.tline
-    elseif !empty(self.parent)
-        " Tag is normal child, so close parent
-        let parent = self.parent
-        let self.fileinfo.tagfolds[parent.fields.kind][parent.fullpath] = 1
-        let newline = parent.tline
-    endif
-
-    return newline
-endfunction
-
-" s:BaseTag.setFolded() {{{3
-function! s:BaseTag.setFolded(folded) abort dict
-    let self.fileinfo.tagfolds[self.fields.kind][self.fullpath] = a:folded
-endfunction
-
-" s:BaseTag.openParents() {{{3
-function! s:BaseTag.openParents() abort dict
-    let parent = self.parent
-
-    while !empty(parent)
-        call parent.openFold()
-        let parent = parent.parent
-    endwhile
-endfunction
-
-" s:BaseTag.addChild() {{{3
-function! s:BaseTag.addChild(tag) abort dict
-    call add(self._childlist, a:tag)
-
-    if has_key(self._childdict, a:tag.name)
-        call add(self._childdict[a:tag.name], a:tag)
-    else
-        let self._childdict[a:tag.name] = [a:tag]
-    endif
-endfunction
-
-" s:BaseTag.getChildren() {{{3
-function! s:BaseTag.getChildren() dict abort
-    return self._childlist
-endfunction
-
-" s:BaseTag.getChildrenByName() {{{3
-function! s:BaseTag.getChildrenByName(tagname) dict abort
-    return get(self._childdict, a:tagname, [])
-endfunction
-
-" s:BaseTag.removeChild() {{{3
-function! s:BaseTag.removeChild(tag) dict abort
-    let idx = index(self._childlist, a:tag)
-    if idx >= 0
-        call remove(self._childlist, idx)
-    endif
-
-    let namelist = get(self._childdict, a:tag.name, [])
-    let idx = index(namelist, a:tag)
-    if idx >= 0
-        call remove(namelist, idx)
-    endif
-endfunction
-
-" Normal tag {{{2
-let s:NormalTag = copy(s:BaseTag)
-
-" s:NormalTag.isNormalTag() {{{3
-function! s:NormalTag.isNormalTag() abort dict
-    return 1
-endfunction
-
-" s:NormalTag.strfmt() {{{3
-function! s:NormalTag.strfmt() abort dict
-    let typeinfo = self.typeinfo
-
-    let suffix = get(self.fields, 'signature', '')
-    if has_key(self.fields, 'type')
-        let suffix .= ' : ' . self.fields.type
-    elseif has_key(get(typeinfo, 'kind2scope', {}), self.fields.kind)
-        let suffix .= ' : ' . typeinfo.kind2scope[self.fields.kind]
-    endif
-
-    return self._getPrefix() . self.name . suffix
-endfunction
-
-" s:NormalTag.str() {{{3
-function! s:NormalTag.str(longsig, full) abort dict
-    if a:full && self.path != ''
-        let str = self.path . self.typeinfo.sro . self.name
-    else
-        let str = self.name
-    endif
-
-    if has_key(self.fields, 'signature')
-        if a:longsig
-            let str .= self.fields.signature
-        else
-            let str .= '()'
-        endif
-    endif
-
-    return str
-endfunction
-
-" s:NormalTag.getPrototype() {{{3
-function! s:NormalTag.getPrototype(short) abort dict
-    if self.prototype != ''
-        let prototype = self.prototype
-    else
-        let bufnr = self.fileinfo.bufnr
-
-        if self.fields.line == 0 || !bufloaded(bufnr)
-            " No linenumber available or buffer not loaded (probably due to
-            " 'nohidden'), try the pattern instead
-            return substitute(self.pattern, '^\\M\\^\\C\s*\(.*\)\\$$', '\1', '')
-        endif
-
-        let line = getbufline(bufnr, self.fields.line)[0]
-        let list = split(line, '\zs')
-
-        let start = index(list, '(')
-        if start == -1
-            return substitute(line, '^\s\+', '', '')
-        endif
-
-        let opening = count(list, '(', 0, start)
-        let closing = count(list, ')', 0, start)
-        if closing >= opening
-            return substitute(line, '^\s\+', '', '')
-        endif
-
-        let balance = opening - closing
-
-        let prototype = line
-        let curlinenr = self.fields.line + 1
-        while balance > 0
-            let curline = getbufline(bufnr, curlinenr)[0]
-            let curlist = split(curline, '\zs')
-            let balance += count(curlist, '(')
-            let balance -= count(curlist, ')')
-            let prototype .= "\n" . curline
-            let curlinenr += 1
-        endwhile
-
-        let self.prototype = prototype
-    endif
-
-    if a:short
-        " join all lines and remove superfluous spaces
-        let prototype = substitute(prototype, '^\s\+', '', '')
-        let prototype = substitute(prototype, '\_s\+', ' ', 'g')
-        let prototype = substitute(prototype, '(\s\+', '(', 'g')
-        let prototype = substitute(prototype, '\s\+)', ')', 'g')
-        " Avoid hit-enter prompts
-        let maxlen = &columns - 12
-        if len(prototype) > maxlen
-            let prototype = prototype[:maxlen - 1 - 3]
-            let prototype .= '...'
-        endif
-    endif
-
-    return prototype
-endfunction
-
-" Pseudo tag {{{2
-let s:PseudoTag = copy(s:BaseTag)
-
-" s:PseudoTag.isPseudoTag() {{{3
-function! s:PseudoTag.isPseudoTag() abort dict
-    return 1
-endfunction
-
-" s:PseudoTag.strfmt() {{{3
-function! s:PseudoTag.strfmt() abort dict
-    let typeinfo = self.typeinfo
-
-    let suffix = get(self.fields, 'signature', '')
-    if has_key(typeinfo.kind2scope, self.fields.kind)
-        let suffix .= ' : ' . typeinfo.kind2scope[self.fields.kind]
-    endif
-
-    return self._getPrefix() . self.name . '*' . suffix
-endfunction
-
-" Kind header {{{2
-let s:KindheaderTag = copy(s:BaseTag)
-
-" s:KindheaderTag.isKindheader() {{{3
-function! s:KindheaderTag.isKindheader() abort dict
-    return 1
-endfunction
-
-" s:KindheaderTag.getPrototype() {{{3
-function! s:KindheaderTag.getPrototype(short) abort dict
-    return self.name . ': ' .
-         \ self.numtags . ' ' . (self.numtags > 1 ? 'tags' : 'tag')
-endfunction
-
-" s:KindheaderTag.isFoldable() {{{3
-function! s:KindheaderTag.isFoldable() abort dict
-    return 1
-endfunction
-
-" s:KindheaderTag.isFolded() {{{3
-function! s:KindheaderTag.isFolded() abort dict
-    return self.fileinfo.kindfolds[self.short]
-endfunction
-
-" s:KindheaderTag.openFold() {{{3
-function! s:KindheaderTag.openFold() abort dict
-    let self.fileinfo.kindfolds[self.short] = 0
-endfunction
-
-" s:KindheaderTag.closeFold() {{{3
-function! s:KindheaderTag.closeFold() abort dict
-    let self.fileinfo.kindfolds[self.short] = 1
-    return line('.')
-endfunction
-
-" s:KindheaderTag.toggleFold() {{{3
-function! s:KindheaderTag.toggleFold() abort dict
-    let fileinfo = s:TagbarState().getCurrent(0)
-
-    let fileinfo.kindfolds[self.short] = !fileinfo.kindfolds[self.short]
-endfunction
-
-" Type info {{{2
-let s:TypeInfo = {}
-
-" s:TypeInfo.New() {{{3
-function! s:TypeInfo.New(...) abort dict
-    let newobj = copy(self)
-
-    let newobj.kinddict = {}
-
-    if a:0 > 0
-        call extend(newobj, a:1)
-    endif
-
-    return newobj
-endfunction
-
-" s:TypeInfo.getKind() {{{3
-function! s:TypeInfo.getKind(kind) abort dict
-    let idx = self.kinddict[a:kind]
-    return self.kinds[idx]
-endfunction
-
-" s:TypeInfo.createKinddict() {{{3
-" Create a dictionary of the kind order for fast access in sorting functions
-function! s:TypeInfo.createKinddict() abort dict
-    let i = 0
-    for kind in self.kinds
-        let self.kinddict[kind.short] = i
-        let i += 1
-    endfor
-    let self.kinddict['?'] = i
-endfunction
-
-" File info {{{2
-let s:FileInfo = {}
-
-" s:FileInfo.New() {{{3
-function! s:FileInfo.New(fname, ftype, typeinfo) abort dict
-    let newobj = copy(self)
-
-    " The complete file path
-    let newobj.fpath = a:fname
-
-    let newobj.bufnr = bufnr(a:fname)
-
-    " File modification time
-    let newobj.mtime = getftime(a:fname)
-
-    " The vim file type
-    let newobj.ftype = a:ftype
-
-    " List of the tags that are present in the file, sorted according to the
-    " value of 'g:tagbar_sort'
-    let newobj._taglist = []
-    let newobj._tagdict = {}
-
-    " Dictionary of the tags, indexed by line number in the file
-    let newobj.fline = {}
-
-    " Dictionary of the tags, indexed by line number in the tagbar
-    let newobj.tline = {}
-
-    " Dictionary of the folding state of 'kind's, indexed by short name
-    let newobj.kindfolds = {}
-    let newobj.typeinfo = a:typeinfo
-    " copy the default fold state from the type info
-    for kind in a:typeinfo.kinds
-        let newobj.kindfolds[kind.short] =
-                    \ g:tagbar_foldlevel == 0 ? 1 : kind.fold
-    endfor
-
-    " Dictionary of dictionaries of the folding state of individual tags,
-    " indexed by kind and full path
-    let newobj.tagfolds = {}
-    for kind in a:typeinfo.kinds
-        let newobj.tagfolds[kind.short] = {}
-    endfor
-
-    " The current foldlevel of the file
-    let newobj.foldlevel = g:tagbar_foldlevel
-
-    return newobj
-endfunction
-
-" s:FileInfo.addTag() {{{3
-function! s:FileInfo.addTag(tag) abort dict
-    call add(self._taglist, a:tag)
-
-    if has_key(self._tagdict, a:tag.name)
-        call add(self._tagdict[a:tag.name], a:tag)
-    else
-        let self._tagdict[a:tag.name] = [a:tag]
-    endif
-endfunction
-
-" s:FileInfo.getTags() {{{3
-function! s:FileInfo.getTags() dict abort
-    return self._taglist
-endfunction
-
-" s:FileInfo.getTagsByName() {{{3
-function! s:FileInfo.getTagsByName(tagname) dict abort
-    return get(self._tagdict, a:tagname, [])
-endfunction
-
-" s:FileInfo.removeTag() {{{3
-function! s:FileInfo.removeTag(tag) dict abort
-    let idx = index(self._taglist, a:tag)
-    if idx >= 0
-        call remove(self._taglist, idx)
-    endif
-
-    let namelist = get(self._tagdict, a:tag.name, [])
-    let idx = index(namelist, a:tag)
-    if idx >= 0
-        call remove(namelist, idx)
-    endif
-endfunction
-
-" s:FileInfo.reset() {{{3
-" Reset stuff that gets regenerated while processing a file and save the old
-" tag folds
-function! s:FileInfo.reset() abort dict
-    let self.mtime = getftime(self.fpath)
-    let self._taglist = []
-    let self._tagdict = {}
-    let self.fline = {}
-    let self.tline = {}
-
-    let self._tagfolds_old = self.tagfolds
-    let self.tagfolds = {}
-
-    for kind in self.typeinfo.kinds
-        let self.tagfolds[kind.short] = {}
-    endfor
-endfunction
-
-" s:FileInfo.clearOldFolds() {{{3
-function! s:FileInfo.clearOldFolds() abort dict
-    if exists('self._tagfolds_old')
-        unlet self._tagfolds_old
-    endif
-endfunction
-
-" s:FileInfo.sortTags() {{{3
-function! s:FileInfo.sortTags() abort dict
-    if get(s:compare_typeinfo, 'sort', g:tagbar_sort)
-        call s:SortTags(self._taglist, 's:CompareByKind')
-    else
-        call s:SortTags(self._taglist, 's:CompareByLine')
-    endif
-endfunction
-
-" s:FileInfo.openKindFold() {{{3
-function! s:FileInfo.openKindFold(kind) abort dict
-    let self.kindfolds[a:kind.short] = 0
-endfunction
-
-" s:FileInfo.closeKindFold() {{{3
-function! s:FileInfo.closeKindFold(kind) abort dict
-    let self.kindfolds[a:kind.short] = 1
-endfunction
-
-" Per-tagbar instance state prototype {{{2
-let s:state = {
-    \ '_current' : {},
-    \ '_paused'  : {},
-\ }
-
-" s:state.New() {{{3
-function! s:state.New() abort dict
-    return deepcopy(self)
-endfunction
-
-" s:state.getCurrent() {{{3
-function! s:state.getCurrent(forcecurrent) abort dict
-    if !s:paused || a:forcecurrent
-        return self._current
-    else
-        return self._paused
-    endif
-endfunction
-
-" s:state.setCurrent() {{{3
-function! s:state.setCurrent(fileinfo) abort dict
-    let self._current = a:fileinfo
-endfunction
-
-" s:state.setPaused() {{{3
-function! s:state.setPaused() abort dict
-    let self._paused = self._current
-endfunction
-
-" Known files {{{2
+" Known files {{{1
 let s:known_files = {
     \ '_files'   : {}
 \ }
 
-" s:known_files.get() {{{3
+" s:known_files.get() {{{2
 function! s:known_files.get(fname) abort dict
     return get(self._files, a:fname, {})
 endfunction
 
-" s:known_files.put() {{{3
+" s:known_files.put() {{{2
 " Optional second argument is the filename
 function! s:known_files.put(fileinfo, ...) abort dict
     if a:0 == 1
@@ -1891,12 +595,12 @@ function! s:known_files.put(fileinfo, ...) abort dict
     endif
 endfunction
 
-" s:known_files.has() {{{3
+" s:known_files.has() {{{2
 function! s:known_files.has(fname) abort dict
     return has_key(self._files, a:fname)
 endfunction
 
-" s:known_files.rm() {{{3
+" s:known_files.rm() {{{2
 function! s:known_files.rm(fname) abort dict
     if s:known_files.has(a:fname)
         call s:debug('Removing fileinfo for [' . a:fname . ']')
@@ -2128,7 +832,7 @@ function! s:CloseWindow() abort
         if winbufnr(2) != -1
             " Other windows are open, only close the tagbar one
 
-            let curfile = s:TagbarState().getCurrent(0)
+            let curfile = tagbar#state#get_current_file(0)
 
             close
 
@@ -2230,7 +934,7 @@ endfunction
 " the current file after startup.
 function! s:CorrectFocusOnStartup() abort
     if bufwinnr(s:TagbarBufName()) != -1 && !g:tagbar_autofocus && !s:last_autofocus
-        let curfile = s:TagbarState().getCurrent(1)
+        let curfile = tagbar#state#get_current_file(1)
         if !empty(curfile) && curfile.fpath != fnamemodify(bufname('%'), ':p')
             let winnr = bufwinnr(curfile.fpath)
             if winnr != -1
@@ -2269,7 +973,7 @@ function! s:ProcessFile(fname, ftype) abort
                 call typeinfo.createKinddict()
             endif
         endif
-        let fileinfo = s:FileInfo.New(a:fname, a:ftype, typeinfo)
+        let fileinfo = tagbar#prototypes#fileinfo#new(a:fname, a:ftype, typeinfo)
     endif
 
     call s:debug('typeinfo for file to process: ' . string(typeinfo))
@@ -2300,7 +1004,7 @@ function! s:ProcessFile(fname, ftype) abort
         call s:debug('Ctags output empty')
         " No need to go through the tag processing if there are no tags, and
         " preserving the old fold state isn't necessary either
-        call s:known_files.put(s:FileInfo.New(a:fname, a:ftype,
+        call s:known_files.put(tagbar#prototypes#fileinfo#new(a:fname, a:ftype,
                                             \ s:known_types[a:ftype]), a:fname)
         return
     endif
@@ -2339,7 +1043,7 @@ function! s:ProcessFile(fname, ftype) abort
             continue
         endif
 
-        let kindtag          = s:KindheaderTag.New(kind.long)
+        let kindtag          = tagbar#prototypes#kindheadertag#new(kind.long)
         let kindtag.short    = kind.short
         let kindtag.numtags  = len(curtags)
         let kindtag.fileinfo = fileinfo
@@ -2353,8 +1057,7 @@ function! s:ProcessFile(fname, ftype) abort
     call fileinfo.clearOldFolds()
 
     " Sort the tags
-    let s:compare_typeinfo = typeinfo
-    call fileinfo.sortTags()
+    call fileinfo.sortTags(typeinfo)
 
     call s:known_files.put(fileinfo)
 endfunction
@@ -2465,7 +1168,7 @@ endfunction
 function! s:ParseTagline(part1, part2, typeinfo, fileinfo) abort
     let basic_info  = split(a:part1, '\t')
 
-    let taginfo      = s:NormalTag.New(basic_info[0])
+    let taginfo      = tagbar#prototypes#normaltag#new(basic_info[0])
     let taginfo.file = basic_info[1]
 
     " the pattern can contain tabs and thus may have been split up, so join
@@ -2554,7 +1257,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo) abort
 
     " Needed for folding
     try
-        call taginfo.initFoldState()
+        call taginfo.initFoldState(s:known_files)
     catch /^Vim(\a\+):E716:/ " 'Key not present in Dictionary'
         " The tag has a 'kind' that doesn't exist in the type definition
         call s:debug('Warning: Unknown tag kind: ' . taginfo.fields.kind)
@@ -2713,7 +1416,7 @@ function! s:add_tag_recursive(parent, taginfo, pathlist) abort
         let parentkind = a:taginfo.typeinfo.scope2kind[a:taginfo.scope]
         if parent.fields.kind ==# '?' || parentkind !=# parent.fields.kind
             let parent.fields.kind = parentkind
-            call parent.initFoldState()
+            call parent.initFoldState(s:known_files)
         endif
     endif
 
@@ -2732,7 +1435,7 @@ function! s:create_pseudotag(name, parent, kind, typeinfo, fileinfo) abort
         let pscope  = ''
     endif
 
-    let pseudotag             = s:PseudoTag.New(a:name)
+    let pseudotag             = tagbar#prototypes#pseudotag#new(a:name)
     let pseudotag.fields.kind = a:kind
 
     let parentscope = substitute(curpath, '\V' . a:name . '$', '', '')
@@ -2753,64 +1456,14 @@ function! s:create_pseudotag(name, parent, kind, typeinfo, fileinfo) abort
     let pseudotag.fileinfo = a:fileinfo
     let pseudotag.typeinfo = a:typeinfo
 
-    call pseudotag.initFoldState()
+    call pseudotag.initFoldState(s:known_files)
 
     return pseudotag
 endfunction
 
-" Sorting {{{1
-" s:SortTags() {{{2
-function! s:SortTags(tags, comparemethod) abort
-    call sort(a:tags, a:comparemethod)
-
-    for tag in a:tags
-        if !empty(tag.getChildren())
-            call s:SortTags(tag.getChildren(), a:comparemethod)
-        endif
-    endfor
-endfunction
-
-" s:CompareByKind() {{{2
-function! s:CompareByKind(tag1, tag2) abort
-    let typeinfo = s:compare_typeinfo
-
-    if typeinfo.kinddict[a:tag1.fields.kind] <#
-     \ typeinfo.kinddict[a:tag2.fields.kind]
-        return -1
-    elseif typeinfo.kinddict[a:tag1.fields.kind] >#
-         \ typeinfo.kinddict[a:tag2.fields.kind]
-        return 1
-    else
-        " Ignore '~' prefix for C++ destructors to sort them directly under
-        " the constructors
-        if a:tag1.name[0] ==# '~'
-            let name1 = a:tag1.name[1:]
-        else
-            let name1 = a:tag1.name
-        endif
-        if a:tag2.name[0] ==# '~'
-            let name2 = a:tag2.name[1:]
-        else
-            let name2 = a:tag2.name
-        endif
-
-        let ci = g:tagbar_case_insensitive
-        if (((!ci) && (name1 <=# name2)) || (ci && (name1 <=? name2)))
-            return -1
-        else
-            return 1
-        endif
-    endif
-endfunction
-
-" s:CompareByLine() {{{2
-function! s:CompareByLine(tag1, tag2) abort
-    return a:tag1.fields.line - a:tag2.fields.line
-endfunction
-
 " s:ToggleSort() {{{2
 function! s:ToggleSort() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -2821,15 +1474,15 @@ function! s:ToggleSort() abort
 
     match none
 
-    let s:compare_typeinfo = s:known_types[fileinfo.ftype]
+    let compare_typeinfo = s:known_types[fileinfo.ftype]
 
-    if has_key(s:compare_typeinfo, 'sort')
-        let s:compare_typeinfo.sort = !s:compare_typeinfo.sort
+    if has_key(compare_typeinfo, 'sort')
+        let compare_typeinfo.sort = !compare_typeinfo.sort
     else
         let g:tagbar_sort = !g:tagbar_sort
     endif
 
-    call fileinfo.sortTags()
+    call fileinfo.sortTags(compare_typeinfo)
 
     call s:RenderContent()
     call s:SetStatusLine()
@@ -2852,7 +1505,7 @@ function! s:RenderContent(...) abort
     if a:0 == 1
         let fileinfo = a:1
     else
-        let fileinfo = s:TagbarState().getCurrent(0)
+        let fileinfo = tagbar#state#get_current_file(0)
     endif
 
     if empty(fileinfo)
@@ -2877,8 +1530,8 @@ function! s:RenderContent(...) abort
         call s:goto_win(tagbarwinnr, 1)
     endif
 
-    if !empty(s:TagbarState().getCurrent(0)) &&
-     \ fileinfo.fpath ==# s:TagbarState().getCurrent(0).fpath
+    if !empty(tagbar#state#get_current_file(0)) &&
+     \ fileinfo.fpath ==# tagbar#state#get_current_file(0).fpath
         " We're redisplaying the same file, so save the view
         call s:debug('Redisplaying file [' . fileinfo.fpath . ']')
         let saveline = line('.')
@@ -2922,8 +1575,8 @@ function! s:RenderContent(...) abort
 
     setlocal nomodifiable
 
-    if !empty(s:TagbarState().getCurrent(0)) &&
-     \ fileinfo.fpath ==# s:TagbarState().getCurrent(0).fpath
+    if !empty(tagbar#state#get_current_file(0)) &&
+     \ fileinfo.fpath ==# tagbar#state#get_current_file(0).fpath
         let scrolloff_save = &scrolloff
         set scrolloff=0
 
@@ -2984,9 +1637,9 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
             let kindtag = curtags[0].parent
 
             if kindtag.isFolded()
-                let foldmarker = s:icon_closed
+                let foldmarker = g:tagbar#icon_closed
             else
-                let foldmarker = s:icon_open
+                let foldmarker = g:tagbar#icon_open
             endif
 
             let padding = g:tagbar_show_visibility ? ' ' : ''
@@ -3061,7 +1714,7 @@ function! s:PrintTag(tag, depth, output, fileinfo, typeinfo) abort
                     let indent += 1 " fold symbol
                     call add(a:output, repeat(' ', indent) . '[' . ckind.long . ']')
                     " Add basic tag to allow folding when on the header line
-                    let headertag = s:BaseTag.New(ckind.long)
+                    let headertag = tagbar#prototypes#basetag#new(ckind.long)
                     let headertag.parent = a:tag
                     let headertag.fileinfo = a:tag.fileinfo
                     let a:fileinfo.tline[len(a:output) + offset] = headertag
@@ -3216,7 +1869,7 @@ function! s:HighlightTag(openfolds, ...) abort
         " Make sure the tag is visible in the window
         call winline()
 
-        let foldpat = '[' . s:icon_open . s:icon_closed . ' ]'
+        let foldpat = '[' . g:tagbar#icon_open . g:tagbar#icon_closed . ' ]'
         let pattern = '/^\%' . tagline . 'l\s*' . foldpat . '[-+# ]\zs[^( ]\+\ze/'
         call s:debug("Highlight pattern: '" . pattern . "'")
         if hlexists('TagbarHighlight') " Safeguard in case syntax highlighting is disabled
@@ -3429,7 +2082,7 @@ endfunction
 " Folding {{{1
 " s:OpenFold() {{{2
 function! s:OpenFold() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -3448,7 +2101,7 @@ endfunction
 
 " s:CloseFold() {{{2
 function! s:CloseFold() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -3469,7 +2122,7 @@ endfunction
 
 " s:ToggleFold() {{{2
 function! s:ToggleFold() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -3484,7 +2137,7 @@ function! s:ToggleFold() abort
     let newline = line('.')
 
     if curtag.isKindheader()
-        call curtag.toggleFold()
+        call curtag.toggleFold(tagbar#state#get_current_file(0))
     elseif curtag.isFoldable()
         if curtag.isFolded()
             call curtag.openFold()
@@ -3500,7 +2153,7 @@ endfunction
 
 " s:ChangeFoldLevel() {{{2
 function! s:ChangeFoldLevel(diff, force) abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -3521,7 +2174,7 @@ function! s:SetFoldLevel(level, force) abort
         return
     endif
 
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -3742,8 +2395,8 @@ function! s:AutoUpdate(fname, force, ...) abort
     " file is being displayed
     if bufwinnr(s:TagbarBufName()) != -1 && !s:paused &&
      \ (s:new_window || updated ||
-      \ (!empty(s:TagbarState().getCurrent(0)) &&
-       \ a:fname != s:TagbarState().getCurrent(0).fpath))
+      \ (!empty(tagbar#state#get_current_file(0)) &&
+       \ a:fname != tagbar#state#get_current_file(0).fpath))
         call s:RenderContent(fileinfo)
     endif
 
@@ -3751,7 +2404,7 @@ function! s:AutoUpdate(fname, force, ...) abort
     " same file is being redisplayed
     if !empty(fileinfo)
         call s:debug('Setting current file [' . a:fname . ']')
-        call s:TagbarState().setCurrent(fileinfo)
+        call tagbar#state#set_current_file(fileinfo)
         let s:nearby_disabled = 0
     endif
 
@@ -3765,9 +2418,9 @@ function! s:CheckMouseClick() abort
     let line   = getline('.')
     let curcol = col('.')
 
-    if (match(line, s:icon_open . '[-+ ]') + 1) == curcol
+    if (match(line, g:tagbar#icon_open . '[-+ ]') + 1) == curcol
         call s:CloseFold()
-    elseif (match(line, s:icon_closed . '[-+ ]') + 1) == curcol
+    elseif (match(line, g:tagbar#icon_closed . '[-+ ]') + 1) == curcol
         call s:OpenFold()
     elseif g:tagbar_singleclick
         call s:JumpToTag(0)
@@ -3968,7 +2621,7 @@ function! s:GetNearbyTag(all, forcecurrent, ...) abort
         return {}
     endif
 
-    let fileinfo = s:TagbarState().getCurrent(a:forcecurrent)
+    let fileinfo = tagbar#state#get_current_file(a:forcecurrent)
     if empty(fileinfo)
         return {}
     endif
@@ -4004,7 +2657,7 @@ endfunction
 " does not contain a valid tag (for example because it is empty or only
 " contains a pseudo-tag) return an empty dictionary.
 function! s:GetTagInfo(linenr, ignorepseudo) abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
 
     if empty(fileinfo)
         return {}
@@ -4090,7 +2743,7 @@ endfunction
 
 " s:ToggleHideNonPublicTags() {{{2
 function! s:ToggleHideNonPublicTags() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -4116,7 +2769,7 @@ endfunction
 
 " s:ToggleCaseInsensitive() {{{2
 function! s:ToggleCaseInsensitive() abort
-    let fileinfo = s:TagbarState().getCurrent(0)
+    let fileinfo = tagbar#state#get_current_file(0)
     if empty(fileinfo)
         return
     endif
@@ -4129,7 +2782,7 @@ function! s:ToggleCaseInsensitive() abort
 
     let g:tagbar_case_insensitive = !g:tagbar_case_insensitive
 
-    call fileinfo.sortTags()
+    call fileinfo.sortTags(fileinfo.typeinfo)
 
     call s:RenderKeepView()
     call s:SetStatusLine()
@@ -4211,8 +2864,8 @@ function! s:SetStatusLine()
         let in_tagbar = 1
     endif
 
-    if !empty(s:TagbarState().getCurrent(0))
-        let fileinfo = s:TagbarState().getCurrent(0)
+    if !empty(tagbar#state#get_current_file(0))
+        let fileinfo = tagbar#state#get_current_file(0)
         let fname = fnamemodify(fileinfo.fpath, ':t')
         let sorted = get(fileinfo.typeinfo, 'sort', g:tagbar_sort)
     else
@@ -4347,7 +3000,7 @@ endfunction
 
 " s:do_delayed_update() {{{2
 function! s:do_delayed_update() abort
-    let curfile = s:TagbarState().getCurrent(0)
+    let curfile = tagbar#state#get_current_file(0)
     if empty(curfile)
         let curfname = ''
     else
@@ -4405,15 +3058,6 @@ function! s:TagbarBufName() abort
     endif
 
     return t:tagbar_buf_name
-endfunction
-
-" s:TagbarState() {{{2
-function! s:TagbarState() abort
-    if !exists('t:tagbar_state')
-        let t:tagbar_state = s:state.New()
-    endif
-
-    return t:tagbar_state
 endfunction
 
 " s:goto_win() {{{2
@@ -4575,10 +3219,14 @@ function! tagbar#toggle_pause() abort
     let s:paused = !s:paused
 
     if s:paused
-        call s:TagbarState().setPaused()
+        call tagbar#state#set_paused()
     else
         call s:AutoUpdate(fnamemodify(expand('%'), ':p'), 1)
     endif
+endfunction
+
+function! tagbar#is_paused() abort
+    return s:paused
 endfunction
 
 " tagbar#getusertypes() {{{2
@@ -4656,8 +3304,8 @@ endfunction
 function! tagbar#currentfile() abort
     let filename = ''
 
-    if !empty(s:TagbarState().getCurrent(1))
-        let filename = fnamemodify(s:TagbarState().getCurrent(1).fpath, ':t')
+    if !empty(tagbar#state#get_current_file(1))
+        let filename = fnamemodify(tagbar#state#get_current_file(1).fpath, ':t')
     endif
 
     return filename
