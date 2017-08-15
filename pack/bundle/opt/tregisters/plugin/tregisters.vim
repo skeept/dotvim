@@ -3,15 +3,11 @@
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
 " @Created:     2007-08-22.
-" @Last Change: 2012-02-12.
-" @Revision:    121
+" @Last Change: 2017-08-13.
+" @Revision:    122
 " GetLatestVimScripts: 2017 1 tregisters.vim
 
 if &cp || exists("loaded_tregisters")
-    finish
-endif
-if !exists('loaded_tlib') || loaded_tlib < 26
-    echoerr 'tlib >= 0.26 is required'
     finish
 endif
 let loaded_tregisters = 3
