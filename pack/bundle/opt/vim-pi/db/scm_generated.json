@@ -3151,6 +3151,10 @@
     "type": "git",
     "url": "git://github.com/hoffoo/vim-grails-console"
   },
+  "4602": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-PatternsOnText"
+  },
   "4604": {
     "type": "git",
     "url": "git://github.com/qeexee/balsa-vim"
