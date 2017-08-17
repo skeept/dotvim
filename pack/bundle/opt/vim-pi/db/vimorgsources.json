@@ -128,7 +128,7 @@
 "TabList_for_terminal_vim":{"archive_name":"Tablist.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24639","version":"1.01","vim_script_nr":5463},
 "Despacio":{"archive_name":"despacio.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24704","version":"4","vim_script_nr":5462},
 "dutch_peasants":{"archive_name":"dutch_peasants.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24616","version":"0.1","vim_script_nr":5461},
-"vim-markdown-toc":{"archive_name":"vim-markdown-toc-1.2.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24760","version":"v1.2.1","vim_script_nr":5460},
+"vim-markdown-toc":{"archive_name":"vim-markdown-toc-1.2.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25512","version":"v1.2.2","vim_script_nr":5460},
 "syntax_for_verilog_2001":{"archive_name":".vimrc","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24660","version":"0.2.1","vim_script_nr":5459},
 "vim_comment_toggle":{"archive_name":"vim_comment_toggle.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24718","version":"1.1.2","vim_script_nr":5458},
 "vim-tail":{"archive_name":"vim-tail.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24590","version":"1.0","vim_script_nr":5457},

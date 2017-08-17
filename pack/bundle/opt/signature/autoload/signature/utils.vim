@@ -1,7 +1,7 @@
 " vim: fdm=marker:et:ts=4:sw=2:sts=2
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-function! signature#utils#Set(var, value, ...)                                                                  " {{{1
+function! signature#utils#Set(var, value, ...)                                                                    " {{{1
   " Description: Assign value to var if var is unset or if an optional 3rd arg is provided to force
 
   if (!exists(a:var) || a:0 && a:1)
@@ -76,7 +76,7 @@ function! signature#utils#Input()                                               
   let l:in = nr2char(getchar())
 
   " ... if the input is not a number eg. '!' ==> Delete all '!' markers
-  if (b:SignatureIncludeMarkers =~# l:in)
+  if signature#utils#IsValidMarker(l:in)
     return signature#marker#Purge(l:in)
   endif
 
@@ -87,11 +87,9 @@ function! signature#utils#Input()                                               
     let l:char = l:in
   endif
 
-  if (  (b:SignatureIncludeMarkers =~# l:char)
-   \ && (l:char != ' ')
-   \ )
+  if signature#utils#IsValidMarker(l:char)
     return signature#marker#Toggle(l:char)
-  elseif (b:SignatureIncludeMarks =~# l:char)
+  elseif signature#utils#IsValidMark(l:char)
     return signature#mark#Toggle(l:char)
   else
     " l:char is probably one of `'[]<> or a space from the gap in b:SignatureIncludeMarkers
@@ -149,25 +147,39 @@ endfunction
 function! signature#utils#SetupHighlightGroups()                                                                  " {{{1
   " Description: Sets up the highlight groups
 
-  function! CheckAndSetHL(curr_hl, attr, prefix, from_hl)
+  function! CheckAndSetHL(curr_hl, prefix, attr, targ_color)
     let l:curr_color = synIDattr(synIDtrans(hlID(a:curr_hl)), a:attr, a:prefix)
-    let l:from_color = synIDattr(synIDtrans(hlID(a:from_hl)), a:attr, a:prefix)
 
     if (  (  (l:curr_color == "")
      \    || (l:curr_color  < 0)
      \    )
-     \ && (l:from_color != "")
-     \ && (l:from_color >= 0)
+     \ && (a:targ_color != "")
+     \ && (a:targ_color >= 0)
      \ )
-      execute 'highlight ' . a:curr_hl . ' ' . a:prefix . a:attr . '=' . l:from_color
+      " echom "DEBUG: HL=" . a:curr_hl . " (" . a:prefix . a:attr . ") Curr=" . l:curr_color . ", To=" . a:targ_color
+      execute 'highlight ' . a:curr_hl . ' ' . a:prefix . a:attr . '=' . a:targ_color
     endif
   endfunction
 
-  let l:prefix = (has('gui_running') || has('termguicolors') ? 'gui' : 'cterm')
-  call CheckAndSetHL('SignatureMarkText',   'bg', l:prefix, 'SignColumn')
-  call CheckAndSetHL('SignatureMarkText',   'fg', l:prefix, 'Exception' )
-  call CheckAndSetHL('SignatureMarkerText', 'bg', l:prefix, 'SignColumn')
-  call CheckAndSetHL('SignatureMarkerText', 'fg', l:prefix, 'WarningMsg')
+  let l:prefix = (has('gui_running') || (has('termguicolors') && &termguicolors) ? 'gui' : 'cterm')
+  let l:sign_col_color = synIDattr(synIDtrans(hlID('SignColumn')), 'bg', l:prefix)
+
+  call CheckAndSetHL('SignatureMarkText',   l:prefix, 'fg', 'Red')
+  call CheckAndSetHL('SignatureMarkText',   l:prefix, 'bg', l:sign_col_color)
+  call CheckAndSetHL('SignatureMarkerText', l:prefix, 'fg', 'Green')
+  call CheckAndSetHL('SignatureMarkerText', l:prefix, 'bg', l:sign_col_color)
 
   delfunction CheckAndSetHL
+endfunction
+
+
+function! signature#utils#IsValidMark(mark)                                                                       " {{{1
+  return (b:SignatureIncludeMarks =~# a:mark)
+endfunction
+
+
+function! signature#utils#IsValidMarker(marker)                                                                   " {{{1
+  return (  (b:SignatureIncludeMarkers =~# a:marker)
+         \ && (a:marker != ' ')
+         \ )
 endfunction
