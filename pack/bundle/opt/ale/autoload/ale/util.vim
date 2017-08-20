@@ -21,6 +21,8 @@ function! ale#util#GetFunction(string_or_ref) abort
     return a:string_or_ref
 endfunction
 
+" Compare two loclist items for ALE, sorted by their buffers, filenames, and
+" line numbers and column numbers.
 function! ale#util#LocItemCompare(left, right) abort
     if a:left.bufnr < a:right.bufnr
         return -1
@@ -28,6 +30,16 @@ function! ale#util#LocItemCompare(left, right) abort
 
     if a:left.bufnr > a:right.bufnr
         return 1
+    endif
+
+    if a:left.bufnr == -1
+        if a:left.filename < a:right.filename
+            return -1
+        endif
+
+        if a:left.filename > a:right.filename
+            return 1
+        endif
     endif
 
     if a:left.lnum < a:right.lnum
@@ -43,6 +55,27 @@ function! ale#util#LocItemCompare(left, right) abort
     endif
 
     if a:left.col > a:right.col
+        return 1
+    endif
+
+    return 0
+endfunction
+
+" Compare two loclist items, including the text for the items.
+"
+" This function can be used for de-duplicating lists.
+function! ale#util#LocItemCompareWithText(left, right) abort
+    let l:cmp_value = ale#util#LocItemCompare(a:left, a:right)
+
+    if l:cmp_value
+        return l:cmp_value
+    endif
+
+    if a:left.text < a:right.text
+        return -1
+    endif
+
+    if a:left.text > a:right.text
         return 1
     endif
 
