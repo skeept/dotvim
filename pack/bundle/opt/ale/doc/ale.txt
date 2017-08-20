@@ -43,6 +43,8 @@ CONTENTS                                                         *ale-contents*
       fusion-lint.........................|ale-fuse-fusionlint|
     go....................................|ale-go-options|
       gometalinter........................|ale-go-gometalinter|
+    graphql...............................|ale-graphql-options|
+      gqlint..............................|ale-graphql-gqlint|
     handlebars............................|ale-handlebars-options|
       ember-template-lint.................|ale-handlebars-embertemplatelint|
     haskell...............................|ale-haskell-options|
@@ -83,6 +85,7 @@ CONTENTS                                                         *ale-contents*
       phpcs...............................|ale-php-phpcs|
       phpmd...............................|ale-php-phpmd|
       phpstan.............................|ale-php-phpstan|
+      phpcbf..............................|ale-php-phpcbf|
     pug...................................|ale-pug-options|
       puglint.............................|ale-pug-puglint|
     python................................|ale-python-options|
@@ -210,7 +213,7 @@ The following languages and tools are supported.
 * Objective-C++: 'clang'
 * OCaml: 'merlin' (see |ale-ocaml-merlin|)
 * Perl: 'perl' (-c flag), 'perlcritic'
-* PHP: 'hack', 'langserver', 'php' (-l flag), 'phpcs', 'phpmd', 'phpstan'
+* PHP: 'hack', 'langserver', 'php' (-l flag), 'phpcs', 'phpmd', 'phpstan', 'phpcbf'
 * Pod: 'proselint'
 * Pug: 'pug-lint'
 * Puppet: 'puppet', 'puppet-lint'
@@ -488,6 +491,11 @@ g:ale_lint_on_enter                                       *g:ale_lint_on_enter*
   The |FileChangedShellPost| and |BufEnter| events will be used to check if
   files have been changed outside of Vim. If a file is changed outside of
   Vim, it will be checked when it is next opened.
+
+  A |BufWinLeave| event will be used to look for the |E924|, |E925|, or |E926|
+  errors after moving from a loclist or quickfix window to a new buffer. If
+  prompts for these errors are opened after moving to new buffers, then ALE
+  will automatically send the `<CR>` key needed to close the prompt.
 
 
 g:ale_lint_on_filetype_changed                 *g:ale_lint_on_filetype_changed*

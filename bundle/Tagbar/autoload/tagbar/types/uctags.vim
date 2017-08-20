@@ -1,6 +1,6 @@
-" Type definitions for standard Exuberant Ctags
+" Type definitions for Universal Ctags
 
-function! tagbar#typedefs#ctags#init(supported_types) abort
+function! tagbar#types#uctags#init(supported_types) abort
     let types = {}
 
     " Ant {{{1
@@ -296,8 +296,10 @@ function! tagbar#typedefs#ctags#init(supported_types) abort
     let type_html = tagbar#prototypes#typeinfo#new()
     let type_html.ctagstype = 'html'
     let type_html.kinds = [
-        \ {'short' : 'f', 'long' : 'JavaScript functions', 'fold' : 0, 'stl' : 1},
-        \ {'short' : 'a', 'long' : 'named anchors',        'fold' : 0, 'stl' : 1}
+        \ {'short' : 'a', 'long' : 'named anchors', 'fold' : 0, 'stl' : 1},
+        \ {'short' : 'h', 'long' : 'H1 headings',   'fold' : 0, 'stl' : 1},
+        \ {'short' : 'i', 'long' : 'H2 headings',   'fold' : 0, 'stl' : 1},
+        \ {'short' : 'j', 'long' : 'H3 headings',   'fold' : 0, 'stl' : 1},
     \ ]
     let types.html = type_html
     " Java {{{1
@@ -424,13 +426,28 @@ function! tagbar#typedefs#ctags#init(supported_types) abort
     let type_php = tagbar#prototypes#typeinfo#new()
     let type_php.ctagstype = 'php'
     let type_php.kinds     = [
-        \ {'short' : 'i', 'long' : 'interfaces',           'fold' : 0, 'stl' : 1},
-        \ {'short' : 'c', 'long' : 'classes',              'fold' : 0, 'stl' : 1},
+        \ {'short' : 'n', 'long' : 'namespaces',           'fold' : 0, 'stl' : 0},
+        \ {'short' : 'a', 'long' : 'use aliases',          'fold' : 1, 'stl' : 0},
         \ {'short' : 'd', 'long' : 'constant definitions', 'fold' : 0, 'stl' : 0},
-        \ {'short' : 'f', 'long' : 'functions',            'fold' : 0, 'stl' : 1},
-        \ {'short' : 'v', 'long' : 'variables',            'fold' : 0, 'stl' : 0},
-        \ {'short' : 'j', 'long' : 'javascript functions', 'fold' : 0, 'stl' : 1}
+        \ {'short' : 'i', 'long' : 'interfaces',           'fold' : 0, 'stl' : 1},
+        \ {'short' : 't', 'long' : 'traits',               'fold' : 0, 'stl' : 1},
+        \ {'short' : 'c', 'long' : 'classes',              'fold' : 0, 'stl' : 1},
+        \ {'short' : 'v', 'long' : 'variables',            'fold' : 1, 'stl' : 0},
+        \ {'short' : 'f', 'long' : 'functions',            'fold' : 0, 'stl' : 1}
     \ ]
+    let type_php.sro        = '\\'
+    let type_php.kind2scope = {
+        \ 'c' : 'class',
+        \ 'n' : 'namespace',
+        \ 'i' : 'interface',
+        \ 't' : 'trait',
+    \ }
+    let type_php.scope2kind = {
+        \ 'class'     : 'c',
+        \ 'namespace' : 'n',
+        \ 'interface' : 'i',
+        \ 'trait'     : 't',
+    \ }
     let types.php = type_php
     " Python {{{1
     let type_python = tagbar#prototypes#typeinfo#new()
@@ -452,6 +469,8 @@ function! tagbar#typedefs#ctags#init(supported_types) abort
         \ 'class'    : 'c',
         \ 'function' : 'f'
     \ }
+    let type_python.kind2scope.m = 'member'
+    let type_python.scope2kind.member = 'm'
     let types.python = type_python
     let types.pyrex  = type_python
     let types.cython = type_python
