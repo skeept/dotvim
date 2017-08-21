@@ -49,7 +49,7 @@ if has("python3") && GetIsAddonActive('denite')
       \ 'description': 'Vim',
       \ }
   let s:menus.vim.file_candidates = [
-      \ ['    > Edit configuation file (init.vim)', '~/.config/nvim/init.vim']
+      \ ['    > Edit configuration file (init.vim)', '~/vimfiles/vimrc']
       \ ]
   call denite#custom#var('menu', 'menus', s:menus)
 
