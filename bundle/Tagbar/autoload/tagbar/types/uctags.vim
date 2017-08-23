@@ -182,6 +182,24 @@ function! tagbar#types#uctags#init(supported_types) abort
         \ 'enum'      : 'g'
     \ }
     let types.cs = type_cs
+    " Clojure {{{1
+    let type_clojure = tagbar#prototypes#typeinfo#new()
+    let type_clojure.ctagstype = 'clojure'
+    let type_clojure.kinds     = [
+        \ {'short': 'n', 'long': 'namespace',              'fold': 0, 'stl': 1},
+        \ {'short': 'd', 'long': 'definition',             'fold': 0, 'stl': 1},
+        \ {'short': 'f', 'long': 'function',               'fold': 0, 'stl': 1},
+        \ {'short': 'p', 'long': 'private function',       'fold': 0, 'stl': 1},
+        \ {'short': 'm', 'long': 'macro',                  'fold': 0, 'stl': 1},
+        \ {'short': 'i', 'long': 'inline',                 'fold': 0, 'stl': 1},
+        \ {'short': 'a', 'long': 'multimethod definition', 'fold': 0, 'stl': 1},
+        \ {'short': 'b', 'long': 'multimethod instance',   'fold': 0, 'stl': 1},
+        \ {'short': 'c', 'long': 'definition (once)',      'fold': 0, 'stl': 1},
+        \ {'short': 's', 'long': 'struct',                 'fold': 0, 'stl': 1},
+        \ {'short': 'v', 'long': 'intern',                 'fold': 0, 'stl': 1},
+        \ {'short': 'n', 'long': 'namespace',              'fold': 0, 'stl': 1}
+    \ ]
+    let types.clojure = type_clojure
     " COBOL {{{1
     let type_cobol = tagbar#prototypes#typeinfo#new()
     let type_cobol.ctagstype = 'cobol'
@@ -194,6 +212,15 @@ function! tagbar#types#uctags#init(supported_types) abort
         \ {'short' : 's', 'long' : 'sections',          'fold' : 0, 'stl' : 1}
     \ ]
     let types.cobol = type_cobol
+    " CSS {{{1
+    let type_css = tagbar#prototypes#typeinfo#new()
+    let type_css.ctagstype = 'css'
+    let type_css.kinds     = [
+        \ {'short' : 's', 'long' : 'selector',   'fold' : 0, 'stl' : 0},
+        \ {'short' : 'i', 'long' : 'identities', 'fold' : 1, 'stl' : 0},
+        \ {'short' : 'c', 'long' : 'classes',    'fold' : 1, 'stl' : 0}
+    \ ]
+    let types.css = type_css
     " DOS Batch {{{1
     let type_dosbatch = tagbar#prototypes#typeinfo#new()
     let type_dosbatch.ctagstype = 'dosbatch'
@@ -355,7 +382,6 @@ function! tagbar#types#uctags#init(supported_types) abort
         \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let types.lisp = type_lisp
-    let types.clojure = type_lisp
     " Lua {{{1
     let type_lua = tagbar#prototypes#typeinfo#new()
     let type_lua.ctagstype = 'lua'
@@ -502,6 +528,43 @@ function! tagbar#types#uctags#init(supported_types) abort
         \ 'module' : 'm'
     \ }
     let types.ruby = type_ruby
+    " Rust {{{1
+    let type_rust = tagbar#prototypes#typeinfo#new()
+    let type_rust.ctagstype = 'rust'
+    let type_rust.kinds     = [
+        \ {'short' : 'n', 'long' : 'module',          'fold' : 1, 'stl' : 0},
+        \ {'short' : 's', 'long' : 'struct',          'fold' : 0, 'stl' : 1},
+        \ {'short' : 'i', 'long' : 'trait',           'fold' : 0, 'stl' : 1},
+        \ {'short' : 'c', 'long' : 'implementation',  'fold' : 0, 'stl' : 0},
+        \ {'short' : 'f', 'long' : 'function',        'fold' : 0, 'stl' : 1},
+        \ {'short' : 'g', 'long' : 'enum',            'fold' : 0, 'stl' : 1},
+        \ {'short' : 't', 'long' : 'type alias',      'fold' : 0, 'stl' : 1},
+        \ {'short' : 'v', 'long' : 'global variable', 'fold' : 0, 'stl' : 1},
+        \ {'short' : 'M', 'long' : 'macro',           'fold' : 0, 'stl' : 1},
+        \ {'short' : 'm', 'long' : 'struct field',    'fold' : 0, 'stl' : 1},
+        \ {'short' : 'e', 'long' : 'enum variant',    'fold' : 0, 'stl' : 1},
+        \ {'short' : 'F', 'long' : 'method',          'fold' : 0, 'stl' : 1}
+    \ ]
+    let type_rust.sro        = '::'
+    let type_rust.kind2scope = {
+        \ 'n' : 'module',
+        \ 's' : 'struct',
+        \ 'i' : 'interface',
+        \ 'c' : 'implementation',
+        \ 'f' : 'function',
+        \ 'g' : 'enum',
+        \ 'F' : 'method',
+    \ }
+    let type_rust.scope2kind = {
+        \ 'module'        : 'n',
+        \ 'struct'        : 's',
+        \ 'interface'     : 'i',
+        \ 'implementation': 'c',
+        \ 'function'      : 'f',
+        \ 'enum'          : 'g',
+        \ 'method'        : 'F',
+    \ }
+    let types.rust = type_rust
     " Scheme {{{1
     let type_scheme = tagbar#prototypes#typeinfo#new()
     let type_scheme.ctagstype = 'scheme'
