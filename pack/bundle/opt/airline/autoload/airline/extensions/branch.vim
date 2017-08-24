@@ -118,10 +118,12 @@ function! s:update_git_branch(path)
   let s:vcs_config['git'].branch = name
 endfunction
 
-function! s:update_hg_branch(path)
+function! s:update_hg_branch(...)
+  " path argument is not actually used, so we don't actually care about a:1
+  " it is just needed, because update_git_branch needs it.
   if s:has_lawrencium
     let stl=lawrencium#statusline()
-    if !empty(stl) && g:airline#init#async
+    if !empty(stl) && g:airline#init#async && get(b:, 'airline_do_mq_check', 1)
       call s:get_mq_async('LC_ALL=C hg qtop', expand('%:p'))
     endif
     if exists("s:mq") && !empty(s:mq)
@@ -138,9 +140,10 @@ function! s:update_hg_branch(path)
 endfunction
 
 function! s:update_branch()
-  let l:path = exists("*fnamemodify") ? fnamemodify(resolve(@%), ":p:h") : expand("%:p:h")
+  let b:airline_fname_path = get(b:, 'airline_fname_path',
+        \ exists("*fnamemodify") ? fnamemodify(resolve(@%), ":p:h") : expand("%:p:h"))
   for vcs in keys(s:vcs_config)
-    call {s:vcs_config[vcs].update_branch}(l:path)
+    call {s:vcs_config[vcs].update_branch}(b:airline_fname_path)
     if b:buffer_vcs_config[vcs].branch != s:vcs_config[vcs].branch
       let b:buffer_vcs_config[vcs].branch = s:vcs_config[vcs].branch
       unlet! b:airline_head
@@ -252,6 +255,8 @@ if g:airline#init#async
         unlet! b:airline_head
       endif
       let s:mq = self.buf
+      " do not do mq check anymore
+      let b:airline_do_mq_check = 0
     endif
     if has_key(s:jobs, self.file)
       call remove(s:jobs, self.file)
@@ -400,8 +405,8 @@ function! airline#extensions#branch#init(ext)
   call airline#parts#define_function('branch', 'airline#extensions#branch#get_head')
 
   autocmd BufReadPost * unlet! b:airline_file_in_root
-  autocmd ShellCmdPost,CmdwinLeave * unlet! b:airline_head
-  autocmd User AirlineBeforeRefresh unlet! b:airline_head
+  autocmd ShellCmdPost,CmdwinLeave * unlet! b:airline_head b:airline_do_mq_check b:airline_fname_path
+  autocmd User AirlineBeforeRefresh unlet! b:airline_head b:airline_do_mq_check b:airline_fname_path
   autocmd BufWritePost * call s:reset_untracked_cache(0)
   autocmd ShellCmdPost * call s:reset_untracked_cache(1)
 endfunction
