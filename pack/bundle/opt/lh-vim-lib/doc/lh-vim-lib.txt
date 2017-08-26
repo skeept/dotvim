@@ -1,5 +1,5 @@
 *lh-vim-lib.txt*        Vim common libraries (v4.0.0)
-                        For Vim version 7+      Last change: 23rd Aug 2017
+                        For Vim version 7+      Last change: 25th Aug 2017
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -159,6 +159,7 @@ Stack related functions:                                |lhvl#stack|      {{{2
 String related functions:                               |lhvl#string|     {{{2
 - |lh#string#as()|
 - |lh#string#matches()|
+- |lh#string#matchstrpos()|
 - |lh#string#substitute_unless()|
 - |lh#string#trim()|
 Graph related functions:                                |lhvl#graph|      {{{2
@@ -1289,6 +1290,12 @@ Example: >
    let matches = lh#string#matches('sqjg %1 msqkg ml %2 mihs m%43%8', '%\zs\d\+')
    let expected= ['1', '2', '43', '8']
    AssertEquals(matches, expected)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#matchstrpos()*         {{{3
+lh#string#matchstrpos(expr, pattern [, start [, count]])~
+Backports |matchstrpos()| to old versions of vim.
+@since Version 4.0.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#substitute_unless()*   {{{3
@@ -4421,8 +4428,11 @@ lh#assert#value({actual}).verifies({func}, {arglist} [, {msg}]) *lh#assert#value
     Unlike |lh#assert#true()|, this flavour doesn't evaluate {func} in
     |dbc-ignore| mode.
 
-lh#assert#type({actual}).is({expected})                *lh#assert#type().is()*
-lh#assert#type({actual}).belongs_to({expected}...)     *lh#assert#type().belongs_to()*
+lh#assert#type({actual})....                           *lh#assert#type()*
+    This time the assertions are done on the type of the expression.
+
+lh#assert#type({actual}).is({expected})                         *lh#assert#type().is()*
+lh#assert#type({actual}).belongs_to({expected}...)              *lh#assert#type().belongs_to()*
     They are very similar to |lh#assert#value()| tests, but on types.
     e.g. >
     call lh#assert#type([1,2]).is([])
