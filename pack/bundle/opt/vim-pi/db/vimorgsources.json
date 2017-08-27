@@ -1,4 +1,5 @@
 {
+"CtrlXA":{"archive_name":"vim-CtrlXA.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25530","version":"1.0","vim_script_nr":5600},
 "octopus":{"archive_name":"octopus.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25502","version":"1.0","vim_script_nr":5599},
 "mbed-vim":{"archive_name":"mbed.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25524","version":"1.0","vim_script_nr":5598},
 "SubstituteExpression":{"archive_name":"SubstituteExpression-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25447","version":"1.00","vim_script_nr":5596},
@@ -355,7 +356,7 @@
 "Ferret":{"archive_name":"ferret-3.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25528","version":"3.0.1","vim_script_nr":5220},
 "airline-colornum":{"archive_name":"airline-colornum.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23468","version":"1.1","vim_script_nr":5219},
 "vim-gurl":{"archive_name":"vim-gurl.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23452","version":"1.0","vim_script_nr":5218},
-"vim-clipper":{"archive_name":"vim-clipper-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24304","version":"1.0","vim_script_nr":5217},
+"vim-clipper":{"archive_name":"vim-clipper-2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25529","version":"2.0","vim_script_nr":5217},
 "Terminus":{"archive_name":"terminus-1.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25284","version":"1.3","vim_script_nr":5216},
 "Loupe":{"archive_name":"loupe-1.2.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24375","version":"1.2.1","vim_script_nr":5215},
 "vim-qlist":{"archive_name":"vim-qlist-0.0.3.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23678","version":"0.0.3","vim_script_nr":5214},
@@ -770,7 +771,7 @@
 "vim-nfo":{"archive_name":"vim-nfo.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21190","version":"0.1.0","vim_script_nr":4796},
 "ExtractMatches":{"archive_name":"ExtractMatches-1.40.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24919","version":"1.40","vim_script_nr":4795},
 "AddCppClass_Plus":{"archive_name":"AddCppClass_Plus.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21183","version":"1.0","vim_script_nr":4794},
-"easydir":{"archive_name":"vim-easydir-1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21265","version":"1.0.1","vim_script_nr":4793},
+"easydir":{"archive_name":"vim-easydir-1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25531","version":"1.1","vim_script_nr":4793},
 "netgrep":{"archive_name":"netgrep-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21178","version":"1.0","vim_script_nr":4792},
 "SwissCalc":{"archive_name":"SwissCalc.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21170","version":"1.0.0","vim_script_nr":4791},
 "gsl%4790":{"archive_name":"gsl.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21167","version":"0.1","vim_script_nr":"4790"},

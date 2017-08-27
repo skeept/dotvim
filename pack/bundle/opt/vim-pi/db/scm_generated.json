@@ -5595,6 +5595,10 @@
     "type": "git",
     "url": "git://github.com/nelqatib/mbed-vim"
   },
+  "5600": {
+    "type": "git",
+    "url": "git://github.com/Konfekt/vim-CtrlXA"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
