@@ -5599,6 +5599,10 @@
     "type": "git",
     "url": "git://github.com/Konfekt/vim-CtrlXA"
   },
+  "5601": {
+    "type": "git",
+    "url": "git://github.com/benknoble/vim-auto-origami"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
