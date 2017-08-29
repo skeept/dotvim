@@ -1,6 +1,6 @@
 {
 "AutoOrigami":{"archive_name":"AutoOrigami.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25533","version":"v1.0.0","vim_script_nr":5601},
-"CtrlXA":{"archive_name":"vim-CtrlXA.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25530","version":"1.0","vim_script_nr":5600},
+"CtrlXA":{"archive_name":"vim-CtrlXA.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25538","version":"1.1","vim_script_nr":5600},
 "octopus":{"archive_name":"octopus.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25502","version":"1.0","vim_script_nr":5599},
 "mbed-vim":{"archive_name":"mbed.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25524","version":"1.0","vim_script_nr":5598},
 "SubstituteExpression":{"archive_name":"SubstituteExpression-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25447","version":"1.00","vim_script_nr":5596},
