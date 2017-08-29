@@ -15,16 +15,16 @@ function! s:untracked_output(dict, buf)
 endfunction
 
 function! s:mq_output(buf, file)
-  let buf=''
+  let buf=a:buf
   if !empty(a:buf)
     if a:buf is# 'no patches applied' ||
       \ a:buf =~# "unknown command 'qtop'"
       let buf = ''
-    elseif exists("b:mq") && b:mq isnot# a:buf
+    elseif exists("b:mq") && b:mq isnot# buf
       " make sure, statusline is updated
       unlet! b:airline_head
     endif
-    let b:mq = a:buf
+    let b:mq = buf
   endif
   if has_key(s:mq_jobs, a:file)
     call remove(s:mq_jobs, a:file)
@@ -154,7 +154,7 @@ elseif has("nvim")
   endfunction
 
   function! s:nvim_mq_job_handler(job_id, data, event) dict
-    if a:event == 'stdout'
+    if a:event == 'stdout' || a:event == 'stderr'
       let self.buf .=  join(a:data)
     else " on_exit handler
       call s:mq_output(self.buf, self.file)
@@ -162,9 +162,7 @@ elseif has("nvim")
   endfunction
 
   function! s:nvim_po_job_handler(job_id, data, event) dict
-    if a:event == 'stdout'
-      let self.buf .=  join(a:data)
-    elseif a:event == 'stderr'
+    if a:event == 'stdout' || a:event == 'stderr'
       let self.buf .=  join(a:data)
     else " on_exit handler
       call s:po_output(self.buf, self.file)
@@ -176,8 +174,9 @@ elseif has("nvim")
     let config = {
     \ 'buf': '',
     \ 'file': a:file,
-    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h'))
+    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h')),
     \ 'on_stdout': function('s:nvim_mq_job_handler'),
+    \ 'on_stderr': function('s:nvim_mq_job_handler'),
     \ 'on_exit': function('s:nvim_mq_job_handler')
     \ }
     if g:airline#init#is_windows && &shell =~ 'cmd'
@@ -197,7 +196,7 @@ elseif has("nvim")
     let config = {
     \ 'buf': '',
     \ 'file': a:file,
-    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h'))
+    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h')),
     \ 'on_stdout': function('s:nvim_po_job_handler'),
     \ 'on_stderr': function('s:nvim_po_job_handler'),
     \ 'on_exit': function('s:nvim_po_job_handler')

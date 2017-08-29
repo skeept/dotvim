@@ -43,7 +43,8 @@ command! NeomakeTestsWaitForNextMessage call s:wait_for_next_message()
 
 function! s:wait_for_message(...)
   let max = 45
-  let n = len(g:neomake_test_messages)
+  " let n = len(g:neomake_test_messages)
+  let n = g:neomake_test_messages_last_idx
   let error = 'No new message appeared after 3s.'
   while 1
     let max -= 1
@@ -108,19 +109,28 @@ function! g:NeomakeTestsCreateExe(name, lines)
   let tmpbindir = s:tempname . dir_separator . 'neomake-vader-tests'
   let exe = tmpbindir.dir_separator.a:name
   if $PATH !~# tmpbindir . path_separator
-    Save $PATH
     if !isdirectory(tmpbindir)
       call mkdir(tmpbindir, 'p', 0770)
     endif
-    let $PATH = tmpbindir . ':' . $PATH
+    call g:NeomakeTestsSetPATH(tmpbindir . ':' . $PATH)
   endif
   call writefile(a:lines, exe)
   if exists('*setfperm')
     call setfperm(exe, 'rwxrwx---')
   else
     " XXX: Windows support
-    call system('chmod 770 '.shellescape(exe))
+    call system('/bin/chmod 770 '.shellescape(exe))
+    Assert !v:shell_error, 'Got shell_error with chmod: '.v:shell_error
   endif
+endfunction
+
+let s:saved_path = 0
+function! g:NeomakeTestsSetPATH(path) abort
+  if !s:saved_path
+    Save $PATH
+    let s:saved_path = 1
+  endif
+  let $PATH = a:path
 endfunction
 
 function! s:AssertNeomakeMessage(msg, ...)
@@ -290,6 +300,7 @@ function! NeomakeTestsFakeJobinfo() abort
   let make_info[-42] = {
         \ 'verbosity': get(g:, 'neomake_verbose', 1),
         \ 'active_jobs': [],
+        \ 'finished_jobs': [],
         \ 'queued_jobs': []}
   return {'file_mode': 1, 'bufnr': bufnr('%'), 'ft': '', 'make_id': -42}
 endfunction
