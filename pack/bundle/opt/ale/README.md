@@ -73,7 +73,7 @@ formatting.
 | Awk | [gawk](https://www.gnu.org/software/gawk/)|
 | Bash | shell [-n flag](https://www.gnu.org/software/bash/manual/bash.html#index-set), [shellcheck](https://www.shellcheck.net/) |
 | Bourne Shell | shell [-n flag](http://linux.die.net/man/1/sh), [shellcheck](https://www.shellcheck.net/) |
-| C | [cppcheck](http://cppcheck.sourceforge.net), [cpplint](https://github.com/google/styleguide/tree/gh-pages/cpplint), [gcc](https://gcc.gnu.org/), [clang](http://clang.llvm.org/), [clang-format](https://clang.llvm.org/docs/ClangFormat.html)|
+| C | [cppcheck](http://cppcheck.sourceforge.net), [cpplint](https://github.com/google/styleguide/tree/gh-pages/cpplint), [gcc](https://gcc.gnu.org/), [clang](http://clang.llvm.org/), [clangtidy](http://clang.llvm.org/extra/clang-tidy/) !!, [clang-format](https://clang.llvm.org/docs/ClangFormat.html)|
 | C++ (filetype cpp) | [clang](http://clang.llvm.org/), [clangcheck](http://clang.llvm.org/docs/ClangCheck.html) !!, [clangtidy](http://clang.llvm.org/extra/clang-tidy/) !!, [cppcheck](http://cppcheck.sourceforge.net), [cpplint](https://github.com/google/styleguide/tree/gh-pages/cpplint) !!, [gcc](https://gcc.gnu.org/), [clang-format](https://clang.llvm.org/docs/ClangFormat.html)|
 | C# | [mcs](http://www.mono-project.com/docs/about-mono/languages/csharp/) |
 | Chef | [foodcritic](http://www.foodcritic.io/) |
@@ -99,7 +99,7 @@ formatting.
 | HTML | [HTMLHint](http://htmlhint.com/), [proselint](http://proselint.com/), [tidy](http://www.html-tidy.org/) |
 | Idris | [idris](http://www.idris-lang.org/) |
 | Java | [checkstyle](http://checkstyle.sourceforge.net), [javac](http://www.oracle.com/technetwork/java/javase/downloads/index.html) |
-| JavaScript | [eslint](http://eslint.org/), [jscs](http://jscs.info/), [jshint](http://jshint.com/), [flow](https://flowtype.org/), [prettier](https://github.com/prettier/prettier), prettier-eslint, prettier-standard, [standard](http://standardjs.com/), [xo](https://github.com/sindresorhus/xo)
+| JavaScript | [eslint](http://eslint.org/), [jscs](http://jscs.info/), [jshint](http://jshint.com/), [flow](https://flowtype.org/), [prettier](https://github.com/prettier/prettier), prettier-eslint >= 4.2.0, prettier-standard, [standard](http://standardjs.com/), [xo](https://github.com/sindresorhus/xo)
 | JSON | [jsonlint](http://zaa.ch/jsonlint/) |
 | Kotlin | [kotlinc](https://kotlinlang.org) !!, [ktlint](https://ktlint.github.io) !! see `:help ale-integration-kotlin` for configuration instructions
 | LaTeX | [chktex](http://www.nongnu.org/chktex/), [lacheck](https://www.ctan.org/pkg/lacheck), [proselint](http://proselint.com/) |
@@ -135,6 +135,7 @@ formatting.
 | Tcl | [nagelfar](http://nagelfar.sourceforge.net) !! |
 | Texinfo | [proselint](http://proselint.com/)|
 | Text^ | [proselint](http://proselint.com/), [vale](https://github.com/ValeLint/vale) |
+| Thrift | [thrift](http://thrift.apache.org/) |
 | TypeScript | [eslint](http://eslint.org/), [tslint](https://github.com/palantir/tslint), tsserver, typecheck |
 | Verilog | [iverilog](https://github.com/steveicarus/iverilog), [verilator](http://www.veripool.org/projects/verilator/wiki/Intro) |
 | Vim | [vint](https://github.com/Kuniwak/vint) |
