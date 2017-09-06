@@ -84,6 +84,7 @@ endfunction
 " Function: lh#dev#find_function_boundaries(line) {{{2
 "# Find the function that starts before {line}, and finish after.
 " @todo: check monoline functions
+" @note depend on tags
 function! lh#dev#find_function_boundaries(line) abort
   try
     let lTags = lh#dev#start_tag_session()
@@ -114,6 +115,7 @@ endfunction
 " Function: lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
+" @note depend on tags
 if lh#tags#ctags_flavour() == 'utags'
   let c_ctags_understands_local_variables_in_one_pass = 1
   let cpp_ctags_understands_local_variables_in_one_pass = 1
@@ -241,6 +243,7 @@ if !exists('s:temp_tags')
 endif
 
 " # lh#dev#__FindFunctions(line) {{{2
+" @note depend on tags
 function! lh#dev#__FindFunctions(line) abort
   let func_kind = lh#tags#func_kind(&ft)
   try
@@ -272,6 +275,7 @@ function! lh#dev#__FindFunctions(line) abort
 endfunction
 
 " # lh#dev#__FindEndFunc() {{{2
+" @note depend on tags
 function! lh#dev#__FindEndFunc(first_line) abort
   " 2.1- get the hook that find the end of a function ; default hook is based
   " on matchit , we may also want to play with tags kinds
@@ -284,6 +288,7 @@ endfunction
 
 " # lh#dev#__BuildCrtBufferCtags(...) {{{2
 " arg1: [first-line, last-line] => imply get local variables...
+" @note depend on tags
 function! lh#dev#__BuildCrtBufferCtags(...) abort
   " let temp_tags = tempname()
   let ctags_dirname = fnamemodify(s:temp_tags, ':h')
@@ -462,6 +467,7 @@ function! lh#dev#_line_comment() abort
 endfunction
 
 " Function: lh#dev#_select_current_function() {{{3
+" @note depend on tags
 function! lh#dev#_select_current_function() abort
   let fn = lh#dev#find_function_boundaries(line('.'))
   call lh#dev#_goto_function_begin(fn)
@@ -470,12 +476,14 @@ function! lh#dev#_select_current_function() abort
 endfunction
 
 " Function: lh#dev#_goto_function_begin() {{{3
+" @note depend on tags
 function! lh#dev#_goto_function_begin(...) abort
   let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
   exe fn.lines[0]
 endfunction
 
 " Function: lh#dev#_goto_function_end() {{{3
+" @note depend on tags
 function! lh#dev#_goto_function_end(...) abort
   let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
   exe fn.lines[1]
