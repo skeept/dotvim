@@ -11,7 +11,7 @@ gina
 [![Doc](https://img.shields.io/badge/doc-%3Ah%20gina-orange.svg?style=flat-square)](doc/gina.txt)
 [![Powered by vital.vim](https://img.shields.io/badge/powered%20by-vital.vim-80273f.svg?style=flat-square)](https://github.com/vim-jp/vital.vim)
 
-gina.vim (gina) is a plugin to asynchrnously control git repositories.
+gina.vim (gina) is a plugin to asynchronously control git repositories.
 
 The plugin was developed based on the success of [lambdalisue/vim-gita][].
 So gina.vim has most of the outstanding features of vim-gita and drops some unwilling points.
@@ -68,8 +68,8 @@ Pros.
   - Users don't have to wait `:Gina push` (`git push`)
   - Asynchronous feature in Neovim is great. `:Gina log` (`git log`) on **Linux** repository won't freeze Neovim
 - Single command. Users do not need to remember tons of commands
-  - `:Gina {command}` will execute a gina command or a git raw command asynchrnously
-  - `:Gina! {command}` will execute a git raw command asynchrnously
+  - `:Gina {command}` will execute a gina command or a git raw command asynchronously
+  - `:Gina! {command}` will execute a git raw command asynchronously
   - `:Gina!! {command}` will execute a git raw command in a shell (mainly for `:Gina!! add -p` or `:Gina!! rebase -i`)
 - Action based. Users do not need to remember tons of mappings
   - `?` to see the help
