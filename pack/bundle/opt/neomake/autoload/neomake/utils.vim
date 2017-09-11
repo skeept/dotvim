@@ -4,6 +4,8 @@ scriptencoding utf-8
 let s:level_to_name = {0: 'error  ', 1: 'warning', 2: 'verbose', 3: 'debug  '}
 let s:short_level_to_name = {0: 'E', 1: 'W', 2: 'V', 3: 'D'}
 
+let s:is_testing = exists('g:neomake_test_messages')
+
 function! s:reltime_lastmsg() abort
     if exists('s:last_msg_ts')
         let cur = neomake#compat#reltimefloat()
@@ -47,8 +49,7 @@ function! neomake#utils#LogMessage(level, msg, ...) abort
     endif
     let logfile = get(g:, 'neomake_logfile', '')
 
-    let is_testing = exists('g:neomake_test_messages')
-    if !is_testing && verbosity < a:level && logfile is# ''
+    if !s:is_testing && verbosity < a:level && logfile is# ''
         return
     endif
 
@@ -65,7 +66,7 @@ function! neomake#utils#LogMessage(level, msg, ...) abort
 
     " Use Vader's log for messages during tests.
     " @vimlint(EVL104, 1, l:timediff)
-    if is_testing && (verbosity >= a:level || get(g:, 'neomake_test_log_all_messages', 0))
+    if s:is_testing && (verbosity >= a:level || get(g:, 'neomake_test_log_all_messages', 0))
         let timediff = s:reltime_lastmsg()
         if timediff !=# '     '
             let test_msg = '['.s:short_level_to_name[a:level].' '.timediff.']: '.msg
@@ -435,7 +436,9 @@ function! neomake#utils#CompressWhitespace(entry) abort
 endfunction
 
 function! neomake#utils#redir(cmd) abort
+    " @vimlint(EVL108, 1)
     if exists('*execute') && has('nvim-0.2.0')
+    " @vimlint(EVL108, 0)
         " NOTE: require Neovim, since Vim has at least an issue when using
         "       this in a :command-completion function.
         "       Ref: https://github.com/neomake/neomake/issues/650.

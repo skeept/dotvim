@@ -301,7 +301,7 @@ function! NeomakeTestsFakeJobinfo() abort
         \ 'verbosity': get(g:, 'neomake_verbose', 1),
         \ 'active_jobs': [],
         \ 'finished_jobs': [],
-        \ 'queued_jobs': []}
+        \ 'options': {'make_id': -42}}
   return {'file_mode': 1, 'bufnr': bufnr('%'), 'ft': '', 'make_id': -42}
 endfunction
 
@@ -360,6 +360,24 @@ function! NeomakeTestsGetSigns()
   let signs = split(neomake#utils#redir('sign place'), '\n')
   call map(signs, "substitute(substitute(v:val, '\\m^\\s\\+', '', ''), '\\m\\s\\+$', '', '')")
   return signs[1:-1]
+endfunction
+
+let s:vim_msgs_marker = '== neomake_tests_marker =='
+function! NeomakeTestsSetVimMessagesMarker()
+  echom s:vim_msgs_marker
+endfunction
+
+function! NeomakeTestsGetVimMessages()
+  redir => messages_output
+    silent messages
+  redir END
+  call NeomakeTestsSetVimMessagesMarker()
+  let msgs = split(messages_output, "\n")
+  let idx = index(reverse(msgs), s:vim_msgs_marker)
+  if idx <= 0
+    return []
+  endif
+  return reverse(msgs[0 : idx-1])
 endfunction
 
 function! s:After()
