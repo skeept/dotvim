@@ -16,7 +16,6 @@ function! s:wait_for_jobs(filter)
       for j in jobs
         call vader#log('Remaining job: '.string(neomake#utils#fix_self_ref(j)))
       endfor
-      call neomake#CancelJobs(1)
       throw len(jobs).' jobs did not finish after 3s.'
     endif
     exe 'sleep' (max < 25 ? 100 : max < 35 ? 50 : 10).'m'
@@ -103,7 +102,8 @@ endfunction
 
 let s:tempname = tempname()
 
-function! g:NeomakeTestsCreateExe(name, lines)
+function! g:NeomakeTestsCreateExe(name, ...)
+  let lines = a:0 ? a:1 : []
   let path_separator = exists('+shellslash') ? ';' : ':'
   let dir_separator = exists('+shellslash') ? '\' : '/'
   let tmpbindir = s:tempname . dir_separator . 'neomake-vader-tests'
@@ -114,7 +114,7 @@ function! g:NeomakeTestsCreateExe(name, lines)
     endif
     call g:NeomakeTestsSetPATH(tmpbindir . ':' . $PATH)
   endif
-  call writefile(a:lines, exe)
+  call writefile(lines, exe)
   if exists('*setfperm')
     call setfperm(exe, 'rwxrwx---')
   else
