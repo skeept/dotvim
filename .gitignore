@@ -38,9 +38,13 @@ colors/not_used/
 test/cur_color.vim
 notused_plugins/frawor/test/
 __pycache__/
+.idea/
+.vscode/
 
 *.pdb
 *.dll
 *.exp
 *.lib
 *.so
+
+log.txt
