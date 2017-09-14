@@ -4,16 +4,17 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.2.0
-let s:k_version = '320'
+" Version:      3.2.1
+let s:k_version = '321'
 " Created:      03rd Nov 2015
-" Last Update:  24th Jul 2017
+" Last Update:  13th Sep 2017
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.2.1 Fix regression with `set et`
 "       v3.2.0 Add `lh#map#4_this_context()`
 "              Fix tw issue, again
 "              Deprecates lh#dev#reinterpret_escaped_char()
@@ -545,9 +546,9 @@ function! lh#map#_goto_mark(...) abort
   " line breaking occurs (i.e. when cursor column exceeds 'tw'). Indeed, in
   " that case, the mark is automatically moved, and we need to use it's last
   " know position.
-  let markpos = getpos(s:goto_mark[0])
+  let markpos = getpos(s:goto_mark[0]) + [virtcol(s:goto_mark[0])]
   let goto_lin = markpos[1]
-  let goto_col = markpos[2]
+  let goto_vcol = markpos[4]
   call s:Verbose('Returning to mark %1 @ %2', markpos[0][0], markpos[0][1])
   " Bug: if line is empty, indent() value is 0 => expect old_indent to be the One
   let crt_indent = indent(goto_lin)
@@ -556,17 +557,19 @@ function! lh#map#_goto_mark(...) abort
 
   try
     if s:fix_indent != 0
-      let goto_col -= s:fix_indent
-      call s:Verbose('goto_col -= %1 (old_indent:%3 - crt_indent:%4) => %2', s:fix_indent, goto_col, s:old_indent, crt_indent)
+      let goto_vcol -= s:fix_indent
+      call s:Verbose('goto_vcol -= %1 (old_indent:%3 - crt_indent:%4) => %2', s:fix_indent, goto_vcol, s:old_indent, crt_indent)
     endif
     let new_behaviour = (a:0 > 0) ? (!a:1) : 1
     if new_behaviour && goto_lin == line('.')
       " Same line -> eligible for moving the cursor
       " TODO: handle reindentation changes
-      let delta = goto_col - virtcol('.')
+      let delta = goto_vcol - virtcol('.')
       let move = lh#map#_move_cursor_on_the_current_line(delta)
       return move
     else
+      let goto_col = markpos[2]
+      let goto_col -= s:fix_indent
       " " uses {lig}'normal! {col}|' because of the possible reindent
       call s:Verbose("Restore cursor to %1normal! %2|", goto_lin, goto_col)
       execute goto_lin . 'normal! ' . (goto_col) . '|'
