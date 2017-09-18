@@ -4,8 +4,10 @@
 
 if has("python3") && GetIsAddonActive('denite')
   if executable('rg')
-    call denite#custom#var('file_rec', 'command',
+    call denite#custom#alias('source', 'rgf', 'file_rec')
+    call denite#custom#var('rgf', 'command',
           \ ['rg', '--files', '--glob', '!.git'])
+
     call denite#custom#var('grep', 'command', ['rg'])
     call denite#custom#var('grep', 'recursive_opts', [])
     call denite#custom#var('grep', 'final_opts', [])
@@ -16,6 +18,11 @@ if has("python3") && GetIsAddonActive('denite')
     "call denite#custom#var('file_rec', 'command',
           "\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
   endif
+
+  let ignore_files=&wildignore . ",*.pyc,.git,.hg,.svn,.p2,.cache"
+  let ignore_files .= ',*.swp'
+  call denite#custom#var('file_rec', 'command',
+   \ ['scantree.py', '--ignore', ignore_files])
 
   call denite#custom#source('file_old', 'matchers',
         \ ['matcher_fuzzy', 'matcher_project_files'])
@@ -40,6 +47,9 @@ if has("python3") && GetIsAddonActive('denite')
   call denite#custom#alias('source', 'file_rec/git', 'file_rec')
   call denite#custom#var('file_rec/git', 'command',
         \ ['git', 'ls-files', '-co', '--exclude-standard'])
+
+  call denite#custom#alias('source', 'file_rec/py', 'file_rec')
+  call denite#custom#var('file_rec/py', 'command',['scantree.py'])
 
   call denite#custom#option('default', 'prompt', '>')
   call denite#custom#option('default', 'short_source_names', v:true)
