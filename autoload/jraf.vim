@@ -620,6 +620,10 @@ function! jraf#quoteCommaJoin() range
   execute cmd . "yank u"
   call jraf#ScratchEdit('split', '')
   normal "upggdd
+  silent! %s/^\s\+//
+  DelTrailWhiteSpace
+  " replace one or more space with newline
+  %s/\s\+/\r/g
   DelTrailWhiteSpace
   %s/^/"/
   %s/$/",/
