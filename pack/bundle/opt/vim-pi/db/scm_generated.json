@@ -607,6 +607,10 @@
     "type": "git",
     "url": "git://github.com/vim-voom/VOoM"
   },
+  "2666": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-mark"
+  },
   "2672": {
     "type": "git",
     "url": "git://github.com/Twinside/vim-hoogle"
@@ -2039,6 +2043,10 @@
     "type": "git",
     "url": "git://github.com/molok/vim-vombato-colorscheme"
   },
+  "3914": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-CompleteHelper"
+  },
   "3916": {
     "type": "git",
     "url": "git://github.com/MarcWeber/vim-addon-haskell"
@@ -2483,6 +2491,10 @@
     "type": "git",
     "url": "git://github.com/Soares/butane.vim"
   },
+  "4248": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-PatternComplete"
+  },
   "4250": {
     "type": "git",
     "url": "git://github.com/coot/cmdalias_vim"
@@ -2518,6 +2530,10 @@
   "4270": {
     "type": "git",
     "url": "git://github.com/AndrewRadev/vim-eco"
+  },
+  "4271": {
+    "type": "git",
+    "url": "git://github.com/cy2081/vim-cyim"
   },
   "4273": {
     "type": "git",
@@ -4421,7 +4437,7 @@
   },
   "5134": {
     "type": "git",
-    "url": "git://github.com/dbeniamine/todo.txt-vim"
+    "url": "git://github.com/sietse/todo.txt-vim"
   },
   "5135": {
     "type": "git",
@@ -5602,6 +5618,46 @@
   "5601": {
     "type": "git",
     "url": "git://github.com/benknoble/vim-auto-origami"
+  },
+  "5604": {
+    "type": "git",
+    "url": "git://github.com/konfekt/vim-scratchpad"
+  },
+  "5605": {
+    "type": "git",
+    "url": "git://github.com/machakann/vim-Verdin"
+  },
+  "5606": {
+    "type": "hg",
+    "url": "https://bitbucket.org/abudden/vim-markdowncopy"
+  },
+  "5607": {
+    "type": "git",
+    "url": "git://github.com/jsfaint/purge_undodir.vim"
+  },
+  "5608": {
+    "type": "git",
+    "url": "git://github.com/ollej/vim-emacs"
+  },
+  "5609": {
+    "type": "git",
+    "url": "git://github.com/xis19/qcvim"
+  },
+  "5610": {
+    "type": "git",
+    "url": "git://github.com/igemnace/vim-makery"
+  },
+  "5611": {
+    "type": "git",
+    "url": "git://github.com/antoinemadec/vim-verilog-instance"
+  },
+  "5612": {
+    "type": "git",
+    "url": "git://github.com/antoinemadec/vim-highlight-groups"
+  },
+  "5613": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-WORDComplete"
   },
   "586": {
     "type": "git",
