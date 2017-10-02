@@ -54,15 +54,15 @@ set guioptions -=T
 "map <f5> :call ToggleMenu()<cr>
 "imap <f5> <C-O>:call ToggleMenu()<cr>
 function! ToggleMenu()
-        if g:togglemenu == 0
-                set go +=m
-		set go +=T
-                let g:togglemenu = 1
-        else
-                set go -=m
-		set go -=T
-                let g:togglemenu = 0
-        endif
+  if g:togglemenu == 0
+    set go +=m
+    set go +=T
+    let g:togglemenu = 1
+  else
+    set go -=m
+    set go -=T
+    let g:togglemenu = 0
+  endif
 endfunction
 
 
