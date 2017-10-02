@@ -5659,6 +5659,10 @@
     "type": "git",
     "url": "git://github.com/inkarkat/vim-WORDComplete"
   },
+  "5614": {
+    "type": "git",
+    "url": "git://github.com/lifepillar/vim-colortemplate"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
