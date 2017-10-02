@@ -408,7 +408,7 @@
 "Hardy":{"archive_name":"hardy.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23307","version":"1.0.0","vim_script_nr":5180},
 "Scrawl":{"archive_name":"scrawl.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23306","version":"1.0.0","vim_script_nr":5179},
 "vim-sandwich":{"archive_name":"vim-sandwich-1.3.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24472","version":"1.3.0","vim_script_nr":5178},
-"PaperColor":{"archive_name":"PaperColor.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25544","version":"0.9.1","vim_script_nr":5177},
+"PaperColor":{"archive_name":"PaperColor.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25598","version":"0.9.2","vim_script_nr":5177},
 "dotenv":{"archive_name":"dotenv.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23282","version":"1.0","vim_script_nr":5176},
 "git-flow-format":{"archive_name":"git-flow-format.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23292","version":"0.4","vim_script_nr":5175},
 "slashcomment":{"archive_name":"slashcomment.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23279","version":"1.0.0","vim_script_nr":5174},
