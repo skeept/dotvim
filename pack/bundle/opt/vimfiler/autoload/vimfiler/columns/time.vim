@@ -1,34 +1,12 @@
 "=============================================================================
 " FILE: time.vim
-" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
+" License: MIT license
 "=============================================================================
-
-let s:save_cpo = &cpo
-set cpo&vim
 
 function! vimfiler#columns#time#define() abort
   return s:column
-endfunction"}}}
+endfunction
 
 let s:column = {
       \ 'name' : 'time',
@@ -36,11 +14,11 @@ let s:column = {
       \ 'syntax' : 'vimfilerColumn__Time',
       \ }
 
-function! s:column.length(files, context) abort "{{{
+function! s:column.length(files, context) abort
   return len(strftime(g:vimfiler_time_format, 0)) + 1
-endfunction"}}}
+endfunction
 
-function! s:column.define_syntax(context) abort "{{{
+function! s:column.define_syntax(context) abort
   syntax match   vimfilerColumn__TimeNormal
         \ '#[^#]\+' contained
         \ containedin=vimfilerColumn__Time
@@ -64,17 +42,17 @@ function! s:column.define_syntax(context) abort "{{{
   highlight def link vimfilerColumn__TimeToday Statement
   highlight def link vimfilerColumn__TimeWeek Special
   highlight def link vimfilerColumn__TimeIgnore Ignore
-endfunction"}}}
+endfunction
 
-function! s:column.get(file, context) abort "{{{
+function! s:column.get(file, context) abort
   let datemark = s:get_datemark(a:file)
   return (a:file.vimfiler__filetime =~ '^-\?\d\+$' ?
         \  (a:file.vimfiler__filetime == -1 ? '' :
         \    datemark . strftime(g:vimfiler_time_format, a:file.vimfiler__filetime))
         \ : datemark . a:file.vimfiler__filetime)
-endfunction"}}}
+endfunction
 
-function! s:get_datemark(file) abort "{{{
+function! s:get_datemark(file) abort
   if a:file.vimfiler__filetime !~ '^\d\+$'
     return '~'
   endif
@@ -89,9 +67,4 @@ function! s:get_datemark(file) abort "{{{
   else
     return '~'
   endif
-endfunction"}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
-
-" vim: foldmethod=marker
+endfunction

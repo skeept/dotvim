@@ -1,34 +1,12 @@
 "=============================================================================
 " FILE: type.vim
-" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
+" License: MIT license
 "=============================================================================
-
-let s:save_cpo = &cpo
-set cpo&vim
 
 function! vimfiler#columns#type#define() abort
   return s:column
-endfunction"}}}
+endfunction
 
 let s:column = {
       \ 'name' : 'type',
@@ -36,11 +14,11 @@ let s:column = {
       \ 'syntax' : 'vimfilerColumn__Type',
       \ }
 
-function! s:column.length(files, context) abort "{{{
+function! s:column.length(files, context) abort
   return 3
-endfunction"}}}
+endfunction
 
-function! s:column.define_syntax(context) abort "{{{
+function! s:column.define_syntax(context) abort
   syntax match   vimfilerColumn__TypeText       '\[T\]'
         \ contained containedin=vimfilerColumn__Type
   syntax match   vimfilerColumn__TypeImage      '\[I\]'
@@ -66,9 +44,9 @@ function! s:column.define_syntax(context) abort "{{{
   highlight def link vimfilerColumn__TypeDirectory Preproc
   highlight def link vimfilerColumn__TypeSystem Comment
   highlight def link vimfilerColumn__TypeLink Comment
-endfunction"}}}
+endfunction
 
-function! s:column.get(file, context) abort "{{{
+function! s:column.get(file, context) abort
   let ext = tolower(a:file.vimfiler__extension)
 
   if (vimfiler#util#is_windows() && ext ==? 'LNK')
@@ -101,9 +79,4 @@ function! s:column.get(file, context) abort "{{{
     " Others filetype.
     return '   '
   endif
-endfunction"}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
-
-" vim: foldmethod=marker
+endfunction

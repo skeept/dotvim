@@ -1,40 +1,18 @@
 "=============================================================================
 " FILE: variables.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" AUTHOR: Shougo Matsushita <Shougo.Matsu at gmail.com>
+" License: MIT license
 "=============================================================================
 
-let s:save_cpo = &cpo
-set cpo&vim
-
-function! vimfiler#variables#get_clipboard() abort "{{{
+function! vimfiler#variables#get_clipboard() abort
   if !exists('s:clipboard')
     let s:clipboard = {'operation' : '', 'files' : []}
   endif
 
   return s:clipboard
-endfunction"}}}
+endfunction
 
-function! vimfiler#variables#get_data_directory() abort "{{{
+function! vimfiler#variables#get_data_directory() abort
   let g:vimfiler_data_directory =
         \ substitute(fnamemodify(get(
         \   g:, 'vimfiler_data_directory',
@@ -46,17 +24,17 @@ function! vimfiler#variables#get_data_directory() abort "{{{
   endif
 
   return g:vimfiler_data_directory
-endfunction"}}}
+endfunction
 
-function! vimfiler#variables#default_context() abort "{{{
+function! vimfiler#variables#default_context() abort
   if !exists('s:default_context')
     call s:initialize_default_options()
   endif
 
   return deepcopy(s:default_context)
-endfunction"}}}
+endfunction
 
-function! vimfiler#variables#options() abort "{{{
+function! vimfiler#variables#options() abort
   if !exists('s:options')
     let s:options = map(filter(items(vimfiler#variables#default_context()),
           \ "v:val[0] !~ '^vimfiler__'"),
@@ -70,9 +48,9 @@ function! vimfiler#variables#options() abort "{{{
   endif
 
   return deepcopy(s:options)
-endfunction"}}}
+endfunction
 
-function! s:initialize_default_options() abort "{{{
+function! s:initialize_default_options() abort
   let s:default_context = {
         \ 'buffer_name' : 'default',
         \ 'quit' : 1,
@@ -129,10 +107,4 @@ function! s:initialize_default_options() abort "{{{
         \ ], "exists(v:val[1])")
     let s:default_context[context] = {var}
   endfor
-endfunction"}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
-
-" vim: foldmethod=marker
-
+endfunction

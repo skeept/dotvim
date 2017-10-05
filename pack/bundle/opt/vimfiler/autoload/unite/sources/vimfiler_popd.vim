@@ -1,36 +1,14 @@
 "=============================================================================
 " FILE: vimfiler/popd.vim
-" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
+" License: MIT license
 "=============================================================================
 
-let s:save_cpo = &cpo
-set cpo&vim
-
-function! unite#sources#vimfiler_popd#define() abort "{{{
+function! unite#sources#vimfiler_popd#define() abort
   return s:source
-endfunction"}}}
+endfunction
 
-function! unite#sources#vimfiler_popd#pushd() abort "{{{
+function! unite#sources#vimfiler_popd#pushd() abort
   if &filetype !=# 'vimfiler'
     return
   endif
@@ -40,7 +18,7 @@ function! unite#sources#vimfiler_popd#pushd() abort "{{{
         \ : [b:vimfiler.current_dir]
   call insert(s:directory_stack, directories)
   echo 'Yanked directories:' string(directories)
-endfunction"}}}
+endfunction
 
 let s:directory_stack = []
 
@@ -53,7 +31,7 @@ let s:source = {
       \ 'alias_table' : { 'cd' : 'lcd' },
       \ }
 
-function! s:source.gather_candidates(args, context) abort "{{{
+function! s:source.gather_candidates(args, context) abort
   let num = 0
   let _ = []
   for stack in s:directory_stack
@@ -70,9 +48,9 @@ function! s:source.gather_candidates(args, context) abort "{{{
   endfor
 
   return _
-endfunction"}}}
+endfunction
 
-" Actions "{{{
+" Actions
 let s:action_table = {}
 
 let s:action_table.delete = {
@@ -81,21 +59,21 @@ let s:action_table.delete = {
       \ 'is_invalidate_cache' : 1,
       \ 'is_quit' : 0,
       \ }
-function! s:action_table.delete.func(candidates) abort "{{{
+function! s:action_table.delete.func(candidates) abort
   for candidate in sort(a:candidates, 's:compare')
     call remove(s:directory_stack,
           \ candidate.action__nr)
   endfor
-endfunction"}}}
+endfunction
 
-function! s:compare(candidate_a, candidate_b) abort "{{{
+function! s:compare(candidate_a, candidate_b) abort
   return a:candidate_b.action__nr - a:candidate_a.action__nr
-endfunction"}}}
+endfunction
 
 let s:action_table.cd = {
       \ 'description' : 'cd vimfiler directory from directory stack',
       \ }
-function! s:action_table.cd.func(candidate) abort "{{{
+function! s:action_table.cd.func(candidate) abort
   if &filetype != 'vimfiler'
     return
   endif
@@ -110,17 +88,12 @@ function! s:action_table.cd.func(candidate) abort "{{{
     call vimfiler#mappings#cd(stack[1])
     wincmd p
   endif
-endfunction"}}}
+endfunction
 
 let s:source.action_table['*'] = s:action_table
 unlet! s:action_table
-"}}}
 
-function! s:compare(candidate_a, candidate_b) abort "{{{
+
+function! s:compare(candidate_a, candidate_b) abort
   return a:candidate_b.action__nr - a:candidate_a.action__nr
-endfunction"}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
-
-" vim: foldmethod=marker
+endfunction

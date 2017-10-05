@@ -1,26 +1,7 @@
 "=============================================================================
 " FILE: vimfiler.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" AUTHOR: Shougo Matsushita <Shougo.Matsu at gmail.com>
+" License: MIT license
 "=============================================================================
 
 if exists('g:loaded_vimfiler')
@@ -30,17 +11,14 @@ elseif v:version < 703
   finish
 endif
 
-let s:save_cpo = &cpo
-set cpo&vim
-
-" Global options definition. "{{{
+" Global options definition.
 let g:vimfiler_as_default_explorer =
       \ get(g:, 'vimfiler_as_default_explorer', 0)
 let g:vimfiler_define_wrapper_commands =
       \ get(g:, 'vimfiler_define_wrapper_commands', 0)
-"}}}
 
-" Plugin keymappings "{{{
+
+" Plugin keymappings
 nnoremap <silent> <Plug>(vimfiler_split_switch)
       \ :<C-u><SID>call_vimfiler({ 'split' : 1 }, '')<CR>
 nnoremap <silent> <Plug>(vimfiler_split_create)
@@ -51,7 +29,7 @@ nnoremap <silent> <Plug>(vimfiler_create)
       \ :<C-u>VimFilerCreate<CR>
 nnoremap <silent> <Plug>(vimfiler_simple)
       \ :<C-u>VimFilerSimple<CR>
-"}}}
+
 
 command! -nargs=? -bar -complete=customlist,vimfiler#complete VimFiler
       \ call vimfiler#init#_command({}, <q-args>)
@@ -91,7 +69,7 @@ if g:vimfiler_define_wrapper_commands
         \ VimFilerWrite  <line1>,<line2>write<bang> <args>
 endif
 
-function! s:browse_check(path) abort "{{{
+function! s:browse_check(path) abort
   if !g:vimfiler_as_default_explorer
         \ || a:path == ''
         \ || bufnr('%') != expand('<abuf>')
@@ -116,11 +94,6 @@ function! s:browse_check(path) abort "{{{
   if isdirectory(vimfiler#util#expand(path))
     call vimfiler#handler#_event_handler('BufReadCmd')
   endif
-endfunction"}}}
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
+endfunction
 
 let g:loaded_vimfiler = 1
-
-" vim: foldmethod=marker
