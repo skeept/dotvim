@@ -57,10 +57,10 @@ function! s:testBasic()
 
         for op in [ 'c', 'd', 'y', 'v' ]
             for cnt in [ '', '1', '2' ]
-                for LlnN in [ 'l', '', 'n' ]
+                for ln in [ 'l', '', 'n' ]
                     for iaIA in [ 'I', 'i', 'a', 'A' ]
                         execute "normal \"lpfx"
-                        call s:execute(op, cnt . iaIA . LlnN . del)
+                        call s:execute(op, cnt . iaIA . ln . del)
                     endfor
                 endfor
             endfor
@@ -76,10 +76,10 @@ function! s:testBasic()
 
         for op in [ 'c', 'd', 'y', 'v' ]
             for cnt in [ '', '1', '2' ]
-                for LlnN in [ 'L', 'l', '', 'n', 'N' ]
+                for ln in [ 'l', '', 'n' ]
                     for iaIA in [ 'I', 'i', 'a', 'A' ]
                         execute "normal \"lpfx"
-                        call s:execute(op, cnt . iaIA . LlnN . del)
+                        call s:execute(op, cnt . iaIA . ln . del)
                     endfor
                 endfor
             endfor
@@ -134,6 +134,11 @@ function s:testSeeking()
     edit! test3.in
     normal gg0
 
+    for c in split('PQ', '\zs')
+        execute "normal /"   . c . "\<CR>"
+        execute "normal cia" . c . "\<Esc>"
+    endfor
+
     for c in split('ABCDEFGHI', '\zs')
         execute "normal /"   . c . "\<CR>"
         execute "normal ci)" . c . "\<Esc>"
@@ -142,11 +147,6 @@ function s:testSeeking()
     for c in split('JKLMNO', '\zs')
         execute "normal /"   . c . "\<CR>"
         execute "normal ci'" . c . "\<Esc>"
-    endfor
-
-    for c in split('PQ', '\zs')
-        execute "normal /"   . c . "\<CR>"
-        execute "normal cia" . c . "\<Esc>"
     endfor
 
     write! test3.out
