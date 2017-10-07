@@ -1674,7 +1674,7 @@
 "visualrepeat":{"archive_name":"visualrepeat-1.30.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21046","version":"1.30","vim_script_nr":3848},
 "cue":{"archive_name":"cue.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17053","version":"0.1","vim_script_nr":3846},
 "lrc":{"archive_name":"lrc.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20950","version":"0.2","vim_script_nr":3845},
-"SpellCheck":{"archive_name":"SpellCheck-1.30.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22256","version":"1.30","vim_script_nr":3844},
+"SpellCheck":{"archive_name":"SpellCheck-2.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25601","version":"2.00","vim_script_nr":3844},
 "nodeunit":{"archive_name":"nodeunit.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17040","version":"0.1","vim_script_nr":3843},
 "nose":{"archive_name":"lambdalisue-nose.vim-0418999.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17073","version":"0.1-rc2","vim_script_nr":3842},
 "vim-django-support":{"archive_name":"lambdalisue-vim-django-support-v0.1-1-g7728bde.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=17072","version":"0.1-rc3","vim_script_nr":3841},
