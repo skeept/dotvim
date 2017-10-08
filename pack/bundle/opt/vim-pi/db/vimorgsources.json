@@ -39,7 +39,7 @@
 "WWDC17":{"archive_name":"vim-wwdc17-theme-1.1.0.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25553","version":"1.1.0","vim_script_nr":5575},
 "golint-fixer":{"archive_name":"golint-fixer.vim.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25281","version":"1.0.0","vim_script_nr":5574},
 "yankee":{"archive_name":"yankee.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25260","version":"0.5","vim_script_nr":5573},
-"vim-prettier":{"archive_name":"vim-prettier-0.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25600","version":"0.2.0","vim_script_nr":5572},
+"vim-prettier":{"archive_name":"vim-prettier-0.2.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25602","version":"0.2.1","vim_script_nr":5572},
 "remaining-todos":{"archive_name":"remaining-todos.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25240","version":"1.0","vim_script_nr":5571},
 "quickEditTab":{"archive_name":"quickEditTab-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25225","version":"1.0.0","vim_script_nr":5570},
 "botlang-syntax":{"archive_name":"botlang.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25222","version":"1.0.0","vim_script_nr":5569},
