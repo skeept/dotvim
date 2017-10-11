@@ -959,7 +959,7 @@
 "vim-cpp-enhanced-highlight":{"archive_name":"vim-cpp-enhanced-highlight-0.3.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21805","version":"0.3","vim_script_nr":4617},
 "shootingstar":{"archive_name":"shootingstar.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20459","version":"0.2","vim_script_nr":4616},
 "thumbnail":{"archive_name":"thumbnail.vim-0.8.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24500","version":"0.8","vim_script_nr":4615},
-"vim-autopep8":{"archive_name":"vim-autopep8.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25000","version":"1.1.0","vim_script_nr":4614},
+"vim-autopep8":{"archive_name":"vim-autopep8.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25606","version":"1.1.1","vim_script_nr":4614},
 "vim-origami":{"archive_name":"vim-origami.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21238","version":"1.6","vim_script_nr":4613},
 "aPen":{"archive_name":"apen.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23368","version":"1.0.1","vim_script_nr":4612},
 "racoon":{"archive_name":"racoon.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20288","version":"0.1","vim_script_nr":4611},
