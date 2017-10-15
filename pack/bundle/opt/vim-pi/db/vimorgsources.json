@@ -1,4 +1,5 @@
 {
+"man":{"archive_name":"man.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25608","version":"1.1","vim_script_nr":5615},
 "Colortemplate":{"archive_name":"vim-colortemplate-0.0.2.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25597","version":"v0.0.2","vim_script_nr":5614},
 "WORDComplete":{"archive_name":"WORDComplete-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25589","version":"1.00","vim_script_nr":5613},
 "highlight-groups":{"archive_name":"vim-highlight-groups-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25581","version":"1.0","vim_script_nr":5612},
