@@ -364,6 +364,10 @@ endif
 "let g:syntastic_python_checkers=['flake8']
 "==============================================================================}}}
 
+"================== Junkfile =================================================={{{
+nnoremap <space>jf :JunkfileOpen<CR>
+vnoremap <space>jf :JunkfileOpen<CR>
+"==============================================================================}}}
 
 if g:is_win
   let Grep_Path = 'C:\cygwin\bin\grep'
