@@ -369,6 +369,10 @@ nnoremap <space>jf :JunkfileOpen<CR>
 vnoremap <space>jf :JunkfileOpen<CR>
 "==============================================================================}}}
 
+"================== NrrwRgn ==================================================={{{
+xnoremap <space>nr :call nrrwrgn#NrrwRgn(visualmode(),'!')<CR>
+"==============================================================================}}}
+
 if g:is_win
   let Grep_Path = 'C:\cygwin\bin\grep'
 endif
