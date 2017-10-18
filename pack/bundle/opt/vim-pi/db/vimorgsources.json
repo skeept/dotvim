@@ -154,7 +154,7 @@
 "ALE_-_Asynchronous_Lint_Engine":{"archive_name":"vim-ale-1.5.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25599","version":"1.5.2","vim_script_nr":5449},
 "vim-zim":{"archive_name":"vim-zim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24524","version":"0.1","vim_script_nr":5448},
 "pgn%5447":{"archive_name":"pgn.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24529","version":"1.0","vim_script_nr":"5447"},
-"git-switcher":{"archive_name":"git-switcher.vim-1.6.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25605","version":"1.6.0","vim_script_nr":5446},
+"git-switcher":{"archive_name":"git-switcher.vim-1.6.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25610","version":"1.6.1","vim_script_nr":5446},
 "rimas":{"archive_name":"rimas.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24505","version":"1.1.0","vim_script_nr":5443},
 "wordbyword":{"archive_name":"wordbyword.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24504","version":"1.0.0","vim_script_nr":5442},
 "stardict":{"archive_name":"stardict.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24503","version":"1.0.0","vim_script_nr":5441},
