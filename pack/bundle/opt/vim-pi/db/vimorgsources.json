@@ -4045,7 +4045,7 @@
 "cecscope":{"archive_name":"cecscope.vba.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=9492","version":"4","vim_script_nr":1453},
 "testing":{"archive_name":"testaaaing.txt","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5010","version":"1.2","vim_script_nr":1452},
 "svn_commit":{"archive_name":"svn_commit.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5700","version":"0.2","vim_script_nr":1451},
-"VHDL_indent_93_syntax":{"archive_name":"vhdl.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24292","version":"1.60","vim_script_nr":1450},
+"VHDL_indent_93_syntax":{"archive_name":"vhdl.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25611","version":"1.62","vim_script_nr":1450},
 "vera%1449":{"archive_name":"vera.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=4994","version":"1.0","vim_script_nr":1449},
 "Low-Contrast_Color_Schemes":{"archive_name":"LoContrastColors.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=6908","version":"1.1","vim_script_nr":1448},
 "Altair_OptiStruct_Syntax":{"archive_name":"optistruct_linux.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=5412","version":"110306","vim_script_nr":1447},

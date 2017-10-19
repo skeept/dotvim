@@ -315,7 +315,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/netrw.vba.gz",
-    "version": "v162n"
+    "version": "v162o"
   },
   "PassWGenPasswordGenerator@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -483,7 +483,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/amsmath.vba.gz",
-    "version": "v1a"
+    "version": "v1b"
   },
   "array@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
