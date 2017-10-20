@@ -569,10 +569,21 @@ function! jedi#complete_string(autocomplete) abort
         set completeopt+=menuone
         set completeopt-=menu
         if &completeopt !~# 'noinsert\|noselect'
-            if g:jedi#popup_select_first
-                set completeopt+=noinsert
+            " Patch 775 introduced noinsert and noselect, previously these
+            " options didn't exist. Setting them in earlier versions results in
+            " errors (E474).
+            if has('patch-7.4-775')
+                if g:jedi#popup_select_first
+                    set completeopt+=noinsert
+                else
+                    set completeopt+=noselect
+                endif
             else
-                set completeopt+=noselect
+                " To pass the tests we use this, it seems to get the closest to
+                " the other options. I'm really not sure if this properly
+                " works, but VIM 7.4-775 is already pretty old, so it might not
+                " be a problem anymore in a few years.
+                set completeopt+=longest
             endif
         endif
     elseif pumvisible()

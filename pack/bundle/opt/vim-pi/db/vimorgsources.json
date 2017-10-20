@@ -485,7 +485,7 @@
 "haystack":{"archive_name":"haystack.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22868","version":"1.0","vim_script_nr":5103},
 "vital-snoop":{"archive_name":"vital-snoop.vim-0.9.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22858","version":"0.9.1","vim_script_nr":5102},
 "enabler":{"archive_name":"enabler.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23635","version":"1.00","vim_script_nr":5101},
-"vim-cursorword":{"archive_name":"cursorword.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25191","version":"0.7","vim_script_nr":5100},
+"vim-cursorword":{"archive_name":"cursorword.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25612","version":"0.8","vim_script_nr":5100},
 "vim-stay":{"archive_name":"vim-stay-1.3.1.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23111","version":"1.3.1","vim_script_nr":5099},
 "cscope_dynamic":{"archive_name":"cscope_dynamic-0.6.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24093","version":"0.6","vim_script_nr":5098},
 "vim-less%5097":{"archive_name":"vim-less-1.0.0.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22842","version":"1.0.0","vim_script_nr":"5097"},

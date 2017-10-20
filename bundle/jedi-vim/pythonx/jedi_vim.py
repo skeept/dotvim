@@ -95,6 +95,8 @@ def echo_highlight(msg):
 
 jedi_path = os.path.join(os.path.dirname(__file__), 'jedi')
 sys.path.insert(0, jedi_path)
+parso_path = os.path.join(os.path.dirname(__file__), 'parso')
+sys.path.insert(0, parso_path)
 
 try:
     import jedi
@@ -120,6 +122,7 @@ else:
             echo_highlight('Please update your Jedi version, it is too old.')
 finally:
     sys.path.remove(jedi_path)
+    sys.path.remove(parso_path)
 
 
 def catch_and_print_exceptions(func):
@@ -235,71 +238,68 @@ def goto(mode="goto", no_output=False):
     :rtype: list
     """
     script = get_script()
-    try:
-        if mode == "goto":
-            definitions = [x for x in script.goto_definitions()
-                           if not x.in_builtin_module()]
-            if not definitions:
-                definitions = script.goto_assignments()
-        elif mode == "related_name":
-            definitions = script.usages()
-        elif mode == "definition":
-            definitions = script.goto_definitions()
-        elif mode == "assignment":
-            definitions = script.goto_assignments()
-    except jedi.NotFoundError:
-        echo_highlight("Cannot follow nothing. Put your cursor on a valid name.")
-        definitions = []
-    else:
-        if no_output:
-            return definitions
+    if mode == "goto":
+        definitions = [x for x in script.goto_definitions()
+                       if not x.in_builtin_module()]
         if not definitions:
-            echo_highlight("Couldn't find any definitions for this.")
-        elif len(definitions) == 1 and mode != "related_name":
-            d = list(definitions)[0]
-            if d.in_builtin_module():
-                if d.is_keyword:
-                    echo_highlight("Cannot get the definition of Python keywords.")
-                else:
-                    echo_highlight("Builtin modules cannot be displayed (%s)."
-                                   % d.desc_with_module)
+            definitions = script.goto_assignments()
+    elif mode == "related_name":
+        definitions = script.usages()
+    elif mode == "definition":
+        definitions = script.goto_definitions()
+    elif mode == "assignment":
+        definitions = script.goto_assignments()
+
+
+    if no_output:
+        return definitions
+    if not definitions:
+        echo_highlight("Couldn't find any definitions for this.")
+    elif len(definitions) == 1 and mode != "related_name":
+        d = list(definitions)[0]
+        if d.in_builtin_module():
+            if d.is_keyword:
+                echo_highlight("Cannot get the definition of Python keywords.")
             else:
-                using_tagstack = int(vim_eval('g:jedi#use_tag_stack')) == 1
-                if d.module_path != vim.current.buffer.name:
-                    result = new_buffer(d.module_path,
-                                        using_tagstack=using_tagstack)
-                    if not result:
-                        return []
-                if d.module_path and using_tagstack:
-                    tagname = d.name
-                    with tempfile('{0}\t{1}\t{2}'.format(tagname, d.module_path,
-                            'call cursor({0}, {1})'.format(d.line, d.column + 1))) as f:
-                        old_tags = vim.eval('&tags')
-                        old_wildignore = vim.eval('&wildignore')
-                        try:
-                            # Clear wildignore to ensure tag file isn't ignored
-                            vim.command('set wildignore=')
-                            vim.command('let &tags = %s' %
-                                        repr(PythonToVimStr(f.name)))
-                            vim.command('tjump %s' % tagname)
-                        finally:
-                            vim.command('let &tags = %s' %
-                                        repr(PythonToVimStr(old_tags)))
-                            vim.command('let &wildignore = %s' %
-                                        repr(PythonToVimStr(old_wildignore)))
-                vim.current.window.cursor = d.line, d.column
+                echo_highlight("Builtin modules cannot be displayed (%s)."
+                               % d.desc_with_module)
         else:
-            # multiple solutions
-            lst = []
-            for d in definitions:
-                if d.in_builtin_module():
-                    lst.append(dict(text=PythonToVimStr('Builtin ' + d.description)))
-                else:
-                    lst.append(dict(filename=PythonToVimStr(d.module_path),
-                                    lnum=d.line, col=d.column + 1,
-                                    text=PythonToVimStr(d.description)))
-            vim_eval('setqflist(%s)' % repr(lst))
-            vim_eval('jedi#add_goto_window(' + str(len(lst)) + ')')
+            using_tagstack = int(vim_eval('g:jedi#use_tag_stack')) == 1
+            if (d.module_path or '') != vim.current.buffer.name:
+                result = new_buffer(d.module_path,
+                                    using_tagstack=using_tagstack)
+                if not result:
+                    return []
+            if d.module_path and os.path.exists(d.module_path) and using_tagstack:
+                tagname = d.name
+                with tempfile('{0}\t{1}\t{2}'.format(tagname, d.module_path,
+                        'call cursor({0}, {1})'.format(d.line, d.column + 1))) as f:
+                    old_tags = vim.eval('&tags')
+                    old_wildignore = vim.eval('&wildignore')
+                    try:
+                        # Clear wildignore to ensure tag file isn't ignored
+                        vim.command('set wildignore=')
+                        vim.command('let &tags = %s' %
+                                    repr(PythonToVimStr(f.name)))
+                        vim.command('tjump %s' % tagname)
+                    finally:
+                        vim.command('let &tags = %s' %
+                                    repr(PythonToVimStr(old_tags)))
+                        vim.command('let &wildignore = %s' %
+                                    repr(PythonToVimStr(old_wildignore)))
+            vim.current.window.cursor = d.line, d.column
+    else:
+        # multiple solutions
+        lst = []
+        for d in definitions:
+            if d.in_builtin_module():
+                lst.append(dict(text=PythonToVimStr('Builtin ' + d.description)))
+            else:
+                lst.append(dict(filename=PythonToVimStr(d.module_path),
+                                lnum=d.line, col=d.column + 1,
+                                text=PythonToVimStr(d.description)))
+        vim_eval('setqflist(%s)' % repr(lst))
+        vim_eval('jedi#add_goto_window(' + str(len(lst)) + ')')
     return definitions
 
 
@@ -384,7 +384,8 @@ def show_call_signatures(signatures=()):
         # TODO check if completion menu is above or below
         line = vim_eval("getline(%s)" % line_to_replace)
 
-        params = [p.description.replace('\n', '') for p in signature.params]
+        # Descriptions are usually looking like `param name`, remove the param.
+        params = [p.description.replace('\n', '').replace('param ', '', 1) for p in signature.params]
         try:
             # *_*PLACEHOLDER*_* makes something fat. See after/syntax file.
             params[signature.index] = '*_*%s*_*' % params[signature.index]
@@ -430,7 +431,7 @@ def show_call_signatures(signatures=()):
 @catch_and_print_exceptions
 def cmdline_call_signatures(signatures):
     def get_params(s):
-        return [p.description.replace('\n', '') for p in s.params]
+        return [p.description.replace('\n', '').replace('param ', '', 1) for p in s.params]
 
     def escape(string):
         return string.replace('"', '\\"').replace(r'\n', r'\\n')
@@ -454,7 +455,7 @@ def cmdline_call_signatures(signatures):
     max_msg_len = int(vim_eval('&columns')) - 12
     if int(vim_eval('&ruler')):
         max_msg_len -= 18
-    max_msg_len -= len(signatures[0].call_name) + 2  # call name + parentheses
+    max_msg_len -= len(signatures[0].name) + 2  # call name + parentheses
 
     if max_msg_len < (1 if params else 0):
         return
@@ -489,7 +490,7 @@ def cmdline_call_signatures(signatures):
     _, column = signatures[0].bracket_start
     spaces = min(int(vim_eval('g:jedi#first_col +'
                               'wincol() - col(".")')) +
-                 column - len(signatures[0].call_name),
+                 column - len(signatures[0].name),
                  max_num_spaces) * ' '
 
     if index is not None:
@@ -500,14 +501,14 @@ def cmdline_call_signatures(signatures):
                     'echohl jediFat      | echon "%s" | '
                     'echohl jediFunction | echon "%s" | '
                     'echohl None         | echon ")"'
-                    % (spaces, signatures[0].call_name,
+                    % (spaces, signatures[0].name,
                        left + ', ' if left else '',
                        center, ', ' + right if right else ''))
     else:
         vim_command('                      echon "%s" | '
                     'echohl Function     | echon "%s" | '
                     'echohl None         | echon "(%s)"'
-                    % (spaces, signatures[0].call_name, text))
+                    % (spaces, signatures[0].name, text))
 
 
 @_check_jedi_availability(show_error=True)
@@ -668,7 +669,7 @@ def new_buffer(path, options='', using_tagstack=False):
             vim_command(split_options[user_split_option] + " %s" % escape_file_path(path))
     else:
         if int(vim_eval("!&hidden && &modified")) == 1:
-            if vim_eval("bufname('%')") is None:
+            if not vim_eval("bufname('%')"):
                 echo_highlight('Cannot open a new buffer, use `:set hidden` or save your buffer')
                 return False
             else:
