@@ -1,0 +1,81 @@
+# vim:set et sw=4 ts=8:
+import vim
+import json
+import msgpack
+
+# vim's python binding doesn't have the `call` method, wrap it here
+def nvim_call_function(method,args):
+    vim.vars['_neovim_rpc_tmp_args'] = args
+    # vim.eval('getcurpos()') return an array of string, it should be an array
+    # of int.  Use json_encode to workaround this
+    return json.loads(vim.eval('json_encode(call("%s",g:_neovim_rpc_tmp_args))' % method))
+
+def nvim_get_current_buf():
+    return vim.current.buffer
+
+def nvim_list_bufs():
+    return list(vim.buffers)
+
+# {'return_type': 'Integer', 'since': 1, 'method': True, 'parameters': [['Buffer', 'buffer']], 'name': 'nvim_buf_get_number'}
+def nvim_buf_get_number(buf):
+    return buf.number
+
+def nvim_buf_get_name(buffer):
+    return nvim_call_function('bufname', [buffer.number])
+
+def nvim_get_var(name):
+    return json.loads(vim.eval('json_encode(g:' + name + ')'))
+
+def nvim_set_var(name,val):
+    vim.vars[name] = val
+    return val
+
+def nvim_buf_get_var(buffer,name):
+    return json.loads(vim.eval('json_encode(getbufvar(%s, "%s"))' % (buffer.number, name)))
+
+def nvim_buf_set_var(buffer,name,val):
+    buffer.vars[name] = val
+
+def nvim_buf_get_lines(buffer,start,end,*args):
+    if end==-1:
+        return buffer[start:]
+    return buffer[start:end]
+
+def nvim_eval(expr):
+    return nvim_call_function('eval',[expr])
+
+def buffer_set_lines(buffer,start,end,err,lines):
+    if end==-1:
+        buffer[start:] = lines
+    else:
+        buffer[start:end] = lines
+
+    if nvim_call_function('bufwinnr',[buffer.number])!=-1:
+        # vim needs' redraw to update the screen, it seems to be a bug
+        vim.command('redraw')
+
+def buffer_line_count(buffer):
+    return len(buffer)
+
+def nvim_get_option(name):
+    return vim.options[name]
+
+def nvim_set_option(name, val):
+    vim.options[name] = val
+
+def nvim_command(cmd):
+    vim.command(cmd)
+
+def nvim_get_current_win():
+    return vim.current.window
+
+def nvim_win_get_cursor(window):
+    return window.cursor
+
+# TODO
+def nvim_out_write(s):
+    pass
+
+# TODO
+def nvim_err_write(s):
+    pass
