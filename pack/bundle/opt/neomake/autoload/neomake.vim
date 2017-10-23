@@ -639,15 +639,6 @@ function! s:command_maker_base._bind_args() abort dict
 endfunction
 
 function! s:command_maker_base._get_argv(jobinfo) abort dict
-    " Resolve exe, which might be a function or dictionary.
-    if type(self.exe) == type(function('tr'))
-        let exe = call(self.exe, [])
-    elseif type(self.exe) == type({})
-        let exe = call(self.exe.fn, [], self.exe)
-    else
-        let exe = self.exe
-    endif
-
     let args = copy(self.args)
     let args_is_list = type(args) == type([])
 
@@ -665,7 +656,7 @@ function! s:command_maker_base._get_argv(jobinfo) abort dict
             endif
         endif
     endif
-    return neomake#compat#get_argv(exe, args, args_is_list)
+    return neomake#compat#get_argv(self.exe, args, args_is_list)
 endfunction
 
 function! s:GetMakerForFiletype(ft, maker_name) abort
@@ -2496,6 +2487,16 @@ function! s:map_makers(options, makers, ...) abort
 
             if has_key(maker, '_bind_args')
                 call maker._bind_args()
+                if type(maker.exe) != type('')
+                    let error = printf('Non-string given for executable of maker %s: type %s.',
+                                \ maker.name, type(maker.exe))
+                    if !get(maker, 'auto_enabled', 0)
+                        call neomake#utils#ErrorMessage(error, options)
+                    else
+                        call neomake#utils#DebugMessage(error, options)
+                    endif
+                    continue
+                endif
                 if !executable(maker.exe)
                     if !get(maker, 'auto_enabled', 0)
                         let error = printf('Exe (%s) of maker %s is not executable.', maker.exe, maker.name)

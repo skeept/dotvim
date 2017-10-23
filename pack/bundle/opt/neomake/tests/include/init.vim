@@ -334,12 +334,6 @@ function! g:entry_maker.get_list_entries(...) abort
   \   {'text': 'error', 'lnum': 1, 'type': 'E'}])
 endfunction
 let g:doesnotexist_maker = {'exe': 'doesnotexist'}
-let g:sleep_entry_maker = {}
-function! g:sleep_entry_maker.get_list_entries(...) abort
-  sleep 10m
-  return get(g:, 'neomake_test_getlistentries', [
-  \   {'text': 'slept', 'lnum': 1}])
-endfunction
 
 " A maker that generates incrementing errors.
 let g:neomake_test_inc_maker_counter = 0
@@ -382,27 +376,6 @@ function! NeomakeTestsGetVimMessages()
   endif
   return reverse(msgs[0 : idx-1])
 endfunction
-
-" Helpers for monkeypatching a function temporarily.
-" This avoids having to put them into separate files when using profiling,
-" where :runtime would overwrite the functions.
-let s:monkeypatched = []
-function! s:monkeypatch(fname)
-    let orig_f = neomake#utils#redir('fun neomake#compat#get_mode')
-    let restore_f = map(split(orig_f, '\n'), 'v:val[3:]')
-    call add(s:monkeypatched, restore_f)
-endfunction
-function! s:undo_monkeypatch()
-    let tmpfile = tempname()
-    for f in s:monkeypatched
-        let f[0] = substitute(f[0], '^function ', 'function!', '')
-        call writefile(f, tmpfile)
-        exe 'source '.tmpfile
-    endfor
-    let s:monkeypatched = []
-endfunction
-command! -nargs=1 NeomakeTestsMonkeyPatch call s:monkeypatch(<f-args>)
-command! NeomakeTestsMonkeyPatchUndo call s:undo_monkeypatch(<f-args>)
 
 function! s:After()
   if exists('#neomake_automake')

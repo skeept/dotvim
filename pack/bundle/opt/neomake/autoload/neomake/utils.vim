@@ -348,7 +348,7 @@ function! neomake#utils#GetSetting(key, maker, default, ft, bufnr, ...) abort
     let maker_name = has_key(a:maker, 'name') ? a:maker.name : ''
     if maker_only && empty(maker_name)
         if has_key(a:maker, a:key)
-            return a:maker[a:key]
+            return get(a:maker, a:key)
         endif
         return a:default
     endif
@@ -378,7 +378,7 @@ function! neomake#utils#GetSetting(key, maker, default, ft, bufnr, ...) abort
     endfor
 
     if has_key(a:maker, a:key)
-        return a:maker[a:key]
+        return get(a:maker, a:key)
     endif
 
     let key = maker_only ? maker_name.'_'.a:key : a:key
@@ -620,6 +620,14 @@ function! neomake#utils#fix_self_ref(obj, ...) abort
         endif
         if type(obj[k]) == type({})
             let obj[k] = neomake#utils#fix_self_ref(obj[k], a:0 ? a:1 + [[len(a:1)+1, [a:obj, k]]] : [[1, [a:obj, k]]])
+        elseif has('nvim')
+            " Ensure that it can be used as a string.
+            " Ref: https://github.com/neovim/neovim/issues/7432
+            try
+                call string(obj[k])
+            catch /^Vim(call):E724:/
+                let obj[k] = '<unrepresentable object, type='.type(obj).'>'
+            endtry
         endif
     endfor
     return obj
