@@ -5075,6 +5075,10 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-solarized8"
   },
+  "5390": {
+    "type": "git",
+    "url": "git://github.com/KnoP-01/tortus"
+  },
   "5394": {
     "type": "git",
     "url": "git://github.com/nelsyeung/twig.vim"
