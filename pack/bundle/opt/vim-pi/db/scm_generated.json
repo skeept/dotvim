@@ -5671,6 +5671,10 @@
     "type": "git",
     "url": "git://github.com/lifepillar/vim-colortemplate"
   },
+  "5616": {
+    "type": "git",
+    "url": "git://github.com/Badacadabra/vim-archery"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
