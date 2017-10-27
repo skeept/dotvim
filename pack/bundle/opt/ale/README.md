@@ -86,7 +86,7 @@ formatting.
 | CSS | [csslint](http://csslint.net/), [stylelint](https://github.com/stylelint/stylelint), [prettier](https://github.com/prettier/prettier) |
 | Cython (pyrex filetype) | [cython](http://cython.org/) |
 | D | [dmd](https://dlang.org/dmd-linux.html) |
-| Dart | [dartanalyzer](https://github.com/dart-lang/sdk/tree/master/pkg/analyzer_cli) |
+| Dart | [dartanalyzer](https://github.com/dart-lang/sdk/tree/master/pkg/analyzer_cli) !! |
 | Dockerfile | [hadolint](https://github.com/lukasmartinelli/hadolint) |
 | Elixir | [credo](https://github.com/rrrene/credo), [dogma](https://github.com/lpil/dogma) !! |
 | Elm | [elm-format](https://github.com/avh4/elm-format), [elm-make](https://github.com/elm-lang/elm-make) |
@@ -141,6 +141,7 @@ formatting.
 | SQL | [sqlint](https://github.com/purcell/sqlint) |
 | Swift | [swiftlint](https://github.com/realm/SwiftLint), [swiftformat](https://github.com/nicklockwood/SwiftFormat) |
 | Tcl | [nagelfar](http://nagelfar.sourceforge.net) !! |
+| Terraform | [tflint](https://github.com/wata727/tflint) |
 | Texinfo | [proselint](http://proselint.com/), [write-good](https://github.com/btford/write-good)|
 | Text^ | [proselint](http://proselint.com/), [vale](https://github.com/ValeLint/vale), [write-good](https://github.com/btford/write-good) |
 | Thrift | [thrift](http://thrift.apache.org/) |

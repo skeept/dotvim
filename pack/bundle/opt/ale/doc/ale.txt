@@ -181,6 +181,8 @@ CONTENTS                                                         *ale-contents*
       stylelint...........................|ale-stylus-stylelint|
     tcl...................................|ale-tcl-options|
       nagelfar............................|ale-tcl-nagelfar|
+    terraform.............................|ale-terraform-options|
+      tflint..............................|ale-terraform-tflint|
     tex...................................|ale-tex-options|
       chktex..............................|ale-tex-chktex|
       lacheck.............................|ale-tex-lacheck|
@@ -265,7 +267,7 @@ Notes:
 * CSS: `csslint`, `stylelint`, `prettier`
 * Cython (pyrex filetype): `cython`
 * D: `dmd`
-* Dart: `dartanalyzer`
+* Dart: `dartanalyzer`!!
 * Dockerfile: `hadolint`
 * Elixir: `credo`, `dogma`!!
 * Elm: `elm-format, elm-make`
@@ -320,6 +322,7 @@ Notes:
 * SQL: `sqlint`
 * Swift: `swiftlint`, `swiftformat`
 * Tcl: `nagelfar`!!
+* Terraform: `tflint`
 * Texinfo: `proselint`, `write-good`
 * Text^: `proselint`, `vale`, `write-good`
 * Thrift: `thrift`
@@ -623,6 +626,11 @@ g:ale_emit_conflict_warnings                     *g:ale_emit_conflict_warnings*
 
   When set to `0`, ALE will not emit any warnings on startup about conflicting
   plugins. ALE will probably not work if other linting plugins are installed.
+
+  When this option is set to `1`, ALE will add its `after` directory to
+  |runtimepath| automatically, so the checks can be applied. Setting this
+  option to `0` before ALE is loaded will prevent ALE from modifying
+  |runtimepath|.
 
 
 g:ale_enabled                                                   *g:ale_enabled*
