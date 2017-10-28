@@ -537,6 +537,8 @@ function! s:process_flags(flags)
     let a:flags.query = substitute(a:flags.query, '\V\C'.s:magic.cr .'\$', '', '')
     if empty(a:flags.query)
       let a:flags.query = s:escape_cword(a:flags, expand('<cword>'))
+    elseif a:flags.prompt_quote
+      let a:flags.query = shellescape(a:flags.query)
     endif
   endif
 
@@ -663,8 +665,14 @@ function! s:run(flags)
   let s:cmdline = s:build_cmdline(a:flags)
 
   " 'cmd' and 'options' are only used for async execution.
-  if has('win32') && &shell =~ 'cmd'
+  if ( has('win32') || has("win64")) && &shell =~ 'powershell'
+    " Windows powershell has better quot handling
     let cmd = s:cmdline
+  elseif ( has('win32') || has("win64")) && &shell =~ 'cmd'
+    " Since Windows cmd handles single quotes as part of the query
+    " we spawn a powershell session within cmd to avoid this behavior
+    " Hack took from https://stackoverflow.com/questions/94382/vim-with-powershell
+    let cmd = ['powershell.exe', '-NoLogo','-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned' , s:cmdline]
   else
     let cmd = ['sh', '-c', s:cmdline]
   endif
@@ -994,6 +1002,7 @@ function! s:operator(type) abort
 
   let &selection = selsave
   let flags = s:get_config()
+  let flags.prompt = 0
   let flags.query_orig = @@
   let flags.query_escaped = 0
 
