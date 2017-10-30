@@ -628,7 +628,7 @@
 "AdvancedSorters":{"archive_name":"AdvancedSorters-1.21.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24671","version":"1.21","vim_script_nr":4958},
 "zeavim":{"archive_name":"zeavim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23897","version":"2.1.0","vim_script_nr":4957},
 "vimbed":{"archive_name":"vimbed.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22050","version":"0.2","vim_script_nr":4956},
-"Merginal":{"archive_name":"merginal_v2.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24315","version":"2.0.2","vim_script_nr":4955},
+"Merginal":{"archive_name":"merginal_v2.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25628","version":"2.1.0","vim_script_nr":4955},
 "purpledrop":{"archive_name":"purpledrop.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21983","version":"1.0","vim_script_nr":4954},
 "dubs-green":{"archive_name":"dubs_green.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21980","version":"0.1","vim_script_nr":4953},
 "dubs-red":{"archive_name":"dubs_red.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21979","version":"0.1","vim_script_nr":4952},
