@@ -977,7 +977,7 @@
 "grails-conque":{"archive_name":"grails-conque.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20353","version":"0.4","vim_script_nr":4601},
 "Sprunge_Paste_Upload":{"archive_name":"sprunge.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20224","version":"0.1","vim_script_nr":4600},
 "videm":{"archive_name":"videm-1102-build20140213.tar.bz2","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21478","version":"1.102","vim_script_nr":4599},
-"rainbow_csv":{"archive_name":"rainbow_csv-master.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24083","version":"2.0","vim_script_nr":4598},
+"rainbow_csv":{"archive_name":"rainbow_csv-master.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25629","version":"3.0","vim_script_nr":4598},
 "vim-misc":{"archive_name":"misc.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23300","version":"1.17.6","vim_script_nr":4597},
 "verilog_auto_testbench":{"archive_name":"testbench-2.4.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20759","version":"2.4","vim_script_nr":4596},
 "vim-bufferline":{"archive_name":"bufferline.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=20322","version":"0.3","vim_script_nr":4595},

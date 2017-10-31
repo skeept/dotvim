@@ -150,6 +150,7 @@ CONTENTS                                                         *ale-contents*
       lintr...............................|ale-r-lintr|
     reasonml..............................|ale-reasonml-options|
       merlin..............................|ale-reasonml-merlin|
+      refmt...............................|ale-reasonml-refmt|
     restructuredtext......................|ale-restructuredtext-options|
       write-good..........................|ale-restructuredtext-write-good|
     ruby..................................|ale-ruby-options|
@@ -308,7 +309,7 @@ Notes:
 * Puppet: `puppet`, `puppet-lint`
 * Python: `autopep8`, `flake8`, `isort`, `mypy`, `pycodestyle`, `pylint`!!, `yapf`
 * R: `lintr`
-* ReasonML: `merlin`
+* ReasonML: `merlin`, `refmt`
 * reStructuredText: `proselint`, `write-good`
 * RPM spec: `rpmlint`
 * Ruby: `brakeman`, `rails_best_practices`!!, `reek`, `rubocop`, `ruby`
@@ -668,6 +669,7 @@ g:ale_fixers                                                     *g:ale_fixers*
 
 
 g:ale_fix_on_save                                           *g:ale_fix_on_save*
+b:ale_fix_on_save                                           *b:ale_fix_on_save*
 
   Type: |Number|
   Default: `0`
@@ -677,6 +679,9 @@ g:ale_fix_on_save                                           *g:ale_fix_on_save*
   If |g:ale_lint_on_save| is set to 1, files will be checked with linters
   after files are fixed, only when the buffer is open, or re-opened. Changes
   to the file will be saved to the file on disk.
+
+  Fixing files can be disabled or enabled for individual buffers by setting
+  `b:ale_fix_on_save` to `0` or `1`.
 
 
 g:ale_history_enabled                                   *g:ale_history_enabled*
