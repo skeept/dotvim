@@ -202,7 +202,7 @@
 "ember_tools":{"archive_name":"ember_tools.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24463","version":"0.1.0","vim_script_nr":5399},
 "verilog_emacsauto%5398":{"archive_name":"verilog_emacsauto.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24299","version":"0.5","vim_script_nr":"5398"},
 "Closing_Brackets":{"archive_name":"vim-closing-brackets.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24297","version":"1.0.0","vim_script_nr":5397},
-"Ranger%5396":{"archive_name":"ranger.vim-1.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24294","version":"1.0","vim_script_nr":"5396"},
+"Ranger%5396":{"archive_name":"ranger.vim-2.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25630","version":"2.0","vim_script_nr":"5396"},
 "tabulous":{"archive_name":"tabulous-0.5.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24306","version":"0.5.0","vim_script_nr":5395},
 "twig":{"archive_name":"twig.vim.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24290","version":"1.0.0","vim_script_nr":5394},
 "vim_eslint":{"archive_name":"vim-eslint.rar","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24288","version":"1.0","vim_script_nr":5393},
