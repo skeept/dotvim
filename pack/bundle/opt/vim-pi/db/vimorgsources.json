@@ -1,4 +1,5 @@
 {
+"files-complete":{"archive_name":"files-complete.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25631","version":"1","vim_script_nr":5617},
 "Archery":{"archive_name":"vim-archery.tgz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25620","version":"1.0.0","vim_script_nr":5616},
 "man":{"archive_name":"man.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25608","version":"1.1","vim_script_nr":5615},
 "Colortemplate":{"archive_name":"vim-colortemplate-1.0.0.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25624","version":"1.0.0","vim_script_nr":5614},
@@ -66,7 +67,7 @@
 "js_alternate":{"archive_name":"js_alternate.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25067","version":"0.1.0","vim_script_nr":5548},
 "vim-custom-surround":{"archive_name":"vim-custom-surround-1.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25072","version":"1.1","vim_script_nr":5547},
 "goyo-doc":{"archive_name":"goyo-doc.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25059","version":"0.0.1","vim_script_nr":5546},
-"CurtineIncSw":{"archive_name":"CurtineIncSw.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25058","version":"0.2","vim_script_nr":5545},
+"CurtineIncSw":{"archive_name":"CurtinIncSw.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25632","version":"0.3","vim_script_nr":5545},
 "vim-sourcer":{"archive_name":"vim-sourcer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25053","version":"0.1","vim_script_nr":5544},
 "eclipse-lite":{"archive_name":"eclipse-lite.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25065","version":"1.0.1","vim_script_nr":5543},
 "note%5542":{"archive_name":"note.vim.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25050","version":"1.0.0","vim_script_nr":"5542"},

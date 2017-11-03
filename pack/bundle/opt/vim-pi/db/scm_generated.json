@@ -4971,6 +4971,10 @@
     "type": "git",
     "url": "git://github.com/zizhongyan/vim-stata"
   },
+  "5344": {
+    "type": "git",
+    "url": "git://github.com/KnoP-01/krl-for-vim"
+  },
   "5345": {
     "type": "git",
     "url": "git://github.com/alpertuna/vim-header"
@@ -5462,6 +5466,10 @@
   "5544": {
     "type": "git",
     "url": "git://github.com/carlsmedstad/vim-sourcer"
+  },
+  "5545": {
+    "type": "git",
+    "url": "git://github.com/ericcurtin/CurtineIncSw.vim"
   },
   "5548": {
     "type": "git",
