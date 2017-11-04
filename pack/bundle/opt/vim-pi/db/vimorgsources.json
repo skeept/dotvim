@@ -249,7 +249,7 @@
 "color":{"archive_name":"color.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24105","version":"1.0","vim_script_nr":5347},
 "Bullets":{"archive_name":"bullets.vim-1.0.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24104","version":"1.0.2","vim_script_nr":5346},
 "vim-header":{"archive_name":"vim-header-0.1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24099","version":"v0.1.0","vim_script_nr":5345},
-"KRL-Syntax":{"archive_name":"krl_for_vim_v151_20170813.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25508","version":"1.5.1","vim_script_nr":5344},
+"KRL-Syntax":{"archive_name":"krl-for-vim-1.5.2.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25634","version":"1.5.2","vim_script_nr":5344},
 "VimFlowy_Outliner":{"archive_name":"vimflowy.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24069","version":"1.0","vim_script_nr":5343},
 "stata-syntax":{"archive_name":"stata.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24057","version":"0.3","vim_script_nr":5342},
 "thesaurus_query":{"archive_name":"thesaurus_query.vim-0.6.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25387","version":"v0.6.2","vim_script_nr":5341},
