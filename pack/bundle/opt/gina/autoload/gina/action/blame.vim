@@ -49,13 +49,13 @@ function! s:on_echo(candidates, options) abort dict
         \ chunk.author_time,
         \ chunk.author_tz,
         \)
-  redraw | call gina#core#console#info(printf(
+  redraw | echo printf(
         \ '%s: %s authored on %s [%s]',
         \ chunk.summary,
         \ chunk.author,
         \ timestamp,
         \ chunk.revision,
-        \))
+        \)
 endfunction
 
 function! s:on_open(candidates, options) abort dict
@@ -82,7 +82,15 @@ function! s:on_open(candidates, options) abort dict
     endif
     let rev = matchstr(chunk.previous, '^\S\+')
     let path = matchstr(chunk.previous, '^\S\+\s\zs.*')
-    let line = v:null
+    let line = gina#core#tracker#track(
+          \ gina#core#get_or_fail(),
+          \ chunk.path,
+          \ line('.'),
+          \ {
+          \   'lhs': chunk.rev,
+          \   'rhs': rev,
+          \ }
+          \)
   else
     let rev = chunk.rev
     let path = chunk.path

@@ -143,7 +143,7 @@
 "vim-jobs":{"archive_name":"jobs.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24630","version":"1","vim_script_nr":5466},
 "vim-kramdown-tab":{"archive_name":"vim-kramdown-tab-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24628","version":"v0.1","vim_script_nr":5464},
 "TabList_for_terminal_vim":{"archive_name":"Tablist.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24639","version":"1.01","vim_script_nr":5463},
-"Despacio":{"archive_name":"despacio.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24704","version":"4","vim_script_nr":5462},
+"Despacio":{"archive_name":"despacio.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25633","version":"543556d","vim_script_nr":5462},
 "dutch_peasants":{"archive_name":"dutch_peasants.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24616","version":"0.1","vim_script_nr":5461},
 "vim-markdown-toc":{"archive_name":"vim-markdown-toc-1.2.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25512","version":"v1.2.2","vim_script_nr":5460},
 "syntax_for_verilog_2001":{"archive_name":".vimrc","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24660","version":"0.2.1","vim_script_nr":5459},

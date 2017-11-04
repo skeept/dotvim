@@ -118,7 +118,7 @@ function! s:build_args(git, args, range) abort
           \)
   endif
 
-  call gina#core#args#extend_treeish(a:git, args, args.pop(1))
+  call gina#core#args#extend_treeish(a:git, args, args.pop(1, ':'))
   call gina#core#args#extend_line(a:git, args, args.pop('--line'))
   if empty(args.params.path)
     throw gina#core#exception#warn(printf(
@@ -192,9 +192,8 @@ function! s:call(range, args, mods) abort
   call gina#core#buffer#open(bufname, {
         \ 'mods': 'leftabove',
         \ 'group': args.params.groups[1],
-        \ 'opener': (args.params.width ? args.params.width : 80) . 'vsplit',
+        \ 'opener': (args.params.width ? args.params.width : g:gina#command#blame#default_navi_width) . 'vsplit',
         \ 'cmdarg': args.params.cmdarg,
-        \ 'range': 'all',
         \ 'width': args.params.width,
         \ 'line': args.params.line,
         \ 'callback': {
@@ -278,15 +277,20 @@ function! s:init(args) abort
 endfunction
 
 function! s:WinLeave() abort
-  let bufname = bufname('%')
-  let scheme = gina#core#buffer#param(bufname, 'scheme')
-  let alternate = substitute(
-        \ bufname,
-        \ ':' . scheme . '\>',
-        \ ':' . (scheme ==# 'blame' ? 'show' : 'blame'),
-        \ ''
-        \)
-  if bufwinnr(alternate) > 0
+  let git = gina#core#get_or_fail()
+  let params = gina#core#buffer#parse('%')
+  if params.scheme ==# 'blame'
+    let alternate = gina#core#buffer#bufname(git, 'show', {
+          \ 'params': params.params,
+          \ 'treeish': params.treeish,
+          \})
+  else
+    let alternate = gina#core#buffer#bufname(git, 'blame', {
+          \ 'params': params.params,
+          \ 'treeish': params.treeish,
+          \})
+  endif
+  if bufwinnr(alternate) != -1
     call setbufvar(alternate, 'gina_syncbind_line', line('.'))
   endif
 endfunction
@@ -334,7 +338,8 @@ function! s:redraw_content() abort
   if exists('b:gina_blame_writer')
     call b:gina_blame_writer.kill()
   endif
-  if len(chunks) < g:gina#command#blame#writer_threshold
+  if !g:gina#command#blame#writer_threshold
+        \ || len(chunks) < g:gina#command#blame#writer_threshold
     let winview_saved = winsaveview()
     let content = []
     call map(copy(chunks), 'extend(content, formatter.format(v:val))')
@@ -420,5 +425,6 @@ endfunction
 call gina#config(expand('<sfile>'), {
       \ 'use_default_aliases': 1,
       \ 'use_default_mappings': 1,
-      \ 'writer_threshold': 1000,
+      \ 'writer_threshold': 0,
+      \ 'default_navi_width': 50,
       \})
