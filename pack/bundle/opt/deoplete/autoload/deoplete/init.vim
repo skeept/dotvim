@@ -41,9 +41,11 @@ function! deoplete#init#_channel() abort
       let g:deoplete#_yarp = yarp#py3('deoplete')
       call g:deoplete#_yarp.notify('deoplete_init')
     else
+      " rplugin.vim may not be loaded on VimEnter
       if !exists('g:loaded_remote_plugins')
         runtime! plugin/rplugin.vim
       endif
+
       call _deoplete_init()
     endif
   catch
@@ -76,7 +78,7 @@ function! deoplete#init#_channel() abort
   endtry
 endfunction
 function! deoplete#init#_check_channel() abort
-  return !exists('g:deoplete#_initialized')
+  return !has('vim_starting') && !exists('g:deoplete#_initialized')
 endfunction
 function! deoplete#init#_enable() abort
   call deoplete#handler#_init()
@@ -95,6 +97,7 @@ function! deoplete#init#_variables() abort
   if !exists('g:deoplete#_logging')
     let g:deoplete#_logging = {}
   endif
+  unlet! g:deoplete#_initialized
 
   " User vairables
   call deoplete#util#set_default(
