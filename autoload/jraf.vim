@@ -623,7 +623,9 @@ function! jraf#quoteCommaJoin() range
   silent! %s/^\s\+//
   DelTrailWhiteSpace
   " replace one or more space with newline
-  %s/\s\+/\r/g
+  if search("\s+", 'w') > 0
+    %s/\s\+/\r/g
+  endif
   DelTrailWhiteSpace
   %s/^/"/
   %s/$/",/
