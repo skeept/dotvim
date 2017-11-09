@@ -145,6 +145,7 @@ CONTENTS                                                         *ale-contents*
       mypy................................|ale-python-mypy|
       pycodestyle.........................|ale-python-pycodestyle|
       pylint..............................|ale-python-pylint|
+      pyls................................|ale-python-pyls|
       yapf................................|ale-python-yapf|
     r.....................................|ale-r-options|
       lintr...............................|ale-r-lintr|
@@ -270,6 +271,7 @@ Notes:
 * CSS: `csslint`, `stylelint`, `prettier`
 * Cython (pyrex filetype): `cython`
 * D: `dmd`
+* Dafny: `dafny`!!
 * Dart: `dartanalyzer`!!, `language_server`
 * Dockerfile: `hadolint`
 * Elixir: `credo`, `dogma`!!
@@ -308,7 +310,7 @@ Notes:
 * Pod: `proselint`, `write-good`
 * Pug: `pug-lint`
 * Puppet: `puppet`, `puppet-lint`
-* Python: `autopep8`, `flake8`, `isort`, `mypy`, `pycodestyle`, `pylint`!!, `yapf`
+* Python: `autopep8`, `flake8`, `isort`, `mypy`, `pycodestyle`, `pyls`, `pylint`!!, `yapf`
 * R: `lintr`
 * ReasonML: `merlin`, `refmt`
 * reStructuredText: `proselint`, `write-good`
