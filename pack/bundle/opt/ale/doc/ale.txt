@@ -134,6 +134,8 @@ CONTENTS                                                         *ale-contents*
       phpstan.............................|ale-php-phpstan|
     pod...................................|ale-pod-options|
       write-good..........................|ale-pod-write-good|
+    proto.................................|ale-proto-options|
+      protoc-gen-lint.....................|ale-proto-protoc-gen-lint|
     pug...................................|ale-pug-options|
       puglint.............................|ale-pug-puglint|
     puppet................................|ale-puppet-options|
@@ -308,12 +310,13 @@ Notes:
 * Perl: `perl -c`, `perl-critic`
 * PHP: `hack`, `hackfmt`, `langserver`, `phan`, `php -l`, `phpcs`, `phpmd`, `phpstan`, `phpcbf`
 * Pod: `proselint`, `write-good`
+* proto: `protoc-gen-lint`
 * Pug: `pug-lint`
 * Puppet: `puppet`, `puppet-lint`
 * Python: `autopep8`, `flake8`, `isort`, `mypy`, `pycodestyle`, `pyls`, `pylint`!!, `yapf`
 * R: `lintr`
 * ReasonML: `merlin`, `refmt`
-* reStructuredText: `proselint`, `write-good`
+* reStructuredText: `proselint`, `rstcheck`, `write-good`
 * RPM spec: `rpmlint`
 * Ruby: `brakeman`, `rails_best_practices`!!, `reek`, `rubocop`, `ruby`
 * Rust: `cargo`!!, `rls`, `rustc` (see |ale-integration-rust|), `rustfmt`
@@ -879,7 +882,7 @@ g:ale_linter_aliases                                     *g:ale_linter_aliases*
   `let g:ale_linter_aliases = {'html': ['html', 'javascript', 'css']}`
 
   Note that `html` itself was included as an alias. That is because aliases
-  will override the original linters for the aliased filetepe.
+  will override the original linters for the aliased filetype.
 
   Linter aliases can be configured in each buffer with buffer-local variables.
   ALE will first look for aliases for filetypes in the `b:ale_linter_aliases`
@@ -1004,10 +1007,13 @@ g:ale_pattern_options                                   *g:ale_pattern_options*
   only `eslint` for checking those files by setting `b:ale_linters`.
 
   Filenames are matched with |match()|, and patterns depend on the |magic|
-  setting, unless prefixed with the special escape sequences like `'\v'`, etc.
-
-  The patterns can match any part of a filename. The absolute path of the
+  setting, unless prefixed with the special escape sequences like `'\v'`,
+  etc.The patterns can match any part of a filename. The absolute path of the
   filename will be used for matching, taken from `expand('%:p')`.
+
+  The options for every match for the filename will be applied, with the
+  pattern keys sorted in alphabetical order. Options for `'zebra'` will
+  override the options for `'alpha'` for a filename `alpha-zebra`.
 
 
 g:ale_pattern_options_enabled                   *g:ale_pattern_options_enabled*
@@ -1016,8 +1022,9 @@ g:ale_pattern_options_enabled                   *g:ale_pattern_options_enabled*
   Default: `!empty(g:ale_pattern_options)`
 
   This option can be used for turning the behaviour of setting
-  |g:ale_pattern_options| on or off. By default, setting a single key
-  for |g:ale_pattern_options| will turn this option on.
+  |g:ale_pattern_options| on or off. By default, setting a single key for
+  |g:ale_pattern_options| will turn this option on, as long as the setting is
+  configured before ALE is loaded.
 
 
 g:ale_set_balloons                                         *g:ale_set_balloons*
