@@ -293,7 +293,7 @@
 "Base2Tone":{"archive_name":"Base2Tone_EveningDark.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25475","version":"1.6","vim_script_nr":5301},
 "Ranger%5300":{"archive_name":"ranger.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23894","version":"1.0","vim_script_nr":5300},
 "Citation":{"archive_name":"citation.vim.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24988","version":"0.4","vim_script_nr":5299},
-"vim-love-docs":{"archive_name":"vim-love-docs.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25449","version":"0.5.3","vim_script_nr":5298},
+"vim-love-docs":{"archive_name":"vim-love-docs.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25641","version":"0.6.1","vim_script_nr":5298},
 "iterm-start":{"archive_name":"iterm-start.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23880","version":"0.2.0","vim_script_nr":5297},
 "vim-run":{"archive_name":"vim-run.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23857","version":"0.1.0","vim_script_nr":5296},
 "csscomplete":{"archive_name":"csscomplete.vim-0.1.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=23851","version":"0.1","vim_script_nr":5295},
