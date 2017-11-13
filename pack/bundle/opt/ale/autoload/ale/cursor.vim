@@ -5,18 +5,27 @@ let s:cursor_timer = -1
 let s:last_pos = [0, 0, 0]
 
 " Return a formatted message according to g:ale_echo_msg_format variable
-function! s:GetMessage(linter, type, text) abort
+function! s:GetMessage(item) abort
     let l:msg = g:ale_echo_msg_format
-    let l:type = a:type is# 'E'
-    \   ? g:ale_echo_msg_error_str
-    \   : g:ale_echo_msg_warning_str
+    let l:severity = g:ale_echo_msg_warning_str
+    let l:code = get(a:item, 'code', '')
+    let l:code_repl = !empty(l:code) ? '\=submatch(1) . l:code . submatch(2)' : ''
 
-    " Replace handlers if they exist
-    for [l:k, l:v] in items({'linter': a:linter, 'severity': l:type})
-        let l:msg = substitute(l:msg, '\V%' . l:k . '%', l:v, '')
-    endfor
+    if a:item.type is# 'E'
+        let l:severity = g:ale_echo_msg_error_str
+    elseif a:item.type is# 'I'
+        let l:severity = g:ale_echo_msg_info_str
+    endif
 
-    return printf(l:msg, a:text)
+    " Replace special markers with certain information.
+    " \=l:variable is used to avoid escaping issues.
+    let l:msg = substitute(l:msg, '\V%severity%', '\=l:severity', 'g')
+    let l:msg = substitute(l:msg, '\V%linter%', '\=a:item.linter_name', 'g')
+    let l:msg = substitute(l:msg, '\v\%([^\%]*)code([^\%]*)\%', l:code_repl, 'g')
+    " Replace %s with the text.
+    let l:msg = substitute(l:msg, '\V%s', '\=a:item.text', 'g')
+
+    return l:msg
 endfunction
 
 function! s:EchoWithShortMess(setting, message) abort
@@ -87,7 +96,7 @@ function! s:EchoImpl() abort
     let [l:info, l:loc] = s:FindItemAtCursor()
 
     if !empty(l:loc)
-        let l:msg = s:GetMessage(l:loc.linter_name, l:loc.type, l:loc.text)
+        let l:msg = s:GetMessage(l:loc)
         call ale#cursor#TruncatedEcho(l:msg)
         let l:info.echoed = 1
     elseif get(l:info, 'echoed')
