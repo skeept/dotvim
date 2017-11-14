@@ -1,4 +1,5 @@
 {
+"AutoSave":{"archive_name":"AutoSave-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25646","version":"1.00","vim_script_nr":5618},
 "files-complete":{"archive_name":"files-complete.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25631","version":"1","vim_script_nr":5617},
 "Archery":{"archive_name":"vim-archery.tgz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25620","version":"1.0.0","vim_script_nr":5616},
 "man":{"archive_name":"man.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25608","version":"1.1","vim_script_nr":5615},
@@ -211,7 +212,7 @@
 "easy-execute":{"archive_name":"easy-execute.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25460","version":"0.2","vim_script_nr":5391},
 "tortus":{"archive_name":"tortus.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25615","version":"1.0.7","vim_script_nr":5390},
 "RougherExp":{"archive_name":"rougherexp.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24256","version":"0.1","vim_script_nr":5389},
-"Solarized_8":{"archive_name":"vim-solarized8-1.0.0.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25643","version":"1.0.0","vim_script_nr":5388},
+"Solarized_8":{"archive_name":"vim-solarized8-1.0.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25645","version":"1.0.1","vim_script_nr":5388},
 "definition":{"archive_name":"definition.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24244","version":"1.0","vim_script_nr":5387},
 "vim-logreview":{"archive_name":"vim-logreview.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24240","version":"1.0","vim_script_nr":5386},
 "vim-freemarker":{"archive_name":"vim-freemarker.tar","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24239","version":"1.0","vim_script_nr":5385},
@@ -1043,7 +1044,7 @@
 "vim-latex-live-preview":{"archive_name":"vim-latex-live-preview-0.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19825","version":"0.1.0","vim_script_nr":4524},
 "vim-multiple-cursors":{"archive_name":"vim-multiple-cursors.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19814","version":"1.0","vim_script_nr":4523},
 "VERun":{"archive_name":"verun-0.9.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19813","version":"0.9","vim_script_nr":4522},
-"vim-auto-save":{"archive_name":"vim-auto-save-0.1.9.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24894","version":"0.1.9","vim_script_nr":4521},
+"vim-auto-save":{"archive_name":"vim-auto-save-0.1.10.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25644","version":"0.1.10","vim_script_nr":4521},
 "vim-easy-align":{"archive_name":"vim-easy-align.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21888","version":"2.9.3","vim_script_nr":4520},
 "specta":{"archive_name":"specta.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19805","version":"0.1","vim_script_nr":4519},
 "translator":{"archive_name":"translator.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19798","version":"1.0.1","vim_script_nr":4518},
