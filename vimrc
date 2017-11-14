@@ -98,6 +98,7 @@ function! SetupVAM()
   VAMAddToActiveAddons ferret
   VAMAddToActiveAddons exchange
   VAMAddToActiveAddons gina
+  VAMAddToActiveAddons autoread
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
