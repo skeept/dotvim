@@ -287,7 +287,7 @@ Notes:
 * Fortran: `gcc`
 * FusionScript: `fusion-lint`
 * GLSL: glslang
-* Go: `gofmt`, `go vet`, `golint`, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
+* Go: `gofmt`, `goimports`, `go vet`, `golint`, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
 * GraphQL: `gqlint`
 * Haml: `haml-lint`
 * Handlebars: `ember-template-lint`
@@ -656,6 +656,7 @@ g:ale_echo_msg_format                                   *g:ale_echo_msg_format*
   The strings for `%severity%` can be configured with the following options.
 
     |g:ale_echo_msg_error_str|   - Defaults to `'Error'`
+    |g:ale_echo_msg_info_str|    - Defaults to `'Info'`
     |g:ale_echo_msg_warning_str| - Defaults to `'Warning'`
 
   `%code%` is replaced with the error code, and replaced with an empty string
@@ -945,23 +946,25 @@ g:ale_linters                                                   *g:ale_linters*
   Type: |Dictionary|
   Default: `{}`
 
-  The |g:ale_linters| option sets a |Dictionary| mapping a filetype
-  to a |List| of linter programs to be run when checking particular filetypes.
-  Only the filetypes specified in the dictionary will be limited in terms
-  of which linters will be run.
+  The |g:ale_linters| option sets a |Dictionary| mapping a filetype to a
+  |List| of linter programs to be run when checking particular filetypes.
 
   This |Dictionary| will be merged with a default dictionary containing the
   following values: >
 
   {
   \   'csh': ['shell'],
+  \   'go': ['gofmt', 'golint', 'go vet'],
+  \   'help': [],
+  \   'python': ['flake8', 'mypy', 'pylint'],
   \   'rust': ['cargo'],
+  \   'spec': [],
   \   'text': [],
   \   'zsh': ['shell'],
   \}
 <
   This option can be used to enable only a particular set of linters for a
-  file. For example, you can enable only 'eslint' for JavaScript files: >
+  file. For example, you can enable only `eslint` for JavaScript files: >
 
   let g:ale_linters = {'javascript': ['eslint']}
 <
@@ -970,14 +973,15 @@ g:ale_linters                                                   *g:ale_linters*
 
   let g:ale_linters = {'javascript': []}
 <
-  All linters available for a given filetype can be enabled by using the
-  string `'all'`: >
+  All linters will be run for unspecified filetypes. All available linters can
+  be enabled explicitly for a given filetype by passing the string `'all'`,
+  instead of a List. >
 
   let g:ale_linters = {'c': 'all'}
 <
   Linters can be configured in each buffer with buffer-local variables. ALE
   will first look for linters for filetypes in the `b:ale_linters` variable,
-  then `g:ale_linters`, and then a default Dictionary.
+  then `g:ale_linters`, and then the default Dictionary mentioned above.
 
   `b:ale_linters` can be set to a List, or the string `'all'`. When linters
   for two different filetypes share the same name, the first linter loaded
@@ -993,6 +997,30 @@ g:ale_linters                                                   *g:ale_linters*
   " Explicitly enable all available linters for the filetype.
   let b:ale_linters = 'all'
 <
+  ALE can be configured to disable all linters unless otherwise specified with
+  `g:ale_enabled` or `b:ale_enabled` with the option |g:ale_linters_explicit|.
+
+
+g:ale_linters_explicit                                 *g:ale_linters_explicit*
+
+  Type: |Number|
+  Default: `0`
+
+  When set to `1`, only the linters from |g:ale_linters| and |b:ale_linters|
+  will be enabled. The default behavior for ALE is to enable as many linters
+  as possible, unless otherwise specified.
+
+
+g:ale_loclist_msg_format                             *g:ale_loclist_msg_format*
+
+  Type: |String|
+  Default: `g:ale_echo_msg_format`
+
+  This option is the same as |g:ale_echo_msg_format|, but for formatting the
+  message used for the loclist and the quickfix list.
+
+  The strings for configuring `%severity%` are also used for this option.
+
 
 g:ale_max_buffer_history_size                   *g:ale_max_buffer_history_size*
 
@@ -1581,10 +1609,12 @@ ALEDisableBuffer                                             *ALEDisableBuffer*
   For removing problems reported by ALE, but leaving ALE enabled, see
   |ALEReset| and |ALEResetBuffer|.
 
+                                                                   *:ALEDetail*
 ALEDetail                                                           *ALEDetail*
 
-  Show the full linter message for the current line. This will only have an
-  effect on lines that contain a linter message.
+  Show the full linter message for the current line in the preview window.
+  This will only have an effect on lines that contain a linter message. The
+  preview window can be easily closed with the `q` key.
 
   A plug mapping `<Plug>(ale_detail)` is defined for this command.
 

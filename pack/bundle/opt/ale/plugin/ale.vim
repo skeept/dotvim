@@ -68,7 +68,9 @@ let g:ale_filetype_blacklist = [
 \]
 
 " This Dictionary configures which linters are enabled for which languages.
-let g:ale_linters = get(g:, 'ale_linters', {})
+call ale#Set('linters', {})
+" This option can be changed to only enable explicitly selected linters.
+call ale#Set('linters_explicit', 0)
 
 " This Dictionary configures which functions will be used for fixing problems.
 let g:ale_fixers = get(g:, 'ale_fixers', {})
@@ -149,7 +151,9 @@ let g:ale_sign_offset = get(g:, 'ale_sign_offset', 1000000)
 let g:ale_sign_column_always = get(g:, 'ale_sign_column_always', 0)
 
 " A string format for the echoed message
-let g:ale_echo_msg_format = get(g:, 'ale_echo_msg_format', '%code: %%s')
+call ale#Set('echo_msg_format', '%code: %%s')
+" The same for the loclist.
+call ale#Set('loclist_msg_format', g:ale_echo_msg_format)
 
 " Strings used for severity in the echoed message
 let g:ale_echo_msg_error_str = get(g:, 'ale_echo_msg_error_str', 'Error')
