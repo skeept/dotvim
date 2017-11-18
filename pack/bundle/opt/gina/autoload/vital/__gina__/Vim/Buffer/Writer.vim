@@ -54,7 +54,7 @@ endif
 if exists('*nvim_buf_set_lines')
   function! s:subbufline(expr, text) abort
     let bufnr = type(a:expr) == s:t_number ? a:expr : bufnr(a:expr)
-    return nvim_buf_set_lines(bufnr, 0, -1, v:true, a:text)
+    return nvim_buf_set_lines(bufnr, 0, -1, v:false, a:text)
   endfunction
 else
   function! s:subbufline(expr, text) abort
@@ -106,25 +106,14 @@ function! s:new(...) abort dict
         \ 'updatetime': self.updatetime,
         \}, get(a:000, 0, {})
         \)
-  let writer = extend(copy(s:writer), options)
+  let writer = extend(deepcopy(s:writer), options)
   return writer
 endfunction
 
 
 " Writer instance ------------------------------------------------------------
-let s:timers = {}
 let s:writers = {}
 let s:writer = {'_timer': v:null, '_running': 0, '_data': []}
-
-function! s:_timer_callback(timer) abort
-  let writer = get(s:timers, a:timer, v:null)
-  if writer is# v:null
-    call timer_stop(a:timer)
-    unlet s:timers[a:timer]
-    return
-  endif
-  call writer.flush()
-endfunction
 
 function! s:writer.start() abort
   if self._timer isnot# v:null
@@ -141,10 +130,9 @@ function! s:writer.start() abort
   let self._running = 1
   let self._timer = timer_start(
         \ self.updatetime,
-        \ function('s:_timer_callback'),
+        \ { timer -> self.flush() },
         \ {'repeat': -1}
         \)
-  let s:timers[self._timer] = self
   call self.on_start()
 endfunction
 
@@ -155,7 +143,7 @@ endfunction
 
 function! s:writer.kill() abort
   silent! call timer_stop(self._timer)
-  silent! unlet s:timers[self._timer]
+  silent! unlet! s:writers[self.bufnr]
   let self._running = 0
   unlockvar! self.bufnr
   unlockvar! self.updatetime
