@@ -100,7 +100,7 @@
 "json-ponyfill":{"archive_name":"json-ponyfill.vim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25069","version":"1.1","vim_script_nr":5512},
 "ruta":{"archive_name":"ruta-vim-0.2.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24886","version":"0.2","vim_script_nr":5511},
 "madlang-vim":{"archive_name":"madlang.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24882","version":"0.1.0.0","vim_script_nr":5510},
-"spotdiff":{"archive_name":"spotdiff1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24931","version":"1.1","vim_script_nr":5509},
+"spotdiff":{"archive_name":"spotdiff2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25649","version":"2.0","vim_script_nr":5509},
 "greek_mac":{"archive_name":"greek_mac.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25078","version":"1.0.5","vim_script_nr":5508},
 "Arcadia":{"archive_name":"arcadia.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25617","version":"3acdc8d","vim_script_nr":5507},
 "ipynb_notedown":{"archive_name":"ipynb_notedown.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24834","version":"0.1.1","vim_script_nr":5506},
