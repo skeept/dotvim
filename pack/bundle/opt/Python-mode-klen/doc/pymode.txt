@@ -309,16 +309,15 @@ Default code checkers (you could set several)          *'g:pymode_lint_checkers'
 Values may be chosen from: `pylint`, `pep8`, `mccabe`, `pep257`, `pyflakes`.
 
 Skip errors and warnings                                 *'g:pymode_lint_ignore'*
-E.g. "E501,W002", "E2,W" (Skip all Warnings and Errors that starts with E2) and
-etc
+E.g. ["W", "E2"] (Skip all Warnings and the Errors starting with E2) etc.
 >
-    let g:pymode_lint_ignore = "E501,W"
+    let g:pymode_lint_ignore = ["E501", "W",]
 
 Select some error or warnings.                           *'g:pymode_lint_select'*
 By example you disable all warnings starting from 'W', but want to see warning
 'W0011' and warning 'W430'
 >
-    let g:pymode_lint_select = "E501,W0011,W430"
+    let g:pymode_lint_select = ["E501", "W0011", "W430"]
 
 Sort errors by relevance                                   *'g:pymode_lint_sort'*
 If not empty, errors will be sort by defined relevance
@@ -693,12 +692,15 @@ Python-mode doesn't work
 ------------------------
 
 Start python mode with:
-`vim -u <path_to_pymode>/debugvimrc.vim`
-Reproduce the error and submit your python mode debug file. You check its
+`vim -i NONE -u <path_to_pymode>/debugvimrc.vim`
+Reproduce the error and submit your python mode debug file. You can check its
 location with `:messages` for something like:
 `pymode debug msg 1: Starting debug on: 2017-11-18 16:44:13 with file /tmp/pymode_debug_file.txt`
 Please submit the entire content of the file along with a reasoning of why the
 plugin seems broken.
+
+	*Underlined	do check for sensitive information in the file before
+	*Underlined	submitting!
 
 
 Rope completion is very slow                                   *pymode-rope-slow*

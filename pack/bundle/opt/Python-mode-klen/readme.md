@@ -10,6 +10,20 @@
 
 -------------------------------------------------------------------------------
 
+<p align="center">
+  <img width="150" height="150" src="https://vignette.wikia.nocookie.net/sqmegapolis/images/4/42/Warning-2-256.png/revision/latest?cb=20130403220740">
+</p>
+
+***Important***: From 2017-11-19 onwards python-mode uses submodules instead of
+hard coding 3rd party libraries into its codebase. Please issue the command:  
+`git submodule update --init --recursive`  
+inside your python-mode folder.
+
+If you are a new user please clone the repos using the recursive flag:  
+`git clone --recursive https://github.com/python-mode/python-mode`
+
+-------------------------------------------------------------------------------
+
 Python-mode is a Vim plugin that magically converts Vim into a Python IDE.
 
 Why Python-mode?
@@ -75,9 +89,9 @@ help packages` in vim for details.
 
 ## Using pathogen
 
-    % cd ~/.vim
-    % mkdir -p bundle && cd bundle
-    % git clone https://github.com/python-mode/python-mode.git
+    cd ~/.vim
+    mkdir -p bundle && cd bundle
+    git clone https://github.com/python-mode/python-mode.git
 
 Enable [pathogen](https://github.com/tpope/vim-pathogen) in your `~/.vimrc`:
 
@@ -103,17 +117,19 @@ Then rebuild **helptags** in vim:
 **filetype-plugin** (`:help filetype-plugin-on`) and **filetype-indent**
 (`:help filetype-indent-on`) must be enabled to use python-mode.
 
-# Troubleshooting
+# Troubleshooting/Debugging
 
 If your python-mode doesn't work:
 
-1. **(From the FAQ)** Start python mode with:  
-    `vim -u <path_to_pymode>/debugvimrc.vim`  
-   Reproduce the error and submit your python mode debug file. You check its
-   location with `:messages` for something like:  
-   `pymode debug msg 1: Starting debug on: 2017-11-18 16:44:13 with file /tmp/pymode_debug_file.txt`.  
-   Please submit the entire content of the file along with a reasoning of why
-   the plugin seems broken.
+**(From the FAQ)** Start python mode with:  
+`vim -i NONE -u <path_to_pymode>/debugvimrc.vim`  
+Reproduce the error and submit your python mode debug file. You can check its
+location with `:messages` for something like:  
+`pymode debug msg 1: Starting debug on: 2017-11-18 16:44:13 with file /tmp/pymode_debug_file.txt`.  
+Please submit the entire content of the file along with a reasoning of why the
+plugin seems broken.
+
+***Do check for sensitive information in the file before submitting.***
 
 # Frequent problems
 
@@ -140,8 +156,11 @@ the issue tracker at:
 
 # Contributing
 
-* Kirill Klenov (<https://github.com/klen>)
-* Felipe Vieira (<https://github.com/fmv1992>)
+The contributing guidelines for this plugin are outlined at
+`:help pymode-development`.
+
+* Author: Kirill Klenov (<https://github.com/klen>)
+* Maintainer: Felipe Vieira (<https://github.com/fmv1992>)
 
 Also see the AUTHORS file.
 
