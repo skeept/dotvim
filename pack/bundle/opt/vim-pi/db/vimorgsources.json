@@ -637,7 +637,7 @@
 "caniuse":{"archive_name":"vim-caniuse.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21975","version":"1.0","vim_script_nr":4951},
 "Lua_Support_2":{"archive_name":"lua-support.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24447","version":"1.0","vim_script_nr":4950},
 "SearchRepeat":{"archive_name":"SearchRepeat-1.11.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24214","version":"1.11","vim_script_nr":4949},
-"SearchSpecial":{"archive_name":"SearchSpecial-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21935","version":"1.00","vim_script_nr":4948},
+"SearchSpecial":{"archive_name":"SearchSpecial-1.10.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25650","version":"1.10","vim_script_nr":4948},
 "Find_in_Files_feature_like_Notepad":{"archive_name":"Find_in_Files.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21925","version":"0.0.01","vim_script_nr":4947},
 "Gtags_And_Man_Proto_GAMP":{"archive_name":"GAMP.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22101","version":"0.5.9","vim_script_nr":4946},
 "SemanticHL":{"archive_name":"semantic.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=22004","version":"1.1","vim_script_nr":4945},
