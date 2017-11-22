@@ -5691,6 +5691,10 @@
     "type": "git",
     "url": "git://github.com/inkarkat/vim-AutoSave"
   },
+  "5619": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-SearchAsQuickJump"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

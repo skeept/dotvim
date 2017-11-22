@@ -182,6 +182,8 @@ function! neomake#CancelJob(job_id, ...) abort
     let ret = 0
     if get(jobinfo, 'finished')
         call neomake#utils#DebugMessage('Removing already finished job.', jobinfo)
+    elseif has_key(jobinfo, 'exit_code')
+        call neomake#utils#DebugMessage('Job exited already.', jobinfo)
     elseif s:async
         call neomake#utils#DebugMessage('Stopping job.', jobinfo)
         if has('nvim')
@@ -2208,6 +2210,7 @@ endfunction
 
 function! s:exit_handler(jobinfo, data) abort
     let jobinfo = a:jobinfo
+    let jobinfo.exit_code = a:data
     if get(jobinfo, 'canceled')
         call neomake#utils#DebugMessage('exit: job was canceled.', jobinfo)
         call s:CleanJobinfo(jobinfo)
@@ -2240,13 +2243,11 @@ function! s:exit_handler(jobinfo, data) abort
         endif
     endfor
 
-    let status = a:data
-    let jobinfo.exit_code = a:data
     if !get(jobinfo, 'failed_to_start')
         let l:ExitCallback = neomake#utils#GetSetting('exit_callback',
                     \ extend(copy(jobinfo), maker), 0, jobinfo.ft, jobinfo.bufnr)
         if l:ExitCallback isnot# 0
-            let callback_dict = { 'status': status,
+            let callback_dict = { 'status': jobinfo.exit_code,
                                 \ 'name': maker.name,
                                 \ 'has_next': !empty(s:make_info[jobinfo.make_id].jobs_queue) }
             try
@@ -2263,10 +2264,10 @@ function! s:exit_handler(jobinfo, data) abort
     endif
 
     if s:async
-        if has('nvim') || status != 122
+        if has('nvim') || jobinfo.exit_code != 122
             call neomake#utils#DebugMessage(printf(
                         \ '%s: completed with exit code %d.',
-                        \ maker.name, status), jobinfo)
+                        \ maker.name, jobinfo.exit_code), jobinfo)
         endif
         if has_key(s:pending_outputs, jobinfo.id)
             let jobinfo.pending_output = 1
