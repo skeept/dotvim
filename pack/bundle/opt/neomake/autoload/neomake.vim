@@ -1253,7 +1253,8 @@ function! s:AddExprCallback(jobinfo, prev_list) abort
                 call neomake#utils#DebugMessage(printf(
                   \ 'Modified list entry (postprocess): %s.',
                   \ join(values(map(neomake#utils#diff_dict(before, entry)[0],
-                  \ "v:key.': '.string(v:val[0]).' => '.string(v:val[1])")))))
+                  \ "v:key.': '.string(v:val[0]).' => '.string(v:val[1])")))),
+                  \ a:jobinfo)
 
             endif
         endif
@@ -1428,7 +1429,9 @@ function! s:clean_make_info(make_info, ...) abort
             endif
         endif
         call neomake#EchoCurrentError(1)
-        call neomake#statusline#buffer_finished(a:make_info.options.bufnr)
+        if exists('*neomake#statusline#make_finished')
+            call neomake#statusline#make_finished(a:make_info)
+        endif
         call s:clean_for_new_make(a:make_info)
         if get(a:make_info, 'canceled', 0)
             call neomake#utils#DebugMessage('Skipping final processing for canceled make.', a:make_info)
@@ -1574,10 +1577,12 @@ function! s:CanProcessJobOutput() abort
     return 0
 endfunction
 
+" Create a location/quickfix list once per make.
+" Returns 0 if it has been created, 1 otherwise (i.e. it was created already).
 function! s:create_locqf_list(jobinfo, ...) abort
     let make_info = s:make_info[a:jobinfo.make_id]
     if get(make_info, 'created_locqf_list', 0)
-        return
+        return 0
     endif
     let make_info.created_locqf_list = 1
 
@@ -1589,6 +1594,7 @@ function! s:create_locqf_list(jobinfo, ...) abort
         call neomake#utils#DebugMessage('Creating quickfix list.', a:jobinfo)
         call setqflist([])
     endif
+    return 1
 endfunction
 
 function! s:clean_for_new_make(make_info) abort
@@ -1888,8 +1894,11 @@ function! s:ProcessJobOutput(jobinfo, lines, source, ...) abort
                         \ cwd, cd_error), a:jobinfo)
         endif
 
-        call s:create_locqf_list(a:jobinfo)
-        let prev_list = file_mode ? getloclist(0) : getqflist()
+        if s:create_locqf_list(a:jobinfo)
+            let prev_list = []
+        else
+            let prev_list = file_mode ? getloclist(0) : getqflist()
+        endif
 
         if exists('g:loaded_qf')
             let vimqf_var = file_mode ? 'qf_auto_open_loclist' : 'qf_auto_open_quickfix'

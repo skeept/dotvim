@@ -9,7 +9,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Align.vba.gz",
-    "version": "v40"
+    "version": "v40a"
   },
   "AlignmentMaps@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -429,7 +429,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/visincr.vba.gz",
-    "version": "v21g"
+    "version": "v21h"
   },
   "VisualModeBasedSwapping@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",

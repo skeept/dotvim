@@ -459,6 +459,15 @@ are supported for running the commands.
                       for commands which need to modify some file on disk in
                       order to fix files.
 
+  `process_with`        An optional callback for post-processing.
+
+                      The callback must accept two arguments,
+                      `(buffer, output)`, which can be used for converting
+                      the output from a command into lines to replace the
+                      buffer's contents with.
+
+                      A |List| of |String|s must be returned.
+
   `chain_with`          An optional key for defining a callback to call next.
 
                       The callback must accept two or three arguments,
@@ -478,6 +487,18 @@ are supported for running the commands.
                       This allows commands to be skipped, like version checks
                       that are cached. An empty List will be passed to the
                       next callback in the chain for the `output`.
+
+  `read_buffer`         An optional key for disabling reading the buffer.
+
+                      When set to `0`, ALE will not pipe the buffer's data
+                      into the command via stdin. This option is ignored and
+                      the buffer is not read when `read_temporary_file` is
+                      `1`.
+
+                      This option defaults to `0` when `chain_with` is defined
+                      as anything other than `v:null`, and defaults to `1`
+                      otherwise. This is so earlier commands in a chain
+                      do not receive the buffer's data by default.
 
                                                         *ale-fix-configuration*
 
@@ -1768,7 +1789,8 @@ ale#engine#ManageDirectory(buffer, directory)    *ale#engine#ManageDirectory()*
   files.
 
 
-ale#fix#registry#Add(name, func, filetypes, desc)      *ale#fix#registry#Add()*
+ale#fix#registry#Add(name, func, filetypes, desc, [aliases])
+                                                       *ale#fix#registry#Add()*
 
   Given a |String| `name` for a name to add to the registry, a |String| `func`
   for a function name, a |List| `filetypes` for a list of filetypes to
@@ -1777,6 +1799,11 @@ ale#fix#registry#Add(name, func, filetypes, desc)      *ale#fix#registry#Add()*
 
   The `name` can then be used for |g:ale_fixers| in place of the function
   name, and suggested for fixing files.
+
+  An optional |List| of |String|s for aliases can be passed as the `aliases`
+  argument. These aliases can also be used for looking up a fixer function.
+  ALE will search for fixers in the registry first by `name`, then by their
+  `aliases`.
 
 
 ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
