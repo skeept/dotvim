@@ -44,6 +44,8 @@ if s:is_win
   let s:bin.preview = (executable('ruby') ? 'ruby' : 'bash').' '.escape(s:bin.preview, '\')
 endif
 
+let s:wide = 120
+
 function! s:extend_opts(dict, eopts, prepend)
   if empty(a:eopts)
     return
@@ -327,7 +329,7 @@ function! fzf#vim#_lines(all)
   let rest = []
   let buf = bufnr('')
   let longest_name = 0
-  let display_bufnames = &columns > 100
+  let display_bufnames = &columns > s:wide
   if display_bufnames
     let bufnames = {}
     for b in s:buflisted()
@@ -1043,16 +1045,29 @@ endfunction
 " ------------------------------------------------------------------
 " Commits / BCommits
 " ------------------------------------------------------------------
+function! s:yank_to_register(data)
+  let @" = a:data
+  silent! let @* = a:data
+  silent! let @+ = a:data
+endfunction
+
 function! s:commits_sink(lines)
   if len(a:lines) < 2
     return
   endif
 
+  let pat = '[0-9a-f]\{7,9}'
+
+  if a:lines[0] == 'ctrl-y'
+    let hashes = join(filter(map(a:lines[1:], 'matchstr(v:val, pat)'), 'len(v:val)'))
+    return s:yank_to_register(hashes)
+  end
+
   let diff = a:lines[0] == 'ctrl-d'
   let cmd = s:action_for(a:lines[0], 'e')
   let buf = bufnr('')
   for idx in range(1, len(a:lines) - 1)
-    let sha = matchstr(a:lines[idx], '[0-9a-f]\{7,9}')
+    let sha = matchstr(a:lines[idx], pat)
     if !empty(sha)
       if diff
         if idx > 1
@@ -1098,8 +1113,8 @@ function! s:commits(buffer_local, args)
   \ 'sink*':   s:function('s:commits_sink'),
   \ 'options': ['--ansi', '--multi', '--tiebreak=index', '--reverse',
   \   '--inline-info', '--prompt', command.'> ', '--bind=ctrl-s:toggle-sort',
-  \   '--header', ':: Press '.s:magenta('CTRL-S', 'Special').' to toggle sort',
-  \   '--expect='.expect_keys]
+  \   '--header', ':: Press '.s:magenta('CTRL-S', 'Special').' to toggle sort, '.s:magenta('CTRL-Y', 'Special').' to yank commit hashes',
+  \   '--expect=ctrl-y,'.expect_keys]
   \ }
 
   if a:buffer_local
@@ -1107,7 +1122,7 @@ function! s:commits(buffer_local, args)
     let options.options[-1] .= ',ctrl-d'
   endif
 
-  if !s:is_win
+  if !s:is_win && &columns > s:wide
     call extend(options.options,
     \ ['--preview', 'grep -o "[a-f0-9]\{7,\}" <<< {} | xargs git show --format=format: --color=always | head -200'])
   endif

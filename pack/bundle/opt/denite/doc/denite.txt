@@ -1654,7 +1654,7 @@ openable	An interface to open the object.
 
 			switch
 				Switch to the window that is opening the
-				object.
+				object. If it isn't opened, fallback open.
 
 			tabswitch
 				Switch to the window that is opening the
@@ -1918,6 +1918,14 @@ After create new Kind class, alias it to your source by >
     self.kind = Kind(vim)
 <
 in the "__init__" method of your source class.
+
+Note: If you want to change the source in the action, you can change
+"context['sources_queue']" like this: >
+
+    def action_refine(self, context):
+        context['sources_queue'].append([
+            {'name': 'myplugin', 'args': []},
+        ])
 
 ------------------------------------------------------------------------------
 KIND ATTRIBUTES					*denite-kind-attributes*
