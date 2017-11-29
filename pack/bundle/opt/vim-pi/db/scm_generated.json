@@ -5695,6 +5695,10 @@
     "type": "git",
     "url": "git://github.com/inkarkat/vim-SearchAsQuickJump"
   },
+  "5622": {
+    "type": "git",
+    "url": "git://github.com/mboughaba/vim-lessmess"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
