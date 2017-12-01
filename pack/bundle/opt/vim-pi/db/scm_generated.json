@@ -5699,6 +5699,10 @@
     "type": "git",
     "url": "git://github.com/mboughaba/vim-lessmess"
   },
+  "5623": {
+    "type": "git",
+    "url": "git://github.com/joereynolds/SQHell.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
