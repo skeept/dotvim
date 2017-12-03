@@ -10,7 +10,6 @@ function! deoplete#handler#_init() abort
     autocmd InsertLeave * call s:on_insert_leave()
     autocmd CompleteDone * call s:on_complete_done()
     autocmd TextChangedI * call s:completion_begin('TextChangedI')
-    autocmd InsertEnter * call s:completion_begin('InsertEnter')
     autocmd InsertLeave * call s:completion_timer_stop()
   augroup END
 
@@ -22,8 +21,13 @@ function! deoplete#handler#_init() abort
     call s:define_on_event('DirChanged')
   endif
 
+  if g:deoplete#enable_on_insert_enter
+    autocmd deoplete InsertEnter *
+          \ call s:completion_begin('InsertEnter')
+  endif
   if g:deoplete#enable_refresh_always
-    autocmd deoplete InsertCharPre * call s:completion_begin('InsertCharPre')
+    autocmd deoplete InsertCharPre *
+          \ call s:completion_begin('InsertCharPre')
   endif
 endfunction
 
@@ -129,8 +133,10 @@ function! s:completion_begin(event) abort
             \ 'b:deoplete_omni_patterns',
             \ 'g:deoplete#omni_patterns',
             \ 'g:deoplete#_omni_patterns'))
+        let blacklist = ['LanguageClient#complete']
         if pattern !=# '' && &l:omnifunc !=# ''
               \ && context.input =~# '\%('.pattern.'\)$'
+              \ && index(blacklist, &l:omnifunc) < 0
           let g:deoplete#_context.candidates = []
           call deoplete#mapping#_set_completeopt()
           call feedkeys("\<C-x>\<C-o>", 'in')

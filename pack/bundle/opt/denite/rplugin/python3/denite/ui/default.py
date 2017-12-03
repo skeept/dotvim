@@ -414,6 +414,8 @@ class Default(object):
             self._cursor + self._win_cursor,
             self._candidates_len)
         mode = '-- ' + self._current_mode.upper() + ' -- '
+        if self._context['error_messages']:
+            mode = '[ERROR] ' + mode
         path = '[' + self._context['path'] + ']'
         bufvars = self._bufvars
 
@@ -509,6 +511,7 @@ class Default(object):
 
         if self._context['auto_preview']:
             self.do_action('preview')
+            self.redraw()
         if self._context['auto_highlight']:
             self.do_action('highlight')
 

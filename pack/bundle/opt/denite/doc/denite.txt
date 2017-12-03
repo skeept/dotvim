@@ -123,7 +123,7 @@ EXAMPLES						*denite-examples*
 	" For ripgrep
 	" Note: It is slower than ag
 	call denite#custom#var('file_rec', 'command',
-	\ ['rg', '--files', '--glob', '!.git', ''])
+	\ ['rg', '--files', '--glob', '!.git'])
 	" For Pt(the platinum searcher)
 	" NOTE: It also supports windows.
 	call denite#custom#var('file_rec', 'command',
@@ -1740,6 +1740,10 @@ sorter_sublime
 		Uses the scoring algorithm from this article and its implementation:
 		https://bit.ly/reverse-engineering-sublime-text-s-fuzzy-match
 
+				*denite-filter-converter_abbr_word*
+converter_abbr_word
+		Convert candidate abbr to word.
+
 				*denite-filter-converter_relative_abbr*
 converter_relative_abbr
 		Convert candidate's abbr to the relative path.
@@ -2146,6 +2150,11 @@ A:
 <
 Please execute :GetChar and press <A-g>.
 If it is the same of g, your environment does not support <A-g>.
+
+Q: I want to narrow by path in grep source.
+
+A: >
+	call denite#custom#source('grep', 'filters', ['converter_abbr_word'])
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*
