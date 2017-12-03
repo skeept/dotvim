@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.17.2
+0.17.3
 ------
 - `$LINES` and `$COLUMNS` are exported to preview command so that the command
   knows the exact size of the preview window.
