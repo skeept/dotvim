@@ -430,6 +430,10 @@ func parseKeyChords(str string, message string) map[int]string {
 			chord = tui.SLeft
 		case "shift-right":
 			chord = tui.SRight
+		case "left-click":
+			chord = tui.LeftClick
+		case "right-click":
+			chord = tui.RightClick
 		case "double-click":
 			chord = tui.DoubleClick
 		case "f10":
@@ -658,8 +662,12 @@ func parseKeymap(keymap map[int][]action, str string) {
 				appendAction(actAbort)
 			case "accept":
 				appendAction(actAccept)
+			case "accept-non-empty":
+				appendAction(actAcceptNonEmpty)
 			case "print-query":
 				appendAction(actPrintQuery)
+			case "replace-query":
+				appendAction(actReplaceQuery)
 			case "backward-char":
 				appendAction(actBackwardChar)
 			case "backward-delete-char":

@@ -769,6 +769,15 @@ class TestGoFZF < TestBase
     assert_equal %w[print-my-query], readonce.split($INPUT_RECORD_SEPARATOR)
   end
 
+  def test_bind_replace_query
+    tmux.send_keys "seq 1 1000 | #{fzf '--print-query --bind=ctrl-j:replace-query'}", :Enter
+    tmux.send_keys '1'
+    tmux.until { |lines| lines[-2].end_with? '272/1000' }
+    tmux.send_keys 'C-k', 'C-j'
+    tmux.until { |lines| lines[-2].end_with? '29/1000' }
+    tmux.until { |lines| lines[-1].end_with? '> 10' }
+  end
+
   def test_long_line
     data = '.' * 256 * 1024
     File.open(tempname, 'w') do |f|
@@ -1319,12 +1328,12 @@ class TestGoFZF < TestBase
   end
 
   def test_preview_hidden
-    tmux.send_keys %(seq 1000 | #{FZF} --preview 'echo {{}-{}}' --preview-window down:1:hidden --bind ?:toggle-preview), :Enter
+    tmux.send_keys %(seq 1000 | #{FZF} --preview 'echo {{}-{}-\\$LINES-\\$COLUMNS}' --preview-window down:1:hidden --bind ?:toggle-preview), :Enter
     tmux.until { |lines| lines[-1] == '>' }
     tmux.send_keys '?'
-    tmux.until { |lines| lines[-2].include?(' {1-1}') }
+    tmux.until { |lines| lines[-2] =~ / {1-1-1-[0-9]+}/ }
     tmux.send_keys '555'
-    tmux.until { |lines| lines[-2].include?(' {555-555}') }
+    tmux.until { |lines| lines[-2] =~ / {555-555-1-[0-9]+}/ }
     tmux.send_keys '?'
     tmux.until { |lines| lines[-1] == '> 555' }
   end
@@ -1367,6 +1376,42 @@ class TestGoFZF < TestBase
     tmux.send_keys 1
     tmux.until { |lines| lines[-3] == '> 11' }
     tmux.send_keys :Enter
+  end
+
+  def test_accept_non_empty
+    tmux.send_keys %(seq 1000 | #{fzf '--print-query --bind enter:accept-non-empty'}), :Enter
+    tmux.until { |lines| lines.match_count == 1000 }
+    tmux.send_keys 'foo'
+    tmux.until { |lines| lines[-2].include? '0/1000' }
+    # fzf doesn't exit since there's no selection
+    tmux.send_keys :Enter
+    tmux.until { |lines| lines[-2].include? '0/1000' }
+    tmux.send_keys 'C-u'
+    tmux.until { |lines| lines[-2].include? '1000/1000' }
+    tmux.send_keys '999'
+    tmux.until { |lines| lines[-2].include? '1/1000' }
+    tmux.send_keys :Enter
+    assert_equal %w[999 999], readonce.split($INPUT_RECORD_SEPARATOR)
+  end
+
+  def test_accept_non_empty_with_multi_selection
+    tmux.send_keys %(seq 1000 | #{fzf '-m --print-query --bind enter:accept-non-empty'}), :Enter
+    tmux.until { |lines| lines.match_count == 1000 }
+    tmux.send_keys :Tab
+    tmux.until { |lines| lines[-2].include? '1000/1000 (1)' }
+    tmux.send_keys 'foo'
+    tmux.until { |lines| lines[-2].include? '0/1000' }
+    # fzf will exit in this case even though there's no match for the current query
+    tmux.send_keys :Enter
+    assert_equal %w[foo 1], readonce.split($INPUT_RECORD_SEPARATOR)
+  end
+
+  def test_accept_non_empty_with_empty_list
+    tmux.send_keys %(: | #{fzf '-q foo --print-query --bind enter:accept-non-empty'}), :Enter
+    tmux.until { |lines| lines[-2].strip == '0/0' }
+    tmux.send_keys :Enter
+    # fzf will exit anyway since input list is empty
+    assert_equal %w[foo], readonce.split($INPUT_RECORD_SEPARATOR)
   end
 
   def test_preview_update_on_select
@@ -1715,6 +1760,27 @@ class TestBash < TestBase
   def setup
     super
     @tmux = Tmux.new :bash
+  end
+
+  def test_dynamic_completion_loader
+    tmux.paste 'touch /tmp/foo; _fzf_completion_loader=1'
+    tmux.paste '_completion_loader() { complete -o default fake; }'
+    tmux.paste 'complete -F _fzf_path_completion -o default -o bashdefault fake'
+    tmux.send_keys 'fake /tmp/foo**', :Tab
+    tmux.until do |lines|
+      lines.item_count.positive? && lines.item_count == lines.match_count
+    end
+    tmux.send_keys 'C-c'
+
+    tmux.prepare
+    tmux.send_keys 'fake /tmp/foo'
+    tmux.send_keys :Tab , 'C-u'
+
+    tmux.prepare
+    tmux.send_keys 'fake /tmp/foo**', :Tab
+    tmux.until do |lines|
+      lines.item_count.positive? && lines.item_count == lines.match_count
+    end
   end
 end
 
