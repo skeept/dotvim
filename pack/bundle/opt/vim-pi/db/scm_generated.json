@@ -2679,6 +2679,14 @@
     "type": "git",
     "url": "git://github.com/Rykka/trans.vim"
   },
+  "4372": {
+    "type": "git",
+    "url": "git://github.com/Clavelito/indent-awk.vim"
+  },
+  "4373": {
+    "type": "git",
+    "url": "git://github.com/Clavelito/indent-sh.vim"
+  },
   "4375": {
     "type": "git",
     "url": "git://github.com/tpope/vim-sleuth"
