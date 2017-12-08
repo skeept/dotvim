@@ -620,19 +620,19 @@ function! s:prompt(flags)
   let &ttimeout = 1
   let &ttimeoutlen = 100
 
-  if a:flags.prompt_quote == 2
-    let text = "'". a:flags.query ."'\<left>"
-  elseif a:flags.prompt_quote == 3
-    let text = '"'. a:flags.query ."\"\<left>"
+  if a:flags.prompt_quote == 2 && !has_key(a:flags, 'query_orig')
+    let a:flags.query = "'". a:flags.query ."'\<left>"
+  elseif a:flags.prompt_quote == 3 && !has_key(a:flags, 'query_orig')
+    let a:flags.query = '"'. a:flags.query ."\"\<left>"
   else
-    let text = a:flags.query
+    let a:flags.query = a:flags.query
   endif
 
   echohl Question
   call inputsave()
 
   try
-    let a:flags.query = input(prompt_text .'> ', text,
+    let a:flags.query = input(prompt_text .'> ', a:flags.query,
           \ 'customlist,grepper#complete_files')
   finally
     redraw!
@@ -660,9 +660,15 @@ function! s:prompt(flags)
       let a:flags.query = s:escape_cword(a:flags, a:flags.query_orig)
     else
       let is_findstr = s:get_current_tool_name(a:flags) == 'findstr'
-      let a:flags.query = has_key(a:flags, 'query_orig')
-            \ ? (is_findstr ? '' : '-- '). s:escape_query(a:flags, a:flags.query_orig)
-            \ : a:flags.query[:-len(s:magic.next)-1]
+      if has_key(a:flags, 'query_orig')
+        let a:flags.query = (is_findstr ? '' : '-- '). s:escape_query(a:flags, a:flags.query_orig)
+      else
+        if a:flags.prompt_quote >= 2
+          let a:flags.query = a:flags.query[1:-len(s:magic.next)-2]
+        else
+          let a:flags.query = a:flags.query[:-len(s:magic.next)-1]
+        endif
+      endif
     endif
     return s:prompt(a:flags)
   endif

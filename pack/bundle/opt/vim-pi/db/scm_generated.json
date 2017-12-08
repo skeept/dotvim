@@ -5711,6 +5711,10 @@
     "type": "git",
     "url": "git://github.com/joereynolds/SQHell.vim"
   },
+  "5627": {
+    "type": "git",
+    "url": "git://github.com/mboughaba/i3config.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
