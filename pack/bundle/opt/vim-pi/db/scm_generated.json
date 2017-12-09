@@ -3971,6 +3971,10 @@
     "type": "git",
     "url": "git://github.com/inkarkat/vim-SearchSpecial"
   },
+  "4949": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-SearchRepeat"
+  },
   "4950": {
     "type": "git",
     "url": "git://github.com/WolfgangMehner/lua-support"
@@ -4094,6 +4098,10 @@
   "4995": {
     "type": "git",
     "url": "git://github.com/KabbAmine/vCoolor.vim"
+  },
+  "4997": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-SearchInRange"
   },
   "4998": {
     "type": "git",
@@ -5710,6 +5718,10 @@
   "5623": {
     "type": "git",
     "url": "git://github.com/joereynolds/SQHell.vim"
+  },
+  "5626": {
+    "type": "git",
+    "url": "git://github.com/AlessandroYorba/Libertine"
   },
   "5627": {
     "type": "git",

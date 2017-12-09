@@ -77,7 +77,13 @@ endfunction
 if exists('g:neomake_test_messages')  " is_testing
     function! neomake#GetMakeOptions(...) abort
         let make_id = a:0 ? a:1 : s:make_id
-        return s:make_info[make_id]
+        try
+            let r = s:make_info[make_id]
+        catch
+            let g:neomake_test_errors += [printf('GetMakeOptions failed: %s (in %s)', v:exception, v:throwpoint)]
+            return {'verbosity': 3}
+        endtry
+        return r
     endfunction
 else
     function! neomake#GetMakeOptions(...) abort
@@ -1035,11 +1041,9 @@ function! s:Make(options) abort
 
     let s:make_id += 1
     let make_id = s:make_id
-    let bufnr = bufnr('%')
-    let options = copy(a:options)
-    call extend(options, {
+    let options = extend(copy(a:options), {
                 \ 'file_mode': 1,
-                \ 'bufnr': bufnr,
+                \ 'bufnr': bufnr('%'),
                 \ 'ft': &filetype,
                 \ 'make_id': make_id,
                 \ }, 'keep')
@@ -1079,7 +1083,7 @@ function! s:Make(options) abort
             if empty(makers)
                 if file_mode
                     call neomake#utils#DebugMessage('Nothing to make: no enabled file mode makers (filetype='.options.ft.').', options)
-                    call s:clean_make_info(make_info)
+                    unlet s:make_info[make_id]
                     return []
                 else
                     let makers = [s:get_makeprg_maker()]
