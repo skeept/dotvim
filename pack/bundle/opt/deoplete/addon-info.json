@@ -1,0 +1,6 @@
+{
+  "dependencies" : {
+    "yarp": {},
+    "neovim-rpc": {}
+  },
+}
