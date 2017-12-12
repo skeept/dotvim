@@ -13,6 +13,7 @@ func! yarp#pyx#init() dict
     endif
 
     let self.cmd = [exe, 
+                \ '-u',
                 \ s:script,
                 \ yarp#core#serveraddr(),
                 \ self.id,
@@ -59,7 +60,7 @@ func! s:py3exe() dict
         if has('vim_starting')
             call self.error("")
         endif
-        call self.error("###### Please configure g:python3_host_prog proerly ######")
+        call self.error("###### Please configure g:python3_host_prog properly ######")
         if has('vim_starting')
             call self.error("")
         endif
