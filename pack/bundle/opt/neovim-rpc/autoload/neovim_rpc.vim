@@ -48,17 +48,11 @@ endfunc
 
 " elegant python function call wrapper
 func! neovim_rpc#pyxcall(func,...)
-	execute s:py . ' import vim'
-	execute s:py . ' import json'
-	let l:i = 1
-	let l:cnt = len(a:000)
-	let l:args = []
-	while l:i <= l:cnt
-		call add(l:args,'json.loads(vim.eval("json_encode(a:'.l:i.')"))')
-		let l:i += 1
-	endwhile
-	return s:pyeval(a:func . '(' . join(l:args,',') . ')')
-	" return l:args
+	execute s:py . ' import vim, json'
+    let g:neovim_rpc#_tmp_args = copy(a:000)
+	let l:ret = s:pyeval(a:func . '(*vim.vars["neovim_rpc#_tmp_args"])')
+    unlet g:neovim_rpc#_tmp_args
+    return l:ret
 endfunc
 
 " supported opt keys:
@@ -162,7 +156,26 @@ let g:_neovim_rpc_jobs = {}
 let s:leaving = 0
 
 func! neovim_rpc#_error(msg)
+    if mode() == 'i'
+        " NOTE: side effect, sorry, but this is necessary
+        set nosmd
+    endif
     echohl ErrorMsg
     echom '[vim-hug-neovim-rpc] ' . a:msg
     echohl None
+endfunc
+
+func! neovim_rpc#_nvim_err_write(msg)
+    if mode() == 'i'
+        " NOTE: side effect, sorry, but this is necessary
+        set nosmd
+    endif
+    echohl ErrorMsg
+    let g:error = a:msg
+    echom a:msg
+    echohl None
+endfunc
+
+func! neovim_rpc#_nvim_out_write(msg)
+    echom a:msg
 endfunc
