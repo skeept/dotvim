@@ -5,7 +5,6 @@
 # ============================================================================
 
 from .base import Base
-from os import path
 from ..kind.file import Kind as File
 from denite.util import expand
 
@@ -25,8 +24,7 @@ class Source(Base):
 
     def gather_candidates(self, context):
         return [{'word': x, 'action__path': x}
-                for x in [expand(x) for x in self.vim.eval('v:oldfiles')]
-                if path.isfile(x) or self.vim.call('buflisted', x)]
+                for x in [expand(x) for x in self.vim.eval('v:oldfiles')]]
 
 
 class Kind(File):

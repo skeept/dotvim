@@ -69,6 +69,7 @@ class Default(object):
             while context['sources_queue']:
                 self._start(context['sources_queue'][0], context)
                 context['sources_queue'] = context['sources_queue'][1:]
+                context['path'] = self._context['path']
         finally:
             self.cleanup()
 
@@ -403,9 +404,6 @@ class Default(object):
         self._vim.current.buffer[:] = self._displayed_texts
         self.resize_buffer()
 
-        if self._context['reversed']:
-            self._vim.command('normal! zb')
-
         self.move_cursor()
 
     def update_status(self):
@@ -466,6 +464,8 @@ class Default(object):
 
         if not is_vertical and self._vim.current.window.height != winheight:
             self._vim.command('resize ' + str(winheight))
+            if self._context['reversed']:
+                self._vim.command('normal! zb')
         elif is_vertical and self._vim.current.window.width != winwidth:
             self._vim.command('vertical resize ' + str(winwidth))
 
