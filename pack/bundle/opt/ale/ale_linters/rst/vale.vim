@@ -1,7 +1,7 @@
 " Author: chew-z https://github.com/chew-z
-" Description: vale for Markdown files
+" Description: vale for RST files
 
-call ale#linter#Define('markdown', {
+call ale#linter#Define('rst', {
 \   'name': 'vale',
 \   'executable': 'vale',
 \   'command': 'vale --output=JSON %t',
