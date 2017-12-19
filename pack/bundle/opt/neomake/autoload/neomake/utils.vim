@@ -241,11 +241,9 @@ function! s:command_maker.fn(jobinfo) dict abort
         let argv = split(&shell) + split(&shellcmdflag)
         let maker.exe = argv[0]
         let maker.args = argv[1:] + [command]
-        let maker._exe_wrapped_in_shell = split(command)[0]
     else
         let maker.exe = command[0]
         let maker.args = command[1:]
-        let maker._exe_wrapped_in_shell = ''
     endif
 
     if get(maker, 'append_file', a:jobinfo.file_mode)
@@ -676,4 +674,25 @@ function! neomake#utils#highlight_is_defined(group) abort
         return 0
     endif
     return neomake#utils#parse_highlight(a:group) !=# 'cleared'
+endfunction
+
+function! neomake#utils#get_project_root(bufnr) abort
+    let ft = getbufvar(a:bufnr, '&filetype')
+    call neomake#utils#load_ft_makers(ft)
+
+    let project_root_files = ['.git', 'Makefile']
+
+    let ft_project_root_files = 'neomake#makers#ft#'.ft.'#project_root_files'
+    if has_key(g:, ft_project_root_files)
+        let project_root_files = get(g:, ft_project_root_files) + project_root_files
+    endif
+
+    let buf_dir = expand('#'.a:bufnr.':p:h')
+    for fname in project_root_files
+        let project_root = neomake#utils#FindGlobFile(fname, buf_dir)
+        if !empty(project_root)
+            return fnamemodify(project_root, ':h')
+        endif
+    endfor
+    return ''
 endfunction
