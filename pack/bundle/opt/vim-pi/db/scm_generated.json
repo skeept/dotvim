@@ -5727,6 +5727,10 @@
     "type": "git",
     "url": "git://github.com/mboughaba/i3config.vim"
   },
+  "5629": {
+    "type": "git",
+    "url": "git://github.com/thiagoalessio/rainbow_levels.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
