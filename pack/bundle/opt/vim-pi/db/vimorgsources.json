@@ -164,7 +164,7 @@
 "Buffy":{"archive_name":"buffy-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24557","version":"0.1","vim_script_nr":5452},
 "vim-seattle":{"archive_name":"vim-seattle-release_1.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24556","version":"1.1","vim_script_nr":5451},
 "unicon":{"archive_name":"vim-unicon.zip","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25688","version":"1.2","vim_script_nr":5450},
-"ALE_-_Asynchronous_Lint_Engine":{"archive_name":"vim-ale-1.6.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25654","version":"1.6.2","vim_script_nr":5449},
+"ALE_-_Asynchronous_Lint_Engine":{"archive_name":"vim-ale-1.7.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25721","version":"1.7.0","vim_script_nr":5449},
 "vim-zim":{"archive_name":"vim-zim.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24524","version":"0.1","vim_script_nr":5448},
 "pgn%5447":{"archive_name":"pgn.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24529","version":"1.0","vim_script_nr":"5447"},
 "git-switcher":{"archive_name":"git-switcher.vim-1.6.2.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25673","version":"1.6.2","vim_script_nr":5446},
