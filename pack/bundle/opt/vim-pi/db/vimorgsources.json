@@ -1,5 +1,5 @@
 {
-"rainbow_levels":{"archive_name":"rainbow_levels-0.1.0.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25720","version":"0.1.0","vim_script_nr":5629},
+"rainbow_levels":{"archive_name":"rainbow_levels-0.3.0.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25724","version":"0.3.0","vim_script_nr":5629},
 "bioSyntax":{"archive_name":"bioSyntax-0.1-beta.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25717","version":"v0.1","vim_script_nr":5628},
 "i3config":{"archive_name":"i3config.vim-0.3.0.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25696","version":"0.3.0","vim_script_nr":5627},
 "Libertine":{"archive_name":"libertine.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25686","version":"1e66d66","vim_script_nr":5626},
@@ -179,7 +179,7 @@
 "vim-anyfold":{"archive_name":"vim-anyfold-1.1.0.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24776","version":"1.1.0","vim_script_nr":5435},
 "ctrlp-obsession":{"archive_name":"ctrlp-obsession.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24477","version":"0.0.1","vim_script_nr":5434},
 "speedy":{"archive_name":"speedy-1.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24631","version":"v1,1","vim_script_nr":5433},
-"Omnipytent":{"archive_name":"omnipytent_v1.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25677","version":"1.1.0","vim_script_nr":5432},
+"Omnipytent":{"archive_name":"omnipytent_v1.2.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25722","version":"1.2.0","vim_script_nr":5432},
 "asyncrun":{"archive_name":"asyncrun.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25711","version":"1.3.19","vim_script_nr":5431},
 "FocusPrevious":{"archive_name":"FocusPrevious.vmb","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24462","version":"1.0","vim_script_nr":5430},
 "Smile":{"archive_name":"smile_v1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24456","version":"1.0.1","vim_script_nr":5429},
