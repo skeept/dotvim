@@ -780,13 +780,10 @@ S		<denite:change_line>
 X		<denite:quick_move>
 a		<denite:append>
 b		<denite:move_caret_to_one_word_left>
-c		<denite:change_word>
 cc		<denite:change_line>
 cw		<denite:change_word>
 d		<denite:do_action:delete>
-dd		<denite:delete_entire_text>
 e		<denite:do_action:edit>
-e		<denite:move_caret_to_end_of_word>
 gg		<denite:move_to_first_line>
 h		<denite:move_caret_to_left>
 i		<denite:enter_mode:insert>
@@ -1745,6 +1742,10 @@ sorter_sublime
 		Uses the scoring algorithm from this article and its implementation:
 		https://bit.ly/reverse-engineering-sublime-text-s-fuzzy-match
 
+						*denite-filter-sorter_word*
+sorter_word
+		Simple filter to sort candidates by ascii order of word
+
 				*denite-filter-converter_abbr_word*
 converter_abbr_word
 		Convert candidate abbr to word.
@@ -2159,7 +2160,8 @@ If it is the same of g, your environment does not support <A-g>.
 Q: I want to narrow by path in grep source.
 
 A: >
-	call denite#custom#source('grep', 'filters', ['converter_abbr_word'])
+	call denite#custom#source('grep',
+	\ 'converters', ['converter_abbr_word'])
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*

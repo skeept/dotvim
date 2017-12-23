@@ -5731,6 +5731,14 @@
     "type": "git",
     "url": "git://github.com/thiagoalessio/rainbow_levels.vim"
   },
+  "5630": {
+    "type": "git",
+    "url": "git://github.com/tc50cal/vim-terminal"
+  },
+  "5631": {
+    "type": "git",
+    "url": "git://github.com/joereynolds/place.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
