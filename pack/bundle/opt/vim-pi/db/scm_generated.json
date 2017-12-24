@@ -507,6 +507,10 @@
     "type": "git",
     "url": "git://github.com/rkitover/perl-vim-mxd"
   },
+  "2529": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-IndentCommentPrefix"
+  },
   "2531": {
     "type": "git",
     "url": "git://github.com/kovisoft/slimv"
@@ -5002,6 +5006,10 @@
   "5346": {
     "type": "git",
     "url": "git://github.com/dkarter/bullets.vim"
+  },
+  "5348": {
+    "type": "git",
+    "url": "git://github.com/KnoP-01/rapid-for-vim"
   },
   "5349": {
     "type": "git",
