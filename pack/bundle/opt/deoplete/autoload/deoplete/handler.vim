@@ -32,8 +32,8 @@ function! deoplete#handler#_init() abort
 
   " Note: Vim 8 GUI is broken
   " dummy timer call is needed before complete()
-  if !has('nvim')
-    let s:dummy_timer = timer_start(100, {timer -> 0})
+  if !has('nvim') && has('gui_running')
+    let s:dummy_timer = timer_start(200, {timer -> 0}, {'repeat': -1})
   endif
 endfunction
 
@@ -74,10 +74,6 @@ function! s:do_complete(timer) abort
   elseif g:deoplete#complete_method ==# 'omnifunc'
     let &l:omnifunc = 'deoplete#mapping#_completefunc'
     call feedkeys("\<C-x>\<C-o>", 'in')
-  endif
-
-  if exists('s:dummy_timer')
-    call timer_stop(s:dummy_timer)
   endif
 endfunction
 

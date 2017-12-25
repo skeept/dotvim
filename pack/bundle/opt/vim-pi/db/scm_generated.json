@@ -111,6 +111,14 @@
     "type": "git",
     "url": "git://github.com/tpope/vim-git"
   },
+  "1690": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-IndentConsistencyCop"
+  },
+  "1691": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-IndentConsistencyCopAutoCmds"
+  },
   "1693": {
     "type": "git",
     "url": "git://github.com/mbbill/desertEx"
