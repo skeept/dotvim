@@ -1,4 +1,5 @@
 {
+"readline":{"archive_name":"readline.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25740","version":"1.0","vim_script_nr":5633},
 "DumpX":{"archive_name":"dumpx.tar.xz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25733","version":"0.2","vim_script_nr":5632},
 "place":{"archive_name":"place.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25738","version":"0.2","vim_script_nr":5631},
 "vim-terminal":{"archive_name":"vim-terminal-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25725","version":"1.0","vim_script_nr":5630},
@@ -1196,7 +1197,7 @@
 "vim-maximizer":{"archive_name":"vim-maximizer.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19263","version":"1.0.1","vim_script_nr":4376},
 "sleuth":{"archive_name":"sleuth.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19409","version":"1.1","vim_script_nr":4375},
 "pyflakes-nopython":{"archive_name":"pyflakes-nopython.tar.gz","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19266","version":"0.2","vim_script_nr":4374},
-"sh%4373":{"archive_name":"sh.vim_4.58.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25716","version":"4.58","vim_script_nr":"4373"},
+"sh%4373":{"archive_name":"sh.vim_4.59.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25739","version":"4.59","vim_script_nr":"4373"},
 "awk":{"archive_name":"awk.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25690","version":"1.80","vim_script_nr":4372},
 "Gentooish_II":{"archive_name":"gentooishII.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19246","version":"1.0","vim_script_nr":4371},
 "visualMarks%4370":{"archive_name":"visualMarks.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=24139","version":"2.4","vim_script_nr":4370},
