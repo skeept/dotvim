@@ -119,7 +119,7 @@ uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 _TESTS_REL_AND_ABS:=$(call uniq,$(abspath $(TESTS)) $(TESTS))
 FILE_TEST_TARGET=test$(DEFAULT_VIM)
 $(_TESTS_REL_AND_ABS):
-	make $(FILE_TEST_TARGET) VADER_ARGS='$@'
+	$(MAKE) --no-print-directory $(FILE_TEST_TARGET) VADER_ARGS='$@'
 .PHONY: $(_TESTS_REL_AND_ABS)
 
 testcoverage: COVERAGE_VADER_ARGS:=tests/main.vader $(wildcard tests/isolated/*.vader)
@@ -127,7 +127,7 @@ testcoverage:
 	$(RM) .coverage.covimerage
 	@ret=0; \
 	for testfile in $(COVERAGE_VADER_ARGS); do \
-	  make test VADER_ARGS=$$testfile NEOMAKE_DO_COVERAGE=1 || (( ++ret )); \
+	  $(MAKE) --no-print-directory test VADER_ARGS=$$testfile NEOMAKE_DO_COVERAGE=1 || (( ++ret )); \
 	done; \
 	exit $$ret
 
@@ -226,25 +226,28 @@ docker_list_vims:
 	docker run --rm $(DOCKER_IMAGE) $(_ECHO_DOCKER_VIMS)
 
 check_lint_diff:
+	@# NOTE: does not see changed files for builds on master.
 	@set -e; \
 	echo "Looking for changed files (to origin/master)."; \
 	CHANGED_VIM_FILES=($$(git diff-tree --no-commit-id --name-only --diff-filter=AM -r origin/master.. \
 	  | grep '\.vim$$' | grep -v '^tests/fixtures')) || true; \
 	ret=0; \
-	if [ -z "$$CHANGED_VIM_FILES" ]; then \
+	if [ "$${#CHANGED_VIM_FILES[@]}" -eq 0 ]; then \
 	  echo 'No .vim files changed.'; \
 	else \
-	  MAKE_ARGS="LINT_ARGS='$$CHANGED_VIM_FILES'"; \
+	  MAKE_ARGS="LINT_ARGS=$${CHANGED_VIM_FILES[*]}"; \
 	  echo "== Running \"make vimlint $$MAKE_ARGS\" =="; \
-	  make vimlint $$MAKE_ARGS || (( ret+=1 )); \
+	  $(MAKE) --no-print-directory vimlint "$$MAKE_ARGS" || (( ret+=1 )); \
 	  echo "== Running \"make vint $$MAKE_ARGS\" =="; \
-	  make vint $$MAKE_ARGS    || (( ret+=2 )); \
+	  $(MAKE) --no-print-directory vint "$$MAKE_ARGS"    || (( ret+=2 )); \
 	fi; \
 	if ! git diff-tree --quiet --exit-code --diff-filter=AM -r origin/master.. -- doc/neomake.txt; then \
 	  echo "== Running \"make vimhelplint\" for changed doc/neomake.txt =="; \
-	  make vimhelplint       || (( ret+=4 )); \
+	  $(MAKE) --no-print-directory vimhelplint       || (( ret+=4 )); \
 	fi; \
 	exit $$ret
+
+check_lint: vimlint vint vimhelplint
 
 # Checks to be run with Docker.
 # This is kept separate from "check" to not require Docker there.
