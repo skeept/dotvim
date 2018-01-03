@@ -5755,6 +5755,10 @@
     "type": "git",
     "url": "git://github.com/joereynolds/place.vim"
   },
+  "5634": {
+    "type": "git",
+    "url": "git://github.com/bergercookie/vim-debugstring"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
