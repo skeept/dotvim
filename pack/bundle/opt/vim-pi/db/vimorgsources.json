@@ -1,4 +1,5 @@
 {
+"Hearts_of_Iron_Syntax":{"archive_name":"vimfiles.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25748","version":"1.0","vim_script_nr":5635},
 "debugstring":{"archive_name":"debugstring.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25747","version":"0.1","vim_script_nr":5634},
 "readline":{"archive_name":"readline.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25743","version":"1.2","vim_script_nr":5633},
 "DumpX":{"archive_name":"dumpx.tar.xz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25733","version":"0.2","vim_script_nr":5632},

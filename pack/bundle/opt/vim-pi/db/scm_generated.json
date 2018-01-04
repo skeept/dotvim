@@ -5759,6 +5759,10 @@
     "type": "git",
     "url": "git://github.com/bergercookie/vim-debugstring"
   },
+  "5635": {
+    "type": "git",
+    "url": "git://github.com/gqqnbig/VimHoiSupport"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

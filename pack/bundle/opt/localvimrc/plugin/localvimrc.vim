@@ -200,7 +200,7 @@ function! s:LocalVimRC()
   " only consider normal buffers (skip especially CommandT's GoToFile buffer)
   " NOTE: in general the buftype is not set for new buffers (BufWinEnter),
   "       e.g. for help files via plugins (pydoc)
-  if (&buftype != "")
+  if !empty(&buftype)
     call s:LocalVimRCDebug(1, "not a normal buffer, exiting")
     return
   endif
@@ -247,6 +247,7 @@ function! s:LocalVimRC()
   let s:localvimrc_finish = 0
   let l:answer = ""
   let l:sandbox_answer = ""
+  let l:sourced_files = []
   for l:rcfile_dict in l:rcfiles
     " get values from dictionary
     let l:rcfile = l:rcfile_dict["resolved"]
@@ -280,7 +281,7 @@ function! s:LocalVimRC()
 
       " reset answers if checksum changed
       if (!l:checksum_is_same)
-        call s:LocalVimRCDebug(2, "checksum mismatch, no answer reuse")
+        call s:LocalVimRCDebug(2, "checksum mismatch, not reusing answer")
         let l:stored_answer = ""
         let l:stored_sandbox_answer = ""
       else
@@ -434,8 +435,7 @@ function! s:LocalVimRC()
 
         " emit an autocommand before sourcing
         if (s:localvimrc_autocmd == 1)
-          silent doautocmd User LocalVimRCPre
-          call s:LocalVimRCDebug(1, "pre sourcing autocommand emitted")
+          call s:LocalVimRCUserAutocommand('LocalVimRCPre')
         endif
 
         " add 'sandbox' if requested
@@ -513,9 +513,10 @@ function! s:LocalVimRC()
 
         " emit an autocommands after sourcing
         if (s:localvimrc_autocmd == 1)
-          silent doautocmd User LocalVimRCPost
-          call s:LocalVimRCDebug(1, "post sourcing autocommand emitted")
+          call s:LocalVimRCUserAutocommand('LocalVimRCPost')
         endif
+
+        call add(l:sourced_files, l:rcfile)
 
         " remove global variables again
         unlet g:localvimrc_file
@@ -544,11 +545,32 @@ function! s:LocalVimRC()
     endif
   endfor
 
+  " store information about source local vimrc files in buffer local variable
+  if exists("b:localvimrc_sourced_files")
+    call extend(l:sourced_files, b:localvimrc_sourced_files)
+  endif
+  call uniq(sort(l:sourced_files))
+  let b:localvimrc_sourced_files = l:sourced_files
+
   " make information persistent
   call s:LocalVimRCWritePersistent()
 
   " end marker
   call s:LocalVimRCDebug(1, "==================================================")
+endfunction
+
+
+" Function: s:LocalVimRCUserAutocommand(event) {{{2
+"
+function! s:LocalVimRCUserAutocommand(event)
+  if exists('#User#'.a:event)
+    call s:LocalVimRCDebug(1, 'executing User autocommand '.a:event)
+    if v:version >= 704 || (v:version == 703 && has('patch442'))
+      exec 'doautocmd <nomodeline> User ' . a:event
+    else
+      exec 'doautocmd User ' . a:event
+    endif
+  endif
 endfunction
 
 " Function: s:LocalVimRCMatchAny(str, patterns) {{{2
@@ -775,8 +797,39 @@ function! s:LocalVimRCDebug(level, text)
   endif
 endfunction
 
+" Function: s:LocalVimRCEdit() {{{2
+"
+" open the local vimrc file for the current buffer in an split window for
+" editing. If more than one local vimrc file has been sourced, the user
+" can decide which file to edit.
+"
+function! s:LocalVimRCEdit()
+  if exists("b:localvimrc_sourced_files")
+    let l:items = len(b:localvimrc_sourced_files)
+    if l:items > 1
+      " build message for asking the user
+      let l:message = [ "Select local vimrc file to edit:" ]
+      call extend(l:message, map(copy(b:localvimrc_sourced_files), 'v:key+1 . " " . v:val'))
+
+      " ask the user which one should be edited
+      let l:answer = inputlist(l:message)
+      if l:answer =~ '^\d\+$' && l:answer > 0 && l:answer <= l:items
+        let l:file = b:localvimrc_sourced_files[l:answer-1]
+      endif
+    else
+      " edit the sourced file
+      let l:file = b:localvimrc_sourced_files[0]
+    endif
+
+    if exists("l:file")
+      execute 'silent! split ' . fnameescape(l:file)
+    endif
+  endif
+endfunction
+
 " Section: Commands {{{1
 command! LocalVimRC      call s:LocalVimRC()
 command! LocalVimRCClear call s:LocalVimRCClear()
+command! LocalVimRCEdit  call s:LocalVimRCEdit()
 
 " vim600: foldmethod=marker foldlevel=0 :
