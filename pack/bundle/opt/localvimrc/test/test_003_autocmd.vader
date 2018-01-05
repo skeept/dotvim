@@ -2,7 +2,7 @@
 
 Before (setup test):
   " create test directory tree
-  silent! !./setup.sh
+  exec "silent! !./setup.sh " . $LOCALVIMRC_TEST_DIR
 
   " default setup localvimrc
   source default.vim
@@ -25,8 +25,13 @@ Execute (autocommand pre):
   endif
   source ../plugin/localvimrc.vim
 
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
   " edit a file in the test tree
-  e /tmp/localvimrc_test/a/b/c/d/e/f/foo
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
 Then (autocommand pre):
   let expected = [ "pre", "pre", "pre", "pre", "pre", "pre" ]
@@ -40,8 +45,13 @@ Execute (autocommand post):
   endif
   source ../plugin/localvimrc.vim
 
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
   " edit a file in the test tree
-  e /tmp/localvimrc_test/a/b/c/d/e/f/foo
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
 Then (autocommand pre):
   let expected = [ "post", "post", "post", "post", "post", "post" ]
@@ -58,8 +68,13 @@ Execute (autocommand pre disable):
   endif
   source ../plugin/localvimrc.vim
 
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
   " edit a file in the test tree
-  e /tmp/localvimrc_test/a/b/c/d/e/f/foo
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
 Then (autocommand pre disable):
   let expected = []
@@ -76,8 +91,13 @@ Execute (autocommand post disable):
   endif
   source ../plugin/localvimrc.vim
 
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
   " edit a file in the test tree
-  e /tmp/localvimrc_test/a/b/c/d/e/f/foo
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
 Then (autocommand pre disable):
   let expected = []
