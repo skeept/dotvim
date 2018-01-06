@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2016 Bailey Ling.
+" MIT License. Copyright (c) 2013-2018 Bailey Ling et al.
 " vim: et ts=2 sts=2 sw=2
 
 scriptencoding utf-8
@@ -332,7 +332,7 @@ function! airline#extensions#load()
    call add(loaded_ext, 'vimtex')
   endif
 
-  if (get(g:, 'airline#extensions#cursormode#enabled', 1))
+  if (get(g:, 'airline#extensions#cursormode#enabled', 0))
     call airline#extensions#cursormode#init(s:ext)
     call add(loaded_ext, 'cursormode')
   endif
@@ -358,4 +358,3 @@ function! airline#extensions#load()
     endfor
   endif
 endfunction
-

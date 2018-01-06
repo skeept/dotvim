@@ -5755,6 +5755,10 @@
     "type": "git",
     "url": "git://github.com/joereynolds/place.vim"
   },
+  "5632": {
+    "type": "git",
+    "url": "git://github.com/vbextreme/dumpx"
+  },
   "5634": {
     "type": "git",
     "url": "git://github.com/bergercookie/vim-debugstring"
