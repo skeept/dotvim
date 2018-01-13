@@ -6,7 +6,7 @@
 "place":{"archive_name":"place.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25738","version":"0.2","vim_script_nr":5631},
 "vim-terminal":{"archive_name":"vim-terminal-1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25725","version":"1.0","vim_script_nr":5630},
 "rainbow_levels":{"archive_name":"rainbow_levels-0.5.0.zip","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25732","version":"0.5.0","vim_script_nr":5629},
-"bioSyntax":{"archive_name":"bioSyntax-0.1-beta.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25717","version":"v0.1","vim_script_nr":5628},
+"bioSyntax":{"archive_name":"bioSyntax-vim_v0.1-beta3.tar.gz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25758","version":"v0.1-beta3","vim_script_nr":5628},
 "i3config":{"archive_name":"i3config.vim-0.3.0.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25696","version":"0.3.0","vim_script_nr":5627},
 "Libertine":{"archive_name":"libertine.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25686","version":"1e66d66","vim_script_nr":5626},
 "Github":{"archive_name":"GitHub.vim-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25679","version":"v0.1.1","vim_script_nr":5625},
