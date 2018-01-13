@@ -304,12 +304,12 @@ class Default(object):
 
     def update_candidates(self):
         pattern = ''
-        sources = ''
+        statuses = []
         self._candidates = []
-        for name, entire, partial, patterns in self._denite.filter_candidates(
-                self._context):
+        for status, partial, patterns in (
+                self._denite.filter_candidates(self._context)):
             self._candidates += partial
-            sources += '{}({}/{}) '.format(name, len(partial), len(entire))
+            statuses.append(status)
 
             if pattern == '' and patterns:
                 pattern = next(patterns, '')
@@ -343,8 +343,8 @@ class Default(object):
         self._candidates_len = len(self._candidates)
 
         if self._denite.is_async():
-            sources = '[async] ' + sources
-        self._statusline_sources = sources
+            statuses.append('[async]')
+        self._statusline_sources = ' '.join(statuses)
 
         prev_displayed_texts = self._displayed_texts
         self.update_displayed_texts()

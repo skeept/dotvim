@@ -49,3 +49,6 @@ class Base(object):
 
     def debug(self, expr):
         denite.util.debug(self.vim, expr)
+
+    def get_status(self, context):
+        return ':'.join([self.name] + context['args'])
