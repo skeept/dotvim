@@ -116,7 +116,8 @@ class Denite(object):
                 ctx['candidates'] = f.filter(ctx)
             partial = ctx['candidates']
             for c in partial:
-                c['source'] = source.name
+                c['source_name'] = source.name
+                c['source_index'] = source.index
             ctx['candidates'] = []
 
             patterns = filterfalse(lambda x: x == '', (
@@ -152,6 +153,7 @@ class Denite(object):
 
     def on_init(self, context):
         self._current_sources = []
+        index = 0
         for [name, args] in [[x['name'], x['args']]
                              for x in context['sources']]:
             if name not in self._sources:
@@ -164,6 +166,7 @@ class Denite(object):
             source.context['is_interactive'] = False
             source.context['all_candidates'] = []
             source.context['candidates'] = []
+            source.index = index
 
             # Set the source attributes.
             source.matchers = get_custom_source(
@@ -185,6 +188,7 @@ class Denite(object):
             if hasattr(source, 'on_init'):
                 source.on_init(source.context)
             self._current_sources.append(source)
+            index += 1
 
         for filter in [x for x in self._filters.values()
                        if x.vars and x.name in self._custom['filter']]:
@@ -257,31 +261,20 @@ class Denite(object):
         if not action:
             return True
 
-        sources = set()
         for target in targets:
-            sources.add(target['source'])
-        context['source'] = self._sources[
-            sources.pop()].context if len(sources) == 1 else {}
+            # It must be deepcopy.
+            # If it is copied, it will be too recursive object.
+            target['source_context'] = copy.deepcopy(
+                self._current_sources[target['source_index']].context)
 
         context['targets'] = targets
         return action['func'](context) if action['func'] else self._vim.call(
             'denite#custom#call_action',
             action['kind'], action['name'], context)
 
-    def _get_kind(self, context, targets):
-        if not targets:
-            return {}
-
-        kinds = set()
-        for target in targets:
-            k = target['kind'] if 'kind' in target else (
-                self._sources[target['source']].kind)
-            kinds.add(k)
-        if len(kinds) != 1:
-            self.error('Multiple kinds are detected')
-            return {}
-
-        k = kinds.pop()
+    def _get_kind(self, context, target):
+        k = target['kind'] if 'kind' in target else (
+                self._current_sources[target['source_index']].kind)
 
         if isinstance(k, str):
             # k is kind name
@@ -295,26 +288,12 @@ class Denite(object):
 
         return kind
 
-    def _get_source(self, context, targets):
-        if not targets:
-            return {}
-
-        sources = set()
-        for target in targets:
-            sources.add(self._sources[target['source']])
-        if len(sources) != 1:
-            self.error('Multiple sources are detected')
-            return {}
-        return sources.pop()
-
-    def get_action(self, context, action_name, targets):
-        kind = self._get_kind(context, targets)
+    def _get_action(self, context, action_name, target):
+        kind = self._get_kind(context, target)
         if not kind:
             return {}
 
-        source = self._get_source(context, targets)
-        if not source:
-            return {}
+        source = self._current_sources[target['source_index']]
 
         if action_name == 'default':
             action_name = context['default_action']
@@ -347,6 +326,17 @@ class Denite(object):
             'is_redraw': (action_name in kind.redraw_actions),
         }
 
+    def get_action(self, context, action_name, targets):
+        actions = set()
+        action = None
+        for target in targets:
+            action = self._get_action(context, action_name, target)
+            actions.add(action['name'])
+        if len(actions) > 1:
+            self.error('Multiple actions are detected: ' + action_name)
+            return {}
+        return action if actions else {}
+
     def get_custom_actions(self, kind_name):
         actions = {}
         if '_' in self._custom['action']:
@@ -356,7 +346,14 @@ class Denite(object):
         return actions
 
     def get_action_names(self, context, targets):
-        kind = self._get_kind(context, targets)
+        kinds = set()
+        for target in targets:
+            kinds.add(self._get_kind(context, target))
+        if len(kinds) != 1:
+            self.error('Multiple kinds are detected')
+            return []
+
+        kind = kinds.pop()
         if not kind:
             return []
         actions = kind.get_action_names()
