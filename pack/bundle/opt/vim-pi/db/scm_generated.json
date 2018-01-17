@@ -5767,6 +5767,10 @@
     "type": "git",
     "url": "git://github.com/gqqnbig/VimHoiSupport"
   },
+  "5643": {
+    "type": "git",
+    "url": "git://github.com/sodapopcan/vim-twiggy"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
