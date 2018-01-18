@@ -5771,6 +5771,10 @@
     "type": "git",
     "url": "git://github.com/sodapopcan/vim-twiggy"
   },
+  "5644": {
+    "type": "git",
+    "url": "git://github.com/sodapopcan/vim-ifionly"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
