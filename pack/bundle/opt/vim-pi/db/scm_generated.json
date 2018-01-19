@@ -5775,6 +5775,14 @@
     "type": "git",
     "url": "git://github.com/sodapopcan/vim-ifionly"
   },
+  "5646": {
+    "type": "git",
+    "url": "git://github.com/DougBeney/pickachu"
+  },
+  "5647": {
+    "type": "git",
+    "url": "git://github.com/juanchanco/vim-jbuilder"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
