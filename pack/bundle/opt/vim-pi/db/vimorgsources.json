@@ -1,4 +1,5 @@
 {
+"textfilter":{"archive_name":"textfilter.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25786","version":"2.0","vim_script_nr":5648},
 "jbuilder":{"archive_name":"jbuilder.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25785","version":"0.1","vim_script_nr":5647},
 "Pickachu":{"archive_name":"pickachu-master.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25784","version":"0.0.1","vim_script_nr":5646},
 "cmod":{"archive_name":"cmod.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25782","version":"2.3","vim_script_nr":5645},
