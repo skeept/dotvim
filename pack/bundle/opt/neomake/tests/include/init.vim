@@ -396,8 +396,9 @@ function! NeomakeTestsGetMakerWithOutput(func, lines) abort
   call writefile(a:lines, output_file)
 
   let maker = call(a:func, [])
-  let maker.exe = 'cat'
-  let maker.args = [output_file]
+  let maker.exe = &shell
+  let maker.args = [&shellcmdflag, 'cat '.fnameescape(output_file)]
+  let maker.name = printf('%s-mocked', substitute(a:func, '^.*#', '', ''))
   return maker
 endfunction
 
@@ -435,18 +436,17 @@ function! s:After()
   endif
   if !empty(make_info)
     call add(errors, 'make_info is not empty: '.string(make_info))
+    try
+      call neomake#CancelAllMakes(1)
+    catch
+      call add(errors, v:exception)
+    endtry
   endif
   let actions = filter(copy(status.action_queue), '!empty(v:val)')
   if !empty(actions)
     call add(errors, printf('action_queue is not empty: %d entries: %s',
           \ len(actions), string(status.action_queue)))
   endif
-  try
-    NeomakeTestsWaitForRemovedJobs
-  catch
-    call neomake#CancelJobs(1)
-    call add(errors, v:exception)
-  endtry
 
   if exists('#neomake_tests')
     autocmd! neomake_tests
@@ -493,10 +493,6 @@ function! s:After()
       exe 'bwipe!' b
     endfor
   endif
-
-  for k in keys(make_info)
-    unlet make_info[k]
-  endfor
 
   " Check that no new global functions are defined.
   redir => neomake_output_func_after
