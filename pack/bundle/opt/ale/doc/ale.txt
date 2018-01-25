@@ -112,7 +112,9 @@ CONTENTS                                                         *ale-contents*
       standard............................|ale-javascript-standard|
       xo..................................|ale-javascript-xo|
     json..................................|ale-json-options|
+      fixjson.............................|ale-json-fixjson|
       jsonlint............................|ale-json-jsonlint|
+      jq..................................|ale-json-jq|
       prettier............................|ale-json-prettier|
     kotlin................................|ale-kotlin-options|
       kotlinc.............................|ale-kotlin-kotlinc|
@@ -304,7 +306,7 @@ Notes:
 * Dockerfile: `hadolint`
 * Elixir: `credo`, `dialyxir`, `dogma`!!
 * Elm: `elm-format, elm-make`
-* Erb: `erb`, `erubis`
+* Erb: `erb`, `erubi`, `erubis`
 * Erlang: `erlc`, `SyntaxErl`
 * Fish: `fish` (-n flag)
 * Fortran: `gcc`
@@ -321,7 +323,7 @@ Notes:
 * Idris: `idris`
 * Java: `checkstyle`, `javac`, `google-java-format`
 * JavaScript: `eslint`, `flow`, `jscs`, `jshint`, `prettier`, `prettier-eslint`, `prettier-standard`, `standard`, `xo`
-* JSON: `jsonlint`, `prettier`
+* JSON: `fixjson`, `jsonlint`, `jq`, `prettier`
 * Kotlin: `kotlinc`, `ktlint`
 * LaTeX (tex): `alex`!!, `chktex`, `lacheck`, `proselint`, `redpen`, `vale`, `write-good`
 * Less: `lessc`, `prettier`, `stylelint`
