@@ -518,7 +518,6 @@ class Default(object):
 
         if self._context['auto_preview']:
             self.do_action('preview')
-            self.redraw()
         if self._context['auto_highlight']:
             self.do_action('highlight')
 
@@ -565,7 +564,8 @@ class Default(object):
         self.update_status()
 
     def cleanup(self):
-        self._vim.command('pclose!')
+        if not self._is_suspend:
+            self._vim.command('pclose!')
         clearmatch(self._vim)
         if not self._context['immediately']:
             # Redraw to clear prompt
