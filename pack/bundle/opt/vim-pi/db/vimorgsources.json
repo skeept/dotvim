@@ -1,4 +1,5 @@
 {
+"Realcolors":{"archive_name":"realcolors.vmb","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25801","version":"0.01b","vim_script_nr":5650},
 "Gruvbox_8":{"archive_name":"vim-gruvbox8-0.0.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25799","version":"0.0.1","vim_script_nr":5649},
 "textfilter":{"archive_name":"textfilter.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25786","version":"2.0","vim_script_nr":5648},
 "jbuilder":{"archive_name":"jbuilder.tgz","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25785","version":"0.1","vim_script_nr":5647},
