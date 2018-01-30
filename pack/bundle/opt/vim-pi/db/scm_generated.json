@@ -5783,6 +5783,10 @@
     "type": "git",
     "url": "git://github.com/juanchanco/vim-jbuilder"
   },
+  "5651": {
+    "type": "git",
+    "url": "git://github.com/fedorenchik/qt-support.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
