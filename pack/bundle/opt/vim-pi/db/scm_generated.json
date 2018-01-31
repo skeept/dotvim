@@ -5787,6 +5787,10 @@
     "type": "git",
     "url": "git://github.com/fedorenchik/qt-support.vim"
   },
+  "5652": {
+    "type": "git",
+    "url": "git://github.com/kutsan/vim-fetlang"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

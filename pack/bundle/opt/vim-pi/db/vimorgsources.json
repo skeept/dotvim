@@ -1,4 +1,5 @@
 {
+"vim-fetlang":{"archive_name":"vim-fetlang-2677c31.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25808","version":"2677c31","vim_script_nr":5652},
 "qt-support":{"archive_name":"qt-support.vim-1.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25806","version":"1.0","vim_script_nr":5651},
 "Realcolors":{"archive_name":"realcolors.vmb","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25801","version":"0.01b","vim_script_nr":5650},
 "Gruvbox_8":{"archive_name":"vim-gruvbox8-0.0.1.tar.gz","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25799","version":"0.0.1","vim_script_nr":5649},
@@ -2906,7 +2907,7 @@
 "dosbatch_indent":{"archive_name":"dosbatch.vim","script-type":"indent","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10590","version":"1","vim_script_nr":2631},
 "compilerjsl":{"archive_name":"jsl.vim","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10576","version":"1.00.003","vim_script_nr":2630},
 "explorer":{"archive_name":"explorer.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=10565","version":"2.5","vim_script_nr":2629},
-"Nvim-R":{"archive_name":"Nvim-R.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25557","version":"0.9.10","vim_script_nr":2628},
+"Nvim-R":{"archive_name":"Nvim-R.vmb","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25807","version":"0.9.11","vim_script_nr":2628},
 "exVim":{"archive_name":"exvim-v0.2.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21840","version":"v0.2.0","vim_script_nr":2627},
 "Vimya":{"archive_name":"vimya-0.5.vba","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=21933","version":"0.5","vim_script_nr":2626},
 "Cabal":{"archive_name":"cabal.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=16755","version":"1,4","vim_script_nr":2625},
