@@ -1,4 +1,5 @@
 {
+"vim-auf":{"archive_name":"vim-auf-1.0.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25811","version":"1.0","vim_script_nr":5653},
 "vim-fetlang":{"archive_name":"vim-fetlang-2677c31.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25808","version":"2677c31","vim_script_nr":5652},
 "qt-support":{"archive_name":"qt-support.vim-1.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25806","version":"1.0","vim_script_nr":5651},
 "Realcolors":{"archive_name":"realcolors.vmb","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25801","version":"0.01b","vim_script_nr":5650},
@@ -3399,7 +3400,7 @@
 "sgf":{"archive_name":"sgf.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8226","version":"0.0.1","vim_script_nr":2139},
 "PBwiki_syntax_highlighting":{"archive_name":"pbwiki.zip","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8258","version":"0.21","vim_script_nr":2138},
 "Css_Pretty":{"archive_name":"csspretty.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=13560","version":"1.1","vim_script_nr":2137},
-"repeat":{"archive_name":"repeat.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=19285","version":"1.1","vim_script_nr":2136},
+"repeat":{"archive_name":"repeat.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25810","version":"1.2","vim_script_nr":2136},
 "syntax_highlighting_for_tintintt":{"archive_name":"tt.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8205","version":"a","vim_script_nr":2135},
 "tabpage_sort":{"archive_name":"tabpage_sort.vim","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8204","version":"0.8","vim_script_nr":2134},
 "tintin":{"archive_name":"tintin.vim","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=8200","version":"1.1","vim_script_nr":2133},

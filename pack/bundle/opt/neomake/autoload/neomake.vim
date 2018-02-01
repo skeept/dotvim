@@ -1497,11 +1497,11 @@ function! s:clean_make_info(make_info, ...) abort
                 call neomake#signs#CleanAllOldSigns('project')
             endif
         endif
+        call s:clean_for_new_make(a:make_info)
         call neomake#EchoCurrentError(1)
         if exists('*neomake#statusline#make_finished')
             call neomake#statusline#make_finished(a:make_info)
         endif
-        call s:clean_for_new_make(a:make_info)
         if get(a:make_info, 'canceled', 0)
             call neomake#utils#DebugMessage('Skipping final processing for canceled make.', a:make_info)
             call s:do_clean_make_info(a:make_info)
@@ -2164,33 +2164,7 @@ function! s:vim_output_handler(channel, output, event_type) abort
 
     let data = split(a:output, '\v\r?\n', 1)
 
-    if exists('jobinfo._vim_in_handler')
-        call neomake#utils#DebugMessage(printf('Queueing: %s: %s: %s.',
-                    \ a:event_type, jobinfo.maker.name, string(data)), jobinfo)
-        let jobinfo._vim_in_handler += [[jobinfo, data, a:event_type]]
-        return
-    else
-        let jobinfo._vim_in_handler = []
-    endif
-
-    call s:output_handler(jobinfo, data, a:event_type)
-
-    " Process queued events that might have arrived by now.
-    " The attribute might be unset here, since output_handler might have
-    " been interrupted.
-    if exists('jobinfo._vim_in_handler')
-        while has_key(jobinfo, '_vim_in_handler') && !empty(jobinfo._vim_in_handler)
-            let args = remove(jobinfo._vim_in_handler, 0)
-            call call('s:output_handler', args)
-        endwhile
-        unlet! jobinfo._vim_in_handler
-
-        " Trigger previously delayed exit handler.
-        if exists('jobinfo._exited_while_in_handler')
-            call neomake#utils#DebugMessage('Trigger delayed exit.', jobinfo)
-            call s:exit_handler(jobinfo, jobinfo._exited_while_in_handler)
-        endif
-    endif
+    call s:output_handler_queued(jobinfo, data, a:event_type)
 endfunction
 
 function! s:vim_output_handler_stdout(channel, output) abort
@@ -2231,7 +2205,7 @@ function! s:vim_exit_handler(channel) abort
 endfunction
 
 " @vimlint(EVL108, 1)
-if has('nvim-0.2.0') && !has('nvim-0.2.3')  " temp(?) fix for Neovim master (hopefully fixed with refactored action queue).
+if has('nvim-0.2.0')
 " @vimlint(EVL108, 0)
     function! s:nvim_output_handler(job_id, data, event_type) abort
         let jobinfo = get(s:jobs, get(s:map_job_ids, a:job_id, -1), {})
@@ -2240,7 +2214,7 @@ if has('nvim-0.2.0') && !has('nvim-0.2.3')  " temp(?) fix for Neovim master (hop
             return
         endif
         let data = map(copy(a:data), "substitute(v:val, '\\r$', '', '')")
-        call s:output_handler(jobinfo, data, a:event_type)
+        call s:output_handler_queued(jobinfo, data, a:event_type)
     endfunction
 else
     " Neovim: register output from jobs as quick as possible, and trigger
@@ -2351,7 +2325,7 @@ function! s:exit_handler(jobinfo, data) abort
     endif
     let maker = jobinfo.maker
 
-    if exists('jobinfo._vim_in_handler') || exists('jobinfo._nvim_in_handler')
+    if exists('jobinfo._output_while_in_handler') || exists('jobinfo._nvim_in_handler')
         let jobinfo._exited_while_in_handler = a:data
         call neomake#utils#DebugMessage(printf('exit (delayed): %s: %s.',
                     \ maker.name, string(a:data)), jobinfo)
@@ -2422,6 +2396,36 @@ function! s:exit_handler(jobinfo, data) abort
                     \ '%s: unexpected output. See :messages for more information.', maker.name), jobinfo)
     endif
     call s:handle_next_job(jobinfo)
+endfunction
+
+function! s:output_handler_queued(jobinfo, data, event_type) abort
+    let jobinfo = a:jobinfo
+    if exists('jobinfo._output_while_in_handler')
+        call neomake#utils#DebugMessage(printf('Queueing: %s: %s: %s.',
+                    \ a:event_type, jobinfo.maker.name, string(a:data)), jobinfo)
+        let jobinfo._output_while_in_handler += [[jobinfo, a:data, a:event_type]]
+        return
+    else
+        let jobinfo._output_while_in_handler = []
+    endif
+
+    call s:output_handler(jobinfo, a:data, a:event_type)
+
+    " Process queued events that might have arrived by now.
+    " The attribute might be unset here, since output_handler might have
+    " been interrupted.
+    if exists('jobinfo._output_while_in_handler')
+        while has_key(jobinfo, '_output_while_in_handler') && !empty(jobinfo._output_while_in_handler)
+            let args = remove(jobinfo._output_while_in_handler, 0)
+            call call('s:output_handler', args)
+        endwhile
+        unlet! jobinfo._output_while_in_handler
+    endif
+    " Trigger previously delayed exit handler.
+    if exists('jobinfo._exited_while_in_handler')
+        call neomake#utils#DebugMessage('Trigger delayed exit.', jobinfo)
+        call s:exit_handler(jobinfo, jobinfo._exited_while_in_handler)
+    endif
 endfunction
 
 function! s:output_handler(jobinfo, data, event_type) abort
@@ -2566,11 +2570,11 @@ function! neomake#GetCurrentErrorMsg() abort
 endfunction
 
 function! neomake#EchoCurrentError(...) abort
-    " a:1 might be a timer from the VimResized event.
-    let force = a:0 ? a:1 : 0
-    if !force && !get(g:, 'neomake_echo_current_error', 1)
+    if !get(g:, 'neomake_echo_current_error', 1)
         return
     endif
+    " a:1 might be a timer from the VimResized event.
+    let force = a:0 ? a:1 : 0
 
     let message = neomake#GetCurrentErrorMsg()
     if empty(message)
