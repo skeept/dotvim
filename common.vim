@@ -53,7 +53,7 @@ set nostartofline
 
 " for being able to change buffers without saving
 set hidden
-set shortmess=ac
+set shortmess=acF
 
 set foldmethod=syntax
 set title

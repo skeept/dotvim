@@ -84,9 +84,7 @@ function! SetupVAM()
   VAMAddToActiveAddons vim-diff-enhanced
   VAMAddToActiveAddons magit fuzzysearch grepper
   VAMAddToActiveAddons FastFold
-  "VAMAddToActiveAddons lightline
   VAMAddToActiveAddons leader-guide
-  VAMAddToActiveAddons SmartusLine
   VAMAddToActiveAddons gv
   VAMAddToActiveAddons neoyank
   VAMAddToActiveAddons rsi
@@ -99,7 +97,12 @@ function! SetupVAM()
   VAMAddToActiveAddons exchange
   VAMAddToActiveAddons gina
   VAMAddToActiveAddons autoread
+
+  "" Related with statusline
+  "VAMAddToActiveAddons SmartusLine
+  VAMAddToActiveAddons lightline
   "VAMAddToActiveAddons airline
+
   "VAMAddToActiveAddons obsession
   "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
