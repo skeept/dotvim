@@ -549,7 +549,15 @@ function! s:LocalVimRC()
   if exists("b:localvimrc_sourced_files")
     call extend(l:sourced_files, b:localvimrc_sourced_files)
   endif
-  call uniq(sort(l:sourced_files))
+  if exists("*uniq")
+    call uniq(sort(l:sourced_files))
+  else
+    let l:sourced_files_uniq = {}
+    for l:file in l:sourced_files
+      let l:sourced_files_uniq[l:file] = 1
+    endfor
+    let l:sourced_files = sort(keys(l:sourced_files_uniq))
+  endif
   let b:localvimrc_sourced_files = l:sourced_files
 
   " make information persistent
