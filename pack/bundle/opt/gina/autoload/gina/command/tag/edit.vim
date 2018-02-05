@@ -29,6 +29,10 @@ function! s:build_args(args) abort
   let args = a:args.clone()
   let args.params.group = args.pop('--group', '')
   let args.params.opener = args.pop('--opener', '')
+  let args.params.restore = args.pop(
+        \ '--restore',
+        \ empty(args.params.opener) || args.params.opener ==# 'edit',
+        \)
   return args.lock()
 endfunction
 
@@ -61,7 +65,7 @@ endfunction
 function! s:BufReadCmd() abort
   let git = gina#core#get_or_fail()
   let args = gina#core#meta#get_or_fail('args')
-  let content = gina#core#exception#call(
+  let content = gina#core#revelator#call(
         \ function('s:get_tagmsg_template'),
         \ [git, args]
         \)
@@ -77,13 +81,24 @@ function! s:BufWriteCmd() abort
 endfunction
 
 function! s:QuitPre() abort
+  " Restore the previous buffer if 'restore' is specified
+  let args = gina#core#meta#get('args', v:null)
+  if args isnot# v:null && get(args.params, 'restore')
+    let win_id = win_getid()
+    if bufnr('#') == -1
+      silent keepalt keepjumps 1new
+    else
+      silent keepalt keepjumps 1split #
+    endif
+    call win_gotoid(win_id)
+  endif
   " Do not perform commit when user hit :q!
   if histget('cmd', -1) !~# '^q\%[uit]!'
     let b:gina_QuitPre = 1
     " If this is a last window, open a new window to prevent quit
     if tabpagenr('$') == 1 && winnr('$') == 1
       let win_id = win_getid()
-      silent tabnew
+      silent keepalt keepjumps 1new
       call win_gotoid(win_id)
     endif
   endif
@@ -101,13 +116,13 @@ function! s:WinLeave() abort
     let args = gina#core#meta#get_or_fail('args')
     if exists('b:gina_BufWriteCmd')
       " User execute 'wq' so do not confirm
-      call gina#core#exception#call(
+      call gina#core#revelator#call(
             \ function('s:apply_tagmsg'),
             \ [git, args]
             \)
     else
       " User execute 'q' so confirm
-      call gina#core#exception#call(
+      call gina#core#revelator#call(
             \ function('s:apply_tagmsg_confirm'),
             \ [git, args]
             \)

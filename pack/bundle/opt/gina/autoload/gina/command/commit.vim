@@ -71,6 +71,10 @@ function! s:get_options() abort
         \ 'A window group name used for a buffer.',
         \)
   call options.define(
+        \ '--restore',
+        \ 'Restore the previous buffer when the window is closed.',
+        \)
+  call options.define(
         \ '-a|--all',
         \ 'Commit all changed files',
         \)
@@ -191,6 +195,10 @@ function! s:build_args(args) abort
   let args = a:args.clone()
   let args.params.group = args.pop('--group', '')
   let args.params.opener = args.pop('--opener', '')
+  let args.params.restore = args.pop(
+        \ '--restore',
+        \ empty(args.params.opener) || args.params.opener ==# 'edit',
+        \)
   let args.params.amend = args.get('--amend')
   return args.lock()
 endfunction
@@ -261,12 +269,12 @@ function! s:BufReadCmd() abort
   let git = gina#core#get_or_fail()
   let args = gina#core#meta#get_or_fail('args')
   if v:cmdbang
-    let content = gina#core#exception#call(
+    let content = gina#core#revelator#call(
           \ function('s:get_commitmsg_template'),
           \ [git, args]
           \)
   else
-    let content = gina#core#exception#call(
+    let content = gina#core#revelator#call(
           \ function('s:get_commitmsg'),
           \ [git, args]
           \)
@@ -281,7 +289,7 @@ function! s:BufWriteCmd() abort
   let b:gina_BufWriteCmd = 1
   let git = gina#core#get_or_fail()
   let args = gina#core#meta#get_or_fail('args')
-  call gina#core#exception#call(
+  call gina#core#revelator#call(
         \ function('s:set_commitmsg'),
         \ [git, args, getline(1, '$')]
         \)
@@ -289,13 +297,24 @@ function! s:BufWriteCmd() abort
 endfunction
 
 function! s:QuitPre() abort
+  " Restore the previous buffer if 'restore' is specified
+  let args = gina#core#meta#get('args', v:null)
+  if args isnot# v:null && get(args.params, 'restore')
+    let win_id = win_getid()
+    if bufnr('#') == -1
+      silent keepalt keepjumps 1new
+    else
+      silent keepalt keepjumps 1split #
+    endif
+    call win_gotoid(win_id)
+  endif
   " Do not perform commit when user hit :q!
   if histget('cmd', -1) !~# '^q\%[uit]!'
     let b:gina_QuitPre = 1
     " If this is a last window, open a new window to prevent quit
     if tabpagenr('$') == 1 && winnr('$') == 1
       let win_id = win_getid()
-      silent tabnew
+      silent keepalt keepjumps 1new
       call win_gotoid(win_id)
     endif
   endif
@@ -313,14 +332,14 @@ function! s:WinLeave() abort
     let args = gina#core#meta#get_or_fail('args')
     if exists('b:gina_BufWriteCmd')
       " User execute 'wq' so do not confirm
-      call gina#core#exception#call(
+      call gina#core#revelator#call(
             \ function('s:commit_commitmsg'),
             \ [git, args]
             \)
     else
       " User execute 'q' so confirm if commit message is written
       if !empty(s:get_cached_commitmsg(git, args))
-        call gina#core#exception#call(
+        call gina#core#revelator#call(
               \ function('s:commit_commitmsg_confirm'),
               \ [git, args]
               \)
