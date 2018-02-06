@@ -1,23 +1,26 @@
 VimFold4C
 =========
 
-Reactive vim fold plugin for C &amp; C++ (and similar languages)
+Reactive vim fold plugin for C &amp; C++ (and similar languages).
 
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
-[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+[![Last release](https://img.shields.io/github/tag/LucHermitte/VimFold4C.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Features
 
 The foldtext displayed will also try to be as pertinent as possible:
 - Correctly indented
-- Template parameters may be discarded if they induce a foldtext line which is too long for the windows width
-- Strip spaces in parenthesis, and eventually parameters when lines are too
-  longs)
+- Strip spaces in parenthesis
 - Strip `scopes::` (optional)
 - Multiple subsequent (consecutive ?) `#include` will be condensed into one line
 - `#if` & co are folded
+- When the fold text line to display is too long, simplifications are operated:
+    - Template parameters may be discarded
+    - Initialisation-lists are replaced with  `....`
+    - Parameter names are discarded
+    - Last parameters are discarded 
 
 
 ## Note
@@ -45,68 +48,85 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 " In the .vimrc
 let g:fold_options = {
    \ 'show_if_and_else': 1,
-   \ 'strip_template_argurments': 1,
+   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
+   \ 'max_foldline_length': 'win'
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
    \ 'show_if_and_else': 1,
-   \ 'strip_template_argurments': 1,
+   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
+   \ 'max_foldline_length': 'win'
    \ }
 ```
 
 ### Available options
-The options are:
+The
+[options](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md) are:
+
 - `show_if_and_else` (which is currently hard-coded to _true_) requires to have
   two folds on
 
-```c
-if (foo) {
-    foo_action();
-} else {
-    bar_action();
-}
-```
-instead of the single fold we have when using `indent` _foldmethod_ (or was it
-the `syntax` one ?).
+    ```c
+    if (foo) {
+        foo_action();
+    } else {
+        bar_action();
+    }
+    ```
 
-- `strip_template_argurments` (default: _true_) strips template arguments from
+    instead of the single fold we have when using `indent` _foldmethod_ (or was it
+    the `syntax` one ?).
+
+- `strip_template_arguments` (default: _true_) strips template arguments from
   the fold text generated if the text would be too long for the current window
   width
 
 - `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
   `boost::filesystem::` from the fold text generated.
 
+- `max_foldline_length` (default: _"win"_) specifies the maximum line length
+  of the fold text. The possibile values are: 
+  - _"win"_: stops at current window width
+  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
+  - number: hardcoded maximum number of characters to keep.
+
 ## Requirements / Installation
 
-This fold-plugin requires vim 7+ and
-[lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib).
+  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib)
 
-The easiest way to install this plugin is with
-[vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
-plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
-that support vim-addon-files -- as this script specifies its
-[dependencies](https://github.com/LucHermitte/VimFold4C/blob/master/addon-info.txt)
-in vim-addon-file format.
+  * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-cpp. This is the preferred method because of the various dependencies.
+    ```vim
+    ActivateAddons VimFold4C
+    ```
 
-When installing [lh-cpp](http://github.com/LucHermitte/lh-cpp) with
-[vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
-plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
-this fold-plugin will get automatically installed.
-```vim
-ActivateAddons lh-cpp
-" Or just this one (and soon as I register it in vim-pi):
-ActivateAddons VimFold4C
-```
+  * or with [vim-flavor](http://github.com/kana/vim-flavor) which also supports
+    dependencies:
+    ```
+    flavor 'LucHermitte/VimFold4C'
+    ```
 
-With Vundle/NeoBundle
-```vim
-Bundle 'LucHermitte/lh-vim-lib'
-Bundle 'LucHermitte/VimFold4C'
-```
+  * When installing [lh-cpp](http://github.com/LucHermitte/lh-cpp) with
+    [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or
+    other plugin managers based on
+    [vim-pi](https://bitbucket.org/vimcommunity/vim-pi), or with
+    [vim-flavor](http://github.com/kana/vim-flavor) this fold-plugin will get
+    automatically installed.
+    ```vim
+    ActivateAddons lh-cpp
+    " Or just this one (and soon as I register it in vim-pi):
+    ActivateAddons VimFold4C
+    ```
+
+  * or with Vundle/NeoBundle (expecting I haven't forgotten anything):
+
+    ```vim
+    Bundle 'LucHermitte/lh-vim-lib'
+    Bundle 'LucHermitte/VimFold4C'
+    ```
 
 So far, it is only triggered for C and C++. It should be easy to use it from
 C#, Java, and other languages with C like syntax: a
@@ -125,8 +145,6 @@ There is still a lot to be done:
 - [optional] fold a logging line spanning on several lines (`cout`, `printf`,
   `log(stuff << stuff)`
 - [optional] Fold visibilities
-- [optional] Merge function parameters when they induce fold lines too long to
-  fit
 - `#include`
   - [optional] cut the foldtext line when it's too long to fit
   - [optional] strip the dirname of each included file to build the foldtext
