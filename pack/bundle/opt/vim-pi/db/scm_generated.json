@@ -5791,6 +5791,10 @@
     "type": "git",
     "url": "git://github.com/kutsan/vim-fetlang"
   },
+  "5653": {
+    "type": "git",
+    "url": "git://github.com/umitkablan/vim-auf"
+  },
   "5654": {
     "type": "git",
     "url": "git://github.com/machakann/vim-multiselect"
