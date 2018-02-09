@@ -24,7 +24,6 @@ class Process(object):
                                       stderr=subprocess.PIPE,
                                       startupinfo=startupinfo,
                                       cwd=cwd)
-        self._eof = False
         self._context = context
         self._packer = msgpack.Packer(
             use_bin_type=True,
@@ -36,9 +35,6 @@ class Process(object):
         self._queue_out = Queue()
         self._thread = Thread(target=self.enqueue_output)
         self._thread.start()
-
-    def eof(self):
-        return self._eof
 
     def kill(self):
         if not self._proc:
@@ -52,7 +48,10 @@ class Process(object):
 
     def enqueue_output(self):
         while self._proc:
-            b = self._proc.stdout.read(1)
+            b = self._proc.stdout.raw.read(102400)
+            if b == b'':
+                # EOF
+                break
             self._unpacker.feed(b)
             for child_out in self._unpacker:
                 self._queue_out.put(child_out)

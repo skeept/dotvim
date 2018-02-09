@@ -49,10 +49,10 @@ function! deoplete#util#print_debug(string) abort
 endfunction
 
 function! deoplete#util#convert2list(expr) abort
-  return type(a:expr) ==# type([]) ? a:expr : [a:expr]
+  return type(a:expr) ==# v:t_list ? a:expr : [a:expr]
 endfunction
 function! deoplete#util#string(expr) abort
-  return type(a:expr) ==# type('') ? a:expr : string(a:expr)
+  return type(a:expr) ==# v:t_string ? a:expr : string(a:expr)
 endfunction
 
 function! deoplete#util#get_input(event) abort
@@ -218,12 +218,6 @@ function! deoplete#util#rpcnotify(event, context) abort
     return ''
   endif
   call s:notify(a:event, a:context)
-  if has('nvim') && a:event ==# 'deoplete_on_event'
-        \ && a:context['event'] ==# 'VimLeavePre'
-    while g:deoplete#_stopped_processes < g:deoplete#max_processes
-      sleep 50m
-    endwhile
-  endif
   return ''
 endfunction
 

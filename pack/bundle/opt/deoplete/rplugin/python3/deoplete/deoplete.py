@@ -25,20 +25,24 @@ class Deoplete(logger.LoggingMixin):
         self._parents = []
         self._parent_count = 0
         self._max_parents = max(
-            [1, self._vim.vars['deoplete#max_processes']])
-
-        # Init context
-        context = self._vim.call('deoplete#init#_context', 'Init', [])
-        context['rpc'] = 'deoplete_on_event'
-
-        for n in range(0, self._max_parents):
-            self._parents.append(Parent(vim, context))
+            [1, self._vim.vars['deoplete#num_processes']])
 
         # Enable logging before "Init" for more information, and e.g.
         # deoplete-jedi picks up the log filename from deoplete's handler in
         # its on_init.
         if self._vim.vars['deoplete#_logging']:
             self.enable_logging()
+
+        # Init context
+        context = self._vim.call('deoplete#init#_context', 'Init', [])
+        context['rpc'] = 'deoplete_on_event'
+
+        # Init processes
+        for n in range(0, self._max_parents):
+            self._parents.append(Parent(vim, context))
+        if self._vim.vars['deoplete#_logging']:
+            for parent in self._parents:
+                parent.enable_logging()
 
         # on_init() call
         self.on_event(context)
@@ -51,8 +55,6 @@ class Deoplete(logger.LoggingMixin):
         logging = self._vim.vars['deoplete#_logging']
         logger.setup(self._vim, logging['level'], logging['logfile'])
         self.is_debug_enabled = True
-        for parent in self._parents:
-            parent.enable_logging()
 
     def completion_begin(self, context):
         self.debug('completion_begin: %s', context['input'])
@@ -157,6 +159,7 @@ class Deoplete(logger.LoggingMixin):
             self._loaded_paths.add(path)
 
             self._parents[self._parent_count].add_source(path)
+            self.debug('Process %d: %s', self._parent_count, path)
 
             self._parent_count += 1
             self._parent_count %= self._max_parents

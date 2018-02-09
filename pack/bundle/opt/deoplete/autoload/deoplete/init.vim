@@ -122,9 +122,14 @@ function! deoplete#init#_variables() abort
     let g:deoplete#_logging = {}
   endif
   unlet! g:deoplete#_initialized
-  let g:deoplete#_stopped_processes = 0
+  let g:deoplete#_serveraddr = has('nvim') ?
+        \ v:servername : neovim_rpc#serveraddr()
+  if g:deoplete#_serveraddr ==# ''
+    " Use NVIM_LISTEN_ADDRESS
+    let g:deoplete#_serveraddr = $NVIM_LISTEN_ADDRESS
+  endif
 
-  " User vairables
+  " User variables
   call deoplete#util#set_default(
         \ 'g:deoplete#enable_at_startup', 0)
   call deoplete#util#set_default(
@@ -162,7 +167,7 @@ function! deoplete#init#_variables() abort
   call deoplete#util#set_default(
         \ 'g:deoplete#complete_method', 'complete')
   call deoplete#util#set_default(
-        \ 'g:deoplete#max_processes', 4)
+        \ 'g:deoplete#num_processes', 4)
 
   call deoplete#util#set_default(
         \ 'g:deoplete#keyword_patterns', {})
@@ -240,8 +245,6 @@ function! deoplete#init#_context(event, sources) abort
 
   return {
         \ 'changedtick': b:changedtick,
-        \ 'serveraddr': (has('nvim') ?
-        \                v:servername : neovim_rpc#serveraddr()),
         \ 'dp_main': s:dp_main,
         \ 'event': event,
         \ 'input': input,

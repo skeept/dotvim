@@ -20,7 +20,7 @@ class Parent(logger.LoggingMixin):
         self._proc = None
         self._queue_id = ''
         self._prev_pos = []
-        self._start_process(context, context['serveraddr'])
+        self._start_process(context)
 
     def enable_logging(self):
         self._put('enable_logging', [])
@@ -60,18 +60,18 @@ class Parent(logger.LoggingMixin):
                 results['merged_results']) if results else (False, [])
 
     def on_event(self, context):
+        self._put('on_event', [context])
         if context['event'] == 'VimLeavePre':
             self._stop_process()
-            self._vim.vars['deoplete#_stopped_processes'] += 1
-        self._put('on_event', [context])
 
-    def _start_process(self, context, serveraddr):
+    def _start_process(self, context):
         if self._proc:
             return
 
         python3 = self._vim.vars.get('python3_host_prog', 'python3')
         self._proc = Process(
-            [python3, context['dp_main'], serveraddr],
+            [python3, context['dp_main'],
+             self._vim.vars['deoplete#_serveraddr']],
             context, context['cwd'])
 
     def _stop_process(self):
@@ -89,5 +89,5 @@ class Parent(logger.LoggingMixin):
         return queue_id
 
     def _get(self, queue_id):
-        return [x for x in self._proc.communicate(40)
+        return [x for x in self._proc.communicate(0.02)
                 if x['queue_id'] == queue_id]

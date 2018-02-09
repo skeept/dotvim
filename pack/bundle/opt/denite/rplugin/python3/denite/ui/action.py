@@ -352,6 +352,10 @@ def _quick_move(prompt, params):
     prompt.denite.update_cursor()
 
 
+def _nop(prompt, params):
+    pass
+
+
 DEFAULT_ACTION_RULES = [
     ('denite:append', _append),
     ('denite:append_to_line', _append_to_line),
@@ -381,6 +385,7 @@ DEFAULT_ACTION_RULES = [
     ('denite:move_to_previous_line', _move_to_previous_line),
     ('denite:move_to_top', _move_to_top),
     ('denite:move_up_path', _move_up_path),
+    ('denite:nop', _nop),
     ('denite:print_messages', _print_messages),
     ('denite:quick_move', _quick_move),
     ('denite:quit', _quit),
