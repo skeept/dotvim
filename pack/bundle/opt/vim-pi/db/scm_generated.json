@@ -1011,6 +1011,10 @@
     "type": "git",
     "url": "git://github.com/xolox/vim-shell"
   },
+  "3130": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-CountJump"
+  },
   "3132": {
     "type": "git",
     "url": "git://github.com/mgutz/vim-colors"
@@ -5802,6 +5806,14 @@
   "5655": {
     "type": "git",
     "url": "git://github.com/machakann/vim-masquerade"
+  },
+  "5656": {
+    "type": "git",
+    "url": "git://github.com/ttm/tokipona"
+  },
+  "5657": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-JumpToVerticalBlock"
   },
   "586": {
     "type": "git",

@@ -43,8 +43,8 @@ Improvements in deoplete in comparison to |neocomplete|:
 ==============================================================================
 INSTALL							*deoplete-install*
 
-Note: deoplete requires Neovim or Vim8(latest is recommended) with Python3 and
-|+timers| enabled.
+Note: deoplete requires Neovim(0.2.0+) or Vim8(latest is recommended) with
+Python3 and |+timers| enabled.
 
 Please install nvim-yarp plugin for Vim8.
 https://github.com/roxma/nvim-yarp
@@ -140,6 +140,7 @@ g:deoplete#enable_refresh_always
 		Deoplete refreshes the candidates automatically if this value
 		is 1.
 		Note: It increases the screen flicker.
+		Note: If |TextChangedP| autocmd is supported, deoplete uses it.
 
 		Default value: 0
 
@@ -197,8 +198,9 @@ g:deoplete#max_list
 
 						*g:deoplete#num_processes*
 g:deoplete#num_processes
-		The number of processes used for the asynchronous completion.
-		If it is less than equal 1, this feature is disabled.
+		The number of processes used for the deoplete parallel
+		feature.  If it is less than equal 1, this feature is
+		disabled.
 
 		Default value: 4
 
