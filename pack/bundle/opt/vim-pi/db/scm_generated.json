@@ -3581,7 +3581,7 @@
   },
   "4767": {
     "type": "git",
-    "url": "git://github.com/cesheridan/tabwins"
+    "url": "git://github.com/cesheridan/tabwins.vim"
   },
   "4769": {
     "type": "git",
@@ -3758,6 +3758,10 @@
   "4840": {
     "type": "git",
     "url": "git://github.com/artnez/vim-rename"
+  },
+  "4841": {
+    "type": "git",
+    "url": "git://github.com/inkarkat/vim-JumpToVerticalOccurrence"
   },
   "4844": {
     "type": "git",
@@ -5814,6 +5818,10 @@
   "5657": {
     "type": "git",
     "url": "git://github.com/inkarkat/vim-JumpToVerticalBlock"
+  },
+  "5658": {
+    "type": "git",
+    "url": "git://github.com/dewyze/vim-ruby-block-helpers"
   },
   "586": {
     "type": "git",
