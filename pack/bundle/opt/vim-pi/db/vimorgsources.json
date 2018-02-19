@@ -1,4 +1,5 @@
 {
+"copytoggle":{"archive_name":"vim-copytoggle.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25830","version":"1.0.1","vim_script_nr":5659},
 "vim-ruby-block-helpers":{"archive_name":"vim-ruby-block-helpers-1.0.0.zip","script-type":"ftplugin","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25828","version":"1.0.0","vim_script_nr":5658},
 "JumpToVerticalBlock":{"archive_name":"JumpToVerticalBlock-1.00.vmb.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25824","version":"1.00","vim_script_nr":5657},
 "Toki_Pona":{"archive_name":"tokipona.vmb","script-type":"syntax","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25822","version":"0.01b","vim_script_nr":5656},

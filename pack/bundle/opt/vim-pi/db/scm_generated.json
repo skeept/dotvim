@@ -5823,6 +5823,10 @@
     "type": "git",
     "url": "git://github.com/dewyze/vim-ruby-block-helpers"
   },
+  "5659": {
+    "type": "git",
+    "url": "git://github.com/timakro/vim-copytoggle"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
