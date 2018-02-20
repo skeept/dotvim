@@ -446,6 +446,11 @@ function! s:After()
   if !empty(actions)
     call add(errors, printf('action_queue is not empty: %d entries: %s',
           \ len(actions), string(status.action_queue)))
+    try
+      call neomake#CancelAllMakes(1)
+    catch
+      call add(errors, v:exception)
+    endtry
   endif
 
   if exists('#neomake_tests')
@@ -487,8 +492,8 @@ function! s:After()
 
   let new_buffers = filter(range(1, bufnr('$')), 'bufexists(v:val) && index(g:neomake_test_buffers_before, v:val) == -1')
   if !empty(new_buffers)
-    call add(errors, 'Unexpected/not wiped buffers: '.join(new_buffers, ', '))
-    Log neomake#utils#redir('ls!')
+    let curbuffers = neomake#utils#redir('ls!')
+    call add(errors, 'Unexpected/not wiped buffers: '.join(new_buffers, ', ')."\ncurrent buffers:".curbuffers)
     for b in new_buffers
       exe 'bwipe!' b
     endfor
@@ -513,7 +518,8 @@ function! s:After()
   endif
 
   if !empty(errors)
-    throw len(errors).' error(s) in teardown: '.join(errors, "\n")
+    call map(errors, "printf('%d. %s', v:key+1, v:val)")
+    throw len(errors)." error(s) in teardown:\n".join(errors, "\n")
   endif
 endfunction
 command! NeomakeTestsGlobalAfter call s:After()
