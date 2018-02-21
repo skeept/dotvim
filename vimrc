@@ -126,7 +126,6 @@ endfunction
 execute "source " . g:p0 . "/common.vim"
 
 func! LoadPluginsWithTimer(timer)
-  execute "source " . g:p0 . "/denite.rc.vim"
   VAMAddToActiveAddons airline
   VAMAddToActiveAddons FastFold
   VAMAddToActiveAddons leader-guide
@@ -142,7 +141,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons vim-qf
   VAMAddToActiveAddons ps1 fugitive
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user
-  VAMAddToActiveAddons gina
+  "VAMAddToActiveAddons gina
   "VAMAddToActiveAddons peekaboo
 
   if has("python3")
@@ -151,6 +150,7 @@ func! LoadPluginsWithTimer(timer)
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
+  execute "source " . g:p0 . "/denite.rc.vim"
 endfunction
 
 if has('timers')
