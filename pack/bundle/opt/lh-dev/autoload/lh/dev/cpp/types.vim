@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	19th Oct 2016
+" Last Update:	20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
@@ -15,6 +15,7 @@ let s:k_version = '2.0.0'
 "------------------------------------------------------------------------
 " History:
 " 	v2.0.0: ~ deprecate lh#dev#option#get()
+" 	        - #_of_var cannot work on parameters
 " 	v1.5.0: - #_of_var
 " 	v1.3.9: - better magic/nomagic neutrality
 " 	        - snake_case enforced
@@ -300,7 +301,12 @@ function! lh#dev#cpp#types#_of_var(name, ...) abort
         throw "Too many matching variables"
       endif
     endif
+    " TODO: In order to correctly extract the declaration, try to exploit `/\%#`
+    " Trim trailing chars
     let def_line = substitute(def_line, '\s*;\s*$\|\s*=.*', '', '')
+    " In case of functions, keep only the parameters
+    let def_line = substitute(def_line, '^.*(\|).*$', '', 'g')
+    " Trim leading whitespaces
     let def_line = substitute(def_line, '^\s*', '', '')
     let def = split(def_line, ',') " split function lists
     call filter(def, 'v:val =~ "\\<".a:name."\\s*$"')
@@ -327,8 +333,8 @@ function! s:GetClassName(dict) abort
   return get(a:dict, "class", get(a:dict, "struct", ""))
 endfunction
 
-"------------------------------------------------------------------------
 " }}}1
+"------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================
 " Vim: let b:UTfiles = 'tests/lh/dev-cpptypes.vim'
