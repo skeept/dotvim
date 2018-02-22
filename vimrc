@@ -404,5 +404,4 @@ if g:read_localVimrc == 1
   call LocalSettingsEndingVimRC()
 endif
 
-
 " vim: foldmethod=marker
