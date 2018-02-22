@@ -413,7 +413,7 @@ augroup ft_unite
   autocmd FileType unite call jraf#unite_my_settings()
 augroup END
 
-function! LoadUnite() "{{{
+function! LoadUnite(timer) "{{{
   if exists("g:loadUnite_done") || !exists("g:addon_manager") || g:addon_manager != 2
     return ""
   endif
@@ -478,37 +478,19 @@ function! LoadUnite() "{{{
   " }}}
 endfunction " }}}
 
-if 0
-nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
-nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call jraf#uniteColorSchemeResume()<CR>
-nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
-nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
-nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
-nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
-nnoremap <silent> ,u<SPACE>> :call LoadUnite()<CR>:<C-U>Unite<SPACE><C-D>
-endif
+if has('timers')
+  nnoremap <silent> ,ud :call LoadUnite()<CR>:<C-U>UniteWithCurrentDir file<CR>
+  nnoremap <silent> ,uc :call LoadUnite()<CR>:<C-U>call jraf#uniteColorSchemeResume()<CR>
+  nnoremap <silent> ,uo :call LoadUnite()<CR>:<C-U>Unite outline<CR>
+  nnoremap <silent> ,uf :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
+  nnoremap <silent> ,uu :call LoadUnite()<CR>:<C-U>Unite -start-insert source<CR>
+  nnoremap <silent> ,rr :call LoadUnite()<CR>:<C-U>UniteResume<CR>
+  nnoremap <silent> ,u<SPACE>> :call LoadUnite()<CR>:<C-U>Unite<SPACE><C-D>
 
-if 0 && has('python') "{{{ LoadPythonDelayed
-function! LoadPythonDelayed()
+  call timer_start(1500, 'LoadUnite')
 
-python << ENDP
-import time
-from threading import Thread
-import vim
-
-def LoadUnitePy():
-    time.sleep(2)
-    vim.command('call LoadUnite()')
-
-Thread(target=LoadUnitePy).start()
-
-ENDP
-return ''
-endfunction
-
-call LoadPythonDelayed()
 else
-  call LoadUnite()
+  LoadUnite(0)
 endif
 "}}}
 "==============================================================================}}}

@@ -123,7 +123,11 @@ endfunction
 " does this contain settings that should be read by packages? Leave it like
 " this for now
 "
+profile start profile.log
+profile func *
+profile file *
 execute "source " . g:p0 . "/common.vim"
+profile pause
 
 func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons airline
@@ -141,8 +145,8 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons vim-qf
   VAMAddToActiveAddons ps1 fugitive
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user
-  "VAMAddToActiveAddons gina
-  "VAMAddToActiveAddons peekaboo
+  VAMAddToActiveAddons gina
+  VAMAddToActiveAddons peekaboo
 
   if has("python3")
     VAMAddToActiveAddons UltiSnips
@@ -154,7 +158,7 @@ func! LoadPluginsWithTimer(timer)
 endfunction
 
 if has('timers')
-  call timer_start(3000, 'LoadPluginsWithTimer')
+  call timer_start(1000, 'LoadPluginsWithTimer')
 else
   call LoadPluginsWithTimer(0)
 endif
