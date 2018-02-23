@@ -123,11 +123,7 @@ endfunction
 " does this contain settings that should be read by packages? Leave it like
 " this for now
 "
-profile start profile.log
-profile func *
-profile file *
 execute "source " . g:p0 . "/common.vim"
-profile pause
 
 func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons airline
