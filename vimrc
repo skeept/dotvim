@@ -76,31 +76,14 @@ function! SetupVAM()
   "VAMAddToActiveAddons Syntastic
   "VAMAddToActiveAddons ale
   "VAMAddToActiveAddons neomake
-  VAMAddToActiveAddons ps1 fugitive
   "VAMAddToActiveAddons gitv targets
-  VAMAddToActiveAddons junkfile
-  VAMAddToActiveAddons nerdcommenter
-  VAMAddToActiveAddons unite-outline unite-qf
-  VAMAddToActiveAddons vim-diff-enhanced
-  VAMAddToActiveAddons magit fuzzysearch grepper
-  VAMAddToActiveAddons FastFold
-  VAMAddToActiveAddons leader-guide
-  VAMAddToActiveAddons gv
-  VAMAddToActiveAddons neoyank
-  VAMAddToActiveAddons rsi
-  VAMAddToActiveAddons vinegar
-  VAMAddToActiveAddons vim-qf
-  "VAMAddToActiveAddons peekaboo
+  "VAMAddToActiveAddons FastFold
+  "VAMAddToActiveAddons leader-guide
   VAMAddToActiveAddons unite-session neomru
-  VAMAddToActiveAddons textobj-entire textobj-python textobj-user
-  VAMAddToActiveAddons ferret
-  VAMAddToActiveAddons exchange
-  VAMAddToActiveAddons gina
-  VAMAddToActiveAddons autoread
 
   "" Related with statusline
   "VAMAddToActiveAddons SmartusLine
-  VAMAddToActiveAddons lightline
+  "VAMAddToActiveAddons lightline
   "VAMAddToActiveAddons airline
 
   "VAMAddToActiveAddons obsession
@@ -108,8 +91,8 @@ function! SetupVAM()
   "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
   "VAMAddToActiveAddons yankstack
   if has("python3")
-    VAMAddToActiveAddons UltiSnips
-    VAMAddToActiveAddons denite
+    "VAMAddToActiveAddons UltiSnips
+    "VAMAddToActiveAddons denite
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
@@ -140,9 +123,45 @@ endfunction
 " does this contain settings that should be read by packages? Leave it like
 " this for now
 "
+profile start profile.log
+profile func *
+profile file *
 execute "source " . g:p0 . "/common.vim"
+profile pause
 
-execute "source " . g:p0 . "/denite.rc.vim"
+func! LoadPluginsWithTimer(timer)
+  VAMAddToActiveAddons airline
+  VAMAddToActiveAddons FastFold
+  VAMAddToActiveAddons leader-guide
+  VAMAddToActiveAddons junkfile
+  VAMAddToActiveAddons nerdcommenter
+  VAMAddToActiveAddons unite-outline unite-qf
+  VAMAddToActiveAddons vim-diff-enhanced
+  VAMAddToActiveAddons magit fuzzysearch grepper
+  VAMAddToActiveAddons gv
+  VAMAddToActiveAddons neoyank
+  VAMAddToActiveAddons rsi
+  VAMAddToActiveAddons vinegar
+  VAMAddToActiveAddons vim-qf
+  VAMAddToActiveAddons ps1 fugitive
+  VAMAddToActiveAddons textobj-entire textobj-python textobj-user
+  VAMAddToActiveAddons gina
+  VAMAddToActiveAddons peekaboo
+
+  if has("python3")
+    VAMAddToActiveAddons UltiSnips
+    VAMAddToActiveAddons denite
+  endif
+
+  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
+  execute "source " . g:p0 . "/denite.rc.vim"
+endfunction
+
+if has('timers')
+  call timer_start(1000, 'LoadPluginsWithTimer')
+else
+  call LoadPluginsWithTimer(0)
+endif
 
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
@@ -384,6 +403,5 @@ endif
 if g:read_localVimrc == 1
   call LocalSettingsEndingVimRC()
 endif
-
 
 " vim: foldmethod=marker
