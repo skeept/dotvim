@@ -358,11 +358,15 @@ function! s:MakeJob(make_id, options) abort
         endif
 
         call neomake#utils#hook('NeomakeJobInit', {'jobinfo': jobinfo})
-        if s:async
-            call neomake#utils#LoudMessage(printf('Starting async job: %s.', string(jobinfo.argv)), jobinfo)
+
+        let start_msg = s:async ? 'Starting async job' : 'Starting'
+        if type(jobinfo.argv) == type('')
+            let start_msg .= ' [string]: '.jobinfo.argv
         else
-            call neomake#utils#LoudMessage(printf('Starting: %s.', jobinfo.argv), jobinfo)
+            let start_msg .= ': '.join(map(copy(jobinfo.argv), 'neomake#utils#shellescape(v:val)'))
         endif
+        call neomake#utils#LoudMessage(start_msg.'.', jobinfo)
+
         if empty(cd_back_cmd)
             call neomake#utils#DebugMessage('cwd: '.cwd.'.', jobinfo)
         else
@@ -697,10 +701,6 @@ function! s:command_maker_base._bind_args() abort dict
         let args = call(self.args.fn, [], self.args)
     else
         let args = copy(self.args)
-    endif
-    let args_is_list = type(args) == type([])
-    if args_is_list
-        call neomake#utils#ExpandArgs(args)
     endif
     let self.args = args
 endfunction
