@@ -674,7 +674,7 @@ function! dispatch#focus(...) abort
   if haslnum
     let compiler = s:expand_lnum(compiler, a:1)
     let [compiler, opts] = s:extract_opts(compiler)
-    if compiler =~# '^:\S' && a:1 > 0
+    if compiler =~# '^:[[:alpha:]]' && a:1 > 0
       let compiler = substitute(compiler, '^:\zs', a:1, '')
     endif
     if has_key(opts, 'compiler') && opts.compiler != dispatch#compiler_for_program(compiler)
@@ -876,10 +876,16 @@ function! s:cgetfile(request, ...) abort
       let &l:efm = request.format
     endif
     let &l:makeprg = request.command
+    let title = ':Dispatch '.escape(request.expanded, '%#') . ' ' . s:postfix(request)
     silent doautocmd QuickFixCmdPre cgetfile
-    execute 'noautocmd cgetfile' fnameescape(request.file)
+    if exists(':chistory') && getqflist({'title': 1}).title ==# title
+      call setqflist([], 'r')
+      execute 'noautocmd caddfile' fnameescape(request.file)
+    else
+      execute 'noautocmd cgetfile' fnameescape(request.file)
+    endif
     if exists(':chistory')
-      call setqflist([], 'r', {'title': ':Dispatch '.escape(request.expanded, '%#') . ' ' . s:postfix(request)})
+      call setqflist([], 'r', {'title': title})
     endif
     silent doautocmd QuickFixCmdPost cgetfile
   catch '^E40:'
