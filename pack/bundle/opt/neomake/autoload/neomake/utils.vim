@@ -471,7 +471,7 @@ function! neomake#utils#ExpandArgs(args) abort
     " \\% is expanded to \\file.ext
     " %% becomes %
     " % must be followed with an expansion keyword
-    let ret = map(a:args,
+    let ret = map(copy(a:args),
                 \ 'substitute(v:val, '
                 \ . '''\(\%(\\\@<!\\\)\@<!%\%(%\|\%(:[phtre]\+\)*\)\ze\)\w\@!'', '
                 \ . '''\=(submatch(1) == "%%" ? "%" : expand(submatch(1)))'', '
@@ -605,7 +605,7 @@ function! s:gsub(str,pat,rep) abort
 endfunction
 
 function! neomake#utils#shellescape(arg) abort
-    if a:arg =~# '^[A-Za-z0-9_/.-]\+$'
+    if a:arg =~# '^[A-Za-z0-9_/.=-]\+$'
         return a:arg
     elseif &shell =~? 'cmd' || exists('+shellslash') && !&shellslash
         return '"'.s:gsub(s:gsub(a:arg, '"', '""'), '\%', '"%"').'"'

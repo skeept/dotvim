@@ -28,6 +28,7 @@ CONTENTS                                                         *ale-contents*
       clang-format........................|ale-c-clangformat|
       clangtidy...........................|ale-c-clangtidy|
       cppcheck............................|ale-c-cppcheck|
+      flawfinder..........................|ale-c-flawfinder|
       gcc.................................|ale-c-gcc|
     chef..................................|ale-chef-options|
       foodcritic..........................|ale-chef-foodcritic|
@@ -42,6 +43,7 @@ CONTENTS                                                         *ale-contents*
       clangtidy...........................|ale-cpp-clangtidy|
       cppcheck............................|ale-cpp-cppcheck|
       cpplint.............................|ale-cpp-cpplint|
+      flawfinder..........................|ale-cpp-flawfinder|
       gcc.................................|ale-cpp-gcc|
     c#....................................|ale-cs-options|
       mcs.................................|ale-cs-mcs|
@@ -80,6 +82,7 @@ CONTENTS                                                         *ale-contents*
       gobuild.............................|ale-go-gobuild|
       gofmt...............................|ale-go-gofmt|
       gometalinter........................|ale-go-gometalinter|
+      staticcheck.........................|ale-go-staticcheck|
     graphql...............................|ale-graphql-options|
       eslint..............................|ale-graphql-eslint|
       gqlint..............................|ale-graphql-gqlint|
@@ -297,8 +300,8 @@ Notes:
 * Awk: `gawk`
 * Bash: `shell` (-n flag), `shellcheck`, `shfmt`
 * Bourne Shell: `shell` (-n flag), `shellcheck`, `shfmt`
-* C: `cppcheck`, `cpplint`!!, `gcc`, `clang`, `clangtidy`!!, `clang-format`
-* C++ (filetype cpp): `clang`, `clangcheck`!!, `clangtidy`!!, `clang-format`, `cppcheck`, `cpplint`!!, `gcc`
+* C: `cppcheck`, `cpplint`!!, `clang`, `clangtidy`!!, `clang-format`, `flawfinder`, `gcc`
+* C++ (filetype cpp): `clang`, `clangcheck`!!, `clangtidy`!!, `clang-format`, `cppcheck`, `cpplint`!!, `flawfinder`, `gcc`
 * CUDA: `nvcc`!!
 * C#: `mcs`, `mcsc`!!
 * Chef: `foodcritic`
@@ -322,7 +325,7 @@ Notes:
 * FusionScript: `fusion-lint`
 * Git Commit Messages: `gitlint`
 * GLSL: glslang, `glslls`
-* Go: `gofmt`, `goimports`, `go vet`, `golint`, `gotype`, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
+* Go: `gofmt`, `goimports`, `go vet`!!, `golint`, `gotype`, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
 * GraphQL: `eslint`, `gqlint`, `prettier`
 * Haml: `haml-lint`
 * Handlebars: `ember-template-lint`
@@ -920,10 +923,10 @@ g:ale_keep_list_window_open                       *g:ale_keep_list_window_open*
   Type: |Number|
   Default: `0`
 
-  When set to `1`, this option will keep the loclist or quickfix windows
-  event after all warnings/errors have been removed for files. By default
-  the loclist or quicfix windows will be closed automatically when there
-  are no warnings or errors.
+  When set to `1`, this option will keep the loclist or quickfix windows event
+  after all warnings/errors have been removed for files. By default the
+  loclist or quickfix windows will be closed automatically when there are no
+  warnings or errors.
 
   See |g:ale_open_list|
 
@@ -1214,10 +1217,19 @@ g:ale_open_list                                               *g:ale_open_list*
 
   The window will be kept open until all warnings or errors are cleared,
   including those not set by ALE, unless |g:ale_keep_list_window_open| is set
-  to `1`, in which case the window will be kept open until closed manually.
+  to `1`, in which case the window will be kept open when no problems are
+  found.
 
   The window size can be configured with |g:ale_list_window_size|.
 
+  If you want to close the loclist window automatically when the buffer is
+  closed, you can set up the following |autocmd| command: >
+
+  augroup CloseLoclistWindowGroup
+    autocmd!
+    autocmd QuitPre * if empty(&buftype) | lclose | endif
+  augroup END
+<
 
 g:ale_pattern_options                                   *g:ale_pattern_options*
 
@@ -1239,8 +1251,8 @@ g:ale_pattern_options                                   *g:ale_pattern_options*
   See |b:ale_linters| and |b:ale_fixers| for information for those options.
 
   Filenames are matched with |match()|, and patterns depend on the |magic|
-  setting, unless prefixed with the special escape sequences like `'\v'`,
-  etc.The patterns can match any part of a filename. The absolute path of the
+  setting, unless prefixed with the special escape sequences like `'\v'`, etc.
+  The patterns can match any part of a filename. The absolute path of the
   filename will be used for matching, taken from `expand('%:p')`.
 
   The options for every match for the filename will be applied, with the
@@ -1895,6 +1907,13 @@ ale#engine#GetLoclist(buffer)                         *ale#engine#GetLoclist()*
 
   A reference to the buffer's list of problems will be returned. The list must
   be copied before applying |map()| or |filter()|.
+
+
+ale#engine#IsCheckingBuffer(buffer)             *ale#engine#IsCheckingBuffer()*
+
+  Given a buffer number, returns `1` when ALE is busy checking that buffer.
+
+  This function can be used for status lines, tab names, etc.
 
 
 ale#engine#ManageFile(buffer, filename)               *ale#engine#ManageFile()*
