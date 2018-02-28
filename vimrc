@@ -66,9 +66,7 @@ function! SetupVAM()
         \ escape(g:p0 . '/pack/bundle/opt', ' \'),
         \ ]
 
-  VAMAddToActiveAddons ctrlp TaskList Supertab
-  VAMAddToActiveAddons delimitMate CountJump
-  VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
+  VAMAddToActiveAddons ctrlp
   VAMAddToActiveAddons neocomplete
   "VAMAddToActiveAddons startify
   VAMAddToActiveAddons fzf fzf-vim
@@ -79,7 +77,6 @@ function! SetupVAM()
   "VAMAddToActiveAddons gitv targets
   "VAMAddToActiveAddons FastFold
   "VAMAddToActiveAddons leader-guide
-  VAMAddToActiveAddons unite-session neomru
 
   "" Related with statusline
   "VAMAddToActiveAddons SmartusLine
@@ -126,7 +123,8 @@ endfunction
 execute "source " . g:p0 . "/common.vim"
 
 func! LoadPluginsWithTimer(timer)
-  VAMAddToActiveAddons airline
+  "VAMAddToActiveAddons airline
+  VAMAddToActiveAddons lightline
   VAMAddToActiveAddons FastFold
   VAMAddToActiveAddons leader-guide
   VAMAddToActiveAddons junkfile
@@ -143,6 +141,10 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user
   VAMAddToActiveAddons gina
   VAMAddToActiveAddons peekaboo
+  VAMAddToActiveAddons TaskList Supertab
+  VAMAddToActiveAddons delimitMate CountJump
+  VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
+  VAMAddToActiveAddons unite-session neomru
 
   if has("python3")
     VAMAddToActiveAddons UltiSnips
