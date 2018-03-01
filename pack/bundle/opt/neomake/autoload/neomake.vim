@@ -34,6 +34,11 @@ if !has('nvim')
     let s:kill_vim_timers = {}
 endif
 
+" A list of references to keep when profiling.
+" Workaround for https://github.com/vim/vim/issues/2350, where
+" https://github.com/blueyed/vader.vim/commit/e66d91dea is not enough.
+let s:hack_keep_refs_for_profiling = []
+
 " Can Neovim buffer output?
 " This uses detection since the appimage for 0.2.2 reports as being 0.2.3.
 let s:nvim_can_buffer_output = (has('nvim-0.2.4') ? 1 :
@@ -509,7 +514,6 @@ function! s:MakeJob(make_id, options) abort
             call s:output_handler(jobinfo, split(output, '\r\?\n', 1), 'stdout')
             let stderr_output = readfile(stderr_file)
             if !empty(stderr_output)
-                call map(stderr_output, "substitute(v:val, '\\r$', '', '')")
                 call s:output_handler(jobinfo, stderr_output, 'stderr')
             endif
             call delete(stderr_file)
@@ -788,7 +792,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             \ 'exe': maker.name,
             \ 'args': [],
             \ })
-        if !has_key(maker, 'process_output')
+        if !has_key(maker, 'process_output') && !has_key(maker, 'process_json')
             call extend(defaults, {
                 \ 'errorformat': &errorformat,
                 \ })
@@ -797,6 +801,9 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             let maker[key] = neomake#utils#GetSetting(key, {'name': maker.name}, get(maker, key, default), ft, bufnr, 1)
             unlet default  " for Vim without patch-7.4.1546
         endfor
+    endif
+    if v:profiling
+        call add(s:hack_keep_refs_for_profiling, maker)
     endif
     return maker
 endfunction
@@ -1773,7 +1780,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
         let prev_list = a:1
         let new_list = file_mode ? getloclist(0) : getqflist()
     else
-        " Fix entries with get_list_entries/process_output.
+        " Fix entries with get_list_entries/process_output/process_json.
         let maker_name = a:jobinfo.maker.name
         call map(a:entries, 'extend(v:val, {'
                     \ . "'bufnr': str2nr(get(v:val, 'bufnr', 0)),"
@@ -1953,16 +1960,43 @@ function! s:ProcessJobOutput(jobinfo, lines, source, ...) abort
                 \ '%s: processing %d lines of output.',
                 \ maker.name, len(a:lines)), a:jobinfo)
     try
-        if has_key(maker, 'process_output')
-            let entries = call(maker.process_output, [{
-                        \ 'output': a:lines,
-                        \ 'source': a:source,
-                        \ 'jobinfo': a:jobinfo}], maker)
+        if has_key(maker, 'process_json') || has_key(maker, 'process_output')
+            if has_key(maker, 'process_json')
+                let method = 'process_json'
+                let output = join(a:lines, "\n")
+                try
+                    let json = neomake#compat#json_decode(output)
+                catch
+                    let error = printf(
+                                \ 'Failed to decode JSON: %s (output: %s).',
+                                \ substitute(v:exception, '^Neomake: ', '', ''), string(output))
+                    call neomake#utils#log_exception(error, a:jobinfo)
+                    return
+                endtry
+                call neomake#utils#DebugMessage(printf(
+                            \ "Calling maker's process_json method with %d JSON entries.",
+                            \ len(json)), a:jobinfo)
+                let entries = call(maker.process_json, [{
+                            \ 'json': json,
+                            \ 'source': a:source,
+                            \ 'jobinfo': a:jobinfo}], maker)
+            else
+                call neomake#utils#DebugMessage(printf(
+                            \ "Calling maker's process_output method with %d lines of output on %s.",
+                            \ len(a:lines), a:source), a:jobinfo)
+                let method = 'process_output'
+                let entries = call(maker.process_output, [{
+                            \ 'output': a:lines,
+                            \ 'source': a:source,
+                            \ 'jobinfo': a:jobinfo}], maker)
+            endif
             if type(entries) != type([])
-                call neomake#utils#ErrorMessage(printf('The process_output method for maker %s did not return a list, but: %s.', maker.name, string(entries)[:100]), a:jobinfo)
+                call neomake#utils#ErrorMessage(printf('The %s method for maker %s did not return a list, but: %s.',
+                            \ method, maker.name, string(entries)[:100]), a:jobinfo)
                 return 0
             elseif !empty(entries) && type(entries[0]) != type({})
-                call neomake#utils#ErrorMessage(printf('The process_output method for maker %s did not return a list of dicts, but: %s.', maker.name, string(entries)[:100]), a:jobinfo)
+                call neomake#utils#ErrorMessage(printf('The %s method for maker %s did not return a list of dicts, but: %s.',
+                            \ method, maker.name, string(entries)[:100]), a:jobinfo)
                 return 0
             endif
             return s:ProcessEntries(a:jobinfo, entries)
@@ -2221,8 +2255,11 @@ if has('nvim-0.2.0')
             call neomake#utils#DebugMessage(printf('output [%s]: job %d not found.', a:event_type, a:job_id))
             return
         endif
-        let data = map(copy(a:data), "substitute(v:val, '\\r$', '', '')")
-        call s:output_handler_queued(jobinfo, data, a:event_type)
+        if a:data == [''] && !exists('jobinfo[a:event_type]')
+            " EOF in Neovim (see :h on_data).
+            return
+        endif
+        call s:output_handler_queued(jobinfo, copy(a:data), a:event_type)
     endfunction
 else
     " Neovim: register output from jobs as quick as possible, and trigger
@@ -2235,8 +2272,7 @@ else
             call neomake#utils#DebugMessage(printf('output [%s]: job %d not found.', a:event_type, a:job_id))
             return
         endif
-        let data = map(copy(a:data), "substitute(v:val, '\\r$', '', '')")
-        let args = [jobinfo, data, a:event_type]
+        let args = [jobinfo, copy(a:data), a:event_type]
         call add(s:nvim_output_handler_queue, args)
         if !exists('jobinfo._nvim_in_handler')
             let jobinfo._nvim_in_handler = 1
@@ -2282,9 +2318,7 @@ function! s:nvim_exit_handler_buffered(job_id, data, event_type) abort
 
     for stream in ['stdout', 'stderr']
         if has_key(jobinfo.jobstart_opts, stream)
-            let output = copy(jobinfo.jobstart_opts[stream])
-            call map(output, "substitute(v:val, '\\r$', '', '')")
-            call s:output_handler(jobinfo, output, stream)
+            call s:output_handler(jobinfo, copy(jobinfo.jobstart_opts[stream]), stream)
         endif
     endfor
 
@@ -2440,22 +2474,26 @@ function! s:output_handler(jobinfo, data, event_type) abort
     let jobinfo = a:jobinfo
     call neomake#utils#DebugMessage(printf('%s: %s: %s.',
                 \ a:event_type, jobinfo.maker.name, string(a:data)), jobinfo)
+    let data = copy(a:data)
+    if !empty(a:data)
+        call map(data, "substitute(v:val, '\\r$', '', '')")
+    endif
     if get(jobinfo, 'canceled')
         call neomake#utils#DebugMessage('Ignoring output (job was canceled).', jobinfo)
         return
     endif
     let last_event_type = get(jobinfo, 'event_type', a:event_type)
 
-    " a:data is a list of 'lines' read. Each element *after* the first
+    " data is a list of 'lines' read. Each element *after* the first
     " element represents a newline.
     if has_key(jobinfo, a:event_type)
         let lines = jobinfo[a:event_type]
         " As per https://github.com/neovim/neovim/issues/3555
         let jobinfo[a:event_type] = lines[:-2]
-                    \ + [lines[-1] . get(a:data, 0, '')]
-                    \ + a:data[1:]
+                    \ + [lines[-1] . get(data, 0, '')]
+                    \ + data[1:]
     else
-        let jobinfo[a:event_type] = a:data
+        let jobinfo[a:event_type] = data
     endif
 
     if !jobinfo.buffer_output || last_event_type !=# a:event_type
