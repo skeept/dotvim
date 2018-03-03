@@ -1,4 +1,4 @@
-# localvimrc test event behavior
+# localvimrc test event pattern behavior
 
 Before (setup test):
   " create test directory tree
@@ -11,9 +11,32 @@ Before (setup test):
   let g:localvimrc_test_var = []
 
 ################################################################################
-Execute (event none):
+Execute (event pattern default):
+  " (re)load localvimrc plugin
+  if exists("g:loaded_localvimrc")
+    unlet g:loaded_localvimrc
+  endif
+  source ../plugin/localvimrc.vim
+
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
+  " edit a file in the test tree
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+
+Then (event pattern default):
+  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
+  Assert expected == g:localvimrc_test_var
+
+  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
+  Assert expected == b:localvimrc_sourced_files
+
+################################################################################
+Execute (event pattern all):
   " change setup for this test
-  let g:localvimrc_event = []
+  let g:localvimrc_event_pattern = "*"
 
   " (re)load localvimrc plugin
   if exists("g:loaded_localvimrc")
@@ -29,60 +52,66 @@ Execute (event none):
   " edit a file in the test tree
   exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
-Then (event none):
-  let expected = []
+Then (event pattern all):
+  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
+  Assert expected == g:localvimrc_test_var
+
+  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
+  Assert expected == b:localvimrc_sourced_files
+
+################################################################################
+Execute (event pattern txt):
+  " change setup for this test
+  let g:localvimrc_event_pattern = "*.txt"
+
+  " (re)load localvimrc plugin
+  if exists("g:loaded_localvimrc")
+    unlet g:loaded_localvimrc
+  endif
+  source ../plugin/localvimrc.vim
+
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo.txt")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo.txt"
+  endif
+
+  " edit a file in the test tree
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo.txt"
+
+Then (event pattern txt):
+  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
+  Assert expected == g:localvimrc_test_var
+
+  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
+  Assert expected == b:localvimrc_sourced_files
+
+################################################################################
+Execute (event pattern none-txt):
+  " change setup for this test
+  let g:localvimrc_event_pattern = "*.txt"
+
+  " (re)load localvimrc plugin
+  if exists("g:loaded_localvimrc")
+    unlet g:loaded_localvimrc
+  endif
+  source ../plugin/localvimrc.vim
+
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo.txt")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo.txt"
+  endif
+
+  " edit a file in the test tree
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+
+Then (event pattern none-txt):
+  let expected = [ ]
   Assert expected == g:localvimrc_test_var
 
   Assert !exists("b:localvimrc_sourced_files")
-
-################################################################################
-Execute (event changed):
-  " change setup for this test
-  let g:localvimrc_event = [ "BufEnter" ]
-
-  " (re)load localvimrc plugin
-  if exists("g:loaded_localvimrc")
-    unlet g:loaded_localvimrc
-  endif
-  source ../plugin/localvimrc.vim
-
-  " delete buffer if it exists
-  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
-    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
-  endif
-
-  " edit a file in the test tree
-  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
-
-Then (event changed):
-  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
-  Assert expected == g:localvimrc_test_var
-
-  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
-  Assert expected == b:localvimrc_sourced_files
-
-################################################################################
-Execute (event backward compatibility):
-  " change setup for this test
-  let g:localvimrc_event = "FileReadPost"
-
-  " (re)load localvimrc plugin
-  if exists("g:loaded_localvimrc")
-    unlet g:loaded_localvimrc
-  endif
-  source ../plugin/localvimrc.vim
-
-  " delete buffer if it exists
-  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
-    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
-  endif
-
-  " edit a file in the test tree
-  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
-
-Then (event backward compatibility):
-  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
-  Assert expected == g:localvimrc_test_var
-
-  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
-  Assert expected == b:localvimrc_sourced_files
