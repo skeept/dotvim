@@ -1,4 +1,4 @@
-# localvimrc test event behavior
+# localvimrc test default behavior
 
 Before (setup test):
   " create test directory tree
@@ -11,9 +11,32 @@ Before (setup test):
   let g:localvimrc_test_var = []
 
 ################################################################################
-Execute (event none):
+Execute (enable):
+  " (re)load localvimrc plugin
+  if exists("g:loaded_localvimrc")
+    unlet g:loaded_localvimrc
+  endif
+  source ../plugin/localvimrc.vim
+
+  " delete buffer if it exists
+  if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
+    exec "bwipeout! " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+  endif
+
+  " edit a file in the test tree
+  exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
+
+Then (enable):
+  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
+  Assert expected == g:localvimrc_test_var
+
+  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
+  Assert expected == b:localvimrc_sourced_files
+
+################################################################################
+Execute (disable setting):
   " change setup for this test
-  let g:localvimrc_event = []
+  let g:localvimrc_enable = 0
 
   " (re)load localvimrc plugin
   if exists("g:loaded_localvimrc")
@@ -29,22 +52,24 @@ Execute (event none):
   " edit a file in the test tree
   exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
-Then (event none):
-  let expected = []
+Then (disable setting):
+  let expected = [ ]
   Assert expected == g:localvimrc_test_var
 
   Assert !exists("b:localvimrc_sourced_files")
 
 ################################################################################
-Execute (event changed):
+Execute (enable using command):
   " change setup for this test
-  let g:localvimrc_event = [ "BufEnter" ]
+  let g:localvimrc_enable = 0
 
   " (re)load localvimrc plugin
   if exists("g:loaded_localvimrc")
     unlet g:loaded_localvimrc
   endif
   source ../plugin/localvimrc.vim
+
+  exec "LocalVimRCEnable"
 
   " delete buffer if it exists
   if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
@@ -54,7 +79,7 @@ Execute (event changed):
   " edit a file in the test tree
   exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
-Then (event changed):
+Then (enable using command):
   let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
   Assert expected == g:localvimrc_test_var
 
@@ -62,15 +87,14 @@ Then (event changed):
   Assert expected == b:localvimrc_sourced_files
 
 ################################################################################
-Execute (event backward compatibility):
-  " change setup for this test
-  let g:localvimrc_event = "FileReadPost"
-
+Execute (disable using command):
   " (re)load localvimrc plugin
   if exists("g:loaded_localvimrc")
     unlet g:loaded_localvimrc
   endif
   source ../plugin/localvimrc.vim
+
+  exec "LocalVimRCDisable"
 
   " delete buffer if it exists
   if bufexists($LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo")
@@ -80,9 +104,9 @@ Execute (event backward compatibility):
   " edit a file in the test tree
   exec "edit " . $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/foo"
 
-Then (event backward compatibility):
-  let expected = [ "lvimrc: ./a", "lvimrc: ./a/b", "lvimrc: ./a/b/c", "lvimrc: ./a/b/c/d", "lvimrc: ./a/b/c/d/e", "lvimrc: ./a/b/c/d/e/f" ]
+Then (disable using command):
+  let expected = [ ]
   Assert expected == g:localvimrc_test_var
 
-  let expected = [ $LOCALVIMRC_TEST_DIR . "/a/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/.lvimrc", $LOCALVIMRC_TEST_DIR . "/a/b/c/d/e/f/.lvimrc" ]
-  Assert expected == b:localvimrc_sourced_files
+  Assert !exists("b:localvimrc_sourced_files")
+
