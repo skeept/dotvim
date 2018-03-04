@@ -79,7 +79,7 @@ function! SetupVAM()
   "VAMAddToActiveAddons leader-guide
 
   "" Related with statusline
-  "VAMAddToActiveAddons SmartusLine
+  VAMAddToActiveAddons SmartusLine
   "VAMAddToActiveAddons lightline
   "VAMAddToActiveAddons airline
 
@@ -124,7 +124,7 @@ execute "source " . g:p0 . "/common.vim"
 
 func! LoadPluginsWithTimer(timer)
   "VAMAddToActiveAddons airline
-  VAMAddToActiveAddons lightline
+  "VAMAddToActiveAddons lightline
   VAMAddToActiveAddons FastFold
   VAMAddToActiveAddons leader-guide
   VAMAddToActiveAddons junkfile
