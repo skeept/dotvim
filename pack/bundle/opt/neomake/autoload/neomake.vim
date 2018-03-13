@@ -511,10 +511,10 @@ function! s:MakeJob(make_id, options) abort
             let s:jobs[job_id] = jobinfo
             let s:make_info[a:make_id].active_jobs += [jobinfo]
 
-            call s:output_handler(jobinfo, split(output, '\r\?\n', 1), 'stdout')
+            call s:output_handler(jobinfo, split(output, '\r\?\n', 1), 'stdout', 0)
             let stderr_output = readfile(stderr_file)
             if !empty(stderr_output)
-                call s:output_handler(jobinfo, stderr_output, 'stderr')
+                call s:output_handler(jobinfo, stderr_output, 'stderr', 1)
             endif
             call delete(stderr_file)
 
@@ -1273,32 +1273,33 @@ function! s:AddExprCallback(jobinfo, prev_list) abort
     let removed_entries = []
     let different_bufnrs = {}
     let llen = len(list)
-    let wipe_unlisted_buffers = {}
+    let bufnr_from_temp = {}
+    let bufnr_from_stdin = {}
+    let tempfile_bufnrs = has_key(make_info, 'tempfiles') ? map(copy(make_info.tempfiles), 'bufnr(v:val)') : []
+    let uses_stdin = get(a:jobinfo, 'uses_stdin', 0)
     while index < llen - 1
         let index += 1
         let entry = list[index]
         let entry.maker_name = maker_name
 
         let before = copy(entry)
-        if file_mode
-            " NOTE: also handled below with the generic stdin case?!
-            if has_key(make_info, 'tempfiles')
-                if entry.bufnr
-                    for tempfile in make_info.tempfiles
-                        let tempfile_bufnr = bufnr(tempfile)
-                        if tempfile_bufnr != -1 && entry.bufnr == tempfile_bufnr
-                            call neomake#utils#DebugMessage(printf(
-                                        \ 'Setting bufnr according to tempfile for entry: %s.', string(entry)), a:jobinfo)
-                            let entry.bufnr = a:jobinfo.bufnr
-                        endif
-                    endfor
+        " Handle unlisted buffers via tempfiles and uses_stdin.
+        if file_mode && entry.bufnr && entry.bufnr != a:jobinfo.bufnr
+                    \ && (!empty(tempfile_bufnrs) || uses_stdin)
+            let map_bufnr = index(tempfile_bufnrs, entry.bufnr)
+            if map_bufnr != -1
+                let entry.bufnr = a:jobinfo.bufnr
+                let map_bufnr = tempfile_bufnrs[map_bufnr]
+                if !has_key(bufnr_from_temp, map_bufnr)
+                    let bufnr_from_temp[map_bufnr] = []
                 endif
-            endif
-            if get(a:jobinfo, 'uses_stdin', 0)
+                let bufnr_from_temp[map_bufnr] += [index+1]
+            elseif uses_stdin
                 if !buflisted(entry.bufnr) && bufexists(entry.bufnr)
-                    call neomake#utils#DebugMessage(printf(
-                                \ 'Setting bufnr according to stdin filename for entry: %s.', string(entry)), a:jobinfo)
-                    let wipe_unlisted_buffers[entry.bufnr] = 1
+                    if !has_key(bufnr_from_stdin, entry.bufnr)
+                        let bufnr_from_stdin[entry.bufnr] = []
+                    endif
+                    let bufnr_from_stdin[entry.bufnr] += [index+1]
                     let entry.bufnr = a:jobinfo.bufnr
                 endif
             endif
@@ -1329,7 +1330,8 @@ function! s:AddExprCallback(jobinfo, prev_list) abort
             let changed_entries[index] = entry
             if debug
                 call neomake#utils#DebugMessage(printf(
-                  \ 'Modified list entry (postprocess): %s.',
+                  \ 'Modified list entry %d (postprocess): %s.',
+                  \ index + 1,
                   \ string(neomake#utils#diff_dict(before, entry))),
                   \ a:jobinfo)
             endif
@@ -1389,13 +1391,34 @@ function! s:AddExprCallback(jobinfo, prev_list) abort
         endif
     endif
 
+    if !empty(bufnr_from_temp) || !empty(bufnr_from_stdin)
+        if !has_key(make_info, '_wipe_unlisted_buffers')
+            let make_info._wipe_unlisted_buffers = []
+        endif
+        let make_info._wipe_unlisted_buffers += keys(bufnr_from_stdin) + keys(bufnr_from_stdin)
+        if !empty(bufnr_from_temp)
+            for [tempbuf, entries_idx] in items(bufnr_from_temp)
+                call neomake#utils#DebugMessage(printf(
+                            \ 'Used bufnr from temporary buffer %d (%s) for %d entries: %s.',
+                            \ tempbuf,
+                            \ bufname(+tempbuf),
+                            \ len(entries_idx),
+                            \ join(entries_idx, ', ')), a:jobinfo)
+            endfor
+        endif
+        if !empty(bufnr_from_stdin)
+            for [tempbuf, entries_idx] in items(bufnr_from_stdin)
+                call neomake#utils#DebugMessage(printf(
+                            \ 'Used bufnr from stdin buffer %d (%s) for %d entries: %s.',
+                            \ tempbuf,
+                            \ bufname(+tempbuf),
+                            \ len(entries_idx),
+                            \ join(entries_idx, ', ')), a:jobinfo)
+            endfor
+        endif
+    endif
     if !empty(different_bufnrs)
         call neomake#utils#DebugMessage(printf('WARN: seen entries with bufnr different from jobinfo.bufnr (%d): %s, current bufnr: %d.', a:jobinfo.bufnr, string(different_bufnrs), bufnr('%')))
-    endif
-
-    if !empty(wipe_unlisted_buffers)
-        call neomake#utils#DebugMessage(printf('Wiping out %d unlisted/remapped buffers.', len(wipe_unlisted_buffers)))
-        exe (&report < 2 ? 'silent ' : '').'bwipeout '.join(keys(wipe_unlisted_buffers))
     endif
 
     return s:ProcessEntries(a:jobinfo, entries, a:prev_list)
@@ -1537,6 +1560,8 @@ function! s:do_clean_make_info(make_info) abort
         call settabwinvar(t, w, 'neomake_make_ids', make_ids)
     endif
 
+    " Clean up temporary files and buffers.
+    let wipe_unlisted_buffers = get(a:make_info, '_wipe_unlisted_buffers', [])
     let tempfiles = get(a:make_info, 'tempfiles')
     if !empty(tempfiles)
         for tempfile in tempfiles
@@ -1544,7 +1569,7 @@ function! s:do_clean_make_info(make_info) abort
                         \ tempfile))
             call delete(tempfile)
             if bufexists(tempfile) && !buflisted(tempfile)
-                exe 'bwipe' tempfile
+                let wipe_unlisted_buffers += [tempfile]
             endif
         endfor
 
@@ -1555,6 +1580,15 @@ function! s:do_clean_make_info(make_info) abort
                 call delete(dir, 'd')
             endfor
         endif
+    endif
+    if !empty(wipe_unlisted_buffers)
+        if !empty(wipe_unlisted_buffers)
+            call neomake#compat#uniq(sort(wipe_unlisted_buffers))
+        endif
+        call neomake#utils#DebugMessage(printf('Wiping out %d unlisted/remapped buffers: %s.',
+                    \ len(wipe_unlisted_buffers),
+                    \ string(wipe_unlisted_buffers)))
+        exe (&report < 2 ? 'silent ' : '').'bwipeout '.join(wipe_unlisted_buffers)
     endif
 
     let buf_prev_makes = getbufvar(a:make_info.options.bufnr, 'neomake_automake_make_ids')
@@ -2202,10 +2236,8 @@ function! s:vim_output_handler(channel, output, event_type) abort
         call neomake#utils#DebugMessage(printf("output [%s]: job '%s' not found.", a:event_type, a:channel))
         return
     endif
-
-    let data = split(a:output, '\v\r?\n', 1)
-
-    call s:output_handler_queued(jobinfo, data, a:event_type)
+    let data = split(a:output, '\r\?\n', 1)
+    call s:output_handler_queued(jobinfo, data, a:event_type, 0)
 endfunction
 
 function! s:vim_output_handler_stdout(channel, output) abort
@@ -2259,7 +2291,7 @@ if has('nvim-0.2.0')
             " EOF in Neovim (see :h on_data).
             return
         endif
-        call s:output_handler_queued(jobinfo, copy(a:data), a:event_type)
+        call s:output_handler_queued(jobinfo, copy(a:data), a:event_type, 1)
     endfunction
 else
     " Neovim: register output from jobs as quick as possible, and trigger
@@ -2272,7 +2304,7 @@ else
             call neomake#utils#DebugMessage(printf('output [%s]: job %d not found.', a:event_type, a:job_id))
             return
         endif
-        let args = [jobinfo, copy(a:data), a:event_type]
+        let args = [jobinfo, copy(a:data), a:event_type, 1]
         call add(s:nvim_output_handler_queue, args)
         if !exists('jobinfo._nvim_in_handler')
             let jobinfo._nvim_in_handler = 1
@@ -2318,7 +2350,8 @@ function! s:nvim_exit_handler_buffered(job_id, data, event_type) abort
 
     for stream in ['stdout', 'stderr']
         if has_key(jobinfo.jobstart_opts, stream)
-            call s:output_handler(jobinfo, copy(jobinfo.jobstart_opts[stream]), stream)
+            let data = copy(jobinfo.jobstart_opts[stream])
+            call s:output_handler(jobinfo, data, stream, 1)
         endif
     endfor
 
@@ -2440,18 +2473,18 @@ function! s:exit_handler(jobinfo, data) abort
     call s:handle_next_job(jobinfo)
 endfunction
 
-function! s:output_handler_queued(jobinfo, data, event_type) abort
+function! s:output_handler_queued(jobinfo, data, event_type, trim_CR) abort
     let jobinfo = a:jobinfo
     if exists('jobinfo._output_while_in_handler')
         call neomake#utils#DebugMessage(printf('Queueing: %s: %s: %s.',
                     \ a:event_type, jobinfo.maker.name, string(a:data)), jobinfo)
-        let jobinfo._output_while_in_handler += [[jobinfo, a:data, a:event_type]]
+        let jobinfo._output_while_in_handler += [[jobinfo, a:data, a:event_type, a:trim_CR]]
         return
     else
         let jobinfo._output_while_in_handler = []
     endif
 
-    call s:output_handler(jobinfo, a:data, a:event_type)
+    call s:output_handler(jobinfo, a:data, a:event_type, a:trim_CR)
 
     " Process queued events that might have arrived by now.
     " The attribute might be unset here, since output_handler might have
@@ -2470,12 +2503,12 @@ function! s:output_handler_queued(jobinfo, data, event_type) abort
     endif
 endfunction
 
-function! s:output_handler(jobinfo, data, event_type) abort
+function! s:output_handler(jobinfo, data, event_type, trim_CR) abort
     let jobinfo = a:jobinfo
     call neomake#utils#DebugMessage(printf('%s: %s: %s.',
                 \ a:event_type, jobinfo.maker.name, string(a:data)), jobinfo)
     let data = copy(a:data)
-    if !empty(a:data)
+    if a:trim_CR && !empty(a:data)
         call map(data, "substitute(v:val, '\\r$', '', '')")
     endif
     if get(jobinfo, 'canceled')
