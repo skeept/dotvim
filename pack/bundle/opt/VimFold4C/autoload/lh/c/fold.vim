@@ -32,7 +32,7 @@ function! lh#c#fold#verbose(...) "{{{3
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
     for i in range(1, 9)
-      exe 'sign define Fold'.i.'   text=|'.i.'  texthl=Identifier'
+      exe 'sign define Fold'.i.'   text=|'.i.' texthl=Identifier'
       exe 'sign define Fold'.i.'gt text=>'.i.' texthl=Identifier'
       exe 'sign define Fold'.i.'lt text=<'.i.' texthl=Identifier'
     endfor
@@ -64,13 +64,20 @@ function! lh#c#fold#toggle_balloons() abort
     let s:balloon_reset = lh#on#exit()
           \.restore('&beval')
           \.restore('&bexpr')
-    set beval bexpr=lh#c#fold#_balloon_expr()
+    setlocal beval bexpr=lh#c#fold#_balloon_expr()
     call lh#common#WarningMsg('Start balloon debugging for VimFold4C')
   endif
 endfunction
 
 " Function: lh#c#fold#_balloon_expr() {{{3
 function! lh#c#fold#_balloon_expr() abort
+  if !exists('b:fold_data')
+    " This may happen when splitting a window where bexpr is set
+    " `:sp` copy all local option values, even if the filetype of the
+    " buffer on't be compatible...
+    setlocal bexpr<
+    return
+  endif
   let l = v:beval_lnum
   let expr = printf("Debug VimFold4C\nline: %d\nlevel: %d\ndata: [%d, %d]\ninstr: [%d, %d]\ncontext: %s",
         \ l, b:fold_data.levels[l],
@@ -83,11 +90,14 @@ endfunction
 
 " # Options {{{2
 " let b/g:fold_options = {
-      " \ 'show_if_and_else': 1,
-      " \ 'strip_template_arguments': 1,
-      " \ 'strip_namespaces': 1,
       " \ 'fold_blank': 1,
-      " \ 'max_foldline_length': 'win'/'tw'/42
+      " \ 'fold_includes': 1,
+      " \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+      " \ 'max_foldline_length': 'win'/'tw'/42,
+      " \ 'merge_comments' : 1
+      " \ 'show_if_and_else': 1,
+      " \ 'strip_namespaces': 1,
+      " \ 'strip_template_arguments': 1,
       " \ }
 function! s:opt_show_if_and_else() abort
   return lh#option#get('fold_options.show_if_and_else', 1)
@@ -99,7 +109,11 @@ function! s:opt_strip_namespaces() abort
   return lh#option#get('fold_options.strip_namespaces', 1)
 endfunction
 function! s:opt_fold_blank() abort
+  " Empty lines shall always not be merged with the previous line
   return lh#option#get('fold_options.fold_blank', 1)
+endfunction
+function! s:opt_fold_includes() abort
+  return lh#option#get('fold_options.fold_includes', 1)
 endfunction
 function! s:opt_max_foldline_length() abort
   " TODO: optimize this function call
@@ -113,6 +127,19 @@ function! s:opt_max_foldline_length() abort
     return winwidth(winnr()) - &foldcolumn
   endif
 endfunction
+function! s:opt_merge_comments() abort
+  return lh#option#get('fold_options.merge_comments', 1)
+endfunction
+let s:k_ignored_doxygen_fields = ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+function! s:opt_ignored_doxygen_fields() abort
+  return lh#option#get('fold_options.ignored_doxygen_fields', s:k_ignored_doxygen_fields)
+endfunction
+
+function! s:line_doesnt_matches_an_ignored_doxygen_field(line) abort
+  let fields = s:opt_ignored_doxygen_fields()
+  let matches = map(copy(fields), 'match(a:line, "[@\\\\]".v:val)')
+  return empty(filter(matches, 'v:val >= 0'))
+endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -122,6 +149,9 @@ endfunction
 " levels from one call to the other.
 " It means sometimes we have to refresh everything with zx/zX
 function! lh#c#fold#expr(lnum) abort
+  let opt_merge_comments = s:opt_merge_comments()
+  let opt_fold_blank = s:opt_fold_blank()
+
   " 0- Resize b:fold_* arrays to have as many lines as the buffer {{{4
   call s:ResizeCache()
 
@@ -129,7 +159,7 @@ function! lh#c#fold#expr(lnum) abort
   let where_it_starts = b:fold_data.begin[a:lnum]
   if where_it_starts == 0
     " it's possible the boundaries was never known => compute thems
-    let where_it_ends   = s:WhereInstructionEnds(a:lnum)
+    let where_it_ends   = s:WhereInstructionEnds(a:lnum, opt_merge_comments, opt_fold_blank)
     let where_it_starts = b:fold_data.begin[a:lnum]
   else
     " Actually, we can't know when text is changed, the where it starts may
@@ -167,7 +197,8 @@ function! lh#c#fold#expr(lnum) abort
   let line  = getline(where_it_ends)
 
   " Case: #include {{{5
-  if line =~ '^\s*#\s*include'
+  let fold_includes = s:opt_fold_includes()
+  if fold_includes && line =~ '^\s*#\s*include'
     let b:fold_data.context[a:lnum] = 'include'
     if     b:fold_data.context[a:lnum-1] == '#if'
       " Override #include context with #if
@@ -179,14 +210,14 @@ function! lh#c#fold#expr(lnum) abort
             \ = repeat(['include'], 1 + where_it_ends - where_it_starts)
       " And update the include context for the next elements...
       if getline(where_it_ends+1) =~ '^\s*#\s*include'
-        let where_next_ends = s:WhereInstructionEnds(a:lnum+1)
+        let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments, opt_fold_blank)
         let b:fold_data.context[where_it_starts : where_next_ends]
               \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
       endif
       return s:IncrFoldLevel(a:lnum, 1)
     endif
 
-    let where_next_ends = s:WhereInstructionEnds(a:lnum+1)
+    let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments, opt_fold_blank)
     let next_lines = getline(a:lnum+1, where_next_ends)
     if match(next_lines, '^\s*#\s*include') == -1
       return s:DecrFoldLevel(a:lnum, 1)
@@ -196,7 +227,9 @@ function! lh#c#fold#expr(lnum) abort
       return s:KeepFoldLevel(a:lnum)
     endif
   elseif b:fold_data.context[a:lnum] == 'include'
-    if a:lnum == where_it_ends
+    if a:lnum == where_it_ends && match(getline(a:lnum+1), '^\s*#\s*include') == -1
+      " line is the last in the "#include" context, and the next line
+      " doesn't match "#include" either => end of the fold
       return s:DecrFoldLevel(a:lnum, 1)
     else
       return s:KeepFoldLevel(a:lnum)
@@ -254,8 +287,8 @@ function! lh#c#fold#expr(lnum) abort
   call map(instr_lines, "substitute(v:val, '^[^{]*}\\ze.*{', '', '')")
 
   let line = join(instr_lines, '')
-  let incr = count(line, '{') " len(substitute(line, '[^{]', '', 'g'))
-  let decr = count(line, '}') " len(substitute(line, '[^}]', '', 'g'))
+  let incr = lh#string#count_char(line, '{') " len(substitute(line, '[^{]', '', 'g'))
+  let decr = lh#string#count_char(line, '}') " len(substitute(line, '[^}]', '', 'g'))
 
   if incr > decr  && a:lnum == where_it_starts
     return s:IncrFoldLevel(a:lnum, incr-decr)
@@ -267,8 +300,14 @@ function! lh#c#fold#expr(lnum) abort
       return s:DecrFoldLevel(a:lnum, decr-incr)
     endif
   else
-    " This is where we can detect instructions spawning on several lines
-    if line =~ '{.*}'
+    " This is where we can detect instructions, or comments, spanning on several lines
+    " Note: ";" case permits to merge comments with single-line function
+    " declarations, but also to fold multi-line instructions. At this
+    " point, I don't see how to distinguish the two cases: functions
+    " calls and function declarations are quite alike.
+    " Should it be an option?
+    if line =~ '\v\{.*\}|;\s*$'
+          \ || (!opt_merge_comments && join(getline(instr_start, where_it_ends), '') =~ '\v^\s*(/\*.*\*/|//)')
       " first case: oneliner that cannot be folded => we left it as it is
       if     a:lnum == instr_start && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
       elseif a:lnum == instr_start                            | return s:IncrFoldLevel(a:lnum, 1)
@@ -281,7 +320,43 @@ endfunction
 
 " Function: lh#c#fold#text()               {{{2
 function! lh#c#fold#text_(lnum) abort
-  let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
+  " options cached
+  let shall_fold_blank = s:opt_fold_blank()
+  let ts = s:Build_ts()
+
+  let lnum = s:NextNonCommentNonBlank(a:lnum, shall_fold_blank)
+
+  " Case: Don't merge comment                         {{{3
+  if (lnum > a:lnum) && ! s:opt_merge_comments()
+    " => Extract something like the brief line...
+    let lines = getline(b:fold_data.begin[a:lnum], b:fold_data.end[a:lnum])
+
+    let leading_spaces = matchstr(lines[0], '^\s*')
+    let leading_spaces = substitute(leading_spaces, "\t", ts, 'g')
+
+    let [lead, lead_start, lead_end] = matchstrpos(lines[0], '\v/.[*!]?\ze(\_s|$)')
+    " Trim line of repeated characters, if any
+    let lines[0] = substitute(lines[0][lead_end:], '\v(.)\1+\s*$', '', '')
+    let tail = matchstr(lines[-1], './\ze\s*$')
+    " Remove leading characters like '*', '///', and so on
+    call map(lines, 'substitute(v:val, "\\v^\\s*(/\\*[*!]|//!|///|[*])", "", "")')
+    " Remove leading spaces
+    call map(lines, 'substitute(v:val, "^\\s*", "", "")')
+    " * Ignore stuff like \class, @ingroup, ...
+    let ignored_doxygen_fields = s:opt_ignored_doxygen_fields()
+    call filter(lines, 's:line_doesnt_matches_an_ignored_doxygen_field(v:val)')
+    " * Extract brief line
+    " -> Search the first empty line after the first that is not empty...
+    let first = match(lines, '.')
+    let end = index(lines, '', first+1)
+    " -> Ignore what follows
+    let lines = lines[first : end]
+    let line = join(lines, ' ')
+    let line = substitute(line, '\v\.\zs(\_s|$).*', '', '')
+    let line = substitute(line, '[\\@]brief ', '', '')
+
+    return leading_spaces . lead.' '.line.' '.tail
+  endif
 
   " Case: #include                                    {{{3
   if b:fold_data.context[a:lnum] == 'include'
@@ -289,7 +364,7 @@ function! lh#c#fold#text_(lnum) abort
     let lastline = line('$')
     while lnum <= lastline && b:fold_data.context[lnum] == 'include'
       let includes += [matchstr(getline(lnum), '["<]\zs.*\ze[">]')]
-      let lnum = s:NextNonCommentNonBlank(lnum+1, s:opt_fold_blank())
+      let lnum = s:NextNonCommentNonBlank(lnum+1, shall_fold_blank)
     endwhile
     return '#include '.join(includes, ' ')
   endif
@@ -298,7 +373,6 @@ function! lh#c#fold#text_(lnum) abort
   " No need: What follows does the work
 
   " Loop for all the lines in the fold                {{{3
-  let ts = s:Build_ts()
   let line = ''
   let in_macro_ctx = 0
 
@@ -351,8 +425,9 @@ function! lh#c#fold#text_(lnum) abort
       break
     endif
     " Goto next line
-    let lnum = s:NextNonCommentNonBlank(lnum + 1, s:opt_fold_blank())
+    let lnum = s:NextNonCommentNonBlank(lnum + 1, shall_fold_blank)
   endwhile
+  let leading_spaces = get(l:, 'leading_spaces', '')
 
   " Strip whatever follows "case xxx:" and "default:" {{{3
   let line = substitute(line,
@@ -461,15 +536,68 @@ function! s:CleanLine(line) abort
   return line
 endfunction
 
+function! s:CleanLineCtx(line, ctx) abort
+  let line = a:line
+  if a:ctx.is_in_a_continuing_comment
+    let p = matchend(line, '\*/')
+    if p >= 0
+      let line = line[p:]
+      let a:ctx.is_in_a_continuing_comment = 0
+    else
+      return ''
+    endif
+  endif
+  " 1- remove strings
+  let line = substitute(line, '".\{-}[^\\]"', '', 'g')
+  " 2- remove C Comments
+  let line = substitute(line, '/\*.\{-}\*/', '', 'g')
+  " 3- remove C++ Comments
+  let line = substitute(line, '//.*', '', 'g')
+  " 4- multilines C comments
+  let p = match(line, '/\*')
+  if p >= 0
+    let line = p > 0 ? line[: (p-1)] : ''
+    let a:ctx.is_in_a_continuing_comment = 1
+  endif
+  return line
+endfunction
+
 " Function: s:WhereInstructionEnds()         {{{2
 " Given a line number, search for something that indicates the end of a
 " instruction => ; , {, }
-" TODO: Handle special case: "do { ... }\nwhile()\n;"
-function! s:WhereInstructionEnds(lnum) abort
+" TODO:
+" - Handle special case: "do { ... }\nwhile()\n;"
+let s:g_syn_filter_comments = lh#syntax#line_filter('\v\ccomment|doxygen')
+
+function! s:WhereInstructionEnds(lnum, opt_merge_comments, opt_fold_blank) abort
   let last_line = line('$')
   let lnum = a:lnum
   " let last = lnum
-  while lnum <= last_line
+  if ! a:opt_merge_comments
+    " whithin a comment line => search end of the comment line
+    " else => as usual
+    let line = s:g_syn_filter_comments.getline_not_matching(lnum)
+    if line =~ '^\s*$'
+      " let lnum += 1
+      " => only whitespaces & comments in the line
+      " => let's merge with comments
+      while lnum <= last_line
+        let line = s:g_syn_filter_comments.getline_not_matching(lnum+1)
+        if line !~ '^\s*$'
+          break
+        endif
+        let lnum += 1
+      endwhile
+      let as_usual = 0
+    else
+      " in the other case, let search as usual
+      let as_usual = 1
+    endif
+  else
+    let as_usual = 1
+  endif
+
+  while (lnum <= last_line) && as_usual
     "" Where the instruction started
     " let b:fold_data.begin[lnum] = a:lnum
     let line = getline(lnum)
@@ -478,11 +606,14 @@ function! s:WhereInstructionEnds(lnum) abort
     else
       let line = s:getline(lnum) " remove comments & strings
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
-        let last = lnum
+        " let last = lnum
         " Search next non empty line -- why don't I use nextnonblank(lnum)?
-        while lnum < last_line && getline(lnum+1) =~ '^\s*$'
-          let lnum += 1
-        endwhile
+        if a:opt_fold_blank
+          while lnum < last_line && getline(lnum+1) =~ '^\s*$'
+            let lnum += 1
+          endwhile
+        endif
+        " TODO: if there is no error => use this new value
         " call lh#assert#value(lnum).equal(max(nextnonblank(last+1)-1, last))
         break
       endif
@@ -647,7 +778,7 @@ function! s:TrimLongLine(line, max_length) abort
   return line
 endfunction
 
-" Function: s:getline(first [, last]) abort {{{1
+" Function: s:getline(first [, last]) abort  {{{2
 " This function caches calls to s:CleanLine() as long as the file hasn't been
 " modified.
 " TODO: support multiline comments
@@ -656,9 +787,16 @@ if exists('*undotree')
     let ut = undotree()
     let time = get(ut.entries, -1, {'time': localtime()}).time
     if b:fold_data.last_updated < time
+      "" s:CleanLine() doesn't handle multi line comments well
+      " let b:fold_data.lines = [''] + getline(1, '$')
+      " " TODO: -> s:getSNR
+      " call map(b:fold_data.lines, 's:CleanLine(v:val)')
+      "" getline_not_matching is too slow...
+      " let b:fold_data.lines = [''] + map(range(1, line('$')), 's:g_syn_filter_comments.getline_not_matching(v:val)')
       let b:fold_data.lines = [''] + getline(1, '$')
+      let ctx = {'is_in_a_continuing_comment': 0}
       " TODO: -> s:getSNR
-      call map(b:fold_data.lines, 's:CleanLine(v:val)')
+      call map(b:fold_data.lines, 's:CleanLineCtx(v:val, ctx)')
       let b:fold_data.last_updated = time
     endif
     return a:0 == 1
@@ -681,4 +819,4 @@ endif
 " }}}1
 let &cpo=s:cpo_save
 "=============================================================================
-" vim600: set fdm=marker:
+" vim600: set fdm=marker:sw=2:

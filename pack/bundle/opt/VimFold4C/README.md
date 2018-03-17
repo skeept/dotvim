@@ -21,6 +21,8 @@ The foldtext displayed will also try to be as pertinent as possible:
     - Initialisation-lists are replaced with  `....`
     - Parameter names are discarded (this requires [lh-cpp](https://github.com/LucHermitte/lh-cpp)).
     - Last parameters are discarded 
+- fold any instruction, or declaration, spanning on several lines (`cout`,
+  `printf`, `log(stuff << stuff)`
 
 
 ## Note
@@ -47,25 +49,58 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 ```vim
 " In the .vimrc
 let g:fold_options = {
+   \ 'fold_blank: 0,
+   \ 'fold_includes': 0,
+   \ 'max_foldline_length': 'win',
+   \ 'merge_comments' : 1
    \ 'show_if_and_else': 1,
-   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
-   \ 'max_foldline_length': 'win'
+   \ 'strip_template_arguments': 1,
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
+   \ 'fold_blank: 1,
+   \ 'fold_includes': 1,
+   \ 'ignored_doxygen_fields : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+   \ 'max_foldline_length': 'win',
+   \ 'merge_comments' : 0,
    \ 'show_if_and_else': 1,
-   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
-   \ 'max_foldline_length': 'win'
+   \ 'strip_template_arguments': 1,
    \ }
 ```
 
 ### Available options
 The
 [options](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md) are:
+
+- `fold_blank` (default: _true_) tells to fold blanks lines with the lines
+  preceding them.
+
+- `fold_includes` (default: _true_) tells to fold blocks of `#include` directives.
+
+- `ignored_doxygen_fields` (default: `['class', 'ingroup', 'function', 'def',
+  'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn',
+  'var']`) list of doxygen keywords that shall be ignored when computing the
+  folded text -- when `merge_comments == 0`
+
+- `max_foldline_length` (default: _"win"_) specifies the maximum line length
+  of the fold text. The possibile values are: 
+  - _"win"_: stops at current window width
+  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
+  - number: hardcoded maximum number of characters to keep.
+
+- `merge_comments` (default: 1) specifies whether comments shall be folded
+  together with the code or separativelly.
+
+- `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
+  `boost::filesystem::` from the fold text generated.
+
+- `strip_template_arguments` (default: _true_) strips template arguments from
+  the fold text generated if the text would be too long for the current window
+  width
 
 - `show_if_and_else` (which is currently hard-coded to _true_) requires to have
   two folds on
@@ -81,22 +116,9 @@ The
     instead of the single fold we have when using `indent` _foldmethod_ (or was it
     the `syntax` one ?).
 
-- `strip_template_arguments` (default: _true_) strips template arguments from
-  the fold text generated if the text would be too long for the current window
-  width
-
-- `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
-  `boost::filesystem::` from the fold text generated.
-
-- `max_foldline_length` (default: _"win"_) specifies the maximum line length
-  of the fold text. The possibile values are: 
-  - _"win"_: stops at current window width
-  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
-  - number: hardcoded maximum number of characters to keep.
-
 ## Requirements / Installation
 
-  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib)
+  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) 4.2.0+
 
   * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install VimFold4C.
 
@@ -148,8 +170,6 @@ However, I'm unlikely to handle specials cases in those languages.
 ## TO DO
 There is still a lot to be done:
 
-- [optional] fold a logging line spanning on several lines (`cout`, `printf`,
-  `log(stuff << stuff)`
 - [optional] Fold visibilities
 - `#include`
   - [optional] cut the foldtext line when it's too long to fit
@@ -172,8 +192,6 @@ There is still a lot to be done:
     - increment foldlevel for every `case`
     - [optional] merge `case`s that aren't separated by a `break;`
   - `do { } while();` requires a specific handling
-- Technicalities
-  - merge all those `b:fold_*` internal variables
 
 ## History
 - A long time ago (~2001), Johannes Zellner published a first folding plugin
@@ -182,7 +200,7 @@ There is still a lot to be done:
   time. (the last version is still archived in
   <http://hermitte.free.fr/vim/ressources/lh-cpp.tar.gz>)
 - Eventually I got tired of the slow execution times and moved back to
-  foldmethod=indent.
+  `foldmethod=indent`.
 
 - Here is a new (2014) version almost entirely rewritten, that I hope will
   be fast enough to be usable.

@@ -110,22 +110,9 @@ function! startify#insane_in_the_membrane() abort
   endif
 
   let b:startify.section_header_lines = []
-  let s:lists = get(g:, 'startify_list_order', [
-        \ [s:padding_left .'MRU'],            'files',
-        \ [s:padding_left .'MRU '. getcwd()], 'dir',
-        \ [s:padding_left .'Sessions'],       'sessions',
-        \ [s:padding_left .'Bookmarks'],      'bookmarks',
-        \ [s:padding_left .'Commands'],       'commands',
-        \ ])
 
-  for item in s:lists
-    if type(item) == 1
-      call s:show_{item}()
-    else
-      let s:last_message = item
-    endif
-    unlet item
-  endfor
+  let s:lists = s:get_lists()
+  call s:show_lists(s:lists)
 
   silent $delete _
 
@@ -141,8 +128,8 @@ function! startify#insane_in_the_membrane() abort
   let b:startify.firstline = 2
   let b:startify.firstline += len(g:startify_header)
   " no special, no local Session.vim, but a section header
-  if !s:show_special && !exists('l:show_session') && type(s:lists[0]) == type([])
-    let b:startify.firstline += len(s:lists[0]) + 1
+  if !s:show_special && !exists('l:show_session') && has_key(s:lists[0], 'header')
+    let b:startify.firstline += len(s:lists[0].header) + 1
   endif
 
   let b:startify.lastline = line('$')
@@ -434,6 +421,79 @@ function! startify#open_buffers(...) abort
   endfor
 
   wincmd =
+endfunction
+
+" Function: s:get_lists {{{1
+function! s:get_lists() abort
+  if exists('g:startify_lists')
+    return g:startify_lists
+  elseif exists('g:startify_list_order')
+    " Convert old g:startify_list_order format to newer g:startify_lists format.
+    let lists = []
+    for item in g:startify_list_order
+      if type(item) == type([])
+        let header = item
+      else
+        if exists('header')
+          let lists += [{ 'type': item, 'header': header }]
+          unlet header
+        else
+          let lists += [{ 'type': item }]
+        endif
+      endif
+    endfor
+    return lists
+  else
+    return [
+          \ { 'header': [s:padding_left .'MRU'],            'type': 'files' },
+          \ { 'header': [s:padding_left .'MRU '. getcwd()], 'type': 'dir' },
+          \ { 'header': [s:padding_left .'Sessions'],       'type': 'sessions' },
+          \ { 'header': [s:padding_left .'Bookmarks'],      'type': 'bookmarks' },
+          \ { 'header': [s:padding_left .'Commands'],       'type': 'commands' },
+          \ ]
+  endif
+endfunction
+
+" Function: s:show_lists {{{1
+function! s:show_lists(lists) abort
+  for list in a:lists
+    if !has_key(list, 'type')
+      continue
+    endif
+
+    if type(list.type) == type('')
+      if has_key(list, 'header')
+        let s:last_message = list.header
+      endif
+      call s:show_{list.type}()
+    elseif type(list.type) == type(function('tr'))
+      try
+        let entries = list.type()
+      catch
+        call s:warn(v:exception)
+        continue
+      endtry
+      if empty(entries)
+        unlet s:last_message
+        continue
+      endif
+
+      if has_key(list, 'header')
+        let s:last_message = list.header
+        call s:print_section_header()
+      endif
+
+      for entry in entries
+        let index = s:get_index_as_string(b:startify.entry_number)
+        call append('$', s:padding_left .'['. index .']'. repeat(' ', (3 - strlen(index))) . entry.line)
+        call s:register(line('$'), index, 'special', entry.cmd, '')
+        let b:startify.entry_number += 1
+      endfor
+      call append('$', '')
+    else
+      call s:warn('Wrong format for g:startify_lists: '. string(list))
+    endif
+  endfor
 endfunction
 
 " Function: s:open_buffer {{{1
