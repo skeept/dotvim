@@ -59,6 +59,7 @@ CONTENTS                                                         *ale-contents*
       hadolint............................|ale-dockerfile-hadolint|
     elixir................................|ale-elixir-options|
       mix.................................|ale-elixir-mix|
+      mix_format..........................|ale-elixir-mix-format|
       dialyxir............................|ale-elixir-dialyxir|
     elm...................................|ale-elm-options|
       elm-format..........................|ale-elm-elm-format|
@@ -197,6 +198,7 @@ CONTENTS                                                         *ale-contents*
       reek................................|ale-ruby-reek|
       rubocop.............................|ale-ruby-rubocop|
       ruby................................|ale-ruby-ruby|
+      rufo................................|ale-ruby-rufo|
     rust..................................|ale-rust-options|
       cargo...............................|ale-rust-cargo|
       rls.................................|ale-rust-rls|
@@ -327,7 +329,7 @@ Notes:
 * FusionScript: `fusion-lint`
 * Git Commit Messages: `gitlint`
 * GLSL: glslang, `glslls`
-* Go: `gofmt`, `goimports`, `go vet`!!, `golint`, `gotype`, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
+* Go: `gofmt`, `goimports`, `go vet`!!, `golint`, `gotype`!!, `gometalinter`!!, `go build`!!, `gosimple`!!, `staticcheck`!!
 * GraphQL: `eslint`, `gqlint`, `prettier`
 * Haml: `haml-lint`
 * Handlebars: `ember-template-lint`
@@ -344,7 +346,7 @@ Notes:
 * Lua: `luac`, `luacheck`
 * Mail: `alex`!!, `proselint`, `vale`
 * Make: `checkmake`
-* Markdown: `alex`!!, `mdl`, `prettier`, `proselint`, `redpen`, `remark-lint`, `vale`, `write-good`
+* Markdown: `alex`!!, `mdl`, `prettier`, `proselint`, `redpen`, `remark-lint`, `vale`, `write-good`, `textlint`
 * MATLAB: `mlint`
 * Nim: `nim check`!!
 * nix: `nix-instantiate`
@@ -366,7 +368,7 @@ Notes:
 * reStructuredText: `alex`!!, `proselint`, `redpen`, `rstcheck`, `vale`, `write-good`
 * Re:VIEW: `redpen`
 * RPM spec: `rpmlint`
-* Ruby: `brakeman`, `rails_best_practices`!!, `reek`, `rubocop`, `ruby`
+* Ruby: `brakeman`, `rails_best_practices`!!, `reek`, `rubocop`, `ruby`, `rufo`
 * Rust: `cargo`!!, `rls`, `rustc` (see |ale-integration-rust|), `rustfmt`
 * SASS: `sass-lint`, `stylelint`
 * SCSS: `prettier`, `sass-lint`, `scss-lint`, `stylelint`
@@ -2304,9 +2306,11 @@ b:ale_linted                                                     *b:ale_linted*
 
 ALELintPre                                                 *ALELintPre-autocmd*
 ALELintPost                                               *ALELintPost-autocmd*
+ALEFixPre                                                   *ALEFixPre-autocmd*
+ALEFixPost                                                 *ALEFixPost-autocmd*
 
-  These |User| autocommands are triggered before and after every lint cycle.
-  They can be used to update statuslines, send notifications, etc.
+  These |User| autocommands are triggered before and after every lint or fix
+  cycle. They can be used to update statuslines, send notifications, etc.
   The autocmd commands are run with |:silent|, so |:unsilent| is required for
   echoing messges.
 

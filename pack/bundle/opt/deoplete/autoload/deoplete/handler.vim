@@ -13,7 +13,7 @@ function! deoplete#handler#_init() abort
     autocmd InsertLeave * call s:completion_timer_stop()
   augroup END
 
-  for event in ['BufNewFile', 'BufNew', 'BufWritePost', 'VimLeavePre']
+  for event in ['InsertEnter', 'BufWritePost', 'VimLeavePre']
     call s:define_on_event(event)
   endfor
 
@@ -163,7 +163,8 @@ function! s:is_skip(event, context) abort
         \   'g:deoplete#disable_auto_complete')
 
   if &paste
-        \ || (a:event !=# 'Manual' && disable_auto_complete)
+        \ || (a:event !=# 'Manual' && a:event !=# 'Async'
+        \     && disable_auto_complete)
         \ || (&l:completefunc !=# '' && &l:buftype =~# 'nofile')
         \ || (a:event !=# 'InsertEnter' && mode() !=# 'i')
     return 1

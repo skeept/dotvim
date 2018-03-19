@@ -64,7 +64,7 @@ You can enable Python3 interface with pip: >
 
     pip3 install neovim
 
-Note: deoplete needs neovim-python ver.0.1.8+.
+Note: deoplete needs neovim-python ver.0.2.4+.
 You need update neovim-python module.
 >
     pip3 install --upgrade neovim
@@ -202,7 +202,7 @@ g:deoplete#num_processes
 		feature.  If it is less than equal 1, this feature is
 		disabled.
 
-		Default value: 4
+		Default value: 1 (Windows) or 4 (Others)
 
 						*g:deoplete#max_abbr_width*
 g:deoplete#max_abbr_width
@@ -799,14 +799,6 @@ rank		(Integer)			(Optional)
 		If you omit it, it is set 100.
 		Note: It is high priority than match position.
 
-					*deoplete-source-attribute-limit*
-limit		(Integer)			(Optional)
-		If the buffer is bigger than this limit,
-		the source will disable the completion.
-		If it is 0, it is disabled.
-
-		If you omit it, it is set 0.
-
 				*deoplete-source-attribute-min_pattern_length*
 min_pattern_length
 		(Integer)			(Optional)
@@ -919,6 +911,13 @@ disabled_syntaxes
 
 		If you omit it, this feature is ignored.
 
+					*deoplete-source-attribute-events*
+events		(List[str])			(Optional)
+		Calling event names list when
+		|deoplete-source-attribute-on_event|.
+
+		If you omit it, the feature is disabled.
+
 			*deoplete-source-attribute-get_complete_position*
 get_complete_position
 		(Function)			(Optional)
@@ -957,16 +956,15 @@ on_post_filter
 
 					*deoplete-source-attribute-on_event*
 on_event	(Function)			(Optional)
-		It is called when |BufNew|, |BufNewFile|, |BufWritePost|,
-		|VimLeavePre| or |deoplete#send_event()| or deoplete is
-		initialized.
+		It is called when |InsertEnter|, |BufWritePost|, |VimLeavePre|
+		|DirChanged|, or |deoplete#send_event()| or deoplete is
+		initialized("Init" event).
 		It is useful to make cache.
 		It takes {self} and {context} as its parameter.
 
 		" Examples:
 		def on_event(self, context):
 		    if context['event'] == 'Init':
-			# BufNewFile, BufRead
 			pass
 		    elif context['event'] == 'BufWritePost':
 			# BufWritePost
@@ -1651,6 +1649,10 @@ A: https://github.com/zchee/deoplete-jedi/issues/35
 
 ==============================================================================
 COMPATIBILITY					*deoplete-compatibility*
+
+2018.03.18
+* limit attribute in source is removed.
+* neovim-python 0.2.4+ is needed for asyncio feature.
 
 2017.12.04
 * "debug_enabled" is deprecated.  Please use "is_debug_enabled" instead.

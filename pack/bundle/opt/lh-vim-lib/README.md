@@ -1,13 +1,12 @@
-﻿# lh-vim-lib v4.0.0 [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-vim-lib.svg)](https://github.com/LucHermitte/lh-vim-lib/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+﻿# lh-vim-lib [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-vim-lib.svg)](https://github.com/LucHermitte/lh-vim-lib/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Introduction
 
 _lh-vim-lib_ is a library that defines some common vim functions I use in my various plugins and ftplugins.
 
-This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+.
+This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+. A few commands are defined.
 
-As I only have access to a version 7.3-429 on travis-ci, let's say this is the
-minimum vim version I'll try to be compatible with.
+As I only have access to a version 7.4-052 on travis-ci, let's say this is the minimum vim version I'll try to be compatible with. Until 2017 (v3.x) I was trying to be compatible with 7.3-429.
 
 The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/master/doc/lh-vim-lib.txt) can be browsed.
 
@@ -15,7 +14,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 
 - Since Version 2.2.0, the naming policy of these autoload functions have been harmonized. Now, most names are in lower cases, with words separated by underscores.
 - Since version 3.2.7, it's no longer hosted on google-code but on github
-- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`
+- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`, requires vim 7.4-52
 
 ## Functions
 
@@ -36,6 +35,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Logging framework](doc/Log.md) -- other web page
   * [Design by Contract functions](doc/DbC.md) -- other web page
   * [Call stack decoding](doc/Callstack.md) -- other web page
+  * [Commands](#commands)
 
 ### Miscellaneous functions
 
@@ -349,28 +349,50 @@ See separate page: [doc/DbC.md](doc/DbC.md).
 ### Word Tools
 See http://hermitte.free.fr/vim/general.php#expl_words_tools
 
+### Commands
+
+| Command                                   | Purpose                                                                                                                                                                    |
+|:------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`:Toggle`](#menus-related-functions)     | Toggles the state of a cyclic option/variable                                                                                                                              |
+| `:LoadedBufDo`                            | Like [`:h :bufdo`](http://vimhelp.appspot.com/windows.txt.html#%3abufdo), on loaded buffers                                                                                |
+| `:CleanEmptyBuffers`                      | [Wipeout](http://vimhelp.appspot.com/windows.txt.html#%3abw) empty buffers                                                                                                 |
+| [`:LHLog`](doc/Log.md)                    | Helper command to choose where logs shall be dumped to                                                                                                                     |
+| `Jobs`, `:JobUnpause`, `:StopBGExecution` | Helper commands to keep track of async jobs registered with lh-vim-lib API                                                                                                 |
+| `:ConfirmGlobal`                          | Like the [`:g`](http://vimhelp.appspot.com/repeat.txt.html#%3aglobal) command, but with a _confirm_ option as in [`:s`](http://vimhelp.appspot.com/change.txt.html#%3as_c) |
+| `:LetIfUndef`                             | Sets the value of an option, only if not set already -- supports `g.foo.bar = 42`                                                                                          |
+| `:LetTo`                                  | Sets the value of an option, even if it's already set -- unlike [`:h :let`](http://vimhelp.appspot.com/eval.txt.html#%3alet), supports `g:foo.bar = 42`                    |
+| `:Unlet`                                  | [`:unlet`](http://vimhelp.appspot.com/eval.txt.html#%3aunlet) a variable if it doesn't exists -- no side effect unlike `:silent! unlet`                                    |
+| `:PushOptions`, `:PopOptions`             | Pushs/pops values into list variables                                                                                                                                      |
+| [`:Project`](doc/Project.md)              | Central command for the project feature                                                                                                                                    |
 
 ## Installation
   * Requirements: Vim 7.4, Vim 8 for `lh#async` feature.
   * Clone from the git repository
-```
-git clone git@github.com:LucHermitte/lh-vim-lib.git
-```
+
+    ```sh
+    git clone git@github.com:LucHermitte/lh-vim-lib.git
+    ```
+
   * [Vim Addon Manager](http://github.com/MarcWeber/vim-addon-manager): (this
     is the preferred method as VAM handles dependencies).
-```vim
-ActivateAddons lh-vim-lib
-```
+
+    ```vim
+    ActivateAddons lh-vim-lib
+    ```
+
   * Note that [vim-flavor](https://github.com/kana/vim-flavor) also handles
     dependencies which will permit to automatically import lh-vim-lib from
     plugins that use it:
-```
-flavor LucHermitte/lh-vim-lib
-```
+
+    ```
+    flavor LucHermitte/lh-vim-lib
+    ```
+
   * Vundle/NeoBundle:
-```vim
-Bundle 'LucHermitte/lh-vim-lib'
-```
+
+    ```vim
+    Bundle 'LucHermitte/lh-vim-lib'
+    ```
 
 ## Credits
   * Luc Hermitte, maintainer

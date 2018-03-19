@@ -6,8 +6,7 @@
 
 from deoplete import logger
 from deoplete.parent import Parent
-from deoplete.util import (error_tb, find_rplugins)
-# from deoplete.util import error
+from deoplete.util import (error_tb, find_rplugins, error)
 
 
 class Deoplete(logger.LoggingMixin):
@@ -26,6 +25,10 @@ class Deoplete(logger.LoggingMixin):
         self._parent_count = 0
         self._max_parents = max(
             [1, self._vim.vars['deoplete#num_processes']])
+
+        if self._max_parents > 1 and not hasattr(self._vim, 'loop'):
+            error(self._vim, 'neovim-python 0.2.4+ is required.')
+            return
 
         # Enable logging before "Init" for more information, and e.g.
         # deoplete-jedi picks up the log filename from deoplete's handler in
@@ -79,10 +82,13 @@ class Deoplete(logger.LoggingMixin):
                                in context['vars']):
             self._vim.call('deoplete#mapping#_restore_completeopt')
 
-        # Check the previous completion
-        prev_candidates = context['vars'][
-            'deoplete#_prev_completion']['candidates']
-        if context['event'] == 'Async' and candidates == prev_candidates:
+        # Async update is skipped if same.
+        prev_completion = context['vars']['deoplete#_prev_completion']
+        prev_candidates = prev_completion['candidates']
+        prev_pos = prev_completion['complete_position']
+        if (context['event'] == 'Async' and
+                prev_pos == self._vim.call('getpos', '.') and
+                prev_candidates and candidates == prev_candidates):
             return
 
         # error(self._vim, candidates)
