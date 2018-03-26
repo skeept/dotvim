@@ -1451,7 +1451,7 @@ file/rec (file_rec)
 					\ ['scantree.py'])
 <
 				By default it ignores the files or folders
-				matching your wildignore setting.
+				matching your |'wildignore'| setting.
 				You can change which files to ignore with the
 				following command line argument:
 				  --ignore pat1,pat2,...
@@ -1461,20 +1461,20 @@ file/rec (file_rec)
 
 				The following two examples show how to set up
 				the command:
-
+>
 				call denite#custom#var('file_rec', 'command',
 					\ ['scantree.py', "--ignore=''"])
-
+<
 				or
-
+>
 				let ignore=&wildignore .
-				  \ ',*.pyc,.git,.hg,.svn'
+				    \ ',*.pyc,.git,.hg,.svn'
 				call denite#custom#var('file_rec', 'command',
 				    \ ['scantree.py', '--ignore', ignore])
-
+<
 				The first example doesn't ignore any files,
 				the second ignores everything matching
-				wildignore plus the given patterns.
+				|'wildignore'| plus the given patterns.
 				Note: The patterns are based on fnmatch python
 				module.
 
@@ -1494,6 +1494,7 @@ grep		Gather grep results and nominates them.
 			1. string or list of arguments
 			2. pattern string or list of patterns
 
+		Note: If the args 0 is empty, |denite-options-path| is used.
 		Note: If the args 2 is "!", it is the interactive mode.
 		The results are updated when the input is changed.
 		Note: If the args 2 is empty, |denite-options-input| or user
@@ -1511,7 +1512,7 @@ grep		Gather grep results and nominates them.
 		separator	the argument separator
 				(default: ["--"])
 		final_opts	the final arguments
-				(default: ["."] path to search argument)
+				(default: [])
 
 						*denite-source-help*
 help		Search through doc tags

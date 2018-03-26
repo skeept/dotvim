@@ -190,6 +190,7 @@ class Default(object):
         self._options['buflisted'] = False
         self._options['modeline'] = False
         self._options['filetype'] = 'denite'
+        self._options['modifiable'] = True
 
         self._window_options = self._vim.current.window.options
         window_options = {
@@ -572,7 +573,7 @@ class Default(object):
         self.update_status()
 
     def cleanup(self):
-        if not self._is_suspend:
+        if not self._is_suspend and not self._context['has_preview_window']:
             self._vim.command('pclose!')
         clearmatch(self._vim)
         if not self._context['immediately']:
@@ -947,4 +948,5 @@ class Default(object):
                               ':<C-u>Denite -resume -buffer_name=' +
                               self._context['buffer_name'] + '<CR>')
         self._is_suspend = True
+        self._options['modifiable'] = False
         return STATUS_ACCEPT
