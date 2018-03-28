@@ -21,7 +21,7 @@ from deoplete.exceptions import SourceInitError
 from deoplete.util import (bytepos2charpos, charpos2bytepos, error, error_tb,
                            import_plugin,
                            get_buffer_config, get_custom,
-                           get_syn_names, convert2candidates)
+                           get_syn_names, convert2candidates, uniq_list_dict)
 
 
 class Child(logger.LoggingMixin):
@@ -157,16 +157,21 @@ class Child(logger.LoggingMixin):
         merged_results = []
         for result in [x for x in results
                        if not self._is_skip(x['context'], x['source'])]:
-            source_result = self._source_result(result, context['input'])
-            if source_result:
+            if self._update_result(result, context['input']):
                 rank = get_custom(self._custom,
                                   result['source'].name, 'rank',
                                   result['source'].rank)
+                dup = bool(result['source'].filetypes)
+                candidates = result['candidates']
+                # Note: cannot use set() for dict
+                if dup:
+                    # Remove duplicates
+                    candidates = uniq_list_dict(candidates)
                 merged_results.append({
-                    'complete_position': source_result['complete_position'],
+                    'complete_position': result['complete_position'],
                     'mark': result['source'].mark,
-                    'dup': bool(result['source'].filetypes),
-                    'candidates': result['candidates'],
+                    'dup': dup,
+                    'candidates': candidates,
                     'source_name': result['source'].name,
                     'rank': rank,
                 })
@@ -302,7 +307,7 @@ class Child(logger.LoggingMixin):
         except Exception:
             error_tb(self._vim, 'Errors from: %s' % f)
 
-    def _source_result(self, result, context_input):
+    def _update_result(self, result, context_input):
         source = result['source']
 
         # Gather async results
