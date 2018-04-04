@@ -848,6 +848,9 @@ command! Pcp echo expand('%:p')
 " maximize window vertically
 command! ML set go-=m | winpos 0 0 | set lines=100
 
+" keep text on screen when exiting vim on command line
+command! KeepText set t_te=
+
 " Deletes spaces, puts quotes, comma and joins range of lines. Usefull to
 " quickly define a powershell list
 command! -range=% QuoteCommaJoin silent <line1>,<line2>call jraf#quoteCommaJoin()
