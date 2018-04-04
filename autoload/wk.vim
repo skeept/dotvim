@@ -133,7 +133,7 @@ function! wk#getIteration()
   let end_line = line('.')
   let to_copy = start_line . ',' . end_line . 'yank w'
   execute to_copy
-  enew 
+  enew
   normal "wp
 endfunction
 
@@ -146,6 +146,19 @@ endfunction
 function! wk#getGlobal()
   "similar to wk#getSelection() but get global part instead
 endfunction
+
+function! wk#getIterationNum()
+  "get current iteration. Later try harder to check if before first or after
+  "last
+  " 0: before first -1: after last
+
+  let curr_line = line('.')
+  let res = search('Start of Global Iteration', 'bnW')
+  if res > 0
+    echom getline(res)
+  endif
+endfunction
+
 
 function! wk#cleanVSCallStack()
   %substitute/) Line.*/)/e
