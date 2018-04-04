@@ -15,6 +15,8 @@ from deoplete import logger
 from deoplete.process import Process
 from deoplete.util import error_tb, error
 
+dp_main = os.path.join(os.path.dirname(__file__), 'dp_main.py')
+
 
 class Parent(logger.LoggingMixin):
 
@@ -93,7 +95,7 @@ class Parent(logger.LoggingMixin):
                 self._vim.loop.subprocess_exec(
                     partial(Process, self),
                     self._vim.vars.get('python3_host_prog', 'python3'),
-                    context['dp_main'],
+                    dp_main,
                     self._vim.vars['deoplete#_serveraddr'],
                     stderr=None, cwd=context['cwd'], startupinfo=startupinfo))
         else:
@@ -133,11 +135,3 @@ class Parent(logger.LoggingMixin):
         while not self._queue_out.empty():
             outs.append(self._queue_out.get_nowait())
         return [x for x in outs if x['queue_id'] == queue_id]
-
-    def _on_connection(self, transport):
-        self._stdin = transport.get_pipe_transport(0)
-
-    def _on_output(self, fd, data):
-        self._unpacker.feed(data)
-        for child_out in self._unpacker:
-            self._queue_out.put(child_out)

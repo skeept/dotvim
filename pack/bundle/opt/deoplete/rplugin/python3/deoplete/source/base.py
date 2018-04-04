@@ -33,7 +33,7 @@ class Base(LoggingMixin):
         self.is_silent = False
         self.rank = 100
         self.disabled_syntaxes = []
-        self.events = []
+        self.events = None
 
     def get_complete_position(self, context):
         m = re.search('(?:' + context['keyword_patterns'] + ')$',
@@ -49,7 +49,7 @@ class Base(LoggingMixin):
             error_vim(self.vim, expr)
 
     @abstractmethod
-    def gather_candidate(self, context):
+    def gather_candidates(self, context):
         pass
 
     def on_event(self, context):
