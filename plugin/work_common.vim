@@ -102,3 +102,6 @@ endfunction
 
 " search for current line stripped
 nnoremap gsl /\s*<C-R>=substitute(getline('.'), '^\s*\(.\{-}\)\s*$', '\1', '')<CR>\s*$<CR>
+
+"command to show current iteration
+command! IterShow call wk#getIterationNum()
