@@ -43,11 +43,13 @@ endfunction
 
 " Function: #insane_in_the_membrane {{{1
 function! startify#insane_in_the_membrane() abort
-  if &insertmode
+  " Handle vim -y, vim -M.
+  if &insertmode || (!&modifiable && &filetype != 'startify')
     return
   endif
 
-  if &modified
+  if !&hidden && &modified
+    call s:warn('startify: Save your changes first.')
     return
   endif
 
@@ -57,6 +59,10 @@ function! startify#insane_in_the_membrane() abort
         return
       endif
     endfor
+  endif
+
+  if line2byte('$') != -1
+    noautocmd enew
   endif
 
   silent! setlocal
