@@ -1,5 +1,10 @@
 " Initialization {{{1
 
+if exists('g:loaded_grepper')
+  finish
+endif
+let g:loaded_grepper = 1
+
 " Escaping test line:
 " ..ad\\f40+$':-# @=,!;%^&&*()_{}/ /4304\'""?`9$343%$ ^adfadf[ad)[(
 
@@ -806,11 +811,14 @@ function! s:finish_up(flags)
   call s:restore_errorformat()
 
   try
-    let title = has('nvim') ? cmdline : {'title': cmdline}
+    " TODO: Remove condition if nvim 0.2.0+ enters Debian stable.
+    let attrs = has('nvim') && !has('nvim-0.2.0')
+          \ ? cmdline
+          \ : {'title': cmdline, 'context': @/}
     if qf
-      call setqflist(list, a:flags.append ? 'a' : 'r', title)
+      call setqflist(list, a:flags.append ? 'a' : 'r', attrs)
     else
-      call setloclist(0, list, a:flags.append ? 'a' : 'r', title)
+      call setloclist(0, list, a:flags.append ? 'a' : 'r', attrs)
     endif
   catch /E118/
   endtry
