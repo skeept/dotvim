@@ -379,11 +379,8 @@ function! NeomakeTestsSetVimMessagesMarker()
 endfunction
 
 function! NeomakeTestsGetVimMessages()
-  redir => messages_output
-    silent messages
-  redir END
+  let msgs = split(neomake#utils#redir('messages'), "\n")
   call NeomakeTestsSetVimMessagesMarker()
-  let msgs = split(messages_output, "\n")
   let idx = index(reverse(msgs), s:vim_msgs_marker)
   if idx <= 0
     return []
@@ -399,6 +396,21 @@ function! NeomakeTestsGetMakerWithOutput(func, lines) abort
   let maker.exe = &shell
   let maker.args = [&shellcmdflag, 'cat '.fnameescape(output_file)]
   let maker.name = printf('%s-mocked', substitute(a:func, '^.*#', '', ''))
+  return maker
+endfunction
+
+function! NeomakeTestsFixtureMaker(func, fname) abort
+  let output_base = substitute(a:fname, '^tests/fixtures/input/', 'tests/fixtures/output/', '')
+  let stdout = printf('%s.stdout', output_base)
+  let stderr = printf('%s.stderr', output_base)
+  let exitcode = readfile(printf('%s.exitcode', output_base))[0]
+
+  let maker = call(a:func, [])
+  let maker.exe = &shell
+  let maker.args = [&shellcmdflag, printf(
+        \ 'cat %s; cat %s >&2; exit %d',
+        \ fnameescape(stdout), fnameescape(stderr), exitcode)]
+  let maker.name = printf('%s-fixture', substitute(a:func, '^.*#', '', ''))
   return maker
 endfunction
 
@@ -500,9 +512,7 @@ function! s:After()
   endif
 
   " Check that no new global functions are defined.
-  redir => neomake_output_func_after
-    silent function /\C^[A-Z]
-  redir END
+  let neomake_output_func_after = neomake#utils#redir('function /\C^[A-Z]')
   let funcs = map(split(neomake_output_func_after, '\n'),
         \ "substitute(v:val, '\\v^function (.*)\\(.*$', '\\1', '')")
   let new_funcs = filter(copy(funcs), 'index(g:neomake_test_funcs_before, v:val) == -1')
