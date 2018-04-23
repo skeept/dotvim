@@ -289,17 +289,19 @@ class Child(logger.LoggingMixin):
             else:
                 error_tb(self._vim, 'Errors from: %s' % source.name)
 
-    def _process_filter(self, f, context):
+    def _process_filter(self, f, context, max_candidates):
         try:
             self._profile_start(context, f.name)
             if (isinstance(context['candidates'], dict) and
                     'sorted_candidates' in context['candidates']):
-                context_candidates = []
+                filtered = []
                 context['is_sorted'] = True
                 for candidates in context['candidates']['sorted_candidates']:
                     context['candidates'] = candidates
-                    context_candidates += f.filter(context)
-                context['candidates'] = context_candidates
+                    filtered += f.filter(context)
+                if max_candidates > 0:
+                    filtered = filtered[: max_candidates]
+                context['candidates'] = filtered
             else:
                 context['candidates'] = f.filter(context)
             self._profile_end(f.name)
@@ -333,7 +335,7 @@ class Child(logger.LoggingMixin):
         for f in [self._filters[x] for x
                   in source.matchers + source.sorters + source.converters
                   if x in self._filters]:
-            self._process_filter(f, ctx)
+            self._process_filter(f, ctx, source.max_candidates)
 
         ctx['ignorecase'] = ignorecase
 
@@ -428,20 +430,22 @@ class Child(logger.LoggingMixin):
         context['vars'] under a different name, use a tuple.
         """
         attrs = (
-            'filetypes',
-            'disabled_syntaxes',
-            'input_pattern',
-            'min_pattern_length',
-            'max_pattern_length',
-            'max_abbr_width',
-            'max_kind_width',
-            'max_menu_width',
-            'matchers',
-            'sorters',
             'converters',
-            'mark',
+            'disabled_syntaxes',
+            'filetypes',
+            'input_pattern',
             'is_debug_enabled',
             'is_silent',
+            'keyword_patterns',
+            'mark',
+            'matchers',
+            'max_abbr_width',
+            'max_candidates',
+            'max_kind_width',
+            'max_menu_width',
+            'max_pattern_length',
+            'min_pattern_length',
+            'sorters',
             'vars',
         )
 
@@ -457,8 +461,7 @@ class Child(logger.LoggingMixin):
                     setattr(source, attr, custom)
 
             # Default min_pattern_length
-            # Todo: better initialization
-            if source.min_pattern_length is None:
+            if source.min_pattern_length < 0:
                 source.min_pattern_length = self._vim.call(
                     'deoplete#custom#_get_option', 'min_pattern_length')
 

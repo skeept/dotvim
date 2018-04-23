@@ -21,7 +21,7 @@ let s:Util = unite#sources#outline#import('Util')
 " Outline Info
 
 let s:outline_info = {
-      \ 'heading'  : '^\s*\%(class\|def\)\>',
+      \ 'heading'  : '^\s*\%(class\|\%(async\s\+\)\=def\)\>',
       \
       \ 'skip': {
       \   'header': s:Util.shared_pattern('sh', 'header'),
@@ -60,10 +60,10 @@ function! s:outline_info.create_heading(which, heading_line, matched_line, conte
     " Class
     let heading.type = 'class'
     let heading.word = matchstr(heading.word, '^\s*class\s\+\zs\h\w*') . ' : class'
-  elseif heading.word =~ '^\s*def\>'
+  elseif heading.word =~ '^\s*\%(async\s\+\)\=def\>'
     " Function
     let heading.type = 'function'
-    let heading.word = substitute(heading.word, '\<def\s*', '', '')
+    let heading.word = substitute(heading.word, '\<\%(async\s\+\)\=def\s*', '', '')
     let heading.word = substitute(heading.word, '\S\zs(', ' (', '')
     let heading.word = substitute(heading.word, '\%(:\|#\).*$', '', '')
   endif
