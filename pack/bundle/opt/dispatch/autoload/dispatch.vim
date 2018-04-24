@@ -289,10 +289,10 @@ endfunction
 function! s:extract_opts(command) abort
   let command = a:command
   let opts = {}
-  while command =~# '^-\%(\w\+\)\%([= ]\|$\)'
-    let opt = matchstr(command, '^-\zs\w\+')
-    if command =~# '^-\w\+='
-      let val = matchstr(command, '^-\w\+=\zs\%(\\.\|\S\)*')
+  while command =~# '^\%(-\|++\)\%(\w\+\)\%([= ]\|$\)'
+    let opt = matchstr(command, '\zs\w\+')
+    if command =~# '^\%(-\|++\)\w\+='
+      let val = matchstr(command, '\w\+=\zs\%(\\.\|\S\)*')
     else
       let val = 1
     endif
@@ -301,7 +301,7 @@ function! s:extract_opts(command) abort
     elseif index(['compiler', 'title', 'wait'], opt) >= 0
       let opts[opt] = substitute(val, '\\\(\s\)', '\1', 'g')
     endif
-    let command = substitute(command, '^-\w\+\%(=\%(\\.\|\S\)*\)\=\s*', '', '')
+    let command = substitute(command, '^\%(-\|++\)\w\+\%(=\%(\\.\|\S\)*\)\=\s*', '', '')
   endwhile
   return [command, opts]
 endfunction
@@ -589,6 +589,7 @@ function! dispatch#compile_command(bang, args, count) abort
     let args = a:args
   else
     let args = '_'
+    let default_dispatch = 1
     if type(get(b:, 'dispatch')) == type('')
       let args = b:dispatch
     endif
@@ -628,7 +629,10 @@ function! dispatch#compile_command(bang, args, count) abort
 
   if executable ==# '_'
     let request.args = matchstr(args, '_\s*\zs.*')
-    if empty(request.args)
+    if a:count >= 0 || exists('default_dispatch')
+      let request.args = s:expand_lnum(s:efm_literal('buffer'), a:count < 0 ? 0 : a:count) .
+            \ substitute(request.args, '^\ze.', ' ', '')
+    elseif empty(request.args)
       let request.args = s:expand_lnum(s:efm_literal('default'))
     endif
     let request.program = &makeprg
@@ -758,12 +762,16 @@ function! dispatch#focus(...) abort
     let [compiler, why] = [g:dispatch, 'Global focus']
   elseif exists('b:dispatch')
     let [compiler, why] = [b:dispatch, 'Buffer default']
-  elseif !empty(&l:makeprg)
-    return [':Make', 'Buffer default']
   else
-    return [':Make', 'Global default']
+    let [compiler, why] = ['_', (len(&l:makeprg) ? 'Buffer' : 'Global') . ' default']
   endif
   if haslnum
+    if compiler ==# '_'
+      let task = s:efm_literal('buffer')
+      if len(task)
+        let compiler .= ' ' . task
+      endif
+    endif
     let compiler = s:expand_lnum(compiler, a:1)
     let [compiler, opts] = s:extract_opts(compiler)
     if compiler =~# '^:[[:alpha:]]' && a:1 > 0
@@ -776,6 +784,14 @@ function! dispatch#focus(...) abort
       let compiler = '-dir=' .
             \ s:escape_path(fnamemodify(opts.directory, ':~:.')) .
             \ ' ' . compiler
+    endif
+  elseif compiler ==# '_'
+    let task = s:efm_literal('buffer')
+    if empty(task)
+      let task = s:efm_literal('default')
+    endif
+    if len(task)
+      let compiler .= ' ' . task
     endif
   endif
   if compiler =~# '^_\>'
@@ -928,7 +944,9 @@ function! dispatch#complete(file) abort
       let status = -1
       call writefile([-1], request.file . '.complete')
     endtry
-    if status > 0
+    if has_key(request, 'aborted')
+      let label = 'Aborted:'
+    elseif status > 0
       let label = 'Failure:'
     elseif status == 0
       let label = 'Success:'
@@ -936,12 +954,43 @@ function! dispatch#complete(file) abort
       let label = 'Complete:'
     endif
     echo label '!'.request.expanded s:postfix(request)
-    if !request.background
+    if !request.background && !get(request, 'aborted')
       call s:cwindow(request, 0, status)
       redraw
     endif
   endif
   return ''
+endfunction
+
+" }}}1
+" :AbortDispatch {{{1
+
+function! dispatch#abort_command(bang, query) abort
+  let i = len(s:makes) - 1
+  while i >= 0
+    let request = s:makes[i]
+    if strpart(request.command, 0, len(a:query)) ==# a:query &&
+          \ !dispatch#completed(request)
+      break
+    endif
+    let i -= 1
+  endwhile
+  if i < 0
+    return 'echomsg '.string('No running dispatch found')
+  endif
+  let request.aborted = 1
+  let pid = dispatch#pid(request)
+  if !pid
+    return 'echoerr '.string('No pid file')
+  endif
+  if exists('*dispatch#'.get(request, 'handler').'#kill')
+    return dispatch#{request.handler}#kill(pid)
+  elseif has('win32')
+    call system('taskkill /PID '.pid)
+  else
+    call system('kill -HUP '.pid)
+  endif
+  return 'call dispatch#complete('.request.id.')'
 endfunction
 
 " }}}1
