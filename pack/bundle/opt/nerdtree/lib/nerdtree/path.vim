@@ -719,8 +719,14 @@ function! s:Path.str(...)
 
     if has_key(options, 'truncateTo')
         let limit = options['truncateTo']
-        if len(toReturn) > limit-1
-            let toReturn = toReturn[(len(toReturn)-limit+1):]
+        if strdisplaywidth(toReturn) > limit-1
+            if exists("*strcharpart")
+                while strdisplaywidth(toReturn) > limit-1 && strchars(toReturn) > 0
+                    let toReturn = strcharpart(toReturn, 1)
+                endwhile
+            else
+                let toReturn = toReturn[(len(toReturn)-limit+1):]
+            endif
             if len(split(toReturn, '/')) > 1
                 let toReturn = '</' . join(split(toReturn, '/')[1:], '/') . '/'
             else
