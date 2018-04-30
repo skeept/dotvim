@@ -21,7 +21,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/AnsiEsc.vba.gz",
-    "version": "v13l"
+    "version": "v13m"
   },
   "AsNeeded@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -117,7 +117,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/DrawIt.vba.gz",
-    "version": "v14h"
+    "version": "v14i"
   },
   "EasyAccents@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -279,13 +279,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/math.vba.gz",
-    "version": "v5d"
+    "version": "v5e"
   },
   "Mines@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Mines.vba.gz",
-    "version": "v21c"
+    "version": "v21d"
   },
   "MoreHelpSyntaxHighlighting@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -315,7 +315,7 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/netrw.vba.gz",
-    "version": "v162"
+    "version": "v163b"
   },
   "PassWGenPasswordGenerator@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
@@ -345,13 +345,13 @@
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/Rndm.vba.gz",
-    "version": "v4f"
+    "version": "v4g"
   },
   "RunView@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",
     "type": "archive",
     "url": "http://www.drchip.org/astronaut/vim/vbafiles/RunView.vba.gz",
-    "version": "v4d"
+    "version": "v4e"
   },
   "SeeTab@drchip": {
     "homepage": "http://www.drchip.org/astronaut/vim/index.html",

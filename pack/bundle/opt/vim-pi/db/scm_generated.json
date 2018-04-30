@@ -151,6 +151,10 @@
     "type": "git",
     "url": "git://github.com/fboender/bexec"
   },
+  "1813": {
+    "type": "git",
+    "url": "git://github.com/yegappan/greplace"
+  },
   "1861": {
     "type": "git",
     "url": "git://github.com/mh21/errormarker.vim"
@@ -425,7 +429,7 @@
   },
   "2361": {
     "type": "git",
-    "url": "git://gitorious.org/vim-diff_navigator/main.git"
+    "url": "https://gitlab.com/mcepl/vim-diff_navigator.git"
   },
   "2368": {
     "type": "git",
@@ -5826,6 +5830,38 @@
   "5659": {
     "type": "git",
     "url": "git://github.com/timakro/vim-copytoggle"
+  },
+  "5664": {
+    "type": "git",
+    "url": "git://github.com/Radialsum/copy-paste-finder"
+  },
+  "5667": {
+    "type": "git",
+    "url": "git://github.com/tyru/open-browser-unicode.vim"
+  },
+  "5668": {
+    "type": "git",
+    "url": "git://github.com/tyru/open-browser-github.vim"
+  },
+  "5669": {
+    "type": "git",
+    "url": "git://github.com/ToruIwashita/nimble-anyjump.vim"
+  },
+  "5673": {
+    "type": "git",
+    "url": "git://github.com/evturn/vim-hardaway"
+  },
+  "5674": {
+    "type": "git",
+    "url": "git://github.com/anschnapp/move-less"
+  },
+  "5675": {
+    "type": "git",
+    "url": "git://github.com/nwochaadim/git-remote-open"
+  },
+  "5676": {
+    "type": "git",
+    "url": "git://github.com/fourjay/vim-flexagon"
   },
   "586": {
     "type": "git",

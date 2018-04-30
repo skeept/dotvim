@@ -82,6 +82,23 @@ INTERFACE						*deoplete-interface*
 ------------------------------------------------------------------------------
 OPTIONS	 					*deoplete-options*
 
+Options can be toggled through the use of |deoplete#custom#option()|.
+
+For example:
+
+>
+    " set a single option
+    call deoplete#custom#option('auto_complete_delay', 200)
+    
+    " pass a dictionary to set multiple options
+    call deoplete#custom#option({
+    \ 'auto_complete_delay': 200,
+    \ 'smart_case': v:true,
+    \ })
+<
+
+The set of available options follows.
+
 					*deoplete-options-auto_complete*
 auto_complete
 		If it is False, automatic completion becomes invalid, but can
@@ -154,7 +171,9 @@ keyword_patterns
 		'iskeyword' pattern.
 >
 		call deoplete#custom#option('keyword_patterns', {
+		\ '_': '[a-zA-Z_]\k*',
 		\ 'tex': '\\?[a-zA-Z_]\w*',
+		\ 'ruby': '[a-zA-Z_]\w*[!?]?',
 		\})
 <
 		Default value: {}
@@ -1548,7 +1567,7 @@ Q: I want to use Java script omnifunc.
 
 A: Please set "input_patterns" manually. >
 
-       call deoplete#custom#source('omni', 'input_patterns', {
+       call deoplete#custom#var('omni', 'input_patterns', {
        \ 'javascript': '[^. *\t]\.\w*',
        \ )
 
@@ -1562,7 +1581,7 @@ A: Please set the config as below.  >
        let g:lua_complete_dynamic = 0
        let g:lua_define_completion_mappings = 0
 
-       call deoplete#custom#source('omni', 'functions', {
+       call deoplete#custom#var('omni', 'functions', {
        \ 'lua': 'xolox#lua#omnifunc',
        \ })
 

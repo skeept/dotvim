@@ -160,18 +160,10 @@ class Child(logger.LoggingMixin):
                 rank = get_custom(self._custom,
                                   result['source'].name, 'rank',
                                   result['source'].rank)
-                dup = bool(result['source'].filetypes)
                 candidates = result['candidates']
-                # Note: cannot use set() for dict
-                if dup:
-                    # Remove duplicates
-                    candidates = uniq_list_dict(candidates)
                 merged_results.append({
                     'complete_position': result['complete_position'],
-                    'mark': result['source'].mark,
-                    'dup': dup,
                     'candidates': candidates,
-                    'source_name': result['source'].name,
                     'rank': rank,
                 })
 
@@ -254,7 +246,7 @@ class Child(logger.LoggingMixin):
                 }
                 self._prev_results[source.name] = result
                 results.append(result)
-            except Exception:
+            except Exception as exc:
                 self._source_errors[source.name] += 1
                 if source.is_silent:
                     continue
@@ -264,7 +256,7 @@ class Child(logger.LoggingMixin):
                           'is restarted.' % source.name)
                     self._ignore_sources.append(source.name)
                     continue
-                error_tb(self._vim, 'Errors from: %s' % source.name)
+                error_tb(self._vim, 'Error from %s: %r' % (source.name, exc))
 
         return results
 
@@ -277,7 +269,7 @@ class Child(logger.LoggingMixin):
             if async_candidates is None:
                 return
             context['candidates'] += convert2candidates(async_candidates)
-        except Exception:
+        except Exception as exc:
             self._source_errors[source.name] += 1
             if source.is_silent:
                 return
@@ -287,7 +279,7 @@ class Child(logger.LoggingMixin):
                       'is restarted.' % source.name)
                 self._ignore_sources.append(source.name)
             else:
-                error_tb(self._vim, 'Errors from: %s' % source.name)
+                error_tb(self._vim, 'Error from %s: %r' % (source.name, exc))
 
     def _process_filter(self, f, context, max_candidates):
         try:
@@ -299,11 +291,11 @@ class Child(logger.LoggingMixin):
                 for candidates in context['candidates']['sorted_candidates']:
                     context['candidates'] = candidates
                     filtered += f.filter(context)
-                if max_candidates > 0:
-                    filtered = filtered[: max_candidates]
-                context['candidates'] = filtered
             else:
-                context['candidates'] = f.filter(context)
+                filtered = f.filter(context)
+            if max_candidates > 0:
+                filtered = filtered[: max_candidates]
+            context['candidates'] = filtered
             self._profile_end(f.name)
         except Exception:
             error_tb(self._vim, 'Errors from: %s' % f)
@@ -342,6 +334,21 @@ class Child(logger.LoggingMixin):
         # On post filter
         if hasattr(source, 'on_post_filter'):
             ctx['candidates'] = source.on_post_filter(ctx)
+
+        mark = source.mark + ' '
+        dup = bool(source.filetypes)
+        for candidate in ctx['candidates']:
+            # Set default menu and icase
+            candidate['icase'] = 1
+            if (mark != ' ' and
+                    candidate.get('menu', '').find(mark) != 0):
+                candidate['menu'] = mark + candidate.get('menu', '')
+            if dup:
+                candidate['dup'] = 1
+        # Note: cannot use set() for dict
+        if dup:
+            # Remove duplicates
+            ctx['candidates'] = uniq_list_dict(ctx['candidates'])
 
         result['candidates'] = ctx['candidates']
         return result if result['candidates'] else None
