@@ -5863,6 +5863,10 @@
     "type": "git",
     "url": "git://github.com/fourjay/vim-flexagon"
   },
+  "5677": {
+    "type": "git",
+    "url": "git://github.com/markonm/traces.vim"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

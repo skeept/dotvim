@@ -1,4 +1,5 @@
 {
+"traces":{"archive_name":"traces.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25956","version":"v1.0.0","vim_script_nr":5677},
 "Flexagon":{"archive_name":"vim-flexagon.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25942","version":"1.0","vim_script_nr":5676},
 "git-remote-open":{"archive_name":"git-remote-open.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25941","version":"1.0","vim_script_nr":5675},
 "move-less":{"archive_name":"move-less-1.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25955","version":"1.1","vim_script_nr":5674},
@@ -6,7 +7,7 @@
 "rested":{"archive_name":"rested.vim","script-type":"color scheme","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25894","version":"0.1.0","vim_script_nr":5672},
 "vinegar":{"archive_name":"vinegar.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25886","version":"1.0","vim_script_nr":5671},
 "simplebuffer":{"archive_name":"simplebuffer.tar","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25883","version":"1.0.0","vim_script_nr":5670},
-"nimble-anyjump":{"archive_name":"nimble-anyjump.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25879","version":"1.0.0","vim_script_nr":5669},
+"nimble-anyjump":{"archive_name":"nimble-anyjump.vim-1.1.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25957","version":"1.1.0","vim_script_nr":5669},
 "open-browser-github":{"archive_name":"open-browser-github-v1.0.1.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25899","version":"v1.0.1","vim_script_nr":5668},
 "open-browser-unicode":{"archive_name":"open-browser-unicode-v1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25874","version":"v1.0.0","vim_script_nr":5667},
 "dadbod":{"archive_name":"dadbod.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25944","version":"1.2","vim_script_nr":5665},
