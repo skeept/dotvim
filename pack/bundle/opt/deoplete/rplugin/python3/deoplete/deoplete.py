@@ -82,7 +82,7 @@ class Deoplete(logger.LoggingMixin):
         prev_pos = prev_completion['complete_position']
         if (context['event'] == 'Async' and
                 prev_pos == self._vim.call('getpos', '.') and
-                prev_candidates and candidates == prev_candidates):
+                prev_candidates and len(candidates) <= len(prev_candidates)):
             return
 
         # error(self._vim, candidates)
@@ -130,8 +130,8 @@ class Deoplete(logger.LoggingMixin):
         if not merged_results:
             return (is_async, -1, [])
 
-        complete_position = min([x['complete_position']
-                                 for x in merged_results])
+        complete_position = min(x['complete_position']
+                                for x in merged_results)
 
         all_candidates = []
         for result in sorted(merged_results,
@@ -193,10 +193,6 @@ class Deoplete(logger.LoggingMixin):
     def _load_filters(self, context):
         # Load filters from runtimepath
         for path in find_rplugins(context, 'filter'):
-            if path in self._loaded_paths:
-                continue
-            self._loaded_paths.add(path)
-
             for parent in self._parents:
                 parent.add_filter(path)
 
