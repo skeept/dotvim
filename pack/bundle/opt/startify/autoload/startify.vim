@@ -49,7 +49,7 @@ function! startify#insane_in_the_membrane() abort
   endif
 
   if !&hidden && &modified
-    call s:warn('startify: Save your changes first.')
+    call s:warn('Save your changes first.')
     return
   endif
 
@@ -107,7 +107,7 @@ function! startify#insane_in_the_membrane() abort
   endif
 
   if empty(v:oldfiles)
-    call s:warn("startify: Can't read viminfo file. Read :help startify-faq-02")
+    call s:warn("Can't read viminfo file. Read :help startify-faq-02")
   endif
 
   let b:startify.section_header_lines = []
@@ -365,22 +365,9 @@ endfunction
 
 " Function: #session_delete_buffers {{{1
 function! startify#session_delete_buffers()
-  if !get(g:, 'startify_session_delete_buffers', 1)
-    return
+  if get(g:, 'startify_session_delete_buffers', 1)
+    silent! %bdelete
   endif
-  let n = 1
-  while n <= bufnr('$')
-    if buflisted(n)
-      try
-        silent execute 'bdelete' n
-      catch
-        echohl ErrorMsg
-        echomsg v:exception
-        echohl NONE
-      endtry
-    endif
-    let n += 1
-  endwhile
 endfunction
 
 " Function: #session_list {{{1
@@ -780,7 +767,7 @@ function! s:is_in_skiplist(arg) abort
         return 1
       endif
     catch
-      call s:warn('startify: Pattern '. string(regexp) .' threw an exception. Read :help g:startify_skiplist')
+      call s:warn('Pattern '. string(regexp) .' threw an exception. Read :help g:startify_skiplist')
     endtry
   endfor
 endfunction
@@ -976,7 +963,7 @@ function! s:create_last_session_link(spath)
           \ shellescape(s:session_dir .'/__LAST__'))
     call system(cmd)
     if v:shell_error
-      echomsg "startify: Can't create 'last used session' symlink."
+      call s:warn("Can't create 'last used session' symlink.")
     endif
   endif
 endfunction
@@ -1033,6 +1020,6 @@ endfunction
 " Function: s:warn {{{1
 function! s:warn(msg) abort
   echohl WarningMsg
-  echomsg a:msg
+  echomsg 'startify: '. a:msg
   echohl NONE
 endfunction

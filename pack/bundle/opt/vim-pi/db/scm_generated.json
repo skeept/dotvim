@@ -5867,6 +5867,10 @@
     "type": "git",
     "url": "git://github.com/markonm/traces.vim"
   },
+  "5678": {
+    "type": "git",
+    "url": "git://github.com/skywind3000/vim-preview"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
