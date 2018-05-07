@@ -8,26 +8,32 @@ if exists("g:loaded_unimpaired") || &cp || v:version < 700
 endif
 let g:loaded_unimpaired = 1
 
-function! s:map(mode, lhs, rhs, ...) abort
-  let flags = (a:0 ? a:1 : '') . (a:rhs =~# '^<Plug>' ? '' : '<script>')
-  let head = a:lhs
-  let tail = ''
-  let keys = get(g:, a:mode.'remap', {})
-  if type(keys) != type({})
-    return
-  endif
-  while !empty(head)
-    if has_key(keys, head)
-      let head = keys[head]
-      if empty(head)
-        return
-      endif
-      break
+let s:maps = []
+function! s:map(...) abort
+  call add(s:maps, a:000)
+endfunction
+
+function! s:maps() abort
+  for [mode, head, rhs; rest] in s:maps
+    let flags = get(rest, 0, '') . (rhs =~# '^<Plug>' ? '' : '<script>')
+    let tail = ''
+    let keys = get(g:, mode.'remap', {})
+    if type(keys) != type({})
+      continue
     endif
-    let tail = matchstr(head, '<[^<>]*>$\|.$') . tail
-    let head = substitute(head, '<[^<>]*>$\|.$', '', '')
-  endwhile
-  exe a:mode.'map' flags head.tail a:rhs
+    while !empty(head)
+      if has_key(keys, head)
+        let head = keys[head]
+        if empty(head)
+          return
+        endif
+        break
+      endif
+      let tail = matchstr(head, '<[^<>]*>$\|.$') . tail
+      let head = substitute(head, '<[^<>]*>$\|.$', '', '')
+    endwhile
+    exe mode.'map' flags head.tail rhs
+  endfor
 endfunction
 
 " Section: Next and previous
@@ -240,17 +246,17 @@ endfunction
 function! s:option_map(letter, option, mode) abort
   call s:map('n', '[o'.a:letter, ':'.a:mode.' '.a:option.'<C-R>=<SID>statusbump()<CR><CR>')
   call s:map('n', ']o'.a:letter, ':'.a:mode.' no'.a:option.'<C-R>=<SID>statusbump()<CR><CR>')
-  call s:map('n', '=o'.a:letter, ':'.a:mode.' <C-R>=<SID>toggle("'.a:option.'")<CR><CR>')
+  call s:map('n', 'yo'.a:letter, ':'.a:mode.' <C-R>=<SID>toggle("'.a:option.'")<CR><CR>')
 endfunction
 
 call s:map('n', '[ob', ':set background=light<CR>')
 call s:map('n', ']ob', ':set background=dark<CR>')
-call s:map('n', '=ob', ':set background=<C-R>=&background == "dark" ? "light" : "dark"<CR><CR>')
+call s:map('n', 'yob', ':set background=<C-R>=&background == "dark" ? "light" : "dark"<CR><CR>')
 call s:option_map('c', 'cursorline', 'setlocal')
 call s:option_map('u', 'cursorcolumn', 'setlocal')
 call s:map('n', '[od', ':diffthis<CR>')
 call s:map('n', ']od', ':diffoff<CR>')
-call s:map('n', '=od', ':<C-R>=&diff ? "diffoff" : "diffthis"<CR><CR>')
+call s:map('n', 'yod', ':<C-R>=&diff ? "diffoff" : "diffthis"<CR><CR>')
 call s:option_map('h', 'hlsearch', 'set')
 call s:option_map('i', 'ignorecase', 'set')
 call s:option_map('l', 'list', 'setlocal')
@@ -260,12 +266,13 @@ call s:option_map('s', 'spell', 'setlocal')
 call s:option_map('w', 'wrap', 'setlocal')
 call s:map('n', '[ov', ':set virtualedit+=all<CR>')
 call s:map('n', ']ov', ':set virtualedit-=all<CR>')
-call s:map('n', '=ov', ':set <C-R>=(&virtualedit =~# "all") ? "virtualedit-=all" : "virtualedit+=all"<CR><CR>')
+call s:map('n', 'yov', ':set <C-R>=(&virtualedit =~# "all") ? "virtualedit-=all" : "virtualedit+=all"<CR><CR>')
 call s:map('n', '[ox', ':set cursorline cursorcolumn<CR>')
 call s:map('n', ']ox', ':set nocursorline nocursorcolumn<CR>')
-call s:map('n', '=ox', ':set <C-R>=<SID>cursor_options()<CR><CR>')
+call s:map('n', 'yox', ':set <C-R>=<SID>cursor_options()<CR><CR>')
+nmap =o yo
 if empty(maparg('co', 'n'))
-  nmap <script><silent> co :<C-U>echoerr 'co has been replaced by =o'<CR>
+  nmap <script><silent><expr> co ":\<C-U>echoerr 'Use =o'.nr2char(getchar())\<CR>"
 endif
 
 function! s:setup_paste() abort
@@ -288,14 +295,11 @@ endfunction
 
 nnoremap <silent> <Plug>unimpairedPaste :call <SID>setup_paste()<CR>
 
-call s:map('n', 'yo', ':call <SID>setup_paste()<CR>o', '<silent>')
-call s:map('n', 'yO', ':call <SID>setup_paste()<CR>O', '<silent>')
+call s:map('n', 'yo', ':<C-U>echoerr "Use ]op"<CR>', '<silent>')
+call s:map('n', 'yO', ':<C-U>echoerr "Use [op"<CR>', '<silent>')
 call s:map('n', '[op', ':call <SID>setup_paste()<CR>O', '<silent>')
 call s:map('n', ']op', ':call <SID>setup_paste()<CR>o', '<silent>')
-call s:map('n', '=op', ':call <SID>setup_paste()<CR>A', '<silent>')
-call s:map('n', '[O', ':call <SID>setup_paste()<CR>O', '<silent>')
-call s:map('n', ']O', ':call <SID>setup_paste()<CR>o', '<silent>')
-call s:map('n', '=O', ':call <SID>setup_paste()<CR>A', '<silent>')
+call s:map('n', 'yop', ':call <SID>setup_paste()<CR>A', '<silent>')
 
 " Section: Put
 
@@ -448,11 +452,7 @@ function! s:Transform(algorithm,type) abort
   let cb_save = &clipboard
   set selection=inclusive clipboard-=unnamed clipboard-=unnamedplus
   let reg_save = @@
-  if a:type =~# '^\d\+$'
-    silent exe 'norm! ^v'.a:type.'$hy'
-  elseif a:type =~# '^.$'
-    silent exe "normal! `<" . a:type . "`>y"
-  elseif a:type ==# 'line'
+  if a:type ==# 'line'
     silent exe "normal! '[V']y"
   elseif a:type ==# 'block'
     silent exe "normal! `[\<C-V>`]y"
@@ -468,9 +468,6 @@ function! s:Transform(algorithm,type) abort
   let @@ = reg_save
   let &selection = sel_save
   let &clipboard = cb_save
-  if a:type =~# '^\d\+$'
-    silent! call repeat#set("\<Plug>unimpaired_line_".a:algorithm,a:type)
-  endif
 endfunction
 
 function! s:TransformOpfunc(type) abort
@@ -480,12 +477,13 @@ endfunction
 function! s:TransformSetup(algorithm) abort
   let s:encode_algorithm = a:algorithm
   let &opfunc = matchstr(expand('<sfile>'), '<SNR>\d\+_').'TransformOpfunc'
+  return 'g@'
 endfunction
 
 function! UnimpairedMapTransform(algorithm, key) abort
-  exe 'nnoremap <silent> <Plug>unimpaired_'    .a:algorithm.' :<C-U>call <SID>TransformSetup("'.a:algorithm.'")<CR>g@'
-  exe 'xnoremap <silent> <Plug>unimpaired_'    .a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",visualmode())<CR>'
-  exe 'nnoremap <silent> <Plug>unimpaired_line_'.a:algorithm.' :<C-U>call <SID>Transform("'.a:algorithm.'",v:count1)<CR>'
+  exe 'nnoremap <expr> <Plug>unimpaired_'    .a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")'
+  exe 'xnoremap <expr> <Plug>unimpaired_'    .a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")'
+  exe 'nnoremap <expr> <Plug>unimpaired_line_'.a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")."_"'
   call s:map('n', a:key, '<Plug>unimpaired_'.a:algorithm)
   call s:map('x', a:key, '<Plug>unimpaired_'.a:algorithm)
   call s:map('n', a:key.a:key[strlen(a:key)-1], '<Plug>unimpaired_line_'.a:algorithm)
@@ -498,5 +496,15 @@ call UnimpairedMapTransform('url_decode',']u')
 call UnimpairedMapTransform('xml_encode','[x')
 call UnimpairedMapTransform('xml_decode',']x')
 
+" Section: Activation
+
+augroup unimpaired
+  autocmd!
+  autocmd VimEnter * call s:maps()
+augroup END
+
+if !has('vim_starting')
+  call s:maps()
+endif
 
 " vim:set sw=2 sts=2:

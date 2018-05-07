@@ -5871,6 +5871,10 @@
     "type": "git",
     "url": "git://github.com/skywind3000/vim-preview"
   },
+  "5679": {
+    "type": "git",
+    "url": "git://github.com/urbainvaes/vim-remembrall"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"

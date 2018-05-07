@@ -1,4 +1,5 @@
 {
+"vim-remembrall":{"archive_name":"vim-remembrall-v0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25963","version":"v0.2","vim_script_nr":5679},
 "vim-preview":{"archive_name":"vim-preview.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25962","version":"1.0.0","vim_script_nr":5678},
 "traces":{"archive_name":"traces.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25956","version":"v1.0.0","vim_script_nr":5677},
 "Flexagon":{"archive_name":"vim-flexagon.tgz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25942","version":"1.0","vim_script_nr":5676},
