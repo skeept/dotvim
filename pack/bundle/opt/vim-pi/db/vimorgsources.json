@@ -1,4 +1,7 @@
 {
+"vpager":{"archive_name":"vpager.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25966","version":"1","vim_script_nr":5682},
+"vim-tmux-pilot":{"archive_name":"vim-tmux-pilot-0.1.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25965","version":"0.1","vim_script_nr":5681},
+"yaTranslator":{"archive_name":"yaTranslator.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25964","version":"0.7","vim_script_nr":5680},
 "vim-remembrall":{"archive_name":"vim-remembrall-v0.2.tar.gz","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25963","version":"v0.2","vim_script_nr":5679},
 "vim-preview":{"archive_name":"vim-preview.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25962","version":"1.0.0","vim_script_nr":5678},
 "traces":{"archive_name":"traces.vim-1.0.0.zip","script-type":"utility","type":"archive","url":"http://www.vim.org/scripts/download_script.php?src_id=25956","version":"v1.0.0","vim_script_nr":5677},

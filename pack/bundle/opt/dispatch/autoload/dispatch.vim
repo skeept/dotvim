@@ -274,10 +274,10 @@ function! s:dispatch(request) abort
   for handler in g:dispatch_handlers
     let response = call('dispatch#'.handler.'#handle', [a:request])
     if !empty(response)
-      redraw
       let a:request.handler = handler
+      redraw
       echo ':!'.a:request.expanded s:postfix(a:request)
-      return 1
+      return response
     endif
   endfor
   return 0
@@ -1068,7 +1068,7 @@ endfunction
 
 function! dispatch#quickfix_init() abort
   let request = s:request(w:quickfix_title)
-  if empty(request)
+  if !has_key(request, 'handler')
     return
   endif
   let w:quickfix_title = ':Dispatch ' . escape(request.expanded, '%#') .

@@ -5875,6 +5875,18 @@
     "type": "git",
     "url": "git://github.com/urbainvaes/vim-remembrall"
   },
+  "5680": {
+    "type": "git",
+    "url": "git://github.com/ademin/yaTranslator"
+  },
+  "5681": {
+    "type": "git",
+    "url": "git://github.com/urbainvaes/vim-tmux-pilot"
+  },
+  "5682": {
+    "type": "git",
+    "url": "git://github.com/chrisbra/vpager"
+  },
   "586": {
     "type": "git",
     "url": "git://github.com/khorser/vim-northsky"
