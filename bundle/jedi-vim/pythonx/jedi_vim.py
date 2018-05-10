@@ -25,6 +25,16 @@ else:
     ELLIPSIS = u"…"
 
 
+try:
+    # Somehow sys.prefix is set in combination with VIM and virtualenvs.
+    # However the sys path is not affected. Just reset it to the normal value.
+    sys.prefix = sys.base_prefix
+    sys.exec_prefix = sys.base_exec_prefix
+except AttributeError:
+    # If we're not in a virtualenv we don't care. Everything is fine.
+    pass
+
+
 class PythonToVimStr(unicode):
     """ Vim has a different string implementation of single quotes """
     __slots__ = []
@@ -73,11 +83,11 @@ def _catch_exception(string, is_eval):
 
 
 def vim_command(string):
-    _catch_exception(string, False)
+    _catch_exception(string, is_eval=False)
 
 
 def vim_eval(string):
-    return _catch_exception(string, True)
+    return _catch_exception(string, is_eval=True)
 
 
 def no_jedi_warning(error=None):
@@ -148,6 +158,42 @@ def _check_jedi_availability(show_error=False):
     return func_receiver
 
 
+current_environment = (None, None)
+
+
+def get_environment(use_cache=True):
+    global current_environment
+
+    vim_force_python_version = vim_eval("g:jedi#force_py_version")
+    if use_cache and vim_force_python_version == current_environment[0]:
+        return current_environment[1]
+
+    environment = None
+    if vim_force_python_version == "auto":
+        environment = jedi.api.environment.get_cached_default_environment()
+    else:
+        force_python_version = vim_force_python_version
+        if '0000' in force_python_version or '9999' in force_python_version:
+            # It's probably a float that wasn't shortened.
+            try:
+                force_python_version = "{:.1f}".format(float(force_python_version))
+            except ValueError:
+                pass
+        elif isinstance(force_python_version, float):
+            force_python_version = "{:.1f}".format(force_python_version)
+
+        try:
+            environment = jedi.get_system_environment(force_python_version)
+        except jedi.InvalidPythonEnvironment as exc:
+            environment = jedi.api.environment.get_cached_default_environment()
+            echo_highlight(
+                "force_python_version=%s is not supported: %s - using %s." % (
+                    vim_force_python_version, str(exc), str(environment)))
+
+    current_environment = (vim_force_python_version, environment)
+    return environment
+
+
 @catch_and_print_exceptions
 def get_script(source=None, column=None):
     jedi.settings.additional_dynamic_modules = [
@@ -161,8 +207,12 @@ def get_script(source=None, column=None):
     if column is None:
         column = vim.current.window.cursor[1]
     buf_path = vim.current.buffer.name
-    encoding = vim_eval('&encoding') or 'latin1'
-    return jedi.Script(source, row, column, buf_path, encoding)
+
+    return jedi.Script(
+        source, row, column, buf_path,
+        encoding=vim_eval('&encoding') or 'latin1',
+        environment=get_environment(),
+    )
 
 
 @_check_jedi_availability(show_error=False)
@@ -627,7 +677,7 @@ def py_import():
     args = shsplit(vim.eval('a:args'))
     import_path = args.pop()
     text = 'import %s' % import_path
-    scr = jedi.Script(text, 1, len(text), '')
+    scr = jedi.Script(text, 1, len(text), '', environment=get_environment())
     try:
         completion = scr.goto_assignments()[0]
     except IndexError:
@@ -650,7 +700,7 @@ def py_import_completions():
         comps = []
     else:
         text = 'import %s' % argl
-        script = jedi.Script(text, 1, len(text), '')
+        script = jedi.Script(text, 1, len(text), '', environment=get_environment())
         comps = ['%s%s' % (argl, c.complete) for c in script.completions()]
     vim.command("return '%s'" % '\n'.join(comps))
 
