@@ -248,6 +248,15 @@ function! s:AssertNeomakeMessage(msg, ...)
 endfunction
 command! -nargs=+ AssertNeomakeMessage call s:AssertNeomakeMessage(<args>)
 
+function! s:AssertEqualQf(actual, expected, ...) abort
+  let expected = a:expected
+  if has('patch-8.0.1782')
+    let expected = map(copy(expected), "extend(v:val, {'module': ''})")
+  endif
+  call call('vader#assert#equal', [a:actual, expected] + a:000)
+endfunction
+command! -nargs=1 AssertEqualQf call s:AssertEqualQf(<args>)
+
 function! s:AssertNeomakeMessageAbsent(msg, ...)
   try
     call call('s:AssertNeomakeMessage', [a:msg] + a:000)
@@ -402,8 +411,10 @@ function! NeomakeTestsGetMakerWithOutput(func, lines_or_file) abort
   return maker
 endfunction
 
+let s:fixture_root = '/tmp/neomake-tests'
+
 function! NeomakeTestsFixtureMaker(func, fname) abort
-  let output_base = substitute(a:fname, '^tests/fixtures/input/', 'tests/fixtures/output/', '')
+  let output_base = getcwd().'/'.substitute(a:fname, '^tests/fixtures/input/', 'tests/fixtures/output/', '')
   let stdout = printf('%s.stdout', output_base)
   let stderr = printf('%s.stderr', output_base)
   let exitcode = readfile(printf('%s.exitcode', output_base))[0]
@@ -414,6 +425,20 @@ function! NeomakeTestsFixtureMaker(func, fname) abort
         \ 'cat %s; cat %s >&2; exit %d',
         \ fnameescape(stdout), fnameescape(stderr), exitcode)]
   let maker.name = printf('%s-fixture', substitute(a:func, '^.*#', '', ''))
+
+  " Massage current buffer.
+  if get(b:, 'neomake_tests_massage_buffer', 1)
+    " Write the input file to the temporary root.
+    let test_fname = s:fixture_root . '/' . a:fname
+    let test_fname_dir = fnamemodify(test_fname, ':h')
+    if !isdirectory(test_fname_dir)
+      call mkdir(test_fname_dir, 'p')
+    endif
+    call writefile(readfile(a:fname), test_fname, 'b')
+    exe 'file ' . s:fixture_root . '/' . a:fname
+    exe 'lcd '.s:fixture_root
+  endif
+
   return maker
 endfunction
 
