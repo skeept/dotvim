@@ -145,6 +145,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons unite-session neomru
+  VAMAddToActiveAddons apathy
 
   if has("python3")
     VAMAddToActiveAddons UltiSnips
@@ -152,7 +153,10 @@ func! LoadPluginsWithTimer(timer)
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
-  execute "source " . g:p0 . "/denite.rc.vim"
+  
+  if has("python3")
+    execute "source " . g:p0 . "/denite.rc.vim"
+  endif
 endfunction
 
 if has('timers')
