@@ -146,6 +146,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons unite-session neomru
   VAMAddToActiveAddons apathy
+  VAMAddToActiveAddons flagship
 
   if has("python3")
     VAMAddToActiveAddons UltiSnips
