@@ -21,7 +21,7 @@ class Deoplete(logger.LoggingMixin):
         self._custom = []
         self._loaded_paths = set()
         self._prev_merged_results = {}
-        self._prev_pos = []
+        self._prev_input = ''
         self._prev_next_input = ''
 
         self._parents = []
@@ -42,7 +42,7 @@ class Deoplete(logger.LoggingMixin):
         # Initialization
         context = self._vim.call('deoplete#init#_context', 'Init', [])
         context['rpc'] = 'deoplete_on_event'
-        self._check_recache(context)
+        self.on_event(context)
 
         if hasattr(self._vim, 'channel_id'):
             self._vim.vars['deoplete#_channel_id'] = self._vim.channel_id
@@ -79,9 +79,9 @@ class Deoplete(logger.LoggingMixin):
         # Async update is skipped if same.
         prev_completion = context['vars']['deoplete#_prev_completion']
         prev_candidates = prev_completion['candidates']
-        prev_pos = prev_completion['complete_position']
+        prev_input = prev_completion['input']
         if (context['event'] == 'Async' and
-                prev_pos == self._vim.call('getpos', '.') and
+                prev_input == context['input'] and
                 prev_candidates and len(candidates) <= len(prev_candidates)):
             return
 
@@ -105,7 +105,7 @@ class Deoplete(logger.LoggingMixin):
             parent.on_event(context)
 
     def _merge_results(self, context):
-        use_prev = (context['position'] == self._prev_pos
+        use_prev = (context['input'] == self._prev_input
                     and context['next_input'] == self._prev_next_input
                     and context['event'] != 'Manual')
         if not use_prev:
@@ -124,7 +124,7 @@ class Deoplete(logger.LoggingMixin):
                 if not result[0]:
                     self._prev_merged_results[cnt] = result[1]
                 merged_results += result[1]
-        self._prev_pos = context['position']
+        self._prev_input = context['input']
         self._prev_next_input = context['next_input']
 
         if not merged_results:
@@ -188,7 +188,6 @@ class Deoplete(logger.LoggingMixin):
                 self._parent_count %= self._max_parents
 
         self._set_source_attributes(context)
-        self._set_custom(context)
 
     def _load_filters(self, context):
         # Load filters from runtimepath
@@ -200,11 +199,6 @@ class Deoplete(logger.LoggingMixin):
         for parent in self._parents:
             parent.set_source_attributes(context)
 
-    def _set_custom(self, context):
-        self._custom = context['custom']
-        for parent in self._parents:
-            parent.set_custom(self._custom)
-
     def _check_recache(self, context):
         if context['runtimepath'] != self._runtimepath:
             self._runtimepath = context['runtimepath']
@@ -215,4 +209,3 @@ class Deoplete(logger.LoggingMixin):
                 self.on_event(context)
         elif context['custom'] != self._custom:
             self._set_source_attributes(context)
-            self._set_custom(context)

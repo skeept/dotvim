@@ -377,29 +377,30 @@ function! projectionist#activate() abort
       setlocal errorformat<
     endif
     let &l:makeprg = makeprg
-    let &l:errorformat .= ',chdir '.escape(root, ',')
-    break
-  endfor
-
-  for [root, command] in projectionist#query_exec('start')
-    let offset = index(s:paths(), root) + 1
-    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
-          \ substitute('Start '.command, 'Start :', '', '')
+    let &l:errorformat .= ',%\&chdir '.escape(root, ',')
     break
   endfor
 
   for [root, command] in projectionist#query_exec('console')
     let offset = index(s:paths(), root) + 1
+    let b:start = '-dir=' . fnameescape(root) .
+          \ ' -title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
+          \ command
     execute 'command! -bar -bang -buffer -nargs=* Console ' .
-          \ 'ProjectDo ' . (offset == 1 ? '' : offset.' ') .
-          \ (exists(':Start') < 2 ? '!' : 'Start<bang> -title=' .
-          \ escape(fnamemodify(root, ':t'), '\ ') . '\ console ') .
-          \ command . ' <args>'
+          \ (exists(':Start') < 2 ?
+          \ 'ProjectDo ' . (offset == 1 ? '' : offset.' ') . '!' . command :
+          \ 'Start<bang> ' . b:start) . ' <args>'
+    break
+  endfor
+
+  for [root, command] in projectionist#query_exec('start')
+    let offset = index(s:paths(), root) + 1
+    let b:start = '-dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
   for [root, command] in s:query_exec_with_alternate('dispatch')
-    let b:dispatch = '-dir='.fnameescape(root).' '.command
+    let b:dispatch = '-dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
@@ -633,7 +634,7 @@ endfunction
 " Section: Make
 
 function! s:qf_pre() abort
-  let dir = substitute(matchstr(','.&l:errorformat, ',chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
+  let dir = substitute(matchstr(','.&l:errorformat, ',\%(%\\&\)\=chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
   let cwd = getcwd()
   if !empty(dir) && dir !=# cwd
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'

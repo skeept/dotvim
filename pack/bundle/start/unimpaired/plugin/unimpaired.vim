@@ -278,14 +278,18 @@ call s:map('n', 'yox', ':set <C-R>=<SID>cursor_options()<CR><CR>')
 call s:map('n', '[o+', ':set cursorline cursorcolumn<CR>')
 call s:map('n', ']o+', ':set nocursorline nocursorcolumn<CR>')
 call s:map('n', 'yo+', ':set <C-R>=<SID>cursor_options()<CR><CR>')
-nmap =o yo
 
 function! s:legacy_option_map(letter) abort
   let y = get(get(g:, 'nremap', {}), 'y', 'y')
   return y . 'o' . a:letter . ':echo "Use ' . y . 'o' . a:letter . ' instead"' . "\<CR>"
 endfunction
 
-nmap <silent><expr> co <SID>legacy_option_map(nr2char(getchar()))
+if empty(maparg('co', 'n'))
+  nmap <silent><expr> co <SID>legacy_option_map(nr2char(getchar()))
+endif
+if empty(maparg('=o', 'n'))
+  nmap <silent><expr> =o <SID>legacy_option_map(nr2char(getchar()))
+endif
 
 function! s:setup_paste() abort
   let s:paste = &paste
@@ -311,7 +315,7 @@ call s:map('n', 'yo', ':<C-U>echoerr "Use ]op"<CR>', '<silent>')
 call s:map('n', 'yO', ':<C-U>echoerr "Use [op"<CR>', '<silent>')
 call s:map('n', '[op', ':call <SID>setup_paste()<CR>O', '<silent>')
 call s:map('n', ']op', ':call <SID>setup_paste()<CR>o', '<silent>')
-call s:map('n', 'yop', ':call <SID>setup_paste()<CR>A', '<silent>')
+call s:map('n', 'yop', ':call <SID>setup_paste()<CR>0C', '<silent>')
 
 " Section: Put
 
