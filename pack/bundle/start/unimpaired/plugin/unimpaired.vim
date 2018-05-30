@@ -57,6 +57,11 @@ function! s:MapNextFamily(map,cmd) abort
     execute 'nnoremap <silent> '.map.'NFile :<C-U>exe "'.cmd.'nfile'.end
     call s:map('n', '[<C-'.toupper(a:map).'>', map.'PFile')
     call s:map('n', ']<C-'.toupper(a:map).'>', map.'NFile')
+  elseif exists(':p'.a:cmd.'next')
+    execute 'nnoremap <silent> '.map.'PPrevious :<C-U>exe "p'.cmd.'previous'.end
+    execute 'nnoremap <silent> '.map.'PNext :<C-U>exe "p'.cmd.'next'.end
+    call s:map('n', '[<C-'.toupper(a:map).'>', map.'PPrevious')
+    call s:map('n', ']<C-'.toupper(a:map).'>', map.'PNext')
   endif
 endfunction
 
@@ -336,6 +341,8 @@ nnoremap <silent> <Plug>unimpairedPutBelow :call <SID>putline(']p', 'Below')<CR>
 
 call s:map('n', '[p', '<Plug>unimpairedPutAbove')
 call s:map('n', ']p', '<Plug>unimpairedPutBelow')
+call s:map('n', '[P', '<Plug>unimpairedPutAbove')
+call s:map('n', ']P', '<Plug>unimpairedPutBelow')
 call s:map('n', '>P', ":call <SID>putline('[p', 'Above')<CR>>']", '<silent>')
 call s:map('n', '>p', ":call <SID>putline(']p', 'Below')<CR>>']", '<silent>')
 call s:map('n', '<P', ":call <SID>putline('[p', 'Above')<CR><']", '<silent>')
