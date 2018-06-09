@@ -1060,6 +1060,21 @@ class TestGoFZF < TestBase
     assert_equal '50', readonce.chomp
   end
 
+  def test_header_lines_reverse_list
+    tmux.send_keys "seq 100 | #{fzf '--header-lines=10 -q 5 --layout=reverse-list'}", :Enter
+    2.times do
+      tmux.until do |lines|
+        lines[0]    == '> 50' &&
+          lines[-4] == '  2' &&
+          lines[-3] == '  1' &&
+          lines[-2].include?('/90')
+      end
+      tmux.send_keys :Up
+    end
+    tmux.send_keys :Enter
+    assert_equal '50', readonce.chomp
+  end
+
   def test_header_lines_overflow
     tmux.send_keys "seq 100 | #{fzf '--header-lines=200'}", :Enter
     tmux.until do |lines|
@@ -1087,7 +1102,8 @@ class TestGoFZF < TestBase
     header = File.readlines(FILE).take(5).map(&:strip)
     tmux.until do |lines|
       lines[-2].include?('100/100') &&
-        lines[-7..-3].map(&:strip) == header
+        lines[-7..-3].map(&:strip) == header &&
+        lines[-8] == '> 1'
     end
   end
 
@@ -1096,7 +1112,18 @@ class TestGoFZF < TestBase
     header = File.readlines(FILE).take(5).map(&:strip)
     tmux.until do |lines|
       lines[1].include?('100/100') &&
-        lines[2..6].map(&:strip) == header
+        lines[2..6].map(&:strip) == header &&
+        lines[7] == '> 1'
+    end
+  end
+
+  def test_header_reverse_list
+    tmux.send_keys "seq 100 | #{fzf "--header=\\\"\\$(head -5 #{FILE})\\\" --layout=reverse-list"}", :Enter
+    header = File.readlines(FILE).take(5).map(&:strip)
+    tmux.until do |lines|
+      lines[-2].include?('100/100') &&
+        lines[-7..-3].map(&:strip) == header &&
+        lines[0] == '> 1'
     end
   end
 
@@ -1117,6 +1144,16 @@ class TestGoFZF < TestBase
       lines[1].include?('90/90') &&
         lines[2...7].map(&:strip) == header &&
         lines[7...17].map(&:strip) == (1..10).map(&:to_s)
+    end
+  end
+
+  def test_header_and_header_lines_reverse_list
+    tmux.send_keys "seq 100 | #{fzf "--layout=reverse-list --header-lines 10 --header \\\"\\$(head -5 #{FILE})\\\""}", :Enter
+    header = File.readlines(FILE).take(5).map(&:strip)
+    tmux.until do |lines|
+      lines[-2].include?('90/90') &&
+        lines[-7...-2].map(&:strip) == header &&
+        lines[-17...-7].map(&:strip) == (1..10).map(&:to_s).reverse
     end
   end
 
@@ -1142,6 +1179,12 @@ class TestGoFZF < TestBase
   def test_margin_reverse
     tmux.send_keys "seq 1000 | #{fzf '--margin 7,5 --reverse'}", :Enter
     tmux.until { |lines| lines[1 + 7] == '       1000/1000' }
+    tmux.send_keys :Enter
+  end
+
+  def test_margin_reverse_list
+    tmux.send_keys "yes | head -1000 | #{fzf '--margin 5,3 --layout=reverse-list'}", :Enter
+    tmux.until { |lines| lines[4] == '' && lines[5] == '   > y' }
     tmux.send_keys :Enter
   end
 
@@ -1353,6 +1396,35 @@ class TestGoFZF < TestBase
     tmux.send_keys :Down
     tmux.until { |lines| lines[4] == '> 3' }
     tmux.until { |_| %w[1 2 3] == File.readlines(tempname).map(&:chomp) }
+  end
+
+  def test_preview_flags
+    tmux.send_keys %(seq 10 | sed 's/^/:: /; s/$/  /' |
+        #{FZF} --multi --preview 'echo {{2}/{s2}/{+2}/{+s2}/{q}}'), :Enter
+    tmux.until { |lines| lines[1].include?('{1/1  /1/1  /}') }
+    tmux.send_keys '123'
+    tmux.until { |lines| lines[1].include?('{////123}') }
+    tmux.send_keys 'C-u', '1'
+    tmux.until { |lines| lines.match_count == 2 }
+    tmux.until { |lines| lines[1].include?('{1/1  /1/1  /1}') }
+    tmux.send_keys :BTab
+    tmux.until { |lines| lines[1].include?('{10/10  /1/1  /1}') }
+    tmux.send_keys :BTab
+    tmux.until { |lines| lines[1].include?('{10/10  /1 10/1   10  /1}') }
+    tmux.send_keys '2'
+    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /12}') }
+    tmux.send_keys '3'
+    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /123}') }
+  end
+
+  def test_preview_q_no_match
+    tmux.send_keys %(: | #{FZF} --preview 'echo foo {q}'), :Enter
+    tmux.until { |lines| lines.match_count == 0 }
+    tmux.until { |lines| !lines[1].include?('foo') }
+    tmux.send_keys 'bar'
+    tmux.until { |lines| lines[1].include?('foo bar') }
+    tmux.send_keys 'C-u'
+    tmux.until { |lines| !lines[1].include?('foo') }
   end
 
   def test_no_clear

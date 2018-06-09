@@ -319,7 +319,7 @@ around a repository history in the browser window.
                         current line.  When on a merge commit, a |count|
                         may be used to choose a parent other than the first.
 
-Here is a list of mapping for rebasing.
+Here is a list of mappings for rebasing.
 
     Mode        Map     Description~
 
@@ -405,9 +405,8 @@ Here is a list of mappings for bisecting.
 
     visual      gbb     Mark selected commits as bad.
 
-    normal      gbn     Skip the commit under the cursor. Accepts a count. If
-                        a count is given, ignores the commit under the cursor
-                        and starts at the currently checked out commit.
+    normal      gbn     Skip the current commit. Accepts a count. If a count
+                        is given, skips the number of times specified.
                         Mnemonic- git bisect next.
 
     visual      gbn     Skip the selected range of commits.
