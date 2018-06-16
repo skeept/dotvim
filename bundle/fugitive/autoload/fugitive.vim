@@ -275,23 +275,13 @@ function! s:repo_translate(spec) dict abort
     return 'fugitive://'.self.dir().'//'.ref
   elseif a:spec =~# '^:'
     return 'fugitive://'.self.dir().'//0/'.a:spec[1:-1]
-  elseif a:spec ==# '@'
-    return self.dir('HEAD')
   elseif a:spec =~# 'HEAD\|^refs/' && a:spec !~ ':' && filereadable(refs . '../' . a:spec)
     return simplify(refs . '../' . a:spec)
   elseif filereadable(refs.a:spec)
     return refs.a:spec
-  elseif filereadable(refs.'tags/'.a:spec)
-    return refs.'tags/'.a:spec
-  elseif filereadable(refs.'heads/'.a:spec)
-    return refs.'heads/'.a:spec
-  elseif filereadable(refs.'remotes/'.a:spec)
-    return refs.'remotes/'.a:spec
-  elseif filereadable(refs.'remotes/'.a:spec.'/HEAD')
-    return refs.'remotes/'.a:spec.'/HEAD'
   else
     try
-      let ref = self.rev_parse(matchstr(a:spec,'[^:]*'))
+      let ref = self.rev_parse(s:sub(matchstr(a:spec,'[^:]*'), '^\@%($|[^~])@=', 'HEAD'))
       let path = s:sub(matchstr(a:spec,':.*'),'^:','/')
       return 'fugitive://'.self.dir().'//'.ref.path
     catch /^fugitive:/
@@ -438,7 +428,7 @@ call s:add_methods('repo',['keywordprg'])
 " Section: Buffer
 
 function! s:UrlSplit(path) abort
-  let vals = matchlist(s:shellslash(a:path), '\c^fugitive://\(.\{-\}\)//\(\w\+\)\(/.*\)\=$')
+  let vals = matchlist(s:shellslash(a:path), '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\w\+\)\(/.*\)\=$')
   if empty(vals)
     return ['', '', '']
   endif
@@ -537,7 +527,7 @@ function! s:buffer_name() dict abort
 endfunction
 
 function! s:buffer_commit() dict abort
-  return matchstr(self.spec(),'^fugitive://.\{-\}//\zs\w*')
+  return matchstr(self.spec(),'^fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs\w*')
 endfunction
 
 function! s:cpath(path) abort
@@ -549,7 +539,7 @@ function! s:cpath(path) abort
 endfunction
 
 function! s:buffer_path(...) dict abort
-  let rev = matchstr(self.spec(),'^fugitive://.\{-\}//\zs.*')
+  let rev = matchstr(self.spec(),'^fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs.*')
   if rev != ''
     let rev = s:sub(rev,'\w*','')
   elseif s:cpath(self.spec()[0 : len(self.repo().dir())]) ==#
@@ -564,7 +554,7 @@ function! s:buffer_path(...) dict abort
 endfunction
 
 function! s:buffer_rev() dict abort
-  let rev = matchstr(self.spec(),'^fugitive://.\{-\}//\zs.*')
+  let rev = matchstr(self.spec(),'^fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs.*')
   if rev =~ '^\x/'
     return ':'.rev[0].':'.rev[2:-1]
   elseif rev =~ '.'
@@ -579,7 +569,7 @@ function! s:buffer_rev() dict abort
 endfunction
 
 function! s:buffer_sha1() dict abort
-  if self.spec() =~ '^fugitive://' || self.spec() =~ '\.git/refs/\|\.git/.*HEAD$'
+  if self.spec() =~? '^fugitive:' || self.spec() =~ '\.git/refs/\|\.git/.*HEAD$'
     return self.repo().rev_parse(self.rev())
   else
     return ''
@@ -2229,9 +2219,9 @@ function! s:Browse(bang,line1,count,...) abort
     endif
     let full = s:repo().translate(expanded)
     let commit = ''
-    if full =~# '^fugitive://'
-      let commit = matchstr(full,'://.*//\zs\w\w\+')
-      let path = matchstr(full,'://.*//\w\+\zs/.*')
+    if full =~? '^fugitive:'
+      let commit = matchstr(full,':\%(//\)\=.*\%(//\|::\)\zs\w\w\+')
+      let path = matchstr(full,':\%(//\)\=.*\%(//\|::\)\w\+\zs/.*')
       if commit =~ '..'
         let type = s:repo().git_chomp('cat-file','-t',commit.s:sub(path,'^/',':'))
         let branch = matchstr(expanded, '^[^:]*')
@@ -2577,7 +2567,7 @@ endfunction
 function! fugitive#FileRead() abort
   try
     let repo = s:repo(FugitiveExtractGitDir(expand('<amatch>')))
-    let path = s:sub(s:sub(matchstr(expand('<amatch>'),'fugitive://.\{-\}//\zs.*'),'/',':'),'^\d:',':&')
+    let path = s:sub(s:sub(matchstr(expand('<amatch>'),'fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs.*'),'/',':'),'^\d:',':&')
     let hash = repo.rev_parse(path)
     if path =~ '^:'
       let type = 'blob'
