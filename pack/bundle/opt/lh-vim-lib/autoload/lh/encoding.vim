@@ -7,7 +7,7 @@
 " Version:      4.5.0
 let s:k_version = 450
 " Created:      21st Feb 2008
-" Last Update:  15th Jun 2018
+" Last Update:  18th Jun 2018
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions that help managing various encodings
@@ -110,35 +110,88 @@ function! lh#encoding#strlen(mb_string)
   return strlen(substitute(a:mb_string, '.', 'a', 'g'))
 endfunction
 
-" Function: lh#encoding#previous_character() {{{3
+" Function: lh#encoding#previous_character() {{{2
 function! lh#encoding#previous_character() abort
   return matchstr(getline('.'), '.\%'.col('.').'c')
 endfunction
 
-" Function: lh#encoding#current_character() {{{3
+" Function: lh#encoding#current_character() {{{2
 function! lh#encoding#current_character() abort
   return matchstr(getline('.'), '\%'.col('.').'c.')
 endfunction
 
-" Function: lh#encoding#does_support(chars [, fonts=&guifont]) {{{3
-function! lh#encoding#does_support(chars, ...) abort
+" Function: lh#encoding#does_support(chars [, fonts=&guifont]) {{{2
+function! lh#encoding#does_support(chars, ...) abort " {{{3
   if ! lh#python#external_can_import('fontconfig') | return lh#option#unset('Cannot use python-fontconfig packet') | endif
   return call('s:does_support', [a:chars + a:000])
 endfunction
 
 let s:script_dir = expand('<sfile>:p:h')
-function! s:does_support(chars, ...) abort
+function! s:check_does_support_with_python_fontconfig(chars, ...) abort " {{{3
+  if ! lh#python#external_can_import('fontconfig')
+    call s:Verbose('Abort: Cannot use fontconfig though python')
+    return {}
+  endif
   " TODO: support passing a true regex as "fonts"
-  let fonts = '('.escape(join(get(a:, 1, [substitute(&guifont, '\s\+\d\+$', '', '')]), '|'), '|\.*+').')'
+
+  let def_font = has('gui_running') ? substitute(&guifont, '\s\+\d\+$\|:.*$', '', '') : ''
+  let font_list = get(a:, 1, [def_font])
+  if empty(font_list) ||empty(font_list[0])
+    call s:Verbose('Abort: font list is empty')
+    return {}
+  endif
+  let fonts = '('.escape(join(font_list, '|'), '|\.*+').')'
   " echomsg fonts
+  " Some shells don't support passing UTF-8 glyphs through system() => convert
+  " them to "U+{hexa}" from
+  let chars = map(copy(a:chars), "v:val =~ '\\M^U+' ? v:val : printf('U+%x',char2nr(v:val))")
   " Use an external script to not rely on the current implementation of python
-  let cmd = fnameescape(s:script_dir.'/encoding.py').' '.fnameescape(&enc).' '.string(fonts).' '
-        \ .join(map(copy(a:chars), 'fnameescape(v:val)'), ' ')
+  let cmd = shellescape(s:script_dir.'/encoding_does_support.py').' '.shellescape(&enc).' '.shellescape(fonts).' '
+        \ .join(map(chars, 'shellescape(v:val)'), ' ')
+  " let g:cmd = cmd
   let res = eval(lh#os#system(cmd))
+  if has_key(res, '_error')
+    call s:Verbose('Error: %1', res._error)
+    return {}
+  endif
   return res
 endfunction
 
-" Function: lh#encoding#find_best_glyph(caller, glyphs...) {{{3
+function! s:check_does_support_with_cached_screenchar(chars, ...) abort " {{{3
+  " Doesn't return anything usefull on cygwin-vim, vim-win64,
+  " vim-linux64...
+  " => returns the codepoint, independently of the current font
+  " let g:chars = a:chars
+  let res = {}
+  try
+    tabnew
+    call setline(1, join(a:chars, ''))
+    let line = map(range(1,virtcol('$')-1), 'screenchar(1,v:val)')
+    call lh#assert#value(len(line)).eq(eval(join(map(copy(a:chars), 'strwidth(v:val)'),'+')))
+    " call map(copy(a:chars), 'extend(res, {v:val: char2nr(v:val) == line[v:key]})')
+    " TODO: support glyphs with strwidth > 1
+    let idx = 1
+    for c in a:chars
+      call extend(res, {c: screenchar(1,idx) == char2nr(c)})
+      let idx += strwidth(c)
+    endfor
+    undo
+  finally
+    tabclose
+  endtry
+  return res
+endfunction
+
+function! s:does_support(chars, ...) abort " {{{3
+  let res = call('s:check_does_support_with_python_fontconfig', [a:chars]+a:000)
+  " if empty(res)
+  "   " This doesn't permit to know anything...
+  "   let res = call('s:check_does_support_with_cached_screenchar', [a:chars]+a:000)
+  " endif
+  return res
+endfunction
+
+" Function: lh#encoding#find_best_glyph(caller, glyphs...) {{{2
 " Expect last sequence to be in ASCII
 function! lh#encoding#find_best_glyph(plugin_name, ...) abort
   " call lh#assert#value(a:000[*]).not().empty()

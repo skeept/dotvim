@@ -1,6 +1,6 @@
 Before:
   function! CheckAutocmd(group)
-    call ale#autocmd#InitAuGroups()
+    call ale#events#Init()
 
     redir => l:output
       execute 'silent! autocmd ' . a:group
@@ -59,7 +59,7 @@ After:
     call ale#completion#Disable()
   endif
 
-  call ale#autocmd#InitAuGroups()
+  call ale#events#Init()
 
 Execute (g:ale_lint_on_text_changed = 0 should bind no events):
   let g:ale_lint_on_text_changed = 0
@@ -191,7 +191,7 @@ Execute (g:ale_echo_cursor = 1 should bind cursor events):
 
 Execute (ALECleanupGroup should include the right commands):
   AssertEqual [
-  \ 'BufDelete * call ale#engine#Cleanup(str2nr(expand(''<abuf>'')))',
+  \ 'BufDelete * if exists(''*ale#engine#Cleanup'') | call ale#engine#Cleanup(str2nr(expand(''<abuf>''))) | endif',
   \ 'QuitPre * call ale#events#QuitEvent(str2nr(expand(''<abuf>'')))',
   \], CheckAutocmd('ALECleanupGroup')
 
