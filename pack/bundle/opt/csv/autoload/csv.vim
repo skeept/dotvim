@@ -117,6 +117,15 @@ fu! csv#Init(start, end, ...) "{{{3
         let b:col_noend = g:csv_col
     endif
 
+    " Enable vartabs for tab delimited files
+    if b:delimiter=="\t" && has("vartabs")&& !exists("b:csv_fixed_width_cols")
+        if get(b:, 'col_width', []) ==# []
+            call csv#CalculateColumnWidth('')
+        endif
+        let &l:vts=join(b:col_width, ',')
+        let g:csv_no_conceal=1
+    endif
+
     " set filetype specific options
     call csv#LocalSettings('all')
 
@@ -171,7 +180,7 @@ fu! csv#LocalSettings(type) "{{{3
         let b:browsefilter="CSV Files (*.csv, *.dat)\t*.csv;*.dat\n".
                  \ "All Files\t*.*\n"
 
-        if has("conceal")
+        if !get(g:, 'csv_no_conceal', 0) && has("conceal")
             setl cole=2 cocu=nc
             let b:undo_ftplugin .= '| setl cole< cocu< '
         endif
@@ -659,21 +668,25 @@ fu! csv#ArrangeCol(first, last, bang, limit, ...) range "{{{3
         call csv#Warn("No column data detected, aborting ArrangeCol command!")
         return
     endif
+    let ro=&ro
     if &ro
        " Just in case, to prevent the Warning
        " Warning: W10: Changing read-only file
-       let ro = 1
        setl noro
-    else
-       let ro = 0
     endif
     let s:count = 0
     let _stl  = &stl
     let s:max   = (last - first + 1) * len(b:col_width)
     let s:temp  = 0
     try
-        exe "sil". first . ',' . last .'s/' . (b:col) .
-        \ '/\=csv#Columnize(submatch(0))/' . (&gd ? '' : 'g')
+        if first==1 && last == line('$') && b:delimiter=="\t" && has("vartabs") && !empty(get(b:, 'col_width', []))
+            " Make use of vartab feature
+            let &l:vts=join(b:col_width, ',')
+            let g:csv_no_conceal=1
+        else
+            exe "sil". first . ',' . last .'s/' . (b:col) .
+            \ '/\=csv#Columnize(submatch(0))/' . (&gd ? '' : 'g')
+        endif
     finally
         " Clean up variables, that were only needed for csv#Columnize() function
         unlet! s:columnize_count s:max_cols s:prev_line s:max s:count s:temp s:val

@@ -427,7 +427,7 @@ call s:add_methods('repo',['keywordprg'])
 
 " Section: Buffer
 
-function! s:UrlSplit(path) abort
+function! s:DirCommitFile(path) abort
   let vals = matchlist(s:shellslash(a:path), '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\w\+\)\(/.*\)\=$')
   if empty(vals)
     return ['', '', '']
@@ -436,7 +436,7 @@ function! s:UrlSplit(path) abort
 endfunction
 
 function! fugitive#Filename(url) abort
-  let [dir, rev, file] = s:UrlSplit(a:url)
+  let [dir, commit, file] = s:DirCommitFile(a:url)
   if len(dir)
     return s:PlatformSlash(FugitiveTreeForGitDir(dir) . file)
   elseif a:url =~# '^[\\/]\|^\a:[\\/]'
@@ -538,7 +538,7 @@ function! s:cpath(path) abort
   endif
 endfunction
 
-function! s:buffer_path(...) dict abort
+function! s:buffer_relative(...) dict abort
   let rev = matchstr(self.spec(),'^fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs.*')
   if rev != ''
     let rev = s:sub(rev,'\w*','')
@@ -630,7 +630,8 @@ function! s:buffer_up(...) dict abort
   return rev
 endfunction
 
-call s:add_methods('buffer',['getvar','setvar','getline','repo','type','spec','name','commit','path','rev','sha1','expand','containing_commit','up'])
+call s:add_methods('buffer',['getvar','setvar','getline','repo','type','spec','name','commit','relative','rev','sha1','expand','containing_commit','up'])
+let s:buffer_prototype.path = s:function('s:buffer_relative')
 
 " Section: Git
 
@@ -1009,7 +1010,11 @@ function! s:Commit(mods, args, ...) abort
   let outfile = tempname()
   let errorfile = tempname()
   try
+    let guioptions = &guioptions
     try
+      if &guioptions =~# '!'
+        setglobal guioptions-=!
+      endif
       execute cd s:fnameescape(repo.tree())
       if s:winshell()
         let command = ''
@@ -1029,6 +1034,7 @@ function! s:Commit(mods, args, ...) abort
       let error = v:shell_error
     finally
       execute cd s:fnameescape(dir)
+      let &guioptions = guioptions
     endtry
     if !has('gui_running')
       redraw!
@@ -1729,8 +1735,8 @@ endfunction
 
 function! s:buffer_compare_age(commit) dict abort
   let scores = {':0': 1, ':1': 2, ':2': 3, ':': 4, ':3': 5}
-  let my_score    = get(scores,':'.self.commit(),0)
-  let their_score = get(scores,':'.a:commit,0)
+  let my_score    = get(scores, ':'.self.commit(), 0)
+  let their_score = get(scores, ':'.substitute(a:commit, '^:', '', ''), 0)
   if my_score || their_score
     return my_score < their_score ? -1 : my_score != their_score
   elseif self.commit() ==# a:commit
@@ -1800,13 +1806,12 @@ function! s:Diff(vert,keepfocus,...) abort
   endif
   try
     let spec = s:repo().translate(file)
-    let commit = matchstr(spec,'\C[^:/]\%(//\|::\)\zs\x\+')
     let restore = s:diff_restore()
     if exists('+cursorbind')
       setlocal cursorbind
     endif
     let w:fugitive_diff_restore = restore
-    if s:buffer().compare_age(commit) < 0
+    if s:buffer().compare_age(s:DirCommitFile(spec)[1]) < 0
       execute 'rightbelow '.vert.'diffsplit '.s:fnameescape(spec)
     else
       execute 'leftabove '.vert.'diffsplit '.s:fnameescape(spec)
@@ -2217,11 +2222,16 @@ function! s:Browse(bang,line1,count,...) abort
     else
       let expanded = s:buffer().expand(rev)
     endif
+    if filereadable(s:repo().tree('refs/tags/' . expanded))
+      let expanded = 'refs/tags/' . expanded
+    endif
     let full = s:repo().translate(expanded)
     let commit = ''
     if full =~? '^fugitive:'
-      let commit = matchstr(full,':\%(//\)\=.*\%(//\|::\)\zs\w\w\+')
-      let path = matchstr(full,':\%(//\)\=.*\%(//\|::\)\w\+\zs/.*')
+      let [dir, commit, path] = s:DirCommitFile(full)
+      if commit =~# '^:\=\d$'
+        let commit = ''
+      endif
       if commit =~ '..'
         let type = s:repo().git_chomp('cat-file','-t',commit.s:sub(path,'^/',':'))
         let branch = matchstr(expanded, '^[^:]*')
@@ -2566,8 +2576,9 @@ endfunction
 
 function! fugitive#FileRead() abort
   try
-    let repo = s:repo(FugitiveExtractGitDir(expand('<amatch>')))
-    let path = s:sub(s:sub(matchstr(expand('<amatch>'),'fugitive:\%(//\)\=.\{-\}\%(//\|::\)\zs.*'),'/',':'),'^\d:',':&')
+    let [dir, commit, file] = s:DirCommitFile(expand('<amatch>'))
+    let repo = s:repo(dir)
+    let path = commit . substitute(file, '^/', ':', '')
     let hash = repo.rev_parse(path)
     if path =~ '^:'
       let type = 'blob'
@@ -2605,15 +2616,15 @@ endfunction
 function! fugitive#BufWriteIndex() abort
   let tmp = tempname()
   try
-    let path = matchstr(expand('<amatch>'),'//\d/\zs.*')
-    let stage = matchstr(expand('<amatch>'),'//\zs\d')
+    let [dir, commit, file] = s:DirCommitFile(expand('<amatch>'))
+    let path = file[1:-1]
     silent execute 'write !'.s:repo().git_command('hash-object','-w','--stdin').' > '.tmp
     let sha1 = readfile(tmp)[0]
     let old_mode = matchstr(s:repo().git_chomp('ls-files','--stage',path),'^\d\+')
     if old_mode == ''
       let old_mode = executable(s:repo().tree(path)) ? '100755' : '100644'
     endif
-    let info = old_mode.' '.sha1.' '.stage."\t".path
+    let info = old_mode.' '.sha1.' '.commit[-1:-1]."\t".path
     call writefile([info],tmp)
     if s:winshell()
       let error = system('type '.s:gsub(tmp,'/','\\').'|'.s:repo().git_command('update-index','--index-info'))
