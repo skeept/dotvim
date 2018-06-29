@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-.. image:: https://github.com/Tobaloidee/jedi-vim/blob/master/logo/logotype-a.png
-=======
 .. image:: https://github.com/davidhalter/jedi-vim/blob/master/doc/logotype-a.svg
 
->>>>>>> 5f98bfb62ea1f7d1ee211fb23c2fbb25151bf036
 #################################################
 jedi-vim - awesome Python autocompletion with VIM
 #################################################

@@ -105,6 +105,16 @@ function! s:parse(mods, args) abort
   return cmd
 endfunction
 
+function! s:mkdir_p(path) abort
+  if a:path !~# '^\a[[:alnum:].+-]\+:' && !isdirectory(a:path)
+    call mkdir(a:path, 'p')
+  endif
+endfunction
+
+function! projectionist#glob(path) abort
+  return split(glob(a:path), "\n")
+endfunction
+
 " Section: Querying
 
 function! s:paths() abort
@@ -383,9 +393,9 @@ function! projectionist#activate() abort
     return
   endif
   command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-        \ exe 'cd<bang>'  fnameescape(projectionist#path(<q-args>, <line2>))
+        \ exe 'cd' fnameescape(projectionist#path(<q-args>, <line2>))
   command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-        \ exe 'lcd<bang>' fnameescape(projectionist#path(<q-args>, <line2>))
+        \ exe (<bang>0 ? 'cd' : 'lcd') fnameescape(projectionist#path(<q-args>, <line2>))
   for [command, patterns] in items(projectionist#navigation_commands())
     call projectionist#define_navigation_command(command, patterns)
   endfor
@@ -493,7 +503,7 @@ function! s:dir_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let slash = projectionist#slash()
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = split(glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1)), "\n")
+  let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1))
   call map(matches,'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ]')
   return matches
 endfunction
@@ -555,9 +565,7 @@ function! s:open_projection(mods, edit, variants, ...) abort
       break
     endif
   endfor
-  if !isdirectory(fnamemodify(target, ':h'))
-    call mkdir(fnamemodify(target, ':h'), 'p')
-  endif
+  call s:mkdir_p(fnamemodify(target, ':h'))
   return cmd.mods . a:edit . cmd.pre . ' ' .
         \ fnameescape(fnamemodify(target, ':~:.'))
 endfunction
@@ -570,7 +578,7 @@ function! s:projection_complete(lead, cmdline, _) abort
       continue
     endif
     let glob = substitute(format, '[^\/]*\ze\*\*[\/]\*', '', 'g')
-    let results += map(split(glob(glob), "\n"), 's:match(v:val, format)')
+    let results += map(projectionist#glob(glob), 's:match(v:val, format)')
   endfor
   call s:uniq(results)
   return projectionist#completion_filter(results, a:lead, '/')
@@ -638,9 +646,7 @@ function! s:edit_command(mods, edit, count, ...) abort
     endif
   endif
   let [file, jump] = open
-  if !isdirectory(fnamemodify(file, ':h'))
-    call mkdir(fnamemodify(file, ':h'), 'p')
-  endif
+  call s:mkdir_p(fnamemodify(file, ':h'))
   return cmd.mods . a:edit . cmd.pre . ' ' .
         \ jump . fnameescape(fnamemodify(file, ':~:.'))
 endfunction
@@ -648,7 +654,7 @@ endfunction
 function! s:edit_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = split(glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1)), "\n")
+  let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1))
   call map(matches, 'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (isdirectory(v:val) ? projectionist#slash() : "")')
   return matches
 endfunction

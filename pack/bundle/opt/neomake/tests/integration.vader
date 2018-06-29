@@ -751,7 +751,7 @@ Execute (Neomake: append_file from settings and empty entry type):
   set ft=myft
 
   call neomake#Make(1, [maker])
-  let bufname = expand('%:p')
+  let bufname = bufname('%')
   NeomakeTestsWaitForFinishedJobs
   AssertEqualQf getloclist(0),
     \ [{'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'output '.bufname}]
@@ -940,6 +940,7 @@ Execute (Highlights should be cleared after successful run):
   Assert !has_key(highlights['file'], bufnr('%')), 'highlight not present'
 
 Execute (neomake#GetCurrentErrorMsg):
+  new
   let maker = {'name': 'my_maker'}
   function maker.get_list_entries(...)
     let bufnr = bufnr('%')
@@ -961,3 +962,4 @@ Execute (neomake#GetCurrentErrorMsg):
   normal! A12
   normal! l
   AssertEqual neomake#GetCurrentErrorMsg(), 'my_maker: error 3.2 (0)'
+  bwipe!
