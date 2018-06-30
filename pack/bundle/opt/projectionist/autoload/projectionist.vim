@@ -43,6 +43,18 @@ function! projectionist#lencmp(i1, i2) abort
   return len(a:i1) - len(a:i2)
 endfunction
 
+function! s:real(file) abort
+  let pre = substitute(matchstr(a:file, '^\a\a\+\ze:'), '^.', '\u&', '')
+  if empty(pre)
+    let path = a:file
+  elseif exists('*' . pre . 'Path')
+    let path = {pre}Path(a:file)
+  else
+    return ''
+  endif
+  return exists('+shellslash') && !&shellslash ? tr(path, '/', '\') : path
+endfunction
+
 function! projectionist#slash() abort
   return exists('+shellslash') && !&shellslash ? '\' : '/'
 endfunction
@@ -66,6 +78,10 @@ endfunction
 
 function! projectionist#shellescape(arg) abort
   return a:arg =~# "^[[:alnum:]_/.:-]\\+$" ? a:arg : shellescape(a:arg)
+endfunction
+
+function! projectionist#shellpath(arg) abort
+  return projectionist#shellescape(s:real(a:arg))
 endfunction
 
 function! s:join(arg) abort
@@ -105,6 +121,15 @@ function! s:parse(mods, args) abort
   return cmd
 endfunction
 
+function! s:fcall(fn, path, ...) abort
+  let ns = matchstr(a:path, '^\a\a\+\ze:')
+  if len(ns) && exists('*' . ns . '#' . a:fn)
+    return call(ns . '#' . a:fn, [a:path] + a:000)
+  else
+    return call(a:fn, [a:path] + a:000)
+  endif
+endfunction
+
 function! s:mkdir_p(path) abort
   if a:path !~# '^\a[[:alnum:].+-]\+:' && !isdirectory(a:path)
     call mkdir(a:path, 'p')
@@ -112,17 +137,25 @@ function! s:mkdir_p(path) abort
 endfunction
 
 function! projectionist#glob(path) abort
-  return split(glob(a:path), "\n")
+  let ns = matchstr(a:path, '^\a\a\+\ze:')
+  if len(ns) && exists('*' . ns . '#glob')
+    return call(ns . '#glob', [a:path, 0, 1])
+  else
+    return split(glob(a:path), "\n")
+  endif
 endfunction
 
 " Section: Querying
 
-function! s:paths() abort
+function! s:roots() abort
   return reverse(sort(keys(b:projectionist), function('projectionist#lencmp')))
 endfunction
 
 function! projectionist#path(...) abort
-  let path = get(s:paths(), a:0 > 1 ? a:2 - 1 : 0, '')
+  if a:0 && a:1 =~# '^/\|^\a\+:'
+    return a:1
+  endif
+  let path = get(s:roots(), a:0 > 1 ? a:2 - 1 : 0, '')
   if !empty(path) && a:0
     return path . projectionist#slash() . a:1
   else
@@ -132,7 +165,7 @@ endfunction
 
 function! s:all() abort
   let all = []
-  for key in s:paths()
+  for key in s:roots()
     for value in b:projectionist[key]
       call add(all, [key, value])
     endfor
@@ -320,7 +353,7 @@ function! s:absolute(path, in) abort
   if a:path =~# '^\%([[:alnum:].-]\+:\)\|^\.\?[\/]'
     return a:path
   else
-    return simplify(a:in . projectionist#slash() . a:path)
+    return substitute(a:in, '[\/]$', '', '') . projectionist#slash() . a:path
   endif
 endfunction
 
@@ -338,8 +371,8 @@ function! s:shelljoin(val) abort
 endfunction
 
 function! projectionist#query_exec(key, ...) abort
-  let opts = extend({'post_function': 'projectionist#shellescape'}, a:0 ? a:1 : {})
-  return filter(map(projectionist#query(a:key, opts), '[v:val[0], s:shelljoin(v:val[1])]'), '!empty(v:val[1])')
+  let opts = extend({'post_function': 'projectionist#shellpath'}, a:0 ? a:1 : {})
+  return filter(map(projectionist#query(a:key, opts), '[s:real(v:val[0]), s:shelljoin(v:val[1])]'), '!empty(v:val[0]) && !empty(v:val[1])')
 endfunction
 
 function! projectionist#query_scalar(key) abort
@@ -392,10 +425,14 @@ function! projectionist#activate() abort
   if empty(b:projectionist)
     return
   endif
-  command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-        \ exe 'cd' fnameescape(projectionist#path(<q-args>, <line2>))
-  command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-        \ exe (<bang>0 ? 'cd' : 'lcd') fnameescape(projectionist#path(<q-args>, <line2>))
+  if len(s:real(s:roots()[0]))
+    command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
+          \ exe 'cd' fnameescape(s:real(projectionist#path(<q-args>, <line2>)))
+    command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
+          \ exe (<bang>0 ? 'cd' : 'lcd') fnameescape(s:real(projectionist#path(<q-args>, <line2>)))
+    command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo
+          \ exe s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
+  endif
   for [command, patterns] in items(projectionist#navigation_commands())
     call projectionist#define_navigation_command(command, patterns)
   endfor
@@ -404,7 +441,6 @@ function! projectionist#activate() abort
           \ 'A'.prefix
           \ ':execute s:edit_command("<mods>", "'.excmd.'<bang>", <count>, <f-args>)'
   endfor
-  command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo execute s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
 
   for [root, makeprg] in projectionist#query_exec('make')
     unlet! b:current_compiler
@@ -424,7 +460,7 @@ function! projectionist#activate() abort
   endfor
 
   for [root, command] in projectionist#query_exec('console')
-    let offset = index(s:paths(), root) + 1
+    let offset = index(s:roots(), root) + 1
     let b:start = '-dir=' . fnameescape(root) .
           \ ' -title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
           \ command
@@ -436,7 +472,7 @@ function! projectionist#activate() abort
   endfor
 
   for [root, command] in projectionist#query_exec('start')
-    let offset = index(s:paths(), root) + 1
+    let offset = index(s:roots(), root) + 1
     let b:start = '-dir=' . fnameescape(root) . ' ' . command
     break
   endfor
@@ -447,14 +483,15 @@ function! projectionist#activate() abort
   endfor
 
   for dir in projectionist#query_file('path')
+    let dir = substitute(dir, '^\a\a\+:', '+&', '')
     if stridx(','.&l:path.',', ','.escape(dir, ', ').',') < 0
       let &l:path = escape(dir, ', ') . ',' . &path
     endif
   endfor
 
-  for root in s:paths()
-    let tags = root . projectionist#slash() . 'tags'
-    if stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
+  for root in s:roots()
+    let tags = s:real(root . projectionist#slash() . 'tags')
+    if len(tags) && stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
       let &l:tags = &tags . ',' . escape(tags, ', ')
     endif
   endfor
@@ -503,8 +540,8 @@ function! s:dir_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let slash = projectionist#slash()
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1))
-  call map(matches,'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ]')
+  let matches = projectionist#glob(s:real(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1)))
+  call map(matches,'matchstr(a:lead, "^[\\/]") . v:val[ strlen(s:real(projectionist#path()))+1 : -1 ]')
   return matches
 endfunction
 
@@ -560,7 +597,7 @@ function! s:open_projection(mods, edit, variants, ...) abort
   endif
   let target = formats[0]
   for format in formats
-    if filereadable(format)
+    if s:fcall('filereadable', format)
       let target = format
       break
     endif
@@ -626,7 +663,7 @@ function! s:edit_command(mods, edit, count, ...) abort
       return 'echoerr '.string(matchstr(warning, 'replace %.*}').' in alternate projection')
     endif
     call map(alternates, 's:jumpopt(v:val)')
-    let open = get(filter(copy(alternates), '!empty(getftype(v:val[0]))'), 0, [])
+    let open = get(filter(copy(alternates), 's:fcall("getftime", v:val[0]) >= 0'), 0, [])
     if empty(alternates)
       return 'echoerr "No alternate file"'
     elseif empty(open)
@@ -655,7 +692,7 @@ function! s:edit_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let c = matchstr(a:cmdline, '^\d\+')
   let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1))
-  call map(matches, 'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (isdirectory(v:val) ? projectionist#slash() : "")')
+  call map(matches, 'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (s:fcall("isdirectory", v:val) ? projectionist#slash() : "")')
   return matches
 endfunction
 
@@ -667,7 +704,7 @@ function! s:do(bang, count, cmd) abort
   let cmd = substitute(a:cmd, '^\d\+ ', '', '')
   let offset = cmd ==# a:cmd ? 1 : matchstr(a:cmd, '^\d\+')
   try
-    execute cd fnameescape(projectionist#path('', offset))
+    execute cd fnameescape(s:real(projectionist#path('', offset)))
     execute (a:count >= 0 ? a:count : '').substitute(cmd, '\>', a:bang, '')
   catch
     return 'echoerr '.string(v:exception)
