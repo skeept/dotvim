@@ -84,18 +84,19 @@ endfunc
 func! yarp#core#try_notify(method, ...) dict
     call self.jobstart()
     if get(self, 'job_is_dead', 0)
-        self.error('try_notify ' . a:method . ' failed, job is dead')
+        call self.error('try_notify ' . a:method . ' failed, job is dead')
         return 0
     endif
     if !has_key(self, 'channel')
         " not yet started
         return 0
     endif
+    let args = [self.channel, a:method] + a:000
     try
-        call call(s:rpcnotify, [self.channel, a:method] + a:000)
+        call call(s:rpcnotify, args)
         return 1
     catch
-        self.error('try_notify ' . a:method . ' failed: ' . v:exception)
+        call self.error('try_notify ' . s:rpcnotify . ' ' . a:method . ' failed: ' . v:exception . ', ' . string(args))
         return 0
     endtry
 endfunc
@@ -126,15 +127,15 @@ func! yarp#core#wait_channel() dict
 endfunc
 
 func! yarp#core#jobstart() dict
-    if has_key(self, 'job')
-        return
-    endif
     if ! has_key(self, 'cmd')
         call self.init()
         if ! has_key(self, 'cmd')
             call self.error("cmd of the job is not set")
             return
         endif
+    endif
+    if has_key(self, 'job')
+        return
     endif
     let opts = {'on_stderr': function('yarp#core#on_stderr'),
             \ 'on_exit': function('yarp#core#on_exit'),

@@ -1,6 +1,6 @@
 " Location:     plugin/projectionist.vim
 " Author:       Tim Pope <http://tpo.pe/>
-" Version:      1.0
+" Version:      1.1
 " GetLatestVimScripts: 4989 1 :AutoInstall: projectionist.vim
 
 if exists("g:loaded_projectionist") || v:version < 700 || &cp
@@ -101,7 +101,7 @@ augroup projectionist
         \   call projectionist#activate() |
         \ endif
   autocmd User NERDTreeInit,NERDTreeNewRoot
-        \ call ProjectionistDetect(b:NERDTreeRoot.path.str())
+        \ call ProjectionistDetect(b:NERDTree.root.path.str())
   autocmd VimEnter *
         \ if empty(expand('<afile>:p')) |
         \   call ProjectionistDetect(getcwd()) |
