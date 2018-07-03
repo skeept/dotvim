@@ -5,38 +5,18 @@ from os import environ
 
 assert __name__ == "__main__"
 
+if "" in sys.path:
+    sys.path.remove("")
+
 serveraddr = sys.argv[1]
 yarpid = int(sys.argv[2])
 module = sys.argv[3]
 module_obj = None
+nvim = None
 
 environ['NVIM_YARP_MODULE'] = module
 
 setup_logging(module)
-
-# create another connection to avoid synchronization issue?
-if len(serveraddr.split(':')) == 2:
-    serveraddr, port = serveraddr.split(':')
-    port = int(port)
-    nvim = attach('tcp', address=serveraddr, port=port)
-else:
-    nvim = attach('socket', path=serveraddr)
-
-sys.modules['vim'] = nvim
-sys.modules['nvim'] = nvim
-
-paths = nvim.eval(r'globpath(&rtp,"pythonx",1) . "\n" .'
-                  r' globpath(&rtp,"rplugin/python3",1)')
-for path in paths.split("\n"):
-    if not path:
-        continue
-    if path not in sys.path:
-        sys.path.append(path)
-
-nvim.call('yarp#core#channel_started', yarpid, nvim.channel_id)
-
-module_obj = importlib.import_module(module)
-
 
 def on_request(method, args):
     if hasattr(module_obj, method):
@@ -56,5 +36,30 @@ def on_notification(method, args):
 def on_setup():
     pass
 
+try:
+    # create another connection to avoid synchronization issue?
+    if len(serveraddr.split(':')) == 2:
+        serveraddr, port = serveraddr.split(':')
+        port = int(port)
+        nvim = attach('tcp', address=serveraddr, port=port)
+    else:
+        nvim = attach('socket', path=serveraddr)
 
-nvim.run_loop(on_request, on_notification, on_setup)
+    sys.modules['vim'] = nvim
+    sys.modules['nvim'] = nvim
+
+    paths = nvim.eval(r'globpath(&rtp,"pythonx",1) . "\n" .'
+                      r' globpath(&rtp,"rplugin/python3",1)')
+    for path in paths.split("\n"):
+        if not path:
+            continue
+        if path not in sys.path:
+            sys.path.append(path)
+
+    nvim.call('yarp#core#channel_started', yarpid, nvim.channel_id)
+
+    module_obj = importlib.import_module(module)
+
+    nvim.run_loop(on_request, on_notification, on_setup)
+finally:
+    nvim.close()
