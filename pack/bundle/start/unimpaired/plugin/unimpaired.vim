@@ -506,12 +506,20 @@ function! s:TransformSetup(algorithm) abort
 endfunction
 
 function! UnimpairedMapTransform(algorithm, key) abort
+  let bracket = a:key =~# '^\[\|^\]'
   exe 'nnoremap <expr> <Plug>unimpaired_'    .a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")'
   exe 'xnoremap <expr> <Plug>unimpaired_'    .a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")'
   exe 'nnoremap <expr> <Plug>unimpaired_line_'.a:algorithm.' <SID>TransformSetup("'.a:algorithm.'")."_"'
-  call s:map('n', a:key, '<Plug>unimpaired_'.a:algorithm)
-  call s:map('x', a:key, '<Plug>unimpaired_'.a:algorithm)
-  call s:map('n', a:key.a:key[strlen(a:key)-1], '<Plug>unimpaired_line_'.a:algorithm)
+  call s:map('n', a:key, '<Plug>unimpaired_'.a:algorithm, bracket ? '<unique>' : '')
+  call s:map('x', a:key, '<Plug>unimpaired_'.a:algorithm, bracket ? '<unique>' : '')
+  call s:map('n', a:key.a:key[strlen(a:key)-1], '<Plug>unimpaired_line_'.a:algorithm, bracket ? '<unique>' : '')
+  if bracket
+    let key = tr(a:key, '[]', '<>')
+    call s:map('n', key, '<Plug>unimpaired_'.a:algorithm)
+    call s:map('x', key, '<Plug>unimpaired_'.a:algorithm)
+    call s:map('n', key.key[strlen(key)-1], '<Plug>unimpaired_line_'.a:algorithm)
+    call s:map('n', key.key[0], '<Plug>unimpaired_line_'.a:algorithm)
+  endif
 endfunction
 
 call UnimpairedMapTransform('string_encode','[y')
@@ -528,7 +536,7 @@ augroup unimpaired
   autocmd VimEnter * call s:maps()
 augroup END
 
-if !has('vim_starting')
+if get(v:, 'vim_did_enter', !has('vim_starting'))
   call s:maps()
 endif
 
