@@ -19,6 +19,7 @@ class Base(LoggingMixin):
         self.max_pattern_length = 80
         self.min_pattern_length = -1
         self.input_pattern = ''
+        self.input_patterns = {}
         self.matchers = ['matcher_fuzzy']
         self.sorters = ['sorter_rank']
         self.converters = [
@@ -65,9 +66,23 @@ class Base(LoggingMixin):
     def on_event(self, context):
         pass
 
-    def get_filetype_var(self, filetype, var_name):
-        # Todo: buffer custom vars support
+    def get_var(self, var_name):
+        custom_vars = self.vim.call(
+            'deoplete#custom#_get_source_vars', self.name)
+        if var_name in custom_vars:
+            return custom_vars[var_name]
+        if var_name in self.vars:
+            return self.vars[var_name]
+        return None
 
-        var = self.vars[var_name]
+    def get_filetype_var(self, filetype, var_name):
+        var = self.get_var(var_name)
         ft = filetype if (filetype in var) else '_'
         return var.get(ft, '')
+
+    def get_input_pattern(self, filetype):
+        if not self.input_patterns:
+            return self.input_pattern
+
+        ft = filetype if (filetype in self.input_patterns) else '_'
+        return self.input_patterns.get(ft, self.input_pattern)

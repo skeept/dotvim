@@ -351,6 +351,10 @@ deoplete#custom#buffer_option({option-name}, {value})
 deoplete#custom#buffer_option({dict})
 		The buffer local version of |deoplete#custom#option()|.
 
+					*deoplete#custom#buffer_var()*
+deoplete#custom#buffer_var({source-name}, {var-name}, {value})
+		The buffer local version of |deoplete#custom#var()|.
+
 						*deoplete#custom#option()*
 deoplete#custom#option({option-name}, {value})
 deoplete#custom#option({dict})
@@ -839,6 +843,14 @@ input_pattern
 
 		Default: ''
 		Note: It means this feature is ignored.
+
+				*deoplete-source-attribute-input_patterns*
+input_patterns
+		(Dictionary)			(Optional)
+		The dictionary version of
+		|deoplete-source-attribute-input_pattern|.
+		The key is filetype and the value is input pattern.
+		Note: It is Python3 regexp.
 
 					*deoplete-source-attribute-is_bytepos*
 is_bytepos

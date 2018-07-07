@@ -245,16 +245,7 @@ class Child(logger.LoggingMixin):
                 self._prev_results[source.name] = result
                 results.append(result)
             except Exception as exc:
-                self._source_errors[source.name] += 1
-                if source.is_silent:
-                    continue
-                if self._source_errors[source.name] > 2:
-                    error(self._vim, 'Too many errors from "%s". '
-                          'This source is disabled until Neovim '
-                          'is restarted.' % source.name)
-                    self._ignore_sources.append(source.name)
-                    continue
-                error_tb(self._vim, 'Error from %s: %r' % (source.name, exc))
+                self._handle_source_exception(source, exc)
 
         return results
 
@@ -268,16 +259,26 @@ class Child(logger.LoggingMixin):
                 return
             context['candidates'] += convert2candidates(async_candidates)
         except Exception as exc:
-            self._source_errors[source.name] += 1
-            if source.is_silent:
-                return
-            if self._source_errors[source.name] > 2:
-                error(self._vim, 'Too many errors from "%s". '
-                      'This source is disabled until Neovim '
-                      'is restarted.' % source.name)
-                self._ignore_sources.append(source.name)
-            else:
-                error_tb(self._vim, 'Error from %s: %r' % (source.name, exc))
+            self._handle_source_exception(source, exc)
+
+    def _handle_source_exception(self, source, exc):
+        if isinstance(exc, SourceInitError):
+            error(self._vim,
+                  'Error when loading source {}: {}. '
+                  'Ignoring.'.format(source.name, exc))
+            self._ignore_sources.append(source.name)
+            return
+
+        self._source_errors[source.name] += 1
+        if source.is_silent:
+            return
+        if self._source_errors[source.name] > 2:
+            error(self._vim, 'Too many errors from "%s". '
+                  'This source is disabled until Neovim '
+                  'is restarted.' % source.name)
+            self._ignore_sources.append(source.name)
+        else:
+            error_tb(self._vim, 'Error from %s: %r' % (source.name, exc))
 
     def _process_filter(self, f, context, max_candidates):
         try:
@@ -437,10 +438,11 @@ class Child(logger.LoggingMixin):
             p = re.compile('(' + '|'.join(source.disabled_syntaxes) + ')$')
             if next(filter(p.search, context['syntax_names']), None):
                 return True
-        if (source.input_pattern != '' and
-                re.search('(' + source.input_pattern + ')$',
-                          context['input'])):
-            return False
+        for ft in context['filetypes']:
+            input_pattern = source.get_input_pattern(ft)
+            if (input_pattern != '' and
+                    re.search('(' + input_pattern + ')$', context['input'])):
+                return False
         if context['event'] == 'Manual':
             return False
         return not (source.min_pattern_length <=
@@ -449,8 +451,7 @@ class Child(logger.LoggingMixin):
     def _set_source_attributes(self, context):
         """Set source attributes from the context.
 
-        Each item in `attrs` is the attribute name.  If the default value is in
-        context['vars'] under a different name, use a tuple.
+        Each item in `attrs` is the attribute name.
         """
         attrs = (
             'converters',
@@ -469,7 +470,6 @@ class Child(logger.LoggingMixin):
             'max_pattern_length',
             'min_pattern_length',
             'sorters',
-            'vars',
         )
 
         for name, source in self._get_sources().items():
