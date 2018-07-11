@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  09th Mar 2018
+" Last Update:  10th Jul 2018
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -89,25 +89,36 @@ endfunction
 " @note depend on tags
 function! lh#dev#find_function_boundaries(line) abort
   try
-    let lTags = lh#dev#start_tag_session()
+    let func_kind = lh#tags#func_kind(&ft)
+    let lTags = lh#dev#start_tag_session({'kinds': func_kind})
 
     let info = lh#dev#__FindFunctions(a:line)
 
     let crt_function = info.idx " function starting just after the current line
     let lFunctions   = info.fn
     if crt_function == 0
-      throw "No known function around (before) line ".a:line." in ctags base"
+      return lh#option#unset("No known function around (before) line ".a:line." in ctags base")
     endif
-    " echomsg "first after=="crt_function."->".string(lFunctions[crt_function])
 
     " decrement by 1 to access the previous function in the list
     let crt_function -= 1
-    let first_line = lFunctions[crt_function].line
+    let the_function = lFunctions[crt_function]
+    let first_line = the_function.line
+    call s:Verbose("Function data found: %1", the_function)
 
     " 2- find where the function ends
-    let last_line = lh#dev#__FindEndFunc(first_line)
-    "
-    let fun = {'lines': [first_line, last_line[1]], 'fn':lFunctions[crt_function]}
+    if has_key(the_function, 'end')
+      " When it can be done with ctags
+      let last_line = the_function.end
+    else
+      " When it shall be done manually (for instance, with matchit)
+      let last_line = lh#dev#__FindEndFunc(first_line)[1]
+    endif
+    if last_line < a:line
+      return lh#option#unset("No known function around line ".a:line." in ctags base")
+    endif
+
+    let fun = {'lines': [first_line, last_line], 'fn':the_function}
     return fun
   finally
     call lh#dev#end_tag_session()
@@ -119,11 +130,13 @@ endfunction
 " extract "i" as a local variable ...
 " @note depend on tags
 if lh#tags#ctags_flavour() =~ 'utags'
-  let c_ctags_understands_local_variables_in_one_pass = 1
+  let c_ctags_understands_local_variables_in_one_pass   = 1
   let cpp_ctags_understands_local_variables_in_one_pass = 1
+  let ctags_has_end_of_functions                        = 1
 else
-  let c_ctags_understands_local_variables_in_one_pass = 0
+  let c_ctags_understands_local_variables_in_one_pass   = 0
   let cpp_ctags_understands_local_variables_in_one_pass = 0
+  let ctags_has_end_of_functions                        = 0
 endif
 
 function! lh#dev#get_variables(function_boundaries, ...) abort
@@ -153,13 +166,13 @@ let s:tags = {
       \ 'tags': [],
       \ 'count': 0
       \ }
-function! lh#dev#start_tag_session() abort
+function! lh#dev#start_tag_session(...) abort
   if s:tags.count < 0
     let s:tags.count = 0
   endif
   let s:tags.count += 1
   if s:tags.count == 1
-    let s:tags.tags = lh#dev#__BuildCrtBufferCtags()
+    let s:tags.tags = call('lh#dev#__BuildCrtBufferCtags', a:000)
   endif
   return s:tags.tags
 endfunction
@@ -249,13 +262,13 @@ endif
 function! lh#dev#__FindFunctions(line) abort
   let func_kind = lh#tags#func_kind(&ft)
   try
-    let lTags = lh#dev#start_tag_session()
+    let lTags = lh#dev#start_tag_session({'kinds': func_kind})
     if empty(lTags)
       throw "No tags found, cannot find function definitions in ".expand('%')
     endif
 
     " 1- filter to keep functions only
-    let lFunctions = filter(copy(lTags), 'v:val.kind==func_kind')
+    let lFunctions = filter(copy(lTags), 'v:val.kind=~func_kind')
 
     " Several cases to consider:
     " - no function starting before => fail
@@ -291,12 +304,24 @@ endfunction
 " # lh#dev#__BuildCrtBufferCtags(...) {{{2
 " arg1: [first-line, last-line] => imply get local variables...
 " @note depend on tags
+function! s:inject_to_field(line, field, value) abort
+  let field = a:field.'='
+  let idx = stridx(a:line, field)
+  if idx == -1
+    return a:line . ' ' . field.a:value
+  elseif match(a:line, '^\v\S+'.a:value, idx+len(field)) == -1
+    return a:line[:idx+len(field)-1].substitute(a:line[idx+len(field):], '\v\S+\zs', a:value, '')
+  else
+    return a:line
+  endif
+endfunction
+
 function! lh#dev#__BuildCrtBufferCtags(...) abort
   " let temp_tags = tempname()
   let ctags_dirname = fnamemodify(s:temp_tags, ':h')
 
   if &modified || a:0 > 0
-    if a:0 > 0
+    if a:0 > 0 && type(a:0) == type([])
       let s = a:1[0]
       let e = a:1[1]
     else
@@ -310,6 +335,8 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     let source_name    = expand('%:p')
     " let source_name    = lh#path#relative_to(ctags_dirname, expand('%:p'))
   endif
+  let args = (a:0 > 0 && type(a:1) == type({})) ? a:1 : {}
+  " call s:Verbose("Args: %1, %2", args, a:000)
   let ctags_pathname = s:temp_tags
 
   let cmd_line = lh#tags#cmd_line(ctags_pathname)
@@ -318,21 +345,29 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     call lh#common#warning_msg("lh-tags may not know how to recognize and parse ".&ft." files")
   else
     let cmd_line .= ' --language-force='.lang
-  endif
-  if cmd_line =~ '--fields='
-    let cmd_line = substitute(cmd_line, '--fields=\S\+', '&n', '') " inject line numbers in fields
-  else
-    let cmd_line .= ' --fields=n'
-  endif
-  " let cmd_line = substitute(cmd_line, '--fields=\S\+', '&t', '') " inject types in fields
-  let cmd_line = substitute(cmd_line, '-kinds=\S\+\zsp', '', '') " remove prototypes, todo: ft-specific
-  if a:0>0 || lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
-    if stridx(cmd_line, '-kinds=') != -1
-      let cmd_line = substitute(cmd_line, '-kinds=\S\+', '&l', '') " inject local variable, todo: ft-specific
-    else
-      let cmd_line .= ' --' . &ft . '-kinds=lv'
+
+    let kind_flags = '--'.tolower(lang).'-kinds'
+    if a:0>0 || lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
+      let cmd_line = s:inject_to_field(cmd_line, kind_flags, 'l')
+      let cmd_line = s:inject_to_field(cmd_line, kind_flags, 'v')
+    endif
+    if has_key(args, 'kinds')
+      for kind in split(substitute(args.kinds, '[[\]]', '', 'g'), '\zs')
+        let cmd_line = s:inject_to_field(cmd_line, kind_flags, kind)
+      endfor
     endif
   endif
+  " As we run on a file, we don't need the --languages= option (unless
+  " may be to force the same thing as --language-force?
+  let cmd_line = substitute(cmd_line, '\v --languages\=\S*', '', '')
+
+  " Make sure to inject line numbers
+  let cmd_line = s:inject_to_field(cmd_line, '--fields', 'n') " inject line numbers in fields
+  if ctags_has_end_of_functions
+    let cmd_line = s:inject_to_field(cmd_line, '--fields', 'e') " inject end-line numbers in fields
+  endif
+  let cmd_line = substitute(cmd_line, '\v-kinds\=\S+\zsp', '', '') " remove prototypes, todo: ft-specific
+
   let cmd_line .= ' ' . shellescape(source_name)
   if filereadable(s:temp_tags)
     call delete(s:temp_tags)
