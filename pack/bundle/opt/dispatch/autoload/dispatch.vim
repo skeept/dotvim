@@ -57,8 +57,17 @@ function! dispatch#shellescape(...) abort
   return join(args, ' ')
 endfunction
 
+let s:var = '\%(<\%(cword\|cWORD\|cexpr\|cfile\|sfile\|slnum\|afile\|abuf\|amatch' . (has('clientserver') ? '\|client' : '') . '\)>\|%\|##\=\|#<\=\d\+\)'
+function! dispatch#escape(string) abort
+  return substitute(a:string, s:var, '\\&', 'g')
+endfunction
+
+function! dispatch#bang(string) abort
+  return '!' . substitute(a:string, '!\|' . s:var, '\\&', 'g')
+endfunction
+
 let s:flags = '<\=\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*\%(:S\)\='
-let s:expandable = '\\*\%(<\w\+>\|%\|#\d*\)' . s:flags
+let s:expandable = '\\*' . s:var . s:flags
 function! dispatch#expand(string) abort
   return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
 endfunction
@@ -78,6 +87,10 @@ function! s:sandbox_eval(string) abort
   execute 'return v'
 endfunction
 
+function! s:command_lnum(string, lnum) abort
+  return a:lnum > 0 ? substitute(a:string, '^:[%0]\=\ze\a', ':' . a:lnum, '') : a:string
+endfunction
+
 function! s:expand_lnum(string, ...) abort
   let v = a:string
   let old = v:lnum
@@ -85,7 +98,7 @@ function! s:expand_lnum(string, ...) abort
     let v:lnum = a:0 ? a:1 : 0
     let v = substitute(v, '<\%(lnum\|line1\|line2\)>'.s:flags,
           \ v:lnum > 0 ? '\=fnamemodify(v:lnum, substitute(submatch(0), "^[^>]*>", "", ""))' : '', 'g')
-    let sbeval = '\=escape(s:sandbox_eval(submatch(1)), "!#%")'
+    let sbeval = '\=dispatch#escape(s:sandbox_eval(submatch(1)))'
     let v = substitute(v, '`=\([^`]*\)`', sbeval, 'g')
     let v = substitute(v, '`-=\([^`]*\)`', v:lnum < 1 ? sbeval : '', 'g')
     let v = substitute(v, '`+=\([^`]*\)`', v:lnum > 0 ? sbeval : '', 'g')
@@ -93,6 +106,16 @@ function! s:expand_lnum(string, ...) abort
   finally
     let v:lnum = old
   endtry
+endfunction
+
+function! s:build_make(program, args) abort
+  if a:program =~# '\$\*'
+    return substitute(a:program, '\$\*', a:args, 'g')
+  elseif empty(a:args)
+    return a:program
+  else
+    return a:program . ' ' . a:args
+  endif
 endfunction
 
 function! s:efm_query(key, efm) abort
@@ -438,7 +461,7 @@ function! dispatch#spawn(command, ...) abort
       endif
     else
       let request.handler = 'sync'
-      execute '!' . request.command
+      execute dispatch#bang(request.expanded)
     endif
   finally
     if exists('cwd')
@@ -673,9 +696,7 @@ function! dispatch#compile_command(bang, args, count) abort
 
   if args =~# '^:\S'
     call dispatch#autowrite()
-    if a:count > 0
-      let args = substitute(args, '^:[%0]\=\ze\a', ':' . a:count, '')
-    endif
+    let args = s:command_lnum(args, a:count)
     return s:wrapcd(get(request, 'directory', getcwd()),
           \ substitute(args[1:-1], '\>', (a:bang ? '!' : ''), ''))
   endif
@@ -706,13 +727,7 @@ function! dispatch#compile_command(bang, args, count) abort
     if empty(request.args)
       let request.args = s:expand_lnum(s:efm_literal('default', request.format))
     endif
-    if request.program =~# '\$\*'
-      let request.command = substitute(request.program, '\$\*', request.args, 'g')
-    elseif empty(request.args)
-      let request.command = request.program
-    else
-      let request.command = request.program . ' ' . request.args
-    endif
+    let request.command = s:build_make(request.program, request.args)
   else
     let [compiler, prefix, program, rest] = s:compiler_split(args)
     let request.compiler = get(request, 'compiler', compiler)
@@ -750,6 +765,7 @@ function! dispatch#compile_command(bang, args, count) abort
   let request.file = dispatch#tempname()
   let &errorfile = request.file
 
+  let lnum = v:lnum
   let efm = &l:efm
   let makeprg = &l:makeprg
   let compiler = get(b:, 'current_compiler', '')
@@ -759,6 +775,7 @@ function! dispatch#compile_command(bang, args, count) abort
   try
     let &modelines = 0
     call s:set_current_compiler(get(request, 'compiler', ''))
+    let v:lnum = a:count > 0 ? a:count : 0
     let &l:efm = request.format
     let &l:makeprg = request.command
     silent doautocmd QuickFixCmdPre dispatch-make
@@ -767,7 +784,7 @@ function! dispatch#compile_command(bang, args, count) abort
       let cwd = getcwd()
       execute cd dispatch#fnameescape(request.directory)
     endif
-    let request.expanded = get(request, 'expanded', dispatch#expand(request.command))
+    let request.expanded = dispatch#expand(request.command)
     call extend(s:makes, [request])
     let request.id = len(s:makes)
     let s:files[request.file] = request
@@ -790,15 +807,16 @@ function! dispatch#compile_command(bang, args, count) abort
       let sp = dispatch#shellpipe(request.file)
       let dest = request.file . '.complete'
       if &shellxquote ==# '"'
-        silent execute '!' . request.command sp '& echo \%ERRORLEVEL\% >' dest
+        silent execute dispatch#bang(request.expanded . ' ' . sp . ' & echo %ERRORLEVEL% > ' . dest)
       else
-        silent execute '!(' . request.command . '; echo'
-              \ dispatch#status_var()  '> ' . dest . ')' sp
+        silent execute '(' . dispatch#bang('(' . request.expanded . '; echo ' .
+              \ dispatch#status_var() . ' > ' . dest . ')' . ' ' . sp)
       endif
       redraw!
     endif
   finally
     silent doautocmd QuickFixCmdPost dispatch-make
+    let v:lnum = lnum
     let &modelines = modelines
     let &l:efm = efm
     let &l:makeprg = makeprg
@@ -841,8 +859,8 @@ function! dispatch#focus(...) abort
       endif
     endif
     let compiler = s:expand_lnum(compiler, a:1)
-    if compiler =~# '^:[[:alpha:]]' && a:1 > 0
-      let compiler = substitute(compiler, '^:\zs', a:1, '')
+    if compiler =~# '^:'
+      let compiler = s:command_lnum(compiler, a:1)
     endif
     if has_key(opts, 'compiler') && opts.compiler != dispatch#compiler_for_program(compiler)
       let compiler = '-compiler=' . opts.compiler . ' ' . compiler
@@ -885,15 +903,9 @@ function! dispatch#focus_command(bang, args, count) abort
     if empty(args)
       let args = s:efm_literal('default')
     endif
-    if &makeprg =~# '\$\*'
-      let args = substitute(&makeprg, '\$\*', args, 'g')
-    elseif empty(args)
-      let args = &makeprg
-    else
-      let args = &makeprg . ' ' . args
-    endif
+    let args = s:build_make(&makeprg, args)
   endif
-  let args = escape(dispatch#expand(args), '%#')
+  let args = dispatch#escape(dispatch#expand(args))
   if has_key(opts, 'compiler')
     let args = '-compiler=' . opts.compiler . ' ' . args
   endif
@@ -933,7 +945,7 @@ function! dispatch#make_focus(count) abort
   if empty(task)
     let task = s:expand_lnum(s:efm_literal('default'), 0)
   endif
-  return &l:makeprg . (empty(task) ? '' : ' ' . task)
+  return s:build_make(&makeprg, task)
 endfunction
 
 " }}}1
@@ -1121,8 +1133,8 @@ function! s:cgetfile(request, ...) abort
     else
       let &l:efm = request.format
     endif
-    let &l:makeprg = request.command
-    let title = ':Dispatch '.escape(request.expanded, '%#') . ' ' . s:postfix(request)
+    let &l:makeprg = dispatch#escape(request.expanded)
+    let title = ':Dispatch '.dispatch#escape(request.expanded) . ' ' . s:postfix(request)
     silent doautocmd QuickFixCmdPre cgetfile
     if exists(':chistory') && get(getqflist({'title': 1}), 'title', '') ==# title
       call setqflist([], 'r')
@@ -1163,10 +1175,10 @@ function! dispatch#quickfix_init() abort
   if empty(request)
     return
   endif
-  let w:quickfix_title = ':Dispatch ' . escape(request.expanded, '%#') .
+  let w:quickfix_title = ':Dispatch ' . dispatch#escape(request.expanded) .
         \ ' ' . s:postfix(request)
   let b:dispatch = dispatch#dir_opt(request.directory) .
-        \ escape(request.expanded, '%#')
+        \ dispatch#escape(request.expanded)
   if has_key(request, 'compiler')
     let b:dispatch = '-compiler=' . request.compiler . ' ' . b:dispatch
   endif
