@@ -634,7 +634,7 @@ function! s:buffer(...) abort
   if buffer.getvar('git_dir') !=# ''
     return buffer
   endif
-  call s:throw('not a git repository: '.expand('%:p'))
+  call s:throw('not a git repository: '.bufname(buffer['#']))
 endfunction
 
 function! fugitive#buffer(...) abort
@@ -660,7 +660,7 @@ endfunction
 function! s:buffer_type(...) dict abort
   if self.getvar('fugitive_type') != ''
     let type = self.getvar('fugitive_type')
-  elseif fnamemodify(self.spec(),':p') =~# '.\git/refs/\|\.git/\w*HEAD$'
+  elseif fnamemodify(self.spec(),':p') =~# '\.git/refs/\|\.git/\w*HEAD$'
     let type = 'head'
   elseif self.getline(1) =~ '^tree \x\{40\}$' && self.getline(2) == ''
     let type = 'tree'
@@ -843,9 +843,9 @@ function! s:Git(bang, mods, args) abort
     let git .= ' --no-pager'
   endif
   let args = matchstr(a:args,'\v\C.{-}%($|\\@<!%(\\\\)*\|)@=')
-  if exists(':terminal') && has('nvim')
+  if exists(':terminal') && has('nvim') && !get(g:, 'fugitive_force_bang_command')
     let dir = s:repo().tree()
-    if expand('%') != ''
+    if len(@%)
       -tabedit %
     else
       -tabnew
@@ -1239,7 +1239,14 @@ function! s:Commit(mods, args, ...) abort
         let args = a:args
         let args = s:gsub(args,'%(%(^| )-- )@<!%(^| )@<=%(-[esp]|--edit|--interactive|--patch|--signoff)%($| )','')
         let args = s:gsub(args,'%(%(^| )-- )@<!%(^| )@<=%(-c|--reedit-message|--reuse-message|-F|--file|-m|--message)%(\s+|\=)%(''[^'']*''|"%(\\.|[^"])*"|\\.|\S)*','')
-        let args = s:gsub(args,'%(^| )@<=[%#]%(:\w)*','\=expand(submatch(0))')
+        let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
+        let cwd = getcwd()
+        try
+          exe cd s:fnameescape(repo.tree())
+          let args = s:gsub(args,'\\@<!(\%|##=|#\<=\d+)(:\w)*','\=fnamemodify(FugitivePath(expand(submatch(1))),":." . submatch(2))')
+        finally
+          exe cd cwd
+        endtry
         let args = s:sub(args, '\ze -- |$', ' --no-edit --no-interactive --no-signoff')
         let args = '-F '.s:shellesc(msgfile).' '.args
         if args !~# '\%(^\| \)--cleanup\>'
