@@ -91,12 +91,21 @@ function! s:executable(binary) abort
   return s:executables[a:binary]
 endfunction
 
-let s:git_versions = {}
-
 function! s:git_command() abort
   return get(g:, 'fugitive_git_command', g:fugitive_git_executable)
 endfunction
 
+function! fugitive#Prepare(...) abort
+  let args = copy(a:000)
+  if empty(args)
+    return g:fugitive_git_executable
+  elseif args[0] !~# '^-' && args[0] =~# '[\/.]'
+    let args[0] = '--git-dir=' . args[0]
+  endif
+  return g:fugitive_git_executable . ' ' . join(map(args, 's:shellesc(v:val)'), ' ')
+endfunction
+
+let s:git_versions = {}
 function! fugitive#GitVersion(...) abort
   if !has_key(s:git_versions, g:fugitive_git_executable)
     let s:git_versions[g:fugitive_git_executable] = matchstr(system(g:fugitive_git_executable.' --version'), "\\S\\+\\ze\n")
@@ -181,7 +190,7 @@ function! fugitive#Init() abort
     call s:map('n', 'y<C-G>', ':call setreg(v:register, <SID>recall())<CR>', '<silent>')
   endif
   let buffer = fugitive#buffer()
-  if expand('%:p') =~# '://'
+  if expand('%:p') =~# ':[\/][\/]'
     call buffer.setvar('&path', s:sub(buffer.getvar('&path'), '^\.%(,|$)', ''))
   endif
   if stridx(buffer.getvar('&tags'), escape(b:git_dir, ', ')) == -1
@@ -323,9 +332,7 @@ function! s:repo_git_command(...) dict abort
 endfunction
 
 function! s:repo_git_chomp(...) dict abort
-  let git = g:fugitive_git_executable . ' --git-dir='.s:shellesc(self.git_dir)
-  let output = git.join(map(copy(a:000),'" ".s:shellesc(v:val)'),'')
-  return s:sub(system(output),'\n$','')
+  return s:sub(system(call('fugitive#Prepare', [self.git_dir] + a:000)),'\n$','')
 endfunction
 
 function! s:repo_git_chomp_in_tree(...) dict abort
@@ -437,7 +444,7 @@ call s:add_methods('repo',['keywordprg'])
 " Section: Buffer
 
 function! s:DirCommitFile(path) abort
-  let vals = matchlist(s:shellslash(a:path), '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\w\+\)\(/.*\)\=$')
+  let vals = matchlist(s:shellslash(a:path), '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\x\{40\}\|[0-3]\)\(/.*\)\=$')
   if empty(vals)
     return ['', '', '']
   endif
@@ -467,7 +474,7 @@ endfunction
 let s:trees = {}
 let s:indexes = {}
 function! s:TreeInfo(dir, commit) abort
-  let git = g:fugitive_git_executable . ' --git-dir=' . s:shellesc(a:dir)
+  let git = fugitive#Prepare(a:dir)
   if a:commit =~# '^:\=[0-3]$'
     let index = get(s:indexes, a:dir, [])
     let newftime = getftime(a:dir . '/index')
@@ -560,7 +567,7 @@ function! fugitive#getfsize(url) abort
   let entry = s:PathInfo(a:url)
   if entry[4] == -2 && entry[2] ==# 'blob' && len(entry[3])
     let dir = s:DirCommitFile(a:url)[0]
-    let size = +system(g:fugitive_git_executable . ' ' . s:shellesc('--git-dir=' . dir) . ' cat-file -s ' . entry[3])
+    let size = +system(fugitive#Prepare(dir, 'cat-file', '-s', entry[3]))
     let entry[4] = v:shell_error ? -1 : size
   endif
   return entry[4]
@@ -586,8 +593,7 @@ function! fugitive#readfile(url, ...) abort
     return []
   endif
   let [dir, rev] = s:DirRev(a:url)
-  let cmd = g:fugitive_git_executable . ' --git-dir=' . s:shellesc(dir) .
-        \ ' cat-file blob ' . s:shellesc(rev)
+  let cmd = fugitive#Prepare(dir, 'cat-file', 'blob', rev)
   if max > 0 && s:executable('head')
     let cmd .= '|head -' . max
   endif
@@ -2779,21 +2785,16 @@ function! fugitive#BufReadStatus() abort
 endfunction
 
 function! fugitive#FileRead() abort
-  try
-    let [dir, commit, file] = s:DirCommitFile(expand('<amatch>'))
-    let repo = s:repo(dir)
-    let path = commit . substitute(file, '^/', ':', '')
-    let hash = repo.rev_parse(path)
-    if path =~ '^:'
-      let type = 'blob'
-    else
-      let type = repo.git_chomp('cat-file','-t',hash)
-    endif
-    " TODO: use count, if possible
-    return "read !".escape(repo.git_command('cat-file',type,hash),'%#\')
-  catch /^fugitive:/
-    return 'echoerr v:errmsg'
-  endtry
+  let [dir, rev] = s:DirRev(expand('<amatch>'))
+  if empty(dir)
+    return "noautocmd '[read <amatch>"
+  endif
+  if rev !~# ':'
+    let cmd = fugitive#Prepare(dir, 'log', '--pretty=format:%B', '-1', rev)
+  else
+    let cmd = fugitive#Prepare(dir, 'cat-file', '-p', rev)
+  endif
+  return "'[read !" . escape(cmd, '!#%')
 endfunction
 
 function! fugitive#BufReadIndex() abort
@@ -2933,10 +2934,6 @@ function! fugitive#BufReadObject() abort
     return 'echoerr v:errmsg'
   endtry
 endfunction
-
-augroup fugitive_files
-  autocmd!
-augroup END
 
 " Section: Temp files
 
