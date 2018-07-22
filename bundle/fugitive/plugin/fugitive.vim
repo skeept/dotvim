@@ -25,8 +25,8 @@ endfunction
 
 let s:worktree_for_dir = {}
 let s:dir_for_worktree = {}
-function! FugitiveTreeForGitDir(git_dir) abort
-  let dir = substitute(s:shellslash(a:git_dir), '/$', '', '')
+function! FugitiveTreeForGitDir(...) abort
+  let dir = substitute(s:shellslash(a:0 ? a:1 : get(b:, 'git_dir', '')), '/$', '', '')
   if dir =~# '/\.git$'
     return len(dir) ==# 5 ? '/' : dir[0:-6]
   endif
@@ -150,6 +150,20 @@ endfunction
 
 function! FugitiveReal(...) abort
   return call('FugitivePath', a:000)
+endfunction
+
+function! FugitiveGenerate(...) abort
+  return fugitive#repo(a:0 > 1 ? a:2 : get(b:, 'git_dir', '')).translate(a:0 ? a:1 : '', 1)
+endfunction
+
+function! FugitiveParse(...) abort
+  let path = s:shellslash(a:0 ? a:1 : @%)
+  let vals = matchlist(path, '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\x\{40\}\|[0-3]\)\(/.*\)\=$')
+  if len(vals)
+    return [(vals[2] =~# '^.$' ? ':' : '') . vals[2] . substitute(vals[3], '^/', ':', ''), vals[1]]
+  endif
+  let v:errmsg = 'fugitive: invalid Fugitive URL ' . path
+  throw v:errmsg
 endfunction
 
 augroup fugitive
