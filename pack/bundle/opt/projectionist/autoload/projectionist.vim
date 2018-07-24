@@ -47,10 +47,10 @@ function! s:real(file) abort
   let pre = substitute(matchstr(a:file, '^\a\a\+\ze:'), '^.', '\u&', '')
   if empty(pre)
     let path = a:file
-  elseif exists('*' . pre . 'Path')
-    let path = {pre}Path(a:file)
   elseif exists('*' . pre . 'Real')
     let path = {pre}Real(a:file)
+  elseif exists('*' . pre . 'Path')
+    let path = {pre}Path(a:file)
   else
     return ''
   endif
@@ -150,7 +150,7 @@ endfunction
 " Section: Querying
 
 function! s:roots() abort
-  return reverse(sort(keys(b:projectionist), function('projectionist#lencmp')))
+  return reverse(sort(keys(get(b:, 'projectionist', {})), function('projectionist#lencmp')))
 endfunction
 
 function! projectionist#path(...) abort
@@ -167,6 +167,10 @@ function! projectionist#path(...) abort
   else
     return root
   endif
+endfunction
+
+function! projectionist#real(...) abort
+  return s:real(call('projectionist#path', a:000))
 endfunction
 
 function! s:all() abort
@@ -272,15 +276,15 @@ function! s:expand_placeholder(placeholder, expansions) abort
   if has_key(a:expansions, get(transforms, 0, '}'))
     let value = a:expansions[remove(transforms, 0)]
   else
-    let value = get(a:expansions, 'match', "\001")
+    let value = get(a:expansions, 'match', "\030")
   endif
   for transform in transforms
     if !has_key(g:projectionist_transformations, transform)
-      return "\001"
+      return "\030"
     endif
     let value = g:projectionist_transformations[transform](value, a:expansions)
-    if value =~# "\001"
-      return "\001"
+    if value =~# "\030"
+      return "\030"
     endif
   endfor
   if has_key(a:expansions, 'post_function')
@@ -291,10 +295,10 @@ endfunction
 
 function! s:expand_placeholders(value, expansions, ...) abort
   if type(a:value) ==# type([]) || type(a:value) ==# type({})
-    return filter(map(copy(a:value), 's:expand_placeholders(v:val, a:expansions, 1)'), 'type(v:val) !=# type("") || v:val !~# "\001"')
+    return filter(map(copy(a:value), 's:expand_placeholders(v:val, a:expansions, 1)'), 'type(v:val) !=# type("") || v:val !~# "[\001-\006\016-\037]"')
   endif
   let value = substitute(a:value, '{[^{}]*}', '\=s:expand_placeholder(submatch(0), a:expansions)', 'g')
-  return !a:0 && value =~# "\001" ? '' : value
+  return !a:0 && value =~# "[\001-\006\016-\037]" ? '' : value
 endfunction
 
 let s:valid_key = '^\%([^*{}]*\*\*[^*{}]\{2\}\)\=[^*{}]*\*\=[^*{}]*$'
@@ -433,16 +437,16 @@ function! projectionist#activate() abort
   endif
   if len(s:real(s:roots()[0]))
     command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Pcd
-          \ exe 'cd' s:real(projectionist#path(<q-args>, <line2>))
+          \ exe 'cd' projectionist#real(<q-args>, <line2>)
     command! -buffer -bar -bang -nargs=* -range=1 -complete=customlist,s:dir_complete Plcd
-          \ exe (<bang>0 ? 'cd' : 'lcd') s:real(projectionist#path(<q-args>, <line2>))
+          \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(<q-args>, <line2>)
     if exists(':Cd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-            \ exe 'cd' s:real(projectionist#path(<q-args>, <line2>))
+            \ exe 'cd' projectionist#real(<q-args>, <line2>)
     endif
     if exists(':Lcd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-            \ exe (<bang>0 ? 'cd' : 'lcd') s:real(projectionist#path(<q-args>, <line2>))
+            \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(<q-args>, <line2>)
     endif
     command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo
           \ exe s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
@@ -554,8 +558,8 @@ function! s:dir_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let slash = projectionist#slash()
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = projectionist#glob(s:real(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1)))
-  call map(matches,'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(s:real(projectionist#path()))+1 : -1 ])')
+  let matches = projectionist#glob(projectionist#real(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1))
+  call map(matches,'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#real())+1 : -1 ])')
   return matches
 endfunction
 
@@ -718,7 +722,7 @@ function! s:do(bang, count, cmd) abort
   let cmd = substitute(a:cmd, '^\d\+ ', '', '')
   let offset = cmd ==# a:cmd ? 1 : matchstr(a:cmd, '^\d\+')
   try
-    execute cd fnameescape(s:real(projectionist#path('', offset)))
+    execute cd fnameescape(projectionist#real('', offset))
     execute (a:count >= 0 ? a:count : '').substitute(cmd, '\>', a:bang, '')
   catch
     return 'echoerr '.string(v:exception)
@@ -731,7 +735,7 @@ endfunction
 " Section: Make
 
 function! s:qf_pre() abort
-  let dir = substitute(matchstr(','.&l:errorformat, ',\%(%\\&\)\=chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
+  let dir = substitute(matchstr(','.&l:errorformat, ',\%(%\\&\)\=chdir[ =]\zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
   let cwd = getcwd()
   if !empty(dir) && dir !=# cwd
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
@@ -751,6 +755,9 @@ augroup END
 
 function! projectionist#apply_template() abort
   let template = get(projectionist#query('template'), 0, ['', ''])[1]
+  if type(template) == type([]) && type(get(template, 0)) == type([])
+    let template = template[0]
+  endif
   if type(template) == type([])
     let l:.template = join(template, "\n")
   endif
