@@ -77,7 +77,7 @@ function! s:expand(expr) abort
   endif
   sandbox let v = expand(substitute(a:expr, ':S$', '', ''))
   if a:expr =~# ':S$'
-    let v = dispatch#shellescape(v)
+    let v = shellescape(v)
   endif
   if len(v) && len(expand(matchstr(a:expr, '^[%#][^:]*\%(:p:h\)\=\|^[^:]\+')))
     return v
@@ -346,7 +346,7 @@ endfunction
 
 " Section: :Start, :Spawn
 
-function! s:extract_opts(command) abort
+function! s:extract_opts(command, ...) abort
   let command = a:command
   let opts = {}
   while command =~# '^\%(-\|++\)\%(\w\+\)\%([= ]\|$\)'
@@ -363,22 +363,42 @@ function! s:extract_opts(command) abort
     endif
     let command = substitute(command, '^\%(-\|++\)\w\+\%(=\%(\\.\|\S\)*\)\=\s*', '', '')
   endwhile
-  return [command, opts]
+  return [command, extend(opts, a:0 ? a:1 : {})]
 endfunction
 
-function! dispatch#spawn_command(bang, command, ...) abort
+function! s:make_focus(count) abort
+  let task = ''
+  if a:count >= 0
+    let task = s:efm_literal('buffer')
+  endif
+  if empty(task)
+    let task = s:efm_literal('default')
+  endif
+  return s:build_make(&makeprg, task)
+endfunction
+
+function! dispatch#spawn_command(bang, command, count, ...) abort
   let [command, opts] = s:extract_opts(a:command)
+  if empty(command) && a:count >= 0
+    if type(get(b:, 'dispatch')) == type('')
+      let command = b:dispatch
+    else
+      let command = s:make_focus(a:count)
+    endif
+    call extend(opts, {'wait': 'always'}, 'keep')
+    let [command, opts] = s:extract_opts(command, opts)
+  endif
   let opts.background = a:bang
-  call dispatch#spawn(command, opts)
+  call dispatch#spawn(command, opts, a:count)
   return ''
 endfunction
 
 function! dispatch#start_command(bang, command, ...) abort
-  let command = a:command
+  let [command, opts] = s:extract_opts(a:command)
   if empty(command) && type(get(b:, 'start')) == type('')
     let command = b:start
+    let [command, opts] = s:extract_opts(command, opts)
   endif
-  let [command, opts] = s:extract_opts(command)
   let opts.background = a:bang
   if command =~# '^:\S'
     unlet! g:dispatch_last_start
@@ -420,7 +440,7 @@ function! dispatch#spawn(command, ...) abort
       let cwd = getcwd()
       execute cd dispatch#fnameescape(request.directory)
     endif
-    let request.expanded = dispatch#expand(request.command, -1)
+    let request.expanded = dispatch#expand(request.command, a:0 > 1 ? a:2 : -1)
     if get(request, 'manage')
       let key = request.directory."\t".substitute(request.expanded, '\s*$', '', '')
       let i = 0
@@ -663,9 +683,9 @@ if !exists('s:makes')
 endif
 
 function! dispatch#compile_command(bang, args, count, ...) abort
-  if !empty(a:args)
-    let args = a:args
-  else
+  let [args, request] = s:extract_opts(a:args)
+
+  if empty(args)
     let args = '--'
     let default_dispatch = 1
     if type(get(b:, 'dispatch')) == type('')
@@ -678,13 +698,12 @@ function! dispatch#compile_command(bang, args, count, ...) abort
         let args = vars.Dispatch
       endif
     endfor
+    let [args, request] = s:extract_opts(args, request)
   endif
 
   if args =~# '^!'
     return 'Start' . (a:bang ? '!' : '') . ' ' . args[1:-1]
   endif
-
-  let [args, request] = s:extract_opts(args)
 
   if args =~# '^:\S'
     call dispatch#autowrite()
@@ -934,14 +953,7 @@ function! dispatch#focus_command(bang, args, count, ...) abort
 endfunction
 
 function! dispatch#make_focus(count) abort
-  let task = ''
-  if a:count >= 0
-    let task = dispatch#expand(s:efm_literal('buffer'), a:count)
-  endif
-  if empty(task)
-    let task = dispatch#expand(s:efm_literal('default'), a:count)
-  endif
-  return s:build_make(&makeprg, task)
+  return dispatch#expand(s:make_focus(a:count), a:count)
 endfunction
 
 " Section: Requests

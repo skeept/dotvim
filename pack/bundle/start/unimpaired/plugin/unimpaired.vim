@@ -1,6 +1,6 @@
 " unimpaired.vim - Pairs of handy bracket mappings
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.2
+" Version:      2.0
 " GetLatestVimScripts: 1590 1 :AutoInstall: unimpaired.vim
 
 if exists("g:loaded_unimpaired") || &cp || v:version < 700
@@ -10,7 +10,7 @@ let g:loaded_unimpaired = 1
 
 let s:maps = []
 function! s:map(...) abort
-  call add(s:maps, a:000)
+  call add(s:maps, copy(a:000))
 endfunction
 
 function! s:maps() abort
@@ -318,8 +318,6 @@ endfunction
 
 nnoremap <silent> <Plug>unimpairedPaste :call <SID>setup_paste()<CR>
 
-call s:map('n', 'yo', ':<C-U>echoerr "Use ]op"<CR>', '<silent>')
-call s:map('n', 'yO', ':<C-U>echoerr "Use [op"<CR>', '<silent>')
 call s:map('n', '[op', ':call <SID>setup_paste()<CR>O', '<silent>')
 call s:map('n', ']op', ':call <SID>setup_paste()<CR>o', '<silent>')
 call s:map('n', 'yop', ':call <SID>setup_paste()<CR>0C', '<silent>')
