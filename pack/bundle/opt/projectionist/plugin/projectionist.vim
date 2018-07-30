@@ -12,6 +12,10 @@ if !exists('g:projectionist_heuristics')
   let g:projectionist_heuristics = {}
 endif
 
+if !exists('s:loaded')
+  let s:loaded = {}
+endif
+
 function! s:nscall(ns, fn, path, ...) abort
   if len(a:ns) && exists('*' . a:ns . '#' . a:fn)
     return call(a:ns . '#' . a:fn, [a:path] + a:000)
@@ -43,11 +47,17 @@ function! ProjectionistDetect(path) abort
 
   let root = file
   let ns = matchstr(file, '^\a\a\+\ze:')
+  if len(ns) && get(g:, 'projectionist_ignore_' . ns)
+    return
+  endif
+  if len(ns) && !has_key(s:loaded, ns) && len(findfile('autoload/' . ns . '.vim', escape(&rtp, ' ')))
+    exe 'runtime! autoload/' . ns . '.vim'
+  endif
   let previous = ""
   while root !=# previous && root !=# '.'
     if s:nscall(ns, 'filereadable', root . '/.projections.json')
       try
-        let value = projectionist#json_parse(s:nscall(ns, 'readfile', root . '/.projections.json'))
+        let value = projectionist#json_parse(projectionist#readfile(root . '/.projections.json'))
         call projectionist#append(root, value)
       catch /^invalid JSON:/
       endtry
