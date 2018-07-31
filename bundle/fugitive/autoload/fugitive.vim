@@ -141,6 +141,14 @@ function! s:TreeChomp(...) abort
         \ join(map(args, 's:shellesc(v:val)'))), '\n$', '')
 endfunction
 
+function! fugitive#RevParse(rev, ...) abort
+  let hash = system(s:Prepare(a:0 ? a:1 : b:git_dir, 'rev-parse', '--verify', a:rev))[0:-2]
+  if !v:shell_error && hash =~# '^\x\{40\}$'
+    return hash
+  endif
+  call s:throw('rev-parse '.a:rev.': '.hash)
+endfunction
+
 function! fugitive#Config(name, ...) abort
   let cmd = s:Prepare(a:0 ? a:1 : get(b:, 'git_dir', ''), 'config', '--get', a:name)
   let out = matchstr(system(cmd), "[^\r\n]*")
@@ -240,7 +248,7 @@ let s:abstract_prototype = {}
 let s:repo_prototype = {}
 let s:repos = {}
 
-function! s:repo(...) abort
+function! fugitive#repo(...) abort
   let dir = a:0 ? a:1 : (exists('b:git_dir') && b:git_dir !=# '' ? b:git_dir : FugitiveExtractGitDir(expand('%:p')))
   if dir !=# ''
     if has_key(s:repos, dir)
@@ -252,10 +260,6 @@ function! s:repo(...) abort
     return extend(extend(repo, s:repo_prototype, 'keep'), s:abstract_prototype, 'keep')
   endif
   call s:throw('not a git repository: '.expand('%:p'))
-endfunction
-
-function! fugitive#repo(...) abort
-  return call('s:repo', a:000)
 endfunction
 
 function! s:repo_dir(...) dict abort
@@ -292,7 +296,7 @@ function! s:repo_translate(spec, ...) dict abort
   elseif empty(rev) || rev ==# '/.'
     return self.tree()
   elseif rev =~# '^\.\=/'
-    let f = self.tree(substitute(rev, '^\.', '', ''))
+    let f = self.tree(substitute(rev, '^\.\=/', '', ''))
   elseif rev =~# '^:[0-3]:/\@!'
     let f = 'fugitive://' . dir . '//' . rev[1] . '/' . rev[3:-1]
   elseif rev ==# ':'
@@ -333,7 +337,7 @@ function! s:repo_translate(spec, ...) dict abort
 endfunction
 
 function! s:Generate(rev) abort
-  return s:repo().translate(a:rev, 1)
+  return fugitive#repo().translate(a:rev, 1)
 endfunction
 
 function! s:repo_head(...) dict abort
@@ -378,11 +382,7 @@ function! s:repo_git_chomp_in_tree(...) dict abort
 endfunction
 
 function! s:repo_rev_parse(rev) dict abort
-  let hash = self.git_chomp('rev-parse','--verify',a:rev)
-  if hash =~ '\<\x\{40\}$'
-    return matchstr(hash,'\<\x\{40\}$')
-  endif
-  call s:throw('rev-parse '.a:rev.': '.hash)
+  return fugitive#RevParse(a:rev, self.git_dir)
 endfunction
 
 call s:add_methods('repo',['git_command','git_chomp','git_chomp_in_tree','rev_parse'])
@@ -737,17 +737,13 @@ endfunction
 
 let s:buffer_prototype = {}
 
-function! s:buffer(...) abort
+function! fugitive#buffer(...) abort
   let buffer = {'#': bufnr(a:0 ? a:1 : '%')}
   call extend(extend(buffer,s:buffer_prototype,'keep'),s:abstract_prototype,'keep')
   if buffer.getvar('git_dir') !=# ''
     return buffer
   endif
   call s:throw('not a git repository: '.bufname(buffer['#']))
-endfunction
-
-function! fugitive#buffer(...) abort
-  return s:buffer(a:0 ? a:1 : '%')
 endfunction
 
 function! s:buffer_getvar(var) dict abort
@@ -759,7 +755,7 @@ function! s:buffer_getline(lnum) dict abort
 endfunction
 
 function! s:buffer_repo() dict abort
-  return s:repo(self.getvar('git_dir'))
+  return fugitive#repo(self.getvar('git_dir'))
 endfunction
 
 function! s:buffer_type(...) dict abort
@@ -1997,15 +1993,25 @@ function! s:UsableWin(nr) abort
 endfunction
 
 function! s:Expand(rev) abort
-  if len(a:rev)
-    return s:buffer().expand(a:rev)
-  elseif expand('%') ==# ''
-    return ':'
-  elseif empty(s:DirCommitFile(@%)[1]) && s:Relative('/') !~# '^/.git\>'
-    return s:Relative(':')
+  return fugitive#buffer().expand(a:rev)
+endfunction
+
+function! s:EditParse(args) abort
+  let pre = []
+  let args = copy(a:args)
+  while !empty(args) && args[0] =~# '^+'
+    call add(pre, escape(remove(args, 0), ' |"') . ' ')
+  endwhile
+  if len(args)
+    let file = join(args)
+  elseif empty(expand('%'))
+    let file = ':'
+  elseif empty(s:DirCommitFile(@%)[1]) && s:Relative('./') !~# '^\./\.git\>'
+    let file = s:Relative(':0:')
   else
-    return s:Relative('/')
+    let file = s:Relative('./')
   endif
+  return [s:Expand(file), join(pre)]
 endfunction
 
 function! s:Edit(cmd, bang, mods, args, ...) abort
@@ -2054,15 +2060,16 @@ function! s:Edit(cmd, bang, mods, args, ...) abort
     return echo
   endif
 
+  let [file, pre] = s:EditParse(a:000)
   try
-    let file = s:Generate(s:Expand(join(a:000)))
+    let file = s:Generate(file)
   catch /^fugitive:/
     return 'echoerr v:errmsg'
   endtry
   if file !~# '^fugitive:'
     let file = s:sub(file, '/$', '')
   endif
-  return mods.' '.a:cmd.' '.s:fnameescape(file)
+  return mods . ' ' . a:cmd . ' ' . pre . s:fnameescape(file)
 endfunction
 
 function! s:Read(count, line1, line2, range, bang, mods, args, ...) abort
@@ -2091,12 +2098,13 @@ function! s:Read(count, line1, line2, range, bang, mods, args, ...) abort
     call fugitive#ReloadStatus()
     return 'redraw|echo '.string(':!'.git.' '.args)
   endif
+  let [file, pre] = s:EditParse(a:000)
   try
-    let file = s:Generate(s:Expand(join(a:000)))
+    let file = s:Generate(file)
   catch /^fugitive:/
     return 'echoerr v:errmsg'
   endtry
-  return mods . ' ' . after . 'read '.s:fnameescape(file) . '|' . delete . 'diffupdate' . (a:count < 0 ? '|' . line('.') : '')
+  return mods . ' ' . after . 'read ' . pre . s:fnameescape(file) . '|' . delete . 'diffupdate' . (a:count < 0 ? '|' . line('.') : '')
 endfunction
 
 function! s:EditRunComplete(A,L,P) abort
@@ -2133,7 +2141,7 @@ function! s:Write(force,...) abort
     setlocal buftype=
     silent write
     setlocal buftype=nowrite
-    if matchstr(getline(2),'index [[:xdigit:]]\+\.\.\zs[[:xdigit:]]\{7\}') ==# s:repo().rev_parse(':0:'.filename)[0:6]
+    if matchstr(getline(2),'index [[:xdigit:]]\+\.\.\zs[[:xdigit:]]\{7\}') ==# fugitive#RevParse(':0:'.filename)[0:6]
       let err = s:TreeChomp('apply', '--cached', '--reverse', expand('%:p'))
     else
       let err = s:TreeChomp('apply', '--cached', expand('%:p'))
@@ -2465,7 +2473,7 @@ function! s:Diff(vert,keepfocus,...) abort
       let file = s:Relative(':0:')
     elseif arg =~# '^:/.'
       try
-        let file = s:repo().rev_parse(arg).s:Relative(':')
+        let file = fugitive#RevParse(arg).s:Relative(':')
       catch /^fugitive:/
         return 'echoerr v:errmsg'
       endtry
@@ -2906,7 +2914,7 @@ function! s:Browse(bang,line1,count,...) abort
     else
       let expanded = s:Expand(rev)
     endif
-    if filereadable(s:repo().dir('refs/tags/' . expanded))
+    if filereadable(b:git_dir . '/refs/tags/' . expanded)
       let expanded = '.git/refs/tags/' . expanded
     endif
     let full = s:Generate(expanded)
@@ -2989,7 +2997,12 @@ function! s:Browse(bang,line1,count,...) abort
       if a:line1 && !a:count && !empty(merge)
         let commit = merge
       else
-        let commit = s:repo().rev_parse('HEAD')
+        let commit = readfile(b:git_dir . '/HEAD', '', 1)[0]
+        let i = 0
+        while commit =~# '^ref: ' && i < 10
+          let commit = readfile(b:git_dir . '/' . commit[5:-1], '', 1)[0]
+          let i -= 1
+        endwhile
       endif
     endif
 
@@ -3014,7 +3027,7 @@ function! s:Browse(bang,line1,count,...) abort
 
     let opts = {
           \ 'dir': b:git_dir,
-          \ 'repo': s:repo(),
+          \ 'repo': fugitive#repo(),
           \ 'remote': raw,
           \ 'revision': 'No longer provided',
           \ 'commit': commit,
@@ -3163,7 +3176,7 @@ function! s:cfile() abort
     let myhash = s:DirRev(@%)[1]
     if len(myhash)
       try
-        let myhash = s:repo().rev_parse(myhash)
+        let myhash = fugitive#RevParse(myhash)
       catch /^fugitive:/
         let myhash = ''
       endtry
@@ -3212,7 +3225,7 @@ function! s:cfile() abort
 
       elseif getline('.') =~# '^tree \x\{40\}$'
         let ref = matchstr(getline('.'),'\x\{40\}')
-        if len(myhash) && s:repo().rev_parse(myhash.':') ==# ref
+        if len(myhash) && fugitive#RevParse(myhash.':') ==# ref
           let ref = myhash.':'
         endif
         return [ref]
@@ -3318,12 +3331,12 @@ function! s:GF(mode) abort
   catch /^fugitive:/
     return 'echoerr v:errmsg'
   endtry
-  if len(results) > 1 && a:mode ==# 'pedit'
-    return a:mode .
-          \ ' +' . join(map(results[1:-1], 'escape(v:val, " ")'), '\|') . ' ' .
-          \ s:fnameescape(s:Generate(results[0]))
+  if len(results) > 1
+    return 'G' . a:mode .
+          \ ' +' . escape(join(results[1:-1], '|'), '| ') . ' ' .
+          \ s:fnameescape(results[0])
   elseif len(results)
-    return s:Edit(a:mode, 0, '', '', results[0]).join(map(results[1:-1], '"|".v:val'))
+    return 'G' . a:mode . ' ' . s:fnameescape(results[0])
   else
     return ''
   endif
@@ -3368,7 +3381,7 @@ function! fugitive#head(...) abort
     return ''
   endif
 
-  return s:repo().head(a:0 ? a:1 : 0)
+  return fugitive#repo().head(a:0 ? a:1 : 0)
 endfunction
 
 " Section: Folding

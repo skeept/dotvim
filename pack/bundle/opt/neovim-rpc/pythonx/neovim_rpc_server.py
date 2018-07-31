@@ -18,9 +18,10 @@ from neovim.api import common as neovim_common
 import neovim_rpc_protocol
 
 vim_error = vim.Function('neovim_rpc#_error')
+vim_py = vim.eval('g:neovim_rpc#py')
 
 # protable devnull
-if sys.version_info.major==2:
+if sys.version_info.major == 2:
     DEVNULL = open(os.devnull, 'wb')
 else:
     from subprocess import DEVNULL
@@ -42,17 +43,20 @@ except ImportError:
 
 # globals
 logger = logging.getLogger(__name__)
-# supress the annoying error message: 
+# supress the annoying error message:
 #     No handlers could be found for logger "neovim_rpc_server"
 logger.addHandler(logging.NullHandler())
 
 request_queue = Queue()
 responses = {}
 
+
 def _channel_id_new():
     with _channel_id_new._lock:
         _channel_id_new._counter += 1
         return _channel_id_new._counter
+
+
 # static local
 _channel_id_new._counter = 0
 _channel_id_new._lock = threading.Lock()
@@ -64,24 +68,27 @@ class VimHandler(socketserver.BaseRequestHandler):
     _sock = None
 
     @classmethod
-    def notify(cls,cmd="call neovim_rpc#_callback()"):
+    def notify(cls, cmd=None):
         try:
+            if cmd is None:
+                 cmd = vim_py + " neovim_rpc_server.process_pending_requests()"
             if not VimHandler._sock:
                 return
             with VimHandler._lock:
                 encoded = json.dumps(['ex', cmd])
-                logger.info("sending notification: %s",encoded)
+                logger.info("sending notification: %s", encoded)
                 VimHandler._sock.send(encoded.encode('utf-8'))
         except Exception as ex:
-            logger.exception('VimHandler notify exception for [%s]: %s', cmd, ex)
+            logger.exception(
+                'VimHandler notify exception for [%s]: %s', cmd, ex)
 
     @classmethod
-    def notify_exited(cls,channel):
+    def notify_exited(cls, channel):
         try:
-            cmd = "call neovim_rpc#_on_exit(%s)" % channel
-            cls.notify(cmd)
+            cls.notify("call neovim_rpc#_on_exit(%s)" % channel)
         except Exception as ex:
-            logger.exception('notify_exited for channel [%s] exception: %s',channel,ex)
+            logger.exception(
+                'notify_exited for channel [%s] exception: %s', channel, ex)
 
     # each connection is a thread
     def handle(self):
@@ -114,7 +121,7 @@ class VimHandler(socketserver.BaseRequestHandler):
 
             # Send a response if the sequence number is positive.
             # Negative numbers are used for "eval" responses.
-            if len(decoded)>=2 and decoded[0] >= 0 and decoded[1] == 'neovim_rpc_setup':
+            if len(decoded) >= 2 and decoded[0] >= 0 and decoded[1] == 'neovim_rpc_setup':
 
                 VimHandler._sock = self.request
 
@@ -130,27 +137,26 @@ class VimHandler(socketserver.BaseRequestHandler):
                 event = decoded[1][2]
                 args = decoded[1][3]
                 rspid = decoded[1][4]
-                NvimHandler.request(self.request, 
-                                    channel, 
+                NvimHandler.request(self.request,
+                                    channel,
                                     reqid,
                                     event,
                                     args,
                                     rspid)
 
-                # wait for response
-
 class SocketToStream():
 
-    def __init__(self,sock):
+    def __init__(self, sock):
         self._sock = sock
 
-    def read(self,cnt):
-        if cnt>4096:
+    def read(self, cnt):
+        if cnt > 4096:
             cnt = 4096
         return self._sock.recv(cnt)
 
-    def write(self,w):
+    def write(self, w):
         return self._sock.send(w)
+
 
 class NvimHandler(socketserver.BaseRequestHandler):
 
@@ -194,8 +200,7 @@ class NvimHandler(socketserver.BaseRequestHandler):
                     chinfo.pop(reqid)
                     continue
 
-
-                request_queue.put((f,channel,unpacked))
+                request_queue.put((f, channel, unpacked))
                 # notify vim in order to process request in main thread, and
                 # avoiding the stupid json protocol
                 VimHandler.notify()
@@ -212,7 +217,7 @@ class NvimHandler(socketserver.BaseRequestHandler):
                 pass
 
     @classmethod
-    def notify(cls,channel,event,args):
+    def notify(cls, channel, event, args):
         try:
             channel = int(channel)
             if channel not in cls.channel_sockets:
@@ -263,7 +268,7 @@ class NvimHandler(socketserver.BaseRequestHandler):
     def shutdown(cls):
         # close all sockets
         for channel in list(cls.channel_sockets.keys()):
-            chinfo = cls.channel_sockets.get(channel,None)
+            chinfo = cls.channel_sockets.get(channel, None)
             if chinfo:
                 sock = chinfo['sock']
                 logger.info("closing client %s", channel)
@@ -295,19 +300,52 @@ def _setup_logging(name):
                 level = l
         logger.setLevel(level)
 
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    pass
+
+
+if sys.platform in ['linux', 'darwin']:
+    class ThreadedUnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+        pass
+    has_unix = True
+else:
+    has_unix = False
+
+
 def start():
 
     _setup_logging('neovim_rpc_server')
 
-    class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-        pass
-
     # 0 for random port
     global _vim_server
     global _nvim_server
+
     _vim_server = ThreadedTCPServer(("127.0.0.1", 0), VimHandler)
-    _nvim_server = ThreadedTCPServer(("127.0.0.1", 0), NvimHandler)
     _vim_server.daemon_threads = True
+    vim_server_addr = "{addr[0]}:{addr[1]}".format(
+        addr=_vim_server.server_address)
+
+    if 'NVIM_LISTEN_ADDRESS' in os.environ:
+        nvim_server_addr = os.environ['NVIM_LISTEN_ADDRESS']
+        if nvim_server_addr.find(':') >= 0:
+            host, port = nvim_server_addr.split(':')
+            port = int(port)
+            _nvim_server = ThreadedTCPServer((host, port), NvimHandler)
+        else:
+            if os.path.exists(nvim_server_addr):
+                try:
+                    os.unlink(nvim_server_addr)
+                except:
+                    pass
+            _nvim_server = ThreadedUnixServer(nvim_server_addr, NvimHandler)
+    elif not has_unix:
+        _nvim_server = ThreadedTCPServer(("127.0.0.1", 0), NvimHandler)
+        nvim_server_addr = "{addr[0]}:{addr[1]}".format(
+            addr=_nvim_server.server_address)
+    else:
+        nvim_server_addr = vim.eval('tempname()')
+        _nvim_server = ThreadedUnixServer(nvim_server_addr, NvimHandler)
     _nvim_server.daemon_threads = True
 
     # Start a thread with the server -- that thread will then start one
@@ -321,7 +359,8 @@ def start():
     clients_server_thread.daemon = True
     clients_server_thread.start()
 
-    return ["{addr[0]}:{addr[1]}".format(addr=_nvim_server.server_address), "{addr[0]}:{addr[1]}".format(addr=_vim_server.server_address)]
+    return [nvim_server_addr, vim_server_addr]
+
 
 def process_pending_requests():
 
@@ -351,20 +390,20 @@ def process_pending_requests():
             #   - msg[2] arguments
 
             if msg[0] == 0:
-                #request
+                # request
 
                 req_typed, req_id, method, args = msg
 
                 try:
-                    err=None
-                    result = _process_request(channel,method,args)
+                    err = None
+                    result = _process_request(channel, method, args)
                 except Exception as ex:
                     logger.exception("process failed: %s", ex)
                     # error uccor
-                    err = [1,str(ex)]
+                    err = [1, str(ex)]
                     result = None
 
-                result = [1,req_id,err,result]
+                result = [1, req_id, err, result]
                 logger.info("sending result: %s", result)
                 packed = msgpack.packb(neovim_rpc_protocol.to_client(result))
                 f.write(packed)
@@ -373,7 +412,7 @@ def process_pending_requests():
                 # notification
                 req_typed, method, args = msg
                 try:
-                    result = _process_request(channel,method,args)
+                    result = _process_request(channel, method, args)
                     logger.info('notification process result: [%s]', result)
                 except Exception as ex:
                     logger.exception("process failed: %s", ex)
@@ -389,20 +428,22 @@ def process_pending_requests():
                 # item==None means the queue is empty
                 break
 
-def _process_request(channel,method,args):
-    if method=='vim_get_api_info':
-        # this is the first request send from neovim client
-        api_info = neovim_rpc_server_api_info.API_INFO
-        return [channel,api_info]
-    if hasattr(neovim_rpc_methods,method):
-        return getattr(neovim_rpc_methods,method)(*args)
+
+def _process_request(channel, method, args):
+    if hasattr(neovim_rpc_methods, method):
+        return getattr(neovim_rpc_methods, method)(*args)
+    elif method in ['vim_get_api_info', 'nvim_get_api_info']:
+        # the first request sent by neovim python client
+        return [channel, neovim_rpc_server_api_info.API_INFO]
     else:
         logger.error("method %s not implemented", method)
-        vim_error("rpc method [%s] not implemented in pythonx/neovim_rpc_methods.py. Please send PR or contact the mantainer." % method)
+        vim_error(
+            "rpc method [%s] not implemented in pythonx/neovim_rpc_methods.py. Please send PR or contact the mantainer." % method)
         raise Exception('%s not implemented' % method)
 
-def rpcnotify(channel,method,args):
-    NvimHandler.notify(channel,method,args)
+
+def rpcnotify(channel, method, args):
+    NvimHandler.notify(channel, method, args)
 
 
 def stop():
@@ -432,5 +473,3 @@ def stop():
         _vim_server.server_close()
     except Exception as ex:
         logger.info("_vim_server close failed: %s", ex)
-
-

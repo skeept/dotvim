@@ -1,6 +1,12 @@
 test:
 	pytest test_*.py
 
+test_nvim:
+	VSPEC_VIM=nvim pytest test_*.py
+
+test_coverage: export PYTEST_ADDOPTS:=--cov pythonx --cov test --cov-report=term-missing:skip-covered
+test_coverage: test_nvim
+
 build:
 	mkdir $@
 

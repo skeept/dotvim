@@ -6,11 +6,11 @@ describe 'documentation docstrings'
     end
 
     after
-        bd!
-        bd!
+        try | %bwipeout! | catch | endtry
     end
 
     it 'simple'
+        Expect maparg('K') == ':call jedi#show_documentation()<CR>'
         put = 'ImportError'
         normal GK
         Expect bufname('%') == "__doc__"
