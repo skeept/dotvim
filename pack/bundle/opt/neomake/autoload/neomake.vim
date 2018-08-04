@@ -594,42 +594,53 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
     let bufnr = a:jobinfo.bufnr
     let bufname = bufname(bufnr)
     let temp_file = ''
-    if empty(bufname)
-        let temp_file = self._get_tempfilename(a:jobinfo)
-        if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
-            throw 'Neomake: no file name.'
+    let _uses_stdin = neomake#utils#GetSetting('uses_stdin', a:jobinfo.maker, s:unset_dict, a:jobinfo.ft, bufnr)
+    if _uses_stdin isnot s:unset_dict
+        let a:jobinfo.uses_stdin = _uses_stdin
+        let uses_stdin = _uses_stdin
+        call neomake#log#debug(printf('Using uses_stdin (%s) from setting.',
+                    \ a:jobinfo.uses_stdin), a:jobinfo)
+        if a:jobinfo.uses_stdin
+            let temp_file = neomake#utils#GetSetting('tempfile_name', a:jobinfo.maker, '-', a:jobinfo.ft, bufnr)
         endif
-        let used_for = 'unnamed'
-    elseif getbufvar(bufnr, '&modified')
-        let temp_file = self._get_tempfilename(a:jobinfo)
-        if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
-            call neomake#log#debug('warning: buffer is modified. You might want to enable tempfiles.',
-                        \ a:jobinfo)
-        endif
-        let used_for = 'modified'
-    elseif !filereadable(bufname)
-        let temp_file = self._get_tempfilename(a:jobinfo)
-        if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
-            " Using ':p' as modifier is unpredictable as per doc, but OK.
-            throw printf('Neomake: file is not readable (%s)', fnamemodify(bufname, ':p'))
-        endif
-        let used_for = 'unreadable'
     else
-        let bufname = fnamemodify(bufname, ':.')
-        let used_for = ''
-    endif
+        if empty(bufname)
+            let temp_file = self._get_tempfilename(a:jobinfo)
+            if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
+                throw 'Neomake: no file name.'
+            endif
+            let used_for = 'unnamed'
+        elseif getbufvar(bufnr, '&modified')
+            let temp_file = self._get_tempfilename(a:jobinfo)
+            if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
+                call neomake#log#debug('warning: buffer is modified. You might want to enable tempfiles.',
+                            \ a:jobinfo)
+            endif
+            let used_for = 'modified'
+        elseif !filereadable(bufname)
+            let temp_file = self._get_tempfilename(a:jobinfo)
+            if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
+                " Using ':p' as modifier is unpredictable as per doc, but OK.
+                throw printf('Neomake: file is not readable (%s)', fnamemodify(bufname, ':p'))
+            endif
+            let used_for = 'unreadable'
+        else
+            let bufname = fnamemodify(bufname, ':.')
+            let used_for = ''
+        endif
 
-    let uses_stdin = get(a:jobinfo, 'uses_stdin', 0)
+        let uses_stdin = get(a:jobinfo, 'uses_stdin', 0)
 
-    if !empty(used_for)
-        if uses_stdin
-            call neomake#log#debug(printf(
-                        \ 'Using stdin for %s buffer (%s).', used_for, temp_file),
-                        \ a:jobinfo)
-        elseif !empty(temp_file)
-            call neomake#log#debug(printf(
-                        \ 'Using tempfile for %s buffer: "%s".', used_for, temp_file),
-                        \ a:jobinfo)
+        if !empty(used_for)
+            if uses_stdin
+                call neomake#log#debug(printf(
+                            \ 'Using stdin for %s buffer (%s).', used_for, temp_file),
+                            \ a:jobinfo)
+            elseif !empty(temp_file)
+                call neomake#log#debug(printf(
+                            \ 'Using tempfile for %s buffer: "%s".', used_for, temp_file),
+                            \ a:jobinfo)
+            endif
         endif
     endif
 
@@ -938,7 +949,8 @@ function! s:HandleLoclistQflistDisplay(jobinfo, loc_or_qflist, ...) abort
 
             let win_count = winnr('$')
             exe cmd height
-            if win_count == winnr('$')
+            let new_win_count = winnr('$')
+            if win_count == new_win_count
                 " No new window, adjust height eventually.
                 let found = 0
                 for w in range(1, winnr('$'))
@@ -948,17 +960,31 @@ function! s:HandleLoclistQflistDisplay(jobinfo, loc_or_qflist, ...) abort
                     endif
                 endfor
                 if found
+                    let cmd = printf('%dresize %d', found, height)
                     call neomake#log#debug(printf(
-                                \ 'Resizing existing quickfix window (%d, height=%d).',
-                                \ found, height), a:jobinfo)
-                    exe printf('%dresize %d', found, height)
+                                \ 'Resizing existing quickfix window: %s.',
+                                \ cmd), a:jobinfo)
+                    exe cmd
                 else
                     call neomake#log#debug(
                                 \ 'Could not find corresponding quickfix window.',
                                 \ a:jobinfo)
                 endif
+            elseif new_win_count > win_count
+                if &filetype !=# 'qf'
+                    call neomake#log#debug(printf(
+                                \ 'WARN: unexpected filetype for new window: %s',
+                                \ &filetype), a:jobinfo)
+                else
+                    call neomake#log#debug(printf(
+                                \ 'list window has been opened (old count: %d, new count: %d).',
+                                \ win_count, new_win_count), a:jobinfo)
+                    let w:neomake_window_for_make_id = a:jobinfo.make_id
+                endif
             else
-                let w:neomake_window_for_make_id = a:jobinfo.make_id
+                call neomake#log#debug(printf(
+                            \ 'list window has been closed (old count: %d, new count: %d).',
+                            \ win_count, new_win_count), a:jobinfo)
             endif
             call neomake#compat#restore_prev_windows()
         finally
