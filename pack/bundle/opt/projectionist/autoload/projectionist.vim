@@ -160,15 +160,6 @@ function! projectionist#readfile(...) abort
   return call('s:fcall', ['readfile'] + a:000)
 endfunction
 
-function! projectionist#glob(path) abort
-  let ns = matchstr(a:path, '^\a\a\+\ze:')
-  if len(ns) && exists('*' . ns . '#glob')
-    return call(ns . '#glob', [a:path, 0, 1])
-  else
-    return split(glob(a:path), "\n")
-  endif
-endfunction
-
 " Section: Querying
 
 function! s:roots() abort
@@ -176,18 +167,44 @@ function! s:roots() abort
 endfunction
 
 function! projectionist#path(...) abort
-  if a:0 && a:1 =~# '^/\|^\a\+:'
+  let abs = '^[' . projectionist#slash() . '/]\|^\a\+:'
+  if a:0 && a:1 =~# abs
     return a:1
   endif
-  if a:0 > 1 && type(a:2) == type('')
+  if a:0 && type(a:1) ==# type(0)
+    let root = get(s:roots(), (a:1 < 0 ? -a:1 : a:1) - 1, '')
+    if a:0 > 1
+      if a:2 =~# abs
+        return a:2
+      endif
+      let file = a:2
+    endif
+  elseif a:0 > 1 && type(a:2) == type('')
     let root = a:2
+    let file = a:1
+    if empty(root)
+      return file
+    endif
   else
-    let root = get(s:roots(), a:0 > 1 ? a:2 - 1 : 0, '')
+    let root = get(s:roots(), a:0 > 1 ? (a:2 < 0 ? -a:2 : a:2) - 1 : 0, '')
+    if a:0
+      let file = a:1
+    endif
   endif
-  if !empty(root) && a:0
-    return root . projectionist#slash() . a:1
+  if !empty(root) && exists('file')
+    return root . projectionist#slash() . file
   else
     return root
+  endif
+endfunction
+
+function! projectionist#glob(path, ...) abort
+  let path = a:0 ? projectionist#path(a:path, a:1) : a:path
+  let ns = matchstr(path, '^\a\a\+\ze:')
+  if len(ns) && exists('*' . ns . '#glob')
+    return call(ns . '#glob', [path, 0, 1])
+  else
+    return split(glob(path), "\n")
   endif
 endfunction
 
@@ -735,8 +752,8 @@ endfunction
 function! s:edit_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1))
-  call map(matches, 'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (projectionist#isdirectory(v:val) ? projectionist#slash() : ""))')
+  let matches = projectionist#glob(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1)
+  call map(matches, 'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path("", c ? c : 1)) : -1 ] . (projectionist#isdirectory(v:val) ? projectionist#slash() : ""))')
   return matches
 endfunction
 
