@@ -103,7 +103,11 @@ endfunction
 " Returns v:servername if present, or @hostname() when sshed.  This is the
 " default tab prefix.
 function! flagship#id() abort
-  return v:servername . (empty($SSH_TTY) ? '': '@'.substitute(hostname(), '\..*', '', ''))
+  let servername = v:servername
+  if has('nvim')
+    let servername = fnamemodify(servername, ':h:t')
+  endif
+  return servername . (empty($SSH_TTY) ? '': '@'.substitute(hostname(), '\..*', '', ''))
 endfunction
 
 " Returns "Help" for help buffers and the filetype otherwise.
@@ -458,7 +462,7 @@ function! flagship#statusline(...) abort
     let s .= '%=' . (&ruler ? ' '.rulerformat : '')
   endif
   let s = s:in('winnr()=='.winnr().'?'.tabpagenr().':-'.winnr()).s.s:in(0)
-  let s = substitute(s, '%-\=\d*\.\=\d*\zsf', '{flagship#filename()}', 'g')
+  let s = substitute(s, '%-\=\d*\.\=\d*\zsf\(\s\)\=', '{flagship#filename()."\1"}', 'g')
   return substitute(s, '%=', '\=s:flags("file").s:flags("buffer")."%=".s:flags("window",-1)', '')
 endfunction
 
