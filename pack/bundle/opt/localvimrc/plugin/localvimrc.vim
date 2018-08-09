@@ -609,48 +609,52 @@ endfunction
 " string (https://en.wikipedia.org/wiki/Fowler-Noll-Vo_hash_function)
 "
 function! s:LocalVimRCCalcFNV(text)
+  " initialize the hash with defined offset value
+  let l:prime = 0x01000193
+  let l:checksum = 0x811c9dc5
+
+  " loop over all characters
+  for i in range(0, len(a:text)-1)
+    let l:checksum = and((l:checksum * prime), 0xFFFFFFFF)
+    let l:checksum = xor(l:checksum, char2nr(a:text[i]))
+  endfor
+
+  return l:checksum
+endfunction
+
+" Function: s:LocalVimRCCalcSHA256() {{{2
+"
+" calculate sha256 checksum using python hashlib
+"
+function! s:LocalVimRcCalcSHA256(text)
   if has("python")
 python << EOF
 import vim
+import hashlib
 
-FNV_PRIME_32  = 0x01000193
-FNV_OFFSET_32 = 0x811c9dc5
+text = vim.eval("a:text")
+checksum = hashlib.sha256(text)
 
-# initialize the hash with defined offset value
-hash = FNV_OFFSET_32
-
-# loop over all characters
-for c in vim.eval("a:text"):
-  hash = (hash * FNV_PRIME_32) & 0xFFFFFFFF
-  hash = hash ^ ord(c)
-
-vim.command("let l:hash = %s" % hash)
+vim.command("let l:checksum = \"%s\"" % checksum.hexdigest())
 EOF
   else
-    let l:FNV_PRIME_32  = 0x01000193
-    let l:FNV_OFFSET_32 = 0x811c9dc5
-
-    " initialize the hash with defined offset value
-    let l:hash = l:FNV_OFFSET_32
-
-    " loop over all characters
-    for i in range(0, len(a:text)-1)
-      let l:hash = and((l:hash * l:FNV_PRIME_32), 0xFFFFFFFF)
-      let l:hash = xor(l:hash, char2nr(a:text[i]))
-    endfor
+    let l:checksum = ""
   endif
 
-  return l:hash
+  return l:checksum
 endfunction
 
 " Function: s:LocalVimRCCalcChecksum(filename) {{{2
 "
-" calculate FNV-1 checksum
+" calculate checksum. depending on Vim version this is done with sha256 or
+" with FNV-1
 "
 function! s:LocalVimRCCalcChecksum(file)
   let l:content = join(readfile(a:file))
   if exists("*sha256")
     let l:checksum = sha256(l:content)
+  elseif has("python")
+    let l:checksum = s:LocalVimRcCalcSHA256(l:content)
   else
     let l:checksum = s:LocalVimRCCalcFNV(l:content)
   endif
@@ -812,7 +816,7 @@ endfunction
 
 " Function: s:LocalVimRCClear() {{{2
 "
-" clear all stored data
+" clear all stored persistence data
 "
 function! s:LocalVimRCClear()
   let s:localvimrc_data = {}
@@ -828,6 +832,57 @@ function! s:LocalVimRCClear()
     call delete(s:localvimrc_persistence_file)
     call s:LocalVimRCDebug(3, "deleted persistence file")
   endif
+endfunction
+
+" Function: s:LocalVimRCCleanup() {{{2
+"
+" cleanup stored persistence data
+"
+function! s:LocalVimRCCleanup()
+  " read persistent information
+  call s:LocalVimRCReadPersistent()
+  call s:LocalVimRCDebug(3, "read persistent data")
+
+  " loop over all persistent data entries
+  for l:file in keys(s:localvimrc_data)
+    if !filereadable(l:file)
+      unlet s:localvimrc_data[l:file]
+      call s:LocalVimRCDebug(3, "removed file '".l:file."' from persistence file")
+    else
+      call s:LocalVimRCDebug(3, "keeping file '".l:file."' in persistence file")
+    endif
+  endfor
+
+  " make information persistent
+  call s:LocalVimRCWritePersistent()
+  call s:LocalVimRCDebug(3, "write persistent data")
+endfunction
+
+" Function: s:LocalVimRCForget(...) {{{2
+"
+" forget stored persistence data for given files
+"
+function! s:LocalVimRCForget(...)
+  " read persistent information
+  call s:LocalVimRCReadPersistent()
+  call s:LocalVimRCDebug(3, "read persistent data")
+
+  " loop over all persistent data entries
+  for l:file in a:000
+    if !filereadable(l:file)
+      let l:file = resolve(fnamemodify(l:file, ":p"))
+      if has_key(s:localvimrc_data, l:file)
+        unlet s:localvimrc_data[l:file]
+        call s:LocalVimRCDebug(3, "removed file '".l:file."' from persistence file")
+      else
+        call s:LocalVimRCDebug(3, "file '".l:file."' does not exist in persistence file")
+      endif
+    endif
+  endfor
+
+  " make information persistent
+  call s:LocalVimRCWritePersistent()
+  call s:LocalVimRCDebug(3, "write persistent data")
 endfunction
 
 " Function: LocalVimRCEnable() {{{2
@@ -915,6 +970,8 @@ endfunction
 " Section: Commands {{{1
 command! LocalVimRC        call s:LocalVimRC()
 command! LocalVimRCClear   call s:LocalVimRCClear()
+command! LocalVimRCCleanup call s:LocalVimRCCleanup()
+command! -nargs=+ -complete=file LocalVimRCForget  call s:LocalVimRCForget(<f-args>)
 command! LocalVimRCEdit    call s:LocalVimRCEdit()
 command! LocalVimRCEnable  call s:LocalVimRCEnable()
 command! LocalVimRCDisable call s:LocalVimRCDisable()
