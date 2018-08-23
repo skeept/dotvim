@@ -199,23 +199,22 @@ function! deoplete#util#get_keyword_pattern(filetype, keyword_patterns) abort
 endfunction
 
 function! deoplete#util#rpcnotify(event, context) abort
-  if deoplete#init#_channel_initialized()
-    call s:notify(a:event, a:context)
+  if !deoplete#init#_channel_initialized()
+    return ''
   endif
-  return ''
-endfunction
 
-function! s:notify(event, context) abort
   let a:context['rpc'] = a:event
 
   if deoplete#util#has_yarp()
     if g:deoplete#_yarp.job_is_dead
-      return
+      return ''
     endif
     call g:deoplete#_yarp.notify(a:event, a:context)
   else
     call rpcnotify(g:deoplete#_channel_id, a:event, a:context)
   endif
+
+  return ''
 endfunction
 
 " Compare versions.  Return values is the distance between versions.  Each
