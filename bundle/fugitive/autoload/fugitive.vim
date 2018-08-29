@@ -53,11 +53,12 @@ function! s:shellesc(arg) abort
   endif
 endfunction
 
+let s:fnameescape = " \t\n*?[{`$\\%#'\"|!<"
 function! s:fnameescape(file) abort
   if exists('*fnameescape')
     return fnameescape(a:file)
   else
-    return escape(a:file," \t\n*?[{`$\\%#'\"|!<")
+    return escape(a:file, s:fnameescape)
   endif
 endfunction
 
@@ -474,15 +475,33 @@ function! fugitive#Real(url) abort
 endfunction
 
 function! fugitive#Path(url, ...) abort
-  if !a:0 || empty(a:url)
+  if empty(a:url)
+    return ''
+  endif
+  let dir = a:0 > 1 ? a:2 : get(b:, 'git_dir', '')
+  let tree = s:Tree(dir)
+  if !a:0
     return fugitive#Real(a:url)
+  elseif a:1 =~# '\.$'
+    let path = s:Slash(fugitive#Real(a:url))
+    let cwd = getcwd()
+    let lead = ''
+    while s:cpath(tree . '/', (cwd . '/')[0 : len(tree)])
+      if s:cpath(cwd . '/', path[0 : len(cwd)])
+        if strpart(path, len(cwd) + 1) =~# '^\.git\%(/\|$\)'
+          break
+        endif
+        return a:1[0:-2] . (empty(lead) ? './' : lead) . strpart(path, len(cwd) + 1)
+      endif
+      let cwd = fnamemodify(cwd, ':h')
+      let lead .= '../'
+    endwhile
+    return a:1[0:-2] . path
   endif
   let url = s:Slash(fnamemodify(a:url, ':p'))
   if url =~# '/$' && s:Slash(a:url) !~# '/$'
     let url = url[0:-2]
   endif
-  let dir = a:0 > 1 ? a:2 : get(b:, 'git_dir', '')
-  let tree = s:Tree(dir)
   let [argdir, commit, file] = s:DirCommitFile(a:url)
   if len(argdir) && s:cpath(argdir) !=# s:cpath(dir)
     let file = ''
@@ -504,7 +523,10 @@ function! s:Relative(...) abort
 endfunction
 
 function! fugitive#Route(object, ...) abort
-  if a:object =~# '^[~$]'
+  if type(a:object) == type(0)
+    let name = bufname(a:object)
+    return s:PlatformSlash(name =~# '^$\|^/\|^\a\+:' ? name : getcwd() . '/' . name)
+  elseif a:object =~# '^[~$]'
     let prefix = matchstr(a:object, '^[~$]\i*')
     let owner = expand(prefix)
     return s:PlatformSlash((len(owner) ? owner : prefix) . strpart(a:object, len(prefix)))
@@ -620,18 +642,13 @@ function! s:Generate(rev, ...) abort
   return fugitive#Route(object, dir)
 endfunction
 
-function! s:RemoveDot(path, ...) abort
-  if a:path !~# '^\./'
-    return a:path
+function! s:DotRelative(path) abort
+  let cwd = getcwd()
+  let path = substitute(a:path, '^[~$]\i*', '\=expand(submatch(0))', '')
+  if s:cpath(cwd . '/', (path . '/')[0 : len(cwd)])
+    return '.' . strpart(path, len(cwd))
   endif
-  let dir = a:0 ? a:1 : get(b:, 'git_dir', '')
-  let cdir = fugitive#CommonDir(dir)
-  if len(filter(['', '/tags', '/heads', '/remotes'], 'getftime(cdir . "/refs" . v:val . a:path[1:-1]) >= 0')) ||
-        \ a:path =~# 'HEAD$' && filereadable(dir . a:path[1:-1]) ||
-        \ a:path =~# '^\./refs/' && filereadable(cdir . a:path[1:-1])
-    return a:path
-  endif
-  return a:path[2:-1]
+  return a:path
 endfunction
 
 function! fugitive#Object(...) abort
@@ -660,6 +677,44 @@ function! fugitive#Object(...) abort
   endif
 endfunction
 
+let s:var = '\%(%\|#<\=\d\+\|##\=\)'
+let s:flag = '\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)'
+let s:expand = '\%(\(' . s:var . '\)\(' . s:flag . '*\)\(:S\)\=\)'
+
+function! s:BufName(var) abort
+  if a:var ==# '%'
+    return bufname(get(b:, 'fugitive_blamed_bufnr', ''))
+  elseif a:var =~# '^#\d*$'
+    let nr = getbufvar(+a:var[1:-1], 'fugitive_blamed_bufnr', '')
+    return bufname(nr ? nr : +a:var[1:-1])
+  else
+    return expand(a:var)
+  endif
+endfunction
+
+function! s:ExpandVar(other, var, flags, esc) abort
+  if a:other =~# '^\'
+    return a:other[1:-1]
+  elseif a:other =~# '^!'
+    let buffer = s:BufName(len(a:other) > 1 ? '#'. a:other[1:-1] : '%')
+    let owner = s:Owner(buffer)
+    return len(owner) ? owner : '@'
+  endif
+  let flags = a:flags
+  let file = s:DotRelative(fugitive#Real(s:BufName(a:var)))
+  while len(flags)
+    let flag = matchstr(flags, s:flag)
+    let flags = strpart(flags, len(flag))
+    if flag ==# ':.'
+      let file = s:DotRelative(file)
+    else
+      let file = fnamemodify(file, flag)
+    endif
+  endwhile
+  let file = s:Slash(file)
+  return (len(a:esc) ? shellescape(file) : file)
+endfunction
+
 function! s:Expand(rev) abort
   if a:rev =~# '^:[0-3]$'
     let file = a:rev . s:Relative(':')
@@ -667,19 +722,26 @@ function! s:Expand(rev) abort
     let file = 'HEAD^{}' . a:rev[1:-1] . s:Relative(':')
   elseif a:rev =~# '^@{'
     let file = 'HEAD' . a:rev. s:Relative(':')
-  elseif a:rev =~# '^[~^]/\@!'
+  elseif a:rev =~# '^\^[0-9~^{]\|^\~[0-9~^]'
     let commit = substitute(s:DirCommitFile(@%)[1], '^\d\=$', 'HEAD', '')
     let file = commit . a:rev . s:Relative(':')
   else
     let file = a:rev
   endif
-  return s:sub(substitute(file,
-        \ '\([%#]\)$\|\\\([[:punct:]]\)','\=len(submatch(2)) ? submatch(2) : fugitive#Path(expand(submatch(1)))','g'),
-        \ '\.\@<=/$','')
+  return substitute(file,
+        \ '\(\\[' . s:fnameescape . ']\|^\\[>+-]\|!\d*\)\|' . s:expand,
+        \ '\=s:ExpandVar(submatch(1),submatch(2),submatch(3),"")', 'g')
+endfunction
+
+function! fugitive#Expand(object) abort
+  return substitute(a:object,
+        \ '\(\\[' . s:fnameescape . ']\|^\\[>+-]\|!\d*\)\|' . s:expand,
+        \ '\=s:ExpandVar(submatch(1),submatch(2),submatch(3),submatch(5))', 'g')
 endfunction
 
 function! s:ShellExpand(cmd) abort
-  return substitute(a:cmd, '\\\@<![%#]:\@!', '\=s:RemoveDot(fugitive#Path(expand(submatch(0)), "./"))', 'g')
+  return substitute(a:cmd, '\(\\[!#%]\|!\d*\)\|' . s:expand,
+        \ '\=s:ExpandVar(submatch(1),submatch(2),submatch(3),submatch(5))', 'g')
 endfunction
 
 let s:trees = {}
@@ -2187,10 +2249,10 @@ function! s:Log(cmd, bang, line1, line2, ...) abort
   let before = substitute(args, ' --\S\@!.*', '', '')
   let after = strpart(args, len(before))
   let path = s:Relative('/')
+  let relative = path[1:-1]
   if path =~# '^/\.git\%(/\|$\)' || len(after)
     let path = ''
   endif
-  let relative = s:Relative('')
   if before !~# '\s[^[:space:]-]'
     let owner = s:Owner(@%)
     if len(owner)

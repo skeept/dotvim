@@ -44,7 +44,7 @@ function! FugitiveReal(...) abort
 endfunction
 
 function! FugitiveRoute(...) abort
-  return fugitive#Route(a:0 ? a:1 : ':/', FugitiveGitDir(a:0 > 1 ? a:2 : -1))
+  return fugitive#Route(a:0 ? a:1 : bufnr(''), FugitiveGitDir(a:0 > 1 ? a:2 : -1))
 endfunction
 
 function! FugitivePath(...) abort
@@ -198,6 +198,10 @@ function! FugitiveDetect(path) abort
   if exists('b:git_dir')
     return fugitive#Init()
   endif
+endfunction
+
+function! FugitiveFind(...) abort
+  return call('FugitiveRoute', a:000)
 endfunction
 
 function! FugitiveGenerate(...) abort

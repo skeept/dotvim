@@ -150,7 +150,7 @@ function! s:roots() abort
 endfunction
 
 function! projectionist#path(...) abort
-  let abs = '^[' . projectionist#slash() . '/]\|^\a\+:\|^\.\.\=\%(/\|$\)\|^$'
+  let abs = '^[' . projectionist#slash() . '/]\|^\a\+:\|^\.\.\=\%(/\|$\)'
   if a:0 && s:slash(a:1) =~# abs || (a:0 > 1 && a:2 is# 0)
     return s:slash(a:1)
   endif
@@ -168,6 +168,8 @@ function! projectionist#path(...) abort
     if empty(root)
       return file
     endif
+  elseif a:0 == 1 && empty(a:1)
+    return ''
   else
     let root = get(s:roots(), a:0 > 1 ? (a:2 < 0 ? -a:2 : a:2) - 1 : 0, '')
     if a:0
@@ -491,10 +493,11 @@ function! projectionist#append(root, ...) abort
     endtry
   endif
   if type(projections) == type({})
-    if !has_key(b:projectionist, a:root)
-      let b:projectionist[a:root] = []
+    let root = projectionist#slash(substitute(a:root, '[' . projectionist#slash() . '/]$', '', ''))
+    if !has_key(b:projectionist, root)
+      let b:projectionist[root] = []
     endif
-    call add(b:projectionist[a:root], filter(projections, 'type(v:val) == type({})'))
+    call add(b:projectionist[root], filter(projections, 'type(v:val) == type({})'))
     return 1
   endif
 endfunction
@@ -513,16 +516,16 @@ function! projectionist#activate() abort
   endif
   if len(s:real(s:roots()[0]))
     command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Pcd
-          \ exe 'cd' projectionist#real(<q-args>, <line2>)
+          \ exe 'cd' projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
     command! -buffer -bar -bang -nargs=* -range=1 -complete=customlist,s:dir_complete Plcd
-          \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(<q-args>, <line2>)
+          \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
     if exists(':Cd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-            \ exe 'cd' projectionist#real(<q-args>, <line2>)
+            \ exe 'cd' projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
     endif
     if exists(':Lcd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-            \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(<q-args>, <line2>)
+            \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
     endif
     command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo
           \ exe s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
