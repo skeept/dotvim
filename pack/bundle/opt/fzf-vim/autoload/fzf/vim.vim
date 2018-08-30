@@ -182,7 +182,7 @@ endfunction
 function! s:ansi(str, group, default, ...)
   let fg = s:get_color('fg', a:group)
   let bg = s:get_color('bg', a:group)
-  let color = s:csi(empty(fg) ? s:ansi[a:default] : fg, 1) .
+  let color = (empty(fg) ? s:ansi[a:default] : s:csi(fg, 1)) .
         \ (empty(bg) ? '' : ';'.s:csi(bg, 0))
   return printf("\x1b[%s%sm%s\x1b[m", color, a:0 ? ';1' : '', a:str)
 endfunction
@@ -692,7 +692,7 @@ function! fzf#vim#grep(grep_command, with_column, ...)
   \ 'column':  a:with_column,
   \ 'options': ['--ansi', '--prompt', capname.'> ',
   \             '--multi', '--bind', 'alt-a:select-all,alt-d:deselect-all',
-  \             '--color', 'hl:68,hl+:110']
+  \             '--color', 'hl:4,hl+:12']
   \}
   function! opts.sink(lines)
     return s:ag_handler(a:lines, self.column)
@@ -941,7 +941,7 @@ endfunction
 " Marks
 " ------------------------------------------------------------------
 function! s:format_mark(line)
-  return substitute(a:line, '\S', '\=s:yellow(submatch(0))', '')
+  return substitute(a:line, '\S', '\=s:yellow(submatch(0), "Number")', '')
 endfunction
 
 function! s:mark_sink(lines)
