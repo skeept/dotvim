@@ -145,7 +145,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons unite-session neomru
-  VAMAddToActiveAddons apathy
+  "VAMAddToActiveAddons apathy
   VAMAddToActiveAddons flagship
 
   if has("python3")

@@ -903,5 +903,6 @@ map gc <plug>NERDCommenterInvert
 packadd! editexisting
 packadd! matchit
 packadd! SimpylFold
+packadd! cfilter
 
 " vim: foldmethod=marker
