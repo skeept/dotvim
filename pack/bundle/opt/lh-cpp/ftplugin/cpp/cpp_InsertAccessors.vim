@@ -8,7 +8,7 @@
 " Version:	2.0.0
 "
 "------------------------------------------------------------------------
-" Description:	
+" Description:
 " 	Defines a function to insert const-correct accessors and mutators.
 "
 " 	Used in cpp_BuildTemplates.vim
@@ -85,7 +85,7 @@ endfunction
 
 " Function: s:WriteAccessor	{{{4
 function! s:WriteAccessor(returnType, signature, instruction, comment)
-  try 
+  try
     let old_foldenable = &foldenable
     set nofoldenable
     let lines = []
@@ -116,19 +116,19 @@ endfunction
 
 " Function: s:InsertAccessor {{{4
 function! s:InsertAccessor(className, returnType, signature, instruction, comment)
-  try 
+  try
     let old_foldenable = &foldenable
     set nofoldenable
-    if exists('g:mu_template') && 
-          \ (   !exists('g:mt_jump_to_first_markers') 
+    if exists('g:mu_template') &&
+          \ (   !exists('g:mt_jump_to_first_markers')
           \  || g:mt_jump_to_first_markers)
       " NB: g:mt_jump_to_first_markers is true by default
       let mt_jump = 1
       let g:mt_jump_to_first_markers = 0
     endif
 
-    let implPlace = lh#dev#option#get('implPlace', 'cpp', 0)
-    let in_place = implPlace == 0 
+    let implPlace = lh#ft#option#get('implPlace', 'cpp', 0)
+    let in_place = implPlace == 0
           \ || expand('%:e') =~? 'c\|cpp\|c++'
     if in_place " within the class definition /à la/ Java
       call s:WriteAccessor(a:returnType, a:signature, a:instruction, a:comment)
@@ -205,7 +205,7 @@ function! Cpp_AddAttribute()
   " TODO: Place the cursor where the attribute must be defined
 
   " Insert the attribute itself
-  let attrName = lh#dev#naming#member(name)
+  let attrName = lh#naming#member(name)
   let lines=[ s:Comment(name, 'attribute'),
         \ type . "\<tab>" . attrName . ';'
         \ ]
@@ -221,16 +221,16 @@ function! Cpp_AddAttribute()
 
   " Insert the get accessor {{{
   let proxyType   = 0
-  let choice = confirm('Do you want a get accessor ?', "&Yes\n&No\n&Proxy", 1) 
+  let choice = confirm('Do you want a get accessor ?', "&Yes\n&No\n&Proxy", 1)
   if choice == 1
     let comment     = s:Comment(name, 'get')
-    let signature   = lh#dev#naming#getter(name) . "()\<tab>const"
+    let signature   = lh#naming#getter(name) . "()\<tab>const"
     let instruction = 'return ' . attrName . ';'
     call s:InsertAccessor(className, ccType, signature, instruction, comment)
   elseif choice == 3
     let proxyType = input( 'Proxy type                : ') | echo "\n"
     let comment     = s:Comment(name, 'proxy_get')
-    let signature   = lh#dev#naming#getter(name) . "()\<tab>const"
+    let signature   = lh#naming#getter(name) . "()\<tab>const"
     let instruction = 'return ' . proxyType.'('.attrName . ' /*,this*/);'
     call s:InsertAccessor(className, 'const '.proxyType, signature, instruction, comment)
   endif " }}}
@@ -238,13 +238,13 @@ function! Cpp_AddAttribute()
   " Insert the set accessor {{{
   if confirm('Do you want a set accessor ?', "&Yes\n&No", 1) == 1
     let comment     = s:Comment(name, 'set')
-    let signature   = lh#dev#naming#setter(name)
-          \ . '('. ccType .' '. lh#dev#naming#param(name) .')'
+    let signature   = lh#naming#setter(name)
+          \ . '('. ccType .' '. lh#naming#param(name) .')'
     let instruction = attrName . ' = '.name.';'
     call s:InsertAccessor(className, 'void', signature, instruction, comment)
     if proxyType != ""
       let comment     = s:Comment(name, 'proxy_set')
-      let signature   = lh#dev#naming#setter(name) . '('. proxyType .'& '. name .')'
+      let signature   = lh#naming#setter(name) . '('. proxyType .'& '. name .')'
       let instruction = attrName . ' = '.name.';'
       call s:InsertAccessor(className, 'void', signature, instruction, comment)
     endif
@@ -254,12 +254,12 @@ function! Cpp_AddAttribute()
   if confirm('Do you want a reference accessor ?', "&Yes\n&No", 1) == 1
     if proxyType == ""
       let comment     = s:Comment(name, 'ref')
-      let signature   = lh#dev#naming#ref_getter(name) . "()\<tab>"
+      let signature   = lh#naming#ref_getter(name) . "()\<tab>"
       let instruction = 'return ' . attrName . ';'
       call s:InsertAccessor(className, type.'&', signature, instruction, comment)
     else
       let comment     = s:Comment(name, 'proxy_ref')
-      let signature   = lh#dev#naming#proxy_getter(name) . "()\<tab>"
+      let signature   = lh#naming#proxy_getter(name) . "()\<tab>"
       let instruction = 'return ' . proxyType.'('.attrName . ' /*,this*/);'
       call s:InsertAccessor(className, proxyType, signature, instruction, comment)
     endif

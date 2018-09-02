@@ -2,9 +2,9 @@
 " File:         autoload/lh/cpp/option.vim                        {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://code.google.com/p/lh-vim/>
-" Version:      2.0.0b16
+" Version:      2.2.0
 " Created:      05th Apr 2012
-" Last Update:  $Date$
+" Last Update:  08th Mar 2018
 "------------------------------------------------------------------------
 " Description:
 "       Options for lh-cpp
@@ -59,20 +59,20 @@ endfunction
 " Write each '(' on a new line; -> if \n() ... {}
 function! lh#cpp#option#nl_before_bracket()
   call s:Deprecated()
-  return lh#dev#option#get('nl_before_bracket', &ft, 0)
+  return lh#ft#option#get('nl_before_bracket', &ft, 0)
 endfunction
 
 " Function: lh#cpp#option#nl_before_curlyB() {{{3
 " Write each '{' on a new line; -> if ...() \n {}
 function! lh#cpp#option#nl_before_curlyB()
   call s:Deprecated()
-  return lh#dev#option#get('nl_before_curlyB', &ft, 0)
+  return lh#ft#option#get('nl_before_curlyB', &ft, 0)
 endfunction
 
 " Function: lh#cpp#option#multiple_namespace_on_same_line() {{{3
 " Write each "namespace Foo {" on a same line
 function! lh#cpp#option#multiple_namespaces_on_same_line()
-  return lh#dev#option#get('multiple_namespaces_on_same_line', &ft, 1)
+  return lh#ft#option#get('multiple_namespaces_on_same_line', &ft, 1)
 endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
@@ -80,11 +80,11 @@ endfunction
 " # Deprecated {{{2
 let s:deprecated_notified = 0
 function! s:Deprecated()
-  echomsg "lh#cpp#option#nl_before_bracket() API has been deprecated, please use lh#dev#style#*() and AddStyle instead."
+  echomsg "lh#cpp#option#nl_before_bracket() API has been deprecated, please use lh#style#*() and AddStyle instead."
   let s:deprecated_notified = 1
 endfunction
 
-
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

@@ -7,7 +7,7 @@
 " Version:      2.2.0.
 let s:k_version = '220'
 " Created:      03rd Nov 2015
-" Last Update:  14th Mar 2017
+" Last Update:  08th Mar 2018
 "------------------------------------------------------------------------
 " Description:
 "       Tool functions to help write snippets (ftplugin/c/c_snippets.vim)
@@ -66,7 +66,7 @@ function! lh#cpp#snippets#def_abbr(key, expr) abort
   else
     let expr = a:expr
   endif
-  let rhs = lh#dev#style#apply(expr)
+  let rhs = lh#style#apply(expr)
   return lh#map#insert_seq(a:key, rhs)
 endfunction
 
@@ -131,7 +131,7 @@ endfunction
 
 " Function: lh#cpp#snippets#current_namespace(default) {{{3
 function! lh#cpp#snippets#current_namespace(default) abort
-  let ns = lh#dev#option#get('project_namespace', &ft, '')
+  let ns = lh#ft#option#get('project_namespace', &ft, '')
   return empty(ns) ? a:default : (ns.'::')
 endfunction
 
@@ -535,7 +535,7 @@ endfunction
 " - nl (bool)
 function! lh#cpp#snippets#build_param_list(parameters) abort
   " 1- Handle default params, if any. {{{4
-  let l:ShowDefaultParams       = lh#dev#option#get('ShowDefaultParams', &ft, 1)
+  let l:ShowDefaultParams       = lh#ft#option#get('ShowDefaultParams', &ft, 1)
   "    0 -> ""              : ignored
   "    1 -> "/* = value */" : commented
   "    2 -> "/*=value*/"    : commented, spaces trimmed
@@ -551,7 +551,7 @@ function! lh#cpp#snippets#build_param_list(parameters) abort
   let implParams = []
   for param in a:parameters
     let sParam = (get(param, 'nl', '0') ? "\n" : '')
-          \ . get(param, 'type', lh#marker#txt('type')) . ' ' . lh#dev#naming#param(param.name)
+          \ . get(param, 'type', lh#marker#txt('type')) . ' ' . lh#naming#param(param.name)
 
     if has_key(param, 'default')
       let sParam .= substitute(param.default, '\v(.+)', pattern, '')
@@ -711,7 +711,7 @@ function! lh#cpp#snippets#_decode_selected_attributes(text) abort
   for attr in split(a:text, "\n")
     let attr = matchstr(attr, '^\s*\zs.\{-}\ze;*\s*$')
     let attr_data = lh#dev#option#call('function#_analyse_parameter', &ft, attr, 1)
-    let attr_data.name = lh#dev#naming#param(attr_data.name)
+    let attr_data.name = lh#naming#param(attr_data.name)
     let res += [ attr_data ]
   endfor
   return res

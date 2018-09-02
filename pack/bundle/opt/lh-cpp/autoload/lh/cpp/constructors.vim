@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-cpp/blob/master/License.md>
 " Version:      2.2.0
 " Created:      09th Feb 2009
-" Last Update:  27th May 2016
+" Last Update:  08th Mar 2018
 "------------------------------------------------------------------------
 " Description:
 "       Helper MMIs to generate constructors
@@ -151,6 +151,9 @@ function! lh#cpp#constructors#AssignmentOperator() abort
   " 4- Move its implementation, if any, to the right place
   if getline('.') =~ '}$'
     normal! %
+    while line('.') > 1 && getline('.') =~ '\v^\s*\{|^\s*$'
+      normal! k
+    endwhile
     MOVETOIMPL
   endif
 endfunction
@@ -184,7 +187,7 @@ function! lh#cpp#constructors#GenericConstructor(kind) abort
   GOTOIMPL
   normal! %
   " 4.2- Prepare init-list code
-  let rhs = lh#dev#naming#param('rhs').'.'
+  let rhs = lh#naming#param('rhs').'.'
   let init_list=[]
   for attribute in attributes
     let attrb_name = matchstr(attribute.fullsignature, '^\s*.\{-}\s\+\zs\S\+\ze\s*$')

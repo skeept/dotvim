@@ -7,7 +7,7 @@
 let s:k_version = 220
 " Version:      2.2.0
 " Created:      06th Jan 2011
-" Last Update:  06th Dec 2016
+" Last Update:  31st Aug 2018
 "------------------------------------------------------------------------
 " Description:
 "       Support autoload-plugin for :SwitchEnum.
@@ -76,10 +76,11 @@ function! lh#cpp#enum#expand_enum_to_switch() abort
 endfunction
 
 " Function: lh#cpp#enum#analyse_token(name, ...) {{{3
-function! lh#cpp#enum_analyse#token(name, ...) abort
-  let cleanup = lh#on#exit()
-        \.register('call lh#dev#end_tag_session()')
-  let tags = lh#dev#start_tag_session()
+function! lh#cpp#enum#analyse_token(name, ...) abort
+  let session               = lh#tags#session#get()
+  let tags                  = session.tags
+  " "variable" => regex
+  let [var_kind, enum_kind] = session.indexer.get_kind_flags(&ft, ['variable', 'v', 'l'], ['enumeration name', 'g'])
   try
     " 1- check whether its a variable or a type
     " 1.1- ask clang, if available
@@ -89,8 +90,8 @@ function! lh#cpp#enum_analyse#token(name, ...) abort
     " let defs = taglist(pat)
     let defs = filter(copy(tags), 'v:val.name =~ pat')
     if !empty(defs)
-      let t_enums = lh#list#copy_if(defs, [], 'v:1_.kind == "g"')
-      let t_vars  = lh#list#copy_if(defs, [], 'v:1_.kind =~ "[lvx]"')
+      let t_enums = filter(copy(defs), 'index(enum_kind, v:val.kind)>=0')
+      let t_vars  = filter(copy(defs), 'index(var_kind,  v:val.kind)>=0')
       " nominal case: one type
       if len(t_enums) > 1
         let t_enums = lh#dev#tags#keep_full_names(t_enums)
@@ -149,21 +150,21 @@ function! lh#cpp#enum_analyse#token(name, ...) abort
             throw "Variable ".string(a:1)." referencing another variable: ".string(res)
           endif
           let res = lh#cpp#enum#analyse_token(type, res)
-          return res
         endif
       finally
         call setpos('.', pos)
       endtry
     endif
 
+    return res
     " 2- find the type definition
   finally
-    call cleanup.finalize()
+    call session.finalize()
   endtry
 endfunction
 
 " Function: lh#cpp#enum#get_definition(name) {{{2
-function! lh#cpp#enum#get_definition(name)
+function! lh#cpp#enum#get_definition(name) abort
   let what = lh#cpp#enum#analyse_token(a:name)
   if empty(what)
     throw "Cannot obtain information on the alleged ".(a:name)." enum"
@@ -205,7 +206,7 @@ function! lh#cpp#enum#get_definition(name)
 endfunction
 
 " Function: lh#cpp#enum#_new(...) {{{2
-function! lh#cpp#enum#_new(...)
+function! lh#cpp#enum#_new(...) abort
   try
     " Inhibits the jump part in lh#mut#expand_and_jump()
     let cleanup = lh#on#exit()

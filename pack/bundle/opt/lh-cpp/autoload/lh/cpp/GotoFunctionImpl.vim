@@ -7,7 +7,7 @@
 " Version:      2.2.0
 let s:k_version = '220'
 " Created:      07th Oct 2006
-" Last Update:  14th Mar 2017
+" Last Update:  31st Aug 2018
 "------------------------------------------------------------------------
 " Description:
 "       Implementation functions for ftplugin/cpp/cpp_GotoImpl
@@ -47,6 +47,8 @@ let s:k_version = '220'
 "       v2.2.0
 "       (*) Use new alternate-lite API to determine the destination file
 "       (*) Update options to support specialization
+"       (*) Fix extra space introduced by `:MOVETOIMPL`
+"       (*) Update to new lh-tags v3.0 and lh-dev new API
 " TODO:
 "       (*) add knowledge about C99/C++11 new numeric types
 "       (*) :MOVETOIMPL should not expect the open-brace "{" to be of the same
@@ -114,7 +116,7 @@ function! lh#cpp#GotoFunctionImpl#MoveImpl(...) abort
       let @a = ''
     endif
     silent normal! "Ad%
-    " For some reason, the previous command insert a trailing newline
+    " For some reason, the previous command insert a leading newline
     let @a = substitute(@a, '^\_s*', '', '')
     " Add the ';' at the end what precedes, but not on a single line
     call search('\S', 'b')
@@ -122,7 +124,12 @@ function! lh#cpp#GotoFunctionImpl#MoveImpl(...) abort
     " Search the prototype (once again!), from a compatible position (on the
     " closing bracket)
     call search(')', 'b')
-    " For now, search the protype once again...
+    " TODO: For now, search the protype once again...
+    " `"Ad%` sets regtype to "V". When pasted, it introduces a newline
+    " => we need to prevent that
+    if exists('*setreg')
+      call setreg('a', @a, 'v')
+    endif
     :exe "normal! :GOTOIMPL ".join(a:000, ' ')."\<cr>va{\"ap=a{"
     " was:
     " :exe "normal! \<home>f{\"ac%;\<esc>:GOTOIMPL ".join(a:000, ' ')."\<cr>va{\"ap=a{"
@@ -432,7 +439,8 @@ function! s:BuildFunctionSignature4impl(proto,className) abort
 
   " 4- Add scope to other types {{{4
   try
-    let ltags = lh#dev#start_tag_session()
+    let session = lh#tags#session#get()
+    let ltags   = session.tags
     " 4.1- ... return type
     let all_ret_dicts = filter(copy(ltags), 'v:val.name == '.string(proto.return))
     let all_rets = lh#list#get(all_ret_dicts, 'class', '')
@@ -461,7 +469,7 @@ function! s:BuildFunctionSignature4impl(proto,className) abort
       let return = 'constexpr ' . return
     endif
   finally
-    call lh#dev#end_tag_session()
+    call session.finalize()
   endtry
 
   " 5- Return{{{4
@@ -479,8 +487,8 @@ function! s:BuildFunctionSignature4impl(proto,className) abort
         \ . (proto.final ? ' final' : '')
         \ . (proto.overriden ? ' override' : '')
         \ . "{}"
-  let styles = lh#dev#style#get(&ft)
-  let styled = lh#dev#style#apply(unstyled)
+  let styles = lh#style#get(&ft)
+  let styled = lh#style#apply(unstyled)
 
   let res = unstyled
   if !empty(styles)
