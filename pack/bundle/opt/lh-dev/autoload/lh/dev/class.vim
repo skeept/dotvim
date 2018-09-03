@@ -4,7 +4,7 @@
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " Version:      2.0.0
 " Created:      31st May 2010
-" Last Update:  17th Oct 2016
+" Last Update:  02nd Sep 2018
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on (OO) classes
@@ -17,6 +17,7 @@
 "       v0.0.1: code moved from lh-cpp
 "       v0.0.2: Ways to get class separators (mostly for lh-refactor)
 "       v2.0.0: Deprecating lh#dev#option#get
+"               Request tags on the fly
 " TODO:
 "       - option to return inherited members
 "       - option to return prototypes or function definitions
@@ -208,29 +209,34 @@ endfunction
 " @pre relies on ctags via lh-tags
 " @todo, may need to adapt s_struct, and c_lass to other languages
 function! s:FetchMembers(id, member_kind)
-  let tags = taglist(a:id)
-  let class_tags = filter(copy(tags), 'v:val.kind=~"[sc]" && v:val.name=="'.a:id.'"')
-  " overwrite tagnames
-  for class in class_tags
-    let class.name = lh#tags#tag_name(class)
-  endfor
-  let class_tags = lh#list#unique_sort2(class_tags)
-  " echo join(class_tags, "\n")
-  let nb_matches=len(class_tags)
-  let struct_class_filter = [0]
-  for class in class_tags
-    if class.kind == 's'
-      call add(struct_class_filter, '(has_key(v:val,"struct") && v:val.struct=="'.class.name.'")')
-    elseif class.kind == 'c'
-      call add(struct_class_filter, '(has_key(v:val,"class") && v:val.class=="'.class.name.'")')
-    endif
-  endfor
+  let session = lh#tags#session#get({'pattern': a:id})
+  let tags = session.tags
+  try
+    let class_tags = filter(copy(tags), 'v:val.kind=~"[sc]" && v:val.name=="'.a:id.'"')
+    " overwrite tagnames
+    for class in class_tags
+      let class.name = lh#tags#tag_name(class)
+    endfor
+    let class_tags = lh#list#unique_sort2(class_tags)
+    " echo join(class_tags, "\n")
+    let nb_matches=len(class_tags)
+    let struct_class_filter = [0]
+    for class in class_tags
+      if class.kind == 's'
+        call add(struct_class_filter, '(has_key(v:val,"struct") && v:val.struct=="'.class.name.'")')
+      elseif class.kind == 'c'
+        call add(struct_class_filter, '(has_key(v:val,"class") && v:val.class=="'.class.name.'")')
+      endif
+    endfor
 
-  let members = filter(copy(tags), 'v:val.kind=~'.string(a:member_kind))
-  let class_filter = join(struct_class_filter, '||')
-  call s:Verbose ("filter=". class_filter)
-  let members = filter(members, class_filter)
-  return members
+    let members = filter(copy(tags), 'v:val.kind=~'.string(a:member_kind))
+    let class_filter = join(struct_class_filter, '||')
+    call s:Verbose ("filter=". class_filter)
+    let members = filter(members, class_filter)
+    return members
+  finally
+    call session.finalize()
+  endtry
 endfunction
 
 
