@@ -141,6 +141,7 @@ function! neomake#CancelMake(make_id, ...) abort
     endif
     let make_info = s:make_info[a:make_id]
     let make_info.canceled = 1
+    let make_info.make_id = a:make_id  " for logging.
     call neomake#log#debug('Cancelling make.', make_info)
     let bang = a:0 ? a:1 : 0
     let jobs = filter(copy(values(s:jobs)), 'v:val.make_id == a:make_id')
@@ -1712,12 +1713,13 @@ function! s:do_clean_make_info(make_info) abort
     let tempfiles = get(a:make_info, 'tempfiles')
     if !empty(tempfiles)
         for tempfile in tempfiles
-            if delete(tempfile) == 0
+            let delete_ret = delete(tempfile)
+            if delete_ret == 0
                 call neomake#log#debug(printf('Removing temporary file: "%s".',
                             \ tempfile))
             else
-                call neomake#log#warning(printf('Failed to remove temporary file: "%s".',
-                            \ tempfile))
+                call neomake#log#warning(printf('Failed to remove temporary file: "%s" (%d).',
+                            \ tempfile, delete_ret))
             endif
             let bufnr_tempfile = bufnr(tempfile)
             if bufnr_tempfile != -1 && !buflisted(bufnr_tempfile)

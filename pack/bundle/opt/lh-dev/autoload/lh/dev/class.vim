@@ -4,7 +4,7 @@
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " Version:      2.0.0
 " Created:      31st May 2010
-" Last Update:  02nd Sep 2018
+" Last Update:  03rd Sep 2018
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on (OO) classes
@@ -60,30 +60,33 @@ endfunction
 " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 " # Fetch Attributes {{{2
 " @todo, may need to adapt m_member to other languages
-function! lh#dev#class#attributes(id)
-  return s:FetchMembers(a:id, 'm')
+function! lh#dev#class#attributes(id, ...) abort
+  let need_local = get(a:, 1, 1)
+  return s:FetchMembers(a:id, 'm', need_local)
 endfunction
 
 " # Fetch Methods {{{2
-function! lh#dev#class#methods(id)
 " @todo, may need to adapt f_unction to other languages
-  return s:FetchMembers(a:id, '[fp]')
+function! lh#dev#class#methods(id, ...) abort
+  let need_local = get(a:, 1, 1)
+  return s:FetchMembers(a:id, '[fp]', need_local)
 endfunction
 
 " # Fetch Attributes & Methods {{{2
 " @todo, may need to adapt f_unction and m_member to other languages
-function! lh#dev#class#members(id)
-  return s:FetchMembers(a:id, '[mfp]')
+function! lh#dev#class#members(id, ...) abort
+  let need_local = get(a:, 1, 1)
+  return s:FetchMembers(a:id, '[mfp]', need_local)
 endfunction
 
 " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 " # Class separators {{{2
-function! lh#dev#class#sep_decl()
+function! lh#dev#class#sep_decl() abort
   " sorry, I do C++.
   return lh#ft#option#get('class_sep_use', &ft, '::')
 endfunction
 
-function! lh#dev#class#sep_use()
+function! lh#dev#class#sep_use() abort
   return lh#ft#option#get('class_sep_use', &ft, '.')
 endfunction
 
@@ -92,7 +95,7 @@ endfunction
 " @pre relies on ctags via lh-tags
 " @todo, may need to adapt s_struct, c_lass a,d m_member to other languages
 
-function! lh#dev#class#get_class_tag(id)
+function! lh#dev#class#get_class_tag(id) abort
   let tags = taglist(a:id)
   " In C++, a struct is a class, but with different default access rights
   let class_tags = filter(copy(tags), 'v:val.kind=~"[sc]"')
@@ -103,7 +106,7 @@ endfunction
 " # Ancestors {{{2
 " @pre relies on ctags via lh-tags
 
-function! lh#dev#class#fetch_direct_parents(id)
+function! lh#dev#class#fetch_direct_parents(id) abort
   let k_inherits = lh#ft#option#get('inherits_tag', &ft, 'inherits')
 
   let parents = []
@@ -138,7 +141,7 @@ function! lh#dev#class#fetch_direct_parents(id)
   return parents
 endfunction
 
-function! lh#dev#class#ancestors(id)
+function! lh#dev#class#ancestors(id) abort
   try
     let id = type(a:id) == type([]) ? a:id : [a:id]
     let s:instance = {}
@@ -169,7 +172,7 @@ endfunction
 " @pre relies on ctags via lh-tags
 " a:scope_where_to_search is a hack because listing all element to extract
 " classes is very slow!
-function! lh#dev#class#fetch_direct_children(id, scope_where_to_search, ...)
+function! lh#dev#class#fetch_direct_children(id, scope_where_to_search, ...) abort
   let k_scope_sep = lh#ft#option#get('scope_separator', &ft, '\.')
   let k_inherits  = lh#ft#option#get('inherits_tag', &ft, 'inherits')
 
@@ -195,7 +198,7 @@ LetIfUndef g:cpp_scope_separator '::'
 " ## Internal functions {{{1
 
 " Returns cached information about CTags base {{{2
-function! s:DoFetchClasses(id, instance)
+function! s:DoFetchClasses(id, instance) abort
   if has_key(a:instance, a:id)
     return a:instance[a:id]
   else
@@ -208,39 +211,44 @@ endfunction
 " Returns any member (method, attribute, ...) {{{2
 " @pre relies on ctags via lh-tags
 " @todo, may need to adapt s_struct, and c_lass to other languages
-function! s:FetchMembers(id, member_kind)
-  let session = lh#tags#session#get({'pattern': a:id})
-  let tags = session.tags
-  try
+function! s:FetchMembers(id, member_kind, need_local) abort
+  let class_tags = []
+  if !&modified && !a:need_local
+    let tags = taglist(a:id)
     let class_tags = filter(copy(tags), 'v:val.kind=~"[sc]" && v:val.name=="'.a:id.'"')
-    " overwrite tagnames
-    for class in class_tags
-      let class.name = lh#tags#tag_name(class)
-    endfor
-    let class_tags = lh#list#unique_sort2(class_tags)
-    " echo join(class_tags, "\n")
-    let nb_matches=len(class_tags)
-    let struct_class_filter = [0]
-    for class in class_tags
-      if class.kind == 's'
-        call add(struct_class_filter, '(has_key(v:val,"struct") && v:val.struct=="'.class.name.'")')
-      elseif class.kind == 'c'
-        call add(struct_class_filter, '(has_key(v:val,"class") && v:val.class=="'.class.name.'")')
-      endif
-    endfor
+  endif
 
-    let members = filter(copy(tags), 'v:val.kind=~'.string(a:member_kind))
-    let class_filter = join(struct_class_filter, '||')
-    call s:Verbose ("filter=". class_filter)
-    let members = filter(members, class_filter)
-    return members
-  finally
+  if empty(class_tags)
+    let session = lh#tags#session#get({'pattern': a:id})
+    let tags = session.tags
     call session.finalize()
-  endtry
+    let class_tags = filter(copy(tags), 'v:val.kind=~"[sc]" && v:val.name=="'.a:id.'"')
+  endif
+  " overwrite tagnames
+  for class in class_tags
+    let class.name = lh#tags#tag_name(class)
+  endfor
+  let class_tags = lh#list#unique_sort2(class_tags)
+  " echo join(class_tags, "\n")
+  let nb_matches=len(class_tags)
+  let struct_class_filter = [0]
+  for class in class_tags
+    if class.kind == 's'
+      call add(struct_class_filter, '(has_key(v:val,"struct") && v:val.struct=="'.class.name.'")')
+    elseif class.kind == 'c'
+      call add(struct_class_filter, '(has_key(v:val,"class") && v:val.class=="'.class.name.'")')
+    endif
+  endfor
+
+  let members = filter(copy(tags), 'v:val.kind=~'.string(a:member_kind))
+  let class_filter = join(struct_class_filter, '||')
+  call s:Verbose ("filter=". class_filter)
+  let members = filter(members, class_filter)
+  return members
 endfunction
 
-
 "------------------------------------------------------------------------
+" }}}1
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:
