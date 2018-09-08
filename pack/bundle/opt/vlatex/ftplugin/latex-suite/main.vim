@@ -991,7 +991,7 @@ exe 'source '.fnameescape(s:path.'/version.vim')
 " SetTeXOptions: sets options/mappings for this file. {{{
 function! <SID>SetTeXOptions()
 	" Avoid reinclusion.
-	if exists('b:doneSetTeXOptions')
+	if exists('b:doneSetTeXOptions') || &ft ==# "bib"
 		return
 	endif
 	let b:doneSetTeXOptions = 1
@@ -1127,7 +1127,7 @@ if exists('*readfile')
 elseif Tex_UsePython()
 	function! Tex_CatFile(filename)
 		" catFile assigns a value to retval
-		exec g:Tex_PythonCmd . ' catFile("'.a:filename.'")'
+		exec g:Tex_PythonCmd . ' catFile(r"'.a:filename.'")'
 
 		return retval
 	endfunction
