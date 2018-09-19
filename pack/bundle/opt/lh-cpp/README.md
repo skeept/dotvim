@@ -11,6 +11,7 @@ It provides the following things:
   * an [API](doc/API.md) to build even more complex wizards and advanced features
 
   An exhaustive [list of all options](doc/options.md) is also available.
+  For help using this plugin for the first time, please take a look at `:h lh-cpp-first-steps`
 
 ### Text insertion facilities
 
@@ -199,7 +200,7 @@ git clone git@github.com:LucHermitte/lh-brackets.git
 git clone git@github.com:LucHermitte/searchInRuntime.git
 git clone git@github.com:LucHermitte/mu-template.git
 git clone git@github.com:tomtom/stakeholders_vim.git
-git clone git@github.com:tomtom/alternate-lite.git
+git clone git@github.com:LucHermitte/alternate-lite.git
 git clone git@github.com:LucHermitte/lh-cpp.git
 ```
   * or with Vundle/NeoBundle (expecting I haven't forgotten anything):
