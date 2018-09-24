@@ -60,7 +60,8 @@ function! neomake#action_queue#add(events, data) abort
                 endif
                 let s:action_queue_timer = timer_start(timeout, function('s:process_action_queue_timer_cb'))
                 call neomake#log#debug(printf(
-                            \ 'Retrying Timer event in %dms.', timeout), job_or_make_info)
+                            \ 'Retrying Timer event in %dms (timer %d).',
+                            \ timeout, s:action_queue_timer), job_or_make_info)
             else
                 call neomake#log#debug('Retrying Timer event on CursorHold(I).', job_or_make_info)
                 if !exists('#neomake_event_queue#CursorHold')
@@ -118,18 +119,41 @@ function! s:process_action_queue(event) abort
 
     let processed = []
     let removed = 0
+    let stop_processing = {'make_id': [], 'job_id': []}
     for [i, data] in q_for_this_event
         let job_or_make_info = data[1][0]
-        let v = remove(queue, i - removed)
+        let current_event = remove(queue, i - removed)
         let removed += 1
 
+        let skip = 0
+        let make_id_job_id = {}  " make_id/job_id relevant to re-queue following.
         if has_key(job_or_make_info, 'make_id')
             let log_context = job_or_make_info
+            let make_id_job_id = {
+                        \ 'make_id': job_or_make_info.make_id,
+                        \ 'job_id': job_or_make_info.id,
+                        \ }
         elseif has_key(job_or_make_info, 'options')
             let log_context = job_or_make_info.options
+            let make_id_job_id = {
+                        \ 'make_id': job_or_make_info.options.make_id,
+                        \ }
         else
             let log_context = {}
         endif
+        for [prop_name, prop_value] in items(make_id_job_id)
+            if index(stop_processing[prop_name], prop_value) != -1
+                call neomake#log#debug(printf('action queue: re-queueing %s for not processed %s.',
+                            \ s:actionname(data[0]), prop_name), log_context)
+                call add(queue, current_event)
+                let skip = 1
+                break
+            endif
+        endfor
+        if skip
+            continue
+        endif
+
         call neomake#log#debug(printf('action queue: calling %s.',
                     \ s:actionname(data[0])), log_context)
         try
@@ -149,11 +173,17 @@ function! s:process_action_queue(event) abort
         endtry
         if rv is# g:neomake#action_queue#processed
             let processed += [data]
-        elseif rv is# g:neomake#action_queue#not_processed
+            continue
+        endif
+
+        if rv is# g:neomake#action_queue#not_processed
             if a:event !=# 'Timer' && has_key(job_or_make_info, 'action_queue_timer_tries')
                 call neomake#log#debug('s:process_action_queue: decrementing timer tries for non-Timer event.', job_or_make_info)
                 let job_or_make_info.action_queue_timer_tries.count -= 1
             endif
+            for [prop_name, prop_value] in items(make_id_job_id)
+                call add(stop_processing[prop_name], prop_value)
+            endfor
         else
             let args_str = neomake#utils#Stringify(data[1])
             throw printf('Internal Neomake error: hook function %s(%s) returned unexpected value (%s)', data[0], args_str, rv)
