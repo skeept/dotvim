@@ -138,7 +138,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons vinegar
   VAMAddToActiveAddons vim-qf
   VAMAddToActiveAddons ps1 fugitive
-  VAMAddToActiveAddons textobj-entire textobj-python textobj-user
+  VAMAddToActiveAddons textobj-entire textobj-python textobj-user textobj-matchit
   VAMAddToActiveAddons gina
   VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons TaskList Supertab
