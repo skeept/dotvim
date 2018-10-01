@@ -604,8 +604,7 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
         elseif getbufvar(bufnr, '&modified')
             let temp_file = self._get_tempfilename(a:jobinfo)
             if !get(a:jobinfo, 'uses_stdin', 0) && empty(temp_file)
-                call neomake#log#debug('warning: buffer is modified. You might want to enable tempfiles.',
-                            \ a:jobinfo)
+                throw 'Neomake: skip_job: buffer is modified, but temporary files are disabled.'
             endif
             let used_for = 'modified'
         elseif !filereadable(bufname)
@@ -710,7 +709,7 @@ function! s:command_maker_base._get_argv(jobinfo) abort dict
     let filename = self._get_fname_for_args(a:jobinfo)
     let args_is_list = type(self.args) == type([])
     if args_is_list
-        let args = neomake#utils#ExpandArgs(self.args)
+        let args = neomake#utils#ExpandArgs(self.args, a:jobinfo)
         if !empty(filename)
             call add(args, filename)
         endif
@@ -2489,14 +2488,19 @@ function! s:handle_next_job(prev_jobinfo) abort
         try
             let jobinfo = s:MakeJob(make_id, options)
         catch /^Neomake: /
-            let log_context = {'make_id': make_id}
-            let error = substitute(v:exception, '^Neomake: ', '', '')
-            call neomake#log#exception(error, log_context)
+            let log_context = extend(options, {'make_id': make_id})
+            if v:exception =~# '\v^Neomake: skip_job: '
+                let msg = substitute(v:exception, '^Neomake: skip_job: ', '', '')
+                call neomake#log#debug(printf('Skipping job: %s', msg), log_context)
+            else
+                let error = substitute(v:exception, '^Neomake: ', '', '')
+                call neomake#log#exception(error, log_context)
 
-            if options.serialize
-                if neomake#utils#GetSetting('serialize_abort_on_error', maker, 0, options.ft, options.bufnr)
-                    call s:abort_next_makers(make_id)
-                    break
+                if options.serialize
+                    if neomake#utils#GetSetting('serialize_abort_on_error', maker, 0, options.ft, options.bufnr)
+                        call s:abort_next_makers(make_id)
+                        break
+                    endif
                 endif
             endif
             continue
