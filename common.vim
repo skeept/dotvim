@@ -197,6 +197,8 @@ nnoremap ,ts :tab split<CR>
 nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
 nnoremap ,sq :bw!<CR>
 
+nnoremap ,gg :<C-U>Gina<SPACE><C-D>
+
 nnoremap <Leader>Q :BD!<CR>
 nnoremap g/ /\<\><Left><Left>
 "==============================================================================}}}
