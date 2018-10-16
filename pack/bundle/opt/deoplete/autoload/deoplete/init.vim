@@ -226,7 +226,6 @@ function! deoplete#init#_context(event, sources) abort
         \ 'ignorecase': deoplete#custom#_get_option('ignore_case'),
         \ 'smartcase': deoplete#custom#_get_option('smart_case'),
         \ 'camelcase': deoplete#custom#_get_option('camel_case'),
-        \ 'delay': deoplete#custom#_get_option('auto_complete_delay'),
         \ 'sources': sources,
         \ 'max_abbr_width': max_width,
         \ 'max_kind_width': max_width,
@@ -238,7 +237,6 @@ function! deoplete#init#_context(event, sources) abort
         \ 'vars': filter(copy(g:),
         \       "stridx(v:key, 'deoplete#') == 0
         \        && v:key !=# 'deoplete#_yarp'"),
-        \ 'bufvars': filter(copy(b:), "stridx(v:key, 'deoplete_') == 0"),
         \ 'custom': deoplete#custom#_get(),
         \ 'omni__omnifunc': &l:omnifunc,
         \ 'dict__dictionary': &l:dictionary,
