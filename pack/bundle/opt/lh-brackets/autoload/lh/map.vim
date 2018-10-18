@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.5.1
-let s:k_version = '351'
+" Version:      3.5.2
+let s:k_version = '352'
 " Created:      03rd Nov 2015
-" Last Update:  11th Oct 2018
+" Last Update:  17th Oct 2018
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
@@ -126,7 +126,7 @@ function! s:new_matcher(context) abort
 endfunction
 
 function! lh#map#4_this_context(key, rule, sequence, ...) abort
-  let syn = synIDattr(synID(line('.'),col('.')-1,1),'name')
+  let syn = lh#syntax#name_at(line('.'), col('.')-1, 1)
   let context = s:new_matcher(a:rule)
   if context.recognizes(syn)
     return lh#mapping#reinterpret_escaped_char(a:sequence)
@@ -145,7 +145,7 @@ endfunction
 " - interpreted {seq_i} within {syn_i} context,
 " - interpreted {default-seq} otherwise ; default value: {key}
 function! lh#map#4_these_contexts(key, ...) abort
-  let syn = synIDattr(synID(line('.'),col('.')-1,1),'name')
+  let syn = lh#syntax#name_at(line('.'), col('.')-1, 1)
   let i = 1
   while i < a:0
     if (a:{i} =~ '^\(\k\|\\|\)\+$') && (syn =~? a:{i})
@@ -168,8 +168,8 @@ endfunction
 " - interpreted {seq_i} within {syn_i} context,
 " - interpreted {default-seq} otherwise ; default value: {key}
 function! lh#map#context(key, ...) abort
-  let syn = synIDattr(synID(line('.'),col('.')-1,1),'name')
-  if syn =~? 'comment\|string\|character\|doxygen'
+  let syn = lh#syntax#name_at(line('.'), col('.')-1, 1)
+  if syn =~? '\vcomment|string|character|doxygen'
     return a:key
   else
     return call('lh#map#4_these_contexts', [a:key]+a:000)
@@ -191,9 +191,13 @@ endfunction
 " A mapping of 'if' for C programmation:
 "   Iabbr if <C-R>=lh#map#no_context("if ",
 "   \ '\<c-f\>if () {\<cr\>}\<esc\>?)\<cr\>i')<CR>
+function! s:syn_context() abort
+    return synIDattr(synID(line('.'),col('.')-1,1),'name')
+endfunction
+
 function! lh#map#no_context(key, seq) abort
-  let syn = synIDattr(synID(line('.'),col('.')-1,1),'name')
-  if syn =~? 'comment\|string\|character\|doxygen'
+  let syn = lh#syntax#name_at(line('.'), col('.')-1, 1)
+  if syn =~? '\vcomment|string|character|doxygen'
     return a:key
   else
     return lh#mapping#reinterpret_escaped_char(a:seq)
@@ -213,8 +217,8 @@ endfunction
 function! lh#map#no_context2(key, sequence) abort
   let c = col('.')-1
   let l = line('.')
-  let syn = synIDattr(synID(l,c,1), 'name')
-  if syn =~? 'comment\|string\|character\|doxygen'
+  let syn = lh#syntax#name_at(l,c, 1)
+  if syn =~? '\vcomment|string|character|doxygen'
     return a:key
   elseif getline(l)[c-1] =~ '\k'
     return a:key
@@ -428,7 +432,7 @@ function! lh#map#surround(begin, end, isLine, isIndented, goback, mustInterpret,
   " Call the function that really insert the text around the selection
   :'<,'>call lh#map#insert_around_visual(begin, end, a:isLine, a:isIndented)
   " Return the nomal-mode sequence to execute at the end.
-  let g:goback =goback
+  " let g:goback =goback
   return goback
 endfunction
 
@@ -536,7 +540,7 @@ function! lh#map#_cursor_here(...) abort
   if a:0 > 0
     let s:goto_mark_{a:1} = mark
   else
-    let s:goto_mark = mark
+    let s:goto_mark = mark + [virtcol(mark[0])]
   endif
   call s:Verbose("Record cursor %1 with mark %2: @ %3 |   indent=%4", get(a:, 1, ''), mark[0], pos, s:old_indent)
   return ''
@@ -548,10 +552,11 @@ function! lh#map#_goto_mark(...) abort
   " line breaking occurs (i.e. when cursor column exceeds 'tw'). Indeed, in
   " that case, the mark is automatically moved, and we need to use it's last
   " know position.
-  let markpos = getpos(s:goto_mark[0]) + [virtcol(s:goto_mark[0])]
+  let markpos = getpos(s:goto_mark[0])
   let goto_lin = markpos[1]
-  let goto_vcol = markpos[4]
-  call s:Verbose('Returning to mark %1 @ %2', s:goto_mark[0], markpos)
+  let old_vcol = s:goto_mark[2]
+  let goto_vcol = virtcol(s:goto_mark[0])
+  call s:Verbose('Returning to mark %1 @ %2', s:goto_mark[0], markpos+[goto_vcol])
   " Bug: if line is empty, indent() value is 0 => expect old_indent to be the One
   let crt_indent = indent(goto_lin)
   let s:fix_indent = s:old_indent - crt_indent
@@ -570,12 +575,44 @@ function! lh#map#_goto_mark(...) abort
       let move = lh#map#_move_cursor_on_the_current_line(delta)
       return move
     else
-      let goto_col = markpos[2]
-      let goto_col -= s:fix_indent
-      " " uses {lig}'normal! {col}|' because of the possible reindent
-      call s:Verbose("Restore cursor to %1normal! %2|", goto_lin, goto_col)
-      execute goto_lin . 'normal! ' . (goto_col) . '|'
-      " call cursor(goto_lin, goto_col)
+      " * insert-mode "^Fif(!cursor!)..." does not trigger fix_indent
+      " * visual-mode surrounding "`<iif (!cursor!)....gv``=" triggers
+      "   fix_indent
+      " * getpos() doesn't follow indent changes
+      "   try "rm", ">>", "`r"
+      "   -> the mark has not followed the indent change
+      " * However, with virtcol() if &expandtab is false, and we're within
+      "   curly brackets, things change...
+      " * virtual columns are important because
+      "   - "\t" occupies 1 byte, but several columns
+      "   - "«" occupies 2 bytes, but only one column
+      " * "|" takes a virtual column number
+      """ No!
+      ""let pos = getpos(s:goto_mark[0])
+      ""call s:Verbose("Restore cursor to mark %1: %2", s:goto_mark[0], pos)
+      ""call setpos('.', pos)
+
+      """ No!
+      ""let goto_col = markpos[2]
+      ""let goto_col -= s:fix_indent
+      """ " uses {lig}'normal! {col}|' because of the possible reindent
+      ""call s:Verbose("Restore cursor to %1normal! %2|", goto_lin, goto_col)
+      ""execute goto_lin . 'normal! ' . (goto_col) . '|'
+
+      if s:fix_indent == 0
+        call s:Verbose("No indent fixed ; restore cursor to mark %1: %2", s:goto_mark[0], markpos)
+        call setpos('.', markpos)
+      else
+        let goto_vcol = old_vcol - s:fix_indent
+        call s:Verbose("new virtcol = old (%1) - fix_indent(%2) => %3", old_vcol, s:fix_indent, goto_vcol)
+        " goto_lin has already been fixed!
+        call s:Verbose("Indent needs to be fixed ; restore cursor to %1normal! %2|", goto_lin, goto_vcol)
+        execute goto_lin . 'normal! ' . (goto_vcol) . '|'
+
+      endif
+
+      """ No!
+      "" call cursor(goto_lin, goto_col)
       return ''
     endif
   finally
