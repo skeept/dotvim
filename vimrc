@@ -400,6 +400,17 @@ vnoremap <space>jf :JunkfileOpen<CR>
 xnoremap <space>nr :call nrrwrgn#NrrwRgn(visualmode(),'!')<CR>
 "==============================================================================}}}
 
+"================== WhichKey =================================================={{{
+function! WhicKeyMapperHelper()
+  echo "Press any key: "
+  let v = getchar()
+  let quote = '"'
+  if nr2char(v) == quote | let quote = "'" | endif
+  execute 'WhichKey ' . quote  . nr2char(v) . quote
+endfu
+nnoremap ,vk :<C-U>call WhicKeyMapperHelper()<CR>
+"==============================================================================}}}
+
 if g:is_win
   let Grep_Path = 'C:\cygwin\bin\grep'
 endif
