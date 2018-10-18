@@ -147,6 +147,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons unite-session neomru
   "VAMAddToActiveAddons apathy
   VAMAddToActiveAddons flagship
+  VAMAddToActiveAddons which-key
 
   if has("python3")
     VAMAddToActiveAddons UltiSnips
