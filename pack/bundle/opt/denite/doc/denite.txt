@@ -1,6 +1,6 @@
 *denite.txt*	Dark powered asynchronous unite all interfaces for NeoVim/Vim.
 
-Version: 1.0
+Version: 1.1
 Author:  Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
 
@@ -88,7 +88,7 @@ INSTALL							*denite-install*
 Note: denite requires Neovim(the latest is recommended) or Vim8.0+ with
 |:python3| enabled.
 
-Note: You need to install Python3.5+ or `pip3 install typing`.
+Note: You need to install Python3.5+.
 
 For neovim install:
 
