@@ -83,8 +83,8 @@ def get_custom_source(custom, source_name, key, default):
         return default
 
 
-def load_external_module(file, module):
-    current = os.path.dirname(os.path.abspath(file))
+def load_external_module(base, module):
+    current = os.path.dirname(os.path.abspath(base))
     module_dir = join(os.path.dirname(current), module)
     sys.path.insert(0, module_dir)
 
@@ -278,7 +278,7 @@ def parse_tagline(line, tagpath):
         return info
 
     pattern = m.group(0)
-    if re.match('\d+;"$', pattern):
+    if re.match(r'\d+;"$', pattern):
         info['line'] = re.sub(r';"$', '', pattern)
     else:
         info['pattern'] = re.sub(r'([~.*\[\]\\])', r'\\\1',
