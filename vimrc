@@ -404,8 +404,8 @@ xnoremap <space>nr :call nrrwrgn#NrrwRgn(visualmode(),'!')<CR>
 function! WhicKeyMapperHelper()
   echo "Press any key: "
   let v = getchar()
-  let quote = '"'
-  if nr2char(v) == quote | let quote = "'" | endif
+  let quote = "'"
+  if nr2char(v) == quote | let quote = '"' | endif
   execute 'WhichKey ' . quote  . nr2char(v) . quote
 endfu
 nnoremap ,vk :<C-U>call WhicKeyMapperHelper()<CR>
