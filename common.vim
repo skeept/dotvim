@@ -198,6 +198,7 @@ nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
 nnoremap ,sq :bw!<CR>
 
 nnoremap ,gg :<C-U>Gina<SPACE><C-D>
+nnoremap ,gs :<C-U>Gina status<CR>
 
 nnoremap <Leader>Q :BD!<CR>
 nnoremap g/ /\<\><Left><Left>
@@ -862,6 +863,7 @@ command! -range=% QuoteCommaJoin silent <line1>,<line2>call jraf#quoteCommaJoin(
 
 "let fortran_free_source = 1
 
+set diffopt+=vertical
 command! WTS if &diffopt =~ 'iwhite' | set diffopt-=iwhite
       \ | else | set diffopt+=iwhite | endif | echo &diffopt
 
