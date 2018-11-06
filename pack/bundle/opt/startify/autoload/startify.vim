@@ -10,7 +10,6 @@ endif
 let g:autoloaded_startify = 1
 
 " Init: values {{{1
-let s:nowait         = v:version >= 704 || (v:version == 703 && has('patch1261')) ? '<nowait>' : ''
 let s:numfiles       = get(g:, 'startify_files_number', 10)
 let s:show_special   = get(g:, 'startify_enable_special', 1)
 let s:relative_path  = get(g:, 'startify_relative_path') ? ':~:.' : ':p:~'
@@ -156,13 +155,11 @@ function! startify#insane_in_the_membrane() abort
   if exists('##DirChanged')
     autocmd startify DirChanged <buffer> Startify
   endif
-
   if exists('#User#Startified')
-    if v:version > 703 || v:version == 703 && has('patch442')
-      doautocmd <nomodeline> User Startified
-    else
-      doautocmd User Startified
-    endif
+    doautocmd <nomodeline> User Startified
+  endif
+  if exists('#User#StartifyReady')
+    doautocmd <nomodeline> User StartifyReady
   endif
 endfunction
 
@@ -413,6 +410,10 @@ function! startify#open_buffers(...) abort
   endfor
 
   wincmd =
+
+  if exists('#User#StartifyAllBuffersOpened')
+    autocmd <nomodeline> User StartifyAllBuffersOpened
+  endif
 endfunction
 
 " Function: s:get_lists {{{1
@@ -509,6 +510,9 @@ function! s:open_buffer(entry)
       execute a:entry.cmd a:entry.path
     endif
     call s:check_user_options(a:entry.path)
+  endif
+  if exists('#User#StartifyBufferOpened')
+    autocmd <nomodeline> User StartifyBufferOpened
   endif
 endfunction
 
@@ -803,15 +807,15 @@ endfunction
 
 " Function: s:set_mappings {{{1
 function! s:set_mappings() abort
-  execute "nnoremap <buffer>". s:nowait ."<silent> i             :enew <bar> startinsert<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> <insert>      :enew <bar> startinsert<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> b             :call <sid>set_mark('B')<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> s             :call <sid>set_mark('S')<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> t             :call <sid>set_mark('T')<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> v             :call <sid>set_mark('V')<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> <cr>          :call startify#open_buffers()<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> <2-LeftMouse> :call startify#open_buffers()<cr>"
-  execute "nnoremap <buffer>". s:nowait ."<silent> <MiddleMouse> :enew <bar> execute 'normal! \"'.(v:register=='\"'?'*':v:register).'gp'<cr>"
+  nnoremap <buffer><nowait><silent> i             :enew <bar> startinsert<cr>
+  nnoremap <buffer><nowait><silent> <insert>      :enew <bar> startinsert<cr>
+  nnoremap <buffer><nowait><silent> b             :call <sid>set_mark('B')<cr>
+  nnoremap <buffer><nowait><silent> s             :call <sid>set_mark('S')<cr>
+  nnoremap <buffer><nowait><silent> t             :call <sid>set_mark('T')<cr>
+  nnoremap <buffer><nowait><silent> v             :call <sid>set_mark('V')<cr>
+  nnoremap <buffer><nowait><silent> <cr>          :call startify#open_buffers()<cr>
+  nnoremap <buffer><nowait><silent> <2-LeftMouse> :call startify#open_buffers()<cr>
+  nnoremap <buffer><nowait><silent> <MiddleMouse> :enew <bar> execute 'normal! "'.(v:register=='"'?'*':v:register).'gp'<cr>
 
   " Without these mappings n/N wouldn't work properly, since autocmds always
   " force the cursor back on the index.
@@ -823,7 +827,7 @@ function! s:set_mappings() abort
   endfunction
 
   for entry in sort(values(b:startify.entries), 's:compare_by_index')
-    execute 'nnoremap <buffer><silent>'. s:nowait entry.index
+    execute 'nnoremap <buffer><silent><nowait>' entry.index
           \ ':call startify#open_buffers('. string(entry.line) .')<cr>'
   endfor
 endfunction

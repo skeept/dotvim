@@ -413,8 +413,13 @@ vim --cmd "let g:localvimrc_debug=99" -c "redir! > localvimrc_debug.txt" -c "Loc
 - Justin M. Keyes for ideas to improve this plugin
 - Lars Winderling for whitelist/blacklist patch
 - Michon van Dooren for autocommands patch
+- Benoit de Chezell for fix with nested execution
 
 ## Changelog
+
+vX.X.X : XXXX-XX-XX
+
+  - prevent recursive sourcing of local vimrc files
 
 v3.0.1 : 2018-08-21
 
