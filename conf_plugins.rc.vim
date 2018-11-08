@@ -1,7 +1,9 @@
+" denite gina
+
 "---------------------------------------------------------------------------
 " denite.nvim
 "
-
+echo has("python3") && GetIsAddonActive('denite')
 if has("python3") && GetIsAddonActive('denite')
   if executable('rg')
     call denite#custom#alias('source', 'rgf', 'file/rec')
@@ -75,7 +77,8 @@ if has("python3") && GetIsAddonActive('denite')
 endif
 
 "================== Gina ======================================================{{{
-if exists("*gina#custom#execute")
+if exists('g:loaded_gina') && g:loaded_gina
+  call gina#custom#command#alias('status', 'st')
   call gina#custom#command#alias('branch', 'br')
   call gina#custom#command#option('br', '-v', 'v')
   call gina#custom#command#option(
