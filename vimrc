@@ -157,7 +157,7 @@ func! LoadPluginsWithTimer(timer)
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
   
   if has("python3")
-    execute "source " . g:p0 . "/denite.rc.vim"
+    execute "source " . g:p0 . "/conf_plugins.rc.vim"
   endif
 endfunction
 
