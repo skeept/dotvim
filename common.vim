@@ -159,6 +159,8 @@ endif
 
 nnoremap <C-L> :nohl<CR><C-L>
 
+nnoremap ,cn :%s///n<LEFT><LEFT><LEFT>
+
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
