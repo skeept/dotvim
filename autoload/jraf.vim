@@ -544,14 +544,14 @@ endfunction
 "==============================================================================}}}
 
 "================== Bufstop ==================================================={{{
-function! jraf#myBuffStopCall()
-  if     v:count == 1 | Bufstop
-  elseif v:count == 2 | BufstopFast
-  elseif v:count == 3 | BufstopMode
-  else
-    BufstopModeFast
-  endif
-endfunction
+"function! jraf#myBuffStopCall()
+  "if     v:count == 1 | Bufstop
+  "elseif v:count == 2 | BufstopFast
+  "elseif v:count == 3 | BufstopMode
+  "else
+    "BufstopModeFast
+  "endif
+"endfunction
 "==============================================================================}}}
 
 "================== Delete Whitespace (DeltTrailWhiteSpace) ==================={{{

@@ -156,9 +156,7 @@ func! LoadPluginsWithTimer(timer)
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
   
-  if has("python3")
-    execute "source " . g:p0 . "/denite.rc.vim"
-  endif
+  execute "source " . g:p0 . "/conf_plugins.rc.vim"
 endfunction
 
 if has('timers')
@@ -186,7 +184,7 @@ augroup END
 "==============================================================================}}}
 
 "================== Bufstop ==================================================={{{
-nnoremap <Leader>b :<C-U>call jraf#myBuffStopCall()<CR>
+"nnoremap <Leader>b :<C-U>call jraf#myBuffStopCall()<CR>
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
