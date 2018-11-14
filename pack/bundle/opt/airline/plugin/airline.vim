@@ -23,7 +23,7 @@ function! s:init()
     try
       let palette = g:airline#themes#{g:airline_theme}#palette
     catch
-      echom 'Could not resolve airline theme "' . g:airline_theme . '". Themes have been migrated to github.com/vim-airline/vim-airline-themes.'
+      call airline#util#warning(printf('Could not resolve airline theme "%s". Themes have been migrated to github.com/vim-airline/vim-airline-themes.', g:airline_theme))
       let g:airline_theme = 'dark'
     endtry
     silent call airline#switch_theme(g:airline_theme)
@@ -102,9 +102,6 @@ function! s:airline_toggle()
         " Make sure that g_airline_gui_mode is refreshed
         autocmd OptionSet termguicolors call <sid>on_colorscheme_changed()
       endif
-      if exists("##TerminalOpen")
-        autocmd TerminalOpen * call <sid>on_colorscheme_changed()
-      endif
       " Set all statuslines to inactive
       autocmd FocusLost * call airline#update_statusline_focuslost()
       " Refresh airline for :syntax off
@@ -149,8 +146,7 @@ function! s:airline_toggle()
 endfunction
 
 function! s:get_airline_themes(a, l, p)
-  let files = split(globpath(&rtp, 'autoload/airline/themes/'.a:a.'*'), "\n")
-  return map(files, 'fnamemodify(v:val, ":t:r")')
+  return airline#util#themes(a:a)
 endfunction
 
 function! s:airline_theme(...)

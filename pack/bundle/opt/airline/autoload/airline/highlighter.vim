@@ -165,7 +165,7 @@ function! s:GetHiCmd(list)
   " a:list needs to have 5 items!
   let res = ''
   let i = -1
-  while i < 5
+  while i < 4
     let i += 1
     let item = get(a:list, i, '')
     if item is ''
@@ -271,8 +271,10 @@ function! airline#highlighter#highlight(modes, ...)
           if bnr > 0 && index(buffers_in_tabpage, bnr) == -1
             continue
           endif
-        elseif name =~# '_to_'
+        elseif (name =~# '_to_') || (name[0:10] is# 'airline_tab' && !empty(suffix))
           " group will be redefined below at exec_separator
+          " or is not needed for tabline with '_inactive' suffix
+          " since active flag is 1 for builder)
           continue
         endif
         if s:group_not_done(airline_grouplist, name.suffix)
