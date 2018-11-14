@@ -3,7 +3,6 @@
 "---------------------------------------------------------------------------
 " denite.nvim
 "
-echo has("python3") && GetIsAddonActive('denite')
 if has("python3") && GetIsAddonActive('denite')
   if executable('rg')
     call denite#custom#alias('source', 'rgf', 'file/rec')
