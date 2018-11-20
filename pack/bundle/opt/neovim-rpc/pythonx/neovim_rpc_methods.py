@@ -1,7 +1,5 @@
 # vim:set et sw=4 ts=8:
 import vim
-import json
-import msgpack
 
 # vim's python binding doesn't have the `call` method, wrap it here
 
@@ -19,8 +17,6 @@ def nvim_get_current_buf():
 
 def nvim_list_bufs():
     return list(vim.buffers)
-
-# {'return_type': 'Integer', 'since': 1, 'method': True, 'parameters': [['Buffer', 'buffer']], 'name': 'nvim_buf_get_number'}
 
 
 def nvim_buf_get_number(buf):
