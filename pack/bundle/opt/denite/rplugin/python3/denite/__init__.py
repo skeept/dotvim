@@ -4,9 +4,11 @@
 # License: MIT license
 # =============================================================================
 
-from importlib import find_loader
+from importlib.util import find_spec
 
-if find_loader('pynvim'):
+if find_spec('vim'):
+    import vim
+elif find_spec('pynvim'):
     import pynvim
     vim = pynvim
 else:
