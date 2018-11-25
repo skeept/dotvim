@@ -178,7 +178,7 @@ vimhelplint: | $(if $(VIMHELPLINT_DIR),,build/vimhelplint)
 
 # Run tests in dockerized Vims.
 DOCKER_REPO:=neomake/vims-for-tests
-DOCKER_TAG:=34
+DOCKER_TAG:=35
 NEOMAKE_DOCKER_IMAGE?=
 DOCKER_IMAGE:=$(if $(NEOMAKE_DOCKER_IMAGE),$(NEOMAKE_DOCKER_IMAGE),$(DOCKER_REPO):$(DOCKER_TAG))
 DOCKER_STREAMS:=-ti
@@ -246,7 +246,8 @@ docker_run: $(DEP_PLUGINS)
 docker_run:
 	$(DOCKER) $(if $(DOCKER_RUN),$(DOCKER_RUN),bash)
 
-docker_make: DOCKER_RUN=make $(DOCKER_MAKE_TARGET)
+# Pass down/through MAKEFLAGS explicitly (not available in Docker env).
+docker_make: DOCKER_RUN=$(MAKE) -$(MAKEFLAGS) $(DOCKER_MAKE_TARGET)
 docker_make: docker_run
 
 docker_check: DOCKER_MAKE_TARGET=check_docker
@@ -301,8 +302,8 @@ check_in_docker: DOCKER_MAKE_TARGET=checkqa
 check_in_docker: docker_make
 
 # Run in CircleCI.
-checkqa: MAKEFLAGS+=k
-checkqa: check check_docker check_lint_diff
+checkqa:
+	$(MAKE) -k check check_docker check_lint_diff
 
 check:
 	@:; set -e; ret=0; \
