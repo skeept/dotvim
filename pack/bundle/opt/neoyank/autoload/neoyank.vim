@@ -33,12 +33,11 @@ let s:base = expand($XDG_CACHE_HOME != '' ?
 
 call s:set_default(
       \ 'g:neoyank#file',
-      \ s:substitute_path_separator(s:base.'/history_yank'),
-      \ 'g:unite_source_history_yank_file')
+      \ s:substitute_path_separator(s:base.'/history_yank'))
 
-call s:set_default(
-      \ 'g:neoyank#limit', 100,
-      \ 'g:unite_source_history_yank_limit')
+call s:set_default('g:neoyank#limit', 100)
+
+call s:set_default('g:neoyank#length', 10000)
 
 function! neoyank#default_register_from_clipboard()
   if &clipboard == 'unnamed'
@@ -52,8 +51,7 @@ endfunction
 
 call s:set_default(
       \ 'g:neoyank#save_registers',
-      \ [neoyank#default_register_from_clipboard()],
-      \ 'g:unite_source_history_yank_save_registers')
+      \ [neoyank#default_register_from_clipboard()])
 
 
 function! neoyank#update() abort
@@ -151,7 +149,7 @@ function! s:add_register(name, reg) abort
 
   let len_history = len(a:reg[0])
   " Ignore too long yank.
-  if len_history < 2 || len_history > 10000
+  if len_history < 2 || len_history > g:neoyank#length
         \ || a:reg[0] =~ '[\x00-\x08\x10-\x1a\x1c-\x1f]\{3,}'
     return
   endif
