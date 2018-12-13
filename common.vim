@@ -67,7 +67,7 @@ set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
 set wildignore+=*.o,*.obj,.git,.hg,*.rbc,*.pyc,*.zip,*.gz,*.bz,*.tar
 set wildignore+=*.jpg,*.png,*.gif,*.avi,*.wmv,*.ogg,*.mp3,*.mov,*~
 set wildignore+=tags,cscope.out,*.db,*.pdf
-set wildignore+=GTAGS,GRTAGS,GPATH,.tmp
+set wildignore+=GTAGS,GRTAGS,GPATH,.tmp,*.exe
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
@@ -160,6 +160,9 @@ endif
 nnoremap <C-L> :nohl<CR><C-L>
 
 nnoremap ,cn :%s///n<LEFT><LEFT><LEFT>
+
+nnoremap ,vn :vim // *<LEFT><LEFT><LEFT>
+nnoremap ,vr :vim // **<LEFT><LEFT><LEFT><LEFT>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
