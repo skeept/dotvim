@@ -6,6 +6,31 @@ function! neomake#core#create_jobs(options, makers) abort
     return jobs
 endfunction
 
+" Map/bind a:makers to a list of job options, using a:options.
+function! s:bind_makers_for_job(options, makers) abort
+    let r = []
+    for maker in a:makers
+        let options = copy(a:options)
+        try
+            let maker = neomake#core#instantiate_maker(maker, options, 1)
+        catch /^Neomake: skip_job: /
+            let msg = substitute(v:exception, '^Neomake: skip_job: ', '', '')
+            call neomake#log#debug(printf('%s: skipping job: %s.',
+                        \ maker.name, msg), options)
+            continue
+        catch /^Neomake: /
+            let error = substitute(v:exception, '^Neomake: ', '', '').'.'
+            call neomake#log#error(error, options)
+            continue
+        endtry
+        if !empty(maker)
+            let options.maker = maker
+            let r += [options]
+        endif
+    endfor
+    return r
+endfunction
+
 function! neomake#core#instantiate_maker(maker, options, check_exe) abort
     let maker = a:maker
     let options = a:options
@@ -57,31 +82,6 @@ function! neomake#core#instantiate_maker(maker, options, check_exe) abort
     return maker
 endfunction
 
-" Map/bind a:makers to a list of job options, using a:options.
-function! s:bind_makers_for_job(options, makers) abort
-    let r = []
-    for maker in a:makers
-        let options = copy(a:options)
-        try
-            let maker = neomake#core#instantiate_maker(maker, options, 1)
-        catch /^Neomake: skip_job: /
-            let msg = substitute(v:exception, '^Neomake: skip_job: ', '', '')
-            call neomake#log#debug(printf('%s: skipping job: %s.',
-                        \ maker.name, msg), options)
-            continue
-        catch /^Neomake: /
-            let error = substitute(v:exception, '^Neomake: ', '', '').'.'
-            call neomake#log#error(error, options)
-            continue
-        endtry
-        if !empty(maker)
-            let options.maker = maker
-            let r += [options]
-        endif
-    endfor
-    return r
-endfunction
-
 " Base class for command makers.
 let g:neomake#core#command_maker_base = {}
 
@@ -115,3 +115,4 @@ function! neomake#core#get_tabwin_for_makeid(make_id) abort
     endfor
     return [-1, -1]
 endfunction
+" vim: ts=4 sw=4 et

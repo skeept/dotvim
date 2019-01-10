@@ -15,7 +15,7 @@ function! neomake#utils#Stringify(obj) abort
         return '['.join(ls, ', ').']'
     elseif type(a:obj) == type({})
         let ls = []
-        for [k, V] in items(a:obj)
+        for [k, V] in items(neomake#utils#fix_self_ref(a:obj))
             if type(V) == type(function('tr'))
                 let fname = substitute(string(V), ', {\zs.*\ze})', '…', '')
                 call add(ls, k.': '.fname)
@@ -198,7 +198,7 @@ function! neomake#utils#GetSetting(key, maker, default, ft, bufnr, ...) abort
             if has_key(a:maker, 'name')
                 let tmpmaker.name = a:maker.name
             endif
-            let RetOld = s:get_oldstyle_setting(a:key, tmpmaker, s:unset, a:ft, a:bufnr, maker_only)
+            let RetOld = s:get_oldstyle_setting(a:key, tmpmaker, s:unset, a:ft, a:bufnr, 1)
             if RetOld isnot# s:unset
                 return RetOld
             endif
@@ -220,31 +220,28 @@ function! s:get_oldstyle_setting(key, maker, default, ft, bufnr, maker_only) abo
         return a:default
     endif
 
-    if a:bufnr isnot# ''
-        if !empty(a:ft)
-            let fts = neomake#utils#get_config_fts(a:ft) + ['']
-        else
-            let fts = ['']
+    if !empty(a:ft)
+        let fts = neomake#utils#get_config_fts(a:ft) + ['']
+    else
+        let fts = ['']
+    endif
+    for ft in fts
+        let part = join(filter([ft, maker_name], '!empty(v:val)'), '_')
+        if empty(part)
+            break
         endif
-        for ft in fts
-            " Look through the override vars for a filetype maker, like
-            " neomake_scss_sasslint_exe (should be a string), and
-            " neomake_scss_sasslint_args (should be a list).
-            let part = join(filter([ft, maker_name], '!empty(v:val)'), '_')
-            if empty(part)
-                break
-            endif
-            let config_var = 'neomake_'.part.'_'.a:key
-            unlet! Bufcfgvar  " vim73
+        let config_var = 'neomake_'.part.'_'.a:key
+        if a:bufnr isnot# ''
             let Bufcfgvar = neomake#compat#getbufvar(a:bufnr, config_var, s:unset)
             if Bufcfgvar isnot s:unset
                 return copy(Bufcfgvar)
             endif
-            if has_key(g:, config_var)
-                return copy(get(g:, config_var))
-            endif
-        endfor
-    endif
+        endif
+        if has_key(g:, config_var)
+            return copy(get(g:, config_var))
+        endif
+        unlet! Bufcfgvar  " vim73
+    endfor
 
     if has_key(a:maker, a:key)
         return get(a:maker, a:key)
@@ -363,14 +360,16 @@ if has('patch-7.3.1058')
 else
     " Older Vim does not handle s: function references across files.
     function! s:function(name) abort
-      return function(substitute(a:name,'^s:',matchstr(expand('<sfile>'), '.*\zs<SNR>\d\+_'),''))
+        return function(substitute(a:name,'^s:',matchstr(expand('<sfile>'), '.*\zs<SNR>\d\+_'),''))
     endfunction
 endif
 
 function! s:handle_hook(jobinfo, event, context) abort
     let context_str = string(map(copy(a:context),
-                \ "v:key ==# 'jobinfo' ? v:val.as_string()"
-                \ .": (v:key ==# 'finished_jobs' ? map(copy(v:val), 'v:val.as_string()') : v:val)"))
+                \ "v:key ==# 'make_info' ? 'make_info #'.get(v:val, 'make_id')"
+                \ .": (v:key ==# 'options' && has_key(v:val, 'jobs') ? extend(copy(v:val), {'jobs': map(copy(v:val.jobs), 'v:val.maker.name')}, 'force')"
+                \ .": (v:key ==# 'jobinfo' ? v:val.as_string()"
+                \ .": (v:key ==# 'finished_jobs' ? map(copy(v:val), 'v:val.as_string()') : v:val)))"))
 
     if exists('g:neomake_hook_context')
         call neomake#log#debug(printf('Queuing User autocmd %s for nested invocation (%s).', a:event, context_str),
@@ -515,8 +514,15 @@ endfunction
 function! neomake#utils#fnamemodify(bufnr, modifier) abort
     let bufnr = +a:bufnr
     if !empty(getbufvar(bufnr, 'fugitive_type'))
-        let fug_buffer = fugitive#buffer(bufnr)
-        let path = fnamemodify(fug_buffer.repo().translate(fug_buffer.path()), ':.')
+        if exists('*FugitivePath')
+            let path = FugitivePath(bufname(bufnr))
+        else
+            let fug_buffer = fugitive#buffer(bufnr)
+            let path = fug_buffer.repo().translate(fug_buffer.path())
+        endif
+        if empty(a:modifier)
+            let path = fnamemodify(path, ':.')
+        endif
     else
         let path = bufname(bufnr)
     endif
@@ -525,6 +531,9 @@ endfunction
 
 function! neomake#utils#fix_self_ref(obj, ...) abort
     if type(a:obj) != type({})
+        if type(a:obj) == type([])
+            return map(copy(a:obj), 'neomake#utils#fix_self_ref(v:val)')
+        endif
         return a:obj
     endif
     let obj = copy(a:obj)
@@ -563,6 +572,11 @@ function! neomake#utils#highlight_is_defined(group) abort
     return neomake#utils#parse_highlight(a:group) !=# 'cleared'
 endfunction
 
+" Get the root directory of the current project.
+" This is determined by looking for specific files (e.g. `.git` and
+" `Makefile`), and `g:neomake#makers#ft#X#project_root_files` (if defined for
+" filetype "X").
+" a:1 buffer number (defaults to current)
 function! neomake#utils#get_project_root(...) abort
     let bufnr = a:0 ? a:1 : bufnr('%')
     let ft = getbufvar(bufnr, '&filetype')
@@ -713,3 +727,10 @@ else
         return ''
     endfunction
 endif
+
+function! neomake#utils#shorten_list_for_log(l, max) abort
+    if len(a:l) > a:max
+        return a:l[:a:max-1] + ['... ('.len(a:l).' total)']
+    endif
+    return a:l
+endfunction

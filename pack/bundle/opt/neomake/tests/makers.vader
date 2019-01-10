@@ -97,8 +97,6 @@ Execute (neomake#GetMaker uses defaults from b:/g: based on maker):
   AssertEqual neomake#GetMaker(maker).remove_invalid_entries, 3
 
 Execute (neomake#GetMaker uses maker_defaults):
-  Save g:neomake
-
   let maker = {'name': 'test'}
   AssertEqual neomake#GetMaker(maker).remove_invalid_entries, 0
 
@@ -132,6 +130,10 @@ Execute (Instantiate all default makers):
   " NOTE: not using a list to support older Vim (on Travis).
   let ft_makers = split(call('glob', glob_args[0:-2]), '\n')
 
+  " For vim makers' EnabledMakers to use neomake_checks.
+  new
+  noautocmd edit autoload/neomake/makers/ft/vim.vim
+
   let errors_by_file = {}
   let file_errors = []
   for maker_file in ft_makers
@@ -144,6 +146,12 @@ Execute (Instantiate all default makers):
     let f = 'neomake#makers#ft#'.ft.'#EnabledMakers'
     try
       let enabled_makers = call(f, [])
+    catch /^Vim(let):E119:/
+      try
+        let enabled_makers = call(f, [{'file_mode': 1, 'bufnr': bufnr('%')}])
+      catch
+        call add(file_errors, 'Error when calling '.f.'(options): '.v:exception)
+      endtry
     catch
       call add(file_errors, 'Error when calling '.f.': '.v:exception)
     endtry
@@ -222,6 +230,7 @@ Execute (Instantiate all default makers):
     Assert 0, "Errors when loading makers (per file):".msg
   endif
   AssertEqual exists('*neomake#makers#ft#neomake_tests#EnabledMakers'), 1
+  bwipe
 
 Execute (neomake#GetEnabledMakers without make_id):
   Save g:neomake_myft_enabled_makers
@@ -240,7 +249,11 @@ Execute (Neomake with non-existing maker (configured)):
   RunNeomake
   let make_id = neomake#GetStatus().last_make_id
   let log_context = {'make_id': make_id, 'bufnr': bufnr('%')}
-  AssertNeomakeMessage "Calling Make with options {'ft': 'myft', 'file_mode': 1}.", 3, log_context
+  if exists('*win_getid')
+    AssertNeomakeMessage "Calling Make with options {'ft': 'myft', 'file_mode': 1, 'winid': ".win_getid()."}.", 3, log_context
+  else
+    AssertNeomakeMessage "Calling Make with options {'ft': 'myft', 'file_mode': 1}.", 3, log_context
+  endif
   AssertNeomakeMessage 'Maker not found (for filetype myft): nonexisting_custom.', 0, log_context
   AssertNeomakeMessage 'Nothing to make: no enabled file mode makers (filetype=myft).', 1, log_context
   AssertEqual len(g:neomake_test_messages), 3
@@ -420,11 +433,7 @@ Execute (Using maker.fn results in deprecation warning):
   call NeomakeTestsSetVimMessagesMarker()
   CallNeomake 1, [maker]
 
-  let expected_warningmsg = "Please use 'InitForJob' instead of 'fn' for maker unnamed_maker."
-  AssertEqual v:warningmsg, 'Neomake: '.expected_warningmsg
-  let v:warningmsg = ''
-  AssertNeomakeMessage 'Neomake warning: '.expected_warningmsg, 3
-  Assert index(NeomakeTestsGetVimMessages(), 'Neomake: '.expected_warningmsg) != -1
+  AssertNeomakeWarning "Please use 'InitForJob' instead of 'fn' for maker unnamed_maker."
   AssertNeomakeMessage 'Exe (doesnotexist) of maker unnamed_maker is not executable.', 0
 
 Execute (Using maker.args as function results in deprecation warning):
@@ -434,11 +443,7 @@ Execute (Using maker.args as function results in deprecation warning):
   call NeomakeTestsSetVimMessagesMarker()
   CallNeomake 1, [maker]
 
-  let expected_warningmsg = "Please use 'InitForJob' instead of 'args' for maker unnamed_maker."
-  AssertEqual v:warningmsg, 'Neomake: '.expected_warningmsg
-  let v:warningmsg = ''
-  AssertNeomakeMessage 'Neomake warning: '.expected_warningmsg, 3
-  Assert index(NeomakeTestsGetVimMessages(), 'Neomake: '.expected_warningmsg) != -1
+  AssertNeomakeWarning "Please use 'InitForJob' instead of 'args' for maker unnamed_maker."
   AssertNeomakeMessage 'Exe (unnamed_maker) of maker unnamed_maker is not executable.', 0
 
 Execute (Using maker.args.fn as function results in deprecation warning):
@@ -451,11 +456,7 @@ Execute (Using maker.args.fn as function results in deprecation warning):
   call NeomakeTestsSetVimMessagesMarker()
   CallNeomake 1, [maker]
 
-  let expected_warningmsg = "Please use 'InitForJob' instead of 'args.fn' for maker unnamed_maker."
-  AssertEqual v:warningmsg, 'Neomake: '.expected_warningmsg
-  let v:warningmsg = ''
-  AssertNeomakeMessage 'Neomake warning: '.expected_warningmsg, 3
-  Assert index(NeomakeTestsGetVimMessages(), 'Neomake: '.expected_warningmsg) != -1
+  AssertNeomakeWarning "Please use 'InitForJob' instead of 'args.fn' for maker unnamed_maker."
   AssertNeomakeMessage 'Exe (unnamed_maker) of maker unnamed_maker is not executable.', 0
 
 Execute (Set env from maker config):
@@ -644,9 +645,15 @@ Execute (Makers: process_json with non-list return value):
   AssertNeomakeMessage "Calling maker's process_json method with 2 JSON entries.", 3
   AssertNeomakeMessage 'The process_json method for maker json-maker did not return a list, but: 0.', 0
 
+  function! maker.process_json(...) abort dict
+    return [0]
+  endfunction
+  CallNeomake 1, [maker]
+  AssertNeomakeMessage 'The process_json method for maker json-maker did not return a list of dicts, but: [0].', 0
+
   AssertEqual len(g:neomake_test_countschanged), 0
-  AssertEqual len(g:neomake_test_jobfinished), 1
-  AssertEqual len(g:neomake_test_finished), 1
+  AssertEqual len(g:neomake_test_jobfinished), 2
+  AssertEqual len(g:neomake_test_finished), 2
 
 Execute (Makers: get_list_entries with sandbox exception):
   call neomake#statusline#ResetCounts()
@@ -859,8 +866,8 @@ Execute (Neomake/Neomake! run ft maker in project mode):
 
 Execute (Maker can pass opts for jobstart/job_start):
   if NeomakeAsyncTestsSetup()
-    if !has('nvim') && !has('patch-8.0.0902')
-      NeomakeTestsSkip 'Requires patch 8.0.0902 for Vim.'
+    if !has('nvim') && !(has('patch-8.0.0902') && has('patch-8.0.1832'))
+      NeomakeTestsSkip 'Requires patch 8.0.0902/8.0.1832 for Vim.'
     else
       let maker = {'exe': 'sh', 'args': ['-c', 'echo $TERM']}
       if has('nvim')

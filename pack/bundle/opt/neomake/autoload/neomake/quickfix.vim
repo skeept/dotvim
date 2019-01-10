@@ -18,6 +18,7 @@ function! neomake#quickfix#enable(...) abort
         augroup END
         return
     endif
+    call neomake#log#debug('enabling custom quickfix list handling.')
     let s:is_enabled = 1
     augroup neomake_qf
         autocmd!
@@ -30,6 +31,7 @@ endfunction
 
 
 function! neomake#quickfix#disable() abort
+    call neomake#log#debug('disabling custom quickfix list handling.')
     let s:is_enabled = 0
     if &filetype ==# 'qf'
         call neomake#quickfix#FormatQuickfix()
@@ -89,6 +91,7 @@ function! s:set_qf_lines(lines) abort
 endfunction
 
 function! s:clean_qf_annotations() abort
+    call neomake#log#debug('cleaning qf annotations.', {'bufnr': bufnr('%')})
     if exists('b:_neomake_qf_orig_lines')
         call s:set_qf_lines(b:_neomake_qf_orig_lines)
         unlet b:_neomake_qf_orig_lines
@@ -161,8 +164,8 @@ function! neomake#quickfix#FormatQuickfix() abort
     let lnum_width = 0
     let col_width = 0
     let maker_width = 0
-    let maker = {}
-    let makers = []
+    let nmcfg = {}
+    let makers = {}
 
     for item in qflist
         " Look for marker at end of entry.
@@ -171,9 +174,9 @@ function! neomake#quickfix#FormatQuickfix() abort
             if idx != -1
                 let config = item.text[idx+7:]
                 try
-                    let maker = eval(config)
-                    if index(makers, maker.name) == -1
-                        call add(makers, maker.name)
+                    let nmcfg = eval(config)
+                    if !has_key(makers, nmcfg.name)
+                        let makers[nmcfg.name] = 0
                     endif
                     let item.text = idx == 0 ? '' : item.text[:(idx-1)]
                 catch
@@ -184,7 +187,12 @@ function! neomake#quickfix#FormatQuickfix() abort
             endif
         endif
 
-        let item.maker_name = get(maker, 'short', '????')
+        " Count entries.
+        if !empty(nmcfg)
+            let makers[nmcfg.name] += 1
+        endif
+
+        let item.maker_name = get(nmcfg, 'short', '????')
         let maker_width = max([len(item.maker_name), maker_width])
 
         if item.lnum
@@ -195,7 +203,7 @@ function! neomake#quickfix#FormatQuickfix() abort
         let i += 1
     endfor
 
-    let syntax = copy(makers)
+    let syntax = keys(makers)
     if src_buf
         for ft in split(neomake#compat#getbufvar(src_buf, '&filetype', ''), '\.')
             if !empty(ft) && index(syntax, ft) == -1
@@ -203,7 +211,10 @@ function! neomake#quickfix#FormatQuickfix() abort
             endif
         endfor
     endif
-    call neomake#quickfix#set_syntax(syntax)
+    if get(b:, '_neomake_cur_syntax', []) != syntax
+        call neomake#quickfix#set_syntax(syntax)
+        let b:_neomake_cur_syntax = syntax
+    endif
 
     if maker_width + lnum_width + col_width > 0
         let b:neomake_start_col = maker_width + lnum_width + col_width + 2
@@ -304,16 +315,19 @@ function! neomake#quickfix#FormatQuickfix() abort
         autocmd CursorMoved <buffer> call s:cursor_moved()
     augroup END
 
-    if is_loclist
-        let bufname = bufname(src_buf)
-        if empty(bufname)
-            let bufname = 'buf:'.src_buf
+    " Set title.
+    " Fallback without patch-7.4.2200, fix for without 8.0.1831.
+    if !has('patch-7.4.2200') || !exists('w:quickfix_title') || w:quickfix_title[0] ==# ':'
+        let maker_info = []
+        for [maker, c] in items(makers)
+            call add(maker_info, maker.'('.c.')')
+        endfor
+        let maker_info_str = join(maker_info, ', ')
+        if is_loclist
+            let prefix = 'file'
         else
-            let bufname = pathshorten(bufname)
+            let prefix = 'project'
         endif
-        let w:quickfix_title = printf('Neomake[file]: %s (%s)',
-                    \ bufname, join(makers, ', '))
-    else
-        let w:quickfix_title = 'Neomake[project]: '.join(makers, ', ')
+        let w:quickfix_title = neomake#list#get_title(prefix, src_buf, maker_info_str)
     endif
 endfunction
