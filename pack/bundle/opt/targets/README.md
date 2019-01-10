@@ -50,6 +50,7 @@ correctly.
 		* [Any Quote](#any-quote)
 * [Settings](#settings)
 	* [g:targets_aiAI](#gtargets_aiai)
+	* [g:targets_mapped_aiAI](#gtargets_mapped_aiai)
 	* [g:targets_nl](#gtargets_nl)
 	* [g:targets_seekRanges](#gtargets_seekranges)
 	* [g:targets_jumpRanges](#gtargets_jumpranges)
@@ -540,6 +541,23 @@ Controls the normal mode operator mode maps that get created for In Pair (`i`),
 A Pair (`a`), Inside Pair (`I`), and Around Pair (`A`). Required to be a 4
 character long list. Use a space to deactivate a mode.
 
+### g:targets_mapped_aiAI
+
+Default:
+
+```vim
+let g:targets_mapped_aiAI = g:targets_aiAI
+```
+
+If you can't get your g:targets_aiAI settings to work because they conflict
+with other mappings you have, you might need to use g:targets_mapped_aiAI. For
+example if you want to map `k` to `i` and use `k` as `i` in targets mappings,
+you need to NOT map `k` to `i` in operator pending mode, and set
+`g:targets_aiAI = 'akAI'` and `g:targets_mapped_aiAI = 'aiAI'`.
+
+For more details see issue #213 and don't hesitate to comment there or open a
+new issue if you need assistance.
+
 ### g:targets_nl
 
 Default:
@@ -690,17 +708,17 @@ The keys in this dictionary correspond to the trigger character. For example if
 you type `di(`, `(` is the trigger and gets mapped to the `pair` target source
 with arguments `'o':'('` (opening) and `'c':')'` (closing). Sources `quote` and
 `separator` have argument `'d'` (delimiter), `tag` has no arguments and
-`argument` text objets take `'o'` (opening), `'c'` (closing) and `'s'`
+`argument` text objects take `'o'` (opening), `'c'` (closing) and `'s'`
 (separator). Notably the `b` (any block) and `q` (any quote) triggers map to
-one source with three sets of `pair` and `quote` args dictiory respectively.
-That means if you type `dib` each of those sources get taken into account to
-pick the proper target. Also note that it's even possible to have one target
-mapped to multiple different sources to select any of those different text
-objects (see example below).
+one source with three sets of `pair` and `quote` argument dictionaries
+respectively.  That means if you type `dib` each of those sources get taken
+into account to pick the proper target. Also note that it's even possible to
+have one target mapped to multiple different sources, so you can select any of
+those different text objects (see example below).
 
 You can use the `targets#mappings#extend()` function to modify these internal
 mappings. For example if you wanted to switch `b` back to the Vim default
-behavior of operating on paretheses only, you can add this to your vimrc:
+behavior of operating on parentheses only, you can add this to your vimrc:
 
 ```vim
 autocmd User targets#mappings#user call targets#mappings#extend({
@@ -726,7 +744,7 @@ autocmd User targets#mappings#user call targets#mappings#extend({
 That way targets.vim will ignore it and fall back to Vim default behavior,
 which for the case of `q` does nothing.
 
-Finally here's a more complex example which adds too triggers `s` (any
+Finally here's a more complex example which adds two triggers `s` (any
 separator text object) and `@` (anything at all). So you could type `das` to
 delete the closest separator text object near the cursor, or `da@` to operate
 on the closest text object available via targets.vim. All of those support
@@ -750,15 +768,14 @@ autocmd User targets#mappings#user call targets#mappings#extend({
 
 Also note how this example shows that you can set multiple triggers in a single
 `targets#mappings#extend()` call. To keep the autocmd overhead minimal I'd
-recommend to keep all your mappings setup in a single such call. But do as you
-wish, I'm not your mom!
+recommend to keep all your mappings setup in a single such call.
 
 ### Deprecated settings
 
 If you have set any of the following settings in your vimrc, they will still be
 respected when creating the default mappings dictionary. But it's not possible
 to set up any multi source targets (like any block or any quote) this way. It's
-recommendet to retire those legacy settings and use `targets#mappings#extend()`
+recommended to retire those legacy settings and use `targets#mappings#extend()`
 as described above.
 
 ```vim

@@ -558,10 +558,6 @@ class Default(object):
             # Redraw to clear prompt
             self._vim.command('redraw | echo ""')
         self._vim.command('highlight! link CursorLine CursorLine')
-        if self._vim.call('exists', '#ColorScheme'):
-            self._vim.command('silent doautocmd ColorScheme')
-            if self._vim.call('mode') == 'n':
-                self._vim.command('normal! zv')
         if self._context['cursor_shape']:
             self._vim.command('set guicursor&')
             self._vim.options['guicursor'] = self._guicursor
@@ -632,6 +628,7 @@ class Default(object):
         self.update_buffer()
 
     def init_denite(self):
+        self._prompt.history.reset()
         self._denite.start(self._context)
         self._denite.on_init(self._context)
         self._initialized = True

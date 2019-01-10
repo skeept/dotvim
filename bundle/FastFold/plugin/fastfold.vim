@@ -175,9 +175,10 @@ function! s:init()
     autocmd!
     " Make &l:foldmethod local to Buffer and NOT Window.
     autocmd BufEnter,WinEnter *
-          \ if exists('b:lastfdm') | let w:lastfdm = b:lastfdm | call s:LeaveWin() | call s:EnterWin() | endif
+          \ if exists('b:lastfdm') |
+          \   let w:lastfdm = b:lastfdm |
+          \ endif
     autocmd BufLeave,WinLeave *
-          \ call s:LeaveWin() | call s:EnterWin() |
           \ if exists('w:lastfdm')     | let b:lastfdm = w:lastfdm |
           \ elseif exists('b:lastfdm') | unlet b:lastfdm | endif
 
@@ -187,11 +188,8 @@ function! s:init()
           \ if exists('w:predifffdm')     | let b:predifffdm = w:predifffdm |
           \ elseif exists('b:predifffdm') | unlet b:predifffdm | endif
 
-    " UpdateBuf/Win(1) = skip if another session is still loading.
-    autocmd TabEnter                      * call s:UpdateTab()
-
     " BufWinEnter = to change &l:foldmethod by modelines.
-    autocmd BufWinEnter,FileType          * call s:UpdateBuf(0)
+    autocmd FileType                      * call s:UpdateBuf(0)
     " So that FastFold functions correctly after :loadview.
     autocmd SessionLoadPost               * call s:UpdateBuf(0)
 
@@ -199,10 +197,18 @@ function! s:init()
     if g:fastfold_savehook
       autocmd BufWritePost                * call s:UpdateBuf(0)
     endif
-    if g:fastfold_fdmhook
-      if exists('##OptionSet')
-        autocmd OptionSet foldmethod call s:UpdateBuf(0)
-      endif
+    if g:fastfold_fdmhook && exists('##OptionSet')
+      " takes care of changing &l:foldmethod by modelines.
+      autocmd OptionSet foldmethod call s:UpdateBuf(0)
+      autocmd BufRead            * call s:UpdateBuf(0)
+    else
+      " takes care of changing &l:foldmethod by modelines.
+      autocmd BufWinEnter        *
+          \ if !exists('b:fastfold') |
+          \   call s:UpdateBuf(0) |
+          \ else |
+          \   let b:fastfold = 1 |
+          \ endif
     endif
   augroup end
 endfunction

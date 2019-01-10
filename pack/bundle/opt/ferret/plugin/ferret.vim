@@ -145,14 +145,14 @@
 "
 " @indent
 "                                                                 *ferret-nolist*
-"   'nolist'
+"   ## 'nolist'
 "
 "   Turned off to reduce visual clutter in the search results, and because
 "   'list' is most useful in files that are being actively edited, which is not
 "   the case for |quickfix| results.
 "
 "                                                       *ferret-norelativenumber*
-"   'norelativenumber'
+"   ## 'norelativenumber'
 "
 "   Turned off, because it is more useful to have a sense of absolute progress
 "   through the results list than to have the ability to jump to nearby results
@@ -161,26 +161,26 @@
 "   respectively).
 "
 "                                                                 *ferret-nowrap*
-"   'nowrap'
+"   ## 'nowrap'
 "
 "   Turned off to avoid ugly wrapping that makes the results list hard to read,
 "   and because in search results, the most relevant information is the
 "   filename, which is on the left and is usually visible even without wrapping.
 "
 "                                                                 *ferret-number*
-"   'number'
+"   ## 'number'
 "
 "   Turned on to give a sense of absolute progress through the results.
 "
 "                                                              *ferret-scrolloff*
-"   'scrolloff'
+"   ## 'scrolloff'
 "
 "   Set to 0 because the |quickfix| listing is usually small by default, so
 "   trying to keep the current line away from the edge of the viewpoint is
 "   futile; by definition it is usually near the edge.
 "
 "                                                           *ferret-nocursorline*
-"   'nocursorline'
+"   ## 'nocursorline'
 "
 "   Turned off to reduce visual clutter.
 "
@@ -349,12 +349,25 @@
 " - Daniel Silva
 " - Filip Szymański
 " - Joe Lencioni
+" - Jon Parise
 " - Nelo-Thara Wallus
 " - Tom Dooner
 " - Vaibhav Sagar
 "
 "
 " # History
+"
+" ## 4.0.1 (8 January 2019)
+"
+" - Make |:Acks| behavior the same irrespective of the |'gdefault'| setting.
+"
+" ## 4.0 (25 December 2018)
+"
+" - Try to avoid "press ENTER to continue" prompts.
+" - Put search term in |w:quickfix_title| for use in statuslines
+"   (https://github.com/wincent/ferret/pull/57).
+" - Add |g:FerretExecutableArguments| and |ferret#get_default_arguments()|
+"   (https://github.com/wincent/ferret/pull/46).
 "
 " ## 3.0.3 (23 March 2018)
 "
@@ -611,7 +624,21 @@ command! -bang -nargs=1 -complete=customlist,ferret#private#blackcomplete Black 
 " :Acks /\v(foo\d+)(bar)/\2\1/
 " ```
 command! -nargs=1 Acks call ferret#private#acks(<q-args>)
+
+""
+" @command :FerretCancelAsync
+"
+" Cancels any asynchronous search that may be in progress in the background.
+"
 command! FerretCancelAsync call ferret#private#async#cancel()
+
+""
+" @command :FerretPullAsync
+"
+" Eagerly populates the |quickfix| (or |location-list|) window with any results
+" that may have been produced by a long-running asynchronoous search in progress
+" in the background.
+"
 command! FerretPullAsync call ferret#private#async#pull()
 
 nnoremap <Plug>(FerretAck) :Ack<space>

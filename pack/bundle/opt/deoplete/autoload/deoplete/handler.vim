@@ -12,7 +12,10 @@ function! deoplete#handler#_init() abort
     autocmd InsertLeave * call s:completion_timer_stop()
   augroup END
 
-  for event in ['InsertEnter', 'BufReadPost', 'BufWritePost', 'BufDelete']
+  for event in [
+        \ 'InsertEnter', 'BufReadPost',
+        \ 'BufWritePost', 'BufDelete', 'VimLeavePre'
+        \ ]
     call s:define_on_event(event)
   endfor
 
@@ -24,11 +27,9 @@ function! deoplete#handler#_init() abort
   endif
   if deoplete#custom#_get_option('refresh_always')
     if exists('##TextChangedP')
-      autocmd deoplete InsertCharPre * let s:check_insert_charpre = v:true
       call s:define_completion_via_timer('TextChangedP')
-    else
-      call s:define_completion_via_timer('InsertCharPre')
     endif
+    call s:define_completion_via_timer('InsertCharPre')
   endif
 
   " Note: Vim 8 GUI(MacVim and Win32) is broken
@@ -65,6 +66,8 @@ function! deoplete#handler#_do_complete() abort
   let prev.event = context.event
   let prev.input = context.input
   let prev.candidates = context.candidates
+  let prev.complete_position = context.complete_position
+  let prev.linenr = line('.')
 
   if context.event ==# 'Manual'
     let context.event = ''
@@ -72,16 +75,7 @@ function! deoplete#handler#_do_complete() abort
     call deoplete#mapping#_set_completeopt()
   endif
 
-  let complete_method = deoplete#custom#_get_option('complete_method')
-  if complete_method ==# 'complete'
-    call feedkeys("\<Plug>_", 'i')
-  elseif complete_method ==# 'completefunc'
-    let &l:completefunc = 'deoplete#mapping#_completefunc'
-    call feedkeys("\<C-x>\<C-u>", 'in')
-  elseif complete_method ==# 'omnifunc'
-    let &l:omnifunc = 'deoplete#mapping#_completefunc'
-    call feedkeys("\<C-x>\<C-o>", 'in')
-  endif
+  call feedkeys("\<Plug>_", 'i')
 endfunction
 
 function! deoplete#handler#_check_omnifunc(context) abort
@@ -135,6 +129,35 @@ function! s:completion_timer_stop() abort
   unlet s:completion_timer
 endfunction
 
+function! s:check_prev_completion(event) abort
+  let prev = g:deoplete#_prev_completion
+  if mode() !=# 'i' || empty(get(prev, 'candidates', []))
+    return
+  endif
+
+  let input = deoplete#util#get_input(a:event)
+  if prev.linenr != line('.')
+        \ || (substitute(input, '\w\+$', '', '') !=#
+        \     substitute(prev.input, '\w\+$', '', ''))
+        \ || stridx(input, prev.input) != 0
+    return
+  endif
+
+  call deoplete#mapping#_set_completeopt()
+  let escaped_input = escape(input[prev.complete_position :], '~\.^$[]*')
+  let pattern = substitute(escaped_input, '\w', '\\w*\0', 'g')
+  let candidates = filter(copy(prev.candidates),
+        \ 'v:val.word =~? pattern && len(v:val.word) > len(pattern)')
+  if empty(candidates)
+    return
+  endif
+  let g:deoplete#_filtered_prev = {
+        \ 'complete_position': prev.complete_position,
+        \ 'candidates': candidates,
+        \ }
+  call feedkeys("\<Plug>+", 'i')
+endfunction
+
 function! deoplete#handler#_async_timer_start() abort
   if exists('s:async_timer')
     call deoplete#handler#_async_timer_stop()
@@ -166,11 +189,15 @@ function! s:completion_async(timer) abort
 endfunction
 
 function! s:completion_begin(event) abort
+  let s:check_insert_charpre = (a:event ==# 'InsertCharPre')
+
   if s:is_skip(a:event)
     call deoplete#mapping#_restore_completeopt()
     let g:deoplete#_context.candidates = []
     return
   endif
+
+  call s:check_prev_completion(a:event)
 
   if a:event !=# 'Async'
     call deoplete#init#_prev_completion()
@@ -183,8 +210,6 @@ function! s:is_skip(event) abort
   if a:event ==# 'TextChangedP' && !s:check_insert_charpre
     return 1
   endif
-
-  let s:check_insert_charpre = v:false
 
   if s:is_skip_text(a:event)
     return 1
@@ -201,14 +226,32 @@ function! s:is_skip(event) abort
 
   return 0
 endfunction
+function! s:check_eskk_phase_henkan(input) abort
+  let preedit = eskk#get_preedit()
+  let phase = preedit.get_henkan_phase()
+  return phase is g:eskk#preedit#PHASE_HENKAN && a:input !~# '\w$'
+endfunction
 function! s:is_skip_text(event) abort
-  let context = g:deoplete#_context
   let input = deoplete#util#get_input(a:event)
 
+  let lastchar = matchstr(input, '.$')
+  let skip_multibyte = deoplete#custom#_get_option('skip_multibyte')
+  if skip_multibyte && len(lastchar) != strwidth(lastchar)
+        \ && empty(get(b:, 'eskk', []))
+    return 1
+  endif
+
+  let context = g:deoplete#_context
   if has_key(context, 'input')
         \ && a:event !=# 'Manual'
         \ && a:event !=# 'Async'
+        \ && a:event !=# 'TextChangedP'
         \ && input ==# context.input
+    return 1
+  endif
+
+  if (exists('b:eskk') && !empty(b:eskk)
+        \     && !s:check_eskk_phase_henkan(input))
     return 1
   endif
 
@@ -224,8 +267,7 @@ function! s:is_skip_text(event) abort
 
   let skip_chars = deoplete#custom#_get_option('skip_chars')
 
-  return (!pumvisible() && virtcol('.') != displaywidth)
-        \ || (a:event !=# 'Manual' && input !=# ''
+  return (a:event !=# 'Manual' && input !=# ''
         \     && index(skip_chars, input[-1:]) >= 0)
 endfunction
 
@@ -266,7 +308,7 @@ function! deoplete#handler#_skip_next_completion() abort
   endif
 
   let input = deoplete#util#get_input('CompleteDone')
-  if input[-1:] !=# '/'
+  if input !~# '[/.]$'
     let g:deoplete#_context.input = input
   endif
   call deoplete#init#_prev_completion()

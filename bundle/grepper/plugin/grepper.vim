@@ -41,7 +41,7 @@ let s:defaults = {
       \ 'ag':            { 'grepprg':    'ag --vimgrep',
       \                    'grepformat': '%f:%l:%c:%m,%f:%l:%m',
       \                    'escape':     '\^$.*+?()[]{}|' },
-      \ 'rg':            { 'grepprg':    'rg -H --no-heading --vimgrep',
+      \ 'rg':            { 'grepprg':    'rg -H --no-heading --vimgrep' . (has('win32') ? ' $* .' : ''),
       \                    'grepformat': '%f:%l:%c:%m',
       \                    'escape':     '\^$.*+?()[]{}|' },
       \ 'pt':            { 'grepprg':    'pt --nogroup',
@@ -803,6 +803,7 @@ function! s:run(flags)
             \ 'stderr_buffered': 1,
             \ 'on_exit':   function('s:on_exit'),
             \ }))
+      call chanclose(s:id, 'stdin')
     finally
       call s:chdir_pop(orig_dir)
     endtry

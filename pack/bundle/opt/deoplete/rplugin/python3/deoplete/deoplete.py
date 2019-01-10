@@ -7,7 +7,6 @@
 import copy
 import glob
 import os
-import time
 
 import deoplete.parent
 from deoplete import logger
@@ -35,7 +34,7 @@ class Deoplete(logger.LoggingMixin):
                                            'num_processes')
 
         if self._max_parents != 1 and not hasattr(self._vim, 'loop'):
-            msg = ('pynvim 0.2.4+ is required for %d parents. '
+            msg = ('pynvim 0.3.0+ is required for %d parents. '
                    'Using single process.' % self._max_parents)
             error(self._vim, msg)
             self._max_parents = 1
@@ -159,14 +158,7 @@ class Deoplete(logger.LoggingMixin):
         self._prev_input = context['input']
         self._prev_next_input = context['next_input']
 
-        start = time.time()
-        timeout = int(self._vim.call('deoplete#custom#_get_option',
-                                     'async_timeout')) / 1000.0
-        while 1:
-            [is_async, results] = self._get_results(context)
-            if not is_async or (time.time() - start > timeout):
-                break
-            time.sleep(0.01)
+        [is_async, results] = self._get_results(context)
 
         if not results:
             return (is_async, -1, [])
@@ -187,9 +179,19 @@ class Deoplete(logger.LoggingMixin):
             all_candidates += candidates
 
         # self.debug(candidates)
-        max_list = self._vim.call('deoplete#custom#_get_option', 'max_list')
+        max_list = self._vim.call(
+            'deoplete#custom#_get_option', 'max_list')
         if max_list > 0:
             all_candidates = all_candidates[: max_list]
+
+        candidate_marks = self._vim.call(
+            'deoplete#custom#_get_option', 'candidate_marks')
+        if candidate_marks:
+            all_candidates = copy.deepcopy(all_candidates)
+            for i, candidate in enumerate(all_candidates):
+                mark = (candidate_marks[i] if i < len(candidate_marks) and
+                        candidate_marks[i] else ' ')
+                candidate['menu'] = mark + ' ' + candidate.get('menu', '')
 
         return (is_async, complete_position, all_candidates)
 
@@ -198,16 +200,6 @@ class Deoplete(logger.LoggingMixin):
         if self._vim.vars['deoplete#_logging']:
             parent.enable_logging()
         self._parents.append(parent)
-
-    def _init_parents(self):
-        if self._parents or self._max_parents <= 0:
-            return
-
-        if self._max_parents == 1:
-            self._add_parent(deoplete.parent.SyncParent)
-        else:
-            for n in range(0, self._max_parents):
-                self._add_parent(deoplete.parent.AsyncParent)
 
     def _find_rplugins(self, source):
         """Search for base.py or *.py
@@ -233,15 +225,16 @@ class Deoplete(logger.LoggingMixin):
                 yield from glob.iglob(os.path.join(path, src))
 
     def _load_sources(self, context):
-        self._init_parents()
+        if not self._parents and self._max_parents == 1:
+            self._add_parent(deoplete.parent.SyncParent)
 
         for path in self._find_rplugins('source'):
             if path in self._loaded_paths:
                 continue
             self._loaded_paths.add(path)
 
-            if self._max_parents <= 0:
-                # Add parent automatically for num_processes=0.
+            if len(self._parents) <= self._parent_count:
+                # Add parent automatically
                 self._add_parent(deoplete.parent.AsyncParent)
 
             self._parents[self._parent_count].add_source(path)

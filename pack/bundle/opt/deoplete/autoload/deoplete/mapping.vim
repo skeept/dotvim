@@ -6,22 +6,23 @@
 
 function! deoplete#mapping#_init() abort
   " Note: The dummy function is needed for cpoptions bug in neovim
-  inoremap <expr><silent> <Plug>_ deoplete#mapping#_dummy_complete()
+  inoremap <expr><silent> <Plug>_
+        \ deoplete#mapping#_dummy('deoplete#mapping#_complete')
+  inoremap <expr><silent> <Plug>+
+        \ deoplete#mapping#_dummy('deoplete#mapping#_prev_complete')
 endfunction
-
-function! deoplete#mapping#_dummy_complete() abort
-  return "\<C-r>=deoplete#mapping#_complete()\<CR>"
-endfunction
-function! deoplete#mapping#_completefunc(findstart, base) abort
-  if a:findstart
-    return g:deoplete#_context.complete_position
-  else
-    return g:deoplete#_context.candidates
-  endif
+function! deoplete#mapping#_dummy(func) abort
+  return "\<C-r>=".a:func."()\<CR>"
 endfunction
 function! deoplete#mapping#_complete() abort
   call complete(g:deoplete#_context.complete_position + 1,
         \ g:deoplete#_context.candidates)
+
+  return ''
+endfunction
+function! deoplete#mapping#_prev_complete() abort
+  call complete(g:deoplete#_filtered_prev.complete_position + 1,
+        \ g:deoplete#_filtered_prev.candidates)
 
   return ''
 endfunction
@@ -71,16 +72,16 @@ function! deoplete#mapping#_complete_common_string() abort
   endif
 
   " Get cursor word.
-  let complete_str = matchstr(deoplete#util#get_input(''), '\w*$')
-
-  if complete_str ==# '' || !has_key(g:deoplete#_context, 'candidates')
+  let prev = g:deoplete#_prev_completion
+  if empty(prev)
     return ''
   endif
 
-  let candidates = filter(copy(g:deoplete#_context.candidates),
+  let complete_str = prev.input[prev.complete_position :]
+  let candidates = filter(copy(prev.candidates),
         \ 'stridx(tolower(v:val.word), tolower(complete_str)) == 0')
 
-  if empty(candidates)
+  if empty(candidates) || complete_str ==# ''
     return ''
   endif
 
@@ -97,4 +98,17 @@ function! deoplete#mapping#_complete_common_string() abort
 
   return (pumvisible() ? "\<C-e>" : '')
         \ . repeat("\<BS>", strchars(complete_str)) . common_str
+endfunction
+function! deoplete#mapping#_insert_candidate(number) abort
+  let prev = g:deoplete#_prev_completion
+  let candidates = get(prev, 'candidates', [])
+  let word = get(candidates, a:number, {'word': ''}).word
+  if word ==# ''
+    return ''
+  endif
+
+  " Get cursor word.
+  let complete_str = prev.input[prev.complete_position :]
+  return (pumvisible() ? "\<C-e>" : '')
+        \ . repeat("\<BS>", strchars(complete_str)) . word
 endfunction

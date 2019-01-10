@@ -4,9 +4,8 @@
 # License: MIT license
 # ============================================================================
 
+import os
 import re
-
-from os.path import exists
 
 
 class Context(object):
@@ -14,9 +13,10 @@ class Context(object):
     def __init__(self, vim):
         self._vim = vim
         self._prev_filetype = self._vim.eval('&l:filetype')
-        self._cached = self._init_cached()
+        self._cached = None
         self._cached_filetype = self._init_cached_filetype(
             self._prev_filetype)
+        self._init_cached()
 
     def get(self, event):
         text = self._vim.call('deoplete#util#get_input', event)
@@ -48,7 +48,7 @@ class Context(object):
 
         if filetype != self._prev_filetype:
             self._prev_filetype = filetype
-            self._filetype_context = self._init_cached_filetype(filetype)
+            self._cached_filetype = self._init_cached_filetype(filetype)
 
         context.update(self._cached_filetype)
 
@@ -71,13 +71,15 @@ class Context(object):
             bufnr = -1
             bufname = ''
         else:
-            bufname = self._vim.buffers[int(bufnr)].name
+            bufname = self._vim.call('bufname', bufnr)
+        cwd = self._vim.call('getcwd')
         buftype = self._vim.current.buffer.options['buftype']
-        bufpath = self._vim.call('fnamemodify', bufname, ':p')
-        if not exists(bufpath) or 'nofile' in buftype:
+        bufpath = (bufname if os.path.isabs(bufname)
+                   else os.path.join(cwd, bufname))
+        if not os.path.exists(bufpath) or 'nofile' in buftype:
             bufpath = ''
 
-        return {
+        self._cached = {
             'bufnr': bufnr,
             'bufname': bufname,
             'bufpath': bufpath,
@@ -85,7 +87,7 @@ class Context(object):
                 'deoplete#custom#_get_option', 'camel_case'),
             'complete_str': '',
             'custom': self._vim.call('deoplete#custom#_get'),
-            'cwd': self._vim.call('getcwd'),
+            'cwd': cwd,
             'encoding': self._vim.options['encoding'],
             'ignorecase': self._vim.call(
                 'deoplete#custom#_get_option', 'ignore_case'),

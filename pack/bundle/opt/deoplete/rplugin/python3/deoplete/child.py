@@ -351,6 +351,13 @@ class Child(logger.LoggingMixin):
         for f in sorters + converters:
             self._process_filter(f, ctx, source.max_candidates)
 
+        if (isinstance(ctx['candidates'], dict) and
+                'sorted_candidates' in ctx['candidates']):
+            sorted_candidates = ctx['candidates']['sorted_candidates']
+            ctx['candidates'] = []
+            for candidates in sorted_candidates:
+                ctx['candidates'] += candidates
+
         ctx['ignorecase'] = ignorecase
 
         # On post filter
@@ -358,17 +365,16 @@ class Child(logger.LoggingMixin):
             ctx['candidates'] = source.on_post_filter(ctx)
 
         mark = source.mark + ' '
-        dup = bool(source.filetypes)
         for candidate in ctx['candidates']:
             # Set default menu and icase
             candidate['icase'] = 1
             if (mark != ' ' and
                     candidate.get('menu', '').find(mark) != 0):
                 candidate['menu'] = mark + candidate.get('menu', '')
-            if dup:
+            if source.dup:
                 candidate['dup'] = 1
         # Note: cannot use set() for dict
-        if dup:
+        if source.dup:
             # Remove duplicates
             ctx['candidates'] = uniq_list_dict(ctx['candidates'])
 
@@ -460,6 +466,7 @@ class Child(logger.LoggingMixin):
         attrs = (
             'converters',
             'disabled_syntaxes',
+            'dup',
             'filetypes',
             'input_pattern',
             'is_debug_enabled',
@@ -477,6 +484,8 @@ class Child(logger.LoggingMixin):
 
         for name, source in self._get_sources().items():
             self.debug('Set Source attributes: %s', name)
+
+            source.dup = bool(source.filetypes)
 
             for attr in attrs:
                 source_attr = getattr(source, attr, None)
