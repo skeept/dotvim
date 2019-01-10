@@ -1,3 +1,5 @@
+let s:notslash = '\\\@<!\%(\\\\\)*'
+
 function! s:throw_if(condition, exception)
   if a:condition
     throw 'textobj-matchit: ' . a:exception
@@ -26,13 +28,23 @@ function! s:skip() abort
   return b:match_skip
 endfunction
 
-function! s:parse_match_words() abort
+" Convert a string in b:match_words format to an array of pairs, containing
+" only the start and end patterns.
+"
+" Matches without 'word' characters are filtered out. This is what makes this
+" plugin only operate on pairs like if/endif, instead of simple pairs like
+" those found in &matchpairs.
+function! textobj#matchit#parse_match_words(match_words) abort
+  if a:match_words !~ ':'
+    return []
+  endif
+
   return map(
         \   map(
-        \     filter(split(b:match_words, '\\\@<!,'), 'v:val =~ ''\w'''),
-        \     'split(v:val, ''\\\@<!:'')'
+        \     filter(split(a:match_words, s:notslash . ','), {_, group -> group =~ s:notslash . '\w'}),
+        \     {_, group -> split(group, s:notslash . ':')}
         \   ),
-        \   '[v:val[0], v:val[-1:][0]]'
+        \   {_, patterns -> [patterns[0], patterns[-1:][0]]}
         \ )
 endfunction
 
@@ -40,7 +52,7 @@ endfunction
 " flags according to the context of the cursor position.
 function! s:flags(start, end)
   let cursor_col = getpos('.')[2]
-  let end_match_col = match(getline('.'), a:end) + 1
+  let end_match_col = match(getline('.'), substitute(a:end, s:notslash . '\\\d', '', '')) + 1
 
   if end_match_col && end_match_col <= cursor_col
     call cursor('.', end_match_col)
@@ -61,7 +73,7 @@ function! s:closest_pair() abort
 
   let candidates = {}
 
-  for [start, end] in s:parse_match_words()
+  for [start, end] in textobj#matchit#parse_match_words(b:match_words)
     let [lnum, col] = searchpairpos(start, '', end, s:flags(start, end), s:skip())
     if lnum
       let candidates[lnum] = [0, lnum, col, 0]
@@ -119,3 +131,5 @@ function! textobj#matchit#map(char) abort
     execute 'omap <buffer> i' . a:char . ' <Plug>(textobj-matchit-i)'
   endif
 endfunction
+
+let g:textobj#matchit#can_map_surround = exists('loaded_surround') && get(g:, 'textobj_matchit_surround_mappings', 1)

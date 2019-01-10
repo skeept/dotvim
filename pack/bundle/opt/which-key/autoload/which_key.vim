@@ -144,7 +144,7 @@ function! s:wait_with_timeout(timeout)
   return 1
 endfunction
 
-function! s:has_child(input) abort
+function! s:has_children(input) abort
   let group = map(keys(s:runtime), 'v:val =~# "^'.a:input.'"')
   let group = filter(group, 'v:val == 1')
   return len(group) > 1
@@ -171,7 +171,7 @@ function! s:getchar() abort
   " <Tab>, <C-I> = 9
   let input .= c == 9 ? '<Tab>' : nr2char(c)
 
-  if s:has_child(input)
+  if s:has_children(input)
     while 1
       if !s:wait_with_timeout(g:which_key_timeout)
         let c = getchar()
@@ -237,7 +237,7 @@ function! s:execute(cmd) abort
     endif
     if Cmd =~? '^<Plug>.\+' || Cmd =~? '^<C-W>.\+' || Cmd =~? '^<.\+>$'
       let Cmd = s:join('call', 'feedkeys("\'.Cmd.'")')
-    elseif Cmd =~? '.(*)$' && match(Cmd, 'call') == -1
+    elseif Cmd =~? '.(*)$' && match(Cmd, '\<call\>') == -1
       let Cmd = s:join('call', Cmd)
     endif
     execute Cmd

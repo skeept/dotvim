@@ -202,29 +202,25 @@ endfunction
 function! deoplete#init#_option() abort
   " Note: HTML omni func use search().
   return {
-        \ 'async_timeout': 150,
         \ 'auto_complete': v:true,
-        \ 'auto_complete_delay': 20,
-        \ 'auto_refresh_delay': 50,
+        \ 'auto_complete_delay': 0,
+        \ 'auto_refresh_delay': 20,
         \ 'camel_case': v:false,
-        \ 'complete_method': 'complete',
         \ 'delimiters': ['/'],
         \ 'ignore_case': &ignorecase,
         \ 'ignore_sources': {},
+        \ 'candidate_marks': [],
         \ 'max_list': 500,
-        \ 'num_processes': has('win32') ? 1 : 4,
+        \ 'num_processes': 4,
         \ 'keyword_patterns': {'_': '[a-zA-Z_]\k*'},
-        \ 'omni_patterns': {
-        \  'html': ['<', '</', '<[^>]*\s[[:alnum:]-]*'],
-        \  'xhtml': ['<', '</', '<[^>]*\s[[:alnum:]-]*'],
-        \  'xml': ['<', '</', '<[^>]*\s[[:alnum:]-]*'],
-        \ },
+        \ 'omni_patterns': {},
         \ 'on_insert_enter': v:true,
         \ 'on_text_changed_i': v:true,
         \ 'profile': v:false,
         \ 'min_pattern_length': 2,
         \ 'refresh_always': v:true,
         \ 'skip_chars': ['(', ')'],
+        \ 'skip_multibyte': v:false,
         \ 'smart_case': &smartcase,
         \ 'sources': {},
         \ 'trigger_key': v:char,
@@ -235,7 +231,9 @@ function! deoplete#init#_prev_completion() abort
   let g:deoplete#_prev_completion = {
         \ 'event': '',
         \ 'input': '',
+        \ 'linenr': -1,
         \ 'candidates': [],
+        \ 'complete_position': -1,
         \ }
 endfunction
 

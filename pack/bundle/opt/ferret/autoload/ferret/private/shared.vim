@@ -26,15 +26,40 @@ function! s:autojump()
   return l:autojump
 endfunction
 
+function! s:set_title(type, title)
+  if has('patch-7.4.2200')
+    if a:type ==# 'qf'
+      call setqflist([], 'a', {'title' : a:title})
+    else
+      call setloclist(0, [], 'a', {'title' : a:title})
+    endif
+  elseif a:type ==# 'qf'
+    let w:quickfix_title=a:title
+  endif
+endfunction
+
 function! ferret#private#shared#finalize_search(output, ack)
+  let l:lastsearch = get(g:, 'ferret_lastsearch', '')
   let l:original_errorformat=&errorformat
   let l:autojump=s:autojump()
   if a:ack
     let l:prefix='c' " Will use cexpr, cgetexpr.
+    ""
+    " @option g:FerretQFHandler string "botright copen"
+    "
+    " Allows you to override the mechanism that opens the |quickfix| window to
+    " display search results.
+    "
     let l:handler=get(g:, 'FerretQFHandler', 'botright copen')
     let l:post='qf'
   else
     let l:prefix='l' " Will use lexpr, lgetexpr.
+    ""
+    " @option g:FerretLLHandler string "lopen"
+    "
+    " Allows you to override the mechanism that opens the |location-list|
+    " window to display search results.
+    "
     let l:handler=get(g:, 'FerretLLHandler', 'lopen')
     let l:post='location'
   endif
@@ -45,6 +70,7 @@ function! ferret#private#shared#finalize_search(output, ack)
     else
       call s:swallow(l:prefix . 'getexpr a:1', a:output)
     endif
+    call s:set_title(l:post, 'Search `' . l:lastsearch . '`')
     let l:before=winnr()
     let l:len=ferret#private#post(l:post)
     if l:len

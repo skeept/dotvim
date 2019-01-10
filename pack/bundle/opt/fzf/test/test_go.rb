@@ -1427,6 +1427,12 @@ class TestGoFZF < TestBase
     tmux.until { |lines| !lines[1].include?('foo') }
   end
 
+  def test_preview_q_no_match_with_initial_query
+    tmux.send_keys %(: | #{FZF} --preview 'echo foo {q}{q}' --query foo), :Enter
+    tmux.until { |lines| lines.match_count == 0 }
+    tmux.until { |lines| lines[1].include?('foofoo') }
+  end
+
   def test_no_clear
     tmux.send_keys "seq 10 | fzf --no-clear --inline-info --height 5 > #{tempname}", :Enter
     prompt = '>   < 10/10'
@@ -1512,6 +1518,25 @@ class TestGoFZF < TestBase
     assert_equal ['foo bar'], `#{FZF} -f'foo\\ bar' < #{tempname}`.lines.map(&:chomp)
     assert_equal ['foo bar'], `#{FZF} -f'^foo\\ bar$' < #{tempname}`.lines.map(&:chomp)
     assert_equal input.lines.count - 1, `#{FZF} -f'!^foo\\ bar$' < #{tempname}`.lines.count
+  end
+
+  def test_inverse_only_search_should_not_sort_the_result
+    # Filter
+    assert_equal(%w[aaaaa b ccc],
+      `printf '%s\n' aaaaa b ccc BAD | #{FZF} -f '!bad'`.lines.map(&:chomp))
+
+    # Interactive
+    tmux.send_keys(%[printf '%s\n' aaaaa b ccc BAD | #{FZF} -q '!bad'], :Enter)
+    tmux.until { |lines| lines.item_count == 4 && lines.match_count == 3 }
+    tmux.until { |lines| lines[-3] == '> aaaaa' }
+    tmux.until { |lines| lines[-4] == '  b' }
+    tmux.until { |lines| lines[-5] == '  ccc' }
+  end
+
+  def test_preview_correct_tab_width_after_ansi_reset_code
+    writelines tempname, ["\x1b[31m+\x1b[m\t\x1b[32mgreen"]
+    tmux.send_keys "#{FZF} --preview 'cat #{tempname}'", :Enter
+    tmux.until { |lines| lines[1].include?('+       green') }
   end
 end
 

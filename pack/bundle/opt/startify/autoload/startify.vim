@@ -153,7 +153,8 @@ function! startify#insane_in_the_membrane() abort
   set filetype=startify
 
   if exists('##DirChanged')
-    autocmd startify DirChanged <buffer> Startify
+    let b:startify.cwd = getcwd()
+    autocmd startify DirChanged <buffer> if getcwd() !=# get(get(b:, 'startify', {}), 'cwd') | Startify | endif
   endif
   if exists('#User#Startified')
     doautocmd <nomodeline> User Startified
@@ -592,10 +593,7 @@ function! s:filter_oldfiles(path_prefix, path_format, use_env) abort
 
     let entries[absolute_path]  = 1
     let counter                -= 1
-    if !has('win32')
-      let absolute_path = fnameescape(absolute_path)
-    endif
-    let oldfiles += [[absolute_path, entry_path]]
+    let oldfiles += [[fnameescape(absolute_path), entry_path]]
   endfor
 
   if a:use_env

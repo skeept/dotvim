@@ -30,21 +30,17 @@ endfunction
 " re-queued also).
 function! neomake#action_queue#add(events, data) abort
     let job_or_make_info = a:data[1][0]
-    if empty(job_or_make_info)
-        let log_context = {}
-    elseif has_key(job_or_make_info, 'make_id')
-        let jobinfo = job_or_make_info
-        let log_context = jobinfo
+    if a:events is# g:neomake#action_queue#any_event
+        call neomake#log#debug(printf('Queuing action %s for any event.',
+                    \ s:actionname(a:data[0])), job_or_make_info)
     else
-        let make_info = job_or_make_info
-        let log_context = make_info.options
+        call neomake#log#debug(printf('Queuing action %s for %s.',
+                    \ s:actionname(a:data[0]), join(a:events, ', ')), job_or_make_info)
     endif
-    call neomake#log#debug(printf('Queuing action %s for %s.',
-                \ s:actionname(a:data[0]), join(a:events, ', ')), log_context)
 
     for event in a:events
         if event ==# 'Timer'
-            if !exists('jobinfo.action_queue_timer_tries')
+            if !has_key(job_or_make_info, 'action_queue_timer_tries')
                 let job_or_make_info.action_queue_timer_tries = {'count': 1, 'data': a:data[0]}
             else
                 let job_or_make_info.action_queue_timer_tries.count += 1
@@ -127,8 +123,8 @@ function! s:process_action_queue(event) abort
         endif
         let i += 1
     endfor
-    call neomake#log#debug(printf('action queue: processing for %s (%d items, winnr: %d).',
-                \ a:event, len(q_for_this_event), winnr()), {'bufnr': bufnr('%')})
+    call neomake#log#debug(printf('action queue: processing for %s (%d items).',
+                \ a:event, len(q_for_this_event)), {'bufnr': bufnr('%'), 'winnr': winnr()})
 
     let processed = []
     let removed = 0
@@ -140,18 +136,16 @@ function! s:process_action_queue(event) abort
 
         let make_id_job_id = {}  " make_id/job_id relevant to re-queue following.
         if has_key(job_or_make_info, 'make_id')
-            let log_context = job_or_make_info
-            let make_id_job_id = {
-                        \ 'make_id': job_or_make_info.make_id,
-                        \ 'job_id': job_or_make_info.id,
-                        \ }
-        elseif has_key(job_or_make_info, 'options')
-            let log_context = job_or_make_info.options
-            let make_id_job_id = {
-                        \ 'make_id': job_or_make_info.options.make_id,
-                        \ }
-        else
-            let log_context = {}
+            if has_key(job_or_make_info, 'options')
+                let make_id_job_id = {
+                            \ 'make_id': job_or_make_info.make_id,
+                            \ }
+            else
+                let make_id_job_id = {
+                            \ 'make_id': job_or_make_info.make_id,
+                            \ 'job_id': job_or_make_info.id,
+                            \ }
+            endif
         endif
 
         " Skip/re-queue entries for same make/job.
@@ -159,7 +153,7 @@ function! s:process_action_queue(event) abort
         for [prop_name, prop_value] in items(make_id_job_id)
             if index(stop_processing[prop_name], prop_value) != -1
                 call neomake#log#debug(printf('action queue: skipping %s for not processed %s.',
-                            \ s:actionname(data[0]), prop_name), log_context)
+                            \ s:actionname(data[0]), prop_name), job_or_make_info)
                 call add(queue, current_event)
                 let skip = 1
                 break
@@ -170,7 +164,7 @@ function! s:process_action_queue(event) abort
         endif
 
         call neomake#log#debug(printf('action queue: calling %s.',
-                    \ s:actionname(data[0])), log_context)
+                    \ s:actionname(data[0])), job_or_make_info)
         let queue_before_call = copy(queue)
         try
             " Call the queued action.  On failure they should have requeued
@@ -183,7 +177,7 @@ function! s:process_action_queue(event) abort
                 let error = printf('Error during action queue processing: %s.',
                       \ v:exception)
             endif
-            call neomake#log#exception(error, log_context)
+            call neomake#log#exception(error, job_or_make_info)
 
             " Cancel job in case its action failed to get re-queued after X
             " attempts.
@@ -210,7 +204,7 @@ function! s:process_action_queue(event) abort
                     " Assert current_event != q
                     if get(q[1][1][0], prop_name) == prop_value
                         call neomake#log#debug(printf('action queue: re-queuing %s for not processed %s.',
-                                    \ s:actionname(q[1][0]), prop_name), log_context)
+                                    \ s:actionname(q[1][0]), prop_name), job_or_make_info)
                         call add(queue, remove(queue, i))
                         let i -= 1
                         break
