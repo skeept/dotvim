@@ -162,7 +162,11 @@ nnoremap <C-L> :nohl<CR><C-L>
 nnoremap ,cn :%s///n<LEFT><LEFT><LEFT>
 
 nnoremap ,vn :vim // *<LEFT><LEFT><LEFT>
-nnoremap ,vr :vim // **<LEFT><LEFT><LEFT><LEFT>
+nnoremap ,vr :vim // **/*<LEFT><LEFT><LEFT><LEFT><LEFT><LEFT>
+nnoremap ,vf :find **/**<LEFT>
+nnoremap ,va :args **/**<LEFT>
+vnoremap ,ys y:Sscratch<CR>p
+nnoremap ,ys yy:Sscratch<CR>p
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
@@ -205,6 +209,10 @@ nnoremap ,sq :bw!<CR>
 
 nnoremap ,gg :<C-U>Gina<SPACE><C-D>
 nnoremap ,gs :<C-U>Gina status<CR>
+nnoremap ,gc :<C-U>Gina commit<CR>
+" Gina diff is the inline diff. I guess not that useful
+nnoremap ,gd :<C-U>Gina compare<CR>
+nnoremap ,ga :<C-U>Gina add %
 
 nnoremap <Leader>Q :BD!<CR>
 nnoremap g/ /\<\><Left><Left>

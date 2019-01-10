@@ -369,10 +369,10 @@ let g:delimitMate_expand_space = 1
 "==============================================================================}}}
 
 "================== fugitive =================================================={{{
-nnoremap ,gcf :<C-U>Gcommit -v %<CR>
-nnoremap ,gca :<C-U>Gcommit -v -a<CR>
-nnoremap ,gp :<C-U>Git push<CR>
-nnoremap ,gdf :<C-U>Git diff<CR>
+"nnoremap ,gcf :<C-U>Gcommit -v %<CR>
+"nnoremap ,gca :<C-U>Gcommit -v -a<CR>
+"nnoremap ,gp :<C-U>Git push<CR>
+"nnoremap ,gdf :<C-U>Git diff<CR>
 "==============================================================================}}}
 
 "================== Thesis Specific Settings =================================={{{
