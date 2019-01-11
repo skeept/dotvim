@@ -675,6 +675,7 @@ endif
 "================== NeoSnippet ================================================{{{
 if s:ulti_or_neosnip == 2
   packadd! neosnippet
+  packadd! neosnippet-snippets
   call jraf#LoadNeoSnipppet()
 endif
 "==============================================================================}}}
