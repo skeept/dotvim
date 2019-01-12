@@ -357,6 +357,11 @@
 "
 " # History
 "
+" 4.0.2 (11 January 2019)
+"
+" - Restore compatibility with versions of `rg` prior to v0.8
+"   (https://github.com/wincent/ferret/issues/59).
+"
 " ## 4.0.1 (8 January 2019)
 "
 " - Make |:Acks| behavior the same irrespective of the |'gdefault'| setting.

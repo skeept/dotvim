@@ -1895,7 +1895,7 @@ augroup END
 function! s:Status(bang, count, mods) abort
   try
     let mods = a:mods ==# '<mods>' || empty(a:mods) ? '' : a:mods . ' '
-    if mods !~# 'aboveleft|belowright\|leftabove\|rightbelow\|topleft\|botright'
+    if mods !~# 'aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright'
       let mods = 'topleft ' . mods
     endif
     let file = fugitive#Find(':')
@@ -3178,7 +3178,7 @@ function! s:Dispatch(bang, args)
     let &l:errorformat = s:common_efm
     let &l:makeprg = substitute(s:UserCommand() . ' ' . a:args, '\s\+$', '', '')
     if exists(':Make') == 2
-      noautocmd Make
+      Make
     else
       silent noautocmd make!
       redraw!
@@ -3684,8 +3684,10 @@ endfunction
 
 function! s:BlameJump(suffix) abort
   let commit = matchstr(getline('.'),'^\^\=\zs\x\+')
+  let suffix = a:suffix
   if commit =~# '^0\+$'
     let commit = ':0'
+    let suffix = ''
   endif
   let lnum = matchstr(getline('.'),' \zs\d\+\ze\s\+[([:digit:]]')
   let path = matchstr(getline('.'),'^\^\=\x\+\s\+\zs.\{-\}\ze\s*\d\+ ')
@@ -3699,7 +3701,7 @@ function! s:BlameJump(suffix) abort
   if winnr > 0
     exe winnr.'wincmd w'
   endif
-  execute 'Gedit' s:fnameescape(commit . a:suffix . ':' . path)
+  execute 'Gedit' s:fnameescape(commit . suffix . ':' . path)
   execute lnum
   if winnr > 0
     exe bufnr.'bdelete'
