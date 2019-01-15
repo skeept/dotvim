@@ -1,6 +1,6 @@
 *denite.txt*	Dark powered asynchronous unite all interfaces for NeoVim/Vim.
 
-Version: 1.1
+Version: 2.0
 Author:  Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
 
@@ -1148,6 +1148,12 @@ OPTIONS							*denite-options*
 		Open any denite buffer if the candidate is empty.
 		Default: true
 
+						*denite-option-expand*
+-expand
+		|expand()| the input.
+		Note: It is useful for file sources.
+		Default: false
+
 					*denite-option-highlight-matched-char*
 -highlight-matched-char
 		Matched characters highlight.
@@ -1803,7 +1809,7 @@ matcher/project_files (matcher_project_files)
 		A matcher which removes removes non project files.
 
 				*denite-filter-matcher/ignore_current_buffer*
-matcher/current_buffer
+matcher/ignore_current_buffer
 		A matcher which ignores the current buffer path.
 
 					*denite-filter-matcher/ignore_globs*
