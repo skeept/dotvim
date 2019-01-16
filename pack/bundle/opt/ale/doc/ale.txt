@@ -27,6 +27,7 @@ CONTENTS                                                         *ale-contents*
       ansible-lint........................|ale-ansible-ansible-lint|
     asciidoc..............................|ale-asciidoc-options|
       write-good..........................|ale-asciidoc-write-good|
+      textlint............................|ale-asciidoc-textlint|
     asm...................................|ale-asm-options|
       gcc.................................|ale-asm-gcc|
     awk...................................|ale-awk-options|
@@ -277,6 +278,7 @@ CONTENTS                                                         *ale-contents*
       ols.................................|ale-reasonml-ols|
       refmt...............................|ale-reasonml-refmt|
     restructuredtext......................|ale-restructuredtext-options|
+      textlint............................|ale-restructuredtext-textlint|
       write-good..........................|ale-restructuredtext-write-good|
     ruby..................................|ale-ruby-options|
       brakeman............................|ale-ruby-brakeman|
@@ -407,7 +409,7 @@ Notes:
 * ASM: `gcc`
 * Ansible: `ansible-lint`
 * API Blueprint: `drafter`
-* AsciiDoc: `alex`!!, `proselint`, `redpen`, `write-good`, `vale`
+* AsciiDoc: `alex`!!, `proselint`, `redpen`, `write-good`, `vale`, `textlint`
 * Awk: `gawk`
 * Bash: `language-server`, `shell` (-n flag), `shellcheck`, `shfmt`
 * BibTeX: `bibclean`
@@ -484,8 +486,9 @@ Notes:
 * Python: `autopep8`, `black`, `flake8`, `isort`, `mypy`, `prospector`, `pycodestyle`, `pydocstyle`, `pyls`, `pyre`, `pylint`!!, `vulture`!!, `yapf`
 * QML: `qmlfmt`, `qmllint`
 * R: `lintr`
+* Racket: `raco`
 * ReasonML: `merlin`, `ols`, `refmt`
-* reStructuredText: `alex`!!, `proselint`, `redpen`, `rstcheck`, `vale`, `write-good`
+* reStructuredText: `alex`!!, `proselint`, `redpen`, `rstcheck`, `textlint`, `vale`, `write-good`
 * Re:VIEW: `redpen`
 * RPM spec: `rpmlint`
 * Ruby: `brakeman`, `rails_best_practices`!!, `reek`, `rubocop`, `ruby`, `rufo`, `solargraph`, `standardrb`
