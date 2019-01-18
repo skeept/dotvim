@@ -131,7 +131,8 @@ endfunction
 
 function! s:check_prev_completion(event) abort
   let prev = g:deoplete#_prev_completion
-  if mode() !=# 'i' || empty(get(prev, 'candidates', []))
+  if a:event ==# 'Async' || mode() !=# 'i'
+        \ || empty(get(prev, 'candidates', []))
     return
   endif
 
@@ -144,14 +145,22 @@ function! s:check_prev_completion(event) abort
   endif
 
   call deoplete#mapping#_set_completeopt()
-  let input = input[prev.complete_position :]
-  let escaped_input = escape(input, '~\.^$[]*')
-  let pattern = substitute(escaped_input, '\w', '\\w*\0', 'g')
-  let candidates = filter(copy(prev.candidates),
-        \ 'v:val.word =~? pattern && len(v:val.word) > len(input)')
-  if empty(candidates)
+
+  let mode = deoplete#custom#_get_option('prev_completion_mode')
+  let candidates = copy(prev.candidates)
+
+  if mode ==# 'filter'
+    let input = input[prev.complete_position :]
+    let escaped_input = escape(input, '~\.^$[]*')
+    let pattern = substitute(escaped_input, '\w', '\\w*\0', 'g')
+    call filter(candidates,
+          \ 'v:val.word =~? pattern && len(v:val.word) > len(input)')
+  elseif mode ==# 'mirror'
+    " pass
+  else
     return
   endif
+
   let g:deoplete#_filtered_prev = {
         \ 'complete_position': prev.complete_position,
         \ 'candidates': candidates,
@@ -171,8 +180,7 @@ function! deoplete#handler#_async_timer_start() abort
 
   let s:async_timer = { 'event': 'Async', 'changedtick': b:changedtick }
   let s:async_timer.id = timer_start(
-        \ max([20, delay]),
-        \ function('s:completion_async'), {'repeat': -1})
+        \ max([20, delay]), function('s:completion_async'))
 endfunction
 function! deoplete#handler#_async_timer_stop() abort
   if exists('s:async_timer')
@@ -193,7 +201,6 @@ function! s:completion_begin(event) abort
   let s:check_insert_charpre = (a:event ==# 'InsertCharPre')
 
   if s:is_skip(a:event)
-    call deoplete#mapping#_restore_completeopt()
     let g:deoplete#_context.candidates = []
     return
   endif
@@ -242,12 +249,14 @@ function! s:is_skip_text(event) abort
     return 1
   endif
 
-  let context = g:deoplete#_context
-  if has_key(context, 'input')
+  let prev_input = g:deoplete#_prev_completion.input
+  if input ==# prev_input
         \ && a:event !=# 'Manual'
         \ && a:event !=# 'Async'
         \ && a:event !=# 'TextChangedP'
-        \ && input ==# context.input
+    return 1
+  endif
+  if a:event ==# 'Async' && prev_input !=# '' && input !=# prev_input
     return 1
   endif
 
@@ -312,6 +321,7 @@ function! deoplete#handler#_skip_next_completion() abort
   if input !~# '[/.]$'
     let g:deoplete#_context.input = input
   endif
+  call deoplete#mapping#_restore_completeopt()
   call deoplete#init#_prev_completion()
 endfunction
 
