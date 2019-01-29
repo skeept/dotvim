@@ -26,6 +26,8 @@ call neosnippet#util#set_default(
       \ 'g:neosnippet#enable_optional_arguments', 1)
 call neosnippet#util#set_default(
       \ 'g:neosnippet#enable_auto_clear_markers', 1)
+call neosnippet#util#set_default(
+      \ 'g:neosnippet#enable_complete_done', 0)
 
 function! neosnippet#expandable_or_jumpable() abort
   return neosnippet#mappings#expandable_or_jumpable()
@@ -66,6 +68,9 @@ function! neosnippet#get_placeholder_marker_pattern() abort
 endfunction
 function! neosnippet#get_placeholder_marker_substitute_pattern() abort
   return '\%(\\\@<!\|\\\\\zs\)\${\(\d\+\%(:\%(\${VISUAL\%(:.\{-}\)\?}\)\?.\{-}\)\?\\\@<!\)}'
+endfunction
+function! neosnippet#get_placeholder_marker_substitute_zero_pattern() abort
+  return '\%(\\\@<!\|\\\\\zs\)\$\(0\)'
 endfunction
 function! neosnippet#get_placeholder_marker_substitute_nonzero_pattern() abort
   return '\%(\\\@<!\|\\\\\zs\)\${\([1-9]\d*\%(:\%(\${VISUAL\%(:.\{-}\)\?}\)\?.\{-}\)\?\\\@<!\)}'
