@@ -599,6 +599,9 @@ It is deactivated by default if |airline-bufferline| is activated.
 * enable/disable bufferline integration >
   let g:airline#extensions#fugitiveline#enabled = 1
 <
+If enabled, the buffer that comes from fugitive, will have added a trailing
+"[git]" to be able do distinguish between fugitive and non-fugitive buffers.
+
 -------------------------------------                     *airline-grepper*
 vim-grepper <https://github.com/mhinz/vim-grepper>
 
@@ -809,6 +812,13 @@ with the middle mouse button to delete that buffer.
 
   Note: last option can be used to specify a different formatter for
   displaying the numbers. By default tabline/formatter/tabnr.vim is used
+  The argument of that setting should either be a filename that exists 
+  autoload/airline/extensions/tabline/formatter/ (without .vim extension)
+  and needs to provide a format() function. Alternatively you can use a
+  custom function name, that is defined e.g. in your .vimrc file. In any
+  case, the function needs to take 2 arguments, tab_nr_type and tabpage
+  number.
+  For an example, have a look at the default tabline/formatter/tabnr.vim
 <
 * enable/disable displaying tab number in tabs mode. >
   let g:airline#extensions#tabline#show_tab_nr = 1

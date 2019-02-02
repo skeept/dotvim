@@ -120,6 +120,8 @@ class Deoplete(logger.LoggingMixin):
         self._vim.call('deoplete#handler#_do_complete')
 
     def on_event(self, user_context):
+        self._vim.call('deoplete#custom#_update_cache')
+
         if not self._context:
             self.init_context()
         else:
@@ -212,8 +214,6 @@ class Deoplete(logger.LoggingMixin):
 
         sources = (
             os.path.join('rplugin', 'python3', 'deoplete',
-                         source, 'base.py'),
-            os.path.join('rplugin', 'python3', 'deoplete',
                          source, '*.py'),
             os.path.join('rplugin', 'python3', 'deoplete',
                          source + 's', '*.py'),
@@ -230,7 +230,8 @@ class Deoplete(logger.LoggingMixin):
             self._add_parent(deoplete.parent.SyncParent)
 
         for path in self._find_rplugins('source'):
-            if path in self._loaded_paths:
+            if (path in self._loaded_paths
+                    or os.path.basename(path) == 'base.py'):
                 continue
             self._loaded_paths.add(path)
 
