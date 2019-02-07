@@ -550,6 +550,11 @@ function! s:filter_oldfiles(path_prefix, path_format, use_env) abort
       break
     endif
 
+    if s:is_in_skiplist(fname)
+      " https://github.com/mhinz/vim-startify/issues/353
+      continue
+    endif
+
     let absolute_path = fnamemodify(resolve(fname), ":p")
     " filter duplicates, bookmarks and entries from the skiplist
     if has_key(entries, absolute_path)
@@ -586,7 +591,7 @@ function! s:filter_oldfiles(path_prefix, path_format, use_env) abort
   endif
 
   return oldfiles
-endfun
+endfunction
 
 " Function: s:filter_oldfiles_unsafe {{{1
 function! s:filter_oldfiles_unsafe(path_prefix, path_format, use_env) abort
@@ -599,6 +604,11 @@ function! s:filter_oldfiles_unsafe(path_prefix, path_format, use_env) abort
   for fname in v:oldfiles
     if counter <= 0
       break
+    endif
+
+    if s:is_in_skiplist(fname)
+      " https://github.com/mhinz/vim-startify/issues/353
+      continue
     endif
 
     let absolute_path = glob(fnamemodify(fname, ":p"))
@@ -617,7 +627,7 @@ function! s:filter_oldfiles_unsafe(path_prefix, path_format, use_env) abort
   endfor
 
   return oldfiles
-endfun
+endfunction
 
 " Function: s:show_dir {{{1
 function! s:show_dir() abort
