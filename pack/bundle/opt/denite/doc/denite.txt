@@ -89,7 +89,7 @@ Note: denite requires Neovim 0.3.0+ or Vim 8.0+ with |:python3| enabled.
 
 Note: You need to install Python3.5+.
 
-For neovim install:
+For neovim:
 
 1. Extract the files and put them in your Neovim directory
    (usually `$XDG_CONFIG_HOME/nvim/`).
@@ -97,7 +97,7 @@ For neovim install:
 
 If ":echo has('python3')" returns `1`, then you're done; otherwise, see below.
 
-You can enable Python3 interface with pip: >
+You can enable Python3 interface with pip >
 
     pip3 install --user pynvim
 
@@ -111,6 +111,10 @@ command.
 For Vim8.0+:
 
 Use |:python3| enabled Vim.
+
+You must install "pynvim" module with pip >
+
+    pip3 install --user pynvim
 
 ==============================================================================
 EXAMPLES						*denite-examples*
@@ -1233,12 +1237,22 @@ OPTIONS							*denite-options*
 		"quit": quit the denite buffer.
 		"open": open the denite buffer.
 		"suspend": suspend the denite buffer.
-		Otherwise: Nothing.
+		Otherwise: nothing.
 
 		Default: "none"
 
+						*denite-option-quick-move*
+-quick-move={action}
+		It runs |denite-map-quick_move| automatically.
+
+		"immediately": runs the default action immediately
+		Empty string : nothing.
+		Otherwise: move to the position.
+
+		Default: ""
+
 					*denite-option-quick-move-table*
--quick-move
+-quick-move-table
 
 		The table of completion candidates of quick move list,
 		corresponding the narrowing text.
@@ -1254,7 +1268,6 @@ OPTIONS							*denite-options*
         		\   '1' : 20, '2' : 21, '3' : 22, '4' : 23, '5' : 24,
         		\   '6' : 25, '7' : 26, '8' : 27, '9' : 28, '0' : 29,
         		\ }
-<
 						*denite-option-refresh*
 -refresh
 		Refresh the candidates when |denite-option-resume| is true.
@@ -2345,6 +2358,9 @@ https://github.com/raghur/fruzzy
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*
+
+2019.02.11
+* Remove some deprecated options support.
 
 2018.10.20
 * Python 3.5+ is required.
