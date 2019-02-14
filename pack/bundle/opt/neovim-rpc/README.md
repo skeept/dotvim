@@ -26,17 +26,19 @@ open a PR if you get any idea on improving it**.
 2. Else if `has('pythonx')` and `set pyxversion=2`
     - same requirements as `5. has('python')`
 4. Else if `has('python3')`
-    - [neovim/python-client](https://github.com/neovim/python-client). (`pip3
-        install pynvim`). There should be no error when you execute `:python3
-        import pynvim`
+    - [pynvim](https://github.com/neovim/pynvim)
+    - Pynvim is normally installed by `:py3 import pip; pip.main(['install',
+        '--user', 'pynvim'])` or `python3 -m pip install pynvim`.
+    - There should be no error when you execute `:python3 import pynvim`
 5. Else if `has('python')`
-    - [neovim/python-client](https://github.com/neovim/python-client). (`pip
-        install pynvim`). There should be no error when you execute `:python
-        import pynvim`
+    - [pynvim](https://github.com/neovim/pynvim)
+    - Pynvim is normally installed by `:py import pip; pip.main(['install',
+        '--user', 'pynvim'])` or `python2 -m pip install pynvim`.
+    - There should be no error when you execute `:python import pynvim`
 6. `set encoding=utf-8` in your vimrc.
 
 ***Use `:echo neovim_rpc#serveraddr()` to test the installation***. It should print
-something like `127.0.0.1:51359`.
+something like `127.0.0.1:51359` or `/tmp/vmrUX9X/2`.
 
 ## API
 
