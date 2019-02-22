@@ -206,6 +206,10 @@ Note: The following commands are only available within the NERDTree buffer.
 :ClearAllBookmarks
     Remove all bookmarks.
 
+:EditBookmarks
+    Opens the bookmarks file for manual editing, e.g. for removing invalid
+    bookmarks.
+
 :ReadBookmarks
     Re-read the bookmarks in the |NERDTreeBookmarksFile|.
 
@@ -218,13 +222,14 @@ If invalid bookmarks are detected, the script will issue an error message and
 the invalid bookmarks will become unavailable for use.
 
 These bookmarks will still be stored in the bookmarks file (see
-|NERDTreeBookmarksFile|), down the bottom. There will always be a blank line
+|NERDTreeBookmarksFile|), down at the bottom. There will always be a blank line
 after the valid bookmarks but before the invalid ones.
 
 Each line in the bookmarks file represents one bookmark. The proper format is:
 <bookmark name><space><full path to the bookmark location>
 
-After you have corrected any invalid bookmarks, either restart vim, or go
+You can use the :EditBookmarks command to open the bookmarks file for editing.
+After you have corrected any invalid bookmarks, either restart vim, or run
 :ReadBookmarks from the NERD tree window.
 
 ------------------------------------------------------------------------------
@@ -677,7 +682,8 @@ the NERD tree. These settings should be set in your vimrc, using `:let`.
 
 |NERDTreeMouseMode|           Manage the interpretation of mouse clicks.
 
-|NERDTreeQuitOnOpen|          Closes the tree window after opening a file.
+|NERDTreeQuitOnOpen|          Closes the tree window or bookmark table after
+                            opening a file.
 
 |NERDTreeShowBookmarks|       Tells the NERD tree whether to display the
                             bookmarks table on startup.
@@ -954,11 +960,19 @@ then (to single click activate it) you must click somewhere in
 ------------------------------------------------------------------------------
                                                             *NERDTreeQuitOnOpen*
 
-Values: 0 or 1.
+Values: 0,1,2 or 3.
 Default: 0
 
-If set to 1, the NERD tree window will close after opening a file with the
-|NERDTree-o|, |NERDTree-i|, |NERDTree-t| and |NERDTree-T| mappings.
+This setting governs whether the NERDTree window or the bookmarks table closes
+after opening a file with the |NERDTree-o|, |NERDTree-i|, |NERDTree-t| and
+|NERDTree-T| mappings.
+
+ Value  | NERDTree Window Behavior
+ -------+-------------------------------------------------------
+ 0      | No change
+ 1      | Closes after opening a file
+ 2      | Closes the bookmark table after opening a bookmark
+ 3(1+2) | Same as both 1 and 2
 
 ------------------------------------------------------------------------------
                                                          *NERDTreeShowBookmarks*
