@@ -1513,8 +1513,8 @@ function! fugitive#BufReadStatus() abort
     endif
 
     let b:fugitive_diff = {
-          \ 'Staged': split(system(fugitive#Prepare('diff', '--no-ext-diff', '--no-prefix', '--cached')), "\n"),
-          \ 'Unstaged': split(system(fugitive#Prepare('diff', '--no-ext-diff', '--no-prefix')), "\n")}
+          \ 'Staged': split(system(fugitive#Prepare('diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached')), "\n"),
+          \ 'Unstaged': split(system(fugitive#Prepare('diff', '--color=never', '--no-ext-diff', '--no-prefix')), "\n")}
     let expanded = get(b:, 'fugitive_expanded', {'Staged': {}, 'Unstaged': {}})
     let b:fugitive_expanded = {'Staged': {}, 'Unstaged': {}}
 
@@ -1553,8 +1553,8 @@ function! fugitive#BufReadStatus() abort
     exe "nnoremap <buffer> <silent>" nowait "u :<C-U>execute <SID>Do('Unstage',0)<CR>"
     exe "xnoremap <buffer> <silent>" nowait "u :<C-U>execute <SID>Do('Unstage',1)<CR>"
     nnoremap <buffer> <silent> C :<C-U>Gcommit<CR>:echohl WarningMsg<Bar>echo ':Gstatus C is deprecated in favor of cc'<Bar>echohl NONE<CR>
-    nnoremap <buffer> <silent> a :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>
-    nnoremap <buffer> <silent> i :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>
+    nnoremap <buffer> <silent> a :<C-U>execute <SID>StatusDo('Toggle',0)<CR>
+    nnoremap <buffer> <silent> i :<C-U>execute <SID>StageIntend(v:count1)<CR>
     exe 'nnoremap <buffer> <silent>' nowait "= :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>"
     exe 'nnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>"
     exe 'nnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>"
@@ -2052,8 +2052,10 @@ augroup fugitive_status
   autocmd!
   autocmd ShellCmdPost         * call s:AutoReloadStatus()
   autocmd QuickFixCmdPost c*file call s:AutoReloadStatus()
-  autocmd FocusGained          * call s:AutoReloadStatus()
   autocmd BufDelete     term://* call s:AutoReloadStatus()
+  if !has('win32')
+    autocmd FocusGained        * call s:AutoReloadStatus()
+  endif
 augroup END
 
 function! s:StageInfo(...) abort
@@ -2357,6 +2359,23 @@ function! s:StageInline(mode, ...) abort
     endif
   endwhile
   return lnum
+endfunction
+
+function! s:StageIntend(count) abort
+  for i in range(a:count)
+    if getline('.')[0:1] ==# '? '
+      call s:TreeChomp('add', '--intent-to-add', '--', s:Tree() . '/' . getline('.')[2:-1])
+      -
+      exe s:ReloadStatus()
+    elseif getline('.') =~# '^Unstaged'
+      call s:TreeChomp('add', '--intent-to-add', '--', s:Tree())
+      exe s:ReloadStatus()
+    else
+      call s:StageInline('show', line('.'), 1)
+    endif
+    call s:StageNext(1)
+  endfor
+  return '.'
 endfunction
 
 function! s:StageDiff(diff) abort
@@ -3708,7 +3727,7 @@ function! s:Blame(bang, line1, line2, count, mods, args) abort
     if empty(s:Relative('/'))
       call s:throw('file or blob required')
     endif
-    if filter(copy(a:args),'v:val !~# "^\\%(--first-parent\\|--root\\|--show-name\\|-\\=\\%([ltfnsew]\\|[MC]\\d*\\)\\+\\)$"') != []
+    if filter(copy(a:args),'v:val !~# "^\\%(--relative-date\\|--first-parent\\|--root\\|--show-name\\|-\\=\\%([ltfnsew]\\|[MC]\\d*\\)\\+\\)$"') != []
       call s:throw('unsupported option')
     endif
     call map(a:args,'s:sub(v:val,"^\\ze[^-]","-")')
