@@ -626,7 +626,11 @@ function! fugitive#Path(url, ...) abort
     endwhile
     return a:1[0:-2] . path
   endif
-  let url = s:Slash(fnamemodify(a:url, ':p'))
+  let url = a:url
+  if has_key(get(s:temp_files, s:cpath(url), {}), 'bufnr')
+    let url = bufname(s:temp_files[s:cpath(url)].bufnr)
+  endif
+  let url = s:Slash(fnamemodify(url, ':p'))
   if url =~# '/$' && s:Slash(a:url) !~# '/$'
     let url = url[0:-2]
   endif
@@ -1553,7 +1557,7 @@ function! fugitive#BufReadStatus() abort
     exe "nnoremap <buffer> <silent>" nowait "u :<C-U>execute <SID>Do('Unstage',0)<CR>"
     exe "xnoremap <buffer> <silent>" nowait "u :<C-U>execute <SID>Do('Unstage',1)<CR>"
     nnoremap <buffer> <silent> C :<C-U>Gcommit<CR>:echohl WarningMsg<Bar>echo ':Gstatus C is deprecated in favor of cc'<Bar>echohl NONE<CR>
-    nnoremap <buffer> <silent> a :<C-U>execute <SID>StatusDo('Toggle',0)<CR>
+    nnoremap <buffer> <silent> a :<C-U>execute <SID>Do('Toggle',0)<CR>
     nnoremap <buffer> <silent> i :<C-U>execute <SID>StageIntend(v:count1)<CR>
     exe 'nnoremap <buffer> <silent>' nowait "= :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>"
     exe 'nnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>"
