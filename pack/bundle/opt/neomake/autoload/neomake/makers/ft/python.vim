@@ -126,8 +126,20 @@ function! neomake#makers#ft#python#flake8() abort
         \ }
 
     function! maker.supports_stdin(jobinfo) abort
-        let self.args += ['--stdin-display-name', '%:.']
-        call a:jobinfo.cd('%:h')
+        let self.args += ['--stdin-display-name', '%:p']
+
+        let bufpath = bufname(a:jobinfo.bufnr)
+        if !empty(bufpath)
+            let bufdir = fnamemodify(bufpath, ':p:h')
+            if stridx(bufdir, getcwd()) != 0
+                " The buffer is not below the current dir, so let's cd for lookup
+                " of config files etc.
+                " This avoids running into issues with flake8's per-file-ignores,
+                " which is handled not relative to the config file currently
+                " (https://gitlab.com/pycqa/flake8/issues/517).
+                call a:jobinfo.cd(bufdir)
+            endif
+        endif
         return 1
     endfunction
     return maker
@@ -246,7 +258,12 @@ function! neomake#makers#ft#python#Flake8EntryProcess(entry) abort
 
     let a:entry.text = a:entry.type . a:entry.nr . ' ' . a:entry.text
     let a:entry.type = type
-    let a:entry.nr = ''  " Avoid redundancy in the displayed error message.
+    " Reset "nr" to Avoid redundancy with neomake#GetCurrentErrorMsg.
+    " TODO: This is rather bad, since "nr" itself can be useful.
+    "       This should rather use the entry via Neomake's list, and then a
+    "       new property like "current_error_text" could be used.
+    "       Or with the maker being available a callback could be used.
+    let a:entry.nr = -1
 endfunction
 
 function! neomake#makers#ft#python#pyflakes() abort
