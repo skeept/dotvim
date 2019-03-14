@@ -513,7 +513,7 @@ endif
 
 "================== neocomplete ============================================={{{
 let g:load_neocomplete = (!exists('g:load_neocomplete') ||  g:load_neocomplete == 1) &&
-      \ (g:is_vimrc_simple == 0 || GetIsAddonActive('neocomplete'))
+      \ (GetIsAddonActive('neocomplete'))
 if g:load_neocomplete
   function! SetupNeocomplete()
     let g:neocomplete#enable_at_startup = 1
@@ -549,7 +549,7 @@ if g:load_neocomplete
       "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
     endfunction
     " <TAB>: completion.
-    inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+    "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
     " <C-h>, <BS>: close popup and delete backword char.
     inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
     inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
@@ -649,7 +649,8 @@ let g:gundo_prefer_python3 = 1
 "================== Snippets / UltiSnips ======================================{{{
 "1 UltiSnips, 2 neosnippet
 let s:ulti_or_neosnip_default = 1
-let s:ulti_or_neosnip = has("python3") ? s:ulti_or_neosnip_default : 2
+let s:ulti_or_neosnip = (has("python3") && GetIsAddonActive('UltiSnips'))
+      \ ? s:ulti_or_neosnip_default : 2
 
 if s:ulti_or_neosnip == 1
   let g:UltiSnipsExpandTrigger = "<F10>"
@@ -674,8 +675,8 @@ endif
 
 "================== NeoSnippet ================================================{{{
 if s:ulti_or_neosnip == 2
-  packadd! neosnippet
-  packadd! neosnippet-snippets
+  VAMAddToActiveAddons neosnippet
+  VAMAddToActiveAddons neosnippet-snippets
   call jraf#LoadNeoSnipppet()
 endif
 "==============================================================================}}}
