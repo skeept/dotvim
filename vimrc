@@ -68,8 +68,8 @@ function! SetupVAM()
 
   VAMAddToActiveAddons ctrlp
 
-  "VAMAddToActiveAddons neocomplete
-  VAMAddToActiveAddons asyncomplete
+  VAMAddToActiveAddons neocomplete
+  "VAMAddToActiveAddons asyncomplete
 
   "VAMAddToActiveAddons startify
   VAMAddToActiveAddons fzf fzf-vim
