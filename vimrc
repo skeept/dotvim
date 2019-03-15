@@ -67,7 +67,10 @@ function! SetupVAM()
         \ ]
 
   VAMAddToActiveAddons ctrlp
+
   VAMAddToActiveAddons neocomplete
+  "VAMAddToActiveAddons asyncomplete
+
   "VAMAddToActiveAddons startify
   VAMAddToActiveAddons fzf fzf-vim
   "VAMAddToActiveAddons argumentative projectionist
@@ -141,7 +144,15 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user textobj-matchit
   VAMAddToActiveAddons gina
   VAMAddToActiveAddons peekaboo
-  VAMAddToActiveAddons TaskList Supertab
+  VAMAddToActiveAddons TaskList
+  VAMAddToActiveAddons Supertab
+  "VAMAddToActiveAddons Mucomplete
+
+  VAMAddToActiveAddons asyncomplete-buffer
+  VAMAddToActiveAddons asyncomplete-file
+  VAMAddToActiveAddons asyncomplete-neosnippet
+  VAMAddToActiveAddons asyncomplete-omni
+
   VAMAddToActiveAddons delimitMate CountJump
   VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
   VAMAddToActiveAddons unite-session neomru
@@ -150,7 +161,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons which-key
 
   if has("python3")
-    VAMAddToActiveAddons UltiSnips
+    "VAMAddToActiveAddons UltiSnips
     VAMAddToActiveAddons denite
   endif
 

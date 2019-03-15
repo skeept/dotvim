@@ -136,3 +136,69 @@ if exists('g:loaded_gina') && g:loaded_gina
         \)
 endif
 "==============================================================================}}}
+
+"================== Mucomplete ================================================{{{
+if GetIsAddonActive('Mucomplete')
+	let g:mucomplete#chains = {}
+	let g:mucomplete#chains.default = ['path', 'nsnp', 'keyn']
+        let g:mucomplete#enable_auto_at_startup = 1
+        set completeopt+=noselect
+
+        if GetIsAddonActive('neosnippet')
+          inoremap <silent> <expr> <plug><MyCR>
+              \ mucomplete#neosnippet#expand_snippet("\<cr>")
+          imap <F10> <plug><MyCR>
+        endif
+        imap <F11> <plug>(MUcompleteCR)
+endif
+"==============================================================================}}}
+
+"================== asyncomplete =============================================={{{
+function! SetupAsyncomplete()
+  if !GetIsAddonActive('asyncomplete')
+    return
+  endif
+
+  let g:asyncomplete_remove_duplicates = 1
+
+
+  if GetIsAddonActive('asyncomplete-buffer')
+    call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
+          \ 'name': 'buffer',
+          \ 'whitelist': ['*'],
+          \ 'blacklist': ['go'],
+          \ 'completor': function('asyncomplete#sources#buffer#completor'),
+          \ }))
+  endif
+
+  if GetIsAddonActive('asyncomplete-omni')
+    call asyncomplete#register_source(asyncomplete#sources#omni#get_source_options({
+          \ 'name': 'omni',
+          \ 'whitelist': ['*'],
+          \ 'blacklist': ['c', 'cpp', 'html'],
+          \ 'completor': function('asyncomplete#sources#omni#completor')
+          \  }))
+  endif
+
+  if GetIsAddonActive('asyncomplete-file')
+    "au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
+    call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
+          \ 'name': 'file',
+          \ 'whitelist': ['*'],
+          \ 'priority': 10,
+          \ 'completor': function('asyncomplete#sources#file#completor')
+          \ }))
+  endif
+
+  if GetIsAddonActive('asyncomplete-neosnippet')
+    call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
+          \ 'name': 'neosnippet',
+          \ 'whitelist': ['*'],
+          \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
+          \ }))
+  endif
+endfunction
+
+" for now call it here, may call it somewhere else
+call SetupAsyncomplete()
+"==============================================================================}}}
