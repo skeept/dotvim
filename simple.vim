@@ -23,6 +23,7 @@ let g:is_win = has('win32') || has('win64')
 
 " decide on pathogen or vam (pathogen: 1, vam: 2)
 let g:addon_manager = 2
+let g:active_addons = []
 
 "================== vim-addon-manager========================================{{{
 if g:addon_manager == 2
@@ -32,7 +33,7 @@ function! SetupVAM()
   exec 'set rtp+='.vam_install_path.'/vam'
   " let g:vim_addon_manager = { your config here see "commented version" example and help
 
-  let g:active_addons = ['Supertab', 'nerdcommenter']
+  let g:active_addons += ['Supertab', 'nerdcommenter']
 
   let g:vim_addon_manager.additional_addon_dirs = [
         \ escape(g:p0 . '/notused_plugins', ' \'),
@@ -46,16 +47,6 @@ function! SetupVAM()
 endfunction
 call SetupVAM()
 endif
-"==============================================================================}}}
-
-"================== GetIsAddonActive =========================================={{{
-function! GetIsAddonActive(addon)
-  if g:addon_manager == 1 "Pathogen"
-    return index(g:pathogen_disabled, a:addon) == -1
-  else "vam-addon-manager
-    return index(g:active_addons, a:addon) >= 0
-  endif
-endfunction
 "==============================================================================}}}
 
 "this is where all vimrc and simple settings go

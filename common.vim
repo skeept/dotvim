@@ -2,6 +2,7 @@
 
 " use this to replace VAMAddToActiveAddons
 command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons += ['<args>'] 
+
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 
@@ -218,6 +219,19 @@ nnoremap ,ga :<C-U>Gina add %
 
 nnoremap <Leader>Q :BD!<CR>
 nnoremap g/ /\<\><Left><Left>
+"==============================================================================}}}
+
+"================== GetIsAddonActive =========================================={{{
+function! GetIsAddonActive(addon)
+  if !exists("g:addon_manager") || g:addon_manager == 0 "how can we know?
+    return 0
+  endif
+  if g:addon_manager == 1 "Pathogen"
+    return index(g:pathogen_disabled, a:addon) == -1
+  else "vam-addon-manager
+    return index(g:active_addons, a:addon) >= 0
+  endif
+endfunction
 "==============================================================================}}}
 
 "================== redir ====================================================={{{
