@@ -1,5 +1,7 @@
 " common settings and functions to both vimrc and simple.vim
 
+" use this to replace VAMAddToActiveAddons
+command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons += ['<args>'] 
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 
@@ -675,8 +677,8 @@ endif
 
 "================== NeoSnippet ================================================{{{
 if s:ulti_or_neosnip == 2
-  VAMAddToActiveAddons neosnippet
-  VAMAddToActiveAddons neosnippet-snippets
+  PackAddRegister neosnippet
+  PackAddRegister neosnippet-snippets
   call jraf#LoadNeoSnipppet()
 endif
 "==============================================================================}}}
