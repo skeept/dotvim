@@ -420,9 +420,9 @@ function! s:compute_working_directory(flags) abort
         endif
       endif
       for repo in g:grepper.repo
-        let repopath = finddir(repo, '.;')
+        let repopath = finddir(repo, expand('%:p:h').';')
         if empty(repopath)
-          let repopath = findfile(repo, '.;')
+          let repopath = findfile(repo, expand('%:p:h').';')
         endif
         if !empty(repopath)
           let repopath = fnamemodify(repopath, ':h')
@@ -468,10 +468,6 @@ function! s:get_config() abort
   let flags = deepcopy(g:grepper)
   if exists('b:grepper')
     let flags = s:merge_configs(b:grepper, g:grepper)
-  endif
-  if !empty(flags.tools) && flags.tools[0] == 'git'
-        \ && empty(finddir('.git', '.;'))
-    call remove(flags.tools, 0)
   endif
   return flags
 endfunction
@@ -623,6 +619,11 @@ endfunction
 " s:start() {{{1
 function! s:start(flags) abort
   let s:prompt_op = ''
+
+  if !empty(g:grepper.tools) && a:flags.tools[0] == 'git'
+        \ && empty(finddir('.git', expand('%:p:h').';'))
+    call remove(a:flags.tools, 0)
+  endif
 
   if empty(g:grepper.tools)
     call s:error('No grep tool found!')
