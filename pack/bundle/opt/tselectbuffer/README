@@ -47,9 +47,8 @@ Also available via git: http://github.com/tomtom/tselectbuffer_vim/
 
 
 Dependencies:
-  tlib (>= 1.14) :: http://github.com/tomtom/tlib_vim
+  tlib (>= 1.27) :: http://github.com/tomtom/tlib_vim
 
 License: GPLv3 or later
-Install: See http://github.com/tomtom/vimtlib/blob/master/INSTALL.TXT
-See http://github.com/tomtom for related plugins.
+
 
