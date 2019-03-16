@@ -413,10 +413,10 @@ function! s:compute_working_directory(flags) abort
   for dir in split(a:flags.dir, ',')
     if dir == 'repo'
       if s:get_current_tool_name(a:flags) == 'git'
-        let dir = system(printf('git -C %s rev-parse --show-toplevel',
-              \ expand('%:p:h')))
+        let dir = systemlist(printf('git -C %s rev-parse --show-toplevel',
+              \ shellescape(expand('%:p:h'))))
         if !v:shell_error
-          return dir
+          return dir[0]
         endif
       endif
       for repo in g:grepper.repo
@@ -569,6 +569,15 @@ function! s:process_flags(flags)
     return 1
   endif
 
+  let s:tmp_work_dir = s:compute_working_directory(a:flags)
+  if s:get_current_tool_name(a:flags) ==# 'git' && empty(finddir('.git', s:tmp_work_dir.';'))
+    call remove(a:flags.tools, 0)
+    if empty(a:flags.tools)
+      call s:error('Using git outside of repo and no other tool to switch to. Try ":Grepper -dir repo,file" instead.')
+      return 1
+    endif
+  endif
+
   if a:flags.buffer
     let a:flags.buflist = [fnamemodify(bufname(''), ':p')]
     if !filereadable(a:flags.buflist[0])
@@ -619,11 +628,6 @@ endfunction
 " s:start() {{{1
 function! s:start(flags) abort
   let s:prompt_op = ''
-
-  if !empty(g:grepper.tools) && a:flags.tools[0] == 'git'
-        \ && empty(finddir('.git', expand('%:p:h').';'))
-    call remove(a:flags.tools, 0)
-  endif
 
   if empty(g:grepper.tools)
     call s:error('No grep tool found!')
@@ -777,8 +781,7 @@ function! s:run(flags)
     call setloclist(0, [])
   endif
 
-  let work_dir  = s:compute_working_directory(a:flags)
-  let orig_dir  = s:chdir_push(work_dir)
+  let orig_dir  = s:chdir_push(s:tmp_work_dir)
   let s:cmdline = s:build_cmdline(a:flags)
 
   " 'cmd' and 'options' are only used for async execution.
@@ -790,7 +793,7 @@ function! s:run(flags)
 
   let options = {
         \ 'cmd':       s:cmdline,
-        \ 'work_dir':  work_dir,
+        \ 'work_dir':  s:tmp_work_dir,
         \ 'flags':     a:flags,
         \ 'addexpr':   a:flags.quickfix ? 'caddexpr' : 'laddexpr',
         \ 'window':    winnr(),

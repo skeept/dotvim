@@ -276,12 +276,9 @@ class Default(object):
         return direction
 
     def _get_wininfo(self):
-        wininfo = self._vim.call('denite#helper#_get_wininfo')
         return [
             self._vim.options['columns'], self._vim.options['lines'],
-            self._vim.call('tabpagebuflist'),
-            wininfo['bufnr'], wininfo['winnr'],
-            wininfo['winid'], wininfo['tabnr'],
+            self._vim.call('winnr', '$'), self._vim.call('win_getid'),
         ]
 
     def _switch_prev_buffer(self):
@@ -1037,9 +1034,10 @@ class Default(object):
                 self._vim.command('autocmd denite WinEnter <buffer> ' +
                                   'Denite -resume -buffer_name=' +
                                   self._context['buffer_name'])
-            self._vim.command('nnoremap <silent><buffer> <CR> ' +
-                              ':<C-u>Denite -resume -buffer_name=' +
-                              self._context['buffer_name'] + '<CR>')
+            for mapping in ['i', 'a', '<CR>']:
+                self._vim.command(f'nnoremap <silent><buffer> {mapping} ' +
+                                  ':<C-u>Denite -resume -buffer_name=' +
+                                  f"{self._context['buffer_name']}<CR>")
         self._is_suspend = True
         self._options['modifiable'] = False
         return STATUS_ACCEPT

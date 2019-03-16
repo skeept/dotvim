@@ -1,9 +1,14 @@
 " @Author:      Tom Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" @Revision:    56
+" @Revision:    59
 
 " call tlog#Log('Load: '. expand('<sfile>')) " vimtlib-sfile
+
+if !exists('loaded_tlib') || loaded_tlib < 127
+    echoerr 'tlib >= 1.27 is required'
+    finish
+endif
 
 
 function! s:SNR() abort
@@ -160,7 +165,7 @@ endf
 
 
 function! s:AgentOpenBufferInWindow(world, selected) abort
-    return tlib#agent#EditFileInWindow(a:world, s:GetBufferNames(a:selected))
+    return tlib#agent#ViewBufferInWindow(a:world, s:GetBufferNames(a:selected))
 endf
 
 
