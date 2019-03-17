@@ -197,12 +197,12 @@ class Default(object):
                 # Use floating window
                 self._vim.call(
                     'nvim_open_win',
-                    self._vim.call('bufnr', '%'), True,
-                    int(self._context['winwidth']),
-                    int(self._context['winheight']), {
+                    self._vim.call('bufnr', '%'), True, {
                         'relative': 'editor',
                         'row': int(self._context['winrow']),
                         'col': int(self._context['wincol']),
+                        'width': int(self._context['winwidth']),
+                        'height': int(self._context['winheight']),
                     })
             elif split != 'no':
                 vertical = 'vertical' if split == 'vertical' else ''
@@ -278,7 +278,7 @@ class Default(object):
     def _get_wininfo(self):
         return [
             self._vim.options['columns'], self._vim.options['lines'],
-            self._vim.call('winnr', '$'), self._vim.call('win_getid'),
+            self._vim.call('win_getid'),
         ]
 
     def _switch_prev_buffer(self):
