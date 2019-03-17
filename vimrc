@@ -104,19 +104,6 @@ call SetupVAM()
 endif
 "==============================================================================}}}
 
-"================== GetIsAddonActive =========================================={{{
-function! GetIsAddonActive(addon)
-  if !exists("g:addon_manager") || g:addon_manager == 0 "how can we know?
-    return 0
-  endif
-  if g:addon_manager == 1 "Pathogen"
-    return index(g:pathogen_disabled, a:addon) == -1
-  else "vam-addon-manager
-    return index(g:active_addons, a:addon) >= 0
-  endif
-endfunction
-"==============================================================================}}}
-
 "
 " this is where all vimrc and simple settings go
 " should I just move it to plugins folder?
