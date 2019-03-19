@@ -226,6 +226,8 @@ function! jraf#LoadNeoSnipppet()
   imap <F12> <Plug>(neosnippet_start_unite_snippet)
   smap <F12> <Plug>(neosnippet_start_unite_snippet)
   xmap <F12> <Plug>(neosnippet_start_unite_snippet)
+
+  let g:neosnippet#snippets_directory = g:p0 . "/snippets/neo"
 endfunction
 "==============================================================================}}}
 
