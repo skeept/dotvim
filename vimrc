@@ -149,7 +149,7 @@ func! LoadPluginsWithTimer(timer)
 
   if has("python3")
     "VAMAddToActiveAddons UltiSnips
-    VAMAddToActiveAddons denite
+    VAMAddToActiveAddons denite neovim-rpc yarp
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
