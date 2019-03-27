@@ -53,12 +53,19 @@ endfunction
 function! wk#echoOrPrintTime()
   if v:count != 0
     let g:wk.echoOrPrintTimeSetting = v:count
+    let g:wk.echoOrPrintTimeRanOnce = 1 "user remembers setting
+  endif
+
+  "first time calling this function give a message how to change setting
+  if !exists('g:wk.echoOrPrintTimeRanOnce')
+    let g:wk.echoOrPrintTimeRanOnce = 1
+    echom 'prefix mapping 1: print 2: write'
   endif
 
   " We now adjust for time zone right here. Offset in Dallas is 6 or 7 hours
   let is_winter = 0 "Time changes in Dallas, need to adjust computation
   let hours_adjust = ($TZ == 'GMT0') ? 0 : (is_winter ? 7 : 6)
-  let time_display = strftime("%a, %d %b %Y %H:%M:%S %p", (expand("<cWORD>") + hours_adjust*3600))
+  let time_display = strftime("%a, %d %b %Y %H:%M:%S %p", (expand("<cword>") + hours_adjust*3600))
 
   if g:wk.echoOrPrintTimeSetting != 1
     " try writting text after current word

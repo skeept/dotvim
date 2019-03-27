@@ -130,7 +130,7 @@ func! LoadPluginsWithTimer(timer)
   VAMAddToActiveAddons ps1 fugitive
   VAMAddToActiveAddons textobj-entire textobj-python textobj-user textobj-matchit
   VAMAddToActiveAddons gina
-  VAMAddToActiveAddons peekaboo
+  "VAMAddToActiveAddons peekaboo
   VAMAddToActiveAddons TaskList
   VAMAddToActiveAddons Supertab
   "VAMAddToActiveAddons Mucomplete
