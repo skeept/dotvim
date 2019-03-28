@@ -112,11 +112,13 @@ perl files.
 <
   to your 'vimrc'. Default value is [].
 
-- To disable FastFold for files smaller than certain number of lines, add
+- FastFold is by default enabled for files that have more than a certain
+  number of lines, by default set to 200. To change this number, for example,
+  to enable FastFold independent of the number of lines of a file, add
 >
-` let g:fastfold_minlines`= 800
+` let g:fastfold_minlines`= 0
 <
-  to your 'vimrc'. Default value is 0 (enabled for all files).
+  to your 'vimrc'.
 
 - Add a fold text-object, mapped to `iz` and `az`, by adding the lines
 
@@ -131,7 +133,7 @@ perl files.
 
 `FastFold` integrates with the plug-in `vim-stay` available at
 
-https://github.com/kopischke/vim-stay
+https://github.com/zhimsel/vim-stay
 
 that stores and restores the last folds by `:mkview` and `:loadview`.
 
@@ -150,6 +152,10 @@ unless
 
 - FastFold is disabled for this filetype by `g:fastfold_skip_filetypes`, or
 - the `foldmethod=manual` since having entered the buffer.
+
+To ensure that sessions do not override the default fold method of the buffer
+file type (by the value `manual`), set `sessionoptions-=localoptions` in your
+`vimrc`. For a thorougher solution, install `vim-stay` discussed above.
 
 3.3 API ~
 
