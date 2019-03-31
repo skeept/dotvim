@@ -1371,7 +1371,7 @@ class TestGoFZF < TestBase
   end
 
   def test_preview_hidden
-    tmux.send_keys %(seq 1000 | #{FZF} --preview 'echo {{}-{}-\\$LINES-\\$COLUMNS}' --preview-window down:1:hidden --bind ?:toggle-preview), :Enter
+    tmux.send_keys %(seq 1000 | #{FZF} --preview 'echo {{}-{}-\\$FZF_PREVIEW_LINES-\\$FZF_PREVIEW_COLUMNS}' --preview-window down:1:hidden --bind ?:toggle-preview), :Enter
     tmux.until { |lines| lines[-1] == '>' }
     tmux.send_keys '?'
     tmux.until { |lines| lines[-2] =~ / {1-1-1-[0-9]+}/ }
@@ -1400,21 +1400,21 @@ class TestGoFZF < TestBase
 
   def test_preview_flags
     tmux.send_keys %(seq 10 | sed 's/^/:: /; s/$/  /' |
-        #{FZF} --multi --preview 'echo {{2}/{s2}/{+2}/{+s2}/{q}}'), :Enter
-    tmux.until { |lines| lines[1].include?('{1/1  /1/1  /}') }
+        #{FZF} --multi --preview 'echo {{2}/{s2}/{+2}/{+s2}/{q}/{n}/{+n}}'), :Enter
+    tmux.until { |lines| lines[1].include?('{1/1  /1/1  //0/0}') }
     tmux.send_keys '123'
-    tmux.until { |lines| lines[1].include?('{////123}') }
+    tmux.until { |lines| lines[1].include?('{////123//}') }
     tmux.send_keys 'C-u', '1'
     tmux.until { |lines| lines.match_count == 2 }
-    tmux.until { |lines| lines[1].include?('{1/1  /1/1  /1}') }
+    tmux.until { |lines| lines[1].include?('{1/1  /1/1  /1/0/0}') }
     tmux.send_keys :BTab
-    tmux.until { |lines| lines[1].include?('{10/10  /1/1  /1}') }
+    tmux.until { |lines| lines[1].include?('{10/10  /1/1  /1/9/0}') }
     tmux.send_keys :BTab
-    tmux.until { |lines| lines[1].include?('{10/10  /1 10/1   10  /1}') }
+    tmux.until { |lines| lines[1].include?('{10/10  /1 10/1   10  /1/9/0 9}') }
     tmux.send_keys '2'
-    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /12}') }
+    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /12//0 9}') }
     tmux.send_keys '3'
-    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /123}') }
+    tmux.until { |lines| lines[1].include?('{//1 10/1   10  /123//0 9}') }
   end
 
   def test_preview_q_no_match

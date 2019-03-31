@@ -171,3 +171,12 @@ func (chars *Chars) CopyRunes(dest []rune) {
 	}
 	return
 }
+
+func (chars *Chars) Prepend(prefix string) {
+	if runes := chars.optionalRunes(); runes != nil {
+		runes = append([]rune(prefix), runes...)
+		chars.slice = *(*[]byte)(unsafe.Pointer(&runes))
+	} else {
+		chars.slice = append([]byte(prefix), chars.slice...)
+	}
+}

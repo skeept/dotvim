@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ..
-.TH fzf 1 "Oct 2018" "fzf 0.17.5" "fzf - a command-line fuzzy finder"
+.TH fzf 1 "Mar 2019" "fzf 0.18.0" "fzf - a command-line fuzzy finder"
 
 .SH NAME
 fzf - a command-line fuzzy finder
@@ -174,6 +174,11 @@ A synonym for \fB--layout=reverse\fB
 .TP
 .B "--border"
 Draw border above and below the finder
+
+.TP
+.B "--no-unicode"
+Use ASCII characters instead of Unicode box drawing characters to draw border
+
 .TP
 .BI "--margin=" MARGIN
 Comma-separated expression for margins around the finder.
@@ -250,6 +255,7 @@ e.g. \fBfzf --color=bg+:24\fR
     \fBhl      \fRHighlighted substrings
     \fBfg+     \fRText (current line)
     \fBbg+     \fRBackground (current line)
+    \fBgutter  \fRGutter on the left (defaults to \fBbg+\fR)
     \fBhl+     \fRHighlighted substrings (current line)
     \fBinfo    \fRInfo
     \fBborder  \fRBorder of the preview window and horizontal separators (\fB--border\fR)
@@ -288,8 +294,11 @@ EXPRESSION\fR for the details).
 e.g. \fBfzf --preview='head -$LINES {}'\fR
      \fBls -l | fzf --preview="echo user={3} when={-4..-2}; cat {-1}" --header-lines=1\fR
 
-fzf overrides \fB$LINES\fR and \fB$COLUMNS\fR so that they represent the exact
-size of the preview window.
+fzf exports \fB$FZF_PREVIEW_LINES\fR and \fB$FZF_PREVIEW_COLUMNS\fR so that
+they represent the exact size of the preview window. (It also overrides
+\fB$LINES\fR and \fB$COLUMNS\fR with the same values but they can be reset
+by the default shell, so prefer to refer to the ones with \fBFZF_PREVIEW_\fR
+prefix.)
 
 A placeholder expression starting with \fB+\fR flag will be replaced to the
 space-separated list of the selected lines (or the current line if no selection
@@ -301,7 +310,9 @@ e.g. \fBfzf --multi --preview='head -10 {+}'\fR
 When using a field index expression, leading and trailing whitespace is stripped
 from the replacement string. To preserve the whitespace, use the \fBs\fR flag.
 
-Also, \fB{q}\fR is replaced to the current query string.
+Also, \fB{q}\fR is replaced to the current query string, and \fB{n}\fR is
+replaced to zero-based ordinal index of the line. Use \fB{+n}\fR if you want
+all index numbers when multiple lines are selected.
 
 Note that you can escape a placeholder pattern by prepending a backslash.
 

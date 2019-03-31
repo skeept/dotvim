@@ -195,6 +195,7 @@ type Options struct {
 	HeaderLines int
 	Margin      [4]sizeSpec
 	Bordered    bool
+	Unicode     bool
 	Tabstop     int
 	ClearOnExit bool
 	Version     bool
@@ -244,6 +245,7 @@ func defaultOptions() *Options {
 		Header:      make([]string, 0),
 		HeaderLines: 0,
 		Margin:      defaultMargin(),
+		Unicode:     true,
 		Tabstop:     8,
 		ClearOnExit: true,
 		Version:     false}
@@ -576,6 +578,8 @@ func parseTheme(defaultTheme *tui.ColorTheme, str string) *tui.ColorTheme {
 				theme.Current = ansi
 			case "bg+":
 				theme.DarkBg = ansi
+			case "gutter":
+				theme.Gutter = ansi
 			case "hl":
 				theme.Match = ansi
 			case "hl+":
@@ -1150,6 +1154,10 @@ func parseOptions(opts *Options, allArgs []string) {
 			opts.Bordered = false
 		case "--border":
 			opts.Bordered = true
+		case "--no-unicode":
+			opts.Unicode = false
+		case "--unicode":
+			opts.Unicode = true
 		case "--margin":
 			opts.Margin = parseMargin(
 				nextString(allArgs, &i, "margin required (TRBL / TB,RL / T,RL,B / T,R,B,L)"))
