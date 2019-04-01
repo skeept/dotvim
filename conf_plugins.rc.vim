@@ -84,6 +84,10 @@ if exists('g:loaded_gina') && g:loaded_gina
         \ '/\%(log\|reflog\)',
         \ '--opener', 'vsplit'
         \)
+
+  call gina#custom#command#option('status', '--opener', 'split')
+  call gina#custom#command#option('commit', '--opener', 'tabedit')
+
   call gina#custom#command#option(
         \ 'log', '--group', 'log-viewer'
         \)

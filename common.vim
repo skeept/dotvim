@@ -435,11 +435,6 @@ if !has("gui_running") && !g:is_win
 endif
 "==============================================================================}}}
 
-"================== number/relativenumber ====================================={{{
-let g:relativenumber = 2
-noremap <Leader>tn :call jraf#toggleRelativeNumber()<CR>
-"==============================================================================}}}
-
 "================== Unite ====================================================={{{
 augroup ft_unite
   autocmd!
@@ -693,7 +688,19 @@ endif
 if s:ulti_or_neosnip == 2
   PackAddRegister neosnippet
   PackAddRegister neosnippet-snippets
-  call jraf#LoadNeoSnipppet()
+
+  function! s:LoadNeoSnipppet()
+    imap <NL> <Plug>(neosnippet_expand_or_jump)
+    smap <NL> <Plug>(neosnippet_expand_or_jump)
+    xmap <NL> <Plug>(neosnippet_expand_target)
+    imap <F12> <Plug>(neosnippet_start_unite_snippet)
+    smap <F12> <Plug>(neosnippet_start_unite_snippet)
+    xmap <F12> <Plug>(neosnippet_start_unite_snippet)
+
+    let g:neosnippet#snippets_directory = g:p0 . "/snippets/neo"
+  endfunction
+
+  call s:LoadNeoSnipppet()
 endif
 "==============================================================================}}}
 

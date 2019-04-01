@@ -1,25 +1,6 @@
 " my own functions comming either from common.vim, simple.vim or vimrc
 " that can be auloaded
 
-let g:al = 1
-"================== number/relativenumber ====================================={{{
-function! jraf#toggleRelativeNumber()
-  if g:relativenumber == 0
-    let g:relativenumber = 1
-    set nonumber
-    set relativenumber
-  elseif g:relativenumber == 1
-    let g:relativenumber = 2
-    set norelativenumber
-    set number
-  else
-    let g:relativenumber = 0
-    set nonumber
-    set norelativenumber
-  endif
-endfunction
-"==============================================================================}}}
-
 "================== Unite ====================================================={{{
 function! jraf#uniteColorSchemeResume()
   if !exists("s:unite_init_colorscheme")
@@ -215,19 +196,6 @@ endfunction
 function! jraf#ultiSnipsCallUnite()
   Unite -start-insert -winheight=100 -immediately -no-empty ultisnips
   return ''
-endfunction
-"==============================================================================}}}
-
-"================== NeoSnippet ================================================{{{
-function! jraf#LoadNeoSnipppet()
-  imap <NL> <Plug>(neosnippet_expand_or_jump)
-  smap <NL> <Plug>(neosnippet_expand_or_jump)
-  xmap <NL> <Plug>(neosnippet_expand_target)
-  imap <F12> <Plug>(neosnippet_start_unite_snippet)
-  smap <F12> <Plug>(neosnippet_start_unite_snippet)
-  xmap <F12> <Plug>(neosnippet_start_unite_snippet)
-
-  let g:neosnippet#snippets_directory = g:p0 . "/snippets/neo"
 endfunction
 "==============================================================================}}}
 
@@ -594,17 +562,22 @@ endfunction "}}}
 function! jraf#loadCtrlP()
   if g:addon_manager == 2
     call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
-          \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-    nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
+  else "assume packadd
+    packadd ctrlp
+    call SetupLycosa()
   endif
+  nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
+        \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
+  nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
 
 function! jraf#loadLycosa()
   if g:addon_manager == 2
     call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    call SetupLycosa()
+  else
+    packadd LycosaExplorer
   endif
+    call SetupLycosa()
 endfunction
 "==============================================================================}}}
 
