@@ -132,8 +132,6 @@ noremap <F1> :wa<CR>
 inoremap ;; <esc>
 inoremap {{ {<CR><CR>}<ESC>kcc
 
-"do I really change colorscheme that often?
-"nnoremap ,sc :<C-U>colorscheme<space>
 nnoremap ,di :registers<CR>
 
 " make <BS> <DEL> <C-U> and <C-W> undoable
@@ -144,7 +142,7 @@ inoremap <BS> <C-G>u<BS>
 inoremap <DEL> <C-G>u<DEL>
 
 noremap <f4> :x<CR>
-inoremap <f4> <esc>:wq<CR>
+inoremap <f4> <esc>:x<CR>
 
 "noremap ,en :cnext<CR>
 "noremap ,ep :cprevious<CR>
@@ -168,8 +166,8 @@ nnoremap ,vn :vim // *<LEFT><LEFT><LEFT>
 nnoremap ,vr :vim // **/*<LEFT><LEFT><LEFT><LEFT><LEFT><LEFT>
 nnoremap ,vf :find **/**<LEFT>
 nnoremap ,va :args **/**<LEFT>
-vnoremap ,ys y:Sscratch<CR>p
-nnoremap ,ys yy:Sscratch<CR>p
+vnoremap ,yy y:Sscratch<CR>p
+nnoremap ,yy yy:Sscratch<CR>p
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
