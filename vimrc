@@ -146,6 +146,8 @@ func! LoadPluginsWithTimer(timer)
   "VAMAddToActiveAddons apathy
   VAMAddToActiveAddons flagship
   VAMAddToActiveAddons which-key
+  VAMAddToActiveAddons bufkill
+  VAMAddToActiveAddons sayonara
 
   if has("python3")
     "VAMAddToActiveAddons UltiSnips
