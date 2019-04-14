@@ -1893,6 +1893,7 @@ documented in additional help files.
     mcsc..................................|ale-cs-mcsc|
     uncrustify............................|ale-cs-uncrustify|
   css.....................................|ale-css-options|
+    fecs..................................|ale-css-fecs|
     prettier..............................|ale-css-prettier|
     stylelint.............................|ale-css-stylelint|
   cuda....................................|ale-cuda-options|
@@ -1970,6 +1971,7 @@ documented in additional help files.
   hcl.....................................|ale-hcl-options|
     terraform-fmt.........................|ale-hcl-terraform-fmt|
   html....................................|ale-html-options|
+    fecs..................................|ale-html-fecs|
     htmlhint..............................|ale-html-htmlhint|
     tidy..................................|ale-html-tidy|
     prettier..............................|ale-html-prettier|
@@ -1985,9 +1987,11 @@ documented in additional help files.
     google-java-format....................|ale-java-google-java-format|
     pmd...................................|ale-java-pmd|
     javalsp...............................|ale-java-javalsp|
+    eclipselsp............................|ale-java-eclipselsp|
     uncrustify............................|ale-java-uncrustify|
   javascript..............................|ale-javascript-options|
     eslint................................|ale-javascript-eslint|
+    fecs..................................|ale-javascript-fecs|
     flow..................................|ale-javascript-flow|
     importjs..............................|ale-javascript-importjs|
     jscs..................................|ale-javascript-jscs|
@@ -2070,6 +2074,7 @@ documented in additional help files.
   pony....................................|ale-pony-options|
     ponyc.................................|ale-pony-ponyc|
   powershell............................|ale-powershell-options|
+    powershell..........................|ale-powershell-powershell|
     psscriptanalyzer....................|ale-powershell-psscriptanalyzer|
   prolog..................................|ale-prolog-options|
     swipl.................................|ale-prolog-swipl|
@@ -2164,6 +2169,7 @@ documented in additional help files.
   tex.....................................|ale-tex-options|
     chktex................................|ale-tex-chktex|
     lacheck...............................|ale-tex-lacheck|
+    latexindent...........................|ale-tex-latexindent|
   texinfo.................................|ale-texinfo-options|
     write-good............................|ale-texinfo-write-good|
   text....................................|ale-text-options|
