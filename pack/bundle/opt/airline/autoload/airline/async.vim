@@ -64,13 +64,17 @@ function! airline#async#vcs_untracked(config, file, vcs)
   endif
 endfunction
 
+function! s:set_clean_variables(file, vcs)
+  let var=getbufvar(fnameescape(a:file), 'buffer_vcs_config', {})
+  let var[a:vcs].dirty=1
+  call setbufvar(fnameescape(a:file), 'buffer_vcs_config', var)
+  unlet! b:airline_head
+endfunction
+
 function! s:on_exit_clean(...) dict abort
   let buf=self.buf
   if !empty(buf)
-    let var=getbufvar(self.file, 'buffer_vcs_config', {})
-    let var[self.vcs].dirty=1
-    call setbufvar(self.file, 'buffer_vcs_config', var)
-    unlet! b:airline_head
+    call s:set_clean_variables(self.file, self.vcs)
   endif
   if has_key(get(s:clean_jobs, 'self.vcs', {}), self.file)
     call remove(s:clean_jobs[self.vcs], self.file)
@@ -81,9 +85,12 @@ function! airline#async#vcs_clean(cmd, file, vcs)
   if g:airline#init#vim_async
     " Vim 8 with async support
     noa call airline#async#vim_vcs_clean(a:cmd, a:file, a:vcs)
-  else
-    " nvim async or vim without job-feature
+  elseif has("nvim")
+    " nvim async
     noa call airline#async#nvim_vcs_clean(a:cmd, a:file, a:vcs)
+  else
+    " Vim pre 8 using system()
+    call airline#async#vim7_vcs_clean(a:cmd, a:file, a:vcs)
   endif
 endfunction
 
@@ -255,32 +262,6 @@ elseif has("nvim")
     let s:mq_jobs[a:file] = id
   endfunction
 
-  function! airline#async#nvim_vcs_clean(cmd, file, vcs)
-    let config = {
-    \ 'buf': '',
-    \ 'vcs': a:vcs,
-    \ 'file': a:file,
-    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h')),
-    \ 'on_stdout': function('s:nvim_output_handler'),
-    \ 'on_stderr': function('s:nvim_output_handler'),
-    \ 'on_exit': function('s:on_exit_clean')
-    \ }
-    if g:airline#init#is_windows && &shell =~ 'cmd'
-      let cmd = a:cmd
-    else
-      let cmd = ['sh', '-c', a:cmd]
-    endif
-
-    if !has_key(s:clean_jobs, a:vcs)
-      let s:clean_jobs[a:vcs] = {}
-    endif
-    if has_key(s:clean_jobs[a:vcs], a:file)
-      call remove(s:clean_jobs[a:vcs], a:file)
-    endif
-    let id = jobstart(cmd, config)
-    let s:clean_jobs[a:vcs][a:file] = id
-  endfunction
-
   function! airline#async#nvim_get_msgfmt_stat(cmd, file)
     let config = {
     \ 'buf': '',
@@ -302,6 +283,31 @@ elseif has("nvim")
     endif
     let id = jobstart(cmd, config)
     let s:po_jobs[a:file] = id
+  endfunction
+
+  function! airline#async#nvim_vcs_clean(cmd, file, vcs)
+    let config = {
+    \ 'buf': '',
+    \ 'vcs': a:vcs,
+    \ 'file': a:file,
+    \ 'cwd': s:valid_dir(fnamemodify(a:file, ':p:h')),
+    \ 'on_stdout': function('s:nvim_output_handler'),
+    \ 'on_stderr': function('s:nvim_output_handler'),
+    \ 'on_exit': function('s:on_exit_clean')}
+    if g:airline#init#is_windows && &shell =~ 'cmd'
+      let cmd = a:cmd
+    else
+      let cmd = ['sh', '-c', a:cmd]
+    endif
+
+    if !has_key(s:clean_jobs, a:vcs)
+      let s:clean_jobs[a:vcs] = {}
+    endif
+    if has_key(s:clean_jobs[a:vcs], a:file)
+      call remove(s:clean_jobs[a:vcs], a:file)
+    endif
+    let id = jobstart(cmd, config)
+    let s:clean_jobs[a:vcs][a:file] = id
   endfunction
 
 endif
@@ -338,5 +344,13 @@ function! airline#async#nvim_vcs_untracked(cfg, file, vcs)
     let output=system(cmd)
     call s:untracked_output(config, output)
     call airline#extensions#branch#update_untracked_config(a:file, a:vcs)
+  endif
+endfunction
+
+function! airline#async#vim7_vcs_clean(cmd, file, vcs)
+  " Vim pre 8, fallback using system()
+  let output=system(a:cmd)
+  if !empty(output)
+    call s:set_clean_variables(a:file, a:vcs)
   endif
 endfunction
