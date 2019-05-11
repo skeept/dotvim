@@ -142,6 +142,8 @@ ALE offers several options for controlling which linters are run.
 * Selecting linters to run.            - |g:ale_linters|
 * Aliasing filetypes for linters       - |g:ale_linter_aliases|
 * Only running linters you asked for.  - |g:ale_linters_explicit|
+* Disabling only a subset of linters.  - |g:ale_linters_ignore|
+* Disabling LSP linters and `tsserver`.  - |g:ale_disable_lsp|
 
 
 -------------------------------------------------------------------------------
@@ -321,6 +323,9 @@ servers. LSP linters can be used in combination with any other linter, and
 will automatically connect to LSP servers when needed. ALE also supports
 `tsserver` for TypeScript, which uses a different but very similar protocol.
 
+If you want to use another plugin for LSP features and tsserver, you can use
+the |g:ale_disable_lsp| setting to disable ALE's own LSP integrations, or
+ignore particular linters with |g:ale_linters_ignore|.
 
 -------------------------------------------------------------------------------
 5.1 Completion                                                 *ale-completion*
@@ -627,7 +632,9 @@ g:ale_disable_lsp                                           *g:ale_disable_lsp*
   Type: |Number|
   Default: `0`
 
-  When this option is set to `1`, ALE ignores all linters powered by LSP.
+  When this option is set to `1`, ALE ignores all linters powered by LSP,
+  and also `tsserver`.
+
   Please see also |ale-lsp|.
 
 
@@ -682,7 +689,7 @@ b:ale_echo_msg_format                                   *b:ale_echo_msg_format*
     `%s`           - replaced with the text for the problem
     `%...code...% `- replaced with the error code
     `%linter%`     - replaced with the name of the linter
-    `%severity%`   - replaced withe severity of the problem
+    `%severity%`   - replaced with the severity of the problem
 
   The strings for `%severity%` can be configured with the following options.
 
@@ -699,7 +706,7 @@ b:ale_echo_msg_format                                   *b:ale_echo_msg_format*
   |g:ale_echo_cursor| needs to be set to 1 for messages to be displayed.
 
   The echo message format can also be configured separately for each buffer,
-  so different formats can be used for differnt languages. (Say in ftplugin
+  so different formats can be used for different languages. (Say in ftplugin
   files.)
 
 
@@ -2105,6 +2112,7 @@ documented in additional help files.
     merlin................................|ale-ocaml-merlin|
     ols...................................|ale-ocaml-ols|
     ocamlformat...........................|ale-ocaml-ocamlformat|
+    ocp-indent............................|ale-ocaml-ocp-indent|
   pawn....................................|ale-pawn-options|
     uncrustify............................|ale-pawn-uncrustify|
   perl....................................|ale-perl-options|
@@ -2458,7 +2466,7 @@ ALELast                                                               *ALELast*
 
   Flags can be combined to create create custom jumping. Thus you can use
   ":ALENext -wrap -error -nosyle" to jump to the next error which is not a
-  style error while going back to the begining of the file if needed.
+  style error while going back to the beginning of the file if needed.
 
   `ALEFirst` goes to the first error or warning in the buffer, while `ALELast`
   goes to the last one.
@@ -3193,7 +3201,7 @@ ale#statusline#Count(buffer)                           *ale#statusline#Count()*
 ale#statusline#FirstProblem(buffer, type)       *ale#statusline#FirstProblem()*
 
   Returns a copy of the first entry in the `loclist` that matches the supplied
-  buffer number and problem type. If there is no such enty, an empty dictionary
+  buffer number and problem type. If there is no such entry, an empty dictionary
   is returned.
   Problem type should be one of the strings listed below:
 

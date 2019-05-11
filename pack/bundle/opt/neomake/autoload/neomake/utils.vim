@@ -32,8 +32,17 @@ function! neomake#utils#Stringify(obj) abort
     endif
 endfunction
 
-function! neomake#utils#wstrpart(mb_string, start, len) abort
-    return matchstr(a:mb_string, '.\{,'.a:len.'}', 0, a:start+1)
+function! neomake#utils#truncate_width(string, width) abort
+    let pos = a:width
+    while pos >= 0
+        let s = matchstr(a:string, '.\{,'.pos.'}', 0, 1)
+        let w = strwidth(s)
+        if w <= a:width
+            return s
+        endif
+        let pos -= max([(w-a:width)/2, 1])
+    endwhile
+    return ''
 endfunction
 
 " This comes straight out of syntastic.
@@ -50,7 +59,7 @@ function! neomake#utils#WideMessage(msg) abort " {{{2
     "width as the proper amount of characters
     let chunks = split(msg, "\t", 1)
     let msg = join(map(chunks[:-2], "v:val . repeat(' ', &tabstop - strwidth(v:val) % &tabstop)"), '') . chunks[-1]
-    let msg = neomake#utils#wstrpart(msg, 0, &columns - 1)
+    let msg = neomake#utils#truncate_width(msg, &columns-1)
 
     set noruler noshowcmd
     redraw
@@ -261,6 +270,44 @@ function! s:get_oldstyle_setting(key, maker, default, ft, bufnr, maker_only) abo
         return get(g:, 'neomake_'.key)
     endif
     return a:default
+endfunction
+
+" Helper function to define default highlight for a:group (e.g.
+" "Neomake%sSign"), using fg from another highlight, abd given background.
+function! neomake#utils#define_derived_highlights(group_format, bg) abort
+    for [type, fg_from] in items({
+                \ 'Error': ['Error', 'bg'],
+                \ 'Warning': ['Todo', 'fg'],
+                \ 'Info': ['Question', 'fg'],
+                \ 'Message': ['ModeMsg', 'fg']
+                \ })
+        let group = printf(a:group_format, type)
+        call s:define_derived_highlight_group(group, fg_from, a:bg)
+    endfo
+endfunction
+
+function! s:define_derived_highlight_group(group, fg_from, bg) abort
+    let [fg_group, fg_attr] = a:fg_from
+    let [ctermbg, guibg] = a:bg
+    let bg = 'ctermbg='.ctermbg.' guibg='.guibg
+
+    " NOTE: fg falls back to "Normal" always, not bg (for e.g. "SignColumn")
+    " inbetween.
+    let ctermfg = neomake#utils#GetHighlight(fg_group, fg_attr, 'Normal')
+    let guifg = neomake#utils#GetHighlight(fg_group, fg_attr.'#', 'Normal')
+
+    " Ensure that we're not using bg as fg (as with gotham
+    " colorscheme, issue https://github.com/neomake/neomake/pull/659).
+    if ctermfg !=# 'NONE' && ctermfg ==# ctermbg
+        let ctermfg = neomake#utils#GetHighlight(fg_group, neomake#utils#ReverseSynIDattr(fg_attr))
+    endif
+    if guifg !=# 'NONE' && guifg ==# guibg
+        let guifg = neomake#utils#GetHighlight(fg_group, neomake#utils#ReverseSynIDattr(fg_attr).'#')
+    endif
+    exe 'hi '.a:group.'Default ctermfg='.ctermfg.' guifg='.guifg.' '.bg
+    if !neomake#utils#highlight_is_defined(a:group)
+        exe 'hi link '.a:group.' '.a:group.'Default'
+    endif
 endfunction
 
 " Get property from highlighting group.
