@@ -386,6 +386,8 @@ function! ale#completion#ParseLSPCompletions(response) abort
         if get(l:item, 'insertTextFormat') is s:LSP_INSERT_TEXT_FORMAT_PLAIN
         \&& type(get(l:item, 'textEdit')) is v:t_dict
             let l:text = l:item.textEdit.newText
+        elseif type(get(l:item, 'insertText')) is v:t_string
+            let l:text = l:item.insertText
         else
             let l:text = l:item.label
         endif
@@ -547,6 +549,19 @@ function! s:OnReady(linter, lsp_details) abort
     endif
 endfunction
 
+" This function can be called to check if ALE can provide completion data for
+" the current buffer. 1 will be returned if there's a potential source of
+" completion data ALE can use, and 0 will be returned otherwise.
+function! ale#completion#CanProvideCompletions() abort
+    for l:linter in ale#linter#Get(&filetype)
+        if !empty(l:linter.lsp)
+            return 1
+        endif
+    endfor
+
+    return 0
+endfunction
+
 " This function can be used to manually trigger autocomplete, even when
 " g:ale_completion_enabled is set to false
 function! ale#completion#GetCompletions(source) abort
@@ -582,7 +597,7 @@ function! ale#completion#GetCompletions(source) abort
 endfunction
 
 function! s:TimerHandler(...) abort
-    if !g:ale_completion_enabled
+    if !get(b:, 'ale_completion_enabled', g:ale_completion_enabled)
         return
     endif
 
@@ -607,7 +622,7 @@ function! ale#completion#StopTimer() abort
 endfunction
 
 function! ale#completion#Queue() abort
-    if !g:ale_completion_enabled
+    if !get(b:, 'ale_completion_enabled', g:ale_completion_enabled)
         return
     endif
 
