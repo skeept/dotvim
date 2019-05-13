@@ -35,7 +35,7 @@ vnoremap ,N :<C-U>call wk#jumpToNextNonMatching(-2)<CR>gv
 "
 " settings 1: displays time in last line 2: writes time in front of current
 " word
-let g:wk.echoOrPrintTimeSetting = 2
+let g:wk.echoOrPrintTimeSetting = 1
 nnoremap \e :<C-U>call wk#echoOrPrintTime()<CR>
 
 if has("autocmd")
