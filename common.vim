@@ -940,7 +940,7 @@ map gc <plug>NERDCommenterInvert
 
 "==============================================================================}}}
 
-packadd! editexisting
+"packadd! editexisting
 packadd! matchit
 packadd! SimpylFold
 packadd! cfilter
