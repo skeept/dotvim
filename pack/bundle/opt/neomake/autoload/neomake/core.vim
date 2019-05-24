@@ -1,5 +1,7 @@
 let g:neomake#core#valid_maker_name_pattern = '\v^\w+$'
 
+let g:neomake#core#_ignore_autocommands = 0
+
 function! neomake#core#create_jobs(options, makers) abort
     let args = [a:options, a:makers]
     let jobs = call('s:bind_makers_for_job', args)
@@ -38,12 +40,12 @@ function! neomake#core#instantiate_maker(maker, options, check_exe) abort
     let bufnr = get(options, 'bufnr', '')
 
     " Call InitForJob function in maker object, if any.
-    let Init = neomake#utils#GetSetting('InitForJob', maker, g:neomake#config#undefined, ft, bufnr)
+    let l:Init = neomake#utils#GetSetting('InitForJob', maker, g:neomake#config#undefined, ft, bufnr)
     if empty(Init)
         " Deprecated: should use InitForJob instead.
         if has_key(maker, 'fn')
             unlet Init  " vim73
-            let Init = maker.fn
+            let l:Init = maker.fn
             call neomake#log#warn_once(printf("Please use 'InitForJob' instead of 'fn' for maker %s.", maker.name),
                         \ printf('deprecated-fn-%s', maker.name))
         endif

@@ -523,7 +523,7 @@ endif
 let s:command_maker_base = copy(g:neomake#core#command_maker_base)
 " Check if a temporary file is used, and set it in s:make_info in case it is.
 function! s:command_maker_base._get_tempfilename(jobinfo) abort dict
-    let Supports_stdin = neomake#utils#GetSetting('supports_stdin', self, s:unset_dict, a:jobinfo.ft, a:jobinfo.bufnr)
+    let l:Supports_stdin = neomake#utils#GetSetting('supports_stdin', self, s:unset_dict, a:jobinfo.ft, a:jobinfo.bufnr)
     if Supports_stdin isnot s:unset_dict
         if type(Supports_stdin) == type(function('tr'))
             let supports_stdin = call(Supports_stdin, [a:jobinfo], self)
@@ -809,7 +809,7 @@ function! neomake#create_maker_object(maker, ft) abort
     let [maker, ft, bufnr] = [a:maker, a:ft, bufnr('%')]
 
     " Create the maker object.
-    let GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, ft, bufnr)
+    let l:GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, ft, bufnr)
     if GetEntries isnot# -1
         let maker = copy(maker)
         let maker.get_list_entries = GetEntries
@@ -970,7 +970,6 @@ function! neomake#GetEnabledMakers(...) abort
     return enabled_makers
 endfunction
 
-let s:ignore_automake_events = 0
 " a:1: override "open_list" setting.
 function! s:HandleLoclistQflistDisplay(jobinfo, loc_or_qflist, ...) abort
     let open_list_default = a:0 ? a:1 : 0
@@ -993,7 +992,7 @@ function! s:HandleLoclistQflistDisplay(jobinfo, loc_or_qflist, ...) abort
     if open_val == 2
         let make_id = a:jobinfo.make_id
         let make_info = s:make_info[make_id]
-        let s:ignore_automake_events += 1
+        let g:neomake#core#_ignore_autocommands += 1
         try
             call neomake#compat#save_prev_windows()
 
@@ -1044,7 +1043,7 @@ function! s:HandleLoclistQflistDisplay(jobinfo, loc_or_qflist, ...) abort
             call neomake#compat#restore_prev_windows()
             let make_info._did_lwindow = 1
         finally
-            let s:ignore_automake_events -= 1
+            let g:neomake#core#_ignore_autocommands -= 1
         endtry
     else
         exe cmd height
@@ -1081,9 +1080,9 @@ endfunction
 function! s:Make(options) abort
     let is_automake = get(a:options, 'automake', !empty(expand('<abuf>')))
     if is_automake
-        if s:ignore_automake_events
+        if g:neomake#core#_ignore_autocommands
             call neomake#log#debug(printf(
-                        \ 'Ignoring Make through autocommand due to s:ignore_automake_events=%d.', s:ignore_automake_events), {'winnr': winnr()})
+                        \ 'Ignoring Make through autocommand due to ignore_autocommands=%d.', g:neomake#core#_ignore_autocommands), {'winnr': winnr()})
             return []
         endif
         let disabled = neomake#config#get_with_source('disabled', 0)
@@ -2209,7 +2208,7 @@ function! s:exit_handler(jobinfo, data) abort
         endfor
 
         if !get(jobinfo, 'failed_to_start')
-            let ExitCallback = neomake#utils#GetSetting('exit_callback',
+            let l:ExitCallback = neomake#utils#GetSetting('exit_callback',
                         \ extend(copy(jobinfo), maker), 0, jobinfo.ft, jobinfo.bufnr)
             if ExitCallback isnot# 0
                 let callback_dict = { 'status': jobinfo.exit_code,
@@ -2217,7 +2216,7 @@ function! s:exit_handler(jobinfo, data) abort
                                     \ 'has_next': !empty(s:make_info[jobinfo.make_id].jobs_queue) }
                 try
                     if type(ExitCallback) == type('')
-                        let ExitCallback = function(ExitCallback)
+                        let l:ExitCallback = function(ExitCallback)
                     endif
                     call call(ExitCallback, [callback_dict], jobinfo)
                 catch
