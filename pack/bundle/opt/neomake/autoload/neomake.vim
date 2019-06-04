@@ -293,7 +293,7 @@ function! s:MakeJob(make_id, options) abort
     "                        1 for non-async)
     "  - serialize_abort_on_error (default: 0)
     "  - exit_callback (string/function, default: 0)
-    let jobinfo = extend(deepcopy(g:neomake#jobinfo#base), extend({
+    let jobinfo = extend(neomake#jobinfo#new(), extend({
         \ 'id': job_id,
         \ 'make_id': a:make_id,
         \ 'name': empty(get(a:options.maker, 'name', '')) ? 'neomake_'.job_id : a:options.maker.name,
@@ -539,7 +539,10 @@ function! s:command_maker_base._get_tempfilename(jobinfo) abort dict
     if has_key(self, 'tempfile_name')
         return self.tempfile_name
     endif
+    return self._get_default_tempfilename(a:jobinfo)
+endfunction
 
+function! s:command_maker_base._get_default_tempfilename(jobinfo) abort dict
     let tempfile_enabled = neomake#utils#GetSetting('tempfile_enabled', self, 1, a:jobinfo.ft, a:jobinfo.bufnr)
     if !tempfile_enabled
         return ''

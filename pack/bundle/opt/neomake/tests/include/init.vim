@@ -329,7 +329,7 @@ let s:jobinfo_count = 0
 function! NeomakeTestsFakeJobinfo() abort
   let s:jobinfo_count += 1
   let make_id = -42
-  let jobinfo = copy(g:neomake#jobinfo#base)
+  let jobinfo = neomake#jobinfo#new()
   let maker = copy(g:neomake#config#_defaults.maker_defaults)
   let maker.name = 'fake_jobinfo_name'
 
@@ -598,7 +598,7 @@ function! s:After()
         exe 'bwipe!' b
         continue
       endif
-      call append(new_new_buffers, b)
+      call add(new_new_buffers, b)
     endfor
     let new_buffers = new_new_buffers
   endif
@@ -634,6 +634,11 @@ function! s:After()
 
   " Check that no highlights are left.
   let highlights = neomake#highlights#_get()
+  " Ignore unlisted qf buffers that Vim keeps around
+  " (having ft='' (likely due to bwipe above)).
+  if has('patch-8.1.0877')
+      call filter(highlights['file'], 'buflisted(v:key)')
+  endif
   if highlights != {'file': {}, 'project': {}}
     call add(errors, printf('Highlights were not reset (use a new buffer): %s', highlights))
     let highlights.file = {}

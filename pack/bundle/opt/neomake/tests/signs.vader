@@ -36,8 +36,7 @@ Execute (neomake#signs#RedefineErrorSign):
 
   call neomake#signs#Reset(bufnr, 'file')
   call neomake#signs#CleanAllOldSigns('file')
-  AssertNeomakeMessage 'Removing signs: {file: {'.bufnr.': '
-  \ .'{5000: neomake_file_warn}}, project: {}}.'
+  AssertNeomakeMessage 'Cleaning 1 old signs.', 3
   bwipe
 
 Execute (Placing signs in project mode):
@@ -85,19 +84,6 @@ Execute (Signs are wiped when buffer gets wiped):
   bwipe
   " Should not cause 'E158: Invalid buffer name'
   call neomake#signs#RedefineSign('neomake_file_err', {})
-
-Execute (Signs are not wiped when buffer gets wiped with removed augroup):
-  new
-  au! neomake_signs
-  let buf = bufnr('%')
-  call neomake#signs#PlaceSigns(bufnr('%'),
-  \ [{'type': 'E', 'bufnr': buf, 'lnum': 1}], 'file')
-  AssertEqual neomake#signs#by_lnum(bufnr('%')), {'1': [5000, 'neomake_file_err']}
-  bwipe
-
-  AssertEqual neomake#signs#by_lnum(buf), {}
-  call neomake#signs#ResetFile(buf)
-  AssertNeomakeMessage 'Skipped cleaning of old signs in non-existing buffer '.buf.': {5000: neomake_file_err}.', 3
 
 Execute (neomake#signs#by_lnum):
   new
