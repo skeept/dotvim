@@ -551,7 +551,7 @@ Execute (BufWritePost does not run for unchanged buffer):
   call neomake#configure#automake('w')
 
   new
-  let b:neomake_test_enabledmakers = ['true']
+  let b:neomake_test_enabledmakers = ['success_entry_maker']
   set filetype=neomake_tests
 
   CallNeomake 1, []
@@ -559,32 +559,19 @@ Execute (BufWritePost does not run for unchanged buffer):
   Assert !exists('b:_neomake_automake_tick')
 
   exe 'w' tempname()
-  NeomakeTestsWaitForFinishedJobs
   AssertEqual len(g:neomake_test_jobfinished), 2
   Assert exists('b:_neomake_automake_tick')
 
+  " Every write triggers a run (due to b:changedtick being incremented,
+  " https://github.com/vim/vim/issues/2764).
   w
-  NeomakeTestsWaitForFinishedJobs
-  AssertEqual len(g:neomake_test_jobfinished), 2
-  AssertNeomakeMessage 'automake: buffer was not changed.'
+  AssertEqual len(g:neomake_test_jobfinished), 3
 
   normal! ifoo
   w
-  NeomakeTestsWaitForFinishedJobs
-  AssertEqual len(g:neomake_test_jobfinished), 3
-
-  w
-  NeomakeTestsWaitForFinishedJobs
-  AssertEqual len(g:neomake_test_jobfinished), 3
-  AssertNeomakeMessage 'automake: buffer was not changed.'
-
-  normal! oline2
-  call neomake#Make(1, [])
-  NeomakeTestsWaitForFinishedJobs
   AssertEqual len(g:neomake_test_jobfinished), 4
 
-  w
-  AssertNeomakeMessage 'automake: buffer was not changed.'
+  NeomakeTestsWaitForFinishedJobs
   AssertEqual len(g:neomake_test_jobfinished), 4
   bwipe
 
@@ -596,31 +583,24 @@ Execute (BufWritePost does not run for unchanged buffer (delayed)):
     AssertNeomakeMessage 'automake: timer support is required for automaking, removing event BufWritePost.', 0
   else
     new
-    let b:neomake_test_enabledmakers = ['true']
+    let b:neomake_test_enabledmakers = ['success_entry_maker']
     set filetype=neomake_tests
     exe 'w' tempname()
     AssertNeomakeMessage '\vautomake: started timer \(5ms\): (\d+)'
     NeomakeTestsWaitForNextFinishedJob
     AssertEqual len(g:neomake_test_jobfinished), 1
 
-    w
-    NeomakeTestsWaitForFinishedJobs
-    AssertEqual len(g:neomake_test_jobfinished), 1
-    AssertNeomakeMessage 'automake: buffer was not changed.'
-
-    normal! ifoo
+    " Every write triggers a run (due to b:changedtick being incremented,
+    " https://github.com/vim/vim/issues/2764).
     w
     NeomakeTestsWaitForNextFinishedJob
     AssertEqual len(g:neomake_test_jobfinished), 2
 
+    normal! ifoo
     w
-    NeomakeTestsWaitForFinishedJobs
-    AssertEqual len(g:neomake_test_jobfinished), 2
-    AssertNeomakeMessage 'automake: buffer was not changed.'
-    w
-    NeomakeTestsWaitForFinishedJobs
-    AssertEqual len(g:neomake_test_jobfinished), 2
-    AssertNeomakeMessage 'automake: buffer was not changed.'
+    NeomakeTestsWaitForNextFinishedJob
+    AssertEqual len(g:neomake_test_jobfinished), 3
+
     bwipe
   endif
 
@@ -1523,3 +1503,31 @@ Execute (automake: creates/handles single cleanup autocmd per buffer):
   call neomake#configure#reset_automake()
   Assert !exists('#neomake_automake_clean#BufWipeout')
   bwipe
+
+Execute (BufWritePost via doautocmd is handled (e.g. vim-fugitive)):
+  call g:NeomakeSetupAutocmdWrappers()
+  call neomake#configure#automake('w')
+
+  function! s:BufWriteCmd() abort
+    exe 'doautocmd BufWritePost '.expand('<amatch>')
+  endfunction
+  augroup neomake_tests
+    au BufWriteCmd * call s:BufWriteCmd()
+  augroup END
+
+  new
+  let b:neomake_test_enabledmakers = ['success_entry_maker']
+  set filetype=neomake_tests
+
+  exe 'w' tempname()
+  NeomakeTestsWaitForFinishedJobs
+  AssertEqual len(g:neomake_test_jobfinished), 1
+  Assert exists('b:_neomake_automake_tick')
+
+  " Setup tick for when :diffget was used (only changing it by one), in
+  " contrast to e.g. ":normal o".
+  let b:_neomake_automake_tick[0] = b:_neomake_automake_tick[0] - 1
+  setlocal modified
+  update
+  AssertEqual len(g:neomake_test_jobfinished), 2
+  bwipe!

@@ -1,9 +1,21 @@
 " Copyright 2015-present Greg Hurrell. All rights reserved.
 " Licensed under the terms of the BSD 2-clause license.
 
+function! s:is_quickfix()
+  if exists('*getwininfo')
+    let l:info=getwininfo(win_getid())[0]
+    return l:info.quickfix && !l:info.loclist
+  else
+    " On old Vim, degrade such that we at least handle the common case (ie.
+    " quickfix windows).
+    return 1
+  endif
+endfunction
+
 " Remove lines a:first through a:last from the quickfix listing.
 function! s:delete(first, last)
-  let l:list=getqflist()
+  let l:type=s:is_quickfix() ? 'qf' : 'location'
+  let l:list=l:type == 'qf' ? getqflist() : getloclist(0)
   let l:line=a:first
 
   while l:line >= a:first && l:line <= a:last
@@ -11,12 +23,17 @@ function! s:delete(first, last)
     let l:list[l:line - 1]=0
     let l:line=l:line + 1
   endwhile
-  call setqflist(l:list, 'r')
 
-  " Go to next entry.
-  execute 'cc ' . a:first
+  " Update listing and go to next entry.
+  if l:type ==# 'qf'
+    call setqflist(l:list, 'r')
+    execute 'cc ' . a:first
+  else
+    call setloclist(0, l:list, 'r')
+    execute 'll ' . a:first
+  endif
 
-  " Move focus back to quickfix listing.
+  " Move focus back to listing.
   execute "normal \<C-W>\<C-P>"
 endfunction
 
@@ -267,7 +284,7 @@ function! ferret#private#quack(bang, args) abort
   if s:qfsize('qf') == 0
     call ferret#private#error('Cannot search in empty quickfix list')
   else
-    call call('ferret#private#ack', [a:bang, a:args . ' ' . ferret#private#qargs()])
+    call call('ferret#private#ack', [a:bang, a:args . ' ' . ferret#private#args('qf')])
   endif
 endfunction
 
@@ -334,11 +351,17 @@ endfunction
 " and the following on Vim 8 or after:
 "
 "   :Ack foo
+"   :cdo substitute/foo/bar/ge | update
+"
+" Note that if |g:FerretAcksCommand| is set to "cfdo" then this will be used
+" instead:
+"
+"   :Ack foo
 "   :cfdo %substitute/foo/bar/ge | update
 "
 " (Note: there's nothing specific to Ack in this function; it's just named this
 " way for mnemonics, as it will most often be preceded by an :Ack invocation.)
-function! ferret#private#acks(command) abort
+function! ferret#private#acks(command, type) abort
   " Accept any pattern allowed by E146 (crude sanity check).
   let l:matches=matchlist(a:command, '\v\C^(([^|"\\a-zA-Z0-9]).+\2.*\2)([cgeiI]*)$')
   if !len(l:matches)
@@ -369,9 +392,9 @@ function! ferret#private#acks(command) abort
     let l:options=substitute(l:options, 'g', '', 'g')
   endif
 
-  let l:cfdo=has('listcmds') && exists(':cfdo') == 2
-  if !l:cfdo
-    let l:filenames=ferret#private#qargs()
+  let l:cdo=has('listcmds') && exists(':cdo') == 2
+  if !l:cdo
+    let l:filenames=ferret#private#args(a:type)
     if l:filenames ==# ''
       call ferret#private#error(
             \ 'Ferret: Quickfix filenames must be present, but there are none ' .
@@ -383,12 +406,90 @@ function! ferret#private#acks(command) abort
   endif
 
   call ferret#private#autocmd('FerretWillWrite')
-  if l:cfdo
-    execute 'cfdo' '%substitute' . l:pattern . l:options . ' | update'
+
+  if l:cdo
+    if a:type == 'qf'
+      ""
+      " @option g:FerretAcksCommand string "cdo"
+      "
+      " Controls the underlying Vim command that |:Acks| uses to peform
+      " substitutions. On versions of Vim that have it, defaults to |:cdo|, which
+      " means that substitutions will apply to the specific lines currently in the
+      " |quickfix| listing. Can be set to "cfdo" to instead use |:cfdo| (if
+      " available), which means that the substitutions will be applied on a
+      " per-file basis to all the files in the |quickfix| listing. This
+      " distinction is important if you have used Ferret's bindings to delete
+      " entries from the listing.
+      "
+      " ```
+      " let g:FerretAcksCommand='cfdo'
+      " ```
+      "
+      if get(g:, 'FerretAcksCommand', 'cdo') == 'cfdo'
+        let l:command='cfdo'
+        let l:substitute='%substitute'
+      else
+        let l:command='cdo'
+        let l:substitute='substitute'
+      endif
+    else
+      ""
+      " @option g:FerretLacksCommand string "ldo"
+      "
+      " Controls the underlying Vim command that |:Lacks| uses to peform
+      " substitutions. On versions of Vim that have it, defaults to |:ldo|, which
+      " means that substitutions will apply to the specific lines currently in the
+      " |location-list|. Can be set to "lfdo" to instead use |:lfdo| (if
+      " available), which means that the substitutions will be applied on a
+      " per-file basis to all the files in the |location-list|. This
+      " distinction is important if you have used Ferret's bindings to delete
+      " entries from the listing.
+      "
+      " ```
+      " let g:FerretLacksCommand='lfdo'
+      " ```
+      "
+      if get(g:, 'FerretLacksCommand', 'ldo') == 'lfdo'
+        let l:command='lfdo'
+        let l:substitute='%substitute'
+      else
+        let l:command='ldo'
+        let l:substitute='substitute'
+      endif
+    endif
   else
-    execute 'argdo' '%substitute' . l:pattern . l:options . ' | update'
+    let l:command='argdo'
+    let l:substitute='%substitute'
   endif
+
+  execute l:command l:substitute . l:pattern . l:options . ' | update'
+
   call ferret#private#autocmd('FerretDidWrite')
+endfunction
+
+""
+" @option g:FerretVeryMagic boolean 1
+"
+" Controls whether the |<Plug>(FerretAck)| mapping should populate the command
+" line with the |/\v| "very magic" marker. Given that the argument passed to
+" |:Acks| is handed straight to Vim, using "very magic" makes it more likely
+" that the (probably Perl-compatible) regular expression used in the initial
+" search can be used directly with Vim's (famously not-Perl-compatible) regular
+" expression engine.
+"
+" To prevent the automatic use of |/\v|, set this option to 0:
+"
+" ```
+" let g:FerretVeryMagic=0
+" ```
+function! ferret#private#acks_prompt() abort
+  let l:magic=get(g:, 'FerretVeryMagic', 1)
+  let l:mode=l:magic ? '\v' : ''
+  if exists('g:ferret_lastsearch')
+    return '/' . l:mode . g:ferret_lastsearch . '// '
+  else
+    return '/' . l:mode . '//'
+  endif
 endfunction
 
 function! ferret#private#autocmd(cmd) abort
@@ -584,10 +685,12 @@ function! ferret#private#option(str) abort
   return a:str =~# '^-'
 endfunction
 
-" Populate the :args list with the filenames currently in the quickfix window.
-function! ferret#private#qargs() abort
+" Populate the :args list with the filenames currently in the quickfix window or
+" location list.
+function! ferret#private#args(type) abort
   let l:buffer_numbers={}
-  for l:item in getqflist()
+  let l:items=a:type == 'qf' ? getqflist() : getloclist(0)
+  for l:item in l:items
     let l:number=l:item['bufnr']
     if !has_key(l:buffer_numbers, l:number)
       let l:buffer_numbers[l:number]=bufname(l:number)

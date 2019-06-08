@@ -45,8 +45,8 @@ endif
 ""
 " @option g:FerretQFMap boolean 1
 "
-" Controls whether to set up mappings in the |quickfix| results window for
-" deleting results. The mappings include:
+" Controls whether to set up mappings in the |quickfix| results window and
+" |location-list| for deleting results. The mappings include:
 "
 " - `d` (|visual-mode|): delete visual selection
 " - `dd` (|Normal-mode|): delete current line
@@ -59,8 +59,7 @@ endif
 " ```
 let s:map=get(g:, 'FerretQFMap', 1)
 if s:map
-  " Make it easy to remove entries from the quickfix listing.
-  " TODO: distinguish between quickfix and location list
+  " Make it easy to remove entries from the quickfix listing or location-list.
   nnoremap <buffer> <silent> d :set operatorfunc=ferret#private#qf_delete_motion<CR>g@
   nnoremap <buffer> <silent> dd :call ferret#private#qf_delete()<CR>
   vnoremap <buffer> <silent> d :call ferret#private#qf_delete()<CR>
