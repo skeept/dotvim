@@ -137,7 +137,7 @@ function! s:efm_query(key, format) abort
 endfunction
 
 function! s:efm_literal(key, format, ...) abort
-  let subs = {'%': '%'}
+  let subs = {'%': '%', 'f': '%:S'}
   for [key, raw] in s:efm_query(a:key, a:format)
     let value = substitute(raw, '%\(.\)', '\=get(subs,submatch(1),"\030")', 'g')
     if len(value) && value !~# "\030"
@@ -909,65 +909,59 @@ endfunction
 function! dispatch#focus(...) abort
   let haslnum = a:0 && a:1 >= 0
   if exists('b:Dispatch') && !haslnum
-    let [compiler, why] = [b:Dispatch, 'Buffer local focus']
+    let [what, why] = [b:Dispatch, 'Buffer local focus']
   elseif exists('w:Dispatch') && !haslnum
-    let [compiler, why] = [w:Dispatch, 'Window local focus']
+    let [what, why] = [w:Dispatch, 'Window local focus']
   elseif exists('t:Dispatch') && !haslnum
-    let [compiler, why] = [t:Dispatch, 'Tab local focus']
+    let [what, why] = [t:Dispatch, 'Tab local focus']
   elseif exists('g:Dispatch') && !haslnum
-    let [compiler, why] = [g:Dispatch, 'Global focus']
+    let [what, why] = [g:Dispatch, 'Global focus']
   elseif exists('b:dispatch')
-    let [compiler, why] = [b:dispatch, 'Buffer default']
+    let [what, why] = [b:dispatch, 'Buffer default']
   else
-    let [compiler, why] = ['--', (len(&l:makeprg) ? 'Buffer' : 'Global') . ' default']
+    let [what, why] = ['--', (len(&l:makeprg) ? 'Buffer' : 'Global') . ' default']
+    let default = 1
   endif
-  if haslnum || !a:0
-    let lnum = a:0 ? a:1 : -1
-    let [compiler, opts] = s:extract_opts(compiler)
-    if compiler ==# '--'
-      let task = s:default_args('', lnum)
-      if len(task)
-        let compiler .= ' ' . task
-      endif
-    endif
-    if compiler =~# '^:'
-      let compiler = s:command_lnum(compiler, lnum)
+  if what =~# '^--\S\@!'
+    let args = s:default_args(what[2:-1], haslnum ? a:1 : exists('default') ? 0 : -1)
+    let what = len(args) ? '-- ' . args : args
+  endif
+  if haslnum
+    let [what, opts] = s:extract_opts(what)
+    if what =~# '^:'
+      let what = s:command_lnum(what, a:1)
     else
-      let compiler = dispatch#expand(compiler, lnum)
+      let what = dispatch#expand(what, a:1)
     endif
-    if has_key(opts, 'compiler') && opts.compiler != dispatch#compiler_for_program(compiler)
-      let compiler = '-compiler=' . opts.compiler . ' ' . compiler
+    if a:0 > 1
+      return [what, extend(opts, a:2)]
     endif
-    if has_key(opts, 'directory') && opts.directory != getcwd()
-      let compiler = '-dir=' .
+    if has_key(opts, 'compiler') && opts.compiler !=# dispatch#compiler_for_program(what)
+      let what = '-compiler=' . opts.compiler . ' ' . what
+    endif
+    if has_key(opts, 'directory') && opts.directory !=# getcwd()
+      let what = '-dir=' .
             \ s:escape_path(fnamemodify(opts.directory, ':~:.')) .
-            \ ' ' . compiler
-    endif
-  elseif compiler ==# '--'
-    let task = s:default_args('', 0)
-    if len(task)
-      let compiler .= ' ' . task
+            \ ' ' . what
     endif
   endif
-  if compiler =~# '^--\S\@!'
-    return [':Make' . compiler[2:-1], why]
-  elseif compiler =~# '^!'
-    return [':Start ' . compiler[1:-1], why]
-  elseif compiler =~# '^:\S'
-    return [compiler, why]
+  if what =~# '^--\S\@!'
+    return [':Make' . what[2:-1], why]
+  elseif what =~# '^!'
+    return [':Start ' . what[1:-1], why]
+  elseif what =~# '^:\S'
+    return [what, why]
   else
-    return [':Dispatch ' . compiler, why]
+    return [':Dispatch ' . what, why]
   endif
 endfunction
 
 function! dispatch#focus_command(bang, args, count, ...) abort
   let [args, opts] = s:extract_opts(a:args)
-  if args ==# ':Dispatch'
-    let args = dispatch#focus()[0]
-  elseif args =~# '^:[.$]Dispatch$'
-    let args = dispatch#focus(line(a:args[1]))[0]
-  elseif args =~# '^:\d\+Dispatch$'
-    let args = dispatch#focus(+matchstr(a:args, '\d\+'))[0]
+  if args =~# '^:[.$%]Dispatch$'
+    let [args, opts] = dispatch#focus(line(a:args[1]), opts)
+  elseif args =~# '^:\d*Dispatch$'
+    let [args, opts] = dispatch#focus(+matchstr(a:args, '\d\+'), opts)
   elseif args =~# '^--\S\@!' && !has_key(opts, 'compiler')
     let args = s:default_args(args, -1)
     let args = s:build_make(&makeprg, args)
@@ -1043,7 +1037,7 @@ function! dispatch#start_focus(count) abort
   if has_key(opts, 'title')
     let command = '-title=' . escape(opts.title, '\ ') . ' ' . command
   endif
-  if has_key(opts, 'directory') && opts.directory != getcwd()
+  if has_key(opts, 'directory') && opts.directory !=# getcwd()
     let command = '-dir=' .
             \ s:escape_path(fnamemodify(opts.directory, ':~:.')) . ' ' .
             \ command

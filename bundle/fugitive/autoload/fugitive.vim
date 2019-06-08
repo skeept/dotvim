@@ -942,7 +942,7 @@ function! s:PathInfo(url) abort
   let path = substitute(file[1:-1], '/*$', '', '')
   let [tree, ftime] = s:TreeInfo(dir, commit)
   let entry = empty(path) ? [ftime, '040000', 'tree', '', -1] : get(tree, path, [])
-  if empty(entry) || file =~# '/$' && entry[1] !=# 'tree'
+  if empty(entry) || file =~# '/$' && entry[2] !=# 'tree'
     return [-1, '000000', '', '', -1]
   else
     return entry
@@ -1837,7 +1837,7 @@ augroup END
 
 " Section: :Git
 
-call s:command("-bang -nargs=? -complete=customlist,fugitive#CompleteGit Git", "Git")
+call s:command("-bang -nargs=? -range=-1 -complete=customlist,fugitive#CompleteGit Git", "Git")
 
 function! s:GitCommand(line1, line2, range, count, bang, mods, reg, arg, args) abort
   if a:bang
