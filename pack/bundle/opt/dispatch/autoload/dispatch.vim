@@ -362,6 +362,9 @@ endfunction
 
 function! s:dispatch(request) abort
   for handler in g:dispatch_handlers
+    if get(g:, 'dispatch_no_' . handler . '_' . get(a:request, 'action'))
+      continue
+    endif
     let response = call('dispatch#'.handler.'#handle', [a:request])
     if !empty(response)
       let a:request.handler = handler
@@ -372,7 +375,6 @@ function! s:dispatch(request) abort
   endfor
   return 0
 endfunction
-
 
 function! s:extract_opts(command, ...) abort
   let command = a:command
@@ -866,9 +868,13 @@ function! dispatch#compile_command(bang, args, count, ...) abort
 
     call writefile([], request.file)
 
-    let result = s:dispatch(request)
+    if exists(':chistory')
+      let result = s:dispatch(request)
+    else
+      let result = 0
+    endif
     if result
-      if !get(request, 'background') && exists(':chistory')
+      if !get(request, 'background')
         call s:cgetfile(request)
         if result is 2
           exe 'botright copen' get(g:, 'dispatch_quickfix_height', '')
@@ -881,6 +887,11 @@ function! dispatch#compile_command(bang, args, count, ...) abort
       redraw!
       let sp = dispatch#shellpipe(request.file)
       let dest = request.file . '.complete'
+      if !exists(':chistory') && request.background
+        echohl WarningMsg
+        echo "Asynchronous dispatch requires Vim 8 or higher\n"
+        echohl NONE
+      endif
       if &shellxquote ==# '"'
         silent execute dispatch#bang(request.expanded . ' ' . sp . ' & echo %ERRORLEVEL% > ' . dest)
       else
@@ -1166,6 +1177,9 @@ endfunction
 " Section: :AbortDispatch
 
 function! dispatch#abort_command(bang, query, ...) abort
+  if !exists(':chistory')
+    return 'echoerr ' .string('Asynchronous dispatch requires Vim 8 or higher')
+  endif
   let i = len(s:makes) - 1
   while i >= 0
     let request = s:makes[i]

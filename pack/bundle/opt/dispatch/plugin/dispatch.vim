@@ -1,6 +1,6 @@
 " Location:     plugin/dispatch.vim
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.7
+" Version:      1.8
 " GetLatestVimScripts: 4504 1 :AutoInstall: dispatch.vim
 
 if exists("g:loaded_dispatch") || v:version < 700 || &compatible
@@ -87,6 +87,7 @@ endfunction
 if !exists('g:dispatch_handlers')
   let g:dispatch_handlers = [
         \ 'tmux',
+        \ 'job',
         \ 'screen',
         \ 'windows',
         \ 'iterm',
