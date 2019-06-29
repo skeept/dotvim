@@ -74,6 +74,14 @@ function! s:warn(str) abort
   let v:warningmsg = a:str
 endfunction
 
+function! s:Mods(mods, ...) abort
+  let mods = a:mods ==# '<mods>' || empty(a:mods) ? '' : a:mods . ' '
+  if a:0 && mods !~# 'aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright\|tab'
+    let mods = a:1 . ' ' . mods
+  endif
+  return mods
+endfunction
+
 function! s:Slash(path) abort
   if exists('+shellslash')
     return tr(a:path, '\', '/')
@@ -1934,10 +1942,7 @@ call s:command("-bar -bang -range=-1 G", "Status")
 
 function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args) abort
   try
-    let mods = a:mods ==# '<mods>' || empty(a:mods) ? '' : a:mods . ' '
-    if mods !~# 'aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright'
-      let mods = (&splitbelow ? 'botright ' : 'topleft ') . mods
-    endif
+    let mods = s:Mods(a:mods, &splitbelow ? 'botright' : 'topleft')
     let file = fugitive#Find(':')
     let arg = ' +setl\ foldmethod=syntax\ foldlevel=1\|let\ w:fugitive_status=FugitiveGitDir() ' .
           \ s:fnameescape(file)
@@ -2112,11 +2117,13 @@ function! s:StageInfo(...) abort
       let index += 1
     endif
   endwhile
+  let text = matchstr(getline(lnum), '^[A-Z?] \zs.*')
   return {'section': section,
         \ 'heading': getline(slnum),
         \ 'sigil': sigil,
         \ 'offset': offset,
-        \ 'filename': matchstr(getline(lnum), '^[A-Z?] \zs.*'),
+        \ 'filename': text,
+        \ 'paths': reverse(split(text, ' -> ')),
         \ 'commit': matchstr(getline(lnum), '^\%(\%(\x\x\x\)\@!\l\+\s\+\)\=\zs[0-9a-f]\{4,\}\ze '),
         \ 'status': matchstr(getline(lnum), '^[A-Z?]\ze \|^\%(\x\x\x\)\@!\l\+\ze [0-9a-f]'),
         \ 'index': index}
@@ -2289,7 +2296,7 @@ function! s:StageReveal(...) abort
     while getline(end) =~# '^[ \+-]'
       let end += 1
     endwhile
-    while end > line('w$') && line('.') > line('w0') + &scrolloff
+    while line('w$') > line('$') && end > line('w$') && line('.') > line('w0') + &scrolloff
       execute "normal! \<C-E>"
     endwhile
   endif
@@ -2320,7 +2327,7 @@ function! s:StageInline(mode, ...) abort
   let lnum = lnum1 + 1
   if a:0 > 1 && a:2 == 0
     let info = s:StageInfo(lnum - 1)
-    if empty(info.filename) && len(info.section)
+    if empty(info.paths) && len(info.section)
       while len(getline(lnum))
         let lnum += 1
       endwhile
@@ -2350,7 +2357,7 @@ function! s:StageInline(mode, ...) abort
       endif
       continue
     endif
-    if !has_key(b:fugitive_diff, info.section) || info.status !~# '^[ADM]$' || a:mode ==# 'hide'
+    if !has_key(b:fugitive_diff, info.section) || info.status !~# '^[ADMR]$' || a:mode ==# 'hide'
       continue
     endif
     let mode = ''
@@ -2367,9 +2374,9 @@ function! s:StageInline(mode, ...) abort
         endif
         let start = index
         let mode = 'head'
-      elseif mode ==# 'head' && substitute(line, "\t$", '', '') ==# '--- ' . info.filename
+      elseif mode ==# 'head' && substitute(line, "\t$", '', '') ==# '--- ' . info.paths[-1]
         let mode = 'await'
-      elseif mode ==# 'head' && substitute(line, "\t$", '', '') ==# '+++ ' . info.filename
+      elseif mode ==# 'head' && substitute(line, "\t$", '', '') ==# '+++ ' . info.paths[0]
         let mode = 'await'
       elseif mode ==# 'capture'
         call add(diff, line)
@@ -2409,32 +2416,31 @@ function! s:StageDiff(diff) abort
   let lnum = line('.')
   let info = s:StageInfo(lnum)
   let prefix = info.offset > 0 ? '+' . info.offset : ''
-  if empty(info.filename) && info.section ==# 'Staged'
+  if empty(info.paths) && info.section ==# 'Staged'
     return 'Git! diff --no-ext-diff --cached'
-  elseif empty(info.filename)
+  elseif empty(info.paths)
     return 'Git! diff --no-ext-diff'
-  elseif info.filename =~# ' -> '
-    let [old, new] = split(info.filename,' -> ')
-    execute 'Gedit' . prefix s:fnameescape(':0:'.new)
-    return a:diff.' HEAD:'.s:fnameescape(old)
+  elseif len(info.paths) > 1
+    execute 'Gedit' . prefix s:fnameescape(':0:' . info.paths[0])
+    return a:diff.' HEAD:'.s:fnameescape(info.paths[1])
   elseif info.section ==# 'Staged' && info.sigil ==# '-'
-    execute 'Gedit' prefix s:fnameescape('@:'.info.filename)
-    return a:diff.'! :0'
+    execute 'Gedit' prefix s:fnameescape('@:'.info.paths[0])
+    return a:diff.'! :0:%'
   elseif info.section ==# 'Staged'
-    execute 'Gedit' prefix s:fnameescape(':0:'.info.filename)
-    return a:diff . (info.sigil ==# '+' ? '!' : '') . ' -'
+    execute 'Gedit' prefix s:fnameescape(':0:'.info.paths[0])
+    return a:diff . (info.sigil ==# '+' ? '!' : '') . ' @:%'
   elseif info.sigil ==# '-'
-    execute 'Gedit' prefix s:fnameescape(':0:'.info.filename)
+    execute 'Gedit' prefix s:fnameescape(':0:'.info.paths[0])
     return a:diff . '!'
   else
-    execute 'Gedit' prefix s:fnameescape(':(top)'.info.filename)
+    execute 'Gedit' prefix s:fnameescape(':(top)'.info.paths[0])
     return a:diff . (info.sigil ==# '+' ? '!' : '')
   endif
 endfunction
 
 function! s:StageDiffEdit() abort
   let info = s:StageInfo(line('.'))
-  let arg = (empty(info.filename) ? '.' : info.filename)
+  let arg = (empty(info.paths) ? '.' : info.paths[0])
   if info.section ==# 'Staged'
     return 'Git! diff --no-ext-diff --cached '.s:shellesc(arg)
   elseif info.status ==# '?'
@@ -2446,6 +2452,9 @@ function! s:StageDiffEdit() abort
 endfunction
 
 function! s:StageApply(info, reverse, extra) abort
+  if a:info.status ==# 'R'
+    call s:throw('fugitive: patching renamed file not yet supported')
+  endif
   let cmd = ['apply', '-p0', '--recount'] + a:extra
   let info = a:info
   let start = info.patch
@@ -2526,7 +2535,7 @@ function! s:StageDelete(lnum, count) abort
   exe s:ReloadStatus()
   let @@ = hash
   return 'checktime|redraw|echomsg ' .
-        \ string('To restore, :Git cat-file blob '.hash[0:6].' > '.info.filename)
+        \ string('To restore, :Git cat-file blob '.hash[0:6].' > '.info.paths[0])
 endfunction
 
 function! s:DoToggleHeadHeader(value) abort
@@ -2623,20 +2632,18 @@ function! s:StagePatch(lnum1,lnum2) abort
 
   for lnum in range(a:lnum1,a:lnum2)
     let info = s:StageInfo(lnum)
-    if empty(info.filename) && info.section ==# 'Staged'
+    if empty(info.paths) && info.section ==# 'Staged'
       return 'Git reset --patch'
-    elseif empty(info.filename) && info.section ==# 'Unstaged'
+    elseif empty(info.paths) && info.section ==# 'Unstaged'
       return 'Git add --patch'
-    elseif info.filename ==# ''
+    elseif empty(info.paths) ==# ''
       continue
     endif
     execute lnum
-    if info.filename =~ ' -> '
-      let reset += [split(info.filename,' -> ')[1]]
-    elseif info.section ==# 'Staged'
-      let reset += [info.filename]
+    if info.section ==# 'Staged'
+      let reset += info.paths
     elseif info.status !~# '^D'
-      let add += [info.filename]
+      let add += info.paths
     endif
   endfor
   try
@@ -2657,7 +2664,7 @@ endfunction
 call s:command("-nargs=? -complete=customlist,s:CommitComplete Gcommit", "Commit")
 
 function! s:CommitCommand(line1, line2, range, count, bang, mods, reg, arg, args, ...) abort
-  let mods = s:gsub(a:mods ==# '<mods>' ? '' : a:mods, '<tab>', '-tab')
+  let mods = substitute(s:Mods(a:mods), '\C\<tab\>', '-tab', 'g')
   let dir = a:0 ? a:1 : s:Dir()
   let tree = s:Tree(dir)
   let msgfile = fugitive#Find('.git/COMMIT_EDITMSG', dir)
@@ -2713,12 +2720,12 @@ function! s:CommitCommand(line1, line2, range, count, bang, mods, reg, arg, args
         if args !~# '\%(^\| \)--cleanup\>'
           let args = '--cleanup=strip '.args
         endif
-        if bufname('%') == '' && line('$') == 1 && getline(1) == '' && !&mod
-          execute mods 'keepalt edit' s:fnameescape(msgfile)
+        if bufname('%') == '' && line('$') == 1 && getline(1) == '' && !&modified
+          execute mods . 'keepalt edit' s:fnameescape(msgfile)
         elseif a:arg =~# '\%(^\| \)-\w*v' || mods =~# '\<tab\>'
-          execute mods 'keepalt -tabedit' s:fnameescape(msgfile)
+          execute mods . 'keepalt -tabedit' s:fnameescape(msgfile)
         else
-          execute mods 'keepalt split' s:fnameescape(msgfile)
+          execute mods . 'keepalt split' s:fnameescape(msgfile)
         endif
         let b:fugitive_commit_arguments = args
         setlocal bufhidden=wipe filetype=gitcommit
@@ -2869,7 +2876,7 @@ endfunction
 
 function! s:Merge(cmd, bang, mods, args, ...) abort
   let dir = a:0 ? a:1 : s:Dir()
-  let mods = substitute(a:mods, '\C<mods>', '', '') . ' '
+  let mods = s:Mods(a:mods)
   if a:cmd =~# '^rebase' && ' '.a:args =~# ' -i\| --interactive'
     let cmd = fugitive#Prepare(dir, '-c', 'sequence.editor=sh ' . s:RebaseSequenceAborter(), 'rebase') . ' ' . a:args
     let out = system(cmd)[0:-2]
@@ -3193,7 +3200,7 @@ function! s:BlurStatus() abort
 endfunction
 
 function! s:Open(cmd, bang, mods, arg, args) abort
-  let mods = a:mods ==# '<mods>' ? '' : a:mods
+  let mods = s:Mods(a:mods)
 
   if a:bang
     let temp = tempname()
@@ -3212,7 +3219,7 @@ function! s:Open(cmd, bang, mods, arg, args) abort
     if a:cmd ==# 'edit'
       call s:BlurStatus()
     endif
-    silent execute mods a:cmd temp
+    silent execute mods . a:cmd temp
     call fugitive#ReloadStatus()
     return 'echo ' . string(':!' . git . ' ' . args)
   endif
@@ -3229,11 +3236,11 @@ function! s:Open(cmd, bang, mods, arg, args) abort
   if a:cmd ==# 'edit'
     call s:BlurStatus()
   endif
-  return mods . ' ' . a:cmd . pre . ' ' . s:fnameescape(file)
+  return mods . a:cmd . pre . ' ' . s:fnameescape(file)
 endfunction
 
 function! s:ReadCommand(line1, line2, range, count, bang, mods, reg, arg, args) abort
-  let mods = a:mods ==# '<mods>' ? '' : a:mods
+  let mods = s:Mods(a:mods)
   let after = a:line2
   if a:count < 0
     let delete = 'silent 1,' . line('$') . 'delete_|'
@@ -3248,7 +3255,7 @@ function! s:ReadCommand(line1, line2, range, count, bang, mods, reg, arg, args) 
       let cdback = s:Cd(s:Tree())
       let git = s:UserCommand()
       let args = s:ShellExpand(a:arg)
-      silent execute mods after.'read!' escape(git . ' --no-pager ' . args, '!#%')
+      silent execute mods . after . 'read!' escape(git . ' --no-pager ' . args, '!#%')
     finally
       execute cdback
     endtry
@@ -3263,12 +3270,12 @@ function! s:ReadCommand(line1, line2, range, count, bang, mods, reg, arg, args) 
     return 'echoerr v:errmsg'
   endtry
   if file =~# '^fugitive:' && after is# 0
-    return 'exe ' .string(mods . ' ' . fugitive#FileReadCmd(file, 0, pre)) . '|diffupdate'
+    return 'exe ' .string(mods . fugitive#FileReadCmd(file, 0, pre)) . '|diffupdate'
   endif
   if foldlevel(after)
     exe after . 'foldopen!'
   endif
-  return mods . ' ' . after . 'read' . pre . ' ' . s:fnameescape(file) . '|' . delete . 'diffupdate' . (a:count < 0 ? '|' . line('.') : '')
+  return mods . after . 'read' . pre . ' ' . s:fnameescape(file) . '|' . delete . 'diffupdate' . (a:count < 0 ? '|' . line('.') : '')
 endfunction
 
 function! s:ReadComplete(A,L,P) abort
@@ -3846,7 +3853,7 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
         call s:throw(join(readfile(error),"\n"))
       endif
       if a:count
-        let edit = substitute(a:mods, '^<mods>$', '', '') . get(['edit', 'split', 'pedit'], a:line2 - a:line1, ' split')
+        let edit = s:Mods(a:mods) . get(['edit', 'split', 'pedit'], a:line2 - a:line1, ' split')
         return s:BlameCommit(edit, get(readfile(temp), 0, ''))
       else
         for winnr in range(winnr('$'),1,-1)
@@ -4393,16 +4400,16 @@ function! s:StatusCfile(...) abort
   let lead = s:cpath(tree, getcwd()) ? './' : tree . '/'
   let info = s:StageInfo()
   let line = getline('.')
-  if len(info.sigil) && len(info.section) && len(info.filename)
+  if len(info.sigil) && len(info.section) && len(info.paths)
     if info.section ==# 'Unstaged' && info.sigil !=# '-'
-      return [lead . info.filename, info.offset, 'normal!zv']
+      return [lead . info.paths[0], info.offset, 'normal!zv']
     elseif info.section ==# 'Staged' && info.sigil ==# '-'
-      return ['@:' . info.filename, info.offset, 'normal!zv']
+      return ['@:' . info.paths[0], info.offset, 'normal!zv']
     else
-      return [':0:' . info.filename, info.offset, 'normal!zv']
+      return [':0:' . info.paths[0], info.offset, 'normal!zv']
     endif
-  elseif len(info.filename)
-    return [lead . info.filename]
+  elseif len(info.paths)
+    return [lead . info.paths[0]]
   elseif len(info.commit)
     return [info.commit]
   elseif line =~# '^\%(Head\|Merge\|Rebase\|Upstream\|Pull\|Push\): '
