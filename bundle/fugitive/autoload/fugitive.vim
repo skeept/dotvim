@@ -170,10 +170,6 @@ function! s:UserCommand() abort
   return get(g:, 'fugitive_git_command', g:fugitive_git_executable)
 endfunction
 
-function! s:Prepare(...) abort
-  return call('fugitive#Prepare', a:000)
-endfunction
-
 let s:git_versions = {}
 function! fugitive#GitVersion(...) abort
   if !has_key(s:git_versions, g:fugitive_git_executable)
@@ -252,20 +248,19 @@ let s:prepare_env = {
       \ 'core.editor': 'GIT_EDITOR',
       \ 'core.askpass': 'GIT_ASKPASS',
       \ }
-function! fugitive#Prepare(...) abort
-  if !a:0
-    return g:fugitive_git_executable
-  endif
-  if type(a:1) ==# type([])
+function! fugitive#PrepareDirEnvArgv(...) abort
+  if a:0 && type(a:1) ==# type([])
     let cmd = a:000[1:-1] + a:1
   else
     let cmd = copy(a:000)
   endif
-  let pre = ''
+  let env = {}
   let i = 0
   while i < len(cmd)
     if cmd[i] =~# '^$\|[\/.]' && cmd[i] !~# '^-'
       let dir = remove(cmd, 0)
+    elseif cmd[i] =~# '^--git-dir='
+      let dir = remove(cmd, 0)[10:-1]
     elseif type(cmd[i]) ==# type(0)
       let dir = s:Dir(remove(cmd, i))
     elseif cmd[i] ==# '-c' && len(cmd) > i + 1
@@ -273,11 +268,7 @@ function! fugitive#Prepare(...) abort
       if has_key(s:prepare_env, tolower(key)) || key !~# '\.'
         let var = get(s:prepare_env, tolower(key), key)
         let val = matchstr(cmd[i+1], '=\zs.*')
-        if s:winshell()
-          let pre .= 'set ' . var . '=' . s:shellesc(val) . '& '
-        else
-          let pre = (len(pre) ? pre : 'env ') . var . '=' . s:shellesc(val) . ' '
-        endif
+        let env[var] = val
       endif
       if fugitive#GitVersion(1, 8) && cmd[i+1] =~# '\.'
         let i += 2
@@ -302,15 +293,34 @@ function! fugitive#Prepare(...) abort
   endif
   let tree = s:Tree(dir)
   call s:PreparePathArgs(cmd, dir, !exists('explicit_pathspec_option'))
-  let args = join(map(copy(cmd), 's:shellesc(v:val)'))
+  return [dir, env, cmd]
+endfunction
+
+function! s:BuildShell(dir, env, args) abort
+  let cmd = copy(a:args)
+  let tree = s:Tree(a:dir)
+  let pre = ''
+  for [var, val] in items(a:env)
+    if s:winshell()
+      let pre .= 'set ' . var . '=' . s:shellesc(val) . '& '
+    else
+      let pre = (len(pre) ? pre : 'env ') . var . '=' . s:shellesc(val) . ' '
+    endif
+  endfor
   if empty(tree) || index(cmd, '--') == len(cmd) - 1
-    let args = s:shellesc('--git-dir=' . dir) . ' ' . args
+    call insert(cmd, '--git-dir=' . a:dir)
   elseif fugitive#GitVersion(1, 9)
-    let args = '-C ' . s:shellesc(tree) . ' ' . args
+    call extend(cmd, ['-C', tree], 'keep')
   else
-    let pre = 'cd ' . s:shellesc(tree) . (s:winshell() ? ' & ' : '; ') . pre
+    let pre = 'cd ' . s:shellesc(tree) . (s:winshell() ? '& ' : '; ') . pre
   endif
-  return pre . g:fugitive_git_executable . ' ' . args
+  let cmd = join(map(cmd, 's:shellesc(v:val)'))
+  return pre . g:fugitive_git_executable . ' ' . cmd
+endfunction
+
+function! fugitive#Prepare(...) abort
+  let [dir, env, argv] = call('fugitive#PrepareDirEnvArgv', a:000)
+  return s:BuildShell(dir, env, argv)
 endfunction
 
 function! s:SystemError(cmd, ...) abort
@@ -1431,6 +1441,7 @@ endfunction
 function! fugitive#BufReadStatus() abort
   let amatch = s:Slash(expand('%:p'))
   let b:fugitive_type = 'index'
+  unlet! b:fugitive_reltime
   try
     silent doautocmd BufReadPre
     let cmd = [fnamemodify(amatch, ':h')]
@@ -1643,6 +1654,7 @@ function! fugitive#BufReadStatus() abort
       endwhile
     endfor
 
+    let b:fugitive_reltime = reltime()
     return ''
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
@@ -1657,9 +1669,9 @@ function! fugitive#FileReadCmd(...) abort
     return 'noautocmd ' . line . 'read ' . s:fnameescape(amatch)
   endif
   if rev !~# ':'
-    let cmd = s:Prepare(dir, 'log', '--pretty=format:%B', '-1', rev, '--')
+    let cmd = fugitive#Prepare(dir, 'log', '--pretty=format:%B', '-1', rev, '--')
   else
-    let cmd = s:Prepare(dir, 'cat-file', '-p', rev)
+    let cmd = fugitive#Prepare(dir, 'cat-file', '-p', rev)
   endif
   return line . 'read !' . escape(cmd, '!#%')
 endfunction
@@ -1676,7 +1688,7 @@ function! fugitive#FileWriteCmd(...) abort
     if commit !~# '^[0-3]$' || !v:cmdbang && (line("'[") != 1 || line("']") != line('$'))
       return "noautocmd '[,']write" . (v:cmdbang ? '!' : '') . ' ' . s:fnameescape(amatch)
     endif
-    silent execute "'[,']write !".s:Prepare(dir, 'hash-object', '-w', '--stdin', '--').' > '.tmp
+    silent execute "'[,']write !".fugitive#Prepare(dir, 'hash-object', '-w', '--stdin', '--').' > '.tmp
     let sha1 = readfile(tmp)[0]
     let old_mode = matchstr(s:SystemError([dir, 'ls-files', '--stage', '.' . file])[0], '^\d\+')
     if empty(old_mode)
@@ -1689,7 +1701,6 @@ function! fugitive#FileWriteCmd(...) abort
       if exists('#' . autype . 'WritePost')
         execute 'doautocmd ' . autype . 'WritePost ' . s:fnameescape(amatch)
       endif
-      call fugitive#ReloadStatus()
       return ''
     else
       return 'echoerr '.string('fugitive: '.error)
@@ -1711,9 +1722,9 @@ function! fugitive#BufReadCmd(...) abort
     else
       let [b:fugitive_type, exec_error] = s:ChompError([dir, 'cat-file', '-t', rev])
       if exec_error && rev =~# '^:0'
-        let sha = s:TreeChomp(dir, 'write-tree', '--prefix=' . rev[3:-1])
-        let exec_error = 0
-        let b:fugitive_type = 'tree'
+        let sha = s:ChompDefault('', dir, 'write-tree', '--prefix=' . rev[3:-1])
+        let exec_error = empty(sha)
+        let b:fugitive_type = exec_error ? '' : 'tree'
       endif
       if exec_error
         let error = b:fugitive_type
@@ -1883,9 +1894,6 @@ function! s:GitCommand(line1, line2, range, count, bang, mods, reg, arg, args) a
   let args = matchstr(a:arg,'\v\C.{-}%($|\\@<!%(\\\\)*\|)@=')
   let after = matchstr(a:arg, '\v\C\\@<!%(\\\\)*\zs\|.*')
   let tree = s:Tree()
-  if !s:CanAutoReloadStatus()
-    let after = '|call fugitive#ReloadStatus()' . after
-  endif
   let cmd = "exe '!'.escape(" . string(git) . " . ' ' . s:ShellExpand(" . string(args) . "),'!#%')"
   if s:cpath(tree) !=# s:cpath(getcwd())
     let cd = s:Cd()
@@ -2037,6 +2045,7 @@ function! s:StageSeek(info, fallback) abort
 endfunction
 
 function! s:ReloadStatus(...) abort
+  call s:ExpireStatus(-1)
   if get(b:, 'fugitive_type', '') !=# 'index'
     return ''
   endif
@@ -2048,57 +2057,99 @@ function! s:ReloadStatus(...) abort
   return ''
 endfunction
 
-function! fugitive#ReloadStatus(...) abort
-  if exists('s:reloading_status')
+let s:last_time = reltime()
+if !exists('s:last_times')
+  let s:last_times = {}
+endif
+
+function! s:ExpireStatus(bufnr) abort
+  if a:bufnr == -2
+    let s:last_time = reltime()
+    return ''
+  endif
+  let dir = s:Dir(a:bufnr)
+  if len(dir)
+    let s:last_times[s:cpath(dir)] = reltime()
+  endif
+  return ''
+endfunction
+
+function! FugitiveReloadCheck() abort
+  let t = b:fugitive_reltime
+  return [t, reltimestr(reltime(s:last_time, t)),
+        \ reltimestr(reltime(get(s:last_times, s:cpath(s:Dir()), t), t))]
+endfunction
+
+function! s:ReloadWinStatus(...) abort
+  if get(b:, 'fugitive_type', '') !=# 'index' || &modified
     return
   endif
-  try
-    let s:reloading_status = 1
-    let mytab = tabpagenr()
-    for tab in [mytab] + range(1,tabpagenr('$'))
-      for winnr in range(1,tabpagewinnr(tab,'$'))
-        if getbufvar(tabpagebuflist(tab)[winnr-1],'fugitive_type') ==# 'index'
-          execute 'tabnext '.tab
-          if winnr != winnr()
-            execute winnr.'wincmd w'
-            let restorewinnr = 1
-          endif
-          try
-            if !&modified
-              exe s:ReloadStatus()
-            endif
-          finally
-            if exists('restorewinnr')
-              unlet restorewinnr
-              wincmd p
-            endif
-            execute 'tabnext '.mytab
-          endtry
+  if !exists('b:fugitive_reltime')
+    exe s:ReloadStatus()
+    return
+  endif
+  let t = b:fugitive_reltime
+  if reltimestr(reltime(s:last_time, t)) =~# '-' ||
+        \ reltimestr(reltime(get(s:last_times, s:cpath(s:Dir()), t), t)) =~# '-'
+    exe s:ReloadStatus()
+  endif
+endfunction
+
+function! s:ReloadTabStatus(...) abort
+  let mytab = tabpagenr()
+  let tab = a:0 ? a:1 : mytab
+  for winnr in range(1, tabpagewinnr(tab, '$'))
+    if getbufvar(tabpagebuflist(tab)[winnr-1], 'fugitive_type') ==# 'index'
+      execute 'tabnext '.tab
+      if winnr != winnr()
+        execute winnr.'wincmd w'
+        let restorewinnr = 1
+      endif
+      try
+        call s:ReloadWinStatus()
+      finally
+        if exists('restorewinnr')
+          unlet restorewinnr
+          wincmd p
         endif
-      endfor
+        execute 'tabnext '.mytab
+      endtry
+    endif
+  endfor
+  unlet! t:fugitive_reload_status
+endfunction
+
+function! fugitive#ReloadStatus(...) abort
+  call s:ExpireStatus(a:0 ? a:1 : -2)
+  if a:0 > 1 ? a:2 : s:CanAutoReloadStatus()
+    let t = reltime()
+    for tabnr in range(1, tabpagenr('$'))
+      call settabvar(tabnr, 'fugitive_reload_status', t)
     endfor
-  finally
-    unlet! s:reloading_status
-  endtry
+    call s:ReloadTabStatus()
+  else
+    call s:ReloadWinStatus()
+  endif
 endfunction
 
 function! s:CanAutoReloadStatus() abort
   return get(g:, 'fugitive_autoreload_status', !has('win32'))
 endfunction
 
-function! s:AutoReloadStatus(...) abort
-  if s:CanAutoReloadStatus()
-    return call('fugitive#ReloadStatus', a:000)
-  endif
-endfunction
-
 augroup fugitive_status
   autocmd!
-  autocmd ShellCmdPost         * call s:AutoReloadStatus()
-  autocmd BufDelete     term://* call s:AutoReloadStatus()
+  autocmd BufWritePost         * call fugitive#ReloadStatus(-1, 0)
+  autocmd ShellCmdPost         * call fugitive#ReloadStatus()
+  autocmd BufDelete     term://* call fugitive#ReloadStatus()
   if !has('win32')
-    autocmd FocusGained        * call s:AutoReloadStatus()
+    autocmd FocusGained        * call fugitive#ReloadStatus(-2, 0)
   endif
+  autocmd BufEnter index,index.lock
+        \ call s:ReloadWinStatus()
+  autocmd TabEnter *
+        \ if exists('t:fugitive_reload_status') |
+        \    call s:ReloadTabStatus() |
+        \ endif
 augroup END
 
 function! s:StageInfo(...) abort
@@ -2553,7 +2604,7 @@ function! s:StageDelete(lnum, count) abort
   call s:StageReveal()
   let @@ = hash
   return 'checktime|redraw|echomsg ' .
-        \ string('To restore, :Git cat-file blob '.hash[0:6].' > '.info.paths[0])
+        \ string('To restore, :Gedit ' . info.relative[0] . '|Gread ' . hash[0:6])
 endfunction
 
 function! s:DoToggleHeadHeader(value) abort
@@ -2743,7 +2794,7 @@ function! s:CommitCommand(line1, line2, range, count, bang, mods, reg, arg, args
           echo line
         endfor
       endif
-      call fugitive#ReloadStatus()
+      call fugitive#ReloadStatus(dir, 1)
       return ''
     else
       let error = get(errors,-2,get(errors,-1,'!'))
@@ -3006,7 +3057,7 @@ function! s:Merge(cmd, bang, mods, args, ...) abort
     endif
     execute cdback
   endtry
-  call fugitive#ReloadStatus()
+  call fugitive#ReloadStatus(dir, 1)
   if empty(filter(getqflist(),'v:val.valid && v:val.type !=# "I"'))
     if a:cmd =~# '^rebase' &&
           \ filereadable(fugitive#Find('.git/rebase-merge/amend', dir)) &&
@@ -3233,9 +3284,10 @@ function! s:Open(cmd, bang, mods, arg, args) abort
   let mods = s:Mods(a:mods)
 
   if a:bang
+    let dir = s:Dir()
     let temp = tempname()
     try
-      let cdback = s:Cd(s:Tree())
+      let cdback = s:Cd(s:Tree(dir))
       let git = s:UserCommand()
       let args = s:ShellExpand(a:arg)
       silent! execute '!' . escape(git . ' --no-pager ' . args, '!#%') .
@@ -3250,7 +3302,7 @@ function! s:Open(cmd, bang, mods, arg, args) abort
       call s:BlurStatus()
     endif
     silent execute mods . a:cmd temp
-    call fugitive#ReloadStatus()
+    call fugitive#ReloadStatus(dir, 1)
     return 'echo ' . string(':!' . git . ' ' . args)
   endif
 
@@ -4429,14 +4481,14 @@ function! s:StatusCfile(...) abort
   let line = getline('.')
   if len(info.sigil) && len(info.section) && len(info.paths)
     if info.section ==# 'Unstaged' && info.sigil !=# '-'
-      return [lead . info.paths[0], info.offset, 'normal!zv']
+      return [lead . info.relative[0], info.offset, 'normal!zv']
     elseif info.section ==# 'Staged' && info.sigil ==# '-'
-      return ['@:' . info.paths[0], info.offset, 'normal!zv']
+      return ['@:' . info.relative[0], info.offset, 'normal!zv']
     else
-      return [':0:' . info.paths[0], info.offset, 'normal!zv']
+      return [':0:' . info.relative[0], info.offset, 'normal!zv']
     endif
   elseif len(info.paths)
-    return [lead . info.paths[0]]
+    return [lead . info.relative[0]]
   elseif len(info.commit)
     return [info.commit]
   elseif line =~# '^\%(Head\|Merge\|Rebase\|Upstream\|Pull\|Push\): '
