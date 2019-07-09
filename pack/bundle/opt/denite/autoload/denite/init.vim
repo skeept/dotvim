@@ -49,6 +49,9 @@ function! denite#init#_initialize() abort
     endif
     call s:initialize_variables()
   catch
+    call denite#util#print_error(v:exception)
+    call denite#util#print_error(v:throwpoint)
+
     if denite#util#has_yarp()
       if !has('nvim') && !exists('*neovim_rpc#serveraddr')
         call denite#util#print_error(
@@ -98,7 +101,7 @@ function! denite#init#_user_options() abort
         \ 'empty': v:true,
         \ 'expand': v:false,
         \ 'filter_split_direction': 'botright',
-        \ 'filter_updatetime': 300,
+        \ 'filter_updatetime': 100,
         \ 'highlight_filter_background': 'NormalFloat',
         \ 'highlight_matched_range': 'Underlined',
         \ 'highlight_matched_char': 'Search',
