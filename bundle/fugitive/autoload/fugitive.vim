@@ -3371,47 +3371,69 @@ function! s:LogComplete(A, L, P) abort
   return s:CompleteSubcommand('log', a:A, a:L, a:P)
 endfunction
 
-function! s:Grep(cmd,bang,arg) abort
-  let listnr = a:cmd =~# '^l' ? 0 : -1
-  let grepprg = &grepprg
-  let grepformat = &grepformat
-  try
-    let cdback = s:Cd(s:Tree())
-    let &grepprg = s:UserCommand() . ' --no-pager grep -n --no-color'
-    let &grepformat = '%f:%l:%c:%m,%f:%l:%m,%m %f match%ts,%f'
-    if fugitive#GitVersion(2, 19)
-      let &grepprg .= ' --column'
+function! s:GrepParseLine(cached, name_only, dir, line) abort
+  if a:line =~# '^git: \|^usage: \|^error: \|^fatal: '
+    return {'text': a:line}
+  endif
+  let entry = {'valid': 1}
+  let match = matchlist(a:line, '^\(.\{-\}\):\(\d\+\):\(\d\+:\)\=\(.*\)$')
+  if len(match)
+    let entry.module = match[1]
+    let entry.lnum = +match[2]
+    let entry.col = +match[3]
+    let entry.text = match[4]
+  else
+    let entry.module = matchstr(a:line, '\CBinary file \zs.*\ze matches$')
+    if len(entry.module)
+      let entry.text = 'Binary file'
+      let entry.valid = 0
     endif
-    let args = s:SplitExpand(a:arg)
-    exe a:cmd.'! '.escape(s:shellesc(args), '|#%')
-    let list = s:GetLocList(listnr)
-    for entry in list
-      if bufname(entry.bufnr) =~ ':'
-        let entry.filename = s:Generate(bufname(entry.bufnr))
-        unlet! entry.bufnr
-        let changed = 1
-      elseif s:HasOpt(args, '--cached')
-        let entry.filename = s:Generate(':0:'.bufname(entry.bufnr))
-        unlet! entry.bufnr
-        let changed = 1
-      endif
-    endfor
-    if exists('changed')
-      call s:SetLocList(listnr, list, 'r')
-    endif
-    if !a:bang && !empty(list)
-      return (listnr < 0 ? 'c' : 'l').'first'
-    else
-      return ''
-    endif
-  finally
-    let &grepprg = grepprg
-    let &grepformat = grepformat
-    execute cdback
-  endtry
+  endif
+  if empty(entry.module) && a:name_only
+    let entry.module = a:line
+  endif
+  if empty(entry.module)
+    return {'text': a:line}
+  endif
+  if a:cached
+    let entry.module = ':0:' . entry.module
+  endif
+  if entry.module !~# ':'
+    let entry.filename = fugitive#Find(':(top)' . entry.module, a:dir)
+  else
+    let entry.filename = fugitive#Find(entry.module, a:dir)
+  endif
+  return entry
 endfunction
 
-function! s:Log(type, bang, line1, line2, args) abort
+function! s:Grep(type, bang, arg) abort
+  let dir = s:Dir()
+  let listnr = a:type =~# '^l' ? 0 : -1
+  let cmd = s:UserCommandList(dir) + ['--no-pager', 'grep', '-n', '--no-color', '--full-name']
+  if fugitive#GitVersion(2, 19)
+    call add(cmd, '--column')
+  endif
+  let args = s:SplitExpand(a:arg, s:Tree(dir))
+  if exists(':chistory')
+    call s:SetLocList(listnr, [], ' ', {'title': (listnr < 0 ? ':Ggrep ' : ':Glgrep ') . s:fnameescape(args)})
+  else
+    call s:SetLocList(listnr, [], ' ')
+  endif
+  let tempfile = tempname()
+  exe '!' . s:shellesc(cmd + args)
+        \ printf(&shellpipe . (&shellpipe =~# '%s' ? '' : ' %s'), s:shellesc(tempfile))
+  let cached = s:HasOpt(args, '--cached')
+  let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
+  let list = map(readfile(tempfile), 's:GrepParseLine(cached, name_only, dir, v:val)')
+  call s:SetLocList(listnr, list, 'a')
+  if !a:bang && !empty(list)
+    return (listnr < 0 ? 'c' : 'l').'first'
+  else
+    return ''
+  endif
+endfunction
+
+function! s:Log(type, bang, line1, count, args) abort
   let dir = s:Dir()
   let listnr = a:type =~# '^l' ? 0 : -1
   let args = s:SplitExpand(a:args, s:Tree(dir))
@@ -3426,10 +3448,10 @@ function! s:Log(type, bang, line1, line2, args) abort
     let paths = []
   endif
   let path = fugitive#Path(@%, '/', dir)
-  if path =~# '^/\.git\%(/\|$\)\|^$' || a:line2 < 0
+  if path =~# '^/\.git\%(/\|$\)\|^$' || a:count < 0
     let path = ''
-  elseif a:line2 > 0
-    call add(args, '-L' . a:line1 . ',' . a:line2 . ':' . path[1:-1])
+  elseif a:count > 0
+    call add(args, '-L' . a:line1 . ',' . a:count . ':' . path[1:-1])
   else
     if empty(paths)
       call add(paths, '--')
@@ -3474,8 +3496,8 @@ function! s:Log(type, bang, line1, line2, args) abort
   return ''
 endfunction
 
-call s:command("-bar -bang -nargs=? -complete=customlist,s:GrepComplete Ggrep :execute s:Grep('grep',<bang>0,<q-args>)")
-call s:command("-bar -bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:Grep('lgrep',<bang>0,<q-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:GrepComplete Ggrep :execute s:Grep('c',<bang>0,<q-args>)")
+call s:command("-bar -bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:Grep('l',<bang>0,<q-args>)")
 call s:command("-bar -bang -nargs=? -range=-1 -complete=customlist,s:LogComplete Glog :exe s:Log('c',<bang>0,<line1>,<count>,<q-args>)")
 call s:command("-bar -bang -nargs=? -range=-1 -complete=customlist,s:LogComplete Gllog :exe s:Log('l',<bang>0,<line1>,<count>,<q-args>)")
 
@@ -3571,12 +3593,12 @@ endfunction
 
 function! s:ReadCommand(line1, line2, range, count, bang, mods, reg, arg, args) abort
   let mods = s:Mods(a:mods)
-  let after = a:line2
+  let after = a:count
   if a:count < 0
     let delete = 'silent 1,' . line('$') . 'delete_|'
     let after = line('$')
   elseif a:range == 2
-    let delete = 'silent ' . a:line1 . ',' . a:line2 . 'delete_|'
+    let delete = 'silent ' . a:line1 . ',' . a:count . 'delete_|'
   else
     let delete = ''
   endif
