@@ -1,8 +1,9 @@
 ﻿# Install / create archive with new compiles files
 
 Param(
-    [string]$dest='C:\Program Files\vim\vim80',
+    [string]$dest='C:\Program Files\vim\vim81',
     [string]$source='C:\htemp\vim',
+    [switch]$dropbox,
     [switch]$arch
 )
 
@@ -37,14 +38,17 @@ Copy-item -recurse -force -path (Join-path $source runtime) -destination "$dest"
 
 if([bool]$arch) {
   $sevenz = 'C:\Program Files\7-Zip\7z.exe'
-  $vimproc = Join-path "$($env:HOME)" 'vimfiles\bundle\vimproc\lib\*'
+  $vimproc = ls (Join-path "$($env:HOME)" 'vimfiles\bundle\vimproc\lib\*')
   mkdir "$dest\vimproc_lib" | out-null
-  copy-item -recurse -force $vimproc "$dest\vimproc_lib"
+  $vimproc | copy-item -recurse -force -dest "$dest\vimproc_lib"
   $output = "${dest}.7z"
   "& $sevenz a $output $dest"
   & $sevenz a $output $dest
   write-host "`n7Z archive: $output"
-  cp $output ~\Dropbox\tmp
+
+  if([bool]$dropbox) {
+    cp $output ~\Dropbox\tmp
+  }
   rm -recurse "$dest"
 }
 
