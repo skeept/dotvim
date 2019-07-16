@@ -46,7 +46,7 @@ endfunction
 function! s:shellesc(arg) abort
   if type(a:arg) == type([])
     return join(map(copy(a:arg), 's:shellesc(v:val)'))
-  elseif a:arg =~ '^[A-Za-z0-9_/.-]\+$'
+  elseif a:arg =~ '^[A-Za-z0-9_/:.-]\+$'
     return a:arg
   elseif s:winshell()
     return '"'.s:gsub(s:gsub(a:arg, '"', '""'), '\%', '"%"').'"'
@@ -172,9 +172,6 @@ function! s:map(mode, lhs, rhs, ...) abort
 endfunction
 
 " Section: Git
-
-function! s:ChdirArg(dir) abort
-endfunction
 
 function! s:UserCommandList(...) abort
   let git = split(get(g:, 'fugitive_git_command', g:fugitive_git_executable), '\s\+')
@@ -3253,6 +3250,7 @@ function! s:MergeRebase(cmd, bang, mods, args, ...) abort
       silent! wall
     endif
     silent noautocmd make!
+  catch /^Vim\%((\a\+)\)\=:E211/
     let err = v:exception
   finally
     if exists('autowrite_was_set')
@@ -4737,17 +4735,14 @@ endfunction
 function! fugitive#MapJumps(...) abort
   if !&modifiable
     if get(b:, 'fugitive_type', '') ==# 'blob'
-      nnoremap <buffer> <silent> <CR>    :<C-U>0,3Gblame<CR>
-    else
-      nnoremap <buffer> <silent> <CR>    :<C-U>exe <SID>GF("edit")<CR>
-    endif
-    if get(b:, 'fugitive_type', '') ==# 'blob'
+      nnoremap <buffer> <silent> <CR>  :<C-U>0,1Gblame<CR>
       nnoremap <buffer> <silent> o     :<C-U>0,2Gblame<CR>
       nnoremap <buffer> <silent> S     :<C-U>echoerr 'Use gO'<CR>
       nnoremap <buffer> <silent> gO    :<C-U>vertical 0,2Gblame<CR>
       nnoremap <buffer> <silent> O     :<C-U>tab 0,2Gblame<CR>
       nnoremap <buffer> <silent> p     :<C-U>0,3Gblame<CR>
     else
+      nnoremap <buffer> <silent> <CR>  :<C-U>exe <SID>GF("edit")<CR>
       nnoremap <buffer> <silent> o     :<C-U>exe <SID>GF("split")<CR>
       nnoremap <buffer> <silent> S     :<C-U>echoerr 'Use gO'<CR>
       nnoremap <buffer> <silent> gO    :<C-U>exe <SID>GF("vsplit")<CR>
