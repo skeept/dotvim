@@ -27,7 +27,9 @@ Table of Contents
       * [Using git](#using-git)
       * [As Vim plugin](#as-vim-plugin)
       * [Arch Linux](#arch-linux)
+      * [Debian](#debian)
       * [Fedora](#fedora)
+      * [openSUSE](#opensuse)
       * [FreeBSD](#freebsd)
       * [Windows](#windows)
    * [Upgrading fzf](#upgrading-fzf)
@@ -145,6 +147,17 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 sudo pacman -S fzf
 ```
 
+### Debian
+
+fzf is available in Debian Buster and above, and can be installed using the usual
+method:
+
+```sh
+sudo apt-get install fzf
+```
+
+Read the documentation (/usr/share/doc/fzf/README.Debian) on how to enable it.
+
 ### Fedora
 
 fzf is available in Fedora 26 and above, and can be installed using the usual
@@ -157,6 +170,14 @@ sudo dnf install fzf
 Shell completion and plugins for vim or neovim are enabled by default. Shell
 key bindings are installed but not enabled by default. See Fedora's package
 documentation (/usr/share/doc/fzf/README.Fedora) for more information.
+
+### openSUSE
+
+fzf is available in openSUSE Tumbleweed and can be installed via zypper:
+
+```sh
+sudo zypper install fzf
+```
 
 ### FreeBSD
 
