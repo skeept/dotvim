@@ -1,0 +1,8 @@
+
+set backspace=indent,eol,start
+set vsvim_useeditordefaults
+
+nnoremap ; :
+nnoremap : ;
+vnoremap ; :
+vnoremap : ;
