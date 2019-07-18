@@ -6,7 +6,7 @@ if exists('g:autoloaded_fugitive')
 endif
 let g:autoloaded_fugitive = 1
 
-if !exists('g:fugitive_git_executable')
+if !exists('g:fugitive_git_executable') || g:fugitive_git_executable =~# '^LANG='
   let g:fugitive_git_executable = 'git'
 endif
 
@@ -1813,7 +1813,7 @@ function! fugitive#BufReadStatus() abort
     nnoremap <buffer> <silent> dv :<C-U>execute <SID>StageDiff('Gvdiffsplit')<CR>
     nnoremap <buffer> <silent> P :<C-U>execute <SID>StagePatch(line('.'),line('.')+v:count1-1)<CR>
     xnoremap <buffer> <silent> P :<C-U>execute <SID>StagePatch(line("'<"),line("'>"))<CR>
-    if empty(mapcheck('q'))
+    if empty(mapcheck('q', 'n'))
       nnoremap <buffer> <silent> q :<C-U>if bufnr('$') == 1<Bar>quit<Bar>else<Bar>bdelete<Bar>endif<CR>
     endif
     exe 'nnoremap <buffer> <silent>' s:nowait "gq :<C-U>if bufnr('$') == 1<Bar>quit<Bar>else<Bar>bdelete<Bar>endif<CR>"
@@ -2041,7 +2041,7 @@ function! s:SetupTemp(file) abort
     setlocal foldmarker=<<<<<<<,>>>>>>>
     setlocal bufhidden=delete nobuflisted
     setlocal buftype=nowrite
-    if empty(mapcheck('q'))
+    if empty(mapcheck('q', 'n'))
       nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
     endif
     exe 'nnoremap <buffer> <silent>' s:nowait "gq :<C-U>bdelete<CR>"
@@ -2069,7 +2069,8 @@ augroup END
 
 function! s:GitExec(line1, line2, range, count, bang, mods, reg, args, dir) abort
   if empty(a:args)
-    return s:StatusCommand(a:line1, a:line2, a:range, a:count, a:bang, a:mods, a:reg, '', [])
+    let cmd = s:StatusCommand(a:line1, a:line2, a:range, a:count, a:bang, a:mods, a:reg, '', [])
+    return empty(cmd) ? 'exe' : cmd
   endif
   if a:bang
     return s:OpenExec((a:count > 0 ? a:count : '') . (a:count ? 'split' : 'edit'), a:mods, a:args, a:dir)
@@ -2109,11 +2110,15 @@ function! s:Command(line1, line2, range, count, bang, mods, reg, arg, args, ...)
 endfunction
 
 let s:exec_paths = {}
-function! s:Subcommands() abort
+function! s:ExecPath() abort
   if !has_key(s:exec_paths, g:fugitive_git_executable)
     let s:exec_paths[g:fugitive_git_executable] = s:sub(system(g:fugitive_git_executable.' --exec-path'),'\n$','')
   endif
-  let exec_path = s:exec_paths[g:fugitive_git_executable]
+  return s:exec_paths[g:fugitive_git_executable]
+endfunction
+
+function! s:Subcommands() abort
+  let exec_path = s:ExecPath()
   return map(split(glob(exec_path.'/git-*'),"\n"),'s:sub(v:val[strlen(exec_path)+5 : -1],"\\.exe$","")')
 endfunction
 
@@ -2184,9 +2189,10 @@ function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args
           \ s:fnameescape(file)
     for winnr in range(1, winnr('$'))
       if s:cpath(file, fnamemodify(bufname(winbufnr(winnr)), ':p'))
+        call s:ExpireStatus(-1)
         exe winnr . 'wincmd w'
         let w:fugitive_status = dir
-        return s:ReloadStatus()
+        return 1
       endif
     endfor
     if a:count ==# 0
@@ -3558,7 +3564,7 @@ function! s:Log(type, bang, line1, count, args) abort
     let path = ''
   elseif a:line1 == 0
     let range = "0," . (a:count ? a:count : bufnr(''))
-    let extra = (len(paths) ? [] : ['--']) + [path[1:-1]]
+    let extra = ['.' . path]
   elseif a:count > 0
     if !s:HasOpt(args, '--merges', '--no-merges')
       call insert(args, '--no-merges')
@@ -3919,6 +3925,18 @@ function! s:FetchComplete(A, L, P) abort
   return s:CompleteSubcommand('fetch', a:A, a:L, a:P, function('s:CompleteRemote'))
 endfunction
 
+function! s:AskPassArgs(dir) abort
+  if (len($DISPLAY) || len($TERM_PROGRAM) || has('gui_running')) && fugitive#GitVersion(1, 8) &&
+        \ empty($GIT_ASKPASS) && empty($SSH_ASKPASS) && empty(fugitive#Config('core.askPass', a:dir))
+    if s:executable(s:ExecPath() . '/git-gui--askpass')
+      return ['-c', 'core.askPass=' . s:ExecPath() . '/git-gui--askpass']
+    elseif s:executable('ssh-askpass')
+      return ['-c', 'core.askPass=ssh-askpass']
+    endif
+  endif
+  return []
+endfunction
+
 function! s:Dispatch(bang, cmd, arg) abort
   let dir = s:Dir()
   let [args, after] = s:SplitExpandChain(a:arg, s:Tree(dir))
@@ -3926,7 +3944,7 @@ function! s:Dispatch(bang, cmd, arg) abort
   try
     let b:current_compiler = 'git'
     let &l:errorformat = s:common_efm
-    let &l:makeprg = s:shellesc(s:UserCommandList(dir) + [a:cmd] + args)
+    let &l:makeprg = s:shellesc(s:UserCommandList(dir) + s:AskPassArgs(dir) + [a:cmd] + args)
     if exists(':Make') == 2
       Make
       return after[1:-1]
@@ -4378,7 +4396,7 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
         let nowait = v:version >= 704 ? '<nowait>' : ''
         nnoremap <buffer> <silent> <F1> :help fugitive-:Gblame<CR>
         nnoremap <buffer> <silent> g?   :help fugitive-:Gblame<CR>
-        if empty(mapcheck('q'))
+        if empty(mapcheck('q', 'n'))
           nnoremap <buffer> <silent> q    :exe substitute(bufwinnr(b:fugitive_blamed_bufnr).' wincmd w<Bar>'.bufnr('').'bdelete','^-1','','')<CR>
         endif
         exe 'nnoremap <buffer> <silent>' s:nowait "gq :exe substitute(bufwinnr(b:fugitive_blamed_bufnr).' wincmd w<Bar>'.bufnr('').'bdelete<Bar>if expand(''%:p'') =~# ''^fugitive:[\\/][\\/]''<Bar>Gedit<Bar>endif','^-1','','')<CR>"
@@ -4859,8 +4877,7 @@ function! fugitive#MapJumps(...) abort
     nnoremap <buffer>          c-    :Gcommit -
     nnoremap <buffer>       c<Space> :Gcommit<Space>
     nnoremap <buffer>          c<CR> :Gcommit<CR>
-    nnoremap <buffer> <silent> co    :<C-U>echoerr 'Use CTRL-W C'<CR>
-    nnoremap <buffer> <silent> <C-W>C :<C-U>exe 'Gsplit ' . <SID>fnameescape(<SID>ContainingCommit())<CR>
+    nnoremap <buffer> <silent> co    :<C-U>echoerr 'Use CTRL-W sC'<CR>
     nnoremap <buffer> <silent> cp    :<C-U>echoerr 'Use gC'<CR>
     nnoremap <buffer> <silent> gC    :<C-U>exe 'Gpedit ' . <SID>fnameescape(<SID>ContainingCommit())<CR>
     nnoremap <buffer> <silent> gc    :<C-U>exe 'Gpedit ' . <SID>fnameescape(<SID>ContainingCommit())<CR>

@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-cpp/tree/master/License.md>
 " Version:      2.2.0
 " Created:      05th Oct 2006
-" Last Update:  01st Sep 2018
+" Last Update:  18th Jul 2019
 "------------------------------------------------------------------------
 " Description:
 "       This plugin defines VimL functions specialized in the analysis of C++
@@ -46,6 +46,8 @@
 "       (*) Add detection of final, override, constexpr, noexept, volatile,
 "          =default, =delete
 "       (*) Fix regex building for operator()
+"       (*) Support `decltype(auto)`
+"       (*) Support `->` return type specification
 "       v2.0.0
 "       (*) GPLv3 w/ exception
 "       (*) AnalysePrototype() accepts spaces between functionname and (
@@ -186,7 +188,8 @@ let s:re_qualified_oper             = '\%('.s:re_qualified_name . '\s*::\s*\)\='
 let s:re_const_member_fn            = ')\s*\zs\<const\>'
 let s:re_volatile_member_fn         = ')\s*\zs\<volatile\>'
 let s:re_throw_spec                 = ')\s*\%(\%(\<const\>\|\<volatile\>\)\s\+\)\=\<throw\>(\(\zs.*\ze\))'
-let s:re_noexcept_spec              = '\<noexcept\>\((\zs.*\ze)\)\='
+" let s:re_noexcept_spec              = ')\s*\%(\%(\<const\>\|\<volatile\>\)\s\+\)\=\<noexcept\>\((\zs.*\ze)\)\='
+let s:re_noexcept_spec              = '\<noexcept\>\%((\zs.*\ze)\)\='
 let s:re_defined_by_compiler_prefix = ')\s*\%(\%(\<const\>\|\<volatile\>\)\s*\)\=\%(\<noexcept\>\%((.*)\)\=\s*\)\==\s*'
 let s:re_pure_virtual               = s:re_defined_by_compiler_prefix . '0\s*[;{]'
 let s:re_special_definition         = s:re_defined_by_compiler_prefix . '\zs\<\(default\|delete\)\>\ze\s*[;{]'
@@ -216,10 +219,17 @@ function! lh#cpp#AnalysisLib_Function#AnalysePrototype(prototype) abort
   "   operators
   if iName == -1
     " if not an operator -> just a function
-    " "\s*(" -> parenthesis may be aligned and not sticking to the function
-    " name
-    let iName = match   (prototype, s:re_qualified_name . '\ze\s*(')
-    let sName = matchstr(prototype, s:re_qualified_name . '\ze\s*(')
+
+    " First: special case of `decltype(auto)`
+    let iName = match   (prototype, 'decltype(auto)\s*\zs'.s:re_qualified_name . '\ze\s*(')
+    if  iName >= 0
+      let sName = matchstr(prototype, 'decltype(auto)\s*\zs'.s:re_qualified_name . '\ze\s*(')
+    else
+      " "\s*(" -> parenthesis may be aligned and not sticking to the function
+      " name
+      let iName = match   (prototype, s:re_qualified_name . '\ze\s*(')
+      let sName = matchstr(prototype, s:re_qualified_name . '\ze\s*(')
+    endif
   else
     " echo "operator"
     let sName = matchstr(prototype, s:re_qualified_oper)
@@ -237,22 +247,34 @@ function! lh#cpp#AnalysisLib_Function#AnalysePrototype(prototype) abort
     let retType = ''
   endif
   let retType = substitute(retType, s:re_constexpr.'\s*', '', '')
+  if retType =~ '\v^$|auto' && prototype =~ '->'
+    " New C++11 syntax for return type specification
+    let retType = matchstr(prototype, '\v-\>\s*\zs.{-}\ze\s*[{;]\s*$')
+    let prototype = matchstr(prototype, '\v^.{-}\ze\s*-\>')
+  endif
 
-  " 4- Parameters                                {{{5
-  let sParams = strpart(prototype, iName+len(sName))
-  let params = lh#cpp#AnalysisLib_Function#GetListOfParams(sParams, 0)
-
-  " 5- Const member function ?                   {{{5
-  let isConst    = match(prototype, s:re_const_member_fn) != -1
-  let isVolatile = match(prototype, s:re_volatile_member_fn) != -1
-
-  " 6- Throw specification                       {{{5
+  " 4- Throw specification                       {{{5
   let sThrowSpec = matchstr(prototype, s:re_throw_spec)
   let lThrowSpec = split(sThrowSpec, '\s*,\s*')
   if len(lThrowSpec) == 0 && match(prototype, s:re_throw_spec) > 0
     let lThrowSpec = [ '' ]
   endif
-  let sNoexceptSpec = matchstr(prototype, s:re_noexcept_spec)
+  let [sNoexceptSpec, idx_s, idx_e] = lh#string#matchstrpos(prototype, s:re_noexcept_spec)
+  call s:Verbose("sNoexceptSpec: %1 ∈ [%2, %3]", sNoexceptSpec, idx_s, idx_e)
+  if !empty(sNoexceptSpec)
+    " call s:Verbose("Prototype before trimming noexcept(): %1", prototype)
+    let prototype = prototype[:idx_s-2].prototype[idx_e+1:]
+    " +2: to remove () that'll mess param extraction
+    call s:Verbose("Prototype after trimming noexcept(): %1", prototype)
+  endif
+
+  " 5- Parameters                                {{{5
+  let sParams = strpart(prototype, iName+len(sName))
+  let params = lh#cpp#AnalysisLib_Function#GetListOfParams(sParams, 0)
+
+  " 6- Const member function ?                   {{{5
+  let isConst    = match(prototype, s:re_const_member_fn) != -1
+  let isVolatile = match(prototype, s:re_volatile_member_fn) != -1
 
   " 7- Pure member function ?                    {{{5
   let isPure =  prototype =~ s:re_pure_virtual
