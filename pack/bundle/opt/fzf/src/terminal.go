@@ -1290,7 +1290,7 @@ func replacePlaceholder(template string, stripAnsi bool, delimiter Delimiter, fo
 		for idx, item := range items {
 			tokens := Tokenize(item.AsString(stripAnsi), delimiter)
 			trans := Transform(tokens, ranges)
-			str := string(joinTokens(trans))
+			str := joinTokens(trans)
 			if delimiter.str != nil {
 				str = strings.TrimSuffix(str, *delimiter.str)
 			} else if delimiter.regex != nil {
@@ -1423,7 +1423,7 @@ func (t *Terminal) Loop() {
 	<-t.startChan
 	{ // Late initialization
 		intChan := make(chan os.Signal, 1)
-		signal.Notify(intChan, os.Interrupt, os.Kill, syscall.SIGTERM)
+		signal.Notify(intChan, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			<-intChan
 			t.reqBox.Set(reqQuit, nil)
@@ -1532,7 +1532,7 @@ func (t *Terminal) Loop() {
 					cmd.Wait()
 					finishChan <- true
 					if out.Len() > 0 || !<-updateChan {
-						t.reqBox.Set(reqPreviewDisplay, string(out.Bytes()))
+						t.reqBox.Set(reqPreviewDisplay, out.String())
 					}
 				} else {
 					t.reqBox.Set(reqPreviewDisplay, "")
