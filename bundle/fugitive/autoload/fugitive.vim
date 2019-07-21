@@ -2189,8 +2189,12 @@ function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args
           \ s:fnameescape(file)
     for winnr in range(1, winnr('$'))
       if s:cpath(file, fnamemodify(bufname(winbufnr(winnr)), ':p'))
-        call s:ExpireStatus(-1)
-        exe winnr . 'wincmd w'
+        if winnr == winnr()
+          call s:ReloadStatus()
+        else
+          call s:ExpireStatus(dir)
+          exe winnr . 'wincmd w'
+        endif
         let w:fugitive_status = dir
         return 1
       endif
@@ -3470,7 +3474,7 @@ function! s:Grep(type, bang, arg) abort
   let title = [listnr < 0 ? ':Ggrep' : ':Glgrep'] + args
   call s:QuickfixCreate(listnr, {'title': (listnr < 0 ? ':Ggrep ' : ':Glgrep ') . s:fnameescape(args)})
   let tempfile = tempname()
-  exe '!' . s:shellesc(cmd + args)
+  exe '!' . escape(s:shellesc(cmd + args), '%#!')
         \ printf(&shellpipe . (&shellpipe =~# '%s' ? '' : ' %s'), s:shellesc(tempfile))
   let list = map(readfile(tempfile), 's:GrepParseLine(prefix, name_only, dir, v:val)')
   call s:QuickfixSet(listnr, list, 'a')
@@ -3766,13 +3770,15 @@ function! s:WriteCommand(line1, line2, range, count, bang, mods, reg, arg, args)
     silent write
     setlocal buftype=nowrite
     if matchstr(getline(2),'index [[:xdigit:]]\+\.\.\zs[[:xdigit:]]\{7\}') ==# fugitive#RevParse(':0:'.filename)[0:6]
-      let err = s:TreeChomp('apply', '--cached', '--reverse', '--', expand('%:p'))
+      let [message, exec_error] = s:ChompError(['apply', '--cached', '--reverse', '--', expand('%:p')])
     else
-      let err = s:TreeChomp('apply', '--cached', '--', expand('%:p'))
+      let [message, exec_error] = s:ChompError(['apply', '--cached', '--', expand('%:p')])
     endif
-    if err !=# ''
-      let v:errmsg = split(err,"\n")[0]
-      return 'echoerr v:errmsg'
+    if exec_error
+      echohl ErrorMsg
+      echo message
+      echohl NONE
+      return ''
     elseif a:bang
       return 'bdelete'
     else
