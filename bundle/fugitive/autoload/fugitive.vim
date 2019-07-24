@@ -6,8 +6,10 @@ if exists('g:autoloaded_fugitive')
 endif
 let g:autoloaded_fugitive = 1
 
-if !exists('g:fugitive_git_executable') || g:fugitive_git_executable =~# '^LANG='
+if !exists('g:fugitive_git_executable')
   let g:fugitive_git_executable = 'git'
+elseif g:fugitive_git_executable =~# '^\w\+='
+  let g:fugitive_git_executable = 'env ' . g:fugitive_git_executable
 endif
 
 " Section: Utility
@@ -1806,7 +1808,7 @@ function! fugitive#BufReadStatus() abort
     nnoremap <buffer> <silent> gr :<C-U>exe <SID>StageJump(v:count, 'Rebasing')<CR>
     nnoremap <buffer> <silent> C :<C-U>Gcommit<CR>:echohl WarningMsg<Bar>echo ':Gstatus C is deprecated in favor of cc'<Bar>echohl NONE<CR>
     nnoremap <buffer> <silent> a :<C-U>execute <SID>Do('Toggle',0)<CR>
-    nnoremap <buffer> <silent> i :<C-U>execute <SID>StageIntend(v:count1)<CR>
+    nnoremap <buffer> <silent> i :<C-U>execute <SID>NextExpandedHunk(v:count1)<CR>
     exe 'nnoremap <buffer> <silent>' nowait "= :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>"
     exe 'nnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>"
     exe 'nnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>"
@@ -1828,8 +1830,8 @@ function! fugitive#BufReadStatus() abort
     nnoremap <buffer> <silent> R :echohl WarningMsg<Bar>echo 'Reloading is automatic.  Use :e to force'<Bar>echohl NONE<CR>
     nnoremap <buffer> <silent> g<Bar> :<C-U>echoerr 'Changed to X'<CR>
     xnoremap <buffer> <silent> g<Bar> :<C-U>echoerr 'Changed to X'<CR>
-    nnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line('.'),v:count)<CR>
-    xnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line("'<"),line("'>")-line("'<")+1)<CR>
+    nnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line('.'), 0, v:count)<CR>
+    xnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line("'<"), line("'>"), v:count)<CR>
     nnoremap <buffer>          . :<C-U> <C-R>=<SID>StageArgs(0)<CR><Home>
     xnoremap <buffer>          . :<C-U> <C-R>=<SID>StageArgs(1)<CR><Home>
     nnoremap <buffer> <silent> <F1> :help fugitive-mappings<CR>
@@ -2728,19 +2730,15 @@ function! s:StageInline(mode, ...) abort
   return lnum
 endfunction
 
-function! s:StageIntend(count) abort
+function! s:NextExpandedHunk(count) abort
   for i in range(a:count)
-    if getline('.')[0:1] ==# '? '
-      call s:TreeChomp('add', '--intent-to-add', '--', s:Tree() . '/' . getline('.')[2:-1])
-      -
-      exe s:ReloadStatus()
-    elseif getline('.') =~# '^Unstaged\|^Untracked'
+    if getline('.') =~# '^Unstaged\|^Untracked'
       call s:TreeChomp('add', '--intent-to-add', '--', s:Tree())
       exe s:ReloadStatus()
     else
       call s:StageInline('show', line('.'), 1)
     endif
-    call s:NextFileHunk(1)
+    call search('^[A-Z?] .\|^diff --\|^@','W')
   endfor
   return '.'
 endfunction
@@ -2833,38 +2831,38 @@ function! s:StageApply(info, reverse, extra) abort
   call s:throw(output)
 endfunction
 
-function! s:StageDelete(lnum, count) abort
-  let info = get(s:Selection(a:lnum, -a:count), 0, {'filename': ''})
+function! s:StageDelete(lnum1, lnum2, count) abort
+  let info = get(s:Selection(a:lnum1, a:lnum2), 0, {'filename': ''})
   if empty(info.filename)
     return ''
   endif
   let hash = s:TreeChomp('hash-object', '-w', '--', info.paths[0])
-  if empty(hash)
-    return ''
-  elseif info.patch
-    try
+  try
+    if empty(hash)
+      return ''
+    elseif info.patch
       call s:StageApply(info, 1, info.section ==# 'Staged' ? ['--index'] : [])
-    catch /^fugitive:/
-      return 'echoerr ' . string(v:exception)
-    endtry
-  elseif a:count == 2
-    call s:TreeChomp('checkout', '--ours', '--', info.paths[0])
-  elseif a:count == 3
-    call s:TreeChomp('checkout', '--theirs', '--', info.paths[0])
-  elseif info.status =~# '[ADU]' &&
-        \ get(b:fugitive_status[info.section ==# 'Staged' ? 'Unstaged' : 'Staged'], info.filename, '') =~# '[AU]'
-    call s:TreeChomp('checkout', info.section ==# 'Staged' ? '--ours' : '--theirs', '--', info.paths[0])
-  elseif info.status ==# 'U'
-    call s:TreeChomp('rm', '--', info.paths[0])
-  elseif info.status ==# 'A'
-    call s:TreeChomp('rm', '-f', '--', info.paths[0])
-  elseif info.status ==# '?'
-    call s:TreeChomp('clean', '-f', '--', info.paths[0])
-  elseif info.section ==# 'Unstaged'
-    call s:TreeChomp('checkout', '--', info.paths[0])
-  else
-    call s:TreeChomp('checkout', 'HEAD^{}', '--', info.paths[0])
-  endif
+    elseif info.status ==# '?'
+      call s:TreeChomp('clean', '-f', '--', info.paths[0])
+    elseif a:count == 2
+      call s:TreeChomp('checkout', '--ours', '--', info.paths[0])
+    elseif a:count == 3
+      call s:TreeChomp('checkout', '--theirs', '--', info.paths[0])
+    elseif info.status =~# '[ADU]' &&
+          \ get(b:fugitive_status[info.section ==# 'Staged' ? 'Unstaged' : 'Staged'], info.filename, '') =~# '[AU]'
+      call s:TreeChomp('checkout', info.section ==# 'Staged' ? '--ours' : '--theirs', '--', info.paths[0])
+    elseif info.status ==# 'U'
+      call s:TreeChomp('rm', '--', info.paths[0])
+    elseif info.status ==# 'A'
+      call s:TreeChomp('rm', '-f', '--', info.paths[0])
+    elseif info.section ==# 'Unstaged'
+      call s:TreeChomp('checkout', '--', info.paths[0])
+    else
+      call s:TreeChomp('checkout', 'HEAD^{}', '--', info.paths[0])
+    endif
+  catch /^fugitive:/
+    return 'echoerr ' . string(v:exception)
+  endtry
   exe s:ReloadStatus()
   call s:StageReveal()
   let @@ = hash
