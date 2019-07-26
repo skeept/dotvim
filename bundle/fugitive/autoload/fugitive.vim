@@ -487,7 +487,7 @@ function! fugitive#RevParse(rev, ...) abort
   if !exec_error && hash =~# '^\x\{40,\}$'
     return hash
   endif
-  call s:throw('rev-parse '.a:rev.': '.hash)
+  throw 'vim-fugitive: rev-parse '.a:rev.': '.hash
 endfunction
 
 function! s:ConfigTimestamps(dir, dict) abort
@@ -884,12 +884,6 @@ function! fugitive#Find(object, ...) abort
   elseif rev =~# '^:/\@!'
     let f = 'fugitive://' . dir . '//0/' . rev[1:-1]
   else
-    if rev =~# 'HEAD$\|^refs/' && rev !~# ':'
-      let cdir = rev =~# '^refs/' ? fugitive#CommonDir(dir) : dir
-      if filereadable(cdir . '/' . rev)
-        let f = simplify(cdir . '/' . rev)
-      endif
-    endif
     if !exists('f')
       let commit = substitute(matchstr(rev, '^[^:]\+\|^:.*'), '^@\%($\|[~^]\|@{\)\@=', 'HEAD', '')
       let file = substitute(matchstr(rev, '^[^:]\+\zs:.*'), '^:', '/', '')
@@ -949,13 +943,8 @@ function! fugitive#Object(...) abort
   if empty(rev) && empty(tree)
   elseif empty(rev)
     let rev = fugitive#Path(a:0 ? a:1 : @%, './', dir)
-    let cdir = fugitive#CommonDir(dir)
-    if rev =~# '^\./\.git/refs/\%(tags\|heads\|remotes\)/.\|^\./\.git/\w*HEAD$'
-      let rev = rev[7:-1]
-    elseif s:cpath(cdir . '/refs/', rev[0 : len(cdir)])
-      let rev = strpart(rev, len(cdir)+1)
-    elseif rev =~# '^\./.git\%(/\|$\)'
-      return fnamemodify(a:0 ? a:1 : @%, ':p')
+    if rev =~# '^\./.git\%(/\|$\)'
+      return fnamemodify(a:0 ? a:1 : @%, ':p' . (rev =~# '/$' ? '' : ':s?/$??'))
     endif
   endif
   if rev !~# '^\.\%(/\|$\)' || s:cpath(getcwd(), tree)
@@ -1810,11 +1799,11 @@ function! fugitive#BufReadStatus() abort
     nnoremap <buffer> <silent> a :<C-U>execute <SID>Do('Toggle',0)<CR>
     nnoremap <buffer> <silent> i :<C-U>execute <SID>NextExpandedHunk(v:count1)<CR>
     exe 'nnoremap <buffer> <silent>' nowait "= :<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>"
-    exe 'nnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>"
-    exe 'nnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>"
+    exe 'nnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>"
+    exe 'nnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>"
     exe 'xnoremap <buffer> <silent>' nowait "= :<C-U>execute <SID>StageInline('toggle',line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>"
-    exe 'xnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('show',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>"
-    exe 'xnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('hide',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>"
+    exe 'xnoremap <buffer> <silent>' nowait "< :<C-U>execute <SID>StageInline('hide',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>"
+    exe 'xnoremap <buffer> <silent>' nowait "> :<C-U>execute <SID>StageInline('show',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>"
     nnoremap <buffer> <silent> D :<C-U>execute <SID>StageDiff('Gdiffsplit')<CR>
     nnoremap <buffer> <silent> dd :<C-U>execute <SID>StageDiff('Gdiffsplit')<CR>
     nnoremap <buffer> <silent> dh :<C-U>execute <SID>StageDiff('Ghdiffsplit')<CR>
@@ -1832,6 +1821,8 @@ function! fugitive#BufReadStatus() abort
     xnoremap <buffer> <silent> g<Bar> :<C-U>echoerr 'Changed to X'<CR>
     nnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line('.'), 0, v:count)<CR>
     xnoremap <buffer> <silent> X :<C-U>execute <SID>StageDelete(line("'<"), line("'>"), v:count)<CR>
+    nnoremap <buffer> <silent> gI :<C-U>execute <SID>StageIgnore(line('.'), line('.'), v:count)<CR>
+    xnoremap <buffer> <silent> gI :<C-U>execute <SID>StageIgnore(line("'<"), line("'>"), v:count)<CR>
     nnoremap <buffer>          . :<C-U> <C-R>=<SID>StageArgs(0)<CR><Home>
     xnoremap <buffer>          . :<C-U> <C-R>=<SID>StageArgs(1)<CR><Home>
     nnoremap <buffer> <silent> <F1> :help fugitive-mappings<CR>
@@ -2732,12 +2723,7 @@ endfunction
 
 function! s:NextExpandedHunk(count) abort
   for i in range(a:count)
-    if getline('.') =~# '^Unstaged\|^Untracked'
-      call s:TreeChomp('add', '--intent-to-add', '--', s:Tree())
-      exe s:ReloadStatus()
-    else
-      call s:StageInline('show', line('.'), 1)
-    endif
+    call s:StageInline('show', line('.'), 1)
     call search('^[A-Z?] .\|^diff --\|^@','W')
   endfor
   return '.'
@@ -2870,6 +2856,23 @@ function! s:StageDelete(lnum1, lnum2, count) abort
         \ string('To restore, :Gedit ' . info.relative[0] . '|Gread ' . hash[0:6])
 endfunction
 
+function! s:StageIgnore(lnum1, lnum2, count) abort
+  let paths = []
+  for info in s:Selection(a:lnum1, a:lnum2)
+    call extend(paths, info.relative)
+  endfor
+  call map(paths, '"/" . v:val')
+  exe 'Gsplit' (a:count ? '.gitignore' : '.git/info/exclude')
+  let last = line('$')
+  if last == 1 && empty(getline(1))
+    call setline(last, paths)
+  else
+    call append(last, paths)
+    exe last + 1
+  endif
+  return ''
+endfunction
+
 function! s:DoToggleHeadHeader(value) abort
   exe 'edit' s:fnameescape(s:Dir())
   call search('\C^index$', 'wc')
@@ -2975,6 +2978,7 @@ endfunction
 function! s:StagePatch(lnum1,lnum2) abort
   let add = []
   let reset = []
+  let intend = []
 
   for lnum in range(a:lnum1,a:lnum2)
     let info = s:StageInfo(lnum)
@@ -2990,11 +2994,16 @@ function! s:StagePatch(lnum1,lnum2) abort
     execute lnum
     if info.section ==# 'Staged'
       let reset += info.relative
+    elseif info.section ==# 'Untracked'
+      let intend += info.paths
     elseif info.status !~# '^D'
       let add += info.relative
     endif
   endfor
   try
+    if !empty(intend)
+      call s:TreeChomp(['add', '--intent-to-add', '--'] + intend)
+    endif
     if !empty(add)
       execute "Git add --patch -- ".join(map(add,'s:fnameescape(v:val)'))
     endif
@@ -4891,6 +4900,7 @@ function! fugitive#MapJumps(...) abort
     nnoremap <buffer> <silent> cp    :<C-U>echoerr 'Use gC'<CR>
     nnoremap <buffer> <silent> gC    :<C-U>exe 'Gpedit ' . <SID>fnameescape(<SID>ContainingCommit())<CR>
     nnoremap <buffer> <silent> gc    :<C-U>exe 'Gpedit ' . <SID>fnameescape(<SID>ContainingCommit())<CR>
+    nnoremap <buffer> <silent> gi    :<C-U>exe 'Gsplit' (v:count ? '.gitignore' : '.git/info/exclude')<CR>
 
     nnoremap <buffer>          c-    :Gcommit -
     nnoremap <buffer>       c<Space> :Gcommit<Space>
@@ -4907,6 +4917,15 @@ function! fugitive#MapJumps(...) abort
     nnoremap <buffer>          cS    :<C-U><Bar>Grebase --autosquash<C-R>=<SID>RebaseArgument()<CR><Home>Gcommit --squash=<C-R>=<SID>SquashArgument()<CR>
     nnoremap <buffer>          cA    :<C-U>Gcommit --edit --squash=<C-R>=<SID>SquashArgument()<CR>
     nnoremap <buffer> <silent> c?    :<C-U>help fugitive_c<CR>
+
+    nnoremap <buffer>      cz<Space> :G stash<Space>
+    nnoremap <buffer>         cz<CR> :G stash<CR>
+    nnoremap <buffer> <silent> cza   :<C-U>exe <SID>EchoExec(['stash', 'apply', '--quiet', 'stash@{' . v:count . '}'])<CR>
+    nnoremap <buffer> <silent> czp   :<C-U>exe <SID>EchoExec(['stash', 'pop', '--quiet', 'stash@{' . v:count . '}'])<CR>
+    nnoremap <buffer> <silent> czv   :<C-U>exe 'Gedit' fugitive#RevParse('stash@{' . v:count . '}')<CR>
+    nnoremap <buffer> <silent> czw   :<C-U>exe <SID>EchoExec(['stash', '--keep-index'] + (v:count > 1 ? ['--all'] : v:count ? ['--include-untracked'] : []))<CR>
+    nnoremap <buffer> <silent> czz   :<C-U>exe <SID>EchoExec(['stash'] + (v:count > 1 ? ['--all'] : v:count ? ['--include-untracked'] : []))<CR>
+    nnoremap <buffer> <silent> cz?   :<C-U>help fugitive_cz<CR>
 
     nnoremap <buffer>          r-    :Grebase -
     nnoremap <buffer>       r<Space> :Grebase<Space>

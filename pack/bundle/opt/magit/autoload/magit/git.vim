@@ -105,6 +105,8 @@ endfunction
 " magit#git#git_diff: helper function to get diff of a file
 " nota: when git fail (due to misformated patch for example), an error
 " message is raised.
+" WARNING: diff is generated without prefix. To apply this diff, git apply
+" must use the option -p0.
 " param[in] filemane: it must be quoted if it contains spaces
 " param[in] status: status of the file (see g:magit_git_status_code)
 " param[in] mode: can be staged or unstaged
@@ -115,7 +117,7 @@ function! magit#git#git_diff(filename, status, mode)
 	let dev_null = ( a:status == '?' ) ? "/dev/null " : ""
 	let staged_flag = ( a:mode == 'staged' ) ? "--staged" : ""
 	let git_cmd=g:magit_git_cmd . " diff --no-ext-diff " . staged_flag .
-				\ " --no-color -p -U" . b:magit_diff_context .
+				\ " --no-prefix --no-color -p -U" . b:magit_diff_context .
 				\ " -- " . dev_null . " " . a:filename
 
 	if ( a:status != '?' )
@@ -231,7 +233,7 @@ function! magit#git#git_apply(header, selection)
 	if ( selection[-1] !~ '^$' )
 		let selection += [ '' ]
 	endif
-	let git_cmd=g:magit_git_cmd . " apply --recount --no-index --cached -"
+	let git_cmd=g:magit_git_cmd . " apply --recount --no-index --cached -p0 -"
 	try
 		silent let git_result=magit#sys#system(git_cmd, selection)
 	catch 'shell_error'
@@ -259,8 +261,8 @@ function! magit#git#git_unapply(header, selection, mode)
 	endif
 	try
 		silent let git_result=magit#sys#system(
-			\ g:magit_git_cmd . " apply --recount --no-index " . cached_flag . " --reverse - ",
-			\ selection)
+			\ g:magit_git_cmd . " apply --recount --no-index -p0 --reverse " .
+			\ cached_flag . " - ", selection)
 	catch 'shell_error'
 		call magit#sys#print_shell_error()
 		echom "Tried to unaply this"
@@ -316,7 +318,8 @@ endfunction
 " return commit subject
 function! magit#git#get_commit_subject(ref)
 	try
-		return magit#utils#strip(magit#sys#system(g:magit_git_cmd . " show --no-patch --format=\"%s\" " . a:ref))
+		return magit#utils#strip(magit#sys#system(g:magit_git_cmd . " show " .
+					\" --no-prefix --no-patch --format=\"%s\" " . a:ref))
 	catch 'shell_error'
 		return ""
 	endtry
