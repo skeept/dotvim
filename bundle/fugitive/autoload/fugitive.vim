@@ -3111,7 +3111,7 @@ function! s:CommitCommand(line1, line2, range, count, bang, mods, reg, arg, args
         return '1' . after
       elseif empty(errors)
         let out = readfile(outfile)
-        echo get(out, -1, '') =~# 'stash\|\d' ? get(out, -2, '') : out[-1]
+        echo get(out, -1, '') =~# 'stash\|\d' ? get(out, -2, '') : get(out, -1, '')
         return after[1:-1]
       else
         echo join(errors, "\n")
@@ -3813,7 +3813,7 @@ function! s:WriteCommand(line1, line2, range, count, bang, mods, reg, arg, args)
   if file =~# '^fugitive:'
     return 'write' . (a:bang ? '! ' : ' ') . s:fnameescape(file)
   endif
-  let always_permitted = s:cpath(fugitive#Real(@%), file) && s:DirCommitFile(@%)[1] =~# '^0\=$'
+  let always_permitted = s:cpath(fugitive#Real(@%), file) && empty(s:DirCommitFile(@%)[1])
   if !always_permitted && !a:bang && (len(s:TreeChomp('diff', '--name-status', 'HEAD', '--', file)) || len(s:TreeChomp('ls-files', '--others', '--', file)))
     let v:errmsg = 'fugitive: file has uncommitted changes (use ! to override)'
     return 'echoerr v:errmsg'
@@ -3827,7 +3827,7 @@ function! s:WriteCommand(line1, line2, range, count, bang, mods, reg, arg, args)
 
   if treebufnr > 0 && treebufnr != bufnr('')
     let temp = tempname()
-    silent execute '%write '.temp
+    silent execute 'keepalt %write '.temp
     for tab in [mytab] + range(1,tabpagenr('$'))
       for winnr in range(1,tabpagewinnr(tab,'$'))
         if tabpagebuflist(tab)[winnr-1] == treebufnr
