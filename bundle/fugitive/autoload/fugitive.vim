@@ -1826,6 +1826,8 @@ function! fugitive#BufReadStatus() abort
     nnoremap <buffer> <silent> d? :<C-U>help fugitive_d<CR>
     nnoremap <buffer> <silent> P :<C-U>execute <SID>StagePatch(line('.'),line('.')+v:count1-1)<CR>
     xnoremap <buffer> <silent> P :<C-U>execute <SID>StagePatch(line("'<"),line("'>"))<CR>
+    nnoremap <buffer> <silent> I :<C-U>execute <SID>StagePatch(line('.'),line('.'))<CR>
+    xnoremap <buffer> <silent> I :<C-U>execute <SID>StagePatch(line("'<"),line("'>"))<CR>
     if empty(mapcheck('q', 'n'))
       nnoremap <buffer> <silent> q :<C-U>if bufnr('$') == 1<Bar>quit<Bar>else<Bar>bdelete<Bar>endif<CR>
     endif
@@ -2091,7 +2093,7 @@ function! s:GitExec(line1, line2, range, count, bang, mods, reg, args, dir) abor
   let git = s:UserCommandList(a:dir)
   if s:HasOpt(a:args, ['add', 'checkout', 'commit', 'stage', 'stash', 'reset'], '-p', '--patch') ||
         \ s:HasOpt(a:args, ['add', 'clean', 'stage'], '-i', '--interactive') ||
-        \ index(['fetch', 'pull', 'push'], a:args[0]) >= 0
+        \ index(['fetch', 'pull', 'push', '--paginate', '-p'], a:args[0]) >= 0
     let mods = substitute(s:Mods(a:mods), '\<tab\>', '-tab', 'g')
     if has('nvim')
       if &autowrite || &autowriteall | silent! wall | endif
@@ -2958,7 +2960,7 @@ function! s:DoUnstageStaged(record) abort
 endfunction
 
 function! s:DoToggleUnstaged(record) abort
-  if a:record.patch
+  if a:record.patch && a:record.status !=# 'A'
     return s:StageApply(a:record, 0, ['--cached'])
   else
     call s:TreeChomp(['add', '-A', '--'] + a:record.paths)
@@ -4936,9 +4938,9 @@ function! fugitive#MapJumps(...) abort
 
     nnoremap <buffer>      cz<Space> :G stash<Space>
     nnoremap <buffer>         cz<CR> :G stash<CR>
-    nnoremap <buffer> <silent> cza   :<C-U>exe <SID>EchoExec(['stash', 'apply', '--quiet', 'stash@{' . v:count . '}'])<CR>
+    nnoremap <buffer> <silent> cza   :<C-U>exe <SID>EchoExec(['stash', 'apply', '--quiet', '--index', 'stash@{' . v:count . '}'])<CR>
     nnoremap <buffer> <silent> czA   :<C-U>exe <SID>EchoExec(['stash', 'apply', '--quiet', 'stash@{' . v:count . '}'])<CR>
-    nnoremap <buffer> <silent> czp   :<C-U>exe <SID>EchoExec(['stash', 'pop', '--quiet', 'stash@{' . v:count . '}'])<CR>
+    nnoremap <buffer> <silent> czp   :<C-U>exe <SID>EchoExec(['stash', 'pop', '--quiet', '--index', 'stash@{' . v:count . '}'])<CR>
     nnoremap <buffer> <silent> czP   :<C-U>exe <SID>EchoExec(['stash', 'pop', '--quiet', 'stash@{' . v:count . '}'])<CR>
     nnoremap <buffer> <silent> czv   :<C-U>exe 'Gedit' fugitive#RevParse('stash@{' . v:count . '}')<CR>
     nnoremap <buffer> <silent> czw   :<C-U>exe <SID>EchoExec(['stash', '--keep-index'] + (v:count > 1 ? ['--all'] : v:count ? ['--include-untracked'] : []))<CR>
