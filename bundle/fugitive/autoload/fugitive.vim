@@ -2087,7 +2087,7 @@ function! s:GitExec(line1, line2, range, count, bang, mods, reg, args, dir) abor
     let cmd = s:StatusCommand(a:line1, a:line2, a:range, a:count, a:bang, a:mods, a:reg, '', [])
     return empty(cmd) ? 'exe' : cmd
   endif
-  if a:bang
+  if a:bang || a:args[0] =~# '^-P$\|^--no-pager$'
     return s:OpenExec((a:count > 0 ? a:count : '') . (a:count ? 'split' : 'edit'), a:mods, a:args, a:dir)
   endif
   let git = s:UserCommandList(a:dir)
@@ -2244,7 +2244,7 @@ function! s:StageSeek(info, fallback) abort
   endif
   let line = search('^' . info.section, 'wn')
   if !line
-    for section in get({'Staged': ['Unstaged', 'Untracked'], 'Unstaged': ['Untracked', 'Staged']}, info.section, [])
+    for section in get({'Staged': ['Unstaged', 'Untracked'], 'Unstaged': ['Untracked', 'Staged'], 'Untracked': ['Unstaged', 'Stacked']}, info.section, [])
       let line = search('^' . section, 'wn')
       if line
         return line + (info.index > 0 ? 1 : 0)
@@ -4360,7 +4360,7 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
     elseif filter(copy(a:args),'v:val !~# "^\\%(--abbrev=\\d*\\|--relative-date\\|--first-parent\\|--root\\|--show-name\\|-\\%([ltfnsew]\\|[MC]\\d*\\)\\+\\)$"') != []
       call s:throw('unsupported option')
     endif
-    let cmd = ['--no-pager', 'blame', '--show-number']
+    let cmd = ['--no-pager', '-c', 'blame.coloring=none', 'blame', '--show-number']
     if a:count > 0
       let cmd += ['-L', (a:line1 ? a:line1 : line('.')) . ',' . (a:line1 ? a:line1 : line('.'))]
     endif
