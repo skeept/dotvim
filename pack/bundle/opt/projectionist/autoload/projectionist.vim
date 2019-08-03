@@ -909,6 +909,9 @@ augroup END
 " Section: Templates
 
 function! projectionist#apply_template() abort
+  if !&modifiable
+    return ''
+  endif
   let template = get(projectionist#query('template'), 0, ['', ''])[1]
   if type(template) == type([]) && type(get(template, 0)) == type([])
     let template = template[0]
@@ -921,7 +924,7 @@ function! projectionist#apply_template() abort
     if !&et
       let template = s:gsub(template, repeat(' ', &ts), "\t")
     endif
-    %delete_
+    silent %delete_
     call setline(1, split(template, "\n"))
      if exists('#User#ProjectionistApplyTemplate')
        doautocmd User ProjectionistApplyTemplate

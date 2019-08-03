@@ -25,8 +25,12 @@ that are part of Git repositories).
 
                                                 *fugitive-:Git!*
 :Git! {args}            Like |:Git|, but capture the output into a temp file,
-                        and |:split| that that temp file.  Use :0Git to
-                        |:edit| the temp file instead.
+:Git --no-pager {args}  and |:split| that temp file.  Use :0Git to
+:Git -P {args}          |:edit| the temp file instead.  A temp file is always
+                        used for diff and log commands.
+
+:Git --paginate {args}  Like |:Git|, but use |:terminal| if it is available.
+:Git -p {args}
 
                                                 *fugitive-:Gcd*
 :Gcd [directory]        |:cd| relative to the repository.
@@ -41,6 +45,9 @@ that are part of Git repositories).
                         message, or a new tab if -v is given.  Write and close
                         the window (:wq) to finish the commit. To cancel, use
                         an empty message.
+
+                                                *fugitive-:Grevert*
+:Grevert [args]         A wrapper around git-revert.  Similar to |:Gcommit|.
 
                                                 *fugitive-:Gmerge*
 :Gmerge [args]          Calls git-merge and loads errors and conflicted files
@@ -185,8 +192,8 @@ that are part of Git repositories).
 
                                                 *fugitive-:Gblame*
 :Gblame [flags]         Run git-blame on the file and open the results in a
-                        scroll bound vertical split.  You can give any of
-                        -ltsewMC as flags and they will be passed along to
+                        scroll-bound vertical split.  You can give any of
+                        -ltsewMC as flags, and they will be passed along to
                         git-blame.  The following maps, which work on the
                         cursor line commit where sensible, are provided:
 
@@ -394,6 +401,8 @@ cS                      Create a `squash!` commit for the commit under the
 
 cA                      Create a `squash!` commit for the commit under the
                         cursor and edit the message.
+
+cr                      Revert the commit under the cursor.
 
 c<Space>                Populate command line with ":Gcommit ".
 
