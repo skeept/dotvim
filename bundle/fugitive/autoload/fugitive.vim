@@ -583,11 +583,8 @@ endfunction
 
 function! s:Command(command, line1, line2, range, bang, mods, arg, args) abort
   try
-    if exists('*s:' . a:command . 'Subcommand')
-      let dir = s:Dir()
-      exe s:DirCheck(dir)
-      let [args, after] = s:SplitExpandChain(a:arg, s:Tree(dir))
-      return 'exe ' . string(s:{a:command}Subcommand(a:line1, a:line2, a:range, a:bang, s:Mods(a:mods), args)) . after
+    if a:command =~# '^\l[[:alnum:]-]\+$'
+      return s:GitCommand(a:line1, a:line2, a:range, a:line2, a:bang, s:Mods(a:mods), '', a:command . ' ' . a:arg, [a:command] + a:args)
     endif
     return s:{a:command}Command(a:line1, a:line2, a:range, a:line2, a:bang, s:Mods(a:mods), '', a:arg, a:args)
   catch /^fugitive:/
@@ -2115,13 +2112,13 @@ function! s:GitCommand(line1, line2, range, count, bang, mods, reg, arg, args) a
     return (empty(cmd) ? 'exe' : cmd) . after
   endif
   let alias = get(s:Aliases(dir), args[0], '!')
-  if alias !~# '^!\|[\"'']' && !filereadable(s:ExecPath() . '/git-' . args[0])
+  if get(args, 1, '') !=# '--help' && alias !~# '^!\|[\"'']' && !filereadable(s:ExecPath() . '/git-' . args[0])
         \ && !(has('win32') && filereadable(s:ExecPath() . '/git-' . args[0] . '.exe'))
     call remove(args, 0)
     call extend(args, split(alias, '\s\+'), 'keep')
   endif
   let name = substitute(args[0], '\%(^\|-\)\(\l\)', '\u\1', 'g')
-  if exists('*s:' . name . 'Subcommand')
+  if exists('*s:' . name . 'Subcommand') && get(args, 1, '') !=# '--help'
     try
       exe s:DirCheck(dir)
       return 'exe ' . string(s:{name}Subcommand(a:line1, a:count, a:range, a:bang, a:mods, args[1:-1])) . after
@@ -2129,7 +2126,9 @@ function! s:GitCommand(line1, line2, range, count, bang, mods, reg, arg, args) a
       return 'echoerr ' . string(v:exception)
     endtry
   endif
-  if a:bang || args[0] =~# '^-P$\|^--no-pager$\|diff\%(tool\)\@!\|log'
+  if a:bang || args[0] =~# '^-P$\|^--no-pager$\|diff\%(tool\)\@!\|log\|^show$' ||
+        \ (args[0] ==# 'stash' && get(args, 1, '') ==# 'show') ||
+        \ (args[0] ==# 'help' || get(args, 1, '') ==# '--help') && !s:HasOpt(args, '--web')
     return s:OpenExec((a:count > 0 ? a:count : '') . (a:count ? 'split' : 'edit'), a:mods, args, dir) . after
   endif
   let git = s:UserCommandList(dir)
@@ -3230,7 +3229,7 @@ function! s:CommitInteractive(line1, line2, range, bang, mods, args, patch) abor
   let status = s:StatusCommand(a:line1, a:line2, a:range, a:line2, a:bang, a:mods, '', '', [])
   let status = len(status) ? status . '|' : ''
   if a:patch
-    return status . 'if search("^Unstaged")|exe "+"|endif'
+    return status . 'if search("^Unstaged")|exe "normal >"|exe "+"|endif'
   else
     return status . 'if search("^Untracked\\|^Unstaged")|exe "+"|endif'
   endif
@@ -3303,7 +3302,7 @@ function! s:CommitSubcommand(line1, line2, range, bang, mods, args, ...) abort
           call insert(argv, '--cleanup=strip')
         endif
         call extend(argv, ['-F', msgfile], 'keep')
-        if bufname('%') == '' && line('$') == 1 && getline(1) == '' && !&modified
+        if (bufname('%') == '' && line('$') == 1 && getline(1) == '' && !&modified) || a:line2 == 0
           execute mods . 'keepalt edit' s:fnameescape(msgfile)
         elseif s:HasOpt(argv, '-v') || mods =~# '\<tab\>'
           execute mods . 'keepalt -tabedit' s:fnameescape(msgfile)
@@ -3376,8 +3375,8 @@ function! s:FinishCommit() abort
   return ''
 endfunction
 
-call s:command("-nargs=? -complete=customlist,s:CommitComplete Gcommit", "Commit")
-call s:command("-nargs=? -complete=customlist,s:RevertComplete Grevert", "Revert")
+call s:command("-nargs=? -range=-1 -complete=customlist,s:CommitComplete Gcommit", "commit")
+call s:command("-nargs=? -range=-1 -complete=customlist,s:RevertComplete Grevert", "revert")
 
 " Section: :Gmerge, :Grebase, :Gpull
 
@@ -3656,9 +3655,9 @@ augroup fugitive_merge
         \ endif
 augroup END
 
-call s:command("-nargs=? -bang -complete=customlist,s:MergeComplete Gmerge", "Merge")
-call s:command("-nargs=? -bang -complete=customlist,s:RebaseComplete Grebase", "Rebase")
-call s:command("-nargs=? -bang -complete=customlist,s:PullComplete Gpull", "Pull")
+call s:command("-nargs=? -bang -complete=customlist,s:MergeComplete Gmerge", "merge")
+call s:command("-nargs=? -bang -complete=customlist,s:RebaseComplete Grebase", "rebase")
+call s:command("-nargs=? -bang -complete=customlist,s:PullComplete Gpull", "pull")
 
 " Section: :Ggrep, :Glog
 
@@ -3705,16 +3704,20 @@ function! s:GrepParseLine(prefix, name_only, dir, line) abort
   return entry
 endfunction
 
-function! s:Grep(listnr, bang, arg) abort
+function! s:GrepSubcommand(line1, line2, range, bang, mods, args) abort
   let dir = s:Dir()
   exe s:DirCheck(dir)
-  let listnr = a:listnr
+  let listnr = a:line1 == 0 ? a:line1 : a:line2
   let cmd = s:UserCommandList(dir) + ['--no-pager', 'grep', '-n', '--no-color', '--full-name']
   if fugitive#GitVersion(2, 19)
     call add(cmd, '--column')
   endif
   let tree = s:Tree(dir)
-  let [args, after] = s:SplitExpandChain(a:arg, tree)
+  if type(a:args) == type([])
+    let [args, after] = [a:args, '']
+  else
+    let [args, after] = s:SplitExpandChain(a:args, tree)
+  endif
   let prefix = s:PlatformSlash(s:HasOpt(args, '--cached') || empty(tree) ? 'fugitive://' . dir . '//0/' : tree . '/')
   let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
   let title = [listnr < 0 ? ':Ggrep' : ':Glgrep'] + args
@@ -3860,9 +3863,9 @@ function! s:Log(type, bang, line1, count, args) abort
   return s:QuickfixStream(listnr, title, cmd, !a:bang, s:function('s:LogParse'), state, path, dir) . after
 endfunction
 
-call s:command("-bang -nargs=? -range=-1 -addr=windows -complete=customlist,s:GrepComplete Ggrep :execute s:Grep(<count>,<bang>0,<q-args>)")
-call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Gcgrep :execute s:Grep(-1,<bang>0,<q-args>)")
-call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:Grep(0,<bang>0,<q-args>)")
+call s:command("-bang -nargs=? -range=-1 -addr=windows -complete=customlist,s:GrepComplete Ggrep", "grep")
+call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Gcgrep :execute s:GrepSubcommand(-1, -1, 0, <bang>0, '<mods>', <q-args>)")
+call s:command("-bang -nargs=? -complete=customlist,s:GrepComplete Glgrep :execute s:GrepSubcommand(0, 0, 0, <bang>0, '<mods>', <q-args>)")
 call s:command("-bang -nargs=? -range=-1 -addr=other -complete=customlist,s:LogComplete Glog :exe s:Log('c',<bang>0,<line1>,<count>,<q-args>)")
 call s:command("-bang -nargs=? -range=-1 -addr=other -complete=customlist,s:LogComplete Gclog :exe s:Log('c',<bang>0,<line1>,<count>,<q-args>)")
 call s:command("-bang -nargs=? -range=-1 -addr=other -complete=customlist,s:LogComplete Gllog :exe s:Log('l',<bang>0,<line1>,<count>,<q-args>)")
@@ -3923,11 +3926,25 @@ function! s:OpenExec(cmd, mods, args, ...) abort
   let args = s:shellesc(a:args)
   let temp = tempname()
   let git = s:UserCommand(dir)
-  silent! execute '!' . escape(git . ' --no-pager ' . args, '!#%') .
+  let columns = get(g:, 'fugitive_columns', 80)
+  if columns <= 0
+    let env = ''
+  elseif s:winshell()
+    let env = 'set COLUMNS=' . columns . '& '
+  else
+    let env = 'env COLUMNS=' . columns . ' '
+  endif
+  silent! execute '!' . escape(env . git . ' --no-pager ' . args, '!#%') .
         \ (&shell =~# 'csh' ? ' >& ' . temp : ' > ' . temp . ' 2>&1')
   redraw!
   let temp = s:Resolve(temp)
-  let s:temp_files[s:cpath(temp)] = { 'dir': dir, 'filetype': 'git', 'modifiable': get(readfile(temp, 1), '') =~# '^diff ' }
+  let first = join(readfile(temp, '', 2), "\n")
+  if first =~# '\<\([[:upper:][:digit:]_-]\+(\d\+)\).*\1'
+    let filetype = 'man'
+  else
+    let filetype = 'git'
+  endif
+  let s:temp_files[s:cpath(temp)] = { 'dir': dir, 'filetype': filetype, 'modifiable': first =~# '^diff ' }
   if a:cmd ==# 'edit'
     call s:BlurStatus()
   endif
@@ -4240,8 +4257,8 @@ function! s:FetchSubcommand(line1, line2, range, bang, mods, args) abort
   return s:Dispatch(a:bang ? '!' : '', 'fetch', a:args)
 endfunction
 
-call s:command("-nargs=? -bang -complete=customlist,s:PushComplete Gpush", "Push")
-call s:command("-nargs=? -bang -complete=customlist,s:FetchComplete Gfetch", "Fetch")
+call s:command("-nargs=? -bang -complete=customlist,s:PushComplete Gpush", "push")
+call s:command("-nargs=? -bang -complete=customlist,s:FetchComplete Gfetch", "fetch")
 
 " Section: :Gdiff
 
@@ -4553,17 +4570,6 @@ function! s:Keywordprg() abort
   endif
 endfunction
 
-augroup fugitive_blame
-  autocmd!
-  autocmd FileType fugitiveblame setlocal nomodeline | if len(s:Dir()) | let &l:keywordprg = s:Keywordprg() | endif
-  autocmd User Fugitive
-        \ if get(b:, 'fugitive_type') =~# '^\%(file\|blob\)$' || s:BlameBufnr() > 0 || filereadable(@%) |
-        \   exe "command! -buffer -bar -bang -range=-1 -nargs=* -complete=customlist,s:BlameComplete Gblame :execute s:BlameCommand(<line1>,<line2>,+'<range>',<count>,<bang>0,'<mods>',<q-reg>,<q-args>,[<f-args>])" |
-        \ endif
-  autocmd ColorScheme,GUIEnter * call s:RehighlightBlame()
-  autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
-augroup END
-
 function! s:linechars(pattern) abort
   let chars = strlen(s:gsub(matchstr(getline('.'), a:pattern), '.', '.'))
   if exists('*synconcealed') && &conceallevel > 1
@@ -4745,27 +4751,10 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
           setlocal cursorbind
         endif
         setlocal nonumber scrollbind nowrap foldcolumn=0 nofoldenable winfixwidth
-        if exists('+concealcursor')
-          setlocal concealcursor=nc conceallevel=2
-        endif
         if exists('+relativenumber')
           setlocal norelativenumber
         endif
         execute "vertical resize ".(s:linechars('.\{-\}\ze\s\+\d\+)')+1)
-        nnoremap <buffer> <silent> <F1> :help fugitive-:Gblame<CR>
-        nnoremap <buffer> <silent> g?   :help fugitive-:Gblame<CR>
-        if mapcheck('q', 'n') =~# '^$\|bdelete'
-          nnoremap <buffer> <silent> q    :exe <SID>BlameQuit()<Bar>echohl WarningMsg<Bar>echo ":Gblame q is deprecated in favor of gq"<Bar>echohl NONE<CR>
-        endif
-        exe 'nnoremap <buffer> <silent>' s:nowait "gq :exe <SID>BlameQuit()<CR>"
-        nnoremap <buffer> <silent> <CR> :<C-U>exe <SID>BlameCommit("exe <SID>BlameLeave()<Bar>edit")<CR>
-        nnoremap <buffer> <silent> -    :<C-U>exe <SID>BlameJump('')<CR>
-        nnoremap <buffer> <silent> P    :<C-U>exe <SID>BlameJump('^'.v:count1)<CR>
-        nnoremap <buffer> <silent> ~    :<C-U>exe <SID>BlameJump('~'.v:count1)<CR>
-        nnoremap <buffer> <silent> i    :<C-U>exe <SID>BlameCommit("exe <SID>BlameLeave()<Bar>edit")<CR>
-        nnoremap <buffer> <silent> o    :<C-U>exe <SID>BlameCommit("split")<CR>
-        nnoremap <buffer> <silent> O    :<C-U>exe <SID>BlameCommit("tabedit")<CR>
-        nnoremap <buffer> <silent> p    :<C-U>exe <SID>BlameCommit("pedit")<CR>
         nnoremap <buffer> <silent> A    :<C-u>exe "vertical resize ".(<SID>linechars('.\{-\}\ze [0-9:/+-][0-9:/+ -]* \d\+)')+1+v:count)<CR>
         nnoremap <buffer> <silent> C    :<C-u>exe "vertical resize ".(<SID>linechars('^\S\+')+1+v:count)<CR>
         nnoremap <buffer> <silent> D    :<C-u>exe "vertical resize ".(<SID>linechars('.\{-\}\ze\d\ze\s\+\d\+)')+1-v:count)<CR>
@@ -4916,10 +4905,10 @@ function! fugitive#BlameSyntax() abort
     endif
     exe 'syn match FugitiveblameHash'.hash.'       "\%(^\^\=\)\@<='.hash.'\x\{1,34\}\>" nextgroup=FugitiveblameAnnotation,FugitiveblameOriginalLineNumber,fugitiveblameOriginalFile skipwhite'
   endfor
-  call s:RehighlightBlame()
+  call s:BlameRehighlight()
 endfunction
 
-function! s:RehighlightBlame() abort
+function! s:BlameRehighlight() abort
   for [hash, cterm] in items(s:hash_colors)
     if !empty(cterm) || has('gui_running') || has('termguicolors') && &termguicolors
       exe 'hi FugitiveblameHash'.hash.' guifg=#'.hash.get(s:hash_colors, hash, '')
@@ -4928,6 +4917,47 @@ function! s:RehighlightBlame() abort
     endif
   endfor
 endfunction
+
+function! s:BlameFileType() abort
+  setlocal nomodeline
+  setlocal foldmethod=manual
+  if len(s:Dir())
+    let &l:keywordprg = s:Keywordprg()
+  endif
+  let b:undo_ftplugin = 'setl keywordprg= foldmethod<'
+  if exists('+concealcursor')
+    setlocal concealcursor=nc conceallevel=2
+    let b:undo_ftplugin .= ' concealcursor< conceallevel<'
+  endif
+  if &modifiable
+    return ''
+  endif
+  nnoremap <buffer> <silent> <F1> :help fugitive-:Gblame<CR>
+  nnoremap <buffer> <silent> g?   :help fugitive-:Gblame<CR>
+  if mapcheck('q', 'n') =~# '^$\|bdelete'
+    nnoremap <buffer> <silent> q    :exe <SID>BlameQuit()<Bar>echohl WarningMsg<Bar>echo ":Gblame q is deprecated in favor of gq"<Bar>echohl NONE<CR>
+  endif
+  exe 'nnoremap <buffer> <silent>' s:nowait "gq :exe <SID>BlameQuit()<CR>"
+  nnoremap <buffer> <silent> <CR> :<C-U>exe <SID>BlameCommit("exe <SID>BlameLeave()<Bar>edit")<CR>
+  nnoremap <buffer> <silent> -    :<C-U>exe <SID>BlameJump('')<CR>
+  nnoremap <buffer> <silent> P    :<C-U>exe <SID>BlameJump('^'.v:count1)<CR>
+  nnoremap <buffer> <silent> ~    :<C-U>exe <SID>BlameJump('~'.v:count1)<CR>
+  nnoremap <buffer> <silent> i    :<C-U>exe <SID>BlameCommit("exe <SID>BlameLeave()<Bar>edit")<CR>
+  nnoremap <buffer> <silent> o    :<C-U>exe <SID>BlameCommit("split")<CR>
+  nnoremap <buffer> <silent> O    :<C-U>exe <SID>BlameCommit("tabedit")<CR>
+  nnoremap <buffer> <silent> p    :<C-U>exe <SID>BlameCommit("pedit")<CR>
+endfunction
+
+augroup fugitive_blame
+  autocmd!
+  autocmd FileType fugitiveblame call s:BlameFileType()
+  autocmd User Fugitive
+        \ if get(b:, 'fugitive_type') =~# '^\%(file\|blob\)$' || s:BlameBufnr() > 0 || filereadable(@%) |
+        \   exe "command! -buffer -bar -bang -range=-1 -nargs=* -complete=customlist,s:BlameComplete Gblame :execute s:BlameCommand(<line1>,<line2>,+'<range>',<count>,<bang>0,'<mods>',<q-reg>,<q-args>,[<f-args>])" |
+        \ endif
+  autocmd ColorScheme,GUIEnter * call s:BlameRehighlight()
+  autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
+augroup END
 
 " Section: :Gbrowse
 
