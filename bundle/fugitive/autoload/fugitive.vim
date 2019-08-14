@@ -145,7 +145,7 @@ endfunction
 
 let s:nowait = v:version >= 704 ? '<nowait>' : ''
 
-function! s:map(mode, lhs, rhs, ...) abort
+function! s:Map(mode, lhs, rhs, ...) abort
   let flags = (a:0 ? a:1 : '') . (a:rhs =~# '<Plug>' ? '' : '<script>')
   let head = a:lhs
   let tail = ''
@@ -171,6 +171,10 @@ function! s:map(mode, lhs, rhs, ...) abort
             \ '|sil! exe "' . a:mode . 'unmap <buffer> ' . head.tail . '"'
     endif
   endif
+endfunction
+
+function! s:map(...) abort
+  return call('s:Map', a:000)
 endfunction
 
 " Section: Quickfix
@@ -459,7 +463,7 @@ endfunction
 
 function! s:NullError(...) abort
   let [out, exec_error] = s:SystemError(call('fugitive#Prepare', a:000))
-  return [exec_error ? [] : split(out, "\1"), exec_error ? out : '', exec_error]
+  return [exec_error ? [] : split(out, "\1"), exec_error ? substitute(out, "\n$", "", "") : '', exec_error]
 endfunction
 
 function! s:TreeChomp(...) abort
@@ -4591,14 +4595,17 @@ endfunction
 
 function! s:BlameCommitFileLnum(...) abort
   let line = a:0 ? a:1 : getline('.')
+  let state = a:0 ? a:2 : s:TempState()
   let commit = matchstr(line, '^\^\=\zs\x\+')
   if commit =~# '^0\+$'
     let commit = ''
+  elseif line !~# '^\^' && has_key(state, 'blame_reverse_end')
+    let commit = get(s:LinesError('rev-list', '--ancestry-path', '--reverse', commit . '..' . state.blame_reverse_end)[0], 0, '')
   endif
   let lnum = +matchstr(line, ' \zs\d\+\ze \%((\| *\d\+)\)')
   let path = matchstr(line, '^\^\=\x* \+\%(\d\+ \+\d\+ \+\)\=\zs.\{-\}\ze\s\+\%(\%( \d\+ \)\@<!([^()]*\w \d\+)\|\d\+ \)')
   if empty(path) && lnum
-    let path = fugitive#Path(bufname(a:0 ? a:2 : s:BlameBufnr()), '')
+    let path = get(state, 'blame_file', '')
   endif
   return [commit, path, lnum]
 endfunction
@@ -4625,16 +4632,20 @@ function! s:BlameQuit() abort
 endfunction
 
 function! s:BlameComplete(A, L, P) abort
-  return s:CompleteSub('blame', a:A, a:L, a:P, [])
+  return s:CompleteSub('blame', a:A, a:L, a:P)
 endfunction
 
-function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args) abort
-  if has_key(s:TempState(), 'blame_flags')
-    return substitute(s:BlameLeave(), '^$', 'bdelete', '')
-  endif
+function! s:BlameSubcommand(line1, count, range, bang, mods, args) abort
   exe s:DirCheck()
   let flags = copy(a:args)
   let i = 0
+  let raw = 0
+  let commits = []
+  let files = []
+  let ranges = []
+  if a:line1 > 0 && a:count > 0 && a:range != 1
+    call extend(ranges, ['-L', a:line1 . ',' . a:count])
+  endif
   while i < len(flags)
     let match = matchlist(flags[i], '^\(-[a-zABDFH-KN-RT-Z]\)\ze\(.*\)')
     if len(match) && len(match[2])
@@ -4643,9 +4654,21 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
       continue
     endif
     let arg = flags[i]
-    if arg =~# '^-[Lp]$\|^--\%(help\|porcelain\|line-porcelain\|incremental\|contents\)$'
-      return 'echoerr ' . string('fugitive: blame ' . arg . ' unsupported')
-    elseif arg =~# '^-[GLS]$\|^--\%(date\|encoding\)$'
+    if arg =~# '^-p$\|^--\%(help\|porcelain\|line-porcelain\|incremental\)$'
+      let raw = 1
+    elseif arg ==# '--contents' && i + 1 < len(flags)
+      call extend(commits, remove(flags, i, i+1))
+      continue
+    elseif arg ==# '-L' && i + 1 < len(flags)
+      call extend(ranges, remove(flags, i, i+1))
+      continue
+    elseif arg =~# '^--contents='
+      call add(commits, remove(flags, i))
+      continue
+    elseif arg =~# '^-L.'
+      call add(ranges, remove(flags, i))
+      continue
+    elseif arg =~# '^-[GLS]$\|^--\%(date\|encoding\|contents\)$'
       let i += 1
       if i == len(flags)
         echohl ErrorMsg
@@ -4653,33 +4676,59 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
         echohl NONE
         return ''
       endif
-    elseif arg !~# '^-'
-      return 'echoerr ' . string("fugitive: '-' required for all blame options")
     elseif arg ==# '--'
+      if i + 1 < len(flags)
+        call extend(files, remove(flags, i + 1, -1))
+      endif
       call remove(flags, i)
+      break
+    elseif arg !~# '^-' && (s:HasOpt(flags, '--not') || arg !~# '^\^')
+      if index(flags, '--') >= 0
+        call add(commits, remove(flags, i))
+        continue
+      endif
+      if arg =~# '\.\.' && arg !~# '^\.\.\=\%(/\|$\)' && empty(commits)
+        call add(commits, remove(flags, i))
+        continue
+      endif
+      try
+        let dcf = s:DirCommitFile(fugitive#Find(arg))
+        if len(dcf[1]) && empty(dcf[2])
+          call add(commits, remove(flags, i))
+          continue
+        endif
+      catch /^fugitive:/
+      endtry
+      call add(files, remove(flags, i))
       continue
     endif
     let i += 1
   endwhile
+  if empty(ranges + commits + files) && has_key(s:TempState(), 'blame_flags')
+    return substitute(s:BlameLeave(), '^$', 'bdelete', '')
+  endif
+  let file = substitute(get(files, 0, get(s:TempState(), 'blame_file', s:Relative('./'))), '^\.\%(/\|$\)', '', '')
+  if empty(commits) && len(files) > 1
+    call add(commits, remove(files, 1))
+  endif
   try
-    if empty(s:Relative('/'))
-      call s:throw('file or blob required')
-    endif
-    let commit = matchstr(s:DirCommitFile(@%)[1], '^\x\x\+$')
     let cmd = ['--no-pager', '-c', 'blame.coloring=none', '-c', 'blame.blankBoundary=false', 'blame', '--show-number']
     call extend(cmd, filter(copy(flags), 'v:val !~# "\\v^%(-b|--%(no-)=color-.*|--progress)$"'))
-    if a:count > 0
+    if a:count > 0 && empty(ranges)
       let cmd += ['-L', (a:line1 ? a:line1 : line('.')) . ',' . (a:line1 ? a:line1 : line('.'))]
     endif
-    if len(commit)
-      let cmd += [commit]
-    elseif !s:HasOpt(flags, '--reverse')
+    call extend(cmd, ranges)
+    if len(commits)
+      let cmd += commits
+    elseif empty(files) && len(matchstr(s:DirCommitFile(@%)[1], '^\x\x\+$'))
+      let cmd += [matchstr(s:DirCommitFile(@%)[1], '^\x\x\+$')]
+    elseif empty(files) && !s:HasOpt(flags, '--reverse')
       let cmd += ['--contents', '-']
     endif
-    let cmd += ['--', expand('%:p')]
-    let basecmd = escape(fugitive#Prepare(cmd), '!#%')
-    let error = tempname()
-    let temp = error.'.fugitiveblame'
+    let basecmd = escape(fugitive#Prepare(cmd) . ' -- ' . s:shellesc(len(files) ? files : file), '!#%')
+    let tempname = tempname()
+    let error = tempname . '.err'
+    let temp = tempname . (raw ? '' : '.fugitiveblame')
     if &shell =~# 'csh'
       silent! execute '%write !('.basecmd.' > '.temp.') >& '.error
     else
@@ -4707,12 +4756,31 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
         endfor
         return ''
       endif
-      if a:count > 0
+      let temp_state = {'dir': s:Dir(), 'filetype': (raw ? '' : 'fugitiveblame'), 'blame_flags': flags, 'blame_file': file, 'modifiable': 0}
+      if s:HasOpt(flags, '--reverse')
+        let temp_state.blame_reverse_end = matchstr(get(commits, 0, ''), '\.\.\zs.*')
+      endif
+      if (a:line1 == 0 || a:range == 1) && a:count > 0
         let edit = s:Mods(a:mods) . get(['edit', 'split', 'pedit', 'vsplit', 'tabedit'], a:count - (a:line1 ? a:line1 : 1), 'split')
-        return s:BlameCommit(edit, get(readfile(temp), 0, ''), bufnr(''))
+        return s:BlameCommit(edit, get(readfile(temp), 0, ''), temp_state)
       else
         let temp = s:Resolve(temp)
-        let s:temp_files[s:cpath(temp)] = {'dir': s:Dir(), 'filetype': 'fugitiveblame', 'blame_flags': flags, 'modifiable': 0}
+        let s:temp_files[s:cpath(temp)] = temp_state
+        if len(ranges + commits + files) || raw
+          let mods = s:Mods(a:mods)
+          if a:count != 0
+            exe 'silent keepalt' mods 'split' . s:fnameescape(temp)
+          elseif !&modified || a:bang || &bufhidden ==# 'hide' || (empty(&bufhidden) && &hidden)
+            exe 'silent' mods 'edit' . (a:bang ? '! ' : ' ') . s:fnameescape(temp)
+          else
+            return mods . 'edit ' . s:fnameescape(temp)
+          endif
+          return ''
+        endif
+        if a:mods =~# '\<tab\>'
+          silent tabedit %
+        endif
+        let mods = substitute(a:mods, '\<tab\>', '', 'g')
         for winnr in range(winnr('$'),1,-1)
           if getwinvar(winnr, '&scrollbind')
             call setwinvar(winnr, '&scrollbind', 0)
@@ -4725,7 +4793,7 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
           endif
         endfor
         let bufnr = bufnr('')
-        let s:temp_files[s:cpath(temp)].bufnr = bufnr
+        let temp_state.bufnr = bufnr
         let restore = 'call setwinvar(bufwinnr('.bufnr.'),"&scrollbind",0)'
         if exists('+cursorbind')
           let restore .= '|call setwinvar(bufwinnr('.bufnr.'),"&cursorbind",0)'
@@ -4742,7 +4810,7 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
         endif
         let top = line('w0') + &scrolloff
         let current = line('.')
-        exe 'keepalt' (a:bang ? 'split' : 'leftabove vsplit') s:fnameescape(temp)
+        exe 'silent keepalt' (a:bang ? s:Mods(mods) . 'split' : s:Mods(mods, 'leftabove') . 'vsplit') s:fnameescape(temp)
         let w:fugitive_leave = restore
         execute top
         normal! zt
@@ -4769,11 +4837,23 @@ function! s:BlameCommand(line1, line2, range, count, bang, mods, reg, arg, args)
 endfunction
 
 function! s:BlameCommit(cmd, ...) abort
-  let [commit, path, lnum] = call('s:BlameCommitFileLnum', a:000)
+  let line = a:0 ? a:1 : getline('.')
+  let state = a:0 ? a:2 : s:TempState()
+  let sigil = has_key(state, 'blame_reverse_end') ? '-' : '+'
+  let mods = (s:BlameBufnr() < 0 ? '' : &splitbelow ? "botright " : "topleft ")
+  let [commit, path, lnum] = s:BlameCommitFileLnum(line, state)
+  if empty(commit) && len(path) && has_key(state, 'blame_reverse_end')
+    let path = (len(state.blame_reverse_end) ? state.blame_reverse_end . ':' : ':(top)') . path
+    return s:Open(mods . a:cmd, 0, '', '+' . lnum . ' ' . s:fnameescape(path), ['+' . lnum, path])
+  endif
   if commit =~# '^0*$'
     return 'echoerr ' . string('fugitive: no commit')
   endif
-  let cmd = s:Open((&splitbelow ? "botright " : "topleft ") . a:cmd, 0, '', commit, [commit])
+  if line =~# '^\^' && !has_key(state, 'blame_reverse_end')
+    let path = commit . ':' . path
+    return s:Open(mods . a:cmd, 0, '', '+' . lnum . ' ' . s:fnameescape(path), ['+' . lnum, path])
+  endif
+  let cmd = s:Open(mods . a:cmd, 0, '', commit, [commit])
   if cmd =~# '^echoerr'
     return cmd
   endif
@@ -4785,8 +4865,8 @@ function! s:BlameCommit(cmd, ...) abort
     call search('^+++')
     let head = line('.')
     while search('^@@ \|^diff ') && getline('.') =~# '^@@ '
-      let top = +matchstr(getline('.'),' +\zs\d\+')
-      let len = +matchstr(getline('.'),' +\d\+,\zs\d\+')
+      let top = +matchstr(getline('.'),' ' . sigil .'\zs\d\+')
+      let len = +matchstr(getline('.'),' ' . sigil . '\d\+,\zs\d\+')
       if lnum >= top && lnum <= top + len
         let offset = lnum - top
         if &scrolloff
@@ -4798,7 +4878,7 @@ function! s:BlameCommit(cmd, ...) abort
         endif
         while offset > 0 && line('.') < line('$')
           +
-          if getline('.') =~# '^[ +]'
+          if getline('.') =~# '^[ ' . sigil . ']'
             let offset -= 1
           endif
         endwhile
@@ -4822,19 +4902,33 @@ function! s:BlameJump(suffix) abort
     let suffix = ''
   endif
   let offset = line('.') - line('w0')
-  let bufnr = bufnr('%')
-  let winnr = bufwinnr(s:BlameBufnr())
-  if winnr > 0
-    exe winnr.'wincmd w'
-  endif
-  execute 'Gedit' s:fnameescape(commit . suffix . ':' . path)
-  execute lnum
-  if winnr > 0
-    exe bufnr.'bdelete'
+  let flags = get(s:TempState(), 'blame_flags', [])
+  let blame_bufnr = s:BlameBufnr()
+  if blame_bufnr > 0
+    let bufnr = bufnr('')
+    let winnr = bufwinnr(blame_bufnr)
+    if winnr > 0
+      exe winnr.'wincmd w'
+    endif
+    execute 'Gedit' s:fnameescape(commit . suffix . ':' . path)
+    execute lnum
+    if winnr > 0
+      exe bufnr.'bdelete'
+    endif
   endif
   if exists(':Gblame')
-    let flags = get(s:TempState(), 'blame_flags', [])
-    execute 'Gblame ' . s:fnameescape(flags)
+    let my_bufnr = bufnr('')
+    if blame_bufnr < 0
+      let blame_args = flags + [commit . suffix, '--', path]
+      let result = s:BlameSubcommand(0, 0, 0, 0, '', blame_args)
+    else
+      let blame_args = flags
+      let result = s:BlameSubcommand(-1, -1, 0, 0, '', blame_args)
+    endif
+    if bufnr('') == my_bufnr
+      return result
+    endif
+    execute result
     execute lnum
     let delta = line('.') - line('w0') - offset
     if delta > 0
@@ -4842,7 +4936,9 @@ function! s:BlameJump(suffix) abort
     elseif delta < 0
       execute 'normal! '.(-delta)."\<C-Y>"
     endif
-    syncbind
+    keepjumps syncbind
+    redraw
+    echo ':Gblame' s:fnameescape(blame_args)
   endif
   return ''
 endfunction
@@ -4951,13 +5047,11 @@ endfunction
 augroup fugitive_blame
   autocmd!
   autocmd FileType fugitiveblame call s:BlameFileType()
-  autocmd User Fugitive
-        \ if get(b:, 'fugitive_type') =~# '^\%(file\|blob\)$' || s:BlameBufnr() > 0 || filereadable(@%) |
-        \   exe "command! -buffer -bar -bang -range=-1 -nargs=* -complete=customlist,s:BlameComplete Gblame :execute s:BlameCommand(<line1>,<line2>,+'<range>',<count>,<bang>0,'<mods>',<q-reg>,<q-args>,[<f-args>])" |
-        \ endif
   autocmd ColorScheme,GUIEnter * call s:BlameRehighlight()
   autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
 augroup END
+
+call s:command('-buffer -bang -range=-1 -nargs=? -complete=customlist,s:BlameComplete Gblame', 'blame')
 
 " Section: :Gbrowse
 
@@ -5243,19 +5337,18 @@ endfunction
 function! fugitive#MapJumps(...) abort
   if !&modifiable
     if get(b:, 'fugitive_type', '') ==# 'blob'
-      nnoremap <buffer> <silent> <CR>  :<C-U>0,1Gblame<CR>
-      nnoremap <buffer> <silent> o     :<C-U>0,2Gblame<CR>
-      nnoremap <buffer> <silent> S     :<C-U>echoerr 'Use gO'<CR>
-      nnoremap <buffer> <silent> gO    :<C-U>0,4Gblame<CR>
-      nnoremap <buffer> <silent> O     :<C-U>0,5Gblame<CR>
-      nnoremap <buffer> <silent> p     :<C-U>0,3Gblame<CR>
+      let blame_map = 'Gblame<C-R>=v:count ? " --reverse" : ""<CR><CR>'
+      call s:Map('n', '<CR>', ':<C-U>0,1' . blame_map, '<silent>')
+      call s:Map('n', 'o',    ':<C-U>0,2' . blame_map, '<silent>')
+      call s:Map('n', 'p',    ':<C-U>0,3' . blame_map, '<silent>')
+      call s:Map('n', 'gO',   ':<C-U>0,4' . blame_map, '<silent>')
+      call s:Map('n', 'O',    ':<C-U>0,5' . blame_map, '<silent>')
     else
-      nnoremap <buffer> <silent> <CR>  :<C-U>exe <SID>GF("edit")<CR>
-      nnoremap <buffer> <silent> o     :<C-U>exe <SID>GF("split")<CR>
-      nnoremap <buffer> <silent> S     :<C-U>echoerr 'Use gO'<CR>
-      nnoremap <buffer> <silent> gO    :<C-U>exe <SID>GF("vsplit")<CR>
-      nnoremap <buffer> <silent> O     :<C-U>exe <SID>GF("tabedit")<CR>
-      nnoremap <buffer> <silent> p     :<C-U>exe <SID>GF("pedit")<CR>
+      call s:Map('n', '<CR>', ':<C-U>exe <SID>GF("edit")<CR>', '<silent>')
+      call s:Map('n', 'o',    ':<C-U>exe <SID>GF("split")<CR>', '<silent>')
+      call s:Map('n', 'gO',   ':<C-U>exe <SID>GF("vsplit")<CR>', '<silent>')
+      call s:Map('n', 'O',    ':<C-U>exe <SID>GF("tabedit")<CR>', '<silent>')
+      call s:Map('n', 'p',    ':<C-U>exe <SID>GF("pedit")<CR>', '<silent>')
 
       if exists(':CtrlP') && get(g:, 'ctrl_p_map') =~? '^<c-p>$'
         nnoremap <buffer> <silent> <C-P> :<C-U>execute line('.') == 1 ? 'CtrlP ' . fnameescape(<SID>Tree()) : <SID>PreviousItem(v:count1)<CR>
@@ -5278,6 +5371,7 @@ function! fugitive#MapJumps(...) abort
       call s:MapEx('[]', 'exe <SID>PreviousSectionEnd(v:count1)')
       call s:MapEx('][', 'exe <SID>NextSectionEnd(v:count1)')
     endif
+    call s:Map('n', 'S',    ':<C-U>echoerr "Use gO"<CR>', '<silent>')
     exe "nnoremap <buffer> <silent>" s:nowait  "-     :<C-U>exe 'Gedit ' . <SID>fnameescape(<SID>NavigateUp(v:count1))<Bar> if getline(1) =~# '^tree \x\{40,\}$' && empty(getline(2))<Bar>call search('^'.escape(expand('#:t'),'.*[]~\').'/\=$','wc')<Bar>endif<CR>"
     nnoremap <buffer> <silent> P     :<C-U>exe 'Gedit ' . <SID>fnameescape(<SID>ContainingCommit().'^'.v:count1.<SID>Relative(':'))<CR>
     nnoremap <buffer> <silent> ~     :<C-U>exe 'Gedit ' . <SID>fnameescape(<SID>ContainingCommit().'~'.v:count1.<SID>Relative(':'))<CR>
