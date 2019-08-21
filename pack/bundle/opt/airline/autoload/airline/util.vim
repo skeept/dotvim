@@ -4,8 +4,13 @@
 scriptencoding utf-8
 
 call airline#init#bootstrap()
+
+" couple of static variables. Those should not change within a session, thus
+" can be initialized here as "static"
 let s:spc = g:airline_symbols.space
 let s:nomodeline = (v:version > 703 || (v:version == 703 && has("patch438"))) ? '<nomodeline>' : ''
+let s:has_strchars = exists('*strchars')
+let s:has_strcharpart = exists('*strcharpart')
 
 " TODO: Try to cache winwidth(0) function
 " e.g. store winwidth per window and access that, only update it, if the size
@@ -100,10 +105,19 @@ endif
 " Compatibility wrapper for strchars, in case this vim version does not
 " have it natively
 function! airline#util#strchars(str)
-  if exists('*strchars')
+  if s:has_strchars
     return strchars(a:str)
   else
     return strlen(substitute(a:str, '.', 'a', 'g'))
+  endif
+endfunction
+
+function! airline#util#strcharpart(...)
+  if s:has_strcharpart
+    return call('strcharpart',  a:000)
+  else
+    " does not handle multibyte chars :(
+    return a:1[(a:2):(a:3)]
   endif
 endfunction
 
@@ -115,15 +129,24 @@ function! airline#util#ignore_buf(name)
 endfunction
 
 function! airline#util#has_fugitive()
-  return exists('*fugitive#head') || exists('*FugitiveHead')
+  if !exists("s:has_fugitive")
+    let s:has_fugitive = exists('*fugitive#head') || exists('*FugitiveHead')
+  endif
+  return s:has_fugitive
 endfunction
 
 function! airline#util#has_lawrencium()
-  return exists('*lawrencium#statusline')
+  if !exists("s:has_lawrencium")
+    let s:has_lawrencium  = exists('*lawrencium#statusline')
+  endif
+  return s:has_lawrencium
 endfunction
 
 function! airline#util#has_vcscommand()
-  return get(g:, 'airline#extensions#branch#use_vcscommand', 0) && exists('*VCSCommandGetStatusLine')
+  if !exists("s:has_vcscommand")
+    let s:has_vcscommand = exists('*VCSCommandGetStatusLine')
+  endif
+  return get(g:, 'airline#extensions#branch#use_vcscommand', 0) && s:has_vcscommand
 endfunction
 
 function! airline#util#has_custom_scm()
