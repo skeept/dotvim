@@ -56,18 +56,46 @@ function! wk#echoOrPrintTime()
     let g:wk.echoOrPrintTimeRanOnce = 1 "user remembers setting
   endif
 
-  "first time calling this function give a message how to change setting
-  if !exists('g:wk.echoOrPrintTimeRanOnce')
-    let g:wk.echoOrPrintTimeRanOnce = 1
-    echom 'prefix mapping 1: print 2: write'
+  " have the following global variables:
+  " g:ep_offset hours offset
+  " g:ep_format format used for print, some options are provided here
+  if !exists('g:ep_offset')
+    let g:ep_offset = 0
   endif
 
-  " We now adjust for time zone right here. Offset in Dallas is 6 or 7 hours
-  let is_winter = 0 "Time changes in Dallas, need to adjust computation
-  let hours_adjust = ($TZ == 'GMT0') ? 0 : (is_winter ? 7 : 6)
-  let time_display = strftime("%a, %d %b %Y %H:%M:%S %p", (expand("<cword>") + hours_adjust*3600))
+  if !exists('g:ep_format')
+    let g:ep_format = 0
+  endif
+  let formats = [
+        \ "%d/%m %H:%M",
+        \ "%a, %d %b %Y %H:%M:%S %p",
+        \ ]
+  let format = formats[g:ep_format]
 
-  if g:wk.echoOrPrintTimeSetting != 1
+
+  "first time calling this function give a message how to change setting
+  let use_msg = ""
+  if !exists('g:wk.echoOrPrintTimeRanOnce')
+    let g:wk.echoOrPrintTimeRanOnce = 1
+    let one_w = (g:wk.echoOrPrintTimeSetting == 1) ? '*' : ''
+    let two_w = (g:wk.echoOrPrintTimeSetting == 2) ? '*' : ''
+    let use_msg = ' prefix mapping 1: ' . one_w . 'print' . one_w
+          \ . ' 2:' . two_w . 'write' . two_w
+    let use_msg .= ' ' . 'g:ep_offset:' . g:ep_offset
+    let use_msg .= ' ' . 'format: ' . format
+  endif
+
+  let current_val = expand("<cword>")
+  let adjusted_val = current_val + 3600 * g:ep_offset
+
+  let time_display = strftime(format, current_val)
+  if current_val != adjusted_val
+    let time_display .= ' # '  . strftime(format, adjusted_val)
+  endif
+
+  let time_display .= use_msg
+
+  if g:wk.echoOrPrintTimeSetting == 2
     " try writting text after current word
     let @u = " " . time_display
     normal he"up
