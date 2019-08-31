@@ -212,10 +212,11 @@ endfunction
 " grepper#complete() {{{2
 function! grepper#complete(lead, line, _pos) abort
   if a:lead =~ '^-'
-    let flags = ['-append', '-buffer', '-buffers', '-cword', '-dir', '-grepprg',
-          \ '-highlight', '-jump', '-open', '-prompt', '-query', '-quickfix',
-          \ '-side', '-stop', '-switch', '-tool', '-noappend', '-nohighlight',
-          \ '-nojump', '-noopen', '-noprompt', '-noquickfix', '-noswitch']
+    let flags = ['-append', '-buffer', '-buffers', '-cd', '-cword', '-dir',
+          \ '-grepprg', '-highlight', '-jump', '-open', '-prompt', '-query',
+          \ '-quickfix', '-side', '-stop', '-switch', '-tool', '-noappend',
+          \ '-nohighlight', '-nojump', '-noopen', '-noprompt', '-noquickfix',
+          \ '-noside', '-noswitch']
     return filter(map(flags, 'v:val." "'), 'v:val[:strlen(a:lead)-1] ==# a:lead')
   elseif a:line =~# '-dir \w*$'
     return filter(map(['cwd', 'file', 'filecwd', 'repo'], 'v:val." "'),
@@ -404,6 +405,9 @@ endfunction
 
 " s:compute_working_directory() {{{2
 function! s:compute_working_directory(flags) abort
+  if has_key(a:flags, 'cd')
+    return a:flags.cd
+  endif
   for dir in split(a:flags.dir, ',')
     if dir == 'repo'
       if s:get_current_tool_name(a:flags) == 'git'
@@ -432,6 +436,10 @@ function! s:compute_working_directory(flags) abort
     elseif dir == 'file'
       let bufdir = expand('%:p:h')
       return fnameescape(bufdir)
+    elseif dir == 'cwd'
+      return getcwd()
+    else
+      call s:error("Invalid -dir flag '" . a:flags.dir . "'")
     endif
   endfor
   return ''
@@ -556,8 +564,8 @@ function! s:parse_flags(args) abort
     elseif flag =~? '\v^-%(no)?buffer$'        | let flags.buffer    = flag !~? '^-no'
     elseif flag =~? '\v^-%(no)?buffers$'       | let flags.buffers   = flag !~? '^-no'
     elseif flag =~? '\v^-%(no)?append$'        | let flags.append    = flag !~? '^-no'
+    elseif flag =~? '\v^-%(no)?side$'          | let flags.side      = flag !~? '^-no'
     elseif flag =~? '^-cword$'                 | let flags.cword     = 1
-    elseif flag =~? '^-side$'                  | let flags.side      = 1
     elseif flag =~? '^-stop$'
       if empty(args) || args[0] =~ '^-'
         let flags.stop = -1
@@ -605,6 +613,18 @@ function! s:parse_flags(args) abort
       else
         call s:error('No such tool: '. tool)
       endif
+    elseif flag ==# '-cd'
+      if empty(args)
+        call s:error('Missing argument for: -cd')
+        break
+      endif
+      let dir = fnamemodify(args, ':p')
+      if !isdirectory(dir)
+        call s:error('Invalid directory: '. dir)
+        break
+      endif
+      let flags.cd = dir
+      break
     else
       call s:error('Ignore unknown flag: '. flag)
     endif
@@ -630,7 +650,9 @@ function! s:process_flags(flags)
   endif
 
   let s:tmp_work_dir = s:compute_working_directory(a:flags)
-  if s:get_current_tool_name(a:flags) ==# 'git' && empty(finddir('.git', s:tmp_work_dir.';'))
+  if s:get_current_tool_name(a:flags) ==# 'git'
+        \ && empty(finddir('.git', s:tmp_work_dir.';'))
+        \ && empty(findfile('.git', s:tmp_work_dir.';'))
     call remove(a:flags.tools, 0)
     if empty(a:flags.tools)
       call s:error('Using git outside of repo and no other tool to switch to. Try ":Grepper -dir repo,file" instead.')
