@@ -32,15 +32,25 @@ function! neomake#utils#Stringify(obj) abort
     endif
 endfunction
 
-function! neomake#utils#truncate_width(string, width) abort
+function! neomake#utils#truncate_width(string, width, ...) abort
+    if a:width <= 0
+        return ''
+    endif
+    if strwidth(a:string) <= a:width
+        return a:string
+    endif
+
+    let ellipsis = a:0 ? a:1 : '…'
+    let len_ellipsis = strwidth(ellipsis)
     let pos = a:width
+    let w_without_ellipsis = a:width - len_ellipsis
     while pos >= 0
         let s = matchstr(a:string, '.\{,'.pos.'}', 0, 1)
         let w = strwidth(s)
-        if w <= a:width
-            return s
+        if w <= w_without_ellipsis
+            return s . ellipsis
         endif
-        let pos -= max([(w-a:width)/2, 1])
+        let pos -= max([(w - a:width)/2, 1])
     endwhile
     return ''
 endfunction
@@ -48,9 +58,6 @@ endfunction
 " This comes straight out of syntastic.
 "print as much of a:msg as possible without "Press Enter" prompt appearing
 function! neomake#utils#WideMessage(msg) abort " {{{2
-    let old_ruler = &ruler
-    let old_showcmd = &showcmd
-
     " Replace newlines (typically in the msg) with a single space.  This
     " might happen with writegood.
     let msg = substitute(a:msg, '\r\?\n', ' ', 'g')
@@ -59,14 +66,21 @@ function! neomake#utils#WideMessage(msg) abort " {{{2
     "width as the proper amount of characters
     let chunks = split(msg, "\t", 1)
     let msg = join(map(chunks[:-2], "v:val . repeat(' ', &tabstop - strwidth(v:val) % &tabstop)"), '') . chunks[-1]
+
+    if exists('v:echospace')
+        let msg = neomake#utils#truncate_width(msg, v:echospace)
+        call neomake#log#debug('WideMessage: echo '.msg.'.')
+        echo msg
+        return
+    endif
+
     let msg = neomake#utils#truncate_width(msg, &columns-1)
 
+    let old_ruler = &ruler
+    let old_showcmd = &showcmd
     set noruler noshowcmd
     redraw
-
-    call neomake#log#debug('WideMessage: echo '.msg.'.')
     echo msg
-
     let &ruler = old_ruler
     let &showcmd = old_showcmd
 endfunction " }}}2
