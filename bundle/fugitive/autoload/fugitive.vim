@@ -1603,7 +1603,7 @@ function! s:AddHeader(key, value) abort
   endwhile
   call append(before - 1, [a:key . ':' . (len(a:value) ? ' ' . a:value : '')])
   if before == 1 && line('$') == 2
-    silent 2delete _
+    silent keepjumps 2delete _
   endif
 endfunction
 
@@ -2410,7 +2410,10 @@ augroup fugitive_status
   autocmd!
   autocmd BufWritePost         * call fugitive#ReloadStatus(-1, 0)
   autocmd ShellCmdPost     * nested call fugitive#ReloadStatus()
-  autocmd BufDelete term://* nested call fugitive#ReloadStatus()
+  autocmd BufDelete * nested
+        \ if getbufvar(+expand('<abuf>'), 'buftype') == 'terminal' |
+        \   call fugitive#ReloadStatus() |
+        \ endif
   if !has('win32')
     autocmd FocusGained        * call fugitive#ReloadStatus(-2, 0)
   endif
@@ -4242,7 +4245,7 @@ function! s:Dispatch(bang, cmd, args) abort
       endif
       silent noautocmd make!
       redraw!
-      return 'call fugitive#Cwindow()|call fugitive#ReloadStatus()'
+      return 'call fugitive#Cwindow()|silent doautocmd ShellCmdPost'
     endif
   finally
     let [&l:mp, &l:efm, b:current_compiler] = [mp, efm, cc]
