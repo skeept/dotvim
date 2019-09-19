@@ -1041,9 +1041,12 @@ g:ale_linter_aliases                                     *g:ale_linter_aliases*
   {
   \   'Dockerfile': 'dockerfile',
   \   'csh': 'sh',
+  \   'javascriptreact': ['javascript', 'jsx'],
   \   'plaintex': 'tex',
   \   'rmarkdown': 'r',
+  \   'rmd': 'r',
   \   'systemverilog': 'verilog',
+  \   'typescriptreact': ['typescript', 'tsx'],
   \   'verilog_systemverilog': ['verilog_systemverilog', 'verilog'],
   \   'vimwiki': 'markdown',
   \   'vue': ['vue', 'javascript'],
@@ -2370,6 +2373,7 @@ documented in additional help files.
   sml.....................................|ale-sml-options|
     smlnj.................................|ale-sml-smlnj|
   solidity................................|ale-solidity-options|
+    solc..................................|ale-solidity-solc|
     solhint...............................|ale-solidity-solhint|
     solium................................|ale-solidity-solium|
   spec....................................|ale-spec-options|
