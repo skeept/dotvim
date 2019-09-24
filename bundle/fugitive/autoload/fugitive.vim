@@ -2478,7 +2478,7 @@ function! s:Selection(arg1, ...) abort
   endif
   let first = arg1
   if arg2 < 0
-    let last = first - arg2 + 1
+    let last = first - arg2 - 1
   elseif arg2 > 0
     let last = arg2
   else
@@ -2583,7 +2583,7 @@ endfunction
 function! s:Do(action, visual) abort
   let line = getline('.')
   let reload = 0
-  if !a:0 && !v:count && line =~# '^[A-Z][a-z]'
+  if !a:visual && !v:count && line =~# '^[A-Z][a-z]'
     let header = matchstr(line, '^\S\+\ze:')
     if len(header) && exists('*s:Do' . a:action . header . 'Header')
       let reload = s:Do{a:action}{header}Header(matchstr(line, ': \zs.*')) > 0
@@ -3005,9 +3005,10 @@ function! s:StageDelete(lnum1, lnum2, count) abort
       if empty(info.paths)
         continue
       endif
-      let hash = s:TreeChomp('hash-object', '-w', '--', info.paths[0])
-      if empty(hash)
-        continue
+      if info.status ==# 'D'
+        let undo = 'Gremove'
+      else
+        let undo = 'Gread ' . s:TreeChomp('hash-object', '-w', '--', info.paths[0])[0:10]
       endif
       if info.patch
         call s:StageApply(info, 1, info.section ==# 'Staged' ? ['--index'] : [])
@@ -3029,7 +3030,7 @@ function! s:StageDelete(lnum1, lnum2, count) abort
       else
         call s:TreeChomp('checkout', 'HEAD^{}', '--', info.paths[0])
       endif
-      call add(restore, ':Gsplit ' . s:fnameescape(info.relative[0]) . '|Gread ' . hash[0:6])
+      call add(restore, ':Gsplit ' . s:fnameescape(info.relative[0]) . '|' . undo)
     endfor
   catch /^fugitive:/
     let err = '|echoerr ' . string(v:exception)
