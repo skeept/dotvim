@@ -76,6 +76,7 @@ function! startify#insane_in_the_membrane(on_vimenter) abort
         \ nospell
         \ noswapfile
         \ signcolumn=no
+        \ synmaxcol&
   if empty(&statusline)
     setlocal statusline=\ startify
   endif
@@ -83,7 +84,7 @@ function! startify#insane_in_the_membrane(on_vimenter) abort
   " Must be global so that it can be read by syntax/startify.vim.
   let g:startify_header = exists('g:startify_custom_header')
         \ ? s:set_custom_section(g:startify_custom_header)
-        \ : (exists('*strwidth') ? startify#fortune#cowsay() : [])
+        \ : (exists('*strwidth') ? startify#pad(startify#fortune#cowsay()) : [])
   if !empty(g:startify_header)
     let g:startify_header += ['']  " add blank line
   endif
@@ -421,6 +422,18 @@ function! startify#open_buffers(...) abort
   if exists('#User#StartifyAllBuffersOpened')
     doautocmd <nomodeline> User StartifyAllBuffersOpened
   endif
+endfunction
+
+" Function: #pad {{{1
+function! startify#pad(lines) abort
+  return map(copy(a:lines), 's:padding_left . v:val')
+endfunction
+
+" Function: #center {{{1
+function! startify#center(lines) abort
+  let longest_line = max(map(copy(a:lines), 'strwidth(v:val)'))
+  return map(copy(a:lines),
+        \ 'repeat(" ", (&columns / 2) - (longest_line / 2) - 1) . v:val')
 endfunction
 
 " Function: s:get_lists {{{1
