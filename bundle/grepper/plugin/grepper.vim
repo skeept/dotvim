@@ -508,7 +508,20 @@ function! s:query2vimregexp(flags) abort
   else
     " Remove any flags at the beginning, e.g. when using '-uu' with rg, but
     " keep plain '-'.
-    let query = substitute(a:flags.query, '\v-\w+\s+', '', 'g')
+    let query = substitute(a:flags.query, '\v^\s+', '', '')
+    let query = substitute(query, '\v\s+$', '', '')
+    let pos = 0
+    while 1
+      let [mtext, mstart, mend] = matchstrpos(query, '\v^-\S+\s*', pos)
+      if mstart < 0
+        break
+      endif
+      let pos = mend
+      if mtext =~ '\v^--\s*$'
+        break
+      endif
+    endwhile
+    let query = strpart(query, pos)
   endif
 
   " Change Vim's '\'' to ' so it can be understood by /.
@@ -983,8 +996,10 @@ function! s:finish_up(flags)
     execute (qf ? 'cfirst' : 'lfirst')
   endif
 
-  " Also open if the list contains any invalid entry.
-  if a:flags.open || !empty(filter(list, 'v:val.valid == 0'))
+  let has_errors = !empty(filter(list, 'v:val.valid == 0'))
+
+  " Also open if the side mode is off and the list contains any invalid entry.
+  if a:flags.open || (has_errors && !a:flags.side)
     execute (qf ? 'botright copen' : 'lopen') (size > 10 ? 10 : size)
     let w:quickfix_title = cmdline
     setlocal nowrap
@@ -1011,6 +1026,8 @@ endfunction
 " -side {{{1
 let s:filename_regexp = '\v^%(\>\>\>|\]\]\]) ([[:alnum:][:blank:]\/\-_.~]+):(\d+)'
 
+let s:error_marker = '!^@ERR '
+
 " s:side() {{{2
 function! s:side(flags) abort
   call s:side_create_window(a:flags)
@@ -1025,11 +1042,17 @@ function! s:side_create_window(flags) abort
   "   [1] = start of context
   "   [2] = end of context
   let regions = {}
+  let errors = []
   let list = a:flags.quickfix ? getqflist() : getloclist(0)
 
   " process quickfix entries
   for entry in list
     let bufname = bufname(entry.bufnr)
+    if !entry.valid
+      " collect lines with error messages
+      call add(errors, entry.text)
+      continue
+    endif
     if has_key(regions, bufname)
       if (regions[bufname][-1][2] + 2) > entry.lnum
         " merge entries that are close to each other into the same context
@@ -1047,6 +1070,9 @@ function! s:side_create_window(flags) abort
   endfor
 
   execute a:flags.side_cmd
+
+  " write error messages first
+  call append('$', map(errors + [''], 's:error_marker . v:val'))
 
   " write contexts to buffer
   for filename in sort(keys(regions))
@@ -1105,7 +1131,11 @@ function! s:side_buffer_settings() abort
   syntax match GrepperSideAngleBracket  /> \?/ contained containedin=GrepperSideFile conceal
   execute 'syntax match GrepperSideFile /^>>> \v'.s:filename_regexp[20:].'/ contains=GrepperSideAngleBracket'
 
+  execute 'syntax match GrepperSideErrorMarker /^'.s:error_marker.'/ contained containedin=GrepperSideError conceal'
+  execute 'syntax match GrepperSideError /^'.s:error_marker.'.*/ contains=GrepperSideCaret'
+
   highlight default link GrepperSideFile Directory
+  highlight default link GrepperSideError ErrorMsg
 endfunction
 
 " s:side_context_next() {{{2
