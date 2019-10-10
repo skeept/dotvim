@@ -697,9 +697,10 @@ function! s:process_flags(flags)
   if a:flags.prompt
     call s:prompt(a:flags)
     if s:prompt_op == 'cancelled'
-      return
+      return 1
     endif
-    if empty(a:flags.query)
+
+    if a:flags.query =~ '^\s*$'
       let a:flags.query = s:escape_cword(a:flags, expand('<cword>'))
       " input() got empty input, so no query was added to the history.
       call histadd('input', a:flags.query)
@@ -744,11 +745,6 @@ function! s:start(flags) abort
     return
   endif
 
-  if a:flags.prompt && empty(a:flags.query)
-    redraw!
-    return
-  endif
-
   return s:run(a:flags)
 endfunction
 
@@ -765,16 +761,16 @@ function! s:prompt(flags)
   endif
 
   " Store original mappings
-  let mapping_cr   = maparg('<cr>', 'c', '', 1)
+  let mapping_esc  = maparg('<esc>', 'c', '', 1)
   let mapping_tool = maparg(get(g:grepper, 'next_tool', g:grepper.prompt_mapping_tool), 'c', '', 1)
   let mapping_dir  = maparg(g:grepper.prompt_mapping_dir,  'c', '', 1)
   let mapping_side = maparg(g:grepper.prompt_mapping_side, 'c', '', 1)
 
   " Set plugin-specific mappings
-  cnoremap <cr> <end><c-\>e<sid>set_prompt_op('cr')<cr><cr>
-  execute 'cnoremap' g:grepper.prompt_mapping_tool "\<c-\>e\<sid>set_prompt_op('flag_tool')<cr><cr>"
-  execute 'cnoremap' g:grepper.prompt_mapping_dir  "\<c-\>e\<sid>set_prompt_op('flag_dir')<cr><cr>"
-  execute 'cnoremap' g:grepper.prompt_mapping_side "\<c-\>e\<sid>set_prompt_op('flag_side')<cr><cr>"
+  cnoremap <silent> <esc> <c-\>e<sid>set_prompt_op('cancelled')<cr><c-c>
+  execute 'cnoremap <silent>' g:grepper.prompt_mapping_tool "\<c-\>e\<sid>set_prompt_op('flag_tool')<cr><cr>"
+  execute 'cnoremap <silent>' g:grepper.prompt_mapping_dir  "\<c-\>e\<sid>set_prompt_op('flag_dir')<cr><cr>"
+  execute 'cnoremap <silent>' g:grepper.prompt_mapping_side "\<c-\>e\<sid>set_prompt_op('flag_side')<cr><cr>"
 
   " Set low timeout for key codes, so <esc> would cancel prompt faster
   let ttimeoutsave = &ttimeout
@@ -791,30 +787,40 @@ function! s:prompt(flags)
   endif
 
   " s:prompt_op indicates which key ended the prompt's input() and is needed to
-  " distinguish different actions. It defaults to 'cancelled', which means that
-  " the prompt was cancelled by either <esc> or <c-c>.
+  " distinguish different actions.
   "   'cancelled':  don't start searching
   "   'flag_tool':  don't start searching; toggle -tool flag
   "   'flag_dir':   don't start searching; toggle -dir flag
   "   'flag_side':  don't start searching; toggle -side flag
   "   'cr':         start searching
-  let s:prompt_op = 'cancelled'
+  let s:prompt_op = 'cr'
 
   echohl GrepperPrompt
   call inputsave()
 
   try
-    let a:flags.query = input(prompt_text, a:flags.query,
-          \ 'customlist,grepper#complete_files')
+    if has('nvim-0.3.4')
+      let a:flags.query = input({
+            \ 'prompt':     prompt_text,
+            \ 'default':    a:flags.query,
+            \ 'completion': 'customlist,grepper#complete_files',
+            \ 'highlight':  { cmdline -> [[0, len(cmdline), 'String']] },
+            \ })
+    else
+      let a:flags.query = input(prompt_text, a:flags.query,
+            \ 'customlist,grepper#complete_files')
+    endif
+  catch /^Vim:Interrupt$/  " Ctrl-c was pressed
+    let s:prompt_op = 'cancelled'
   finally
     redraw!
 
     " Restore mappings
-    cunmap <cr>
+    cunmap <esc>
     execute 'cunmap' g:grepper.prompt_mapping_tool
     execute 'cunmap' g:grepper.prompt_mapping_dir
     execute 'cunmap' g:grepper.prompt_mapping_side
-    call s:restore_mapping(mapping_cr)
+    call s:restore_mapping(mapping_esc)
     call s:restore_mapping(mapping_tool)
     call s:restore_mapping(mapping_dir)
     call s:restore_mapping(mapping_side)
