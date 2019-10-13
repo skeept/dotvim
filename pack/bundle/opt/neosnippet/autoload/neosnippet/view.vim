@@ -37,15 +37,21 @@ function! neosnippet#view#_insert(snippet, options, cur_text, col) abort
   endif
 
   " Substitute markers.
-  let snip_word = substitute(snip_word,
-        \ neosnippet#get_placeholder_marker_substitute_pattern(),
-        \ '<`\1`>', 'g')
+  if snip_word =~# neosnippet#get_placeholder_marker_substitute_pattern()
+    let snip_word = substitute(snip_word,
+          \ neosnippet#get_placeholder_marker_substitute_pattern(),
+          \ '<`\1`>', 'g')
+    let snip_word = substitute(snip_word,
+          \ neosnippet#get_mirror_placeholder_marker_substitute_pattern(),
+          \ '<|\1|>', 'g')
+  else
+    let snip_word = substitute(snip_word,
+          \ neosnippet#get_mirror_placeholder_marker_substitute_pattern(),
+          \ '<`\1`>', 'g')
+  endif
   let snip_word = substitute(snip_word,
         \ neosnippet#get_placeholder_marker_substitute_zero_pattern(),
         \ '<`\1`>', 'g')
-  let snip_word = substitute(snip_word,
-        \ neosnippet#get_mirror_placeholder_marker_substitute_pattern(),
-        \ '<|\1|>', 'g')
 
   " Substitute escaped characters.
   let snip_word = substitute(snip_word, '\\\(\\\|`\|\$\)', '\1', 'g')
@@ -91,7 +97,7 @@ function! neosnippet#view#_insert(snippet, options, cur_text, col) abort
     endif
 
     if begin_line != end_line || options.indent
-      call s:indent_snippet(begin_line, end_line, base_indent)
+      call s:indent_snippet(begin_line, end_line, base_indent, options)
     endif
 
     let begin_patterns = (begin_line > 1) ?
@@ -164,7 +170,7 @@ function! neosnippet#view#_jump(_, col) abort
   endtry
 endfunction
 
-function! s:indent_snippet(begin, end, base_indent) abort
+function! s:indent_snippet(begin, end, base_indent, options) abort
   if a:begin > a:end
     return
   endif
@@ -182,7 +188,7 @@ function! s:indent_snippet(begin, end, base_indent) abort
 
       if getline('.') =~# '^\t\+'
         let current_line = getline('.')
-        if line_nr != a:begin
+        if line_nr != a:begin && !a:options.lspitem
           " Delete head tab character.
           let current_line = substitute(current_line, '^\t', '', '')
         endif
