@@ -303,6 +303,7 @@ function! s:MapKeys() abort
         \ ['togglesort',            'ToggleSort()'],
         \ ['togglecaseinsensitive', 'ToggleCaseInsensitive()'],
         \ ['toggleautoclose',       'ToggleAutoclose()'],
+        \ ['togglepause',           'TogglePause()'],
         \ ['zoomwin',               'ZoomWindow()'],
         \ ['close',                 'CloseWindow()'],
         \ ['help',                  'ToggleHelp()'],
@@ -398,6 +399,7 @@ function! s:CheckForExCtags(silent) abort
         let ctagsbins += ['ctags']
         let ctagsbins += ['ctags.exe']
         let ctagsbins += ['tags']
+        let ctagsbins += ['universal-ctags']
         for ctags in ctagsbins
             if executable(ctags)
                 let g:tagbar_ctags_bin = ctags
@@ -508,6 +510,11 @@ function! s:CheckExCtagsVersion(output) abort
     if a:output =~ 'Universal Ctags'
         call tagbar#debug#log("Found Universal Ctags, assuming compatibility")
         let s:ctags_is_uctags = 1
+        return 1
+    endif
+
+    if a:output =~ 'Exuberant Ctags compatiable PHP enhancement'
+        call s:debug("Found phpctags, assuming compatibility")
         return 1
     endif
 
@@ -862,8 +869,7 @@ function! s:CloseWindow() abort
     call s:ShrinkIfExpanded()
 
     if s:autocommands_done && !s:statusline_in_use
-        autocmd! TagbarAutoCmds
-        let s:autocommands_done = 0
+        call tagbar#StopAutoUpdate()
     endif
 
     call tagbar#debug#log('CloseWindow finished')
@@ -1021,11 +1027,13 @@ function! s:ProcessFile(fname, ftype) abort
     " Parse the ctags output lines
     call tagbar#debug#log('Parsing ctags output')
     let rawtaglist = split(ctags_output, '\n\+')
+    let seen = {}
     for line in rawtaglist
-        " skip comments
-        if line =~# '^!_TAG_'
+        " skip comments and duplicates (can happen when --sort=no)
+        if line =~# '^!_TAG_' || has_key(seen, line)
             continue
         endif
+        let seen[line] = 1
 
         let parts = split(line, ';"')
         if len(parts) == 2 " Is a valid tag line
@@ -1086,16 +1094,29 @@ function! s:ExecuteCtagsOnFile(fname, realfname, typeinfo) abort
         "intended to be in an argument, spaces in a single ctag_args
         "string would be ambiguous. Is the space an argument separator
         "or to be included in the argument
-        let ctags_args  = [ '-f',
+        let ctags_args = []
+        if exists('g:tagbar_ctags_options')
+            for value in g:tagbar_ctags_options
+                call add(ctags_args, '--options='.value)
+            endfor
+        endif
+        let ctags_args  = ctags_args + [
+                          \ '-f',
                           \ '-',
                           \ '--format=2',
                           \ '--excmd=pattern',
                           \ '--fields=nksSaf',
-                          \ '--extra=',
                           \ '--file-scope=yes',
                           \ '--sort=no',
                           \ '--append=no'
                           \ ]
+
+        " universal-ctags deprecated this argument name
+        if s:ctags_is_uctags
+            let ctags_args += [ '--extras=' ]
+        else
+            let ctags_args += [ '--extra=' ]
+        endif
 
         " verbose if debug enabled
         if tagbar#debug#enabled()
@@ -1255,7 +1276,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo) abort
 endfunction
 
 " s:ProcessTag() {{{2
-function s:ProcessTag(name, filename, pattern, fields, is_split, typeinfo, fileinfo) abort
+function! s:ProcessTag(name, filename, pattern, fields, is_split, typeinfo, fileinfo) abort
     if a:is_split
         let taginfo = tagbar#prototypes#splittag#new(a:name)
     else
@@ -1832,6 +1853,7 @@ function! s:PrintHelp() abort
         silent  put ='\" ' . s:get_map_str('togglesort') . ': Toggle sort'
         silent  put ='\" ' . s:get_map_str('togglecaseinsensitive') . ': Toggle case insensitive sort option'
         silent  put ='\" ' . s:get_map_str('toggleautoclose') . ': Toggle autoclose option'
+        silent  put ='\" ' . s:get_map_str('togglepause') . ': Toggle pause'
         silent  put ='\" ' . s:get_map_str('zoomwin') . ': Zoom window in/out'
         silent  put ='\" ' . s:get_map_str('close') . ': Close window'
         silent  put ='\" ' . s:get_map_str('help') . ': Toggle help'
@@ -3188,6 +3210,21 @@ function! s:warning(msg) abort
     echohl None
 endfunction
 
+" s:TogglePause() {{{2
+function! s:TogglePause() abort
+    let s:paused = !s:paused
+
+    if s:paused
+        call tagbar#state#set_paused()
+    else
+        let fileinfo = tagbar#state#get_current_file(0)
+        let taginfo = fileinfo.getTags()[0]
+
+        call s:GotoFileWindow(taginfo.fileinfo)
+        call s:AutoUpdate(taginfo.fileinfo.fpath, 1)
+    endif
+endfunction
+
 " TagbarBalloonExpr() {{{2
 function! TagbarBalloonExpr() abort
     let taginfo = s:GetTagInfo(v:beval_lnum, 1)
@@ -3241,6 +3278,11 @@ endfunction
 
 function! tagbar#RestoreSession() abort
     call s:RestoreSession()
+endfunction
+
+function! tagbar#StopAutoUpdate() abort
+    autocmd! TagbarAutoCmds
+    let s:autocommands_done = 0
 endfunction
 
 " }}}2

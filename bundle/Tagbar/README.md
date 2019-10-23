@@ -1,7 +1,3 @@
-# Looking for new maintainers
-
-Please see https://github.com/majutsushi/tagbar/issues/549 for details.
-
 # Tagbar: a class outline viewer for Vim
 
 ## What Tagbar is
@@ -21,10 +17,12 @@ creates the tags it needs on-the-fly in-memory without creating any files.
 
 ## Dependencies
 
-[Vim 7.3.1058](http://www.vim.org/)  
-[Exuberant Ctags 5.5](http://ctags.sourceforge.net/) or
-[Universal Ctags](https://ctags.io) (recommended), a maintained fork of
-Exuberant Ctags.
+* [Vim](http://www.vim.org/) at least version 7.3.1058
+  or [NeoVim](https://neovim.io/).
+
+* [Exuberant Ctags 5.5](http://ctags.sourceforge.net/)
+  or [Universal Ctags](https://ctags.io) (recommended), a maintained fork of
+  Exuberant Ctags.
 
 ## Installation
 
