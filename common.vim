@@ -169,6 +169,8 @@ nnoremap ,va :args **/**<LEFT>
 vnoremap ,yy y:Sscratch<CR>p
 nnoremap ,yy yy:Sscratch<CR>p
 
+nnoremap ,fz :FZF<ENTER>
+
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
