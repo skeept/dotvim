@@ -7,7 +7,6 @@
 import re
 import typing
 
-from denite import util
 from denite.base.source import Base
 from denite.kind.command import Kind as Command
 from denite.util import Nvim, UserContext, Candidates
@@ -107,10 +106,10 @@ class Kind(Command):
 
     def action_edit(self, context: UserContext) -> None:
         target = context['targets'][0]
-        command = util.input(self.vim, context,
-                             "command > ",
-                             target['action__command'],
-                             'command')
+        command = str(self.vim.call('denite#util#input',
+                                    'command > ',
+                                    target['action__command'],
+                                    'command'))
         self._execute(context, command, target['action__histadd'])
 
     def action_delete(self, context: UserContext) -> None:
