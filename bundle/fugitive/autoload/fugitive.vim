@@ -4525,14 +4525,11 @@ endfunction
 function! s:diffoff_all(dir) abort
   let curwin = winnr()
   for nr in range(1,winnr('$'))
-    if getwinvar(nr,'&diff')
+    if getwinvar(nr, '&diff') && !empty(getwinvar(nr, 'fugitive_diff_restore'))
       if nr != winnr()
         execute nr.'wincmd w'
-        let restorewinnr = 1
       endif
-      if s:Dir() ==# a:dir
-        call s:diffoff()
-      endif
+      call s:diffoff()
     endif
   endfor
   execute curwin.'wincmd w'
@@ -4633,6 +4630,8 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
       elseif arg =~# '^:\d$'
         exe s:DirCheck()
         let file = s:Relative(arg . ':')
+      elseif arg =~# '^[~^]\d*$'
+        return 'echoerr ' . string('fugitive: change ' . arg . ' to !' . arg . ' to diff against ancestor')
       else
         try
           let file = arg =~# '^:/.' ? fugitive#RevParse(arg) . s:Relative(':') : s:Expand(arg)
