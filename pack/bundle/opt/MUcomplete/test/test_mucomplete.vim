@@ -787,7 +787,7 @@ fun! Test_MU_scoped_completion()
   bwipe!
 endf
 
-fun! Test_MU_test_dictionary_completion()
+fun! Test_MU_test_set_dictionary_spell()
   new
   set dictionary=spell " Set global option
   set spell spelllang=en
@@ -803,6 +803,62 @@ fun! Test_MU_test_dictionary_completion()
   set dictionary&
   bwipe!
 endf
+
+fun! Test_MU_setlocal_dictionary_spell()
+  new
+  setlocal dictionary=spell " Set local option
+  setlocal spell spelllang=en
+  let b:mucomplete_chain = ['dict']
+  " Setting 'dictionary' locally also sets it globally:
+  call assert_equal('spell', &l:dictionary)
+  call assert_equal('spell', &dictionary)
+  call setline(1, 'zu')
+  call cursor(1,1)
+  call feedkeys("A\<tab>\<c-y>\<esc>", 'tx')
+  call assert_equal('zucchini', getline(1))
+
+  set completeopt&
+  set dictionary&
+  bwipe!
+endf
+
+fun! Test_MU_test_set_thesaurus_globally()
+  new
+  call writefile(['abundantly'], 'testthes')
+  set thesaurus=./testthes " Set global option
+  let b:mucomplete_chain = ['thes']
+  " Setting 'thesaurus' globally leaves the local option empty:
+  call assert_equal('', &l:thesaurus)
+  call setline(1, 'abu')
+  call cursor(1,1)
+  call feedkeys("A\<tab>\<c-y>\<esc>", 'tx')
+  call assert_equal('abundantly', getline(1))
+
+  call delete('testthes')
+  set completeopt&
+  set thesaurus&
+  bwipe!
+endf
+
+fun! Test_MU_test_set_thesaurus_locally()
+  new
+  call writefile(['abundantly'], 'testthes')
+  setlocal thesaurus=./testthes
+  let b:mucomplete_chain = ['thes']
+  " Setting 'thesaurus' locally also sets the global option:
+  call assert_equal('./testthes', &l:thesaurus)
+  call assert_equal('./testthes', &thesaurus)
+  call setline(1, 'abu')
+  call cursor(1,1)
+  call feedkeys("A\<tab>\<c-y>\<esc>", 'tx')
+  call assert_equal('abundantly', getline(1))
+
+  call delete('testthes')
+  set completeopt&
+  set thesaurus&
+  bwipe!
+endf
+
 
 call RunBabyRun('MU')
 
