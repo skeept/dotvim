@@ -31,9 +31,8 @@ class Context(object):
 
         m = re.search(r'\w$', text)
         word_len = len(m.group(0)) if m else 0
-        width = self._vim.call('winwidth', 0) - self._vim.call('col', '.')
-        width += word_len
-        max_width = (width * 2 / 3)
+        max_width = self._vim.call('winwidth', 0) - self._vim.call('col', '.')
+        max_width += word_len
 
         context: UserContext = {
             'changedtick': self._vim.call(
@@ -44,7 +43,6 @@ class Context(object):
             'input': text,
             'max_abbr_width': max_width,
             'max_kind_width': max_width,
-            'max_info_width': max_width,
             'max_menu_width': max_width,
             'next_input': self._vim.call(
                 'deoplete#util#get_next_input', event),
