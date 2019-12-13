@@ -41,6 +41,8 @@ if exists(':Gina') && (v:version > 704 || (v:version == 704 && has("patch1898"))
   let s:filetype_overrides['gina-log'] = ['gina', '%{gina#component#repo#preset()}' ]
   let s:filetype_overrides['gina-tag'] = ['gina', '%{gina#component#repo#preset()}' ]
   let s:filetype_overrides['gina-branch'] = ['gina', '%{gina#component#repo#branch()}' ]
+  let s:filetype_overrides['gina-reflog'] = ['gina', '%{gina#component#repo#branch()}' ]
+  let s:filetype_overrides['gina-ls'] = ['gina', '%{gina#component#repo#branch()}' ]
 endif
 
 if get(g:, 'airline#extensions#nerdtree_statusline', 1)
@@ -230,6 +232,7 @@ function! airline#extensions#load()
   endif
 
   if get(g:, 'airline#extensions#vista#enabled', 1)
+        \ && exists(':Vista')
     call airline#extensions#vista#init(s:ext)
     call add(s:loaded_ext, 'vista')
   endif
