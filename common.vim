@@ -207,6 +207,7 @@ nnoremap <Leader>st :tab split<CR>
 nnoremap ,st :tab split<CR>
 nnoremap ,ts :tab split<CR>
 nnoremap ,tt :tab split<BAR><SPACE><BAR>only<LEFT><LEFT><LEFT><LEFT><LEFT><LEFT>
+nnoremap ,tc :tabclose<CR>
 nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
 nnoremap ,sq :bw!<CR>
 
