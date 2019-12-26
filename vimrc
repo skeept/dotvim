@@ -58,7 +58,7 @@ function! SetupVAM()
   command! -nargs=* -bar VAMAddToActiveAddons let g:active_addons += [<f-args>]
 
   let g:vim_addon_manager = {}
-  let vam_install_path = escape(g:p0 . '/bundle/vam', ' \')
+  let vam_install_path = escape(g:p0 . '/pack/bundle/opt/vam', ' \')
   exec 'set rtp+='. vam_install_path
   let g:vim_addon_manager.additional_addon_dirs = [
         \ escape(g:p0 . '/local_plugins', ' \'),
