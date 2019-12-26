@@ -29,9 +29,8 @@ let g:active_addons = []
 if g:addon_manager == 2
 function! SetupVAM()
   let g:vim_addon_manager = {}
-  let vam_install_path = escape(expand(g:p0 . '/bundle'), ' \')
-  exec 'set rtp+='.vam_install_path.'/vam'
-  " let g:vim_addon_manager = { your config here see "commented version" example and help
+  let vam_install_path = escape(g:p0 . '/pack/bundle/opt/vam', ' \')
+  exec 'set rtp+='. vam_install_path
 
   let g:active_addons += ['Supertab', 'nerdcommenter']
 
