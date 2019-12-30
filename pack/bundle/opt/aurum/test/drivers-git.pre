@@ -1,5 +1,0 @@
-#!/bin/zsh
-tar xJf gittestrepo.tar.xz
-tar xJf gitteststatusrepo.tar.xz
-tar xJf gittestbranchedrepo.tar.xz
-mkdir drivers-git-A && (cd drivers-git-A && tar xJf ../drivers-git-first-two.tar.xz)

@@ -1,7 +1,0 @@
-changeset = ':\n{rev}\n{node}\n{phase}\n{branches|json}\n{date}\n{author|json}\n{parents}{tags}{bookmarks}{files}{file_dels}{file_copies}\t{desc|json}\n'
-parent    = 'P{node|json}\n'
-tag       = 'T{tag|json}\n'
-bookmark  = 'B{bookmark|json}\n'
-file      = 'C{file|json}\n'
-file_del  = 'R{file_del|json}\n'
-file_copy = 'D{name|json}\n{source|json}\n'

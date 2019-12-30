@@ -1,9 +1,0 @@
-aurum:\\file:%ETMPDIR%%+test%+cmd-filerepo:504f74154456dbb0e9441326514e42ce66279e62:chgrepo.zsh
-aurum:\\file:%ETMPDIR%%+test%+cmd-filerepo:a16a47a8d7aafc115651bfee6f1202093765365d:chgrepo.zsh
-aurum:\\file:%ETMPDIR%%+test%+hgtestrepo:d760b0fe4fe45adf585f5030181b8081899e26a9:dlines.lst
-aurum:\\file:%ETMPDIR%%+test%+hgtestrepo:d760b0fe4fe45adf585f5030181b8081899e26a9:dlines.lst
-w$: 1
-aurum:\\file:%ETMPDIR%%+test%+hgtestrepo:9fe0c28c3e1dd175e8372b742f13cbb7bd6799fe:dlines.lst
-w$: 2; l$: 52
-aurum:\\file:%ETMPDIR%%+test%+hgtestrepo:9fe0c28c3e1dd175e8372b742f13cbb7bd6799fe:dlines.lst
-l$: 94

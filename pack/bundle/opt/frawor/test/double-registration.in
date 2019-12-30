@@ -1,5 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let g:testfile="plugin/double-registration.vim"
-:let g:testcmd='runtime!'
-:source test.vim
-:source test.vim

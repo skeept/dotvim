@@ -1,9 +1,0 @@
-.1: autoload/frawor/decorators/altervars:idnotstr
-.2: autoload/frawor/decorators/altervars:invid
-.3: autoload/frawor/decorators/altervars:ssiddef
-.4: autoload/frawor/decorators/altervars:savnotfunc
-.5: autoload/frawor/decorators/altervars:setnotfunc
-.6: autoload/frawor/decorators/altervars:ssmanyargs
-.7: autoload/frawor/decorators/altervars:ssoptsndct
-.8: autoload/frawor/decorators:sssavuref
-.9: autoload/frawor/decorators:ssseturef

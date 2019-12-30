@@ -1,5 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let g:testfile="plugin/major-version-mismatch.vim"
-:source test.vim
-:let g:testfile="plugin/minor-version-mismatch.vim"
-:source test.vim

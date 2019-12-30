@@ -1,8 +1,0 @@
-#!/bin/zsh
-export HGRCPATH=''
-tar xJf hgtestbranchedrepo.tar.xz
-hg -q clone hgtestbranchedrepo cmd-other-A -r A -r B
-hg -q clone cmd-other-A        cmd-other-B
-hg -q pull -R cmd-other-B hgtestbranchedrepo -r C -r D
-hg -q clone cmd-other-B        cmd-other-C
-hg -q clone hgtestrepo cmd-otherrepo -r 1

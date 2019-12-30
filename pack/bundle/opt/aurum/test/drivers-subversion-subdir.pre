@@ -1,7 +1,0 @@
-#!/bin/zsh
-mkdir svntestrepo-subdirserver
-(
-    cd svntestrepo-subdirserver
-    tar x --strip-components=1 < ../svntestreposerver.tar
-)
-svn checkout -q file://$PWD/svntestrepo-subdirserver/subdir svntest-subdirrepo

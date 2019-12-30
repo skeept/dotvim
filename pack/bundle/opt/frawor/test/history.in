@@ -1,8 +1,0 @@
-:let &rtp.=",".escape($TESTDIR, ',\').'/rtp'
-:let g:testfile="plugin/".g:curtest.".vim"
-/abc
-:call input('')
-def
-"="ghi"
-p
-:source test.vim

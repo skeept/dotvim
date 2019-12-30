@@ -1,4 +1,0 @@
-.1: autoload/frawor/checks:uchecker
-.2: autoload/frawor/checks:chkncall
-.3: autoload/frawor/checks:filncall
-.4: autoload/frawor/checks:ufilter
