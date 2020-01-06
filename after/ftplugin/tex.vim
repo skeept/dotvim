@@ -161,6 +161,7 @@ function! Ulti_ExpandOrJump_and_getRes() "{{{
   return g:ulti_expand_or_jump_res
 endfunction "}}}
 
+if 0
 inoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
       \ "" : IMAP_Jumpfunc('', 0)<CR>
 snoremap <silent> <buffer> <NL> <C-R>=(Ulti_ExpandOrJump_and_getRes() > 0) ?
@@ -172,6 +173,16 @@ snoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '
       \ UltiSnips#ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
 vnoremap <silent> <buffer> <C-L> <C-\><C-N>i<C-R>=(IMAP_Jumpfunc_val('', 0) == '') ?
       \ UltiSnips#ExpandSnippetOrJump() : g:imap_jumpfun_val<CR>
+endif
+
+function IMAP_JumpfuncWrap(a1, a2)
+  call IMAP_Jumpfunc(a:a1, a:a2)
+  return ''
+endfunction
+
+imap <silent> <buffer> <NL> <C-R>=neosnippet#expandable_or_jumpable()
+      \ ? neosnippet#mappings#expand_or_jump_impl()
+      \ : IMAP_JumpfuncWrap('', 0)<CR>
 
 inoremap <silent> <buffer> `. \cdot
 
