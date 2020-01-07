@@ -311,7 +311,8 @@ function! jraf#loadLatexSettings()
           \ "/Programs/PApps/PortableApps/SumatraPDFPortable/SumatraPDFPortable")
     let g:Tex_ViewRule_pdf = g:SumatraPdfLoc . " -reuse-instance"
     " setting for summatra pdf
-    " "C:\Program Files\Vim\vim74\gvim.exe" -c ":RemoteOpen +%l %f"
+    " gvim -c ":RemoteOpenMod +%l %f"
+    " code_bat.bat -g "%f:%l"
   else
     let g:Tex_ViewRule_pdf = 'okular'
   endif
@@ -329,6 +330,12 @@ function! jraf#loadLatexSettings()
     let g:thesis_path = $HOME . "/WORK/Thesis"
   endif
 
+
+  "LatexBox
+  let g:LatexBox_latexmk_async = 1
+  let g:LatexBox_latexmk_preview_continuously = 1
+  let g:LatexBox_quickfix = 4
+
 endfunction
 
 function! jraf#loadLatexPlugins()
@@ -343,6 +350,7 @@ function! jraf#loadLatexPlugins()
   ActivateAddons vlatex
   ActivateAddons SpellCheck
   ActivateAddons LanguageTool
+  packadd LaTeX_Box
   "will it be necessary to load after/ftplugin/tex again?
   let s:loaded_latex_plugins = 1
 endfunction
@@ -361,7 +369,7 @@ function! jraf#setPdfDestination(...)
   silent exe "cd " . expand('%:p:h')
   echo "changed folder to " . expand('%p:h')
 
-  if has("gui")
+  if 0 && has("gui")
     winpos 0 0
     set guioptions-=m "no menu bar for now
     set lines=100 columns=91
