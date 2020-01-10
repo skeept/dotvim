@@ -29,13 +29,11 @@ function! neosnippet#mappings#completed_expandable() abort
 endfunction
 
 function! neosnippet#mappings#_clear_select_mode_mappings() abort
-  if !g:neosnippet#disable_select_mode_mappings
+  if !g:neosnippet#disable_select_mode_mappings || !exists('*execute')
     return
   endif
 
-  redir => mappings
-    silent! smap
-  redir END
+  let mappings = execute('smap', 'silent!')
 
   for map in map(filter(split(mappings, '\n'),
         \ "v:val !~# '^s' && v:val !~# '^\\a*\\s*<\\S\\+>'"),
