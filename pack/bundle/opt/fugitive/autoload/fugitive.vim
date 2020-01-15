@@ -2192,6 +2192,10 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
         \ (args[0] ==# 'help' || get(args, 1, '') ==# '--help') && !s:HasOpt(args, '--web')
     return s:OpenExec((a:line2 > 0 ? a:line2 : '') . (a:line2 ? 'split' : 'edit'), a:mods, args, dir) . after
   endif
+  if index(['--paginate', '-p'], args[0]) >= 0
+    let paginate_warning = 'fugitive: --paginate support is deprecated. Use :terminal directly'
+    let after = '|echohl WarningMsg|echo ' . string(paginate_warning) . '|echohl NONE' . after
+  endif
   if s:HasOpt(args, ['add', 'checkout', 'commit', 'stage', 'stash', 'reset'], '-p', '--patch') ||
         \ s:HasOpt(args, ['add', 'clean', 'stage'], '-i', '--interactive') ||
         \ index(['--paginate', '-p'], args[0]) >= 0
@@ -3861,6 +3865,9 @@ function! s:ToolParse(state, line) abort
       let offsets = split(matchstr(a:line, '^@\+ \zs[-+0-9, ]\+\ze @'), ' ')
       return s:ToolItems(a:state, a:state.from, a:state.to, offsets, matchstr(a:line, ' @@\+ \zs.*'))
     endif
+  elseif a:line =~# '^\* Unmerged path .'
+    let file = a:line[16:-1]
+    return s:ToolItems(a:state, file, file, [], '')
   elseif a:line =~# '^[A-Z]\d*\t.\|^:.*\t.'
     " --raw, --name-status
     let [status; files] = split(a:line, "\t")
