@@ -556,7 +556,7 @@ Example:
 <
 
                                                        *g:tagbar_show_balloon*
-g:tagbar_show_balloon
+g:tagbar_show_balloon~
 Default: 1
 
 Whether balloon messages should be shown in the Tagbar window.
@@ -909,6 +909,17 @@ tagbar#currenttag({format}, {default} [, {flags}])
     For example, if you put the following into your statusline: >
         %{tagbar#currenttag('[%s] ','')}
 <   then the function "myfunc" will be shown as "[myfunc()] ".
+
+Additionally you can show the kind (type) of the current tag, using following
+function:
+
+tagbar#currenttagtype({format}, {default})
+    {format} and {default} are treated in the same way as for
+    tagbar#currenttag function.
+
+    Altering previous example, like below: >
+        %{tagbar#currenttag('[%s] ','')}\ %{tagbar#currenttagtype("(%s) ", '')
+<   the function "myfunc" will be shown as "[myfunc()] (function)".
 
 Note that if there is an error when processing the current file no error
 message will be shown in order to not disrupt the statusline. If the function
