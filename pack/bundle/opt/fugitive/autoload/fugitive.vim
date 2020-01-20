@@ -1826,7 +1826,8 @@ function! fugitive#BufReadStatus() abort
     if push !=# pull
       call s:AddHeader('Push', push)
     endif
-    if empty(s:Tree())
+    let tree = s:Tree()
+    if empty(tree)
       call s:AddHeader('Bare', 'yes')
     endif
     call s:AddSection('Rebasing ' . rebasing_head, rebasing)
@@ -1844,7 +1845,8 @@ function! fugitive#BufReadStatus() abort
     if &bufhidden ==# ''
       setlocal bufhidden=delete
     endif
-    let b:dispatch = ':Gfetch --all'
+    let b:dispatch = '-compiler=git -dir=' . s:fnameescape(FugitiveVimPath(len(tree) ? tree : s:Dir())) .
+          \ ' ' . s:UserCommand() . ' ' . s:shellesc(s:AskPassArgs(s:Dir())) . ' fetch --all'
     call fugitive#MapJumps()
     call s:Map('n', '-', ":<C-U>execute <SID>Do('Toggle',0)<CR>", '<silent>')
     call s:Map('x', '-', ":<C-U>execute <SID>Do('Toggle',1)<CR>", '<silent>')
@@ -1907,7 +1909,7 @@ function! fugitive#BufReadStatus() abort
     endfor
 
     let b:fugitive_reltime = reltime()
-    return ''
+    return 'silent ' . s:DoAutocmd('User FugitiveIndex')
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
   endtry
@@ -2010,7 +2012,7 @@ function! fugitive#BufReadCmd(...) abort
     setlocal endofline
 
     try
-      silent doautocmd BufReadPre
+      silent exe s:DoAutocmd('BufReadPre')
       if b:fugitive_type ==# 'tree'
         let b:fugitive_display_format = b:fugitive_display_format % 2
         if b:fugitive_display_format
@@ -2078,7 +2080,8 @@ function! fugitive#BufReadCmd(...) abort
     endif
 
     return 'silent ' . s:DoAutocmd('BufReadPost') .
-          \ (modifiable ? '' : '|setl nomodifiable')
+          \ (modifiable ? '' : '|setl nomodifiable') . '|silent ' .
+          \ s:DoAutocmd('User Fugitive' . substitute(b:fugitive_type, '^\l', '\u&', ''))
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
   endtry
@@ -2179,18 +2182,16 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
   else
     let opts = {}
   endif
-  if a:bang || args[0] =~# '^-P$\|^--no-pager$\|diff\%(tool\)\@!\|log\|^show$' ||
+  if a:bang || args[0] =~# '^-p$\|^--paginate$\|diff\%(tool\)\@!\|log\|^show$' ||
         \ (args[0] ==# 'stash' && get(args, 1, '') ==# 'show') ||
         \ (args[0] ==# 'help' || get(args, 1, '') ==# '--help') && !s:HasOpt(args, '--web')
+    if args[0] =~# '^-p$\|^--paginate$'
+      call remove(args, 0)
+    endif
     return s:OpenExec((a:line2 > 0 ? a:line2 : '') . (a:line2 ? 'split' : 'edit'), a:mods, args, dir) . after
   endif
-  if index(['--paginate', '-p'], args[0]) >= 0
-    let paginate_warning = 'fugitive: --paginate support is deprecated. Use :terminal directly'
-    let after = '|echohl WarningMsg|echo ' . string(paginate_warning) . '|echohl NONE' . after
-  endif
   if s:HasOpt(args, ['add', 'checkout', 'commit', 'stage', 'stash', 'reset'], '-p', '--patch') ||
-        \ s:HasOpt(args, ['add', 'clean', 'stage'], '-i', '--interactive') ||
-        \ index(['--paginate', '-p'], args[0]) >= 0
+        \ s:HasOpt(args, ['add', 'clean', 'stage'], '-i', '--interactive')
     let mods = substitute(s:Mods(a:mods), '\<tab\>', '-tab', 'g')
     let assign = len(dir) ? '|let b:git_dir = ' . string(dir) : ''
     if has('nvim')
@@ -3761,7 +3762,7 @@ endfunction
 
 function! s:MergeSubcommand(line1, line2, range, bang, mods, args) abort
   let dir = s:Dir()
-  if empty(args) && (
+  if empty(a:args) && (
         \ filereadable(fugitive#Find('.git/MERGE_MSG', dir)) ||
         \ isdirectory(fugitive#Find('.git/rebase-apply', dir)) ||
         \  !empty(s:TreeChomp(dir, 'diff-files', '--diff-filter=U')))
@@ -4093,11 +4094,7 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, args) abort
     call add(cmd, '--column')
   endif
   let tree = s:Tree(dir)
-  if type(a:args) == type([])
-    let [args, after] = [a:args, '']
-  else
-    let [args, after] = s:SplitExpandChain(a:args, tree)
-  endif
+  let args = a:args
   let prefix = FugitiveVimPath(s:HasOpt(args, '--cached') || empty(tree) ? 'fugitive://' . dir . '//0/' : tree . '/')
   let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
   let title = [listnr < 0 ? ':Ggrep' : ':Glgrep'] + args
@@ -4120,9 +4117,9 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, args) abort
     redraw
   endif
   if !a:bang && !empty(list)
-    return (listnr < 0 ? 'c' : 'l').'first' . after
+    return (listnr < 0 ? 'c' : 'l').'first'
   else
-    return after[1:-1]
+    return ''
   endif
 endfunction
 

@@ -20,10 +20,9 @@ that are part of Git repositories).
 :G {args}               but chdir to the repository tree first.  For some
                         subcommands, a Fugitive command is called instead.
 
-                                                *:Git!*
 :Git! {args}            Like |:Git|, but capture the output into a temp file,
-:Git --no-pager {args}  and |:split| that temp file.  Use :0Git to
-:Git -P {args}          |:edit| the temp file instead.  A temp file is always
+:Git --paginate {args}  and |:split| that temp file.  Use :0Git to
+:Git -p {args}          |:edit| the temp file instead.  A temp file is always
                         used for diff and log commands.
 
                                                 *:Gstatus*
@@ -208,7 +207,7 @@ that are part of Git repositories).
                         focus on the current window.  During a merge conflict,
                         this is a three-way diff against the "ours" and
                         "theirs" ancestors.  Additional d2o and d3o maps are
-                        provided to to obtain the hunk from the "ours" or
+                        provided to obtain the hunk from the "ours" or
                         "theirs" ancestor, respectively.
 
 :Gdiffsplit! {object}   Like |:Gdiffsplit|, but retain focus on the current
