@@ -1909,7 +1909,7 @@ function! fugitive#BufReadStatus() abort
     endfor
 
     let b:fugitive_reltime = reltime()
-    return 'silent ' . s:DoAutocmd('User FugitiveIndex')
+    return 'silent ' . s:DoAutocmd('User Fugitive') . '|silent ' . s:DoAutocmd('User FugitiveIndex')
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
   endtry
@@ -4095,7 +4095,6 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, args) abort
   endif
   let tree = s:Tree(dir)
   let args = a:args
-  let prefix = FugitiveVimPath(s:HasOpt(args, '--cached') || empty(tree) ? 'fugitive://' . dir . '//0/' : tree . '/')
   let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
   let title = [listnr < 0 ? ':Ggrep' : ':Glgrep'] + args
   if listnr > 0
@@ -4108,6 +4107,9 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, args) abort
   let tempfile = tempname()
   let event = listnr < 0 ? 'grep-fugitive' : 'lgrep-fugitive'
   silent exe s:DoAutocmd('QuickFixCmdPre ' . event)
+  let prefix = FugitiveVimPath(s:HasOpt(args, '--cached') || empty(tree) ?
+        \ 'fugitive://' . dir . '//0/' :
+        \ s:cpath(getcwd(), tree) ? '' : tree . '/')
   exe '!' . escape(s:UserCommand(dir, cmd + args), '%#!')
         \ printf(&shellpipe . (&shellpipe =~# '%s' ? '' : ' %s'), s:shellesc(tempfile))
   let list = map(readfile(tempfile), 's:GrepParseLine(prefix, name_only, dir, v:val)')
@@ -6303,20 +6305,9 @@ function! fugitive#foldtext() abort
   return fugitive#Foldtext()
 endfunction
 
-augroup fugitive_folding
-  autocmd!
-  autocmd User Fugitive
-        \ if &filetype =~# '^git\%(commit\)\=$' && &foldtext ==# 'foldtext()' |
-        \    set foldtext=fugitive#Foldtext() |
-        \ endif
-augroup END
-
 " Section: Initialization
 
 function! fugitive#Init() abort
-  if exists('#User#FugitiveBoot')
-    exe s:DoAutocmd('User FugitiveBoot')
-  endif
   let dir = s:Dir()
   if &tags !~# '\.git' && @% !~# '\.git' && !exists('s:tags_warning')
     let actualdir = fugitive#Find('.git/', dir)
@@ -6327,7 +6318,6 @@ function! fugitive#Init() abort
       echohl NONE
     endif
   endif
-  exe s:DoAutocmd('User Fugitive')
 endfunction
 
 function! fugitive#is_git_dir(path) abort
