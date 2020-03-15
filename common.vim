@@ -634,6 +634,7 @@ noremap ,pj :CtrlPBufTagAll<CR>
 noremap ,pf :CtrlPCurFile<CR>
 noremap ,pa :CtrlPShowArr<CR>
 nnoremap ,pc :CtrlPBookmarkDir<CR>
+nnoremap ,pl :CtrlPLine<CR>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
          \ 'PrtCurLeft()': ['<left>', '<c-^>'],
@@ -642,7 +643,7 @@ let g:ctrlp_map = ''
 command! CtrlPShowArr call jraf#ctrlpShowArrFun(-1)
 
 let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
-      \'Root', 'Tag', 'CurFile', 'BookmarkDir']
+      \'Root', 'Tag', 'CurFile', 'BookmarkDir', 'Line']
 nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 noremap ,b :CtrlPBuffer<CR>
