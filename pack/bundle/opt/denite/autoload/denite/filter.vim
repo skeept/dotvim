@@ -71,9 +71,9 @@ function! s:init_buffer() abort
   inoremap <buffer><silent> <Plug>(denite_filter_update)
         \ <ESC>:call <SID>async_update()<CR>
   nnoremap <buffer><silent> <Plug>(denite_filter_quit)
-        \ :<C-u>call <SID>quit()<CR>
+        \ :<C-u>call <SID>quit(v:true)<CR>
   inoremap <buffer><silent> <Plug>(denite_filter_quit)
-        \ <ESC>:<C-u>call <SID>quit()<CR>
+        \ <ESC>:<C-u>call <SID>quit(v:true)<CR>
   inoremap <buffer><silent><expr> <Plug>(denite_filter_backspace)
         \ col('.') == 1 ? "a\<BS>" : "\<BS>"
 
@@ -88,19 +88,19 @@ function! s:init_buffer() abort
 endfunction
 
 function! s:new_filter_buffer(context) abort
-  if (a:context['split'] ==# 'floating' ||
-      \ a:context['filter_split_direction'] ==# 'floating')
-      \ && exists('*nvim_open_win')
+  if denite#util#check_floating(a:context)
     let row = win_screenpos(win_getid())[0] - 1
     " Note: win_screenpos() == [1, 1] if start_filter
     if row <= 0
       let row = a:context['filter_winrow']
     endif
+    let winrow = str2nr(a:context['winrow'])
+    let wincol = str2nr(a:context['wincol'])
     if a:context['split'] ==# 'floating'
       call nvim_open_win(bufnr('%'), v:true, {
             \ 'relative': 'editor',
-            \ 'row': row + winheight(0),
-            \ 'col': str2nr(a:context['wincol']),
+            \ 'row': winrow == 1 ? 0 : row + winheight(0),
+            \ 'col': wincol,
             \ 'width': str2nr(a:context['winwidth']),
             \ 'height': 1,
             \})
@@ -182,15 +182,17 @@ function! s:async_update() abort
 
   let input = getline('.')
 
-  call s:quit()
+  call s:quit(v:false)
 
   call denite#call_async_map('filter', input)
 endfunction
 
-function! s:quit() abort
+function! s:quit(force_quit) abort
+  let context = g:denite#_filter_context
+
   if winnr('$') ==# 1
     buffer #
-  else
+  elseif a:force_quit || !context['start_filter']
     close!
   endif
 
@@ -198,7 +200,9 @@ function! s:quit() abort
 
   call s:stop_timer()
 
-  let g:denite#_filter_winid = -1
+  if win_id2win(g:denite#_filter_winid) < 0
+    let g:denite#_filter_winid = -1
+  endif
 endfunction
 
 function! denite#filter#_move_to_parent(is_async) abort

@@ -125,18 +125,6 @@ options     head
       ${0}
     endfunction
 
-snippet  save_cpoptions
-abbr     let s:save_cpo = &cpo | set cpo&vim
-alias    s:save_cpo cpoptions
-options     head
-    let s:save_cpo = &cpo
-    set cpo&vim
-
-    ${0}
-
-    let &cpo = s:save_cpo
-    unlet s:save_cpo
-
 snippet g:loaded
 abbr    if exists('g:loaded_{plugin-name}')
 alias   loaded
@@ -224,13 +212,13 @@ abbr    use option save
 snippet     p
 abbr        debug-echomsg
 options     head
-  echomsg string([${0:TARGET}])
+    echomsg string([${0:TARGET}])
 
 snippet     version
 abbr        vim-version-check
-        v:version > ${1} || (v:version == $1 && has('patch${2}'))
+    v:version > ${1} || (v:version == $1 && has('patch${2}'))
 
 snippet     version_new
 abbr        vim-version-check-new
-        has('patch-${1}')
+    has('patch-${1}')
 
