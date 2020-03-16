@@ -229,8 +229,10 @@ function! GetIsAddonActive(addon)
   endif
   if g:addon_manager == 1 "Pathogen"
     return index(g:pathogen_disabled, a:addon) == -1
-  else "vam-addon-manager
+  elseif g:addon_manager == 2 "vam-addon-manager
     return index(g:active_addons, a:addon) >= 0
+  elseif g:addon_manager == 3 "Plug
+    return has_key(g:plugs, a:addon)
   endif
 endfunction
 "==============================================================================}}}
@@ -661,9 +663,10 @@ let g:gundo_prefer_python3 = 1
 
 "================== Snippets / UltiSnips ======================================{{{
 "1 UltiSnips, 2 neosnippet
-let s:ulti_or_neosnip_default = 1
-let s:ulti_or_neosnip = (has("python3") && GetIsAddonActive('UltiSnips'))
-      \ ? s:ulti_or_neosnip_default : 2
+let s:ulti_or_neosnip = 2
+if s:ulti_or_neosnip == 1 && !has("python3")
+  let s:ulti_or_neosnip = 2
+endif
 
 if s:ulti_or_neosnip == 1
   let g:UltiSnipsExpandTrigger = "<F10>"
@@ -688,9 +691,6 @@ endif
 
 "================== NeoSnippet ================================================{{{
 if s:ulti_or_neosnip == 2
-  PackAddRegister neosnippet
-  PackAddRegister neosnippet-snippets
-
   function! s:LoadNeoSnipppet()
     imap <NL> <Plug>(neosnippet_expand_or_jump)
     smap <NL> <Plug>(neosnippet_expand_or_jump)
