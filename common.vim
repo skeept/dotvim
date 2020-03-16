@@ -56,7 +56,10 @@ set nostartofline
 
 " for being able to change buffers without saving
 set hidden
-set shortmess=acF
+set shortmess=ac
+if version > 800
+  set shortmess+=F
+endif
 
 set foldmethod=syntax
 set title
@@ -521,7 +524,7 @@ if has('timers')
   call timer_start(1500, 'LoadUnite')
 
 else
-  LoadUnite(0)
+  call LoadUnite(0)
 endif
 "==============================================================================}}}
 
@@ -945,9 +948,9 @@ map gc <plug>NERDCommenterInvert
 "==============================================================================}}}
 
 "packadd! editexisting
-packadd! matchit
-packadd! SimpylFold
 if v:version > 800
+  packadd! matchit
+  packadd! SimpylFold
   packadd! cfilter
 endif
 

@@ -42,8 +42,9 @@ if g:is_win
   set rop=type:directx
   set guifont=Terminus:h12
 else
-  set guifont=Terminus\ 12,
-        \-misc-fixed-medium-*-normal-*-15-*-*-*-*-*-*-*
+  "set guifont=Terminus\ 12,
+        "\-misc-fixed-medium-*-normal-*-15-*-*-*-*-*-*-*
+  set guifont=Monospace 12
 endif
 
 set winaltkeys=no
