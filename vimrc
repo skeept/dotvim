@@ -20,9 +20,9 @@ if filereadable(s:local_settings)
 endif
 
 " plan to use default package loading also
-" decide on pathogen or vam (pathogen: 1, vam: 2, default package loading: 0)
+" (0: builtin 1: pathogen 2: vam: 3: Plug)
 if !exists('g:addon_manager')
-  let g:addon_manager = 2
+  let g:addon_manager = 3
 endif
 
 "================== pathogen ================================================{{{
@@ -104,6 +104,9 @@ call SetupVAM()
 endif
 "==============================================================================}}}
 
+if g:addon_manager == 3
+execute 'source ' . g:p0 . '/plug_load.vim'
+endif
 "
 " this is where all vimrc and simple settings go
 " should I just move it to plugins folder?
@@ -113,6 +116,10 @@ endif
 execute "source " . g:p0 . "/common.vim"
 
 func! LoadPluginsWithTimer(timer)
+  if g:addon_manager != 2
+    return
+  endif
+
   "VAMAddToActiveAddons airline
   "VAMAddToActiveAddons lightline
   VAMAddToActiveAddons FastFold
@@ -156,7 +163,6 @@ func! LoadPluginsWithTimer(timer)
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
   
-  execute "source " . g:p0 . "/conf_plugins.rc.vim"
 endfunction
 
 if has('timers')
@@ -164,6 +170,7 @@ if has('timers')
 else
   call LoadPluginsWithTimer(0)
 endif
+execute "source " . g:p0 . "/conf_plugins.rc.vim"
 
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>

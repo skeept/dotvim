@@ -159,14 +159,13 @@ endif
 
 "================== asyncomplete =============================================={{{
 function! SetupAsyncomplete()
-  if !GetIsAddonActive('asyncomplete')
+  if !GetIsAddonActive('asyncomplete.vim')
     return
   endif
 
   let g:asyncomplete_remove_duplicates = 1
 
-
-  if GetIsAddonActive('asyncomplete-buffer')
+  if GetIsAddonActive('asyncomplete-buffer.vim')
     call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
           \ 'name': 'buffer',
           \ 'whitelist': ['*'],
@@ -175,7 +174,7 @@ function! SetupAsyncomplete()
           \ }))
   endif
 
-  if GetIsAddonActive('asyncomplete-omni')
+  if GetIsAddonActive('asyncomplete-omni.vim')
     call asyncomplete#register_source(asyncomplete#sources#omni#get_source_options({
           \ 'name': 'omni',
           \ 'whitelist': ['*'],
@@ -184,7 +183,7 @@ function! SetupAsyncomplete()
           \  }))
   endif
 
-  if GetIsAddonActive('asyncomplete-file')
+  if GetIsAddonActive('asyncomplete-file.vim')
     "au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
     call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
           \ 'name': 'file',
@@ -194,7 +193,7 @@ function! SetupAsyncomplete()
           \ }))
   endif
 
-  if GetIsAddonActive('asyncomplete-neosnippet')
+  if GetIsAddonActive('asyncomplete-neosnippet.vim')
     call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
           \ 'name': 'neosnippet',
           \ 'whitelist': ['*'],
