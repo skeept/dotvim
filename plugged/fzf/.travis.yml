@@ -1,0 +1,22 @@
+language: go
+env: GO111MODULE=on
+os:
+  - linux
+  - osx
+dist: bionic # For fish >= 2.3.0 string builtin
+addons:
+  apt:
+    packages:
+      - fish
+      - zsh
+  homebrew:
+    packages:
+      - fish
+      - tmux
+    update: true
+script:
+  - make test
+  # LC_ALL=C to avoid escape codes in
+  # printf %q $'\355\205\214\354\212\244\355\212\270' on macOS. Bash on
+  # macOS is built without HANDLE_MULTIBYTE?
+  - make install && ./install --all && LC_ALL=C tmux new-session -d && ruby test/test_go.rb --verbose
