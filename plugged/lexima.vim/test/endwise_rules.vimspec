@@ -1,0 +1,123 @@
+Describe endwise rule
+
+  Before all
+    let g:lexima_enable_basic_rules = 0
+    let g:lexima_enable_newline_rules = 0
+    let g:lexima_enable_space_rules = 0
+    let g:lexima_enable_endwise_rules = 1
+    call lexima#set_default_rules()
+    new | only!
+  End
+
+  After each
+    new | only!
+  End
+
+  After all
+    let g:lexima_enable_basic_rules = 1
+    let g:lexima_enable_newline_rules = 1
+    let g:lexima_enable_space_rules = 1
+    let g:lexima_enable_endwise_rules = 1
+    call lexima#set_default_rules()
+  End
+
+  Context in vim
+
+    Before all
+      new | setf vim
+    End
+
+    It should input end word
+      call Expect("fu x()\<CR>").to_change_input_as("fu x()\n\nendfu")
+      call Expect("function s:hoge(fuga)\<CR>").to_change_input_as("function s:hoge(fuga)\n\nendfunction")
+      call Expect("if x ~=# '\%(ji\|\)ja;s/j'\<CR>").to_change_input_as("if x ~=# '\%(ji\|\)ja;s/j'\n\nendif")
+    End
+  End
+
+  Context in ruby
+
+    Before each
+      new | setf ruby
+    End
+
+    It should input end word
+      call Expect("def hoge()\<CR>").to_change_input_as("def hoge()\n\nend")
+      call Expect("hoge do |i|\<CR>").to_change_input_as("hoge do |i|\n\nend")
+      call Expect("# Yes, I do\<CR>").to_change_input_as("# Yes, I do\n#")
+      call Expect("if x\<CR>").to_change_input_as("if x\n\nend")
+      call Expect("a = if x\<CR>").to_change_input_as("a = if x\n\n    end")
+    End
+
+    It should input end word for various do blocks
+      call Expect("hoge do\<CR>").to_change_input_as("hoge do\n\nend")
+      call Expect("hoge do |i, &block|\<CR>").to_change_input_as("hoge do |i, &block|\n\nend")
+      call Expect("hoge do |*args|\<CR>").to_change_input_as("hoge do |*args|\n\nend")
+      call Expect("hoge do |name: :default|\<CR>").to_change_input_as("hoge do |name: :default|\n\nend")
+      call Expect("hoge do |regex: /abc|def/| end\<CR>").to_change_input_as("hoge do |regex: /abc|def/| end\n")
+      call Expect("hoge do |i| end\<CR>").to_change_input_as("hoge do |i| end\n")
+    End
+  End
+
+  function! s:shared_examples_for_shells()
+    call Expect("if true\<CR>").to_change_input_as("if true\n\nfi")
+    call Expect("if true; then\<CR>").to_change_input_as("if true; then\n\nfi")
+    call Expect("case A in\<CR>'a' ) foo").to_change_input_as("case A in\n\t'a' ) foo\nesac")
+    call Expect("do\<CR>").to_change_input_as("do\n\ndone")
+    call Expect("for x in y; do\<CR>").to_change_input_as("for x in y; do\n\ndone")
+  endfunction
+
+  Context in sh
+
+    Before all
+      new | setf sh
+    End
+
+    It should input end word
+        call s:shared_examples_for_shells()
+    End
+  End
+
+  Context in zsh
+
+    Before all
+      new | setf zsh
+    End
+
+    It should input end word
+        call s:shared_examples_for_shells()
+    End
+  End
+
+  Context in julia
+
+    Before all
+      new | setf julia
+    End
+
+    It should input end word
+      call Expect("function f()\<CR>").to_change_input_as("function f()\n\nend")
+      call Expect("g = function ()\<CR>").to_change_input_as("g = function ()\n\nend")
+      call Expect("return function ()\<CR>").to_change_input_as("return function ()\n\nend")
+      call Expect("@generated function f(x)\<CR>").to_change_input_as("@generated function f(x)\n\nend")
+      call Expect("begin\<CR>").to_change_input_as("begin\n\nend")
+      call Expect("x = begin\<CR>").to_change_input_as("x = begin\n\nend")
+      call Expect("@eval begin\<CR>").to_change_input_as("@eval begin\n\nend")
+      call Expect("eval(quote\<CR>").to_change_input_as("eval(quote\n\nend")
+      call Expect("if x\<CR>").to_change_input_as("if x\n\nend")
+      call Expect("x = if y\<CR>").to_change_input_as("x = if y\n\nend")
+      call Expect("for i in 1:10\<CR>").to_change_input_as("for i in 1:10\n\nend")
+      call Expect("@threads for i in 1:10\<CR>").to_change_input_as("@threads for i in 1:10\n\nend")
+      call Expect("while true\<CR>").to_change_input_as("while true\n\nend")
+      call Expect("let\<CR>").to_change_input_as("let\n\nend")
+      call Expect("let x = 1\<CR>").to_change_input_as("let x = 1\n\nend")
+      call Expect("map(1:10) do i\<CR>").to_change_input_as("map(1:10) do i\n\nend")
+    End
+
+    It should not input end word
+      call Expect("x = begin y; end\<CR>").to_change_input_as("x = begin y; end\n")
+      call Expect("# Yes, I do\<CR>").to_change_input_as("# Yes, I do\n")
+      call Expect("x # let's try\<CR>").to_change_input_as("x # let's try\n")
+    End
+  End
+
+End
