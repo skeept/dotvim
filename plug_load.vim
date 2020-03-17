@@ -41,4 +41,6 @@ Plug 'tpope/vim-apathy'
 Plug 'tpope/vim-vinegar'
 Plug 'tpope/vim-unimpaired'
 
+Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
+
 call plug#end()
