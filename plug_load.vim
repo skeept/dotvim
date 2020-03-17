@@ -45,4 +45,14 @@ Plug 'tpope/vim-unimpaired'
 
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
+Plug 'chrisbra/NrrwRgn'
+
+Plug 'kana/vim-textobj-user'
+Plug 'kana/vim-textobj-entire'
+Plug 'kana/vim-textobj-indent'
+Plug 'whatyouhide/vim-textobj-xmlattr'
+Plug 'Julian/vim-textobj-brace'
+
+Plug 'cohama/lexima.vim'
+
 call plug#end()
