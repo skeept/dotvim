@@ -3,7 +3,7 @@
 "---------------------------------------------------------------------------
 " denite.nvim
 "
-if has("python3") && GetIsAddonActive('denite')
+if has("python3") && IsAddonActive('denite')
   if executable('rg')
     call denite#custom#alias('source', 'rgf', 'file/rec')
     call denite#custom#var('rgf', 'command',
@@ -76,7 +76,7 @@ if has("python3") && GetIsAddonActive('denite')
 endif
 
 "================== Gina ======================================================{{{
-if exists('g:loaded_gina') && g:loaded_gina
+function! LoadGina()
   call gina#custom#command#alias('status', 'st')
   call gina#custom#command#alias('branch', 'br')
   call gina#custom#command#option('br', '-v', 'v')
@@ -101,6 +101,7 @@ if exists('g:loaded_gina') && g:loaded_gina
         \ '/\%(status\|commit\)',
         \ '-u|--untracked-files'
         \)
+
   call gina#custom#command#option(
         \ '/\%(status\|changes\)',
         \ '--ignore-submodules'
@@ -114,6 +115,7 @@ if exists('g:loaded_gina') && g:loaded_gina
         \ 'branch', 'merge',
         \ 'commit:merge'
         \)
+
   call gina#custom#action#alias(
         \ 'branch', 'rebase',
         \ 'commit:rebase'
@@ -138,17 +140,22 @@ if exists('g:loaded_gina') && g:loaded_gina
         \ '/\%(status\|branch\|ls\|grep\|changes\|tag\)',
         \ 'setlocal winfixheight',
         \)
+endfunction
+
+if exists('g:loaded_gina') && g:loaded_gina
+  call LoadGina()
 endif
 "==============================================================================}}}
 
 "================== Mucomplete ================================================{{{
-if GetIsAddonActive('Mucomplete')
+if IsAddonActive('vim-mucomplete')
 	let g:mucomplete#chains = {}
 	let g:mucomplete#chains.default = ['path', 'nsnp', 'keyn']
         let g:mucomplete#enable_auto_at_startup = 1
         set completeopt+=noselect
+        set completeopt+=menuone
 
-        if GetIsAddonActive('neosnippet')
+        if IsAddonActive('neosnippet.vim')
           inoremap <silent> <expr> <plug><MyCR>
               \ mucomplete#neosnippet#expand_snippet("\<cr>")
           imap <F10> <plug><MyCR>
@@ -159,13 +166,13 @@ endif
 
 "================== asyncomplete =============================================={{{
 function! SetupAsyncomplete()
-  if !GetIsAddonActive('asyncomplete.vim')
+  if !IsAddonActive('asyncomplete.vim')
     return
   endif
 
   let g:asyncomplete_remove_duplicates = 1
 
-  if GetIsAddonActive('asyncomplete-buffer.vim')
+  if IsAddonActive('asyncomplete-buffer.vim')
     call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
           \ 'name': 'buffer',
           \ 'whitelist': ['*'],
@@ -174,7 +181,7 @@ function! SetupAsyncomplete()
           \ }))
   endif
 
-  if GetIsAddonActive('asyncomplete-omni.vim')
+  if IsAddonActive('asyncomplete-omni.vim')
     call asyncomplete#register_source(asyncomplete#sources#omni#get_source_options({
           \ 'name': 'omni',
           \ 'whitelist': ['*'],
@@ -183,7 +190,7 @@ function! SetupAsyncomplete()
           \  }))
   endif
 
-  if GetIsAddonActive('asyncomplete-file.vim')
+  if IsAddonActive('asyncomplete-file.vim')
     "au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
     call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
           \ 'name': 'file',
@@ -193,7 +200,7 @@ function! SetupAsyncomplete()
           \ }))
   endif
 
-  if GetIsAddonActive('asyncomplete-neosnippet.vim')
+  if IsAddonActive('asyncomplete-neosnippet.vim')
     call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
           \ 'name': 'neosnippet',
           \ 'whitelist': ['*'],

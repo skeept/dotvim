@@ -20,6 +20,7 @@ Plug 'Shougo/unite.vim', { 'on': 'Unite' }
 Plug 'ctrlpvim/ctrlp.vim'
 
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
+autocmd! User gina.vim call LoadGina()
 
 Plug 'molok/vim-smartusline'
 

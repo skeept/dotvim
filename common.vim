@@ -226,7 +226,7 @@ nnoremap g/ /\<\><Left><Left>
 "==============================================================================}}}
 
 "================== GetIsAddonActive =========================================={{{
-function! GetIsAddonActive(addon)
+function! IsAddonActive(addon)
   if !exists("g:addon_manager") || g:addon_manager == 0 "how can we know?
     return 0
   endif
@@ -530,7 +530,7 @@ endif
 
 "================== neocomplete ============================================={{{
 let g:load_neocomplete = (!exists('g:load_neocomplete') ||  g:load_neocomplete == 1) &&
-      \ (GetIsAddonActive('neocomplete'))
+      \ (IsAddonActive('neocomplete'))
 if g:load_neocomplete
   function! SetupNeocomplete()
     let g:neocomplete#enable_at_startup = 1

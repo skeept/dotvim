@@ -270,7 +270,7 @@ let g:yankring_paste_using_g = 0 "I want gp to select the pasted text
 let g:yankring_history_file = '.yankring_history'
 let g:yankring_history_dir = g:p0
 
-if GetIsAddonActive('yankstack')
+if IsAddonActive('yankstack')
   nmap ,y <Plug>yankstack_substitute_older_paste
   nmap ,Y <Plug>yankstack_substitute_newer_paste
 endif
@@ -339,12 +339,14 @@ let g:ConqueTerm_ReadUnfocused = 1
 
 "================== Tasklist =================================================={{{
 "useful for managing a todo list
+if 0 " disabled for now
 noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
+endif
 "==============================================================================}}}
 
 "================== LycosaExplorer ============================================{{{
-if GetIsAddonActive('lycosaexplorer')
+if IsAddonActive('lycosaexplorer')
   call jrar#setupLycosa()
 endif
 "==============================================================================}}}
