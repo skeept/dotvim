@@ -161,6 +161,9 @@ if IsAddonActive('vim-mucomplete')
           imap <F10> <plug><MyCR>
         endif
         imap <F11> <plug>(MUcompleteCR)
+        inoremap <silent> <plug>(MUcompleteFwdKey) <C-L>
+        imap <C-L> <plug>(MUcompleteCycFwd)
+
 endif
 "==============================================================================}}}
 
