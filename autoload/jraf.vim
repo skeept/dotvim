@@ -508,7 +508,7 @@ function! jraf#setupLycosa()
 endfunction
 
 "if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-if GetIsAddonActive('lycosaexplorer')
+if IsAddonActive('lycosaexplorer')
   call SetupLycosa()
 endif
 "==============================================================================}}}

@@ -7,8 +7,25 @@ import subprocess
 import argparse
 from os.path import basename, join, isdir
 
+def get_individual_files(pathn):
+    for root, dirs, files in os.walk(pathn):
+        for fn in files:
+            if basename(fn) == "tags":
+                continue
+            # can add more exceptions
+            yield join(root, fn)
+
 def git_force_add(pathn):
-    cmd = F'git add --force {pathn}'.split()
+    if isdir(pathn):
+        files = [f for f in get_individual_files(pathn)]
+    else:
+        files = [pathn]
+
+    if not files:
+        return
+    files = ' '.join(files)
+
+    cmd = F'git add --force {files}'.split()
     subprocess.run(cmd)
 
 def add_path(pathn):
@@ -22,7 +39,7 @@ def add_path(pathn):
             if fn == '.git':
                 continue
             fn = join(curdir, fn)
-            print(fn)
+            print('***', fn)
             git_force_add(fn)
 
 
