@@ -46,7 +46,7 @@ Plug 'tpope/vim-unimpaired'
 
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
-Plug 'chrisbra/NrrwRgn'
+Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
 
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-entire'
