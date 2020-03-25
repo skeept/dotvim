@@ -696,6 +696,7 @@ endif
 if s:ulti_or_neosnip == 2
   function! s:LoadNeoSnipppet()
     imap <NL> <Plug>(neosnippet_expand_or_jump)
+    imap <C-J> <Plug>(neosnippet_expand_or_jump)
     smap <NL> <Plug>(neosnippet_expand_or_jump)
     xmap <NL> <Plug>(neosnippet_expand_target)
     imap <F12> <Plug>(neosnippet_start_unite_snippet)
