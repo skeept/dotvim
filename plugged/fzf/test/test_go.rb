@@ -1839,15 +1839,18 @@ module TestShell
     tmux.send_keys 'echo 1st', :Enter; tmux.prepare
     tmux.send_keys 'echo 2nd', :Enter; tmux.prepare
     tmux.send_keys 'echo 3d',  :Enter; tmux.prepare
-    tmux.send_keys 'echo 3rd', :Enter; tmux.prepare
+    3.times { tmux.send_keys 'echo 3rd', :Enter; tmux.prepare }
     tmux.send_keys 'echo 4th', :Enter
     retries do
       tmux.prepare
       tmux.send_keys 'C-r'
       tmux.until { |lines| lines.match_count.positive? }
     end
+    tmux.send_keys 'e3d'
+    # Duplicates removed: 3d (1) + 3rd (1) => 2 matches
+    tmux.until { |lines| lines.match_count == 2 }
+    tmux.until { |lines| lines[-3].end_with? 'echo 3d' }
     tmux.send_keys 'C-r'
-    tmux.send_keys '3d'
     tmux.until { |lines| lines[-3].end_with? 'echo 3rd' }
     tmux.send_keys :Enter
     tmux.until { |lines| lines[-1] == 'echo 3rd' }
@@ -2176,7 +2179,7 @@ unset <%= UNSETS.join(' ') %>
 
 # Old API
 _fzf_complete_f() {
-  _fzf_complete "--multi --prompt \"prompt-f> \"" "$@" < <(
+  _fzf_complete "+m --multi --prompt \"prompt-f> \"" "$@" < <(
     echo foo
     echo bar
   )
@@ -2184,7 +2187,7 @@ _fzf_complete_f() {
 
 # New API
 _fzf_complete_g() {
-  _fzf_complete --multi --prompt "prompt-g> " -- "$@" < <(
+  _fzf_complete +m --multi --prompt "prompt-g> " -- "$@" < <(
     echo foo
     echo bar
   )
