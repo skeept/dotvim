@@ -274,6 +274,7 @@ The following table summarizes the available options.
 | `options`                  | string/list   | Options to fzf                                                        |
 | `dir`                      | string        | Working directory                                                     |
 | `up`/`down`/`left`/`right` | number/string | (Layout) Window position and size (e.g. `20`, `50%`)                  |
+| `tmux`                     | string        | (Layout) fzf-tmux options (e.g. `-p90%,60%`)                          |
 | `window` (Vim 8 / Neovim)  | string        | (Layout) Command to open fzf window (e.g. `vertical aboveleft 30new`) |
 | `window` (Vim 8 / Neovim)  | dict          | (Layout) Popup window settings (e.g. `{'width': 0.9, 'height': 0.6}`) |
 
@@ -395,6 +396,18 @@ The latest versions of Vim and Neovim include builtin terminal emulator
 " - border [string default 'rounded']: Border style
 "   - 'rounded' / 'sharp' / 'horizontal' / 'vertical' / 'top' / 'bottom' / 'left' / 'right'
 let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+```
+
+Alternatively, you can make fzf open in a tmux popup window (requires tmux 3.2
+or above) by putting fzf-tmux options in `tmux` key.
+
+```vim
+" See `man fzf-tmux` for available options
+if exists('$TMUX')
+  let g:fzf_layout = { 'tmux': '-p90%,60%' }
+else
+  let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+endif
 ```
 
 #### Hide statusline
