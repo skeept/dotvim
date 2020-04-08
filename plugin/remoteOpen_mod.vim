@@ -1,13 +1,13 @@
 " File: remoteOpen.vim
 " Author: Srinath Avadhanula <srinath AT fastmail DOT fm>
 " $Id: remoteOpen.vim 1080 2010-01-26 22:02:34Z tmaas $
-" 
+"
 " Description:
 " Often times, an external program needs to open a file in gvim from the
 " command line. However, it will not know if the file is already opened in a
-" previous vim session. It is not sufficient to simply specify 
+" previous vim session. It is not sufficient to simply specify
 "
-" gvim --remote-silent <filename> 
+" gvim --remote-silent <filename>
 "
 " because this simply opens up <filename> in the first remote gvim session it
 " sees. This script provides a command RemoteOpen which is meant to be used
@@ -30,8 +30,10 @@
 " opens in the present session.
 
 " Enclose <args> in single quotes so it can be passed as a function argument.
-com! -nargs=1 RemoteOpenMod :call RemoteOpenMod('<args>', 0)
-com! -nargs=1 RemoteOpenModN :call RemoteOpenMod('<args>', 1)
+com! -nargs=1 RemoteOpenMod :call RemoteOpenMod('<args>', 0, 0)
+com! -nargs=1 RemoteOpenModN :call RemoteOpenMod('<args>', 1, 0)
+com! -nargs=1 RemoteOpenModS :call RemoteOpenMod('<args>', 0, 1)
+com! -nargs=1 RemoteOpenModT :call RemoteOpenMod('<args>', 0, 2)
 
 " RemoteOpen: open a file remotely (if possible) {{{
 " Description: checks all open vim windows to see if this file has been opened
@@ -42,7 +44,7 @@ com! -nargs=1 RemoteOpenModN :call RemoteOpenMod('<args>', 1)
 	"" and use that session to open the other files there
 "endfunction
 
-function! RemoteOpenMod(arglist, new_window)
+function! RemoteOpenMod(arglist, new_window, split_mode)
 
 	" First construct line number and filename from argument. a:arglist is of
 	" the form:
@@ -53,6 +55,7 @@ function! RemoteOpenMod(arglist, new_window)
 	" new_window means if the file has not been found in other running
 	" windows, make it on it's own window
 	"
+	" split_mode: 0: current window 1: split 2: tab
 
 	if a:arglist =~ '^\s*+\d\+'
 		let linenum = matchstr(a:arglist, '^\s*+\zs\d\+\ze')
@@ -67,7 +70,7 @@ function! RemoteOpenMod(arglist, new_window)
 	" session and return
 	if !has('clientserver')
 		exec "e ".filename
-		if linenum >= 0 
+		if linenum >= 0
 			exec linenum
 		endif
 		normal! zv
@@ -79,7 +82,7 @@ function! RemoteOpenMod(arglist, new_window)
 	" If there are no servers, open file locally.
 	if servers == ''
 		exec "e ".filename
-		if linenum >= 0 
+		if linenum >= 0
 			exec linenum
 		endif
 		normal! zv
@@ -87,7 +90,7 @@ function! RemoteOpenMod(arglist, new_window)
 	endif
 
 	let i = 1
-	let server = s:Strntok(servers, "\n", i) 
+	let server = s:Strntok(servers, "\n", i)
 	let targetServer = v:servername
 	let defaultServer = ''
 
@@ -106,16 +109,16 @@ function! RemoteOpenMod(arglist, new_window)
 			let targetServer = server
 			break
 		end
-		
+
 		let i = i + 1
-		let server = s:Strntok(servers, "\n", i) 
+		let server = s:Strntok(servers, "\n", i)
 	endwhile
 
 	" If none of the servers have the file open, then open this file in the
 	" first server. This has the advantage if yap tries to make vim open
 	" multiple vims, then at least they will all be opened by the same gvim
 	" server.
-	
+
 	let lineNumCmd =  ":" . linenum
 	if linenum <= 0
 		let lineNumCmd = ""
@@ -125,12 +128,19 @@ function! RemoteOpenMod(arglist, new_window)
 		let targetServer = defaultServer
 	endif
 
-	call remote_send(targetServer, 
+    let open_cmd = (a:split_mode == 0) ?
+				\ ":drop " :
+				\ (a:split_mode == 1) ?
+				\ ":split " :
+				\ ":tab split "
+
+	call remote_send(targetServer,
 		\ "\<C-\>\<C-n>".
-		\ ":drop ".filename."\<CR>".
+		\ open_cmd . filename."\<CR>".
 		\ lineNumCmd .
 		\ "\<CR>zv"
 		\ )
+
 	call remote_foreground(targetServer)
 	" quit this vim session
 	if v:servername != targetServer
