@@ -11,11 +11,12 @@ Plug 'preservim/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'preservim/nerdcommenter'
 
 " Shougo
-Plug 'Shougo/junkfile.vim', { 'on': 'JunkfileOpen'}
+Plug 'Shougo/junkfile.vim', { 'on': ['JunkfileOpen', 'Unite'] }
 Plug 'Shougo/neosnippet.vim'
 Plug 'Shougo/neosnippet-snippets'
 Plug 'Shougo/vimfiler.vim', { 'on': 'VimFiler'}
 Plug 'Shougo/unite.vim', { 'on': 'Unite' }
+Plug 'thinca/vim-unite-history', { 'on': 'Unite' }
 
 Plug 'ctrlpvim/ctrlp.vim'
 
