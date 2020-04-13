@@ -195,89 +195,6 @@ function! s:Map(mode, lhs, rhs, ...) abort
   endfor
 endfunction
 
-" Section: Quickfix
-
-function! s:QuickfixGet(nr, ...) abort
-  if a:nr < 0
-    return call('getqflist', a:000)
-  else
-    return call('getloclist', [a:nr] + a:000)
-  endif
-endfunction
-
-function! s:QuickfixSet(nr, ...) abort
-  if a:nr < 0
-    return call('setqflist', a:000)
-  else
-    return call('setloclist', [a:nr] + a:000)
-  endif
-endfunction
-
-function! s:QuickfixCreate(nr, opts) abort
-  if has('patch-7.4.2200')
-    call s:QuickfixSet(a:nr, [], ' ', a:opts)
-  else
-    call s:QuickfixSet(a:nr, [], ' ')
-  endif
-endfunction
-
-function! s:QuickfixStream(nr, event, title, cmd, first, callback, ...) abort
-  let opts = {'title': a:title, 'context': {'items': []}}
-  call s:QuickfixCreate(a:nr, opts)
-  let event = (a:nr < 0 ? 'c' : 'l') . 'fugitive-' . a:event
-  silent exe s:DoAutocmd('QuickFixCmdPre ' . event)
-  let winnr = winnr()
-  exe a:nr < 0 ? 'copen' : 'lopen'
-  if winnr != winnr()
-    wincmd p
-  endif
-
-  let buffer = []
-  let lines = split(s:SystemError(s:shellesc(a:cmd))[0], "\n")
-  for line in lines
-    call extend(buffer, call(a:callback, a:000 + [line]))
-    if len(buffer) >= 20
-      let contexts = map(copy(buffer), 'get(v:val, "context", {})')
-      lockvar contexts
-      call extend(opts.context.items, contexts)
-      unlet contexts
-      call s:QuickfixSet(a:nr, remove(buffer, 0, -1), 'a')
-      redraw
-    endif
-  endfor
-  call extend(buffer, call(a:callback, a:000 + [0]))
-  call extend(opts.context.items, map(copy(buffer), 'get(v:val, "context", {})'))
-  lockvar opts.context.items
-  call s:QuickfixSet(a:nr, buffer, 'a')
-
-  silent exe s:DoAutocmd('QuickFixCmdPost ' . event)
-  if a:first && len(s:QuickfixGet(a:nr))
-    call s:BlurStatus()
-    return a:nr < 0 ? 'cfirst' : 'lfirst'
-  else
-    return 'exe'
-  endif
-endfunction
-
-let s:common_efm = ''
-      \ . '%+Egit:%.%#,'
-      \ . '%+Eusage:%.%#,'
-      \ . '%+Eerror:%.%#,'
-      \ . '%+Efatal:%.%#,'
-      \ . '%-G%.%#%\e[K%.%#,'
-      \ . '%-G%.%#%\r%.%\+'
-
-function! fugitive#Cwindow() abort
-  if &buftype == 'quickfix'
-    cwindow
-  else
-    botright cwindow
-    if &buftype == 'quickfix'
-      wincmd p
-    endif
-  endif
-endfunction
-
 " Section: Git
 
 function! s:UserCommandList(...) abort
@@ -679,6 +596,89 @@ function! fugitive#RemoteUrl(...) abort
     return fugitive#Config('remote.' . remote . '.url')
   endif
   return s:ChompDefault('', [dir, 'remote', 'get-url', remote, '--'])
+endfunction
+
+" Section: Quickfix
+
+function! s:QuickfixGet(nr, ...) abort
+  if a:nr < 0
+    return call('getqflist', a:000)
+  else
+    return call('getloclist', [a:nr] + a:000)
+  endif
+endfunction
+
+function! s:QuickfixSet(nr, ...) abort
+  if a:nr < 0
+    return call('setqflist', a:000)
+  else
+    return call('setloclist', [a:nr] + a:000)
+  endif
+endfunction
+
+function! s:QuickfixCreate(nr, opts) abort
+  if has('patch-7.4.2200')
+    call s:QuickfixSet(a:nr, [], ' ', a:opts)
+  else
+    call s:QuickfixSet(a:nr, [], ' ')
+  endif
+endfunction
+
+function! s:QuickfixStream(nr, event, title, cmd, first, callback, ...) abort
+  let opts = {'title': a:title, 'context': {'items': []}}
+  call s:QuickfixCreate(a:nr, opts)
+  let event = (a:nr < 0 ? 'c' : 'l') . 'fugitive-' . a:event
+  silent exe s:DoAutocmd('QuickFixCmdPre ' . event)
+  let winnr = winnr()
+  exe a:nr < 0 ? 'copen' : 'lopen'
+  if winnr != winnr()
+    wincmd p
+  endif
+
+  let buffer = []
+  let lines = split(s:SystemError(s:shellesc(a:cmd))[0], "\n")
+  for line in lines
+    call extend(buffer, call(a:callback, a:000 + [line]))
+    if len(buffer) >= 20
+      let contexts = map(copy(buffer), 'get(v:val, "context", {})')
+      lockvar contexts
+      call extend(opts.context.items, contexts)
+      unlet contexts
+      call s:QuickfixSet(a:nr, remove(buffer, 0, -1), 'a')
+      redraw
+    endif
+  endfor
+  call extend(buffer, call(a:callback, a:000 + [0]))
+  call extend(opts.context.items, map(copy(buffer), 'get(v:val, "context", {})'))
+  lockvar opts.context.items
+  call s:QuickfixSet(a:nr, buffer, 'a')
+
+  silent exe s:DoAutocmd('QuickFixCmdPost ' . event)
+  if a:first && len(s:QuickfixGet(a:nr))
+    call s:BlurStatus()
+    return a:nr < 0 ? 'cfirst' : 'lfirst'
+  else
+    return 'exe'
+  endif
+endfunction
+
+let s:common_efm = ''
+      \ . '%+Egit:%.%#,'
+      \ . '%+Eusage:%.%#,'
+      \ . '%+Eerror:%.%#,'
+      \ . '%+Efatal:%.%#,'
+      \ . '%-G%.%#%\e[K%.%#,'
+      \ . '%-G%.%#%\r%.%\+'
+
+function! fugitive#Cwindow() abort
+  if &buftype == 'quickfix'
+    cwindow
+  else
+    botright cwindow
+    if &buftype == 'quickfix'
+      wincmd p
+    endif
+  endif
 endfunction
 
 " Section: Repository Object
@@ -1316,6 +1316,12 @@ function! fugitive#getfperm(url) abort
   return perm ==# '---------' ? '' : perm
 endfunction
 
+function s:UpdateIndex(dir, info) abort
+  let info = join(a:info[0:-2]) . "\t" . a:info[-1] . "\n"
+  let [error, exec_error] = s:SystemError([a:dir, 'update-index', '--index-info'], info)
+  return !exec_error ? '' : len(error) ? error : 'fugitive: unknown update-index error'
+endfunction
+
 function! fugitive#setfperm(url, perm) abort
   let [dir, commit, file] = s:DirCommitFile(a:url)
   let entry = s:PathInfo(a:url)
@@ -1324,9 +1330,8 @@ function! fugitive#setfperm(url, perm) abort
       \ substitute(perm, 'x', '-', 'g') !=# substitute(a:perm, 'x', '-', 'g')
     return -2
   endif
-  let exec_error = s:SystemError([dir, 'update-index', '--index-info'],
-        \ (a:perm =~# 'x' ? '000755 ' : '000644 ') . entry[3] . ' ' . commit . "\t" . file[1:-1])[1]
-  return exec_error ? -1 : 0
+  let error = s:UpdateIndex(dir, [a:perm =~# 'x' ? '000755' : '000644', entry[3], commit, file[1:-1]])
+  return len(error) ? -1 : 0
 endfunction
 
 function! s:TempCmd(out, cmd) abort
@@ -1396,9 +1401,8 @@ function! fugitive#writefile(lines, url, ...) abort
     let [hash, exec_error] = s:ChompError([dir, 'hash-object', '-w', temp])
     let mode = len(entry[1]) ? entry[1] : '100644'
     if !exec_error && hash =~# '^\x\{40,\}$'
-      let exec_error = s:SystemError([dir, 'update-index', '--index-info'],
-            \ mode . ' ' . hash . ' ' . commit . "\t" . file[1:-1])[1]
-      if !exec_error
+      let error = s:UpdateIndex(dir, [mode, hash, commit, file[1:-1]])
+      if empty(error)
         return 0
       endif
     endif
@@ -1451,9 +1455,8 @@ function! fugitive#delete(url, ...) abort
   if entry[2] !=# 'blob'
     return -1
   endif
-  let exec_error = s:SystemError([dir, 'update-index', '--index-info'],
-        \ '000000 0000000000000000000000000000000000000000 ' . commit . "\t" . file[1:-1])[1]
-  return exec_error ? -1 : 0
+  let error = s:UpdateIndex(dir, ['000000', '0000000000000000000000000000000000000000', commit, file[1:-1]])
+  return len(error) ? -1 : 0
 endfunction
 
 " Section: Buffer Object
@@ -2050,9 +2053,8 @@ function! fugitive#FileWriteCmd(...) abort
     if empty(old_mode)
       let old_mode = executable(s:Tree(dir) . file) ? '100755' : '100644'
     endif
-    let info = old_mode.' '.sha1.' '.commit."\t".file[1:-1]
-    let [error, exec_error] = s:SystemError([dir, 'update-index', '--index-info'], info . "\n")
-    if !exec_error
+    let error = s:UpdateIndex(dir, [old_mode, sha1, commit, file[1:-1]])
+    if empty(error)
       setlocal nomodified
       if exists('#' . autype . 'WritePost')
         execute s:DoAutocmd(autype . 'WritePost ' . s:fnameescape(amatch))
@@ -2358,15 +2360,15 @@ endif
 function! fugitive#Resume() abort
   while len(s:resume_queue)
     let [state, job] = remove(s:resume_queue, 0)
+    if filereadable(state.temp . '.edit')
+      call delete(state.temp . '.edit')
+    endif
     call s:RunWait(state, job)
   endwhile
 endfunction
 
 function! s:RunBufDelete(bufnr) abort
   if has_key(s:edit_jobs, a:bufnr) |
-    if filereadable(s:edit_jobs[a:bufnr][0].temp . '.edit')
-      call delete(s:edit_jobs[a:bufnr][0].temp . '.edit')
-    endif
     call add(s:resume_queue, remove(s:edit_jobs, a:bufnr))
     call feedkeys(":redraw!|call fugitive#Resume()|silent checktime\r", 'n')
   endif
@@ -4134,6 +4136,9 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, options) abort
   endif
   let tree = s:Tree(dir)
   let args = a:options.args
+  if get(args, 0, '') =~# '^-O\|--open-files-in-pager$'
+    let args = args[1:-1]
+  endif
   let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
   let title = [listnr < 0 ? ':Ggrep' : ':Glgrep'] + args
   if listnr > 0
@@ -4715,7 +4720,7 @@ endfunction
 
 function! s:AskPassArgs(dir) abort
   if (len($DISPLAY) || len($TERM_PROGRAM) || has('gui_running')) && fugitive#GitVersion(1, 8) &&
-        \ empty($GIT_ASKPASS) && empty($SSH_ASKPASS) && empty(get(fugitive#Config(a:dir), 'core.askpass', []))
+        \ empty($GIT_ASKPASS) && empty($SSH_ASKPASS) && empty(FugitiveConfigGetAll('core.askpass', a:dir))
     if s:executable(s:ExecPath() . '/git-gui--askpass')
       return ['-c', 'core.askPass=' . s:ExecPath() . '/git-gui--askpass']
     elseif s:executable('ssh-askpass')
@@ -5498,12 +5503,11 @@ let s:hash_colors = {}
 
 function! fugitive#BlameSyntax() abort
   let conceal = has('conceal') ? ' conceal' : ''
-  let config = fugitive#Config()
   let flags = get(s:TempState(), 'blame_flags', [])
   syn match FugitiveblameBlank                      "^\s\+\s\@=" nextgroup=FugitiveblameAnnotation,FugitiveblameScoreDebug,FugitiveblameOriginalFile,FugitiveblameOriginalLineNumber skipwhite
   syn match FugitiveblameHash       "\%(^\^\=[?*]*\)\@<=\<\x\{7,\}\>" nextgroup=FugitiveblameAnnotation,FugitiveblameScoreDebug,FugitiveblameOriginalLineNumber,FugitiveblameOriginalFile skipwhite
   syn match FugitiveblameUncommitted "\%(^\^\=\)\@<=\<0\{7,\}\>" nextgroup=FugitiveblameAnnotation,FugitiveblameScoreDebug,FugitiveblameOriginalLineNumber,FugitiveblameOriginalFile skipwhite
-  if get(get(config, 'blame.blankboundary', ['x']), 0, 'x') =~# '^$\|^true$' || s:HasOpt(flags, '-b')
+  if s:HasOpt(flags, '-b') || FugitiveConfigGet('blame.blankBoundary') =~# '^1$\|^true$'
     syn match FugitiveblameBoundaryIgnore "^\^[*?]*\x\{7,\}\>" nextgroup=FugitiveblameAnnotation,FugitiveblameScoreDebug,FugitiveblameOriginalLineNumber,FugitiveblameOriginalFile skipwhite
   else
     syn match FugitiveblameBoundary "^\^"
