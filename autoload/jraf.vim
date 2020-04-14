@@ -118,7 +118,7 @@ function! jraf#toggleTBarListNT()
     call jraf#tagbarSettings()
   endif
 
-  let s:tbartoggle_names = ['1: tagbar', '2: taglist', '3: nerdtree', '4: buffergator']
+  let s:tbartoggle_names = ['1: tagbar', '3: nerdtree']
 
   if v:count >= 1 && v:count <= 4
     let s:tbartoggle = v:count
@@ -126,43 +126,48 @@ function! jraf#toggleTBarListNT()
 
   if v:count <= 4
     if s:tbartoggle == 1
+      let s:loaded_tagbar = 1
       if !exists("s:loaded_tagbar")
         call vam#ActivateAddons(['Tagbar'],
               \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
         let s:loaded_tagbar = 1
       endif
       TagbarToggle
-    elseif s:tbartoggle == 2
-      if !exists("s:loaded_taglist")
-        "taglist settings
-        "let Tlist_Close_On_Select = 1
-        let Tlist_Enable_Fold_Column = 0
-        let Tlist_GainFocus_On_ToggleOpen = 1
-        let Tlist_Use_Horiz_Window = 0
-        let Tlist_WinWidth = 31
-        let Tlist_Compact_Format = 1
-        let Tlist_Exit_OnlyWindow = 1
-        let Tlist_Use_SingleClick = 1
-        " the following is useful to use configure ctags for using taglist with gams
-        let tlist_gams_settings='gams;e:Equation;c:Variable;m:Model;s:Solve Statement'
-        let tlist_gamslst_settings = 'gamslst;m:Model Solution Report;'
-        let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
 
-        ActivateAddons taglist
-        let s:loaded_taglist = 1
-      endif
-      TlistToggle
+    "elseif s:tbartoggle == 2
+      "if !exists("s:loaded_taglist")
+        ""taglist settings
+        ""let Tlist_Close_On_Select = 1
+        "let Tlist_Enable_Fold_Column = 0
+        "let Tlist_GainFocus_On_ToggleOpen = 1
+        "let Tlist_Use_Horiz_Window = 0
+        "let Tlist_WinWidth = 31
+        "let Tlist_Compact_Format = 1
+        "let Tlist_Exit_OnlyWindow = 1
+        "let Tlist_Use_SingleClick = 1
+        "" the following is useful to use configure ctags for using taglist with gams
+        "let tlist_gams_settings='gams;e:Equation;c:Variable;m:Model;s:Solve Statement'
+        "let tlist_gamslst_settings = 'gamslst;m:Model Solution Report;'
+        "let tlist_gamslst_settings .= 'e:Equation;c:Variable Val;a:Equation Val'
+
+        ""ActivateAddons taglist
+        "let s:loaded_taglist = 1
+      "endif
+      "TlistToggle
+
     elseif s:tbartoggle == 3
       if !exists("s:loaded_nerdtree")
         let NERDTreeShowBookmarks = 1
-        silent ActivateAddons nerdtree
+        "silent ActivateAddons nerdtree
         let s:loaded_nerdtree = 1
       endif
       NERDTreeToggle
-    elseif s:tbartoggle == 4
-      if !exists("s:loaded_buffergator") | call jraf#loadBuffergator() | endif
-      BuffergatorToggle
+
+    "elseif s:tbartoggle == 4
+      ""if !exists("s:loaded_buffergator") | call jraf#loadBuffergator() | endif
+      "BuffergatorToggle
     endif
+
   endif
   let s:tbartoggle_display = copy(s:tbartoggle_names)
   let s:tbartoggle_display[s:tbartoggle-1] .= '(*)'

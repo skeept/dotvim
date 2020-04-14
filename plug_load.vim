@@ -58,6 +58,6 @@ Plug 'Julian/vim-textobj-brace'
 Plug 'cohama/lexima.vim'
 
 "tagbar
-Plug 'majutsushi/tagbar'
+Plug 'majutsushi/tagbar', { 'on': ['Tagbar', 'TagbarToggle'] }
 
 call plug#end()
