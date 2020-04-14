@@ -57,4 +57,7 @@ Plug 'Julian/vim-textobj-brace'
 
 Plug 'cohama/lexima.vim'
 
+"tagbar
+Plug 'majutsushi/tagbar'
+
 call plug#end()
