@@ -48,6 +48,7 @@ Plug 'tpope/vim-unimpaired'
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
 Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
+Plug 'chrisbra/Recover.vim'
 
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-entire'
@@ -59,5 +60,9 @@ Plug 'cohama/lexima.vim'
 
 "tagbar
 Plug 'majutsushi/tagbar', { 'on': ['Tagbar', 'TagbarToggle'] }
+
+Plug 'molok/vim-scratch', { 'on': ['Scratch', 'Sscratch', 'ScratchToggle', 'Vscratch', 'Tscratch'] }
+
+Plug 'vlmarek/PreciseJumpVlad', { 'on': 'PreciseJumpF' }
 
 call plug#end()
