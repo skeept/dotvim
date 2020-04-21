@@ -249,17 +249,25 @@ _fzf_dir_completion() {
 }
 
 _fzf_complete_kill() {
-  [ -n "${COMP_WORDS[COMP_CWORD]}" ] && return 1
-
-  local selected
-  selected=$(command ps -ef | sed 1d | FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT:-50%} --min-height 15 --reverse $FZF_DEFAULT_OPTS $FZF_COMPLETION_OPTS --preview 'echo {}' --preview-window down:3:wrap" __fzf_comprun "kill" -m | awk '{print $2}' | tr '\n' ' ')
-  selected=${selected% }
-  printf '\e[5n'
-
-  if [ -n "$selected" ]; then
-    COMPREPLY=( "$selected" )
-    return 0
+  local trigger=${FZF_COMPLETION_TRIGGER-'**'}
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  if [[ -z "$cur" ]]; then
+    COMP_WORDS[$COMP_CWORD]=$trigger
+  elif [[ "$cur" != *"$trigger" ]]; then
+    return 1
   fi
+
+  _fzf_proc_completion "$@"
+}
+
+_fzf_proc_completion() {
+  _fzf_complete -m --preview 'echo {}' --preview-window down:3:wrap --min-height 15 -- "$@" < <(
+    command ps -ef | sed 1d
+  )
+}
+
+_fzf_proc_completion_post() {
+  awk '{print $2}'
 }
 
 _fzf_host_completion() {
@@ -296,11 +304,10 @@ a_cmds="
   find git grep gunzip gzip hg jar
   ln ls mv open rm rsync scp
   svn tar unzip zip"
-x_cmds="kill"
 
 # Preserve existing completion
 eval "$(complete |
-  sed -E '/-F/!d; / _fzf/d; '"/ ($(echo $d_cmds $a_cmds $x_cmds | sed 's/ /|/g; s/+/\\+/g'))$/"'!d' |
+  sed -E '/-F/!d; / _fzf/d; '"/ ($(echo $d_cmds $a_cmds | sed 's/ /|/g; s/+/\\+/g'))$/"'!d' |
   __fzf_orig_completion_filter)"
 
 if type _completion_loader > /dev/null 2>&1; then
@@ -332,17 +339,17 @@ for cmd in $d_cmds; do
   __fzf_defc "$cmd" _fzf_dir_completion "-o nospace -o dirnames"
 done
 
-# Kill completion
+# Kill completion (supports empty completion trigger)
 complete -F _fzf_complete_kill -o default -o bashdefault kill
 
-unset cmd d_cmds a_cmds x_cmds
+unset cmd d_cmds a_cmds
 
 _fzf_setup_completion() {
   local kind fn cmd
   kind=$1
   fn=_fzf_${1}_completion
   if [[ $# -lt 2 ]] || ! type -t "$fn" > /dev/null; then
-    echo "usage: ${FUNCNAME[0]} path|dir|var|alias|host COMMANDS..."
+    echo "usage: ${FUNCNAME[0]} path|dir|var|alias|host|proc COMMANDS..."
     return 1
   fi
   shift

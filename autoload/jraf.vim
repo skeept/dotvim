@@ -272,7 +272,7 @@ EOF
     if s:has_jedi == 1
       let g:jedi#force_py_version = 3
       let g:jedi#show_call_signatures = "0"
-      ActivateAddons jedi-vim
+      packadd jedi-vim
       setlocal omnifunc=jedi#complete
     else
       echom "No Jedi installed!"
@@ -577,7 +577,7 @@ function! jraf#loadCtrlP()
     call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   else "assume packadd
     packadd ctrlp
-    call SetupLycosa()
+    "call SetupLycosa()
   endif
   nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
         \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
