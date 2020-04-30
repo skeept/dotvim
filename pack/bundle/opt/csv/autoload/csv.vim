@@ -67,6 +67,10 @@ fu! csv#Init(start, end, ...) "{{{3
     else
         let b:csv_cmt = split(g:csv_comment, '%s')
     endif
+    " Make sure it is a list with 2 chars
+    if b:csv_cmt == []
+        let b:csv_cmt = ["", ""]
+    endif
 
     if empty(b:delimiter) && !exists("b:csv_fixed_width")
         call csv#Warn("No delimiter found. See :h csv-delimiter to set it manually!")
@@ -633,8 +637,12 @@ fu! csv#ArrangeCol(first, last, bang, limit, ...) range "{{{3
         return
     endif
     let cur=winsaveview()
+    " be sure, that b:col_width is actually valid
+    if exists("b:col_width") && eval(join(b:col_width, '+')) == 0
+        unlet! b:col_width
+    endif
     " Force recalculation of Column width
-    let row = exists("a:1") ? a:1 : line('$')
+    let row = exists("a:1") && !empty(a:1) ? a:1 : line('$')
     if a:bang || !empty(row)
         if a:bang && exists("b:col_width")
           " Unarrange, so that if csv_arrange_align has changed

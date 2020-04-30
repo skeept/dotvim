@@ -66,6 +66,7 @@ const (
 	Right
 	Home
 	End
+	Insert
 
 	SUp
 	SDown
@@ -209,7 +210,8 @@ type BorderShape int
 
 const (
 	BorderNone BorderShape = iota
-	BorderAround
+	BorderRounded
+	BorderSharp
 	BorderHorizontal
 )
 
@@ -227,14 +229,25 @@ type BorderCharacter int
 
 func MakeBorderStyle(shape BorderShape, unicode bool) BorderStyle {
 	if unicode {
+		if shape == BorderRounded {
+			return BorderStyle{
+				shape:       shape,
+				horizontal:  '─',
+				vertical:    '│',
+				topLeft:     '╭',
+				topRight:    '╮',
+				bottomLeft:  '╰',
+				bottomRight: '╯',
+			}
+		}
 		return BorderStyle{
 			shape:       shape,
 			horizontal:  '─',
 			vertical:    '│',
-			topLeft:     '╭',
-			topRight:    '╮',
-			bottomLeft:  '╰',
-			bottomRight: '╯',
+			topLeft:     '┌',
+			topRight:    '┐',
+			bottomLeft:  '└',
+			bottomRight: '┘',
 		}
 	}
 	return BorderStyle{
@@ -250,7 +263,7 @@ func MakeBorderStyle(shape BorderShape, unicode bool) BorderStyle {
 
 func MakeTransparentBorder() BorderStyle {
 	return BorderStyle{
-		shape:       BorderAround,
+		shape:       BorderRounded,
 		horizontal:  ' ',
 		vertical:    ' ',
 		topLeft:     ' ',

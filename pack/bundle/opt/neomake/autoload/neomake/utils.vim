@@ -396,6 +396,17 @@ function! neomake#utils#redir(cmd) abort
     return neomake_redir
 endfunction
 
+function! s:exparg_subst(bufnr, s, mods) abort
+    let s = a:s
+    let mods = a:mods
+    if s[1:1] ==# '<'
+        " Convert "%<" to "%:r".
+        let mods = ':r' . mods
+        let s = s[0] . s[2:]
+    endif
+    return expand(substitute(s, '^%'.a:mods, neomake#utils#fnamemodify(a:bufnr, mods), ''))
+endfunction
+
 function! neomake#utils#ExpandArgs(args, jobinfo) abort
     if has_key(a:jobinfo, 'tempfile')
         let fname = a:jobinfo.tempfile
@@ -414,8 +425,8 @@ function! neomake#utils#ExpandArgs(args, jobinfo) abort
     " % must be followed with an expansion keyword
     let ret = map(ret,
                 \ 'substitute(v:val, '
-                \ . '''\(\%(\\\@<!\\\)\@<!%\%(%\|<\|\%(:[phtreS8.~]\)\+\|\ze\w\@!\)\)'', '
-                \ . '''\=(submatch(1) == "%%" ? "%" : expand(substitute(submatch(1), "^%", "#'.a:jobinfo.bufnr.'", "")))'', '
+                \ . '''\(\%(\\\@<!\\\)\@<!%\%(%\|<\|\(:[phtreS8.~]\)\+\|\ze\w\@!\)\)'', '
+                \ . '''\=(submatch(1) == "%%" ? "%" : s:exparg_subst(a:jobinfo.bufnr, submatch(1), submatch(2)))'', '
                 \ . '''g'')')
     let ret = map(ret, 'substitute(v:val, ''\v^\~\ze%(/|$)'', expand(''~''), ''g'')')
     return ret
@@ -602,32 +613,57 @@ function! neomake#utils#fnamemodify(bufnr, modifier) abort
     return empty(path) ? '' : fnamemodify(path, a:modifier)
 endfunction
 
+function! s:fix_nvim_partial(obj) abort
+    " Ensure that Funcrefs can be used as a string.
+    " Ref: https://github.com/neovim/neovim/issues/7432
+    try
+        call string(a:obj)
+    catch /^Vim(call):E724:/
+        return '<unrepresentable object, type=2>'
+    endtry
+    return a:obj
+endfunction
+
 function! neomake#utils#fix_self_ref(obj, ...) abort
-    if type(a:obj) != type({})
-        if type(a:obj) == type([])
+    let obj_type = type(a:obj)
+    if has('nvim') && obj_type == 2
+        return s:fix_nvim_partial(a:obj)
+    endif
+
+    if obj_type != type({})
+        if obj_type == type([])
             return map(copy(a:obj), 'neomake#utils#fix_self_ref(v:val)')
         endif
         return a:obj
     endif
-    let obj = copy(a:obj)
+    let obj = a:obj
     for k in keys(obj)
         if a:0
             let self_ref = filter(copy(a:1), 'v:val[1][0] is obj[k]')
             if !empty(self_ref)
+                if obj is a:obj
+                    let obj = copy(a:obj)
+                endif
                 let obj[k] = printf('<self-ref-%d: %s>', self_ref[0][0], self_ref[0][1][1])
                 continue
             endif
         endif
         if type(obj[k]) == type({})
-            let obj[k] = neomake#utils#fix_self_ref(obj[k], a:0 ? a:1 + [[len(a:1)+1, [a:obj, k]]] : [[1, [a:obj, k]]])
-        elseif has('nvim')
-            " Ensure that it can be used as a string.
-            " Ref: https://github.com/neovim/neovim/issues/7432
-            try
-                call string(obj[k])
-            catch /^Vim(call):E724:/
-                let obj[k] = '<unrepresentable object, type='.type(obj).'>'
-            endtry
+            let fixed = neomake#utils#fix_self_ref(get(obj, k), a:0 ? a:1 + [[len(a:1)+1, [a:obj, k]]] : [[1, [a:obj, k]]])
+            if fixed != obj[k]
+                if obj is a:obj
+                    let obj = copy(a:obj)
+                endif
+                let obj[k] = fixed
+            endif
+        elseif has('nvim') && type(obj[k]) == 2
+            let l:Fixed_partial = s:fix_nvim_partial(get(obj, k))
+            if l:Fixed_partial != get(obj, k)
+                if obj is a:obj
+                    let obj = copy(a:obj)
+                endif
+                let obj[k] = l:Fixed_partial
+            endif
         endif
     endfor
     return obj

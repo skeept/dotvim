@@ -417,7 +417,9 @@ function! s:open_dir(d, reload) abort
   " Try to find an existing buffer before creating a new one.
   let bnr = -1
   for pat in ['', ':~:.', ':~']
-    let bnr = bufnr('^'.fnamemodify(d._dir, pat).'$')
+    let dir = fnamemodify(d._dir, pat)
+    if dir == '' | continue | endif
+    let bnr = bufnr('^'.dir.'$')
     if -1 != bnr
       break
     endif
@@ -461,11 +463,7 @@ function! s:open_dir(d, reload) abort
 endfunction
 
 function! s:should_reload() abort
-  if line('$') < 1000 || '' ==# glob(getline('$'),1)
-    return !s:buf_modified() || (empty(getline(1)) && 1 == line('$'))
-  endif
-  redraw | echo 'dirvish: showing cached listing ("R" to reload)'
-  return 0
+  return !s:buf_modified() || (empty(getline(1)) && 1 == line('$'))
 endfunction
 
 function! s:buf_isvalid(bnr) abort

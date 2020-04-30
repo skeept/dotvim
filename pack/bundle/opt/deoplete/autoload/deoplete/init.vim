@@ -75,12 +75,11 @@ function! deoplete#init#_channel() abort
             \ 'deoplete requires Python3 support("+python3").')
     endif
 
-    if !deoplete#init#_python_version_check()
-      call deoplete#util#print_error('deoplete requires Python3.6.1+.')
+    if deoplete#init#_python_version_check()
+      call deoplete#util#print_error('deoplete requires Python 3.6.1+.')
     endif
 
     if deoplete#util#has_yarp()
-      echomsg string(expand('<sfile>'))
       if !exists('*yarp#py3')
         call deoplete#util#print_error(
               \ 'deoplete requires nvim-yarp plugin.')
@@ -149,6 +148,7 @@ function! deoplete#init#_custom_variables() abort
   if get(g:, 'deoplete#disable_auto_complete', v:false)
     call deoplete#custom#option('auto_complete', v:false)
   endif
+
   call s:check_custom_option(
         \ 'g:deoplete#auto_complete_delay',
         \ 'auto_complete_delay')
@@ -195,6 +195,9 @@ function! deoplete#init#_custom_variables() abort
         \ 'g:deoplete#enable_smart_case',
         \ 'smart_case')
   call s:check_custom_option(
+        \ 'g:deoplete#enable_complete_suffix',
+        \ 'complete_suffix')
+  call s:check_custom_option(
         \ 'g:deoplete#enable_yarp',
         \ 'yarp')
 
@@ -211,14 +214,24 @@ function! deoplete#init#_custom_variables() abort
 endfunction
 
 function! s:check_custom_var(source_name, old_var, new_var) abort
-  if exists(a:old_var)
-    call deoplete#custom#var(a:source_name, a:new_var, eval(a:old_var))
+  if !exists(a:old_var)
+    return
   endif
+
+  call deoplete#util#print_error(
+        \ printf('%s is deprecated variable.  '.
+        \ 'Please use deoplete#custom#var() instead.', a:old_var))
+  call deoplete#custom#var(a:source_name, a:new_var, eval(a:old_var))
 endfunction
 function! s:check_custom_option(old_var, new_var) abort
-  if exists(a:old_var)
-    call deoplete#custom#option(a:new_var, eval(a:old_var))
+  if !exists(a:old_var)
+    return
   endif
+
+  call deoplete#util#print_error(
+        \ printf('%s is deprecated variable.  '.
+        \ 'Please use deoplete#custom#option() instead.', a:old_var))
+  call deoplete#custom#option(a:new_var, eval(a:old_var))
 endfunction
 
 function! deoplete#init#_option() abort
@@ -226,21 +239,23 @@ function! deoplete#init#_option() abort
   return {
         \ 'auto_complete': v:true,
         \ 'auto_complete_delay': 0,
+        \ 'auto_complete_popup': 'auto',
         \ 'auto_refresh_delay': 100,
         \ 'camel_case': v:false,
+        \ 'candidate_marks': [],
         \ 'check_stderr': v:true,
+        \ 'complete_suffix': v:true,
         \ 'ignore_case': &ignorecase,
         \ 'ignore_sources': {},
-        \ 'candidate_marks': [],
-        \ 'max_list': 500,
-        \ 'num_processes': 4,
         \ 'keyword_patterns': {'_': '[a-zA-Z_]\k*'},
+        \ 'max_list': 500,
+        \ 'min_pattern_length': 2,
+        \ 'num_processes': 4,
         \ 'omni_patterns': {},
         \ 'on_insert_enter': v:true,
         \ 'on_text_changed_i': v:true,
-        \ 'profile': v:false,
         \ 'prev_completion_mode': '',
-        \ 'min_pattern_length': 2,
+        \ 'profile': v:false,
         \ 'refresh_always': v:true,
         \ 'skip_chars': ['(', ')'],
         \ 'skip_multibyte': v:false,
@@ -270,4 +285,14 @@ vim.vars['deoplete#_python_version_check'] = (
     sys.version_info.micro) < (3, 6, 1)
 EOF
   return get(g:, 'deoplete#_python_version_check', 0)
+endfunction
+
+function! deoplete#init#_msgpack_version_check() abort
+  python3 << EOF
+import vim
+import msgpack
+vim.vars['deoplete#_msgpack_version'] = msgpack.version
+vim.vars['deoplete#_msgpack_version_check'] = msgpack.version < (1, 0, 0)
+EOF
+  return get(g:, 'deoplete#_msgpack_version_check', 0)
 endfunction

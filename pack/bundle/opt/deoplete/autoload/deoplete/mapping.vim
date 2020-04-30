@@ -24,14 +24,31 @@ function! s:check_completion_info(candidates) abort
   if (info.mode !=# '' && info.mode !=# 'eval')
         \ || (noinsert && info.selected > 0)
         \ || (!noinsert && info.selected >= 0)
+        \ || !has_key(g:deoplete#_context, 'complete_position')
     return 1
   endif
+
+  let input = getline('.')[: g:deoplete#_context.complete_position - 1]
+  if deoplete#util#check_eskk_phase_henkan()
+        \ && matchstr(input, '.$') =~# '[\u3040-\u304A]$'
+    return 0
+  endif
+  return 0
 
   let old_candidates = sort(map(copy(info.items), 'v:val.word'))
   return sort(map(copy(a:candidates), 'v:val.word')) ==# old_candidates
 endfunction
 function! deoplete#mapping#_complete() abort
-  if s:check_completion_info(g:deoplete#_context.candidates)
+  if !has_key(g:deoplete#_context, 'candidates')
+        \ || s:check_completion_info(g:deoplete#_context.candidates)
+        \ || !&modifiable
+    return ''
+  endif
+
+  " echomsg string(g:deoplete#_context)
+  if empty(g:deoplete#_context.candidates) && deoplete#util#check_popup()
+    " Note: call complete() to close the popup
+    call complete(1, [])
     return ''
   endif
 

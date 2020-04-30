@@ -6,8 +6,15 @@ This is the Changelog for the vim-airline project.
 - New features
   - Extensions:
     - [poetv](https://github.com/petobens/poet-v) support
+    - [vim-lsp](https://github.com/prabirshrestha/vim-lsp) support
+    - [zoomwintab](https://github.com/troydm/zoomwintab.vim) support
 - Improvements
   - git branch can also be displayed using [gina.vim](https://github.com/lambdalisue/gina.vim)
+  - coc extensions can also show additional status messages
+  - [coc-git](https://github.com/neoclide/coc-git) extension integrated into hunks extension
+- Other
+  - Introduce Vim script static analysis using [reviewdog](https://github.com/reviewdog/action-vint)
+  - Added multiple Vim versions to unit tests using Travis CI
 
 ## [0.11] - 2019-11-10
 - New features

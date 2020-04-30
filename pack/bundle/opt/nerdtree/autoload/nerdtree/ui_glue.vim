@@ -284,13 +284,16 @@ endfunction
 " FUNCTION: s:findAndRevealPath(pathStr) {{{1
 function! s:findAndRevealPath(pathStr) abort
     let l:pathStr = !empty(a:pathStr) ? a:pathStr : expand('%:p')
-    if !filereadable(l:pathStr)
-        let l:pathStr = fnamemodify(l:pathStr, ':h')
-    endif
+    let l:revealOpts = {}
 
     if empty(l:pathStr)
         call nerdtree#echoWarning('no file for the current buffer')
         return
+    endif
+
+    if !filereadable(l:pathStr)
+        let l:pathStr = fnamemodify(l:pathStr, ':h')
+        let l:revealOpts['open'] = 1
     endif
 
     try
@@ -326,7 +329,7 @@ function! s:findAndRevealPath(pathStr) abort
         call b:NERDTree.ui.setShowHidden(1)
     endif
 
-    let l:node = b:NERDTree.root.reveal(l:pathObj)
+    let l:node = b:NERDTree.root.reveal(l:pathObj, l:revealOpts)
     call b:NERDTree.render()
     call l:node.putCursorHere(1, 0)
 endfunction

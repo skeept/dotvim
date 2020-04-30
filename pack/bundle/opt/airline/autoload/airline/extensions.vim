@@ -32,19 +32,8 @@ let s:filetype_overrides = {
       \ 'vim-plug': [ 'Plugins', '' ],
       \ 'vimfiler': [ 'vimfiler', '%{vimfiler#get_status_string()}' ],
       \ 'vimshell': ['vimshell','%{vimshell#get_status_string()}'],
-      \ 'vaffle' : [ 'Vaffle', '' ],
+      \ 'vaffle' : [ 'Vaffle', '%{b:vaffle.dir}' ],
       \ }
-
-if airline#util#has_gina() && get(g:, 'airline#extensions#gina_status', 1)
-  " Gina needs the Vim 7.4.1898, which introduce the <mods> flag for custom commands
-  let s:filetype_overrides['gina-status'] = ['gina', '%{gina#component#repo#preset()}' ]
-  let s:filetype_overrides['diff'] = ['gina', '%{gina#component#repo#preset()}' ]
-  let s:filetype_overrides['gina-log'] = ['gina', '%{gina#component#repo#preset()}' ]
-  let s:filetype_overrides['gina-tag'] = ['gina', '%{gina#component#repo#preset()}' ]
-  let s:filetype_overrides['gina-branch'] = ['gina', '%{gina#component#repo#branch()}' ]
-  let s:filetype_overrides['gina-reflog'] = ['gina', '%{gina#component#repo#branch()}' ]
-  let s:filetype_overrides['gina-ls'] = ['gina', '%{gina#component#repo#branch()}' ]
-endif
 
 if get(g:, 'airline#extensions#nerdtree_statusline', 1)
   let s:filetype_overrides['nerdtree'] = [ get(g:, 'NERDTreeStatusline', 'NERD'), '' ]
@@ -151,7 +140,9 @@ function! airline#extensions#load()
         call airline#extensions#{ext}#init(s:ext)
       catch /^Vim\%((\a\+)\)\=:E117/	" E117, function does not exist
         call airline#util#warning("Extension '".ext."' not installed, ignoring!")
+        continue
       endtry
+      call add(s:loaded_ext, ext)
     endfor
     return
   endif
@@ -169,6 +160,11 @@ function! airline#extensions#load()
     call add(s:loaded_ext, 'denite')
   endif
 
+  if get(g:, 'loaded_gina', 0) && get(g:, 'airline#extensions#gina#enabled', 1)
+    call airline#extensions#gina#init(s:ext)
+    call add(s:loaded_ext, 'gina')
+  endif
+
   if exists(':NetrwSettings')
     call airline#extensions#netrw#init(s:ext)
     call add(s:loaded_ext, 'netrw')
@@ -180,7 +176,7 @@ function! airline#extensions#load()
     call add(s:loaded_ext, 'term')
   endif
 
-  if get(g:, 'airline#extensions#ycm#enabled', 0)
+  if get(g:, 'airline#extensions#ycm#enabled', 0) && exists('g:loaded_youcompleteme')
     call airline#extensions#ycm#init(s:ext)
     call add(s:loaded_ext, 'ycm')
   endif
@@ -215,7 +211,11 @@ function! airline#extensions#load()
   endif
 
   if get(g:, 'airline#extensions#hunks#enabled', 1)
-        \ && (exists('g:loaded_signify') || exists('g:loaded_gitgutter') || exists('g:loaded_changes') || exists('g:loaded_quickfixsigns'))
+        \ && (exists('g:loaded_signify')
+        \ || exists('g:loaded_gitgutter')
+        \ || exists('g:loaded_changes')
+        \ || exists('g:loaded_quickfixsigns')
+        \ || exists(':CocCommand'))
     call airline#extensions#hunks#init(s:ext)
     call add(s:loaded_ext, 'hunks')
   endif
@@ -248,6 +248,11 @@ function! airline#extensions#load()
         \ && (get(g:, 'loaded_csv', 0) || exists(':Table'))
     call airline#extensions#csv#init(s:ext)
     call add(s:loaded_ext, 'csv')
+  endif
+
+  if get(g:, 'airline#extensions#zoomwintab#enabled', 0)
+    call airline#extensions#zoomwintab#init(s:ext)
+    call add(s:loaded_ext, 'zoomwintab')
   endif
 
   if exists(':VimShell')
@@ -288,7 +293,7 @@ function! airline#extensions#load()
   elseif (get(g:, 'airline#extensions#virtualenv#enabled', 1) && (exists(':VirtualEnvList')))
     call airline#extensions#virtualenv#init(s:ext)
     call add(s:loaded_ext, 'virtualenv')
-  elseif (isdirectory($VIRTUAL_ENV))
+  elseif (get(g:, 'airline#extensions#poetv#enabled', 1) && (isdirectory($VIRTUAL_ENV)))
     call airline#extensions#poetv#init(s:ext)
     call add(s:loaded_ext, 'poetv')
   endif
@@ -307,6 +312,11 @@ function! airline#extensions#load()
   if (get(g:, 'airline#extensions#ale#enabled', 1) && exists(':ALELint'))
     call airline#extensions#ale#init(s:ext)
     call add(s:loaded_ext, 'ale')
+  endif
+
+  if (get(g:, 'airline#extensions#lsp#enabled', 1) && exists(':LspDeclaration'))
+    call airline#extensions#lsp#init(s:ext)
+    call add(s:loaded_ext, 'lsp')
   endif
 
   if (get(g:, 'airline#extensions#coc#enabled', 1) && exists(':CocCommand'))

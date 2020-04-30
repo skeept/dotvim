@@ -93,6 +93,9 @@ function! s:new_filter_buffer(context) abort
     " Note: win_screenpos() == [1, 1] if start_filter
     if row <= 0
       let row = a:context['filter_winrow']
+      let on_start_filter = v:true
+    else
+      let on_start_filter = v:false
     endif
     let winrow = str2nr(a:context['winrow'])
     let wincol = str2nr(a:context['wincol'])
@@ -104,11 +107,22 @@ function! s:new_filter_buffer(context) abort
             \ 'width': str2nr(a:context['winwidth']),
             \ 'height': 1,
             \})
-    else
+    elseif a:context['split'] ==# 'floating_relative'
+      " cursor position cannot be gotten from this function.
+      " so instead estimating it from floating buffer position.
+        call nvim_open_win(bufnr('%'), v:true, {
+            \ 'relative': 'editor',
+            \ 'row': on_start_filter ? row : row + winheight(0),
+            \ 'col': on_start_filter ? nvim_win_get_config(0)['col']
+              \ : win_screenpos(0)[1] - 1,
+            \ 'width': winwidth(0),
+            \ 'height': 1,
+            \})
+    elseif a:context['filter_split_direction'] ==# 'floating'
       call nvim_open_win(bufnr('%'), v:true, {
             \ 'relative': 'editor',
             \ 'row': row + winheight(0) + 1,
-            \ 'col': win_screenpos(0)[1],
+            \ 'col': win_screenpos(0)[1] - 1,
             \ 'width': winwidth(0),
             \ 'height': 1,
             \})
@@ -123,6 +137,7 @@ function! s:new_filter_buffer(context) abort
   else
     silent execute a:context['filter_split_direction'] 'split' 'denite-filter'
   endif
+
   let g:denite#_filter_winid = win_getid()
   let g:denite#_filter_bufnr = bufnr('%')
 endfunction
@@ -166,13 +181,7 @@ function! s:update() abort
     return
   endif
 
-  let input = getline('.')
-
-  call denite#filter#_move_to_parent(v:true)
-
-  call denite#call_map('filter', input)
-
-  noautocmd call win_gotoid(g:denite#_filter_winid)
+  call denite#call_map('filter', getline('.'))
 endfunction
 
 function! s:async_update() abort
@@ -188,6 +197,10 @@ function! s:async_update() abort
 endfunction
 
 function! s:quit(force_quit) abort
+  if a:force_quit
+    call s:update()
+  endif
+
   let context = g:denite#_filter_context
 
   if winnr('$') ==# 1
@@ -200,7 +213,7 @@ function! s:quit(force_quit) abort
 
   call s:stop_timer()
 
-  if win_id2win(g:denite#_filter_winid) < 0
+  if win_id2win(g:denite#_filter_winid) <= 0
     let g:denite#_filter_winid = -1
   endif
 endfunction
@@ -217,6 +230,20 @@ function! denite#filter#_move_to_parent(is_async) abort
   else
     call win_gotoid(id[0])
   endif
+endfunction
+function! denite#filter#_close_filter_window() abort
+  if !exists('g:denite#_filter_winid')
+        \ || g:denite#_filter_winid < 0
+        \ || win_id2win(g:denite#_filter_winid) <= 0
+    return
+  endif
+
+  let prev = win_getid()
+
+  call win_gotoid(g:denite#_filter_winid)
+  close!
+
+  call win_gotoid(prev)
 endfunction
 
 function! s:start_timer() abort

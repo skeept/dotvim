@@ -1,6 +1,74 @@
 CHANGELOG
 =========
 
+0.21.1
+------
+- Shell extension
+    - CTRL-R will remove duplicate commands
+- fzf-tmux
+    - Supports tmux popup window (require tmux 3.2 or above)
+        - ```sh
+          # 50% width and height
+          fzf-tmux -p
+
+          # 80% width and height
+          fzf-tmux -p 80%
+
+          # 80% width and 40% height
+          fzf-tmux -p 80%,40%
+          fzf-tmux -w 80% -h 40%
+
+          # Window position
+          fzf-tmux -w 80% -h 40% -x 0 -y 0
+          fzf-tmux -w 80% -h 40% -y 1000
+
+          # Write ordinary fzf options after --
+          fzf-tmux -p -- --reverse --info=inline --margin 2,4 --border
+          ```
+        - On macOS, you can build the latest tmux from the source with
+          `brew install tmux --HEAD`
+- Bug fixes
+    - Fixed Windows file traversal not to include directories
+    - Fixed ANSI colors with `--keep-right`
+    - Fixed _fzf_complete for zsh
+- Built with Go 1.14.1
+
+0.21.0
+------
+- `--height` option is now available on Windows as well (@kelleyma49)
+- Added `--pointer` and `--marker` options
+- Added `--keep-right` option that keeps the right end of the line visible
+  when it's too long
+- Style changes
+    - `--border` will now print border with rounded corners around the
+      finder instead of printing horizontal lines above and below it.
+      The previous style is available via `--border=horizontal`
+    - Unicode spinner
+- More keys and actions for `--bind`
+- Added PowerShell script for downloading Windows binary
+- Vim plugin: Built-in floating windows support
+  ```vim
+  let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+  ```
+- bash: Various improvements in key bindings (CTRL-T, CTRL-R, ALT-C)
+    - CTRL-R will start with the current command-line as the initial query
+    - CTRL-R properly supports multi-line commands
+- Fuzzy completion API changed
+  ```sh
+  # Previous: fzf arguments given as a single string argument
+  # - This style is still supported, but it's deprecated
+  _fzf_complete "--multi --reverse --prompt=\"doge> \"" "$@" < <(
+    echo foo
+  )
+
+  # New API: multiple fzf arguments before "--"
+  # - Easier to write multiple options
+  _fzf_complete --multi --reverse --prompt="doge> " -- "$@" < <(
+    echo foo
+  )
+  ```
+- Bug fixes and improvements
+
 0.20.0
 ------
 - Customizable preview window color (`preview-fg` and `preview-bg` for `--color`)

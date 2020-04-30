@@ -39,13 +39,18 @@ class Child(logger.LoggingMixin):
         self._loaded_filters: typing.Dict[str, typing.Any] = {}
         self._source_errors: typing.Dict[str, int] = defaultdict(int)
         self._prev_results: typing.Dict[str, Result] = {}
-        self._unpacker = msgpack.Unpacker(
-            encoding='utf-8',
-            unicode_errors='surrogateescape')
-        self._packer = msgpack.Packer(
-            use_bin_type=True,
-            encoding='utf-8',
-            unicode_errors='surrogateescape')
+        if msgpack.version < (1, 0, 0):
+            self._packer = msgpack.Packer(
+                encoding='utf-8',
+                unicode_errors='surrogateescape')
+            self._unpacker = msgpack.Unpacker(
+                encoding='utf-8',
+                unicode_errors='surrogateescape')
+        else:
+            self._unpacker = msgpack.Unpacker(
+                unicode_errors='surrogateescape')
+            self._packer = msgpack.Packer(
+                unicode_errors='surrogateescape')
         self._ignore_sources: typing.List[typing.Any] = []
 
     def main_loop(self, stdout: typing.Any) -> None:
@@ -179,8 +184,8 @@ class Child(logger.LoggingMixin):
         }
 
     def _gather_results(self, context: UserContext) -> typing.List[Result]:
-        if (context['changedtick'] !=
-                self._vim.current.buffer.vars.get('changedtick', 0)):
+        # Note: self._vim.current.buffer may not work when Vim quit
+        if context['changedtick'] != self._vim.eval('b:changedtick'):
             return []
         results = []
 
@@ -357,16 +362,18 @@ class Child(logger.LoggingMixin):
         matchers = [self._filters[x] for x
                     in source.matchers if x in self._filters]
         if source.matcher_key != '':
+            original_candidates = ctx['candidates']
             # Convert word key to matcher_key
-            for candidate in ctx['candidates']:
+            for candidate in original_candidates:
                 candidate['__save_word'] = candidate['word']
                 candidate['word'] = candidate[source.matcher_key]
         for f in matchers:
             self._process_filter(f, ctx, source.max_candidates)
         if source.matcher_key != '':
             # Restore word key
-            for candidate in ctx['candidates']:
+            for candidate in original_candidates:
                 candidate['word'] = candidate['__save_word']
+                del candidate['__save_word']
 
         # Sort
         sorters = [self._filters[x] for x
@@ -403,7 +410,9 @@ class Child(logger.LoggingMixin):
             'deoplete#custom#_get_option', 'refresh_always')
         auto_complete = self._vim.call(
             'deoplete#custom#_get_option', 'auto_complete')
-        if refresh_always and auto_complete:
+        eskk_check = self._vim.call(
+            'deoplete#util#check_eskk_phase_henkan')
+        if refresh_always and auto_complete and not eskk_check:
             refresh = True
 
         for candidate in ctx['candidates']:
@@ -504,12 +513,19 @@ class Child(logger.LoggingMixin):
             p = re.compile('(' + '|'.join(source.disabled_syntaxes) + ')$')
             if next(filter(p.search, context['syntax_names']), None):
                 return True
+
+        iminsert = self._vim.call('getbufvar', '%', '&iminsert')
+        if iminsert == 1 and source.is_skip_langmap:
+            return True
+
         for ft in context['filetypes']:
             input_pattern = source.get_input_pattern(ft)
             if (input_pattern != '' and
                     re.search('(' + input_pattern + ')$', context['input'])):
                 return False
-        if context['event'] == 'Manual':
+        auto_complete_popup = self._vim.call(
+            'deoplete#custom#_get_option', 'auto_complete_popup')
+        if context['event'] == 'Manual' or auto_complete_popup == 'manual':
             return False
         return not (source.min_pattern_length <=
                     len(context['complete_str']) <= source.max_pattern_length)
@@ -569,6 +585,7 @@ class Child(logger.LoggingMixin):
 
     def _on_event(self, context: UserContext) -> None:
         event = context['event']
+        context['vars'] = self._vim.vars
         for source_name, source in self._itersource(context):
             if not source.events or event in source.events:
                 try:
@@ -580,6 +597,7 @@ class Child(logger.LoggingMixin):
 
         for f in self._filters.values():
             f.on_event(context)
+        context['vars'] = None
 
     def _get_sources(self) -> typing.Dict[str, typing.Any]:
         # Note: for the size change of "self._sources" error

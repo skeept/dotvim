@@ -1,6 +1,50 @@
 FZF Vim integration
 ===================
 
+Installation
+------------
+
+Once you have fzf installed, you can enable it inside Vim simply by adding the
+directory to `&runtimepath` in your Vim configuration file. The path may
+differ depending on the package manager.
+
+```vim
+" If installed using Homebrew
+set rtp+=/usr/local/opt/fzf
+
+" If installed using git
+set rtp+=~/.fzf
+```
+
+If you use [vim-plug](https://github.com/junegunn/vim-plug), the same can be
+written as:
+
+```vim
+" If installed using Homebrew
+Plug '/usr/local/opt/fzf'
+
+" If installed using git
+Plug '~/.fzf'
+```
+
+But if you want the latest Vim plugin file from GitHub rather than the one
+included in the package, write:
+
+```vim
+Plug 'junegunn/fzf'
+```
+
+The Vim plugin will pick up fzf binary available on the system. If fzf is not
+found on `$PATH`, it will ask you if it should download the latest binary for
+you.
+
+To make sure that you have the latest version of the binary, set up
+post-update hook like so:
+
+```vim
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+```
+
 Summary
 -------
 
@@ -115,6 +159,53 @@ let g:fzf_colors =
 let g:fzf_history_dir = '~/.local/share/fzf-history'
 ```
 
+##### Explanation of `g:fzf_colors`
+
+`g:fzf_colors` is a dictionary mapping fzf elements to a color specification
+list:
+
+    element: [ component, group1 [, group2, ...] ]
+
+- `element` is an fzf element to apply a color to:
+
+  | Element               | Description                                           |
+  | ---                   | ---                                                   |
+  | `fg`  / `bg`  / `hl`  | Item (foreground / background / highlight)            |
+  | `fg+` / `bg+` / `hl+` | Current item (foreground / background / highlight)    |
+  | `hl`  / `hl+`         | Highlighted substrings (normal / current)             |
+  | `gutter`              | Background of the gutter on the left                  |
+  | `pointer`             | Pointer to the current line (`>`)                     |
+  | `marker`              | Multi-select marker (`>`)                             |
+  | `border`              | Border around the window (`--border` and `--preview`) |
+  | `header`              | Header (`--header` or `--header-lines`)               |
+  | `info`                | Info line (match counters)                            |
+  | `spinner`             | Streaming input indicator                             |
+  | `prompt`              | Prompt before query (`> `)                            |
+
+- `component` specifies the component (`fg` / `bg`) from which to extract the
+  color when considering each of the following highlight groups
+
+- `group1 [, group2, ...]` is a list of highlight groups that are searched (in
+  order) for a matching color definition
+
+For example, consider the following specification:
+
+```vim
+  'prompt':  ['fg', 'Conditional', 'Comment'],
+```
+
+This means we color the **prompt**
+- using the `fg` attribute of the `Conditional` if it exists,
+- otherwise use the `fg` attribute of the `Comment` highlight group if it exists,
+- otherwise fall back to the default color settings for the **prompt**.
+
+You can examine the color option generated according the setting by printing
+the result of `fzf#wrap()` function like so:
+
+```vim
+:echo fzf#wrap()
+```
+
 `fzf#run`
 ---------
 
@@ -183,7 +274,9 @@ The following table summarizes the available options.
 | `options`                  | string/list   | Options to fzf                                                        |
 | `dir`                      | string        | Working directory                                                     |
 | `up`/`down`/`left`/`right` | number/string | (Layout) Window position and size (e.g. `20`, `50%`)                  |
+| `tmux`                     | string        | (Layout) fzf-tmux options (e.g. `-p90%,60%`)                          |
 | `window` (Vim 8 / Neovim)  | string        | (Layout) Command to open fzf window (e.g. `vertical aboveleft 30new`) |
+| `window` (Vim 8 / Neovim)  | dict          | (Layout) Popup window settings (e.g. `{'width': 0.9, 'height': 0.6}`) |
 
 `options` entry can be either a string or a list. For simple cases, string
 should suffice, but prefer to use list type to avoid escaping issues.
@@ -192,6 +285,19 @@ should suffice, but prefer to use list type to avoid escaping issues.
 call fzf#run({'options': '--reverse --prompt "C:\\Program Files\\"'})
 call fzf#run({'options': ['--reverse', '--prompt', 'C:\Program Files\']})
 ```
+
+When `window` entry is a dictionary, fzf will start in a popup window. The
+following options are allowed:
+
+- Required:
+    - `width` [float range [0 ~ 1]]
+    - `height` [float range [0 ~ 1]]
+- Optional:
+    - `yoffset` [float default 0.5 range [0 ~ 1]]
+    - `xoffset` [float default 0.5 range [0 ~ 1]]
+    - `highlight` [string default `'Comment'`]: Highlight group for border
+    - `border` [string default `rounded`]: Border style
+        - `rounded` / `sharp` / `horizontal` / `vertical` / `top` / `bottom` / `left` / `right`
 
 `fzf#wrap`
 ----------
@@ -276,43 +382,31 @@ The latest versions of Vim and Neovim include builtin terminal emulator
 - On Terminal Vim with a non-default layout
     - `call fzf#run({'left': '30%'})` or `let g:fzf_layout = {'left': '30%'}`
 
-#### Starting fzf in Neovim floating window
+#### Starting fzf in a popup window
 
 ```vim
-" Using floating windows of Neovim to start fzf
-if has('nvim')
-  function! FloatingFZF(width, height, border_highlight)
-    function! s:create_float(hl, opts)
-      let buf = nvim_create_buf(v:false, v:true)
-      let opts = extend({'relative': 'editor', 'style': 'minimal'}, a:opts)
-      let win = nvim_open_win(buf, v:true, opts)
-      call setwinvar(win, '&winhighlight', 'NormalFloat:'.a:hl)
-      call setwinvar(win, '&colorcolumn', '')
-      return buf
-    endfunction
+" Required:
+" - width [float range [0 ~ 1]]
+" - height [float range [0 ~ 1]]
+"
+" Optional:
+" - xoffset [float default 0.5 range [0 ~ 1]]
+" - yoffset [float default 0.5 range [0 ~ 1]]
+" - highlight [string default 'Comment']: Highlight group for border
+" - border [string default 'rounded']: Border style
+"   - 'rounded' / 'sharp' / 'horizontal' / 'vertical' / 'top' / 'bottom' / 'left' / 'right'
+let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+```
 
-    " Size and position
-    let width = float2nr(&columns * a:width)
-    let height = float2nr(&lines * a:height)
-    let row = float2nr((&lines - height) / 2)
-    let col = float2nr((&columns - width) / 2)
+Alternatively, you can make fzf open in a tmux popup window (requires tmux 3.2
+or above) by putting fzf-tmux options in `tmux` key.
 
-    " Border
-    let top = '╭' . repeat('─', width - 2) . '╮'
-    let mid = '│' . repeat(' ', width - 2) . '│'
-    let bot = '╰' . repeat('─', width - 2) . '╯'
-    let border = [top] + repeat([mid], height - 2) + [bot]
-
-    " Draw frame
-    let s:frame = s:create_float(a:border_highlight, {'row': row, 'col': col, 'width': width, 'height': height})
-    call nvim_buf_set_lines(s:frame, 0, -1, v:true, border)
-
-    " Draw viewport
-    call s:create_float('Normal', {'row': row + 1, 'col': col + 2, 'width': width - 4, 'height': height - 2})
-    autocmd BufWipeout <buffer> execute 'bwipeout' s:frame
-  endfunction
-
-  let g:fzf_layout = { 'window': 'call FloatingFZF(0.9, 0.6, "Comment")' }
+```vim
+" See `man fzf-tmux` for available options
+if exists('$TMUX')
+  let g:fzf_layout = { 'tmux': '-p90%,60%' }
+else
+  let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
 endif
 ```
 

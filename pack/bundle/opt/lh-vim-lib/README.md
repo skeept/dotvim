@@ -54,7 +54,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#askvim#scriptid(name)`                     | Returns the id of the script associated to {name}                                                                                                                        |
 | `lh#askvim#scriptname(id)`                     | Returns the name of the script associated to {id}                                                                                                                        |
 | `lh#askvim#scriptnames()`                      | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
-| `lh#async#queue(cmd, options)`                 | Push a `cmd` to execute in a queue of jobs. Requires Vim 7.4-1980                                                                                                        |
+| `lh#async#get_queue(name,policy).push_or_start(cmd, options)` | Push a `cmd` to execute in a named queue of jobs. Requires Vim 7.4-1980                                                                                   |
 | `lh#common#check_deps()`                       | Checks a Vim symbol is loaded                                                                                                                                            |
 | `lh#common#echomsg_multilines()`               | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
 | `lh#common#error_msg()`                        | Displays an error message                                                                                                                                                |
@@ -327,6 +327,7 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#qf#get_winnr()`        | Returns window number of the qf window -- ignore location list windows                                                       |
 | `lh#qf#is_displayed()`     | Tells whether the qf window is visible -- ignore location list windows                                                       |
 | `lh#qf#make_context_map()` | Returns a non intrusive alternative to [`quickfix-context`](http://vimhelp.appspot.com/quickfix.txt.html#quickfix%2dcontext) |
+| `lh#qf#set_title()`        | Sets the title of the qf window                                                                                              |
 
 ### Syntax related functions
 | Function                                                         | Purpose                                                                                                                                |

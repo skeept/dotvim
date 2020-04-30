@@ -6,12 +6,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/junegunn/fzf/src/algo"
 	"github.com/junegunn/fzf/src/tui"
-	"github.com/junegunn/fzf/src/util"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -43,6 +44,7 @@ const usage = `usage: fzf [options]
     --no-mouse            Disable mouse
     --bind=KEYBINDS       Custom key bindings. Refer to the man page.
     --cycle               Enable cyclic scroll
+    --keep-right          Keep the right end of the line visible on overflow
     --no-hscroll          Disable horizontal scroll
     --hscroll-off=COL     Number of screen columns to keep to the right of the
                           highlighted substring (default: 10)
@@ -55,10 +57,13 @@ const usage = `usage: fzf [options]
     --min-height=HEIGHT   Minimum height when --height is given in percent
                           (default: 10)
     --layout=LAYOUT       Choose layout: [default|reverse|reverse-list]
-    --border              Draw border above and below the finder
+    --border[=STYLE]      Draw border around the finder
+                          [rounded|sharp|horizontal] (default: rounded)
     --margin=MARGIN       Screen margin (TRBL / TB,RL / T,RL,B / T,R,B,L)
     --info=STYLE          Finder info style [default|inline|hidden]
     --prompt=STR          Input prompt (default: '> ')
+    --pointer=STR         Pointer to the current line (default: '>')
+    --marker=STR          Multi-select marker (default: '>')
     --header=STR          String to print as header
     --header-lines=N      The first N lines of the input are treated as header
 
@@ -183,12 +188,15 @@ type Options struct {
 	MinHeight   int
 	Layout      layoutType
 	Cycle       bool
+	KeepRight   bool
 	Hscroll     bool
 	HscrollOff  int
 	FileWord    bool
 	InfoStyle   infoStyle
 	JumpLabels  string
 	Prompt      string
+	Pointer     string
+	Marker      string
 	Query       string
 	Select1     bool
 	Exit0       bool
@@ -206,7 +214,7 @@ type Options struct {
 	Header      []string
 	HeaderLines int
 	Margin      [4]sizeSpec
-	Bordered    bool
+	BorderShape tui.BorderShape
 	Unicode     bool
 	Tabstop     int
 	ClearOnExit bool
@@ -236,12 +244,15 @@ func defaultOptions() *Options {
 		MinHeight:   10,
 		Layout:      layoutDefault,
 		Cycle:       false,
+		KeepRight:   false,
 		Hscroll:     true,
 		HscrollOff:  10,
 		FileWord:    false,
 		InfoStyle:   infoDefault,
 		JumpLabels:  defaultJumpLabels,
 		Prompt:      "> ",
+		Pointer:     ">",
+		Marker:      ">",
 		Query:       "",
 		Select1:     false,
 		Exit0:       false,
@@ -293,12 +304,12 @@ func nextString(args []string, i *int, message string) string {
 	return args[*i]
 }
 
-func optionalNextString(args []string, i *int) string {
-	if len(args) > *i+1 && !strings.HasPrefix(args[*i+1], "-") {
+func optionalNextString(args []string, i *int) (bool, string) {
+	if len(args) > *i+1 && !strings.HasPrefix(args[*i+1], "-") && !strings.HasPrefix(args[*i+1], "+") {
 		*i++
-		return args[*i]
+		return true, args[*i]
 	}
-	return ""
+	return false, ""
 }
 
 func atoi(str string) int {
@@ -392,6 +403,23 @@ func parseAlgo(str string) algo.Algo {
 	return algo.FuzzyMatchV2
 }
 
+func parseBorder(str string, optional bool) tui.BorderShape {
+	switch str {
+	case "rounded":
+		return tui.BorderRounded
+	case "sharp":
+		return tui.BorderSharp
+	case "horizontal":
+		return tui.BorderHorizontal
+	default:
+		if optional && str == "" {
+			return tui.BorderRounded
+		}
+		errorExit("invalid border style (expected: rounded|sharp|horizontal)")
+	}
+	return tui.BorderNone
+}
+
 func parseKeyChords(str string, message string) map[int]string {
 	if len(str) == 0 {
 		errorExit(message)
@@ -464,6 +492,8 @@ func parseKeyChords(str string, message string) map[int]string {
 			chord = tui.Home
 		case "end":
 			chord = tui.End
+		case "insert":
+			chord = tui.Insert
 		case "pgup", "page-up":
 			chord = tui.PgUp
 		case "pgdn", "page-down":
@@ -730,6 +760,8 @@ func parseKeymap(keymap map[int][]action, str string) {
 				appendAction(actBackwardChar)
 			case "backward-delete-char":
 				appendAction(actBackwardDeleteChar)
+			case "backward-delete-char/eof":
+				appendAction(actBackwardDeleteCharEOF)
 			case "backward-word":
 				appendAction(actBackwardWord)
 			case "clear-screen":
@@ -1041,6 +1073,8 @@ func parseOptions(opts *Options, allArgs []string) {
 		}
 	}
 	validateJumpLabels := false
+	validatePointer := false
+	validateMarker := false
 	for i := 0; i < len(allArgs); i++ {
 		arg := allArgs[i]
 		switch arg {
@@ -1084,7 +1118,7 @@ func parseOptions(opts *Options, allArgs []string) {
 		case "--bind":
 			parseKeymap(opts.Keymap, nextString(allArgs, &i, "bind expression required"))
 		case "--color":
-			spec := optionalNextString(allArgs, &i)
+			_, spec := optionalNextString(allArgs, &i)
 			if len(spec) == 0 {
 				opts.Theme = tui.EmptyTheme()
 			} else {
@@ -1143,6 +1177,10 @@ func parseOptions(opts *Options, allArgs []string) {
 			opts.Cycle = true
 		case "--no-cycle":
 			opts.Cycle = false
+		case "--keep-right":
+			opts.KeepRight = true
+		case "--no-keep-right":
+			opts.KeepRight = false
 		case "--hscroll":
 			opts.Hscroll = true
 		case "--no-hscroll":
@@ -1189,6 +1227,12 @@ func parseOptions(opts *Options, allArgs []string) {
 			opts.PrintQuery = false
 		case "--prompt":
 			opts.Prompt = nextString(allArgs, &i, "prompt string required")
+		case "--pointer":
+			opts.Pointer = nextString(allArgs, &i, "pointer sign string required")
+			validatePointer = true
+		case "--marker":
+			opts.Marker = nextString(allArgs, &i, "selected sign string required")
+			validateMarker = true
 		case "--sync":
 			opts.Sync = true
 		case "--no-sync":
@@ -1226,9 +1270,10 @@ func parseOptions(opts *Options, allArgs []string) {
 		case "--no-margin":
 			opts.Margin = defaultMargin()
 		case "--no-border":
-			opts.Bordered = false
+			opts.BorderShape = tui.BorderNone
 		case "--border":
-			opts.Bordered = true
+			hasArg, arg := optionalNextString(allArgs, &i)
+			opts.BorderShape = parseBorder(arg, !hasArg)
 		case "--no-unicode":
 			opts.Unicode = false
 		case "--unicode":
@@ -1253,8 +1298,16 @@ func parseOptions(opts *Options, allArgs []string) {
 				opts.Filter = &value
 			} else if match, value := optString(arg, "-d", "--delimiter="); match {
 				opts.Delimiter = delimiterRegexp(value)
+			} else if match, value := optString(arg, "--border="); match {
+				opts.BorderShape = parseBorder(value, false)
 			} else if match, value := optString(arg, "--prompt="); match {
 				opts.Prompt = value
+			} else if match, value := optString(arg, "--pointer="); match {
+				opts.Pointer = value
+				validatePointer = true
+			} else if match, value := optString(arg, "--marker="); match {
+				opts.Marker = value
+				validateMarker = true
 			} else if match, value := optString(arg, "-n", "--nth="); match {
 				opts.Nth = splitNth(value)
 			} else if match, value := optString(arg, "--with-nth="); match {
@@ -1303,6 +1356,7 @@ func parseOptions(opts *Options, allArgs []string) {
 				opts.HscrollOff = atoi(value)
 			} else if match, value := optString(arg, "--jump-labels="); match {
 				opts.JumpLabels = value
+				validateJumpLabels = true
 			} else {
 				errorExit("unknown option: " + arg)
 			}
@@ -1332,11 +1386,40 @@ func parseOptions(opts *Options, allArgs []string) {
 			}
 		}
 	}
+
+	if validatePointer {
+		if err := validateSign(opts.Pointer, "pointer"); err != nil {
+			errorExit(err.Error())
+		}
+	}
+
+	if validateMarker {
+		if err := validateSign(opts.Marker, "marker"); err != nil {
+			errorExit(err.Error())
+		}
+	}
+}
+
+func validateSign(sign string, signOptName string) error {
+	if sign == "" {
+		return fmt.Errorf("%v cannot be empty", signOptName)
+	}
+	widthSum := 0
+	for _, r := range sign {
+		if !unicode.IsGraphic(r) {
+			return fmt.Errorf("invalid character in %v", signOptName)
+		}
+		widthSum += runewidth.RuneWidth(r)
+		if widthSum > 2 {
+			return fmt.Errorf("%v display width should be up to 2", signOptName)
+		}
+	}
+	return nil
 }
 
 func postProcessOptions(opts *Options) {
-	if util.IsWindows() && opts.Height.size > 0 {
-		errorExit("--height option is currently not supported on Windows")
+	if !tui.IsLightRendererSupported() && opts.Height.size > 0 {
+		errorExit("--height option is currently not supported on this platform")
 	}
 	// Default actions for CTRL-N / CTRL-P when --history is set
 	if opts.History != nil {

@@ -19,6 +19,8 @@ if !has('timers')
     else
         call asyncomplete#log('vim compiled with timers required.')
     endif
+    " Clear augroup so this message is only displayed once.
+    au! asyncomplete_enable *
     finish
 endif
 
@@ -283,7 +285,7 @@ function! s:on_change() abort
     endif
 
     " loop left and find the start of the word and set it as the startcol for the source instead of refresh_pattern
-    let l:refresh_pattern = '\(\k\+$\)'
+    let l:refresh_pattern = get(b:, 'asyncomplete_refresh_pattern', '\(\k\+$\)')
     let [l:_, l:startidx, l:endidx] = asyncomplete#utils#matchstrpos(l:ctx['typed'], l:refresh_pattern)
     let l:startcol = l:startidx + 1
 
@@ -310,7 +312,7 @@ function! s:trigger(ctx) abort
     " send cancellation request if supported
     for [l:source_name, l:matches] in items(s:matches)
         call asyncomplete#log('core', 's:trigger', l:matches)
-        if l:matches['refresh'] || l:matches['status'] == 'idle' || l:matches['status'] == 'failure'
+        if l:matches['refresh'] || l:matches['status'] ==# 'idle' || l:matches['status'] ==# 'failure'
             let l:matches['status'] = 'pending'
             try
                 " TODO: check for min chars
@@ -370,7 +372,7 @@ function! asyncomplete#_force_refresh() abort
     let l:last_char = l:ctx['typed'][l:startcol - 2]
 
     " loop left and find the start of the word or trigger chars and set it as the startcol for the source instead of refresh_pattern
-    let l:refresh_pattern = '\(\k\+$\)'
+    let l:refresh_pattern = get(b:, 'asyncomplete_refresh_pattern', '\(\k\+$\)')
     let [l:_, l:startidx, l:endidx] = asyncomplete#utils#matchstrpos(l:ctx['typed'], l:refresh_pattern)
     " When no word here, startcol is current col
     let l:startcol = l:startidx == -1 ? col('.') : l:startidx + 1
@@ -442,6 +444,11 @@ function! s:recompute_pum(...) abort
     endif
 endfunction
 
+let s:pair = {
+\  '"':  '"',
+\  '''':  '''',
+\}
+
 function! s:default_preprocessor(options, matches) abort
     let l:items = []
     let l:startcols = []
@@ -450,6 +457,14 @@ function! s:default_preprocessor(options, matches) abort
         let l:base = a:options['typed'][l:startcol - 1:]
         for l:item in l:matches['items']
             if stridx(l:item['word'], l:base) == 0
+                " Strip pair characters. If pre-typed text is '"', candidates
+                " should have '"' suffix.
+                if has_key(s:pair, l:base[0])
+                    let [l:lhs, l:rhs, l:str] = [l:base[0], s:pair[l:base[0]], l:item['word']]
+                    if len(l:str) > 1 && l:str[0] ==# l:lhs && l:str[-1:] ==# l:rhs
+                        let l:item['word'] = l:str[:-2]
+                    endif
+                endif
                 let l:startcols += [l:startcol]
                 call add(l:items, l:item)
             endif

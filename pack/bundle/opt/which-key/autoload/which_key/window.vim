@@ -48,7 +48,11 @@ function! s:append_prompt(rows) abort
 endfunction
 
 function! s:floating_win_col_offset() abort
-  return (&number ? strlen(line('$')) : 0) + (&signcolumn ==# 'yes' ? 2: 0) + 1
+  if g:which_key_disable_default_offset
+    return 0
+  else
+    return (&number ? strlen(line('$')) : 0) + (&signcolumn ==# 'yes' ? 2: 0)
+  endif
 endfunction
 
 function! s:show_popup(rows) abort
@@ -62,11 +66,11 @@ function! s:show_popup(rows) abort
   let rows = s:append_prompt(a:rows)
   let offset = s:floating_win_col_offset()
   if g:which_key_floating_relative_win
-    let col = offset + win_screenpos(g:which_key_origin_winid)[1]
-    let maxwidth = winwidth(g:which_key_origin_winid) - offset - 1
+    let col = offset + win_screenpos(g:which_key_origin_winid)[1] + 1
+    let maxwidth = winwidth(g:which_key_origin_winid) - offset
   else
-    let col = offset
-    let maxwidth = &columns - offset - 1
+    let col = offset + 1
+    let maxwidth = &columns - offset
   endif
   call popup_move(s:popup_id, {
           \ 'col': col,
@@ -111,13 +115,12 @@ function! s:show_floating_win(rows, layout) abort
   endif
 
   if g:which_key_floating_relative_win
-    let opts.col = s:origin_lnum_width
+    let opts.col = g:which_key_disable_default_offset ? 0 : s:origin_lnum_width
     let opts.width = winwidth(g:which_key_origin_winid) - opts.col
     let opts.win = g:which_key_origin_winid
     let opts.relative = 'win'
   else
-    let opts.col = s:origin_lnum_width + (&signcolumn ==# 'yes' ? 2 : 0)
-    let opts.col = s:origin_lnum_width
+    let opts.col = g:which_key_disable_default_offset ? 0 : s:origin_lnum_width
     let opts.width = &columns - opts.col
     let opts.relative = 'editor'
   endif
@@ -134,42 +137,42 @@ function! s:show_floating_win(rows, layout) abort
   endif
 endfunction
 
+function! s:show_old_win(rows, layout) abort
+  if s:winnr == -1
+    call s:open_split_win()
+  endif
+
+  let resize = g:which_key_vertical ? 'vertical resize' : 'resize'
+  noautocmd execute resize a:layout.win_dim
+  setlocal modifiable
+  " Delete all lines in the buffer
+  " Use black hole register to avoid affecting the normal registers. :h quote_
+  silent 1,$delete _
+  call setline(1, a:rows)
+  setlocal nomodifiable
+endfunction
+
 function! which_key#window#show(runtime) abort
-  let runtime = a:runtime
-
-  let s:name = get(runtime, 'name', '')
-
-  let [layout, rows] = which_key#view#prepare(runtime)
+  let s:name = get(a:runtime, 'name', '')
+  let [layout, rows] = which_key#renderer#prepare(a:runtime)
 
   if s:use_popup
     call s:show_popup(rows)
   elseif g:which_key_use_floating_win
     call s:show_floating_win(rows, layout)
   else
-    let resize = g:which_key_vertical ? 'vertical resize' : 'resize'
-    noautocmd execute resize layout.win_dim
-    setlocal modifiable
-    " Delete all lines in the buffer
-    " Use black hole register to avoid affecting the normal registers. :h quote_
-    silent 1,$delete _
-    call setline(1, rows)
-    setlocal nomodifiable
+    call s:show_old_win(rows, layout)
   endif
 
   call which_key#wait_for_input()
 endfunction
 
-function! which_key#window#open(runtime) abort
+function! s:open_split_win() abort
   let s:pos = [winsaveview(), winnr(), winrestcmd()]
-
-  if !g:which_key_use_floating_win
-    call s:split_or_new()
-    call s:hide_cursor()
-    setlocal filetype=which_key
-    let s:winnr = winnr()
-  endif
-
-  call which_key#window#show(a:runtime)
+  call s:split_or_new()
+  call s:hide_cursor()
+  setlocal filetype=which_key
+  let s:winnr = winnr()
 endfunction
 
 function! s:close_split_win() abort

@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v4.7.1)
-                        For Vim version 7+      Last change: 12th Jan 2020
+*lh-vim-lib.txt*        Vim common libraries (v5.0.0)
+                        For Vim version 7+      Last change: 18th Feb 2020
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -269,6 +269,7 @@ Quickfix related functions:                             |lhvl#quickfix|   {{{2
 - |lh#qf#get_winnr()|
 - |lh#qf#is_displayed()|
 - |lh#qf#make_context_map()|
+- |lh#qf#set_title()|
 Syntax related functions:                               |lhvl#syntax|     {{{2
 - |lh#syntax#is_a_comment()|
 - |lh#syntax#is_a_comment_at()|
@@ -284,7 +285,7 @@ Syntax related functions:                               |lhvl#syntax|     {{{2
 - |lh#syntax#list_raw()|
 - |lh#syntax#list()|
 OS/System related functions:                            |lhvl#os|         {{{2
-- |lh#async#queue()|
+- |lh#async#get_queue()|
 - |:Jobs|
 - |:JobUnpause|
 - |:StopBGExecution|
@@ -718,8 +719,26 @@ Vim.
 The format of the result being ?to be stabilized?
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#async#queue()*                {{{3
-lh#async#queue(job)~
+                                                *lh#async#get_queue()*            {{{3
+                                                *lh#async#queue()*
+lh#async#get_queue(name, policy)~
+@since 5.0.0
+@warning API changes in v5.0.0
+@param[in] {name}   Unique identifier the global queue to obtain
+@param[in] {policy} Tells what shall be done when a new job is pushed into a
+                    non empty queue. Valid values are:
+                    - `'stack'`: push the new job for later
+                    - `'replace'`: stop the current job, and start the new one
+                    - `'dump'`: ignore the new job
+                    - any else will result in the end user being asked what to
+                      do.
+
+This first function returns a job queue object that implements a few services
+like `push_or_start(job)`, `stop()`... End-users are only expected ot use
+|lh#async#queue/push_or_start()|.
+
+                                               *lh#async#queue/push_or_start()*
+queue.push_or_start(job)~
 This function is a wrapper around recent |job_start()| function. As such it
 requires a recent version of Vim without any bugs in the |+job| related part.
 I've chosen to require v7.4-1980 at least.
@@ -745,15 +764,14 @@ Otherwise, it's ran with `&shell .' '. &shellcmdflag .' '. command`
     callback helps to delay operations written in vim-script language.
   - `'start_fail_cb'`: optional callback executed when starting the job fails.
 @todo Support for |job_stop()|
-@todo Support multiple queues -> `lh#async#new_queue()`
 
 Active queues and background job will be presented in |airline-section|`_b`.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *:Jobs*                           {{{3
-:Jobs~
+:Jobs {queue-name}~
 Opens a dialog scratch window displaying all jobs being executed in background
-and programmed to be through |lh#async#queue()|.
+and programmed to be executed through |lh#async#queue| feature.
 
 For the moment this window will:
 - keep the queue displayed up to date
@@ -764,7 +782,7 @@ Eventually, it'll permit to reorganize pending jobs.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *:JobUnpause*                     {{{3
-:JobUnpause~
+:JobUnpause {queue-name}~
 When a process execution fails, if there are pending jobs, the job queue will
 be paused if you confirm it.
 The only ways to un-pause the queue are through `:JobUnpause` command or
@@ -3742,6 +3760,14 @@ current) |quickfix-ID|.
 Associates a {value} to the {key} for the specified (or current) |quickfix-ID|.
 The plugin has been developped with the idea the {value} would be a
 |dictionary| or a |list|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#set_title()*               {{{3
+lh#qf#set_title({title})~
+@since version 5.1.0
+Sets the title of the |quickfix-window|, even on versions of Vim where >
+    setqflist([], 'a', {'title': title})
+isn't supported.
 
 ------------------------------------------------------------------------------
 SYNTAX RELATED FUNCTIONS                              *lhvl#syntax*     {{{2

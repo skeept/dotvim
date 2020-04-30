@@ -66,16 +66,33 @@ function! denite#_call_map(name, is_async, args) abort
         \ [bufnr('%'), a:name, args], a:is_async)
 
   if is_filter
-    let denite_statusline = get(b:, 'denite_statusline', {})
+    call s:update_filter()
+  endif
+endfunction
+function! denite#_update_map(name, bufnr, is_async) abort
+  let is_filter = &l:filetype ==# 'denite-filter'
 
+  call denite#util#rpcrequest(
+        \ (a:is_async ? '_denite_do_async_map' : '_denite_do_map'),
+        \ [a:bufnr, a:name, []], a:is_async)
+
+  if is_filter
+    call s:update_filter()
+  endif
+endfunction
+function! s:update_filter() abort
+  let denite_statusline = getbufvar(g:denite#_filter_parent,
+        \ 'denite_statusline', {})
+
+  if win_getid() != g:denite#_filter_winid
     noautocmd call win_gotoid(g:denite#_filter_winid)
+  endif
 
-    if &l:filetype ==# 'denite-filter'
-      resize 1
-      let b:denite_statusline = denite_statusline
-    else
-      stopinsert
-    endif
+  if &l:filetype ==# 'denite-filter'
+    resize 1
+    let b:denite_statusline = denite_statusline
+  else
+    stopinsert
   endif
 endfunction
 function! denite#call_map(name, ...) abort
@@ -83,4 +100,14 @@ function! denite#call_map(name, ...) abort
 endfunction
 function! denite#call_async_map(name, ...) abort
   call denite#_call_map(a:name, v:true, get(a:000, 0, []))
+endfunction
+
+" For mapping functions
+function! denite#move_to_filter() abort
+  call win_gotoid(g:denite#_filter_winid)
+  return ''
+endfunction
+function! denite#move_to_parent() abort
+  call denite#filter#_move_to_parent(v:false)
+  return ''
 endfunction

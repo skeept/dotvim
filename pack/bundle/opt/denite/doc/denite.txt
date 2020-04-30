@@ -1,6 +1,6 @@
 *denite.txt*	Dark powered asynchronous unite all interfaces for NeoVim/Vim.
 
-Version: 3.1
+Version: 3.3
 Author:  Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
 
@@ -86,7 +86,10 @@ INSTALL							*denite-install*
 
 Note: denite requires Neovim 0.3.0+ or Vim 8.0+ with |:python3| enabled.
 
-Note: You need to install Python3.6.1+.
+Note: Please install/upgrade msgpack package (1.0.0+).
+https://github.com/msgpack/msgpack-python
+
+Note: You need to install Python 3.6.1+.
 
 For neovim:
 
@@ -198,49 +201,58 @@ EXAMPLES						*denite-examples*
 	call denite#custom#var('menu', 'menus', s:menus)
 
 	" Ag command on grep source
-	call denite#custom#var('grep', 'command', ['ag'])
-	call denite#custom#var('grep', 'default_opts',
-			\ ['-i', '--vimgrep'])
-	call denite#custom#var('grep', 'recursive_opts', [])
-	call denite#custom#var('grep', 'pattern_opt', [])
-	call denite#custom#var('grep', 'separator', ['--'])
-	call denite#custom#var('grep', 'final_opts', [])
+	call denite#custom#var('grep', {
+		\ 'command': ['ag'],
+		\ 'default_opts': ['-i', '--vimgrep'],
+		\ 'recursive_opts': [],
+		\ 'pattern_opt': [],
+		\ 'separator': ['--'],
+		\ 'final_opts': [],
+		\ })
 
 	" Ack command on grep source
-	call denite#custom#var('grep', 'command', ['ack'])
-	call denite#custom#var('grep', 'default_opts',
-			\ ['--ackrc', $HOME.'/.ackrc', '-H', '-i',
-			\  '--nopager', '--nocolor', '--nogroup', '--column'])
-	call denite#custom#var('grep', 'recursive_opts', [])
-	call denite#custom#var('grep', 'pattern_opt', ['--match'])
-	call denite#custom#var('grep', 'separator', ['--'])
-	call denite#custom#var('grep', 'final_opts', [])
+	call denite#custom#var('grep', {
+		\ 'command': ['ack'])
+		\ 'default_opts': [
+		\   '--ackrc', $HOME.'/.ackrc', '-H', '-i',
+		\   '--nopager', '--nocolor', '--nogroup', '--column'
+		\ ],
+		\ 'recursive_opts': [],
+		\ 'pattern_opt': ['--match'],
+		\ 'separator': ['--'],
+		\ 'final_opts': [],
+		\ })
 
 	" Ripgrep command on grep source
-	call denite#custom#var('grep', 'command', ['rg'])
-	call denite#custom#var('grep', 'default_opts',
-			\ ['-i', '--vimgrep', '--no-heading'])
-	call denite#custom#var('grep', 'recursive_opts', [])
-	call denite#custom#var('grep', 'pattern_opt', ['--regexp'])
-	call denite#custom#var('grep', 'separator', ['--'])
-	call denite#custom#var('grep', 'final_opts', [])
+	call denite#custom#var('grep', {
+		\ 'command': ['rg'])
+		\ 'default_opts': ['-i', '--vimgrep', '--no-heading'],
+		\ 'recursive_opts': [],
+		\ 'pattern_opt': ['--regexp'],
+		\ 'separator': ['--'],
+		\ 'final_opts': [],
+		\ })
 
 	" Pt command on grep source
-	call denite#custom#var('grep', 'command', ['pt'])
-	call denite#custom#var('grep', 'default_opts',
-			\ ['-i', '--nogroup', '--nocolor', '--smart-case'])
-	call denite#custom#var('grep', 'recursive_opts', [])
-	call denite#custom#var('grep', 'pattern_opt', [])
-	call denite#custom#var('grep', 'separator', ['--'])
-	call denite#custom#var('grep', 'final_opts', [])
+	call denite#custom#var('grep', {
+		\ 'command': ['pt'])
+		\ 'default_opts': [
+		\   '-i', '--nogroup', '--nocolor', '--smart-case'],
+		\ 'recursive_opts': [],
+		\ 'pattern_opt': [],
+		\ 'separator': ['--'],
+		\ 'final_opts': [],
+		\ })
 
 	" jvgrep command on grep source
-	call denite#custom#var('grep', 'command', ['jvgrep'])
-	call denite#custom#var('grep', 'default_opts', ['-i'])
-	call denite#custom#var('grep', 'recursive_opts', ['-R'])
-	call denite#custom#var('grep', 'pattern_opt', [])
-	call denite#custom#var('grep', 'separator', [])
-	call denite#custom#var('grep', 'final_opts', [])
+	call denite#custom#var('grep', {
+		\ 'command': ['jvgrep'])
+		\ 'default_opts': ['-i'],
+		\ 'recursive_opts': ['-R'],
+		\ 'pattern_opt': [],
+		\ 'separator': [],
+		\ 'final_opts': [],
+		\ })
 
 	" Specify multiple paths in grep source
 	"call denite#start([{'name': 'grep',
@@ -267,6 +279,9 @@ EXAMPLES						*denite-examples*
 	call denite#custom#action('file', 'test2',
 	      \ {context -> denite#do_action(
 	      \  context, 'open', context['targets'])})
+	" Source specific action
+	call denite#custom#action('source/file', 'test',
+	      \ {context -> execute('let g:bar = 1')})
 <
 ==============================================================================
 INTERFACE						*denite-interface*
@@ -410,25 +425,21 @@ FILTER KEY MAPPINGS 				*denite-filter-key-mappings*
 Below mappings are only available in denite filter buffer.
 
 				*denite-map-i_<Plug>(denite_filter_backspace)*
-i_<Plug>(denite_filter_backspace)
+<Plug>(denite_filter_backspace)
 		Delete the back word.
 
-				*denite-map-i_<Plug>(denite_filter_update)*
-i_<Plug>(denite_filter_update)
-		Update the current input and quit filter buffer.
-
-
+				*denite-map-<Plug>(denite_filter_quit)*
 				*denite-map-i_<Plug>(denite_filter_quit)*
-i_<Plug>(denite_filter_quit)
+<Plug>(denite_filter_quit)
 		Quit filter buffer.
 
 				*denite-map-<Plug>(denite_filter_update)*
+				*denite-map-i_<Plug>(denite_filter_update)*
 <Plug>(denite_filter_update)
 		Update the current input and quit filter buffer.
+		Note: It does not close filter window if
+		|denite-option-start-filter| is enabled.
 
-				*denite-map-<Plug>(denite_filter_quit)*
-<Plug>(denite_filter_quit)
-		Quit filter buffer.
 
 					*denite-filter-default-key-mappings*
 Following keymappings are default keymappings.
@@ -442,9 +453,9 @@ q			<Plug>(denite_filter_quit)
 Insert mode default mappings.
 {lhs}			{rhs}
 --------		-----------------------------
-<BS>			i_<Plug>(denite_filter_backspace)
-<C-h>			i_<Plug>(denite_filter_backspace)
-<CR>			i_<Plug>(denite_filter_update)
+<BS>			<Plug>(denite_filter_backspace)
+<C-h>			<Plug>(denite_filter_backspace)
+<CR>			<Plug>(denite_filter_update)
 
 ------------------------------------------------------------------------------
 FUNCTIONS						*denite-functions*
@@ -458,6 +469,8 @@ denite#call_map({map-name}[, {args}])			*denite#call_map()*
 						*denite#custom#action()*
 denite#custom#action({kind}, {name}, {func}[, {options}])
 		Define {name} action for {kind}.
+		If {kind} is "source/{source-name}", you can define
+		{source-name} specific action.
 		{func} must be a |Funcref| or the name of a function.
 		{options} is an optional dictionary which overrides the
 		action behaviors "is_quit" and/or "is_redraw".
@@ -471,16 +484,22 @@ denite#custom#alias({type}, {alias-name}, {base-name})
 
 						*denite#custom#filter()*
 denite#custom#filter({filter-name}, {variable-name}, {value})
+denite#custom#filter({filter-name}, {dict})
 		Set {filter-name} filter specialized variable {variable-name}
 		to {value}.  You may specify multiple filters with the
 		separator "," in {filter-name}.
+		If {dict} is available, the key is {option-name} and the value
+		is {value}.
 
 						*denite#custom#kind()*
 denite#custom#kind({kind-name}, {option-name}, {value})
+denite#custom#kind({kind-name}, {dict})
 		Set {kind-name} kind specialized {option-name} to {value}.
 		You may specify multiple kinds with the separator "," in
 		{kind-name}.
 		A {kind-name} of "_" sets the default for all kinds.
+		If {dict} is available, the key is {option-name} and the value
+		is {value}.
 
 		The options below are available:
 
@@ -498,17 +517,19 @@ denite#custom#option({buffer-name}, {dict})
 		is {value}.
 		Note: The all options are in |denite-options|.  However, "-"
 		is substituted to "_", and "-" prefix is removed. >
-		substituted to "_", and "-" prefix is removed. >
 
 	call denite#custom#option('default', {
 	      \ 'source_names': 'short',
 	      \ })
 						*denite#custom#source()*
 denite#custom#source({source-name}, {option-name}, {value})
+denite#custom#source({source-name}, {dict})
 		Set {source-name} source specialized {option-name} to {value}.
 		You may specify multiple sources with the separator "," in
 		{source-name}.
 		A {source-name} of "_" sets the default for all sources.
+		If {dict} is available, the key is {option-name} and the value
+		is {value}.
 
 		The options below are available:
 
@@ -538,9 +559,12 @@ denite#custom#source({source-name}, {option-name}, {value})
 
 							*denite#custom#var()*
 denite#custom#var({source-name}, {var-name}, {value})
+denite#custom#var({source-name}, {dict})
 		Set {source-name} source specialized variable {variable-name}
 		to {value}.  You may specify multiple sources with the
 		separator "," in {source-name}.
+		If {dict} is available, the key is {var-name} and the value
+		is {value}.
 
 							*denite#do_action()*
 denite#do_action({context}, {action-name}, {targets})
@@ -579,6 +603,15 @@ denite#get_status({name})				*denite#get_status()*
 denite#initialize()
 		Initialize denite and sources.
 		Note: You don't have to call it manually.
+
+denite#move_to_filter()				*denite#move_to_filter()*
+		Move to the filter buffer.
+		Note: It is only used to define mappings.
+
+denite#move_to_parent()				*denite#move_to_parent()*
+		Move to the parent denite buffer.
+		Note: It is only used to define mappings.
+		Note: It can be used in denite-filter buffer.
 
 							*denite#start()*
 denite#start({sources}[, {context}])
@@ -694,6 +727,17 @@ OPTIONS							*denite-options*
 
 		Default: 100
 
+					*denite-option-floating-preview*
+-floating-preview
+		Open the preview window in floating window when
+		|denite-option-vertical-preview|.
+		Note: To use it, you need to use neovim
+		0.4.0+(|nvim_open_win()|).
+		Note: If you need the feature in Vim8, you should use
+		'previewpopup' instead.
+
+		Default: false
+
                             *denite-option-highlight-filter-background*
 -highlight-filter-background
 		Change backgroud color group in floating filter window.
@@ -746,6 +790,13 @@ OPTIONS							*denite-options*
 		Specify an initial narrowing text.
 		Default: ""
 
+						*denite-option-match-highlight*
+-match-highlight
+		Highlight matched chars.
+		Note: Vim 8.1.1084+ is needed for it.
+		Note: It is slow.
+		Default: v:false
+
 						*denite-option-matchers*
 -matchers
 		Specify a list of matcher names.  They overwrite the source
@@ -786,6 +837,19 @@ OPTIONS							*denite-options*
 		Note: It must one or two characters.
 
 		Default: ""
+
+						*denite-option-preview-height*
+-preview-height={preview-height}
+		Specify the preview window height.
+
+		Default: 'previewheight'
+
+						*denite-option-preview-width*
+-preview-width={preview-width}
+		Specify the preview width when
+		|denite-option-vertical-preview|.
+
+		Default: 40
 
 						*denite-option-quick-move*
 -quick-move={action}
@@ -831,6 +895,7 @@ OPTIONS							*denite-options*
 						*denite-option-reversed*
 -reversed
 		The candidates are reversed.
+		Note: It is slow.
 		Default: false
 
 						*denite-option-root-markers*
@@ -866,6 +931,8 @@ OPTIONS							*denite-options*
 		"no": No split
 		"tab": Create the new tab for denite buffer
 		"floating": Use neovim floating window feature
+		"floating_relative": similar to "floating" but open floating
+		window near the cursor.
 
 		Note: To use "floating", you need to use neovim
 		0.4.0+(|nvim_open_win()|).
@@ -913,6 +980,8 @@ OPTIONS							*denite-options*
 -winheight={window-height}
 		Set the height of the Denite window if |denite-option-split|
 		is "horizontal".
+		if |denite-option-split| is "floating" or "floating_relative",
+		set the height of the floating window.
 		If auto-resize is set, |denite-option-winheight| is the
 		maximum size of the window.
 
@@ -930,6 +999,8 @@ OPTIONS							*denite-options*
 -winwidth={window-width}
 		Set the width of the Denite window if |denite-option-split|
 		is "vertical".
+		if |denite-option-split| is "floating" or "floating_relative",
+		set the width of the floating window.
 
 		Default: &columns / 2
 
@@ -1160,6 +1231,25 @@ line		Gather current buffer lines as candidates.
 		"empty":     Include empty lines
 		"noempty":   Do not include empty lines
 		Note: By default, empty lines are included.
+
+						*denite-source-line/external*
+line/external	Gather current buffer lines as candidates.
+		It is simpler but faster than |denite-source-line|.
+		It is useful for huge buffers.
+		Note: The command result must be "path:linenr:text" pattern.
+
+		Source custom variables:
+		command		the default grep command
+				(default: ["grep"])
+		default_opts	the grep default options
+				(default: ["-inH"])
+		pattern_opt	the pattern option
+				(default: ["-e"]
+		separator	the argument separator
+				(default: ["--"])
+		final_opts	the final arguments
+				(default: [])
+
 						*denite-source-mark*
 mark		Gather |:mark|.
 
@@ -1216,6 +1306,9 @@ output		Gather executed command output as candidates.
 <
 						*denite-source-register*
 register	Gather the registers.
+
+		Source actions:
+		edit		Edit the register value
 
 						*denite-source-source*
 source		Gather Denite source names.
@@ -1663,7 +1756,7 @@ Kind class, let's take "openable" for example: >
             target = context['targets'][0]
             path = target['action__path']
             # assume you have a MyEdit command
-            self.vim.call('MyEdit', path)
+            self.vim.command('MyEdit', path)
 >
 After create new Kind class, alias it to your source by >
 
@@ -1914,10 +2007,14 @@ must force this behaviour. >
 
 	autocmd FileType denite-filter call s:denite_filter_my_settings()
 	function! s:denite_filter_my_settings() abort
-	  inoremap <silent><buffer> <C-j>
-	  \ <Esc><C-w>p:call cursor(line('.')+1,0)<CR><C-w>pA
-	  inoremap <silent><buffer> <C-k>
-	  \ <Esc><C-w>p:call cursor(line('.')-1,0)<CR><C-w>pA
+	  inoremap <silent><buffer> <C-j> <Esc>
+	        \:call denite#move_to_parent()<CR>
+	        \:call cursor(line('.')+1,0)<CR>
+	        \:call denite#move_to_filter()<CR>A
+	  inoremap <silent><buffer> <C-k> <Esc>
+	        \:call denite#move_to_parent()<CR>
+	        \:call cursor(line('.')-1,0)<CR>
+	        \:call denite#move_to_filter()<CR>A
 	endfunction
 
 Note: This is very slow in Vim8 environment. See the |denite-examples| for an
@@ -2029,8 +2126,38 @@ key mappings. >
 	  endif
 	endfunction
 
+Q: I want to close denite filter window after hitting <ESC>.
+
+A:
+>
+	autocmd FileType denite-filter call s:denite_filter_my_settings()
+	function! s:denite_filter_my_settings() abort
+	  imap <silent><buffer> <Esc>       <Plug>(denite_filter_quit)
+	endfunction
+
+Q: Is it possible to configure the floating window appearance?  I would like
+to add line numbers to it.
+
+A: You can use |User| "denite-preview" autocmd. >
+
+	autocmd User denite-preview call s:denite_preview()
+	function! s:denite_preview() abort
+	  setlocal number
+	endfunction
+
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*
+
+2020.04.10
+* Remove matched highlight feature to optimize update denite buffer.
+  But you can use -match-highlight option if you use Vim 8.1.1084+.
+
+2020.02.19
+* msgpack 1.0.0+ is required
+https://github.com/msgpack/msgpack-python#major-breaking-changes-in-msgpack-10
+
+2020.02.17
+* Rename "-previewheight" option to "-preview-height".
 
 2019.05.01
 * Version 3.0

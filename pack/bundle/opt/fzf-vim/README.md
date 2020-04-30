@@ -40,31 +40,20 @@ repository][fzf-main], which means you need to **set up both "fzf" and
 
 ### Using [vim-plug](https://github.com/junegunn/vim-plug)
 
-If you already installed fzf using [Homebrew](https://brew.sh/), the following
-should suffice:
-
 ```vim
-Plug '/usr/local/opt/fzf'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 ```
 
-But if you want to install fzf as well using vim-plug:
-
-```vim
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'junegunn/fzf.vim'
-```
-
-- `dir` and `do` options are not mandatory
-- Use `./install --bin` instead if you don't need fzf outside of Vim
-- Make sure to use Vim 7.4 or above
+`fzf#install()` makes sure that you have the latest binary, but it's optional,
+so you can omit it if you use a plugin manager that doesn't support hooks.
 
 Commands
 --------
 
 | Command           | List                                                                    |
 | ---               | ---                                                                     |
-| `:Files [PATH]`   | Files (similar to `:FZF`)                                               |
+| `:Files [PATH]`   | Files (runs `$FZF_DEFAULT_COMMAND` if defined)                          |
 | `:GFiles [OPTS]`  | Git files (`git ls-files`)                                              |
 | `:GFiles?`        | Git files (`git status`)                                                |
 | `:Buffers`        | Open buffers                                                            |
@@ -110,6 +99,20 @@ Customization
 Every command in fzf.vim internally calls `fzf#wrap` function of the main
 repository which supports a set of global option variables. So please read
 through [README-VIM][README-VIM] to learn more about them.
+
+#### Preview window
+
+If the width of the screen is wider than 120 columns, some commands will show
+the preview window on the right. You can customize the behavior with
+`g:fzf_preview_window`. Here are some examples:
+
+```vim
+" Empty value to disable preview window altogether
+let g:fzf_preview_window = ''
+
+" Always enable preview window on the right with 60% width
+let g:fzf_preview_window = 'right:60%'
+```
 
 ### Command-local options
 

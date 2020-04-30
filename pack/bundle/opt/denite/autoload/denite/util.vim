@@ -36,7 +36,7 @@ function! denite#util#execute_path(command, path) abort
 
   try
     execute a:command fnameescape(s:expand(a:path))
-  catch /^Vim\%((\a\+)\)\=:E325/
+  catch /^Vim\%((\a\+)\)\=:E325\|^Vim:Interrupt/
     " Ignore swap file error
   catch
     call denite#util#print_error(v:throwpoint)
@@ -267,6 +267,7 @@ endfunction
 
 function! denite#util#check_floating(context) abort
   return (a:context['split'] ==# 'floating' ||
+        \ a:context['split'] ==# 'floating_relative' ||
         \ a:context['filter_split_direction'] ==# 'floating')
         \ && exists('*nvim_open_win')
 endfunction

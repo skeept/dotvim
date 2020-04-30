@@ -28,6 +28,7 @@ type Attr tcell.Style
 
 type TcellWindow struct {
 	color       bool
+	preview     bool
 	top         int
 	left        int
 	width       int
@@ -318,6 +319,8 @@ func (r *FullscreenRenderer) GetChar() Event {
 			}
 			return Event{Right, 0, nil}
 
+		case tcell.KeyInsert:
+			return Event{Insert, 0, nil}
 		case tcell.KeyHome:
 			return Event{Home, 0, nil}
 		case tcell.KeyDelete:
@@ -416,6 +419,7 @@ func (r *FullscreenRenderer) NewWindow(top int, left int, width int, height int,
 	}
 	return &TcellWindow{
 		color:       r.theme != nil,
+		preview:     preview,
 		top:         top,
 		left:        left,
 		width:       width,
@@ -589,7 +593,7 @@ func (w *TcellWindow) drawBorder() {
 
 	var style tcell.Style
 	if w.color {
-		if w.borderStyle.shape == BorderAround {
+		if w.preview {
 			style = ColPreviewBorder.style()
 		} else {
 			style = ColBorder.style()
@@ -603,7 +607,7 @@ func (w *TcellWindow) drawBorder() {
 		_screen.SetContent(x, bot-1, w.borderStyle.horizontal, nil, style)
 	}
 
-	if w.borderStyle.shape == BorderAround {
+	if w.borderStyle.shape != BorderHorizontal {
 		for y := top; y < bot; y++ {
 			_screen.SetContent(left, y, w.borderStyle.vertical, nil, style)
 			_screen.SetContent(right-1, y, w.borderStyle.vertical, nil, style)

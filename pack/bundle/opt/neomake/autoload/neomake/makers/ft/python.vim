@@ -363,7 +363,7 @@ endfunction
 function! neomake#makers#ft#python#python() abort
     return {
         \ 'args': [s:compile_script],
-        \ 'errorformat': '%E%f:%l:%c: %m',
+        \ 'errorformat': '%E%f:%l:%c: E: %m,%W%f:%l: W: %m',
         \ 'serialize': 1,
         \ 'serialize_abort_on_error': 1,
         \ 'output_stream': 'stdout',
@@ -395,6 +395,7 @@ function! neomake#makers#ft#python#mypy() abort
     " ignore_missing_imports cannot be disabled in a config then though
     let args = [
                 \ '--show-column-numbers',
+                \ '--show-error-codes',
                 \ '--check-untyped-defs',
                 \ '--ignore-missing-imports',
                 \ ]

@@ -117,13 +117,18 @@ class AsyncParent(_Parent):
         self._queue_in: Queue = Queue()  # type: ignore
         self._queue_out: Queue = Queue()  # type: ignore
         self._queue_err: Queue = Queue()  # type: ignore
-        self._packer = msgpack.Packer(
-            use_bin_type=True,
-            encoding='utf-8',
-            unicode_errors='surrogateescape')
-        self._unpacker = msgpack.Unpacker(
-            encoding='utf-8',
-            unicode_errors='surrogateescape')
+        if msgpack.version < (1, 0, 0):
+            self._packer = msgpack.Packer(
+                encoding='utf-8',
+                unicode_errors='surrogateescape')
+            self._unpacker = msgpack.Unpacker(
+                encoding='utf-8',
+                unicode_errors='surrogateescape')
+        else:
+            self._packer = msgpack.Packer(
+                unicode_errors='surrogateescape')
+            self._unpacker = msgpack.Unpacker(
+                unicode_errors='surrogateescape')
         self._prev_pos: typing.List[typing.Any] = []
 
         info = None
@@ -151,7 +156,9 @@ class AsyncParent(_Parent):
 
     def merge_results(self,
                       context: UserContext) -> typing.Tuple[typing.Any, ...]:
-        if (context['event'] == 'Update' and
+        # Note: TextChangedP is triggered when Update
+        event = context['event']
+        if ((event == 'Update' or event == 'TextChangedP') and
                 context['position'] == self._prev_pos and self._queue_id):
             # Use previous id
             queue_id = self._queue_id
@@ -168,7 +175,7 @@ class AsyncParent(_Parent):
             return (True, False, [])
         self._queue_id = ''
         results = get[0]
-        return (results['is_async'], results['is_async'],  # type: ignore
+        return (results['is_async'], results['is_async'],
                 results['merged_results']) if results else (False, [])
 
     def _put(self, name: str,

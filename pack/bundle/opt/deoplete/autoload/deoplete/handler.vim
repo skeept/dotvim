@@ -53,7 +53,7 @@ function! deoplete#handler#_do_complete() abort
     return
   endif
 
-  if empty(get(context, 'candidates', []))
+  if !has_key(context, 'candidates')
         \ || deoplete#util#get_input(context.event) !=# context.input
     return
   endif
@@ -65,13 +65,23 @@ function! deoplete#handler#_do_complete() abort
   let prev.complete_position = context.complete_position
   let prev.linenr = line('.')
 
+  let auto_popup = deoplete#custom#_get_option(
+        \ 'auto_complete_popup') !=# 'manual'
+
+  " Enable auto refresh when popup is displayed
+  if deoplete#util#check_popup()
+    let auto_popup = v:true
+  endif
+
   if context.event ==# 'Manual'
     let context.event = ''
-  elseif !exists('g:deoplete#_saved_completeopt')
+  elseif !exists('g:deoplete#_saved_completeopt') && auto_popup
     call deoplete#mapping#_set_completeopt()
   endif
 
-  call feedkeys("\<Plug>_", 'i')
+  if auto_popup
+    call feedkeys("\<Plug>_", 'i')
+  endif
 endfunction
 
 function! deoplete#handler#_check_omnifunc(context) abort
@@ -82,6 +92,7 @@ function! deoplete#handler#_check_omnifunc(context) abort
         \ || index(blacklist, &l:omnifunc) >= 0
         \ || prev.input ==# a:context.input
         \ || s:check_input_method()
+        \ || deoplete#custom#_get_option('auto_complete_popup') ==# 'manual'
     return
   endif
 
@@ -96,8 +107,15 @@ function! deoplete#handler#_check_omnifunc(context) abort
         let prev.input = a:context.input
         let prev.candidates = []
 
-        call deoplete#mapping#_set_completeopt()
-        call feedkeys("\<C-x>\<C-o>", 'in')
+        if &completeopt =~# 'noselect'
+          call deoplete#mapping#_set_completeopt()
+          call feedkeys("\<C-x>\<C-o>", 'in')
+        else
+          call deoplete#util#print_error(
+                \ 'omni_patterns feature is disabled.')
+          call deoplete#util#print_error(
+                \ 'You need to set "noselect" in completeopt option.')
+        endif
         return 1
       endif
     endfor
@@ -198,7 +216,17 @@ function! s:is_skip(event) abort
     return 1
   endif
 
+  " Note: The check is needed for <C-y> mapping
+  if s:is_skip_prev_text(a:event)
+    return 1
+  endif
+
   if s:is_skip_text(a:event)
+    " Close the popup
+    if deoplete#util#check_popup()
+      call feedkeys("\<Plug>_", 'i')
+    endif
+
     return 1
   endif
 
@@ -213,10 +241,22 @@ function! s:is_skip(event) abort
 
   return 0
 endfunction
-function! s:check_eskk_phase_henkan(input) abort
-  let preedit = eskk#get_preedit()
-  let phase = preedit.get_henkan_phase()
-  return phase is g:eskk#preedit#PHASE_HENKAN && a:input !~# '\w$'
+function! s:is_skip_prev_text(event) abort
+  let input = deoplete#util#get_input(a:event)
+
+  " Note: Use g:deoplete#_context is needed instead of
+  " g:deoplete#_prev_completion
+  let prev_input = get(g:deoplete#_context, 'input', '')
+  if input ==# prev_input
+        \ && input !=# ''
+        \ && a:event !=# 'Manual'
+        \ && a:event !=# 'Async'
+        \ && a:event !=# 'Update'
+        \ && a:event !=# 'TextChangedP'
+    return 1
+  endif
+
+  return 0
 endfunction
 function! s:is_skip_text(event) abort
   let input = deoplete#util#get_input(a:event)
@@ -228,31 +268,14 @@ function! s:is_skip_text(event) abort
     return 1
   endif
 
-  " Note: Use g:deoplete#_context is needed instead of
-  " g:deoplete#_prev_completion
-  let prev_input = get(g:deoplete#_context, 'input', '')
-  if input ==# prev_input
-        \ && a:event !=# 'Manual'
-        \ && a:event !=# 'Async'
-        \ && a:event !=# 'Update'
-        \ && a:event !=# 'TextChangedP'
-    return 1
-  endif
-  if a:event ==# 'Update' && prev_input !=# '' && input !=# prev_input
-    return 1
-  endif
-
-  if (exists('b:eskk') && !empty(b:eskk)
-        \     && !s:check_eskk_phase_henkan(input))
-    return 1
-  endif
-
   let displaywidth = strdisplaywidth(input) + 1
+  let is_virtual = virtcol('.') >= displaywidth
   if &l:formatoptions =~# '[tca]' && &l:textwidth > 0
         \     && displaywidth >= &l:textwidth
     if &l:formatoptions =~# '[ta]'
           \ || !empty(filter(deoplete#util#get_syn_names(),
           \                  "v:val ==# 'Comment'"))
+          \ || is_virtual
       return 1
     endif
   endif
@@ -306,7 +329,8 @@ function! s:on_complete_done() abort
   endif
 endfunction
 function! s:substitute_suffix(user_data) abort
-  if !has_key(a:user_data, 'old_suffix')
+  if !deoplete#custom#_get_option('complete_suffix')
+        \ || !has_key(a:user_data, 'old_suffix')
         \ || !has_key(a:user_data, 'new_suffix')
     return
   endif

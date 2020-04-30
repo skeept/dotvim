@@ -43,20 +43,54 @@ function! denite#helper#call_denite(command, args, line1, line2) abort
 endfunction
 
 function! denite#helper#preview_file(context, filename) abort
+  let preview_width = str2nr(a:context.preview_width)
+  let preview_height = str2nr(a:context.preview_height)
+
   if a:context.vertical_preview
-    let denite_winwidth = &columns
+    let pos = win_screenpos(win_getid())
+    let win_width = winwidth(0)
+
     call denite#util#execute_path(
           \ 'silent rightbelow vertical pedit!', a:filename)
     wincmd P
-    execute 'vert resize ' . (denite_winwidth / 2)
+
+    if a:context.floating_preview && exists('*nvim_win_set_config')
+      if a:context['split'] ==# 'floating'
+        let win_row = str2nr(a:context['winrow'])
+        let win_col = str2nr(a:context['wincol'])
+      else
+        let win_row = pos[0] - 1
+        let win_col = pos[1] - 1
+      endif
+      let win_col += win_width
+      if a:context.split !=# 'floating'
+        let win_col -= preview_width
+      endif
+
+      call nvim_win_set_config(win_getid(), {
+           \ 'relative': 'editor',
+           \ 'row': win_row,
+           \ 'col': win_col,
+           \ 'width': preview_width,
+           \ 'height': preview_height,
+           \ })
+    else
+      execute 'vert resize ' . preview_width
+    endif
   else
     let previewheight_save = &previewheight
     try
-      let &previewheight = a:context.previewheight
+      let &previewheight = preview_height
       call denite#util#execute_path('silent aboveleft pedit!', a:filename)
     finally
       let &previewheight = previewheight_save
     endtry
+
+    wincmd P
+  endif
+
+  if exists('#User#denite-preview')
+    doautocmd User denite-preview
   endif
 endfunction
 
@@ -216,16 +250,29 @@ function! denite#helper#_get_wininfo() abort
         \}
 endfunction
 function! denite#helper#_get_preview_window() abort
+  " Note: For popup preview feature
+  if exists('*popup_findpreview') && popup_findpreview() > 0
+    return 1
+  endif
+
   return len(filter(range(1, winnr('$')),
         \ "getwinvar(v:val, '&previewwindow') ==# 1"))
 endfunction
 
 
-function! denite#helper#_start_update_candidates_timer() abort
-  return timer_start(300,
-        \ {-> denite#call_async_map('update_candidates')}, {'repeat': -1})
+function! denite#helper#_start_update_candidates_timer(bufnr) abort
+  return timer_start(100,
+        \ {-> denite#call_async_map('update_candidates')},
+        \ {'repeat': -1})
 endfunction
-function! denite#helper#_start_update_buffer_timer() abort
+function! denite#helper#_start_update_buffer_timer(bufnr) abort
   return timer_start(50,
-        \ {-> denite#call_map('update_buffer')}, {'repeat': -1})
+        \ {-> denite#_update_map('update_buffer', a:bufnr, v:false)},
+        \ {'repeat': -1})
+endfunction
+
+function! denite#helper#_get_temp_file(bufnr) abort
+  let temp = tempname()
+  call writefile(getbufline(a:bufnr, 1, '$'), temp)
+  return temp
 endfunction

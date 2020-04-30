@@ -55,6 +55,10 @@ function! denite#init#_initialize() abort
     call denite#util#print_error(v:exception)
     call denite#util#print_error(v:throwpoint)
 
+    if denite#init#_msgpack_version_check()
+      call denite#util#print_error('denite requires msgpack 1.0.0+.')
+    endif
+
     if denite#util#has_yarp()
       if !has('nvim') && !exists('*neovim_rpc#serveraddr')
         call denite#util#print_error(
@@ -105,6 +109,7 @@ function! denite#init#_user_options() abort
         \ 'expand': v:false,
         \ 'filter_split_direction': 'botright',
         \ 'filter_updatetime': 100,
+        \ 'floating_preview': v:false,
         \ 'highlight_filter_background': 'NormalFloat',
         \ 'highlight_matched_range': 'Underlined',
         \ 'highlight_matched_char': 'Search',
@@ -116,10 +121,12 @@ function! denite#init#_user_options() abort
         \ 'immediately_1': v:false,
         \ 'input': '',
         \ 'matchers': '',
+        \ 'match_highlight': v:false,
         \ 'max_candidate_width': 200,
         \ 'max_dynamic_update_candidates': 20000,
         \ 'path': getcwd(),
-        \ 'previewheight': &previewheight,
+        \ 'preview_height': &previewheight,
+        \ 'preview_width': 40,
         \ 'prompt': '',
         \ 'post_action': 'none',
         \ 'quick_move': '',
@@ -157,4 +164,13 @@ vim.vars['denite#_python_version_check'] = (
     sys.version_info.micro) < (3, 6, 1)
 EOF
   return g:denite#_python_version_check
+endfunction
+
+function! denite#init#_msgpack_version_check() abort
+  python3 << EOF
+import vim
+import msgpack
+vim.vars['denite#_msgpack_version_check'] = msgpack.version < (1, 0, 0)
+EOF
+  return get(g:, 'denite#_msgpack_version_check', 0)
 endfunction
