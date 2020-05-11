@@ -187,10 +187,10 @@ function! s:get_user_data(cur_text) abort
     let lspitem = user_data.lspitem
     if has_key(lspitem, 'textEdit') && type(lspitem.textEdit) == v:t_dict
       let snippet = lspitem.textEdit.newText
-      let snippet_trigger = lspitem.textEdit.newText
+      let snippet_trigger = v:completed_item.word
     elseif get(lspitem, 'insertTextFormat', -1) == 2
       let snippet = lspitem.insertText
-      let snippet_trigger = lspitem.insertText
+      let snippet_trigger = v:completed_item.word
     endif
   elseif get(user_data, 'snippet', '') !=# ''
     let snippet = user_data.snippet
