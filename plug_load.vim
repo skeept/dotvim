@@ -65,4 +65,8 @@ Plug 'molok/vim-scratch', { 'on': ['Scratch', 'Sscratch', 'ScratchToggle', 'Vscr
 
 Plug 'vlmarek/PreciseJumpVlad', { 'on': 'PreciseJumpF' }
 
+Plug 'will133/vim-dirdiff', { 'on': 'DirDiff' }
+
+Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
+
 call plug#end()
