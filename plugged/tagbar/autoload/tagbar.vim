@@ -1182,29 +1182,34 @@ function! s:ProcessFile(fname, ftype) abort
 
     call tagbar#debug#log('typeinfo for file to process: ' . string(typeinfo))
 
-    " Use a temporary files for ctags processing instead of the original one.
-    " This allows using Tagbar for files accessed with netrw, and also doesn't
-    " slow down Tagbar for files that sit on slow network drives.
-    let tempfile = tempname()
-    let ext = fnamemodify(fileinfo.fpath, ':e')
-    if ext !=# ''
-        let tempfile .= '.' . ext
-    endif
+    if g:tagbar_use_cache
+        " Use a temporary files for ctags processing instead of the original one.
+        " This allows using Tagbar for files accessed with netrw, and also doesn't
+        " slow down Tagbar for files that sit on slow network drives.
+        let tempfile = tempname()
+        let ext = fnamemodify(fileinfo.fpath, ':e')
+        if ext !=# ''
+            let tempfile .= '.' . ext
+        endif
 
-    call tagbar#debug#log('Caching file into: ' . tempfile)
-    let templines = getbufline(fileinfo.bufnr, 1, '$')
-    let res = writefile(templines, tempfile)
+        call tagbar#debug#log('Caching file into: ' . tempfile)
+        let templines = getbufline(fileinfo.bufnr, 1, '$')
+        let res = writefile(templines, tempfile)
 
-    if res != 0
-        call tagbar#debug#log('Could not create copy '.tempfile)
-        return
-    endif
-    let fileinfo.mtime = getftime(tempfile)
+        if res != 0
+            call tagbar#debug#log('Could not create copy '.tempfile)
+            return
+        endif
+        let fileinfo.mtime = getftime(tempfile)
 
-    let ctags_output = s:ExecuteCtagsOnFile(tempfile, a:fname, typeinfo)
+        let ctags_output = s:ExecuteCtagsOnFile(tempfile, a:fname, typeinfo)
 
-    if !tagbar#debug#enabled()
-        call delete(tempfile)
+        if !tagbar#debug#enabled()
+            call delete(tempfile)
+        endif
+    else
+        call tagbar#debug#log('File caching disabled')
+        let ctags_output = s:ExecuteCtagsOnFile(a:fname, a:fname, typeinfo)
     endif
 
     if ctags_output == -1
@@ -1362,7 +1367,7 @@ function! s:ExecuteCtagsOnFile(fname, realfname, typeinfo) abort
 
     let ctags_output = s:ExecuteCtags(ctags_cmd)
 
-    if v:shell_error || ctags_output =~? 'Warning: cannot open source file'
+    if v:shell_error || ctags_output =~? 'Warning: cannot open \(source\|input\) file'
         call tagbar#debug#log('Command output:')
         call tagbar#debug#log(ctags_output)
         call tagbar#debug#log('Exit code: ' . v:shell_error)
@@ -2866,6 +2871,39 @@ function! s:EscapeCtagsCmd(ctags_bin, args, ...) abort
     return ctags_cmd
 endfunction
 
+" run shell command in a proper way: prevent temporary window creation
+function! s:run_system(cmd, version) abort
+    if has('win32') && !has('nvim') && a:version > 0 && (has('python3') || has('python2'))
+        if a:version == 3 && has('python3')
+            let pyx = 'py3 '
+            let python_eval = 'py3eval'
+        elseif a:version == 2 && has('python2')
+            let pyx = 'py2 '
+            let python_eval = 'pyeval'
+        else
+            let pyx = 'pyx '
+            let python_eval = 'pyxeval'
+        endif
+        let l:pc = 0
+        exec pyx . 'import subprocess, vim'
+        exec pyx . '__argv = {"args":vim.eval("a:cmd"), "shell":True}'
+        exec pyx . '__argv["stdout"] = subprocess.PIPE'
+        exec pyx . '__argv["stderr"] = subprocess.STDOUT'
+        exec pyx . '__pp = subprocess.Popen(**__argv)'
+        exec pyx . '__return_text = __pp.stdout.read()'
+        exec pyx . '__pp.stdout.close()'
+        exec pyx . '__return_code = __pp.wait()'
+        exec 'let l:hr = '. python_eval .'("__return_text")'
+        exec 'let l:pc = '. python_eval .'("__return_code")'
+        let s:shell_error = l:pc
+        return l:hr
+    endif
+    let hr = system(a:cmd)
+    let s:shell_error = v:shell_error
+    return hr
+endfunction
+
+
 " s:ExecuteCtags() {{{2
 " Execute ctags with necessary shell settings
 " Partially based on the discussion at
@@ -2903,7 +2941,8 @@ function! s:ExecuteCtags(ctags_cmd) abort
         call tagbar#debug#log('Exit code: ' . v:shell_error)
         redraw!
     else
-        silent let ctags_output = system(a:ctags_cmd)
+        let py_version = get(g:, 'tagbar_python', 1)
+        silent let ctags_output = s:run_system(a:ctags_cmd, py_version)
     endif
 
     if &shell =~? 'cmd\.exe'
