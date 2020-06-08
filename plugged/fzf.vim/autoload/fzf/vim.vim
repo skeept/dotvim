@@ -44,6 +44,7 @@ if s:is_win
 endif
 
 let s:wide = 120
+let s:warned = 0
 
 function! s:extend_opts(dict, eopts, prepend)
   if empty(a:eopts)
@@ -76,9 +77,6 @@ endfunction
 " [[options to wrap], [preview window expression], [toggle-preview keys...]]
 function! fzf#vim#with_preview(...)
   let bash_path = exepath('bash')
-  if empty(bash_path)
-    throw 'bash is not in PATH'
-  endif
   let is_wsl_bash = bash_path =~? 'Windows[/\\]system32[/\\]bash.exe$'
   " Default options
   let options = {}
@@ -90,6 +88,14 @@ function! fzf#vim#with_preview(...)
   if len(args) && type(args[0]) == s:TYPE.dict
     let options = copy(args[0])
     call remove(args, 0)
+  endif
+
+  if empty(bash_path)
+    if !s:warned
+      call s:warn('Preview window not supported (bash not found in PATH)')
+      let s:warned = 1
+    endif
+    return options
   endif
 
   " Placeholder expression (TODO/TBD: undocumented)
@@ -483,7 +489,7 @@ endfunction
 function! fzf#vim#_recent_files()
   return fzf#vim#_uniq(map(
     \ filter([expand('%')], 'len(v:val)')
-    \   + filter(map(s:buflisted_sorted(), 'bufname(v:val)'), 'len(v:val)')
+    \   + filter(map(fzf#vim#_buflisted_sorted(), 'bufname(v:val)'), 'len(v:val)')
     \   + filter(copy(v:oldfiles), "filereadable(fnamemodify(v:val, ':p'))"),
     \ 'fnamemodify(v:val, ":~:.")'))
 endfunction
@@ -632,7 +638,7 @@ function! s:bufopen(lines)
   execute 'buffer' b
 endfunction
 
-function! s:format_buffer(b)
+function! fzf#vim#_format_buffer(b)
   let name = bufname(a:b)
   let line = exists('*getbufinfo') ? getbufinfo(a:b)[0]['lnum'] : 0
   let name = empty(name) ? '[No Name]' : fnamemodify(name, ":p:~:.")
@@ -651,7 +657,7 @@ function! s:sort_buffers(...)
   return b1 < b2 ? 1 : -1
 endfunction
 
-function! s:buflisted_sorted()
+function! fzf#vim#_buflisted_sorted()
   return sort(s:buflisted(), 's:sort_buffers')
 endfunction
 
@@ -659,7 +665,7 @@ function! fzf#vim#buffers(...)
   let [query, args] = (a:0 && type(a:1) == type('')) ?
         \ [a:1, a:000[1:]] : ['', a:000]
   return s:fzf('buffers', {
-  \ 'source':  map(s:buflisted_sorted(), 's:format_buffer(v:val)'),
+  \ 'source':  map(fzf#vim#_buflisted_sorted(), 'fzf#vim#_format_buffer(v:val)'),
   \ 'sink*':   s:function('s:bufopen'),
   \ 'options': ['+m', '-x', '--tiebreak=index', '--header-lines=1', '--ansi', '-d', '\t', '--with-nth', '2..', '-n', '2,1..2', '--prompt', 'Buf> ', '--query', query]
   \}, args)
