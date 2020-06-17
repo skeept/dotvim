@@ -311,14 +311,28 @@ fun! mucomplete#cycle_or_select(dir)
         \ : (get(s:select_dir(), s:compl_methods[s:i], 1) * a:dir > 0 ? "\<c-n>" : "\<c-p>")
 endf
 
+fun! s:match_scoped_item(chain, syn)
+  for l:regex in keys(a:chain)
+    if a:syn =~? l:regex
+      return a:chain[l:regex]
+    endif
+  endfor
+  return has_key(a:chain, 'default')
+        \ ? a:chain['default']
+        \ : s:scope_chain(g:mucomplete#chains['default'])
+endf
+
+fun! s:get_scoped_item(chain, syn)
+  return has_key(a:chain, a:syn) ? a:chain[a:syn] : s:match_scoped_item(a:chain, a:syn)
+endf
+
 " If the argument is a completion chain (type() returns v:t_list), return it;
 " otherwise, get the completion chain for the current syntax item.
 fun! s:scope_chain(c)
   return type(a:c) == 3
         \ ? a:c
-        \ : get(a:c, synIDattr(synID('.', col('.') - 1, 0), 'name'),
-        \       get(a:c, 'default', g:mucomplete#chains['default']))
-endf
+        \ : s:get_scoped_item(a:c, synIDattr(synID('.', col('.') - 1, 0), 'name'))
+endfun
 
 " Precondition: pumvisible() is false.
 fun! mucomplete#init(dir, tab_completion) " Initialize/reset internal state
@@ -372,3 +386,4 @@ endf
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
+" vim: et ts=2 sts=2 sw=2
