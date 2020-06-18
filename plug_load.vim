@@ -3,6 +3,16 @@ function! Cond(cond, ...)
   return a:cond ? opts : extend(opts, { 'on': [], 'for': [] })
 endfunction
 
+function! LoadAdditionalUnite()
+  packadd unite-colorscheme    
+  packadd unite-font           
+  packadd unite-mark           
+  packadd unite-outline        
+  packadd unite-qf             
+  packadd unite-session        
+  packadd unite-tag
+endfunction
+
 call plug#begin(g:p0 . '/plugged')
 
 Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
@@ -16,6 +26,7 @@ Plug 'Shougo/neosnippet.vim'
 Plug 'Shougo/neosnippet-snippets'
 Plug 'Shougo/vimfiler.vim', { 'on': 'VimFiler'}
 Plug 'Shougo/unite.vim', { 'on': 'Unite' }
+autocmd! User unite.vim call LoadAdditionalUnite()
 Plug 'thinca/vim-unite-history', { 'on': 'Unite' }
 
 Plug 'ctrlpvim/ctrlp.vim'
