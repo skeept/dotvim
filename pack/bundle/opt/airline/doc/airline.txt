@@ -167,6 +167,14 @@ values):
     endif
   endfunction
 <
+* if you want to update your highlights without effecting the airline theme,
+  you can do so using the AirlineAfterTheme autocmd. >
+  function! s:update_highlights()
+    hi CursorLine ctermbg=none guibg=none
+    hi VertSplit ctermbg=none guibg=none
+  endfunction
+  autocmd User AirlineAfterTheme call s:update_highlights()
+<
 * By default, airline will use unicode symbols if your encoding matches
   utf-8. If you want the powerline symbols set this variable: >
   let g:airline_powerline_fonts = 1
@@ -697,7 +705,15 @@ you can use.
 -------------------------------------                      *airline-denite*
 Denite <https://github.com/Shougo/denite.nvim>
 
-No configuration available.
+* enable/disable denite integration >
+  let g:airline#extensions#denite#enabled = 1
+
+-------------------------------------                      *airline-dirvish*
+vim-dirvish <https://github.com/justinmk/vim-dirvish>
+
+* enable/disable vim-dirvish integration >
+  let g:airline#extensions#dirvish#enabled = 1
+<  default: 1
 
 -------------------------------------                        *airline-eclim*
 eclim <https://eclim.org>
@@ -1257,7 +1273,8 @@ No configuration available.
 -------------------------------------                     *airline-unite*
 Unite <https://github.com/Shougo/unite.vim>
 
-No configuration available.
+* enable/disable unite integration >
+  let g:airline#extensions#unite#enabled = 1
 
 -------------------------------------                     *airline-vimagit*
 vimagit <https://github.com/jreybert/vimagit>

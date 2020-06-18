@@ -265,7 +265,7 @@ fu! csv#GetPat(colnr, maxcolnr, pat, allowmore) "{{{3
             " Allow space in front of the pattern, so that it works correctly
             " even if :Arrange Col has been used #100
             return '^' . csv#GetColPat(a:colnr - 1,0) .
-                \ '\s*\zs' . a:pat . '\ze' . (a:allowmore ? '' : '$')
+                \ '.*\zs' . a:pat . '\ze' . (a:allowmore ? '' : '$')
         else
             return '\%' . b:csv_fixed_width_cols[-1] .
                 \ 'c\zs' . a:pat . '\ze' . (a:allowmore ? '' : '$')
@@ -502,7 +502,7 @@ fu! csv#WColumn(...) "{{{3
     " Return on which column the cursor is
     let _cur = getpos('.')
     if !exists("b:csv_fixed_width_cols")
-        if line('.') > 1 && mode('') != 'n'
+        if line('.') > 1 && mode('') != 'n' && empty(getline('.')[0:col('.')-1])
             " in insert mode, get line from above, just in case the current
             " line is empty
             let line = getline(line('.')-1)
@@ -760,6 +760,10 @@ fu! csv#CalculateColumnWidth(row, silent) "{{{3
     " does not work with fixed width columns
     " row for the row for which to calculate the width
     let b:col_width=[]
+    if has( 'vartabs' ) && b:delimiter == "\t"
+        let vts_save=&vts
+        set vts=
+    endif
     try
         if exists("b:csv_headerline")
           if line('.') < b:csv_headerline
@@ -778,6 +782,9 @@ fu! csv#CalculateColumnWidth(row, silent) "{{{3
     " delete buffer content in variable b:csv_list,
     " this was only necessary for calculating the max width
     unlet! b:csv_list s:columnize_count s:decimal_column
+    if has( 'vartabs' ) && b:delimiter == "\t"
+        let &vts=vts_save
+    endif
 endfu
 fu! csv#Columnize(field) "{{{3
     " Internal function, not called from external,
@@ -1498,10 +1505,10 @@ fu! csv#AvgColumn(list) "{{{3
         endfor
         if has("float")
             let b:csv_result = printf("%.2f", sum/cnt)
-            return b:csv_result
+            return str2float(b:csv_result)
         else
             let b:csv_result = printf("%s", sum/cnt)
-            return sum/cnt
+            return b:csv_result + 0
         endif
     endif
 endfu
@@ -1534,7 +1541,7 @@ fu! csv#VarianceColumn(list, is_population) "{{{3
             let cnt = cnt-1
         endif
         if has("float")
-            let b:csv_result = printf("%.2f", sum/cnt)
+            let b:csv_result = printf("%." . get(b:, 'csv_accuracy', get(g:, 'csv_accuracy', 2)) . "f", sum/cnt)
             return b:csv_result
         else
             let b:csv_result = printf("%s", sum/cnt)
@@ -2254,7 +2261,7 @@ fu! csv#CommandDefinitions() "{{{3
         \ ':echo csv#EvalColumn(<q-args>, "csv#SmplStdDevColumn", <line1>,<line2>)',
         \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
     call csv#LocalCmd("PopStdCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#SmplStdDevColumn", <line1>,<line2>)',
+        \ ':echo csv#EvalColumn(<q-args>, "csv#PopStdDevColumn", <line1>,<line2>)',
         \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
     call csv#LocalCmd("UnArrangeColumn",
         \':call csv#PrepUnArrangeCol(<line1>, <line2>)',
@@ -2337,7 +2344,7 @@ fu! csv#ColumnWidth()
 endfu
 
 fu! csv#Map(map, name, definition, ...) "{{{3
-    let keyname = substitute(a:name, '[<>]', '', 'g')
+    let keyname = substitute(substitute(a:name, '[<>]', '', 'g'), '-', '_', 'g')
     let expr = (exists("a:1") && a:1 == 'expr'  ? '<expr>' : '')
     if !get(g:, "csv_nomap_". tolower(keyname), 0)
         " All mappings are buffer local

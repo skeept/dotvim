@@ -12,7 +12,9 @@ function! deoplete#handler#_init() abort
   augroup END
 
   for event in [
-        \ 'InsertEnter', 'BufReadPost', 'BufWritePost', 'VimLeavePre',
+        \ 'InsertEnter', 'InsertLeave',
+        \ 'BufReadPost', 'BufWritePost',
+        \ 'VimLeavePre',
         \ ]
     call s:define_on_event(event)
   endfor
@@ -48,8 +50,7 @@ endfunction
 function! deoplete#handler#_do_complete() abort
   let context = g:deoplete#_context
   let event = get(context, 'event', '')
-  let modes = (event ==# 'InsertEnter') ? ['n', 'i'] : ['i']
-  if s:is_exiting() || index(modes, mode()) < 0 || s:check_input_method()
+  if s:is_exiting() || v:insertmode !=# 'i' || s:check_input_method()
     return
   endif
 
@@ -235,7 +236,7 @@ function! s:is_skip(event) abort
   if &paste
         \ || (a:event !=# 'Manual' && a:event !=# 'Update' && !auto_complete)
         \ || (&l:completefunc !=# '' && &l:buftype =~# 'nofile')
-        \ || (a:event !=# 'InsertEnter' && mode() !=# 'i')
+        \ || v:insertmode !=# 'i'
     return 1
   endif
 
@@ -253,6 +254,11 @@ function! s:is_skip_prev_text(event) abort
         \ && a:event !=# 'Async'
         \ && a:event !=# 'Update'
         \ && a:event !=# 'TextChangedP'
+    return 1
+  endif
+
+  " Note: It fixes insert first candidate automatically problem
+  if a:event ==# 'Update' && prev_input !=# '' && input !=# prev_input
     return 1
   endif
 
@@ -295,8 +301,7 @@ function! s:define_on_event(event) abort
   endif
 
   execute 'autocmd deoplete' a:event
-        \ '* if !&l:previewwindow | call deoplete#send_event('
-        \ .string(a:event).') | endif'
+        \ '* call deoplete#send_event('.string(a:event).')'
 endfunction
 function! s:define_completion_via_timer(event) abort
   if !exists('##' . a:event)
@@ -311,22 +316,29 @@ function! s:on_insert_leave() abort
   call deoplete#mapping#_restore_completeopt()
   let g:deoplete#_context = {}
   call deoplete#init#_prev_completion()
+
+  if &cpoptions =~# '$'
+    " If 'cpoptions' includes '$' with popup, redraw problem exists.
+    redraw
+  endif
 endfunction
 
 function! s:on_complete_done() abort
   if get(v:completed_item, 'word', '') ==# ''
     return
   endif
+
   call deoplete#handler#_skip_next_completion()
 
-  if get(v:completed_item, 'user_data', '') !=# ''
-    try
-      if type(v:completed_item.user_data) == type('')
-        call s:substitute_suffix(json_decode(v:completed_item.user_data))
-      endif
-    catch /.*/
-    endtry
+  let user_data = get(v:completed_item, 'user_data', '')
+  if type(user_data) !=# v:t_string || user_data ==# ''
+    return
   endif
+
+  try
+    call s:substitute_suffix(json_decode(user_data))
+  catch /.*/
+  endtry
 endfunction
 function! s:substitute_suffix(user_data) abort
   if !deoplete#custom#_get_option('complete_suffix')

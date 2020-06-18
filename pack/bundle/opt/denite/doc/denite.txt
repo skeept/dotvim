@@ -152,9 +152,9 @@ EXAMPLES						*denite-examples*
 	call denite#custom#var('file/rec', 'command',
 	\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
 	" For ripgrep
-	" Note: It is slower than ag
+	" Note: rg is faster than ag
 	call denite#custom#var('file/rec', 'command',
-	\ ['rg', '--files', '--glob', '!.git'])
+	\ ['rg', '--files', '--glob', '!.git', '--color', 'never'])
 	" For Pt(the platinum searcher)
 	" NOTE: It also supports windows.
 	call denite#custom#var('file/rec', 'command',
@@ -212,7 +212,7 @@ EXAMPLES						*denite-examples*
 
 	" Ack command on grep source
 	call denite#custom#var('grep', {
-		\ 'command': ['ack'])
+		\ 'command': ['ack'],
 		\ 'default_opts': [
 		\   '--ackrc', $HOME.'/.ackrc', '-H', '-i',
 		\   '--nopager', '--nocolor', '--nogroup', '--column'
@@ -225,7 +225,7 @@ EXAMPLES						*denite-examples*
 
 	" Ripgrep command on grep source
 	call denite#custom#var('grep', {
-		\ 'command': ['rg'])
+		\ 'command': ['rg'],
 		\ 'default_opts': ['-i', '--vimgrep', '--no-heading'],
 		\ 'recursive_opts': [],
 		\ 'pattern_opt': ['--regexp'],
@@ -235,7 +235,7 @@ EXAMPLES						*denite-examples*
 
 	" Pt command on grep source
 	call denite#custom#var('grep', {
-		\ 'command': ['pt'])
+		\ 'command': ['pt'],
 		\ 'default_opts': [
 		\   '-i', '--nogroup', '--nocolor', '--smart-case'],
 		\ 'recursive_opts': [],
@@ -246,7 +246,7 @@ EXAMPLES						*denite-examples*
 
 	" jvgrep command on grep source
 	call denite#custom#var('grep', {
-		\ 'command': ['jvgrep'])
+		\ 'command': ['jvgrep'],
 		\ 'default_opts': ['-i'],
 		\ 'recursive_opts': ['-R'],
 		\ 'pattern_opt': [],
@@ -333,13 +333,16 @@ COMMANDS 						*denite-commands*
 		directory.
 
 :DeniteCursorWord [{options}] {sources}			*:DeniteCursorWord*
-		Equivalent to |:Denite| except that it targets the word under
+		Equivalent to |:Denite| except that it targets <cword> under
 		the cursor for the initial narrowing text.
+		Note: <cword> means 'iskeyword' characters.  If you want to
+		custom <cword> pattern, you need to set 'iskeyword' option.
+		Note: <cword> characters are escaped automatically.
 
 :DeniteProjectDir [{options}] {sources}			*:DeniteProjectDir*
-		Equivalent to |:Denite| except that it targets the project
-		directory.
-		Note: You can change the rooted directory by
+		Equivalent to |:Denite| except that it search the VCS project
+		directory from parent.
+		Note: You can change the search directory by
 		|denite-option-path| instead of |getcwd()|.
 
 ------------------------------------------------------------------------------
@@ -644,11 +647,6 @@ OPTIONS							*denite-options*
 						*denite-option-auto-resize*
 -auto-resize
 		Auto resize the Denite window height automatically.
-		Default: false
-
-						*denite-option-auto-resume*
--auto-resume
-		Auto resume when enter the Denite window.
 		Default: false
 
 						*denite-option-buffer-name*
@@ -1193,14 +1191,21 @@ grep		Gather grep results and nominates them.
 				(default: ["grep"])
 		default_opts	the grep default options
 				(default: ["-inH"])
-		recursive_opts	the recursive search arguments
-				(default: ["-r"])
-		pattern_opt	the pattern option
-				(default: ["-e"]
-		separator	the argument separator
-				(default: ["--"])
 		final_opts	the final arguments
 				(default: [])
+		max_path_length
+				the maximum path length.
+				(default: 50)
+		min_interactive_length
+				the minimum input length of interactive
+				filter.
+				(default: 3)
+		pattern_opt	the pattern option
+				(default: ["-e"]
+		recursive_opts	the recursive search arguments
+				(default: ["-r"])
+		separator	the argument separator
+				(default: ["--"])
 
 						*denite-source-help*
 help		Search through doc tags
@@ -2144,6 +2149,10 @@ A: You can use |User| "denite-preview" autocmd. >
 	function! s:denite_preview() abort
 	  setlocal number
 	endfunction
+	
+Q: Are there any source which is the same as history/yank in Unite?
+
+A: Use https://github.com/Shougo/neoyank.vim
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*

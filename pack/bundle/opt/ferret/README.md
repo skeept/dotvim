@@ -593,17 +593,21 @@ Unescaped spaces in the search are treated as argument separators, so a command 
 :Ack -w foo bar
 ```
 
-Note that including quotes will not do what you intend.
+Note that wrapping in quotes will probably not do what you want.
+
+This, for example, is a search for `"foo` in the `bar"` directory:
 
 ```
- " Search for '"foo' in the 'bar"' directory:
- :Ack "foo bar"
-
- " Search for "'foo' in the "bar'" directory:
- :Ack 'foo bar'
+:Ack "foo bar"
 ```
 
-This approach to escaping is taken in order to make it straightfoward to use powerful Perl-compatible regular expression syntax in an unambiguous way without having to worry about shell escaping rules:
+and this is a search for `'abc` in the `xyz'` directory:
+
+```
+:Ack 'abc xyz'
+```
+
+This approach to escaping is taken in order to make it straightfoward to use powerful Perl-compatible regular expression syntax in an unambiguous way without having to worry about shell escaping rules; for example:
 
 ```
 :Ack \blog\((['"]).*?\1\) -i --ignore-dir=src/vendor src dist build
@@ -711,6 +715,7 @@ Other contributors that have submitted patches include (in alphabetical order):
 - Tom Dooner
 - Vaibhav Sagar
 - Yoni Weill
+- fent
 
 This list produced with:
 
@@ -727,6 +732,7 @@ This list produced with:
 - Add <strong>[`g:FerretAckWordWord`](#user-content-gferretackwordword)</strong> setting, to pass `-w` to the underlying search tool when <strong>[`<Plug>(FerretAckWord)`](#user-content-plugferretackword)</strong> is pressed (https://github.com/wincent/ferret/issues/66).
 - Use `:normal!` instead of <strong>`:normal`</strong> to avoid running custom mappings (patch from Yoni Weill, https://github.com/wincent/ferret/pull/67).
 - Append a trailing slash when autocompleting a directory name (https://github.com/wincent/ferret/issues/69).
+- Fixed failure to detect pre-existing mapping to <strong>[`<Plug>(FerretLack)`](#user-content-plugferretlack)</strong>.
 
 
 ### 5.0 (8 June 2019)<a name="ferret-50-8-june-2019" href="#user-content-ferret-50-8-june-2019"></a>

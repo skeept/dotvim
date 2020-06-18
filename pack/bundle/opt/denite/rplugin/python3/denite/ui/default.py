@@ -53,7 +53,7 @@ class Default(object):
         self._matched_range_id = -1
         self._matched_char_id = -1
         self._check_matchdelete = bool(self._vim.call(
-            'has', 'patch-8.1.1084'))
+            'denite#util#check_matchdelete'))
 
     def start(self, sources: typing.List[typing.Any],
               context: UserContext) -> typing.List[typing.Any]:
@@ -294,7 +294,10 @@ class Default(object):
         self._vim.command('setlocal nospell')
         self._vim.command('setlocal winfixheight')
         self._vim.command('setlocal nowrap')
-        self._vim.command('setlocal signcolumn=no')
+        if self._context['prompt']:
+            self._vim.command('setlocal signcolumn=yes')
+        else:
+            self._vim.command('setlocal signcolumn=no')
         if self._context['cursorline']:
             self._vim.command('setlocal cursorline')
 
@@ -316,8 +319,9 @@ class Default(object):
         if self._vim.call('exists', '#BufWinEnter'):
             self._vim.command('doautocmd BufWinEnter')
 
-        if self._vim.call('exists', '#FileType#denite'):
-            self._vim.command('doautocmd FileType denite')
+        if not self._vim.call('has', 'nvim'):
+            # In Vim8, FileType autocmd is not fired after set filetype option.
+            self._vim.command('silent doautocmd FileType denite')
 
         if self._context['auto_action']:
             self._vim.command('autocmd denite '
@@ -529,11 +533,13 @@ class Default(object):
         self._update_status()
 
         if self._check_matchdelete and self._context['match_highlight']:
-            if self._matched_range_id > 0:
+            matches = [x['id'] for x in
+                       self._vim.call('getmatches', self._winid)]
+            if self._matched_range_id in matches:
                 self._vim.call('matchdelete',
                                self._matched_range_id, self._winid)
                 self._matched_range_id = -1
-            if self._matched_char_id > 0:
+            if self._matched_char_id in matches:
                 self._vim.call('matchdelete',
                                self._matched_char_id, self._winid)
                 self._matched_char_id = -1

@@ -271,3 +271,61 @@ function! denite#util#check_floating(context) abort
         \ a:context['filter_split_direction'] ==# 'floating')
         \ && exists('*nvim_open_win')
 endfunction
+function! denite#util#check_matchdelete() abort
+  if !exists('s:check_matchdelete')
+    let s:check_matchdelete = v:false
+    try
+      call getmatches(win_getid())
+      let s:check_matchdelete = v:true
+    catch
+      " Ignore error
+    endtry
+  endif
+
+  return s:check_matchdelete
+endfunction
+
+function! denite#util#escape_match(str) abort
+  return escape(a:str, '~\.^$[]')
+endfunction
+
+function! denite#util#truncate(str, max, footer_width, separator) abort
+  let width = strwidth(a:str)
+  if width <= a:max
+    let ret = a:str
+  else
+    let header_width = a:max - strwidth(a:separator) - a:footer_width
+    let ret = s:strwidthpart(a:str, header_width) . a:separator
+         \ . s:strwidthpart_reverse(a:str, a:footer_width)
+  endif
+  return s:truncate(ret, a:max)
+endfunction
+function! s:truncate(str, width) abort
+  " Original function is from mattn.
+  " http://github.com/mattn/googlereader-vim/tree/master
+
+  if a:str =~# '^[\x00-\x7f]*$'
+    return len(a:str) < a:width
+          \ ? printf('%-' . a:width . 's', a:str)
+          \ : strpart(a:str, 0, a:width)
+  endif
+
+  let ret = a:str
+  let width = strwidth(a:str)
+  if width > a:width
+    let ret = s:strwidthpart(ret, a:width)
+    let width = strwidth(ret)
+  endif
+
+  return ret
+endfunction
+function! s:strwidthpart(str, width) abort
+  let str = tr(a:str, "\t", ' ')
+  let vcol = a:width + 2
+  return matchstr(str, '.*\%<' . (vcol < 0 ? 0 : vcol) . 'v')
+endfunction
+function! s:strwidthpart_reverse(str, width) abort
+  let str = tr(a:str, "\t", ' ')
+  let vcol = strwidth(str) - a:width
+  return matchstr(str, '\%>' . (vcol < 0 ? 0 : vcol) . 'v.*')
+endfunction

@@ -230,19 +230,23 @@
 " :Ack -w foo bar
 " ```
 "
-" Note that including quotes will not do what you intend.
+" Note that wrapping in quotes will probably not do what you want.
+"
+" This, for example, is a search for `"foo` in the `bar"` directory:
 "
 " ```
-" " Search for '"foo' in the 'bar"' directory:
 " :Ack "foo bar"
+" ```
 "
-" " Search for "'foo' in the "bar'" directory:
-" :Ack 'foo bar'
+" and this is a search for `'abc` in the `xyz'` directory:
+"
+" ```
+" :Ack 'abc xyz'
 " ```
 "
 " This approach to escaping is taken in order to make it straightfoward to use
 " powerful Perl-compatible regular expression syntax in an unambiguous way
-" without having to worry about shell escaping rules:
+" without having to worry about shell escaping rules; for example:
 "
 " ```
 " :Ack \blog\((['"]).*?\1\) -i --ignore-dir=src/vendor src dist build
@@ -367,6 +371,7 @@
 " - Tom Dooner
 " - Vaibhav Sagar
 " - Yoni Weill
+" - fent
 "
 " This list produced with:
 "
@@ -385,6 +390,7 @@
 "   (patch from Yoni Weill, https://github.com/wincent/ferret/pull/67).
 " - Append a trailing slash when autocompleting a directory name
 "   (https://github.com/wincent/ferret/issues/69).
+" - Fixed failure to detect pre-existing mapping to |<Plug>(FerretLack)|.
 "
 " ## 5.0 (8 June 2019)
 "
@@ -778,7 +784,7 @@ if s:map
     nmap <unique> <leader>a <Plug>(FerretAck)
   endif
 
-  if !hasmapto('<Plug>FerretLack') && maparg('<leader>l', 'n') ==# ''
+  if !hasmapto('<Plug>(FerretLack)') && maparg('<leader>l', 'n') ==# ''
     ""
     " @mapping <Plug>(FerretLack)
     "

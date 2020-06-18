@@ -15,7 +15,7 @@ endfunction
 
 " Normalize slashes for safe use of fnameescape(), isdirectory(). Vim bug #541.
 function! s:sl(path) abort
-  return tr(a:path, '\', '/')
+  return has('win32') ? tr(a:path, '\', '/') : a:path
 endfunction
 
 function! s:normalize_dir(dir, silent) abort
@@ -456,7 +456,9 @@ function! s:open_dir(d, reload) abort
     call s:buf_render(b:dirvish._dir, get(b:dirvish, 'lastpath', ''))
     " Set up Dirvish before any other `FileType dirvish` handler.
     exe 'source '.fnameescape(s:srcdir.'/ftplugin/dirvish.vim')
+    let curwin = winnr()
     setlocal filetype=dirvish
+    if curwin != winnr() | throw 'FileType autocmd changed the window' | endif
     let b:dirvish._c = b:changedtick
     call s:apply_icons()
   endif
