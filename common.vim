@@ -223,6 +223,7 @@ nnoremap ,ga :<C-U>Gina add %
 
 nnoremap <Leader>Q :BD!<CR>
 nnoremap g/ /\<\><Left><Left>
+nnoremap ,le :<C-U>packadd<SPACE><C-D>
 "==============================================================================}}}
 
 "================== GetIsAddonActive =========================================={{{
