@@ -1,0 +1,496 @@
+*grep.txt*	Plugin for integrating grep like tools with Vim
+
+Author: Yegappan Lakshmanan  (yegappan AT yahoo DOT com)
+For Vim version 7.0 and above
+Last change: May 26, 2018
+
+==============================================================================
+						*grep-license*
+License: MIT License
+Copyright (c) 2002-2018 Yegappan Lakshmanan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+==============================================================================
+CONTENTS~
+
+1. Overview					|grep-overview|
+2. Installation					|grep-installation|
+3. Usage					|grep-usage|
+4. Configuration				|grep-configuration|
+
+==============================================================================
+						*grep-overview*
+1. Overview~
+
+The grep plugin integrates grep like utilities (grep, fgrep, egrep, agrep,
+findstr, silver searcher, ack, ripgrep, git grep, sift, platinum searcher and
+universal code grep) with Vim and allows you to search for a pattern in one or
+more files and jump to them.
+
+To use this plugin, you will need the grep like utilities in your system.  If
+a particular utility is not present, then you cannot use the corresponding
+features, but you can still use the rest of the features supported by the
+plugin.
+
+To use the this plugin with grep, you will need the grep, fgrep and egrep
+utilities. To recursively search for files using grep, you will need the find
+and xargs utilities. These tools are present in most of the Linux/Unix and
+MacOS installations.  For MS-Windows systems, you can download the GNU grep
+and find utilities from the following sites:
+
+    http://gnuwin32.sourceforge.net/packages/grep.htm
+    http://gnuwin32.sourceforge.net/packages/findutils.htm
+
+On MS-Windows, you can use the findstr utility to search for patterns.  This
+is available by default on all MS-Windows systems.
+
+If you want to use the agrep command with this plugin, then you can download
+the agrep utility from:
+
+    https://www.tgries.de/agrep/
+
+If you want to use the Silver Searcher (ag) with this plugin, then you can
+download the Silver Searcher from:
+
+    https://github.com/ggreer/the_silver_searcher
+
+If you want to use the ack utility with this plugin, then you can download the
+ack utility from:
+
+    https://beyondgrep.com/
+
+If you want to use ripgrep (rg) with this plugin, then you can download the
+ripgrep utility from:
+
+    https://github.com/BurntSushi/ripgrep
+
+If you want to use the sift utility with this plugin, then you can download
+the sift utility from:
+
+    https://sift-tool.org
+
+If you want to use the platinum searcher with this plugin, then you can
+download the platinum searcher utility from:
+
+    https://github.com/monochromegane/the_platinum_searcher
+
+If you want to use the universal code grep with this plugin, then you can
+download the universal code grep utility from:
+
+    https://gvansickle.github.io/ucg
+
+The silver searcher, ripgrep, ack, sift, platinum searcher and universal code
+grep utilities can search for a pattern recursively across directories without
+using any other additional utilities like find and xargs.
+
+The github repository for this plugin is at https://github.com/yegappan/grep
+
+==============================================================================
+						*grep-installation*
+2. Installation~
+
+You can use any one of the Vim plugin managers (dein.vim, pathogen, vam,
+vim-plug, volt, Vundle, etc.) to install and manage this plugin.
+
+Alternatively, you can also manually download and install the plugin
+using the following steps. 
+
+1. Download the grep.zip file from the https://vim.sourceforge.io site. 
+2. Expand the grep.zip file to the $HOME/.vim/plugin or
+   $HOME/vimfiles/plugin or $VIM/vimfiles/plugin directory.
+3. If the grep executables are not already present in one of the directories
+   in the PATH environment variable, then set the Grep_Path and other _Path
+   variables to point to the location of the grep utilities in the .vimrc
+   file.
+4. Restart Vim.
+5. You can now use the ":Grep" and other commands to search for patterns in
+   files.
+
+==============================================================================
+						*grep-usage*
+3. Usage~
+
+The grep.vim plugin introduces the following Vim commands:
+
+:Grep          - Search for the specified pattern in the specified files
+:GrepAdd       - Same as ":Grep" but adds the results to the current results
+:Rgrep         - Run recursive grep
+:RgrepAdd      - Same as ":Rgrep" but adds the results to the current results
+:GrepBuffer    - Search for a pattern on all open buffers
+:GrepBufferAdd - Same as ":GrepBuffer" but adds the results to the current
+		 list
+:Bgrep         - Same as :GrepBuffer
+:BgrepAdd      - Same as :GrepBufferAdd
+:GrepArgs      - Search for a pattern on all the Vim argument 
+                 filenames (:args)
+:GrepArgsAdd   - Same as ":GrepArgs" but adds the results to the current list
+:Fgrep         - Run fgrep
+:FgrepAdd      - Same as ":Fgrep" but adds the results to the current list
+:Rfgrep        - Run recursive fgrep
+:RfgrepAdd     - Same as ":Rfgrep" but adds the results to the current list
+:Egrep         - Run egrep
+:EgrepAdd      - Same as ":Egrep" but adds the results to the current list
+:Regrep        - Run recursive egrep
+:RegrepAdd     - Same as ":Regrep" but adds the results to the current list
+:Findstr       - Search for a pattern in files. Available only on MS-Windows.
+:FindstrAdd    - Same as ":Findstr" but adds the results to the current list
+:Agrep         - Run agrep
+:AgrepAdd      - Same as ":Agrep" but adds the results to the current list
+:Ragrep        - Run recursive agrep
+:RagrepAdd     - Same as ":Ragrep" but adds the results to the current list
+:Ag            - Run the silver searcher (ag)
+:AgAdd         - Same as ":Ag" but adds the results to the current list
+:Ack           - Run ack
+:AckAdd        - Same as ":Ack" but adds the results to the current list
+:Rg            - Run ripgrep (rg)
+:RgAdd         - Same as ":Rg" but adds the results to the current list
+:Gitgrep       - Run git grep
+:GitgrepAdd    - Same as ":Gitgrep" but adds the results to the current list
+:Sift          - Run sift
+:SiftAdd       - Same as ":Sift" but adds the results to the current list
+:Ptgrep        - Run the platinum searcher (pt)
+:PtgrepAdd     - Same as ":Ptgrep" but adds the results to the current list
+:Ucgrep        - Run the Universal code grep (ucg)
+:UcgrepAdd     - Same as ":Ucgrep" but adds the results to the current list
+
+The above commands can be invoked like this:
+
+    :Grep   [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Rgrep  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Fgrep  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Rfgrep [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Egrep  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Regrep [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Agrep  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Ragrep [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :Findstr [<options>] [<search_pattern> [<file_name(s)>]]
+    :Ag [<options>] [<search_pattern> [<file_name(s)>]]
+    :Ack [<options>] [<search_pattern> [<file_name(s)>]]
+    :Rg [<options>] [<search_pattern> [<file_name(s)>]]
+    :Gitgrep [<options>] [<search_pattern> [<file_name(s)>]]
+    :Sift [<options>] [<search_pattern> [<file_name(s)>]]
+    :Ptgrep [<options>] [<search_pattern> [<file_name(s)>]]
+    :Ucgrep [<options>] [<search_pattern> [<file_name(s)>]]
+
+    :GrepAdd   [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :RgrepAdd  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :FgrepAdd  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :RfgrepAdd [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :EgrepAdd  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :RegrepAdd [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :FindstrAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :AgrepAdd  [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :RagrepAdd [<grep_options>] [<search_pattern> [<file_name(s)>]]
+    :AgAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :AckAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :RgAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :GitgrepAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :SiftAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :PtgrepAdd [<options>] [<search_pattern> [<file_name(s)>]]
+    :UcgrepAdd [<options>] [<search_pattern> [<file_name(s)>]]
+
+    :GrepBuffer [<grep_options>] [<search_pattern>]
+    :Bgrep [<grep_options>] [<search_pattern>]
+    :GrepArgs [<grep_options>] [<search_pattern>]
+
+    :GrepBufferAdd [<grep_options>] [<search_pattern>]
+    :BgrepAdd [<grep_options>] [<search_pattern>]
+    :GrepArgsAdd [<grep_options>] [<search_pattern>]
+
+In the above commands, all the arguments are optional.
+
+You can specify grep options like -i (ignore case) or -w (search for a word)
+to the above commands.  To always pass a set of command line flags to the
+grep command, you can set the Grep_Options variable. There are similar
+variables for other commands.
+
+You can specify the grep pattern to search as an argument to the above
+commands.  If the <search_pattern> is not specified, then you will be prompted
+to enter a search pattern. By default, the keyword under the cursor is
+displayed for the search pattern prompt. You can accept the default or modify
+it.
+
+The search pattern is automatically enclosed by the escape character. You
+should not enclose the search pattern with a shell escape character.
+
+If you want to specify a search pattern with space characters or a multi-word
+pattern, then you should run the Grep command without any arguments and use
+the search pattern input prompt to supply the search pattern.
+
+You can specify one or more file names (or file patterns) to the above
+commands.  If the <file_names> are not specified, then you will be prompted to
+enter file names.  By default, the pattern specified by the
+Grep_Default_Filelist variable is used. To specify the file name(s) as an
+argument to the above commands, you have to specify the search pattern also.
+
+When using search utilities like ag, ack, ripgrep and git grep which searches
+recursively by default, if you don't specify a filename, then the command will
+search recursively.
+
+When you enter only the command name, you will be prompted to enter the search
+pattern and the files in which to search for the pattern. By default, the
+keyword under the cursor is displayed for the search pattern prompt.
+Depending on the command, you may prompted for additional parameters like the
+directories to search for the pattern.
+
+On MS-Windows, the command line options for the findstr.exe utility are
+prefixed with '/'. The ':Findstr' command accepts options prefixed with '/'.
+Examples:
+
+    " To search for 'windows' ignoring case
+    :Findstr /I windows *.java
+    " To search for 'class' recursively from the current directory
+    :Findstr /S class *.java
+
+You can retrieve previously entered values for the Grep prompts using the up
+and down arrow keys. You can cancel the command by pressing the escape key.
+You can use CTRL-U to erase the default shown for the prompt and CTRL-W to
+erase the previous word in the prompt. For more information about editing the
+prompt, read |:cmdline-editing| Vim help topic.
+
+After invoking any of the grep commands, you can cancel the command, when you
+are prompted for a search pattern or file names or a directory by pressing the
+<Esc> key. If you are using a Vim version before 8.0, then you cannot cancel
+(or kill) the grep/fgrep/egrep/agrep commands after the external command is
+invoked.
+
+If you are using Vim version 8.0 and above, then the grep commands are run
+asynchronously in the background. The search output is parsed and the results
+are added to the quickfix list in the background. Invoking a grep command will
+cancel the current grep command which is running in the background (if any).
+
+The GrepAdd, RgrepAdd and other *Add commands append the search output to the
+current search output. This is useful if you want to see the search results
+for multiple patterns at the same time. These commands are available only in
+Vim version 7.0 and above.
+
+Some examples for using the silver searcher command to search for a pattern
+are below:
+>
+    " To search for 'myclass' recursively from the current directory
+    :Ag myclass .
+    " To search for 'myclass' only in .java files in the current directory
+    :Ag myclass *.java
+    " To search for 'myclass' only in .java files recursively
+    :Ag --java myclass .
+<
+You can map a key to invoke any of the above commands. For example, the
+following map invokes the :Grep command to search for the keyword under the
+cursor:
+
+      nnoremap <silent> <F3> :Grep<CR>
+
+The output of the grep command will be listed in the Vim quickfix window.
+1. You can select a line in the quickfix window and press <Enter> or double
+   click on a match to jump to that line.
+2. You can use the ":cnext" and ":cprev" commands to the jump to the next or
+   previous output line.
+3. You can use the ":colder" and ":cnewer" commands to go between multiple
+   grep quickfix output windows.
+4. The quickfix window need not be opened always to use the grep output.
+   You can close the quickfix window and use the quickfix commands to jump
+   to the grep matches.  Use the ":copen" command to open the quickfix
+   window again.
+
+For more information about other quickfix commands read ":help quickfix"
+
+When using GUI Vim, the Tools->Search menu item with a few sub-menu items is
+created for few variations of the search command.
+
+Note that when recursively searching for a pattern using the silver searcher,
+ripgrep, ack, git grep, sift, platinum searcher or universal code grep
+utilities, if a large number (several thousands) of matching files are found,
+then it will take some time for Vim to load all the files into the buffer
+list. In the meantime, Vim will be slow to respond or may not respond to
+keystrokes.
+
+==============================================================================
+						*grep-configuration*
+4. Configuration~
+
+By changing the following variables you can configure the behavior of this
+plugin. Set the following variables in your .vimrc file using the |:let|
+command.
+
+The 'Grep_Path' variable is used to locate the grep utility. By default, this
+is set to grep. You can change this using the let command:
+
+    :let Grep_Path = 'C:\Progra~1\Grep\grep.exe'
+
+The 'Fgrep_Path' variable is used to locate the fgrep utility. By default,
+this is set to fgrep. You can change this using the let command:
+
+    :let Fgrep_Path = 'C:\Progra~1\Grep\fgrep.exe'
+
+The 'Egrep_Path' variable is used to locate the egrep utility. By default,
+this is set to egrep. You can change this using the let command:
+
+    :let Egrep_Path = 'C:\Progra~1\Grep\egrep.exe'
+
+The 'Agrep_Path' variable is used to locate the agrep utility. By default,
+this is set to agrep. You can change this using the let command:
+
+    :let Agrep_Path = 'C:\Progra~1\Grep\agrep.exe'
+
+The 'Findstr_Path' variable is used to locate the findstr.exe utility on
+MS-Windows. By default, this is set to findstr.exe. You can change this using
+the let command:
+
+    :let Findstr_Path = 'C:\Windows\System32\findstr.exe'
+
+The 'Ag_Path' variable is used to locate the ag (silver searcher) utility. By
+default, this is set to ag. You can change this using the let command:
+
+    :let Ag_Path = 'C:\Progra~1\Silver_Searcher\ag.exe'
+
+The 'Ack_Path' variable is used to locate the ack utility. By default, this is
+set to ack. You can change this using the let command:
+
+    :let Ack_Path = 'C:\Progra~1\ack\ack.pl'
+
+The 'Rg_Path' variable is used to locate the rg (ripgrep) utility. By default,
+this is set to rg. You can change this using the let command:
+
+    :let Rg_Path = 'C:\Progra~1\ripgrep\rg.exe'
+
+The 'Git_Path' variable is used to locate the git utility used by the Gitgrep
+command. By default, this is set to git. You can change this using the let
+command:
+
+    :let Git_Path = 'C:\Progra~1\git\git.exe'
+
+The 'Sift_Path' variable is used to locate the sift utility used by the Sift
+command. By default, this is set to sift. You can change this using the let
+command:
+
+    :let Sift_Path = 'C:\Progra~1\sift\sift.exe'
+
+The 'Pt_Path' variable is used to locate the platinum searcher utility used by
+the Ptgrep command. By default, this is set to pt. You can change this
+using the let command:
+
+    :let Pt_Path = 'C:\Progra~1\pt\pt.exe'
+
+The 'Ucg_Path' variable is used to locate the universal code grep utility used by
+the Ucgrep command. By default, this is set to ucg. You can change this
+using the let command:
+
+    :let Ucg_Path = '/usr/local/bin/ucg'
+
+The 'Grep_Find_Path' variable is used to locate the find utility. By default,
+this is set to 'find'. Note that on MS-Windows, there is a find.exe that is
+part of the base OS. This find utility is different from the Unix find
+utility. You cannot use this utility with this plugin. You must install the
+Unix compatible find utility and set the Grep_Find_Path variable to point to
+the location of the utility. You can change this using the let command:
+
+    :let Grep_Find_Path = 'C:\Progra~1\Grep\find.exe'
+
+The 'Grep_Xargs_Path' variable is used to locate the xargs utility. By
+default, this is set to xargs. You can change this using the let command:
+
+    :let Grep_Xargs_Path = 'C:\Progra~1\Grep\xargs.exe'
+
+When running any one of the Grep commands, you will be prompted for the files
+in which to search for the pattern. The 'Grep_Default_Filelist' variable is
+used to specify to default for this prompt. By default, this variable is set
+to '*'. You can specify multiple matching patterns separated by spaces. You
+can change this settings using the let command:
+
+    :let Grep_Default_Filelist = '*.[chS]'
+    :let Grep_Default_Filelist = '*.c *.cpp *.asm'
+
+The 'Grep_Options' variable is used to pass command line options to the grep
+command. By default, this is set to an empty string.  You can change this
+using the let command:
+
+    :let Grep_Options = '-i'
+
+Similarly you can pass command line options to other commands by setting the
+'Fgrep_Options', 'Egrep_Options', 'Agrep_Options', 'Findstr_Options',
+'Ag_options', 'Ack_Options', 'Rg_Options', "Gitgrep_Options', 'Sift_Options',
+'Pt_Options' and 'Ucg_Options' variables in your .vimrc file.
+
+The 'Grep_Skip_Dirs' variable specifies the list of directories to skip while
+doing recursive searches. This is used only by the :Rgrep, :Rfgrep, :Regrep,
+and :Ragrep commands. By default, this is set to 'RCS CVS SCCS'.  You can
+change this using the let command:
+
+    :let Grep_Skip_Dirs = 'dir1 dir2 dir3'
+
+The 'Grep_Skip_Files' variable specifies the list of files to skip while doing
+recursive searches. This is used only by the :Rgrep, :Rfgrep, :Regrep, and
+:Ragrep commands. By default, this is set to '*~ *,v s.*'. You can change this
+using the let command:
+
+    :let Grep_Skip_Files = '*.bak *~'
+
+By default, when you invoke the Grep commands the quickfix window will be
+opened with the grep output.  You can disable opening the quickfix window, by
+setting the 'Grep_OpenQuickfixWindow' variable  to zero:
+
+    :let Grep_OpenQuickfixWindow = 0
+
+You can manually open the quickfix window using the :cwindow command.
+
+By default, for recursive searches, the 'find' and 'xargs' utilities are used.
+If you don't have the 'xargs' utility or don't want to use the 'xargs'
+utility, " then you can set the 'Grep_Find_Use_Xargs' variable to zero. If
+this is set to zero, then only the 'find' utility is used for recursive
+searches:
+
+    :let Grep_Find_Use_Xargs = 0
+
+To handle file names with space characters in them, the xargs utility is
+invoked with the '-0' argument. If the xargs utility in your system doesn't
+accept the '-0' argument, then you can change the Grep_Xargs_Options variable.
+For example, to use the '--null' xargs argument, you can use the following
+command:
+
+    :let Grep_Xargs_Options = '--null'
+
+The Grep_Cygwin_Find variable should be set to 1, if you are using the find
+utility from the cygwin package. This setting is used to handle the difference
+between the backslash and forward slash path separators.
+
+    :let Grep_Cygwin_Find = 1
+
+The 'Grep_Null_Device' variable specifies the name of the null device to pass
+to the grep commands. This is needed to force the grep commands to print the
+name of the file in which a match is found, if only one filename is specified.
+For Unix systems, this is set to /dev/null and for MS-Windows systems, this is
+set to NUL. You can modify this by using the let command:
+
+    :let Grep_Null_Device = '/dev/null'
+
+The 'Grep_Shell_Escape_Char' variable specifies the escape character to use
+for protecting special characters from being interpreted by the shell.  For
+Unix systems, this is set to '\' and for MS-Window systems, this is set to an
+empty string.  You can change this using the let command:
+
+    :let Grep_Shell_Escape_Char = "'"
+
+The 'Grep_Run_Async' variable specifies whether the grep commands are run
+synchronously or asynchronously. Depending on the Vim version, this variable
+is set automatically.  If you want to force Vim to run the grep commands
+synchronously, then you can set the 'Grep_Run_Async' variable to 1.
+
+==============================================================================
+
+vim:tw=78:ts=8:noet:ft=help:
