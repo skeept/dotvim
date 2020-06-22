@@ -10,6 +10,12 @@ function! deoplete#mapping#_init() abort
         \ deoplete#mapping#_dummy('deoplete#mapping#_complete')
   inoremap <expr><silent> <Plug>+
         \ deoplete#mapping#_dummy('deoplete#mapping#_prev_complete')
+
+  " Note: The dummy mappings may be inserted on other modes.
+  cnoremap <silent> <Plug>_  <Nop>
+  cnoremap <silent> <Plug>+  <Nop>
+  noremap  <silent> <Plug>_  <Nop>
+  noremap  <silent> <Plug>+  <Nop>
 endfunction
 function! deoplete#mapping#_dummy(func) abort
   return "\<C-r>=".a:func."()\<CR>"
