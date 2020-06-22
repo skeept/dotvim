@@ -115,7 +115,6 @@ function! neomake#makers#ft#python#flake8() abort
     let maker = {
         \ 'args': ['--format=default'],
         \ 'errorformat':
-            \ '%E%f:%l: could not compile,%-Z%p^,' .
             \ '%A%f:%l:%c: %t%n %m,' .
             \ '%A%f:%l: %t%n %m,' .
             \ '%-G%.%#',
@@ -125,21 +124,23 @@ function! neomake#makers#ft#python#flake8() abort
         \ 'filter_output': function('neomake#makers#ft#python#FilterPythonWarnings'),
         \ }
 
-    function! maker.supports_stdin(jobinfo) abort
-        let self.args += ['--stdin-display-name', '%:p']
-
+    " With flake8 3.8.0 it is required to change the directory, since it now
+    " uses cwd to look up config files, not the common base of passed args
+    " anymore.  https://gitlab.com/pycqa/flake8/-/merge_requests/363.
+    function! maker.InitForJob(jobinfo) abort
         let bufpath = bufname(a:jobinfo.bufnr)
         if !empty(bufpath)
             let bufdir = fnamemodify(bufpath, ':p:h')
-            if stridx(bufdir, getcwd()) != 0
-                " The buffer is not below the current dir, so let's cd for lookup
-                " of config files etc.
-                " This avoids running into issues with flake8's per-file-ignores,
-                " which is handled not relative to the config file currently
-                " (https://gitlab.com/pycqa/flake8/issues/517).
-                call a:jobinfo.cd(bufdir)
+            if isdirectory(bufdir)
+                let self.cwd = bufdir
+            else
+                call neomake#log#debug(printf("buffer's directory does not exist: %s.", bufdir), a:jobinfo)
             endif
         endif
+    endfunction
+
+    function! maker.supports_stdin(_jobinfo) abort
+        let self.args += ['--stdin-display-name', '%:p']
         return 1
     endfunction
     return maker
@@ -267,11 +268,12 @@ function! neomake#makers#ft#python#Flake8EntryProcess(entry) abort
 endfunction
 
 function! neomake#makers#ft#python#pyflakes() abort
+    " NOTE: pyflakes 2.2.0 includes column always, but without trailing colon,
+    "       except for SyntaxErrors.
     return {
         \ 'errorformat':
-            \ '%E%f:%l: could not compile,' .
-            \ '%-Z%p^,'.
             \ '%E%f:%l:%c: %m,' .
+            \ '%E%f:%l:%c %m,' .
             \ '%E%f:%l: %m,' .
             \ '%-G%.%#',
         \ }
