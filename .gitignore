@@ -50,3 +50,5 @@ __pycache__/
 log.txt
 cache/
 share/tmru/
+
+**/vimproc/lib/
