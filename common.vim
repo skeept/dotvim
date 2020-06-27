@@ -464,8 +464,8 @@ function! LoadUnite(timer) "{{{
   let g:unite_source_file_mru_filename_format = ''
   let g:unite_source_history_yank_enable = 0
 
-  call vam#ActivateAddons(['unite', 'unite-mark', 'unite-outline',
-	\ 'unite-tag', 'unite-colorscheme', 'unite-history',
+  call vam#ActivateAddons(['unite.vim', 'unite-mark', 'unite-outline',
+	\ 'unite-tag', 'unite-colorscheme', 'vim-unite-history',
         \ ],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files

@@ -36,7 +36,8 @@ function! SetupVAM()
 
   let g:vim_addon_manager.additional_addon_dirs = [
         \ escape(g:p0 . '/notused_plugins', ' \'),
-        \ escape(g:p0 . '/pack/bundle/opt', ' \')
+        \ escape(g:p0 . '/pack/bundle/opt', ' \'),
+        \ escape(g:p0 . '/plugged', ' \')
         \ ]
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
