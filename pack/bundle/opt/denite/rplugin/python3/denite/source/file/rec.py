@@ -27,6 +27,8 @@ class Source(Base):
             'command': [],
             'cache_threshold': 10000,
         }
+        self.converters = ['converter/truncate_abbr']
+
         self._cache: typing.Dict[str, Candidates] = {}
 
     def on_init(self, context: UserContext) -> None:
@@ -101,7 +103,7 @@ class Source(Base):
         if not outs:
             return []
         directory = context['__directory']
-        if Path(outs[0]).is_absolute():
+        if outs and Path(outs[0]).is_absolute():
             candidates = [{
                 'word': str(Path(x).relative_to(directory)),
                 'action__path': x,

@@ -4,7 +4,7 @@
 # License: MIT license
 # ============================================================================
 
-from denite.base.source import Base
+from denite.base.source.interactive import Source as Base
 from denite.util import Nvim, UserContext, Candidates, Candidate
 from denite import util, process
 
@@ -39,13 +39,6 @@ class Source(Base):
         self.kind = 'file'
         self.matchers = ['matcher/regexp']
         self.sorters = []
-        self.vars = {
-            'command': ['grep'],
-            'default_opts': ['-inH'],
-            'pattern_opt': ['-e'],
-            'separator': ['--'],
-            'final_opts': [],
-        }
 
     def on_init(self, context: UserContext) -> None:
         buf = self.vim.current.buffer
@@ -64,18 +57,16 @@ class Source(Base):
         else:
             context['__path'] = bufpath
 
-        # Backwards compatibility for `ack`
-        if (self.vars['command'] and
-                self.vars['command'][0] == 'ack' and
-                self.vars['pattern_opt'] == ['-e']):
-            self.vars['pattern_opt'] = ['--match']
-
         # Interactive mode
         context['is_interactive'] = True
 
         context['__args'] = ''
 
     def on_close(self, context: UserContext) -> None:
+        if context.get('__proc'):
+            context['__proc'].kill()
+            context['__proc'] = None
+
         if not context['__temp']:
             return
 
@@ -91,9 +82,13 @@ class Source(Base):
         if not context['input']:
             return []
 
-        args = self._init_args(context)
+        args = self.init_grep_args(context)
         if args == context['__args'] and context['__proc']:
             return self._async_gather_candidates(context, 0.5)
+
+        if context.get('__proc'):
+            context['__proc'].kill()
+            context['__proc'] = None
 
         context['__args'] = args
         self.print_message(context, str(args))
@@ -119,21 +114,3 @@ class Source(Base):
             candidates.append(_candidate(
                 result, context['__bufnr'], context['__fmt']))
         return candidates
-
-    def _init_args(self, context: UserContext) -> typing.List[str]:
-        patterns = [
-            '.*'.join(util.split_input(context['input']))]
-
-        args = [util.expand(self.vars['command'][0])]
-        args += self.vars['command'][1:]
-        args += self.vars['default_opts']
-        if self.vars['pattern_opt']:
-            for pattern in patterns:
-                args += self.vars['pattern_opt'] + [pattern]
-            args += self.vars['separator']
-        else:
-            args += self.vars['separator']
-            args += patterns
-        args.append(context['__path'])
-        args += self.vars['final_opts']
-        return args
