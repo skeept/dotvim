@@ -160,9 +160,15 @@ if IsAddonActive('vim-mucomplete')
               \ mucomplete#neosnippet#expand_snippet("\<cr>")
           imap <F10> <plug><MyCR>
         endif
-        imap <F11> <plug>(MUcompleteCR)
-        inoremap <silent> <plug>(MUcompleteFwdKey) <C-L>
-        imap <C-L> <plug>(MUcompleteCycFwd)
+
+        "imap <F11> <plug>(MUcompleteCR)
+        "inoremap <silent> <plug>(MUcompleteFwdKey) <C-L>
+        "imap <C-L> <plug>(MUcompleteCycFwd)
+
+	inoremap <silent> <plug>(MUcompleteFwdKey) <right>
+	imap <right> <plug>(MUcompleteCycFwd)
+	inoremap <silent> <plug>(MUcompleteBwdKey) <left>
+	imap <left> <plug>(MUcompleteCycBwd)
 
 endif
 "==============================================================================}}}

@@ -34,7 +34,14 @@ Plug 'ctrlpvim/ctrlp.vim'
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
-Plug 'molok/vim-smartusline'
+if 0
+  Plug g:p0 . '/pack/bundle/opt/airline'
+  Plug g:p0 . '/pack/bundle/opt/airline-extensions'
+elseif 1
+  Plug g:p0 . '/pack/bundle/opt/lightline'
+else
+  Plug 'molok/vim-smartusline'
+endif
 
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
@@ -59,6 +66,7 @@ Plug 'tpope/vim-unimpaired'
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
 Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
+"Plug 'chrisbra/NrrwRgn'
 Plug 'chrisbra/Recover.vim'
 
 Plug 'kana/vim-textobj-user'
