@@ -1746,6 +1746,47 @@ class TestGoFZF < TestBase
     tmux.send_keys "seq 10000 | #{FZF} --read0 --keep-right", :Enter
     tmux.until { |lines| assert lines.any_include?('9999 10000') }
   end
+
+  def test_backward_eof
+    tmux.send_keys "echo foo | #{FZF} --bind 'backward-eof:reload(seq 100)'", :Enter
+    tmux.until { |lines| lines.item_count == 1 && lines.match_count == 1 }
+    tmux.send_keys 'x'
+    tmux.until { |lines| lines.item_count == 1 && lines.match_count == 0 }
+    tmux.send_keys :BSpace
+    tmux.until { |lines| lines.item_count == 1 && lines.match_count == 1 }
+    tmux.send_keys :BSpace
+    tmux.until { |lines| lines.item_count == 100 && lines.match_count == 100 }
+  end
+
+  def test_preview_bindings_with_default_preview
+    tmux.send_keys "seq 10 | #{FZF} --preview 'echo [{}]' --bind 'a:preview(echo [{}{}]),b:preview(echo [{}{}{}]),c:refresh-preview'", :Enter
+    tmux.until { |lines| lines.item_count == 10 }
+    tmux.until { |lines| assert_includes lines[1], '[1]' }
+    tmux.send_keys 'a'
+    tmux.until { |lines| assert_includes lines[1], '[11]' }
+    tmux.send_keys 'c'
+    tmux.until { |lines| assert_includes lines[1], '[1]' }
+    tmux.send_keys 'b'
+    tmux.until { |lines| assert_includes lines[1], '[111]' }
+    tmux.send_keys :Up
+    tmux.until { |lines| assert_includes lines[1], '[2]' }
+  end
+
+  def test_preview_bindings_without_default_preview
+    tmux.send_keys "seq 10 | #{FZF} --bind 'a:preview(echo [{}{}]),b:preview(echo [{}{}{}]),c:refresh-preview'", :Enter
+    tmux.until { |lines| lines.item_count == 10 }
+    tmux.until { |lines| refute_includes lines[1], '1' }
+    tmux.send_keys 'a'
+    tmux.until { |lines| assert_includes lines[1], '[11]' }
+    tmux.send_keys 'c' # does nothing
+    tmux.until { |lines| assert_includes lines[1], '[11]' }
+    tmux.send_keys 'b'
+    tmux.until { |lines| assert_includes lines[1], '[111]' }
+    tmux.send_keys 9
+    tmux.until { |lines| lines.match_count == 1 }
+    tmux.until { |lines| refute_includes lines[1], '2' }
+    tmux.until { |lines| assert_includes lines[1], '[111]' }
+  end
 end
 
 module TestShell
