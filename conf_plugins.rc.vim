@@ -224,17 +224,33 @@ call SetupAsyncomplete()
 
 "================== lightline  =============================================={{{
 if IsAddonActive('lightline')
+"let g:lightline = {
+      "\ 'active': {
+      "\   'right': [ [ 'lineinfo' ],
+      "\              [ 'percent' ],
+      "\              [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ]
+      "\  },
+      "\ 'component_function': {
+      "\ 'tabsindicator': 'GetNumTabsStr'
+      "\ },
+      "\ }
+
 let g:lightline = {
       \ 'active': {
-      \   'right': [ [ 'lineinfo' ],
-      \              [ 'percent' ],
-      \              [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ]
-      \  },
+      \ 'left': [ [ 'bufnum', 'mode', 'paste' ],
+      \           [ 'readonly', 'filename', 'modified' ] ],
+      \ 'right': [ [ 'lineinfo' ],
+      \            [ 'percent' ],
+      \            [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ] },
       \ 'component_function': {
       \ 'tabsindicator': 'GetNumTabsStr'
       \ },
       \ }
 
+let g:lightline.inactive = {
+    \ 'left': [ ['bufnum', 'filename' ] ],
+    \ 'right': [ [ 'lineinfo' ],
+    \            [ 'percent' ] ] }
 
 "let g:lightline = {
       "\ 'colorscheme': 'wombat',
