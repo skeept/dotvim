@@ -813,7 +813,7 @@ command! -range=% DelTrailWhiteSpace
 "==============================================================================}}}
 
 "================== Statusline Settings/functions ======================={{{
-" These cannot go into auload because always called by statusline
+" These cannot go into autoload because always called by statusline
 function! GetNumTabsStr()
   if tabpagenr('$') == 1
     return ''

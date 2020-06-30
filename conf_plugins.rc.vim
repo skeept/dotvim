@@ -221,3 +221,31 @@ endfunction
 " for now call it here, may call it somewhere else
 call SetupAsyncomplete()
 "==============================================================================}}}
+
+"================== lightline  =============================================={{{
+if IsAddonActive('lightline')
+let g:lightline = {
+      \ 'active': {
+      \   'right': [ [ 'lineinfo' ],
+      \              [ 'percent' ],
+      \              [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ]
+      \  },
+      \ 'component_function': {
+      \ 'tabsindicator': 'GetNumTabsStr'
+      \ },
+      \ }
+
+
+"let g:lightline = {
+      "\ 'colorscheme': 'wombat',
+      "\ 'active': {
+      "\   'right': [ [ 'lineinfo' ],
+      "\              [ 'percent' ],
+      "\              [ 'fileformat', 'fileencoding', 'filetype', 'charvaluehex' ] ]
+      "\ },
+      "\ 'component': {
+      "\   'charvaluehex': '0x%B'
+      "\ },
+      "\ }
+endif
+"==============================================================================}}}
