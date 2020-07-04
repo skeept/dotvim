@@ -548,7 +548,7 @@ endfunction "}}}
 "================== Plugin Loading (simple.vim) ==============================={{{
 function! jraf#loadCtrlP()
   if g:addon_manager == 2
-    call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
+    call vam#ActivateAddons(['ctrlp.vim'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   else "assume packadd
     packadd ctrlp
   endif
