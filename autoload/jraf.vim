@@ -492,32 +492,6 @@ function! jraf#fullScreenToogle()
 endfunction
 "==============================================================================}}}
 
-"================== LycosaExplorer ============================================{{{
-function! jraf#setupLycosa()
-  noremap ,b :LycosaBufferExplorer<CR>
-  noremap ,lh :LycosaFilesystemExplorerFromHere<CR>
-  noremap ,le :LycosaFilesystemExplorer<CR>
-
-  function! ToggleLycosa()
-    if v:count == 0
-      LycosaFilesystemExplorer
-    elseif v:count == 1
-      LycosaBufferExplorer
-    elseif v:count == 2
-      LycosaFilesystemExplorerFromHere
-    else
-      echo "0: File System, 1:buffer, 2: File from here"
-    endif
-  endfunction
-  nnoremap ,e :<c-u> call ToggleLycosa()<CR>
-endfunction
-
-"if index(g:pathogen_disabled, 'lycosaexplorer') == -1
-if IsAddonActive('lycosaexplorer')
-  call SetupLycosa()
-endif
-"==============================================================================}}}
-
 "================== LibClang =================================================={{{
 function! jraf#loadClangComplete()
   if 1 || exists("s:loaded_clang_complete") || g:is_win | return '' | endif
@@ -577,21 +551,11 @@ function! jraf#loadCtrlP()
     call vam#ActivateAddons(['ctrlp'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
   else "assume packadd
     packadd ctrlp
-    "call SetupLycosa()
   endif
   nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
         \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>
 endf
-
-function! jraf#loadLycosa()
-  if g:addon_manager == 2
-    call vam#ActivateAddons(['LycosaExplorer'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  else
-    packadd LycosaExplorer
-  endif
-    call SetupLycosa()
-endfunction
 "==============================================================================}}}
 
 "================== Scratch Edit =============================================={{{

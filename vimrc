@@ -37,11 +37,10 @@ if g:addon_manager == 1
     let g:pathogen_disabled += ['powerline', 'startify']
     let g:pathogen_disabled += ['hilinks']
     let g:pathogen_disabled += ['snipmate']
-    let g:pathogen_disabled += ['lycosaexplorer'] "lycosa is to heavy
     let g:pathogen_disabled += ['Align', 'AutoAlign']
     "let g:pathogen_disabled += ['UltiSnips']
     if !has("python")
-      let g:pathogen_disabled += ['lycosaexplorer', 'headlights']
+      let g:pathogen_disabled += ['headlights']
       let g:pathogen_disabled += ['UltiSnips', 'pyflakes', 'python-mode']
     endif
     call pathogen#infect()
@@ -342,12 +341,6 @@ let g:ConqueTerm_ReadUnfocused = 1
 if 0 " disabled for now
 noremap <leader>t_ <Plug>TaskList
 noremap <leader>td :TaskList<CR>
-endif
-"==============================================================================}}}
-
-"================== LycosaExplorer ============================================{{{
-if IsAddonActive('lycosaexplorer')
-  call jrar#setupLycosa()
 endif
 "==============================================================================}}}
 

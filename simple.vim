@@ -99,8 +99,6 @@ nnoremap <C-P> :<C-U>let curr_vcount=v:count
       \ \| call jraf#loadCtrlP()<CR>:<C-U>call jraf#ctrlpShowArrFun(curr_vcount)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[curr_vcount]<CR>
 nnoremap ,b :<C-U>call jraf#loadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
-
-nnoremap ,e :call jraf#loadLycosa()<CR>:<c-u>LycosaFilesystemExplorer<CR>
 "}}}
 
 "for filetype tex we need imap.vim
