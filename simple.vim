@@ -33,6 +33,7 @@ function! SetupVAM()
   exec 'set rtp+='. vam_install_path
 
   let g:active_addons += ['Supertab', 'nerdcommenter']
+  let g:active_addons += ['vim-unimpaired', 'vim-scratch']
 
   let g:vim_addon_manager.additional_addon_dirs = [
         \ escape(g:p0 . '/notused_plugins', ' \'),
@@ -89,12 +90,6 @@ set statusline+=\ %l/%L\ %2c\ %P
 "==============================================================================}}}
 
 "=================== Plugin Loading ==========================================={{{
-" always load {{{
-runtime plugin/NERD_commenter.vim
-runtime plugin/unimpaired.vim
-runtime plugin/scratch.vim
-"}}}
-
 nnoremap <C-P> :<C-U>let curr_vcount=v:count
       \ \| call jraf#loadCtrlP()<CR>:<C-U>call jraf#ctrlpShowArrFun(curr_vcount)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[curr_vcount]<CR>
