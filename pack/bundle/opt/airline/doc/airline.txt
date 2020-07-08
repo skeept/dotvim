@@ -882,6 +882,12 @@ vim-obsession <https://github.com/tpope/vim-obsession>
 * set marked window indicator string >
   let g:airline#extensions#obsession#indicator_text = '$'
 <
+-------------------------------------                    *airline-omnisharp*
+OmniSharp <https://github.com/OmniSharp/omnisharp-vim>
+
+* enable/disable OmniSharp integration >
+  let g:airline#extensions#omnisharp#enabled = 1
+
 -------------------------------------                          *airline-po*
 This extension will display the currently translated, untranslated and fuzzy
 messages when editing translations (po files). Related plugin (not necessary
@@ -933,6 +939,12 @@ title accordingly.
 <
 * configure the title text for location list buffers >
   let g:airline#extensions#quickfix#location_text = 'Location'
+<
+-------------------------------------                     *airline-searchcount*
+The searchcount extension supports the searchcount() function in Vim script.
+
+* enable/disable searchcount integration >
+  let g:airline#extensions#searchcount#enabled = 1
 <
 -------------------------------------                    *airline-syntastic*
 syntastic <https://github.com/vim-syntastic/syntastic>

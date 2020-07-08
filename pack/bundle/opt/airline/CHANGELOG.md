@@ -11,6 +11,8 @@ This is the Changelog for the vim-airline project.
     - [Vaffle](https://github.com/cocopon/vaffle.vim) support
     - [vim-dirvish](https://github.com/justinmk/vim-dirvish) support
     - [fzf.vim](https://github.com/junegunn/fzf.vim) support
+    - [OmniSharp](https://github.com/OmniSharp/omnisharp-vim) support
+    - [searchcount](https://vim-jp.org/vimdoc-en/eval.html#searchcount())  support
 - Improvements
   - git branch can also be displayed using [gina.vim](https://github.com/lambdalisue/gina.vim)
   - coc extensions can also show additional status messages
