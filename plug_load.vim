@@ -4,12 +4,12 @@ function! Cond(cond, ...)
 endfunction
 
 function! LoadAdditionalUnite()
-  packadd unite-colorscheme    
-  packadd unite-font           
-  packadd unite-mark           
-  packadd unite-outline        
-  packadd unite-qf             
-  packadd unite-session        
+  packadd unite-colorscheme
+  packadd unite-font
+  packadd unite-mark
+  packadd unite-outline
+  packadd unite-qf
+  packadd unite-session
   packadd unite-tag
 endfunction
 
@@ -34,12 +34,13 @@ Plug 'ctrlpvim/ctrlp.vim'
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
-if 0
+let line_plugin = 0
+if 0 == line_plugin "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
   Plug g:p0 . '/pack/bundle/opt/airline-extensions'
-elseif 1
+elseif 1 == line_plugin "lightline
   Plug g:p0 . '/pack/bundle/opt/lightline'
-else
+elseif 2 == line_plugin "smartusline
   Plug 'molok/vim-smartusline'
 endif
 
