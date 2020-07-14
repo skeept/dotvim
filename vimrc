@@ -161,7 +161,6 @@ func! LoadPluginsWithTimer(timer)
   endif
 
   call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
-  
 endfunction
 
 if has('timers')
