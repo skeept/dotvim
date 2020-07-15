@@ -60,14 +60,14 @@ function! wk#echoOrPrintTime()
   " g:ep_offset hours offset
   " g:ep_format format used for print, some options are provided here
   if !exists('g:ep_offset')
-    let g:ep_offset = 0
+    let g:ep_offset = 6
   endif
 
   if !exists('g:ep_format')
     let g:ep_format = 0
   endif
   let formats = [
-        \ "%d/%m %H:%M",
+        \ "%m/%d %H:%M",
         \ "%a, %d %b %Y %H:%M:%S %p",
         \ ]
   let format = formats[g:ep_format]
