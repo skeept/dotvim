@@ -34,7 +34,7 @@ Plug 'ctrlpvim/ctrlp.vim'
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
-let line_plugin = 0
+let line_plugin = 1
 if 0 == line_plugin "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
   Plug g:p0 . '/pack/bundle/opt/airline-extensions'
