@@ -89,4 +89,7 @@ Plug 'will133/vim-dirdiff', { 'on': 'DirDiff' }
 
 Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
 
+
+Plug 'liuchengxu/vim-clap'
+
 call plug#end()
