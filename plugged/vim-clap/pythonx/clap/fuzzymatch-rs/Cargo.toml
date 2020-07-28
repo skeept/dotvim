@@ -1,0 +1,29 @@
+[package]
+name = "fuzzymatch-rs"
+version = "0.1.0"
+edition = "2018"
+authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
+homepage = "https://github.com/liuchengxu/vim-clap"
+description = "Speeding up Python using dynamic module written in Rust"
+license = "MIT"
+publish = false
+
+[lib]
+name = "fuzzymatch_rs"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.11"
+
+[dependencies.printer]
+path = "../../../crates/printer"
+
+[dependencies.filter]
+path = "../../../crates/filter"
+default-features = false
+
+# https://github.com/PyO3/pyo3/issues/340
+# For running PyO3 test using `cargo test --no-default-features`
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]

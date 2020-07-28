@@ -1,0 +1,18 @@
+[package]
+name = "maple"
+build = "build.rs"
+edition = "2018"
+version = "0.1.19"
+license = "MIT"
+publish = false
+include = ["/Cargo.toml", "src/*.rs"]
+authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
+homepage = "https://github.com/liuchengxu/vim-clap"
+categories = ["command-line-utilities"]
+description = "vim-clap external filter gadget"
+
+[dependencies]
+maple_cli = { path = "crates/maple_cli" }
+
+[build-dependencies]
+built = { package = "built", version = "0.4", features = ["git2"]}

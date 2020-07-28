@@ -1,0 +1,71 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  cpoptions_checker:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Check cpoptions
+      run: test/autoload_should_check_cpo.sh
+
+  vint:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Run vint with reviewdog
+      uses: reviewdog/action-vint@v1.0.1
+      with:
+        github_token: ${{ secrets.github_token }}
+        reporter: github-pr-review
+
+  crates:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Run tests under crates
+      run: bash ci/run_test.sh
+
+  maple_binary:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Build maple
+      run: cargo build --release
+
+  python_dynamic_module:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Run Cargo test
+      run: cd pythonx/clap/fuzzymatch-rs && cargo test --no-default-features
+    - name: Install Rustfmt
+      run: rustup component add rustfmt
+    - name: Check formatting
+      run: cargo fmt --all -- --check

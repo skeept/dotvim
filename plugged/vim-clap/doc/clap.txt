@@ -1,0 +1,838 @@
+*clap.txt* Modern Generic Interactive Finder and Dispatcher
+*clap* *vim-clap*
+                                                               ~
+                _                      __                      ~
+         _   __(_)___ ___        _____/ /___ _____             ~
+        | | / / / __ `__ \______/ ___/ / __ `/ __ \            ~
+        | |/ / / / / / / /_____/ /__/ / /_/ / /_/ /            ~
+        |___/_/_/ /_/ /_/      \___/_/\__,_/ .___/             ~
+                                          /_/                  ~
+
+
+===============================================================================
+CONTENTS                                                         *clap-contents*
+
+  1. Introduction.........................|clap-introduction|
+  2. Features.............................|clap-features|
+  3. Supported Providers & Tools..........|clap-support|
+  4. Provider introduction ...............|clap-provider-intro|
+  5. Global Options.......................|clap-options|
+    5.1 Highlights........................|clap-highlights|
+  6. Provider Options.....................|clap-provider-options|
+    6.1 Options for grep..................|clap-grep-options|
+    6.2 Options for yanks.................|clap-yanks-options|
+    6.3 Other Provider Options............|clap-other-provider-options|
+  7. Commands.............................|clap-commands|
+  8. Keybindings..........................|clap-keybindings|
+  9. API..................................|clap-api|
+  10. Contact.............................|clap-contact|
+
+
+===============================================================================
+1. Introduction                                              *clap-introduction*
+
+
+Vim-clap is a modern generic interactive finder and dispatcher, based on the
+newly feature: `floating_win` of neovim or `popup` of vim. The goal of vim-clap is
+to work everywhere out of the box, with fast response.
+
+
+===============================================================================
+2. Features                                                      *clap-features*
+
+
+- Pure vimscript.
+- Work out of the box, without any extra dependency.
+- Extensible, easy to add new source providers.
+- Find or dispatch anything on the fly, with smart cache strategy.
+- Untouch your current window layout, less eye movement.
+- Support multi-selection, use vim's regexp as filter by default.
+- Support the preview functionality when navigating the result list.
+- Support builtin match and external fuzzy filter tools.
+
+
+===============================================================================
+3. Supported Providers & Tools                           *clap-builtin-providers*
+
+Checkout the builtin clap providers |clap-support| .
+
+===============================================================================
+4. Provider introduction                                    *clap-provider-intro*
+
+Checkout |write-clap-provider| for the details.
+
+===============================================================================
+5. Global Options                                                 *clap-options*
+
+
+g:clap_provider_alias                                    *g:clap_provider_alias*
+
+  Type: |Dict|
+  Default: `{ 'hist:': 'command_history', 'gfiles': 'git_files' }`
+
+  Add an alias for the provider if you don't want to invoke some clap provider
+  using its origin id(name) in that it's too long or somehow. That is to say,
+  `:Clap command_history` is equivalenta to `:Clap hist:` .
+
+  The `key` of |g:clap_provider_alias| is the alias, the `value` is the origin
+  provider name.
+
+
+g:clap_cache_directory                                  *g:clap_cache_directory*
+
+  Type: |String|
+  Default: `Undefined`
+
+  This variable controls the cache directory of clap. By default, clap will set
+  the cache directory according to the following order:
+
+  1. If has('nvim'), use `stdpath('cache')/clap`
+  2. If has `$XDG_CACHE_HOME`, use `$XDG_CACHE_HOME/clap`
+  3. Otherwise use `$HOME/.cache/clap`
+
+  Set another directory as the cache directory of clap:
+>
+  let g:clap_cache_directory = $HOME . '/.vim/cache/clap'
+
+
+g:clap_layout                                                    *g:clap_layout*
+
+  Type: |Dict|
+  Default: `{'width': '67%', 'height': '33%', 'row': '33%', 'col': '17%'}`
+
+  This variable controls the size and position of vim-clap window. The postion
+  is relative to the current window by default. The value can be a |Number| which
+  means the window size is fixed or use `[number]%` for a relative size.
+
+  If you change the value of  `width`, normally you'll have to tweak `col` too,
+  otherwise the UI could be weired as vim-clap uses multiple floating_win/popups
+  at the same time.
+
+  If you want to make the window relative to the whole editor instead of
+  current window:
+>
+  let g:clap_layout = { 'relative': 'editor' }
+<
+  Make the width wider:
+>
+  let g:clap_layout = { 'width': '95%', 'col': '5%' }
+
+
+g:clap_theme                                                      *g:clap_theme*
+
+  Type: |Dict| / |String|
+  Default: `Undefined`
+
+  This variable controls the look of clap. If it's undefined, clap will
+  extract the colors from your colorscheme, you could also say that is an
+  adapative theme.
+
+  If you ensure some clap theme exists, e.g., the built-in
+  `material_design_dark` theme, enable it via:
+>
+  let g:clap_theme = 'material_design_dark'
+<
+  If you set `g:clap_theme` to be a `Dict` to specify the palette:
+>
+  let g:clap_theme = { 'search_text': {'guifg': 'red', 'ctermfg': 'red'} }
+
+
+g:clap_popup_input_delay                              *g:clap_popup_input_delay*
+
+  Type: |Number|
+  Default: `100`
+
+  This variable controls the milliseconds delay after which the `on_typed` of
+  provider will be run after your input is changed.
+
+  This option is only meaningful for Vim, NeoVim does not have this delay.
+
+
+g:clap_popup_border                                        *g:clap_popup_border*
+
+  Type: |String|
+  Default: `'rounded'`
+
+  This variable adds the border to the preview popup, avaliable border style:
+  `'rounded'`, `'sharp'`.
+
+  Set it to `'nil'` to disable the border.
+
+  NeoVim's floating_win is unsupported as it does not have a native
+  border option and the workaround is not good for clap's use case.
+
+
+g:clap_maple_delay                                          *g:clap_maple_delay*
+
+  Type: |Number|
+  Default: `100`
+
+  This variable controls the milliseconds delay after which `maple` will be
+  run in case of you have 1 million items.
+
+
+g:clap_popup_cursor_shape                            *g:clap_popup_cursor_shape*
+
+  Type: |String|
+  Default: `''`
+
+  This variable controls the mocked cursor shape in the popup window of vim.
+  If empty, the cursor will be block style.
+
+
+g:clap_on_move_delay                                      *g:clap_on_move_delay*
+
+  Type: |Number|
+  Default: `300`
+
+  This variable controls the milliseconds delay after which the `on_move` of
+  provider will be run when you navigate the result list.
+
+
+g:clap_forerunner_status_sign          *g:clap_forerunner_status_sign*
+
+  Type: |Dict|
+  Default: `{ 'running': '!', 'done': '•', 'using_cache': '*' }`
+
+  The async forerunner job is done in this vim-clap session. Everything should
+  be fast and deterministic even you have 1 million items as long as you
+  install the `maple` Rust extension.
+
+  When it's in `using_cache` status, which means clap is using the cached file
+  collected from previous run, the results could be outdated, use `+no-cache`
+  to rebuild the cache and start a new fresh run, e.g., `:Clap files +no-cache /` .
+
+
+g:clap_disable_bottom_top                            *g:clap_disable_bottom_top*
+
+  Type: |Number|
+  Default: `0`
+
+  Disable wrapping top-to-bottom when pressing ctrl-j/ctrl-k
+  at the bottom/top of the results.
+
+
+g:clap_disable_optional_async                    *g:clap_disable_optional_async*
+
+  Type: |Bool|
+  Default: `v:false`
+
+  For the non-pure-async providers, vim-clap provides an optional async way to
+  filter/find the candidates and will enable it automatically in these cases:
+
+  - the default `source_async` implementation is doable
+  - `g:clap.context.async` is v:true
+  - the `source` of provider is |String|
+  - the `source` of provider is |List| and the size of source exceeds the
+    threshold
+  - the `source` of provider is a |Funcref| that returns a |String| or
+    returns a |List| that exceeds the threshold.
+
+  If the provider does not provide the `source_async` implementation explictily
+  and vim-clap fails to inject the default async external filter implementation,
+  this variable has no effect, the sync filter implementation will always be
+  used.
+
+
+g:clap_no_matches_msg                                    *g:clap_no_matches_msg*
+
+  Type: |String|
+  Default: `"NO MATCHES FOUND"`
+
+  This message will be used when there is no matches found.
+
+
+g:clap_dispatcher_drop_cache                      *g:clap_dispatcher_drop_cache*
+
+  Type: |Bool|
+  Default: `v:true`
+
+  Normally when the external async job returns thousands of results, we won't
+  view them all. By default only the first N items will be actually remembered
+  and the others will only be counted.
+
+  Set this variable to `v:true` to save all the results, and then when you
+  reach the end of the display window, the cached results will be loaded
+  automatically. However, it may have some performance loss to cache all the
+  results especially when there are hundreds of thousands of results.
+
+
+g:clap_insert_mode_only                            *g:clap_insert_mode_only*
+
+  Type: |Bool|
+  Default: `v:false`
+
+  Disable the feature of other modes. `<Esc>` will be used for exiting the
+  clap window instead of exiting the insert mode if you set this variable
+  to `v:true` .
+
+
+g:clap_providers_relaunch_code                  *g:clap_providers_relaunch_code*
+
+  Type: |String|
+  Default: `'@@'`
+
+  This feature is inspired by VS code command palette prefix-based searching.
+  You can input `@@` or use `<C-L>` to invoke `:Clap` to reselect the provider
+  at any time. Although it does not use the prefix searching, it's more
+  convient due to the inherent fuzzy matching feature of vim-clap since you
+  don't have to remember each provider's prefix.
+
+
+g:clap_disable_run_rooter                           *g:clap_disable_run_rooter*
+
+  Type: |Bool|
+  Default: `v:false`
+
+  By default vim-clap will try to run the provider from the project root
+  by changing `cwd` temporarily if the provider has `enable_rooter` field and
+  its value is |v:true|.
+
+  Refer to |g:clap_project_root_markers| for configuring the project root
+  markers.
+
+  This variable can be set to `v:true` to run from the origin `cwd`.
+
+
+g:clap_project_root_markers                       *g:clap_project_root_markers*
+
+  Type: |List|
+  Default: `['.root', '.git', '.git/']`
+
+  This variable controls how vim-clap identify the root directory of a
+  project.
+
+
+g:clap_current_selection_sign                   *g:clap_current_selection_sign*
+
+  Type: |Dict|
+  Default: `{ 'text': '>>', 'texthl': 'ClapCurrentSelectionSign', 'linehl': 'ClapCurrentSelection' }`
+
+
+g:clap_selected_sign                                     *g:clap_selected_sign*
+
+  Type: |Dict|
+  Default: `{ 'text': ' >', 'texthl': 'ClapSelectedSign', 'linehl': 'ClapSelected' }`
+
+
+g:clap_open_action                                         *g:clap_open_action*
+
+  Type: |Dict|
+  Default: `{ 'ctrl-t': 'tab split', 'ctrl-x': 'split', 'ctrl-v': 'vsplit' }`
+
+  This variable defines the extra key bindings for opening the selected file
+  in a different way.
+
+  NOTE: do not define a key binding which is conflicted with the other
+  default bindings of vim-clap, and only `ctrl-*` is supported for now.
+
+
+g:clap_search_box_border_symbols              *g:clap_search_box_border_symbols*
+
+  Type: |Dict|
+  Default: ` { 'arrow': ["\ue0b2", "\ue0b0"], 'curve': ["\ue0b6", "\ue0b4"], 'nil': ['', ''] }`
+
+  This variable defines the symbols that could be used for customizing the
+  search box border. See |g:clap_search_box_border_style| .
+
+  These two symbols must be symmetrically equal. Not every font and terminal
+  emulator can render these symbols perfectly. Use it at your own risk.
+
+
+g:clap_search_box_border_style                  *g:clap_search_box_border_style*
+
+  Type: |Dict|
+  Default: `exists('g:spacevim_nerd_fonts') || exists('g:airline_powerline_fonts') ? 'curve' : 'nil')`
+
+  This variable controls the style of border symbol used for the search box
+  window.
+
+  Set this variable to `nil` to disable the search box border symbol.
+
+
+g:clap_default_external_filter                  *g:clap_default_external_filter*
+
+  Type: |String| or |v:null|
+  Default: `'maple' | 'fzy' | 'fzf' | 'sk' | v:null`
+
+  The default provider's async implementation is based on these external
+  filter programs in the following order:
+
+  `maple` - actually using the algorithm of skim, with the highlight of matched indices.
+  `fzy` - no highlight of matched indices.
+  `fzf` - no highlight of matched indices.
+  `sk` - no highlight of matched indices.
+
+
+g:clap_prompt_format                             *g:clap_prompt_format*
+
+  Type: |String|
+  Default: `' %spinner%%forerunner_status%%provider_id%:'`
+
+  This variable defines a message format for the prompt. The following
+  sequences of characters will be replaced.
+
+    `%spinner%`             - replaced with the current spinner symbol, see
+                             |g:clap_spinner_frames|
+    `%forerunner_status%`   - replaced with the current status of forerunner,
+                            see |g:clap_forerunner_status_sign|
+    `%provider_id%`         - replaced with the id of current provider
+
+
+g:ClapPrompt                                              *g:ClapPrompt*
+
+  Type: |Funcref|
+  Default: `Undefined`
+
+  This variable can let you generate the prompt dynamically, the placeholders
+  in |g:clap_prompt_format| is also supported. |g:clap_prompt_format| will
+  have no use if you set |g:ClapPrompt|.
+
+  For example, show the working directory in the prompt:
+>
+  function! ClapFormat() abort
+    if exists('g:__clap_provider_cwd')
+      let cwd = g:__clap_provider_cwd
+    else
+      let cwd = getcwd()
+    endif
+    return '%spinner% '.pathshorten(cwd).':'
+  endfunction
+
+  let g:ClapPrompt = function('ClapFormat')
+<
+  This is a user level prompt format. There is also a provider level prompt
+  format which has higher priority than the user level one.
+
+
+g:clap_spinner_frames                            *g:clap_spinner_frames*
+
+  Type: |List|
+  Default: `['⠋', '⠙', '⠚', '⠞', '⠖', '⠦', '⠴', '⠲', '⠳', '⠓']`
+
+  The frames used for drawing the spinner.
+
+  Reference:
+  https://github.com/sindresorhus/cli-spinners/blob/master/spinners.json
+
+
+g:clap_enable_icon                               *g:clap_enable_icon*
+
+  Type: |Number|
+  Default: `exists('g:loaded_webdevicons') || get(g:, 'spacevim_nerd_fonts', 0)`
+
+  When set to `1`, vim-clap will try to use the nerdfont icons during
+  the rendering process. Set to `0` If your terminal-emulator or font can not
+  render these icons properly.
+
+  This variable is indended for all the providers by default. It has no effect
+  if some clap provider already has its own icon flag, e.g., |g:clap_provider_grep_enable_icon| .
+
+
+g:clap_fuzzy_match_hl_groups                      *g:clap_fuzzy_match_hl_groups*
+
+  Type: |List|
+  Default: >
+          [
+          \ [118 , '#87ff00'] ,
+          \ [82  , '#5fff00'] ,
+          \ [46  , '#00ff00'] ,
+          \ [47  , '#00ff5f'] ,
+          \ [48  , '#00ff87'] ,
+          \ [49  , '#00ffaf'] ,
+          \ [50  , '#00ffd7'] ,
+          \ [51  , '#00ffff'] ,
+          \ [87  , '#5fffff'] ,
+          \ [123 , '#87ffff'] ,
+          \ [159 , '#afffff'] ,
+          \ [195 , '#d7ffff'] ,
+          \ ]
+<
+
+  This variable controls the highlight groups of the fuzzy matches chars. Each
+  item of |g:clap_fuzzy_match_hl_groups| is `[ctermfg, guifg]` .
+
+
+g:clap_builtin_fuzzy_filter_threshold     *g:clap_builtin_fuzzy_filter_threshold*
+
+  Type: |Number|
+  Default: `10000`(no Python dylib), `100000`(with Python dylib)
+
+  Vim-clap will try to spawn a asynchronous job to get the total possible
+  results on entering the main window, instead of dispatching with the
+  user's input later, to get the total result number and use the built-in
+  fuzzy filter which uses the fzy algorithm.
+
+  The benefit of the built-in fzy filter is that no redraw that happens in the
+  async job, that means no flicker on your every input. Its drawback is that
+  the built-in filter is synchoronous that will block the UI if you have a
+  monster of candidates.
+
+
+g:clap_preview_size                                         *g:clap_preview_size*
+
+  Type: |Number| or |Dict|
+  Default: `5`
+
+  This variable controls the size of preview, normally the number of preview
+  lines is `2 * g:clap_preview_size` .
+
+  If |g:clap_preview_size| is a |Number|, all providers use the same size.
+
+  If |g:clap_preview_size| is a |Dict|, you can use different size for various
+  providers, use provider id as the key, `*` is a special key for the default size.
+  >
+  " 20 preview lines for files provider, 10 lines for the other providers.
+  let g:clap_preview_size = { '*': 5, 'files': 10 }
+<
+
+-------------------------------------------------------------------------------
+5.1. Highlights                                                *clap-highlights*
+
+
+ClapInput                                                            *ClapInput*
+
+  Default: `hi default link ClapInput Visual`
+
+  The highlight for input window.
+
+
+ClapDisplay                                                         *ClapDisplay*
+
+  Default: `hi default link ClapDisplay Pmenu`
+
+  The highlight for display window.
+
+
+ClapPreview                                                         *ClapPreview*
+
+  Default: `hi default link ClapPreview PmenuSel`
+
+  The highlight for preview window.
+
+
+ClapDefaultSelected                                          *ClapDefaultSelected*
+
+  See `:hi ClapDefaultSelected` .
+
+
+ClapDefaultCurrentSelection                          *ClapDefaultCurrentSelection*
+
+  See `:hi ClapDefaultCurrentSelection` .
+
+
+ClapSelected                                                       *ClapSelected*
+
+  Default: `hi default link ClapSelected ClapDefaultSelected`
+
+  The highlight for the sign of selected items via `<Tab>` by default.
+
+
+ClapCurrentSelection                                        *ClapCurrentSelection*
+
+  Default: `hi default link ClapCurrentSelection ClapCurrentSelection`
+
+  The highlight for the sign of current selection.
+
+
+ClapMatches                                                          *ClapMatches*
+
+  Default: `hi default link ClapMatches Search`
+
+  The highlight for the first matched part.
+
+
+ClapMatches[1-8]                                                 *ClapMatches[1-8]*
+
+  `ClapMatches[1-8]` will be used for the matched substrings in the substring mode.
+
+
+ClapNoMatchesFound                                        *ClapNClapNoMatchesFound*
+
+  Default: `hi default link ClapNClapNoMatchesFound ErrorMsg`
+
+  The highlight for the no matches found message. See |g:clap_no_matches_msg|.
+
+
+===============================================================================
+6. Provider Options                                     *clap-provider-options*
+
+
+The option naming convention for provider is `g:clap_provider_{provider_id}_{opt}`.
+
+
+-------------------------------------------------------------------------------
+6.1. Clap Grep Options                                      *clap-grep-options*
+
+g:clap_provider_grep_executable                   *g:clap_provider_grep_executable*
+
+  Type: |String|
+  Default: `'rg'`
+
+  The grep tool to be used. If you change it, you may need to adjust the
+  g:clap_provider_grep_opts as well. Please make sure grep_tool has an output
+  or a flag similar to the --vimgrep flag in ag/rg. Otherwise you may
+  encounter issues.
+
+
+g:clap_provider_grep_delay                         *g:clap_provider_grep_delay*
+
+  Type: |Number|
+  Default: `300`
+
+  This variable controls the milliseconds delay after which the grep job
+  will be spawned in the background.
+
+
+g:clap_provider_grep_blink                         *g:clap_provider_grep_blink*
+
+  Type: |List|
+  Default: `[2, 100]`
+
+  Blink the cursorline 2 times with 100ms timeout when jumping the result.
+
+  Set it to `[0, 0]` to disable this blink.
+
+
+g:clap_provider_grep_opts                          *g:clap_provider_grep_opts*
+
+  Type: |String|
+  Default: `'-H --no-heading --vimgrep --smart-case'`
+
+  Set this to control the arguments that get passed to the grep tool.
+  Setting `'-H --no-heading --vimgrep --smart-case --hidden -g "!.git/"'`
+  for example would enable grepping hidden files and folders while respecting
+  your `.gitignore` and not showing the `.git` directory itself.
+
+  For the grep tools Ag & Rg make sure to pass the `--vimgrep` flag, otherwise
+  the output cannot be interpreted. For other tools you may want check if a
+  similar option exists.
+
+
+g:clap_provider_grep_enable_icon              *g:clap_provider_grep_enable_icon*
+
+  Type: |Number|
+  Default: `exists('g:loaded_webdevicons') || get(g:, 'spacevim_nerd_fonts', 0)`
+
+  Set this variable to `0` to disable drawing an icon for the returned result.
+
+
+g:clap_provider_grep_cmd_format             *g:clap_provider_grep_cmd_format*
+
+  Type: |String|
+  Default: `'%s %s "%s"'.(has('win32') ? ' .' : '')`
+
+  The format used to create the command. 3 strings will be passed to the
+  format in that order:
+
+  1. |g:clap_provider_grep_executable|
+  2. |g:clap_provider_grep_opts|
+  3. |g:clap.input.get()|, the query string that the user has entered to search
+
+  In most cases this option does not have to be adjusted for tools like Ag &
+  Rg. For other tools this may not be the case.
+
+
+-------------------------------------------------------------------------------
+6.2. Clap Yanks Options                                      *clap-yanks-options*
+
+
+g:clap_enable_yanks_provider                       *g:clap_enable_yanks_provider*
+
+  Type: |Number|
+  Default: `1`
+
+  The yanks provider is enabled by default.
+
+  Set this variable to `0` to disable yanks provider.
+
+
+g:clap_provider_yanks_max_entries             *g:clap_provider_yanks_max_entries*
+
+  Type: |Number|
+  Default: `20`
+
+  Set this variable to limit maximum yanks entries.
+
+
+g:clap_provider_yanks_min_len                     *g:clap_provider_yanks_min_len*
+
+  Type: |Number|
+  Default: `1`
+
+  Set minimum length of yanked text to be stored in yanks stack. Setting this
+  variable to less than 2 has no effect.
+
+
+g:clap_provider_yanks_history                     *g:clap_provider_yanks_history*
+
+  Type: |String|
+  Default: `Undefined`
+
+  This variables controls the path of persist yanks history, e.g.,
+  >
+  let g:clap_provider_yanks_history = '~/.clap_yanks.history'
+<
+  The persist history feature is disabled by default.
+
+
+-------------------------------------------------------------------------------
+6.3 Other Provider Options                          *clap-other-provider-options*
+
+
+g:clap_provider_buffers_cur_tab_only       *g:clap_provider_buffers_cur_tab_only*
+
+  Type: |bool|
+  Default: `undefined`
+
+  List the buffer list per tab instead of the global buffer list.
+
+
+===============================================================================
+7. Commands                                                     *clap-commands*
+
+  >
+  :Clap[!] [provider_id_or_alias] [++opt] [+opt]
+<
+
+All the opts are accessible via `g:clap.context[opt]`.
+
+The form of `[++opt]` is `++{optname}={value}`, where {optname} is one of:
+
+  - `++externalfilter=fzf` or `++ef=fzf`.
+
+`[+opt]` is used for the bool arguments:
+
+ - `+async`
+
+`Clap! [provider_id_or_alias]` is equal to `Clap [provider_id_or_alias] +async` .
+
+
+===============================================================================
+8. Movement/Keybindings                                       *clap-movement*
+                                                              *clap-keybindings*
+
+Insert mode
+
+- Use `Ctrl-j`/`Down` or `Ctrl-k`/`Up` to navigate the result list up and down linewise.
+
+- Use `PageDown`/`PageUp` to scroll the result list down and up.
+
+- Use `Ctrl-a`/`Home` to go to the start of the input.
+
+- Use `Ctrl-e`/`End` to go to the end of the input.
+
+- Use `Ctrl-c`, `Ctrl-g`, `Ctrl-[` or `Esc` to exit.
+
+- Use `Ctrl-h`/`BS` to delete previous character.
+
+- Use `Ctrl-d` to delete next character.
+
+- Use `Ctrl-b` to move cursor left one character.
+
+- Use `Ctrl-f` to move cursor right one character.
+
+- Use `Enter` to select the entry and exit.
+
+- Use `Tab` to select multiple entries and open them using the quickfix window.
+  (Need the provider has `sink*` support)
+
+- Use `Ctrl-t` or `Ctrl-x`, `Ctrl-v` to open the selected entry in a new tab
+  or a new split.
+
+- Use `Ctrl-u` to clear inputs.
+
+
+NeoVim only
+
+Normal mode
+
+- Use `j`/`Down` or `k`/`Up` to navigate the result list up and down linewise.
+- Use `Ctrl-d`/`Ctrl-u`/`PageDown`/`PageUp` to scroll the result list down and up.
+- Use `Ctrl-c`, `Ctrl-g` to exit.
+- Use `gg` and `G` to scroll to the first and last item.
+- Use `Enter` to select the entry and exit.
+- Actions defined by `g:clap_open_action`.
+
+Cmdline mode
+
+- Use `:q` to exit.
+
+===============================================================================
+9. API                                                                *clap-api*
+
+
+g:clap                                                               *g:clap*
+
+
+g:clap.context                                               *g:clap.context*
+
+  `g:clap.context` stores all the provider options passed via `++opt` or `+opt`.
+
+
+g:clap.provider                                             *g:clap.provider*
+
+
+g:clap.input                                                   *g:clap.input*
+
+  `g:clap.input.goto_win()` - Go to input window with `noautocmd`.
+
+  `g:clap.input.getbufvar({varname}[, {def}])` - Similar to |getbufvar()| with
+  the buffer number specified to the input buffer.
+
+  `g:clap.input.setbufvar({varname}, {val})` - Similar to |setbufvar()| with
+  the buffer number specified to the input buffer.
+
+  `g:clap.input.get()` - Get the current input.
+
+
+g:clap.display                                               *g:clap.display*
+
+  `g:clap.display.goto_win()` - Go to display window with `noautocmd`.
+
+  `g:clap.display.get_lines()` - Get the current lines in display window.
+
+  `g:clap.display.getbufvar({varname}[, {def}])` - Similar to |getbufvar()| with
+  the buffer number specified to the display buffer.
+
+  `g:clap.display.setbufvar({varname}, {val})` - Similar to |setbufvar()| with
+  the buffer number specified to the display buffer.
+
+
+ClapOnEnter                                             *ClapOnEnter-autocmd*
+                                                                *ClapOnEnter*
+
+  This |User| autocommand is triggered immediately after the provider's
+  `on_enter` is run. You can use this autocommand to change the options of
+  clap related buffers and windows.
+
+
+ClapOnExit                                               *ClapOnExit-autocmd*
+                                                                 *ClapOnExit*
+
+  This |User| autocommand is triggered when you exit the clap windows.
+
+
+clap#run()                                                       *clap#run()*
+
+  Similar to `fzf#run()`, `clap#run(provider)` has an argument `provider`, which is
+  a Dict like `g:clap_provider_foo` with an optional extra field `id` specifying the
+  provider id(the default value is `run`).
+
+  Example:
+  >
+  :call clap#run({'id': 'quick_run', 'source': 'ls', 'sink': 'edit'})
+<
+  It can used for adhoc running with a small-scale `source`, don't use it with
+  a `source` that probably ha a fair amount of items as it's normally undeveloped
+  in performance.
+
+===============================================================================
+10. Contact                                                       *clap-contact*
+
+If you like this plugin, and wish to get in touch, check out the GitHub
+for more at https://github.com/liuchengxu/clap
+
+
+===============================================================================
+  vim:tw=78:ts=2:sts=2:sw=2:ft=help:norl:

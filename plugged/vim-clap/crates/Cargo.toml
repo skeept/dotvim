@@ -1,0 +1,14 @@
+[workspace]
+
+members = [
+    "icon",
+    "maple_cli",
+    "pattern",
+    "printer",
+    "stdio_server",
+    "utility",
+    "upgrade",
+    "matcher",
+    "matcher/extracted_fzy",
+    "filter",
+]
