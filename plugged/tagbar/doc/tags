@@ -19,10 +19,13 @@ g:tagbar_ctags_bin	tagbar.txt	/*g:tagbar_ctags_bin*
 g:tagbar_ctags_options	tagbar.txt	/*g:tagbar_ctags_options*
 g:tagbar_expand	tagbar.txt	/*g:tagbar_expand*
 g:tagbar_foldlevel	tagbar.txt	/*g:tagbar_foldlevel*
+g:tagbar_height	tagbar.txt	/*g:tagbar_height*
 g:tagbar_hide_nonpublic	tagbar.txt	/*g:tagbar_hide_nonpublic*
 g:tagbar_iconchars	tagbar.txt	/*g:tagbar_iconchars*
 g:tagbar_indent	tagbar.txt	/*g:tagbar_indent*
 g:tagbar_left	tagbar.txt	/*g:tagbar_left*
+g:tagbar_no_status_line	tagbar.txt	/*g:tagbar_no_status_line*
+g:tagbar_position	tagbar.txt	/*g:tagbar_position*
 g:tagbar_previewwin_pos	tagbar.txt	/*g:tagbar_previewwin_pos*
 g:tagbar_show_balloon	tagbar.txt	/*g:tagbar_show_balloon*
 g:tagbar_show_linenumbers	tagbar.txt	/*g:tagbar_show_linenumbers*
