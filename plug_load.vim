@@ -35,13 +35,12 @@ Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
 let line_plugin = 1
+Plug 'molok/vim-smartusline', Cond(2 == line_plugin)
 if 0 == line_plugin "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
   Plug g:p0 . '/pack/bundle/opt/airline-extensions'
 elseif 1 == line_plugin "lightline
   Plug g:p0 . '/pack/bundle/opt/lightline'
-elseif 2 == line_plugin "smartusline
-  Plug 'molok/vim-smartusline'
 endif
 
 Plug 'junegunn/fzf'

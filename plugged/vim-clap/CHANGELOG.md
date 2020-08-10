@@ -3,6 +3,12 @@ CHANGELOG
 
 ## [unreleased]
 
+### Fixed
+
+- Fix `:Clap install-binary` does not work correctly on Windows.
+
+## [0.20] 2020-08-06
+
 ### Added
 
 - Python dynamic module now can be compiled using stable Rust. ([#471](https://github.com/liuchengxu/vim-clap/pull/471))
@@ -30,6 +36,7 @@ CHANGELOG
 
 - Make the indicator winwidth a bit adpative when using the `relative` layout.
 - Ensure the sign always visiable when running maple via job.
+- Build static Rust binary for Linux. [#469](https://github.com/liuchengxu/vim-clap/issues/469)
 
 ### Fixed
 
