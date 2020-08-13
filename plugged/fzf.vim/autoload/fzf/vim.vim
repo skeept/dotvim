@@ -74,19 +74,19 @@ function! s:prepend_opts(dict, eopts)
   return s:extend_opts(a:dict, a:eopts, 1)
 endfunction
 
-" [[options to wrap], [preview window expression], [toggle-preview keys...]]
+" [[spec to wrap], [preview window expression], [toggle-preview keys...]]
 function! fzf#vim#with_preview(...)
   let bash_path = exepath('bash')
   let is_wsl_bash = bash_path =~? 'Windows[/\\]system32[/\\]bash.exe$'
-  " Default options
-  let options = {}
+  " Default spec
+  let spec = {}
   let window = ''
 
   let args = copy(a:000)
 
-  " Options to wrap
+  " Spec to wrap
   if len(args) && type(args[0]) == s:TYPE.dict
-    let options = copy(args[0])
+    let spec = copy(args[0])
     call remove(args, 0)
   endif
 
@@ -95,11 +95,11 @@ function! fzf#vim#with_preview(...)
       call s:warn('Preview window not supported (bash not found in PATH)')
       let s:warned = 1
     endif
-    return options
+    return spec
   endif
 
   " Placeholder expression (TODO/TBD: undocumented)
-  let placeholder = get(options, 'placeholder', '{}')
+  let placeholder = get(spec, 'placeholder', '{}')
 
   " Preview window
   if len(args) && type(args[0]) == s:TYPE.string
@@ -126,8 +126,8 @@ function! fzf#vim#with_preview(...)
   if len(args)
     call extend(preview, ['--bind', join(map(args, 'v:val.":toggle-preview"'), ',')])
   endif
-  call s:merge_opts(options, preview)
-  return options
+  call s:merge_opts(spec, preview)
+  return spec
 endfunction
 
 function! s:remove_layout(opts)
@@ -584,7 +584,7 @@ function! fzf#vim#gitfiles(args, ...)
   let wrapped = fzf#wrap({
   \ 'source':  'git -c color.status=always status --short --untracked-files=all',
   \ 'dir':     root,
-  \ 'options': ['--ansi', '--multi', '--nth', '2..,..', '--tiebreak=index', '--prompt', 'GitFiles?> ', '--preview', 'sh -c "(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -500"']
+  \ 'options': ['--ansi', '--multi', '--nth', '2..,..', '--tiebreak=index', '--prompt', 'GitFiles?> ', '--preview', 'sh -c "(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -1000"']
   \})
   call s:remove_layout(wrapped)
   let wrapped.common_sink = remove(wrapped, 'sink*')
@@ -648,7 +648,7 @@ function! fzf#vim#_format_buffer(b)
   let readonly = getbufvar(a:b, '&modifiable') ? '' : s:green(' [RO]', 'Constant')
   let extra = join(filter([modified, readonly], '!empty(v:val)'), '')
   let target = line == 0 ? name : name.':'.line
-  return s:strip(printf("%s\t[%s] %s\t%s\t%s", target, s:yellow(a:b, 'Number'), flag, name, extra))
+  return s:strip(printf("%s\t%d\t[%s] %s\t%s\t%s", target, line, s:yellow(a:b, 'Number'), flag, name, extra))
 endfunction
 
 function! s:sort_buffers(...)
@@ -667,7 +667,7 @@ function! fzf#vim#buffers(...)
   return s:fzf('buffers', {
   \ 'source':  map(fzf#vim#_buflisted_sorted(), 'fzf#vim#_format_buffer(v:val)'),
   \ 'sink*':   s:function('s:bufopen'),
-  \ 'options': ['+m', '-x', '--tiebreak=index', '--header-lines=1', '--ansi', '-d', '\t', '--with-nth', '2..', '-n', '2,1..2', '--prompt', 'Buf> ', '--query', query]
+  \ 'options': ['+m', '-x', '--tiebreak=index', '--header-lines=1', '--ansi', '-d', '\t', '--with-nth', '3..', '-n', '2,1..2', '--prompt', 'Buf> ', '--query', query, '--preview-window', '+{2}-5']
   \}, args)
 endfunction
 
@@ -675,7 +675,7 @@ endfunction
 " Ag / Rg
 " ------------------------------------------------------------------
 function! s:ag_to_qf(line, has_column)
-  let parts = matchlist(a:line, '\(.\{-}\):\(\d\+\)\%(:\(\d\+\)\)\?\%(:\(.*\)\)\?')
+  let parts = matchlist(a:line, '\(.\{-}\)\s*:\s*\(\d\+\)\%(\s*:\s*\(\d\+\)\)\?\%(\s*:\(.*\)\)\?')
   let dict = {'filename': &acd ? fnamemodify(parts[1], ':p') : parts[1], 'lnum': parts[2], 'text': parts[4]}
   if a:has_column
     let dict.col = parts[3]
@@ -744,6 +744,7 @@ function! fzf#vim#grep(grep_command, has_column, ...)
   \ 'column':  a:has_column,
   \ 'options': ['--ansi', '--prompt', capname.'> ',
   \             '--multi', '--bind', 'alt-a:select-all,alt-d:deselect-all',
+  \             '--delimiter', ':', '--preview-window', '+{2}-5',
   \             '--color', 'hl:4,hl+:12']
   \}
   function! opts.sink(lines)
@@ -815,7 +816,7 @@ function! fzf#vim#buffer_tags(query, ...)
     return s:fzf('btags', {
     \ 'source':  s:btags_source(tag_cmds),
     \ 'sink*':   s:function('s:btags_sink'),
-    \ 'options': s:reverse_list(['-m', '-d', '\t', '--with-nth', '1,4..', '-n', '1', '--prompt', 'BTags> ', '--query', a:query])}, args)
+    \ 'options': s:reverse_list(['-m', '-d', '\t', '--with-nth', '1,4..', '-n', '1', '--prompt', 'BTags> ', '--query', a:query, '--preview-window', '+{3}-5'])}, args)
   catch
     return s:warn(v:exception)
   endtry
@@ -1173,7 +1174,7 @@ function! s:commits(buffer_local, args)
 
   if !s:is_win && &columns > s:wide
     call extend(options.options,
-    \ ['--preview', 'echo {} | grep -o "[a-f0-9]\{7,\}" | head -1 | xargs git show --format=format: --color=always | head -200'])
+    \ ['--preview', 'echo {} | grep -o "[a-f0-9]\{7,\}" | head -1 | xargs git show --format=format: --color=always | head -1000'])
   endif
 
   return s:fzf(a:buffer_local ? 'bcommits' : 'commits', options, a:args)

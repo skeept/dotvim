@@ -1,7 +1,7 @@
 ﻿# Install / create archive with new compiles files
 
 Param(
-    [string]$dest='C:\Program Files\vim\vim81',
+    [string]$dest='C:\Program Files\vim\vim82',
     [string]$source='C:\htemp\vim',
     [switch]$dropbox,
     [switch]$arch

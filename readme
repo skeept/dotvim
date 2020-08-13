@@ -57,3 +57,13 @@ q' "
 \re -- end recording. Contents in register u
 ,co -- capture output from command (pastes contents at end of current buffer)
 <c-e> (insert mode) -- either go to end of line or copy char bellow
+
+
+following works currently to compile without python on windows:
+
+search developer (a terminal should come up)
+In that terminal go to the src folder where vim source is and run:
+nmake -f Make_mvc.mak DYNAMIC_PYTHON3=no GUI=no
+nmake -f Make_mvc.mak DYNAMIC_PYTHON3=no GUI=yes
+
+can adjust for lua when we try to enable that again
