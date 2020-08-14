@@ -224,6 +224,11 @@ call SetupAsyncomplete()
 
 "================== lightline  =============================================={{{
 if IsAddonActive('lightline')
+
+function LineInfoForLightLine()
+  return line('.') . ':' . col('.') . '/'. line('$') . ''
+endfunction
+
 "let g:lightline = {
       "\ 'active': {
       "\   'right': [ [ 'lineinfo' ],
@@ -244,6 +249,7 @@ let g:lightline = {
       \            [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ] },
       \ 'component_function': {
       \ 'tabsindicator': 'GetNumTabsStr'
+      \ , 'lineinfo': 'LineInfoForLightLine'
       \ },
       \ }
 
