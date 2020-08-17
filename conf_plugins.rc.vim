@@ -241,6 +241,8 @@ endfunction
       "\ }
 
 let g:lightline = {
+      "\ 'colorscheme': 'nord',
+      \ 'colorscheme': 'deus',
       \ 'active': {
       \ 'left': [ [ 'bufnum', 'mode', 'paste' ],
       \           [ 'readonly', 'filename', 'modified' ] ],
