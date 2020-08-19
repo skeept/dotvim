@@ -364,5 +364,16 @@ Execute(CFlags we dont want to pass):
   \ ale#c#ParseCFlags(
   \   ale#path#Simplify(g:dir. '/test_c_projects/makefile_project'),
   \   'gcc -Wl,option -Wa,option -Wp,option filename.c somelib.a '
-  \ . '-fdump-file=name -fdiagnostics-arg -fno-show-column'
+  \ . '-fdump-file=name -fdiagnostics-arg -fno-show-column -fstack-usage'
+  \ )
+
+Execute(Expanding @file in CFlags):
+  AssertEqual
+  \ '-DARGS1 -DARGS2 -O2',
+  \ ale#c#ParseCFlags(
+  \   ale#path#Simplify(g:dir. '/test_c_projects/makefile_project'),
+  \   'gcc'
+  \   . ' -g'
+  \   . ' @./args'
+  \   . ' -O2',
   \ )
