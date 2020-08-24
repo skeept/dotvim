@@ -676,6 +676,8 @@ func (t *Terminal) resizeWindows() {
 	}
 	if t.pborder != nil {
 		t.pborder.Close()
+	}
+	if t.pwindow != nil {
 		t.pwindow.Close()
 	}
 
@@ -700,19 +702,28 @@ func (t *Terminal) resizeWindows() {
 	noBorder := tui.MakeBorderStyle(tui.BorderNone, t.unicode)
 	if previewVisible {
 		createPreviewWindow := func(y int, x int, w int, h int) {
-			previewBorder := tui.MakeBorderStyle(tui.BorderRounded, t.unicode)
-			if !t.preview.border {
-				previewBorder = tui.MakeTransparentBorder()
+			pwidth := w
+			pheight := h
+			if t.preview.border != tui.BorderNone {
+				previewBorder := tui.MakeBorderStyle(t.preview.border, t.unicode)
+				t.pborder = t.tui.NewWindow(y, x, w, h, true, previewBorder)
+				pwidth -= 4
+				pheight -= 2
+				x += 2
+				y += 1
+			} else {
+				previewBorder := tui.MakeTransparentBorder()
+				t.pborder = t.tui.NewWindow(y, x, w, h, true, previewBorder)
+				pwidth -= 4
+				x += 2
 			}
-			t.pborder = t.tui.NewWindow(y, x, w, h, true, previewBorder)
-			pwidth := w - 4
 			// ncurses auto-wraps the line when the cursor reaches the right-end of
 			// the window. To prevent unintended line-wraps, we use the width one
 			// column larger than the desired value.
 			if !t.preview.wrap && t.tui.DoesAutoWrap() {
 				pwidth += 1
 			}
-			t.pwindow = t.tui.NewWindow(y+1, x+2, pwidth, h-2, true, noBorder)
+			t.pwindow = t.tui.NewWindow(y, x, pwidth, pheight, true, noBorder)
 		}
 		switch t.preview.position {
 		case posUp:
@@ -1210,7 +1221,10 @@ func (t *Terminal) refresh() {
 			windows = append(windows, t.border)
 		}
 		if t.hasPreviewWindow() {
-			windows = append(windows, t.pborder, t.pwindow)
+			if t.pborder != nil {
+				windows = append(windows, t.pborder)
+			}
+			windows = append(windows, t.pwindow)
 		}
 		windows = append(windows, t.window)
 		t.tui.RefreshWindows(windows)
@@ -1374,7 +1388,7 @@ func atopi(s string) int {
 	return n
 }
 
-func (t *Terminal) evaluateScrollOffset(list []*Item) int {
+func (t *Terminal) evaluateScrollOffset(list []*Item, height int) int {
 	offsetExpr := t.replacePlaceholder(t.preview.scroll, false, "", list)
 	nums := strings.Split(offsetExpr, "-")
 	switch len(nums) {
@@ -1386,6 +1400,13 @@ func (t *Terminal) evaluateScrollOffset(list []*Item) int {
 			return 0
 		} else if len(nums) == 1 {
 			return base - 1
+		}
+		if nums[1][0] == '/' {
+			denom := atopi(nums[1][1:])
+			if denom == 0 {
+				return base
+			}
+			return base - height/denom
 		}
 		return base - atopi(nums[1]) - 1
 	default:
@@ -1676,11 +1697,13 @@ func (t *Terminal) Loop() {
 				// We don't display preview window if no match
 				if items[0] != nil {
 					command := t.replacePlaceholder(commandTemplate, false, string(t.Input()), items)
-					offset := t.evaluateScrollOffset(items)
+					offset := 0
 					cmd := util.ExecCommand(command, true)
 					if t.pwindow != nil {
+						height := t.pwindow.Height()
+						offset = t.evaluateScrollOffset(items, height)
 						env := os.Environ()
-						lines := fmt.Sprintf("LINES=%d", t.pwindow.Height())
+						lines := fmt.Sprintf("LINES=%d", height)
 						columns := fmt.Sprintf("COLUMNS=%d", t.pwindow.Width())
 						env = append(env, lines)
 						env = append(env, "FZF_PREVIEW_"+lines)
