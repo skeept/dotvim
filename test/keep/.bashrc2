@@ -258,14 +258,15 @@ function xtitle ()
 
 function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
 
-function te()  # wrapper around xemacs/gnuserv
-{
-    if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
-        gnuclient -q "$@";
-    else
-        ( xemacs "$@" & );
-    fi
-}
+
+#function te()  # wrapper around xemacs/gnuserv
+#{
+    #if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
+        #gnuclient -q "$@";
+    #else
+        #( xemacs "$@" & );
+    #fi
+#}
 
 #-----------------------------------
 # File & strings related functions:
