@@ -1,0 +1,20 @@
+# we just ignore  gdx files but must be careful not to ingore all of them
+
+
+.vim/swapdir
+.vim/backup
+.vim/d
+.vim/dd
+
+*.swp
+
+*.pass
+*~
+
+*.o
+*.a
+
+tags*
+cscope.out
+.nfs*
+.idea/

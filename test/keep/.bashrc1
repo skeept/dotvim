@@ -1,0 +1,136 @@
+# Sample .bashrc for SuSE Linux
+# Copyright (c) SuSE GmbH Nuernberg
+
+# There are 3 different types of shells in bash: the login shell, normal shell
+# and interactive shell. Login shells read ~/.profile and interactive shells
+# read ~/.bashrc; in our setup, .profile sources .bashrc - thus all settings
+# made here will also take effect in a login shell.
+#
+# NOTE: It is recommended to make language settings in ~/.profile rather than
+# here, since multilingual X sessions would not work properly if LANG is over-
+# ridden in every subshell.
+
+#-----------------------------------
+# Source global definitions (if any)
+#-----------------------------------
+
+if type readlink >& /dev/null; then
+  export CUR_SHELL=$(basename $(readlink -f /proc/$$/exe))
+else # assume shell is bash
+  export CUR_SHELL="bash"
+fi
+
+# read /etc/bashrc and /etc/profile if present
+if test -z "$now_profile"; then
+  export now_profile="0"
+fi
+prev_profile_time="$now_profile"
+export now_profile=$(date +'%s')
+let "time_diff = $now_profile - $prev_profile_time"
+if test $time_diff -ge 3; then
+  test -f /etc/bashrc && . /etc/bashrc
+  test -f /etc/profile && . /etc/profile
+fi
+
+export EDITOR=vim
+
+# Smart way of setting the DISPLAY variable (from Hans) :)
+#
+if test -z "$DISPLAY" -a "$TERM" = "xterm" -a -x /usr/bin/who ; then
+    WHOAMI="`/usr/bin/who am i`"
+    _DISPLAY="`expr "$WHOAMI" : '.*(\([^\.][^\.]*\).*)'`:0.0"
+    if [ "${_DISPLAY}" != ":0:0.0" -a "${_DISPLAY}" != " :0.0" \
+         -a "${_DISPLAY}" != ":0.0" ]; then
+        export DISPLAY="${_DISPLAY}";
+    fi
+    unset WHOAMI _DISPLAY
+fi
+
+test -s "${HOME}/.alias" && . "${HOME}/.alias"
+
+function addfolderstovariables ( )
+{
+  local DROOT="$1"
+  export PATH="$DROOT/bin":"${PATH}"
+  export LD_LIBRARY_PATH="$DROOT/lib":"${LD_LIBRARY_PATH}"
+  export LD_LIBRARY_PATH="$DROOT/lib64":"${LD_LIBRARY_PATH}"
+  export MANPATH="$DROOT/share/man":"$MANPATH"
+}
+
+# path : the ones going first
+export PATH="${HOME}/usr/bin":${PATH}
+
+# path: the ones going after the current setting
+#dangerous:
+export PATH=${PATH}:./Mybin
+
+# LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/${HOME}/lib"
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/lib"
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/usr/lib"
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"${HOME}/lib"
+
+export MANPATH=$MANPATH:"/tmp/$USER/man":"/tmp/$USER/local/man"
+
+##################################################
+# test if this machine is one of the unix machines
+unix_machines="scepter ballista"
+function query_is_unix {
+  local is_unix=0
+  for name in $unix_machines; do
+    aux=`hostname | grep $name`
+    if test -n "$aux" ; then
+      echo "is_unix"
+      break
+    fi
+  done
+} #query is unix END
+is_unix=`query_is_unix`
+##################################################
+
+declare t=/tmp/$USER
+
+unset LS_COLORS
+
+export DISPLAY0="$DISPLAY"
+
+#grep options
+#export GREP_OPTIONS='--color=auto --ignore-case' 
+export GREP_COLOR="1"
+
+
+#export PATH="${PATH}:/opt/condor/bin"
+
+export PYTHONSTARTUP=~/.pythonrc.py
+#if type gcc44 >& /dev/null; then
+  ##export CC="gcc44"
+  ##export CXX="g++44"
+  ##export F77="gfortran44"
+  ##export FC="gfortran44"
+
+  #export CC="gcc"
+  #export CXX="g++"
+  #export F77="gfortran"
+  #export FC="gfortran"
+#fi
+
+
+# don't load any more settings if the shell is not interactive
+if test -n "$PS1"; then
+
+test -f "${HOME}/.alias" && . "${HOME}/.alias"
+
+test -f "${HOME}/.bashrc2" && . "${HOME}/.bashrc2"
+
+# load windows specific settings, case they exist
+test -f "${HOME}/.bashrc.cygwin" && . "${HOME}/.bashrc.cygwin"
+
+test -f "${HOME}/.bashrc.local" && . "${HOME}/.bashrc.local"
+
+# in local we set some path to be in first place, but I want ~/bin always there
+
+# try using faster vim for fc
+export HISTCONTROL=erasedups:ignoredups
+
+fi # test -z "$PS1" --> check if the shell is interactive or not
+export PATH="${HOME}/bin":${PATH}

@@ -52,3 +52,5 @@ cache/
 share/tmru/
 
 **/vimproc/lib/
+
+.bash_history

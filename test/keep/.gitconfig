@@ -1,0 +1,156 @@
+[user]
+	email = Helder.Inacio@Sabre.com
+	name = Helder Inacio
+
+[color]
+  ui = auto
+
+[color "branch"]
+  ;current = yellow reverse
+  ;local = yellow
+  remote = green
+
+[color "diff"]
+  ;meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+
+[color "status"]
+  ;added = yellow
+  changed = green
+  untracked = cyan
+
+[color]
+  ui = true
+
+[color "diff"]
+  whitespace = red reverse
+
+[core]
+  whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+  ;editor = vim -u "${HOME}/vimfiles/simple.vim" --noplugins
+  editor = vim
+	autocrlf = false
+	excludesfile = 
+	;sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+
+[github]
+  user=skeept
+  token=1f0d1517ec365f2c8be0e7c3dff798f5723efe73
+
+[alias]
+  alias = config --get-regexp 'alias.*'
+  br   = branch
+  ci   = commit
+  ciam = commit -a -m
+  ciamn = commit -n -a -m
+  civ  = commit --verbose
+  br   = branch
+  co   = checkout
+  df   = diff
+  dt   = difftool
+  dw   = diff --word-diff=color
+  h    = help
+  l    = log --oneline --decorate
+  lg   = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+  d4 = difftool --tool=p4
+  d = difftool --tool=p4
+  mp4 = mergetool --tool=p4
+  bc4 = difftool --tool=bc4
+  vd   = difftool --tool=vimdiff
+  ls-ignored = ls-files --exclude-standard --ignored --others
+  st   = status
+  dnamestatus = diff --name-status
+  getbase = merge-base master HEAD
+  dk = difftool --tool=k
+  bc = difftool --tool=bc
+
+[diff]
+  tool = vimdiff
+
+[difftool]
+  prompt = false
+[push]
+  default = current
+
+
+[http]
+  ;proxy = sg0216489:@www-ad-proxy.sabre.com:80
+
+[gui]
+  gcwarning = false
+  recentrepo = C:/Work/RMC/Engines/V0
+  recentrepo = C:/Users/sg0216489/vimfiles
+
+[merge]
+  tool = vimdiff
+
+[difftool "p4"]
+  cmd = \"C:/Program Files/Perforce/p4merge.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+
+[mergetool "p4"]
+  cmd = \"C:/Program Files/Perforce/p4merge.exe\" $(cygpath -w $BASE) $(cygpath -w $LOCAL) $(cygpath -w $REMOTE) $(cygpath -w $MERGED)
+  trustExitCode = false
+  keepBackup = false
+
+[merge]
+  tool = p4
+
+[difftool "winmerge"]
+  cmd = "winmergeu.exe -e -u -x -wl -wr -dl base $LOCAL $REMOTE"
+
+[difftool "vimdiff"]
+  cmd = \"C:/Program Files/Vim/vim82/gvim.exe\" -c \"set lines=100 columns=300\" -c \"silent wincmd =\" -d $LOCAL $REMOTE
+
+[difftool "k"]
+  cmd = \"C:/Program Files/KDiff3/kdiff3.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+
+[mergetool "k"]
+  cmd = \"C:/Program Files/KDiff3/kdiff3.exe\" $(cygpath -w $BASE) $(cygpath -w $LOCAL) $(cygpath -w $REMOTE) $(cygpath -w $MERGED)
+  trustExitCode = false
+  keepBackup = false
+
+[difftool "bc"]
+  cmd = \"C:/Program Files (x86)/Beyond Compare 2/BC2.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+
+[difftool "meld"]
+  cmd = \"C:/Program Files (x86)/Meld/Meld.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+
+
+[web]
+    browser = specialchrome
+[browser "specialchrome"]
+    ;cmd = \"C:/Program Files (x86)/Google/Chrome/Application/chrome.exe\" --new-window
+    cmd = \"C:/Tools/_launch_chrome.bat\"
+
+[help]
+  format = web
+  browser = specialchrome 
+
+[difftool "sourcetree"]
+	cmd = '' \"$LOCAL\" \"$REMOTE\"
+
+[difftool "bc4"]
+  cmd = \"c:/program files/beyond compare 4/bcomp.exe\" \"$LOCAL\" \"$REMOTE\"
+
+[mergetool "bc4"]
+  cmd = \"c:/program files/beyond compare 4/bcomp.exe\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
+  trustExitCode = true
+[mergetool "sourcetree"]
+	cmd = 'C:/Program Files/Perforce/p4merge.exe' \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"
+	trustExitCode = true
+[cola]
+	fontdiff = Monospace,9,-1,5,50,0,0,0,0,0
+	tabwidth = 3
+	spellcheck = false
+
+[guitool "bc"]
+  ;cmd = \"/c/Program Files (x86)/Beyond Compare 2/bc2.exe\" \"$LOCAL\" ] \"$REMOTE\"
+  cmd = git difftool --tool=bc \"$FILENAME\"
+  noconsole = yes
+
+[guitool "gvim"]
+  cmd = gvim \"$FILENAME\"
+  noconsole = yes
+  needsfile = yes
