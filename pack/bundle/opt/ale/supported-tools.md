@@ -16,7 +16,7 @@ formatting.
 
 |      Key      |             Definition           |
 | ------------- | -------------------------------- |
-| :floppy_disk: | Only checked when saved to disk  |
+| :floppy_disk: | May only run on files on disk    |
 |   :warning:   | Disabled by default              |
 
 ---
@@ -458,6 +458,7 @@ formatting.
   * [sqlfmt](https://github.com/jackc/sqlfmt)
   * [sqlformat](https://github.com/andialbrecht/sqlparse)
   * [sqlint](https://github.com/purcell/sqlint)
+  * [sql-lint](https://github.com/joereynolds/sql-lint)
 * Stylus
   * [stylelint](https://github.com/stylelint/stylelint)
 * SugarSS
