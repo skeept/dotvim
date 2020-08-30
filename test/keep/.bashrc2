@@ -1113,7 +1113,3 @@ function g()
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
-_conda_setup=$(/conda/condabin/conda 'shell.bash' 'hook')
-if [ $? -eq 0 ]; then
-  eval "${_conda_setup}"
-fi
