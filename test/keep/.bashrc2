@@ -720,13 +720,16 @@ __print_folder_keys()
   local size=${#_dirs_data_names[@]}
   local name
   local key
+  local curdir="$(readlink -e .)"
+  curdir="${curdir/${HOME}/~}"
   for((i=0; i < size; i++)); do
     name="${_dirs_data_names[$i]/${HOME}/~}"
+    [ "${name}" = "${curdir}" ] && indicator_cur="*" || indicator_cur=" "
     key="${_dirs_data_keys[$i]}"
     if [ "$1" = "-n" ]; then # print only numbers
-      printf "%4s  %-30s\n" "$i" "${name}"
+      printf "${indicator_cur} %-2s  %-30s\n" "$i" "${name}"
     else
-      printf "%4s  %-20s  %-30s\n" "$i" "${key}" "${name}"
+      printf "${indicator_cur} %-2s  %-20s  %-30s\n" "$i" "${key}" "${name}"
     fi
   done
 }
