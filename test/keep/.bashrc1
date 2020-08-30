@@ -57,6 +57,30 @@ function addfolderstovariables ( )
   export MANPATH="$DROOT/share/man":"$MANPATH"
 }
 
+function addDirToVarsFront()
+{
+  local DROOT="$1"
+  export PATH="$DROOT/bin":"${PATH}"
+  export LD_LIBRARY_PATH="$DROOT/lib":"${LD_LIBRARY_PATH}"
+  #export LD_LIBRARY_PATH="$DROOT/lib/amd64":"${LD_LIBRARY_PATH}"
+  export LD_LIBRARY_PATH="$DROOT/lib64":"${LD_LIBRARY_PATH}"
+  export LD_LIBRARY_PATH="$DROOT/lib/amd64":"${LD_LIBRARY_PATH}"
+  export MANPATH="$DROOT/share/man":"$MANPATH"
+  export PKG_CONFIG_PATH="${DROOT}/lib/pkgconfig":":${PKG_CONFIG_PATH}"
+}
+
+function addDirToVarsBack()
+{
+  local DROOT="$1"
+  export PATH="${PATH}":"$DROOT/bin"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib"
+  #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib/amd64"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib64"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib/amd64"
+  export MANPATH="$MANPATH":"$DROOT/share/man"
+  export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}":"${DROOT}/lib/pkgconfig"
+}
+
 # path : the ones going first
 export PATH="${HOME}/usr/bin":${PATH}
 
