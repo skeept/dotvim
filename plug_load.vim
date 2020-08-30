@@ -62,6 +62,8 @@ Plug 'tpope/vim-repeat'
 "Plug 'tpope/vim-apathy'
 Plug 'tpope/vim-vinegar'
 Plug 'tpope/vim-unimpaired'
+"Plug 'tpope/vim-surround'
+Plug g:p0 . '/pack/bundle/opt/surround'
 
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
