@@ -1092,13 +1092,10 @@ function e()
   fi
 }
 
-function g()
+
+g()
 {
-  if test -z "$1"; then
-    git status
-  else
-    git $@
-  fi
+  [ -z "$1" ] && git status || git $@
 }
 
 #function vs()
