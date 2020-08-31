@@ -741,6 +741,7 @@ d()
 
   # can be name or key
   target=$1
+  [ "${target}" = "-" ] && cd - && return
 
   # if dir exists change to it regardless
   if [ -d  "${target}" ]; then
