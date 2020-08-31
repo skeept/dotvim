@@ -196,17 +196,6 @@ function powerprompt()
 #powerprompt     # this is the default prompt - might be slow
                 # If too slow, use fastprompt instead....
 
-## put the clear case view by default if we are in the view
-if _CLEARCASE="$(cleartool pwv -set -short 2> /dev/null)" && \
-  test "a${_CLEARCASE}" != "a" && \
-  { echo ${_CLEARCASE} | grep -v "NONE" > /dev/null; }; then
-    _CLEARCASE='(v) '
-  else
-    _CLEARCASE=""
-fi
-PS1="${_CLEARCASE}[\u@\h \w]> "
-unset _CLEARCASE
-
 
 #===============================================================
 #
