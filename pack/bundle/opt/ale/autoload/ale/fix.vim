@@ -1,8 +1,8 @@
 " Author: w0rp <devw0rp@gmail.com>
 " Description: Functions for fixing code with programs, or other means.
 
-call ale#Set('fix_on_save_ignore', {})
-call ale#Set('filename_mappings', {})
+let g:ale_fix_on_save_ignore = get(g:, 'ale_fix_on_save_ignore', {})
+let g:ale_filename_mappings = get(g:, 'ale_filename_mappings', {})
 
 " Apply fixes queued up for buffers which may be hidden.
 " Vim doesn't let you modify hidden buffers.
@@ -15,22 +15,29 @@ function! ale#fix#ApplyQueuedFixes(buffer) abort
 
     call remove(g:ale_fix_buffer_data, a:buffer)
 
-    if l:data.changes_made
-        let l:new_lines = ale#util#SetBufferContents(a:buffer, l:data.output)
+    try
+        if l:data.changes_made
+            let l:new_lines = ale#util#SetBufferContents(a:buffer, l:data.output)
 
-        if l:data.should_save
-            if a:buffer is bufnr('')
-                if empty(&buftype)
-                    noautocmd :w!
+            if l:data.should_save
+                if a:buffer is bufnr('')
+                    if empty(&buftype)
+                        noautocmd :w!
+                    else
+                        set nomodified
+                    endif
                 else
-                    set nomodified
+                    call writefile(l:new_lines, expand('#' . a:buffer . ':p')) " no-custom-checks
+                    call setbufvar(a:buffer, '&modified', 0)
                 endif
-            else
-                call writefile(l:new_lines, expand('#' . a:buffer . ':p')) " no-custom-checks
-                call setbufvar(a:buffer, '&modified', 0)
             endif
         endif
-    endif
+    catch /E21/
+        " If we cannot modify the buffer now, try again later.
+        let g:ale_fix_buffer_data[a:buffer] = l:data
+
+        return
+    endtry
 
     if l:data.should_save
         let l:should_lint = ale#Var(a:buffer, 'fix_on_save')
@@ -376,3 +383,4 @@ endfunction
 augroup ALEBufferFixGroup
     autocmd!
     autocmd BufEnter * call ale#fix#ApplyQueuedFixes(str2nr(expand('<abuf>')))
+augroup END

@@ -463,12 +463,56 @@ is loaded. The delay for completion can be configured with
 |g:ale_completion_delay|. This setting should not be enabled if you wish to
 use ALE as a completion source for other plugins.
 
+ALE automatic completion will not work when 'paste' is active. Only set
+'paste' when you are copy and pasting text into your buffers.
+
+ALE automatic completion will interfere with default insert completion with
+`CTRL-N` and so on (|compl-vim|). You can write your own keybinds and a
+function in your |vimrc| file to force insert completion instead, like so: >
+
+  function! SmartInsertCompletion() abort
+    " Use the default CTRL-N in completion menus
+    if pumvisible()
+      return "\<C-n>"
+    endif
+
+    " Exit and re-enter insert mode, and use insert completion
+    return "\<C-c>a\<C-n>"
+  endfunction
+
+  inoremap <silent> <C-n> <C-R>=SmartInsertCompletion()<CR>
+<
 ALE provides an 'omnifunc' function |ale#completion#OmniFunc| for triggering
 completion manually with CTRL-X CTRL-O. |i_CTRL-X_CTRL-O| >
 
   " Use ALE's function for omnicompletion.
   set omnifunc=ale#completion#OmniFunc
 <
+                                                      *ale-completion-fallback*
+
+You can write your own completion function and fallback on other methods of
+completion by checking if there are no results that ALE can determine. For
+example, for Python code, you could fall back on the `python3complete`
+function. >
+
+  function! TestCompletionFunc(findstart, base) abort
+    let l:result = ale#completion#OmniFunc(a:findstart, a:base)
+
+    " Check if ALE couldn't find anything.
+    if (a:findstart && l:result is -3)
+    \|| (!a:findstart && empty(l:result))
+      " Defer to another omnifunc if ALE couldn't find anything.
+      return python3complete#Complete(a:findstart, a:base)
+    endif
+
+    return l:result
+  endfunction
+
+  set omnifunc=TestCompletionFunc
+<
+See |complete-functions| for documentation on how to write completion
+functions.
+
 ALE will only suggest so many possible matches for completion. The maximum
 number of items can be controlled with |g:ale_completion_max_suggestions|.
 
@@ -562,15 +606,9 @@ displayed.
 -------------------------------------------------------------------------------
 5.4 Find References                                       *ale-find-references*
 
-ALE supports finding references for symbols though any enabled LSP linters.
-ALE will display a preview window showing the places where a symbol is
-referenced in a codebase when a command is run. The following commands are
-supported:
-
-|ALEFindReferences| - Find references for the word under the cursor.
-
-Options:
-  `-relative`       Show file paths in the results relative to the working dir
+ALE supports finding references for symbols though any enabled LSP linters
+with the |ALEFindReferences| command. See the documentation for the command
+for a full list of options.
 
 -------------------------------------------------------------------------------
 5.5 Hovering                                                        *ale-hover*
@@ -613,13 +651,9 @@ Documentation for symbols at the cursor can be retrieved using the
 -------------------------------------------------------------------------------
 5.6 Symbol Search                                           *ale-symbol-search*
 
-ALE supports searching for workspace symbols via LSP linters. The following
-commands are supported:
-
-|ALESymbolSearch| - Search for symbols in the workspace.
-
-Options:
-  `-relative`     Show file paths in the results relative to the working dir
+ALE supports searching for workspace symbols via LSP linters with the
+|ALESymbolSearch| command. See the documentation for the command
+for a full list of options.
 
 ===============================================================================
 6. Global Options                                                 *ale-options*
@@ -738,6 +772,9 @@ g:ale_completion_enabled                             *g:ale_completion_enabled*
 
   This setting should not be enabled if you wish to use ALE as a completion
   source for other completion plugins.
+
+  ALE automatic completion will not work when 'paste' is active. Only set
+  'paste' when you are copy and pasting text into your buffers.
 
   A buffer-local version of this setting `b:ale_completion_enabled` can be set
   to `0` to disable ALE's automatic completion support for a single buffer.
@@ -871,7 +908,7 @@ g:ale_default_navigation                             *g:ale_default_navigation*
   Default: `'buffer'`
 
   The default method for navigating away from the current buffer to another
-  buffer, such as for |ALEFindReferences:|, or |ALEGoToDefinition|.
+  buffer, such as for |ALEFindReferences|, or |ALEGoToDefinition|.
 
 
 g:ale_disable_lsp                                           *g:ale_disable_lsp*
@@ -1182,13 +1219,16 @@ g:ale_list_window_size                                 *g:ale_list_window_size*
 
 
 g:ale_lint_delay                                             *g:ale_lint_delay*
-
+                                                             *b:ale_lint_delay*
   Type: |Number|
   Default: `200`
 
   This variable controls the milliseconds delay after which the linters will
   be run after text is changed. This option is only meaningful with the
   |g:ale_lint_on_text_changed| variable set to `always`, `insert`, or `normal`.
+
+  A buffer-local option, `b:ale_lint_delay`, can be set to change the delay
+  for different buffers, such as in |ftplugin| files.
 
 
 g:ale_lint_on_enter                                       *g:ale_lint_on_enter*
@@ -1451,7 +1491,7 @@ g:ale_linters                                                   *g:ale_linters*
   \   'perl': ['perlcritic'],
   \   'perl6': [],
   \   'python': ['flake8', 'mypy', 'pylint', 'pyright'],
-  \   'rust': ['cargo'],
+  \   'rust': ['cargo', 'rls'],
   \   'spec': [],
   \   'text': [],
   \   'vue': ['eslint', 'vls'],
@@ -2911,13 +2951,20 @@ ALEFindReferences                                           *ALEFindReferences*
   The default method used for navigating to a new location can be changed
   by modifying |g:ale_default_navigation|.
 
+  You can add `-relative` to the command to view results with relatives paths,
+  instead of absolute paths.
+
   The selection can be opened again with the |ALERepeatSelection| command.
 
   You can jump back to the position you were at before going to a reference of
   something with jump motions like CTRL-O. See |jump-motions|.
 
   A plug mapping `<Plug>(ale_find_references)` is defined for this command.
+  You can define additional plug mapping with any additional options you want
+  like so: >
 
+  nnoremap <silent> <Plug>(my_mapping) :ALEFindReferences -relative<Return>
+<
 
 ALEFix                                                                 *ALEFix*
 
@@ -3029,14 +3076,17 @@ ALESymbolSearch `<query>`                                     *ALESymbolSearch*
   The arguments provided to this command will be used as a search query for
   finding symbols in the workspace, such as functions, types, etc.
 
+  You can add `-relative` to the command to view results with relatives paths,
+  instead of absolute paths.
+
                                                                      *:ALELint*
 ALELint                                                               *ALELint*
 
   Run ALE once for the current buffer. This command can be used to run ALE
   manually, instead of automatically, if desired.
 
-  This command will also run linters where `lint_file` is set to `1`, or in
-  other words linters which check the file instead of the Vim buffer.
+  This command will also run linters where `lint_file` is evaluates to `1`,
+  meaning linters which check the file instead of the Vim buffer.
 
   A plug mapping `<Plug>(ale_lint)` is defined for this command.
 
@@ -3249,9 +3299,9 @@ ale#Queue(delay, [linting_flag, buffer_number])                   *ale#Queue()*
   The linters will always be run in the background. Calling this function
   again from the same buffer
 
-  An optional `linting_flag` argument can be given. If `linting_flag`
-  is `'lint_file'`, then linters where the `lint_file` option is set to `1` will be
-  run. Linters with `lint_file` set to `1` are not run by default.
+  An optional `linting_flag` argument can be given. If `linting_flag` is
+  `'lint_file'`, then linters where the `lint_file` option evaluates to `1`
+  will be run. Otherwise, those linters will not be run.
 
   An optional `buffer_number` argument can be given for specifying the buffer
   to check. The active buffer (`bufnr('')`) will be checked by default.
@@ -3585,24 +3635,30 @@ ale#linter#Define(filetype, linter)                       *ale#linter#Define()*
                          if a command manually reads from a temporary file
                          instead, etc.
 
+                         This option behaves as if it was set to `0` when the
+                         `lint_file` option evaluates to `1`.
+
                                                                 *ale-lint-file*
-  `lint_file`              A |Number| (`0` or `1`) indicating whether a command
-                         should read the file instead of the Vim buffer. This
-                         option can be used for linters which must check the
-                         file on disk, and which cannot check a Vim buffer
-                         instead.
+  `lint_file`              A |Number| (`0` or `1`), or a |Funcref| for a function
+                         accepting a buffer number for computing either `0` or
+                         `1`, indicating whether a command should read the file
+                         instead of the Vim buffer. This option can be used
+                         for linters which must check the file on disk, and
+                         which cannot check a Vim buffer instead.
 
-                         Linters set with this option will not be run as a
-                         user types, per |g:ale_lint_on_text_changed|. Linters
-                         will instead be run only when events occur against
-                         the file on disk, including |g:ale_lint_on_enter|
-                         and |g:ale_lint_on_save|. Linters with this option
-                         set to `1` will also be run when linters are run
-                         manually, per |ALELintPost-autocmd|.
+                         The result can be computed with |ale#command#Run()|.
 
-                         When this option is set to `1`, `read_buffer` will
-                         be set automatically to `0`. The two options cannot
-                         be used together.
+                         Linters where the eventual value of this option
+                         evaluates to `1` will not be run as a user types, per
+                         |g:ale_lint_on_text_changed|. Linters will instead be
+                         run only when events occur against the file on disk,
+                         including |g:ale_lint_on_enter| and
+                         |g:ale_lint_on_save|. Linters where this option
+                         evaluates to `1` will also be run when the |ALELint|
+                         command is run.
+
+                         When this option is evaluates to `1`, ALE will behave
+                         as if `read_buffer` was set to `0`.
 
                                                               *ale-lsp-linters*
   `lsp`                    A |String| for defining LSP (Language Server Protocol)
