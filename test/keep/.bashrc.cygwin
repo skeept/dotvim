@@ -106,4 +106,28 @@ e()
   "${gvim}" -c "RemoteOpenMod $(__process_arg_to_cygwin $@)" &
 }
 
+
+tc()
+{
+  totalcmd="/mnt/c/Program Files/totalcmd/TOTALCMD64.EXE"
+
+  # handle up to a couple arguments
+  a1="$1"
+  shift
+  a2="$1"
+  [ -z "$a1" ] && a1="."
+  [ -e "${a1}" ] && a1="$(winpath "$a1")"
+  [ -e "$a2" ] && a2="$(winpath "$a2")"
+
+  [ -z "$a2" ] && left="/P=L"
+
+  "${totalcmd}" "$left" "$a1" "$a2"
+}
+
+
+_conda_setup=$(/conda/condabin/conda 'shell.bash' 'hook')
+if [ $? -eq 0 ]; then
+  eval "${_conda_setup}"
+fi
+
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
