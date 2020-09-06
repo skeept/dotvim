@@ -5,6 +5,7 @@ CHANGELOG
 
 ### Added
 
+- New shortcut for `+no-cache`, `:Clap files!` is equivalent to `:Clap!! files` and `:Clap files +no-cache`. ([#509](https://github.com/liuchengxu/vim-clap/pull/509))
 - Add `g:clap_enable_debug`, useful when you find vim-clap is problematic and want to debug vim-clap.
 
 ### Improved
@@ -18,6 +19,7 @@ CHANGELOG
 - Fix filer issue on Windows [#370](https://github.com/liuchengxu/vim-clap/issues/370). @Grueslayer
 - Handle the maple error in the filer provider, fix [#500](https://github.com/liuchengxu/vim-clap/issues/500), [#501](https://github.com/liuchengxu/vim-clap/issues/501).
 - Fix regression #513
+- Fix #515
 
 ## [0.20] 2020-08-06
 
