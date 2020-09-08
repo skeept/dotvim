@@ -5,6 +5,8 @@ Path navigator designed to work with Vim's built-in mechanisms and
 [complementary](https://github.com/tpope/vim-eunuch)
 [plugins](https://github.com/tpope/vim-unimpaired).
 
+<img src="./dirvish.png" alt="dirvish" width="400"/>
+
 Features
 --------
 
