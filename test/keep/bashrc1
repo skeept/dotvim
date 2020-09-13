@@ -46,8 +46,6 @@ if test -z "$DISPLAY" -a "$TERM" = "xterm" -a -x /usr/bin/who ; then
     unset WHOAMI _DISPLAY
 fi
 
-test -s "${HOME}/.alias" && . "${HOME}/.alias"
-
 function addfolderstovariables ( )
 {
   local DROOT="$1"
@@ -118,43 +116,37 @@ unset LS_COLORS
 
 export DISPLAY0="$DISPLAY"
 
-#grep options
-#export GREP_OPTIONS='--color=auto --ignore-case' 
-export GREP_COLOR="1"
-
-
 #export PATH="${PATH}:/opt/condor/bin"
 
 export PYTHONSTARTUP=~/.pythonrc.py
-#if type gcc44 >& /dev/null; then
-  ##export CC="gcc44"
-  ##export CXX="g++44"
-  ##export F77="gfortran44"
-  ##export FC="gfortran44"
-
-  #export CC="gcc"
-  #export CXX="g++"
-  #export F77="gfortran"
-  #export FC="gfortran"
-#fi
-
 
 # don't load any more settings if the shell is not interactive
+
+# assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
 if test -n "$PS1"; then
 
-test -f "${HOME}/.alias" && . "${HOME}/.alias"
+  if [ -z "${CONFIG_FILES_DIR}" ]; then
+    # assume HOME and .
+    echo "Variable CONFIG_FILES_DIR not set. Setting it to HOME (${HOME})"
+    export CONFIG_FILES_DIR="${HOME}"
+    export CONFIG_DOT_PREFIX="."
+  fi
 
-test -f "${HOME}/.bashrc2" && . "${HOME}/.bashrc2"
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias"
+  [ -e "${NAME}" ] && . "${NAME}"
 
-# load windows specific settings, case they exist
-test -f "${HOME}/.bashrc.cygwin" && . "${HOME}/.bashrc.cygwin"
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2"
+  [ -e "${NAME}" ] && . "${NAME}"
 
-test -f "${HOME}/.bashrc.local" && . "${HOME}/.bashrc.local"
+  # load windows specific settings, case they exist
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc.cygwin"
+  [ -e "${NAME}" ] && . "${NAME}"
 
-# in local we set some path to be in first place, but I want ~/bin always there
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc.local"
+  [ -e "${NAME}" ] && . "${NAME}"
 
-# try using faster vim for fc
-export HISTCONTROL=erasedups:ignoredups
+  # try using faster vim for fc
+  export HISTCONTROL=erasedups:ignoredups
+fi
 
-fi # test -z "$PS1" --> check if the shell is interactive or not
 export PATH="${HOME}/bin":${PATH}

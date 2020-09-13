@@ -1,0 +1,9 @@
+
+
+# bashrc is read when executing exec bash or when executing ssh hostname <cmd>
+
+if [[ $- == *i* ]]; then
+  export CONFIG_FILES_DIR="${HOME}/vimfiles/test/keep"
+  export CONFIG_DOT_PREFIX=""
+  source "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc1"
+fi

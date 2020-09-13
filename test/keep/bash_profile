@@ -1,0 +1,24 @@
+# change DEFAULT_TERM to suit your needs
+#
+#
+# -----------------------------------------------------------
+# now run standard profile
+# -----------------------------------------------------------
+#
+
+alias b="exec bash"
+
+export CONFIG_FILES_DIR="${HOME}/vimfiles/test/keep"
+export CONFIG_DOT_PREFIX=""
+TARGET_CONFIG="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc1"
+[ ! -f "${TARGET_CONFIG}" ] && TARGET_CONFIG="${HOME}/.bashrc1"
+
+if [ -f "${TARGET_CONFIG}" ]; then
+  source "${TARGET_CONFIG}"
+else
+  echo "Cannot source TARGET_CONFIG=${TARGET_CONFIG}"
+fi
+
+unset DOT_BASHRC_READ
+
+set read_bash_profile
