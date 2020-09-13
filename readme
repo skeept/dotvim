@@ -61,9 +61,36 @@ q' "
 
 following works currently to compile without python on windows:
 
-search developer (a terminal should come up)
+search x64 native (a terminal should come up)
 In that terminal go to the src folder where vim source is and run:
-nmake -f Make_mvc.mak DYNAMIC_PYTHON3=no GUI=no
-nmake -f Make_mvc.mak DYNAMIC_PYTHON3=no GUI=yes
 
-can adjust for lua when we try to enable that again
+set LUA_SETTINGS=LUA_VER=54 LUA=C:\ht\lua  DYNAMIC_LUA=yes
+set PYTHON_SETTINGS=DYNAMIC_PYTHON3=no
+nmake -f Make_mvc.mak %LUA_SETTINGS% %PYTHON_SETTINGS% GUI=no clean
+nmake -f Make_mvc.mak %LUA_SETTINGS% %PYTHON_SETTINGS% GUI=no
+nmake -f Make_mvc.mak %LUA_SETTINGS% %PYTHON_SETTINGS% GUI=yes clean
+nmake -f Make_mvc.mak %LUA_SETTINGS% %PYTHON_SETTINGS% GUI=yes
+
+To build compatible lua, assume its downloaded and unpacked in folder inside
+C:/ht/lua. Run the following in x64 prompt:
+
+set short_ver=54
+set ver=5.4.0
+rm *.obj *.o
+cl /MD /O2 /c /DLUA_BUILD_AS_DLL *.c
+ren lua.obj lua.o
+ren luac.obj luac.o
+link /DLL /IMPLIB:lua%ver%.lib /OUT:lua%ver%.dll *.obj
+link /OUT:lua.exe lua.o lua%ver%.lib
+lib /OUT:lua%ver%-static.lib *.obj
+link /OUT:luac.exe luac.o lua%ver%-static.lib
+mkdir ..\..\lib
+mkdir ..\..\include
+cp *dll *lib ..\..\lib
+cp *.h ..\..\include
+cp lua%ver%.lib ..\..\lib\lua%short_ver%.lib
+cp lua%ver%.dll ..\..\lib\lua%short_ver%.dll
+cp *.exe ..\..
+
+previous instructions were adapted from
+https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/

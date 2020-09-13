@@ -1,9 +1,17 @@
 
-
 # bashrc is read when executing exec bash or when executing ssh hostname <cmd>
 
 if [[ $- == *i* ]]; then
-  export CONFIG_FILES_DIR="${HOME}/vimfiles/test/keep"
+  [ -d "${HOME}/vimfiles" ] && CONFIG_BASE="${HOME}/vimfiles"
+  [ ! -d "${CONFIG_BASE}" ] && CONFIG_BASE="${HOME}.vim"
+  export CONFIG_FILES_DIR="${CONFIG_BASE}/test/keep"
   export CONFIG_DOT_PREFIX=""
-  source "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc1"
+  TARGET_CONFIG="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc1"
+  [ ! -f "${TARGET_CONFIG}" ] && TARGET_CONFIG="${HOME}/.bashrc1"
+
+  if [ -f "${TARGET_CONFIG}" ]; then
+    source "${TARGET_CONFIG}"
+  else
+    echo "Cannot source TARGET_CONFIG=${TARGET_CONFIG}"
+  fi
 fi
