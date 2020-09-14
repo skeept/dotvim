@@ -6,6 +6,17 @@ alias ls='ls --color'
 #disable control flow
 stty -ixon
 
+
+# backslash is weird in git windows
+if [ -z "$bs" ]; then
+  function _get_backslash()
+  {
+    local s="$(uname -a)"
+    [ "${s%Msys}" = "${s}" ] && echo "/" || echo "//"
+  }
+  export bs="$(_get_backslash)"
+fi
+
 function gi()
 {
   local pattern=$1
@@ -69,7 +80,6 @@ function np()
 {
   local npp="$(__win_base)/Program Files/Notepad++/notepad++.exe"
   [ ! -e "${npp}" ] && npp=notepad.exe
-  #"${npp}" $(__args_to_win $@) >& /dev/null &
   "${npp}" $(__args_to_win $@) &
 }
 
@@ -108,14 +118,14 @@ tc()
   [ -e "${a1}" ] && a1="$(winpath "$a1")"
   [ -e "$a2" ] && a2="$(winpath "$a2")"
 
-  "${_TOTALCMD_PATH}" /O "$a1" "$a2" &
+  "${_TOTALCMD_PATH}" ${bs}O "$a1" "$a2" &
 }
 
 tcr()
 {
   local arg="$1"
   [ -z "${arg}" ] && arg="."
-  tc "/R=$(winpath $arg)"
+  tc "${bs}R=$(winpath $arg)"
 }
 
 
