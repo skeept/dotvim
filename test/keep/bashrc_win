@@ -1,28 +1,4 @@
 
-export PATH="/mnt/c/Work/RMC/Tools/ILOG/Cplex/12.6.0.1/cplex/bin/x64_win64:$PATH"
-#export PATH="$PATH":"/cygdrive/c/Program Files/WinRAR"
-#export PATH="$PATH":"/cygdrive/c/Users/sg0216489/Programs/PApps/PortableApps/Latex/miktex/bin"
-
-unset PYTHONHOME
-
-#export CDPATH="${HOME}"
-
-# use the following convention c -> code, s -> scenarios.
-
-WIN_HOME=/mnt/c/Users/sg0216489
-ONEDRIVE_WIN="/mnt/c/Users/sg0216489/OneDrive - Sabre"
-OR_BASE=/mnt/c/OR
-WORK_BASE=/mnt/c/zl
-
-__d_add_folder "/mnt/c/ht/vim" vsrc
-__d_add_folder "${WIN_HOME}/vimfiles" vim
-__d_add_folder "'${ONEDRIVE_WIN}/Documents'" doc
-__d_add_folder "${WIN_HOME}/Downloads" down
-__d_add_folder "${OR_BASE}/RMC/Engines/V0" v0
-__d_add_folder "${OR_BASE}/IROPS/Engines/Reaccomm/src" ir
-__d_add_folder "${WORK_BASE}/ml" ml
-
-
 alias c='command'
 alias ls='ls --color'
 
@@ -109,7 +85,7 @@ e()
 
 tc()
 {
-  totalcmd="/mnt/c/Program Files/totalcmd/TOTALCMD64.EXE"
+  [ -z "${_TOTALCMD_PATH}" ] && explorer.exe $@ && return
 
   # handle up to a couple arguments
   a1="$1"
@@ -121,13 +97,11 @@ tc()
 
   [ -z "$a2" ] && left="/P=L"
 
-  "${totalcmd}" "$left" "$a1" "$a2"
+  "${_TOTALCMD_PATH}" "$left" "$a1" "$a2"
 }
 
 
-_conda_setup=$(/conda/condabin/conda 'shell.bash' 'hook')
-if [ $? -eq 0 ]; then
-  eval "${_conda_setup}"
-fi
 
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
+
+# vim: set ft=bash:

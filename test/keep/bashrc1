@@ -121,7 +121,6 @@ export DISPLAY0="$DISPLAY"
 export PYTHONSTARTUP=~/.pythonrc.py
 
 # don't load any more settings if the shell is not interactive
-
 # assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
 if test -n "$PS1"; then
 
@@ -139,8 +138,14 @@ if test -n "$PS1"; then
   [ -e "${NAME}" ] && . "${NAME}"
 
   # load windows specific settings, case they exist
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc.cygwin"
-  [ -e "${NAME}" ] && . "${NAME}"
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
+  [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ] && . "${NAME}"
+  if [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ]; then
+    echo "imported ${NAME}"
+  else
+    [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && echo "set to import win" || echo "not set to import win"
+    [ -e "${NAME}" ] && echo "${NAME} exists" || echo "${NAME} does not exist"
+  fi
 
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc.local"
   [ -e "${NAME}" ] && . "${NAME}"
