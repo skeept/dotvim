@@ -116,6 +116,8 @@ unset LS_COLORS
 
 export DISPLAY0="$DISPLAY"
 
+DEBUG_BASHRC=yes
+
 #export PATH="${PATH}:/opt/condor/bin"
 
 export PYTHONSTARTUP=~/.pythonrc.py
@@ -140,18 +142,20 @@ if test -n "$PS1"; then
   # load windows specific settings, case they exist
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
   [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ] && . "${NAME}"
-  if [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ]; then
-    echo "imported ${NAME}"
-  else
-    [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && echo "set to import win" || echo "not set to import win"
-    [ -e "${NAME}" ] && echo "${NAME} exists" || echo "${NAME} does not exist"
+  if [ -n "${DEBUG_BASHRC}" ]; then
+    if [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ]; then
+      echo "imported ${NAME}"
+    else
+      [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && echo "set to import win" || echo "not set to import win"
+      [ -e "${NAME}" ] && echo "${NAME} exists" || echo "${NAME} does not exist"
+    fi
   fi
 
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc.local"
-  [ -e "${NAME}" ] && . "${NAME}"
+  [ -e "${HOME}/.bashrc.local" ] && . "${HOME}/.bashrc.local"
 
   # try using faster vim for fc
   export HISTCONTROL=erasedups:ignoredups
 fi
 
 export PATH="${HOME}/bin":${PATH}
+# vim: set ft=bash:
