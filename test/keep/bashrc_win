@@ -93,7 +93,7 @@ e()
 
 tc()
 {
-  local _TOTALCMD_PATH="$(__win_base)/Program Files/totalcmd/TOTALCMD64.EXE"
+  _TOTALCMD_PATH="$(__win_base)/Program Files/totalcmd/TOTALCMD64.EXE"
   [ ! -e "${_TOTALCMD_PATH}" ] && _TOTALCMD_PATH="$(__win_base)/totalcmd/TOTALCMD64.EXE"
   if [ ! -e "${_TOTALCMD_PATH}" ]; then
    explorer.exe $@ &
@@ -108,8 +108,7 @@ tc()
   [ -e "${a1}" ] && a1="$(winpath "$a1")"
   [ -e "$a2" ] && a2="$(winpath "$a2")"
 
-  echo "${_TOTALCMD_PATH}" //O "$a1" "$a2" &
-  "${_TOTALCMD_PATH}" //O "$a1" "$a2" &
+  "${_TOTALCMD_PATH}" /O "$a1" "$a2" &
 }
 
 tcr()
