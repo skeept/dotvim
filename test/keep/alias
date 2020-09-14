@@ -96,9 +96,11 @@ alias ee='vim -c "packadd editexisting"'
 alias gr='grep -irn'
 
 alias grep='grep --color=auto --ignore-case'
-alias ii='cygstart'
+# alias ii='cygstart'
 alias vc='vd --filetype csv --header 0'
 alias t2='tmux -2'
 alias tw='emacsclient -nw'
 #alias tm='tmux -2'
 alias cpv='rsync -ah --info=progress2'
+
+# vim: set ft=sh:
