@@ -8,7 +8,7 @@ alias ...="cd ../.."
 
 alias hi=history
 alias plf='perl -wnle' #loop around a file (must supply a file)
-alias pe='perl -wle' #simple execute the command provided (noter that here won't be looping through the lines of a file)
+alias pe='perl -wle' #simple execute the command provided (note that here won't be looping through the lines of a file)
 alias passwd=yppasswd
 #alias quit=logout
 
