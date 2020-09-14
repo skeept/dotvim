@@ -17,7 +17,7 @@ function gi()
   grep -iR --exclude={tags,*.{obj,idb,pdb,exe,dll,png,jpg,vlt,dat,tff,ico}} "${pattern}" ${def_loc}
 }
 
-function __process_arg_to_cygwin()
+function __args_to_win()
 {
   path_util=wslpath
   ! [ -x "$(command -v $path_util)" ] && path_util=cygpath
@@ -35,19 +35,25 @@ function __process_arg_to_cygwin()
   echo $arg_list
 }
 
+function __win_base()
+{
+  local cmd=$(command -v cmd.exe)
+  echo "${cmd/\/Windows*/}"
+}
+
 function vg()
 {
-  gvim $(__process_arg_to_cygwin -u "${HOME}/vimfiles/simple.vim" --noplugins $@) &
+  gvim $(__args_to_win -u "${HOME}/vimfiles/simple.vim" --noplugins $@) &
 }
 
 function vdg()
 {
-  gvim.bat $(__process_arg_to_cygwin -u "${HOME}/vimfiles/simple.vim" --noplugins -d $@)
+  gvim.bat $(__args_to_win -u "${HOME}/vimfiles/simple.vim" --noplugins -d $@)
 }
 
 function gv()
 {
-  gvim.bat $(__process_arg_to_cygwin $@)
+  gvim.bat $(__args_to_win $@)
 }
 
 function gr()
@@ -56,13 +62,13 @@ function gr()
   if test "a$1" != "a"; then
     _REMOTE_SILENT='--remote-silent'
   fi
-  gvim.bat $(__process_arg_to_cygwin ${_REMOTE_SILENT} $@)
+  gvim.bat $(__args_to_win ${_REMOTE_SILENT} $@)
 }
 
 function np()
 {
-  /cygdrive/c/Program\ Files/Notepad++/notepad++.exe \
-    $(__process_arg_to_cygwin $@) >& /dev/null &
+  "$(__win_base)/Program Files/Notepad++/notepad++.exe" \
+    $(__args_to_win $@) >& /dev/null &
 }
 
 xmlformat ()
@@ -79,12 +85,13 @@ e()
   unset gvim
   [ -x "$(command -v gvim)" ] && gvim=gvim
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim.exe)" ] && gvim=gvim.exe
-  "${gvim}" -c "RemoteOpenMod $(__process_arg_to_cygwin $@)" &
+  "${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" &
 }
 
 
 tc()
 {
+  local _TOTALCMD_PATH="$(__win_base)/Program Files/totalcmd/TOTALCMD64.EXE"
   [ -z "${_TOTALCMD_PATH}" ] && explorer.exe $@ && return
 
   # handle up to a couple arguments
