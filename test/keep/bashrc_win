@@ -101,16 +101,22 @@ tc()
   fi
 
   # handle up to a couple arguments
-  a1="$1"
+  local a1="$1"
   shift
-  a2="$1"
+  local a2="$1"
   [ -z "$a1" ] && a1="."
   [ -e "${a1}" ] && a1="$(winpath "$a1")"
   [ -e "$a2" ] && a2="$(winpath "$a2")"
 
-  [ -z "$a2" ] && left="/P=L"
+  echo "${_TOTALCMD_PATH}" //O "$a1" "$a2" &
+  "${_TOTALCMD_PATH}" //O "$a1" "$a2" &
+}
 
-  "${_TOTALCMD_PATH}" "$left" "$a1" "$a2" &
+tcr()
+{
+  local arg="$1"
+  [ -z "${arg}" ] && arg="."
+  tc "/R=$(winpath $arg)"
 }
 
 
