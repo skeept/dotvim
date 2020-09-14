@@ -67,8 +67,10 @@ function gr()
 
 function np()
 {
-  "$(__win_base)/Program Files/Notepad++/notepad++.exe" \
-    $(__args_to_win $@) >& /dev/null &
+  local npp="$(__win_base)/Program Files/Notepad++/notepad++.exe"
+  [ ! -e "${npp}" ] && npp=notepad.exe
+  #"${npp}" $(__args_to_win $@) >& /dev/null &
+  "${npp}" $(__args_to_win $@) &
 }
 
 xmlformat ()
@@ -92,7 +94,11 @@ e()
 tc()
 {
   local _TOTALCMD_PATH="$(__win_base)/Program Files/totalcmd/TOTALCMD64.EXE"
-  [ -z "${_TOTALCMD_PATH}" ] && explorer.exe $@ && return
+  [ ! -e "${_TOTALCMD_PATH}" ] && _TOTALCMD_PATH="$(__win_base)/totalcmd/TOTALCMD64.EXE"
+  if [ ! -e "${_TOTALCMD_PATH}" ]; then
+   explorer.exe $@ &
+   return
+  fi
 
   # handle up to a couple arguments
   a1="$1"
@@ -104,9 +110,8 @@ tc()
 
   [ -z "$a2" ] && left="/P=L"
 
-  "${_TOTALCMD_PATH}" "$left" "$a1" "$a2"
+  "${_TOTALCMD_PATH}" "$left" "$a1" "$a2" &
 }
-
 
 
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
