@@ -4,3 +4,28 @@ set main-view-date = relative-compact
 set main-view-author = abbreviated
 #set main-view-commit-title-overflow = 50
 set line-graphics = utf-8
+set main-view-id-display = yes
+
+
+
+set git-colors = no
+
+color diff-stat			95	default
+color date			172	default
+color "Merge: "			cyan	default
+color graph-commit		red	default
+color id			167	default
+color "author "			95	default
+color "Commit: "		90	default
+color cursor			white	101	bold
+
+color palette-0			93	default
+color palette-1			95	default
+color palette-2			124	default
+color palette-7			90	default bold
+
+color delimiter			90	default
+color main-tracked		99	default	bold
+
+# vi: ts=8 sts=8 sw=8 noet
+ 
