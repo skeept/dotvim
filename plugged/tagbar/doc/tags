@@ -39,6 +39,7 @@ g:tagbar_updateonsave_maxlines	tagbar.txt	/*g:tagbar_updateonsave_maxlines*
 g:tagbar_use_cache	tagbar.txt	/*g:tagbar_use_cache*
 g:tagbar_vertical	tagbar.txt	/*g:tagbar_vertical*
 g:tagbar_width	tagbar.txt	/*g:tagbar_width*
+g:tagbar_wrap	tagbar.txt	/*g:tagbar_wrap*
 g:tagbar_zoomwidth	tagbar.txt	/*g:tagbar_zoomwidth*
 tagbar	tagbar.txt	/*tagbar*
 tagbar#GetTagNearLine()	tagbar.txt	/*tagbar#GetTagNearLine()*
