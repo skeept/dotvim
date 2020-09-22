@@ -226,7 +226,7 @@ call SetupAsyncomplete()
 if IsAddonActive('lightline')
 
 function LineInfoForLightLine()
-  return line('.') . ':' . col('.') . '/'. line('$') . ''
+  return line('.') . '/'. line('$') . ':' . col('.')
 endfunction
 
 "let g:lightline = {
