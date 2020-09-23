@@ -46,7 +46,8 @@ endif
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 
-Plug 'prabirshrestha/asyncomplete.vim', Cond(version > 800)
+let load_asynccomplete=has("nvim") || v:version > 800
+Plug 'prabirshrestha/asyncomplete.vim', Cond(load_asynccomplete > 0)
 Plug 'prabirshrestha/asyncomplete-buffer.vim'
 Plug 'prabirshrestha/asyncomplete-file.vim'
 Plug 'prabirshrestha/asyncomplete-neosnippet.vim'

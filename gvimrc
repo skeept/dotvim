@@ -39,7 +39,9 @@ set cmdheight=1
 "set guifont=Courier\ 13
 "set guifont=Bitstream\ Vera\ Sans\ Mono\ 11
 if g:is_win
-  set rop=type:directx
+  if !has("nvim")
+    set rop=type:directx
+  endif
   set guifont=Terminus:h12
 else
   "set guifont=Terminus\ 12,
@@ -50,18 +52,24 @@ endif
 set winaltkeys=no
 
 let g:togglemenu=0
-set guioptions -=T
+if !has("nvim")
+  set guioptions -=T
+endif
 
 "map <f5> :call ToggleMenu()<cr>
 "imap <f5> <C-O>:call ToggleMenu()<cr>
 function! ToggleMenu()
   if g:togglemenu == 0
     set go +=m
-    set go +=T
+  if !has("nvim")
+    set guioptions +=T
+  endif
     let g:togglemenu = 1
   else
     set go -=m
-    set go -=T
+  if !has("nvim")
+    set guioptions -=T
+  endif
     let g:togglemenu = 0
   endif
 endfunction
