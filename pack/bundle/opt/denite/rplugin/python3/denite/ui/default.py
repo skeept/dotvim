@@ -713,10 +713,10 @@ class Default(object):
         if self._context['cursor_pos'].isnumeric():
             self._cursor = int(self._context['cursor_pos']) + 1
         elif re.match(r'\+\d+', self._context['cursor_pos']):
-            for _ in range(self._context['cursor_pos'][1:]):
+            for _ in range(int(self._context['cursor_pos'][1:])):
                 self._move_to_next_line()
         elif re.match(r'-\d+', self._context['cursor_pos']):
-            for _ in range(self._context['cursor_pos'][1:]):
+            for _ in range(int(self._context['cursor_pos'][1:])):
                 self._move_to_prev_line()
         elif self._context['cursor_pos'] == '$':
             self._move_to_last_line()
