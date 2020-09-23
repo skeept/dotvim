@@ -22,6 +22,4 @@ else
   echo "Cannot source TARGET_CONFIG=${TARGET_CONFIG}"
 fi
 
-unset DOT_BASHRC_READ
-
 set read_bash_profile
