@@ -27,6 +27,7 @@ g:tagbar_left	tagbar.txt	/*g:tagbar_left*
 g:tagbar_no_status_line	tagbar.txt	/*g:tagbar_no_status_line*
 g:tagbar_position	tagbar.txt	/*g:tagbar_position*
 g:tagbar_previewwin_pos	tagbar.txt	/*g:tagbar_previewwin_pos*
+g:tagbar_scopestrs	tagbar.txt	/*g:tagbar_scopestrs*
 g:tagbar_show_balloon	tagbar.txt	/*g:tagbar_show_balloon*
 g:tagbar_show_linenumbers	tagbar.txt	/*g:tagbar_show_linenumbers*
 g:tagbar_show_visibility	tagbar.txt	/*g:tagbar_show_visibility*
@@ -38,6 +39,7 @@ g:tagbar_systemenc	tagbar.txt	/*g:tagbar_systemenc*
 g:tagbar_updateonsave_maxlines	tagbar.txt	/*g:tagbar_updateonsave_maxlines*
 g:tagbar_use_cache	tagbar.txt	/*g:tagbar_use_cache*
 g:tagbar_vertical	tagbar.txt	/*g:tagbar_vertical*
+g:tagbar_visibility_symbols	tagbar.txt	/*g:tagbar_visibility_symbols*
 g:tagbar_width	tagbar.txt	/*g:tagbar_width*
 g:tagbar_wrap	tagbar.txt	/*g:tagbar_wrap*
 g:tagbar_zoomwidth	tagbar.txt	/*g:tagbar_zoomwidth*
