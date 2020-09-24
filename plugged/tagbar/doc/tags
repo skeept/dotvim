@@ -2,6 +2,7 @@
 :TagbarCurrentTag	tagbar.txt	/*:TagbarCurrentTag*
 :TagbarDebug	tagbar.txt	/*:TagbarDebug*
 :TagbarDebugEnd	tagbar.txt	/*:TagbarDebugEnd*
+:TagbarForceUpdate	tagbar.txt	/*:TagbarForceUpdate*
 :TagbarGetTypeConfig	tagbar.txt	/*:TagbarGetTypeConfig*
 :TagbarOpen	tagbar.txt	/*:TagbarOpen*
 :TagbarOpenAutoClose	tagbar.txt	/*:TagbarOpenAutoClose*
@@ -18,6 +19,7 @@ g:tagbar_compact	tagbar.txt	/*g:tagbar_compact*
 g:tagbar_ctags_bin	tagbar.txt	/*g:tagbar_ctags_bin*
 g:tagbar_ctags_options	tagbar.txt	/*g:tagbar_ctags_options*
 g:tagbar_expand	tagbar.txt	/*g:tagbar_expand*
+g:tagbar_file_size_limit	tagbar.txt	/*g:tagbar_file_size_limit*
 g:tagbar_foldlevel	tagbar.txt	/*g:tagbar_foldlevel*
 g:tagbar_height	tagbar.txt	/*g:tagbar_height*
 g:tagbar_hide_nonpublic	tagbar.txt	/*g:tagbar_hide_nonpublic*
@@ -44,6 +46,7 @@ g:tagbar_width	tagbar.txt	/*g:tagbar_width*
 g:tagbar_wrap	tagbar.txt	/*g:tagbar_wrap*
 g:tagbar_zoomwidth	tagbar.txt	/*g:tagbar_zoomwidth*
 tagbar	tagbar.txt	/*tagbar*
+tagbar#ForceUpdate()	tagbar.txt	/*tagbar#ForceUpdate()*
 tagbar#GetTagNearLine()	tagbar.txt	/*tagbar#GetTagNearLine()*
 tagbar#StopAutoUpdate()	tagbar.txt	/*tagbar#StopAutoUpdate()*
 tagbar-autoopen	tagbar.txt	/*tagbar-autoopen*
