@@ -1,3 +1,4 @@
+# vim: set ft=bash:
 #===============================================================
 #
 # PERSONAL $HOME/.bashrc FILE for bash-2.05 (or later)
@@ -1074,13 +1075,12 @@ complete -F _vim vim vi v gv vd va
 
 function e()
 {
-  if test "a$STY" != "a"; then
-    TERM=screen vim $@
+  if [ -x "$(command -v nvim)" ]; then
+    nvim $@
   else
     vim $@
   fi
 }
-
 
 g()
 {

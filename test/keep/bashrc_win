@@ -2,7 +2,6 @@
 alias c='command'
 alias ls='ls --color'
 
-
 #disable control flow
 stty -ixon
 
@@ -92,12 +91,27 @@ xmlformat ()
   fi
 }
 
-e()
+ev()
 {
   unset gvim
-  [ -x "$(command -v gvim)" ] && gvim=gvim
+
+  # nvim-qt doesn't seem to be able to add remote files; try again later
+  if false; then
+  [ -x "$(command -v nvim-qt.exe)" ] && gvim=nvim-qt.exe
+  local c1="$(__win_base)/ht/Neovim/bin/nvim-qt.exe"
+  [ -z ${gvim+x} ] && [ -e "${c1}" ] && gvim="${c1}"
+  fi
+
+  [ -z ${gvim+x} ] && [ -x "$(command -v gvim)" ] && gvim=gvim
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim.exe)" ] && gvim=gvim.exe
-  "${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" &
+  if [ -n ${gvim+x} ]; then
+    "${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" > /dev/null &
+    disown
+  elif [ -x "$(command -v nvim)" ]; then
+    nvim $@
+  else
+    vim $@
+  fi
 }
 
 
