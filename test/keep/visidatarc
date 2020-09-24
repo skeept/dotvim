@@ -1,25 +1,21 @@
 # vim: set ft=python:
 
 import itertools
-import logging
 
-logging.basicConfig(
-        level=logging.ERROR,
-        format="%(message)s",
-        handlers=[
-            logging.FileHandler("tmp/visi.log"),
-            ],
-        )
+if False:
+    import logging
+    logging.basicConfig(
+            level=logging.ERROR,
+            format="%(message)s",
+            handlers=[
+                logging.FileHandler("tmp/visi.log"),
+                ],
+            )
 
-logging.info("------------------------------------\n")
+    logging.info("------------------------------------\n")
+
 
 Sheet.addCommand('gr', 'guess-types', 'for c in visibleCols: c.type = guessType(c, visibleRows)')
-
-def guessType(col, rows):
-    res = guessTypeImp(col, rows)
-    logging.info("dir(col) = %s", dir(col))
-    logging.info("type = %s", res)
-    return res
 
 
 def guessTypeImp(col, rows):
@@ -46,3 +42,11 @@ def guessTypeImp(col, rows):
         return anytype
     else:
         return curr_type
+
+
+def guessType(col, rows):
+    res = guessTypeImp(col, rows)
+    logging.info("dir(col) = %s", dir(col))
+    logging.info("type = %s", res)
+    return res
+guessType=guessTypeImp
