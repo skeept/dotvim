@@ -1,0 +1,48 @@
+# vim: set ft=python:
+
+import itertools
+import logging
+
+logging.basicConfig(
+        level=logging.ERROR,
+        format="%(message)s",
+        handlers=[
+            logging.FileHandler("tmp/visi.log"),
+            ],
+        )
+
+logging.info("------------------------------------\n")
+
+Sheet.addCommand('gr', 'guess-types', 'for c in visibleCols: c.type = guessType(c, visibleRows)')
+
+def guessType(col, rows):
+    res = guessTypeImp(col, rows)
+    logging.info("dir(col) = %s", dir(col))
+    logging.info("type = %s", res)
+    return res
+
+
+def guessTypeImp(col, rows):
+    if col.type is not anytype:
+        return col.type
+
+    max_to_check = 20
+    curr_type = None
+    for val in itertools.islice((col.getValue(r) for r in rows), max_to_check):
+        if not str(val):
+            continue
+        try:
+            fv = float(val)
+            is_int = float(int(fv)) == fv 
+            if is_int:
+                if curr_type is None:
+                    curr_type = int
+            else:
+                curr_type = float
+        except Exception:
+            pass
+
+    if curr_type is None:
+        return anytype
+    else:
+        return curr_type
