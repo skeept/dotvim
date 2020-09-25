@@ -105,8 +105,7 @@ ev()
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim)" ] && gvim=gvim
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim.exe)" ] && gvim=gvim.exe
   if [ -n ${gvim+x} ]; then
-    "${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" > /dev/null &
-    disown
+    ("${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" > /dev/null) &
   elif [ -x "$(command -v nvim)" ]; then
     nvim $@
   else
