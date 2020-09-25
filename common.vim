@@ -146,8 +146,17 @@ inoremap <C-W> <C-G>u<C-W>
 inoremap <BS> <C-G>u<BS>
 inoremap <DEL> <C-G>u<DEL>
 
-noremap <f4> :x<CR>
-inoremap <f4> <esc>:x<CR>
+function! CloseTabOrExit()
+  if tabpagenr('$') > 1
+    tabclose
+  else
+    xit
+  endif
+  return ""
+endfunction
+
+noremap <f4> :call CloseTabOrExit()<CR>
+inoremap <f4> <ESC>:call CloseTabOrExit()<CR>
 
 "noremap ,en :cnext<CR>
 "noremap ,ep :cprevious<CR>
