@@ -6,16 +6,30 @@ let b:done_vimsnippets = 1
 " Some variables need default value
 let s:has_git = executable('git')
 
-if !exists("g:snips_author") && s:has_git
-    let g:snips_author = trim(system('command git config --global user.name'))
-else
-    let g:snips_author = "yourname"
+if !exists("g:snips_author")
+    if s:has_git
+        let s:author = substitute(system('git config --global user.name'), '\n', '', 'g')
+        if s:author == ''
+            let g:snips_author = "yourname"
+        else
+            let g:snips_author = s:author
+        endif
+    else
+        let g:snips_author = "yourname"
+    endif
 endif
 
-if !exists("g:snips_email") && s:has_git
-    let g:snips_email = trim(system('command git config --global user.email'))
-else
-    let g:snips_email = "yourname@email.com"
+if !exists("g:snips_email")
+    if s:has_git
+        let s:email = substitute(system('git config --global user.email'), '\n', '', 'g')
+        if s:email == ''
+            let g:snips_email = "yourname@email.com"
+        else
+            let g:snips_email = s:email
+        endif
+    else
+        let g:snips_email = "yourname@email.com"
+    endif
 endif
 
 if !exists("g:snips_github")
