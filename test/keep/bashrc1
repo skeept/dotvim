@@ -157,5 +157,8 @@ if test -n "$PS1"; then
   export HISTCONTROL=erasedups:ignoredups
 fi
 
-export PATH="${HOME}/bin":${PATH}
+
+# bin/links is usually not commited
+export PATH="${HOME}/bin:${HOME}/bin/links:${PATH}"
+
 # vim: set ft=bash:

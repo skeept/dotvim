@@ -15,6 +15,7 @@ if False:
     logging.info("------------------------------------\n")
 
 
+# Sheet.addCommand('gr', 'guess-types', 'for c in visibleCols: c.type = guessType(c, visibleRows); execCommand("resize-cols-max")')
 Sheet.addCommand('gr', 'guess-types', 'for c in visibleCols: c.type = guessType(c, visibleRows)')
 
 

@@ -259,6 +259,8 @@ function! jraf#loadJedi()
   if exists("s:loadedJedi")
     return ''
   endif
+  let s:loadedJedi = 1
+  let s:has_jedi = 0
   if has("python3")
     silent python3 << EOF
 import vim
@@ -266,7 +268,7 @@ try:
   import jedi
   vim.command('let s:has_jedi = 1')
 except:
-  vim.command('let s:has_jedi = 0')
+  pass
 EOF
 
     if s:has_jedi == 1
@@ -278,9 +280,8 @@ EOF
       echom "No Jedi installed!"
     endif
   else
-    echom "Cannot Load Jedi No Python!"
+    echom "Cannot Load Jedi No Python support!"
   endif
-  let s:loadedJedi = 1
 endfunction "}}}
 "==============================================================================}}}
 
