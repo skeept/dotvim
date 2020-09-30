@@ -63,6 +63,7 @@ endif
 
 set foldmethod=syntax
 set title
+set titleold=
 set virtualedit+=block
 
 set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
