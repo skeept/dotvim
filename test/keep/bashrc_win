@@ -141,6 +141,12 @@ tcr()
   tc "${bs}R=$(winpath $arg)"
 }
 
+bc4()
+{
+  _BC_CMD1="$(__win_base)/Program Files/Beyond Compare 4/BCompare.exe"
+  "${_BC_CMD1}" $@ &
+}
+
 
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
 
