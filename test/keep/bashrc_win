@@ -147,6 +147,9 @@ bc4()
   "${_BC_CMD1}" $@ &
 }
 
+if [ -e /conda/envs/dvc/bin/vd ]; then
+  alias vsd=/conda/envs/dvc/bin/vd
+fi
 
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
 
