@@ -5,25 +5,56 @@ import logging
 
 if False:
     from os.path import isdir
+
     file_name = "tmp/visi.log" if isdir("tmp") else "visi.log"
     logging.basicConfig(
-            level=logging.INFO,
-            format="%(message)s",
-            handlers=[
-                logging.FileHandler(file_name, mode="w"),
-                ],
-            )
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[logging.FileHandler(file_name, mode="a"),],
+    )
+
+    def ii(*args):
+        logging.info(*args)
 
     logging.info("------------------------------------\n")
 else:
-    logging.basicConfig(
-            level=logging.ERROR,
-            )
+    logging.basicConfig(level=logging.ERROR,)
+
+    def ii(*args):
+        pass
 
 
 # can use this one later in version 2.0
 # Sheet.addCommand('gr', 'guess-types', 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")')
-Sheet.addCommand('gr', 'guess-types', 'guessType(visibleCols, visibleRows); exec_keystrokes("resize-cols-max")')
+Sheet.addCommand(
+    "gr",
+    "guess-types",
+    'guessType(visibleCols, visibleRows); exec_keystrokes("resize-cols-max")',
+)
+
+# Sheet.addCommand('gr', 'guess-types', 'logging.info("source %s", source)')
+# Sheet.addCommand('gr', 'guess-columns', 'gessColNames(source, visibleCols)')
+
+Sheet.addCommand("gw", "set-col-names", "guessColNames(source, visibleCols)")
+
+
+def guessColNames(source, cols_input):
+    source_base = os.path.basename(source.resolve())
+    names = []
+    if source_base == "schedule.dat":
+        names = (
+            "id arr dep air fn id2 air2 fn2 . d_gmt s_t e_t s_sch_t e_sch_t d_l sl_t sl_t el_t "
+            " sl_sch_t el_sch_t"
+        ).split()
+    elif source_base == "passengers.dat":
+        names = ("pnr n crm fare . . . . .").split()
+    elif source_base == "availability.dat":
+        names = "id class order auth . . ".split()
+
+    for col, name, idx in zip(
+        cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0)
+    ):
+        col.name = name if name != "." else f"c{idx}"
 
 
 def guessType(cols, rows):
