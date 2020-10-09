@@ -94,7 +94,7 @@ Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
 
 Plug 'liuchengxu/vim-clap'
 
-Plug 'troydm/zoomwintab.vim', { 'on': ['ZoomWinTabToggle', 'ZoomWinTabOut ', 'ZoomWinTabIn '] }
+Plug 'troydm/zoomwintab.vim'
 
 Plug 'skeept/ctrlp-packadd'
 

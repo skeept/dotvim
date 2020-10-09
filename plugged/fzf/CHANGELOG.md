@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.23.1
+------
+- Added `--preview-window` options for disabling flags
+    - `nocycle`
+    - `nohidden`
+    - `nowrap`
+
 0.23.0
 ------
 - Support preview scroll offset relative to window height
