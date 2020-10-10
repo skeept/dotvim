@@ -67,6 +67,7 @@ GIT_SSL_NO_VERIFY=true git pull 2>&1 |\
   grep -v "Updating " |\
   grep -v "Fast-forward" |\
   grep -v "^From " |\
+  grep -v "in responses" |\
   grep -v -i "FETCH_HEAD"
 EOF
 )
@@ -79,6 +80,7 @@ hg pull -u 2>&1 |\
   grep -v "searching for changes" |\
   grep -v "all remote heads known locally" |\
   grep -v "no changes found" |\
+  grep -v "in responses" |\
   grep -v "pulling from"
 EOF
 )
