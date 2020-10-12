@@ -7,6 +7,9 @@ CHANGELOG
     - `nocycle`
     - `nohidden`
     - `nowrap`
+    - `default`
+- Built with Go 1.14.9 due to performance regression
+    - https://github.com/golang/go/issues/40727
 
 0.23.0
 ------

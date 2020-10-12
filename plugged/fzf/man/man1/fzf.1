@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ..
-.TH fzf 1 "Oct 2020" "fzf 0.23.0" "fzf - a command-line fuzzy finder"
+.TH fzf 1 "Oct 2020" "fzf 0.23.1" "fzf - a command-line fuzzy finder"
 
 .SH NAME
 fzf - a command-line fuzzy finder
@@ -381,7 +381,7 @@ Preview window will be updated even when there is no match for the current
 query if any of the placeholder expressions evaluates to a non-empty string.
 .RE
 .TP
-.BI "--preview-window=" "[POSITION][:SIZE[%]][:rounded|sharp|noborder][:[no]wrap][:[no]cycle][:[no]hidden][:+SCROLL[-OFFSET]]"
+.BI "--preview-window=" "[POSITION][:SIZE[%]][:rounded|sharp|noborder][:[no]wrap][:[no]cycle][:[no]hidden][:+SCROLL[-OFFSET]][:default]"
 
 .RS
 .B POSITION: (default: right)
@@ -410,6 +410,8 @@ expression that refers to a numeric integer. The optional \fB-OFFSET\fR part is
 for adjusting the base offset so that you can see the text above it. It should
 be given as a numeric integer (\fB-INTEGER\fR), or as a denominator form
 (\fB-/INTEGER\fR) for specifying a fraction of the preview window height.
+
+\fBdefault\fR resets all options previously set to the default.
 
 .RS
 e.g.
