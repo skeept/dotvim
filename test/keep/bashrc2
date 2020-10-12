@@ -1087,14 +1087,22 @@ g()
   [ -z "$1" ] && git status || git $@
 }
 
-#function vs()
-#{
-  #if test "a$STY" != "a"; then
-    #TERM=screen v $@
-  #else
-    #v $@
-  #fi
-#}
+irr()
+{
+  # this function serves as a helper to run the python script run_irops.py
+  # may need to consider explicity location for where this script is for now
+  # we start with windows
+
+  # also in the future we should see if there is a nice way to use tmux to start the run in a pane
+  # for now just start directly
+
+  local candidate1="/mnt/c/Tools/run_irops.py"
+  if [ -e "${candidate1}" ]; then
+    python "${candidate1}" $@
+  else
+    echo "what do you want to do? maybe add more candidates? for irr?"
+  fi
+}
 
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
