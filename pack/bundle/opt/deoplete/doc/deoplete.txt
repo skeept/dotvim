@@ -113,7 +113,7 @@ auto_complete
 auto_complete_delay
 		Delay the completion after input in milliseconds.
 
-		Default value: 0 (milliseconds)
+		Default value: 20 (milliseconds)
 
 					*deoplete-options-auto_complete_popup*
 auto_complete_popup
@@ -217,7 +217,7 @@ num_processes
 		If it is less than or equal to 0, the number of processes is
 		equal to that of sources.
 
-		Default value: 4
+		Default value: 1
 
 					*deoplete-options-omni_patterns*
 omni_patterns
