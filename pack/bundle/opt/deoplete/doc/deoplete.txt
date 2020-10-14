@@ -45,8 +45,8 @@ Improvements in deoplete in comparison to |neocomplete|:
 ==============================================================================
 INSTALL							*deoplete-install*
 
-Note: deoplete requires Neovim (0.3.0+) or Vim8 (latest is recommended) with
-Python 3.6.1+ and |+timers| enabled.
+Note: deoplete requires Neovim (0.3.0+) or Vim8.1+ (latest is recommended)
+with Python 3.6.1+ and |+timers| enabled.
 
 Please install/upgrade msgpack package (1.0.0+).
 https://github.com/msgpack/msgpack-python
@@ -1687,9 +1687,7 @@ Q: I want to silence the |ins-completion-menu| messages in the command line
 
 A: You can disable the messages through the 'shortmess' option. >
 
-	if has("patch-7.4.314")
-	  set shortmess+=c
-	endif
+	set shortmess+=c
 
 Q: I want to use the auto select feature like |neocomplete|.
 
