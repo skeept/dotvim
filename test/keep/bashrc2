@@ -702,6 +702,7 @@ __d_add_folder()
   # not found, add new one
   _dirs_data_names+=("${name}")
   _dirs_data_keys+=("${key}")
+  [ -n "${key}" ] && eval "export ${key}=\"${name}\""
 }
 
 __print_folder_keys()
