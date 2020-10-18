@@ -848,9 +848,10 @@ localsearch <https://github.com/mox-mox/vim-localsearch>
 * enable/disable localsearch indicator integration >
   let g:airline#extensions#localsearch#enabled = 1
 
-* show only when localsearch is off (shows 'GS' denoting GlobalSearch)
-  (this option is set to 0 by default) >
-  let g:airline#extensions#localsearch#enabled = 1
+* invert the localsearch indicator
+  if set to 1, the indicator shall only be shown when localsearch is disabled
+  the text will also change from 'LS' to 'GS' (Global Search) >
+  let g:airline#extensions#localsearch#inverted = 0
 
 -------------------------------------                    *airline-lsp*
 lsp <https://github.com/prabirshrestha/vim-lsp>
@@ -1514,7 +1515,7 @@ vim-windowswap <https://github.com/wesQ3/vim-windowswap>
   " The default value matches filetypes typically used for documentation
   " such as markdown and help files. Default is:
   let g:airline#extensions#wordcount#filetypes =
-    \ ['asciidoc', 'help', 'mail', 'markdown', 'org', 'plaintex', 'rst', 'tex', 'text'])
+    \ ['asciidoc', 'help', 'mail', 'markdown', 'nroff', 'org', 'plaintex', 'rst', 'tex', 'text'])
   " Use ['all'] to enable for all filetypes.
 
 * defines the name of a formatter for word count will be displayed: >
