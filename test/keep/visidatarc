@@ -43,11 +43,12 @@ def guessColNames(source, cols_input):
     names = []
     if source_base == "schedule.dat":
         names = (
-            "id arr dep air fn id2 air2 fn2 . d_gmt s_t e_t s_sch_t e_sch_t d_l sl_t sl_t el_t "
+            "id arr dep air fn id2 air2 fn2 "
+            " . d_gmt s_t e_t s_sch_t e_sch_t d_l sl_t sl_t el_t "
             " sl_sch_t el_sch_t"
         ).split()
     elif source_base == "passengers.dat":
-        names = ("pnr n crm fare . . . . .").split()
+        names = ("pnr n crm fare . . . minor . . checkIn dayT intN").split()
     elif source_base == "availability.dat":
         names = "id class order auth . . ".split()
 
