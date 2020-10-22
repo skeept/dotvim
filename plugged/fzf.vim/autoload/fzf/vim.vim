@@ -72,7 +72,11 @@ function! s:check_requirements()
     throw "fzf#exec function not found. You need to upgrade Vim plugin from the main fzf repository ('junegunn/fzf')"
   endif
   let exec = fzf#exec()
-  let fzf_version = matchstr(systemlist(exec . ' --version')[0], '[0-9.]*')
+  let output = systemlist(exec . ' --version')
+  if v:shell_error || empty(output)
+    throw 'Failed to run "fzf --version": ' . string(output)
+  endif
+  let fzf_version = matchstr(output[0], '[0-9.]\+')
 
   if s:version_requirement(fzf_version, s:min_version)
     let s:checked = 1
@@ -155,7 +159,9 @@ function! fzf#vim#with_preview(...)
   else
     let preview_cmd = fzf#shellescape(s:bin.preview)
   endif
-  let preview += ['--preview', preview_cmd.' '.placeholder]
+  if len(placeholder)
+    let preview += ['--preview', preview_cmd.' '.placeholder]
+  end
 
   if len(args)
     call extend(preview, ['--bind', join(map(args, 'v:val.":toggle-preview"'), ',')])
