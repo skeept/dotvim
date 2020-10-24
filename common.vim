@@ -185,6 +185,11 @@ vnoremap ,yy y:Sscratch<CR>p
 nnoremap ,yy yy:Sscratch<CR>p
 
 nnoremap ,fz :FZF<ENTER>
+nnoremap ,fe :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
+nnoremap ,fb :Buffers<CR>
+nnoremap ,fh :History
+nnoremap ,fc :Commands<CR>
+nnoremap ,fl :Lines<CR>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
