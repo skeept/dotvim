@@ -2,7 +2,11 @@
 
 set -u
 
+<<<<<<< HEAD
 version=0.23.1
+=======
+version=0.24.1
+>>>>>>> fzf tagbar
 auto_completion=
 key_bindings=
 update_config=2

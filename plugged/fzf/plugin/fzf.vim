@@ -656,6 +656,35 @@ function! s:getpos()
   return {'tab': tabpagenr(), 'win': winnr(), 'winid': win_getid(), 'cnt': winnr('$'), 'tcnt': tabpagenr('$')}
 endfunction
 
+<<<<<<< HEAD
+=======
+function! s:border_opt(window)
+  if type(a:window) != type({})
+    return ''
+  endif
+
+  " Border style
+  let style = tolower(get(a:window, 'border', 'rounded'))
+  if !has_key(a:window, 'border') && !get(a:window, 'rounded', 1)
+    let style = 'sharp'
+  endif
+  if style == 'none' || style == 'no'
+    return ''
+  endif
+
+  " For --border styles, we need fzf 0.24.0 or above
+  call fzf#exec('0.24.0')
+  let opt = ' --border=' . style
+  if has_key(a:window, 'highlight')
+    let color = s:get_color('fg', a:window.highlight)
+    if len(color)
+      let opt .= ' --color=border:' . color
+    endif
+  endif
+  return opt
+endfunction
+
+>>>>>>> fzf tagbar
 function! s:split(dict)
   let directions = {
   \ 'up':    ['topleft', 'resize', &lines],

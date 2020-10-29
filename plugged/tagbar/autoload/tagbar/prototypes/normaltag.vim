@@ -35,7 +35,17 @@ function! s:strfmt() abort dict
         let suffix .= ' : ' . scope
     endif
 
+<<<<<<< HEAD
     return self._getPrefix() . self.name . suffix
+=======
+    if g:tagbar_show_tag_linenumbers == 1
+        let suffix .= ' [' . self.fields.line . ']'
+    elseif g:tagbar_show_tag_linenumbers == 2
+        let prefix .= '[' . self.fields.line . '] '
+    endif
+
+    return prefix . self.name . suffix
+>>>>>>> fzf tagbar
 endfunction
 
 " s:str() {{{1

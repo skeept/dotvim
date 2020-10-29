@@ -539,11 +539,15 @@ g:tagbar_width~
 Default: 40
 
 If |g:tagbar_position| does include a 'vertical' options, then this value is
-used to determine the width of the Tagbar window in characters.
+used to determine the width of the Tagbar window in characters. This value can
+also be set using the |winwidth(0)| function call to calculate a dynamic value
+to make the tagbar width relative to a percentage of the vim window size as
+seen in the example below that will open the tagbar window to 20 percent of
+the window width with a limit of no less than 25 characters.
 
 Example:
 >
-        let g:tagbar_width = 30
+        let g:tagbar_width = max([25, winwidth(0) / 5])
 <
 
                                                           *g:tagbar_zoomwidth*
@@ -703,6 +707,34 @@ Example:
         let g:tagbar_show_linenumbers = 2
 <
 
+<<<<<<< HEAD
+=======
+This option allows printing the tag line number next to the tag in the tagbar
+window. It can be set to the following values:
+    0 - The line number will not be printed
+    1 - The line number will be printed to the right of the tag >
+        Example:    function1(int i) [123]
+<
+    2 - The line number will be printed to the left of the tag >
+        Example:    [123] function1(int i)
+<
+Example:
+>
+    let g:tagbar_show_tag_linenumbers = 1
+<
+                                                     *g:tagbar_show_tag_count*
+g:tagbar_show_tag_count~
+Default: 0
+
+This option allows showing the tag count next to the tag kind in the tagbar
+window. This will show up like this >
+   > functions (<tag-count>)
+<
+Example:
+>
+    let g:tagbar_show_tag_count = 1
+<
+>>>>>>> fzf tagbar
                                                      *g:tagbar_hide_nonpublic*
 g:tagbar_hide_nonpublic~
 Default: 0
