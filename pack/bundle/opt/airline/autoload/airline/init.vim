@@ -31,7 +31,6 @@ function! airline#init#bootstrap()
   call s:check_defined('g:airline_exclude_filenames', ['DebuggerWatch','DebuggerStack','DebuggerStatus'])
   call s:check_defined('g:airline_exclude_filetypes', [])
   call s:check_defined('g:airline_exclude_preview', 0)
-  call s:check_defined('g:airline_gui_mode', airline#init#gui_mode())
 
   call s:check_defined('g:airline_mode_map', {})
   call extend(g:airline_mode_map, {
@@ -176,16 +175,13 @@ function! airline#init#bootstrap()
   call airline#parts#define_text('bookmark', '')
   call airline#parts#define_text('capslock', '')
   call airline#parts#define_text('gutentags', '')
+  call airline#parts#define_text('gen_tags', '')
   call airline#parts#define_text('grepper', '')
   call airline#parts#define_text('xkblayout', '')
   call airline#parts#define_text('keymap', '')
   call airline#parts#define_text('omnisharp', '')
 
   unlet g:airline#init#bootstrapping
-endfunction
-
-function! airline#init#gui_mode()
-  return has('gui_running') || (has("termguicolors") && &termguicolors == 1) ?  'gui' : 'cterm'
 endfunction
 
 function! airline#init#sections()
@@ -211,7 +207,7 @@ function! airline#init#sections()
     let g:airline_section_gutter = airline#section#create(['%='])
   endif
   if !exists('g:airline_section_x')
-    let g:airline_section_x = airline#section#create_right(['bookmark', 'tagbar', 'vista', 'gutentags', 'omnisharp', 'grepper', 'filetype'])
+    let g:airline_section_x = airline#section#create_right(['bookmark', 'tagbar', 'vista', 'gutentags', 'gen_tags', 'omnisharp', 'grepper', 'filetype'])
   endif
   if !exists('g:airline_section_y')
     let g:airline_section_y = airline#section#create_right(['ffenc'])
