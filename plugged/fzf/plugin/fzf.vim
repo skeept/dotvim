@@ -169,6 +169,26 @@ function! fzf#exec()
       throw 'fzf executable not found'
     endif
   endif
+
+  if a:0 && !has_key(s:checked, a:1)
+    let command = s:exec . ' --version'
+    let output = systemlist(command)
+    if v:shell_error || empty(output)
+      throw printf('Failed to run "%s": %s', command, output)
+    endif
+    let fzf_version = matchstr(output[-1], '[0-9.]\+')
+    if s:version_requirement(fzf_version, a:1)
+      let s:checked[a:1] = 1
+      return s:exec
+    elseif a:0 < 2 && input(printf('You need fzf %s or above. Found: %s. Download binary? (y/n) ', a:1, fzf_version)) =~? '^y'
+      redraw
+      call fzf#install()
+      return fzf#exec(a:1, 1)
+    else
+      throw printf('You need to upgrade fzf (required: %s or above)', a:1)
+    endif
+  endif
+
   return s:exec
 endfunction
 

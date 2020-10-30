@@ -947,6 +947,10 @@ function! s:InitWindow(autoclose) abort
     setlocal nomodifiable
     setlocal textwidth=0
 
+    if g:tagbar_scrolloff > 0
+        execute 'setlocal scrolloff=' . g:tagbar_scrolloff
+    endif
+
     if g:tagbar_show_balloon == 1 && has('balloon_eval')
         setlocal balloonexpr=TagbarBalloonExpr()
         set ballooneval
@@ -1902,13 +1906,13 @@ function! s:RenderContent(...) abort
     if !empty(tagbar#state#get_current_file(0)) &&
      \ fileinfo.fpath ==# tagbar#state#get_current_file(0).fpath
         let scrolloff_save = &scrolloff
-        set scrolloff=0
+        setlocal scrolloff=0
 
         call cursor(topline, 1)
         normal! zt
         call cursor(saveline, savecol)
 
-        let &scrolloff = scrolloff_save
+        let &l:scrolloff = scrolloff_save
     else
         " Make sure as much of the Tagbar content as possible is shown in the
         " window by jumping to the top after drawing
@@ -2274,6 +2278,21 @@ function! s:JumpToTag(stay_in_tagbar) abort
     " Center the tag in the window and jump to the correct column if
     " available, otherwise try to find it in the line
     normal! z.
+
+    " If configured, adjust the jump_offset and center the window on that
+    " line. Then fall-through adjust the cursor() position below that
+    if g:tagbar_jump_offset != 0 && g:tagbar_jump_offset < curline
+        if g:tagbar_jump_offset > winheight(0) / 2
+            let jump_offset = winheight(0) / 2
+        elseif g:tagbar_jump_offset < -winheight(0) / 2
+            let jump_offset = -winheight(0) / 2
+        else
+            let jump_offset = g:tagbar_jump_offset
+        endif
+        execute curline+jump_offset
+        normal! z.
+    endif
+
     if taginfo.fields.column > 0
         call cursor(taginfo.fields.line, taginfo.fields.column)
     else
