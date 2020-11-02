@@ -38,24 +38,27 @@ Sheet.addCommand(
 Sheet.addCommand("gw", "set-col-names", "guessColNames(source, visibleCols)")
 
 
-def guessColNames(source, cols_input):
+def guessColNames(source, cols_input, override=False):
     source_base = os.path.basename(source.resolve())
     names = []
     if source_base == "schedule.dat":
         names = (
-            "id arr dep air fn id2 air2 fn2 "
-            " . d_gmt s_t e_t s_sch_t e_sch_t d_l sl_t sl_t el_t "
-            " sl_sch_t el_sch_t"
+            "id dep arr air fn oprFI oprA oprFN netwk "
+            " dt_gmt sch_s sch_e s e dt_local sch_sl sch_el sl el "
+            " ter_dep_s ter_arr_s ter_dep ter_arr "
+            " sch_dep sch_arr "
+            " depSt arrSt depT arrT svcT body opSt eligi selec whatif isAdde "
         ).split()
     elif source_base == "passengers.dat":
         names = ("pnr n crm fare . . . minor . . checkIn dayT intN").split()
     elif source_base == "availability.dat":
-        names = "id class order auth . . ".split()
+        names = "id class order auth cap booked blocked".split()
 
     for col, name, idx in zip(
         cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0)
     ):
-        col.name = name if name != "." else f"c{idx}"
+        if override or not col.name.strip():
+            col.name = name if name != "." else f"c{idx}"
 
 
 def guessType(cols, rows):
