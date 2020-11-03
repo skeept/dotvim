@@ -1342,7 +1342,7 @@ function! s:ExecuteCtagsOnFile(fname, realfname, typeinfo) abort
                           \ '-',
                           \ '--format=2',
                           \ '--excmd=pattern',
-                          \ '--fields=nksSaf',
+                          \ '--fields=nksSafet',
                           \ '--sort=no',
                           \ '--append=no'
                           \ ]
@@ -1463,7 +1463,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo) abort
             let fielddict[key] = 'yes'
         endif
         if len(val) > 0
-            if key ==# 'line' || key ==# 'column'
+            if key ==# 'line' || key ==# 'column' || key ==# 'end'
                 let fielddict[key] = str2nr(val)
             else
                 let fielddict[key] = val
@@ -1525,6 +1525,22 @@ function! s:ProcessTag(name, filename, pattern, fields, is_split, typeinfo, file
         let taginfo.fields.line = 0
     endif
 
+    " Make sure our 'end' is valid
+    if taginfo.fields.end < taginfo.fields.line
+        if a:typeinfo.getKind(taginfo.fields.kind).stl
+            " the config indicates this is a scoped kind due to 'stl', but we
+            " don't have scope vars, assume scope goes to end of file. This
+            " can also be the case for exhuberant ctags which doesn't support
+            " the --fields=e option.
+            " When we call the GetNearbyTag(), it will look up for the nearest
+            " tag, so if we have multiples that have scope to the end of the
+            " file it will still only grab the first one above the current line
+            let taginfo.fields.end = line('$')
+        else
+            let taginfo.fields.end = taginfo.fields.line
+        endif
+    endif
+
     if !has_key(taginfo.fields, 'kind')
         call tagbar#debug#log(
             \ "Warning: No 'kind' field found for tag " . a:name[0] . '!')
@@ -1540,6 +1556,17 @@ function! s:ProcessTag(name, filename, pattern, fields, is_split, typeinfo, file
     let taginfo.typeinfo = a:typeinfo
 
     let a:fileinfo.fline[taginfo.fields.line] = taginfo
+
+    if has_key(taginfo.fields, 'typeref')
+        let typeref = taginfo.fields.typeref
+        let delimit = stridx(typeref, ':')
+        let key = strpart(typeref, 0, delimit)
+        if key ==# 'typename'
+            let taginfo.data_type = substitute(strpart(typeref, delimit + 1), '\t', '', 'g')
+        else
+            let taginfo.data_type = key
+        endif
+    endif
 
     " If this filetype doesn't have any scope information then we can stop
     " here after adding the tag to the list
@@ -2060,40 +2087,57 @@ function! s:PrintHelp() abort
     if !g:tagbar_compact && s:short_help
         silent 0put ='\" Press ' . s:get_map_str('help') . ' for help'
         silent  put _
-    elseif !s:short_help
+    elseif g:tagbar_help_visibility || !s:short_help
+        let help_cmds = [
+                    \ ['jump',              'Jump to tag definition'],
+                    \ ['preview',           'As above, but stay in tagbar window'],
+                    \ ['previewwin',        'Show tag in preview window'],
+                    \ ['nexttag',           'Go to next top-level tag'],
+                    \ ['prevtag',           'Go to preveous top-level tag'],
+                    \ ['showproto',         'Display tag prototype'],
+                    \ ['hidenonpublic',     'Hide non-public tags'],
+                \ ]
+        let fold_cmds = [
+                    \ ['openfold',          'Open fold'],
+                    \ ['closefold',         'Close fold'],
+                    \ ['togglefold',        'Toggle fold'],
+                    \ ['openallfolds',      'Open all folds'],
+                    \ ['closeallfolds',     'Close all folds'],
+                    \ ['incrementfolds',    'Increment fold level by 1'],
+                    \ ['decrementfolds',    'Decrement fold level by 1'],
+                    \ ['nextfold',          'Go to next fold'],
+                    \ ['prevfold',          'Go to previous fold'],
+                \ ]
+        let misc_cmds = [
+                    \ ['togglesort',        'Toggle sort'],
+                    \ ['togglecaseinsensitive', 'Toggle case insensitive sort option'],
+                    \ ['toggleautoclose',   'Toggle autoclose option'],
+                    \ ['togglepause',       'Toggle pause'],
+                    \ ['zoomwin',           'Zoom window in/out'],
+                    \ ['close',             'Close window'],
+                    \ ['help',              'Toggle help'],
+                \ ]
+
         silent 0put ='\" Tagbar keybindings'
         silent  put ='\"'
         silent  put ='\" --------- General ---------'
-        if !empty(s:get_map_str('jump')) | silent  put ='\" ' . s:get_map_str('jump') . ': Jump to tag definition' | endif
-        if !empty(s:get_map_str('preview')) | silent  put ='\" ' . s:get_map_str('preview') . ': As above, but stay in tagbar window' | endif
-        if !empty(s:get_map_str('previewwin')) | silent  put ='\" ' . s:get_map_str('previewwin') . ': Show tag in preview window' | endif
-        if !empty(s:get_map_str('nexttag')) | silent  put ='\" ' . s:get_map_str('nexttag') . ': Go to next top-level tag' | endif
-        if !empty(s:get_map_str('prevtag')) | silent  put ='\" ' . s:get_map_str('prevtag') . ': Go to previous top-level tag' | endif
-        if !empty(s:get_map_str('showproto')) | silent  put ='\" ' . s:get_map_str('showproto') . ': Display tag prototype' | endif
-        if !empty(s:get_map_str('hidenonpublic')) | silent  put ='\" ' . s:get_map_str('hidenonpublic') . ': Hide non-public tags' | endif
+        for [cmd, desc] in help_cmds
+            if !empty(s:get_map_str(cmd)) | silent put ='\" ' . s:get_map_str(cmd) . ': ' . desc | endif
+        endfor
         silent  put ='\"'
         silent  put ='\" ---------- Folds ----------'
-        if !empty(s:get_map_str('openfold')) | silent  put ='\" ' . s:get_map_str('openfold') . ': Open fold' | endif
-        if !empty(s:get_map_str('closefold')) | silent  put ='\" ' . s:get_map_str('closefold') . ': Close fold' | endif
-        if !empty(s:get_map_str('togglefold')) | silent  put ='\" ' . s:get_map_str('togglefold') . ': Toggle fold' | endif
-        if !empty(s:get_map_str('openallfolds')) | silent  put ='\" ' . s:get_map_str('openallfolds') . ': Open all folds' | endif
-        if !empty(s:get_map_str('closeallfolds')) | silent  put ='\" ' . s:get_map_str('closeallfolds') . ': Close all folds' | endif
-        if !empty(s:get_map_str('incrementfolds')) | silent  put ='\" ' . s:get_map_str('incrementfolds') . ': Increment fold level by 1' | endif
-        if !empty(s:get_map_str('decrementfolds')) | silent  put ='\" ' . s:get_map_str('decrementfolds') . ': Decrement fold level by 1' | endif
-        if !empty(s:get_map_str('nextfold')) | silent  put ='\" ' . s:get_map_str('nextfold') . ': Go to next fold' | endif
-        if !empty(s:get_map_str('prevfold')) | silent  put ='\" ' . s:get_map_str('prevfold') . ': Go to previous fold' | endif
+        for [cmd, desc] in fold_cmds
+            if !empty(s:get_map_str(cmd)) | silent put ='\" ' . s:get_map_str(cmd) . ': ' . desc | endif
+        endfor
         silent  put ='\"'
         silent  put ='\" ---------- Misc -----------'
-        if !empty(s:get_map_str('togglesort')) | silent  put ='\" ' . s:get_map_str('togglesort') . ': Toggle sort' | endif
-        if !empty(s:get_map_str('togglecaseinsensitive')) | silent  put ='\" ' . s:get_map_str('togglecaseinsensitive') . ': Toggle case insensitive sort option' | endif
-        if !empty(s:get_map_str('toggleautoclose')) | silent  put ='\" ' . s:get_map_str('toggleautoclose') . ': Toggle autoclose option' | endif
-        if !empty(s:get_map_str('togglepause')) | silent  put ='\" ' . s:get_map_str('togglepause') . ': Toggle pause' | endif
-        if !empty(s:get_map_str('zoomwin')) | silent  put ='\" ' . s:get_map_str('zoomwin') . ': Zoom window in/out' | endif
-        if !empty(s:get_map_str('close')) | silent  put ='\" ' . s:get_map_str('close') . ': Close window' | endif
-        if !empty(s:get_map_str('help')) | silent  put ='\" ' . s:get_map_str('help') . ': Toggle help' | endif
+        for [cmd, desc] in misc_cmds
+            if !empty(s:get_map_str(cmd)) | silent put ='\" ' . s:get_map_str(cmd) . ': ' . desc | endif
+        endfor
         silent  put _
     endif
 endfunction
+
 function! s:get_map_str(map) abort
     let def = get(g:, 'tagbar_map_' . a:map)
     if type(def) ==# type('')
@@ -2137,9 +2181,9 @@ function! s:HighlightTag(openfolds, ...) abort
     let force = a:0 > 0 ? a:1 : 0
 
     if a:0 > 1
-        let tag = s:GetNearbyTag('highlight', 0, a:2)
+        let tag = s:GetNearbyTag('nearest-stl', 0, a:2)
     else
-        let tag = s:GetNearbyTag('highlight', 0)
+        let tag = s:GetNearbyTag('nearest-stl', 0)
     endif
     if !empty(tag)
         let tagline = tag.tline
@@ -2197,9 +2241,6 @@ function! s:HighlightTag(openfolds, ...) abort
         call winline()
 
         let foldpat = '[' . g:tagbar#icon_open . g:tagbar#icon_closed . ' ]'
-<<<<<<< HEAD
-        let pattern = '/^\%' . tagline . 'l\s*' . foldpat . '[-+# ]\?\zs[^( ]\+\ze/'
-=======
 
         " If printing the line number of the tag to the left, and the tag is
         " visible (I.E. parent isn't folded)
@@ -2208,7 +2249,6 @@ function! s:HighlightTag(openfolds, ...) abort
         else
             let pattern = '/^\%' . tagline . 'l\s*' . foldpat . '[-+# ]\?\zs[^( ]\+\ze/'
         endif
->>>>>>> fzf tagbar
         call tagbar#debug#log("Highlight pattern: '" . pattern . "'")
         if hlexists('TagbarHighlight') " Safeguard in case syntax highlighting is disabled
             execute 'match TagbarHighlight ' . pattern
@@ -2603,7 +2643,7 @@ function! s:OpenParents(...) abort
     if a:0 == 1
         let tag = a:1
     else
-        let tag = s:GetNearbyTag('parent', 0)
+        let tag = s:GetNearbyTag('nearest', 0)
     endif
 
     if !empty(tag)
@@ -3046,19 +3086,17 @@ function! s:GetNearbyTag(request, forcecurrent, ...) abort
     for line in range(curline, 1, -1)
         if has_key(fileinfo.fline, line)
             let curtag = fileinfo.fline[line]
-            if a:request ==# 'highlight' && typeinfo.getKind(curtag.fields.kind).stl
+            if a:request ==# 'nearest-stl'
+                        \ && typeinfo.getKind(curtag.fields.kind).stl || line == curline
                 let tag = curtag
                 break
-            endif
-            if a:request ==# 'highlight' && line == curline
+            elseif a:request ==# 'scoped-stl'
+                        \ && typeinfo.getKind(curtag.fields.kind).stl
+                        \ && curtag.fields.line <= curline
+                        \ && curline <= curtag.fields.end
                 let tag = curtag
                 break
-            endif
-            if a:request ==# 'statusline' && typeinfo.getKind(curtag.fields.kind).stl
-                let tag = curtag
-                break
-            endif
-            if a:request ==# 'parent'
+            elseif a:request ==# 'nearest'
                 let tag = curtag
                 break
             endif
@@ -3574,31 +3612,6 @@ endfunction
 " Autoload functions {{{1
 
 " Wrappers {{{2
-function! tagbar#GetTagNearLine(lnum, ...) abort
-    if a:0 > 0
-        let fmt = a:1
-        let longsig   = a:2 =~# 's'
-        let fullpath  = a:2 =~# 'f'
-        let prototype = a:2 =~# 'p'
-    else
-        let fmt = '%s'
-        let longsig   = 0
-        let fullpath  = 0
-        let prototype = 0
-    endif
-
-    let taginfo = s:GetNearbyTag('statusline', 1, a:lnum)
-
-    if empty(taginfo)
-        return ''
-    endif
-
-    if prototype
-        return taginfo.getPrototype(1)
-    else
-        return printf(fmt, taginfo.str(longsig, fullpath))
-    endif
-endfunction
 
 function! tagbar#ToggleWindow(...) abort
     let flags = a:0 > 0 ? a:1 : ''
@@ -3707,28 +3720,67 @@ function! tagbar#autoopen(...) abort
     call tagbar#debug#log('tagbar#autoopen finished without finding valid file')
 endfunction
 
+" tagbar#GetTagNearLine() {{{2
+function! tagbar#GetTagNearLine(lnum, ...) abort
+    if a:0 >= 2
+        let fmt = a:1
+        let longsig   = a:2 =~# 's'
+        let fullpath  = a:2 =~# 'f'
+        let prototype = a:2 =~# 'p'
+        if a:0 >= 3
+            let search_method = a:3
+        else
+            let search_method = 'nearest-stl'
+        endif
+    else
+        let fmt = '%s'
+        let longsig   = 0
+        let fullpath  = 0
+        let prototype = 0
+        let search_method = 'nearest-stl'
+    endif
+
+    let taginfo = s:GetNearbyTag(search_method, 1, a:lnum)
+
+    if empty(taginfo)
+        return ''
+    endif
+
+    if prototype
+        return taginfo.getPrototype(1)
+    else
+        return printf(fmt, taginfo.str(longsig, fullpath))
+    endif
+endfunction
+
 " tagbar#currenttag() {{{2
 function! tagbar#currenttag(fmt, default, ...) abort
     " Indicate that the statusline functionality is being used. This prevents
     " the CloseWindow() function from removing the autocommands.
     let s:statusline_in_use = 1
 
-    if a:0 > 0
+    if a:0 >= 1
         " also test for non-zero value for backwards compatibility
         let longsig   = a:1 =~# 's' || (type(a:1) == type(0) && a:1 != 0)
         let fullpath  = a:1 =~# 'f'
         let prototype = a:1 =~# 'p'
+        if a:0 >= 2
+            let search_method = a:2
+        else
+            let search_method = 'nearest-stl'
+        endif
     else
         let longsig   = 0
         let fullpath  = 0
         let prototype = 0
+        let search_method = 'nearest-stl'
     endif
 
     if !s:Init(1)
         return a:default
     endif
 
-    let tag = s:GetNearbyTag('statusline', 1)
+    let tag = s:GetNearbyTag(search_method, 1)
 
     if !empty(tag)
         if prototype
@@ -3800,7 +3852,7 @@ function! tagbar#currenttagtype(fmt, default) abort
     " the CloseWindow() function from removing the autocommands.
     let s:statusline_in_use = 1
     let kind = ''
-    let tag = s:GetNearbyTag('statusline', 1)
+    let tag = s:GetNearbyTag('scoped-stl', 1)
 
     if empty(tag)
         return a:default

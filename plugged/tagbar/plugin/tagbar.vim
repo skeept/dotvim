@@ -102,6 +102,7 @@ function! s:setup_options() abort
         \ ['previewwin_pos', previewwin_pos],
         \ ['scrolloff', 0],
         \ ['show_balloon', 1],
+        \ ['show_data_type', 0],
         \ ['show_visibility', 1],
         \ ['show_linenumbers', 0],
         \ ['singleclick', 0],
