@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-$version="0.23.1"
+$version="0.24.2"
 
 if ([Environment]::Is64BitProcess) {
   $binary_arch="amd64"
@@ -7,7 +6,6 @@ if ([Environment]::Is64BitProcess) {
   $binary_arch="386"
 }
 =======
-$version="0.24.1"
 >>>>>>> fzf tagbar
 
 $fzf_base=Split-Path -Parent $MyInvocation.MyCommand.Definition
