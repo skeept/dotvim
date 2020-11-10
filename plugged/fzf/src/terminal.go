@@ -119,6 +119,7 @@ type Terminal struct {
 	ansi         bool
 	tabstop      int
 	margin       [4]sizeSpec
+	padding      [4]sizeSpec
 	strong       tui.Attr
 	unicode      bool
 	borderShape  tui.BorderShape
@@ -472,6 +473,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		printQuery:  opts.PrintQuery,
 		history:     opts.History,
 		margin:      opts.Margin,
+		padding:     opts.Padding,
 		unicode:     opts.Unicode,
 		borderShape: opts.BorderShape,
 		cleanExit:   opts.ClearOnExit,
@@ -526,7 +528,6 @@ func (t *Terminal) parsePrompt(prompt string) (func(), int) {
 		blankState := ansiOffset{[2]int32{int32(loc[0]), int32(loc[1])}, ansiState{-1, -1, tui.AttrClear}}
 		if item.colors != nil {
 			lastColor := (*item.colors)[len(*item.colors)-1]
-			fmt.Println(lastColor.offset[1], int32(loc[1]))
 			if lastColor.offset[1] < int32(loc[1]) {
 				blankState.offset[0] = lastColor.offset[1]
 				colors := append(*item.colors, blankState)
@@ -670,34 +671,40 @@ func calculateSize(base int, size sizeSpec, occupied int, minSize int, pad int) 
 func (t *Terminal) resizeWindows() {
 	screenWidth := t.tui.MaxX()
 	screenHeight := t.tui.MaxY()
-	marginInt := [4]int{}
 	t.prevLines = make([]itemLine, screenHeight)
-	for idx, sizeSpec := range t.margin {
-		if sizeSpec.percent {
 			var max float64
-			if idx%2 == 0 {
+			if index%2 == 0 {
 				max = float64(screenHeight)
 			} else {
 				max = float64(screenWidth)
 			}
-			marginInt[idx] = int(max * sizeSpec.size * 0.01)
-		} else {
-			marginInt[idx] = int(sizeSpec.size)
+			return int(max * spec.size * 0.01)
 		}
+		return int(spec.size)
+	}
+	for idx, sizeSpec := range t.padding {
+		paddingInt[idx] = sizeSpecToInt(idx, sizeSpec)
+	}
+
+	extraMargin := [4]int{} // TRBL
+	for idx, sizeSpec := range t.margin {
 		switch t.borderShape {
 		case tui.BorderHorizontal:
-			marginInt[idx] += 1 - idx%2
 		case tui.BorderRounded, tui.BorderSharp:
-			marginInt[idx] += 1 + idx%2
+			extraMargin[idx] += 1 + idx%2
 		}
+		marginInt[idx] = sizeSpecToInt(idx, sizeSpec) + extraMargin[idx]
 	}
+
 	adjust := func(idx1 int, idx2 int, max int, min int) {
 		if max >= min {
-			margin := marginInt[idx1] + marginInt[idx2]
+			margin := marginInt[idx1] + marginInt[idx2] + paddingInt[idx1] + paddingInt[idx2]
 			if max-margin < min {
 				desired := max - min
-				marginInt[idx1] = desired * marginInt[idx1] / margin
-				marginInt[idx2] = desired * marginInt[idx2] / margin
+				paddingInt[idx1] = desired * paddingInt[idx1] / margin
+				paddingInt[idx2] = desired * paddingInt[idx2] / margin
+				marginInt[idx1] = util.Max(extraMargin[idx1], desired*marginInt[idx1]/margin)
+				marginInt[idx2] = util.Max(extraMargin[idx2], desired*marginInt[idx2]/margin)
 			}
 		}
 	}
@@ -748,6 +755,14 @@ func (t *Terminal) resizeWindows() {
 			height+2,
 			false, tui.MakeBorderStyle(t.borderShape, t.unicode))
 	}
+
+	// Add padding
+	for idx, val := range paddingInt {
+		marginInt[idx] += val
+	}
+	width = screenWidth - marginInt[1] - marginInt[3]
+	height = screenHeight - marginInt[0] - marginInt[2]
+
 	noBorder := tui.MakeBorderStyle(tui.BorderNone, t.unicode)
 	if previewVisible {
 		createPreviewWindow := func(y int, x int, w int, h int) {
