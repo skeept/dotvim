@@ -23,6 +23,7 @@ g:tagbar_file_size_limit	tagbar.txt	/*g:tagbar_file_size_limit*
 g:tagbar_foldlevel	tagbar.txt	/*g:tagbar_foldlevel*
 g:tagbar_height	tagbar.txt	/*g:tagbar_height*
 g:tagbar_hide_nonpublic	tagbar.txt	/*g:tagbar_hide_nonpublic*
+g:tagbar_highlight_method	tagbar.txt	/*g:tagbar_highlight_method*
 g:tagbar_iconchars	tagbar.txt	/*g:tagbar_iconchars*
 g:tagbar_indent	tagbar.txt	/*g:tagbar_indent*
 g:tagbar_jump_lazy_scroll	tagbar.txt	/*g:tagbar_jump_lazy_scroll*

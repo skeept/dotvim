@@ -99,6 +99,7 @@ function! s:setup_options() abort
         \ ['jump_offset', 0],
         \ ['jump_lazy_scroll', 0],
         \ ['left', 0],
+        \ ['highlight_method', 'nearest-stl'],
         \ ['position', default_pos],
         \ ['previewwin_pos', previewwin_pos],
         \ ['scrolloff', 0],
