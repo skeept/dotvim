@@ -825,6 +825,7 @@ function! s:execute_term(dict, command, temps) abort
         let term_opts.curwin = 1
       endif
       let fzf.buf = term_start([&shell, &shellcmdflag, command], term_opts)
+      call setbufvar(fzf.buf, '&termwinkey', '<c-z>')
       if is_popup && exists('#TerminalWinOpen')
         doautocmd <nomodeline> TerminalWinOpen
       endif
@@ -832,6 +833,7 @@ function! s:execute_term(dict, command, temps) abort
         call term_wait(fzf.buf, 20)
       endif
     endif
+    tnoremap <buffer> <c-z> <nop>
   finally
     call s:dopopd()
   endtry
