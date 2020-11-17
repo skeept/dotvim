@@ -318,9 +318,7 @@ function! s:matched_indentkeys(input) abort
   endif
 
   for word in filter(map(split(&l:indentkeys, ','),
-        \ "v:val =~# '^<.*>$' ? matchstr(v:val, '^<\\zs.*\\ze>$')
-        \                  : matchstr(v:val, 'e\\|=\\zs.*')"),
-        \ "v:val !=# ''")
+        \ "matchstr(v:val, 'e\\|=\\zs.*')"), "v:val !=# ''")
 
     if word ==# 'e'
       let word = 'else'
@@ -365,10 +363,26 @@ endfunction
 
 function! s:on_complete_done() abort
   if get(v:completed_item, 'word', '') ==# ''
+        \ || !has_key(g:deoplete#_context, 'complete_str')
     return
   endif
 
   call deoplete#handler#_skip_next_completion()
+
+  let max_used = 100
+  let g:deoplete#_recently_used = insert(
+        \ g:deoplete#_recently_used,
+        \ tolower(v:completed_item.word),
+        \ )
+  let min_pattern_length = deoplete#custom#_get_option('min_pattern_length')
+  if len(g:deoplete#_context['complete_str']) > min_pattern_length
+    let g:deoplete#_recently_used = insert(
+          \ g:deoplete#_recently_used,
+          \ tolower(g:deoplete#_context['complete_str']),
+          \ )
+  endif
+  let g:deoplete#_recently_used = deoplete#util#uniq(
+        \ g:deoplete#_recently_used)[: max_used]
 
   let user_data = get(v:completed_item, 'user_data', '')
   if type(user_data) !=# v:t_string || user_data ==# ''
