@@ -2093,7 +2093,7 @@ function! s:PrintHelp() abort
                     \ ['preview',           'As above, but stay in tagbar window'],
                     \ ['previewwin',        'Show tag in preview window'],
                     \ ['nexttag',           'Go to next top-level tag'],
-                    \ ['prevtag',           'Go to preveous top-level tag'],
+                    \ ['prevtag',           'Go to previous top-level tag'],
                     \ ['showproto',         'Display tag prototype'],
                     \ ['hidenonpublic',     'Hide non-public tags'],
                 \ ]

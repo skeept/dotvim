@@ -525,7 +525,7 @@ func (t *Terminal) parsePrompt(prompt string) (func(), int) {
 	//             // unless the part has a non-default ANSI state
 	loc := whiteSuffix.FindStringIndex(trimmed)
 	if loc != nil {
-		blankState := ansiOffset{[2]int32{int32(loc[0]), int32(loc[1])}, ansiState{-1, -1, tui.AttrClear}}
+		blankState := ansiOffset{[2]int32{int32(loc[0]), int32(loc[1])}, ansiState{-1, -1, tui.AttrClear, -1}}
 		if item.colors != nil {
 			lastColor := (*item.colors)[len(*item.colors)-1]
 			if lastColor.offset[1] < int32(loc[1]) {
@@ -656,8 +656,6 @@ func (t *Terminal) displayWidth(runes []rune) int {
 const (
 	minWidth  = 4
 	minHeight = 4
-
-	maxDisplayWidthCalc = 1024
 )
 
 func calculateSize(base int, size sizeSpec, occupied int, minSize int, pad int) int {
@@ -1078,13 +1076,15 @@ func (t *Terminal) displayWidthWithLimit(runes []rune, prefixWidth int, limit in
 }
 
 func (t *Terminal) trimLeft(runes []rune, width int) ([]rune, int32) {
-	if len(runes) > maxDisplayWidthCalc && len(runes) > width {
-		trimmed := len(runes) - width
-		return runes[trimmed:], int32(trimmed)
+	var trimmed int32
+	// Assume that each rune takes at least one column on screen
+	if len(runes) > width {
+		diff := len(runes) - width
+		trimmed = int32(diff)
+		runes = runes[diff:]
 	}
 
 	currentWidth := t.displayWidth(runes)
-	var trimmed int32
 
 	for currentWidth > width && len(runes) > 0 {
 		runes = runes[1:]
@@ -1239,6 +1239,10 @@ func (t *Terminal) renderPreviewText(unchanged bool) {
 	}
 	var ansi *ansiState
 	for _, line := range t.previewer.lines {
+		var lbg tui.Color = -1
+		if ansi != nil {
+			ansi.lbg = -1
+		}
 		line = strings.TrimSuffix(line, "\n")
 		if lineNo >= height || t.pwindow.Y() == height-1 && t.pwindow.X() > 0 {
 			t.previewed.filled = true
@@ -1254,6 +1258,7 @@ func (t *Terminal) renderPreviewText(unchanged bool) {
 				str, width := t.processTabs(trimmed, prefixWidth)
 				prefixWidth += width
 				if t.theme.Colored && ansi != nil && ansi.colored() {
+					lbg = ansi.lbg
 					fillRet = t.pwindow.CFill(ansi.fg, ansi.bg, ansi.attr, str)
 				} else {
 					fillRet = t.pwindow.CFill(tui.ColPreview.Fg(), tui.ColPreview.Bg(), tui.AttrRegular, str)
@@ -1270,7 +1275,12 @@ func (t *Terminal) renderPreviewText(unchanged bool) {
 			if unchanged && lineNo == 0 {
 				break
 			}
-			t.pwindow.Fill("\n")
+			if lbg >= 0 {
+				t.pwindow.CFill(-1, lbg, tui.AttrRegular,
+					strings.Repeat(" ", t.pwindow.Width()-t.pwindow.X())+"\n")
+			} else {
+				t.pwindow.Fill("\n")
+			}
 		}
 		lineNo++
 	}
