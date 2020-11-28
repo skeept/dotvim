@@ -51,7 +51,7 @@ endfunction
 function! ctrlp#packadd#accept(mode, str)
   call ctrlp#exit()
   let name = fnamemodify(a:str, ":t")
-  echom 'name' . name
+  echom 'loading plugin' . name
   exe "packadd " . name
 	"exe "normal! g'".matchstr(a:str, '^\s*\zs\S\+\ze\s.*')
 

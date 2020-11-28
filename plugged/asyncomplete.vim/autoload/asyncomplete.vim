@@ -268,11 +268,15 @@ function! s:on_change() abort
 
     let l:ctx = asyncomplete#context()
     let l:last_char = l:ctx['typed'][l:ctx['col'] - 2] " col is 1-indexed, but str 0-indexed
-    let l:triggered_sources = get(b:asyncomplete_triggers, l:last_char, {})
+    if exists('b:asyncomplete_triggers')
+        let l:triggered_sources = get(b:asyncomplete_triggers, l:last_char, {})
+    else
+        let l:triggered_sources = {}
+    endif
     let l:refresh_pattern = get(b:, 'asyncomplete_refresh_pattern', '\(\k\+$\)')
     let [l:_, l:startidx, l:endidx] = asyncomplete#utils#matchstrpos(l:ctx['typed'], l:refresh_pattern)
 
-    for l:source_name in b:asyncomplete_active_sources
+    for l:source_name in get(b:, 'asyncomplete_active_sources', [])
         " match sources based on the last character if it is a trigger character
         " TODO: also check for multiple chars instead of just last chars for
         " languages such as cpp which uses -> and ::
@@ -372,7 +376,7 @@ function! asyncomplete#_force_refresh() abort
 
     let s:matches = {}
 
-    for l:source_name in b:asyncomplete_active_sources
+    for l:source_name in get(b:, 'asyncomplete_active_sources', [])
         let s:matches[l:source_name] = { 'startcol': l:startcol, 'status': 'idle', 'items': [], 'refresh': 0, 'ctx': l:ctx }
     endfor
 
@@ -409,6 +413,8 @@ function! s:recompute_pum(...) abort
     let l:matches_to_filter = {}
 
     for [l:source_name, l:match] in items(s:matches)
+        " ignore sources that have been unregistered
+        if !has_key(s:sources, l:source_name) | continue | endif
         let l:startcol = l:match['startcol']
         let l:startcols += [l:startcol]
         let l:curitems = l:match['items']
