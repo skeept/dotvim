@@ -1,7 +1,7 @@
 " common settings and functions to both vimrc and simple.vim
 
 " use this to replace VAMAddToActiveAddons
-command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons += ['<args>'] 
+command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons += ['<args>']
 
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
@@ -658,7 +658,7 @@ noremap ,pd :CtrlPCurWD<CR>
 noremap ,pj :CtrlPBufTagAll<CR>
 noremap ,pf :CtrlPCurFile<CR>
 noremap ,pa :CtrlPShowArr<CR>
-nnoremap ,pc :CtrlPBookmarkDir<CR>
+nnoremap ,pc :CtrlPCommand<CR>
 nnoremap ,pl :CtrlPLine<CR>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
@@ -966,13 +966,31 @@ map ,ci <plug>NERDCommenterInvert
 map gc <plug>NERDCommenterInvert
 "==============================================================================}}}
 
-"==============================================================================}}}
-
+"================== Load More Plugins On Demand ==============================={{{
+" some we load if we can some we load on demand
 "packadd! editexisting
 if v:version > 800
   packadd! matchit
   packadd! SimpylFold
   packadd! cfilter
 endif
+
+function! LoadMorePluginsOnDemand()
+  packadd dirvish
+  packadd ferret
+  packadd neomru
+  packadd obsession
+  packadd tlib
+  packadd tcommand
+  packadd tmarks
+  packadd tmru
+  packadd toptions
+  packadd tregisters
+  packadd tselectbuffer
+  packadd which-key
+endfunction
+
+command! LoadMorePlugins call LoadMorePluginsOnDemand()
+"==============================================================================}}}
 
 " vim: foldmethod=marker
