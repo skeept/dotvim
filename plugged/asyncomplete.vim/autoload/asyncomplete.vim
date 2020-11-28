@@ -1,4 +1,4 @@
-function! asyncomplete#log(...) abort
+function! asyncomplete#log(...) abort 
     if !empty(g:asyncomplete_log_file)
         call writefile([json_encode(a:000)], g:asyncomplete_log_file, 'a')
     endif
