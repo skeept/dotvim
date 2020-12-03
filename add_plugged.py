@@ -18,8 +18,9 @@ def get_individual_files(pathn):
 
 
 def git_force_add(pathn):
+    """git force add files or folder"""
     if isdir(pathn):
-        files = [f for f in get_individual_files(pathn)]
+        files = list(get_individual_files(pathn))
     else:
         files = [pathn]
 
