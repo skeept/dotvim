@@ -1823,6 +1823,20 @@ class TestGoFZF < TestBase
     tmux.until { |lines| lines.item_count == 100 }
     tmux.until { |lines| lines[1]&.include?('[200]') }
   end
+
+  def test_change_prompt
+    tmux.send_keys "#{FZF} --bind 'a:change-prompt(a> ),b:change-prompt:b> ' --query foo", :Enter
+    tmux.until { |lines| assert_equal '> foo', lines[-1] }
+    tmux.send_keys 'a'
+    tmux.until { |lines| assert_equal 'a> foo', lines[-1] }
+    tmux.send_keys 'b'
+    tmux.until { |lines| assert_equal 'b> foo', lines[-1] }
+  end
+
+  def test_preview_window_follow
+    tmux.send_keys "#{FZF} --preview 'seq 1000 | nl' --preview-window down:noborder:follow", :Enter
+    tmux.until { |lines| assert_equal '1000  1000', lines[-1].strip }
+  end
 end
 
 module TestShell

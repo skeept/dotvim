@@ -1,4 +1,4 @@
-$version="0.24.3"
+$version="0.24.4"
 
 if ([Environment]::Is64BitProcess) {
   $binary_arch="amd64"
