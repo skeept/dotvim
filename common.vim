@@ -147,7 +147,10 @@ inoremap <C-W> <C-G>u<C-W>
 inoremap <BS> <C-G>u<BS>
 inoremap <DEL> <C-G>u<DEL>
 
-function! CloseTabOrExit()
+function! CloseTabOrExit(idx)
+  if a:idx == 0
+    wall
+  endif
   if tabpagenr('$') > 1
     tabclose
   else
@@ -156,8 +159,8 @@ function! CloseTabOrExit()
   return ""
 endfunction
 
-noremap <f4> :call CloseTabOrExit()<CR>
-inoremap <f4> <ESC>:call CloseTabOrExit()<CR>
+noremap <f4> :<C-U>call CloseTabOrExit(v:count)<CR>
+inoremap <f4> <ESC>:<C-U>call CloseTabOrExit(v:count)<CR>
 
 "noremap ,en :cnext<CR>
 "noremap ,ep :cprevious<CR>
