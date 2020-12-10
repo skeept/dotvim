@@ -273,6 +273,11 @@ const (
 	BorderRounded
 	BorderSharp
 	BorderHorizontal
+	BorderVertical
+	BorderTop
+	BorderBottom
+	BorderLeft
+	BorderRight
 )
 
 type BorderStyle struct {

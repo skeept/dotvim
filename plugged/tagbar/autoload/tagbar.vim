@@ -2017,7 +2017,12 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
             endif
 
             let padding = g:tagbar_show_visibility ? ' ' : ''
-            call add(output, foldmarker . padding . kind.long)
+            if g:tagbar_show_tag_count
+                let tag_count = ' (' . len(curtags) . ')'
+                call add(output, foldmarker . padding . kind.long . tag_count)
+            else
+                call add(output, foldmarker . padding . kind.long)
+            endif
 
             let curline                   = len(output) + offset
             let kindtag.tline             = curline
@@ -2043,7 +2048,7 @@ function! s:PrintKinds(typeinfo, fileinfo) abort
     endfor
 
     let outstr = join(output, "\n")
-    if g:tagbar_compact && s:short_help
+    if g:tagbar_compact && !g:tagbar_help_visibility && s:short_help
         silent 0put =outstr
     else
         silent  put =outstr
@@ -2103,7 +2108,7 @@ endfunction
 
 " s:PrintHelp() {{{2
 function! s:PrintHelp() abort
-    if !g:tagbar_compact && s:short_help
+    if !g:tagbar_compact && !g:tagbar_help_visibility && s:short_help
         silent 0put ='\" Press ' . s:get_map_str('help') . ' for help'
         silent  put _
     elseif g:tagbar_help_visibility || !s:short_help

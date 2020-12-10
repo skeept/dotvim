@@ -37,8 +37,8 @@ function! s:strfmt() abort dict
             let suffix .= ' : ' . scope
         endif
     endif
+    let prefix = self._getPrefix()
 
-    return self._getPrefix() . self.name . suffix
     if g:tagbar_show_data_type && self.getDataType() !=# ''
         let suffix .= ' : ' . self.getDataType()
     endif

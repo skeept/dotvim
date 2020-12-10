@@ -128,7 +128,7 @@ endfunction
 
 function! s:default_layout()
   return s:popup_support()
-        \ ? { 'window' : { 'width': 0.9, 'height': 0.6, 'highlight': 'Normal' } }
+        \ ? { 'window' : { 'width': 0.9, 'height': 0.6 } }
         \ : { 'down': '~40%' }
 endfunction
 
@@ -154,7 +154,20 @@ function! fzf#install()
   endif
 endfunction
 
-function! fzf#exec()
+function! s:version_requirement(val, min)
+  let val = split(a:val, '\.')
+  let min = split(a:min, '\.')
+  for idx in range(0, len(min) - 1)
+    let v = get(val, idx, 0)
+    if     v < min[idx] | return 0
+    elseif v > min[idx] | return 1
+    endif
+  endfor
+  return 1
+endfunction
+
+let s:checked = {}
+function! fzf#exec(...)
   if !exists('s:exec')
     if executable(s:fzf_go)
       let s:exec = s:fzf_go
@@ -425,7 +438,7 @@ try
       let prefix = '( '.source.' )|'
     elseif type == 3
       let temps.input = s:fzf_tempname()
-      call writefile(map(source, '<SID>enc_to_cp(v:val)'), temps.input)
+      call writefile(source, temps.input)
       let prefix = (s:is_win ? 'type ' : 'cat ').fzf#shellescape(temps.input).'|'
     else
       throw 'Invalid source type'
@@ -453,6 +466,7 @@ try
   elseif use_term
     let optstr .= ' --no-height'
   endif
+  let optstr .= s:border_opt(get(dict, 'window', 0))
   let command = prefix.(use_tmux ? s:fzf_tmux(dict) : fzf_exec).' '.optstr.' > '.temps.result
 
   if use_term
@@ -679,8 +693,6 @@ function! s:getpos()
   return {'tab': tabpagenr(), 'win': winnr(), 'winid': win_getid(), 'cnt': winnr('$'), 'tcnt': tabpagenr('$')}
 endfunction
 
-<<<<<<< HEAD
-=======
 function! s:border_opt(window)
   if type(a:window) != type({})
     return ''
@@ -707,7 +719,6 @@ function! s:border_opt(window)
   return opt
 endfunction
 
->>>>>>> fzf tagbar
 function! s:split(dict)
   let directions = {
   \ 'up':    ['topleft', 'resize', &lines],
@@ -918,12 +929,8 @@ else
 endif
 
 function! s:popup(opts) abort
-  " Support ambiwidth == 'double'
-  let ambidouble = &ambiwidth == 'double' ? 2 : 1
-
   " Size and position
   let width = min([max([8, a:opts.width > 1 ? a:opts.width : float2nr(&columns * a:opts.width)]), &columns])
-  let width += width % ambidouble
   let height = min([max([4, a:opts.height > 1 ? a:opts.height : float2nr(&lines * a:opts.height)]), &lines - has('nvim')])
   let row = float2nr(get(a:opts, 'yoffset', 0.5) * (&lines - height))
   let col = float2nr(get(a:opts, 'xoffset', 0.5) * (&columns - width))
@@ -934,45 +941,9 @@ function! s:popup(opts) abort
   let row += !has('nvim')
   let col += !has('nvim')
 
-  " Border style
-  let style = tolower(get(a:opts, 'border', 'rounded'))
-  if !has_key(a:opts, 'border') && !get(a:opts, 'rounded', 1)
-    let style = 'sharp'
-  endif
-
-  if style =~ 'vertical\|left\|right'
-    let mid = style == 'vertical' ? '│' .. repeat(' ', width - 2 * ambidouble) .. '│' :
-            \ style == 'left'     ? '│' .. repeat(' ', width - 1 * ambidouble)
-            \                     :        repeat(' ', width - 1 * ambidouble) .. '│'
-    let border = repeat([mid], height)
-    let shift = { 'row': 0, 'col': style == 'right' ? 0 : 2, 'width': style == 'vertical' ? -4 : -2, 'height': 0 }
-  elseif style =~ 'horizontal\|top\|bottom'
-    let hor = repeat('─', width / ambidouble)
-    let mid = repeat(' ', width)
-    let border = style == 'horizontal' ? [hor] + repeat([mid], height - 2) + [hor] :
-               \ style == 'top'        ? [hor] + repeat([mid], height - 1)
-               \                       :         repeat([mid], height - 1) + [hor]
-    let shift = { 'row': style == 'bottom' ? 0 : 1, 'col': 0, 'width': 0, 'height': style == 'horizontal' ? -2 : -1 }
-  else
-    let edges = style == 'sharp' ? ['┌', '┐', '└', '┘'] : ['╭', '╮', '╰', '╯']
-    let bar = repeat('─', width / ambidouble - 2)
-    let top = edges[0] .. bar .. edges[1]
-    let mid = '│' .. repeat(' ', width - 2 * ambidouble) .. '│'
-    let bot = edges[2] .. bar .. edges[3]
-    let border = [top] + repeat([mid], height - 2) + [bot]
-    let shift = { 'row': 1, 'col': 2, 'width': -4, 'height': -2 }
-  endif
-
-  let highlight = get(a:opts, 'highlight', 'Comment')
-  let frame = s:create_popup(highlight, {
-    \ 'row': row, 'col': col, 'width': width, 'height': height, 'border': border
-  \ })
   call s:create_popup('Normal', {
-    \ 'row': row + shift.row, 'col': col + shift.col, 'width': width + shift.width, 'height': height + shift.height
+    \ 'row': row, 'col': col, 'width': width, 'height': height
   \ })
-  if has('nvim')
-    execute 'autocmd BufWipeout <buffer> bwipeout '..frame
-  endif
 endfunction
 
 let s:default_action = {
