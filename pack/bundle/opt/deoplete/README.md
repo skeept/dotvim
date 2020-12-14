@@ -6,6 +6,8 @@
 [![Join the chat at https://gitter.im/Shougo/deoplete.nvim](https://badges.gitter.im/Shougo/deoplete.nvim.svg)](https://gitter.im/Shougo/deoplete.nvim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Doc](https://img.shields.io/badge/doc-%3Ah%20deoplete-orange.svg)](doc/deoplete.txt)
 
+Please read [help](doc/deoplete.txt) for details.
+
 Note: If you need to understand what's different between deoplete and other
 similar plugins, please read "deoplete-faq" section in the documentation.
 
@@ -78,7 +80,8 @@ For manual installation(not recommended)
 
 deoplete requires Neovim or Vim8 with `if_python3`.
 
-If `:echo has("python3")` returns `1`, then you have python 3 support; otherwise, see below.
+If `:echo has("python3")` returns `1`, then you have python 3 support;
+otherwise, see below.
 
 You can enable Python3 interface with pip:
 
