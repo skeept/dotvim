@@ -400,14 +400,14 @@ xnoremap <space>nr :call nrrwrgn#NrrwRgn(visualmode(),'!')<CR>
 "==============================================================================}}}
 
 "================== WhichKey =================================================={{{
-function! WhicKeyMapperHelper()
+function! WhichKeyMapperHelper()
   echo "Press any key: "
   let v = getchar()
   let quote = "'"
   if nr2char(v) == quote | let quote = '"' | endif
   execute 'WhichKey ' . quote  . nr2char(v) . quote
 endfu
-nnoremap ,vk :<C-U>call WhicKeyMapperHelper()<CR>
+nnoremap ,vk :<C-U>call WhichKeyMapperHelper()<CR>
 "==============================================================================}}}
 
 if g:is_win
