@@ -401,6 +401,7 @@ xnoremap <space>nr :call nrrwrgn#NrrwRgn(visualmode(),'!')<CR>
 
 "================== WhichKey =================================================={{{
 function! WhichKeyMapperHelper()
+  LoadMorePlugins
   echo "Press any key: "
   let v = getchar()
   let quote = "'"
