@@ -63,7 +63,8 @@ alias top='xtitle Processes on $HOST && top'
 
 alias vix='TERM=xterm vim'
 alias vu='vim -u "${HOME}/.vim/simple.vim" --noplugins'
-alias r='fc -s'
+alias rr='fc -s'
+alias r='ranger'
 alias gp='git push'
 alias w3m='w3m -no-graph'
 

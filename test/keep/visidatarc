@@ -53,6 +53,8 @@ def guessColNames(source, cols_input, override=False):
         names = ("pnr n crm fare . . . minor . . checkIn dayT intN").split()
     elif source_base == "availability.dat":
         names = "id class order auth cap booked blocked".split()
+    elif source_base == "pnrFlights.dat":
+        names = "id fID cabin fare checkIn boarded isSeg seqNum".split()
 
     for col, name, idx in zip(
         cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0)
