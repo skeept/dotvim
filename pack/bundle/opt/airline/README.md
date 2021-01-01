@@ -297,13 +297,13 @@ A full list of screenshots for various themes can be found in the [Wiki][14].
 
 # Maintainers
 
-The project is currently being maintained by [Bailey Ling][41], [Christian Brabandt][42], and [Mike Hartington][44].
+The project is currently being maintained by [Christian Brabandt][42] and [Bailey Ling][41].
 
 If you are interested in becoming a maintainer (we always welcome more maintainers), please [go here][43].
 
 # License
 
-[MIT License][58]. Copyright (c) 2013-2020 Bailey Ling & Contributors.
+[MIT License][58]. Copyright (c) 2013-2021 Bailey Ling & Contributors.
 
 [1]: https://github.com/Lokaltog/vim-powerline
 [2]: https://github.com/Lokaltog/powerline
@@ -348,7 +348,6 @@ If you are interested in becoming a maintainer (we always welcome more maintaine
 [41]: https://github.com/bling
 [42]: https://github.com/chrisbra
 [43]: https://github.com/vim-airline/vim-airline/wiki/Becoming-a-Maintainer
-[44]: https://github.com/mhartington
 [45]: https://github.com/vim-airline/vim-airline/commit/d7fd8ca649e441b3865551a325b10504cdf0711b
 [46]: https://github.com/vim-airline/vim-airline-themes#vim-airline-themes--
 [47]: https://github.com/mildred/vim-bufmru
