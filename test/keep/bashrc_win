@@ -102,8 +102,10 @@ ev()
   [ -z ${gvim+x} ] && [ -e "${c1}" ] && gvim="${c1}"
   fi
 
-  [ -z ${gvim+x} ] && [ -x "$(command -v gvim)" ] && gvim=gvim
+  # if gvim.exe exists means we are on windows and show use that
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim.exe)" ] && gvim=gvim.exe
+  [ -z ${gvim+x} ] && [ -x "$(command -v nvim-qt.exe)" ] && gvim=nvim-qt.exe
+  [ -z ${gvim+x} ] && [ -x "$(command -v gvim)" ] && gvim=gvim
   if [ -n ${gvim+x} ]; then
     ("${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" > /dev/null) &
   elif [ -x "$(command -v nvim)" ]; then
