@@ -23,6 +23,8 @@ if exists("g:ctrlp_command_commands")
   unlet g:ctrlp_command_commands
 endif
 
+g:ctrlp_command_arg = 0
+
 function! ctrlp#command#get_commands()
   let more_val=&more
   set nomore
@@ -49,7 +51,8 @@ function! ctrlp#command#get_commands()
   let g:ctrlp_command_commands = all_files_base
 endfunction
 
-function! ctrlp#command#command()
+function! ctrlp#command#command(arg)
+  let g:ctrlp_command_arg = a:arg
   call ctrlp#command#get_commands()
   call ctrlp#init(ctrlp#command#id())
 endfunction
@@ -63,9 +66,11 @@ function! ctrlp#command#accept(mode, str)
   call ctrlp#exit()
   let name = fnamemodify(a:str, ":t")
   echom 'executing ' . name
-  call feedkeys(":" . name, "n")
-	"exe "normal! g'".matchstr(a:str, '^\s*\zs\S\+\ze\s.*')
-
+  if g:ctrlp_command_arg == 1
+    call feedkeys(":" . name, "n")
+  else
+    execute name
+  endif
 endfunction
 
 function! ctrlp#command#exit()
