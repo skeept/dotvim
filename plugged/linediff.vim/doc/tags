@@ -5,6 +5,9 @@
 :LinediffPick	linediff.txt	/*:LinediffPick*
 :LinediffReset	linediff.txt	/*:LinediffReset*
 :LinediffShow	linediff.txt	/*:LinediffShow*
+<Plug>(linediff-add-operator)	linediff.txt	/*<Plug>(linediff-add-operator)*
+<Plug>(linediff-last-operator)	linediff.txt	/*<Plug>(linediff-last-operator)*
+<Plug>(linediff-operator)	linediff.txt	/*<Plug>(linediff-operator)*
 g:linediff_buffer_type	linediff.txt	/*g:linediff_buffer_type*
 g:linediff_diffopt	linediff.txt	/*g:linediff_diffopt*
 g:linediff_first_buffer_command	linediff.txt	/*g:linediff_first_buffer_command*
@@ -18,6 +21,7 @@ linediff-contents	linediff.txt	/*linediff-contents*
 linediff-installation	linediff.txt	/*linediff-installation*
 linediff-internals	linediff.txt	/*linediff-internals*
 linediff-issues	linediff.txt	/*linediff-issues*
+linediff-mappings	linediff.txt	/*linediff-mappings*
 linediff-settings	linediff.txt	/*linediff-settings*
 linediff-usage	linediff.txt	/*linediff-usage*
 linediff.txt	linediff.txt	/*linediff.txt*
