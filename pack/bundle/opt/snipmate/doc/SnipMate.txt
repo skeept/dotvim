@@ -506,8 +506,10 @@ To continue using the old parser, set g:snipMate.snippet_version (see
 |SnipMate-options|) to 0 in your |vimrc|.
 
 Setting g:snipMate.snippet_version to either 0 or 1 will remove the start up
-message.
-
+message. One way this can be done--to use the new parser--is as follows:
+>
+    let g:snipMate = { 'snippet_version' : 1 }
+<
 ==============================================================================
 SNIPPET SOURCES                                     *SnipMate-snippet-sources*
 
