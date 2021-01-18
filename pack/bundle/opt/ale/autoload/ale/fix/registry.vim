@@ -132,7 +132,7 @@ let s:default_registry = {
 \   },
 \   'scalafmt': {
 \       'function': 'ale#fixers#scalafmt#Fix',
-\       'suggested_filetypes': ['scala'],
+\       'suggested_filetypes': ['sbt', 'scala'],
 \       'description': 'Fix Scala files using scalafmt',
 \   },
 \   'sorbet': {
@@ -342,7 +342,7 @@ let s:default_registry = {
 \   },
 \   'ktlint': {
 \       'function': 'ale#fixers#ktlint#Fix',
-\       'suggested_filetypes': ['kt'],
+\       'suggested_filetypes': ['kt', 'kotlin'],
 \       'description': 'Fix Kotlin files with ktlint.',
 \   },
 \   'styler': {

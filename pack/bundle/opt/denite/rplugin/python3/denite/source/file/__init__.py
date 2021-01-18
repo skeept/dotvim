@@ -19,7 +19,11 @@ class Source(Base):
 
         self.name = 'file'
         self.kind = 'file'
-        self.matchers = ['matcher/fuzzy', 'matcher/hide_hidden_files']
+        self.matchers = [
+            'converter/expand_input',
+            'matcher/fuzzy',
+            'matcher/hide_hidden_files',
+        ]
         self.is_volatile = True
 
     def gather_candidates(self, context: UserContext) -> Candidates:
@@ -45,7 +49,7 @@ class Source(Base):
             })
         else:
             file_path = Path(filename)
-            glb = str(file_path)
+            glb = str(file_path if file_path.is_dir() else file_path.parent)
             glb += '/.*' if str(file_path.name).startswith('.') else '/*'
             for f in glob.glob(glb):
                 fullpath = abspath(self.vim, f)
