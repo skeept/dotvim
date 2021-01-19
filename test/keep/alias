@@ -103,6 +103,7 @@ alias t2='tmux -2'
 alias tw='emacsclient -nw'
 #alias tm='tmux -2'
 alias cpv='rsync -ah --info=progress2'
-alias lg=lazygit
+#alias lg=lazygit
+alias lazygit=lg
 
 # vim: set ft=sh:
