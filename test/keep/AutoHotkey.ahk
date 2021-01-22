@@ -51,3 +51,18 @@ RWin::AppsKey
 ; temporarily fix F10 key not working on my keyboard (use numpad Insert)
 ; NumpadIns::F10
 ; NumpadDel::F11
+
+; Use F1 to send ctrl-w ctrf-f md
+;f1::
+;Send, {Ctrl down}w{Ctrl up}md{Ctrl down}f{Ctrl up}md
+;return
+
+;f1::
+;RepeatKey := !RepeatKey
+;If RepeatKey
+;  Send, {Ctrl down}f{Ctrl up}md
+;Else
+;  Send, {Ctrl down}w{Ctrl up}
+;Return
+
+
