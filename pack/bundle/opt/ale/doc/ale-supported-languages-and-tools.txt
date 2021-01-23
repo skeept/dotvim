@@ -13,12 +13,16 @@ Notes:
 `!!` These linters check only files on disk. See |ale-lint-file-linters|
 
 * Ada
+  * `ada_language_server`
   * `gcc`
   * `gnatpp`
 * Ansible
   * `ansible-lint`
 * API Blueprint
   * `drafter`
+* APKBUILD
+  * `apkbuild-lint`
+  * `secfixes-check`
 * AsciiDoc
   * `alex`!!
   * `languagetool`!!
@@ -116,6 +120,7 @@ Notes:
 * Dafny
   * `dafny`!!
 * Dart
+  * `analysis_server`
   * `dartanalyzer`!!
   * `dartfmt`!!
   * `language_server`
@@ -246,6 +251,7 @@ Notes:
   * `jq`
   * `jsonlint`
   * `prettier`
+  * `spectral`
 * Julia
   * `languageserver`
 * Kotlin
@@ -304,6 +310,7 @@ Notes:
 * nix
   * `nix-instantiate`
   * `nixpkgs-fmt`
+  * `rnix-lsp`
 * nroff
   * `alex`!!
   * `proselint`
@@ -322,6 +329,10 @@ Notes:
   * `ocamlformat`
   * `ocp-indent`
   * `ols`
+* OpenApi
+  * `ibm_validator`
+  * `prettier`
+  * `yamllint`
 * Pawn
   * `uncrustify`
 * Perl
@@ -492,6 +503,7 @@ Notes:
 * Thrift
   * `thrift`
 * TypeScript
+  * `deno`
   * `eslint`
   * `fecs`
   * `prettier`
@@ -501,6 +513,7 @@ Notes:
   * `typecheck`
 * VALA
   * `uncrustify`
+  * `vala_lint`!!
 * Verilog
   * `hdl-checker`
   * `iverilog`
@@ -529,6 +542,7 @@ Notes:
   * `xmllint`
 * YAML
   * `prettier`
+  * `spectral`
   * `swaglint`
   * `yamlfix`
   * `yamllint`

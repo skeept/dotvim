@@ -32,6 +32,11 @@ let s:default_registry = {
 \       'suggested_filetypes': ['python'],
 \       'description': 'Fix PEP8 issues with black.',
 \   },
+\   'deno': {
+\       'function': 'ale#fixers#deno#Fix',
+\       'suggested_filetypes': ['typescript'],
+\       'description': 'Fix TypeScript using deno fmt.',
+\   },
 \   'dfmt': {
 \       'function': 'ale#fixers#dfmt#Fix',
 \       'suggested_filetypes': ['d'],
@@ -102,7 +107,7 @@ let s:default_registry = {
 \   },
 \   'prettier': {
 \       'function': 'ale#fixers#prettier#Fix',
-\       'suggested_filetypes': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'json5', 'graphql', 'markdown', 'vue', 'html', 'yaml'],
+\       'suggested_filetypes': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'json5', 'graphql', 'markdown', 'vue', 'html', 'yaml', 'openapi'],
 \       'description': 'Apply prettier to a file.',
 \   },
 \   'prettier_eslint': {

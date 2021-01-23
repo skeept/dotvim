@@ -1556,6 +1556,7 @@ g:ale_linters                                                   *g:ale_linters*
   following values: >
 
   {
+  \   'apkbuild': ['apkbuild_lint', 'secfixes_check'],
   \   'csh': ['shell'],
   \   'elixir': ['credo', 'dialyxir', 'dogma'],
   \   'go': ['gofmt', 'golint', 'go vet'],
@@ -2596,8 +2597,12 @@ documented in additional help files.
   ada.....................................|ale-ada-options|
     gcc...................................|ale-ada-gcc|
     gnatpp................................|ale-ada-gnatpp|
+    ada-language-server...................|ale-ada-language-server|
   ansible.................................|ale-ansible-options|
     ansible-lint..........................|ale-ansible-ansible-lint|
+  apkbuild................................|ale-apkbuild-options|
+    apkbuild-lint.........................|ale-apkbuild-apkbuild-lint|
+    secfixes-check........................|ale-apkbuild-secfixes-check|
   asciidoc................................|ale-asciidoc-options|
     write-good............................|ale-asciidoc-write-good|
     textlint..............................|ale-asciidoc-textlint|
@@ -2664,6 +2669,7 @@ documented in additional help files.
   dafny...................................|ale-dafny-options|
     dafny.................................|ale-dafny-dafny|
   dart....................................|ale-dart-options|
+    analysis_server.......................|ale-dart-analysis_server|
     dartanalyzer..........................|ale-dart-dartanalyzer|
     dartfmt...............................|ale-dart-dartfmt|
   dhall...................................|ale-dhall-options|
@@ -2783,6 +2789,7 @@ documented in additional help files.
     jsonlint..............................|ale-json-jsonlint|
     jq....................................|ale-json-jq|
     prettier..............................|ale-json-prettier|
+    spectral..............................|ale-json-spectral|
   julia...................................|ale-julia-options|
     languageserver........................|ale-julia-languageserver|
   kotlin..................................|ale-kotlin-options|
@@ -2835,6 +2842,10 @@ documented in additional help files.
     ols...................................|ale-ocaml-ols|
     ocamlformat...........................|ale-ocaml-ocamlformat|
     ocp-indent............................|ale-ocaml-ocp-indent|
+  openapi.................................|ale-openapi-options|
+    ibm_validator.........................|ale-openapi-ibm-validator|
+    prettier..............................|ale-openapi-prettier|
+    yamllint..............................|ale-openapi-yamllint|
   pawn....................................|ale-pawn-options|
     uncrustify............................|ale-pawn-uncrustify|
   perl....................................|ale-perl-options|
@@ -2988,11 +2999,13 @@ documented in additional help files.
   thrift..................................|ale-thrift-options|
     thrift................................|ale-thrift-thrift|
   typescript..............................|ale-typescript-options|
+    deno..................................|ale-typescript-deno|
     eslint................................|ale-typescript-eslint|
     prettier..............................|ale-typescript-prettier|
     standard..............................|ale-typescript-standard|
     tslint................................|ale-typescript-tslint|
     tsserver..............................|ale-typescript-tsserver|
+    xo....................................|ale-typescript-xo|
   vala....................................|ale-vala-options|
     uncrustify............................|ale-vala-uncrustify|
   verilog/systemverilog...................|ale-verilog-options|
@@ -3020,6 +3033,7 @@ documented in additional help files.
     xmllint...............................|ale-xml-xmllint|
   yaml....................................|ale-yaml-options|
     prettier..............................|ale-yaml-prettier|
+    spectral..............................|ale-yaml-spectral|
     swaglint..............................|ale-yaml-swaglint|
     yamlfix...............................|ale-yaml-yamlfix|
     yamllint..............................|ale-yaml-yamllint|
