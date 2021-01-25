@@ -39,9 +39,9 @@ let g:wk.echoOrPrintTimeSetting = 1
 nnoremap \e :<C-U>call wk#echoOrPrintTime()<CR>
 
 if has("autocmd")
-  augroup log_files
+  augroup logs_data
     autocmd!
-    autocmd! BufRead *.log
+    autocmd! BufRead *.log,*.dat,*.csv,*.out
           \ setlocal nowrap
   augroup END
 endif
