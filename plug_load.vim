@@ -31,6 +31,7 @@ Plug 'thinca/vim-unite-history', { 'on': 'Unite' }
 
 Plug 'ctrlpvim/ctrlp.vim'
 
+Plug 'lambdalisue/fern.vim', { 'on': ;'Fern' }
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
