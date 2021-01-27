@@ -1,0 +1,1197 @@
+*fern.txt*			General purpose asynchronous tree explorer
+
+Author:  Alisue <lambdalisue@hashnote.net>
+License: MIT license
+
+=============================================================================
+CONTENTS						*fern-contents*
+
+INTRODUCTION				|fern-introduction|
+  FEATURES				|fern-features|
+  PLUGINS				|fern-plugins|
+USAGE					|fern-usage|
+  ACTION				|fern-action|
+  CUSTOM				|fern-custom|
+COMPARATOR				|fern-comparator|
+RENDERER				|fern-renderer|
+INTERFACE				|fern-interface|
+  VARIABLE				|fern-variable|
+  COMMAND				|fern-command|
+  FUNCTION				|fern-function|
+  AUTOCMD				|fern-autocmd|
+  HIGHLIGHT				|fern-highlight|
+MAPPING					|fern-mapping|
+  GLOBAL				|fern-mapping-global|
+  FILE					|fern-mapping-file|
+  DICT					|fern-mapping-dict|
+GLOSSARY				|fern-glossary|
+DEVELOPMENT				|fern-development|
+
+
+=============================================================================
+INTRODUCTION						*fern-introduction*
+
+*fern.vim* (fern) is a general purpose asynchronous tree explorer written in
+pure Vim script. It provides "file" scheme in default to use it as a file
+explorer.
+
+-----------------------------------------------------------------------------
+FEATURES						*fern-features*
+
+No external dependencies~
+	Fern is written in pure Vim script without any external libraries
+	(note that vim-jp/vital.vim is bundled, not external dependencies) so
+	users do NOT need to install anything rather than fern.vim itself.
+	Exception: "trash" feature in Linux.
+	https://github.com/lambdalisue/vital-Whisky/issues/31
+
+Asynchronous~
+	Fern uses asynchronous technique to perform most of operations so Vim 
+	would not freeze during operations. It is probably obvious in Windows 
+	while file operations in Windows are relatively slow.
+
+Split windows or project drawer~
+	Fern supports both styles; split windows (e.g. netrw) and project
+	drawer (e.g.  NERDTree); officially.
+
+Buffer name base~
+	Fern is developed based on |BufReadCmd| technique like netrw. Thus any 
+	buffer starts from "fern://" are handled by fern and required 
+	arguments and options are read from the buffer name. That's why fern 
+	integrate well with |session|.
+
+Action~
+	Fern provides operation as action. When user hit "?", all actions and
+	corresponding mapping (if exist) are shown. When user hit "a", an 
+	action prompt will popped up and user can input an action to execute.
+	So users don't have to remember complex mappings to execute operation 
+	which is not often required.
+
+Window selector~
+	Fern has an internal window selector which works like 
+	t9md/vim-choosewin.  Users can quickly select which window to open a 
+	selected node.
+	See |hl-FernWindowSelectIndicator| and |hl-FernWindowSelectStatusLine|
+	to customize the statusline when selecting a window.
+	https://github.com/t9md/vim-choosewin
+
+Renamer (A.k.a exrename)~
+	Fern has an internal renamer which works like "exrename" in
+	Shougo/vimfiler.  Users can edit multiple path of nodes in Vim's 
+	buffer and ":w" to apply changes to actual nodes (file, directory,
+	bookmark, etc.)
+	https://github.com/Shougo/vimfiler
+
+System CRUD operations ("file" scheme)~
+	Fern supports file system CRUD operations. Users can create, delete,
+	rename files/directories through fern.
+
+System program support ("file" scheme)~
+	Fern supports to open a file/directory through a system default
+	program. So it's quite easy to open a directory with Explorer 
+	(Windows), Finder (macOS), or whatever.
+
+System trash-bin support ("file" scheme)~
+	Fern supports system trash-bin by PowerShell (Windows), osascript 
+	(macOS), and 3rd party applications (Linux). Any files/directories 
+	deleted by "trash" action are sent to system trash-bin rather than 
+	actual delete.
+
+-----------------------------------------------------------------------------
+PLUGINS							*fern-plugins*
+
+Most of functionalities are provided as plugins in fern.
+So visit the following URL to find fern plugins.
+
+https://github.com/topics/fern-vim-plugin
+
+For example, following features are provided as official plugins
+
+- Netrw hijack (Use fern as a default file explorer)
+- Nerd Fonts integration (https://www.nerdfonts.com/)
+- Git integration (show status, touch index, ...)
+- Bookmark feature
+
+And lot more!
+
+
+=============================================================================
+USAGE							*fern-usage*
+
+Open fern at the current working directory by
+>
+	:Fern .
+<
+Or a parent directory of the current buffer by
+>
+	:Fern %:h
+<
+On a fern buffer, hit
+
+	"?"	List mappings/actions available
+	"a"	Open a prompt to input action to execute
+
+-----------------------------------------------------------------------------
+ACTION							*fern-action*
+
+Action is a special mapping which is defined on a fern buffer and looks like:
+
+	<Plug>(fern-action-{name})
+
+where {name} is a name of the action.
+
+Note that any mappings defined in user custom code (|fern-custom|) are
+registered as action as well if the name of the mapping followed above rule.
+
+							*fern-action-mapping*
+Fern defines the following mappings for actions:
+
+	"?"	List mappings/actions available
+	"a"	Open a prompt to input action to execute
+	"."	Repeat previous action which has executed from a prompt
+
+Note that |g:fern#disable_default_mappings| does not affect mappings above.
+Users have to define alternative mappings to disable default mappings like:
+>
+	" Use g? to show help instead of ?
+	nmap <buffer> g? <Plug>(fern-action-help)
+<
+							*fern-action-capture*
+Use "capture" to redirects an action output to a separate buffer like:
+>
+	action: capture help
+<
+							*fern-action-verbose*
+Use "verbose" to execute an action in |verbose| mode like:
+>
+	action: verbose expand
+<
+
+-----------------------------------------------------------------------------
+CUSTOM							*fern-custom*
+
+Use |FileType| |autocmd| with "fern" like:
+>
+	function! s:init_fern() abort
+	  " Write custom code here
+	endfunction
+
+	augroup my-fern
+	  autocmd! *
+	  autocmd FileType fern call s:init_fern()
+	augroup END
+<
+The autocmd will be called AFTER fern buffer has initialized but BEFORE any
+content had loaded.
+							*fern-custom-alias*
+Fern provides some features as mapping alias. For example, you may found
+entries like below by "?":
+>
+	e                         open       <Plug>(fern-action-open)
+	<Plug>(fern-action-open)  open:edit  <Plug>(fern-action-open:edit)
+<
+Above mean that when you hit "e", the "open" action is executed and the "open"
+action execute "open:edit" action.
+So if you want to use "open:split" action instead of "open:edit" when you
+hit "e", add the following code:
+>
+	" Use 'open:split' instead of 'open:edit' for 'open' action
+	nmap <buffer> <Plug>(fern-action-open) <Plug>(fern-action-open:split)
+<
+							*fern-custom-wait*
+Fern provide |<Plug>(fern-wait)| mapping as a helper.
+For example, following execute "tcd:root" action every after "leave" action.
+>
+	nmap <buffer> <Plug>(fern-my-leave-and-tcd)
+	      \ <Plug>(fern-action-leave)
+	      \ <Plug>(fern-wait)
+	      \ <Plug>(fern-action-tcd:root)
+<
+Without <Plug>(fern-wait), the "tcd:root" action will be invoked before actual
+"leave" while "leave" action is asynchronous.
+
+							*fern-custom-smart*
+Fern provide following mapping helper functions:
+
+	|fern#smart#leaf()|	Return a mapping expression determined by a
+				status of a current cursor node
+
+	|fern#smart#drawer()|	Return a mapping expression determined by a
+				style of a current fern window
+
+	|fern#smart#scheme()|	Return a mapping expression determined by a
+				scheme of a current fern tree
+
+For example, following execute "open" on leaf but "expand" on branch.
+>
+	nmap <buffer><expr> <Plug>(fern-my-open-or-expand)
+	      \ fern#smart#leaf(
+	      \   "\<Plug>(fern-action-open)",
+	      \   "\<Plug>(fern-action-expand)",
+	      \ )
+<
+See https://github.com/lambdalisue/fern.vim/wiki/ for custom tips.
+
+
+=============================================================================
+COMPARATOR						*fern-comparator*
+
+Comparator is an object to sort nodes for making a tree.
+Users can create user custom comparator to change the order of appearance of
+nodes in the tree.
+See |fern-develop-comparator| for more details.
+
+
+=============================================================================
+RENDERER						*fern-renderer*
+
+Renderer is an object to render nodes as a tree like (default renderer):
+>
+	fern.vim
+	|- autoload
+	 |+ fern
+	 |+ vital
+	 |  fern.vim
+	|- doc
+	 |  fern-develop.txt
+	 |  fern.txt
+	 |  tags
+	|+ ftplugin
+	|+ plugin
+	|+ test
+	|  LICENSE
+	|  README.md
+<
+Users can customize above appearance by the following variables.
+
+*g:fern#renderer#default#leading*
+	A |String| used as leading space unit (one indentation level.)
+	Default: " "
+
+*g:fern#renderer#default#root_symbol*
+	A |String| used as a symbol of root node.
+	Default: ""
+
+*g:fern#renderer#default#leaf_symbol*
+	A |String| used as a symbol of leaf node (non branch node like file).
+	Default: "|  "
+
+*g:fern#renderer#default#collapsed_symbol*
+	A |String| used as a symbol of collapsed branch node.
+	Default: "|+ "
+
+*g:fern#renderer#default#expanded_symbol*
+	A |String| used as a symbol of expanded branch node.
+	Default: "|- "
+
+*g:fern#renderer#default#marked_symbol*
+	OBSOLETE(v1.6.0)~
+	Use |g:fern#mark_symbol| instead.
+
+*g:fern#renderer#default#unmarked_symbol*
+	OBSOLETE(v1.6.0)~
+	No alternative feature is provided.
+
+See |FernHighlight| and |fern-highlight| to change pre-defeined |highlight|.
+
+Or create user custom renderer to change the appearance completely.
+See |fern-develop-renderer| for more details.
+
+
+=============================================================================
+INTERFACE						*fern-interface*
+
+-----------------------------------------------------------------------------
+VARIABLE						*fern-variable*
+
+*g:fern#profile*
+	Set 1 to enable fern profiling mode.
+	Default: 0
+
+*g:fern#logfile*
+	A path |String| to log messages or |v:null| to log messages via
+	|echomsg|.
+>
+	let g:fern#logfile = "~/fern.tsv"
+<
+	Default: |v:null|
+
+*g:fern#loglevel*
+	A |Number| to indicate a current loglevel. Use the following constant
+	variable to set loglevel.
+	*g:fern#DEBUG*		Debug level
+	*g:fern#INFO*		Info level
+	*g:fern#WARN*		Warn level
+	*g:fern#ERROR*		Error level
+	Default: |g:fern#ERROR|
+
+*g:fern#opener*
+	A default |fern-opener| used to open a fern buffer itself in split
+	windows style.
+	Default: 'edit'
+
+*g:fern#smart_cursor*
+	A type |String| of the smart cursor. Available values are
+
+	"stick"		Stick the cursor to the first column to visualize the
+			cursor node. In this mode, single whitespace is
+			prefixed as a padding for better looks.
+
+	"hide"		Hide the cursor and forcedly enable |cursorline| to
+			visualize the cursor node. In this mode, |cursorline|
+			is automatically enabled when the focus is on the
+			buffer and automatically disabled when the cursor is
+			out of the buffer.
+			Note that Neovim prior to 0.5.0 cannot hide the cursor
+			thus faint vertical bar is used instead.
+	
+	Default: "stick"
+
+*g:fern#keepalt_on_edit*
+	Set 1 to apply |keepalt| on the "open:edit" action to keep an
+	|alternate-file| in a split windows style like:
+>
+        g:fern#keepalt_on_edit =      0            1
+	                         +---------+  +---------+
+	:edit A                  |  %:A    |  |  %:A    |
+	                         |  #:     |  |  #:     |
+	                         +---------+  +---------+
+	                              v            v
+	                         +---------+  +---------+
+	:Fern .                  |  %:fern |  |  %:fern |
+	                         |  #:A    |  |  #:A    |
+	                         +---------+  +---------+
+	                              v            v
+	                         +---------+  +---------+
+	open:edit                |  %:B    |  |  %:B    |
+	on 'B'                   |  #:fern |  |  #:A    |
+	                         +---------+  +---------+
+<
+	Default: 0
+
+*g:fern#keepjumps_on_edit*
+	Set 1 to apply |keepjumps| on the "open:edit" action to keep a
+	|jumplist| in a split windows style like:
+>
+        g:fern#keepjumps_on_edit =      0            1
+	                           +---------+  +---------+
+	                           |  0:A    |  |  0:A    |
+	:edit A                    |  1:     |  |  1:     |
+	                           |  2:     |  |  2:     |
+	                           +---------+  +---------+
+	                                v            v
+	                           +---------+  +---------+
+	                           |  0:fern |  |  0:Fern |
+	:Fern .                    |  1:A    |  |  1:A    |
+	                           |  2:     |  |  2:     |
+	                           +---------+  +---------+
+	                                v            v
+	                           +---------+  +---------+
+	                           |  0:B    |  |  0:B    |
+	open:edit                  |  1:fern |  |  1:A    |
+	on 'B'                     |  2:A    |  |  2:     |
+	                           +---------+  +---------+
+<
+	Note that even with this option, any |jump-motions| performed in a
+	fern buffer updates |jumplist|. For example, if user move cursors by
+	"G" in above situation, |CTRL-O| in last step jumps to the fern buffer
+	rather than a buffer "A" because a jump for "G" has recoreded in
+	|jumplist|.
+	Default: 0
+
+*g:fern#disable_default_mappings*
+	Set 1 to disable default mappings
+	Note that this variable does not affect mappings for actions.
+	See |fern-action-mappings| for more detail.
+	Default: 0
+
+*g:fern#disable_viewer_spinner*
+	Set 1 to disable viewer spinner shown on a sign column.
+	Note that the default value will be 1 if CUI Vim is running on
+	Windows. See https://github.com/lambdalisue/fern.vim/issues/256 for
+	detail.
+
+*g:fern#disable_viewer_auto_duplication*
+	Set 1 to disable viewer auto duplication on |WinEnter| autocmd.
+	The duplication is mainly occured when user execute |split| or
+	|vsplit| command to duplicate window.
+
+*g:fern#disable_viewer_hide_cursor*
+	DEPRECATED: The cursor is not hidden any longer in default.
+	See |g:fern#smart_cursor| for detail.
+
+*g:fern#disable_viewer_smart_cursor*
+	Set 1 to disable viewer smart cursor feature.
+	See |g:fern#smart_cursor| for detail.
+
+*g:fern#disable_drawer_auto_winfixwidth*
+	Set 1 to disable automatically enable 'winfixwidth' to drawer on
+	|BufEnter| autocmd.
+	Default: 0
+
+*g:fern#disable_drawer_auto_resize*
+	Set 1 to disable automatically resize drawer on |BufEnter| and
+	|BufLeave| autocmd.
+	Default: 0 
+
+*g:fern#disable_drawer_auto_quit*
+	DEPRECATED: Use |g:fern#disable_drawer_smart_quit| instead.
+
+*g:fern#disable_drawer_smart_quit*
+	Set 1 to disable smart quit behavior when there are only two buffer
+	remains (one is for the drawer styled fern window.)
+	The smart quit behavior is something like below (assume that #
+	indicate the cursor position.)
+>
+	g:fern#disable_drawer_smart_quit = 0
+
+	:Fern . -drawer -stay		+--+---------------+
+					|FE|#              |
+					|RN|               |
+					+--+---------------+
+	:q				Quit vim
+
+	:Fern . -drawer -stay -keep	+--+---------------+
+					|FE|#              |
+					|RN|               |
+					+--+---------------+
+	:q				+------------------+
+					|FE|# (new buffer) |
+					|RN|               |
+					+------------------+
+
+	g:fern#disable_drawer_smart_quit = 1
+
+	:Fern . -drawer -stay		+--+---------------+
+					|FE|#              |
+					|RN|               |
+					+--+---------------+
+	:q				+------------------+
+					|FE                |
+					|RN                |
+					+------------------+
+<
+	Default: 0
+
+*g:fern#disable_drawer_auto_restore_focus*
+	Set 1 to disable automatic focus restore on drawer close.
+	The behavior changes like: (# indicate the cursor)
+>
+	g:fern#disable_drawer_auto_restore_focus = 0
+	                        +---------------+---------------+
+	                        |               |#              |
+	                        |               |               |
+	                        +---------------+---------------+
+	:Fern . -drawer -stay   +----+------------+-------------+
+	                        |    |            |#            |
+	                        |    |            |             |
+	                        +----+------------+-------------+
+	:Fern . -drawer -toggle +---------------+---------------+
+	                        |               |#              |
+	                        |               |               |
+	                        +---------------+---------------+
+
+	g:fern#disable_drawer_auto_restore_focus = 1
+	                        +---------------+---------------+
+	                        |               |#              |
+	                        |               |               |
+	                        +---------------+---------------+
+	:Fern . -drawer -stay   +----+------------+-------------+
+	                        |    |            |#            |
+	                        |    |            |             |
+	                        +----+------------+-------------+
+	:Fern . -drawer -toggle +---------------+---------------+
+	                        |#              |               |
+	                        |               |               |
+	                        +---------------+---------------+
+<
+	Default: 0 
+
+*g:fern#default_hidden*
+	Set 1 to enter hidden mode (show hidden files) in default.
+	Default: 0
+
+*g:fern#default_include*
+	A default |String| pattern used to filter nodes (include).
+	Default: ''
+
+*g:fern#default_exclude*
+	A default |String| pattern used to filter nodes (exclude).
+	Default: ''
+
+*g:fern#renderer*
+	A |String| name of renderer used to render tree items. Allowed value
+	is a key of |g:fern#renderers|.
+	Default: "default"
+
+*g:fern#comparator*
+	A |String| name of comparator used to sort tree items. Allowed value
+	is a key of |g:fern#comparators|.
+	Default: "default"
+
+*g:fern#drawer_width*
+	A |Number| width of drawer in default.
+	Default: 30
+
+*g:fern#drawer_keep*
+	A |Boolean| which indicate whether the last fern window should be keep
+	open or close.
+	Default: |v:false|
+
+*g:fern#mark_symbol*
+	A |String| which is used as a mark symbol text.
+	Note that users must restart Vim to apply changes.
+	Default: "*"
+
+*g:fern#scheme#file#show_absolute_path_on_root_label*
+	A |Boolean| to show an absolute path of the root node of "file" scheme
+	as a label of the node.
+	Default: 0
+
+*g:fern#disable_auto_buffer_delete*
+	A |Number| value that specifies whether to synchronize file removes to the buffer
+	Default: 0
+
+*g:fern#disable_auto_buffer_rename*
+	A |Number| value that specifies whether to synchronize file renames to the buffer
+	Default: 0
+
+-----------------------------------------------------------------------------
+COMMAND							*fern-command*
+
+							*:Fern*
+:Fern {url} [-opener={opener}] [-stay] [-wait] [-reveal={reveal}]
+	Open a fern buffer in split windows style with the {opener}.
+	If -stay options is specified, the focus stays on a window where the
+	command has executed. If -wait option is specified, the command wait
+	synchronously until the fern buffer become ready.
+
+							*fern-reveal*
+	If {reveal} is specified, parent nodes of the node which is identified
+	by the {reveal} are expanded and the node will be focused.
+	The {reveal} must be a relative path separated by "/" from the
+	specfied {url}.
+	Note that if the {url} is for "file" scheme, an absolute path can be
+	specified to the {reveal}.
+							*fern-opener*
+	One of the following value is available for the {opener}:
+
+	"select"	Select which window to open a buffer
+	"split"		Open a buffer by |split|
+	"vsplit"	Open a buffer by |vsplit|
+	"tabedit"	Open a buffer by |tabedit|
+	"edit"		Open a buffer by |edit| or fail when the buffer is
+			|modified|
+	"edit/split"	Open a buffer by |edit| or |split| when the buffer is
+			|modified|
+	"edit/vsplit"	Open a buffer by |edit| or |vsplit| when the buffer is
+			|modified|
+	"edit/tabedit"	Open a buffer by |edit| or |tabedit| when the buffer
+			is |modified|
+
+	Additionally, any modifiers (|mods|) are allowd to be prepend (e.g.
+	"topleft split".)
+
+	Note that the command can be followed by a '|' and another command.
+
+							*:Fern-drawer*
+:Fern {url} -drawer [-width={width}] [-keep] [-toggle] ...
+	Open a fern buffer in project drawer style with the {width}.
+
+	If the {width} is specified, the width of the window is regulated to
+	the specified value. (See |g:fern#drawer_width|)
+	If "-keep" options is specified, the buffer won't close even there is
+	only this window exist. (See |g:fern#drawer_keep|)
+	If "-toggle" option is specified, existing fern buffer will be closed
+	rather than opening a new fern buffer when exist.
+
+	See |:Fern| for other arguments and options. Note that -opener options
+	is ignored for project drawer style.
+
+							*:FernDo*
+:FernDo {expr...} [-drawer] [-stay]
+	Focus a next fern viewer and execute {expr...}. It does nothing if no
+	next fern viewer is found.
+	If "-drawer" option is specified, it focus and execute only a project
+	drawer style fern.
+	If "-stay" option is specified, it stay focus after execution.
+	Note that the command can be followed by a '|' and another command.
+
+							*:FernFocus*
+:FernFocus [-drawer]
+	DEPRECATED: Use |:FernDo| with ":" like ":FernDo :" instead.
+	Focus a next fern viewer. If "-drawer" option is specified, it focus
+	only a project drawer style fern.
+	Note that the command can be followed by a '|' and another command.
+
+							*:FernReveal*
+:FernReveal {reveal} [-wait]				BUFFER LOCAL
+	Reveal {reveal} on a current fern viewer. Note that this command
+	exists only in a fern viewer buffer.
+	If "-wait" option is specified, the command wait synchronously until
+	the node specified has revealed.
+	Note that the command can be followed by a '|' and another command.
+
+-----------------------------------------------------------------------------
+FUNCTION						*fern-function*
+
+							*fern#version()*
+fern#version()
+	Show fern version itself.
+
+							*fern#smart#leaf()*
+fern#smart#leaf({leaf}, {collapsed}[, {expanded}])
+	Return one of a given mapping expression determined by a "status" of a
+	current cursor node. If the node is leaf, the {leaf} is returned.
+	If the node is branch and collapsed, the {collapsed} is returned. If
+	the node is branch and expanded, the {expanded} or {collapsed} is
+	returned.
+>
+	" Perform 'open' on leaf node and 'enter' on branch node
+	nmap <buffer><expr>
+	      \ <Plug>(fern-my-open-or-enter)
+	      \ fern#smart#leaf(
+	      \   "\<Plug>(fern-action-open)",
+	      \   "\<Plug>(fern-action-enter)",
+	      \ )
+
+	" Perform 'open' on leaf node, 'expand' on collapsed node, and
+	" 'collapse' on expanded node.
+	nmap <buffer><expr>
+	      \ <Plug>(fern-my-open-or-expand-or-collapse)
+	      \ fern#smart#leaf(
+	      \   "\<Plug>(fern-action-open)",
+	      \   "\<Plug>(fern-action-expand)",
+	      \   "\<Plug>(fern-action-collapse)",
+	      \ )
+<
+							*fern#smart#drawer()*
+fern#smart#drawer({drawer}, {explorer})
+	Return one of a given mapping expression determined by the style of
+	a current buffer. If the current buffer is drawer, the {drawer} is
+	returned. Otherwise the {explorer} is retunred.
+>
+	" Perform 'expand' on drawer and 'enter' on explorer
+	nmap <buffer><expr>
+	      \ <Plug>(fern-expand-or-enter)
+	      \ fern#smart#drawer(
+	      \   "\<Plug>(fern-action-expand)",
+	      \   "\<Plug>(fern-action-enter)",
+	      \ )
+<
+							*fern#smart#scheme()*
+fern#smart#scheme({default}, {schemes})
+	Return one of a given mapping expression determined by the scheme of
+	a current buffer. The {schemes} is a |Dict| which key is a name of
+	scheme and the value is mapping expression. If no corresponding
+	key-value found in {schemes}, the value of {default} is returned.
+>
+	" Execute 'Fern bookmark:///' or back to a previous file if the
+	" scheme is already 'bookmark'
+	nmap <buffer><expr><silent>
+	      \ <C-^>
+	      \ fern#smart#scheme(
+	      \   ":\<C-u>Fern bookmark:///\<CR>",
+	      \   {
+	      \     'bookmark': "\<C-^>",
+	      \   },
+	      \ )
+
+-----------------------------------------------------------------------------
+AUTOCMD							*fern-autocmd*
+
+						*FernHighlight*
+FernHighlight
+	Invoked after a fern renderer and 3rd party plugins defined highlight.
+	Use this autocmd to overwrite existing |highlight| like:
+>
+	function! s:on_highlight() abort
+	  " Use brighter highlight on root node
+	  highlight link FernRootSymbol Title
+	  highlight link FernRootText   Title
+	endfunction
+
+	augroup my-fern-highlight
+	  autocmd!
+	  autocmd User FernHighlight call s:on_highlight()
+	augroup END
+<
+	See |fern-highlight| for pre-defined |highlight|.
+
+						*FernSyntax*
+FernSyntax
+	Invoked after a fern renderer and 3rd party plugins defined syntax.
+	Use this |autocmd| to overwrite existing |syntax|.
+	Note that if you'd like to change color/highlight, use |FernHighlight|
+	autocmd instead. This autocmd exists for more complex (heavy) use.
+
+-----------------------------------------------------------------------------
+HIGHLIGHT						*fern-highlight*
+
+FernSpinner					*hl-FernSpinner*
+	A |highlight| group used as a text highlight of spinner |sign|.
+
+FernMarkedLine					*hl-FernMarkedLine*
+	A |highlight| group used as a line highlight of mark |sign|.
+
+FernMarkedText					*hl-FernMarkedText*
+	A |highlight| group used as a text highlight of mark |sign|.
+
+FernRootSymbol					*hl-FernRootSymbol*
+	A |highlight| group of renderer used for root node symbol.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+	
+FernRootText					*hl-FernRootText*
+	A |highlight| group of renderer used for root node text.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+
+FernLeafSymbol					*hl-FernLeafSymbol*
+	A |highlight| group of renderer used for leaf node symbol.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+	
+FernLeafText					*hl-FernLeafText*
+	A |highlight| group of renderer used for leaf node text.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+
+FernBranchSymbol				*hl-FernBranchSymbol*
+	A |highlight| group of renderer used for branch node symbol.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+	
+FernBranchText					*hl-FernBranchText*
+	A |highlight| group of renderer used for branch node text.
+	An actual appearance will be determined by the |fern-renderer| thus 
+	this highlight might not be referred.
+
+FernWindowSelectIndicator		*hl-FernWindowSelectIndicator*
+	A |highlight| group used for an indicator when selecting a window
+	through "open:select" action.
+
+FernWindowSelectStatusLine		*hl-FernWindowSelectStatusLine*
+	A |highlight| group used for |statusline| when selecting a window
+	through "open:select" action.
+
+
+=============================================================================
+MAPPING							*fern-mapping*
+
+As described in |fern-action|, some mappings in fern are used as action.
+See |fern-action| for more detail.
+
+-----------------------------------------------------------------------------
+GLOBAL							*fern-mapping-global*
+
+*<Plug>(fern-action-zoom:half)*
+	Zoom width of the drawer style fern to half of the global width.
+	The original window width will be restored once user leave the window.
+	It only works on a drawer style fern window.
+
+*<Plug>(fern-action-zoom:full)*
+	Zoom width of the drawer style fern to full of the global width.
+	The original window width will be restored once user leave the window.
+	It only works on a drawer style fern window.
+
+*<Plug>(fern-action-hidden:set)*
+	Show hidden nodes. For example hidden nodes in file:// scheme is a
+	file or directory starts from '.' character.
+	
+*<Plug>(fern-action-hidden:unset)*
+	Hide hidden nodes. For example hidden nodes in file:// scheme is a
+	file or directory starts from '.' character.
+
+*<Plug>(fern-action-hidden:toggle)*
+	Toggle hidden nodes. For example hidden nodes in file:// scheme is a
+	file or directory starts from '.' character.
+
+*<Plug>(fern-action-hidden)*
+	An alias to "hidden:toggle" action. Users can overwrite this mapping
+	to change the default behavior of "hidden" action.
+
+*<Plug>(fern-action-hidden-set)*
+	DEPRECATED: Use |<Plug>(fern-action-hidden:set)| instead.
+	
+*<Plug>(fern-action-hidden-unset)*
+	DEPRECATED: Use |<Plug>(fern-action-hidden:unset)| instead.
+
+*<Plug>(fern-action-hidden-toggle)*
+	DEPRECATED: Use |<Plug>(fern-action-hidden:toggle)| instead.
+
+*<Plug>(fern-action-include)*
+	Open a prompt to enter include filter. Users can type a |pattern| to
+	filter nodes recursively.
+
+*<Plug>(fern-action-exclude)*
+	Open a prompt to enter exclude filter. Users can type a |pattern| to
+	filter nodes recursively.
+
+*<Plug>(fern-action-mark:clear)*
+	Clear existing marks.
+
+*<Plug>(fern-action-mark:set)*
+	Set marks on cursor node(s).
+
+*<Plug>(fern-action-mark:unset)*
+	Unset marks on cursor node(s).
+
+*<Plug>(fern-action-mark:toggle)*
+	Toggle marks on cursor node(s).
+
+*<Plug>(fern-action-mark)*
+	An alias to "mark:toggle" action. Users can overwrite this mapping to 
+	change the default behavior of "mark" action.
+
+*<Plug>(fern-action-mark-clear)*
+	DEPRECATED: Use |<Plug>(fern-action-mark:clear)| instead.
+
+*<Plug>(fern-action-mark-set)*
+	DEPRECATED: Use |<Plug>(fern-action-mark:set)| instead.
+
+*<Plug>(fern-action-mark-unset)*
+	DEPRECATED: Use |<Plug>(fern-action-mark:unset)| instead.
+
+*<Plug>(fern-action-mark-toggle)*
+	DEPRECATED: Use |<Plug>(fern-action-mark:toggle)| instead.
+
+*<Plug>(fern-action-debug)*
+	Echo debug information of a cursor node.
+
+*<Plug>(fern-action-reload:all)*
+	Reload on the root node and its children.
+
+*<Plug>(fern-action-reload:cursor)*
+	Reload on a cursor node and its children.
+
+*<Plug>(fern-action-reload)*
+	An alias to "reload:all" action. Users can overwrite this mapping to
+	change the default behavior of "reload" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-reload)
+	      \ <Plug>(fern-action-reload:cursor)
+<
+*<Plug>(fern-action-expand:stay)*
+	Expand on a cursor node and stay the cursor on the node.
+
+*<Plug>(fern-action-expand:in)*
+	Expand on a cursor node and get in the cursor node (move on the first
+	child node of the cursor node.)
+
+*<Plug>(fern-action-expand)*
+	An alias to "expand:in" action. Users can overwrite this mapping to
+	change the default behavior of "expand" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-expand)
+	      \ <Plug>(fern-action-expand:stay)
+<
+
+*<Plug>(fern-action-collapse)*
+	Collapse on a cursor node.
+
+*<Plug>(fern-action-reveal)*
+	Open a prompt to reveal a node in a tree.
+
+*<Plug>(fern-action-enter)*
+	Open a new fern buffer which root node is a cursor node. In other
+	word, get enter the directory.
+
+*<Plug>(fern-action-leave)*
+	Open a new fern buffer which root node is a parent node of the current 
+	root node. In other word, go up directory.
+
+*<Plug>(fern-action-open:select)*
+	Open a cursor node or marked nodes through "window selector"
+	(|fern-glossary-window-selector|.)
+
+*<Plug>(fern-action-open:split)*
+*<Plug>(fern-action-open:vsplit)*
+*<Plug>(fern-action-open:tabedit)*
+	Open a cursor node or marked nodes with a corresponding command.
+	The command will be applied on an "anchor" window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-edit-or-error)*
+	Open a cursor node or marked nodes with |edit| command or fallback
+	to print an error. 
+	Note that when 'hidden' has set or 'bufhidden' is "hide", the |edit|
+	command will never fails.
+
+*<Plug>(fern-action-open:edit-or-split)*
+*<Plug>(fern-action-open:edit-or-vsplit)*
+*<Plug>(fern-action-open:edit-or-tabedit)*
+	Open a cursor node or marked nodes with |edit| command or fallback
+	to a corresponding command.
+	Note that when 'hidden' has set or 'bufhidden' is "hide", the |edit|
+	command will never fails.
+
+*<Plug>(fern-action-open:above)*
+*<Plug>(fern-action-open:left)*
+*<Plug>(fern-action-open:below)*
+*<Plug>(fern-action-open:right)*
+	Open a cursor node or marked nodes on a corresponding direction
+	from an "anchor" window.
+	The command will be applied on the anchor window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-open:top)*
+*<Plug>(fern-action-open:leftest)*
+*<Plug>(fern-action-open:bottom)*
+*<Plug>(fern-action-open:rightest)*
+	Open a cursor node or marked nodes on a edge of a corresponding
+	direction from an "anchor" window.
+	The command will be applied on the anchor window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-open:side)*
+	Open a cursor node or marked nodes on the right side of the current
+	window. The behavior is slightly different between a drawer style fern
+	window and a split style fern window due to the presence of "anchor".
+
+*<Plug>(fern-action-open-or-enter)*
+	Invoke "open" action on a leaf node and "enter" action on a branch
+	node.
+
+*<Plug>(fern-action-open-or-expand)*
+	Invoke "open" action on a leaf node and "expand" action on a branch
+	node.
+
+*<Plug>(fern-action-open:edit)*
+	An alias to "open:edit-or-error" action. Users can overwrite this
+	mapping to change the default behavior of "open:edit" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-open:edit)
+	      \ <Plug>(fern-action-open:edit-or-tabedit)
+<
+*<Plug>(fern-action-open)*
+	An alias to "open:edit" action. Users can overwrite this mapping to
+	change the default behavior of "open" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-open)
+	      \ <Plug>(fern-action-open:select)
+<
+*<Plug>(fern-action-cancel)*
+	Cancel tree rendering.
+
+*<Plug>(fern-action-redraw)*
+	Redraw tree.
+
+*<Plug>(fern-action-yank:label)*
+*<Plug>(fern-action-yank:badge)*
+*<Plug>(fern-action-yank:bufname)*
+	Yank the node label, badge, or bufname.
+
+*<Plug>(fern-action-yank)*
+	An alias to "yank:bufname" action. Users can overwrite this mapping to
+	change the default behavior of "yank" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-yank)
+	      \ <Plug>(fern-action-yank:label)
+<
+	Note that this mapping is overwritten in FILE scheme.
+
+*<Plug>(fern-wait)*
+	Wait until the fern buffer become ready which would opened just before 
+	this mapping. This is required while fern buffers are loaded 
+	asynchronously but mappings are inovked synchronously.
+	Note this is not action.
+
+
+-----------------------------------------------------------------------------
+FILE							*fern-mapping-file*
+
+The following mappings/actions are only available on file:// scheme.
+
+*<Plug>(fern-action-new-path)*
+	Open a prompt to ask a path and create a file/directory of the input
+	path from the path of a cursor node.
+	Any intermediate directories of the destination will be created.
+	If the path ends with "/", it creates a directory. Otherwise it
+	creates a file.
+
+*<Plug>(fern-action-new-file)*
+	Open a prompt to ask a path and create a file of the input path from
+	the path of a cursor node.
+	Any intermediate directories of the destination will be created.
+
+*<Plug>(fern-action-new-dir)*
+	Open a prompt to ask a path and create a directory of the input path 
+	from the path of a cursor node.
+	Any intermediate directories of the destination will be created.
+
+*<Plug>(fern-action-copy)*
+	Open a prompt to ask a path and copy a file/directory of the cursor
+	node or marked node path(s) to the input path(s).
+	Any intermediate directories of the destination will be created.
+	The prompt will repeatedly open if multiple nodes has marked.
+
+*<Plug>(fern-action-move)*
+	Open a prompt to ask a path and move a file/directory of the cursor
+	node or marked node path(s) to the input path(s).
+	Any intermediate directories of the destination will be created.
+	The prompt will repeatedly open if multiple nodes has marked.
+
+*<Plug>(fern-action-trash)*
+	Open a prompt to ask if fern can send the cursor node or marked nodes
+	to the system trash-bin. It uses the following implementations to send
+	the node(s) into system trash-bin.
+	OS		Requirement~
+	macOS:		osascript (OS builtin)
+	Windows:	PowerShell (OS builtin)
+	Linux:		trash-cli or gomi (Users need to install)
+			https://github.com/andreafrancia/trash-cli
+			https://github.com/b4b4r07/gomi
+	Note that the action fails without removing the files/directories if
+	no requirement exists on Linux.
+
+*<Plug>(fern-action-remove)*
+	Open a prompt to ask if fern can DELETE the cursor node or marked
+	nodes. BE CAREFUL with this action while it DELETE the file/direcoty
+	and users cannot restore (like "rm" in terminal.)
+
+*<Plug>(fern-action-cd:root)*
+*<Plug>(fern-action-lcd:root)*
+*<Plug>(fern-action-tcd:root)*
+	Invoke |:cd|, |:lcd|, or |:tcd| command on the path of the root node.
+
+*<Plug>(fern-action-cd:cursor)*
+*<Plug>(fern-action-lcd:cursor)*
+*<Plug>(fern-action-tcd:cursor)*
+	Invoke |:cd|, |:lcd|, or |:tcd| command on the path of a cursor node.
+
+*<Plug>(fern-action-cd)*
+*<Plug>(fern-action-lcd)*
+*<Plug>(fern-action-tcd)*
+	An alias to "cd:cursor", "lcd:cursor", and "tcd:cursor" action.
+	Users can overwrite this mapping to change the default behavior like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-cd)
+	      \ <Plug>(fern-action-cd:root)
+<
+*<Plug>(fern-action-clipboard-copy)*
+	Copy a cursor node or marked nodes into an internal clipboard.
+	Actual copy happens when users paste the nodes with "clipboard-paste"
+	action.
+	Note that this action has NO-relation with the system clipboard.
+
+*<Plug>(fern-action-clipboard-move)*
+	Move a cursor node or marked nodes into an internal clipboard.
+	Actual move happens when users paste the nodes with "clipboard-paste"
+	action.
+	Note that this action has NO-relation with the system clipboard.
+
+*<Plug>(fern-action-clipboard-paste)*
+	Paste copied/moved nodes on a cursor node. It does not clear the
+	internal clipboard so users can copy -> paste -> paste -> ...
+	Note that this action has NO-relation with the system clipboard.
+
+*<Plug>(fern-action-clipboard-clear)*
+	Clear the internal clipboard.
+	Note that this action has NO-relation with the system clipboard.
+
+*<Plug>(fern-action-grep)*
+	Open a prompt to ask a grep pattern and execute grep command under the
+	cursor node. It respects the value of 'grepprg' and 'grepformat'.
+	
+*<Plug>(fern-action-rename:select)*
+*<Plug>(fern-action-rename:split)*
+*<Plug>(fern-action-rename:vsplit)*
+*<Plug>(fern-action-rename:tabedit)*
+*<Plug>(fern-action-rename:above)*
+*<Plug>(fern-action-rename:left)*
+*<Plug>(fern-action-rename:below)*
+*<Plug>(fern-action-rename:right)*
+*<Plug>(fern-action-rename:top)*
+*<Plug>(fern-action-rename:leftest)*
+*<Plug>(fern-action-rename:bottom)*
+*<Plug>(fern-action-rename:rightest)*
+*<Plug>(fern-action-rename:edit-or-error)*
+*<Plug>(fern-action-rename:edit-or-split)*
+*<Plug>(fern-action-rename:edit-or-vsplit)*
+*<Plug>(fern-action-rename:edit-or-tabedit)*
+*<Plug>(fern-action-rename:edit)*
+*<Plug>(fern-action-rename:side)*
+*<Plug>(fern-action-rename)*
+	Open "renamer" (|fern-glossary-renamer|) for a cursor node or marked
+	nodes in similar manners of global "open" actions.
+
+*<Plug>(fern-action-open:system)*
+	Open a cursor node or marked nodes on a default program of the system.
+	For example, a cursor node points a PDF file, an application "Preview"
+	will open that file in macOS.
+
+*<Plug>(fern-action-terminal:select)*
+*<Plug>(fern-action-terminal:split)*
+*<Plug>(fern-action-terminal:vsplit)*
+*<Plug>(fern-action-terminal:tabedit)*
+*<Plug>(fern-action-terminal:above)*
+*<Plug>(fern-action-terminal:left)*
+*<Plug>(fern-action-terminal:below)*
+*<Plug>(fern-action-terminal:right)*
+*<Plug>(fern-action-terminal:top)*
+*<Plug>(fern-action-terminal:leftest)*
+*<Plug>(fern-action-terminal:bottom)*
+*<Plug>(fern-action-terminal:rightest)*
+*<Plug>(fern-action-terminal:edit-or-error)*
+*<Plug>(fern-action-terminal:edit-or-split)*
+*<Plug>(fern-action-terminal:edit-or-vsplit)*
+*<Plug>(fern-action-terminal:edit-or-tabedit)*
+*<Plug>(fern-action-terminal:edit)*
+*<Plug>(fern-action-terminal:side)*
+*<Plug>(fern-action-terminal)*
+	Open terminal window(s) on or on parent of a cursor node or marked 
+	nodes in similar manners of global "open" actions.
+
+*<Plug>(fern-action-yank:path)*
+	Yank the node path. In FILE scheme, |<Plug>(fern-action-yank)| is
+	aliased to this mapping.
+
+-----------------------------------------------------------------------------
+DICT							*fern-mapping-dict*
+
+The following mappings/actions are only available on dict:// scheme.
+
+TBW
+
+
+=============================================================================
+GLOSSARY						*fern-glossary*
+
+					*fern-glossary-anchor*
+"anchor"		A nearest suitable window from a drawer style fern
+			window. "suitable" window is a window which is
+			1. not quickfix window
+			2. not location-list window
+			3. not 'winfixwidth'
+			4. not 'winfixheight'
+			5. not 'previewwindow'
+			Usually a right window by the drawer become "anchor".
+
+					*fern-glossary-renamer*
+"renamer"		A special buffer which lists paths. Users can modify
+			the paths and save. Once user save the content with
+			|:write| command, corresponding rename process will
+			invokes (e.g. file/directory rename on file:// scheme)
+
+					*fern-glossary-window-selector*
+"window selector"	A special prompt to select window to open a node.
+			Once user hit a window indicator displayed under each
+			window, a content of the node will be opened at that
+			window.
+
+
+=============================================================================
+DEVELOPMENT						*fern-development*
+
+There is |fern-develop.txt| as an API documentation for fern plugin developer.
+
+
+=============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl

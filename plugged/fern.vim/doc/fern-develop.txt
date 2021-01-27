@@ -1,0 +1,700 @@
+*fern-develop.txt*		Developer documentations for fern.vim
+
+Author:  Alisue <lambdalisue@hashnote.net>
+License: MIT license
+
+=============================================================================
+CONTENTS					*fern-develop-contents*
+
+INTRODUCTION				|fern-develop-introduction|
+FRI					|fern-develop-fri|
+NODE					|fern-develop-node|
+MAPPING					|fern-develop-mapping|
+SCHEME					|fern-develop-scheme|
+  PROVIDER				|fern-develop-scheme-provider|
+  MAPPING				|fern-develop-scheme-provider|
+HOOK					|fern-develop-hook|
+HELPER					|fern-develop-helper|
+RENDERER				|fern-develop-renderer|
+COMPARATOR				|fern-develop-comparator|
+LOGGER					|fern-develop-logger|
+UTILITY					|fern-develop-utility|
+
+
+=============================================================================
+INTRODUCTION					*fern-develop-introduction*
+
+This is documentation for |fern.vim| developer.
+
+
+=============================================================================
+FRI						*fern-develop-fri*
+
+Fern Resource Identifier (FRI) is designed to be used in Vim's buffer name and
+explained as the following:
+
+  FRI = scheme "://" [ auth ] "/" path [ ";" query ][ "#" fragment ][$]
+
+Where:
+
+  scheme   = ALPHA { ALPHA | DIGIT | "_" }
+  auth     = { pchar }
+  path     = { segment "/" }
+  query    = { pchar | "/" | ";" }
+  fragment = { pchar | "/" | ";" }
+
+And the definition of each sub-components are:
+
+  pct-encoded = "%" HEXDIG HEXDIG
+  reserved = gen-delims | sub-delims
+  unreserved = ALPHA | DIGIT | "-" | "."| "_" | "~"
+  gen-delims = ":" | "/" | ";" | "#" | "[" | "]" | "@"
+  sub-delims = "!" | "$" | "&" | """ | "(" | ")" | "+" | "," | "="
+  segment   = pchar { pchar }
+  pchar     = { unreserved | pct-encoded | sub-delims | ":" | "@" }
+
+FRI was desigend to remove the following characters which could not be used
+in buffer names in Windows from URI definition:
+
+  unusable   = "<" | ">" | "|" | "?" | "*"
+
+Note that "fern" scheme may end with "$" to avoid unwilling filetype plugins.
+For example, some filetype plugin add "BufRead *.vim ..." thus if the FRI ends
+with ".vim", that autocmd is triggered without "$".
+
+Developers can use the following function to parse/format FRIs.
+
+							*fern#fri#new()*
+fern#fri#new({partial})
+	Create a FRI instance from {partial} |Dictionary|.
+	Note that omitted fields in {partial} is filled with an empty string.
+
+							*fern#fri#parse()*
+fern#fri#parse({expr})
+	Parse the {expr} (|String|) and return a FRI instance.
+	The instance has the following attributes:
+
+	"scheme"	A |String| scheme part
+	"authority"	A |String| authority part
+	"path"		A |String| path part
+	"query"		A |Dict| query part
+	"fragment"	A |String| fragment part
+
+	Note that "fern" scheme always end with "$" thus the trailing "$" is
+	removed from {expr} if scheme is "fern".
+
+							*fern#fri#format()*
+fern#fri#format({fri})
+	Format a |String| representation of the {fri} instance.
+	Note that "fern" scheme always end with "$" thus the trailing "$" is
+	added to the result if scheme is "fern".
+>
+	echo fern#fri#format({
+	      \ 'scheme': 'http',
+	      \ 'authority': 'www.example.com',
+	      \ 'path': 'foo/bar',
+	      \ 'query': {},
+	      \ 'fragment': '',
+	      \})
+	" -> https://www.example.com/foo/bar
+<
+							*fern#fri#encode()*
+fern#fri#encode({str}[, {pattern}])
+	Apply percent-encoding to characters which matches the {pattern} in
+	the {str}. When the {pattern} is omitted, unusable characters and
+	percent character itself in {str} are encoded.
+	NOTE:
+	The default {pattern} has changed from v1.16.0
+
+							*fern#fri#decode()*
+fern#fri#decode({str})
+	Decode percent-encoding from the {str}.
+
+
+=============================================================================
+NODE						*fern-develop-node*
+
+A node instance is a tree item which has the following attributes:
+
+"name"		A |String| name of the node. This value is used in "__key"
+		thus must be unique among nodes which has same "__owner".
+
+"status"	A |Number| which indicates the node status. One of the
+		followings:
+		|g:fern#STATUS_NONE|	Leaf node
+		|g:fern#STATUS_COLLAPSED|	Branch node (close)
+		|g:fern#STATUS_EXPANDED|	Branch node (open)
+
+"label"		A |String| used to display the node in a tree view.
+
+"badge"		A |String| used to display the node badge in a tree view.
+		Only first character is used in the default renderer.
+
+"hidden"	A 1/0 to indicate if the node should be hidden. All hidden
+		nodes become visible once fern enter hidden mode.
+
+"bufname"	A |String| buffer name used to open the node or |v:null|.
+		This value is used when users want to enter a branch node so
+		scheme developers SHOULD assign a proper value to this
+		attribute. Otherwise users cannot enter the branch node.
+
+"concealed"	A |Dict| used as a namespace object to store complex objects
+		which is not suitable to output.
+		Developers MUST follow same convention of naming under this
+		namespace as well.
+
+"__processing"	A |Number| which indicate that the node is in processing.
+		If the value is greater than 0, a spinner is displayed in sign
+		area of the node to indicate that the node is processing.
+
+"__key"		A |List| of |String| which represents the location of the
+		node in the tree.
+		This value is automatically assigned by fern and developers
+		should NOT touch unless for debugging purpose.
+
+"__owner"	An owner node instance of the node in the tree.
+		This value is automatically assigned by fern and developers
+		should NOT touch unless for debugging purpose.
+
+"_{XXX}"	Any attribute starts from a single underscore (_) is opened
+		for each scheme. Note that any complex value should be stored
+		in "concealed" instead to avoid display error.
+
+*g:fern#STATUS_NONE*
+*g:fern#STATUS_COLLAPSED*
+*g:fern#STATUS_EXPANDED*
+	Constant |Number| which indicates a node status.
+	STATUS_NONE means that the node is leaf and does not have any status.
+	STATUS_COLLAPSED means that the node is branch and collapsed (closed).
+	STATUS_EXPANDED means that the node is branch and expanded (opened).
+
+
+=============================================================================
+MAPPING						*fern-develop-mapping*
+
+Fern provides global mappings under "autoload/fern/mapping" directory.
+Mapping MUST provide an init function as "fern#mapping#{name}#init()" with
+a boolean argument to disable default mappings.
+
+Mappings under that directory are registered automatically when a filename has
+listed in |g:fern#mapping#mappings| variable.
+
+So 3rd party plugin MUST register mappings by add followings to plugin.vim
+like:
+>
+	call add(g:fern#mapping#mappings, ['your_plugin'])
+>
+*g:fern#mapping#mappings*
+	A |List| of globally available mapping names. 
+	A target mapping MUST exist under "fern#mapping#" namespace.
+
+
+=============================================================================
+SCHEME						*fern-develop-scheme*
+
+-----------------------------------------------------------------------------
+PROVIDER				*fern-develop-scheme-provider*
+
+Provider is a core instance to produce scheme plugin. The instance must has
+the following methods.
+
+				*fern-develop-scheme-provider.get_root()*
+.get_root({url})		
+	Return a (partial) node instance of the {url} (|String|).
+	The node instance will be used as a root node of a tree.
+	It throws error when no node is found for the {url}.
+
+	The node instance MUST have the following attributes.
+
+	"name"		The name of the node (required)
+	"status"	1/0 to indicate if the node is branch (required)
+
+	And may have the following attributes.
+
+	"label"		Label to display the node in a tree view
+	"hidden"	1/0 to indicate if the node should be hidden
+	"bufname"	Buffer name used to open the node or |v:null|
+	"concealed"	Namespace for storing complex object
+	"_{ANY}"	Scheme specific variables (e.g. "_path" in file)
+
+	The partial node will be filled by fern to become |fern-develop-node|.
+
+				*fern-develop-scheme-provider.get_parent()*
+.get_parent({node}, {token})
+	Return a promise which is resolved to a parent node of the {node}.
+	It resolves the {node} itself when the {node} does not have parent.
+
+	The {token} is CancellationToken which can be used to cancel the
+	internal process. Use ... to ignore that argument.
+
+				*fern-develop-scheme-provider.get_children()*
+.get_children({node}, {token})
+	Return a promise which is resolved to a list of child nodes of the
+	{node}. It rejects when the {node} is leaf node.
+
+	The {token} is CancellationToken which can be used to cancel the
+	internal process. Use ... to ignore that argument.
+
+-----------------------------------------------------------------------------
+MAPPING					*fern-develop-scheme-mapping*
+
+Fern provides scheme mappings under "autoload/fern/scheme/{scheme}/mapping"
+directory.  Mapping MUST provide an init function as 
+"fern#scheme#{scheme}#mapping#{name}#init()" with a boolean argument to disable 
+default mappings.
+
+Mappings under that directory are registered automatically when a filename has
+listed in |g:fern#scheme#{scheme}#mapping#mappings| variable.
+
+So 3rd party plugin MUST register mappings by add followings to plugin.vim
+like:
+>
+	call add(g:fern#scheme#file#mapping#mappings, ['your_plugin'])
+>
+*g:fern#scheme#{scheme}#mapping#mappings*
+	A |List| of scheme available mapping names for {scheme}.
+	A target mapping MUST exist under "fern#scheme#{scheme}#mapping#"
+	namespace.
+
+
+=============================================================================
+HOOK						*fern-develop-hook*
+
+Following hook will be emitted by |fern#hook#emit()| from fern itself.
+
+"viewer:syntax" ({helper})
+	Called when fern viewer has registered the syntax.
+	The {helper} is a helper instance described in |fern-develop-helper|.
+
+"viewer:highlight" ({helper})
+	Called when fern viewer has registered the highlight.
+	The {helper} is a helper instance described in |fern-develop-helper|.
+
+"viewer:redraw" ({helper})
+	Called when fern viewer has redrawed.
+	The {helper} is a helper instance described in |fern-develop-helper|.
+
+"viewer:remark" ({helper})
+	Called when fern viewer has remarked.
+	The {helper} is a helper instance described in |fern-develop-helper|.
+
+"viewer:ready" ({helper})
+	Called when fern viewer has ready, mean that the buffer has opened and
+	all content has rendererd.
+	The {helper} is a helper instance described in |fern-develop-helper|.
+
+"renderer:syntax" ({helper})
+	DEPRECATED:
+	Use "viewer:syntax" instead.
+
+"renderer:highlight" ({helper})
+	DEPRECATED:
+	Use "viewer:highlight" instead.
+
+
+=============================================================================
+HELPER						*fern-develop-helper*
+
+A helper instance is used for writing features in mappings. Developers can
+pass a helper instance to the first argument of functions by calling the
+function with |fern#helper#call()| or create a new helper instance of the
+current buffer by calling |fern#helper#new()|.
+
+-----------------------------------------------------------------------------
+VARIABLE				*fern-develop-helper-variable*
+
+			*fern-develop-helper.fern*
+.fern
+	A fern instance which has the following attributes:
+
+	"scheme"	A scheme name used to determine "provider"
+	"source"	A cancellation token source to cancel requests
+	"provider"	A provider instance for the fren tree
+	"renderer"	A renderer instance to sort nodes
+	"comparator"	A comparator instance to sort nodes
+	"root"		A root node instance
+	"nodes"		A |List| of nodes which is handled in the tree
+	"visible_nodes"	A |List| of nodes which is displayed in the tree
+	"marks"		A |List| of marks
+	"hidden"	1/0 to indicate if hidden mode is on
+	"include"	A |List| of |String| to include nodes
+	"exclude"	A |List| of |String| to exclude nodes
+
+	Develoeprs can refer each attributes but Do NOT modify.
+
+			*fern-develop-helper.bufnr*
+.bufnr
+	A buffer number where the target fern instance binded.
+
+			*fern-develop-helper.winid*
+.winid
+	A window number where a target fern instance binded.
+
+			*fern-develop-helper.STATUS_NONE*
+			*fern-develop-helper.STATUS_COLLAPSED*
+			*fern-develop-helper.STATUS_EXPANDED*
+.STATUS_NONE
+.STATUS_COLLAPSED
+.STATUS_EXPANDED
+	Constant variable for "status" of node instance.
+
+-----------------------------------------------------------------------------
+SYNC METHODS				*fern-develop-helper.sync*
+
+Following methods are executed synchronously.
+
+			*fern-develop-helper.sync.echo()*
+.sync.echo({message})
+	Display a temporary |String| {message}.
+
+			*fern-develop-helper.sync.echomsg()*
+.sync.echomsg({message})
+	Display a permanent |String| {message}.
+
+			*fern-develop-helper.sync.get_root_node()*
+.sync.get_root_node()
+	Return a root node instance.
+
+			*fern-develop-helper.sync.get_cursor_node()*
+.sync.get_cursor_node()
+	Return a node under the cursor.
+
+			*fern-develop-helper.sync.get_marked_nodes()*
+.sync.get_marked_nodes()
+	Return a list of nodes which has marked.
+
+			*fern-develop-helper.sync.get_selected_nodes()*
+.sync.get_selected_nodes()
+	Return a list of nodes 1) which has marked when at least one marked
+	node exists 2) a node under the cursor.
+	This is equivalent to the following code
+>
+	function! s:get_selected_nodes(helper) abort
+	  let nodes = a:helper.sync.get_selected_nodes()
+	  return empty(nodes) ? [a:helper.sync.get_cursor_node()] : nodes
+	endfunction
+<
+			*fern-develop-helper.sync.get_cursor()*
+.sync.get_cursor()
+	Return a list which indicates the cursor position of a binded window.
+	Note that the value is slightly different from the value from
+	|getcurpos()| or whatever.
+
+			*fern-develop-helper.sync.set_cursor()*
+.sync.set_cursor({cursor})
+	Move cursor of a binded window to the {cursor}.
+
+			*fern-develop-helper.sync.save_cursor()*
+.sync.save_cursor()
+	Save cursor position to restore. It saves the node under cursor to
+	restore cursor even after the content changes.
+
+			*fern-develop-helper.sync.restore_cursor()*
+.sync.restore_cursor()
+	Restore saved cursor position by searching a corresponding node.
+
+			*fern-develop-helper.sync.cancel()*
+.sync.cancel()
+	Emit cancel request through cancellation token and assign a new
+	cancellation token to the tree for later processes.
+
+			*fern-develop-helper.sync.is_drawer()*
+.sync.is_drawer()
+	Returns 1 if the fern buffer is shwon in a project drawer. Otherwise
+	it returns 0.
+
+			*fern-develop-helper.sync.get_scheme()*
+.sync.get_scheme()
+	Return |String| which represent the scheme name of the fern buffer.
+
+			*fern-develop-helper.sync.process_node()*
+.sync.process_node({node})
+	Mark the {node} PROCESSING and return a function to restore.
+	The PROCESSING nodes are displayed with a spinner |sign|.
+>
+	function! s:map_slow_operation(helper) abort
+	  let node = a:helper.sync.get_cursor_node()
+	  let l:Done = a:helper.sync.process_node(node)
+	  return s:slow_operation(node).finally({ -> Done() })
+	endfunction
+<
+			*fern-develop-helper.sync.focus_node()*
+.sync.focus_node({key}[, {options}])
+	Focus (move cursor on) a node identified by the {key}.
+	The following options are available in the {options}.
+
+	"offset"	A |Number| for line offset.
+	"previous"	A node instance or |v:null|. If a node instance has
+			specified, it focus node only when the current node
+			has not changed from the specified previous one.
+
+-----------------------------------------------------------------------------
+ASYNC METHODS				*fern-develop-helper.async*
+
+Following methods are executed asynchronously and return a promise.
+
+			*fern-develop-helper.async.sleep()*
+.async.sleep({ms})
+	Return a promise which will resolves to 0 after {ms} milliseconds.
+
+			*fern-develop-helper.async.redraw()*
+.async.redraw()
+	Return a promise to redraw the content.
+
+			*fern-develop-helper.async.remark()*
+.async.remark()
+	Return a promise to remark the content.
+
+			*fern-develop-helper.async.get_child_nodes()*
+.async.get_child_nodes({key})
+	Return a promise which will resolves to child nodes of the {key} node.
+
+			*fern-develop-helper.async.set_mark()*
+.async.set_mark({key}, {value})
+	Return a promise to set mark to a node identified by the {key}.
+
+			*fern-develop-helper.async.set_hidden()*
+.async.set_hidden({value})
+	Return a promise to set hidden.
+
+			*fern-develop-helper.async.set_include()*
+			*fern-develop-helper.async.set_exclude()*
+.async.set_include({pattern})
+.async.set_exclude({pattern})
+	Return a promise to set include/exclude.
+
+			*fern-develop-helper.async.update_nodes()*
+.async.update_nodes({nodes})
+	Return a promise to update nodes to the {nodes}.
+
+			*fern-develop-helper.async.update_marks()*
+.async.update_marks({marks})
+	Return a promise to update marks to the {marks}.
+
+			*fern-develop-helper.async.expand_node()*
+.async.expand_node({key})
+	Return a promise to expand a node identified by the {key}.
+	It reloads the node instead when the node has expanded or leaf.
+
+			*fern-develop-helper.async.collapse_node()*
+.async.collapse_node({key})
+	Return a promise to collapse a node identified by the {key}.
+	It reloads the node instead when the node has collapsed or leaf.
+
+			*fern-develop-helper.async.reload_node()*
+.async.reload_node({key})
+	Return a promise to reload a node identified by the {key} and it's
+	descended.
+
+			*fern-develop-helper.async.reveal_node()*
+.async.reveal_node({key})
+	Return a promise to reveal a node identified by the {key}.
+	The term "reveal" here means "recursively expand nested nodes until
+	reached to the target node."
+
+			*fern-develop-helper.async.enter_tree()*
+.async.enter_tree({node})
+	Return a promise to enter a tree which root node become the {node}.
+	Note that "bufname" of the {node} must be properly configured to use
+	this feature.
+
+			*fern-develop-helper.async.leave_tree()*
+.async.leave_tree()
+	Return a promise to enter a tree which root node become a parent node
+	of the current root node.
+	Note that "bufname" of the parent node must be properly configured to
+	use this feature.
+
+			*fern-develop-helper.async.collapse_modified_nodes()*
+.async.collapse_modified_nodes({nodes})
+	Return a promise to collapse {nodes}.
+	It does NOT reload the node instead when the node has collapsed or
+	leaf, not like |fern-develop-helper.async.collapse_node()|.
+	It is used to collapse modified nodes to solve issue #103.
+
+
+=============================================================================
+COMPARATOR					*fern-develop-comparator*
+
+Comparator is an instance which has the following methods to sort nodes in an
+entire tree.
+
+					*fern-develop-comparator.compare()*
+.compare({lhs}, {rhs})
+	Compare {lhs} and {rhs} nodes and return -1, 0, or 1.
+
+*g:fern#comparators*
+	comparator and the value is a function reference which return a
+	comparator instance when called.
+	Default: {}
+
+A 3rd-party plugin MUST extend |g:fern#comparators| in plugin
+directory to register a comparator itself like:
+>
+	if exists('g:loaded_fern_comparator_foo')
+	  finish
+	endif
+	let g:loaded_fern_comparator_foo = 1
+
+	call extend(g:fern#comparators, {
+	      \ 'foo': function('fern#comparator#foo#new'),
+	      \})
+<
+See https://github.com/lambdalisue/fern-comparator-lexical.vim as example.
+
+
+=============================================================================
+RENDERER					*fern-develop-renderer*
+
+Renderer is an instance which has the following methods to render a list of
+nodes as a tree.
+
+					*fern-develop-renderer.render()*
+.render({nodes})
+	Return a promise which is resolved to a list of |String|.
+
+	Change (v1.6.0):~
+	Second argumet ({marks}) has removed.
+
+					*fern-develop-renderer.index()*
+.index({lnum})
+	Return a corresponding index (|Number|) of {lnum}. It is used to find
+	a node under a cursor.
+
+					*fern-develop-renderer.lnum()*
+.lnum({index})
+	Return a corresponding lnum (|Number|) of {index}. It is used to find
+	a line number where a node has displayed.
+
+					*fern-develop-renderer.syntax()*
+.syntax()
+	Define syntax on a current buffer. The function is called posterior to
+	'filetype' specification and every after |BufReadCmd| has fired.
+
+					*fern-develop-renderer.highlight()*
+.highlight()
+	Define highlight on a current buffer. The function is called prior to
+	'filetype' specification and every after |ColorScheme| has fired.
+
+*g:fern#renderers*
+	A |Dict| to define external renderers. The key is a name of renderer
+	and the value is a function reference which return a renderer instance
+	when called.
+	Default: {}
+
+A 3rd-party plugin MUST extend |g:fern#renderers| to register a
+renderer itself like:
+>
+	" plugin/fern_renderer_foo.vim
+	if exists('g:loaded_fern_renderer_foo')
+	  finish
+	endif
+	let g:loaded_fern_renderer_foo = 1
+
+	call extend(g:fern#renderers, {
+	      \ 'foo': function('fern#renderer#foo#new'),
+	      \})
+<
+See https://github.com/lambdalisue/fern-renderer-nerdfont.vim as example.
+
+=============================================================================
+LOGGER						*fern-develop-logger*
+
+Use following functions to log events.
+
+The log will be saved in |g:fern#logfile| or displayed with |echomsg| if
+|v:null| has specified to the variable.
+
+						*fern#logger#debug()*
+fern#logger#debug({object}...)
+	Log |String| representation of {object}s when |g:fern#loglevel|
+	beyonds |g:fern#logger#DEBUG|.
+
+						*fern#logger#info()*
+fern#logger#info({object}...)
+	Log |String| representation of {object}s when |g:fern#loglevel|
+	beyonds |g:fern#logger#INFO|.
+
+						*fern#logger#warn()*
+fern#logger#warn({object}...)
+	Log |String| representation of {object}s when |g:fern#loglevel|
+	beyonds |g:fern#logger#WARN|.
+
+						*fern#logger#error()*
+fern#logger#error({object}...)
+	Log |String| representation of {object}s when |g:fern#loglevel|
+	beyonds |g:fern#logger#ERROR|.
+
+
+=============================================================================
+UTILITY						*fern-develop-utility*
+
+						*fern#action#call()*
+fern#action#call({name}[, {options}])
+	Call an action {name} of the current buffer.
+	The following attributes are available in {options}
+
+	"capture"	1 to enable capture mode which write output messages
+			into a new empty buffer instead
+	"verbose"	1 to execute action with 'verbose' (1) mode.
+
+						*fern#action#list()*
+fern#action#list([{conceal}])
+	Return a |List| of available actions. Each item of the list is tuple
+	like [{lhs}, {name}, {rhs}] where {lhs} is an actual mapping, {name}
+	is an action name, and {rhs} is a <Plug> mapping like:
+>
+	assert_equal(fern#action#list(), [
+	      \ ['a', 'choice', '<Plug>(fern-action-choice)'],
+	      \ ['.', 'repeat', '<Plug>(fern-action-repeat)'],
+	      \ ['?', 'help', '<Plug>(fern-action-help)'],
+	      \ ['', 'help:all', '<Plug>(fern-action-help:all)'],
+	      \])
+<
+	When {conceal} is truthy value, it remove items which contains ":" in
+	it's name and no actual mapping (like "help:all" in above example.)
+
+						*fern#hook#add()*
+fern#hook#add({name}, {callback}[, {options}])
+	Add the {callback} to the {name} hook.
+	The {options} may contains the followings:
+
+	"id"		A |String| which is used to remove the hook.
+			Developer must specify this to remove a hook
+			later.
+	"once"		1 to remove the hook after initial call.
+			Default: 0
+>
+	call fern#hook#add('BufRead', { -> execute('echomsg "Ready"', '') })
+<
+	See |fern-develop-hook| for available hook {name}.
+
+						*fern#hook#remove()*
+fern#hook#remove({name}[, {id}])
+	Remove the {id} hook or all hooks when missing for the {name}.
+
+						*fern#hook#emit()*
+fern#hook#emit({name}[, {args}...])
+	Emit the {name} hooks with the {args}.
+>
+	call fern#hook#add('t', { -> execute('echomsg string(a:000)', '') })
+	call fern#hook#emit('t', 'Hello', 'World')
+	" -> ['Hello', 'World']
+<
+						*fern#util#sleep()*
+fern#util#sleep({ms})
+	Return a promise which will be resolved after {ms} milliseconds.
+
+						*fern#util#deprecated()*
+fern#util#deprecated({name}[, {alternative}])
+	Log warning that {name} has deprecated. It tells users that they
+	should use {alternative} if specified.
+
+						*fern#util#obsolete()*
+fern#util#obsolete({name}[, {alternative}])
+	Throw error that {name} has obsolete. It tells users that they
+	must use {alternative} if specified.
+
+
+=============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
