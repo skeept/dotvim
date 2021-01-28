@@ -94,9 +94,11 @@ Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
 
 
 Plug 'liuchengxu/vim-clap'
-
 Plug 'troydm/zoomwintab.vim'
 
 Plug 'skeept/ctrlp-packadd'
+
+Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
+
 
 call plug#end()

@@ -241,7 +241,8 @@ nnoremap ,gc :<C-U>Gina commit<CR>
 nnoremap ,gd :<C-U>Gina compare<CR>
 nnoremap ,ga :<C-U>Gina add %
 
-nnoremap <Leader>Q :BD!<CR>
+nnoremap <Leader>Q :Sayonara
+nnoremap <Leader>q :Sayonara!<CR>
 nnoremap g/ /\<\><Left><Left>
 nnoremap ,le :<C-U>packadd<SPACE><C-D>
 nnoremap ,ln :<C-U>"<C-R>=<C-R><C-W>
