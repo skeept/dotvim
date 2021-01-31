@@ -53,7 +53,7 @@ class Source(Base):
             file_path = Path(filename)
             glb = str(file_path if file_path.is_dir() else file_path.parent)
             # Note: Path('../.').name convert to ".."
-            hidden = re.match(r'.([^.]|$)', str(self.vim.call(
+            hidden = re.match(r'\.([^.]|$)', str(self.vim.call(
                 'fnamemodify', context['input'], ':t')))
             glb += '/.*' if hidden else '/*'
             for f in glob.glob(glb):
@@ -62,8 +62,7 @@ class Source(Base):
                 f_path = Path(f)
                 abbr = (str(f_path.relative_to(path))
                         if fullpath != path and f.startswith(path + sep)
-                        else str(f_path.resolve())) + (
-                            sep if f_path.is_dir() else '')
+                        else fullpath) + (sep if f_path.is_dir() else '')
                 candidates.append({
                     'word': f,
                     'abbr': abbr,
