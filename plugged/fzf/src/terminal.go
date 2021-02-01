@@ -221,6 +221,7 @@ const (
 	actClearScreen
 	actClearQuery
 	actClearSelection
+	actClose
 	actDeleteChar
 	actDeleteCharEOF
 	actEndOfLine
@@ -2222,6 +2223,8 @@ func (t *Terminal) Loop() {
 			case actTogglePreviewWrap:
 				if t.hasPreviewWindow() {
 					t.previewOpts.wrap = !t.previewOpts.wrap
+					// Reset preview version so that full redraw occurs
+					t.previewed.version = 0
 					req(reqPreviewRefresh)
 				}
 			case actToggleSort:
@@ -2331,6 +2334,12 @@ func (t *Terminal) Loop() {
 						t.deselectItem(t.merger.Get(i).item)
 					}
 					req(reqList, reqInfo)
+				}
+			case actClose:
+				if t.isPreviewEnabled() {
+					togglePreview(false)
+				} else {
+					req(reqQuit)
 				}
 			case actToggle:
 				if t.multi > 0 && t.merger.Length() > 0 && toggle() {

@@ -605,6 +605,20 @@ Use following functions to log events.
 The log will be saved in |g:fern#logfile| or displayed with |echomsg| if
 |v:null| has specified to the variable.
 
+						*fern#logger#tap()*
+fern#logger#tap({value}, {object}...)
+	Log |String| representation of {value} and {object}s when
+	|g:fern#loglevel| beyonds |g:fern#logger#DEBUG| and return {value}.
+	It is useful to used in Promise's "then()" like
+>
+	call s:Promise.resolve("foo")
+	      \.then(function('fern#logger#tap')))
+	      \.then({ v -> fern#logger#tap(v) })
+	      \.then({ v -> fern#logger#tap(v, 'bar') })
+	" 'foo'
+	" 'foo'
+	" 'foo bar'
+<
 						*fern#logger#debug()*
 fern#logger#debug({object}...)
 	Log |String| representation of {object}s when |g:fern#loglevel|
@@ -681,6 +695,14 @@ fern#hook#emit({name}[, {args}...])
 	call fern#hook#emit('t', 'Hello', 'World')
 	" -> ['Hello', 'World']
 <
+						*fern#util#compare()*
+fern#util#compare({i1}, {i2})
+	Compare {i1} and {i2} and return -1, 0, or 1.
+	This is equivalent to the following code
+>
+	i1 == i2 ? 0 : i1 > i2 ? 1 : -1
+<
+
 						*fern#util#sleep()*
 fern#util#sleep({ms})
 	Return a promise which will be resolved after {ms} milliseconds.
