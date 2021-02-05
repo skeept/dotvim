@@ -46,7 +46,7 @@ function! denite#filter#_open(context, parent, entire_len, is_async) abort
           \ call denite#filter#_start_filter_timer()
     autocmd InsertLeave <buffer>
           \ call denite#filter#_stop_filter_timer()
-    autocmd InsertLeave <buffer> call s:update()
+    autocmd TextChanged,InsertLeave <buffer> call s:update()
   augroup END
 
   call cursor(line('$'), 0)
@@ -83,9 +83,11 @@ function! s:init_buffer() abort
   inoremap <buffer><silent> <Plug>(denite_filter_quit)
         \ <ESC>:<C-u>call <SID>quit(v:true)<CR>
   inoremap <buffer><silent><expr> <Plug>(denite_filter_backspace)
-        \ col('.') == 1 ? "a\<BS>" : "\<BS>"
+        \ col('.') == 1 ? "\<ESC>:call \<SID>quit(v:false)\<CR>" : "\<BS>"
   inoremap <buffer><silent> <Plug>(denite_filter_space)
         \ <ESC>:call <SID>filter_async()<CR>a<Space>
+  inoremap <buffer><silent> <Plug>(denite_filter_clear_backward)
+        \ <ESC>"_d0a<BS>
 
   nmap <buffer> <CR> <Plug>(denite_filter_update)
   nmap <buffer> q    <Plug>(denite_filter_quit)
@@ -93,6 +95,7 @@ function! s:init_buffer() abort
   imap <buffer> <CR> <Plug>(denite_filter_update)
   imap <buffer> <BS> <Plug>(denite_filter_backspace)
   imap <buffer> <C-h> <Plug>(denite_filter_backspace)
+  imap <buffer> <C-u> <Plug>(denite_filter_clear_backward)
   imap <buffer> <Space> <Plug>(denite_filter_space)
 
   setfiletype denite-filter
@@ -229,6 +232,10 @@ function! s:quit(force_quit) abort
   endif
 
   call denite#filter#_move_to_parent(v:false)
+
+  if a:force_quit
+    call denite#call_map('quit')
+  endif
 
   call denite#filter#_stop_filter_timer()
 
