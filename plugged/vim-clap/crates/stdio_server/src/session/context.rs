@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
 use super::*;
@@ -5,11 +6,12 @@ use crate::types::ProviderId;
 
 #[derive(Debug, Clone)]
 pub struct SessionContext {
-    pub cwd: String,
+    pub cwd: PathBuf,
     pub source_cmd: Option<String>,
     pub winwidth: Option<u64>,
     pub provider_id: ProviderId,
-    pub start_buffer_path: String,
+    pub runtimepath: Option<String>,
+    pub start_buffer_path: PathBuf,
     pub is_running: Arc<Mutex<AtomicBool>>,
     pub source_list: Arc<Mutex<Option<Vec<String>>>>,
 }
@@ -27,7 +29,12 @@ impl From<Message> for SessionContext {
         log::debug!("recv msg for SessionContext: {:?}", msg);
         let provider_id = msg.get_provider_id();
 
-        let cwd = msg.get_cwd();
+        let cwd = msg.get_cwd().into();
+
+        let runtimepath = msg
+            .params
+            .get("runtimepath")
+            .and_then(|x| x.as_str().map(Into::into));
 
         let source_cmd = msg
             .params
@@ -36,17 +43,18 @@ impl From<Message> for SessionContext {
 
         let winwidth = msg.params.get("winwidth").and_then(|x| x.as_u64());
 
-        let start_buffer_path = String::from(
-            msg.params
-                .get("source_fpath")
-                .and_then(|x| x.as_str())
-                .expect("Missing source_fpath"),
-        );
+        let start_buffer_path = msg
+            .params
+            .get("source_fpath")
+            .and_then(|x| x.as_str())
+            .unwrap_or_else(|| panic!("Missing source_fpath"))
+            .into();
 
         Self {
             provider_id,
             cwd,
             source_cmd,
+            runtimepath,
             winwidth,
             start_buffer_path,
             is_running: Arc::new(Mutex::new(true.into())),

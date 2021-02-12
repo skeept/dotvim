@@ -1,7 +1,8 @@
 mod context;
-mod forerunner;
 mod handler;
+pub mod impls;
 mod manager;
+mod providers;
 
 use anyhow::Result;
 
@@ -9,13 +10,20 @@ use super::*;
 use crate::types::ProviderId;
 
 pub use self::context::SessionContext;
-pub use self::handler::{
-    on_move::{as_absolute_path, build_abs_path, OnMove, OnMoveHandler},
-    HandleMessage, RpcMessage,
-};
+pub use self::impls::on_move::{as_absolute_path, build_abs_path, OnMove, OnMoveHandler};
 pub use self::manager::{Manager, NewSession, OpaqueSession};
+pub use self::providers::*;
 
 pub type SessionId = u64;
+
+pub enum RpcMessage {
+    OnMove(Message),
+    OnTyped(Message),
+}
+
+pub trait HandleMessage: Send + 'static {
+    fn handle(&self, msg: RpcMessage, context: &SessionContext);
+}
 
 #[derive(Debug, Clone)]
 pub struct Session<T> {
@@ -33,7 +41,7 @@ pub enum SessionEvent {
     Terminate,
 }
 
-impl<T: handler::HandleMessage> Session<T> {
+impl<T: HandleMessage> Session<T> {
     /// Sets the running signal to false, in case of the forerunner thread is still working.
     pub fn handle_terminate(&mut self) {
         let mut val = self.context.is_running.lock().unwrap();
@@ -66,13 +74,13 @@ impl<T: handler::HandleMessage> Session<T> {
     }
 
     pub fn start_event_loop(mut self) -> Result<()> {
-        thread::Builder::new()
-            .name(format!(
-                "session-{}-{}",
+        tokio::spawn(async move {
+            debug!(
+                "spawn a new task for session-{}-{}",
                 self.session_id,
                 self.provider_id()
-            ))
-            .spawn(move || loop {
+            );
+            loop {
                 match self.event_recv.recv() {
                     Ok(event) => {
                         debug!("session recv: {:?}", event);
@@ -83,15 +91,17 @@ impl<T: handler::HandleMessage> Session<T> {
                             }
                             SessionEvent::OnMove(msg) => self
                                 .message_handler
-                                .handle(handler::RpcMessage::OnMove(msg), &self.context),
+                                .handle(RpcMessage::OnMove(msg), &self.context),
                             SessionEvent::OnTyped(msg) => self
                                 .message_handler
-                                .handle(handler::RpcMessage::OnTyped(msg), &self.context),
+                                .handle(RpcMessage::OnTyped(msg), &self.context),
                         }
                     }
                     Err(err) => debug!("session recv error: {:?}", err),
                 }
-            })?;
+            }
+        });
+
         Ok(())
     }
 }
