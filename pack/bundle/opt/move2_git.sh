@@ -106,13 +106,15 @@ verbose_cmd=pwd
     parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd git {}" ::: $git_folders
   fi
   if test -n "$hg_folders"; then
+    :
     #parallel -j 20 "cd {}; echo \">>> hg   >>> {} \" ; hg pull -u" ::: $hg_folders
     #parallel -j 20 "${hg_cmd}" ::: $hg_folders
-    parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd hg {}" ::: $hg_folders
+    #parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd hg {}" ::: $hg_folders
   fi
   if test -n "$bzr_folders"; then
+    :
     #parallel -j 20 "${bzr_cmd}" ::: $bzr_folders
-    parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd bzr {}" ::: $bzr_folders
+    #parallel -j $num_parallel "bash $THIS_SCRIPT update_cmd bzr {}" ::: $bzr_folders
   fi
 }
 
