@@ -84,7 +84,7 @@ function! g:clap#floating_win#display.open() abort
 endfunction
 
 function! g:clap#floating_win#display.shrink_if_undersize() abort
-  if !g:clap_always_open_preview
+  if !clap#preview#is_always_open()
     let opts = nvim_win_get_config(s:display_winid)
     if g:clap.display.line_count() < s:display_opts.height
       let opts.height = g:clap.display.line_count()
@@ -97,7 +97,7 @@ function! g:clap#floating_win#display.shrink_if_undersize() abort
 endfunction
 
 function! g:clap#floating_win#display.shrink() abort
-  if !g:clap_always_open_preview
+  if !clap#preview#is_always_open()
     let height = g:clap.display.line_count()
     let opts = nvim_win_get_config(s:display_winid)
     if opts.height != height
@@ -310,9 +310,16 @@ function! s:adjust_display_for_border_symbol() abort
 endfunction
 
 function! s:get_config_preview(height) abort
-  let opts = nvim_win_get_config(s:display_winid)
-  let opts.row += opts.height
-  let opts.height = a:height
+  if g:clap_preview_direction ==# 'LR'
+    let opts = nvim_win_get_config(s:display_winid)
+    let opts.row -= 1
+    let opts.col += opts.width
+    let opts.height += 1
+  else
+    let opts = nvim_win_get_config(s:display_winid)
+    let opts.row += opts.height
+    let opts.height = a:height
+  endif
   let opts.style = 'minimal'
   return opts
 endfunction
@@ -338,11 +345,19 @@ function! s:create_preview_win(height) abort
 endfunction
 
 function! s:max_preview_size() abort
-  let max_size = &lines - s:display_opts.row - s:display_opts.height - &cmdheight
-  return float2nr(max_size)
+  if g:clap_preview_direction ==# 'LR'
+    return s:display_opts.height
+  else
+    let max_size = &lines - s:display_opts.row - s:display_opts.height - &cmdheight
+    return float2nr(max_size)
+  endif
 endfunction
 
 function! clap#floating_win#preview.show(lines) abort
+  if !clap#preview#is_enabled()
+    return
+  endif
+
   let max_size = s:max_preview_size()
   if max_size <= 0
     call g:clap#floating_win#preview.close()
@@ -353,10 +368,12 @@ function! clap#floating_win#preview.show(lines) abort
   if !exists('s:preview_winid')
     call s:create_preview_win(height)
   else
-    let opts = nvim_win_get_config(s:preview_winid)
-    if opts.height != height
-      let opts.height = height
-      call nvim_win_set_config(s:preview_winid, opts)
+    if g:clap_preview_direction !=# 'LR'
+      let opts = nvim_win_get_config(s:preview_winid)
+      if opts.height != height
+        let opts.height = height
+        call nvim_win_set_config(s:preview_winid, opts)
+      endif
     endif
   endif
   call clap#util#nvim_buf_set_lines(s:preview_bufnr, lines)
@@ -370,7 +387,7 @@ function! clap#floating_win#preview.close() abort
 endfunction
 
 function! clap#floating_win#preview.hide() abort
-  if !g:clap_always_open_preview
+  if !clap#preview#is_always_open()
     call g:clap#floating_win#preview.close()
   endif
 endfunction
@@ -395,6 +412,9 @@ function! clap#floating_win#open() abort
   call s:open_win_border_left()
   call g:clap#floating_win#spinner.open()
   call g:clap#floating_win#input.open()
+  if clap#preview#is_enabled() && g:clap_preview_direction ==# 'LR'
+    call s:create_preview_win(s:display_opts.height)
+  endif
   if g:clap_search_box_border_style ==# 'curve'
     " Indicator win must be opened before shadow win.
     " ref 567
