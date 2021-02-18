@@ -2843,6 +2843,7 @@ documented in additional help files.
     uncrustify............................|ale-objcpp-uncrustify|
   ocaml...................................|ale-ocaml-options|
     merlin................................|ale-ocaml-merlin|
+    ocamllsp..............................|ale-ocaml-ocamllsp|
     ols...................................|ale-ocaml-ols|
     ocamlformat...........................|ale-ocaml-ocamlformat|
     ocp-indent............................|ale-ocaml-ocp-indent|
@@ -2931,6 +2932,7 @@ documented in additional help files.
   ruby....................................|ale-ruby-options|
     brakeman..............................|ale-ruby-brakeman|
     debride...............................|ale-ruby-debride|
+    prettier..............................|ale-ruby-prettier|
     rails_best_practices..................|ale-ruby-rails_best_practices|
     reek..................................|ale-ruby-reek|
     rubocop...............................|ale-ruby-rubocop|

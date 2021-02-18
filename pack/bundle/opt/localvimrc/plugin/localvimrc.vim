@@ -638,9 +638,14 @@ endfunction
 "
 function! s:LocalVimRCMatchAny(str, patterns)
   for l:pattern in a:patterns
-    if (match(a:str, l:pattern) != -1)
-      return 1
-    endif
+    try
+      if (match(a:str, l:pattern) != -1)
+        return 1
+      endif
+    catch
+      " the given patterns contain an illegal regular expression
+      call s:LocalVimRCError("localvimrc_whitelist or localvimrc_blacklist contains illegal regular expression '" . l:pattern . "'")
+    endtry
   endfor
   return 0
 endfunction
@@ -1000,12 +1005,24 @@ endfunction
 
 " Function: s:LocalVimRCDebugShow() {{{2
 "
-" output stored debug message
+" output stored debug messages to console
 "
 function! s:LocalVimRCDebugShow()
+  redir! > /tmp/localvimrc.log
+
   for l:message in s:localvimrc_debug_message
     echo l:message
   endfor
+
+  redir END
+endfunction
+
+" Function: s:LocalVimRCDebugDump(logfile) {{{2
+"
+" output stored debug message to file
+"
+function! s:LocalVimRCDebugDump(logfile)
+  call writefile(s:localvimrc_debug_message, a:logfile, "s")
 endfunction
 
 " Section: Initialize internal variables {{{1
@@ -1113,5 +1130,6 @@ command! LocalVimRCEdit    call s:LocalVimRCEdit()
 command! LocalVimRCEnable  call s:LocalVimRCEnable()
 command! LocalVimRCDisable call s:LocalVimRCDisable()
 command! LocalVimRCDebugShow call s:LocalVimRCDebugShow()
+command! -nargs=+ -complete=file LocalVimRCDebugDump call s:LocalVimRCDebugDump(<f-args>)
 
 " vim600: foldmethod=marker foldlevel=0 :
