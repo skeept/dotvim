@@ -25,7 +25,7 @@ Table of Contents
 <!-- vim-markdown-toc GFM -->
 
 * [Installation](#installation)
-  * [Using Homebrew or Linuxbrew](#using-homebrew-or-linuxbrew)
+  * [Using Homebrew](#using-homebrew)
   * [Using git](#using-git)
   * [Using Linux package managers](#using-linux-package-managers)
   * [Windows](#windows)
@@ -84,9 +84,9 @@ stuff.
 
 [bin]: https://github.com/junegunn/fzf/releases
 
-### Using Homebrew or Linuxbrew
+### Using Homebrew
 
-You can use [Homebrew](http://brew.sh/) or [Linuxbrew](http://linuxbrew.sh/)
+You can use [Homebrew](http://brew.sh/) (on macOS or Linux)
 to install fzf.
 
 ```sh
@@ -411,7 +411,7 @@ unalias **<TAB>
 export FZF_COMPLETION_TRIGGER='~~'
 
 # Options to fzf command
-export FZF_COMPLETION_OPTS='+c -x'
+export FZF_COMPLETION_OPTS='--border --info=inline'
 
 # Use fd (https://github.com/sharkdp/fd) instead of the default find
 # command for listing path candidates.
