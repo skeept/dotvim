@@ -1010,8 +1010,15 @@ function! fugitive#Find(object, ...) abort
       endif
       if commit !~# '^[0-9a-f]\{40,\}$'
         let commit = matchstr(s:ChompDefault('', [dir, 'rev-parse', '--verify', commit . (len(file) ? '^{}' : ''), '--']), '\<[0-9a-f]\{40,\}\>')
+        if empty(commit) && len(file)
+          let commit = repeat('0', 40)
+        endif
       endif
-      let f = 'fugitive://' . dir . '//' . (len(commit) ? commit : repeat('0', 40)) . file
+      if len(commit)
+        let f = 'fugitive://' . dir . '//' . commit . file
+      else
+        let f = base . '/' . substitute(rev, '^:/:\=\|^[^:]\+:', '', '')
+      endif
     endif
   endif
   return FugitiveVimPath(f)
@@ -5618,7 +5625,7 @@ augroup fugitive_blame
   autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
 augroup END
 
-" Section: :Gbrowse
+" Section: :GBrowse
 
 let s:redirects = {}
 
@@ -5631,7 +5638,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
       if a:count >= 0
         return 'echoerr ' . string('fugitive: ''-'' no longer required to get persistent URL if range given')
       else
-        return 'echoerr ' . string('fugitive: use :0Gbrowse instead of :Gbrowse -')
+        return 'echoerr ' . string('fugitive: use :0GBrowse instead of :GBrowse -')
       endif
     elseif len(a:args)
       let remote = matchstr(join(a:args, ' '),'@\zs\%('.validremote.'\)$')
@@ -5822,7 +5829,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
     endif
 
     if empty(url)
-      call s:throw("No Gbrowse handler installed for '".raw."'")
+      call s:throw("No GBrowse handler installed for '".raw."'")
     endif
 
     let url = s:gsub(url, '[ <>]', '\="%".printf("%02X",char2nr(submatch(0)))')
@@ -5833,14 +5840,18 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
       return 'echomsg '.string(url)
     elseif exists(':Browse') == 2
       return 'echomsg '.string(url).'|Browse '.url
+    elseif exists(':OpenBrowser') == 2
+      return 'echomsg '.string(url).'|OpenBrowser '.url
     else
       if !exists('g:loaded_netrw')
         runtime! autoload/netrw.vim
       endif
       if exists('*netrw#BrowseX')
         return 'echomsg '.string(url).'|call netrw#BrowseX('.string(url).', 0)'
-      else
+      elseif exists('*netrw#NetrwBrowseX')
         return 'echomsg '.string(url).'|call netrw#NetrwBrowseX('.string(url).', 0)'
+      else
+        return 'echoerr ' . string('Netrw not found. Define your own :Browse to use :GBrowse')
       endif
     endif
   catch /^fugitive:/
