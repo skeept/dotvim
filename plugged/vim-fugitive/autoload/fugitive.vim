@@ -1488,11 +1488,11 @@ function! s:FilterEscape(items, ...) abort
   return items
 endfunction
 
-function! s:GlobComplete(lead, pattern) abort
+function! s:GlobComplete(lead, pattern, ...) abort
   if a:lead ==# '/'
     return []
   elseif v:version >= 704
-    let results = glob(a:lead . a:pattern, 0, 1)
+    let results = glob(a:lead . a:pattern, a:0 ? a:1 : 0, 1)
   else
     let results = split(glob(a:lead . a:pattern), "\n")
   endif
@@ -2422,6 +2422,30 @@ augroup fugitive_job
         \ endfor
 augroup END
 
+function! s:OpenExec(cmd, mods, env, args, ...) abort
+  let options = a:0 ? a:1 : {'dir': s:Dir()}
+  let temp = tempname()
+  let columns = get(g:, 'fugitive_columns', 80)
+  let env = s:BuildEnvPrefix(extend({'COLUMNS': columns}, a:env))
+  silent! execute '!' . escape(env . s:UserCommand(options, ['--no-pager'] + a:args), '!#%') .
+        \ (&shell =~# 'csh' ? ' >& ' . temp : ' > ' . temp . ' 2>&1')
+  redraw!
+  let temp = s:Resolve(temp)
+  let first = join(readfile(temp, '', 2), "\n")
+  if first =~# '\<\([[:upper:][:digit:]_-]\+(\d\+)\).*\1'
+    let filetype = 'man'
+  else
+    let filetype = 'git'
+  endif
+  let s:temp_files[s:cpath(temp)] = { 'dir': options.dir, 'filetype': filetype }
+  if a:cmd ==# 'edit'
+    call s:BlurStatus()
+  endif
+  silent execute s:Mods(a:mods) . a:cmd temp
+  call fugitive#ReloadStatus(options.dir, 1)
+  return 'echo ' . string(':!' . s:UserCommand(options, a:args))
+endfunction
+
 function! fugitive#PagerFor(argv, ...) abort
   let args = a:argv
   if empty(args)
@@ -2541,16 +2565,9 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
       return 'echoerr ' .  string('fugitive: :Git! for temp buffer output has been replaced by :Git --paginate')
     endif
   endif
-  if pager is# 1
-    if editcmd ==# 'read'
-      return s:ReadExec(a:line1, a:line2, a:range, a:mods, env, args, options) . after
-    else
-      return s:OpenExec(editcmd, a:mods, env, args, options) . after
-    endif
-  endif
-  if s:HasOpt(args, ['add', 'checkout', 'commit', 'stage', 'stash', 'reset'], '-p', '--patch') ||
+  if (s:HasOpt(args, ['add', 'checkout', 'commit', 'stage', 'stash', 'reset'], '-p', '--patch') ||
         \ s:HasOpt(args, ['add', 'clean', 'stage'], '-i', '--interactive') ||
-        \ type(pager) == type('')
+        \ type(pager) == type('')) && pager isnot# 1
     let mods = substitute(s:Mods(a:mods), '\<tab\>', '-tab', 'g')
     let assign = len(dir) ? '|let b:git_dir = ' . string(dir) : ''
     if has('nvim')
@@ -2561,6 +2578,13 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
       return 'exe ' . string(mods . 'terminal ' . (a:line2 ? '' : '++curwin ') . join(map(s:UserCommandList(options) + args, 's:fnameescape(v:val)'))) . assign . after
     endif
   endif
+  if pager is# 1
+    if editcmd ==# 'read'
+      return s:ReadExec(a:line1, a:line2, a:range, a:mods, env, args, options) . after
+    else
+      return s:OpenExec(editcmd, a:mods, env, args, options) . after
+    endif
+  endif
   if s:RunJobs()
     let state = {
           \ 'dir': dir,
@@ -2569,7 +2593,7 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
           \ 'echo_buffer': '',
           \ 'escape_buffer': '',
           \ 'log': [],
-          \ 'temp': tempname()}
+          \ 'temp': s:Resolve(tempname())}
     let state.pty = get(g:, 'fugitive_pty', has('unix') && (has('patch-8.0.0744') || has('nvim')))
     if !state.pty
       let args = s:AskPassArgs(dir) + args
@@ -2638,7 +2662,7 @@ endfunction
 
 function! s:Subcommands() abort
   let exec_path = s:ExecPath()
-  return map(split(glob(exec_path.'/git-*'),"\n"),'s:sub(v:val[strlen(exec_path)+5 : -1],"\\.exe$","")')
+  return map(s:GlobComplete(exec_path.'/git-', '*', 1),'substitute(v:val,"\\.exe$","","")')
 endfunction
 
 let s:aliases = {}
@@ -2891,7 +2915,8 @@ endfunction
 function! s:ReloadTabStatus(...) abort
   let mytab = tabpagenr()
   let tab = a:0 ? a:1 : mytab
-  for winnr in range(1, tabpagewinnr(tab, '$'))
+  let winnr = 1
+  while winnr <= tabpagewinnr(tab, '$')
     if getbufvar(tabpagebuflist(tab)[winnr-1], 'fugitive_type') ==# 'index'
       execute 'tabnext '.tab
       if winnr != winnr()
@@ -2908,7 +2933,8 @@ function! s:ReloadTabStatus(...) abort
         execute 'tabnext '.mytab
       endtry
     endif
-  endfor
+    let winnr += 1
+  endwhile
   unlet! t:fugitive_reload_status
 endfunction
 
@@ -4520,30 +4546,6 @@ function! s:BlurStatus() abort
       call fugitive#DiffClose()
     endif
   endif
-endfunction
-
-function! s:OpenExec(cmd, mods, env, args, ...) abort
-  let options = a:0 ? a:1 : {'dir': s:Dir()}
-  let temp = tempname()
-  let columns = get(g:, 'fugitive_columns', 80)
-  let env = s:BuildEnvPrefix(extend({'COLUMNS': columns}, a:env))
-  silent! execute '!' . escape(env . s:UserCommand(options, ['--no-pager'] + a:args), '!#%') .
-        \ (&shell =~# 'csh' ? ' >& ' . temp : ' > ' . temp . ' 2>&1')
-  redraw!
-  let temp = s:Resolve(temp)
-  let first = join(readfile(temp, '', 2), "\n")
-  if first =~# '\<\([[:upper:][:digit:]_-]\+(\d\+)\).*\1'
-    let filetype = 'man'
-  else
-    let filetype = 'git'
-  endif
-  let s:temp_files[s:cpath(temp)] = { 'dir': options.dir, 'filetype': filetype }
-  if a:cmd ==# 'edit'
-    call s:BlurStatus()
-  endif
-  silent execute s:Mods(a:mods) . a:cmd temp
-  call fugitive#ReloadStatus(options.dir, 1)
-  return 'echo ' . string(':!' . s:UserCommand(options, a:args))
 endfunction
 
 let s:bang_edits = {'split': 'Git', 'vsplit': 'vert Git', 'tabedit': 'tab Git', 'pedit': 'Git!'}
