@@ -151,10 +151,10 @@ function! CloseTabOrExit(idx)
   if a:idx == 0
     wall
   endif
-  if tabpagenr('$') > 1
+  let numtabs = tabpagenr('$')
+  xit
+  if numtabs == tabpagenr('$') && numtabs > 1
     tabclose
-  else
-    xit
   endif
   return ""
 endfunction
