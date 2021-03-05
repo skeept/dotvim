@@ -27,6 +27,7 @@ Currently this repository contains the following themes:
 
     * alduin
     * angr
+    * apprentice
     * atomic
     * ayu_light
     * ayu_mirage
@@ -94,6 +95,8 @@ Currently this repository contains the following themes:
     * durant
     * faryfloss
     * fruit_punch
+    * google_dark
+    * google_light
     * hybrid
     * hybridline
     * jay
