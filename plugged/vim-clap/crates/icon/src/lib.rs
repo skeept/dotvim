@@ -1,6 +1,7 @@
-mod constants;
-
-pub use constants::*;
+include!(concat!(env!("OUT_DIR"), "/constants.rs"));
+// Now we do not need to genetate the constants module using the Python script.
+// mod constants;
+// pub use constants::*;
 
 use std::path::Path;
 
@@ -41,7 +42,7 @@ pub fn get_icon_or(path: &Path, default: Icon) -> Icon {
         })
 }
 
-fn icon_for(line: &str) -> Icon {
+pub fn icon_for(line: &str) -> Icon {
     let path = Path::new(line);
     get_icon_or(&path, DEFAULT_ICON)
 }

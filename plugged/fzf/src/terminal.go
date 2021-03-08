@@ -133,6 +133,7 @@ type Terminal struct {
 	count        int
 	progress     int
 	reading      bool
+	running      bool
 	failed       *string
 	jumping      jumpMode
 	jumpLabels   string
@@ -505,6 +506,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		ansi:        opts.Ansi,
 		tabstop:     opts.Tabstop,
 		reading:     true,
+		running:     true,
 		failed:      nil,
 		jumping:     jumpDisabled,
 		jumpLabels:  opts.JumpLabels,
@@ -1826,7 +1828,7 @@ func (t *Terminal) killPreview(code int) {
 	case t.killChan <- code:
 	default:
 		if code != exitCancel {
-			os.Exit(code)
+			t.eventBox.Set(EvtQuit, code)
 		}
 	}
 }
@@ -2010,7 +2012,7 @@ func (t *Terminal) Loop() {
 								case code := <-t.killChan:
 									if code != exitCancel {
 										util.KillCommand(cmd)
-										os.Exit(code)
+										t.eventBox.Set(EvtQuit, code)
 									} else {
 										timer := time.NewTimer(previewCancelWait)
 										select {
@@ -2047,16 +2049,6 @@ func (t *Terminal) Loop() {
 		}()
 	}
 
-	exit := func(getCode func() int) {
-		t.tui.Close()
-		code := getCode()
-		if code <= exitNoMatch && t.history != nil {
-			t.history.append(string(t.input))
-		}
-		// prof.Stop()
-		t.killPreview(code)
-	}
-
 	refreshPreview := func(command string) {
 		if len(command) > 0 && t.isPreviewEnabled() {
 			_, list := t.buildPlusList(command, false)
@@ -2068,7 +2060,19 @@ func (t *Terminal) Loop() {
 	go func() {
 		var focusedIndex int32 = minItem.Index()
 		var version int64 = -1
-		for {
+		running := true
+		code := exitError
+		exit := func(getCode func() int) {
+			t.tui.Close()
+			code = getCode()
+			if code <= exitNoMatch && t.history != nil {
+				t.history.append(string(t.input))
+			}
+			running = false
+			t.mutex.Unlock()
+		}
+
+		for running {
 			t.reqBox.Wait(func(events *util.Events) {
 				defer events.Clear()
 				t.mutex.Lock()
@@ -2114,6 +2118,7 @@ func (t *Terminal) Loop() {
 							}
 							return exitNoMatch
 						})
+						return
 					case reqPreviewDisplay:
 						result := value.(previewResult)
 						if t.previewer.version != result.version {
@@ -2138,14 +2143,18 @@ func (t *Terminal) Loop() {
 							t.printer(string(t.input))
 							return exitOk
 						})
+						return
 					case reqQuit:
 						exit(func() int { return exitInterrupt })
+						return
 					}
 				}
 				t.refresh()
 				t.mutex.Unlock()
 			})
 		}
+		// prof.Stop()
+		t.killPreview(code)
 	}()
 
 	looping := true
