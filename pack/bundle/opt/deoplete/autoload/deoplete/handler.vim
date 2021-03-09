@@ -304,7 +304,7 @@ function! s:is_skip_text(event) abort
     endif
   endif
 
-  if s:matched_indentkeys(input) !=# ''
+  if a:event =~# '^TextChanged' && s:matched_indentkeys(input) !=# ''
     call deoplete#util#indent_current_line()
     return 1
   endif
@@ -327,7 +327,8 @@ function! s:matched_indentkeys(input) abort
   let checkstr = matchstr(a:input, '\w+$')
 
   for word in filter(map(split(&l:indentkeys, ','),
-        \ "matchstr(v:val, 'e\\|=\\zs.*')"), "v:val !=# ''")
+        \ "matchstr(v:val, 'e\\|=\\zs.*')"),
+        \ "v:val !=# '' && v:val =~# '\\h\\w*'")
 
     if word ==# 'e'
       let word = 'else'
