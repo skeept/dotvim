@@ -107,5 +107,6 @@ alias tw='emacsclient -nw'
 alias cpv='rsync -ah --info=progress2'
 #alias lg=lazygit
 alias lazygit=lg
+alias bc=bc4
 
 # vim: set ft=sh:
