@@ -919,13 +919,13 @@ function! startify#set_mark(type, ...) abort
   if entry.marked && index[0] == a:type
     let entry.cmd = 'edit'
     let entry.marked = 0
-    execute 'normal! ci]'. entry.index
+    execute 'normal! "_ci]'. entry.index
   else
     let entry.cmd = default_cmds[a:type]
     let entry.marked = 1
     let entry.tick = b:startify.tick
     let b:startify.tick += 1
-    execute 'normal! ci]'. repeat(a:type, len(index))
+    execute 'normal! "_ci]'. repeat(a:type, len(index))
   endif
 
   setlocal nomodifiable nomodified
@@ -1054,7 +1054,7 @@ function! s:create_last_session_link(session_path)
     let cmd = printf('ln -sf %s %s',
           \ shellescape(fnamemodify(a:session_path, ':t')),
           \ shellescape(s:session_dir .'/__LAST__'))
-    call system(cmd)
+    silent call system(cmd)
     if v:shell_error
       call s:warn("Can't create 'last used session' symlink.")
     endif
