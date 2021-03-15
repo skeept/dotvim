@@ -167,7 +167,7 @@ Notes:
 * Git Commit Messages
   * `gitlint`
 * GLSL
-  * glslang
+  * `glslang`
   * `glslls`
 * Go
   * `bingo`
@@ -216,10 +216,11 @@ Notes:
 * HCL
   * `terraform-fmt`
 * HTML
-  * `HTMLHint`
   * `alex`!!
+  * `angular`
   * `fecs`
   * `html-beautify`
+  * `htmlhint`
   * `prettier`
   * `proselint`
   * `tidy`
@@ -491,6 +492,8 @@ Notes:
   * `sourcekit-lsp`
   * `swiftformat`
   * `swiftlint`
+* systemd
+  * `systemd-analyze`!!
 * Tcl
   * `nagelfar`!!
 * Terraform
@@ -561,3 +564,6 @@ Notes:
   * `yang-lsp`
 * Zig
   * `zls`
+
+===============================================================================
+  vim:tw=78:ts=2:sts=2:sw=2:ft=help:norl:

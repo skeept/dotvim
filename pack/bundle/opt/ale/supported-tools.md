@@ -225,10 +225,11 @@ formatting.
 * HCL
   * [terraform-fmt](https://github.com/hashicorp/terraform)
 * HTML
-  * [HTMLHint](http://htmlhint.com/)
   * [alex](https://github.com/wooorm/alex) :floppy_disk:
+  * [angular](https://www.npmjs.com/package/@angular/language-server)
   * [fecs](http://fecs.baidu.com/)
   * [html-beautify](https://beautifier.io/)
+  * [htmlhint](http://htmlhint.com/)
   * [prettier](https://github.com/prettier/prettier)
   * [proselint](http://proselint.com/)
   * [tidy](http://www.html-tidy.org/)
@@ -500,6 +501,8 @@ formatting.
   * [sourcekit-lsp](https://github.com/apple/sourcekit-lsp)
   * [swiftformat](https://github.com/nicklockwood/SwiftFormat)
   * [swiftlint](https://github.com/realm/SwiftLint)
+* systemd
+  * [systemd-analyze](https://www.freedesktop.org/software/systemd/man/systemd-analyze.html) :floppy_disk:
 * Tcl
   * [nagelfar](http://nagelfar.sourceforge.net) :floppy_disk:
 * Terraform
