@@ -109,6 +109,7 @@ Notes:
 * Cucumber
   * `cucumber`
 * CUDA
+  * `clangd`
   * `nvcc`!!
 * Cypher
   * `cypher-lint`
@@ -489,6 +490,9 @@ Notes:
   * `stylelint`
 * SugarSS
   * `stylelint`
+* Svelte
+  * `prettier`
+  * `svelteserver`
 * Swift
   * Apple `swift-format`
   * `sourcekit-lsp`
