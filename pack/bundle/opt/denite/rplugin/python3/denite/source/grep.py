@@ -157,11 +157,20 @@ class Source(Base):
             result = util.parse_jump_line(context['path'], line)
             if not result:
                 continue
+            path = result[0]
             for searching_path in context['__paths']:
-                path = (str(Path(result[0]).relative_to(searching_path))
-                        if result[0] != searching_path and
-                        result[0].startswith(searching_path + sep)
-                        else searching_path)
+                if (path == searching_path and
+                        not Path(searching_path).is_dir() and
+                        path.startswith(context['path'] + sep)):
+                    # relative to context path
+                    path = str(Path(path).relative_to(context['path']))
+                    break
+                elif (path != searching_path and
+                        path.startswith(searching_path + sep)):
+                    # relative to searching_path
+                    path = str(Path(path).relative_to(
+                        Path(searching_path).parent))
+                    break
             truncated = truncate(self.vim, path, self.vars['max_path_length'])
             candidates.append(_candidate(result, truncated))
         return candidates
