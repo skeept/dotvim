@@ -11,7 +11,6 @@ import copy
 import msgpack
 import re
 import sys
-import time
 import typing
 
 from denite.util import (
@@ -142,7 +141,6 @@ class Child(object):
             source.context['is_interactive'] = False
             source.context['all_candidates'] = []
             source.context['candidates'] = []
-            source.context['prev_time'] = time.time()
             source.index = index
 
             # Set the source attributes.
@@ -329,12 +327,10 @@ class Child(object):
                 ctx['ignorecase'] = re.search(r'[A-Z]', ctx['input']) is None
             ctx['async_timeout'] = 0.03
             prev_input = ctx['prev_input']
-            if prev_input != ctx['input']:
-                ctx['prev_time'] = time.time()
-                if ctx['is_interactive']:
-                    ctx['event'] = 'interactive'
-                    ctx['all_candidates'] = self._gather_source_candidates(
-                        ctx, source)
+            if prev_input != ctx['input'] and ctx['is_interactive']:
+                ctx['event'] = 'interactive'
+                ctx['all_candidates'] = self._gather_source_candidates(
+                    ctx, source)
             ctx['prev_input'] = ctx['input']
             if ctx['is_async']:
                 ctx['event'] = 'async'
@@ -347,9 +343,7 @@ class Child(object):
 
             candidates = self._filter_source_candidates(ctx, source)
 
-            partial = candidates[: source.max_candidates]
-
-            for c in partial:
+            for c in candidates:
                 c['source_name'] = source.name
                 c['source_index'] = source.index
 
@@ -357,12 +351,12 @@ class Child(object):
                 self._filters[x].convert_pattern(ctx['input'])
                 for x in source.matchers if self._filters[x]))
 
-            status = self._get_source_status(ctx, source,
-                                             ctx['all_candidates'], partial)
+            status = self._get_source_status(
+                ctx, source, ctx['all_candidates'], candidates)
             # Free memory
             ctx['candidates'] = []
 
-            yield status, partial, patterns, len(ctx['all_candidates'])
+            yield status, candidates, patterns, len(ctx['all_candidates'])
 
     def _filter_source_candidates(self, ctx: UserContext,
                                   source: Source) -> Candidates:
@@ -370,20 +364,27 @@ class Child(object):
         entire = ctx['all_candidates']
         ctx['candidates'] = entire
 
+        # Matchers
+        matchers = [
+            self._filters[x] for x in
+            (ctx['matchers'].split(',') if ctx['matchers']
+             else source.matchers) if x in self._filters]
         for i in range(0, len(entire), 1000):
             ctx['candidates'] = entire[i:i+1000]
-            matchers = [self._filters[x] for x in
-                        (ctx['matchers'].split(',') if ctx['matchers']
-                            else source.matchers)
-                        if x in self._filters]
             self._match_candidates(ctx, matchers)
             partial += ctx['candidates']
             if len(partial) >= source.max_candidates:
                 break
 
-        ctx['candidates'] = partial
-        for f in [self._filters[x]
-                  for x in source.sorters + source.converters
+        # Sorters
+        for f in [self._filters[x] for x in source.sorters
+                  if x in self._filters]:
+            ctx['candidates'] = f.filter(ctx)
+
+        ctx['candidates'] = partial[: source.max_candidates]
+
+        # Converters
+        for f in [self._filters[x] for x in source.converters
                   if x in self._filters]:
             ctx['candidates'] = f.filter(ctx)
 
@@ -391,7 +392,7 @@ class Child(object):
 
     def _gather_source_candidates(self, context: UserContext,
                                   source: Source) -> Candidates:
-        max_len = context['max_candidate_width'] * 2
+        max_len = int(context['max_candidate_width'] * 1.2)
         candidates = source.gather_candidates(context)
         for candidate in [x for x in candidates if len(x['word']) > max_len]:
             candidate['word'] = candidate['word'][: max_len]
