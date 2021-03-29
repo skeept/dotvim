@@ -52,40 +52,34 @@ nnoremap <silent>        <Plug>(qf_loc_toggle_stay) :<C-u> call qf#toggle#Toggle
 " Jump to and from list
 nnoremap <silent> <expr> <Plug>(qf_qf_switch)       &filetype ==# 'qf' ? '<C-w>p' : '<C-w>b'
 
-" Move forward and backward in list history (in a quickfix or location window)
-nnoremap <silent>        <Plug>(qf_older)           :<C-u> call qf#history#Older()<CR>
-nnoremap <silent>        <Plug>(qf_newer)           :<C-u> call qf#history#Newer()<CR>
-
 " A list of commands used to trigger the QuickFixCmdPost event is documented in
 " `:help QuickFixCmdPre`.
 " NOTE: helgrep is excluded because it's a special case (see below).
 let s:quickfix_autocmd_trigger_cmds = [
-    \ 'make', 'grep', 'grepadd', 'vimgrep', 'vimgrepadd', 'cfile', 'cgetfile', 
-    \ 'caddfile', 'cexpr', 'cgetexpr', 'caddexpr', 'cbuffer', 
-    \ 'cgetbuffer', 'caddbuffer']
+            \ 'make', 'grep', 'grepadd', 'vimgrep', 'vimgrepadd', 'cfile', 'cgetfile', 
+            \ 'caddfile', 'cexpr', 'cgetexpr', 'caddexpr', 'cbuffer', 
+            \ 'cgetbuffer', 'caddbuffer']
 
 function! s:GetQuickFixCmdsPattern() abort
-  return join(s:quickfix_autocmd_trigger_cmds, ',')
+    return join(s:quickfix_autocmd_trigger_cmds, ',')
 endfunction
 
 function! s:GetLocListCmdsPattern() abort
-  let l:loclist_cmds = []
-  for l:qf_cmd in s:quickfix_autocmd_trigger_cmds
-    " If a commands starts with 'c', replace it with 'l'. Otherwise, prepend
-    " 'l'. 
-    if l:qf_cmd[0] is# 'c'
-      let l:cmd = 'l' . l:qf_cmd[1:]
-    else
-      let l:cmd = 'l' . l:qf_cmd
-    endif
-    call add(l:loclist_cmds, l:cmd)
-  endfor
-  return join(l:loclist_cmds, ',')
-endfunction
+    let l:loclist_cmds = []
 
-" Jump to previous and next file grouping (in a quickfix or location window)
-nnoremap <silent>        <Plug>(qf_previous_file)   :<C-u> call qf#filegroup#PreviousFile()<CR>
-nnoremap <silent>        <Plug>(qf_next_file)       :<C-u> call qf#filegroup#NextFile()<CR>
+    for l:qf_cmd in s:quickfix_autocmd_trigger_cmds
+        " If a commands starts with 'c', replace it with 'l'. Otherwise, prepend
+        " 'l'. 
+        if l:qf_cmd[0] is# 'c'
+            let l:cmd = 'l' . l:qf_cmd[1:]
+        else
+            let l:cmd = 'l' . l:qf_cmd
+        endif
+        call add(l:loclist_cmds, l:cmd)
+    endfor
+
+    return join(l:loclist_cmds, ',')
+endfunction
 
 augroup qf
     autocmd!
