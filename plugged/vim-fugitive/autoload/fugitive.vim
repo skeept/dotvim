@@ -1159,7 +1159,7 @@ function! fugitive#Object(...) abort
   endif
 endfunction
 
-let s:var = '\%(%\|#<\=\d\+\|##\=\)'
+let s:var = '\%(%\|#<\=\d\+\|##\=\|<cfile>\)'
 let s:flag = '\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)'
 let s:expand = '\%(\(' . s:var . '\)\(' . s:flag . '*\)\(:S\)\=\)'
 
@@ -1194,6 +1194,15 @@ function! s:ExpandVar(other, var, flags, esc, ...) abort
     let buffer = s:BufName(len(a:other) > 1 ? '#'. a:other[1:-1] : '%')
     let owner = s:Owner(buffer)
     return len(owner) ? owner : '@'
+  elseif a:var ==# '<cfile>'
+    let cfile = expand('<cfile>')
+    if v:version >= 704 && get(maparg('<Plug><cfile>', 'c', 0, 1), 'expr')
+      try
+        let cfile = eval(maparg('<Plug><cfile>', 'c'))
+      catch
+      endtry
+    endif
+    return cfile
   endif
   let flags = a:flags
   let file = s:DotRelative(fugitive#Real(s:BufName(a:var)), cwd)
@@ -2322,7 +2331,9 @@ function! s:TempState(...) abort
 endfunction
 
 function! fugitive#Result(...) abort
-  if !a:0 || a:1 =~# '^-\=$'
+  if !a:0 && exists('g:fugitive_event')
+    return get(g:, 'fugitive_result', {})
+  elseif !a:0 || type(a:1) == type('') && a:1 =~# '^-\=$'
     return get(g:, '_fugitive_last_job', {})
   elseif type(a:1) == type(0)
     return s:TempState(bufname(a:1))
@@ -2354,7 +2365,9 @@ endfunction
 function! s:TempReadPost(file) abort
   if has_key(s:temp_files, s:cpath(a:file))
     let dict = s:temp_files[s:cpath(a:file)]
-    setlocal nobuflisted
+    if !has_key(dict, 'job')
+      setlocal nobuflisted
+    endif
     if get(dict, 'filetype', '') ==# 'git'
       call fugitive#MapJumps()
     endif
@@ -2403,7 +2416,7 @@ function! s:AskPassArgs(dir) abort
 endfunction
 
 function! s:RunJobs() abort
-  return exists('*job_start') || exists('*jobstart')
+  return (exists('*job_start') || exists('*jobstart')) && exists('*bufwinid')
 endfunction
 
 function! s:RunSave(state) abort
@@ -2419,6 +2432,10 @@ function! s:RunFinished(state, ...) abort
   if get(a:state, 'filetype', '') ==# 'git' && first =~# '\<\([[:upper:][:digit:]_-]\+(\d\+)\).*\1'
     let a:state.filetype = 'man'
   endif
+  if !has_key(a:state, 'capture_bufnr')
+    return
+  endif
+  call fugitive#ReloadStatus(a:state, 1)
 endfunction
 
 function! s:RunEdit(state, tmp, job) abort
@@ -2468,6 +2485,38 @@ function! s:RunReceive(state, tmp, type, job, data, ...) abort
     endif
     let a:tmp.echo .= data
   endif
+  let line_count = a:tmp.line_count
+  let a:tmp.line_count += len(lines) - 1
+  if !has_key(a:state, 'capture_bufnr') || !bufloaded(a:state.capture_bufnr)
+    return
+  endif
+  call remove(lines, -1)
+  try
+    call setbufvar(a:state.capture_bufnr, '&modifiable', 1)
+    if !line_count && len(lines) > 1000
+      let first = remove(lines, 0, 999)
+      call setbufline(a:state.capture_bufnr, 1, first)
+      redraw
+      call setbufline(a:state.capture_bufnr, 1001, lines)
+    else
+      call setbufline(a:state.capture_bufnr, line_count + 1, lines)
+    endif
+    call setbufvar(a:state.capture_bufnr, '&modifiable', 0)
+    if !getwinvar(bufwinid(a:state.capture_bufnr), '&previewwindow')
+      " no-op
+    elseif exists('*win_execute')
+      call win_execute(bufwinid(a:state.capture_bufnr), '$')
+    else
+      let winnr = bufwinnr(a:state.capture_bufnr)
+      if winnr > 0
+        let old_winnr = winnr()
+        exe 'noautocmd' winnr.'wincmd w'
+        $
+        exe 'noautocmd' old_winnr.'wincmd w'
+      endif
+    endif
+  catch
+  endtry
 endfunction
 
 function! s:RunExit(state, tmp, job, exit_status) abort
@@ -2485,6 +2534,19 @@ function! s:RunClose(state, tmp, job, ...) abort
   let noeol = substitute(substitute(a:tmp.err, "\r$", '', ''), ".*\r", '', '') . a:tmp.out
   call writefile([noeol], a:state.file, 'ba')
   call remove(a:state, 'job')
+  if has_key(a:state, 'capture_bufnr') && bufloaded(a:state.capture_bufnr)
+    if len(noeol)
+      call setbufvar(a:state.capture_bufnr, '&modifiable', 1)
+      call setbufline(a:state.capture_bufnr, a:tmp.line_count + 1, [noeol])
+      call setbufvar(a:state.capture_bufnr, '&eol', 0)
+      call setbufvar(a:state.capture_bufnr, '&modifiable', 0)
+    endif
+    call setbufvar(a:state.capture_bufnr, '&modified', 0)
+    call setbufvar(a:state.capture_bufnr, '&buflisted', 0)
+    if a:state.filetype !=# getbufvar(a:state.capture_bufnr, '&filetype', '')
+      call setbufvar(a:state.capture_bufnr, '&filetype', a:state.filetype)
+    endif
+  endif
   if !has_key(a:state, 'exit_status')
     return
   endif
@@ -2499,6 +2561,19 @@ function! s:RunSend(job, str) abort
       call ch_sendraw(a:job, a:str)
     endif
     return len(a:str)
+  catch /^Vim\%((\a\+)\)\=:E90[06]:/
+    return 0
+  endtry
+endfunction
+
+function! s:RunCloseIn(job) abort
+  try
+    if type(a:job) ==# type(0)
+      call chanclose(a:job, 'stdin')
+    else
+      call ch_close_in(a:job)
+    endif
+    return 1
   catch /^Vim\%((\a\+)\)\=:E90[06]:/
     return 0
   endtry
@@ -2541,12 +2616,25 @@ function! s:RunWait(state, tmp, job, ...) abort
         if peek != 0 && !(has('win32') && peek == 128)
           let c = getchar()
           let c = type(c) == type(0) ? nr2char(c) : c
-          if c ==# "\<C-D>"
+          if c ==# "\<C-D>" || c ==# "\<Esc>"
             let a:state.closed_in = 1
-            if type(a:job) ==# type(0)
-              call chanclose(a:job, 'stdin')
-            else
-              call ch_close_in(a:job)
+            let can_pedit = s:RunCloseIn(a:job) && exists('*setbufline')
+            for winnr in range(1, winnr('$'))
+              if getwinvar(winnr, '&previewwindow') && getbufvar(winbufnr(winnr), '&modified')
+                let can_pedit = 0
+              endif
+            endfor
+            if can_pedit
+              if has_key(a:tmp, 'echo')
+                call remove(a:tmp, 'echo')
+              endif
+              call writefile(['fugitive: aborting edit due to background operation.'], a:state.file . '.exit')
+              exe (&splitbelow ? 'botright' : 'topleft') 'silent pedit ++ff=unix' fnameescape(a:state.file)
+              let a:state.capture_bufnr = bufnr(a:state.file)
+              call setbufvar(a:state.capture_bufnr, '&modified', 1)
+              let finished = 0
+              redraw!
+              return ''
             endif
           else
             call s:RunSend(a:job, c)
@@ -2579,7 +2667,7 @@ function! s:RunWait(state, tmp, job, ...) abort
       catch /.*/
       endtry
     elseif finished
-      call fugitive#ReloadStatus(a:state.dir, 1)
+      call fugitive#ReloadStatus(a:state, 1)
     endif
   endtry
   return ''
@@ -2590,13 +2678,26 @@ if !exists('s:resume_queue')
 endif
 function! fugitive#Resume() abort
   while len(s:resume_queue)
-    try
-      call call('s:RunWait', remove(s:resume_queue, 0))
-    endtry
+    if s:resume_queue[0][2] isnot# ''
+      try
+        call call('s:RunWait', remove(s:resume_queue, 0))
+      endtry
+    endif
   endwhile
 endfunction
 
 function! s:RunBufDelete(bufnr) abort
+  let state = s:TempState(bufname(+a:bufnr))
+  if has_key(state, 'job')
+    try
+      if type(state.job) == type(0)
+        call jobstop(state.job)
+      else
+        call job_stop(state.job)
+      endif
+    catch
+    endtry
+  endif
   if has_key(s:edit_jobs, a:bufnr) |
     call add(s:resume_queue, remove(s:edit_jobs, a:bufnr))
     call feedkeys(":redraw!|call delete(" . string(s:resume_queue[-1][0].file . '.edit') .
@@ -2606,7 +2707,7 @@ endfunction
 
 augroup fugitive_job
   autocmd!
-  autocmd BufDelete * call s:RunBufDelete(expand('<abuf>'))
+  autocmd BufDelete * call s:RunBufDelete(+expand('<abuf>'))
   autocmd VimLeave *
         \ for s:jobbuf in keys(s:edit_jobs) |
         \   call writefile(['Aborting edit due to Vim exit.'], s:edit_jobs[s:jobbuf][0].file . '.exit') |
@@ -2771,6 +2872,7 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
       let args = s:AskPassArgs(dir) + args
     endif
     let tmp = {
+          \ 'line_count': 0,
           \ 'err': '',
           \ 'out': '',
           \ 'echo': '',
@@ -2831,7 +2933,8 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
     if editcmd ==# 'edit'
       call s:BlurStatus()
     endif
-    return state.mods . editcmd . ' ' . s:fnameescape(state.file) . '|call fugitive#ReloadStatus(' . string(dir) . ', 1)' . after
+    return state.mods . editcmd . ' ' . s:fnameescape(state.file) .
+          \ '|call fugitive#ReloadStatus(fugitive#Result(' . string(state.file) . '), 1)' . after
   elseif has('win32')
     return 'echoerr ' . string('fugitive: Vim 8 with job support required to use :Git on Windows')
   elseif has('gui_running')
@@ -3086,9 +3189,12 @@ function! s:DoAutocmdChanged(dir) abort
   endif
   try
     let g:fugitive_event = dir
+    if type(a:dir) == type({}) && has_key(a:dir, 'args')
+      let g:fugitive_result = a:dir
+    endif
     exe s:DoAutocmd('User FugitiveChanged')
   finally
-    unlet! g:fugitive_event
+    unlet! g:fugitive_event g:fugitive_result
     " Force statusline reload with the buffer's Git dir
     let &ro = &ro
   endtry
@@ -3828,13 +3934,13 @@ function! s:StageDelete(lnum1, lnum2, count) abort
         continue
       endif
       let sub = get(get(get(b:fugitive_files, info.section, {}), info.filename, {}), 'submodule')
-      if info.status ==# 'D'
-        let undo = 'GRemove'
-      elseif sub =~# '^S' && info.status !~# '[MD]'
-        let err .= '|echoerr ' . string('fugitive: will not delete submodule ' . string(info.relative[0]))
-        break
-      elseif sub =~# '^S'
+      if sub =~# '^S' && info.status ==# 'M'
         let undo = 'Git checkout ' . fugitive#RevParse('HEAD', FugitiveExtractGitDir(info.paths[0]))[0:10] . ' --'
+      elseif sub =~# '^S'
+        let err .= '|echoerr ' . string('fugitive: will not touch submodule ' . string(info.relative[0]))
+        break
+      elseif info.status ==# 'D'
+        let undo = 'GRemove'
       elseif info.paths[0] =~# '/$'
         let err .= '|echoerr ' . string('fugitive: will not delete directory ' . string(info.relative[0]))
         break
@@ -5636,15 +5742,16 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
         let temp_state.file = temp
         call s:RunSave(temp_state)
         if len(ranges + commits + files) || raw
+          let reload = '|call fugitive#ReloadStatus(fugitive#Result(' . string(temp_state.file) . '), 1)'
           let mods = s:Mods(a:mods)
           if a:count != 0
             exe 'silent keepalt' mods 'split' s:fnameescape(temp)
           elseif !&modified || a:bang || &bufhidden ==# 'hide' || (empty(&bufhidden) && &hidden)
             exe 'silent' mods 'edit' . (a:bang ? '! ' : ' ') . s:fnameescape(temp)
           else
-            return mods . 'edit ' . s:fnameescape(temp)
+            return mods . 'edit ' . s:fnameescape(temp) . reload
           endif
-          return ''
+          return reload[1 : -1]
         endif
         if a:mods =~# '\<tab\>'
           silent tabedit %
@@ -5709,6 +5816,7 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
         call s:Map('n', 'D', ":<C-u>exe 'vertical resize '.(<SID>linechars('.\\{-\\}\\ze\\d\\ze\\s\\+\\d\\+)')+1-v:count)<CR>", '<silent>')
         redraw
         syncbind
+        exe s:DoAutocmdChanged(temp_state)
       endif
     endtry
     return ''
@@ -6715,9 +6823,11 @@ function! fugitive#Foldtext() abort
     if exists('binary')
       return 'Binary: '.filename
     else
-      return (add<10&&remove<100?' ':'') . add . '+ ' . (remove<10&&add<100?' ':'') . remove . '- ' . filename
+      return '+-' . v:folddashes . ' ' . (add<10&&remove<100?' ':'') . add . '+ ' . (remove<10&&add<100?' ':'') . remove . '- ' . filename
     endif
-  elseif line_foldstart =~# '^# .*:$'
+  elseif line_foldstart =~# '^@@\+ .* @@'
+    return '+-' . v:folddashes . ' ' . line_foldstart
+  elseif &filetype ==# 'gitcommit' && line_foldstart =~# '^# .*:$'
     let lines = getline(v:foldstart, v:foldend)
     call filter(lines, 'v:val =~# "^#\t"')
     cal map(lines, "s:sub(v:val, '^#\t%(modified: +|renamed: +)=', '')")
