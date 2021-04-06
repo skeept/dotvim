@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.27.0
+------
+- More border options for `--preview-window`
+  ```sh
+  fzf --preview 'cat {}' --preview-window border-left
+  fzf --preview 'cat {}' --preview-window top:border-bottom
+  fzf --preview 'cat {}' --preview-window top:border-horizontal
+  ```
+- Signed and notarized macOS binaries (thanks to [BACKERS.md](https://github.com/junegunn/junegunn/blob/main/BACKERS.md))
+
 0.26.0
 ------
 - Added support for fixed header in preview window
