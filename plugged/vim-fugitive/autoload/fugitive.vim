@@ -1080,8 +1080,6 @@ function! fugitive#Find(object, ...) abort
     let f = matchstr(rev, ')\zs.*')
     if f=~# '^\.\.\=\%(/\|$\)'
       let f = simplify(getcwd() . '/' . f)
-    elseif empty(f)
-      let f = base
     elseif f !~# '^/\|^\%(\a\a\+:\).*\%(//\|::\)' . (has('win32') ? '\|^\a:/' : '')
       let f = base . '/' . f
     endif
@@ -5060,17 +5058,22 @@ endfunction
 " Section: :Gwrite, :Gwq
 
 function! fugitive#WriteCommand(line1, line2, range, bang, mods, arg, args) abort
-  if s:cpath(expand('%:p'), fugitive#Find('.git/COMMIT_EDITMSG'))
+  if s:cpath(expand('%:p'), fugitive#Find('.git/COMMIT_EDITMSG')) && empty(a:arg)
     return (empty($GIT_INDEX_FILE) ? 'write|bdelete' : 'wq') . (a:bang ? '!' : '')
-  elseif get(b:, 'fugitive_type', '') ==# 'index'
+  elseif get(b:, 'fugitive_type', '') ==# 'index' && empty(a:arg)
     return 'Git commit'
   elseif &buftype ==# 'nowrite' && getline(4) =~# '^[+-]\{3\} '
     return 'echoerr ' . string('fugitive: :Gwrite from :Git diff has been removed in favor of :Git add --edit')
   endif
   let mytab = tabpagenr()
   let mybufnr = bufnr('')
+  let args = s:ArgSplit(a:arg)
+  let after = ''
+  if get(args, 0) =~# '^+'
+    let after = '|' . remove(args, 0)[1:-1]
+  endif
   try
-    let file = len(a:arg) ? s:Generate(s:Expand(a:arg)) : fugitive#Real(@%)
+    let file = len(args) ? s:Generate(s:Expand(join(args, ' '))) : fugitive#Real(@%)
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
   endtry
@@ -5185,7 +5188,7 @@ function! fugitive#WriteCommand(line1, line2, range, bang, mods, arg, args) abor
     endfor
   endfor
   call fugitive#ReloadStatus(-1, 1)
-  return 'checktime'
+  return 'silent checktime' . after
 endfunction
 
 function! fugitive#WqCommand(...) abort
@@ -6164,7 +6167,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
         let expanded = '.git/refs/' . subdir . expanded
       endif
     endfor
-    let full = fugitive#Find(expanded, dir)
+    let full = s:Generate(expanded, dir)
     let commit = ''
     if full =~? '^fugitive:'
       let [dir, commit, path] = s:DirCommitFile(full)
@@ -6174,6 +6177,8 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
       if commit =~ '..'
         let type = s:TreeChomp(['cat-file','-t',commit.s:sub(path,'^/',':')], dir)
         let branch = matchstr(expanded, '^[^:]*')
+      elseif empty(path) || path ==# '/'
+        let type = 'tree'
       else
         let type = 'blob'
       endif
