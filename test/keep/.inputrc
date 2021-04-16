@@ -5,6 +5,7 @@ set completion-ignore-case on
 set meta-flag on
 set convert-meta off
 set output-meta on
+set bell-style none
 
 "\eOA": history-search-backward
 "\eOB": history-search-forward
