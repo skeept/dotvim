@@ -934,7 +934,6 @@ class Default(object):
         if split == 'floating':
             args = {
                 'relative': 'editor',
-                'border': 'shadow',
                 'row': self._context['winrow'],
                 'col': self._context['wincol'],
                 'width': self._context['winwidth'],
