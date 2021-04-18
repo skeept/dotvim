@@ -53,7 +53,7 @@
   dw   = diff --word-diff=color
   h    = help
   l    = log --oneline --decorate
-  lg   = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+  ll   = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
   d4 = difftool --tool=p4
   d = difftool --tool=p4
   mp4 = mergetool --tool=p4
@@ -64,7 +64,10 @@
   dnamestatus = diff --name-status
   getbase = merge-base master HEAD
   dk = difftool --tool=k
-  bc = difftool --tool=bc
+  bc = difftool --tool=bc4
+  sur = submodule update --init --recursive
+  ui = !gitui
+  lg = !lg
 
 [diff]
   tool = vimdiff
