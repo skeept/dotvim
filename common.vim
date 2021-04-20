@@ -41,7 +41,11 @@ exec "set backupdir^=" . g:p0 . "/tmp/backup"
 exec "set directory^=" . g:p0 . "/tmp/swapdir"
 if v:version >= 703
   set undofile
-  exec "set undodir^=" . g:p0 . "/tmp/undodir"
+  if has('nvim-0.5')
+    let &undodir=g:p0 . '/tmp/undodir_nvim'
+  else
+    exec "set undodir^=" . g:p0 . "/tmp/undodir"
+  endif
 endif
 
 set expandtab
