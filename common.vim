@@ -249,8 +249,11 @@ nnoremap <Leader>Q :Sayonara
 nnoremap <Leader>q :Sayonara!<CR>
 nnoremap g/ /\<\><Left><Left>
 nnoremap ,le :<C-U>packadd<SPACE><C-D>
+
+" numeric manipulation
 nnoremap ,ln :<C-U>"<C-R>=<C-R><C-W>
-nnoremap ,lh :<C-U>"<C-R>=<C-R><C-W>/3600
+"nnoremap ,lh :<C-U>"<C-R>=<C-R><C-W>/3600
+command! HoursMinutes call wk#hoursMinutes(expand("<cword>"), 3600)
 "==============================================================================}}}
 
 "================== GetIsAddonActive =========================================={{{

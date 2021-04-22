@@ -200,3 +200,26 @@ function! wk#cleanVSCallStack()
   %substitute/=.\{-},/,/eg
   %substitute/=.\{-})/)/eg
 endfunction
+
+function! wk#hoursMinutes(total, denominator)
+  " do the mapping for <F9>
+  let mapping_msg = " "
+  if !exists("g:hourMinutesMappingIsSet")
+    nnoremap <f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)
+    let mapping_msg .= "-- Use <f9> mapping to compute result"
+    let g:hourMinutesMappingIsSet = 1
+  endif
+
+  let hours = a:total / a:denominator
+  let minutes_left = (a:total - hours * a:denominator) / 60
+  let days = hours / 24
+  let additional_hours = hours - 24 * days
+  let msg = hours . ' h '
+  if minutes_left > 0
+    let msg .= minutes_left . ' m '
+  endif
+  if days > 0
+    let msg .= ' [ ' . days . ' days ' . additional_hours . ' hours ] '
+  endif
+  echo msg . mapping_msg
+endfunction
