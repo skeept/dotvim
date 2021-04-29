@@ -6,7 +6,7 @@ let g:is_vimrc_simple = 0
 
 "default path for runtime files
 "let g:p0 = split(&runtimepath, ',')[0]
-let g:p0 = has("unix") ? "~/.vim" : "~/vimfiles"
+let g:p0 = has("unix") ? expand("~/.vim") : expand("~/vimfiles")
 
 " can I always use has('win32')?
 let g:is_win = has('win32') || has('win64')
