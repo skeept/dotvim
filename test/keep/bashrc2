@@ -1088,6 +1088,14 @@ g()
   [ -z "$1" ] && git status || git $@
 }
 
+first_alternative()
+{
+  for cand in "$@"; do
+    [ -e "${cand}" ] && echo "${cand}" && break
+    [ -d "${cand}" ] && echo "${cand}" && break
+  done
+}
+
 irr()
 {
   # this function serves as a helper to run the python script run_irops.py
@@ -1097,12 +1105,36 @@ irr()
   # also in the future we should see if there is a nice way to use tmux to start the run in a pane
   # for now just start directly
 
-  local candidate1="/mnt/c/Tools/run_irops.py"
-  if [ -e "${candidate1}" ]; then
-    python "${candidate1}" $@
+  local candidates=("/mnt/c/Tools" "/project/ezcrew_new/helder/c_tools")
+  local pyfile="$(first_alternative ${candidates[@]})/run_irops.py"
+  if [ -e "${pyfile}" ]; then
+    python "${pyfile}" $@
   else
-    echo "what do you want to do? maybe add more candidates? for irr?"
+    echo "folder with run_irops.py not found in list... Please add it"
   fi
+}
+
+
+copy-static()
+{
+  # use this to call script to copy scenario
+  local rt_candidates=(/mnt/c/OR/IROPS/rt/ /project/ezcrew_new/helder/irops/rt)
+  local copy_py="$(first_alternative ${rt_candidates[@]})/Scripts/copy_static.py"
+  if [ ! -e "${copy_py}" ]; then
+    echo "couldn't find copy_static.py script in rt_candidates=${rt_candidates[@]}"
+    return 1
+  fi
+
+  local static_cand=(/mnt/c/OR/IROPS/reaccomm-static /project/ezcrew_new/helder/irops/reaccomm-static)
+  local static_f="$(first_alternative ${static_cand[@]})"
+  if [ ! -d "${static_f}" ]; then
+    echo "couldn't find static files in static_cand=${static_cand[@]}"
+    echo "invoking script directly"
+    python "${copy_py}" $@
+    return
+  fi
+
+  python "${copy_py}" -i "${static_f}" $@
 }
 
 function dirdiff()

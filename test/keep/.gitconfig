@@ -37,7 +37,6 @@
 
 [github]
   user=skeept
-  token=1f0d1517ec365f2c8be0e7c3dff798f5723efe73
 
 [alias]
   alias = config --get-regexp 'alias.*'
