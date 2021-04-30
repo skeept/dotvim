@@ -11,6 +11,10 @@ works differently.
 
 It will make use of the [vartabs](https://vimhelp.org/options.txt.html#%27vartabstop%27) feature for tab delimited files.
 
+By default, some remapings are done, including `E` to go back to the previous column (comma) which is obviously not the best option :
+it'd be logical to use `B` to do so. Fortunately, you can set your favourite key to do this action just by setting a variable in your config.
+Follow the indications [there](#map-b-instead-of-e-to-jump-back-to-previous-column) (also in the builtin docs).
+
 ![Screenshot](http://www.256bit.org/~chrisbra/csv.gif)
 
 # Table of Contents
@@ -67,6 +71,7 @@ It will make use of the [vartabs](https://vimhelp.org/options.txt.html#%27vartab
   * [Move folded lines](#move-folded-lines)
   * [Using comments](#using-comments)
   * [Size and performance considerations](#size-and-performance-considerations)
+  * [Map `B` instead of `E` to jump back to previous column](#map-b-instead-of-e-to-jump-back-to-previous-column)
 - [Functions](#functions)
   * [CSVPat()](#csvpat)
   * [CSVField(x,y[, orig])](#csvfieldxy-orig)
@@ -426,11 +431,15 @@ While this command
 :1,10Sort! 3
 ```
 
-reverses the order based on column 3.
+reverses the order based on column 3. If you want numeric sort on floatng
+points, you can use:
+```vim
+:2,$Sort 3f
+```
 
 The column number can be optionally followed by any of the flags [i], [n],
 [x] and [o] for [i]gnoring case, sorting by [n]umeric, he[x]adecimal
-or [o]ctal value.
+[o]ctal or [f]loat value.
 
 When no column number is given, it will sort by the column, on which the
 cursor is currently.
@@ -1577,6 +1586,24 @@ will disable syntax highlighting and the filetype commands for very large csv
 files (by default larger than 100 MB).
 
 See also [Slow CSV plugin](#slow-csv-plugin)
+
+## Map `B` instead of `E` to jump back to previous column
+
+Mapping E to go back a cell has no logic ; this feature lets the user choose
+to map B instead with the `g:csv_bind_B` variable (boolean) defined anywhere
+in his vim configuration. If it is not set, falls back to mapping E to
+previous column. Added by @lapingenieur ([lapingenieur over github](https://github.com/lapingenieur),
+email: lapingenieur@gmail.com).
+
+Exemple : I want to remap `B` to go to the previous column (comma) instead of `E`.
+Just put this in your counfig file :
+
+```vim
+    let g:csv_bind_B = 1
+```
+
+If you don't want this feature, you can just leave this variable without
+defining it : the script will automatically map `E`.
 
 # Functions
 
