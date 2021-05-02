@@ -1007,7 +1007,8 @@ OPTIONS							*denite-options*
 -winheight={window-height}
 		Set the height of the Denite window if |denite-option-split|
 		is "horizontal".
-		if |denite-option-split| is "floating" or "floating_relative",
+		if |denite-option-split| is "floating" or
+		"floating_relative_cursor" or "floating_relative_window",
 		set the height of the floating window.
 		If auto-resize is set, |denite-option-winheight| is the
 		maximum size of the window.
@@ -1026,7 +1027,8 @@ OPTIONS							*denite-options*
 -winwidth={window-width}
 		Set the width of the Denite window if |denite-option-split|
 		is "vertical".
-		if |denite-option-split| is "floating" or "floating_relative",
+		if |denite-option-split| is "floating" or
+		"floating_relative_cursor" or "floating_relative_window",
 		set the width of the floating window.
 
 		Default: &columns / 2
@@ -2262,8 +2264,8 @@ Q: I want to grep for loaded buffers like unite.vim's "$buffers" arguments.
 A: >
 	nnoremap <silent> <C-g> :call denite#start([{'name': 'grep', 'args':
 	      \ map(filter(range(1, bufnr('$')),
-	      \ 'buflisted(v:val) && filereadable(bufname(v:val))'),
-	      \ 'bufname(v:val)')}])<CR>
+	      \ { _, val -> buflisted(val) && filereadable(bufname(val)) }),
+	      \ { _, val -> bufname(val) })}])<CR>
 
 Q: I want to switch from the filter window into the denite window.
 
@@ -2271,6 +2273,10 @@ A: You must use |<Plug>(denite_filter_update)| for it.
 
 ==============================================================================
 COMPATIBILITY						*denite-compatibility*
+
+2021.05.01
+* "floating_relative" option is replaced to "floating_relative_cursor" and
+  "floating_relative_window".
 
 2021.03.25
 * |denite-filter-matcher/regexp| is very slow.  It is disabled in the default
