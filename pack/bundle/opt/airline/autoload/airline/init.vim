@@ -104,13 +104,13 @@ function! airline#init#bootstrap()
     call s:check_defined('g:airline_left_alt_sep', "")
     call s:check_defined('g:airline_right_sep', "")
     call s:check_defined('g:airline_right_alt_sep', "")
-    " ro=⊝, ws=☲, lnr=㏑, mlnr=☰, colnr=㏇, br=ᚠ, nx=Ɇ, crypt=🔒
+    " ro=⊝, ws=☲, lnr=㏑, mlnr=☰, colnr=℅, br=ᚠ, nx=Ɇ, crypt=🔒
     call extend(g:airline_symbols, {
           \ 'readonly': "\u229D",
           \ 'whitespace': "\u2632",
           \ 'maxlinenr': "\u2630",
           \ 'linenr': "\u33d1",
-          \ 'colnr': "\u33c7",
+          \ 'colnr': "\u2105",
           \ 'branch': "\u16A0",
           \ 'notexists': "\u0246",
           \ 'crypt': nr2char(0x1F512),
@@ -127,7 +127,7 @@ function! airline#init#bootstrap()
           \ 'whitespace': '!',
           \ 'linenr': 'ln',
           \ 'maxlinenr': '',
-          \ 'colnr': 'cn',
+          \ 'colnr': 'co',
           \ 'branch': '',
           \ 'notexists': '?',
           \ 'crypt': 'cr',
@@ -186,10 +186,11 @@ function! airline#init#bootstrap()
         \ 'syntastic-err', 'eclim', 'whitespace','windowswap',
         \ 'ycm_error_count', 'ycm_warning_count', 'neomake_error_count',
         \ 'neomake_warning_count', 'ale_error_count', 'ale_warning_count',
-        \ 'lsp_error_count', 'lsp_warning_count',
+        \ 'lsp_error_count', 'lsp_warning_count', 'scrollbar',
         \ 'nvimlsp_error_count', 'nvimlsp_warning_count',
         \ 'languageclient_error_count', 'languageclient_warning_count',
         \ 'coc_warning_count', 'coc_error_count', 'vista', 'battery'])
+
   call airline#parts#define_text('bookmark', '')
   call airline#parts#define_text('capslock', '')
   call airline#parts#define_text('gutentags', '')
@@ -225,7 +226,7 @@ function! airline#init#sections()
     let g:airline_section_gutter = airline#section#create(['%='])
   endif
   if !exists('g:airline_section_x')
-    let g:airline_section_x = airline#section#create_right(['coc_current_function', 'bookmark', 'tagbar', 'vista', 'gutentags', 'gen_tags', 'omnisharp', 'grepper', 'filetype'])
+    let g:airline_section_x = airline#section#create_right(['coc_current_function', 'bookmark', 'scrollbar', 'tagbar', 'vista', 'gutentags', 'gen_tags', 'omnisharp', 'grepper', 'filetype'])
   endif
   if !exists('g:airline_section_y')
     let g:airline_section_y = airline#section#create_right(['ffenc'])
