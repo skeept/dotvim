@@ -1148,6 +1148,11 @@ is_volatile
 					*deoplete-source-attribute-mark*
 mark		(String)			(Optional)
 		The mark of a source.
+		Note: If the source set candidate menu, the source must set
+		it.  If the attribute is empty string, the candidate menu will
+		be disabled.
+
+		Default: ''
 
 					*deoplete-source-attribute-matchers*
 matchers	(List[str])			(Optional)
@@ -1813,6 +1818,11 @@ Q: How can I sort all entries alphabetically?
 
 A: >
 	call deoplete#custom#source('_', 'sorters', ['sorter_word'])
+
+Q: I want to disable all sources marks.
+
+A: >
+	call deoplete#custom#source('_', 'mark', '')
 
 Q: I want to use head matcher instead of fuzzy matcher.
 
