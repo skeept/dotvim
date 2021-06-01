@@ -2,6 +2,8 @@
 //!
 //! This module requires the executable rg with `--json` and `--pcre2` is installed in the system.
 
+mod default_types;
+
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::{collections::HashMap, fmt::Display};
@@ -11,9 +13,14 @@ use once_cell::sync::{Lazy, OnceCell};
 use serde::Deserialize;
 
 use crate::tools::ripgrep::{Match, Word};
-use crate::{cmd::dumb_jump::Lines, process::AsyncCommand};
+use crate::{commands::dumb_jump::Lines, process::AsyncCommand};
 
-static RG_PCRE2_REGEX_RULES: OnceCell<HashMap<String, DefinitionRules>> = OnceCell::new();
+static RG_PCRE2_REGEX_RULES: Lazy<HashMap<&str, DefinitionRules>> = Lazy::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../../scripts/dumb_jump/rg_pcre2_regex.json"
+    ))
+    .unwrap()
+});
 
 static LANGUAGE_COMMENT_TABLE: OnceCell<HashMap<String, Vec<String>>> = OnceCell::new();
 
@@ -21,21 +28,25 @@ static LANGUAGE_COMMENT_TABLE: OnceCell<HashMap<String, Vec<String>>> = OnceCell
 ///
 /// https://github.com/BurntSushi/ripgrep/blob/20534fad04/crates/ignore/src/default_types.rs
 static LANGUAGE_EXT_TABLE: Lazy<HashMap<String, String>> = Lazy::new(|| {
-    vec![
-        ("clj", "clojure"),
-        ("cpp", "cpp"),
-        ("go", "go"),
-        ("java", "java"),
-        ("lua", "lua"),
-        ("py", "python"),
-        ("r", "r"),
-        ("rb", "ruby"),
-        ("rs", "rust"),
-        ("scala", "scala"),
-    ]
-    .into_iter()
-    .map(|(k, v)| (k.into(), v.into()))
-    .collect()
+    default_types::DEFAULT_TYPES
+        .iter()
+        .map(|(lang, values)| {
+            values
+                .iter()
+                .filter_map(|v| {
+                    v.split('.').last().and_then(|ext| {
+                        // Simply ignore the abnormal cases.
+                        if ext.contains('[') || ext.contains('*') {
+                            None
+                        } else {
+                            Some((ext.into(), String::from(*lang)))
+                        }
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .flatten()
+        .collect()
 });
 
 /// Finds the language given the file extension.
@@ -49,9 +60,10 @@ pub fn get_language_by_ext(ext: &str) -> Result<&str> {
 /// Map of file extension to the comment prefix.
 pub fn get_comments_by_ext(ext: &str) -> &[String] {
     let table = LANGUAGE_COMMENT_TABLE.get_or_init(|| {
-        let comments: HashMap<String, Vec<String>> =
-            serde_json::from_str(include_str!("../../../scripts/dumb_jump/comments_map.json"))
-                .unwrap();
+        let comments: HashMap<String, Vec<String>> = serde_json::from_str(include_str!(
+            "../../../../scripts/dumb_jump/comments_map.json"
+        ))
+        .unwrap();
         comments
     });
 
@@ -154,19 +166,32 @@ impl DefinitionRules {
         Ok(maybe_defs.into_iter().filter_map(|def| def.ok()).collect())
     }
 
+    async fn get_occurences_and_definitions(
+        word: Word,
+        lang: &str,
+        dir: &Option<PathBuf>,
+        comments: &[String],
+    ) -> (Vec<Match>, Vec<(DefinitionKind, Vec<Match>)>) {
+        let (occurrences, definitions) = futures::future::join(
+            find_all_occurrences_by_type(word.clone(), lang, dir, comments),
+            Self::all_definitions(lang, word, dir),
+        )
+        .await;
+
+        (
+            occurrences.unwrap_or_default(),
+            definitions.unwrap_or_default(),
+        )
+    }
+
     pub async fn definitions_and_references_lines(
         lang: &str,
         word: Word,
         dir: &Option<PathBuf>,
         comments: &[String],
     ) -> Result<Lines> {
-        let (occurrences, definitions) = futures::future::join(
-            find_all_occurrences_by_type(word.clone(), lang, dir, comments),
-            Self::all_definitions(lang, word.clone(), dir),
-        )
-        .await;
-
-        let (occurrences, definitions) = (occurrences?, definitions?);
+        let (occurrences, definitions) =
+            Self::get_occurences_and_definitions(word.clone(), lang, dir, comments).await;
 
         let defs = definitions
             .iter()
@@ -195,7 +220,7 @@ impl DefinitionRules {
                 occurrences
                     .iter()
                     .filter(|r| !defs.contains(&r))
-                    .map(|line| line.build_jump_line("references", &word)),
+                    .map(|line| line.build_jump_line("refs", &word)),
             )
             .unzip();
 
@@ -217,13 +242,8 @@ impl DefinitionRules {
         dir: &Option<PathBuf>,
         comments: &[String],
     ) -> Result<HashMap<MatchKind, Vec<Match>>> {
-        let (occurrences, definitions) = futures::future::join(
-            find_all_occurrences_by_type(word.clone(), lang, dir, comments),
-            Self::all_definitions(lang, word.clone(), dir),
-        )
-        .await;
-
-        let (occurrences, definitions) = (occurrences?, definitions?);
+        let (occurrences, definitions) =
+            Self::get_occurences_and_definitions(word.clone(), lang, dir, comments).await;
 
         let defs = definitions
             .clone()
@@ -277,16 +297,21 @@ pub struct LanguageDefinition;
 
 impl LanguageDefinition {
     pub fn get_rules(lang: &str) -> Result<&DefinitionRules> {
-        RG_PCRE2_REGEX_RULES
-            .get_or_init(|| {
-                let rules: HashMap<String, DefinitionRules> = serde_json::from_str(include_str!(
-                    "../../../scripts/dumb_jump/rg_pcre2_regex.json"
-                ))
-                .unwrap();
-                rules
-            })
-            .get(lang)
-            .ok_or_else(|| anyhow!("Language {} is unsupported in dumb analyzer", lang))
+        static EXTION_LANGUAGE_MAP: Lazy<HashMap<&str, &str>> =
+            Lazy::new(|| [("js", "javascript")].iter().cloned().collect());
+
+        match RG_PCRE2_REGEX_RULES.get(lang) {
+            Some(rules) => Ok(rules),
+            None => EXTION_LANGUAGE_MAP
+                .get(lang)
+                .and_then(|l| RG_PCRE2_REGEX_RULES.get(l))
+                .ok_or_else(|| {
+                    anyhow!(
+                        "Language {} can not be found in dumb_jump/rg_pcre2_regex.json",
+                        lang
+                    )
+                }),
+        }
     }
 }
 
@@ -386,4 +411,14 @@ async fn find_definition_matches_with_kind(
     collect_matches(command, dir, None)
         .await
         .map(|defs| (kind.clone(), defs))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ext_table() {
+        println!("{:?}", LANGUAGE_EXT_TABLE.clone());
+    }
 }
