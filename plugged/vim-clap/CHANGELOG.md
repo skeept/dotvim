@@ -5,11 +5,13 @@
 ### Added
 
 - [neovim] Add zindex option to fix the tricky floating_win overlapping, and add border for the preview window, use `let g:clap_popup_border = 'nil'` to disable the order. #693
+- Impl preview for `quickfix` provider. #691
 
 ### Fixed
 
 - Handle the non-utf8 line of rg's output properly. #673
 - [neovim] Fix the action dialog creation using floating_win. #688
+- Fix the indicator winwidth is not flexible. #687
 
 ### Perf
 
