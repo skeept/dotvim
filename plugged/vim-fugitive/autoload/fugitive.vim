@@ -1480,7 +1480,7 @@ function! fugitive#getfperm(url) abort
   return perm ==# '---------' ? '' : perm
 endfunction
 
-function s:UpdateIndex(dir, info) abort
+function! s:UpdateIndex(dir, info) abort
   let info = join(a:info[0:-2]) . "\t" . a:info[-1] . "\n"
   let [error, exec_error] = s:SystemError([a:dir, 'update-index', '--index-info'], info)
   return !exec_error ? '' : len(error) ? error : 'fugitive: unknown update-index error'
@@ -5487,8 +5487,6 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
       set diffopt-=vertical
     endif
     execute mods 'diffsplit' s:fnameescape(spec)
-    let &l:readonly = &l:readonly
-    redraw
     let w:fugitive_diff_restore = restore
     let winnr = winnr()
     if getwinvar('#', '&diff')
