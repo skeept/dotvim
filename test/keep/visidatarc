@@ -86,3 +86,18 @@ def guessType(cols, rows):
             except Exception:
                 pass
         col.type = anytype if current_type is None else current_type
+
+
+options.csv_lineterminator = "\n"
+
+# @VisiData.api
+def open_dat(p):
+    return DatSheet(p.name, source=p)
+
+
+class DatSheet(CsvSheet):
+    pass
+
+
+DatSheet.class_options.header = 0
+vd.save_dat = vd.save_csv
