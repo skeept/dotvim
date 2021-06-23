@@ -1145,5 +1145,14 @@ function dirdiff()
     vim $@ -c "DirDiff $DIR1 $DIR2"
 }
 
+fz()
+{
+  if [ -x "$(command -v bat)" ]; then
+    fzf --preview 'bat --style=plain --color=always --line-range :500 {}' $@
+  else
+    fzf --preview 'cat {}'
+  fi
+  }
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
