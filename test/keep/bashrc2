@@ -1150,7 +1150,7 @@ fz()
   if [ -x "$(command -v bat)" ]; then
     fzf --preview 'bat --style=plain --color=always --line-range :500 {}' $@
   else
-    fzf --preview 'cat {}'
+    fzf --preview 'head -n 120 {}'
   fi
   }
 
