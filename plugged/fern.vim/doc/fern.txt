@@ -823,13 +823,29 @@ GLOBAL							*fern-mapping-global*
 	DEPRECATED: Use |<Plug>(fern-action-hidden:toggle)| instead.
 
 *<Plug>(fern-action-include)*
+*<Plug>(fern-action-include=)*
 	Open a prompt to enter include filter. Users can type a |pattern| to
 	filter nodes recursively.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-include)
+	      \ <Plug>(fern-action-include=)foo<CR>
+<
 *<Plug>(fern-action-exclude)*
+*<Plug>(fern-action-exclude=)*
 	Open a prompt to enter exclude filter. Users can type a |pattern| to
 	filter nodes recursively.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-exclude)
+	      \ <Plug>(fern-action-exclude=)foo<CR>
+<
 *<Plug>(fern-action-mark:clear)*
 	Clear existing marks.
 
@@ -895,8 +911,16 @@ GLOBAL							*fern-mapping-global*
 	Collapse on a cursor node.
 
 *<Plug>(fern-action-reveal)*
+*<Plug>(fern-action-reveal=)*
 	Open a prompt to reveal a node in a tree.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-reveal)
+	      \ <Plug>(fern-action-reveal=)foo<CR>
+<
 *<Plug>(fern-action-focus:parent)*
 	Focus the parent of the cursor node.
 
@@ -919,7 +943,7 @@ GLOBAL							*fern-mapping-global*
 	The command will be applied on an "anchor" window when invoked from a
 	drawer style fern (|fern-glossary-anchor|.)
 
-*<Plug>(fern-action-edit-or-error)*
+*<Plug>(fern-action-open:edit-or-error)*
 	Open a cursor node or marked nodes with |edit| command or fallback
 	to print an error. 
 	Note that when 'hidden' has set or 'bufhidden' is "hide", the |edit|
@@ -980,6 +1004,95 @@ GLOBAL							*fern-mapping-global*
 	      \ <Plug>(fern-action-open)
 	      \ <Plug>(fern-action-open:select)
 <
+*<Plug>(fern-action-diff:select)*
+*<Plug>(fern-action-diff:select:vert)*
+	Open a first marked node through "window selector"
+	(|fern-glossary-window-selector|.) then open remains with |split| or
+	|vsplit| (:vert) to compare content through |diff| feature.
+
+*<Plug>(fern-action-diff:split)*
+*<Plug>(fern-action-diff:split:vert)*
+*<Plug>(fern-action-diff:vsplit)*
+*<Plug>(fern-action-diff:vsplit:vert)*
+*<Plug>(fern-action-diff:tabedit)*
+*<Plug>(fern-action-diff:tabedit:vert)*
+	Open a first marked node with a corresponding command then open remains
+	with |split| or |vsplit| (:vert) to compare contents through |diff|
+	feature.
+	The command will be applied on an "anchor" window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-diff:edit-or-error)*
+*<Plug>(fern-action-diff:edit-or-error:vert)*
+	Open a first marked node with |edit| command or fallback to print an
+	error then open remains with |split| or |vsplit| (:vert) to compare
+	contents through |diff| feature.
+	Note that when 'hidden' has set or 'bufhidden' is "hide", the |edit|
+	command will never fails.
+
+*<Plug>(fern-action-diff:edit-or-split)*
+*<Plug>(fern-action-diff:edit-or-split:vert)*
+*<Plug>(fern-action-diff:edit-or-vsplit)*
+*<Plug>(fern-action-diff:edit-or-vsplit:vert)*
+*<Plug>(fern-action-diff:edit-or-tabedit)*
+*<Plug>(fern-action-diff:edit-or-tabedit:vert)*
+	Open a first marked node with |edit| command or fallback to a 
+	corresponding command then .
+	Note that when 'hidden' has set or 'bufhidden' is "hide", the |edit|
+	command will never fails.
+
+*<Plug>(fern-action-diff:above)*
+*<Plug>(fern-action-diff:above:vert)*
+*<Plug>(fern-action-diff:left)*
+*<Plug>(fern-action-diff:left:vert)*
+*<Plug>(fern-action-diff:below)*
+*<Plug>(fern-action-diff:below:vert)*
+*<Plug>(fern-action-diff:right)*
+*<Plug>(fern-action-diff:right:vert)*
+	Open a first marked node on a corresponding direction from an "anchor"
+	window then open remains with |split| or |vsplit| (:vert) to compare
+	contents through |diff| feature.
+	The command will be applied on the anchor window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-diff:top)*
+*<Plug>(fern-action-diff:top:vert)*
+*<Plug>(fern-action-diff:leftest)*
+*<Plug>(fern-action-diff:leftest:vert)*
+*<Plug>(fern-action-diff:bottom)*
+*<Plug>(fern-action-diff:bottom:vert)*
+*<Plug>(fern-action-diff:rightest)*
+*<Plug>(fern-action-diff:rightest:vert)*
+	Open a first marked node on a edge of a corresponding direction from
+	an "anchor" window then open remains with |split| or |vsplit| (:vert)
+	to compare contents through |diff| feature.
+	The command will be applied on the anchor window when invoked from a
+	drawer style fern (|fern-glossary-anchor|.)
+
+*<Plug>(fern-action-diff:side)*
+*<Plug>(fern-action-diff:side:vert)*
+	Open a first marked node on the right side of the current window then
+	open remains with |split| or |vsplit| (:vert) to compare contents
+	through |diff| feature.
+	The behavior is slightly different between a drawer style fern
+	window and a split style fern window due to the presence of "anchor".
+
+*<Plug>(fern-action-diff:edit)*
+	An alias to "diff:edit-or-error" action. Users can overwrite this
+	mapping to change the default behavior of "diff:edit" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-diff:edit)
+	      \ <Plug>(fern-action-diff:edit-or-tabedit)
+<
+*<Plug>(fern-action-diff)*
+	An alias to "diff:edit" action. Users can overwrite this mapping to
+	change the default behavior of "diff" action like:
+>
+	nmap <buffer> 
+	      \ <Plug>(fern-action-diff)
+	      \ <Plug>(fern-action-diff:select)
+<
 *<Plug>(fern-action-cancel)*
 	Cancel tree rendering.
 
@@ -1013,23 +1126,59 @@ FILE							*fern-mapping-file*
 
 The following mappings/actions are only available on file:// scheme.
 
+*<Plug>(fern-action-ex)*
+*<Plug>(fern-action-ex=)*
+	Open a prompt to execute an Ex command with a path of cursor node or 
+	paths of marked nodes.
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-ex)
+	      \ <Plug>(fern-action-ex=)foo<CR>
+<
 *<Plug>(fern-action-new-path)*
+*<Plug>(fern-action-new-path=)*
 	Open a prompt to ask a path and create a file/directory of the input
 	path from the path of a cursor node.
 	Any intermediate directories of the destination will be created.
 	If the path ends with "/", it creates a directory. Otherwise it
 	creates a file.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-new-path)
+	      \ <Plug>(fern-action-new-path=)foo<CR>
+<
 *<Plug>(fern-action-new-file)*
+*<Plug>(fern-action-new-file=)*
 	Open a prompt to ask a path and create a file of the input path from
 	the path of a cursor node.
 	Any intermediate directories of the destination will be created.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-new-file)
+	      \ <Plug>(fern-action-new-file=)foo<CR>
+<
 *<Plug>(fern-action-new-dir)*
+*<Plug>(fern-action-new-dir=)*
 	Open a prompt to ask a path and create a directory of the input path 
 	from the path of a cursor node.
 	Any intermediate directories of the destination will be created.
-
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-new-dir)
+	      \ <Plug>(fern-action-new-dir=)foo<CR>
+<
 *<Plug>(fern-action-copy)*
 	Open a prompt to ask a path and copy a file/directory of the cursor
 	node or marked node path(s) to the input path(s).
@@ -1102,9 +1251,17 @@ The following mappings/actions are only available on file:// scheme.
 	Note that this action has NO-relation with the system clipboard.
 
 *<Plug>(fern-action-grep)*
+*<Plug>(fern-action-grep=)*
 	Open a prompt to ask a grep pattern and execute grep command under the
 	cursor node. It respects the value of 'grepprg' and 'grepformat'.
-	
+	You can use a "=" variant to apply values to the prompt and/or submit
+	a value like:
+>
+	" Automatically apply "foo" to the prompt and submit.
+	nmap <buffer>
+	      \ <Plug>(my-grep)
+	      \ <Plug>(fern-action-grep=)foo<CR>
+<
 *<Plug>(fern-action-rename:select)*
 *<Plug>(fern-action-rename:split)*
 *<Plug>(fern-action-rename:vsplit)*

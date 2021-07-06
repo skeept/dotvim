@@ -24,6 +24,7 @@ alias xtop2='xterm  -geometry 76x25+809+00   -ls  -j -title "top $HOST" -e top -
 alias b='exec bash'
 alias py='python'
 alias yp='ipython'
+alias ipy='ipython'
 
 alias ps2='ps -A -o user -o pid -o args'
 alias ps2me='ps -U $(echo -n $USER) -o pid -o args'
