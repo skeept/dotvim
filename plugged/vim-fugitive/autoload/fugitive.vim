@@ -801,6 +801,7 @@ function! s:QuickfixCreate(nr, opts) abort
 endfunction
 
 function! s:QuickfixStream(nr, event, title, cmd, first, mods, callback, ...) abort
+  call s:BlurStatus()
   let mods = s:Mods(a:mods)
   let opts = {'title': a:title, 'context': {'items': []}}
   call s:QuickfixCreate(a:nr, opts)
@@ -834,7 +835,6 @@ function! s:QuickfixStream(nr, event, title, cmd, first, mods, callback, ...) ab
 
   silent exe s:DoAutocmd('QuickFixCmdPost ' . event)
   if a:first && len(s:QuickfixGet(a:nr))
-    call s:BlurStatus()
     return mods . (a:nr < 0 ? 'cfirst' : 'lfirst')
   else
     return 'exe'
@@ -4577,7 +4577,7 @@ function! s:ToolStream(line1, line2, range, bang, mods, options, args, state) ab
         if len(get(item, 'filename', '')) && item.filename != filename
           call add(cmd, 'tabedit ' . s:fnameescape(item.filename))
           for i in reverse(range(len(get(item.context, 'diff', []))))
-            call add(cmd, (i ? 'rightbelow' : 'leftabove') . ' vert Gdiffsplit! ' . s:fnameescape(item.context.diff[i].filename))
+            call add(cmd, (i ? 'rightbelow' : 'leftabove') . ' vertical Gdiffsplit! ' . s:fnameescape(item.context.diff[i].filename))
           endfor
           call add(cmd, 'wincmd =')
           let filename = item.filename
@@ -4736,7 +4736,7 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, options) abort
   let cmd = ['--no-pager', 'grep', '-n', '--no-color', '--full-name']
   let tree = s:Tree(dir)
   let args = a:options.subcommand_args
-  if get(args, 0, '') =~# '^-O\|--open-files-in-pager$'
+  if get(args, 0, '') =~# '^\%(-O\|--open-files-in-pager\)$'
     let args = args[1:-1]
   endif
   let name_only = s:HasOpt(args, '-l', '--files-with-matches', '--name-only', '-L', '--files-without-match')
@@ -5085,7 +5085,7 @@ function! s:BlurStatus() abort
   endif
 endfunction
 
-let s:bang_edits = {'split': 'Git', 'vsplit': 'vert Git', 'tabedit': 'tab Git', 'pedit': 'Git!'}
+let s:bang_edits = {'split': 'Git', 'vsplit': 'vertical Git', 'tabedit': 'tab Git', 'pedit': 'Git!'}
 function! fugitive#Open(cmd, bang, mods, arg, args) abort
   exe s:VersionCheck()
   if a:bang
@@ -6240,15 +6240,9 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
       let rev = ''
       let result = fugitive#Result()
       if filereadable(get(result, 'file', ''))
-        for line in readfile(result.file, 4096)
-          let rev = s:fnameescape(matchstr(line, '\<https\=://[^[:space:]<>]*[^[:space:]<>.,;:"''!?]'))
-          if len(rev)
-            break
-          endif
-        endfor
-        if empty(rev)
-          return 'echoerr ' . string('fugitive: no URL found in output of last :Git')
-        endif
+        let rev = s:fnameescape(result.file)
+      else
+        return 'echoerr ' . string('fugitive: could not find prior :Git invocation')
       endif
     elseif !exists('l:remote')
       let remote = matchstr(arg, '@\zs\%('.validremote.'\)$')
@@ -6264,6 +6258,20 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
     let expanded = s:Expand(rev)
     if expanded =~? '^\a\a\+:[\/][\/]' && expanded !~? '^fugitive:'
       return s:BrowserOpen(s:Slash(expanded), a:mods, a:bang)
+    endif
+    if !exists('l:result')
+      let result = s:TempState(empty(expanded) ? @% : expanded)
+    endif
+    if !empty(result) && filereadable(get(result, 'file', ''))
+      for line in readfile(result.file, 4096)
+        let rev = s:fnameescape(matchstr(line, '\<https\=://[^[:space:]<>]*[^[:space:]<>.,;:"''!?]'))
+        if len(rev)
+          break
+        endif
+      endfor
+      if empty(rev)
+        return 'echoerr ' . string('fugitive: no URL found in output of :Git')
+      endif
     endif
     exe s:DirCheck(dir)
     if empty(expanded)
