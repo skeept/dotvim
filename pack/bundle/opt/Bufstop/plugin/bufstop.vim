@@ -6,7 +6,7 @@ let g:loaded_bufstop = 1
 
 let s:name = "--Bufstop--"
 let s:lsoutput = ""
-let s:types = ["fullname", "path", "shortname"]
+let s:types = ["fullname", "path", "shortname", "indicators"]
 let s:local_bufnr = -1
 let s:fast_mode = 0
 let s:preview_mode = 0
@@ -46,6 +46,10 @@ endif
 
 if !exists("g:BufstopSorting")
   let g:BufstopSorting = "MRU"
+endif
+
+if !exists("g:BufstopIndicators")
+  let g:BufstopIndicators = 0
 endif
 
 let s:keystr = g:BufstopKeys
@@ -95,6 +99,10 @@ endfunction
 
 " select a buffer from the Bufstop window
 function! s:BufstopSelectBuffer(k)
+  if len(s:allbufs) == 0
+    return
+  endif
+
   let delkey = 0
 
   if (a:k == 'd')
@@ -121,11 +129,7 @@ function! s:BufstopSelectBuffer(k)
 
   if bufexists(s:bufnr)
     if delkey
-      call remove(s:allbufs, line('.')-1)
-      exe "silent bw ".s:bufnr
-      setlocal modifiable
-      exe "d"
-      setlocal nomodifiable
+      call s:BufstopWipeBuffer(s:bufnr)
     else
       exe "wincmd p"
       exe "silent b" s:bufnr
@@ -136,6 +140,41 @@ function! s:BufstopSelectBuffer(k)
       endif
     endif
   endif
+endfunction
+
+" wipe a buffer without altering the window layout
+function! s:BufstopWipeBuffer(bufnr)
+  for window in range(1, winnr("$"))
+    if winbufnr(window) != a:bufnr
+      continue
+    endif
+
+    let candidate = s:allbufs[0].bufno
+    if len(s:allbufs) > 1 && line('.') == 1
+      let candidate = s:allbufs[1].bufno
+    endif
+
+    exe window . "wincmd w"
+    exe "silent b" candidate
+
+    " our candidate may still be the buffer we're trying to wipe
+    if bufnr("%") == a:bufnr
+      " load a dummy buffer in the window
+      exe "enew"
+      setlocal bufhidden=wipe
+      setlocal noswapfile
+      setlocal buftype=
+      setlocal nobuflisted
+    endif
+
+    exe "wincmd p"
+  endfor
+
+  call remove(s:allbufs, line('.')-1)
+  exe "silent bw ".s:bufnr
+  setlocal modifiable
+  exe "d"
+  setlocal nomodifiable
 endfunction
 
 " create mappings for the Bufstop window
@@ -200,6 +239,7 @@ function! s:GetBufferInfo()
     let pathbits = split(bits[1], '\\\|\/', 1)
     let b.shortname = pathbits[len(pathbits)-1]
     let b.bufno = str2nr(bits[0])
+    let b.indicators = substitute(bits[0], '\s*\d\+', '', '')
 
     if (k < len(s:keys))
       let b.key = s:keys[k]
@@ -269,15 +309,21 @@ function! Bufstop()
   for buf in bufdata
     let line = ''
     if buf.key ==# 'X'
-      let line = "  " . " " . "   "
+      let line = "  " . " "
     else
-      let line = "  " . buf.key . "   "
+      let line = "  " . buf.key
+    endif
+
+    if g:BufstopIndicators
+      let pad = s:allpads.indicators
+      let line .= buf.indicators . strpart(pad, len(buf.indicators))
+    else
+      let line .= "   "
     endif
 
     let path = buf["path"]
     let pad = s:allpads.shortname
 
-    " let shortn = fnamemodify(buf.shortname, ":r")
     let line .= buf.shortname . "  " . strpart(pad . path, len(buf.shortname))
     
     call add(lines, line)
