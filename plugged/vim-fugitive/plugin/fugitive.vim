@@ -99,9 +99,11 @@ function! FugitiveParse(...) abort
 endfunction
 
 " FugitiveResult() returns an object encapsulating the result of the most
-" recend :Git command.  Will be empty if no result is available.  Pass in the
-" name of a temp buffer to get the result object for that command instead.
-" Contains the following keys:
+" recent :Git command.  Will be empty if no result is available.  During a
+" User FugitiveChanged event, this is guaranteed to correspond to the :Git
+" command that triggered the event, or be empty if :Git was not the trigger.
+" Pass in the name of a temp buffer to get the result object for that command
+" instead.  Contains the following keys:
 "
 " * "args": List of command arguments, starting with the subcommand.  Will be
 "   empty for usages like :Git --help.
@@ -168,7 +170,7 @@ endfunction
 " An optional second argument provides the Git dir, or the buffer number of a
 " buffer with a Git dir.  The default is the current buffer.
 function! FugitiveRemoteUrl(...) abort
-  return fugitive#RemoteUrl(a:0 ? a:1 : '', FugitiveGitDir(a:0 > 1 ? a:2 : -1), a:0 > 2 ? a:3 : 0)
+  return fugitive#RemoteUrl(a:0 ? a:1 : '', a:0 > 1 ? a:2 : -1, a:0 > 2 ? a:3 : 0)
 endfunction
 
 " FugitiveHead() retrieves the name of the current branch. If the current HEAD

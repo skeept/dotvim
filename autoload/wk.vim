@@ -205,8 +205,9 @@ function! wk#hoursMinutes(total, denominator)
   " do the mapping for <F9>
   let mapping_msg = " "
   if !exists("g:hourMinutesMappingIsSet")
-    nnoremap <f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)
-    let mapping_msg .= "-- Use <f9> mapping to compute result"
+    nnoremap <f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)<CR>
+    nnoremap <S-f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)
+    let mapping_msg .= "-- Use <f9> mapping to compute result (<S-F9>) to edit"
     let g:hourMinutesMappingIsSet = 1
   endif
 
