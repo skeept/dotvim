@@ -13,7 +13,8 @@ let s:bad_git_dir = '/$\|^fugitive:'
 " FugitiveGitDir() returns the detected Git dir for the given buffer number,
 " or the current buffer if no argument is passed.  This will be an empty
 " string if no Git dir was found.  Use !empty(FugitiveGitDir()) to check if
-" Fugitive is active in the current buffer.
+" Fugitive is active in the current buffer.  Do not rely on this for direct
+" filesystem access; use FugitiveFind('.git/whatever') instead.
 function! FugitiveGitDir(...) abort
   if v:version < 704
     return ''
@@ -71,11 +72,19 @@ endfunction
 " An optional second argument provides the Git dir, or the buffer number of a
 " buffer with a Git dir.  The default is the current buffer.
 function! FugitiveFind(...) abort
-  return fugitive#Find(a:0 ? a:1 : bufnr(''), FugitiveGitDir(a:0 > 1 ? a:2 : -1))
+  if a:0 && type(a:1) ==# type({})
+    return call('fugitive#Find', a:000[1:-1] + [FugitiveGitDir(a:1)])
+  else
+    return fugitive#Find(a:0 ? a:1 : bufnr(''), FugitiveGitDir(a:0 > 1 ? a:2 : -1))
+  endif
 endfunction
 
 function! FugitivePath(...) abort
-  if a:0 > 1
+  if a:0 > 2 && type(a:1) ==# type({})
+    return fugitive#Path(a:2, a:3, FugitiveGitDir(a:1))
+  elseif a:0 && type(a:1) ==# type({})
+    return FugitiveReal(a:0 > 1 ? a:2 : @%)
+  elseif a:0 > 1
     return fugitive#Path(a:1, a:2, FugitiveGitDir(a:0 > 2 ? a:3 : -1))
   else
     return FugitiveReal(a:0 ? a:1 : @%)
@@ -170,7 +179,7 @@ endfunction
 " An optional second argument provides the Git dir, or the buffer number of a
 " buffer with a Git dir.  The default is the current buffer.
 function! FugitiveRemoteUrl(...) abort
-  return fugitive#RemoteUrl(a:0 ? a:1 : '', a:0 > 1 ? a:2 : -1, a:0 > 2 ? a:3 : 0)
+  return call('fugitive#RemoteUrl', a:000)
 endfunction
 
 " FugitiveHead() retrieves the name of the current branch. If the current HEAD
@@ -181,11 +190,20 @@ endfunction
 " An optional second argument provides the Git dir, or the buffer number of a
 " buffer with a Git dir.  The default is the current buffer.
 function! FugitiveHead(...) abort
-  let dir = FugitiveGitDir(a:0 > 1 ? a:2 : -1)
+  if a:0 && type(a:1) ==# type({})
+    let dir = FugitiveGitDir(a:1)
+    let arg = get(a:, 2, 0)
+  elseif a:0 > 1
+    let dir = FugitiveGitDir(a:2)
+    let arg = a:1
+  else
+    let dir = FugitiveGitDir()
+    let arg = get(a:, 1, 0)
+  endif
   if empty(dir)
     return ''
   endif
-  return fugitive#Head(a:0 ? a:1 : 0, dir)
+  return fugitive#Head(arg, dir)
 endfunction
 
 function! FugitiveStatusline(...) abort
@@ -212,9 +230,12 @@ function! FugitiveWorkTree(...) abort
   endif
 endfunction
 
-function! FugitiveIsGitDir(path) abort
-  let path = substitute(a:path, '[\/]$', '', '') . '/'
-  return len(a:path) && getfsize(path.'HEAD') > 10 && (
+function! FugitiveIsGitDir(...) abort
+  if !a:0 || type(a:1) !=# type('')
+    return !empty(call('FugitiveGitDir', a:000))
+  endif
+  let path = substitute(a:1, '[\/]$', '', '') . '/'
+  return len(path) && getfsize(path.'HEAD') > 10 && (
         \ isdirectory(path.'objects') && isdirectory(path.'refs') ||
         \ getftype(path.'commondir') ==# 'file')
 endfunction
