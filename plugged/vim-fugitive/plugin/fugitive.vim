@@ -116,7 +116,7 @@ endfunction
 "
 " * "args": List of command arguments, starting with the subcommand.  Will be
 "   empty for usages like :Git --help.
-" * "dir": Git dir of the relevant repository.
+" * "git_dir": Git dir of the relevant repository.
 " * "exit_status": The integer exit code of the process.
 " * "flags": Flags passed directly to Git, like -c and --help.
 " * "file": Path to file containing command output.  Not guaranteed to exist,
@@ -134,7 +134,7 @@ endfunction
 " it will be used as the Git dir.  If it's a buffer number, the Git dir for
 " that buffer will be used.  The default is the current buffer.
 function! FugitivePrepare(...) abort
-  return call('fugitive#Prepare', a:000)
+  return call('fugitive#ShellCommand', a:000)
 endfunction
 
 " FugitiveConfig() get returns an opaque structure that can be passed to other
