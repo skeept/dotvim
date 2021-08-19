@@ -51,9 +51,24 @@ endfunction
 " useful mapping to convert time, get the word under cursor and convert it to
 " regular date format
 function! wk#echoOrPrintTime()
-  if v:count != 0
-    let g:wk.echoOrPrintTimeSetting = v:count
-    let g:wk.echoOrPrintTimeRanOnce = 1 "user remembers setting
+  " defaults
+  if !exists('g:wk.ep_write')
+    let g:wk.ep_write = 0
+  endif
+  if !exists('g:wk.ep_display_msg')
+    let g:wk.ep_display_msg = 1 "display first time run
+  endif
+  if !exists('g:wk.ep_show_adjusted')
+    let g:wk.ep_show_adjusted = 0
+  endif
+
+  " user passes count => modify one of defaults
+  if v:count == 1
+    let g:wk.ep_write = 1 - g:wk.ep_write
+  elseif v:count == 2
+    let g:wk.ep_display_msg = 1
+  elseif v:count == 3
+    let g:wk.ep_show_adjusted = 1 - g:wk.ep_show_adjusted
   endif
 
   " have the following global variables:
@@ -75,31 +90,45 @@ function! wk#echoOrPrintTime()
 
   "first time calling this function give a message how to change setting
   let use_msg = ""
-  if !exists('g:wk.echoOrPrintTimeRanOnce')
-    let g:wk.echoOrPrintTimeRanOnce = 1
-    let one_w = (g:wk.echoOrPrintTimeSetting == 1) ? '*' : ''
-    let two_w = (g:wk.echoOrPrintTimeSetting == 2) ? '*' : ''
-    let use_msg = ' prefix mapping 1: ' . one_w . 'print' . one_w
-          \ . ' 2:' . two_w . 'write' . two_w
-    let use_msg .= ' ' . 'g:ep_offset:' . g:ep_offset
-    let use_msg .= ' ' . 'format: ' . format
+  if g:wk.ep_display_msg == 1
+    let g:wk.ep_display_msg = 0 "print once, unless requested again
+    let write_fmt = (g:wk.ep_write == 1) ? '*' : ''
+    let use_msg .= ' (prefix) 1: write[' . write_fmt . ']'
+    let use_msg .= ' 2: this msg'
+    let adjusted_fmt = (g:wk.ep_show_adjusted == 1) ? '*' : ''
+    let use_msg .= ' 3: show adjusted[' . adjusted_fmt . ']'
+    let use_msg .= ' g:ep_offset:' . g:ep_offset
+    let use_msg .= ' format: ' . format
   endif
 
   let current_val = expand("<cword>")
+  let current_val = substitute(current_val, "\\D", "", "g")
+
+  let hours_diff = ''
+  if exists('g:wk.ep_previous_val') && current_val != g:wk.ep_previous_val
+    let d1 = (current_val - g:wk.ep_previous_val)
+    let sign_t = d1 >= 0 ? "" : "-"
+    if d1 < 0 | let d1 = -d1 | endif
+    let hours_d =  d1 / 3600
+    let mins_d = (d1 - hours_d * 3600) / 60
+    let hours_diff = ' (' . sign_t . hours_d . ':' . mins_d . ')'
+  endif
+  let g:wk.ep_previous_val = current_val
+
   let adjusted_val = current_val + 3600 * g:ep_offset
 
   let time_display = strftime(format, current_val)
-  if current_val != adjusted_val
+  if current_val != adjusted_val && g:wk.ep_show_adjusted
     let time_display .= ' # '  . strftime(format, adjusted_val)
   endif
 
-  let time_display .= use_msg
-
-  if g:wk.echoOrPrintTimeSetting == 2
+  if g:wk.ep_write == 1
     " try writting text after current word
     let @u = " " . time_display
     normal he"up
   endif
+  let time_display .= hours_diff
+  let time_display .= use_msg
   echo time_display
 endfunction
 
