@@ -9,6 +9,7 @@ import os
 from typing import Set, List
 
 from UltiSnips import vim_helper
+from UltiSnips.error import PebkacError
 from UltiSnips.snippet.definition import UltiSnipsSnippetDefinition
 from UltiSnips.snippet.source.file.base import SnippetFileSource
 from UltiSnips.snippet.source.file.common import (
@@ -52,7 +53,7 @@ def find_all_snippet_directories() -> List[str]:
     for rtp in check_dirs:
         for snippet_dir in snippet_dirs:
             if snippet_dir == "snippets":
-                raise RuntimeError(
+                raise PebkacError(
                     "You have 'snippets' in UltiSnipsSnippetDirectories. This "
                     "directory is reserved for snipMate snippets. Use another "
                     "directory for UltiSnips snippets."
@@ -187,7 +188,10 @@ def _parse_snippets_file(data, filename):
         elif head == "clearsnippets":
             yield "clearsnippets", (current_priority, tail.split())
         elif head == "context":
-            head, context, = handle_context(tail, lines.line_index)
+            (
+                head,
+                context,
+            ) = handle_context(tail, lines.line_index)
             if head == "error":
                 yield (head, tail)
         elif head == "priority":
