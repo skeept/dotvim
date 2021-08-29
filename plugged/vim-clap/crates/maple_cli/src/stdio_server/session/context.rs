@@ -1,7 +1,8 @@
 use std::path::PathBuf;
-use std::sync::{atomic::AtomicBool, Arc, Mutex};
+use std::sync::{atomic::AtomicBool, Arc};
 
 use anyhow::Result;
+use parking_lot::Mutex;
 use serde::Deserialize;
 
 use crate::stdio_server::{types::ProviderId, Message};
@@ -9,6 +10,37 @@ use crate::stdio_server::{types::ProviderId, Message};
 const DEFAULT_DISPLAY_WINWIDTH: u64 = 100;
 
 const DEFAULT_PREVIEW_WINHEIGHT: u64 = 30;
+
+/// This type represents the scale of filtering source.
+#[derive(Debug, Clone)]
+pub enum Scale {
+    /// We do not know the exact total number of source items.
+    Indefinite,
+
+    /// Large scale.
+    ///
+    /// The number of total source items is already known, but that's
+    /// too many for the synchorous filtering.
+    Large(usize),
+
+    /// Small scale, in which case we do not have to use the dynamic filtering.
+    Small { total: usize, lines: Vec<String> },
+}
+
+impl Default for Scale {
+    fn default() -> Self {
+        Self::Indefinite
+    }
+}
+
+impl Scale {
+    pub fn total(&self) -> Option<usize> {
+        match self {
+            Self::Large(total) | Self::Small { total, .. } => Some(*total),
+            _ => None,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct SessionContext {
@@ -18,9 +50,10 @@ pub struct SessionContext {
     pub display_winwidth: u64,
     pub preview_winheight: u64,
     pub source_cmd: Option<String>,
+    pub scale: Arc<Mutex<Scale>>,
     pub runtimepath: Option<String>,
     pub is_running: Arc<Mutex<AtomicBool>>,
-    pub source_list: Arc<Mutex<Option<Vec<String>>>>,
+    pub enable_icon: bool,
 }
 
 impl SessionContext {
@@ -52,6 +85,7 @@ impl From<Message> for SessionContext {
             preview_winheight: Option<u64>,
             source_cmd: Option<String>,
             runtimepath: Option<String>,
+            enable_icon: Option<bool>,
         }
 
         let Params {
@@ -62,6 +96,7 @@ impl From<Message> for SessionContext {
             preview_winheight,
             source_cmd,
             runtimepath,
+            enable_icon,
         } = msg.deserialize_params_unsafe();
 
         Self {
@@ -70,10 +105,11 @@ impl From<Message> for SessionContext {
             start_buffer_path: source_fpath,
             display_winwidth: display_winwidth.unwrap_or(DEFAULT_DISPLAY_WINWIDTH),
             preview_winheight: preview_winheight.unwrap_or(DEFAULT_PREVIEW_WINHEIGHT),
+            enable_icon: enable_icon.unwrap_or(false),
             source_cmd,
             runtimepath,
+            scale: Arc::new(Mutex::new(Scale::Indefinite)),
             is_running: Arc::new(Mutex::new(true.into())),
-            source_list: Arc::new(Mutex::new(None)),
         }
     }
 }

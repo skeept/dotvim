@@ -99,6 +99,14 @@ function! FugitiveParse(...) abort
   throw v:errmsg
 endfunction
 
+" FugitiveGitVersion() queries the version of Git in use.  Pass up to 3
+" arguments to return a Boolean of whether a certain minimum version is
+" available (FugitiveGitVersion(2,3,4) checks for 2.3.4 or higher) or no
+" arguments to get a raw string.
+function! FugitiveGitVersion(...) abort
+  return call('fugitive#GitVersion', a:000)
+endfunction
+
 " FugitiveResult() returns an object encapsulating the result of the most
 " recent :Git command.  Will be empty if no result is available.  During a
 " User FugitiveChanged event, this is guaranteed to correspond to the :Git
@@ -117,6 +125,22 @@ function! FugitiveResult(...) abort
   return call('fugitive#Result', a:000)
 endfunction
 
+" FugitiveExecute() runs Git with a list of arguments and returns a dictionary
+" with the following keys:
+"
+" * "exit_status": The integer exit code of the process.
+" * "stdout": The stdout produced by the process, as a list of lines.
+" * "stderr": The stdout produced by the process, as a list of lines.
+"
+" An optional second argument provides the Git dir, or the buffer number of a
+" buffer with a Git dir.  The default is the current buffer.
+"
+" An optional final argument is a callback Funcref, for asynchronous
+" execution.
+function! FugitiveExecute(args, ...) abort
+  return call('fugitive#Execute', [a:args] + a:000)
+endfunction
+
 " FugitiveShellCommand() turns an array of arugments into a Git command string
 " which can be executed with functions like system() and commands like :!.
 " Integer arguments will be treated as buffer numbers, and the appropriate
@@ -128,7 +152,16 @@ function! FugitiveShellCommand(...) abort
   return call('fugitive#ShellCommand', a:000)
 endfunction
 
+" FugitivePrepare() is a deprecated alias for FugitiveShellCommand().  If you
+" are using this in conjunction with system(), consider using
+" FugitiveExecute() instead.
 function! FugitivePrepare(...) abort
+  if !exists('s:did_prepare_warning')
+    let s:did_prepare_warning = 1
+    echohl WarningMsg
+    unsilent echomsg 'FugitivePrepare() has been superseded by FugitiveShellCommand()'
+    echohl NONE
+  endif
   return call('fugitive#ShellCommand', a:000)
 endfunction
 
@@ -452,10 +485,13 @@ if exists(':Gstatus') != 2 && get(g:, 'fugitive_legacy_commands', 1)
 endif
 
 for s:cmd in ['Commit', 'Revert', 'Merge', 'Rebase', 'Pull', 'Push', 'Fetch', 'Blame']
-  if exists(':G' . tolower(s:cmd)) != 2 && get(g:, 'fugitive_legacy_commands', 1)
+  if exists(':G' . tolower(s:cmd)) != 2 && get(g:, 'fugitive_legacy_commands', 0)
     exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#' . s:cmd . 'Complete G' . tolower(s:cmd)
           \ 'echohl WarningMSG|echomsg ":G' . tolower(s:cmd) . ' is deprecated in favor of :Git ' . tolower(s:cmd) . '"|echohl NONE|'
           \ 'exe fugitive#Command(<line1>, <count>, +"<range>", <bang>0, "<mods>", "' . tolower(s:cmd) . ' " . <q-args>)'
+  elseif exists(':G' . tolower(s:cmd)) != 2 && !exists('g:fugitive_legacy_commands')
+    exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#' . s:cmd . 'Complete G' . tolower(s:cmd)
+          \ 'echoerr ":G' . tolower(s:cmd) . ' has been removed in favor of :Git ' . tolower(s:cmd) . '"'
   endif
 endfor
 unlet s:cmd
@@ -467,9 +503,12 @@ exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugiti
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Gcgrep exe fugitive#GrepCommand(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Glgrep exe fugitive#GrepCommand(0, <count> > 0 ? <count> : 0, +"<range>", <bang>0, "<mods>", <q-args>)'
 
-if exists(':Glog') != 2 && get(g:, 'fugitive_legacy_commands', 1)
+if exists(':Glog') != 2 && get(g:, 'fugitive_legacy_commands', 0)
   exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Glog  :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "")'
         \ '|echohl WarningMSG|echomsg ":Glog is deprecated in favor of :Gclog"|echohl NONE'
+elseif exists(':Glog') != 2 && !exists('g:fugitive_legacy_commands')
+  exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Glog'
+        \ ' echoerr ":Glog has been removed in favor of :Gclog"'
 endif
 exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Gclog :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "c")'
 exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GcLog :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "c")'

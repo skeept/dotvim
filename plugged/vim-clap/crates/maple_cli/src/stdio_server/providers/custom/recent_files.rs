@@ -6,19 +6,23 @@ use crossbeam_channel::Sender;
 use serde::Deserialize;
 use serde_json::json;
 
+use filter::FilteredItem;
+
 use crate::datastore::RECENT_FILES_IN_MEMORY;
-use crate::stdio_server::event_handlers::OnMoveHandler;
+use crate::stdio_server::providers::builtin::OnMoveHandler;
 use crate::stdio_server::{
-    session::{Event, EventHandler, NewSession, Session, SessionContext, SessionEvent},
+    session::{EventHandler, NewSession, Session, SessionContext, SessionEvent},
     write_response, Message,
 };
 
 pub async fn handle_recent_files_message(
     msg: Message,
-    winwidth: u64,
+    context: Arc<SessionContext>,
     force_execute: bool,
-) -> Vec<filter::FilteredItem> {
+) -> Vec<FilteredItem> {
     let msg_id = msg.id;
+
+    let cwd = context.cwd.to_string_lossy().to_string();
 
     #[derive(Deserialize)]
     struct Params {
@@ -33,19 +37,44 @@ pub async fn handle_recent_files_message(
         lnum,
     } = msg.deserialize_params_unsafe();
 
-    let recent_files = RECENT_FILES_IN_MEMORY.lock();
-    let ranked = recent_files.filter_on_query(&query);
+    let mut recent_files = RECENT_FILES_IN_MEMORY.lock();
+
+    let ranked = if query.is_empty() || force_execute {
+        // Sort the initial list according to the cwd.
+        //
+        // This changes the order of existing recent file entries.
+        recent_files.sort_by_cwd(&cwd);
+        recent_files
+            .entries
+            .iter()
+            .map(|entry| {
+                FilteredItem::new(
+                    entry.fpath.clone(),
+                    entry.frecent_score as i64,
+                    Default::default(),
+                )
+            })
+            .collect::<Vec<_>>()
+    } else {
+        recent_files.filter_on_query(&query, cwd)
+    };
     let initial_size = recent_files.len();
 
     let total = ranked.len();
 
     let mut preview = None;
 
+    let winwidth = context.display_winwidth as usize;
+
     if let Some(lnum) = lnum {
         // process the new preview
         if let Some(new_entry) = ranked.get(lnum as usize - 1) {
             let new_curline = new_entry.display_text();
-            if let Ok((lines, fname)) = crate::previewer::preview_file(new_curline, 100, 80) {
+            if let Ok((lines, fname)) = crate::previewer::preview_file(
+                new_curline,
+                context.sensible_preview_size(),
+                winwidth,
+            ) {
                 preview = Some(json!({
                   "lines": lines,
                   "fname": fname
@@ -57,7 +86,7 @@ pub async fn handle_recent_files_message(
     // Take the first 200 entries and add an icon to each of them.
     let (lines, indices, truncated_map) = printer::process_top_items(
         ranked.iter().take(200).cloned().collect(),
-        winwidth as usize,
+        winwidth,
         if enable_icon.unwrap_or(true) {
             Some(icon::IconPainter::File)
         } else {
@@ -98,48 +127,45 @@ pub async fn handle_recent_files_message(
 
 #[derive(Debug, Clone, Default)]
 pub struct RecentFilesMessageHandler {
-    lines: Arc<Mutex<Vec<filter::FilteredItem>>>,
+    lines: Arc<Mutex<Vec<FilteredItem>>>,
 }
 
 #[async_trait::async_trait]
 impl EventHandler for RecentFilesMessageHandler {
-    async fn handle(&mut self, event: Event, context: SessionContext) -> Result<()> {
-        match event {
-            Event::OnMove(msg) => {
-                let msg_id = msg.id;
+    async fn handle_on_move(&mut self, msg: Message, context: Arc<SessionContext>) -> Result<()> {
+        let msg_id = msg.id;
 
-                let lnum = msg.get_u64("lnum").expect("lnum is required");
+        let lnum = msg.get_u64("lnum").expect("lnum is required");
 
-                if let Some(curline) = self
-                    .lines
-                    .lock()
-                    .get((lnum - 1) as usize)
-                    .map(|r| r.source_item.raw.as_str())
-                {
-                    if let Err(e) = OnMoveHandler::create(&msg, &context, Some(curline.into()))
-                        .map(|x| x.handle())
-                    {
-                        log::error!("Failed to handle OnMove event: {:?}", e);
-                        write_response(json!({"error": e.to_string(), "id": msg_id }));
-                    }
-                }
-            }
-            Event::OnTyped(msg) => {
-                let winwidth = context.display_winwidth;
-                let new_lines = tokio::spawn(handle_recent_files_message(msg, winwidth, false))
-                    .await
-                    .unwrap_or_else(|e| {
-                        log::error!(
-                            "Failed to spawn a task for handle_dumb_jump_message: {:?}",
-                            e
-                        );
-                        Default::default()
-                    });
-
-                let mut lines = self.lines.lock();
-                *lines = new_lines;
+        if let Some(curline) = self
+            .lines
+            .lock()
+            .get((lnum - 1) as usize)
+            .map(|r| r.source_item.raw.as_str())
+        {
+            if let Err(e) =
+                OnMoveHandler::create(&msg, &context, Some(curline.into())).map(|x| x.handle())
+            {
+                log::error!("Failed to handle OnMove event: {:?}", e);
+                write_response(json!({"error": e.to_string(), "id": msg_id }));
             }
         }
+        Ok(())
+    }
+
+    async fn handle_on_typed(&mut self, msg: Message, context: Arc<SessionContext>) -> Result<()> {
+        let new_lines = tokio::spawn(handle_recent_files_message(msg, context, false))
+            .await
+            .unwrap_or_else(|e| {
+                log::error!(
+                    "Failed to spawn a task for handle_dumb_jump_message: {:?}",
+                    e
+                );
+                Default::default()
+            });
+
+        let mut lines = self.lines.lock();
+        *lines = new_lines;
 
         Ok(())
     }
@@ -154,12 +180,12 @@ impl NewSession for RecentFilesSession {
 
         let (session, session_sender) = Session::new(msg.clone(), handler);
 
-        let winwidth = session.context.display_winwidth;
+        let context_clone = session.context.clone();
 
         session.start_event_loop()?;
 
         tokio::spawn(async move {
-            let initial_lines = handle_recent_files_message(msg, winwidth, true).await;
+            let initial_lines = handle_recent_files_message(msg, context_clone, true).await;
 
             let mut lines = lines_clone.lock();
             *lines = initial_lines;
