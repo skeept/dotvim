@@ -11,9 +11,9 @@
 "
 " TODO: use option_save() and option_restore() when implemented
 
-if !has('patch-8.0.1806')
+if !has('patch-8.2.2638')
   echohl WarningMsg
-  echomsg "[MUcomplete Test] Vim 8.0.1806 or later is needed to run the tests successfully"
+  echomsg "[MUcomplete Test] Vim 8.2.2638 or later is needed to run the tests successfully"
   echohl None
 endif
 
@@ -156,7 +156,7 @@ fun! Test_MU_cmd_completion()
   call feedkeys("aech", "tx")
   call feedkeys("a", "t!")
   call feedkeys("\<tab>\<tab>\<esc>", "tx")
-  call assert_equal("echoerr", getline(1))
+  call assert_equal("echoconsole", getline(1))
   bwipe!
   set completeopt&
 endf

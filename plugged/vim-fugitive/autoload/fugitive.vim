@@ -918,6 +918,8 @@ function! fugitive#RevParse(rev, ...) abort
   throw 'fugitive: failed to parse revision ' . a:rev
 endfunction
 
+" Section: Git config
+
 function! s:ConfigTimestamps(dir, dict) abort
   let files = ['/etc/gitconfig', '~/.gitconfig',
         \ len($XDG_CONFIG_HOME) ? $XDG_CONFIG_HOME . '/git/config' : '~/.config/git/config']
@@ -1168,27 +1170,57 @@ function! fugitive#SshHostAlias(authority) abort
   return (len(user) ? user . '@' : '') . get(c, 'hostname', host) . (port =~# '^\%(22\)\=$' ? '' : ':' . port)
 endfunction
 
-let s:redirects = {}
+function! s:CurlResponse(result) abort
+  let a:result.headers = {}
+  for line in a:result.exit_status ? [] : remove(a:result, 'stdout')
+    let header = matchlist(line, '^\([[:alnum:]-]\+\):\s\(.\{-\}\)'. "\r\\=$")
+    if len(header)
+      let k = tolower(header[1])
+      if has_key(a:result.headers, k)
+        let a:result.headers[k] .= ', ' . header[2]
+      else
+        let a:result.headers[k] = header[2]
+      endif
+    elseif empty(line)
+      break
+    endif
+  endfor
+endfunction
+
+let s:remote_headers = {}
+
+function! fugitive#RemoteHttpHeaders(remote) abort
+  if a:remote !~# '^https\=://.' || !s:executable('curl')
+    return {}
+  endif
+  if !has_key(s:remote_headers, a:remote)
+    let url = a:remote . '/info/refs?service=git-upload-pack'
+    let exec = s:JobExecute(
+          \ ['curl', '--disable', '--silent', '--max-time', '5', '-X', 'GET', '-I',
+          \ url], {}, [function('s:CurlResponse')], {})
+    call fugitive#Wait(exec)
+    let s:remote_headers[a:remote] = exec.headers
+  endif
+  return s:remote_headers[a:remote]
+endfunction
 
 function! fugitive#ResolveRemote(remote) abort
   let scp_authority = matchstr(a:remote, '^[^:/]\+\ze:\%(//\)\@!')
   if len(scp_authority) && !(has('win32') && scp_authority =~# '^\a:[\/]')
     let path = strpart(a:remote, len(scp_authority) + 1)
     let authority = fugitive#SshHostAlias(scp_authority)
-    if authority !~# ':'
-      return authority . ':' . path
-    elseif path =~# '^/'
+    if path =~# '^/'
       return 'ssh://' . authority . path
+    elseif path =~# '^\~'
+      return 'ssh://' . authority . '/' . path
+    elseif authority !~# ':'
+      return authority . ':' . path
     endif
-  elseif a:remote =~# '^https\=://' && s:executable('curl')
-    if !has_key(s:redirects, a:remote)
-      let s:redirects[a:remote] = matchstr(join(s:JobExecute(
-            \ ['curl', '--disable', '--silent', '--max-time', '5', '-I',
-            \ a:remote . '/info/refs?service=git-upload-pack'], {}, [], {}).stdout, "\n"),
-            \ 'Location: \zs\S\+\ze/info/refs?')
-    endif
-    if len(s:redirects[a:remote])
-      return s:redirects[a:remote]
+  elseif a:remote =~# '^https\=://'
+    let headers = fugitive#RemoteHttpHeaders(a:remote)
+    let loc = matchstr(get(headers, 'location', ''), '^https\=://.\{-\}\ze/info/refs?')
+    if len(loc)
+      return loc
     endif
   elseif a:remote =~# '^ssh://'
     let authority = matchstr(a:remote, '[^/?#]*', 6)
@@ -1802,14 +1834,20 @@ function! s:ExpandVar(other, var, flags, esc, ...) abort
 endfunction
 
 function! s:Expand(rev, ...) abort
-  if a:rev =~# '^:[0-3]$'
-    let file = len(expand('%')) ? a:rev . ':%' : '%'
+  if a:rev =~# '^>\=:[0-3]$'
+    let file = len(expand('%')) ? a:rev[-2:-1] . ':%' : '%'
   elseif a:rev ==# '>'
     let file = '%'
-  elseif a:rev =~# '^>[~^]'
-    let file = len(expand('%')) ? '!' . a:rev[1:-1] . ':%' : '%'
+  elseif a:rev ==# '>:'
+    let file = empty(s:DirCommitFile(@%)[0]) ? ':0:%' : '%'
   elseif a:rev =~# '^>[> ]\@!'
-    let file = len(expand('%')) ? a:rev[1:-1] . ':%' : '%'
+    let rev = (a:rev =~# '^>[~^]' ? '!' : '') . a:rev[1:-1]
+    let prefix = matchstr(rev, '^\%(\\.\|{[^{}]*}\|[^:]\)*')
+    if prefix !=# rev
+      let file = rev
+    else
+      let file = len(expand('%')) ? rev . ':%' : '%'
+    endif
   else
     let file = a:rev
   endif
@@ -5674,7 +5712,7 @@ function! s:OpenParse(string, wants_cmd) abort
       break
     endif
   endwhile
-  if len(args)
+  if len(args) && args !=# ['>:']
     let file = join(args)
     if file ==# '-'
       let result = fugitive#Result()
@@ -6046,12 +6084,14 @@ function! fugitive#CanDiffoff(buf) abort
   return s:can_diffoff(bufnr(a:buf))
 endfunction
 
-function! s:diff_modifier(count) abort
+function! s:DiffModifier(count, default) abort
   let fdc = matchstr(&diffopt, 'foldcolumn:\zs\d\+')
   if &diffopt =~# 'horizontal' && &diffopt !~# 'vertical'
     return ''
   elseif &diffopt =~# 'vertical'
     return 'vertical '
+  elseif !get(g:, 'fugitive_diffsplit_directional_fit', a:default)
+    return ''
   elseif winwidth(0) <= a:count * ((&tw ? &tw : 80) + (empty(fdc) ? 2 : fdc))
     return ''
   else
@@ -6148,7 +6188,7 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
     let pre = ''
   endif
   let back = exists('*win_getid') ? 'call win_gotoid(' . win_getid() . ')' : 'wincmd p'
-  if (empty(args) || args[0] ==# ':') && a:keepfocus
+  if (empty(args) || args[0] =~# '^>\=:$') && a:keepfocus
     exe s:DirCheck()
     if commit =~# '^1\=$' && s:IsConflicted()
       let parents = [s:Relative(':2:'), s:Relative(':3:')]
@@ -6164,7 +6204,7 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
   try
     if exists('parents') && len(parents) > 1
       exe pre
-      let mods = (autodir ? s:diff_modifier(len(parents) + 1) : '') . s:Mods(mods, 'leftabove')
+      let mods = (autodir ? s:DiffModifier(len(parents) + 1, empty(args) || args[0] =~# '^>') : '') . s:Mods(mods, 'leftabove')
       let nr = bufnr('')
       if len(parents) > 1 && !&equalalways
         let equalalways = 0
@@ -6209,7 +6249,11 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
           return 'echoerr ' . string(v:exception)
         endtry
       endif
-      let mods = s:Mods(a:mods)
+      if a:keepfocus || arg =~# '^>'
+        let mods = s:Mods(a:mods, 'leftabove')
+      else
+        let mods = s:Mods(a:mods)
+      endif
     elseif exists('parents')
       let file = get(parents, -1, s:Relative(repeat('0', 40). ':'))
       let mods = s:Mods(a:mods, 'leftabove')
@@ -6234,7 +6278,7 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, args) abort
     exe pre
     let restore = s:diff_restore()
     let w:fugitive_diff_restore = restore
-    let mods = (autodir ? s:diff_modifier(2) : '') . mods
+    let mods = (autodir ? s:DiffModifier(2, empty(args) || args[0] =~# '^>') : '') . mods
     if &diffopt =~# 'vertical'
       let diffopt = &diffopt
       set diffopt-=vertical
@@ -7030,6 +7074,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
         let branch = matchstr(path, '^\.git/refs/remotes/[^/]\+/\zs.\+')
       else
         let merge = matchstr(path, '^\.git/refs/remotes/[^/]\+/\zs.\+')
+        let branch = merge
         let path = '.git/refs/heads/'.merge
       endif
     elseif path =~# '^\.git/refs/heads/.'
@@ -7110,7 +7155,11 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
     if empty(remote) || remote ==# '.'
       let remote = s:Remote(dir)
     endif
-    let remote_url = fugitive#RemoteUrl(remote, dir)
+    if remote =~# ':'
+      let remote_url = remote
+    else
+      let remote_url = fugitive#RemoteUrl(remote, dir)
+    endif
     let raw = empty(remote_url) ? remote : remote_url
     let git_dir = s:GitDir(dir)
 
@@ -7582,7 +7631,7 @@ function! s:cfile() abort
       endif
 
       if exists('dref')
-        return [ref, dcmd . ' ' . s:fnameescape(dref)] + dcmds
+        return [ref, dcmd . ' >' . s:fnameescape(dref)] + dcmds
       elseif ref != ""
         return [ref] + dcmds
       endif
