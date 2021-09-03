@@ -112,27 +112,14 @@ pub fn sync_run<I: Iterator<Item = SourceItem>>(
     Ok(ranked)
 }
 
-pub fn simple_run<T: Into<SourceItem>>(
-    lines: impl Iterator<Item = T>,
-    query: &str,
-    bonuses: Option<Vec<Bonus>>,
+/// Performs the synchorous filtering on a small scale of source in parallel.
+pub fn par_filter(
+    query: impl Into<Query>,
+    source_items: Vec<SourceItem>,
+    fuzzy_matcher: &Matcher,
 ) -> Vec<FilteredItem> {
-    let matcher = matcher::Matcher::with_bonuses(
-        FuzzyAlgorithm::Fzy,
-        MatchType::Full,
-        bonuses.unwrap_or_default(),
-    );
-
     let query: Query = query.into();
-    let do_match = |source_item: &SourceItem| matcher.match_query(source_item, &query);
-
-    let filtered = lines
-        .map(|line| line.into())
-        .filter_map(|source_item| {
-            do_match(&source_item).map(|(score, indices)| (source_item, score, indices))
-        })
-        .map(Into::into)
-        .collect::<Vec<_>>();
-
-    sort_initial_filtered(filtered)
+    let mut filtered = source::par_filter_impl(source_items, fuzzy_matcher, &query);
+    filtered.par_sort_unstable_by(|item1, item2| item2.score.partial_cmp(&item1.score).unwrap());
+    filtered
 }

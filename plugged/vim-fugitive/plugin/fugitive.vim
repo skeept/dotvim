@@ -1,6 +1,6 @@
 " fugitive.vim - A Git wrapper so awesome, it should be illegal
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      3.3
+" Version:      3.4
 " GetLatestVimScripts: 2975 1 :AutoInstall: fugitive.vim
 
 if exists('g:loaded_fugitive')
@@ -208,6 +208,18 @@ endfunction
 " buffer with a Git dir.  The default is the current buffer.
 function! FugitiveRemoteUrl(...) abort
   return call('fugitive#RemoteUrl', a:000)
+endfunction
+
+" FugitiveDidChange() triggers a FugitiveChanged event and reloads the summary
+" buffer for the current or given buffer number's repository.  You can also
+" give the result of a FugitiveExecute() and that context will be made
+" available inside the FugitiveChanged() event.
+"
+" Passing the special argument 0 (the number zero) softly expires summary
+" buffers for all repositories.  This can be used after a call to system()
+" with unclear implications.
+function! FugitiveDidChange(...) abort
+  return call('fugitive#DidChange', a:000)
 endfunction
 
 " FugitiveHead() retrieves the name of the current branch. If the current HEAD
@@ -470,7 +482,7 @@ function! s:ProjectionistDetect() abort
   endif
 endfunction
 
-let s:addr_other = has('patch-8.1.560') ? '-addr=other' : ''
+let s:addr_other = has('patch-8.1.560') || has('nvim-0.5.0') ? '-addr=other' : ''
 let s:addr_tabs  = has('patch-7.4.542') ? '-addr=tabs' : ''
 let s:addr_wins  = has('patch-7.4.542') ? '-addr=windows' : ''
 
@@ -479,9 +491,12 @@ if exists(':G') != 2
 endif
 command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#Complete Git exe fugitive#Command(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)
 
-if exists(':Gstatus') != 2 && get(g:, 'fugitive_legacy_commands', 1)
+if exists(':Gstatus') != 2 && get(g:, 'fugitive_legacy_commands', 0)
   exe 'command! -bang -bar     -range=-1' s:addr_other 'Gstatus exe fugitive#Command(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
         \ '|echohl WarningMSG|echomsg ":Gstatus is deprecated in favor of :Git (with no arguments)"|echohl NONE'
+elseif exists(':Gstatus') != 2 && !exists('g:fugitive_legacy_commands')
+  exe 'command! -bang -bar     -range=-1' s:addr_other 'Gstatus'
+        \ ' echoerr ":Gstatus has been removed in favor of :Git (with no arguments)"'
 endif
 
 for s:cmd in ['Commit', 'Revert', 'Merge', 'Rebase', 'Pull', 'Push', 'Fetch', 'Blame']
@@ -500,7 +515,6 @@ exe "command! -bar -bang -nargs=? -complete=customlist,fugitive#CdComplete Gcd  
 exe "command! -bar -bang -nargs=? -complete=customlist,fugitive#CdComplete Glcd exe fugitive#Cd(<q-args>, 1)"
 
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Ggrep  exe fugitive#GrepCommand(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
-exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Gcgrep exe fugitive#GrepCommand(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Glgrep exe fugitive#GrepCommand(0, <count> > 0 ? <count> : 0, +"<range>", <bang>0, "<mods>", <q-args>)'
 
 if exists(':Glog') != 2 && get(g:, 'fugitive_legacy_commands', 0)

@@ -107,3 +107,15 @@ impl<I: Iterator<Item = SourceItem>> Source<I> {
         Ok(filtered)
     }
 }
+
+/// Filter the source list in parallel.
+pub(crate) fn par_filter_impl(
+    list: Vec<SourceItem>,
+    matcher: &Matcher,
+    query: &Query,
+) -> Vec<FilteredItem> {
+    let scorer = |item: &SourceItem| matcher.match_query(item, query);
+    list.into_par_iter()
+        .filter_map(|item| scorer(&item).map(|(score, indices)| (item, score, indices).into()))
+        .collect()
+}
