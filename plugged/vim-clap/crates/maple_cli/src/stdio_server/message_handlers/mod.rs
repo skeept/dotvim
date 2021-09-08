@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rayon::prelude::*;
 use serde::Deserialize;
 use serde_json::json;
@@ -42,15 +42,40 @@ async fn preview_file_impl(msg: Message) -> Result<()> {
     #[derive(Deserialize)]
     struct Params {
         fpath: String,
-        preview_width: usize,
-        preview_height: usize,
+        display_width: usize,
+        display_height: usize,
+        preview_width: Option<usize>,
+        preview_height: Option<usize>,
+        preview_direction: String,
     }
 
     let Params {
         fpath,
+        display_width,
+        display_height,
         preview_width,
         preview_height,
+        preview_direction,
     } = msg.deserialize_params()?;
+
+    let home_prefix: String = format!("~{}", std::path::MAIN_SEPARATOR);
+
+    let fpath = if let Some(stripped) = fpath.strip_prefix(&home_prefix) {
+        let mut home_dir = directories::BaseDirs::new()
+            .ok_or(anyhow!("Failed to construct BaseDirs"))?
+            .home_dir()
+            .to_path_buf();
+        home_dir.push(stripped);
+        home_dir
+    } else {
+        fpath.into()
+    };
+
+    let (preview_height, preview_width) = if preview_direction.to_uppercase().as_str() == "UD" {
+        (preview_height.unwrap_or(display_height), display_width)
+    } else {
+        (display_height, preview_width.unwrap_or(display_width))
+    };
 
     let (lines, fname) = previewer::preview_file(fpath, preview_height, preview_width)?;
 
