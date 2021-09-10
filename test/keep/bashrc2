@@ -21,21 +21,21 @@
 #---------------
 
 if test "$CUR_SHELL" = "bash"; then
-set -o notify
-set -o noclobber
-#set -o ignoreeof
-set -o nounset
-#set -o xtrace          # useful for debuging
+  set -o notify
+  set -o noclobber
+  #set -o ignoreeof
+  set -o nounset
+  #set -o xtrace          # useful for debuging
 
-shopt -s cdspell
-shopt -s cdable_vars
-shopt -s checkhash
-shopt -s checkwinsize
-shopt -s mailwarn
-shopt -s sourcepath
-shopt -s no_empty_cmd_completion
-shopt -s histappend histreedit
-shopt -s extglob        # useful for programmable completion
+  shopt -s cdspell
+  shopt -s cdable_vars
+  shopt -s checkhash
+  shopt -s checkwinsize
+  shopt -s mailwarn
+  shopt -s sourcepath
+  shopt -s no_empty_cmd_completion
+  shopt -s histappend histreedit
+  shopt -s extglob        # useful for programmable completion
 fi
 
 #-----------------------
@@ -99,15 +99,15 @@ function ud ()
 
 
 function soo () {
-#use this to run a command and pipe the output to less
-# in case the comand does not exist try less on the file
-if
-  type "$1" >& /dev/null
-then
-  "$@"  | less
-else
-  less "$@"
-fi
+  #use this to run a command and pipe the output to less
+  # in case the comand does not exist try less on the file
+  if
+    type "$1" >& /dev/null
+  then
+    "$@"  | less
+  else
+    less "$@"
+  fi
 }
 
 function pre()
@@ -150,7 +150,7 @@ function sae()
 
 function _exit()        # function to run upon exit of shell
 {
-    echo -e "${RED}Hasta la vista, baby${NC}"
+  echo -e "${RED}Hasta la vista, baby${NC}"
 }
 trap _exit 0
 
@@ -160,41 +160,41 @@ trap _exit 0
 
 function fastprompt()
 {
-    unset PROMPT_COMMAND
-    case $TERM in
-        *term | rxvt )
-            PS1="[\h] \W > \[\033]0;[\u@\h] \w\007\]" ;;
-        *)
-            PS1="[\h] \W > " ;;
-    esac
+  unset PROMPT_COMMAND
+  case $TERM in
+    *term | rxvt )
+      PS1="[\h] \W > \[\033]0;[\u@\h] \w\007\]" ;;
+    *)
+      PS1="[\h] \W > " ;;
+  esac
 }
 
 
 MYHOST=`hostname`
 function powerprompt()
 {
-    _powerprompt()
-    {
-        LOAD=$(uptime|sed -e "s/.*: \([^,]*\).*/\1/" -e "s/ //g")
-        TIME=$(date +%H:%M)
-    }
+  _powerprompt()
+  {
+    LOAD=$(uptime|sed -e "s/.*: \([^,]*\).*/\1/" -e "s/ //g")
+    TIME=$(date +%H:%M)
+  }
 
-    PROMPT_COMMAND=_powerprompt
-    case $TERM in
-        *term | rxvt  )
-#            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
-            PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
-        linux )
-            PS1="$USER\w> " ;;
-        * )
-            PS1="$USER\w> " ;;
-    esac
+PROMPT_COMMAND=_powerprompt
+case $TERM in
+  *term | rxvt  )
+    #            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
+    PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
+  linux )
+    PS1="$USER\w> " ;;
+  * )
+    PS1="$USER\w> " ;;
+esac
 }
 
 
 
 #powerprompt     # this is the default prompt - might be slow
-                # If too slow, use fastprompt instead....
+# If too slow, use fastprompt instead....
 
 
 #===============================================================
@@ -228,7 +228,7 @@ export LESSOPEN='|/usr/bin/lesspipe.sh %s >& /dev/null' # Use this if lesspipe.s
 #export LESS='-i -N -w  -z-4 -g -e -M -X -F -R -P%t?f%f \
 #:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 export LESS='-i      -e -M -X  -R -P%t?f%f \
-:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
+  :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 
 #----------------
 # a few fun ones
@@ -236,12 +236,12 @@ export LESS='-i      -e -M -X  -R -P%t?f%f \
 
 function xtitle ()
 {
-    #case $TERM in
-        #*term | rxvt)
-            #echo -n -e "\033]0;$*\007" ;;
-        #*)  ;;
-    #esac
-    echo -n -e "\033]0;$*\007"
+  #case $TERM in
+  #*term | rxvt)
+  #echo -n -e "\033]0;$*\007" ;;
+#*)  ;;
+#esac
+echo -n -e "\033]0;$*\007"
 }
 
 
@@ -250,11 +250,11 @@ function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total ";
 
 #function te()  # wrapper around xemacs/gnuserv
 #{
-    #if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
-        #gnuclient -q "$@";
-    #else
-        #( xemacs "$@" & );
-    #fi
+#if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
+#gnuclient -q "$@";
+#else
+#( xemacs "$@" & );
+#fi
 #}
 
 #-----------------------------------
@@ -265,47 +265,47 @@ function ff() { local pat=$1; shift; find . -iname '*'${pat}'*' $@; }
 function fe() { find . -iname '*'$1'*' -exec $2 {} \; ; }  # find a file and run $2 on it
 function fstr() # find a string in a set of files
 {
-    if [ "$#" -gt 2 ]; then
-        echo "Usage: fstr \"pattern\" [files] "
-        return;
-    fi
-    SMSO=$(tput smso)
-    RMSO=$(tput rmso)
-    find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
-sed "s/$1/$SMSO$1$RMSO/gI"
-}
+  if [ "$#" -gt 2 ]; then
+    echo "Usage: fstr \"pattern\" [files] "
+    return;
+  fi
+  SMSO=$(tput smso)
+  RMSO=$(tput rmso)
+  find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
+    sed "s/$1/$SMSO$1$RMSO/gI"
+  }
 
 function cuttail() # cut last n lines in file, 10 by default
 {
-    nlines=${2:-10}
-    sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
+  nlines=${2:-10}
+  sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
 }
 
 function lowercase()  # move filenames to lowercase
 {
-    for file ; do
-        filename=${file##*/}
-        case "$filename" in
-        */*) dirname==${file%/*} ;;
-        *) dirname=.;;
-        esac
-        nf=$(echo $filename | tr A-Z a-z)
-        newname="${dirname}/${nf}"
-        if [ "$nf" != "$filename" ]; then
-            mv "$file" "$newname"
-            echo "lowercase: $file --> $newname"
-        else
-            echo "lowercase: $file not changed."
-        fi
-    done
+  for file ; do
+    filename=${file##*/}
+    case "$filename" in
+      */*) dirname==${file%/*} ;;
+      *) dirname=.;;
+    esac
+    nf=$(echo $filename | tr A-Z a-z)
+    newname="${dirname}/${nf}"
+    if [ "$nf" != "$filename" ]; then
+      mv "$file" "$newname"
+      echo "lowercase: $file --> $newname"
+    else
+      echo "lowercase: $file not changed."
+    fi
+  done
 }
 
 function swap()         # swap 2 filenames around
 {
-    local TMPFILE=tmp.$$
-    mv $1 $TMPFILE
-    mv $2 $1
-    mv $TMPFILE $2
+  local TMPFILE=tmp.$$
+  mv $1 $TMPFILE
+  mv $2 $1
+  mv $TMPFILE $2
 }
 
 #-----------------------------------
@@ -319,38 +319,38 @@ function pp() { my_ps f | awk '!/awk/ && $0~var' var=${1:-".*"} ; }
 # but has no equivalent (that I know of) on Solaris
 function killps()   # kill by process name
 {
-    local pid pname sig="-TERM"   # default signal
-    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-        echo "Usage: killps [-SIGNAL] pattern"
-        return;
+  local pid pname sig="-TERM"   # default signal
+  if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    echo "Usage: killps [-SIGNAL] pattern"
+    return;
+  fi
+  if [ $# = 2 ]; then sig=$1 ; fi
+  for pid in $(my_ps| awk '!/awk/ && $0~pat { print $1 }' pat=${!#} ) ; do
+    pname=$(my_ps | awk '$1~var { print $5 }' var=$pid )
+    if ask "Kill process $pid <$pname> with signal $sig?"
+    then kill $sig $pid
     fi
-    if [ $# = 2 ]; then sig=$1 ; fi
-    for pid in $(my_ps| awk '!/awk/ && $0~pat { print $1 }' pat=${!#} ) ; do
-        pname=$(my_ps | awk '$1~var { print $5 }' var=$pid )
-        if ask "Kill process $pid <$pname> with signal $sig?"
-            then kill $sig $pid
-        fi
-    done
+  done
 }
 
 #function my_ip() # get IP adresses
 #{
-    #MY_IP=$(/sbin/ifconfig ppp0 | awk '/inet/ { print $2 } ' | sed -e s/addr://)
-    #MY_ISP=$(/sbin/ifconfig ppp0 | awk '/P-t-P/ { print $3 } ' | sed -e s/P-t-P://)
+#MY_IP=$(/sbin/ifconfig ppp0 | awk '/inet/ { print $2 } ' | sed -e s/addr://)
+#MY_ISP=$(/sbin/ifconfig ppp0 | awk '/P-t-P/ { print $3 } ' | sed -e s/P-t-P://)
 #}
 
 function iii()   # get current host related info
 {
-    echo -e "\nYou are logged on ${RED}$HOST"
-    echo -e "\nAdditionnal information:$NC " ; uname -a
-    echo -e "\n${RED}Users logged on:$NC " ; w -h
-    echo -e "\n${RED}Current date :$NC " ; date
-    echo -e "\n${RED}Machine stats :$NC " ; uptime
-    echo -e "\n${RED}Memory stats :$NC " ; free
-    my_ip 2>&- ;
-    echo -e "\n${RED}Local IP Address :$NC" ; echo ${MY_IP:-"Not connected"}
-    echo -e "\n${RED}ISP Address :$NC" ; echo ${MY_ISP:-"Not connected"}
-    echo
+  echo -e "\nYou are logged on ${RED}$HOST"
+  echo -e "\nAdditionnal information:$NC " ; uname -a
+  echo -e "\n${RED}Users logged on:$NC " ; w -h
+  echo -e "\n${RED}Current date :$NC " ; date
+  echo -e "\n${RED}Machine stats :$NC " ; uptime
+  echo -e "\n${RED}Memory stats :$NC " ; free
+  my_ip 2>&- ;
+  echo -e "\n${RED}Local IP Address :$NC" ; echo ${MY_IP:-"Not connected"}
+  echo -e "\n${RED}ISP Address :$NC" ; echo ${MY_ISP:-"Not connected"}
+  echo
 }
 
 
@@ -358,20 +358,20 @@ function iii()   # get current host related info
 
 function repeat()       # repeat n times command
 {
-    local i max
-    max=$1; shift;
-    for ((i=1; i <= max ; i++)); do  # --> C-like syntax
-        eval "$@";
-    done
+  local i max
+  max=$1; shift;
+  for ((i=1; i <= max ; i++)); do  # --> C-like syntax
+    eval "$@";
+  done
 }
 
 function ask()
 {
-    echo -n "$@" '[y/n] ' ; read ans
-    case "$ans" in
-        y*|Y*) return 0 ;;
-        *) return 1 ;;
-    esac
+  echo -n "$@" '[y/n] ' ; read ans
+  case "$ans" in
+    y*|Y*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 #=========================================================================
@@ -383,8 +383,8 @@ function ask()
 #=========================================================================
 
 if [ "${BASH_VERSION%.*}" \< "2.05" ]; then
-    echo "You will need to upgrade to version 2.05 for programmable completion"
-    return
+  echo "You will need to upgrade to version 2.05 for programmable completion"
+  return
 fi
 
 shopt -s extglob        # necessary
@@ -432,73 +432,73 @@ complete -f -o default -X '!*.cc' vim vi gvim emacs xemacs nedit joe jed kate kw
 complete -f -o default -X '!*.cpp' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
 complete -f -o default -X '!*.c++' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
 complete -f -o default -X '!*.py' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit \
-					py.exe py python python.exe ipython wpy wpy.exe \
-                                        epy
-complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
-complete -f -o default -X '!*.gms' gams gr
-complete -f -o default -X '!*.sh' bash sh
-complete -A variable path dupremove pre
-complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
+  py.exe py python python.exe ipython wpy wpy.exe \
+  epy
+  complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
+  complete -f -o default -X '!*.gms' gams gr
+  complete -f -o default -X '!*.sh' bash sh
+  complete -A variable path dupremove pre
+  complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
 
 
 # This is a 'universal' completion function - it works when commands have
 # a so-called 'long options' mode , ie: 'ls --all' instead of 'ls -a'
 _universal_func ()
 {
-    case "$2" in
-        -*)     ;;
-        *)      return ;;
-    esac
+  case "$2" in
+    -*)     ;;
+    *)      return ;;
+  esac
 
-    case "$1" in
-        \~*)    eval cmd=$1 ;;
-        *)      cmd="$1" ;;
-    esac
-    COMPREPLY=( $("$cmd" --help | sed  -e '/--/!d' -e 's/.*--\([^ ]*\).*/--\1/'| \
-grep ^"$2" |sort -u) )
-}
+  case "$1" in
+    \~*)    eval cmd=$1 ;;
+    *)      cmd="$1" ;;
+  esac
+  COMPREPLY=( $("$cmd" --help | sed  -e '/--/!d' -e 's/.*--\([^ ]*\).*/--\1/'| \
+    grep ^"$2" |sort -u) )
+  }
 complete  -o default -F _universal_func ldd wget bash id info
 
 
 _make_targets ()
 {
-    local mdef makef gcmd cur prev i
+  local mdef makef gcmd cur prev i
 
-    COMPREPLY=()
-    cur=${COMP_WORDS[COMP_CWORD]}
-    prev=${COMP_WORDS[COMP_CWORD-1]}
+  COMPREPLY=()
+  cur=${COMP_WORDS[COMP_CWORD]}
+  prev=${COMP_WORDS[COMP_CWORD-1]}
 
     # if prev argument is -f, return possible filename completions.
     # we could be a little smarter here and return matches against
     # `makefile Makefile *.mk', whatever exists
     case "$prev" in
-        -*f)    COMPREPLY=( $(compgen -f $cur ) ); return 0;;
+      -*f)    COMPREPLY=( $(compgen -f $cur ) ); return 0;;
     esac
 
     # if we want an option, return the possible posix options
     case "$cur" in
-        -)      COMPREPLY=(-e -f -i -k -n -p -q -r -S -s -t); return 0;;
+      -)      COMPREPLY=(-e -f -i -k -n -p -q -r -S -s -t); return 0;;
     esac
 
     # make reads `makefile' before `Makefile'
     if [ -f makefile ]; then
-        mdef=makefile
+      mdef=makefile
     elif [ -f Makefile ]; then
-        mdef=Makefile
+      mdef=Makefile
     else
-        mdef=*.mk               # local convention
+      mdef=*.mk               # local convention
     fi
 
     # before we scan for targets, see if a makefile name was specified
     # with -f
     for (( i=0; i < ${#COMP_WORDS[@]}; i++ )); do
-        if [[ ${COMP_WORDS[i]} == -*f ]]; then
-            eval makef=${COMP_WORDS[i+1]}       # eval for tilde expansion
-            break
-        fi
+      if [[ ${COMP_WORDS[i]} == -*f ]]; then
+        eval makef=${COMP_WORDS[i+1]}       # eval for tilde expansion
+        break
+      fi
     done
 
-        [ -z "$makef" ] && makef=$mdef
+    [ -z "$makef" ] && makef=$mdef
 
     # if we have a partial word to complete, restrict completions to
     # matches of that word
@@ -507,23 +507,23 @@ _make_targets ()
     # if we don't want to use *.mk, we can take out the cat and use
     # test -f $makef and input redirection
     COMPREPLY=( $(cat $makef 2>/dev/null | awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' | tr -s ' ' '\012' | sort -u | eval $gcmd ) )
-}
+  }
 
 complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
 
 _configure_func ()
 {
-    case "$2" in
-        -*)     ;;
-        *)      return ;;
-    esac
+  case "$2" in
+    -*)     ;;
+    *)      return ;;
+  esac
 
-    case "$1" in
-        \~*)    eval cmd=$1 ;;
-        *)      cmd="$1" ;;
-    esac
+  case "$1" in
+    \~*)    eval cmd=$1 ;;
+    *)      cmd="$1" ;;
+  esac
 
-    COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
+  COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
 }
 
 complete -F _configure_func configure
@@ -531,38 +531,38 @@ complete -F _configure_func configure
 # cvs(1) completion
 _cvs ()
 {
-    local cur prev
-    COMPREPLY=()
-    cur=${COMP_WORDS[COMP_CWORD]}
-    prev=${COMP_WORDS[COMP_CWORD-1]}
+  local cur prev
+  COMPREPLY=()
+  cur=${COMP_WORDS[COMP_CWORD]}
+  prev=${COMP_WORDS[COMP_CWORD-1]}
 
-    if [ $COMP_CWORD -eq 1 ] || [ "${prev:0:1}" = "-" ]; then
-        COMPREPLY=( $( compgen -W 'add admin checkout commit diff \
-        export history import log rdiff release remove rtag status \
-        tag update' $cur ))
-    else
-        COMPREPLY=( $( compgen -f $cur ))
-    fi
-    return 0
+  if [ $COMP_CWORD -eq 1 ] || [ "${prev:0:1}" = "-" ]; then
+    COMPREPLY=( $( compgen -W 'add admin checkout commit diff \
+      export history import log rdiff release remove rtag status \
+      tag update' $cur ))
+        else
+          COMPREPLY=( $( compgen -f $cur ))
+  fi
+  return 0
 }
 complete -F _cvs cvs
 
 
 _killall ()
 {
-    local cur prev
-    COMPREPLY=()
-    cur=${COMP_WORDS[COMP_CWORD]}
+  local cur prev
+  COMPREPLY=()
+  cur=${COMP_WORDS[COMP_CWORD]}
 
     # get a list of processes (the first sed evaluation
     # takes care of swapped out processes, the second
     # takes care of getting the basename of the process)
     COMPREPLY=( $( ps -u $USER -o comm  | \
-        sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
-        awk '{if ($0 ~ /^'$cur'/) print $0}' ))
+      sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
+      awk '{if ($0 ~ /^'$cur'/) print $0}' ))
 
     return 0
-}
+  }
 
 complete -F _killall killall killps
 
@@ -576,11 +576,11 @@ complete -F _killall killall killps
 
 function ddo() #try to do something with every file passed on the command line
 {
-    command=$1
-    shift
-    for file ; do
-      eval "($command $file &)"
-    done
+  command=$1
+  shift
+  for file ; do
+    eval "($command $file &)"
+  done
 }
 
 function qp()
@@ -589,13 +589,13 @@ function qp()
   ( for f in $@; do ( scp -r $f acme:Documents/quickput/ & ) ; done &> /dev/null )
   cp -rf $@ ~/x/quickput/
   (
-    cd ~/x/quickput;
-    git add . ;
-    git commit -a -m "$(date)" ;
-    git push --force origin master
-    hg add . ;
-    hg commit -m "$(date)"
-  )
+  cd ~/x/quickput;
+  git add . ;
+  git commit -a -m "$(date)" ;
+  git push --force origin master
+  hg add . ;
+  hg commit -m "$(date)"
+)
 }
 
 function qg()
@@ -605,11 +605,11 @@ function qg()
 
 
 function __javastart( ) {
-  if test -e  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ ; then
-    cd  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ >& /dev/null
-    ./java >& /dev/null
-    cd - >& /dev/null
-  fi
+if test -e  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ ; then
+  cd  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ >& /dev/null
+  ./java >& /dev/null
+  cd - >& /dev/null
+fi
 }
 __javastart
 
@@ -638,26 +638,26 @@ function dupremove()
   eval __dupremovevar=\$$1
   _result=$(gawk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | \
     sed -e 's/\:\:/\:/g' -e 's/:$//')
-  if test "a${_result}" = "a"; then
-    eval "export ${1}=\"\$$1\" "
-  else
-    eval "export ${1}=\"${_result}\" "
-  fi
-}
+      if test "a${_result}" = "a"; then
+        eval "export ${1}=\"\$$1\" "
+      else
+        eval "export ${1}=\"${_result}\" "
+      fi
+    }
 
-test -s "$HOME/.completion-git.sh" && . "$HOME/.completion-git.sh"
-test -s "$HOME/.completion-eg.sh" && . "$HOME/.completion-eg.sh"
-test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
-
-
-PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+  test -s "$HOME/.completion-git.sh" && . "$HOME/.completion-git.sh"
+  test -s "$HOME/.completion-eg.sh" && . "$HOME/.completion-eg.sh"
+  test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
 
 
-function gtp()
-{
-  GIT_PS1_SHOWDIRTYSTATE=1
-  PS1="[\h] \W $(__git_ps1) > "
-}
+  PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+
+
+  function gtp()
+  {
+    GIT_PS1_SHOWDIRTYSTATE=1
+    PS1="[\h] \W $(__git_ps1) > "
+  }
 #the following assumes 'alias g='git '
 complete -o default -o nospace -F _git g
 
@@ -665,18 +665,18 @@ complete -o default -o nospace -F _git g
 #complete -o default -o nospace -F _screen s
 
 if true; then
-# try new implementation for d
-__d_add_folder()
-{
-  local name_orig=$1
-  [ -z "${name_orig}" ] && echo "__d_add_folder: cannot add. Nothing provided." && return 1
-  #[ ! -d "${name}" ] && echo "cannot add. Folder ${name} missing." && return 1
+  # try new implementation for d
+  __d_add_folder()
+  {
+    local name_orig=$1
+    [ -z "${name_orig}" ] && echo "__d_add_folder: cannot add. Nothing provided." && return 1
+    #[ ! -d "${name}" ] && echo "cannot add. Folder ${name} missing." && return 1
 
-  if ! name=$(eval "cd $name_orig" >& /dev/null && readlink -e . ); then
-    echo "__d_add_folder: $name_orig not found. Cannot add"
-    return 1
-  fi
-  local key=$2
+    if ! name=$(eval "cd $name_orig" >& /dev/null && readlink -e . ); then
+      echo "__d_add_folder: $name_orig not found. Cannot add"
+      return 1
+    fi
+    local key=$2
 
   # use a vector where is element is another vector
   local size=${#_dirs_data_keys[@]}
@@ -915,71 +915,71 @@ elif test ${BASH_VERSION:0:1} -ge 4 ; then
     return
   }
 
-  __list_folder_hist()
-  {
-    # first argument is folder to be kept in history.
-    # history will not be deleted so don't need much manipulation
-    let i=0
-    for key in "${__my_dirs_history[@]}"; do
-      printf "%-30s   --  %s\n" "${key/${HOME}/~}" "$i"
-      let i+=1
-    done
-  }
-  __save_folder_hist()
-  {
-    local cand=$1
-    for key in "${__my_dirs_history[@]}"; do
-      if test "${cand}" = "${key}"; then
-        return
-      fi
-    done
-    # got here just add it to end of list
-    __my_dirs_history+=("${cand}")
-  }
-   __change_folder_hist()
-   {
-     # change to a folder in history specifying a key
-     # we assume the key will be valid
-     if test "$1" -ge "${#__my_dirs_history[@]}" >& /dev/null; then
-       return
-     fi
-     d "${__my_dirs_history[$1]}"
-   }
-   #interface function
-   dh() {
-     if test "a$1" = "a"; then
-       __list_folder_hist
-     else
-       __change_folder_hist "$1"
-     fi
-   }
-
-  function _d()
-  {
-    local cur=${COMP_WORDS[COMP_CWORD]}
-    COMPREPLY=( $(eval "compgen -W \"${!_my_dirs_data[@]}\" -- $cur") )
-  }
-  complete -o plusdirs -o nospace -F _d d
-
-  function __d_add_folder()
-  {
-    #echo --1=$1-- --2=$2--
-    # usage: $0 destination tag
-    if test "a$1" = "a"; then return; fi
-    # check if key already added, to many for push/popd
-    existing=0
-    for key in ${_my_dirs_data[@]}; do
-      if test "$key" = "$1"; then
-        existing=1;
-        break;
-      fi
-    done
-    if test "$existing" = "0"; then
-      pushd -n "$1" > /dev/null
+__list_folder_hist()
+{
+  # first argument is folder to be kept in history.
+  # history will not be deleted so don't need much manipulation
+  let i=0
+  for key in "${__my_dirs_history[@]}"; do
+    printf "%-30s   --  %s\n" "${key/${HOME}/~}" "$i"
+    let i+=1
+  done
+}
+__save_folder_hist()
+{
+  local cand=$1
+  for key in "${__my_dirs_history[@]}"; do
+    if test "${cand}" = "${key}"; then
+      return
     fi
-    if test "a$2" = "a"; then return; fi
-    _my_dirs_data["$2"]="$1"
-  }
+  done
+  # got here just add it to end of list
+  __my_dirs_history+=("${cand}")
+}
+__change_folder_hist()
+{
+  # change to a folder in history specifying a key
+  # we assume the key will be valid
+  if test "$1" -ge "${#__my_dirs_history[@]}" >& /dev/null; then
+    return
+  fi
+  d "${__my_dirs_history[$1]}"
+}
+#interface function
+dh() {
+  if test "a$1" = "a"; then
+    __list_folder_hist
+  else
+    __change_folder_hist "$1"
+  fi
+}
+
+function _d()
+{
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  COMPREPLY=( $(eval "compgen -W \"${!_my_dirs_data[@]}\" -- $cur") )
+}
+complete -o plusdirs -o nospace -F _d d
+
+function __d_add_folder()
+{
+  #echo --1=$1-- --2=$2--
+  # usage: $0 destination tag
+  if test "a$1" = "a"; then return; fi
+  # check if key already added, to many for push/popd
+  existing=0
+  for key in ${_my_dirs_data[@]}; do
+    if test "$key" = "$1"; then
+      existing=1;
+      break;
+    fi
+  done
+  if test "$existing" = "0"; then
+    pushd -n "$1" > /dev/null
+  fi
+  if test "a$2" = "a"; then return; fi
+  _my_dirs_data["$2"]="$1"
+}
 else
   function d()
   {
@@ -1017,7 +1017,7 @@ function gi()
   fi
   grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
     --exclude-dir=.{git,hg,svn} --binary-files=without-match "${pattern}" ${def_loc}
-}
+  }
 
 function gib()
 {
@@ -1029,7 +1029,7 @@ function gib()
   fi
   grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
     --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
-}
+  }
 
 # completion for vim
 function _vim()
@@ -1055,7 +1055,7 @@ function _vim()
     _vopts="${_vopts} --startuptime -i -h --help --version"
     COMPREPLY=( $( compgen -W "${_vopts}" \
       -- "$cur" ) )
-    return 0
+          return 0
   fi
 
   local _VIM_IGNORE=(pdf xdvi jpg pyc exe tar zip ps)
@@ -1139,10 +1139,10 @@ copy-static()
 
 function dirdiff()
 {
-    # Shell-escape each path:
-    DIR1=$(printf '%q' "$1"); shift
-    DIR2=$(printf '%q' "$1"); shift
-    vim $@ -c "DirDiff $DIR1 $DIR2"
+  # Shell-escape each path:
+  DIR1=$(printf '%q' "$1"); shift
+  DIR2=$(printf '%q' "$1"); shift
+  vim $@ -c "DirDiff $DIR1 $DIR2"
 }
 
 fz()
@@ -1152,7 +1152,12 @@ fz()
   else
     fzf --preview 'head -n 120 {}'
   fi
-  }
+}
+
+star()
+{
+  eval "$(starship init bash)"
+}
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
