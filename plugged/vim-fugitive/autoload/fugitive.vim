@@ -3214,11 +3214,7 @@ function! s:RunReceive(state, tmp, type, job, data, ...) abort
       call setbufline(a:state.capture_bufnr, line_count + 1, lines)
     endif
     call setbufvar(a:state.capture_bufnr, '&modifiable', 0)
-    if !getwinvar(bufwinid(a:state.capture_bufnr), '&previewwindow')
-      " no-op
-    elseif exists('*win_execute')
-      call win_execute(bufwinid(a:state.capture_bufnr), '$')
-    else
+    if getwinvar(bufwinid(a:state.capture_bufnr), '&previewwindow')
       let winnr = bufwinnr(a:state.capture_bufnr)
       if winnr > 0
         let old_winnr = winnr()
@@ -3815,8 +3811,12 @@ function! fugitive#Complete(lead, ...) abort
   let dir = a:0 == 1 ? a:1 : a:0 >= 3 ? s:Dir(a:3) : s:Dir()
   let root = a:0 >= 4 ? a:4 : s:Tree(s:Dir())
   let pre = a:0 > 1 ? strpart(a:1, 0, a:2) : ''
-  let subcmd = matchstr(pre, '\u\w*[! ] *\zs[[:alnum:]-]\+\ze ')
-  if empty(subcmd)
+  let subcmd = matchstr(pre, '\u\w*[! ] *\%(\%(++\S\+\|--\S\+-pathspecs\|-c\s\+\S\+\)\s\+\)*\zs[[:alnum:]][[:alnum:]-]*\ze ')
+  if empty(subcmd) && a:lead =~# '^+'
+    let results = ['++curwin']
+  elseif empty(subcmd) && a:lead =~# '^-'
+    let results = ['--literal-pathspecs', '--no-literal-pathspecs', '--glob-pathspecs', '--noglob-pathspecs', '--icase-pathspecs', '--no-optional-locks']
+  elseif empty(subcmd)
     let results = s:CompletableSubcommands(dir)
   elseif a:0 ==# 2 && subcmd =~# '^\%(commit\|revert\|push\|fetch\|pull\|merge\|rebase\)$'
     let cmdline = substitute(a:1, '\u\w*\([! ] *\)' . subcmd, 'G' . subcmd, '')
