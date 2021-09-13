@@ -109,5 +109,6 @@ alias cpv='rsync -ah --info=progress2'
 #alias lg=lazygit
 alias lazygit=lg
 alias bc=bc4
+alias dd=dirdiff
 
 # vim: set ft=sh:
