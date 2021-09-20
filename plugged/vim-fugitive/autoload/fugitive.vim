@@ -125,7 +125,15 @@ function! s:Mods(mods, ...) abort
   let mods = substitute(a:mods, '\C<mods>', '', '')
   let mods = mods =~# '\S$' ? mods . ' ' : mods
   if a:0 && mods !~# '\<\%(aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright\|tab\)\>'
-    let mods = a:1 . ' ' . mods
+    if a:1 ==# 'Edge'
+      if mods =~# '\<vertical\>' ? &splitright : &splitbelow
+        let mods = 'botright ' . mods
+      else
+        let mods = 'topleft ' . mods
+      endif
+    else
+      let mods = a:1 . ' ' . mods
+    endif
   endif
   return substitute(mods, '\s\+', ' ', 'g')
 endfunction
@@ -420,7 +428,7 @@ function! s:UserCommandList(...) abort
     if empty(tree)
       call add(git, '--git-dir=' . FugitiveGitPath(dir))
     else
-      if !s:cpath(tree . '/.git', dir)
+      if !s:cpath(tree . '/.git', dir) || len($GIT_DIR)
         call add(git, '--git-dir=' . FugitiveGitPath(dir))
       endif
       if !s:cpath(tree, getcwd())
@@ -546,6 +554,9 @@ function! s:PrepareEnv(env, dir) abort
     if !s:cpath(index_dir, our_dir) && !s:cpath(resolve(FugitiveVimPath(index_dir)), our_dir)
       let a:env['GIT_INDEX_FILE'] = FugitiveGitPath(fugitive#Find('.git/index', a:dir))
     endif
+  endif
+  if len($GIT_WORK_TREE)
+    let a:env['GIT_WORK_TREE'] = '.'
   endif
 endfunction
 
@@ -704,7 +715,7 @@ function! fugitive#PrepareJob(...) abort
   else
     let dict.cwd = FugitiveVimPath(tree)
     call extend(cmd, ['-C', FugitiveGitPath(tree)], 'keep')
-    if !s:cpath(tree . '/.git', dir)
+    if !s:cpath(tree . '/.git', dir) || len($GIT_DIR)
       call extend(cmd, ['--git-dir=' . FugitiveGitPath(dir)], 'keep')
     endif
   endif
@@ -742,7 +753,7 @@ function! s:BuildShell(dir, env, git, args) abort
     call insert(cmd, '--git-dir=' . FugitiveGitPath(a:dir))
   else
     call extend(cmd, ['-C', FugitiveGitPath(tree)], 'keep')
-    if !s:cpath(tree . '/.git', a:dir)
+    if !s:cpath(tree . '/.git', a:dir) || len($GIT_DIR)
       call extend(cmd, ['--git-dir=' . FugitiveGitPath(a:dir)], 'keep')
     endif
   endif
@@ -1110,7 +1121,7 @@ endfunction
 
 call s:add_methods('config', ['GetAll', 'Get', 'GetRegexp'])
 
-function! s:Remote(dir) abort
+function! s:RemoteDefault(dir) abort
   let head = FugitiveHead(0, a:dir)
   let remote = len(head) ? FugitiveConfigGet('branch.' . head . '.remote', a:dir) : ''
   let i = 10
@@ -1236,29 +1247,53 @@ function! fugitive#RemoteHttpHeaders(remote) abort
   return s:remote_headers[remote]
 endfunction
 
-function! fugitive#ResolveRemote(remote) abort
-  let scp_authority = matchstr(a:remote, '^[^:/]\+\ze:\%(//\)\@!')
+function! s:UrlParse(url) abort
+  let scp_authority = matchstr(a:url, '^[^:/]\+\ze:\%(//\)\@!')
   if len(scp_authority) && !(has('win32') && scp_authority =~# '^\a:[\/]')
-    let path = strpart(a:remote, len(scp_authority) + 1)
-    let authority = fugitive#SshHostAlias(scp_authority)
-    if path =~# '^/'
-      return 'ssh://' . authority . path
-    elseif path =~# '^\~'
-      return 'ssh://' . authority . '/' . path
-    elseif authority !~# ':'
-      return authority . ':' . path
-    endif
-  elseif a:remote =~# '^https\=://'
-    let headers = fugitive#RemoteHttpHeaders(a:remote)
+    return {'scheme': 'ssh', 'authority': scp_authority,
+          \ 'path': strpart(a:url, len(scp_authority) + 1)}
+  endif
+  let match = matchlist(a:url, '^\([[:alnum:].+-]\+\)://\([^/]*\)\(/.*\)\=\%(#\|$\)')
+  if empty(match)
+    return {'scheme': 'file', 'authority': '', 'path': a:url}
+  endif
+  let remote = {'scheme': match[1], 'authority': match[2]}
+  let remote.path = empty(match[3]) ? '/' : match[3]
+  if (remote.scheme ==# 'ssh' || remote.scheme ==# 'git') && remote.path[0:1] ==# '/~'
+    let remote.path = strpart(remote.path, 1)
+  endif
+  return remote
+endfunction
+
+function! s:ResolveRemote(url) abort
+  let remote = s:UrlParse(a:url)
+  if remote.scheme =~# '^https\=$'
+    let headers = fugitive#RemoteHttpHeaders(remote.scheme . '://' . remote.authority . remote.path)
     let loc = matchstr(get(headers, 'location', ''), '^https\=://.\{-\}\ze/info/refs?')
     if len(loc)
-      return loc
+      let remote = s:UrlParse(loc)
+    else
+      let remote.http_headers = headers
     endif
-  elseif a:remote =~# '^ssh://'
-    let authority = matchstr(a:remote, '[^/?#]*', 6)
-    return 'ssh://' . fugitive#SshHostAlias(authority) . strpart(a:remote, 6 + len(authority))
+  elseif remote.scheme ==# 'ssh'
+    let remote.authority = fugitive#SshHostAlias(remote.authority)
   endif
-  return a:remote
+  return remote
+endfunction
+
+function! fugitive#ResolveRemote(url) abort
+  let remote = s:ResolveRemote(a:url)
+  if remote.scheme ==# 'file' || remote.scheme ==# ''
+    return remote.path
+  elseif remote.path =~# '^/'
+    return remote.scheme . '://' . remote.authority . remote.path
+  elseif remote.path =~# '^\~'
+    return remote.scheme . '://' . remote.authority . '/' . remote.path
+  elseif remote.scheme ==# 'ssh' && remote.authority !~# ':'
+    return remote.authority . ':' . remote.path
+  else
+    return a:url
+  endif
 endfunction
 
 function! s:ConfigLengthSort(i1, i2) abort
@@ -1278,10 +1313,10 @@ function! fugitive#RemoteUrl(...) abort
     let config = fugitive#Config()
   endif
   if empty(args) || args[0] =~# '^:'
-    let url = s:Remote(config)
+    let url = s:RemoteDefault(config)
   elseif args[0] =~# '^\.\=$'
     call remove(args, 0)
-    let url = s:Remote(config)
+    let url = s:RemoteDefault(config)
   else
     let url = remove(args, 0)
   endif
@@ -3596,7 +3631,7 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
   if a:bang && pager isnot# 2
     let pager = 1
     let stream = exists('*setbufline')
-    let do_edit = substitute(s:Mods(a:mods, &splitbelow ? 'botright' : 'topleft'), '\<tab\>', '-tab', 'g') . 'pedit!'
+    let do_edit = substitute(s:Mods(a:mods, 'Edge'), '\<tab\>', '-tab', 'g') . 'pedit!'
   elseif pager
     let allow_pty = 0
     if pager is# 2 && a:bang && a:line2 >= 0
@@ -3872,7 +3907,7 @@ function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args
   let dir = a:0 ? s:Dir(a:1) : s:Dir()
   exe s:DirCheck(dir)
   try
-    let mods = s:Mods(a:mods, &splitbelow ? 'botright' : 'topleft')
+    let mods = s:Mods(a:mods, 'Edge')
     let file = fugitive#Find(':', dir)
     let arg = ' +setl\ foldmarker=<<<<<<<<,>>>>>>>>\|let\ w:fugitive_status=FugitiveGitDir() ' .
           \ s:fnameescape(file)
@@ -7144,6 +7179,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
         let type = 'blob'
       endif
     endif
+    let config = fugitive#Config(dir)
     if type ==# 'tree' && !empty(path)
       let path = s:sub(path, '/\=$', '/')
     endif
@@ -7175,13 +7211,13 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       let branch = FugitiveHead(0, dir)
     endif
     if !empty(branch)
-      let r = FugitiveConfigGet('branch.'.branch.'.remote', dir)
-      let m = FugitiveConfigGet('branch.'.branch.'.merge', dir)[11:-1]
+      let r = FugitiveConfigGet('branch.'.branch.'.remote', config)
+      let m = FugitiveConfigGet('branch.'.branch.'.merge', config)[11:-1]
       if r ==# '.' && !empty(m)
-        let r2 = FugitiveConfigGet('branch.'.m.'.remote', dir)
+        let r2 = FugitiveConfigGet('branch.'.m.'.remote', config)
         if r2 !~# '^\.\=$'
           let r = r2
-          let m = FugitiveConfigGet('branch.'.m.'.merge', dir)[11:-1]
+          let m = FugitiveConfigGet('branch.'.m.'.merge', config)[11:-1]
         endif
       endif
       if empty(remote)
@@ -7189,7 +7225,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       endif
       if r ==# '.' || r ==# remote
         let remote_ref = 'refs/remotes/' . remote . '/' . branch
-        if FugitiveConfigGet('push.default', dir) ==# 'upstream' ||
+        if FugitiveConfigGet('push.default', config) ==# 'upstream' ||
               \ !filereadable(FugitiveFind('.git/' . remote_ref, dir)) && empty(s:ChompDefault('', ['rev-parse', '--verify', remote_ref, '--'], dir))
           let merge = m
           if path =~# '^\.git/refs/heads/.'
@@ -7245,12 +7281,12 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
     endif
 
     if empty(remote) || remote ==# '.'
-      let remote = s:Remote(dir)
+      let remote = s:RemoteDefault(config)
     endif
     if remote =~# ':'
       let remote_url = remote
     else
-      let remote_url = fugitive#RemoteUrl(remote, dir)
+      let remote_url = fugitive#RemoteUrl(remote, config)
     endif
     let raw = empty(remote_url) ? remote : remote_url
     let git_dir = s:GitDir(dir)
