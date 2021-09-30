@@ -1300,25 +1300,48 @@ function! s:ConfigLengthSort(i1, i2) abort
   return len(a:i2[0]) - len(a:i1[0])
 endfunction
 
-function! fugitive#RemoteUrl(...) abort
-  let args = copy(a:000)
-  if len(args) && (type(args[0]) !=# type('') || args[0] =~# '^/\|^\a:[\\/]' && get(args, 1, '') !~# '^/\|^\a:[\\/]')
-    let config = fugitive#Config(remove(args, 0))
-    if type(a:1) ==# type({}) && has_key(a:1, 'remote_name') && (type(get(args, 0, 0)) !=# type('') || args[0] =~# '^:')
-      call insert(args, a:1.remote_name)
+function! s:RemoteParseArgs(args) abort
+  " Extract ':noresolve' style flags and an optional callback
+  let args = []
+  let flags = []
+  let cb = copy(a:args)
+  while len(cb)
+    if type(cb[0]) ==# type(function('tr'))
+      break
+    elseif len(args) > 1 || type(cb[0]) ==# type('') && cb[0] =~# '^:'
+      call add(flags, remove(cb, 0))
+    else
+      call add(args, remove(cb, 0))
     endif
-  elseif len(args) > 1 && (type(args[1]) !=# type('') || args[1] !~# '^:')
-    let config = fugitive#Config(remove(args, 1))
+  endwhile
+
+  " From the remaining 0-2 arguments, extract the remote and Git config
+  let remote = ''
+  if empty(args)
+    let dir_or_config = s:Dir()
+  elseif len(args) == 1 && type(args[0]) ==# type('') && args[0] !~# '^/\|^\a:[\\/]'
+    let dir_or_config = s:Dir()
+    let remote = args[0]
+  elseif len(args) == 1
+    let dir_or_config = args[0]
+    if type(args[0]) ==# type({}) && has_key(args[0], 'remote_name')
+      let remote = args[0].remote_name
+    endif
+  elseif type(args[1]) !=# type('') || args[1] =~# '^/\|^\a:[\\/]'
+    let dir_or_config = args[1]
+    let remote = args[0]
   else
-    let config = fugitive#Config()
+    let dir_or_config = args[0]
+    let remote = args[1]
   endif
-  if empty(args) || args[0] =~# '^:'
+  return [dir_or_config, remote, flags, cb]
+endfunction
+
+function! fugitive#RemoteUrl(...) abort
+  let [dir_or_config, url, flags, cb] = s:RemoteParseArgs(a:000)
+  let config = fugitive#Config(dir_or_config)
+  if url =~# '^\.\=$'
     let url = s:RemoteDefault(config)
-  elseif args[0] =~# '^\.\=$'
-    call remove(args, 0)
-    let url = s:RemoteDefault(config)
-  else
-    let url = remove(args, 0)
   endif
   if url ==# '.git'
     let url = s:GitDir(config)
@@ -1338,7 +1361,7 @@ function! fugitive#RemoteUrl(...) abort
       break
     endif
   endfor
-  if index(args, 1) < 0 && index(args, get(v:, 'true', 1)) < 0 && index(args, ':noresolve') < 0
+  if index(flags, 1) < 0 && index(flags, get(v:, 'true', 1)) < 0 && index(flags, ':noresolve') < 0
     let url = fugitive#ResolveRemote(url)
   endif
   return url
@@ -2442,8 +2465,8 @@ function! s:ReplaceCmd(cmd) abort
   endif
 endfunction
 
-function! s:QueryLog(refspec) abort
-  let lines = s:LinesError(['log', '-n', '256', '--pretty=format:%h%x09%s', a:refspec, '--'])[0]
+function! s:QueryLog(refspec, limit) abort
+  let lines = s:LinesError(['log', '-n', '' . a:limit, '--pretty=format:%h%x09%s', a:refspec, '--'])[0]
   call map(lines, 'split(v:val, "\t", 1)')
   call map(lines, '{"type": "Log", "commit": v:val[0], "subject": join(v:val[1 : -1], "\t")}')
   return lines
@@ -2491,6 +2514,20 @@ function! s:AddSection(label, lines, ...) abort
     return
   endif
   call append(line('$'), ['', a:label . (len(note) ? ': ' . note : ' (' . len(a:lines) . ')')] + s:Format(a:lines))
+endfunction
+
+function! s:AddLogSection(label, a, b) abort
+  let limit = 256
+  let log = s:QueryLog(a:a . '..' . a:b, limit)
+  if empty(log)
+    return
+  elseif len(log) == limit
+    call remove(log, -1)
+    let label = a:label . ' (' . (limit - 1). '+)'
+  else
+    let label = a:label . ' (' . len(log) . ')'
+  endif
+  call append(line('$'), ['', label] + s:Format(log))
 endfunction
 
 let s:rebase_abbrevs = {
@@ -2744,16 +2781,16 @@ function! fugitive#BufReadStatus() abort
     let staged_end = len(staged) ? line('$') : 0
 
     if len(pull) && get(props, 'branch.ab') !~# ' -0$'
-      call s:AddSection('Unpulled from ' . pull, s:QueryLog(head . '..' . pull))
+      call s:AddLogSection('Unpulled from ' . pull, head, pull)
     endif
     if len(push) && push !=# pull
-      call s:AddSection('Unpulled from ' . push, s:QueryLog(head . '..' . push))
+      call s:AddLogSection('Unpulled from ' . push, head, push)
     endif
     if len(pull) && push !=# pull
-      call s:AddSection('Unpushed to ' . pull, s:QueryLog(pull . '..' . head))
+      call s:AddLogSection('Unpushed to ' . pull, pull, head)
     endif
     if len(push) && !(push ==# pull && get(props, 'branch.ab') =~# '^+0 ')
-      call s:AddSection('Unpushed to ' . push, s:QueryLog(push . '..' . head))
+      call s:AddLogSection('Unpushed to ' . push, push, head)
     endif
 
     setlocal nomodified readonly noswapfile
@@ -3972,7 +4009,7 @@ function! s:StageSeek(info, fallback) abort
   if empty(info.heading)
     return a:fallback
   endif
-  let line = search('^' . escape(info.heading, '^$.*[]~\') . ' (\d\+)$', 'wn')
+  let line = search('^' . escape(info.heading, '^$.*[]~\') . ' (\d\++\=)$', 'wn')
   if !line
     for section in get({'Staged': ['Unstaged', 'Untracked'], 'Unstaged': ['Untracked', 'Staged'], 'Untracked': ['Unstaged', 'Staged']}, info.section, [])
       let line = search('^' . section, 'wn')
@@ -4155,7 +4192,7 @@ endfunction
 
 augroup fugitive_status
   autocmd!
-  autocmd BufWritePost         * call fugitive#DidChange(+expand('<abuf>'))
+  autocmd BufWritePost         * call fugitive#DidChange(+expand('<abuf>'), 0)
   autocmd ShellCmdPost,ShellFilterPost * nested call fugitive#DidChange(0)
   autocmd BufDelete * nested
         \ if getbufvar(+expand('<abuf>'), 'buftype') ==# 'terminal' |
@@ -4201,7 +4238,7 @@ function! s:StageInfo(...) abort
   let index = 0
   while len(getline(slnum - 1)) && empty(heading)
     let slnum -= 1
-    let heading = matchstr(getline(slnum), '^\u\l\+.\{-\}\ze (\d\+)$')
+    let heading = matchstr(getline(slnum), '^\u\l\+.\{-\}\ze (\d\++\=)$')
     if empty(heading) && getline(slnum) !~# '^[ @\+-]'
       let index += 1
     endif
@@ -4256,7 +4293,7 @@ function! s:Selection(arg1, ...) abort
   let index = 0
   while empty(heading)
     let slnum -= 1
-    let heading = matchstr(getline(slnum), '^\u\l\+.\{-\}\ze (\d\+)$')
+    let heading = matchstr(getline(slnum), '^\u\l\+.\{-\}\ze (\d\++\=)$')
     if empty(heading) && getline(slnum) !~# '^[ @\+-]'
       let index += 1
     endif
@@ -4276,7 +4313,7 @@ function! s:Selection(arg1, ...) abort
   let lnum = first - (arg1 == flnum ? 0 : 1)
   let root = s:Tree() . '/'
   while lnum <= last
-    let heading = matchstr(line, '^\u\l\+\ze.\{-\}\ze (\d\+)$')
+    let heading = matchstr(line, '^\u\l\+\ze.\{-\}\ze (\d\++\=)$')
     if len(heading)
       let template.heading = heading
       let template.section = matchstr(heading, '^\u\l\+')
@@ -4782,9 +4819,13 @@ function! s:StageDelete(lnum1, lnum2, count) abort
 
   let err = ''
   let did_conflict_err = 0
+  let reset_commit = matchstr(getline(a:lnum1), '^Un\w\+ \%(to\| from\) \zs\S\+')
   try
     for info in s:Selection(a:lnum1, a:lnum2)
       if empty(info.paths)
+        if len(info.commit)
+          let reset_commit = info.commit . '^'
+        endif
         continue
       endif
       let sub = get(get(get(b:fugitive_files, info.section, {}), info.filename, {}), 'submodule')
@@ -4850,15 +4891,14 @@ function! s:StageDelete(lnum1, lnum2, count) abort
     let err .= '|echoerr ' . string(v:exception)
   endtry
   if empty(restore)
+    if len(reset_commit) && empty(err)
+      call feedkeys(':Git reset ' . reset_commit)
+    endif
     return err[1:-1]
   endif
   exe s:ReloadStatus()
   call s:StageReveal()
-  if len(restore)
-    return 'checktime|redraw|echomsg ' . string('To restore, ' . join(restore, '|')) . err
-  else
-    return 'checktime|redraw' . err
-  endif
+  return 'checktime|redraw|echomsg ' . string('To restore, ' . join(restore, '|')) . err
 endfunction
 
 function! s:StageIgnore(lnum1, lnum2, count) abort
@@ -7123,12 +7163,10 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       for line in readfile(result.file, '', 4096)
         let rev = s:fnameescape(matchstr(line, '\<https\=://[^[:space:]<>]*[^[:space:]<>.,;:"''!?]'))
         if len(rev)
-          break
+          return s:BrowserOpen(rev, a:mods, a:bang)
         endif
       endfor
-      if empty(rev)
-        return 'echoerr ' . string('fugitive: no URL found in output of :Git')
-      endif
+      return 'echoerr ' . string('fugitive: no URL found in output of :Git')
     endif
     exe s:DirCheck(dir)
     if empty(expanded)
