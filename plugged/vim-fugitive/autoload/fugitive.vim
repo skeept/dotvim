@@ -2752,6 +2752,9 @@ function! fugitive#BufReadStatus() abort
           \ s:LinesError(['diff', '--color=never', '--no-ext-diff', '--no-prefix'])[0]
     endif
     let b:fugitive_diff = diff
+    if v:cmdbang
+      unlet! b:fugitive_expanded
+    endif
     let expanded = get(b:, 'fugitive_expanded', {'Staged': {}, 'Unstaged': {}})
     let b:fugitive_expanded = {'Staged': {}, 'Unstaged': {}}
 
@@ -4193,6 +4196,7 @@ endfunction
 augroup fugitive_status
   autocmd!
   autocmd BufWritePost         * call fugitive#DidChange(+expand('<abuf>'), 0)
+  autocmd User FileChmodPost,FileUnlinkPost call fugitive#DidChange(+expand('<abuf>'), 0)
   autocmd ShellCmdPost,ShellFilterPost * nested call fugitive#DidChange(0)
   autocmd BufDelete * nested
         \ if getbufvar(+expand('<abuf>'), 'buftype') ==# 'terminal' |
