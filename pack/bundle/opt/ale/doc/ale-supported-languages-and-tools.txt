@@ -249,6 +249,7 @@ Notes:
   * `javalsp`
   * `uncrustify`
 * JavaScript
+  * `deno`
   * `eslint`
   * `fecs`
   * `flow`
@@ -418,6 +419,7 @@ Notes:
   * `bandit`
   * `black`
   * `flake8`
+  * `flakehell`
   * `isort`
   * `mypy`
   * `prospector`!!
