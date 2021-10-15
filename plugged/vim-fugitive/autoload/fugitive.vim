@@ -263,6 +263,9 @@ function! fugitive#Wait(job_or_jobs, ...) abort
   if exists('*jobwait')
     call map(copy(jobs), 'chanclose(v:val, "stdin")')
     call jobwait(jobs, timeout_ms)
+    if len(jobs) && has('nvim-0.5')
+      sleep 1m
+    endif
   else
     let sleep = has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
     for job in jobs
@@ -2380,7 +2383,7 @@ function! fugitive#CompleteObject(base, ...) abort
         let heads += ["stash"]
         let heads += sort(s:LinesError(["stash","list","--pretty=format:%gd"], dir)[0])
       endif
-      let results += s:FilterEscape(heads, base)
+      let results += s:FilterEscape(heads, fnameescape(base))
     endif
     let results += a:0 == 1 || a:0 >= 3 ? fugitive#CompletePath(base, 0, '', dir, a:0 >= 4 ? a:4 : tree) : fugitive#CompletePath(base)
     return results
@@ -2402,7 +2405,7 @@ function! fugitive#CompleteObject(base, ...) abort
     call map(entries,'s:sub(v:val,"^04.*\\zs$","/")')
     call map(entries,'parent.s:sub(v:val,".*\t","")')
   endif
-  return s:FilterEscape(entries, base)
+  return s:FilterEscape(entries, fnameescape(base))
 endfunction
 
 function! s:CompleteSub(subcommand, A, L, P, ...) abort
@@ -2666,6 +2669,16 @@ function! fugitive#BufReadStatus() abort
       endwhile
     endif
 
+    let diff = {'Staged': {'stdout': ['']}, 'Unstaged': {'stdout': ['']}}
+    if len(staged)
+      let diff['Staged'] =
+          \ fugitive#Execute(['diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached'], function('len'))
+    endif
+    if len(unstaged)
+      let diff['Unstaged'] =
+          \ fugitive#Execute(['diff', '--color=never', '--no-ext-diff', '--no-prefix'], function('len'))
+    endif
+
     for dict in staged
       let b:fugitive_files['Staged'][dict.filename] = dict
     endfor
@@ -2742,15 +2755,6 @@ function! fugitive#BufReadStatus() abort
       endfor
     endif
 
-    let diff = {'Staged': [], 'Unstaged': []}
-    if len(staged)
-      let diff['Staged'] =
-          \ s:LinesError(['diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached'])[0]
-    endif
-    if len(unstaged)
-      let diff['Unstaged'] =
-          \ s:LinesError(['diff', '--color=never', '--no-ext-diff', '--no-prefix'])[0]
-    endif
     let b:fugitive_diff = diff
     if v:cmdbang
       unlet! b:fugitive_expanded
@@ -3009,7 +3013,7 @@ function! fugitive#BufReadCmd(...) abort
         if b:fugitive_display_format
           call s:ReplaceCmd([dir, 'cat-file', b:fugitive_type, rev])
         else
-          call s:ReplaceCmd([dir, '-c', 'diff.noprefix=false', 'show', '--no-color', '-m', '--first-parent', '--pretty=format:tree%x20%T%nparent%x20%P%nauthor%x20%an%x20<%ae>%x20%ad%ncommitter%x20%cn%x20<%ce>%x20%cd%nencoding%x20%e%n%n%s%n%n%b', rev])
+          call s:ReplaceCmd([dir, '-c', 'diff.noprefix=false', '-c', 'log.showRoot=false', 'show', '--no-color', '-m', '--first-parent', '--pretty=format:tree%x20%T%nparent%x20%P%nauthor%x20%an%x20<%ae>%x20%ad%ncommitter%x20%cn%x20<%ce>%x20%cd%nencoding%x20%e%n%n%s%n%n%b', rev])
           keepjumps 1
           keepjumps call search('^parent ')
           if getline('.') ==# 'parent '
@@ -4671,7 +4675,7 @@ function! s:StageInline(mode, ...) abort
     let diff = []
     let index = 0
     let start = -1
-    for line in b:fugitive_diff[info.section]
+    for line in fugitive#Wait(b:fugitive_diff[info.section]).stdout
       if mode ==# 'await' && line[0] ==# '@'
         let mode = 'capture'
       endif
@@ -4795,10 +4799,11 @@ function! s:StageApply(info, reverse, extra) abort
   endif
   let i = b:fugitive_expanded[info.section][info.filename][0]
   let head = []
-  while get(b:fugitive_diff[info.section], i, '@') !~# '^@'
-    let line = b:fugitive_diff[info.section][i]
+  let diff_lines = fugitive#Wait(b:fugitive_diff[info.section]).stdout
+  while get(diff_lines, i, '@') !~# '^@'
+    let line = diff_lines[i]
     if line ==# '--- /dev/null'
-      call add(head, '--- ' . get(b:fugitive_diff[info.section], i + 1, '')[4:-1])
+      call add(head, '--- ' . get(diff_lines, i + 1, '')[4:-1])
     elseif line !~# '^new file '
       call add(head, line)
     endif
