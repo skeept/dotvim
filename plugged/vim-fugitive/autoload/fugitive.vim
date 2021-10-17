@@ -1253,19 +1253,23 @@ endfunction
 function! s:UrlParse(url) abort
   let scp_authority = matchstr(a:url, '^[^:/]\+\ze:\%(//\)\@!')
   if len(scp_authority) && !(has('win32') && scp_authority =~# '^\a:[\/]')
-    return {'scheme': 'ssh', 'authority': scp_authority,
+    let url = {'scheme': 'ssh', 'authority': scp_authority,
           \ 'path': strpart(a:url, len(scp_authority) + 1)}
+  elseif empty(a:url)
+    let url = {'scheme': '', 'authority': '', 'path': ''}
+  else
+    let match = matchlist(a:url, '^\([[:alnum:].+-]\+\)://\([^/]*\)\(/.*\)\=\%(#\|$\)')
+    if empty(match)
+      let url = {'scheme': 'file', 'authority': '', 'path': a:url}
+    else
+      let url = {'scheme': match[1], 'authority': match[2]}
+      let url.path = empty(match[3]) ? '/' : match[3]
+    endif
   endif
-  let match = matchlist(a:url, '^\([[:alnum:].+-]\+\)://\([^/]*\)\(/.*\)\=\%(#\|$\)')
-  if empty(match)
-    return {'scheme': 'file', 'authority': '', 'path': a:url}
+  if (url.scheme ==# 'ssh' || url.scheme ==# 'git') && url.path[0:1] ==# '/~'
+    let url.path = strpart(url.path, 1)
   endif
-  let remote = {'scheme': match[1], 'authority': match[2]}
-  let remote.path = empty(match[3]) ? '/' : match[3]
-  if (remote.scheme ==# 'ssh' || remote.scheme ==# 'git') && remote.path[0:1] ==# '/~'
-    let remote.path = strpart(remote.path, 1)
-  endif
-  return remote
+  return url
 endfunction
 
 function! s:ResolveRemote(url) abort
@@ -2547,16 +2551,15 @@ let s:rebase_abbrevs = {
       \ 'b': 'break',
       \ }
 
-function! fugitive#BufReadStatus() abort
+function! fugitive#BufReadStatus(...) abort
   let amatch = s:Slash(expand('%:p'))
-  let b:fugitive_type = 'index'
-  unlet! b:fugitive_reltime
+  unlet! b:fugitive_reltime b:fugitive_type
   try
     silent doautocmd BufReadPre
     let config = fugitive#Config()
 
     let cmd = [fnamemodify(amatch, ':h')]
-    setlocal noro ma nomodeline buftype=nowrite
+    setlocal noreadonly modifiable nomodeline buftype=nowrite
     if s:cpath(fnamemodify($GIT_INDEX_FILE !=# '' ? FugitiveVimPath($GIT_INDEX_FILE) : fugitive#Find('.git/index'), ':p')) !=# s:cpath(amatch)
       let cmd += [{'env': {'GIT_INDEX_FILE': FugitiveGitPath(amatch)}}]
     endif
@@ -2756,7 +2759,7 @@ function! fugitive#BufReadStatus() abort
     endif
 
     let b:fugitive_diff = diff
-    if v:cmdbang
+    if get(a:, 1, v:cmdbang)
       unlet! b:fugitive_expanded
     endif
     let expanded = get(b:, 'fugitive_expanded', {'Staged': {}, 'Unstaged': {}})
@@ -2874,6 +2877,8 @@ function! fugitive#BufReadStatus() abort
     return s:DoAutocmd('User FugitiveIndex')
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
+  finally
+    let b:fugitive_type = 'index'
   endtry
 endfunction
 
@@ -4095,7 +4100,7 @@ function! s:ReloadStatusBuffer(...) abort
   endif
   let original_lnum = a:0 ? a:1 : line('.')
   let info = s:StageInfo(original_lnum)
-  call fugitive#BufReadStatus()
+  call fugitive#BufReadStatus(0)
   call setpos('.', [0, s:StageSeek(info, original_lnum), 1, 0])
   return ''
 endfunction
@@ -4535,8 +4540,8 @@ endfunction
 
 function! s:PreviousItem(count) abort
   for i in range(a:count)
-    if !search(s:item_pattern, 'Wbe') && getline('.') !~# s:item_pattern
-      call search('^commit ', 'Wbe')
+    if !search(s:item_pattern, 'Wb') && getline('.') !~# s:item_pattern
+      call search('^commit ', 'Wb')
     endif
   endfor
   call s:StageReveal()
