@@ -326,6 +326,7 @@ call s:option_map('<Bar>', 'cursorcolumn', 'setlocal')
 nmap <script> <Plug>(unimpaired-enable)d  :<C-U>diffthis<CR>
 nmap <script> <Plug>(unimpaired-disable)d :<C-U>diffoff<CR>
 nmap <script> <Plug>(unimpaired-toggle)d  :<C-U><C-R>=&diff ? "diffoff" : "diffthis"<CR><CR>
+call s:option_map('e', 'spell', 'setlocal')
 call s:option_map('h', 'hlsearch', 'set')
 call s:option_map('i', 'ignorecase', 'set')
 call s:option_map('l', 'list', 'setlocal')
@@ -349,6 +350,12 @@ exe s:Map('n', ']o', '<Plug>(unimpaired-disable)')
 exe s:Map('n', 'yo<Esc>', '<Nop>')
 exe s:Map('n', '[o<Esc>', '<Nop>')
 exe s:Map('n', ']o<Esc>', '<Nop>')
+exe s:Map('n', '=s', '<Plug>(unimpaired-toggle)')
+exe s:Map('n', '<s', '<Plug>(unimpaired-enable)')
+exe s:Map('n', '>s', '<Plug>(unimpaired-disable)')
+exe s:Map('n', '=s<Esc>', '<Nop>')
+exe s:Map('n', '<s<Esc>', '<Nop>')
+exe s:Map('n', '>s<Esc>', '<Nop>')
 
 function! s:SetupPaste() abort
   let s:paste = &paste

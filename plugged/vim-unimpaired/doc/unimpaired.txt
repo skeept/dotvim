@@ -80,18 +80,21 @@ On	Off	Toggle	Option
 *[ob*	*]ob*	*yob*	'background' (dark is off, light is on)
 *[oc*	*]oc*	*yoc*	'cursorline'
 *[od*	*]od*	*yod*	'diff' (actually |:diffthis| / |:diffoff|)
+*[oe*	*]oe*	*yoe*	'spell'
 *[oh*	*]oh*	*yoh*	'hlsearch'
 *[oi*	*]oi*	*yoi*	'ignorecase'
 *[ol*	*]ol*	*yol*	'list'
 *[on*	*]on*	*yon*	'number'
 *[or*	*]or*	*yor*	'relativenumber'
-*[os*	*]os*	*yos*	'spell'
 *[ou*	*]ou*	*you*	'cursorcolumn'
 *[ov*	*]ov*	*yov*	'virtualedit'
 *[ow*	*]ow*	*yow*	'wrap'
 *[ox*	*]ox*	*yox*	'cursorline' 'cursorcolumn' (x as in crosshairs)
 
 The mnemonic for y is that if you tilt it a bit it looks like a switch.
+
+                                                *<s* *>s* *=s*
+Alternative prefixes for on/off/toggle: <s, >s, =s.
 
 PASTING                                         *unimpaired-pasting*
 
