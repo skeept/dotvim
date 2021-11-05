@@ -288,6 +288,7 @@ func TestUnixCommands(t *testing.T) {
 		{give{`grep {} ~/test`, ``, newItems(`~`)}, want{output: `grep '~' ~/test`}},
 
 		// 2) problematic examples
+		// (not necessarily unexpected)
 
 		// paths that need to expand some part of it won't work (special characters and variables)
 		{give{`cat {}`, ``, newItems(`~/test`)}, want{output: `cat '~/test'`}},
@@ -315,6 +316,7 @@ func TestWindowsCommands(t *testing.T) {
 		{give{`rg -- {}`, ``, newItems(`"C:\test.txt"`)}, want{output: `rg -- ^"\^"C:\\test.txt\^"^"`}},
 
 		// 2) problematic examples
+		// (not necessarily unexpected)
 
 		// notepad++'s parser can't handle `-n"12"` generate by fzf, expects `-n12`
 		{give{`notepad++ -n{1} {2}`, ``, newItems(`12	C:\Work\Test Folder\File.txt`)}, want{output: `notepad++ -n^"12^" ^"C:\\Work\\Test Folder\\File.txt^"`}},
@@ -327,9 +329,95 @@ func TestWindowsCommands(t *testing.T) {
 
 		// the "file" flag in the pattern won't create *.bat or *.cmd file so the command in the output tries to edit the file, instead of executing it
 		// the temp file contains: `cat "C:\test.txt"`
+		// TODO this should actually work
 		{give{`cmd /c {f}`, ``, newItems(`cat "C:\test.txt"`)}, want{match: `^cmd /c .*\fzf-preview-[0-9]{9}$`}},
 	}
 	testCommands(t, tests)
+}
+
+// purpose of this test is to demonstrate some shortcomings of fzf's templating system on Windows in Powershell
+func TestPowershellCommands(t *testing.T) {
+	if !util.IsWindows() {
+		t.SkipNow()
+	}
+
+	tests := []testCase{
+		// reference: give{template, query, items}, want{output OR match}
+
+		/*
+			You can read each line in the following table as a pipeline that
+			consist of series of parsers that act upon your input (col. 1) and
+			each cell represents the output value.
+
+			For example:
+			 - exec.Command("program.exe", `\''`)
+			   - goes to win32 api which will process it transparently as it contains no special characters, see [CommandLineToArgvW][].
+			     - powershell command will receive it as is, that is two arguments: a literal backslash and empty string in single quotes
+			     - native command run via/from powershell will receive only one argument: a literal backslash. Because extra parsing rules apply, see [NativeCallsFromPowershell][].
+			       - some¹ apps have internal parser, that requires one more level of escaping (yes, this is completely application-specific, but see terminal_test.go#TestWindowsCommands)
+
+			Character⁰   CommandLineToArgvW   Powershell commands              Native commands from Powershell   Apps requiring escapes¹    | Being tested below
+			----------   ------------------   ------------------------------   -------------------------------   -------------------------- | ------------------
+			"            empty string²        missing argument error           ...                               ...                        |
+			\"           literal "            unbalanced quote error           ...                               ...                        |
+			'\"'         literal '"'          literal "                        empty string                      empty string (match all)   | yes
+			'\\\"'       literal '\"'         literal \"                       literal "                         literal "                  |
+			----------   ------------------   ------------------------------   -------------------------------   -------------------------- | ------------------
+			\            transparent          transparent                      transparent                       regex error                |
+			'\'          transparent          literal \                        literal \                         regex error                | yes
+			\\           transparent          transparent                      transparent                       literal \                  |
+			'\\'         transparent          literal \\                       literal \\                        literal \                  |
+			----------   ------------------   ------------------------------   -------------------------------   -------------------------- | ------------------
+			'            transparent          unbalanced quote error           ...                               ...                        |
+			\'           transparent          literal \ and unb. quote error   ...                               ...                        |
+			\''          transparent          literal \ and empty string       literal \                         regex error                | no, but given as example above
+			'''          transparent          unbalanced quote error           ...                               ...                        |
+			''''         transparent          literal '                        literal '                         literal '                  | yes
+			----------   ------------------   ------------------------------   -------------------------------   -------------------------- | ------------------
+
+			⁰: charatecter or characters 'x' as an argument to a program in go's call: exec.Command("program.exe", `x`)
+			¹: native commands like grep, git grep, ripgrep
+			²: interpreted as a grouping quote, affects argument parser and gets removed from the result
+
+			[CommandLineToArgvW]: https://docs.microsoft.com/en-gb/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw#remarks
+			[NativeCallsFromPowershell]: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-7.1#passing-arguments-that-contain-quote-characters
+		*/
+
+		// 1) working examples
+
+		{give{`Get-Content {}`, ``, newItems(`C:\test.txt`)}, want{output: `Get-Content 'C:\test.txt'`}},
+		{give{`rg -- "package" {}`, ``, newItems(`.\test.go`)}, want{output: `rg -- "package" '.\test.go'`}},
+
+		// example of escaping single quotes
+		{give{`rg -- {}`, ``, newItems(`'foobar'`)}, want{output: `rg -- '''foobar'''`}},
+
+		// chaining powershells
+		{give{`powershell -NoProfile -Command {}`, ``, newItems(`cat "C:\test.txt"`)}, want{output: `powershell -NoProfile -Command 'cat \"C:\test.txt\"'`}},
+
+		// 2) problematic examples
+		// (not necessarily unexpected)
+
+		// looking for a path string will only work with escaped backslashes
+		{give{`rg -- {}`, ``, newItems(`C:\test.txt`)}, want{output: `rg -- 'C:\test.txt'`}},
+		// looking for a literal double quote will only work with triple escaped double quotes
+		{give{`rg -- {}`, ``, newItems(`"C:\test.txt"`)}, want{output: `rg -- '\"C:\test.txt\"'`}},
+
+		// Get-Content (i.e. cat alias) is parsing `"` as a part of the file path, returns an error:
+		// Get-Content : Cannot find drive. A drive with the name '"C:' does not exist.
+		{give{`cat {}`, ``, newItems(`"C:\test.txt"`)}, want{output: `cat '\"C:\test.txt\"'`}},
+
+		// the "file" flag in the pattern won't create *.ps1 file so the powershell will offload this "unknown" filetype
+		// to explorer, which will prompt user to pick editing program for the fzf-preview file
+		// the temp file contains: `cat "C:\test.txt"`
+		// TODO this should actually work
+		{give{`powershell -NoProfile -Command {f}`, ``, newItems(`cat "C:\test.txt"`)}, want{match: `^powershell -NoProfile -Command .*\fzf-preview-[0-9]{9}$`}},
+	}
+
+	// to force powershell-style escaping we temporarily set environment variable that fzf honors
+	shellBackup := os.Getenv("SHELL")
+	os.Setenv("SHELL", "powershell")
+	testCommands(t, tests)
+	os.Setenv("SHELL", shellBackup)
 }
 
 /*
