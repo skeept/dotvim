@@ -249,8 +249,7 @@ function! airline#extensions#load()
     call airline#extensions#tagbar#init(s:ext)
     call add(s:loaded_ext, 'tagbar')
   endif
-  if get(g:, 'airline#extensions#taglist#enabled', 1)
-        \ && exists(':TlistShowTag')
+  if get(g:, 'airline#extensions#taglist#enabled', 1) && exists(':TlistShowTag')
     call airline#extensions#taglist#init(s:ext)
     call add(s:loaded_ext, 'taglist')
   endif
