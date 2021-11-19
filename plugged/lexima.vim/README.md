@@ -1,6 +1,6 @@
 lexima.vim
 ==========
-[![Build Status](https://travis-ci.com/cohama/lexima.vim.svg?branch=master)](https://travis-ci.com/cohama/lexima.vim)
+[![Build Status](https://app.travis-ci.com/cohama/lexima.vim.svg?branch=master)](https://app.travis-ci.com/cohama/lexima.vim)
 
 Auto close parentheses and repeat by dot dot dot...
 
@@ -32,6 +32,8 @@ If `g:lexima_enable_basic_rules` is `1`, the following rules are enabled.
     ""|           "             """|"""
     ------------------------------------
     ''|           '             '''|'''
+    ------------------------------------
+    ``|           `             ```|```
     ------------------------------------
     \|            [             \[|
     ------------------------------------
@@ -65,6 +67,10 @@ If `g:lexima_enable_newline_rules` is `1`, the following rules are enabled.
     {|            <CR>          {
                                     |
                                 }
+    ------------------------------------
+    ```vim|```    <CR>          ```vim
+                                    |
+                                ```
     ------------------------------------
 
 Same as `()` and `[]`.
