@@ -670,6 +670,9 @@ function! dispatch#compiler_options(compiler) abort
   let current_compiler = get(b:, 'current_compiler', '')
   let makeprg = &l:makeprg
   let efm = &l:efm
+  if empty(a:compiler)
+    return {}
+  endif
 
   try
     if a:compiler ==# 'make'
@@ -786,7 +789,7 @@ function! dispatch#command_complete(A, L, P) abort
     else
       let results = []
     endif
-  elseif a:A =~# '^\%(\w:\|\.\)\=[\/]'
+  elseif a:A =~# '[\/]'
     let results = s:file_complete(a:A)
   else
     let results = []
