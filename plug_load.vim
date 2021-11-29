@@ -22,8 +22,8 @@ Plug 'preservim/nerdcommenter'
 
 " Shougo
 Plug 'Shougo/junkfile.vim', { 'on': ['JunkfileOpen', 'Unite'] }
-"Plug 'Shougo/neosnippet.vim'
-"Plug 'Shougo/neosnippet-snippets'
+Plug 'Shougo/neosnippet.vim'
+Plug 'Shougo/neosnippet-snippets'
 Plug 'Shougo/vimfiler.vim', { 'on': 'VimFiler'}
 Plug 'Shougo/unite.vim', { 'on': 'Unite' }
 autocmd! User unite.vim call LoadAdditionalUnite()
@@ -54,7 +54,7 @@ Plug 'prabirshrestha/asyncomplete-file.vim'
 Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
 Plug 'yami-beta/asyncomplete-omni.vim'
 
-Plug 'lifepillar/vim-mucomplete'
+Plug 'lifepillar/vim-mucomplete', {'branch': 'hji/neosnippet-fix-01'}
 
 "tpope
 Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }
