@@ -92,7 +92,10 @@ options.csv_lineterminator = "\n"
 
 
 class DatSheet(visidata.loaders.csv.CsvSheet):
-    pass
+    """Used when loading files ending in .dat (usually no headers available)"""
+
+    class_options = visidata.loaders.csv.CsvSheet.class_options
+    class_options.header = 0
 
 
 @VisiData.api
@@ -100,5 +103,4 @@ def open_dat(vd, p):
     return DatSheet(p.name, source=p)
 
 
-DatSheet.class_options.header = 0
 vd.save_dat = vd.save_csv
