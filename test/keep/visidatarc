@@ -90,13 +90,14 @@ def guessType(cols, rows):
 
 options.csv_lineterminator = "\n"
 
+
+class DatSheet(visidata.loaders.csv.CsvSheet):
+    pass
+
+
 @VisiData.api
 def open_dat(vd, p):
     return DatSheet(p.name, source=p)
-
-
-class DatSheet(CsvSheet):
-    pass
 
 
 DatSheet.class_options.header = 0

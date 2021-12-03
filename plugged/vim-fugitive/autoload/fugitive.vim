@@ -478,9 +478,7 @@ function! fugitive#CommonDir(dir) abort
     return ''
   endif
   if !has_key(s:commondirs, a:dir)
-    if getfsize(a:dir . '/HEAD') < 10
-      let s:commondirs[a:dir] = ''
-    elseif filereadable(a:dir . '/commondir')
+    if filereadable(a:dir . '/commondir') && getfsize(a:dir . '/HEAD') >= 10
       let cdir = get(readfile(a:dir . '/commondir', '', 1), 0, '')
       if cdir =~# '^/\|^\a:/'
         let s:commondirs[a:dir] = s:Slash(FugitiveVimPath(cdir))
@@ -2716,11 +2714,11 @@ function! fugitive#BufReadStatus(...) abort
     let diff = {'Staged': {'stdout': ['']}, 'Unstaged': {'stdout': ['']}}
     if len(staged)
       let diff['Staged'] =
-          \ fugitive#Execute(['diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached'], function('len'))
+          \ fugitive#Execute(['-c', 'diff.suppressBlankEmpty=false', 'diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached'], function('len'))
     endif
     if len(unstaged)
       let diff['Unstaged'] =
-          \ fugitive#Execute(['diff', '--color=never', '--no-ext-diff', '--no-prefix'], function('len'))
+          \ fugitive#Execute(['-c', 'diff.suppressBlankEmpty=false', 'diff', '--color=never', '--no-ext-diff', '--no-prefix'], function('len'))
     endif
 
     for dict in staged
@@ -6771,7 +6769,7 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
     elseif empty(files) && len(matchstr(s:DirCommitFile(@%)[1], '^\x\x\+$'))
       let cmd += [matchstr(s:DirCommitFile(@%)[1], '^\x\x\+$')]
     elseif empty(files) && !s:HasOpt(flags, '--reverse')
-      if &modified
+      if &modified || !empty(s:DirCommitFile(@%)[1])
         let cmd += ['--contents', tempname . '.in']
         silent execute 'noautocmd keepalt %write ' . s:fnameescape(tempname . '.in')
         let delete_in = 1
@@ -7668,7 +7666,7 @@ endfunction
 function! s:StatusCfile(...) abort
   let tree = s:Tree()
   if empty(tree)
-    return ''
+    return []
   endif
   let lead = s:cpath(tree, getcwd()) ? './' : tree . '/'
   if getline('.') =~# '^.\=\trenamed:.* -> '
