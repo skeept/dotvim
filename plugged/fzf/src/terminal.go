@@ -135,7 +135,7 @@ type Terminal struct {
 	toggleSort         bool
 	delimiter          Delimiter
 	expect             map[tui.Event]string
-	keymap             map[tui.Event][]action
+	keymap             map[tui.Event][]*action
 	pressed            string
 	printQuery         bool
 	history            *History
@@ -217,6 +217,7 @@ const (
 	reqRefresh
 	reqReinit
 	reqRedraw
+	reqFullRedraw
 	reqClose
 	reqPrintQuery
 	reqPreviewEnqueue
@@ -340,16 +341,16 @@ type previewResult struct {
 	spinner string
 }
 
-func toActions(types ...actionType) []action {
-	actions := make([]action, len(types))
+func toActions(types ...actionType) []*action {
+	actions := make([]*action, len(types))
 	for idx, t := range types {
-		actions[idx] = action{t: t, a: ""}
+		actions[idx] = &action{t: t, a: ""}
 	}
 	return actions
 }
 
-func defaultKeymap() map[tui.Event][]action {
-	keymap := make(map[tui.Event][]action)
+func defaultKeymap() map[tui.Event][]*action {
+	keymap := make(map[tui.Event][]*action)
 	add := func(e tui.EventType, a actionType) {
 		keymap[e.AsEvent()] = toActions(a)
 	}
@@ -1778,8 +1779,10 @@ func replacePlaceholder(template string, stripAnsi bool, delimiter Delimiter, pr
 	})
 }
 
-func (t *Terminal) redraw() {
-	t.tui.Clear()
+func (t *Terminal) redraw(clear bool) {
+	if clear {
+		t.tui.Clear()
+	}
 	t.tui.Refresh()
 	t.printAll()
 }
@@ -1799,7 +1802,7 @@ func (t *Terminal) executeCommand(template string, forcePlus bool, background bo
 		t.tui.Pause(true)
 		cmd.Run()
 		t.tui.Resume(true, false)
-		t.redraw()
+		t.redraw(true)
 		t.refresh()
 	} else {
 		t.tui.Pause(false)
@@ -1944,7 +1947,7 @@ func (t *Terminal) Loop() {
 		go func() {
 			for {
 				<-resizeChan
-				t.reqBox.Set(reqRedraw, nil)
+				t.reqBox.Set(reqFullRedraw, nil)
 			}
 		}()
 
@@ -2194,9 +2197,11 @@ func (t *Terminal) Loop() {
 						t.suppress = false
 					case reqReinit:
 						t.tui.Resume(t.fullscreen, t.sigstop)
-						t.redraw()
+						t.redraw(true)
 					case reqRedraw:
-						t.redraw()
+						t.redraw(false)
+					case reqFullRedraw:
+						t.redraw(true)
 					case reqClose:
 						exit(func() int {
 							if t.output() {
@@ -2268,7 +2273,6 @@ func (t *Terminal) Loop() {
 			if t.previewer.enabled != enabled {
 				t.previewer.enabled = enabled
 				// We need to immediately update t.pwindow so we don't use reqRedraw
-				t.tui.Clear()
 				t.resizeWindows()
 				req(reqPrompt, reqList, reqInfo, reqHeader)
 				return true
@@ -2310,12 +2314,12 @@ func (t *Terminal) Loop() {
 			}
 		}
 
-		actionsFor := func(eventType tui.EventType) []action {
+		actionsFor := func(eventType tui.EventType) []*action {
 			return t.keymap[eventType.AsEvent()]
 		}
 
-		var doAction func(action) bool
-		doActions := func(actions []action) bool {
+		var doAction func(*action) bool
+		doActions := func(actions []*action) bool {
 			for _, action := range actions {
 				if !doAction(action) {
 					return false
@@ -2323,7 +2327,7 @@ func (t *Terminal) Loop() {
 			}
 			return true
 		}
-		doAction = func(a action) bool {
+		doAction = func(a *action) bool {
 			switch a.t {
 			case actIgnore:
 			case actExecute, actExecuteSilent:
@@ -2503,14 +2507,14 @@ func (t *Terminal) Loop() {
 				}
 			case actToggleIn:
 				if t.layout != layoutDefault {
-					return doAction(action{t: actToggleUp})
+					return doAction(&action{t: actToggleUp})
 				}
-				return doAction(action{t: actToggleDown})
+				return doAction(&action{t: actToggleDown})
 			case actToggleOut:
 				if t.layout != layoutDefault {
-					return doAction(action{t: actToggleDown})
+					return doAction(&action{t: actToggleDown})
 				}
-				return doAction(action{t: actToggleUp})
+				return doAction(&action{t: actToggleUp})
 			case actToggleDown:
 				if t.multi > 0 && t.merger.Length() > 0 && toggle() {
 					t.vmove(-1, true)
@@ -2534,7 +2538,7 @@ func (t *Terminal) Loop() {
 					req(reqClose)
 				}
 			case actClearScreen:
-				req(reqRedraw)
+				req(reqFullRedraw)
 			case actClearQuery:
 				t.input = []rune{}
 				t.cx = 0
@@ -2732,7 +2736,13 @@ func (t *Terminal) Loop() {
 
 				// Reset preview options and apply the additional options
 				t.previewOpts = t.initialPreviewOpts
-				parsePreviewWindow(&t.previewOpts, a.a)
+
+				// Split window options
+				tokens := strings.Split(a.a, "|")
+				parsePreviewWindow(&t.previewOpts, tokens[0])
+				if len(tokens) > 1 {
+					a.a = strings.Join(append(tokens[1:], tokens[0]), "|")
+				}
 
 				if t.previewOpts.hidden {
 					togglePreview(false)
@@ -2761,7 +2771,7 @@ func (t *Terminal) Loop() {
 		if t.jumping == jumpDisabled {
 			actions := t.keymap[event.Comparable()]
 			if len(actions) == 0 && event.Type == tui.Rune {
-				doAction(action{t: actRune})
+				doAction(&action{t: actRune})
 			} else if !doActions(actions) {
 				continue
 			}
