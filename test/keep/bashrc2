@@ -1172,12 +1172,12 @@ function zp()
 
 function vv()
 {
-  for name in $@; do
-    [ -e {${name}} ] && return vim $@
+  for fname in $@; do
+    if [ -e "${fname}" ]; then vim $@; return $?; fi
   done
 
-  (type fzf >& /dev/null) && name="$(zp $@)" || name=$@
-  [ -n "${name}" ] && return vim "${name}"
+  if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
+  [ -n "${name}" ] && vim "${name}"
 }
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
