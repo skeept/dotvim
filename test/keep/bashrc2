@@ -1159,5 +1159,26 @@ star()
   eval "$(starship init bash)"
 }
 
+function zp()
+{
+  test -n "$1" && select1=("--select-1" "-q") || select1=()
+  if (type bat >& /dev/null); then
+    fzf --preview "bat --style=plain --color=always --line-range :500 {}" ${select1[@]} $@
+  else
+    fzf --preview "head -n 500 {}" ${select1[@]} $@
+  fi
+
+}
+
+function vv()
+{
+  for name in $@; do
+    [ -e {${name}} ] && return vim $@
+  done
+
+  (type fzf >& /dev/null) && name="$(zp $@)" || name=$@
+  [ -n "${name}" ] && vim "${name}"
+}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
