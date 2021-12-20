@@ -1177,7 +1177,7 @@ function vv()
   done
 
   (type fzf >& /dev/null) && name="$(zp $@)" || name=$@
-  [ -n "${name}" ] && vim "${name}"
+  [ -n "${name}" ] && return vim "${name}"
 }
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
