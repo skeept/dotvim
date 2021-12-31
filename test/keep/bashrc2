@@ -1184,7 +1184,7 @@ function vv()
 dd() {
   local dir
   local ok=0
-  if [ -n "${1}" -a -d ${1} ]; then dir=$1
+  if [ -n "${1}" -a -d "${1}" ]; then dir=$1
   elif type -p fd >& /dev/null; then
     dir=$(fd -I --type d ${1:-.} | fzf --select-1 +m)
     ok=$?
@@ -1194,7 +1194,7 @@ dd() {
     ok=$?
   fi
 
-  if [ 0 -eq "${ok}" ] ; then
+  if [ "${ok}" -eq "0" ] ; then
     if type d >& /dev/null; then
       d ${dir}
     else
