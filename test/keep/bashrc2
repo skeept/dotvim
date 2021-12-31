@@ -1189,8 +1189,9 @@ dd() {
     dir=$(fd -I --type d ${1:-.} | fzf --select-1 +m)
     ok=$?
   else
-    dir=$(find ${1:-.} -path '*/\.*' -prune \
-      -o -type d -print 2> /dev/null | fzf --select-1 +m)
+    local arg="$([ -n "${1}" ] && echo -q \'$@)"
+    dir=$(find . -path '*/\.*' -prune -o -type d -print 2> /dev/null \
+        | grep -v "^\.$"| fzf --select-1 +m $arg)
     ok=$?
   fi
 
