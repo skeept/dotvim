@@ -1180,5 +1180,28 @@ function vv()
   [ -n "${name}" ] && vim "${name}"
 }
 
+# cd to a nested folder
+dd() {
+  local dir
+  local ok=0
+  if [ -n "${1}" -a -d ${1} ]; then dir=$1
+  elif type -p fd >& /dev/null; then
+    dir=$(fd -I --type d ${1:-.} | fzf --select-1 +m)
+    ok=$?
+  else
+    dir=$(find ${1:-.} -path '*/\.*' -prune \
+      -o -type d -print 2> /dev/null | fzf --select-1 +m)
+    ok=$?
+  fi
+
+  if [ 0 -eq "${ok}" ] ; then
+    if type d >& /dev/null; then
+      d ${dir}
+    else
+      cd ${dir}
+    fi
+  fi
+}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
