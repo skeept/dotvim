@@ -253,3 +253,22 @@ function! wk#hoursMinutes(total, denominator)
   endif
   echo msg . mapping_msg
 endfunction
+
+
+"================== Get notes file ============================================{{{
+function! wk#get_notes_files()
+  let files = [
+        \ "/zl/rem.org",
+        \ "/mnt/c/zl/rem.org",
+        \ expand("~") . "/rem.org"
+        \ ]
+  let file = '' "not sure favailable after the loop so just initialize it here
+  for file in files
+    if filereadable(file)
+      break
+    endif
+  endfor
+  execute 'edit ' . file
+  return ''
+endfunction
+"==============================================================================}}}

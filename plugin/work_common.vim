@@ -105,3 +105,5 @@ nnoremap gsl /\s*<C-R>=substitute(getline('.'), '^\s*\(.\{-}\)\s*$', '\1', '')<C
 
 "command to show current iteration
 command! IterShow call wk#getIterationNum()
+
+command! Notes call wk#get_notes_files()
