@@ -98,6 +98,8 @@ Plug 'troydm/zoomwintab.vim'
 
 Plug 'skeept/ctrlp-packadd'
 
+Plug 'axvr/org.vim'
+
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
 
 

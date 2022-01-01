@@ -1,0 +1,239 @@
+*org.txt*            A minimal Org mode package providing only the necessities.
+
+
+                      Org.vim Manual by Alex Vear~
+
+
+Welcome to the org.vim user manual.            *org*  *org.vim*  *vim-org*  *outline*
+
+    1. Introduction ............................... |org-intro|
+    2. Usage ...................................... |org-usage|
+    3. Configuration .............................. |org-configuration|
+    4. Change log ................................. |org-changelog|
+    5. Legal ...................................... |org-legal|
+    6. References ................................. |org-references|
+
+==============================================================================
+ 1. INTRODUCTION                                                    *org-intro*
+
+Org.vim is a minimal Org mode [2] and Outline mode [1] plugin for Vim
+providing only syntax highlighting and folding.
+
+This plugin aims to replicate Vim's existing Markdown editing experience on
+Org mode (and Outline mode) files, rather than trying to be a full featured
+Org mode plugin -- that is what Emacs is for.
+
+==============================================================================
+ 2. USAGE                                                           *org-usage*
+
+When Org.vim is installed, files ending with the extension `.org` will
+automatically have syntax highlighting and folding support enabled.  You can
+also manually enable it by setting the 'filetype' option.
+>
+    :set filetype=org
+<
+Outline mode doesn't have a file extension like Org mode so you will have to
+enable it manually.
+>
+    :set filetype=outline
+<
+Just make sure the following options are set in your vimrc to enable all
+functionality offered by this plugin:
+>
+    syntax enable
+    filetype plugin indent on
+<
+==============================================================================
+ 3. CONFIGURATION                                           *org-configuration*
+
+                                                                  *org-folding*
+
+To control how Org.vim handles folding, just use the standard Vim |folding|
+options and commands.
+
+For example if you want to enable or disable folding, just set 'foldenable'.
+>
+    autocmd FileType org,outline setlocal nofoldenable
+<
+For more information on folding in Vim, refer to |fold.txt|.
+
+------------------------------------------------------------------------------
+                                                            *org-conceal-links*
+
+You can tell Vim to conceal links by using the built-in 'conceallevel' and
+'concealcursor' options.
+
+For example, you can make Vim collapse an Org mode link to look like it would
+within Emacs or a Web browser (i.e. only showing the link title).
+>
+    [[https://www.vim.org][Vim website]] --> Vim website
+<
+This is achieved with this |autocmd|:
+>
+    autocmd FileType org setlocal conceallevel=2 concealcursor=nc
+<
+Note: long concealed text can act weird when "hard-wraping" text in Vim.
+
+------------------------------------------------------------------------------
+                               *'b:org_state_keywords'*  *'g:org_state_keywords'*
+Value: list of strings~
+Default: ['TODO', 'NEXT', 'DONE']~
+
+To change the default state keywords set this variable to contain a list of
+strings you would like to use.
+>
+    let g:org_state_keywords = ['TODO', 'WAIT', 'DOING', 'DONE', 'CANCELED']
+<
+Note: state keywords are case sensitive.
+
+State keywords can be set on specific buffers by using |'b:org_state_keywords'|
+rather than |'g:org_state_keywords'|.
+
+------------------------------------------------------------------------------
+                                     *'b:org_clean_folds'*  *'g:org_clean_folds'*
+Value: numeric~
+Default: 0~
+
+Vim's default styling for folds is quite ugly.  Enabling this option will
+remove much of the visual noise and suffix the folded heading text with an
+ellipsis (`...`) making folds look the same as they do in Emacs' Org mode (and
+Outline mode).
+>
+    * Heading 1...
+<
+This option can be enabled for all buffers like so:
+>
+    let g:org_clean_folds = 1
+<
+Alternatively it can be enabled for specific buffers:
+>
+    let b:org_clean_folds = 1
+<
+------------------------------------------------------------------------------
+                                     *'b:org_use_italics'*  *'g:org_use_italics'*
+Value: numeric~
+Default: 1~
+
+Display italic Org mode markup (e.g. `/this is italic Org mode markup/`) using
+the italic variant of your font.
+
+As some terminals, terminal multiplexers and monospaced fonts don't support
+the use of italics, org.vim provides a mechanism to disable italic text.
+
+To disable for all Org mode files place the following line in your vimrc:
+>
+    let g:org_use_italics = 0
+<
+To disable italics only in a single buffer, use this instead:
+>
+    let b:org_use_italics = 0
+<
+------------------------------------------------------------------------------
+                                 *'b:org_highlight_tex'*  *'g:org_highlight_tex'*
+Value: numeric~
+Default: 1~
+
+Enable/disable syntax highlighting of inline (La)TeX blocks[4].  This option
+exists as some Org mode users don't use TeX and may find the highlighting
+annoying.
+
+To disable for all Org mode files place the following line in your vimrc:
+>
+    let g:org_highlight_tex = 0
+<
+To disable only in a single buffer, use this instead:
+>
+    let b:org_highlight_tex = 0
+<
+------------------------------------------------------------------------------
+          *'b:org_list_alphabetical_bullets'* *'g:org_list_alphabetical_bullets'*
+Value: numeric~
+Default: 0~
+
+Enable/disable alphabetical bullets on ordered lists.  This is disabled by
+default like in Emacs.
+
+To enable for all Org mode files place the following line in your vimrc:
+>
+    let g:org_list_alphabetical_bullets = 1
+<
+To enable only in a single buffer, use this instead:
+>
+    let b:org_list_alphabetical_bullets = 1
+<
+==============================================================================
+ 4. CHANGE LOG                                                  *org-changelog*
+
+v1.5 [2021-03-11]~
+
+  * Added support for alphabetical ordered list bullets.  (Thanks Isti115!)
+  * Option to disable (La)TeX highlighting.  (See: |g:org_highlight_tex|)
+  * Doc update.
+
+v1.4 [2020-08-24]~
+
+  * Render "strikethrough" text as "struck through".
+  * Added syntax cluster groups for headings and hyperlinks.
+  * Made spacing consistent throughout syntax files.
+  * Minor wording tweaks to README.
+
+v1.3 [2020-05-02]~
+
+  * Added syntax highlighting of LaTeX math fragments.  (Thanks Gavinok!)
+  * Improved detection of inline bold, italic, underline, strike through,
+    verbatim and code syntax.
+  * Grey out "strike through" text by default.
+  * Updated README content and added screenshots.
+  * Removed the "basic Org mode syntax" section from this document.
+
+v1.2 [2020-02-15]~
+
+  * Improved syntax highlighting of links and turned off link concealing.
+    * Added |org_conceal_links| doc section on how turn on link concealing.
+  * Syntax highlight list item bullets and numbers.
+    * Make Vim correctly format lists without messing up indentation.
+  * Allow lower case in option keys and dynamic block markers.
+  * Remove a couple of unnecessary 'fillchars' rules.
+  * Minor README content update.
+
+v1.1 [2020-01-05]~
+
+  * Added documentation on folding configuration (|org-folding|).
+  * Added 'g:org_clean_folds' option.
+  * Improved accuracy of in-line delimiter matching.
+  * Various minor documentation fixes.
+  * Rewrote README in Org mode.
+  * Enabled rendering of italics by default.
+
+v1.0 [2019-09-28]~
+
+  * Initial stable release.
+
+==============================================================================
+ 5. LEGAL                                                           *org-legal*
+
+Org.vim is distributed under the same terms as Vim itself.
+
+Copyright (c) 2018–2021, Alex Vear.
+
+A copy of the full licence text should have been provided with this extension
+in the `LICENCE` file.  The license can also be viewed on the web [3] or by
+viewing the |license| section of the |uganda.txt| help doc from within Vim.
+
+Org.vim is based on the work of many other people (far too many to list here),
+without them org.vim would not have been possible.  The most notable of thse
+works are:
+
+  * GNU Emacs' Outline mode [1].
+  * Carsten Dominik's Org mode [2].
+
+==============================================================================
+ 7. REFERENCES                                                 *org-references*
+
+[1]: <https://www.gnu.org/software/emacs/manual/html_node/emacs/Outline-Mode.html>
+[2]: <https://orgmode.org/>
+[3]: <http://vimdoc.sourceforge.net/htmldoc/uganda.html#license>
+[4]: <https://orgmode.org/manual/LaTeX-fragments.html>
+
+------------------------------------------------------------------------------
+vim:et:ts=4:sts=4:sw=4:tw=78:ft=help:norl:
