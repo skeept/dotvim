@@ -144,9 +144,8 @@ formatting.
 * Dart
   * [analysis_server](https://github.com/dart-lang/sdk/tree/master/pkg/analysis_server)
   * [dart-analyze](https://github.com/dart-lang/sdk/tree/master/pkg/analyzer_cli) :floppy_disk:
-  * [dart-format](https://github.com/dart-lang/sdk/tree/master/utils/dartfmt) :floppy_disk:
-  * [dartanalyzer](https://github.com/dart-lang/sdk/tree/master/pkg/analyzer_cli) :floppy_disk:
-  * [dartfmt](https://github.com/dart-lang/sdk/tree/master/utils/dartfmt) :floppy_disk:
+  * [dart-format](https://github.com/dart-lang/sdk/tree/master/utils/dartfmt)
+  * [dartfmt](https://github.com/dart-lang/sdk/tree/master/utils/dartfmt)
   * [language_server](https://github.com/natebosch/dart_language_server)
 * desktop
   * [desktop-file-validate](https://www.freedesktop.org/wiki/Software/desktop-file-utils/)
@@ -160,7 +159,7 @@ formatting.
   * [hadolint](https://github.com/hadolint/hadolint)
 * Elixir
   * [credo](https://github.com/rrrene/credo)
-  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell) :warning:
   * [dialyxir](https://github.com/jeremyjh/dialyxir)
   * [dogma](https://github.com/lpil/dogma) :floppy_disk:
   * [elixir-ls](https://github.com/elixir-lsp/elixir-ls) :warning:
@@ -198,7 +197,7 @@ formatting.
   * [glslls](https://github.com/svenstaro/glsl-language-server)
 * Go
   * [bingo](https://github.com/saibing/bingo) :warning:
-  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell) :warning:
   * [go build](https://golang.org/cmd/go/) :warning: :floppy_disk:
   * [go mod](https://golang.org/cmd/go/) :warning: :floppy_disk:
   * [go vet](https://golang.org/cmd/vet/) :floppy_disk:
@@ -290,18 +289,18 @@ formatting.
   * [tsserver](https://github.com/Microsoft/TypeScript/wiki/Standalone-Server-%28tsserver%29)
   * [xo](https://github.com/sindresorhus/xo)
 * JSON
-  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell) :warning:
   * [dprint](https://dprint.dev)
-  * [eslint](http://eslint.org/)
+  * [eslint](http://eslint.org/) :warning:
   * [fixjson](https://github.com/rhysd/fixjson)
-  * [jq](https://stedolan.github.io/jq/)
+  * [jq](https://stedolan.github.io/jq/) :warning:
   * [jsonlint](https://github.com/zaach/jsonlint)
   * [prettier](https://github.com/prettier/prettier)
   * [spectral](https://github.com/stoplightio/spectral)
 * JSON5
-  * [eslint](http://eslint.org/)
+  * [eslint](http://eslint.org/) :warning:
 * JSONC
-  * [eslint](http://eslint.org/)
+  * [eslint](http://eslint.org/) :warning:
 * Jsonnet
   * [jsonnet-lint](https://jsonnet.org/learning/tools.html)
   * [jsonnetfmt](https://jsonnet.org/learning/tools.html)
