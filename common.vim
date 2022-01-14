@@ -197,6 +197,7 @@ nnoremap ,fb :Buffers<CR>
 nnoremap ,fh :History
 nnoremap ,fc :Commands<CR>
 nnoremap ,fl :Lines<CR>
+nnoremap ,ff :Files<CR>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'

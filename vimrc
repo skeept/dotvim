@@ -172,9 +172,9 @@ execute "source " . g:p0 . "/conf_plugins.rc.vim"
 
 "================== PreciseJump ==============================================={{{
 "nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
-nnoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
-vnoremap ,ff <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
-onoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
+"nnoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
+"vnoremap ,ff <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
+"onoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
 "==============================================================================}}}
 
 "================== LibClang =================================================={{{
