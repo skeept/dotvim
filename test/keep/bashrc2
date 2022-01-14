@@ -262,24 +262,39 @@ function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total ";
 #-----------------------------------
 
 function ff() { local pat=$1; shift; find . -iname '*'${pat}'*' $@; }
-function fe() { find . -iname '*'$1'*' -exec $2 {} \; ; }  # find a file and run $2 on it
-function fstr() # find a string in a set of files
-{
-  if [ "$#" -gt 2 ]; then
-    echo "Usage: fstr \"pattern\" [files] "
-    return;
+function fexec()
+{ 
+  # find a file and run $2 on it
+  if [ -z "$1" ]; then
+    1>&2 echo "usage: $0 pattern [command]"
+  else
+    local pat=$1
+    shift
+    if [ -z "$1" ]; then
+      find . -iname '*'${pat}'*' -print0 | xargs --null ls -1 
+    else
+      find . -iname '*'${pat}'*' -print0 | xargs --null $@
+    fi
   fi
-  SMSO=$(tput smso)
-  RMSO=$(tput rmso)
-  find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
-    sed "s/$1/$SMSO$1$RMSO/gI"
-  }
-
-function cuttail() # cut last n lines in file, 10 by default
-{
-  nlines=${2:-10}
-  sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
 }
+
+#function fstr() # find a string in a set of files
+#{
+  #if [ "$#" -gt 2 ]; then
+    #echo "Usage: fstr \"pattern\" [files] "
+    #return;
+  #fi
+  #SMSO=$(tput smso)
+  #RMSO=$(tput rmso)
+  #find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
+    #sed "s/$1/$SMSO$1$RMSO/gI"
+#}
+
+#function cuttail() # cut last n lines in file, 10 by default
+#{
+  #nlines=${2:-10}
+  #sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
+#}
 
 function lowercase()  # move filenames to lowercase
 {
