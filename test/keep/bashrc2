@@ -262,11 +262,11 @@ function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total ";
 #-----------------------------------
 
 function ff() { local pat=$1; shift; find . -iname '*'${pat}'*' $@; }
-function fexec()
+function ffe()
 { 
   # find a file and run $2 on it
   if [ -z "$1" ]; then
-    1>&2 echo "usage: $0 pattern [command]"
+    1>&2 echo "usage: ${FUNCNAME[0]} pattern [command]"
   else
     local pat=$1
     shift
