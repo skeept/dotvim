@@ -271,9 +271,9 @@ function ffe()
     local pat=$1
     shift
     if [ -z "$1" ]; then
-      find . -iname '*'${pat}'*' -print0 | xargs --null ls -1 
+      find . -iname '*'${pat}'*' -print0 | xargs --null -n1 echo
     else
-      find . -iname '*'${pat}'*' -print0 | xargs --null $@
+      find . -iname '*'${pat}'*' -print0 | xargs --null -n1 $@
     fi
   fi
 }
