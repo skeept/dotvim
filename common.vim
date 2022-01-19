@@ -98,6 +98,12 @@ if has("patch789")
 endif
 
 set belloff=all
+
+" fix for blinking cursor
+if &term =~ "xterm" || &term =~ "screen-256color"
+  let &t_SI = "\e[6 q"
+  let &t_EI = "\e[2 q"
+endif
 "==============================================================================}}}
 
 "================== Mappings =================================================={{{
