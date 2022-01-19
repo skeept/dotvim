@@ -1,31 +1,20 @@
-mod parser;
-
 use std::hash::Hash;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use filter::subprocess::Exec;
 
+use super::{SearchType, TagInfo};
 use crate::tools::ctags::TagsConfig;
-
-pub use self::parser::TagLine;
-
-#[derive(Clone, Debug)]
-pub enum Filtering {
-    StartWith,
-    Contain,
-    #[allow(unused)]
-    Inherit,
-}
 
 /// `readtags` powered searcher.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct TagSearcher<'a, P> {
+pub struct CtagsSearcher<'a, P> {
     config: TagsConfig<'a, P>,
     tags_path: PathBuf,
 }
 
-impl<'a, P: AsRef<Path> + Hash> TagSearcher<'a, P> {
+impl<'a, P: AsRef<Path> + Hash> CtagsSearcher<'a, P> {
     pub fn new(config: TagsConfig<'a, P>) -> Self {
         let tags_path = config.tags_path();
         Self { config, tags_path }
@@ -41,7 +30,7 @@ impl<'a, P: AsRef<Path> + Hash> TagSearcher<'a, P> {
         self.config.generate_tags()
     }
 
-    fn build_exec(&self, query: &str, filtering_type: Filtering) -> Exec {
+    fn build_exec(&self, query: &str, search_type: SearchType) -> Exec {
         // https://docs.ctags.io/en/latest/man/readtags.1.html#examples
         let cmd = Exec::cmd("readtags")
             .arg("--tag-file")
@@ -55,13 +44,17 @@ impl<'a, P: AsRef<Path> + Hash> TagSearcher<'a, P> {
             cmd
         };
 
-        match filtering_type {
-            Filtering::StartWith => cmd.arg("--prefix-match").arg("-").arg(query),
-            Filtering::Contain => cmd
+        match search_type {
+            SearchType::StartWith => cmd.arg("--prefix-match").arg("-").arg(query),
+            SearchType::Exact => cmd
+                .arg("-Q")
+                .arg(format!("(eq? (downcase $name) \"{}\")", query))
+                .arg("-l"),
+            SearchType::Contain => cmd
                 .arg("-Q")
                 .arg(format!("(substr? (downcase $name) \"{}\")", query))
                 .arg("-l"),
-            Filtering::Inherit => {
+            SearchType::Inherit => {
                 todo!("Inherit")
             }
         }
@@ -70,21 +63,21 @@ impl<'a, P: AsRef<Path> + Hash> TagSearcher<'a, P> {
     pub fn search(
         &self,
         query: &str,
-        filtering: Filtering,
+        search_type: SearchType,
         force_generate: bool,
-    ) -> Result<impl Iterator<Item = TagLine>> {
+    ) -> Result<impl Iterator<Item = TagInfo>> {
         use std::io::BufRead;
 
         if force_generate || !self.tags_exists() {
             self.generate_tags()?;
         }
 
-        let stdout = self.build_exec(query, filtering).stream_stdout()?;
+        let stdout = self.build_exec(query, search_type).stream_stdout()?;
 
         // We usually have a decent amount of RAM nowdays.
         Ok(std::io::BufReader::with_capacity(8 * 1024 * 1024, stdout)
             .lines()
             .flatten()
-            .filter_map(|line| line.parse::<TagLine>().ok()))
+            .filter_map(|s| TagInfo::from_ctags(&s)))
     }
 }
