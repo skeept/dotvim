@@ -1,15 +1,16 @@
-#!/usr/bin/env python3
-
-# loop over all the files in plugged (ignore .git) and add those to git index
+__doc__ = (
+    """ loop over all the files in plugged (ignore .git) and add those to git index"""
+)
 
 import os
 import subprocess
 import argparse
 from os.path import basename, join, isdir
+from typing import Generator
 
 
-def get_individual_files(pathn):
-    for root, _, files in os.walk(pathn):
+def get_individual_files(path_name: str) -> Generator[str, None, None]:
+    for root, _, files in os.walk(path_name):
         for fn in files:
             if basename(fn) == "tags":
                 continue
@@ -17,12 +18,12 @@ def get_individual_files(pathn):
             yield join(root, fn)
 
 
-def git_force_add(pathn):
+def git_force_add(path_name: str) -> None:
     """git force add files or folder"""
-    if isdir(pathn):
-        files = list(get_individual_files(pathn))
+    if isdir(path_name):
+        files = list(get_individual_files(path_name))
     else:
-        files = [pathn]
+        files = [path_name]
 
     if not files:
         return
@@ -32,13 +33,13 @@ def git_force_add(pathn):
     subprocess.run(cmd)
 
 
-def add_path(pathn):
-    path_is_plugged = basename(pathn) == "plugged"
-    packages = os.listdir(pathn) if path_is_plugged else [pathn]
+def add_path(path_name: str) -> None:
+    path_is_plugged = basename(path_name) == "plugged"
+    packages = os.listdir(path_name) if path_is_plugged else [path_name]
     if not path_is_plugged:
-        pathn = ""
-    for dirn in packages:
-        curdir = join(pathn, dirn)
+        path_name = ""
+    for dir_name in packages:
+        curdir = join(path_name, dir_name)
         for fn in os.listdir(curdir):
             if fn == ".git":
                 continue

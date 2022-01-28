@@ -101,7 +101,9 @@ Plug 'skeept/ctrlp-packadd'
 Plug 'axvr/org.vim'
 Plug 'mhinz/vim-signify'
 
+" local plugins
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
+Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable', 'ALELint']}
 
 
 call plug#end()

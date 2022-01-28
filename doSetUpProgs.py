@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-
 # vim: cc=80
-
-__doc__ = """\
+__doc__ = """
 if the file is a directory, create a directory with the same name in usr,
 if it doesn't exist
 if the file is not a directory, just create a symbolic
@@ -63,7 +60,7 @@ def do_recursion(origin, dirname):
 
 def create_symlinks(origin, destin, display_passage=True):
     """we go over the files and folders in origin and create a symlink in destin
-  folders if not existing will be explicitly created, others files symlinked"""
+    folders if not existing will be explicitly created, others files symlinked"""
     origin = realpath(origin)
     destin = abspath(destin)
     os.chdir(origin)
