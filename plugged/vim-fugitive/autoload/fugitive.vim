@@ -5905,9 +5905,13 @@ function! s:ArgSplit(string) abort
     let arg = matchstr(string, '^\s*\%(\\.\|[^[:space:]]\)\+')
     let string = strpart(string, len(arg))
     let arg = substitute(arg, '^\s\+', '', '')
-    call add(args, substitute(arg, '\\\@<!\\ ', ' ', 'g'))
+    call add(args, substitute(arg, '\\\+[|" ]', '\=submatch(0)[len(submatch(0))/2 : -1]', 'g'))
   endwhile
   return args
+endfunction
+
+function! s:PlusEscape(string) abort
+  return substitute(a:string, '\\*[|" ]', '\=repeat("\\", len(submatch(0))).submatch(0)', 'g')
 endfunction
 
 function! s:OpenParse(string, wants_cmd) abort
@@ -5916,7 +5920,7 @@ function! s:OpenParse(string, wants_cmd) abort
   let args = s:ArgSplit(a:string)
   while !empty(args)
     if args[0] =~# '^++'
-      call add(opts, ' ' . escape(remove(args, 0), ' |"'))
+      call add(opts, ' ' . s:PlusEscape(remove(args, 0)))
     elseif a:wants_cmd && args[0] =~# '^+'
       call add(cmds, remove(args, 0)[1:-1])
     else
@@ -5983,9 +5987,9 @@ function! s:OpenParse(string, wants_cmd) abort
 
   let pre = join(opts, '')
   if len(cmds) > 1
-    let pre .= ' +' . escape(join(map(cmds, '"exe ".string(v:val)'), '|'), ' |"')
+    let pre .= ' +' . s:PlusEscape(join(map(cmds, '"exe ".string(v:val)'), '|'))
   elseif len(cmds)
-    let pre .= ' +' . escape(cmds[0], ' |"')
+    let pre .= ' +' . s:PlusEscape(cmds[0])
   endif
   return [url, pre]
 endfunction
@@ -7593,9 +7597,10 @@ function! fugitive#MapJumps(...) abort
     call s:Map('n', 'czA', ':<C-U>Git stash apply --quiet stash@{<C-R>=v:count<CR>}<CR>')
     call s:Map('n', 'czp', ':<C-U>Git stash pop --quiet --index stash@{<C-R>=v:count<CR>}<CR>')
     call s:Map('n', 'czP', ':<C-U>Git stash pop --quiet stash@{<C-R>=v:count<CR>}<CR>')
+    call s:Map('n', 'czs', ':<C-U>Git stash push --staged<CR>')
     call s:Map('n', 'czv', ':<C-U>exe "Gedit" fugitive#RevParse("stash@{" . v:count . "}")<CR>', '<silent>')
-    call s:Map('n', 'czw', ':<C-U>Git stash --keep-index<C-R>=v:count > 1 ? " --all" : v:count ? " --include-untracked" : ""<CR><CR>')
-    call s:Map('n', 'czz', ':<C-U>Git stash <C-R>=v:count > 1 ? " --all" : v:count ? " --include-untracked" : ""<CR><CR>')
+    call s:Map('n', 'czw', ':<C-U>Git stash push --keep-index<C-R>=v:count > 1 ? " --all" : v:count ? " --include-untracked" : ""<CR><CR>')
+    call s:Map('n', 'czz', ':<C-U>Git stash push <C-R>=v:count > 1 ? " --all" : v:count ? " --include-untracked" : ""<CR><CR>')
     call s:Map('n', 'cz?', ':<C-U>help fugitive_cz<CR>', '<silent>')
 
     call s:Map('n', 'co<Space>', ':Git checkout<Space>')
@@ -7904,7 +7909,7 @@ function! s:GF(mode) abort
   endtry
   if len(results) > 1
     let cmd = 'G' . a:mode .
-          \ (empty(results[1]) ? '' : ' +' . escape(results[1], ' |')) . ' ' .
+          \ (empty(results[1]) ? '' : ' +' . s:PlusEscape(results[1])) . ' ' .
           \ fnameescape(results[0])
     let tail = join(map(results[2:-1], '"|" . v:val'), '')
     if a:mode ==# 'pedit' && len(tail)
