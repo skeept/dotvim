@@ -61,6 +61,8 @@ formatting.
   * [buildifier](https://github.com/bazelbuild/buildtools)
 * BibTeX
   * [bibclean](http://ftp.math.utah.edu/pub/bibclean/)
+* BitBake
+  * [oelint-adv](https://github.com/priv-kweihmann/oelint-adv)
 * Bourne Shell
   * shell [-n flag](http://linux.die.net/man/1/sh)
   * [shellcheck](https://www.shellcheck.net/)
@@ -112,7 +114,8 @@ formatting.
   * [cfn-python-lint](https://github.com/awslabs/cfn-python-lint)
 * CMake
   * [cmake-format](https://github.com/cheshirekow/cmake_format)
-  * [cmakelint](https://github.com/richq/cmake-lint)
+  * [cmake-lint](https://github.com/cheshirekow/cmake_format)
+  * [cmakelint](https://github.com/cmake-lint/cmake-lint)
 * CoffeeScript
   * [coffee](http://coffeescript.org/)
   * [coffeelint](https://www.npmjs.com/package/coffeelint)
