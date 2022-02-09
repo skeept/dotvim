@@ -5,10 +5,12 @@
 ## Added
 
 - Support generating the source of `tags` provider using the Rust binary, remove the vista.vim dep from `tags` provider. #795
+- Initial support of preview with context. #798
 
 ## Fixed
 
 - Fix the `proj_tags` cmd list under Vim. #796
+- No syntax highlight for `c` preview. #800
 
 ### Internal
 
