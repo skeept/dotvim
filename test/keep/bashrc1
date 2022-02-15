@@ -163,4 +163,16 @@ fi
 # bin/links is usually not commited
 export PATH="${HOME}/bin:${HOME}/bin/links:${PATH}"
 
+
+# command history settings
+if ! command -v mcfly &> /dev/null; then
+  export MCFLY_RESULTS=30
+  export MCFLY
+  eval "$(mcfly init bash)"
+elif command -v fzf &> /dev/null; then
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}fzf.bash"
+  [ -e "${NAME}" ] && . "${NAME}" "${CONFIG_FILES_DIR}/../../plugged/fzf/shell"
+fi
+
+
 # vim: set ft=bash:
