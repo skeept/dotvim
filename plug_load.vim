@@ -55,6 +55,7 @@ Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
 Plug 'yami-beta/asyncomplete-omni.vim'
 
 Plug 'lifepillar/vim-mucomplete', {'branch': 'hji/neosnippet-fix-01'}
+"Plug 'lifepillar/vim-mucomplete'
 
 "tpope
 Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }

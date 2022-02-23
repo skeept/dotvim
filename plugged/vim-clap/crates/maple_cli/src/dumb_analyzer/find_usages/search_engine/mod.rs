@@ -15,10 +15,12 @@ use std::collections::HashMap;
 
 use once_cell::sync::OnceCell;
 
+use super::AddressableUsage;
+
 /// When spawning the ctags/gtags request, we can specify the searching strategy.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[allow(unused)]
-pub enum SearchType {
+pub enum QueryType {
     /// Prefix match.
     StartWith,
     /// Exact match.
@@ -29,7 +31,7 @@ pub enum SearchType {
     Inherit,
 }
 
-impl Default for SearchType {
+impl Default for QueryType {
     fn default() -> Self {
         Self::Exact
     }
@@ -196,5 +198,14 @@ impl TagInfo {
         ignorecase: bool,
     ) -> (String, Option<Vec<usize>>) {
         self.grep_format_inner(kind, query, ignorecase)
+    }
+
+    pub fn into_addressable_usage(self, line: String, indices: Vec<usize>) -> AddressableUsage {
+        AddressableUsage {
+            line,
+            indices,
+            path: self.path,
+            line_number: self.line,
+        }
     }
 }

@@ -7,6 +7,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use anyhow::Result;
 
+use crate::dumb_analyzer::AddressableUsage;
 use crate::utils::display_width;
 
 pub use self::jsont::{Match, Message, SubMatch};
@@ -153,7 +154,7 @@ impl Match {
             path,
             line_number,
             column,
-            self.lines.text().trim_end()
+            self.pattern().trim_end()
         );
 
         // filepath:line_number:column:text, 3 extra `:` in the formatted String.
@@ -171,6 +172,11 @@ impl Match {
         (formatted, indices)
     }
 
+    #[inline]
+    pub fn pattern(&self) -> Cow<str> {
+        self.lines.text()
+    }
+
     /// Returns a pair of the formatted `String` and the offset of matches for dumb_jump provider.
     ///
     /// NOTE: [`pattern::DUMB_JUMP_LINE`] must be updated accordingly once the format is changed.
@@ -185,7 +191,7 @@ impl Match {
             path,
             line_number,
             column,
-            self.lines.text().trim_end()
+            self.pattern().trim_end()
         );
 
         let offset = path.len()
@@ -207,12 +213,8 @@ impl Match {
         let line_number = self.line_number();
         let column = self.column();
 
-        let formatted_string = format!(
-            "  {}:{}:{}",
-            line_number,
-            column,
-            self.lines.text().trim_end()
-        );
+        let formatted_string =
+            format!("  {}:{}:{}", line_number, column, self.pattern().trim_end());
 
         let offset = display_width(line_number as usize) + display_width(column) + 2 + 2;
 
@@ -223,5 +225,14 @@ impl Match {
         let (formatted, offset) = self.jump_line_format_bare();
         let indices = self.match_indices_for_dumb_jump(offset, word);
         (formatted, indices)
+    }
+
+    pub fn into_addressable_usage(self, line: String, indices: Vec<usize>) -> AddressableUsage {
+        AddressableUsage {
+            line,
+            indices,
+            path: self.path().into(),
+            line_number: self.line_number() as usize,
+        }
     }
 }
