@@ -1,4 +1,5 @@
 use super::*;
+use crate::process::light::CommandEnv;
 
 #[derive(Parser, Debug, Clone)]
 pub struct RipGrepForerunner {
@@ -41,8 +42,10 @@ impl RipGrepForerunner {
             if let Some(ref dir) = self.cmd_dir {
                 let base_cmd = BaseCommand::new(RG_EXEC_CMD.into(), dir.clone());
                 if let Some((total, cache)) = base_cmd.cache_info() {
-                    send_response_from_cache(&cache, total as usize, SendResponse::Json, icon);
-                    return Ok(());
+                    if total > 100000 {
+                        send_response_from_cache(&cache, total as usize, SendResponse::Json, icon);
+                        return Ok(());
+                    }
                 }
             }
         }
@@ -61,12 +64,14 @@ impl RipGrepForerunner {
 
         let mut cmd = std_cmd.into_inner();
 
-        let mut light_cmd = LightCommand::new_grep(
+        let mut light_cmd = LightCommand::new(
             &mut cmd,
-            self.cmd_dir.clone(),
-            number,
-            icon,
-            Some(self.output_threshold),
+            CommandEnv::new(
+                self.cmd_dir.clone(),
+                number,
+                icon,
+                Some(self.output_threshold),
+            ),
         );
 
         let cwd = match self.cmd_dir {
