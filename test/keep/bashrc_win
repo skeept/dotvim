@@ -48,7 +48,8 @@ function __args_to_win()
 function __win_base()
 {
   local cmd=$(command -v cmd.exe)
-  echo "${cmd/\/Windows*/}"
+  cmd=${cmd,,} # convert to lowercase
+  echo "${cmd/\/windows*/}"
 }
 
 function vg()
