@@ -52,19 +52,45 @@ function __win_base()
   echo "${cmd/\/windows*/}"
 }
 
+function __get_gvim()
+{
+  # we try different options to get windows gvim
+  if command -v gvim.exe >& /dev/null; then
+    echo gvim.exe
+    return
+  fi
+  gvim1="/mnt/c/Program Files/vim/vim82/gvim.exe"
+  if [ -e "${gvim1}" ]; then
+    echo "${gvim1}"
+    return
+  fi
+
+  gvim2="/mnt/c/ht/Neovim/bin/nvim-qt.exe"
+  if [ -e "${gvim2}" ]; then
+    echo "${gvim2}"
+    return
+  fi
+}
+
+function __get_vim_config_folder()
+{
+  test -d ~/vimfiles && ((cd ~/vimfiles; realpath .) ; return)
+  test -d ~/.vim && ((cd ~/.vim; realpath .); return)
+}
+
 function vg()
 {
-  gvim $(__args_to_win -u "${HOME}/vimfiles/simple.vim" --noplugins $@) &
+  "$(__get_gvim)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins $@) &
 }
 
 function vdg()
 {
-  gvim.bat $(__args_to_win -u "${HOME}/vimfiles/simple.vim" --noplugins -d $@)
+  "$(__get_gvim)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins -d $@)
 }
 
 function gv()
 {
-  gvim.bat $(__args_to_win $@)
+  "$(__get_gvim)" $(__args_to_win $@)
 }
 
 function gr()
