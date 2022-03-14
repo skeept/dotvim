@@ -74,8 +74,11 @@ function __get_gvim()
 
 function __get_vim_config_folder()
 {
-  test -d ~/vimfiles && ((cd ~/vimfiles; realpath .) ; return)
-  test -d ~/.vim && ((cd ~/.vim; realpath .); return)
+  if [ -d ~/vimfiles ]; then
+    (cd ~/vimfiles; realpath .)
+  elif [ -d ~/.vim ]; then
+    (cd ~/.vim; realpath .)
+  fi
 }
 
 function vg()
@@ -99,7 +102,7 @@ function gr()
   if test "a$1" != "a"; then
     _REMOTE_SILENT='--remote-silent'
   fi
-  gvim.bat $(__args_to_win ${_REMOTE_SILENT} $@)
+  "$(__get_gvim)" $(__args_to_win ${_REMOTE_SILENT} $@)
 }
 
 function np()
