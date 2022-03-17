@@ -330,7 +330,7 @@ fu! s:Open()
 endf
 
 fu! s:Close()
-	cal s:async_glob_abort()
+	cal s:async_glob_abort(0)
 	cal s:buffunc(0)
 	if winnr('$') == 1
 		bw!
@@ -488,10 +488,12 @@ fu! s:async_glob_on_exit(...)
 	en
 endf
 
-fu! s:async_glob_abort()
+fu! s:async_glob_abort(upd)
 	cal s:stop_job_if_exists()
 	cal s:stop_timer_if_exists()
-	cal s:ForceUpdate()
+	if a:upd
+		cal s:ForceUpdate()
+	en
 endf
 
 fu! s:stop_timer_if_exists()
@@ -751,6 +753,9 @@ fu! s:Render(lines, pat)
 	en
 	if s:mw_order == 'btt' | cal reverse(lines) | en
 	let s:lines = copy(lines)
+	if s:maxfiles && len(lines) > s:maxfiles
+		let lines = lines[:s:maxfiles]
+	en
 	if has('patch-8.1-0') && s:flfunc ==# 's:formatline(v:val)'
 		cal map(lines, function('s:formatline2', [s:curtype()]))
 	el
@@ -1152,7 +1157,7 @@ fu! s:ToggleByFname()
 endf
 
 fu! s:ToggleType(dir)
-	cal s:async_glob_abort()
+	cal s:async_glob_abort(1)
 	let max = len(g:ctrlp_ext_vars) + len(s:coretypes) - 1
 	let next = s:walker(max, s:itemtype, a:dir)
 	cal ctrlp#setlines(next)
@@ -1762,16 +1767,22 @@ fu! s:formatline2(ct, key, str)
 				let str .= printf('  %s', parts[3])
 			en
 		en
+		retu s:lineprefix.str
 	en
-	let cond = a:ct != 'buf' &&s:ispath && ( s:winw - 4 ) < s:strwidth(str)
+	let cond = s:ispath && ( s:winw - 4 ) < strchars(str)
 	retu s:lineprefix.( cond ? s:pathshorten(str) : str )
 endf
 
-
-fu! s:pathshorten(str)
-	retu matchstr(a:str, '^.\{9}').'...'
-		\ .matchstr(a:str, '.\{'.( s:winw - 16 ).'}$')
-endf
+if exists('*strchars') && exists('*strcharpart')
+	fu! s:pathshorten(str)
+		retu strcharpart(a:str, 0, 9).'...'.strcharpart(a:str, strchars(a:str) - s:winw + 16)
+	endf
+el
+	fu! s:pathshorten(str)
+		retu matchstr(a:str, '^.\{9}').'...'
+			\ .matchstr(a:str, '.\{'.( s:winw - 16 ).'}$')
+	endf
+en
 
 fu! s:offset(lines, height)
 	let s:offset = s:mw_order == 'btt' ? ( a:height - s:res_count ) : 0
