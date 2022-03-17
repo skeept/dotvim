@@ -42,5 +42,10 @@ wsl, git => same but use vim
 vvo
 wsl, git => :call foreground()
 
+proposed:
+
+vp - open with fzf preview
+va - like current v (a is for add, meaning add to existing instance)
+v - maybe try vim first but open new unless it exists
 
 

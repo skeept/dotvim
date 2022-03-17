@@ -52,7 +52,7 @@ function __win_base()
   echo "${cmd/\/windows*/}"
 }
 
-function __get_gvim()
+function __get_gvim_win()
 {
   # we try different options to get windows gvim
   if command -v gvim.exe >& /dev/null; then
@@ -83,17 +83,17 @@ function __get_vim_config_folder()
 
 function vg()
 {
-  "$(__get_gvim)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins $@) &
+  "$(__get_gvim_win)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins $@) &
 }
 
 function vdg()
 {
-  "$(__get_gvim)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins -d $@)
+  "$(__get_gvim_win)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins -d $@)
 }
 
 function gv()
 {
-  "$(__get_gvim)" $(__args_to_win $@)
+  "$(__get_gvim_win)" $(__args_to_win $@)
 }
 
 function gr()
@@ -102,7 +102,7 @@ function gr()
   if test "a$1" != "a"; then
     _REMOTE_SILENT='--remote-silent'
   fi
-  "$(__get_gvim)" $(__args_to_win ${_REMOTE_SILENT} $@)
+  "$(__get_gvim_win)" $(__args_to_win ${_REMOTE_SILENT} $@)
 }
 
 function np()

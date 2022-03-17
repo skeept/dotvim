@@ -119,33 +119,33 @@ function pre()
   fi
 }
 
-function sa()
-{
-  echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-  if test "a$1" = "a1" ; then
-    source "${HOME}/.alias"
-  elif test "a$1" = "a2"; then
-    source "${HOME}/.bashrc"
-  elif test "a$1" = "a3"; then
-    source "${HOME}/.bashrc2"
-  elif test "a$1" = "a4"; then
-    source "${HOME}/.bashrc.local"
-  fi
-}
+#function sa()
+#{
+  #echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
+  #if test "a$1" = "a1" ; then
+    #source "${HOME}/.alias"
+  #elif test "a$1" = "a2"; then
+    #source "${HOME}/.bashrc"
+  #elif test "a$1" = "a3"; then
+    #source "${HOME}/.bashrc2"
+  #elif test "a$1" = "a4"; then
+    #source "${HOME}/.bashrc.local"
+  #fi
+#}
 
-function sae()
-{
-  echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-  if test "a$1" = "a1" ; then
-    vim "${HOME}/.alias"
-  elif test "a$1" = "a2"; then
-    vim "${HOME}/.bashrc"
-  elif test "a$1" = "a3"; then
-    vim "${HOME}/.bashrc2"
-  elif test "a$1" = "a4"; then
-    vim "${HOME}/.bashrc.local"
-  fi
-}
+#function sae()
+#{
+  #echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
+  #if test "a$1" = "a1" ; then
+    #vim "${HOME}/.alias"
+  #elif test "a$1" = "a2"; then
+    #vim "${HOME}/.bashrc"
+  #elif test "a$1" = "a3"; then
+    #vim "${HOME}/.bashrc2"
+  #elif test "a$1" = "a4"; then
+    #vim "${HOME}/.bashrc.local"
+  #fi
+#}
 
 
 function _exit()        # function to run upon exit of shell
@@ -1093,6 +1093,18 @@ function e()
 {
   if [ -x "$(command -v nvim)" ]; then
     nvim $@
+  else
+    vim $@
+  fi
+}
+
+v()
+{
+  # returns gvim or vim
+  if [ "$(type -t __get_gvim_win)" = "function" ] && [ -n "$(__get_gvim_win)" ]; then
+    "$(__get_gvim_win)" -c "RemoteOpenMod $(__args_to_win $@)" &
+  elif [ -x "$(command -v gvim)" -a -n "${DISPLAY}"]; then
+    gvim -c "RemoteOpenMod $@"
   else
     vim $@
   fi
