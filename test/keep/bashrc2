@@ -1108,7 +1108,7 @@ __imp_v()
   local remote_open="RemoteOpenMod$mode"
   if [ "$(type -t __get_gvim_win)" = "function" ] && [ -n "$(__get_gvim_win)" ]; then
     ("$(__get_gvim_win)" -c "${remote_open} $(__args_to_win $@)" &)
-  elif [ -x "$(command -v gvim)" -a -n "${DISPLAY}"]; then
+  elif [ -x "$(command -v gvim)" -a -n "${DISPLAY}" ]; then
     gvim -c "${remote_open} $@"
   else
     vim $@
