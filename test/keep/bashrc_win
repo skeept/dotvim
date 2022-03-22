@@ -59,13 +59,13 @@ function __get_gvim_win()
     echo gvim.exe
     return
   fi
-  gvim1="/mnt/c/Program Files/vim/vim82/gvim.exe"
+  gvim1="$(__win_base)/Program Files/vim/vim82/gvim.exe"
   if [ -e "${gvim1}" ]; then
     echo "${gvim1}"
     return
   fi
 
-  gvim2="/mnt/c/ht/Neovim/bin/nvim-qt.exe"
+  gvim2="$(__win_base)/ht/Neovim/bin/nvim-qt.exe"
   if [ -e "${gvim2}" ]; then
     echo "${gvim2}"
     return
