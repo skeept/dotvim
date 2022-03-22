@@ -1,8 +1,10 @@
-
 " set ft=vim
+"
+" copy this file to one of the following locations depending Linux/windows
+" ~/.config/nvim/
+" ~/AppData/Local/nvim 
 
-" should determine which is current vim folder
-
+" determine vim config folder
 if has("win32")
   let vim_config_folder=expand('~') . '/vimfiles'
 else
