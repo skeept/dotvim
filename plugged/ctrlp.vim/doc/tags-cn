@@ -5,7 +5,6 @@
 'ctrlp-autocompletion'	ctrlp.cnx	/*'ctrlp-autocompletion'*
 'ctrlp-fullregexp'	ctrlp.cnx	/*'ctrlp-fullregexp'*
 'ctrlp-pasting'	ctrlp.cnx	/*'ctrlp-pasting'*
-'ctrlp-wildignore'	ctrlp.cnx	/*'ctrlp-wildignore'*
 'g:ctrlp_abbrev'	ctrlp.cnx	/*'g:ctrlp_abbrev'*
 'g:ctrlp_arg_map'	ctrlp.cnx	/*'g:ctrlp_arg_map'*
 'g:ctrlp_brief_prompt'	ctrlp.cnx	/*'g:ctrlp_brief_prompt'*

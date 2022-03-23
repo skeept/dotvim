@@ -425,14 +425,17 @@ fu! s:CloseCustomFuncs()
 	en
 endf
 
-if has('patch-8.2-0995')
+if has('patch-8.2-0995') && get(g:, 'ctrlp_use_readdir', 1)
 	fu! s:GlobPath(dirs, depth)
 		let entries = []
 		let dirs = substitute(a:dirs, '\\\([%# ]\)', '\1', 'g')
 		for e in split(dirs, ',')
-			sil let files = readdir(e, '1', {'sort': 'none'})
-			if !s:showhidden | cal filter(files, 'v:val[0] != "."') | en
-			let entries += map(files, 'e.s:lash.v:val')
+			try
+				let files = readdir(e, '1', {'sort': 'none'})
+				if !s:showhidden | cal filter(files, 'v:val[0] != "."') | en
+				let entries += map(files, 'e.s:lash.v:val')
+			cat
+			endt
 		endfo
 		let [dnf, depth] = [ctrlp#dirnfile(entries), a:depth + 1]
 		if &wig != '' | cal filter(dnf[1], 'glob(v:val) != ""') | en
