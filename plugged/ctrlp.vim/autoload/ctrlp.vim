@@ -95,7 +95,7 @@ let [s:pref, s:bpref, s:opts, s:new_opts, s:lc_opts] =
 	\ 'brief_prompt':          ['s:brfprt', 0],
 	\ 'match_current_file':    ['s:matchcrfile', 0],
 	\ 'match_natural_name':    ['s:matchnatural', 0],
-	\ 'compare_lim':           ['s:compare_lim', 3000],
+	\ 'compare_lim':           ['s:compare_lim', 0],
 	\ 'bufname_mod':           ['s:bufname_mod', ':t'],
 	\ 'bufpath_mod':           ['s:bufpath_mod', ':~:.:h'],
 	\ 'formatline_func':       ['s:flfunc', 's:formatline(v:val)'],
@@ -396,7 +396,7 @@ fu! ctrlp#files()
 		en
 		" Remove base directory
 		cal ctrlp#rmbasedir(g:ctrlp_allfiles)
-		if len(g:ctrlp_allfiles) <= s:compare_lim
+		if !s:compare_lim || len(g:ctrlp_allfiles) <= s:compare_lim
 			cal sort(g:ctrlp_allfiles, 'ctrlp#complen')
 		en
 		cal s:writecache(cafile)

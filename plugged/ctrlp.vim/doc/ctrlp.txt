@@ -847,6 +847,17 @@ Example: >
 
 This is possible to change no-limit mode for match type "path".
 
+                                                          *ctrlp_compare_lim*
+If your search directory has more number of files than this limit, no sorting
+will be performed for the first readout. You can improve CtrlP performance by
+setting this to a proper value, but no sorting on the first readout can reduce
+the quality of fuzzy finding results.
+Example:
+  let g:ctrlp_compare_lim = 100
+
+Set the value to 0 for unlimited sorting. Default is 0.  
+
+
 ===============================================================================
 COMMANDS                                                       *ctrlp-commands*
 
