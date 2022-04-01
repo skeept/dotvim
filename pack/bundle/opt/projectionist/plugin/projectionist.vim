@@ -3,7 +3,7 @@
 " Version:      1.3
 " GetLatestVimScripts: 4989 1 :AutoInstall: projectionist.vim
 
-if exists("g:loaded_projectionist") || v:version < 700 || &cp
+if exists("g:loaded_projectionist") || v:version < 704 || &cp
   finish
 endif
 let g:loaded_projectionist = 1
@@ -14,7 +14,6 @@ function! ProjectionistHas(req, ...) abort
     return
   endif
   let ns = matchstr(a:0 ? a:1 : a:req, '^\a\a\+\ze:')
-  call s:load(ns)
   if !a:0
     return s:nscall(ns, a:req =~# '[\/]$' ? 'isdirectory' : 'filereadable', a:req)
   endif
@@ -31,20 +30,9 @@ if !exists('g:projectionist_heuristics')
   let g:projectionist_heuristics = {}
 endif
 
-if !exists('s:loaded')
-  let s:loaded = {}
-endif
-
-function! s:load(ns) abort
-  if len(a:ns) && !has_key(s:loaded, a:ns) && len(findfile('autoload/' . a:ns . '.vim', escape(&rtp, ' ')))
-    exe 'runtime! autoload/' . a:ns . '.vim'
-    let s:loaded[a:ns] = 1
-  endif
-endfunction
-
 function! s:nscall(ns, fn, path, ...) abort
-  if len(a:ns) && !get(g:, 'projectionist_ignore_' . a:ns) && exists('*' . a:ns . '#' . a:fn)
-    return call(a:ns . '#' . a:fn, [a:path] + a:000)
+  if !get(g:, 'projectionist_ignore_' . a:ns)
+    return call(get(get(g:, 'io_' . a:ns, {}), a:fn, a:fn), [a:path] + a:000)
   else
     return call(a:fn, [a:path] + a:000)
   endif
@@ -87,7 +75,6 @@ function! ProjectionistDetect(path) abort
   elseif get(g:, 'projectionist_ignore_' . ns)
     return
   endif
-  call s:load(ns)
   let file = substitute(file, '[' . s:slash . '/]$', '', '')
   let root = file
   let previous = ""
@@ -112,24 +99,12 @@ function! ProjectionistDetect(path) abort
   endwhile
 
   if exists('#User#ProjectionistDetect')
-    if v:version >= 704 || (v:version == 703 && has('patch442'))
-      try
-        let g:projectionist_file = file
-        doautocmd <nomodeline> User ProjectionistDetect
-      finally
-        unlet! g:projectionist_file
-      endtry
-    else
-      let modelines = &modelines
-      try
-        set modelines=0
-        let g:projectionist_file = file
-        doautocmd User ProjectionistDetect
-      finally
-        let &modelines = modelines
-        unlet! g:projectionist_file
-      endtry
-    endif
+    try
+      let g:projectionist_file = file
+      doautocmd <nomodeline> User ProjectionistDetect
+    finally
+      unlet! g:projectionist_file
+    endtry
   endif
 
   if !empty(b:projectionist)
