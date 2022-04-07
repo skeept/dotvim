@@ -1246,6 +1246,7 @@ function! fugitive#RemoteHttpHeaders(remote) abort
   if type(remote) !=# type('') || remote !~# '^https\=://.' || !s:executable('curl')
     return {}
   endif
+  let remote = substitute(remote, '#.*', '', '')
   if !has_key(s:remote_headers, remote)
     let url = remote . '/info/refs?service=git-upload-pack'
     let exec = s:JobExecute(
@@ -1274,6 +1275,11 @@ function! s:UrlParse(url) abort
       let url.path = empty(match[3]) ? '/' : match[3]
     endif
   endif
+  return url
+endfunction
+
+function! s:UrlPopulate(string, into) abort
+  let url = a:into
   let url.protocol = substitute(url.scheme, '.\zs$', ':', '')
   let url.user = matchstr(url.authority, '.\{-\}\ze@', '', '')
   let url.host = substitute(url.authority, '.\{-\}@', '', '')
@@ -1292,16 +1298,15 @@ function! s:UrlParse(url) abort
   elseif url.scheme ==# 'ssh' && url.authority !~# ':'
     let url.href = url.authority . ':' . url.path . url.hash
   else
-    let url.href = a:url
+    let url.href = a:string
   endif
   let url.url = matchstr(url.href, '^[^#]*')
-  return url
 endfunction
 
 function! s:RemoteResolve(url, flags) abort
   let remote = s:UrlParse(a:url)
   if remote.scheme =~# '^https\=$' && index(a:flags, ':nohttp') < 0
-    let headers = fugitive#RemoteHttpHeaders(remote.url)
+    let headers = fugitive#RemoteHttpHeaders(a:url)
     let loc = matchstr(get(headers, 'location', ''), '^https\=://.\{-\}\ze/info/refs?')
     if len(loc)
       let remote = s:UrlParse(loc)
@@ -1347,6 +1352,7 @@ function! s:RemoteCallback(config, into, flags, cb) abort
   else
     call extend(a:into, s:UrlParse(url))
   endif
+  call s:UrlPopulate(url, a:into)
   if len(a:cb)
     call call(a:cb[0], [a:into] + a:cb[1:-1])
   endif
@@ -2839,17 +2845,17 @@ function! fugitive#BufReadStatus(...) abort
     call s:AddSection('Staged', staged)
     let staged_end = len(staged) ? line('$') : 0
 
-    if len(pull) && get(props, 'branch.ab') !~# ' -0$'
-      call s:AddLogSection('Unpulled from ' . pull, head, pull)
-    endif
-    if len(push) && push !=# pull
-      call s:AddLogSection('Unpulled from ' . push, head, push)
+    if len(push) && !(push ==# pull && get(props, 'branch.ab') =~# '^+0 ')
+      call s:AddLogSection('Unpushed to ' . push, push, head)
     endif
     if len(pull) && push !=# pull
       call s:AddLogSection('Unpushed to ' . pull, pull, head)
     endif
-    if len(push) && !(push ==# pull && get(props, 'branch.ab') =~# '^+0 ')
-      call s:AddLogSection('Unpushed to ' . push, push, head)
+    if len(push) && push !=# pull
+      call s:AddLogSection('Unpulled from ' . push, head, push)
+    endif
+    if len(pull) && get(props, 'branch.ab') !~# ' -0$'
+      call s:AddLogSection('Unpulled from ' . pull, head, pull)
     endif
 
     setlocal nomodified readonly noswapfile
@@ -6918,19 +6924,14 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
               call add(restore, 'call setwinvar(bufwinnr('.winbufnr(winnr).'),"&foldenable",1)')
             endif
           endif
-          if exists('+cursorbind') && !&l:cursorbind && getwinvar(winnr, '&cursorbind')
-            call setwinvar(winnr, '&cursorbind', 0)
-          endif
-          if s:BlameBufnr(winbufnr(winnr)) > 0
+          let win_blame_bufnr = s:BlameBufnr(winbufnr(winnr))
+          if getwinvar(winnr, '&scrollbind') ? win_blame_bufnr == bufnr : win_blame_bufnr > 0
             execute winbufnr(winnr).'bdelete'
           endif
         endfor
         let restore_winnr = 'bufwinnr(' . bufnr . ')'
         if !&l:scrollbind
           call add(restore, 'call setwinvar(' . restore_winnr . ',"&scrollbind",0)')
-        endif
-        if exists('+cursorbind') && !&l:cursorbind
-          call add(restore, 'call setwinvar(' . restore_winnr . ',"&cursorbind",0)')
         endif
         if &l:wrap
           call add(restore, 'call setwinvar(' . restore_winnr . ',"&wrap",1)')
@@ -6939,9 +6940,6 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
           call add(restore, 'call setwinvar(' . restore_winnr . ',"&foldenable",1)')
         endif
         setlocal scrollbind nowrap nofoldenable
-        if exists('+cursorbind')
-          setlocal cursorbind
-        endif
         let top = line('w0') + &scrolloff
         let current = line('.')
         exe 'silent keepalt' (a:bang ? s:Mods(mods) . 'split' : s:Mods(mods, 'leftabove') . 'vsplit') s:fnameescape(temp)
@@ -6949,9 +6947,6 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
         execute top
         normal! zt
         execute current
-        if exists('+cursorbind')
-          setlocal cursorbind
-        endif
         setlocal nonumber scrollbind nowrap foldcolumn=0 nofoldenable winfixwidth
         if exists('+relativenumber')
           setlocal norelativenumber
@@ -7192,10 +7187,27 @@ function! fugitive#BlameFileType() abort
   call s:BlameMaps(1)
 endfunction
 
+function! s:BlameCursorSync(bufnr, line) abort
+  if a:line == line('.')
+    return
+  endif
+  if get(s:TempState(), 'origin_bufnr') == a:bufnr || get(s:TempState(a:bufnr), 'origin_bufnr') == bufnr('')
+    if &startofline
+      execute a:line
+    else
+      let pos = getpos('.')
+      let pos[1] = a:line
+      call setpos('.', pos)
+    endif
+  endif
+endfunction
+
 augroup fugitive_blame
   autocmd!
   autocmd ColorScheme,GUIEnter * call s:BlameRehighlight()
   autocmd BufWinLeave * execute getwinvar(+bufwinnr(+expand('<abuf>')), 'fugitive_leave')
+  autocmd WinLeave * let s:cursor_for_blame = [bufnr(''), line('.')]
+  autocmd WinEnter * if exists('s:cursor_for_blame') | call call('s:BlameCursorSync', s:cursor_for_blame) | endif
 augroup END
 
 " Section: :GBrowse

@@ -136,6 +136,7 @@ type Terminal struct {
 	delimiter          Delimiter
 	expect             map[tui.Event]string
 	keymap             map[tui.Event][]*action
+	keymapOrg          map[tui.Event][]*action
 	pressed            string
 	printQuery         bool
 	history            *History
@@ -313,6 +314,7 @@ const (
 	actSelect
 	actDeselect
 	actUnbind
+	actRebind
 )
 
 type placeholderFlags struct {
@@ -501,6 +503,10 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		wordRubout = fmt.Sprintf("%s[^%s]", sep, sep)
 		wordNext = fmt.Sprintf("[^%s]%s|(.$)", sep, sep)
 	}
+	keymapCopy := make(map[tui.Event][]*action)
+	for key, action := range opts.Keymap {
+		keymapCopy[key] = action
+	}
 	t := Terminal{
 		initDelay:          delay,
 		infoStyle:          opts.InfoStyle,
@@ -526,6 +532,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		delimiter:          opts.Delimiter,
 		expect:             opts.Expect,
 		keymap:             opts.Keymap,
+		keymapOrg:          keymapCopy,
 		pressed:            "",
 		printQuery:         opts.PrintQuery,
 		history:            opts.History,
@@ -2728,12 +2735,18 @@ func (t *Terminal) Loop() {
 					command := t.replacePlaceholder(a.a, false, string(t.input), list)
 					newCommand = &command
 					t.reading = true
-					t.version++
 				}
 			case actUnbind:
 				keys := parseKeyChords(a.a, "PANIC")
 				for key := range keys {
 					delete(t.keymap, key)
+				}
+			case actRebind:
+				keys := parseKeyChords(a.a, "PANIC")
+				for key := range keys {
+					if originalAction, found := t.keymapOrg[key]; found {
+						t.keymap[key] = originalAction
+					}
 				}
 			case actChangePreview:
 				if t.previewOpts.command != a.a {
