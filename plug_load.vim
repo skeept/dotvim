@@ -102,6 +102,10 @@ Plug 'skeept/ctrlp-packadd'
 Plug 'axvr/org.vim'
 Plug 'mhinz/vim-signify'
 
+" gin
+Plug 'vim-denops/denops.vim', { 'on': ['Gin', 'GinStatus'] }
+Plug 'lambdalisue/gin.vim', { 'on': ['Gin', 'GinStatus'] }
+
 " local plugins
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
 Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable', 'ALELint']}
