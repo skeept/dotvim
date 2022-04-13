@@ -1127,10 +1127,10 @@ v()
   #fi
 }
 
-vn()
-{
-  __imp_v N $@
-}
+#vn()
+#{
+  #__imp_v N $@
+#}
 
 vs()
 {
@@ -1232,21 +1232,24 @@ function zp()
 function vv()
 {
   for fname in $@; do
-    if [ -e "${fname}" ]; then vim $@; return $?; fi
+    if [ -e "${fname}" ]; then
+      __imp_v X $@
+      return $?
+    fi
   done
 
   if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
-  [ -n "${name}" ] && v "${name}"
+  [ -n "${name}" ] && __imp_v X "${name}"
 }
 
-function vvn()
+function vn()
 {
   for fname in $@; do
-    if [ -e "${fname}" ]; then vim $@; return $?; fi
+    if [ -e "${fname}" ]; then __imp_v N $@; return $?; fi
   done
 
   if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
-  [ -n "${name}" ] && vn "${name}"
+  [ -n "${name}" ] && __imp_v N "${name}"
 }
 
 # cd to a nested folder
