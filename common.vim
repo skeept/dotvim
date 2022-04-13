@@ -7,8 +7,8 @@ command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons 
 " Use Vim settings, rather then Vi settings (much better!).
 
 " allow backspacing over everything in insert mode
-"set backspace=indent,eol,start
-set backspace=2
+set backspace=indent,eol,start
+"set backspace=2
 if !has('nvim') | set esckeys | endif
 
 set autoindent		" always set autoindenting on
