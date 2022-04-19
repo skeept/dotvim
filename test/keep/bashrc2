@@ -229,6 +229,7 @@ export LESSOPEN='|/usr/bin/lesspipe.sh %s >& /dev/null' # Use this if lesspipe.s
 #:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 export LESS='-i      -e -M -X  -R -P%t?f%f \
   :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
+export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
 
 #----------------
 # a few fun ones
