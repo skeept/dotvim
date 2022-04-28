@@ -41,11 +41,11 @@ function! s:parent_dir(dir) abort
   return s:normalize_dir(fnamemodify(a:dir, mod), 0)
 endfunction
 
-if v:version > 703
+if v:version > 704 || v:version == 704 && has('patch279')
 function! s:globlist(dir_esc, pat) abort
   return globpath(a:dir_esc, a:pat, !s:suf(), 1)
 endfunction
-else "Vim 7.3 glob() cannot handle filenames containing newlines.
+else " Older versions cannot handle filenames containing newlines.
 function! s:globlist(dir_esc, pat) abort
   return split(globpath(a:dir_esc, a:pat, !s:suf()), "\n")
 endfunction
@@ -477,9 +477,9 @@ function! dirvish#open(...) range abort
     call s:msg_error("'autochdir' is not supported")
     return
   endif
-  if !&autowriteall && !&hidden && &modified
+  if (&bufhidden =~# '\vunload|delete|wipe' || (!&autowriteall && !&hidden && &modified))
       \ && (!exists("*win_findbuf") || len(win_findbuf(winbufnr(0))) == 1)
-    call s:msg_error("E37: No write since last change")
+    call s:msg_error(&modified ? 'E37: No write since last change' : 'E37: Buffer would be deleted')
     return
   endif
 
