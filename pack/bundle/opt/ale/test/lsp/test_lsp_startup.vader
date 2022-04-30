@@ -189,11 +189,20 @@ Before:
       \           'typeDefinition': {
       \             'dynamicRegistration': v:false,
       \           },
+      \           'implementation': {
+      \             'dynamicRegistration': v:false,
+      \             'linkSupport': v:false,
+      \           },
       \           'publishDiagnostics': {
       \             'relatedInformation': v:true,
       \           },
       \           'codeAction': {
       \             'dynamicRegistration': v:false,
+      \             'codeActionLiteralSupport': {
+      \                  'codeActionKind': {
+      \                      'valueSet': []
+      \                  }
+      \              }
       \           },
       \           'rename': {
       \             'dynamicRegistration': v:false,

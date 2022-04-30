@@ -77,6 +77,12 @@ function! ProjectionistDetect(...) abort
   endif
   let file = substitute(file, '[' . s:slash . '/]$', '', '')
 
+  try
+    if exists('*ExcludeBufferFromDiscovery') && ExcludeBufferFromDiscovery(file, 'projectionist')
+      return
+    endif
+  catch
+  endtry
   let ns = matchstr(file, '^\a\a\+\ze:')
   if empty(ns)
     let file = resolve(file)
@@ -88,7 +94,7 @@ function! ProjectionistDetect(...) abort
     let root = fnamemodify(root, ':h')
   endif
   let previous = ""
-  while root !=# previous && root !=# '.'
+  while root !=# previous && root !~# '^\.\=$\|^[\/][\/][^\/]*$'
     if s:nscall(ns, 'filereadable', root . '/.projections.json')
       try
         let value = projectionist#json_parse(projectionist#readfile(root . '/.projections.json'))

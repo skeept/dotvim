@@ -292,6 +292,7 @@ formatting.
   * [tsserver](https://github.com/Microsoft/TypeScript/wiki/Standalone-Server-%28tsserver%29)
   * [xo](https://github.com/sindresorhus/xo)
 * JSON
+  * [VSCode JSON language server](https://www.npmjs.com/package/vscode-json-languageserver)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell) :warning:
   * [dprint](https://dprint.dev)
   * [eslint](http://eslint.org/) :warning:
@@ -336,6 +337,7 @@ formatting.
   * [luac](https://www.lua.org/manual/5.1/luac.html)
   * [luacheck](https://github.com/mpeterv/luacheck)
   * [luafmt](https://github.com/trixnz/lua-fmt)
+  * [selene](https://github.com/Kampfkarren/selene)
   * [stylua](https://github.com/johnnymorganz/stylua)
 * Mail
   * [alex](https://github.com/get-alex/alex)

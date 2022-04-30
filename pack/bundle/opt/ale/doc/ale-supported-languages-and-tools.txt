@@ -283,6 +283,7 @@ Notes:
   * `tsserver`
   * `xo`
 * JSON
+  * `VSCode JSON language server`
   * `cspell`
   * `dprint`
   * `eslint`
@@ -327,6 +328,7 @@ Notes:
   * `luac`
   * `luacheck`
   * `luafmt`
+  * `selene`
   * `stylua`
 * Mail
   * `alex`
