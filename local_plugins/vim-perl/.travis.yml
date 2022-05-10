@@ -1,4 +1,0 @@
-language: perl
-install:
-  - sudo apt-get install vim
-  - cpanm --notest Test::Differences Text::VimColor IO::Pty Test::Deep
