@@ -609,8 +609,6 @@ function! fugitive#PrepareDirEnvGitFlagsArgs(...) abort
     if type(cmd[i]) == type({})
       if has_key(cmd[i], 'git_dir')
         let dir = cmd[i].git_dir
-      elseif has_key(cmd[i], 'dir')
-        let dir = cmd[i].dir
       endif
       if has_key(cmd[i], 'git')
         let git = cmd[i].git
@@ -960,6 +958,10 @@ function! fugitive#Head(...) abort
   else
     return ''
   endif
+endfunction
+
+function! fugitive#head(...) abort
+  throw 'Third party code is using fugitive#head() which has been removed. Change it to FugitiveHead()'
 endfunction
 
 function! fugitive#RevParse(rev, ...) abort
@@ -1680,8 +1682,8 @@ function! fugitive#Path(url, ...) abort
   if empty(a:url)
     return ''
   endif
-  let dir = a:0 > 1 ? s:Dir(a:2) : s:Dir()
-  let tree = s:Tree(dir)
+  let dir = FugitiveVimPath(call('s:GitDir', a:000[1:-1]))
+  let tree = call('fugitive#Find', [':/'] + a:000[1:-1])
   if !a:0
     return fugitive#Real(a:url)
   elseif a:1 =~# '\.$'
@@ -3737,7 +3739,6 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
         \ 'git': options.git,
         \ 'flags': flags,
         \ 'args': args,
-        \ 'dir': options.git_dir,
         \ 'git_dir': options.git_dir,
         \ 'cwd': s:UserCommandCwd(dir),
         \ 'filetype': 'git',
@@ -4193,11 +4194,11 @@ function! s:ExpireStatus(bufnr) abort
     let s:last_time = reltime()
     return ''
   endif
-  let dir = s:Dir(a:bufnr)
-  if len(dir)
-    let s:last_times[s:cpath(dir)] = reltime()
-    if has_key(s:head_cache, dir)
-      call remove(s:head_cache, dir)
+  let head_file = fugitive#Find('.git/HEAD', a:bufnr)
+  if !empty(head_file)
+    let s:last_times[s:Tree(a:bufnr) . '/'] = reltime()
+    if has_key(s:head_cache, head_file)
+      call remove(s:head_cache, head_file)
     endif
   endif
   return ''
@@ -4213,7 +4214,7 @@ function! s:ReloadWinStatus(...) abort
   endif
   let t = b:fugitive_reltime
   if reltimestr(reltime(s:last_time, t)) =~# '-\|\d\{10\}\.' ||
-        \ reltimestr(reltime(get(s:last_times, s:cpath(s:Dir()), t), t)) =~# '-\|\d\{10\}\.'
+        \ reltimestr(reltime(get(s:last_times, s:Tree() . '/', t), t)) =~# '-\|\d\{10\}\.'
     exe s:ReloadStatusBuffer()
   endif
 endfunction
@@ -5708,7 +5709,6 @@ function! s:GrepSubcommand(line1, line2, range, bang, mods, options) abort
         \ 'git': a:options.git,
         \ 'flags': a:options.flags,
         \ 'args': cmd + args,
-        \ 'dir': s:GitDir(a:options),
         \ 'git_dir': s:GitDir(a:options),
         \ 'cwd': s:UserCommandCwd(a:options),
         \ 'filetype': 'git',
@@ -6879,7 +6879,6 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
             \ 'git': a:options.git,
             \ 'flags': a:options.flags,
             \ 'args': [a:options.subcommand] + a:options.subcommand_args,
-            \ 'dir': dir,
             \ 'git_dir': dir,
             \ 'cwd': s:UserCommandCwd(dir),
             \ 'filetype': (raw ? 'git' : 'fugitiveblame'),
@@ -8016,14 +8015,6 @@ endfunction
 
 function! fugitive#statusline(...) abort
   return fugitive#Statusline()
-endfunction
-
-function! fugitive#head(...) abort
-  if empty(s:Dir())
-    return ''
-  endif
-
-  return fugitive#Head(a:0 ? a:1 : 0)
 endfunction
 
 " Section: Folding
