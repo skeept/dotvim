@@ -202,6 +202,7 @@ nnoremap ,fe :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
 nnoremap ,fb :Buffers<CR>
 nnoremap ,fh :History
 nnoremap ,fc :Commands<CR>
+nnoremap <SPACE><SPACE> :Commands<CR>
 nnoremap ,fl :Lines<CR>
 nnoremap ,vv :Files<CR>
 
