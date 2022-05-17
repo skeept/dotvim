@@ -200,9 +200,8 @@ nnoremap ,yy yy:Sscratch<CR>p
 nnoremap ,fz :FZF<ENTER>
 nnoremap ,fe :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
 nnoremap ,fb :Buffers<CR>
-nnoremap ,fh :History
+nnoremap ,fh :History<CR>
 nnoremap ,fc :Commands<CR>
-nnoremap <SPACE><SPACE> :Commands<CR>
 nnoremap ,fl :Lines<CR>
 nnoremap ,vv :Files<CR>
 
@@ -681,6 +680,7 @@ noremap ,pj :CtrlPBufTagAll<CR>
 noremap ,pf :CtrlPCurFile<CR>
 noremap ,pa :CtrlPShowArr<CR>
 nnoremap ,pc :CtrlPCommand<CR>
+nnoremap <space>c :CtrlPCommand<CR>
 nnoremap ,pl :CtrlPLine<CR>
 let g:ctrlp_prompt_mappings = {
          \ 'PrtBS()':      ['<bs>', '<c-]>', '<c-h>'],
