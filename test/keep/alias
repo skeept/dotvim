@@ -46,7 +46,7 @@ alias t1='top -u `whoami` -c '
 alias vmore='vimpager'
 
 alias h='history'
-alias j='jobs -l'
+alias jl='jobs -l'
 alias which='type -all'
 alias gdf='type'
 alias ..='cd ..'

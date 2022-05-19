@@ -1277,5 +1277,14 @@ dd() {
   fi
 }
 
+function j()
+{
+  if [ -n "$1"  ]; then
+    export LAST_JJ_ARGS="$@"
+  fi
+
+  ${LAST_JJ_ARGS[@]}
+}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
