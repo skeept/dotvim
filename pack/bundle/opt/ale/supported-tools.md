@@ -75,7 +75,7 @@ formatting.
   * [clangd](https://clang.llvm.org/extra/clangd.html)
   * [clangtidy](http://clang.llvm.org/extra/clang-tidy/) :floppy_disk:
   * [cppcheck](http://cppcheck.sourceforge.net)
-  * [cpplint](https://github.com/google/styleguide/tree/gh-pages/cpplint)
+  * [cpplint](https://github.com/cpplint/cpplint)
   * [cquery](https://github.com/cquery-project/cquery)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
   * [flawfinder](https://www.dwheeler.com/flawfinder/)
@@ -248,6 +248,7 @@ formatting.
   * [stack-ghc](https://haskellstack.org/)
   * [stylish-haskell](https://github.com/jaspervdj/stylish-haskell)
 * HCL
+  * [packer-fmt](https://github.com/hashicorp/packer)
   * [terraform-fmt](https://github.com/hashicorp/terraform)
 * HTML
   * [VSCode HTML language server](https://github.com/hrsh7th/vscode-langservers-extracted)
@@ -401,6 +402,8 @@ formatting.
   * [ibm_validator](https://github.com/IBM/openapi-validator)
   * [prettier](https://github.com/prettier/prettier)
   * [yamllint](https://yamllint.readthedocs.io/)
+* Packer (HCL)
+  * [packer-fmt-fixer](https://github.com/hashicorp/packer)
 * Pascal
   * [ptop](https://www.freepascal.org/tools/ptop.var)
 * Pawn
@@ -498,6 +501,10 @@ formatting.
   * [ols](https://github.com/freebroccolo/ocaml-language-server)
   * [reason-language-server](https://github.com/jaredly/reason-language-server)
   * [refmt](https://github.com/reasonml/reason-cli)
+* Rego
+  * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [opacheck](https://www.openpolicyagent.org/docs/latest/cli/#opa-check)
+  * [opafmt](https://www.openpolicyagent.org/docs/latest/cli/#opa-fmt)
 * reStructuredText
   * [alex](https://github.com/get-alex/alex)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
@@ -670,4 +677,5 @@ formatting.
 * Zeek
   * [zeek](http://zeek.org) :floppy_disk:
 * Zig
+  * [zigfmt](https://github.com/ziglang/zig)
   * [zls](https://github.com/zigtools/zls)

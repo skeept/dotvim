@@ -1466,9 +1466,9 @@ g:ale_linter_aliases                                     *g:ale_linter_aliases*
   \   'ps1': 'powershell',
   \   'rmarkdown': 'r',
   \   'rmd': 'r',
-  \   'svelte': ['svelte', 'javascript'],
   \   'systemverilog': 'verilog',
   \   'typescriptreact': ['typescript', 'tsx'],
+  \   'vader': ['vim', 'vader'],
   \   'verilog_systemverilog': ['verilog_systemverilog', 'verilog'],
   \   'vimwiki': 'markdown',
   \   'vue': ['vue', 'javascript'],
@@ -1622,9 +1622,11 @@ g:ale_linters                                                   *g:ale_linters*
   \   'rust': ['cargo', 'rls'],
   \   'spec': [],
   \   'text': [],
+  \   'vader': ['vimls'],
   \   'vue': ['eslint', 'vls'],
   \   'zsh': ['shell'],
   \   'v': ['v'],
+  \   'yaml': ['spectral', 'yaml-language-server', 'yamllint'],
   \}
 <
   This option can be used to enable only a particular set of linters for a
@@ -2909,6 +2911,7 @@ documented in additional help files.
     hie...................................|ale-haskell-hie|
     ormolu................................|ale-haskell-ormolu|
   hcl.....................................|ale-hcl-options|
+    packer-fmt............................|ale-hcl-packer-fmt|
     terraform-fmt.........................|ale-hcl-terraform-fmt|
   help....................................|ale-help-options|
     cspell................................|ale-help-cspell|
@@ -3039,6 +3042,8 @@ documented in additional help files.
     ibm_validator.........................|ale-openapi-ibm-validator|
     prettier..............................|ale-openapi-prettier|
     yamllint..............................|ale-openapi-yamllint|
+  packer..................................|ale-packer-options|
+    packer-fmt-fixer......................|ale-packer-fmt-fixer|
   pascal..................................|ale-pascal-options|
     ptop..................................|ale-pascal-ptop|
   pawn....................................|ale-pawn-options|
@@ -3126,6 +3131,10 @@ documented in additional help files.
     ols...................................|ale-reasonml-ols|
     reason-language-server................|ale-reasonml-language-server|
     refmt.................................|ale-reasonml-refmt|
+  rego....................................|ale-rego-options|
+    cspell................................|ale-rego-cspell|
+    opacheck..............................|ale-rego-opa-check|
+    opafmt................................|ale-rego-opa-fmt-fixer|
   restructuredtext........................|ale-restructuredtext-options|
     cspell................................|ale-restructuredtext-cspell|
     textlint..............................|ale-restructuredtext-textlint|
@@ -3285,6 +3294,7 @@ documented in additional help files.
   zeek....................................|ale-zeek-options|
     zeek..................................|ale-zeek-zeek|
   zig.....................................|ale-zig-options|
+    zigfmt................................|ale-zig-zigfmt|
     zls...................................|ale-zig-zls|
 
 
