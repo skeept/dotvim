@@ -1,5 +1,0 @@
-VimL:" filter File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 07th Mar 2017
-VimL:" hint: filter(list, predicate)
-VimL: let s:marker_open  = '<+'
-VimL: let s:marker_close = '+>'
-filter(<+s:SurroundableParam('list', 1)+>, <+s:SurroundableParam('pred', 2)+>)<+s:TerminalPlaceHolder()+>

@@ -1,7 +1,0 @@
-VimL:" doxygen <+html+> snippets, Luc Hermitte, 11th Apr 2012
-VimL:" hint: <html-tag>|</html-tag>
-VimL: let s:marker_open  = '<+'
-VimL: let s:marker_close = '+>'
-MuT: let s:text = s:Surround(1, lh#marker#txt())
-MuT: let s:tag = s:Surround(2, lh#marker#txt("html"))
-<<+s:tag+>><+s:text+></<+s:tag+>><+s:TerminalPlaceHolder()+>

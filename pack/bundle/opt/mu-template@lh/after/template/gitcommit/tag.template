@@ -1,7 +1,0 @@
-VimL:" tag File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 29th Jun 2018
-VimL:" hint: List commits since last tag
-VimL: let s:marker_open  = '<+'
-VimL: let s:marker_close = '+>'
-Version <++>
-
-<+lh#os#system('git log --pretty=oneline $(git describe $(git rev-list --tags="[0-9].[0-9]*" --max-count=1))..HEAD')+>

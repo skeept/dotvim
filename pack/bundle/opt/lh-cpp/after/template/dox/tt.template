@@ -1,4 +1,0 @@
-VimL:" doxygen <tt/> File Template, Luc Hermitte, 11th Apr 2012
-VimL:" hint: <tt>|</tt>
-MuT:  let s:text = s:Surround(1, lh#marker#txt())
-<tt><+s:text+></tt><+s:TerminalPlaceHolder()+>

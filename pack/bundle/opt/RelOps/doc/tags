@@ -1,7 +1,0 @@
-'g:relops_check_for_nu'	relops.txt	/*'g:relops_check_for_nu'*
-'g:relops_mappings'	relops.txt	/*'g:relops_mappings'*
-<Plug>RelopsEnablernu	relops.txt	/*<Plug>RelopsEnablernu*
-relops-enable-by-hand	relops.txt	/*relops-enable-by-hand*
-relops-known-problems	relops.txt	/*relops-known-problems*
-relops-mappings	relops.txt	/*relops-mappings*
-relops.txt	relops.txt	/*relops.txt*

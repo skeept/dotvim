@@ -1,2 +1,0 @@
-# Definition of :AddStyle
-lh-dev plugin/dev.vim

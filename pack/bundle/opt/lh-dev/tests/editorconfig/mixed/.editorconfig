@@ -1,5 +1,0 @@
-[*]
-indent_brace_style: 1TBS
-
-[*.cpp]
-indent_brace_style: Stroustrup
