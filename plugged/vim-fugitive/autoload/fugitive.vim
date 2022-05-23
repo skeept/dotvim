@@ -1631,7 +1631,7 @@ function! s:Owner(path, ...) abort
   endif
   let actualdir = fugitive#Find('.git/', dir)
   let [pdir, commit, file] = s:DirCommitFile(a:path)
-  if s:cpath(dir, pdir)
+  if s:cpath(s:GitDir(dir), s:GitDir(pdir))
     if commit =~# '^\x\{40,\}$'
       return commit
     elseif commit ==# '2'
@@ -1667,7 +1667,7 @@ function! fugitive#Real(url) abort
   let [dir, commit, file] = s:DirCommitFile(a:url)
   if len(dir)
     let tree = s:Tree(dir)
-    return FugitiveVimPath((len(tree) ? tree : dir) . file)
+    return FugitiveVimPath((len(tree) ? tree : s:GitDir(dir)) . file)
   endif
   let pre = substitute(matchstr(a:url, '^\a\a\+\ze:'), '^.', '\u&', '')
   if len(pre) && pre !=? 'fugitive' && exists('*' . pre . 'Real')
@@ -1711,8 +1711,8 @@ function! fugitive#Path(url, ...) abort
   if url =~# '/$' && s:Slash(a:url) !~# '/$'
     let url = url[0:-2]
   endif
-  let [argdir, commit, file] = s:DirCommitFile(a:url)
-  if len(argdir) && s:cpath(argdir) !=# s:cpath(dir)
+  let [argdir, commit, file] = s:DirCommitFile(url)
+  if !empty(argdir) && !s:cpath(s:GitDir(argdir), dir)
     let file = ''
   elseif len(dir) && s:cpath(url[0 : len(dir)]) ==# s:cpath(dir . '/')
     let file = '/.git'.url[strlen(dir) : -1]
@@ -1724,7 +1724,7 @@ function! fugitive#Path(url, ...) abort
   if empty(file) && a:1 =~# '^$\|^[.:]/$'
     return FugitiveGitPath(fugitive#Real(a:url))
   endif
-  return substitute(file, '^/', a:1, '')
+  return substitute(file, '^/', '\=a:1', '')
 endfunction
 
 function! s:Relative(...) abort
@@ -2280,7 +2280,8 @@ let s:globsubs = {
       \ '*': '[^/]*',
       \ '?': '[^/]'}
 function! fugitive#glob(url, ...) abort
-  let [dirglob, commit, glob] = s:DirCommitFile(a:url)
+  let [dir, commit, glob] = s:DirCommitFile(a:url)
+  let dirglob = s:GitDir(dir)
   let append = matchstr(glob, '/*$')
   let glob = substitute(glob, '/*$', '', '')
   let pattern = '^' . substitute(glob, '/\=\*\*/\=\|/\=\*\|[.?\$]\|^^', '\=get(s:globsubs, submatch(0), "\\" . submatch(0))', 'g')[1:-1] . '$'
@@ -3632,9 +3633,9 @@ for s:colortype in ['advice', 'branch', 'diff', 'grep', 'interactive', 'pager', 
   call extend(s:disable_colors, ['-c', 'color.' . s:colortype . '=false'])
 endfor
 unlet s:colortype
-function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
+function! fugitive#Command(line1, line2, range, bang, mods, arg, ...) abort
   exe s:VersionCheck()
-  let dir = s:Dir()
+  let dir = call('s:Dir', a:000)
   if len(dir)
     exe s:DirCheck(dir)
   endif
@@ -5015,7 +5016,7 @@ function! s:StageIgnore(lnum1, lnum2, count) abort
 endfunction
 
 function! s:DoToggleHeadHeader(value) abort
-  exe 'edit' s:fnameescape(s:Dir())
+  exe 'edit' fnameescape(fugitive#Find('.git/'))
   call search('\C^index$', 'wc')
 endfunction
 
@@ -5305,7 +5306,7 @@ function! s:CompleteBisect(A, L, P, ...) abort
   return fugitive#CompleteObject(a:A, dir)
 endfunction
 
-function fugitive#BisectComplete(A, L, P, ...) abort
+function! fugitive#BisectComplete(A, L, P, ...) abort
   return s:CompleteSub('bisect', a:A, a:L, a:P, function('s:CompleteBisect'), a:000)
 endfunction
 
@@ -6850,7 +6851,7 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
     else
       call fugitive#Autowrite()
     endif
-    let basecmd = [{'git': a:options.git, 'git_dir': dir}] + ['--literal-pathspecs'] + cmd + ['--'] + (len(files) ? files : [file])
+    let basecmd = [{'git': a:options.git}, dir, '--literal-pathspecs'] + cmd + ['--'] + (len(files) ? files : [file])
     let [err, exec_error] = s:StdoutToFile(temp, basecmd)
     if exists('delete_in')
       call delete(tempname . '.in')
@@ -6881,8 +6882,8 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
             \ 'git': a:options.git,
             \ 'flags': a:options.flags,
             \ 'args': [a:options.subcommand] + a:options.subcommand_args,
-            \ 'git_dir': dir,
-            \ 'cwd': s:UserCommandCwd(dir),
+            \ 'git_dir': s:GitDir(a:options),
+            \ 'cwd': s:UserCommandCwd(a:options),
             \ 'filetype': (raw ? 'git' : 'fugitiveblame'),
             \ 'blame_options': a:options,
             \ 'blame_flags': flags,
@@ -6939,7 +6940,7 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
             execute winbufnr(winnr).'bdelete'
           endif
         endfor
-        let restore_winnr = 'bufwinnr(' . bufnr . ')'
+        let restore_winnr = exists('*win_getid') ? win_getid() : 'bufwinnr(' . bufnr . ')'
         if !&l:scrollbind
           call add(restore, 'call setwinvar(' . restore_winnr . ',"&scrollbind",0)')
         endif
@@ -7275,8 +7276,6 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
     endif
     if rev =~? '^\a\a\+:[\/][\/]' && rev !~? '^fugitive:'
       let rev = substitute(rev, '\\\@<![#!]\|\\\@<!%\ze\w', '\\&', 'g')
-    elseif rev ==# ':'
-      let rev = ''
     endif
     let expanded = s:Expand(rev)
     if expanded =~? '^\a\a\+:[\/][\/]' && expanded !~? '^fugitive:'
