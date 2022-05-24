@@ -589,4 +589,26 @@ function! jraf#quoteCommaJoin() range
 endfunction
 "==============================================================================}}}
 
+"================== quickrun-jq ==============================================={{{
+function! jraf#quickrunjqset(json_file)
+  let g:quickrun_config = get(g:, 'quickrun_config', {})
+  let g:quickrun_config["conf.jq"] = {
+        \ 'runner': 'jq',
+        \ 'exec': "jq -f %s " . a:json_file
+        \ }
+  let file_name = '.last_qr_jq'
+  call writefile([a:json_file], file_name)
+endfunction
+function! jraf#quickrunjqload()
+  " check if file .last_qr_jq exists and if so load with those contents
+  let file_name = '.last_qr_jq'
+  if filereadable(file_name)
+    for line in readfile(file_name)
+      call jraf#quickrunjqset(line)
+      return ''
+    endfor
+  endif
+endfunction
+"==============================================================================}}}
+
 " vim: foldmethod=marker

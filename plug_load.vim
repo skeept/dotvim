@@ -68,6 +68,9 @@ Plug 'tpope/vim-unimpaired'
 "Plug 'tpope/vim-surround'
 Plug g:p0 . '/pack/bundle/opt/surround'
 
+" quickrun
+Plug g:p0 .'/pack/bundle/opt/quickrun', {'on': 'QuickRun'}
+
 Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 
 Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}

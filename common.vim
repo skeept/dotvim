@@ -460,6 +460,11 @@ if has("autocmd")
     autocmd FileType tlibInputList setlocal norelativenumber nonumber
   augroup END
 
+  augroup jq_grp
+    autocmd!
+    autocmd BufRead,BufNewFile *.jq set filetype=conf.jq | call jraf#quickrunjqload()
+  augroup END
+
   "try to disable swapfiles for large files
   augroup disable_swap_large_files
     autocmd!
@@ -903,13 +908,6 @@ function! IsLineEndInsert() "{{{
   "in insert mode last is +1 len"
   return getpos(".")[2] == (1 + len(getline(".")))
 endfunction "}}}
-
-function! LoadQuickRun() "{{{
-  call vam#ActivateAddons(['quickrun'],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap ,qr :QuickRun<CR>
-endfunction
-nnoremap ,qr :call LoadQuickRun()<CR>:QuickRun<CR>
 "}}}
 
 " {{{ commands
@@ -954,10 +952,13 @@ command! WTS if &diffopt =~ 'iwhite' | set diffopt-=iwhite
       \ | else | set diffopt+=iwhite | endif | echo &diffopt
 
 "================== QuickRun =================================================={{{
-let g:quickrun_config = {}
+let g:quickrun_config = get(g:, 'quickrun_config', {})
 let g:quickrun_config.python = {
       \ 'runner': 'vimproc',
       \ }
+
+command! -nargs=1 -complete=file QuickRunJQSet call jraf#quickrunjqset('<args>')
+nnoremap ,qr :QuickRun<CR>
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
