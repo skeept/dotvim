@@ -114,12 +114,23 @@ function! s:resize_main_window(window,
 endfunction
 
 function! s:resize_to_golden_ratio()
+
+  if win_gettype(winnr()) == 'popup'
+    return
+  endif
+
   if exists("b:golden_ratio_resizing_ignored") &&
         \ b:golden_ratio_resizing_ignored
     return
   endif
 
   if g:golden_ratio_exclude_nonmodifiable && !&modifiable
+    return
+  endif
+
+  " Prevent "E11: Invalid in command-line window". We cannot leave cmdwin to
+  " resize windows, so abort.
+  if exists('*getcmdwintype') && !empty(getcmdwintype())
     return
   endif
 
