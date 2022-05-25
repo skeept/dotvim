@@ -957,8 +957,14 @@ let g:quickrun_config.python = {
       \ 'runner': 'vimproc',
       \ }
 
+function! SetupQuickRun()
+  nnoremap ,qr :QuickRun<CR>
+  nnoremap <F9> :QuickRun<CR>
+  inoremap <F9>  <C-\><C-O>:QuickRun<CR>
+endfunction
 command! -nargs=1 -complete=file QuickRunJQSet call jraf#quickrunjqset('<args>')
-nnoremap ,qr :QuickRun<CR>
+nnoremap ,qr :call SetupQuickRun()<CR>:QuickRun<CR>
+
 "==============================================================================}}}
 
 "================== A.vim settings ============================================{{{
