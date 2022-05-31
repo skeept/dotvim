@@ -58,7 +58,7 @@ function! FugitiveReal(...) abort
   if type(file) ==# type({})
     let dir = FugitiveGitDir(file)
     let tree = s:Tree(dir)
-    return FugitiveVimPath(empty(tree) ? dir : tree)
+    return s:VimSlash(empty(tree) ? dir : tree)
   elseif file =~# '^\a\a\+:' || a:0 > 1
     return call('fugitive#Real', [file] + a:000[1:-1])
   elseif file =~# '^/\|^\a:\|^$'
@@ -88,12 +88,12 @@ endfunction
 " the inverse of FugitiveFind().
 function! FugitiveParse(...) abort
   let path = s:Slash(a:0 ? a:1 : @%)
-  if path !~# '^fugitive:'
+  if path !~# '^fugitive://'
     return ['', '']
   endif
-  let vals = matchlist(path, '\c^fugitive:\%(//\)\=\(.\{-\}\)\%(//\|::\)\(\x\{40,\}\|[0-3]\)\(/.*\)\=$')
+  let vals = matchlist(path, s:dir_commit_file)
   if len(vals)
-    return [(vals[2] =~# '^.$' ? ':' : '') . vals[2] . substitute(vals[3], '^/', ':', ''), vals[1]]
+    return [(vals[2] =~# '^.\=$' ? ':' : '') . vals[2] . substitute(vals[3], '^/', ':', ''), vals[1]]
   endif
   let v:errmsg = 'fugitive: invalid Fugitive URL ' . path
   throw v:errmsg
@@ -283,9 +283,13 @@ function! FugitiveStatusline(...) abort
   return fugitive#Statusline()
 endfunction
 
+function! FugitiveActualDir(...) abort
+  return call('FugitiveGitDir', a:000)
+endfunction
+
 let s:commondirs = {}
 function! FugitiveCommonDir(...) abort
-  let dir = FugitiveGitDir(a:0 ? a:1 : -1)
+  let dir = call('FugitiveActualDir', a:000)
   if empty(dir)
     return ''
   endif
@@ -327,6 +331,9 @@ function! FugitiveIsGitDir(...) abort
 endfunction
 
 function! s:ReadFile(path, line_count) abort
+  if v:version < 800 && !filereadable(a:path)
+    return []
+  endif
   try
     return readfile(a:path, 'b', a:line_count)
   catch
@@ -409,22 +416,16 @@ function! FugitiveExtractGitDir(path) abort
   else
     let path = s:Slash(a:path)
   endif
-  if path =~# '^fugitive:'
-    return matchstr(path, '\C^fugitive:\%(//\)\=\zs.\{-\}\ze\%(//\|::\|$\)')
+  if path =~# '^fugitive://'
+    return get(matchlist(path, s:dir_commit_file), 1, '')
   elseif empty(path)
     return ''
-  else
-    let path = fnamemodify(path, ':p:h')
   endif
   let pre = substitute(matchstr(path, '^\a\a\+\ze:'), '^.', '\u&', '')
   if len(pre) && exists('*' . pre . 'Real')
-    let path ={pre}Real(path)
+    let path = {pre}Real(path)
   endif
-  let path = s:Slash(path)
-  let root = resolve(path)
-  if root !=# path
-    silent! exe (haslocaldir() ? 'lcd' : exists(':tcd') && haslocaldir(-1) ? 'tcd' : 'cd') '.'
-  endif
+  let root = s:Slash(fnamemodify(path, ':p:h'))
   let previous = ""
   let env_git_dir = len($GIT_DIR) ? s:Slash(simplify(fnamemodify(FugitiveVimPath($GIT_DIR), ':p:s?[\/]$??'))) : ''
   call s:Tree(env_git_dir)
@@ -493,32 +494,54 @@ function! FugitiveDetect(...) abort
   return ''
 endfunction
 
-function! FugitiveVimPath(path) abort
-  if exists('+shellslash') && !&shellslash
-    return tr(a:path, '/', '\')
-  else
-    return a:path
-  endif
-endfunction
-
 function! FugitiveGitPath(path) abort
   return s:Slash(a:path)
 endfunction
 
 if exists('+shellslash')
+
+  let s:dir_commit_file = '\c^fugitive://\%(/\a\@=\)\=\(.\{-\}\)//\%(\(\x\{40,\}\|[0-3]\)\(/.*\)\=\)\=$'
+
   function! s:Slash(path) abort
     return tr(a:path, '\', '/')
   endfunction
+
+  function! s:VimSlash(path) abort
+    return tr(a:path, '\/', &shellslash ? '//' : '\\')
+  endfunction
+
+  function FugitiveVimPath(path) abort
+    return tr(a:path, '\/', &shellslash ? '//' : '\\')
+  endfunction
+
 else
+
+  let s:dir_commit_file = '\c^fugitive://\(.\{-\}\)//\%(\(\x\{40,\}\|[0-3]\)\(/.*\)\=\)\=$'
+
   function! s:Slash(path) abort
     return a:path
   endfunction
+
+  function! s:VimSlash(path) abort
+    return a:path
+  endfunction
+
+  if has('win32unix') && filereadable('/git-bash.exe')
+    function! FugitiveVimPath(path) abort
+      return substitute(a:path, '^\(\a\):', '/\l\1', '')
+    endfunction
+  else
+    function! FugitiveVimPath(path) abort
+      return a:path
+    endfunction
+  endif
+
 endif
 
 function! s:ProjectionistDetect() abort
   let file = s:Slash(get(g:, 'projectionist_file', ''))
   let dir = FugitiveExtractGitDir(file)
-  let base = matchstr(file, '^fugitive://.\{-\}//\x\+')
+  let base = get(matchlist(file, s:dir_commit_file), 1, '')
   if empty(base)
     let base = s:Tree(dir)
   endif
