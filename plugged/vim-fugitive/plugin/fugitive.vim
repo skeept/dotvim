@@ -1,6 +1,6 @@
 " fugitive.vim - A Git wrapper so awesome, it should be illegal
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      3.6
+" Version:      3.7
 " GetLatestVimScripts: 2975 1 :AutoInstall: fugitive.vim
 
 if exists('g:loaded_fugitive')
@@ -16,7 +16,7 @@ let s:bad_git_dir = '/$\|^fugitive:'
 " Fugitive is active in the current buffer.  Do not rely on this for direct
 " filesystem access; use FugitiveFind('.git/whatever') instead.
 function! FugitiveGitDir(...) abort
-  if v:version < 703
+  if v:version < 704
     return ''
   elseif !a:0 || type(a:1) == type(0) && a:1 < 0 || a:1 is# get(v:, 'true', -1)
     if exists('g:fugitive_event')
@@ -463,33 +463,14 @@ function! FugitiveExtractGitDir(path) abort
 endfunction
 
 function! FugitiveDetect(...) abort
-  if v:version < 703
+  if v:version < 704
     return ''
   endif
   if exists('b:git_dir') && b:git_dir =~# '^$\|' . s:bad_git_dir
     unlet b:git_dir
   endif
-  if a:0 > 1 && a:2 is# 0 && !exists('#User#Fugitive')
-    return ''
-  endif
   if !exists('b:git_dir')
     let b:git_dir = FugitiveExtractGitDir(a:0 ? a:1 : bufnr(''))
-  endif
-  if empty(b:git_dir) || !exists('#User#Fugitive')
-    return ''
-  endif
-  if v:version >= 704 || (v:version == 703 && has('patch442'))
-    doautocmd <nomodeline> User Fugitive
-  elseif &modelines > 0
-    let modelines = &modelines
-    try
-      set modelines=0
-      doautocmd User Fugitive
-    finally
-      let &modelines = modelines
-    endtry
-  else
-    doautocmd User Fugitive
   endif
   return ''
 endfunction
@@ -664,7 +645,7 @@ elseif exists(':Gbrowse') != 2 && !exists('g:fugitive_legacy_commands')
         \ 'echoerr ":Gbrowse has been removed in favor of :GBrowse"'
 endif
 
-if v:version < 703
+if v:version < 704
   finish
 endif
 
@@ -688,8 +669,14 @@ let g:io_fugitive = {
 augroup fugitive
   autocmd!
 
-  autocmd BufNewFile,BufReadPost *  call FugitiveDetect(+expand('<abuf>'), 0)
-  autocmd FileType           netrw  call FugitiveDetect(+expand('<abuf>'), 0)
+  autocmd BufNewFile,BufReadPost *
+        \ if exists('b:git_dir') && b:git_dir =~# '^$\|' . s:bad_git_dir |
+        \   unlet b:git_dir |
+        \ endif
+  autocmd FileType           netrw
+        \ if exists('b:git_dir') && b:git_dir =~# '^$\|' . s:bad_git_dir |
+        \   unlet b:git_dir |
+        \ endif
   autocmd BufFilePost            *  unlet! b:git_dir
 
   autocmd FileType git
@@ -743,10 +730,8 @@ if get(g:, 'fugitive_no_maps')
   finish
 endif
 
-let s:nowait = v:version >= 704 ? '<nowait>' : ''
-
 function! s:Map(mode, lhs, rhs, flags) abort
-  let flags = a:flags . (a:rhs =~# '<Plug>' ? '' : '<script>')
+  let flags = a:flags . (a:rhs =~# '<Plug>' ? '' : '<script>') . '<nowait>'
   let head = a:lhs
   let tail = ''
   let keys = get(g:, a:mode.'remap', {})
@@ -764,7 +749,7 @@ function! s:Map(mode, lhs, rhs, flags) abort
     endwhile
   endif
   if empty(mapcheck(head.tail, a:mode))
-    exe a:mode.'map' s:nowait flags head.tail a:rhs
+    exe a:mode.'map' flags head.tail a:rhs
   endif
 endfunction
 
