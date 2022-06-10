@@ -54,7 +54,7 @@ Plug 'prabirshrestha/asyncomplete-file.vim'
 Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
 Plug 'yami-beta/asyncomplete-omni.vim'
 
-Plug 'lifepillar/vim-mucomplete', {'branch': 'hji/neosnippet-fix-01'}
+Plug 'lifepillar/vim-mucomplete'
 "Plug 'lifepillar/vim-mucomplete'
 
 "tpope
