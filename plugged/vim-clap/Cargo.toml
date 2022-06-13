@@ -2,7 +2,7 @@
 name = "maple"
 build = "build.rs"
 edition = "2021"
-version = "0.1.34"
+version = "0.1.35"
 license = "MIT"
 publish = false
 include = ["/Cargo.toml", "src/*.rs"]
@@ -12,7 +12,7 @@ categories = ["command-line-utilities"]
 description = "Rust backend for the vim plugin vim-clap"
 
 [dependencies]
-tokio = { version = "1.17", features = ["rt"] }
+tokio = { version = "1.19", features = ["rt"] }
 
 maple_cli = { path = "crates/maple_cli" }
 
