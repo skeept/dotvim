@@ -554,9 +554,6 @@ command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#Complete Git exe
 if exists(':Gstatus') != 2 && get(g:, 'fugitive_legacy_commands', 0)
   exe 'command! -bang -bar     -range=-1' s:addr_other 'Gstatus exe fugitive#Command(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
         \ '|echohl WarningMSG|echomsg ":Gstatus is deprecated in favor of :Git (with no arguments)"|echohl NONE'
-elseif exists(':Gstatus') != 2 && !exists('g:fugitive_legacy_commands')
-  exe 'command! -bang -bar     -range=-1' s:addr_other 'Gstatus'
-        \ ' echoerr ":Gstatus has been removed in favor of :Git (with no arguments)"'
 endif
 
 for s:cmd in ['Commit', 'Revert', 'Merge', 'Rebase', 'Pull', 'Push', 'Fetch', 'Blame']
@@ -564,9 +561,6 @@ for s:cmd in ['Commit', 'Revert', 'Merge', 'Rebase', 'Pull', 'Push', 'Fetch', 'B
     exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#' . s:cmd . 'Complete G' . tolower(s:cmd)
           \ 'echohl WarningMSG|echomsg ":G' . tolower(s:cmd) . ' is deprecated in favor of :Git ' . tolower(s:cmd) . '"|echohl NONE|'
           \ 'exe fugitive#Command(<line1>, <count>, +"<range>", <bang>0, "<mods>", "' . tolower(s:cmd) . ' " . <q-args>)'
-  elseif exists(':G' . tolower(s:cmd)) != 2 && !exists('g:fugitive_legacy_commands')
-    exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#' . s:cmd . 'Complete G' . tolower(s:cmd)
-          \ 'echoerr ":G' . tolower(s:cmd) . ' has been removed in favor of :Git ' . tolower(s:cmd) . '"'
   endif
 endfor
 unlet s:cmd
@@ -577,13 +571,6 @@ exe "command! -bar -bang -nargs=? -complete=customlist,fugitive#CdComplete Glcd 
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Ggrep  exe fugitive#GrepCommand(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
 exe 'command! -bang -nargs=? -range=-1' s:addr_wins '-complete=customlist,fugitive#GrepComplete Glgrep exe fugitive#GrepCommand(0, <count> > 0 ? <count> : 0, +"<range>", <bang>0, "<mods>", <q-args>)'
 
-if exists(':Glog') != 2 && get(g:, 'fugitive_legacy_commands', 0)
-  exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Glog  :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "")'
-        \ '|echohl WarningMSG|echomsg ":Glog is deprecated in favor of :Gclog"|echohl NONE'
-elseif exists(':Glog') != 2 && !exists('g:fugitive_legacy_commands')
-  exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Glog'
-        \ ' echoerr ":Glog has been removed in favor of :Gclog"'
-endif
 exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Gclog :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "c")'
 exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete GcLog :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "c")'
 exe 'command! -bang -nargs=? -range=-1 -complete=customlist,fugitive#LogComplete Gllog :exe fugitive#LogCommand(<line1>,<count>,+"<range>",<bang>0,"<mods>",<q-args>, "l")'
@@ -595,6 +582,7 @@ exe 'command! -bar -bang -nargs=*                          -complete=customlist,
 exe 'command! -bar -bang -nargs=* -range=-1' s:addr_other '-complete=customlist,fugitive#EditComplete   Gsplit   exe fugitive#Open((<count> > 0 ? <count> : "").(<count> ? "split" : "edit"), <bang>0, "<mods>", <q-args>)'
 exe 'command! -bar -bang -nargs=* -range=-1' s:addr_other '-complete=customlist,fugitive#EditComplete   Gvsplit  exe fugitive#Open((<count> > 0 ? <count> : "").(<count> ? "vsplit" : "edit!"), <bang>0, "<mods>", <q-args>)'
 exe 'command! -bar -bang -nargs=* -range=-1' s:addr_tabs  '-complete=customlist,fugitive#EditComplete   Gtabedit exe fugitive#Open((<count> >= 0 ? <count> : "")."tabedit", <bang>0, "<mods>", <q-args>)'
+exe 'command! -bar -bang -nargs=*                          -complete=customlist,fugitive#EditComplete   Gdrop    exe fugitive#Open("drop", <bang>0, "<mods>", <q-args>)'
 
 if exists(':Gr') != 2
   exe 'command! -bar -bang -nargs=* -range=-1                -complete=customlist,fugitive#ReadComplete   Gr     exe fugitive#ReadCommand(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)'
