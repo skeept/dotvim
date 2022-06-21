@@ -1553,7 +1553,11 @@ endfunction
 let s:repo_prototype = {}
 
 function! fugitive#repo(...) abort
-  return copy(s:repo_prototype)
+  let dir = a:0 ? s:GitDir(a:1) : (len(s:GitDir()) ? s:GitDir() : FugitiveExtractGitDir(expand('%:p')))
+  if dir !=# ''
+    return extend({'git_dir': dir, 'fugitive_dir': dir}, s:repo_prototype, 'keep')
+  endif
+  throw 'fugitive: not a Git repository'
 endfunction
 
 function! s:repo_dir(...) dict abort
@@ -2065,7 +2069,7 @@ function! s:TreeInfo(dir, commit) abort
   if a:commit =~# '^:\=[0-3]$'
     let index = get(s:indexes, key, [])
     let newftime = getftime(fugitive#Find('.git/index', a:dir))
-    if get(index, 0, -1) < newftime
+    if get(index, 0, -2) < newftime
       let [lines, exec_error] = s:LinesError([a:dir, 'ls-files', '--stage', '--'])
       let s:indexes[key] = [newftime, {'0': {}, '1': {}, '2': {}, '3': {}}]
       if exec_error
@@ -7220,7 +7224,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       let remote = matchstr(arg, '^++\%([Gg]it\)\=[Rr]emote=\zs\S\+')
       let arg = matchstr(arg, '\s\zs\S.*')
     endif
-    let validremote = '\.\%(git\)\=\|\.\=/.*\|[[:alnum:]_-]\+\%(://.\{-\}\)\='
+    let validremote = '\.\%(git\)\=\|\.\=/.*\|\a[[:alnum:]_-]*\%(://.\{-\}\)\='
     if arg ==# '-'
       let remote = ''
       let rev = ''
@@ -7231,13 +7235,10 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
         return 'echoerr ' . string('fugitive: could not find prior :Git invocation')
       endif
     elseif !exists('l:remote')
-      let remote = matchstr(arg, '@\zs\%('.validremote.'\)$')
-      let rev = substitute(arg, '@\%('.validremote.'\)$','','')
+      let remote = matchstr(arg, '\\\@<!\%(\\\\\)*[!@]\zs\%('.validremote.'\)$')
+      let rev = strpart(arg, 0, len(arg) - len(remote) - (empty(remote) ? 0 : 1))
     else
       let rev = arg
-    endif
-    if rev =~? '^\a\a\+:[\/][\/]' && rev !~? '^fugitive:'
-      let rev = substitute(rev, '\\\@<![#!]\|\\\@<!%\ze\w', '\\&', 'g')
     endif
     let expanded = s:Expand(rev)
     if expanded =~? '^\a\a\+:[\/][\/]' && expanded !~? '^fugitive:'
@@ -7246,7 +7247,7 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
     if !exists('l:result')
       let result = s:TempState(empty(expanded) ? bufnr('') : expanded)
     endif
-    if !empty(result) && filereadable(get(result, 'file', ''))
+    if !get(result, 'origin_bufnr', 1) && filereadable(get(result, 'file', ''))
       for line in readfile(result.file, '', 4096)
         let rev = s:fnameescape(matchstr(line, '\<https\=://[^[:space:]<>]*[^[:space:]<>.,;:"''!?]'))
         if len(rev)
@@ -7256,39 +7257,43 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       return 'echoerr ' . string('fugitive: no URL found in output of :Git')
     endif
     exe s:DirCheck(dir)
+    let config = fugitive#Config(dir)
+    if empty(remote) && expanded =~# '^[^-./:^~][^:^~]*$' && !empty(FugitiveConfigGet('remote.' . expanded . '.url', config))
+      let remote = expanded
+      let expanded = ''
+    endif
     if empty(expanded)
       let bufname = &buftype =~# '^\%(nofile\|terminal\)$' ? '' : s:BufName('%')
       let expanded = s:DirRev(bufname)[1]
       if empty(expanded)
         let expanded = fugitive#Path(bufname, ':(top)', dir)
       endif
-      if a:count > 0 && bufname !=# bufname('')
+      if a:count > 0 && has_key(result, 'origin_bufnr') && a:range != 2
         let blame = s:BlameCommitFileLnum(getline(a:count))
         if len(blame[0])
           let expanded = blame[0]
         endif
       endif
     endif
-    let refdir = fugitive#Find('.git/refs', dir)
-    for subdir in ['tags/', 'heads/', 'remotes/']
-      if expanded !~# '^[./]' && filereadable(refdir . '/' . subdir . expanded)
-        let expanded = '.git/refs/' . subdir . expanded
-      endif
-    endfor
     let full = s:Generate(expanded, dir)
     let commit = ''
-    if full =~? '^fugitive:'
+    let ref = ''
+    let forbid_ref_as_commit = 0
+    if full =~# '^fugitive:'
       let [dir, commit, path] = s:DirCommitFile(full)
-      if commit =~# '^:\=\d$'
+      if commit =~# '^\d\=$'
         let commit = ''
-      endif
-      if commit =~ '..'
-        let type = s:TreeChomp(['cat-file','-t',commit.s:sub(path,'^/',':')], dir)
-        let branch = matchstr(expanded, '^[^:]*')
-      elseif empty(path) || path ==# '/'
-        let type = 'tree'
+        let type = path =~# '^/\=$' ? 'tree' : 'blob'
       else
-        let type = 'blob'
+        let ref_match = matchlist(expanded, '^\(@{\@!\|[^:~^@]\+\)\(:\%(//\)\@!\|[~^@]\|$\)')
+        let ref = get(ref_match, 1, '')
+        let forbid_ref_as_commit = ref =~# '^@\=$' || ref_match[2] !~# '^:\=$'
+        if empty(path) && !forbid_ref_as_commit
+          let type = 'ref'
+        else
+          let type = s:ChompDefault(empty(path) ? 'commit': 'blob',
+                \ ['cat-file', '-t', commit . substitute(path, '^/', ':', '')], dir)
+        endif
       endif
       let path = path[1:-1]
     elseif empty(s:Tree(dir))
@@ -7296,48 +7301,41 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       let type = ''
     else
       let path = fugitive#Path(full, '/')[1:-1]
-      if path =~# '^\.git/'
-        let type = ''
-      elseif isdirectory(full) || empty(path)
+      if empty(path) || isdirectory(full)
         let type = 'tree'
       else
         let type = 'blob'
       endif
     endif
-    let config = fugitive#Config(dir)
-    if type ==# 'tree' && !empty(path)
-      let path = s:sub(path, '/\=$', '/')
+    if path =~# '^\.git/'
+      let ref = matchstr(path, '^.git/\zs\%(refs/[^/]\+/[^/].*\|\w*HEAD\)$')
+      let type = empty(ref) ? 'root': 'ref'
+      let path = ''
     endif
-    let actual_dir = fugitive#Find('.git/', dir)
-    if path =~# '^\.git/.*HEAD$' && filereadable(actual_dir . path[5:-1])
-      let body = readfile(actual_dir . path[5:-1])[0]
-      if body =~# '^\x\{40,\}$'
-        let commit = body
-        let type = 'commit'
-        let path = ''
-      elseif body =~# '^ref: refs/'
-        let path = '.git/' . matchstr(body,'ref: \zs.*')
+    if empty(ref) || ref ==# 'HEAD' || ref ==# '@'
+      let ref = fugitive#Head(-1, dir)
+    endif
+    if ref =~# '^\x\{40,\}$'
+      let ref = ''
+    elseif !empty(ref) && ref !~# '^refs/'
+      let ref = FugitiveExecute(['rev-parse', '--symbolic-full-name', ref], dir).stdout[0]
+      if ref !~# '^refs/'
+        let ref = ''
       endif
     endif
 
     let merge = ''
-    if path =~# '^\.git/refs/remotes/.'
-      if empty(remote)
-        let remote = matchstr(path, '^\.git/refs/remotes/\zs[^/]\+')
-        let branch = matchstr(path, '^\.git/refs/remotes/[^/]\+/\zs.\+')
-      else
-        let merge = matchstr(path, '^\.git/refs/remotes/[^/]\+/\zs.\+')
-        let branch = merge
-        let path = '.git/refs/heads/'.merge
-      endif
-    elseif path =~# '^\.git/refs/heads/.'
-      let branch = path[16:-1]
-    elseif !exists('branch')
-      let branch = FugitiveHead(0, dir)
-    endif
-    if !empty(branch)
-      let r = FugitiveConfigGet('branch.'.branch.'.remote', config)
-      let m = FugitiveConfigGet('branch.'.branch.'.merge', config)[11:-1]
+    if !empty(remote) && ref =~# '^refs/remotes/[^/]\+/[^/]\|^refs/heads/[^/]'
+      let merge = matchstr(ref, '^refs/\%(heads/\|remotes/[^/]\+/\)\zs.\+')
+      let ref = 'refs/heads/' . merge
+    elseif ref =~# '^refs/remotes/[^/]\+/[^/]'
+      let remote = matchstr(ref, '^refs/remotes/\zs[^/]\+')
+      let merge = matchstr(ref, '^refs/remotes/[^/]\+/\zs.\+')
+      let ref = 'refs/heads/' . merge
+    elseif ref =~# '^refs/heads/[^/]'
+      let merge = strpart(ref, 11)
+      let r = FugitiveConfigGet('branch.' . merge . '.remote', config)
+      let m = FugitiveConfigGet('branch.' . merge . '.merge', config)[11:-1]
       if r ==# '.' && !empty(m)
         let r2 = FugitiveConfigGet('branch.'.m.'.remote', config)
         if r2 !~# '^\.\=$'
@@ -7345,69 +7343,73 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
           let m = FugitiveConfigGet('branch.'.m.'.merge', config)[11:-1]
         endif
       endif
-      if empty(remote)
+      if r !~# '^\.\=$'
         let remote = r
       endif
-      if r ==# '.' || r ==# remote
-        let remote_ref = 'refs/remotes/' . remote . '/' . branch
+      if !empty(remote)
+        let remote_ref = 'refs/remotes/' . remote . '/' . merge
         if FugitiveConfigGet('push.default', config) ==# 'upstream' ||
               \ !filereadable(FugitiveFind('.git/' . remote_ref, dir)) && empty(s:ChompDefault('', ['rev-parse', '--verify', remote_ref, '--'], dir))
           let merge = m
-          if path =~# '^\.git/refs/heads/.'
-            let path = '.git/refs/heads/'.merge
-          endif
-        else
-          let merge = branch
+          let ref = 'refs/heads/' . merge
         endif
       endif
-    endif
-
-    let line1 = a:count > 0 && type ==# 'blob' ? a:line1 : 0
-    let line2 = a:count > 0 && type ==# 'blob' ? a:count : 0
-    if empty(commit) && path !~# '^\.git/'
-      if a:count < 0 && !empty(merge)
-        let commit = merge
-      else
-        let commit = ''
-        if len(merge)
-          let owner = s:Owner(@%, dir)
-          let commit = s:ChompDefault('', ['merge-base', 'refs/remotes/' . remote . '/' . merge, empty(owner) ? '@' : owner, '--'], dir)
-          if line2 > 0 && empty(arg) && commit =~# '^\x\{40,\}$'
-            let blame_list = tempname()
-            call writefile([commit, ''], blame_list, 'b')
-            let blame_in = tempname()
-            silent exe 'noautocmd keepalt %write' blame_in
-            let [blame, exec_error] = s:LinesError(['-c', 'blame.coloring=none', 'blame', '--contents', blame_in, '-L', line1.','.line2, '-S', blame_list, '-s', '--show-number', './' . path], dir)
-            if !exec_error
-              let blame_regex = '^\^\x\+\s\+\zs\d\+\ze\s'
-              if get(blame, 0) =~# blame_regex && get(blame, -1) =~# blame_regex
-                let line1 = +matchstr(blame[0], blame_regex)
-                let line2 = +matchstr(blame[-1], blame_regex)
-              else
-                throw "fugitive: can't browse to uncommitted change"
-              endif
-            endif
-          endif
-        endif
-      endif
-      if empty(commit)
-        let commit = readfile(fugitive#Find('.git/HEAD', dir), '', 1)[0]
-      endif
-      let i = 0
-      while commit =~# '^ref: ' && i < 10
-        let ref_file = refdir[0 : -5] . commit[5:-1]
-        if getfsize(ref_file) > 0
-          let commit = readfile(ref_file, '', 1)[0]
-        else
-          let commit = fugitive#RevParse(commit[5:-1], dir)
-        endif
-        let i -= 1
-      endwhile
     endif
 
     if empty(remote) || remote ==# '.'
       let remote = s:RemoteDefault(config)
     endif
+    if empty(merge) || empty(remote)
+      let provider_ref = ref
+    else
+      let provider_ref = 'refs/remotes/' . remote . '/' . merge
+    endif
+    if forbid_ref_as_commit || a:count >= 0
+      let ref = ''
+      if type ==# 'ref'
+        let type = 'commit'
+      endif
+    elseif type ==# 'ref' && ref =~# '^refs/\%(heads\|tags\)/[^/]'
+        let commit = matchstr(ref, '^\Crefs/\%(heads\|tags\)/\zs.*')
+    endif
+
+    let line1 = a:count > 0 && type ==# 'blob' ? a:line1 : 0
+    let line2 = a:count > 0 && type ==# 'blob' ? a:count : 0
+    if empty(commit) && type =~# '^\%(tree\|blob\)$'
+      if a:count < 0
+        let commit = matchstr(ref, '^\Crefs/\%(heads\|tags\)/\zs.*')
+      elseif len(provider_ref)
+        let owner = s:Owner(@%, dir)
+        let commit = s:ChompDefault('', ['merge-base', provider_ref, empty(owner) ? '@' : owner, '--'], dir)
+        if line2 > 0 && empty(arg) && commit =~# '^\x\{40,\}$' && type ==# 'blob'
+          let blame_list = tempname()
+          call writefile([commit, ''], blame_list, 'b')
+          let blame_cmd = ['-c', 'blame.coloring=none', 'blame', '-L', line1.','.line2, '-S', blame_list, '-s', '--show-number']
+          if !&l:modified || has_key(result, 'origin_bufnr')
+            let [blame, exec_error] = s:LinesError(blame_cmd + ['./' . path], dir)
+          else
+            let blame_in = tempname()
+            silent exe 'noautocmd keepalt %write' blame_in
+            let [blame, exec_error] = s:LinesError(blame_cmd + ['--contents', blame_in, './' . path], dir)
+            call delete(blame_in)
+          endif
+          call delete(blame_list)
+          if !exec_error
+            let blame_regex = '^\^\x\+\s\+\zs\d\+\ze\s'
+            if get(blame, 0) =~# blame_regex && get(blame, -1) =~# blame_regex
+              let line1 = +matchstr(blame[0], blame_regex)
+              let line2 = +matchstr(blame[-1], blame_regex)
+            else
+              throw "fugitive: can't browse to unpushed change"
+            endif
+          endif
+        endif
+      endif
+      if empty(commit)
+        let commit = fugitive#RevParse(empty(ref) ? 'HEAD' : ref, dir)
+      endif
+    endif
+
     if remote =~# ':'
       let remote_url = remote
     else
@@ -7426,6 +7428,18 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
           \ 'type': type,
           \ 'line1': line1,
           \ 'line2': line2}
+
+    if empty(path)
+      if type ==# 'ref' && ref =~# '^refs/'
+        let opts.path = '.git/' . ref
+        let opts.type = ''
+      elseif type ==# 'root'
+        let opts.path ='.git/index'
+        let opts.type = ''
+      endif
+    elseif type ==# 'tree' && !empty(path)
+      let opts.path = s:sub(path, '/\=$', '/')
+    endif
 
     let url = ''
     for Handler in get(g:, 'fugitive_browse_handlers', [])
