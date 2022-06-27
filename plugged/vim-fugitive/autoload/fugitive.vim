@@ -137,7 +137,7 @@ endfunction
 
 if exists('+shellslash')
 
-  let s:dir_commit_file = '\c^fugitive://\%(/\a\@=\)\=\(.\{-\}\)//\%(\(\x\{40,\}\|[0-3]\)\(/.*\)\=\)\=$'
+  let s:dir_commit_file = '\c^fugitive://\%(/[^/]\@=\)\=\(.\{-1,\}\)//\%(\(\x\{40,\}\|[0-3]\)\(/.*\)\=\)\=$'
 
   function! s:Slash(path) abort
     return tr(a:path, '\', '/')
@@ -542,8 +542,19 @@ function! s:SameRepo(one, two) abort
   return !empty(one) && one ==# s:GitDir(a:two)
 endfunction
 
-function! s:DirUrlPrefix(...) abort
-  return 'fugitive://' . call('s:GitDir', a:000) . '//'
+if exists('+shellslash')
+  function! s:DirUrlPrefix(dir) abort
+    let gd = s:GitDir(a:dir)
+    return 'fugitive://' . (gd =~# '^[^/]' ? '/' : '') . gd . '//'
+  endfunction
+else
+  function! s:DirUrlPrefix(dir) abort
+    return 'fugitive://' . s:GitDir(a:dir) . '//'
+  endfunction
+endif
+
+function! s:PathJoin(prefix, str) abort
+  return a:prefix . a:str
 endfunction
 
 function! s:Tree(...) abort
@@ -638,7 +649,7 @@ function! fugitive#PrepareDirEnvGitFlagsArgs(...) abort
   else
     let list_args = []
     let cmd = []
-    for arg in a:000
+    for l:.arg in a:000
       if type(arg) ==# type([])
         call extend(list_args, arg)
       else
@@ -1215,7 +1226,7 @@ function! s:SshParseConfig(into, root, file, ...) abort
     elseif key ==# 'include'
       call s:SshParseInclude(a:into, a:root, host, value)
     elseif len(key) && len(host)
-      call extend(a:into, {key: []}, 'keep')
+      call extend(a:into, {key : []}, 'keep')
       call add(a:into[key], [host, value])
     endif
   endfor
@@ -1459,12 +1470,12 @@ function! s:RemoteUrlCallback(remote, callback) abort
 endfunction
 
 function! fugitive#RemoteUrl(...) abort
-  let [dir_or_config, remote, flags, cb] = s:RemoteParseArgs(a:000)
+  let [dir_or_config, remote_url, flags, cb] = s:RemoteParseArgs(a:000)
   if len(cb)
     let cb = [function('s:RemoteUrlCallback'), cb]
   endif
-  let remote = s:Remote(dir_or_config, remote, flags, cb)
-  return get(remote, 'url', remote)
+  let remote = s:Remote(dir_or_config, remote_url, flags, cb)
+  return get(remote, 'url', remote_url)
 endfunction
 
 " Section: Quickfix
@@ -1784,7 +1795,7 @@ function! fugitive#Find(object, ...) abort
     if f =~# '^\.\./\.\.\%(/\|$\)'
       let f = simplify(len(tree) ? tree . f[2:-1] : fdir . f)
     elseif f =~# '^\.\.\%(/\|$\)'
-      let f = base . f[2:-1]
+      let f = s:PathJoin(base, f[2:-1])
     elseif cdir !=# fdir && (
           \ f =~# '^\%(config\|hooks\|info\|logs/refs\|objects\|refs\|worktrees\)\%(/\|$\)' ||
           \ f !~# '^\%(index$\|index\.lock$\|\w*MSG$\|\w*HEAD$\|logs/\w*HEAD$\|logs$\|rebase-\w\+\)\%(/\|$\)' &&
@@ -1796,17 +1807,17 @@ function! fugitive#Find(object, ...) abort
   elseif rev ==# ':/'
     let f = tree
   elseif rev =~# '^\.\%(/\|$\)'
-    let f = base . rev[1:-1]
+    let f = s:PathJoin(base, rev[1:-1])
   elseif rev =~# '^::\%(/\|\a\+\:\)'
     let f = rev[2:-1]
   elseif rev =~# '^::\.\.\=\%(/\|$\)'
     let f = simplify(getcwd() . '/' . rev[2:-1])
   elseif rev =~# '^::'
-    let f = base . '/' . rev[2:-1]
+    let f = s:PathJoin(base, '/' . rev[2:-1])
   elseif rev =~# '^:\%([0-3]:\)\=\.\.\=\%(/\|$\)\|^:[0-3]:\%(/\|\a\+:\)'
     let f = rev =~# '^:\%([0-3]:\)\=\.' ? simplify(getcwd() . '/' . matchstr(rev, '\..*')) : rev[3:-1]
     if s:cpath(base . '/', (f . '/')[0 : len(base)])
-      let f = urlprefix . +matchstr(rev, '^:\zs\d\ze:') . '/' . strpart(f, len(base) + 1)
+      let f = s:PathJoin(urlprefix, +matchstr(rev, '^:\zs\d\ze:') . '/' . strpart(f, len(base) + 1))
     else
       let altdir = FugitiveExtractGitDir(f)
       if len(altdir) && !s:cpath(dir, altdir)
@@ -1814,7 +1825,7 @@ function! fugitive#Find(object, ...) abort
       endif
     endif
   elseif rev =~# '^:[0-3]:'
-    let f = urlprefix . rev[1] . '/' . rev[3:-1]
+    let f = s:PathJoin(urlprefix, rev[1] . '/' . rev[3:-1])
   elseif rev ==# ':'
     let fdir = simplify(FugitiveActualDir(dir) . '/')
     let f = fdir . 'index'
@@ -1833,10 +1844,10 @@ function! fugitive#Find(object, ...) abort
     if f=~# '^\.\.\=\%(/\|$\)'
       let f = simplify(getcwd() . '/' . f)
     elseif f !~# '^/\|^\%(\a\a\+:\).*\%(//\|::\)' . (has('win32') ? '\|^\a:/' : '')
-      let f = base . '/' . f
+      let f = s:PathJoin(base, '/' . f)
     endif
   elseif rev =~# '^:/\@!'
-    let f = urlprefix . '0/' . rev[1:-1]
+    let f = s:PathJoin(urlprefix, '0/' . rev[1:-1])
   else
     if !exists('f')
       let commit = matchstr(rev, '^\%([^:.-]\|\.\.[^/:]\)[^:]*\|^:.*')
@@ -1865,9 +1876,9 @@ function! fugitive#Find(object, ...) abort
         endif
       endif
       if len(commit)
-        let f = urlprefix . commit . file
+        let f = s:PathJoin(urlprefix, commit . file)
       else
-        let f = base . '/' . substitute(rev, '^:/:\=\|^[^:]\+:', '', '')
+        let f = s:PathJoin(base, '/' . substitute(rev, '^:/:\=\|^[^:]\+:', '', ''))
       endif
     endif
   endif
@@ -2014,6 +2025,8 @@ function! s:Expand(rev, ...) abort
     let file = len(expand('%')) ? a:rev[-2:-1] . ':%' : '%'
   elseif a:rev =~# '^>\%(:\=/\)\=$'
     let file = '%'
+  elseif a:rev =~# '^>[> ]\@!' && @% !~# '^fugitive:' && s:Slash(@%) =~# '://'
+    let file = '%'
   elseif a:rev ==# '>:'
     let file = empty(s:DirCommitFile(@%)[0]) ? ':0:%' : '%'
   elseif a:rev =~# '^>[> ]\@!'
@@ -2148,7 +2161,7 @@ function! fugitive#simplify(url) abort
       endif
     endif
   endif
-  return s:VimSlash(s:DirUrlPrefix(simplify(s:GitDir(dir))) . commit . simplify(file))
+  return s:VimSlash(s:PathJoin(s:DirUrlPrefix(simplify(s:GitDir(dir))), commit . simplify(file)))
 endfunction
 
 function! fugitive#resolve(url) abort
@@ -2326,7 +2339,7 @@ function! fugitive#glob(url, ...) abort
     call filter(files, 'v:val =~# pattern')
     let prepend = s:DirUrlPrefix(dir) . substitute(commit, '^:', '', '') . '/'
     call sort(files)
-    call map(files, 's:VimSlash(prepend . v:val . append)')
+    call map(files, 's:VimSlash(s:PathJoin(prepend, v:val . append))')
     call extend(results, files)
   endfor
   if a:0 > 1 && a:2
@@ -5603,7 +5616,7 @@ function! s:GrepParseLine(options, quiet, dir, line) abort
     return {'text': a:line}
   endif
   if entry.module !~# ':'
-    let entry.filename = a:options.prefix . entry.module
+    let entry.filename = s:PathJoin(a:options.prefix, entry.module)
   else
     let entry.filename = fugitive#Find(entry.module, a:dir)
   endif
@@ -5804,7 +5817,7 @@ function! s:LogParse(state, dir, prefix, line) abort
     let a:state.queue = [{
           \ 'valid': 1,
           \ 'context': context,
-          \ 'filename': a:state.base . a:state.target,
+          \ 'filename': s:PathJoin(a:state.base, a:state.target),
           \ 'module': a:state.base_module . substitute(a:state.target, '^/', ':', ''),
           \ 'text': a:state.message}]
     let a:state.child_found = 0
@@ -5970,34 +5983,46 @@ function! s:OpenParse(string, wants_cmd) abort
   while !empty(args)
     if args[0] =~# '^++'
       call add(opts, ' ' . s:PlusEscape(remove(args, 0)))
+    elseif a:wants_cmd && args[0] ==# '+'
+      call remove(args, 0)
+      call add(cmds, '$')
     elseif a:wants_cmd && args[0] =~# '^+'
       call add(cmds, remove(args, 0)[1:-1])
     else
       break
     endif
   endwhile
-  if len(args) && args !=# ['>:']
-    let file = join(args)
-    if file ==# '-'
-      let result = fugitive#Result()
-      if has_key(result, 'file')
-        let file = s:fnameescape(result.file)
-      else
-        throw 'fugitive: no previous command output'
-      endif
-    endif
-  elseif empty(expand('%'))
-    let file = ''
-  elseif empty(s:DirCommitFile(@%)[1]) && s:Relative('./') !~# '^\./\.git\>'
-    let file = '>:0'
-  else
-    let file = '>'
+  if empty(args) && !empty(@%)
+    let args = ['>:']
   endif
   let dir = s:Dir()
-  let efile = s:Expand(file)
-  let url = s:Generate(efile, dir)
+  let [url, lnum] = s:OpenExpand(dir, join(args), a:wants_cmd)
+  if lnum
+    call insert(cmds, lnum)
+  endif
 
-  if a:wants_cmd && file[0] ==# '>' && efile[0] !=# '>' && get(b:, 'fugitive_type', '') isnot# 'tree' && &filetype !=# 'netrw'
+  let pre = join(opts, '')
+  if len(cmds) > 1
+    let pre .= ' +' . s:PlusEscape(join(map(cmds, '"exe ".string(v:val)'), '|'))
+  elseif len(cmds)
+    let pre .= ' +' . s:PlusEscape(cmds[0])
+  endif
+  return [url, pre]
+endfunction
+
+function! s:OpenExpand(dir, file, wants_cmd) abort
+  if a:file ==# '-'
+    let result = fugitive#Result()
+    if has_key(result, 'file')
+      let efile = result.file
+    else
+      throw 'fugitive: no previous command output'
+    endif
+  else
+    let efile = s:Expand(a:file)
+  endif
+  let url = s:Generate(efile, a:dir)
+  if a:wants_cmd && a:file[0] ==# '>' && efile[0] !=# '>' && get(b:, 'fugitive_type', '') isnot# 'tree' && &filetype !=# 'netrw'
     let line = line('.')
     if expand('%:p') !=# url
       let diffcmd = 'diff'
@@ -6014,7 +6039,7 @@ function! s:OpenParse(string, wants_cmd) abort
       else
         let args = [from, to]
       endif
-      let [res, exec_error] = s:LinesError([dir, diffcmd, '-U0'] + args)
+      let [res, exec_error] = s:LinesError([a:dir, diffcmd, '-U0'] + args)
       if !exec_error
         call filter(res, 'v:val =~# "^@@ "')
         call map(res, 'substitute(v:val, ''[-+]\d\+\zs '', ",1 ", "g")')
@@ -6031,16 +6056,9 @@ function! s:OpenParse(string, wants_cmd) abort
         endif
       endif
     endif
-    call insert(cmds, line)
+    return [url, line]
   endif
-
-  let pre = join(opts, '')
-  if len(cmds) > 1
-    let pre .= ' +' . s:PlusEscape(join(map(cmds, '"exe ".string(v:val)'), '|'))
-  elseif len(cmds)
-    let pre .= ' +' . s:PlusEscape(cmds[0])
-  endif
-  return [url, pre]
+  return [url, 0]
 endfunction
 
 function! fugitive#DiffClose() abort
@@ -7446,19 +7464,14 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
       let opts.path = s:sub(path, '/\=$', '/')
     endif
 
-    let url = ''
-    for Handler in get(g:, 'fugitive_browse_handlers', [])
-      let url = call(Handler, [copy(opts)])
-      if !empty(url)
-        break
+    for l:.Handler in get(g:, 'fugitive_browse_handlers', [])
+      let l:.url = call(Handler, [copy(opts)])
+      if type(url) == type('') && url =~# '://'
+        return s:BrowserOpen(url, a:mods, a:bang)
       endif
     endfor
 
-    if empty(url)
-      throw "fugitive: no GBrowse handler installed for '".raw."'"
-    endif
-
-    return s:BrowserOpen(url, a:mods, a:bang)
+    throw "fugitive: no GBrowse handler installed for '".raw."'"
   catch /^fugitive:/
     return 'echoerr ' . string(v:exception)
   endtry
@@ -7477,7 +7490,7 @@ function! fugitive#MapCfile(...) abort
     call s:Map('n', '<C-W>f',     '<SID>:sfind <Plug><cfile><CR>', '<silent><unique>', 1)
     call s:Map('n', '<C-W><C-F>', '<SID>:sfind <Plug><cfile><CR>', '<silent><unique>', 1)
     call s:Map('n', '<C-W>gf',  '<SID>:tabfind <Plug><cfile><CR>', '<silent><unique>', 1)
-    call s:Map('c', '<C-R><C-F>', '<Plug><cfile>', '<silent><unique>', 1)
+    call s:Map('c', '<C-R><C-F>', '<Plug><cfile>', '<unique>', 1)
   endif
 endfunction
 
