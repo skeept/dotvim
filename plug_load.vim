@@ -97,7 +97,7 @@ Plug 'will133/vim-dirdiff', { 'on': 'DirDiff' }
 Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
 
 
-Plug 'liuchengxu/vim-clap'
+Plug 'liuchengxu/vim-clap',  { 'on': 'Clap' }
 Plug 'troydm/zoomwintab.vim'
 
 Plug 'skeept/ctrlp-packadd'
