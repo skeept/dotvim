@@ -1286,5 +1286,18 @@ function j()
   ${LAST_JJ_ARGS[@]}
 }
 
+function pt()
+{
+  if [ -n  "$1" ]; then
+    if [ "$1" = "-cc" ]; then
+      export LAST_PYTEST_ARGS=
+    else
+      export LAST_PYTEST_ARGS="$@"
+    fi
+  fi
+
+  pytest ${LAST_PYTEST_ARGS[@]}
+}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 

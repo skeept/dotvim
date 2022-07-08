@@ -85,7 +85,7 @@ function! fugitive#UrlDecode(str) abort
 endfunction
 
 function! s:UrlEncode(str) abort
-  return substitute(a:str, '[%#?&;+\<> [:cntrl:]]', '\=printf("%%%02X", char2nr(submatch(0)))', 'g')
+  return substitute(a:str, '[%#?&;+=\<> [:cntrl:]]', '\=printf("%%%02X", char2nr(submatch(0)))', 'g')
 endfunction
 
 function! s:PathUrlEncode(str) abort
@@ -4343,7 +4343,7 @@ augroup fugitive_status
         \ if get(g:, 'fugitive_focus_gained', !has('win32')) |
         \   call fugitive#DidChange(0) |
         \ endif
-  autocmd BufEnter index,index.lock
+  autocmd BufEnter index,index.lock,fugitive://*//
         \ call s:ReloadWinStatus()
   autocmd TabEnter *
         \ if exists('t:fugitive_reload_status') |
@@ -7503,13 +7503,13 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, ...) abor
     elseif type ==# 'tree' && !empty(path)
       let opts.path = s:sub(opts.path, '/\=$', '/')
     endif
-    let opts.path = tr(substitute(opts.path, '\~', '%7E', 'g'), '%', '~')
-    let opts.commit = tr(substitute(opts.commit, '\~', '%7E', 'g'), '%', '~')
+    let opts.path = tr(opts.path, '%', "\032")
+    let opts.commit = tr(opts.commit, '%', "\032")
 
     for l:.Handler in get(g:, 'fugitive_browse_handlers', [])
       let l:.url = call(Handler, [copy(opts)])
       if type(url) == type('') && url =~# '://'
-        return s:BrowserOpen(substitute(tr(url, '~', '%'), '\C%7E', '\~', 'g'), a:mods, a:bang)
+        return s:BrowserOpen(tr(url, "\032", '%'), a:mods, a:bang)
       endif
     endfor
 
