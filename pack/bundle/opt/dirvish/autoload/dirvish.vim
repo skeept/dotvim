@@ -3,22 +3,41 @@ let s:sep = exists('+shellslash') && !&shellslash ? '\' : '/'
 let s:noswapfile = (2 == exists(':noswapfile')) ? 'noswapfile' : ''
 let s:noau       = 'silent noautocmd keepjumps'
 let s:cb_map = {}   " callback map
+let s:rel = get(g:, 'dirvish_relative_paths', 0)
 
-function! s:msg_error(msg) abort
+" Debug:
+"     echo '' > dirvish.log ; tail -F dirvish.log
+"     nvim +"let g:dirvish_dbg=1" -- b1 b2
+"     :bnext
+"     -
+if get(g:, 'dirvish_dbg')
+  func! s:log(msg, ...) abort
+    call writefile([a:msg], expand('~/dirvish.log'), 'as')
+  endf
+else
+  func! s:log(msg, ...) abort
+  endf
+endif
+
+func! s:msg_error(msg) abort
   redraw | echohl ErrorMsg | echomsg 'dirvish:' a:msg | echohl None
-endfunction
+endf
 
-function! s:suf() abort
+func! s:eq(dir1, dir2) abort
+  return fnamemodify(a:dir1, ':p') ==# fnamemodify(a:dir2, ':p')
+endf
+
+func! s:suf() abort
   let m = get(g:, 'dirvish_mode', 1)
   return type(m) == type(0) && m <= 1 ? 1 : 0
-endfunction
+endf
 
 " Normalize slashes for safe use of fnameescape(), isdirectory(). Vim bug #541.
-function! s:sl(path) abort
+func! s:sl(path) abort
   return has('win32') ? tr(a:path, '\', '/') : a:path
-endfunction
+endf
 
-function! s:normalize_dir(dir, silent) abort
+func! s:normalize_dir(dir, silent) abort
   let dir = s:sl(a:dir)
   if !isdirectory(dir)
     " Fallback for cygwin/MSYS paths lacking a drive letter.
@@ -34,39 +53,38 @@ function! s:normalize_dir(dir, silent) abort
   let dir = dir[0] . substitute(dir[1:], '/\+', '/', 'g')
   " Always end with separator.
   return (dir[-1:] ==# '/') ? dir : dir.'/'
-endfunction
+endf
 
-function! s:parent_dir(dir) abort
+func! s:parent_dir(dir) abort
   let mod = isdirectory(s:sl(a:dir)) ? ':p:h:h' : ':p:h'
   return s:normalize_dir(fnamemodify(a:dir, mod), 0)
-endfunction
+endf
 
 if v:version > 704 || v:version == 704 && has('patch279')
-function! s:globlist(dir_esc, pat) abort
+func! s:globlist(dir_esc, pat) abort
   return globpath(a:dir_esc, a:pat, !s:suf(), 1)
-endfunction
+endf
 else " Older versions cannot handle filenames containing newlines.
-function! s:globlist(dir_esc, pat) abort
+func! s:globlist(dir_esc, pat) abort
   return split(globpath(a:dir_esc, a:pat, !s:suf()), "\n")
-endfunction
+endf
 endif
 
-function! s:list_dir(dir) abort
+func! s:list_dir(dir) abort
   " Escape for globpath().
   let dir_esc = escape(substitute(a:dir,'\[','[[]','g'), ',;*?{}^$\')
   let paths = s:globlist(dir_esc, '*')
   "Append dot-prefixed files. globpath() cannot do both in 1 pass.
   let paths = paths + s:globlist(dir_esc, '.[^.]*')
 
-  if get(g:, 'dirvish_relative_paths', 0)
-      \ && a:dir != s:parent_dir(getcwd()) "avoid blank CWD
-    return map(paths, "fnamemodify(v:val, ':p:.')")
+  if s:rel && !s:eq(a:dir, s:parent_dir(getcwd()))
+    return map(paths, "fnamemodify(v:val, ':p:.')")  " Avoid blank CWD.
   else
     return map(paths, "fnamemodify(v:val, ':p')")
   endif
-endfunction
+endf
 
-function! s:info(paths, dirsize) abort
+func! s:info(paths, dirsize) abort
   for f in a:paths
     " Slash decides how getftype() classifies directory symlinks. #138
     let noslash = substitute(f, escape(s:sep,'\').'$', '', 'g')
@@ -75,9 +93,9 @@ function! s:info(paths, dirsize) abort
     echo (-1 == getfsize(f) ? '?' : (fname.(getftype(noslash)[0]).' '.getfperm(f)
           \.' '.strftime('%Y-%m-%d.%H:%M:%S',getftime(f)).' '.size).('link'!=#getftype(noslash)?'':' -> '.fnamemodify(resolve(f),':~:.')))
   endfor
-endfunction
+endf
 
-function! s:set_args(args) abort
+func! s:set_args(args) abort
   if exists('*arglistid') && arglistid() == 0
     arglocal
   endif
@@ -95,9 +113,9 @@ function! s:set_args(args) abort
 
   " Define (again) DirvishArg syntax group.
   exe 'source '.fnameescape(s:srcdir.'/syntax/dirvish.vim')
-endfunction
+endf
 
-function! dirvish#shdo(paths, cmd) abort
+func! dirvish#shdo(paths, cmd) abort
   " Remove empty/duplicate lines.
   let lines = uniq(sort(filter(copy(a:paths), '-1!=match(v:val,"\\S")')))
   let head = fnamemodify(get(lines, 0, '')[:-2], ':h')
@@ -137,14 +155,14 @@ function! dirvish#shdo(paths, cmd) abort
   augroup END
 
   nnoremap <buffer><silent> Z! :silent write<Bar>exe '!'.(has('win32')?fnameescape(escape(expand('%:p:gs?\\?/?'), '&\')):join(map(split(&shell), 'shellescape(v:val)')).' %')<Bar>if !v:shell_error<Bar>close<Bar>endif<CR>
-endfunction
+endf
 
 " Returns true if the buffer was modified by the user.
-function! s:buf_modified() abort
+func! s:buf_modified() abort
   return b:changedtick > get(b:dirvish, '_c', b:changedtick)
-endfunction
+endf
 
-function! s:buf_init() abort
+func! s:buf_init() abort
   augroup dirvish_buflocal
     autocmd! * <buffer>
     autocmd BufEnter,WinEnter <buffer> call <SID>on_bufenter()
@@ -162,9 +180,9 @@ function! s:buf_init() abort
   augroup END
 
   setlocal buftype=nofile noswapfile
-endfunction
+endf
 
-function! s:on_bufenter() abort
+func! s:on_bufenter() abort
   if bufname('%') is ''  " Something is very wrong. #136
     return
   elseif !exists('b:dirvish') || (empty(getline(1)) && 1 == line('$'))
@@ -175,70 +193,72 @@ function! s:on_bufenter() abort
     " Ensure w:dirvish for window splits, `:b <nr>`, etc.
     let w:dirvish = extend(get(w:, 'dirvish', {}), b:dirvish, 'keep')
   endif
-endfunction
+endf
 
-function! s:save_state(d) abort
+func! s:save_state(d) abort
   " Remember previous ('original') buffer.
-  let a:d.prevbuf = s:buf_isvalid(bufnr('%')) || !exists('w:dirvish')
-        \ ? 0+bufnr('%') : w:dirvish.prevbuf
-  if !s:buf_isvalid(a:d.prevbuf)
+  let p = s:buf_valid(bufnr('%')) || !exists('w:dirvish') ? 0+bufnr('%') : w:dirvish.prevbuf
+  if !s:buf_valid(p)
     "If reached via :edit/:buffer/etc. we cannot get the (former) altbuf.
-    let a:d.prevbuf = exists('b:dirvish') && s:buf_isvalid(b:dirvish.prevbuf)
-        \ ? b:dirvish.prevbuf : bufnr('#')
+    let p = exists('b:dirvish') && s:buf_valid(b:dirvish.prevbuf) ? b:dirvish.prevbuf : bufnr('#')
   endif
 
   " Remember alternate buffer.
-  let a:d.altbuf = s:buf_isvalid(bufnr('#')) || !exists('w:dirvish')
-        \ ? 0+bufnr('#') : w:dirvish.altbuf
-  if exists('b:dirvish') && (a:d.altbuf == a:d.prevbuf || !s:buf_isvalid(a:d.altbuf))
-    let a:d.altbuf = b:dirvish.altbuf
+  let a = (p != bufnr('#') && s:buf_valid(bufnr('#'))) || !exists('w:dirvish') ? 0+bufnr('#') : w:dirvish.altbuf
+  if !s:buf_valid(a) || a == p
+    let a = exists('b:dirvish') && s:buf_valid(b:dirvish.altbuf) ? b:dirvish.altbuf : -1
   endif
 
   " Save window-local settings.
+  let a:d.altbuf = a
+  let a:d.prevbuf = p
   let w:dirvish = extend(get(w:, 'dirvish', {}), a:d, 'force')
   let [w:dirvish._w_wrap, w:dirvish._w_cul] = [&l:wrap, &l:cul]
   if has('conceal') && !exists('b:dirvish')
     let [w:dirvish._w_cocu, w:dirvish._w_cole] = [&l:concealcursor, &l:conceallevel]
   endif
-endfunction
 
-function! s:win_init() abort
+  call s:log(printf('save_state: bufnr=%d altbuf=%d prevbuf=%d', bufnr(''), a:d.altbuf, a:d.prevbuf))
+endf
+
+func! s:win_init() abort
   let w:dirvish = extend(get(w:, 'dirvish', {}), b:dirvish, 'keep')
   setlocal nowrap cursorline
 
   if has('conceal')
     setlocal concealcursor=nvc conceallevel=2
   endif
-endfunction
+endf
 
-function! s:on_bufunload() abort
+func! s:on_bufunload() abort
   call s:restore_winlocal_settings()
-endfunction
+endf
 
-function! s:buf_close() abort
+func! s:buf_close() abort
   let d = get(w:, 'dirvish', {})
   if empty(d)
     return
   endif
 
   let [altbuf, prevbuf] = [get(d, 'altbuf', 0), get(d, 'prevbuf', 0)]
+  call s:log(printf('buf_close: bufnr=%d altbuf=%d prevbuf=%d', bufnr(''), altbuf, prevbuf))
   let found_alt = s:try_visit(altbuf, 0)
   if !s:try_visit(prevbuf, 0) && !found_alt
       \ && (1 == bufnr('%') || (prevbuf != bufnr('%') && altbuf != bufnr('%')))
     bdelete
   endif
-endfunction
+endf
 
-function! s:restore_winlocal_settings() abort
+func! s:restore_winlocal_settings() abort
   if !exists('w:dirvish') " can happen during VimLeave, etc.
     return
   endif
   if has('conceal') && has_key(w:dirvish, '_w_cocu')
     let [&l:cocu, &l:cole] = [w:dirvish._w_cocu, w:dirvish._w_cole]
   endif
-endfunction
+endf
 
-function! s:open_selected(splitcmd, bg, line1, line2) abort
+func! s:open_selected(splitcmd, bg, line1, line2) abort
   let curbuf = bufnr('%')
   let [curtab, curwin, wincount] = [tabpagenr(), winnr(), winnr('$')]
   let p = (a:splitcmd ==# 'p')  " Preview-mode
@@ -276,14 +296,10 @@ function! s:open_selected(splitcmd, bg, line1, line2) abort
   elseif !exists('b:dirvish') && exists('w:dirvish')
     call s:set_altbuf(w:dirvish.prevbuf)
   endif
-endfunction
+endf
 
-function! s:is_valid_altbuf(bnr) abort
-  return a:bnr != bufnr('%') && bufexists(a:bnr) && empty(getbufvar(a:bnr, 'dirvish'))
-endfunction
-
-function! s:set_altbuf(bnr) abort
-  if !s:is_valid_altbuf(a:bnr) | return | endif
+func! s:set_altbuf(bnr) abort
+  if !s:buf_valid(a:bnr) | return | endif
 
   if has('patch-7.4.605') | let @# = a:bnr | return | endif
 
@@ -293,10 +309,10 @@ function! s:set_altbuf(bnr) abort
     " Return to the current buffer.
     execute 'silent keepjumps' noau s:noswapfile 'buffer' curbuf
   endif
-endfunction
+endf
 
-function! s:try_visit(bnr, noau) abort
-  if s:is_valid_altbuf(a:bnr)
+func! s:try_visit(bnr, noau) abort
+  if s:buf_valid(a:bnr)
     " If _previous_ buffer is _not_ loaded (because of 'nohidden'), we must
     " allow autocmds (else no syntax highlighting; #13).
     let noau = a:noau && bufloaded(a:bnr) ? 'noau' : ''
@@ -304,15 +320,15 @@ function! s:try_visit(bnr, noau) abort
     return 1
   endif
   return 0
-endfunction
+endf
 
 if exists('*win_execute')
   " Performs `cmd` in all windows showing `bname`.
-  function! s:bufwin_do(cmd, bname) abort
+  func! s:bufwin_do(cmd, bname) abort
     call map(filter(getwininfo(), {_,v -> a:bname ==# bufname(v.bufnr)}), {_,v -> win_execute(v.winid, s:noau.' '.a:cmd)})
-  endfunction
+  endf
 else
-  function! s:tab_win_do(tnr, cmd, bname) abort
+  func! s:tab_win_do(tnr, cmd, bname) abort
     exe s:noau 'tabnext' a:tnr
     for wnr in range(1, tabpagewinnr(a:tnr, '$'))
       if a:bname ==# bufname(winbufnr(wnr))
@@ -320,9 +336,9 @@ else
         exe a:cmd
       endif
     endfor
-  endfunction
+  endf
 
-  function! s:bufwin_do(cmd, bname) abort
+  func! s:bufwin_do(cmd, bname) abort
     let [curtab, curwin, curwinalt, curheight, curwidth, squashcmds] = [tabpagenr(), winnr(), winnr('#'), winheight(0), winwidth(0), filter(split(winrestcmd(), '|'), 'v:val =~# " 0$"')]
     for tnr in range(1, tabpagenr('$'))
       let [origwin, origwinalt] = [tabpagewinnr(tnr), tabpagewinnr(tnr, '#')]
@@ -344,10 +360,10 @@ else
         endif
       endfor
     endif
-  endfunction
+  endf
 endif
 
-function! s:buf_render(dir, lastpath) abort
+func! s:buf_render(dir, lastpath) abort
   let bname = bufname('%')
   let isnew = empty(getline(1))
 
@@ -377,15 +393,15 @@ function! s:buf_render(dir, lastpath) abort
   endif
 
   if !empty(a:lastpath)
-    let pat = get(g:, 'dirvish_relative_paths', 0) ? fnamemodify(a:lastpath, ':p:.') : a:lastpath
+    let pat = s:rel ? fnamemodify(a:lastpath, ':p:.') : a:lastpath
     let pat = empty(pat) ? a:lastpath : pat  " no longer in CWD
     call search('\V\^'.escape(pat, '\').'\$', 'cw')
   endif
   " Place cursor on the tail (last path segment).
   call search('\'.s:sep.'\zs[^\'.s:sep.']\+\'.s:sep.'\?$', 'c', line('.'))
-endfunction
+endf
 
-function! s:apply_icons() abort
+func! s:apply_icons() abort
   if 0 == len(s:cb_map)
     return
   endif
@@ -406,9 +422,9 @@ function! s:apply_icons() abort
       exe 'syntax match DirvishColumnHead =^'.head_esc.'\ze'.tail_esc.'$= conceal cchar='.icon
     endif
   endfor
-endfunction
+endf
 
-function! s:open_dir(d, reload) abort
+func! s:open_dir(d, reload) abort
   let d = a:d
   let dirname_without_sep = substitute(d._dir, '[\\/]\+$', '', 'g')
 
@@ -434,7 +450,7 @@ function! s:open_dir(d, reload) abort
   " Use :file to force a normalized path.
   " - Avoids ".././..", ".", "./", etc. (breaks %:p, not updated on :cd).
   " - Avoids [Scratch] in some cases (":e ~/" on Windows).
-  if s:sl(bufname('%')) !=# d._dir
+  if !s:rel && s:sl(bufname('%')) !=# d._dir
     execute 'silent '.s:noswapfile.' file ' . fnameescape(d._dir)
   endif
 
@@ -462,17 +478,17 @@ function! s:open_dir(d, reload) abort
     let b:dirvish._c = b:changedtick
     call s:apply_icons()
   endif
-endfunction
+endf
 
-function! s:should_reload() abort
+func! s:should_reload() abort
   return !s:buf_modified() || (empty(getline(1)) && 1 == line('$'))
-endfunction
+endf
 
-function! s:buf_isvalid(bnr) abort
+func! s:buf_valid(bnr) abort
   return bufexists(a:bnr) && !isdirectory(s:sl(bufname(a:bnr)))
-endfunction
+endf
 
-function! dirvish#open(...) range abort
+func! dirvish#open(...) range abort
   if &autochdir
     call s:msg_error("'autochdir' is not supported")
     return
@@ -488,6 +504,7 @@ function! dirvish#open(...) range abort
     return
   endif
 
+  let s:rel = get(g:, 'dirvish_relative_paths', 0)
   let d = {}
   let is_uri    = -1 != match(a:1, '^\w\+:[\/][\/]')
   let from_path = fnamemodify(bufname('%'), ':p')
@@ -506,27 +523,27 @@ function! dirvish#open(...) range abort
 
   if reloading
     let d.lastpath = ''         " Do not place cursor when reloading.
-  elseif !is_uri && d._dir ==# s:parent_dir(from_path)
+  elseif !is_uri && s:eq(d._dir, s:parent_dir(from_path))
     let d.lastpath = from_path  " Save lastpath when navigating _up_.
   endif
 
   call s:save_state(d)
   call s:open_dir(d, reloading)
-endfunction
+endf
 
-function! dirvish#add_icon_fn(fn) abort
+func! dirvish#add_icon_fn(fn) abort
   if !exists('v:t_func') || type(a:fn) != v:t_func | throw 'argument must be a Funcref' | endif
   let s:cb_map[string(a:fn)] = a:fn
   return string(a:fn)
-endfunction
+endf
 
-function! dirvish#remove_icon_fn(fn_id) abort
+func! dirvish#remove_icon_fn(fn_id) abort
   if has_key(s:cb_map, a:fn_id)
     call remove(s:cb_map, a:fn_id)
     return 1
   endif
   return 0
-endfunction
+endf
 
 nnoremap <silent> <Plug>(dirvish_quit) :<C-U>call <SID>buf_close()<CR>
 nnoremap <silent> <Plug>(dirvish_arg) :<C-U>call <SID>set_args([getline('.')])<CR>
