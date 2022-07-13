@@ -36,7 +36,11 @@ MAPPINGS                                                    *dirvish-mappings*
 
 Global ~
     <Plug>(dirvish_up)
-    -               Opens the current file directory or the [count]th parent.
+    -               Opens the [count]th parent directory of the current file.
+    <Plug>(dirvish_split_up)
+                    Opens the [count]th parent in a new window.
+    <Plug>(dirvish_vsplit_up)
+                    Opens the [count]th parent in a new, vertical window.
 
 Buffer-local (filetype=dirvish) ~
     g?              Shows this help.
@@ -45,12 +49,6 @@ Buffer-local (filetype=dirvish) ~
                     Mnemonic: higher [count] => more files.
     <Plug>(dirvish_quit)
     gq              Quits and returns to the original file.
-    <Plug>(dirvish_up)
-    -               Opens the [count]th parent directory.
-    <Plug>(dirvish_split_up)
-                    Opens the [count]th parent in a new window.
-    <Plug>(dirvish_vsplit_up)
-                    Opens the [count]th parent in a new, vertical window.
     <2-LeftMouse>
     i
     <CR>            Opens file at cursor.
@@ -84,14 +82,10 @@ Buffer-local (:Shdo) ~
 ==============================================================================
 COMMANDS                                                    *dirvish-commands*
 
-:Dirvish                                                    *dirvish-:Dirvish*
-    Opens the |current-directory|.
+:Dirvish [path]                                             *dirvish-:Dirvish*
+    Opens the directory at [path], or its parent if [path] is a file, or the
+    parent of the current file if [path] is not given.
 
-:Dirvish {path}
-    Opens the directory at {path}, or its parent if {path} is a file.
-    To open the directory of the current file: >
-        :Dirvish %
-<
 :[range]Shdo[!] {cmd}                               *:Shdo* *dirvish-:Shdo*
     Generates a shell script with {cmd} applied to [range] and the respective
     filepath inserted wherever {} appears in {cmd}. The window-local directory
@@ -108,8 +102,8 @@ FUNCTIONS                                                  *dirvish-functions*
                                                               *dirvish#open()*
 [range]dirvish#open({cmd}, {bg})
     Performs {cmd} ("edit", "vsplit", "split", "tabedit") on the files in
-    [range]. {bg} must be 0 (open files in current window) or 1 (open files in
-    the "background").
+    [range]. {bg} must be 0 (opens in current window) or 1 (opens in the
+    "background").
 
                                                        *dirvish#add_icon_fn()*
 dirvish#add_icon_fn(fn)
@@ -161,7 +155,7 @@ can be overridden by handling that event. Example: >
 
       " Map `gr` to reload.
       autocmd FileType dirvish nnoremap <silent><buffer>
-        \ gr :<C-U>Dirvish %<CR>
+        \ gr :<C-U>Dirvish<CR>
 
       " Map `gh` to hide dot-prefixed files.  Press `R` to "toggle" (reload).
       autocmd FileType dirvish nnoremap <silent><buffer>

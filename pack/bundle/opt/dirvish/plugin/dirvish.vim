@@ -17,15 +17,15 @@ augroup dirvish
   autocmd VimEnter * if exists('#FileExplorer') | exe 'au! FileExplorer *' | endif
   autocmd VimEnter * if exists('#NERDTreeHijackNetrw') | exe 'au! NERDTreeHijackNetrw *' | endif
   autocmd BufEnter * if !exists('b:dirvish') && <SID>isdir(expand('%:p'))
-    \ | exe 'Dirvish %:p'
+    \ | Dirvish
     \ | elseif exists('b:dirvish') && &buflisted && bufnr('$') > 1 | setlocal nobuflisted | endif
   autocmd FileType dirvish if exists('#fugitive') | call FugitiveDetect(@%) | endif
-  autocmd ShellCmdPost * if exists('b:dirvish') | exe 'Dirvish %' | endif
+  autocmd ShellCmdPost * if exists('b:dirvish') | Dirvish | endif
 augroup END
 
-nnoremap <silent> <Plug>(dirvish_up) :<C-U>exe 'Dirvish %:p'.repeat(':h',v:count1)<CR>
-nnoremap <silent> <Plug>(dirvish_split_up) :<C-U>exe 'split +Dirvish\ %:p'.repeat(':h',v:count1)<CR>
-nnoremap <silent> <Plug>(dirvish_vsplit_up) :<C-U>exe 'vsplit +Dirvish\ %:p'.repeat(':h',v:count1)<CR>
+nnoremap <silent> <Plug>(dirvish_up) :<C-U>exe 'Dirvish' fnameescape(fnamemodify(@%, ':p'.(@%[-1:]=~'[\\/]'?':h':'').repeat(':h',v:count1)))<CR>
+nnoremap <silent> <Plug>(dirvish_split_up) :<C-U>split<bar>exe 'Dirvish' fnameescape(fnamemodify(@%, ':p'.(@%[-1:]=~'[\\/]'?':h':'').repeat(':h',v:count1)))<CR>
+nnoremap <silent> <Plug>(dirvish_vsplit_up) :<C-U>vsplit<bar>exe 'Dirvish' fnameescape(fnamemodify(@%, ':p'.(@%[-1:]=~'[\\/]'?':h':'').repeat(':h',v:count1)))<CR>
 
 highlight default link DirvishSuffix   SpecialKey
 highlight default link DirvishPathTail Directory

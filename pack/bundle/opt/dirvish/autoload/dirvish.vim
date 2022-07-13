@@ -32,12 +32,21 @@ func! s:suf() abort
   return type(m) == type(0) && m <= 1 ? 1 : 0
 endf
 
-" Normalize slashes for safe use of fnameescape(), isdirectory(). Vim bug #541.
-func! s:sl(path) abort
-  return has('win32') ? tr(a:path, '\', '/') : a:path
+" Normalizes slashes:
+" - Replace "\" with "/", for safe use of fnameescape(), isdirectory(). Vim bug #541.
+" - Collapse slashes (except UNC-style \\foo\bar).
+" - Always end dir with "/".
+" - Special case: empty string (CWD) => "./".
+func! s:sl(f) abort
+  let f = has('win32') ? tr(a:f, '\', '/') : a:f
+  " Collapse slashes (except UNC-style \\foo\bar).
+  let f = f[0] . substitute(f[1:], '/\+', '/', 'g')
+  " End with separator.
+  return empty(f) ? './' : (f[-1:] !=# '/' && isdirectory(f) ? f.'/' : f)
 endf
 
-func! s:normalize_dir(dir, silent) abort
+" Workaround for platform quirks, and shows an error if dir is invalid.
+func! s:fix_dir(dir, silent) abort
   let dir = s:sl(a:dir)
   if !isdirectory(dir)
     " Fallback for cygwin/MSYS paths lacking a drive letter.
@@ -49,15 +58,12 @@ func! s:normalize_dir(dir, silent) abort
       return ''
     endif
   endif
-  " Collapse slashes (except UNC-style \\foo\bar).
-  let dir = dir[0] . substitute(dir[1:], '/\+', '/', 'g')
-  " Always end with separator.
-  return (dir[-1:] ==# '/') ? dir : dir.'/'
+  return dir
 endf
 
-func! s:parent_dir(dir) abort
-  let mod = isdirectory(s:sl(a:dir)) ? ':p:h:h' : ':p:h'
-  return s:normalize_dir(fnamemodify(a:dir, mod), 0)
+func! s:parent_dir(f) abort
+  let f_noslash = substitute(a:f, escape(s:sep == '\'?'[/\]':'/','\').'\+$', '', 'g')
+  return s:fix_dir(fnamemodify(f_noslash, ':h'), 0)
 endf
 
 if v:version > 704 || v:version == 704 && has('patch279')
@@ -71,14 +77,15 @@ endf
 endif
 
 func! s:list_dir(dir) abort
+  let s:rel = get(g:, 'dirvish_relative_paths', 0)
   " Escape for globpath().
   let dir_esc = escape(substitute(a:dir,'\[','[[]','g'), ',;*?{}^$\')
   let paths = s:globlist(dir_esc, '*')
   "Append dot-prefixed files. globpath() cannot do both in 1 pass.
   let paths = paths + s:globlist(dir_esc, '.[^.]*')
 
-  if s:rel && !s:eq(a:dir, s:parent_dir(getcwd()))
-    return map(paths, "fnamemodify(v:val, ':p:.')")  " Avoid blank CWD.
+  if s:rel && !s:eq(a:dir, s:parent_dir(s:sl(getcwd())))  " Avoid blank CWD.
+    return map(paths, "fnamemodify(v:val, ':p:.')")
   else
     return map(paths, "fnamemodify(v:val, ':p')")
   endif
@@ -150,7 +157,7 @@ func! dirvish#shdo(paths, cmd) abort
     autocmd! * <buffer>
     " Refresh Dirvish after executing a shell command.
     exe 'autocmd ShellCmdPost <buffer> nested if !v:shell_error && bufexists('.dirvish_bufnr.')'
-      \.'|setlocal bufhidden=hide|buffer '.dirvish_bufnr.'|silent! Dirvish %'
+      \.'|setlocal bufhidden=hide|buffer '.dirvish_bufnr.'|silent! Dirvish'
       \.'|buffer '.bufnr('%').'|setlocal bufhidden=wipe|endif'
   augroup END
 
@@ -186,7 +193,7 @@ func! s:on_bufenter() abort
   if bufname('%') is ''  " Something is very wrong. #136
     return
   elseif !exists('b:dirvish') || (empty(getline(1)) && 1 == line('$'))
-    Dirvish %
+    Dirvish
   elseif 3 != &l:conceallevel && !s:buf_modified()
     call s:win_init()
   else
@@ -265,20 +272,22 @@ func! s:open_selected(splitcmd, bg, line1, line2) abort
 
   let paths = getline(a:line1, a:line2)
   for path in paths
-    let path = s:sl(path)
+    let isdir = path[-1:] == s:sep
     if !isdirectory(path) && !filereadable(path)
-      call s:msg_error("invalid (access denied?): ".path)
+      call s:msg_error(printf('invalid (access denied?): %s', path))
       continue
     endif
+    " Open files (not dirs) using relative paths.
+    let shortname = fnamemodify(path, isdir ? ':p:~' : ':~:.')
 
     if p  " Go to previous window.
       exe (winnr('$') > 1 ? 'wincmd p|if winnr()=='.winnr().'|wincmd w|endif' : 'vsplit')
     endif
 
-    if isdirectory(path)
-      exe (p || a:splitcmd ==# 'edit' ? '' : a:splitcmd.'|') 'Dirvish' fnameescape(path)
+    if isdir
+      exe (p || a:splitcmd ==# 'edit' ? '' : a:splitcmd.'|') 'Dirvish' fnameescape(shortname)
     else
-      exe (p ? 'edit' : a:splitcmd) fnameescape(path)
+      exe (p ? 'edit' : a:splitcmd) fnameescape(shortname)
     endif
 
     " Return to previous window after _each_ split, else we get lost.
@@ -323,28 +332,28 @@ func! s:try_visit(bnr, noau) abort
 endf
 
 if exists('*win_execute')
-  " Performs `cmd` in all windows showing `bname`.
-  func! s:bufwin_do(cmd, bname) abort
-    call map(filter(getwininfo(), {_,v -> a:bname ==# bufname(v.bufnr)}), {_,v -> win_execute(v.winid, s:noau.' '.a:cmd)})
+  " Performs `cmd` in all windows showing `bnr`.
+  func! s:bufwin_do(cmd, bnr) abort
+    call map(filter(getwininfo(), {_,v -> a:bnr ==# v.bufnr}), {_,v -> win_execute(v.winid, s:noau.' '.a:cmd)})
   endf
 else
-  func! s:tab_win_do(tnr, cmd, bname) abort
+  func! s:tab_win_do(tnr, cmd, bnr) abort
     exe s:noau 'tabnext' a:tnr
     for wnr in range(1, tabpagewinnr(a:tnr, '$'))
-      if a:bname ==# bufname(winbufnr(wnr))
+      if a:bnr ==# winbufnr(wnr)
         exe s:noau wnr.'wincmd w'
         exe a:cmd
       endif
     endfor
   endf
 
-  func! s:bufwin_do(cmd, bname) abort
+  func! s:bufwin_do(cmd, bnr) abort
     let [curtab, curwin, curwinalt, curheight, curwidth, squashcmds] = [tabpagenr(), winnr(), winnr('#'), winheight(0), winwidth(0), filter(split(winrestcmd(), '|'), 'v:val =~# " 0$"')]
     for tnr in range(1, tabpagenr('$'))
       let [origwin, origwinalt] = [tabpagewinnr(tnr), tabpagewinnr(tnr, '#')]
       for bnr in tabpagebuflist(tnr)
-        if a:bname ==# bufname(bnr)
-          call s:tab_win_do(tnr, a:cmd, a:bname)
+        if a:bnr == bnr
+          call s:tab_win_do(tnr, a:cmd, a:bnr)
           exe s:noau origwinalt.'wincmd w|' s:noau origwin.'wincmd w'
           break
         endif
@@ -364,16 +373,16 @@ else
 endif
 
 func! s:buf_render(dir, lastpath) abort
-  let bname = bufname('%')
+  let bnr = bufnr('%')
   let isnew = empty(getline(1))
 
-  if !isdirectory(s:sl(bname))
-    echoerr 'dirvish: fatal: buffer name is not a directory:' bufname('%')
+  if !isdirectory(a:dir)
+    echoerr 'dirvish: not a directory:' a:dir
     return
   endif
 
   if !isnew
-    call s:bufwin_do('let w:dirvish["_view"] = winsaveview()', bname)
+    call s:bufwin_do('let w:dirvish["_view"] = winsaveview()', bnr)
   endif
 
   if v:version > 704 || v:version == 704 && has("patch73")
@@ -389,12 +398,13 @@ func! s:buf_render(dir, lastpath) abort
   endif
 
   if !isnew
-    call s:bufwin_do('call winrestview(w:dirvish["_view"])', bname)
+    call s:bufwin_do('call winrestview(w:dirvish["_view"])', bnr)
   endif
 
   if !empty(a:lastpath)
     let pat = s:rel ? fnamemodify(a:lastpath, ':p:.') : a:lastpath
     let pat = empty(pat) ? a:lastpath : pat  " no longer in CWD
+    let pat = tr(pat, '/', s:sep)  " platform slashes
     call search('\V\^'.escape(pat, '\').'\$', 'cw')
   endif
   " Place cursor on the tail (last path segment).
@@ -424,7 +434,13 @@ func! s:apply_icons() abort
   endfor
 endf
 
+let s:recursive = ''
 func! s:open_dir(d, reload) abort
+  if s:recursive ==# a:d._dir
+    return
+  endif
+  let s:recursive = a:d._dir
+  call s:log(printf('open_dir ENTER: %d %s', bufnr('%'), a:d._dir))
   let d = a:d
   let dirname_without_sep = substitute(d._dir, '[\\/]\+$', '', 'g')
 
@@ -441,17 +457,21 @@ func! s:open_dir(d, reload) abort
     endif
   endfor
 
+  " Note: :noautocmd not used here, to allow BufEnter/BufNew. 61282f2453af
+  " Thus s:recursive guards against recursion (for performance).
   if -1 == bnr
     execute 'silent' s:noswapfile 'keepalt edit' fnameescape(d._dir)
   else
     execute 'silent' s:noswapfile 'buffer' bnr
   endif
 
-  " Use :file to force a normalized path.
+  " Force a normalized directory path.
+  " - Starts with "~/" or "/", ie absolute (important for ":h").
+  " - Ends with "/".
   " - Avoids ".././..", ".", "./", etc. (breaks %:p, not updated on :cd).
   " - Avoids [Scratch] in some cases (":e ~/" on Windows).
-  if !s:rel && s:sl(bufname('%')) !=# d._dir
-    execute 'silent '.s:noswapfile.' file ' . fnameescape(d._dir)
+  if bufname('%')[-1:] != '/' ||  bufname('%')[0:1] !=# d._dir[0:1]
+    execute 'silent' s:noswapfile 'file' fnameescape(d._dir)
   endif
 
   if !isdirectory(bufname('%'))  " sanity check
@@ -478,6 +498,8 @@ func! s:open_dir(d, reload) abort
     let b:dirvish._c = b:changedtick
     call s:apply_icons()
   endif
+  let s:recursive = ''
+  call s:log(printf('open_dir EXIT : %d %s', bufnr('%'), a:d._dir))
 endf
 
 func! s:should_reload() abort
@@ -485,7 +507,7 @@ func! s:should_reload() abort
 endf
 
 func! s:buf_valid(bnr) abort
-  return bufexists(a:bnr) && !isdirectory(s:sl(bufname(a:bnr)))
+  return bufexists(a:bnr) && (empty(bufname(a:bnr)) || !isdirectory(s:sl(bufname(a:bnr))))
 endf
 
 func! dirvish#open(...) range abort
@@ -504,22 +526,19 @@ func! dirvish#open(...) range abort
     return
   endif
 
-  let s:rel = get(g:, 'dirvish_relative_paths', 0)
   let d = {}
   let is_uri    = -1 != match(a:1, '^\w\+:[\/][\/]')
-  let from_path = fnamemodify(bufname('%'), ':p')
-  let to_path   = fnamemodify(s:sl(a:1), ':p')
-  "                                       ^resolves to CWD if a:1 is empty
+  let from_path = s:sl(fnamemodify(bufname('%'), ':p'))
+  let to_path   = s:sl(fnamemodify(!empty(a:1) || empty(@%) ? a:1 : @%, ':p'))
 
-  let d._dir = filereadable(to_path) ? fnamemodify(to_path, ':p:h') : to_path
-  let d._dir = s:normalize_dir(d._dir, is_uri)
+  let d._dir = s:fix_dir(filereadable(to_path) ? fnamemodify(to_path, ':p:h') : to_path, is_uri)
   " Fallback to CWD for URIs. #127
-  let d._dir = empty(d._dir) && is_uri ? s:normalize_dir(getcwd(), is_uri) : d._dir
-  if empty(d._dir)  " s:normalize_dir() already showed error.
+  let d._dir = empty(d._dir) && is_uri ? s:fix_dir(getcwd(), is_uri) : d._dir
+  if empty(d._dir)  " s:fix_dir() already showed error.
     return
   endif
 
-  let reloading = exists('b:dirvish') && d._dir ==# b:dirvish._dir
+  let reloading = exists('b:dirvish') && d._dir ==# b:dirvish._dir && s:recursive !=# d._dir
 
   if reloading
     let d.lastpath = ''         " Do not place cursor when reloading.
