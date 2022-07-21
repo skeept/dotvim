@@ -5,7 +5,6 @@ alias la='ls -a'
 alias lsm='ls -l --block-size=M -S'
 alias more='less'
 alias o='less'
-alias ...="cd ../.."
 
 alias hi=history
 #alias plf='perl -wnle' #loop around a file (must supply a file)
@@ -31,10 +30,10 @@ alias ps2me='ps -U $(echo -n $USER) -o pid -o args'
 
 alias gpgd='gpg --decrypt-files'
 #alias s=screen
-alias s-r="screen -r"
-alias sn="screen -X next"
-alias sp="screen -X  prev"
-alias so="screen -X other"
+#alias s-r="screen -r"
+#alias sn="screen -X next"
+#alias sp="screen -X  prev"
+#alias so="screen -X other"
 
 alias rs='reset'
 
@@ -50,6 +49,7 @@ alias jl='jobs -l'
 alias which='type -all'
 alias gdf='type'
 alias ..='cd ..'
+alias ...="cd ../.."
 alias du='du -h'
 alias df='df -kh'
 
