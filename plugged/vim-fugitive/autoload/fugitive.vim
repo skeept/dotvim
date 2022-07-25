@@ -1846,18 +1846,7 @@ function! fugitive#Find(object, ...) abort
   elseif rev =~# '^:[0-3]:'
     let f = s:PathJoin(urlprefix, rev[1] . '/' . rev[3:-1])
   elseif rev ==# ':'
-    let fdir = simplify(FugitiveActualDir(dir) . '/')
-    let f = fdir . 'index'
-    if !s:cpath(dir . '/', fdir)
-      let f = urlprefix
-    elseif len($GIT_INDEX_FILE)
-      let index_dir = substitute(s:GitIndexFileEnv(), '[^/]\+$', '', '')
-      if s:cpath(index_dir, fdir)
-        let f = s:GitIndexFileEnv()
-      elseif s:cpath(resolve(index_dir), fdir)
-        let f = resolve(s:GitIndexFileEnv())
-      endif
-    endif
+    let f = urlprefix
   elseif rev =~# '^:(\%(top\|top,literal\|literal,top\|literal\))'
     let f = matchstr(rev, ')\zs.*')
     if f=~# '^\.\.\=\%(/\|$\)'
@@ -4609,8 +4598,12 @@ function! s:NextHunk(count) abort
 endfunction
 
 function! s:PreviousHunk(count) abort
+  normal! 0
   for i in range(a:count)
     if &filetype ==# 'fugitive'
+      if getline('.') =~# '^@' && getline(line('.') - 1) =~# s:file_pattern
+        -
+      endif
       let lnum = search(s:file_pattern . '\|^@','Wbn')
       call s:StageInline('show', lnum)
       call search('^? .\|^@','Wb')
@@ -4635,6 +4628,7 @@ endfunction
 
 function! s:PreviousFile(count) abort
   exe s:StageInline('hide')
+  normal! 0
   for i in range(a:count)
     if !search(s:file_pattern, 'Wb')
       break
@@ -4655,6 +4649,7 @@ function! s:NextItem(count) abort
 endfunction
 
 function! s:PreviousItem(count) abort
+  normal! 0
   for i in range(a:count)
     if !search(s:item_pattern, 'Wb') && getline('.') !~# s:item_pattern
       call search('^commit ', 'Wb')
@@ -4690,6 +4685,7 @@ function! s:PreviousSection(count) abort
   if getline('.') !~# '^commit '
     -
   endif
+  normal! 0
   for i in range(a:count)
     if !search(s:section_commit_pattern . '\|\%^', 'bW')
       break
