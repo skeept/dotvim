@@ -342,13 +342,13 @@ function! fugitive#Wait(job_or_jobs, ...) abort
   else
     let sleep = has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
     for job in jobs
-      if ch_status(job) !=# 'closed'
+      if ch_status(job) ==# 'open'
         call ch_close_in(job)
       endif
     endfor
     let i = 0
     for job in jobs
-      while ch_status(job) !=# 'closed' || job_status(job) ==# 'run'
+      while ch_status(job) !~# '^closed$\|^fail$' || job_status(job) ==# 'run'
         if i == timeout_ms
           break
         endif
@@ -387,11 +387,15 @@ function! s:JobExecute(argv, jopts, stdin, callback, ...) abort
           \ 'stdout_buffered': v:true,
           \ 'stderr_buffered': v:true,
           \ 'on_exit': function('s:JobNvimExit', [dict, cb])})
-    let dict.job = jobstart(a:argv, a:jopts)
-    if !empty(a:stdin)
-      call chansend(dict.job, a:stdin)
-      call chanclose(dict.job, 'stdin')
-    endif
+    try
+      let dict.job = jobstart(a:argv, a:jopts)
+      if !empty(a:stdin)
+        call chansend(dict.job, a:stdin)
+        call chanclose(dict.job, 'stdin')
+      endif
+    catch /^Vim\%((\a\+)\)\=:E475:/
+      let [dict.exit_status, dict.stdout, dict.stderr] = [122, [''], ['']]
+    endtry
   elseif exists('*ch_close_in')
     let temp = tempname()
     call extend(a:jopts, {
@@ -408,6 +412,10 @@ function! s:JobExecute(argv, jopts, stdin, callback, ...) abort
       call writefile(a:stdin, a:jopts.in_name, 'b')
     endif
     let dict.job = job_start(a:argv, a:jopts)
+    if job_status(dict.job) ==# 'fail'
+      let [dict.exit_status, dict.stdout, dict.stderr] = [122, [''], ['']]
+      unlet dict.job
+    endif
   elseif &shell !~# 'sh' || &shell =~# 'fish\|\%(powershell\|pwsh\)\%(\.exe\)\=$'
     throw 'fugitive: Vim 8 or higher required to use ' . &shell
   else
@@ -873,7 +881,7 @@ function! s:SystemList(cmd) abort
     let job = job_start(a:cmd, jopts)
     call ch_close_in(job)
     let sleep = has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
-    while ch_status(job) !=# 'closed' || job_status(job) ==# 'run'
+    while ch_status(job) !~# '^closed$\|^fail$' || job_status(job) ==# 'run'
       exe sleep
     endwhile
     return [lines, exit[0]]
@@ -988,7 +996,7 @@ function! s:StdoutToFile(out, cmd, ...) abort
         call ch_sendraw(job, a:1)
       endif
       call ch_close_in(job)
-      while ch_status(job) !=# 'closed' || job_status(job) ==# 'run'
+      while ch_status(job) !~# '^closed$\|^fail$' || job_status(job) ==# 'run'
         exe has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
       endwhile
       return [join(readfile(err, 'b'), "\n"), exit[0]]
@@ -1953,22 +1961,14 @@ function! s:BufName(var) abort
   endif
 endfunction
 
-function! s:ExpandVarLegacy(str) abort
-  if get(g:, 'fugitive_legacy_quoting', 0)
-    return substitute(a:str, '\\\ze[%#!]', '', 'g')
-  else
-    return a:str
-  endif
-endfunction
-
 function! s:ExpandVar(other, var, flags, esc, ...) abort
   let cwd = a:0 ? a:1 : getcwd()
   if a:other =~# '^\'
     return a:other[1:-1]
   elseif a:other =~# '^'''
-    return s:ExpandVarLegacy(substitute(a:other[1:-2], "''", "'", "g"))
+    return substitute(a:other[1:-2], "''", "'", "g")
   elseif a:other =~# '^"'
-    return s:ExpandVarLegacy(substitute(a:other[1:-2], '""', '"', "g"))
+    return substitute(a:other[1:-2], '""', '"', "g")
   elseif a:other =~# '^!'
     let buffer = s:BufName(len(a:other) > 1 ? '#'. a:other[1:-1] : '%')
     let owner = s:Owner(buffer)
@@ -3493,7 +3493,7 @@ function! s:RunTick(job) abort
   if type(a:job) == v:t_number
     return jobwait([a:job], 1)[0] == -1
   elseif type(a:job) == 8
-    let running = ch_status(a:job) !~# '^closed$\|^failed$' || job_status(a:job) ==# 'run'
+    let running = ch_status(a:job) !~# '^closed$\|^fail$' || job_status(a:job) ==# 'run'
     sleep 1m
     return running
   endif
