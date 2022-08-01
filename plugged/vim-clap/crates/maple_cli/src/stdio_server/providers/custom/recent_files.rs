@@ -6,7 +6,7 @@ use crossbeam_channel::Sender;
 use serde::Deserialize;
 use serde_json::json;
 
-use filter::FilteredItem;
+use types::{MatchedItem, Score, SourceItem};
 
 use crate::datastore::RECENT_FILES_IN_MEMORY;
 use crate::stdio_server::providers::builtin::OnMoveHandler;
@@ -18,7 +18,7 @@ async fn handle_recent_files_message(
     msg: MethodCall,
     context: Arc<SessionContext>,
     force_execute: bool,
-) -> Vec<FilteredItem> {
+) -> Vec<MatchedItem> {
     let msg_id = msg.id;
 
     let cwd = context.cwd.to_string_lossy().to_string();
@@ -51,11 +51,9 @@ async fn handle_recent_files_message(
             .entries
             .iter()
             .map(|entry| {
-                FilteredItem::new(
-                    entry.fpath.replacen(&cwd, "", 1),
-                    entry.frecent_score as i64,
-                    Default::default(),
-                )
+                let item: SourceItem = entry.fpath.replacen(&cwd, "", 1).into();
+                // frecent_score will not be larger than i32::MAX.
+                MatchedItem::new(item, entry.frecent_score as Score, Default::default())
             })
             .collect::<Vec<_>>()
     } else {
@@ -72,7 +70,7 @@ async fn handle_recent_files_message(
     if let Some(lnum) = lnum {
         // process the new preview
         if let Some(new_entry) = ranked.get(lnum as usize - 1) {
-            let new_curline = new_entry.display_text();
+            let new_curline = new_entry.display_text().to_string();
             if let Ok((lines, fname)) = crate::previewer::preview_file(
                 new_curline,
                 context.sensible_preview_size(),
@@ -84,7 +82,7 @@ async fn handle_recent_files_message(
     }
 
     // Take the first 200 entries and add an icon to each of them.
-    let printer::DecoratedLines {
+    let printer::DisplayLines {
         lines,
         indices,
         truncated_map,
@@ -142,7 +140,7 @@ async fn handle_recent_files_message(
 
 #[derive(Debug, Clone, Default)]
 pub struct RecentFilesHandle {
-    lines: Arc<Mutex<Vec<FilteredItem>>>,
+    lines: Arc<Mutex<Vec<MatchedItem>>>,
 }
 
 #[async_trait::async_trait]
@@ -164,7 +162,7 @@ impl EventHandle for RecentFilesHandle {
             .lines
             .lock()
             .get((lnum - 1) as usize)
-            .map(|r| r.source_item.raw.clone());
+            .map(|r| r.item.raw.clone());
 
         if let Some(curline) = maybe_curline {
             let on_move_handler = OnMoveHandler::create(&msg, &context, Some(curline))?;

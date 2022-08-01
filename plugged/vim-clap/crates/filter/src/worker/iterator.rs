@@ -1,15 +1,14 @@
-use std::io::BufRead;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use rayon::slice::ParallelSliceMut;
 
 use icon::{Icon, ICON_LEN};
-use types::{FilteredItem, Query, SourceItem};
+use types::{MatchedItem, Query, Score, SourceItem};
 use utility::{println_json, println_json_with_length};
 
-use super::{source_iter_exec, source_iter_file, source_iter_list, source_iter_stdin};
-use crate::{sort_initial_filtered, FilterContext, Source};
+use crate::source::{source_exec, source_file, source_list, source_stdin};
+use crate::{sort_matched_items, FilterContext, Source};
 
 /// The constant to define the length of `top_` queues.
 const ITEMS_TO_SHOW: usize = 40;
@@ -63,30 +62,27 @@ macro_rules! insert_both {
     }};
 }
 
-/// Type of matcher scoring.
-type Score = i64;
-
 type SelectedTopItemsInfo = (usize, [Score; ITEMS_TO_SHOW], [usize; ITEMS_TO_SHOW]);
 
 /// Returns Ok if all items in the iterator has been processed.
 ///
 /// First, let's try to produce `ITEMS_TO_SHOW` items to fill the topscores.
 fn select_top_items_to_show(
-    buffer: &mut Vec<FilteredItem>,
-    iter: &mut impl Iterator<Item = FilteredItem>,
+    buffer: &mut Vec<MatchedItem>,
+    iter: &mut impl Iterator<Item = MatchedItem>,
 ) -> std::result::Result<usize, SelectedTopItemsInfo> {
     let mut top_scores: [Score; ITEMS_TO_SHOW] = [Score::min_value(); ITEMS_TO_SHOW];
     let mut top_results: [usize; ITEMS_TO_SHOW] = [usize::min_value(); ITEMS_TO_SHOW];
 
     let mut total = 0;
-    let res = iter.try_for_each(|filtered_item| {
-        let score = filtered_item.score;
+    let res = iter.try_for_each(|matched_item| {
+        let score = matched_item.score;
         let idx = match find_best_score_idx(&top_scores, score) {
             Some(idx) => idx + 1,
             None => 0,
         };
 
-        insert_both!(idx, score, filtered_item => buffer, top_results, top_scores);
+        insert_both!(idx, score, matched_item => buffer, top_results, top_scores);
 
         // Stop iterating after `ITEMS_TO_SHOW` iterations.
         total += 1;
@@ -145,20 +141,20 @@ impl Watcher {
     /// # NOTE
     ///
     /// Printing to stdout is to send the content to the client.
-    pub fn try_notify(&mut self, top_results: &[usize; ITEMS_TO_SHOW], buffer: &[FilteredItem]) {
+    pub fn try_notify(&mut self, top_results: &[usize; ITEMS_TO_SHOW], buffer: &[MatchedItem]) {
         if self.total % 16 == 0 {
             let now = Instant::now();
             if now > self.past + UPDATE_INTERVAL {
                 let mut indices = Vec::with_capacity(ITEMS_TO_SHOW);
                 let mut lines = Vec::with_capacity(ITEMS_TO_SHOW);
                 for &idx in top_results.iter() {
-                    let filtered_item = std::ops::Index::index(buffer, idx);
+                    let matched_item = std::ops::Index::index(buffer, idx);
                     let text = if let Some(painter) = self.icon.painter() {
-                        indices.push(filtered_item.shifted_indices(ICON_LEN));
-                        painter.paint(filtered_item.display_text())
+                        indices.push(matched_item.shifted_indices(ICON_LEN));
+                        painter.paint(matched_item.display_text())
                     } else {
-                        indices.push(filtered_item.match_indices.clone());
-                        filtered_item.display_text().to_owned()
+                        indices.push(matched_item.indices.clone());
+                        matched_item.display_text().into()
                     };
                     lines.push(text);
                 }
@@ -197,7 +193,7 @@ impl Watcher {
 /// VecDeque for this iterator.
 ///
 /// So, this particular function won't work in parallel context at all.
-fn dyn_collect_all(mut iter: impl Iterator<Item = FilteredItem>, icon: Icon) -> Vec<FilteredItem> {
+fn dyn_collect_all(mut iter: impl Iterator<Item = MatchedItem>, icon: Icon) -> Vec<MatchedItem> {
     let mut buffer = Vec::with_capacity({
         let (low, high) = iter.size_hint();
         high.unwrap_or(low)
@@ -241,13 +237,13 @@ fn dyn_collect_all(mut iter: impl Iterator<Item = FilteredItem>, icon: Icon) -> 
 // I think, it's just good enough. And should be more effective than full
 // `collect()` into Vec on big numbers of iterations.
 fn dyn_collect_number(
-    mut iter: impl Iterator<Item = FilteredItem>,
+    mut iter: impl Iterator<Item = MatchedItem>,
     number: usize,
     icon: Icon,
-) -> (usize, Vec<FilteredItem>) {
+) -> (usize, Vec<MatchedItem>) {
     // To not have problems with queues after sorting and truncating the buffer,
     // buffer has the lowest bound of `ITEMS_TO_SHOW * 2`, not `number * 2`.
-    let mut buffer = Vec::with_capacity(2 * std::cmp::max(ITEMS_TO_SHOW, number));
+    let mut buffer = Vec::with_capacity(2 * ITEMS_TO_SHOW.max(number));
 
     let top_selected_result = select_top_items_to_show(&mut buffer, &mut iter);
 
@@ -260,11 +256,11 @@ fn dyn_collect_number(
 
     // Now we have the full queue and can just pair `.pop_back()` with
     // `.insert()` to keep the queue with best results the same size.
-    iter.for_each(|filtered_item| {
-        let score = filtered_item.score;
+    iter.for_each(|matched_item| {
+        let score = matched_item.score;
         let idx = find_best_score_idx(&top_scores, score);
 
-        insert_both!(pop; idx, score, filtered_item => buffer, top_results, top_scores);
+        insert_both!(pop; idx, score, matched_item => buffer, top_results, top_scores);
 
         watcher.total += 1;
 
@@ -273,7 +269,7 @@ fn dyn_collect_number(
         if buffer.len() == buffer.capacity() {
             buffer.par_sort_unstable_by(|v1, v2| v2.score.partial_cmp(&v1.score).unwrap());
 
-            for (idx, FilteredItem { score, .. }) in buffer[..ITEMS_TO_SHOW].iter().enumerate() {
+            for (idx, MatchedItem { score, .. }) in buffer[..ITEMS_TO_SHOW].iter().enumerate() {
                 top_scores[idx] = *score;
                 top_results[idx] = idx;
             }
@@ -298,41 +294,44 @@ pub fn dyn_run<I: Iterator<Item = SourceItem>>(
     }: FilterContext,
 ) -> Result<()> {
     let query: Query = query.into();
-    let scorer = |item: &SourceItem| matcher.match_query(item, &query);
     if let Some(number) = number {
-        let (total, filtered) = match source {
-            Source::Stdin => dyn_collect_number(source_iter_stdin!(scorer), number, icon),
-            Source::Exec(exec) => dyn_collect_number(source_iter_exec!(scorer, exec), number, icon),
-            Source::File(fpath) => {
-                dyn_collect_number(source_iter_file!(scorer, fpath), number, icon)
+        let (total_matched, matched_items) = match source {
+            Source::List(list) => {
+                dyn_collect_number(source_list(&matcher, &query, list), number, icon)
             }
-            Source::List(list) => dyn_collect_number(source_iter_list!(scorer, list), number, icon),
+            Source::Stdin => dyn_collect_number(source_stdin(&matcher, &query), number, icon),
+            Source::File(fpath) => {
+                dyn_collect_number(source_file(&matcher, &query, fpath)?, number, icon)
+            }
+            Source::Exec(exec) => {
+                dyn_collect_number(source_exec(&matcher, &query, exec)?, number, icon)
+            }
         };
 
-        let ranked = sort_initial_filtered(filtered);
+        let matched_items = sort_matched_items(matched_items);
 
-        printer::print_dyn_filter_results(ranked, total, number, winwidth.unwrap_or(100), icon);
+        printer::print_dyn_filter_results(
+            matched_items,
+            total_matched,
+            number,
+            winwidth.unwrap_or(100),
+            icon,
+        );
     } else {
-        let filtered = match source {
-            Source::Stdin => dyn_collect_all(source_iter_stdin!(scorer), icon),
-            Source::Exec(exec) => dyn_collect_all(source_iter_exec!(scorer, exec), icon),
-            Source::File(fpath) => dyn_collect_all(source_iter_file!(scorer, fpath), icon),
-            Source::List(list) => dyn_collect_all(source_iter_list!(scorer, list), icon),
+        let matched_items = match source {
+            Source::List(list) => dyn_collect_all(source_list(&matcher, &query, list), icon),
+            Source::Stdin => dyn_collect_all(source_stdin(&matcher, &query), icon),
+            Source::File(fpath) => dyn_collect_all(source_file(&matcher, &query, fpath)?, icon),
+            Source::Exec(exec) => dyn_collect_all(source_exec(&matcher, &query, exec)?, icon),
         };
 
-        let ranked = sort_initial_filtered(filtered);
+        let matched_items = sort_matched_items(matched_items);
 
-        for FilteredItem {
-            source_item,
-            match_indices,
-            display_text,
-            ..
-        } in ranked.into_iter()
-        {
-            let text = display_text.unwrap_or_else(|| source_item.display_text().to_owned());
-            let indices = match_indices;
+        matched_items.iter().for_each(|matched_item| {
+            let indices = &matched_item.indices;
+            let text = matched_item.display_text();
             println_json!(text, indices);
-        }
+        });
     }
 
     Ok(())

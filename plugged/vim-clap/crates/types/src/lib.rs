@@ -1,13 +1,15 @@
+mod matcher;
 mod query;
 mod search_term;
 mod source_item;
 
+pub use self::matcher::{MatchResult, Score};
 pub use self::query::Query;
 pub use self::search_term::{
     ExactTerm, ExactTermType, FuzzyTerm, FuzzyTermType, InverseTerm, InverseTermType, SearchTerm,
     TermType,
 };
-pub use self::source_item::{FilteredItem, FuzzyText, MatchScope, MatchingText, SourceItem};
+pub use self::source_item::{ClapItem, FuzzyText, MatchScope, MatchedItem, SourceItem};
 
 /// The preview content is usually part of a file.
 #[derive(Clone, Debug)]

@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use pyo3::{prelude::*, wrap_pyfunction};
 
-use matcher::{Bonus, FuzzyAlgorithm, MatchResult, MatchScope, Matcher};
+use matcher::{Bonus, FuzzyAlgorithm, MatchScope, Matcher};
 use printer::truncate_long_matched_lines_v0;
-use types::{FilteredItem, Query, SourceItem};
+use types::{MatchedItem, Query, SourceItem};
 
 /// Pass a Vector of lines to Vim for setting them in Vim with one single API call.
 type LinesInBatch = Vec<String>;
@@ -82,48 +82,46 @@ fn fuzzy_match(
     let matcher = Matcher::with_bonuses(bonuses, FuzzyAlgorithm::Fzy, match_scope);
 
     let query: Query = query.into();
-    let do_match = |line: &str| {
-        if enable_icon {
-            // " " is 4 bytes, but the offset of highlight is 2.
-            matcher
-                .match_query(&SourceItem::from(&line[4..]), &query)
-                .map(|MatchResult { score, indices }| {
-                    MatchResult::new(score, indices.into_iter().map(|x| x + 4).collect())
-                })
-        } else {
-            matcher.match_query(&SourceItem::from(line), &query)
-        }
-    };
 
     let mut ranked = candidates
         .into_iter()
-        .filter_map(|line| {
-            do_match(&line).map(|MatchResult { score, indices }| {
-                (Into::<SourceItem>::into(line), score, indices)
-            })
+        .filter_map(|line: String| {
+            if enable_icon {
+                matcher
+                    .match_item(SourceItem::from(&line[4..]), &query)
+                    .map(|matched_item| {
+                        let indices = matched_item.indices.iter().map(|x| x + 4).collect();
+                        MatchedItem {
+                            indices,
+                            ..matched_item
+                        }
+                    })
+            } else {
+                matcher.match_item(SourceItem::from(line), &query)
+            }
         })
-        .map(Into::<FilteredItem>::into)
         .collect::<Vec<_>>();
 
     ranked.sort_unstable_by(|v1, v2| v2.score.partial_cmp(&v1.score).unwrap());
 
+    // " " is 4 bytes, but the offset of highlight is 2.
     // 2 = chars(icon)
     let skipped = if enable_icon { Some(2) } else { None };
     let truncated_map = truncate_long_matched_lines_v0(ranked.iter_mut(), winwidth, skipped);
 
-    let (filtered, indices): (Vec<_>, Vec<_>) = ranked
+    let (lines, indices): (Vec<_>, Vec<_>) = ranked
         .into_iter()
-        .map(|filtered_item| {
+        .map(|matched_item| {
             (
-                filtered_item.display_text().to_owned(),
-                filtered_item.match_indices,
+                matched_item.display_text().to_string(),
+                matched_item.indices,
             )
         })
         .unzip();
 
     Ok((
         indices,
-        filtered,
+        lines,
         truncated_map
             .into_iter()
             .map(|(k, v)| (k.to_string(), v))
@@ -166,13 +164,13 @@ mod tests {
         ];
 
         for (needle, haystack) in test_cases.into_iter() {
-            let py_result: (i64, Vec<usize>) = py_scorer
+            let py_result: (i32, Vec<usize>) = py_scorer
                 .getattr("substr_scorer")
                 .unwrap()
                 .call1((needle, haystack))
                 .unwrap()
                 .extract()
-                .map(|(score, positions): (f64, Vec<usize>)| (score as i64, positions))
+                .map(|(score, positions): (f64, Vec<usize>)| (score as i32, positions))
                 .unwrap();
             let rs_result = substr_scorer(haystack, needle, CaseMatching::Smart).unwrap();
             assert_eq!(py_result, rs_result);
