@@ -9,15 +9,20 @@
 //! //        |
 //! //        |
 //! //        ↓
-//! //    Apply exact/inverse search term
+//! //    Apply InverseSearchTerms
 //! //        |
 //! //        |
 //! //        |
 //! //        ↓
-//! //    Apply fuzzy search term
+//! //    Apply ExactSearchTerms
+//! //        |
+//! //        |
+//! //        |
+//! //        ↓
+//! //    Apply FuzzyTerms
 //! //        |
 //! //        |  MatchScope: extract the content to match.
-//! //        |  FuzzyAlgorithm: run the match algorithm on MatchText.
+//! //        |  FuzzyAlgorithm: run the match algorithm on FuzzyText.
 //! //        |
 //! //        ↓
 //! //   MatchResult
@@ -147,6 +152,10 @@ impl Matcher {
     pub fn set_bonuses(mut self, bonuses: Vec<Bonus>) -> Self {
         self.bonuses = bonuses;
         self
+    }
+
+    pub fn match_scope(&self) -> MatchScope {
+        self.match_scope
     }
 
     pub fn set_match_scope(mut self, match_scope: MatchScope) -> Self {
@@ -356,7 +365,9 @@ mod tests {
     #[test]
     fn test_search_syntax() {
         let items: Vec<SourceItem> = vec![
-            "autoload/clap/provider/search_history.vim".to_string().into(),
+            "autoload/clap/provider/search_history.vim"
+                .to_string()
+                .into(),
             "autoload/clap/provider/files.vim".to_string().into(),
             "vim-clap/crates/matcher/src/algo.rs".to_string().into(),
             "pythonx/clap/scorer.py".to_string().into(),
