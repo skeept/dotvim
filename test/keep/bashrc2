@@ -1216,7 +1216,11 @@ fz()
 
 star()
 {
-  eval "$(starship init bash)"
+  if [ -z "${1}" ]; then
+    eval "$(starship init bash)"
+  else
+    eval "$(oh-my-posh prompt init bash)"
+  fi
 }
 
 function zp()
