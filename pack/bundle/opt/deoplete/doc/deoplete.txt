@@ -45,8 +45,8 @@ Improvements in deoplete in comparison to neocomplete:
 ==============================================================================
 INSTALL							*deoplete-install*
 
-Note: deoplete requires Neovim (0.3.0+) or Vim8.1+ (latest is recommended)
-with Python 3.6.1+ and |+timers| enabled.
+Note: deoplete requires Neovim (0.3.0+) or Vim8.2.1978+ (latest is
+recommended) with Python 3.6.1+ and |+timers| enabled.
 
 Please install/upgrade msgpack package (1.0.0+).
 https://github.com/msgpack/msgpack-python
@@ -604,7 +604,7 @@ EXAMPLES						*deoplete-examples*
 	call deoplete#custom#source('_', 'smart_case', v:true)
 
 	" <CR>: close popup and save indent.
-	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
+	inoremap <silent> <CR> <Cmd>call <SID>my_cr_function()<CR>
 	function! s:my_cr_function() abort
 	  return deoplete#close_popup() . "\<CR>"
 	endfunction
@@ -1701,7 +1701,7 @@ Q: When I press enter, neovim closes the popup instead of inserting new line.
 A: It is Vim/neovim's default behavior (feature.)  If you want to insert the
    new line, you should map <CR>. >
 
-	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
+	inoremap <silent> <CR> <Cmd>call <SID>my_cr_function()<CR>
 	function! s:my_cr_function() abort
 	  return deoplete#close_popup() . "\<CR>"
 	endfunction
