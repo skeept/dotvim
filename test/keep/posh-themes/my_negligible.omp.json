@@ -7,7 +7,7 @@
         {
           "foreground": "cyan",
           "style": "powerline",
-          "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}}",
+          "template": "{{ if .WSL }}{{ end }}{{.Icon}}",
           "type": "os"
         },
         {
@@ -76,6 +76,17 @@
           "style": "powerline",
           "template": "| {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} \uf295 ",
           "type": "battery"
+        },
+	{
+          "type": "executiontime",
+          "style": "plain",
+          "powerline_symbol": "\uE0B0",
+          "foreground": "lightGreen",
+          "properties": {
+            "threshold": 500,
+            "style": "austin",
+            "prefix": " <#fefefe>\ufbab</> "
+          }
         },
         {
           "foreground": "lightGreen",
