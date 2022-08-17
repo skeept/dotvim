@@ -1219,7 +1219,7 @@ star()
   if [ -z "${1}" ]; then
     eval "$(starship init bash)"
   else
-    eval "$(oh-my-posh prompt init bash)"
+    eval "$(oh-my-posh prompt init bash --config ~/.vim/test/keep/posh-themes/negligible.omp.json)"
   fi
 }
 
