@@ -1,17 +1,17 @@
 use std::io::BufRead;
 
 use anyhow::Result;
-use crossbeam_channel::{Receiver, Sender};
 use once_cell::sync::OnceCell;
 use serde::Serialize;
 use serde_json::json;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::stdio_server::impls::dumb_jump::DumbJumpHandle;
-use crate::stdio_server::impls::filer::FilerHandle;
-use crate::stdio_server::impls::recent_files::RecentFilesHandle;
-use crate::stdio_server::impls::DefaultHandle;
+use crate::stdio_server::impls::dumb_jump::DumbJumpProvider;
+use crate::stdio_server::impls::filer::FilerProvider;
+use crate::stdio_server::impls::recent_files::RecentFilesProvider;
+use crate::stdio_server::impls::DefaultProvider;
 use crate::stdio_server::rpc::{Call, RpcClient};
-use crate::stdio_server::session::{SessionEvent, SessionManager};
+use crate::stdio_server::session::{ProviderEvent, SessionContext, SessionManager};
 
 /// Writes the response to stdout.
 pub fn write_response<T: Serialize>(msg: T) {
@@ -20,7 +20,7 @@ pub fn write_response<T: Serialize>(msg: T) {
     }
 }
 
-fn loop_read_rpc_message(reader: impl BufRead, sink: &Sender<String>) {
+fn loop_read_rpc_message(reader: impl BufRead, sink: &UnboundedSender<String>) {
     let mut reader = reader;
     loop {
         let mut message = String::new();
@@ -39,17 +39,21 @@ fn loop_read_rpc_message(reader: impl BufRead, sink: &Sender<String>) {
     }
 }
 
-fn loop_handle_rpc_message(rx: &Receiver<String>) {
-    use SessionEvent::*;
+async fn loop_handle_rpc_message(mut rx: UnboundedReceiver<String>) {
+    use ProviderEvent::*;
 
     let mut manager = SessionManager::default();
-    for msg in rx.iter() {
+
+    while let Some(msg) = rx.recv().await {
         if let Ok(call) = serde_json::from_str::<Call>(msg.trim()) {
             // TODO: fix the clone
             match call.clone() {
                 Call::Notification(notification) => match notification.method.as_str() {
                     "exit" => manager.terminate(notification.session_id),
-                    "on_init" => manager.new_session(call, DefaultHandle::new()),
+                    "on_init" => {
+                        let context: SessionContext = call.clone().into();
+                        manager.new_session(call, Box::new(DefaultProvider::new(context)))
+                    }
                     _ => {
                         tokio::spawn(async move {
                             if let Err(e) = notification.process().await {
@@ -86,17 +90,24 @@ fn loop_handle_rpc_message(rx: &Receiver<String>) {
                             });
                         }
 
-                        "dumb_jump/on_init" => manager.new_session(call, DumbJumpHandle::default()),
+                        "dumb_jump/on_init" => {
+                            let context: SessionContext = call.clone().into();
+                            manager.new_session(call, Box::new(DumbJumpProvider::new(context)))
+                        }
                         "dumb_jump/on_typed" => manager.send(msg.session_id, OnTyped(msg)),
                         "dumb_jump/on_move" => manager.send(msg.session_id, OnMove(msg)),
 
                         "recent_files/on_init" => {
-                            manager.new_session(call, RecentFilesHandle::default())
+                            let context: SessionContext = call.clone().into();
+                            manager.new_session(call, Box::new(RecentFilesProvider::new(context)))
                         }
                         "recent_files/on_typed" => manager.send(msg.session_id, OnTyped(msg)),
                         "recent_files/on_move" => manager.send(msg.session_id, OnMove(msg)),
 
-                        "filer/on_init" => manager.new_session(call, FilerHandle),
+                        "filer/on_init" => {
+                            let context: SessionContext = call.clone().into();
+                            manager.new_session(call, Box::new(FilerProvider::new(context)))
+                        }
                         "filer/on_typed" => manager.send(msg.session_id, OnTyped(msg)),
                         "filer/on_move" => manager.send(msg.session_id, OnMove(msg)),
 
@@ -115,11 +126,11 @@ fn loop_handle_rpc_message(rx: &Receiver<String>) {
     }
 }
 
-pub fn run_forever(reader: impl BufRead + Send + 'static) {
-    let (tx, rx) = crossbeam_channel::unbounded();
+pub async fn run_forever(reader: impl BufRead + Send + 'static) {
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     tokio::spawn(async move {
         loop_read_rpc_message(reader, &tx);
     });
 
-    loop_handle_rpc_message(&rx);
+    loop_handle_rpc_message(rx).await;
 }
