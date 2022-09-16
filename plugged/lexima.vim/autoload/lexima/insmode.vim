@@ -162,17 +162,6 @@ function! lexima#insmode#_map_impl(char) abort
       else
         throw 'lexima: Not applicable rule (' . string(rule) . ')'
       endif
-      let input_after = ''
-    elseif has_key(rule, 'delete')
-      if type(rule.delete) ==# type('')
-        let input = printf('<C-r>=lexima#insmode#delete_till(%s, %s)<CR>', string(rule.delete), string(lexima#string#to_mappable(a:char)))
-      elseif type(rule.delete) ==# type(0)
-        let input = printf('<C-r>=lexima#insmode#delete(%d, %s)<CR>', rule.delete, string(lexima#string#to_mappable(a:char)))
-      else
-        throw 'lexima: Not applicable rule (' . string(rule) . ')'
-      endif
-      let input = input . rule.input
-      let input_after = ''
     endif
     if has_key(rule, 'delete')
       if type(rule.delete) ==# type('')
@@ -186,6 +175,13 @@ function! lexima#insmode#_map_impl(char) abort
     if get(rule, 'with_submatch', 0)
       let searchlimit = max([0, line('.') - 20])
       let at_end_pos = searchpos(rule.at, 'bcWne', searchlimit)
+      if at_end_pos == [0, 0]
+        let at_end_pos = searchpos(rule.at, 'cWne', searchlimit)
+        if at_end_pos == [0, 0]
+          echoerr "Pattern not found. This is lexima's bug. Please report an issue with the following information."
+          echoerr rule
+        endif
+      endif
       let context = join(getline(at_start_pos[0], at_end_pos[0]), "\n")[at_start_pos[1] - 1:at_end_pos[1]]
       let pattern = substitute(rule.at, '\\%#', '', '')
       let base_string = matchstr(context, pattern)
