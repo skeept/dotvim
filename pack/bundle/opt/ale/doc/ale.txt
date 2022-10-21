@@ -2297,6 +2297,9 @@ g:ale_virtualtext_cursor                             *g:ale_virtualtext_cursor*
   column nearest to the cursor when the cursor is resting on a line which
   contains a warning or error. This option can be set to `0` to disable this
   behavior.
+  When this option is set to `2`, then all warnings will be shown for the
+  whole buffer, regardless of if the cursor is currently positioned in that
+  line.
 
   Messages are only displayed after a short delay. See |g:ale_virtualtext_delay|.
 
@@ -2784,6 +2787,8 @@ documented in additional help files.
     buildifier............................|ale-bazel-buildifier|
   bib.....................................|ale-bib-options|
     bibclean..............................|ale-bib-bibclean|
+  bicep...................................|ale-bicep-options|
+    bicep.................................|ale-bicep-bicep|
   bitbake.................................|ale-bitbake-options|
     oelint-adv............................|ale-bitbake-oelint_adv|
   c.......................................|ale-c-options|
@@ -2836,6 +2841,7 @@ documented in additional help files.
     uncrustify............................|ale-cs-uncrustify|
   css.....................................|ale-css-options|
     cspell................................|ale-css-cspell|
+    css-beautify..........................|ale-css-css-beautify|
     fecs..................................|ale-css-fecs|
     prettier..............................|ale-css-prettier|
     stylelint.............................|ale-css-stylelint|
@@ -3255,6 +3261,7 @@ documented in additional help files.
     terraform-ls..........................|ale-terraform-terraform-ls|
     terraform-lsp.........................|ale-terraform-terraform-lsp|
     tflint................................|ale-terraform-tflint|
+    tfsec.................................|ale-terraform-tfsec|
   tex.....................................|ale-tex-options|
     chktex................................|ale-tex-chktex|
     cspell................................|ale-tex-cspell|
@@ -3326,6 +3333,7 @@ documented in additional help files.
     yaml-language-server..................|ale-yaml-language-server|
     yamlfix...............................|ale-yaml-yamlfix|
     yamllint..............................|ale-yaml-yamllint|
+    gitlablint............................|ale-yaml-gitlablint|
   yang....................................|ale-yang-options|
     yang-lsp..............................|ale-yang-lsp|
   zeek....................................|ale-zeek-options|

@@ -61,6 +61,8 @@ formatting.
   * [buildifier](https://github.com/bazelbuild/buildtools)
 * BibTeX
   * [bibclean](http://ftp.math.utah.edu/pub/bibclean/)
+* Bicep
+  * [bicep](https://github.com/Azure/bicep) :floppy_disk:
 * BitBake
   * [oelint-adv](https://github.com/priv-kweihmann/oelint-adv)
 * Bourne Shell
@@ -127,6 +129,7 @@ formatting.
 * CSS
   * [VSCode CSS language server](https://github.com/hrsh7th/vscode-langservers-extracted)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [css-beautify](https://github.com/beautify-web/js-beautify)
   * [csslint](http://csslint.net/)
   * [fecs](http://fecs.baidu.com/)
   * [prettier](https://github.com/prettier/prettier)
@@ -603,6 +606,7 @@ formatting.
   * [terraform-ls](https://github.com/hashicorp/terraform-ls)
   * [terraform-lsp](https://github.com/juliosueiras/terraform-lsp)
   * [tflint](https://github.com/wata727/tflint)
+  * [tfsec](https://github.com/aquasecurity/tfsec)
 * Texinfo
   * [alex](https://github.com/get-alex/alex)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
@@ -674,6 +678,7 @@ formatting.
 * YAML
   * [actionlint](https://github.com/rhysd/actionlint) :warning:
   * [circleci](https://circleci.com/docs/2.0/local-cli) :floppy_disk: :warning:
+  * [gitlablint](https://github.com/elijah-roberts/gitlab-lint)
   * [prettier](https://github.com/prettier/prettier)
   * [spectral](https://github.com/stoplightio/spectral)
   * [swaglint](https://github.com/byCedric/swaglint) :warning:
