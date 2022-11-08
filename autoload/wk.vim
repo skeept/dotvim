@@ -17,26 +17,34 @@ endfunction
 
 function! wk#jumpToNextNonMatchingSetLength()
   if v:count != 0
-    let g:wk.jumpToNextNonMatchingNTimes = v:count
+    let g:wk.numCharsFrontForMatch = v:count
     echom "Setting numbers of matching chars to " . v:count
   endif
 endfunction
 
 function! wk#jumpToNextNonMatching(direction)
-  if !exists("g:wk.jumpToNextNonMatchingNTimes")
-    let g:wk.jumpToNextNonMatchingNTimes = 2
+  " given num of chars in front (default 2)
+  " jump to next line that doesn't match
+  if !exists("g:wk.numCharsFrontForMatch")
+    let g:wk.numCharsFrontForMatch = 2
   endif
   let flags = ''
   if a:direction < 0
     let flags = flags . 'b'
   endif
   let ntimes = max([v:count, 1])
+  let message = 'num chars: ' . g:wk.numCharsFrontForMatch . ' [change <num>,sj] pattern: '
   for icnt in range(ntimes)
     let curr_line = getline('.')
     let spattern = '^'
-    for icol in range(g:wk.jumpToNextNonMatchingNTimes)
+    let pattern = '^'
+    for icol in range(g:wk.numCharsFrontForMatch)
       let spattern .= '[^' . curr_line[icol] . ']'
+      let pattern .= curr_line[icol]
     endfor
+    if icnt == 0
+      let message .= pattern
+    endif
     call search(spattern, flags)
   endfor
   nohlsearch
@@ -46,6 +54,7 @@ function! wk#jumpToNextNonMatching(direction)
   if a:direction == -2
     mark <
   endif
+  echom message
 endfunction
 
 " useful mapping to convert time, get the word under cursor and convert it to
@@ -262,7 +271,7 @@ function! wk#get_notes_files()
         \ "/mnt/c/zl/rem.org",
         \ expand("~") . "/rem.org"
         \ ]
-  let file = '' "not sure favailable after the loop so just initialize it here
+  let file = '' "not sure if available after the loop so just initialize it here
   for file in files
     if filereadable(file)
       break
