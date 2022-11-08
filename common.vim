@@ -856,6 +856,10 @@ command! -range=% DelTrailWhiteSpace
       \ | <line1>,<line2>call jraf#stripTrailingWhitespace()
 "==============================================================================}}}
 
+"================== Split words into Lines ===================================={{{
+command! SplitInLines call jraf#splitInLines()
+"==============================================================================}}}
+
 "================== Statusline Settings/functions ======================={{{
 " These cannot go into autoload because always called by statusline
 function! GetNumTabsStr()

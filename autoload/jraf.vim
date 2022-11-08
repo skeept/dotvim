@@ -1,5 +1,5 @@
 " my own functions comming either from common.vim, simple.vim or vimrc
-" that can be auloaded
+" that can be autoladed
 
 "================== Unite ====================================================={{{
 function! jraf#uniteColorSchemeResume()
@@ -588,6 +588,16 @@ function! jraf#quoteCommaJoin() range
   normal "uPG^yg_
 endfunction
 "==============================================================================}}}
+
+"================== SplitInLines =============================================={{{
+" split buffer in different lines. delete blank lines
+function! jraf#splitInLines()
+  silent! %s/\s\+/\r/g
+  DelTrailWhiteSpace
+  silent! g/^$/d
+endfunction
+"==============================================================================}}}
+
 
 "================== quickrun-jq ==============================================={{{
 function! jraf#quickrunjqset(json_file)
