@@ -649,6 +649,12 @@ coc <https://github.com/neoclide/coc.nvim>
 <
 * enable/disable coc status display >
   g:airline#extensions#coc#show_coc_status = 1
+
+* change the error format (%C - error count, %L - line number): >
+  let airline#extensions#coc#stl_format_err = '%C(L%L)'
+<
+* change the warning format (%C - error count, %L - line number): >
+  let airline#extensions#coc#stl_format_warn = '%C(L%L)'
 <
 -------------------------------------                    *airline-commandt*
 command-t <https://github.com/wincent/command-t>
@@ -1599,7 +1605,7 @@ vista.vim <https://github.com/liuchengxu/vista.vim>
 
   " this can also be configured for an individual buffer
   let b:airline_whitespace_checks =
-    \  [ 'indent', 'trailing', 'long', 'mixed-indent-file', 'conflicts ]
+    \  [ 'indent', 'trailing', 'long', 'mixed-indent-file', 'conflicts' ]
 <
 * configure the max number of lines where whitespace checking is enabled. >
   let g:airline#extensions#whitespace#max_lines = 20000
