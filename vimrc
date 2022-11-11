@@ -417,10 +417,6 @@ let g:clap_layout = { 'width': '95%', 'col': '5%' }
 let g:clap_theme = 'material_design_dark'
 "==============================================================================}}}
 
-if g:is_win
-  let Grep_Path = 'C:\cygwin\bin\grep'
-endif
-
 if g:read_localVimrc == 1
   call LocalSettingsEndingVimRC()
 endif

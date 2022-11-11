@@ -71,6 +71,10 @@ set titleold=
 set virtualedit+=block
 
 set grepprg=grep\ -nIh\ --exclude={tags,cscope.out}
+if executable('rg')
+  set grepprg=rg\ -H\ --no-heading\ --vimgrep
+  set grepformat=%f:%l:%c:%m
+endif
 
 "for scip go up two folders
 set tags=./tags,./TAGS,tags,TAGS,../tags,../../tags
