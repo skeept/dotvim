@@ -601,6 +601,7 @@ endfunction
 
 "================== quickrun-jq ==============================================={{{
 function! jraf#quickrunjqset(json_file)
+  call SetupQuickRun()
   let g:quickrun_config = get(g:, 'quickrun_config', {})
   let g:quickrun_config["conf.jq"] = {
         \ 'runner': 'jq',
