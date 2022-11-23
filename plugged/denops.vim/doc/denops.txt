@@ -108,6 +108,11 @@ VARIABLE						*denops-variable*
 
 	Default: 0
 
+*g:denops#disable_deprecation_warning_message*
+	Set 1 to disable deprecation warning messages.
+
+	Default: 0
+
 *g:denops#server#deno*
 	Executable program of Deno for starting a server.
 	Default: |g:denops#deno|
@@ -290,6 +295,20 @@ denops#plugin#discover([{options}])
 	|denops#server#start()|.
 	It uses same {options} as |denops#plugin#register()| except that the
 	default value of "mode" is "skip".
+
+						*denops#plugin#reload()*
+denops#plugin#reload({plugin}[, {options}])
+	Reload registered denops plugin.
+	The following attributes are available on {options}.
+
+	"mode"		|String| to regulate the behavior of reload when
+			a {plugin} plugin is not registered yet.
+
+			"error"		Throw an error. (Default)
+			"skip"		Skip plugin reload.
+
+	It internally calls |denops#plugin#register()| with "reload" mode when
+	the plugin is registered.
 
 						*denops#callback#register()*
 denops#callback#register({callback}[, {options}])

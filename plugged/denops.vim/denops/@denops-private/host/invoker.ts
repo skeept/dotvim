@@ -12,6 +12,16 @@ export type RegisterOptions = {
   mode?: "reload" | "skip" | "error";
 };
 
+export type ReloadOptions = {
+  /**
+   * The behavior of reload when the plugin is not registered yet.
+   *
+   * skip:    Skip reload
+   * error:   Throw an error
+   */
+  mode?: "skip" | "error";
+};
+
 export class Invoker {
   #service: Service;
 
@@ -28,6 +38,14 @@ export class Invoker {
     this.#service.register(name, script, meta, options);
   }
 
+  reload(
+    name: string,
+    meta: Meta,
+    options: ReloadOptions,
+  ): void {
+    this.#service.reload(name, meta, options);
+  }
+
   dispatch(name: string, fn: string, args: unknown[]): Promise<unknown> {
     return this.#service.dispatch(name, fn, args);
   }
@@ -42,14 +60,14 @@ export class Invoker {
     this.#service.dispatch(name, fn, args)
       .then(async (r) => {
         try {
-          await this.#service.call("denops#callback#call", success, r);
+          await this.#service.host.call("denops#callback#call", success, r);
         } catch (e) {
           console.error(`${e.stack ?? e.toString()}`);
         }
       })
       .catch(async (e) => {
         try {
-          await this.#service.call(
+          await this.#service.host.call(
             "denops#callback#call",
             failure,
             toErrorObject(e),
