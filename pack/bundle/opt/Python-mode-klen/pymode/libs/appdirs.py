@@ -1,1 +1,0 @@
-../../submodules/appdirs/appdirs.py
