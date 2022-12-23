@@ -3,6 +3,14 @@ CHANGELOG
 
 0.36.0
 ------
+- Added `--listen=HTTP_PORT` option to receive actions from external processes
+  ```sh
+  # Start HTTP server on port 6266
+  fzf --listen 6266
+
+  # Send actions to the server
+  curl -XPOST localhost:6266 -d 'reload(seq 100)+change-prompt(hundred> )'
+  ```
 - Added `next-selected` and `prev-selected` actions to move between selected
   items
   ```sh
@@ -13,6 +21,7 @@ CHANGELOG
   # Both actions respect --layout option
   seq 10 | fzf --multi --bind ctrl-n:next-selected,ctrl-p:prev-selected --layout reverse
   ```
+- Added `change-query(...)` action
 - `double-click` will behave the same as `enter` unless otherwise specified,
   so you don't have to repeat the same action twice in `--bind` in most cases.
   ```sh

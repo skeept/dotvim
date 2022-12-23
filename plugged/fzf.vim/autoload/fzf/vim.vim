@@ -153,7 +153,7 @@ function! fzf#vim#with_preview(...)
     \ ? s:bin.preview
     \ : escape(s:bin.preview, '\'))
   else
-    let preview_cmd = fzf#shellescape(s:bin.preview)
+    let preview_cmd = 'bash ' . fzf#shellescape(s:bin.preview)
   endif
   if len(placeholder)
     let preview += ['--preview', preview_cmd.' '.placeholder]
@@ -618,9 +618,9 @@ function! fzf#vim#gitfiles(args, ...)
   let prefix = 'git -C ' . fzf#shellescape(root) . ' '
   if a:args != '?'
     return s:fzf('gfiles', {
-    \ 'source':  prefix . 'ls-files '.a:args.(s:is_win ? '' : ' | uniq'),
+    \ 'source':  prefix . 'ls-files -z --deduplicate',
     \ 'dir':     root,
-    \ 'options': '-m --prompt "GitFiles> "'
+    \ 'options': '-m --read0 --prompt "GitFiles> "'
     \}, a:000)
   endif
 

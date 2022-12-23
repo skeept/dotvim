@@ -7,6 +7,7 @@ require 'English'
 require 'shellwords'
 require 'erb'
 require 'tempfile'
+require 'net/http'
 
 TEMPLATE = DATA.read
 UNSETS = %w[
@@ -1764,6 +1765,14 @@ class TestGoFZF < TestBase
     tmux.until { |lines| assert_equal '>', lines.last }
   end
 
+  def test_change_query
+    tmux.send_keys %(: | #{FZF} --query foo --bind space:change-query:foobar), :Enter
+    tmux.until { |lines| assert_equal 0, lines.item_count }
+    tmux.until { |lines| assert_equal '> foo', lines.last }
+    tmux.send_keys :Space, 'baz'
+    tmux.until { |lines| assert_equal '> foobarbaz', lines.last }
+  end
+
   def test_clear_selection
     tmux.send_keys %(seq 100 | #{FZF} --multi --bind space:clear-selection), :Enter
     tmux.until { |lines| assert_equal 100, lines.match_count }
@@ -2426,6 +2435,14 @@ class TestGoFZF < TestBase
     tmux.until { |lines| assert_includes lines, '>>1' }
     tmux.send_keys 'C-p'
     tmux.until { |lines| assert_includes lines, '>>2' }
+  end
+
+  def test_listen
+    tmux.send_keys 'seq 10 | fzf --listen 6266', :Enter
+    tmux.until { |lines| assert_equal 10, lines.item_count }
+    Net::HTTP.post(URI('http://localhost:6266'), 'change-query(yo)+reload(seq 100)+change-prompt:hundred> ')
+    tmux.until { |lines| assert_equal 100, lines.item_count }
+    tmux.until { |lines| assert_equal 'hundred> yo', lines[-1] }
   end
 end
 

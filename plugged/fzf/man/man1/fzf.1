@@ -721,6 +721,19 @@ ncurses finder only after the input stream is complete.
 e.g. \fBfzf --multi | fzf --sync\fR
 .RE
 .TP
+.B "--listen=HTTP_PORT"
+Start HTTP server on the given port to receive actions via POST requests.
+
+e.g.
+     \fB# Start HTTP server on port 6266
+     fzf --listen 6266
+
+     # Send action to the server
+     curl -XPOST localhost:6266 -d 'reload(seq 100)+change-prompt(hundred> )'
+     \fR
+
+The port number is exported as \fB$FZF_LISTEN_PORT\fR on the child processes.
+.TP
 .B "--version"
 Display version information and exit
 
@@ -950,6 +963,7 @@ A key or an event can be bound to one or more of the following actions.
     \fBchange-preview(...)\fR        (change \fB--preview\fR option)
     \fBchange-preview-window(...)\fR (change \fB--preview-window\fR option; rotate through the multiple option sets separated by '|')
     \fBchange-prompt(...)\fR         (change prompt to the given string)
+    \fBchange-query(...)\fR          (change query string to the given string)
     \fBclear-screen\fR               \fIctrl-l\fR
     \fBclear-selection\fR            (clear multi-selection)
     \fBclose\fR                      (close preview window if open, abort fzf otherwise)
@@ -1035,6 +1049,8 @@ that case, you can use any of the following alternative notations to avoid
 parse errors.
 
     \fBaction-name[...]\fR
+    \fBaction-name{...}\fR
+    \fBaction-name<...>\fR
     \fBaction-name~...~\fR
     \fBaction-name!...!\fR
     \fBaction-name@...@\fR
