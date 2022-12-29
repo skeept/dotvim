@@ -177,6 +177,8 @@ type Terminal struct {
 	pwindow            tui.Window
 	count              int
 	progress           int
+	hasLoadActions     bool
+	triggerLoad        bool
 	reading            bool
 	running            bool
 	failed             *string
@@ -202,6 +204,7 @@ type Terminal struct {
 	startChan          chan fitpad
 	killChan           chan int
 	serverChan         chan []*action
+	eventChan          chan tui.Event
 	slab               *util.Slab
 	theme              *tui.ColorTheme
 	tui                tui.Renderer
@@ -297,6 +300,7 @@ const (
 	actUp
 	actPageUp
 	actPageDown
+	actPosition
 	actHalfPageUp
 	actHalfPageDown
 	actJump
@@ -307,6 +311,7 @@ const (
 	actToggleSort
 	actTogglePreview
 	actTogglePreviewWrap
+	actTransformQuery
 	actPreview
 	actChangePreview
 	actChangePreviewWindow
@@ -320,6 +325,7 @@ const (
 	actPreviewHalfPageDown
 	actPrevHistory
 	actPrevSelected
+	actPut
 	actNextHistory
 	actNextSelected
 	actExecute
@@ -329,6 +335,7 @@ const (
 	actFirst
 	actLast
 	actReload
+	actReloadSync
 	actDisableSearch
 	actEnableSearch
 	actSelect
@@ -347,6 +354,7 @@ type placeholderFlags struct {
 
 type searchRequest struct {
 	sort    bool
+	sync    bool
 	command *string
 }
 
@@ -576,6 +584,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		ellipsis:           opts.Ellipsis,
 		ansi:               opts.Ansi,
 		tabstop:            opts.Tabstop,
+		hasLoadActions:     false,
+		triggerLoad:        false,
 		reading:            true,
 		running:            true,
 		failed:             nil,
@@ -599,7 +609,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		theme:              opts.Theme,
 		startChan:          make(chan fitpad, 1),
 		killChan:           make(chan int),
-		serverChan:         make(chan []*action),
+		serverChan:         make(chan []*action, 10),
+		eventChan:          make(chan tui.Event, 1),
 		tui:                renderer,
 		initFunc:           func() { renderer.Init() },
 		executing:          util.NewAtomicBool(false)}
@@ -620,6 +631,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		}
 		t.separator, t.separatorLen = t.ansiLabelPrinter(bar, &tui.ColSeparator, true)
 	}
+
+	_, t.hasLoadActions = t.keymap[tui.Load.AsEvent()]
 
 	if err := startHttpServer(t.listenPort, t.serverChan); err != nil {
 		errorExit(err.Error())
@@ -760,6 +773,9 @@ func (t *Terminal) Input() (bool, []rune) {
 func (t *Terminal) UpdateCount(cnt int, final bool, failedCommand *string) {
 	t.mutex.Lock()
 	t.count = cnt
+	if t.hasLoadActions && t.reading && final {
+		t.triggerLoad = true
+	}
 	t.reading = !final
 	t.failed = failedCommand
 	t.mutex.Unlock()
@@ -807,6 +823,10 @@ func (t *Terminal) UpdateList(merger *Merger, reset bool) {
 	if reset {
 		t.selected = make(map[int32]selectedItem)
 		t.version++
+	}
+	if t.hasLoadActions && t.triggerLoad {
+		t.triggerLoad = false
+		t.eventChan <- tui.Load.AsEvent()
 	}
 	t.mutex.Unlock()
 	t.reqBox.Set(reqInfo, nil)
@@ -2012,10 +2032,11 @@ func (t *Terminal) redraw(clear bool) {
 	t.printAll()
 }
 
-func (t *Terminal) executeCommand(template string, forcePlus bool, background bool) {
+func (t *Terminal) executeCommand(template string, forcePlus bool, background bool, captureFirstLine bool) string {
+	line := ""
 	valid, list := t.buildPlusList(template, forcePlus)
 	if !valid {
-		return
+		return line
 	}
 	command := t.replacePlaceholder(template, forcePlus, string(t.input), list)
 	cmd := util.ExecCommand(command, false)
@@ -2031,11 +2052,21 @@ func (t *Terminal) executeCommand(template string, forcePlus bool, background bo
 		t.refresh()
 	} else {
 		t.tui.Pause(false)
-		cmd.Run()
+		if captureFirstLine {
+			out, _ := cmd.StdoutPipe()
+			reader := bufio.NewReader(out)
+			cmd.Start()
+			line, _ = reader.ReadString('\n')
+			line = strings.TrimRight(line, "\r\n")
+			cmd.Wait()
+		} else {
+			cmd.Run()
+		}
 		t.tui.Resume(false, false)
 	}
 	t.executing.Set(false)
 	cleanTemporaryFiles()
+	return line
 }
 
 func (t *Terminal) hasPreviewer() bool {
@@ -2265,9 +2296,6 @@ func (t *Terminal) Loop() {
 						env = append(env, "FZF_PREVIEW_"+lines)
 						env = append(env, columns)
 						env = append(env, "FZF_PREVIEW_"+columns)
-						if t.listenPort > 0 {
-							env = append(env, fmt.Sprintf("FZF_LISTEN_PORT=%d", t.listenPort))
-						}
 						cmd.Env = env
 					}
 
@@ -2504,17 +2532,17 @@ func (t *Terminal) Loop() {
 	looping := true
 	_, startEvent := t.keymap[tui.Start.AsEvent()]
 
-	eventChan := make(chan tui.Event)
 	needBarrier := true
 	barrier := make(chan bool)
 	go func() {
 		for {
 			<-barrier
-			eventChan <- t.tui.GetChar()
+			t.eventChan <- t.tui.GetChar()
 		}
 	}()
 	for looping {
 		var newCommand *string
+		var reloadSync bool
 		changed := false
 		beof := false
 		queryChanged := false
@@ -2529,8 +2557,8 @@ func (t *Terminal) Loop() {
 				barrier <- true
 			}
 			select {
-			case event = <-eventChan:
-				needBarrier = true
+			case event = <-t.eventChan:
+				needBarrier = event != tui.Load.AsEvent()
 			case actions = <-t.serverChan:
 				event = tui.Invalid.AsEvent()
 				needBarrier = false
@@ -2611,9 +2639,9 @@ func (t *Terminal) Loop() {
 			switch a.t {
 			case actIgnore:
 			case actExecute, actExecuteSilent:
-				t.executeCommand(a.a, false, a.t == actExecuteSilent)
+				t.executeCommand(a.a, false, a.t == actExecuteSilent, false)
 			case actExecuteMulti:
-				t.executeCommand(a.a, true, false)
+				t.executeCommand(a.a, true, false, false)
 			case actInvalid:
 				t.mutex.Unlock()
 				return false
@@ -2636,6 +2664,10 @@ func (t *Terminal) Loop() {
 					t.previewed.version = 0
 					req(reqPreviewRefresh)
 				}
+			case actTransformQuery:
+				query := t.executeCommand(a.a, false, true, true)
+				t.input = []rune(query)
+				t.cx = len(t.input)
 			case actToggleSort:
 				t.sort = !t.sort
 				changed = true
@@ -2837,6 +2869,21 @@ func (t *Terminal) Loop() {
 			case actLast:
 				t.vset(t.merger.Length() - 1)
 				req(reqList)
+			case actPosition:
+				if n, e := strconv.Atoi(a.a); e == nil {
+					if n > 0 {
+						n--
+					} else if n < 0 {
+						n += t.merger.Length()
+					}
+					t.vset(n)
+					req(reqList)
+				}
+			case actPut:
+				str := []rune(a.a)
+				suffix := copySlice(t.input[t.cx:])
+				t.input = append(append(t.input[:t.cx], str...), suffix...)
+				t.cx += len(str)
 			case actUnixLineDiscard:
 				beof = len(t.input) == 0
 				if t.cx > 0 {
@@ -2986,7 +3033,7 @@ func (t *Terminal) Loop() {
 						}
 					}
 				}
-			case actReload:
+			case actReload, actReloadSync:
 				t.failed = nil
 
 				valid, list := t.buildPlusList(a.a, false)
@@ -3000,6 +3047,7 @@ func (t *Terminal) Loop() {
 				if valid {
 					command := t.replacePlaceholder(a.a, false, string(t.input), list)
 					newCommand = &command
+					reloadSync = a.t == actReloadSync
 					t.reading = true
 				}
 			case actUnbind:
@@ -3129,7 +3177,7 @@ func (t *Terminal) Loop() {
 		t.mutex.Unlock() // Must be unlocked before touching reqBox
 
 		if changed || newCommand != nil {
-			t.eventBox.Set(EvtSearchNew, searchRequest{sort: t.sort, command: newCommand})
+			t.eventBox.Set(EvtSearchNew, searchRequest{sort: t.sort, sync: reloadSync, command: newCommand})
 		}
 		for _, event := range events {
 			t.reqBox.Set(event, nil)

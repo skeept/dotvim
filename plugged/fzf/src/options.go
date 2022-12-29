@@ -590,6 +590,8 @@ func parseKeyChords(str string, message string) map[tui.Event]string {
 			add(tui.BackwardEOF)
 		case "start":
 			add(tui.Start)
+		case "load":
+			add(tui.Load)
 		case "alt-enter", "alt-return":
 			chords[tui.CtrlAltKey('m')] = key
 		case "alt-space":
@@ -890,7 +892,7 @@ const (
 
 func init() {
 	executeRegexp = regexp.MustCompile(
-		`(?si)[:+](execute(?:-multi|-silent)?|reload|preview|change-query|change-prompt|change-preview-window|change-preview|(?:re|un)bind)`)
+		`(?si)[:+](execute(?:-multi|-silent)?|reload(?:-sync)?|preview|change-query|change-prompt|change-preview-window|change-preview|(?:re|un)bind|pos|put|transform-query)`)
 	splitRegexp = regexp.MustCompile("[,:]+")
 	actionNameRegexp = regexp.MustCompile("(?i)^[a-z-]+")
 }
@@ -938,7 +940,11 @@ Loop:
 			break
 		}
 		// Keep + or , at the end
-		masked += strings.Repeat(" ", loc[1]-1) + action[loc[1]-1:loc[1]]
+		lastChar := action[loc[1]-1]
+		if lastChar == '+' || lastChar == ',' {
+			loc[1]--
+		}
+		masked += strings.Repeat(" ", loc[1])
 		action = action[loc[1]:]
 	}
 	masked = strings.Replace(masked, "::", string([]rune{escapedColon, ':'}), -1)
@@ -1179,6 +1185,8 @@ func isExecuteAction(str string) actionType {
 	switch prefix {
 	case "reload":
 		return actReload
+	case "reload-sync":
+		return actReloadSync
 	case "unbind":
 		return actUnbind
 	case "rebind":
@@ -1193,12 +1201,18 @@ func isExecuteAction(str string) actionType {
 		return actChangePrompt
 	case "change-query":
 		return actChangeQuery
+	case "pos":
+		return actPosition
 	case "execute":
 		return actExecute
 	case "execute-silent":
 		return actExecuteSilent
 	case "execute-multi":
 		return actExecuteMulti
+	case "put":
+		return actPut
+	case "transform-query":
+		return actTransformQuery
 	}
 	return actIgnore
 }
