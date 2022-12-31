@@ -1555,13 +1555,13 @@ class TestGoFZF < TestBase
   end
 
   def test_preview_q_no_match
-    tmux.send_keys %(: | #{FZF} --preview 'echo foo {q}'), :Enter
+    tmux.send_keys %(: | #{FZF} --preview 'echo foo {q} foo'), :Enter
     tmux.until { |lines| assert_equal 0, lines.match_count }
-    tmux.until { |lines| refute_includes lines[1], ' foo ' }
+    tmux.until { |lines| assert_includes lines[1], ' foo  foo' }
     tmux.send_keys 'bar'
-    tmux.until { |lines| assert_includes lines[1], ' foo bar ' }
+    tmux.until { |lines| assert_includes lines[1], ' foo bar foo' }
     tmux.send_keys 'C-u'
-    tmux.until { |lines| refute_includes lines[1], ' foo ' }
+    tmux.until { |lines| assert_includes lines[1], ' foo  foo' }
   end
 
   def test_preview_q_no_match_with_initial_query
@@ -1798,6 +1798,15 @@ class TestGoFZF < TestBase
   end
 
   def test_transform_query
+    tmux.send_keys %{#{FZF} --bind 'ctrl-r:transform-query(rev <<< {q}),ctrl-u:transform-query: tr "[:lower:]" "[:upper:]" <<< {q}' --query bar}, :Enter
+    tmux.until { |lines| assert_equal '> bar', lines[-1] }
+    tmux.send_keys 'C-r'
+    tmux.until { |lines| assert_equal '> rab', lines[-1] }
+    tmux.send_keys 'C-u'
+    tmux.until { |lines| assert_equal '> RAB', lines[-1] }
+  end
+
+  def test_transform_prompt
     tmux.send_keys %{#{FZF} --bind 'ctrl-r:transform-query(rev <<< {q}),ctrl-u:transform-query: tr "[:lower:]" "[:upper:]" <<< {q}' --query bar}, :Enter
     tmux.until { |lines| assert_equal '> bar', lines[-1] }
     tmux.send_keys 'C-r'
