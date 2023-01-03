@@ -97,6 +97,7 @@ type itemLine struct {
 	label    string
 	queryLen int
 	width    int
+	bar      bool
 	result   Result
 }
 
@@ -161,6 +162,7 @@ type Terminal struct {
 	header             []string
 	header0            []string
 	ellipsis           string
+	scrollbar          string
 	ansi               bool
 	tabstop            int
 	margin             [4]sizeSpec
@@ -632,6 +634,15 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		}
 		t.separator, t.separatorLen = t.ansiLabelPrinter(bar, &tui.ColSeparator, true)
 	}
+	if opts.Scrollbar == nil {
+		if t.unicode {
+			t.scrollbar = "│"
+		} else {
+			t.scrollbar = "|"
+		}
+	} else {
+		t.scrollbar = *opts.Scrollbar
+	}
 
 	_, t.hasLoadActions = t.keymap[tui.Load.AsEvent()]
 
@@ -761,6 +772,27 @@ func (t *Terminal) parsePrompt(prompt string) (func(), int) {
 
 func (t *Terminal) noInfoLine() bool {
 	return t.infoStyle != infoDefault
+}
+
+func (t *Terminal) getScrollbar() (int, int) {
+	total := t.merger.Length()
+	if total == 0 {
+		return 0, 0
+	}
+
+	maxItems := t.maxItems()
+	barLength := util.Max(1, maxItems*maxItems/total)
+	if total <= maxItems {
+		return 0, 0
+	}
+
+	var barStart int
+	if total == maxItems {
+		barStart = 0
+	} else {
+		barStart = (maxItems - barLength) * t.offset / (total - maxItems)
+	}
+	return barLength, barStart
 }
 
 // Input returns current query string
@@ -1349,6 +1381,7 @@ func (t *Terminal) printHeader() {
 
 func (t *Terminal) printList() {
 	t.constrain()
+	barLength, barStart := t.getScrollbar()
 
 	maxy := t.maxItems()
 	count := t.merger.Length() - t.offset
@@ -1362,7 +1395,7 @@ func (t *Terminal) printList() {
 			line--
 		}
 		if i < count {
-			t.printItem(t.merger.Get(i+t.offset), line, i, i == t.cy-t.offset)
+			t.printItem(t.merger.Get(i+t.offset), line, i, i == t.cy-t.offset, i >= barStart && i < barStart+barLength)
 		} else if t.prevLines[i] != emptyLine {
 			t.prevLines[i] = emptyLine
 			t.move(line, 0, true)
@@ -1370,7 +1403,7 @@ func (t *Terminal) printList() {
 	}
 }
 
-func (t *Terminal) printItem(result Result, line int, i int, current bool) {
+func (t *Terminal) printItem(result Result, line int, i int, current bool, bar bool) {
 	item := result.item
 	_, selected := t.selected[item.Index()]
 	label := ""
@@ -1386,13 +1419,24 @@ func (t *Terminal) printItem(result Result, line int, i int, current bool) {
 
 	// Avoid unnecessary redraw
 	newLine := itemLine{current: current, selected: selected, label: label,
-		result: result, queryLen: len(t.input), width: 0}
+		result: result, queryLen: len(t.input), width: 0, bar: bar}
 	prevLine := t.prevLines[i]
+	printBar := func() {
+		if len(t.scrollbar) > 0 && bar != prevLine.bar {
+			t.prevLines[i].bar = bar
+			t.move(line, t.window.Width()-1, true)
+			if bar {
+				t.window.CPrint(tui.ColScrollbar, t.scrollbar)
+			}
+		}
+	}
+
 	if prevLine.current == newLine.current &&
 		prevLine.selected == newLine.selected &&
 		prevLine.label == newLine.label &&
 		prevLine.queryLen == newLine.queryLen &&
 		prevLine.result == newLine.result {
+		printBar()
 		return
 	}
 
@@ -1426,6 +1470,7 @@ func (t *Terminal) printItem(result Result, line int, i int, current bool) {
 	if fillSpaces > 0 {
 		t.window.Print(strings.Repeat(" ", fillSpaces))
 	}
+	printBar()
 	t.prevLines[i] = newLine
 }
 
@@ -2543,6 +2588,9 @@ func (t *Terminal) Loop() {
 			t.eventChan <- t.tui.GetChar()
 		}
 	}()
+	previewDraggingPos := -1
+	barDragging := false
+	wasDown := false
 	for looping {
 		var newCommand *string
 		var reloadSync bool
@@ -2986,8 +3034,15 @@ func (t *Terminal) Loop() {
 			case actMouse:
 				me := event.MouseEvent
 				mx, my := me.X, me.Y
+				clicked := !wasDown && me.Down
+				wasDown = me.Down
+				if !me.Down {
+					barDragging = false
+					previewDraggingPos = -1
+				}
+
+				// Scrolling
 				if me.S != 0 {
-					// Scroll
 					if t.window.Enclose(my, mx) && t.merger.Length() > 0 {
 						if t.multi > 0 && me.Mod {
 							toggle()
@@ -2997,47 +3052,86 @@ func (t *Terminal) Loop() {
 					} else if t.hasPreviewWindow() && t.pwindow.Enclose(my, mx) {
 						scrollPreviewBy(-me.S)
 					}
-				} else if t.window.Enclose(my, mx) {
-					mx -= t.window.Left()
-					my -= t.window.Top()
-					mx = util.Constrain(mx-t.promptLen, 0, len(t.input))
-					min := 2 + len(t.header)
-					if t.noInfoLine() {
-						min--
+					break
+				}
+
+				// Preview dragging
+				if me.Down && (previewDraggingPos > 0 || clicked && t.hasPreviewWindow() && t.pwindow.Enclose(my, mx)) {
+					if previewDraggingPos > 0 {
+						scrollPreviewBy(previewDraggingPos - my)
 					}
-					h := t.window.Height()
-					switch t.layout {
-					case layoutDefault:
+					previewDraggingPos = my
+					break
+				}
+
+				// Ignored
+				if !t.window.Enclose(my, mx) && !barDragging {
+					break
+				}
+
+				// Translate coordinates
+				mx -= t.window.Left()
+				my -= t.window.Top()
+				min := 2 + len(t.header)
+				if t.noInfoLine() {
+					min--
+				}
+				h := t.window.Height()
+				switch t.layout {
+				case layoutDefault:
+					my = h - my - 1
+				case layoutReverseList:
+					if my < h-min {
+						my += min
+					} else {
 						my = h - my - 1
-					case layoutReverseList:
-						if my < h-min {
-							my += min
-						} else {
-							my = h - my - 1
+					}
+				}
+
+				// Scrollbar dragging
+				barDragging = me.Down && (barDragging || clicked && my >= min && mx == t.window.Width()-1)
+				if barDragging {
+					barLength, barStart := t.getScrollbar()
+					if barLength > 0 {
+						maxItems := t.maxItems()
+						if newBarStart := util.Constrain(my-min-barLength/2, 0, maxItems-barLength); newBarStart != barStart {
+							total := t.merger.Length()
+							prevOffset := t.offset
+							// barStart = (maxItems - barLength) * t.offset / (total - maxItems)
+							t.offset = int(math.Ceil(float64(newBarStart) * float64(total-maxItems) / float64(maxItems-barLength)))
+							t.cy = t.offset + t.cy - prevOffset
+							req(reqList)
 						}
 					}
-					if me.Double {
-						// Double-click
-						if my >= min {
-							if t.vset(t.offset+my-min) && t.cy < t.merger.Length() {
-								return doActions(actionsFor(tui.DoubleClick))
-							}
+					break
+				}
+
+				// Double-click on an item
+				if me.Double && mx < t.window.Width()-1 {
+					// Double-click
+					if my >= min {
+						if t.vset(t.offset+my-min) && t.cy < t.merger.Length() {
+							return doActions(actionsFor(tui.DoubleClick))
 						}
-					} else if me.Down {
-						if my == t.promptLine() && mx >= 0 {
-							// Prompt
-							t.cx = mx + t.xoffset
-						} else if my >= min {
-							// List
-							if t.vset(t.offset+my-min) && t.multi > 0 && me.Mod {
-								toggle()
-							}
-							req(reqList)
-							if me.Left {
-								return doActions(actionsFor(tui.LeftClick))
-							}
-							return doActions(actionsFor(tui.RightClick))
+					}
+					break
+				}
+
+				if me.Down {
+					mx = util.Constrain(mx-t.promptLen, 0, len(t.input))
+					if my == t.promptLine() && mx >= 0 {
+						// Prompt
+						t.cx = mx + t.xoffset
+					} else if my >= min {
+						// List
+						if t.vset(t.offset+my-min) && t.multi > 0 && me.Mod {
+							toggle()
 						}
+						req(reqList)
+						if me.Left {
+							return doActions(actionsFor(tui.LeftClick))
+						}
+						return doActions(actionsFor(tui.RightClick))
 					}
 				}
 			case actReload, actReloadSync:

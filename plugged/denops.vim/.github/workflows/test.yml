@@ -1,8 +1,5 @@
 name: test
 
-env:
-  DENOPS_PATH: "./"
-
 on:
   schedule:
     - cron: "0 7 * * 0"
@@ -34,7 +31,6 @@ jobs:
         runner:
           - ubuntu-latest
         version:
-          - "1.17.1"
           - "1.x"
     runs-on: ${{ matrix.runner }}
     steps:
@@ -46,10 +42,8 @@ jobs:
           deno-version: "${{ matrix.version }}"
       - name: Lint check
         run: make lint
-        if: matrix.version == '1.x'
       - name: Format check
         run: make fmt-check
-        if: matrix.version == '1.x'
       - name: Type check
         run: make type-check
 
@@ -100,6 +94,7 @@ jobs:
       - name: Test
         run: make test
         env:
-          DENOPS_TEST_VIM: ${{ steps.vim.outputs.executable_path }}
-          DENOPS_TEST_NVIM: ${{ steps.nvim.outputs.executable_path }}
+          DENOPS_TEST_DENOPS_PATH: "./"
+          DENOPS_TEST_VIM_EXECUTABLE: ${{ steps.vim.outputs.executable_path }}
+          DENOPS_TEST_NVIM_EXECUTABLE: ${{ steps.nvim.outputs.executable_path }}
         timeout-minutes: 5

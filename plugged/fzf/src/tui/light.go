@@ -72,7 +72,7 @@ type LightRenderer struct {
 	forceBlack    bool
 	clearOnExit   bool
 	prevDownTime  time.Time
-	clickY        []int
+	clicks        [][2]int
 	ttyin         *os.File
 	buffer        []byte
 	origState     *term.State
@@ -176,6 +176,7 @@ func (r *LightRenderer) Init() {
 
 	if r.mouse {
 		r.csi("?1000h")
+		r.csi("?1002h")
 		r.csi("?1006h")
 	}
 	r.csi(fmt.Sprintf("%dA", r.MaxY()-1))
@@ -569,25 +570,31 @@ func (r *LightRenderer) mouseSequence(sz *int) Event {
 	// ctrl := t & 0b1000
 	mod := t&0b1100 > 0
 
+	drag := t&0b100000 > 0
+
 	if scroll != 0 {
 		return Event{Mouse, 0, &MouseEvent{y, x, scroll, false, false, false, mod}}
 	}
 
 	double := false
-	if down {
+	if down && !drag {
 		now := time.Now()
 		if !left { // Right double click is not allowed
-			r.clickY = []int{}
+			r.clicks = [][2]int{}
 		} else if now.Sub(r.prevDownTime) < doubleClickDuration {
-			r.clickY = append(r.clickY, y)
+			r.clicks = append(r.clicks, [2]int{x, y})
 		} else {
-			r.clickY = []int{y}
+			r.clicks = [][2]int{{x, y}}
 		}
 		r.prevDownTime = now
 	} else {
-		if len(r.clickY) > 1 && r.clickY[0] == r.clickY[1] &&
+		n := len(r.clicks)
+		if len(r.clicks) > 1 && r.clicks[n-2][0] == r.clicks[n-1][0] && r.clicks[n-2][1] == r.clicks[n-1][1] &&
 			time.Since(r.prevDownTime) < doubleClickDuration {
 			double = true
+			if double {
+				r.clicks = [][2]int{}
+			}
 		}
 	}
 	return Event{Mouse, 0, &MouseEvent{y, x, 0, left, down, double, mod}}
@@ -628,6 +635,7 @@ func (r *LightRenderer) Resume(clear bool, sigcont bool) {
 		// It's highly likely that the offset we obtained at the beginning is
 		// no longer correct, so we simply disable mouse input.
 		r.csi("?1000l")
+		r.csi("?1002l")
 		r.csi("?1006l")
 		r.mouse = false
 	}
@@ -668,6 +676,7 @@ func (r *LightRenderer) Close() {
 	}
 	if r.mouse {
 		r.csi("?1000l")
+		r.csi("?1002l")
 		r.csi("?1006l")
 	}
 	r.flush()

@@ -12,6 +12,14 @@ CHANGELOG
   # Send actions to the server
   curl -XPOST localhost:6266 -d 'reload(seq 100)+change-prompt(hundred> )'
   ```
+- Added scrollbar on the main search window
+  ```sh
+  # Hide scrollbar
+  fzf --no-scrollbar
+
+  # Customize scrollbar
+  fzf --scrollbar ┆ --color scrollbar:blue
+  ```
 - New event
     - Added `load` event that is triggered when the input stream is complete
       and the initial processing of the list is complete.
@@ -97,6 +105,10 @@ CHANGELOG
       # No need to bind 'double-click' to the same action
       fzf --bind 'enter:execute:less {}' # --bind 'double-click:execute:less {}'
       ```
+    - If the color for `separator` is not specified, it will default to the
+      color for `border`. Same holds true for `scrollbar`. This is to reduce
+      the number of configuration items required to achieve a consistent color
+      scheme.
 - Added color name `preview-label` for `--preview-label` (defaults to `label`
   for `--border-label`)
 - Minor bug fixes and improvements
