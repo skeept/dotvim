@@ -838,6 +838,7 @@ vim-signify <https://github.com/mhinz/vim-signify>
 changesPlugin <https://github.com/chrisbra/changesPlugin>
 quickfixsigns <https://github.com/tomtom/quickfixsigns_vim>
 coc-git <https://github.com/neoclide/coc-git>
+gitsigns.nvim <https://github.com/lewis6991/gitsigns.nvim>
 
 You can use `airline#extensions#hunks#get_raw_hunks()` to get the full hunks,
 without shortening. This allows for advanced customization, or a quick way of
@@ -1072,6 +1073,12 @@ highlighting (e.g. using |:nohls|), it this will be disabled.
 
 * enable/disable searchcount integration >
   let g:airline#extensions#searchcount#enabled = 1
+
+* enable/disable displaying search term >
+  let g:airline#extensions#searchcount#show_search_term = 1
+
+* truncate long search terms to a fixed length >
+  let g:airline#extensions#searchcount#search_term_limit = 8
 <
 -------------------------------------                    *airline-syntastic*
 syntastic <https://github.com/vim-syntastic/syntastic>
