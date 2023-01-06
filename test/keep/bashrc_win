@@ -65,7 +65,7 @@ function __get_gvim_win()
     return
   fi
 
-  gvim2="$(__win_base)/ht/Neovim/bin/nvim-qt.exe"
+  gvim2="$(__win_base)/ht/nvim-win64/bin/nvim-qt.exe"
   if [ -e "${gvim2}" ]; then
     echo "${gvim2}"
     return
@@ -128,7 +128,7 @@ ev()
   # nvim-qt doesn't seem to be able to add remote files; try again later
   if false; then
   [ -x "$(command -v nvim-qt.exe)" ] && gvim=nvim-qt.exe
-  local c1="$(__win_base)/ht/Neovim/bin/nvim-qt.exe"
+  local c1="$(__win_base)/ht/nvim-win64/bin/nvim-qt.exe"
   [ -z ${gvim+x} ] && [ -e "${c1}" ] && gvim="${c1}"
   fi
 
