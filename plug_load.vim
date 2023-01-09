@@ -35,12 +35,12 @@ Plug 'lambdalisue/fern.vim', { 'on': 'Fern' }
 Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
-let line_plugin = 1
-Plug 'molok/vim-smartusline', Cond(2 == line_plugin)
-if 0 == line_plugin "airline
+let use_airline = 0  " issues when running airline (complains about ale init)
+Plug 'molok/vim-smartusline', Cond(2 == use_airline)
+if 1 == use_airline "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
   Plug g:p0 . '/pack/bundle/opt/airline-extensions'
-elseif 1 == line_plugin "lightline
+elseif 0 == use_airline "lightline
   Plug g:p0 . '/pack/bundle/opt/lightline'
 endif
 

@@ -2,8 +2,13 @@
 
 ## [unreleased]
 
+### Added
+
+- Build executables for more platforms. #901
+- Rework the bridge between the Rust backend and Vim, some commonly used providers such as `grep`, `files`, `blines` are reimplemented to be significantly faster and reponsive without using any caching tricks. #872
 
 ## [0.37] 2022-10-16
+
 ### Changed
 
 - Rename the provider `grep` and `grep2`. `:Clap grep` becomes `:Clap live_grep`, `:Clap grep2` becomes `:Clap grep`. If you have some grep variables like `g:clap_provider_grep_foo` before, now you need to rename them to `g:clap_provider_live_grep_foo`. #879
