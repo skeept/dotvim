@@ -1,4 +1,4 @@
-use crate::stdio_server::handler::OnMoveImpl;
+use crate::stdio_server::handler::{initialize_provider, OnMoveImpl};
 use crate::stdio_server::provider::{ClapProvider, ProviderContext, SearcherControl};
 use crate::stdio_server::types::VimProgressor;
 use crate::stdio_server::vim::Vim;
@@ -106,11 +106,16 @@ impl ClapProvider for FilesProvider {
         let query = self.vim().context_query_or_input().await?;
         if !query.is_empty() {
             self.process_query(query);
+        } else {
+            initialize_provider(&self.context).await?;
         }
         Ok(())
     }
 
     async fn on_move(&mut self) -> Result<()> {
+        if !self.context.env.preview_enabled {
+            return Ok(());
+        }
         OnMoveImpl::new(&self.context, self.vim())
             .do_preview()
             .await
