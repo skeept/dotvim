@@ -88,6 +88,11 @@ CHANGELOG
       # a will put 'alpha' on the prompt, ctrl-b will put 'bravo'
       fzf --bind 'a:put+put(lpha),ctrl-b:put(bravo)'
       ```
+- Added color name `preview-label` for `--preview-label` (defaults to `label`
+  for `--border-label`)
+- Better support for (Windows) terminals where each box-drawing character
+  takes 2 columns. Set `RUNEWIDTH_EASTASIAN` environment variable to `1`.
+    - On Vim, the variable will be automatically set if `&ambiwidth` is `double`
 - Behavior changes
     - fzf will always execute the preview command if the command template
       contains `{q}` even when it's empty. If you prefer the old behavior,
@@ -109,8 +114,14 @@ CHANGELOG
       color for `border`. Same holds true for `scrollbar`. This is to reduce
       the number of configuration items required to achieve a consistent color
       scheme.
-- Added color name `preview-label` for `--preview-label` (defaults to `label`
-  for `--border-label`)
+    - If `follow` flag is specified in `--preview-window` option, fzf will
+      automatically scroll to the bottom of the streaming preview output. But
+      when the user manually scrolls the window, the following stops. With
+      this version, fzf will resume following if the user scrolls the window
+      to the bottom.
+    - Default border style on Windows is changed to `sharp` because some
+      Windows terminals are not capable of displaying `rounded` border
+      characters correctly.
 - Minor bug fixes and improvements
 
 0.35.1

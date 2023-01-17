@@ -24,13 +24,6 @@ def read_file(fname):
     f = open(fname)
     return f.readlines()
 
-
-#  install.sh
-fname = '../install.sh'
-lines = read_file(fname)
-lines[4] = "version=v{version}\n".format(version=next_tag)
-write_back(lines, fname)
-
 #  install.ps1
 fname = '../install.ps1'
 lines = read_file(fname)
@@ -58,10 +51,4 @@ write_back(lines, fname)
 fname = '../Cargo.toml'
 lines = read_file(fname)
 lines[4] = 'version = "{version}"\n'.format(version=next_maple_version)
-write_back(lines, fname)
-
-#  update_release_note.sh
-fname = 'update_release_note.sh'
-lines = read_file(fname)
-lines[4] = 'new_tag=v{version}\n'.format(version=next_tag)
 write_back(lines, fname)

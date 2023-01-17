@@ -4,15 +4,39 @@
 mod trimmer;
 mod truncation;
 
-use icon::{Icon, ICON_LEN};
+use icon::{Icon, ICON_CHAR_LEN};
 use serde::Serialize;
 use types::MatchedItem;
-use utility::println_json;
 
 pub use self::truncation::{
     truncate_grep_lines, truncate_long_matched_lines, truncate_long_matched_lines_v0,
     LinesTruncatedMap,
 };
+
+/// Combine json and println macro.
+#[macro_export]
+macro_rules! println_json {
+  ( $( $field:expr ),+ ) => {
+    {
+      println!("{}", serde_json::json!({ $(stringify!($field): $field,)* }))
+    }
+  }
+}
+
+/// Combine json and println macro.
+///
+/// Neovim needs Content-length info when using stdio-based communication.
+#[macro_export]
+macro_rules! println_json_with_length {
+  ( $( $field:expr ),+ ) => {
+    {
+      let msg = serde_json::json!({ $(stringify!($field): $field,)* });
+      if let Ok(s) = serde_json::to_string(&msg) {
+          println!("Content-length: {}\n\n{}", s.len(), s);
+      }
+    }
+  }
+}
 
 /// 1. Truncate the line.
 /// 2. Add an icon.
@@ -57,6 +81,34 @@ impl DisplayLines {
     }
 }
 
+/// Converts the char positions to byte positions as Vim and Neovim highlights is byte-positioned.
+fn char_indices_to_byte_indices(s: &str, char_indices: &[usize]) -> Vec<usize> {
+    s.char_indices()
+        .enumerate()
+        .filter_map(|(char_idx, (byte_idx, _char))| {
+            if char_indices.contains(&char_idx) {
+                Some(byte_idx)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
+}
+
+pub fn decorate_line(matched_item: &MatchedItem, icon: Icon) -> (String, Vec<usize>) {
+    if let Some(icon_kind) = icon.icon_kind() {
+        (
+            icon_kind.add_icon_to_text(matched_item.display_text()),
+            matched_item.shifted_indices(ICON_CHAR_LEN),
+        )
+    } else {
+        (
+            matched_item.display_text().into(),
+            matched_item.indices.clone(),
+        )
+    }
+}
+
 /// Returns the info of the truncated top items ranked by the filtering score.
 pub fn decorate_lines(
     matched_items: Vec<MatchedItem>,
@@ -81,7 +133,9 @@ pub fn decorate_lines(
                 } else {
                     icon_kind.add_icon_to_text(&display_text)
                 };
-                (iconized, matched_item.shifted_indices(ICON_LEN))
+                let (line, indices) = (iconized, matched_item.shifted_indices(ICON_CHAR_LEN));
+                let indices = char_indices_to_byte_indices(&line, &indices);
+                (line, indices)
             })
             .unzip();
 
@@ -90,10 +144,12 @@ pub fn decorate_lines(
         let (lines, indices): (Vec<_>, Vec<_>) = matched_items
             .into_iter()
             .map(|matched_item| {
-                (
+                let (line, indices) = (
                     matched_item.display_text().to_string(),
                     matched_item.indices,
-                )
+                );
+                let indices = char_indices_to_byte_indices(&line, &indices);
+                (line, indices)
             })
             .unzip();
 
@@ -275,5 +331,26 @@ pub(crate) mod tests {
           "..s/fuzzy_filter/target/debug/deps/libstructopt_..",
             (QUERY, "srlis", None, 50)
         );
+    }
+
+    #[test]
+    fn test_char_position_to_byte_position() {
+        let line = "1 # 存储项目";
+        let char_pos = vec![4, 5];
+        let expected_byte_pos = vec![4, 7];
+
+        assert_eq!(
+            expected_byte_pos,
+            char_indices_to_byte_indices(line, &char_pos)
+        );
+
+        let line = "abcdefg";
+        let char_pos = vec![4, 5];
+        let expected_byte_pos = vec![4, 5];
+
+        assert_eq!(
+            expected_byte_pos,
+            char_indices_to_byte_indices(line, &char_pos)
+        )
     }
 }

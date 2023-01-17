@@ -47,7 +47,6 @@ if exists('g:clap_forerunner_status_sign_running')
   let g:clap_forerunner_status_sign.running = g:clap_forerunner_status_sign_running
 endif
 
-let g:clap_disable_optional_async = get(g:, 'clap_disable_optional_async', v:false)
 let g:clap_no_matches_msg = get(g:, 'clap_no_matches_msg', 'NO MATCHES FOUND')
 let g:__clap_no_matches_pattern = '^'.g:clap_no_matches_msg.'$'
 
@@ -107,7 +106,7 @@ function! s:inject_default_impl_is_ok(provider_info) abort
       let provider_info.on_typed = { -> clap#client#notify('on_typed') }
     endif
     if !has_key(provider_info, 'filter')
-      let provider_info.filter = function('clap#filter#sync')
+      let provider_info.filter = function('clap#legacy#filter#sync')
     endif
   else
     if !has_key(provider_info, 'on_typed')
@@ -115,7 +114,7 @@ function! s:inject_default_impl_is_ok(provider_info) abort
       return v:false
     endif
     if !has_key(provider_info, 'jobstop')
-      let provider_info.jobstop = function('clap#dispatcher#jobstop')
+      let provider_info.jobstop = function('clap#legacy#dispatcher#jobstop')
     endif
   endif
 

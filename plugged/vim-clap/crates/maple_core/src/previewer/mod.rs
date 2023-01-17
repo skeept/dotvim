@@ -1,0 +1,214 @@
+pub mod vim_help;
+
+use crate::paths::truncate_absolute_path;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+use utils::bytelines::ByteLines;
+use utils::read_first_lines;
+
+/// Preview of a file.
+#[derive(Clone, Debug)]
+pub struct FilePreview {
+    /// Line number at which the preview starts.
+    pub start: usize,
+    /// Line number at which the preview ends.
+    pub end: usize,
+    /// Line number of the line that should be highlighed in the preview window.
+    pub highlight_lnum: usize,
+    /// [start, end] of the source file.
+    pub lines: Vec<String>,
+}
+
+/// Returns the lines that can fit into the preview window given its window height.
+///
+/// Center the line at `target_line_number` in the preview window if possible.
+/// (`target_line` - `size`, `target_line` - `size`).
+pub fn get_file_preview<P: AsRef<Path>>(
+    path: P,
+    target_line_number: usize,
+    winheight: usize,
+) -> std::io::Result<FilePreview> {
+    let mid = winheight / 2;
+    let (start, end, highlight_lnum) = if target_line_number > mid {
+        (target_line_number - mid, target_line_number + mid, mid)
+    } else {
+        (0, winheight, target_line_number)
+    };
+
+    read_preview_lines_impl(path, start, end, highlight_lnum)
+}
+
+// Copypasted from stdlib.
+/// Indicates how large a buffer to pre-allocate before reading the entire file.
+fn initial_buffer_size(file: &File) -> usize {
+    // Allocate one extra byte so the buffer doesn't need to grow before the
+    // final `read` call at the end of the file.  Don't worry about `usize`
+    // overflow because reading will fail regardless in that case.
+    file.metadata().map(|m| m.len() as usize + 1).unwrap_or(0)
+}
+
+fn read_preview_lines_impl<P: AsRef<Path>>(
+    path: P,
+    start: usize,
+    end: usize,
+    highlight_lnum: usize,
+) -> std::io::Result<FilePreview> {
+    let mut filebuf: Vec<u8> = Vec::new();
+
+    File::open(path)
+        .and_then(|mut file| {
+            //x XXX: is megabyte enough for any text file?
+            const MEGABYTE: usize = 32 * 1_048_576;
+
+            let filesize = initial_buffer_size(&file);
+            if filesize > MEGABYTE {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "maximum preview file buffer size reached",
+                ));
+            }
+
+            filebuf.reserve_exact(filesize);
+            file.read_to_end(&mut filebuf)
+        })
+        .map(|_| {
+            let lines = ByteLines::new(&filebuf)
+                .skip(start)
+                .take(end - start)
+                // trim_end() to get rid of ^M on Windows.
+                .map(|l| l.trim_end().to_string())
+                .collect::<Vec<_>>();
+
+            FilePreview {
+                start,
+                end,
+                highlight_lnum,
+                lines,
+            }
+        })
+}
+
+#[inline]
+fn as_absolute_path<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
+    if path.as_ref().is_absolute() {
+        Ok(path.as_ref().to_string_lossy().into())
+    } else {
+        // Somehow the absolute path on Windows is problematic using `canonicalize`:
+        // C:\Users\liuchengxu\AppData\Local\nvim\init.vim
+        // \\?\C:\Users\liuchengxu\AppData\Local\nvim\init.vim
+        Ok(std::fs::canonicalize(path.as_ref())?
+            .into_os_string()
+            .to_string_lossy()
+            .into())
+    }
+}
+
+/// Truncates the lines that are awfully long as vim can not handle them properly.
+///
+/// Ref https://github.com/liuchengxu/vim-clap/issues/543
+pub fn truncate_preview_lines(
+    max_width: usize,
+    lines: impl Iterator<Item = String>,
+) -> impl Iterator<Item = String> {
+    lines.map(move |line| {
+        if line.len() > max_width {
+            let mut line = line;
+            // https://github.com/liuchengxu/vim-clap/pull/544#discussion_r506281014
+            let replace_start = (0..max_width + 1)
+                .rev()
+                .find(|idx| line.is_char_boundary(*idx))
+                .unwrap_or_default(); // truncate to 0
+            line.replace_range(replace_start.., "……");
+            line
+        } else {
+            line
+        }
+    })
+}
+
+pub fn preview_file<P: AsRef<Path>>(
+    path: P,
+    size: usize,
+    max_width: usize,
+) -> std::io::Result<(Vec<String>, String)> {
+    if !path.as_ref().is_file() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Can not preview if the object is not a file",
+        ));
+    }
+    let abs_path = as_absolute_path(path.as_ref())?;
+    let lines_iter = read_first_lines(path.as_ref(), size)?;
+    let lines = std::iter::once(abs_path.clone())
+        .chain(truncate_preview_lines(max_width, lines_iter))
+        .collect::<Vec<_>>();
+
+    Ok((lines, abs_path))
+}
+
+pub fn preview_file_with_truncated_title<P: AsRef<Path>>(
+    path: P,
+    size: usize,
+    max_line_width: usize,
+    max_title_width: usize,
+) -> std::io::Result<(Vec<String>, String)> {
+    let abs_path = as_absolute_path(path.as_ref())?;
+    let truncated_abs_path = truncate_absolute_path(&abs_path, max_title_width).into_owned();
+    let lines_iter = read_first_lines(path.as_ref(), size)?;
+    let lines = std::iter::once(truncated_abs_path.clone())
+        .chain(truncate_preview_lines(max_line_width, lines_iter))
+        .collect::<Vec<_>>();
+
+    Ok((lines, truncated_abs_path))
+}
+
+pub fn preview_file_at<P: AsRef<Path>>(
+    path: P,
+    winheight: usize,
+    max_width: usize,
+    lnum: usize,
+) -> std::io::Result<(Vec<String>, usize)> {
+    tracing::debug!(path = %path.as_ref().display(), lnum, "Previewing file");
+
+    let FilePreview {
+        lines,
+        highlight_lnum,
+        ..
+    } = get_file_preview(path.as_ref(), lnum, winheight)?;
+
+    let lines = std::iter::once(format!("{}:{}", path.as_ref().display(), lnum))
+        .chain(truncate_preview_lines(max_width, lines.into_iter()))
+        .collect::<Vec<_>>();
+
+    Ok((lines, highlight_lnum))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_file_preview_contains_multi_byte() {
+        let test_txt = std::env::current_dir()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join("test")
+            .join("testdata")
+            .join("test_673.txt");
+        let FilePreview { lines, .. } = get_file_preview(test_txt, 2, 10).unwrap();
+        assert_eq!(
+            lines,
+            [
+                "test_ddd",
+                "test_ddd    //1����ˤ��ϡ�����1",
+                "test_ddd    //2����ˤ��ϡ�����2",
+                "test_ddd    //3����ˤ��ϡ�����3",
+                "test_ddd    //hello"
+            ]
+        );
+    }
+}
