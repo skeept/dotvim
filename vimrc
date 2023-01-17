@@ -362,6 +362,7 @@ endif
 "load cscope in two levels up
 noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
 
+command! JunkFileBrowse FZF ~/.cache/junkfile
 "==============================================================================}}}
 
 "================== delimitmate ==============================================={{{
