@@ -85,7 +85,7 @@ export PATH=${HOME}/.local/bin:${PATH}
 
 # path: the ones going after the current setting
 #dangerous:
-export PATH=${PATH}:./Mybin
+#export PATH=${PATH}:./Mybin
 
 # LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/${HOME}/lib"
@@ -120,7 +120,8 @@ export DISPLAY0="$DISPLAY"
 
 DEBUG_BASHRC=yes
 
-#export PATH="${PATH}:/opt/condor/bin"
+export IS_WSL="$(uname -a | grep -i microsoft >& /dev/null && echo 1 || echo 0)"
+export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
 
 export PYTHONSTARTUP=~/.pythonrc.py
 
@@ -159,9 +160,13 @@ if test -n "$PS1"; then
   export HISTCONTROL=erasedups:ignoredups
 fi
 
-
 # bin/links is usually not commited
-export PATH="${HOME}/bin:${HOME}/bin/links:${PATH}"
+if [ "${IS_GIT_BASH}" = "1" ]; then
+  export PATH="/c/ht/nvim-win64/bin:${PATH}"
+else
+  export PATH="${HOME}/bin/links:${PATH}"
+fi
+export PATH="${HOME}/bin:${PATH}"
 
 
 # command history settings
