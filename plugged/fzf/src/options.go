@@ -609,6 +609,8 @@ func parseKeyChordsImpl(str string, message string, exit func(string)) map[tui.E
 			add(tui.Start)
 		case "load":
 			add(tui.Load)
+		case "focus":
+			add(tui.Focus)
 		case "alt-enter", "alt-return":
 			chords[tui.CtrlAltKey('m')] = key
 		case "alt-space":
@@ -912,7 +914,7 @@ const (
 
 func init() {
 	executeRegexp = regexp.MustCompile(
-		`(?si)[:+](execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt)|change-preview-window|change-preview|(?:re|un)bind|pos|put)`)
+		`(?si)[:+](execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt|border-label|preview-label)|change-preview-window|change-preview|(?:re|un)bind|pos|put)`)
 	splitRegexp = regexp.MustCompile("[,:]+")
 	actionNameRegexp = regexp.MustCompile("(?i)^[a-z-]+")
 }
@@ -954,7 +956,7 @@ Loop:
 		ce = regexp.QuoteMeta(ce)
 
 		// @$ or @+
-		loc = regexp.MustCompile(fmt.Sprintf(`^%s.*?(%s[+,]|%s$)`, cs, ce, ce)).FindStringIndex(action)
+		loc = regexp.MustCompile(fmt.Sprintf(`(?s)^%s.*?(%s[+,]|%s$)`, cs, ce, ce)).FindStringIndex(action)
 		if loc == nil {
 			masked += action
 			break
@@ -1220,6 +1222,10 @@ func isExecuteAction(str string) actionType {
 		return actRebind
 	case "preview":
 		return actPreview
+	case "change-border-label":
+		return actChangeBorderLabel
+	case "change-preview-label":
+		return actChangePreviewLabel
 	case "change-preview-window":
 		return actChangePreviewWindow
 	case "change-preview":
@@ -1238,6 +1244,10 @@ func isExecuteAction(str string) actionType {
 		return actExecuteMulti
 	case "put":
 		return actPut
+	case "transform-border-label":
+		return actTransformBorderLabel
+	case "transform-preview-label":
+		return actTransformPreviewLabel
 	case "transform-prompt":
 		return actTransformPrompt
 	case "transform-query":

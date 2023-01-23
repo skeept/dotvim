@@ -2473,11 +2473,30 @@ class TestGoFZF < TestBase
     end
   end
 
+  def test_focus_event
+    tmux.send_keys 'seq 100 | fzf --bind "focus:transform-prompt(echo [[{}]])"', :Enter
+    tmux.until { |lines| assert_includes(lines[-1], '[[1]]') }
+    tmux.send_keys :Up
+    tmux.until { |lines| assert_includes(lines[-1], '[[2]]') }
+    tmux.send_keys :X
+    tmux.until { |lines| assert_includes(lines[-1], '[[]]') }
+  end
+
   def test_labels_center
-    tmux.send_keys ': | fzf --border --border-label foobar --preview : --preview-label barfoo', :Enter
+    tmux.send_keys 'echo x | fzf --border --border-label foobar --preview : --preview-label barfoo --bind "space:change-border-label(foobarfoo)+change-preview-label(barfoobar),enter:transform-border-label(echo foo{}foo)+transform-preview-label(echo bar{}bar)"', :Enter
     tmux.until do
       assert_includes(_1[0], '─foobar─')
       assert_includes(_1[1], '─barfoo─')
+    end
+    tmux.send_keys :space
+    tmux.until do
+      assert_includes(_1[0], '─foobarfoo─')
+      assert_includes(_1[1], '─barfoobar─')
+    end
+    tmux.send_keys :Enter
+    tmux.until do
+      assert_includes(_1[0], '─fooxfoo─')
+      assert_includes(_1[1], '─barxbar─')
     end
   end
 

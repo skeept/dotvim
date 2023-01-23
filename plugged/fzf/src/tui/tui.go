@@ -92,6 +92,7 @@ const (
 	BackwardEOF
 	Start
 	Load
+	Focus
 
 	AltBS
 
@@ -426,6 +427,7 @@ type Window interface {
 	Width() int
 	Height() int
 
+	DrawHBorder()
 	Refresh()
 	FinishFill()
 	Close()
