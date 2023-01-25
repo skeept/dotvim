@@ -1314,8 +1314,10 @@ if type zoxide >& /dev/null; then
   #_zoxide_add ~/src/t1/users/sg0216489/irops_micros
   #_zoxide_add ~/src/sabre2
   _zoxide_add /mnt/c/Users/SG0216489/vimfiles
-  _zoxide_add  /mnt/c/OR/IRops/Engines/Reaccomm
-  _zoxide_add /mnt/c/zl/ML
+  _zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm
+  _zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm/
+  _zoxide_add  /mnt/c/OR/IROPS/rt
+  #_zoxide_add /mnt/c/zl/ML
 
   eval "$(zoxide init bash)"
 fi
