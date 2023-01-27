@@ -143,7 +143,7 @@ function! s:prepend_opts(dict, eopts)
   return s:extend_opts(a:dict, a:eopts, 1)
 endfunction
 
-" [[spec to wrap], [preview window expression], [toggle-preview keys...]]
+" [spec to wrap], [preview window expression], [toggle-preview keys...]
 function! fzf#vim#with_preview(...)
   " Default spec
   let spec = {}
@@ -827,7 +827,7 @@ function! s:ag_handler(lines, has_column)
   call s:fill_quickfix(list)
 endfunction
 
-" query, [[ag options], options]
+" query, [ag options], [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#ag(query, ...)
   if type(a:query) != s:TYPE.string
     return s:warn('Invalid query argument')
@@ -839,7 +839,7 @@ function! fzf#vim#ag(query, ...)
   return call('fzf#vim#ag_raw', insert(args, command, 0))
 endfunction
 
-" ag command suffix, [options]
+" ag command suffix, [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#ag_raw(command_suffix, ...)
   if !executable('ag')
     return s:warn('ag is not found')
@@ -847,7 +847,7 @@ function! fzf#vim#ag_raw(command_suffix, ...)
   return call('fzf#vim#grep', extend(['ag --nogroup --column --color '.a:command_suffix, 1], a:000))
 endfunction
 
-" command (string), has_column (0/1), [options (dict)], [fullscreen (0/1)]
+" command (string), has_column (bool), [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#grep(grep_command, has_column, ...)
   let words = []
   for word in split(a:grep_command)
@@ -918,7 +918,7 @@ function! s:btags_sink(lines)
   normal! zvzz
 endfunction
 
-" query, [[tag commands], options]
+" query, [tag commands], [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#buffer_tags(query, ...)
   let args = copy(a:000)
   let escaped = fzf#shellescape(expand('%'))
@@ -1267,16 +1267,19 @@ function! s:commits(range, buffer_local, args)
     let managed = !v:shell_error
   endif
 
+  let args = copy(a:args)
+  let log_opts = len(args) && type(args[0]) == type('') ? remove(args, 0) : ''
+
   if len(a:range) || a:buffer_local
     if !managed
       return s:warn('The current buffer is not in the working tree')
     endif
     let source .= len(a:range)
-      \ ? printf(' -L %d,%d:%s --no-patch', a:range[0], a:range[1], fzf#shellescape(current))
-      \ : (' --follow '.fzf#shellescape(current))
+      \ ? join([printf(' -L %d,%d:%s --no-patch', a:range[0], a:range[1], fzf#shellescape(current)), log_opts])
+      \ : join([' --follow', log_opts, fzf#shellescape(current)])
     let command = 'BCommits'
   else
-    let source .= ' --graph'
+    let source .= join([' --graph', log_opts])
     let command = 'Commits'
   endif
 
@@ -1303,7 +1306,7 @@ function! s:commits(range, buffer_local, args)
     \ ['--preview', 'echo {} | grep -o "[a-f0-9]\{7,\}" | head -1 | xargs ' . prefix . 'show -O'.fzf#shellescape(orderfile).' --format=format: --color=always ' . suffix])
   endif
 
-  return s:fzf(a:buffer_local ? 'bcommits' : 'commits', options, a:args)
+  return s:fzf(a:buffer_local ? 'bcommits' : 'commits', options, args)
 endfunction
 
 " Heuristically determine if the user specified a range
@@ -1320,6 +1323,7 @@ function! s:given_range(line1, line2)
   return []
 endfunction
 
+" [git-log-args], [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#commits(...) range
   if exists('b:fzf_winview')
     call winrestview(b:fzf_winview)
@@ -1328,6 +1332,7 @@ function! fzf#vim#commits(...) range
   return s:commits(s:given_range(a:firstline, a:lastline), 0, a:000)
 endfunction
 
+" [git-log-args], [spec (dict)], [fullscreen (bool)]
 function! fzf#vim#buffer_commits(...) range
   if exists('b:fzf_winview')
     call winrestview(b:fzf_winview)
