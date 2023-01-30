@@ -301,6 +301,11 @@ let s:default_registry = {
 \       'suggested_filetypes': ['gomod'],
 \       'description': 'Fix Go module files with go mod edit -fmt.',
 \   },
+\   'gopls': {
+\       'function': 'ale#fixers#gopls#Fix',
+\       'suggested_filetypes': ['go'],
+\       'description': 'Fix Go files with gopls.',
+\   },
 \   'tslint': {
 \       'function': 'ale#fixers#tslint#Fix',
 \       'suggested_filetypes': ['typescript'],
@@ -585,6 +590,11 @@ let s:default_registry = {
 \       'function': 'ale#fixers#ruff#Fix',
 \       'suggested_filetypes': ['python'],
 \       'description': 'Fix python files with ruff.',
+\   },
+\   'pycln': {
+\       'function': 'ale#fixers#pycln#Fix',
+\       'suggested_filetypes': ['python'],
+\       'description': 'remove unused python import statements',
 \   }
 \}
 
