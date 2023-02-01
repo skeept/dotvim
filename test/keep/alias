@@ -50,6 +50,7 @@ alias which='type -all'
 alias gdf='type'
 alias ..='cd ..'
 alias ...="cd ../.."
+alias di=zi
 alias du='du -h'
 alias df='df -kh'
 
@@ -90,7 +91,7 @@ alias 9='cd ~9'
 alias da=date
 alias sm=smake
 alias ze='unset FPATH; exec zsh'
-alias z='unset FPATH; zsh'
+#alias z='unset FPATH; zsh'
 alias m4i='make -j4; make install'
 alias wgetnc='wget --no-check-certificate'
 
