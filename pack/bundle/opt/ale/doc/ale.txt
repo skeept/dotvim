@@ -17,7 +17,7 @@ CONTENTS                                                         *ale-contents*
     5.1 Completion........................|ale-completion|
     5.2 Go To Definition..................|ale-go-to-definition|
     5.3 Go To Type Definition.............|ale-go-to-type-definition|
-    5.4 Go To Implementation..............|ale-go-to-type-implementation|
+    5.4 Go To Implementation..............|ale-go-to-implementation|
     5.5 Find References...................|ale-find-references|
     5.6 Hovering..........................|ale-hover|
     5.7 Symbol Search.....................|ale-symbol-search|
@@ -2809,6 +2809,7 @@ documented in additional help files.
     textlint..............................|ale-asciidoc-textlint|
   asm.....................................|ale-asm-options|
     gcc...................................|ale-asm-gcc|
+    llvm_mc...............................|ale-asm-llvm_mc|
   avra....................................|ale-avra-options|
     avra..................................|ale-avra-avra|
   awk.....................................|ale-awk-options|
@@ -3068,6 +3069,7 @@ documented in additional help files.
   lua.....................................|ale-lua-options|
     cspell................................|ale-lua-cspell|
     lua-format............................|ale-lua-lua-format|
+    lua-language-server...................|ale-lua-lua-language-server|
     luac..................................|ale-lua-luac|
     luacheck..............................|ale-lua-luacheck|
     luafmt................................|ale-lua-luafmt|
@@ -3094,6 +3096,7 @@ documented in additional help files.
     nimlsp................................|ale-nim-nimlsp|
     nimpretty.............................|ale-nim-nimpretty|
   nix.....................................|ale-nix-options|
+    alejandra.............................|ale-nix-alejandra|
     nixfmt................................|ale-nix-nixfmt|
     nixpkgs-fmt...........................|ale-nix-nixpkgs-fmt|
     statix................................|ale-nix-statix|

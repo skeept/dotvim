@@ -45,6 +45,7 @@ formatting.
   * [write-good](https://github.com/btford/write-good)
 * ASM
   * [gcc](https://gcc.gnu.org)
+  * [llvm-mc](https://llvm.org)
 * AVRA
   * [avra](https://github.com/Ro5bert/avra)
 * Awk
@@ -350,6 +351,7 @@ formatting.
 * Lua
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
   * [lua-format](https://github.com/Koihik/LuaFormatter)
+  * [lua-language-server](https://github.com/LuaLS/lua-language-server)
   * [luac](https://www.lua.org/manual/5.1/luac.html)
   * [luacheck](https://github.com/mpeterv/luacheck)
   * [luafmt](https://github.com/trixnz/lua-fmt)
@@ -387,6 +389,7 @@ formatting.
   * [nimlsp](https://github.com/PMunch/nimlsp)
   * nimpretty
 * nix
+  * [alejandra](https://github.com/kamadorueda/alejandra)
   * [nix-instantiate](http://nixos.org/nix/manual/#sec-nix-instantiate)
   * [nixfmt](https://github.com/serokell/nixfmt)
   * [nixpkgs-fmt](https://github.com/nix-community/nixpkgs-fmt)
