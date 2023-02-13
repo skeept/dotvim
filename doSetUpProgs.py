@@ -1,9 +1,10 @@
-# vim: cc=80
-__doc__ = """
-if the file is a directory, create a directory with the same name in usr,
+"""
+If the file is a directory, create a directory with the same name in usr,
 if it doesn't exist
 if the file is not a directory, just create a symbolic
-link pointing to the file."""
+link pointing to the file.
+"""
+
 
 # see in Packages/<package_name>
 
@@ -113,3 +114,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# vim: cc=80
