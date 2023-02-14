@@ -312,6 +312,24 @@ fun! vam#PreprocessScriptIdentifier(list, opts)
   " only be loaded when installations take place
 endf
 
+fun! vam#AddRuntimePath(paths) abort
+  let rtp = split(&runtimepath, '\v(\\@<!(\\.)*\\)@<!\,')
+  let escapeComma = 'escape(v:val, '','')'
+
+  let new_runtime_paths = a:paths
+  let after = filter(map(copy(new_runtime_paths), 'v:val."/after"'), 'isdirectory(v:val)')
+  " rtp[-1:-1] keep users /after directory last, see github issue #165
+  let list = rtp[:0] + map(copy(new_runtime_paths), escapeComma)
+              \                 + rtp[1:-2]
+              \                 + map(after, escapeComma)
+              \                 + rtp[-1:-1]
+  if s:c.rtp_list_hook != ''
+    let list = call(s:c.rtp_list_hook, [list])
+  endif
+  let &runtimepath=join(list , ",")
+  unlet rtp
+endf
+
 " see also ActivateRecursively
 " Activate activates the plugins and their dependencies recursively.
 " I sources both: plugin/*.vim and after/plugin/*.vim files when called after
@@ -395,21 +413,9 @@ fun! vam#ActivateAddons(...) abort
     " add paths after ~/.vim but before $VIMRUNTIME
     " don't miss the after directories if they exist and
     " put them last! (Thanks to Oliver Teuliere)
-    let rtp = split(&runtimepath, '\v(\\@<!(\\.)*\\)@<!\,')
-    let escapeComma = 'escape(v:val, '','')'
-    let after = filter(map(copy(new_runtime_paths), 'v:val."/after"'), 'isdirectory(v:val)')
     if !s:c.dont_source
-      " rtp[-1:-1] keep users /after directory last, see github issue #165
-      let list = rtp[:0] + map(copy(new_runtime_paths), escapeComma)
-                  \                 + rtp[1:-2]
-                  \                 + map(after, escapeComma)
-                  \                 + rtp[-1:-1]
-      if s:c.rtp_list_hook != ''
-        let list = call(s:c.rtp_list_hook, [list])
-      endif
-      let &runtimepath=join(list , ",")
+      call vam#AddRuntimePath(new_runtime_paths)
     endif
-    unlet rtp
 
     for rtp in new_runtime_paths
       " filetype off/on would do the same ?
@@ -428,6 +434,8 @@ fun! vam#ActivateAddons(...) abort
       for rtp in new_runtime_paths
         call vam#GlobThenSource(rtp, 'plugin/**/*.vim')
         call vam#GlobThenSource(rtp, 'after/plugin/**/*.vim')
+        call vam#GlobThenSource(rtp, 'plugin/**/*.lua')
+        call vam#GlobThenSource(rtp, 'after/plugin/**/*.lua') " eg cmp-path is using this
       endfor
 
       " Now find out which au groups are new and run them manually, cause
@@ -497,6 +505,8 @@ fun! vam#Scripts(scripts, opts) abort
   let activate = []
   let keys_ = keys(s:c.activate_on)
   let scripts = (type(a:scripts) == type([])) ? a:scripts : map(filter(readfile(a:scripts), 'v:val !~ "#"'), 'eval(v:val)')
+  " filter expr - is eval evil ? You trust code anyway
+  call filter(scripts, 'type(v:val) != 4 || !has_key(v:val, "expr") || eval(v:val["expr"])')
   let scripts = vam#PreprocessScriptIdentifier(scripts, {'rewrite_names': 0})
   for x in scripts
     for k in keys_
