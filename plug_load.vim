@@ -108,5 +108,8 @@ Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable', 'ALELint']}
 "Plug 'nvim-lua/plenary.nvim', Cond(is_nvim > 0)
 "Plug 'nvim-telescope/telescope.nvim', Cond(is_nvim > 0, { 'tag': '0.1.1' })
 
+" check ddu
+"Plug 'Shougo/ddu.vim'
+
 
 call plug#end()
