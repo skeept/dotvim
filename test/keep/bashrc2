@@ -1304,6 +1304,31 @@ function pt()
   pytest ${LAST_PYTEST_ARGS[@]}
 }
 
+
+function dr()
+{
+  # we assume first argument is image name followed by entrypoint (optional)
+  # entrypoint if exists must be second arg (and not -)
+  # / for entrypoint is converted to /bin/bash
+  # everything after - is passed verbatim
+  # TODO: add global variables for persistance
+
+  local image=$1
+  shift
+  if [ "${image}" = "-" ]; then
+    image=""
+  else
+    local entrypoint=$1
+    shift
+  fi
+  [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
+  if [ -z "$entrypoint" ]; then
+    docker run -it ${image} $@
+  else
+    docker run -it --entrypoint ${entrypoint} ${image} $@
+  fi
+}
+
 if type zoxide >& /dev/null; then
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
   #mkdir -p "${_ZO_DATA_DIR}"
