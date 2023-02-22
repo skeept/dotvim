@@ -50,7 +50,7 @@ Plug 'lifepillar/vim-mucomplete'
 "tpope
 Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }
 Plug 'tpope/vim-rsi'
-Plug 'tpope/vim-abolish', { 'on': 'Subvert' }
+"Plug 'tpope/vim-abolish', { 'on': 'Subvert' }
 Plug 'tpope/vim-repeat'
 "Plug 'tpope/vim-apathy'
 Plug 'tpope/vim-vinegar'
