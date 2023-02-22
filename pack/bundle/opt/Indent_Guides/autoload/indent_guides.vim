@@ -86,6 +86,13 @@ function! indent_guides#clear_matches() abort
       let l:index += l:index
     endfor
   endif
+
+  " Make sure to clear indent guide if remembered match id has gone somehow.
+  for l:match in getmatches()
+    if l:match.group =~# '^IndentGuides\v(Even|Odd)$'
+      call matchdelete(l:match.id)
+    endif
+  endfor
 endfunction
 
 "
@@ -277,6 +284,11 @@ endfunction
 " Detect if any of the buffer filetypes should be excluded.
 "
 function! indent_guides#exclude_filetype() abort
+  if exists('g:indent_guides_exclude_buftype')
+    if g:indent_guides_exclude_buftype && &buftype !=# ''
+      return 1
+    endif
+  endif
   for ft in split(&ft, '\.')
     if index(g:indent_guides_exclude_filetypes, ft) > -1
       return 1
