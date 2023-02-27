@@ -100,7 +100,7 @@ endfunction
 "
 function! indent_guides#highlight_colors() abort
   if s:auto_colors
-    if has('gui_running') || has('nvim')
+    if has('gui_running') || has('nvim') || has('termguicolors')
       call indent_guides#gui_highlight_colors()
     else
       call indent_guides#basic_highlight_colors()
@@ -253,10 +253,7 @@ endfunction
 " Returns: 'Normal xxx guifg=#323232 guibg=#ffffff'
 "
 function! indent_guides#capture_highlight(group_name) abort
-  redir => l:output
-  exe 'silent hi ' . a:group_name
-  redir END
-
+  let l:output = execute('hi ' . a:group_name, 'silent')
   let l:output = substitute(l:output, '\n', '', '')
   return l:output
 endfunction
@@ -289,7 +286,7 @@ function! indent_guides#exclude_filetype() abort
       return 1
     endif
   endif
-  for ft in split(&ft, '\.')
+  for ft in split(&ft, '\.', 1)
     if index(g:indent_guides_exclude_filetypes, ft) > -1
       return 1
     end
