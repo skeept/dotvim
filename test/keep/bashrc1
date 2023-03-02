@@ -125,6 +125,16 @@ export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
 
 export PYTHONSTARTUP=~/.pythonrc.py
 
+
+# bin/links is usually not commited
+if [ "${IS_GIT_BASH}" = "1" ]; then
+  export PATH="/c/ht/nvim-win64/bin:${PATH}"
+else
+  export PATH="${HOME}/bin/links:${PATH}"
+fi
+export PATH="${HOME}/bin:${PATH}"
+
+
 # don't load any more settings if the shell is not interactive
 # assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
 if test -n "$PS1"; then
@@ -159,14 +169,6 @@ if test -n "$PS1"; then
   # try using faster vim for fc
   export HISTCONTROL=erasedups:ignoredups
 fi
-
-# bin/links is usually not commited
-if [ "${IS_GIT_BASH}" = "1" ]; then
-  export PATH="/c/ht/nvim-win64/bin:${PATH}"
-else
-  export PATH="${HOME}/bin/links:${PATH}"
-fi
-export PATH="${HOME}/bin:${PATH}"
 
 
 # command history settings

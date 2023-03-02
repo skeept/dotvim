@@ -1329,7 +1329,7 @@ function dr()
   fi
 }
 
-if type zoxide >& /dev/null; then
+if { type zoxide && ! type zi; } >& /dev/null ; then
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
   #mkdir -p "${_ZO_DATA_DIR}"
   _zoxide_add()
