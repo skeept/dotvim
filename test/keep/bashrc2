@@ -743,7 +743,7 @@ __print_folder_keys()
 d()
 {
   # implement changing logic
-  CD_OP="$(type z >& /dev/null && echo z || echo cd)"
+  local CD_OP="$(type z >& /dev/null && echo z || echo cd)"
   [ -z "$@" ] && __print_folder_keys && return
 
   # can be name or key

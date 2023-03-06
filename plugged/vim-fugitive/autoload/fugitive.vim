@@ -2582,13 +2582,6 @@ function! s:ReplaceCmd(cmd) abort
   endif
 endfunction
 
-function! s:QueryLog(refspec, limit) abort
-  let lines = s:LinesError(['log', '-n', '' . a:limit, '--pretty=format:%h%x09%s'] + a:refspec + ['--'])[0]
-  call map(lines, 'split(v:val, "\t", 1)')
-  call map(lines, '{"type": "Log", "commit": v:val[0], "subject": join(v:val[1 : -1], "\t")}')
-  return lines
-endfunction
-
 function! s:FormatLog(dict) abort
   return a:dict.commit . ' ' . a:dict.subject
 endfunction
@@ -2635,9 +2628,14 @@ endfunction
 
 function! s:AddLogSection(label, refspec) abort
   let limit = 256
-  let log = s:QueryLog(a:refspec, limit)
+  let [log, exec_error] = s:LinesError(['log', '-n', '' . limit, '--pretty=format:%h%x09%s'] + a:refspec + ['--'])
+  if exec_error
+    return 0
+  endif
+  call map(log, 'split(v:val, "\t", 1)')
+  call map(log, '{"type": "Log", "commit": v:val[0], "subject": join(v:val[1 : -1], "\t")}')
   if empty(log)
-    return
+    return 1
   elseif len(log) == limit
     call remove(log, -1)
     let label = a:label . ' (' . (limit - 1). '+)'
@@ -2645,6 +2643,7 @@ function! s:AddLogSection(label, refspec) abort
     let label = a:label . ' (' . len(log) . ')'
   endif
   call append(line('$'), ['', label] + s:Format(log))
+  return 1
 endfunction
 
 let s:rebase_abbrevs = {
@@ -2682,7 +2681,6 @@ function! fugitive#BufReadStatus(...) abort
     let [staged, unstaged, untracked] = [[], [], []]
     let props = {}
 
-    let pull = ''
     if empty(s:Tree())
       let branch = FugitiveHead(0)
       let head = FugitiveHead(11)
@@ -2734,7 +2732,6 @@ function! fugitive#BufReadStatus(...) abort
       else
         let head = FugitiveHead(11)
       endif
-      let pull = get(props, 'branch.upstream', '')
     else " git < 2.11
       let cmd += ['status', '--porcelain', '-bz']
       let [output, message, exec_error] = s:NullError(cmd)
@@ -2747,7 +2744,7 @@ function! fugitive#BufReadStatus(...) abort
       endwhile
       let head = matchstr(output[0], '^## \zs\S\+\ze\%($\| \[\)')
       if head =~# '\.\.\.'
-        let [head, pull] = split(head, '\.\.\.')
+        let head = split(head, '\.\.\.')[0]
         let branch = head
       elseif head ==# 'HEAD' || empty(head)
         let head = FugitiveHead(11)
@@ -2799,8 +2796,29 @@ function! fugitive#BufReadStatus(...) abort
       let b:fugitive_files['Unstaged'][dict.filename] = dict
     endfor
 
+    let fetch_remote = FugitiveConfigGet('branch.' . branch . '.remote', config)
+    if empty(fetch_remote) && !empty(FugitiveConfigGet('remote.origin.url', config))
+      let fetch_remote = 'origin'
+    endif
+    let push_remote = FugitiveConfigGet('branch.' . branch . '.pushRemote', config)
+    if empty(push_remote)
+      let push_remote = FugitiveConfigGet('remote.pushDefault', config)
+      if empty(push_remote)
+        let push_remote = fetch_remote
+      elseif empty(FugitiveConfigGet('remote.' . push_remote . '.url', config))
+        let push_remote = ''
+      endif
+    endif
+
     let pull_type = 'Pull'
-    if len(pull)
+    if empty(fetch_remote) || empty(branch)
+      let pull_ref = ''
+    elseif fetch_remote ==# '.'
+      let pull_ref = FugitiveConfigGet('branch.' . branch . '.merge', config)
+    else
+      let pull_ref = substitute(FugitiveConfigGet('branch.' . branch . '.merge', config), '^refs/heads/', 'refs/remotes/' . fetch_remote . '/', '')
+    endif
+    if len(pull_ref)
       let rebase = FugitiveConfigGet('branch.' . branch . '.rebase', config)
       if empty(rebase)
         let rebase = FugitiveConfigGet('pull.rebase', config)
@@ -2812,27 +2830,22 @@ function! fugitive#BufReadStatus(...) abort
       endif
     endif
 
-    let push_remote = FugitiveConfigGet('branch.' . branch . '.pushRemote', config)
-    if empty(push_remote)
-      let push_remote = FugitiveConfigGet('remote.pushDefault', config)
-    endif
-    let fetch_remote = FugitiveConfigGet('branch.' . branch . '.remote', config)
-    if empty(fetch_remote)
-      let fetch_remote = 'origin'
-    endif
-    if empty(push_remote)
-      let push_remote = fetch_remote
-    endif
-
     let push_default = FugitiveConfigGet('push.default', config)
     if empty(push_default)
       let push_default = fugitive#GitVersion(2) ? 'simple' : 'matching'
     endif
     if push_default ==# 'upstream'
-      let push = pull
+      let push_ref = pull_ref
+    elseif empty(push_remote) || empty(branch)
+      let push_ref = ''
+    elseif push_remote ==# '.'
+      let push_ref = 'refs/heads/' . branch
     else
-      let push = len(branch) ? (push_remote ==# '.' ? '' : push_remote . '/') . branch : ''
+      let push_ref = 'refs/remotes/' . push_remote . '/' . branch
     endif
+
+    let push_short = substitute(push_ref, '^refs/\w\+/', '', '')
+    let pull_short = substitute(pull_ref, '^refs/\w\+/', '', '')
 
     if isdirectory(fugitive#Find('.git/rebase-merge/'))
       let rebasing_dir = fugitive#Find('.git/rebase-merge/')
@@ -2878,9 +2891,9 @@ function! fugitive#BufReadStatus(...) abort
     silent keepjumps %delete_
 
     call s:AddHeader('Head', head)
-    call s:AddHeader(pull_type, pull)
-    if push !=# pull
-      call s:AddHeader('Push', push)
+    call s:AddHeader(pull_type, pull_short)
+    if push_ref !=# pull_ref
+      call s:AddHeader('Push', push_short)
     endif
     if empty(s:Tree())
       if get(fugitive#ConfigGetAll('core.bare', config), 0, '') !~# '^\%(false\|no|off\|0\|\)$'
@@ -2900,20 +2913,28 @@ function! fugitive#BufReadStatus(...) abort
     call s:AddSection('Staged', staged)
     let staged_end = len(staged) ? line('$') : 0
 
-    if len(push) && !(push ==# pull && get(props, 'branch.ab') =~# '^+0 ')
-      call s:AddLogSection('Unpushed to ' . push, [push . '..' . head])
+    if push_ref ==# pull_ref
+      let push_ref = ''
     endif
-    if len(pull) && push !=# pull
-      call s:AddLogSection('Unpushed to ' . pull, [pull . '..' . head])
+    if len(push_ref)
+      if !s:AddLogSection('Unpushed to ' . push_short, [push_ref . '..' . head])
+        let push_ref = ''
+      endif
     endif
-    if empty(pull) && empty(push) && empty(rebasing)
+    if len(pull_ref) && get(props, 'branch.ab') !~# '^+0 '
+      if !s:AddLogSection('Unpushed to ' . pull_short, [pull_ref . '..' . head])
+        let pull_ref = ''
+      endif
+    endif
+    if empty(pull_ref) && empty(push_ref) && empty(rebasing) &&
+          \ !empty(push_remote . fetch_remote)
       call s:AddLogSection('Unpushed to *', [head, '--not', '--remotes'])
     endif
-    if len(push) && push !=# pull
-      call s:AddLogSection('Unpulled from ' . push, [head . '..' . push])
+    if len(push_ref)
+      call s:AddLogSection('Unpulled from ' . push_short, [head . '..' . push_ref])
     endif
-    if len(pull) && get(props, 'branch.ab') !~# ' -0$'
-      call s:AddLogSection('Unpulled from ' . pull, [head . '..' . pull])
+    if len(pull_ref) && get(props, 'branch.ab') !~# ' -0$'
+      call s:AddLogSection('Unpulled from ' . pull_short, [head . '..' . pull_ref])
     endif
 
     setlocal nomodified readonly noswapfile
