@@ -2803,18 +2803,14 @@ function! fugitive#BufReadStatus(...) abort
       let b:fugitive_files['Unstaged'][dict.filename] = dict
     endfor
 
-    let fetch_remote = FugitiveConfigGet('branch.' . branch . '.remote', config)
-    if empty(fetch_remote) && !empty(FugitiveConfigGet('remote.origin.url', config))
-      let fetch_remote = 'origin'
+    let fetch_remote = config.Get('branch.' . branch . '.remote', 'origin')
+    let push_remote = config.Get('branch.' . branch . '.pushRemote',
+          \ config.Get('remote.pushDefault', fetch_remote))
+    if empty(config.Get('remote.' . fetch_remote . '.fetch'))
+      let fetch_remote = ''
     endif
-    let push_remote = FugitiveConfigGet('branch.' . branch . '.pushRemote', config)
-    if empty(push_remote)
-      let push_remote = FugitiveConfigGet('remote.pushDefault', config)
-      if empty(push_remote)
-        let push_remote = fetch_remote
-      elseif empty(FugitiveConfigGet('remote.' . push_remote . '.url', config))
-        let push_remote = ''
-      endif
+    if empty(config.Get('remote.' . push_remote . '.push', config.Get('remote.' . push_remote . '.fetch')))
+      let push_remote = ''
     endif
 
     let pull_type = 'Pull'
@@ -2823,7 +2819,7 @@ function! fugitive#BufReadStatus(...) abort
     elseif fetch_remote ==# '.'
       let pull_ref = FugitiveConfigGet('branch.' . branch . '.merge', config)
     else
-      let pull_ref = substitute(FugitiveConfigGet('branch.' . branch . '.merge', config), '^refs/heads/', 'refs/remotes/' . fetch_remote . '/', '')
+      let pull_ref = substitute(config.Get('branch.' . branch . '.merge', 'refs/heads/' . branch), '^refs/heads/', 'refs/remotes/' . fetch_remote . '/', '')
     endif
     if len(pull_ref)
       let rebase = FugitiveConfigGet('branch.' . branch . '.rebase', config)
@@ -2920,7 +2916,8 @@ function! fugitive#BufReadStatus(...) abort
     call s:AddSection('Staged', staged)
     let staged_end = len(staged) ? line('$') : 0
 
-    let unpushed_push = s:QueryLogRange(push_ref ==# pull_ref ? '' : push_ref, head)
+    let unique_push_ref = push_ref ==# pull_ref ? '' : push_ref
+    let unpushed_push = s:QueryLogRange(unique_push_ref, head)
     if get(props, 'branch.ab') =~# '^+0 '
       let unpushed_pull = {'error': 0, 'overflow': 0, 'entries': []}
     else
@@ -2937,7 +2934,7 @@ function! fugitive#BufReadStatus(...) abort
           \ !empty(push_remote . fetch_remote)
       call s:AddLogSection('Unpushed to *', s:QueryLog([head, '--not', '--remotes'], 256))
     endif
-    call s:AddLogSection('Unpulled from ' . push_short, s:QueryLogRange(head, push_ref))
+    call s:AddLogSection('Unpulled from ' . push_short, s:QueryLogRange(head, unique_push_ref))
     if len(pull_ref) && get(props, 'branch.ab') !~# ' -0$'
       call s:AddLogSection('Unpulled from ' . pull_short, s:QueryLogRange(head, pull_ref))
     endif
