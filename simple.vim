@@ -21,8 +21,8 @@ endif
 let g:is_win = has('win32') || has('win64')
 "}}}
 
-" decide on pathogen or vam (pathogen: 1, vam: 2)
-let g:addon_manager = 2
+" decide on pathogen or vam (pathogen: 1, vam: 2, 3: Plug + internal)
+let g:addon_manager = 3
 let g:active_addons = []
 
 "================== vim-addon-manager========================================{{{
@@ -47,6 +47,52 @@ function! SetupVAM()
         \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
 endfunction
 call SetupVAM()
+endif
+"==============================================================================}}}
+
+
+"================== Plug + internal ========================================={{{
+if g:addon_manager == 3
+
+function! Cond(cond, ...)
+  let opts = get(a:000, 0, {})
+  return a:cond ? opts : extend(opts, { 'on': [], 'for': [] })
+endfunction
+
+call plug#begin(g:p0 . '/plugged')
+
+Plug 'preservim/nerdcommenter'
+
+" Shougo
+Plug 'Shougo/junkfile.vim', { 'on': ['JunkfileOpen'] }
+"Plug 'Shougo/neosnippet.vim'
+"Plug 'Shougo/neosnippet-snippets'
+
+Plug 'ctrlpvim/ctrlp.vim', { 'on': ['CtrlP', 'CtrlPCurFile'] }
+
+
+Plug g:p0 . '/pack/bundle/opt/airline'
+Plug g:p0 . '/pack/bundle/opt/airline-extensions'
+
+"Plug 'junegunn/fzf'
+"Plug 'junegunn/fzf.vim'
+
+"tpope
+Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }
+Plug 'tpope/vim-unimpaired'
+
+
+Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
+
+
+Plug 'molok/vim-scratch', { 'on': ['Scratch', 'Sscratch', 'ScratchToggle', 'Vscratch', 'Tscratch'] }
+
+
+Plug 'skeept/ctrlp-packadd'
+
+call plug#end()
+
+
 endif
 "==============================================================================}}}
 
@@ -76,11 +122,13 @@ endif
 "set statusline+=\ \ \ \ \ %l/%L\ \ %3c\ \ \ %P
 "
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
+if 0
 set statusline=%2.2n\ %t\ %h%m%r%=
 set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P
+endif
 
 "" SmartusLine
 "hi Modified guifg=black guibg=#FFA500
@@ -96,10 +144,6 @@ nnoremap <C-P> :<C-U>let curr_vcount=v:count
 nnoremap ,b :<C-U>call jraf#loadCtrlP()<CR>:<C-U>CtrlPBuffer<CR>
 "}}}
 
-"for filetype tex we need imap.vim
-if has("autocmd")
-  autocmd FileType tex exec "source " . g:p0 . "/bundle/vlatex/plugin/imaps.vim"
-endif
 "==============================================================================}}}
 
 " vim: foldmethod=marker
