@@ -134,6 +134,12 @@ else
 fi
 export PATH="${HOME}/bin:${PATH}"
 
+# add some completions under bin/links/completions
+# just copy code into completions/comp.bash
+completions_file=$HOME/bin/links/completions/comp.bash
+[ -e "$completions_file" ] && source $completions_file
+
+
 
 # don't load any more settings if the shell is not interactive
 # assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
