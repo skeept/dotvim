@@ -177,7 +177,10 @@ tcr()
 bc4()
 {
   _BC_CMD1="$(__win_base)/Program Files/Beyond Compare 4/BCompare.exe"
-  "${_BC_CMD1}" $@ &
+  local arg1="$(winpath $1)"
+  local arg2="$(winpath $2)"
+  shift; shift
+  "${_BC_CMD1}" "${arg1}" "${arg2}" $@ &
 }
 
 if [ -e /conda/envs/dvc/bin/vd ]; then
