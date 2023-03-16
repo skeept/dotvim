@@ -48,7 +48,7 @@ Plug 'lifepillar/vim-mucomplete'
 "Plug 'lifepillar/vim-mucomplete'
 
 "tpope
-Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }
+Plug 'tpope/vim-fugitive', { 'on': ['G', 'Git', 'Gwrite', 'Gstatus'] }
 Plug 'tpope/vim-rsi'
 "Plug 'tpope/vim-abolish', { 'on': 'Subvert' }
 Plug 'tpope/vim-repeat'
