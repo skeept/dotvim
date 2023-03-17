@@ -209,6 +209,10 @@ nnoremap ,fc :Commands<CR>
 nnoremap ,fl :Lines<CR>
 nnoremap ,vv :Files<CR>
 
+nnoremap <SPACE>z :FZF<ENTER>
+nnoremap <SPACE>e :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
+nnoremap <SPACE>b :Buffers<CR>
+
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
 "let g:tmpa='screen -p gams_run -X stuff gr'
 "nmap <Leader>rg :!screen -p gams_run -X stuff gr  <CR>
