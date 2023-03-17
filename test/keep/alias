@@ -112,6 +112,6 @@ alias cpv='rsync -ah --info=progress2'
 alias lazygit=lg
 alias bc=bc4
 alias ddf=dirdiff
-alias ruf='ruff --select ALL --ignore UP006,UP007,T201,EXE002'
+alias ruf='ruff --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,D213'
 
 # vim: set ft=sh:

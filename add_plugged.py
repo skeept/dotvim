@@ -1,59 +1,52 @@
-__doc__ = (
-    """ loop over all the files in plugged (ignore .git) and add those to git index"""
-)
+"""Loop over all the files in plugged (ignore .git) and add those to git index."""
 
-import os
-import subprocess
 import argparse
-from os.path import basename, join, isdir
-from typing import Generator
+import subprocess
+import typing
+from pathlib import Path
 
 
-def get_individual_files(path_name: str) -> Generator[str, None, None]:
-    for root, _, files in os.walk(path_name):
-        for fn in files:
-            if basename(fn) == "tags":
-                continue
-            # can add more exceptions
-            yield join(root, fn)
+def get_individual_files(path_name: Path) -> typing.Iterator[Path]:
+    """Get all files in specific folder."""
+    if path_name.is_file():
+        yield path_name
+        return
+    for fn in path_name.glob("**/*"):
+        if fn.name == "tags":
+            continue
+        yield fn
 
 
-def git_force_add(path_name: str) -> None:
-    """git force add files or folder"""
-    if isdir(path_name):
-        files = list(get_individual_files(path_name))
-    else:
-        files = [path_name]
-
+def git_force_add(path_name: Path) -> None:
+    """Use --force arg to git to force add files or folder."""
+    files = list(get_individual_files(path_name=path_name))
     if not files:
         return
-    files = " ".join(files)
 
-    cmd = f"git add --force {files}".split()
+    cmd = "git add --force".split()
+    cmd.extend(str(fn) for fn in files)
     subprocess.run(cmd)
 
 
-def add_path(path_name: str) -> None:
-    path_is_plugged = basename(path_name) == "plugged"
-    packages = os.listdir(path_name) if path_is_plugged else [path_name]
-    if not path_is_plugged:
-        path_name = ""
+def add_path(path_name: Path) -> None:
+    """Add specific path."""
+    path_is_plugged = path_name.name == "plugged"
+    packages = list(path_name.iterdir()) if path_is_plugged else [path_name]
     for dir_name in packages:
-        curdir = join(path_name, dir_name)
-        for fn in os.listdir(curdir):
-            if fn == ".git":
+        for fn in dir_name.iterdir():
+            if fn.name == ".git":
                 continue
-            fn = join(curdir, fn)
             print("***", fn)
             git_force_add(fn)
 
 
-def main():
+def main() -> None:
+    """Parse arguments and run action."""
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="path to convert", default="plugged")
 
     args = parser.parse_args()
-    add_path(args.path)
+    add_path(Path(args.path))
 
 
 if __name__ == "__main__":
