@@ -78,7 +78,7 @@ Plug g:p0 . '/pack/bundle/opt/airline-extensions'
 "Plug 'junegunn/fzf.vim'
 
 "tpope
-Plug 'tpope/vim-fugitive', { 'on': ['Git', 'Gwrite', 'Gstatus'] }
+Plug 'tpope/vim-fugitive', { 'on': ['G', 'Git', 'Gwrite', 'Gstatus'] }
 Plug 'tpope/vim-unimpaired'
 
 

@@ -5,14 +5,20 @@ import subprocess
 import typing
 from pathlib import Path
 
+SKIP = [
+    ".git",
+    "tags"
+]
 
 def get_individual_files(path_name: Path) -> typing.Iterator[Path]:
     """Get all files in specific folder."""
+    if path_name.name in SKIP:
+        return
     if path_name.is_file():
         yield path_name
         return
     for fn in path_name.glob("**/*"):
-        if fn.name == "tags":
+        if fn.name in SKIP:
             continue
         yield fn
 
@@ -34,8 +40,6 @@ def add_path(path_name: Path) -> None:
     packages = list(path_name.iterdir()) if path_is_plugged else [path_name]
     for dir_name in packages:
         for fn in dir_name.iterdir():
-            if fn.name == ".git":
-                continue
             print("***", fn)
             git_force_add(fn)
 
