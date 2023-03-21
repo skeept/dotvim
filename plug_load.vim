@@ -26,6 +26,7 @@ Plug 'lambdalisue/gina.vim', { 'on': 'Gina' }
 autocmd! User gina.vim call LoadGina()
 
 let use_airline = 0  " issues when running airline (complains about ale init)
+let use_airline = has("nvim")
 Plug 'molok/vim-smartusline', Cond(2 == use_airline)
 if 1 == use_airline "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
@@ -102,6 +103,11 @@ Plug 'lambdalisue/gin.vim', { 'on': ['Gin', 'GinStatus'] }
 " local plugins
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
 Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable', 'ALELint']}
+
+"airline fails if ale is not properly loaded
+if use_airline
+  Plug g:p0 . '/pack/bundle/opt/ale'
+endif
 
 "check telescope
 "let is_nvim = has("nvim")

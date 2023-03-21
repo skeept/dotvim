@@ -11,14 +11,14 @@ set backspace=indent,eol,start
 "set backspace=2
 if !has('nvim') | set esckeys | endif
 
-set autoindent		" always set autoindenting on
+set autoindent          " always set autoindenting on
 set splitright          "split the window to the right
 set splitbelow          "open the window to the bottom
 
 set history=200
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set incsearch		" do incremental searching
+set ruler               " show the cursor position all the time
+set showcmd             " display incomplete commands
+set incsearch           " do incremental searching
 set ignorecase
 set smartcase
 set showmatch           " show matching parenthesis
@@ -516,13 +516,13 @@ function! LoadUnite(timer) "{{{
   let g:unite_source_history_yank_enable = 0
 
   call vam#ActivateAddons(['unite.vim', 'unite-mark', 'unite-outline',
-	\ 'unite-tag', 'unite-colorscheme', 'vim-unite-history',
+        \ 'unite-tag', 'unite-colorscheme', 'vim-unite-history',
         \ ],
         \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
   nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
-	\ buffer bookmark file<CR>
+        \ buffer bookmark file<CR>
   nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -start-insert -buffer-name=files
-	\ -prompt=%\  buffer bookmark file<CR>
+        \ -prompt=%\  buffer bookmark file<CR>
   nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
   nnoremap <silent> ,uo :<C-u>Unite outline -start-insert<CR>
   nnoremap ,uf :<C-U>Unite -start-insert source<CR>
