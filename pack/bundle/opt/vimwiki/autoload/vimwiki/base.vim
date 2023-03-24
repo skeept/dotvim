@@ -492,7 +492,7 @@ endfunction
 function! vimwiki#base#goto(...) abort
   " Jump: to other wikifile, specified on command mode
   " Called: by command VimwikiGoto (Exported)
-  let key = a:0 > 0 ? a:1 : input('Enter name: ', '',
+  let key = a:0 > 0 && a:1 !=# '' ? a:1 : input('Enter name: ', '',
         \ 'customlist,vimwiki#base#complete_links_escaped')
 
   let anchor = a:0 > 1 ? a:2 : ''
@@ -500,7 +500,7 @@ function! vimwiki#base#goto(...) abort
   " Save current file pos
   let vimwiki_prev_link = [vimwiki#path#current_wiki_file(), getpos('.')]
 
-  call vimwiki#base#edit_file(':e',
+  call vimwiki#base#edit_file('edit',
         \ vimwiki#vars#get_wikilocal('path') . key . vimwiki#vars#get_wikilocal('ext'),
         \ anchor,
         \ vimwiki_prev_link,
@@ -664,7 +664,7 @@ function! vimwiki#base#get_anchors(filename, syntax) abort
     let h_match = matchlist(line, rxheader)
     if !empty(h_match)
       let header = vimwiki#base#normalize_anchor(h_match[2])
-      " Mesure: header level
+      " Measure: header level
       let level = len(h_match[1])
       call add(anchors, header)
       let anchor_level[level-1] = header
@@ -755,7 +755,7 @@ function! vimwiki#base#normalize_anchor(anchor, ...) abort
 
   " 4 Append '-1', '-2', '-3',... to make it unique <= If that not unique
   if has_key(previous_anchors, anchor)
-    " Inc anchor number (before modifing the anchor)
+    " Inc anchor number (before modifying the anchor)
     let anchor_nb = previous_anchors[anchor] + 1
     let previous_anchors[anchor] = anchor_nb
     " Append suffix
@@ -816,7 +816,7 @@ function! vimwiki#base#unnormalize_anchor(anchor) abort
   " For each char
   let anchor_loop = ''
   for char in split(anchor, '\zs')
-    " Nest the char for easyer debugging
+    " Nest the char for easier debugging
     let anchor_loop .=  '\%('
 
     " 3 Change any space to a hyphen
@@ -825,7 +825,7 @@ function! vimwiki#base#unnormalize_anchor(anchor) abort
       let anchor_loop .=  invisible_rx.'\+'
 
     " 2 Remove anything that is not a letter, number, CJK character, hyphen or space
-    " -- So add puncutation regex at each char
+    " -- So add punctuation regex at each char
     else
       " Match My_char . punctuation . ( link . punctuaction )?
       " Note: Because there may be punctuation before ad after link
@@ -847,7 +847,7 @@ endfunction
 
 
 function! s:jump_to_anchor(anchor) abort
-  " Jump: to anchor, doing the oposite of normalize_anchor
+  " Jump: to anchor, doing the opposite of normalize_anchor
   " Called: edit_file
   " Get segments <= anchor
   let anchor = vimwiki#u#escape(a:anchor)
@@ -886,7 +886,7 @@ function! s:jump_to_segment(segment, segment_norm_re, segment_nb) abort
         \ vimwiki#vars#get_syntaxlocal('tag_match'),
         \ '__Tag__', a:segment, 'g')
 
-  " Go: Move cursor: maybe more than onces (see markdown suffix)
+  " Go: Move cursor: maybe more than once (see markdown suffix)
   let success_nb = 0
   let is_last_segment = 0
   for i in range(a:segment_nb)
@@ -898,7 +898,7 @@ function! s:jump_to_segment(segment, segment_norm_re, segment_nb) abort
 
     " Succeed: Get the result and reloop or leave
     if pos != 0
-      " Avance, one line more to not rematch the same pattern if not last segment_nb
+      " Advance, one line more to not rematch the same pattern if not last segment_nb
       if success_nb < a:segment_nb-1
         let pos += 1
         let is_last_segment = -1
@@ -1102,7 +1102,7 @@ endfunction
 function! vimwiki#base#edit_file(command, filename, anchor, ...) abort
   " Edit File: (like :e)
   " :param: command <string>: ':e'
-  " :param: filename <strign> vimwiki#vars#get_wikilocal('path') . key . vimwiki#vars#get_wikilocal('ext')
+  " :param: filename <string> vimwiki#vars#get_wikilocal('path') . key . vimwiki#vars#get_wikilocal('ext')
   " :param: anchor
   " :param: (1) vimwiki_prev_link
   " :param: (2) vimwiki#u#ft_is_vw()
@@ -1117,10 +1117,10 @@ function! vimwiki#base#edit_file(command, filename, anchor, ...) abort
   endif
 
   " Check if the file we want to open is already the current file
-  " which happens if we jump to an achor in the current file.
+  " which happens if we jump to an anchor in the current file.
   " This hack is necessary because apparently Vim messes up the result of
   " getpos() directly after this command. Strange.
-  if !(a:command ==# ':e ' && vimwiki#path#is_equal(a:filename, expand('%:p')))
+  if !(a:command =~# ':\?[ed].*' && vimwiki#path#is_equal(a:filename, expand('%:p')))
     try
       execute a:command fname
     catch /E37:/
@@ -1129,6 +1129,10 @@ function! vimwiki#base#edit_file(command, filename, anchor, ...) abort
       return
     catch /E325:/
       call vimwiki#u#warn('Vim couldn''t open the file, probably because a swapfile already exists. See :h E325.')
+      return
+    catch /E319:/
+      call vimwiki#u#warn('Vim couldn''t open the file, cannot launch the drop command. See :h E319.')
+      execute 'edit' fname
       return
     endtry
     " If the opened file was not already loaded by Vim, an autocommand is
@@ -1391,7 +1395,7 @@ endfunction
 function! s:open_wiki_buffer(item) abort
   " Edit wiki file.
   " Called: by rename_file: Usefull for buffer commands
-  call vimwiki#base#edit_file(':e', a:item[0], '')
+  call vimwiki#base#edit_file('edit', a:item[0], '')
   if !empty(a:item[1])
     call vimwiki#vars#set_bufferlocal('prev_links', a:item[1], a:item[0])
   endif
@@ -1421,7 +1425,7 @@ function! vimwiki#base#nested_syntax(filetype, start, end, textSnipHl) abort
   " attempting to include them.
   " https://vi.stackexchange.com/a/10354
   " Previously, this used a try/catch block to intercept any errors thrown
-  " when attempting to include files. The error(s) interferred with running
+  " when attempting to include files. The error(s) interfered with running
   " with Vader tests (specifically, testing VimwikiSearch).
   if !empty(globpath(&runtimepath, 'syntax/'.a:filetype.'.vim'))
     execute 'syntax include @'.group.' syntax/'.a:filetype.'.vim'
@@ -1651,7 +1655,7 @@ function! vimwiki#base#follow_link(split, ...) abort
           \ vimwiki#vars#get_syntaxlocal('rxWeblinkMatchUrl'))
     if lnk !=# ''
       if lnk !~# '\%(\%('.vimwiki#vars#get_global('schemes_web').'\):\%(\/\/\)\?\)\S\{-1,}'
-        " prepend file: scheme so link is opened by sytem handler if it isn't a web url
+        " prepend file: scheme so link is opened by system handler if it isn't a web url
         let lnk = 'file:'.lnk
       endif
     endif
@@ -1665,23 +1669,26 @@ function! vimwiki#base#follow_link(split, ...) abort
     endif
 
     if a:split ==# 'hsplit'
-      let cmd = ':split '
+      let cmd = 'split'
     elseif a:split ==# 'vsplit'
-      let cmd = ':vsplit '
+      let cmd = 'vsplit'
     elseif a:split ==# 'badd'
-      let cmd = ':badd '
+      let cmd = 'badd'
     elseif a:split ==# 'tab'
-      let cmd = ':tabnew '
+      let cmd = 'tabnew'
     elseif a:split ==# 'tabdrop'
       " Use tab drop if we've already got the file open in an existing tab
-      let cmd = ':tab drop '
+      let cmd = 'tab edit'
+      if exists(':drop') == 2
+        let cmd = 'tab drop'
+      endif
     else
       " Same as above - doing this by default reduces incidence of multiple
       " tabs with the same file.  We default to :e just in case :drop doesn't
       " exist in the current build.
-      let cmd = ':e '
-      if exists(':drop')
-        let cmd = ':drop '
+      let cmd = 'edit'
+      if exists(':drop') == 2 && has('windows')
+        let cmd = 'drop'
       endif
     endif
 
@@ -1691,7 +1698,7 @@ function! vimwiki#base#follow_link(split, ...) abort
       let previous_window_nr = winnr('#')
       if previous_window_nr > 0 && previous_window_nr != winnr()
         execute previous_window_nr . 'wincmd w'
-        let cmd = ':e'
+        let cmd = ':edit'
       endif
     endif
 
@@ -1739,8 +1746,14 @@ function! vimwiki#base#go_back_link() abort
   " Jump to target with edit_file
   if !empty(prev_link)
     " go back to saved wiki link
-    call vimwiki#base#edit_file(':e ', prev_link[0], '')
-    call setpos('.', prev_link[1])
+    " Change file if required lazy
+    let file = prev_link[0]
+    let pos = prev_link[1]
+    " Removed the filereadable check for Vader
+    if !(vimwiki#path#is_equal(file, expand('%:p')))
+      call vimwiki#base#edit_file('edit', file, '')
+    endif
+    call setpos('.', pos)
   else
     " maybe we came here by jumping to a tag -> pop from the tag stack
     silent! pop!
@@ -1955,7 +1968,7 @@ function! vimwiki#base#rename_file(...) abort
   else
     " Should not happen
     call vimwiki#u#error('New buffer is the same as old, so will not delete: '
-          \ . buf_new_nb . '.Please open an issue if see this messsage')
+          \ . buf_new_nb . '.Please open an issue if see this message')
   endif
 
   " Log success
@@ -2223,7 +2236,7 @@ function! vimwiki#base#AddHeaderLevel(...) abort
   " Clause, argument must be <= 1
   " Actually argument is not used :-)
   if a:1 > 1
-    call vimwiki#base#AddHeaderLevel(1)
+    call vimwiki#base#AddHeaderLevel(a:1 - 1)
   endif
   let lnum = line('.')
   let line = getline(lnum)
@@ -2257,7 +2270,7 @@ function! vimwiki#base#RemoveHeaderLevel(...) abort
   " Clause, argument must be <= 1
   " Actually argument is not used :-)
   if a:1 > 1
-    call vimwiki#base#RemoveHeaderLevel(1)
+    call vimwiki#base#RemoveHeaderLevel(a:1 - 1)
   endif
   let lnum = line('.')
   let line = getline(lnum)
@@ -2492,7 +2505,7 @@ function! vimwiki#base#table_of_contents(create) abort
   " copy all local variables into dict (add a: if arguments are needed)
   let GeneratorTOC = copy(l:)
   function! GeneratorTOC.f() abort
-    " Clean heading informations
+    " Clean heading information
     let numbering = vimwiki#vars#get_global('html_header_numbering')
     " TODO numbering not used !
     let headers_levels = [['', 0], ['', 0], ['', 0], ['', 0], ['', 0], ['', 0]]
@@ -2655,7 +2668,7 @@ function! vimwiki#base#normalize_link_helper(str, rxUrl, rxDesc, template) abort
     let descr = s:clean_url(url)
     if descr ==# '' | return url | endif
   endif
-  " Substiture placeholders
+  " Substitute placeholders
   let lnk = s:safesubstitute(a:template, '__LinkDescription__', descr, '')
   let lnk = s:safesubstitute(lnk, '__LinkUrl__', url, '')
   let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
@@ -2833,7 +2846,7 @@ endfunction
 
 
 function! vimwiki#base#complete_file(ArgLead, CmdLine, CursorPos) abort
-  " Complete filename relatie to current file
+  " Complete filename relative to current file
   " Called: rename_file
   " Start from current file
   let base_path = expand('%:h')
@@ -2900,7 +2913,7 @@ function! s:get_title(match) abort
     " Do not overwrite if g:page_title is already set
     " when there are multiple <title> tags, only use the first one
     " this is a side effect of the substitute's 'n' flag (count number of
-    " occurences and evaluate \= for each one
+    " occurrences and evaluate \= for each one
     if (g:page_title !=# '')
         return
     endif
@@ -3005,7 +3018,7 @@ function! vimwiki#base#colorize(...) range abort
   " TODO Must be coherent with color_tag_template
   " Arg1: Key, list them with VimwikiColorize completion
   " Arg2: visualmode()
-  " -- Just removeing spaces, \/ -> /,  replacing COLORFG will do it
+  " -- Just removing spaces, \/ -> /,  replacing COLORFG will do it
   let key = a:0 ? a:1 : 'default'
   let mode = a:0 > 1 ? a:2 : ''
   let color_dic = vimwiki#vars#get_wikilocal('color_dic')

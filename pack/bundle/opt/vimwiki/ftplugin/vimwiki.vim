@@ -3,7 +3,7 @@
 " Home: https://github.com/vimwiki/vimwiki/
 
 
-" Clause: load only onces per buffer
+" Clause: load only once per buffer
 if exists('b:did_ftplugin')
   finish
 endif
@@ -160,7 +160,7 @@ setlocal formatoptions-=2
 setlocal formatoptions+=c
 " Do not wrap if line was already long
 setlocal formatoptions+=l
-" AutoWrap inteligent with lists
+" AutoWrap intelligent with lists
 setlocal formatoptions+=n
 let &formatlistpat = vimwiki#vars#get_wikilocal('rxListItem')
 " Used to join 'commented' lines (blockquote, list) (see: #915)
@@ -222,7 +222,7 @@ endfunction
 " (so that -s:tolerance <= spare <= s:tolerance, "string" ends with s:ellipsis)
 " Return: [string, spare]
 function! s:shorten_text(text, len) abort
-  " strlen() returns lenght in bytes, not in characters, so we'll have to do a
+  " strlen() returns length in bytes, not in characters, so we'll have to do a
   " trick here -- replace all non-spaces with dot, calculate lengths and
   " indexes on it, then use original string to break at selected index.
   let text_pattern = substitute(a:text, '\m\S', '.', 'g')
@@ -363,7 +363,7 @@ command! -buffer VimwikiDiaryPrevDay call vimwiki#diary#goto_prev_day()
 " tags commands
 command! -buffer -bang VimwikiRebuildTags call vimwiki#tags#update_tags(1, '<bang>')
 command! -buffer -nargs=* -complete=custom,vimwiki#tags#complete_tags
-      \ VimwikiSearchTags VimwikiSearch /:<args>:/
+      \ VimwikiSearchTags call vimwiki#tags#search_tags(<q-args>)
 command! -buffer -nargs=* -complete=custom,vimwiki#tags#complete_tags
       \ VimwikiGenerateTagLinks call vimwiki#tags#generate_tags(1, <f-args>)
 command! -buffer -nargs=* -complete=custom,vimwiki#tags#complete_tags

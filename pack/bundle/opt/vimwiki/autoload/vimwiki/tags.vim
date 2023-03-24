@@ -117,7 +117,8 @@ function! s:scan_tags(lines, page_name) abort
         endfor
         let current_complete_anchor .= header
       endif
-      continue " tags are not allowed in headers
+      " See: issue #1316 to allow tags in header
+      " continue " tags are not allowed in headers
     endif
 
     " Scan line for tags.  There can be many of them.
@@ -247,7 +248,7 @@ function! s:tags_entry_cmp(i1, i2) abort
   "
   " This function is needed for tags sorting, since plain sort() compares line
   " numbers as strings, not integers, and so, for example, tag at line 14
-  " preceeds the same tag on the same page at line 9.  (Because string "14" is
+  " precedes the same tags on the same page at line 9.  (Because string "14" is
   " alphabetically 'less than' string "9".)
   let items = []
   for orig_item in [a:i1, a:i2]
@@ -447,4 +448,22 @@ function! vimwiki#tags#complete_tags(ArgLead, CmdLine, CursorPos) abort
   " will do the job of filtering.
   let taglist = vimwiki#tags#get_tags()
   return join(taglist, "\n")
+endfunction
+
+
+function! vimwiki#tags#search_tags(tag_pattern) abort
+  " See #1316 and rxTags in vars.vim
+  let tf = vimwiki#vars#get_syntaxlocal('tag_format')
+
+  " Craft regex
+  let rx_this_tag = '/'
+  let rx_this_tag .= tf.pre . '\@<=' . tf.pre_mark
+  let rx_this_tag .= '\%(' . tf.in . tf.sep . '\)*'
+  let rx_this_tag .= a:tag_pattern
+  let rx_this_tag .= '\%(' . tf.sep . tf.in . '\)*'
+  let rx_this_tag .= tf.post_mark . tf.post . '\@='
+  let rx_this_tag .= '/'
+
+  " Search in current wiki folder
+  return vimwiki#base#search(rx_this_tag)
 endfunction
