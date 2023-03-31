@@ -83,9 +83,9 @@ Plug 'tpope/vim-unimpaired'
 
 
 Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
-
-
 Plug 'molok/vim-scratch', { 'on': ['Scratch', 'Sscratch', 'ScratchToggle', 'Vscratch', 'Tscratch'] }
+
+Plug 'will133/vim-dirdiff', { 'on': 'DirDiff' }
 
 
 Plug 'skeept/ctrlp-packadd'
