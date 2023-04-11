@@ -239,9 +239,6 @@ nnoremap ,; :Unite history/command -start-insert<CR>
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
 
-"select everything in visual mode (from Damian Conway setup)
-vnoremap aa VGo1G
-
 nnoremap <Leader>tc :tabclose<CR>
 nnoremap ,sc :tabclose<CR>
 nnoremap <Leader>ts :tab split<CR>
