@@ -1,4 +1,4 @@
-" actually file read is ~/.ideavimrc
+" actual file read is ~/.ideavimrc
 
 sethandler <C-2> a:ide
 sethandler <C-S-2> a:ide
