@@ -1,17 +1,20 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-
-"""Find matching files or folders"""
+"""Find matching files or folders."""
 
 import os
 import sys
 
 
-def find_matching(folder_name, folder_criteria=None, folder_action=None, file_criteria=None, file_action=None):
-    """find files or folders according to criteria and apply criteria"""
-    default_action = lambda x : sys.stdout.write("{}\n".format(x))
-    to_skip = ['.git', '.svn', 'dd_']
+def find_matching(
+    folder_name,
+    folder_criteria=None,
+    folder_action=None,
+    file_criteria=None,
+    file_action=None,
+):
+    """Find files or folders according to criteria and apply criteria."""
+    def default_action(x) -> None:
+        return sys.stdout.write(f"{x}\n")
+    to_skip = [".git", ".svn", "dd_"]
     if file_action is None:
         file_action = default_action
     if folder_action is None:
@@ -20,8 +23,10 @@ def find_matching(folder_name, folder_criteria=None, folder_action=None, file_cr
         for name in (n for n in to_skip if n in dirs):
             dirs.remove(name)
         if file_criteria is not None:
-            for ff in files:
-                fname = os.path.join(root,)
+            for _ff in files:
+                fname = os.path.join(
+                    root,
+                )
                 if file_criteria(fname):
                     file_action(fname)
         if folder_criteria(root):
@@ -29,14 +34,10 @@ def find_matching(folder_name, folder_criteria=None, folder_action=None, file_cr
 
 
 def empty_folder_or_with_tags(name):
+    """Find empty folders or folder only with tags."""
     all_files = os.listdir(name)
-    return len([x for x in all_files if x != 'tags']) == 0
+    return len([x for x in all_files if x != "tags"]) == 0
 
-def fd_do(root):
-    print(root)
-    print(os.listdir(root))
-    print(" ")
 
 if __name__ == "__main__":
-    any_folder = lambda x : True
-    find_matching('.', folder_criteria=empty_folder_or_with_tags, folder_action=None)
+    find_matching(".", folder_criteria=empty_folder_or_with_tags, folder_action=None)

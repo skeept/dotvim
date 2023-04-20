@@ -1,12 +1,11 @@
-# import os
+"""Load several libraries if they exist.
+
+All the libraries are loaded in a thread with gobal variables.
+"""
+
 import sys
 import threading
 
-# np = None
-# pd = None
-# sk = None
-# tf = None
-# Path = None
 
 def _load_heavy():
     """Import on a thread."""
@@ -34,13 +33,6 @@ def _load_heavy():
     except ImportError:
         sys.stderr.write("cannot import sklearn\n")
 
-    # try:
-        # global tf
-        # import tensorflow as tf_
-        # tf = tf_
-    # except ImportError:
-        # sys.stderr.write("cannot import tensorflow\n")
-
     try:
         global tf
         import tensorflow as tf
@@ -51,6 +43,7 @@ def _load_heavy():
         global rich
         import rich
         import functools
+
         global ii
         ii = functools.partial(rich.inspect, methods=True)
         global iih
@@ -59,8 +52,6 @@ def _load_heavy():
         iia = functools.partial(rich.inspect, all=True)
     except ImportError:
         sys.stderr.write("cannot import rich\n")
-
-
 
 
 threading.Thread(target=_load_heavy).start()
