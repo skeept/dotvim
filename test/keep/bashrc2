@@ -121,30 +121,30 @@ function pre()
 
 #function sa()
 #{
-  #echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-  #if test "a$1" = "a1" ; then
-    #source "${HOME}/.alias"
-  #elif test "a$1" = "a2"; then
-    #source "${HOME}/.bashrc"
-  #elif test "a$1" = "a3"; then
-    #source "${HOME}/.bashrc2"
-  #elif test "a$1" = "a4"; then
-    #source "${HOME}/.bashrc.local"
-  #fi
+#echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
+#if test "a$1" = "a1" ; then
+#source "${HOME}/.alias"
+#elif test "a$1" = "a2"; then
+#source "${HOME}/.bashrc"
+#elif test "a$1" = "a3"; then
+#source "${HOME}/.bashrc2"
+#elif test "a$1" = "a4"; then
+#source "${HOME}/.bashrc.local"
+#fi
 #}
 
 #function sae()
 #{
-  #echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-  #if test "a$1" = "a1" ; then
-    #vim "${HOME}/.alias"
-  #elif test "a$1" = "a2"; then
-    #vim "${HOME}/.bashrc"
-  #elif test "a$1" = "a3"; then
-    #vim "${HOME}/.bashrc2"
-  #elif test "a$1" = "a4"; then
-    #vim "${HOME}/.bashrc.local"
-  #fi
+#echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
+#if test "a$1" = "a1" ; then
+#vim "${HOME}/.alias"
+#elif test "a$1" = "a2"; then
+#vim "${HOME}/.bashrc"
+#elif test "a$1" = "a3"; then
+#vim "${HOME}/.bashrc2"
+#elif test "a$1" = "a4"; then
+#vim "${HOME}/.bashrc.local"
+#fi
 #}
 
 
@@ -179,16 +179,16 @@ function powerprompt()
     TIME=$(date +%H:%M)
   }
 
-PROMPT_COMMAND=_powerprompt
-case $TERM in
-  *term | rxvt  )
-    #            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
-    PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
-  linux )
-    PS1="$USER\w> " ;;
-  * )
-    PS1="$USER\w> " ;;
-esac
+  PROMPT_COMMAND=_powerprompt
+  case $TERM in
+    *term | rxvt  )
+      #            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
+      PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
+    linux )
+      PS1="$USER\w> " ;;
+    * )
+      PS1="$USER\w> " ;;
+  esac
 }
 
 
@@ -229,7 +229,7 @@ export LESSOPEN='|/usr/bin/lesspipe.sh %s >& /dev/null' # Use this if lesspipe.s
 #:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 export LESS='-i      -e -M -X  -R -P%t?f%f \
   :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
-export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
+  export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
 
 #----------------
 # a few fun ones
@@ -281,20 +281,20 @@ function ffe()
 
 #function fstr() # find a string in a set of files
 #{
-  #if [ "$#" -gt 2 ]; then
-    #echo "Usage: fstr \"pattern\" [files] "
-    #return;
-  #fi
-  #SMSO=$(tput smso)
-  #RMSO=$(tput rmso)
-  #find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
-    #sed "s/$1/$SMSO$1$RMSO/gI"
+#if [ "$#" -gt 2 ]; then
+#echo "Usage: fstr \"pattern\" [files] "
+#return;
+#fi
+#SMSO=$(tput smso)
+#RMSO=$(tput rmso)
+#find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
+#sed "s/$1/$SMSO$1$RMSO/gI"
 #}
 
 #function cuttail() # cut last n lines in file, 10 by default
 #{
-  #nlines=${2:-10}
-  #sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
+#nlines=${2:-10}
+#sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
 #}
 
 function lowercase()  # move filenames to lowercase
@@ -473,16 +473,16 @@ _universal_func ()
   COMPREPLY=( $("$cmd" --help | sed  -e '/--/!d' -e 's/.*--\([^ ]*\).*/--\1/'| \
     grep ^"$2" |sort -u) )
   }
-complete  -o default -F _universal_func ldd wget bash id info
+  complete  -o default -F _universal_func ldd wget bash id info
 
 
-_make_targets ()
-{
-  local mdef makef gcmd cur prev i
+  _make_targets ()
+  {
+    local mdef makef gcmd cur prev i
 
-  COMPREPLY=()
-  cur=${COMP_WORDS[COMP_CWORD]}
-  prev=${COMP_WORDS[COMP_CWORD-1]}
+    COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
 
     # if prev argument is -f, return possible filename completions.
     # we could be a little smarter here and return matches against
@@ -525,24 +525,24 @@ _make_targets ()
     COMPREPLY=( $(cat $makef 2>/dev/null | awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' | tr -s ' ' '\012' | sort -u | eval $gcmd ) )
   }
 
-complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
+  complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
 
-_configure_func ()
-{
-  case "$2" in
-    -*)     ;;
-    *)      return ;;
-  esac
+  _configure_func ()
+  {
+    case "$2" in
+      -*)     ;;
+      *)      return ;;
+    esac
 
-  case "$1" in
-    \~*)    eval cmd=$1 ;;
-    *)      cmd="$1" ;;
-  esac
+    case "$1" in
+      \~*)    eval cmd=$1 ;;
+      *)      cmd="$1" ;;
+    esac
 
-  COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
-}
+    COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
+  }
 
-complete -F _configure_func configure
+  complete -F _configure_func configure
 
 # cvs(1) completion
 _cvs ()
@@ -580,7 +580,7 @@ _killall ()
     return 0
   }
 
-complete -F _killall killall killps
+  complete -F _killall killall killps
 
 # Local Variables:
 # mode:shell-script
@@ -661,27 +661,27 @@ function dupremove()
       fi
     }
 
-  test -s "$HOME/.completion-git.sh" && . "$HOME/.completion-git.sh"
-  test -s "$HOME/.completion-eg.sh" && . "$HOME/.completion-eg.sh"
-  test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
+    test -s "$HOME/.completion-git.sh" && . "$HOME/.completion-git.sh"
+    test -s "$HOME/.completion-eg.sh" && . "$HOME/.completion-eg.sh"
+    test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
 
 
-  function __my_git_ps1()
-  {
-    if type -t __git_ps1 >& /dev/null; then
-      __git_ps1
-    fi
-  }
-  PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
+    function __my_git_ps1()
+    {
+      if type -t __git_ps1 >& /dev/null; then
+        __git_ps1
+      fi
+    }
+    PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
 
 
-  function gtp()
-  {
-    GIT_PS1_SHOWDIRTYSTATE=1
-    PS1="[\h] \W $(__git_ps1) > "
-  }
-#the following assumes 'alias g='git '
-complete -o default -o nospace -F _git g
+    function gtp()
+    {
+      GIT_PS1_SHOWDIRTYSTATE=1
+      PS1="[\h] \W $(__git_ps1) > "
+    }
+    #the following assumes 'alias g='git '
+    complete -o default -o nospace -F _git g
 
 #also use the screen completion for the alias s (screen)
 #complete -o default -o nospace -F _screen s
@@ -938,71 +938,71 @@ elif test ${BASH_VERSION:0:1} -ge 4 ; then
     return
   }
 
-__list_folder_hist()
-{
-  # first argument is folder to be kept in history.
-  # history will not be deleted so don't need much manipulation
-  let i=0
-  for key in "${__my_dirs_history[@]}"; do
-    printf "%-30s   --  %s\n" "${key/${HOME}/~}" "$i"
-    let i+=1
-  done
-}
-__save_folder_hist()
-{
-  local cand=$1
-  for key in "${__my_dirs_history[@]}"; do
-    if test "${cand}" = "${key}"; then
+  __list_folder_hist()
+  {
+    # first argument is folder to be kept in history.
+    # history will not be deleted so don't need much manipulation
+    let i=0
+    for key in "${__my_dirs_history[@]}"; do
+      printf "%-30s   --  %s\n" "${key/${HOME}/~}" "$i"
+      let i+=1
+    done
+  }
+  __save_folder_hist()
+  {
+    local cand=$1
+    for key in "${__my_dirs_history[@]}"; do
+      if test "${cand}" = "${key}"; then
+        return
+      fi
+    done
+    # got here just add it to end of list
+    __my_dirs_history+=("${cand}")
+  }
+  __change_folder_hist()
+  {
+    # change to a folder in history specifying a key
+    # we assume the key will be valid
+    if test "$1" -ge "${#__my_dirs_history[@]}" >& /dev/null; then
       return
     fi
-  done
-  # got here just add it to end of list
-  __my_dirs_history+=("${cand}")
-}
-__change_folder_hist()
-{
-  # change to a folder in history specifying a key
-  # we assume the key will be valid
-  if test "$1" -ge "${#__my_dirs_history[@]}" >& /dev/null; then
-    return
-  fi
-  d "${__my_dirs_history[$1]}"
-}
-#interface function
-dh() {
-  if test "a$1" = "a"; then
-    __list_folder_hist
-  else
-    __change_folder_hist "$1"
-  fi
-}
-
-function _d()
-{
-  local cur=${COMP_WORDS[COMP_CWORD]}
-  COMPREPLY=( $(eval "compgen -W \"${!_my_dirs_data[@]}\" -- $cur") )
-}
-complete -o plusdirs -o nospace -F _d d
-
-function __d_add_folder()
-{
-  #echo --1=$1-- --2=$2--
-  # usage: $0 destination tag
-  if test "a$1" = "a"; then return; fi
-  # check if key already added, to many for push/popd
-  existing=0
-  for key in ${_my_dirs_data[@]}; do
-    if test "$key" = "$1"; then
-      existing=1;
-      break;
+    d "${__my_dirs_history[$1]}"
+  }
+  #interface function
+  dh() {
+    if test "a$1" = "a"; then
+      __list_folder_hist
+    else
+      __change_folder_hist "$1"
     fi
-  done
-  if test "$existing" = "0"; then
-    pushd -n "$1" > /dev/null
-  fi
-  if test "a$2" = "a"; then return; fi
-  _my_dirs_data["$2"]="$1"
-}
+  }
+
+  function _d()
+  {
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=( $(eval "compgen -W \"${!_my_dirs_data[@]}\" -- $cur") )
+  }
+  complete -o plusdirs -o nospace -F _d d
+
+  function __d_add_folder()
+  {
+    #echo --1=$1-- --2=$2--
+    # usage: $0 destination tag
+    if test "a$1" = "a"; then return; fi
+    # check if key already added, to many for push/popd
+    existing=0
+    for key in ${_my_dirs_data[@]}; do
+      if test "$key" = "$1"; then
+        existing=1;
+        break;
+      fi
+    done
+    if test "$existing" = "0"; then
+      pushd -n "$1" > /dev/null
+    fi
+    if test "a$2" = "a"; then return; fi
+    _my_dirs_data["$2"]="$1"
+  }
 else
   function d()
   {
@@ -1042,17 +1042,17 @@ function gi()
     --exclude-dir=.{git,hg,svn} --binary-files=without-match "${pattern}" ${def_loc}
   }
 
-function gib()
-{
-  local pattern=$1
-  local def_loc="."
-  shift
-  if [[ -n "$@" ]]; then
-    local def_loc=$@
-  fi
-  grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
-    --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
-  }
+  function gib()
+  {
+    local pattern=$1
+    local def_loc="."
+    shift
+    if [[ -n "$@" ]]; then
+      local def_loc=$@
+    fi
+    grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
+      --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
+    }
 
 # completion for vim
 function _vim()
@@ -1127,17 +1127,17 @@ v()
 {
   __imp_v X $@
   #if [ "$(type -t __get_gvim_win)" = "function" ] && [ -n "$(__get_gvim_win)" ]; then
-    #("$(__get_gvim_win)" -c "RemoteOpenMod $(__args_to_win $@)" &)
+  #("$(__get_gvim_win)" -c "RemoteOpenMod $(__args_to_win $@)" &)
   #elif [ -x "$(command -v gvim)" -a -n "${DISPLAY}"]; then
-    #gvim -c "RemoteOpenMod $@"
+  #gvim -c "RemoteOpenMod $@"
   #else
-    #vim $@
+  #vim $@
   #fi
 }
 
 #vn()
 #{
-  #__imp_v N $@
+#__imp_v N $@
 #}
 
 vs()
@@ -1275,8 +1275,8 @@ dd() {
   else
     local arg="$([ -n "${1}" ] && echo -q \'$@)"
     dir=$(find . -path '*/\.*' -prune -o -type d -print 2> /dev/null \
-        | grep -v "^\.$"| fzf --select-1 +m $arg)
-    ok=$?
+      | grep -v "^\.$"| fzf --select-1 +m $arg)
+          ok=$?
   fi
 
   if [ "${ok}" -eq "0" ] ; then
