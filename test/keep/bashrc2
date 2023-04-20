@@ -666,7 +666,13 @@ function dupremove()
   test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
 
 
-  PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+  function __my_git_ps1()
+  {
+    if type -t __git_ps1 >& /dev/null; then
+      __git_ps1
+    fi
+  }
+  PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
 
 
   function gtp()
