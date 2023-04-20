@@ -101,7 +101,9 @@ if has("patch789")
   set nofixeol
 endif
 
-set belloff=all
+if v:version >= 800
+  set belloff=all
+endif
 
 " fix for blinking cursor
 if &term =~ "xterm" || &term =~ "screen-256color"
@@ -403,7 +405,9 @@ if has("autocmd")
 
     autocmd FileType text setlocal textwidth=100
 
-    autocmd TabClosed * tabprevious
+    if v:version >= 800
+      autocmd TabClosed * tabprevious
+    endif
 
     " When editing a file, always jump to the last known cursor position.
     " Don't do it when the position is invalid or when inside an event handler

@@ -152,7 +152,9 @@ if IsAddonActive('vim-mucomplete')
 	let g:mucomplete#chains = {}
 	let g:mucomplete#chains.default = ['path', 'nsnp', 'keyn']
         let g:mucomplete#enable_auto_at_startup = 1
-        set completeopt+=noselect
+        if v:version >= 800
+          set completeopt+=noselect
+        endif
         set completeopt+=menuone
 
         if IsAddonActive('neosnippet.vim')
@@ -175,7 +177,7 @@ endif
 
 "================== asyncomplete =============================================={{{
 function! SetupAsyncomplete()
-  if !IsAddonActive('asyncomplete.vim')
+  if !IsAddonActive('asyncomplete.vim') || v:version < 800
     return
   endif
 

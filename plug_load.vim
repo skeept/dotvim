@@ -45,8 +45,7 @@ Plug 'prabirshrestha/asyncomplete-file.vim'
 Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
 Plug 'yami-beta/asyncomplete-omni.vim'
 
-Plug 'lifepillar/vim-mucomplete'
-"Plug 'lifepillar/vim-mucomplete'
+Plug 'lifepillar/vim-mucomplete', Cond(v:version > 800)
 
 "tpope
 Plug 'tpope/vim-fugitive', { 'on': ['G', 'Git', 'Gwrite', 'Gstatus'] }
@@ -74,7 +73,7 @@ Plug 'kana/vim-textobj-indent'
 Plug 'whatyouhide/vim-textobj-xmlattr'
 Plug 'Julian/vim-textobj-brace'
 
-Plug 'cohama/lexima.vim'
+Plug 'cohama/lexima.vim', Cond(v:version > 800)
 
 "tagbar
 Plug 'majutsushi/tagbar', { 'on': ['Tagbar', 'TagbarToggle'] }
