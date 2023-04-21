@@ -46,7 +46,7 @@ if g:is_win
 else
   "set guifont=Terminus\ 12,
         "\-misc-fixed-medium-*-normal-*-15-*-*-*-*-*-*-*
-  set guifont=Monospace 12
+  set guifont="Monospace 12"
 endif
 
 set winaltkeys=no
