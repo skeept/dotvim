@@ -29,7 +29,9 @@ export now_profile=$(date +'%s')
 let "time_diff = $now_profile - $prev_profile_time"
 if test $time_diff -ge 3; then
   test -f /etc/bashrc && . /etc/bashrc
-  test -f /etc/profile && . /etc/profile
+  if ! { whoami | grep ark-research >& /dev/null ; }; then
+    test -f /etc/profile && . /etc/profile
+  fi
 fi
 
 export EDITOR=vim
