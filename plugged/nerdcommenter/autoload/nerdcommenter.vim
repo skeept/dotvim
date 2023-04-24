@@ -54,6 +54,7 @@ let s:delimiterMap = {
     \ 'calibre': { 'left': '//' },
     \ 'caos': { 'left': '*' },
     \ 'catalog': { 'left': '--', 'right': '--' },
+    \ 'cel': { 'left': '//' },
     \ 'cf': { 'left': '<!---', 'right': '--->' },
     \ 'cfg': { 'left': '#' },
     \ 'cg': { 'left': '//', 'leftAlt': '/*', 'rightAlt': '*/' },
@@ -460,10 +461,6 @@ endif
 " This function is responsible for setting up buffer scoped variables for the
 " current buffer.
 function! nerdcommenter#SetUp() abort
-    if exists('b:NERDCommenterDelims')
-        return
-    endif
-
     let filetype = &filetype
 
     "for compound filetypes, if we don't know how to handle the full filetype
@@ -495,8 +492,8 @@ function! nerdcommenter#SetUp() abort
         " if g:NERD_<filetype>_alt_style is defined, use the alternate style
         let b:NERDCommenterFirstInit = getbufvar(1,'NERDCommenterFirstInit')
         if exists('g:NERDAltDelims_'.filetype) && eval('g:NERDAltDelims_'.filetype) && !b:NERDCommenterFirstInit
-            call nerdcommenter#SwitchToAlternativeDelimiters(0)
             let b:NERDCommenterFirstInit = 1
+            call nerdcommenter#SwitchToAlternativeDelimiters(0)
         endif
     else
         let b:NERDCommenterDelims = s:CreateDelimMapFromCms()
@@ -1766,6 +1763,8 @@ function! s:UncommentLineNormal(line) abort
     endif
 
 
+    let indxLeft = s:FindDelimiterIndex(s:Left(), line)
+    let indxLeftAlt = s:FindDelimiterIndex(s:Left({'alt': 1}), line)
     let indxLeftPlace = s:FindDelimiterIndex(g:NERDLPlace, line)
     let indxRightPlace = s:FindDelimiterIndex(g:NERDRPlace, line)
 
@@ -2528,8 +2527,9 @@ function! s:IsDelimValid(delimiter, delIndx, line) abort
 
     "vim comments are so fucking stupid!! Why the hell do they have comment
     "delimiters that are used elsewhere in the syntax?!?! We need to check
-    "some conditions especially for vim
-    if &filetype ==# 'vim'
+    "some conditions especially for vim. 
+    "Also check &commentstring because it may be overwritten for embedded lua.
+    if &filetype ==# 'vim' && &commentstring[0] ==# '"'
         if !s:IsNumEven(s:CountNonESCedOccurances(preComStr, '"', "\\"))
             return 0
         endif
