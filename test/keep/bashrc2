@@ -1118,7 +1118,8 @@ complete -F _vim vim vi v gv vd va
 
 function e()
 {
-  if [ -x "$(command -v nvim)" ]; then
+  # need to determine if nvim can be run
+  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
     nvim $@
   else
     vim $@
