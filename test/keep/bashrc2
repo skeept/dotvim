@@ -60,6 +60,25 @@ NC='\e[0m'              # No Color
 #    /usr/games/fortune -s     # makes our day a bit more fun.... :-)
 #fi
 
+function initial_setup_copy()
+{
+  # copy all files in folder to ~
+  if [ -z "$1" -o  ! -d "$1" ]; then
+    echo "need to provide a folder with files to copy"
+    return 1
+  fi
+  local folder=$1
+  local target
+  for fn in $(command ls -A $folder); do
+    echo -n ${folder}/${fn}
+    target="${HOME}/${fn}"
+    if [ ! -e  "${target}" ]; then
+      cp "${folder}/${fn}" "${target}"
+      echo -n " *"
+    fi
+    echo " "
+  done
+}
 
 function m2k() {
   ( cd ../../ ; make $@ )
@@ -1105,7 +1124,6 @@ function e()
     vim $@
   fi
 }
-
 
 __imp_v()
 {
