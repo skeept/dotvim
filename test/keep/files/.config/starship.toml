@@ -1,0 +1,19 @@
+[java]
+disabled = true
+
+[package]
+disabled = true
+
+[directory]
+truncate_to_repo = false
+repo_root_style = "bold blue"
+
+[container]
+#format = '[$symbol \[$name\]]($style) '
+format = '[$symbol]($style) '
+
+[gcloud]
+disabled = true
+
+[buf]
+disabled = true
