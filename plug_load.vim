@@ -14,7 +14,6 @@ Plug 'preservim/nerdcommenter'
 Plug 'Shougo/junkfile.vim', { 'on': ['JunkfileOpen'] }
 Plug 'Shougo/neosnippet.vim'
 Plug 'Shougo/neosnippet-snippets'
-Plug 'Shougo/vimfiler.vim', { 'on': 'VimFiler'}
 "Plug 'Shougo/unite.vim', { 'on': 'Unite' }
 "autocmd! User unite.vim call LoadAdditionalUnite()
 "Plug 'thinca/vim-unite-history', { 'on': 'Unite' }
