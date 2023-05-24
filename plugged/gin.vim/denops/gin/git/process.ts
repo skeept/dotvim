@@ -9,15 +9,16 @@ export function run(
   args: string[],
   options: RunOptions = {},
 ): Deno.ChildProcess {
-  args.unshift("--no-pager", "--literal-pathspecs");
+  const cmdArgs = ["--no-pager", "--literal-pathspecs"];
   if (options.noOptionalLocks) {
-    args.unshift("--no-optional-locks");
+    cmdArgs.push("--no-optional-locks");
   }
+  cmdArgs.push(...args);
   if (options.printCommand) {
-    console.debug(`Run 'git ${args.join(" ")}' on '${options.cwd}'`);
+    console.debug(`Run 'git ${cmdArgs.join(" ")}' on '${options.cwd}'`);
   }
   const command = new Deno.Command("git", {
-    args,
+    args: cmdArgs,
     stdout: options.stdout,
     stderr: options.stderr,
     cwd: options.cwd,
@@ -34,7 +35,7 @@ export class ExecuteError extends Error {
     public stderr: Uint8Array,
   ) {
     super(`[${code}]: ${decodeUtf8(stderr)}`);
-    this.name = "ExecuteError";
+    this.name = this.constructor.name;
   }
 }
 
@@ -47,8 +48,8 @@ export async function execute(
     stdout: "piped",
     stderr: "piped",
   });
-  const { code, stdout, stderr } = await proc.output();
-  if (code) {
+  const { code, success, stdout, stderr } = await proc.output();
+  if (!success) {
     throw new ExecuteError(args, code, stdout, stderr);
   }
   return stdout;

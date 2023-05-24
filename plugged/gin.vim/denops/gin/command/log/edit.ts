@@ -120,7 +120,6 @@ async function gatherCandidates(
     ),
     vars.g.get(denops, "gin_log_parse_pattern"),
   ]);
-
   const pattern = unnullish(patternStr, (v) => new RegExp(ensureString(v)));
   const result = parseLog(content, pattern);
   return result.entries;

@@ -64,31 +64,31 @@ export async function execute(
     env,
   });
 
-  const { code, stdout, stderr } = await proc.output();
+  const { success, stdout, stderr } = await proc.output();
 
   // Early return when execution has failed
-  if (code) {
+  if (!success) {
     if (options.throwOnError) {
       throw new ExecuteError(removeAnsiEscapeCode(decodeUtf8(stderr)));
     }
-    return { success: !!code, stdout, stderr };
+    return { success, stdout, stderr };
   }
 
   // Return when no post-processor is specified
   const processor = options.processor ?? [];
   if (!processor.length) {
-    return { success: !!code, stdout, stderr };
+    return { success, stdout, stderr };
   }
 
   // Run post-processor
   const postResult = await postProcessor(processor, worktree, stdout, env);
 
-  if (options.throwOnError && !postResult.code) {
+  if (options.throwOnError && !postResult.success) {
     throw new ExecuteError(removeAnsiEscapeCode(decodeUtf8(postResult.stderr)));
   }
 
   return {
-    success: !!postResult.code,
+    success: postResult.success,
     stdout: postResult.stdout,
     stderr: postResult.stderr,
   };
@@ -111,9 +111,9 @@ async function postProcessor(
   });
   const proc = command.spawn();
   const reader = new Blob([stdout]);
-  const [result, _] = await Promise.all([
-    proc.output(),
+  const [_, result] = await Promise.all([
     reader.stream().pipeTo(proc.stdin),
+    proc.output(),
   ]);
   return result;
 }
