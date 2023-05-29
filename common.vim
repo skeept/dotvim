@@ -393,7 +393,6 @@ command! -nargs=* ToggleSpell call ToggleSpellFun(<f-args>)
 "================== Autocommands =============================================={{{
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
-
   " Enable file type detection.
   " Use the default filetype settings, so that mail gets 'tw' set to 72,
   " 'cindent' is on in C files, etc.
@@ -496,93 +495,6 @@ if !has("gui_running") && !g:is_win
 endif
 "==============================================================================}}}
 
-"================== Unite ====================================================={{{
-augroup ft_unite
-  autocmd!
-  autocmd FileType unite call jraf#unite_my_settings()
-augroup END
-
-function! LoadUnite(timer) "{{{
-  if exists("g:loadUnite_done") || !exists("g:addon_manager") || g:addon_manager != 2
-    return ""
-  endif
-  let g:loadUnite_done = 1
-
-  let g:unite_source_file_mru_limit = 200
-  let g:unite_cursor_line_highlight = 'TabLineSel'
-  let g:unite_abbr_highlight = 'TabLine'
-
-  " For optimize.
-  let g:unite_source_file_mru_filename_format = ''
-  let g:unite_source_history_yank_enable = 0
-
-  call vam#ActivateAddons(['unite.vim', 'unite-mark', 'unite-outline',
-        \ 'unite-tag', 'unite-colorscheme', 'vim-unite-history',
-        \ ],
-        \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  nnoremap <silent> ,ud :<C-U>UniteWithCurrentDir -buffer-name=files
-        \ buffer bookmark file<CR>
-  nnoremap <silent> ,ub :<C-u>UniteWithBufferDir -start-insert -buffer-name=files
-        \ -prompt=%\  buffer bookmark file<CR>
-  nnoremap <silent> ,ur :<C-u>Unite -buffer-name=register register<CR>
-  nnoremap <silent> ,uo :<C-u>Unite outline -start-insert<CR>
-  nnoremap ,uf :<C-U>Unite -start-insert source<CR>
-  nnoremap ,uu :<C-U>Unite -start-insert source<CR>
-  nnoremap ,rr :<C-U>UniteResume<CR>
-  nnoremap ,rd :<C-U>Unite -buffer-name=mru_folders -resume directory_mru<CR>
-  nnoremap ,uc :<C-U>call UniteColorSchemeResume()<CR>
-  nnoremap ,u<SPACE> :<C-U>Unite<SPACE><C-D>
-
-  " Ref {{{
-  let g:ref_use_vimproc = 1
-  let g:ref_open = 'vsplit'
-  let g:ref_cache_dir = expand('~/.vim/tmp/ref_cache/')
-  nnoremap <leader>K :<C-u>Unite ref/man -buffer-name=man
-        \ -start-insert -horizontal<CR>
-  " }}}
-
-  " Ack {{{
-  if 1 || !g:is_win
-    let g:unite_source_grep_command = 'ack'
-    let g:unite_source_grep_default_opts = '--column --no-color --nogroup --with-filename'
-    let g:unite_source_grep_recursive_opt = ''
-  else
-    "let g:unite_source_grep_command = 'grep_vim'
-    "let g:unite_source_grep_default_opts = ''
-    let g:unite_source_grep_command = 'ack\ --column\ --no-color\ --nogroup\ --with-filename'
-    let g:unite_source_grep_default_opts = ''
-    let g:unite_source_grep_recursive_opt = ''
-  endif
-
-  "nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -auto-preview<CR>
-  nnoremap <leader>a :<C-u>Unite grep -start-insert -default-action=above -no-quit <CR>
-  nnoremap <leader>A :<C-u>execute 'Unite grep:.::' . expand("<cword>") .
-        \ ' -default-action=above -auto-preview'<CR>
-  " }}}
-
-  " wimviki replacement {{{
-  nnoremap <leader>W :<C-u>Unite file file/new -buffer-name=notes -start-insert
-        \ -toggle -default-action=split -profile-name=files
-        \ -input=~/vimfiles/Vimwiki/<CR>
-  " }}}
-endfunction " }}}
-
-if has('timers')
-  nnoremap <silent> ,ud :call LoadUnite(0)<CR>:<C-U>UniteWithCurrentDir file<CR>
-  nnoremap <silent> ,uc :call LoadUnite(0)<CR>:<C-U>call jraf#uniteColorSchemeResume()<CR>
-  nnoremap <silent> ,uo :call LoadUnite(0)<CR>:<C-U>Unite outline<CR>
-  nnoremap <silent> ,uf :call LoadUnite(0)<CR>:<C-U>Unite -start-insert source<CR>
-  nnoremap <silent> ,uu :call LoadUnite(0)<CR>:<C-U>Unite -start-insert source<CR>
-  nnoremap <silent> ,rr :call LoadUnite(0)<CR>:<C-U>UniteResume<CR>
-  nnoremap <silent> ,u<SPACE> :call LoadUnite(0)<CR>:<C-U>Unite<SPACE><C-D>
-
-  call timer_start(1500, 'LoadUnite')
-
-else
-  call LoadUnite(0)
-endif
-"==============================================================================}}}
-
 "================== neocomplete ============================================={{{
 let g:load_neocomplete = (!exists('g:load_neocomplete') ||  g:load_neocomplete == 1) &&
       \ (IsAddonActive('neocomplete'))
@@ -672,12 +584,6 @@ if g:load_neocomplete
     let g:neocomplete#sources#omni#input_patterns.perl = '\h\w*->\h\w*\|\h\w*::'
   endfunction
 endif
-"==============================================================================}}}
-
-"================== Buffergator ==============================================={{{
-let g:buffergator_suppress_keymaps      = 1
-let g:buffergator_viewport_split_policy = "R"
-let g:buffergator_split_size            = 26
 "==============================================================================}}}
 
 "================== CtrlP ====================================================={{{
@@ -923,7 +829,7 @@ function! IsLineEndInsert() "{{{
 endfunction "}}}
 "}}}
 
-" {{{ commands
+"================== Commands =================================================={{{
 " delete current buffer but don't delete the view
 command! Kwbd let kwbd_bn= bufnr("%")|enew|exe "bdel ".kwbd_bn|unlet kwbd_bn
 
@@ -963,6 +869,7 @@ command! -range=% QuoteCommaJoin silent <line1>,<line2>call jraf#quoteCommaJoin(
 set diffopt+=vertical
 command! WTS if &diffopt =~ 'iwhite' | set diffopt-=iwhite
       \ | else | set diffopt+=iwhite | endif | echo &diffopt
+"==============================================================================}}}
 
 "================== QuickRun =================================================={{{
 let g:quickrun_config = get(g:, 'quickrun_config', {})
@@ -984,17 +891,6 @@ nnoremap ,qr :call SetupQuickRun()<CR>:QuickRun<CR>
 let g:alternateSearchPath = '../inc,./inc,../source,sfr,../src,../include,..'
 let g:alternateExtensions_C = "h,inc,H,HPP,hpp"
 let g:alternateExtensions_h = "C,cpp,c++,CPP"
-"==============================================================================}}}
-
-"================== full screen with plugin ==================================={{{
-"plugin: http://www.vim.org/scripts/script.php?script_id=2596
-if g:is_win
-  let g:isMaximized = 0
-  command! FullScreenToogle call jraf#fullScreenToogle()
-  noremap  <Leader>tf :FullScreenToogle<CR>
-else
-  nnoremap <Leader>tf :silent! !wmctrl -r GVIM -b toggle,fullscreen<CR>
-endif
 "==============================================================================}}}
 
 "================== NerdCommenter ============================================={{{
@@ -1034,5 +930,11 @@ endfunction
 
 command! LoadMorePlugins call LoadMorePluginsOnDemand()
 "==============================================================================}}}
+
+"================== Other ============================================{{{
+" Default to static completion for SQL
+let g:omni_sql_default_compl_type = 'syntax'
+"==============================================================================}}}
+
 
 " vim: foldmethod=marker
