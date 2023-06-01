@@ -102,6 +102,15 @@ function initial_setup_copy()
   done
 }
 
+function py() {
+  # should we go with python by default or python 3?
+  if type python3 >& /dev/null; then
+    python3 $@
+  else
+    python $@
+  fi
+}
+
 function m2k() {
   ( cd ../../ ; make $@ )
 }

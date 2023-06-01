@@ -21,7 +21,7 @@ alias cls="clear;date"
 alias xtop2='xterm  -geometry 76x25+809+00   -ls  -j -title "top $HOST" -e top -d 1 -n 05 &'
 
 alias b='exec bash'
-alias py='python'
+#alias py='python'
 alias yp='ipython'
 alias ipy='ipython'
 
