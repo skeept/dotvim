@@ -17,3 +17,9 @@ disabled = true
 
 [buf]
 disabled = true
+
+[hostname]
+disabled = true
+
+[username]
+disabled = true
