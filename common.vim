@@ -887,7 +887,7 @@ nnoremap ,qr :call SetupQuickRun()<CR>:QuickRun<CR>
 
 "==============================================================================}}}
 
-"================== A.vim settings ============================================{{{
+"================== A.vim / alternate.vim settings ============================{{{
 let g:alternateSearchPath = '../inc,./inc,../source,sfr,../src,../include,..'
 let g:alternateExtensions_C = "h,inc,H,HPP,hpp"
 let g:alternateExtensions_h = "C,cpp,c++,CPP"
