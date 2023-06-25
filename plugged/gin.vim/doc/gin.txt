@@ -80,6 +80,9 @@ guise.vim~
 It can live together with the plugins mentioned above because the environment
 variable names used are different.
 
+Use |g:gin_proxy_editor_opener| to specify the opener command to open the
+buffer.
+
 Use |g:gin_proxy_disable_askpass| and/or |g:gin_proxy_disable_editor| to
 disable this proxy feature.
 
@@ -118,6 +121,9 @@ COMMANDS					*gin-commands*
 		Displays the result in black and white without coloring.
 		Use this option when the resulting data is large and coloring
 		may cause performance problems.
+	
+	++emojify
+		Replace all ":emoji:" with emoji characters.
 
 	++processor={processor}
 		Specifies the processor program that will process the result.
@@ -266,6 +272,11 @@ COMMANDS					*gin-commands*
 							*:GinLog*
 :GinLog[!][&] [{++option}...] [{commitish}] [-- {pathspec}...]
 	Open a "gin-log" buffer to show a git log.
+	
+	The following options are valid as {++option}:
+
+	++emojify
+		Replace all ":emoji:" with emoji characters.
 
 	See |gin-commands-options| for common {++option}.
 		
@@ -483,6 +494,12 @@ VARIABLES					*gin-variables*
 	Disable overriding "GIT_EDITOR" to proxy editors.
 
 	Default: 0
+
+*g:gin_proxy_editor_opener*
+	Opener command (e.g. "split", "vsplit", "tabedit") to open a buffer
+	on proxy editors.
+
+	Default: "tabedit"
 
 *g:gin_status_default_args*
 	Specify default arguments of |:GinStatus|.

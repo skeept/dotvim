@@ -1,14 +1,13 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
-import * as lambda from "https://deno.land/x/denops_std@v5.0.0/lambda/mod.ts";
-import * as autocmd from "https://deno.land/x/denops_std@v5.0.0/autocmd/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v5.0.0/batch/mod.ts";
-import * as buffer from "https://deno.land/x/denops_std@v5.0.0/buffer/mod.ts";
-import * as fn from "https://deno.land/x/denops_std@v5.0.0/function/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v5.0.0/variable/mod.ts";
-import * as unknownutil from "https://deno.land/x/unknownutil@v2.1.1/mod.ts";
-import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
-import * as streams from "https://deno.land/std@0.188.0/streams/mod.ts";
-import { deferred } from "https://deno.land/std@0.188.0/async/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
+import * as lambda from "https://deno.land/x/denops_std@v5.0.1/lambda/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
+import * as buffer from "https://deno.land/x/denops_std@v5.0.1/buffer/mod.ts";
+import * as fn from "https://deno.land/x/denops_std@v5.0.1/function/mod.ts";
+import * as vars from "https://deno.land/x/denops_std@v5.0.1/variable/mod.ts";
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.0.0/mod.ts#^";
+import * as path from "https://deno.land/std@0.192.0/path/mod.ts";
+import * as streams from "https://deno.land/std@0.192.0/streams/mod.ts";
+import { deferred } from "https://deno.land/std@0.192.0/async/mod.ts";
 import { decodeUtf8, encodeUtf8 } from "../util/text.ts";
 
 const recordPattern = /^([^:]+?):(.*)$/;
@@ -31,7 +30,11 @@ export async function listen(denops: Denops): Promise<void> {
       "GIN_PROXY_ADDRESS",
       JSON.stringify(listener.addr),
     );
-    if (!unknownutil.ensureBoolean(disableAskpass ?? false)) {
+    if (
+      !ensure(disableAskpass ?? false, is.Boolean, {
+        message: "g:gin_proxy_disable_askpass must be boolean",
+      })
+    ) {
       const script = path.fromFileUrl(new URL("askpass.ts", import.meta.url));
       await vars.e.set(
         denops,
@@ -39,7 +42,11 @@ export async function listen(denops: Denops): Promise<void> {
         denops.meta.platform === "windows" ? `"${script}"` : `'${script}'`,
       );
     }
-    if (!unknownutil.ensureBoolean(disableEditor ?? false)) {
+    if (
+      !ensure(disableEditor ?? false, is.Boolean, {
+        message: "g:gin_proxy_disable_editor must be boolean",
+      })
+    ) {
       const script = path.fromFileUrl(new URL("editor.ts", import.meta.url));
       await vars.e.set(
         denops,
@@ -98,8 +105,12 @@ async function handleEditor(
   filename: string,
 ): Promise<void> {
   try {
-    await edit(denops, filename);
-    await streams.writeAll(conn, encodeUtf8("ok:"));
+    if (await edit(denops, filename)) {
+      await streams.writeAll(conn, encodeUtf8("ok:"));
+    } else {
+      await Deno.writeFile(filename, new Uint8Array());
+      await streams.writeAll(conn, encodeUtf8("cancel:"));
+    }
   } catch (e: unknown) {
     await streams.writeAll(conn, encodeUtf8(`err:${e}`));
   }
@@ -108,43 +119,23 @@ async function handleEditor(
 async function edit(
   denops: Denops,
   filename: string,
-): Promise<void> {
-  const { winid, bufnr } = await buffer.open(
+): Promise<boolean> {
+  const opener = await vars.g.get(denops, "gin_proxy_editor_opener", "tabedit");
+  const { bufnr } = await buffer.open(
     denops,
     filename,
     {
-      mods: "silent noswapfile",
-      opener: "tabedit",
+      mods: "silent",
+      opener,
     },
   );
 
-  // Check if this is the last tabpage or not
-  const tabpagenr = await fn.tabpagenr(denops, "$") as number;
-  if (tabpagenr === 1) {
-    await batch.batch(denops, async (denops) => {
-      await denops.cmd("noautocmd | tabnew");
-      await fn.win_gotoid(denops, winid);
-      await denops.cmd("redraw");
-    });
-  }
-
-  const auname = `gin_editor_${winid}_${bufnr}`;
-  const waiter = deferred<void>();
-  const waiterId = lambda.register(denops, () => {
-    waiter.resolve();
+  const waiter = deferred<boolean>();
+  const waiterId = lambda.register(denops, (accept) => {
+    waiter.resolve(!!accept);
   }, { once: true });
-  await batch.batch(denops, async (denops) => {
-    await autocmd.group(denops, auname, (helper) => {
-      helper.remove("*", `<buffer=${bufnr}>`);
-      helper.define(
-        ["BufWinLeave"],
-        `<buffer=${bufnr}>`,
-        `call denops#request('gin', '${waiterId}', [])`,
-        {
-          once: true,
-        },
-      );
-    });
+  await buffer.ensure(denops, bufnr, async () => {
+    await denops.call("gin#internal#proxy#init", waiterId);
   });
-  await waiter;
+  return waiter;
 }

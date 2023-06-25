@@ -1,7 +1,7 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
-import * as autocmd from "https://deno.land/x/denops_std@v5.0.0/autocmd/mod.ts";
-import * as helper from "https://deno.land/x/denops_std@v5.0.0/helper/mod.ts";
-import * as option from "https://deno.land/x/denops_std@v5.0.0/option/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
+import * as autocmd from "https://deno.land/x/denops_std@v5.0.1/autocmd/mod.ts";
+import * as helper from "https://deno.land/x/denops_std@v5.0.1/helper/mod.ts";
+import * as option from "https://deno.land/x/denops_std@v5.0.1/option/mod.ts";
 import { removeAnsiEscapeCode } from "../../util/ansi_escape_code.ts";
 import { execute } from "../../git/executor.ts";
 
@@ -9,6 +9,8 @@ export type ExecOptions = {
   worktree?: string;
   encoding?: string;
   fileformat?: string;
+  stdoutIndicator?: string;
+  stderrIndicator?: string;
 };
 
 export async function exec(
@@ -20,6 +22,8 @@ export async function exec(
   const { stdout, stderr } = await execute(denops, args, {
     worktree: options.worktree,
     throwOnError: true,
+    stdoutIndicator: options.stdoutIndicator,
+    stderrIndicator: options.stderrIndicator,
   });
   const encoding = options.encoding ?? "utf8";
   const decoder = new TextDecoder(encoding);
