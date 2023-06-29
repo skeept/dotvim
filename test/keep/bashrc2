@@ -22,7 +22,7 @@
 
 if test "$CUR_SHELL" = "bash"; then
   set -o notify
-  set -o noclobber
+  [ "$(hostname)"  != "sabre" ] && set -o noclobber
   #set -o ignoreeof
   set -o nounset
   #set -o xtrace          # useful for debuging
