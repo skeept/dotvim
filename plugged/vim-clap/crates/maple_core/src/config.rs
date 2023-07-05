@@ -6,12 +6,16 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 static CONFIG_FILE: OnceCell<PathBuf> = OnceCell::new();
+// TODO: reload-config
+static CONFIG: OnceCell<Config> = OnceCell::new();
 
-// Should be only initialized once.
-pub fn initialize_config_file(specified_file: Option<PathBuf>) {
-    let config_file = specified_file.unwrap_or_else(|| {
+pub fn load_config_on_startup(
+    specified_config_file: Option<PathBuf>,
+) -> (&'static Config, Option<toml::de::Error>) {
+    let config_file = specified_config_file.unwrap_or_else(|| {
         // Linux: ~/.config/vimclap/config.toml
         // macOS: ~/Library/Application\ Support/org.vim.Vim-Clap/config.toml
+        // Windows: ~\AppData\Roaming\Vim\Vim Clap\config\config.toml
         let config_file_path = PROJECT_DIRS.config_dir().join("config.toml");
 
         if !config_file_path.exists() {
@@ -21,34 +25,33 @@ pub fn initialize_config_file(specified_file: Option<PathBuf>) {
         config_file_path
     });
 
-    CONFIG_FILE.set(config_file).ok();
+    let mut maybe_config_err = None;
+    let loaded_config = std::fs::read_to_string(&config_file)
+        .and_then(|contents| {
+            toml::from_str(&contents).map_err(|err| {
+                maybe_config_err.replace(err);
+                std::io::Error::new(std::io::ErrorKind::Other, "Error occurred in config.toml")
+            })
+        })
+        .unwrap_or_default();
+
+    CONFIG_FILE
+        .set(config_file)
+        .expect("Failed to initialize Config file");
+
+    CONFIG
+        .set(loaded_config)
+        .expect("Failed to initialize Config");
+
+    (config(), maybe_config_err)
+}
+
+pub fn config() -> &'static Config {
+    CONFIG.get().expect("Config must be initialized")
 }
 
 pub fn config_file() -> &'static PathBuf {
     CONFIG_FILE.get().expect("Config file uninitialized")
-}
-
-// TODO: reload-config
-pub fn config() -> &'static Config {
-    static CONFIG: OnceCell<Config> = OnceCell::new();
-
-    CONFIG.get_or_init(|| {
-        std::fs::read_to_string(CONFIG_FILE.get().expect("Config file uninitialized!"))
-            .and_then(|contents| {
-                toml::from_str(&contents).map_err(|err| {
-                    // TODO: Notify the config error.
-                    tracing::debug!(
-                        ?err,
-                        "Error while deserializing config.toml, using the default config"
-                    );
-                    std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        format!("Error occurred at reading config.toml: {err}"),
-                    )
-                })
-            })
-            .unwrap_or_default()
-    })
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -131,6 +134,32 @@ pub struct IgnoreConfig {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
+pub struct ProviderConfig {
+    /// Delay in milliseconds before the user query will be handled actually.
+    ///
+    /// When enabled and not-zero, some intermediate inputs will be dropped if user types too fast.
+    ///
+    /// # Config example
+    ///
+    /// ```toml
+    /// [provider.debounce]
+    /// # Set debounce to 200ms for all providers by default.
+    /// "*" = 200
+    ///
+    /// # Set debounce to 100ms for files provider specifically.
+    /// "files" = 100
+    /// ```
+    pub debounce: HashMap<String, u64>,
+
+    /// Ignore configuration per provider.
+    ///
+    /// Priorities of the ignore config:
+    ///   provider_ignores > provider_ignores > global_ignore
+    pub ignore: HashMap<String, IgnoreConfig>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 pub struct InputHistoryConfig {
     /// Whether to share the input history of each provider.
     pub share_all_inputs: bool,
@@ -148,6 +177,9 @@ pub struct Config {
     /// Plugin configuration.
     pub plugin: PluginConfig,
 
+    /// Provider configuration.
+    pub provider: ProviderConfig,
+
     /// Global ignore configuration.
     pub global_ignore: IgnoreConfig,
 
@@ -156,23 +188,33 @@ pub struct Config {
     /// The project path must be specified as absolute path or a path relative to the home directory.
     pub project_ignore: HashMap<AbsPathBuf, IgnoreConfig>,
 
-    /// Ignore configuration per provider.
-    ///
-    /// Priorities of the ignore config:
-    ///   provider_ignores > provider_ignores > global_ignore
-    pub provider_ignore: HashMap<String, IgnoreConfig>,
-
     /// Input history configuration
     pub input_history: InputHistoryConfig,
 }
 
 impl Config {
     pub fn ignore_config(&self, provider_id: &str, project_dir: &AbsPathBuf) -> &IgnoreConfig {
-        self.provider_ignore.get(provider_id).unwrap_or_else(|| {
+        self.provider.ignore.get(provider_id).unwrap_or_else(|| {
             self.project_ignore
                 .get(project_dir)
                 .unwrap_or(&self.global_ignore)
         })
+    }
+
+    pub fn provider_debounce(&self, provider_id: &str) -> u64 {
+        const DEFAULT_DEBOUNCE: u64 = 200;
+
+        self.provider
+            .debounce
+            .get(provider_id)
+            .copied()
+            .unwrap_or_else(|| {
+                self.provider
+                    .debounce
+                    .get("*")
+                    .copied()
+                    .unwrap_or(DEFAULT_DEBOUNCE)
+            })
     }
 }
 
@@ -183,15 +225,6 @@ mod tests {
     #[test]
     fn test_load_config() {
         let toml_content = r#"
-          [global-ignore]
-          file-path-pattern = ["test", "build"]
-
-          # [project-ignore."~/src/github.com/subspace/subspace"]
-          # comment-line = true
-
-          [provider-ignore.dumb_jump]
-          comment-line = true
-
           [log]
           max-level = "trace"
           log-file = "/tmp/clap.log"
@@ -201,9 +234,23 @@ mod tests {
 
           [plugin.highlight-cursor-word]
           enable = true
+
+          [provider.debounce]
+          "*" = 200
+          "files" = 100
+
+          [global-ignore]
+          file-path-pattern = ["test", "build"]
+
+          # [project-ignore."~/src/github.com/subspace/subspace"]
+          # comment-line = true
+
+          [provider.ignore.dumb_jump]
+          comment-line = true
 "#;
-        let user_config: Config = toml::from_str(toml_content).unwrap();
-        println!("{user_config:?}");
+        let user_config: Config =
+            toml::from_str(toml_content).expect("Failed to deserialize config");
+        println!("{:#?}", user_config);
         println!("{}", toml::to_string(&user_config).unwrap());
     }
 }

@@ -33,13 +33,29 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use types::{ClapItem, MatchedItem};
 
+/// [`BaseArgs`] represents the arguments common to all the providers.
+#[derive(Debug, clap::Parser, PartialEq, Eq, Default)]
+pub struct BaseArgs {
+    /// Specify the initial query.
+    #[clap(long)]
+    query: Option<String>,
+
+    /// Specify the working directory for this provider and all subsequent providers.
+    #[clap(long)]
+    cwd: Option<PathBuf>,
+
+    /// Skip the default working directory in searching.
+    #[clap(long)]
+    no_cwd: bool,
+}
+
 pub async fn create_provider(provider_id: &str, ctx: &Context) -> Result<Box<dyn ClapProvider>> {
     let provider: Box<dyn ClapProvider> = match provider_id {
         "blines" => Box::new(blines::BlinesProvider::new()),
         "dumb_jump" => Box::new(dumb_jump::DumbJumpProvider::new()),
         "filer" => Box::new(filer::FilerProvider::new(ctx).await?),
         "files" => Box::new(files::FilesProvider::new(ctx).await?),
-        "grep" => Box::new(grep::GrepProvider::new()),
+        "grep" => Box::new(grep::GrepProvider::new(ctx).await?),
         "igrep" => Box::new(igrep::IgrepProvider::new(ctx).await?),
         "recent_files" => Box::new(recent_files::RecentFilesProvider::new(ctx)),
         "tagfiles" => Box::new(tagfiles::TagfilesProvider::new()),
@@ -81,7 +97,6 @@ pub struct ProviderEnvironment {
     pub display: BufnrWinid,
     pub icon: Icon,
     pub matcher_builder: MatcherBuilder,
-    pub debounce: bool,
     pub no_cache: bool,
     pub preview_enabled: bool,
     pub display_winwidth: usize,
@@ -236,7 +251,6 @@ impl Context {
             display: BufnrWinid,
             cwd: AbsPathBuf,
             icon: String,
-            debounce: bool,
             no_cache: bool,
             start_buffer_path: PathBuf,
         }
@@ -247,7 +261,6 @@ impl Context {
             input,
             display,
             cwd,
-            debounce,
             no_cache,
             start_buffer_path,
             icon,
@@ -296,7 +309,6 @@ impl Context {
             input,
             display,
             no_cache,
-            debounce,
             preview_enabled: preview_enabled == 1,
             start_buffer_path,
             display_winwidth,
@@ -347,12 +359,11 @@ impl Context {
         Ok(out.stdout)
     }
 
-    pub fn start_buffer_extension(&self) -> std::io::Result<String> {
+    pub fn start_buffer_extension(&self) -> std::io::Result<&str> {
         self.env
             .start_buffer_path
             .extension()
             .and_then(|s| s.to_str())
-            .map(|s| s.to_string())
             .ok_or_else(|| {
                 std::io::Error::new(
                     std::io::ErrorKind::Other,
@@ -362,6 +373,56 @@ impl Context {
                     ),
                 )
             })
+    }
+
+    pub async fn parse_provider_args<T: clap::Parser + Default + Debug>(&self) -> Result<T> {
+        let args = self.vim.provider_args().await?;
+
+        let provider_args = if args.is_empty() {
+            T::default()
+        } else {
+            T::try_parse_from(std::iter::once(String::from("")).chain(args.into_iter()))
+                .map_err(|err| {
+                    match err.kind() {
+                        clap::error::ErrorKind::DisplayHelp => {
+                            // Show help in the display window.
+                            let err_msg = err.to_string();
+                            let lines = err_msg.split('\n').collect::<Vec<_>>();
+                            let _ = self.vim.exec("display_set_lines", json!([lines]));
+                        }
+                        _ => {
+                            let _ = self.vim.echo_warn(format!(
+                                "using default {:?} due to {err}",
+                                T::default()
+                            ));
+                        }
+                    }
+                })
+                .unwrap_or_default()
+        };
+        Ok(provider_args)
+    }
+
+    pub async fn handle_base_args(&self, base: &BaseArgs) -> Result<String> {
+        let BaseArgs { query, .. } = base;
+
+        let query = if let Some(query) = query {
+            self.vim.call("set_initial_query", json!([query])).await?
+        } else {
+            self.vim.input_get().await?
+        };
+
+        Ok(query)
+    }
+
+    pub async fn expanded_paths(&self, paths: &[PathBuf]) -> Result<Vec<PathBuf>> {
+        let mut expanded_paths = Vec::with_capacity(paths.len());
+        for p in paths {
+            if let Ok(path) = self.vim.expand(p.to_string_lossy()).await {
+                expanded_paths.push(path.into());
+            }
+        }
+        Ok(expanded_paths)
     }
 
     pub fn set_provider_source(&self, new: ProviderSource) {
