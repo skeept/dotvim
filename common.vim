@@ -189,7 +189,7 @@ function! CloseTabOrExit(idx)
 endfunction
 
 noremap <f4> :<C-U>call CloseTabOrExit(v:count)<CR>
-inoremap <f4> <ESC>:<C-U>call CloseTabOrExit(v:count)<CR> : '',
+inoremap <f4> <ESC>:<C-U>call CloseTabOrExit(v:count)<CR>
 
 "noremap ,en :cnext<CR>
 "noremap ,ep :cprevious<CR>
