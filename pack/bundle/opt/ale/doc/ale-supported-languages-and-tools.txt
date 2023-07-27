@@ -175,6 +175,7 @@ Notes:
   * `elm-make`
 * Erb
   * `erb`
+  * `erb-formatter`
   * `erblint`
   * `erubi`
   * `erubis`
@@ -213,7 +214,6 @@ Notes:
   * `golangci-lint`!!
   * `golangserver`
   * `golines`
-  * `gometalinter`!!
   * `gopls`
   * `gosimple`!!
   * `gotype`!!
