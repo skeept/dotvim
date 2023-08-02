@@ -1210,6 +1210,8 @@ g()
   local first_arg="$([ -z "$1" ] && echo -n status || echo -n $1 )"
   shift
   case "$first_arg" in
+    st) arg=(status)
+      ;;
     co) arg=("checkout")
       ;;
     br) arg=("branch")
