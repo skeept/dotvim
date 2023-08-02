@@ -1207,7 +1207,25 @@ vt()
 
 g()
 {
-  [ -z "$1" ] && git status || git $@
+  local first_arg="$([ -z "$1" ] && echo -n status || echo -n $1 )"
+  shift
+  case "$first_arg" in
+    co) arg=("checkout")
+      ;;
+    br) arg=("branch")
+      ;;
+    df) arg=("diff")
+      ;;
+    dt) arg=("difftool")
+      ;;
+    dn) arg=(diff --name-status)
+      ;;
+    ll) arg=(log --oneline)
+      ;;
+    *) arg=("${first_arg}")
+      ;;
+  esac
+  git ${arg[@]} $@
 }
 
 first_alternative()
