@@ -1216,7 +1216,7 @@ g()
       ;;
     ci) arg=("commit")
       ;;
-    ciam) arg=(commit -all -m)
+    ciam) arg=(commit -a -m)
       ;;
     br) arg=("branch")
       ;;
