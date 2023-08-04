@@ -1214,6 +1214,10 @@ g()
       ;;
     co) arg=("checkout")
       ;;
+    ci) arg=("commit")
+      ;;
+    ciam) arg=(commit -all -m)
+      ;;
     br) arg=("branch")
       ;;
     df) arg=("diff")
