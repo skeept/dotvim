@@ -1212,26 +1212,26 @@ g()
   case "$first_arg" in
     st) arg=(status)
       ;;
-    co) arg=("checkout")
+    co) arg=(checkout)
       ;;
-    ci) arg=("commit")
+    ci) arg=(commit)
       ;;
     ciam) arg=(commit -a -m)
       ;;
-    br) arg=("branch")
+    br) arg=(branch)
       ;;
-    df) arg=("diff")
+    df) arg=(diff)
       ;;
-    dt) arg=("difftool")
+    dt) arg=(difftool)
       ;;
     dn) arg=(diff --name-status)
       ;;
     ll) arg=(log --oneline)
       ;;
-    *) arg=("${first_arg}")
+    *) arg=(${first_arg})
       ;;
   esac
-  git ${arg[@]} $@
+  git ${arg[@]} "$@"
 }
 
 first_alternative()
