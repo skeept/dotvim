@@ -23,3 +23,6 @@ disabled = true
 
 [username]
 disabled = true
+
+[nix_shell]
+format = 'via [☃️ $state](bold blue) '
