@@ -569,6 +569,8 @@ endfunction
 
 "================== QuoteCommaJoin ============================================{{{
 function! jraf#quoteCommaJoin() range
+  " will try to always call splitInLines before. add comma to end
+  call jraf#splitInLines()
   let cmd = '' . a:firstline . ',' . a:lastline
   execute cmd . "yank u"
   call jraf#ScratchEdit('split', '')
