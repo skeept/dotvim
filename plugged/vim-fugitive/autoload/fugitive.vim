@@ -116,16 +116,15 @@ function! s:VersionCheck() abort
   elseif !fugitive#GitVersion(1, 8, 5)
     return 'return ' . string('echoerr "fugitive: Git 1.8.5 or newer required"')
   else
+    if exists('b:git_dir') && empty(b:git_dir)
+      unlet! b:git_dir
+    endif
     return ''
   endif
 endfunction
 
 let s:worktree_error = "core.worktree is required when using an external Git dir"
 function! s:DirCheck(...) abort
-  let vcheck = s:VersionCheck()
-  if !empty(vcheck)
-    return vcheck
-  endif
   let dir = call('FugitiveGitDir', a:000)
   if !empty(dir) && FugitiveWorkTree(dir, 1) is# 0
     return 'return ' . string('echoerr "fugitive: ' . s:worktree_error . '"')
@@ -349,7 +348,6 @@ function! fugitive#Wait(job_or_jobs, ...) abort
       sleep 1m
     endif
   else
-    let sleep = has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
     for job in jobs
       if ch_status(job) ==# 'open'
         call ch_close_in(job)
@@ -362,7 +360,7 @@ function! fugitive#Wait(job_or_jobs, ...) abort
           break
         endif
         let i += 1
-        exe sleep
+        sleep 1m
       endwhile
     endfor
   endif
@@ -400,8 +398,8 @@ function! s:JobExecute(argv, jopts, stdin, callback, ...) abort
       let dict.job = jobstart(a:argv, a:jopts)
       if !empty(a:stdin)
         call chansend(dict.job, a:stdin)
-        call chanclose(dict.job, 'stdin')
       endif
+      call chanclose(dict.job, 'stdin')
     catch /^Vim\%((\a\+)\)\=:E475:/
       let [dict.exit_status, dict.stdout, dict.stderr] = [122, [''], ['']]
     endtry
@@ -889,9 +887,8 @@ function! s:SystemList(cmd) abort
           \ 'exit_cb': { j, code -> add(exit, code) }}
     let job = job_start(a:cmd, jopts)
     call ch_close_in(job)
-    let sleep = has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
     while ch_status(job) !~# '^closed$\|^fail$' || job_status(job) ==# 'run'
-      exe sleep
+      sleep 1m
     endwhile
     return [lines, exit[0]]
   else
@@ -1006,7 +1003,7 @@ function! s:StdoutToFile(out, cmd, ...) abort
       endif
       call ch_close_in(job)
       while ch_status(job) !~# '^closed$\|^fail$' || job_status(job) ==# 'run'
-        exe has('patch-8.2.2366') ? 'sleep! 1m' : 'sleep 1m'
+        sleep 1m
       endwhile
       return [join(readfile(err, 'b'), "\n"), exit[0]]
     finally
@@ -2696,8 +2693,8 @@ function! fugitive#BufReadStatus(cmdbang) abort
       let branch = FugitiveHead(0)
       let head = FugitiveHead(11)
     elseif fugitive#GitVersion(2, 11)
-      let cmd += ['status', '--porcelain=v2', '-bz']
-      let [output, message, exec_error] = s:NullError(cmd)
+      let status_cmd = cmd + ['status', '--porcelain=v2', '-bz']
+      let [output, message, exec_error] = s:NullError(status_cmd)
       if exec_error
         throw 'fugitive: ' . message
       endif
@@ -2744,8 +2741,8 @@ function! fugitive#BufReadStatus(cmdbang) abort
         let head = FugitiveHead(11)
       endif
     else " git < 2.11
-      let cmd += ['status', '--porcelain', '-bz']
-      let [output, message, exec_error] = s:NullError(cmd)
+      let status_cmd = cmd + ['status', '--porcelain', '-bz']
+      let [output, message, exec_error] = s:NullError(status_cmd)
       if exec_error
         throw 'fugitive: ' . message
       endif
@@ -2790,14 +2787,13 @@ function! fugitive#BufReadStatus(cmdbang) abort
       endwhile
     endif
 
+    let diff_cmd = cmd + ['-c', 'diff.suppressBlankEmpty=false', '-c', 'core.quotePath=false', 'diff', '--color=never', '--no-ext-diff', '--no-prefix']
     let diff = {'Staged': {'stdout': ['']}, 'Unstaged': {'stdout': ['']}}
     if len(staged)
-      let diff['Staged'] =
-          \ fugitive#Execute(['-c', 'diff.suppressBlankEmpty=false', '-c', 'core.quotePath=false', 'diff', '--color=never', '--no-ext-diff', '--no-prefix', '--cached'], function('len'))
+      let diff['Staged'] = fugitive#Execute(diff_cmd + ['--cached'], function('len'))
     endif
     if len(unstaged)
-      let diff['Unstaged'] =
-          \ fugitive#Execute(['-c', 'diff.suppressBlankEmpty=false', '-c', 'core.quotePath=false', 'diff', '--color=never', '--no-ext-diff', '--no-prefix'], function('len'))
+      let diff['Unstaged'] = fugitive#Execute(diff_cmd + map(copy(unstaged), 'v:val.relative[0]'), function('len'))
     endif
 
     for dict in staged
@@ -4127,6 +4123,7 @@ function! fugitive#CdComplete(A, L, P) abort
 endfunction
 
 function! fugitive#Cd(path, ...) abort
+  exe s:VersionCheck()
   let path = substitute(a:path, '^:/:\=\|^:(\%(top\|top,literal\|literal,top\|literal\))', '', '')
   if path !~# '^/\|^\a\+:\|^\.\.\=\%(/\|$\)'
     let dir = s:Dir()
@@ -5964,6 +5961,7 @@ function! s:LogParse(state, dir, prefix, line) abort
 endfunction
 
 function! fugitive#LogCommand(line1, count, range, bang, mods, args, type) abort
+  exe s:VersionCheck()
   let dir = s:Dir()
   exe s:DirCheck(dir)
   let listnr = a:type =~# '^l' ? 0 : -1
@@ -6667,6 +6665,7 @@ endfunction
 " Section: :GMove, :GRemove
 
 function! s:Move(force, rename, destination) abort
+  exe s:VersionCheck()
   let dir = s:Dir()
   exe s:DirCheck(dir)
   if s:DirCommitFile(@%)[1] !~# '^0\=$' || empty(@%)
@@ -6740,6 +6739,7 @@ function! fugitive#RenameCommand(line1, line2, range, bang, mods, arg, ...) abor
 endfunction
 
 function! s:Remove(after, force) abort
+  exe s:VersionCheck()
   let dir = s:Dir()
   exe s:DirCheck(dir)
   if len(@%) && s:DirCommitFile(@%)[1] ==# ''
