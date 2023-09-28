@@ -133,11 +133,22 @@ function! flagship#tabbufnr(...) abort
   return tab > 0 ? tabpagebuflist(v:lnum)[tabpagewinnr(v:lnum)-1] : 0
 endfunction
 
-" Returns a string consisting of one plus sign for each
-" tabs if v:lnum is zero.
+" Returns a string consisting of one plus sign for each modified buffer and
+" one exclamation point for each terminal buffer in the given tab number.
+" If no tab number is given, use the tab number in v:lnum.
 function! flagship#tabmodified(...) abort
-  let cnt = flagship#tabcountbufvar('&modified', a:0 ? a:1 : v:lnum)
-  return repeat('+', cnt)
+  let tab = a:0 ? a:1 : v:lnum
+  let str = ''
+  for tab in tab ? [tab] : range(1, tabpagenr('$'))
+    for buf in tabpagebuflist(tab)
+      if getbufvar(buf, '&buftype') ==# 'terminal'
+        let str .= '!'
+      elseif getbufvar(buf, '&modified')
+        let str .= '+'
+      endif
+    endfor
+  endfor
+  return str
 endfunction
 
 " Return the number of times a given buffer variable is nonempty for the given
@@ -594,7 +605,6 @@ function! flagship#setup(...) abort
   let s:new_flags = {}
   let modelines = &modelines
   try
-    let &modelines = 0
     let g:Hoist = function('flagship#_hoist')
     function! Hoist(...) abort
       return call(g:Hoist, a:000)
@@ -603,6 +613,7 @@ function! flagship#setup(...) abort
       if v:version >= 704 || (v:version == 703 && has('patch442'))
         doautocmd <nomodeline> User Flags
       else
+        let &modelines = 0
         doautocmd User Flags
       endif
     endif
@@ -613,7 +624,9 @@ function! flagship#setup(...) abort
     let s:flags = s:new_flags
     lockvar! s:flags
   finally
-    let &modelines = modelines
+    if &modelines != modelines
+      let &modelines = modelines
+    endif
     unlet! s:new_flags g:Hoist
     if exists('*Hoist')
       delfunction Hoist
