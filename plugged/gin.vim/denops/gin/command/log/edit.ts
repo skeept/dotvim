@@ -1,6 +1,6 @@
 import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
 import { unnullish } from "https://deno.land/x/unnullish@v1.0.1/mod.ts";
-import { ensure, is } from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.9.0/mod.ts#^";
 import * as fn from "https://deno.land/x/denops_std@v5.0.1/function/mod.ts";
 import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
 import * as buffer from "https://deno.land/x/denops_std@v5.0.1/buffer/mod.ts";
@@ -16,8 +16,9 @@ import {
 } from "https://deno.land/x/denops_std@v5.0.1/argument/mod.ts";
 import { bind } from "../../command/bare/command.ts";
 import { exec as execBuffer } from "../../command/buffer/edit.ts";
-import { init as initActionCore, Range } from "../../action/core.ts";
+import { init as initActionBrowse } from "../../action/browse.ts";
 import { init as initActionCherryPick } from "../../action/cherry_pick.ts";
+import { init as initActionCore, Range } from "../../action/core.ts";
 import { init as initActionEcho } from "../../action/echo.ts";
 import { init as initActionMerge } from "../../action/merge.ts";
 import { init as initActionRebase } from "../../action/rebase.ts";
@@ -90,6 +91,7 @@ export async function exec(
     await batch.batch(denops, async (denops) => {
       await bind(denops, bufnr);
       await initActionCore(denops, bufnr);
+      await initActionBrowse(denops, bufnr, gatherCandidates);
       await initActionCherryPick(denops, bufnr, gatherCandidates);
       await initActionEcho(denops, bufnr, gatherCandidates);
       await initActionMerge(denops, bufnr, gatherCandidates);

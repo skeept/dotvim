@@ -4,17 +4,15 @@ import {
   assert,
   ensure,
   is,
-} from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+} from "https://deno.land/x/unknownutil@v3.9.0/mod.ts#^";
 import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
 import * as fn from "https://deno.land/x/denops_std@v5.0.1/function/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v5.0.1/variable/mod.ts";
 import * as helper from "https://deno.land/x/denops_std@v5.0.1/helper/mod.ts";
 import {
   parse,
-  validateFlags,
   validateOpts,
 } from "https://deno.land/x/denops_std@v5.0.1/argument/mod.ts";
-import { normCmdArgs, parseDisableDefaultArgs } from "../../util/cmd.ts";
+import { fillCmdArgs, normCmdArgs } from "../../util/cmd.ts";
 import { exec } from "./command.ts";
 
 type Range = readonly [number, number];
@@ -25,16 +23,12 @@ export function main(denops: Denops): void {
   denops.dispatcher = {
     ...denops.dispatcher,
     "browse:command": (args, range) => {
-      assert(args, is.ArrayOf(is.String), { message: "args must be string[]" });
-      assert(range, is.OneOf([is.Undefined, isRange]), {
-        message: "range must be undefined | [number, number]",
-      });
-      const [disableDefaultArgs, realArgs] = parseDisableDefaultArgs(args);
+      assert(args, is.ArrayOf(is.String), { name: "args" });
+      assert(range, is.OneOf([is.Undefined, isRange]), { name: "range" });
       return helper.friendlyCall(
         denops,
         () =>
-          command(denops, realArgs, {
-            disableDefaultArgs,
+          command(denops, args, {
             range,
           }),
       );
@@ -43,7 +37,6 @@ export function main(denops: Denops): void {
 }
 
 type CommandOptions = {
-  disableDefaultArgs?: boolean;
   range?: Range;
 };
 
@@ -52,35 +45,18 @@ async function command(
   args: string[],
   options: CommandOptions = {},
 ): Promise<void> {
-  if (!options.disableDefaultArgs) {
-    const defaultArgs = await vars.g.get(
-      denops,
-      "gin_browse_default_args",
-      [],
-    );
-    assert(defaultArgs, is.ArrayOf(is.String), {
-      message: "g:gin_browse_default_args must be string[]",
-    });
-    args = [...defaultArgs, ...args];
-  }
-  const [opts, flags, residue] = parse(await normCmdArgs(denops, args));
-  validateFlags(flags, [
-    "remote",
-    "permalink",
-    "path",
-    "home",
-    "commit",
-    "pr",
-    "n",
-    "no-browser",
-  ]);
+  args = await fillCmdArgs(denops, args, "browse");
+  args = await normCmdArgs(denops, args);
+
+  const [opts, flags, residue] = parse(args);
   validateOpts(opts, [
     "worktree",
     "yank",
   ]);
+
   const commitish = parseResidue(residue);
   const path = unnullish(
-    await ensurePath(denops, opts.path),
+    await ensurePath(denops, flags["path"]),
     (p) => formatPath(p, options.range),
   );
   await exec(denops, commitish ?? "HEAD", {
@@ -114,7 +90,7 @@ function parseResidue(
 
 async function ensurePath(
   denops: Denops,
-  path?: string,
+  path?: unknown,
 ): Promise<string | undefined> {
   if (path) {
     return ensure(path, is.String, {

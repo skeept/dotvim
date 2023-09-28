@@ -4,7 +4,7 @@ import * as buffer from "https://deno.land/x/denops_std@v5.0.1/buffer/mod.ts";
 import * as fn from "https://deno.land/x/denops_std@v5.0.1/function/mod.ts";
 import * as helper from "https://deno.land/x/denops_std@v5.0.1/helper/mod.ts";
 import * as mapping from "https://deno.land/x/denops_std@v5.0.1/mapping/mod.ts";
-import { assert, is } from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.9.0/mod.ts#^";
 
 let rangeInternal: Range | undefined;
 
@@ -95,7 +95,8 @@ export async function define(
 ): Promise<void> {
   denops.dispatcher = {
     ...denops.dispatcher,
-    [`action:action:${name}`]: async () => {
+    [`action:action:${name}`]: async (bufnr) => {
+      assert(bufnr, is.Number);
       await helper.friendlyCall(denops, async () => {
         await buffer.ensure(denops, bufnr, async () => {
           const range = await getRange(denops);
@@ -107,7 +108,7 @@ export async function define(
   await mapping.map(
     denops,
     `<Plug>(gin-action-${name})`,
-    `<Cmd>call denops#request('gin', 'action:action:${name}', [])<CR>`,
+    `<Cmd>call denops#request('gin', 'action:action:${name}', [${bufnr}])<CR>`,
     { ...options, buffer: true, silent: true, noremap: true },
   );
 }
@@ -175,15 +176,12 @@ async function doRepeat(
     denops,
     bufnr,
     "denops_action_previous",
-    null,
   );
   if (!name) {
     await helper.echo(denops, "[gin] Nothing to repeat");
     return;
   }
-  assert(name, is.String, {
-    message: `b:denops_action_previous on buffer ${bufnr} must be string`,
-  });
+  assert(name, is.String, { name: `b:denops_action_previous` });
   await call(denops, name, range);
 }
 

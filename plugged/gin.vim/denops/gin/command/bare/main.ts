@@ -1,5 +1,5 @@
 import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
-import { assert, is } from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.9.0/mod.ts#^";
 import * as helper from "https://deno.land/x/denops_std@v5.0.1/helper/mod.ts";
 import {
   parseOpts,
@@ -12,8 +12,8 @@ export function main(denops: Denops): void {
   denops.dispatcher = {
     ...denops.dispatcher,
     "command": (mods, args) => {
-      assert(mods, is.String, { message: "mods must be string" });
-      assert(args, is.ArrayOf(is.String), { message: "args must be string[]" });
+      assert(mods, is.String, { name: "mods" });
+      assert(args, is.ArrayOf(is.String), { name: "args" });
       const silent = parseSilent(mods);
       return helper.ensureSilent(denops, silent, () => {
         return helper.friendlyCall(denops, () => command(denops, args));

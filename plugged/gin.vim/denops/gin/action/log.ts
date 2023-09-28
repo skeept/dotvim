@@ -2,7 +2,7 @@ import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
 import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
 import { alias, define, GatherCandidates, Range } from "./core.ts";
 
-export type Candidate = { path: string; XY: string };
+export type Candidate = { commitish: string };
 
 export async function init(
   denops: Denops,
@@ -20,48 +20,34 @@ export async function init(
       await define(
         denops,
         bufnr,
-        `diff:smart:${opener}`,
+        `log:${opener}`,
         (denops, bufnr, range) =>
-          doDiffSmart(denops, bufnr, range, opener, gatherCandidates),
+          doLog(denops, bufnr, range, opener, [], gatherCandidates),
       );
     }
     await alias(
       denops,
       bufnr,
-      "diff:smart",
-      "diff:smart:edit",
-    );
-    await alias(
-      denops,
-      bufnr,
-      "diff",
-      "diff:smart",
+      "log",
+      "log:edit",
     );
   });
 }
 
-async function doDiffSmart(
+async function doLog(
   denops: Denops,
   bufnr: number,
   range: Range,
   opener: string,
+  extraArgs: string[],
   gatherCandidates: GatherCandidates<Candidate>,
 ): Promise<void> {
   const xs = await gatherCandidates(denops, bufnr, range);
   for (const x of xs) {
-    if (x.XY.startsWith(".")) {
-      await denops.dispatch("gin", "diff:command", "", "", [
-        `++opener=${opener}`,
-        "--",
-        x.path,
-      ]);
-    } else {
-      await denops.dispatch("gin", "diff:command", "", "", [
-        `++opener=${opener}`,
-        "--cached",
-        "--",
-        x.path,
-      ]);
-    }
+    await denops.dispatch("gin", "log:command", "", "", [
+      `++opener=${opener}`,
+      ...extraArgs,
+      x.commitish,
+    ]);
   }
 }

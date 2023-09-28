@@ -1,5 +1,5 @@
 import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
-import { assert, is } from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.9.0/mod.ts#^";
 import { unnullish } from "https://deno.land/x/unnullish@v1.0.1/mod.ts";
 import * as itertools from "https://deno.land/x/itertools@v1.1.1/mod.ts";
 import * as ansiEscapeCode from "https://deno.land/x/ansi_escape_code@v1.0.2/mod.ts";
@@ -20,7 +20,7 @@ export async function buildDecorationsFromAnsiEscapeCode(
 ): Promise<[string[], Decoration[]]> {
   const colors = await denops.call("gin#internal#util#ansi_escape_code#colors");
   assert(colors, is.ArrayOf(is.String), {
-    message: "gin#internal#util#ansi_escape_code#colors() must be string[]",
+    name: "gin#internal#util#ansi_escape_code#colors()",
   });
   const trimmed: string[] = [];
   const decorations: Decoration[] = [];
