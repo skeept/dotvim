@@ -22,6 +22,7 @@ alias xtop2='xterm  -geometry 76x25+809+00   -ls  -j -title "top $HOST" -e top -
 
 alias ba='exec bash'
 alias b='bat'
+alias bt='bat -r 1:5'
 #alias py='python'
 alias yp='ipython'
 alias ipy='ipython'
