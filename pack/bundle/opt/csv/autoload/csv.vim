@@ -220,11 +220,11 @@ endfu
 
 fu! csv#RemoveAutoHighlight() "{{{3
     exe "aug CSV_HI".bufnr('')
-        exe "au! CursorMoved <buffer=".bufnr('').">"
+        exe "au! "
     aug end
     exe "aug! CSV_HI".bufnr('')
     " Remove any existing highlighting
-    HiColumn!
+    call csv#HiCol('', 1)
 endfu
 
 fu! csv#DoAutoCommands() "{{{3
@@ -242,9 +242,8 @@ fu! csv#DoAutoCommands() "{{{3
     endif
     " undo autocommand:
     let b:undo_ftplugin .= '| exe "sil! au! CSV_HI'.bufnr('').' CursorMoved <buffer> "'
-    let b:undo_ftplugin .= '| exe "sil! aug! CSV_HI'.bufnr('').'"'
+    let b:undo_ftplugin .= '| call csv#RemoveAutoHighlight()'
     let b:undo_ftplugin = 'exe "sil! HiColumn!" |' . b:undo_ftplugin
-
     if has("gui_running") && !exists("#CSV_Menu#FileType")
         augroup CSV_Menu
             au!
@@ -439,10 +438,14 @@ fu! csv#HiCol(colnr, bang) "{{{3
         if exists("s:matchid")
             " ignore errors, that come from already deleted matches
             sil! call matchdelete(s:matchid)
+            if a:bang
+              unlet! s:matchid
+              return
+            endif
         endif
         " Additionally, filter all matches, that could have been used earlier
         let matchlist=getmatches()
-        call filter(matchlist, 'v:val["group"] !~ s:hiGroup')
+        call filter(matchlist, 'v:val["group"] !~? s:hiGroup')
         call setmatches(matchlist)
         if a:bang
             return
@@ -451,6 +454,10 @@ fu! csv#HiCol(colnr, bang) "{{{3
     elseif !a:bang
         exe ":2match " . s:hiGroup . ' /' . pat . '/'
     endif
+    " Remove Highlighting once switching away from the buffer
+    exe "aug CSV_HI".bufnr('')
+        exe "au BufWinLeave <buffer=".bufnr('')."> call csv#RemoveAutoHighlight()"
+    aug end
 endfu
 fu! csv#GetDelimiter(first, last, ...) "{{{3
     " This depends on the locale. Hopefully it works
