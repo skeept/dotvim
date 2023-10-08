@@ -115,7 +115,7 @@ alias cpv='rsync -ah --info=progress2'
 alias lazygit=lg
 alias bc=bc4
 alias ddf=dirdiff
-alias ruf='ruff --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,D213,UP035'
+alias ruf='ruff --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,D213,UP035,FA100'
 
 alias gcl=gcloud
 alias gsu=gsutil
