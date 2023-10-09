@@ -1309,6 +1309,23 @@ star()
   fi
 }
 
+posh_display_themes()
+{
+  if [ -e "$1" ];  then
+    eval "$(oh-my-posh prompt init bash --config $(pwd)/$1)"
+    return
+  fi
+
+  [ -n "$1" ] && tmux_pane=$1 || tmux_pane=1
+  for fn in *; do 
+    echo $fn
+    local v="tmux send-keys -t $tmux_pane 'eval \"\$(oh-my-posh prompt init bash --config $fn)\"' Enter"
+    #tmux send-keys -t $tmux_pane 'eval "$(oh-my-posh prompt init bash --config $fn)"' Enter
+    eval "$v"
+    read a
+  done
+}
+
 function zp()
 {
   test -n "$1" && select1=("--select-1" "-q") || select1=()
@@ -1317,7 +1334,6 @@ function zp()
   else
     fzf --preview "head -n 500 {}" ${select1[@]} $@
   fi
-
 }
 
 function vv()
