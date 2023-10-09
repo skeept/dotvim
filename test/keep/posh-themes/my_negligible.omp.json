@@ -76,23 +76,16 @@
           "style": "powerline",
           "template": "| {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} \uf295 ",
           "type": "battery"
-        },
-	{
-          "type": "executiontime",
-          "style": "plain",
-          "powerline_symbol": "\uE0B0",
+        }
+        , {
           "foreground": "lightGreen",
           "properties": {
-            "threshold": 500,
             "style": "austin",
-            "prefix": " <#fefefe>\ufbab</> "
-          }
-        },
-        {
-          "foreground": "lightGreen",
+            "threshold": 0
+          },
           "style": "plain",
-          "template": "| {{ .CurrentDate | date .Format }} ",
-          "type": "time"
+          "template": "| {{ .FormattedMs }}</>",
+          "type": "executiontime"
         }
       ],
       "type": "prompt"
