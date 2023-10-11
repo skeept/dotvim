@@ -273,6 +273,7 @@ nnoremap ,gc :<C-U>Gina commit<CR>
 " Gina diff is the inline diff. I guess not that useful
 nnoremap ,gd :<C-U>Gina compare<CR>
 nnoremap ,ga :<C-U>Gina add %
+nnoremap ,gw :<C-U>:silent! call jraf#_gitCommit()<CR>
 
 nnoremap <Leader>Q :Sayonara
 nnoremap <Leader>q :Sayonara!<CR>

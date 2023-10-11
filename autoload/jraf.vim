@@ -600,6 +600,13 @@ function! jraf#splitInLines()
 endfunction
 "==============================================================================}}}
 
+"================== Git Commit ================================================{{{
+" Add commit for current file
+function! jraf#_gitCommit()
+  Gwrite
+  Gina commit
+endfunction
+"==============================================================================}}}
 
 "================== quickrun-jq ==============================================={{{
 function! jraf#quickrunjqset(json_file)
