@@ -229,6 +229,11 @@ function! airline#extensions#load()
     call add(s:loaded_ext, 'undotree')
   endif
 
+  if exists(':RTM')
+    call airline#extensions#vimodoro#init(s:ext)
+    call add(s:loaded_ext, 'vimodoro')
+  endif
+
   if get(g:, 'airline#extensions#hunks#enabled', 1)
         \ && (exists('g:loaded_signify')
         \ || exists('g:loaded_gitgutter')
@@ -413,6 +418,11 @@ function! airline#extensions#load()
   if (get(g:, 'airline#extensions#capslock#enabled', 1) && exists('*CapsLockStatusline'))
     call airline#extensions#capslock#init(s:ext)
     call add(s:loaded_ext, 'capslock')
+  endif
+
+  if (get(g:, 'airline#extensions#codeium#enabled', 1) && get(g:, 'loaded_codeium', 0))
+    call airline#extensions#codeium#init(s:ext)
+    call add(s:loaded_ext, 'codeium')
   endif
 
   if (get(g:, 'airline#extensions#gutentags#enabled', 1) && get(g:, 'loaded_gutentags', 0))
