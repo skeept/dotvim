@@ -102,12 +102,13 @@ Plug 'lambdalisue/gin.vim', { 'on': ['Gin', 'GinStatus'] }
 
 " local plugins
 Plug g:p0 . '/pack/bundle/opt/sayonara', {'on': 'Sayonara'}
-Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable', 'ALELint']}
+
+Plug g:p0 . '/pack/bundle/opt/ale', {'on': ['ALEEnable']}
 
 "airline fails if ale is not properly loaded
-if use_airline
-  Plug g:p0 . '/pack/bundle/opt/ale'
-endif
+"if use_airline
+  "Plug g:p0 . '/pack/bundle/opt/ale'
+"endif
 
 "check telescope
 "let is_nvim = has("nvim")
