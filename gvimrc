@@ -103,5 +103,5 @@ endif
 set encoding=utf-8
 
 "=============================== Supertab =====================================
-imap <C-SPACE> <C-R>=jraf#mySupertabAltCompletion()<CR>
+"imap <C-SPACE> <C-R>=jraf#mySupertabAltCompletion()<CR>
 "==============================================================================
