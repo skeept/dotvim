@@ -263,8 +263,8 @@ function! jraf#loadJedi()
   let s:has_jedi = 0
   if has("python3")
     silent python3 << EOF
-import vim
 try:
+  import vim
   import jedi
   vim.command('let s:has_jedi = 1')
 except:
