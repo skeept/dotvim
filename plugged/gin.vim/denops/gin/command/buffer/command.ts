@@ -1,10 +1,10 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
 import { unnullish } from "https://deno.land/x/unnullish@v1.0.1/mod.ts";
-import * as buffer from "https://deno.land/x/denops_std@v5.0.0/buffer/mod.ts";
-import * as option from "https://deno.land/x/denops_std@v5.0.0/option/mod.ts";
+import * as buffer from "https://deno.land/x/denops_std@v5.0.1/buffer/mod.ts";
+import * as option from "https://deno.land/x/denops_std@v5.0.1/option/mod.ts";
 import {
   format as formatBufname,
-} from "https://deno.land/x/denops_std@v5.0.0/bufname/mod.ts";
+} from "https://deno.land/x/denops_std@v5.0.1/bufname/mod.ts";
 import { findWorktreeFromDenops } from "../../git/worktree.ts";
 
 export type ExecOptions = {
@@ -12,6 +12,7 @@ export type ExecOptions = {
   worktree?: string;
   monochrome?: boolean;
   opener?: string;
+  emojify?: boolean;
   cmdarg?: string;
   mods?: string;
   bang?: boolean;
@@ -32,7 +33,8 @@ export async function exec(
     expr: worktree,
     params: {
       processor: unnullish(options.processor, (v) => v.join(" ")),
-      monochrome: unnullish(options.monochrome, () => ""),
+      monochrome: unnullish(options.monochrome, (v) => v ? "" : undefined),
+      emojify: unnullish(options.emojify, (v) => v ? "" : undefined),
     },
     fragment: `${args.join(" ")}$`,
   });

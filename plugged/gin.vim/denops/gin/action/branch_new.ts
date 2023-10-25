@@ -1,10 +1,10 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v5.0.0/batch/mod.ts";
-import * as helper from "https://deno.land/x/denops_std@v5.0.0/helper/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
+import * as helper from "https://deno.land/x/denops_std@v5.0.1/helper/mod.ts";
 import { define, GatherCandidates, Range } from "./core.ts";
 import { exec as execBare } from "../command/bare/command.ts";
 
-export type Candidate = { branch?: string };
+export type Candidate = { target?: string };
 
 export async function init(
   denops: Denops,
@@ -45,7 +45,7 @@ async function doNew(
 ): Promise<void> {
   const xs = await gatherCandidates(denops, bufnr, range);
   const x = xs.at(0);
-  const from = x?.branch ?? "HEAD";
+  const from = x?.target ?? "HEAD";
   const name = await helper.input(denops, {
     prompt: `New branch (from ${from}): `,
   });

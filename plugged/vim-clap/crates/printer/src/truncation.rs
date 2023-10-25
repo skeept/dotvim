@@ -80,7 +80,7 @@ pub fn truncate_item_output_text(
     skipped_chars: Option<usize>,
 ) -> LinesTruncatedMap {
     let mut truncated_map = HashMap::new();
-    items.enumerate().for_each(|(lnum, mut matched_item)| {
+    items.enumerate().for_each(|(lnum, matched_item)| {
         let output_text = matched_item.output_text().to_string();
         let truncation_offset = skipped_chars.or(matched_item.item.truncation_offset());
 
@@ -123,7 +123,7 @@ pub fn truncate_grep_results(
     skipped_chars: Option<usize>,
 ) -> LinesTruncatedMap {
     let mut truncated_map = HashMap::new();
-    grep_results.enumerate().for_each(|(lnum, mut grep_result)| {
+    grep_results.enumerate().for_each(|(lnum, grep_result)| {
         let output_text = grep_result.matched_item.output_text().to_string();
 
         // Truncate the text simply if it's too long.
@@ -176,12 +176,12 @@ pub fn truncate_grep_results(
                             };
 
                             let mut indices = indices;
-                            let file_name_end = UnicodeDots::CHAR_LEN + 1 + file_name.len();
+                            // let file_name_end = UnicodeDots::CHAR_LEN + 1 + file_name.len();
                             indices.iter_mut().for_each(|x| {
                                 *x += offset;
-                                if *x <= file_name_end {
-                                    *x -= 1;
-                                }
+                                // if *x <= file_name_end {
+                                    // *x -= 1;
+                                // }
                             });
                             // TODO: truncate the invisible text and indices caused by the inserted
                             // file name.

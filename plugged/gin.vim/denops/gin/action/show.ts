@@ -1,5 +1,5 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v5.0.0/batch/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
 import { alias, define, GatherCandidates, Range } from "./core.ts";
 import { exec as execBuffer } from "../command/buffer/command.ts";
 
@@ -23,7 +23,14 @@ export async function init(
         bufnr,
         `show:${opener}`,
         (denops, bufnr, range) =>
-          doShow(denops, bufnr, range, opener, gatherCandidates),
+          doShow(denops, bufnr, range, opener, false, gatherCandidates),
+      );
+      await define(
+        denops,
+        bufnr,
+        `show:${opener}:emojify`,
+        (denops, bufnr, range) =>
+          doShow(denops, bufnr, range, opener, true, gatherCandidates),
       );
     }
     await alias(
@@ -31,6 +38,12 @@ export async function init(
       bufnr,
       "show",
       "show:edit",
+    );
+    await alias(
+      denops,
+      bufnr,
+      "show:emojify",
+      "show:edit:emojify",
     );
   });
 }
@@ -40,12 +53,14 @@ async function doShow(
   bufnr: number,
   range: Range,
   opener: string,
+  emojify: boolean,
   gatherCandidates: GatherCandidates<Candidate>,
 ): Promise<void> {
   const xs = await gatherCandidates(denops, bufnr, range);
   for (const x of xs) {
     await execBuffer(denops, ["show", x.commit], {
       opener,
+      emojify,
     });
   }
 }

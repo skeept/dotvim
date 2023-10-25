@@ -167,10 +167,23 @@ function! CloseTabOrExit(idx)
   if a:idx == 0
     wall
   endif
+  let is_diff = &diff
+  " check if dirdiff present in current window
+  let is_dirdiff = 0
+  for window in gettabinfo('.')[0].windows
+    let bufnr = getwininfo(window)[0].bufnr
+    let variables = getbufinfo(bufnr)[0].variables
+    if has_key(variables, 'currentDiff')
+      let is_dirdiff = 1
+    endif
+  endfor
   let numtabs = tabpagenr('$')
-  xit
   if numtabs == tabpagenr('$') && numtabs > 1
     tabclose
+  elseif is_diff || is_dirdiff
+    qall
+  else
+    xit
   endif
   return ""
 endfunction
@@ -187,7 +200,7 @@ nnoremap ,, <c-w><c-w>
 "noremap gl :bprevious<CR>
 "
 if &diff
-  noremap <F4> :qa<CR>
+  "noremap <F4> :qa<CR>
   noremap <F5> :wqa!<CR>
   noremap <F6> :qa!<CR>
 endif
@@ -887,7 +900,7 @@ nnoremap ,qr :call SetupQuickRun()<CR>:QuickRun<CR>
 
 "==============================================================================}}}
 
-"================== A.vim settings ============================================{{{
+"================== A.vim / alternate.vim settings ============================{{{
 let g:alternateSearchPath = '../inc,./inc,../source,sfr,../src,../include,..'
 let g:alternateExtensions_C = "h,inc,H,HPP,hpp"
 let g:alternateExtensions_h = "C,cpp,c++,CPP"

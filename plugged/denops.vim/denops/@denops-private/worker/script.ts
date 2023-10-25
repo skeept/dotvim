@@ -1,13 +1,8 @@
-import {
-  assertObject,
-  assertString,
-  isObject,
-  isString,
-} from "https://deno.land/x/unknownutil@v2.1.1/mod.ts#^";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.2.0/mod.ts#^";
 import {
   Client,
   Session,
-} from "https://deno.land/x/messagepack_rpc@v2.0.0/mod.ts#^";
+} from "https://deno.land/x/messagepack_rpc@v2.0.3/mod.ts#^";
 import {
   readableStreamFromWorker,
   writableStreamFromWorker,
@@ -15,6 +10,7 @@ import {
 import type { Denops, Meta } from "../../@denops/mod.ts";
 import { DenopsImpl } from "../impl.ts";
 import { patchConsole } from "./patch_console.ts";
+import { traceReadableStream, traceWritableStream } from "../trace_stream.ts";
 import { errorDeserializer, errorSerializer } from "../error.ts";
 
 const worker = self as unknown as Worker & { name: string };
@@ -22,12 +18,15 @@ const worker = self as unknown as Worker & { name: string };
 async function main(
   scriptUrl: string,
   meta: Meta,
+  trace: boolean,
 ): Promise<void> {
-  const session = new Session(
-    readableStreamFromWorker(worker),
-    writableStreamFromWorker(worker),
-    { errorSerializer },
-  );
+  let reader = readableStreamFromWorker(worker);
+  let writer = writableStreamFromWorker(worker);
+  if (trace) {
+    reader = traceReadableStream(reader, { prefix: "worker -> plugin: " });
+    writer = traceWritableStream(writer, { prefix: "plugin -> worker: " });
+  }
+  const session = new Session(reader, writer, { errorSerializer });
   session.onMessageError = (error, message) => {
     if (error instanceof Error && error.name === "Interrupted") {
       return;
@@ -104,20 +103,20 @@ async function main(
 }
 
 function isMeta(v: unknown): v is Meta {
-  if (!isObject(v)) {
+  if (!is.Record(v)) {
     return false;
   }
-  if (!isString(v.mode) || !["release", "debug", "test"].includes(v.mode)) {
+  if (!is.String(v.mode) || !["release", "debug", "test"].includes(v.mode)) {
     return false;
   }
-  if (!isString(v.host) || !["vim", "nvim"].includes(v.host)) {
+  if (!is.String(v.host) || !["vim", "nvim"].includes(v.host)) {
     return false;
   }
-  if (!isString(v.version)) {
+  if (!is.String(v.version)) {
     return false;
   }
   if (
-    !isString(v.platform) || !["windows", "mac", "linux"].includes(v.platform)
+    !is.String(v.platform) || !["windows", "mac", "linux"].includes(v.platform)
   ) {
     return false;
   }
@@ -129,13 +128,21 @@ patchConsole(`(${worker.name})`);
 
 // Wait startup arguments and start 'main'
 worker.addEventListener("message", (event: MessageEvent<unknown>) => {
-  assertObject(event.data);
-  assertString(event.data.scriptUrl);
-  if (!isMeta(event.data.meta)) {
-    throw new Error(`Invalid 'meta' is passed: ${event.data.meta}`);
-  }
-  const { scriptUrl, meta } = event.data;
-  main(scriptUrl, meta).catch((e) => {
+  assert(event.data, is.Record, {
+    message: `event.data '${event.data}' must be Record`,
+  });
+  assert(event.data.scriptUrl, is.String, {
+    message: `event.data.scriptUrl '${event.data.scriptUrl}' must be String`,
+  });
+  assert(event.data.meta, isMeta, {
+    message: `event.data.meta '${event.data.meta}' must be Meta`,
+  });
+  assert(event.data.trace, is.OneOf([is.Undefined, is.Boolean]), {
+    message:
+      `event.data.trace '${event.data.trace}' must be undefined or boolean`,
+  });
+  const { scriptUrl, meta, trace } = event.data;
+  main(scriptUrl, meta, trace ?? false).catch((e) => {
     console.error(
       `Unexpected error occurred in '${scriptUrl}': ${e}`,
     );

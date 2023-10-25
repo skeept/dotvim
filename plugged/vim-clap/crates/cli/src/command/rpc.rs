@@ -1,3 +1,5 @@
+use std::io::IsTerminal;
+
 use crate::app::Args;
 use anyhow::{anyhow, Result};
 use clap::Parser;
@@ -8,9 +10,8 @@ pub struct Rpc;
 
 impl Rpc {
     pub async fn run(&self, args: Args) -> Result<()> {
-        maple_core::config::initialize_config_file(args.config_file.clone());
-
-        let config = maple_core::config::config();
+        let (config, config_err) =
+            maple_core::config::load_config_on_startup(args.config_file.clone());
 
         let maybe_log = if let Some(log_path) = args.log {
             Some(log_path)
@@ -50,13 +51,14 @@ impl Rpc {
                 .with_max_level(max_level)
                 .with_line_number(true)
                 .with_writer(non_blocking)
+                .with_ansi(std::io::stdout().is_terminal())
                 .finish();
 
             tracing::subscriber::set_global_default(subscriber)?;
 
-            maple_core::stdio_server::start().await;
+            maple_core::stdio_server::start(config_err).await;
         } else {
-            maple_core::stdio_server::start().await;
+            maple_core::stdio_server::start(config_err).await;
         }
 
         Ok(())

@@ -22,12 +22,12 @@ function! clap#client#handle(msg) abort
     try
       let result = clap#api#call(decoded.method, params)
       if has_key(decoded, 'id')
-        call clap#job#daemon#send_message(json_encode({ 'id': decoded.id, 'result': result }))
+        call clap#rpc#send_ok_response(decoded.id, result)
       endif
     catch
       call clap#helper#echo_error(v:exception.', throwpoint:'.v:throwpoint)
       if has_key(decoded, 'id')
-        call clap#job#daemon#send_message(json_encode({ 'id': decoded.id, 'error': {'code': -32603, 'message': string(v:exception) }}))
+        call clap#rpc#send_error_response(decoded.id, v:exception)
       endif
     endtry
     return
@@ -42,37 +42,28 @@ endfunction
 
 function! s:notify_provider(method, params) abort
   if clap#job#daemon#is_running()
-    call clap#job#daemon#send_message(json_encode({
-          \ 'method': a:method,
-          \ 'params': a:params,
-          \ 'session_id': s:session_id,
-          \ }))
+    let params = a:params
+    let params['session_id'] = s:session_id
+    call clap#rpc#notify(a:method, params)
   endif
 endfunction
 
 function! s:request_async(method, params) abort
   if clap#job#daemon#is_running()
     let s:req_id += 1
-    call clap#job#daemon#send_message(json_encode({
-          \ 'id': s:req_id,
-          \ 'method': a:method,
-          \ 'params': a:params,
-          \ }))
+    call clap#rpc#request(s:req_id, a:method, a:params)
   endif
 endfunction
 
 " Recommended API
 " Optional argument: params: v:null, List, Dict
 function! clap#client#notify_provider(method, ...) abort
-  call s:notify_provider(a:method, get(a:000, 0, v:null))
+  call s:notify_provider(a:method, get(a:000, 0, {}))
 endfunction
 
 function! clap#client#notify(method, ...) abort
   if clap#job#daemon#is_running()
-    call clap#job#daemon#send_message(json_encode({
-          \ 'method': a:method,
-          \ 'params': get(a:000, 0, v:null),
-          \ }))
+    call clap#rpc#notify(a:method, get(a:000, 0, v:null))
   endif
 endfunction
 
@@ -84,16 +75,18 @@ function! clap#client#request_async(method, callback, ...) abort
   endif
 endfunction
 
-function! clap#client#request(method, ...) abort
-  call s:request_async(a:method, get(a:000, 0, v:null))
-endfunction
-
 function! clap#client#notify_on_init(...) abort
   if g:clap.display.winid < 0
     return
   endif
   call clap#rooter#try_set_cwd()
   let s:session_id += 1
+  let source_is_list = v:false
+  if has_key(g:clap.provider, 'source_type') && has_key(g:clap.provider._(), 'source')
+    if g:clap.provider.source_type == g:__t_list || g:clap.provider.source_type == g:__t_func_list
+      let source_is_list = v:true
+    endif
+  endif
   let params = {
         \   'provider_id': g:clap.provider.id,
         \   'input': { 'bufnr': g:clap.input.bufnr, 'winid': g:clap.input.winid },
@@ -101,22 +94,14 @@ function! clap#client#notify_on_init(...) abort
         \   'display': { 'bufnr': g:clap.display.bufnr, 'winid': g:clap.display.winid },
         \   'cwd': clap#rooter#working_dir(),
         \   'icon': g:clap_enable_icon ? get(g:clap.provider._(), 'icon', 'Null') : 'Null',
-        \   'debounce': get(g:clap.provider._(), 'debounce', v:true),
         \   'no_cache': has_key(g:clap.context, 'no-cache') ? v:true : v:false,
         \   'start_buffer_path': expand('#'.g:clap.start.bufnr.':p'),
+        \   'source_is_list': source_is_list,
         \ }
   if a:0 > 0
     call extend(params, a:1)
   endif
   call s:notify_provider('new_session', params)
-endfunction
-
-function! clap#client#notify_recent_file() abort
-  if &buftype ==# 'nofile'
-    return
-  endif
-  let file = expand(expand('<afile>:p'))
-  call s:notify_provider('note_recent_files', [file])
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

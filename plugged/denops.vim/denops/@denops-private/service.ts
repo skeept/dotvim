@@ -1,16 +1,9 @@
-import { toFileUrl } from "https://deno.land/std@0.188.0/path/mod.ts";
-import {
-  assertArray,
-  assertBoolean,
-  assertString,
-  isArray,
-  isNullish,
-  isString,
-} from "https://deno.land/x/unknownutil@v2.1.1/mod.ts#^";
+import { toFileUrl } from "https://deno.land/std@0.194.0/path/mod.ts";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.2.0/mod.ts#^";
 import {
   Client,
   Session,
-} from "https://deno.land/x/messagepack_rpc@v2.0.0/mod.ts#^";
+} from "https://deno.land/x/messagepack_rpc@v2.0.3/mod.ts#^";
 import {
   readableStreamFromWorker,
   writableStreamFromWorker,
@@ -18,6 +11,7 @@ import {
 import { Disposable } from "https://deno.land/x/disposable@v1.1.1/mod.ts#^";
 import { Host } from "./host/base.ts";
 import { Invoker, RegisterOptions, ReloadOptions } from "./host/invoker.ts";
+import { traceReadableStream, traceWritableStream } from "./trace_stream.ts";
 import { errorDeserializer, errorSerializer } from "./error.ts";
 import type { Meta } from "../@denops/mod.ts";
 
@@ -46,6 +40,7 @@ export class Service implements Disposable {
     script: string,
     meta: Meta,
     options: RegisterOptions,
+    trace: boolean,
   ): void {
     const plugin = this.#plugins.get(name);
     if (plugin) {
@@ -73,13 +68,14 @@ export class Service implements Disposable {
       },
     );
     const scriptUrl = resolveScriptUrl(script);
-    worker.postMessage({ scriptUrl, meta });
+    worker.postMessage({ scriptUrl, meta, trace });
     const session = buildServiceSession(
       name,
       meta,
       readableStreamFromWorker(worker),
       writableStreamFromWorker(worker),
       this,
+      trace,
     );
     this.#plugins.set(name, {
       script,
@@ -93,6 +89,7 @@ export class Service implements Disposable {
     name: string,
     meta: Meta,
     options: ReloadOptions,
+    trace: boolean,
   ): void {
     const plugin = this.#plugins.get(name);
     if (!plugin) {
@@ -107,7 +104,7 @@ export class Service implements Disposable {
     }
     this.register(name, plugin.script, { ...meta, mode: "release" }, {
       mode: "reload",
-    });
+    }, trace);
   }
 
   async dispatch(name: string, fn: string, args: unknown[]): Promise<unknown> {
@@ -142,7 +139,12 @@ function buildServiceSession(
   reader: ReadableStream<Uint8Array>,
   writer: WritableStream<Uint8Array>,
   service: Service,
+  trace: boolean,
 ) {
+  if (trace) {
+    reader = traceReadableStream(reader, { prefix: "worker -> denops: " });
+    writer = traceWritableStream(writer, { prefix: "denops -> worker: " });
+  }
   const session = new Session(reader, writer, {
     errorSerializer,
   });
@@ -153,35 +155,34 @@ function buildServiceSession(
     console.error(`Failed to handle message ${message}`, error);
   };
   session.dispatcher = {
-    reload: () => {
+    reload: (trace) => {
+      assert(trace, is.Boolean);
       service.reload(name, meta, {
         mode: "skip",
-      });
+      }, trace);
       return Promise.resolve();
     },
 
     redraw: async (force) => {
-      if (!isNullish(force)) {
-        assertBoolean(force);
-      }
+      assert(force, is.OneOf([is.Boolean, is.Nullish]));
       return await service.host.redraw(!!force);
     },
 
     call: async (fn, ...args) => {
-      assertString(fn);
-      assertArray(args);
+      assert(fn, is.String);
+      assert(args, is.Array);
       return await service.host.call(fn, ...args);
     },
 
     batch: async (...calls) => {
-      assertArray(calls, isCall);
+      assert(calls, is.ArrayOf(isCall));
       return await service.host.batch(...calls);
     },
 
     dispatch: async (name, fn, ...args) => {
-      assertString(name);
-      assertString(fn);
-      assertArray(args);
+      assert(name, is.String);
+      assert(fn, is.String);
+      assert(args, is.Array);
       return await service.dispatch(name, fn, args);
     },
   };
@@ -190,7 +191,7 @@ function buildServiceSession(
 }
 
 function isCall(call: unknown): call is [string, ...unknown[]] {
-  return isArray(call) && call.length > 0 && isString(call[0]);
+  return is.Array(call) && call.length > 0 && is.String(call[0]);
 }
 
 function resolveScriptUrl(script: string): string {

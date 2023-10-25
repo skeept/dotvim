@@ -1,17 +1,17 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
 import { unnullish } from "https://deno.land/x/unnullish@v1.0.1/mod.ts";
-import { ensureString } from "https://deno.land/x/unknownutil@v2.1.1/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v5.0.0/variable/mod.ts";
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.4.0/mod.ts#^";
+import * as vars from "https://deno.land/x/denops_std@v5.0.1/variable/mod.ts";
 import {
   parse as parseBufname,
-} from "https://deno.land/x/denops_std@v5.0.0/bufname/mod.ts";
+} from "https://deno.land/x/denops_std@v5.0.1/bufname/mod.ts";
 import {
   builtinOpts,
   Flags,
   formatFlags,
   parseOpts,
   validateOpts,
-} from "https://deno.land/x/denops_std@v5.0.0/argument/mod.ts";
+} from "https://deno.land/x/denops_std@v5.0.1/argument/mod.ts";
 import { exec as execBuffer } from "../../command/buffer/read.ts";
 
 export async function read(
@@ -19,13 +19,16 @@ export async function read(
   bufnr: number,
   bufname: string,
 ): Promise<void> {
-  const cmdarg = await vars.v.get(denops, "cmdarg") as string;
+  const cmdarg = ensure(await vars.v.get(denops, "cmdarg"), is.String);
   const [opts, _] = parseOpts(cmdarg.split(" "));
   validateOpts(opts, builtinOpts);
   const { expr, params, fragment } = parseBufname(bufname);
   await exec(denops, bufnr, {
     worktree: expr,
-    commitish: unnullish(params?.commitish, ensureString),
+    commitish: unnullish(
+      params?.commitish,
+      (v) => ensure(v, is.String, { message: "commitish must be string" }),
+    ),
     paths: unnullish(fragment, JSON.parse),
     flags: {
       ...params,
@@ -33,6 +36,7 @@ export async function read(
     },
     encoding: opts.enc ?? opts.encoding,
     fileformat: opts.ff ?? opts.fileformat,
+    emojify: "emojify" in (params ?? {}),
   });
 }
 
@@ -43,6 +47,7 @@ export type ExecOptions = {
   flags?: Flags;
   encoding?: string;
   fileformat?: string;
+  emojify?: boolean;
 };
 
 export async function exec(
@@ -62,5 +67,6 @@ export async function exec(
     worktree: options.worktree,
     encoding: options.encoding,
     fileformat: options.fileformat,
+    emojify: options.emojify,
   });
 }

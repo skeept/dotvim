@@ -15,12 +15,13 @@ use crate::searcher::SearchContext;
 use crate::stdio_server::handler::{
     initialize_provider, CachedPreviewImpl, Preview, PreviewTarget,
 };
-use crate::stdio_server::input::{InputRecorder, KeyEvent};
+use crate::stdio_server::input::{InputRecorder, KeyEvent, KeyEventType};
 use crate::stdio_server::vim::Vim;
 use anyhow::{anyhow, Result};
 use filter::Query;
 use icon::{Icon, IconKind};
 use matcher::{Bonus, MatchScope, Matcher, MatcherBuilder};
+use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use printer::Printer;
 use rpc::Params;
@@ -31,19 +32,39 @@ use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::mpsc::UnboundedSender;
 use types::{ClapItem, MatchedItem};
 
-pub async fn create_provider(provider_id: &str, ctx: &Context) -> Result<Box<dyn ClapProvider>> {
-    let provider: Box<dyn ClapProvider> = match provider_id {
-        "blines" => Box::new(blines::BlinesProvider::new()),
-        "dumb_jump" => Box::new(dumb_jump::DumbJumpProvider::new()),
+use super::input::{InternalProviderEvent, ProviderEvent};
+
+/// [`BaseArgs`] represents the arguments common to all the providers.
+#[derive(Debug, Clone, clap::Parser, PartialEq, Eq, Default)]
+pub struct BaseArgs {
+    /// Specify the initial query.
+    #[clap(long)]
+    query: Option<String>,
+
+    /// Specify the working directory for this provider and all subsequent providers.
+    #[clap(long)]
+    cwd: Option<PathBuf>,
+
+    /// Skip the default working directory in searching.
+    #[clap(long)]
+    no_cwd: bool,
+}
+
+pub async fn create_provider(ctx: &Context) -> Result<Box<dyn ClapProvider>> {
+    let provider: Box<dyn ClapProvider> = match ctx.env.provider_id.as_str() {
+        "blines" => Box::new(blines::BlinesProvider::new(ctx).await?),
+        "dumb_jump" => Box::new(dumb_jump::DumbJumpProvider::new(ctx).await?),
         "filer" => Box::new(filer::FilerProvider::new(ctx).await?),
         "files" => Box::new(files::FilesProvider::new(ctx).await?),
-        "grep" => Box::new(grep::GrepProvider::new()),
+        "grep" => Box::new(grep::GrepProvider::new(ctx).await?),
         "igrep" => Box::new(igrep::IgrepProvider::new(ctx).await?),
-        "recent_files" => Box::new(recent_files::RecentFilesProvider::new(ctx)),
-        "tagfiles" => Box::new(tagfiles::TagfilesProvider::new()),
-        _ => Box::new(generic_provider::GenericProvider::new()),
+        "recent_files" => Box::new(recent_files::RecentFilesProvider::new(ctx).await?),
+        "tagfiles" => Box::new(tagfiles::TagfilesProvider::new(ctx).await?),
+        _ => Box::new(generic_provider::GenericProvider::new(ctx).await?),
     };
     Ok(provider)
 }
@@ -81,9 +102,11 @@ pub struct ProviderEnvironment {
     pub display: BufnrWinid,
     pub icon: Icon,
     pub matcher_builder: MatcherBuilder,
-    pub debounce: bool,
     pub no_cache: bool,
+    pub source_is_list: bool,
     pub preview_enabled: bool,
+    pub preview_border_enabled: bool,
+    pub preview_direction: String,
     pub display_winwidth: usize,
     pub display_winheight: usize,
     /// Actual width for displaying the line content due to the sign column is included in
@@ -220,37 +243,39 @@ pub struct Context {
     pub vim: Vim,
     pub env: Arc<ProviderEnvironment>,
     pub maybe_preview_size: Option<usize>,
+    pub initializing_prompt_echoed: Arc<AtomicBool>,
     pub terminated: Arc<AtomicBool>,
     pub input_recorder: InputRecorder,
     pub preview_manager: PreviewManager,
     pub provider_source: Arc<RwLock<ProviderSource>>,
+    provider_event_sender: OnceCell<UnboundedSender<ProviderEvent>>,
 }
 
 impl Context {
     pub async fn new(params: Params, vim: Vim) -> Result<Self> {
         #[derive(Deserialize)]
-        struct InnerParams {
+        struct InitializeParams {
             provider_id: ProviderId,
             start: BufnrWinid,
             input: BufnrWinid,
             display: BufnrWinid,
             cwd: AbsPathBuf,
             icon: String,
-            debounce: bool,
             no_cache: bool,
             start_buffer_path: PathBuf,
+            source_is_list: bool,
         }
 
-        let InnerParams {
+        let InitializeParams {
             provider_id,
             start,
             input,
             display,
             cwd,
-            debounce,
             no_cache,
             start_buffer_path,
             icon,
+            source_is_list,
         } = params.parse()?;
 
         let icon = match icon.to_lowercase().as_str() {
@@ -261,32 +286,23 @@ impl Context {
             _ => Icon::Null,
         };
 
-        let rank_criteria = crate::config::config()
-            .matcher
-            .tiebreak
-            .split(',')
-            .filter_map(|s| types::parse_criteria(s.trim()))
-            .collect();
+        let rank_criteria = crate::config::config().matcher.rank_criteria();
         let matcher_builder = provider_id.matcher_builder().rank_criteria(rank_criteria);
+
         let display_winwidth = vim.winwidth(display.winid).await?;
+        let display_winheight = vim.winheight(display.winid).await?;
+        let is_nvim: usize = vim.call("has", ["nvim"]).await?;
+        let has_nvim_09: usize = vim.call("has", ["nvim-0.9"]).await?;
+        let preview_enabled: usize = vim.bare_call("clap#preview#is_enabled").await?;
+        let preview_direction: String = vim.bare_call("clap#preview#direction").await?;
+        let popup_border: String = vim.eval("g:clap_popup_border").await?;
+
         // Sign column occupies 2 spaces.
         let display_line_width = display_winwidth - 2;
         let display_line_width = match provider_id.as_str() {
             "grep" => display_line_width - 2,
             _ => display_line_width,
         };
-        let display_winheight = vim.winheight(display.winid).await?;
-        let is_nvim: usize = vim.call("has", ["nvim"]).await?;
-        let has_nvim_09: usize = vim.call("has", ["nvim-0.9"]).await?;
-        let preview_enabled: usize = vim.bare_call("clap#preview#is_enabled").await?;
-
-        let input_history = crate::datastore::INPUT_HISTORY_IN_MEMORY.lock();
-        let inputs = if crate::config::config().input_history.share_all_inputs {
-            input_history.all_inputs()
-        } else {
-            input_history.inputs(&provider_id)
-        };
-        let input_recorder = InputRecorder::new(inputs);
 
         let env = ProviderEnvironment {
             is_nvim: is_nvim == 1,
@@ -296,8 +312,10 @@ impl Context {
             input,
             display,
             no_cache,
-            debounce,
+            source_is_list,
             preview_enabled: preview_enabled == 1,
+            preview_border_enabled: popup_border != "nil",
+            preview_direction,
             start_buffer_path,
             display_winwidth,
             display_winheight,
@@ -306,20 +324,48 @@ impl Context {
             icon,
         };
 
+        let input_history = crate::datastore::INPUT_HISTORY_IN_MEMORY.lock();
+        let inputs = if crate::config::config().input_history.share_all_inputs {
+            input_history.all_inputs()
+        } else {
+            input_history.inputs(&env.provider_id)
+        };
+        let input_recorder = InputRecorder::new(inputs);
+
         Ok(Self {
             cwd,
             vim,
             env: Arc::new(env),
             maybe_preview_size: None,
+            initializing_prompt_echoed: Arc::new(AtomicBool::new(false)),
             terminated: Arc::new(AtomicBool::new(false)),
             input_recorder,
             preview_manager: PreviewManager::new(),
-            provider_source: Arc::new(RwLock::new(ProviderSource::Unactionable)),
+            provider_source: Arc::new(RwLock::new(ProviderSource::Uninitialized)),
+            provider_event_sender: OnceCell::new(),
         })
     }
 
+    // let root_markers = vec![".root".to_string(), ".git".to_string(), ".git/".to_string()];
+    // let cwd = if start_buffer_path.exists() {
+    // match crate::paths::find_project_root(&start_buffer_path, &root_markers) {
+    // Some(project_root) => project_root
+    // .to_path_buf()
+    // .try_into()
+    // .expect("project_root must be absolute path; qed"),
+    // None => vim.bare_call("getcwd").await?,
+    // }
+    // } else {
+    // vim.bare_call("getcwd").await?
+    // };
+    // vim.set_var("g:__clap_provider_cwd", serde_json::json!([&cwd]))?;
+
     pub fn provider_id(&self) -> &str {
         self.env.provider_id.as_str()
+    }
+
+    pub fn provider_debounce(&self) -> u64 {
+        crate::config::config().provider_debounce(self.env.provider_id.as_str())
     }
 
     pub fn matcher_builder(&self) -> MatcherBuilder {
@@ -330,6 +376,7 @@ impl Context {
         self.env.matcher_builder.clone().build(query.into())
     }
 
+    /// Constructs a [`SearchContext`] for the searching worker.
     pub fn search_context(&self, stop_signal: Arc<AtomicBool>) -> SearchContext {
         SearchContext {
             icon: self.env.icon,
@@ -341,18 +388,31 @@ impl Context {
         }
     }
 
+    pub fn set_provider_event_sender(&self, provider_event_sender: UnboundedSender<ProviderEvent>) {
+        self.provider_event_sender
+            .set(provider_event_sender)
+            .expect("Failed to initialize provider_event_sender in Context")
+    }
+
+    pub fn send_provider_event(&self, event: ProviderEvent) -> Result<()> {
+        self.provider_event_sender
+            .get()
+            .expect("Forget to initialize provider_event_sender!")
+            .send(event)
+            .map_err(Into::into)
+    }
+
     /// Executes the command `cmd` and returns the raw bytes of stdout.
     pub fn exec_cmd(&self, cmd: &str) -> std::io::Result<Vec<u8>> {
         let out = utils::execute_at(cmd, Some(&self.cwd))?;
         Ok(out.stdout)
     }
 
-    pub fn start_buffer_extension(&self) -> std::io::Result<String> {
+    pub fn start_buffer_extension(&self) -> std::io::Result<&str> {
         self.env
             .start_buffer_path
             .extension()
             .and_then(|s| s.to_str())
-            .map(|s| s.to_string())
             .ok_or_else(|| {
                 std::io::Error::new(
                     std::io::ErrorKind::Other,
@@ -364,22 +424,81 @@ impl Context {
             })
     }
 
+    pub async fn parse_provider_args<T: clap::Parser + Default + Debug>(&self) -> Result<T> {
+        let args = self.vim.provider_args().await?;
+
+        let provider_args = if args.is_empty() {
+            T::default()
+        } else {
+            T::try_parse_from(std::iter::once(String::from("")).chain(args.into_iter()))
+                .map_err(|err| {
+                    match err.kind() {
+                        clap::error::ErrorKind::DisplayHelp => {
+                            // Show help in the display window.
+                            let err_msg = err.to_string();
+                            let lines = err_msg.split('\n').collect::<Vec<_>>();
+                            let _ = self.vim.exec("display_set_lines", json!([lines]));
+                        }
+                        _ => {
+                            let _ = self.vim.echo_warn(format!(
+                                "using default {:?} due to {err}",
+                                T::default()
+                            ));
+                        }
+                    }
+                })
+                .unwrap_or_default()
+        };
+        Ok(provider_args)
+    }
+
+    pub async fn handle_base_args(&self, base: &BaseArgs) -> Result<()> {
+        let BaseArgs { query, .. } = base;
+
+        if let Some(query) = query {
+            self.send_provider_event(ProviderEvent::Internal(
+                InternalProviderEvent::InitialQuery(query.clone()),
+            ))?;
+        };
+
+        Ok(())
+    }
+
+    pub async fn expanded_paths(&self, paths: &[PathBuf]) -> Result<Vec<PathBuf>> {
+        let mut expanded_paths = Vec::with_capacity(paths.len());
+        for p in paths {
+            if let Ok(path) = self.vim.expand(p.to_string_lossy()).await {
+                expanded_paths.push(path.into());
+            }
+        }
+        Ok(expanded_paths)
+    }
+
     pub fn set_provider_source(&self, new: ProviderSource) {
         let mut provider_source = self.provider_source.write();
         *provider_source = new;
     }
 
+    /// Returns a smaller delay for the input debounce if the source is not large.
+    pub fn adaptive_debounce_delay(&self) -> Option<Duration> {
+        if let ProviderSource::Small { total, .. } = *self.provider_source.read() {
+            if total < 10_000 {
+                return Some(Duration::from_millis(10));
+            } else if total < 100_000 {
+                return Some(Duration::from_millis(50));
+            } else if total < 200_000 {
+                return Some(Duration::from_millis(100));
+            }
+        }
+        None
+    }
+
     pub fn signify_terminated(&self, session_id: u64) {
         self.terminated.store(true, Ordering::SeqCst);
+        let provider_id = self.env.provider_id.clone();
+        tracing::debug!("ProviderSession {session_id:?}-{provider_id} terminated");
         let mut input_history = crate::datastore::INPUT_HISTORY_IN_MEMORY.lock();
-        input_history.insert(
-            self.env.provider_id.clone(),
-            self.input_recorder.clone().into_inputs(),
-        );
-        tracing::debug!(
-            "ProviderSession {session_id:?}-{} terminated",
-            self.provider_id()
-        );
+        input_history.update_inputs(provider_id, self.input_recorder.clone().into_inputs());
     }
 
     pub async fn record_input(&mut self) -> Result<()> {
@@ -551,7 +670,10 @@ impl std::fmt::Display for ProviderId {
 pub enum ProviderSource {
     /// The provider source is not actionable on the Rust backend.
     #[default]
-    Unactionable,
+    Uninitialized,
+
+    /// The initializaion is in progress,
+    Initializing,
 
     /// Small scale, in which case we do not have to use the dynamic filtering.
     ///
@@ -606,23 +728,24 @@ impl ProviderSource {
             ),
             Self::File { ref path, .. } | Self::CachedFile { ref path, .. } => {
                 let lines_iter = utils::read_first_lines(path, n).ok()?;
-                Some(if provider_id == "blines" {
-                    let mut index = 0;
-                    lines_iter
-                        .map(|line| {
+                if provider_id == "blines" {
+                    let items = lines_iter
+                        .enumerate()
+                        .map(|(index, line)| {
                             let item: Arc<dyn ClapItem> = Arc::new(BlinesItem {
                                 raw: line,
                                 line_number: index + 1,
                             });
-                            index += 1;
                             MatchedItem::from(item)
                         })
-                        .collect()
+                        .collect();
+                    Some(items)
                 } else {
-                    lines_iter
+                    let items = lines_iter
                         .map(|line| MatchedItem::from(Arc::new(line) as Arc<dyn ClapItem>))
-                        .collect()
-                })
+                        .collect();
+                    Some(items)
+                }
             }
             _ => None,
         }
@@ -633,7 +756,16 @@ impl ProviderSource {
 #[async_trait::async_trait]
 pub trait ClapProvider: Debug + Send + Sync + 'static {
     async fn on_initialize(&mut self, ctx: &mut Context) -> Result<()> {
-        initialize_provider(ctx).await
+        initialize_provider(ctx, true).await
+    }
+
+    async fn on_initial_query(&mut self, ctx: &mut Context, initial_query: String) -> Result<()> {
+        // Mimic the user behavior by setting the user input and sending the singal
+        let _ = ctx
+            .vim
+            .call::<String>("set_initial_query", json!([initial_query]))
+            .await;
+        ctx.send_provider_event(ProviderEvent::OnTyped(Params::None))
     }
 
     async fn on_move(&mut self, ctx: &mut Context) -> Result<()> {
@@ -654,11 +786,12 @@ pub trait ClapProvider: Debug + Send + Sync + 'static {
     }
 
     async fn on_key_event(&mut self, ctx: &mut Context, key_event: KeyEvent) -> Result<()> {
-        match key_event {
-            KeyEvent::ShiftUp => ctx.scroll_preview(Direction::Up).await?,
-            KeyEvent::ShiftDown => ctx.scroll_preview(Direction::Down).await?,
-            KeyEvent::CtrlN => ctx.next_input().await?,
-            KeyEvent::CtrlP => ctx.previous_input().await?,
+        let (key_event_type, _params) = key_event;
+        match key_event_type {
+            KeyEventType::ShiftUp => ctx.scroll_preview(Direction::Up).await?,
+            KeyEventType::ShiftDown => ctx.scroll_preview(Direction::Down).await?,
+            KeyEventType::CtrlN => ctx.next_input().await?,
+            KeyEventType::CtrlP => ctx.previous_input().await?,
             _ => {}
         }
         Ok(())

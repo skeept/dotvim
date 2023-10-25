@@ -1,12 +1,12 @@
-import type { Denops } from "https://deno.land/x/denops_std@v5.0.0/mod.ts";
-import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
-import * as fs from "https://deno.land/std@0.188.0/fs/mod.ts";
-import * as batch from "https://deno.land/x/denops_std@v5.0.0/batch/mod.ts";
-import * as fn from "https://deno.land/x/denops_std@v5.0.0/function/mod.ts";
-import * as option from "https://deno.land/x/denops_std@v5.0.0/option/mod.ts";
+import type { Denops } from "https://deno.land/x/denops_std@v5.0.1/mod.ts";
+import * as path from "https://deno.land/std@0.197.0/path/mod.ts";
+import * as fs from "https://deno.land/std@0.197.0/fs/mod.ts";
+import * as batch from "https://deno.land/x/denops_std@v5.0.1/batch/mod.ts";
+import * as fn from "https://deno.land/x/denops_std@v5.0.1/function/mod.ts";
+import * as option from "https://deno.land/x/denops_std@v5.0.1/option/mod.ts";
 import {
   parse as parseBufname,
-} from "https://deno.land/x/denops_std@v5.0.0/bufname/mod.ts";
+} from "https://deno.land/x/denops_std@v5.0.1/bufname/mod.ts";
 import { findWorktreeFromDenops } from "../../git/worktree.ts";
 import { exec as execBare } from "../../command/bare/command.ts";
 
@@ -65,7 +65,7 @@ export async function exec(
     restore = () => Deno.remove(original);
   }
   try {
-    await fs.ensureFile(original);
+    await fs.copy(f, original);
     await Deno.writeTextFile(original, `${content.join("\n")}\n`);
     await fn.setbufvar(denops, bufnr, "&modified", 0);
     await execBare(denops, [

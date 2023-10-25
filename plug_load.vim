@@ -94,6 +94,8 @@ Plug 'skeept/ctrlp-packadd'
 Plug 'axvr/org.vim'
 Plug 'mhinz/vim-signify'
 
+Plug 'ton/vim-alternate', { 'on': 'Alternate'}
+
 " gin
 Plug 'vim-denops/denops.vim', { 'on': ['Gin', 'GinStatus'] }
 Plug 'lambdalisue/gin.vim', { 'on': ['Gin', 'GinStatus'] }

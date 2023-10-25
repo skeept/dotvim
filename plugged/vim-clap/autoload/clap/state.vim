@@ -119,6 +119,12 @@ function! clap#state#render_preview(preview) abort
     if has_key(a:preview, 'hi_lnum')
       call g:clap.preview.add_highlight(a:preview.hi_lnum+1)
     endif
+
+    if has_key(a:preview, 'scrollbar')
+      let g:scrollbar = copy(a:preview.scrollbar)
+      let [top_position, length] = a:preview.scrollbar
+      call clap#floating_win#show_preview_scrollbar(top_position, length)
+    endif
   endif
 endfunction
 
@@ -219,6 +225,7 @@ function! clap#state#update_on_empty_query(lines, truncated_map, icon_added) abo
   endif
   let g:__clap_icon_added_by_maple = a:icon_added
   call clap#sign#ensure_exists()
+  call g:clap.display.clear_highlight()
   call clap#indicator#update_matched(0)
   call clap#preview#update_with_delay()
 endfunction
@@ -227,26 +234,6 @@ function! clap#state#set_input(new) abort
   call g:clap.input.set(a:new)
   " Move cursor to the end of line.
   call clap#api#win_execute(g:clap.input.winid, 'call cursor(1, 1000)')
-endfunction
-
-" Returns the cached source tmp file.
-"
-" Write the providers whose `source` is list-style into a tempfile.
-function! clap#state#into_tempfile(source_list) abort
-  if has_key(g:clap.provider, 'source_tempfile')
-    let tmp = g:clap.provider.source_tempfile
-    return tmp
-  else
-    let tmp = tempname()
-    if writefile(a:source_list, tmp) == 0
-      call add(g:clap.tmps, tmp)
-      let g:clap.provider.source_tempfile = tmp
-      return tmp
-    else
-      call g:clap.abort('Fail to write source to a temp file')
-      return ''
-    endif
-  endif
 endfunction
 
 function! s:unlet_vars(vars) abort

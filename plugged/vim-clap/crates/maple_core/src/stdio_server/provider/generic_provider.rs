@@ -1,4 +1,4 @@
-use crate::stdio_server::handler::{CachedPreviewImpl, PreviewTarget};
+use crate::stdio_server::handler::{initialize_provider, CachedPreviewImpl, PreviewTarget};
 use crate::stdio_server::provider::{ClapProvider, Context, ProviderSource};
 use crate::stdio_server::vim::VimProgressor;
 use anyhow::Result;
@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use subprocess::Exec;
 use types::MatchedItem;
+
+use super::BaseArgs;
 
 #[derive(Debug)]
 enum DataSource {
@@ -80,6 +82,7 @@ fn start_filter_parallel(
 /// Generic provider impl.
 #[derive(Debug)]
 pub struct GenericProvider {
+    args: BaseArgs,
     runtimepath: Option<String>,
     maybe_filter_control: Option<FilterControl>,
     current_results: Arc<Mutex<Vec<MatchedItem>>>,
@@ -87,13 +90,15 @@ pub struct GenericProvider {
 }
 
 impl GenericProvider {
-    pub fn new() -> Self {
-        Self {
+    pub async fn new(ctx: &Context) -> Result<Self> {
+        let args = ctx.parse_provider_args().await?;
+        Ok(Self {
+            args,
             runtimepath: None,
             maybe_filter_control: None,
             current_results: Arc::new(Mutex::new(Vec::new())),
             last_filter_control_killed: Arc::new(AtomicBool::new(true)),
-        }
+        })
     }
 
     /// `lnum` is 1-based.
@@ -123,7 +128,7 @@ impl GenericProvider {
                 let items = curline.split('\t').collect::<Vec<_>>();
                 if items.len() < 2 {
                     return Err(anyhow::anyhow!(
-                        "Couldn't extract subject and doc_filename from the line"
+                        "Couldn't extract subject and doc_filename from {curline}"
                     ));
                 }
                 Some(PreviewTarget::HelpTags {
@@ -151,6 +156,13 @@ impl GenericProvider {
 
 #[async_trait::async_trait]
 impl ClapProvider for GenericProvider {
+    async fn on_initialize(&mut self, ctx: &mut Context) -> Result<()> {
+        let init_display = self.args.query.is_none();
+        // Always attempt to initialize the source
+        initialize_provider(ctx, init_display).await?;
+        ctx.handle_base_args(&self.args).await
+    }
+
     async fn on_move(&mut self, ctx: &mut Context) -> Result<()> {
         if !ctx.env.preview_enabled {
             return Ok(());
@@ -194,7 +206,7 @@ impl ClapProvider for GenericProvider {
     async fn on_typed(&mut self, ctx: &mut Context) -> Result<()> {
         let query = ctx.vim.input_get().await?;
 
-        let quick_response =
+        let small_list_response =
             if let ProviderSource::Small { ref items, .. } = *ctx.provider_source.read() {
                 let matched_items = filter::par_filter_items(items, &ctx.matcher(&query));
                 let printer = Printer::new(ctx.env.display_winwidth, ctx.env.icon);
@@ -217,7 +229,7 @@ impl ClapProvider for GenericProvider {
                 None
             };
 
-        if let Some((msg, matched_items)) = quick_response {
+        if let Some((msg, matched_items)) = small_list_response {
             let new_query = ctx.vim.input_get().await?;
             if new_query == query {
                 ctx.vim
@@ -229,8 +241,16 @@ impl ClapProvider for GenericProvider {
         }
 
         let data_source = match *ctx.provider_source.read() {
-            ProviderSource::Small { .. } | ProviderSource::Unactionable => {
-                tracing::debug!("par_dyn_run can not be used for ProviderSource::Small and ProviderSource::Unactionable.");
+            ProviderSource::Small { .. } => unreachable!("Handled above; qed"),
+            ProviderSource::Initializing => {
+                ctx.vim
+                    .echo_warn("Can not process query: source initialization is in progress")?;
+                ctx.initializing_prompt_echoed.store(true, Ordering::SeqCst);
+                return Ok(());
+            }
+            ProviderSource::Uninitialized => {
+                ctx.vim
+                    .echo_warn("Can not process query: source uninitialized")?;
                 return Ok(());
             }
             ProviderSource::CachedFile { ref path, .. } | ProviderSource::File { ref path, .. } => {

@@ -24,6 +24,8 @@ pub struct Preview {
     pub fname: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hi_lnum: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scrollbar: Option<(usize, usize)>,
 }
 
 impl Preview {
@@ -43,9 +45,9 @@ pub enum PreviewTarget {
     File(PathBuf),
     /// A specific location in a file.
     LineInFile { path: PathBuf, line_number: usize },
-    /// Commit revision.
-    Commit(String),
-    /// For the provider `help_tags`.
+    /// Git commit revision.
+    GitCommit(String),
+    /// Specifically for the `help_tags` provider.
     HelpTags {
         subject: String,
         doc_filename: String,
@@ -132,7 +134,7 @@ fn parse_preview_target(curline: String, ctx: &Context) -> Result<(PreviewTarget
         }
         "commits" | "bcommits" => {
             let rev = extract_commit_rev(&curline).ok_or_else(err)?;
-            PreviewTarget::Commit(rev.into())
+            PreviewTarget::GitCommit(rev.into())
         }
         unknown_provider_id => {
             return Err(std::io::Error::new(
@@ -217,7 +219,7 @@ impl<'a> CachedPreviewImpl<'a> {
                 self.preview_file_at(path, *line_number, container_width)
                     .await
             }
-            PreviewTarget::Commit(rev) => self.preview_commits(rev)?,
+            PreviewTarget::GitCommit(rev) => self.preview_commits(rev)?,
             PreviewTarget::HelpTags {
                 subject,
                 doc_filename,
@@ -261,6 +263,7 @@ impl<'a> CachedPreviewImpl<'a> {
                 hi_lnum: Some(1),
                 fname: Some(fname),
                 syntax: Some("help".into()),
+                scrollbar: None,
             }
         } else {
             tracing::debug!(?preview_tag, "Can not find the preview help lines");
@@ -336,24 +339,55 @@ impl<'a> CachedPreviewImpl<'a> {
             }
         };
 
+        let total = utils::count_lines(std::fs::File::open(path)?)?;
+        let end = lines.len();
+
+        let scrollbar = if self.ctx.env.is_nvim
+            && self.ctx.env.preview_direction.to_uppercase() == "LR"
+            && end > 0
+        {
+            let preview_winheight = self.ctx.env.display_winheight;
+
+            let length = ((end * preview_winheight) as f32 / total as f32) as usize;
+
+            if length == 0 {
+                None
+            } else {
+                let mut length = preview_winheight.min(length);
+                let top_position = if self.ctx.env.preview_border_enabled {
+                    length -= if length == preview_winheight { 1 } else { 0 };
+
+                    1usize
+                } else {
+                    0usize
+                };
+                Some((top_position, length))
+            }
+        } else {
+            None
+        };
+
         if std::fs::metadata(path)?.len() == 0 {
             let mut lines = lines;
             lines.push("<Empty file>".to_string());
             Ok(Preview {
                 lines,
                 fname: Some(fname),
+                scrollbar,
                 ..Default::default()
             })
         } else if let Some(syntax) = preview_syntax(path) {
             Ok(Preview {
                 lines,
                 syntax: Some(syntax.into()),
+                scrollbar,
                 ..Default::default()
             })
         } else {
             Ok(Preview {
                 lines,
                 fname: Some(fname),
+                scrollbar,
                 ..Default::default()
             })
         }
@@ -379,10 +413,11 @@ impl<'a> CachedPreviewImpl<'a> {
 
         match get_file_preview(path, lnum, self.preview_height) {
             Ok(FilePreview {
-                lines,
-                highlight_lnum,
                 start,
-                ..
+                end,
+                total,
+                highlight_lnum,
+                lines,
             }) => {
                 let mut context_lines = Vec::new();
 
@@ -399,7 +434,7 @@ impl<'a> CachedPreviewImpl<'a> {
                             && !dumb_analyzer::is_comment(latest_line, ext)
                         {
                             match context_tag_with_timeout(path, lnum).await {
-                                Some(tag) if tag.line < start => {
+                                Some(tag) if tag.line_number < start => {
                                     context_lines.reserve_exact(3);
 
                                     let border_line = "─".repeat(if self.ctx.env.is_nvim {
@@ -438,11 +473,45 @@ impl<'a> CachedPreviewImpl<'a> {
 
                 let highlight_lnum = highlight_lnum + context_lines.len();
 
+                let context_lines_is_empty = context_lines.is_empty();
+
                 let header_line = truncated_preview_header();
                 let lines = std::iter::once(header_line)
                     .chain(context_lines.into_iter())
                     .chain(self.truncate_preview_lines(lines.into_iter()))
                     .collect::<Vec<_>>();
+
+                let scrollbar = if self.ctx.env.is_nvim
+                    && self.ctx.env.preview_direction.to_uppercase() == "LR"
+                    && total > 0
+                {
+                    let start = if context_lines_is_empty {
+                        start.saturating_sub(3)
+                    } else {
+                        start
+                    };
+                    let preview_winheight = self.ctx.env.display_winheight;
+                    let length =
+                        (((end - start) * preview_winheight) as f32 / total as f32) as usize;
+                    let top_position = (start * preview_winheight) as f32 / total as f32;
+
+                    if length == 0 {
+                        None
+                    } else {
+                        let mut length = preview_winheight.min(length);
+                        let top_position = if self.ctx.env.preview_border_enabled {
+                            length -= if length == preview_winheight { 1 } else { 0 };
+
+                            1usize.max(top_position as usize)
+                        } else {
+                            top_position as usize
+                        };
+
+                        Some((top_position, length))
+                    }
+                } else {
+                    None
+                };
 
                 if let Some(syntax) = preview_syntax(path) {
                     Preview {
@@ -450,6 +519,7 @@ impl<'a> CachedPreviewImpl<'a> {
                         syntax: Some(syntax.into()),
                         hi_lnum: Some(highlight_lnum),
                         fname: None,
+                        scrollbar,
                     }
                 } else {
                     Preview {
@@ -457,6 +527,7 @@ impl<'a> CachedPreviewImpl<'a> {
                         syntax: None,
                         hi_lnum: Some(highlight_lnum),
                         fname: Some(fname),
+                        scrollbar,
                     }
                 }
             }
@@ -464,13 +535,12 @@ impl<'a> CachedPreviewImpl<'a> {
                 tracing::error!(
                     ?path,
                     provider_id = %self.ctx.provider_id(),
-                    ?err,
-                    "Couldn't read first lines",
+                    "Couldn't read first lines: {err:?}",
                 );
                 let header_line = truncated_preview_header();
                 let lines = vec![
                     header_line,
-                    format!("Error while previewing the file: {err}"),
+                    format!("Error while previewing {}: {err}", path.display()),
                 ];
                 Preview {
                     lines,
@@ -500,10 +570,7 @@ impl<'a> CachedPreviewImpl<'a> {
                             tracing::debug!(cwd = ?ctx.cwd, "Refreshing grep cache");
                             let new_digest = match crate::tools::rg::refresh_cache(&ctx.cwd) {
                                 Ok(digest) => {
-                                    tracing::debug!(
-                                        total = digest.total,
-                                        "Refresh the grep cache successfully"
-                                    );
+                                    tracing::debug!(total = digest.total, "Refreshed grep cache");
                                     digest
                                 }
                                 Err(e) => {
@@ -526,7 +593,7 @@ impl<'a> CachedPreviewImpl<'a> {
                     } else {
                         tracing::debug!(
                             cwd = ?self.ctx.cwd,
-                            "There is already a grep job running, skip freshing the cache"
+                            "Another grep job is running, skip freshing the cache"
                         );
                     }
                 }

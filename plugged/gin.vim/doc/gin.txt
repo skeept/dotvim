@@ -80,6 +80,15 @@ guise.vim~
 It can live together with the plugins mentioned above because the environment
 variable names used are different.
 
+It asks if users want to apply or cancel changes when |:quit| command is
+invoked. Answer "yes" to apply changes and others to cancel changes. Or use
+:Accept or :Cancel buffer local command to directly apply or cancel changes.
+
+Use |g:gin_proxy_apply_without_confirm| to apply changes without asking.
+
+Use |g:gin_proxy_editor_opener| to specify the opener command to open the
+buffer.
+
 Use |g:gin_proxy_disable_askpass| and/or |g:gin_proxy_disable_editor| to
 disable this proxy feature.
 
@@ -118,6 +127,9 @@ COMMANDS					*gin-commands*
 		Displays the result in black and white without coloring.
 		Use this option when the resulting data is large and coloring
 		may cause performance problems.
+	
+	++emojify
+		Replace all ":emoji:" with emoji characters.
 
 	++processor={processor}
 		Specifies the processor program that will process the result.
@@ -154,6 +166,39 @@ COMMANDS					*gin-commands*
 
 	Users can specify default arguments by |g:gin_branch_default_args|.
 	Use a bang (!) to forcibly open a buffer.
+	Use an ampersand (&) to temporary disable default arguments.
+
+							*:GinBrowse*
+:GinBrowse[&] [{++option}...] [{flags}] [{commitish}]
+	Open a system browser to visit the hosting service webpage of the
+	repository. If no {commitish} is given, it defaults to HEAD.
+
+	The following options are valid as {++option}:
+
+	++yank
+		Yank the URL to the clipboard.
+
+	See |gin-commands-options| for common {++option}.
+
+	The following flags are valid as {flags}:
+
+	--commit
+	--home
+	-n, --no-browser
+	--path={PATH}
+	--permalink
+	--pr
+	--remote={REMOTE}
+
+	It uses "git-browse" command as a module internally so see usage of
+	that for detail about each {flags}.
+	
+	https://deno.land/x/git_browse
+
+	See |g:gin_browse_aliases| to define aliases of REMOTE to support
+	arbitrary domain (e.g. GitHub Enterprise).
+
+	Users can specify default arguments by |g:gin_browse_default_args|.
 	Use an ampersand (&) to temporary disable default arguments.
 
 							*:GinCd*
@@ -266,6 +311,11 @@ COMMANDS					*gin-commands*
 							*:GinLog*
 :GinLog[!][&] [{++option}...] [{commitish}] [-- {pathspec}...]
 	Open a "gin-log" buffer to show a git log.
+	
+	The following options are valid as {++option}:
+
+	++emojify
+		Replace all ":emoji:" with emoji characters.
 
 	See |gin-commands-options| for common {++option}.
 		
@@ -418,6 +468,32 @@ Users can define "GinLocal" buffer local command on those buffers like
 -----------------------------------------------------------------------------
 VARIABLES					*gin-variables*
 
+*g:gin_branch_default_args*
+	Specify default arguments of |:GinBranch|.
+
+	Default: []
+
+*g:gin_branch_disable_default_mappings*
+	Disable default mappings on buffers shown by |:GinBranch|.
+
+	Default: 0
+
+*g:gin_browse_aliases*
+	Define a REMOTE alias for a specific hosting service on |:GinBrowse|
+	command. This is useful for example GitHub Enterprise with a custom
+	domain like
+>
+	let g:gin_browse_aliases = {
+	      \ 'github.on.my.custom.domain.com': 'github.com',
+	      \}
+<
+	Default: {}
+
+*g:gin_browse_default_args*
+	Specify default arguments of |:GinBrowse|.
+
+	Default: []
+
 *g:gin_chaperon_default_args*
 	Specify default arguments of |:GinChaperon|.
 
@@ -474,6 +550,11 @@ VARIABLES					*gin-variables*
 
 	Default: 0
 
+*g:gin_proxy_apply_without_confirm*
+	Apply changes without confirmation on proxy editors.
+
+	Default: 0
+
 *g:gin_proxy_disable_askpass*
 	Disable overriding "GIT_ASKPASS" to proxy prompts.
 
@@ -483,6 +564,12 @@ VARIABLES					*gin-variables*
 	Disable overriding "GIT_EDITOR" to proxy editors.
 
 	Default: 0
+
+*g:gin_proxy_editor_opener*
+	Opener command (e.g. "split", "vsplit", "tabedit") to open a buffer
+	on proxy editors.
+
+	Default: "tabedit"
 
 *g:gin_status_default_args*
 	Specify default arguments of |:GinStatus|.

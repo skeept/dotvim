@@ -1,13 +1,11 @@
-import {
-  assertArray,
-  assertString,
-} from "https://deno.land/x/unknownutil@v2.1.1/mod.ts#^";
+import { assert, is } from "https://deno.land/x/unknownutil@v3.2.0/mod.ts#^";
 import {
   Client,
   Session,
-} from "https://deno.land/x/messagepack_rpc@v2.0.0/mod.ts#^";
+} from "https://deno.land/x/messagepack_rpc@v2.0.3/mod.ts#^";
 import { Invoker, isInvokerMethod } from "./invoker.ts";
 import { errorDeserializer, errorSerializer } from "../error.ts";
+import { getVersionOr } from "../version.ts";
 import { Host } from "./base.ts";
 
 export class Neovim implements Host {
@@ -30,6 +28,26 @@ export class Neovim implements Host {
     this.#session.start();
     this.#client = new Client(this.#session, {
       errorDeserializer,
+    });
+    getVersionOr({}).then((version) => {
+      this.#client.notify(
+        "nvim_set_client_info",
+        "denops",
+        version,
+        "remote",
+        {
+          invoke: {
+            async: false,
+            nargs: 2,
+          },
+        },
+        {
+          "website": "https://github.com/vim-denops/denops.vim",
+          "license": "MIT",
+          "logo":
+            "https://github.com/vim-denops/denops-logos/blob/main/20210403-main/denops.png?raw=true",
+        },
+      );
     });
   }
 
@@ -57,16 +75,19 @@ export class Neovim implements Host {
 
   register(invoker: Invoker): void {
     this.#session.dispatcher = {
+      nvim_error_event(type, message) {
+        console.error(`nvim_error_event(${type})`, message);
+      },
+
       void() {
         return Promise.resolve();
       },
 
       async invoke(method: unknown, args: unknown): Promise<unknown> {
-        assertString(method);
-        assertArray(args);
-        if (!isInvokerMethod(method)) {
-          throw new Error(`Method '${method}' is not defined in the invoker`);
-        }
+        assert(method, isInvokerMethod, {
+          message: `method '${method}' must be a key of Invoker`,
+        });
+        assert(args, is.Array, { message: `args '${args}' must be an array` });
         // deno-lint-ignore no-explicit-any
         return await (invoker[method] as any)(...args);
       },
