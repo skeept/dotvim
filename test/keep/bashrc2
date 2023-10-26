@@ -314,7 +314,7 @@ function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total ";
 
 function ff() { local pat=$1; shift; find . -iname '*'${pat}'*' $@; }
 function ffe()
-{ 
+{
   # find a file and run $2 on it
   if [ -z "$1" ]; then
     1>&2 echo "usage: ${FUNCNAME[0]} pattern [command]"
@@ -1317,7 +1317,7 @@ posh_display_themes()
   fi
 
   [ -n "$1" ] && tmux_pane=$1 || tmux_pane=1
-  for fn in *; do 
+  for fn in *; do
     echo $fn
     local v="tmux send-keys -t $tmux_pane 'eval \"\$(oh-my-posh prompt init bash --config $fn)\"' Enter"
     #tmux send-keys -t $tmux_pane 'eval "$(oh-my-posh prompt init bash --config $fn)"' Enter

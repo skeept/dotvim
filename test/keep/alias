@@ -121,4 +121,6 @@ alias gcl=gcloud
 alias gsu=gsutil
 alias db=duckdb
 
+type -t 7z >& /dev/null || alias 7z=7za
+
 # vim: set ft=sh:

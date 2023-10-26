@@ -9,7 +9,7 @@ different ways that I call vim, nvim, gvim, nvim-qt
 here git <=> git bash
 simple <=> don't load default vimrc and plugins, load simple.vim and subset of plugins specified there
 
-vim   
+vim
 nvim
 
 gvim     - doesn't work in wsl directly
@@ -17,8 +17,8 @@ gvim.exe - should work everwhere if in path
 
 e - nvim, vim
 
-v 
-wsl, git => vim+simple 
+v
+wsl, git => vim+simple
 win      => reuse gvim with passed argument. Remember last passed argument and open it again
 
 vn
