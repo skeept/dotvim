@@ -1,7 +1,7 @@
 " vim-clap - Modern interactive filter and dispatcher
 " Author:    Liu-Cheng Xu <xuliuchengxlc@gmail.com>
 " Website:   https://github.com/liuchengxu/vim-clap
-" Version:   0.46
+" Version:   0.47
 " License:   MIT
 
 if exists('g:loaded_clap')
@@ -52,7 +52,7 @@ augroup VimClap
   autocmd BufDelete            * call s:OnBufDelete(+expand('<abuf>'))
   autocmd BufWinEnter,WinEnter * let g:__clap_buffers[bufnr('')] = reltimefloat(reltime())
 
-  autocmd BufAdd      * call clap#client#notify('note_recent_files', [+expand('<abuf>')])
+  autocmd BufAdd      * call clap#client#notify('__note_recent_files', [+expand('<abuf>')])
 
   if get(g:, 'clap_plugin_experimental', 0)
     autocmd InsertEnter  * call clap#client#notify('InsertEnter',  [+expand('<abuf>')])
