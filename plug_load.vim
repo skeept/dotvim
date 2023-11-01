@@ -90,6 +90,7 @@ Plug 'liuchengxu/vim-clap',  { 'on': 'Clap' }
 Plug 'troydm/zoomwintab.vim'
 
 Plug 'skeept/ctrlp-packadd'
+Plug 'ompugao/ctrlp-history', { 'on': ['CtrlPCmdHistory', 'CtrlPSearchHistory'] }
 
 Plug 'axvr/org.vim'
 Plug 'mhinz/vim-signify'

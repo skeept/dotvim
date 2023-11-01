@@ -249,7 +249,7 @@ vnoremap ; :
 vnoremap : ;
 
 "nnoremap ,; :<UP>
-nnoremap ,; :Unite history/command -start-insert<CR>
+"nnoremap ,; :Unite history/command -start-insert<CR>
 
 " we already have <Leader>pt as pastetoogle, but I always get confused
 nnoremap <Leader>tp :set paste!<CR>
@@ -629,6 +629,7 @@ nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
 noremap ,b :CtrlPBuffer<CR>
 noremap ,e :CtrlPCurFile<CR>
+nnoremap ,; :CtrlPCmdHistory<CR>
 "==============================================================================}}}
 
 "================== Tagbar ===================================================={{{
