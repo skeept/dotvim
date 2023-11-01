@@ -68,8 +68,10 @@ function! ctrlp#command#accept(mode, str)
   echom 'executing ' . name
   if g:ctrlp_command_arg == 1
     call feedkeys(":" . name, "n")
+    "call histadd("cmd", str)
   else
     execute name
+    call histadd("cmd",  name)
   endif
 endfunction
 
