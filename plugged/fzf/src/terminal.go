@@ -66,7 +66,7 @@ func init() {
 	// * https://github.com/tmux/tmux/wiki/FAQ#what-is-the-passthrough-escape-sequence-and-how-do-i-use-it
 	// * https://sw.kovidgoyal.net/kitty/graphics-protocol
 	// * https://en.wikipedia.org/wiki/Sixel
-	passThroughRegex = regexp.MustCompile(`\x1bPtmux;\x1b\x1b.*?[^\x1b]\x1b\\|\x1b(_G|P[0-9;]*q).*?\x1b\\`)
+	passThroughRegex = regexp.MustCompile(`\x1bPtmux;\x1b\x1b.*?[^\x1b]\x1b\\|\x1b(_G|P[0-9;]*q).*?\x1b\\\r?`)
 }
 
 type jumpMode int
@@ -1996,6 +1996,7 @@ func (t *Terminal) renderPreviewText(height int, lines []string, lineNo int, unc
 	maxWidth := t.pwindow.Width()
 	var ansi *ansiState
 	spinnerRedraw := t.pwindow.Y() == 0
+	wiped := false
 	sixel := false
 	wireframe := false
 Loop:
@@ -2023,7 +2024,7 @@ Loop:
 				t.renderPreviewSpinner()
 				t.pwindow.Move(y, x)
 			}
-			for _, passThrough := range passThroughs {
+			for idx, passThrough := range passThroughs {
 				// Handling Sixel output
 				requiredLines := 0
 				isSixel := strings.HasPrefix(passThrough, "\x1bP")
@@ -2050,20 +2051,22 @@ Loop:
 				}
 
 				// Clear previous wireframe or any other text
-				if t.previewed.wireframe || isSixel && !t.previewed.sixel {
+				if (t.previewed.wireframe || isSixel && !t.previewed.sixel) && !wiped {
+					wiped = true
 					for i := y + 1; i < height; i++ {
 						t.pwindow.MoveAndClear(i, 0)
 					}
 				}
 				sixel = sixel || isSixel
-				t.pwindow.MoveAndClear(y, x)
+				if idx == 0 {
+					t.pwindow.MoveAndClear(y, x)
+				} else {
+					t.pwindow.Move(y, x)
+				}
 				t.tui.PassThrough(passThrough)
 
 				if requiredLines > 0 {
 					if y+requiredLines == height {
-						if t.tui.MaxY() == t.pwindow.Top()+height {
-							t.tui.PassThrough("\x1b[1T")
-						}
 						t.pwindow.Move(height-1, maxWidth-1)
 						t.previewed.filled = true
 						break Loop
@@ -2784,6 +2787,8 @@ func (t *Terminal) Loop() {
 						env = append(env, "FZF_PREVIEW_"+lines)
 						env = append(env, columns)
 						env = append(env, "FZF_PREVIEW_"+columns)
+						env = append(env, fmt.Sprintf("FZF_PREVIEW_TOP=%d", t.tui.Top()+t.pwindow.Top()))
+						env = append(env, fmt.Sprintf("FZF_PREVIEW_LEFT=%d", t.pwindow.Left()))
 					}
 					cmd.Env = env
 

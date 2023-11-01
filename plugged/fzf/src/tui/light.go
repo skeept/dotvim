@@ -33,7 +33,6 @@ var offsetRegexpBegin *regexp.Regexp = regexp.MustCompile("^\x1b\\[[0-9]+;[0-9]+
 
 func (r *LightRenderer) PassThrough(str string) {
 	r.queued.WriteString("\x1b7" + str + "\x1b8")
-	r.flush()
 }
 
 func (r *LightRenderer) stderr(str string) {
@@ -719,6 +718,10 @@ func (r *LightRenderer) Close() {
 	r.flush()
 	r.closePlatform()
 	r.restoreTerminal()
+}
+
+func (r *LightRenderer) Top() int {
+	return r.yoffset
 }
 
 func (r *LightRenderer) MaxX() int {
