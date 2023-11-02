@@ -1938,13 +1938,20 @@ func (t *Terminal) renderPreviewArea(unchanged bool) {
 	if t.previewed.wipe && t.previewed.version != t.previewer.version {
 		t.previewed.wipe = false
 		t.pwindow.Erase()
+		// Required for tcell to clear the previous image
+		t.tui.Sync(true)
 	} else if unchanged {
 		t.pwindow.MoveAndClear(0, 0) // Clear scroll offset display
 	} else {
 		t.previewed.filled = false
-		// We don't erase the window here to avoid flickering during scroll
-		t.pwindow.DrawBorder()
-		t.pwindow.Move(0, 0)
+		// We don't erase the window here to avoid flickering during scroll.
+		// However, tcell renderer uses double-buffering technique and there's no
+		// flickering. So we just erase the window and make the rest of the code
+		// simpler.
+		if !t.pwindow.EraseMaybe() {
+			t.pwindow.DrawBorder()
+			t.pwindow.Move(0, 0)
+		}
 	}
 
 	height := t.pwindow.Height()
@@ -2056,6 +2063,10 @@ Loop:
 					for i := y + 1; i < height; i++ {
 						t.pwindow.MoveAndClear(i, 0)
 					}
+					// Required for tcell to clear the previous text
+					if !t.previewed.sixel {
+						t.tui.Sync(false)
+					}
 				}
 				sixel = sixel || isSixel
 				if idx == 0 {
@@ -2063,7 +2074,7 @@ Loop:
 				} else {
 					t.pwindow.Move(y, x)
 				}
-				t.tui.PassThrough(passThrough)
+				t.tui.PassThrough(t.pwindow.Top()+y, t.pwindow.Left()+x, passThrough)
 
 				if requiredLines > 0 {
 					if y+requiredLines == height {

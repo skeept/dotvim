@@ -489,7 +489,8 @@ type Renderer interface {
 	RefreshWindows(windows []Window)
 	Refresh()
 	Close()
-	PassThrough(string)
+	PassThrough(y int, x int, data string)
+	Sync(bool)
 	NeedScrollbarRedraw() bool
 
 	GetChar() Event
@@ -526,6 +527,7 @@ type Window interface {
 	Fill(text string) FillReturn
 	CFill(fg Color, bg Color, attr Attr, text string) FillReturn
 	Erase()
+	EraseMaybe() bool
 }
 
 type FullscreenRenderer struct {
