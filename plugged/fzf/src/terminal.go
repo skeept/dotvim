@@ -235,7 +235,9 @@ type Terminal struct {
 	margin             [4]sizeSpec
 	padding            [4]sizeSpec
 	unicode            bool
+	listenAddr         *listenAddress
 	listenPort         *int
+	listenUnsafe       bool
 	borderShape        tui.BorderShape
 	cleanExit          bool
 	paused             bool
@@ -435,6 +437,26 @@ const (
 	actResponse
 )
 
+func processExecution(action actionType) bool {
+	switch action {
+	case actTransformBorderLabel,
+		actTransformHeader,
+		actTransformPreviewLabel,
+		actTransformPrompt,
+		actTransformQuery,
+		actPreview,
+		actChangePreview,
+		actExecute,
+		actExecuteSilent,
+		actExecuteMulti,
+		actReload,
+		actReloadSync,
+		actBecome:
+		return true
+	}
+	return false
+}
+
 type placeholderFlags struct {
 	plus          bool
 	preserveSpace bool
@@ -586,7 +608,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 	}
 	var previewBox *util.EventBox
 	// We need to start previewer if HTTP server is enabled even when --preview option is not specified
-	if len(opts.Preview.command) > 0 || hasPreviewAction(opts) || opts.ListenPort != nil {
+	if len(opts.Preview.command) > 0 || hasPreviewAction(opts) || opts.ListenAddr != nil {
 		previewBox = util.NewEventBox()
 	}
 	var renderer tui.Renderer
@@ -659,7 +681,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		margin:             opts.Margin,
 		padding:            opts.Padding,
 		unicode:            opts.Unicode,
-		listenPort:         opts.ListenPort,
+		listenAddr:         opts.ListenAddr,
+		listenUnsafe:       opts.Unsafe,
 		borderShape:        opts.BorderShape,
 		borderWidth:        1,
 		borderLabel:        nil,
@@ -748,8 +771,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 
 	_, t.hasLoadActions = t.keymap[tui.Load.AsEvent()]
 
-	if t.listenPort != nil {
-		err, port := startHttpServer(*t.listenPort, t.serverInputChan, t.serverOutputChan)
+	if t.listenAddr != nil {
+		err, port := startHttpServer(*t.listenAddr, t.serverInputChan, t.serverOutputChan)
 		if err != nil {
 			errorExit(err.Error())
 		}
@@ -3087,8 +3110,18 @@ func (t *Terminal) Loop() {
 			select {
 			case event = <-t.eventChan:
 				needBarrier = !event.Is(tui.Load, tui.One, tui.Zero)
-			case actions = <-t.serverInputChan:
+			case serverActions := <-t.serverInputChan:
 				event = tui.Invalid.AsEvent()
+				if t.listenAddr == nil || t.listenAddr.IsLocal() || t.listenUnsafe {
+					actions = serverActions
+				} else {
+					for _, action := range serverActions {
+						if !processExecution(action.t) {
+							actions = append(actions, action)
+						}
+					}
+				}
+
 				needBarrier = false
 			}
 		}
