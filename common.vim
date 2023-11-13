@@ -897,7 +897,7 @@ function! SetupQuickRun()
   nnoremap <F9> :QuickRun<CR>
   inoremap <F9>  <C-\><C-O>:QuickRun<CR>
 endfunction
-command! -nargs=1 -complete=file QuickRunJQSet call jraf#quickrunjqset('<args>')
+command! -nargs=? -complete=file QuickRunJQSet call jraf#quickrunjqset('<args>')
 nnoremap ,qr :call SetupQuickRun()<CR>:QuickRun<CR>
 
 "==============================================================================}}}

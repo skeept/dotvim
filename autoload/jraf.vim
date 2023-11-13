@@ -610,6 +610,10 @@ endfunction
 
 "================== quickrun-jq ==============================================={{{
 function! jraf#quickrunjqset(json_file)
+  if a:json_file == "" && !exists("g:_quickrunjqset_called")
+    echo "May need to provide json file!"
+    let g:_quickrunjqset_called = 1
+  endif
   call SetupQuickRun()
   let g:quickrun_config = get(g:, 'quickrun_config', {})
   let g:quickrun_config["conf.jq"] = {
