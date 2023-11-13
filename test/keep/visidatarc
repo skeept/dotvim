@@ -1,5 +1,10 @@
 # vim: set ft=python:
 
+"""Visidata settings.
+
+Guess type of some columns by default.
+"""
+
 import itertools
 import logging
 
@@ -10,7 +15,9 @@ if False:
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
-        handlers=[logging.FileHandler(file_name, mode="a"),],
+        handlers=[
+            logging.FileHandler(file_name, mode="a"),
+        ],
     )
 
     def ii(*args):
@@ -18,14 +25,20 @@ if False:
 
     logging.info("------------------------------------\n")
 else:
-    logging.basicConfig(level=logging.ERROR,)
+    logging.basicConfig(
+        level=logging.ERROR,
+    )
 
     def ii(*args):
         pass
 
 
 # can use this one later in version 2.0
-# Sheet.addCommand('gr', 'guess-types', 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")')
+# Sheet.addCommand(
+    # "gr",
+    # "guess-types",
+    # 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")',
+# )
 Sheet.addCommand(
     "gr",
     "guess-types",
@@ -41,27 +54,28 @@ Sheet.addCommand("gw", "set-col-names", "guessColNames(source, visibleCols)")
 def cols_param():
     """Add columns for params file"""
     return (
-            "solveT",
-            "airlNet",
-            "seatAll",
-            "rebookMode",
-            "useMctTol",
-            "tolDD",
-            "tolDI",
-            "tolID",
-            "tolII",
-            "domestic",
-            "int",
-            "rebookearlier",
-            "origin",
-            "downG",
-            "upG",
-            "transfer",
-            "allowCoterm",
-            "overNight",
-            "allowInt",
-            "delayThreshold",
-            )
+        "solveT",
+        "airlNet",
+        "seatAll",
+        "rebookMode",
+        "useMctTol",
+        "tolDD",
+        "tolDI",
+        "tolID",
+        "tolII",
+        "domestic",
+        "int",
+        "rebookearlier",
+        "origin",
+        "downG",
+        "upG",
+        "transfer",
+        "allowCoterm",
+        "overNight",
+        "allowInt",
+        "delayThreshold",
+    )
+
 
 def guessColNames(source, cols_input, override=False):
     source_base = os.path.basename(source.resolve())
@@ -75,7 +89,10 @@ def guessColNames(source, cols_input, override=False):
             " depSt arrSt depT arrT svcT eqT body opSt elig selec whatif isAdde "
         ).split()
     elif source_base == "passengers.dat":
-        names = ("pnr n crm fare . . . minor . . checkIn dayT intN").split()
+        names = (
+            "pnr n crm fare freFly codeS corp minor "
+            "strat checkIn dayT intN etk grp staff cBag"
+        ).split()
     elif source_base == "availability.dat":
         names = "id class order auth cap booked blocked".split()
     elif source_base == "pnrFlights.dat":
@@ -84,7 +101,7 @@ def guessColNames(source, cols_input, override=False):
         names = cols_param()
 
     for col, name, idx in zip(
-        cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0)
+        cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0),
     ):
         if override or not col.name.strip():
             col.name = name if name != "." else f"c{idx}"
