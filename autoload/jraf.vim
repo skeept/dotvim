@@ -635,4 +635,34 @@ function! jraf#quickrunjqload()
 endfunction
 "==============================================================================}}}
 
+"================== close tab or exit ========================================={{{
+function! jraf#closeTabOrExit(idx)
+  if a:idx == 0
+    wall
+  endif
+  let is_diff = &diff
+  " check if dirdiff present in current window
+  let is_dirdiff = 0
+  for window in gettabinfo('.')[0].windows
+    let bufnr = getwininfo(window)[0].bufnr
+    let variables = getbufinfo(bufnr)[0].variables
+    if has_key(variables, 'currentDiff')
+      let is_dirdiff = 1
+    endif
+  endfor
+  if tabpagenr('$') > 1 " number of tabs
+    if tabpagewinnr(tabpagenr(), '$') == 1 " number of windows in current tab
+      xit
+    else
+      tabclose
+    endif
+  elseif is_diff || is_dirdiff
+    qall
+  else
+    xit
+  endif
+  return ""
+endfunction
+"==============================================================================}}}
+
 " vim: foldmethod=marker

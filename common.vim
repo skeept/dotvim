@@ -163,33 +163,8 @@ inoremap <C-W> <C-G>u<C-W>
 inoremap <BS> <C-G>u<BS>
 inoremap <DEL> <C-G>u<DEL>
 
-function! CloseTabOrExit(idx)
-  if a:idx == 0
-    wall
-  endif
-  let is_diff = &diff
-  " check if dirdiff present in current window
-  let is_dirdiff = 0
-  for window in gettabinfo('.')[0].windows
-    let bufnr = getwininfo(window)[0].bufnr
-    let variables = getbufinfo(bufnr)[0].variables
-    if has_key(variables, 'currentDiff')
-      let is_dirdiff = 1
-    endif
-  endfor
-  let numtabs = tabpagenr('$')
-  if numtabs == tabpagenr('$') && numtabs > 1
-    tabclose
-  elseif is_diff || is_dirdiff
-    qall
-  else
-    xit
-  endif
-  return ""
-endfunction
-
-noremap <f4> :<C-U>call CloseTabOrExit(v:count)<CR>
-inoremap <f4> <ESC>:<C-U>call CloseTabOrExit(v:count)<CR>
+noremap <f4> :<C-U>call jraf#closeTabOrExit(v:count)<CR>
+inoremap <f4> <ESC>:<C-U>call jraf#closeTabOrExit(v:count)<CR>
 
 "noremap ,en :cnext<CR>
 "noremap ,ep :cprevious<CR>
