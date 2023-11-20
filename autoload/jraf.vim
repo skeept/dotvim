@@ -642,7 +642,7 @@ function! jraf#closeTabOrExit(idx)
   endif
   let is_diff = &diff " check if dirdiff present in current window
   let is_dirdiff = 0
-  for window in gettabinfo(tabpagenr())[0].windows "a
+  for window in gettabinfo(tabpagenr())[0].windows
     let bufnr = getwininfo(window)[0].bufnr
     let variables = getbufinfo(bufnr)[0].variables
     if has_key(variables, 'currentDiff')
