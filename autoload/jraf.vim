@@ -640,8 +640,7 @@ function! jraf#closeTabOrExit(idx)
   if a:idx == 0
     wall
   endif
-  let is_diff = &diff
-  " check if dirdiff present in current window
+  let is_diff = &diff " check if dirdiff present in current window
   let is_dirdiff = 0
   for window in gettabinfo('.')[0].windows
     let bufnr = getwininfo(window)[0].bufnr
