@@ -46,17 +46,8 @@ pub enum Error {
 }
 
 // Do the initialization on the Vim end on startup.
-async fn initialize_client(
-    vim: Vim,
-    actions: Vec<&str>,
-    config_err: Option<toml::de::Error>,
-) -> VimResult<()> {
-    if let Some(err) = config_err {
-        vim.echo_warn(format!(
-            "Using default Config due to the error in {}: {err}",
-            crate::config::config_file().display()
-        ))?;
-    }
+async fn initialize_client(vim: Vim, actions: Vec<&str>, config_err: ConfigError) -> VimResult<()> {
+    config_err.notify_error(&vim)?;
 
     // The output of `autocmd filetypedetect` could be incomplete as the
     // filetype won't be instantly initialized, thus the current workaround
@@ -94,7 +85,7 @@ struct InitializedService {
 fn initialize_service(vim: Vim) -> InitializedService {
     use self::plugin::{
         ActionType, ClapPlugin, ColorizerPlugin, CtagsPlugin, CursorwordPlugin, GitPlugin,
-        LinterPlugin, MarkdownPlugin, SyntaxHighlighterPlugin, SystemPlugin,
+        LinterPlugin, MarkdownPlugin, SyntaxPlugin, SystemPlugin,
     };
 
     let mut callable_actions = Vec::new();
@@ -115,11 +106,13 @@ fn initialize_service(vim: Vim) -> InitializedService {
     };
 
     register_plugin(Box::new(SystemPlugin::new(vim.clone())), None);
-    register_plugin(Box::new(GitPlugin::new(vim.clone())), None);
-    register_plugin(Box::new(SyntaxHighlighterPlugin::new(vim.clone())), None);
+    register_plugin(Box::new(SyntaxPlugin::new(vim.clone())), None);
 
     let plugin_config = &crate::config::config().plugin;
 
+    if plugin_config.git.enable {
+        register_plugin(Box::new(GitPlugin::new(vim.clone())), None);
+    }
     if plugin_config.colorizer.enable {
         register_plugin(
             Box::new(ColorizerPlugin::new(vim.clone())),
@@ -153,8 +146,30 @@ fn initialize_service(vim: Vim) -> InitializedService {
     }
 }
 
+pub struct ConfigError {
+    pub maybe_toml_err: Option<toml::de::Error>,
+    pub maybe_log_target_err: Option<String>,
+}
+
+impl ConfigError {
+    fn notify_error(self, vim: &Vim) -> VimResult<()> {
+        if let Some(err) = self.maybe_toml_err {
+            vim.echo_warn(format!(
+                "Using default Config due to the error in {}: {err}",
+                crate::config::config_file().display()
+            ))?;
+        }
+
+        if let Some(err) = self.maybe_log_target_err {
+            vim.echo_warn(err)?;
+        }
+
+        Ok(())
+    }
+}
+
 /// Starts and keep running the server on top of stdio.
-pub async fn start(config_err: Option<toml::de::Error>) {
+pub async fn start(config_err: ConfigError) {
     // TODO: setup test framework using vim_message_sender.
     let (vim_message_sender, vim_message_receiver) = tokio::sync::mpsc::unbounded_channel();
 
@@ -180,7 +195,7 @@ struct Backend {
 
 impl Backend {
     /// Creates a new instance of [`Backend`].
-    fn new(vim: Vim, config_err: Option<toml::de::Error>) -> Self {
+    fn new(vim: Vim, config_err: ConfigError) -> Self {
         let InitializedService {
             callable_actions,
             plugin_actions,

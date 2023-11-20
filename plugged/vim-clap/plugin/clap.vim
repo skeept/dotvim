@@ -1,7 +1,7 @@
 " vim-clap - Modern interactive filter and dispatcher
 " Author:    Liu-Cheng Xu <xuliuchengxlc@gmail.com>
 " Website:   https://github.com/liuchengxu/vim-clap
-" Version:   0.47
+" Version:   0.49
 " License:   MIT
 
 if exists('g:loaded_clap')
@@ -62,10 +62,23 @@ augroup VimClap
     autocmd BufDelete    * call clap#client#notify('BufDelete',    [+expand('<abuf>')])
     autocmd BufWritePost * call clap#client#notify('BufWritePost', [+expand('<abuf>')])
     autocmd BufWinEnter  * call clap#client#notify('BufWinEnter',  [+expand('<abuf>')])
-    autocmd BufWinLeave  * call clap#client#notify('BufWinLeave',  [+expand('<abuf>'), bufwinid(+expand('<abuf>'))])
+    autocmd BufWinLeave  * call clap#client#notify('BufWinLeave',  [+expand('<abuf>')])
     " Are these really needed?
     " autocmd TextChanged  * call clap#client#notify('TextChanged',  [+expand('<abuf>')])
     " autocmd TextChangedI * call clap#client#notify('TextChangedI', [+expand('<abuf>')])
+
+    " Create `clap_actions` provider so that it's convenient to interact with the plugins later.
+    let g:clap_provider_clap_actions = get(g:, 'clap_provider_clap_actions', {
+                \ 'source': { -> get(g:, 'clap_actions', []) },
+                \ 'sink': { line -> clap#client#notify(line, []) },
+                \ 'mode': 'quick_pick',
+                \ })
+
+    function! s:RequestClapAction(bang, action) abort
+      call clap#client#notify(a:action, [])
+    endfunction
+
+    command! -bang -nargs=* -bar -range -complete=customlist,clap#helper#complete_actions ClapAction call s:RequestClapAction(<bang>0, <f-args>)
   endif
 
   " yanks provider

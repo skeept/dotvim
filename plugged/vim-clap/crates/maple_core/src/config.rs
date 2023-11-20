@@ -83,6 +83,7 @@ impl MatcherConfig {
 pub struct LogConfig {
     pub log_file: Option<String>,
     pub max_level: String,
+    pub log_target: String,
 }
 
 impl Default for LogConfig {
@@ -90,6 +91,7 @@ impl Default for LogConfig {
         Self {
             log_file: None,
             max_level: "debug".into(),
+            log_target: "".into(),
         }
     }
 }
@@ -223,7 +225,7 @@ pub struct ProviderConfig {
     ///
     /// If the theme is not found and the engine is [`HighlightEngine::SublimeSyntax`],
     /// the default theme (`Visual Studio Dark+`) will be used.
-    pub preview_color_scheme: Option<String>,
+    pub sublime_syntax_color_scheme: Option<String>,
 
     /// Whether to share the input history of each provider.
     pub share_input_history: bool,
@@ -326,7 +328,8 @@ mod tests {
             Config {
                 log: LogConfig {
                     log_file: Some("/tmp/clap.log".to_string()),
-                    max_level: "trace".to_string()
+                    max_level: "trace".to_string(),
+                    ..Default::default()
                 },
                 matcher: MatcherConfig {
                     tiebreak: "score,-begin,-end,-length".to_string()
