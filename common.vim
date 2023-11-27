@@ -839,6 +839,7 @@ command! -bang ChgDirCurrFileFolder
       \ | echo expand('%:p:h')
 
 nnoremap ,cd :<C-U>ChgDirCurrFileFolder<CR>
+nnoremap ,cu :<C-U>cd! %:p:h \| cd ..\| echo expand('%:p:h:h')<CR>
 
 " print current files pwd
 command! Pcp echo expand('%:p')
