@@ -457,11 +457,12 @@ If you need to copy a specific column, you can use the command `:CSVColumn` or
 `:Column` 
 
 ```vim
-:[N]Column [a]
+:[N]Column[!] [a]
 ```
 
 Copy column N into register a. This will copy all the values, that are
 not folded-away ([Dynamic filters](#dynamic-filters)) and skip comments.
+If the bang (`!`) attribute is given, skips the Header Lines.
 
 If you don't specify N, the column of the current cursor position is used.
 If no register is given, the default register
@@ -643,10 +644,11 @@ You can convert your CSV file to a different format with the `:ConvertData`
 or `:CSVConvertData` command 
 
 ```vim
-ConvertData
+[range]ConvertData[!]
 ```
 
-Use the the ! attribute, to convert your data without the delimiter.
+Use the the bang ("!") attribute, to convert your data without the delimiter.
+If [range] is given, will only convert the lines in range.
 
 This command will interactively ask you for the definition of 3 variables.
 After which it will convert your csv file into a new format, defined by those
@@ -696,7 +698,7 @@ as default value which you can confirm by pressing Enter. Last, you define,
 how your columns need to be converted. Again, Vim asks you for how to do that:
 
 ```
-Converted text, use %s for column input:
+How to convert data (use %s for column input):
 <tr><td>%s</td><td>%s</td><td>%s</td></tr>
 ```
 
@@ -741,7 +743,7 @@ Post convert text: Commit;
 After inserting the data, commit it into the database.
 
 ```
-Converted text, use %s for column input:
+How to convert data (use %s for column input):
 Insert into table foobar values ('%s', '%s', %s);
 ```
 
@@ -938,8 +940,11 @@ In csv files, you can also use the :CSVTabularize command, in different
 filetypes you can use the :CSVTable command (and is available as plugin so it
 will be available for non-CSV filetypes).
 
-Set the variable g:csv_table_leftalign=1 if you want the columns to be
+Set the variable `g:csv_table_leftalign=1` if you want the columns to be
 leftaligned.
+
+Set the variable `g:csv_table_use_ascii=1` if you do not want to use unicode
+drawing characters.
 
 Note: Each row must contain exactly as many fields as columns.
 

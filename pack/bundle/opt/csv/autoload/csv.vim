@@ -881,7 +881,7 @@ fu! csv#Columnize(field) "{{{3
         if get(s:decimal_column, colnr, 0) == 0
             call csv#CheckHeaderLine()
             call csv#NumberFormat()
-            let data = csv#CopyCol('', colnr+1, '')[s:csv_fold_headerline : -1]
+            let data = csv#CopyCol('', colnr+1, '', 0)[s:csv_fold_headerline : -1]
             let pat1 = escape(s:nr_format[1], '.').'\zs[^'.s:nr_format[1].']*\ze'.
                         \ (has_delimiter ? b:delimiter : '').'$'
             let pat2 = '\d\+\ze\%(\%('.escape(s:nr_format[1], '.'). '\d\+\)\|'.
@@ -1015,9 +1015,9 @@ fu! csv#SplitHeaderLine(lines, bang, hor) "{{{3
             setl scrollopt=ver scrollbind cursorbind
             noa 0
             if a:lines[-1:] is? '!'
-                let a=csv#CopyCol('',a:lines,'')
+                let a=csv#CopyCol('',a:lines,'', 0)
             else
-                let a=csv#CopyCol('',1, a:lines-1)
+                let a=csv#CopyCol('',1, a:lines-1, 0)
             endif
             " Does it make sense to use the preview window?
             "vert sil! pedit |wincmd w | enew!
@@ -1254,7 +1254,7 @@ fu! csv#Sort(bang, line1, line2, colnr) range "{{{3
         \' r'. flag. ' /' . pat . '/'
     call winrestview(wsv)
 endfun
-fu! csv#CopyCol(reg, col, cnt) "{{{3
+fu! csv#CopyCol(reg, col, cnt, bang) "{{{3
     " Return Specified Column into register reg
     let col = a:col == "0" ? csv#WColumn() : a:col+0
     let mcol = csv#MaxColumns()
@@ -1268,11 +1268,18 @@ fu! csv#CopyCol(reg, col, cnt) "{{{3
         let cnt_cols = col + a:cnt - 1
     endif
     let a = []
+		let first = 1
+		call csv#CheckHeaderLine()
+    if a:bang && first <= s:csv_fold_headerline
+        " don't take the header line into consideration
+        let first = s:csv_fold_headerline + 1
+    endif
+
     " Don't get lines, that are currently filtered away
     if !exists("b:csv_filter") || empty(b:csv_filter)
-        let a=getline(1, '$')
+        let a=getline(first, '$')
     else
-        for line in range(1, line('$'))
+        for line in range(first, line('$'))
             if foldlevel(line)
                 continue
             else
@@ -1700,7 +1707,7 @@ fu! csv#DoForEachColumn(start, stop, bang) range "{{{3
     endif
 
     for item in range(a:start, a:stop, 1)
-        if foldlevel(line)
+        if foldlevel(item)
           " Filter out folded lines (from dynamic filter)
           continue
         endif
@@ -1733,7 +1740,7 @@ fu! csv#DoForEachColumn(start, stop, bang) range "{{{3
             endfor
         endif
         for j in range(1, columns, 1)
-            let t=substitute(t, '%s', fields[j-1], '')
+            let t=substitute(t, '%s', get(fields, j-1, ''), '')
         endfor
         call add(result, t)
     endfor
@@ -1752,7 +1759,7 @@ fu! csv#PrepareDoForEachColumn(start, stop, bang) range"{{{3
     let post = exists("g:csv_post_convert") ? g:csv_post_convert : ''
     let g:csv_post_convert=input('Post convert text: ', post)
     let convert = exists("g:csv_convert") ? g:csv_convert : ''
-    let g:csv_convert=input("Converted text, use %s for column input:\n", convert)
+    let g:csv_convert=input("How to convert data (use %s for column input):\n", convert)
     call csv#DoForEachColumn(a:start, a:stop, a:bang)
 endfun
 fu! csv#EscapeValue(val) "{{{3
@@ -2000,7 +2007,7 @@ fu! csv#AnalyzeColumn(...) "{{{3
 
     " Initialize csv#fold_headerline
     call csv#CheckHeaderLine()
-    let data = csv#CopyCol('', colnr, '')[s:csv_fold_headerline : -1]
+    let data = csv#CopyCol('', colnr, '', 0)[s:csv_fold_headerline : -1]
     let qty = len(data)
     let res = {}
     for item in data
@@ -2273,100 +2280,45 @@ fu! csv#CSVMappings() "{{{3
     endif
 endfu
 fu! csv#CommandDefinitions() "{{{3
-    call csv#LocalCmd("WhatColumn", ':echo csv#WColumn(<bang>0)',
-        \ '-bang')
-    call csv#LocalCmd("NrColumns", ':call csv#NrColumns(<q-bang>)', '-bang')
-    call csv#LocalCmd("HiColumn", ':call csv#HiCol(<q-args>,<bang>0)',
-        \ '-bang -nargs=?')
-    call csv#LocalCmd("SearchInColumn",
-        \ ':call csv#SearchColumn(<q-args>)', '-nargs=*')
-    call csv#LocalCmd("DeleteColumn", ':call csv#DeleteColumn(<q-args>)',
-        \ '-nargs=? -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("ArrangeColumn",
-        \ ':call csv#ArrangeCol(<line1>, <line2>, <bang>0, -1, <q-args>)',
-        \ '-range -bang -bar -nargs=?')
-    call csv#LocalCmd("SmplVarCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#SmplVarianceColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("PopVarCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#PopVarianceColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("SmplStdCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#SmplStdDevColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("PopStdCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#PopStdDevColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("UnArrangeColumn",
-        \':call csv#PrepUnArrangeCol(<line1>, <line2>)',
-        \ '-bar -range')
-    call csv#LocalCmd("CSVInit", ':call csv#Init(<line1>,<line2>,<bang>0)',
-        \ '-bang -range=%')
-    call csv#LocalCmd('Header',
-        \ ':call csv#SplitHeaderLine(<q-args>,<bang>0,1)',
-        \ '-nargs=? -bang')
-    call csv#LocalCmd('VHeader',
-        \ ':call csv#SplitHeaderLine(<q-args>,<bang>0,0)',
-        \ '-nargs=? -bang')
-    call csv#LocalCmd("HeaderToggle",
-        \ ':call csv#SplitHeaderToggle(1)', '')
-    call csv#LocalCmd("VHeaderToggle",
-        \ ':call csv#SplitHeaderToggle(0)', '')
-    call csv#LocalCmd("Sort",
-        \ ':call csv#Sort(<bang>0, <line1>,<line2>,<q-args>)',
-        \ '-nargs=* -bang -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("Column",
-        \ ':call csv#CopyCol(empty(<q-reg>)?''"'':<q-reg>,<q-count>,<q-args>)',
-        \ '-count -register -nargs=?')
-    call csv#LocalCmd("MoveColumn",
-        \ ':call csv#MoveColumn(<line1>,<line2>,<f-args>)',
-        \ '-range=% -nargs=* -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("SumCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#SumColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("MaxCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#MaxColumn", <line1>,<line2>, 1)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("MinCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#MaxColumn", <line1>,<line2>, 0)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("CountCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#CountColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("AvgCol",
-        \ ':echo csv#EvalColumn(<q-args>, "csv#AvgColumn", <line1>,<line2>)',
-        \ '-nargs=? -range=% -complete=custom,csv#SortComplete')
-    call csv#LocalCmd('SumRow', ':call csv#SumCSVRow(<q-count>, <q-args>)',
-        \ '-nargs=? -range')
-    call csv#LocalCmd("ConvertData",
-        \ ':call csv#PrepareDoForEachColumn(<line1>,<line2>,<bang>0)',
-        \ '-bang -nargs=? -range=%')
-    call csv#LocalCmd("Filters", ':call csv#OutputFilters(<bang>0)',
-        \ '-nargs=0 -bang')
-    call csv#LocalCmd("Analyze", ':call csv#AnalyzeColumn(<f-args>)',
-        \ '-nargs=*' )
-    call csv#LocalCmd("VertFold", ':call csv#Vertfold(<bang>0,<q-args>)',
-        \ '-bang -nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("AddColumn", ':call csv#AddColumn(<line1>,<line2>,<f-args>)', '-range=% -nargs=* -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("Analyze", ':call csv#AnalyzeColumn(<f-args>)', '-nargs=*' )
+    call csv#LocalCmd("ArrangeColumn", ':call csv#ArrangeCol(<line1>, <line2>, <bang>0, -1, <q-args>)', '-range -bang -bar -nargs=?')
+    call csv#LocalCmd("AvgCol", ':echo csv#EvalColumn(<q-args>, "csv#AvgColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
     call csv#LocalCmd("CSVFixed", ':call csv#InitCSVFixedWidth()', '')
-    call csv#LocalCmd("NewRecord", ':call csv#NewRecord(<line1>,
-        \ <line2>, <q-args>)', '-nargs=? -range')
-    call csv#LocalCmd("NewDelimiter", ':call csv#NewDelimiter(<q-args>, 1, line(''$''))',
-        \ '-nargs=1')
-    call csv#LocalCmd("Duplicates", ':call csv#CheckDuplicates(<q-args>)',
-        \ '-nargs=? -complete=custom,csv#CompleteColumnNr')
-    call csv#LocalCmd('Transpose', ':call csv#Transpose(<line1>, <line2>)',
-        \ '-range=%')
-    call csv#LocalCmd('CSVTabularize', ':call csv#Tabularize(<bang>0,<line1>,<line2>)',
-        \ '-bang -range=%')
-    call csv#LocalCmd("AddColumn",
-        \ ':call csv#AddColumn(<line1>,<line2>,<f-args>)',
-        \ '-range=% -nargs=* -complete=custom,csv#SortComplete')
-    call csv#LocalCmd("DupColumn",
-        \ ':call csv#DupColumn(<line1>,<line2>,<f-args>)',
-        \ '-range=% -nargs=* -complete=custom,csv#SortComplete')
-    call csv#LocalCmd('Substitute', ':call csv#SubstituteInColumn(<q-args>,<line1>,<line2>)',
-        \ '-nargs=1 -range=%')
+    call csv#LocalCmd("CSVInit", ':call csv#Init(<line1>,<line2>,<bang>0)', '-bang -range=%')
+    call csv#LocalCmd("Column", ':call csv#CopyCol(empty(<q-reg>)?''"'':<q-reg>,<q-count>,<q-args>, <bang>0)', '-bang -count -register -nargs=?')
+    call csv#LocalCmd("ConvertData", ':call csv#PrepareDoForEachColumn(<line1>,<line2>,<bang>0)', '-bang -nargs=0 -range=%')
+    call csv#LocalCmd("CountCol", ':echo csv#EvalColumn(<q-args>, "csv#CountColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("DeleteColumn", ':call csv#DeleteColumn(<q-args>)', '-nargs=? -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("DupColumn", ':call csv#DupColumn(<line1>,<line2>,<f-args>)', '-range=% -nargs=* -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("Duplicates", ':call csv#CheckDuplicates(<q-args>)', '-nargs=? -complete=custom,csv#CompleteColumnNr')
+    call csv#LocalCmd("Filters", ':call csv#OutputFilters(<bang>0)', '-nargs=0 -bang')
+    call csv#LocalCmd("HeaderToggle", ':call csv#SplitHeaderToggle(1)', '')
+    call csv#LocalCmd("HiColumn", ':call csv#HiCol(<q-args>,<bang>0)', '-bang -nargs=?')
+    call csv#LocalCmd("MaxCol", ':echo csv#EvalColumn(<q-args>, "csv#MaxColumn", <line1>,<line2>, 1)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("MinCol", ':echo csv#EvalColumn(<q-args>, "csv#MaxColumn", <line1>,<line2>, 0)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("MoveColumn", ':call csv#MoveColumn(<line1>,<line2>,<f-args>)', '-range=% -nargs=* -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("NewDelimiter", ':call csv#NewDelimiter(<q-args>, 1, line(''$''))', '-nargs=1')
+    call csv#LocalCmd("NewRecord", ':call csv#NewRecord(<line1>, <line2>, <q-args>)', '-nargs=? -range')
+    call csv#LocalCmd("NrColumns", ':call csv#NrColumns(<q-bang>)', '-bang')
+    call csv#LocalCmd("PopStdCol", ':echo csv#EvalColumn(<q-args>, "csv#PopStdDevColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("PopVarCol", ':echo csv#EvalColumn(<q-args>, "csv#PopVarianceColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("SearchInColumn", ':call csv#SearchColumn(<q-args>)', '-nargs=*')
+    call csv#LocalCmd("SmplStdCol", ':echo csv#EvalColumn(<q-args>, "csv#SmplStdDevColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("SmplVarCol", ':echo csv#EvalColumn(<q-args>, "csv#SmplVarianceColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("Sort", ':call csv#Sort(<bang>0, <line1>,<line2>,<q-args>)', '-nargs=* -bang -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("SumCol", ':echo csv#EvalColumn(<q-args>, "csv#SumColumn", <line1>,<line2>)', '-nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("UnArrangeColumn", ':call csv#PrepUnArrangeCol(<line1>, <line2>)', '-bar -range')
+    call csv#LocalCmd("VHeaderToggle", ':call csv#SplitHeaderToggle(0)', '')
+    call csv#LocalCmd("VertFold", ':call csv#Vertfold(<bang>0,<q-args>)', '-bang -nargs=? -range=% -complete=custom,csv#SortComplete')
+    call csv#LocalCmd("WhatColumn", ':echo csv#WColumn(<bang>0)', '-bang')
+    call csv#LocalCmd('CSVTabularize', ':call csv#Tabularize(<bang>0,<line1>,<line2>)', '-bang -range=%')
     call csv#LocalCmd('ColumnWidth', ':call csv#ColumnWidth()', '')
+    call csv#LocalCmd('Header', ':call csv#SplitHeaderLine(<q-args>,<bang>0,1)', '-nargs=? -bang')
+    call csv#LocalCmd('Substitute', ':call csv#SubstituteInColumn(<q-args>,<line1>,<line2>)', '-nargs=1 -range=%')
+    call csv#LocalCmd('SumRow', ':call csv#SumCSVRow(<q-count>, <q-args>)', '-nargs=? -range')
+    call csv#LocalCmd('Transpose', ':call csv#Transpose(<line1>, <line2>)', '-range=%')
+    call csv#LocalCmd('VHeader', ':call csv#SplitHeaderLine(<q-args>,<bang>0,0)', '-nargs=? -bang')
 endfu
 fu! csv#ColumnWidth()
     let w=CSVWidth()
@@ -2650,21 +2602,21 @@ fu! csv#Tabularize(bang, first, last) "{{{3
     endif
     let _c = winsaveview()
     " Table delimiter definition "{{{4
-    if !exists("s:td")
-        let s:td = {
-            \ 'hbar': (&enc =~# 'utf-8' ? '─' : '-'),
-            \ 'vbar': (&enc =~# 'utf-8' ? '│' : '|'),
-            \ 'scol': (&enc =~# 'utf-8' ? '├' : '|'),
-            \ 'ecol': (&enc =~# 'utf-8' ? '┤' : '|'),
-            \ 'ltop': (&enc =~# 'utf-8' ? '┌' : '+'),
-            \ 'rtop': (&enc =~# 'utf-8' ? '┐' : '+'),
-            \ 'lbot': (&enc =~# 'utf-8' ? '└' : '+'),
-            \ 'rbot': (&enc =~# 'utf-8' ? '┘' : '+'),
-            \ 'cros': (&enc =~# 'utf-8' ? '┼' : '+'),
-            \ 'dhor': (&enc =~# 'utf-8' ? '┬' : '-'),
-            \ 'uhor': (&enc =~# 'utf-8' ? '┴' : '-')
+		let use_unicode = &enc =~# 'utf-8' && get(g:, 'csv_table_use_ascii', 0) == 0
+		let s:td = {
+            \ 'hbar': (use_unicode ? '─' : '-'),
+            \ 'vbar': (use_unicode ? '│' : '|'),
+            \ 'scol': (use_unicode ? '├' : '|'),
+            \ 'ecol': (use_unicode ? '┤' : '|'),
+            \ 'ltop': (use_unicode ? '┌' : '+'),
+            \ 'rtop': (use_unicode ? '┐' : '+'),
+            \ 'lbot': (use_unicode ? '└' : '+'),
+            \ 'rbot': (use_unicode ? '┘' : '+'),
+            \ 'cros': (use_unicode ? '┼' : '+'),
+            \ 'dhor': (use_unicode ? '┬' : '-'),
+            \ 'uhor': (use_unicode ? '┴' : '-')
             \ }
-    endif "}}}4
+    "}}}4
     if match(getline(a:first), '^'.s:td.ltop) > -1
         " Already tabularized, done
         call csv#Warn("Looks already Tabularized, aborting!")
@@ -3008,7 +2960,7 @@ fu! csv#EvalColumn(nr, func, first, last, ...) range "{{{3
         let stop  += s:csv_fold_headerline
     endif
 
-    let column = csv#CopyCol('', col, '')[start : stop]
+    let column = csv#CopyCol('', col, '', 0)[start : stop]
     let column = csv#GetCells(column)
     " Delete empty values
     " Leave this up to the function that does something
@@ -3127,7 +3079,7 @@ fu! CSVField(x, y, ...) "{{{3
     let orig = !empty(a:0)
     let y = (y < 0 ? 0 : y)
     let x = (x > (csv#MaxColumns()) ? (csv#MaxColumns()) : x)
-    let col = csv#CopyCol('',x,'')
+    let col = csv#CopyCol('',x,'',0)
     if !orig
     " remove leading and trainling whitespace and the delimiter
         return matchstr(col[y], '^\s*\zs.\{-}\ze\s*'.b:delimiter.'\?$')
