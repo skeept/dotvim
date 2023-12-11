@@ -392,6 +392,9 @@ endif
 "==============================================================================}}}
 
 "================== Junkfile =================================================={{{
+" this seems to work even though the plugin is not loaded through plug
+command! -range -nargs=? JunkfileOpen <line1>,<line2>call junkfile#open(
+      \ strftime('%Y-%m-%d-%H%M%S.'), <q-args>)
 nnoremap <space>jf :JunkfileOpen<CR>
 vnoremap <space>jf :JunkfileOpen<CR>
 "==============================================================================}}}
