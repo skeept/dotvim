@@ -836,7 +836,6 @@ command! -bang ChgDirCurrFileFolder
       \ lcd %:p:h |
       \ else |
       \ cd! %:p:h | endif
-      \ | echo expand('%:p:h')
 
 nnoremap ,cd :<C-U>ChgDirCurrFileFolder<CR>
 nnoremap ,cu :<C-U>cd! %:p:h \| cd ..\| echo expand('%:p:h:h')<CR>
