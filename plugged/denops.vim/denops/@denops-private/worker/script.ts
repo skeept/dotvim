@@ -1,8 +1,4 @@
-import {
-  assert,
-  is,
-  Predicate,
-} from "https://deno.land/x/unknownutil@v3.10.0/mod.ts#^";
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.11.0/mod.ts";
 import {
   Client,
   Session,
@@ -14,29 +10,27 @@ import {
 import type { Denops, Meta } from "../../@denops/mod.ts";
 import { DenopsImpl } from "../impl.ts";
 import { patchConsole } from "./patch_console.ts";
-import { traceReadableStream, traceWritableStream } from "../trace_stream.ts";
 import { errorDeserializer, errorSerializer } from "../error.ts";
+import { isMeta } from "../util.ts";
 
 const worker = self as unknown as Worker & { name: string };
 
-const isMeta: Predicate<Meta> = is.ObjectOf({
-  mode: is.LiteralOneOf(["release", "debug", "test"] as const),
-  host: is.LiteralOneOf(["vim", "nvim"] as const),
-  version: is.String,
-  platform: is.LiteralOneOf(["windows", "mac", "linux"] as const),
+const isMessageData = is.ObjectOf({
+  scriptUrl: is.String,
+  meta: isMeta,
 });
+
+function emit(denops: Denops, name: string): Promise<void> {
+  return denops.cmd(`doautocmd <nomodeline> User ${name}`)
+    .catch((e) => console.warn(`Failed to emit ${name}: ${e}`));
+}
 
 async function main(
   scriptUrl: string,
   meta: Meta,
-  trace: boolean,
 ): Promise<void> {
-  let reader = readableStreamFromWorker(worker);
-  let writer = writableStreamFromWorker(worker);
-  if (trace) {
-    reader = traceReadableStream(reader, { prefix: "worker -> plugin: " });
-    writer = traceWritableStream(writer, { prefix: "plugin -> worker: " });
-  }
+  const reader = readableStreamFromWorker(worker);
+  const writer = writableStreamFromWorker(worker);
   const session = new Session(reader, writer, { errorSerializer });
   session.onMessageError = (error, message) => {
     if (error instanceof Error && error.name === "Interrupted") {
@@ -78,34 +72,13 @@ async function main(
   });
   try {
     const mod = await import(scriptUrl);
-    await denops.cmd(
-      `doautocmd <nomodeline> User DenopsSystemPluginPre:${worker.name}`,
-    )
-      .catch((e) =>
-        console.warn(
-          `Failed to emit DenopsSystemPluginPre:${worker.name}: ${e}`,
-        )
-      );
+    await emit(denops, `DenopsSystemPluginPre:${worker.name}`);
     await mod.main(denops);
-    await denops.cmd(
-      `doautocmd <nomodeline> User DenopsSystemPluginPost:${worker.name}`,
-    )
-      .catch((e) =>
-        console.warn(
-          `Failed to emit DenopsSystemPluginPost:${worker.name}: ${e}`,
-        )
-      );
+    await emit(denops, `DenopsSystemPluginPost:${worker.name}`);
     await session.wait();
   } catch (e) {
     console.error(e);
-    await denops.cmd(
-      `doautocmd <nomodeline> User DenopsSystemPluginFail:${worker.name}`,
-    )
-      .catch((e) =>
-        console.warn(
-          `Failed to emit DenopsSystemPluginFail:${worker.name}: ${e}`,
-        )
-      );
+    await emit(denops, `DenopsSystemPluginFail:${worker.name}`);
     await session.shutdown();
   }
   self.close();
@@ -116,12 +89,8 @@ patchConsole(`(${worker.name})`);
 
 // Wait startup arguments and start 'main'
 worker.addEventListener("message", (event: MessageEvent<unknown>) => {
-  assert(event.data, is.Record);
-  assert(event.data.scriptUrl, is.String);
-  assert(event.data.meta, isMeta);
-  assert(event.data.trace, is.OneOf([is.Undefined, is.Boolean]));
-  const { scriptUrl, meta, trace } = event.data;
-  main(scriptUrl, meta, trace ?? false).catch((e) => {
+  const { scriptUrl, meta } = ensure(event.data, isMessageData);
+  main(scriptUrl, meta).catch((e) => {
     console.error(
       `Unexpected error occurred in '${scriptUrl}': ${e}`,
     );

@@ -288,6 +288,7 @@ type Terminal struct {
 	executing          *util.AtomicBool
 	termSize           tui.TermSize
 	lastAction         actionType
+	lastFocus          int32
 }
 
 type selectedItem struct {
@@ -444,6 +445,8 @@ const (
 	actRebind
 	actBecome
 	actResponse
+	actShowHeader
+	actHideHeader
 )
 
 func processExecution(action actionType) bool {
@@ -584,10 +587,14 @@ func trimQuery(query string) []rune {
 	return []rune(strings.Replace(query, "\t", " ", -1))
 }
 
-func hasPreviewAction(opts *Options) bool {
+func mayTriggerPreview(opts *Options) bool {
+	if opts.ListenAddr != nil {
+		return true
+	}
 	for _, actions := range opts.Keymap {
 		for _, action := range actions {
-			if action.t == actPreview || action.t == actChangePreview {
+			switch action.t {
+			case actPreview, actChangePreview, actTransform:
 				return true
 			}
 		}
@@ -626,8 +633,11 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		delay = initialDelay
 	}
 	var previewBox *util.EventBox
-	// We need to start previewer if HTTP server is enabled even when --preview option is not specified
-	if len(opts.Preview.command) > 0 || hasPreviewAction(opts) || opts.ListenAddr != nil {
+	// We need to start the previewer even when --preview option is not specified
+	// * if HTTP server is enabled
+	// * if 'preview' or 'change-preview' action is bound to a key
+	// * if 'transform' action is bound to a key
+	if len(opts.Preview.command) > 0 || mayTriggerPreview(opts) {
 		previewBox = util.NewEventBox()
 	}
 	var renderer tui.Renderer
@@ -751,7 +761,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		tui:                renderer,
 		initFunc:           func() { renderer.Init() },
 		executing:          util.NewAtomicBool(false),
-		lastAction:         actStart}
+		lastAction:         actStart,
+		lastFocus:          minItem.Index()}
 	t.prompt, t.promptLen = t.parsePrompt(opts.Prompt)
 	t.pointer, t.pointerLen = t.processTabs([]rune(opts.Pointer), 0)
 	t.marker, t.markerLen = t.processTabs([]rune(opts.Marker), 0)
@@ -2762,6 +2773,13 @@ func (t *Terminal) pwindowSize() tui.TermSize {
 	return size
 }
 
+func (t *Terminal) currentIndex() int32 {
+	if currentItem := t.currentItem(); currentItem != nil {
+		return currentItem.Index()
+	}
+	return minItem.Index()
+}
+
 // Loop is called to start Terminal I/O
 func (t *Terminal) Loop() {
 	// prof := profile.Start(profile.ProfilePath("/tmp/"))
@@ -3046,17 +3064,14 @@ func (t *Terminal) Loop() {
 						t.printInfo()
 					case reqList:
 						t.printList()
-						var currentIndex int32 = minItem.Index()
-						currentItem := t.currentItem()
-						if currentItem != nil {
-							currentIndex = currentItem.Index()
-						}
+						currentIndex := t.currentIndex()
 						focusChanged := focusedIndex != currentIndex
 						if focusChanged && t.track == trackCurrent {
 							t.track = trackDisabled
 							t.printInfo()
 						}
-						if onFocus, prs := t.keymap[tui.Focus.AsEvent()]; prs && focusChanged {
+						if onFocus, prs := t.keymap[tui.Focus.AsEvent()]; prs && focusChanged && currentIndex != t.lastFocus {
+							t.lastFocus = focusedIndex
 							t.serverInputChan <- onFocus
 						}
 						if focusChanged || version != t.version {
@@ -3246,10 +3261,19 @@ func (t *Terminal) Loop() {
 		}
 
 		var doAction func(*action) bool
-		doActions := func(actions []*action) bool {
+		var doActions func(actions []*action) bool
+		doActions = func(actions []*action) bool {
+			currentIndex := t.currentIndex()
 			for _, action := range actions {
 				if !doAction(action) {
 					return false
+				}
+			}
+
+			if onFocus, prs := t.keymap[tui.Focus.AsEvent()]; prs {
+				if newIndex := t.currentIndex(); newIndex != currentIndex {
+					t.lastFocus = newIndex
+					return doActions(onFocus)
 				}
 			}
 			return true
@@ -3700,6 +3724,12 @@ func (t *Terminal) Loop() {
 					t.track = trackEnabled
 				}
 				req(reqInfo)
+			case actShowHeader:
+				t.headerVisible = true
+				req(reqList, reqInfo, reqPrompt, reqHeader)
+			case actHideHeader:
+				t.headerVisible = false
+				req(reqList, reqInfo, reqPrompt, reqHeader)
 			case actToggleHeader:
 				t.headerVisible = !t.headerVisible
 				req(reqList, reqInfo, reqPrompt, reqHeader)

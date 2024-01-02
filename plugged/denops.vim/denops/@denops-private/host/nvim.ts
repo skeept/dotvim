@@ -1,4 +1,8 @@
-import { assert, is } from "https://deno.land/x/unknownutil@v3.10.0/mod.ts#^";
+import {
+  assert,
+  ensure,
+  is,
+} from "https://deno.land/x/unknownutil@v3.11.0/mod.ts";
 import {
   Client,
   Session,
@@ -8,9 +12,20 @@ import { errorDeserializer, errorSerializer } from "../error.ts";
 import { getVersionOr } from "../version.ts";
 import { Host } from "./base.ts";
 
+const isNvimCallFunctionReturn = is.TupleOf(
+  [
+    is.Array,
+    is.OneOf([
+      is.Null,
+      is.TupleOf([is.Number, is.Number, is.String] as const),
+    ]),
+  ] as const,
+);
+
 export class Neovim implements Host {
   #session: Session;
   #client: Client;
+  #invoker?: Invoker;
 
   constructor(
     reader: ReadableStream<Uint8Array>,
@@ -19,6 +34,25 @@ export class Neovim implements Host {
     this.#session = new Session(reader, writer, {
       errorSerializer,
     });
+    this.#session.dispatcher = {
+      nvim_error_event(type, message) {
+        console.error(`nvim_error_event(${type})`, message);
+      },
+
+      void() {
+        return Promise.resolve();
+      },
+
+      invoke: async (method: unknown, args: unknown): Promise<unknown> => {
+        if (this.#invoker === undefined) {
+          throw new Error("Invoker is not registered");
+        }
+        assert(method, isInvokerMethod);
+        assert(args, is.Array);
+        // deno-lint-ignore no-explicit-any
+        return await (this.#invoker[method] as any)(...args);
+      },
+    };
     this.#session.onMessageError = (error, message) => {
       if (error instanceof Error && error.name === "Interrupted") {
         return;
@@ -61,12 +95,13 @@ export class Neovim implements Host {
   }
 
   async batch(
-    ...calls: [string, ...unknown[]][]
-  ): Promise<[unknown[], string]> {
-    const [ret, err] = await this.#client.call(
+    ...calls: (readonly [string, ...unknown[]])[]
+  ): Promise<readonly [unknown[], string]> {
+    const result = await this.#client.call(
       "nvim_call_atomic",
       calls.map(([fn, ...args]) => ["nvim_call_function", [fn, args]]),
-    ) as [unknown[], [number, number, string] | null];
+    );
+    const [ret, err] = ensure(result, isNvimCallFunctionReturn);
     if (err) {
       return [ret, err[2]];
     }
@@ -74,26 +109,11 @@ export class Neovim implements Host {
   }
 
   register(invoker: Invoker): void {
-    this.#session.dispatcher = {
-      nvim_error_event(type, message) {
-        console.error(`nvim_error_event(${type})`, message);
-      },
-
-      void() {
-        return Promise.resolve();
-      },
-
-      async invoke(method: unknown, args: unknown): Promise<unknown> {
-        assert(method, isInvokerMethod);
-        assert(args, is.Array);
-        // deno-lint-ignore no-explicit-any
-        return await (invoker[method] as any)(...args);
-      },
-    };
+    this.#invoker = invoker;
   }
 
-  async waitClosed(): Promise<void> {
-    await this.#session.wait();
+  waitClosed(): Promise<void> {
+    return this.#session.wait();
   }
 
   async dispose(): Promise<void> {

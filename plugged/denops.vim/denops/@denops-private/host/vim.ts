@@ -1,3 +1,4 @@
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.11.0/mod.ts";
 import {
   Client,
   Message,
@@ -6,49 +7,33 @@ import {
 import { Invoker, isInvokerMethod } from "./invoker.ts";
 import { Host } from "./base.ts";
 
+const isCallReturn = is.TupleOf([is.Unknown, is.String] as const);
+
+const isBatchReturn = is.TupleOf([is.Array, is.String] as const);
+
+const isVoidMessage = is.TupleOf([is.LiteralOf("void")] as const);
+
+const isInvokeMessage = is.TupleOf(
+  [
+    is.LiteralOf("invoke"),
+    is.String,
+    is.Array,
+  ] as const,
+);
+
 export class Vim implements Host {
   #session: Session;
   #client: Client;
+  #invoker?: Invoker;
 
   constructor(
     reader: ReadableStream<Uint8Array>,
     writer: WritableStream<Uint8Array>,
   ) {
     this.#session = new Session(reader, writer);
-    this.#session.start();
-    this.#client = new Client(this.#session);
-  }
-
-  redraw(force?: boolean): Promise<void> {
-    this.#client.redraw(force);
-    return Promise.resolve();
-  }
-
-  async call(fn: string, ...args: unknown[]): Promise<unknown> {
-    const [ret, err] = (await this.#client.call(
-      "denops#api#vim#call",
-      fn,
-      args,
-    )) as [unknown, string];
-    if (err !== "") {
-      throw new Error(`Failed to call '${fn}(${args.join(", ")})': ${err}`);
-    }
-    return ret;
-  }
-
-  async batch(
-    ...calls: [string, ...unknown[]][]
-  ): Promise<[unknown[], string]> {
-    return (await this.#client.call("denops#api#vim#batch", calls)) as [
-      unknown[],
-      string,
-    ];
-  }
-
-  register(invoker: Invoker): void {
     this.#session.onMessage = (message: Message) => {
       const [msgid, expr] = message;
-      dispatch(invoker, expr)
+      dispatch(this.#invoker, expr)
         .then((result) => [result, null] as const)
         .catch((error) => [null, error] as const)
         .then(([result, error]) => {
@@ -59,6 +44,37 @@ export class Vim implements Host {
           }
         });
     };
+    this.#session.start();
+    this.#client = new Client(this.#session);
+  }
+
+  redraw(force?: boolean): Promise<void> {
+    this.#client.redraw(force);
+    return Promise.resolve();
+  }
+
+  async call(fn: string, ...args: unknown[]): Promise<unknown> {
+    const result = await this.#client.call(
+      "denops#api#vim#call",
+      fn,
+      args,
+    );
+    const [ret, err] = ensure(result, isCallReturn);
+    if (err !== "") {
+      throw new Error(`Failed to call '${fn}(${args.join(", ")})': ${err}`);
+    }
+    return ret;
+  }
+
+  async batch(
+    ...calls: (readonly [string, ...unknown[]])[]
+  ): Promise<readonly [unknown[], string]> {
+    const result = await this.#client.call("denops#api#vim#batch", calls);
+    return ensure(result, isBatchReturn);
+  }
+
+  register(invoker: Invoker): void {
+    this.#invoker = invoker;
   }
 
   waitClosed(): Promise<void> {
@@ -74,8 +90,16 @@ export class Vim implements Host {
   }
 }
 
-async function dispatch(invoker: Invoker, expr: unknown): Promise<unknown> {
-  if (isInvokeMessage(expr)) {
+async function dispatch(
+  invoker: Invoker | undefined,
+  expr: unknown,
+): Promise<unknown> {
+  if (isVoidMessage(expr)) {
+    // Do nothing
+  } else if (isInvokeMessage(expr)) {
+    if (invoker === undefined) {
+      throw new Error("Invoker is not registered");
+    }
     const [_, method, args] = expr;
     if (!isInvokerMethod(method)) {
       throw new Error(`Method '${method}' is not defined in the invoker`);
@@ -87,16 +111,4 @@ async function dispatch(invoker: Invoker, expr: unknown): Promise<unknown> {
       `Unexpected JSON channel message is received: ${JSON.stringify(expr)}`,
     );
   }
-}
-
-type InvokeMessage = ["invoke", string, unknown[]];
-
-function isInvokeMessage(data: unknown): data is InvokeMessage {
-  return (
-    Array.isArray(data) &&
-    data.length === 3 &&
-    data[0] === "invoke" &&
-    typeof data[1] === "string" &&
-    Array.isArray(data[2])
-  );
 }

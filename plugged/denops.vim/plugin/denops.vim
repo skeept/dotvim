@@ -19,8 +19,6 @@ endif
 
 augroup denops_plugin_internal
   autocmd!
-  autocmd User DenopsReady call denops#plugin#discover()
-  autocmd User DenopsPluginRegister:* :
   autocmd User DenopsPluginPre:* :
   autocmd User DenopsPluginPost:* :
   autocmd User DenopsPluginFail:* :
@@ -29,11 +27,13 @@ augroup END
 function! s:init() abort
   if !empty(get(g:, 'denops_server_addr'))
     if denops#server#connect()
+      call denops#server#wait_async({ -> denops#plugin#discover() })
       return
     endif
     " Fallback to a local denops server
   endif
   call denops#server#start()
+  call denops#server#wait_async({ -> denops#plugin#discover() })
 endfunction
 
 if has('vim_starting')
