@@ -54,7 +54,6 @@ in the specified range append to current line $_ .= ...
 q; :
 q' "
 \rs -- start recording to register u
-\re -- end recording. Contents in register u
 ,co -- capture output from command (pastes contents at end of current buffer)
 <c-e> (insert mode) -- either go to end of line or copy char bellow
 
