@@ -12,6 +12,9 @@ repo_root_style = "bold blue"
 #format = '[$symbol \[$name\]]($style) '
 format = '[$symbol]($style) '
 
+[docker_context]
+disabled = true
+
 [gcloud]
 disabled = true
 

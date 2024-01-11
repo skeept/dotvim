@@ -1430,6 +1430,15 @@ function dr()
   fi
 }
 
+
+function wk()
+{
+  # interface for running some useful scripts
+  # should declare a array with names, scripts
+  :
+
+}
+
 if { type zoxide && ! type zi; } >& /dev/null ; then
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
   #mkdir -p "${_ZO_DATA_DIR}"
