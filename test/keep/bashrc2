@@ -1435,6 +1435,9 @@ function wk()
 {
   # interface for running some useful scripts
   # should declare a array with names, scripts
+  # declare the paths
+  declare -A keys
+  keys[]
   :
 
 }

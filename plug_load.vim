@@ -29,7 +29,7 @@ let use_airline = has("nvim")
 Plug 'molok/vim-smartusline', Cond(2 == use_airline)
 if 1 == use_airline "airline
   Plug g:p0 . '/pack/bundle/opt/airline'
-  Plug g:p0 . '/pack/bundle/opt/airline-extensions'
+  Plug g:p0 . '/pack/bundle/opt/airline-themes'
 elseif 0 == use_airline "lightline
   Plug g:p0 . '/pack/bundle/opt/lightline'
 endif
@@ -65,6 +65,7 @@ Plug 'PProvost/vim-ps1', { 'for': ['dos', 'ps1'] }
 Plug 'chrisbra/NrrwRgn', {'on': ['NR', 'NW', 'NRV', 'NW', 'NarrowRegion']}
 "Plug 'chrisbra/NrrwRgn'
 Plug 'chrisbra/Recover.vim'
+Plug 'chrisbra/improvedft'
 
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-entire'
@@ -79,12 +80,9 @@ Plug 'majutsushi/tagbar', { 'on': ['Tagbar', 'TagbarToggle'] }
 
 Plug 'molok/vim-scratch', { 'on': ['Scratch', 'Sscratch', 'ScratchToggle', 'Vscratch', 'Tscratch'] }
 
-Plug 'vlmarek/PreciseJumpVlad', { 'on': 'PreciseJumpF' }
-
 Plug 'will133/vim-dirdiff', { 'on': 'DirDiff' }
 
 Plug 'AndrewRadev/linediff.vim', { 'on': ['Linediff', 'LinediffReset'] }
-
 
 Plug 'liuchengxu/vim-clap',  { 'on': 'Clap' }
 Plug 'troydm/zoomwintab.vim'
