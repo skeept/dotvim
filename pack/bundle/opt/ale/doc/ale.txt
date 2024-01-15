@@ -3031,6 +3031,8 @@ documented in additional help files.
     fusion-lint...........................|ale-fuse-fusionlint|
   git commit..............................|ale-gitcommit-options|
     gitlint...............................|ale-gitcommit-gitlint|
+  gleam...................................|ale-gleam-options|
+    gleamlsp..............................|ale-gleam-gleamlsp|
   glsl....................................|ale-glsl-options|
     glslang...............................|ale-glsl-glslang|
     glslls................................|ale-glsl-glslls|
@@ -3114,6 +3116,7 @@ documented in additional help files.
     eclipselsp............................|ale-java-eclipselsp|
     uncrustify............................|ale-java-uncrustify|
   javascript..............................|ale-javascript-options|
+    biome.................................|ale-javascript-biome|
     clang-format..........................|ale-javascript-clangformat|
     cspell................................|ale-javascript-cspell|
     deno..................................|ale-javascript-deno|
@@ -3350,6 +3353,7 @@ documented in additional help files.
     sorbet................................|ale-ruby-sorbet|
     standardrb............................|ale-ruby-standardrb|
     syntax_tree...........................|ale-ruby-syntax_tree|
+    rubyfmt...............................|ale-ruby-rubyfmt|
   rust....................................|ale-rust-options|
     analyzer..............................|ale-rust-analyzer|
     cargo.................................|ale-rust-cargo|
@@ -3436,6 +3440,7 @@ documented in additional help files.
   toml....................................|ale-toml-options|
     dprint................................|ale-toml-dprint|
   typescript..............................|ale-typescript-options|
+    biome.................................|ale-typescript-biome|
     cspell................................|ale-typescript-cspell|
     deno..................................|ale-typescript-deno|
     dprint................................|ale-typescript-dprint|

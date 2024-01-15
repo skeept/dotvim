@@ -202,6 +202,8 @@ Notes:
   * `fusion-lint`
 * Git Commit Messages
   * `gitlint`
+* Gleam
+  * `gleamlsp`
 * GLSL
   * `glslang`
   * `glslls`
@@ -290,6 +292,7 @@ Notes:
   * `javalsp`
   * `uncrustify`
 * JavaScript
+  * `biome`
   * `clang-format`
   * `cspell`
   * `deno`
@@ -558,6 +561,7 @@ Notes:
   * `reek`
   * `rubocop`
   * `ruby`
+  * `rubyfmt`
   * `rufo`
   * `solargraph`
   * `sorbet`
@@ -650,6 +654,7 @@ Notes:
 * TOML
   * `dprint`
 * TypeScript
+  * `biome`
   * `cspell`
   * `deno`
   * `dprint`
