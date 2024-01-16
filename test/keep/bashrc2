@@ -500,11 +500,11 @@ complete -f -o default -X '!*.c++' vim vi gvim emacs xemacs nedit joe jed kate k
 complete -f -o default -X '!*.py' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit \
   py.exe py python python.exe ipython wpy wpy.exe \
   epy
-  complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
-  complete -f -o default -X '!*.gms' gams gr
-  complete -f -o default -X '!*.sh' bash sh
-  complete -A variable path dupremove pre
-  complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
+complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
+complete -f -o default -X '!*.gms' gams gr
+complete -f -o default -X '!*.sh' bash sh
+complete -A variable path dupremove pre
+complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
 
 
 # This is a 'universal' completion function - it works when commands have
@@ -593,25 +593,6 @@ _universal_func ()
   }
 
   complete -F _configure_func configure
-
-# cvs(1) completion
-_cvs ()
-{
-  local cur prev
-  COMPREPLY=()
-  cur=${COMP_WORDS[COMP_CWORD]}
-  prev=${COMP_WORDS[COMP_CWORD-1]}
-
-  if [ $COMP_CWORD -eq 1 ] || [ "${prev:0:1}" = "-" ]; then
-    COMPREPLY=( $( compgen -W 'add admin checkout commit diff \
-      export history import log rdiff release remove rtag status \
-      tag update' $cur ))
-        else
-          COMPREPLY=( $( compgen -f $cur ))
-  fi
-  return 0
-}
-complete -F _cvs cvs
 
 
 _killall ()
@@ -1430,17 +1411,55 @@ function dr()
   fi
 }
 
+declare -A __wk_keys
+
+function __wk_populate_keys()
+{
+  util=/mnt/c/OR/IRops/util
+  reg=/mnt/c/OR/IROPS/rt
+  myscripts=/mnt/c/jT
+  mldeps=/mnt/c/zl/ss/B6/23May/mldeps
+
+  __wk_keys[irr]="$myscripts/run_irops.py"
+  __wk_keys[exp]="$myscripts/experiment.py"
+  __wk_keys[enhance]="$util/src/enhance_sol.py"
+  __wk_keys[mod]="$util/src/mod_scen.py"
+  __wk_keys[copy_static]="$reg/Scripts/copy_static.py"
+}
 
 function wk()
 {
   # interface for running some useful scripts
   # should declare a array with names, scripts
   # declare the paths
-  declare -A keys
-  keys[]
-  :
+  # the scripts to run are mostly in 3 locations: util, reg and myscripts, also mldeps
+  # for now harcode paths
 
+  __wk_populate_keys
+  local userkey userval
+  userkey=$1
+  userval=""
+  shift
+  [ -v "__wk_keys[$userkey]" ] && userval="${__wk_keys[$userkey]}"
+  if [ -z "$userval" ]; then
+    for key in "${!__wk_keys[@]}"; do
+      printf "%-15s - %s\n" "$key" "${__wk_keys[$key]}"
+    done
+  else
+    python "$userval" $@
+  fi
 }
+
+# generate completion
+function _wk_comp()
+{
+  __wk_populate_keys
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  COMPREPLY=( $(eval "compgen -W \"${!__wk_keys[@]}\" -- $cur") )
+  return 0
+}
+
+complete -F _wk_comp wk
 
 if { type zoxide && ! type zi; } >& /dev/null ; then
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
