@@ -2,8 +2,6 @@ alias kp='kill -9 '
 alias mv='mv -i'
 
 alias la='ls -a'
-alias lsm='ls -l --block-size=M -S'
-alias more='less'
 alias o='less'
 
 alias hi=history
@@ -30,21 +28,10 @@ alias ipy='ipython'
 alias ps2='ps -A -o user -o pid -o args'
 alias ps2me='ps -U $(echo -n $USER) -o pid -o args'
 
-alias gpgd='gpg --decrypt-files'
-#alias s=screen
-#alias s-r="screen -r"
-#alias sn="screen -X next"
-#alias sp="screen -X  prev"
-#alias so="screen -X other"
-
 alias rs='reset'
 
-alias prstatme='prstat -U $(id -u)'
 alias vt1='export TERM=vt100'
-alias mut='mutt -f =inbox'
 alias top1='top -u `whoami` -c '
-alias t1='top -u `whoami` -c '
-alias vmore='vimpager'
 
 alias h='history'
 alias jl='jobs -l'
@@ -52,54 +39,29 @@ alias which='type -all'
 alias gdf='type'
 alias ..='cd ..'
 alias ...="cd ../.."
-alias di=zi
+alias di='zi'
 alias du='du -h'
 alias df='df -kh'
 
 alias tree='tree -Cs'           # nice alternative to 'ls'
 
-# spelling typos - highly personnal :-)
-alias xs='cd'
-alias vf='cd'
-alias moer='more'
-alias moew='more'
-alias kk='ll'
-alias makw='make'
+alias top='xtitle Processes on $HOSTNAME && top'
 
-alias top='xtitle Processes on $HOST && top'
-
-alias vix='TERM=xterm vim'
 alias vu='vim -u "${HOME}/.vim/simple.vim" --noplugins'
-alias rr='fc -s'
-alias r='ranger'
-alias gp='git push'
+alias rr='ranger'
+alias r='fc -s'
 alias w3m='w3m -no-graph'
 
 #aliases for conveniently changing dirs
 alias po=popd
 alias pu=pushd
-#alias d='dirs -v' # we try now with a function that achives more
-alias 0='cd ~0'
-alias 1='cd ~1'
-alias 2='cd ~2'
-alias 3='cd ~3'
-alias 4='cd ~4'
-alias 5='cd ~5'
-alias 6='cd ~6'
-alias 7='cd ~7'
-alias 8='cd ~8'
-alias 9='cd ~9'
 
 alias da=date
-alias sm=smake
 alias ze='unset FPATH; exec zsh'
-#alias z='unset FPATH; zsh'
-alias m4i='make -j4; make install'
 alias wgetnc='wget --no-check-certificate'
 
 alias vp='vim -u NONE --noplugins'
 alias ee='vim -c "packadd editexisting"'
-#alias gv='gvim --remote'
 
 alias gr='grep -irn'
 alias grep='grep --color=auto --ignore-case'
@@ -107,7 +69,6 @@ alias fdi='fd -I'
 alias rgi='rg -u'
 # alias ii='cygstart'
 alias vc='vd --filetype csv --header 0'
-alias t2='tmux -2'
 alias tw='emacsclient -nw'
 #alias tm='tmux -2'
 alias cpv='rsync -ah --info=progress2'

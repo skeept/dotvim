@@ -52,13 +52,6 @@ CYAN='\e[1;36m'
 NC='\e[0m'              # No Color
 # --> Nice. Has the same effect as using "ansi.sys" in DOS.
 
-# Looks best on a black background.....
-#####
-#echo -e "${CYAN}This is BASH ${RED}${BASH_VERSION%.*}${CYAN} - DISPLAY on ${RED}$DISPLAY${NC}\n"
-#date
-#if [ -x /usr/games/fortune ]; then
-#    /usr/games/fortune -s     # makes our day a bit more fun.... :-)
-#fi
 
 function initial_setup_copy()
 {
@@ -111,25 +104,6 @@ function py() {
   fi
 }
 
-function m2k() {
-  ( cd ../../ ; make $@ )
-}
-
-function makei()
-{
-  local nprocs
-  if [[ -n "$@" ]] ; then
-    nprocs=$1
-  else
-    nprocs=4
-  fi
-  cmd="make -j${nprocs} && make -j${nprocs} install"
-  echo $cmd
-  eval "$cmd"
-}
-
-
-
 function ud ()
 {
   # normally just change DISPLAY and DISPLAY0
@@ -146,56 +120,6 @@ function ud ()
   echo "DISPLAY0=$DISPLAY0"
   echo "TERM=$TERM"
 }
-
-
-function soo () {
-  #use this to run a command and pipe the output to less
-  # in case the comand does not exist try less on the file
-  if
-    type "$1" >& /dev/null
-  then
-    "$@"  | less
-  else
-    less "$@"
-  fi
-}
-
-function pre()
-{
-  if test "a$1" != "a"; then
-    eval "echo \${$1}"
-  else
-    env
-  fi
-}
-
-#function sa()
-#{
-#echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-#if test "a$1" = "a1" ; then
-#source "${HOME}/.alias"
-#elif test "a$1" = "a2"; then
-#source "${HOME}/.bashrc"
-#elif test "a$1" = "a3"; then
-#source "${HOME}/.bashrc2"
-#elif test "a$1" = "a4"; then
-#source "${HOME}/.bashrc.local"
-#fi
-#}
-
-#function sae()
-#{
-#echo "1: .alias, 2: .bashrc, 3: .bashrc2, 4: .bashrc.local"
-#if test "a$1" = "a1" ; then
-#vim "${HOME}/.alias"
-#elif test "a$1" = "a2"; then
-#vim "${HOME}/.bashrc"
-#elif test "a$1" = "a3"; then
-#vim "${HOME}/.bashrc2"
-#elif test "a$1" = "a4"; then
-#vim "${HOME}/.bashrc.local"
-#fi
-#}
 
 
 function _exit()        # function to run upon exit of shell
@@ -287,26 +211,12 @@ export LESS='-i      -e -M -X  -R -P%t?f%f \
 
 function xtitle ()
 {
-  #case $TERM in
-  #*term | rxvt)
-  #echo -n -e "\033]0;$*\007" ;;
-#*)  ;;
-#esac
-echo -n -e "\033]0;$*\007"
+  echo -n -e "\033]0;$*\007"
 }
 
 
 function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
 
-
-#function te()  # wrapper around xemacs/gnuserv
-#{
-#if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
-#gnuclient -q "$@";
-#else
-#( xemacs "$@" & );
-#fi
-#}
 
 #-----------------------------------
 # File & strings related functions:
@@ -327,51 +237,6 @@ function ffe()
       find . -iname '*'${pat}'*' -print0 | xargs --null -n1 $@
     fi
   fi
-}
-
-#function fstr() # find a string in a set of files
-#{
-#if [ "$#" -gt 2 ]; then
-#echo "Usage: fstr \"pattern\" [files] "
-#return;
-#fi
-#SMSO=$(tput smso)
-#RMSO=$(tput rmso)
-#find . -type f -name "${2:-*}" -print | xargs grep -sin "$1" | \
-#sed "s/$1/$SMSO$1$RMSO/gI"
-#}
-
-#function cuttail() # cut last n lines in file, 10 by default
-#{
-#nlines=${2:-10}
-#sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
-#}
-
-function lowercase()  # move filenames to lowercase
-{
-  for file ; do
-    filename=${file##*/}
-    case "$filename" in
-      */*) dirname==${file%/*} ;;
-      *) dirname=.;;
-    esac
-    nf=$(echo $filename | tr A-Z a-z)
-    newname="${dirname}/${nf}"
-    if [ "$nf" != "$filename" ]; then
-      mv "$file" "$newname"
-      echo "lowercase: $file --> $newname"
-    else
-      echo "lowercase: $file not changed."
-    fi
-  done
-}
-
-function swap()         # swap 2 filenames around
-{
-  local TMPFILE=tmp.$$
-  mv $1 $TMPFILE
-  mv $2 $1
-  mv $TMPFILE $2
 }
 
 #-----------------------------------
@@ -398,12 +263,6 @@ function killps()   # kill by process name
     fi
   done
 }
-
-#function my_ip() # get IP adresses
-#{
-#MY_IP=$(/sbin/ifconfig ppp0 | awk '/inet/ { print $2 } ' | sed -e s/addr://)
-#MY_ISP=$(/sbin/ifconfig ppp0 | awk '/P-t-P/ { print $3 } ' | sed -e s/P-t-P://)
-#}
 
 function iii()   # get current host related info
 {
@@ -630,35 +489,6 @@ function ddo() #try to do something with every file passed on the command line
   done
 }
 
-function qp()
-{
-  # default folder is ~/x/quickput
-  ( for f in $@; do ( scp -r $f acme:Documents/quickput/ & ) ; done &> /dev/null )
-  cp -rf $@ ~/x/quickput/
-  (
-  cd ~/x/quickput;
-  git add . ;
-  git commit -a -m "$(date)" ;
-  git push --force origin master
-  hg add . ;
-  hg commit -m "$(date)"
-)
-}
-
-function qg()
-{
-  git pull
-}
-
-
-function __javastart( ) {
-if test -e  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ ; then
-  cd  /opt/hinacio/usr/local/packages/jre1.6.0_01/bin/ >& /dev/null
-  ./java >& /dev/null
-  cd - >& /dev/null
-fi
-}
-__javastart
 
 function path ( )
 {
@@ -1232,7 +1062,7 @@ irr()
   # also in the future we should see if there is a nice way to use tmux to start the run in a pane
   # for now just start directly
 
-  local candidates=("/mnt/c/Tools" "/project/ezcrew_new/helder/c_tools")
+  local candidates=("/mnt/c/jT" "/project/ezcrew_new/helder/c_tools")
   local pyfile="$(first_alternative ${candidates[@]})/run_irops.py"
   if [ -e "${pyfile}" ]; then
     python "${pyfile}" $@
