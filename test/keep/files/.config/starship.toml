@@ -4,6 +4,9 @@ command_timeout = 15
 
 add_newline = false
 
+[c]
+disabled = true
+
 [java]
 disabled = true
 
