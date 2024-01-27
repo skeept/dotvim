@@ -149,6 +149,10 @@ for bullet in vimwiki#vars#get_syntaxlocal('bullet_types')
   " list
   let comments .= ',fb:' . bullet
 endfor
+" Add :: for vimwiki default syntax (#1279)
+if 'default' ==# vimwiki#vars#get_wikilocal('syntax')
+  let comments .= ',b:::'
+endif
 let &l:comments = comments
 
 " Set Format Options: (:h fo-table)
@@ -189,14 +193,22 @@ function! VimwikiFoldLevel(lnum) abort
   " Header/section folding...
   if line =~# vimwiki#vars#get_syntaxlocal('rxHeader') && !vimwiki#u#is_codeblock(a:lnum)
     return '>'.vimwiki#u#count_first_sym(line)
-  " Code block folding...
-  elseif line =~# vimwiki#vars#get_syntaxlocal('rxPreStart')
-    return 'a1'
-  elseif line =~# vimwiki#vars#get_syntaxlocal('rxPreEnd')
-    return 's1'
-  else
-    return '='
   endif
+
+  " Code block folding...
+  " -- previously it would always increment when it saw a ```, so we never left the code block. (See #1323)
+  let prevline = getline(v:lnum - 1)
+  let nextline = getline(v:lnum + 1)
+
+  " -- Start: assumes empty line before
+  if line =~# vimwiki#vars#get_syntaxlocal('rxPreStart') && prevline =~# '^\s*$'
+    return 'a1'
+  " -- End: assumes empty line after
+  elseif line =~# vimwiki#vars#get_syntaxlocal('rxPreEnd') && nextline =~# '^\s*$'
+    return 's1'
+  endif
+
+  return '='
 endfunction
 
 
@@ -322,7 +334,7 @@ command! -buffer -nargs=0 VWB call vimwiki#base#backlinks()
 command! -buffer -nargs=* VimwikiSearch call vimwiki#base#search(<q-args>)
 command! -buffer -nargs=* VWS call vimwiki#base#search(<q-args>)
 
-command! -buffer -nargs=* -complete=customlist,vimwiki#base#complete_links_escaped
+command! -buffer -nargs=* -complete=customlist,vimwiki#base#complete_links_raw
       \ VimwikiGoto call vimwiki#base#goto(<q-args>)
 
 command! -buffer -range VimwikiCheckLinks call vimwiki#base#check_links(<range>, <line1>, <line2>)
@@ -568,7 +580,7 @@ if str2nr(vimwiki#vars#get_global('key_mappings').lists)
       inoremap <expr><silent><buffer> <S-CR> pumvisible() ? '<CR>' : '<Esc>:VimwikiReturn 2 2<CR>'
     endif
   endif
- 
+
   " change symbol for bulleted lists
   for s:char in vimwiki#vars#get_syntaxlocal('bullet_types')
     if !hasmapto(':VimwikiChangeSymbolTo '.s:char.'<CR>')

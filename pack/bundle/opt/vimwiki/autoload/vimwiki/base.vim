@@ -394,9 +394,33 @@ function! vimwiki#base#open_link(cmd, link, ...) abort
 endfunction
 
 
+function! vimwiki#base#nop1(stg) abort
+  " Nop with one arg, used if callback is required
+  return a:stg
+endfunction
+
+
 function! vimwiki#base#get_globlinks_escaped(...) abort
+  " Proxy: Called by command completion
+  let args = copy(a:000)
+  call insert(args, 'fnameescape')
+  return call('vimwiki#base#get_globlinks_callback', args)
+endfunction
+
+
+function! vimwiki#base#get_globlinks_raw(...) abort
+  " Proxy: Called by command completion
+  let args = copy(a:000)
+  call insert(args, 'vimwiki#base#nop1')
+  return call('vimwiki#base#get_globlinks_callback', args)
+endfunction
+
+
+function! vimwiki#base#get_globlinks_callback(callback, ...) abort
   " Escape global link
   " Called by command completion
+  " [1] callback <string> of a function converting file <string> => escaped file <string>
+  " -- ex: fnameescape
   let s_arg_lead = a:0 > 0 ? a:1 : ''
   " only get links from the current dir
   " change to the directory of the current file
@@ -414,8 +438,8 @@ function! vimwiki#base#get_globlinks_escaped(...) abort
   " " use smart case matching
   let r_arg = substitute(s_arg_lead, '\u', '[\0\l\0]', 'g')
   call filter(lst, '-1 != match(v:val, r_arg)')
-  " Apply fnameescape() to each item
-  call map(lst, 'fnameescape(v:val)')
+  " Apply callback to each item
+  call map(lst, a:callback . '(v:val)')
   " Return list (for customlist completion)
   return lst
 endfunction
@@ -493,7 +517,12 @@ function! vimwiki#base#goto(...) abort
   " Jump: to other wikifile, specified on command mode
   " Called: by command VimwikiGoto (Exported)
   let key = a:0 > 0 && a:1 !=# '' ? a:1 : input('Enter name: ', '',
-        \ 'customlist,vimwiki#base#complete_links_escaped')
+        \ 'customlist,vimwiki#base#complete_links_raw')
+
+  if key ==# ''
+    " Input cancelled
+    return
+  endif
 
   let anchor = a:0 > 1 ? a:2 : ''
 
@@ -853,6 +882,9 @@ function! s:jump_to_anchor(anchor) abort
   let anchor = vimwiki#u#escape(a:anchor)
   let segments = split(anchor, '#', 0)
 
+  " Start at beginning => Independent of link position
+  call cursor(1, 1)
+
   " For markdown: there is only one segment
   for segment in segments
     " Craft segment pattern so that it is case insensitive and also matches dashes
@@ -873,7 +905,6 @@ function! s:jump_to_segment(segment, segment_norm_re, segment_nb) abort
   " Called: jump_to_anchor with suffix and withtou suffix
   " Save cursor %% Initialize at top of line
   let oldpos = getpos('.')
-  call cursor(1, 1)
 
   " Get anchor regex
   let anchor_header = s:safesubstitute(
@@ -930,9 +961,6 @@ function! s:jump_to_segment(segment, segment_norm_re, segment_nb) abort
   if success_nb == a:segment_nb
     return 0
   endif
-
-  " Or keep on (i.e more than once segment)
-  let oldpos = getpos('.')
 
   " Said 'fail' to caller
   return 1
@@ -1106,7 +1134,7 @@ function! vimwiki#base#edit_file(command, filename, anchor, ...) abort
   " :param: anchor
   " :param: (1) vimwiki_prev_link
   " :param: (2) vimwiki#u#ft_is_vw()
-  let fname = escape(a:filename, '% *|#`')
+  let fname = fnameescape(a:filename)
   let dir = fnamemodify(a:filename, ':p:h')
 
   let ok = vimwiki#path#mkdir(dir, 1)
@@ -2863,8 +2891,14 @@ endfunction
 
 
 function! vimwiki#base#complete_links_escaped(ArgLead, CmdLine, CursorPos) abort
-  " Complete escaping globlinks
+  " Complete globlinks escaping
   return vimwiki#base#get_globlinks_escaped(a:ArgLead)
+endfunction
+
+
+function! vimwiki#base#complete_links_raw(ArgLead, CmdLine, CursorPos) abort
+  " Complete globlinks as raw string (unescaped)
+  return vimwiki#base#get_globlinks_raw(a:ArgLead)
 endfunction
 
 

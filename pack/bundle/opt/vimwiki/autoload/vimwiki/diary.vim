@@ -37,8 +37,12 @@ endfunction
 
 function! vimwiki#diary#diary_date_link(...) abort
   " Return: <String> date
-
-  let wiki_nr = vimwiki#vars#get_bufferlocal('wiki_nr')
+  if a:0 > 2
+    " user supply wiki number as 1 indexed, not 0 indexed
+    let wiki_nr = a:3 - 1
+  else
+    let wiki_nr = vimwiki#vars#get_bufferlocal('wiki_nr')
+  endif
   if wiki_nr < 0  " this happens when called outside a wiki buffer
     let wiki_nr = 0
   endif
@@ -523,7 +527,7 @@ endfunction
 function! vimwiki#diary#calendar_sign(day, month, year) abort
   " Callback function for Calendar.vim
   " Clause: no wiki no sign #290
-  if len(g:vimwiki_list) <= 0
+  if exists('g:vimwiki_list') && len(g:vimwiki_list) <= 0
     return
   endif
   let day = s:prefix_zero(a:day)

@@ -123,38 +123,34 @@ function! s:scan_tags(lines, page_name) abort
 
     " Scan line for tags.  There can be many of them.
     let str = line
-    while 1
-      " Get all matches
-      let tag_groups = []
-      call substitute(str, tag_search_rx, '\=add(tag_groups, submatch(0))', 'g')
-      if tag_groups == []
-        break
-      endif
-      let tagend = matchend(str, tag_search_rx)
-      let str = str[(tagend):]
-      for tag_group in tag_groups
-        for tag in split(tag_group, tag_format.sep)
-          " Create metadata entry
-          let entry = {}
-          let entry.tagname  = tag
-          let entry.lineno   = line_nr
-          if line_nr <= PROXIMITY_LINES_NR && header_line_nr < 0
-            " Tag appeared at the top of the file
-            let entry.link   = a:page_name
-            let entry.description = entry.link
-          elseif line_nr <= (header_line_nr + PROXIMITY_LINES_NR)
-            " Tag appeared right below a header
-            let entry.link   = a:page_name . '#' . current_complete_anchor
-            let entry.description = current_header_description
-          else
-            " Tag stands on its own
-            let entry.link   = a:page_name . '#' . tag
-            let entry.description = entry.link
-          endif
-          call add(entries, entry)
-        endfor
+    " Get all matches
+    let tag_groups = []
+    call substitute(str, tag_search_rx, '\=add(tag_groups, submatch(0))', 'g')
+    if tag_groups == []
+      continue
+    endif
+    for tag_group in tag_groups
+      for tag in split(tag_group, tag_format.sep)
+        " Create metadata entry
+        let entry = {}
+        let entry.tagname  = tag
+        let entry.lineno   = line_nr
+        if line_nr <= PROXIMITY_LINES_NR && header_line_nr < 0
+          " Tag appeared at the top of the file
+          let entry.link   = a:page_name
+          let entry.description = entry.link
+        elseif line_nr <= (header_line_nr + PROXIMITY_LINES_NR)
+          " Tag appeared right below a header
+          let entry.link   = a:page_name . '#' . current_complete_anchor
+          let entry.description = current_header_description
+        else
+          " Tag stands on its own
+          let entry.link   = a:page_name . '#' . tag
+          let entry.description = entry.link
+        endif
+        call add(entries, entry)
       endfor
-    endwhile
+    endfor
 
   endfor " loop over lines
   return entries
@@ -364,65 +360,70 @@ function! vimwiki#tags#generate_tags(create, ...) abort
 
     " make a dictionary { tag_name: [tag_links, ...] }
     let tags_entries = {}
+    for tagname in self.specific_tags
+      let tags_entries[tagname] = []
+    endfor
+
     for entries in values(metadata)
       for entry in entries
         if has_key(tags_entries, entry.tagname)
           call add(tags_entries[entry.tagname], [entry.link, entry.description])
         else
-          let tags_entries[entry.tagname] = [[entry.link, entry.description]]
+          if need_all_tags
+            let tags_entries[entry.tagname] = [[entry.link, entry.description]]
+          endif
         endif
       endfor
       unlet entry " needed for older vims with sticky type checking since name is reused
     endfor
 
+    let tagnames = need_all_tags ? sort(keys(tags_entries)) : self.specific_tags
     let lines = []
     let bullet = repeat(' ', vimwiki#lst#get_list_margin()).vimwiki#lst#default_symbol().' '
     let current_dir = vimwiki#base#current_subdir()
-    for tagname in sort(keys(tags_entries))
-      if need_all_tags || index(self.specific_tags, tagname) != -1
-        if len(lines) > 0
+    for tagname in tagnames
+      if len(lines) > 0
+        call add(lines, '')
+      endif
+
+      let tag_tpl = printf('rxH%d_Template', self.header_level + 1)
+      call add(lines, s:safesubstitute(vimwiki#vars#get_syntaxlocal(tag_tpl), '__Header__', tagname, ''))
+
+      if vimwiki#vars#get_wikilocal('syntax') ==# 'markdown'
+        for _ in range(vimwiki#vars#get_global('markdown_header_style'))
           call add(lines, '')
-        endif
-
-        let tag_tpl = printf('rxH%d_Template', self.header_level + 1)
-        call add(lines, s:safesubstitute(vimwiki#vars#get_syntaxlocal(tag_tpl), '__Header__', tagname, ''))
-
-        if vimwiki#vars#get_wikilocal('syntax') ==# 'markdown'
-          for _ in range(vimwiki#vars#get_global('markdown_header_style'))
-            call add(lines, '')
-          endfor
-        endif
-
-        for [taglink, tagdescription] in sort(tags_entries[tagname])
-          let taglink = vimwiki#path#relpath(current_dir, taglink)
-          if vimwiki#vars#get_wikilocal('syntax') ==# 'markdown'
-            let link_tpl = vimwiki#vars#get_syntaxlocal('Weblink3Template')
-            let link_infos = vimwiki#base#resolve_link(taglink)
-            if empty(link_infos.anchor)
-              let link_tpl = vimwiki#vars#get_syntaxlocal('Link1')
-              let entry = s:safesubstitute(link_tpl, '__LinkUrl__', taglink, '')
-              let entry = s:safesubstitute(entry, '__LinkDescription__', tagdescription, '')
-              let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
-              let entry = s:safesubstitute(entry, '__FileExtension__', file_extension , '')
-            else
-              let link_caption = split(tagdescription, '#', 0)[-1]
-              let link_text = split(taglink, '#', 1)[0]
-              let entry = s:safesubstitute(link_tpl, '__LinkUrl__', link_text, '')
-              let entry = s:safesubstitute(entry, '__LinkAnchor__', link_infos.anchor, '')
-              let entry = s:safesubstitute(entry, '__LinkDescription__', link_caption, '')
-              let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
-              let entry = s:safesubstitute(entry, '__FileExtension__', file_extension , '')
-            endif
-
-            call add(lines, bullet . entry)
-          else
-            let link_tpl = vimwiki#vars#get_global('WikiLinkTemplate1')
-            let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
-            let link_tpl = s:safesubstitute(link_tpl, '__FileExtension__', file_extension , '')
-            call add(lines, bullet . substitute(link_tpl, '__LinkUrl__', taglink, ''))
-          endif
         endfor
       endif
+
+      for [taglink, tagdescription] in sort(tags_entries[tagname])
+        let taglink = vimwiki#path#relpath(current_dir, taglink)
+        if vimwiki#vars#get_wikilocal('syntax') ==# 'markdown'
+          let link_tpl = vimwiki#vars#get_syntaxlocal('Weblink3Template')
+          let link_infos = vimwiki#base#resolve_link(taglink)
+          if empty(link_infos.anchor)
+            let link_tpl = vimwiki#vars#get_syntaxlocal('Link1')
+            let entry = s:safesubstitute(link_tpl, '__LinkUrl__', taglink, '')
+            let entry = s:safesubstitute(entry, '__LinkDescription__', tagdescription, '')
+            let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
+            let entry = s:safesubstitute(entry, '__FileExtension__', file_extension , '')
+          else
+            let link_caption = split(tagdescription, '#', 0)[-1]
+            let link_text = split(taglink, '#', 1)[0]
+            let entry = s:safesubstitute(link_tpl, '__LinkUrl__', link_text, '')
+            let entry = s:safesubstitute(entry, '__LinkAnchor__', link_infos.anchor, '')
+            let entry = s:safesubstitute(entry, '__LinkDescription__', link_caption, '')
+            let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
+            let entry = s:safesubstitute(entry, '__FileExtension__', file_extension , '')
+          endif
+
+          call add(lines, bullet . entry)
+        else
+          let link_tpl = vimwiki#vars#get_global('WikiLinkTemplate1')
+          let file_extension = vimwiki#vars#get_wikilocal('ext', vimwiki#vars#get_bufferlocal('wiki_nr'))
+          let link_tpl = s:safesubstitute(link_tpl, '__FileExtension__', file_extension , '')
+          call add(lines, bullet . substitute(link_tpl, '__LinkUrl__', taglink, ''))
+        endif
+      endfor
     endfor
 
     return lines
