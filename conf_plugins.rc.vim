@@ -177,7 +177,7 @@ endif
 
 "================== asyncomplete =============================================={{{
 function! SetupAsyncomplete()
-  if !IsAddonActive('asyncomplete.vim') || v:version < 800
+  if !IsAddonActive('asyncomplete.vim') || v:version <= 800
     return
   endif
 
