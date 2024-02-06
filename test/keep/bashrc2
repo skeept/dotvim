@@ -86,7 +86,7 @@ function initial_setup_copy()
         # it's a file and already exists
         exists="#"
       else
-        cp "${from}" "${target}"
+        cp -i "${from}" "${target}"
       fi
     fi
     if [ "${exists}" != "_" ]; then

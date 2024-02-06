@@ -82,6 +82,8 @@ alias gcl=gcloud
 alias gsu=gsutil
 alias db=duckdb
 
+[ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
+
 type -t 7z >& /dev/null || alias 7z=7za
 
 # vim: set ft=sh:
