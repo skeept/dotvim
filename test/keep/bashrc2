@@ -22,7 +22,9 @@
 
 if test "$CUR_SHELL" = "bash"; then
   set -o notify
-  [ "$(hostname)"  != "sabre" ] && set -o noclobber
+  #[ "$(hostname)"  != "sabre" ] && set -o noclobber
+  # we assume if this folder exists we are in nix setup
+  [ -d ~/src/SABRE2/sabre2/ ] || set -o noclobber
   #set -o ignoreeof
   set -o nounset
   #set -o xtrace          # useful for debuging
