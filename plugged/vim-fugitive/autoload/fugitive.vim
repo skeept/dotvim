@@ -140,7 +140,7 @@ endfunction
 function! s:Mods(mods, ...) abort
   let mods = substitute(a:mods, '\C<mods>', '', '')
   let mods = mods =~# '\S$' ? mods . ' ' : mods
-  if a:0 && mods !~# '\<\%(aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright\|tab\)\>'
+  if a:0 && mods !~# '\<\d*\%(aboveleft\|belowright\|leftabove\|rightbelow\|topleft\|botright\|tab\)\>'
     let default = a:1
     if default ==# 'SpanOrigin'
       if s:OriginBufnr() > 0 && (mods =~# '\<vertical\>' ? &winfixheight : &winfixwidth)
@@ -1532,7 +1532,7 @@ function! s:QuickfixCreate(nr, opts) abort
 endfunction
 
 function! s:QuickfixOpen(nr, mods) abort
-  let mods = substitute(s:Mods(a:mods), '\<tab\>', '', '')
+  let mods = substitute(s:Mods(a:mods), '\<\d*tab\>', '', '')
   return mods . (a:nr < 0 ? 'c' : 'l').'open' . (mods =~# '\<vertical\>' ? ' 20' : '')
 endfunction
 
@@ -2664,8 +2664,61 @@ let s:rebase_abbrevs = {
       \ 'b': 'break',
       \ }
 
+function! s:MapStatus() abort
+  call fugitive#MapJumps()
+  call s:Map('n', '-', ":<C-U>execute <SID>Do('Toggle',0)<CR>", '<silent>')
+  call s:Map('x', '-', ":<C-U>execute <SID>Do('Toggle',1)<CR>", '<silent>')
+  call s:Map('n', 's', ":<C-U>execute <SID>Do('Stage',0)<CR>", '<silent>')
+  call s:Map('x', 's', ":<C-U>execute <SID>Do('Stage',1)<CR>", '<silent>')
+  call s:Map('n', 'u', ":<C-U>execute <SID>Do('Unstage',0)<CR>", '<silent>')
+  call s:Map('x', 'u', ":<C-U>execute <SID>Do('Unstage',1)<CR>", '<silent>')
+  call s:Map('n', 'U', ":<C-U>Git reset -q<CR>", '<silent>')
+  call s:MapMotion('gu', "exe <SID>StageJump(v:count, 'Untracked', 'Unstaged')")
+  call s:MapMotion('gU', "exe <SID>StageJump(v:count, 'Unstaged', 'Untracked')")
+  call s:MapMotion('gs', "exe <SID>StageJump(v:count, 'Staged')")
+  call s:MapMotion('gp', "exe <SID>StageJump(v:count, 'Unpushed')")
+  call s:MapMotion('gP', "exe <SID>StageJump(v:count, 'Unpulled')")
+  call s:MapMotion('gr', "exe <SID>StageJump(v:count, 'Rebasing')")
+  call s:Map('n', 'C', ":echoerr 'fugitive: C has been removed in favor of cc'<CR>", '<silent><unique>')
+  call s:Map('n', 'a', ":<C-U>execute <SID>Do('Toggle',0)<CR>", '<silent>')
+  call s:Map('n', 'i', ":<C-U>execute <SID>NextExpandedHunk(v:count1)<CR>", '<silent>')
+  call s:Map('n', "=", ":<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>", '<silent>')
+  call s:Map('n', "<", ":<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>", '<silent>')
+  call s:Map('n', ">", ":<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>", '<silent>')
+  call s:Map('x', "=", ":<C-U>execute <SID>StageInline('toggle',line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
+  call s:Map('x', "<", ":<C-U>execute <SID>StageInline('hide',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
+  call s:Map('x', ">", ":<C-U>execute <SID>StageInline('show',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
+  call s:Map('n', 'D', ":echoerr 'fugitive: D has been removed in favor of dd'<CR>", '<silent><unique>')
+  call s:Map('n', 'dd', ":<C-U>execute <SID>StageDiff('Gdiffsplit')<CR>", '<silent>')
+  call s:Map('n', 'dh', ":<C-U>execute <SID>StageDiff('Ghdiffsplit')<CR>", '<silent>')
+  call s:Map('n', 'ds', ":<C-U>execute <SID>StageDiff('Ghdiffsplit')<CR>", '<silent>')
+  call s:Map('n', 'dp', ":<C-U>execute <SID>StageDiffEdit()<CR>", '<silent>')
+  call s:Map('n', 'dv', ":<C-U>execute <SID>StageDiff('Gvdiffsplit')<CR>", '<silent>')
+  call s:Map('n', 'd?', ":<C-U>help fugitive_d<CR>", '<silent>')
+  call s:Map('n', 'P', ":<C-U>execute <SID>StagePatch(line('.'),line('.')+v:count1-1)<CR>", '<silent>')
+  call s:Map('x', 'P', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
+  call s:Map('n', 'p', ":<C-U>if v:count<Bar>silent exe <SID>GF('pedit')<Bar>else<Bar>echoerr 'Use = for inline diff, P for :Git add/reset --patch, 1p for :pedit'<Bar>endif<CR>", '<silent>')
+  call s:Map('x', 'p', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
+  call s:Map('n', 'I', ":<C-U>execute <SID>StagePatch(line('.'),line('.'))<CR>", '<silent>')
+  call s:Map('x', 'I', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
+  call s:Map('n', 'gq', ":<C-U>if bufnr('$') == 1<Bar>quit<Bar>else<Bar>bdelete<Bar>endif<CR>", '<silent>')
+  call s:Map('n', 'R', ":echohl WarningMsg<Bar>echo 'Reloading is automatic.  Use :e to force'<Bar>echohl NONE<CR>", '<silent>')
+  call s:Map('n', 'g<Bar>', ":<C-U>echoerr 'Changed to X'<CR>", '<silent><unique>')
+  call s:Map('x', 'g<Bar>', ":<C-U>echoerr 'Changed to X'<CR>", '<silent><unique>')
+  call s:Map('n', 'X', ":<C-U>execute <SID>StageDelete(line('.'), 0, v:count)<CR>", '<silent>')
+  call s:Map('x', 'X', ":<C-U>execute <SID>StageDelete(line(\"'<\"), line(\"'>\"), v:count)<CR>", '<silent>')
+  call s:Map('n', 'gI', ":<C-U>execute <SID>StageIgnore(line('.'), line('.'), v:count)<CR>", '<silent>')
+  call s:Map('x', 'gI', ":<C-U>execute <SID>StageIgnore(line(\"'<\"), line(\"'>\"), v:count)<CR>", '<silent>')
+  call s:Map('n', '.', ':<C-U> <C-R>=<SID>StageArgs(0)<CR><Home>')
+  call s:Map('x', '.', ':<C-U> <C-R>=<SID>StageArgs(1)<CR><Home>')
+endfunction
+
 function! fugitive#BufReadStatus(cmdbang) abort
+  exe s:VersionCheck()
   let amatch = s:Slash(expand('%:p'))
+  if a:cmdbang
+    unlet! b:fugitive_expanded
+  endif
   unlet! b:fugitive_reltime b:fugitive_type
   try
     let config = fugitive#Config()
@@ -2687,9 +2740,10 @@ function! fugitive#BufReadStatus(cmdbang) abort
       let status = fugitive#Execute(status_cmd, function('len'))
     endif
 
-    doautocmd BufReadPre
-    setlocal noreadonly modifiable nomodeline buftype=nowrite
-    let b:fugitive_files = {'Staged': {}, 'Unstaged': {}}
+    doautocmd <nomodeline> BufReadPre
+
+    setlocal readonly nomodifiable noswapfile nomodeline buftype=nowrite
+    call s:MapStatus()
 
     let [staged, unstaged, untracked] = [[], [], []]
     let props = {}
@@ -2699,7 +2753,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
       let head = FugitiveHead(11, dir)
 
     elseif fugitive#Wait(status).exit_status
-      throw 'fugitive: ' . s:JoinChomp(status.stderr)
+      return 'echoerr ' . string('fugitive: ' . s:JoinChomp(status.stderr))
 
     elseif status.args[-1] ==# '--porcelain=v2'
       let output = split(tr(join(status.stdout, "\1"), "\1\n", "\n\1"), "\1", 1)[0:-2]
@@ -2796,11 +2850,12 @@ function! fugitive#BufReadStatus(cmdbang) abort
       let diff['Unstaged'] = fugitive#Execute(diff_cmd + ['--'] + map(copy(unstaged), 'tree . "/" . v:val.relative[0]'), function('len'))
     endif
 
+    let section_files = {'Staged': {}, 'Unstaged': {}}
     for dict in staged
-      let b:fugitive_files['Staged'][dict.filename] = dict
+      let section_files['Staged'][dict.filename] = dict
     endfor
     for dict in unstaged
-      let b:fugitive_files['Unstaged'][dict.filename] = dict
+      let section_files['Unstaged'][dict.filename] = dict
     endfor
 
     let fetch_remote = config.Get('branch.' . branch . '.remote', 'origin')
@@ -2902,13 +2957,12 @@ function! fugitive#BufReadStatus(cmdbang) abort
       endif
     endif
 
+    let b:fugitive_files = section_files
     let b:fugitive_diff = diff
-    if a:cmdbang
-      unlet! b:fugitive_expanded
-    endif
     let expanded = get(b:, 'fugitive_expanded', {'Staged': {}, 'Unstaged': {}})
     let b:fugitive_expanded = {'Staged': {}, 'Unstaged': {}}
 
+    setlocal noreadonly modifiable
     silent keepjumps %delete_
 
     call s:AddHeader('Head', head)
@@ -2958,63 +3012,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
       call s:AddLogSection('Unpulled from ' . pull_short, s:QueryLogRange(head, pull_ref, dir))
     endif
 
-    setlocal nomodified readonly noswapfile
-    doautocmd BufReadPost
-    setlocal nomodifiable
-    if &bufhidden ==# ''
-      setlocal bufhidden=delete
-    endif
-    if !exists('b:dispatch')
-      let b:dispatch = ':Git fetch --all'
-    endif
-    call fugitive#MapJumps()
-    call s:Map('n', '-', ":<C-U>execute <SID>Do('Toggle',0)<CR>", '<silent>')
-    call s:Map('x', '-', ":<C-U>execute <SID>Do('Toggle',1)<CR>", '<silent>')
-    call s:Map('n', 's', ":<C-U>execute <SID>Do('Stage',0)<CR>", '<silent>')
-    call s:Map('x', 's', ":<C-U>execute <SID>Do('Stage',1)<CR>", '<silent>')
-    call s:Map('n', 'u', ":<C-U>execute <SID>Do('Unstage',0)<CR>", '<silent>')
-    call s:Map('x', 'u', ":<C-U>execute <SID>Do('Unstage',1)<CR>", '<silent>')
-    call s:Map('n', 'U', ":<C-U>Git reset -q<CR>", '<silent>')
-    call s:MapMotion('gu', "exe <SID>StageJump(v:count, 'Untracked', 'Unstaged')")
-    call s:MapMotion('gU', "exe <SID>StageJump(v:count, 'Unstaged', 'Untracked')")
-    call s:MapMotion('gs', "exe <SID>StageJump(v:count, 'Staged')")
-    call s:MapMotion('gp', "exe <SID>StageJump(v:count, 'Unpushed')")
-    call s:MapMotion('gP', "exe <SID>StageJump(v:count, 'Unpulled')")
-    call s:MapMotion('gr', "exe <SID>StageJump(v:count, 'Rebasing')")
-    call s:Map('n', 'C', ":echoerr 'fugitive: C has been removed in favor of cc'<CR>", '<silent><unique>')
-    call s:Map('n', 'a', ":<C-U>execute <SID>Do('Toggle',0)<CR>", '<silent>')
-    call s:Map('n', 'i', ":<C-U>execute <SID>NextExpandedHunk(v:count1)<CR>", '<silent>')
-    call s:Map('n', "=", ":<C-U>execute <SID>StageInline('toggle',line('.'),v:count)<CR>", '<silent>')
-    call s:Map('n', "<", ":<C-U>execute <SID>StageInline('hide',  line('.'),v:count)<CR>", '<silent>')
-    call s:Map('n', ">", ":<C-U>execute <SID>StageInline('show',  line('.'),v:count)<CR>", '<silent>')
-    call s:Map('x', "=", ":<C-U>execute <SID>StageInline('toggle',line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
-    call s:Map('x', "<", ":<C-U>execute <SID>StageInline('hide',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
-    call s:Map('x', ">", ":<C-U>execute <SID>StageInline('show',  line(\"'<\"),line(\"'>\")-line(\"'<\")+1)<CR>", '<silent>')
-    call s:Map('n', 'D', ":echoerr 'fugitive: D has been removed in favor of dd'<CR>", '<silent><unique>')
-    call s:Map('n', 'dd', ":<C-U>execute <SID>StageDiff('Gdiffsplit')<CR>", '<silent>')
-    call s:Map('n', 'dh', ":<C-U>execute <SID>StageDiff('Ghdiffsplit')<CR>", '<silent>')
-    call s:Map('n', 'ds', ":<C-U>execute <SID>StageDiff('Ghdiffsplit')<CR>", '<silent>')
-    call s:Map('n', 'dp', ":<C-U>execute <SID>StageDiffEdit()<CR>", '<silent>')
-    call s:Map('n', 'dv', ":<C-U>execute <SID>StageDiff('Gvdiffsplit')<CR>", '<silent>')
-    call s:Map('n', 'd?', ":<C-U>help fugitive_d<CR>", '<silent>')
-    call s:Map('n', 'P', ":<C-U>execute <SID>StagePatch(line('.'),line('.')+v:count1-1)<CR>", '<silent>')
-    call s:Map('x', 'P', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
-    call s:Map('n', 'p', ":<C-U>if v:count<Bar>silent exe <SID>GF('pedit')<Bar>else<Bar>echoerr 'Use = for inline diff, P for :Git add/reset --patch, 1p for :pedit'<Bar>endif<CR>", '<silent>')
-    call s:Map('x', 'p', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
-    call s:Map('n', 'I', ":<C-U>execute <SID>StagePatch(line('.'),line('.'))<CR>", '<silent>')
-    call s:Map('x', 'I', ":<C-U>execute <SID>StagePatch(line(\"'<\"),line(\"'>\"))<CR>", '<silent>')
-    call s:Map('n', 'gq', ":<C-U>if bufnr('$') == 1<Bar>quit<Bar>else<Bar>bdelete<Bar>endif<CR>", '<silent>')
-    call s:Map('n', 'R', ":echohl WarningMsg<Bar>echo 'Reloading is automatic.  Use :e to force'<Bar>echohl NONE<CR>", '<silent>')
-    call s:Map('n', 'g<Bar>', ":<C-U>echoerr 'Changed to X'<CR>", '<silent><unique>')
-    call s:Map('x', 'g<Bar>', ":<C-U>echoerr 'Changed to X'<CR>", '<silent><unique>')
-    call s:Map('n', 'X', ":<C-U>execute <SID>StageDelete(line('.'), 0, v:count)<CR>", '<silent>')
-    call s:Map('x', 'X', ":<C-U>execute <SID>StageDelete(line(\"'<\"), line(\"'>\"), v:count)<CR>", '<silent>')
-    call s:Map('n', 'gI', ":<C-U>execute <SID>StageIgnore(line('.'), line('.'), v:count)<CR>", '<silent>')
-    call s:Map('x', 'gI', ":<C-U>execute <SID>StageIgnore(line(\"'<\"), line(\"'>\"), v:count)<CR>", '<silent>')
-    call s:Map('n', '.', ':<C-U> <C-R>=<SID>StageArgs(0)<CR><Home>')
-    call s:Map('x', '.', ':<C-U> <C-R>=<SID>StageArgs(1)<CR><Home>')
-    setlocal filetype=fugitive
-
+    setlocal nomodified readonly nomodifiable
     for [lnum, section] in [[staged_end, 'Staged'], [unstaged_end, 'Unstaged']]
       while len(getline(lnum))
         let filename = matchstr(getline(lnum), '^[A-Z?] \zs.*')
@@ -3025,10 +3023,17 @@ function! fugitive#BufReadStatus(cmdbang) abort
       endwhile
     endfor
 
+    doautocmd <nomodeline> BufReadPost
+    if &bufhidden ==# ''
+      setlocal bufhidden=delete
+    endif
+    if !exists('b:dispatch')
+      let b:dispatch = ':Git fetch --all'
+    endif
+    setlocal filetype=fugitive
+
     let b:fugitive_reltime = reltime()
     return s:DoAutocmd('User FugitiveIndex')
-  catch /^fugitive:/
-    return 'echoerr ' . string(v:exception)
   finally
     let b:fugitive_type = 'index'
   endtry
@@ -3096,15 +3101,16 @@ endfunction
 
 function! fugitive#BufReadCmd(...) abort
   let amatch = a:0 ? a:1 : expand('<amatch>')
+  let [dir, rev] = s:DirRev(amatch)
+  if empty(dir)
+    return 'echo "Invalid Fugitive URL"'
+  endif
+  call s:InitializeBuffer(dir)
+  if rev ==# ':'
+    return fugitive#BufReadStatus(v:cmdbang)
+  endif
   try
-    let [dir, rev] = s:DirRev(amatch)
-    if empty(dir)
-      return 'echo "Invalid Fugitive URL"'
-    endif
-    call s:InitializeBuffer(dir)
-    if rev ==# ':'
-      return fugitive#BufReadStatus(v:cmdbang)
-    elseif rev =~# '^:\d$'
+    if rev =~# '^:\d$'
       let b:fugitive_type = 'stage'
     else
       let r = fugitive#Execute([dir, 'cat-file', '-t', rev])
@@ -3397,7 +3403,7 @@ function! s:RunEdit(state, tmp, job) abort
   let sentinel = a:state.file . '.edit'
   let file = FugitiveVimPath(readfile(sentinel, '', 1)[0])
   try
-    if !&equalalways && a:state.mods !~# '\<tab\>' && 3 > (a:state.mods =~# '\<vert' ? winwidth(0) : winheight(0))
+    if !&equalalways && a:state.mods !~# '\<\d*tab\>' && 3 > (a:state.mods =~# '\<vert' ? winwidth(0) : winheight(0))
       let noequalalways = 1
       setglobal equalalways
     endif
@@ -4362,13 +4368,15 @@ function! fugitive#DidChange(...) abort
   if a:0 > 1 ? a:2 : (!a:0 || a:1 isnot# 0)
     let t = reltime()
     let t:fugitive_reload_status = t
-    let prevnr = tabpagenr('#')
+    let prevnr = has('patch-9.0.1362') || has('nvim-0.9') ? tabpagenr('#') : 0
     for tabnr in range(1, tabpagenr('$'))
       if tabnr != prevnr
         call settabvar(tabnr, 'fugitive_reload_status', t)
       endif
     endfor
-    call settabvar(prevnr, 'fugitive_reload_status', t)
+    if prevnr
+      call settabvar(prevnr, 'fugitive_reload_status', t)
+    endif
     call s:ReloadTabStatus()
   else
     call s:ReloadWinStatus()
@@ -4416,6 +4424,10 @@ augroup fugitive_status
         \ endif
 augroup END
 
+function! s:StatusSectionFile(heading, filename) abort
+  return get(get(get(b:, 'fugitive_files', {}), a:heading, {}), a:filename, {})
+endfunction
+
 function! s:StageInfo(...) abort
   let lnum = a:0 ? a:1 : line('.')
   let sigil = matchstr(getline(lnum), '^[ @\+-]')
@@ -4438,7 +4450,7 @@ function! s:StageInfo(...) abort
     endif
   endwhile
   let text = matchstr(getline(lnum), '^[A-Z?] \zs.*')
-  let file = get(get(b:fugitive_files, heading, {}), text, {})
+  let file = s:StatusSectionFile(heading, text)
   let relative = get(file, 'relative', len(text) ? [text] : [])
   return {'section': matchstr(heading, '^\u\l\+'),
         \ 'heading': heading,
@@ -4520,7 +4532,7 @@ function! s:Selection(arg1, ...) abort
       let results[-1].lnum = lnum
     elseif line =~# '^[A-Z?] '
       let text = matchstr(line, '^[A-Z?] \zs.*')
-      let file = get(get(b:fugitive_files, template.heading, {}), text, {})
+      let file = s:StatusSectionFile(template.heading, text)
       let relative = get(file, 'relative', len(text) ? [text] : [])
       call add(results, extend(deepcopy(template), {
             \ 'lnum': lnum,
@@ -4845,7 +4857,8 @@ function! s:StageInline(mode, ...) abort
       let lnum -= 1
     endwhile
     let info = s:StageInfo(lnum)
-    if !has_key(b:fugitive_diff, info.section)
+    let diff_section = get(get(b:, 'fugitive_diff', {}), info.section, {})
+    if empty(diff_section)
       continue
     endif
     if getline(lnum + 1) =~# '^[ @\+-]'
@@ -4861,7 +4874,7 @@ function! s:StageInline(mode, ...) abort
       endif
       continue
     endif
-    if !has_key(b:fugitive_diff, info.section) || info.status !~# '^[ADMRU]$' || a:mode ==# 'hide'
+    if info.status !~# '^[ADMRU]$' || a:mode ==# 'hide'
       continue
     endif
     let mode = ''
@@ -4871,7 +4884,7 @@ function! s:StageInline(mode, ...) abort
     else
       let diff_header = 'diff --git ' . s:Quote(info.relative[-1]) . ' ' . s:Quote(info.relative[0])
     endif
-    let stdout = fugitive#Wait(b:fugitive_diff[info.section]).stdout
+    let stdout = fugitive#Wait(diff_section).stdout
     let start = index(stdout, diff_header)
     if start == -1
       continue
@@ -5023,7 +5036,7 @@ function! s:StageDelete(lnum1, lnum2, count) abort
         endif
         continue
       endif
-      let sub = get(get(get(b:fugitive_files, info.section, {}), info.filename, {}), 'submodule')
+      let sub = get(s:StatusSectionFile(info.section, info.filename), 'submodule', '')
       if sub =~# '^S' && info.status ==# 'M'
         let undo = 'Git checkout ' . fugitive#RevParse('HEAD', FugitiveExtractGitDir(info.paths[0]))[0:10] . ' --'
       elseif sub =~# '^S'
@@ -5047,19 +5060,19 @@ function! s:StageDelete(lnum1, lnum2, count) abort
       elseif info.status ==# '?'
         call s:TreeChomp('clean', '-f', '--', info.paths[0])
       elseif a:count == 2
-        if get(b:fugitive_files['Staged'], info.filename, {'status': ''}).status ==# 'D'
+        if get(s:StatusSectionFile('Staged', info.filename), 'status', '') ==# 'D'
           call delete(info.paths[0])
         else
           call s:TreeChomp('checkout', '--ours', '--', info.paths[0])
         endif
       elseif a:count == 3
-        if get(b:fugitive_files['Unstaged'], info.filename, {'status': ''}).status ==# 'D'
+        if get(s:StatusSectionFile('Unstaged', info.filename), 'status', '') ==# 'D'
           call delete(info.paths[0])
         else
           call s:TreeChomp('checkout', '--theirs', '--', info.paths[0])
         endif
       elseif info.status =~# '[ADU]' &&
-            \ get(b:fugitive_files[info.section ==# 'Staged' ? 'Unstaged' : 'Staged'], info.filename, {'status': ''}).status =~# '[AU]'
+            \ get(s:StatusSectionFile(info.section ==# 'Staged' ? 'Unstaged' : 'Staged', info.filename), 'status', '') =~# '[AU]'
         if get(g:, 'fugitive_conflict_x', 0)
           call s:TreeChomp('checkout', info.section ==# 'Unstaged' ? '--ours' : '--theirs', '--', info.paths[0])
         else
@@ -6550,9 +6563,9 @@ function! fugitive#Diffsplit(autodir, keepfocus, mods, arg, ...) abort
     return s:Mods(a:mods) . 'DiffGitCached' . (len(post) ? '|' . post : '')
   endif
   let commit = s:DirCommitFile(@%)[1]
-  if a:mods =~# '\<tab\>'
-    let mods = substitute(a:mods, '\<tab\>', '', 'g')
-    let pre = 'tab split'
+  if a:mods =~# '\<\d*tab\>'
+    let mods = substitute(a:mods, '\<\d*tab\>', '', 'g')
+    let pre = matchstr(a:mods, '\<\d*tab\>') . 'edit'
   else
     let mods = 'keepalt ' . a:mods
     let pre = ''
@@ -7030,15 +7043,16 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
           endif
           return reload[1 : -1]
         endif
-        if a:mods =~# '\<tab\>'
-          silent tabedit %
+        let tabmod = matchstr(a:mods, '\<\d*tab\>')
+        let mods = substitute(a:mods, '\<\d*tab\>', '', 'g')
+        if !empty(tabmod)
+          silent execute tabmod . 'edit %'
         endif
         let temp_state.origin_bufnr = bufnr('')
         if exists('*win_getid')
           let temp_state.origin_winid = win_getid()
         endif
         let restore = []
-        let mods = substitute(a:mods, '\<tab\>', '', 'g')
         for winnr in range(winnr('$'),1,-1)
           if getwinvar(winnr, '&scrollbind')
             if !&l:scrollbind
