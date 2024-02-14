@@ -2737,7 +2737,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
     if !empty(tree)
       let status_cmd = cmd + ['status', '-bz']
       call add(status_cmd, fugitive#GitVersion(2, 11) ? '--porcelain=v2' : '--porcelain')
-      let status = fugitive#Execute(status_cmd, function('len'))
+      let status_exec = fugitive#Execute(status_cmd, function('len'))
     endif
 
     doautocmd <nomodeline> BufReadPre
@@ -2748,15 +2748,15 @@ function! fugitive#BufReadStatus(cmdbang) abort
     let [staged, unstaged, untracked] = [[], [], []]
     let props = {}
 
-    if !exists('status')
+    if !exists('status_exec')
       let branch = FugitiveHead(0, dir)
       let head = FugitiveHead(11, dir)
 
-    elseif fugitive#Wait(status).exit_status
-      return 'echoerr ' . string('fugitive: ' . s:JoinChomp(status.stderr))
+    elseif fugitive#Wait(status_exec).exit_status
+      return 'echoerr ' . string('fugitive: ' . s:JoinChomp(status_exec.stderr))
 
-    elseif status.args[-1] ==# '--porcelain=v2'
-      let output = split(tr(join(status.stdout, "\1"), "\1\n", "\n\1"), "\1", 1)[0:-2]
+    elseif status_exec.args[-1] ==# '--porcelain=v2'
+      let output = split(tr(join(status_exec.stdout, "\1"), "\1\n", "\n\1"), "\1", 1)[0:-2]
       let i = 0
       while i < len(output)
         let line = output[i]
@@ -2800,7 +2800,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
       endif
 
     else
-      let output = split(tr(join(status.stdout, "\1"), "\1\n", "\n\1"), "\1", 1)[0:-2]
+      let output = split(tr(join(status_exec.stdout, "\1"), "\1\n", "\n\1"), "\1", 1)[0:-2]
       while get(output, 0, '') =~# '^\l\+:'
         call remove(output, 0)
       endwhile
@@ -8347,8 +8347,8 @@ function! fugitive#Foldtext() abort
   elseif &filetype ==# 'gitcommit' && line_foldstart =~# '^# .*:$'
     let lines = getline(v:foldstart, v:foldend)
     call filter(lines, 'v:val =~# "^#\t"')
-    cal map(lines, "s:sub(v:val, '^#\t%(modified: +|renamed: +)=', '')")
-    cal map(lines, "s:sub(v:val, '^([[:alpha:] ]+): +(.*)', '\\2 (\\1)')")
+    call map(lines, "s:sub(v:val, '^#\t%(modified: +|renamed: +)=', '')")
+    call map(lines, "s:sub(v:val, '^([[:alpha:] ]+): +(.*)', '\\2 (\\1)')")
     return line_foldstart.' '.join(lines, ', ')
   endif
   return foldtext()
