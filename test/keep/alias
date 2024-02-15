@@ -84,6 +84,6 @@ alias db=duckdb
 
 [ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
 
-type -t 7z >& /dev/null || alias 7z=7za
+type 7z >& /dev/null || { type 7za >& /dev/null && alias 7z=7za; } || { type 7z.exe >&/dev/null && alias 7z=7z.exe; }
 
 # vim: set ft=sh:
