@@ -2,7 +2,8 @@ use inflections::case::to_snake_case;
 use itertools::Itertools;
 use maple_config::Config;
 use quote::ToTokens;
-use std::{collections::BTreeMap, str::FromStr};
+use std::collections::BTreeMap;
+use std::str::FromStr;
 use syn::{
     Attribute, Field, Fields, ItemEnum, ItemStruct, Lit, Meta, MetaNameValue, PathSegment, Type,
 };
@@ -242,7 +243,9 @@ fn process_ast(ast: &syn::File) -> Document {
 
                                 // Ugly workaround to handle the special case `SyntaxPluginConfig
                                 // { render_strategy }`.
-                                if t_key.get() == "render-strategy" {
+                                if t_key.get() == "render-strategy"
+                                    || t_key.get() == "language-server"
+                                {
                                     if let Some(t) = item.as_table_mut() {
                                         t.decor_mut().set_prefix(format!("\n{comments}\n"));
                                     }

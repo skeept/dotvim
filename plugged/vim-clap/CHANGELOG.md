@@ -2,6 +2,14 @@
 
 ## [unreleased]
 
+- Change the syntax of plugin actions from `plugin/action` to `plugin.action` for better compatibility with other tools.
+
+### Internal
+
+- Improve the robustness of the publish pipeline by migrating Bash and Python scripts to `cargo xtask`.
+
+## [0.51] 2024-02-18
+
 ## Added
 
 - Input history of providers are now persistent.
@@ -9,6 +17,15 @@
 ```
 [winbar]
 enable = true
+```
+- Added project-specific ignore configs for more providers. You can use
+
+```toml
+# Ignore the results from the certain files/folders.
+# For example, ignore the test files when searching in the folder ~/src/github.com/bitcoin/bitcoin.
+[provider.project-ignores."~/src/github.com/bitcoin/bitcoin"]
+ignore-file-path-pattern = ["test"]
+ignore-file-name-pattern = ["test"]
 ```
 
 ## Fixed

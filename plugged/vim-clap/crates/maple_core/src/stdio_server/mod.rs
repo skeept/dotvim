@@ -1,7 +1,6 @@
 mod diagnostics_worker;
 mod input;
 mod job;
-mod lsp;
 mod plugin;
 mod provider;
 mod request_handler;
@@ -16,7 +15,8 @@ use self::service::ServiceManager;
 use self::vim::{initialize_filetype_map, VimError, VimResult};
 pub use self::vim::{SearchProgressor, Vim};
 use parking_lot::Mutex;
-use rpc::{vim::VimMessage, RpcNotification, RpcRequest};
+use rpc::vim::VimMessage;
+use rpc::{RpcNotification, RpcRequest};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::{BufReader, BufWriter};
