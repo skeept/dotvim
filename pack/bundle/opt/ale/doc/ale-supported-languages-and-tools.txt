@@ -422,6 +422,8 @@ Notes:
   * `ocamllsp`
   * `ocp-indent`
   * `ols`
+* Odin
+  * `ols`
 * OpenApi
   * `ibm_validator`
   * `prettier`
@@ -675,6 +677,7 @@ Notes:
 * Verilog
   * `hdl-checker`
   * `iverilog`
+  * slang
   * `verilator`
   * `vlog`
   * `xvlog`
