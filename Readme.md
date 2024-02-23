@@ -98,3 +98,28 @@ https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/
 git line ending settings
 seems OK to do this for this repo:
 git config  core.autocrlf input
+
+
+simple python logging setup
+
+-----------------
+import logging
+
+def basic_logger(name: str, output: str = "output.log", level=logging.INFO) -> logging.Logger:
+    """Get a simple logger ."""
+    import sys
+
+    logger = logging.getLogger(name=name)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(level=level)
+    formatter = logging.Formatter("%(asctime)s %(name)s: %(message)s")
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    if output:
+        file_handler = logging.FileHandler(output)
+        file_handler.setLevel(level=level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    return logger
+-----------------
+
