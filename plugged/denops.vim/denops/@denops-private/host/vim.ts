@@ -1,4 +1,4 @@
-import { ensure, is } from "https://deno.land/x/unknownutil@v3.14.1/mod.ts";
+import { ensure, is } from "https://deno.land/x/unknownutil@v3.16.3/mod.ts";
 import {
   Client,
   Message,
@@ -94,7 +94,7 @@ export class Vim implements Host {
     return this.#session.wait();
   }
 
-  async dispose(): Promise<void> {
+  async [Symbol.asyncDispose](): Promise<void> {
     try {
       await this.#session.shutdown();
     } catch {
