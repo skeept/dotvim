@@ -2,7 +2,14 @@
 
 ## [unreleased]
 
-- Change the syntax of plugin actions from `plugin/action` to `plugin.action` for better compatibility with other tools.
+## [0.52] 2024-2-29
+
+### Plugins
+
+- Change the naming convention of plugin action from `plugin/foo-action` to `plugin.fooAction` for the compatibility with tools like coc.nvim.
+- Use different highlight groups for the span of error and warn diagnostics.
+- Added diagnostics plugin in order to conveniently inspect the collected diagnostics from both the linter and lsp plugin.
+  Now you should use `:ClapAction diagnostics.firstError` instead of `:ClapAction linter.firstError` to jump to the position of first error.
 
 ### Internal
 

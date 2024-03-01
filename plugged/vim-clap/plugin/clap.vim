@@ -1,7 +1,7 @@
 " vim-clap - Modern interactive filter and dispatcher
 " Author:    Liu-Cheng Xu <xuliuchengxlc@gmail.com>
 " Website:   https://github.com/liuchengxu/vim-clap
-" Version:   0.51
+" Version:   0.52
 " License:   MIT
 
 if exists('g:loaded_clap')
@@ -52,7 +52,7 @@ augroup VimClap
   autocmd BufDelete            * call s:OnBufDelete(+expand('<abuf>'))
   autocmd BufWinEnter,WinEnter * let g:__clap_buffers[bufnr('')] = reltimefloat(reltime())
 
-  autocmd BufAdd      * call clap#client#notify('__note_recent_files', [+expand('<abuf>')])
+  autocmd BufAdd      * call clap#client#notify('__noteRecentFiles', [+expand('<abuf>')])
 
   if get(g:, 'clap_plugin_experimental', 0)
     autocmd InsertEnter  * call clap#client#notify('InsertEnter',  [+expand('<abuf>')])
@@ -71,7 +71,7 @@ augroup VimClap
     " Create `clap_actions` provider so that it's convenient to interact with the plugins later.
     let g:clap_provider_clap_actions = get(g:, 'clap_provider_clap_actions', {
                 \ 'source': { -> get(g:, 'clap_actions', []) },
-                \ 'sink': { line -> clap#client#notify(line, []) },
+                \ 'sink': { line -> clap#client#notify(line, [ g:clap.start.bufnr, g:clap.start.old_pos[1], g:clap.start.old_pos[2] ] ) },
                 \ 'mode': 'quick_pick',
                 \ })
 
