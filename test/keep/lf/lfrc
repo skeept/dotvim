@@ -1,0 +1,3 @@
+set previewer ~/.vim/test/keep/lf/lf_previewer.sh
+
+map <f-2> doc
