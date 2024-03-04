@@ -41,3 +41,10 @@ cmd fzf_jump ${{
     fi
 }}
 map <c-f> :fzf_jump
+
+
+map oo %gvim.exe -f -c "RemoteOpenMod $(wslpath -w -a $f)"
+map oc $code $f
+#map og %gvim.exe "$(wslpath -w -a $f)"
+map on %gvim.exe -c "RemoteOpenModN $(wslpath -w -a $f)"
+map ov $vim $f
