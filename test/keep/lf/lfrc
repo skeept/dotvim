@@ -1,7 +1,7 @@
 set previewer ~/.vim/test/keep/lf/lf_previewer.sh
 
 cmd mkdir push %mkdir<space>
-map <f-2> doc
+map i $bat --style=plain --color=always --paging=auto $f
 map <c-j> shell
 map <enter> read
 
