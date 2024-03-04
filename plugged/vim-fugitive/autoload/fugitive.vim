@@ -2732,10 +2732,11 @@ function! fugitive#BufReadStatus(cmdbang) abort
   if a:cmdbang
     unlet! b:fugitive_expanded
   endif
-  unlet! b:fugitive_reltime b:fugitive_type
+  let b:fugitive_type = 'index'
   let dir = s:Dir()
   let stat = {'bufnr': bufnr(''), 'reltime': reltime(), 'work_tree': s:Tree(dir)}
   try
+    let b:fugitive_loading = stat
     let config = fugitive#Config(dir)
 
     let cmd = [dir]
@@ -2880,25 +2881,13 @@ function! fugitive#BufReadStatus(cmdbang) abort
     if push_remote !=# '.' && empty(config.Get('remote.' . push_remote . '.push', config.Get('remote.' . push_remote . '.fetch')))
       let push_remote = ''
     endif
+    let stat.fetch_remote = fetch_remote
+    let stat.push_remote = push_remote
 
-    let pull_type = 'Pull'
-    if empty(fetch_remote) || empty(branch)
-      let pull_ref = ''
-    elseif fetch_remote ==# '.'
-      let pull_ref = config.Get('branch.' . branch . '.merge', '')
+    if empty(stat.fetch_remote) || empty(branch)
+      let stat.merge = ''
     else
-      let pull_ref = substitute(config.Get('branch.' . branch . '.merge', ''), '^refs/heads/', 'refs/remotes/' . fetch_remote . '/', '')
-    endif
-    if len(pull_ref)
-      let rebase = FugitiveConfigGet('branch.' . branch . '.rebase', config)
-      if empty(rebase)
-        let rebase = FugitiveConfigGet('pull.rebase', config)
-      endif
-      if rebase =~# '^\%(true\|yes\|on\|1\|interactive\|merges\|preserve\)$'
-        let pull_type = 'Rebase'
-      elseif rebase =~# '^\%(false\|no|off\|0\|\)$'
-        let pull_type = 'Merge'
-      endif
+      let stat.merge = config.Get('branch.' . branch . '.merge')
     endif
 
     let push_default = FugitiveConfigGet('push.default', config)
@@ -2906,13 +2895,34 @@ function! fugitive#BufReadStatus(cmdbang) abort
       let push_default = fugitive#GitVersion(2) ? 'simple' : 'matching'
     endif
     if push_default ==# 'upstream'
-      let push_ref = pull_ref
-    elseif empty(push_remote) || empty(branch)
-      let push_ref = ''
-    elseif push_remote ==# '.'
-      let push_ref = 'refs/heads/' . branch
+      let stat.push = stat.merge
+    elseif empty(stat.push_remote) || empty(branch)
+      let stat.push = ''
     else
-      let push_ref = 'refs/remotes/' . push_remote . '/' . branch
+      let stat.push = 'refs/heads/' . branch
+    endif
+
+    let stat.pull_type = 'Pull'
+    if len(stat.merge)
+      let rebase = FugitiveConfigGet('branch.' . branch . '.rebase', config)
+      if empty(rebase)
+        let rebase = FugitiveConfigGet('pull.rebase', config)
+      endif
+      if rebase =~# '^\%(true\|yes\|on\|1\|interactive\|merges\|preserve\)$'
+        let stat.pull_type = 'Rebase'
+      elseif rebase =~# '^\%(false\|no|off\|0\|\)$'
+        let stat.pull_type = 'Merge'
+      endif
+    endif
+
+    let pull_ref = stat.merge
+    if stat.fetch_remote !=# '.'
+      let pull_ref = substitute(pull_ref, '^refs/heads/', 'refs/remotes/' . stat.fetch_remote . '/', '')
+    endif
+
+    let push_ref = stat.push
+    if stat.push_remote !=# '.'
+      let push_ref = substitute(push_ref, '^refs/heads/', 'refs/remotes/' . stat.push_remote . '/', '')
     endif
 
     let push_short = substitute(push_ref, '^refs/\w\+/', '', '')
@@ -2973,7 +2983,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
     let stat.expanded = {'Staged': {}, 'Unstaged': {}}
     let to = {'lines': []}
     call s:AddHeader(to, 'Head', head)
-    call s:AddHeader(to, pull_type, pull_short)
+    call s:AddHeader(to, stat.pull_type, pull_short)
     if push_ref !=# pull_ref
       call s:AddHeader(to, 'Push', push_short)
     endif
@@ -3009,7 +3019,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
     call s:AddLogSection(to, 'Unpushed to ' . push_short, unpushed_push)
     call s:AddLogSection(to, 'Unpushed to ' . pull_short, unpushed_pull)
     if unpushed_push.error && unpushed_pull.error && empty(rebasing) &&
-          \ !empty(push_remote . fetch_remote)
+          \ !empty(stat.push_remote . stat.fetch_remote)
       call s:AddLogSection(to, 'Unpushed to *', s:QueryLog([head, '--not', '--remotes'], 256, dir))
     endif
     call s:AddLogSection(to, 'Unpulled from ' . push_short, s:QueryLogRange(head, unique_push_ref, dir))
@@ -3017,15 +3027,14 @@ function! fugitive#BufReadStatus(cmdbang) abort
       call s:AddLogSection(to, 'Unpulled from ' . pull_short, s:QueryLogRange(head, pull_ref, dir))
     endif
 
-    let b:fugitive_files = stat.files
-    let b:fugitive_diff = stat.diff
-    let b:fugitive_expanded = stat.expanded
-    let b:fugitive_reltime = stat.reltime
+    let bufnr = stat.bufnr
     setlocal noreadonly modifiable
     if len(to.lines) < line('$')
       silent keepjumps execute (len(to.lines)+1) . ',$delete_'
     endif
     call setline(1, to.lines)
+    call setbufvar(bufnr, 'fugitive_status', stat)
+    call setbufvar(bufnr, 'fugitive_expanded', stat.expanded)
     setlocal nomodified readonly nomodifiable
 
     doautocmd <nomodeline> BufReadPost
@@ -3039,7 +3048,7 @@ function! fugitive#BufReadStatus(cmdbang) abort
 
     return s:DoAutocmd('User FugitiveIndex')
   finally
-    let b:fugitive_type = 'index'
+    call setbufvar(stat.bufnr, 'fugitive_loading', {})
   endtry
 endfunction
 
@@ -4292,7 +4301,7 @@ function! s:DoAutocmdChanged(dir) abort
 endfunction
 
 function! s:ReloadStatusBuffer() abort
-  if get(b:, 'fugitive_type', '') !=# 'index'
+  if get(b:, 'fugitive_type', '') !=# 'index' || !empty(get(b:, 'fugitive_loading'))
     return ''
   endif
   let original_lnum = line('.')
@@ -4331,14 +4340,14 @@ function! s:ExpireStatus(bufnr) abort
 endfunction
 
 function! s:ReloadWinStatus(...) abort
-  if get(b:, 'fugitive_type', '') !=# 'index' || &modified
+  if get(b:, 'fugitive_type', '') !=# 'index' || !empty(get(b:, 'fugitive_loading')) || &modified
     return
   endif
-  if !exists('b:fugitive_reltime')
+  if !exists('b:fugitive_status.reltime')
     exe call('s:ReloadStatusBuffer', a:000)
     return
   endif
-  let t = b:fugitive_reltime
+  let t = b:fugitive_status.reltime
   if reltimestr(reltime(s:last_time, t)) =~# '-\|\d\{10\}\.' ||
         \ reltimestr(reltime(get(s:last_times, s:Tree() . '/', t), t)) =~# '-\|\d\{10\}\.'
     exe call('s:ReloadStatusBuffer', a:000)
@@ -4425,7 +4434,7 @@ augroup fugitive_status
 augroup END
 
 function! s:StatusSectionFile(heading, filename) abort
-  return get(get(get(b:, 'fugitive_files', {}), a:heading, {}), a:filename, {})
+  return get(get(get(get(b:, 'fugitive_status', {}), 'files', {}), a:heading, {}), a:filename, {})
 endfunction
 
 function! s:StageInfo(...) abort
@@ -4880,7 +4889,7 @@ function! s:StageInline(mode, ...) abort
       let lnum -= 1
     endwhile
     let info = s:StageInfo(lnum)
-    let diff_section = get(get(b:, 'fugitive_diff', {}), info.section, {})
+    let diff_section = get(get(get(b:, 'fugitive_status', {}), 'diff', {}), info.section, {})
     if empty(diff_section)
       continue
     endif
@@ -5002,7 +5011,7 @@ function! s:StageApply(info, reverse, extra) abort
   endif
   let i = b:fugitive_expanded[info.section][info.filename][0]
   let head = []
-  let diff_lines = fugitive#Wait(b:fugitive_diff[info.section]).stdout
+  let diff_lines = fugitive#Wait(b:fugitive_status.diff[info.section]).stdout
   while get(diff_lines, i, '@') !~# '^@'
     let line = diff_lines[i]
     if line ==# '--- /dev/null'
@@ -5149,11 +5158,12 @@ function! s:DoToggleHelpHeader(value) abort
 endfunction
 
 function! s:DoStagePushHeader(value) abort
-  let remote = matchstr(a:value, '\zs[^/]\+\ze/')
-  if empty(remote)
-    let remote = '.'
+  let stat = get(b:, 'fugitive_status', {})
+  let remote = get(stat, 'push_remote', '')
+  let branch = substitute(get(stat, 'push', ''), '^ref/heads/', '', '')
+  if empty(remote) || empty(branch)
+    return
   endif
-  let branch = matchstr(a:value, '\%([^/]\+/\)\=\zs\S\+')
   call feedkeys(':Git push ' . remote . ' ' . branch)
 endfunction
 
@@ -5162,15 +5172,13 @@ function! s:DoTogglePushHeader(value) abort
 endfunction
 
 function! s:DoStageUnpushedHeading(heading) abort
-  let remote = matchstr(a:heading, 'to \zs[^/]\+\ze/')
-  if empty(remote)
-    let remote = '.'
-  endif
-  let branch = matchstr(a:heading, 'to \%([^/]\+/\)\=\zs\S\+')
-  if branch ==# '*'
+  let stat = get(b:, 'fugitive_status', {})
+  let remote = get(stat, 'push_remote', '')
+  let push = get(stat, 'push', '')
+  if empty(remote) || empty(push)
     return
   endif
-  call feedkeys(':Git push ' . remote . ' ' . '@:' . 'refs/heads/' . branch)
+  call feedkeys(':Git push ' . remote . ' ' . '@:' . push)
 endfunction
 
 function! s:DoToggleUnpushedHeading(heading) abort
@@ -5178,15 +5186,13 @@ function! s:DoToggleUnpushedHeading(heading) abort
 endfunction
 
 function! s:DoStageUnpushed(record) abort
-  let remote = matchstr(a:record.heading, 'to \zs[^/]\+\ze/')
-  if empty(remote)
-    let remote = '.'
-  endif
-  let branch = matchstr(a:record.heading, 'to \%([^/]\+/\)\=\zs\S\+')
-  if branch ==# '*'
+  let stat = get(b:, 'fugitive_status', {})
+  let remote = get(stat, 'push_remote', '')
+  let push = get(stat, 'push', '')
+  if empty(remote) || empty(push)
     return
   endif
-  call feedkeys(':Git push ' . remote . ' ' . a:record.commit . ':' . 'refs/heads/' . branch)
+  call feedkeys(':Git push ' . remote . ' ' . a:record.commit . ':' . push)
 endfunction
 
 function! s:DoToggleUnpushed(record) abort
