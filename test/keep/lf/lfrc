@@ -5,11 +5,11 @@ map <f-2> doc
 map <c-j> shell
 map <enter> read
 
-#cmd on-cd &{{
-#    export STARSHIP_SHELL=
-#    fmt="$(starship prompt)"
-#    lf -remote "send $id set promptfmt \"$fmt\""
-#}}
+cmd on-cd &{{
+    export STARSHIP_SHELL=
+    fmt="$(starship prompt)"
+    lf -remote "send $id set promptfmt \"$fmt\""
+}}
 
 cmd on-select &{{
     lf -remote "send $id set statfmt \"$(exa -ld --color=always "$f")\""
