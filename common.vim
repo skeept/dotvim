@@ -200,7 +200,7 @@ nnoremap ,fl :Lines<CR>
 nnoremap ,vv :Files<CR>
 
 nnoremap <SPACE>z :FZF<ENTER>
-nnoremap <SPACE>e :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
+nnoremap <SPACE>e :FZF<SPACE><C-R>=fnameescape(expand("%:p:h"))<CR><CR>
 nnoremap <SPACE>b :Buffers<CR>
 
 "nmap <silent> <Leader>rg :!screen -p gams_run -X stuff \"gr\" <CR>
