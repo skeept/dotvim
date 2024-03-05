@@ -54,3 +54,4 @@ share/tmru/
 **/vimproc/lib/
 
 .bash_history
+test/keep/lf/lf/history
