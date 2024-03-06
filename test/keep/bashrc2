@@ -346,10 +346,9 @@ complete -f -o default -X '!*.zip' unzip
 complete -f -o default -X '!*.tar' tar
 complete -f -o default -X '!*.rar' unrar
 complete -f -o default -X '!*.pl'  perl perl5 p
-complete -f -o default -X '!*.ps'  gs ghostview ps2pdf ps2ascii kghostview gv
+complete -f -o default -X '!*.ps'  gs ghostview ps2pdf ps2ascii kghostview
 complete -f -o default -X '!*.dvi' dvips dvipdf xdvi dviselect dvitype kdvi
 complete -f -o default -X '!*.pdf' acroread pdf2ps kpdf xpdf
-complete -f -o default -X '!*.+(pdf|ps)' gv ggv
 complete -f -o default -X '!*.texi*' makeinfo texi2dvi texi2html texi2pdf
 complete -f -o default -X '!*.tex' tex latex slitex pdflatex vim xemacs emacs te gvim kile
 complete -f -o default -X '!*.lyx' lyx
@@ -960,7 +959,7 @@ function _vim()
   done
   return 0
 }
-complete -F _vim vim vi v gv vd va
+complete -F _vim vim vi v gv gvi vd va
 
 function e()
 {

@@ -91,11 +91,6 @@ function vdg()
   "$(__get_gvim_win)" $(__args_to_win -u "$(__get_vim_config_folder)/simple.vim" --noplugins -d $@)
 }
 
-function gv()
-{
-  "$(__get_gvim_win)" $(__args_to_win $@)
-}
-
 function gr()
 {
   local _REMOTE_SILENT=" "
@@ -126,7 +121,8 @@ ev()
   unset gvim
 
   # nvim-qt doesn't seem to be able to add remote files; try again later
-  if false; then
+
+  if [ -z "$ev_nvim" ]; then
   [ -x "$(command -v nvim-qt.exe)" ] && gvim=nvim-qt.exe
   local c1="$(__win_base)/ht/nvim-win64/bin/nvim-qt.exe"
   [ -z ${gvim+x} ] && [ -e "${c1}" ] && gvim="${c1}"
@@ -136,9 +132,13 @@ ev()
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim.exe)" ] && gvim=gvim.exe
   [ -z ${gvim+x} ] && [ -x "$(command -v nvim-qt.exe)" ] && gvim=nvim-qt.exe
   [ -z ${gvim+x} ] && [ -x "$(command -v gvim)" ] && gvim=gvim
+  dash_dash=
+  if [[ $gvim == *nvim* ]]; then
+    dash_dash="--"
+  fi
   if [ -n ${gvim+x} ]; then
     #("${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" > /dev/null) &
-    ("${gvim}" -c "RemoteOpenMod $(__args_to_win $@)" &)
+    ("${gvim}" ${dash_dash} -c "RemoteOpenMod $(__args_to_win $@)" &)
   elif [ -x "$(command -v nvim)" ]; then
     nvim $@
   else
