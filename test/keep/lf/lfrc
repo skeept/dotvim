@@ -43,8 +43,7 @@ cmd fzf_jump ${{
 map <c-f> :fzf_jump
 
 
-map oo %gvi $f
+map oo &gvi $f
 map oc $code $f
-#map og %gvim.exe "$(wslpath -w -a $f)"
-map on %gvi :N $f
+map on &gvi :N $f
 map ov $vim $f
