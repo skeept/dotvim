@@ -5,6 +5,10 @@ map i $bat --style=plain --color=always --paging=auto $f
 map <c-j> shell
 map <enter> read
 
+cmd vdiff ${{
+  vdf $fx
+}}
+
 cmd on-cd &{{
     export STARSHIP_SHELL=
     fmt="$(starship prompt)"
