@@ -42,9 +42,8 @@ set scrolloff 10
 map <enter> read
 map ; read
 
-#set previewer \Users\sg0216489\vimfiles\test\keep\lf\lf\preview.bat
-#set previewer C:\jT\preview.bat
-#set previewer preview.ps1
+# copy current file to a folder where it can be easily found
+set previewer C:\\jT\\preview.bat
 
 map ac $code ($env:fx -split '\n')
 map av $gvim ($env:fx -split '\n')
