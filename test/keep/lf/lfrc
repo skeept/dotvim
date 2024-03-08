@@ -4,10 +4,19 @@ cmd mkdir push %mkdir<space>
 map i $bat --style=plain --color=always --paging=auto $f
 map <c-j> shell
 map <enter> read
+map ; read
 
 cmd vdiff ${{
   vdf $fx
 }}
+
+cmd wdiff $bcp $fx
+
+map d
+map dd cut
+map dv vdiff
+map dc wdiff
+
 
 cmd on-cd &{{
     export STARSHIP_SHELL=
