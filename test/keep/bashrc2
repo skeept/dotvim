@@ -1292,6 +1292,15 @@ function _wk_comp()
   return 0
 }
 
+
+pwc()
+{
+  # can try other methods when available
+  command -v clip.exe  > /dev/null && { pwd | clip.exe; }
+  pwd
+}
+
+
 complete -F _wk_comp wk
 
 if { type zoxide && ! type zi; } >& /dev/null ; then
