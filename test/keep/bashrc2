@@ -509,7 +509,7 @@ function dupremove()
 {
   local __dupremovevar
   local _result
-  if test "a$1" = "a"; then
+  if [ -z "$1" ]; then
     dupremove PATH
     dupremove LD_LIBRARY_PATH
     dupremove MANPATH
@@ -518,34 +518,28 @@ function dupremove()
   eval __dupremovevar=\$$1
   _result=$(gawk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | \
     sed -e 's/\:\:/\:/g' -e 's/:$//')
-      if test "a${_result}" = "a"; then
-        eval "export ${1}=\"\$$1\" "
-      else
-        eval "export ${1}=\"${_result}\" "
-      fi
-    }
 
-    test -s "$HOME/.completion-git.sh" && . "$HOME/.completion-git.sh"
-    test -s "$HOME/.completion-eg.sh" && . "$HOME/.completion-eg.sh"
-    test -s "$HOME/.git-prompt.sh" && . "$HOME/.git-prompt.sh"
+  if [ -z "${_result}" ]; then
+    eval "export ${1}=\"\$$1\" "
+  else
+    eval "export ${1}=\"${_result}\" "
+  fi
+}
 
-
-    function __my_git_ps1()
-    {
-      if type -t __git_ps1 >& /dev/null; then
-        __git_ps1
-      fi
-    }
-    PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
+function __my_git_ps1()
+{
+  if type -t __git_ps1 >& /dev/null; then
+    __git_ps1
+  fi
+}
+PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
 
 
-    function gtp()
-    {
-      GIT_PS1_SHOWDIRTYSTATE=1
-      PS1="[\h] \W $(__git_ps1) > "
-    }
-    #the following assumes 'alias g='git '
-    complete -o default -o nospace -F _git g
+function gtp()
+{
+  GIT_PS1_SHOWDIRTYSTATE=1
+  PS1="[\h] \W $(__git_ps1) > "
+}
 
 #also use the screen completion for the alias s (screen)
 #complete -o default -o nospace -F _screen s
