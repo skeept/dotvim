@@ -123,3 +123,6 @@ def basic_logger(name: str, output: str = "output.log", level=logging.INFO) -> l
     return logger
 -----------------
 
+nvim remap directly in nvim config file (~/.config/nvim/init.lua)
+vim.keymap.set('n', ';', ':')
+vim.keymap.set('n', ':', ';')
