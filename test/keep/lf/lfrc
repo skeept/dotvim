@@ -60,3 +60,7 @@ map oo &gvi $f
 map oc $code $f
 map on &gvi :N $f
 map ov $vim $f
+
+map c
+map cc rename
+map cl clear
