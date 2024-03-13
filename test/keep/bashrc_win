@@ -161,8 +161,8 @@ tc()
   shift
   local a2="$1"
   [ -z "$a1" ] && a1="."
-  [ -e "${a1}" ] && a1="$(winpath "$a1")"
-  [ -e "$a2" ] && a2="$(winpath "$a2")"
+  [ -e "${a1}" ] && a1="$(wpath "$a1")"
+  [ -e "$a2" ] && a2="$(wpath "$a2")"
 
   "${_TOTALCMD_PATH}" ${bs}O "$a1" "$a2" &
 }
@@ -171,14 +171,14 @@ tcr()
 {
   local arg="$1"
   [ -z "${arg}" ] && arg="."
-  tc "${bs}R=$(winpath $arg)"
+  tc "${bs}R=$(wpath $arg)"
 }
 
 bc4()
 {
   _BC_CMD1="$(__win_base)/Program Files/Beyond Compare 4/BCompare.exe"
-  local arg1="$(winpath $1)"
-  local arg2="$(winpath $2)"
+  local arg1="$(wpath $1)"
+  local arg2="$(wpath $2)"
   shift; shift
   "${_BC_CMD1}" "${arg1}" "${arg2}" $@ &
 }
