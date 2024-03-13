@@ -43,7 +43,8 @@ map <enter> read
 map ; read
 
 # copy current file to a folder where it can be easily found
-set previewer C:\\jT\\preview.bat
+#set previewer C:\\jT\\preview.bat
+set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 
 map ac $code ($env:fx -split '\n')
 map av $gvim ($env:fx -split '\n')
