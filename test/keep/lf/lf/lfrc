@@ -54,7 +54,11 @@ map d
 map dd cut
 map dv $gvim -d ($env:fx -split '\n')
 map dc diff
-
+map du ${{
+  $item = Get-Item $env:f
+  $target = if($item.PSIsContainer) {$item.name} else {"."}
+  wsl -e ncdu $target
+}}
 map c
 map cc rename
 map cl clear

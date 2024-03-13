@@ -16,6 +16,9 @@ map d
 map dd cut
 map dv vdiff
 map dc wdiff
+map du ${{
+  [ -d $f  ] && ncdu $f || ncdu $(dirname $f)
+}}
 
 
 cmd on-cd &{{
