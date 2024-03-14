@@ -28,6 +28,11 @@ map w $pwsh -noprofile
 # change 'doc' command to use a different pager
 cmd doc $lf -doc | bat --style=plain --color=always
 
+
+cmd maps $lf -remote "query $env:id maps" | bat --style=plain --color=always --paging=always
+cmd cmaps $lf -remote "query $env:id cmaps" | bat --style=plain --color=always --paging=always
+cmd cmds $lf -remote "query $env:id cmds" | bat --style=plain --color=always --paging=always
+
 cmd diff ${{
   #gvim ($env:fx -split '\n')
   #msg * "C:\Program Files\Beyond Compare 4\BCompare.exe" $env:fx
