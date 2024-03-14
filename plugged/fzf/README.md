@@ -56,6 +56,7 @@ Table of Contents
     * [Using git](#using-git)
     * [Using Linux package managers](#using-linux-package-managers)
     * [Windows](#windows)
+    * [Setting up shell integration](#setting-up-shell-integration)
     * [As Vim plugin](#as-vim-plugin)
 * [Upgrading fzf](#upgrading-fzf)
 * [Building fzf](#building-fzf)
@@ -104,9 +105,9 @@ fzf project consists of the following components:
 
 - `fzf` executable
 - `fzf-tmux` script for launching fzf in a tmux pane
-- Shell extensions
+- Shell integration
     - Key bindings (`CTRL-T`, `CTRL-R`, and `ALT-C`) (bash, zsh, fish)
-    - Fuzzy auto-completion (bash, zsh)
+    - Fuzzy completion (bash, zsh)
 - Vim/Neovim plugin
 
 You can [download fzf executable][bin] alone if you don't need the extra
@@ -121,10 +122,11 @@ to install fzf.
 
 ```sh
 brew install fzf
-
-# To install useful key bindings and fuzzy completion:
-$(brew --prefix)/opt/fzf/install
 ```
+
+> [!IMPORTANT]
+> To set up shell integration (key bindings and fuzzy completion),
+> see [the instructions below](#setting-up-shell-integration).
 
 fzf is also available [via MacPorts][portfile]: `sudo port install fzf`
 
@@ -139,6 +141,9 @@ Alternatively, you can "git clone" this repository to any directory and run
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
 ```
+
+The install script will add lines to your shell configuration file to modify
+`$PATH` and set up shell integration.
 
 ### Using Linux package managers
 
@@ -158,10 +163,9 @@ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 | XBPS            | Void Linux              | `sudo xbps-install -S fzf`         |
 | Zypper          | openSUSE                | `sudo zypper install fzf`          |
 
-> :warning: **Key bindings (CTRL-T / CTRL-R / ALT-C) and fuzzy auto-completion
-> may not be enabled by default.**
->
-> Refer to the package documentation for more information. (e.g. `apt show fzf`)
+> [!IMPORTANT]
+> To set up shell integration (key bindings and fuzzy completion),
+> see [the instructions below](#setting-up-shell-integration).
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/fzf.svg)](https://repology.org/project/fzf/versions)
 
@@ -186,6 +190,31 @@ Known issues and limitations on Windows can be found on [the wiki
 page][windows-wiki].
 
 [windows-wiki]: https://github.com/junegunn/fzf/wiki/Windows
+
+### Setting up shell integration
+
+Add the following line to your shell configuration file.
+
+* bash
+  ```sh
+  # Set up fzf key bindings and fuzzy completion
+  eval "$(fzf --bash)"
+  ```
+* zsh
+  ```sh
+  # Set up fzf key bindings and fuzzy completion
+  eval "$(fzf --zsh)"
+  ```
+* fish
+  ```fish
+  # Set up fzf key bindings
+  fzf --fish | source
+  ```
+
+> [!NOTE]
+> `--bash`, `--zsh`, and `--fish` options are only available in
+> fzf 0.48.0 or above. If you have an older version of fzf, refer to the
+> package documentation for more information. (e.g. `apt show fzf`)
 
 ### As Vim plugin
 
@@ -231,21 +260,26 @@ find * -type f | fzf > selected
 ```
 
 Without STDIN pipe, fzf will traverse the file system under the current
-directory to get the list of files, skipping hidden directories. (You can
-override the default behavior with `FZF_DEFAULT_COMMAND`)
+directory to get the list of files.
 
 ```sh
 vim $(fzf)
 ```
 
-> *:bulb: A more robust solution would be to use `xargs` but we've presented
-> the above as it's easier to grasp*
+> [!NOTE]
+> You can override the default behavior
+> * Either by setting `$FZF_DEFAULT_COMMAND` to a command that generates the desired list
+> * Or by setting `--walker`, `--walker-root`, and `--walker-skip` options in `$FZF_DEFAULT_OPTS`
+
+> [!WARNING]
+> A more robust solution would be to use `xargs` but we've presented
+> the above as it's easier to grasp
 > ```sh
 > fzf --print0 | xargs -0 -o vim
 > ```
 
->
-> *:bulb: fzf also has the ability to turn itself into a different process.*
+> [!TIP]
+> fzf also has the ability to turn itself into a different process.
 >
 > ```sh
 > fzf --bind 'enter:become(vim {})'
@@ -319,13 +353,6 @@ or `py`.
 - `FZF_DEFAULT_COMMAND`
     - Default command to use when input is tty
     - e.g. `export FZF_DEFAULT_COMMAND='fd --type f'`
-    - > :warning: This variable is not used by shell extensions due to the
-      > slight difference in requirements.
-      >
-      > (e.g. `CTRL-T` runs `$FZF_CTRL_T_COMMAND` instead, `vim **<tab>` runs
-      > `_fzf_compgen_path()`, and `cd **<tab>` runs `_fzf_compgen_dir()`)
-      >
-      > The available options are described later in this document.
 - `FZF_DEFAULT_OPTS`
     - Default options
     - e.g. `export FZF_DEFAULT_OPTS="--layout=reverse --inline-info"`
@@ -333,6 +360,17 @@ or `py`.
     - If you prefer to manage default options in a file, set this variable to
       point to the location of the file
     - e.g. `export FZF_DEFAULT_OPTS_FILE=~/.fzfrc`
+
+> [!WARNING]
+> `FZF_DEFAULT_COMMAND` is not used by shell integration due to the
+> slight difference in requirements.
+>
+> * `CTRL-T` runs `$FZF_CTRL_T_COMMAND` to get a list of files and directories
+> * `ALT-C` runs `$FZF_ALT_C_COMMAND` to get a list of directories
+> * `vim ~/**<tab>` runs `fzf_compgen_path()` with the prefix (`~/`) as the first argument
+> * `cd foo**<tab>` runs `fzf_compgen_dir()` with the prefix (`foo`) as the first argument
+>
+> The available options are described later in this document.
 
 ### Options
 
@@ -388,11 +426,14 @@ The install script will setup the following key bindings for bash, zsh, and
 fish.
 
 - `CTRL-T` - Paste the selected files and directories onto the command-line
-    - Set `FZF_CTRL_T_COMMAND` to override the default command
+    - The list is generated using `--walker file,dir,follow,hidden` option
+        - You can override the behavior by setting `FZF_CTRL_T_COMMAND` to a custom command that generates the desired list
+        - Or you can set `--walker*` options in `FZF_CTRL_T_OPTS`
     - Set `FZF_CTRL_T_OPTS` to pass additional options to fzf
       ```sh
       # Preview file content using bat (https://github.com/sharkdp/bat)
       export FZF_CTRL_T_OPTS="
+        --walker-skip .git,node_modules,target
         --preview 'bat -n --color=always {}'
         --bind 'ctrl-/:change-preview-window(down|hidden|)'"
       ```
@@ -411,11 +452,15 @@ fish.
         --header 'Press CTRL-Y to copy command into clipboard'"
       ```
 - `ALT-C` - cd into the selected directory
+    - The list is generated using `--walker dir,follow,hidden` option
     - Set `FZF_ALT_C_COMMAND` to override the default command
+        - Or you can set `--walker-*` options in `FZF_ALT_C_OPTS`
     - Set `FZF_ALT_C_OPTS` to pass additional options to fzf
       ```sh
       # Print tree structure in the preview window
-      export FZF_ALT_C_OPTS="--preview 'tree -C {}'"
+      export FZF_ALT_C_OPTS="
+        --walker-skip .git,node_modules,target
+        --preview 'tree -C {}'"
       ```
 
 If you're on a tmux session, you can start fzf in a tmux split-pane or in
@@ -739,22 +784,21 @@ See the man page (`man fzf`) for the full list of options.
 
 More advanced examples can be found [here](https://github.com/junegunn/fzf/blob/master/ADVANCED.md).
 
-----
-
-Since fzf is a general-purpose text filter rather than a file finder, **it is
-not a good idea to add `--preview` option to your `$FZF_DEFAULT_OPTS`**.
-
-```sh
-# *********************
-# ** DO NOT DO THIS! **
-# *********************
-export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always --line-range :500 {}"'
-
-# bat doesn't work with any input other than the list of files
-ps -ef | fzf
-seq 100 | fzf
-history | fzf
-```
+> [!WARNING]
+> Since fzf is a general-purpose text filter rather than a file finder, **it is
+> not a good idea to add `--preview` option to your `$FZF_DEFAULT_OPTS`**.
+>
+> ```sh
+> # *********************
+> # ** DO NOT DO THIS! **
+> # *********************
+> export FZF_DEFAULT_OPTS='--preview "bat --style=numbers --color=always --line-range :500 {}"'
+>
+> # bat doesn't work with any input other than the list of files
+> ps -ef | fzf
+> seq 100 | fzf
+> history | fzf
+> ```
 
 ### Previewing an image
 
@@ -787,7 +831,7 @@ fd --type f --strip-cwd-prefix | fzf
 # Setting fd as the default source for fzf
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix'
 
-# Now fzf (w/o pipe) will use fd instead of find
+# Now fzf (w/o pipe) will use the fd command to generate the list
 fzf
 
 # To apply the command to CTRL-T as well
