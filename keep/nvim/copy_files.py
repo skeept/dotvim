@@ -4,6 +4,7 @@ import argparse
 import os
 import filecmp
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -25,6 +26,8 @@ def copy_files(origin: Path, destination: Path, dry_run: bool = True) -> None:
         elif not elem.is_dir() and not filecmp.cmp(elem, backup, shallow=False):
             missing_or_different = "D"
         print(f"{missing_or_different} {str(elem):<50} => {backup}")
+        if missing_or_different == "D" and shutil.which("delta"):
+            subprocess.run(["delta", elem, backup])
     if not dry_run:
         for elem in get_all_elems(origin):
             backup = destination / elem.relative_to(origin)

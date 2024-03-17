@@ -8,6 +8,6 @@ vim.keymap.set("n", ":", ";")
 vim.keymap.set("n", "<F1>", "wa")
 -- vim.keymap.set("i", "<F1>", )
 
-vim.keymap.set("n", "g/", "</><left><left>")
+vim.keymap.set("n", "g/", "/\\<\\><left><left>")
 
 vim.keymap.set("n", "<tab>", "<c-w>")
