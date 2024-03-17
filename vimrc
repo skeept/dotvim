@@ -170,13 +170,6 @@ else
 endif
 execute "source " . g:p0 . "/conf_plugins.rc.vim"
 
-"================== PreciseJump ==============================================={{{
-"nnoremap ,f :call PreciseJumpF(-2, -1, 0)<CR>
-"nnoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
-"vnoremap ,ff <ESC>:call PreciseJumpF(-1, -1, 1)<CR>
-"onoremap ,ff :call PreciseJumpF(-1, -1, 0)<CR>
-"==============================================================================}}}
-
 "================== LibClang =================================================={{{
 let g:clang_use_library = 1
 "note, this does not work when the first file is loaded. Just reload the first
@@ -186,10 +179,6 @@ augroup ft_cpp_clang
   autocmd!
   autocmd FileType c,cpp call jraf#loadClangComplete()
 augroup END
-"==============================================================================}}}
-
-"================== Bufstop ==================================================={{{
-"nnoremap <Leader>b :<C-U>call jraf#myBuffStopCall()<CR>
 "==============================================================================}}}
 
 "================== Statusline ================================================{{{
@@ -232,9 +221,6 @@ let g:smartusline_string_to_highlight = '%2.2n %t %h'
 "some pylint settings
 let g:pylint_onwrite = 0
 
-"mapping for running python code
-"nmap <F9> :SingleCompileRun<CR>
-
 "================== python_mode (plugin) ======================================{{{
 "some python mode configuration. Don't always use but for now disable some
 "settings when used
@@ -274,29 +260,6 @@ if IsAddonActive('yankstack')
 endif
 "==============================================================================}}}
 
-"================== autocomplpop (acp) ========================================{{{
-if 0
-"don't want to start this completion thing before x chars
-let g:acp_behaviorKeywordLength = 12
-let g:acp_completeOption = '.,w,b,k,t'
-
-"fuction to toogle behaviour of autocomplpop
-let g:is_acp_disabled = 0
-function! ToggleAcpDisable()
-  if g:is_acp_disabled == 0
-    AcpLock
-    let g:is_acp_disabled = 1
-  else
-    AcpUnlock
-    let g:is_acp_disabled = 0
-  endif
-endfunction
-
-"noremap <f11> :call ToggleAcpDisable()<CR>
-"inoremap <f11> <ESC>:call ToggleAcpDisable()<CR>a
-endif
-"==============================================================================}}}
-
 "================== ManPageView ==============================================={{{
 let g:manpageview_winopen = "hsplit="
 augroup manpageview
@@ -311,17 +274,6 @@ let g:languagetool_disable_rules = "WHITESPACE_RULE,EN_QUOTES,CURRENCY," .
       \ "COMMA_PARENTHESIS_WHITESPACE,EN_UNPAIRED_BRACKETS"
 "==============================================================================}}}
 
-"================== LustyExplorer and Juggler ================================={{{
-"nmap <silent> ,lf :LustyFilesystemExplorer<CR>
-"nmap <silent> ,lr :LustyFilesystemExplorerFromHere<CR>
-"nmap <silent> ,lb :LustyBufferExplorer<CR>
-"nmap <silent> ,lg :LustyBufferGrep<CR>
-"nmap <silent> ,lj :LustyJuggler<CR>
-
-"lusty juggler
-let g:LustyJugglerShowKeys = 'a'
-"==============================================================================}}}
-
 "================== vim-pipe commands ========================================={{{
 augroup vim_pipe
   autocmd!
@@ -329,18 +281,6 @@ augroup vim_pipe
   autocmd FileType perl let b:vimpipe_command="perl"
   autocmd FileType tex let b:vimpipe_command="latexmk"
 augroup END
-"==============================================================================}}}
-
-"================== ConqueTerm ================================================{{{
-let g:ConqueTerm_ReadUnfocused = 1
-"==============================================================================}}}
-
-"================== Tasklist =================================================={{{
-"useful for managing a todo list
-if 0 " disabled for now
-noremap <leader>t_ <Plug>TaskList
-noremap <leader>td :TaskList<CR>
-endif
 "==============================================================================}}}
 
 "some plugins don't work well with some enviroments, just try to adjust them
@@ -359,9 +299,6 @@ if v:version < 703
   let g:loaded_autoload_l9 = 1
 endif
 
-"load cscope in two levels up
-noremap <Leader>csa :cs add ../../cscope.out ../..<CR>
-
 command! JunkFileBrowse FZF ~/.cache/junkfile
 "==============================================================================}}}
 
@@ -375,10 +312,6 @@ let g:delimitMate_expand_space = 1
 "nnoremap ,gca :<C-U>Gcommit -v -a<CR>
 "nnoremap ,gp :<C-U>Git push<CR>
 "nnoremap ,gdf :<C-U>Git diff<CR>
-"==============================================================================}}}
-
-"================== Thesis Specific Settings =================================={{{
-command! -complete=file -nargs=* Mtorig call jraf#myThesisEnv(<f-args>)
 "==============================================================================}}}
 
 "================== neocomplete ============================================={{{
