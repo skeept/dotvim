@@ -1,9 +1,9 @@
 """Copy files to/from config folder."""
 
 import argparse
-from pathlib import Path
-import os
 import shutil
+from pathlib import Path
+
 
 def get_all_elems(name: Path):
     """Get all elements recursively."""
@@ -25,8 +25,8 @@ def copy_files(origin: Path, destination: Path, dry_run:bool=True) -> None:
                 shutil.copy(elem, backup)
 
 
-def main():
-    """setup args and do the copy."""
+def main() -> None:
+    """Setup args and copy."""
     parser = argparse.ArgumentParser("copy files from folder.")
     parser.add_argument("-c", "--copy", help="copy from", action="store_true")
     parser.add_argument("-f", "--force", action="store_true", help="copy the files")
@@ -36,11 +36,9 @@ def main():
     saved = Path("lua")
     saved.mkdir(exist_ok=True, parents=True)
 
-    if args.copy:
-        dry_run = not args.force
-        copy_files(nvim_conf, saved, dry_run=dry_run)
-    else:
-        copy_files(saved, nvim_conf, dry_run=dry_run)
+    origin, dest = (nvim_conf, saved) if args.copy else (saved, nvim_conf)
+    dry_run = not args.force
+    copy_files(origin, dest, dry_run=dry_run)
 
 
 if __name__ == "__main__":
