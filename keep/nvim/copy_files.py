@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import filecmp
 import shutil
 from pathlib import Path
 
@@ -17,8 +18,13 @@ def get_all_elems(name: Path):
 def copy_files(origin: Path, destination: Path, dry_run: bool = True) -> None:
     """Assume folders and copy nested files."""
     for elem in get_all_elems(origin):
+        missing_or_different = "."
         backup = destination / elem.relative_to(origin)
-        print(f"{str(elem):<50} => {backup}")
+        if not backup.exists():
+            missing_or_different = "X"
+        elif not elem.is_dir() and not filecmp.cmp(elem, backup, shallow=False):
+            missing_or_different = "D"
+        print(f"{missing_or_different} {str(elem):<50} => {backup}")
     if not dry_run:
         for elem in get_all_elems(origin):
             backup = destination / elem.relative_to(origin)
