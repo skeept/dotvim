@@ -1,6 +1,7 @@
 """Copy files to/from config folder."""
 
 import argparse
+import os
 import shutil
 from pathlib import Path
 
@@ -12,10 +13,12 @@ def get_all_elems(name: Path):
         if elem.is_dir():
             yield from get_all_elems(elem)
 
-def copy_files(origin: Path, destination: Path, dry_run:bool=True) -> None:
+
+def copy_files(origin: Path, destination: Path, dry_run: bool = True) -> None:
     """Assume folders and copy nested files."""
     for elem in get_all_elems(origin):
-        print(elem, elem.relative_to(origin))
+        backup = destination / elem.relative_to(origin)
+        print(f"{str(elem):<50} => {backup}")
     if not dry_run:
         for elem in get_all_elems(origin):
             backup = destination / elem.relative_to(origin)
@@ -32,7 +35,13 @@ def main() -> None:
     parser.add_argument("-f", "--force", action="store_true", help="copy the files")
     args = parser.parse_args()
 
-    nvim_conf = Path.home() / ".config/nvim/lua"
+    nvim_conf_dir = (
+        Path(os.path.expandvars(r"%LOCALAPPDATA%\nvim"))
+        if os.name == "nt"
+        else Path.home() / ".config/nvim"
+    )
+    nvim_conf = nvim_conf_dir / "lua"
+
     saved = Path("lua")
     saved.mkdir(exist_ok=True, parents=True)
 
