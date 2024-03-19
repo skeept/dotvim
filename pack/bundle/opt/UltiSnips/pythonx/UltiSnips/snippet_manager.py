@@ -130,6 +130,7 @@ class SnippetManager:
         self._visual_content = VisualContentPreserver()
 
         self._snippet_sources = []
+        self._filetypes = []
 
         self._snip_expanded_in_action = False
         self._inside_action = False
@@ -145,6 +146,10 @@ class SnippetManager:
             enable_snipmate = vim_helper.eval("g:UltiSnipsEnableSnipMate")
         if enable_snipmate == "1":
             self.register_snippet_source("snipmate_files", SnipMateFileSource())
+
+        self._autotrigger = True
+        if vim_helper.eval("exists('g:UltiSnipsAutoTrigger')") == "1":
+            self._autotrigger = vim_helper.eval("g:UltiSnipsAutoTrigger") == "1"
 
         self._should_update_textobjects = False
         self._should_reset_visual = False
@@ -852,6 +857,10 @@ class SnippetManager:
     def can_jump_backwards(self):
         return self.can_jump(JumpDirection.BACKWARD)
 
+    def _toggle_autotrigger(self):
+        self._autotrigger = not self._autotrigger
+        return self._autotrigger
+
     @property
     def _current_snippet(self):
         """The current snippet or None."""
@@ -956,7 +965,8 @@ class SnippetManager:
                 before = vim_helper.buf.line_till_cursor
 
                 if (
-                    before
+                    self._autotrigger
+                    and before
                     and self._last_change[0] != ""
                     and before[-1] == self._last_change[0]
                 ):
@@ -973,6 +983,15 @@ class SnippetManager:
     def _refresh_snippets(self):
         for _, source in self._snippet_sources:
             source.refresh()
+
+
+    @err_to_scratch_buffer.wrap
+    def _check_filetype(self, ft):
+        """Ensure snippets are loaded for the current filetype."""
+        if ft not in self._filetypes:
+            self._filetypes.append(ft)
+            for _, source in self._snippet_sources:
+                source.must_ensure = True
 
 
 UltiSnips_Manager = SnippetManager(  # pylint:disable=invalid-name
