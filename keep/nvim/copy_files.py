@@ -56,8 +56,10 @@ def copy_files(
 def main() -> None:
     """Setup args and copy."""
     parser = argparse.ArgumentParser("copy files from folder.")
-    parser.add_argument("-c", "--copy", help="copy from", action="store_true")
-    parser.add_argument("-f", "--force", action="store_true", help="copy the files")
+    parser.add_argument(
+        "-o", "--other_direction", help="reverse copy destination", action="store_true"
+    )
+    parser.add_argument("-c", "--copy", action="store_true", help="copy the files")
     parser.add_argument(
         "-d", "--hide_diff", action="store_true", help="hide diff output"
     )
@@ -73,8 +75,8 @@ def main() -> None:
     saved = Path("lua")
     saved.mkdir(exist_ok=True, parents=True)
 
-    origin, dest = (nvim_conf, saved) if args.copy else (saved, nvim_conf)
-    dry_run = not args.force
+    origin, dest = (nvim_conf, saved) if args.other_direction else (saved, nvim_conf)
+    dry_run = not args.copy
     copy_files(origin, dest, dry_run=dry_run, show_diff=not args.hide_diff)
 
 

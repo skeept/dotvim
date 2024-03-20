@@ -13,6 +13,10 @@ return {
     --   cmdline = { enabled = false },
     -- },
   },
+  {
+    "folke/flash.nvim",
+    enabled = false,
+  },
   -- Use <tab> for completion and snippets (supertab)
   -- first: disable default <tab> and <s-tab> behavior in LuaSnip
   {
