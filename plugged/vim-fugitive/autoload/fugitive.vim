@@ -4162,7 +4162,9 @@ function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args
   try
     let mods = s:Mods(a:mods, 'Edge')
     let file = fugitive#Find(':', dir)
-    let arg = ' +setl\ foldmarker=<<<<<<<<,>>>>>>>>\|let\ w:fugitive_status=FugitiveGitDir() ' .
+    let arg = ' +setl\ foldmarker=<<<<<<<<,>>>>>>>>' .
+          \ (exists('&winfixbuf') ? '\ winfixbuf' : '') .
+          \ '\|let\ w:fugitive_status=FugitiveGitDir() ' .
           \ s:fnameescape(file)
     for tabnr in [tabpagenr()] + (mods =~# '\<tab\>' ? range(1, tabpagenr('$')) : [])
       let bufs = tabpagebuflist(tabnr)
@@ -4176,6 +4178,9 @@ function! s:StatusCommand(line1, line2, range, count, bang, mods, reg, arg, args
             exe winnr . 'wincmd w'
           endif
           let w:fugitive_status = dir
+          if exists('&winfixbuf')
+            setlocal winfixbuf
+          endif
           1
           return ''
         endif
@@ -6071,6 +6076,7 @@ endfunction
 
 function! s:UsableWin(nr) abort
   return a:nr && !getwinvar(a:nr, '&previewwindow') && !getwinvar(a:nr, '&winfixwidth') &&
+        \ !getwinvar(a:nr, '&winfixbuf') &&
         \ (empty(getwinvar(a:nr, 'fugitive_status')) || getbufvar(winbufnr(a:nr), 'fugitive_type') !=# 'index') &&
         \ index(['gitrebase', 'gitcommit'], getbufvar(winbufnr(a:nr), '&filetype')) < 0 &&
         \ index(['nofile','help','quickfix', 'terminal'], getbufvar(winbufnr(a:nr), '&buftype')) < 0
@@ -6202,7 +6208,7 @@ function! fugitive#DiffClose() abort
 endfunction
 
 function! s:BlurStatus() abort
-  if (&previewwindow || exists('w:fugitive_status')) && get(b:,'fugitive_type', '') ==# 'index'
+  if (&previewwindow || getwinvar(winnr(), '&winfixbuf') is# 1 || exists('w:fugitive_status')) && get(b:, 'fugitive_type', '') ==# 'index'
     let winnrs = filter([winnr('#')] + range(1, winnr('$')), 's:UsableWin(v:val)')
     if len(winnrs)
       exe winnrs[0].'wincmd w'
@@ -7096,6 +7102,9 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
         normal! zt
         execute current
         setlocal nonumber scrollbind nowrap foldcolumn=0 nofoldenable winfixwidth
+        if exists('&winfixbuf')
+          setlocal winfixbuf
+        endif
         if exists('+relativenumber')
           setlocal norelativenumber
         endif
