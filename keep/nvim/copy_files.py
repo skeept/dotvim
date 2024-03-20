@@ -43,7 +43,8 @@ def copy_files(
             and missing_or_different == CmpStatus.diff
             and shutil.which("delta")
         ):
-            subprocess.run(["delta", elem, backup])
+            delta_options = ["--side-by-side"]
+            subprocess.run(["delta", *delta_options, elem, backup])
 
         if not dry_run:
             if elem.is_dir():
