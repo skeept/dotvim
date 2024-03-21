@@ -1294,6 +1294,21 @@ pwc()
   pwd
 }
 
+# run docker container [entrypoint '/'=/bin/bash]
+dr()
+{
+  container=$1
+  _entry=$2
+  shift; shift
+  entrypoint=()
+  if [ -n "$_entry" ]; then
+    [ "$_entry"  = "/" ] &&  _entry=/bin/bash
+    entrypoint=("--entrypoint" "${_entry}")
+  fi
+
+  docker run -it ${entrypoint[@]} ${container} $@
+}
+
 
 complete -F _wk_comp wk
 
