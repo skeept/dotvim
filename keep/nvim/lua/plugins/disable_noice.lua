@@ -68,4 +68,8 @@ return {
       })
     end,
   },
+  {
+    "cappyzawa/trim.nvim",
+    opts = {},
+  },
 }

@@ -11,3 +11,14 @@ vim.keymap.set("n", "<F1>", "wa")
 vim.keymap.set("n", "g/", "/\\<\\><left><left>")
 
 vim.keymap.set("n", "<tab>", "<c-w>")
+
+local function DeltTrailingSpace()
+  vim.cmd([[
+normal mz
+normal Hmy
+]])
+end
+
+vim.api.nvim_create_user_command("DeltTrailingSpace", DeltTrailingSpace, {
+  desc = "delete trailing whitespace",
+})

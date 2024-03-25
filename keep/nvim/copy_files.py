@@ -26,30 +26,31 @@ class CmpStatus(enum.Enum):
 
 
 def copy_files(
-    origin: Path, destination: Path, dry_run: bool = True, show_diff: bool = True
+        origin: Path, destination: Path, dry_run: bool = True, display_all: bool=False, show_diff: bool = True
 ) -> None:
     """Assume folders and copy nested files."""
     show_diff = not dry_run or show_diff
     for elem in get_all_elems(origin):
-        missing_or_different = CmpStatus.same
+        status = CmpStatus.same
         backup = destination / elem.relative_to(origin)
         if not backup.exists():
-            missing_or_different = CmpStatus.missing
+            status = CmpStatus.missing
         elif not elem.is_dir() and not filecmp.cmp(elem, backup, shallow=False):
-            missing_or_different = CmpStatus.diff
-        print(f"{missing_or_different.name:<7} {str(elem):<50} => {backup}")
-        if (
-            show_diff
-            and missing_or_different == CmpStatus.diff
-            and shutil.which("delta")
-        ):
-            delta_options = ["--side-by-side"]
-            subprocess.run(["delta", *delta_options, elem, backup])
+            status = CmpStatus.diff
+        if display_all or status != CmpStatus.same:
+            print(f"{status.name:<7} {str(elem):<50} => {backup}")
+            if (
+                show_diff
+                and status == CmpStatus.diff
+                and shutil.which("delta")
+            ):
+                delta_options = ["--side-by-side"]
+                subprocess.run(["delta", *delta_options, elem, backup])
 
         if not dry_run:
             if elem.is_dir():
                 backup.mkdir(exist_ok=True, parents=True)
-            elif missing_or_different != CmpStatus.same:
+            elif status != CmpStatus.same:
                 shutil.copy(elem, backup)
 
 
