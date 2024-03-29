@@ -161,8 +161,8 @@ tc()
   shift
   local a2="$1"
   [ -z "$a1" ] && a1="."
-  [ -e "${a1}" ] && a1="$(wpath "$a1")"
-  [ -e "$a2" ] && a2="$(wpath "$a2")"
+  [ -e "${a1}" ] && a1="$(wpath -f "$a1")"
+  [ -e "$a2" ] && a2="$(wpath -f "$a2")"
 
   "${_TOTALCMD_PATH}" ${bs}O "$a1" "$a2" &
 }
@@ -171,7 +171,7 @@ tcr()
 {
   local arg="$1"
   [ -z "${arg}" ] && arg="."
-  tc "${bs}R=$(wpath $arg)"
+  tc "${bs}R=$(wpath -f $arg)"
 }
 
 bc4()
