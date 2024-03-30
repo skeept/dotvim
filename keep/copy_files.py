@@ -6,7 +6,27 @@ import os
 import filecmp
 import shutil
 import subprocess
+import dataclasses
 from pathlib import Path
+
+
+@dataclasses.dataclass
+class FolderConfig:
+    actual: Path
+    local: Path
+
+    @classmethod
+    def nvim(cls):
+        """Get nvim config."""
+        nvim_conf_dir = (
+            Path(os.path.expandvars(r"%LOCALAPPDATA%\nvim"))
+            if os.name == "nt"
+            else Path.home() / ".config/nvim"
+        )
+        return cls(actual=nvim_conf_dir / "lua", local=Path("nvim/lua"))
+
+    def flip(self):
+        return FolderConfig(actual=self.local, local=self.actual)
 
 
 def get_all_elems(name: Path):
@@ -26,7 +46,11 @@ class CmpStatus(enum.Enum):
 
 
 def copy_files(
-        origin: Path, destination: Path, dry_run: bool = True, display_all: bool=False, show_diff: bool = True
+    origin: Path,
+    destination: Path,
+    dry_run: bool = True,
+    display_all: bool = False,
+    show_diff: bool = True,
 ) -> None:
     """Assume folders and copy nested files."""
     show_diff = not dry_run or show_diff
@@ -39,11 +63,7 @@ def copy_files(
             status = CmpStatus.diff
         if display_all or status != CmpStatus.same:
             print(f"{status.name:<7} {str(elem):<50} => {backup}")
-            if (
-                show_diff
-                and status == CmpStatus.diff
-                and shutil.which("delta")
-            ):
+            if show_diff and status == CmpStatus.diff and shutil.which("delta"):
                 delta_options = ["--side-by-side"]
                 subprocess.run(["delta", *delta_options, elem, backup])
 
@@ -66,17 +86,12 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    nvim_conf_dir = (
-        Path(os.path.expandvars(r"%LOCALAPPDATA%\nvim"))
-        if os.name == "nt"
-        else Path.home() / ".config/nvim"
+    nvim = FolderConfig.nvim()
+    origin, dest = (
+        dataclasses.astuple(nvim)
+        if args.other_direction
+        else dataclasses.astuple(nvim.flip())
     )
-    nvim_conf = nvim_conf_dir / "lua"
-
-    saved = Path("lua")
-    saved.mkdir(exist_ok=True, parents=True)
-
-    origin, dest = (nvim_conf, saved) if args.other_direction else (saved, nvim_conf)
     dry_run = not args.copy
     copy_files(origin, dest, dry_run=dry_run, show_diff=not args.hide_diff)
 
