@@ -64,6 +64,7 @@ map oc $code $f
 map on &gvi :N $f
 map ov $vim $f
 map oe $nvim $f
+map oi $gvi -nvim $f
 
 map c
 map cc rename
