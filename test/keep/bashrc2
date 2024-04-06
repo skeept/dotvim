@@ -1216,25 +1216,36 @@ function pt()
 
 function dr()
 {
-  # we assume first argument is image name followed by entrypoint (optional)
-  # entrypoint if exists must be second arg (and not -)
-  # / for entrypoint is converted to /bin/bash
-  # everything after - is passed verbatim
+  # assumption $1=image $2=command [/=bin/bash, can be missing (uses entrypoint)]
+  # if -- is found command and arguments are passed at the end
+  # if -* is found assumed to be docker option
   # TODO: add global variables for persistance
 
-  local image=$1
-  shift
-  if [ "${image}" = "-" ]; then
-    image=""
-  else
-    local entrypoint=$1
-    shift
+  # use previous run arguments
+  local -a args
+  [ -n "$1" ] && args=("$@") && __previous_dr_args=${args[@]}
+  [ -z "$1" ] && [ -v __previous_dr_args ] && args=${__previous_dr_args[@]}
+  local image=${args[0]}
+  if [ ${#args[@]} -gt 1 ]; then
+    local entrypoint=${args[1]}
+    [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
   fi
-  [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
+  # handle volume
+  if [ "${args[2]}" = "-v" ]; then
+    local t=${args[3]}
+    if [[ $t == *:* ]]; then
+      args[3]=$(realpath ${t%:*}):${t##*:}
+    else
+      args[3]=$(realpath $t):/v
+    fi
+  fi
+
   if [ -z "$entrypoint" ]; then
-    docker run -it ${image} $@
+    echo docker run --rm -it ${args[@]:2} ${image}
+    docker run --rm -it ${args[@]:2} ${image}
   else
-    docker run -it --entrypoint ${entrypoint} ${image} $@
+    echo docker run --rm -it --entrypoint ${entrypoint} ${args[@]:2} ${image}
+    docker run --rm -it --entrypoint ${entrypoint} ${args[@]:2} ${image}
   fi
 }
 
@@ -1295,6 +1306,7 @@ pwc()
 }
 
 # run docker container [entrypoint '/'=/bin/bash]
+if false; then
 dr()
 {
   container=$1
@@ -1308,6 +1320,7 @@ dr()
 
   docker run -it ${entrypoint[@]} ${container} $@
 }
+fi
 
 
 complete -F _wk_comp wk
