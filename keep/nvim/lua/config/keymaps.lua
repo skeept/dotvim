@@ -6,7 +6,7 @@ vim.keymap.set("n", ";", ":")
 vim.keymap.set("n", ":", ";")
 
 vim.keymap.set("n", "<F1>", "wa")
--- vim.keymap.set("i", "<F1>", )
+ vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>")
 
 vim.keymap.set("n", "g/", "/\\<\\><left><left>")
 
