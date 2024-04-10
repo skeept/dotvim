@@ -133,19 +133,6 @@ nnoremap gY yg_
 "if EOL copy char bellow, otherwise go to EOL
 inoremap <expr> <C-E> IsLineEndInsert() ? "\<C-E>" : "\<C-O>$"
 
-inoremap <F2> <ESC>:call Make2()<CR><C-L>
-noremap <F2> :call Make2()<CR><C-L>
-function! Make2()
-  if !exists("g:make_args")
-    let g:make_args = ""
-  endif
-  wall
-  exec "silent! make " . g:make_args
-  cwindow 6
-  redraw
-endfunction
-command! -nargs=* Make write | let g:make_args="<args>" | make <args> | cwindow 6
-
 "make the f1 key save-buffer key
 inoremap <F1> <ESC>:wa<CR>
 noremap <F1> :wa<CR>
