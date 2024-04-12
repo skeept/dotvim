@@ -6,7 +6,7 @@ vim.keymap.set("n", ";", ":")
 vim.keymap.set("n", ":", ";")
 
 vim.keymap.set("n", "<F1>", "wa")
- vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>")
+vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>")
 
 vim.keymap.set("n", "g/", "/\\<\\><left><left>")
 
@@ -52,3 +52,9 @@ end, {
 
 vim.keymap.set("n", "<Leader>oo", ":CaptureToSractch<space>")
 vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
+
+vim.api.nvim_create_user_command("Pcp", function()
+  vim.cmd("echo expand('%:p')")
+end, {
+  desc = "Print current Path",
+})
