@@ -10,8 +10,6 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-WINDOWS_PATH = Path("/mnt/c/Users/SG0216489/AppData/Local")
-
 
 @dataclasses.dataclass
 class FolderConfig:
@@ -20,11 +18,17 @@ class FolderConfig:
 
     @classmethod
     def nvim(cls, windows: Optional[bool] = None):
-        """Get nvim config."""
+        """Get nvim config.
+
+        windows option is to force windows path (e.g. for WSL)."""
         conf_dir = (
             Path(os.path.expandvars(r"%LOCALAPPDATA%"))
             if os.name == "nt"
-            else (WINDOWS_PATH if windows else Path.home() / ".config")
+            else (
+                Path("/mnt/c/Users/SG0216489/AppData/Local")
+                if windows
+                else Path.home() / ".config"
+            )
         )
         return cls(actual=conf_dir / "nvim/lua", local=Path("nvim/lua"))
 
@@ -81,14 +85,24 @@ def main() -> None:
     """Set args and copy."""
     parser = argparse.ArgumentParser("copy files from folder.")
     parser.add_argument(
-        "-o", "--other_direction", help="reverse copy destination", action="store_true",
+        "-o",
+        "--other_direction",
+        help="reverse copy destination",
+        action="store_true",
     )
     parser.add_argument("-c", "--copy", action="store_true", help="copy the files")
     parser.add_argument(
-        "-d", "--hide_diff", action="store_true", help="hide diff output",
+        "-d",
+        "--hide_diff",
+        action="store_true",
+        help="hide diff output",
     )
     parser.add_argument(
-        "-w", "--windows", action="store_true", help="use windows path", default=None,
+        "-w",
+        "--windows",
+        action="store_true",
+        help="use windows path",
+        default=None,
     )
     args = parser.parse_args()
 
