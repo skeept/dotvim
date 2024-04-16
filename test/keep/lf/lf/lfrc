@@ -51,8 +51,8 @@ map ; read
 #set previewer C:\\jT\\preview.bat
 set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 
-map ac $code ($env:fx -split '\n')
-map av $gvim ($env:fx -split '\n')
+map oc $code ($env:fx -split '\n')
+map ov $gvim ($env:fx -split '\n')
 
 cmd vdiff $gvim -d ($env:fx -split '\n')
 
