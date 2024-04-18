@@ -62,9 +62,27 @@ end, {
 local wk = require("which-key")
 wk.register({
   [","] = {
-    name = "+fzf",
-    f = { "<cmd>FzfLua<cr>", "Fzf" },
+    name = " comma mappings ",
+    f = {
+      name = "fzf mappings",
+      f = { "<cmd>FzfLua<cr>", "Fzf" },
+      g = { "<cmd>FzfLua grep_project<cr>", "grep project" },
+      r = { "<cmd>FzfLua oldfiles<cr>", "recent files" },
+      c = { "<cmd>FzfLua commands<cr>", "commands" },
+      h = { "<cmd>FzfLua command_history<cr>", "command history" },
+    },
+    v = {
+      name = "search and whatever",
+      n = { ":vimgrep // *<Left><Left><Left>", "vimgrep this folder [start typing]" },
+      r = { ":vimgrep // **/*<Left><Left><Left><Left><Left>", "vimgrep nested" },
+    },
+    s = {
+      name = "settings tabs and more",
+      w = { "<cmd>setlocal wrap! | set wrap?<cr>", "toogle wrap" },
+      t = { "<cmd>tab split<cr>", "tab split" },
+    },
     e = { "<cmd>Fzf files<cr>", "files" },
     b = { "<cmd>FzfLua buffers<cr>", "buffers" },
+
   },
 })
