@@ -58,3 +58,13 @@ vim.api.nvim_create_user_command("Pcp", function()
 end, {
   desc = "Print current Path",
 })
+
+local wk = require("which-key")
+wk.register({
+  [","] = {
+    name = "+fzf",
+    f = { "<cmd>FzfLua<cr>", "Fzf" },
+    e = { "<cmd>Fzf files<cr>", "files" },
+    b = { "<cmd>FzfLua buffers<cr>", "buffers" },
+  },
+})
