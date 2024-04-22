@@ -965,6 +965,16 @@ function e()
   fi
 }
 
+function ei
+{
+  # need to determine if nvim can be run
+  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
+      XDG_CONFIG_HOME=~/.vim/test nvim $@
+  else
+    vim $@
+  fi
+}
+
 __imp_v()
 {
   # first argument is to decide mode

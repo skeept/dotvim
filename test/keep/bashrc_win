@@ -146,7 +146,6 @@ ev()
   fi
 }
 
-
 tc()
 {
   _TOTALCMD_PATH="$(__win_base)/Program Files/totalcmd/TOTALCMD64.EXE"
