@@ -1,4 +1,4 @@
-use crate::searcher::{walk_parallel, SearchContext, WalkConfig};
+use crate::searcher::{walk_parallel, SearchContext, SearchInfo, WalkConfig};
 use crate::stdio_server::SearchProgressor;
 use filter::MatchedItem;
 use grep_searcher::{sinks, BinaryDetection, SearcherBuilder};
@@ -13,8 +13,6 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use types::{Rank, SearchProgressUpdate};
 
 pub(super) const UPDATE_INTERVAL: Duration = Duration::from_millis(200);
-
-pub(super) type SearcherMessage = crate::searcher::SearcherMessage<FileResult>;
 
 #[derive(Debug, Default)]
 struct MatchEverything;
@@ -52,7 +50,7 @@ pub struct FileResult {
 pub(super) struct StoppableSearchImpl {
     paths: Vec<PathBuf>,
     matcher: Matcher,
-    sender: UnboundedSender<SearcherMessage>,
+    sender: UnboundedSender<FileResult>,
     stop_signal: Arc<AtomicBool>,
 }
 
@@ -60,7 +58,7 @@ impl StoppableSearchImpl {
     pub(super) fn new(
         paths: Vec<PathBuf>,
         matcher: Matcher,
-        sender: UnboundedSender<SearcherMessage>,
+        sender: UnboundedSender<FileResult>,
         stop_signal: Arc<AtomicBool>,
     ) -> Self {
         Self {
@@ -71,7 +69,7 @@ impl StoppableSearchImpl {
         }
     }
 
-    pub(super) fn run(self) {
+    pub(super) fn run(self, search_info: SearchInfo) {
         let Self {
             paths,
             matcher,
@@ -91,14 +89,14 @@ impl StoppableSearchImpl {
             let sender = sender.clone();
             let stop_signal = stop_signal.clone();
             let search_root = search_root.clone();
+            let search_info = search_info.clone();
             Box::new(move |entry: Result<DirEntry, ignore::Error>| -> WalkState {
                 if stop_signal.load(Ordering::SeqCst) {
                     return WalkState::Quit;
                 }
 
-                let entry = match entry {
-                    Ok(entry) => entry,
-                    Err(_) => return WalkState::Continue,
+                let Ok(entry) = entry else {
+                    return WalkState::Continue;
                 };
 
                 // TODO: Add search syntax for filtering path
@@ -109,23 +107,26 @@ impl StoppableSearchImpl {
                     _ => return WalkState::Continue,
                 };
 
+                let relative_path = entry
+                    .path()
+                    .strip_prefix(&search_root)
+                    .unwrap_or_else(|_| entry.path());
+
                 let result = searcher.search_path(
                     &MatchEverything,
                     entry.path(),
                     sinks::Lossy(|line_number, line| {
+                        search_info.total_processed.fetch_add(1, Ordering::Relaxed);
+
                         if line.is_empty() {
-                            // Discontinue if the sender has been dropped.
-                            return Ok(sender.send(SearcherMessage::ProcessedOne).is_ok());
+                            return Ok(true);
                         }
 
-                        let path = entry
-                            .path()
-                            .strip_prefix(&search_root)
-                            .unwrap_or_else(|_| entry.path());
                         let line = line.trim();
+
                         let maybe_file_result =
                             matcher
-                                .match_file_result(path, line)
+                                .match_file_result(relative_path, line)
                                 .map(|matched| FileResult {
                                     path: entry.path().to_path_buf(),
                                     line_number,
@@ -135,19 +136,22 @@ impl StoppableSearchImpl {
                                     indices_in_line: matched.fuzzy_indices,
                                 });
 
-                        let searcher_message = if let Some(file_result) = maybe_file_result {
-                            SearcherMessage::Match(file_result)
-                        } else {
-                            SearcherMessage::ProcessedOne
-                        };
+                        if let Some(file_result) = maybe_file_result {
+                            search_info.total_matched.fetch_add(1, Ordering::Relaxed);
 
-                        // Discontinue if the sender has been dropped.
-                        Ok(sender.send(searcher_message).is_ok())
+                            // Only send the item when its rank is higher than the lowest rank.
+                            if file_result.rank > *search_info.lowest_rank.read() {
+                                // Discontinue if the sender has been dropped.
+                                return Ok(sender.send(file_result).is_ok());
+                            }
+                        }
+
+                        Ok(true)
                     }),
                 );
 
                 if let Err(err) = result {
-                    tracing::error!("Global search error: {}, {}", entry.path().display(), err);
+                    tracing::error!(?err, path = ?entry.path(), "Global search error");
                 }
 
                 WalkState::Continue
@@ -160,6 +164,9 @@ impl StoppableSearchImpl {
 struct BestFileResults {
     /// Time of last notification.
     past: Instant,
+    // TODO: Use BinaryHeap than sorted vector.
+    //
+    // Blocked by https://github.com/rust-lang/rust/pull/124012
     results: Vec<FileResult>,
     last_lines: Vec<String>,
     last_visible_highlights: Vec<Vec<usize>>,
@@ -179,6 +186,12 @@ impl BestFileResults {
 
     fn sort(&mut self) {
         self.results.sort_unstable_by(|a, b| b.rank.cmp(&a.rank));
+    }
+
+    #[inline]
+    fn replace_last(&mut self, new: FileResult) {
+        let index = self.results.len() - 1;
+        self.results[index] = new;
     }
 }
 
@@ -200,16 +213,18 @@ pub async fn search(query: String, matcher: Matcher, search_context: SearchConte
 
     let (sender, mut receiver) = unbounded_channel();
 
+    let search_info = SearchInfo::new();
+
     std::thread::Builder::new()
         .name("grep-worker".into())
         .spawn({
             let stop_signal = stop_signal.clone();
-            move || StoppableSearchImpl::new(paths, matcher, sender, stop_signal).run()
+            let search_info = search_info.clone();
+            move || StoppableSearchImpl::new(paths, matcher, sender, stop_signal).run(search_info)
         })
         .expect("Failed to spawn grep-worker thread");
 
     let mut total_matched = 0usize;
-    let mut total_processed = 0usize;
 
     let to_display_lines = |best_results: &[FileResult], icon: Icon| {
         let grep_results = best_results
@@ -261,85 +276,80 @@ pub async fn search(query: String, matcher: Matcher, search_context: SearchConte
     };
 
     let now = std::time::Instant::now();
-    while let Some(searcher_message) = receiver.recv().await {
+    while let Some(file_result) = receiver.recv().await {
         if stop_signal.load(Ordering::SeqCst) {
             return;
         }
 
-        match searcher_message {
-            SearcherMessage::Match(file_result) => {
-                total_matched += 1;
-                total_processed += 1;
+        total_matched += 1;
 
-                if best_results.results.len() <= best_results.max_capacity {
-                    best_results.results.push(file_result);
-                    best_results.sort();
+        if best_results.results.len() <= best_results.max_capacity {
+            best_results.results.push(file_result);
+            best_results.sort();
 
-                    let now = Instant::now();
-                    if now > best_results.past + UPDATE_INTERVAL {
-                        let display_lines = to_display_lines(&best_results.results, icon);
-                        progressor.update_all(&display_lines, total_matched, total_processed);
-                        best_results.last_lines = display_lines.lines;
-                        best_results.past = now;
-                    }
-                } else {
-                    let last = best_results
-                        .results
-                        .last_mut()
-                        .expect("Max capacity is non-zero; qed");
-
-                    let new = file_result;
-                    if let std::cmp::Ordering::Greater = new.rank.cmp(&last.rank) {
-                        *last = new;
-                        best_results.sort();
-                    }
-
-                    if total_matched % 16 == 0 || total_processed % 16 == 0 {
-                        let now = Instant::now();
-                        if now > best_results.past + UPDATE_INTERVAL {
-                            let display_lines = to_display_lines(&best_results.results, icon);
-
-                            let visible_highlights = display_lines
-                                .indices
-                                .iter()
-                                .map(|line_highlights| {
-                                    line_highlights
-                                        .iter()
-                                        .copied()
-                                        .filter(|&x| x <= line_width)
-                                        .collect::<Vec<_>>()
-                                })
-                                .collect::<Vec<_>>();
-
-                            if best_results.last_lines != display_lines.lines.as_slice()
-                                || best_results.last_visible_highlights != visible_highlights
-                            {
-                                progressor.update_all(
-                                    &display_lines,
-                                    total_matched,
-                                    total_processed,
-                                );
-                                best_results.last_lines = display_lines.lines;
-                                best_results.last_visible_highlights = visible_highlights;
-                            } else {
-                                progressor.quick_update(total_matched, total_processed)
-                            }
-
-                            best_results.past = now;
-                        }
-                    }
-                }
+            let now = Instant::now();
+            if now > best_results.past + UPDATE_INTERVAL {
+                let display_lines = to_display_lines(&best_results.results, icon);
+                let total_processed = search_info.total_processed.load(Ordering::Relaxed);
+                progressor.update_all(&display_lines, total_matched, total_processed);
+                best_results.last_lines = display_lines.lines;
+                best_results.past = now;
             }
-            SearcherMessage::ProcessedOne => {
-                total_processed += 1;
+        } else {
+            best_results.replace_last(file_result);
+            best_results.sort();
+
+            let total_matched = search_info.total_matched.load(Ordering::Relaxed);
+            let total_processed = search_info.total_processed.load(Ordering::Relaxed);
+
+            let now = Instant::now();
+            if now > best_results.past + UPDATE_INTERVAL {
+                let display_lines = to_display_lines(&best_results.results, icon);
+
+                let visible_highlights = display_lines
+                    .indices
+                    .iter()
+                    .map(|line_highlights| {
+                        line_highlights
+                            .iter()
+                            .copied()
+                            .filter(|&x| x <= line_width)
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
+
+                if best_results.last_lines != display_lines.lines.as_slice()
+                    || best_results.last_visible_highlights != visible_highlights
+                {
+                    progressor.update_all(&display_lines, total_matched, total_processed);
+                    best_results.last_lines = display_lines.lines;
+                    best_results.last_visible_highlights = visible_highlights;
+                } else {
+                    progressor.quick_update(total_matched, total_processed)
+                }
+
+                best_results.past = now;
             }
         }
+
+        // best_results list is sorted now.
+        *search_info.lowest_rank.write() = best_results
+            .results
+            .last()
+            .expect("results must not be empty; qed")
+            .rank;
+    }
+
+    if stop_signal.load(Ordering::SeqCst) {
+        return;
     }
 
     let elapsed = now.elapsed().as_millis();
 
     let display_lines = to_display_lines(&best_results.results, icon);
 
+    let total_matched = search_info.total_matched.load(Ordering::SeqCst);
+    let total_processed = search_info.total_processed.load(Ordering::SeqCst);
     progressor.on_finished(display_lines, total_matched, total_processed);
 
     tracing::debug!(

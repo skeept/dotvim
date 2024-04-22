@@ -18,29 +18,50 @@ pub use self::live_grep::LiveGrep;
 pub const RG_EXEC_CMD: &str =
     "rg --column --line-number --no-heading --color=never --smart-case '' .";
 
+#[derive(clap::ValueEnum, Default, Clone, Debug)]
+enum FuzzyAlgo {
+    #[default]
+    Fzy,
+    Skim,
+    FzfV2,
+    Nucleo,
+}
+
 #[derive(Parser, Debug, Clone)]
 pub struct Grep {
     /// Specify the query string for GREP_CMD.
     #[clap(index = 1)]
     grep_query: String,
 
-    /// Read input from a cached grep tempfile, only absolute file path is supported.
+    /// Read input from a cached grep tempfile.
+    ///
+    /// Only absolute file path is supported.
     #[clap(long, value_parser)]
     input: Option<PathBuf>,
 
-    /// Specify the working directory of CMD
+    /// Specify the working directory of CMD.
     #[clap(long, value_parser)]
     cmd_dir: Option<PathBuf>,
 
-    /// Recreate the cache, only intended for the test purpose.
+    /// Specify the fuzzy matching algorithm.
+    #[clap(long, default_value_t, value_enum)]
+    fuzzy_algo: FuzzyAlgo,
+
+    /// Recreate the grep cache.
+    ///
+    /// Only intended for the test purpose.
     #[clap(long)]
     refresh_cache: bool,
 
+    /// Run the filter in parallel.
+    ///
+    /// Deprecated.
     #[clap(long)]
     par_run: bool,
 
+    /// Use the builtin searching implementation on top of libripgrep instead of the rg executable.
     #[clap(long)]
-    ripgrep: bool,
+    lib_ripgrep: bool,
 }
 
 impl Grep {
@@ -55,13 +76,21 @@ impl Grep {
             return Ok(());
         }
 
-        if self.ripgrep {
+        if self.lib_ripgrep {
             let dir = match self.cmd_dir {
                 Some(ref dir) => dir.clone(),
                 None => std::env::current_dir()?,
             };
 
-            let clap_matcher = matcher::MatcherBuilder::new().build(self.grep_query.clone().into());
+            let fuzzy_algo = match self.fuzzy_algo {
+                FuzzyAlgo::Skim => matcher::FuzzyAlgorithm::Skim,
+                FuzzyAlgo::Fzy => matcher::FuzzyAlgorithm::Fzy,
+                FuzzyAlgo::FzfV2 => matcher::FuzzyAlgorithm::FzfV2,
+                FuzzyAlgo::Nucleo => matcher::FuzzyAlgorithm::Nucleo,
+            };
+            let clap_matcher = matcher::MatcherBuilder::new()
+                .fuzzy_algo(fuzzy_algo)
+                .build(self.grep_query.clone().into());
 
             let search_result =
                 maple_core::searcher::grep::cli_search(vec![dir], clap_matcher).await;
