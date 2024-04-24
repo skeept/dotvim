@@ -99,11 +99,15 @@ function initial_setup_copy()
 
 function py() {
   # should we go with python by default or python 3?
-  if type python3 >& /dev/null; then
-    python3 $@
-  else
-    python $@
-  fi
+  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
+  "${PYTHON_EXE}" $@
+}
+
+function pym {
+  # assume script is first argument
+  script_root=$(dirname $1)
+  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
+  PYTHONPATH="$script_root:$PYTHONPATH" "${PYTHON_EXE}" $@
 }
 
 function ud ()
