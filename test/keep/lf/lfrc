@@ -19,6 +19,7 @@ map dc wdiff
 map du ${{
   [ -d $f  ] && ncdu $f || ncdu $(dirname $f)
 }}
+map dD delete
 
 
 cmd on-cd &{{

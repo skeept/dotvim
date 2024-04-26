@@ -65,6 +65,7 @@ map du ${{
   $target = if($item.PSIsContainer) {$item.name} else {"."}
   wsl -e ncdu $target
 }}
+map dD delete
 map c
 map cc rename
 map cl clear
