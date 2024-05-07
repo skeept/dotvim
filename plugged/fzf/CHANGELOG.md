@@ -1,6 +1,64 @@
 CHANGELOG
 =========
 
+0.52.0
+------
+- Added `--highlight-line` to highlight the whole current line (à la `set cursorline` of Vim)
+- Added color names for selected lines: `selected-fg`, `selected-bg`, and `selected-hl`
+  ```sh
+  fzf --border --multi --info inline-right --layout reverse --marker ▏ --pointer ▌ --prompt '▌ '  \
+      --highlight-line --color gutter:-1,selected-bg:238,selected-fg:146,current-fg:189
+  ```
+- Added `click-header` event that is triggered when the header section is clicked. When the event is triggered, `$FZF_CLICK_HEADER_COLUMN` and `$FZF_CLICK_HEADER_LINE` are set.
+  ```sh
+  fd --type f |
+    fzf --header $'[Files] [Directories]' --header-first \
+        --bind 'click-header:transform:
+          (( FZF_CLICK_HEADER_COLUMN <= 7 )) && echo "reload(fd --type f)"
+          (( FZF_CLICK_HEADER_COLUMN >= 9 )) && echo "reload(fd --type d)"
+        '
+  ```
+- Add `$FZF_COMPLETION_{DIR,PATH}_OPTS` for separately customizing the behavior of fuzzy completion
+  ```sh
+  # Set --walker options without 'follow' not to follow symbolic links
+  FZF_COMPLETION_PATH_OPTS="--walker=file,dir,hidden"
+  FZF_COMPLETION_DIR_OPTS="--walker=dir,hidden"
+  ```
+- Fixed Windows argument escaping
+- Bug fixes and improvements
+- The code was heavily refactored to allow using fzf as a library in Go programs. The API is still experimental and subject to change.
+    - https://gist.github.com/junegunn/193990b65be48a38aac6ac49d5669170
+
+0.51.0
+------
+- Added a new environment variable `$FZF_POS` exported to the child processes. It's the vertical position of the cursor in the list starting from 1.
+  ```sh
+  # Toggle selection to the top or to the bottom
+  seq 30 | fzf --multi --bind 'load:pos(10)' \
+    --bind 'shift-up:transform:for _ in $(seq $FZF_POS $FZF_MATCH_COUNT); do echo -n +toggle+up; done' \
+    --bind 'shift-down:transform:for _ in $(seq 1 $FZF_POS); do echo -n +toggle+down; done'
+  ```
+- Added `--with-shell` option to start child processes with a custom shell command and flags
+  ```sh
+  gem list | fzf --with-shell 'ruby -e' \
+    --preview 'pp Gem::Specification.find_by_name({1})' \
+    --bind 'ctrl-o:execute-silent:
+        spec = Gem::Specification.find_by_name({1})
+        [spec.homepage, *spec.metadata.filter { _1.end_with?("uri") }.values].uniq.each do
+          system "open", _1
+        end
+    '
+  ```
+- Added `change-multi` action for dynamically changing `--multi` option
+    - `change-multi` - enable multi-select mode with no limit
+    - `change-multi(NUM)` - enable multi-select mode with a limit
+    - `change-multi(0)` - disable multi-select mode
+- Windows improvements
+    - `become` action is now supported on Windows
+        - Unlike in *nix, this does not use `execve(2)`. Instead it spawns a new process and waits for it to finish, so the exact behavior may differ.
+    - Fixed argument escaping for Windows cmd.exe. No redundant escaping of backslashes.
+- Bug fixes and improvements
+
 0.50.0
 ------
 - Search performance optimization. You can observe 50%+ improvement in some scenarios.

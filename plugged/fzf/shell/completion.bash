@@ -4,10 +4,12 @@
 #  / __/ / /_/ __/
 # /_/   /___/_/ completion.bash
 #
-# - $FZF_TMUX               (default: 0)
-# - $FZF_TMUX_OPTS          (default: empty)
-# - $FZF_COMPLETION_TRIGGER (default: '**')
-# - $FZF_COMPLETION_OPTS    (default: empty)
+# - $FZF_TMUX                 (default: 0)
+# - $FZF_TMUX_OPTS            (default: empty)
+# - $FZF_COMPLETION_TRIGGER   (default: '**')
+# - $FZF_COMPLETION_OPTS      (default: empty)
+# - $FZF_COMPLETION_PATH_OPTS (default: empty)
+# - $FZF_COMPLETION_DIR_OPTS  (default: empty)
 
 if [[ $- =~ i ]]; then
 
@@ -297,8 +299,14 @@ __fzf_generic_path_completion() {
           if declare -F "$1" > /dev/null; then
             eval "$1 $(printf %q "$dir")" | __fzf_comprun "$4" -q "$leftover"
           else
-            [[ $1 =~ dir ]] && walker=dir,follow || walker=file,dir,follow,hidden
-            __fzf_comprun "$4" -q "$leftover" --walker "$walker" --walker-root="$dir"
+            if [[ $1 =~ dir ]]; then
+              walker=dir,follow
+              rest=${FZF_COMPLETION_DIR_OPTS-}
+            else
+              walker=file,dir,follow,hidden
+              rest=${FZF_COMPLETION_PATH_OPTS-}
+            fi
+            __fzf_comprun "$4" -q "$leftover" --walker "$walker" --walker-root="$dir" $rest
           fi | while read -r item; do
             printf "%q " "${item%$3}$3"
           done
@@ -463,8 +471,11 @@ complete -o default -F _fzf_opts_completion fzf
 # fzf-tmux specific options (like `-w WIDTH`) are left as a future patch.
 complete -o default -F _fzf_opts_completion fzf-tmux
 
-d_cmds="${FZF_COMPLETION_DIR_COMMANDS:-cd pushd rmdir}"
-a_cmds="
+d_cmds="${FZF_COMPLETION_DIR_COMMANDS-cd pushd rmdir}"
+
+# NOTE: $FZF_COMPLETION_PATH_COMMANDS and $FZF_COMPLETION_VAR_COMMANDS are
+# undocumented and subject to change in the future.
+a_cmds="${FZF_COMPLETION_PATH_COMMANDS-"
   awk bat cat diff diff3
   emacs emacsclient ex file ftp g++ gcc gvim head hg hx java
   javac ld less more mvim nvim patch perl python ruby
@@ -472,8 +483,8 @@ a_cmds="
   basename bunzip2 bzip2 chmod chown curl cp dirname du
   find git grep gunzip gzip hg jar
   ln ls mv open rm rsync scp
-  svn tar unzip zip"
-v_cmds="export unset printenv"
+  svn tar unzip zip"}"
+v_cmds="${FZF_COMPLETION_VAR_COMMANDS-export unset printenv}"
 
 # Preserve existing completion
 __fzf_orig_completion < <(complete -p $d_cmds $a_cmds $v_cmds unalias kill ssh 2> /dev/null)

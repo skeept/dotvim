@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ..
-.TH fzf 1 "Apr 2024" "fzf 0.50.0" "fzf - a command-line fuzzy finder"
+.TH fzf 1 "May 2024" "fzf 0.52.0" "fzf - a command-line fuzzy finder"
 
 .SH NAME
 fzf - a command-line fuzzy finder
@@ -464,14 +464,17 @@ color mappings.
 
 .B COLOR NAMES:
     \fBfg                  \fRText
+      \fBselected-fg       \fRSelected line text
       \fBpreview-fg        \fRPreview window text
     \fBbg                  \fRBackground
+      \fBselected-bg       \fRSelected line background
       \fBpreview-bg        \fRPreview window background
     \fBhl                  \fRHighlighted substrings
-    \fBfg+                 \fRText (current line)
-    \fBbg+                 \fRBackground (current line)
+      \fBselected-hl       \fRHighlighted substrings in the selected line
+    \fBcurrent-fg (fg+)    \fRText (current line)
+    \fBcurrent-bg (bg+)    \fRBackground (current line)
       \fBgutter            \fRGutter on the left
-    \fBhl+                 \fRHighlighted substrings (current line)
+    \fBcurrent-hl (hl+)    \fRHighlighted substrings (current line)
     \fBquery               \fRQuery string
       \fBdisabled          \fRQuery string when search is disabled (\fB--disabled\fR)
     \fBinfo                \fRInfo line (match counters)
@@ -533,6 +536,9 @@ color mappings.
          --color='hl:#719872,fg:#D9D9D9,header:#719872,fg+:#D9D9D9' \\
          --color='pointer:#E12672,marker:#E17899,prompt:#98BEDE,hl+:#98BC99'\fR
 .RE
+.TP
+.B "--highlight-line"
+Highlight the whole current line
 .TP
 .B "--no-bold"
 Do not use bold text
@@ -818,6 +824,16 @@ the finder only after the input stream is complete.
 e.g. \fBfzf --multi | fzf --sync\fR
 .RE
 .TP
+.B "--with-shell=STR"
+Shell command and flags to start child processes with. On *nix Systems, the
+default value is \fB$SHELL -c\fR if \fB$SHELL\fR is set, otherwise \fBsh -c\fR.
+On Windows, the default value is \fBcmd /s/c\fR when \fB$SHELL\fR is not
+set.
+
+.RS
+e.g. \fBgem list | fzf --with-shell 'ruby -e' --preview 'pp Gem::Specification.find_by_name({1})'\fR
+.RE
+.TP
 .B "--listen[=[ADDR:]PORT]" "--listen-unsafe[=[ADDR:]PORT]"
 Start HTTP server and listen on the given address. It allows external processes
 to send actions to perform via POST method.
@@ -932,6 +948,8 @@ you need to protect against DNS rebinding and privilege escalation attacks.
 .br
 .BR 2 "      Error"
 .br
+.BR 127 "    Invalid shell command for \fBbecome\fR action"
+.br
 .BR 130 "    Interrupted with \fBCTRL-C\fR or \fBESC\fR"
 
 .SH FIELD INDEX EXPRESSION
@@ -971,6 +989,8 @@ fzf exports the following environment variables to its child processes.
 .BR FZF_MATCH_COUNT "     Number of matched items"
 .br
 .BR FZF_SELECT_COUNT "    Number of selected items"
+.br
+.BR FZF_POS "             Vertical position of the cursor in the list starting from 1"
 .br
 .BR FZF_QUERY "           Current query string"
 .br
@@ -1264,6 +1284,15 @@ e.g.
      \fBfzf --bind space:jump,jump:accept,jump-cancel:abort\fR
 .RE
 
+\fIclick-header\fR
+.RS
+Triggered when a mouse click occurs within the header. Sets \fBFZF_CLICK_HEADER_LINE\fR and \fBFZF_CLICK_HEADER_COLUMN\fR environment variables starting from 1.
+
+e.g.
+     \fBprintf "head1\\nhead2" | fzf --header-lines=2 --bind 'click-header:transform-prompt:printf ${FZF_CLICK_HEADER_LINE}x${FZF_CLICK_HEADER_COLUMN}'\fR
+
+.RE
+
 .SS AVAILABLE ACTIONS:
 A key or an event can be bound to one or more of the following actions.
 
@@ -1282,6 +1311,8 @@ A key or an event can be bound to one or more of the following actions.
     \fBcancel\fR                       (clear query string if not empty, abort fzf otherwise)
     \fBchange-border-label(...)\fR     (change \fB--border-label\fR to the given string)
     \fBchange-header(...)\fR           (change header to the given string; doesn't affect \fB--header-lines\fR)
+    \fBchange-multi\fR                 (enable multi-select mode with no limit)
+    \fBchange-multi(...)\fR            (enable multi-select mode with a limit or disable it with 0)
     \fBchange-preview(...)\fR          (change \fB--preview\fR option)
     \fBchange-preview-label(...)\fR    (change \fB--preview-label\fR to the given string)
     \fBchange-preview-window(...)\fR   (change \fB--preview-window\fR option; rotate through the multiple option sets separated by '|')
@@ -1438,8 +1469,6 @@ current fzf process with the specified command using \fBexecve(2)\fR system
 call.
 
     \fBfzf --bind "enter:become(vim {})"\fR
-
-\fBbecome(...)\fR is not supported on Windows.
 
 .SS RELOAD INPUT
 
