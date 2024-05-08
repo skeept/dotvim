@@ -67,7 +67,7 @@ map on &gvi :N $f
 map ov $vim $f
 map oe $nvim $f
 map oi $gvi -nvim $f
-map oz $7zFM.exe $f
+map oz &7zFM.exe $f
 
 map c
 map cc rename
