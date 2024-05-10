@@ -44,6 +44,14 @@ cmd fzf_search ${{
 }}
 map gs :fzf_search
 
+cmd copy_to_clip &{{
+  if command -v clip.exe >& /dev/null; then
+    echo "$fx" | clip.exe
+  fi
+}}
+
+map gy :copy_to_clip
+
 
 cmd fzf_jump ${{
     res="$(fd | fzf --reverse --header='Jump to location')"
