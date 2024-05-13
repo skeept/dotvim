@@ -71,6 +71,8 @@ map c
 map cc rename
 map cl clear
 
+map <delete> delete
+
 # map all common operations to a (for action) prefix
 map ap paste
 map ay copy

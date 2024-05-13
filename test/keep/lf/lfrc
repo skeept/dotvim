@@ -20,6 +20,7 @@ map du ${{
   [ -d $f  ] && ncdu $f || ncdu $(dirname $f)
 }}
 map dD delete
+map <delete> delete
 
 
 cmd on-cd &{{
