@@ -95,7 +95,7 @@ function! s:shellesc_cmd(arg)
     let e .= c
   endfor
   let e .= repeat('\', slashes) .'"'
-  return e
+  return substitute(substitute(e, '[&|<>()^!"]', '^&', 'g'), '%', '%%', 'g')
 endfunction
 
 function! fzf#shellescape(arg, ...)
@@ -711,7 +711,7 @@ function! s:execute(dict, command, use_height, temps) abort
   elseif has('win32unix') && $TERM !=# 'cygwin'
     let shellscript = s:fzf_tempname()
     call s:writefile([command], shellscript)
-    let command = 'cmd.exe /C '.fzf#shellescape('set "TERM=" & start /WAIT sh -c '.shellscript)
+    let command = 'cmd.exe //C '.fzf#shellescape('set "TERM=" & start /WAIT sh -c '.shellscript)
     let a:temps.shellscript = shellscript
   endif
   if a:use_height
