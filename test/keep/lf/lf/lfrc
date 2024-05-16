@@ -81,3 +81,5 @@ map ad cut
 map ac clear
 map aD delete
 map ar rename
+
+map gi $lg

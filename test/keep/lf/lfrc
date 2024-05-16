@@ -44,6 +44,7 @@ cmd fzf_search ${{
     [ -n "$res" ] && lf -remote "send $id select \"$res\""
 }}
 map gs :fzf_search
+map gi $lg
 
 cmd copy_to_clip &{{
   if command -v clip.exe >& /dev/null; then
