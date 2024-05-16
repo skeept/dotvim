@@ -1358,5 +1358,12 @@ if { type zoxide && ! type zi; } >& /dev/null ; then
   eval "$(zoxide init bash)"
 fi
 
+#function docker()
+#{
+  #[ -e ~/bin/links/completions/docker.bash ] && . ~/bin/links/completions/docker.bash
+  #unset -f docker
+  #docker $@
+#}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 

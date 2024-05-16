@@ -190,6 +190,15 @@ if [ -e /conda/envs/dvc/bin/vd ]; then
   alias vsd=/conda/envs/dvc/bin/vd
 fi
 
+# move docker windows path to end of path. We actually first remove it
+docker_windows='/mnt/c/Program Files/Docker/Docker/resources/bin'
+PATH=:$PATH:
+PATH=${PATH//:$docker_windows:/:}
+PATH=${PATH#:}
+PATH=${PATH%:}
+PATH=${PATH}:${docker_windows}
+unset docker_windows
+
 if test ${BASH_VERSION:0:1} -ge 3 ; then dupremove; fi
 
 # vim: set ft=bash:
