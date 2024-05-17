@@ -53,7 +53,7 @@ set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 
 map oc $code ($env:fx -split '\n')
 map ov $gvim ($env:fx -split '\n')
-map oz &7fFM ($env:fx -split '\n')
+map oz &7zFM ($env:fx -split '\n')
 
 cmd vdiff $gvim -d ($env:fx -split '\n')
 
