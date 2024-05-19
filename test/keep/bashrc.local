@@ -1,0 +1,50 @@
+
+command -v ngp >& /dev/null  || export PATH=${PATH}:/home/sabre/src/SABRE2/sabre2/.sabre2/bin
+
+function pm()
+{
+  # assume first argument is python file
+  file=$1
+  shift
+  file=${file//\//.}
+  file=${file/.py/}
+  p -m ${file} "$@"
+}
+
+function ppythonpathadd()
+{
+  # assumption is user is at root of the service
+  export PYTHONPATH="$(realpath .):$(realpath service):$(git rev-parse --show-toplevel):$(realpath cmnpy):${PYTHONPATH}"
+  dupremove PYTHONPATH
+}
+
+function ussh()
+{
+  # cert, prod -> for use with costumers
+  # cc, pp -> research
+}
+
+function tools_init()
+{
+  . /home/sabre/src/ngp_tools/tools-init.sh
+}
+
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# Restart your shell for the changes to take effect.
+
+# Load pyenv-virtualenv automatically by adding
+# the following to ~/.bashrc:
+
+eval "$(pyenv virtualenv-init -)"
+[ -s "/home/sabre/.tools/tools-init.sh" ] && \. "/home/sabre/.tools/tools-init.sh"
+
+[[ -e ~/tmp/bash-preexec/bash-preexec.sh ]] && . ~/tmp/bash-preexec/bash-preexec.sh
+eval "$(atuin init bash)"
+
+#export PATH="${HOME}/tmp/docker:${PATH}"
+#export DOCKER_HOST=tcp://localhost:2375
+
+# some gsc bucket
