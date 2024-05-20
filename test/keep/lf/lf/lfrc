@@ -62,9 +62,11 @@ map dd cut
 map dv $gvim -d ($env:fx -split '\n')
 map dc diff
 map du ${{
-  $item = Get-Item $env:f
-  $target = if($item.PSIsContainer) {$item.name} else {"."}
-  wsl -e ncdu $target
+  #$item = Get-Item $env:f
+  #$target = if($item.PSIsContainer) {$item.name} else {"."}
+  #wsl -e ncdu $target
+  #dua interative $target
+  if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
 }}
 map dD delete
 map c

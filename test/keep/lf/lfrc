@@ -17,7 +17,7 @@ map dd cut
 map dv vdiff
 map dc wdiff
 map du ${{
-  [ -d $f  ] && ncdu $f || ncdu $(dirname $f)
+  [ -d $f  ] && dua interactive $f || dua interactive $(dirname $f)
 }}
 map dD delete
 map <delete> delete
