@@ -35,6 +35,7 @@ alias top1='top -u `whoami` -c '
 
 alias h='history'
 alias jl='jobs -l'
+alias ju='just'
 alias which='type -all'
 alias gdf='type'
 alias ..='z ..'

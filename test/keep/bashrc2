@@ -1365,5 +1365,12 @@ fi
   #docker $@
 #}
 
+function just()
+{
+  unset -f just
+  eval "$(command just --completions bash)"
+  just "$@"
+}
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
