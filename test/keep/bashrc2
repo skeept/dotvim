@@ -1372,5 +1372,11 @@ function just()
   just "$@"
 }
 
+# atuin related configs
+if [ -x "$(command -v atuin)" ]; then
+  [[ -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
+  eval "$(atuin init bash)"
+fi
+
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
