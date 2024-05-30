@@ -1375,7 +1375,8 @@ function just()
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
   [[ -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
-  eval "$(atuin init bash)"
+  eval "$(atuin init bash --disable-up-arrow)"
+  bind -x '"\C-p": __atuin_history'
 fi
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
