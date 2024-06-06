@@ -71,12 +71,13 @@ map <c-f> :fzf_jump
 
 
 # open operations
-map oo &gvi $f
 map oc $code $f
-map on &gvi :N $f
-map ov $vim $f
 map oe $nvim $f
 map oi $gvi -nvim $f
+map om $emacs -nw $f
+map on &gvi :N $f
+map oo &gvi $f
+map ov $vim $f
 map oz &7zFM.exe $f
 
 map c
