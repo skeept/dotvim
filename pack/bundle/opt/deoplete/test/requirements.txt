@@ -1,5 +1,0 @@
-pynvim
-pytest
-flake8
-mypy
-pytest-cov
