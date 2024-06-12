@@ -94,6 +94,10 @@ cp *.exe ..\..
 previous instructions were adapted from
 https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/
 
+----------- Replace in multiple files
+-- first find text to replace 
+:vimgrep /pattern/ **/*.py
+:cfdo %s//newnew/gc | update
 
 git line ending settings
 seems OK to do this for this repo:

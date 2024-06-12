@@ -9,7 +9,6 @@ vim.keymap.set("n", "<F1>", "wa")
 vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>")
 
 vim.keymap.set("n", "g/", "/\\<\\><left><left>")
-
 vim.keymap.set("n", "<tab>", "<c-w>")
 
 local function DeltTrailingSpace()
@@ -74,7 +73,7 @@ wk.register({
     v = {
       name = "search and whatever",
       n = { ":vimgrep // *<Left><Left><Left>", "vimgrep this folder [start typing]" },
-      r = { ":vimgrep // **/*<Left><Left><Left><Left><Left>", "vimgrep nested" },
+      r = { ":vimgrep // **/*<Left><Left><Left><Left><Left><Left>", "vimgrep nested" },
     },
     s = {
       name = "settings tabs and more",
