@@ -247,7 +247,7 @@ func Run(opts *Options) (int, error) {
 	if heightUnknown {
 		maxFit, padHeight = terminal.MaxFitAndPad()
 	}
-	deferred := opts.Select1 || opts.Exit0
+	deferred := opts.Select1 || opts.Exit0 || opts.Sync
 	go terminal.Loop()
 	if !deferred && !heightUnknown {
 		// Start right away
@@ -339,9 +339,6 @@ func Run(opts *Options) (int, error) {
 					}
 					total = count
 					terminal.UpdateCount(total, !reading, value.(*string))
-					if opts.Sync {
-						terminal.UpdateList(PassMerger(&snapshot, opts.Tac, snapshotRevision), false)
-					}
 					if heightUnknown && !deferred {
 						determine(!reading)
 					}
@@ -429,7 +426,7 @@ func Run(opts *Options) (int, error) {
 								determine(val.final)
 							}
 						}
-						terminal.UpdateList(val, true)
+						terminal.UpdateList(val)
 					}
 				}
 			}
