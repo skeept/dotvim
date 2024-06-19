@@ -492,10 +492,9 @@ of options that the user can choose from via |popupmenu-completion|:
 >
     snippet todo
         # ${1|TODO|FIXME|BUG}: $2
-<
-Notice that the : is replaced by the pipe |. Currently mirrors or evaluations
-are not supported within selection text. If alterations are made to the
-selected text, the stop becomes a regular stop, losing the selections.
+< Notice that the : is replaced by the pipe |. Currently mirrors and
+placeholders are not supported within selection text. If alterations are made
+to the selected text, the stop becomes a regular stop, losing the selections.
 
                                                              *SnipMate-visual*
 The VISUAL Stop~

@@ -35,6 +35,7 @@ endfunction
 " Update state information to correspond to the given tab stop
 function! s:state_set_stop(backwards) dict abort
 	call self.find_next_stop(a:backwards)
+
 	let self.cur_stop    = self.stops[self.stop_no]
 	let self.stop_len = (type(self.cur_stop.placeholder) == type(0))
 				\ ? self.cur_stop.placeholder
@@ -43,17 +44,26 @@ function! s:state_set_stop(backwards) dict abort
 	let self.end_col     = self.start_col + self.stop_len
 	let self.mirrors     = get(self.cur_stop, 'mirrors', [])
 	let self.old_mirrors = deepcopy(self.mirrors)
+
 	call cursor(self.cur_stop.line, self.cur_stop.col)
+
 	let self.prev_len    = col('$')
 	let self.changed = 0
+
+	for mirror in self.mirrors
+		let mirror.oldSize = self.stop_len
+	endfor
+
 	if exists("self.cur_stop.items")
 		let ret = self.select_item()
 	else
 		let ret = self.select_word()
 	endif
+
 	if (self.stop_no == 0 || self.stop_no == self.stop_count - 1) && !a:backwards
 		call self.remove()
 	endif
+
 	return ret
 endfunction
 
