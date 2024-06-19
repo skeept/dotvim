@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import shlex
 
-file, *others = sys.argv[1:]
+# this doesn't work in python 3.7
+# file, *others = sys.argv[1:]
+file, others = sys.argv[1], sys.argv[2:]
 file = Path(file)
 
 suffix = file.suffix.lower()[1:]
