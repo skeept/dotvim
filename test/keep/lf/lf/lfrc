@@ -86,7 +86,6 @@ map ay copy
 map av invert
 map ad cut
 map ac clear
-map aD delete
 
 map gi $lg
 
