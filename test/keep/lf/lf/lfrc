@@ -28,7 +28,6 @@ map w $pwsh -noprofile
 # change 'doc' command to use a different pager
 cmd doc $lf -doc | bat --style=plain --color=always
 
-
 cmd maps $lf -remote "query $env:id maps" | bat --style=plain --color=always --paging=always
 cmd cmaps $lf -remote "query $env:id cmaps" | bat --style=plain --color=always --paging=always
 cmd cmds $lf -remote "query $env:id cmds" | bat --style=plain --color=always --paging=always
@@ -70,10 +69,16 @@ map du ${{
 }}
 map dD delete
 map c
-map cc rename
+map cw rename
 map cl clear
 
 map <delete> delete
+
+map r
+map rr rename
+map rg $lg.exe
+map rv $wsl -e /home/jr/.local/bin/vd (Get-item $env:f).name
+
 
 # map all common operations to a (for action) prefix
 map ap paste
@@ -82,7 +87,6 @@ map av invert
 map ad cut
 map ac clear
 map aD delete
-map ar rename
 
 map gi $lg
 
