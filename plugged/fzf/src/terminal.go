@@ -1724,6 +1724,9 @@ func (t *Terminal) updatePromptOffset() ([]rune, []rune) {
 func (t *Terminal) promptLine() int {
 	if t.headerFirst {
 		max := t.window.Height() - 1
+		if max <= 0 { // Extremely short terminal
+			return 0
+		}
 		if !t.noSeparatorLine() {
 			max--
 		}
@@ -1759,9 +1762,14 @@ func (t *Terminal) trimMessage(message string, maxWidth int) string {
 func (t *Terminal) printInfo() {
 	pos := 0
 	line := t.promptLine()
-	move := func(y int, x int, clear bool) {
+	maxHeight := t.window.Height()
+	move := func(y int, x int, clear bool) bool {
+		if y < 0 || y >= maxHeight {
+			return false
+		}
 		t.move(y, x, clear)
 		t.markOtherLine(y)
+		return true
 	}
 	printSpinner := func() {
 		if t.reading {
@@ -1800,7 +1808,9 @@ func (t *Terminal) printInfo() {
 
 	if t.infoStyle == infoHidden {
 		if t.separatorLen > 0 {
-			move(line+1, 0, false)
+			if !move(line+1, 0, false) {
+				return
+			}
 			printSeparator(t.window.Width()-1, false)
 		}
 		return
@@ -1836,7 +1846,7 @@ func (t *Terminal) printInfo() {
 		output = fmt.Sprintf("[Command failed: %s]", *t.failed)
 	}
 	var outputPrinter labelPrinter
-	var outputLen int
+	outputLen := len(output)
 	if t.infoCommand != "" {
 		output = t.executeCommand(t.infoCommand, false, true, true, true, output)
 		outputPrinter, outputLen = t.ansiLabelPrinter(output, &tui.ColInfo, false)
@@ -1844,12 +1854,16 @@ func (t *Terminal) printInfo() {
 
 	switch t.infoStyle {
 	case infoDefault:
-		move(line+1, 0, t.separatorLen == 0)
+		if !move(line+1, 0, t.separatorLen == 0) {
+			return
+		}
 		printSpinner()
 		t.window.Print(" ") // Margin
 		pos = 2
 	case infoRight:
-		move(line+1, 0, false)
+		if !move(line+1, 0, false) {
+			return
+		}
 	case infoInlineRight:
 		pos = t.promptLen + t.queryLen[0] + t.queryLen[1] + 1
 	case infoInline:
@@ -1882,16 +1896,13 @@ func (t *Terminal) printInfo() {
 		if outputPrinter == nil {
 			t.window.CPrint(tui.ColInfo, output)
 		} else {
-			outputPrinter(t.window, maxWidth)
+			outputPrinter(t.window, maxWidth-1)
 		}
 		t.window.Print(" ") // Margin
 		return
 	}
 
 	if t.infoStyle == infoInlineRight {
-		if outputPrinter == nil {
-			outputLen = util.StringWidth(output)
-		}
 		if len(t.infoPrefix) == 0 {
 			move(line, pos, false)
 			newPos := util.Max(pos, t.window.Width()-outputLen-3)
@@ -1921,7 +1932,9 @@ func (t *Terminal) printInfo() {
 
 	if t.infoStyle == infoInlineRight {
 		if t.separatorLen > 0 {
-			move(line+1, 0, false)
+			if !move(line+1, 0, false) {
+				return
+			}
 			printSeparator(t.window.Width()-1, false)
 		}
 		return
