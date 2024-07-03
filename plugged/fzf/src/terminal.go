@@ -1006,8 +1006,8 @@ func (t *Terminal) ansiLabelPrinter(str string, color *tui.ColorPair, fill bool)
 	runes := []rune(text)
 
 	// Simpler printer for strings without ANSI colors or tab characters
-	if colors == nil && !strings.ContainsRune(str, '\t') {
-		length := util.StringWidth(str)
+	if colors == nil && !strings.ContainsRune(text, '\t') {
+		length := util.StringWidth(text)
 		if length == 0 {
 			return nil, 0
 		}
@@ -1016,9 +1016,9 @@ func (t *Terminal) ansiLabelPrinter(str string, color *tui.ColorPair, fill bool)
 				trimmedRunes, _ := t.trimRight(runes, limit)
 				window.CPrint(*color, string(trimmedRunes))
 			} else if fill {
-				window.CPrint(*color, util.RepeatToFill(str, length, limit))
+				window.CPrint(*color, util.RepeatToFill(text, length, limit))
 			} else {
-				window.CPrint(*color, str)
+				window.CPrint(*color, text)
 			}
 		}
 		return printFn, length
@@ -4301,9 +4301,11 @@ func (t *Terminal) Loop() error {
 				}
 			case actFirst:
 				t.vset(0)
+				t.constrain()
 				req(reqList)
 			case actLast:
 				t.vset(t.merger.Length() - 1)
+				t.constrain()
 				req(reqList)
 			case actPosition:
 				if n, e := strconv.Atoi(a.a); e == nil {
@@ -4313,6 +4315,7 @@ func (t *Terminal) Loop() error {
 						n += t.merger.Length()
 					}
 					t.vset(n)
+					t.constrain()
 					req(reqList)
 				}
 			case actPut:
