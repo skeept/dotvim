@@ -55,6 +55,7 @@ class CmpStatus(enum.Enum):
 def copy_files(
     origin: Path,
     destination: Path,
+    backup_folder: Path = Path("tmp"),
     dry_run: bool = True,
     display_all: bool = False,
     show_diff: bool = True,
@@ -63,22 +64,26 @@ def copy_files(
     show_diff = not dry_run or show_diff
     for elem in get_all_elements(origin):
         status = CmpStatus.same
-        backup = destination / elem.relative_to(origin)
-        if not backup.exists():
+        target = destination / elem.relative_to(origin)
+        if not target.exists():
             status = CmpStatus.missing
-        elif not elem.is_dir() and not filecmp.cmp(elem, backup, shallow=False):
+        elif not elem.is_dir() and not filecmp.cmp(elem, target, shallow=False):
             status = CmpStatus.diff
         if display_all or status != CmpStatus.same:
-            print(f"{status.name:<7} {elem!s:<50} => {backup}")
+            print(f"{status.name:<7} {elem!s:<50} => {target}")
             if show_diff and status == CmpStatus.diff and shutil.which("delta"):
                 delta_options = ["--side-by-side"]
-                subprocess.run(["delta", *delta_options, elem, backup], check=False)
+                subprocess.run(["delta", *delta_options, elem, target], check=False)
 
         if not dry_run:
+            if not backup_folder.is_dir():
+                backup_folder.mkdir(parents=True, exist_ok=True)
             if elem.is_dir():
-                backup.mkdir(exist_ok=True, parents=True)
+                target.mkdir(exist_ok=True, parents=True)
             elif status != CmpStatus.same:
-                shutil.copy(elem, backup)
+                # copy item to be overridden to backup
+                shutil.copy(target, backup_folder)
+                shutil.copy(elem, target)
 
 
 def main() -> None:
