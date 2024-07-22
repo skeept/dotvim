@@ -1127,22 +1127,22 @@ star()
   if [ -z "${1}" ]; then
     eval "$(starship init bash)"
   else
-    eval "$(oh-my-posh prompt init bash --config ~/.vim/test/keep/posh-themes/my_negligible.omp.json)"
+    eval "$(posh prompt init bash --config ~/.vim/test/keep/posh-themes/my_negligible.omp.json)"
   fi
 }
 
 posh_display_themes()
 {
   if [ -e "$1" ];  then
-    eval "$(oh-my-posh prompt init bash --config $(pwd)/$1)"
+    eval "$(posh prompt init bash --config $(pwd)/$1)"
     return
   fi
 
   [ -n "$1" ] && tmux_pane=$1 || tmux_pane=1
   for fn in *; do
     echo $fn
-    local v="tmux send-keys -t $tmux_pane 'eval \"\$(oh-my-posh prompt init bash --config $fn)\"' Enter"
-    #tmux send-keys -t $tmux_pane 'eval "$(oh-my-posh prompt init bash --config $fn)"' Enter
+    local v="tmux send-keys -t $tmux_pane 'eval \"\$(posh prompt init bash --config $fn)\"' Enter"
+    #tmux send-keys -t $tmux_pane 'eval "$(posh prompt init bash --config $fn)"' Enter
     eval "$v"
     read a
   done
