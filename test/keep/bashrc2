@@ -1377,6 +1377,7 @@ function kc()
   unset -f kc
   alias kc='kubectl'
   complete -o default -F __start_kubectl kc
+  kubectl $@
 }
 
 # atuin related configs
