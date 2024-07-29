@@ -1372,6 +1372,13 @@ function just()
   just "$@"
 }
 
+function kc()
+{
+  unset -f kc
+  alias kc='kubectl'
+  complete -o default -F __start_kubectl kc
+}
+
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
   [[ -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
