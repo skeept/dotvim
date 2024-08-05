@@ -89,8 +89,20 @@ map cw rename
 map cl clear
 
 # map all common operations to a (for action) prefix
+map aa invert
 map ap paste
 map ay copy
 map av invert
 map ad cut
 map ac clear
+
+map v
+
+map vv invert
+map ve $vim $f
+
+map y
+map yy copy
+map yp ${{
+  dirname $f | clip.exe
+}}
