@@ -103,6 +103,5 @@ map ve $vim $f
 
 map y
 map yy copy
-map yp ${{
-  dirname $f | clip.exe
-}}
+map yb ${{ basename $f | clip.exe }}
+map yd ${{ dirname $f | clip.exe }}
