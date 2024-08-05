@@ -1,10 +1,10 @@
-import { is } from "jsr:@core/unknownutil@3.18.1";
+import { isString } from "jsr:@core/unknownutil@^4.0.0/is/string";
 import {
   fromErrorObject,
   isErrorObject,
   toErrorObject,
   tryOr,
-} from "jsr:@lambdalisue/errorutil@1.1.0";
+} from "jsr:@lambdalisue/errorutil@^1.1.0";
 
 export function errorSerializer(err: unknown): unknown {
   if (err instanceof Error) {
@@ -16,7 +16,7 @@ export function errorSerializer(err: unknown): unknown {
 }
 
 export function errorDeserializer(err: unknown): unknown {
-  if (is.String(err)) {
+  if (isString(err)) {
     const obj = tryOr(() => JSON.parse(err), undefined);
     if (isErrorObject(obj)) {
       return fromErrorObject(obj);
