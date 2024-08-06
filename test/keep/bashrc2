@@ -1372,12 +1372,25 @@ function just()
   just "$@"
 }
 
+# function kc()
+# {
+#   unset -f kc
+#   alias kc='kubectl'
+#   complete -o default -F __start_kubectl kc
+#   kubectl $@
+# }
+
 function kc()
 {
-  unset -f kc
-  alias kc='kubectl'
-  complete -o default -F __start_kubectl kc
-  kubectl $@
+  # this assumes namespace
+  complete -o default _F __start_kubectl kc
+  function kc()
+  {
+    [ "$1" = "-n" ] && __ns=("$1" "$2") && shift && shift
+    [ -z "${__ns}" ] && __ns=(-n stai-snd1-fulf)
+    kubectl "${__ns[@]}" $@
+  }
+  kc "$@"
 }
 
 # atuin related configs
@@ -1388,4 +1401,3 @@ if [ -x "$(command -v atuin)" ]; then
 fi
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
-
