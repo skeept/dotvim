@@ -68,9 +68,10 @@ map du ${{
   if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
 }}
 map dD delete
+
 map c
 map cw rename
-map cl clear
+map cc clear
 
 map <delete> delete
 

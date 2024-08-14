@@ -86,7 +86,7 @@ map oz &7zFM.exe $f
 
 map c
 map cw rename
-map cl clear
+map cc clear
 
 # map all common operations to a (for action) prefix
 map aa invert
