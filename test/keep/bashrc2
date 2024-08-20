@@ -1386,8 +1386,13 @@ function kc()
   complete -o default _F __start_kubectl kc
   function kc()
   {
+    local print_info=0
+    [ "$1" = "-i" ] && print_info=1 && shift
     [ "$1" = "-n" ] && __ns=("$1" "$2") && shift && shift
     [ -z "${__ns}" ] && __ns=(-n stai-snd1-fulf)
+    if [ "$print_info"  = "1" ]; then
+      echo kubectl "${__ns[@]}" $@
+    fi
     kubectl "${__ns[@]}" $@
   }
   kc "$@"
