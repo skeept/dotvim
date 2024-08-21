@@ -1,4 +1,4 @@
-// @deno-types="npm:@types/sinon@17.0.3"
+// @deno-types="npm:@types/sinon@^17.0.3"
 import sinon from "npm:sinon@^18.0.0";
 import {
   assertEquals,
@@ -11,7 +11,7 @@ import {
   resolvesNext,
   spy,
   stub,
-} from "jsr:@std/testing@^1.0.0-rc.5/mock";
+} from "jsr:@std/testing@^1.0.0/mock";
 import { delay } from "jsr:@std/async@^1.0.1/delay";
 import { DisposableStack } from "jsr:@nick/dispose@^1.1.0/disposable-stack";
 import * as nvimCodec from "jsr:@lambdalisue/messagepack@^1.0.1";
