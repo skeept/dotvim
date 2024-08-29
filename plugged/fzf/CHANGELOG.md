@@ -3,6 +3,15 @@ CHANGELOG
 
 0.55.0
 ------
+_Release highlights: https://junegunn.github.io/fzf/releases/0.55.0/_
+
+- Added `exact-boundary-match` type to the search syntax. When a search term is single-quoted, fzf will search for the exact occurrences of the string with both ends at word boundaries.
+  ```sh
+  fzf --query "'here'" << EOF
+  come here
+  not there
+  EOF
+  ```
 - [bash] Fuzzy path completion is enabled for all commands
     - 1. If the default completion is not already set
     - 2. And if the current bash supports `complete -D` option
@@ -23,6 +32,7 @@ CHANGELOG
 
   fzf --preview "printf '<< \e]8;;http://github.com/junegunn/fzf\e\\Link to \e[32mfz\e[0mf\e]8;;\e\\ >>'"
   ```
+- The default `--ellipsis` is now `··` instead of `..`.
 - [vim] A spec can have `exit` callback that is called with the exit status of fzf
     - This can be used to clean up temporary resources or restore the original state when fzf is closed without a selection
 - Fixed `--tmux bottom` when the status line is not at the bottom

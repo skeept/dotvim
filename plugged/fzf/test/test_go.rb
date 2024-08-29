@@ -1443,7 +1443,7 @@ class TestGoFZF < TestBase
     [0, 3, 6].each do |off|
       tmux.prepare
       tmux.send_keys "#{FZF} --hscroll-off=#{off} -q 0 < #{tempname}", :Enter
-      tmux.until { |lines| assert lines[-3]&.end_with?((0..off).to_a.join + '..') }
+      tmux.until { |lines| assert lines[-3]&.end_with?((0..off).to_a.join + '··') }
       tmux.send_keys '9'
       tmux.until { |lines| assert lines[-3]&.end_with?('789') }
       tmux.send_keys :Enter
@@ -3365,6 +3365,18 @@ class TestGoFZF < TestBase
     tmux.until { |lines| assert_includes lines[-4], 'bar' }
     tmux.send_keys :Space
     tmux.until { |lines| assert_includes lines[-3], 'bar' }
+  end
+
+  def test_boundary_match
+    # Underscore boundaries should be ranked lower
+    {
+      default: [' x '] + %w[/x/ [x] -x- -x_ _x- _x_],
+      path: ['/x/', ' x '] + %w[[x] -x- -x_ _x- _x_],
+      history: ['[x]', '-x-', ' x '] + %w[/x/ -x_ _x- _x_]
+    }.each do |scheme, expected|
+      result = `printf -- 'xxx\n-xx\nxx-\n_x_\n_x-\n-x_\n[x]\n-x-\n x \n/x/\n' | #{FZF} -f"'x'" --scheme=#{scheme}`.lines(chomp: true)
+      assert_equal expected, result
+    end
   end
 end
 

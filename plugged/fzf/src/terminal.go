@@ -827,7 +827,6 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		headerLines:        opts.HeaderLines,
 		header:             []string{},
 		header0:            opts.Header,
-		ellipsis:           opts.Ellipsis,
 		ansi:               opts.Ansi,
 		tabstop:            opts.Tabstop,
 		hasStartActions:    false,
@@ -855,7 +854,6 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		mutex:              sync.Mutex{},
 		uiMutex:            sync.Mutex{},
 		suppress:           true,
-		sigstop:            false,
 		slab:               util.MakeSlab(slab16Size, slab32Size),
 		theme:              opts.Theme,
 		startChan:          make(chan fitpad, 1),
@@ -884,6 +882,15 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		}
 		t.separator, t.separatorLen = t.ansiLabelPrinter(bar, &tui.ColSeparator, true)
 	}
+
+	if opts.Ellipsis != nil {
+		t.ellipsis = *opts.Ellipsis
+	} else if t.unicode {
+		t.ellipsis = "··"
+	} else {
+		t.ellipsis = ".."
+	}
+
 	if t.unicode {
 		t.wrapSign = "↳ "
 		t.borderWidth = uniseg.StringWidth("│")
@@ -3429,19 +3436,6 @@ func (t *Terminal) Loop() error {
 			}
 		}()
 
-		contChan := make(chan os.Signal, 1)
-		notifyOnCont(contChan)
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-contChan:
-					t.reqBox.Set(reqReinit, nil)
-				}
-			}
-		}()
-
 		if !t.tui.ShouldEmitResizeEvent() {
 			resizeChan := make(chan os.Signal, 1)
 			notifyOnResize(resizeChan) // Non-portable
@@ -3779,7 +3773,7 @@ func (t *Terminal) Loop() error {
 					case reqRedrawPreviewLabel:
 						t.printLabel(t.pborder, t.previewLabel, t.previewLabelOpts, t.previewLabelLen, t.previewOpts.border, true)
 					case reqReinit:
-						t.tui.Resume(t.fullscreen, t.sigstop)
+						t.tui.Resume(t.fullscreen, true)
 						t.fullRedraw()
 					case reqResize, reqFullRedraw:
 						if req == reqResize {
@@ -4519,11 +4513,11 @@ func (t *Terminal) Loop() error {
 			case actSigStop:
 				p, err := os.FindProcess(os.Getpid())
 				if err == nil {
-					t.sigstop = true
 					t.tui.Clear()
 					t.tui.Pause(t.fullscreen)
 					notifyStop(p)
 					t.mutex.Unlock()
+					t.reqBox.Set(reqReinit, nil)
 					return false
 				}
 			case actMouse:
