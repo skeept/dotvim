@@ -10,7 +10,7 @@ alias hi=history
 alias passwd=yppasswd
 #alias quit=logout
 
-alias m='TERM=vt100 more'
+#alias m='TERM=vt100 more'
 
 alias co='command'
 
@@ -30,7 +30,7 @@ alias ps2me='ps -U $(echo -n $USER) -o pid -o args'
 
 alias rs='reset'
 
-alias vt1='export TERM=vt100'
+#alias vt1='export TERM=vt100'
 alias top1='top -u `whoami` -c '
 
 alias h='history'
