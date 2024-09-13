@@ -216,6 +216,16 @@ vam#vcs#SubversionCheckout                        *vam#vcs#SubversionCheckout*
         let g:vim_addon_manager.scms.hg.clone =['vam#vcs#MercurialCheckout']
         let g:vim_addon_manager.scms.svn.clone=['vam#vcs#SubversionCheckout']
 
+vam#Scripts(scripts, opts)                                   *vam#Scripts*
+    load scripts to be loaded from a file
+    {'name': 'nvim-setup-cmp', 'expr':  'has("nvim")'}
+    {'filename_regex': '\%(\%(l\)hs\|cabal\)$', 'name': 'vim-addon-haskell'}
+    {'name': 'snippets-angular', 'expr': 'vam#FileContains("package.json", "angular")'}
+
+
+vam#FileContains(file, regex)                                *vam#FileContains*
+    See |vam#Scripts|
+
 ==============================================================================
 4. Options                                                       *VAM-options*
                                                          *g:vim_addon_manager*
@@ -431,7 +441,7 @@ Follow these steps:
                                             *addon-info.json* *addon-info.txt*
 
 Some documentation will be moved to vim-wiki:
-http://vim-wiki.mawercer.de/wiki/topic/addon-info.json.html
+https://web.archive.org/web/20230203235330/http://vim-wiki.mawercer.de/wiki/topic/addon-info.json.html
 
 Example:  >
   {

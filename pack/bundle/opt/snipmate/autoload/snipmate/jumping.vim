@@ -243,7 +243,7 @@ endfunction
 " selection hack in s:state_select_item
 function! s:cot_count()
 	let cotl = split(&cot, ',')
-	let c = count(cotl, 'longest') + count(cotl, 'noinsert') + count(cotl, 'noselect')
+	let c = (has('patch-9.0.0567') && count(cotl, 'longest')) + count(cotl, 'noinsert') + count(cotl, 'noselect')
 	return min([1, c])
 endfunction
 

@@ -361,11 +361,11 @@ function! s:current_compiler(...) abort
   return get((empty(&l:makeprg) ? g: : b:), 'current_compiler', a:0 ? a:1 : '')
 endfunction
 
-function! s:set_current_compiler(name) abort
-  if empty(a:name)
+function! s:set_current_compiler(name, ...) abort
+  if empty(a:name) && (!a:0 || a:1 ==# bufnr(''))
     unlet! b:current_compiler
   else
-    let b:current_compiler = a:name
+    call setbufvar(a:0 ? a:1 : bufnr(''), 'current_compiler', a:name)
   endif
 endfunction
 
@@ -925,6 +925,7 @@ function! dispatch#compile_command(bang, args, count, mods, ...) abort
   let compiler = get(b:, 'current_compiler', '')
   let after = ''
   let cd = s:cd_command()
+  let bufnr = bufnr('')
   try
     call s:set_current_compiler(get(request, 'compiler', ''))
     let v:lnum = a:count > 0 ? a:count : 0
@@ -980,9 +981,9 @@ function! dispatch#compile_command(bang, args, count, mods, ...) abort
   finally
     exe s:doautocmd('QuickFixCmdPost dispatch-make')
     let v:lnum = lnum
-    let &l:efm = efm
-    let &l:makeprg = makeprg
-    call s:set_current_compiler(compiler)
+    call setbufvar(bufnr, '&efm', efm)
+    call setbufvar(bufnr, '&makeprg', makeprg)
+    call s:set_current_compiler(compiler, bufnr)
     if exists('cwd')
       execute cd dispatch#fnameescape(cwd)
     endif
@@ -1049,7 +1050,7 @@ function! dispatch#focus_command(bang, args, count, ...) abort
     let [args, opts] = dispatch#focus(line(a:args[1]), opts)
   elseif args =~# '^:\d*Dispatch$'
     let [args, opts] = dispatch#focus(+matchstr(a:args, '\d\+'), opts)
-  elseif args =~# '^--\S\@!' && !has_key(opts, 'compiler')
+  elseif args =~# '^\%(--\|:[Mm]ake\)\S\@!' && !has_key(opts, 'compiler')
     let args = s:default_args(args, -1)
     let args = s:build_make(&makeprg, args)
     let args = dispatch#expand(args, 0)
