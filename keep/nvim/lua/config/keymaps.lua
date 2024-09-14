@@ -59,29 +59,20 @@ end, {
 })
 
 local wk = require("which-key")
-wk.register({
-  [","] = {
-    name = " comma mappings ",
-    f = {
-      name = "fzf mappings",
-      f = { "<cmd>FzfLua<cr>", "Fzf" },
-      g = { "<cmd>FzfLua grep_project<cr>", "grep project" },
-      r = { "<cmd>FzfLua oldfiles<cr>", "recent files" },
-      c = { "<cmd>FzfLua commands<cr>", "commands" },
-      h = { "<cmd>FzfLua command_history<cr>", "command history" },
-    },
-    v = {
-      name = "search and whatever",
-      n = { ":vimgrep // *<Left><Left><Left>", "vimgrep this folder [start typing]" },
-      r = { ":vimgrep // **/*<Left><Left><Left><Left><Left><Left>", "vimgrep nested" },
-    },
-    s = {
-      name = "settings tabs and more",
-      w = { "<cmd>setlocal wrap! | set wrap?<cr>", "toogle wrap" },
-      t = { "<cmd>tab split<cr>", "tab split" },
-    },
-    e = { "<cmd>Fzf files<cr>", "files" },
-    b = { "<cmd>FzfLua buffers<cr>", "buffers" },
-
-  },
+wk.add({
+  { ",", group = "comma mappings" },
+  { ",e", "<cmd>Fzf files<cr>", desc = "files" },
+  { ",b", "<cmd>FzfLua buffers<cr>", desc = "buffers" },
+  { ",f", group = "fzf" },
+  { ",ff", "<cmd>FzfLua<cr>", desc = "Fzf" },
+  { ",fg", "<cmd>FzfLua grep_project<cr>", desc = "grep project" },
+  { ",fr", "<cmd>FzfLua oldfiles<cr>", desc = "recent files" },
+  { ",fc", "<cmd>FzfLua commands<cr>", desc = "commands" },
+  { ",fh", "<cmd>FzfLua command_history<cr>", desc = "command history" },
+  { ",v", group = "search with vimgrep" },
+  { ",vn", ":vimgrep // *<Left><Left><Left>", desc = "vimgrep this folder (start typing)" },
+  { ",vr", ":vimgrep // **/*<Left><Left><Left><Left><Left><Left>", desc = "vimgrep nested" },
+  { ",s", group = "settings, tabs and more" },
+  { ",sw", "<cmd>setlocal wrap! | set wrap?<cr>", desc = "toogle wrap" },
+  { ",st", "<cmd>tab split<cr>", desc = "tab split" },
 })
