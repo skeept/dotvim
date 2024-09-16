@@ -14,7 +14,8 @@ return {
     opts = {
       -- colorscheme = "gruvbox",
       -- colorscheme = "onedark",
-      colorscheme = "material",
+      -- colorscheme = "material",
+      colorscheme = "desert",
     },
   },
 }
