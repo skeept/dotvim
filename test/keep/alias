@@ -3,6 +3,7 @@ alias mv='mv -i'
 
 alias la='ls -a'
 alias o='less'
+alias e='vim'
 
 alias hi=history
 #alias plf='perl -wnle' #loop around a file (must supply a file)
@@ -47,7 +48,7 @@ alias di='zi'
 alias du='du -h'
 alias df='df -kh'
 
-alias tree='tree -Cs'           # nice alternative to 'ls'
+alias tree='tree -Cs' # nice alternative to 'ls'
 
 alias top='xtitle Processes on $HOSTNAME && top'
 
@@ -90,6 +91,6 @@ alias dui='dua i'
 
 [ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
 
-type 7z >& /dev/null || { type 7za >& /dev/null && alias 7z=7za; } || { type 7z.exe >&/dev/null && alias 7z=7z.exe; }
+type 7z >&/dev/null || { type 7za >&/dev/null && alias 7z=7za; } || { type 7z.exe >&/dev/null && alias 7z=7z.exe; }
 
 # vim: set ft=sh:
