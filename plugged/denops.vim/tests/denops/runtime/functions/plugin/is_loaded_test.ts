@@ -1,14 +1,17 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert@^1.0.1";
 import { delay } from "jsr:@std/async@^1.0.1";
-import { join } from "jsr:@std/path@^1.0.2/join";
+import { INVALID_PLUGIN_NAMES } from "/denops-testdata/invalid_plugin_names.ts";
+import { resolveTestDataPath } from "/denops-testdata/resolve.ts";
 import { testHost } from "/denops-testutil/host.ts";
 import { wait } from "/denops-testutil/wait.ts";
 
 const MESSAGE_DELAY = 200; // msc
 
-const scriptValid = resolve("dummy_valid_plugin.ts");
-const scriptInvalid = resolve("dummy_invalid_plugin.ts");
-const scriptInvalidDispose = resolve("dummy_invalid_dispose_plugin.ts");
+const scriptValid = resolveTestDataPath("dummy_valid_plugin.ts");
+const scriptInvalid = resolveTestDataPath("dummy_invalid_plugin.ts");
+const scriptInvalidDispose = resolveTestDataPath(
+  "dummy_invalid_dispose_plugin.ts",
+);
 
 testHost({
   name: "denops#plugin#is_loaded()",
@@ -28,16 +31,17 @@ testHost({
       "augroup END",
     ], "");
 
-    await t.step("if the plugin name is invalid", async (t) => {
-      await t.step("throws an error", async () => {
-        // NOTE: '.' is not allowed in plugin name.
-        await assertRejects(
-          () => host.call("denops#plugin#is_loaded", "dummy.invalid"),
-          Error,
-          "Invalid plugin name: dummy.invalid",
-        );
+    for (const [plugin_name, label] of INVALID_PLUGIN_NAMES) {
+      await t.step(`if the plugin name is invalid (${label})`, async (t) => {
+        await t.step("throws an error", async () => {
+          await assertRejects(
+            () => host.call("denops#plugin#is_loaded", plugin_name),
+            Error,
+            `Invalid plugin name: ${plugin_name}`,
+          );
+        });
       });
-    });
+    }
 
     await t.step("if the plugin is not yet loaded", async (t) => {
       await t.step("returns 0", async () => {
@@ -309,8 +313,3 @@ testHost({
     });
   },
 });
-
-/** Resolve testdata script path. */
-function resolve(path: string): string {
-  return join(import.meta.dirname!, `../../../testdata/${path}`);
-}
