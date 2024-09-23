@@ -6,6 +6,13 @@ return {
     "EdenEast/nightfox.nvim",
     "marko-cerovac/material.nvim",
     "molok/vim-scratch",
+    "neanias/everforest-nvim",
+    "cpea2506/one_monokai.nvim",
+    "projekt0n/github-nvim-theme",
+    "olimorris/onedarkpro.nvim",
+    "sainnhe/sonokai",
+    "rebelot/kanagawa.nvim",
+    "yorumicolors/yorumi.nvim",
   },
 
   -- Configure LazyVim to load gruvbox
@@ -15,7 +22,10 @@ return {
       -- colorscheme = "gruvbox",
       -- colorscheme = "onedark",
       -- colorscheme = "material",
-      colorscheme = "desert",
+      -- colorscheme = "desert",
+      -- colorscheme = "sonokai",
+      colorscheme = "kanagawa",
+      -- colorscheme = "yorumi",
     },
   },
 }
