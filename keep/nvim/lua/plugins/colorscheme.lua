@@ -24,7 +24,7 @@ return {
       -- colorscheme = "material",
       -- colorscheme = "desert",
       -- colorscheme = "sonokai",
-      colorscheme = "kanagawa",
+      colorscheme = "tokyonight-night",
       -- colorscheme = "yorumi",
     },
   },
