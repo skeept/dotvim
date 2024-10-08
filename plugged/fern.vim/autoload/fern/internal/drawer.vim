@@ -51,11 +51,8 @@ function! fern#internal#drawer#init() abort
   call fern#internal#drawer#auto_winfixwidth#init()
   call fern#internal#drawer#auto_restore_focus#init()
   call fern#internal#drawer#smart_quit#init()
+  call fern#internal#drawer#hover_popup#init()
   call fern#internal#drawer#resize()
-
-  if !fern#internal#drawer#is_right_drawer()
-    call fern#internal#drawer#hover_popup#init()
-  endif
 
   setlocal winfixwidth
 endfunction
@@ -70,6 +67,6 @@ function! s:focus_next(right) abort
   if winnr is# 0
     return
   endif
-  noautocmd call win_gotoid(win_getid(winnr))
+  call win_gotoid(win_getid(winnr))
   return 1
 endfunction

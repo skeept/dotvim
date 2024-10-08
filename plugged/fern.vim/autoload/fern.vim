@@ -18,6 +18,7 @@ call s:Config.config(expand('<sfile>:p'), {
       \ 'loglevel': g:fern#INFO,
       \ 'opener': 'edit',
       \ 'hide_cursor': 0,
+      \ 'hide_cursorline': 0,
       \ 'keepalt_on_edit': 0,
       \ 'keepjumps_on_edit': 0,
       \ 'disable_auto_buffer_delete': 0,
@@ -36,12 +37,14 @@ call s:Config.config(expand('<sfile>:p'), {
       \ 'default_exclude': '',
       \ 'renderer': 'default',
       \ 'renderers': {},
+      \ 'enable_textprop_support': 0,
       \ 'comparator': 'default',
       \ 'comparators': {},
       \ 'drawer_width': 30,
       \ 'drawer_keep': v:false,
       \ 'drawer_hover_popup_delay': 0,
       \ 'mark_symbol': '*',
+      \ 'window_selector_use_popup': 0,
       \})
 
 function! fern#version() abort

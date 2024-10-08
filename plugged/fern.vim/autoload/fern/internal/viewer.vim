@@ -50,7 +50,7 @@ function! s:init() abort
   setlocal noswapfile nobuflisted nomodifiable
   setlocal signcolumn=yes
   " The 'foldmethod=manual' is required to avoid the following issue
-  " https://github.com/lambdalisue/fern.vim/issues/331
+  " https://github.com/lambdalisue/vim-fern/issues/331
   setlocal foldmethod=manual
 
   augroup fern_internal_viewer_init
@@ -61,6 +61,7 @@ function! s:init() abort
   augroup END
   call fern#internal#viewer#auto_duplication#init()
   call fern#internal#viewer#hide_cursor#init()
+  call fern#internal#viewer#hide_cursorline#init()
 
   " Add unique fragment to make each buffer uniq
   let bufname = bufname('%')
