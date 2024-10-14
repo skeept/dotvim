@@ -42,7 +42,8 @@ if g:is_win
   if !has("nvim")
     set rop=type:directx
   endif
-  set guifont=Terminus:h12
+  "set guifont=Terminus:h12
+  set guifont=Lucida_Console:h10
 else
   "set guifont=Terminus\ 12,
         "\-misc-fixed-medium-*-normal-*-15-*-*-*-*-*-*-*
