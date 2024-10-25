@@ -68,6 +68,9 @@ map du ${{
   if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
 }}
 map dD delete
+map df ${{
+  & "C:\Program Files\Beyond Compare 4\BCompare.exe" "$env:f/BL" "$env:f/TR"
+}}
 
 map c
 map cw rename
