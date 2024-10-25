@@ -449,7 +449,8 @@ Includes the current file in the match entries: >
 
 By default, the current file is excluded from the list.
 
-Note: does not apply when |g:ctrlp_match_func| is used.
+Note: With the exception of |:CtrlPMRU|, does not apply when
+|g:ctrlp_match_func| is used.
 
                                                               *'g:ctrlp_types'*
 Set this to list of names to customize core types: >

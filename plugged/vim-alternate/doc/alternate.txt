@@ -73,15 +73,27 @@ To set an option, include a line like the following in your Vim configuration:
 
 The following is a list of all available options:
 
+                                                         *g:AlternateAutoCreate*
 
-                                                              *g:AlternatePaths*
+    |g:AlternateAutoCreate|   switch to automatically create a missing alternates
 
-    |g:AlternatePaths|                    comma separated list of alternate paths
+        In case this is set, automatically creates a missing alternate file.
+        An alternate file is considered missing in case all possible alternate
+        files are missing on disk. In that case, the first configured
+        alternate file is automatically created, including any missing
+        directories.
 
-        Comma separated list of paths relative to the current file that are
-        searched for the alternate file.
+        Default value: `v:false`
 
-        Default value is: ['.', '../itf', '../include', '../src']
+                                                            *g:AlternateCommand*
+
+    |g:AlternateCommand|            command to use for opening the alternate file
+
+        Command to use for opening the alternate file. By default, this uses
+        'e' to open the alternate file in the current buffer. To open the
+        alternate file in a new tab for example, use 'tabnew'.
+
+        Default value: 'e'
 
                                                   *g:AlternateExtensionMappings*
 
@@ -92,10 +104,19 @@ The following is a list of all available options:
         Default value: [{'.cpp' : '.h', '.h' : '.hpp', '.hpp' : '.cpp'}, \
                         {'.c': '.h', '.h': '.c'}]
 
+                                                              *g:AlternatePaths*
+
+    |g:AlternatePaths|                    comma separated list of alternate paths
+
+        Comma separated list of paths relative to the current file that are
+        searched for the alternate file.
+
+        Default value: ['.', '../itf', '../include', '../src']
+
 
 LICENSE                                                      *alternate-license*
 
-Copyright 2018-2020 Ton van den Heuvel. All rights reserved.
+Copyright 2018-2024 Ton van den Heuvel. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

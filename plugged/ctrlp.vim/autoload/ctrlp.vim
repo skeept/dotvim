@@ -641,6 +641,9 @@ fu! ctrlp#buffers(...)
 		retu ids
 	el
 		let bufs = [[], []]
+		if s:matcher != {} && !s:matchcrfile
+			call filter(ids, 'v:val != s:crbufnr')
+		en
 		for id in ids
 			let bname = bufname(id)
 			let ebname = bname == ''
@@ -2179,7 +2182,7 @@ fu! s:isabs(path)
 endf
 
 fu! s:bufnrfilpath(line)
-  if s:isabs(a:line) || a:line =~ '^\~[/\\]' || a:line =~ '^\w\+:\/\/'
+	if s:isabs(a:line) || a:line =~ '^\~[/\\]' || a:line =~ '^\w\+:\/\/'
 		let filpath = a:line
 	el
 		let filpath = s:dyncwd.s:lash().a:line

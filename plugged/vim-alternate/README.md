@@ -11,7 +11,7 @@ located in a different directory relative to the current file. The directories
 that are considered can be configured separately.
 
 This plugin is similar to the well-known a.vim, but simpler. Vim-alternate
-weighs in at less than seventy lines of pure Vim script, and that includes
+weighs in at less than eighty lines of pure Vim script, and that includes
 whitespace and comments. Furthermore, it simplifies dealing with a cycle of
 alternates. For example, with vim-alternate it is possible to switch from a C++
 source file (.cpp) to its corresponding header file (.h), then from the header
@@ -80,17 +80,24 @@ let g:AlternatePaths = ['../itf', '../src', '.', '..']
 
 The remainder of this sections lists all available options:
 
-g:AlternatePaths
-----------------
+g:AlternateAutoCreate
+---------------------
 
-Comma separated list of paths relative to the current file that are searched
-for the alternate file.
+In case this is set, automatically creates a missing alternate file. An
+alternate file is considered missing in case all possible alternate files are
+missing on disk. In that case, the first configured alternate file is
+automatically created, including any missing directories.
 
-Default value:
+Default value: `v:false`
 
-```Vim
-['.', '../itf', '../include', '../src']
-```
+g:AlternateCommand
+------------------
+
+Command to use for opening the alternate file. By default, this uses `e` to
+open the alternate file in the current buffer. To open the alternate file in a
+new tab for example, use `tabnew`.
+
+Default value: `e`
 
 g:AlternateExtensionMappings
 ----------------------------
@@ -106,6 +113,18 @@ Default value:
 This implies that in case you have a file named `foo.cpp` open, and ask for the
 alternate file, the plugin will first search for `foo.h` in the alternate
 directories, and in case that is not found, it will search for `foo.hpp`.
+
+g:AlternatePaths
+----------------
+
+Comma separated list of paths relative to the current file that are searched
+for the alternate file.
+
+Default value:
+
+```Vim
+['.', '../itf', '../include', '../src']
+```
 
 License
 =======
