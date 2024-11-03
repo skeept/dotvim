@@ -959,7 +959,7 @@ function _vim()
 }
 complete -F _vim vim vi v gv gvi vd va
 
-function nv()
+function n()
 {
   # need to determine if nvim can be run
   if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then

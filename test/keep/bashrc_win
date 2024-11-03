@@ -120,6 +120,12 @@ ev()
 {
   gvi -nvim $@ 
 }
+
+ng()
+{
+  gvi -nvim $@
+}
+
 __ev()
 {
   unset gvim
