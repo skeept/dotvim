@@ -1,7 +1,7 @@
 alias kp='kill -9 '
 alias mv='mv -i'
 
-alias la='ls -a'
+alias la='eza -a'
 alias o='less'
 alias e='vim'
 
@@ -34,6 +34,7 @@ alias rs='reset'
 #alias vt1='export TERM=vt100'
 alias top1='top -u `whoami` -c '
 
+alias l='eza'
 alias h='history'
 alias jl='jobs -l'
 alias ju='just'
