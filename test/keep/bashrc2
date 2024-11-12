@@ -223,7 +223,14 @@ function xtitle ()
 }
 
 
-function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
+#function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
+function ll() {
+  if type eza >& /dev/null; then
+    eza -l --git --icons "$@"
+  else
+    ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "
+  fi
+}
 
 
 #-----------------------------------
