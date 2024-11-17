@@ -2,14 +2,17 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
-vim.keymap.set("n", ";", ":")
-vim.keymap.set("n", ":", ";")
+vim.keymap.set("n", ";", ":", { noremap = true })
+vim.keymap.set("n", ":", ";", { noremap = true })
 
-vim.keymap.set("n", "<F1>", "wa")
-vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>")
+vim.keymap.set({ "n", "v" }, "<F1>", ":wa<CR>", { noremap = true })
+vim.keymap.set("i", "<F1>", "<C-O>:wa<CR>", { noremap = true })
 
-vim.keymap.set("n", "g/", "/\\<\\><left><left>")
-vim.keymap.set("n", "<tab>", "<c-w>")
+vim.keymap.set("n", "g/", "/\\<\\><left><left>", { noremap = true })
+vim.keymap.set("n", "<tab>", "<c-w>", { noremap = true })
+
+vim.keymap.set({ "n", "v" }, "<F4>", ":x<CR>", { noremap = true })
+vim.keymap.set("i", "<F4>", "<C-O>:x<CR>", { noremap = true })
 
 local function DeltTrailingSpace()
   vim.cmd([[

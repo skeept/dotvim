@@ -9,12 +9,14 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
+import typing
 
 
 @dataclasses.dataclass
 class FolderConfig:
     actual: Path
     local: Path
+    skip: list[str] = dataclasses.field(default_factory=list)
 
     @classmethod
     def nvim(cls, windows: Optional[bool] = None):
@@ -30,18 +32,22 @@ class FolderConfig:
                 else Path.home() / ".config"
             )
         )
-        return cls(actual=conf_dir / "nvim/lua", local=Path("nvim/lua"))
+        skip = ["example.lua", "lazy.lua"]
+        return cls(actual=conf_dir / "nvim/lua", local=Path("nvim/lua"), skip=skip)
 
     def flip(self):
         return FolderConfig(actual=self.local, local=self.actual)
 
 
-def get_all_elements(name: Path):
+def get_all_elements(name: Path, skip: list[str]) -> typing.Iterator[Path]:
     """Get all elements recursively."""
     for elem in name.iterdir():
+        if elem.name in skip:
+            print(f"Skipping {elem}")
+            continue
         yield elem
         if elem.is_dir():
-            yield from get_all_elements(elem)
+            yield from get_all_elements(elem, skip=skip)
 
 
 class CmpStatus(enum.Enum):
@@ -55,6 +61,7 @@ class CmpStatus(enum.Enum):
 def copy_files(
     origin: Path,
     destination: Path,
+    skip: list[str],
     backup_folder: Path = Path("tmp"),
     dry_run: bool = True,
     display_all: bool = False,
@@ -62,7 +69,7 @@ def copy_files(
 ) -> None:
     """Assume folders and copy nested files."""
     show_diff = not dry_run or show_diff
-    for elem in get_all_elements(origin):
+    for elem in get_all_elements(origin, skip=skip):
         status = CmpStatus.same
         target = destination / elem.relative_to(origin)
         if not target.exists():
@@ -112,13 +119,13 @@ def main() -> None:
     args = parser.parse_args()
 
     nvim = FolderConfig.nvim(args.windows)
-    origin, dest = (
+    origin, dest, _ = (
         dataclasses.astuple(nvim)
         if args.other_direction
         else dataclasses.astuple(nvim.flip())
     )
     dry_run = not args.copy
-    copy_files(origin, dest, dry_run=dry_run, show_diff=not args.hide_diff)
+    copy_files(origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff)
 
 
 if __name__ == "__main__":
