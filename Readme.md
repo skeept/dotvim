@@ -95,7 +95,7 @@ previous instructions were adapted from
 https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/
 
 ----------- Replace in multiple files
--- first find text to replace 
+-- first find text to replace
 :vimgrep /pattern/ **/*.py
 :cfdo %s//newnew/gc | update
 
@@ -130,3 +130,18 @@ def basic_logger(name: str, output: str = "output.log", level=logging.INFO) -> l
 nvim remap directly in nvim config file (~/.config/nvim/init.lua)
 vim.keymap.set('n', ';', ':')
 vim.keymap.set('n', ':', ';')
+
+---- keep track of different ways to currently invoke vim
+vi -- shim or binary
+vim -- ok
+n - nvim
+ei - nvim with default vim conf
+gvi - script to open with gvim.exe or gvim
+ev - open nvim-qt or gvim (uses script gvi)
+v -  open file in gvim[.exe] reusing existing instance if possible
+vn - like v but open in new window. if not exact match invokes zp
+vs - open file in split
+vt - open file in new tab
+vg - run gvim with simple configuration
+vp - vim with no plugings
+vuo - vim with simple config
