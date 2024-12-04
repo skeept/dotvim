@@ -1167,6 +1167,19 @@ function zp()
   fi
 }
 
+function zp2()
+{
+  test -n "$1" && select1=(--exit-0 --select-1 -q) || select1=()
+  if (type bat >& /dev/null); then
+    fzf --preview "bat --style=plain --color=always --line-range :500 {}" ${select1[@]} $@
+  else
+    fzf --preview "head -n 500 {}" ${select1[@]} $@
+  fi
+  if [ $? -ne 0 ]; then
+    echo $@
+  fi
+}
+
 function vv()
 {
   for fname in $@; do
@@ -1188,6 +1201,16 @@ function vn()
 
   if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
   [ -n "${name}" ] && __imp_v N "${name}"
+}
+
+function nz()
+{
+  nvim $(zp2 $@)
+}
+
+function ez()
+{
+  ei $(zp2 $@)
 }
 
 # cd to a nested folder

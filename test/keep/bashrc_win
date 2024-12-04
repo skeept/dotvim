@@ -118,7 +118,7 @@ xmlformat ()
 
 ev()
 {
-  gvi -nvim $@ 
+  gvi -nvim $@
 }
 
 ng()

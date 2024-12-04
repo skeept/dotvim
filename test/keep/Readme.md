@@ -1,4 +1,3 @@
-
 ** some random notes
 
 bash list commands:
@@ -13,7 +12,7 @@ vim
 nvim
 
 gvim     - doesn't work in wsl directly
-gvim.exe - should work everwhere if in path
+gvim.exe - should work everywhere if in path
 
 e - nvim, vim
 
@@ -42,10 +41,11 @@ wsl, git => same but use vim
 vvo
 wsl, git => :call foreground()
 
+ez fzf fuzzy open with nvim + vim config
+nz fzf fuzzy nvim
+
 proposed:
 
 vp - open with fzf preview
 va - like current v (a is for add, meaning add to existing instance)
 v - maybe try vim first but open new unless it exists
-
-
