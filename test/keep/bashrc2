@@ -1430,6 +1430,12 @@ function kc()
   kc "$@"
 }
 
+function fixnix() {
+  # put ~/bin first in the path as some older tools are used in nix which messes up things
+  export PATH=${HOME}:$PATH
+  dupremove PATH
+}
+
 function cdr()
 {
   # cd to repo root
