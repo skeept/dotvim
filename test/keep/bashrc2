@@ -649,7 +649,6 @@ d()
     return
   fi
 
-  echo "key or index not found. run this without argument. trying cd directly"
   if ${CD_OP} "$@"; then
     shift
     __d_add_folder . $@
