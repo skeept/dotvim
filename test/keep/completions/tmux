@@ -178,6 +178,6 @@ _tmux() {
     return 0
 }
 # http://linux.die.net/man/1/bash
-complete -F _tmux tmux
+complete -F _tmux tmux tm
 
 # END tmux completion

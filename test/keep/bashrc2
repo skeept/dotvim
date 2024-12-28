@@ -40,6 +40,8 @@ if test "$CUR_SHELL" = "bash"; then
   shopt -s extglob        # useful for programmable completion
 fi
 
+export CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null && pwd )"
+
 #-----------------------
 # Greeting, motd etc...
 #-----------------------
@@ -210,8 +212,7 @@ export LESSOPEN='|/usr/bin/lesspipe.sh %s >& /dev/null' # Use this if lesspipe.s
 export LESS='-i      -e -M -X  -R -P%t?f%f \
   :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
-export LF_CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null && pwd )"
-echo $LF_CONFIG_HOME
+export LF_CONFIG_HOME="${CONFIG_HOME}"
 
 #----------------
 # a few fun ones
@@ -1426,6 +1427,35 @@ function cdr()
   shift
   $cd_cmd $first_arg "$@"
 }
+
+function setcomps
+{
+  local start=$(date +%s%3N)
+  folders=(
+    $HOME/bin/links/completions
+    ${CONFIG_HOME}/completions
+  )
+  for folder in ${folders[@]}; do
+    [ ! -e "${folder}" ] && continue
+    for file in ${folder}/*; do
+      . $file
+    done
+  done
+
+  # several completions that we get from command line
+  eval "$(command just --completions bash)"
+  complete -o default _F __start_kubectl kc
+  eval "$(atuin gen-completions --shell bash)"
+  eval "$(posh completion bash)"
+  complete -o default -F __start_oh-my-posh posh
+  eval "$(starship completions bash)"
+
+  local end=$(date +%s%3N)
+  local duration=$((end - start))
+
+  echo "Elapsed time setcomps: ${duration} milliseconds"
+}
+setcomps
 
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
