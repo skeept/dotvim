@@ -1,321 +1,171 @@
 # vim: set ft=bash:
-#===============================================================
+
+#=========================================================================
 #
-# PERSONAL $HOME/.bashrc FILE for bash-2.05 (or later)
+# PROGRAMMABLE COMPLETION - ONLY SINCE BASH-2.04
+# (Most are taken from the bash 2.05 documentation)
+# You will in fact need bash-2.05 for some features
 #
-# This file is read (normally) by interactive shells only.
-# Here is the place to define your aliases, functions and
-# other interactive features like your prompt.
-#
-# This file was designed (originally) for Solaris.
-# --> Modified for Linux.
-# This bashrc file is a bit overcrowded - remember it is just
-# just an example. Tailor it to your needs
-#
-#===============================================================
+#=========================================================================
 
-# --> Comments added by HOWTO author.
+shopt -s extglob        # necessary
+set +o nounset          # otherwise some completions will fail
 
-#---------------
-# Some settings
-#---------------
+complete -A hostname   rsh rcp telnet rlogin r ftp ping disk
+complete -A command    nohup exec eval trace gdb ddd
+complete -A command    command type which
+complete -A export     printenv
+complete -A variable   export local readonly unset
+complete -A enabled    builtin
+complete -A alias      alias unalias
+complete -A function   function
+complete -A user       su mail finger
 
-if test "$CUR_SHELL" = "bash"; then
-  set -o notify
-  #[ "$(hostname)"  != "sabre" ] && set -o noclobber
-  # we assume if this folder exists we are in nix setup
-  [ -d ~/src/SABRE2/sabre2/ ] || set -o noclobber
-  #set -o ignoreeof
-  set -o nounset
-  #set -o xtrace          # useful for debuging
+complete -A helptopic  help     # currently same as builtins
+complete -A shopt      shopt
+complete -A stopped -P '%' bg
+complete -A job -P '%'     fg jobs disown
 
-  shopt -s cdspell
-  shopt -s cdable_vars
-  shopt -s checkhash
-  shopt -s checkwinsize
-  shopt -s mailwarn
-  shopt -s sourcepath
-  shopt -s no_empty_cmd_completion
-  shopt -s histappend histreedit
-  shopt -s extglob        # useful for programmable completion
-fi
+complete -A directory  mkdir rmdir
+complete -A directory   -o default cd d
 
-export CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null && pwd )"
+complete -f -d -X '*.gz'  gzip tar
+complete -f -d -X '*.bz2' bzip2 tar
+complete -f -d -X '*.rar' unrar
+complete -f -o default -X '!*.gz'  gunzip tar
+complete -f -o default -X '!*.bz2' bunzip2 tar
+complete -f -o default -X '!*.zip' unzip
+complete -f -o default -X '!*.tar' tar
+complete -f -o default -X '!*.rar' unrar
+complete -f -o default -X '!*.pl'  perl perl5 p
+complete -f -o default -X '!*.ps'  gs ghostview ps2pdf ps2ascii kghostview
+complete -f -o default -X '!*.dvi' dvips dvipdf xdvi dviselect dvitype kdvi
+complete -f -o default -X '!*.pdf' acroread pdf2ps kpdf xpdf
+complete -f -o default -X '!*.texi*' makeinfo texi2dvi texi2html texi2pdf
+complete -f -o default -X '!*.tex' tex latex slitex pdflatex vim xemacs emacs te gvim kile
+complete -f -o default -X '!*.lyx' lyx
+complete -f -o default -X '!*.+(jpg|gif|xpm|png|bmp)' xv gimp display
+complete -f -o default -X '!*.mp3' mpg123 mplayer
+complete -f -o default -X '!*.ogg' ogg123 mplayer
+complete -f -o default -X '!*.c' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
+complete -f -o default -X '!*.cc' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
+complete -f -o default -X '!*.cpp' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
+complete -f -o default -X '!*.c++' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
+complete -f -o default -X '!*.py' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit \
+  py.exe py python python.exe ipython wpy wpy.exe \
+  epy
+complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
+complete -f -o default -X '!*.gms' gams gr
+complete -f -o default -X '!*.sh' bash sh
+complete -A variable path dupremove pre
+complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
 
-#-----------------------
-# Greeting, motd etc...
-#-----------------------
 
-# Define some colors first:
-red='\e[0;31m'
-RED='\e[1;31m'
-blue='\e[0;34m'
-BLUE='\e[1;34m'
-cyan='\e[0;36m'
-CYAN='\e[1;36m'
-NC='\e[0m'              # No Color
-# --> Nice. Has the same effect as using "ansi.sys" in DOS.
-
-
-function initial_setup_copy()
+# This is a 'universal' completion function - it works when commands have
+# a so-called 'long options' mode , ie: 'ls --all' instead of 'ls -a'
+_universal_func ()
 {
-  # copy all files in folder to ~
-  local folder=$1
-  local dest=${HOME}
-  [ -n "$2" ] && dest="$2"
-  if [ -z "${folder}" -o  ! -d "${folder}" ]; then
-    echo "need to provide a folder with files to copy"
-    return 1
-  fi
-  if [ -z "${dest}" -o  ! -d "${dest}" ]; then
-    echo "target $dest doesn't exist or not a folder"
-    return 1
-  fi
-  echo "input=$folder destination=$dest"
-  local target
-  local from
-  local exists
-  for fn in $(command ls -A $folder); do
-    from="${folder}/${fn}"
-    target="${dest}/${fn}"
-    exists="="
-    echo "processing $from"
-    if [ -d "${from}" ]; then
-      # can bash handle recursive?
-      mkdir -p $target >& /dev/null
-      initial_setup_copy "${from}" "${target}"
-      exists="_"
-    else
-      if [ -e  "${target}" ]; then
-        # it's a file and already exists
-        exists="#"
-      else
-        cp -i "${from}" "${target}"
-      fi
-    fi
-    if [ "${exists}" != "_" ]; then
-      printf "%s %-40s => %s\n" $exists $from $target
-    fi
-  done
-}
-
-function py() {
-  # should we go with python by default or python 3?
-  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
-  "${PYTHON_EXE}" $@
-}
-
-function pym {
-  # assume script is first argument
-  script_root=$(dirname $1)
-  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
-  PYTHONPATH="$script_root:$PYTHONPATH" "${PYTHON_EXE}" $@
-}
-
-function ud ()
-{
-  # normally just change DISPLAY and DISPLAY0
-  # argument given store change to given arg and store old one
-  if [[ "$@" = "" ]] ;  then
-    local DISPLAY_="$DISPLAY"
-    export DISPLAY="$DISPLAY0"
-    export DISPLAY0="$DISPLAY_"
-  else
-    export DISPLAY0="${DISPLAY}"
-    export DISPLAY="$1"
-  fi
-  echo "DISPLAY=$DISPLAY"
-  echo "DISPLAY0=$DISPLAY0"
-  echo "TERM=$TERM"
-}
-
-
-function _exit()        # function to run upon exit of shell
-{
-  echo -e "${RED}Hasta la vista, baby${NC}"
-}
-trap _exit 0
-
-#---------------
-# Shell prompt
-#---------------
-
-function fastprompt()
-{
-  unset PROMPT_COMMAND
-  case $TERM in
-    *term | rxvt )
-      PS1="[\h] \W > \[\033]0;[\u@\h] \w\007\]" ;;
-    *)
-      PS1="[\h] \W > " ;;
+  case "$2" in
+    -*)     ;;
+    *)      return ;;
   esac
-}
+
+  case "$1" in
+    \~*)    eval cmd=$1 ;;
+    *)      cmd="$1" ;;
+  esac
+  COMPREPLY=( $("$cmd" --help | sed  -e '/--/!d' -e 's/.*--\([^ ]*\).*/--\1/'| \
+    grep ^"$2" |sort -u) )
+  }
+  complete  -o default -F _universal_func ldd wget bash id info
 
 
-MYHOST=`hostname`
-function powerprompt()
-{
-  _powerprompt()
+  _make_targets ()
   {
-    LOAD=$(uptime|sed -e "s/.*: \([^,]*\).*/\1/" -e "s/ //g")
-    TIME=$(date +%H:%M)
+    local mdef makef gcmd cur prev i
+
+    COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    # if prev argument is -f, return possible filename completions.
+    # we could be a little smarter here and return matches against
+    # `makefile Makefile *.mk', whatever exists
+    case "$prev" in
+      -*f)    COMPREPLY=( $(compgen -f $cur ) ); return 0;;
+    esac
+
+    # if we want an option, return the possible posix options
+    case "$cur" in
+      -)      COMPREPLY=(-e -f -i -k -n -p -q -r -S -s -t); return 0;;
+    esac
+
+    # make reads `makefile' before `Makefile'
+    if [ -f makefile ]; then
+      mdef=makefile
+    elif [ -f Makefile ]; then
+      mdef=Makefile
+    else
+      mdef=*.mk               # local convention
+    fi
+
+    # before we scan for targets, see if a makefile name was specified
+    # with -f
+    for (( i=0; i < ${#COMP_WORDS[@]}; i++ )); do
+      if [[ ${COMP_WORDS[i]} == -*f ]]; then
+        eval makef=${COMP_WORDS[i+1]}       # eval for tilde expansion
+        break
+      fi
+    done
+
+    [ -z "$makef" ] && makef=$mdef
+
+    # if we have a partial word to complete, restrict completions to
+    # matches of that word
+    if [ -n "$2" ]; then gcmd='grep "^$2"' ; else gcmd=cat ; fi
+
+    # if we don't want to use *.mk, we can take out the cat and use
+    # test -f $makef and input redirection
+    COMPREPLY=( $(cat $makef 2>/dev/null | awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' | tr -s ' ' '\012' | sort -u | eval $gcmd ) )
   }
 
-  PROMPT_COMMAND=_powerprompt
-  case $TERM in
-    *term | rxvt  )
-      #            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
-      PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
-    linux )
-      PS1="$USER\w> " ;;
-    * )
-      PS1="$USER\w> " ;;
-  esac
-}
+  complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
+
+  _configure_func ()
+  {
+    case "$2" in
+      -*)     ;;
+      *)      return ;;
+    esac
+
+    case "$1" in
+      \~*)    eval cmd=$1 ;;
+      *)      cmd="$1" ;;
+    esac
+
+    COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
+  }
+
+  complete -F _configure_func configure
 
 
-
-#powerprompt     # this is the default prompt - might be slow
-# If too slow, use fastprompt instead....
-
-
-#===============================================================
-#
-# ALIASES AND FUNCTIONS
-#
-# Arguably, some functions defined here are quite big
-# (ie 'lowercase') but my workstation has 512Meg of RAM, so .....
-# If you want to make this file smaller, these functions can
-# be converted into scripts.
-#
-# Many functions were taken (almost) straight from the bash-2.04
-# examples.
-#
-#===============================================================
-
-#-------------------
-# Personnal Aliases
-#-------------------
-
-#alias rm='rm -i'
-#alias cp='cp -i'
-#alias mv='mv -i'
-# -> Prevents accidentally clobbering files.
-
-export PAGER=less
-#export LESSCHARSET='latin1'
-#export LESSOPEN='|/usr/bin/lesspipe.sh %s 2>& /dev/null' # Use this if lesspipe.sh exists
-export LESSOPEN='|/usr/bin/lesspipe.sh %s >& /dev/null' # Use this if lesspipe.sh exists
-
-#export LESS='-i -N -w  -z-4 -g -e -M -X -F -R -P%t?f%f \
-#:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
-export LESS='-i      -e -M -X  -R -P%t?f%f \
-  :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
-export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
-export LF_CONFIG_HOME="${CONFIG_HOME}"
-
-#----------------
-# a few fun ones
-#----------------
-
-function xtitle ()
+_killall ()
 {
-  echo -n -e "\033]0;$*\007"
-}
+  local cur prev
+  COMPREPLY=()
+  cur=${COMP_WORDS[COMP_CWORD]}
 
+    # get a list of processes (the first sed evaluation
+    # takes care of swapped out processes, the second
+    # takes care of getting the basename of the process)
+    COMPREPLY=( $( ps -u $USER -o comm  | \
+      sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
+      awk '{if ($0 ~ /^'$cur'/) print $0}' ))
 
-#function ll(){ ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
-function ll() {
-  if type eza >& /dev/null; then
-    eza -l --git --icons "$@"
-  else
-    ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "
-  fi
-}
+    return 0
+  }
 
-
-#-----------------------------------
-# File & strings related functions:
-#-----------------------------------
-
-function ff() { local pat=$1; shift; find . -iname '*'${pat}'*' $@; }
-function ffe()
-{
-  # find a file and run $2 on it
-  if [ -z "$1" ]; then
-    1>&2 echo "usage: ${FUNCNAME[0]} pattern [command]"
-  else
-    local pat=$1
-    shift
-    if [ -z "$1" ]; then
-      find . -iname '*'${pat}'*' -print0 | xargs --null -n1 echo
-    else
-      find . -iname '*'${pat}'*' -print0 | xargs --null -n1 $@
-    fi
-  fi
-}
-
-#-----------------------------------
-# Process/system related functions:
-#-----------------------------------
-
-function my_ps() { ps $@ -u $USER -o pid,%cpu,%mem,bsdtime,command ; }
-function pp() { my_ps f | awk '!/awk/ && $0~var' var=${1:-".*"} ; }
-
-# This function is roughly the same as 'killall' on linux
-# but has no equivalent (that I know of) on Solaris
-function killps()   # kill by process name
-{
-  local pid pname sig="-TERM"   # default signal
-  if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-    echo "Usage: killps [-SIGNAL] pattern"
-    return;
-  fi
-  if [ $# = 2 ]; then sig=$1 ; fi
-  for pid in $(my_ps| awk '!/awk/ && $0~pat { print $1 }' pat=${!#} ) ; do
-    pname=$(my_ps | awk '$1~var { print $5 }' var=$pid )
-    if ask "Kill process $pid <$pname> with signal $sig?"
-    then kill $sig $pid
-    fi
-  done
-}
-
-function iii()   # get current host related info
-{
-  echo -e "\nYou are logged on ${RED}$HOST"
-  echo -e "\nAdditionnal information:$NC " ; uname -a
-  echo -e "\n${RED}Users logged on:$NC " ; w -h
-  echo -e "\n${RED}Current date :$NC " ; date
-  echo -e "\n${RED}Machine stats :$NC " ; uptime
-  echo -e "\n${RED}Memory stats :$NC " ; free
-  my_ip 2>&- ;
-  echo -e "\n${RED}Local IP Address :$NC" ; echo ${MY_IP:-"Not connected"}
-  echo -e "\n${RED}ISP Address :$NC" ; echo ${MY_ISP:-"Not connected"}
-  echo
-}
-
-
-# Misc utilities:
-
-function repeat()       # repeat n times command
-{
-  local i max
-  max=$1; shift;
-  for ((i=1; i <= max ; i++)); do  # --> C-like syntax
-    eval "$@";
-  done
-}
-
-function ask()
-{
-  echo -n "$@" '[y/n] ' ; read ans
-  case "$ans" in
-    y*|Y*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-[[ -e ${CONFIG_HOME}/setup_completion.sh ]] && source ${CONFIG_HOME}/setup_completion.sh
+  complete -F _killall killall killps
 
 function ddo() #try to do something with every file passed on the command line
 {
