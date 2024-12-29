@@ -1117,6 +1117,7 @@ function _wk_comp()
   return 0
 }
 
+complete -F _wk_comp wk
 
 pwc()
 {
@@ -1124,26 +1125,6 @@ pwc()
   command -v clip.exe  > /dev/null && { pwd | clip.exe; }
   pwd
 }
-
-# run docker container [entrypoint '/'=/bin/bash]
-if false; then
-dr()
-{
-  container=$1
-  _entry=$2
-  shift; shift
-  entrypoint=()
-  if [ -n "$_entry" ]; then
-    [ "$_entry"  = "/" ] &&  _entry=/bin/bash
-    entrypoint=("--entrypoint" "${_entry}")
-  fi
-
-  docker run -it ${entrypoint[@]} ${container} $@
-}
-fi
-
-
-complete -F _wk_comp wk
 
 if { type zoxide && ! type zi; } >& /dev/null ; then
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
@@ -1164,32 +1145,9 @@ if { type zoxide && ! type zi; } >& /dev/null ; then
   eval "$(zoxide init bash)"
 fi
 
-#function docker()
-#{
-  #[ -e ~/bin/links/completions/docker.bash ] && . ~/bin/links/completions/docker.bash
-  #unset -f docker
-  #docker $@
-#}
-
-function just()
-{
-  unset -f just
-  eval "$(command just --completions bash)"
-  just "$@"
-}
-
-# function kc()
-# {
-#   unset -f kc
-#   alias kc='kubectl'
-#   complete -o default -F __start_kubectl kc
-#   kubectl $@
-# }
-
 function kc()
 {
   # this assumes namespace
-  complete -o default _F __start_kubectl kc
   function kc()
   {
     local print_info=0
@@ -1201,6 +1159,7 @@ function kc()
     fi
     kubectl "${__ns[@]}" $@
   }
+  complete -o default _F __start_kubectl kc
   kc "$@"
 }
 
@@ -1219,40 +1178,9 @@ function cdr()
   $cd_cmd $first_arg "$@"
 }
 
-function setcomps
-{
-  local start=$(date +%s%3N)
-  folders=(
-    $HOME/bin/links/completions
-    ${CONFIG_HOME}/completions
-  )
-  for folder in ${folders[@]}; do
-    [ ! -e "${folder}" ] && continue
-    for file in ${folder}/*; do
-      . $file
-    done
-  done
-
-  # several completions that we get from command line
-  eval "$(command just --completions bash)"
-  complete -o default _F __start_kubectl kc
-  eval "$(atuin gen-completions --shell bash)"
-  eval "$(posh completion bash)"
-  complete -o default -F __start_oh-my-posh posh
-  eval "$(starship completions bash)"
-
-  local end=$(date +%s%3N)
-  local duration=$((end - start))
-
-  echo "Elapsed time setcomps: ${duration} milliseconds"
-}
-setcomps
-
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
   [[ -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
   eval "$(atuin init bash --disable-up-arrow)"
   bind -x '"\C-p": __atuin_history'
 fi
-
-test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
