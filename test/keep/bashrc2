@@ -1165,7 +1165,7 @@ function kc()
 
 function fixnix() {
   # put ~/bin first in the path as some older tools are used in nix which messes up things
-  export PATH=${HOME}:$PATH
+  export PATH=${HOME}/bin:${HOME}/bin/links:$PATH
   dupremove PATH
 }
 
