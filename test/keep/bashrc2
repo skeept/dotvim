@@ -375,9 +375,6 @@ function gtp()
   PS1="[\h] \W $(__git_ps1) > "
 }
 
-#also use the screen completion for the alias s (screen)
-#complete -o default -o nospace -F _screen s
-
 if true; then
   # try new implementation for d
   __d_add_folder()
@@ -745,49 +742,6 @@ function gi()
       --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
     }
 
-# completion for vim
-function _vim()
-{
-  local cur prev idx ext
-
-  COMPREPLY=()
-  _get_comp_words_by_ref cur prev
-
-  case $prev in
-    -h|--help|-v|--version)
-      return 0
-      ;;
-  esac
-
-  if [[ "$cur" == -* ]] ; then
-    local _vopts='-v -e -E -s -d -y -R -Z -m -M -b -l -C'
-    _vopts="${_vopts} -N -V -D -n -r -r -L -A -H -F -T -u"
-    _vopts="${_vopts} --noplugin -p -o -O --cmd -c -S -s -w -W"
-    _vopts="${_vopts} -x -X --remote --remote-silent --remote-wait"
-    _vopts="${_vopts} --remote-wait-silent --remote-tab --remote-send"
-    _vopts="${_vopts} --remote-expr --serverlist --servername"
-    _vopts="${_vopts} --startuptime -i -h --help --version"
-    COMPREPLY=( $( compgen -W "${_vopts}" \
-      -- "$cur" ) )
-          return 0
-  fi
-
-  local _VIM_IGNORE=(pdf xdvi jpg pyc exe tar zip ps)
-  _filedir
-  for idx in ${!COMPREPLY[@]}; do
-    ext=${COMPREPLY[$idx]}
-    ext=${ext##*.}
-    for iext in ${_VIM_IGNORE[@]}; do
-      if test "$ext" = "$iext"; then
-        unset -v COMPREPLY[$idx]
-        break
-      fi
-    done
-  done
-  return 0
-}
-complete -F _vim vim vi v gv gvi vd va
-
 function n()
 {
   # need to determine if nvim can be run
@@ -1019,7 +973,8 @@ function ez()
 }
 
 # cd to a nested folder
-dd() {
+dz()
+{
   local dir
   local ok=0
   if [ -n "${1}" -a \( -d "${1}" -o "${1}" = "-" \) ]; then dir=$1
@@ -1091,12 +1046,26 @@ function dr()
     fi
   fi
 
+  # do we want to add credentials by default?
+  # docker run -e
+  # GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud/application_default_credentials.json
+  # --mount type=bind,source=${HOME}/.config/gcloud,target=/tmp/gcloud,readonly
+  # -it --rm
+  # repository.sabre-gcp.com:9082/sabre/labs/research/travelai/schedchg_test:0.1.2
+  # --gcp-scenario-folder-prefix scenario1121 --process-connections-dat
+  creds=(
+    -e
+    GOOGLE_APPLICATION_CREDENTIALS=/gcreds/application_default_credentials.json
+    --mount
+    type=bind,source=${HOME}/.config/gcloud,target=/gcreds,readonly
+  )
+
   if [ -z "$entrypoint" ]; then
-    echo docker run --rm -it ${args[@]:2} ${image}
-    docker run --rm -it ${args[@]:2} ${image}
+    echo docker run --rm -it ${creds[@]} ${args[@]:2} ${image}
+    docker run --rm -it ${creds[@]} ${args[@]:2} ${image}
   else
-    echo docker run --rm -it --entrypoint ${entrypoint} ${args[@]:2} ${image}
-    docker run --rm -it --entrypoint ${entrypoint} ${args[@]:2} ${image}
+    echo docker run --rm -it ${creds[@]} --entrypoint ${entrypoint} ${args[@]:2} ${image}
+    docker run --rm -it ${creds[@]} --entrypoint ${entrypoint} ${args[@]:2} ${image}
   fi
 }
 
