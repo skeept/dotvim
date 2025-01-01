@@ -42,6 +42,21 @@ fi
 
 export CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null && pwd )"
 
+MTIMER_ENABLED=1
+function mtimer()
+{
+  [ -z ${MTIMER_ENABLED+x} ] && return
+  local now=$(date +%s%3N)
+  [ -z ${MTIMER_START+x} ] && MTIMER_START=$now
+  [ -z ${MTIMER_LAST+x} ] && MTIMER_LAST=$now
+  local total=$((now - MTIMER_START))
+  local last=$((now - MTIMER_LAST))
+  echo "$@ Total: $total last: $last"
+  MTIMER_LAST=$(date +%s%3N)
+}
+
+mtimer right after start
+
 #-----------------------
 # Greeting, motd etc...
 #-----------------------
@@ -55,7 +70,6 @@ cyan='\e[0;36m'
 CYAN='\e[1;36m'
 NC='\e[0m'              # No Color
 # --> Nice. Has the same effect as using "ansi.sys" in DOS.
-
 
 function py() {
   # should we go with python by default or python 3?
@@ -864,10 +878,9 @@ if { type zoxide && ! type zi; } >& /dev/null ; then
 
   #_zoxide_add ${HOME}/src/t1/users/sg0216489/irops_micros
   #_zoxide_add ${HOME}/src/sabre2
-  _zoxide_add /mnt/c/Users/SG0216489/vimfiles
-  _zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm
-  _zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm/
-  _zoxide_add  /mnt/c/OR/IROPS/rt
+  #_zoxide_add /mnt/c/Users/SG0216489/vimfiles
+  #_zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm/
+  #_zoxide_add  /mnt/c/OR/IROPS/rt
   #_zoxide_add /mnt/c/zl/ML
 
   eval "$(zoxide init bash)"
@@ -912,3 +925,5 @@ if [ -x "$(command -v atuin)" ]; then
   eval "$(atuin init bash --disable-up-arrow)"
   bind -x '"\C-p": __atuin_history'
 fi
+
+mtimer end of bashrc

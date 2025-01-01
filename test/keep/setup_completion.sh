@@ -8,6 +8,8 @@
 #
 #=========================================================================
 
+mtimer completion start
+
 shopt -s extglob        # necessary
 set +o nounset          # otherwise some completions will fail
 
@@ -247,3 +249,4 @@ function setcomps
 setcomps
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
+mtimer "completion end"
