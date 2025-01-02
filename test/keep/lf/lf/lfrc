@@ -102,3 +102,36 @@ cmd on-cd &{{
 cmd on-select &{{
     lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
 }}
+
+cmd fzf_search ${{
+    $cmd = "rg --column --line-number --no-heading --color=always --smart-case"
+
+    $result = (fzf --ansi --disabled --layout=reverse --height="100%" --header="Search in files" --delimiter=":" `
+        --bind "start:reload($cmd {q})" `
+        --bind "change:reload($cmd {q})" `
+        --preview 'bat --color=always --highlight-line={2} -- {1}' `
+        --preview-window "up,60%,border-bottom,+{2}+3/3" `
+    ).Split(':')[0]
+
+    lf -remote "send $env:id select `"$result`""
+}}
+
+set shellflag "-cwa"
+
+cmd z ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $result = ((zoxide query --exclude $PWD $args[0]) -replace "/", "//")
+    lf -remote "send $env:id cd '$result'"
+}}
+
+cmd zi ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $result=((zoxide query -i) -replace "/", "//")
+    lf -remote "send $id cd '$result'"
+}}
+
+cmd on-cd &{{
+    zoxide add "$PWD"
+}}
+
+map zz zi
