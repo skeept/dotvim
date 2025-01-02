@@ -105,16 +105,30 @@ cmd on-select &{{
 
 cmd fzf_search ${{
     $cmd = "rg --column --line-number --no-heading --color=always --smart-case"
-
     $result = (fzf --ansi --disabled --layout=reverse --height="100%" --header="Search in files" --delimiter=":" `
         --bind "start:reload($cmd {q})" `
         --bind "change:reload($cmd {q})" `
-        --preview 'bat --color=always --highlight-line={2} -- {1}' `
-        --preview-window "up,60%,border-bottom,+{2}+3/3" `
-    ).Split(':')[0]
+        --preview 'bat --color=always --style=plain --highlight-line={2} -- {1}' `
+    )
+    if($result -ne $null) {
+      $result = [regex]::escape($result.split(':')[0])
+    }
 
     lf -remote "send $env:id select `"$result`""
 }}
+
+map gs fzf_search
+
+cmd fzf_file_jump ${{
+  $res = "$((fd  | fzf --reverse --header='Jump to location').trim())"
+  if([bool]$res) {
+    if ((get-item $res)  -is [System.IO.DirectoryInfo]) { $cmd = "cd" } else { $cmd = "select" }
+    $res = [regex]::escape($res)
+    lf -remote "send $id $cmd $res"
+  }
+}}
+
+map gf fzf_file_jump
 
 set shellflag "-cwa"
 
