@@ -59,7 +59,7 @@ cmd copy_to_clip &{{
 map gy :copy_to_clip
 
 
-cmd fzf_jump ${{
+cmd fzf_file_jump ${{
     res="$(fd | fzf --reverse --header='Jump to location')"
     if [ -n "$res" ]; then
         if [ -d "$res" ]; then
@@ -71,7 +71,7 @@ cmd fzf_jump ${{
         lf -remote "send $id $cmd \"$res\""
     fi
 }}
-map gj :fzf_jump
+map gf :fzf_file_jump
 
 cmd z %{{
     result="$(zoxide query --exclude "$PWD" "$@" | sed 's/\\/\\\\/g;s/"/\\"/g')"
