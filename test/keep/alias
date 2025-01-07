@@ -1,3 +1,6 @@
+# define this one as a function now
+unalias ll
+
 alias kp='kill -9 '
 alias mv='mv -i'
 
