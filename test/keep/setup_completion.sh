@@ -240,6 +240,7 @@ function setcomps
   eval "$(posh completion bash)"
   complete -o default -F __start_oh-my-posh posh
   eval "$(starship completions bash)"
+  eval "$(procs --gen-completion-out bash)"
 
   local end=$(date +%s%3N)
   local duration=$((end - start))
