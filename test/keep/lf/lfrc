@@ -97,6 +97,7 @@ map on &gvi :N $f
 map oo &gvi $f
 map ov $vim $f
 map oz &7zFM.exe $f
+map D &gio trash $fx
 
 map c
 map cw rename
