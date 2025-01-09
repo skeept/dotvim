@@ -560,13 +560,25 @@ function! s:query2vimregexp(flags) abort
     endif
     let vim_query = '\V'. vim_query
   else
+    let tool = s:get_current_tool(a:flags)
+    " if tool escapes literal {} or () or | or ? or +, then unescape them
+    let chars = [ '{', '}', '(', ')', '|', '?', '+' ]
+    for c in chars
+      if match(tool.escape, c) != -1
+        let vim_query = escape(vim_query, c)
+        let vim_query = substitute(vim_query, '\\\\' . c, c, 'g')
+      endif
+    endfor
+    " # is escaped in Sift; not sure what it corresponds in Vim to though
+    if match(tool.escape, '#') != -1
+      let vim_query = substitute(vim_query, '\\#', '#', 'g')
+    endif
     " \bfoo\b -> \<foo\> Assume only one pair.
     let vim_query = substitute(vim_query, '\v\\b(.{-})\\b', '\\<\1\\>', '')
     " *? -> \{-}
     let vim_query = substitute(vim_query, '*\\\=?', '\\{-}', 'g')
     " +? -> \{-1,}
     let vim_query = substitute(vim_query, '\\\=+\\\=?', '\\{-1,}', 'g')
-    let vim_query = escape(vim_query, '+')
   endif
 
   return vim_query
@@ -1076,9 +1088,13 @@ function! s:side_create_window(flags) abort
   let errors = []
   let list = a:flags.quickfix ? getqflist() : getloclist(0)
 
+  " Count unique filenames
+  let filenames = {}
+
   " process quickfix entries
   for entry in list
     let bufname = bufname(entry.bufnr)
+    let filenames[bufname] = 1
     if !entry.valid
       " collect lines with error messages
       call add(errors, entry.text)
@@ -1126,9 +1142,11 @@ function! s:side_create_window(flags) abort
 
   silent 1delete _
 
-  let nummatches = len(getqflist())
-  let numfiles = len(uniq(map(getqflist(), 'bufname(v:val.bufnr)')))
-  let &l:statusline = printf(' Found %d matches in %d files.', nummatches, numfiles)
+  let b:grepper_side_status = {
+        \ 'matches': len(list),
+        \ 'files': len(filenames),
+        \ }
+  let &l:statusline = printf(' Found %d matches in %d files.', b:grepper_side_status.matches, b:grepper_side_status.files)
 endfunction
 
 " s:side_buffer_settings() {{{2
