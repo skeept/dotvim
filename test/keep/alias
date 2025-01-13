@@ -1,5 +1,5 @@
 # define this one as a function now
-unalias ll
+unalias ll >& /dev/null || true
 
 alias kp='kill -9 '
 alias mv='mv -i'
