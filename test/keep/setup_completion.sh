@@ -241,6 +241,7 @@ function setcomps
   complete -o default -F __start_oh-my-posh posh
   eval "$(starship completions bash)"
   eval "$(procs --gen-completion-out bash)"
+  eval "$(uv generate-shell-completion bash)"
 
   local end=$(date +%s%3N)
   local duration=$((end - start))

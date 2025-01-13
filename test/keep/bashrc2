@@ -275,6 +275,7 @@ function ask()
   esac
 }
 
+[ -e $HOME/.cargo/env ] && source $HOME/.cargo/env
 [[ -e ${CONFIG_HOME}/setup_completion.sh ]] && source ${CONFIG_HOME}/setup_completion.sh
 
 function ddo() #try to do something with every file passed on the command line
