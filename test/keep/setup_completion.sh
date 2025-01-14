@@ -234,14 +234,23 @@ function setcomps
   done
 
   # several completions that we get from command line
-  eval "$(command just --completions bash)"
   complete -o default _F __start_kubectl kc
-  eval "$(atuin gen-completions --shell bash)"
-  eval "$(posh completion bash)"
   complete -o default -F __start_oh-my-posh posh
-  eval "$(starship completions bash)"
-  eval "$(procs --gen-completion-out bash)"
-  eval "$(uv generate-shell-completion bash)"
+
+  function _eval_comp_expression
+  {
+    # this assumes command is the first one passed and should exist
+    if ! command -v $1 >& /dev/null; then return; fi
+    eval "$($@)"
+  }
+
+  _eval_comp_expression just --completions bash
+  _eval_comp_expression command just --completions bash
+  _eval_comp_expression atuin gen-completions --shell bash
+  _eval_comp_expression posh completion bash
+  _eval_comp_expression starship completions bash
+  _eval_comp_expression procs --gen-completion-out bash
+  _eval_comp_expression uv generate-shell-completion bash
 
   local end=$(date +%s%3N)
   local duration=$((end - start))
