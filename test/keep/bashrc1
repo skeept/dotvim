@@ -14,11 +14,13 @@
 # Source global definitions (if any)
 #-----------------------------------
 
-if type readlink >& /dev/null; then
-  export CUR_SHELL=$(basename $(readlink -f /proc/$$/exe))
-else # assume shell is bash
-  export CUR_SHELL="bash"
-fi
+# we can see how portable the 2 alternatives are
+#if type readlink >& /dev/null; then
+  #export CUR_SHELL=$(basename $(readlink -f /proc/$$/exe))
+#else # assume shell is bash
+  #export CUR_SHELL="bash"
+#fi
+CURSHELL="${0/-}"
 
 # read /etc/bashrc and /etc/profile if present
 if test -z "$now_profile"; then
@@ -141,6 +143,14 @@ completions_file=$HOME/bin/links/completions/comp.bash
 
 
 
+function _eval_cmd_expression_if_exists
+{
+  # this assumes command is the first one passed and should exist
+  if ! command -v $1 >& /dev/null; then return; fi
+  eval "$($@)"
+}
+
+
 # don't load any more settings if the shell is not interactive
 # assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
 if test -n "$PS1"; then
@@ -174,18 +184,17 @@ if test -n "$PS1"; then
 
   # try using faster vim for fc
   export HISTCONTROL=erasedups:ignoredups
+  _eval_cmd_expression_if_exists fzf --${CURSHELL}
 fi
 
-
-# command history settings
-if command -v mcfly &> /dev/null; then
-  export MCFLY_RESULTS=30
-  export MCFLY_FUZZY=2
-  eval "$(mcfly init bash)"
-elif command -v fzf &> /dev/null; then
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}fzf.bash"
-  [ -e "${NAME}" ] && . "${NAME}" "${CONFIG_FILES_DIR}/../../plugged/fzf/shell"
-fi
-
+## command history settings
+#if command -v mcfly &> /dev/null; then
+  #export MCFLY_RESULTS=30
+  #export MCFLY_FUZZY=2
+  #eval "$(mcfly init bash)"
+#elif command -v fzf &> /dev/null; then
+  #NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}fzf.bash"
+  #[ -e "${NAME}" ] && . "${NAME}" "${CONFIG_FILES_DIR}/../../plugged/fzf/shell"
+#fi
 
 # vim: set ft=bash:

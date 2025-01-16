@@ -237,20 +237,13 @@ function setcomps
   complete -o default _F __start_kubectl kc
   complete -o default -F __start_oh-my-posh posh
 
-  function _eval_comp_expression
-  {
-    # this assumes command is the first one passed and should exist
-    if ! command -v $1 >& /dev/null; then return; fi
-    eval "$($@)"
-  }
-
-  _eval_comp_expression just --completions bash
-  _eval_comp_expression command just --completions bash
-  _eval_comp_expression atuin gen-completions --shell bash
-  _eval_comp_expression posh completion bash
-  _eval_comp_expression starship completions bash
-  _eval_comp_expression procs --gen-completion-out bash
-  _eval_comp_expression uv generate-shell-completion bash
+  _eval_cmd_expression_if_exists just --completions ${CURSHELL}
+  _eval_cmd_expression_if_exists command just --completions ${CURSHELL}
+  _eval_cmd_expression_if_exists atuin gen-completions --shell ${CURSHELL}
+  _eval_cmd_expression_if_exists posh completion ${CURSHELL}
+  _eval_cmd_expression_if_exists starship completions ${CURSHELL}
+  _eval_cmd_expression_if_exists procs --gen-completion-out ${CURSHELL}
+  _eval_cmd_expression_if_exists uv generate-shell-completion ${CURSHELL}
 
   local end=$(date +%s%3N)
   local duration=$((end - start))

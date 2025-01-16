@@ -20,7 +20,7 @@
 # Some settings
 #---------------
 
-if test "$CUR_SHELL" = "bash"; then
+if [ "$CURSHELL" = "bash" ]; then
   set -o notify
   #[ "$(hostname)"  != "sabre" ] && set -o noclobber
   # we assume if this folder exists we are in nix setup
