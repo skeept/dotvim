@@ -34,7 +34,8 @@ elseif 0 == use_airline "lightline
   Plug g:p0 . '/pack/bundle/opt/lightline'
 endif
 
-Plug 'junegunn/fzf'
+" fzf repo should not be needed we can use executable to set the shell
+"Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 
 let load_asynccomplete=has("nvim") || v:version > 800
