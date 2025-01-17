@@ -81,7 +81,6 @@ map <delete> delete
 map r
 map rr rename
 map rg $lg.exe
-map rv $wsl -e /home/jr/.local/bin/vd (Get-item $env:f).name
 
 
 # map all common operations to a (for action) prefix
@@ -90,6 +89,11 @@ map ay copy
 map av invert
 map ad cut
 map ac clear
+
+map v
+map vv invert
+map ve $vim $f
+map vd $wsl -e /home/sabre/.local/bin/visidata (Get-item $env:f).name
 
 map gi $lg
 
