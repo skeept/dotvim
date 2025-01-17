@@ -100,7 +100,7 @@ map D &gio trash $fx
 
 map c
 map cw rename
-map cc clear
+map cc :clear ; unselect
 
 # map all common operations to a (for action) prefix
 map aa invert
