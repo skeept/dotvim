@@ -21,6 +21,7 @@
   #export CUR_SHELL="bash"
 #fi
 CURSHELL="${0/-}"
+CURSHELL="${CURSHELL##*/}"
 
 # read /etc/bashrc and /etc/profile if present
 if test -z "$now_profile"; then
