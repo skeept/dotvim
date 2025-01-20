@@ -20,8 +20,8 @@
 #else # assume shell is bash
   #export CUR_SHELL="bash"
 #fi
-CURSHELL="${0/-}"
-CURSHELL="${CURSHELL##*/}"
+
+CURSHELL="${0/-}" && CURSHELL="${CURSHELL##*/}"
 
 # read /etc/bashrc and /etc/profile if present
 if test -z "$now_profile"; then
@@ -149,6 +149,7 @@ function _eval_cmd_expression_if_exists
   # this assumes command is the first one passed and should exist
   if ! command -v $1 >& /dev/null; then return; fi
   eval "$($@)"
+  [ "$?" != "0" ] && echo "$@"
 }
 
 
