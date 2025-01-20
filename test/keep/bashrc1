@@ -21,7 +21,11 @@
   #export CUR_SHELL="bash"
 #fi
 
-CURSHELL="${0/-}" && CURSHELL="${CURSHELL##*/}"
+# for now just consider bash and zsh
+[ -n "$ZSH_VERSION" ] && CURSHELL=zsh || CURSHELL=bash
+# alternate way that seems to work.
+#CURSHELL="$(ps -o comm= -p $$)"
+# Note: tested this for speed and it's much slower
 
 # read /etc/bashrc and /etc/profile if present
 if test -z "$now_profile"; then
