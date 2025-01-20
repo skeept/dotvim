@@ -1262,6 +1262,8 @@ func parseTheme(defaultTheme *tui.ColorTheme, str string) (*tui.ColorTheme, erro
 				mergeAttr(&theme.Header)
 			case "header-bg":
 				mergeAttr(&theme.HeaderBg)
+			case "gap-line":
+				mergeAttr(&theme.GapLine)
 			default:
 				fail()
 			}
@@ -3133,7 +3135,7 @@ func postProcessOptions(opts *Options) error {
 		boldify := func(c tui.ColorAttr) tui.ColorAttr {
 			dup := c
 			if (c.Attr & tui.AttrRegular) == 0 {
-				dup.Attr |= tui.Bold
+				dup.Attr |= tui.BoldForce
 			}
 			return dup
 		}

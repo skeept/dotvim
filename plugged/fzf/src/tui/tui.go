@@ -213,6 +213,16 @@ func NewColorAttr() ColorAttr {
 	return ColorAttr{Color: colUndefined, Attr: AttrUndefined}
 }
 
+func (a ColorAttr) Merge(other ColorAttr) ColorAttr {
+	if other.Color != colUndefined {
+		a.Color = other.Color
+	}
+	if other.Attr != AttrUndefined {
+		a.Attr = a.Attr.Merge(other.Attr)
+	}
+	return a
+}
+
 const (
 	colUndefined Color = -2
 	colDefault   Color = -1
@@ -341,6 +351,7 @@ type ColorTheme struct {
 	BorderLabel      ColorAttr
 	ListLabel        ColorAttr
 	ListBorder       ColorAttr
+	GapLine          ColorAttr
 }
 
 type Event struct {
@@ -655,6 +666,7 @@ var (
 	ColHeaderLabel          ColorPair
 	ColSeparator            ColorPair
 	ColScrollbar            ColorPair
+	ColGapLine              ColorPair
 	ColBorder               ColorPair
 	ColPreview              ColorPair
 	ColPreviewBorder        ColorPair
@@ -708,6 +720,7 @@ func EmptyTheme() *ColorTheme {
 		HeaderBg:         ColorAttr{colUndefined, AttrUndefined},
 		HeaderBorder:     ColorAttr{colUndefined, AttrUndefined},
 		HeaderLabel:      ColorAttr{colUndefined, AttrUndefined},
+		GapLine:          ColorAttr{colUndefined, AttrUndefined},
 		Nth:              ColorAttr{colUndefined, AttrUndefined},
 	}
 }
@@ -752,6 +765,7 @@ func NoColorTheme() *ColorTheme {
 		HeaderBg:         ColorAttr{colDefault, AttrUndefined},
 		HeaderBorder:     ColorAttr{colDefault, AttrUndefined},
 		HeaderLabel:      ColorAttr{colDefault, AttrUndefined},
+		GapLine:          ColorAttr{colDefault, AttrUndefined},
 		Nth:              ColorAttr{colUndefined, AttrUndefined},
 	}
 }
@@ -793,6 +807,7 @@ func init() {
 		InputBg:          ColorAttr{colUndefined, AttrUndefined},
 		InputBorder:      ColorAttr{colUndefined, AttrUndefined},
 		InputLabel:       ColorAttr{colUndefined, AttrUndefined},
+		GapLine:          ColorAttr{colUndefined, AttrUndefined},
 		Nth:              ColorAttr{colUndefined, AttrUndefined},
 	}
 	Dark256 = &ColorTheme{
@@ -831,6 +846,7 @@ func init() {
 		InputBg:          ColorAttr{colUndefined, AttrUndefined},
 		InputBorder:      ColorAttr{colUndefined, AttrUndefined},
 		InputLabel:       ColorAttr{colUndefined, AttrUndefined},
+		GapLine:          ColorAttr{colUndefined, AttrUndefined},
 		Nth:              ColorAttr{colUndefined, AttrUndefined},
 	}
 	Light256 = &ColorTheme{
@@ -872,6 +888,7 @@ func init() {
 		HeaderBg:         ColorAttr{colUndefined, AttrUndefined},
 		HeaderBorder:     ColorAttr{colUndefined, AttrUndefined},
 		HeaderLabel:      ColorAttr{colUndefined, AttrUndefined},
+		GapLine:          ColorAttr{colUndefined, AttrUndefined},
 		Nth:              ColorAttr{colUndefined, AttrUndefined},
 	}
 }
@@ -897,7 +914,9 @@ func InitTheme(theme *ColorTheme, baseTheme *ColorTheme, forceBlack bool, hasInp
 	theme.DarkBg = o(baseTheme.DarkBg, theme.DarkBg)
 	theme.Prompt = o(baseTheme.Prompt, theme.Prompt)
 	theme.Match = o(baseTheme.Match, theme.Match)
-	theme.Current = o(baseTheme.Current, theme.Current)
+	// Inherit from 'fg', so that we don't have to write 'current-fg:dim'
+	// e.g. fzf --delimiter / --nth -1 --color fg:dim,nth:regular
+	theme.Current = theme.Fg.Merge(o(baseTheme.Current, theme.Current))
 	theme.CurrentMatch = o(baseTheme.CurrentMatch, theme.CurrentMatch)
 	theme.Spinner = o(baseTheme.Spinner, theme.Spinner)
 	theme.Info = o(baseTheme.Info, theme.Info)
@@ -927,6 +946,7 @@ func InitTheme(theme *ColorTheme, baseTheme *ColorTheme, forceBlack bool, hasInp
 	theme.ListBorder = o(theme.Border, theme.ListBorder)
 	theme.Separator = o(theme.ListBorder, theme.Separator)
 	theme.Scrollbar = o(theme.ListBorder, theme.Scrollbar)
+	theme.GapLine = o(theme.ListBorder, theme.GapLine)
 	/*
 		--color list-border:green
 		--color scrollbar:red
@@ -992,6 +1012,7 @@ func initPalette(theme *ColorTheme) {
 	ColInfo = pair(theme.Info, theme.InputBg)
 	ColSeparator = pair(theme.Separator, theme.InputBg)
 	ColScrollbar = pair(theme.Scrollbar, theme.ListBg)
+	ColGapLine = pair(theme.GapLine, theme.ListBg)
 	ColBorder = pair(theme.Border, theme.Bg)
 	ColBorderLabel = pair(theme.BorderLabel, theme.Bg)
 	ColPreviewLabel = pair(theme.PreviewLabel, theme.PreviewBg)
