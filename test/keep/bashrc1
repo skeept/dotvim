@@ -125,7 +125,7 @@ unset LS_COLORS
 
 export DISPLAY0="$DISPLAY"
 
-DEBUG_BASHRC=yes
+DEBUG_BASHRC=no
 
 export IS_WSL="$(uname -a | grep -i microsoft >& /dev/null && echo 1 || echo 0)"
 export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
@@ -176,12 +176,12 @@ if test -n "$PS1"; then
 
   # load windows specific settings, case they exist
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
-  [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ] && . "${NAME}"
-  if [ -n "${DEBUG_BASHRC}" ]; then
-    if [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && [ -e "${NAME}" ]; then
+  [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && [ -e "${NAME}" ] && . "${NAME}"
+  if [ "${DEBUG_BASHRC}"  = "yes" ]; then
+    if [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && [ -e "${NAME}" ]; then
       echo "imported ${NAME}"
     else
-      [ -n "${BASH_CONFIG_IMPORT_WIN}" ] && echo "set to import win" || echo "not set to import win"
+      [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && echo "set to import win" || echo "not set to import win"
       [ -e "${NAME}" ] && echo "${NAME} exists" || echo "${NAME} does not exist"
     fi
   fi
