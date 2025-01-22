@@ -132,15 +132,15 @@ export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
 
 export PYTHONSTARTUP=~/.pythonrc.py
 
-
 # bin/links is usually not commited
 if [ "${IS_GIT_BASH}" = "1" ]; then
   export PATH="/c/ht/nvim-win64/bin:${PATH}"
 else
   export PATH="${HOME}/bin/links:${PATH}"
 fi
-export PATH="${HOME}/bin:${PATH}"
-export PATH="${HOME}/.cargo/bin:${PATH}"
+
+[ -e $HOME/bin ] && export PATH="${HOME}/bin:${PATH}"
+[ -e $HOME/.cargo/bin ] && export PATH="${HOME}/.cargo/bin:${PATH}"
 
 # add some completions under bin/links/completions
 # just copy code into completions/comp.bash
