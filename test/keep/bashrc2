@@ -771,6 +771,12 @@ function dr()
   # TODO: add global variables for persistance
 
   # use previous run arguments
+  if [ "$1" = "-h" ]; then
+    echo "dr image [entrypoint (can use / or :)] [-v folder[:/m]]"
+    echo "/ => /bin/bash : skips"
+    echo "-v mounts folder"
+    return 0
+  fi
   local -a args
   [ -n "$1" ] && args=("$@") && __previous_dr_args=${args[@]}
   [ -z "$1" ] && [ -v __previous_dr_args ] && args=${__previous_dr_args[@]}
@@ -778,7 +784,9 @@ function dr()
   if [ ${#args[@]} -gt 1 ]; then
     local entrypoint=${args[1]}
     [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
+    [ "$entrypoint" = ":" ] && entrypoint=
   fi
+
   # handle volume
   if [ "${args[2]}" = "-v" ]; then
     local t=${args[3]}
