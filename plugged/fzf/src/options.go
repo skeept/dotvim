@@ -11,6 +11,7 @@ import (
 
 	"github.com/junegunn/fzf/src/algo"
 	"github.com/junegunn/fzf/src/tui"
+	"github.com/junegunn/fzf/src/util"
 
 	"github.com/junegunn/go-shellwords"
 	"github.com/rivo/uniseg"
@@ -46,8 +47,8 @@ Usage: fzf [options]
     --tail=NUM               Maximum number of items to keep in memory
     --disabled               Do not perform search
     --tiebreak=CRI[,..]      Comma-separated list of sort criteria to apply
-                             when the scores are tied [length|chunk|begin|end|index]
-                             (default: length)
+                             when the scores are tied
+                             [length|chunk|pathname|begin|end|index] (default: length)
 
   INPUT/OUTPUT
     --read0                  Read input delimited by ASCII NUL characters
@@ -164,6 +165,9 @@ Usage: fzf [options]
     --header-border[=STYLE]  Draw border around the header section
                              [rounded|sharp|bold|block|thinblock|double|horizontal|vertical|
                               top|bottom|left|right|none] (default: rounded)
+    --header-lines-border[=STYLE]
+                             Display header from --header-lines with a separate border.
+                             Pass 'none' to still separate it but without a border.
     --header-label=LABEL     Label to print on the header border
     --header-label-pos=COL   Position of the header label
                              [POSITIVE_INTEGER: columns from left|
@@ -238,6 +242,7 @@ const (
 	byLength
 	byBegin
 	byEnd
+	byPathname
 )
 
 type heightSpec struct {
@@ -597,6 +602,7 @@ type Options struct {
 	ListBorderShape   tui.BorderShape
 	InputBorderShape  tui.BorderShape
 	HeaderBorderShape tui.BorderShape
+	HeaderLinesShape  tui.BorderShape
 	InputLabel        labelOpts
 	HeaderLabel       labelOpts
 	BorderLabel       labelOpts
@@ -649,7 +655,7 @@ func defaultOptions() *Options {
 		Man:          false,
 		Fuzzy:        true,
 		FuzzyAlgo:    algo.FuzzyMatchV2,
-		Scheme:       "default",
+		Scheme:       "", // Unknown
 		Extended:     true,
 		Phony:        false,
 		Case:         CaseSmart,
@@ -660,7 +666,7 @@ func defaultOptions() *Options {
 		Sort:         1000,
 		Track:        trackDisabled,
 		Tac:          false,
-		Criteria:     []criterion{byScore, byLength},
+		Criteria:     []criterion{}, // Unknown
 		Multi:        0,
 		Ansi:         false,
 		Mouse:        true,
@@ -798,16 +804,6 @@ func parseAlgo(str string) (algo.Algo, error) {
 		return algo.FuzzyMatchV2, nil
 	}
 	return nil, errors.New("invalid algorithm (expected: v1 or v2)")
-}
-
-func processScheme(opts *Options) error {
-	if !algo.Init(opts.Scheme) {
-		return errors.New("invalid scoring scheme (expected: default|path|history)")
-	}
-	if opts.Scheme == "history" {
-		opts.Criteria = []criterion{byScore}
-	}
-	return nil
 }
 
 func parseBorder(str string, optional bool, allowLine bool) (tui.BorderShape, error) {
@@ -1033,6 +1029,19 @@ func parseKeyChordsImpl(str string, message string) (map[tui.Event]string, error
 	return chords, nil
 }
 
+func parseScheme(str string) (string, []criterion, error) {
+	str = strings.ToLower(str)
+	switch str {
+	case "history":
+		return str, []criterion{byScore}, nil
+	case "path":
+		return str, []criterion{byScore, byPathname, byLength}, nil
+	case "default":
+		return str, []criterion{byScore, byLength}, nil
+	}
+	return str, nil, errors.New("invalid scoring scheme: " + str + " (expected: default|path|history)")
+}
+
 func parseTiebreak(str string) ([]criterion, error) {
 	criteria := []criterion{byScore}
 	hasIndex := false
@@ -1040,6 +1049,7 @@ func parseTiebreak(str string) ([]criterion, error) {
 	hasLength := false
 	hasBegin := false
 	hasEnd := false
+	hasPathname := false
 	check := func(notExpected *bool, name string) error {
 		if *notExpected {
 			return errors.New("duplicate sort criteria: " + name)
@@ -1061,6 +1071,11 @@ func parseTiebreak(str string) ([]criterion, error) {
 				return nil, err
 			}
 			criteria = append(criteria, byChunk)
+		case "pathname":
+			if err := check(&hasPathname, "pathname"); err != nil {
+				return nil, err
+			}
+			criteria = append(criteria, byPathname)
 		case "length":
 			if err := check(&hasLength, "length"); err != nil {
 				return nil, err
@@ -2257,7 +2272,9 @@ func parseOptions(index *int, opts *Options, allArgs []string) error {
 			if err != nil {
 				return err
 			}
-			opts.Scheme = strings.ToLower(str)
+			if opts.Scheme, opts.Criteria, err = parseScheme(str); err != nil {
+				return err
+			}
 		case "--expect":
 			str, err := nextString("key names required")
 			if err != nil {
@@ -2669,6 +2686,13 @@ func parseOptions(index *int, opts *Options, allArgs []string) error {
 			if opts.HeaderBorderShape, err = parseBorder(arg, !hasArg, false); err != nil {
 				return err
 			}
+		case "--no-header-lines-border":
+			opts.HeaderLinesShape = tui.BorderNone
+		case "--header-lines-border":
+			hasArg, arg := optionalNextString()
+			if opts.HeaderLinesShape, err = parseBorder(arg, !hasArg, false); err != nil {
+				return err
+			}
 		case "--no-header-label":
 			opts.HeaderLabel.label = ""
 		case "--header-label":
@@ -3016,6 +3040,12 @@ func postProcessOptions(opts *Options) error {
 		opts.HeaderBorderShape = tui.BorderNone
 	}
 
+	if opts.HeaderLinesShape == tui.BorderNone {
+		opts.HeaderLinesShape = tui.BorderPhantom
+	} else if opts.HeaderLinesShape == tui.BorderUndefined {
+		opts.HeaderLinesShape = tui.BorderNone
+	}
+
 	if opts.Pointer == nil {
 		defaultPointer := "▌"
 		if !opts.Unicode {
@@ -3156,7 +3186,9 @@ func postProcessOptions(opts *Options) error {
 		return errors.New("failed to start pprof profiles: " + err.Error())
 	}
 
-	return processScheme(opts)
+	algo.Init(opts.Scheme)
+
+	return nil
 }
 
 func parseShellWords(str string) ([]string, error) {
@@ -3206,12 +3238,42 @@ func ParseOptions(useDefaults bool, args []string) (*Options, error) {
 		return nil, err
 	}
 
-	// 4. Final validation of merged options
+	// 4. Change default scheme when built-in walker is used
+	if len(opts.Scheme) == 0 {
+		opts.Scheme = "default"
+		if len(opts.Criteria) == 0 {
+			// NOTE: Let's assume $FZF_DEFAULT_COMMAND generates a list of file paths.
+			// But it is possible that it is set to a command that doesn't generate
+			// file paths.
+			//
+			// In that case, you can either
+			//   1. explicitly set --scheme=default,
+			//   2. or replace $FZF_DEFAULT_COMMAND with an equivalent 'start:reload'
+			//      binding, which is the new preferred way.
+			if !opts.hasReloadOnStart() && util.IsTty(os.Stdin) {
+				opts.Scheme = "path"
+			}
+			_, opts.Criteria, _ = parseScheme(opts.Scheme)
+		}
+	}
+
+	// 5. Final validation of merged options
 	if err := validateOptions(opts); err != nil {
 		return nil, err
 	}
 
 	return opts, nil
+}
+
+func (opts *Options) hasReloadOnStart() bool {
+	if actions, prs := opts.Keymap[tui.Start.AsEvent()]; prs {
+		for _, action := range actions {
+			if action.t == actReload || action.t == actReloadSync {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (opts *Options) extractReloadOnStart() string {

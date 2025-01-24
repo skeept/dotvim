@@ -3008,6 +3008,13 @@ class TestGoFZF < TestBase
     tmux.until { assert_match(%r{   --1/10000/10000-- *$}, _1[-1]) }
   end
 
+  def test_info_command_and_focus
+    tmux.send_keys(%(seq 100 | #{FZF} --separator x --info-command 'echo $FZF_POS' --bind focus:clear-query), :Enter)
+    tmux.until { assert_match(/^  1 xx/, _1[-2]) }
+    tmux.send_keys :Up
+    tmux.until { assert_match(/^  2 xx/, _1[-2]) }
+  end
+
   def test_prev_next_selected
     tmux.send_keys 'seq 10 | fzf --multi --bind ctrl-n:next-selected,ctrl-p:prev-selected', :Enter
     tmux.until { |lines| assert_equal 10, lines.item_count }
@@ -3600,6 +3607,180 @@ class TestGoFZF < TestBase
     tmux.until { assert_block(block, _1) }
   end
 
+  def test_header_border_toggle
+    tmux.send_keys %(seq 100 | #{FZF} --list-border rounded --header-border rounded --bind 'space:change-header(hello),enter:change-header()'), :Enter
+    block1 = <<~BLOCK
+      │   5
+      │   4
+      │   3
+      │   2
+      │ > 1
+      │   100/100 ─
+      │ >
+      ╰────────────
+    BLOCK
+    tmux.until { assert_block(block1, _1) }
+
+    tmux.send_keys :Space
+    block2 = <<~BLOCK
+      │   3
+      │   2
+      │ > 1
+      ╰────────────
+      ╭────────────
+      │   hello
+      ╰────────────
+          100/100 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block2, _1) }
+
+    tmux.send_keys :Enter
+    tmux.until { assert_block(block1, _1) }
+  end
+
+  def test_header_border_toggle_with_header_lines
+    tmux.send_keys %(seq 100 | #{FZF} --list-border rounded --header-border rounded --bind 'space:change-header(hello),enter:change-header()' --header-lines 2), :Enter
+    block1 = <<~BLOCK
+      │   5
+      │   4
+      │ > 3
+      ╰──────────
+      ╭──────────
+      │   2
+      │   1
+      ╰──────────
+          98/98 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block1, _1) }
+
+    tmux.send_keys :Space
+    block2 = <<~BLOCK
+      │   4
+      │ > 3
+      ╰──────────
+      ╭──────────
+      │   2
+      │   1
+      │   hello
+      ╰──────────
+          98/98 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block2, _1) }
+
+    tmux.send_keys :Enter
+    tmux.until { assert_block(block1, _1) }
+  end
+
+  def test_header_border_toggle_with_header_lines_header_first
+    tmux.send_keys %(seq 100 | #{FZF} --list-border rounded --header-border rounded --bind 'space:change-header(hello),enter:change-header()' --header-lines 2 --header-first), :Enter
+    block1 = <<~BLOCK
+      │   5
+      │   4
+      │ > 3
+      ╰──────────
+          98/98 ─
+        >
+      ╭──────────
+      │   2
+      │   1
+      ╰──────────
+    BLOCK
+    tmux.until { assert_block(block1, _1) }
+
+    tmux.send_keys :Space
+    block2 = <<~BLOCK
+      │   4
+      │ > 3
+      ╰──────────
+          98/98 ─
+        >
+      ╭──────────
+      │   2
+      │   1
+      │   hello
+      ╰──────────
+    BLOCK
+    tmux.until { assert_block(block2, _1) }
+
+    tmux.send_keys :Enter
+    tmux.until { assert_block(block1, _1) }
+  end
+
+  def test_header_border_toggle_with_header_lines_header_lines_border
+    tmux.send_keys %(seq 100 | #{FZF} --list-border rounded --header-border rounded --bind 'space:change-header(hello),enter:change-header()' --header-lines 2 --header-lines-border double), :Enter
+    block1 = <<~BLOCK
+      │   5
+      │   4
+      │ > 3
+      ╰──────────
+      ╔══════════
+      ║   2
+      ║   1
+      ╚══════════
+          98/98 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block1, _1) }
+
+    tmux.send_keys :Space
+    block2 = <<~BLOCK
+      │ > 3
+      ╰──────────
+      ╔══════════
+      ║   2
+      ║   1
+      ╚══════════
+      ╭──────────
+      │   hello
+      ╰──────────
+          98/98 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block2, _1) }
+
+    tmux.send_keys :Enter
+    tmux.until { assert_block(block1, _1) }
+  end
+
+  def test_header_border_toggle_with_header_lines_header_first_header_lines_border
+    tmux.send_keys %(seq 100 | #{FZF} --list-border rounded --header-border rounded --bind 'space:change-header(hello),enter:change-header()' --header-lines 2 --header-first --header-lines-border double), :Enter
+    block1 = <<~BLOCK
+      │   5
+      │   4
+      │ > 3
+      ╰──────────
+      ╔══════════
+      ║   2
+      ║   1
+      ╚══════════
+          98/98 ─
+        >
+    BLOCK
+    tmux.until { assert_block(block1, _1) }
+
+    tmux.send_keys :Space
+    block2 = <<~BLOCK
+      │ > 3
+      ╰──────────
+      ╔══════════
+      ║   2
+      ║   1
+      ╚══════════
+          98/98 ─
+        >
+      ╭──────────
+      │   hello
+      ╰──────────
+    BLOCK
+    tmux.until { assert_block(block2, _1) }
+
+    tmux.send_keys :Enter
+    tmux.until { assert_block(block1, _1) }
+  end
+
   def test_header_border_and_label_header_first
     tmux.send_keys %(seq 100 | #{FZF} --border rounded --header-lines 3 --header-border sharp --header-label header --header-label-pos 2:bottom --query 1 --padding 1,2 --header-first), :Enter
     block = <<~BLOCK
@@ -3625,16 +3806,16 @@ class TestGoFZF < TestBase
       │   ║   12
       │   ║   11
       │   ║ > 10
-      │   ╚list════
-      │   ┌────────
+      │   ╚list══════
+      │   ┌──────────
       │   │   3
       │   │   2
       │   │   1
-      │   └header──
-      │     19/97 ─
-      │   > 1
+      │   └header────
+      │       19/97 ─
+      │     > 1
       │
-      ╰────────────
+      ╰──────────────
     BLOCK
     tmux.until { assert_block(block, _1) }
   end
@@ -3645,16 +3826,16 @@ class TestGoFZF < TestBase
       │   ║   12
       │   ║   11
       │   ║ > 10
-      │   ╚list════
-      │     19/97 ─
-      │   > 1
-      │   ┌────────
+      │   ╚list══════
+      │       19/97 ─
+      │     > 1
+      │   ┌──────────
       │   │   3
       │   │   2
       │   │   1
-      │   └header──
+      │   └header────
       │
-      ╰────────────
+      ╰──────────────
     BLOCK
     tmux.until { assert_block(block, _1) }
   end
