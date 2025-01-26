@@ -277,6 +277,7 @@ type Terminal struct {
 	xoffset            int
 	yanked             []rune
 	input              []rune
+	inputOverride      *[]rune
 	multi              int
 	multiLine          bool
 	sort               bool
@@ -530,9 +531,12 @@ const (
 	actTransformInputLabel
 	actTransformHeader
 	actTransformHeaderLabel
+	actTransformNth
 	actTransformPreviewLabel
 	actTransformPrompt
 	actTransformQuery
+	actTransformSearch
+	actSearch
 	actPreview
 	actChangePreview
 	actChangePreviewWindow
@@ -567,6 +571,7 @@ const (
 	actBecome
 	actShowHeader
 	actHideHeader
+	actBell
 )
 
 func (a actionType) Name() string {
@@ -1061,6 +1066,7 @@ func (t *Terminal) environImpl(forPreview bool) []string {
 	env = append(env, fmt.Sprintf("FZF_POS=%d", util.Min(t.merger.Length(), t.cy+1)))
 	env = append(env, fmt.Sprintf("FZF_CLICK_HEADER_LINE=%d", t.clickHeaderLine))
 	env = append(env, fmt.Sprintf("FZF_CLICK_HEADER_COLUMN=%d", t.clickHeaderColumn))
+	env = t.addClickHeaderWord(env)
 
 	// Add preview environment variables if preview is enabled
 	pwindowSize := t.pwindowSize()
@@ -1353,7 +1359,13 @@ func (t *Terminal) getScrollbar() (int, int) {
 func (t *Terminal) Input() (bool, []rune) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	return t.paused, copySlice(t.input)
+	paused := t.paused
+	src := t.input
+	if t.inputOverride != nil {
+		paused = false
+		src = *t.inputOverride
+	}
+	return paused, copySlice(src)
 }
 
 // UpdateCount updates the count information
@@ -1383,6 +1395,8 @@ func (t *Terminal) changeHeader(header string) bool {
 	}
 	needFullRedraw := len(t.header0) != len(lines)
 	t.header0 = lines
+	t.clickHeaderLine = 0
+	t.clickHeaderColumn = 0
 	return needFullRedraw
 }
 
@@ -3836,6 +3850,14 @@ func (t *Terminal) fullRedraw() {
 	t.printAll()
 }
 
+func (t *Terminal) captureLine(template string) string {
+	return t.executeCommand(template, false, true, true, true, "")
+}
+
+func (t *Terminal) captureLines(template string) string {
+	return t.executeCommand(template, false, true, true, false, "")
+}
+
 func (t *Terminal) executeCommand(template string, forcePlus bool, background bool, capture bool, firstLineOnly bool, info string) string {
 	line := ""
 	valid, list := t.buildPlusList(template, forcePlus)
@@ -4069,6 +4091,64 @@ func (t *Terminal) currentIndex() int32 {
 		return currentItem.Index()
 	}
 	return minItem.Index()
+}
+
+func (t *Terminal) addClickHeaderWord(env []string) []string {
+	/*
+	 * echo $'HL1\nHL2' | fzf --header-lines 3 --header $'H1\nH2' --header-lines-border --bind 'click-header:preview:env | grep FZF_CLICK'
+	 *
+	 *   REVERSE      DEFAULT
+	 *   H1      1            1
+	 *   H2      2    HL2     2
+	 *   -------      HL1     3
+	 *   HL1     3    -------
+	 *   HL2     4    H1      4
+	 *           5    H2      5
+	 */
+	lineNum := t.clickHeaderLine - 1
+	if lineNum < 0 {
+		// Never clicked on the header
+		return env
+	}
+
+	var line string
+	if t.layout == layoutReverse {
+		if lineNum < len(t.header0) {
+			line = t.header0[lineNum]
+		} else if lineNum-len(t.header0) < len(t.header) {
+			line = t.header[lineNum-len(t.header0)]
+		}
+	} else {
+		// NOTE: t.header is padded with empty strings so that its size is equal to t.headerLines
+		if lineNum < len(t.header) {
+			line = t.header[len(t.header)-lineNum-1]
+		} else if lineNum-len(t.header) < len(t.header0) {
+			line = t.header0[lineNum-len(t.header)]
+		}
+	}
+	if len(line) == 0 {
+		return env
+	}
+
+	colNum := t.clickHeaderColumn - 1
+	words := Tokenize(line, t.delimiter)
+	for idx, token := range words {
+		prefixWidth := int(token.prefixLength)
+		word := token.text.ToString()
+		trimmed := strings.TrimSpace(word)
+		trimWidth, _ := util.RunesWidth([]rune(trimmed), prefixWidth, t.tabstop, math.MaxInt32)
+
+		if colNum >= prefixWidth && colNum < prefixWidth+trimWidth {
+			env = append(env, fmt.Sprintf("FZF_CLICK_HEADER_WORD=%s", trimmed))
+			nth := fmt.Sprintf("FZF_CLICK_HEADER_NTH=%d", idx+1)
+			if idx == len(words)-1 {
+				nth += ".."
+			}
+			env = append(env, nth)
+			return env
+		}
+	}
+	return env
 }
 
 // Loop is called to start Terminal I/O
@@ -4540,6 +4620,7 @@ func (t *Terminal) Loop() error {
 	pbarDragging := false
 	pborderDragging := -1
 	wasDown := false
+	pmx, pmy := -1, -1
 	needBarrier := true
 
 	// If an action is bound to 'start', we're going to process it before reading
@@ -4704,6 +4785,8 @@ func (t *Terminal) Loop() error {
 						t.executor.Become(t.ttyin, t.environ(), command)
 					}
 				}
+			case actBell:
+				t.tui.Bell()
 			case actExecute, actExecuteSilent:
 				t.executeCommand(a.a, false, a.t == actExecuteSilent, false, false, "")
 			case actExecuteMulti:
@@ -4748,12 +4831,12 @@ func (t *Terminal) Loop() error {
 					req(reqPreviewRefresh)
 				}
 			case actTransformPrompt:
-				prompt := t.executeCommand(a.a, false, true, true, true, "")
+				prompt := t.captureLine(a.a)
 				t.promptString = prompt
 				t.prompt, t.promptLen = t.parsePrompt(prompt)
 				req(reqPrompt)
 			case actTransformQuery:
-				query := t.executeCommand(a.a, false, true, true, true, "")
+				query := t.captureLine(a.a)
 				t.input = []rune(query)
 				t.cx = len(t.input)
 			case actToggleSort:
@@ -4813,11 +4896,14 @@ func (t *Terminal) Loop() error {
 				}
 				t.multi = multi
 				req(reqList, reqInfo)
-			case actChangeNth:
-				changed = true
+			case actChangeNth, actTransformNth:
+				expr := a.a
+				if a.t == actTransformNth {
+					expr = t.captureLine(a.a)
+				}
 
 				// Split nth expression
-				tokens := strings.Split(a.a, "|")
+				tokens := strings.Split(expr, "|")
 				if nth, err := splitNth(tokens[0]); err == nil {
 					// Changed
 					newNth = &nth
@@ -4825,19 +4911,22 @@ func (t *Terminal) Loop() error {
 					// The default
 					newNth = &t.nth
 				}
-				t.nthCurrent = *newNth
 				// Cycle
 				if len(tokens) > 1 {
 					a.a = strings.Join(append(tokens[1:], tokens[0]), "|")
 				}
-				t.forceRerenderList()
+				if !compareRanges(t.nthCurrent, *newNth) {
+					changed = true
+					t.nthCurrent = *newNth
+					t.forceRerenderList()
+				}
 			case actChangeQuery:
 				t.input = []rune(a.a)
 				t.cx = len(t.input)
 			case actChangeHeader, actTransformHeader:
 				header := a.a
 				if a.t == actTransformHeader {
-					header = t.executeCommand(a.a, false, true, true, false, "")
+					header = t.captureLines(a.a)
 				}
 				if t.changeHeader(header) {
 					req(reqHeader, reqList, reqPrompt, reqInfo)
@@ -4875,40 +4964,40 @@ func (t *Terminal) Loop() error {
 					req(reqRedrawPreviewLabel)
 				}
 			case actTransform:
-				body := t.executeCommand(a.a, false, true, true, false, "")
+				body := t.captureLines(a.a)
 				if actions, err := parseSingleActionList(strings.Trim(body, "\r\n")); err == nil {
 					return doActions(actions)
 				}
 			case actTransformHeaderLabel:
-				label := t.executeCommand(a.a, false, true, true, true, "")
+				label := t.captureLine(a.a)
 				t.headerLabelOpts.label = label
 				if t.headerBorder != nil {
 					t.headerLabel, t.headerLabelLen = t.ansiLabelPrinter(label, &tui.ColHeaderLabel, false)
 					req(reqRedrawHeaderLabel)
 				}
 			case actTransformInputLabel:
-				label := t.executeCommand(a.a, false, true, true, true, "")
+				label := t.captureLine(a.a)
 				t.inputLabelOpts.label = label
 				if t.inputBorder != nil {
 					t.inputLabel, t.inputLabelLen = t.ansiLabelPrinter(label, &tui.ColInputLabel, false)
 					req(reqRedrawInputLabel)
 				}
 			case actTransformListLabel:
-				label := t.executeCommand(a.a, false, true, true, true, "")
+				label := t.captureLine(a.a)
 				t.listLabelOpts.label = label
 				if t.wborder != nil {
 					t.listLabel, t.listLabelLen = t.ansiLabelPrinter(label, &tui.ColListLabel, false)
 					req(reqRedrawListLabel)
 				}
 			case actTransformBorderLabel:
-				label := t.executeCommand(a.a, false, true, true, true, "")
+				label := t.captureLine(a.a)
 				t.borderLabelOpts.label = label
 				if t.border != nil {
 					t.borderLabel, t.borderLabelLen = t.ansiLabelPrinter(label, &tui.ColBorderLabel, false)
 					req(reqRedrawBorderLabel)
 				}
 			case actTransformPreviewLabel:
-				label := t.executeCommand(a.a, false, true, true, true, "")
+				label := t.captureLine(a.a)
 				t.previewLabelOpts.label = label
 				if t.pborder != nil {
 					t.previewLabel, t.previewLabelLen = t.ansiLabelPrinter(label, &tui.ColPreviewLabel, false)
@@ -5306,6 +5395,14 @@ func (t *Terminal) Loop() error {
 					t.track = trackDisabled
 				}
 				req(reqInfo)
+			case actSearch:
+				override := []rune(a.a)
+				t.inputOverride = &override
+				changed = true
+			case actTransformSearch:
+				override := []rune(t.captureLine(a.a))
+				t.inputOverride = &override
+				changed = true
 			case actEnableSearch:
 				t.paused = false
 				changed = true
@@ -5326,25 +5423,30 @@ func (t *Terminal) Loop() error {
 			case actMouse:
 				me := event.MouseEvent
 				mx, my := me.X, me.Y
-				clicked := !wasDown && me.Down
+				click := !wasDown && me.Down
+				clicked := wasDown && !me.Down && (mx == pmx && my == pmy)
 				wasDown = me.Down
+				if click {
+					pmx, pmy = mx, my
+				}
 				if !me.Down {
 					barDragging = false
 					pbarDragging = false
 					pborderDragging = -1
 					previewDraggingPos = -1
+					pmx, pmy = -1, -1
 				}
 
 				// Scrolling
 				if me.S != 0 {
 					if t.window.Enclose(my, mx) && t.merger.Length() > 0 {
 						evt := tui.ScrollUp
-						if me.Mod {
+						if me.Mod() {
 							evt = tui.SScrollUp
 						}
 						if me.S < 0 {
 							evt = tui.ScrollDown
-							if me.Mod {
+							if me.Mod() {
 								evt = tui.SScrollDown
 							}
 						}
@@ -5360,7 +5462,7 @@ func (t *Terminal) Loop() error {
 				}
 
 				// Preview dragging
-				if me.Down && (previewDraggingPos >= 0 || clicked && t.hasPreviewWindow() && t.pwindow.Enclose(my, mx)) {
+				if me.Down && (previewDraggingPos >= 0 || click && t.hasPreviewWindow() && t.pwindow.Enclose(my, mx)) {
 					if previewDraggingPos > 0 {
 						scrollPreviewBy(previewDraggingPos - my)
 					}
@@ -5370,7 +5472,7 @@ func (t *Terminal) Loop() error {
 
 				// Preview scrollbar dragging
 				headerLines := t.activePreviewOpts.headerLines
-				pbarDragging = me.Down && (pbarDragging || clicked && t.hasPreviewWindow() && my >= t.pwindow.Top()+headerLines && my < t.pwindow.Top()+t.pwindow.Height() && mx == t.pwindow.Left()+t.pwindow.Width())
+				pbarDragging = me.Down && (pbarDragging || click && t.hasPreviewWindow() && my >= t.pwindow.Top()+headerLines && my < t.pwindow.Top()+t.pwindow.Height() && mx == t.pwindow.Left()+t.pwindow.Width())
 				if pbarDragging {
 					effectiveHeight := t.pwindow.Height() - headerLines
 					numLines := len(t.previewer.lines) - headerLines
@@ -5387,7 +5489,7 @@ func (t *Terminal) Loop() error {
 				}
 
 				// Preview border dragging (resizing)
-				if pborderDragging < 0 && clicked && t.hasPreviewWindow() {
+				if pborderDragging < 0 && click && t.hasPreviewWindow() {
 					switch t.activePreviewOpts.position {
 					case posUp:
 						if t.pborder.Enclose(my, mx) && my == t.pborder.Top()+t.pborder.Height()-1 {
@@ -5468,9 +5570,7 @@ func (t *Terminal) Loop() error {
 				}
 
 				// Inside the header window
-				// TODO: Should we trigger this on mouse up instead?
-				//       Should we still trigger it when the position has changed from the down event?
-				if t.headerVisible && t.headerWindow != nil && t.headerWindow.Enclose(my, mx) {
+				if clicked && t.headerVisible && t.headerWindow != nil && t.headerWindow.Enclose(my, mx) {
 					mx -= t.headerWindow.Left() + t.headerIndent(t.headerBorderShape)
 					my -= t.headerWindow.Top()
 					if mx < 0 {
@@ -5484,7 +5584,7 @@ func (t *Terminal) Loop() error {
 					return doActions(actionsFor(tui.ClickHeader))
 				}
 
-				if t.headerVisible && t.headerLinesWindow != nil && t.headerLinesWindow.Enclose(my, mx) {
+				if clicked && t.headerVisible && t.headerLinesWindow != nil && t.headerLinesWindow.Enclose(my, mx) {
 					mx -= t.headerLinesWindow.Left() + t.headerIndent(t.headerLinesShape)
 					my -= t.headerLinesWindow.Top()
 					if mx < 0 {
@@ -5520,7 +5620,7 @@ func (t *Terminal) Loop() error {
 				}
 
 				// Scrollbar dragging
-				barDragging = me.Down && (barDragging || clicked && my >= min && mx == t.window.Width()-1)
+				barDragging = me.Down && (barDragging || click && my >= min && mx == t.window.Width()-1)
 				if barDragging {
 					barLength, barStart := t.getScrollbar()
 					if barLength > 0 {
@@ -5553,7 +5653,6 @@ func (t *Terminal) Loop() error {
 							return doActions(actionsFor(tui.DoubleClick))
 						}
 					}
-					break
 				}
 
 				if me.Down {
@@ -5565,40 +5664,40 @@ func (t *Terminal) Loop() error {
 						t.vset(cy)
 						req(reqList)
 						evt := tui.RightClick
-						if me.Mod {
+						if me.Mod() {
 							evt = tui.SRightClick
 						}
 						if me.Left {
 							evt = tui.LeftClick
-							if me.Mod {
+							if me.Mod() {
 								evt = tui.SLeftClick
 							}
 						}
 						return doActions(actionsFor(evt))
-					} else if t.headerVisible && t.headerWindow == nil {
-						// Header
-						// TODO: Should we trigger this on mouse up instead?
-						numLines := t.visibleHeaderLinesInList()
-						lineOffset := 0
-						if t.inputWindow == nil && !t.headerFirst {
-							// offset for info line
-							if t.noSeparatorLine() {
-								lineOffset = 1
-							} else {
-								lineOffset = 2
-							}
+					}
+				}
+				if clicked && t.headerVisible && t.headerWindow == nil {
+					// Header
+					numLines := t.visibleHeaderLinesInList()
+					lineOffset := 0
+					if t.inputWindow == nil && !t.headerFirst {
+						// offset for info line
+						if t.noSeparatorLine() {
+							lineOffset = 1
+						} else {
+							lineOffset = 2
 						}
-						my -= lineOffset
-						mx -= t.pointerLen + t.markerLen
-						if my >= 0 && my < numLines && mx >= 0 {
-							if t.layout == layoutReverse {
-								t.clickHeaderLine = my + 1
-							} else {
-								t.clickHeaderLine = numLines - my
-							}
-							t.clickHeaderColumn = mx + 1
-							return doActions(actionsFor(tui.ClickHeader))
+					}
+					my -= lineOffset
+					mx -= t.pointerLen + t.markerLen
+					if my >= 0 && my < numLines && mx >= 0 {
+						if t.layout == layoutReverse {
+							t.clickHeaderLine = my + 1
+						} else {
+							t.clickHeaderLine = numLines - my
 						}
+						t.clickHeaderColumn = mx + 1
+						return doActions(actionsFor(tui.ClickHeader))
 					}
 				}
 			case actReload, actReloadSync:
@@ -5731,6 +5830,9 @@ func (t *Terminal) Loop() error {
 			}
 			t.truncateQuery()
 			queryChanged = string(previousInput) != string(t.input)
+			if queryChanged {
+				t.inputOverride = nil
+			}
 			changed = changed || queryChanged
 			if onChanges, prs := t.keymap[tui.Change.AsEvent()]; queryChanged && prs && !doActions(onChanges) {
 				continue

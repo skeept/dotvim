@@ -1332,7 +1332,7 @@ const (
 
 func init() {
 	executeRegexp = regexp.MustCompile(
-		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt|(?:border|list|preview|input|header)-label|header)|transform|change-(?:preview-window|preview|multi|nth)|(?:re|un)bind|pos|put|print)`)
+		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt|(?:border|list|preview|input|header)-label|header|search|nth)|transform|change-(?:preview-window|preview|multi)|(?:re|un)bind|pos|put|print|search)`)
 	splitRegexp = regexp.MustCompile("[,:]+")
 	actionNameRegexp = regexp.MustCompile("(?i)^[a-z-]+")
 }
@@ -1586,6 +1586,8 @@ func parseActionList(masked string, original string, prevActions []*action, putA
 			} else {
 				return nil, errors.New("unable to put non-printable character")
 			}
+		case "bell":
+			appendAction(actBell)
 		default:
 			t := isExecuteAction(specLower)
 			if t == actIgnore {
@@ -1636,33 +1638,44 @@ func parseKeymap(keymap map[tui.Event][]*action, str string) error {
 	var err error
 	masked := maskActionContents(str)
 	idx := 0
+	keys := []string{}
 	for _, pairStr := range strings.Split(masked, ",") {
 		origPairStr := str[idx : idx+len(pairStr)]
 		idx += len(pairStr) + 1
 
 		pair := strings.SplitN(pairStr, ":", 2)
-		if len(pair) < 2 {
-			return errors.New("bind action not specified: " + origPairStr)
+		if len(pair[0]) == 0 {
+			return errors.New("key name required")
 		}
-		var key tui.Event
-		if len(pair[0]) == 1 && pair[0][0] == escapedColon {
-			key = tui.Key(':')
-		} else if len(pair[0]) == 1 && pair[0][0] == escapedComma {
-			key = tui.Key(',')
-		} else if len(pair[0]) == 1 && pair[0][0] == escapedPlus {
-			key = tui.Key('+')
-		} else {
-			keys, err := parseKeyChordsImpl(pair[0], "key name required")
+		keys = append(keys, pair[0])
+		if len(pair) < 2 {
+			continue
+		}
+		for _, keyName := range keys {
+			var key tui.Event
+			if len(keyName) == 1 && keyName[0] == escapedColon {
+				key = tui.Key(':')
+			} else if len(keyName) == 1 && keyName[0] == escapedComma {
+				key = tui.Key(',')
+			} else if len(keyName) == 1 && keyName[0] == escapedPlus {
+				key = tui.Key('+')
+			} else {
+				keys, err := parseKeyChordsImpl(keyName, "key name required")
+				if err != nil {
+					return err
+				}
+				key = firstKey(keys)
+			}
+			putAllowed := key.Type == tui.Rune && unicode.IsGraphic(key.Char)
+			keymap[key], err = parseActionList(pair[1], origPairStr[len(pair[0])+1:], keymap[key], putAllowed)
 			if err != nil {
 				return err
 			}
-			key = firstKey(keys)
 		}
-		putAllowed := key.Type == tui.Rune && unicode.IsGraphic(key.Char)
-		keymap[key], err = parseActionList(pair[1], origPairStr[len(pair[0])+1:], keymap[key], putAllowed)
-		if err != nil {
-			return err
-		}
+		keys = keys[:0]
+	}
+	if len(keys) > 0 {
+		return errors.New("bind action not specified: " + strings.Join(keys, ", "))
 	}
 	return nil
 }
@@ -1738,10 +1751,16 @@ func isExecuteAction(str string) actionType {
 		return actTransformHeaderLabel
 	case "transform-header":
 		return actTransformHeader
+	case "transform-nth":
+		return actTransformNth
 	case "transform-prompt":
 		return actTransformPrompt
 	case "transform-query":
 		return actTransformQuery
+	case "transform-search":
+		return actTransformSearch
+	case "search":
+		return actSearch
 	}
 	return actIgnore
 }
@@ -3250,7 +3269,7 @@ func ParseOptions(useDefaults bool, args []string) (*Options, error) {
 			//   1. explicitly set --scheme=default,
 			//   2. or replace $FZF_DEFAULT_COMMAND with an equivalent 'start:reload'
 			//      binding, which is the new preferred way.
-			if !opts.hasReloadOnStart() && util.IsTty(os.Stdin) {
+			if !opts.hasReloadOrTransformOnStart() && util.IsTty(os.Stdin) {
 				opts.Scheme = "path"
 			}
 			_, opts.Criteria, _ = parseScheme(opts.Scheme)
@@ -3265,10 +3284,10 @@ func ParseOptions(useDefaults bool, args []string) (*Options, error) {
 	return opts, nil
 }
 
-func (opts *Options) hasReloadOnStart() bool {
+func (opts *Options) hasReloadOrTransformOnStart() bool {
 	if actions, prs := opts.Keymap[tui.Start.AsEvent()]; prs {
 		for _, action := range actions {
-			if action.t == actReload || action.t == actReloadSync {
+			if action.t == actReload || action.t == actReloadSync || action.t == actTransform {
 				return true
 			}
 		}
