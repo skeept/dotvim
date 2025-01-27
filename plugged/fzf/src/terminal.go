@@ -39,7 +39,7 @@ cases for example.
 
 	\\?(?:                                      # escaped type
 	    {\+?s?f?RANGE(?:,RANGE)*}               # token type
-	    |{q}                                    # query type
+	    {q[:s?RANGE]}                           # query type
 	    |{\+?n?f?}                              # item type (notice no mandatory element inside brackets)
 	)
 	RANGE = (?:
@@ -65,7 +65,7 @@ const maxFocusEvents = 10000
 const blockDuration = 1 * time.Second
 
 func init() {
-	placeholder = regexp.MustCompile(`\\?(?:{[+sf]*[0-9,-.]*}|{q}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
+	placeholder = regexp.MustCompile(`\\?(?:{[+sf]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
 	whiteSuffix = regexp.MustCompile(`\s*$`)
 	offsetComponentRegex = regexp.MustCompile(`([+-][0-9]+)|(-?/[1-9][0-9]*)`)
 	offsetTrimCharsRegex = regexp.MustCompile(`[^0-9/+-]`)
@@ -799,7 +799,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 			if previewBox != nil && opts.Preview.aboveOrBelow() {
 				effectiveMinHeight += 1 + borderLines(opts.Preview.Border())
 			}
-			if noSeparatorLine(opts.InfoStyle, opts.Separator == nil || uniseg.StringWidth(*opts.Separator) > 0) {
+			if opts.noSeparatorLine() {
 				effectiveMinHeight--
 			}
 			effectiveMinHeight += borderLines(opts.BorderShape)
@@ -1262,16 +1262,6 @@ func (t *Terminal) parsePrompt(prompt string) (func(), int) {
 	_, promptLen := t.processTabs([]rune(trimmed), 0)
 
 	return output, promptLen
-}
-
-func noSeparatorLine(style infoStyle, separator bool) bool {
-	switch style {
-	case infoInline:
-		return true
-	case infoHidden, infoInlineRight:
-		return !separator
-	}
-	return false
 }
 
 func (t *Terminal) noSeparatorLine() bool {
@@ -3621,28 +3611,26 @@ func parsePlaceholder(match string) (bool, string, placeholderFlags) {
 		return false, match, flags
 	}
 
-	skipChars := 1
+	trimmed := ""
 	for _, char := range match[1:] {
 		switch char {
 		case '+':
 			flags.plus = true
-			skipChars++
 		case 's':
 			flags.preserveSpace = true
-			skipChars++
 		case 'n':
 			flags.number = true
-			skipChars++
 		case 'f':
 			flags.file = true
-			skipChars++
 		case 'q':
 			flags.forceUpdate = true
-			// query flag is not skipped
+			trimmed += string(char)
+		default:
+			trimmed += string(char)
 		}
 	}
 
-	matchWithoutFlags := "{" + match[skipChars:]
+	matchWithoutFlags := "{" + trimmed
 
 	return false, matchWithoutFlags, flags
 }
@@ -3756,6 +3744,19 @@ func replacePlaceholder(params replacePlaceholderParams) (string, []string) {
 			return match
 		case match == "{q}" || match == "{fzf:query}":
 			return params.executor.QuoteEntry(params.query)
+		case strings.HasPrefix(match, "{q:"):
+			if nth, err := splitNth(match[3 : len(match)-1]); err == nil {
+				elems, prefixLength := awkTokenizer(params.query)
+				tokens := withPrefixLengths(elems, prefixLength)
+				trans := Transform(tokens, nth)
+				result := joinTokens(trans)
+				if !flags.preserveSpace {
+					result = strings.TrimSpace(result)
+				}
+				return params.executor.QuoteEntry(result)
+			}
+
+			return match
 		case match == "{}":
 			replace = func(item *Item) string {
 				switch {

@@ -209,9 +209,11 @@ class TestPreview < TestInteractive
   end
 
   def test_preview_q_no_match_with_initial_query
-    tmux.send_keys %(: | #{FZF} --preview 'echo foo {q}{q}' --query foo), :Enter
+    tmux.send_keys %(: | #{FZF} --preview 'echo 1. /{q}/{q:1}/; echo 2. /{q:..}/{q:2}/{q:-1}/; echo 3. /{q:s-2}/{q:-2}/{q:x}/' --query 'foo bar'), :Enter
     tmux.until { |lines| assert_equal 0, lines.match_count }
-    tmux.until { |lines| assert_includes lines[1], ' foofoo ' }
+    tmux.until { |lines| assert_includes lines[1], '1. /foo bar/foo/' }
+    tmux.until { |lines| assert_includes lines[2], '2. /foo bar/bar/bar/' }
+    tmux.until { |lines| assert_includes lines[3], '3. /foo /foo/{q:x}/' }
   end
 
   def test_preview_update_on_select
