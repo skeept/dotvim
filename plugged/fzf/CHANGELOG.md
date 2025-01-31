@@ -28,22 +28,28 @@ CHANGELOG
   ```
     - `$FZF_KEY` was updated to expose the type of the click. e.g. `click`, `ctrl-click`, etc. You can use it to implement a more sophisticated behavior.
     - `kill` completion for bash and zsh were updated to use this feature
+- Added `--no-input` option to completely disable and hide the input section
+  ```sh
+  # Click header to trigger search
+  fzf --header '[src] [test]' --no-input --layout reverse \
+      --header-border bottom --input-border \
+      --bind 'click-header:transform-search:echo ${FZF_CLICK_HEADER_WORD:1:-1}'
+  ```
 - Extended `{q}` placeholder to support ranges. e.g. `{q:1}`, `{q:2..}`, etc.
 - Added `search(...)` and `transform-search(...)` action to trigger an fzf search with an arbitrary query string. This can be used to extend the search syntax of fzf. In the following example, fzf will use the first word of the query to trigger ripgrep search, and use the rest of the query to perform fzf search within the result.
   ```sh
+  export TEMP=$(mktemp -u)
+  trap 'rm -f "$TEMP"' EXIT
+
   TRANSFORMER='
     rg_pat={q:1}      # The first word is passed to ripgrep
     fzf_pat={q:2..}   # The rest are passed to fzf
-    rg_pat_org={q:s1} # The first word with trailing whitespaces preserved.
-                      # We use this to avoid unnecessary reloading of ripgrep.
 
-    if [[ -n $fzf_pat ]]; then
-      echo "search:$fzf_pat"
-    elif ! [[ $rg_pat_org =~ \ $ ]]; then
+    if ! [[ -r "$TEMP" ]] || [[ $rg_pat != $(cat "$TEMP") ]]; then
+      echo "$rg_pat" > "$TEMP"
       printf "reload:sleep 0.1; rg --column --line-number --no-heading --color=always --smart-case %q || true" "$rg_pat"
-    else
-      echo search:
     fi
+    echo "+search:$fzf_pat"
   '
   fzf --ansi --disabled \
     --with-shell 'bash -c' \
@@ -54,6 +60,15 @@ CHANGELOG
   # Load 'ps -ef' output on start and reload it on CTRL-R
   fzf --bind 'start,ctrl-r:reload:ps -ef'
   ```
+- `--min-height` option now takes a number followed by `+`, which tells fzf to show at least that many items in the list section. The default value is now changed to `10+`.
+  ```sh
+  # You will only see the input section which takes 3 lines
+  fzf --style=full --height 1% --min-height 3
+
+  # You will see 3 items in the list section
+  fzf --style full --height 1% --min-height 3+
+  ```
+    - Shell integration scripts were updated to use `--min-height 20+` by default
 - Added `bell` action to ring the terminal bell
   ```sh
   # Press CTRL-Y to copy the current line to the clipboard and ring the bell

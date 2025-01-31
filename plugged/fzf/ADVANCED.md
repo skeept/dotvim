@@ -22,7 +22,7 @@ Advanced fzf examples
     * [Switching to fzf-only search mode](#switching-to-fzf-only-search-mode)
     * [Switching between Ripgrep mode and fzf mode](#switching-between-ripgrep-mode-and-fzf-mode)
     * [Switching between Ripgrep mode and fzf mode using a single key binding](#switching-between-ripgrep-mode-and-fzf-mode-using-a-single-key-binding)
-    * [Controlling Ripgrap search and fzf search simultaneously](#controlling-ripgrap-search-and-fzf-search-simultaneously)
+    * [Controlling Ripgrep search and fzf search simultaneously](#controlling-ripgrep-search-and-fzf-search-simultaneously)
 * [Log tailing](#log-tailing)
 * [Key bindings for git objects](#key-bindings-for-git-objects)
     * [Files listed in `git status`](#files-listed-in-git-status)
@@ -501,34 +501,33 @@ fzf --ansi --disabled --query "$INITIAL_QUERY" \
     --bind 'enter:become(vim {1} +{2})'
 ```
 
-### Controlling Ripgrap search and fzf search simultaneously
+### Controlling Ripgrep search and fzf search simultaneously
 
 fzf 0.59.0 added `search` action that allows you to trigger an fzf search
 with an arbitrary query string. This means fzf is no longer restricted to the
 exact query entered in the prompt.
 
 In the example below, `transform` action is used to conditionally trigger
-either `reload` for ripgrep or `search` for fzf. The first word of the query
-initiates the Ripgrep process to generate the initial results, while the
+`reload` for ripgrep, followed by `search` for fzf. The first word of the
+query initiates the Ripgrep process to generate the initial results, while the
 remainder of the query is passed to fzf for secondary filtering.
 
 ```sh
 #!/usr/bin/env bash
 
+export TEMP=$(mktemp -u)
+trap 'rm -f "$TEMP"' EXIT
+
 INITIAL_QUERY="${*:-}"
 TRANSFORMER='
   rg_pat={q:1}      # The first word is passed to ripgrep
   fzf_pat={q:2..}   # The rest are passed to fzf
-  rg_pat_org={q:s1} # The first word with trailing whitespaces preserved.
-                    # We use this to avoid unnecessary reloading of ripgrep.
 
-  if [[ -n $fzf_pat ]]; then
-    echo "search:$fzf_pat"
-  elif ! [[ $rg_pat_org =~ \ $ ]]; then
+  if ! [[ -r "$TEMP" ]] || [[ $rg_pat != $(cat "$TEMP") ]]; then
+    echo "$rg_pat" > "$TEMP"
     printf "reload:sleep 0.1; rg --column --line-number --no-heading --color=always --smart-case %q || true" "$rg_pat"
-  else
-    echo search:
   fi
+  echo "+search:$fzf_pat"
 '
 fzf --ansi --disabled --query "$INITIAL_QUERY" \
     --with-shell 'bash -c' \
