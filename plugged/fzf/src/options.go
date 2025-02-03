@@ -885,7 +885,7 @@ func parseKeyChordsImpl(str string, message string) (map[tui.Event]string, error
 		case "right":
 			add(tui.Right)
 		case "enter", "return":
-			add(tui.CtrlM)
+			add(tui.Enter)
 		case "space":
 			chords[tui.Key(' ')] = key
 		case "backspace", "bspace", "bs":
@@ -1336,7 +1336,7 @@ const (
 
 func init() {
 	executeRegexp = regexp.MustCompile(
-		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt|(?:border|list|preview|input|header)-label|header|search|nth)|transform|change-(?:preview-window|preview|multi)|(?:re|un)bind|pos|put|print|search)`)
+		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|transform)-(?:query|prompt|(?:border|list|preview|input|header)-label|header|search|nth)|transform|change-(?:preview-window|preview|multi)|(?:re|un|toggle-)bind|pos|put|print|search)`)
 	splitRegexp = regexp.MustCompile("[,:]+")
 	actionNameRegexp = regexp.MustCompile("(?i)^[a-z-]+")
 }
@@ -1500,6 +1500,12 @@ func parseActionList(masked string, original string, prevActions []*action, putA
 			appendAction(actToggleTrack)
 		case "toggle-track-current":
 			appendAction(actToggleTrackCurrent)
+		case "toggle-input":
+			appendAction(actToggleInput)
+		case "hide-input":
+			appendAction(actHideInput)
+		case "show-input":
+			appendAction(actShowInput)
 		case "toggle-header":
 			appendAction(actToggleHeader)
 		case "toggle-wrap":
@@ -1620,7 +1626,7 @@ func parseActionList(masked string, original string, prevActions []*action, putA
 					actions = append(actions, &action{t: t, a: actionArg})
 				}
 				switch t {
-				case actUnbind, actRebind:
+				case actUnbind, actRebind, actToggleBind:
 					if _, err := parseKeyChordsImpl(actionArg, spec[0:offset]+" target required"); err != nil {
 						return nil, err
 					}
@@ -1705,6 +1711,8 @@ func isExecuteAction(str string) actionType {
 		return actUnbind
 	case "rebind":
 		return actRebind
+	case "toggle-bind":
+		return actToggleBind
 	case "preview":
 		return actPreview
 	case "change-header":
@@ -3102,7 +3110,14 @@ func postProcessOptions(opts *Options) error {
 	if opts.HeaderLinesShape == tui.BorderNone {
 		opts.HeaderLinesShape = tui.BorderPhantom
 	} else if opts.HeaderLinesShape == tui.BorderUndefined {
-		opts.HeaderLinesShape = tui.BorderNone
+		// In reverse-list layout, header lines should be at the top, while
+		// ordinary header should be at the bottom. So let's use a separate
+		// window for the header lines.
+		if opts.Layout == layoutReverseList {
+			opts.HeaderLinesShape = tui.BorderPhantom
+		} else {
+			opts.HeaderLinesShape = tui.BorderNone
+		}
 	}
 
 	if opts.Pointer == nil {
@@ -3205,7 +3220,7 @@ func postProcessOptions(opts *Options) error {
 
 	// If 'double-click' is left unbound, bind it to the action bound to 'enter'
 	if _, prs := opts.Keymap[tui.DoubleClick.AsEvent()]; !prs {
-		opts.Keymap[tui.DoubleClick.AsEvent()] = opts.Keymap[tui.CtrlM.AsEvent()]
+		opts.Keymap[tui.DoubleClick.AsEvent()] = opts.Keymap[tui.Enter.AsEvent()]
 	}
 
 	// If we're not using extended search mode, --nth option becomes irrelevant

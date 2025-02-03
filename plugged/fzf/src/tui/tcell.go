@@ -111,6 +111,10 @@ func (r *FullscreenRenderer) HideCursor() {
 	r.showCursor = false
 }
 
+func (r *FullscreenRenderer) ShowCursor() {
+	r.showCursor = true
+}
+
 func (r *FullscreenRenderer) PassThrough(str string) {
 	// No-op
 	// https://github.com/gdamore/tcell/pull/650#issuecomment-1806442846
@@ -556,7 +560,7 @@ func (r *FullscreenRenderer) GetChar() Event {
 
 func (r *FullscreenRenderer) Pause(clear bool) {
 	if clear {
-		_screen.Fini()
+		r.Close()
 	}
 }
 
@@ -568,6 +572,7 @@ func (r *FullscreenRenderer) Resume(clear bool, sigcont bool) {
 
 func (r *FullscreenRenderer) Close() {
 	_screen.Fini()
+	_screen = nil
 }
 
 func (r *FullscreenRenderer) RefreshWindows(windows []Window) {
