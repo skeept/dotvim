@@ -930,7 +930,7 @@ function cdr()
 
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
-  use_ble=
+  use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
   [[ -n "$use_ble" && -e ~/tmp/ble-nightly/ble.sh ]] && . ~/tmp/ble-nightly/ble.sh
   [[ -z "$use_ble" && -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
   eval "$(atuin init bash --disable-up-arrow)"
