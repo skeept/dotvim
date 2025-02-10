@@ -6,7 +6,7 @@ alias mv='mv -i'
 
 alias la='eza -a'
 alias o='less'
-alias e='vim'
+#alias e='vim'
 
 alias hi=history
 #alias plf='perl -wnle' #loop around a file (must supply a file)

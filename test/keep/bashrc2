@@ -485,7 +485,7 @@ function gi()
       --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
     }
 
-function n()
+function e()
 {
   # need to determine if nvim can be run
   if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
@@ -494,6 +494,8 @@ function n()
     vim $@
   fi
 }
+
+alias n=e
 
 function ei
 {
