@@ -1,5 +1,5 @@
 # define this one as a function now
-unalias ll >& /dev/null || true
+unalias ll >&/dev/null || true
 
 alias kp='kill -9 '
 alias mv='mv -i'
@@ -69,7 +69,7 @@ alias da=date
 alias ze='unset FPATH; exec zsh'
 alias wgetnc='wget --no-check-certificate'
 
-alias vp='vim -u NONE --noplugins'
+alias vnp='vim -u NONE --noplugins'
 alias ee='vim -c "packadd editexisting"'
 
 alias gr='grep -irn'

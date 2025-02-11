@@ -707,12 +707,12 @@ function vn()
   [ -n "${name}" ] && __imp_v N "${name}"
 }
 
-function nz()
+function ep()
 {
   nvim $(zp2 $@)
 }
 
-function ez()
+function vp()
 {
   ei $(zp2 $@)
 }
