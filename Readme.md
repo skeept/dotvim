@@ -1,7 +1,6 @@
-My vim configuration.
+# My vim configuration
 
 Bellow are some tips (things I need to look up once in a while)
-
 
 "xY -- copies the current line to register x
 "xP -- pastes the content of register x before the cursor
@@ -19,12 +18,11 @@ then invoke the keystroke s by @s
 
 ZQ : quit without asking for confirmation
 
-
 tranposing chars: xp
 transposing lines: ddp
 transposing words: dawwP
 
-<c-o> -- goto last visited position in the file
+`<c-o>` -- goto last visited position in the file
 <c-i> -- usually goes back, but after mapping <tab> to <c-w> have defined :Jump command
 
 change case of current character: ~
@@ -47,7 +45,6 @@ in the specified range append to current line $_ .= ...
 
 @: -- repeat last : command
 
-
 -- some mappings I have don't always remember --
 \os -- open scratch buffer
 ,di -- display registers (:reg or equivalently :di)
@@ -56,7 +53,6 @@ q' "
 \rs -- start recording to register u
 ,co -- capture output from command (pastes contents at end of current buffer)
 <c-e> (insert mode) -- either go to end of line or copy char bellow
-
 
 following works currently to compile without python on windows:
 
@@ -75,24 +71,24 @@ C:/ht/lua. Run the following in x64 prompt:
 
 set short_ver=54
 set ver=5.4.0
-rm *.obj *.o
-cl /MD /O2 /c /DLUA_BUILD_AS_DLL *.c
+rm _.obj_.o
+cl /MD /O2 /c /DLUA_BUILD_AS_DLL _.c
 ren lua.obj lua.o
 ren luac.obj luac.o
-link /DLL /IMPLIB:lua%ver%.lib /OUT:lua%ver%.dll *.obj
+link /DLL /IMPLIB:lua%ver%.lib /OUT:lua%ver%.dll_.obj
 link /OUT:lua.exe lua.o lua%ver%.lib
 lib /OUT:lua%ver%-static.lib *.obj
 link /OUT:luac.exe luac.o lua%ver%-static.lib
 mkdir ..\..\lib
 mkdir ..\..\include
-cp *dll *lib ..\..\lib
-cp *.h ..\..\include
+cp*dll _lib ..\..\lib
+cp_.h ..\..\include
 cp lua%ver%.lib ..\..\lib\lua%short_ver%.lib
 cp lua%ver%.dll ..\..\lib\lua%short_ver%.dll
 cp *.exe ..\..
 
 previous instructions were adapted from
-https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/
+<https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/>
 
 ----------- Replace in multiple files
 -- first find text to replace
@@ -102,7 +98,6 @@ https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/
 git line ending settings
 seems OK to do this for this repo:
 git config  core.autocrlf input
-
 
 simple python logging setup
 
