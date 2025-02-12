@@ -8,35 +8,35 @@ Bellow are some tips (things I need to look up once in a while)
 ma -- mark the current position in mark a
 'a -- goto the position specified in mark a
 
-H M L -- goto to the [H]top, [M]midle, or [L]bottom of the current screen
+H M L -- goto to the [H]top, [M]middle, or [L]bottom of the current screen
 
-zz -- put the current cursor position in the midle of the screen
+zz -- put the current cursor position in the middle of the screen
 
-recording -- to record a set of keystrokes to register s do the folowing:
+recording -- to record a set of keystrokes to register s do the following:
 qs<keystrokes>q
 then invoke the keystroke s by @s
 
 ZQ : quit without asking for confirmation
 
-tranposing chars: xp
+Transposing chars: xp
 transposing lines: ddp
 transposing words: dawwP
 
 `<c-o>` -- goto last visited position in the file
 <c-i> -- usually goes back, but after mapping <tab> to <c-w> have defined :Jump command
 
-change case of current character: ~
+Change case of current character: ~
 current line <lowercase-uppercase>: uu UU
 in visual mode: u and U change the case of selected text
 guaw -- change current word lowercase
 gUaw -- change current word uppercase
 
-to select various lines use <shitf-v> <c-v> selects blocks
+To select various lines use <shitf-v> <c-v> selects blocks
 
-replace ^M
+Replace ^M
 :%s/<ctrl-v><enter>//g
 
-change to current folder of current file
+Change to current folder of current file
 cd %:p:h
 
 perldo
@@ -54,8 +54,7 @@ q' "
 ,co -- capture output from command (pastes contents at end of current buffer)
 <c-e> (insert mode) -- either go to end of line or copy char bellow
 
-following works currently to compile without python on windows:
-
+Following works currently to compile without python on windows:
 search x64 native (a terminal should come up)
 In that terminal go to the src folder where vim source is and run:
 
@@ -87,7 +86,7 @@ cp lua%ver%.lib ..\..\lib\lua%short_ver%.lib
 cp lua%ver%.dll ..\..\lib\lua%short_ver%.dll
 cp *.exe ..\..
 
-previous instructions were adapted from
+Previous instructions were adapted from
 <https://blog.spreendigital.de/2019/06/25/how-to-compile-lua-5-3-5-for-windows/>
 
 ----------- Replace in multiple files
