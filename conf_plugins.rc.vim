@@ -23,7 +23,7 @@ if has("python3") && IsAddonActive('denite')
   let ignore_files=&wildignore . ",*.pyc,.git,.hg,.svn,.p2,.cache"
   let ignore_files .= ',*.swp'
   call denite#custom#var('file/rec', 'command',
-   \ ['scantree.py', '--ignore', ignore_files])
+        \ ['scantree.py', '--ignore', ignore_files])
 
   call denite#custom#source('file_old', 'matchers',
         \ ['matcher_fuzzy', 'matcher_project_files'])
@@ -57,11 +57,11 @@ if has("python3") && IsAddonActive('denite')
 
   let s:menus = {}
   let s:menus.vim = {
-      \ 'description': 'Vim',
-      \ }
+        \ 'description': 'Vim',
+        \ }
   let s:menus.vim.file_candidates = [
-      \ ['    > Edit configuration file (init.vim)', '~/vimfiles/vimrc']
-      \ ]
+        \ ['    > Edit configuration file (init.vim)', '~/vimfiles/vimrc']
+        \ ]
   call denite#custom#var('menu', 'menus', s:menus)
 
   call denite#custom#filter('matcher_ignore_globs', 'ignore_globs',
@@ -149,28 +149,28 @@ endif
 
 "================== Mucomplete ================================================{{{
 if IsAddonActive('vim-mucomplete')
-	let g:mucomplete#chains = {}
-	let g:mucomplete#chains.default = ['path', 'nsnp', 'keyn']
-        let g:mucomplete#enable_auto_at_startup = 1
-        if v:version >= 800
-          set completeopt+=noselect
-        endif
-        set completeopt+=menuone
+  let g:mucomplete#chains = {}
+  let g:mucomplete#chains.default = ['path', 'nsnp', 'keyn']
+  let g:mucomplete#enable_auto_at_startup = 1
+  if v:version >= 800
+    set completeopt+=noselect
+  endif
+  set completeopt+=menuone
 
-        if IsAddonActive('neosnippet.vim')
-          inoremap <silent> <expr> <plug><MyCR>
-              \ mucomplete#neosnippet#expand_snippet("\<cr>")
-          imap <F10> <plug><MyCR>
-        endif
+  if IsAddonActive('neosnippet.vim')
+    inoremap <silent> <expr> <plug><MyCR>
+          \ mucomplete#neosnippet#expand_snippet("\<cr>")
+    imap <F10> <plug><MyCR>
+  endif
 
-        "imap <F11> <plug>(MUcompleteCR)
-        "inoremap <silent> <plug>(MUcompleteFwdKey) <C-L>
-        "imap <C-L> <plug>(MUcompleteCycFwd)
+  "imap <F11> <plug>(MUcompleteCR)
+  "inoremap <silent> <plug>(MUcompleteFwdKey) <C-L>
+  "imap <C-L> <plug>(MUcompleteCycFwd)
 
-	inoremap <silent> <plug>(MUcompleteFwdKey) <right>
-	imap <right> <plug>(MUcompleteCycFwd)
-	inoremap <silent> <plug>(MUcompleteBwdKey) <left>
-	imap <left> <plug>(MUcompleteCycBwd)
+  inoremap <silent> <plug>(MUcompleteFwdKey) <right>
+  imap <right> <plug>(MUcompleteCycFwd)
+  inoremap <silent> <plug>(MUcompleteBwdKey) <left>
+  imap <left> <plug>(MUcompleteCycBwd)
 
 endif
 "==============================================================================}}}
@@ -227,50 +227,50 @@ call SetupAsyncomplete()
 "================== lightline  =============================================={{{
 if IsAddonActive('lightline')
 
-function LineInfoForLightLine()
-  return line('.') . '/'. line('$') . ':' . col('.')
-endfunction
+  function LineInfoForLightLine()
+    return line('.') . '/'. line('$') . ':' . col('.')
+  endfunction
 
-"let g:lightline = {
-      "\ 'active': {
-      "\   'right': [ [ 'lineinfo' ],
-      "\              [ 'percent' ],
-      "\              [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ]
-      "\  },
-      "\ 'component_function': {
-      "\ 'tabsindicator': 'GetNumTabsStr'
-      "\ },
-      "\ }
+  "let g:lightline = {
+        "\ 'active': {
+        "\   'right': [ [ 'lineinfo' ],
+        "\              [ 'percent' ],
+        "\              [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ]
+        "\  },
+        "\ 'component_function': {
+        "\ 'tabsindicator': 'GetNumTabsStr'
+        "\ },
+        "\ }
 
-let g:lightline = {
-      \ 'colorscheme': 'deus',
-      \ 'active': {
-      \ 'left': [ [ 'bufnum', 'mode', 'paste' ],
-      \           [ 'readonly', 'filename', 'modified' ] ],
-      \ 'right': [ [ 'lineinfo' ],
-      \            [ 'percent' ],
-      \            [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ] },
-      \ 'component_function': {
-      \ 'tabsindicator': 'GetNumTabsStr'
-      \ , 'lineinfo': 'LineInfoForLightLine'
-      \ },
-      \ }
+  let g:lightline = {
+        \ 'colorscheme': 'deus',
+        \ 'active': {
+        \ 'left': [ [ 'bufnum', 'mode', 'paste' ],
+        \           [ 'readonly', 'filename', 'modified' ] ],
+        \ 'right': [ [ 'lineinfo' ],
+        \            [ 'percent' ],
+        \            [ 'tabsindicator', 'fileformat', 'fileencoding', 'filetype' ] ] },
+        \ 'component_function': {
+        \ 'tabsindicator': 'GetNumTabsStr'
+        \ , 'lineinfo': 'LineInfoForLightLine'
+        \ },
+        \ }
 
-let g:lightline.inactive = {
-    \ 'left': [ ['bufnum', 'filename' ] ],
-    \ 'right': [ [ 'lineinfo' ],
-    \            [ 'percent' ] ] }
+  let g:lightline.inactive = {
+        \ 'left': [ ['bufnum', 'filename' ] ],
+        \ 'right': [ [ 'lineinfo' ],
+        \            [ 'percent' ] ] }
 
-"let g:lightline = {
-      "\ 'colorscheme': 'wombat',
-      "\ 'active': {
-      "\   'right': [ [ 'lineinfo' ],
-      "\              [ 'percent' ],
-      "\              [ 'fileformat', 'fileencoding', 'filetype', 'charvaluehex' ] ]
-      "\ },
-      "\ 'component': {
-      "\   'charvaluehex': '0x%B'
-      "\ },
-      "\ }
+  "let g:lightline = {
+        "\ 'colorscheme': 'wombat',
+        "\ 'active': {
+        "\   'right': [ [ 'lineinfo' ],
+        "\              [ 'percent' ],
+        "\              [ 'fileformat', 'fileencoding', 'filetype', 'charvaluehex' ] ]
+        "\ },
+        "\ 'component': {
+        "\   'charvaluehex': '0x%B'
+        "\ },
+        "\ }
 endif
 "==============================================================================}}}
