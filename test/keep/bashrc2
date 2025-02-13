@@ -287,6 +287,13 @@ function ddo() #try to do something with every file passed on the command line
   done
 }
 
+function cr()
+{
+  # do a command at the repo root
+  local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
+  [ -n "$1" ] && (cd ${repo_root}; eval "$@")
+}
+
 function path ( )
 {
   if test -z "$1"; then
