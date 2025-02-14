@@ -148,10 +148,11 @@ cmd zi ${{
     lf -remote "send $id cd '$result'"
 }}
 
-map gr %{{
-    t="$(git rev-parse --show-toplevel 2> $null || '.')"
-    lf -remote "send $id cd \"$t\""
-  }}
+map gr ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $t=(git rev-parse --show-toplevel 2> $null || '.')
+    lf -remote "send $id cd '$t'"
+}}
 
 cmd on-cd &{{
     zoxide add "$PWD"
