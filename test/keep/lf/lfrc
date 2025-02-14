@@ -71,6 +71,10 @@ cmd fzf_file_jump ${{
     fi
 }}
 map gf :fzf_file_jump
+map gr %{{
+    t="$(git rev-parse --show-toplevel 2> /dev/null || echo .)"
+    lf -remote "send $id cd \"$t\""
+  }}
 
 cmd z %{{
     result="$(zoxide query --exclude "$PWD" "$@" | sed 's/\\/\\\\/g;s/"/\\"/g')"
