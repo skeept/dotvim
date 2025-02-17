@@ -725,7 +725,7 @@ function vp()
 }
 
 # cd to a nested folder
-dz()
+cdf()
 {
   local dir
   local ok=0
