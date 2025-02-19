@@ -638,6 +638,7 @@ type previewRequest struct {
 	scrollOffset int
 	list         []*Item
 	env          []string
+	query        string
 }
 
 type previewResult struct {
@@ -3099,8 +3100,15 @@ func (t *Terminal) printHighlighted(result Result, colBase tui.ColorPair, colMat
 		maxWidth := t.window.Width() - (indentSize + 1)
 		wasWrapped := false
 		if wrapped {
-			maxWidth -= t.wrapSignWidth
-			t.window.CPrint(colBase.WithAttr(tui.Dim), t.wrapSign)
+			wrapSign := t.wrapSign
+			if maxWidth < t.wrapSignWidth {
+				runes, _ := util.Truncate(wrapSign, maxWidth)
+				wrapSign = string(runes)
+				maxWidth = 0
+			} else {
+				maxWidth -= t.wrapSignWidth
+			}
+			t.window.CPrint(colBase.WithAttr(tui.Dim), wrapSign)
 			wrapped = false
 			wasWrapped = true
 		}
@@ -3165,7 +3173,9 @@ func (t *Terminal) printHighlighted(result Result, colBase tui.ColorPair, colMat
 			displayWidth = t.displayWidthWithLimit(line, 0, displayWidth)
 		}
 
-		t.printColoredString(t.window, line, offsets, colBase)
+		if maxWidth > 0 {
+			t.printColoredString(t.window, line, offsets, colBase)
+		}
 		if postTask != nil {
 			postTask(actualLineNum, displayWidth, wasWrapped, forceRedraw)
 		} else {
@@ -4376,6 +4386,7 @@ func (t *Terminal) Loop() error {
 				var items []*Item
 				var commandTemplate string
 				var env []string
+				var query string
 				initialOffset := 0
 				t.previewBox.Wait(func(events *util.Events) {
 					for req, value := range *events {
@@ -4389,6 +4400,7 @@ func (t *Terminal) Loop() error {
 							initialOffset = request.scrollOffset
 							items = request.list
 							env = request.env
+							query = request.query
 						}
 					}
 					events.Clear()
@@ -4402,8 +4414,7 @@ func (t *Terminal) Loop() error {
 				version++
 				// We don't display preview window if no match
 				if items[0] != nil {
-					_, query := t.Input()
-					command, tempFiles := t.replacePlaceholder(commandTemplate, false, string(query), items)
+					command, tempFiles := t.replacePlaceholder(commandTemplate, false, query, items)
 					cmd := t.executor.ExecCommand(command, true)
 					cmd.Env = env
 
@@ -4531,7 +4542,7 @@ func (t *Terminal) Loop() error {
 		if len(command) > 0 && t.canPreview() {
 			_, list := t.buildPlusList(command, false)
 			t.cancelPreview()
-			t.previewBox.Set(reqPreviewEnqueue, previewRequest{command, t.evaluateScrollOffset(), list, t.environForPreview()})
+			t.previewBox.Set(reqPreviewEnqueue, previewRequest{command, t.evaluateScrollOffset(), list, t.environForPreview(), string(t.input)})
 		}
 	}
 
@@ -4963,7 +4974,7 @@ func (t *Terminal) Loop() error {
 						if valid {
 							t.cancelPreview()
 							t.previewBox.Set(reqPreviewEnqueue,
-								previewRequest{t.previewOpts.command, t.evaluateScrollOffset(), list, t.environForPreview()})
+								previewRequest{t.previewOpts.command, t.evaluateScrollOffset(), list, t.environForPreview(), string(t.input)})
 						}
 					} else {
 						// Discard the preview content so that it won't accidentally appear
