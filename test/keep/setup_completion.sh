@@ -38,29 +38,11 @@ complete -f -o default -X '!*.gz'  gunzip tar
 complete -f -o default -X '!*.bz2' bunzip2 tar
 complete -f -o default -X '!*.zip' unzip
 complete -f -o default -X '!*.tar' tar
-complete -f -o default -X '!*.rar' unrar
-complete -f -o default -X '!*.pl'  perl perl5 p
-complete -f -o default -X '!*.ps'  gs ghostview ps2pdf ps2ascii kghostview
-complete -f -o default -X '!*.dvi' dvips dvipdf xdvi dviselect dvitype kdvi
-complete -f -o default -X '!*.pdf' acroread pdf2ps kpdf xpdf
-complete -f -o default -X '!*.texi*' makeinfo texi2dvi texi2html texi2pdf
-complete -f -o default -X '!*.tex' tex latex slitex pdflatex vim xemacs emacs te gvim kile
-complete -f -o default -X '!*.lyx' lyx
-complete -f -o default -X '!*.+(jpg|gif|xpm|png|bmp)' xv gimp display
-complete -f -o default -X '!*.mp3' mpg123 mplayer
-complete -f -o default -X '!*.ogg' ogg123 mplayer
-complete -f -o default -X '!*.c' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
-complete -f -o default -X '!*.cc' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
-complete -f -o default -X '!*.cpp' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
-complete -f -o default -X '!*.c++' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit
 complete -f -o default -X '!*.py' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit \
   py.exe py python python.exe ipython wpy wpy.exe \
   epy
-complete -f -o default -X '!*.gdx' gdxdump gdxdump.exe
-complete -f -o default -X '!*.gms' gams gr
-complete -f -o default -X '!*.sh' bash sh
-complete -A variable path dupremove pre
-complete -f -o default -X '!*.zpl' scip cubic ./cubic ./r ./r.sh rr r1 r2
+  complete -f -o default -X '!*.sh' bash sh
+  complete -A variable path dupremove pre
 
 
 # This is a 'universal' completion function - it works when commands have
@@ -151,11 +133,11 @@ _universal_func ()
   complete -F _configure_func configure
 
 
-_killall ()
-{
-  local cur prev
-  COMPREPLY=()
-  cur=${COMP_WORDS[COMP_CWORD]}
+  _killall ()
+  {
+    local cur prev
+    COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
 
     # get a list of processes (the first sed evaluation
     # takes care of swapped out processes, the second
@@ -214,9 +196,9 @@ complete -F _vim vim vi v gv gvi vd va
 
 #function just()
 #{
-  #unset -f just
-  #eval "$(command just --completions bash)"
-  #just "$@"
+#unset -f just
+#eval "$(command just --completions bash)"
+#just "$@"
 #}
 
 function setcomps
