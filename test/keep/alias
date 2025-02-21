@@ -92,7 +92,7 @@ alias gsu=gsutil
 alias db=duckdb
 
 alias dui='dua i'
-alias lcmd='compgen -c | sort | uniq'
+alias lscmd='compgen -c | sort | uniq'
 
 [ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
 
