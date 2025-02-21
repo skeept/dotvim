@@ -1491,7 +1491,7 @@ fu! csv#AddColumn(start, stop, ...) range "{{{3
 endfu
 fu! csv#ExtractValue(item) "{{{3
     let formatThousands = '\d\+\zs\V' . s:nr_format[0] . '\m\ze\d'
-    let formatDecimal   = '\d\+\zs\V' . s:nr_format[1] . '\m\ze\d'
+    let formatDecimal   = '\(^-\?\|\d\+\)\zs\V' . s:nr_format[1] . '\m\ze\d'
     try
         let nr = substitute(a:item, formatThousands, '', 'g')
         if s:nr_format[1] != '.'
@@ -3004,7 +3004,7 @@ fu! csv#EvalColumn(nr, func, first, last, ...) range "{{{3
         try
             let s = []
             " parse the optional number format
-            let str = matchstr(format, '/\zs[^/]*\ze/', 0, start)
+            let str = matchstr(format, '/\zs[^/]*\ze/')
             let s = matchlist(str, '\(.\)\?:\(.\)\?')[1:2]
             if empty(s)
                 " Number format wrong
@@ -3071,7 +3071,7 @@ fu! csv#SumCSVRow(line, nr) "{{{3
         try
             let s = []
             " parse the optional number format
-            let str = matchstr(format, '/\zs[^/]*\ze/', 0, start)
+            let str = matchstr(format, '/\zs[^/]*\ze/')
             let s = matchlist(str, '\(.\)\?:\(.\)\?')[1:2]
             if empty(s)
                 " Number format wrong
