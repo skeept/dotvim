@@ -535,23 +535,6 @@ __imp_v()
   fi
 }
 
-v()
-{
-  __imp_v X $@
-  #if [ "$(type -t __get_gvim_win)" = "function" ] && [ -n "$(__get_gvim_win)" ]; then
-  #("$(__get_gvim_win)" -c "RemoteOpenMod $(__args_to_win $@)" &)
-  #elif [ -x "$(command -v gvim)" -a -n "${DISPLAY}"]; then
-  #gvim -c "RemoteOpenMod $@"
-  #else
-  #vim $@
-  #fi
-}
-
-#vn()
-#{
-#__imp_v N $@
-#}
-
 vs()
 {
   __imp_v S $@
@@ -691,7 +674,7 @@ function zp2()
   fi
 }
 
-function vv()
+function ve()
 {
   for fname in $@; do
     if [ -e "${fname}" ]; then
@@ -702,6 +685,11 @@ function vv()
 
   if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
   [ -n "${name}" ] && __imp_v X "${name}"
+}
+
+function vv
+{
+  echo "start using ve"
 }
 
 function vn()

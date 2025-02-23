@@ -6,7 +6,6 @@ alias mv='mv -i'
 
 alias la='eza -a'
 alias o='less'
-#alias e='vim'
 
 alias hi=history
 #alias plf='perl -wnle' #loop around a file (must supply a file)
@@ -57,7 +56,7 @@ alias tree='tree -Cs' # nice alternative to 'ls'
 alias top='xtitle Processes on $HOSTNAME && top'
 
 alias vu='vim -u "${HOME}/.vim/simple.vim" --noplugins'
-alias rr='ranger'
+# alias rr='ranger'
 alias r='fc -s'
 alias w3m='w3m -no-graph'
 
@@ -69,8 +68,9 @@ alias da=date
 alias ze='unset FPATH; exec zsh'
 alias wgetnc='wget --no-check-certificate'
 
-alias vnp='vim -u NONE --noplugins'
-alias ee='vim -c "packadd editexisting"'
+alias vpp='vim -u NONE --noplugins'
+alias v=ei
+# alias vime='vim -c "packadd editexisting"'
 
 alias gr='grep -irn'
 alias grep='grep --color=auto --ignore-case'
