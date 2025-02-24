@@ -117,12 +117,13 @@ xmlformat ()
 
 ee()
 {
+  # does nvim support opening in same window?
   gvi -nvim $@
 }
 
-ng()
+en()
 {
-  gvi -nvim $@
+  gvi -nvim "$(zp2 $@)"
 }
 
 __ev()
