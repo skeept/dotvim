@@ -591,7 +591,7 @@ irr()
   # also in the future we should see if there is a nice way to use tmux to start the run in a pane
   # for now just start directly
 
-  local candidates=("/mnt/c/jT" "/project/ezcrew_new/helder/c_tools")
+  local candidates=("/mnt/c/mt" "/project/ezcrew_new/helder/c_tools")
   local pyfile="$(first_alternative ${candidates[@]})/run_irops.py"
   if [ -e "${pyfile}" ]; then
     python "${pyfile}" $@
@@ -621,14 +621,6 @@ copy-static()
   fi
 
   python "${copy_py}" -i "${static_f}" $@
-}
-
-function dirdiff()
-{
-  # Shell-escape each path:
-  DIR1=$(printf '%q' "$1"); shift
-  DIR2=$(printf '%q' "$1"); shift
-  vim $@ -c "DirDiff $DIR1 $DIR2"
 }
 
 fz()

@@ -64,6 +64,7 @@ _universal_func ()
   complete  -o default -F _universal_func ldd wget bash id info
 
 
+if false; then
   _make_targets ()
   {
     local mdef makef gcmd cur prev i
@@ -112,6 +113,7 @@ _universal_func ()
     # test -f $makef and input redirection
     COMPREPLY=( $(cat $makef 2>/dev/null | awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' | tr -s ' ' '\012' | sort -u | eval $gcmd ) )
   }
+fi
 
   complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
 
