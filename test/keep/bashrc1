@@ -191,6 +191,8 @@ if test -n "$PS1"; then
   _eval_cmd_expression_if_exists fzf --${CURSHELL}
 fi
 
+export PYTHONPYCACHEPREFIX=/tmp/pychache
+
 ## command history settings
 #if command -v mcfly &> /dev/null; then
   #export MCFLY_RESULTS=30
