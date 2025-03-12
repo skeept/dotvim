@@ -274,6 +274,7 @@ Notes:
   * `alex`
   * `angular`
   * `cspell`
+  * djlint
   * `eslint`
   * `fecs`
   * `html-beautify`
@@ -390,6 +391,7 @@ Notes:
   * `pandoc`
   * `prettier`
   * `proselint`
+  * `pymarkdown`
   * `redpen`
   * `remark-lint`
   * `textlint`
@@ -444,6 +446,7 @@ Notes:
   * `yamllint`
 * OpenSCAD
   * `SCA2D`
+  * `scadformat`
 * Packer
   * `packer-fmt-fixer`
 * Pascal
@@ -736,6 +739,8 @@ Notes:
   * `yq`
 * YANG
   * `yang-lsp`
+* Yara
+  * `yls`
 * Zeek
   * `zeek`!!
 * Zig

@@ -283,6 +283,7 @@ formatting.
   * [alex](https://github.com/get-alex/alex)
   * [angular](https://www.npmjs.com/package/@angular/language-server)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [djlint](https://www.djlint.com/)
   * [eslint](https://github.com/BenoitZugmeyer/eslint-plugin-html)
   * [fecs](http://fecs.baidu.com/)
   * [html-beautify](https://beautifier.io/)
@@ -399,6 +400,7 @@ formatting.
   * [pandoc](https://pandoc.org)
   * [prettier](https://github.com/prettier/prettier)
   * [proselint](http://proselint.com/)
+  * [pymarkdown](https://github.com/jackdewinter/pymarkdown)
   * [redpen](http://redpen.cc/)
   * [remark-lint](https://github.com/wooorm/remark-lint)
   * [textlint](https://textlint.github.io/)
@@ -453,6 +455,7 @@ formatting.
   * [yamllint](https://yamllint.readthedocs.io/)
 * OpenSCAD
   * [SCA2D](https://gitlab.com/bath_open_instrumentation_group/sca2d) :floppy_disk:
+  * [scadformat](https://github.com/hugheaves/scadformat)
 * Packer (HCL)
   * [packer-fmt-fixer](https://github.com/hashicorp/packer)
 * Pascal
@@ -745,6 +748,8 @@ formatting.
   * [yq](https://github.com/mikefarah/yq)
 * YANG
   * [yang-lsp](https://github.com/theia-ide/yang-lsp)
+* Yara
+  * [yls](https://github.com/avast/yls)
 * Zeek
   * [zeek](http://zeek.org) :floppy_disk:
 * Zig
