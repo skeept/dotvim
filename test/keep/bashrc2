@@ -461,13 +461,6 @@ dn()
 }
 ## d imp }}}
 
-function tt()
-{
-  if test "a$1" = "a"; then export TERM=xterm; else export TERM="$1"; fi
-  echo "TERM=$TERM"
-}
-
-
 function gi()
 {
   local pattern=$1
