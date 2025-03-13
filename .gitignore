@@ -56,3 +56,4 @@ share/tmru/
 .bash_history
 test/keep/lf/lf/history
 test/keep/lf/lf/files
+test/keep/lf/lf/marks
