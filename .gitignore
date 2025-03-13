@@ -54,6 +54,7 @@ share/tmru/
 **/vimproc/lib/
 
 .bash_history
-lf/history
-lf/files
-lf/marks
+
+**/lf/history
+**/lf/files
+**/lf/marks
