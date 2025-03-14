@@ -751,6 +751,7 @@ function dr()
   # if -- is found command and arguments are passed at the end
   # if -* is found assumed to be docker option
   # TODO: add global variables for persistance
+  # everything passed after -- is arguments to run
 
   # use previous run arguments
   if [ "$1" = "-h" ]; then
@@ -779,18 +780,12 @@ function dr()
     fi
   fi
 
-  # do we want to add credentials by default?
-  # docker run -e
-  # GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud/application_default_credentials.json
-  # --mount type=bind,source=${HOME}/.config/gcloud,target=/tmp/gcloud,readonly
-  # -it --rm
-  # repository.sabre-gcp.com:9082/sabre/labs/research/travelai/schedchg_test:0.1.2
-  # --gcp-scenario-folder-prefix scenario1121 --process-connections-dat
+  # copied the .config/gcloud and changed permissions on file to 644
   creds=(
     -e
     GOOGLE_APPLICATION_CREDENTIALS=/gcreds/application_default_credentials.json
     --mount
-    type=bind,source=${HOME}/.config/gcloud,target=/gcreds,readonly
+    type=bind,source=${HOME}/tmp/target/gcloud,target=/gcreds,readonly
   )
 
   if [ -z "$entrypoint" ]; then
