@@ -16,7 +16,7 @@ let g:is_win = has('win32') || has('win64')
 let g:read_localVimrc = 0
 let s:local_settings = expand(g:p0 . "/local_settings.vim")
 if filereadable(s:local_settings)
-  execute "source " . s:local_settings
+  execute 'source' . s:local_settings
 endif
 
 " plan to use default package loading also
