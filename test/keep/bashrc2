@@ -42,7 +42,7 @@ fi
 
 export CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null && pwd )"
 
-MTIMER_ENABLED=1
+MTIMER_ENABLED=0
 function mtimer()
 {
   [ -z ${MTIMER_ENABLED+x} ] && return
