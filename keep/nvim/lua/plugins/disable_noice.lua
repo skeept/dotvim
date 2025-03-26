@@ -122,4 +122,10 @@ return {
       -- })
     end,
   },
+  {
+    "chrisbra/NrrwRgn",
+  },
+  {
+    "tpope/vim-fugitive",
+  },
 }
