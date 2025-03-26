@@ -13,6 +13,9 @@ return {
     "sainnhe/sonokai",
     "rebelot/kanagawa.nvim",
     "yorumicolors/yorumi.nvim",
+    "shaunsingh/nord.nvim",
+    "AlexvZyl/nordic.nvim",
+    "bluz71/vim-moonfly-colors",
   },
 
   -- Configure LazyVim to load gruvbox
@@ -24,7 +27,8 @@ return {
       -- colorscheme = "material",
       -- colorscheme = "desert",
       -- colorscheme = "sonokai",
-      colorscheme = "tokyonight-night",
+      -- colorscheme = "tokyonight-night",
+      colorscheme = "moonfly",
       -- colorscheme = "yorumi",
     },
   },
