@@ -4625,11 +4625,7 @@ func (t *Terminal) Loop() error {
 				//  U t.uiMutex                 |
 				t.uiMutex.Lock()
 				t.mutex.Lock()
-				printInfo := util.RunOnce(func() {
-					if !t.resizeIfNeeded() {
-						t.printInfo()
-					}
-				})
+				info := false
 				for _, key := range keys {
 					req := util.EventType(key)
 					value := (*events)[req]
@@ -4637,15 +4633,14 @@ func (t *Terminal) Loop() error {
 					case reqPrompt:
 						t.printPrompt()
 						if t.infoStyle == infoInline || t.infoStyle == infoInlineRight {
-							printInfo()
+							info = true
 						}
 					case reqInfo:
-						printInfo()
+						info = true
 					case reqList:
 						t.printList()
 						currentIndex := t.currentIndex()
 						focusChanged := focusedIndex != currentIndex
-						info := false
 						if focusChanged && focusedIndex >= 0 && t.track == trackCurrent {
 							t.track = trackDisabled
 							info = true
@@ -4656,9 +4651,6 @@ func (t *Terminal) Loop() error {
 							if t.infoCommand != "" {
 								info = true
 							}
-						}
-						if info {
-							printInfo()
 						}
 						if focusChanged || version != t.version {
 							version = t.version
@@ -4750,6 +4742,9 @@ func (t *Terminal) Loop() error {
 						exit(func() int { return ExitError })
 						return
 					}
+				}
+				if info && !t.resizeIfNeeded() {
+					t.printInfo()
 				}
 				t.flush()
 				t.mutex.Unlock()
@@ -6039,6 +6034,8 @@ func (t *Terminal) Loop() error {
 				t.input = currentInput
 				t.cx = len(t.input)
 				beof = false
+			} else if string(t.input) != string(currentInput) {
+				t.inputOverride = nil
 			}
 			return true
 		}
@@ -6064,9 +6061,6 @@ func (t *Terminal) Loop() error {
 				t.truncateQuery()
 			}
 			queryChanged = queryChanged || t.pasting == nil && string(previousInput) != string(t.input)
-			if queryChanged {
-				t.inputOverride = nil
-			}
 			changed = changed || queryChanged
 			if onChanges, prs := t.keymap[tui.Change.AsEvent()]; queryChanged && prs && !doActions(onChanges) {
 				continue
