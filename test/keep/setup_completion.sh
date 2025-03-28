@@ -232,7 +232,9 @@ function setcomps
   local end=$(date +%s%3N)
   local duration=$((end - start))
 
-  echo "Elapsed time setcomps: ${duration} milliseconds"
+  if [ "$MTIMER_ENABLED" == "1" ]; then
+    echo "Elapsed time setcomps: ${duration} milliseconds"
+  fi
 }
 setcomps
 

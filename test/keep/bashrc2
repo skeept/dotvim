@@ -45,7 +45,7 @@ export CONFIG_HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}"  )" &> /dev/null
 MTIMER_ENABLED=0
 function mtimer()
 {
-  [ -z ${MTIMER_ENABLED+x} ] && return
+  [ "${MTIMER_ENABLED}" != "1" ] && return
   local now=$(date +%s%3N)
   [ -z ${MTIMER_START+x} ] && MTIMER_START=$now
   [ -z ${MTIMER_LAST+x} ] && MTIMER_LAST=$now
