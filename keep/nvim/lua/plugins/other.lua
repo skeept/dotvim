@@ -23,14 +23,14 @@ return {
       require("fzf-lua").setup({ "max-perf" })
     end,
   },
-  {
-    "akinsho/bufferline.nvim",
-    opts = {
-      options = {
-        mode = "tabs",
-      },
-    },
-  },
+  -- {
+  --   "akinsho/bufferline.nvim",
+  --   opts = {
+  --     options = {
+  --       mode = "tabs",
+  --     },
+  --   },
+  -- },
   {
     "nvim-orgmode/orgmode",
     event = "VeryLazy",
@@ -49,6 +49,8 @@ return {
       --   ignore_install = { 'org' },
       -- })
     end,
+    -- conditional loading based on OS
+    enabled = vim.loop.os_uname().sysname == "Linux",
   },
   {
     "cappyzawa/trim.nvim",
