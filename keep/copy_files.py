@@ -89,7 +89,8 @@ def copy_files(
                 target.mkdir(exist_ok=True, parents=True)
             elif status != CmpStatus.same:
                 # copy item to be overridden to backup
-                shutil.copy(target, backup_folder)
+                if target.exists():
+                    shutil.copy(target, backup_folder)
                 shutil.copy(elem, target)
 
 
@@ -125,7 +126,9 @@ def main() -> None:
         else dataclasses.astuple(nvim.flip())
     )
     dry_run = not args.copy
-    copy_files(origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff)
+    copy_files(
+        origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff
+    )
 
 
 if __name__ == "__main__":
