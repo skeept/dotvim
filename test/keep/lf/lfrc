@@ -1,6 +1,6 @@
 set previewer ~/.vim/test/keep/lf/lf_previewer.sh
 
-cmd mkdir push %mkdir<space>
+cmd mkdir $mkdir $1
 map i $bat --style=plain --color=always --paging=auto $f
 map <c-j> shell
 map <enter> read
@@ -56,6 +56,78 @@ cmd copy_to_clip &{{
 }}
 
 map gy :copy_to_clip
+
+# compress files
+cmd zip ${{
+  set -fe
+  target_dir="$1"
+  new_dir=1
+  fxa=$(echo "$fx" |  tr '\n' ' ')
+
+  if [ -z "$target_dir" ] && [ "$f" = "$fx" ] && [ -d "$f" ]; then
+    target_dir="$f"
+    new_dir=0
+  fi
+
+  if [ "$new_dir" = "1" ]; then
+    mkdir "$target_dir"
+    cp -r $fxa $target_dir
+  fi
+
+  7z a "$target_dir.zip" "$target_dir"
+
+  if [ "$new_dir" = "1" ]; then
+    rm -rf "$target_dir"
+  fi
+}}
+
+cmd 7z ${{
+  set -fe
+  target_dir="$1"
+  new_dir=1
+  fxa=$(echo "$fx" |  tr '\n' ' ')
+
+  if [ -z "$target_dir" ] && [ "$f" = "$fx" ] && [ -d "$f" ]; then
+    target_dir="$f"
+    new_dir=0
+  fi
+
+  if [ "$new_dir" = "1" ]; then
+    mkdir "$target_dir"
+    cp -r $fxa $target_dir
+  fi
+
+  7z a "$target_dir.7z" "$target_dir"
+
+  if [ "$new_dir" = "1" ]; then
+    rm -rf "$target_dir"
+  fi
+}}
+
+
+
+cmd 7z ${{
+  set -f
+  target_dir="$1"
+  new_dir=1
+
+  if [ -z "$target_dir" ] && [ "$f" = "$fx" ] && [ -d "$f" ]; then
+    target_dir="$f"
+    new_dir=0
+  fi
+
+  if [ "$new_dir" = "1" ]; then
+    mkdir "$target_dir"
+    cp -r "$fx" "$target_dir"
+  fi
+
+  7z a "$target_dir.7z" "$target_dir"
+
+  if [ "$new_dir" = "1" ]; then
+    rm -rf "$target_dir"
+  fi
+}}
+
 
 
 cmd fzf_file_jump ${{
