@@ -404,7 +404,7 @@ __print_folder_keys()
 d()
 {
   # implement changing logic
-  local CD_OP="$(type z >& /dev/null && echo z || echo cd)"
+  local CD_OP="$(type z >& /dev/null && type zoxide >& /dev/null && echo z || echo cd)"
   [ -z "$@" ] && __print_folder_keys && return
 
   # can be name or key
@@ -870,6 +870,9 @@ if { type zoxide && ! type zi; } >& /dev/null ; then
   #_zoxide_add /mnt/c/zl/ML
 
   eval "$(zoxide init bash)"
+else
+  alias z=d
+  alias zi=d
 fi
 
 function kc()
