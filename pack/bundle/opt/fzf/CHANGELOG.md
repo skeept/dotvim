@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+0.61.1
+------
+- Disable bracketed-paste mode on exit. This fixes issue where pasting breaks after running fzf on old bash versions that don't support the mode.
+
 0.61.0
 ------
 - Added `--ghost=TEXT` to display a ghost text when the input is empty
@@ -8,6 +12,9 @@ CHANGELOG
   # Display "Type to search" when the input is empty
   fzf --ghost "Type to search"
   ```
+- Added `change-ghost` and `transform-ghost` actions for dynamically changing the ghost text
+- Added `change-pointer` and `transform-pointer` actions for dynamically changing the pointer sign
+- Added `r` flag for placeholder expression (raw mode) for unquoted output
 - Bug fixes and improvements
 
 0.60.3

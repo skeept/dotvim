@@ -38,7 +38,7 @@ As such it is not useful for validation, but rather to generate test
 cases for example.
 
 	\\?(?:                                      # escaped type
-	    {\+?s?f?RANGE(?:,RANGE)*}               # token type
+	    {\+?s?f?r?RANGE(?:,RANGE)*}             # token type
 	    {q[:s?RANGE]}                           # query type
 	    |{\+?n?f?}                              # item type (notice no mandatory element inside brackets)
 	)
@@ -65,7 +65,7 @@ const maxFocusEvents = 10000
 const blockDuration = 1 * time.Second
 
 func init() {
-	placeholder = regexp.MustCompile(`\\?(?:{[+sf]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
+	placeholder = regexp.MustCompile(`\\?(?:{[+sfr]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
 	whiteSuffix = regexp.MustCompile(`\s*$`)
 	offsetComponentRegex = regexp.MustCompile(`([+-][0-9]+)|(-?/[1-9][0-9]*)`)
 	offsetTrimCharsRegex = regexp.MustCompile(`[^0-9/+-]`)
@@ -475,15 +475,19 @@ const (
 	actBackwardWord
 	actCancel
 	actChangeBorderLabel
-	actChangeListLabel
-	actChangeInputLabel
+	actChangeGhost
 	actChangeHeader
 	actChangeHeaderLabel
+	actChangeInputLabel
+	actChangeListLabel
 	actChangeMulti
+	actChangeNth
+	actChangePointer
+	actChangePreview
 	actChangePreviewLabel
+	actChangePreviewWindow
 	actChangePrompt
 	actChangeQuery
-	actChangeNth
 	actClearScreen
 	actClearQuery
 	actClearSelection
@@ -542,19 +546,19 @@ const (
 	actTogglePreviewWrap
 	actTransform
 	actTransformBorderLabel
-	actTransformListLabel
-	actTransformInputLabel
+	actTransformGhost
 	actTransformHeader
 	actTransformHeaderLabel
+	actTransformInputLabel
+	actTransformListLabel
 	actTransformNth
+	actTransformPointer
 	actTransformPreviewLabel
 	actTransformPrompt
 	actTransformQuery
 	actTransformSearch
 	actSearch
 	actPreview
-	actChangePreview
-	actChangePreviewWindow
 	actPreviewTop
 	actPreviewBottom
 	actPreviewUp
@@ -624,6 +628,7 @@ type placeholderFlags struct {
 	number        bool
 	forceUpdate   bool
 	file          bool
+	raw           bool
 }
 
 type searchRequest struct {
@@ -3778,6 +3783,8 @@ func parsePlaceholder(match string) (bool, string, placeholderFlags) {
 			flags.number = true
 		case 'f':
 			flags.file = true
+		case 'r':
+			flags.raw = true
 		case 'q':
 			flags.forceUpdate = true
 			trimmed += string(char)
@@ -3929,7 +3936,7 @@ func replacePlaceholder(params replacePlaceholderParams) (string, []string) {
 						return "''"
 					}
 					return strconv.Itoa(int(n))
-				case flags.file:
+				case flags.file || flags.raw:
 					return item.AsString(params.stripAnsi)
 				default:
 					return params.executor.QuoteEntry(item.AsString(params.stripAnsi))
@@ -3971,7 +3978,7 @@ func replacePlaceholder(params replacePlaceholderParams) (string, []string) {
 				if !flags.preserveSpace {
 					str = strings.TrimSpace(str)
 				}
-				if !flags.file {
+				if !flags.file && !flags.raw {
 					str = params.executor.QuoteEntry(str)
 				}
 				return str
@@ -5131,7 +5138,12 @@ func (t *Terminal) Loop() error {
 					header = t.captureLines(a.a)
 				}
 				if t.changeHeader(header) {
-					req(reqHeader, reqList, reqPrompt, reqInfo)
+					if t.headerWindow != nil {
+						// Need to resize header window
+						req(reqFullRedraw)
+					} else {
+						req(reqHeader, reqList, reqPrompt, reqInfo)
+					}
 				} else {
 					req(reqHeader)
 				}
@@ -5950,6 +5962,30 @@ func (t *Terminal) Loop() error {
 							t.keymap[key] = originalAction
 						}
 					}
+				}
+			case actChangeGhost, actTransformGhost:
+				ghost := a.a
+				if a.t == actTransformGhost {
+					ghost = t.captureLine(a.a)
+				}
+				t.ghost = ghost
+				if len(t.input) == 0 {
+					req(reqPrompt)
+				}
+			case actChangePointer, actTransformPointer:
+				pointer := a.a
+				if a.t == actTransformPointer {
+					pointer = t.captureLine(a.a)
+				}
+				length := uniseg.StringWidth(pointer)
+				if length <= 2 {
+					if length != t.pointerLen {
+						t.forceRerenderList()
+					}
+					t.pointer = pointer
+					t.pointerLen = length
+					t.pointerEmpty = strings.Repeat(" ", t.pointerLen)
+					req(reqList)
 				}
 			case actChangePreview:
 				if t.previewOpts.command != a.a {
