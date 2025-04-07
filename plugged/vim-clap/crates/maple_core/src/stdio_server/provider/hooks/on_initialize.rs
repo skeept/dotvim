@@ -10,15 +10,20 @@ use std::time::Duration;
 use types::ClapItem;
 use utils::io::line_count;
 
+const INIT_TIMEOUT: Duration = Duration::from_millis(300);
+
 async fn execute_and_write_cache(
-    cmd: &str,
+    cmd: &ShellCommand,
     cache_file: std::path::PathBuf,
 ) -> std::io::Result<ProviderSource> {
     // Can not use subprocess::Exec::shell here.
     //
     // Must use TokioCommand otherwise the timeout may not work.
 
-    let mut tokio_cmd = crate::process::tokio::shell_command(cmd);
+    let mut tokio_cmd = crate::process::tokio::shell_command(&cmd.command);
+
+    tokio_cmd.current_dir(&cmd.dir);
+
     crate::process::tokio::write_stdout_to_file(&mut tokio_cmd, &cache_file).await?;
     let total = line_count(&cache_file)?;
     Ok(ProviderSource::CachedFile {
@@ -99,7 +104,7 @@ async fn initialize_provider_source(ctx: &Context) -> Result<ProviderSource> {
                     DIRECT_CREATE_NEW_SOURCE.contains(&ctx.provider_id());
 
                 let provider_source = if create_new_source_directly || ctx.env.no_cache {
-                    execute_and_write_cache(&shell_cmd.command, cache_file).await?
+                    execute_and_write_cache(&shell_cmd, cache_file).await?
                 } else {
                     match shell_cmd.cache_digest() {
                         Some(digest) => ProviderSource::CachedFile {
@@ -107,7 +112,7 @@ async fn initialize_provider_source(ctx: &Context) -> Result<ProviderSource> {
                             path: digest.cached_path,
                             refreshed: false,
                         },
-                        None => execute_and_write_cache(&shell_cmd.command, cache_file).await?,
+                        None => execute_and_write_cache(&shell_cmd, cache_file).await?,
                     }
                 };
 
@@ -231,49 +236,16 @@ pub async fn initialize_provider(ctx: &Context, init_display: bool) -> Result<()
         return Ok(());
     }
 
-    const TIMEOUT: Duration = Duration::from_millis(300);
-
-    match tokio::time::timeout(TIMEOUT, initialize_provider_source(ctx)).await {
+    match tokio::time::timeout(INIT_TIMEOUT, initialize_provider_source(ctx)).await {
         Ok(Ok(provider_source)) => on_initialized_source(provider_source, ctx, init_display)?,
         Ok(Err(e)) => tracing::error!(?e, "Error occurred while initializing the provider source"),
         Err(_) => {
-            // The initialization was not finished quickly.
-            tracing::debug!(timeout = ?TIMEOUT, "Did not receive value in time");
-
+            tracing::debug!(timeout = ?INIT_TIMEOUT, "Timeout initializing provider");
             let source_cmd: Vec<String> = ctx.vim.bare_call("provider_source_cmd").await?;
             let maybe_source_cmd = source_cmd.into_iter().next();
             if let Some(source_cmd) = maybe_source_cmd {
                 ctx.set_provider_source(ProviderSource::Command(source_cmd));
             }
-
-            /* no longer necessary for grep provider.
-            // Try creating cache for some potential heavy providers.
-            match context.provider_id() {
-                "grep" | "live_grep" => {
-                    context.set_provider_source(ProviderSource::Command(RG_EXEC_CMD.to_string()));
-
-                    let context = context.clone();
-                    let rg_cmd = RgTokioCommand::new(context.cwd.to_path_buf());
-                    let job_id = utils::compute_hash(&rg_cmd);
-                    job::try_start(
-                        async move {
-                            if let Ok(digest) = rg_cmd.create_cache().await {
-                                let new = ProviderSource::CachedFile {
-                                    total: digest.total,
-                                    path: digest.cached_path,
-                                    refreshed: true,
-                                };
-                                if !context.terminated.load(Ordering::SeqCst) {
-                                    context.set_provider_source(new);
-                                }
-                            }
-                        },
-                        job_id,
-                    );
-                }
-                _ => {}
-            }
-            */
         }
     }
 
