@@ -908,6 +908,16 @@ function cdr()
   $cd_cmd $first_arg "$@"
 }
 
+
+function nsh() {
+  if [ -d ~/src/SABRE2/ ]; then
+    local folder="sabre2"
+    [ -n "$1" ] && folder="$1"
+    cd ~/src/SABRE2/${folder}
+    nix-shell
+  fi
+}
+
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
   use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
