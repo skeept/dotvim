@@ -26,8 +26,9 @@ set laststatus=2
 set cmdheight=1
 set whichwrap=<,>,[,],h,l
 set nopaste
-"set pastetoggle=<S-F3>
-set pastetoggle=<Leader>pt
+if !has("nvim") " recent versions of nvim don't have this
+  set pastetoggle=<Leader>pt
+endif
 
 "Set terminal capabilities before the colorscheme
 "set t_Co=128
