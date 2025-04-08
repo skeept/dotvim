@@ -115,43 +115,43 @@ if false; then
   }
 fi
 
-  complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
+complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
 
-  _configure_func ()
-  {
-    case "$2" in
-      -*)     ;;
-      *)      return ;;
-    esac
+_configure_func ()
+{
+  case "$2" in
+    -*)     ;;
+    *)      return ;;
+  esac
 
-    case "$1" in
-      \~*)    eval cmd=$1 ;;
-      *)      cmd="$1" ;;
-    esac
+  case "$1" in
+    \~*)    eval cmd=$1 ;;
+    *)      cmd="$1" ;;
+  esac
 
-    COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
-  }
+  COMPREPLY=( $("$cmd" --help | awk '{if ($1 ~ /--.*/) print $1}' | grep ^"$2" | sort -u) )
+}
 
-  complete -F _configure_func configure
+complete -F _configure_func configure
 
 
-  _killall ()
-  {
-    local cur prev
-    COMPREPLY=()
-    cur=${COMP_WORDS[COMP_CWORD]}
+_killall ()
+{
+  local cur prev
+  COMPREPLY=()
+  cur=${COMP_WORDS[COMP_CWORD]}
 
-    # get a list of processes (the first sed evaluation
-    # takes care of swapped out processes, the second
-    # takes care of getting the basename of the process)
-    COMPREPLY=( $( ps -u $USER -o comm  | \
-      sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
-      awk '{if ($0 ~ /^'$cur'/) print $0}' ))
+  # get a list of processes (the first sed evaluation
+  # takes care of swapped out processes, the second
+  # takes care of getting the basename of the process)
+  COMPREPLY=( $( ps -u $USER -o comm  | \
+    sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
+    awk '{if ($0 ~ /^'$cur'/) print $0}' ))
 
-    return 0
-  }
+  return 0
+}
 
-  complete -F _killall killall killps
+complete -F _killall killall killps
 
 # completion for vim
 function _vim()
@@ -239,4 +239,12 @@ function setcomps
 setcomps
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
+
+
+# fzf-completion
+if test -d ~/tmp/gclones/fzf-tab-completion; then
+  source ~/tmp/gclones/fzf-tab-completion/bash/fzf-bash-completion.sh
+  bind -x '"\C-f": fzf_bash_completion'
+fi
+
 mtimer "completion end"
