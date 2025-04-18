@@ -95,6 +95,8 @@ alias dui='dua i'
 alias lscmd='compgen -c | sort | uniq'
 alias jtt='just tt'
 alias jff='just tf'
+alias jdb='just docker-build'
+alias jdr='just docker-run'
 
 [ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
 
