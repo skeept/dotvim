@@ -176,6 +176,7 @@ export LESS='-i      -e -M -X  -R -P%t?f%f \
   :stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 export RIPGREP_CONFIG_PATH=$HOME/.ripgreprc
 export LF_CONFIG_HOME="${CONFIG_HOME}"
+export STARSHIP_LOG=error
 
 #----------------
 # a few fun ones
