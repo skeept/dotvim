@@ -876,23 +876,53 @@ else
   alias zi=d
 fi
 
+function state()
+{
+  python ~/bin/state2.py $@
+}
+
+function stateclear()
+{
+  if [ -z "$1" ]; then
+    state list
+  else
+    state clear $@
+  fi
+}
+
+function sr()
+{
+  # reset state for specific command. If no args simply clear
+  cmd="$1"
+  shift
+  state get $cmd
+  state clear $cmd
+  if [ -n "$1" ]; then
+    "${cmd}" $@
+  fi
+}
+
+function kl()
+{
+  local -a new_args=( $(state get kl "$@") )
+  echo "kubectl ${new_args[@]}"
+  kubectl "${new_args[@]}"
+}
+alias lk=kl
+
+
 function kc()
 {
-  # this assumes namespace
-  function kc()
-  {
-    local print_info=0
-    [ "$1" = "-i" ] && print_info=1 && shift
-    [ "$1" = "-n" ] && __ns=("$1" "$2") && shift && shift
-    [ -z "${__ns}" ] && __ns=(-n stai-snd1-fulf)
-    if [ "$print_info"  = "1" ]; then
-      echo kubectl "${__ns[@]}" $@
-    fi
-    kubectl "${__ns[@]}" $@
-  }
-  complete -o default _F __start_kubectl kc
-  kc "$@"
+  local print_info=0
+  [ "$1" = "-i" ] && print_info=1 && shift
+  [ "$1" = "-n" ] && __ns=("$1" "$2") && shift && shift
+  [ -z "${__ns}" ] && __ns=(-n stai-snd1-fulf)
+  if [ "$print_info"  = "1" ]; then
+    echo kubectl "${__ns[@]}" $@
+  fi
+  kubectl "${__ns[@]}" $@
 }
+complete -o default -F __start_kubectl kc
 
 function fixnix() {
   # put ~/bin first in the path as some older tools are used in nix which messes up things
