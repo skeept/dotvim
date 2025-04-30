@@ -14,11 +14,20 @@
 
 # Key bindings
 # ------------
-# For compatibility with fish versions down to 3.1.2, the script does not use:
-# - The -f/--function switch of command: set
-# - The process substitution syntax: $(cmd)
-# - Ranges that omit start/end indexes: $var[$start..] $var[..$end] $var[..]
+# The oldest supported fish version is 3.1b1. To maintain compatibility, the
+# command substitution syntax $(cmd) should never be used, even behind a version
+# check, otherwise the source command will fail on fish versions older than 3.4.0.
 function fzf_key_bindings
+
+  # Check fish version
+  set -l fish_ver (string match -r '^(\d+).(\d+)' $version 2> /dev/null; or echo 0\n0\n0)
+  if test \( "$fish_ver[2]" -lt 3 \) -o \( "$fish_ver[2]" -eq 3 -a "$fish_ver[3]" -lt 1 \)
+    echo "This script requires fish version 3.1b1 or newer." >&2
+    return 1
+  else if not type -q fzf
+    echo "fzf was not found in path." >&2
+    return 1
+  end
 
   function __fzf_defaults
     # $argv[1]: Prepend to FZF_DEFAULT_OPTS_FILE and FZF_DEFAULT_OPTS
@@ -42,45 +51,79 @@ function fzf_key_bindings
   end
 
   function __fzf_parse_commandline -d 'Parse the current command line token and return split of existing filepath, fzf query, and optional -option= prefix'
+    set -l fzf_query ''
+    set -l prefix ''
     set -l dir '.'
-    set -l query
-    set -l commandline (commandline -t | string unescape -n)
 
-    # Strip -option= from token if present
-    set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
-    set commandline (string replace -- "$prefix" '' $commandline)
+    # Set variables containing the major and minor fish version numbers, using
+    # a method compatible with all supported fish versions.
+    set -l -- fish_major (string match -r -- '^\d+' $version)
+    set -l -- fish_minor (string match -r -- '^\d+\.(\d+)' $version)[2]
 
-    # Enable home directory expansion of leading ~/
-    set commandline (string replace -r -- '^~/' '\$HOME/' $commandline)
+    # fish v3.3.0 and newer: Don't use option prefix if " -- " is preceded.
+    set -l -- match_regex '(?<fzf_query>[\s\S]*?(?=\n?$)$)'
+    set -l -- prefix_regex '^-[^\s=]+=|^-(?!-)\S'
+    if test "$fish_major" -eq 3 -a "$fish_minor" -lt 3
+    or string match -q -v -- '* -- *' (string sub -l (commandline -Cp) -- (commandline -p))
+      set -- match_regex "(?<prefix>$prefix_regex)?$match_regex"
+    end
 
-    # Escape special characters, except for the $ sign of valid variable names,
-    # so that the original string with expanded variables is returned after eval.
-    set commandline (string escape -n -- $commandline)
-    set commandline (string replace -r -a -- '\\\\\$(?=[\w])' '\$' $commandline)
+    # Set $prefix and expanded $fzf_query with preserved trailing newlines.
+    if test "$fish_major" -ge 4
+      # fish v4.0.0 and newer
+      string match -q -r -- $match_regex (commandline --current-token --tokens-expanded | string collect -N)
+    else if test "$fish_major" -eq 3 -a "$fish_minor" -ge 2
+      # fish v3.2.0 - v3.7.1 (last v3)
+      string match -q -r -- $match_regex (commandline --current-token --tokenize | string collect -N)
+      eval set -- fzf_query (string escape -n -- $fzf_query | string replace -r -a '^\\\(?=~)|\\\(?=\$\w)' '')
+    else
+      # fish older than v3.2.0 (v3.1b1 - v3.1.2)
+      set -l -- cl_token (commandline --current-token --tokenize | string collect -N)
+      set -- prefix (string match -r -- $prefix_regex $cl_token)
+      set -- fzf_query (string replace -- "$prefix" '' $cl_token | string collect -N)
+      eval set -- fzf_query (string escape -n -- $fzf_query | string replace -r -a '^\\\(?=~)|\\\(?=\$\w)|\\\n\\\n$' '')
+    end
 
-    # eval is used to do shell expansion on paths
-    eval set commandline $commandline
-
-    # Combine multiple consecutive slashes into one.
-    set commandline (string replace -r -a -- '/+' '/' $commandline)
-
-    if test -n "$commandline"
-      # Strip trailing slash, unless $dir is root dir (/)
-      set dir (string replace -r -- '(?<!^)/$' '' $commandline)
-
-      # Set $dir to the longest existing filepath
-      while not test -d "$dir"
-        # If path is absolute, this can keep going until ends up at /
-        # If path is relative, this can keep going until entire input is consumed, dirname returns "."
-        set dir (dirname -- $dir)
+    if test -n "$fzf_query"
+      # Normalize path in $fzf_query, set $dir to the longest existing directory.
+      if test \( "$fish_major" -ge 4 \) -o \( "$fish_major" -eq 3 -a "$fish_minor" -ge 5 \)
+        # fish v3.5.0 and newer
+        set -- fzf_query (path normalize -- $fzf_query)
+        set -- dir $fzf_query
+        while not path is -d $dir
+          set -- dir (path dirname $dir)
+        end
+      else
+        # fish older than v3.5.0 (v3.1b1 - v3.4.1)
+        if test "$fish_major" -eq 3 -a "$fish_minor" -ge 2
+          # fish v3.2.0 - v3.4.1
+          string match -q -r -- '(?<fzf_query>^[\s\S]*?(?=\n?$)$)' \
+            (string replace -r -a -- '(?<=/)/|(?<!^)/+(?!\n)$' '' $fzf_query | string collect -N)
+        else
+          # fish v3.1b1 - v3.1.2
+          set -- fzf_query (string replace -r -a -- '(?<=/)/|(?<!^)/+(?!\n)$' '' $fzf_query | string collect -N)
+          eval set -- fzf_query (string escape -n -- $fzf_query | string replace -r '\\\n$' '')
+        end
+        set -- dir $fzf_query
+        while not test -d "$dir"
+          set -- dir (dirname -z -- "$dir" | string split0)
+        end
       end
 
-      if test "$dir" = '.'; and test (string sub -l 2 -- $commandline) != './'
-        # If $dir is "." but commandline is not a relative path, this means no file path found
-        set fzf_query $commandline
-      else
-        # Also remove trailing slash after dir, to "split" input properly
-        set fzf_query (string replace -r -- "^$dir/?" '' $commandline)
+      if not string match -q -- '.' $dir; or string match -q -r -- '^\./|^\.$' $fzf_query
+        # Strip $dir from $fzf_query - preserve trailing newlines.
+        if test "$fish_major" -ge 4
+          # fish v4.0.0 and newer
+          string match -q -r -- '^'(string escape --style=regex -- $dir)'/?(?<fzf_query>[\s\S]*)' $fzf_query
+        else if test "$fish_major" -eq 3 -a "$fish_minor" -ge 2
+          # fish v3.2.0 - v3.7.1 (last v3)
+          string match -q -r -- '^/?(?<fzf_query>[\s\S]*?(?=\n?$)$)' \
+            (string replace -- "$dir" '' $fzf_query | string collect -N)
+        else
+          # fish older than v3.2.0 (v3.1b1 - v3.1.2)
+          set -- fzf_query (string replace -- "$dir" '' $fzf_query | string collect -N)
+          eval set -- fzf_query (string escape -n -- $fzf_query | string replace -r -a '^/?|\\\n$' '')
+        end
       end
     end
 
@@ -95,28 +138,27 @@ function fzf_key_bindings
     set -l prefix $commandline[3]
 
     set -lx FZF_DEFAULT_OPTS (__fzf_defaults \
-      "--reverse --walker=file,dir,follow,hidden --scheme=path --walker-root=$dir" \
-      "$FZF_CTRL_T_OPTS --multi")
+      "--reverse --walker=file,dir,follow,hidden --scheme=path" \
+      "$FZF_CTRL_T_OPTS --multi --print0")
 
     set -lx FZF_DEFAULT_COMMAND "$FZF_CTRL_T_COMMAND"
     set -lx FZF_DEFAULT_OPTS_FILE
 
-    if set -l result (eval (__fzfcmd) --query=$fzf_query)
-      # Remove last token from commandline.
-      commandline -t ''
-      for i in $result
-        commandline -it -- $prefix(string escape -- $i)' '
-      end
-    end
+    set -l result (eval (__fzfcmd) --walker-root=$dir --query=$fzf_query | string split0)
+    and commandline -rt -- (string join -- ' ' $prefix(string escape -- $result))' '
 
     commandline -f repaint
   end
 
   function fzf-history-widget -d "Show command history"
-    set -l fzf_query (commandline | string escape)
+    set -l -- command_line (commandline)
+    set -l -- current_line (commandline -L)
+    set -l -- total_lines (count $command_line)
+    set -l -- fzf_query (string escape -- $command_line[$current_line])
 
     set -lx FZF_DEFAULT_OPTS (__fzf_defaults '' \
       '--nth=2..,.. --scheme=history --multi --wrap-sign="\t↳ "' \
+      '--bind=\'shift-delete:execute-silent(eval history delete --exact --case-sensitive -- (string escape -n -- {+} | string replace -r -a "^\d*\\\\\\t|(?<=\\\\\\n)\\\\\\t" ""))+reload(eval $FZF_DEFAULT_COMMAND)\'' \
       "--bind=ctrl-r:toggle-sort --highlight-line $FZF_CTRL_R_OPTS" \
       '--accept-nth=2.. --read0 --print0 --with-shell='(status fish-path)\\ -c)
 
@@ -138,9 +180,13 @@ function fzf_key_bindings
     test -z "$fish_private_mode"; and builtin history merge
 
     if set -l result (eval $FZF_DEFAULT_COMMAND \| (__fzfcmd) --query=$fzf_query | string split0)
-      commandline -- (string replace -a -- \n\t \n $result[1])
-      test (count $result) -gt 1; and for i in $result[2..-1]
-        commandline -i -- (string replace -a -- \n\t \n \n$i)
+      if test "$total_lines" -eq 1
+        commandline -- (string replace -a -- \n\t \n $result)
+      else
+        set -l a (math $current_line - 1)
+        set -l b (math $current_line + 1)
+        commandline -- $command_line[1..$a] (string replace -a -- \n\t \n $result)
+        commandline -a -- '' $command_line[$b..-1]
       end
     end
 
@@ -154,13 +200,13 @@ function fzf_key_bindings
     set -l prefix $commandline[3]
 
     set -lx FZF_DEFAULT_OPTS (__fzf_defaults \
-      "--reverse --walker=dir,follow,hidden --scheme=path --walker-root=$dir" \
-      "$FZF_ALT_C_OPTS --no-multi")
+      "--reverse --walker=dir,follow,hidden --scheme=path" \
+      "$FZF_ALT_C_OPTS --no-multi --print0")
 
     set -lx FZF_DEFAULT_OPTS_FILE
     set -lx FZF_DEFAULT_COMMAND "$FZF_ALT_C_COMMAND"
 
-    if set -l result (eval (__fzfcmd) --query=$fzf_query)
+    if set -l result (eval (__fzfcmd) --query=$fzf_query --walker-root=$dir | string split0)
       cd -- $result
       commandline -rt -- $prefix
     end
