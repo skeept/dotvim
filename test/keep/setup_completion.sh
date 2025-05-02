@@ -218,13 +218,13 @@ function setcomps
   done
 
   # several completions that we get from command line
-  complete -o default _F __start_kubectl kc
-  complete -o default -F __start_oh-my-posh posh
+  #complete -o default _F __start_kubectl kc
+  #complete -o default -F __start_oh-my-posh posh
 
   _eval_cmd_expression_if_exists just --completions ${CURSHELL}
   _eval_cmd_expression_if_exists command just --completions ${CURSHELL}
   _eval_cmd_expression_if_exists atuin gen-completions --shell ${CURSHELL}
-  _eval_cmd_expression_if_exists posh completion ${CURSHELL}
+  #_eval_cmd_expression_if_exists posh completion ${CURSHELL}
   _eval_cmd_expression_if_exists starship completions ${CURSHELL}
   _eval_cmd_expression_if_exists procs --gen-completion-out ${CURSHELL}
   _eval_cmd_expression_if_exists uv generate-shell-completion ${CURSHELL}
