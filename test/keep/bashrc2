@@ -745,57 +745,85 @@ function pt()
   pytest ${LAST_PYTEST_ARGS[@]}
 }
 
-
-function dr()
-{
-  # assumption $1=image $2=command [/=bin/bash, can be missing (uses entrypoint)]
-  # if -- is found command and arguments are passed at the end
-  # if -* is found assumed to be docker option
-  # TODO: add global variables for persistance
-  # everything passed after -- is arguments to run
-
-  # use previous run arguments
+dr() {
+  # Show help if requested
   if [ "$1" = "-h" ]; then
-    echo "dr image [entrypoint (can use / or :)] [-v folder[:/m]]"
-    echo "/ => /bin/bash : skips"
-    echo "-v mounts folder"
+    cat <<EOF
+Usage: dr <image> [entrypoint_starting_with_/] [-v host_path[:container_path]] [command_and_args...] [-- command_after_--...]
+Options:
+  <image>          Docker image name (e.g., ubuntu:latest)
+  /path            Optional. Override entrypoint if it starts with "/"
+  -v <path_spec>   Mount volume. Host path is resolved to absolute path.
+                   Use 'host_path' for /v, or 'host_path:container_path' for custom mount point.
+  --               All arguments after '--' are treated as command and args
+Examples:
+  dr ubuntu:latest /bin/sh -c 'echo hello'
+  dr alpine ls -l /
+  dr myapp /my/entrypoint -- arg1 arg2
+EOF
     return 0
   fi
-  local -a args
-  [ -n "$1" ] && args=("$@") && __previous_dr_args=${args[@]}
-  [ -z "$1" ] && [ -v __previous_dr_args ] && args=${__previous_dr_args[@]}
-  local image=${args[0]}
-  if [ ${#args[@]} -gt 1 ]; then
-    local entrypoint=${args[1]}
-    [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
-    [ "$entrypoint" = ":" ] && entrypoint=
-  fi
 
-  # handle volume
-  if [ "${args[2]}" = "-v" ]; then
-    local t=${args[3]}
-    if [[ $t == *:* ]]; then
-      args[3]=$(realpath ${t%:*}):${t##*:}
-    else
-      args[3]=$(realpath $t):/v
-    fi
-  fi
-
-  # copied the .config/gcloud and changed permissions on file to 644
-  creds=(
-    -e
-    GOOGLE_APPLICATION_CREDENTIALS=/gcreds/application_default_credentials.json
-    --mount
-    type=bind,source=${HOME}/tmp/target/gcloud,target=/gcreds,readonly
-  )
-
-  if [ -z "$entrypoint" ]; then
-    echo docker run --rm -it ${creds[@]} ${args[@]:2} ${image}
-    docker run --rm -it ${creds[@]} ${args[@]:2} ${image}
+  # Use previous args if none provided
+  if [ $# -eq 0 ] && [ -n "$__previous_dr_args" ]; then
+    set -- $__previous_dr_args
+    echo "Re-running: dr $*"
+  elif [ $# -gt 0 ]; then
+    __previous_dr_args="$*"
   else
-    echo docker run --rm -it ${creds[@]} --entrypoint ${entrypoint} ${args[@]:2} ${image}
-    docker run --rm -it ${creds[@]} --entrypoint ${entrypoint} ${args[@]:2} ${image}
+    echo "No arguments provided. Use 'dr -h' for help." >&2
+    return 1
   fi
+
+  # Parse image and optional entrypoint
+  local image="$1"; shift
+  local entrypoint=""
+  [[ "$1" == /* ]] && entrypoint="$1" && shift
+  [ "$entrypoint" = "/" ] && entrypoint="/bin/bash"
+
+  # Parse remaining options
+  local -a docker_opts creds_mount
+  local -a command_args
+  local parsing_command=false
+
+  while (( "$#" )); do
+    if [ "$1" = "--" ]; then
+      parsing_command=true
+      shift
+      continue
+    fi
+
+    if $parsing_command; then
+      command_args+=("$1")
+    elif [ "$1" = "-v" ]; then
+      shift
+      local volume="${1:-}"
+      [[ "$volume" == *:* ]] || volume="$volume:/v"
+      docker_opts+=("-v" "$(realpath "${volume%:*}"):${volume##*:}")
+    else
+      command_args+=("$1")
+    fi
+    shift
+  done
+
+  # Handle Google Cloud credentials mount if exists
+  local gcreds_dir="${HOME}/tmp/target/gcloud"
+  if [ -d "$gcreds_dir" ]; then
+    creds_mount=(
+      -e GOOGLE_APPLICATION_CREDENTIALS=/gcreds/application_default_credentials.json
+      --mount "type=bind,source=${gcreds_dir},target=/gcreds,readonly"
+    )
+  else
+    echo "Warning: GCP credentials directory not found, skipping mount." >&2
+  fi
+
+  # Build and run the docker command
+  docker run --rm -it \
+    "${creds_mount[@]}" \
+    "${docker_opts[@]}" \
+    ${entrypoint:+--entrypoint "$entrypoint"} \
+    "$image" \
+    "${command_args[@]}"
 }
 
 declare -A __wk_keys
