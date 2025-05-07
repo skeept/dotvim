@@ -60,6 +60,8 @@ Notes:
   * `bibclean`
 * Bicep
   * `bicep`
+* Bindzone
+  * `checkzone` (named-checkzone)
 * BitBake
   * `oelint-adv`
 * Bourne Shell
@@ -586,6 +588,10 @@ Notes:
   * `write-good`
 * Robot
   * `rflint`
+* Roc
+  * roc_annotate
+  * roc_format
+  * roc_language_server
 * RPM spec
   * `rpmlint`
 * Ruby
