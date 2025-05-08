@@ -821,19 +821,13 @@ pwc()
 }
 
 if { type zoxide && ! type zi; } >& /dev/null ; then
+  _ZO_DOCTOR=0
   #export _ZO_DATA_DIR="${HOME}/.sabre2/cache/zoxide"
   #mkdir -p "${_ZO_DATA_DIR}"
   _zoxide_add()
   {
     test -d $1 && zoxide add $1
   }
-
-  #_zoxide_add ${HOME}/src/t1/users/sg0216489/irops_micros
-  #_zoxide_add ${HOME}/src/sabre2
-  #_zoxide_add /mnt/c/Users/SG0216489/vimfiles
-  #_zoxide_add /mnt/c/OR/IRops/Engines/Reaccomm/
-  #_zoxide_add  /mnt/c/OR/IROPS/rt
-  #_zoxide_add /mnt/c/zl/ML
 
   eval "$(zoxide init bash)"
 else
