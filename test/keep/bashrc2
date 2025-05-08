@@ -977,6 +977,18 @@ function nsh() {
   fi
 }
 
+  # if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
+  if [ -x "$(command -v lnav)" ]; then
+    function le()
+    {
+      if [ -n "$1" ]; then
+        lnav -e "$*"
+      else
+        lnav
+      fi
+    }
+  fi
+
 # atuin related configs
 if [ -x "$(command -v atuin)" ]; then
   use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
