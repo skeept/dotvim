@@ -27,30 +27,33 @@
 #CURSHELL="$(ps -o comm= -p $$)"
 # Note: tested this for speed and it's much slower
 
-# read /etc/bashrc and /etc/profile if present
-if test -z "$now_profile"; then
-  export now_profile="0"
-fi
-prev_profile_time="$now_profile"
-export now_profile=$(date +'%s')
-let "time_diff = $now_profile - $prev_profile_time"
-if test $time_diff -ge 3; then
-  test -f /etc/bashrc && . /etc/bashrc
-  if ! { whoami | grep ark-research >& /dev/null ; }; then
-    test -f /etc/profile && . /etc/profile
-  fi
-fi
-
 export EDITOR=vim
 
-if test -z "$DISPLAY" -a "$TERM" = "xterm" -a -x /usr/bin/who ; then
+if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
+  # read /etc/bashrc and /etc/profile if present
+  if test -z "$now_profile"; then
+    export now_profile="0"
+  fi
+  prev_profile_time="$now_profile"
+  export now_profile=$(date +'%s')
+  let "time_diff = $now_profile - $prev_profile_time"
+  if test $time_diff -ge 3; then
+    test -f /etc/bashrc && . /etc/bashrc
+    if ! { whoami | grep ark-research >& /dev/null ; }; then
+      test -f /etc/profile && . /etc/profile
+    fi
+  fi
+
+  if test -z "$DISPLAY" -a "$TERM" = "xterm" -a -x /usr/bin/who ; then
     WHOAMI="`/usr/bin/who am i`"
     _DISPLAY="`expr "$WHOAMI" : '.*(\([^\.][^\.]*\).*)'`:0.0"
     if [ "${_DISPLAY}" != ":0:0.0" -a "${_DISPLAY}" != " :0.0" \
-         -a "${_DISPLAY}" != ":0.0" ]; then
-        export DISPLAY="${_DISPLAY}";
+      -a "${_DISPLAY}" != ":0.0" ]; then
+    export DISPLAY="${_DISPLAY}";
     fi
     unset WHOAMI _DISPLAY
+  fi
+  export FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE=1
 fi
 
 function addfolderstovariables ( )
@@ -170,6 +173,9 @@ if test -n "$PS1"; then
   [ -e "${NAME}" ] && . "${NAME}"
 
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2"
+  [ -e "${NAME}" ] && . "${NAME}"
+
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh"
   [ -e "${NAME}" ] && . "${NAME}"
 
   # load windows specific settings, case they exist

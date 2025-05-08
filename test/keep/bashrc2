@@ -108,49 +108,6 @@ function _exit()        # function to run upon exit of shell
 }
 trap _exit 0
 
-#---------------
-# Shell prompt
-#---------------
-
-function fastprompt()
-{
-  unset PROMPT_COMMAND
-  case $TERM in
-    *term | rxvt )
-      PS1="[\h] \W > \[\033]0;[\u@\h] \w\007\]" ;;
-    *)
-      PS1="[\h] \W > " ;;
-  esac
-}
-
-
-MYHOST=`hostname`
-function powerprompt()
-{
-  _powerprompt()
-  {
-    LOAD=$(uptime|sed -e "s/.*: \([^,]*\).*/\1/" -e "s/ //g")
-    TIME=$(date +%H:%M)
-  }
-
-  PROMPT_COMMAND=_powerprompt
-  case $TERM in
-    *term | rxvt  )
-      #            PS1="$USER\w> \[\033]0;[\u@\h] \w\007\]" ;;
-      PS1="[$MYHOST\w]> \[\033]0;[\u@\h] \w\007\]" ;;
-    linux )
-      PS1="$USER\w> " ;;
-    * )
-      PS1="$USER\w> " ;;
-  esac
-}
-
-
-
-#powerprompt     # this is the default prompt - might be slow
-# If too slow, use fastprompt instead....
-
-
 #===============================================================
 #
 # ALIASES AND FUNCTIONS
@@ -327,15 +284,6 @@ function dupremove()
     eval "export ${1}=\"${_result}\" "
   fi
 }
-
-function __my_git_ps1()
-{
-  if type -t __git_ps1 >& /dev/null; then
-    __git_ps1
-  fi
-}
-PS1='[\u@\h \W$(__my_git_ps1 " (%s)")]\$ '
-
 
 function gtp()
 {
@@ -623,17 +571,6 @@ fz()
     fzf --preview 'bat --style=plain --color=always --line-range :500 {}' $@
   else
     fzf --preview 'head -n 120 {}'
-  fi
-}
-
-star()
-{
-  if [ -z "${1}" ]; then
-    eval "$(starship init bash)"
-  elif [ "$1" = "s2" ]; then
-    PS1="\[\e[1;32m\]\u\[\e[0;39m\]@\[\e[1;36m\]nix-shell\[\e[0;39m\]:\[\e[1;33m\]\w\[\e[0;39m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ "
-  else
-    eval "$(posh prompt init bash --config ~/.vim/test/keep/posh-themes/my_negligible.omp.json)"
   fi
 }
 
@@ -989,14 +926,17 @@ function nsh() {
     }
   fi
 
-# atuin related configs
-if [ -x "$(command -v atuin)" ]; then
-  use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
-  [[ -n "$use_ble" && -e ~/tmp/ble-nightly/ble.sh ]] && . ~/tmp/ble-nightly/ble.sh
-  [[ -z "$use_ble" && -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
-  eval "$(atuin init bash --disable-up-arrow)"
-  bind -x '"\C-p": __atuin_history'
-  unset use_ble
-fi
+  if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
+    # atuin related configs
+    if [ -x "$(command -v atuin)" ]; then
+      use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
+      [[ -n "$use_ble" && -e ~/tmp/ble-nightly/ble.sh ]] && . ~/tmp/ble-nightly/ble.sh
+      [[ -z "$use_ble" && -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
+      eval "$(atuin init bash --disable-up-arrow)"
+      bind -x '"\C-p": __atuin_history'
+      unset use_ble
+    fi
+    export FORCE_ONLY_ONE_EVAL_ATUIN=1
+  fi
 
 mtimer end of bashrc
