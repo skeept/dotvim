@@ -930,7 +930,7 @@ function nsh() {
       bind -x '"\C-p": __atuin_history'
       unset use_ble
     fi
-    export FORCE_ONLY_ONE_EVAL_ATUIN=1
+    # export FORCE_ONLY_ONE_EVAL_ATUIN=1
   fi
 
 mtimer end of bashrc
