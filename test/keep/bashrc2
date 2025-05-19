@@ -908,29 +908,33 @@ function nsh() {
   fi
 }
 
-  # if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
-  if [ -x "$(command -v lnav)" ]; then
-    function le()
-    {
-      if [ -n "$1" ]; then
-        lnav -e "$*"
-      else
-        lnav
-      fi
-    }
-  fi
+function lfr() {
+  ( cdr && lf $@; )
+}
 
-  if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
-    # atuin related configs
-    if [ -x "$(command -v atuin)" ]; then
-      use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
-      [[ -n "$use_ble" && -e ~/tmp/ble-nightly/ble.sh ]] && . ~/tmp/ble-nightly/ble.sh
-      [[ -z "$use_ble" && -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
-      eval "$(atuin init bash --disable-up-arrow)"
-      bind -x '"\C-p": __atuin_history'
-      unset use_ble
+# if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
+if [ -x "$(command -v lnav)" ]; then
+  function le()
+  {
+    if [ -n "$1" ]; then
+      lnav -e "$*"
+    else
+      lnav
     fi
-    # export FORCE_ONLY_ONE_EVAL_ATUIN=1
+  }
+fi
+
+if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
+  # atuin related configs
+  if [ -x "$(command -v atuin)" ]; then
+    use_ble=0 && [ "$use_ble" != 1 ] && use_ble=
+    [[ -n "$use_ble" && -e ~/tmp/ble-nightly/ble.sh ]] && . ~/tmp/ble-nightly/ble.sh
+    [[ -z "$use_ble" && -e ~/.vim/keep/3rdparty/bash-preexec.sh ]] && . ~/.vim/keep/3rdparty/bash-preexec.sh
+    eval "$(atuin init bash --disable-up-arrow)"
+    bind -x '"\C-p": __atuin_history'
+    unset use_ble
   fi
+  # export FORCE_ONLY_ONE_EVAL_ATUIN=1
+fi
 
 mtimer end of bashrc
