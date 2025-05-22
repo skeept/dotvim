@@ -249,6 +249,9 @@ function cr()
 {
   # do a command at the repo root
   local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
+  if ! git rev-parse 2> /dev/null; then
+    echo "`pwd` is not in a git repo. Excuting in place" >&2
+  fi
   [ -n "$1" ] && (cd ${repo_root}; eval "$@")
 }
 
