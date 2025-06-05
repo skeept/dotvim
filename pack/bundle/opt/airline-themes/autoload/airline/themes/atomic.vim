@@ -7,14 +7,16 @@
 "
 "----------------------------------------------------------------
 "  Theme   : Atomic
-"  Version : 2.1.0
+"  Version : 2.3.0
 "  License : MIT
 "  Author  : Gerard Bajona
 "  URL     : https://github.com/gerardbm/atomic
 " ----------------------------------------------------------------
 "  Colors will be adapted to the current colorscheme. For better
-"  contrast use the atomic colorscheme: it has ten color palettes
-"  with sixteen colors selected procedurally (algorithms).
+"  contrast, use the atomic colorscheme: it has 22 color palettes
+"  with sixteen colors selected procedurally through algorithms.
+"  It was designed using HSLuv and ΔE00 to ensure harmony and
+"  contrast across light and dark modes.
 "
 "  Atomic colorscheme: https://github.com/gerardbm/vim-atomic
 " ----------------------------------------------------------------
@@ -38,10 +40,20 @@ function! airline#themes#atomic#refresh()
 	let s:R3 = airline#themes#get_highlight2(['ErrorMsg', 'fg'], ['StatusLine', 'bg'], 'none')
 	let g:airline#themes#atomic#palette.replace = airline#themes#generate_color_map(s:R1, s:R2, s:R3)
 
+	let s:T1 = airline#themes#get_highlight2(['LineNr', 'bg'], ['Boolean', 'fg'])
+	let s:T2 = airline#themes#get_highlight2(['LineNr', 'bg'], ['LineNr', 'fg'], 'none')
+	let s:T3 = airline#themes#get_highlight2(['Boolean', 'fg'], ['StatusLine', 'bg'])
+	let g:airline#themes#atomic#palette.terminal = airline#themes#generate_color_map(s:T1, s:T2, s:T3)
+
 	let s:V1 = airline#themes#get_highlight2(['LineNr', 'bg'], ['WarningMsg', 'fg'], 'none')
 	let s:V2 = airline#themes#get_highlight2(['LineNr', 'bg'], ['LineNr', 'fg'], 'none')
 	let s:V3 = airline#themes#get_highlight2(['WarningMsg', 'fg'], ['StatusLine', 'bg'], 'none')
 	let g:airline#themes#atomic#palette.visual = airline#themes#generate_color_map(s:V1, s:V2, s:V3)
+
+	let s:C1 = airline#themes#get_highlight2(['LineNr', 'bg'], ['Structure', 'fg'], 'none')
+	let s:C2 = airline#themes#get_highlight2(['LineNr', 'bg'], ['LineNr', 'fg'], 'none')
+	let s:C3 = airline#themes#get_highlight2(['Structure', 'fg'], ['StatusLine', 'bg'], 'none')
+	let g:airline#themes#atomic#palette.commandline = airline#themes#generate_color_map(s:C1, s:C2, s:C3)
 
 	let s:IA1 = airline#themes#get_highlight2(['LineNr', 'fg'], ['StatusLine', 'bg'], 'none')
 	let s:IA2 = airline#themes#get_highlight2(['LineNr', 'fg'], ['StatusLine', 'bg'], 'none')

@@ -108,6 +108,9 @@ function! s:UpdateWin()
 endfunction
 
 function! s:UpdateBuf(feedback)
+  " skip if in TelescopeResults and TelescopePrompt UI buffers
+  if has('nvim') && &l:filetype[0:8] ==# 'Telescope' | return | endif
+
   " skip if another session still loading
   if exists('g:SessionLoad') | return | endif
 
