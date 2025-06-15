@@ -1,4 +1,3 @@
-# vim: set ft=python:
 
 """Visidata settings.
 
@@ -146,3 +145,5 @@ def open_dat(vd, p):
 
 vd.save_dat = vd.save_csv
 DatSheet.class_options.header = 0
+
+# vim: set ft=python:
