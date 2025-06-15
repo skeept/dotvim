@@ -1,4 +1,3 @@
-
 """Visidata settings.
 
 Guess type of some columns by default.
@@ -34,9 +33,9 @@ else:
 
 # can use this one later in version 2.0
 # Sheet.addCommand(
-    # "gr",
-    # "guess-types",
-    # 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")',
+# "gr",
+# "guess-types",
+# 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")',
 # )
 Sheet.addCommand(
     "gr",
@@ -100,7 +99,9 @@ def guessColNames(source, cols_input, override=False):
         names = cols_param()
 
     for col, name, idx in zip(
-        cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0),
+        cols_input,
+        itertools.chain(names, itertools.repeat(".")),
+        itertools.count(0),
     ):
         if override or not col.name.strip():
             col.name = name if name != "." else f"c{idx}"
