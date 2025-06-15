@@ -1,0 +1,148 @@
+# vim: set ft=python:
+
+"""Visidata settings.
+
+Guess type of some columns by default.
+"""
+
+import itertools
+import logging
+
+if False:
+    from os.path import isdir
+
+    file_name = "tmp/visi.log" if isdir("tmp") else "visi.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[
+            logging.FileHandler(file_name, mode="a"),
+        ],
+    )
+
+    def ii(*args):
+        logging.info(*args)
+
+    logging.info("------------------------------------\n")
+else:
+    logging.basicConfig(
+        level=logging.ERROR,
+    )
+
+    def ii(*args):
+        pass
+
+
+# can use this one later in version 2.0
+# Sheet.addCommand(
+    # "gr",
+    # "guess-types",
+    # 'guessType(visibleCols, visibleRows); execCommand("resize-cols-max")',
+# )
+Sheet.addCommand(
+    "gr",
+    "guess-types",
+    'guessType(visibleCols, visibleRows); exec_keystrokes("resize-cols-max")',
+)
+
+# Sheet.addCommand('gr', 'guess-types', 'logging.info("source %s", source)')
+# Sheet.addCommand('gr', 'guess-columns', 'gessColNames(source, visibleCols)')
+
+Sheet.addCommand("gw", "set-col-names", "guessColNames(source, visibleCols)")
+
+
+def cols_param():
+    """Add columns for params file"""
+    return (
+        "solveT",
+        "airlNet",
+        "seatAll",
+        "rebookMode",
+        "useMctTol",
+        "tolDD",
+        "tolDI",
+        "tolID",
+        "tolII",
+        "domestic",
+        "int",
+        "rebookearlier",
+        "origin",
+        "downG",
+        "upG",
+        "transfer",
+        "allowCoterm",
+        "overNight",
+        "allowInt",
+        "delayThreshold",
+    )
+
+
+def guessColNames(source, cols_input, override=False):
+    source_base = os.path.basename(source.resolve())
+    names = []
+    if source_base == "schedule.dat":
+        names = (
+            "id dep arr air fn oprFI oprA oprFN netwk "
+            " dt_gmt sch_s sch_e s e dt_local sch_sl sch_el sl el "
+            " ter_dep_s ter_arr_s ter_dep ter_arr "
+            " sch_dep sch_arr "
+            " depSt arrSt depT arrT svcT eqT body opSt elig selec whatif isAdde "
+        ).split()
+    elif source_base == "passengers.dat":
+        names = (
+            "pnr n crm fare freFly codeS corp minor "
+            "strat checkIn dayT intN etk grp staff cBag"
+        ).split()
+    elif source_base == "availability.dat":
+        names = "id class order auth cap booked blocked".split()
+    elif source_base == "pnrFlights.dat":
+        names = "id fID cabin fare checkIn boarded isSeg seqNum".split()
+    elif source_base == "PrmParameters.dat":
+        names = cols_param()
+
+    for col, name, idx in zip(
+        cols_input, itertools.chain(names, itertools.repeat(".")), itertools.count(0),
+    ):
+        if override or not col.name.strip():
+            col.name = name if name != "." else f"c{idx}"
+
+
+def guessType(cols, rows):
+    for col in cols:
+        if col.type is not anytype:
+            continue
+
+        max_to_check = 20
+        current_type = None
+
+        for val in itertools.islice((col.getValue(r) for r in rows), max_to_check):
+            if not str(val):
+                continue
+            try:
+                fv = float(val)
+                is_int = float(int(fv)) == fv
+                if is_int:
+                    if current_type is None:
+                        current_type = int
+                else:
+                    current_type = float
+                    break
+            except Exception:
+                pass
+        col.type = anytype if current_type is None else current_type
+
+
+options.csv_lineterminator = "\n"
+
+
+class DatSheet(visidata.loaders.csv.CsvSheet):
+    """Used when loading files ending in .dat (usually no headers available)"""
+
+
+@VisiData.api
+def open_dat(vd, p):
+    return DatSheet(p.name, source=p)
+
+
+vd.save_dat = vd.save_csv
+DatSheet.class_options.header = 0
