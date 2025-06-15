@@ -1,0 +1,58 @@
+format = """${custom.project_context}$all"""
+# format = """$all"""
+
+[custom.project_context]
+description = "Display if S2 is active based on current s2"
+command = "get_s2_repr $(pwd) $(command -v s2)"
+# following one doesn't have dependencies and displays something is s2 command exists
+# command = "type -t s2 >& /dev/null && echo -n '🟢 ' || echo -n ''"
+# Shell that supports [[ ... ]] and globbing (*) like bash
+# shell = ["bash", "-c"]
+# Always run the command to determine the output
+when = true
+# Format the output ($output will be 'P1', 'P2', or ' ')
+# Example: Display in cyan, followed by a space for separation
+format = "[$output](cyan)"
+
+[character]
+success_symbol = "[❯](bold #5e81ac)"
+error_symbol = "[✗](#bf616a)"
+
+[directory]
+format = "[$path]($style fg:#5e81ac) "
+read_only = " "
+
+[cmd_duration]
+format = '[ $duration ]($style fg:#4c566a)'
+
+[git_branch]
+format = "[on]($style fg:#d08770) [$symbol$branch ]($style fg:#a3be8c)"
+
+[git_status]
+style = "bold fg:#d08770"
+
+[python]
+style = "bold fg:#d08770"
+# Original python status doesn't have space ater it.
+# It mixed with the next status. Otherwise, we don't
+# need to override the format here.
+format = '[${symbol}${pyenv_prefix}(${version})(\($virtualenv\) )]($style)'
+
+[rust]
+style = "bold fg:#bf616a"
+
+[nodejs]
+symbol = "⬢ "
+format = '[$symbol($version)]($style fg:#a3be8c)'
+
+[gcloud]
+disabled = true
+
+[nix_shell]
+disabled = true
+
+[buf]
+disabled = true
+
+[java]
+disabled = true
