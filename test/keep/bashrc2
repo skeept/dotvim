@@ -757,13 +757,35 @@ EOF
     echo "Warning: GCP credentials directory not found, skipping mount." >&2
   fi
 
-  # Build and run the docker command
-  docker run --rm -it \
-    "${creds_mount[@]}" \
-    "${docker_opts[@]}" \
-    ${entrypoint:+--entrypoint "$entrypoint"} \
-    "$image" \
-    "${command_args[@]}"
+  local -a env_file_opt
+  if env_file_path=$(_find_dotenv); then
+      env_file_opt=("--env-file" "$env_file_path")
+  fi
+
+  local -a docker_and_args
+  docker_and_args=(docker run --rm -it)
+  docker_and_args+=("${creds_mount[@]}")
+  docker_and_args+=("${docker_opts[@]}")
+  if [ -n "$entrypoint" ]; then
+    docker_and_args+=(--entrypoint "$entrypoint")
+  fi
+  docker_and_args+=("${env_file_opt[@]}")
+  docker_and_args+=("$image")
+  docker_and_args+=("${command_args[@]}")
+
+
+  # print command
+  printf ' %q' "${docker_and_args[@]}"
+  printf '\n'
+  "${docker_and_args[@]}"
+   #Build and run the docker command
+  #docker run --rm -it \
+    #"${creds_mount[@]}" \
+    #"${docker_opts[@]}" \
+    #${entrypoint:+--entrypoint "$entrypoint"} \
+    #"${env_file_opt[@]}" \
+    #"$image" \
+    #"${command_args[@]}"
 }
 
 declare -A __wk_keys
@@ -926,6 +948,66 @@ if [ -x "$(command -v lnav)" ]; then
     fi
   }
 fi
+
+# activate python virtual environment
+function _activate_pyve() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -d "$dir/.venv" ]; then
+      . "$dir/.venv/bin/activate" && return 0
+    elif [ -d "$dir/venv" ]; then
+      . "$dir/venv/bin/activate" && return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  echo "❌ No virtual environment found." >&2
+  return 1
+}
+
+# activate environment
+function ae() {
+  _activate_pyve
+  if [ -n "$1" ]; then
+    python $@
+  fi
+}
+
+# environment run
+function er() {
+  _activate_pyve
+  if [ -n "$1" ]; then
+    python $@
+  fi
+}
+
+# python run in virtual environment
+# Note: pr is a linux command. use command pr if needed
+function pr() {
+  _activate_pyve
+  if [ -n "$1" ]; then
+    python $@
+  fi
+}
+
+# Search for a .env file from current dir up to Git repo root
+function _find_dotenv() {
+  local dir="$PWD"
+  local rel=".env"
+  local repo_root
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || repo_root="/"
+
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/.env" ]; then
+      echo "${rel}"
+      return 0
+    fi
+    [ "$dir" = "$repo_root" ] && break
+    dir="$(dirname "$dir")"
+    rel="../${rel}"
+  done
+
+  return 1  # Not found
+}
 
 if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
   # atuin related configs
