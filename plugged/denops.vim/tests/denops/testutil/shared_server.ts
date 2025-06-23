@@ -1,7 +1,7 @@
 import { assert } from "jsr:@std/assert@^1.0.1";
 import { deadline } from "jsr:@std/async@^1.0.1/deadline";
 import { resolve } from "jsr:@std/path@^1.0.2/resolve";
-import { channel, pop } from "jsr:@lambdalisue/streamtools@^1.0.0";
+import { channel, pop } from "jsr:@core/streamutil@^1.0.0";
 import { tap } from "jsr:@milly/streams@^1.0.0/transform/tap";
 import { getConfig } from "./conf.ts";
 
@@ -82,11 +82,7 @@ export async function useSharedServer(
   addrPromise.finally(() => addrReader.cancel());
 
   const abort = async (reason: unknown) => {
-    try {
-      aborter.abort(reason);
-    } catch {
-      // Already exited, do nothing.
-    }
+    aborter.abort(reason);
     await proc.status;
     await Promise.allSettled([
       proc.stdout.cancel(reason),
@@ -96,12 +92,13 @@ export async function useSharedServer(
 
   try {
     const addr = await deadline(addrPromise, timeout);
-    assert(typeof addr === "string");
-    const [_, host, port] = addr.match(/^([^:]*):(\d+)(?:\n|$)/) ?? [];
+    assert(addr, "Shared server did not returns an address");
+    const [_, host, portStr] = addr.match(/^([^:]*):(\d+)(?:\n|$)/) ?? [];
+    const port = Number.parseInt(portStr);
     return {
       addr: {
         host,
-        port: Number.parseInt(port),
+        port,
         toString: () => `${host}:${port}`,
       },
       stdout: stdoutReader2,
