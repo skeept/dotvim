@@ -1939,4 +1939,46 @@ class TestCore < TestInteractive
     tmux.send_keys %(echo -en "foo\n" | fzf --read0 --no-multi-line), :Enter
     tmux.until { |lines| assert_includes lines, '> foo␊' }
   end
+
+  def test_async_transform
+    time = Time.now
+    tmux.send_keys %(
+      seq 100 | #{FZF} --style full --border --preview : \
+          --bind 'focus:bg-transform-header(sleep 0.5; echo th.)' \
+          --bind 'focus:+bg-transform-footer(sleep 0.5; echo tf.)' \
+          --bind 'focus:+bg-transform-border-label(sleep 0.5; echo tbl.)' \
+          --bind "focus:+bg-transform-preview-label(sleep 0.5; echo tpl.)" \
+          --bind 'focus:+bg-transform-input-label(sleep 0.5; echo til.)' \
+          --bind 'focus:+bg-transform-list-label(sleep 0.5; echo tll.)' \
+          --bind 'focus:+bg-transform-header-label(sleep 0.5; echo thl.)' \
+          --bind 'focus:+bg-transform-footer-label(sleep 0.5; echo tfl.)' \
+          --bind 'focus:+bg-transform-prompt(sleep 0.5; echo tp.)' \
+          --bind 'focus:+bg-transform-ghost(sleep 0.5; echo tg.)'
+    ).strip, :Enter
+    tmux.until do |lines|
+      assert lines.any_include?('100/100')
+      %w[th tf tbl tpl til tll thl tfl tp tg].each do
+        assert lines.any_include?("#{it}.")
+      end
+    end
+    elapsed = Time.now - time
+    assert elapsed < 2
+  end
+
+  def test_bg_cancel
+    tmux.send_keys %(seq 0 1 | #{FZF} --bind 'space:bg-cancel+bg-transform-header(sleep {}; echo [{}])'), :Enter
+    tmux.until { assert_equal 2, it.match_count }
+    tmux.send_keys '1'
+    tmux.until { assert_equal 1, it.match_count }
+    tmux.send_keys :Space
+    tmux.send_keys :BSpace
+    tmux.until { assert_equal 2, it.match_count }
+    tmux.send_keys :Space
+    tmux.until { |lines| assert lines.any_include?('[0]') }
+    sleep 2
+    tmux.until do |lines|
+      assert lines.any_include?('[0]')
+      refute lines.any_include?('[1]')
+    end
+  end
 end

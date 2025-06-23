@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"regexp"
 	"sort"
@@ -66,7 +67,7 @@ const maxFocusEvents = 10000
 const blockDuration = 1 * time.Second
 
 func init() {
-	placeholder = regexp.MustCompile(`\\?(?:{[+sfr]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
+	placeholder = regexp.MustCompile(`\\?(?:{[+*sfr]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
 	whiteSuffix = regexp.MustCompile(`\s*$`)
 	offsetComponentRegex = regexp.MustCompile(`([+-][0-9]+)|(-?/[1-9][0-9]*)`)
 	offsetTrimCharsRegex = regexp.MustCompile(`[^0-9/+-]`)
@@ -230,6 +231,16 @@ type Status struct {
 	Selected   []StatusItem `json:"selected"`
 }
 
+type versionedCallback struct {
+	version  int64
+	callback func()
+}
+
+type runningCmd struct {
+	cmd       *exec.Cmd
+	tempFiles []string
+}
+
 // Terminal represents terminal input/output
 type Terminal struct {
 	initDelay          time.Duration
@@ -371,6 +382,8 @@ type Terminal struct {
 	selected           map[int32]selectedItem
 	version            int64
 	revision           revision
+	bgVersion          int64
+	runningCmds        *util.ConcurrentSet[*runningCmd]
 	reqBox             *util.EventBox
 	initialPreviewOpts previewOpts
 	previewOpts        previewOpts
@@ -388,6 +401,10 @@ type Terminal struct {
 	startChan          chan fitpad
 	killChan           chan bool
 	serverInputChan    chan []*action
+	callbackChan       chan versionedCallback
+	bgQueue            map[action][]func(bool)
+	bgSemaphore        chan struct{}
+	bgSemaphores       map[action]chan struct{}
 	keyChan            chan tui.Event
 	eventChan          chan tui.Event
 	slab               *util.Slab
@@ -444,6 +461,7 @@ const (
 	reqReinit
 	reqFullRedraw
 	reqResize
+	reqRedraw
 	reqRedrawInputLabel
 	reqRedrawHeaderLabel
 	reqRedrawFooterLabel
@@ -489,6 +507,7 @@ const (
 	actBackwardDeleteCharEof
 	actBackwardWord
 	actCancel
+
 	actChangeBorderLabel
 	actChangeGhost
 	actChangeHeader
@@ -505,6 +524,7 @@ const (
 	actChangePreviewWindow
 	actChangePrompt
 	actChangeQuery
+
 	actClearScreen
 	actClearQuery
 	actClearSelection
@@ -561,6 +581,7 @@ const (
 	actHidePreview
 	actTogglePreview
 	actTogglePreviewWrap
+
 	actTransform
 	actTransformBorderLabel
 	actTransformGhost
@@ -576,6 +597,25 @@ const (
 	actTransformPrompt
 	actTransformQuery
 	actTransformSearch
+
+	actBgTransform
+	actBgTransformBorderLabel
+	actBgTransformGhost
+	actBgTransformHeader
+	actBgTransformFooter
+	actBgTransformHeaderLabel
+	actBgTransformFooterLabel
+	actBgTransformInputLabel
+	actBgTransformListLabel
+	actBgTransformNth
+	actBgTransformPointer
+	actBgTransformPreviewLabel
+	actBgTransformPrompt
+	actBgTransformQuery
+	actBgTransformSearch
+
+	actBgCancel
+
 	actSearch
 	actPreview
 	actPreviewTop
@@ -613,6 +653,7 @@ const (
 	actBell
 	actExclude
 	actExcludeMulti
+	actAsync
 )
 
 func (a actionType) Name() string {
@@ -623,10 +664,34 @@ func processExecution(action actionType) bool {
 	switch action {
 	case actTransform,
 		actTransformBorderLabel,
+		actTransformGhost,
 		actTransformHeader,
+		actTransformFooter,
+		actTransformHeaderLabel,
+		actTransformFooterLabel,
+		actTransformInputLabel,
+		actTransformListLabel,
+		actTransformNth,
+		actTransformPointer,
 		actTransformPreviewLabel,
 		actTransformPrompt,
 		actTransformQuery,
+		actTransformSearch,
+		actBgTransform,
+		actBgTransformBorderLabel,
+		actBgTransformGhost,
+		actBgTransformHeader,
+		actBgTransformFooter,
+		actBgTransformHeaderLabel,
+		actBgTransformFooterLabel,
+		actBgTransformInputLabel,
+		actBgTransformListLabel,
+		actBgTransformNth,
+		actBgTransformPointer,
+		actBgTransformPreviewLabel,
+		actBgTransformPrompt,
+		actBgTransformQuery,
+		actBgTransformSearch,
 		actPreview,
 		actChangePreview,
 		actRefreshPreview,
@@ -643,6 +708,7 @@ func processExecution(action actionType) bool {
 
 type placeholderFlags struct {
 	plus          bool
+	asterisk      bool
 	preserveSpace bool
 	number        bool
 	forceUpdate   bool
@@ -664,7 +730,7 @@ type searchRequest struct {
 type previewRequest struct {
 	template     string
 	scrollOffset int
-	list         []*Item
+	list         [3][]*Item // current, select, and all matched items
 	env          []string
 	query        string
 }
@@ -773,7 +839,7 @@ func mayTriggerPreview(opts *Options) bool {
 	for _, actions := range opts.Keymap {
 		for _, action := range actions {
 			switch action.t {
-			case actPreview, actChangePreview, actTransform:
+			case actPreview, actChangePreview, actTransform, actBgTransform:
 				return true
 			}
 		}
@@ -971,6 +1037,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		proxyScript:        opts.ProxyScript,
 		merger:             EmptyMerger(revision{}),
 		selected:           make(map[int32]selectedItem),
+		runningCmds:        util.NewConcurrentSet[*runningCmd](),
 		reqBox:             util.NewEventBox(),
 		initialPreviewOpts: opts.Preview,
 		previewOpts:        opts.Preview,
@@ -987,6 +1054,10 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		startChan:          make(chan fitpad, 1),
 		killChan:           make(chan bool),
 		serverInputChan:    make(chan []*action, 100),
+		callbackChan:       make(chan versionedCallback, maxBgProcesses),
+		bgQueue:            make(map[action][]func(bool)),
+		bgSemaphore:        make(chan struct{}, maxBgProcesses),
+		bgSemaphores:       make(map[action]chan struct{}),
 		keyChan:            make(chan tui.Event),
 		eventChan:          make(chan tui.Event, 6), // start | (load + result + zero|one) | (focus) | (resize)
 		tui:                renderer,
@@ -1425,11 +1496,18 @@ func getScrollbar(perLine int, total int, height int, offset int) (int, int) {
 	return barLength, barStart
 }
 
+func (t *Terminal) barCol() int {
+	if len(t.scrollbar) == 0 && !t.listBorderShape.HasRight() && !t.borderShape.HasRight() && !t.hasPreviewWindowOnRight() {
+		return 0
+	}
+	return 1
+}
+
 func (t *Terminal) wrapCols() int {
 	if !t.wrap {
 		return 0 // No wrap
 	}
-	return util.Max(t.window.Width()-(t.pointerLen+t.markerLen+1), 1)
+	return util.Max(t.window.Width()-(t.pointerLen+t.markerLen+t.barCol()), 1)
 }
 
 func (t *Terminal) clearNumLinesCache() {
@@ -2578,7 +2656,9 @@ func (t *Terminal) printPrompt() {
 
 	before, after := t.updatePromptOffset()
 	if len(before) == 0 && len(after) == 0 && len(t.ghost) > 0 {
-		w.CPrint(tui.ColGhost, t.ghost)
+		maxWidth := util.Max(1, w.Width()-t.promptLen-1)
+		runes, _ := t.trimRight([]rune(t.ghost), maxWidth)
+		w.CPrint(tui.ColGhost, string(runes))
 		return
 	}
 
@@ -3014,9 +3094,11 @@ func (t *Terminal) printList() {
 func (t *Terminal) printBar(lineNum int, forceRedraw bool, barRange [2]int) bool {
 	hasBar := lineNum >= barRange[0] && lineNum < barRange[1]
 	if (hasBar != t.prevLines[lineNum].hasBar || forceRedraw) && t.window.Width() > 0 {
-		t.move(lineNum, t.window.Width()-1, true)
-		if len(t.scrollbar) > 0 && hasBar {
-			t.window.CPrint(tui.ColScrollbar, t.scrollbar)
+		if len(t.scrollbar) > 0 {
+			t.move(lineNum, t.window.Width()-1, true)
+			if hasBar {
+				t.window.CPrint(tui.ColScrollbar, t.scrollbar)
+			}
 		}
 	}
 	return hasBar
@@ -3072,7 +3154,7 @@ func (t *Terminal) printItem(result Result, line int, maxLine int, index int, cu
 		return line + numLines - 1
 	}
 
-	maxWidth := t.window.Width() - (t.pointerLen + t.markerLen + 1)
+	maxWidth := t.window.Width() - (t.pointerLen + t.markerLen + t.barCol())
 	postTask := func(lineNum int, width int, wrapped bool, forceRedraw bool) {
 		width += extraWidth
 		if (current || selected || alt) && t.highlightLine {
@@ -3391,7 +3473,7 @@ func (t *Terminal) printHighlighted(result Result, colBase tui.ColorPair, colMat
 			indentSize = preTask(marker)
 		}
 
-		maxWidth := t.window.Width() - (indentSize + 1)
+		maxWidth := t.window.Width() - (indentSize + t.barCol())
 		wasWrapped := false
 		if wrapped {
 			wrapSign := t.wrapSign
@@ -4044,6 +4126,8 @@ func parsePlaceholder(match string) (bool, string, placeholderFlags) {
 	trimmed := ""
 	for _, char := range match[1:] {
 		switch char {
+		case '*':
+			flags.asterisk = true
 		case '+':
 			flags.plus = true
 		case 's':
@@ -4067,19 +4151,16 @@ func parsePlaceholder(match string) (bool, string, placeholderFlags) {
 	return false, matchWithoutFlags, flags
 }
 
-func hasPreviewFlags(template string) (slot bool, plus bool, forceUpdate bool) {
+func hasPreviewFlags(template string) (slot bool, plus bool, asterisk bool, forceUpdate bool) {
 	for _, match := range placeholder.FindAllString(template, -1) {
 		escaped, _, flags := parsePlaceholder(match)
 		if escaped {
 			continue
 		}
-		if flags.plus {
-			plus = true
-		}
-		if flags.forceUpdate {
-			forceUpdate = true
-		}
 		slot = true
+		plus = plus || flags.plus
+		asterisk = asterisk || flags.asterisk
+		forceUpdate = forceUpdate || flags.forceUpdate
 	}
 	return
 }
@@ -4091,17 +4172,17 @@ type replacePlaceholderParams struct {
 	printsep   string
 	forcePlus  bool
 	query      string
-	allItems   []*Item
+	allItems   [3][]*Item // current, select, and all matched items
 	lastAction actionType
 	prompt     string
 	executor   *util.Executor
 }
 
 func (t *Terminal) replacePlaceholderInInitialCommand(template string) (string, []string) {
-	return t.replacePlaceholder(template, false, string(t.input), []*Item{nil, nil})
+	return t.replacePlaceholder(template, false, string(t.input), [3][]*Item{nil, nil, nil})
 }
 
-func (t *Terminal) replacePlaceholder(template string, forcePlus bool, input string, list []*Item) (string, []string) {
+func (t *Terminal) replacePlaceholder(template string, forcePlus bool, input string, list [3][]*Item) (string, []string) {
 	return replacePlaceholder(replacePlaceholderParams{
 		template:   template,
 		stripAnsi:  t.ansi,
@@ -4122,7 +4203,11 @@ func (t *Terminal) evaluateScrollOffset() int {
 	}
 
 	// We only need the current item to calculate the scroll offset
-	replaced, tempFiles := t.replacePlaceholder(t.activePreviewOpts.scroll, false, "", []*Item{t.currentItem(), nil})
+	current := []*Item{t.currentItem()}
+	if current[0] == nil {
+		current = nil
+	}
+	replaced, tempFiles := t.replacePlaceholder(t.activePreviewOpts.scroll, false, "", [3][]*Item{current, nil, nil})
 	removeFiles(tempFiles)
 	offsetExpr := offsetTrimCharsRegex.ReplaceAllString(replaced, "")
 
@@ -4154,14 +4239,9 @@ func (t *Terminal) evaluateScrollOffset() int {
 
 func replacePlaceholder(params replacePlaceholderParams) (string, []string) {
 	tempFiles := []string{}
-	current := params.allItems[:1]
-	selected := params.allItems[1:]
-	if current[0] == nil {
-		current = []*Item{}
-	}
-	if selected[0] == nil {
-		selected = []*Item{}
-	}
+	current := params.allItems[0]
+	selected := params.allItems[1]
+	matched := params.allItems[2]
 
 	// replace placeholders one by one
 	replaced := placeholder.ReplaceAllStringFunc(params.template, func(match string) string {
@@ -4257,7 +4337,9 @@ func replacePlaceholder(params replacePlaceholderParams) (string, []string) {
 		// apply 'replace' function over proper set of items and return result
 
 		items := current
-		if flags.plus || params.forcePlus {
+		if flags.asterisk {
+			items = matched
+		} else if flags.plus || params.forcePlus {
 			items = selected
 		}
 		replacements := make([]string, len(items))
@@ -4289,6 +4371,83 @@ func (t *Terminal) captureLine(template string) string {
 
 func (t *Terminal) captureLines(template string) string {
 	return t.executeCommand(template, false, true, true, false, "")
+}
+
+func (t *Terminal) captureAsync(a action, firstLineOnly bool, callback func(string)) {
+	_, list := t.buildPlusList(a.a, false)
+	command, tempFiles := t.replacePlaceholder(a.a, false, string(t.input), list)
+	version := t.bgVersion
+	cmd := t.executor.ExecCommand(command, true)
+	cmd.Env = t.environ()
+	item := func(proceed bool) {
+		if proceed {
+			out, _ := cmd.StdoutPipe()
+			reader := bufio.NewReader(out)
+			var output string
+			if err := cmd.Start(); err == nil {
+				runningCmd := runningCmd{cmd, tempFiles}
+				t.runningCmds.Add(&runningCmd)
+				if firstLineOnly {
+					output, _ = reader.ReadString('\n')
+					output = strings.TrimRight(output, "\r\n")
+				} else {
+					bytes, _ := io.ReadAll(reader)
+					output = string(bytes)
+				}
+				cmd.Wait()
+				t.runningCmds.Remove(&runningCmd)
+			}
+			t.callbackChan <- versionedCallback{version, func() { callback(output) }}
+		}
+		removeFiles(tempFiles)
+
+	}
+	queue, prs := t.bgQueue[a]
+	if !prs {
+		queue = []func(bool){}
+	}
+	queue = append(queue, item)
+	t.bgQueue[a] = queue
+}
+
+func (t *Terminal) dispatchAsync() {
+Loop:
+	for a, queue := range t.bgQueue {
+		delete(t.bgQueue, a)
+		if len(queue) == 0 {
+			continue
+		}
+
+		semaphore, prs := t.bgSemaphores[a]
+		if !prs {
+			semaphore = make(chan struct{}, maxBgProcessesPerAction)
+			t.bgSemaphores[a] = semaphore
+		}
+		for _, item := range queue {
+			select {
+			// Acquire local semaphore
+			case semaphore <- struct{}{}:
+			default:
+				// Failed to acquire local semaphore, putting only the last one back to the queue
+				for _, item := range queue[:len(queue)-1] {
+					item(false)
+				}
+				t.bgQueue[a] = queue[len(queue)-1:]
+				continue Loop
+			}
+			todo := item
+			go func() {
+				// Acquire global semaphore
+				t.bgSemaphore <- struct{}{}
+
+				todo(true)
+				// Release local semaphore
+				<-semaphore
+				// Release global semaphore
+				<-t.bgSemaphore
+			}()
+		}
+	}
 }
 
 func (t *Terminal) executeCommand(template string, forcePlus bool, background bool, capture bool, firstLineOnly bool, info string) string {
@@ -4414,6 +4573,10 @@ func (t *Terminal) hasPreviewWindow() bool {
 	return t.pwindow != nil
 }
 
+func (t *Terminal) hasPreviewWindowOnRight() bool {
+	return t.hasPreviewWindow() && t.activePreviewOpts.position == posRight
+}
+
 func (t *Terminal) currentItem() *Item {
 	cnt := t.merger.Length()
 	if t.cy >= 0 && cnt > 0 && cnt > t.cy {
@@ -4422,11 +4585,15 @@ func (t *Terminal) currentItem() *Item {
 	return nil
 }
 
-func (t *Terminal) buildPlusList(template string, forcePlus bool) (bool, []*Item) {
+func (t *Terminal) buildPlusList(template string, forcePlus bool) (bool, [3][]*Item) {
 	current := t.currentItem()
-	slot, plus, forceUpdate := hasPreviewFlags(template)
-	if !(!slot || forceUpdate || (forcePlus || plus) && len(t.selected) > 0) {
-		return current != nil, []*Item{current, current}
+	slot, plus, asterisk, forceUpdate := hasPreviewFlags(template)
+	if !(!slot || forceUpdate || asterisk || (forcePlus || plus) && len(t.selected) > 0) {
+		if current == nil {
+			// Invalid
+			return false, [3][]*Item{nil, nil, nil}
+		}
+		return true, [3][]*Item{{current}, {current}, nil}
 	}
 
 	// We would still want to update preview window even if there is no match if
@@ -4437,17 +4604,25 @@ func (t *Terminal) buildPlusList(template string, forcePlus bool) (bool, []*Item
 		current = &minItem
 	}
 
-	var sels []*Item
-	if len(t.selected) == 0 {
-		sels = []*Item{current, current}
-	} else {
-		sels = make([]*Item, len(t.selected)+1)
-		sels[0] = current
-		for i, sel := range t.sortSelected() {
-			sels[i+1] = sel.item
+	var all []*Item
+	if asterisk {
+		cnt := t.merger.Length()
+		all = make([]*Item, cnt)
+		for i := 0; i < cnt; i++ {
+			all[i] = t.merger.Get(i).item
 		}
 	}
-	return true, sels
+
+	var sels []*Item
+	if len(t.selected) == 0 {
+		sels = []*Item{current}
+	} else if len(t.selected) > 0 {
+		sels = make([]*Item, len(t.selected))
+		for i, sel := range t.sortSelected() {
+			sels[i] = sel.item
+		}
+	}
+	return true, [3][]*Item{{current}, sels, all}
 }
 
 func (t *Terminal) selectItem(item *Item) bool {
@@ -4707,7 +4882,8 @@ func (t *Terminal) Loop() error {
 			stop := false
 			t.previewBox.WaitFor(reqPreviewReady)
 			for {
-				var items []*Item
+				requested := false
+				var items [3][]*Item
 				var commandTemplate string
 				var env []string
 				var query string
@@ -4725,6 +4901,7 @@ func (t *Terminal) Loop() error {
 							items = request.list
 							env = request.env
 							query = request.query
+							requested = true
 						}
 					}
 					events.Clear()
@@ -4732,7 +4909,7 @@ func (t *Terminal) Loop() error {
 				if stop {
 					break
 				}
-				if items == nil {
+				if !requested {
 					continue
 				}
 				version++
@@ -4887,6 +5064,10 @@ func (t *Terminal) Loop() error {
 			if code <= ExitNoMatch && t.history != nil {
 				t.history.append(string(t.input))
 			}
+			t.runningCmds.ForEach(func(cmd *runningCmd) {
+				util.KillCommand(cmd.cmd)
+				removeFiles(cmd.tempFiles)
+			})
 			running = false
 			t.mutex.Unlock()
 		}
@@ -4985,12 +5166,16 @@ func (t *Terminal) Loop() error {
 					case reqReinit:
 						t.tui.Resume(t.fullscreen, true)
 						t.fullRedraw()
-					case reqResize, reqFullRedraw:
+					case reqResize, reqFullRedraw, reqRedraw:
 						if req == reqResize {
 							t.termSize = t.tui.Size()
 						}
 						wasHidden := t.pwindow == nil
-						t.fullRedraw()
+						if req == reqRedraw {
+							t.printAll()
+						} else {
+							t.fullRedraw()
+						}
 						if wasHidden && t.hasPreviewWindow() {
 							refreshPreview(t.previewOpts.command)
 						}
@@ -5089,11 +5274,27 @@ func (t *Terminal) Loop() error {
 		barrier <- true
 		needBarrier = false
 	}
+
+	// These variables are defined outside the loop to be accessible from closures
+	events := []util.EventType{}
+	changed := false
+	var newNth *[]Range
+	req := func(evts ...util.EventType) {
+		for _, event := range evts {
+			events = append(events, event)
+			if event == reqClose || event == reqQuit {
+				looping = false
+			}
+		}
+	}
+
+	// The main event loop
 	for loopIndex := int64(0); looping; loopIndex++ {
 		var newCommand *commandSpec
-		var newNth *[]Range
 		var reloadSync bool
-		changed := false
+		events = []util.EventType{}
+		changed = false
+		newNth = nil
 		beof := false
 		queryChanged := false
 		denylist := []int32{}
@@ -5110,6 +5311,7 @@ func (t *Terminal) Loop() error {
 
 		var event tui.Event
 		actions := []*action{}
+		callbacks := []versionedCallback{}
 		select {
 		case event = <-t.keyChan:
 			needBarrier = true
@@ -5141,6 +5343,20 @@ func (t *Terminal) Loop() error {
 					}
 				}
 			}
+		case callback := <-t.callbackChan:
+			event = tui.Invalid.AsEvent()
+			actions = append(actions, &action{t: actAsync})
+			callbacks = append(callbacks, callback)
+		DrainCallback:
+			for {
+				select {
+				case callback = <-t.callbackChan:
+					callbacks = append(callbacks, callback)
+					continue DrainCallback
+				default:
+					break DrainCallback
+				}
+			}
 		}
 
 		t.mutex.Lock()
@@ -5155,15 +5371,6 @@ func (t *Terminal) Loop() error {
 		previousInput := t.input
 		previousCx := t.cx
 		t.lastKey = event.KeyName()
-		events := []util.EventType{}
-		req := func(evts ...util.EventType) {
-			for _, event := range evts {
-				events = append(events, event)
-				if event == reqClose || event == reqQuit {
-					looping = false
-				}
-			}
-		}
 		updatePreviewWindow := func(forcePreview bool) {
 			t.resizeWindows(forcePreview, false)
 			req(reqPrompt, reqList, reqInfo, reqHeader, reqFooter)
@@ -5238,9 +5445,31 @@ func (t *Terminal) Loop() error {
 			//   actions to allow changing the query even when the input is hidden
 			//     e.g. fzf --no-input --bind 'space:show-input+change-query(foo)+hide-input'
 			currentInput := t.input
+			capture := func(firstLineOnly bool, callback func(string)) {
+				if a.t >= actBgTransform {
+					// bg-transform-*
+					t.captureAsync(*a, firstLineOnly, callback)
+				} else if a.t >= actTransform {
+					// transform-*
+					if firstLineOnly {
+						callback(t.captureLine(a.a))
+					} else {
+						callback(t.captureLines(a.a))
+					}
+				} else {
+					// change-*
+					callback(a.a)
+				}
+			}
 		Action:
 			switch a.t {
 			case actIgnore, actStart, actClick:
+			case actAsync:
+				for _, callback := range callbacks {
+					if t.bgVersion == callback.version {
+						callback.callback()
+					}
+				}
 			case actBecome:
 				valid, list := t.buildPlusList(a.a, false)
 				if valid {
@@ -5333,15 +5562,17 @@ func (t *Terminal) Loop() error {
 					t.previewed.version = 0
 					req(reqPreviewRefresh)
 				}
-			case actTransformPrompt:
-				prompt := t.captureLine(a.a)
-				t.promptString = prompt
-				t.prompt, t.promptLen = t.parsePrompt(prompt)
-				req(reqPrompt)
-			case actTransformQuery:
-				query := t.captureLine(a.a)
-				t.input = []rune(query)
-				t.cx = len(t.input)
+			case actTransformPrompt, actBgTransformPrompt:
+				capture(true, func(prompt string) {
+					t.promptString = prompt
+					t.prompt, t.promptLen = t.parsePrompt(prompt)
+					req(reqPrompt)
+				})
+			case actTransformQuery, actBgTransformQuery:
+				capture(true, func(query string) {
+					t.input = []rune(query)
+					t.cx = len(t.input)
+				})
 			case actToggleSort:
 				t.sort = !t.sort
 				changed = true
@@ -5399,119 +5630,107 @@ func (t *Terminal) Loop() error {
 				}
 				t.multi = multi
 				req(reqList, reqInfo)
-			case actChangeNth, actTransformNth:
-				expr := a.a
-				if a.t == actTransformNth {
-					expr = t.captureLine(a.a)
-				}
-
-				// Split nth expression
-				tokens := strings.Split(expr, "|")
-				if nth, err := splitNth(tokens[0]); err == nil {
-					// Changed
-					newNth = &nth
-				} else {
-					// The default
-					newNth = &t.nth
-				}
-				// Cycle
-				if len(tokens) > 1 {
-					a.a = strings.Join(append(tokens[1:], tokens[0]), "|")
-				}
-				if !compareRanges(t.nthCurrent, *newNth) {
-					changed = true
-					t.nthCurrent = *newNth
-					t.forceRerenderList()
-				}
+			case actChangeNth, actTransformNth, actBgTransformNth:
+				capture(true, func(expr string) {
+					// Split nth expression
+					tokens := strings.Split(expr, "|")
+					if nth, err := splitNth(tokens[0]); err == nil {
+						// Changed
+						newNth = &nth
+					} else {
+						// The default
+						newNth = &t.nth
+					}
+					// Cycle
+					if len(tokens) > 1 {
+						a.a = strings.Join(append(tokens[1:], tokens[0]), "|")
+					}
+					if !compareRanges(t.nthCurrent, *newNth) {
+						changed = true
+						t.nthCurrent = *newNth
+						t.forceRerenderList()
+					}
+				})
 			case actChangeQuery:
 				t.input = []rune(a.a)
 				t.cx = len(t.input)
-			case actChangeHeader, actTransformHeader:
-				header := a.a
-				if a.t == actTransformHeader {
-					header = t.captureLines(a.a)
-				}
-				if t.changeHeader(header) {
-					if t.headerWindow != nil {
-						// Need to resize header window
-						req(reqFullRedraw)
+			case actChangeHeader, actTransformHeader, actBgTransformHeader:
+				capture(false, func(header string) {
+					if t.changeHeader(header) {
+						if t.headerWindow != nil {
+							// Need to resize header window
+							req(reqRedraw)
+						} else {
+							req(reqHeader, reqList, reqPrompt, reqInfo)
+						}
 					} else {
-						req(reqHeader, reqList, reqPrompt, reqInfo)
+						req(reqHeader)
 					}
-				} else {
-					req(reqHeader)
-				}
-			case actChangeFooter, actTransformFooter:
-				footer := a.a
-				if a.t == actTransformFooter {
-					footer = t.captureLines(a.a)
-				}
-				if t.changeFooter(footer) {
-					req(reqFullRedraw)
-				} else {
-					req(reqFooter)
-				}
-			case actChangeHeaderLabel, actTransformHeaderLabel:
-				label := a.a
-				if a.t == actTransformHeaderLabel {
-					label = t.captureLine(a.a)
-				}
-				t.headerLabelOpts.label = label
-				t.headerLabel, t.headerLabelLen = t.ansiLabelPrinter(label, &tui.ColHeaderLabel, false)
-				req(reqRedrawHeaderLabel)
-			case actChangeFooterLabel, actTransformFooterLabel:
-				label := a.a
-				if a.t == actTransformFooterLabel {
-					label = t.captureLine(a.a)
-				}
-				t.footerLabelOpts.label = label
-				t.footerLabel, t.footerLabelLen = t.ansiLabelPrinter(label, &tui.ColFooterLabel, false)
-				req(reqRedrawFooterLabel)
-			case actChangeInputLabel, actTransformInputLabel:
-				label := a.a
-				if a.t == actTransformInputLabel {
-					label = t.captureLine(a.a)
-				}
-				t.inputLabelOpts.label = label
-				if t.inputBorder != nil {
-					t.inputLabel, t.inputLabelLen = t.ansiLabelPrinter(label, &tui.ColInputLabel, false)
-					req(reqRedrawInputLabel)
-				}
-			case actChangeListLabel, actTransformListLabel:
-				label := a.a
-				if a.t == actTransformListLabel {
-					label = t.captureLine(a.a)
-				}
-				t.listLabelOpts.label = label
-				if t.wborder != nil {
-					t.listLabel, t.listLabelLen = t.ansiLabelPrinter(label, &tui.ColListLabel, false)
-					req(reqRedrawListLabel)
-				}
-			case actChangeBorderLabel, actTransformBorderLabel:
-				label := a.a
-				if a.t == actTransformBorderLabel {
-					label = t.captureLine(a.a)
-				}
-				t.borderLabelOpts.label = label
-				if t.border != nil {
-					t.borderLabel, t.borderLabelLen = t.ansiLabelPrinter(label, &tui.ColBorderLabel, false)
-					req(reqRedrawBorderLabel)
-				}
-			case actChangePreviewLabel, actTransformPreviewLabel:
-				label := a.a
-				if a.t == actTransformPreviewLabel {
-					label = t.captureLine(a.a)
-				}
-				t.previewLabelOpts.label = label
-				if t.pborder != nil {
-					t.previewLabel, t.previewLabelLen = t.ansiLabelPrinter(label, &tui.ColPreviewLabel, false)
-					req(reqRedrawPreviewLabel)
-				}
-			case actTransform:
-				body := t.captureLines(a.a)
-				if actions, err := parseSingleActionList(strings.Trim(body, "\r\n")); err == nil {
-					return doActions(actions)
-				}
+				})
+			case actChangeFooter, actTransformFooter, actBgTransformFooter:
+				capture(false, func(footer string) {
+					if t.changeFooter(footer) {
+						req(reqRedraw)
+					} else {
+						req(reqFooter)
+					}
+				})
+			case actChangeHeaderLabel, actTransformHeaderLabel, actBgTransformHeaderLabel:
+				capture(true, func(label string) {
+					t.headerLabelOpts.label = label
+					t.headerLabel, t.headerLabelLen = t.ansiLabelPrinter(label, &tui.ColHeaderLabel, false)
+					req(reqRedrawHeaderLabel)
+				})
+			case actChangeFooterLabel, actTransformFooterLabel, actBgTransformFooterLabel:
+				capture(true, func(label string) {
+					t.footerLabelOpts.label = label
+					t.footerLabel, t.footerLabelLen = t.ansiLabelPrinter(label, &tui.ColFooterLabel, false)
+					req(reqRedrawFooterLabel)
+				})
+			case actChangeInputLabel, actTransformInputLabel, actBgTransformInputLabel:
+				capture(true, func(label string) {
+					t.inputLabelOpts.label = label
+					if t.inputBorder != nil {
+						t.inputLabel, t.inputLabelLen = t.ansiLabelPrinter(label, &tui.ColInputLabel, false)
+						req(reqRedrawInputLabel)
+					}
+				})
+			case actChangeListLabel, actTransformListLabel, actBgTransformListLabel:
+				capture(true, func(label string) {
+					t.listLabelOpts.label = label
+					if t.wborder != nil {
+						t.listLabel, t.listLabelLen = t.ansiLabelPrinter(label, &tui.ColListLabel, false)
+						req(reqRedrawListLabel)
+					}
+				})
+			case actChangeBorderLabel, actTransformBorderLabel, actBgTransformBorderLabel:
+				capture(true, func(label string) {
+					t.borderLabelOpts.label = label
+					if t.border != nil {
+						t.borderLabel, t.borderLabelLen = t.ansiLabelPrinter(label, &tui.ColBorderLabel, false)
+						req(reqRedrawBorderLabel)
+					}
+				})
+			case actChangePreviewLabel, actTransformPreviewLabel, actBgTransformPreviewLabel:
+				capture(true, func(label string) {
+					t.previewLabelOpts.label = label
+					if t.pborder != nil {
+						t.previewLabel, t.previewLabelLen = t.ansiLabelPrinter(label, &tui.ColPreviewLabel, false)
+						req(reqRedrawPreviewLabel)
+					}
+				})
+			case actTransform, actBgTransform:
+				capture(false, func(body string) {
+					if actions, err := parseSingleActionList(strings.Trim(body, "\r\n")); err == nil {
+						// NOTE: We're not properly passing the return value here
+						doActions(actions)
+					}
+				})
+			case actBgCancel:
+				t.bgVersion++
+				t.runningCmds.ForEach(func(cmd *runningCmd) {
+					util.KillCommand(cmd.cmd)
+				})
 			case actChangePrompt:
 				t.promptString = a.a
 				t.prompt, t.promptLen = t.parsePrompt(a.a)
@@ -5933,10 +6152,12 @@ func (t *Terminal) Loop() error {
 				override := []rune(a.a)
 				t.inputOverride = &override
 				changed = true
-			case actTransformSearch:
-				override := []rune(t.captureLine(a.a))
-				t.inputOverride = &override
-				changed = true
+			case actTransformSearch, actBgTransformSearch:
+				capture(true, func(query string) {
+					override := []rune(query)
+					t.inputOverride = &override
+					changed = true
+				})
 			case actEnableSearch:
 				t.paused = false
 				changed = true
@@ -6243,7 +6464,7 @@ func (t *Terminal) Loop() error {
 					// We run the command even when there's no match
 					// 1. If the template doesn't have any slots
 					// 2. If the template has {q}
-					slot, _, forceUpdate := hasPreviewFlags(a.a)
+					slot, _, _, forceUpdate := hasPreviewFlags(a.a)
 					valid = !slot || forceUpdate
 				}
 				if valid {
@@ -6276,30 +6497,26 @@ func (t *Terminal) Loop() error {
 						}
 					}
 				}
-			case actChangeGhost, actTransformGhost:
-				ghost := a.a
-				if a.t == actTransformGhost {
-					ghost = t.captureLine(a.a)
-				}
-				t.ghost = ghost
-				if len(t.input) == 0 {
-					req(reqPrompt)
-				}
-			case actChangePointer, actTransformPointer:
-				pointer := a.a
-				if a.t == actTransformPointer {
-					pointer = t.captureLine(a.a)
-				}
-				length := uniseg.StringWidth(pointer)
-				if length <= 2 {
-					if length != t.pointerLen {
-						t.forceRerenderList()
+			case actChangeGhost, actTransformGhost, actBgTransformGhost:
+				capture(true, func(ghost string) {
+					t.ghost = ghost
+					if len(t.input) == 0 {
+						req(reqPrompt)
 					}
-					t.pointer = pointer
-					t.pointerLen = length
-					t.pointerEmpty = strings.Repeat(" ", t.pointerLen)
-					req(reqList)
-				}
+				})
+			case actChangePointer, actTransformPointer, actBgTransformPointer:
+				capture(true, func(pointer string) {
+					length := uniseg.StringWidth(pointer)
+					if length <= 2 {
+						if length != t.pointerLen {
+							t.forceRerenderList()
+						}
+						t.pointer = pointer
+						t.pointerLen = length
+						t.pointerEmpty = strings.Repeat(" ", t.pointerLen)
+						req(reqList)
+					}
+				})
 			case actChangePreview:
 				if t.previewOpts.command != a.a {
 					t.previewOpts.command = a.a
@@ -6436,7 +6653,7 @@ func (t *Terminal) Loop() error {
 		}
 
 		if queryChanged && t.canPreview() && len(t.previewOpts.command) > 0 {
-			_, _, forceUpdate := hasPreviewFlags(t.previewOpts.command)
+			_, _, _, forceUpdate := hasPreviewFlags(t.previewOpts.command)
 			if forceUpdate {
 				t.version++
 			}
@@ -6451,6 +6668,10 @@ func (t *Terminal) Loop() error {
 		if reload {
 			reloadRequest = &searchRequest{sort: t.sort, sync: reloadSync, nth: newNth, command: newCommand, environ: t.environ(), changed: changed, denylist: denylist, revision: t.merger.Revision()}
 		}
+
+		// Dispatch queued background requests
+		t.dispatchAsync()
+
 		t.mutex.Unlock() // Must be unlocked before touching reqBox
 
 		if reload {
