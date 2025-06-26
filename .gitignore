@@ -58,3 +58,4 @@ share/tmru/
 **/lf/history
 **/lf/files
 **/lf/marks
+test/keep/tmux/plugins
