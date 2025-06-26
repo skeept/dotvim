@@ -1,0 +1,3 @@
+sourceDir: /home/sabre/.vim/dotfiles
+git:
+    autoPush: true
