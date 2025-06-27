@@ -19,7 +19,13 @@
   #export CUR_SHELL=$(basename $(readlink -f /proc/$$/exe))
 #else # assume shell is bash
   #export CUR_SHELL="bash"
+
 #fi
+
+# use this to add logic to modify paths.
+# the reason to use this: seems that by sourcing my config it overrides some tools some
+# nix. this should prevent that
+export NUM_TIMES_SOURCED=$(( ${NUM_TIMES_SOURCED:-0} + 1 ))
 
 # for now just consider bash and zsh
 [ -n "$ZSH_VERSION" ] && CURSHELL=zsh || CURSHELL=bash
@@ -90,8 +96,10 @@ function addDirToVarsBack()
 }
 
 # path : the ones going first
-export PATH=${HOME}/usr/bin:${PATH}
-export PATH=${HOME}/.local/bin:${PATH}
+if [ "${NUM_TIMES_SOURCED:-0}" = "0" ]; then
+  export PATH=${HOME}/usr/bin:${PATH}
+  export PATH=${HOME}/.local/bin:${PATH}
+fi
 
 # path: the ones going after the current setting
 #dangerous:
