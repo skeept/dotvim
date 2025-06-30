@@ -3,11 +3,14 @@ CHANGELOG
 
 0.63.0
 ------
+_Release highlights: https://junegunn.github.io/fzf/releases/0.63.0/_
+
 - Added footer. The default border style for footer is `line`, which draws a single separator line.
   ```sh
   fzf --reverse --footer "fzf: friend zone forever"
   ```
   - Options
+      - `--footer[=STRING]`
       - `--footer-border[=STYLE]`
       - `--footer-label=LABEL`
       - `--footer-label-pos=COL[:bottom]`
@@ -33,13 +36,13 @@ CHANGELOG
   seq 10000 | fzf --preview "awk '{sum += \$1} END {print sum}' {*f}"
   ```
   - Use this with caution, as it can make fzf sluggish for large lists.
-- Added asynchronous transform actions with `bg-` prefix that run asynchronously in the background, along with `bg-cancel` action to ignore currently running `bg-transform` actions.
+- Added asynchronous transform actions with `bg-` prefix that run asynchronously in the background, along with `bg-cancel` action to cancel currently running `bg-transform` actions.
   ```sh
   # Implement popup that disappears after 1 second
   #   * Use footer as the popup
   #   * Use `bell` to ring the terminal bell
   #   * Use `bg-transform-footer` to clear the footer after 1 second
-  #   * Use `bg-cancel` to ignore currently running background transform actions
+  #   * Use `bg-cancel` to cancel currently running background transform actions
   fzf --multi --list-border \
       --bind 'enter:execute-silent(echo -n {+} | pbcopy)+bell' \
       --bind 'enter:+transform-footer(echo Copied {} to clipboard)' \
@@ -58,6 +61,12 @@ CHANGELOG
       --bind "focus:+bg-transform-footer-label:$GETTER" \
       --bind "focus:+bg-transform-ghost:$GETTER" \
       --bind "focus:+bg-transform-prompt:$GETTER"
+  ```
+- Added support for full-line background color in the list section
+  ```sh
+  for i in $(seq 16 255); do
+    echo -e "\x1b[48;5;${i}m\x1b[0Khello"
+  done | fzf --ansi
   ```
 - SSH completion enhancements by @akinomyoga
 - Bug fixes and improvements
