@@ -23,6 +23,7 @@ format = "[$path]($style fg:#5e81ac) "
 read_only = " "
 
 [cmd_duration]
+min_time = 0
 format = '[ $duration ]($style fg:#4c566a)'
 
 [git_branch]
