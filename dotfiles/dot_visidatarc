@@ -5,6 +5,7 @@ Guess type of some columns by default.
 
 import itertools
 import logging
+import plugins.dat_loader
 
 if False:
     from os.path import isdir
@@ -135,16 +136,16 @@ def guessType(cols, rows):
 options.csv_lineterminator = "\n"
 
 
-class DatSheet(visidata.loaders.csv.CsvSheet):
-    """Used when loading files ending in .dat (usually no headers available)"""
-
-
-@VisiData.api
-def open_dat(vd, p):
-    return DatSheet(p.name, source=p)
-
-
-vd.save_dat = vd.save_csv
-DatSheet.class_options.header = 0
+# class DatSheet(visidata.loaders.csv.CsvSheet):
+#     """Used when loading files ending in .dat (usually no headers available)"""
+#
+#
+# @VisiData.api
+# def open_dat(vd, p):
+#     return DatSheet(p.name, source=p)
+#
+#
+# vd.save_dat = vd.save_csv
+# DatSheet.class_options.header = 0
 
 # vim: set ft=python:
