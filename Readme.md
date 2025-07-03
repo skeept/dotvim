@@ -143,4 +143,4 @@ vuo - vim with simple config
 some utility repos cloned for bash use
 
 mkdir ~/tmp/gclones
-git clone https://github.com/lincheney/fzf-tab-completion ~/tmp/gclones/
+git clone <https://github.com/lincheney/fzf-tab-completion> ~/tmp/gclones/
