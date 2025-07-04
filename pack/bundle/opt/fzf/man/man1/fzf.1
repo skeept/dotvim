@@ -1,7 +1,7 @@
 .ig
 The MIT License (MIT)
 
-Copyright (c) 2013-2024 Junegunn Choi
+Copyright (c) 2013-2025 Junegunn Choi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1937,6 +1937,17 @@ e.g.
                     echo accept ||
                     echo "change\-header:Invalid selection"'
     \fR
+
+A common mistake when writing a \fBtransform\fR action is not escaping
+placeholder expressions when passing them back to fzf. In the following
+example, if you don't escape \fB{}\fR, fzf will immediately replace it with the
+single-quoted string of the current item. This causes single quotes to appear
+in the header and footer, and the script will break if any item contains
+double-quote characters.
+
+    \fBfzf \-\-bind 'focus:transform:[[ $FZF_ACTION =~ up ]] &&
+                echo "change\-header()+transform\-footer:echo \\{}" ||
+                echo "change\-footer()+transform\-header:echo \\{}"'\fR
 
 .SS TRANSFORM IN THE BACKGROUND
 
