@@ -58,7 +58,7 @@ alias top='xtitle Processes on $HOSTNAME && top'
 alias vu='vim -u "${HOME}/.vim/simple.vim" --noplugins'
 # alias rr='ranger'
 alias r='fc -s'
-alias w3m='w3m -no-graph'
+# alias w3m='w3m -no-graph'
 
 #aliases for conveniently changing dirs
 alias po=popd
