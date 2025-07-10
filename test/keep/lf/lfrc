@@ -16,6 +16,7 @@ map d
 map dd cut
 map dv vdiff
 map dc wdiff
+map df ${{ dirdiff $fx }}
 map du ${{
   [ -d $f  ] && dua interactive $f || dua interactive $(dirname $f)
 }}
