@@ -53,8 +53,7 @@ cmd on-load &{{
 }}
 
 cmd on-cd &{{
-    export STARSHIP_SHELL=
-    fmt="$(starship prompt)"
+    fmt="$(STARSHIP_SHELL= starship2 prompt | sed 's/\\/\\\\/g;s/"/\\"/g')"
     lf -remote "send $id set promptfmt \"$fmt\""
 }}
 
