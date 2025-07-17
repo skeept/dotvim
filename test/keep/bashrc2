@@ -918,9 +918,9 @@ function cdr()
 {
   # cd to repo root
   local cd_cmd="$(type z 1>2 >& /dev/null && echo z || echo cd)"
-  local first_arg=$([ -n "$1" ]  && echo "$1" || echo $(git rev-parse --show-toplevel))
-  shift
-  $cd_cmd $first_arg "$@"
+  # local first_arg=$([ -n "$1" ]  && echo "$1" || echo $(git rev-parse --show-toplevel))
+  local target_dir="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+  $cd_cmd $target_dir
 }
 
 
