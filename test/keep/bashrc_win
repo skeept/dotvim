@@ -121,6 +121,8 @@ ee()
   gvi -nvim $@
 }
 
+complete -o  default ee
+
 en()
 {
   gvi -nvim "$(zp2 $@)"

@@ -51,7 +51,7 @@ alias di='zi'
 alias du='du -h'
 alias df='df -kh'
 
-alias tree='tree -Cs' # nice alternative to 'ls'
+#alias tree='tree -Cs' # nice alternative to 'ls'
 
 alias top='xtitle Processes on $HOSTNAME && top'
 
