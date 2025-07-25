@@ -989,6 +989,14 @@ function pr() {
   fi
 }
 
+function lfd() {
+  # run lf searching for dirs
+  # local query="${1:-}"  # Default to empty if not provided
+  local dir
+  dir=$(fd -I --type d "$@" | fzf --select-1 --exit-0)
+  lf "${dir}"
+}
+
 # Search for a .env file from current dir up to Git repo root
 function _find_dotenv() {
   local dir="$PWD"
