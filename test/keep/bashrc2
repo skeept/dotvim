@@ -923,15 +923,14 @@ function cdr()
   $cd_cmd $target_dir
 }
 
-
-function nsh() {
-  if [ -d ~/src/SABRE2/ ]; then
-    local folder="sabre2"
-    [ -n "$1" ] && folder="$1"
-    cd ~/src/SABRE2/${folder}
-    nix-shell
-  fi
-}
+# function nsh() {
+#   if [ -d ~/src/SABRE2/ ]; then
+#     local folder="sabre2"
+#     [ -n "$1" ] && folder="$1"
+#     cd ~/src/SABRE2/${folder}
+#     nix-shell
+#   fi
+# }
 
 function lfr() {
   ( cdr && lf $@; )
