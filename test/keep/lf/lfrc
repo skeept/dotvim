@@ -1,6 +1,6 @@
 set previewer ~/.vim/test/keep/lf/lf_previewer.sh
 
-cmd mkdir $mkdir $1
+cmd mkdir $mkdir -p $1
 map i $bat --style=plain --color=always --paging=auto $f
 map <c-j> shell
 map <enter> read
@@ -68,18 +68,6 @@ cmd fzf_search_text ${{
 }}
 map gt :fzf_search_text
 
-cmd fzf_search_dir ${{
-      if command -v fd >/dev/null 2>&1; then
-        cmd="fd -t d --hidden --exclude .git"
-      else
-        cmd="find . -type d"
-      fi
-
-      res="$($cmd | fzf --preview 'ls -la {}' --preview-window=right:50%)"
-      [ -n "$res" ] && lf -remote "send $id select \"$res\""
-}}
-map gd :fzf_search_dir
-
 map gi $lg
 
 cmd copy_to_clip &{{
@@ -138,7 +126,12 @@ cmd 7z ${{
 
 
 cmd fzf_file_jump ${{
-    res="$(fd | fzf --reverse --header='Jump to location')"
+    #res="$(fd | fzf --reverse --header='Jump to location')"
+    res="$(
+        fd --hidden --exclude .git | fzf --reverse \
+        --preview 'if [ -d {} ]; then eza --tree --color=always --level=1 {}; else bat --color=always --style=plain {}; fi' \
+        --preview-window=right:50%
+        )"
     if [ -n "$res" ]; then
         if [ -d "$res" ]; then
             cmd="cd"
@@ -173,7 +166,7 @@ cmd on-cd &{{
 
 }}
 
-map zz zi
+map zi zi
 
 # open operations
 map oc $code $f
@@ -201,7 +194,7 @@ map ac clear
 map v
 
 map vv invert
-map ve $vim $f
+map ve $nvim $f
 map vd $visidata $fx
 
 map y

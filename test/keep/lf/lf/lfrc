@@ -61,10 +61,6 @@ map dd cut
 map dv $gvim -d ($env:fx -split '\n')
 map dc diff
 map du ${{
-  #$item = Get-Item $env:f
-  #$target = if($item.PSIsContainer) {$item.name} else {"."}
-  #wsl -e ncdu $target
-  #dua interative $target
   if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
 }}
 map dD delete
@@ -107,7 +103,7 @@ cmd on-select &{{
     lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
 }}
 
-cmd fzf_search ${{
+cmd fzf_search_text ${{
     $cmd = "rg --column --line-number --no-heading --color=always --smart-case"
     $result = (fzf --ansi --disabled --layout=reverse --height="100%" --header="Search in files" --delimiter=":" `
         --bind "start:reload($cmd {q})" `
@@ -121,15 +117,21 @@ cmd fzf_search ${{
     lf -remote "send $env:id select `"$result`""
 }}
 
-map gs fzf_search
+map gt fzf_search_text
 
 cmd fzf_file_jump ${{
-  $res = "$((fd  | fzf --reverse --header='Jump to location').trim())"
-  if([bool]$res) {
-    if ((get-item $res)  -is [System.IO.DirectoryInfo]) { $cmd = "cd" } else { $cmd = "select" }
-    $res = [regex]::escape($res)
-    lf -remote "send $id $cmd $res"
-  }
+  $res = fd --hidden --exclude .git | fzf --reverse `
+    --preview 'if (Test-Path -Path {} -PathType Container) { eza --tree --color=always --level=1 {} } else { bat --color=always --style=plain {} }' `
+    --preview-window=right:50%
+
+    if ($res) {
+      if ((Get-Item $res).PSIsContainer) {
+        $cmd = "cd"
+      } else {
+        $cmd = "select"
+      }
+      lf -remote "send $id $cmd `"$res`""
+    }
 }}
 
 map gf fzf_file_jump
@@ -158,4 +160,4 @@ cmd on-cd &{{
     zoxide add "$PWD"
 }}
 
-map zz zi
+map zi zi
