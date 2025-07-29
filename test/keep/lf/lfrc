@@ -52,16 +52,11 @@ cmd on-load &{{
     fi
 }}
 
-cmd on-cd &{{
-    fmt="$(STARSHIP_SHELL= starship2 prompt | sed 's/\\/\\\\/g;s/"/\\"/g')"
-    lf -remote "send $id set promptfmt \"$fmt\""
-}}
-
 cmd on-select &{{
     lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
 }}
 
-cmd fzf_search ${{
+cmd fzf_search_text ${{
     RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case "
     res="$(
         FZF_DEFAULT_COMMAND="$RG_PREFIX ''" \
@@ -71,7 +66,20 @@ cmd fzf_search ${{
     )"
     [ -n "$res" ] && lf -remote "send $id select \"$res\""
 }}
-map gs :fzf_search
+map gt :fzf_search_text
+
+cmd fzf_search_dir ${{
+      if command -v fd >/dev/null 2>&1; then
+        cmd="fd -t d --hidden --exclude .git"
+      else
+        cmd="find . -type d"
+      fi
+
+      res="$($cmd | fzf --preview 'ls -la {}' --preview-window=right:50%)"
+      [ -n "$res" ] && lf -remote "send $id select \"$res\""
+}}
+map gd :fzf_search_dir
+
 map gi $lg
 
 cmd copy_to_clip &{{
@@ -107,31 +115,6 @@ cmd zip ${{
 }}
 
 cmd 7z ${{
-  set -fe
-  target_dir="$1"
-  new_dir=1
-  fxa=$(echo "$fx" |  tr '\n' ' ')
-
-  if [ -z "$target_dir" ] && [ "$f" = "$fx" ] && [ -d "$f" ]; then
-    target_dir="$f"
-    new_dir=0
-  fi
-
-  if [ "$new_dir" = "1" ]; then
-    mkdir "$target_dir"
-    cp -r $fxa $target_dir
-  fi
-
-  7z a "$target_dir.7z" "$target_dir"
-
-  if [ "$new_dir" = "1" ]; then
-    rm -rf "$target_dir"
-  fi
-}}
-
-
-
-cmd 7z ${{
   set -f
   target_dir="$1"
   new_dir=1
@@ -152,7 +135,6 @@ cmd 7z ${{
     rm -rf "$target_dir"
   fi
 }}
-
 
 
 cmd fzf_file_jump ${{
@@ -185,7 +167,12 @@ cmd zi ${{
 
 cmd on-cd &{{
     zoxide add "$PWD"
+
+    fmt="$(STARSHIP_SHELL= starship prompt | sed 's/\\/\\\\/g;s/"/\\"/g')"
+    lf -remote "send $id set promptfmt \"$fmt\""
+
 }}
+
 map zz zi
 
 # open operations
