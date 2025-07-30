@@ -77,5 +77,40 @@ return {
   },
   {
     "shougo/junkfile.vim",
+    cmd = { "JunkfileOpen", "JunkFileBrowse" },
+    keys = {
+      { "<leader>jf", "<cmd>JunkfileOpen<CR>", mode = { "n", "v" }, desc = "Open junkfile" },
+      { "<leader>jb", "<cmd>JunkFileBrowse<CR>", mode = { "n", "v" }, desc = "Browse junkfiles" },
+    },
+    -- Explicitly declare the dependency on fzf-lua
+    dependencies = { "ibhagwan/fzf-lua" },
+    config = function()
+      -- 1. Use the standard path for the cache directory
+      local junkdir = vim.fn.expand("~/.cache/junkfile")
+      if vim.fn.isdirectory(junkdir) == 0 then
+        vim.fn.mkdir(junkdir, "p")
+      end
+
+      -- 2. Define JunkfileOpen using the modern Lua API for consistency
+      vim.api.nvim_create_user_command("JunkfileOpen", function(opts)
+        local timestamp = os.date("%Y-%m-%d-%H%M%S.")
+        vim.fn["junkfile#open"](timestamp, opts.args)
+      end, {
+        range = true,
+        nargs = "?",
+        desc = "Open a new junkfile with a timestamp",
+      })
+
+      -- 3. Define the fzf-lua-based JunkFileBrowse command
+      vim.api.nvim_create_user_command("JunkFileBrowse", function()
+        -- The dependency ensures 'fzf-lua' is available here
+        require("fzf-lua").files({
+          prompt = "Junkfiles> ",
+          cwd = junkdir,
+        })
+      end, {
+        desc = "Browse junkfiles with fzf-lua",
+      })
+    end,
   },
 }
