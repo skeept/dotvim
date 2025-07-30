@@ -69,6 +69,7 @@ def copy_files(
 ) -> None:
     """Assume folders and copy nested files."""
     show_diff = not dry_run or show_diff
+    has_delta = shutil.which("delta") is not None
     for elem in get_all_elements(origin, skip=skip):
         status = CmpStatus.same
         target = destination / elem.relative_to(origin)
@@ -78,7 +79,7 @@ def copy_files(
             status = CmpStatus.diff
         if display_all or status != CmpStatus.same:
             print(f"{status.name:<7} {elem!s:<50} => {target}")
-            if show_diff and status == CmpStatus.diff and shutil.which("delta"):
+            if show_diff and status == CmpStatus.diff and has_delta:
                 delta_options = ["--side-by-side"]
                 subprocess.run(["delta", *delta_options, elem, target], check=False)
 
