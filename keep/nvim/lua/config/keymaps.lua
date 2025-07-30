@@ -40,14 +40,14 @@ end, {
   nargs = "+",
 })
 
-vim.api.nvim_create_user_command("CaptureToSractch", function(args)
+vim.api.nvim_create_user_command("CaptureToScratch", function(args)
   CaptureOutput(true, args.args)
 end, {
   desc = "capture output to scratch buffer",
   nargs = "+",
 })
 
-vim.keymap.set("n", "<Leader>oo", ":CaptureToSractch<space>")
+vim.keymap.set("n", "<Leader>oo", ":CaptureToScratch<space>")
 vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
 
 vim.api.nvim_create_user_command("Pcp", function()

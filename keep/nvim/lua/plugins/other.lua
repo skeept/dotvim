@@ -79,6 +79,7 @@ return {
     "shougo/junkfile.vim",
     cmd = { "JunkfileOpen", "JunkFileBrowse" },
     keys = {
+      { "<leader>j", group = "Junkfile", desc = "+Junkfile" },
       { "<leader>jf", "<cmd>JunkfileOpen<CR>", mode = { "n", "v" }, desc = "Open junkfile" },
       { "<leader>jb", "<cmd>JunkFileBrowse<CR>", mode = { "n", "v" }, desc = "Browse junkfiles" },
     },
