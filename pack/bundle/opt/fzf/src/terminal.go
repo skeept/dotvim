@@ -67,7 +67,7 @@ const maxFocusEvents = 10000
 const blockDuration = 1 * time.Second
 
 func init() {
-	placeholder = regexp.MustCompile(`\\?(?:{[+*sfr]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{\+?f?nf?})`)
+	placeholder = regexp.MustCompile(`\\?(?:{[+*sfr]*[0-9,-.]*}|{q(?::s?[0-9,-.]+)?}|{fzf:(?:query|action|prompt)}|{[+*]?f?nf?})`)
 	whiteSuffix = regexp.MustCompile(`\s*$`)
 	offsetComponentRegex = regexp.MustCompile(`([+-][0-9]+)|(-?/[1-9][0-9]*)`)
 	offsetTrimCharsRegex = regexp.MustCompile(`[^0-9/+-]`)
@@ -422,6 +422,8 @@ type Terminal struct {
 	forcePreview       bool
 	clickHeaderLine    int
 	clickHeaderColumn  int
+	clickFooterLine    int
+	clickFooterColumn  int
 	proxyScript        string
 	numLinesCache      map[int32]numLinesCacheValue
 }
@@ -601,6 +603,8 @@ const (
 	actTransformPrompt
 	actTransformQuery
 	actTransformSearch
+
+	actTrigger
 
 	actBgTransform
 	actBgTransformBorderLabel
@@ -1259,7 +1263,10 @@ func (t *Terminal) environImpl(forPreview bool) []string {
 	env = append(env, fmt.Sprintf("FZF_POS=%d", util.Min(t.merger.Length(), t.cy+1)))
 	env = append(env, fmt.Sprintf("FZF_CLICK_HEADER_LINE=%d", t.clickHeaderLine))
 	env = append(env, fmt.Sprintf("FZF_CLICK_HEADER_COLUMN=%d", t.clickHeaderColumn))
+	env = append(env, fmt.Sprintf("FZF_CLICK_FOOTER_LINE=%d", t.clickFooterLine))
+	env = append(env, fmt.Sprintf("FZF_CLICK_FOOTER_COLUMN=%d", t.clickFooterColumn))
 	env = t.addClickHeaderWord(env)
+	env = t.addClickFooterWord(env)
 
 	// Add preview environment variables if preview is enabled
 	pwindowSize := t.pwindowSize()
@@ -1634,6 +1641,8 @@ func (t *Terminal) changeFooter(footer string) {
 		lines = strings.Split(strings.TrimSuffix(footer, "\n"), "\n")
 	}
 	t.footer = lines
+	t.clickFooterLine = 0
+	t.clickFooterColumn = 0
 }
 
 // UpdateHeader updates the header
@@ -2284,10 +2293,17 @@ func (t *Terminal) resizeWindows(forcePreview bool, redrawBorder bool) {
 						innerMarginInt[0]+shift, innerMarginInt[3]+pwidth+m, innerWidth-pwidth-m, innerHeight-shrink, tui.WindowList, noBorder, true)
 
 					// Clear characters on the margin
-					//   fzf --bind 'space:preview(seq 100)' --preview-window left,1
+					// fzf --bind 'space:toggle-preview' --preview ':' --preview-window left,1
 					if !hasListBorder {
 						for y := 0; y < innerHeight; y++ {
 							t.window.Move(y, -1)
+							t.window.Print(" ")
+						}
+					}
+					// fzf --bind 'space:toggle-preview' --preview ':' --preview-window left,1,border-none
+					if !previewOpts.Border().HasRight() {
+						for y := 0; y < innerHeight; y++ {
+							t.window.Move(y, -2)
 							t.window.Print(" ")
 						}
 					}
@@ -4803,6 +4819,35 @@ func (t *Terminal) addClickHeaderWord(env []string) []string {
 	return env
 }
 
+func (t *Terminal) addClickFooterWord(env []string) []string {
+	clickFooterLine := t.clickFooterLine - 1
+	if clickFooterLine < 0 || clickFooterLine >= len(t.footer) {
+		// Never clicked on the footer
+		return env
+	}
+
+	// NOTE: Unlike in click-header, we don't use --delimiter here, since we're
+	// only interested in the word, not nth. Does this make sense?
+	words := Tokenize(t.footer[clickFooterLine], Delimiter{})
+	colNum := t.clickFooterColumn - 1
+	for _, token := range words {
+		prefixWidth := int(token.prefixLength)
+		word := token.text.ToString()
+		trimmed := strings.TrimRightFunc(word, unicode.IsSpace)
+		trimWidth, _ := util.RunesWidth([]rune(trimmed), prefixWidth, t.tabstop, math.MaxInt32)
+
+		// Find the position of the first non-space character in the word
+		minPos := strings.IndexFunc(trimmed, func(r rune) bool {
+			return !unicode.IsSpace(r)
+		})
+		if colNum >= minPos && colNum >= prefixWidth && colNum < prefixWidth+trimWidth {
+			env = append(env, fmt.Sprintf("FZF_CLICK_FOOTER_WORD=%s", trimmed))
+			return env
+		}
+	}
+	return env
+}
+
 // Loop is called to start Terminal I/O
 func (t *Terminal) Loop() error {
 	// prof := profile.Start(profile.ProfilePath("/tmp/"))
@@ -5400,6 +5445,7 @@ func (t *Terminal) Loop() error {
 				return nil
 			}
 		}
+		triggering := map[tui.Event]struct{}{}
 		previousInput := t.input
 		previousCx := t.cx
 		previousVersion := t.version
@@ -6191,6 +6237,20 @@ func (t *Terminal) Loop() error {
 			case actDisableSearch:
 				t.paused = true
 				req(reqPrompt)
+			case actTrigger:
+				if _, chords, err := parseKeyChords(a.a, ""); err == nil {
+					for _, chord := range chords {
+						if _, prs := triggering[chord]; prs {
+							// Avoid recursive triggering
+							continue
+						}
+						if acts, prs := t.keymap[chord]; prs {
+							triggering[chord] = struct{}{}
+							doActions(acts)
+							delete(triggering, chord)
+						}
+					}
+				}
 			case actSigStop:
 				p, err := os.FindProcess(os.Getpid())
 				if err == nil {
@@ -6380,6 +6440,18 @@ func (t *Terminal) Loop() error {
 					return doActions(actionsFor(tui.ClickHeader))
 				}
 
+				// Inside the footer window
+				if clicked && t.footerWindow != nil && t.footerWindow.Enclose(my, mx) {
+					mx -= t.footerWindow.Left() + t.headerIndent(t.footerBorderShape)
+					my -= t.footerWindow.Top()
+					if mx < 0 {
+						break
+					}
+					t.clickFooterLine = my + 1
+					t.clickFooterColumn = mx + 1
+					return doActions(actionsFor(tui.ClickFooter))
+				}
+
 				// Ignored
 				if !t.window.Enclose(my, mx) && !barDragging {
 					break
@@ -6500,13 +6572,13 @@ func (t *Terminal) Loop() error {
 					t.reading = true
 				}
 			case actUnbind:
-				if keys, err := parseKeyChords(a.a, "PANIC"); err == nil {
+				if keys, _, err := parseKeyChords(a.a, "PANIC"); err == nil {
 					for key := range keys {
 						delete(t.keymap, key)
 					}
 				}
 			case actRebind:
-				if keys, err := parseKeyChords(a.a, "PANIC"); err == nil {
+				if keys, _, err := parseKeyChords(a.a, "PANIC"); err == nil {
 					for key := range keys {
 						if originalAction, found := t.keymapOrg[key]; found {
 							t.keymap[key] = originalAction
@@ -6514,7 +6586,7 @@ func (t *Terminal) Loop() error {
 					}
 				}
 			case actToggleBind:
-				if keys, err := parseKeyChords(a.a, "PANIC"); err == nil {
+				if keys, _, err := parseKeyChords(a.a, "PANIC"); err == nil {
 					for key := range keys {
 						if _, bound := t.keymap[key]; bound {
 							delete(t.keymap, key)
