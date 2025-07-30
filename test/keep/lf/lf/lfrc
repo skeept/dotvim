@@ -121,17 +121,17 @@ map gt fzf_search_text
 
 cmd fzf_file_jump ${{
   $res = fd --hidden --exclude .git | fzf --reverse `
-    --preview 'if (Test-Path -Path {} -PathType Container) { eza --tree --color=always --level=1 {} } else { bat --color=always --style=plain {} }' `
-    --preview-window=right:50%
+      --preview 'bat --color=always --style=plain {}' `
+      --preview-window=right:50%
 
-    if ($res) {
-      if ((Get-Item $res).PSIsContainer) {
-        $cmd = "cd"
-      } else {
-        $cmd = "select"
-      }
-      lf -remote "send $id $cmd `"$res`""
+  if ($res) {
+    if ((Get-Item $res).PSIsContainer) {
+      $cmd = "cd"
+    } else {
+      $cmd = "select"
     }
+    lf -remote "send $id $cmd `"$res`""
+  }
 }}
 
 map gf fzf_file_jump
