@@ -14,14 +14,9 @@ vim.keymap.set("n", "<tab>", "<c-w>", { noremap = true })
 vim.keymap.set({ "n", "v" }, "<F4>", ":x<CR>", { noremap = true })
 vim.keymap.set("i", "<F4>", "<C-O>:x<CR>", { noremap = true })
 
-local function DeltTrailingSpace()
-  vim.cmd([[
-normal mz
-normal Hmy
-]])
-end
-
-vim.api.nvim_create_user_command("DeltTrailingSpace", DeltTrailingSpace, {
+vim.api.nvim_create_user_command("DeltTrailingSpace", function()
+  vim.cmd([[%s/\s\+$//e]])
+end, {
   desc = "delete trailing whitespace",
 })
 
@@ -57,8 +52,9 @@ vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
 
 vim.api.nvim_create_user_command("Pcp", function()
   vim.cmd("echo expand('%:p')")
+  vim.fn.setreg("+", vim.fn.expand("%:p"))
 end, {
-  desc = "Print current Path",
+  desc = "Print current path and copy to clipboard",
 })
 
 local wk = require("which-key")

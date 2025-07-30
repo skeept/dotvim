@@ -4,3 +4,5 @@
 
 vim.opt.number = false
 vim.opt.relativenumber = false
+vim.opt.fixendofline = false
+vim.opt.textwidth = 100

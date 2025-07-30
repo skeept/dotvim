@@ -75,4 +75,7 @@ return {
   {
     "tpope/vim-fugitive",
   },
+  {
+    "shougo/junkfile.vim",
+  },
 }
