@@ -948,27 +948,55 @@ if [ -x "$(command -v lnav)" ]; then
   }
 fi
 
-# activate python virtual environment
-function _activate_pyve() {
+_activate_pyve() {
+  local name="${1:-}"  # optional argument
   local dir="$PWD"
-  while [ "$dir" != "/" ]; do
-    if [ -d "$dir/.venv" ]; then
-      . "$dir/.venv/bin/activate" && return 0
-    elif [ -d "$dir/venv" ]; then
-      . "$dir/venv/bin/activate" && return 0
+
+  while [[ "$dir" != "/" ]]; do
+    if [[ -n "$name" ]]; then
+      if [[ -d "$dir/$name/bin" ]]; then
+        . "$dir/$name/bin/activate"
+        echo "✅ Activated virtual environment: $dir/$name"
+        return 0
+      fi
+    else
+      # Try .venv and venv
+      for candidate in ".venv" "venv"; do
+        if [[ -d "$dir/$candidate/bin" ]]; then
+          . "$dir/$candidate/bin/activate"
+          echo "✅ Activated virtual environment: $dir/$candidate"
+          return 0
+        fi
+      done
+
+      # Try venv_* folders with bin
+      local matches=()
+      while IFS= read -r match; do
+        matches+=("$match")
+      done < <(find "$dir" -maxdepth 1 -type d -name 'venv_*' -exec test -d '{}/bin' \; -print)
+
+      if (( ${#matches[@]} == 1 )); then
+        . "${matches[0]}/bin/activate"
+        echo "✅ Activated virtual environment: ${matches[0]}"
+        return 0
+      elif (( ${#matches[@]} > 1 )); then
+        echo "⚠️  Multiple venv_* directories found in $dir:" >&2
+        printf ' - %s\n' "${matches[@]}" >&2
+        echo "❌ Please specify one explicitly: _activate_pyve <name>" >&2
+        return 1
+      fi
     fi
+
     dir="$(dirname "$dir")"
   done
+
   echo "❌ No virtual environment found." >&2
   return 1
 }
 
 # activate environment
 function ae() {
-  _activate_pyve
-  if [ -n "$1" ]; then
-    python $@
-  fi
+  _activate_pyve "$@"
 }
 
 # environment run
