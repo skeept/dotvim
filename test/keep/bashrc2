@@ -956,20 +956,20 @@ _activate_pyve() {
     if [[ -n "$name" ]]; then
       if [[ -d "$dir/$name/bin" ]]; then
         . "$dir/$name/bin/activate"
-        echo "✅ Activated virtual environment: $dir/$name"
+        echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
         return 0
       fi
     else
-      # Try .venv and venv
+      # Try standard folders
       for candidate in ".venv" "venv"; do
         if [[ -d "$dir/$candidate/bin" ]]; then
           . "$dir/$candidate/bin/activate"
-          echo "✅ Activated virtual environment: $dir/$candidate"
+          echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
           return 0
         fi
       done
 
-      # Try venv_* folders with bin
+      # Try venv_* folders
       local matches=()
       while IFS= read -r match; do
         matches+=("$match")
@@ -977,7 +977,7 @@ _activate_pyve() {
 
       if (( ${#matches[@]} == 1 )); then
         . "${matches[0]}/bin/activate"
-        echo "✅ Activated virtual environment: ${matches[0]}"
+        echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
         return 0
       elif (( ${#matches[@]} > 1 )); then
         echo "⚠️  Multiple venv_* directories found in $dir:" >&2
