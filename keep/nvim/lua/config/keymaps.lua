@@ -60,7 +60,14 @@ end, {
 local wk = require("which-key")
 wk.add({
   { ",", group = "comma mappings" },
-  { ",e", "<cmd>Fzf files<cr>", desc = "files" },
+  -- { ",e", "<cmd>Fzf files<cr>", desc = "files" },
+  {
+    ",e",
+    function()
+      require("fzf-lua").files({ cwd = vim.fn.expand("%:p:h") })
+    end,
+    desc = "files in pwd",
+  },
   { ",b", "<cmd>FzfLua buffers<cr>", desc = "buffers" },
   { ",f", group = "fzf" },
   { ",ff", "<cmd>FzfLua<cr>", desc = "Fzf" },
