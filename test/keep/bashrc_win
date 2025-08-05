@@ -115,19 +115,6 @@ xmlformat ()
   fi
 }
 
-ee()
-{
-  # does nvim support opening in same window?
-  gvi -nvim $@
-}
-
-complete -o  default ee
-
-en()
-{
-  gvi -nvim "$(zp2 $@)"
-}
-
 __ev()
 {
   unset gvim

@@ -435,29 +435,7 @@ function gi()
     fi
     grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
       --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
-    }
-
-function e()
-{
-  # need to determine if nvim can be run
-  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
-    nvim $@
-  else
-    vim $@
-  fi
-}
-
-alias n=e
-
-function ei
-{
-  # need to determine if nvim can be run
-  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
-      XDG_CONFIG_HOME=~/.vim/test nvim $@
-  else
-    vim $@
-  fi
-}
+  }
 
 __imp_v()
 {
@@ -545,7 +523,6 @@ irr()
   fi
 }
 
-
 copy-static()
 {
   # use this to call script to copy scenario
@@ -579,24 +556,28 @@ fz()
 
 function zp()
 {
-  test -n "$1" && select1=("--select-1" "-q") || select1=()
-  if (type bat >& /dev/null); then
-    fzf --preview "bat --style=plain --color=always --line-range :500 {}" ${select1[@]} $@
-  else
-    fzf --preview "head -n 500 {}" ${select1[@]} $@
-  fi
+  [[ -n "$1" ]] && select1=(--select-1 -q "$1") || select1=()
+  preview_cmd="head -n 500 {}"
+  command -v bat &>/dev/null && preview_cmd="bat --style=plain --color=always --line-range :500 {}"
+
+  fd --type f --hidden --follow --exclude .git . \
+    | fzf --preview "$preview_cmd" "${select1[@]}"
 }
 
 function zp2()
 {
-  test -n "$1" && select1=(--exit-0 --select-1 -q) || select1=()
-  if (type bat >& /dev/null); then
-    fzf --preview "bat --style=plain --color=always --line-range :500 {}" ${select1[@]} $@
+  [[ -n  "$1" ]] && select1=(--exit-0 --select-1 -q "$1") || select1=()
+  preview_cmd="head -n 500 {}"
+  command -v bat &>/dev/null && preview_cmd="bat --style=plain --color=always --line-range :500 {}"
+
+  result=$(fd --type f --hidden --follow \
+    --exclude .git -E .venv -E __pycache__ -E node_modules . \
+    | fzf --preview "$preview_cmd" "${select1[@]}")
+
+  if [[ -z "$result" ]]; then
+    echo "$1"
   else
-    fzf --preview "head -n 500 {}" ${select1[@]} $@
-  fi
-  if [ $? -ne 0 ]; then
-    echo $@
+    echo "$result"
   fi
 }
 
@@ -628,15 +609,51 @@ function vn()
   [ -n "${name}" ] && __imp_v N "${name}"
 }
 
-function ep()
-{
-  nvim $(zp2 $@)
-}
-
 function vp()
 {
   ei $(zp2 $@)
 }
+
+function ei()
+{
+  # need to determine if nvim can be run
+  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
+    XDG_CONFIG_HOME=~/.vim/test nvim $@
+  else
+    vim $@
+  fi
+}
+
+
+### NVIM START
+function e()
+{
+  # need to determine if nvim can be run
+  if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
+    nvim $@
+  else
+    vim $@
+  fi
+}
+
+function ef()
+{
+  nvim $(zp2 $@)
+}
+
+eg()
+{
+  # does nvim support opening in same window?
+  gvi -nvim $@
+}
+
+complete -o  default ee
+
+efg()
+{
+  gvi -nvim "$(zp2 $@)"
+}
+### NVIM END
 
 # cd to a nested folder
 cdf()

@@ -128,7 +128,6 @@ vim.keymap.set('n', ':', ';')
 ---- keep track of different ways to currently invoke vim
 vi -- shim or binary
 vim -- ok
-n - nvim
 ei - nvim with default vim conf
 gvi - script to open with gvim.exe or gvim
 ev - open nvim-qt or gvim (uses script gvi)
@@ -139,6 +138,11 @@ vt - open file in new tab
 vg - run gvim with simple configuration
 vp - vim with no plugings
 vuo - vim with simple config
+
+e - nvim
+eg - nvim gui
+ef - nvim with zp2
+efg - nvim gui  + zp2
 
 some utility repos cloned for bash use
 
