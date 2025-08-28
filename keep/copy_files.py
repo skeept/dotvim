@@ -7,13 +7,16 @@ import filecmp
 import os
 import shutil
 import subprocess
+import typing
 from pathlib import Path
 from typing import Optional
-import typing
 
+GLOBAL_SKIP = [".git", ".ruff_cache"]
 
 @dataclasses.dataclass
 class FolderConfig:
+    """Configuration for source and destination folders."""
+
     actual: Path
     local: Path
     skip: list[str] = dataclasses.field(default_factory=list)
@@ -21,8 +24,8 @@ class FolderConfig:
     @classmethod
     def nvim(cls, windows: Optional[bool] = None):
         """Get nvim config.
-
-        windows option is to force windows path (e.g. for WSL)."""
+        windows option is to force windows path (e.g. for WSL).
+        """
         conf_dir = (
             Path(os.path.expandvars(r"%LOCALAPPDATA%"))
             if os.name == "nt"
@@ -32,15 +35,17 @@ class FolderConfig:
                 else Path.home() / ".config"
             )
         )
-        skip = ["example.lua", "lazy.lua"]
-        return cls(actual=conf_dir / "nvim/lua", local=Path("nvim/lua"), skip=skip)
+        # Add global ignores here
+        skip = ["example.lua", "lazy.lua", "lazy-lock.json", *GLOBAL_SKIP]
+        return cls(actual=conf_dir / "nvim", local=Path("nvim"), skip=skip)
 
     def flip(self):
+        """Swap the actual and local paths."""
         return FolderConfig(actual=self.local, local=self.actual)
 
 
 def get_all_elements(name: Path, skip: list[str]) -> typing.Iterator[Path]:
-    """Get all elements recursively."""
+    """Get all elements recursively, honoring the skip list."""
     for elem in name.iterdir():
         if elem.name in skip:
             print(f"Skipping {elem}")
@@ -70,13 +75,19 @@ def copy_files(
     """Assume folders and copy nested files."""
     show_diff = not dry_run or show_diff
     has_delta = shutil.which("delta") is not None
+
+    origin.mkdir(parents=True, exist_ok=True)
+    destination.mkdir(parents=True, exist_ok=True)
+
     for elem in get_all_elements(origin, skip=skip):
         status = CmpStatus.same
         target = destination / elem.relative_to(origin)
+
         if not target.exists():
             status = CmpStatus.missing
         elif not elem.is_dir() and not filecmp.cmp(elem, target, shallow=False):
             status = CmpStatus.diff
+
         if display_all or status != CmpStatus.same:
             print(f"{status.name:<7} {elem!s:<50} => {target}")
             if show_diff and status == CmpStatus.diff and has_delta:
@@ -86,10 +97,10 @@ def copy_files(
         if not dry_run:
             if not backup_folder.is_dir():
                 backup_folder.mkdir(parents=True, exist_ok=True)
+
             if elem.is_dir():
                 target.mkdir(exist_ok=True, parents=True)
             elif status != CmpStatus.same:
-                # copy item to be overridden to backup
                 if target.exists():
                     shutil.copy(target, backup_folder)
                 shutil.copy(elem, target)
@@ -119,7 +130,6 @@ def main() -> None:
         default=None,
     )
     args = parser.parse_args()
-
     nvim = FolderConfig.nvim(args.windows)
     origin, dest, _ = (
         dataclasses.astuple(nvim)
@@ -128,7 +138,7 @@ def main() -> None:
     )
     dry_run = not args.copy
     copy_files(
-        origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff
+        origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff,
     )
 
 
