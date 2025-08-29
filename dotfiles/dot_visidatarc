@@ -5,7 +5,38 @@ Guess type of some columns by default.
 
 import itertools
 import logging
-import plugins.dat_loader
+
+import plugins.dat_loader  # this make functionality available
+from pathlib import Path
+
+
+def setup_logging():
+    import logging
+    from pathlib import Path
+    import sys
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    log_file = Path.home() / "visidata.log"
+
+    fh = logging.FileHandler(log_file)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    logger.addHandler(fh)
+
+    sh = logging.StreamHandler(sys.stderr)
+    sh.setLevel(logging.INFO)
+    sh.setFormatter(logging.Formatter("PLUGIN: %(levelname)s: %(message)s"))
+    logger.addHandler(sh)
+
+    return logger
+
+
+logger = setup_logging()
+
 
 if False:
     from os.path import isdir

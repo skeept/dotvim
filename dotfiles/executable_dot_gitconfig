@@ -60,6 +60,7 @@
   ds = -c diff.external=difft show --ext-diff
   # `git diff` with difftastic.
   dft = -c diff.external=difft diff
+  fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
 [difftool]
 	prompt = false
