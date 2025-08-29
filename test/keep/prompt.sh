@@ -51,6 +51,8 @@ if false; then
 fi
 
 star() {
+  # reset PROMPT_COMMAND
+  [ -n "${PROMPT_COMMAND_BEFORE_LOAD_NIX_BASHCR}" ] && export PROMPT_COMMAND="${PROMPT_COMMAND_BEFORE_LOAD_NIX_BASHCR}"
   if [ -z "${1}" ]; then
     eval "$(starship init bash)"
   elif [ "$1" = "s2" ]; then
