@@ -3,10 +3,10 @@ auto_sync = true
 update_check = true
 sync_frequency = "1h"
 filter_mode = "host"
-workspaces = true
+workspaces = false
 filter_mode_shell_up_key_binding = "global"
-style = "compact"
-inline_height = 13
+# style = "compact"
+# inline_height = 13
 exit_mode = "return-query"
 enter_accept = true
 
