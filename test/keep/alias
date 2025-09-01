@@ -97,6 +97,7 @@ alias jtt='just tt'
 alias jff='just tf'
 alias jdb='just docker-build'
 alias jdr='just docker-run'
+alias pc='pre-commit'
 
 [ -d ~/src/SABRE2/sabre2/ ] && alias s2bash='( cd ~/src/SABRE2/sabre2 && nix-shell )'
 
