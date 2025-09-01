@@ -58,7 +58,7 @@ star() {
   elif [ "$1" = "s2" ]; then
     PS1="\[\e[1;32m\]\u\[\e[0;39m\]@\[\e[1;36m\]nix-shell\[\e[0;39m\]:\[\e[1;33m\]\w\[\e[0;39m\]\[\e[1;35m\]$(__git_ps1 " (%s)")\[\e[0;39m\]$ "
   else
-    eval "$(posh prompt init bash --config ~/.vim/test/keep/posh-themes/my_negligible.omp.json)"
+    eval "$(posh init bash --config ~/.vim/test/keep/posh-themes/my_negligible.omp.json)"
   fi
 }
 
