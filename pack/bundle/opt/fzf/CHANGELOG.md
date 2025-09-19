@@ -1,6 +1,50 @@
 CHANGELOG
 =========
 
+0.66.0
+------
+- Style changes
+    - Updated `--color base16` (alias: `16`) theme so that it works better with both dark and light themes.
+    - Narrowed the gutter column by using the left-half block character (`▌`).
+    - Removed background colors from markers.
+- Added `--gutter CHAR` option for customizing the gutter column. Some examples using [box-drawing characters](https://en.wikipedia.org/wiki/Box-drawing_characters):
+  ```sh
+  # Right-aligned gutter
+  fzf --gutter '▐'
+
+  # Even thinner gutter
+  fzf --gutter '▎'
+
+  # Checker
+  fzf --gutter '▚'
+
+  # Dotted
+  fzf --gutter '▖'
+
+  # Full-width
+  fzf --gutter '█'
+
+  # No gutter
+  fzf --gutter ' '
+  ```
+
+0.65.2
+------
+- Bug fixes and improvements
+    - Fix incorrect truncation of `--info-command` with `--info=inline-right` (#4479)
+    - [install] Support old uname in macOS (#4492)
+    - [bash 3] Fix `CTRL-T` and `ALT-C` to preserve the last yank (#4496)
+    - Do not unset `FZF_DEFAULT_*` variables when using winpty (#4497) (#4400)
+    - Fix rendering of items with tabs when using a non-default ellipsis (#4505)
+- **This is the final release to support Windows 7.**
+    - Future versions will be built with the latest Go toolchain, which has dropped support for Windows 7.
+
+0.65.1
+------
+- Fixed incorrect `$FZF_CLICK_HEADER_WORD` and `$FZF_CLICK_FOOTER_WORD` when the header or footer contains ANSI escape sequences and tab characters.
+- Fixed a bug where you cannot unset the default `--nth` using `change-nth` action.
+- Fixed a highlighting bug when using `--color fg:dim,nth:regular` pattern over ANSI-colored items.
+
 0.65.0
 ------
 - Added `click-footer` event that is triggered when the footer section is clicked. When the event is triggered, the following environment variables are set:

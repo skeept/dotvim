@@ -272,6 +272,7 @@ type Terminal struct {
 	footerLabel        labelPrinter
 	footerLabelLen     int
 	footerLabelOpts    labelOpts
+	gutterReverse      bool
 	pointer            string
 	pointerLen         int
 	pointerEmpty       string
@@ -291,6 +292,8 @@ type Terminal struct {
 	gapLineLen         int
 	wordRubout         string
 	wordNext           string
+	subWordRubout      string
+	subWordNext        string
 	cx                 int
 	cy                 int
 	offset             int
@@ -512,6 +515,7 @@ const (
 	actBackwardDeleteChar
 	actBackwardDeleteCharEof
 	actBackwardWord
+	actBackwardSubWord
 	actCancel
 
 	actChangeBorderLabel
@@ -541,12 +545,15 @@ const (
 	actFatal
 	actForwardChar
 	actForwardWord
+	actForwardSubWord
 	actKillLine
 	actKillWord
+	actKillSubWord
 	actUnixLineDiscard
 	actUnixWordRubout
 	actYank
 	actBackwardKillWord
+	actBackwardKillSubWord
 	actSelectAll
 	actDeselectAll
 	actToggle
@@ -782,6 +789,7 @@ func defaultKeymap() map[tui.Event][]*action {
 	add(tui.CtrlF, actForwardChar)
 	add(tui.CtrlH, actBackwardDeleteChar)
 	add(tui.Backspace, actBackwardDeleteChar)
+	add(tui.CtrlBackspace, actBackwardDeleteChar)
 	add(tui.Tab, actToggleDown)
 	add(tui.ShiftTab, actToggleUp)
 	add(tui.CtrlJ, actDown)
@@ -936,6 +944,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 	}
 	wordRubout := "[^\\pL\\pN][\\pL\\pN]"
 	wordNext := "[\\pL\\pN][^\\pL\\pN]|(.$)"
+	subWordRubout := "[a-z][A-Z]|[^\\pL\\pN][\\pL\\pN]"
+	subWordNext := "[a-z][A-Z]|[\\pL\\pN][^\\pL\\pN]|(.$)"
 	if opts.FileWord {
 		sep := regexp.QuoteMeta(string(os.PathSeparator))
 		wordRubout = fmt.Sprintf("%s[^%s]", sep, sep)
@@ -969,6 +979,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 		markerMultiLine:    *opts.MarkerMulti,
 		wordRubout:         wordRubout,
 		wordNext:           wordNext,
+		subWordRubout:      subWordRubout,
+		subWordNext:        subWordNext,
 		cx:                 len(input),
 		cy:                 0,
 		offset:             0,
@@ -1083,10 +1095,27 @@ func NewTerminal(opts *Options, eventBox *util.EventBox, executor *util.Executor
 	// This should be called before accessing tui.Color*
 	tui.InitTheme(opts.Theme, renderer.DefaultTheme(), opts.Black, opts.InputBorderShape.Visible(), opts.HeaderBorderShape.Visible())
 
+	// Gutter character
+	var gutterChar string
+	if opts.Gutter != nil {
+		gutterChar = *opts.Gutter
+	} else if t.unicode && !t.theme.Gutter.Color.IsDefault() {
+		gutterChar = "▌"
+	} else {
+		gutterChar = " "
+		t.gutterReverse = true
+	}
+
 	t.prompt, t.promptLen = t.parsePrompt(opts.Prompt)
 	// Pre-calculated empty pointer and marker signs
-	t.pointerEmpty = strings.Repeat(" ", t.pointerLen)
+	if t.pointerLen == 0 {
+		t.pointerEmpty = ""
+	} else {
+		t.pointerEmpty = gutterChar + strings.Repeat(" ", util.Max(0, t.pointerLen-1))
+	}
 	t.markerEmpty = strings.Repeat(" ", t.markerLen)
+
+	// Labels
 	t.listLabel, t.listLabelLen = t.ansiLabelPrinter(opts.ListLabel.label, &tui.ColListLabel, false)
 	t.borderLabel, t.borderLabelLen = t.ansiLabelPrinter(opts.BorderLabel.label, &tui.ColBorderLabel, false)
 	t.previewLabel, t.previewLabelLen = t.ansiLabelPrinter(opts.PreviewLabel.label, &tui.ColPreviewLabel, false)
@@ -1394,7 +1423,7 @@ func (t *Terminal) ansiLabelPrinter(str string, color *tui.ColorPair, fill bool)
 			if !fill {
 				ellipsis, ellipsisWidth = util.Truncate(t.ellipsis, limit)
 			}
-			if length > limit-ellipsisWidth {
+			if length > limit {
 				trimmedRunes, _ := t.trimRight(runes, limit-ellipsisWidth)
 				window.CPrint(*color, string(trimmedRunes)+string(ellipsis))
 			} else if fill {
@@ -1798,6 +1827,11 @@ func (t *Terminal) sortSelected() []selectedItem {
 
 func (t *Terminal) displayWidth(runes []rune) int {
 	width, _ := util.RunesWidth(runes, 0, t.tabstop, math.MaxInt32)
+	return width
+}
+
+func (t *Terminal) displayWidthWithPrefix(str string, prefixWidth int) int {
+	width, _ := util.RunesWidth([]rune(str), prefixWidth, t.tabstop, math.MaxInt32)
 	return width
 }
 
@@ -2612,11 +2646,11 @@ func (t *Terminal) updatePromptOffset() ([]rune, []rune) {
 	}
 	maxWidth := util.Max(1, w.Width()-t.promptLen-1)
 
-	_, overflow := t.trimLeft(t.input[:t.cx], maxWidth)
+	_, overflow := t.trimLeft(t.input[:t.cx], maxWidth, 0)
 	minOffset := int(overflow)
 	maxOffset := minOffset + (maxWidth-util.Max(0, maxWidth-t.cx))/2
 	t.xoffset = util.Constrain(t.xoffset, minOffset, maxOffset)
-	before, _ := t.trimLeft(t.input[t.xoffset:t.cx], maxWidth)
+	before, _ := t.trimLeft(t.input[t.xoffset:t.cx], maxWidth, 0)
 	beforeLen := t.displayWidth(before)
 	after, _ := t.trimRight(t.input[t.cx:], maxWidth-beforeLen)
 	afterLen := t.displayWidth(after)
@@ -3080,9 +3114,21 @@ func (t *Terminal) renderEmptyLine(line int, barRange [2]int) {
 	t.renderBar(line, barRange)
 }
 
+func (t *Terminal) gutter(current bool) {
+	var color tui.ColorPair
+	if current {
+		color = tui.ColCurrentCursorEmpty
+	} else if t.gutterReverse {
+		color = tui.ColCursorEmpty
+	} else {
+		color = tui.ColCursorEmptyChar
+	}
+	t.window.CPrint(color, t.pointerEmpty)
+}
+
 func (t *Terminal) renderGapLine(line int, barRange [2]int, drawLine bool) {
 	t.move(line, 0, false)
-	t.window.CPrint(tui.ColCursorEmpty, t.pointerEmpty)
+	t.gutter(false)
 	t.window.Print(t.markerEmpty)
 	x := t.pointerLen + t.markerLen
 
@@ -3246,7 +3292,7 @@ func (t *Terminal) printItem(result Result, line int, maxLine int, index int, cu
 				return indentSize
 			}
 			if len(label) == 0 {
-				t.window.CPrint(tui.ColCurrentCursorEmpty, t.pointerEmpty)
+				t.gutter(true)
 			} else {
 				t.window.CPrint(tui.ColCurrentCursor, label)
 			}
@@ -3268,7 +3314,7 @@ func (t *Terminal) printItem(result Result, line int, maxLine int, index int, cu
 				return indentSize
 			}
 			if len(label) == 0 {
-				t.window.CPrint(tui.ColCursorEmpty, t.pointerEmpty)
+				t.gutter(false)
 			} else {
 				t.window.CPrint(tui.ColCursor, label)
 			}
@@ -3317,22 +3363,22 @@ func (t *Terminal) displayWidthWithLimit(runes []rune, prefixWidth int, limit in
 	return width
 }
 
-func (t *Terminal) trimLeft(runes []rune, width int) ([]rune, int32) {
+func (t *Terminal) trimLeft(runes []rune, width int, ellipsisWidth int) ([]rune, int32) {
 	width = util.Max(0, width)
 	var trimmed int32
 	// Assume that each rune takes at least one column on screen
-	if len(runes) > width+2 {
-		diff := len(runes) - width - 2
+	if len(runes) > width {
+		diff := len(runes) - width
 		trimmed = int32(diff)
 		runes = runes[diff:]
 	}
 
 	currentWidth := t.displayWidth(runes)
 
-	for currentWidth > width && len(runes) > 0 {
+	for currentWidth > width-ellipsisWidth && len(runes) > 0 {
 		runes = runes[1:]
 		trimmed++
-		currentWidth = t.displayWidthWithLimit(runes, 2, width)
+		currentWidth = t.displayWidthWithLimit(runes, ellipsisWidth, width)
 	}
 	return runes, trimmed
 }
@@ -3557,7 +3603,7 @@ func (t *Terminal) printHighlighted(result Result, colBase tui.ColorPair, colMat
 			}
 			if t.hscroll {
 				if t.keepRight && pos == nil {
-					trimmed, diff := t.trimLeft(line, maxWidth-ellipsisWidth)
+					trimmed, diff := t.trimLeft(line, maxWidth, ellipsisWidth)
 					transformOffsets(diff, false)
 					line = append(ellipsis, trimmed...)
 				} else if !t.overflow(line[:maxe], maxWidth-ellipsisWidth) {
@@ -3573,7 +3619,7 @@ func (t *Terminal) printHighlighted(result Result, colBase tui.ColorPair, colMat
 					}
 					// ..ri..
 					var diff int32
-					line, diff = t.trimLeft(line, maxWidth-ellipsisWidth)
+					line, diff = t.trimLeft(line, maxWidth, ellipsisWidth)
 
 					// Transform offsets
 					transformOffsets(diff, rightTrim)
@@ -3614,7 +3660,7 @@ func (t *Terminal) printColoredString(window tui.Window, text []rune, offsets []
 	for _, offset := range offsets {
 		b := util.Constrain32(offset.offset[0], index, maxOffset)
 		e := util.Constrain32(offset.offset[1], index, maxOffset)
-		if url != nil && offset.url == nil {
+		if url != nil && offset.url != url {
 			url = nil
 			window.LinkEnd()
 		}
@@ -4767,6 +4813,7 @@ func (t *Terminal) addClickHeaderWord(env []string) []string {
 	if t.layout == layoutReverse {
 		headers[0], headers[1] = headers[1], headers[0]
 	}
+	var trimmedLine string
 	var words []Token
 	var lineNum int
 	for lineNum = 0; lineNum <= clickHeaderLine; lineNum++ {
@@ -4785,7 +4832,9 @@ func (t *Terminal) addClickHeaderWord(env []string) []string {
 			return env
 		}
 
-		words = Tokenize(line, t.delimiter)
+		// NOTE: We can't expand tabs here because the delimiter can contain tabs.
+		trimmedLine, _, _ = extractColor(line, nil, nil)
+		words = Tokenize(trimmedLine, t.delimiter)
 		if currentLine {
 			break
 		} else {
@@ -4796,11 +4845,14 @@ func (t *Terminal) addClickHeaderWord(env []string) []string {
 	}
 
 	colNum := t.clickHeaderColumn - 1
+	prefixWidth, prefixLength := 0, 0
 	for idx, token := range words {
-		prefixWidth := int(token.prefixLength)
-		word := token.text.ToString()
+		prefixWidth += t.displayWidthWithPrefix(trimmedLine[prefixLength:token.prefixLength], prefixWidth)
+		prefixLength = int(token.prefixLength)
+
+		word, _ := t.processTabs(token.text.ToRunes(), prefixWidth)
 		trimmed := strings.TrimRightFunc(word, unicode.IsSpace)
-		trimWidth, _ := util.RunesWidth([]rune(trimmed), prefixWidth, t.tabstop, math.MaxInt32)
+		trimWidth := t.displayWidthWithPrefix(trimmed, prefixWidth)
 
 		// Find the position of the first non-space character in the word
 		minPos := strings.IndexFunc(trimmed, func(r rune) bool {
@@ -4828,13 +4880,15 @@ func (t *Terminal) addClickFooterWord(env []string) []string {
 
 	// NOTE: Unlike in click-header, we don't use --delimiter here, since we're
 	// only interested in the word, not nth. Does this make sense?
-	words := Tokenize(t.footer[clickFooterLine], Delimiter{})
+	trimmed, _, _ := extractColor(t.footer[clickFooterLine], nil, nil)
+	trimmed, _ = t.processTabs([]rune(trimmed), 0)
+	words := Tokenize(trimmed, Delimiter{})
 	colNum := t.clickFooterColumn - 1
 	for _, token := range words {
 		prefixWidth := int(token.prefixLength)
 		word := token.text.ToString()
 		trimmed := strings.TrimRightFunc(word, unicode.IsSpace)
-		trimWidth, _ := util.RunesWidth([]rune(trimmed), prefixWidth, t.tabstop, math.MaxInt32)
+		trimWidth := t.displayWidthWithPrefix(trimmed, prefixWidth)
 
 		// Find the position of the first non-space character in the word
 		minPos := strings.IndexFunc(trimmed, func(r rune) bool {
@@ -5713,7 +5767,7 @@ func (t *Terminal) Loop() error {
 				capture(true, func(expr string) {
 					// Split nth expression
 					tokens := strings.Split(expr, "|")
-					if nth, err := splitNth(tokens[0]); err == nil {
+					if nth, err := splitNth(tokens[0]); err == nil || len(expr) == 0 {
 						// Changed
 						newNth = &nth
 					} else {
@@ -6007,6 +6061,11 @@ func (t *Terminal) Loop() error {
 				if t.cx > 0 {
 					t.rubout(t.wordRubout)
 				}
+			case actBackwardKillSubWord:
+				beof = len(t.input) == 0
+				if t.cx > 0 {
+					t.rubout(t.subWordRubout)
+				}
 			case actYank:
 				suffix := copySlice(t.input[t.cx:])
 				t.input = append(append(t.input[:t.cx], t.yanked...), suffix...)
@@ -6118,9 +6177,20 @@ func (t *Terminal) Loop() error {
 				t.cx = findLastMatch(t.wordRubout, string(t.input[:t.cx])) + 1
 			case actForwardWord:
 				t.cx += findFirstMatch(t.wordNext, string(t.input[t.cx:])) + 1
+			case actBackwardSubWord:
+				t.cx = findLastMatch(t.subWordRubout, string(t.input[:t.cx])) + 1
+			case actForwardSubWord:
+				t.cx += findFirstMatch(t.subWordNext, string(t.input[t.cx:])) + 1
 			case actKillWord:
 				ncx := t.cx +
 					findFirstMatch(t.wordNext, string(t.input[t.cx:])) + 1
+				if ncx > t.cx {
+					t.yanked = copySlice(t.input[t.cx:ncx])
+					t.input = append(t.input[:t.cx], t.input[ncx:]...)
+				}
+			case actKillSubWord:
+				ncx := t.cx +
+					findFirstMatch(t.subWordNext, string(t.input[t.cx:])) + 1
 				if ncx > t.cx {
 					t.yanked = copySlice(t.input[t.cx:ncx])
 					t.input = append(t.input[:t.cx], t.input[ncx:]...)

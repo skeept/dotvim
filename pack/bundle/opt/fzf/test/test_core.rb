@@ -108,6 +108,40 @@ class TestCore < TestInteractive
     assert_equal %w[3 2 5 6 8 7], fzf_output_lines
   end
 
+  def test_subword_forward
+    tmux.send_keys "#{FZF} --bind K:kill-subword,F:forward-subword -q 'foo bar foo-bar fooFooBar'", :Enter, :Home
+    tmux.until { |lines| assert_equal '> foo bar foo-bar fooFooBar', lines.last }
+
+    tmux.send_keys 'F', :Delete
+    tmux.until { |lines| assert_equal '> foobar foo-bar fooFooBar', lines.last }
+
+    tmux.send_keys 'K'
+    tmux.until { |lines| assert_equal '> foo foo-bar fooFooBar', lines.last }
+
+    tmux.send_keys 'F', 'K'
+    tmux.until { |lines| assert_equal '> foo foo fooFooBar', lines.last }
+
+    tmux.send_keys 'F', 'F', 'K'
+    tmux.until { |lines| assert_equal '> foo foo fooFoo', lines.last }
+  end
+
+  def test_subword_backward
+    tmux.send_keys "#{FZF} --bind K:backward-kill-subword,B:backward-subword -q 'foo bar foo-bar fooBar'", :Enter
+    tmux.until { |lines| assert_equal '> foo bar foo-bar fooBar', lines.last }
+
+    tmux.send_keys 'B', :BSpace
+    tmux.until { |lines| assert_equal '> foo bar foo-bar foBar', lines.last }
+
+    tmux.send_keys 'K'
+    tmux.until { |lines| assert_equal '> foo bar foo-bar Bar', lines.last }
+
+    tmux.send_keys 'B', :BSpace
+    tmux.until { |lines| assert_equal '> foo bar foobar Bar', lines.last }
+
+    tmux.send_keys 'B', 'B', :BSpace
+    tmux.until { |lines| assert_equal '> foobar foobar Bar', lines.last }
+  end
+
   def test_multi_max
     tmux.send_keys "seq 1 10 | #{FZF} -m 3 --bind A:select-all,T:toggle-all --preview 'echo [{+}]/{}'", :Enter
 
@@ -1415,6 +1449,11 @@ class TestCore < TestInteractive
     tmux.until { assert_match(%r{   --1/10000/10000-- *$}, it[-1]) }
   end
 
+  def test_info_command_inline_right_no_ansi
+    tmux.send_keys(%(seq 10000 | #{FZF} --info-command 'echo -e "--$FZF_POS/$FZF_INFO--"' --info inline-right), :Enter)
+    tmux.until { assert_match(%r{   --1/10000/10000-- *$}, it[-1]) }
+  end
+
   def test_info_command_and_focus
     tmux.send_keys(%(seq 100 | #{FZF} --separator x --info-command 'echo $FZF_POS' --bind focus:clear-query), :Enter)
     tmux.until { assert_match(/^  1 xx/, it[-2]) }
@@ -2044,5 +2083,20 @@ class TestCore < TestInteractive
     tmux.until { |lines| assert_includes lines, '> 3' }
     tmux.send_keys :b
     tmux.until { |lines| assert_includes lines, '> 9' }
+  end
+
+  def test_change_nth_unset_default
+    tmux.send_keys %(echo foo bar | #{FZF} --nth 2 --query fb --bind space:change-nth:), :Enter
+    tmux.until do
+      assert_equal 1, it.item_count
+      assert_equal 0, it.match_count
+    end
+
+    tmux.send_keys :Space
+
+    tmux.until do
+      assert_equal 1, it.item_count
+      assert_equal 1, it.match_count
+    end
   end
 end
