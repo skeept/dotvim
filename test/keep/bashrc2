@@ -961,9 +961,10 @@ function lfr() {
 
 # if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
 if [ -x "$(command -v lnav)" ]; then
-  function le()
-  {
-    if [ -n "$1" ]; then
+  function le() {
+    if [ -n "$1" ] && [ -f "$1" ]; then
+      lnav "$@"
+    elif [ -n "$1" ]; then
       lnav -e "$*"
     else
       lnav
