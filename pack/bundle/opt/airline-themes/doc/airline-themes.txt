@@ -1,4 +1,4 @@
-*airline-themes.txt*  Themes for vim-airline
+*airline-themes.txt*	Themes for vim-airline
                    _                       _      _ _                        ~
             __   _(_)_ __ ___         __ _(_)_ __| (_)_ __   ___             ~
             \ \ / / | '_ ` _ \ _____ / _` | | '__| | | '_ \ / _ \            ~
