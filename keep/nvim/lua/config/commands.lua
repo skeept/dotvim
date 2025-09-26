@@ -50,3 +50,5 @@ end, {
   nargs = "+",
   complete = "file", -- 'file' completion works well with expand()
 })
+
+require("wk.utils").setup()
