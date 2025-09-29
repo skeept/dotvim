@@ -52,3 +52,21 @@ end, {
 })
 
 require("wk.utils").setup()
+
+local wk_utils = require("wk.utils")
+
+vim.api.nvim_create_user_command("Uniq", wk_utils.uniq, {
+  range = true,
+  desc = "Remove duplicate lines in range",
+})
+
+vim.api.nvim_create_user_command("ChgDirCurrFileFolder", wk_utils.change_dir, {
+  bang = true,
+  count = true,
+  desc = "Change directory to current file's folder (:lcd, or :cd! with !)",
+})
+
+vim.api.nvim_create_user_command("QuoteCommaJoin", wk_utils.quote_comma_join, {
+  range = "%",
+  desc = "Wrap lines in quotes, add commas, and join them",
+})

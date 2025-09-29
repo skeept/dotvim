@@ -63,7 +63,9 @@ wk.add({
   {
     ",e",
     function()
-      require("fzf-lua").files({ cwd = vim.fn.expand("%:p:h") })
+      local count = vim.v.count
+      local modifier = ":p:h" .. string.rep(":h", count)
+      require("fzf-lua").files({ cwd = vim.fn.expand("%" .. modifier) })
     end,
     desc = "files in pwd",
   },
@@ -86,3 +88,15 @@ wk.add({
 vim.keymap.set("n", "\\e", function()
   require("wk.epoch").convert_time_with_count()
 end, { desc = "Convert epoch time [count: 2=write, 3=toggle]" })
+
+require("wk.block_nav").setup()
+
+vim.keymap.set("n", ",cd", function()
+  local count = vim.v.count
+  vim.cmd("ChgDirCurrFileFolder " .. count)
+end, { desc = "Change to current file's directory (local)" })
+
+vim.keymap.set("n", ",cD", function()
+  local count = vim.v.count
+  vim.cmd("ChgDirCurrFileFolder! " .. count)
+end, { desc = "Change to current file's directory (global)" })
