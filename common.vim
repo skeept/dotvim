@@ -179,6 +179,7 @@ nnoremap ,va :args **/**<LEFT>
 vnoremap ,yy y:Sscratch<CR>p
 nnoremap ,yy yy:Sscratch<CR>p
 
+nnoremap ,ff :FilePicker<ENTER>
 nnoremap ,fz :FZF<ENTER>
 nnoremap ,fe :FZF<SPACE><C-R>=expand("%:p:h")<CR><CR>
 nnoremap ,fb :Buffers<CR>

@@ -78,4 +78,3 @@ if exists(':FilePicker') == 2
     redraw!
   endfunction
 endif
-
