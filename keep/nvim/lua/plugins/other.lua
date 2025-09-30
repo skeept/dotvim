@@ -114,4 +114,17 @@ return {
       })
     end,
   },
+  {
+    -- Local plugin (your custom file)
+    dir = vim.fn.stdpath("config") .. "/lua/wk", -- points to ~/.config/nvim/lua
+    name = "file_picker",
+    lazy = true,
+    cmd = { "FilePicker" }, -- load when :FilePicker is called
+    keys = {
+      { "<leader>fp", "<cmd>FilePicker<cr>", desc = "Open FilePicker" },
+    },
+    config = function()
+      require("wk.file_picker").setup()
+    end,
+  },
 }
