@@ -1,6 +1,6 @@
 # interpreter for shell commands
 set shell pwsh
-set shellopts -noprofile
+# set shellopts -noprofile
 
 # leave some space at the top and the bottom of the screen
 set scrolloff 10
@@ -86,7 +86,7 @@ map gf :fzf_file_jump
 map gr ${{
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
     $t=(git rev-parse --show-toplevel 2> $null || '.')
-    lf -remote "send $id cd '$t'"
+    lf -remote "send $env:id cd '$t'"
 }}
 
 # Zoxide navigation
@@ -167,7 +167,7 @@ cmd fzf_file_jump ${{
         } else {
             $cmd = "select"
         }
-        lf -remote "send $id $cmd `"$res`""
+        lf -remote "send $env:id $cmd `"$res`""
     }
 }}
 
@@ -180,35 +180,57 @@ cmd z ${{
 cmd zi ${{
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
     $result=((zoxide query -i) -replace "/", "//")
-    lf -remote "send $id cd '$result'"
+    lf -remote "send $env:id cd '$result'"
 }}
 
-# --- Event-based Commands ---
-
-# Show Git status on load
 cmd on-load &{{
-    git rev-parse --is-inside-work-tree | Out-Null
-    if ($LASTEXITCODE -ne 0) { return }
-    $cmds = ""
-    $files = $args
+    $log_file = "$HOME/lf_debug.log"
+    "--- on-load started at $(Get-Date) ---" | Out-File -FilePath $log_file -Append
+
+    # Test 1: Are we in a Git repo?
+    cmd /c git rev-parse --is-inside-work-tree 2>> $log_file | Out-File -FilePath $log_file -Append
+    if ($LASTEXITCODE -ne 0) {
+        "Not a git repo. Exiting." | Out-File -FilePath $log_file -Append
+        exit 0
+    }
+    "Inside a git repo." | Out-File -FilePath $log_file -Append
+    "lf id: $id" | Out-File -FilePath $log_file -Append
+    "lf env:id: $env:id" | Out-File -FilePath $log_file -Append
+
+    # Test 2: What files is 'lf' passing to us?
+    "Files received from lf: $($args.Count)" | Out-File -FilePath $log_file -Append
+
+    # Test 3: Loop through files and check git status
+    $files = Get-ChildItem -Name
+    "files listed: $($files.count)" | out-file -filepath $log_file -Append
     foreach ($file in $files) {
-        if ($file -like "*/.git" -or $file -like "*/.git/*") { continue }
-        $statusOutput = git status --porcelain --ignored -- $file | Select-Object -First 1
+        # Skip files that don't exist (lf can pass deleted file names)
+        if (-not (Test-Path $file -PathType Any)) { continue }
+        if ($file -like "*\.git*") { continue }
+
+        "Checking file: $file" | Out-File -FilePath $log_file -Append
+
+        # IMPORTANT: We capture stderr (2>>) to the log file instead of hiding it with 2>$null
+        $statusOutput = cmd /c git status --porcelain --ignored -- "$file" 2>> $log_file | Select-Object -First 1
+
         if ($statusOutput) {
             $status = $statusOutput.Substring(0, 2)
-            $cmds += "addcustominfo `"$file`" `"$status`"; "
+            $cmd_to_send = "addcustominfo `"$file`" `"$status`""
+            "Sending command: $cmd_to_send" | Out-File -FilePath $log_file -Append
+            lf -remote "send $env:id :$cmd_to_send"
         } else {
-            $cmds += "addcustominfo `"$file`" ''; "
+            $cmd_to_send = "addcustominfo `"$file`" ''"
+            "Sending command (no status): $cmd_to_send" | Out-File -FilePath $log_file -Append
+            lf -remote "send $env:id :$cmd_to_send"
         }
     }
-    if ($cmds) {
-        lf -remote "send $id :$cmds"
-    }
+    "--- on-load finished ---" | Out-File -FilePath $log_file -Append
+    exit 0
 }}
 
 # Show eza info on select
 cmd on-select &{{
-    lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
+    lf -remote "send $env:id set statfmt \"$(eza -ld --color=always "$f")\""
 }}
 
 # Integrate zoxide and starship on cd
@@ -216,5 +238,7 @@ cmd on-cd &{{
     zoxide add "$PWD"
     $env:STARSHIP_SHELL = ''
     $fmt = (starship prompt)
-    lf -remote "send $id set promptfmt `"$fmt`""
+    lf -remote "send $env:id set promptfmt `"$fmt`""
 }}
+
+set info perm:size:custom
