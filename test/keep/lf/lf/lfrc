@@ -1,6 +1,8 @@
 # interpreter for shell commands
 set shell pwsh
 # set shellopts -noprofile
+set shellopts set shellopts -NoLogo -NoExit -File ~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1
+
 
 # leave some space at the top and the bottom of the screen
 set scrolloff 10
@@ -184,47 +186,29 @@ cmd zi ${{
 }}
 
 cmd on-load &{{
-    $log_file = "$HOME/lf_debug.log"
-    "--- on-load started at $(Get-Date) ---" | Out-File -FilePath $log_file -Append
+    # this doesn't currently work well on windows. Too slow
+    exit 0
+    # Only run inside a Git repo
+    cmd /c git rev-parse --is-inside-work-tree 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { exit 0 }
 
-    # Test 1: Are we in a Git repo?
-    cmd /c git rev-parse --is-inside-work-tree 2>> $log_file | Out-File -FilePath $log_file -Append
-    if ($LASTEXITCODE -ne 0) {
-        "Not a git repo. Exiting." | Out-File -FilePath $log_file -Append
-        exit 0
-    }
-    "Inside a git repo." | Out-File -FilePath $log_file -Append
-    "lf id: $id" | Out-File -FilePath $log_file -Append
-    "lf env:id: $env:id" | Out-File -FilePath $log_file -Append
+    # Get git status for all tracked/modified/added/deleted files in one go
+    $gitStatus = cmd /c git status --porcelain --ignored 2>$null | ForEach-Object { $_.Trim() }
 
-    # Test 2: What files is 'lf' passing to us?
-    "Files received from lf: $($args.Count)" | Out-File -FilePath $log_file -Append
+    foreach ($line in $gitStatus) {
+        if (-not $line) { continue }
 
-    # Test 3: Loop through files and check git status
-    $files = Get-ChildItem -Name
-    "files listed: $($files.count)" | out-file -filepath $log_file -Append
-    foreach ($file in $files) {
-        # Skip files that don't exist (lf can pass deleted file names)
-        if (-not (Test-Path $file -PathType Any)) { continue }
+        # First two chars are the status, rest is the path
+        $status = $line.Substring(0, 2)
+        $file = $line.Substring(3).Trim('"')  # remove quotes if any
+
+        # Skip .git internals just in case
         if ($file -like "*\.git*") { continue }
 
-        "Checking file: $file" | Out-File -FilePath $log_file -Append
-
-        # IMPORTANT: We capture stderr (2>>) to the log file instead of hiding it with 2>$null
-        $statusOutput = cmd /c git status --porcelain --ignored -- "$file" 2>> $log_file | Select-Object -First 1
-
-        if ($statusOutput) {
-            $status = $statusOutput.Substring(0, 2)
-            $cmd_to_send = "addcustominfo `"$file`" `"$status`""
-            "Sending command: $cmd_to_send" | Out-File -FilePath $log_file -Append
-            lf -remote "send $env:id :$cmd_to_send"
-        } else {
-            $cmd_to_send = "addcustominfo `"$file`" ''"
-            "Sending command (no status): $cmd_to_send" | Out-File -FilePath $log_file -Append
-            lf -remote "send $env:id :$cmd_to_send"
-        }
+        # Send custom info to lf
+        lf -remote "send $env:id :addcustominfo `"$file`" `"$status`""
     }
-    "--- on-load finished ---" | Out-File -FilePath $log_file -Append
+
     exit 0
 }}
 
@@ -241,4 +225,4 @@ cmd on-cd &{{
     lf -remote "send $env:id set promptfmt `"$fmt`""
 }}
 
-set info perm:size:custom
+set info custom
