@@ -1,10 +1,11 @@
-
 @echo off
 setlocal
 
+:: Get the directory where this batch script is located
+SET "mypath=%~dp0"
 
-
-SET mypath=%~dp0
-python %mypath%\preview.py %1 %2 %3 %4 %5 %6
+:: The first argument passed by lf is the filename.
+:: We use %* to pass all arguments (filename, width, height, etc.) to the python script.
+python "%mypath%preview.py" %*
 
 endlocal
