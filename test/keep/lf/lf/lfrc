@@ -6,30 +6,24 @@ set shellopts /c
 set scrolloff 10
 
 # use enter for shell commands
-map <enter> read
-map
-read
+# map <enter> read
+#map ; read
 
 # Set previewer script (now called with cmd)
-set previewer %USERPROFILE%\vimfiles\test\keep\lf\lf\preview.bat
+set previewer "C:\\wf\\lf\\preview.bat"
 
 # --- MAPPINGS ---
 
-# Opening files (note: %fx% is now a single string, not an array)
+# Opening files
 map e vim %fx%
 map i bat --style=plain --color=always --paging=auto %f%
-map w $
 map ov gvim %fx%
 map oz "C:\Program Files\7-Zip\7zFM.exe" %fx%
 map oc code %fx%
 map oe nvim %fx%
 map oi nvim-qt %fx%
 map og gvim %fx%
-
-# Open with system default application
 map os %fx%
-
-# Open current directory in Windows Explorer
 map ox explorer %f%
 
 # Deletion, diffing, and disk usage
@@ -38,7 +32,7 @@ map dd cut
 map dv gvim -d %fx%
 map dc :diff
 map dD delete
-map <delete >delete
+map <delete> delete
 map df "C:\Program Files\Beyond Compare 4\BCompare.exe" "%f%/BL" "%f%/TR"
 
 # Renaming and git
@@ -49,16 +43,13 @@ map rg lg.exe
 # Clearing and selection
 map c
 map cw rename
-map cc :clear
-unselect
+map cc :clear ; unselect
 
 # Yanking (copying to clipboard)
 map y
 map yy :copy_to_clip
-map yb &
-echo %f:t% | clip
-map yd &
-echo %f:h% | clip
+map yb cmd /c "for %%F in (%f%) do echo %%~nxF | clip"
+map yd cmd /c "for %%F in (%f%) do echo %%~dpF | clip"
 
 # Action prefix
 map ap paste
@@ -77,7 +68,7 @@ map vd wsl -e /home/sabre/.local/bin/visidata %f:t%
 map gi lg
 map gt :fzf_search_text
 map gf :fzf_file_jump
-map gr &FOR /F "tokens=*" %%i IN ('git rev-parse --show-toplevel') DO lf -remote "send %id% cd ""%%i"""
+map gr FOR /F "tokens=*" %%i IN ('git rev-parse --show-toplevel') DO lf -remote "send %id% cd ""%%i"""
 
 # Zoxide navigation
 map zi :zi
@@ -89,8 +80,7 @@ cmd fzf_search_text $fzf-search.bat
 cmd fzf_file_jump $fzf-jump.bat
 
 # Copy to clipboard command
-cmd copy_to_clip &
-echo %fx% | clip
+cmd copy_to_clip echo %fx% | clip
 
 # Zoxide commands
-cmd zi &FOR /F "tokens=*" %%i IN ('zoxide query -i') DO lf -remote "send %id% cd ""%%i"""
+cmd zi FOR /F "tokens=*" %%i IN ('zoxide query -i') DO lf -remote "send %id% cd ""%%i"""
