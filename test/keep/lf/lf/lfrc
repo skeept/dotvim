@@ -1,43 +1,6 @@
 # interpreter for shell commands
-#set shell cmd
 set shell pwsh
-
 set shellopts -noprofile
-
-# Shell commands with multiline definitions and/or positional arguments and/or
-# quotes do not work in Windows. For anything but the simplest shell commands,
-# it is recommended to create separate script files and simply call them here
-# in commands or mappings.
-
-# change the editor used in default editor keybinding
-# There is no builtin terminal editor installed in Windows. The default editor
-# mapping uses 'notepad' which launches in a separate GUI window. You may
-# instead install a terminal editor of your choice and replace the default
-# editor keybinding accordingly.
-map e $vim ($env:fx -split '\n')
-
-# change the pager used in default pager keybinding
-# The standard pager used in Windows is 'more' which is not a very capable
-# pager. You may instead install a pager of your choice and replace the default
-# pager keybinding accordingly.
-map i $bat --style=plain --color=always --paging=auto $env:f
-
-# change the shell used in default shell keybinding
-map w $pwsh -noprofile
-
-# change 'doc' command to use a different pager
-cmd doc $lf -doc | bat --style=plain --color=always
-
-cmd maps $lf -remote "query $env:id maps" | bat --style=plain --color=always --paging=always
-cmd cmaps $lf -remote "query $env:id cmaps" | bat --style=plain --color=always --paging=always
-cmd cmds $lf -remote "query $env:id cmds" | bat --style=plain --color=always --paging=always
-
-cmd diff ${{
-  #gvim ($env:fx -split '\n')
-  #msg * "C:\Program Files\Beyond Compare 4\BCompare.exe" $env:fx
-  & "C:\Program Files\Beyond Compare 4\BCompare.exe" ($env:fx -split '\n')
-}}
-#cmd diff $& "C:\Program Files\Beyond Compare 4\BCompare.exe" ($env:fx -split '\n')
 
 # leave some space at the top and the bottom of the screen
 set scrolloff 10
@@ -46,63 +9,142 @@ set scrolloff 10
 map <enter> read
 map ; read
 
-# copy current file to a folder where it can be easily found
-#set previewer C:\\jT\\preview.bat
+# Set previewer script
 set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 
-map oc $code ($env:fx -split '\n')
+
+# --- MAPPINGS ---
+
+# Opening files
+map e $vim ($env:fx -split '\n')
+map i $bat --style=plain --color=always --paging=auto $env:f
+map w $pwsh -noprofile
 map ov $gvim ($env:fx -split '\n')
 map oz &7zFM ($env:fx -split '\n')
+map oc $code ($env:fx -split '\n')
 
-cmd vdiff $gvim -d ($env:fx -split '\n')
+# Open in (e)ditor - Neovim
+map oe $nvim ($env:fx -split '\n')
+map oi $nvim-qt ($env:fx -split '\n')
 
+# Open in (g)vim - Graphical Vim
+map og $gvim ($env:fx -split '\n')
+
+# Open with (s)ystem default application
+map os &Start-Process -FilePath ($env:fx -split '\n')
+
+# Open current directory in Windows E(x)plorer
+map ox &explorer.exe $env:f
+
+# Deletion, diffing, and disk usage
 map d
 map dd cut
 map dv $gvim -d ($env:fx -split '\n')
-map dc diff
+map dc :diff
 map du ${{
-  if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
+    if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
 }}
 map dD delete
+map <delete> delete
 map df ${{
-  & "C:\Program Files\Beyond Compare 4\BCompare.exe" "$env:f/BL" "$env:f/TR"
+    & "C:\Program Files\Beyond Compare 4\BCompare.exe" "$env:f/BL" "$env:f/TR"
 }}
 
-map c
-map cw rename
-map cc :clear ; unselect
-
-map <delete> delete
-
+# Renaming and git
 map r
 map rr rename
 map rg $lg.exe
 
+# Clearing and selection
+map c
+map cw rename
+map cc :clear ; unselect
 
-# map all common operations to a (for action) prefix
+# Yanking (copying to clipboard)
+map y
+map yy :copy_to_clip
+map yb &{{ (Get-Item $env:f).Name | clip.exe }}
+map yd &{{ (Get-Item $env:f).DirectoryName | clip.exe }}
+
+# Action prefix
 map ap paste
 map ay copy
 map av invert
 map ad cut
 map ac clear
 
+# View prefix
 map v
 map vv invert
 map ve $vim $f
 map vd $wsl -e /home/sabre/.local/bin/visidata (Get-item $env:f).name
 
+# Git and FZF navigation
 map gi $lg
-
-cmd on-cd &{{
-    export STARSHIP_SHELL=
-    fmt="$(starship prompt)"
-    lf -remote "send $id set promptfmt \"$fmt\""
+map gt :fzf_search_text
+map gf :fzf_file_jump
+map gr ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $t=(git rev-parse --show-toplevel 2> $null || '.')
+    lf -remote "send $id cd '$t'"
 }}
 
-cmd on-select &{{
-    lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
+# Zoxide navigation
+map zi :zi
+
+
+# --- COMMANDS ---
+
+# Display help commands
+cmd doc $lf -doc | bat --style=plain --color=always
+cmd maps $lf -remote "query $env:id maps" | bat --style=plain --color=always --paging=always
+cmd cmaps $lf -remote "query $env:id cmaps" | bat --style=plain --color=always --paging=always
+cmd cmds $lf -remote "query $env:id cmds" | bat --style=plain --color=always --paging=always
+
+# Diffing commands
+cmd diff ${{
+    & "C:\Program Files\Beyond Compare 4\BCompare.exe" ($env:fx -split '\n')
+}}
+cmd vdiff $gvim -d ($env:fx -split '\n')
+
+# Copy to clipboard command
+cmd copy_to_clip &{{
+    $env:fx | clip.exe
 }}
 
+# Archiving commands (requires 7-Zip in PATH)
+cmd zip ${{
+    $target_dir = $args[0]
+    $new_dir = $true
+    $files_to_copy = ($env:fx -split "`n")
+    if (-not $target_dir -and $files_to_copy.Length -eq 1 -and (Test-Path $files_to_copy[0] -PathType Container)) {
+        $target_dir = $files_to_copy[0]
+        $new_dir = $false
+    }
+    if ($new_dir) {
+        New-Item -ItemType Directory -Force -Path $target_dir | Out-Null
+        Copy-Item -Path $files_to_copy -Destination $target_dir -Recurse
+    }
+    7z a "$target_dir.zip" "$target_dir"
+    if ($new_dir) { Remove-Item -Recurse -Force $target_dir }
+}}
+cmd 7z ${{
+    $target_dir = $args[0]
+    $new_dir = $true
+    $files_to_copy = ($env:fx -split "`n")
+    if (-not $target_dir -and $files_to_copy.Length -eq 1 -and (Test-Path $files_to_copy[0] -PathType Container)) {
+        $target_dir = $files_to_copy[0]
+        $new_dir = $false
+    }
+    if ($new_dir) {
+        New-Item -ItemType Directory -Force -Path $target_dir | Out-Null
+        Copy-Item -Path $files_to_copy -Destination $target_dir -Recurse
+    }
+    7z a "$target_dir.7z" "$target_dir"
+    if ($new_dir) { Remove-Item -Recurse -Force $target_dir }
+}}
+
+# FZF commands
 cmd fzf_search_text ${{
     $cmd = "rg --column --line-number --no-heading --color=always --smart-case"
     $result = (fzf --ansi --disabled --layout=reverse --height="100%" --header="Search in files" --delimiter=":" `
@@ -111,53 +153,68 @@ cmd fzf_search_text ${{
         --preview 'bat --color=always --style=plain --highlight-line={2} -- {1}' `
     )
     if($result -ne $null) {
-      $result = [regex]::escape($result.split(':')[0])
+        $result = [regex]::escape($result.split(':')[0])
     }
-
     lf -remote "send $env:id select `"$result`""
 }}
-
-map gt fzf_search_text
-
 cmd fzf_file_jump ${{
-  $res = fd --hidden --exclude .git | fzf --reverse `
-      --preview 'bat --color=always --style=plain {}' `
-      --preview-window=right:50%
-
-  if ($res) {
-    if ((Get-Item $res).PSIsContainer) {
-      $cmd = "cd"
-    } else {
-      $cmd = "select"
+    $res = fd --hidden --exclude .git | fzf --reverse `
+        --preview 'bat --color=always --style=plain {}' `
+        --preview-window=right:50%
+    if ($res) {
+        if ((Get-Item $res).PSIsContainer) {
+            $cmd = "cd"
+        } else {
+            $cmd = "select"
+        }
+        lf -remote "send $id $cmd `"$res`""
     }
-    lf -remote "send $id $cmd `"$res`""
-  }
 }}
 
-map gf fzf_file_jump
-
-set shellflag "-cwa"
-
+# Zoxide commands
 cmd z ${{
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
     $result = ((zoxide query --exclude $PWD $args[0]) -replace "/", "//")
     lf -remote "send $env:id cd '$result'"
 }}
-
 cmd zi ${{
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
     $result=((zoxide query -i) -replace "/", "//")
     lf -remote "send $id cd '$result'"
 }}
 
-map gr ${{
-    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
-    $t=(git rev-parse --show-toplevel 2> $null || '.')
-    lf -remote "send $id cd '$t'"
+# --- Event-based Commands ---
+
+# Show Git status on load
+cmd on-load &{{
+    git rev-parse --is-inside-work-tree | Out-Null
+    if ($LASTEXITCODE -ne 0) { return }
+    $cmds = ""
+    $files = $args
+    foreach ($file in $files) {
+        if ($file -like "*/.git" -or $file -like "*/.git/*") { continue }
+        $statusOutput = git status --porcelain --ignored -- $file | Select-Object -First 1
+        if ($statusOutput) {
+            $status = $statusOutput.Substring(0, 2)
+            $cmds += "addcustominfo `"$file`" `"$status`"; "
+        } else {
+            $cmds += "addcustominfo `"$file`" ''; "
+        }
+    }
+    if ($cmds) {
+        lf -remote "send $id :$cmds"
+    }
 }}
 
+# Show eza info on select
+cmd on-select &{{
+    lf -remote "send $id set statfmt \"$(eza -ld --color=always "$f")\""
+}}
+
+# Integrate zoxide and starship on cd
 cmd on-cd &{{
     zoxide add "$PWD"
+    $env:STARSHIP_SHELL = ''
+    $fmt = (starship prompt)
+    lf -remote "send $id set promptfmt `"$fmt`""
 }}
-
-map zi zi
