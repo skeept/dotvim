@@ -1,8 +1,7 @@
 # interpreter for shell commands
 set shell pwsh
 # set shellopts -noprofile
-set shellopts set shellopts -NoLogo -NoExit -File ~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1
-
+set shellopts -NoLogo -NoExit -NoProfile -File ~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1
 
 # leave some space at the top and the bottom of the screen
 set scrolloff 10
@@ -20,7 +19,7 @@ set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 # Opening files
 map e $vim ($env:fx -split '\n')
 map i $bat --style=plain --color=always --paging=auto $env:f
-map w $pwsh -noprofile
+map w $pwsh -NoLogo -NoExit -NoProfile -Command ". '~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1'"
 map ov $gvim ($env:fx -split '\n')
 map oz &7zFM ($env:fx -split '\n')
 map oc $code ($env:fx -split '\n')
@@ -186,7 +185,6 @@ cmd zi ${{
 }}
 
 cmd on-load &{{
-    # this doesn't currently work well on windows. Too slow
     exit 0
     # Only run inside a Git repo
     cmd /c git rev-parse --is-inside-work-tree 2>$null | Out-Null
