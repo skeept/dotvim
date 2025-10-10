@@ -639,17 +639,17 @@ function! s:undotree.Update() abort
     if exists('b:isUndotreeBuffer')
         return
     endif
+    " let the user disable undotree for chosen buftypes
+    if index(g:undotree_DisabledBuftypes, &buftype) != -1
+        call s:log("undotree.Update() disabled buftype")
+        return
+    endif
     " let the user disable undotree for chosen filetypes
     if index(g:undotree_DisabledFiletypes, &filetype) != -1
         call s:log("undotree.Update() disabled filetype")
         return
     endif
     if (&bt != '' && &bt != 'acwrite') || (&modifiable == 0) || (mode() != 'n')
-        if &bt == 'quickfix' || &bt == 'nofile'
-            "Do nothing for quickfix and q:
-            call s:log("undotree.Update() ignore quickfix")
-            return
-        endif
         if self.targetBufnr == bufnr('%') && self.targetid == w:undotree_id
             call s:log("undotree.Update() invalid buffer NOupdate")
             return
