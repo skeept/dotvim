@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -z "$1" ] && echo "Expected 2 dirs or one dir with BL/ TR/"
+a=$1
+[ -n "$2" ] && b=$2 || { a=$1/BL && b=$1/TR; }
+DIR1=$(printf '%q' "$a")
+DIR2=$(printf '%q' "$b")
+if [ -n "$1" ]; then
+  vim -c "DirDiff $DIR1 $DIR2"
+else
+  vim
+fi
