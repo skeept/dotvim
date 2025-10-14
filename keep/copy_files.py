@@ -13,6 +13,7 @@ from typing import Optional
 
 GLOBAL_SKIP = [".git", ".ruff_cache"]
 
+
 @dataclasses.dataclass
 class FolderConfig:
     """Configuration for source and destination folders."""
@@ -36,7 +37,7 @@ class FolderConfig:
             )
         )
         # Add global ignores here
-        skip = ["example.lua", "lazy.lua", "lazy-lock.json", *GLOBAL_SKIP]
+        skip = ["example.lua", "lazy-lock.json", *GLOBAL_SKIP]
         return cls(actual=conf_dir / "nvim", local=Path("nvim"), skip=skip)
 
     def flip(self):
@@ -138,7 +139,11 @@ def main() -> None:
     )
     dry_run = not args.copy
     copy_files(
-        origin, dest, skip=nvim.skip, dry_run=dry_run, show_diff=not args.hide_diff,
+        origin,
+        dest,
+        skip=nvim.skip,
+        dry_run=dry_run,
+        show_diff=not args.hide_diff,
     )
 
 
