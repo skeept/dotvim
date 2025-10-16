@@ -77,11 +77,36 @@ function py() {
   "${PYTHON_EXE}" $@
 }
 
-function pym {
-  # assume script is first argument
-  script_root=$(dirname $1)
-  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
-  PYTHONPATH="$script_root:$PYTHONPATH" "${PYTHON_EXE}" $@
+pym() {
+    local script="$1"
+    shift
+
+    # Find Python executable
+    local PYTHON_EXE
+    command -v python3 &>/dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
+
+    # Resolve absolute script path
+    local abs_script
+    abs_script=$(realpath "$script")
+
+    # Derive project src root (the ancestor directory named "src")
+    local pkg_root="$abs_script"
+    while [[ "$pkg_root" != "/" && "$(basename "$pkg_root")" != "src" ]]; do
+        pkg_root=$(dirname "$pkg_root")
+    done
+
+    if [[ "$(basename "$pkg_root")" != "src" ]]; then
+        echo "Error: could not find 'src' directory above $abs_script" >&2
+        return 1
+    fi
+
+    # Build module path: e.g. /.../src/gcp/get_scenarios.py -> gcp.get_scenarios
+    local module_path="${abs_script#$pkg_root/}"  # strip /.../src/
+    module_path="${module_path%.py}"              # strip .py
+    module_path="${module_path//\//.}"            # / -> .
+
+    # Use absolute src root in PYTHONPATH
+    PYTHONPATH="$pkg_root:$PYTHONPATH" "$PYTHON_EXE" -m "$module_path" "$@"
 }
 
 function ud ()
