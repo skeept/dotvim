@@ -1,44 +1,59 @@
-# Set the shell to the Windows Command Prompt
-set shell cmd
-set shellopts /c
+# interpreter for shell commands
+set shell pwsh
+set shellopts -NoLogo -NoProfile -Command ". '~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1';"
 
 # leave some space at the top and the bottom of the screen
 set scrolloff 10
 
 # use enter for shell commands
-# map <enter> read
-#map ; read
+map <enter> read
+map ; read
 
-# Set previewer script (now called with cmd)
-set previewer "C:\\wf\\lf\\preview.bat"
+# Set previewer script
+set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
+
 
 # --- MAPPINGS ---
 
 # Opening files
-map e vim %fx%
-map i bat --style=plain --color=always --paging=auto %f%
-map ov gvim %fx%
-map oz "C:\Program Files\7-Zip\7zFM.exe" %fx%
-map oc code %fx%
-map oe nvim %fx%
-map oi nvim-qt %fx%
-map og gvim %fx%
-map os %fx%
-map ox explorer %f%
+map e $vim ($env:fx -split '\n')
+map i $bat --style=plain --color=always --paging=auto $env:f
+map w $pwsh -NoProfile -Command ". '~\\vimfiles\\test\\keep\\lf\\lf\\profile.ps1'"
+map ov $gvim ($env:fx -split '\n')
+map oz &7zFM ($env:fx -split '\n')
+map oc $code ($env:fx -split '\n')
+
+# Open in (e)ditor - Neovim
+map oe $nvim ($env:fx -split '\n')
+map oi $nvim-qt ($env:fx -split '\n')
+
+# Open in (g)vim - Graphical Vim
+map og $gvim ($env:fx -split '\n')
+
+# Open with (s)ystem default application
+map os &Start-Process -FilePath ($env:fx -split '\n')
+
+# Open current directory in Windows E(x)plorer
+map ox &explorer.exe $env:f
 
 # Deletion, diffing, and disk usage
 map d
 map dd cut
-map dv gvim -d %fx%
+map dv $gvim -d ($env:fx -split '\n')
 map dc :diff
+map du ${{
+    if((Get-Item $env:f).PSIsContainer) { dua interactive $f } else { dua interactive }
+}}
 map dD delete
 map <delete> delete
-map df "C:\Program Files\Beyond Compare 4\BCompare.exe" "%f%/BL" "%f%/TR"
+map df ${{
+    & "C:\Program Files\Beyond Compare 4\BCompare.exe" "$env:f/BL" "$env:f/TR"
+}}
 
 # Renaming and git
 map r
 map rr rename
-map rg lg.exe
+map rg $lg.exe
 
 # Clearing and selection
 map c
@@ -48,8 +63,8 @@ map cc :clear ; unselect
 # Yanking (copying to clipboard)
 map y
 map yy :copy_to_clip
-map yb cmd /c "for %%F in (%f%) do echo %%~nxF | clip"
-map yd cmd /c "for %%F in (%f%) do echo %%~dpF | clip"
+map yb &{{ (Get-Item $env:f).Name | clip.exe }}
+map yd &{{ (Get-Item $env:f).DirectoryName | clip.exe }}
 
 # Action prefix
 map ap paste
@@ -61,26 +76,150 @@ map ac clear
 # View prefix
 map v
 map vv invert
-map ve vim %f%
-map vd wsl -e /home/sabre/.local/bin/visidata %f:t%
+map ve $vim $f
+map vd $wsl -e /home/sabre/.local/bin/visidata (Get-item $env:f).name
 
 # Git and FZF navigation
-map gi lg
+map gi $lg
 map gt :fzf_search_text
 map gf :fzf_file_jump
-map gr FOR /F "tokens=*" %%i IN ('git rev-parse --show-toplevel') DO lf -remote "send %id% cd ""%%i"""
+map gr ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $t=(git rev-parse --show-toplevel 2> $null || '.')
+    lf -remote "send $env:id cd '$t'"
+}}
 
 # Zoxide navigation
 map zi :zi
 
+
 # --- COMMANDS ---
 
-# FZF commands (wrapped in helper scripts for cmd.exe compatibility)
-cmd fzf_search_text $fzf-search.bat
-cmd fzf_file_jump $fzf-jump.bat
+# Display help commands
+cmd doc $lf -doc | bat --style=plain --color=always
+cmd maps $lf -remote "query $env:id maps" | bat --style=plain --color=always --paging=always
+cmd cmaps $lf -remote "query $env:id cmaps" | bat --style=plain --color=always --paging=always
+cmd cmds $lf -remote "query $env:id cmds" | bat --style=plain --color=always --paging=always
+
+# Diffing commands
+cmd diff ${{
+    & "C:\Program Files\Beyond Compare 4\BCompare.exe" ($env:fx -split '\n')
+}}
+cmd vdiff $gvim -d ($env:fx -split '\n')
 
 # Copy to clipboard command
-cmd copy_to_clip echo %fx% | clip
+cmd copy_to_clip &{{
+    $env:fx | clip.exe
+}}
+
+# Archiving commands (requires 7-Zip in PATH)
+cmd zip ${{
+    $target_dir = $args[0]
+    $new_dir = $true
+    $files_to_copy = ($env:fx -split "`n")
+    if (-not $target_dir -and $files_to_copy.Length -eq 1 -and (Test-Path $files_to_copy[0] -PathType Container)) {
+        $target_dir = $files_to_copy[0]
+        $new_dir = $false
+    }
+    if ($new_dir) {
+        New-Item -ItemType Directory -Force -Path $target_dir | Out-Null
+        Copy-Item -Path $files_to_copy -Destination $target_dir -Recurse
+    }
+    7z a "$target_dir.zip" "$target_dir"
+    if ($new_dir) { Remove-Item -Recurse -Force $target_dir }
+}}
+cmd 7z ${{
+    $target_dir = $args[0]
+    $new_dir = $true
+    $files_to_copy = ($env:fx -split "`n")
+    if (-not $target_dir -and $files_to_copy.Length -eq 1 -and (Test-Path $files_to_copy[0] -PathType Container)) {
+        $target_dir = $files_to_copy[0]
+        $new_dir = $false
+    }
+    if ($new_dir) {
+        New-Item -ItemType Directory -Force -Path $target_dir | Out-Null
+        Copy-Item -Path $files_to_copy -Destination $target_dir -Recurse
+    }
+    7z a "$target_dir.7z" "$target_dir"
+    if ($new_dir) { Remove-Item -Recurse -Force $target_dir }
+}}
+
+# FZF commands
+cmd fzf_search_text ${{
+    $cmd = "rg --column --line-number --no-heading --color=always --smart-case"
+    $result = (fzf --ansi --disabled --layout=reverse --height="100%" --header="Search in files" --delimiter=":" `
+        --bind "start:reload($cmd {q})" `
+        --bind "change:reload($cmd {q})" `
+        --preview 'bat --color=always --style=plain --highlight-line={2} -- {1}' `
+    )
+    if($result -ne $null) {
+        $result = [regex]::escape($result.split(':')[0])
+    }
+    lf -remote "send $env:id select `"$result`""
+}}
+cmd fzf_file_jump ${{
+    $res = fd --hidden --exclude .git | fzf --reverse `
+        --preview 'bat --color=always --style=plain {}' `
+        --preview-window=right:50%
+    if ($res) {
+        if ((Get-Item $res).PSIsContainer) {
+            $cmd = "cd"
+        } else {
+            $cmd = "select"
+        }
+        lf -remote "send $env:id $cmd `"$res`""
+    }
+}}
 
 # Zoxide commands
-cmd zi FOR /F "tokens=*" %%i IN ('zoxide query -i') DO lf -remote "send %id% cd ""%%i"""
+cmd z ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $result = ((zoxide query --exclude $PWD $args[0]) -replace "/", "//")
+    lf -remote "send $env:id cd '$result'"
+}}
+cmd zi ${{
+    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF-8")
+    $result=((zoxide query -i) -replace "/", "//")
+    lf -remote "send $env:id cd '$result'"
+}}
+
+cmd on-load &{{
+    exit 0
+    # Only run inside a Git repo
+    cmd /c git rev-parse --is-inside-work-tree 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { exit 0 }
+
+    # Get git status for all tracked/modified/added/deleted files in one go
+    $gitStatus = cmd /c git status --porcelain --ignored 2>$null | ForEach-Object { $_.Trim() }
+
+    foreach ($line in $gitStatus) {
+        if (-not $line) { continue }
+
+        # First two chars are the status, rest is the path
+        $status = $line.Substring(0, 2)
+        $file = $line.Substring(3).Trim('"')  # remove quotes if any
+
+        # Skip .git internals just in case
+        if ($file -like "*\.git*") { continue }
+
+        # Send custom info to lf
+        lf -remote "send $env:id :addcustominfo `"$file`" `"$status`""
+    }
+
+    exit 0
+}}
+
+# Show eza info on select
+cmd on-select &{{
+    lf -remote "send $env:id set statfmt \"$(eza -ld --color=always "$f")\""
+}}
+
+# Integrate zoxide and starship on cd
+cmd on-cd &{{
+    zoxide add "$PWD"
+    $env:STARSHIP_SHELL = ''
+    $fmt = (starship prompt)
+    lf -remote "send $env:id set promptfmt `"$fmt`""
+}}
+
+set info custom
