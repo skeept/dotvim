@@ -1005,7 +1005,7 @@ _activate_pyve() {
     if [[ -n "$name" ]]; then
       if [[ -d "$dir/$name/bin" ]]; then
         . "$dir/$name/bin/activate"
-        echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
+        echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
         return 0
       fi
     else
@@ -1013,7 +1013,7 @@ _activate_pyve() {
       for candidate in ".venv" "venv"; do
         if [[ -d "$dir/$candidate/bin" ]]; then
           . "$dir/$candidate/bin/activate"
-          echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
+          echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
           return 0
         fi
       done
@@ -1026,12 +1026,12 @@ _activate_pyve() {
 
       if (( ${#matches[@]} == 1 )); then
         . "${matches[0]}/bin/activate"
-        echo "✅ Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
+        echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
         return 0
       elif (( ${#matches[@]} > 1 )); then
         echo "⚠️  Multiple venv_* directories found in $dir:" >&2
         printf ' - %s\n' "${matches[@]}" >&2
-        echo "❌ Please specify one explicitly: _activate_pyve <name>" >&2
+        echo "Please specify one explicitly: _activate_pyve <name>" >&2
         return 1
       fi
     fi
@@ -1039,7 +1039,7 @@ _activate_pyve() {
     dir="$(dirname "$dir")"
   done
 
-  echo "❌ No virtual environment found." >&2
+  echo "No virtual environment found." >&2
   return 1
 }
 
