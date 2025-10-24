@@ -20,42 +20,18 @@ end, {
   desc = "delete trailing whitespace",
 })
 
-local function CaptureOutput(use_scractch, cmd_)
-  local more_opt = vim.go.more
-  vim.cmd("redir => captured")
-  vim.cmd("silent " .. cmd_)
-  vim.cmd("redir END")
-  if use_scractch then
-    vim.cmd("Sscratch")
-  end
-  vim.cmd("normal G")
-  vim.cmd("put=captured")
-  vim.o.more = more_opt
-end
-
-vim.api.nvim_create_user_command("CaptureOutput", function(args)
-  CaptureOutput(false, args.args)
-end, {
-  desc = "capture output",
-  nargs = "+",
-})
-
-vim.api.nvim_create_user_command("CaptureToScratch", function(args)
-  CaptureOutput(true, args.args)
-end, {
-  desc = "capture output to scratch buffer",
-  nargs = "+",
-})
-
-vim.keymap.set("n", "<Leader>oo", ":CaptureToScratch<space>")
-vim.keymap.set("n", "<Leader>oc", ":CaptureOutput<space>")
-
 vim.api.nvim_create_user_command("Pcp", function()
   vim.cmd("echo expand('%:p')")
   vim.fn.setreg("+", vim.fn.expand("%:p"))
 end, {
   desc = "Print current path and copy to clipboard",
 })
+
+vim.api.nvim_create_user_command("RemoveCR", function()
+  vim.cmd([[silent! %s/\r//g]])
+end, { desc = "Remove stray carriage returns (^M)" })
+
+vim.keymap.set("n", ",rc", ":RemoveCR<CR>", { desc = "Remove stray carriage returns (^M)" })
 
 local wk = require("which-key")
 wk.add({
