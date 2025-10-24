@@ -18,11 +18,11 @@ function M.setup()
   -- User commands (only defined when plugin is loaded)
   vim.api.nvim_create_user_command("CaptureOutput", function(args)
     CaptureOutput(false, args.args)
-  end, { desc = "Capture output", nargs = "+" })
+  end, { desc = "Capture output", nargs = "+", complete = "command" })
 
   vim.api.nvim_create_user_command("CaptureToScratch", function(args)
     CaptureOutput(true, args.args)
-  end, { desc = "Capture output to scratch buffer", nargs = "+" })
+  end, { desc = "Capture output to scratch buffer", nargs = "+", complete = "command" })
 end
 
 return M
