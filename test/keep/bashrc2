@@ -532,20 +532,8 @@ first_alternative()
 
 irr()
 {
-  # this function serves as a helper to run the python script run_irops.py
-  # may need to consider explicity location for where this script is for now
-  # we start with windows
-
-  # also in the future we should see if there is a nice way to use tmux to start the run in a pane
-  # for now just start directly
-
-  local candidates=("/mnt/c/mt" "/project/ezcrew_new/helder/c_tools")
-  local pyfile="$(first_alternative ${candidates[@]})/run_irops.py"
-  if [ -e "${pyfile}" ]; then
-    python "${pyfile}" $@
-  else
-    echo "folder with run_irops.py not found in list... Please add it"
-  fi
+  # define $WORK_BASE in ~/.bashrc.local
+  python "${WORK_BASE}/utils/src/run_irops.py" "$@"
 }
 
 copy-static()
