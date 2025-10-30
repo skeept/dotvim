@@ -20,29 +20,27 @@ end, {
   desc = "delete trailing whitespace",
 })
 
-vim.api.nvim_create_user_command("Pcp", function()
-  vim.cmd("echo expand('%:p')")
-  vim.fn.setreg("+", vim.fn.expand("%:p"))
-end, {
-  desc = "Print current path and copy to clipboard",
-})
+vim.api.nvim_create_user_command("Pcp", function(opts)
+  local content_to_copy = ""
+  if opts.args == "" then
+    content_to_copy = vim.fn.expand("%:p")
+  else
+    content_to_copy = vim.fn.expand("%:t")
+  end
 
-vim.api.nvim_create_user_command("Pcp", function()
-  local path = vim.fn.expand("%:p") -- full path
-  local name = vim.fn.expand("%:t") -- file name
+  print(content_to_copy)
 
-  -- Echo for feedback
-  print(path)
+  if vim.fn.has("clipboard") == 1 then
+    vim.fn.setreg("+", content_to_copy)
+  end
+  vim.fn.setreg("p", content_to_copy)
 
-  -- Copy to system clipboard
-  vim.fn.setreg("+", path)
-
-  -- Also copy to tmux buffer (if inside tmux)
   if os.getenv("TMUX") then
-    vim.fn.system({ "tmux", "set-buffer", path })
+    vim.fn.system({ "tmux", "set-buffer", content_to_copy })
   end
 end, {
-  desc = "Print current path and copy to clipboard + tmux buffer",
+  nargs = "?",
+  desc = "Copy path (no args) or name (any arg) to clipboard, 'p', and tmux",
 })
 
 local function remove_cr()

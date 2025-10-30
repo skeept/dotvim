@@ -831,24 +831,24 @@ nnoremap ,cu :<C-U>cd! %:p:h \| cd ..\| echo expand('%:p:h:h')<CR>
 
 " print current files pwd
 function! s:PrintAndCopyPath(...)
-    let l:content_to_copy = ""
+    let l:name = ""
     if a:1 == ""
-        let l:content_to_copy = expand('%:p')
+        let l:name = expand('%:p')
     else
-        let l:content_to_copy = expand('%:t')
+        let l:name = expand('%:t')
     endif
 
-    echo l:content_to_copy
+    echo l:name
 
     if has('clipboard')
-        call setreg('+', l:content_to_copy)
+        call setreg('+', l:name)
     endif
+    call setreg('p', l:name)
 
     if exists('$TMUX')
-        call system('tmux set-buffer ' . shellescape(l:content_to_copy))
+        call system('tmux set-buffer ' . shellescape(l:name))
     endif
 endfunction
-
 command! -nargs=? Pcp call <SID>PrintAndCopyPath(<q-args>)
 " }}}
 
