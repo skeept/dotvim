@@ -27,11 +27,23 @@ end, {
   desc = "Print current path and copy to clipboard",
 })
 
-vim.api.nvim_create_user_command("RemoveCR", function()
+local function remove_cr()
   vim.cmd([[silent! %s/\r//g]])
-end, { desc = "Remove stray carriage returns (^M)" })
+end
 
-vim.keymap.set("n", ",rc", ":RemoveCR<CR>", { desc = "Remove stray carriage returns (^M)" })
+vim.api.nvim_create_user_command(
+  "RemoveCR",
+  remove_cr,
+  { desc = "Remove stray carriage returns (^M)" }
+)
+vim.api.nvim_create_user_command(
+  "TrimCR",
+  remove_cr,
+  { desc = "Alias of :RemoveCR (remove stray carriage returns (^M))" }
+)
+
+vim.keymap.set("n", ",rc", remove_cr, { desc = "Remove stray carriage returns (^M)" })
+vim.keymap.set("n", ",tc", remove_cr, { desc = "Trim stray carriage returns (^M)" })
 
 local wk = require("which-key")
 wk.add({
