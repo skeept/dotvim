@@ -27,6 +27,24 @@ end, {
   desc = "Print current path and copy to clipboard",
 })
 
+vim.api.nvim_create_user_command("Pcp", function()
+  local path = vim.fn.expand("%:p") -- full path
+  local name = vim.fn.expand("%:t") -- file name
+
+  -- Echo for feedback
+  print(path)
+
+  -- Copy to system clipboard
+  vim.fn.setreg("+", path)
+
+  -- Also copy to tmux buffer (if inside tmux)
+  if os.getenv("TMUX") then
+    vim.fn.system({ "tmux", "set-buffer", path })
+  end
+end, {
+  desc = "Print current path and copy to clipboard + tmux buffer",
+})
+
 local function remove_cr()
   vim.cmd([[silent! %s/\r//g]])
 end

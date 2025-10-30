@@ -830,7 +830,26 @@ nnoremap ,cd :<C-U>ChgDirCurrFileFolder<CR>
 nnoremap ,cu :<C-U>cd! %:p:h \| cd ..\| echo expand('%:p:h:h')<CR>
 
 " print current files pwd
-command! Pcp echo expand('%:p')
+function! s:PrintAndCopyPath(...)
+    let l:content_to_copy = ""
+    if a:1 == ""
+        let l:content_to_copy = expand('%:p')
+    else
+        let l:content_to_copy = expand('%:t')
+    endif
+
+    echo l:content_to_copy
+
+    if has('clipboard')
+        call setreg('+', l:content_to_copy)
+    endif
+
+    if exists('$TMUX')
+        call system('tmux set-buffer ' . shellescape(l:content_to_copy))
+    endif
+endfunction
+
+command! -nargs=? Pcp call <SID>PrintAndCopyPath(<q-args>)
 " }}}
 
 " maximize window vertically

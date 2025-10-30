@@ -70,3 +70,22 @@ vim.api.nvim_create_user_command("QuoteCommaJoin", wk_utils.quote_comma_join, {
   range = "%",
   desc = "Wrap lines in quotes, add commas, and join them",
 })
+
+vim.api.nvim_create_user_command("CommandSource", function(opts)
+  local cmd = vim.api.nvim_get_commands({})[opts.args]
+  if not cmd then
+    print("Command not found: " .. opts.args)
+    return
+  end
+  if cmd.definition:match("^<Lua") then
+    local file, line = cmd.definition:match("~/(.-):(%d+)")
+    if file and line then
+      vim.cmd("edit ~/" .. file)
+      vim.cmd(line)
+    else
+      print("No file info found for Lua command.")
+    end
+  else
+    print("Definition: " .. cmd.definition)
+  end
+end, { nargs = 1, complete = "command" })
