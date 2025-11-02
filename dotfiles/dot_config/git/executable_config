@@ -1,0 +1,64 @@
+# the next 2 includes allow to keep the file valid for different systems
+# local is symlinked in wsl and linux to ~/.config/git/wsl and ~/.config/git/linux
+# on windows we create a copy of ~/.config/git/windows
+[include]
+    path = ~/.config/git/local
+
+[include]
+  path = ~/.config/git/user
+
+[credential]
+    helper = cache --timeout=3600000
+
+[alias]
+    alias = config --get-regexp 'alias.*'
+    br    = branch
+    ci    = commit
+    ciam = commit -a -m
+    ciamn = commit -n -a -m
+    civ   = commit --verbose
+    co    = checkout
+    df    = diff
+    dt    = difftool
+    dw    = diff --word-diff=color
+    h     = help
+    l     = log --oneline --decorate
+    ll    = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+    vd    = difftool --tool=vimdiff
+    nd    = difftool --tool=nvimdiff
+    ls-ignored = ls-files --exclude-standard --ignored --others
+    st    = status
+    dnamestatus = diff --name-status
+    getbase = merge-base master HEAD
+    dk = difftool --tool=k
+    sur = submodule update --init --recursive
+    ui = !gitui
+    lg = !lg
+    tt    = difftool --tool=difftastic
+    root = rev-parse --show-toplevel
+    # difftastic aliases
+    dlog = -c diff.external=difft log --ext-diff
+    dshow = -c diff.external=difft show --ext-diff
+    ddiff = -c diff.external=difft diff
+    dl = -c diff.external=difft log -p --ext-diff
+    ds = -c diff.external=difft show --ext-diff
+    dft = -c diff.external=difft diff
+    fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
+
+[difftool]
+    prompt = false
+
+[difftool "difftastic"]
+    cmd = difft $LOCAL $REMOTE
+
+[difftool "nvimdiff"]
+    cmd = vdiff "$LOCAL" "$REMOTE"
+
+[push]
+    autoSetupRemote = true
+    followTags = true
+[help]
+    autocorrect = prompt
+[rerere]
+    enabled = true
+    autoupdate = true
