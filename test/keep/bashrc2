@@ -822,12 +822,12 @@ declare -A __wk_keys
 
 function __wk_populate_keys()
 {
-  util=/mnt/c/OR/IRops/util
-  reg=/mnt/c/OR/IROPS/rt
+  util=/wrk/or/utils
+  reg=/wrk/or/rt
   myscripts=/mnt/c/jT
   mldeps=/mnt/c/zl/ss/B6/23May/mldeps
 
-  __wk_keys[irr]="$myscripts/run_irops.py"
+  __wk_keys[irr]="$util/src/run_irops.py"
   __wk_keys[exp]="$myscripts/experiment.py"
   __wk_keys[enhance]="$util/src/enhance_sol.py"
   __wk_keys[mod]="$util/src/mod_scen.py"
