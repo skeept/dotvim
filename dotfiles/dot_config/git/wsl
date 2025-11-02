@@ -19,7 +19,3 @@
 [diff]
     # Set your default tool *for WSL*
     tool = bc4
-
-[core]
-    # Linux-specific path to your global ignore file
-    excludesfile = ~/.config/git/gitignore

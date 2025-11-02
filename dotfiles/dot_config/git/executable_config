@@ -34,7 +34,7 @@
     sur = submodule update --init --recursive
     ui = !gitui
     lg = !lg
-    tt    = difftool --tool=difftastic
+    dtdt    = difftool --tool=difftastic
     root = rev-parse --show-toplevel
     # difftastic aliases
     dlog = -c diff.external=difft log --ext-diff
@@ -42,7 +42,7 @@
     ddiff = -c diff.external=difft diff
     dl = -c diff.external=difft log -p --ext-diff
     ds = -c diff.external=difft show --ext-diff
-    dft = -c diff.external=difft diff
+    tt = -c diff.external=difft diff
     fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
 [difftool]
@@ -62,3 +62,6 @@
 [rerere]
     enabled = true
     autoupdate = true
+
+[core]
+    excludesfile = ~/.config/git/ignore
