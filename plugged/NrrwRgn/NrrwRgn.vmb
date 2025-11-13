@@ -2,12 +2,12 @@
 UseVimball
 finish
 plugin/NrrwRgn.vim	[[[1
-90
+91
 " NrrwRgn.vim - Narrow Region plugin for Vim
 " -------------------------------------------------------------
-" Version:	   0.33
+" Version:	   0.34
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 15 Jan 2015 20:52:29 +0100
+" Last Change: Wed, 05 Nov 2025 21:31:30 +0000
 " Script: http://www.vim.org/scripts/script.php?script_id=3075
 " Copyright:   (c) 2009-2015 by Christian Brabandt
 "			   The VIM LICENSE applies to NrrwRgn.vim
@@ -15,7 +15,7 @@ plugin/NrrwRgn.vim	[[[1
 "			   instead of "Vim".
 "			   No warranty, express or implied.
 "	 *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3075 33 :AutoInstall: NrrwRgn.vim
+" GetLatestVimScripts: 3075 34 :AutoInstall: NrrwRgn.vim
 "
 " Init: {{{1
 let s:cpo= &cpo
@@ -63,6 +63,7 @@ com! -bang NRLast :NRL
 com! -range -bang NR	 :<line1>, <line2>call nrrwrgn#NrrwRgn('',<q-bang>)
 com! -range -bang NRP    :<line1>, <line2>call nrrwrgn#Prepare(<q-bang>)
 com! -bang -range NRV :call nrrwrgn#NrrwRgn(visualmode(), <q-bang>)
+com! -range NRUnprepare    :<line1>, <line2>call nrrwrgn#Unprepare()
 com! NUD :call nrrwrgn#UnifiedDiff()
 com! -bang NW	 :exe ":" . line('w0') . ',' . line('w$') . "call nrrwrgn#NrrwRgn(0,<q-bang>)"
 com! -bang NRM :call nrrwrgn#NrrwRgnDoMulti(<q-bang>)
@@ -94,12 +95,12 @@ let &cpo=s:cpo
 unlet s:cpo
 " vim: ts=4 sts=4 fdm=marker com+=l\:\"
 autoload/nrrwrgn.vim	[[[1
-1572
+1637
 " nrrwrgn.vim - Narrow Region plugin for Vim
 " -------------------------------------------------------------
-" Version:		0.33
+" Version:		0.34
 " Maintainer:	Christian Brabandt <cb@256bit.org>
-" Last Change:	Thu, 15 Jan 2015 20:52:29 +0100
+" Last Change: Wed, 05 Nov 2025 21:31:30 +0000
 " Script:		http://www.vim.org/scripts/script.php?script_id=3075
 " Copyright:	(c) 2009-2015 by Christian Brabandt
 "				The VIM LICENSE applies to NrrwRgn.vim
@@ -107,7 +108,7 @@ autoload/nrrwrgn.vim	[[[1
 "				instead of "Vim".
 "				No warranty, express or implied.
 "				*** *** Use At-Your-Own-Risk! *** ***
-" GetLatestVimScripts: 3075 33 :AutoInstall: NrrwRgn.vim
+" GetLatestVimScripts: 3075 34 :AutoInstall: NrrwRgn.vim
 "
 " Functions:
 
@@ -173,6 +174,9 @@ fun! <sid>SetupHooks() abort "{{{1
 	endif
 	if exists("b:nrrw_aucmd_create")
 		let s:nrrw_aucmd["create"] = b:nrrw_aucmd_create
+	endif
+	if exists("b:nrrw_aucmd_writepost")
+		let s:nrrw_aucmd["writepost"] = b:nrrw_aucmd_writepost
 	endif
 	if exists("b:nrrw_aucmd_close")
 		let s:nrrw_aucmd["close"] = b:nrrw_aucmd_close
@@ -340,6 +344,10 @@ fun! <sid>WriteNrrwRgn(...) abort "{{{1
 		endif
 		" prevent E315
 		call winrestview(_wsv)
+		" Execute "writepost" autocommands in narrowed buffer
+		if exists("b:nrrw_aucmd_writepost")
+		        exe b:nrrw_aucmd_writepost
+		endif
 	else
 		call <sid>StoreLastNrrwRgn(nrrw_instn)
 		" b:orig_buf might not exists (see issue #2)
@@ -439,21 +447,35 @@ endfu
 fun! <sid>SetupBufWinLeave(instn) "{{{1
 	if !exists("#NrrwRgn".a:instn."#BufWinLeave#<buffer>") &&
 	\ exists("b:orig_buf") && bufloaded(b:orig_buf)
-		au BufWinLeave <buffer> :call s:NRBufWinLeave(b:nrrw_instn)
+		au BufWinLeave <buffer> :call s:NRBufWinLeave()
 	endif
 endfu
-fun! <sid>NRBufWinLeave(instn) "{{{1
+
+fun! <sid>SetupWinLeave(instn) "{{{1
+	if !exists("#NrrwRgn".a:instn."#WinLeave#<buffer>")
+		exe "au WinLeave <buffer> :call s:NRWinLeave(".a:instn.")"
+	endif
+endfu
+
+fun! <sid>NRWinLeave(instn) "{{{1
+	let orig_buf = s:nrrw_rgn_lines[a:instn].orig_buf
+	let orig_tab = tabpagenr()
+	call <sid>JumpToBufinTab(<sid>BufInTab(b:orig_buf), orig_buf, a:instn, s:window_type["source"])
+	:sil doautocmd <nomodeline> WinEnter
+endfu
+
+fun! <sid>NRBufWinLeave() "{{{1
+	let instn    = getbufvar(expand("<afile>"), 'nrrw_instn')
 	let nrw_buf  = bufnr('')
-	let orig_win = winnr()
-	let instn    = a:instn
-	let orig_buf = b:orig_buf
+	let orig_buf = getbufvar(expand("<afile>"), 'orig_buf')
 	let orig_tab = tabpagenr()
 	call <sid>JumpToBufinTab(<sid>BufInTab(orig_buf), orig_buf, instn, s:window_type["source"])
 	if !&modifiable
 		set modifiable
 	endif
 	call s:DeleteMatches(instn)
-	call <sid>JumpToBufinTab(orig_tab, nrw_buf, instn, s:window_type["target"])
+	" don't jump back to target window, it will be closed
+	"call <sid>JumpToBufinTab(orig_tab, nrw_buf, instn, s:window_type["target"])
 endfu
 
 fun! <sid>NrrwRgnAuCmd(instn) abort "{{{1
@@ -472,6 +494,7 @@ fun! <sid>NrrwRgnAuCmd(instn) abort "{{{1
 		" make sure the highlighting of the narrowed buffer will
 		" be removed"
 		call s:SetupBufWinLeave(b:nrrw_instn)
+		call s:SetupWinLeave(b:nrrw_instn)
 		call s:SetupBufWriteCmd(b:nrrw_instn)
 		aug end
 		au BufWinEnter <buffer> call s:SetupBufWriteCmd(b:nrrw_instn)
@@ -843,6 +866,14 @@ endfun
 
 fun! <sid>BufInTab(bufnr) abort "{{{1
 	" returns tabpage of buffer a:bufnr
+	if tabpagenr('$') == 1
+		" no tabpages present
+		return 1
+	endif
+	" Do not leave tab if buffer exists there
+	if !empty(filter(tabpagebuflist(), 'v:val == a:bufnr'))
+		return tabpagenr()
+	endif
 	for tab in range(1,tabpagenr('$'))
 		if !empty(filter(tabpagebuflist(tab), 'v:val == a:bufnr'))
 			return tab
@@ -900,8 +931,6 @@ fun! <sid>NrrwSettings(on) abort "{{{1
 		if has_key(s:nrrw_rgn_lines, s:instn)
 			if  !&hidden && !has_key(s:nrrw_rgn_lines[instn], "single")
 				setl bufhidden=wipe
-			else
-				setl bufhidden=delete
 			endif
 		endif
 	else
@@ -911,6 +940,7 @@ endfun
 
 fun! <sid>SetupBufLocalCommands() abort "{{{1
 	com! -buffer -bang WidenRegion :call nrrwrgn#WidenRegion(<bang>0)
+	com! -buffer -bang WR :WidenRegion<bang>
 	com! -buffer NRSyncOnWrite  :call nrrwrgn#ToggleSyncWrite(1)
 	com! -buffer NRNoSyncOnWrite :call nrrwrgn#ToggleSyncWrite(0)
 endfun
@@ -919,10 +949,9 @@ fun! <sid>SetupBufLocalMaps(bang) abort "{{{1
 	if !hasmapto('<Plug>NrrwrgnWinIncr', 'n')
 		nmap <buffer> <Leader><Space> <Plug>NrrwrgnWinIncr
 	endif
-	if !hasmapto('NrrwRgnIncr')
-		nmap <buffer><unique> <Plug>NrrwrgnWinIncr NrrwRgnIncr
+	if !hasmapto('<sid>ToggleWindowSize')
+		nnoremap <buffer><unique><script><silent><expr> <Plug>NrrwrgnWinIncr <sid>ToggleWindowSize()
 	endif
-	nnoremap <buffer><silent><script><expr> NrrwRgnIncr <sid>ToggleWindowSize()
 	if a:bang && winnr('$') == 1
 		" Map away :q and :q! in single window mode, so that :q won't
 		" accidently quit vim.
@@ -1244,7 +1273,7 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  abort "{{{1
 	call <sid>DeleteMatches(s:instn)
 	let local_options = <sid>GetOptions(s:opts)
 	let win=<sid>NrrwRgnWin(bang)
-	if bang
+	if bang && winnr('$') == 1
 		let s:nrrw_rgn_lines[s:instn].single = 1
 	else
 		" Set the highlighting
@@ -1276,6 +1305,9 @@ fun! nrrwrgn#NrrwRgn(mode, ...) range  abort "{{{1
 	if has_key(s:nrrw_aucmd, "create")
 		exe s:nrrw_aucmd["create"]
 	endif
+	if has_key(s:nrrw_aucmd, "writepost")
+		let b:nrrw_aucmd_writepost = s:nrrw_aucmd["writepost"]
+	endif
 	if has_key(s:nrrw_aucmd, "close")
 		let b:nrrw_aucmd_close = s:nrrw_aucmd["close"]
 	endif
@@ -1295,6 +1327,19 @@ fun! nrrwrgn#Prepare(bang) abort "{{{1
 		let s:nrrw_rgn_line[bufnr('%')] = []
 	endif
 	call add(s:nrrw_rgn_line[bufnr('%')], line('.'))
+endfun
+
+fun! nrrwrgn#Unprepare() abort "{{{1
+	if !exists("s:nrrw_rgn_line")
+		let s:nrrw_rgn_line={}
+	endif
+	if !has_key(s:nrrw_rgn_line, bufnr('%'))
+		let s:nrrw_rgn_line[bufnr('%')] = []
+	endif
+	let indx = index(s:nrrw_rgn_line[bufnr('%')], line('.'))
+	if indx > -1
+		call remove(s:nrrw_rgn_line[bufnr('%')], indx)
+	endif
 endfun
 
 fun! nrrwrgn#WidenRegion(force)  abort "{{{1
@@ -1418,7 +1463,7 @@ fun! nrrwrgn#WidenRegion(force)  abort "{{{1
 		" then where we started, else we might accidentally
 		" set a match in the narrowed window (might happen if the
 		" user typed Ctrl-W o in the narrowed window)
-		if !(has_key(s:nrrw_rgn_lines[instn], 'single') || winnr != winnr())
+		if !(has_key(s:nrrw_rgn_lines[instn], 'single') || bufwinnr(orig_buf) != winnr())
 			call <sid>AddMatches(<sid>GeneratePattern(
 				\ s:nrrw_rgn_lines[instn].start[1:2],
 				\ s:nrrw_rgn_lines[instn].end[1:2],
@@ -1454,7 +1499,7 @@ fun! nrrwrgn#WidenRegion(force)  abort "{{{1
 		" then where we started, else we might accidentally
 		" set a match in the narrowed window (might happen if the
 		" user typed Ctrl-W o in the narrowed window)
-		if !(has_key(s:nrrw_rgn_lines[instn], 'single') || winnr != winnr())
+		if !(has_key(s:nrrw_rgn_lines[instn], 'single') || bufwinnr(orig_buf) != winnr())
 			call <sid>AddMatches(<sid>GeneratePattern(
 				\s:nrrw_rgn_lines[instn].start[1:2],
 				\s:nrrw_rgn_lines[instn].end[1:2],
@@ -1487,6 +1532,9 @@ fun! nrrwrgn#WidenRegion(force)  abort "{{{1
 	call winrestview(wsv)
 	"if !close && has_key(s:nrrw_rgn_lines[instn], 'single')
 	if has_key(s:nrrw_rgn_lines[instn], 'single')
+		if &modified
+			noa w
+		endif
 		" move back to narrowed buffer
 		noa b #
 	"elseif close
@@ -1506,39 +1554,57 @@ fun! nrrwrgn#WidenRegion(force)  abort "{{{1
 endfun
 
 fun! nrrwrgn#UnifiedDiff() abort "{{{1
+	" if the filetype is not of type diff, assume to create a diff for merge
+	" conflicts
+	let merge = &ft=~'diff' ? 0 : 1
+	let pat = merge ? ['^<\{7\}', '^=\{7\}', '^>\{7\}' ] : ['^@@','^@@']
 	let save_winposview=winsaveview()
 	let orig_win = winnr()
 	" close previous opened Narrowed buffers
 	silent! windo | if bufname('')=~'^NrrwRgn' &&
 			\ &diff |diffoff|q!|endif
+    " move back to original window (windo changes it)
+	if winnr() != orig_win
+		exe "noa" orig_win "wincmd w"
+	endif
 	" minimize Window
 	" this is disabled, because this might be useful, to see everything
 	"exe "vert resize -999999"
 	"setl winfixwidth
 	" move to current start of chunk of unified diff
-	if search('^@@', 'bcW') > 0
-		call search('^@@', 'bc')
+	if search(pat[0], 'bcW') > 0
+		call search(pat[0], 'bc')
 	else
-		call search('^@@', 'c')
+		call search(pat[0], 'c')
 	endif
 	let curpos=getpos('.')
 	for i in range(2)
-		if search('^@@', 'nW') > 0
-			.+,/@@/-NR
+		if merge
+			if i == 1
+				" move to start of other change below '=====' line
+				call search(pat[1], 'W')
+			endif
+			exe ".+,/".pat[i+1]."/-NR"
 		else
-			" Last chunk in file
-			.+,$NR
+			if search(pat[0], 'nW') > 0
+				exe ".+,/".pat[0]."/-NR"
+			else
+				" Last chunk in file
+				.+,$NR
+			endif
 		endif
 		" Split vertically
 		noa wincmd H
-		if i==0
-			silent! g/^-/d _
-		else
-			silent! g/^+/d _
+		if !merge
+			if i==0
+				silent! g/^-/d _
+			else
+				silent! g/^+/d _
+			endif
 		endif
 		diffthis
 		0
-		exe ":noa wincmd p"
+		noa wincmd p
 		call setpos('.', curpos)
 	endfor
 	call winrestview(save_winposview)
@@ -1668,11 +1734,11 @@ endfun
 " Modeline {{{1
 " vim: noet ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/NarrowRegion.txt	[[[1
-792
+819
 *NrrwRgn.txt*   A Narrow Region Plugin (similar to Emacs)
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.33 Thu, 15 Jan 2015 20:52:29 +0100
+Version: 0.34 Wed, 05 Nov 2025 21:31:30 +0000
 Copyright: (c) 2009-2015 by Christian Brabandt
            The VIM LICENSE applies to NrrwRgnPlugin.vim and NrrwRgnPlugin.txt
            (see |copyright|) except use NrrwRgnPlugin instead of "Vim".
@@ -1724,7 +1790,9 @@ This plugin defines the following commands:
                             Whenever you are finished modifying that region
                             simply write the buffer.
                             If ! is given, open the narrowed buffer not in a
-                            split buffer but in the current window.
+                            split buffer but in the current window. However
+                            when 'hidden' is not set, will open a new split
+                            window. 
 
                                                         *:NarrowWindow* *:NW*
 :NW[!]
@@ -1736,7 +1804,8 @@ This plugin defines the following commands:
                             split buffer but in the current window (works best
                             with 'hidden' set).
 
-                                                                *:WidenRegion*
+                                                         *:WidenRegion* *:WR*
+:WR[!]
 :WidenRegion[!]             This command is only available in the narrowed
                             scratch window. If the buffer has been modified,
                             the contents will be put back on the original
@@ -1755,17 +1824,25 @@ This plugin defines the following commands:
 :NUD                        When viewing unified diffs, this command opens
                             the current chunk in 2 Narrowed Windows in
                             |diff-mode| The current chunk is determined as the
-                            one, that the cursor is at. This command does not
-                            make sense if editing a different file format (or
-                            even different diff format)
+                            one, that the cursor is at.
+                            For filetypes other than diffs, it will try to
+                            create a diff mode for a merge conflict.
 
                                                                   *:NRPrepare*
 :[range]NRPrepare[!]
 :[range]NRP[!]              You can use this command, to mark several lines
                             that will later be put into a Narrowed Window
                             using |:NRM|.
-                            If the ! is used, all earlier selected lines will
-                            be cleared first.
+                            Using '!' clears the selection and does not add
+                            any lines.
+                            Use |:NRUnprepare| to remove a line again.
+
+                                                                  *:NRUnprepare*
+:[range]NRUnprepare[!]
+                            This command will remove the current line and
+                            remove it from the lines marked for use with |:NRM|.
+                            If the current line was not previously selected
+                            for a multi narrowed window, it is ignored.
 
                                                                   *:NRMulti*
 :NRMulti
@@ -1792,8 +1869,7 @@ This plugin defines the following commands:
 :NRN                        Disable synching the buffer content back to the
                             original buffer when writing. When set, the
                             narrowed buffer behaves like an ordinary buffer
-                            that you can write in the filesystem.
-                            (this is the default).
+                            that you can write in the filesystem.               
                             Note: You can still use |:WidenRegion| to write
                             the changes back to the original buffer.
 
@@ -1877,7 +1953,7 @@ When you are finished, simply write your changes back.
 
 NarrowRegion can be customized by setting some global variables. If you'd
 like to open the narrowed window as a vertical split buffer, simply set the
-variable g:nrrw_rgn_vert to 1 in your |.vimrc| >
+variable *g:nrrw_rgn_vert* to 1 in your |.vimrc| >
 
     let g:nrrw_rgn_vert = 1
 <
@@ -1885,7 +1961,7 @@ variable g:nrrw_rgn_vert to 1 in your |.vimrc| >
 ------------------------------------------------------------------------------
 
 If you'd like to specify a certain width/height for you scratch buffer, then
-set the variable g:nrrw_rgn_wdth in your |.vimrc| . This variable defines the
+set the variable *g:nrrw_rgn_wdth* in your |.vimrc| . This variable defines the
 height or the nr of columns, if you have also set g:nrrw_rgn_vert. >
 
     let g:nrrw_rgn_wdth = 30
@@ -1900,7 +1976,7 @@ for single narrowed windows, e.g. when the '!' attribute was used).
 ------------------------------------------------------------------------------
 
 Resizing the narrowed window can happen either by some absolute values or by a
-relative percentage. The variable g:nrrw_rgn_resize_window determines what
+relative percentage. The variable *g:nrrw_rgn_resize_window* determines what
 kind of resize will occur. If it is set to "absolute", the resizing will be
 done by absolute lines or columns (depending on whether a horizontal or
 vertical split has been done). If it is set to "relative" the window will be
@@ -1924,7 +2000,7 @@ be increased. This is allows to easily toggle between the normal narrowed
 window size and an even increased size (think of zooming). 
 
 You can either specify a relative or absolute zooming value. An absolute
-resize will happen, if the variable g:nrrw_rgn_resize_window is set to
+resize will happen, if the variable |g:nrrw_rgn_resize_window| is set to
 "absolute" or it is unset (see above).
 
 If absolute resizing should happen you have to either specify columns, if the
@@ -1936,7 +2012,7 @@ Example, to increase the narrowed window by 30 lines or columns if
 
     let g:nrrw_rgn_incr = 30
 <
-(default: 10, if g:nrrw_rgn_resize_window is "absolute")
+(default: 10, if |g:nrrw_rgn_resize_window| is "absolute")
 
 Note: When using the '!' attribute for narrowing (e.g. the selection will be
 opened in a new window that takes the complete screen size), no resizeing will
@@ -1944,7 +2020,7 @@ happen
 ------------------------------------------------------------------------------
 
 If you'd like to change the key combination that toggles incrementing the
-Narrowed Window size, you can put this in your |.vimrc| >
+Narrowed Window size, map *<Plug>NrrwrgnWinIncr* by putting this in your |.vimrc| >
 
    nmap <F3> <Plug>NrrwrgnWinIncr
 <
@@ -1954,25 +2030,25 @@ This will let you use the <F3> key to toggle the window size of the Narrowed
 Window. Note: This mapping is only in the narrowed window active.
 
 The amount of how much to increase can be further refined by setting the
-g:nrrw_rgn_incr for an absolute increase of by setting the variables
-g:nrrw_rgn_rel_min and g:nrrw_rgn_rel_max
+*g:nrrw_rgn_incr* for an absolute increase of by setting the variables
+*g:nrrw_rgn_rel_min* and *g:nrrw_rgn_rel_max*
 
 Whether an absolute or relative increase will be performed, is determined by
-the g:nrrw_rgn_resize_window variable (see above).
+the |g:nrrw_rgn_resize_window| variable (see above).
 ------------------------------------------------------------------------------
 
 By default, NarrowRegion highlights the region that has been selected
 using the WildMenu highlighting (see |hl-WildMenu|). If you'd like to use a
 different highlighting, set the variable g:nrrw_rgn_hl to your preferred
 highlighting Group. For example to have the region highlighted like a search
-result, you could put that in your |.vimrc| >
+result, you could set *g:nrrw_rgn_hl* in your |.vimrc| >
 
     let g:nrrw_rgn_hl = 'Search'
 <
 (default: WildMenu)
 
 If you want to turn off the highlighting (because this can be distracting), you
-can set the global variable g:nrrw_rgn_nohl to 1 in your |.vimrc| >
+can set the global variable *g:nrrw_rgn_nohl* to 1 in your |.vimrc| >
 
     let g:nrrw_rgn_nohl = 1
 <
@@ -1980,7 +2056,7 @@ can set the global variable g:nrrw_rgn_nohl to 1 in your |.vimrc| >
 ------------------------------------------------------------------------------
 
 If you'd like to change the key combination that starts the Narrowed Window
-for your selected range, you could put this in your |.vimrc| >
+for your selected range, you could map *<Plug>NrrwrgnDo* in your |.vimrc| >
 
    xmap <F3> <Plug>NrrwrgnDo
 <
@@ -1992,7 +2068,7 @@ mode, unless you want it to Narrow your last visually selected range.
 ------------------------------------------------------------------------------
 
 If you'd like to specify the options that you want to have set for the
-narrowed window, you can set the g:nrrw_custom_options setting, in your
+narrowed window, you can set the *g:nrrw_custom_options* setting, in your
 |.vimrc| e.g. >
 
    let g:nrrw_custom_options={}
@@ -2004,7 +2080,7 @@ care that all options you need will apply.
 ------------------------------------------------------------------------------
 
 If you don't like that your narrowed window opens above the current window,
-define the g:nrrw_topbot_leftright variable to your taste, e.g. >
+define the *g:nrrw_topbot_leftright* variable to your taste, e.g. >
 
   let g:nrrw_topbot_leftright = 'botright'
 <
@@ -2016,7 +2092,7 @@ specified, the narrowed window will appear above/left of the original window.
 
 If you want to use several independent narrowed regions of the same buffer
 that you want to write at the same time, protecting the original buffer is not
-really useful. Therefore, set the g:nrrw_rgn_protect variable, e.g. in your
+really useful. Therefore, set the *g:nrrw_rgn_protect* variable, e.g. in your
 |.vimrc| >
 
    let g:nrrw_rgn_protect = 'n'
@@ -2037,7 +2113,7 @@ might fail silently. Therefore, this feature is experimental!
 
 If you are using the |:NRMulti| command and want to have the original window
 update to the position of where the cursor is in the narrowed window, you can
-set the variable g:nrrw_rgn_update_orig_win, e.g. in your |.vimrc| >
+set the variable *g:nrrw_rgn_update_orig_win,* e.g. in your |.vimrc| >
 
    let g:nrrw_rgn_update_orig_win = 1
 <
@@ -2052,7 +2128,8 @@ By default, NarrowRegion plugin defines the two mappings <Leader>nr in visual
 mode and normal mode and <Leader>Nr only in visual mode. If you have your own
 mappings defined, than NarrowRegion will complain about the key already being
 defined. Chances are, this will be quite annoying to you, so you can disable
-mappings those keys by defining the following variables in your |.vimr| >
+mappings those keys by defining the variables *g:nrrw_rgn_nomap_nr* and
+*g:nrrw_rgn_nomap_Nr* in your |.vimr| >
 
   :let g:nrrw_rgn_nomap_nr = 1
   :let g:nrrw_rgn_nomap_Nr = 1
@@ -2075,7 +2152,8 @@ narrowed window.
 Therefore you want the command |:ArrangeColumn| to be executed in the new
 narrowed window upon entering it, and when writing the changes back, you want
 the command |:UnArrangeColumn| to be executed just before putting the
-changes back. So you set those two variables in your original buffer: >
+changes back. So you set the two variables *b:nrrw_aucmd_create* and
+*b:nrrw_aucmd_close* in your original buffer: >
 
     let b:nrrw_aucmd_create = "set ft=csv|%ArrangeCol"
     let b:nrrw_aucmd_close  = "%UnArrangeColumn"
@@ -2093,16 +2171,20 @@ Note: These hooks are executed in the narrowed window (i.e. after creating the
 narrowed window and its content and before writing the changes back to the
 original buffer).
 
-A third hook 'b:nrrw_aucmd_written' is provided, when the data is written back
-in the original window. This allows to execute scripts, whenever the data is
-written back in the original window. For example, consider you want to write
-the original buffer whenever the narrowed window is written back to the
-original window. You can therefore set: >
+Additional hooks *b:nrrw_aucmd_writepost* and *b:nrrw_aucmd_written* are
+provided, when the data is written back in the original window: the first one
+is executed in the narrowed window, while the second one in the original one
+(the one where the narrowed region was created from).  For example, consider
+you want the execute the command |:make| in the narrowed window, and also write
+the original buffer, whenever the narrowed window is written back to the
+original window. You therefore set: >
     
+    :let b:nrrw_aucmd_writepost = ':make'
     :let b:nrrw_aucmd_written = ':update'
 <
-This will write the original buffer, whenever it was modified after writing
-the changes from the narrowed window back.
+This will run |:make| in the narrowed window and also |:update| the original
+buffer, whenever it was modified after writing the changes from the narrowed
+window back.
 
 2.4 NrrwRgn functions                                    *NrrwRgn-func*
 ---------------------
@@ -2160,7 +2242,8 @@ looking at my Amazon whishlist: http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 =============================================================================
 5. NrrwRgn History                                          *NrrwRgn-history*
 
-0.34: (unreleased) {{{1
+0.35: (unreleased) {{{1
+0.34: Nov 05, 2025 {{{1
 - merge Github Pull #34 (https://github.com/chrisbra/NrrwRgn/pull/34, by
   Pyrohh, thanks!)
 - resize narrowed window to actual size, this won't leave the a lot of 
@@ -2189,6 +2272,16 @@ looking at my Amazon whishlist: http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
   (issue https://github.com/chrisbra/NrrwRgn/issues/52, reported by
   digitalronin, thanks!)
 - correctly highlight in block-wise visual mode, if '$' has been pressed.
+- do not set bufhidden=delete for single narrowed windows
+  https://github.com/chrisbra/NrrwRgn/issues/62
+- Make :NUD able to handle git like merge conflicts
+  https://github.com/chrisbra/NrrwRgn/issues/68
+- Correctly jump to the original window when closing
+  https://github.com/chrisbra/NrrwRgn/issues/70
+- Allow to Unremove lines from |:NRP| command
+  https://github.com/chrisbra/NrrwRgn/issues/72
+- Clarify documentation about |:NRP| command
+  https://github.com/chrisbra/NrrwRgn/issues/71
 
 0.33: Jan 16, 2015 {{{1
 - set local options later, so that FileType autocommands don't trigger to
