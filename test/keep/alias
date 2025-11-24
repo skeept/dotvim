@@ -89,6 +89,8 @@ alias ruf='ruff check --select ALL --ignore UP006,UP007,T201,EXE002,ERA001,D203,
 
 alias gcl=gcloud
 alias gsu=gsutil
+alias gu=gsutil
+alias gc=gcloud
 alias db=duckdb
 
 alias dui='dua i'
