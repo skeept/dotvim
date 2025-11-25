@@ -153,6 +153,8 @@ func! dirvish#shdo(paths, cmd) abort
   endfor
   execute 'silent split' tmpfile '|' (2==exists(':lcd')?('lcd '.dir):'')
   setlocal bufhidden=wipe
+  " The :Shdo script is a temp file, don't save undo history to disk.
+  setlocal noundofile
   silent keepmarks keepjumps call setline(1, lines)
   silent write
   if executable('chmod')
