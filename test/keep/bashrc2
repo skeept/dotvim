@@ -270,16 +270,6 @@ function ddo() #try to do something with every file passed on the command line
   done
 }
 
-function cr()
-{
-  # do a command at the repo root
-  local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
-  if ! git rev-parse 2> /dev/null; then
-    echo "`pwd` is not in a git repo. Excuting in place" >&2
-  fi
-  [ -n "$1" ] && (cd ${repo_root}; eval "$@")
-}
-
 function path ( )
 {
   if test -z "$1"; then
@@ -957,6 +947,43 @@ function cdr()
   # local first_arg=$([ -n "$1" ]  && echo "$1" || echo $(git rev-parse --show-toplevel))
   local target_dir="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
   $cd_cmd $target_dir
+}
+
+function cr()
+{
+  # do a command at the repo root
+  local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
+  if ! git rev-parse 2> /dev/null; then
+    echo "`pwd` is not in a git repo. Excuting in place" >&2
+  fi
+  [ -n "$1" ] && (cd ${repo_root}; eval "$@")
+}
+
+
+function rr()
+{
+    local cd_cmd
+    cd_cmd="$(type z &>/dev/null && echo z || echo cd)"
+
+    local repo_root
+    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+    # If no git repo:
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo "Not inside a git repo. Using current dir: $repo_root" >&2
+    fi
+
+    # If no args: just cd to repo root
+    if [ $# -eq 0 ]; then
+        $cd_cmd "$repo_root"
+        return
+    fi
+
+    # If args: execute command at repo root
+    (
+        cd "$repo_root" || return
+        eval "$@"
+    )
 }
 
 # function nsh() {
