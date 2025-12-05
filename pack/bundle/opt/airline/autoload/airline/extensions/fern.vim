@@ -27,13 +27,19 @@ endfunction
 function! airline#extensions#fern#configure_sections(win, context) abort
   let spc = g:airline_symbols.space
   let fri = fern#fri#parse(bufname(a:context.bufnr))
-  let abspath = fern#fri#to#filepath(fern#fri#parse(fri.path))
+  let abspath = ''
+  " Replace uses fern-replacer filetype, do not try to parse in that case
+  if &ft ==# 'fern' && fri.scheme ==# 'fern'
+    let abspath = fern#fri#to#filepath(fern#fri#parse(fri.path))
+  endif
   call a:win.add_section('airline_a', spc.'fern'.spc)
   if exists('*airline#extensions#branch#get_head')
     " because fern navigation changes an internal _fri_ and not the working directory
     " we need to give it some help so the branch name gets updated
     try
-      execute 'lcd' fnameescape(abspath)
+      if &ft ==# 'fern'
+        execute 'lcd' fnameescape(abspath)
+      endif
     catch /^Vim\%((\a\+)\)\=:E344:/
       call a:win.add_section('airline_b', '')
     endtry
