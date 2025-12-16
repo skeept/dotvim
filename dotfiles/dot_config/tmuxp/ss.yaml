@@ -1,0 +1,25 @@
+session_name: S2
+
+start_directory: ~/src/SABRE2/sabre2
+
+windows:
+  - window_name: nix-shell
+    layout: tiled
+    panes:
+      - focus: true
+        shell_command:
+          - nix-shell
+
+  - window_name: nix
+    layout: tiled
+    panes:
+      - shell_command:
+          - echo "Waiting 30s before starting nix-shell..."
+          - sleep 30
+          - nix-shell
+
+  - window_name: jobs_mgr
+    layout: tiled
+    panes:
+      - shell_command:
+          - cdr jobs
