@@ -15,6 +15,7 @@
     p4d = difftool --tool=p4
     bc4 = difftool --tool=bc4
     bc = difftool --tool=bc4
+    bcc = difftool --tool=bc4 --cached
 
 [diff]
     # Set your default tool *for WSL*
