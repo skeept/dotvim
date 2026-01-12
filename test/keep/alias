@@ -64,8 +64,8 @@ alias r='fc -s'
 alias po=popd
 alias pu=pushd
 
-alias da=date
-alias ze='unset FPATH; exec zsh'
+# alias da=date
+# alias ze='unset FPATH; exec zsh'
 alias wgetnc='wget --no-check-certificate'
 
 alias vpp='vim -u NONE --noplugins'

@@ -659,7 +659,7 @@ efg()
 ### NVIM END
 
 # cd to a nested folder
-cdf()
+zf()
 {
   local dir
   local ok=0
@@ -940,25 +940,47 @@ function fixnix() {
   dupremove PATH
 }
 
-function cdr()
-{
-  # cd to repo root
-  local cd_cmd="$(type z 1>2 >& /dev/null && echo z || echo cd)"
-  # local first_arg=$([ -n "$1" ]  && echo "$1" || echo $(git rev-parse --show-toplevel))
-  local target_dir="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
-  $cd_cmd $target_dir
-}
+#function cdr()
+#{
+#  # cd to repo root
+#  local cd_cmd="$(type z 1>2 >& /dev/null && echo z || echo cd)"
+#  # local first_arg=$([ -n "$1" ]  && echo "$1" || echo $(git rev-parse --show-toplevel))
+#  local target_dir="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+#  $cd_cmd $target_dir
+#}
+#
+#function cr()
+#{
+#  # do a command at the repo root
+#  local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
+#  if ! git rev-parse 2> /dev/null; then
+#    echo "`pwd` is not in a git repo. Excuting in place" >&2
+#  fi
+#  [ -n "$1" ] && (cd ${repo_root}; eval "$@")
+#}
 
-function cr()
-{
-  # do a command at the repo root
-  local repo_root="$(git rev-parse --show-toplevel 2> /dev/null || echo -n .)"
-  if ! git rev-parse 2> /dev/null; then
-    echo "`pwd` is not in a git repo. Excuting in place" >&2
+function cr() {
+  # Find the Git root or fall back to current directory
+  local target_dir
+  if ! target_dir="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    target_dir="."
+    echo "$(pwd) is not in a git repo. Executing in place" >&2
   fi
-  [ -n "$1" ] && (cd ${repo_root}; eval "$@")
-}
 
+  local cd_cmd
+  if command -v z >/dev/null 2>&1; then
+    cd_cmd="z"
+  else
+    cd_cmd="cd"
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    "$cd_cmd" "$target_dir"
+  else
+    # Run command at repo root without changing caller's cwd
+    ("$cd_cmd" "$target_dir" && "$@")
+  fi
+}
 
 function rr()
 {
