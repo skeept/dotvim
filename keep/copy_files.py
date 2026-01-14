@@ -112,14 +112,14 @@ def main() -> None:
     parser = argparse.ArgumentParser("copy files from folder.")
     parser.add_argument(
         "-o",
-        "--other_direction",
+        "--other-direction",
         help="reverse copy destination",
         action="store_true",
     )
     parser.add_argument("-c", "--copy", action="store_true", help="copy the files")
     parser.add_argument(
         "-d",
-        "--hide_diff",
+        "--hide-diff",
         action="store_true",
         help="hide diff output",
     )

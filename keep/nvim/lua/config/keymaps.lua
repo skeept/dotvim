@@ -44,7 +44,9 @@ end, {
 })
 
 local function remove_cr()
+  local saved_view = vim.fn.winsaveview()
   vim.cmd([[silent! %s/\r//g]])
+  vim.fn.winrestview(saved_view)
 end
 
 vim.api.nvim_create_user_command(
