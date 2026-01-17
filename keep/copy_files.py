@@ -13,6 +13,15 @@ from typing import Optional
 
 GLOBAL_SKIP = [".git", ".ruff_cache"]
 
+# Configuration for different diff tools
+DIFF_TOOLS = {
+    "delta": ["--side-by-side"],
+    # "difft": ["--display", "side-by-side"],
+    "difft": [],
+    "diff": ["-u", "--color=auto"],  # Standard diff with color
+    "none": [],
+}
+
 
 @dataclasses.dataclass
 class FolderConfig:
@@ -49,7 +58,7 @@ def get_all_elements(name: Path, skip: list[str]) -> typing.Iterator[Path]:
     """Get all elements recursively, honoring the skip list."""
     for elem in name.iterdir():
         if elem.name in skip:
-            print(f"Skipping {elem}")
+            # print(f"Skipping {elem}") # Optional: commented out to reduce noise
             continue
         yield elem
         if elem.is_dir():
@@ -64,6 +73,23 @@ class CmpStatus(enum.Enum):
     diff = enum.auto()
 
 
+def run_diff(tool_name: str, file_a: Path, file_b: Path) -> None:
+    """Run the specified diff tool if available."""
+    if tool_name == "none":
+        return
+
+    # Check if tool exists in path
+    if not shutil.which(tool_name):
+        print(f"  [Warning] Diff tool '{tool_name}' not found in PATH.")
+        return
+
+    options = DIFF_TOOLS.get(tool_name, [])
+    try:
+        subprocess.run([tool_name, *options, str(file_a), str(file_b)], check=False)
+    except subprocess.SubprocessError as e:
+        print(f"  [Error] Failed to run diff: {e}")
+
+
 def copy_files(
     origin: Path,
     destination: Path,
@@ -71,11 +97,12 @@ def copy_files(
     backup_folder: Path = Path("tmp"),
     dry_run: bool = True,
     display_all: bool = False,
-    show_diff: bool = True,
+    diff_tool: str = "delta",
 ) -> None:
     """Assume folders and copy nested files."""
-    show_diff = not dry_run or show_diff
-    has_delta = shutil.which("delta") is not None
+    
+    # If dry_run is True, we generally want to see diffs unless explicitly set to 'none'
+    # logic handled by caller passing appropriate diff_tool string
 
     origin.mkdir(parents=True, exist_ok=True)
     destination.mkdir(parents=True, exist_ok=True)
@@ -91,9 +118,9 @@ def copy_files(
 
         if display_all or status != CmpStatus.same:
             print(f"{status.name:<7} {elem!s:<50} => {target}")
-            if show_diff and status == CmpStatus.diff and has_delta:
-                delta_options = ["--side-by-side"]
-                subprocess.run(["delta", *delta_options, elem, target], check=False)
+            
+            if status == CmpStatus.diff:
+                run_diff(diff_tool, elem, target)
 
         if not dry_run:
             if not backup_folder.is_dir():
@@ -109,6 +136,7 @@ def copy_files(
 
 def main() -> None:
     """Set args and copy."""
+    default_tool = "difft"
     parser = argparse.ArgumentParser("copy files from folder.")
     parser.add_argument(
         "-o",
@@ -117,12 +145,16 @@ def main() -> None:
         action="store_true",
     )
     parser.add_argument("-c", "--copy", action="store_true", help="copy the files")
+    
+    # Updated -d argument
     parser.add_argument(
         "-d",
-        "--hide-diff",
-        action="store_true",
-        help="hide diff output",
+        "--diff-tool",
+        choices=DIFF_TOOLS.keys(),
+        default=default_tool,
+        help=f"Select diff tool (default: {default_tool}). Use 'none' to hide diffs.",
     )
+    
     parser.add_argument(
         "-w",
         "--windows",
@@ -131,19 +163,26 @@ def main() -> None:
         default=None,
     )
     args = parser.parse_args()
+    
     nvim = FolderConfig.nvim(args.windows)
     origin, dest, _ = (
         dataclasses.astuple(nvim)
         if args.other_direction
         else dataclasses.astuple(nvim.flip())
     )
+    
     dry_run = not args.copy
+    
+    # If copying (not dry run), you might want to suppress diffs by default 
+    # unless user explicitly asked for a tool. 
+    # For now, it respects the -d argument regardless of dry_run status.
+    
     copy_files(
         origin,
         dest,
         skip=nvim.skip,
         dry_run=dry_run,
-        show_diff=not args.hide_diff,
+        diff_tool=args.diff_tool,
     )
 
 
