@@ -227,7 +227,7 @@ function setcomps
   #_eval_cmd_expression_if_exists posh completion ${CURSHELL}
   _eval_cmd_expression_if_exists starship completions ${CURSHELL}
   _eval_cmd_expression_if_exists procs --gen-completion-out ${CURSHELL}
-  _eval_cmd_expression_if_exists uv generate-shell-completion ${CURSHELL}
+  # _eval_cmd_expression_if_exists uv generate-shell-completion ${CURSHELL}
 
   local end=$(date +%s%3N)
   local duration=$((end - start))
@@ -237,6 +237,78 @@ function setcomps
   fi
 }
 setcomps
+
+function make_lazy_alias() {
+    local alias_name="$1"
+    local original_cmd="$2"
+    local comp_func="$3"
+    local gen_cmd="$4"
+    local loader_func="_lazy_load_alias_${alias_name}"
+
+    eval "
+        # Shared setup logic
+        function _ensure_setup_${alias_name}() {
+            if ! declare -f $comp_func > /dev/null; then
+                eval \"\$($gen_cmd)\"
+                # Re-bind the alias to the real completion function
+                complete -F $comp_func -o bashdefault -o default $alias_name
+            fi
+        }
+
+        # Execution Wrapper (Runs on Enter)
+        function $alias_name() {
+            _ensure_setup_${alias_name}
+            command $original_cmd \"\$@\"
+        }
+
+        # Completion Wrapper (Runs on Tab)
+        function $loader_func() {
+            _ensure_setup_${alias_name}
+            $comp_func
+        }
+    "
+    # Set initial completion to the loader
+    complete -F "$loader_func" -o bashdefault -o default "$alias_name"
+}
+
+# 2. Add lazy completion to an EXISTING command
+# Usage: make_lazy_completion <cmd_name> <comp_func_name> <gen_cmd>
+function make_lazy_completion() {
+    local cmd_name="$1"
+    local comp_func="$2"
+    local gen_cmd="$3"
+    local loader_func="_lazy_load_completion_${cmd_name}"
+
+    eval "
+        function _ensure_setup_${cmd_name}() {
+            if ! declare -f $comp_func > /dev/null; then
+                eval \"\$($gen_cmd)\"
+                # Note: The eval usually runs 'complete -F ...' itself,
+                # but we run it again here just to be safe and ensure defaults
+                complete -F $comp_func -o bashdefault -o default $cmd_name
+            fi
+        }
+
+        # Execution Wrapper (Optional: ensures setup runs if you type the command without tabbing)
+        function $cmd_name() {
+            _ensure_setup_${cmd_name}
+            command $cmd_name \"\$@\"
+        }
+
+        # Completion Wrapper
+        function $loader_func() {
+            _ensure_setup_${cmd_name}
+            $comp_func
+        }
+    "
+    complete -F "$loader_func" -o bashdefault -o default "$cmd_name"
+}
+
+make_lazy_alias "zl" "zellij" "_zellij" "zellij setup --generate-completion bash"
+
+# 2. For UV (Adding completion to 'uv' itself)
+# Syntax: make_lazy_completion <cmd> <function_name> <setup_cmd>
+make_lazy_completion "uv" "_uv" "command uv generate-shell-completion bash"
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 

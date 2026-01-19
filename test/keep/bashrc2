@@ -1130,6 +1130,34 @@ function _find_dotenv() {
   return 1  # Not found
 }
 
+if false; then
+  ## enable zellij completion START {{
+  # 1. Define the runner function
+  zl() {
+    _zl_ensure_completion
+    zellij "$@"
+  }
+
+  # 2. Define a loader function that sets everything up
+  _zl_ensure_completion() {
+    if ! declare -f _zellij > /dev/null; then
+      eval "$(zellij setup --generate-completion bash)"
+      complete -F _zellij -o bashdefault -o default zl
+    fi
+  }
+
+  # 3. Define a temporary completion function
+  _zl_lazy_complete() {
+    _zl_ensure_completion
+    # Call the real completion function now that it is loaded
+    _zellij
+  }
+
+  # 4. Assign the lazy completion to zl initially
+  complete -F _zl_lazy_complete zl
+  ## enable zellij completion END }}
+fi
+
 if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
   # atuin related configs
   if [ -x "$(command -v atuin)" ]; then
