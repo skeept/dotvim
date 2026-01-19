@@ -243,32 +243,41 @@ function make_lazy_alias() {
     local original_cmd="$2"
     local comp_func="$3"
     local gen_cmd="$4"
-    local loader_func="_lazy_load_alias_${alias_name}"
+    local loader_func="_lazy_load_shared_${alias_name}"
 
     eval "
-        # Shared setup logic
+        # 1. Shared Setup Logic
+        # This function runs ONCE. It generates the script and applies it to BOTH commands.
         function _ensure_setup_${alias_name}() {
             if ! declare -f $comp_func > /dev/null; then
+                # Run the generation command (e.g. zellij setup ...)
                 eval \"\$($gen_cmd)\"
-                # Re-bind the alias to the real completion function
+
+                # Apply the real completion function to BOTH the alias and the original command
                 complete -F $comp_func -o bashdefault -o default $alias_name
+                complete -F $comp_func -o bashdefault -o default $original_cmd
             fi
         }
 
-        # Execution Wrapper (Runs on Enter)
+        # 2. Execution Wrapper for the ALIAS (zl)
+        # We only wrap 'zl', not 'zellij', so 'zellij' runs natively without overhead.
         function $alias_name() {
             _ensure_setup_${alias_name}
             command $original_cmd \"\$@\"
         }
 
-        # Completion Wrapper (Runs on Tab)
+        # 3. Completion Wrapper (The Lazy Loader)
+        # This is triggered when you press TAB on either command.
         function $loader_func() {
             _ensure_setup_${alias_name}
+            # Now that setup is done, call the real completion function immediately
             $comp_func
         }
     "
-    # Set initial completion to the loader
+
+    # 4. Bind the Lazy Loader to BOTH commands initially
     complete -F "$loader_func" -o bashdefault -o default "$alias_name"
+    complete -F "$loader_func" -o bashdefault -o default "$original_cmd"
 }
 
 # 2. Add lazy completion to an EXISTING command
@@ -307,6 +316,7 @@ function make_lazy_completion() {
     complete -F "$loader_func" -o bashdefault -o default "$cmd_name"
 }
 
+if false; then
 make_lazy_alias "zl" "zellij" "_zellij" "zellij setup --generate-completion bash"
 
 # 2. For UV (Adding completion to 'uv' itself)
@@ -315,9 +325,17 @@ make_lazy_completion "uv" "_uv" "uv generate-shell-completion ${CURSHELL}"
 make_lazy_completion "starship" "_starship" "starship completions ${CURSHELL}"
 make_lazy_completion "atuin" "_atuin" "atuin gen-completions --shell ${CURSHELL}"
 make_lazy_completion "procs" "_procs" "procs --gen-completion-out ${CURSHELL}"
+fi
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
+function generate-lazy-completions()
+  {
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    source "${SCRIPT_DIR}/generate_lazy_completions.sh"
+  }
+
+[ -e ~/.cache/lazy_shell_completions.sh ] && source ~/.cache/lazy_shell_completions.sh
 
 # fzf-completion
 if test -d ~/tmp/gclones/fzf-tab-completion; then
