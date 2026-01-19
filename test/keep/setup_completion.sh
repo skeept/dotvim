@@ -223,10 +223,10 @@ function setcomps
 
   _eval_cmd_expression_if_exists just --completions ${CURSHELL}
   _eval_cmd_expression_if_exists command just --completions ${CURSHELL}
-  _eval_cmd_expression_if_exists atuin gen-completions --shell ${CURSHELL}
+  # _eval_cmd_expression_if_exists atuin gen-completions --shell ${CURSHELL}
   #_eval_cmd_expression_if_exists posh completion ${CURSHELL}
-  _eval_cmd_expression_if_exists starship completions ${CURSHELL}
-  _eval_cmd_expression_if_exists procs --gen-completion-out ${CURSHELL}
+  # _eval_cmd_expression_if_exists starship completions ${CURSHELL}
+  # _eval_cmd_expression_if_exists procs --gen-completion-out ${CURSHELL}
   # _eval_cmd_expression_if_exists uv generate-shell-completion ${CURSHELL}
 
   local end=$(date +%s%3N)
@@ -279,23 +279,26 @@ function make_lazy_completion() {
     local gen_cmd="$3"
     local loader_func="_lazy_load_completion_${cmd_name}"
 
+    # AUTO-FIX:
+    # If the setup command ($gen_cmd) starts with the same name as the function ($cmd_name),
+    # we prepend 'command' to prevent the function from calling itself infinitely.
+    if [[ "${gen_cmd%% *}" == "$cmd_name" ]]; then
+        gen_cmd="command $gen_cmd"
+    fi
+
     eval "
         function _ensure_setup_${cmd_name}() {
             if ! declare -f $comp_func > /dev/null; then
                 eval \"\$($gen_cmd)\"
-                # Note: The eval usually runs 'complete -F ...' itself,
-                # but we run it again here just to be safe and ensure defaults
                 complete -F $comp_func -o bashdefault -o default $cmd_name
             fi
         }
 
-        # Execution Wrapper (Optional: ensures setup runs if you type the command without tabbing)
         function $cmd_name() {
             _ensure_setup_${cmd_name}
             command $cmd_name \"\$@\"
         }
 
-        # Completion Wrapper
         function $loader_func() {
             _ensure_setup_${cmd_name}
             $comp_func
@@ -308,7 +311,10 @@ make_lazy_alias "zl" "zellij" "_zellij" "zellij setup --generate-completion bash
 
 # 2. For UV (Adding completion to 'uv' itself)
 # Syntax: make_lazy_completion <cmd> <function_name> <setup_cmd>
-make_lazy_completion "uv" "_uv" "command uv generate-shell-completion bash"
+make_lazy_completion "uv" "_uv" "uv generate-shell-completion ${CURSHELL}"
+make_lazy_completion "starship" "_starship" "starship completions ${CURSHELL}"
+make_lazy_completion "atuin" "_atuin" "atuin gen-completions --shell ${CURSHELL}"
+make_lazy_completion "procs" "_procs" "procs --gen-completion-out ${CURSHELL}"
 
 test -e ~/.local/bash-completion/etc/profile.d/bash_completion.sh && source ~/.local/bash-completion/etc/profile.d/bash_completion.sh
 
