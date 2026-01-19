@@ -14,11 +14,8 @@ function add_lazy_completion() {
   local comp_func="$2"
   local gen_cmd="$3"
 
-  # Auto-fix recursion: if the generation command starts with the tool name,
-  # prepend 'command' so the wrapper doesn't call itself.
-  if [[ "${gen_cmd%% *}" == "$cmd_name" ]]; then
-    gen_cmd="command $gen_cmd"
-  fi
+  # NOTE: We removed the auto-fix recursion logic because we no longer
+  # create a wrapper function named "$cmd_name", so recursion is impossible.
 
   # Append the wrapper logic to the file
   cat <<EOF >>"$OUTPUT_FILE"
@@ -27,20 +24,19 @@ function add_lazy_completion() {
 function _lazy_setup_${cmd_name}() {
     if ! declare -f $comp_func > /dev/null; then
         eval "\$($gen_cmd)"
+        # Re-bind the command to the real completion function so this loader only runs once
         complete -F $comp_func -o bashdefault -o default $cmd_name
     fi
 }
 
-function $cmd_name() {
-    _lazy_setup_${cmd_name}
-    command $cmd_name "\$@"
-}
-
+# The Completion Wrapper (Only runs when you press Tab)
 function _lazy_loader_${cmd_name}() {
     _lazy_setup_${cmd_name}
-    $comp_func
+    # Call the real completion function with all arguments passed by bash
+    $comp_func "\$@"
 }
 
+# Bind the loader to the command
 complete -F _lazy_loader_${cmd_name} -o bashdefault -o default $cmd_name
 EOF
 }
