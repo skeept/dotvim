@@ -1171,4 +1171,58 @@ if [ -z "${FORCE_ONLY_ONE_EVAL_ATUIN+x}" ]; then
   # export FORCE_ONLY_ONE_EVAL_ATUIN=1
 fi
 
+##### tmux utility functions {{
+
+# 1. Run in a new Window (Equivalent to 'zr' - Zellij Run)
+# Usage: tr <command>
+function tt() {
+    # -n sets the window name to the command being run
+    tmux new-window -n "$1" -- "$@"
+}
+
+# 2. Run Floating / Popup (Equivalent to 'zrf' - Run Floating)
+# Usage: trf <command>
+# Requires tmux >= 3.2
+function trf() {
+    # -E closes the popup automatically when the command exits
+    # -d sets the working directory to the current one
+    if [ -n "$TMUX" ]; then
+        tmux popup -d '#{pane_current_path}' -E -- "$@"
+    else
+        # Fallback if not inside tmux: just run the command
+        "$@"
+    fi
+}
+
+# 3. Run In-Place / Split (Equivalent to 'zri' - Run In-place)
+# Usage: tri <command>
+function tri() {
+    # -h splits horizontally (side-by-side), remove -h for vertical
+    tmux split-window -h -- "$@"
+}
+
+# 4. Edit in new Window (Equivalent to 'ze' - Edit)
+# Usage: te <file>
+function te() {
+    tmux new-window  -- nvim "$@"
+}
+
+# 5. Edit Floating (Equivalent to 'zef' - Edit Floating)
+# Usage: tef <file>
+function tef() {
+    if [ -n "$TMUX" ]; then
+        tmux popup -d '#{pane_current_path}' -E -w 90% -h 90% -- "nvim" "$@"
+    else
+        "nvim" "$@"
+    fi
+}
+
+# 6. Edit In-Place / Split (Equivalent to 'zei')
+# Usage: tei <file>
+function tei() {
+    tmux split-window -h -- "nvim" "$@"
+}
+##### tmux utility functions }}
+
+
 mtimer end of bashrc

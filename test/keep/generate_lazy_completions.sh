@@ -77,6 +77,40 @@ complete -F _lazy_loader_${alias_name} -o bashdefault -o default $alias_name
 complete -F _lazy_loader_${alias_name} -o bashdefault -o default $original_cmd
 EOF
 }
+#
+# -----------------------------------------------------------------------------
+# Function 3: Add completion by SOURCING a file (like 'yazi')
+# -----------------------------------------------------------------------------
+function add_lazy_source() {
+  local cmd_name="$1"
+  local comp_func="$2"
+  local source_file="$3"
+
+  cat <<EOF >>"$OUTPUT_FILE"
+
+# --- Lazy source: $cmd_name from $source_file ---
+function _lazy_setup_${cmd_name}() {
+    if ! declare -f $comp_func > /dev/null; then
+        if [ -f "$source_file" ]; then
+            source "$source_file"
+        else
+            echo "Error: Completion file not found: $source_file" >&2
+            return 1
+        fi
+
+        # Re-bind to the real function
+        complete -F $comp_func -o bashdefault -o default $cmd_name
+    fi
+}
+
+function _lazy_loader_${cmd_name}() {
+    _lazy_setup_${cmd_name}
+    $comp_func "\$@"
+}
+
+complete -F _lazy_loader_${cmd_name} -o bashdefault -o default $cmd_name
+EOF
+}
 
 # -----------------------------------------------------------------------------
 # YOUR CONFIGURATION HERE
@@ -90,5 +124,16 @@ add_lazy_completion "uv" "_uv" "uv generate-shell-completion bash"
 add_lazy_completion "starship" "_starship" "starship completions ${CURSHELL}"
 add_lazy_completion "atuin" "_atuin" "atuin gen-completions --shell ${CURSHELL}"
 add_lazy_completion "procs" "_procs" "procs --gen-completion-out ${CURSHELL}"
+add_lazy_completion bat _bat "bat --completion ${CURSHELL}"
+add_lazy_completion rg _rg "rg --generate=complete-bash"
+add_lazy_completion fd _fd "fd --gen-completions bash"
+add_lazy_completion docker __start_docker "docker completion ${CURSHELL}"
+add_lazy_completion xh _xh "xh --generate=complete-bash"
+
+add_lazy_source yazi _yazi $HOME/bin/links/completions/yazi.bash
+add_lazy_source fd fd_ $HOME/bin/links/completions/fd.bash
+add_lazy_source zoxide _zoxide ${HOME}/bin/links/completions/zoxide.bash
+add_lazy_source tmux _tmux ${SCRIPT_DIR}/completions/tmux.bash
+add_lazy_source tm _tmux ${SCRIPT_DIR}/completions/tmux.bash
 
 echo "Generated completions in $OUTPUT_FILE"

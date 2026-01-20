@@ -207,7 +207,7 @@ function setcomps
 {
   local start=$(date +%s%3N)
   folders=(
-    $HOME/bin/links/completions
+    # $HOME/bin/links/completions
     ${CONFIG_HOME}/completions
   )
   for folder in ${folders[@]}; do
@@ -236,7 +236,7 @@ function setcomps
     echo "Elapsed time setcomps: ${duration} milliseconds"
   fi
 }
-setcomps
+# setcomps
 
 function make_lazy_alias() {
     local alias_name="$1"
