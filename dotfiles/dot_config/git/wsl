@@ -1,3 +1,6 @@
+# link this to ./local in wsl systems
+# ln -s wsl local
+
 [difftool "bc4"]
     cmd = \"/mnt/c/Program Files/Beyond Compare 4/BComp.exe\" $(wpath $LOCAL) $(wpath $REMOTE)
 
