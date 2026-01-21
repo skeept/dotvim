@@ -1174,10 +1174,13 @@ fi
 ##### tmux utility functions {{
 
 # 1. Run in a new Window (Equivalent to 'zr' - Zellij Run)
-# Usage: tr <command>
-function tt() {
-    # -n sets the window name to the command being run
-    tmux new-window -n "$1" -- "$@"
+# Usage: tn <command>
+function tn() {
+    local args
+    # If $1 exists, set up the name and command; otherwise, empty array.
+    [ -n "$1" ] && args=("-n" "$1" "--" "$@") || args=()
+
+    tmux new-window "${args[@]}"
 }
 
 # 2. Run Floating / Popup (Equivalent to 'zrf' - Run Floating)
