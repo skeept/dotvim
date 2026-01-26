@@ -131,7 +131,6 @@ add_lazy_completion docker __start_docker "docker completion ${CURSHELL}"
 add_lazy_completion xh _xh "xh --generate=complete-bash"
 
 add_lazy_source yazi _yazi $HOME/bin/links/completions/yazi.bash
-add_lazy_source fd fd_ $HOME/bin/links/completions/fd.bash
 add_lazy_source zoxide _zoxide ${HOME}/bin/links/completions/zoxide.bash
 add_lazy_source tmux _tmux ${SCRIPT_DIR}/../completions/tmux.bash
 add_lazy_source tm _tmux ${SCRIPT_DIR}/../completions/tmux.bash
