@@ -35,29 +35,19 @@ export NUM_TIMES_SOURCED=$(( ${NUM_TIMES_SOURCED:-0} + 1 ))
 
 export EDITOR=vim
 
-if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
-  # read /etc/bashrc and /etc/profile if present
-  if test -z "$now_profile"; then
-    export now_profile="0"
-  fi
-  prev_profile_time="$now_profile"
-  export now_profile=$(date +'%s')
-  let "time_diff = $now_profile - $prev_profile_time"
-  if test $time_diff -ge 3; then
-    test -f /etc/bashrc && . /etc/bashrc
-    if ! { whoami | grep ark-research >& /dev/null ; }; then
-      test -f /etc/profile && . /etc/profile
-    fi
-  fi
 
-  if test -z "$DISPLAY" -a "$TERM" = "xterm" -a -x /usr/bin/who ; then
-    WHOAMI="`/usr/bin/who am i`"
-    _DISPLAY="`expr "$WHOAMI" : '.*(\([^\.][^\.]*\).*)'`:0.0"
-    if [ "${_DISPLAY}" != ":0:0.0" -a "${_DISPLAY}" != " :0.0" \
-      -a "${_DISPLAY}" != ":0.0" ]; then
-    export DISPLAY="${_DISPLAY}";
+if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
+  # Use SECONDS (built-in bash timer) instead of 'date'
+  prev_profile_time="${now_profile:-0}"
+  now_profile=$SECONDS
+  (( time_diff = now_profile - prev_profile_time ))
+
+  if (( time_diff >= 3 )); then
+    [ -f /etc/bashrc ] && . /etc/bashrc
+    # Use bash internal string matching instead of 'whoami | grep'
+    if [[ "$USER" != *"ark-research"* ]]; then
+      [ -f /etc/profile ] && . /etc/profile
     fi
-    unset WHOAMI _DISPLAY
   fi
   export FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE=1
 fi
@@ -71,21 +61,22 @@ function addfolderstovariables ( )
   export MANPATH="$DROOT/share/man":"$MANPATH"
 }
 
-function addDirToVarsFront()
-{
-  local DROOT="$1"
-  export PATH="$DROOT/bin":"${PATH}"
-  export LD_LIBRARY_PATH="$DROOT/lib":"${LD_LIBRARY_PATH}"
-  #export LD_LIBRARY_PATH="$DROOT/lib/amd64":"${LD_LIBRARY_PATH}"
-  export LD_LIBRARY_PATH="$DROOT/lib64":"${LD_LIBRARY_PATH}"
-  export LD_LIBRARY_PATH="$DROOT/lib/amd64":"${LD_LIBRARY_PATH}"
-  export MANPATH="$DROOT/share/man":"$MANPATH"
-  export PKG_CONFIG_PATH="${DROOT}/lib/pkgconfig":":${PKG_CONFIG_PATH}"
+function addDirToVarsFront() {
+  local d="$1"
+  [[ ! -d "$d" ]] && return
+
+  export PATH="$d/bin:$PATH"
+  # Standardize LD logic; check for lib64 specifically
+  [[ -d "$d/lib" ]] && export LD_LIBRARY_PATH="$d/lib:$LD_LIBRARY_PATH"
+  [[ -d "$d/lib64" ]] && export LD_LIBRARY_PATH="$d/lib64:$LD_LIBRARY_PATH"
+  [[ -d "$d/share/man" ]] && export MANPATH="$d/share/man:$MANPATH"
+  [[ -d "$d/lib/pkgconfig" ]] && export PKG_CONFIG_PATH="$d/lib/pkgconfig:$PKG_CONFIG_PATH"
 }
 
 function addDirToVarsBack()
 {
   local DROOT="$1"
+  [[ ! -d ${DROOT} ]] && return
   export PATH="${PATH}":"$DROOT/bin"
   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib"
   #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib/amd64"
@@ -112,22 +103,6 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/usr/lib"
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"${HOME}/lib"
 
 export MANPATH=$MANPATH:"/tmp/$USER/man":"/tmp/$USER/local/man"
-
-##################################################
-# test if this machine is one of the unix machines
-unix_machines="scepter ballista"
-function query_is_unix {
-  local is_unix=0
-  for name in $unix_machines; do
-    aux=`hostname | grep $name`
-    if test -n "$aux" ; then
-      echo "is_unix"
-      break
-    fi
-  done
-} #query is unix END
-is_unix=`query_is_unix`
-##################################################
 
 declare t=/tmp/$USER
 declare h=/tmp/helder
@@ -177,14 +152,18 @@ if test -n "$PS1"; then
     export CONFIG_DOT_PREFIX="."
   fi
 
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias"
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias"
   [ -e "${NAME}" ] && . "${NAME}"
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2"
 
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2"
   [ -e "${NAME}" ] && . "${NAME}"
 
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh"
   [ -e "${NAME}" ] && . "${NAME}"
+
+  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh"
+  [ -e "${NAME}" ] && . "${NAME}"
+
 
   # load windows specific settings, case they exist
   NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
