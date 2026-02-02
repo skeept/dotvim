@@ -120,15 +120,16 @@ EOF
 add_lazy_alias "zl" "zellij" "_zellij" "zellij setup --generate-completion bash"
 
 # 2. UV (Standard completion)
-add_lazy_completion "uv" "_uv" "uv generate-shell-completion bash"
-add_lazy_completion "starship" "_starship" "starship completions ${CURSHELL}"
-add_lazy_completion "atuin" "_atuin" "atuin gen-completions --shell ${CURSHELL}"
-add_lazy_completion "procs" "_procs" "procs --gen-completion-out ${CURSHELL}"
+add_lazy_completion uv _uv "uv generate-shell-completion bash"
+add_lazy_completion starship _starship "starship completions ${CURSHELL}"
+add_lazy_completion atuin _atuin "atuin gen-completions --shell ${CURSHELL}"
+add_lazy_completion procs _procs "procs --gen-completion-out ${CURSHELL}"
 add_lazy_completion bat _bat "bat --completion ${CURSHELL}"
 add_lazy_completion rg _rg "rg --generate=complete-bash"
 add_lazy_completion fd _fd "fd --gen-completions bash"
 add_lazy_completion docker __start_docker "docker completion ${CURSHELL}"
 add_lazy_completion xh _xh "xh --generate=complete-bash"
+add_lazy_completion just _just "just --completions bash"
 
 add_lazy_source yazi _yazi $HOME/bin/links/completions/yazi.bash
 add_lazy_source zoxide _zoxide ${HOME}/bin/links/completions/zoxide.bash
