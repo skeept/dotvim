@@ -1,13 +1,5 @@
 # vim: set ft=bash:
 
-#=========================================================================
-#
-# PROGRAMMABLE COMPLETION - ONLY SINCE BASH-2.04
-# (Most are taken from the bash 2.05 documentation)
-# You will in fact need bash-2.05 for some features
-#
-#=========================================================================
-
 mtimer completion start
 
 shopt -s extglob        # necessary
@@ -195,13 +187,6 @@ function _vim()
   return 0
 }
 complete -F _vim vim vi v gv gvi vd va
-
-#function just()
-#{
-#unset -f just
-#eval "$(command just --completions bash)"
-#just "$@"
-#}
 
 function setcomps
 {
