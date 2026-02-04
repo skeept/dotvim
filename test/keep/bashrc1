@@ -1,199 +1,118 @@
-# Sample .bashrc for SuSE Linux
-# Copyright (c) SuSE GmbH Nuernberg
+# ==============================================================================
+# SECTION 1: GLOBAL ENVIRONMENT (Run once per session, inherited by subshells)
+# ==============================================================================
 
-# There are 3 different types of shells in bash: the login shell, normal shell
-# and interactive shell. Login shells read ~/.profile and interactive shells
-# read ~/.bashrc; in our setup, .profile sources .bashrc - thus all settings
-# made here will also take effect in a login shell.
-#
-# NOTE: It is recommended to make language settings in ~/.profile rather than
-# here, since multilingual X sessions would not work properly if LANG is over-
-# ridden in every subshell.
+if [ -z "$__BASHRC1_ENV_LOADED" ]; then
+    export __BASHRC1_ENV_LOADED=1
 
-#-----------------------------------
-# Source global definitions (if any)
-#-----------------------------------
+    # Track sourcing for debugging
+    export NUM_TIMES_SOURCED=$(( ${NUM_TIMES_SOURCED:-0} + 1 ))
 
-# we can see how portable the 2 alternatives are
-#if type readlink >& /dev/null; then
-  #export CUR_SHELL=$(basename $(readlink -f /proc/$$/exe))
-#else # assume shell is bash
-  #export CUR_SHELL="bash"
+    # Determine shell type
+    [ -n "$ZSH_VERSION" ] && CURSHELL=zsh || CURSHELL=bash
+    export EDITOR=nvim
 
-#fi
-
-# use this to add logic to modify paths.
-# the reason to use this: seems that by sourcing my config it overrides some tools some
-# nix. this should prevent that
-export NUM_TIMES_SOURCED=$(( ${NUM_TIMES_SOURCED:-0} + 1 ))
-
-# for now just consider bash and zsh
-[ -n "$ZSH_VERSION" ] && CURSHELL=zsh || CURSHELL=bash
-# alternate way that seems to work.
-#CURSHELL="$(ps -o comm= -p $$)"
-# Note: tested this for speed and it's much slower
-
-export EDITOR=vim
-
-
-if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
-  # Use SECONDS (built-in bash timer) instead of 'date'
-  prev_profile_time="${now_profile:-0}"
-  now_profile=$SECONDS
-  (( time_diff = now_profile - prev_profile_time ))
-
-  if (( time_diff >= 3 )); then
-    [ -f /etc/bashrc ] && . /etc/bashrc
-    # Use bash internal string matching instead of 'whoami | grep'
-    if [[ "$USER" != *"ark-research"* ]]; then
-      [ -f /etc/profile ] && . /etc/profile
+    # --- System Profile Evaluation ---
+    if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
+        now_profile=$SECONDS
+        if (( now_profile >= 3 )); then
+            [ -f /etc/bashrc ] && . /etc/bashrc
+            if [[ "$USER" != *"ark-research"* ]]; then
+                [ -f /etc/profile ] && . /etc/profile
+            fi
+        fi
+        export FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE=1
     fi
-  fi
-  export FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE=1
+
+    # --- PATH and Library Modifications ---
+    export PATH=${HOME}/.local/bin:${PATH}
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/${HOME}/lib"
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/lib"
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/usr/lib"
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"${HOME}/lib"
+    export MANPATH=$MANPATH:"/tmp/$USER/man":"/tmp/$USER/local/man"
+
+    export IS_WSL="$(uname -a | grep -i microsoft >& /dev/null && echo 1 || echo 0)"
+    export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
+    export PYTHONSTARTUP=~/.pythonrc.py
+    export DISPLAY0="$DISPLAY"
+    export PYTHONPYCACHEPREFIX=/tmp/pychache
+
+    if [ "${IS_GIT_BASH}" = "1" ]; then
+        export PATH="/c/ht/nvim-win64/bin:${PATH}"
+    else
+        export PATH="${HOME}/bin/links:${PATH}"
+    fi
+
+    [ -e "$HOME/bin" ] && export PATH="${HOME}/bin:${PATH}"
+    [ -e "$HOME/.cargo/bin" ] && export PATH="${HOME}/.cargo/bin:${PATH}"
 fi
 
-function addfolderstovariables ( )
-{
-  local DROOT="$1"
-  export PATH="$DROOT/bin":"${PATH}"
-  export LD_LIBRARY_PATH="$DROOT/lib":"${LD_LIBRARY_PATH}"
-  export LD_LIBRARY_PATH="$DROOT/lib64":"${LD_LIBRARY_PATH}"
-  export MANPATH="$DROOT/share/man":"$MANPATH"
+# ==============================================================================
+# SECTION 2: INTERACTIVE SETTINGS (Run for every new shell process/tmux window)
+# ==============================================================================
+
+# Helper functions for path management (must be defined for aliases/local scripts)
+function addfolderstovariables () {
+    local DROOT="$1"
+    export PATH="$DROOT/bin":"${PATH}"; export LD_LIBRARY_PATH="$DROOT/lib":"${LD_LIBRARY_PATH}"
+    export MANPATH="$DROOT/share/man":"$MANPATH"
 }
 
 function addDirToVarsFront() {
-  local d="$1"
-  [[ ! -d "$d" ]] && return
-
-  export PATH="$d/bin:$PATH"
-  # Standardize LD logic; check for lib64 specifically
-  [[ -d "$d/lib" ]] && export LD_LIBRARY_PATH="$d/lib:$LD_LIBRARY_PATH"
-  [[ -d "$d/lib64" ]] && export LD_LIBRARY_PATH="$d/lib64:$LD_LIBRARY_PATH"
-  [[ -d "$d/share/man" ]] && export MANPATH="$d/share/man:$MANPATH"
-  [[ -d "$d/lib/pkgconfig" ]] && export PKG_CONFIG_PATH="$d/lib/pkgconfig:$PKG_CONFIG_PATH"
+    local d="$1"; [[ ! -d "$d" ]] && return
+    export PATH="$d/bin:$PATH"
+    [[ -d "$d/lib" ]] && export LD_LIBRARY_PATH="$d/lib:$LD_LIBRARY_PATH"
+    [[ -d "$d/share/man" ]] && export MANPATH="$d/share/man:$MANPATH"
 }
 
-function addDirToVarsBack()
-{
-  local DROOT="$1"
-  [[ ! -d ${DROOT} ]] && return
-  export PATH="${PATH}":"$DROOT/bin"
-  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib"
-  #export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib/amd64"
-  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib64"
-  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"$DROOT/lib/amd64"
-  export MANPATH="$MANPATH":"$DROOT/share/man"
-  export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}":"${DROOT}/lib/pkgconfig"
+function dupremove() {
+    local __dupremovevar; local _result
+    if [ -z "$1" ]; then dupremove PATH; dupremove LD_LIBRARY_PATH; dupremove MANPATH; return; fi
+    eval __dupremovevar=\$$1
+    _result=$(gawk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | sed -e 's/\:\:/\:/g' -e 's/:$//')
+    eval "export ${1}=\"${_result:-${__dupremovevar}}\" "
 }
 
-# path : the ones going first
-if [ "${NUM_TIMES_SOURCED:-1}" = "1" ]; then
-  # export PATH=${HOME}/usr/bin:${PATH}
-  export PATH=${HOME}/.local/bin:${PATH}
-fi
-
-# path: the ones going after the current setting
-#dangerous:
-#export PATH=${PATH}:./Mybin
-
-# LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/${HOME}/lib"
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/lib"
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/usr/lib"
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"${HOME}/lib"
-
-export MANPATH=$MANPATH:"/tmp/$USER/man":"/tmp/$USER/local/man"
-
-declare t=/tmp/$USER
-declare h=/tmp/helder
-
-unset LS_COLORS
-
-export DISPLAY0="$DISPLAY"
-
-DEBUG_BASHRC=no
-
-export IS_WSL="$(uname -a | grep -i microsoft >& /dev/null && echo 1 || echo 0)"
-export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
-
-export PYTHONSTARTUP=~/.pythonrc.py
-
-# bin/links is usually not commited
-if [ "${IS_GIT_BASH}" = "1" ]; then
-  export PATH="/c/ht/nvim-win64/bin:${PATH}"
-else
-  export PATH="${HOME}/bin/links:${PATH}"
-fi
-
-[ -e $HOME/bin ] && export PATH="${HOME}/bin:${PATH}"
-[ -e $HOME/.cargo/bin ] && export PATH="${HOME}/.cargo/bin:${PATH}"
-
-# add some completions under bin/links/completions
-# just copy code into completions/comp.bash
-completions_file=$HOME/bin/links/completions/comp.bash
-[ -e "$completions_file" ] && source $completions_file
-
-function _eval_cmd_expression_if_exists
-{
-  # this assumes command is the first one passed and should exist
-  if ! command -v $1 >& /dev/null; then return; fi
-  eval "$($@)"
-  [ "$?" != "0" ] && echo "$@"
+function _eval_cmd_expression_if_exists {
+    if ! command -v $1 >& /dev/null; then return; fi
+    eval "$($@)"
 }
 
-# don't load any more settings if the shell is not interactive
-# assume .bashrc correctly sets variable CONFIG_FILES_DIR and CONFIG_DOT_PREFIX
-if test -n "$PS1"; then
+# --- Load Interactive Components ---
+if [[ -n "$PS1" ]]; then
 
-  if [ -z "${CONFIG_FILES_DIR}" ]; then
-    # assume HOME and .
-    echo "Variable CONFIG_FILES_DIR not set. Setting it to HOME (${HOME})"
-    export CONFIG_FILES_DIR="${HOME}"
-    export CONFIG_DOT_PREFIX="."
-  fi
-
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias"
-  [ -e "${NAME}" ] && . "${NAME}"
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2"
-
-  [ -e "${NAME}" ] && . "${NAME}"
-
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh"
-  [ -e "${NAME}" ] && . "${NAME}"
-
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh"
-  [ -e "${NAME}" ] && . "${NAME}"
-
-
-  # load windows specific settings, case they exist
-  NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
-  [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && [ -e "${NAME}" ] && . "${NAME}"
-  if [ "${DEBUG_BASHRC}"  = "yes" ]; then
-    if [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && [ -e "${NAME}" ]; then
-      echo "imported ${NAME}"
-    else
-      [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ] && echo "set to import win" || echo "not set to import win"
-      [ -e "${NAME}" ] && echo "${NAME} exists" || echo "${NAME} does not exist"
+    if [ -z "${CONFIG_FILES_DIR}" ]; then
+        export CONFIG_FILES_DIR="${HOME}"
+        export CONFIG_DOT_PREFIX="."
     fi
-  fi
 
-  [ -e "${HOME}/.bashrc.local" ] && . "${HOME}/.bashrc.local"
+    # 1. Aliases & Functions (Inheritance doesn't pass these, so load every time)
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh"
 
-  # try using faster vim for fc
-  export HISTCONTROL=erasedups:ignoredups
-  _eval_cmd_expression_if_exists fzf --${CURSHELL}
+    # 2. Local Completions
+    [ -e "$HOME/bin/links/completions/comp.bash" ] && . "$HOME/bin/links/completions/comp.bash"
+
+    # 3. Prompt (prompt.sh logic)
+    # Inside prompt.sh, ensure DID_PROMPT_SET is NOT exported
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh"
+
+    # 4. Windows Specifics
+    if [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ]; then
+        [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc_win"
+    fi
+
+    # 5. Local machine overrides
+    [ -e "${HOME}/.bashrc.local" ] && . "${HOME}/.bashrc.local"
+
+    # 6. Final Clean up & Interactive tools
+    export HISTCONTROL=erasedups:ignoredups
+    _eval_cmd_expression_if_exists fzf --${CURSHELL:-bash}
+
+    # Run deduplication one last time to keep the inherited PATH healthy
+    dupremove PATH
 fi
-
-export PYTHONPYCACHEPREFIX=/tmp/pychache
-
-## command history settings
-#if command -v mcfly &> /dev/null; then
-  #export MCFLY_RESULTS=30
-  #export MCFLY_FUZZY=2
-  #eval "$(mcfly init bash)"
-#elif command -v fzf &> /dev/null; then
-  #NAME="${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}fzf.bash"
-  #[ -e "${NAME}" ] && . "${NAME}" "${CONFIG_FILES_DIR}/../../plugged/fzf/shell"
-#fi
 
 # vim: set ft=bash:

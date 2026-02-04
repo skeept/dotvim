@@ -65,5 +65,5 @@ star() {
 # avoid calling again when sourcing bashrc
 if [ -z "${DID_PROMPT_SET+x}" ]; then
   star
-  export DID_PROMPT_SET=1
+  DID_PROMPT_SET=1
 fi
