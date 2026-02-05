@@ -318,6 +318,7 @@ function generate-lazy-completions()
   {
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     source "${SCRIPT_DIR}/generate_lazy_completions.sh"
+    source ~/.cache/lazy_shell_completions.sh
   }
 
 [ -e ~/.cache/lazy_shell_completions.sh ] && source ~/.cache/lazy_shell_completions.sh
