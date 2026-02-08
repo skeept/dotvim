@@ -13,7 +13,10 @@ import { main as mainDiff } from "./command/diff/main.ts";
 import { main as mainEdit } from "./command/edit/main.ts";
 import { main as mainLog } from "./command/log/main.ts";
 import { main as mainPatch } from "./command/patch/main.ts";
+import { main as mainReflog } from "./command/reflog/main.ts";
+import { main as mainStash } from "./command/stash/main.ts";
 import { main as mainStatus } from "./command/status/main.ts";
+import { main as mainTag } from "./command/tag/main.ts";
 
 import { main as mainComponentBranch } from "./component/branch.ts";
 import { main as mainComponentTraffic } from "./component/traffic.ts";
@@ -33,7 +36,10 @@ export function main(denops: Denops): void {
   mainEdit(denops);
   mainLog(denops);
   mainPatch(denops);
+  mainReflog(denops);
+  mainStash(denops);
   mainStatus(denops);
+  mainTag(denops);
 
   mainComponentBranch(denops);
   mainComponentTraffic(denops);
