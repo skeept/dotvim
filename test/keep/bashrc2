@@ -512,6 +512,32 @@ g()
   git ${arg[@]} "$@"
 }
 
+pc() {
+    local remote_url
+    remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+
+    if command -v s2 >/dev/null 2>&1 && [[ "$remote_url" == *"SABRE2.monorepo.git"* ]]; then
+        s2 commit --hooks-only "$@"
+        return
+    fi
+
+    if command -v prek >/dev/null 2>&1; then
+        if [[ -f ".git/hooks/pre-commit" ]] && grep -q "pre-commit" ".git/hooks/pre-commit"; then
+             # Optional: echo "Note: .git/hooks are currently set to legacy pre-commit."
+             :
+        fi
+
+        prek "$@"
+
+    elif command -v pre-commit >/dev/null 2>&1; then
+        pre-commit "$@"
+
+    else
+        echo "Error: Neither 's2', 'prek', nor 'pre-commit' found in PATH." >&2
+        return 1
+    fi
+}
+
 first_alternative()
 {
   for cand in "$@"; do
