@@ -1,0 +1,3 @@
+#!/bin/env bash
+
+env -u TMOUT bash --init-file ~/.bashrc $@

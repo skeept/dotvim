@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+# --- Configuration ---
+declare -A REPO_NAME_MAP=(
+  ["labs-research.reaccomm"]="prm"
+)
+# --- End Configuration ---
+
+# --- Global variables ---
+use_same_folder=false
+git_depth=(--depth 1)
+explicit_target_dir=""
+
+# --- Functions ---
+
+# New function to display help
+usage() {
+  cat << EOF
+Clones the current Git repository into a new directory.
+
+By default, this script performs a shallow clone (--depth 1) of the current
+branch into a timestamped directory inside /tmp.
+
+Usage:
+  $(basename "$0") [options] [target_directory]
+
+Options:
+  -s          Clone into an incremented directory in the current location.
+              (e.g., 'my-repo' becomes 'my-repo.1')
+  -f          Perform a full (deep) clone instead of a shallow one.
+  -h, --help  Display this help message and exit.
+
+Arguments:
+  target_directory  Specify an explicit path for the clone destination,
+                    overriding all other location logic.
+EOF
+}
+
+parse_args() {
+  while [[ "$1" =~ ^- ]]; do
+    case "$1" in
+    -s) use_same_folder=true ;;
+    -f) git_depth=() ;;
+    # Added case for -h and --help
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      # Improved unknown option message
+      echo "❌ Unknown option: $1. Use -h for help." >&2
+      exit 1
+      ;;
+    esac
+    shift
+  done
+  explicit_target_dir="$1"
+}
+
+get_origin_and_branch() {
+  origin=$(git config --get remote.origin.url) || {
+    echo "❌ Not a Git repo or no origin remote." >&2
+    exit 1
+  }
+
+  branch=$(git rev-parse --abbrev-ref HEAD) || {
+    echo "❌ Failed to determine current branch." >&2
+    exit 1
+  }
+
+  raw_repo_name=$(basename -s .git "$origin")
+  repo_name=${REPO_NAME_MAP[$raw_repo_name]:-$raw_repo_name}
+  safe_branch=${branch//\//-}
+}
+
+increment_folder_name() {
+  local base="$1"
+  if [[ "$base" =~ \.([0-9]+)$ ]]; then
+    local prefix="${base%.*}"
+    local num="${BASH_REMATCH[1]}"
+    echo "${prefix}.$((num + 1))"
+  else
+    echo "${base}.1"
+  fi
+}
+
+get_target_dir() {
+  if [[ -n "$explicit_target_dir" ]]; then
+    target_dir="$explicit_target_dir"
+  elif [[ "$use_same_folder" == true ]]; then
+    local current_dir
+    current_dir=$(pwd)
+    target_dir=$(increment_folder_name "$current_dir")
+    while [[ -e "$target_dir" ]]; do
+      target_dir=$(increment_folder_name "$target_dir")
+    done
+  else
+    timestamp=$(date +"%b%d.%H%M%S" | tr '[:lower:]' '[:upper:]')
+    target_dir="/tmp/${repo_name}-${safe_branch}_${timestamp}"
+  fi
+}
+
+do_clone() {
+  echo "📦 Cloning '$origin' (branch: $branch) into '$target_dir'..."
+  git push
+  git clone --branch "$branch" "${git_depth[@]}" --recurse-submodules "$origin" "$target_dir"
+  echo "$target_dir" | tee /dev/tty | { type clip.exe >/dev/null && clip.exe; }
+}
+
+# --- Main ---
+parse_args "$@"
+get_origin_and_branch
+get_target_dir
+do_clone

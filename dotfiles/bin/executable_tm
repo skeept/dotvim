@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+declare -A keys=(
+  ["n"]="next"
+  ["p"]="previous-window"
+  ["rw"]="rename-window"
+  ["ls"]="list-sessions"
+  ["lsc"]="list-commands"
+  ["lk"]="list-keys"
+  ["sv"]="split-window -h"
+  ["og"]="show-options -g"
+  ["ow"]="show-options -w"
+  ["os"]="show-options -s"
+  ["h"]="list these options"
+)
+
+show_help() {
+  echo "Available keys:"
+  for key in "${!keys[@]}"; do
+    echo "  $key = ${keys[$key]}"
+  done
+}
+
+attach_case_insensitive() {
+  local target_lc match=""
+  target_lc=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+  while IFS= read -r session; do
+    local session_lc
+    session_lc=$(echo "$session" | tr '[:upper:]' '[:lower:]')
+    if [[ "$session_lc" == *"$target_lc"* ]]; then
+      match="$session"
+      break
+    fi
+  done < <(tmux list-sessions -F '#S' 2>/dev/null)
+
+  if [[ -n "$match" ]]; then
+    tmux -2 attach -t "$match"
+    exit 0
+  else
+    echo "No matching session found for '$1'" >&2
+    exit 1
+  fi
+}
+
+open_in_dir() {
+  local dir="$1"
+  shift
+  [[ -d "$dir" ]] || {
+    echo "Directory '$dir' not found"
+    exit 1
+  }
+  cd "$dir"
+  if [[ -n "${TMUX:-}" ]]; then
+    exec tmux -2 new-window "$@"
+  else
+    exec tmux -2 new-session "$@"
+  fi
+}
+
+# Show help
+if [[ "${1:-}" == "-h" || "${1:-}" == "h" ]]; then
+  show_help
+  exit 0
+fi
+
+# Handle `tm a <name>` attach-to-session
+if [[ "${1:-}" == "a" && -n "${2:-}" ]]; then
+  attach_case_insensitive "$2"
+fi
+
+tmux_split_with_args() {
+  local direction="$1" # -h or -v
+  shift
+
+  local dir=""
+  local cmd=()
+
+  # First argument might be a directory
+  if [[ -n "${1:-}" && -d "$1" ]]; then
+    dir=$(realpath "$1")
+    shift
+  fi
+
+  # Remaining args are the command to run
+  if [[ $# -gt 0 ]]; then
+    cmd=("$@")
+  fi
+
+  # Build tmux command safely
+  if [[ -n "$dir" ]]; then
+    if [[ ${#cmd[@]} -gt 0 ]]; then
+      tmux split-window "$direction" -c "$dir" "${cmd[@]}"
+    else
+      tmux split-window "$direction" -c "$dir"
+    fi
+  else
+    if [[ ${#cmd[@]} -gt 0 ]]; then
+      tmux split-window "$direction" "${cmd[@]}"
+    else
+      tmux split-window "$direction"
+    fi
+  fi
+
+  exit 0
+}
+
+# Handle `tm <dirname>` (and `tm sv <dirname>`)
+if [[ -d "${1:-}" ]]; then
+  open_in_dir "$1"
+elif [[ "${1:-}" == "sv" ]]; then
+  shift
+  tmux_split_with_args "-h" "$@"
+elif [[ "${1:-}" == "sp" ]]; then
+  shift
+  tmux_split_with_args "-v" "$@"
+fi
+
+# Default fallback behavior
+tmux_cmd="new-session"
+[[ -n "${TMUX:-}" ]] && tmux_cmd="new-window"
+
+if [[ $# -gt 0 ]]; then
+  if [[ -n "${keys[$1]:-}" ]]; then
+    tmux_cmd="${keys[$1]}"
+    shift
+  elif [[ "$1" == -* || ! -x "$(command -v "$1" 2>/dev/null)" ]]; then
+    tmux_cmd=""
+  fi
+fi
+
+exec tmux -2 $tmux_cmd "$@"

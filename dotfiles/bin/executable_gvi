@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Use this to open with gvim if available
+# Try to make it handle WSL (gvim.exe) and regular Linux
+#
+
+#set -x
+
+function findnset() {
+  # convention: always use findnset_var as target
+  [ -z "${DISPLAY}" ] && [[ "$1" == gvim || "$1" == nvim-qt ]] && return 1
+  command -v "$1" 1>/dev/null 2>&1 && findnset_var="$1"
+}
+
+# Check for -nvim option to force neovim
+if [ "$1" = "-nvim" ]; then
+  findnset nvim-qt.exe || findnset nvim-qt || findnset nvim
+  editor="$findnset_var"
+  shift
+else
+  # Find the first available editor in the preferred order
+  findnset gvim.exe || findnset gvim || findnset nvim || findnset vim
+  editor="${findnset_var}"
+fi
+
+# Check for:n suffix to use RemoteOpenModN
+new_suffix=""
+if [[ "${1,,}" == ":n" ]]; then
+  new_suffix="N"
+  shift
+fi
+
+# Determine path command based on editor
+path_cmd=("realpath")
+if [[ "$editor" == gvim.exe && -v WSL_DISTRO_NAME ]]; then
+  path_cmd=(wslpath -a -w)
+fi
+
+# Process arguments and apply path conversion if needed
+args=()
+for arg in "$@"; do
+  [[ "$arg" == -* ]] && args+=("$arg") || args+=($(${path_cmd[@]} "$arg"))
+done
+
+# Split args into first_file and remaining_args
+first_file=""
+remaining_args=()
+for arg in "${args[@]}"; do
+  if [[ -z "$first_file" && "$arg" != -* ]]; then
+    # First non-option argument becomes first_file
+    first_file="$arg"
+  else
+    # All other arguments go into remaining_args
+    remaining_args+=("$arg")
+  fi
+done
+
+# Construct the final command
+if [[ "$editor" == gvim* ]]; then
+  # Construct the remote command with the first file argument
+  if [[ -n "$first_file" ]]; then
+    remote_cmd="RemoteOpenMod${new_suffix} ${first_file}"
+  else
+    remote_cmd="RemoteOpenMod${new_suffix}"
+  fi
+
+  # Launch the editor with the remote command and remaining arguments
+  "$editor" -c "$remote_cmd" "${remaining_args[@]}" &
+elif [[ "$editor" == nvim-qt* ]]; then
+  "$editor" "${args[@]}" &
+else
+  "$editor" "${args[@]}"
+fi

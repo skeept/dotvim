@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Determine the appropriate Vim command
+if command -v gvim.exe &>/dev/null; then
+  cmd=gvim.exe
+  # VIM_OPTS=("-u" "$(wpath "${HOME}/.vim/simple.vim")")
+elif command -v gvim &>/dev/null; then
+  cmd=gvim
+else
+  cmd=vim
+fi
+
+# Convert arguments if using gvim.exe
+args=()
+for arg in "$@"; do
+  args+=($(command -v gvim.exe &>/dev/null && wpath "$arg" || echo "$arg"))
+done
+
+# Handle cases based on number and type of arguments
+if [[ -n "${args[0]}" ]]; then
+  arg1=$(printf '%q' "${args[0]}")
+  arg2=$(printf '%q' "${args[1]}")
+
+  if [[ -d "$arg1" && -d "$arg2" ]]; then
+    "${cmd}" "${VIM_OPTS[@]}" -c "DirDiff $arg1 $arg2" "${args[@]:2}"
+  elif [[ -d "$arg1/BL" && -d "$arg1/TR" ]]; then
+    "${cmd}" "${VIM_OPTS[@]}" -c "DirDiff $arg1/BL $arg1/TR" "${args[@]:2}"
+  else
+    "${cmd}" "${VIM_OPTS[@]}" -d "${args[@]}"
+  fi
+else
+  "${cmd}" "${VIM_OPTS[@]}" "${args[@]}"
+fi
