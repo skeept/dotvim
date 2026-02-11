@@ -1,5 +1,4 @@
-"""
-If the file is a directory, create a directory with the same name in usr,
+"""If the file is a directory, create a directory with the same name in usr,
 if it doesn't exist
 if the file is not a directory, just create a symbolic
 link pointing to the file.
@@ -8,15 +7,15 @@ link pointing to the file.
 
 # see in Packages/<package_name>
 
+import errno
+import glob
 import os
 import sys
-import glob
-import errno
 import textwrap
-from os.path import join, realpath, abspath, isdir, isfile
+from os.path import abspath, isdir, isfile, join, realpath
 
 
-def force_symlink(file1, file2):
+def force_symlink(file1, file2) -> None:
     try:
         os.symlink(file1, file2)
     except OSError as e:
@@ -25,7 +24,7 @@ def force_symlink(file1, file2):
             os.symlink(file1, file2)
 
 
-def usage():
+def usage() -> None:
     sys.stdout.write(
         textwrap.dedent(
             """\
@@ -33,12 +32,13 @@ def usage():
           folder_origin is the original folder with all the files\
   and folders to be linked
           folder_destin is where you want to create symlinks, defaults to 'usr'
-  """
-        )
+  """,
+        ),
     )
 
 
-def do_recursion(origin, dirname):
+def do_recursion(origin, dirname) -> None:
+    """Recurse from origin to destination."""
     AlternatePrefix = "usr"
     dirlist = glob.glob(dirname + os.sep + "*")
     for name in dirlist:
@@ -55,13 +55,17 @@ def do_recursion(origin, dirname):
             print(name, " --> ", newName)
             if not isfile(newName):
                 force_symlink(
-                    os.getcwd() + os.sep + name, os.getcwd() + os.sep + newName
+                    os.getcwd() + os.sep + name,
+                    os.getcwd() + os.sep + newName,
                 )
 
 
-def create_symlinks(origin, destin, display_passage=True):
-    """we go over the files and folders in origin and create a symlink in destin
-    folders if not existing will be explicitly created, others files symlinked"""
+def create_symlinks(origin, destin, display_passage=True) -> None:
+    """Create symlinks from origin to destin.
+
+    We go over the files and folders in origin and create a symlink in destin
+    folders if not existing will be explicitly created, others files symlinked
+    """
     origin = realpath(origin)
     destin = abspath(destin)
     os.chdir(origin)
@@ -74,7 +78,7 @@ def create_symlinks(origin, destin, display_passage=True):
             dir_dest = join(join(destin, root), dirn)
             if os.path.exists(dir_dest) is False:
                 if display_passage is True:
-                    sys.stdout.write("%s does not exists, creating it.\n" % dir_dest)
+                    sys.stdout.write(f"{dir_dest} does not exists, creating it.\n")
                 else:
                     os.makedirs(dir_dest)
         for filen in files:
@@ -100,7 +104,7 @@ prefixDir = "Packages"
 # prefixDir + os.sep  + sys.argv[1])
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         usage()
         sys.exit(-1)
