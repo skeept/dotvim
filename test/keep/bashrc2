@@ -74,7 +74,7 @@ NC='\e[0m'              # No Color
 function py() {
   # should we go with python by default or python 3?
   type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
-  "${PYTHON_EXE}" $@
+  "${PYTHON_EXE}" "$@"
 }
 
 pym() {
