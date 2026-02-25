@@ -556,7 +556,7 @@ first_alternative()
 irr()
 {
   # define $WORK_BASE in ~/.bashrc.local
-  python "${WORK_BASE}/utils/src/run_irops.py" "$@"
+  py "${WORK_BASE}/utils/src/run_irops.py" "$@"
 }
 
 copy-static()
