@@ -71,10 +71,17 @@ CYAN='\e[1;36m'
 NC='\e[0m'              # No Color
 # --> Nice. Has the same effect as using "ansi.sys" in DOS.
 
-function py() {
-  # should we go with python by default or python 3?
-  type python3 >& /dev/null && PYTHON_EXE=python3 || PYTHON_EXE=python
-  "${PYTHON_EXE}" "$@"
+function py () {
+    if command -v py_launcher >/dev/null 2>&1; then
+        py_launcher "$@"
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 "$@"
+    elif command -v python >/dev/null 2>&1; then
+        python "$@"
+    else
+        echo "Error: No Python interpreter or py_launcher found in PATH." >&2
+        return 1
+    fi
 }
 
 pym() {
@@ -945,7 +952,6 @@ function kl()
   kubectl "${new_args[@]}"
 }
 alias lk=kl
-
 
 function kc()
 {
