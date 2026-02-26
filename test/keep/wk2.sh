@@ -5,13 +5,21 @@ __WK_LOADED=0
 
 function __wk_load_config() {
   [[ "$__WK_LOADED" -eq 1 ]] && return 0
-  local config="$HOME/.wk_config.yaml"
-  [[ ! -f "$config" ]] && return 1
+  local config_file="$HOME/.wk_config.yaml"
+  [[ ! -f "$config_file" ]] && return 1
 
-  local def_py=$(yq -r '.settings.default_python // "python3"' "$config")
+  # 0. Pre-process YAML: Replace ~ with $HOME and expand $VARS
+  # We use envsubst to allow ${VAR} or $VAR in the yaml file
+  local raw_yaml
+  raw_yaml=$(sed "s|~|$HOME|g" "$config_file" | envsubst)
+
+  local def_py
+  def_py=$(echo "$raw_yaml" | yq -r '.settings.default_python // "py"')
 
   # 1. Recursive Scan
-  local scan_paths=$(yq -r '.folders[] | select(kind == "scalar")' "$config")
+  local scan_paths
+  scan_paths=$(echo "$raw_yaml" | yq -r '.folders[] | select(kind == "scalar")')
+
   for dir in $scan_paths; do
     [[ ! -d "$dir" ]] && continue
     local cmd
@@ -30,8 +38,12 @@ function __wk_load_config() {
   done
 
   # 2. Process Overrides
-  local overrides=$(yq -r '.folders[] | select(kind == "map") | to_entries | .[] | .key + "|" + .value.path + "|" + (.value.method // "direct") + "|" + (.value.python // "'"$def_py"'")' "$config")
-  while IFS="|" read -r ovr_key ovr_path method venv; do
+  # Using a character like '?' as a delimiter for yq output to handle spaces in paths safely
+  local overrides
+  overrides=$(echo "$raw_yaml" | yq -r '.folders[] | select(kind == "map") | to_entries | .[] | .key + "?" + .value.path + "?" + (.value.method // "direct") + "?" + (.value.python // "'"$def_py"'")')
+
+  while IFS="?" read -r ovr_key ovr_path method venv; do
+    [[ -z "$ovr_key" ]] && continue
     local base_name=$(basename "$ovr_path" .py)
     unset "__WK_PATHS[$base_name]"
     __WK_PATHS["$ovr_key"]="$ovr_path"
@@ -40,9 +52,10 @@ function __wk_load_config() {
   done <<<"$overrides"
 
   # 3. Process Aliases
-  local aliases=$(yq -r '.aliases | to_entries | .[] | .key + "|" + .value' "$config" 2>/dev/null)
+  local aliases
+  aliases=$(echo "$raw_yaml" | yq -r '.aliases | to_entries | .[] | .key + "?" + .value' 2>/dev/null)
   if [[ -n "$aliases" ]]; then
-    while IFS="|" read -r alias_name target_key; do
+    while IFS="?" read -r alias_name target_key; do
       if [[ -n "${__WK_PATHS[$target_key]}" ]]; then
         __WK_PATHS["$alias_name"]="${__WK_PATHS[$target_key]}"
         __WK_TYPES["$alias_name"]="${__WK_TYPES[$target_key]}"
@@ -58,39 +71,55 @@ __wk_run_pym() {
   local python_bin="$2"
   local dry_run="$3"
   shift 3
-  local abs_script=$(realpath "$script_path")
-  local pkg_root="$abs_script"
 
-  while [[ "$pkg_root" != "/" && "$(basename "$pkg_root")" != "src" ]]; do
+  local abs_script
+  abs_script=$(realpath "$script_path")
+
+  # IMPROVED: Upward search for 'src' folder with safety break
+  local pkg_root="$abs_script"
+  local found_src=0
+
+  while [[ "$pkg_root" != "/" ]]; do
+    if [[ "$(basename "$pkg_root")" == "src" ]]; then
+      found_src=1
+      break
+    fi
     pkg_root=$(dirname "$pkg_root")
   done
 
-  local env_path
   local cmd_line
-  if [[ "$(basename "$pkg_root")" != "src" ]]; then
+  local env_path
+
+  if [[ $found_src -eq 1 ]]; then
+    # Found a 'src' directory, run as module
+    local module_path="${abs_script#$pkg_root/}"
+    module_path="${module_path%.py}"
+    module_path="${module_path//\//.}"
+    env_path="$pkg_root:$PYTHONPATH"
+
+    cmd_line="PYTHONPATH=\"$env_path\" \"$python_bin\" -m \"$module_path\" $*"
+    [[ "$dry_run" == "1" ]] && {
+      echo "++ $cmd_line" >&2
+      return 0
+    }
+
+    PYTHONPATH="$env_path" "$python_bin" -m "$module_path" "$@"
+  else
+    # No 'src' found, run as direct script
     env_path="$(dirname "$abs_script"):$PYTHONPATH"
+
     cmd_line="PYTHONPATH=\"$env_path\" \"$python_bin\" \"$abs_script\" $*"
     [[ "$dry_run" == "1" ]] && {
       echo "++ $cmd_line" >&2
       return 0
     }
+
     PYTHONPATH="$env_path" "$python_bin" "$abs_script" "$@"
-  else
-    local module_path="${abs_script#$pkg_root/}"
-    module_path="${module_path%.py}"
-    module_path="${module_path//\//.}"
-    cmd_line="PYTHONPATH=\"$pkg_root:$PYTHONPATH\" \"$python_bin\" -m \"$module_path\" $*"
-    [[ "$dry_run" == "1" ]] && {
-      echo "++ $cmd_line" >&2
-      return 0
-    }
-    PYTHONPATH="$pkg_root:$PYTHONPATH" "$python_bin" -m "$module_path" "$@"
   fi
 }
 
 function wk2() {
   local dry_run=0
-  # Check for dry-run flag at any position or specifically first/second
   if [[ "$1" == "--dry-run" ]]; then
     dry_run=1
     shift
@@ -109,6 +138,7 @@ function wk2() {
     local path="${__WK_PATHS[$key]}"
     local type="${__WK_TYPES[$key]}"
     local venv="${__WK_VENVS[$key]}"
+
     if [[ "$type" == "pym" ]]; then
       __wk_run_pym "$path" "$venv" "$dry_run" "$@"
     else
@@ -129,7 +159,6 @@ function _wk_comp2() {
   _get_comp_words_by_ref -n : cur prev
   __wk_load_config
 
-  # Suggest --dry-run and keys for the first real argument
   if [[ $COMP_CWORD -eq 1 ]]; then
     COMPREPLY=($(compgen -W "--dry-run ${!__WK_PATHS[*]}" -- "$cur"))
   elif [[ $COMP_CWORD -eq 2 && "${COMP_WORDS[1]}" == "--dry-run" ]]; then
