@@ -13,7 +13,8 @@ function __wk_load_config() {
   raw_yaml=$(sed "s|~|$HOME|g" "$config_file" | envsubst)
 
   local def_py
-  def_py=$(echo "$raw_yaml" | yq -r '.settings.default_python // "py"')
+  # def_py=$(echo "$raw_yaml" | yq -r '.settings.default_python // "py"')
+  def_py=$(echo "$raw_yaml" | yq -r '.settings.python_location // .settings.default_python // "py"')
 
   # ==========================================
   # 1. Recursive Scan (Scalars in 'folders')
