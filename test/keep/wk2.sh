@@ -8,17 +8,18 @@ function __wk_load_config() {
   local config_file="$HOME/.wk_config.yaml"
   [[ ! -f "$config_file" ]] && return 1
 
-  # 0. Pre-process YAML: Replace ~ with $HOME and expand $VARS
-  # We use envsubst to allow ${VAR} or $VAR in the yaml file
+  # 0. Pre-process YAML
   local raw_yaml
   raw_yaml=$(sed "s|~|$HOME|g" "$config_file" | envsubst)
 
   local def_py
   def_py=$(echo "$raw_yaml" | yq -r '.settings.default_python // "py"')
 
-  # 1. Recursive Scan
+  # ==========================================
+  # 1. Recursive Scan (Scalars in 'folders')
+  # ==========================================
   local scan_paths
-  scan_paths=$(echo "$raw_yaml" | yq -r '.folders[] | select(kind == "scalar")')
+  scan_paths=$(echo "$raw_yaml" | yq -r '.folders[] | select(kind == "scalar")' 2>/dev/null)
 
   for dir in $scan_paths; do
     [[ ! -d "$dir" ]] && continue
@@ -37,32 +38,65 @@ function __wk_load_config() {
     done < <(eval "$cmd")
   done
 
-  # 2. Process Overrides
-  # Using a character like '?' as a delimiter for yq output to handle spaces in paths safely
-  local overrides
-  overrides=$(echo "$raw_yaml" | yq -r '.folders[] | select(kind == "map") | to_entries | .[] | .key + "?" + .value.path + "?" + (.value.method // "direct") + "?" + (.value.python // "'"$def_py"'")')
+  # ==========================================
+  # 2. Explicit Definitions (Maps in 'folders')
+  # ==========================================
+  local explicit_defs
+  explicit_defs=$(echo "$raw_yaml" | yq -r '
+    .folders[] | select(kind == "map") | to_entries[] |
+    .key + "?" + (.value.path // "") + "?" + (.value.method // "direct") + "?" + (.value.python // "'"$def_py"'")
+  ' 2>/dev/null)
 
-  while IFS="?" read -r ovr_key ovr_path method venv; do
+  while IFS="?" read -r def_key def_path method venv; do
+    [[ -z "$def_key" || -z "$def_path" ]] && continue
+
+    local base_name=$(basename "$def_path" .py)
+    # Clear auto-discovered entry if it conflicts with a custom named definition
+    if [[ "$base_name" != "$def_key" ]]; then
+      unset "__WK_PATHS[$base_name]"
+      unset "__WK_TYPES[$base_name]"
+      unset "__WK_VENVS[$base_name]"
+    fi
+
+    __WK_PATHS["$def_key"]="$def_path"
+    __WK_TYPES["$def_key"]="$method"
+    __WK_VENVS["$def_key"]="$venv"
+  done <<<"$explicit_defs"
+
+  # ==========================================
+  # 3. Apply Overrides
+  # ==========================================
+  local overrides
+  overrides=$(echo "$raw_yaml" | yq -r '
+    .overrides | select(. != null) | to_entries[] |
+    .key + "?" + (.value.method // "") + "?" + (.value.python // "")
+  ' 2>/dev/null)
+
+  while IFS="?" read -r ovr_key method venv; do
     [[ -z "$ovr_key" ]] && continue
-    local base_name=$(basename "$ovr_path" .py)
-    unset "__WK_PATHS[$base_name]"
-    __WK_PATHS["$ovr_key"]="$ovr_path"
-    __WK_TYPES["$ovr_key"]="$method"
-    __WK_VENVS["$ovr_key"]="$venv"
+
+    # Only apply overrides if the script was actually found in steps 1 or 2
+    if [[ -n "${__WK_PATHS[$ovr_key]}" ]]; then
+      [[ -n "$method" ]] && __WK_TYPES["$ovr_key"]="$method"
+      [[ -n "$venv" ]] && __WK_VENVS["$ovr_key"]="$venv"
+    fi
   done <<<"$overrides"
 
-  # 3. Process Aliases
+  # ==========================================
+  # 4. Process Aliases
+  # ==========================================
   local aliases
-  aliases=$(echo "$raw_yaml" | yq -r '.aliases | to_entries | .[] | .key + "?" + .value' 2>/dev/null)
-  if [[ -n "$aliases" ]]; then
-    while IFS="?" read -r alias_name target_key; do
-      if [[ -n "${__WK_PATHS[$target_key]}" ]]; then
-        __WK_PATHS["$alias_name"]="${__WK_PATHS[$target_key]}"
-        __WK_TYPES["$alias_name"]="${__WK_TYPES[$target_key]}"
-        __WK_VENVS["$alias_name"]="${__WK_VENVS[$target_key]}"
-      fi
-    done <<<"$aliases"
-  fi
+  aliases=$(echo "$raw_yaml" | yq -r '.aliases | select(. != null) | to_entries[] | .key + "?" + .value' 2>/dev/null)
+
+  while IFS="?" read -r alias_name target_key; do
+    [[ -z "$alias_name" ]] && continue
+    if [[ -n "${__WK_PATHS[$target_key]}" ]]; then
+      __WK_PATHS["$alias_name"]="${__WK_PATHS[$target_key]}"
+      __WK_TYPES["$alias_name"]="${__WK_TYPES[$target_key]}"
+      __WK_VENVS["$alias_name"]="${__WK_VENVS[$target_key]}"
+    fi
+  done <<<"$aliases"
+
   __WK_LOADED=1
 }
 
