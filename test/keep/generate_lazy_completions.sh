@@ -130,6 +130,7 @@ add_lazy_completion fd _fd "fd --gen-completions bash"
 add_lazy_completion docker __start_docker "docker completion ${CURSHELL}"
 add_lazy_completion xh _xh "xh --generate=complete-bash"
 add_lazy_completion just _just "just --completions bash"
+add_lazy_completion gh __start_gh "gh completion -s bash"
 
 add_lazy_source yazi _yazi $HOME/bin/links/completions/yazi.bash
 add_lazy_source zoxide _zoxide ${HOME}/bin/links/completions/zoxide.bash
