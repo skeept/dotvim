@@ -5,6 +5,7 @@ import sys
 import subprocess
 import tomllib
 from pathlib import Path
+import shutil
 
 
 def expand_path(path_str):
@@ -85,7 +86,7 @@ def load_config():
 def run_pym(script_dict, dry_run, script_args):
     """Runs the script as a module if 'src' is found in the path hierarchy."""
     abs_script = Path(script_dict["path"]).resolve()
-    python_bin = script_dict["python"]
+    python_bin = shutil.which(script_dict["python"]) or script_dict["python"]
 
     pkg_root = abs_script
     found_src = False
@@ -173,7 +174,8 @@ def main():
         run_pym(script_dict, dry_run, args)
     else:
         # Standard direct run
-        cmd = [script_dict["python"], script_dict["path"]] + args
+        python_bin = shutil.which(script_dict["python"]) or script_dict["python"]
+        cmd = [python_bin, script_dict["path"]] + args
         if dry_run:
             print(
                 "++ " + " ".join(f'"{c}"' if " " in c else c for c in cmd),
