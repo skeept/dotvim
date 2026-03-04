@@ -204,3 +204,35 @@ function _wk_comp2() {
 }
 
 complete -F _wk_comp2 -o default -o bashdefault wk2
+
+function wk3() {
+  # Forward all arguments directly to the Python core script.
+  # Adjust the path to 'python3' if your system requires it,
+  # but it must be Python 3.11+ to support tomllib.
+  python3 "${CONFIG_HOME}/wk_core.py" "$@"
+}
+
+function _wk_comp3() {
+  local cur commands
+  cur="${COMP_WORDS[COMP_CWORD]}"
+
+  if [[ ${COMP_CWORD} -eq 1 ]]; then
+    # 1st argument: Autocomplete keywords OR --dry-run
+    commands=$(python3 "${CONFIG_HOME}/wk_core.py" --_complete 2>/dev/null)
+    COMPREPLY=($(compgen -W "--dry-run ${commands}" -- "${cur}"))
+
+  elif [[ ${COMP_CWORD} -eq 2 && "${COMP_WORDS[1]}" == "--dry-run" ]]; then
+    # 2nd argument (if 1st was --dry-run): Autocomplete keywords only
+    commands=$(python3 "${CONFIG_HOME}/wk_core.py" --_complete 2>/dev/null)
+    COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
+
+  else
+    # 3rd+ argument (or 2nd if 1st was a keyword):
+    # Leave COMPREPLY empty. The '-o default' flag below tells Bash
+    # to automatically fall back to standard file/directory completion.
+    COMPREPLY=()
+  fi
+}
+
+# Register the autocompletion function to the 'wk' command
+complete -F _wk_comp3 wk3
