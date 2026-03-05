@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/junegunn/fzf/src/algo"
@@ -587,6 +588,7 @@ type Options struct {
 	FreezeLeft        int
 	FreezeRight       int
 	WithNth           func(Delimiter) func([]Token, int32) string
+	WithNthExpr       string
 	AcceptNth         func(Delimiter) func([]Token, int32) string
 	Delimiter         Delimiter
 	Sort              int
@@ -677,6 +679,8 @@ type Options struct {
 	WalkerSkip        []string
 	Version           bool
 	Help              bool
+	Threads           int
+	Bench             time.Duration
 	CPUProfile        string
 	MEMProfile        string
 	BlockProfile      string
@@ -1626,7 +1630,7 @@ const (
 
 func init() {
 	executeRegexp = regexp.MustCompile(
-		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|bg-transform|transform)-(?:query|prompt|(?:border|list|preview|input|header|footer)-label|header|footer|search|nth|pointer|ghost)|bg-transform|transform|change-(?:preview-window|preview|multi)|(?:re|un|toggle-)bind|pos|put|print|search|trigger)`)
+		`(?si)[:+](become|execute(?:-multi|-silent)?|reload(?:-sync)?|preview|(?:change|bg-transform|transform)-(?:query|prompt|(?:border|list|preview|input|header|footer)-label|header-lines|header|footer|search|with-nth|nth|pointer|ghost)|bg-transform|transform|change-(?:preview-window|preview|multi)|(?:re|un|toggle-)bind|pos|put|print|search|trigger)`)
 	splitRegexp = regexp.MustCompile("[,:]+")
 	actionNameRegexp = regexp.MustCompile("(?i)^[a-z-]+")
 }
@@ -2037,6 +2041,8 @@ func isExecuteAction(str string) actionType {
 		return actPreview
 	case "change-header":
 		return actChangeHeader
+	case "change-header-lines":
+		return actChangeHeaderLines
 	case "change-footer":
 		return actChangeFooter
 	case "change-list-label":
@@ -2067,6 +2073,8 @@ func isExecuteAction(str string) actionType {
 		return actChangeMulti
 	case "change-nth":
 		return actChangeNth
+	case "change-with-nth":
+		return actChangeWithNth
 	case "pos":
 		return actPosition
 	case "execute":
@@ -2097,10 +2105,14 @@ func isExecuteAction(str string) actionType {
 		return actTransformFooter
 	case "transform-header":
 		return actTransformHeader
+	case "transform-header-lines":
+		return actTransformHeaderLines
 	case "transform-ghost":
 		return actTransformGhost
 	case "transform-nth":
 		return actTransformNth
+	case "transform-with-nth":
+		return actTransformWithNth
 	case "transform-pointer":
 		return actTransformPointer
 	case "transform-prompt":
@@ -2127,10 +2139,14 @@ func isExecuteAction(str string) actionType {
 		return actBgTransformFooter
 	case "bg-transform-header":
 		return actBgTransformHeader
+	case "bg-transform-header-lines":
+		return actBgTransformHeaderLines
 	case "bg-transform-ghost":
 		return actBgTransformGhost
 	case "bg-transform-nth":
 		return actBgTransformNth
+	case "bg-transform-with-nth":
+		return actBgTransformWithNth
 	case "bg-transform-pointer":
 		return actBgTransformPointer
 	case "bg-transform-prompt":
@@ -2772,6 +2788,7 @@ func parseOptions(index *int, opts *Options, allArgs []string) error {
 			if opts.WithNth, err = nthTransformer(str); err != nil {
 				return err
 			}
+			opts.WithNthExpr = str
 		case "--accept-nth":
 			str, err := nextString("nth expression required")
 			if err != nil {
@@ -3367,6 +3384,23 @@ func parseOptions(index *int, opts *Options, allArgs []string) error {
 				return err
 			}
 			opts.WalkerSkip = filterNonEmpty(strings.Split(str, ","))
+		case "--threads":
+			if opts.Threads, err = nextInt("number of threads required"); err != nil {
+				return err
+			}
+			if opts.Threads < 0 {
+				return errors.New("--threads must be a positive integer")
+			}
+		case "--bench":
+			str, err := nextString("duration required (e.g. 3s, 500ms)")
+			if err != nil {
+				return err
+			}
+			dur, err := time.ParseDuration(str)
+			if err != nil {
+				return errors.New("invalid duration for --bench: " + str)
+			}
+			opts.Bench = dur
 		case "--profile-cpu":
 			if opts.CPUProfile, err = nextString("file path required: cpu"); err != nil {
 				return err
