@@ -57,19 +57,48 @@ function mtimer()
 
 mtimer right after start
 
-#-----------------------
-# Greeting, motd etc...
-#-----------------------
-
-# Define some colors first:
-red='\e[0;31m'
+# colors
 RED='\e[1;31m'
-blue='\e[0;34m'
+red="${RED}"
 BLUE='\e[1;34m'
-cyan='\e[0;36m'
+blue="${BLUE}"
 CYAN='\e[1;36m'
+cyan="${CYAN}"
+YELLOW='\033[33m'
+yellow="${YELLOW}"
 NC='\e[0m'              # No Color
-# --> Nice. Has the same effect as using "ansi.sys" in DOS.
+
+# 0: ERROR, 1: WARN, 2: INFO, 3: DEBUG
+LOG_LEVEL=${LOG_LEVEL:-2}
+
+log() {
+  # 1. Handle case-insensitivity by converting the first arg to uppercase
+  local input_level=$(echo "$1" | tr '[:lower:]' '[:upper:]')
+  local level
+  local msg
+  local timestamp=$(date +"%H:%M:%S")
+
+  # 2. Check if the first arg is a valid keyword
+  case "$input_level" in
+    ERROR|WARN|INFO|DEBUG)
+      level=$input_level
+      msg=$2
+      ;;
+    *)
+      # If no match, default to INFO and treat the first arg as the message
+      level="INFO"
+      msg="$*" # Take all arguments as the message
+      ;;
+  esac
+
+  # 3. Execution logic with your existing colors
+  case "$level" in
+    ERROR) [[ $LOG_LEVEL -ge 0 ]] && echo -e "${RED}[$timestamp] [!] ERROR: $msg${NC}" >&2 ;;
+    WARN)  [[ $LOG_LEVEL -ge 1 ]] && echo -e "${CYAN}[$timestamp] [-] WARN:  $msg${NC}" >&2 ;;
+    INFO)  [[ $LOG_LEVEL -ge 2 ]] && echo -e "${BLUE}[$timestamp] [*] INFO:  $msg${NC}" >&2 ;;
+    DEBUG) [[ $LOG_LEVEL -ge 3 ]] && echo -e "${NC}[$timestamp] [D] DEBUG: $msg${NC}" >&2 ;;
+  esac
+}
 
 function py () {
     if command -v py_launcher >/dev/null 2>&1; then

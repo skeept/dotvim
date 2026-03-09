@@ -6,6 +6,11 @@ OUTPUT_FILE="$HOME/.cache/lazy_shell_completions.sh"
 # Start the file
 echo "# Lazy completion wrappers generated on $(date)" >"$OUTPUT_FILE"
 
+if [ -z "$CURSHELL" ]; then
+  echo -e "\033[33m[!] Note: CURSHELL not set. Defaulting to bash.\033[0m" >&2
+  export CURSHELL=bash
+fi
+
 # -----------------------------------------------------------------------------
 # Function 1: Add completion to an EXISTING command (like 'uv')
 # -----------------------------------------------------------------------------
