@@ -1095,50 +1095,72 @@ if [ -x "$(command -v lnav)" ]; then
   }
 fi
 
-_activate_pyve() {
-  local name="${1:-}"  # optional argument
-  local dir="$PWD"
+_activate_pyve () {
+    local name="${1:-}"
+    local dir="$PWD"
 
-  while [[ "$dir" != "/" ]]; do
-    if [[ -n "$name" ]]; then
-      if [[ -d "$dir/$name/bin" ]]; then
-        . "$dir/$name/bin/activate"
-        echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
-        return 0
-      fi
-    else
-      # Try standard folders
-      for candidate in ".venv" "venv"; do
-        if [[ -d "$dir/$candidate/bin" ]]; then
-          . "$dir/$candidate/bin/activate"
-          echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
-          return 0
+    # --- CONFIG: Add your default fallback paths here ---
+    local global_fallbacks=(
+        "$HOME/v312"
+        "$HOME/.virtualenvs/main"
+    )
+
+    # Helper function to handle the actual activation to keep code clean
+    _do_activate() {
+        if [[ -f "$1/bin/activate" ]]; then
+            . "$1/bin/activate"
+            echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
+            return 0
         fi
-      done
-
-      # Try venv_* folders
-      local matches=()
-      while IFS= read -r match; do
-        matches+=("$match")
-      done < <(find "$dir" -maxdepth 1 -type d -name 'venv_*' -exec test -d '{}/bin' \; -print)
-
-      if (( ${#matches[@]} == 1 )); then
-        . "${matches[0]}/bin/activate"
-        echo "Activated: $VIRTUAL_ENV ($(python --version 2>&1))"
-        return 0
-      elif (( ${#matches[@]} > 1 )); then
-        echo "⚠️  Multiple venv_* directories found in $dir:" >&2
-        printf ' - %s\n' "${matches[@]}" >&2
-        echo "Please specify one explicitly: _activate_pyve <name>" >&2
         return 1
-      fi
+    }
+
+    # 1. HIGHEST PRECEDENCE: Direct path passed as argument
+    if [[ -n "$name" && -d "$name/bin" ]]; then
+        _do_activate "$name" && return 0
     fi
 
-    dir="$(dirname "$dir")"
-  done
+    # 2. SECOND PRECEDENCE: Tree-climbing discovery
+    while [[ "$dir" != "/" ]]; do
+        # Check for specific name if provided, else check standard names
+        if [[ -n "$name" ]]; then
+            if [[ -d "$dir/$name/bin" ]]; then
+                _do_activate "$dir/$name" && return 0
+            fi
+        else
+            # Standard auto-discovery
+            for candidate in ".venv" "venv"; do
+                if [[ -d "$dir/$candidate/bin" ]]; then
+                    _do_activate "$dir/$candidate" && return 0
+                fi
+            done
 
-  echo "No virtual environment found." >&2
-  return 1
+            # venv_* pattern matching
+            local matches=()
+            while IFS= read -r match; do
+                matches+=("$match")
+            done < <(find "$dir" -maxdepth 1 -type d -name 'venv_*' -exec test -d '{}/bin' \; -print 2>/dev/null)
+
+            if (( ${#matches[@]} == 1 )); then
+                _do_activate "${matches[0]}" && return 0
+            elif (( ${#matches[@]} > 1 )); then
+                echo "⚠️  Multiple venv_* found in $dir. Please be specific." 1>&2
+                return 1
+            fi
+        fi
+        dir="$(dirname "$dir")"
+    done
+
+    # 3. LOWEST PRECEDENCE: Global Fallbacks
+    for fallback in "${global_fallbacks[@]}"; do
+        if [[ -d "$fallback/bin" ]]; then
+            echo "No local venv found. Dropping back to global default..."
+            _do_activate "$fallback" && return 0
+        fi
+    done
+
+    echo "❌ Error: No virtual environment found in path, parents, or defaults." 1>&2
+    return 1
 }
 
 # activate environment
