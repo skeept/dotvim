@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **As of March 11, 2026, this repository is on [Codeberg](https://codeberg.org/lifepillar/vim-mucomplete).**
+
 >We're coming down to the ground
 >
 >There's no better place to go
