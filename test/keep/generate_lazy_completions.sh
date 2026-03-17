@@ -137,6 +137,7 @@ add_lazy_completion xh _xh "xh --generate=complete-bash"
 add_lazy_completion just _just "just --completions bash"
 add_lazy_completion gh __start_gh "gh completion -s bash"
 add_lazy_completion ruff _ruff "ruff generate-shell-completion ${CURSHELL}"
+add_lazy_completion chezmoi __start_chezmoi "chezmoi completion ${CURSHELL}"
 
 add_lazy_source yazi _yazi $HOME/bin/links/completions/yazi.bash
 add_lazy_source zoxide _zoxide ${HOME}/bin/links/completions/zoxide.bash
