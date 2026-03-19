@@ -1,0 +1,20 @@
+{{- if eq .chezmoi.os "windows" }}
+# Ignore Linux-specific shell/multiplexer configs
+.config/tmux/**
+.config/zellij/**
+.config/mc/**
+.config/visidata/**
+.config/tmuxp/**
+.inputrc
+.visidatarc
+
+# Ignore Linux scripts/binaries that won't run natively
+bin/**
+
+# Ignore WSL-specific git configs if you aren't using them in native Windows
+#.config/git/wsl
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+# You can add Windows-specific files here later (e.g., Documents/PowerShell)
+{{- end }}
