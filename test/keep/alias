@@ -16,7 +16,7 @@ alias passwd=yppasswd
 #alias m='TERM=vt100 more'
 
 alias co='command'
-
+alias cf='showncopy.py'
 alias cls="clear;date"
 
 alias xtop2='xterm  -geometry 76x25+809+00   -ls  -j -title "top $HOST" -e top -d 1 -n 05 &'
