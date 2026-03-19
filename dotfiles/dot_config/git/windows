@@ -1,0 +1,46 @@
+[core]
+    sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+    editor = vim
+
+[diff]
+    tool = bc4
+
+[merge]
+    tool = p4
+
+[difftool]
+    prompt = false
+
+[mergetool]
+    prompt = false
+
+[difftool "bc4"]
+    cmd = \"C:/Program Files/Beyond Compare 4/BComp.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+[mergetool "bc4"]
+    cmd = \"C:/program files/beyond compare 4/bcomp.exe\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
+    trustExitCode = true
+
+[mergetool "p4"]
+    cmd = \"p4merge.exe\" $(cygpath -w $BASE) $(cygpath -w $LOCAL) $(cygpath -w $REMOTE) $(cygpath -w $MERGED)
+    trustExitCode = true
+    keepBackup = false
+
+[difftool "k"]
+    cmd = \"C:/Program Files/KDiff3/kdiff3.exe\" $(cygpath -w $LOCAL) $(cygpath -w $REMOTE)
+[mergetool "k"]
+    cmd = \"C:/Program Files/KDiff3/kdiff3.exe\" $(cygpath -w $BASE) $(cygpath -w $LOCAL) $(cygpath -w $REMOTE) $(cygpath -w $MERGED)
+    trustExitCode = false
+    keepBackup = false
+
+
+[gui]
+    gcwarning = false
+    recentrepo = C:/Users/sg0216489/vimfiles
+
+[safe]
+	directory = *
+
+[credential "https://git.prod.sabre.com"]
+  provider = generic
+[credential "https://git.sabre-gcp.com"]
+  provider = generic

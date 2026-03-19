@@ -2,10 +2,12 @@
 # local is symlinked in wsl and linux to ~/.config/git/wsl and ~/.config/git/linux
 # on windows we create a copy of ~/.config/git/windows
 [include]
-    path = ~/.config/git/local
-
-[include]
   path = ~/.config/git/user
+
+[core]
+    excludesfile = ~/.config/git/ignore
+    autocrlf = false
+    whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
 
 [credential]
     helper = cache --timeout=3600000
@@ -31,6 +33,10 @@
     nd    = difftool --tool=nvimdiff
     vdc    = difftool --tool=vimdiff --cached
     ndc    = difftool --tool=nvimdiff --cached
+    vc = difftool --tool=code
+    vcc = difftool --tool=code --cached
+    bc = difftool --tool=bc4
+    bcc = difftool --tool=bc4 --cached
     ls-ignored = ls-files --exclude-standard --ignored --others
     st    = status
     dnamestatus = diff --name-status
@@ -51,6 +57,9 @@
     ttc = -c diff.external=difft diff --cached
     fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
+[diff]
+    algorithm = histogram
+
 [difftool]
     prompt = false
 
@@ -60,14 +69,28 @@
 [difftool "nvimdiff"]
     cmd = vdiff "$LOCAL" "$REMOTE"
 
+[difftool "code"]
+  cmd = code --wait --new-window --diff "$LOCAL" "$REMOTE"
+
 [push]
     autoSetupRemote = true
     followTags = true
+
 [help]
     autocorrect = prompt
-[rerere]
-    enabled = true
-    autoupdate = true
 
-[core]
-    excludesfile = ~/.config/git/ignore
+[advice]
+    useCoreFSMonitorConfig = false
+
+[filter "lfs"]
+    process = git-lfs filter-process
+    required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+
+[rerere]
+	enabled = true
+	autoupdate = true
+
+[include]
+    path = ~/.config/git/local
