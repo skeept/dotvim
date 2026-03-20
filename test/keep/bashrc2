@@ -1185,6 +1185,12 @@ function pr() {
   fi
 }
 
+export DEFAULT_PYENV=~/v312/bin
+function ipy() {
+  local cmd=$(command -v ipython || echo "$DEFAULT_PYENV/ipython")
+  "$cmd" "$@"
+}
+
 function lfd() {
   # run lf searching for dirs
   # local query="${1:-}"  # Default to empty if not provided
