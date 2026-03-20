@@ -105,7 +105,10 @@ function! which_key#mappings#parse(key, dict, visual) " {{{
     " eval the expression as the final {rhs}
     " Ref #60
     if mapd.expr
-      let mapd.rhs = eval(mapd.rhs)
+      try
+        let mapd.rhs = eval(mapd.rhs)
+      catch /.*/
+      endtry
     endif
 
     if mapd.lhs !=# '' && mapd.display !~# 'WhichKey.*'
@@ -119,7 +122,9 @@ endfunction
 
 function! s:escape(mapping) abort " {{{
   let feedkeyargs = a:mapping.noremap ? 'nt' : 'mt'
-  let rhs = substitute(a:mapping.rhs, '\', '\\\\', 'g')
+  let rhs = substitute(a:mapping.rhs, '\c<Leader>', get(g:, 'mapleader', '\'), 'g')
+  let rhs = substitute(rhs, '\c<LocalLeader>', get(g:, 'maplocalleader', '\'), 'g')
+  let rhs = substitute(rhs, '\', '\\\\', 'g')
   let rhs = substitute(rhs, '<\([^<>]*\)>', '\\<\1>', 'g')
   let rhs = substitute(rhs, '"', '\\"', 'g')
   let rhs = 'call feedkeys("'.rhs.'", "'.feedkeyargs.'")'
