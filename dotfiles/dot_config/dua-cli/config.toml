@@ -1,0 +1,6 @@
+# dua-cli configuration
+#
+[keys]
+# If true, pressing <Esc> in the main pane ascends to the parent directory.
+# If false, <Esc> follows the default quit behavior.
+esc_navigates_back = true
