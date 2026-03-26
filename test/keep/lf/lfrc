@@ -126,11 +126,10 @@ cmd 7z ${{
 
 
 cmd fzf_file_jump ${{
-    #res="$(fd | fzf --reverse --header='Jump to location')"
     res="$(
         fd --hidden --exclude .git | fzf --reverse \
         --preview 'if [ -d {} ]; then eza --tree --color=always --level=1 {}; else bat --color=always --style=plain {}; fi' \
-        --preview-window=right:50%
+        --preview-window=right:65%
         )"
     if [ -n "$res" ]; then
         if [ -d "$res" ]; then
