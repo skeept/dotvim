@@ -124,24 +124,64 @@ cmd 7z ${{
   fi
 }}
 
-
 cmd fzf_file_jump ${{
-    res="$(
-        fd --hidden --exclude .git | fzf --reverse \
+    # Save the absolute path and strip trailing slash to prevent //
+    pwd | sed 's/\/$//' > /tmp/lf_fzf_dir
+
+    out=$(fd --hidden --exclude .git | fzf --reverse --print-query \
         --preview 'if [ -d {} ]; then eza --tree --color=always --level=1 {}; else bat --color=always --style=plain {}; fi' \
-        --preview-window=right:65%
-        )"
+        --preview-window=right:65%)
+
+    query=$(echo "$out" | head -n 1)
+    res=$(echo "$out" | sed -n '2p')
+    echo "$query" > /tmp/lf_fzf_query
+
     if [ -n "$res" ]; then
-        if [ -d "$res" ]; then
-            cmd="cd"
-        else
-            cmd="select"
-        fi
+        if [ -d "$res" ]; then cmd="cd"; else cmd="select"; fi
         res="$(printf '%s' "$res" | sed 's/\\/\\\\/g;s/"/\\"/g')"
         lf -remote "send $id $cmd \"$res\""
     fi
 }}
+
+cmd fzf_file_resume ${{
+    last_query=$(cat /tmp/lf_fzf_query 2>/dev/null)
+    last_dir=$(cat /tmp/lf_fzf_dir 2>/dev/null)
+    [ -z "$last_dir" ] && last_dir="."
+
+    # Export so the fzf subshell can see it
+    export LAST_DIR="$last_dir"
+
+    out=$( (cd "$LAST_DIR" && fd --hidden --exclude .git) | fzf --reverse \
+        --print-query --query="$last_query" \
+        --preview '
+            # Move into the original directory first
+            cd "$LAST_DIR"
+            # Now {} works perfectly because it is a relative path from here
+            if [ -d {} ]; then
+                eza --tree --color=always --level=1 {}
+            else
+                bat --color=always --style=plain {}
+            fi' \
+        --preview-window=right:65%)
+
+    query=$(echo "$out" | head -n 1)
+    res=$(echo "$out" | sed -n '2p')
+    echo "$query" > /tmp/lf_fzf_query
+
+    if [ -n "$res" ]; then
+        # Use printf to handle the join safely for the final selection
+        res_path="${LAST_DIR}/${res}"
+        if [ -d "$res_path" ]; then cmd="cd"; else cmd="select"; fi
+
+        # Escape for lf remote
+        res_path="$(printf '%s' "$res_path" | sed 's/\\/\\\\/g;s/"/\\"/g')"
+        lf -remote "send $id $cmd \"$res_path\""
+    fi
+}}
+
+# Bindings
 map gf :fzf_file_jump
+map rf :fzf_file_resume
 map gr %{{
     t="$(git rev-parse --show-toplevel 2> /dev/null || echo .)"
     lf -remote "send $id cd \"$t\""
