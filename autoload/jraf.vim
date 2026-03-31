@@ -1,47 +1,6 @@
 " my own functions comming either from common.vim, simple.vim or vimrc
 " that can be autoladed
 
-"================== Unite ====================================================={{{
-function! jraf#uniteColorSchemeResume()
-  if !exists("s:unite_init_colorscheme")
-    let s:unite_init_colorscheme = 1
-    Unite -buffer-name=colorscheme colorscheme
-  else
-    UniteResume colorscheme
-  endif
-endfunction
-
-function! jraf#unite_my_settings()"{{{
-  " Overwrite settings.
-
-  nmap <buffer> <ESC> <Plug>(unite_exit)
-  "inoremap <buffer> jj <Plug>(unite_insert_leave)
-  "inoremap <buffer> <C-w> <Plug>(unite_delete_backward_path)
-
-  nmap <buffer> s jp
-  nmap <buffer> S kp
-
-  " <C-L>: manual neocomplcache completion.
-  inoremap <buffer> <C-;> <C-X><C-U><C-P><Down>
-
-  inoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
-  nnoremap <silent><expr><buffer> <C-X> unite#do_action('cd')
-
-  " Start insert.
-  "let g:unite_enable_start_insert = 1
-  setlocal nonumber
-  setlocal norelativenumber
-endfunction"}}}
-"==============================================================================}}}
-
-"================== Buffergator ==============================================={{{
-function! jraf#loadBuffergator()
-  if exists("s:loaded_buffergator") | return '' | endif
-  ActivateAddons Buffergator
-  let s:loaded_buffergator = 1
-endfunction
-"==============================================================================}}}
-
 "================== CtrlP ====================================================={{{
 function! jraf#ctrlpShowArrFun(count)
   let i = 0
@@ -172,35 +131,6 @@ function! jraf#toggleTBarListNT()
 endfunction
 "==============================================================================}}}
 
-"================== UltiSnips ================================================={{{
-function! jraf#loadUltisnips()
-  if (has("python") || has("python3")) && g:addon_manager == 2
-    call vam#ActivateAddons(['UltiSnips'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-    inoremap <silent> <NL> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <NL> :call UltiSnips#ListSnippets()<CR>
-    snoremap <silent> <NL> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
-    xnoremap <silent> <NL> :call UltiSnips#SaveLastVisualSelection()<CR>gvs
-
-    inoremap <silent> <F10> <C-R>=UltiSnips#ExpandSnippetOrJump()<CR>
-    nnoremap <silent> <F10> :call UltiSnips#ListSnippets()<CR>
-    snoremap <silent> <F10> <ESC>:call UltiSnips#ExpandSnippetOrJump()<CR>
-
-    nnoremap <silent> <F12> a<C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=jraf#ultiSnipsCallUnite()<CR>
-    inoremap <silent> <F12> <C-R>=(pumvisible()? "\<LT>C-E>":"")<CR><C-R>=jraf#ultiSnipsCallUnite()<CR>
-
-    return 1
-  else
-    echom "vim compiled without python"
-    return 0
-  endif
-endfunction
-
-function! jraf#ultiSnipsCallUnite()
-  Unite -start-insert -winheight=100 -immediately -no-empty ultisnips
-  return ''
-endfunction
-"==============================================================================}}}
-
 "================== Supertab =================================================={{{
 function! jraf#mySupertabAltCompletion()
   "alternate between keyword completion and user omni completion
@@ -219,37 +149,6 @@ endfunction
 "==============================================================================}}}
 
 "================== Python Settings ==========================================={{{
-
-"pysmell {{{
-function! jraf#loadPysmell()
-  if exists("s:loadedPysmell")
-    return ''
-  endif
-  if has("python")
-    silent python << EOF
-import vim
-try:
-  import pysmell
-  vim.command('let s:has_pysmell = 1')
-except:
-  vim.command('let s:has_pysmell = 0')
-EOF
-
-    if s:has_pysmell == 1
-        ActivateAddons pysmell
-      setlocal completefunc=pysmell#Complete
-      augroup ft_py_pysmellcomp
-        autocmd!
-        autocmd filetype python setlocal completefunc=pysmell#Complete
-      augroup END
-    else
-      echom "No Pysmell installed!"
-    endif
-  else
-    echom "Cannot Load PySmell: No Python!"
-  endif
-  let s:loadedPysmell = 1
-endfunction "}}}
 
 "Jedi {{{
 function! jraf#loadJedi()
@@ -350,9 +249,9 @@ function! jraf#loadLatexPlugins()
   vmap <F8> <Plug>IMAP_DeleteAndJumpForward
 
   "ActivateAddons LaTeX-Box
-  ActivateAddons vlatex
-  ActivateAddons SpellCheck
-  ActivateAddons LanguageTool
+  packadd vlatex
+  packadd SpellCheck
+  packadd LanguageTool
   packadd LaTeX_Box
   "will it be necessary to load after/ftplugin/tex again?
   let s:loaded_latex_plugins = 1
@@ -493,7 +392,7 @@ endfunction
 "================== LibClang =================================================={{{
 function! jraf#loadClangComplete()
   if exists("s:loaded_clang_complete") || g:is_win | return '' | endif
-  ActivateAddons clang_complete
+  packadd clang_complete
   let s:loaded_clang_complete = 1
 endfunction
 "==============================================================================}}}
@@ -545,11 +444,7 @@ endfunction "}}}
 
 "================== Plugin Loading (simple.vim) ==============================={{{
 function! jraf#loadCtrlP()
-  if g:addon_manager == 2
-    call vam#ActivateAddons(['ctrlp.vim'], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-  else "assume packadd
-    packadd ctrlp
-  endif
+  packadd ctrlp
   nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
         \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
   nnoremap <silent> ,b :<C-U>CtrlPBuffer<CR>

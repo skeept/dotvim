@@ -1,8 +1,5 @@
 " common settings and functions to both vimrc and simple.vim
 
-" use this to replace VAMAddToActiveAddons
-command! -nargs=1 -bar PackAddRegister packadd <args> <bar> let g:active_addons += ['<args>']
-
 "================== Settings =================================================={{{
 " Use Vim settings, rather then Vi settings (much better!).
 
@@ -256,8 +253,6 @@ function! IsAddonActive(addon)
   endif
   if g:addon_manager == 1 "Pathogen"
     return index(g:pathogen_disabled, a:addon) == -1
-  elseif g:addon_manager == 2 "vam-addon-manager
-    return index(g:active_addons, a:addon) >= 0
   elseif g:addon_manager == 3 "Plug
     return has_key(g:plugs, a:addon)
   endif
@@ -604,50 +599,21 @@ inoremap <F3> <esc>:<c-u>call jraf#toggleTBarListNT()<CR>
 let g:gundo_prefer_python3 = 1
 "==============================================================================}}}
 
-"================== Snippets / UltiSnips ======================================{{{
-"1 UltiSnips, 2 neosnippet
-let s:ulti_or_neosnip = 2
-if s:ulti_or_neosnip == 1 && !has("python3")
-  let s:ulti_or_neosnip = 2
-endif
+"================== Snippets / neosnippet ======================================{{{
+"neosnippet is used for snippets (UltiSnips was previously available via VAM)
+function! s:LoadNeoSnipppet()
+  imap <NL> <Plug>(neosnippet_expand_or_jump)
+  imap <C-J> <Plug>(neosnippet_expand_or_jump)
+  smap <NL> <Plug>(neosnippet_expand_or_jump)
+  xmap <NL> <Plug>(neosnippet_expand_target)
+  imap <F12> <Plug>(neosnippet_start_unite_snippet)
+  smap <F12> <Plug>(neosnippet_start_unite_snippet)
+  xmap <F12> <Plug>(neosnippet_start_unite_snippet)
 
-if s:ulti_or_neosnip == 1
-  let g:UltiSnipsExpandTrigger = "<F10>"
-  let g:UltiSnipsListSnippets = "<C-F10>"
-  let g:UltiSnipsJumpForwardTrigger = "<F10>"
-  let g:UltiSnipsJumpBackwardTrigger ="<S-F10>""
-  let g:UltiSnipsEditSplit = "horizontal"
+  let g:neosnippet#snippets_directory = g:p0 . "/snippets/neo"
+endfunction
 
-  inoremap <F9> <C-R>=UltiSnips#JumpBackwards()<CR>
-  snoremap <F9> <ESC>:call UltiSnips#JumpBackwards()<CR>
-
-  nnoremap <F10> :if jraf#loadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
-  inoremap <F10> <C-R>=jraf#loadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
-  nnoremap <C-J> :if jraf#loadUltisnips() \| call UltiSnips#ListSnippets() \| endif<CR>
-  inoremap <C-J> <C-R>=jraf#loadUltisnips()?UltiSnips#ExpandSnippet():""<CR>
-  nnoremap <F12> :call LoadUnite(0) \| call jraf#loadUltisnips() \|
-        \ :call jraf#ultiSnipsCallUnite()<CR>
-  inoremap <F12> <ESC>:call LoadUnite(0) \| call jraf#loadUltisnips() \|
-        \ :call jraf#ultiSnipsCallUnite()<CR>
-endif
-"==============================================================================}}}
-
-"================== NeoSnippet ================================================{{{
-if s:ulti_or_neosnip == 2
-  function! s:LoadNeoSnipppet()
-    imap <NL> <Plug>(neosnippet_expand_or_jump)
-    imap <C-J> <Plug>(neosnippet_expand_or_jump)
-    smap <NL> <Plug>(neosnippet_expand_or_jump)
-    xmap <NL> <Plug>(neosnippet_expand_target)
-    imap <F12> <Plug>(neosnippet_start_unite_snippet)
-    smap <F12> <Plug>(neosnippet_start_unite_snippet)
-    xmap <F12> <Plug>(neosnippet_start_unite_snippet)
-
-    let g:neosnippet#snippets_directory = g:p0 . "/snippets/neo"
-  endfunction
-
-  call s:LoadNeoSnipppet()
-endif
+call s:LoadNeoSnipppet()
 "==============================================================================}}}
 
 "================== Supertab =================================================={{{
@@ -688,7 +654,6 @@ let g:jedi#popup_on_dot = 0
 if g:is_vimrc_simple == 0
   augroup ft_py_pysmell_or_jedi
     autocmd!
-    "autocmd FileType python call jraf#loadPysmell()
     autocmd FileType python call jraf#loadJedi()
   augroup END
 endif

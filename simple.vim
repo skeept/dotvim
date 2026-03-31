@@ -25,32 +25,6 @@ let g:is_win = has('win32') || has('win64')
 let g:addon_manager = 3
 let g:active_addons = []
 
-"================== vim-addon-manager========================================{{{
-if g:addon_manager == 2
-function! SetupVAM()
-  let g:vim_addon_manager = {}
-  let vam_install_path = escape(g:p0 . '/pack/bundle/opt/vam', ' \')
-  exec 'set rtp+='. vam_install_path
-
-  let g:active_addons += ['Supertab', 'nerdcommenter']
-  let g:active_addons += ['vim-unimpaired', 'vim-scratch']
-
-  let g:vim_addon_manager.additional_addon_dirs = [
-        \ escape(g:p0 . '/notused_plugins', ' \'),
-        \ escape(g:p0 . '/pack/bundle/opt', ' \'),
-        \ escape(g:p0 . '/plugged', ' \')
-        \ ]
-
-  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0, 'force_loading_plugins_now': 1})
-
-  command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
-        \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-endfunction
-call SetupVAM()
-endif
-"==============================================================================}}}
-
-
 "================== Plug + internal ========================================={{{
 if g:addon_manager == 3
 

@@ -51,59 +51,6 @@ if g:addon_manager == 1
 endif
 "==============================================================================}}}
 
-"================== vim-addon-manager========================================{{{
-if g:addon_manager == 2
-function! SetupVAM()
-  let g:active_addons = []
-  command! -nargs=* -bar VAMAddToActiveAddons let g:active_addons += [<f-args>]
-
-  let g:vim_addon_manager = {}
-  let vam_install_path = escape(g:p0 . '/pack/bundle/opt/vam', ' \')
-  exec 'set rtp+='. vam_install_path
-  let g:vim_addon_manager.additional_addon_dirs = [
-        \ escape(g:p0 . '/local_plugins', ' \'),
-        \ escape(g:p0 . '/pack/bundle/start', ' \'),
-        \ escape(g:p0 . '/pack/bundle/opt', ' \'),
-        \ ]
-
-  VAMAddToActiveAddons ctrlp
-
-  "VAMAddToActiveAddons neocomplete
-  VAMAddToActiveAddons asyncomplete
-
-  "VAMAddToActiveAddons startify
-  VAMAddToActiveAddons fzf fzf-vim
-  "VAMAddToActiveAddons argumentative projectionist
-  "VAMAddToActiveAddons Syntastic
-  "VAMAddToActiveAddons ale
-  "VAMAddToActiveAddons neomake
-  "VAMAddToActiveAddons gitv targets
-  "VAMAddToActiveAddons FastFold
-  "VAMAddToActiveAddons leader-guide
-
-  "" Related with statusline
-  VAMAddToActiveAddons SmartusLine
-  "VAMAddToActiveAddons lightline
-  "VAMAddToActiveAddons airline
-
-  "VAMAddToActiveAddons obsession
-  "VAMAddToActiveAddons LaTeX-Box vlatex SpellCheck LanguageTool
-  "VAMAddToActiveAddons SnippetCompleteSnipMate SnippetComplete
-  "VAMAddToActiveAddons yankstack
-  if has("python3")
-    "VAMAddToActiveAddons UltiSnips
-    "VAMAddToActiveAddons denite
-  endif
-
-  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
-
-  command! -nargs=* -bar -complete=customlist,vam#install#InstalledAddonCompletion AA
-        \ :call vam#ActivateAddons([<f-args>], {'auto_install' : 0, 'force_loading_plugins_now': 1})
-endfunction
-call SetupVAM()
-endif
-"==============================================================================}}}
-
 if g:addon_manager == 3
 execute 'source ' . g:p0 . '/plug_load.vim'
 endif
@@ -114,61 +61,6 @@ endif
 " this for now
 "
 execute "source " . g:p0 . "/common.vim"
-
-func! LoadPluginsWithTimer(timer)
-  if g:addon_manager != 2
-    return
-  endif
-
-  "VAMAddToActiveAddons airline
-  "VAMAddToActiveAddons lightline
-  VAMAddToActiveAddons FastFold
-  VAMAddToActiveAddons leader-guide
-  VAMAddToActiveAddons junkfile
-  VAMAddToActiveAddons nerdcommenter
-  VAMAddToActiveAddons unite-outline unite-qf
-  VAMAddToActiveAddons vim-diff-enhanced
-  VAMAddToActiveAddons magit fuzzysearch grepper
-  VAMAddToActiveAddons gv
-  VAMAddToActiveAddons neoyank
-  VAMAddToActiveAddons rsi
-  VAMAddToActiveAddons vinegar
-  VAMAddToActiveAddons vim-qf
-  VAMAddToActiveAddons ps1 fugitive
-  VAMAddToActiveAddons textobj-entire textobj-python textobj-user textobj-matchit
-  VAMAddToActiveAddons gina
-  "VAMAddToActiveAddons peekaboo
-  VAMAddToActiveAddons TaskList
-  VAMAddToActiveAddons Supertab
-  "VAMAddToActiveAddons Mucomplete
-
-  VAMAddToActiveAddons asyncomplete-buffer
-  VAMAddToActiveAddons asyncomplete-file
-  VAMAddToActiveAddons asyncomplete-neosnippet
-  VAMAddToActiveAddons asyncomplete-omni
-
-  VAMAddToActiveAddons delimitMate CountJump
-  VAMAddToActiveAddons vimproc vimfiler tlib NrrwRgn
-  VAMAddToActiveAddons unite-session neomru
-  "VAMAddToActiveAddons apathy
-  VAMAddToActiveAddons flagship
-  VAMAddToActiveAddons which-key
-  VAMAddToActiveAddons bufkill
-  VAMAddToActiveAddons sayonara
-
-  if has("python3")
-    "VAMAddToActiveAddons UltiSnips
-    VAMAddToActiveAddons denite neovim-rpc yarp
-  endif
-
-  call vam#ActivateAddons(g:active_addons, {'auto_install' : 0})
-endfunction
-
-if has('timers')
-  call timer_start(1000, 'LoadPluginsWithTimer')
-else
-  call LoadPluginsWithTimer(0)
-endif
 execute "source " . g:p0 . "/conf_plugins.rc.vim"
 
 "================== LibClang =================================================={{{
