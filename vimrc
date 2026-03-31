@@ -91,12 +91,8 @@ augroup END
 "set statusline=%2.2n\ %t\ %h%m%r%=[%{&ft}\,%{&ff}]
 set statusline=%2.2n\ %t
 set statusline+=\ %h%#Modified#%m%r%*%=
-"set statusline+=%{XgetTagbarFunc()}
-"set statusline+=%{GetWindowNR()}
 set statusline+=%{GetNumTabsStr()}
 set statusline+=%{CondDispFtFf()}
-set statusline+=%{DispLTXCF()}
-"set statusline+=\ %h%m%r%=%{CondDispFtFf()}
 "set statusline+=%{tagbar#currenttag('[%s] ', '')}
 "set statusline+=\ %{strftime(\"[%H:%M%p]\")} "do we want to show time?
 set statusline+=\ %l/%L\ %2c\ %P

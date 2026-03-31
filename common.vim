@@ -563,14 +563,14 @@ let g:ctrlp_extensions = ['tag', 'buffertag', 'quickfix', 'dir', 'changes', 'fun
 let g:ctrlp_jump_to_buffer = 0 "don't like this behavior
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_depth = 2
-noremap ,pu :CtrlPMRUFiles<CR>
-noremap ,pb :CtrlPBuffer<CR>
-noremap ,pt :CtrlPTag<CR>
-noremap ,pq :CtrlPQuickfix<CR>
-noremap ,pd :CtrlPCurWD<CR>
-noremap ,pj :CtrlPBufTagAll<CR>
-noremap ,pf :CtrlPCurFile<CR>
-noremap ,pa :CtrlPShowArr<CR>
+nnoremap ,pu :CtrlPMRUFiles<CR>
+nnoremap ,pb :CtrlPBuffer<CR>
+nnoremap ,pt :CtrlPTag<CR>
+nnoremap ,pq :CtrlPQuickfix<CR>
+nnoremap ,pd :CtrlPCurWD<CR>
+nnoremap ,pj :CtrlPBufTagAll<CR>
+nnoremap ,pf :CtrlPCurFile<CR>
+nnoremap ,pa :CtrlPShowArr<CR>
 nnoremap ,pc :CtrlPCommand<CR>
 nnoremap <space>c :CtrlPCommand<CR>
 nnoremap ,pl :CtrlPLine<CR>
@@ -585,8 +585,8 @@ let g:ctrlp_comm = ['', 'Buffer', 'MRUFiles', 'CurWD', 'Dir',
       \'Root', 'Tag', 'CurFile', 'BookmarkDir', 'Line']
 nnoremap <silent> <C-P> :<C-U>call jraf#ctrlpShowArrFun(v:count)
       \ \| silent! exe 'CtrlP' . g:ctrlp_comm[v:count]<CR>
-noremap ,b :CtrlPBuffer<CR>
-noremap ,e :CtrlPCurFile<CR>
+nnoremap ,b :CtrlPBuffer<CR>
+nnoremap ,e :CtrlPCurFile<CR>
 nnoremap ,; :CtrlPCmdHistory<CR>
 "==============================================================================}}}
 
@@ -684,7 +684,7 @@ command! -complete=file -nargs=* Mt call jraf#setPdfDestination(<f-args>)
 "================== Other commands/mappings/settings =========================={{{
 
 "================== Don't view files with inconsistent ctrl-r ================={{{
-map ,ml :ed ++ff=dos<CR>
+nnoremap ,ml :ed ++ff=dos<CR>
 command! HideCtrlM ed ++ff=dos
 augroup fix_ff
   autocmd!
@@ -728,11 +728,6 @@ function! GetNumTabsStr()
   endif
 endfunction
 
-function! GetWindowNR()
-  if winnr('$') < 3 |  return '' | endif
-  return 'W' . winnr()
-endfunction
-
 function! CondDispFtFf()
   if v:version < 702
     return ''
@@ -745,14 +740,6 @@ function! CondDispFtFf()
     let val =  '[' . xft . ( xft == '' ? '' : ',' ) . xff . ']'
   endif
   return val
-endfunction
-
-function! XgetTagbarFunc()
-  if &ft == "help"
-    return ""
-  else
-    return tagbar#currenttag('[%s] ', '')
-  endif
 endfunction
 
 let g:displtxcf = '' "one time display
