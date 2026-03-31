@@ -6,7 +6,7 @@
 # -----------------------------------------------------------
 #
 
-alias b="exec bash"
+alias ba='exec bash'
 
 [ -d "${HOME}/vimfiles" ] && CONFIG_BASE="${HOME}/vimfiles"
 [ ! -d "${CONFIG_BASE}" ] && CONFIG_BASE="${HOME}/.vim"

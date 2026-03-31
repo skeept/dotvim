@@ -33,8 +33,8 @@ complete -f -o default -X '!*.tar' tar
 complete -f -o default -X '!*.py' vim vi gvim emacs xemacs nedit joe jed kate kwrite gedit \
   py.exe py python python.exe ipython wpy wpy.exe \
   epy
-  complete -f -o default -X '!*.sh' bash sh
-  complete -A variable path dupremove pre
+complete -f -o default -X '!*.sh' bash sh
+complete -A variable path dupremove pre
 
 
 # This is a 'universal' completion function - it works when commands have
@@ -105,9 +105,9 @@ if false; then
     # test -f $makef and input redirection
     COMPREPLY=( $(cat $makef 2>/dev/null | awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' | tr -s ' ' '\012' | sort -u | eval $gcmd ) )
   }
-fi
 
-complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
+  complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
+fi
 
 _configure_func ()
 {

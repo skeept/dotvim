@@ -26,17 +26,18 @@ if [ -z "$__BASHRC1_ENV_LOADED" ]; then
 
     # --- PATH and Library Modifications ---
     export PATH=${HOME}/.local/bin:${PATH}
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/${HOME}/lib"
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/lib"
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/tmp/$USER/usr/lib"
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"${HOME}/lib"
-    export MANPATH=$MANPATH:"/tmp/$USER/man":"/tmp/$USER/local/man"
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}/tmp/${HOME}/lib"
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}/tmp/$USER/lib"
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}/tmp/$USER/usr/lib"
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${HOME}/lib"
+    export MANPATH="${MANPATH:+$MANPATH:}/tmp/$USER/man:/tmp/$USER/local/man"
 
-    export IS_WSL="$(uname -a | grep -i microsoft >& /dev/null && echo 1 || echo 0)"
+    [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]] && IS_WSL=1 || IS_WSL=0
+    export IS_WSL
     export IS_GIT_BASH="$([ -n "${MINGW_PREFIX}" ] && echo 1  || echo 0)"
     export PYTHONSTARTUP=~/.pythonrc.py
     export DISPLAY0="$DISPLAY"
-    export PYTHONPYCACHEPREFIX=/tmp/pychache
+    export PYTHONPYCACHEPREFIX=/tmp/pycache
 
     if [ "${IS_GIT_BASH}" = "1" ]; then
         export PATH="/c/ht/nvim-win64/bin:${PATH}"
@@ -67,10 +68,12 @@ function addDirToVarsFront() {
 }
 
 function dupremove() {
+    # Canonical definition is in bashrc2; this is a minimal fallback
+    # in case bashrc2 hasn't been sourced yet (used at end of bashrc1)
     local __dupremovevar; local _result
     if [ -z "$1" ]; then dupremove PATH; dupremove LD_LIBRARY_PATH; dupremove MANPATH; return; fi
     eval __dupremovevar=\$$1
-    _result=$(gawk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | sed -e 's/\:\:/\:/g' -e 's/:$//')
+    _result=$(awk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | sed -e 's/\:\:/\:/g' -e 's/:$//')
     eval "export ${1}=\"${_result:-${__dupremovevar}}\" "
 }
 
@@ -88,16 +91,16 @@ if [[ -n "$PS1" ]]; then
     fi
 
     # 1. Aliases & Functions (Inheritance doesn't pass these, so load every time)
-    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/alias"
-    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/bashrc2"
-    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/wk2.sh"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}alias"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}bashrc2"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk2.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}wk2.sh"
 
     # 2. Local Completions
     [ -e "$HOME/bin/links/completions/comp.bash" ] && . "$HOME/bin/links/completions/comp.bash"
 
     # 3. Prompt (prompt.sh logic)
     # Inside prompt.sh, ensure DID_PROMPT_SET is NOT exported
-    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}/prompt.sh"
+    [ -e "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}prompt.sh" ] && . "${CONFIG_FILES_DIR}/${CONFIG_DOT_PREFIX}prompt.sh"
 
     # 4. Windows Specifics
     if [ "${BASH_CONFIG_IMPORT_WIN}" = "yes" ]; then
@@ -108,7 +111,7 @@ if [[ -n "$PS1" ]]; then
     [ -e "${HOME}/.bashrc.local" ] && . "${HOME}/.bashrc.local"
 
     # 6. Final Clean up & Interactive tools
-    export HISTCONTROL=erasedups:ignoredups
+    export HISTCONTROL=erasedups:ignoredups:ignorespace
     _eval_cmd_expression_if_exists fzf --${CURSHELL:-bash}
 
     # Run deduplication one last time to keep the inherited PATH healthy

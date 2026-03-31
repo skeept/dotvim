@@ -15,17 +15,6 @@ if [ -z "$bs" ]; then
   export bs="$(_get_backslash)"
 fi
 
-function gi()
-{
-  local pattern=$1
-  local def_loc="."
-  shift
-  if [[ -n "$@" ]]; then
-    local def_loc=$@
-  fi
-  grep -iR --exclude={tags,*.{obj,idb,pdb,exe,dll,png,jpg,vlt,dat,tff,ico}} "${pattern}" ${def_loc}
-}
-
 function __args_to_win()
 {
   path_util=wslpath

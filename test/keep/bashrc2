@@ -73,7 +73,7 @@ LOG_LEVEL=${LOG_LEVEL:-2}
 
 log() {
   # 1. Handle case-insensitivity by converting the first arg to uppercase
-  local input_level=$(echo "$1" | tr '[:lower:]' '[:upper:]')
+  local input_level="${1^^}"
   local level
   local msg
   local timestamp=$(date +"%H:%M:%S")
@@ -294,7 +294,7 @@ function ask()
   esac
 }
 
-[ -e $HOME/.cargo/env ] && source $HOME/.cargo/env
+# cargo/env is already sourced in ~/.bashrc; skip duplicate
 [[ -e ${CONFIG_HOME}/setup_completion.sh ]] && source ${CONFIG_HOME}/setup_completion.sh
 
 function ddo() #try to do something with every file passed on the command line
@@ -329,7 +329,7 @@ function dupremove()
     return
   fi
   eval __dupremovevar=\$$1
-  _result=$(gawk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | \
+  _result=$(awk 'BEGIN{ORS=":";RS="[:\n]"}!a[$0]++' <<<"${__dupremovevar%:}" | \
     sed -e 's/\:\:/\:/g' -e 's/:$//')
 
   if [ -z "${_result}" ]; then
@@ -472,7 +472,7 @@ function gi()
   if [[ -n "$@" ]]; then
     local def_loc=$@
   fi
-  grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
+  grep -iR --exclude={tags,*.{obj,o,idb,pdb,exe}} \
     --exclude-dir=.{git,hg,svn} --binary-files=without-match "${pattern}" ${def_loc}
   }
 
@@ -484,7 +484,7 @@ function gi()
     if [[ -n "$@" ]]; then
       local def_loc=$@
     fi
-    grep -iR --exclude={tags,*.{{obj,o,idb,pdb,exe}} \
+    grep -iR --exclude={tags,*.{obj,o,idb,pdb,exe}} \
       --exclude-dir=.{git,hg,svn} "${pattern}" ${def_loc}
   }
 
@@ -494,8 +494,8 @@ __imp_v()
   local mode=$1
   shift
   args=()
-  for arg in $@; do
-    [ -e $arg ] && args+=("$(realpath $arg)") || args+=("$arg")
+  for arg in "$@"; do
+    [ -e "$arg" ] && args+=("$(realpath "$arg")") || args+=("$arg")
   done
 
   [ "${mode}" = "X" ] && mode=
@@ -511,12 +511,12 @@ __imp_v()
 
 vs()
 {
-  __imp_v S $@
+  __imp_v S "$@"
 }
 
 vt()
 {
-  __imp_v T $@
+  __imp_v T "$@"
 }
 
 g()
@@ -578,7 +578,6 @@ first_alternative()
 {
   for cand in "$@"; do
     [ -e "${cand}" ] && echo "${cand}" && break
-    [ -d "${cand}" ] && echo "${cand}" && break
   done
 }
 
@@ -648,9 +647,9 @@ function zp2()
 
 function ve()
 {
-  for fname in $@; do
+  for fname in "$@"; do
     if [ -e "${fname}" ]; then
-      __imp_v X $@
+      __imp_v X "$@"
       return $?
     fi
   done
@@ -666,8 +665,8 @@ function vv
 
 function vn()
 {
-  for fname in $@; do
-    if [ -e "${fname}" ]; then __imp_v N $@; return $?; fi
+  for fname in "$@"; do
+    if [ -e "${fname}" ]; then __imp_v N "$@"; return $?; fi
   done
 
   if (type fzf >& /dev/null); then name="$(zp $@)"; else name=$@; fi
@@ -683,9 +682,9 @@ function ei()
 {
   # need to determine if nvim can be run
   if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
-    XDG_CONFIG_HOME=~/.vim/test nvim $@
+    XDG_CONFIG_HOME=~/.vim/test nvim "$@"
   else
-    vim $@
+    vim "$@"
   fi
 }
 
@@ -695,9 +694,9 @@ function e()
 {
   # need to determine if nvim can be run
   if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
-    nvim $@
+    nvim "$@"
   else
-    vim $@
+    vim "$@"
   fi
 }
 
@@ -712,7 +711,6 @@ eg()
   gvi -nvim $@
 }
 
-complete -o  default ee
 
 efg()
 {
@@ -905,7 +903,7 @@ function wk()
       printf "%-15s - %s\n" "$key" "${__wk_keys[$key]}"
     done
   else
-    python "$userval" $@
+  python "$userval" "$@"
   fi
 }
 
@@ -950,7 +948,7 @@ fi
 
 function state()
 {
-  python ~/bin/state2.py $@
+  python ~/bin/state2.py "$@"
 }
 
 function stateclear()
@@ -1172,16 +1170,15 @@ function ae() {
 function er() {
   _activate_pyve
   if [ -n "$1" ]; then
-    python $@
+    python "$@"
   fi
 }
 
-# python run in virtual environment
-# Note: pr is a linux command. use command pr if needed
+# Note: pr() shadows /usr/bin/pr (text formatting). Use `command pr` for the original.
 function pr() {
   _activate_pyve
   if [ -n "$1" ]; then
-    python $@
+    python "$@"
   fi
 }
 
