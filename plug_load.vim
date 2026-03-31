@@ -55,6 +55,7 @@ Plug 'tpope/vim-rsi'
 "Plug 'tpope/vim-abolish', { 'on': 'Subvert' }
 Plug 'tpope/vim-repeat'
 "Plug 'tpope/vim-apathy'
+Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-vinegar'
 Plug 'tpope/vim-unimpaired'
 "Plug 'tpope/vim-surround'
