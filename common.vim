@@ -62,7 +62,7 @@ set nostartofline
 " for being able to change buffers without saving
 set hidden
 set shortmess=ac
-if version > 800
+if v:version > 800
   set shortmess+=F
 endif
 
@@ -227,7 +227,6 @@ nnoremap ,ts :tab split<CR>
 nnoremap ,te :tabedit<SPACE>
 nnoremap <Leader>te :tabedit<SPACE>
 nnoremap ,tt :tab split<BAR><BAR>only<LEFT><LEFT><LEFT><LEFT><LEFT>
-nnoremap ,tc :tabclose<CR>
 nnoremap ,sw :<C-U>setlocal wrap! \| set wrap?<CR>
 nnoremap ,sq :bw!<CR>
 
@@ -336,7 +335,7 @@ command! -bar -nargs=* Stabedit call jraf#ScratchEdit('tabe', <q-args>)
 
 "================== Spelling =================================================={{{
 " by default now toggle spell and nospell, if a count is given use Portuguese
-setlocal nospell
+set nospell
 let g:togglespell = 0
 let g:default_langn = 1 "1 for English, 2 for Portuguese
 function! ToggleSpellFun(...)

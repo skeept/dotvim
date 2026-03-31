@@ -37,8 +37,8 @@ endif
 " fzf repo is not needed for shell binding but needeed for :FZF
 "Plug 'junegunn/fzf'
 "Plug 'junegunn/fzf.vim'
-Plug g:p0 . '/pack/bundle/opt//fzf'
-Plug g:p0 . '/pack/bundle/opt//fzf.vim'
+Plug g:p0 . '/pack/bundle/opt/fzf'
+Plug g:p0 . '/pack/bundle/opt/fzf.vim'
 
 let load_asynccomplete=has("nvim") || v:version > 800
 Plug 'prabirshrestha/asyncomplete.vim', Cond(load_asynccomplete > 0)

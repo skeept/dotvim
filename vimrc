@@ -14,6 +14,7 @@ let g:is_win = has('win32') || has('win64')
 " put it at the start of vimrc but define function LocalSettingsEndingVimRC
 " and call it at the end of vimrc
 let g:read_localVimrc = 0
+let g:active_addons = []
 let s:local_settings = expand(g:p0 . "/local_settings.vim")
 if filereadable(s:local_settings)
   execute 'source' . s:local_settings

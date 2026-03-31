@@ -13,9 +13,9 @@ let g:is_vimrc_simple = 1 "so we can do something specific in gvimrc
 "default path for runtime files
 "let g:p0 = split(&runtimepath, ',')[0]
 if has("unix")
-  let g:p0 = "~/.vim"
+  let g:p0 = expand("~/.vim")
 else
-  let g:p0 = "~/vimfiles"
+  let g:p0 = expand("~/vimfiles")
 endif
 
 let g:is_win = has('win32') || has('win64')

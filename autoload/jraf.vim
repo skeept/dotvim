@@ -126,10 +126,7 @@ function! jraf#toggleTBarListNT()
 
   if v:count <= 4
     if s:tbartoggle == 1
-      let s:loaded_tagbar = 1
       if !exists("s:loaded_tagbar")
-        call vam#ActivateAddons(['Tagbar'],
-              \ {'auto_install' : 0, 'force_loading_plugins_now': 1})
         let s:loaded_tagbar = 1
       endif
       TagbarToggle
@@ -495,7 +492,7 @@ endfunction
 
 "================== LibClang =================================================={{{
 function! jraf#loadClangComplete()
-  if 1 || exists("s:loaded_clang_complete") || g:is_win | return '' | endif
+  if exists("s:loaded_clang_complete") || g:is_win | return '' | endif
   ActivateAddons clang_complete
   let s:loaded_clang_complete = 1
 endfunction
