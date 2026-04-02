@@ -29,25 +29,24 @@ end
 -- A setup function to create the command and keymaps
 function M.setup()
   -- Create the :HoursMinutes command
-  vim.api.nvim_create_user_command("HoursMinutes", function()
-    local cword = vim.fn.expand("<cword>")
-    M.hours_minutes(cword, 3600)
-  end, { nargs = 0 })
+  vim.api.nvim_create_user_command("HoursMinutes", function(opts)
+    -- If an argument is typed on the command line, use it.
+    -- Otherwise, default to the word currently under the cursor.
+    local input = opts.args ~= "" and opts.args or vim.fn.expand("<cword>")
+    M.hours_minutes(input, 3600)
+  end, { nargs = "?" })
 
-  -- Create the keymaps
+  -- <F9>: Instantly calculate using the word under the cursor
   vim.keymap.set(
     "n",
     "<F9>",
     "<Cmd>HoursMinutes<CR>",
     { silent = true, desc = "Calculate hours/minutes" }
   )
-  vim.keymap.set(
-    "n",
-    "<S-F9>",
-    ":HoursMinutes<Space>",
-    { noremap = true, desc = "Edit hours/minutes calculation" }
-  )
-  vim.keymap.set("i", "<S-F8>", "<C-R>=3600*<CR>", { desc = "Insert 3600*" })
+
+  vim.keymap.set("n", "<S-F9>", ":HoursMinutes ", { desc = "Edit hours/minutes calculation" })
+  vim.keymap.set("i", "<S-F8>", "<C-R>=3600*", { desc = "Insert 3600*" })
+  vim.keymap.set("n", "<S-F8>", "ciw<C-R>=3600*", { desc = "Replace word with 3600*" })
 end
 
 function M.uniq(opts)

@@ -246,6 +246,7 @@ function! wk#hoursMinutes(total, denominator)
     nnoremap <f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)<CR>
     nnoremap <S-f9> :<C-U>call wk#hoursMinutes(<C-R><C-W>, 3600)
     inoremap <S-F8> <C-R>=3600*
+    nnoremap <S-F8> ciw<C-R>=3600*
     let mapping_msg .= "-- Use <f9> mapping to compute result (<S-F9>) to edit. imap <s-f8> for =3600*"
     let g:hourMinutesMappingIsSet = 1
   endif
