@@ -240,3 +240,4 @@ map y
 map yy copy
 map yb ${{ basename $f | clip.exe }}
 map yd ${{ dirname $f | clip.exe }}
+map yt ${{ ~/bin/showncopy.py $fx }}
