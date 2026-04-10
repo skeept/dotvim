@@ -11,6 +11,7 @@ if [ -z "$__BASHRC1_ENV_LOADED" ]; then
     # Determine shell type
     [ -n "$ZSH_VERSION" ] && CURSHELL=zsh || CURSHELL=bash
     export EDITOR=nvim
+    export GIT_EDITOR=nvim
 
     # --- System Profile Evaluation ---
     if [ -z "${FORCE_ONLY_ONE_EVAL_SYSTEM_PROFILE+x}" ]; then
