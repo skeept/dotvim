@@ -167,6 +167,8 @@ fu! s:esctagscmd(bin, args, ...)
 	endif
 	if &sh =~ 'cmd\.exe'
 		let cmd = substitute(cmd, '[&()@^<>|]', '^\0', 'g')
+	elsei &sh =~? '\vpowershell\|pwsh'
+		let cmd = substitute(cmd, '[()]', '`\0', 'g')
 	en
 	if exists('+ssl')
 		let &ssl = ssl

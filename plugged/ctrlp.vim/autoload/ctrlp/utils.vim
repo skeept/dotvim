@@ -86,6 +86,13 @@ if exists('*fnameescape')
 				let path = escape(a:path, '?*')
 			en
 			let path = substitute(path, '[', '[[]', 'g')
+			if (has('win32') || has('win64'))
+				if a:type == 'g'
+					let path = substitute(path, '(', '[(]', 'g')
+				elsei a:type == 'f'
+					let path = substitute(path, '\\(', '\\\\(', 'g')
+				en
+			en
 			retu a:0 ? escape(path, a:1) : path
 		endf
 	el

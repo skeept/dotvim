@@ -442,7 +442,7 @@ if has('patch-8.2-0995') && get(g:, 'ctrlp_use_readdir', 1)
 			endt
 		endfo
 		let [dnf, depth] = [ctrlp#dirnfile(entries), a:depth + 1]
-		if &wig != '' | cal filter(dnf[1], 'glob(v:val) != ""') | en
+		if &wig != '' | cal filter(dnf[1], 'glob(ctrlp#utils#fnesc(v:val, "g")) != ""') | en
 		let g:ctrlp_allfiles += dnf[1]
 		if !empty(dnf[0]) && !s:maxf(len(g:ctrlp_allfiles)) && depth <= s:maxdepth
 			sil! cal ctrlp#progress(len(g:ctrlp_allfiles), 1)
@@ -540,10 +540,15 @@ fu! s:UserCmd(lscmd)
 	if (has('win32') || has('win64')) && match(&shellcmdflag, "/") != -1
 		let lscmd = substitute(lscmd, '\v(^|\&\&\s*)\zscd (/d)@!', 'cd /d ', '')
 	en
-	let path = exists('*shellescape') ? shellescape(path) : path
+	if (has('win32') || has('win64')) && &shell =~? '\vpowershell|pwsh'
+		let path = "'".substitute(path, "'", "''", 'g')."'"
+	el
+		let path = exists('*shellescape') ? shellescape(path) : path
+	en
 	if (has('win32') || has('win64')) && match(&shell, 'sh') != -1
 		let path = tr(path, '\', '/')
 	en
+
 	if s:usrcmdasync && (v:version >= 800 || has('nvim')) && (exists('*job_start') || exists('*jobstart'))
 		cal s:stop_job_if_exists()
 		let g:ctrlp_allfiles = []
@@ -581,7 +586,7 @@ fu! s:UserCmd(lscmd)
 			let g:ctrlp_allfiles = ctrlp#dirnfile(g:ctrlp_allfiles)[1]
 		en
 		if &wig != ''
-			cal filter(g:ctrlp_allfiles, 'glob(v:val) != ""')
+			cal filter(g:ctrlp_allfiles, 'glob(ctrlp#utils#fnesc(v:val, "g")) != ""')
 		en
 	en
 endf
