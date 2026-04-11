@@ -3722,6 +3722,8 @@ documented in additional help files.
     lessc.................................|ale-less-lessc|
     prettier..............................|ale-less-prettier|
     stylelint.............................|ale-less-stylelint|
+  lilypond................................|ale-lilypond-options|
+    lilypond..............................|ale-lilypond|
   llvm....................................|ale-llvm-options|
     llc...................................|ale-llvm-llc|
   lua.....................................|ale-lua-options|
@@ -3738,6 +3740,7 @@ documented in additional help files.
   markdown................................|ale-markdown-options|
     cspell................................|ale-markdown-cspell|
     dprint................................|ale-markdown-dprint|
+    harper................................|ale-markdown-harper|
     markdownlint..........................|ale-markdown-markdownlint|
     marksman..............................|ale-markdown-marksman|
     mdl...................................|ale-markdown-mdl|
@@ -3804,6 +3807,7 @@ documented in additional help files.
     perl..................................|ale-perl-perl|
     perl language server..................|ale-perl-languageserver|
     perlcritic............................|ale-perl-perlcritic|
+    perlnavigator.........................|ale-perl-perlnavigator|
     perltidy..............................|ale-perl-perltidy|
   perl6...................................|ale-perl6-options|
     perl6.................................|ale-perl6-perl6|

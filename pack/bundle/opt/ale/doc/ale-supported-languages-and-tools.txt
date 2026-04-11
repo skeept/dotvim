@@ -383,6 +383,8 @@ Notes:
   * `lessc`
   * `prettier`
   * `stylelint`
+* LilyPond
+  * `lilypond`
 * LLVM
   * `llc`
 * Lua
@@ -404,6 +406,7 @@ Notes:
 * Markdown
   * `alex`
   * `cspell`
+  * `harper`
   * `languagetool`!!
   * `markdownlint`!!
   * `marksman`
@@ -479,6 +482,7 @@ Notes:
   * `languageserver`
   * `perl -c`
   * `perl-critic`
+  * `perlnavigator`
   * `perltidy`
 * Perl6
   * `perl6 -c`

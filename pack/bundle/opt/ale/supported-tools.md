@@ -393,6 +393,8 @@ formatting.
   * [lessc](https://www.npmjs.com/package/less)
   * [prettier](https://github.com/prettier/prettier)
   * [stylelint](https://github.com/stylelint/stylelint)
+* LilyPond
+  * [lilypond](https://lilypond.org/)
 * LLVM
   * [llc](https://llvm.org/docs/CommandGuide/llc.html)
 * Lua
@@ -414,6 +416,7 @@ formatting.
 * Markdown
   * [alex](https://github.com/get-alex/alex)
   * [cspell](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
+  * [harper](https://github.com/elijah-potter/harper) :speech_balloon:
   * [languagetool](https://languagetool.org/) :floppy_disk: :speech_balloon:
   * [markdownlint](https://github.com/DavidAnson/markdownlint) :floppy_disk:
   * [marksman](https://github.com/artempyanykh/marksman) :speech_balloon:
@@ -486,9 +489,10 @@ formatting.
 * Pawn
   * [uncrustify](https://github.com/uncrustify/uncrustify)
 * Perl
-  * [languageserver](https://metacpan.org/pod/Perl::LanguageServer)
+  * [languageserver](https://metacpan.org/pod/Perl::LanguageServer) :speech_balloon:
   * [perl -c](https://perl.org/) :warning:
   * [perl-critic](https://metacpan.org/pod/Perl::Critic)
+  * [perlnavigator](https://github.com/bscan/PerlNavigator) :speech_balloon:
   * [perltidy](https://metacpan.org/pod/distribution/Perl-Tidy/bin/perltidy)
 * Perl6
   * [perl6 -c](https://perl6.org) :warning:

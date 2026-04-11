@@ -2,7 +2,7 @@
 
 set -u
 
-version=0.70.0
+version=0.71.0
 auto_completion=
 key_bindings=
 update_config=2
@@ -112,10 +112,15 @@ link_fzf_in_path() {
   return 1
 }
 
+tar_opts="-xzf -"
+if tar --no-same-owner -tf /dev/null 2> /dev/null; then
+  tar_opts="--no-same-owner $tar_opts"
+fi
+
 try_curl() {
   command -v curl > /dev/null &&
     if [[ $1 =~ tar.gz$ ]]; then
-      curl -fL $1 | tar --no-same-owner -xzf -
+      curl -fL $1 | tar $tar_opts
     else
       local temp=${TMPDIR:-/tmp}/fzf.zip
       curl -fLo "$temp" $1 && unzip -o "$temp" && rm -f "$temp"
@@ -125,7 +130,7 @@ try_curl() {
 try_wget() {
   command -v wget > /dev/null &&
     if [[ $1 =~ tar.gz$ ]]; then
-      wget -O - $1 | tar --no-same-owner -xzf -
+      wget -O - $1 | tar $tar_opts
     else
       local temp=${TMPDIR:-/tmp}/fzf.zip
       wget -O "$temp" $1 && unzip -o "$temp" && rm -f "$temp"
@@ -439,7 +444,7 @@ if [ $update_config -eq 1 ]; then
     echo
   fi
   [[ $shells =~ zsh ]] && echo "   source ${ZDOTDIR:-~}/.zshrc   # zsh"
-  [[ $shells =~ fish && $lno_func -ne 0 ]] && echo '   fzf_user_key_bindings  # fish'
+  [[ $shells =~ fish && $lno_func -ne 0 ]] && echo '   fish_user_key_bindings  # fish'
   echo
   echo 'Use uninstall script to remove fzf.'
   echo
