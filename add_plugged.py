@@ -7,8 +7,9 @@ from pathlib import Path
 
 SKIP = [
     ".git",
-    "tags"
+    "tags",
 ]
+
 
 def get_individual_files(path_name: Path) -> typing.Iterator[Path]:
     """Get all files in specific folder."""
@@ -29,9 +30,13 @@ def git_force_add(path_name: Path) -> None:
     if not files:
         return
 
-    cmd = "git add --force".split()
+    cmd = [
+        "git",
+        "add",
+        "--force",
+    ]
     cmd.extend(str(fn) for fn in files)
-    subprocess.run(cmd)
+    subprocess.run(cmd, check=False)  # noqa: S603
 
 
 def add_path(path_name: Path) -> None:
