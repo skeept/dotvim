@@ -200,7 +200,8 @@ cmd zi ${{
 cmd on-cd &{{
     zoxide add "$PWD"
 
-    fmt="$(STARSHIP_SHELL= starship prompt | sed 's/\\/\\\\/g;s/"/\\"/g')"
+    # fmt="$(STARSHIP_SHELL= starship prompt | sed 's/\\/\\\\/g;s/"/\\"/g')"
+    fmt=$(STARSHIP_CONFIG=~/.config/starship_lf.toml STARSHIP_SHELL= starship prompt | tr -d '\n' | sed 's/\\/\\\\/g;s/"/\\"/g;s/%/%%/g')
     lf -remote "send $id set promptfmt \"$fmt\""
 
 }}
