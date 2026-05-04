@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+
 import argparse
-import os
 import shutil
 import subprocess
 import sys
@@ -41,7 +41,6 @@ def iter_files(path: Path) -> Iterator[Path]:
         if path.name in SKIP_DIRS:
             return
         try:
-            # Sorting ensures deterministic output order
             for entry in sorted(path.iterdir()):
                 yield from iter_files(entry)
         except PermissionError:
@@ -56,54 +55,65 @@ def iter_files(path: Path) -> Iterator[Path]:
         yield path
 
 
-def copy_to_clipboard(text: str) -> None:
-    """Universal clipboard support with priority for native tools."""
-    # macOS
-    if sys.platform == "darwin" and shutil.which("pbcopy"):
-        cmd = ["pbcopy"]
-    # Linux (X11)
+def copy_to_clipboard(text: str, force_pwsh: bool = False) -> None:
+    """Universal clipboard support with optional PowerShell override for WSL."""
+    cmd = []
+    input_bytes = text.encode("utf-8")
+
+    # If user explicitly asks for PowerShell (great for large WSL transfers)
+    if force_pwsh and shutil.which("powershell.exe"):
+        cmd = ["powershell.exe", "-NoProfile", "-Command", "$input | Set-Clipboard"]
+        # PowerShell often handles large pipes better if we encode as UTF-16
+        input_bytes = text.encode("utf-16")
+
+    # Default Hierarchy
     elif shutil.which("xclip"):
         cmd = ["xclip", "-selection", "clipboard"]
-    # Linux (Wayland)
     elif shutil.which("wl-copy"):
         cmd = ["wl-copy"]
-    # Windows / WSL
+    elif sys.platform == "darwin" and shutil.which("pbcopy"):
+        cmd = ["pbcopy"]
     elif shutil.which("clip.exe"):
-        # clip.exe expects UTF-16 usually, but UTF-8 often works with CRLF
         text = text.replace("\n", "\r\n")
         cmd = ["clip.exe"]
-    else:
-        print(
-            "\n[!] No clipboard tool found (xclip, wl-copy, pbcopy, or clip.exe).",
-            file=sys.stderr,
-        )
+        input_bytes = text.encode("utf-8")
+
+    if not cmd:
+        print("\n[!] No suitable clipboard tool found.", file=sys.stderr)
         return
 
     try:
-        subprocess.run(cmd, input=text.encode("utf-8"), check=True)
+        subprocess.run(cmd, input=input_bytes, check=True)
         print(f"\nCopied to clipboard using {cmd[0]}")
     except subprocess.CalledProcessError as e:
-        print(f"\nClipboard error: {e}", file=sys.stderr)
+        print(f"\nClipboard error with {cmd[0]}: {e}", file=sys.stderr)
 
 
-def process_files(paths: list[str], truncate: Optional[int], *, show: bool) -> None:
+def process_files(
+    paths: list[str], truncate: Optional[int], show: bool, force_pwsh: bool
+) -> None:
     output_parts = []
 
     for p in paths:
         for file_path in iter_files(Path(p)):
-            header = f"============ FILE: {file_path} ============"
             try:
-                content_lines = []
                 with file_path.open("r", encoding="utf-8", errors="replace") as f:
-                    if truncate:
-                        for i, line in enumerate(f):
-                            if i >= truncate:
-                                content_lines.append("[... truncated ...]\n")
-                                break
-                            content_lines.append(line)
-                    else:
-                        content_lines = f.readlines()
+                    all_lines = f.readlines()
 
+                total_lines = len(all_lines)
+
+                # Logic for the header line count string
+                if truncate and total_lines > truncate:
+                    line_info = f"{truncate}/{total_lines}"
+                    content_lines = all_lines[:truncate]
+                    content_lines.append("[... truncated ...]\n")
+                else:
+                    line_info = str(total_lines)
+                    content_lines = all_lines
+
+                header = (
+                    f"============ FILE: {file_path} ({line_info} lines) ============"
+                )
                 content = "".join(content_lines)
                 formatted_block = f"{header}\n{content}\n"
 
@@ -111,14 +121,15 @@ def process_files(paths: list[str], truncate: Optional[int], *, show: bool) -> N
                     print(formatted_block)
                 else:
                     print(header)
+
                 output_parts.append(formatted_block)
 
             except Exception as e:
-                error_msg = f"{header}\n[Error reading file: {e}]\n"
-                print(error_msg, file=sys.stderr)
+                header = f"============ FILE: {file_path} ============"
+                print(f"{header}\n[Error reading file: {e}]", file=sys.stderr)
 
     if output_parts:
-        copy_to_clipboard("".join(output_parts))
+        copy_to_clipboard("".join(output_parts), force_pwsh=force_pwsh)
     else:
         print("No readable text files found.", file=sys.stderr)
 
@@ -138,11 +149,16 @@ def main():
         help="Truncate files to N lines (default 20 if flag is set).",
     )
     parser.add_argument(
-        "-s", "--show", help="print file to stdout", action="store_true"
+        "-s", "--show", help="Print file contents to stdout.", action="store_true"
+    )
+    parser.add_argument(
+        "--pwsh",
+        help="Force use of powershell.exe (recommended for large files on WSL).",
+        action="store_true",
     )
 
     args = parser.parse_args()
-    process_files(args.paths, args.truncate, show=args.show)
+    process_files(args.paths, args.truncate, show=args.show, force_pwsh=args.pwsh)
 
 
 if __name__ == "__main__":
