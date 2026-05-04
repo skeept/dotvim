@@ -1,0 +1,33 @@
+# ~/.config/starship_lf.toml
+
+# 1. No newlines - crucial for lf
+add_newline = false
+
+# 2. Simplified format: Remove 'character' (the arrow/input symbol)
+# and 'cmd_duration' as they don't apply here.
+format = """$directory$git_branch$git_status$python$fill$jobs"""
+
+[directory]
+# lf already shows the path in the breadcrumbs or bottom bar.
+# We can make this very minimal or just show the 'project' folder.
+truncation_length = 7
+# fish_style_pwd_dir_length = 1
+style = "bold cyan"
+
+[character]
+disabled = true  # We don't need a cursor/arrow in the header
+
+[git_branch]
+symbol = " "
+style = "bold yellow"
+
+[git_status]
+style = "red"
+
+[fill]
+symbol = " " # This pushes the time/jobs to the far right of the top bar
+
+[time]
+disabled = false
+format = "[$time]($style)"
+style = "dimmed white"
