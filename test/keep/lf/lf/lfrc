@@ -9,7 +9,7 @@ set shellopts "-nop"
 
 # UI Settings
 set scrolloff 10
-set icons true
+set icons false
 set info custom
 set previewer ~\\vimfiles\\test\\keep\\lf\\lf\\preview.bat
 
