@@ -4,8 +4,13 @@
 
 # Interpreter settings
 set shell pwsh
-set shellflag "-NoProfile -Command"
-set shellopts "-nop"
+set shellflag -c
+set shellopts -NoProfile
+
+
+cmd edit $nvim $env:f
+map e edit
+
 
 # UI Settings
 set scrolloff 10
@@ -126,15 +131,24 @@ map gr ${{
 # EVENT HOOKS
 # ------------------------------------------------------------------------------
 
-# Update prompt with Starship on Directory Change
 cmd on-cd &{{
-    zoxide add "$env:PWD"
-    # Use your dedicated LF config (Update path if different)
-    $cfg = "$env:USERPROFILE\.config\starship_lf.toml"
-    $fmt = if (Test-Path $cfg) { starship prompt --config $cfg } else { starship prompt }
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-    # Sanitize for LF: Remove newlines and escape percents/backslashes
-    $fmt = $fmt -replace "`n", "" -replace "`r", "" -replace "\\", "\\" -replace '"', '\"' -replace "%", "%%"
+    zoxide add "$env:PWD"
+
+    $cfg = "$env:USERPROFILE\.config\starship_lf.toml"
+
+    if (Test-Path $cfg) {
+        $env:STARSHIP_CONFIG = $cfg
+        $fmt = starship prompt
+        Remove-Item Env:STARSHIP_CONFIG # Clean up
+    } else {
+        $fmt = starship prompt
+    }
+
+    $fmt = ($fmt -split "`r?`n" -join "") -replace "\\", "\\" -replace '"', '\"' -replace "%", "%%"
+    
     lf -remote "send $env:id set promptfmt `"$fmt`""
 }}
 
@@ -147,11 +161,11 @@ cmd on-select &{{
 }}
 
 # Git Indicators on load
-cmd on-load &{{
-    $is_git = (git rev-parse --is-inside-work-tree 2>$null)
-    if ($is_git -eq "true") {
-        $status = (git status --porcelain --ignored)
-        # This is a basic implementation; Windows lf-remote loops are slower than Linux
-        # so we just check if the current file has a status
-    }
-}}
+#cmd on-load &{{
+#    $is_git = (git rev-parse --is-inside-work-tree 2>$null)
+#    if ($is_git -eq "true") {
+#        $status = (git status --porcelain --ignored 2>$null)
+#        # This is a basic implementation; Windows lf-remote loops are slower than Linux
+#        # so we just check if the current file has a status
+#    }
+#}}
