@@ -5,92 +5,92 @@
   path = ~/.config/git/user
 
 [core]
-    excludesfile = ~/.config/git/ignore
-    autocrlf = false
-    whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+  excludesfile = ~/.config/git/ignore
+  autocrlf = false
+  whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
 
 [credential]
-    helper = cache --timeout=3600000
+  helper = cache --timeout=3600000
 
 [alias]
-    alias = config --get-regexp 'alias.*'
-    br    = branch
-    ci    = commit
-    ciam = commit -a -m
-    ciamn = commit -n -a -m
-    civ   = commit --verbose
-    co    = checkout
-    df    = diff
-    dfc    = diff --cached
-    dt    = difftool
-    dtc   = difftool --cached
-    dw    = diff --word-diff=color
-    dwc    = diff --word-diff=color --cached
-    h     = help
-    l     = log --oneline --decorate
-    ll    = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
-    vd    = difftool --tool=vimdiff
-    nd    = difftool --tool=nvimdiff
-    vdc    = difftool --tool=vimdiff --cached
-    ndc    = difftool --tool=nvimdiff --cached
-    vc = difftool --tool=code
-    vcc = difftool --tool=code --cached
-    bc = difftool --tool=bc4
-    bcc = difftool --tool=bc4 --cached
-    ls-ignored = ls-files --exclude-standard --ignored --others
-    st    = status
-    dnamestatus = diff --name-status
-    getbase = merge-base master HEAD
-    dk = difftool --tool=k
-    sur = submodule update --init --recursive
-    ui = !gitui
-    lg = !lg
-    dtdt    = difftool --tool=difftastic
-    root = rev-parse --show-toplevel
+  alias = config --get-regexp 'alias.*'
+  br    = branch
+  ci    = commit
+  ciam = commit -a -m
+  ciamn = commit -n -a -m
+  civ   = commit --verbose
+  co    = checkout
+  df    = diff
+  dfc    = diff --cached
+  dt    = difftool
+  dtc   = difftool --cached
+  dw    = diff --word-diff=color
+  dwc    = diff --word-diff=color --cached
+  h     = help
+  l     = log --oneline --decorate
+  ll    = log --graph --pretty=format:'%Cred%h%Creset %an -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+  vd    = difftool --tool=vimdiff
+  nd    = difftool --tool=nvimdiff
+  vdc    = difftool --tool=vimdiff --cached
+  ndc    = difftool --tool=nvimdiff --cached
+  vc = difftool --tool=code
+  vcc = difftool --tool=code --cached
+  bc = difftool --tool=bc4
+  bcc = difftool --tool=bc4 --cached
+  ls-ignored = ls-files --exclude-standard --ignored --others
+  st    = status
+  dnamestatus = diff --name-status
+  getbase = merge-base master HEAD
+  dk = difftool --tool=k
+  sur = submodule update --init --recursive
+  ui = !gitui
+  lg = !lg
+  dtdt    = difftool --tool=difftastic
+  root = rev-parse --show-toplevel
     # difftastic aliases
-    dlog = -c diff.external=difft log --ext-diff
-    dshow = -c diff.external=difft show --ext-diff
-    ddiff = -c diff.external=difft diff
-    dl = -c diff.external=difft log -p --ext-diff
-    ds = -c diff.external=difft show --ext-diff
-    tt = -c diff.external=difft diff
-    ttc = -c diff.external=difft diff --cached
-    fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
+  dlog = -c diff.external=difft log --ext-diff
+  dshow = -c diff.external=difft show --ext-diff
+  ddiff = -c diff.external=difft diff
+  dl = -c diff.external=difft log -p --ext-diff
+  ds = -c diff.external=difft show --ext-diff
+  tt = -c diff.external=difft diff
+  ttc = -c diff.external=difft diff --cached
+  fetchall = fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
 [diff]
-    algorithm = histogram
+  algorithm = histogram
 
 [difftool]
-    prompt = false
+  prompt = false
 
 [difftool "difftastic"]
-    cmd = difft $LOCAL $REMOTE
+  cmd = difft $LOCAL $REMOTE
 
 [difftool "nvimdiff"]
-    cmd = vdiff "$LOCAL" "$REMOTE"
+  cmd = vdiff "$LOCAL" "$REMOTE"
 
 [difftool "code"]
   cmd = code --wait --new-window --diff "$LOCAL" "$REMOTE"
 
 [push]
-    autoSetupRemote = true
-    followTags = true
+  autoSetupRemote = true
+  followTags = false
 
 [help]
-    autocorrect = prompt
+  autocorrect = prompt
 
 [advice]
-    useCoreFSMonitorConfig = false
+  useCoreFSMonitorConfig = false
 
 [filter "lfs"]
-    process = git-lfs filter-process
-    required = true
-    clean = git-lfs clean -- %f
-    smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
 
 [rerere]
-	enabled = true
-	autoupdate = true
+  enabled = true
+  autoupdate = true
 
 [include]
-    path = ~/.config/git/local
+  path = ~/.config/git/local
