@@ -456,19 +456,21 @@ to query its status.
                                                         *nrrwrgn#NrrwRgnStatus()*
 nrrwrgn#NrrwRgnStatus()
     Returns a dict with the following keys:
-        'shortname':    The displayed buffer name
-        'fullname':     The complete buffer name of the original buffer
-        'multi':        1 if it is a multi narrowed window (|:NRMulti|),
+        "enabled":      Whether syncing the buffer is enabled (|:NRS|)
+        "end":          End position (only present if "multi" is 0)
+        "endl":         List of end lines for a multi narrowed window
+                        (only present, if "multi" is 1)
+        "fullname":     The complete buffer name of the original buffer
+        "instn":        Narrow Region Instance Id.
+        "matchid":      Id used for highlighting |matchdelete|
+        "multi":        1 if it is a multi narrowed window (|:NRMulti|),
                         0 otherwise.
-        'startl':       List of start lines for a multi narrowed window
-                        (only present, if 'multi' is 1)
-        'endl':         List of end lines for a multi narrowed window
-                        (only present, if 'multi' is 1)
-        'start':        Start position (only present if 'multi' is 0)
-        'end':          End position (only present if 'multi' is 0)
-        'visual':       Visual Mode, if it the narrowed window was started
+        "shortname":    The displayed buffer name
+        "start":        Start position (only present if "multi" is 0)
+        "startl":       List of start lines for a multi narrowed window
+                        (only present, if "multi" is 1)
+        "visual":       Visual Mode, if it the narrowed window was started
                         from a visual selected region (empty otherwise).
-        'enabled':      Whether syncing the buffer is enabled (|:NRS|)
                             
     If not executed in a narrowed window, returns an empty dict.
 =============================================================================
