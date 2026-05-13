@@ -1077,7 +1077,7 @@ function rr()
 # }
 
 function lfr() {
-  ( cdr && lf $@; )
+  cr lf
 }
 
 # if [ -x "$(command -v nvim)" ] && nvim -h >& /dev/null; then
