@@ -2,7 +2,7 @@ if 'dirvish' !=# get(b:, 'current_syntax', 'dirvish')
   finish
 endif
 
-let s:sep = exists('+shellslash') && !&shellslash ? '\\' : '/'
+let s:sep = has('win32') && stridx(fnamemodify('.', ':p'), '\') >= 0 ? '\\' : '/'
 let s:escape = 'substitute(escape(v:val, ".$~"), "*", ".*", "g")'
 
 " Define once (per buffer).
