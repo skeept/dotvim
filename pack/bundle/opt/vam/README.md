@@ -23,6 +23,8 @@ channel on freenode.
 VAMActivate after startup does load plugin/\*\*/\*.lua files.
 lazy.nvim plugin manager might be worth looking at, too
 
+See ./CO_EXISTING_WITH_LAZY_NVIM.md
+
 ## PLUGIN_NAME - What is a plugin ?
 A plugin is set of files having Vim's rtp directory layout (plugin/, ftplugin/, ...).
 It is identified by name which will be looked up by vim-pi or a url such as
@@ -53,7 +55,7 @@ set nocompatible | filetype indent plugin on | syn on
 fun! SetupVAM()
   let c = get(g:, 'vim_addon_manager', {})
   let g:vim_addon_manager = c
-  let c.plugin_root_dir = expand('$HOME', 1) . '/.vim/vim-addons'
+  let c.plugin_root_dir = get(c, 'plugin_root_dir', expand('$HOME', 1) . '/.vim/vim-addons')
 
   " Force your ~/.vim/after directory to be last in &rtp always:
   " let g:vim_addon_manager.rtp_list_hook = 'vam#ForceUsersAfterDirectoriesToBeLast'
@@ -150,6 +152,9 @@ call add(scripts, {'activate_this_rtp': 'absolute-rtp-path'})
 call vam#Scripts(scripts, {'tag_regex': 'c-dev'})
 
 " activate all tagged scripts immediately
+" mind ./CO_EXISTING_WITH_LAZY_NVIM.md
+" recommend way now is to write the list of plugins
+" into a .lua file
 call vam#Scripts([], {'tag_regex': '.*'})
 ```
 Instead of adding dictionaries to a local list you can make VAM read them from a file
@@ -280,6 +285,10 @@ So I somewhat like this idea
 
 ## Related work
 
+[vim.pack](https://github.com/neovim/neovim/issues/34763)
+
+[lazy.nvim](https://github.com/folke/lazy.nvim) See ./CO_EXISTING_WITH_LAZY_NVIM.md
+
 [vim-wiki's list of alternatives](http://vim-wiki.mawercer.de/wiki/topic/vim%20plugin%20managment.html)
 
 [debian’s vim plugin manager](http://packages.debian.org/sid/vim-addon-manager)
@@ -288,3 +297,12 @@ The author (Jamessan) is fine with this project sharing the same name.
 [vundle](http://github.com/gmarik/Vundle.vim) Referencing it here because
 gmarik taught us how important it is to have both: A simple nice user interface
 and a short descriptive, complete README.md - Other managers see link above.
+
+loosely related: brew, chocolately, scoop, winget apt, brew, buck2,
+bazel, [nixpkgs](https://github.com/nixos/nixpkgs),
+[libsolv](https://github.com/opensuse/libsolv), ...
+
+[packspec](https://github.com/neovim/packspec)
+Similar ideas like vim-addon-manager and maybe one steps towards a unified package manager .. :) YEAH
+So I guess upstream of addon-info.json like files should be
+discussed there.
