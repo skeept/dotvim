@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2021 Bailey Ling et al.
+" MIT License. Copyright (c) 2013-2026 Bailey Ling, Christian Brabandt et al.
 " vim: et ts=2 sts=2 sw=2
 
 scriptencoding utf-8
@@ -6,7 +6,7 @@ scriptencoding utf-8
 let g:airline_statusline_funcrefs = get(g:, 'airline_statusline_funcrefs', [])
 let g:airline_inactive_funcrefs = get(g:, 'airline_inactive_statusline_funcrefs', [])
 
-let s:sections = ['a','b','c','gutter','x','y','z', 'error', 'warning']
+let s:sections = ['a','b','c','gutter','x','y','z', 'error', 'warning', 'warning2']
 let s:contexts = {}
 let s:core_funcrefs = [
       \ function('airline#extensions#apply'),

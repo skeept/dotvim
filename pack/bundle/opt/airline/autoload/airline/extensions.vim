@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2021 Bailey Ling et al.
+" MIT License. Copyright (c) 2013-2026 Bailey Ling, Christian Brabandt et al.
 " vim: et ts=2 sts=2 sw=2
 
 scriptencoding utf-8
@@ -398,6 +398,11 @@ function! airline#extensions#load()
   if get(g:, 'airline#extensions#tabline#enabled', 0)
     call airline#extensions#tabline#init(s:ext)
     call add(s:loaded_ext, 'tabline')
+  endif
+
+  if get(g:, 'airline#extensions#tabpanel#enabled', 0)
+    call airline#extensions#tabpanel#Init(s:ext)
+    call add(s:loaded_ext, 'tabpanel')
   endif
 
   if get(g:, 'airline#extensions#tmuxline#enabled', 1) && exists(':Tmuxline')

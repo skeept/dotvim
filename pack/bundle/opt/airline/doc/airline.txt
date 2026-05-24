@@ -1,4 +1,4 @@
-*airline.txt*	Lean and mean status/tabline that's light as air
+*airline.txt*     Lean and mean status/tabline that's light as air
 *airline* *vim-airline*
                   _                       _      _ _                        ~
            __   _(_)_ __ ___         __ _(_)_ __| (_)_ __   ___             ~
@@ -6,7 +6,7 @@
             \ V /| | | | | | |_____| (_| | | |  | | | | | |  __/            ~
              \_/ |_|_| |_| |_|      \__,_|_|_|  |_|_|_| |_|\___|            ~
                                                                            ~
-Version: 0.11
+Version: 0.12
 =============================================================================
 CONTENTS                                                  *airline-contents*
 
@@ -57,6 +57,8 @@ this: >
 +---------------------------------------------------------------------------+
 | A | B |                     C                          X | Y | Z |  [...] |
 +---------------------------------------------------------------------------+
+| [...]                                                                     |
++---------------------------------------------------------------------------+
 
 The statusline is the colored line at the bottom, which contains the sections
 (possibly in different colors):
@@ -73,15 +75,16 @@ section  meaning (example)~
   Z      current position in the file
            percentage % ln: current line/number of lines ☰ cn: column
            So this: 10% ln:10/100☰ cn:20
-	   means: >
+           means: >
               10%     - 10 percent
-	      ln:     - line number is
+              ln:     - line number is
               10/100☰ - 10 of 100 total lines
-	      cn:     - column number is
+              cn:     - column number is
               20      - 20
 <
   [...]  additional sections (warning/errors/statistics)
          from external plugins (e.g. YCM/syntastic/...)
+         Can be shown on a second line optionally.
 
 For a better look, those sections can be colored differently, depending on
 the mode and whether the current file is 'modified'
@@ -123,6 +126,9 @@ values):
 * enable experimental features >
   " Currently: Enable Vim9 Script implementation
   let g:airline_experimental = 1
+
+* enable multiline feature (requires Vim 9.2.0083) >
+  let g:airline_multiline = 1
 
 * the separator used on the left side >
   let g:airline_left_sep='>'
@@ -266,9 +272,9 @@ values):
   " disable per-buffer
   let b:airline_disable_statusline = 1
 
-< This setting disables setting the 'statusline' option. This allows to use
- e.g. the tabline extension (|airline-tabline|) but keep the 'statusline'
- option totally configurable by a custom configuration.
+<  This setting disables setting the 'statusline' option. This allows to use
+  e.g. the tabline extension (|airline-tabline|) but keep the 'statusline'
+  option totally configurable by a custom configuration.
 * Do not draw separators for empty sections (only for the active window) >
   let g:airline_skip_empty_sections = 1
 <
@@ -306,6 +312,12 @@ values):
 * Display a short path in statusline: >
   let g:airline_stl_path_style = 'short'
 >
+* Display the file path relative to the git repository toplevel directory: >
+  let g:airline_stl_path_style = 'gitrepo'
+<
+  This shows the path as `reponame:path/to/file` instead of the full path.
+  Requires fugitive plugin.  Falls back to the full path for non-git files.
+
 * Display a only file name in statusline: >
   let g:airline_section_c_only_filename = 1
 >
@@ -439,6 +451,7 @@ window.
                                  languageclient_error_count)
   let g:airline_section_warning (ycm_warning_count, syntastic-warn,
                                  languageclient_warning_count, whitespace)
+  let g:airline_section_warning2 (whitespace) [optional]
 
   " [*] This section needs at least the fugitive extension or else
   "     it will remain empty
@@ -783,7 +796,7 @@ eclim <https://eclim.org>
   |airline-syntastic| extension. >
   let g:airline#extensions#eclim#enabled = 1
 
--------------------------------------                 	      *airline-fern*
+-------------------------------------                        *airline-fern*
 fern.vim <https://github.com/lambdalisue/fern.vim>
 
 Airline displays the fern.vim specific statusline.
@@ -1143,8 +1156,8 @@ are supported!
   (only supported for ctrlspace plugin). >
   let g:airline#extensions#tabline#switch_buffers_and_tabs = 0
 
-Note: If you are using neovim (has('tablineat') = 1), then you can click
-on the tabline with the left mouse button to switch to that buffer, and
+Note: If you are using Neovim or Vim with at least v9.2.0338, then you can
+click on the tabline with the left mouse button to switch to that buffer, and
 with the middle mouse button to delete that buffer.
 
 * if you want to show the current active buffer like this:
@@ -1266,9 +1279,14 @@ Note: Not displayed if the number of tabs is less than 1
   This matches that of the numbering scheme of |:buffers|, letting
   `<Plug>AirlineSelectTab67` to reference buffer 67.
 
-  Note: To avoid ambiguity, there won't be <Plug>AirlineSelectTab1
-  - <Plug>AirlineSelectTab9 maps in mode 2 and 3.
+  Note: To avoid ambiguity, there won't be
+  <Plug>AirlineSelectTab1 - <Plug>AirlineSelectTab9
+  maps in mode 2 and 3.
 
+  To go to the very first/last buffer, you can use: >
+  nmap <Leader>FT <Plug>AirlineSelectFirstTab
+  nmap <Leader>LT <Plug>AirlineSelectLastTab
+<
   Note: Mappings will be ignored for filetypes that match
   `g:airline#extensions#tabline#keymap_ignored_filetypes`.
 
@@ -1428,25 +1446,60 @@ Note: Enabling this extension will modify 'showtabline' and 'guioptions'.
   (neovim specific, only works with buffers and not real tabs, default: 0) >
   let g:airline#extensions#tabline#middle_click_preserves_windows = 1
 <
-						*airline-tabline-hlgroups*
+-------------------------------------             *airline-tabline-hlgroups*
 When the tabline is enabled, vim-airline exposes the following highlighting
 groups:
 
-  airline_tab:		default highlighting group for the tabline
-  airline_tab_right:	idem, but for the right side of the tabline
+  airline_tab:          default highlighting group for the tabline
+  airline_tab_right:    idem, but for the right side of the tabline
 
-  airline_tabsel:	highlighting group of the selected item
+  airline_tabsel:       highlighting group of the selected item
   airline_tabsel_right: idem, but for the right side of the tabline
   airline_tabmod:       highlighting group for a 'modified' buffer
   airline_tabmod_right: idem, but on the right side
   airline_tabmod_unsel: unselected tab with modified buffer
   airline_tabmod_unsel_right: (unused)
   airline_tabtype:      label group used by ctrlspace and tabws
-  airline_tabfill:	highlighting group for the filler space
+  airline_tabfill:      highlighting group for the filler space
   airline_tablabel:     highlighting group for the label
   airline_tablabel_right: highlighting group for the label on the right side
-  airline_tabhid:	hidden buffer
+  airline_tabhid:       hidden buffer
   airline_tabhid_right: idem, but on the right
+
+-------------------------------------                      *airline-tabpanel*
+
+Vim supports a vertical tab panel (see |tabpanel|) that displays tab pages
+in a vertical side column. This extension provides airline-styled formatting
+for the tab panel. Requires a Vim version that supports 'tabpanel' (at least
+Vim >9.1.1391).
+
+* enable/disable tabpanel integration >
+  let g:airline#extensions#tabpanel#enabled = 1
+< default: 0
+
+* configure the width of the tab panel (in columns) >
+  let g:airline#extensions#tabpanel#columns = 20
+< default: 20
+
+* configure the alignment of the tab panel >
+  let g:airline#extensions#tabpanel#align = 'left'
+< default: '' (uses Vim's default)
+
+* reserve a one-column scrollbar in the tabpanel showing the current scroll
+  position; clicking or dragging the thumb jumps to that position (requires
+  Vim patch 9.2.386) >
+  let g:airline#extensions#tabpanel#scrollbar = 1
+< default: 1
+
+Note: The tabpanel extension reuses the tabline highlight groups
+(|airline-tabline-hlgroups|) and respects the tabline tab number settings
+(|g:airline#extensions#tabline#show_tab_nr|,
+|g:airline#extensions#tabline#tab_nr_type|,
+|g:airline#extensions#tabline#tabnr_formatter|).
+
+Note: Starting with Vim v9.2.0386 Vim adds mouse support for the tabpanel
+and each tab entry is clickable: a left mouse click switches to the tab and a
+middle click closes it, however 'mouse' setting needs to be enabled.
 
 -------------------------------------                      *airline-scrollbar*
 
@@ -2198,7 +2251,7 @@ Contributions and pull requests are welcome.
 =============================================================================
 LICENSE                                                    *airline-license*
 
-MIT License. Copyright © 2013-2021 Bailey Ling, Christian Brabandt, Mike
+MIT License. Copyright © 2013-2026 Bailey Ling, Christian Brabandt, Mike
 Hartington et al.
 
  vim:tw=78:ts=8:ft=help:norl:

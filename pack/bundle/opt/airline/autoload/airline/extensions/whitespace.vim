@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2021 Bailey Ling et al.
+" MIT License. Copyright (c) 2013-2026 Bailey Ling, Christian Brabandt et al.
 " vim: et ts=2 sts=2 sw=2
 
 " http://got-ravings.blogspot.com/2008/10/vim-pr0n-statusline-whitespace-flags.html
@@ -13,7 +13,9 @@ let s:searchcount = exists('*searchcount')
 let s:enabled = get(g:, 'airline#extensions#whitespace#enabled', 1)
 let s:skip_check_ft = {'make': ['indent', 'mixed-indent-file'],
       \ 'csv': ['indent', 'mixed-indent-file'],
-      \ 'mail': ['trailing']}
+      \ 'mail': ['trailing'],
+      \ 'diff': ['trailing'],
+      \ 'gitcommit': ['trailing']}
 
 function! s:check_mixed_indent()
   let indent_algo = get(g:, 'airline#extensions#whitespace#mixed_indent_algo', 0)
@@ -161,6 +163,9 @@ function! airline#extensions#whitespace#check()
       endif
     endif
   endif
+  if airline#util#has_multiline()
+    return b:airline_whitespace_check
+  endif
   return airline#util#shorten(b:airline_whitespace_check, 120, 9)
 endfunction
 
@@ -178,8 +183,16 @@ function! airline#extensions#whitespace#toggle()
 
   if exists("g:airline#extensions#whitespace#enabled")
     let g:airline#extensions#whitespace#enabled = s:enabled
-    if s:enabled && match(g:airline_section_warning, '#whitespace#check') < 0
-      let g:airline_section_warning .= airline#section#create(['whitespace'])
+    if s:enabled
+      if airline#util#has_multiline() && exists('g:airline_section_warning2')
+        if match(g:airline_section_warning2, '#whitespace#check') < 0
+          let g:airline_section_warning2 .= airline#section#create(['whitespace'])
+        endif
+      else
+        if match(g:airline_section_warning, '#whitespace#check') < 0
+          let g:airline_section_warning .= airline#section#create(['whitespace'])
+        endif
+      endif
       call airline#update_statusline()
     endif
   endif
@@ -211,7 +224,7 @@ function! s:ws_refresh()
     return
   endif
   unlet! b:airline_whitespace_check
-  if get(g:, 'airline_skip_empty_sections', 0)
+  if get(g:, 'airline_skip_empty_sections', 0) || airline#util#has_multiline()
     exe ':AirlineRefresh!'
   endif
   let b:airline_ws_changedtick = b:changedtick

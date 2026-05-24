@@ -32,6 +32,8 @@ information. By default (without configuration) this line will look like this:
 +-----------------------------------------------------------------------------+
 | A | B |                     C                            X | Y | Z |  [...] |
 +-----------------------------------------------------------------------------+
+| [...]                                                                       |
++-----------------------------------------------------------------------------+
 ```
 
 The statusline is the colored line at the bottom, which contains the sections
@@ -45,7 +47,7 @@ section|meaning (example)
   X    | filetype  (vim)
   Y    | file encoding[fileformat] (utf-8[unix])
   Z    | current position in the file
- [...] | additional sections (warning/errors/statistics) from external plugins (e.g. YCM, syntastic, ...)
+ [...] | additional sections (warning/errors/statistics) from external plugins (e.g. YCM, syntastic, ...)<br>can be shown on a second line optionally (Vim only)
 
 The information in Section Z looks like this:
 
@@ -239,6 +241,7 @@ to call custom functions.  Use `:let g:airline_statusline_ontop=1` to enable it.
 Every section is composed of parts, and you can reorder and reconfigure them at will.
 
 ![image](https://f.cloud.github.com/assets/306502/1073278/f291dd4c-14a3-11e3-8a83-268e2753f97d.png)
+Note: nowadays you should use the `AirlineAfterInit` autocommand
 
 Sections can contain accents, which allows for very granular control of visuals (see configuration [here](https://github.com/vim-airline/vim-airline/issues/299#issuecomment-25772886)).
 
@@ -306,7 +309,7 @@ If you are interested in becoming a maintainer (we always welcome more maintaine
 
 # License
 
-[MIT License][58]. Copyright (c) 2013-2021 Bailey Ling & Contributors.
+[MIT License][58]. Copyright (c) 2013-2026 Bailey Ling & Contributors.
 
 [1]: https://github.com/Lokaltog/vim-powerline
 [2]: https://github.com/powerline/powerline

@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2021 Bailey Ling Christian Brabandt et al.
+" MIT License. Copyright (c) 2013-2026 Bailey Ling, Christian Brabandt et al.
 " vim: et ts=2 sts=2 sw=2
 
 scriptencoding utf-8
@@ -248,5 +248,11 @@ function! airline#util#has_vim9_script()
     \ exists("v:versionlong") &&
     \ v:versionlong >= 8022844 &&
     \ get(g:, "airline_experimental", 0))
+endfunction
+
+function! airline#util#has_multiline()
+  " Returns true, if Vim supports multiline statusline (Vim 9.2.0083)
+  return (exists("+statuslineopt") &&
+    \ get(g:, "airline_multiline", 0))
 endfunction
 

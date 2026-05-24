@@ -1,4 +1,4 @@
-" MIT License. Copyright (c) 2013-2021 Bailey Ling et al.
+" MIT License. Copyright (c) 2013-2026 Bailey Ling, Christian Brabandt et al.
 " vim: et ts=2 sts=2 sw=2
 
 scriptencoding utf-8
@@ -199,6 +199,8 @@ function! airline#init#bootstrap()
         \ })
   if get(g:, 'airline_section_c_only_filename',0)
     call airline#parts#define_raw('file', '%t%m')
+  elseif get(g:, 'airline_stl_path_style', 'default') ==# 'gitrepo'
+    call airline#parts#define_function('file', 'airline#parts#gitrepo')
   else
     call airline#parts#define_raw('file', airline#formatter#short_path#format('%f%m'))
   endif
@@ -292,7 +294,16 @@ function! airline#init#sections()
   if !exists('g:airline_section_error')
     let g:airline_section_error = airline#section#create(['ycm_error_count', 'syntastic-err', 'eclim', 'neomake_error_count', 'ale_error_count', 'lsp_error_count', 'nvimlsp_error_count', 'languageclient_error_count', 'coc_error_count', 'vim9lsp_error_count'])
   endif
-  if !exists('g:airline_section_warning')
-    let g:airline_section_warning = airline#section#create(['ycm_warning_count',  'syntastic-warn', 'neomake_warning_count', 'ale_warning_count', 'lsp_warning_count', 'nvimlsp_warning_count', 'languageclient_warning_count', 'whitespace', 'coc_warning_count', 'vim9lsp_warning_count'])
+  if airline#util#has_multiline()
+    if !exists('g:airline_section_warning')
+      let g:airline_section_warning = airline#section#create(['ycm_warning_count',  'syntastic-warn', 'neomake_warning_count', 'ale_warning_count', 'lsp_warning_count', 'nvimlsp_warning_count', 'languageclient_warning_count', 'coc_warning_count', 'vim9lsp_warning_count'])
+    endif
+    if !exists('g:airline_section_warning2')
+      let g:airline_section_warning2 = airline#section#create(['whitespace'])
+    endif
+  else
+    if !exists('g:airline_section_warning')
+      let g:airline_section_warning = airline#section#create(['ycm_warning_count',  'syntastic-warn', 'neomake_warning_count', 'ale_warning_count', 'lsp_warning_count', 'nvimlsp_warning_count', 'languageclient_warning_count', 'whitespace', 'coc_warning_count', 'vim9lsp_warning_count'])
+    endif
   endif
 endfunction
